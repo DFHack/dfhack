@@ -1,0 +1,553 @@
+<?xml version="1.0" ?>
+<DFExtractor>
+<!-- USE A FIXED WIDTH FONT! -->
+  <MemoryDescriptors>
+       _____________________________________________
+       |\'-._(   /                                 |
+       | \  .'-._\                            ,   ,|
+       |-.\'    .-;                         .'\`-' |
+       |   \  .' (                       _.'   \   |
+       |.--.\'   _)                   ;-;       \._|
+       |    ` _\(_)/_                  \ `'-,_,-'\ |
+       jgs____ /(O)\  _________________/____)_`-._\|
+       |                                           |
+       |         Old unsupported versions          |
+       |------------------------------------------->
+
+    <!--<Entry version="v0.27.176.38a" os="windows">
+        <HexValue name="pe_timestamp">0x47B6FAC2</HexValue>
+        <Address name="map_data">0x014A4EAC</Address>
+        <Address name="x_count">0x014A4EC4</Address>
+        <Address name="y_count">0x014A4EC8</Address>
+        <Address name="z_count">0x014A4ECC</Address>
+        <Offset name="type">0x005E</Offset>
+        <Offset name="designation">0x0260</Offset>
+        <Offset name="occupancy">0x0660</Offset>
+    </Entry>
+    <Entry version="v0.28.181.40c" os="windows">
+        <HexValue name="pe_timestamp">0x48AD802B</HexValue>
+        <Address name="map_data">0x015C3D60</Address>
+        <Address name="x_count">0x015C3D78</Address>
+        <Address name="y_count">0x015C3D7C</Address>
+        <Address name="z_count">0x015C3D80</Address>
+        <Offset name="type">0x0062</Offset>
+        <Offset name="designation">0x0264</Offset>
+        <Offset name="occupancy">0x0664</Offset>
+    </Entry>-->
+
+                    .,:rsr,
+                  :2;,;r2A@@5
+                  @2::s5A#@@@ @r.       .
+                 sd;:riXA#@@ :@@@Gir;;AS9
+                 Bs::sS3A#@2 @@#AhXirsS#;
+                iHrLr5d#@@@ .@#95sr;;rie
+                i*'    `*@3 @@A2sr;:;r#5
+                :..:rll:    @@A5sr::r3@
+               @Hr;iZ#@@@@   `:rr;;;;:
+              S@r.;i2#@@@  @s.      ..
+              @2::ri2A@@# B@G2ir:...5i
+             :@r,r3X##@@  @G5sr:..,:A
+            .@Ar;;rSB@@# H#2sr;,..,is
+            .'       `* ,@ASs;:..,:B
+                         ;rr;:,..,:.
+                             `''' 
+                  W I N D O W S
+                       and
+                     W I N E
+
+    <Entry version="v0.28.181.40d" os="windows" id="40dwin">
+        <!-- identification -->
+        <HexValue name="pe_timestamp">0x48C330DF</HexValue>
+        <String name="md5">2c686c26307dcccd7c36cc79737ebe4f</String>
+
+        <!-- map data -->
+        <Address name="map_data">0x015C4D58</Address>
+        <Address name="constructions">0x0156F8B0</Address>
+        <Address name="buildings">0x015838a0</Address>
+        <Address name="vegetation">0x01587A24</Address>
+
+        <!-- size of the map -->
+        <Address name="x_count">0x015C4D70</Address>
+        <Address name="y_count">0x015C4D74</Address>
+        <Address name="z_count">0x015C4D78</Address>
+
+        <!-- position of the map in world coords -->
+        <Address name="region_x">0x015C4D88</Address>
+        <Address name="region_y">0x015C4D8C</Address>
+        <Address name="region_z">0x015C4D90</Address>
+
+        <!-- map block offsets -->
+        <Offset name="v_vein">0x08</Offset>
+        <HexValue name="v_vein_size">0x2C</HexValue>
+        <Offset name="type">0x0062</Offset>
+        <Offset name="designation">0x0264</Offset>
+        <Offset name="occupancy">0x0664</Offset>
+        <Offset name="biome_stuffs">0x1D64</Offset>
+
+        <!-- tree and shrub offsets -->
+        <Offset name="tree_desc_offset">0x70</Offset>
+
+        <!-- the world and its offsets -->
+        <Address name="world">0x015C6388</Address>
+        <Offset name="world_size_x">0x84</Offset>
+        <Offset name="world_size_y">0x86</Offset>
+        <Offset name="w_geoblocks">0x684</Offset>
+        <Offset name="w_regions_arr">0x6B4</Offset>
+
+        <!-- values for the region structure -->
+        <HexValue name="region_size">0x5C</HexValue>
+        <Offset name="region_geo_index_off">0x58</Offset>
+
+        <!-- geoblock offset(s?) -->
+        <Offset name="geolayer_geoblock_offset">0x4</Offset>
+
+        <!-- matgloss vectors -->
+        <Address name="matgloss">0x015C6D70</Address>
+        <HexValue name="matgloss_skip">0x10</HexValue>
+
+        <!-- only stone and metal have color loaded... -->
+        <Offset name="matgloss_stone_color">0x84</Offset>
+        <Offset name="matgloss_metal_color">0x60</Offset>
+
+        <VTable>
+            <class vtable="0x00979fe4" name="stockpile" />
+            <class vtable="0x00979d34" name="zone" />
+            <class vtable="0x0097e7ec" name="construction_blueprint" />
+            <!-- BUILDINGS -->
+            <class vtable="0x0097e3cc" name="wagon"/>
+            <class vtable="0x0097b3ac" name="armor_stand"/>
+            <class vtable="0x0097d1ec" name="bed"/>
+            <class vtable="0x0097d4ac" name="seat"/>
+            <class vtable="0x0097d76c" name="burial_receptacle"/>
+            <class vtable="0x0097b50c" name="door"/>
+            <class vtable="0x0097b92c" name="floodgate"/>
+            <class vtable="0x0097b66c" name="floor_hatch"/>
+            <class vtable="0x0097ba8c" name="wall_grate"/>
+            <class vtable="0x0097bbec" name="floor_grate"/>
+            <class vtable="0x0097bd4c" name="vertical_bars"/>
+            <class vtable="0x0097beac" name="floor_bars"/>
+            <class vtable="0x0097b0ec" name="cabinet"/>
+            <class vtable="0x0097af8c" name="container"/>
+            <multiclass vtable="0x0097e10c" name="workshop" typeoffset="0xC8">
+                <class name="alchemists_laboratory" type="0x0"/>
+                <class name="carpenters_workshop"   type="0x1"/>
+                <class name="farmers_workshop"      type="0x2"/>
+                <class name="masons_workshop"       type="0x3"/>
+                <class name="craftdwarfs_workshop"  type="0x4"/>
+                <class name="jewelers_workshop"     type="0x5"/>
+                <class name="metalsmiths_workshop"  type="0x6"/>
+                <class name="magma_forge"           type="0x7"/>
+                <class name="bowyers_workshop"      type="0x8"/>
+                <class name="mechanics_workshop"    type="0x9"/>
+                <class name="siege_workshop"        type="0xA"/>
+                <class name="butchers_shop"         type="0xB"/>
+                <class name="leather_works"         type="0xC"/>
+                <class name="tanners_shop"          type="0xD"/>
+                <class name="clothiers_shop"        type="0xE"/>
+                <class name="fishery"               type="0xF"/>
+                <class name="still"                 type="0x10"/>
+                <class name="loom"                  type="0x11"/>
+                <class name="quern"                 type="0x12"/>
+                <class name="kennels"               type="0x13"/>
+                <class name="kitchen"               type="0x14"/>
+                <class name="ashery"                type="0x15"/>
+                <class name="dyers_shop"            type="0x16"/>
+                <class name="millstone"             type="0x17"/>
+            </multiclass>
+            <class vtable="0x0097dcec" name="farm_plot"/>
+            <class vtable="0x0097b24c" name="weapon_rack"/>
+            <class vtable="0x0097d8cc" name="statue"/>
+            <class vtable="0x0097d34c" name="table"/>
+            <class vtable="0x0097e68c" name="paved_road"/>
+            <class vtable="0x0097b7cc" name="bridge"/>
+            <class vtable="0x00979e84" name="well"/>
+            <multiclass vtable="0x0097d08c" name="siege engine" typeoffset="0xC8">
+                <class name="catapult"              type="0x0"/>
+                <class name="ballista"              type="0x1"/>
+            </multiclass>
+            <multiclass vtable="0x0097dfac" name="furnace" typeoffset="0xDA">
+                <class name="wood_furnace"          type="0x0"/>
+                <class name="smelter"               type="0x1"/>
+                <class name="glass_furnace"         type="0x2"/>
+                <class name="kiln"                  type="0x3"/>
+                <class name="magma_smelter"         type="0x4"/>
+                <class name="magma_glass_furnace"   type="0x5"/>
+                <class name="magma_kiln"            type="0x6"/>
+            </multiclass>
+            <class vtable="0x0097db8c" name="glass_window"/>
+            <class vtable="0x0097da2c" name="gem_window"/>
+            <class vtable="0x0097e26c" name="trade_depot"/>
+            <multiclass vtable="0x0097c00c" name="mechanism" typeoffset="0xC8">
+                <class name="lever"                 type="0x0"/>
+                <class name="pressure_plate"        type="0x1"/>
+                <class name="cage_trap"             type="0x2"/>
+                <class name="stonefall_trap"        type="0x3"/>
+                <class name="weapon_trap"           type="0x4"/>
+            </multiclass>
+            <class vtable="0x0097c6ec" name="spike" />
+            <class vtable="0x0097de4c" name="animal_trap" />
+            <class vtable="0x0097c9ac" name="screw_pump"/>
+            <class vtable="0x0097cb0c" name="water_wheel"/>
+            <class vtable="0x0097cc6c" name="windmill"/>
+            <class vtable="0x0097c16c" name="gear_assembly"/>
+            <class vtable="0x0097c2cc" name="horizontal_axle"/>
+            <class vtable="0x0097c42c" name="vertical_axle"/>
+            <class vtable="0x0097c58c" name="support"/>
+            <class vtable="0x0097cf2c" name="cage"/>
+            <class vtable="0x0097c84c" name="archery_target"/>
+            <class vtable="0x0097cdcc" name="restraint"/>
+        </VTable>
+    </Entry>
+    <!-- Windows 40d## sub-versions, should inherit only vtable from 40d -->
+    <Entry version="v0.28.181.40d9" os="windows" id="40d9win" base="40dwin">
+        <!-- identification -->
+        <HexValue name="pe_timestamp">0x4967C2E0</HexValue>
+        <String name="md5">aea5a207b8b1cda942502f97a429f6c3</String>
+
+        <!-- map data -->
+        <Address name="map_data">0x01531EC0</Address>
+        <Address name="constructions">0x014da5e0</Address>
+        <Address name="buildings">0x014ee978</Address>
+        <Address name="vegetation">0x014F4B4C</Address>
+        <!-- tree and shrub offsets -->
+        <Offset name="tree_desc_offset">0x70</Offset>
+
+        <!-- size of the map -->
+        <Address name="x_count">0x01531EE0</Address>
+        <Address name="y_count">0x01531EE4</Address>
+        <Address name="z_count">0x01531EE8</Address>
+
+        <!-- position of the map in world coords -->
+        <Address name="region_x">0x01531EF8</Address>
+        <Address name="region_y">0x01531EFC</Address>
+        <Address name="region_z">0x01531F00</Address>
+
+        <!-- map block offsets -->
+        <Offset name="v_vein">0x10</Offset>
+        <HexValue name="v_vein_size">0x2C</HexValue>
+        <Offset name="type">0x0082</Offset>
+        <Offset name="designation">0x0284</Offset>
+        <Offset name="occupancy">0x0684</Offset>
+        <Offset name="biome_stuffs">0x1D84</Offset>
+
+        <!-- the world and its offsets -->
+        <Address name="world">0x015334F8</Address>
+        <Offset name="world_size_x">0x84</Offset>
+        <Offset name="world_size_y">0x86</Offset>
+        <Offset name="w_geoblocks">0x75C</Offset>
+        <Offset name="w_regions_arr">0x79C</Offset>
+
+        <!-- values for the region structure -->
+        <HexValue name="region_size">0x64</HexValue>
+        <Offset name="region_geo_index_off">0x60</Offset>
+
+        <!-- geoblock offset(s?) -->
+        <Offset name="geolayer_geoblock_offset">0xC</Offset>
+
+        <!-- matgloss vectors -->
+        <Address name="matgloss">0x01534030</Address>
+        <HexValue name="matgloss_skip">0x18</HexValue>
+
+        <!-- door: 0x8ea1e4 -->
+        <VTable rebase="-0x91328">
+            <!-- Isn't it just /lovely/ how simple things become?
+                When you specify only typeoffset, nothing else is touched. Same for vtable. -->
+            <multiclass name="workshop" typeoffset="0x100" />
+            <multiclass name="siege engine" typeoffset="0x100" />
+            <multiclass name="furnace" typeoffset="0x11A" />
+            <multiclass name="mechanism" typeoffset="0x100" />
+        </VTable>
+    </Entry>
+    <Entry version="v0.28.181.40d11" os="windows" rebase="0x2d388" id="40d11win" base="40d9win">
+        <!-- identification -->
+        <HexValue name="pe_timestamp">0x49C82D3F</HexValue>
+        <String name="md5">6f81231b845e9c9dc29aaf57705ccc7c</String>
+        <!-- door: 0x8e91e4 -->
+        <VTable rebase="-0x1000" />
+    </Entry>
+    <Entry version="v0.28.181.40d12" os="windows" id="40d12win" base="40d11win">
+        <!-- identification -->
+        <HexValue name="pe_timestamp">0x4A3CCB7F</HexValue>
+        <String name="md5">6ea1de36af8e1666bd6478736e298c4c</String>
+
+        <!-- map data -->
+        <Address name="map_data">0x015FACCC</Address>
+        <Address name="constructions">0x015A33B8</Address>
+        <Address name="buildings">0x015B7750</Address>
+        <Address name="vegetation">0x015BD924</Address>
+
+        <!-- size of the map -->
+        <Address name="x_count">0x015FACEC</Address>
+        <Address name="y_count">0x015FACF0</Address>
+        <Address name="z_count">0x015FACF4</Address>
+
+        <!-- position of the map in world coords -->
+        <Address name="region_x">0x015FAD04</Address>
+        <Address name="region_y">0x015FAD08</Address>
+        <Address name="region_z">0x015FAD0C</Address>
+
+        <!-- the world and its offsets -->
+        <Address name="world">0x015FC304</Address>
+        <!-- matgloss vectors -->
+        <Address name="matgloss">0x015FCE3C</Address>
+        <!-- door: 0x8db5e4 -->
+        <VTable rebase="-0xDC00" />
+    </Entry>
+    <Entry version="v0.28.181.40d13" os="windows" id="40d13win" base="40d12win" rebase="0x5090">
+        <!-- identification -->
+        <HexValue name="pe_timestamp">0x4A51C26E</HexValue>
+        <String name="md5">04a8d8ce311d8ac75e4241bef68d3147</String>
+        <!-- map_data = 0x015FFD5C -->
+        <!-- door: 0x8df5ec -->
+        <VTable rebase="0x4008" />
+    </Entry>
+    <Entry version="v0.28.181.40d14" os="windows" id="40d14win" base="40d13win" rebase="0x2010">
+        <!-- identification -->
+        <HexValue name="pe_timestamp">0x4A8623D2</HexValue>
+        <String name="md5">781a2e51be4056a7320108f8f0df8a13</String>
+        <!-- map_data = 0x01601D6C -->
+        <!-- door: 0x8e15dc -->
+        <VTable rebase="0x1FF0" />
+    </Entry>
+    <Entry version="v0.28.181.40d15" os="windows" id="40d15win" base="40d14win" rebase="0x18">
+        <!-- identification -->
+        <HexValue name="pe_timestamp">0x4A9A6090</HexValue>
+        <String name="md5">12cc4a3dbb6e6dfd7bc7aee458b9471a</String>
+        <!-- map_data = 0x01601D84 -->
+        <!-- door: 0x8e15d4 -->
+        <VTable rebase="-0x8" />
+    </Entry>
+    <Entry version="v0.28.181.40d16" os="windows" base="40d15win">
+        <!-- identification -->
+        <HexValue name="pe_timestamp">0x4A9B1A72</HexValue>
+        <String name="md5">59ab29021aca9f3c66b1ab102fb3ceea</String>
+        <!-- map_data = 0x01601D84 -->
+        <!-- door: 0x8e15d4, no VTable rebase needed -->
+    </Entry>
+
+                            .-"""-.
+                           '       \
+                          |,.  ,-.  |
+                          |()L( ()| |
+                          |,'  `".| |
+                          |.___.',| `
+                         .j `--"' `  `.
+                        / '        '   \
+                       / /          `   `.
+                      / /            `    .
+                     / /              l   |
+                    . ,   L I N U X   |   |
+                    ,"`.             .|   |
+                 _.'   ``.          | `..-'l
+                |       `.`,        |      `.
+                |         `.    __.j         )
+                |__        |--""___|      ,-'
+                   `"--...,+""""   `._,.-' 
+
+
+    <Entry version="v0.28.181.40d9" os="linux" id="40d9lin">
+        <!-- identification -->
+        <String name="md5">992afd73855e787860277f53d18afcbb</String>
+
+        <!-- map data -->
+        <Address name="map_data">0x09372FC0</Address>
+        <Address name="constructions">0x0931ED38</Address>
+        <!-- srsly, WTF? -->
+        <!--<Address name="buildings">0x09332B54</Address>-->
+        <Address name="buildings">0x09332B60</Address>
+        <!--<Address name="buildings">0x09332B90</Address>-->
+        <!--<Address name="buildings">0x09332C80</Address>-->
+        <!--<Address name="buildings">0x09332EF0</Address>-->
+        <Address name="vegetation">0x09335CB0</Address>
+        <!-- tree and shrub offsets -->
+        <Offset name="tree_desc_offset">0x40</Offset>
+
+        <!-- size of the map -->
+        <Address name="x_count">0x09372FD4</Address>
+        <Address name="y_count">0x09372FD8</Address>
+        <Address name="z_count">0x09372FDC</Address>
+
+        <!-- position of the map in world coords -->
+        <Address name="region_x">0x09372FEC</Address>
+        <Address name="region_y">0x09372FF0</Address>
+        <Address name="region_z">0x09372FF4</Address>
+
+        <!-- map block offsets -->
+        <Offset name="v_vein">0x08</Offset>
+        <HexValue name="v_vein_size">0x2C</HexValue>
+        <Offset name="type">0x0052</Offset>
+        <Offset name="designation">0x0254</Offset>
+        <Offset name="occupancy">0x0654</Offset>
+        <Offset name="biome_stuffs">0x1D54</Offset>
+
+        <!-- the world and its offsets -->
+        <Address name="world">0x093745EC</Address>
+        <Offset name="world_size_x">0x54</Offset>
+        <Offset name="world_size_y">0x56</Offset>
+        <Offset name="w_geoblocks">0x5A4</Offset>
+        <Offset name="w_regions_arr">0x5C8</Offset>
+
+        <!-- values for the region structure -->
+        <HexValue name="region_size">0x58</HexValue>
+        <Offset name="region_geo_index_off">0x54</Offset>
+
+        <!-- geoblock offset(s?) -->
+        <Offset name="geolayer_geoblock_offset">0x4</Offset>
+
+        <!-- matgloss vectors -->
+        <Address name="matgloss">0x9374E88</Address>
+        <HexValue name="matgloss_skip">0xC</HexValue>
+        <VTable>
+            <class vtable="0x087981a8" name="stockpile" />
+            <class vtable="0x08799e08" name="zone" />
+            <class vtable="0x08797448" name="construction_blueprint" />
+            <!-- BUILDINGS -->
+            <class vtable="0x0879a0e8" name="wagon"/>
+            <class vtable="0x08798a88" name="armor_stand"/>
+            <class vtable="0x08798908" name="bed"/>
+            <class vtable="0x08799088" name="seat"/>
+            <class vtable="0x08798028" name="burial_receptacle"/>
+            <class vtable="0x0879a868" name="door"/>
+            <class vtable="0x0879b168" name="floodgate"/>
+            <class vtable="0x0879a6e8" name="floor_hatch"/>
+            <class vtable="0x0879ae68" name="wall_grate"/>
+            <class vtable="0x0879afe8" name="floor_grate"/>
+            <class vtable="0x0879ace8" name="vertical_bars"/>
+            <class vtable="0x0879ab68" name="floor_bars"/>
+            <class vtable="0x0879a568" name="cabinet"/>
+            <class vtable="0x0879a3e8" name="container"/>
+            <multiclass vtable="0x08799688" name="workshop" typeoffset="0xAC">
+                <class name="alchemists_laboratory" type="0x0"/>
+                <class name="carpenters_workshop"   type="0x1"/>
+                <class name="farmers_workshop"      type="0x2"/>
+                <class name="masons_workshop"       type="0x3"/>
+                <class name="craftdwarfs_workshop"  type="0x4"/>
+                <class name="jewelers_workshop"     type="0x5"/>
+                <class name="metalsmiths_workshop"  type="0x6"/>
+                <class name="magma_forge"           type="0x7"/>
+                <class name="bowyers_workshop"      type="0x8"/>
+                <class name="mechanics_workshop"    type="0x9"/>
+                <class name="siege_workshop"        type="0xA"/>
+                <class name="butchers_shop"         type="0xB"/>
+                <class name="leather_works"         type="0xC"/>
+                <class name="tanners_shop"          type="0xD"/>
+                <class name="clothiers_shop"        type="0xE"/>
+                <class name="fishery"               type="0xF"/>
+                <class name="still"                 type="0x10"/>
+                <class name="loom"                  type="0x11"/>
+                <class name="quern"                 type="0x12"/>
+                <class name="kennels"               type="0x13"/>
+                <class name="kitchen"               type="0x14"/>
+                <class name="ashery"                type="0x15"/>
+                <class name="dyers_shop"            type="0x16"/>
+                <class name="millstone"             type="0x17"/>
+            </multiclass>
+            <class vtable="0x08799c88" name="farm_plot"/>
+            <class vtable="0x08798c08" name="weapon_rack"/>
+            <class vtable="0x08798488" name="statue"/>
+            <class vtable="0x08798d88" name="table"/>
+            <class vtable="0x08797ea8" name="paved_road"/>
+            <class vtable="0x0879a9e8" name="bridge"/>
+            <class vtable="0x08798608" name="well"/>
+            <multiclass vtable="0x8799808" name="siege engine" typeoffset="0xAC">
+                <class name="catapult"              type="0x0"/>
+                <class name="ballista"              type="0x1"/>
+            </multiclass>
+            <multiclass vtable="0x08799b08" name="furnace" typeoffset="0xBA">
+                <class name="wood_furnace"          type="0x0"/>
+                <class name="smelter"               type="0x1"/>
+                <class name="glass_furnace"         type="0x2"/>
+                <class name="kiln"                  type="0x3"/>
+                <class name="magma_smelter"         type="0x4"/>
+                <class name="magma_glass_furnace"   type="0x5"/>
+                <class name="magma_kiln"            type="0x6"/>
+            </multiclass>
+            <class vtable="0x0879bae8" name="glass_window"/>
+            <class vtable="0x0879b948" name="gem_window"/>
+            <class vtable="0x08799f68" name="trade_depot"/>
+            <multiclass vtable="0x08799988" name="mechanism" typeoffset="0xAC">
+                <class name="lever"                 type="0x0"/>
+                <class name="pressure_plate"        type="0x1"/>
+                <class name="cage_trap"             type="0x2"/>
+                <class name="stonefall_trap"        type="0x3"/>
+                <class name="weapon_trap"           type="0x4"/>
+            </multiclass>
+            <class vtable="0x08799208" name="spike" />
+            <class vtable="0x08798f08" name="animal_trap" />
+            <class vtable="0x08796cc8" name="screw_pump"/>
+            <class vtable="0x08796fc8" name="water_wheel"/>
+            <class vtable="0x08796e48" name="windmill"/>
+            <class vtable="0x087978a8" name="gear_assembly"/>
+            <class vtable="0x08797148" name="horizontal_axle"/>
+            <class vtable="0x087972c8" name="vertical_axle"/>
+            <class vtable="0x08799388" name="support"/>
+            <class vtable="0x08797a28" name="cage"/>
+            <class vtable="0x08799508" name="archery_target"/>
+            <class vtable="0x08797ba8" name="restraint"/>
+        </VTable>
+    </Entry>
+    <Entry version="v0.28.181.40d11" os="linux" base="40d9lin" rebase="-0x73820">
+        <!-- identification -->
+        <String name="md5">fb8ecac8a12af5d0d7b1707078985d0d</String>
+        <!--TODO: <Address name="notes">0x092ab244</Address>-->
+        <VTable rebase="-0x5e360" />
+    </Entry>
+    <!-- re-specified addresses here, offsets and hexvals remain same -->
+    <Entry version="v0.28.181.40d12" os="linux" base="40d9lin" id="40d12lin">
+        <!-- identification -->
+        <String name="md5">4367c59934cbcf14f43fd3af6444c455</String>
+
+        <!-- map data -->
+        <Address name="map_data">0x08F95BBC</Address>
+        <Address name="constructions">0x08F41918</Address>
+        <Address name="buildings">0x08F55740</Address>
+        <Address name="vegetation">0x08F58890</Address>
+
+        <!-- size of the map -->
+        <Address name="x_count">0x08F95BD0</Address>
+        <Address name="y_count">0x08F95BD4</Address>
+        <Address name="z_count">0x08F95BD8</Address>
+
+        <!-- position of the map in world coords -->
+        <Address name="region_x">0x08F95BE8</Address>
+        <Address name="region_y">0x08F95BEC</Address>
+        <Address name="region_z">0x08F95BF0</Address>
+
+        <!-- the world and its offsets -->
+        <Address name="world">0x08F971E8</Address>
+
+        <!-- matgloss vectors -->
+        <Address name="matgloss">0x08F97A84</Address>
+        <VTable rebase="-0xd6f00" />
+        <!--<class vtable="0x086C3968" name="door"/>-->
+    </Entry>
+    <Entry version="v0.28.181.40d13" os="linux" id="40d13lin" base="40d12lin" rebase="0x5020">
+        <!-- identification -->
+        <String name="md5">2f3cb9d720e9fe8844c02c72a2b20bbd</String>
+        <!-- map_data = 0x8F9ABDC -->
+        <VTable rebase="0x3A00" />
+        <!--<class vtable="0x086C7368" name="door"/>-->
+    </Entry>
+    <Entry version="v0.28.181.40d14" os="linux" id="40d14lin" base="40d13lin">
+        <!-- identification -->
+        <String name="md5">dab3ce6bc074529706a1e5fe1273108c</String>
+        <!-- map_data = 0x8F9ABDC -->
+        <VTable rebase="0x300" />
+        <!--<class vtable="0x086C7668" name="door"/>-->
+    </Entry>
+    <Entry version="v0.28.181.40d15" os="linux" id="40d15lin" base="40d14lin">
+        <!-- identification -->
+        <String name="md5">4f55a1dcc326786271f221de23c425b5</String>
+        <!-- map_data = 0x8F9ABDC -->
+        <VTable rebase="0x260" />
+        <!--<class vtable="0x086c78c8" name="door"/>-->
+    </Entry>
+    <Entry version="v0.28.181.40d16" os="linux" base="40d15lin">
+        <!-- identification -->
+        <String name="md5">022b933926e08da49c6df8649295f2b7</String>
+        <!-- map_data = 0x8F9ABDC -->
+        <!--<class vtable="0x086c78c8" name="door"/>-->
+    </Entry>
+</MemoryDescriptors>
+<!-- Windows logo by M$, spiderweb by jgs -->
+</DFExtractor>

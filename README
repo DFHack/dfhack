@@ -1,0 +1,47 @@
+Introduction
+------------
+DFHack is a Dwarf Fortress memory access library and a set of basic tools using this library.
+The library is a work in progress, so things might change as more tools are written for it.
+
+Getting DFHack
+----------------
+You can get the code or a release at DFHack's sourceforge site:
+  https://sourceforge.net/projects/dfhack/
+
+* subversion access: 
+  svn co https://dfhack.svn.sourceforge.net/svnroot/dfhack/trunk dfhack 
+
+Using the library
+-----------------
+The library should be compilable under Linux with GCC and under Windows with MinGW32
+compiler. It is using the cmake build system. See COMPILE for details.
+
+Main part of the API is in SimpleAPI.h
+You might also have to include a few other files:
+Types.h      - defines many of the used data structures
+TileTypes.h  - functions for translating map tile type values to useful properties
+               (wall, flooer, etc.)
+
+Memory offset definitions
+-------------------------
+
+The file with memory offset definitions used by dfhack can be found in the output folder. 
+TODO: write format explanation
+
+Tools
+-----
+All the DFHack tools are terminal programs. This might seem strange to Windows users,
+but they are meant mostly as examples for developers. Still, they can be useful and
+are cross-platform just like the library itself.
+
+* expbench   - just exports the map 1000 times over. Meant to test how fast the
+               DFHack<->DF interface is. This should take 3-12 seconds.
+               
+* reveal     - plain old reveal tool. Demonstrates writing map data back to DF.
+
+* prospector - scans the map for minerals. by default it only scans only visible veins.
+               You can make it show hidden things with '-a' and base rock and soil layers
+               with '-b'. These can be combined ('-ab')
+               
+* cleanmap   - cleans mud, vomit, snow and all kinds of bloody mess from the map. It will
+               clean your irrigated farms too, so consider yourself warned.

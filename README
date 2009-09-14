@@ -58,6 +58,8 @@ All the DFHack tools are terminal programs. This might seem strange to Windows u
 but they are meant mostly as examples for developers. Still, they can be useful and
 are cross-platform just like the library itself.
 
+!! On Windows, make sure your game is paused before using any of these !!
+
 * expbench   - just exports the map 1000 times over. Meant to test how fast the
                DFHack<->DF interface is. This can take 3-30+ seconds, depending on
                your system and the size of the map.

@@ -28,9 +28,6 @@ distribution.
 #include "DFMemInfo.h"
 
 /* TODO: Test these
-    ReadVegetation
-    ReadConstruction
-    ReadBuilding
     matgloss other than stone/soil
 */
 

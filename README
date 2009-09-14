@@ -3,30 +3,54 @@ Introduction
 DFHack is a Dwarf Fortress memory access library and a set of basic tools using this library.
 The library is a work in progress, so things might change as more tools are written for it.
 
+It is an attempt to unite the various ways tools access DF memory and allow for easier development
+of new tools.
+
 Getting DFHack
 ----------------
-You can get the code or a release at DFHack's sourceforge site:
+You can get the code at DFHack's sourceforge site:
   https://sourceforge.net/projects/dfhack/
 
 * subversion access: 
   svn co https://dfhack.svn.sourceforge.net/svnroot/dfhack/trunk dfhack 
 
+Compatibility
+-------------
+DFHack works on Windows XP, Vista, 7 or any modern Linux distribution.
+
+Windows 2000 is currently *not supported* due to missing OS functionality. If you know how
+to easily suspend processes, you can fix it :)
+
+OSX is also not supported due to lack of developers with a Mac.
+
+Currently supported Dwarf Fortress versions:
+* Windows
+  40d
+  40d9 - 40d16
+
+* Linux
+  40d9 - 40d16
+
 Using the library
 -----------------
-The library should be compilable under Linux with GCC and under Windows with MinGW32
-compiler. It is using the cmake build system. See COMPILE for details.
+The library is compilable under Linux with GCC and under Windows with MinGW32 compiler.
+It is using the cmake build system. See COMPILE for details.
 
-Main part of the API is in SimpleAPI.h
+DFHack is using the zlib/libpng license. This makes it easy to link to it, use it in-source
+or add your own extensions. Contributing back to the dfhack repository is welcome and the right
+thing to do :)
+
+At the time of writing there's no API reference or documentation. The code does have a lot
+of comments though.
+
+Main part of the API is in SimpleAPI.h and should be easy to grasp.
 You might also have to include a few other files:
-Types.h      - defines many of the used data structures
-TileTypes.h  - functions for translating map tile type values to useful properties
-               (wall, flooer, etc.)
-
-Memory offset definitions
--------------------------
-
-The file with memory offset definitions used by dfhack can be found in the output folder. 
-TODO: write format explanation
+    * DFTypes.h    
+      defines many of the used data structures
+    * DFTileTypes.h
+      functions for translating map tile type values to useful properties (wall, flooer, etc.)
+    * DFMemAccess.h, together with at least ProcessManager.h
+      manual access to memory reading and writing functions.
 
 Tools
 -----
@@ -35,13 +59,27 @@ but they are meant mostly as examples for developers. Still, they can be useful 
 are cross-platform just like the library itself.
 
 * expbench   - just exports the map 1000 times over. Meant to test how fast the
-               DFHack<->DF interface is. This should take 3-12 seconds.
-               
+               DFHack<->DF interface is. This can take 3-30+ seconds, depending on
+               your system and the size of the map.
+
 * reveal     - plain old reveal tool. Demonstrates writing map data back to DF.
 
 * prospector - scans the map for minerals. by default it only scans only visible veins.
                You can make it show hidden things with '-a' and base rock and soil layers
                with '-b'. These can be combined ('-ab')
-               
+
 * cleanmap   - cleans mud, vomit, snow and all kinds of bloody mess from the map. It will
                clean your irrigated farms too, so consider yourself warned.
+
+Memory offset definitions
+-------------------------
+The file with memory offset definitions used by dfhack can be found in the output folder. 
+It uses XML as the base format.
+
+It allows entry versioning and basing newer entries on older ones. These newer versions
+only have to specify the values that are different or a single 'rebase' value that is then
+used as an offset for all the addresses or object identifiers.
+
+This makes it possible to track the small d## releases pretty quickly.
+
+~ EOF ~

@@ -40,6 +40,10 @@ int main (int argc, const char* argv[])
             showbaselayers = true;
         }
     }
+    // let's be more useful when double-clicked on windows
+    #ifndef LINUX_BUILD
+    showhidden = true;
+    #endif
     uint32_t x_max,y_max,z_max;
     uint16_t tiletypes[16][16];
     t_designation designations[16][16];
@@ -164,5 +168,10 @@ int main (int argc, const char* argv[])
     {
         cout << stonetypes[p->first].id << " : " << p->second << endl;
     }
+    // wait for input on windows so the tool is still usable to some extent
+    #ifndef LINUX_BUILD
+    uint32_t junk = 0;
+    cin >> junk;
+    #endif
     return 0;
 }

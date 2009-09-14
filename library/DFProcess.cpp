@@ -122,15 +122,21 @@ void Process::freeResources()
 
 bool Process::attach()
 {
+    if(attached)
+    {
+        return false;
+    }
+    /*
     if(DebugActiveProcess(my_pid))
     {
+    */
         attached = true;
         g_pProcess = this;
         g_ProcessHandle = my_handle;
 
         return true;
-    }
-    return false;
+    /*}
+    return false;*/
 }
 
 
@@ -140,14 +146,15 @@ bool Process::detach()
     {
         return false;
     }
-    if(DebugActiveProcessStop(my_pid))
-    {
+    //TODO: find a safer way to suspend processes
+    /*if(DebugActiveProcessStop(my_pid))
+    {*/
         attached = false;
         g_pProcess = NULL;
         g_ProcessHandle = 0;
         return true;
-    }
-    return false;
+    /*}
+    return false;*/
 }
 
 

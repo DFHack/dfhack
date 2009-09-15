@@ -141,7 +141,7 @@ bool ProcessManager::findProcessess()
         }
 
         // FIXME: this fails when the wine process isn't started from the 'current working directory'. strip path data from cmdline
-        // DF in wine?
+        // is this windows version of Df running in wine?
         if(strstr(target_name, "wine-preloader")!= NULL)
         {
             // get working directory
@@ -232,50 +232,60 @@ bool ProcessManager::findProcessess()
     for ( int i = 0; i < numProccesses; i++ )
     {
         found = false;
+        
         // open process
         hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, ProcArray[i] );
         if (NULL == hProcess)
             continue;
-        // we've got some process, look at its first module
-        if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk))
+        
+        // try getting the first module of the process
+        if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk) == 0)
         {
-            // TODO: check module filename to verify that it's DF!
-            // got base ;)
-            uint32_t base = (uint32_t)hmod;
-            // read from this process
-            g_ProcessHandle = hProcess;
-            uint32_t pe_offset = MreadDWord(base+0x3C);
-            Mread(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
-            Mread(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
-            // see if there's a version entry that matches this process
-            vector<memory_info>::iterator it;
-            for ( it=meminfo.begin() ; it < meminfo.end(); it++ )
+            CloseHandle(hProcess);
+            continue;
+        }
+        
+        // got base ;)
+        uint32_t base = (uint32_t)hmod;
+        
+        // read from this process
+        g_ProcessHandle = hProcess;
+        uint32_t pe_offset = MreadDWord(base+0x3C);
+        Mread(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
+        Mread(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
+        
+        // see if there's a version entry that matches this process
+        vector<memory_info>::iterator it;
+        for ( it=meminfo.begin() ; it < meminfo.end(); it++ )
+        {
+            // filter by OS
+            if(memory_info::OS_WINDOWS != (*it).getOS())
+                continue;
+            
+            // filter by timestamp
+            uint32_t pe_timestamp = (*it).getHexValue("pe_timestamp");
+            if (pe_timestamp != pe_header.FileHeader.TimeDateStamp)
+                continue;
+            
+            // all went well
             {
-                // filter by OS
-                if(memory_info::OS_WINDOWS == (*it).getOS())
-                {
-                    uint32_t pe_timestamp = (*it).getHexValue("pe_timestamp");
-                    if (pe_timestamp == pe_header.FileHeader.TimeDateStamp)
-                    {
-                        printf("Match found! Using version %s.\n", (*it).getVersion().c_str());
-                        // give the process a data model and memory layout fixed for the base of first module
-                        memory_info *m = new memory_info(*it);
-                        m->RebaseAll(base);
-                        // keep track of created memory_info objects so we can destroy them later
-                        destroy_meminfo.push_back(m);
-                        // process is responsible for destroying its data model
-                        Process *ret= new Process(new DMWindows40d(),m,hProcess, ProcArray[i]);
-                        processes.push_back(ret);
-                        found = true;
-                        break; // break the iterator loop
-                    }
-                }
+                printf("Match found! Using version %s.\n", (*it).getVersion().c_str());
+                // give the process a data model and memory layout fixed for the base of first module
+                memory_info *m = new memory_info(*it);
+                m->RebaseAll(base);
+                // keep track of created memory_info objects so we can destroy them later
+                destroy_meminfo.push_back(m);
+                // process is responsible for destroying its data model
+                Process *ret= new Process(new DMWindows40d(),m,hProcess, ProcArray[i]);
+                processes.push_back(ret);
+                found = true;
+                break; // break the iterator loop
             }
-            // close handle of processes that aren't DF
-            if(!found)
-            {
-                CloseHandle(hProcess);
-            }
+        }
+        // close handle of processes that aren't DF
+        if(!found)
+        {
+            CloseHandle(hProcess);
         }
     }
 	if(processes.size())
@@ -289,32 +299,39 @@ void ProcessManager::ParseVTable(TiXmlElement* vtable, memory_info& mem)
 {
     TiXmlElement* pClassEntry;
     TiXmlElement* pClassSubEntry;
+    // check for rebase, do rebase if check positive
     const char * rebase = vtable->Attribute("rebase");
     if(rebase)
     {
         int32_t rebase_offset = strtol(rebase, NULL, 16);
         mem.RebaseVTable(rebase_offset);
     }
+    // parse vtable entries
     pClassEntry = vtable->FirstChildElement();
     for(;pClassEntry;pClassEntry=pClassEntry->NextSiblingElement())
     {
         string type = pClassEntry->Value();
         const char *cstr_name = pClassEntry->Attribute("name");
         const char *cstr_vtable = pClassEntry->Attribute("vtable");
+        // it's a simple class
         if(type== "class")
         {
             mem.setClass(cstr_name, cstr_vtable);
         }
+        // it's a multi-type class
         else if (type == "multiclass")
         {
+            // get offset of the type variable
             const char *cstr_typeoffset = pClassEntry->Attribute("typeoffset");
             int mclass = mem.setMultiClass(cstr_name, cstr_vtable, cstr_typeoffset);
+            // parse class sub-entries
             pClassSubEntry = pClassEntry->FirstChildElement();
             for(;pClassSubEntry;pClassSubEntry=pClassSubEntry->NextSiblingElement())
             {
                 type = pClassSubEntry->Value();
                 if(type== "class")
                 {
+                    // type is a value loaded from type offset
                     cstr_name = pClassSubEntry->Attribute("name");
                     const char *cstr_value = pClassSubEntry->Attribute("type");
                     mem.setMultiClassChild(mclass,cstr_name,cstr_value);
@@ -338,6 +355,7 @@ void ProcessManager::ParseEntry (TiXmlElement* entry, memory_info& mem, map <str
         string base = cstr_base;
         ParseEntry(knownEntries[base], mem, knownEntries);
     }
+    
     // mandatory attributes missing?
     if(!(cstr_version && cstr_os))
     {
@@ -374,6 +392,7 @@ void ProcessManager::ParseEntry (TiXmlElement* entry, memory_info& mem, map <str
         cerr << "unknown operating system " << os << endl;
         return;
     }
+    
     // process additional entries
     //cout << "Entry " << cstr_version << " " <<  cstr_os << endl;
     pMemEntry = entry->FirstChildElement()->ToElement();
@@ -427,9 +446,9 @@ bool ProcessManager::loadDescriptors(string path_to_xml)
 {
     TiXmlDocument doc( path_to_xml.c_str() );
     bool loadOkay = doc.LoadFile();
-	TiXmlHandle hDoc(&doc);
-	TiXmlElement* pElem;
-	TiXmlHandle hRoot(0);
+    TiXmlHandle hDoc(&doc);
+    TiXmlElement* pElem;
+    TiXmlHandle hRoot(0);
     memory_info mem;
 
     if ( loadOkay )

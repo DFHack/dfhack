@@ -242,6 +242,33 @@ void DFHackAPI::getSize(uint32_t& x, uint32_t& y, uint32_t& z)
     z = z_block_count;
 }
 
+bool DFHackAPI::ReadWoodMatgloss(vector<t_matgloss> & woods)
+{
+    int matgloss_address = offset_descriptor->getAddress("matgloss");
+    // TODO: find flag for autumnal coloring?
+    DfVector p_matgloss = dm->readVector(matgloss_address, 4);
+    
+    woods.clear();
+    
+    t_matgloss mat;
+    // TODO: use brown?
+    mat.fore = 7;
+    mat.back = 0;
+    mat.bright = 0;
+    for (uint32_t i = 0; i< p_matgloss.getSize();i++)
+    {
+        uint32_t temp;
+        
+        // read the matgloss pointer from the vector into temp
+        p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
+        
+        // read the string pointed at by
+        mat.id = dm->readSTLString(temp); // reads a C string given an address
+        woods.push_back(mat);
+    }
+    return true;
+}
+
 bool DFHackAPI::ReadStoneMatgloss(vector<t_matgloss> & stones)
 {
     int matgloss_address = offset_descriptor->getAddress("matgloss");
@@ -294,35 +321,6 @@ bool DFHackAPI::ReadMetalMatgloss(vector<t_matgloss> & metals)
     }
     return true;
 }
-
-
-bool DFHackAPI::ReadWoodMatgloss(vector<t_matgloss> & woods)
-{
-    int matgloss_address = offset_descriptor->getAddress("matgloss");
-    // TODO: find flag for autumnal coloring?
-    DfVector p_matgloss = dm->readVector(matgloss_address, 4);
-
-    woods.clear();
-
-    t_matgloss mat;
-    // TODO: use brown?
-    mat.fore = 7;
-    mat.back = 0;
-    mat.bright = 0;
-    for (uint32_t i = 0; i< p_matgloss.getSize();i++)
-    {
-        uint32_t temp;
-
-        // read the matgloss pointer from the vector into temp
-        p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
-
-        // read the string pointed at by
-        mat.id = dm->readSTLString(temp); // reads a C string given an address
-        woods.push_back(mat);
-    }
-    return true;
-}
-
 
 bool DFHackAPI::ReadPlantMatgloss(vector<t_matgloss> & plants)
 {

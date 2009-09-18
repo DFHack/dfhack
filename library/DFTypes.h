@@ -129,14 +129,66 @@ struct t_tree_desc
     uint16_t z;
 };
 
+/*
+case 10:
+    ret += "leather";
+    break;
+case 11:
+    ret += "silk cloth";
+    break;
+case 12:
+    ret += "plant thread cloth";
+    break;
+case 13: // green glass
+    ret += "green glass";
+    break;
+case 14: // clear glass
+    ret += "clear glass";
+    break;
+case 15: // crystal glass
+    ret += "crystal glass";
+    break;
+case 17:
+    ret += "ice";
+    break;
+case 18:
+    ret += "charcoal";
+    break;
+case 19:
+    ret += "potash";
+    break;
+case 20:
+    ret += "ashes";
+    break;
+case 21:
+    ret += "pearlash";
+    break;
+case 24:
+    ret += "soap";
+    break;
+
+*/
+
 // FIXME: in order in which the raw vectors appear in df memory, move to XML
-enum RawType
+enum MatglossType
 {
     Mat_Wood,
     Mat_Stone,
     Mat_Plant,
     Mat_Metal,
-    NUM_MATGLOSS_TYPES
+    Mat_Leather = 10,
+    Mat_SilkCloth = 11,
+    Mat_PlantCloth = 12,
+    Mat_GreenGlass = 13,
+    Mat_ClearGlass = 14,
+    Mat_CrystalGlass = 15,
+    Mat_Ice = 17,
+    Mat_Charcoal =18,
+    Mat_Potash = 20,
+    Mat_Ashes = 20,
+    Mat_PearlAsh = 21,
+    Mat_Soap = 24,
+    //NUM_MATGLOSS_TYPES
 };
 
 enum BiomeOffset

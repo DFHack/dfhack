@@ -304,22 +304,22 @@ bool isFloorTerrain(int in)
         case 402: //stone boulder
         case 403: //lavastone boulder
         case 404: //featstone boulder
-            
+
         case 405: //stone pebbles 1
         case 406: //stone pebbles 2
         case 407: //stone pebbles 3
         case 408: //stone pebbles 4
-            
+
         case 409: //lavastone pebbles 1
         case 410: //lavastone pebbles 2
         case 411: //lavastone pebbles 3
         case 412: //lavastone pebbles 4
-            
+
         case 413: //featstone pebbles 1
         case 414: //featstone pebbles 2
         case 415: //featstone pebbles 3
         case 416: //featstone pebbles 4
-            
+
         case 441: //minstone floor 1 (cavern raw)
         case 442: //minstone floor 2 (cavern raw)
         case 443: //minstone floor 3 (cavern raw)
@@ -369,37 +369,37 @@ bool isStairTerrain(int in)
         case 25: //up-down stair frozen liquid
         case 26: //down stair frozen liquid
         case 27: //up stair frozen liquid
-            
-            
+
+
         case 36: //up-down stair lavastone
         case 37: //down stair lavastone
         case 38: //up stair lavastone
-            
+
         case 39: //up-down stair soil
         case 40: //down stair soil
         case 41: //up stair soil
-            
+
         case 49: //up-down stair grass1 [muddy?]
         case 50: //down stair grass1 [muddy?]
         case 51: //up stair grass1 [muddy?]
-            
-            
+
+
         case 52: //up-down stair grass2
         case 53: //down stair grass2
         case 54: //up stair grass2
-            
+
         case 55: //up-down stair stone
         case 56: //down stair stone
         case 57: //up stair stone
-            
+
         case 58: //up-down stair minstone
         case 59: //down stair minstone
         case 60: //up stair minstone
-            
+
         case 61: //up-down stair featstone
         case 62: //down stair featstone
         case 63: //up stair featstone
-            
+
         case 515: //stair up-down constructed
         case 516: //stair down constructed
         case 517: //stair up constructed
@@ -409,7 +409,17 @@ bool isStairTerrain(int in)
 
     return false;
 }
-
+bool isOpenTerrain(int in)
+{
+    switch (in)
+    {
+        case 1: // slope down
+        case 32: //open space
+            return true;
+    }
+    return false;
+}
+/*
 bool isOpenTerrain(int in)
 {
     switch (in)
@@ -431,13 +441,13 @@ bool isOpenTerrain(int in)
         case 40: //down stair soil
         case 41: //up stair soil
         case 42: //eerie pit
-            
+
         case 43: //stone floor detailed
         case 44: //lavastone floor detailed
         case 45: //featstone? floor detailed
         case 46: //minstone? floor detailed [calcite]
         case 47: //frozen liquid floor detailed
-            
+
         case 49: //up-down stair grass1 [muddy?]
         case 50: //down stair grass1 [muddy?]
         case 51: //up stair grass1 [muddy?]
@@ -461,7 +471,7 @@ bool isOpenTerrain(int in)
         case 81: //featstone pillar
         case 82: //minstone pillar
         case 83: //frozen liquid pillar
-        */
+        *//*
         case 231: //sapling
         case 233: //ramp grass dry
         case 234: //ramp grass dead
@@ -554,8 +564,8 @@ bool isOpenTerrain(int in)
     }
 
     return false;
-}
-
+}*/
+/*
 int picktexture(int in)
 {
     switch ( in )
@@ -1036,7 +1046,7 @@ int picktexture(int in)
     }
 
     return 6;
-}
+}*/
 int getVegetationType(int in)
 {
     switch(in)

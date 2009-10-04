@@ -21,9 +21,12 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
+
+#define BUILD_DFHACK_LIB
+
 #include "DFTileTypes.h"
 
-bool isWallTerrain(int in)
+DFHACKAPI bool isWallTerrain(int in)
 {
     switch (in)
     {
@@ -181,7 +184,7 @@ bool isWallTerrain(int in)
     return false;
 }
 
-bool isFloorTerrain(int in)
+DFHACKAPI bool isFloorTerrain(int in)
 {
     switch (in)
     {
@@ -340,7 +343,7 @@ bool isFloorTerrain(int in)
     return false;
 }
 
-bool isRampTerrain(int in)
+DFHACKAPI bool isRampTerrain(int in)
 {
     switch (in)
     {
@@ -362,7 +365,7 @@ bool isRampTerrain(int in)
     return false;
 }
 
-bool isStairTerrain(int in)
+DFHACKAPI bool isStairTerrain(int in)
 {
     switch (in)
     {
@@ -409,7 +412,7 @@ bool isStairTerrain(int in)
 
     return false;
 }
-bool isOpenTerrain(int in)
+DFHACKAPI bool isOpenTerrain(int in)
 {
     switch (in)
     {
@@ -1047,7 +1050,7 @@ int picktexture(int in)
 
     return 6;
 }*/
-int getVegetationType(int in)
+DFHACKAPI int getVegetationType(int in)
 {
     switch(in)
     {
@@ -1064,4 +1067,6 @@ int getVegetationType(int in)
         case 34: //shrub
             return SHRUB_OK;
     }
+	// ????
+	return -1;
 }

@@ -22,6 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#define BUILD_DFHACK_LIB
+
 #include "DFCommon.h"
 #ifdef LINUX_BUILD
 #include <sys/wait.h>

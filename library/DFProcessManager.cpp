@@ -22,6 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#define BUILD_DFHACK_LIB
+
 #include "DFCommon.h"
 
 #include "DFDataModel.h"
@@ -229,7 +231,7 @@ bool ProcessManager::findProcessess()
     numProccesses = memoryNeeded / sizeof(DWORD);
 
     // iterate through processes
-    for ( int i = 0; i < numProccesses; i++ )
+    for ( int i = 0; i < (int)numProccesses; i++ )
     {
         found = false;
         

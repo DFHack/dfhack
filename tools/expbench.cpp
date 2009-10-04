@@ -17,7 +17,8 @@ int main (void)
     t_designation designations[16][16];
     t_occupancy occupancies[16][16];
     
-    DFHackAPI DF("Memory.xml");
+    DFHackAPI *pDF = CreateDFHackAPI("Memory.xml");
+	DFHackAPI &DF = *pDF;
     if(!DF.Attach())
     {
         cerr << "DF not found" << endl;
@@ -46,5 +47,6 @@ int main (void)
     }
     cout << num_blocks << " blocks read" << endl;
     cout << bytes_read / (1024 * 1024) << " MB" << endl;
+	delete pDF;
     return 0;
 }

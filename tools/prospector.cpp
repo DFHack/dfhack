@@ -10,6 +10,7 @@
 #include <iostream>
 #include <stdint.h>
 #include <string.h> // for memset
+#include <string>
 #include <vector>
 #include <map>
 using namespace std;
@@ -54,7 +55,8 @@ int main (int argc, const char* argv[])
     vector< vector <uint16_t> > layerassign;
     
     // init the API
-    DFHackAPI DF("Memory.xml");
+    DFHackAPI *pDF = CreateDFHackAPI("Memory.xml");
+	DFHackAPI &DF = *pDF;
     
     // attach
     if(!DF.Attach())
@@ -119,7 +121,7 @@ int main (int argc, const char* argv[])
                 }
                 
                 // for each vein
-                for(int i = 0; i < veins.size();i++)
+                for(int i = 0; i < (int)veins.size();i++)
                 {
                     //iterate through vein rows
                     for(uint32_t j = 0;j<16;j++)
@@ -128,7 +130,7 @@ int main (int argc, const char* argv[])
                         for (uint32_t k = 0; k< 16;k++)
                         {
                             // and the bit array with a one-bit mask, check if the bit is set
-                            bool set = ((1 << k) & veins[i].assignment[j]) >> k;
+                            bool set = !!(((1 << k) & veins[i].assignment[j]) >> k);
                             if(set)
                             {
                                 // store matgloss
@@ -170,8 +172,8 @@ int main (int argc, const char* argv[])
     }
     // wait for input on windows so the tool is still usable to some extent
     #ifndef LINUX_BUILD
-    uint32_t junk = 0;
-    cin >> junk;
+    cin.ignore();
     #endif
+	delete pDF;
     return 0;
 }

@@ -22,6 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#define BUILD_DFHACK_LIB
+
 #include "DFCommon.h"
 #include "DFMemInfo.h"
 #include <stdlib.h>

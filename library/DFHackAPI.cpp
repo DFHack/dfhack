@@ -22,6 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#define BUILD_DFHACK_LIB
+
 #include "DFCommon.h"
 #include "DFVector.h"
 #include "DFHackAPI.h"
@@ -31,10 +33,18 @@ distribution.
     matgloss other than stone/soil
 */
 
+DFHACKAPI DFHackAPI *CreateDFHackAPI0(const char *path_to_xml)
+{
+	return new DFHackAPIImpl(path_to_xml);
+}
+
 // TODO: templating for vectors, simple copy constructor for stl vectors
 // TODO: encapsulate access to multidimensional arrays.
 
-DFHackAPI::DFHackAPI(const string path_to_xml)
+DFHackAPIImpl::DFHackAPIImpl(const string path_to_xml)
+: block(NULL)
+, pm(NULL), p(NULL), dm(NULL), offset_descriptor(NULL)
+, p_cons(NULL), p_bld(NULL), p_veg(NULL)
 {
     xml = path_to_xml;
     constructionsInited = false;
@@ -47,7 +57,7 @@ DFHackAPI::DFHackAPI(const string path_to_xml)
 /*-----------------------------------*
  *  Init the mapblock pointer array   *
  *-----------------------------------*/
-bool DFHackAPI::InitMap()
+bool DFHackAPIImpl::InitMap()
 {
     uint32_t    map_loc,   // location of the X array
                 temp_loc,  // block location
@@ -104,13 +114,24 @@ bool DFHackAPI::InitMap()
     return true;
 }
 
-bool DFHackAPI::isValidBlock(uint32_t x, uint32_t y, uint32_t z)
+bool DFHackAPIImpl::DestroyMap()
+{
+	if (block != NULL)
+	{
+		delete [] block;
+		block = NULL;
+	}
+
+	return true;
+}
+
+bool DFHackAPIImpl::isValidBlock(uint32_t x, uint32_t y, uint32_t z)
 {
     return block[x*y_block_count*z_block_count + y*z_block_count + z] != NULL;
 }
 
 // 256 * sizeof(uint16_t)
-bool DFHackAPI::ReadTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
+bool DFHackAPIImpl::ReadTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
 {
     uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
     if (addr!=NULL)
@@ -123,7 +144,7 @@ bool DFHackAPI::ReadTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buff
 
 
 // 256 * sizeof(uint32_t)
-bool DFHackAPI::ReadDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
+bool DFHackAPIImpl::ReadDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 {
     uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
     if (addr!=NULL)
@@ -136,7 +157,7 @@ bool DFHackAPI::ReadDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *b
 
 
 // 256 * sizeof(uint32_t)
-bool DFHackAPI::ReadOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
+bool DFHackAPIImpl::ReadOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 {
     uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
     if (addr!=NULL)
@@ -149,7 +170,7 @@ bool DFHackAPI::ReadOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buff
 
 
 // 256 * sizeof(uint16_t)
-bool DFHackAPI::WriteTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
+bool DFHackAPIImpl::WriteTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
 {
     uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
     if (addr!=NULL)
@@ -162,7 +183,7 @@ bool DFHackAPI::WriteTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buf
 
 
 // 256 * sizeof(uint32_t)
-bool DFHackAPI::WriteDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
+bool DFHackAPIImpl::WriteDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 {
     uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
     if (addr!=NULL)
@@ -175,7 +196,7 @@ bool DFHackAPI::WriteDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *
 
 
 // 256 * sizeof(uint32_t)
-bool DFHackAPI::WriteOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
+bool DFHackAPIImpl::WriteOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 {
     uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
     if (addr!=NULL)
@@ -189,7 +210,7 @@ bool DFHackAPI::WriteOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buf
 
 //16 of them? IDK... there's probably just 7. Reading more doesn't cause errors as it's an array nested inside a block
 // 16 * sizeof(uint8_t)
-bool DFHackAPI::ReadRegionOffsets(uint32_t x, uint32_t y, uint32_t z, uint8_t *buffer)
+bool DFHackAPIImpl::ReadRegionOffsets(uint32_t x, uint32_t y, uint32_t z, uint8_t *buffer)
 {
     uint32_t biome_stuffs = offset_descriptor->getOffset("biome_stuffs");
     uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
@@ -203,7 +224,7 @@ bool DFHackAPI::ReadRegionOffsets(uint32_t x, uint32_t y, uint32_t z, uint8_t *b
 
 
 // veins of a block, expects empty vein vector
-bool DFHackAPI::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins)
+bool DFHackAPIImpl::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins)
 {
     uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
     int veinvector = offset_descriptor->getOffset("v_vein");
@@ -235,14 +256,14 @@ bool DFHackAPI::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & 
 
 
 // getter for map size
-void DFHackAPI::getSize(uint32_t& x, uint32_t& y, uint32_t& z)
+void DFHackAPIImpl::getSize(uint32_t& x, uint32_t& y, uint32_t& z)
 {
     x = x_block_count;
     y = y_block_count;
     z = z_block_count;
 }
 
-bool DFHackAPI::ReadWoodMatgloss(vector<t_matgloss> & woods)
+bool DFHackAPIImpl::ReadWoodMatgloss(vector<t_matgloss> & woods)
 {
     int matgloss_address = offset_descriptor->getAddress("matgloss");
     // TODO: find flag for autumnal coloring?
@@ -269,7 +290,7 @@ bool DFHackAPI::ReadWoodMatgloss(vector<t_matgloss> & woods)
     return true;
 }
 
-bool DFHackAPI::ReadStoneMatgloss(vector<t_matgloss> & stones)
+bool DFHackAPIImpl::ReadStoneMatgloss(vector<t_matgloss> & stones)
 {
     int matgloss_address = offset_descriptor->getAddress("matgloss");
     int matgloss_offset = offset_descriptor->getHexValue("matgloss_skip");
@@ -286,16 +307,16 @@ bool DFHackAPI::ReadStoneMatgloss(vector<t_matgloss> & stones)
         // read the string pointed at by
         t_matgloss mat;
         mat.id = dm->readSTLString(temp); // reads a C string given an address
-        mat.fore = MreadWord(temp + matgloss_colors);
-        mat.back = MreadWord(temp + matgloss_colors + 2);
-        mat.bright = MreadWord(temp + matgloss_colors + 4);
+        mat.fore = (uint8_t)MreadWord(temp + matgloss_colors);
+        mat.back = (uint8_t)MreadWord(temp + matgloss_colors + 2);
+        mat.bright = (uint8_t)MreadWord(temp + matgloss_colors + 4);
         stones.push_back(mat);
     }
     return true;
 }
 
 
-bool DFHackAPI::ReadMetalMatgloss(vector<t_matgloss> & metals)
+bool DFHackAPIImpl::ReadMetalMatgloss(vector<t_matgloss> & metals)
 {
     int matgloss_address = offset_descriptor->getAddress("matgloss");
     int matgloss_offset = offset_descriptor->getHexValue("matgloss_skip");
@@ -314,15 +335,15 @@ bool DFHackAPI::ReadMetalMatgloss(vector<t_matgloss> & metals)
         // read the string pointed at by
         t_matgloss mat;
         mat.id = dm->readSTLString(temp); // reads a C string given an address
-        mat.fore = MreadWord(temp + matgloss_colors);
-        mat.back = MreadWord(temp + matgloss_colors + 2);
-        mat.bright = MreadWord(temp + matgloss_colors + 4);
+        mat.fore = (uint8_t)MreadWord(temp + matgloss_colors);
+        mat.back = (uint8_t)MreadWord(temp + matgloss_colors + 2);
+        mat.bright = (uint8_t)MreadWord(temp + matgloss_colors + 4);
         metals.push_back(mat);
     }
     return true;
 }
 
-bool DFHackAPI::ReadPlantMatgloss(vector<t_matgloss> & plants)
+bool DFHackAPIImpl::ReadPlantMatgloss(vector<t_matgloss> & plants)
 {
     int matgloss_address = offset_descriptor->getAddress("matgloss");
     int matgloss_offset = offset_descriptor->getHexValue("matgloss_skip");
@@ -350,7 +371,7 @@ bool DFHackAPI::ReadPlantMatgloss(vector<t_matgloss> & plants)
 }
 
 //vector<uint16_t> v_geology[eBiomeCount];
-bool DFHackAPI::ReadGeology( vector < vector <uint16_t> >& assign )
+bool DFHackAPIImpl::ReadGeology( vector < vector <uint16_t> >& assign )
 {
     // get needed addresses and offsets
     int region_x_offset = offset_descriptor->getAddress("region_x");
@@ -445,7 +466,7 @@ bool DFHackAPI::ReadGeology( vector < vector <uint16_t> >& assign )
 
 
 // returns number of buildings, expects v_buildingtypes that will later map t_building.type to its name
-uint32_t DFHackAPI::InitReadBuildings(vector <string> &v_buildingtypes)
+uint32_t DFHackAPIImpl::InitReadBuildings(vector <string> &v_buildingtypes)
 {
     buildingsInited = true;
     int buildings = offset_descriptor->getAddress("buildings");
@@ -457,7 +478,7 @@ uint32_t DFHackAPI::InitReadBuildings(vector <string> &v_buildingtypes)
 
 
 // read one building
-bool DFHackAPI::ReadBuilding(const uint32_t &index, t_building & building)
+bool DFHackAPIImpl::ReadBuilding(const uint32_t &index, t_building & building)
 {
     assert(buildingsInited);
     uint32_t temp;
@@ -480,10 +501,12 @@ bool DFHackAPI::ReadBuilding(const uint32_t &index, t_building & building)
     building.z = bld_40d.z;
     building.material = bld_40d.material;
     building.type = type;
+
+	return true;
 }
 
 
-void DFHackAPI::FinishReadBuildings()
+void DFHackAPIImpl::FinishReadBuildings()
 {
     buildingsInited = false;
 }
@@ -491,7 +514,7 @@ void DFHackAPI::FinishReadBuildings()
 
 //TODO: maybe do construction reading differently - this could go slow with many of them.
 // returns number of constructions, prepares a vector, returns total number of constructions
-uint32_t DFHackAPI::InitReadConstructions()
+uint32_t DFHackAPIImpl::InitReadConstructions()
 {
     constructionsInited = true;
     int constructions = offset_descriptor->getAddress("constructions");
@@ -502,7 +525,7 @@ uint32_t DFHackAPI::InitReadConstructions()
 }
 
 
-bool DFHackAPI::ReadConstruction(const uint32_t &index, t_construction & construction)
+bool DFHackAPIImpl::ReadConstruction(const uint32_t &index, t_construction & construction)
 {
     assert(constructionsInited);
     t_construction_df40d c_40d;
@@ -519,16 +542,18 @@ bool DFHackAPI::ReadConstruction(const uint32_t &index, t_construction & constru
     construction.y = c_40d.y;
     construction.z = c_40d.z;
     construction.material = c_40d.material;
+
+	return true;
 }
 
 
-void DFHackAPI::FinishReadConstructions()
+void DFHackAPIImpl::FinishReadConstructions()
 {
     constructionsInited = false;
 }
 
 
-uint32_t DFHackAPI::InitReadVegetation()
+uint32_t DFHackAPIImpl::InitReadVegetation()
 {
     vegetationInited = true;
     int vegetation = offset_descriptor->getAddress("vegetation");
@@ -539,7 +564,7 @@ uint32_t DFHackAPI::InitReadVegetation()
 }
 
 
-bool DFHackAPI::ReadVegetation(const uint32_t &index, t_tree_desc & shrubbery)
+bool DFHackAPIImpl::ReadVegetation(const uint32_t &index, t_tree_desc & shrubbery)
 {
     assert(vegetationInited);
     uint32_t temp;
@@ -549,16 +574,17 @@ bool DFHackAPI::ReadVegetation(const uint32_t &index, t_tree_desc & shrubbery)
     Mread(temp + treeoffset, sizeof(t_tree_desc), (uint8_t *) &shrubbery);
     // FIXME: this is completely wrong. type isn't just tree/shrub but also different kinds of trees. stuff that grows around ponds has its own type ID
     if(shrubbery.material.type == 3) shrubbery.material.type = 2;
+	return true;
 }
 
 
-void DFHackAPI::FinishReadVegetation()
+void DFHackAPIImpl::FinishReadVegetation()
 {
     vegetationInited = false;
 }
 
 
-bool DFHackAPI::Attach()
+bool DFHackAPIImpl::Attach()
 {
     // detach all processes, destroy manager
     if(pm != NULL)
@@ -578,7 +604,7 @@ bool DFHackAPI::Attach()
 
 
 // TODO: clean inited stuff here
-bool DFHackAPI::Detach()
+bool DFHackAPIImpl::Detach()
 {
     p->detach();
     if(pm != NULL)
@@ -588,4 +614,9 @@ bool DFHackAPI::Detach()
     offset_descriptor = NULL;
     dm = NULL;
     return true;
+}
+
+bool DFHackAPIImpl::isAttached()
+{
+	return dm != NULL;
 }

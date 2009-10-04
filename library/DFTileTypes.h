@@ -24,6 +24,23 @@ distribution.
 
 #ifndef TILETYPES_H_INCLUDED
 #define TILETYPES_H_INCLUDED
+
+#ifdef LINUX_BUILD
+#	ifndef DFHACKAPI
+#		define DFHACKAPI
+#	endif
+#else
+#	ifdef BUILD_DFHACK_LIB
+#		ifndef DFHACKAPI
+#			define DFHACKAPI extern "C" __declspec(dllexport)
+#		endif
+#	else
+#		ifndef DFHACKAPI
+#			define DFHACKAPI extern "C" __declspec(dllimport)
+#		endif
+#	endif
+#endif
+
 enum VegetationType{
     TREE_DEAD,
     TREE_OK,
@@ -33,12 +50,12 @@ enum VegetationType{
     SHRUB_OK
 };
 
-bool isWallTerrain(int in);
-bool isFloorTerrain(int in);
-bool isRampTerrain(int in);
-bool isStairTerrain(int in);
-bool isOpenTerrain(int in);
-int getVegetationType(int in);
-int picktexture(int in);
+DFHACKAPI bool isWallTerrain(int in);
+DFHACKAPI bool isFloorTerrain(int in);
+DFHACKAPI bool isRampTerrain(int in);
+DFHACKAPI bool isStairTerrain(int in);
+DFHACKAPI bool isOpenTerrain(int in);
+DFHACKAPI int getVegetationType(int in);
+DFHACKAPI int picktexture(int in);
 
 #endif // TILETYPES_H_INCLUDED

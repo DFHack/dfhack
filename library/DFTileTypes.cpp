@@ -21,8 +21,9 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
-
-#define BUILD_DFHACK_LIB
+#ifndef BUILD_DFHACK_LIB
+#   define BUILD_DFHACK_LIB
+#endif
 
 #include "DFTileTypes.h"
 

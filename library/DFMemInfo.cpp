@@ -22,7 +22,9 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#define BUILD_DFHACK_LIB
+#ifndef BUILD_DFHACK_LIB
+#   define BUILD_DFHACK_LIB
+#endif
 
 #include "DFCommon.h"
 #include "DFMemInfo.h"

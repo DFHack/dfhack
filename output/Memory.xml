@@ -128,6 +128,7 @@
             <class vtable="0x0097beac" name="floor_bars"/>
             <class vtable="0x0097b0ec" name="cabinet"/>
             <class vtable="0x0097af8c" name="container"/>
+	    <class vtable="0x0097d60c" name="shop"/>
             <multiclass vtable="0x0097e10c" name="workshop" typeoffset="0xC8">
                 <class name="alchemists_laboratory" type="0x0"/>
                 <class name="carpenters_workshop"   type="0x1"/>
@@ -416,6 +417,7 @@
             <class vtable="0x0879ab68" name="floor_bars"/>
             <class vtable="0x0879a568" name="cabinet"/>
             <class vtable="0x0879a3e8" name="container"/>
+	    <class vtable="0x0879a268" name="shop"/>
             <multiclass vtable="0x08799688" name="workshop" typeoffset="0xAC">
                 <class name="alchemists_laboratory" type="0x0"/>
                 <class name="carpenters_workshop"   type="0x1"/>

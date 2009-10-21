@@ -16,7 +16,7 @@ int main (void)
     t_designation designations[256];
     
     DFHackAPI *pDF = CreateDFHackAPI("Memory.xml");
-	DFHackAPI &DF = *pDF;
+    DFHackAPI &DF = *pDF;
     if(!DF.Attach())
     {
         cerr << "DF not found" << endl;
@@ -47,6 +47,6 @@ int main (void)
             }
         }
     }
-	delete pDF;
+    delete pDF;
     return 0;
 }

@@ -56,7 +56,7 @@ int main (int argc, const char* argv[])
     
     // init the API
     DFHackAPI *pDF = CreateDFHackAPI("Memory.xml");
-	DFHackAPI &DF = *pDF;
+    DFHackAPI &DF = *pDF;
     
     // attach
     if(!DF.Attach())
@@ -174,6 +174,6 @@ int main (int argc, const char* argv[])
     #ifndef LINUX_BUILD
     cin.ignore();
     #endif
-	delete pDF;
+    delete pDF;
     return 0;
 }

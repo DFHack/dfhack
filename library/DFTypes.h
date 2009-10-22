@@ -27,7 +27,7 @@ distribution.
 
 struct t_matgloss
 {
-       string id;
+       char id[128];
        uint8_t fore; // Annoyingly the offset for this differs between types
        uint8_t back;
        uint8_t bright;

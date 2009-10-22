@@ -31,6 +31,12 @@ distribution.
 #include "DFHackAPI.h"
 #include "DFMemInfo.h"
 
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+#	define fill_char_buf(buf, str) strcpy_s((buf), sizeof(buf) / sizeof((buf)[0]), (str).c_str())
+#else
+#	define fill_char_buf(buf, str) strncpy((buf), (str).c_str(), sizeof(buf) / sizeof((buf)[0]))
+#endif
+
 /* TODO: Test these
     matgloss other than stone/soil
 */
@@ -286,7 +292,7 @@ bool DFHackAPIImpl::ReadWoodMatgloss(vector<t_matgloss> & woods)
         p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
         
         // read the string pointed at by
-        mat.id = dm->readSTLString(temp); // reads a C string given an address
+        fill_char_buf(mat.id, dm->readSTLString(temp)); // reads a C string given an address
         woods.push_back(mat);
     }
     return true;
@@ -308,7 +314,7 @@ bool DFHackAPIImpl::ReadStoneMatgloss(vector<t_matgloss> & stones)
         p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
         // read the string pointed at by
         t_matgloss mat;
-        mat.id = dm->readSTLString(temp); // reads a C string given an address
+        fill_char_buf(mat.id, dm->readSTLString(temp)); // reads a C string given an address
         mat.fore = (uint8_t)MreadWord(temp + matgloss_colors);
         mat.back = (uint8_t)MreadWord(temp + matgloss_colors + 2);
         mat.bright = (uint8_t)MreadWord(temp + matgloss_colors + 4);
@@ -336,7 +342,7 @@ bool DFHackAPIImpl::ReadMetalMatgloss(vector<t_matgloss> & metals)
 
         // read the string pointed at by
         t_matgloss mat;
-        mat.id = dm->readSTLString(temp); // reads a C string given an address
+        fill_char_buf(mat.id, dm->readSTLString(temp)); // reads a C string given an address
         mat.fore = (uint8_t)MreadWord(temp + matgloss_colors);
         mat.back = (uint8_t)MreadWord(temp + matgloss_colors + 2);
         mat.bright = (uint8_t)MreadWord(temp + matgloss_colors + 4);
@@ -366,7 +372,7 @@ bool DFHackAPIImpl::ReadPlantMatgloss(vector<t_matgloss> & plants)
         p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
 
         // read the string pointed at by
-        mat.id = dm->readSTLString(temp); // reads a C string given an address
+        fill_char_buf(mat.id, dm->readSTLString(temp)); // reads a C string given an address
         plants.push_back(mat);
     }
     return true;

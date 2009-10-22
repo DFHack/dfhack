@@ -6,6 +6,7 @@ DFMemInfo.cpp
 DFProcess.cpp
 DFProcessManager.cpp
 DFHackAPI.cpp
+DFHackAPIc.cpp
 DFTileTypes.cpp
 md5/md5.cpp
 md5/md5wrapper.cpp

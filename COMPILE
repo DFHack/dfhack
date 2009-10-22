@@ -32,6 +32,16 @@ You'll have to add C:\MinGW\ to your PATH variable.
  cmake .. -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE:string=Release
  mingw32-make
 
+* Using MSVC
+
+open up cmd and navigate to the dfhack\build folder, run cmake:
+cd build
+cmake ..
+
+This will generate MSVC solution and project files. Note that: you are working in the /build folder.
+Files added to projects will end up there! (and that's wrong). Any changes to the build system should
+be done by changing cmake configs and running cmake on them!
+
 * Using some other compiler:
 
 I'm afraid you are on your own. dfhack wasn't tested with any other compiler.

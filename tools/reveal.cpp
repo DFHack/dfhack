@@ -1,7 +1,7 @@
 // This is a reveal program. It reveals the map.
 
 #include <iostream>
-#include <stdint.h>
+#include <integers.h>
 #include <vector>
 using namespace std;
 

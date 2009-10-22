@@ -8,7 +8,7 @@
 // TODO: GUI
 
 #include <iostream>
-#include <stdint.h>
+#include <integers.h>
 #include <string.h> // for memset
 #include <string>
 #include <vector>

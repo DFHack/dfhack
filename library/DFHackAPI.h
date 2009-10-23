@@ -186,6 +186,8 @@ private:
     
     uint32_t creature_pos_offset;
     uint32_t creature_type_offset;
+    uint32_t creature_flags1_offset;
+    uint32_t creature_flags2_offset;
     
     ProcessManager* pm;
     Process* p;

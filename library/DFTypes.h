@@ -135,6 +135,8 @@ struct t_creature
     uint16_t y;
     uint16_t z;
     uint32_t type;
+    uint32_t flags1;
+    uint32_t flags2;
 };
 
 /*

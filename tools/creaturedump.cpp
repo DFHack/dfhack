@@ -1,12 +1,25 @@
 // Creature dump
 
 #include <iostream>
+#include <climits>
 #include <integers.h>
 #include <vector>
 using namespace std;
 
 #include <DFTypes.h>
 #include <DFHackAPI.h>
+
+template <typename T>
+void print_bits ( T val, std::ostream& out )
+{
+    T n_bits = sizeof ( val ) * CHAR_BIT;
+    
+    for ( unsigned i = 0; i < n_bits; ++i ) {
+        out<< !!( val & 1 ) << " ";
+        val >>= 1;
+    }
+}
+
 
 int main (void)
 {
@@ -33,6 +46,11 @@ int main (void)
         t_creature temp;
         DF.ReadCreature(i, temp);
         cout << "creature type " << creaturestypes[temp.type].id << ", position:" << temp.x << " " << temp.y << " "<< temp.z << endl;
+        cout << "flags1: ";
+        print_bits(temp.flags1, cout);
+        cout << endl << "flags2: ";
+        print_bits(temp.flags2, cout);
+        cout << endl << endl;
     }
     DF.FinishReadCreatures();
     delete pDF;

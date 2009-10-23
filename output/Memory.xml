@@ -380,6 +380,8 @@
         <!-- creature offsets -->
         <Offset name="creature_position">0x4C</Offset>
         <Offset name="creature_type">0x44</Offset>
+        <Offset name="creature_flags1">0x90</Offset>
+        <Offset name="creature_flags2">0x94</Offset>
         
         <!-- tree and shrub offsets -->
         <Offset name="tree_desc_offset">0x40</Offset>

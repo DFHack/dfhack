@@ -627,7 +627,9 @@ uint32_t DFHackAPIImpl::InitReadCreatures()
     int creatures = offset_descriptor->getAddress("creatures");
     creature_pos_offset = offset_descriptor->getOffset("creature_position");
     creature_type_offset = offset_descriptor->getOffset("creature_type");
-    assert(creatures && creature_pos_offset && creature_type_offset);
+    creature_flags1_offset = offset_descriptor->getOffset("creature_flags1");
+    creature_flags2_offset = offset_descriptor->getOffset("creature_flags2");
+    assert(creatures && creature_pos_offset && creature_type_offset && creature_flags1_offset && creature_flags2_offset);
     p_cre = new DfVector(dm->readVector(creatures, 4));
     return p_cre->getSize();
 }
@@ -642,6 +644,8 @@ bool DFHackAPIImpl::ReadCreature(const uint32_t &index, t_creature & furball)
     //read creature from memory
     Mread(temp + creature_pos_offset, 3 * sizeof(uint16_t), (uint8_t *) &(furball.x)); // xyz really
     Mread(temp + creature_type_offset, sizeof(uint32_t), (uint8_t *) &furball.type);
+    Mread(temp + creature_flags1_offset, sizeof(uint32_t), (uint8_t *) &furball.flags1);
+    Mread(temp + creature_flags2_offset, sizeof(uint32_t), (uint8_t *) &furball.flags2);
     return true;
 }
 

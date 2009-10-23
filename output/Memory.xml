@@ -87,7 +87,10 @@
 
         <!-- creature offsets -->
         <Offset name="creature_position">0x94</Offset>
+        <Offset name="creature_profession">0x88</Offset>
         <Offset name="creature_type">0x8C</Offset>
+        <Offset name="creature_flags1">0xE4</Offset>
+        <Offset name="creature_flags2">0xE8</Offset>
 
         <!-- tree and shrub offsets -->
         <Offset name="tree_desc_offset">0x70</Offset>
@@ -216,6 +219,10 @@
         <Address name="buildings">0x014ee978</Address>
         <Address name="vegetation">0x014F4B4C</Address>
         <Address name="creatures">0x014edfcc</Address>
+        
+        <!-- creature offsets -->
+        <Offset name="creature_flags1">0xFC</Offset>
+        <Offset name="creature_flags2">0x100</Offset>
         
         <!-- tree and shrub offsets -->
         <Offset name="tree_desc_offset">0x70</Offset>

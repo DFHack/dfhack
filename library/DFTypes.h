@@ -129,6 +129,14 @@ struct t_tree_desc
     uint16_t z;
 };
 
+struct t_creature
+{
+    uint16_t x;
+    uint16_t y;
+    uint16_t z;
+    uint32_t type;
+};
+
 /*
 case 10:
     ret += "leather";

@@ -1068,6 +1068,6 @@ DFHACKAPI int getVegetationType(int in)
         case 34: //shrub
             return SHRUB_OK;
     }
-	// ????
-	return -1;
+    // ????
+    return -1;
 }

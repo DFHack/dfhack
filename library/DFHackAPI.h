@@ -75,6 +75,7 @@ public:
     virtual bool ReadWoodMatgloss (vector<t_matgloss> & output) = 0;
     virtual bool ReadMetalMatgloss(vector<t_matgloss> & output) = 0;
     virtual bool ReadPlantMatgloss(vector<t_matgloss> & output) = 0;
+    virtual bool ReadCreatureMatgloss(vector<t_matgloss> & output) = 0;
     // FIXME: add creatures for all the creature products
 
     // read region surroundings, get their vectors of geolayers so we can do translation (or just hand the translation table to the client)
@@ -154,6 +155,10 @@ public:
     virtual uint32_t InitReadVegetation() = 0;
     virtual bool ReadVegetation(const uint32_t &index, t_tree_desc & shrubbery) = 0;
     virtual void FinishReadVegetation() = 0;
+    
+    virtual uint32_t InitReadCreatures() = 0;
+    virtual bool ReadCreature(const uint32_t &index, t_creature & furball) = 0;
+    virtual void FinishReadCreatures() = 0;
 };
 
 #ifdef BUILD_DFHACK_LIB
@@ -179,6 +184,9 @@ private:
     uint32_t designation_offset;
     uint32_t occupancy_offset;
     
+    uint32_t creature_pos_offset;
+    uint32_t creature_type_offset;
+    
     ProcessManager* pm;
     Process* p;
     DataModel* dm;
@@ -189,7 +197,9 @@ private:
     bool constructionsInited;
     bool buildingsInited;
     bool vegetationInited;
-    uint32_t treeoffset;
+    bool creaturesInited;
+    uint32_t tree_offset;
+    DfVector *p_cre;
     DfVector *p_cons;
     DfVector *p_bld;
     DfVector *p_veg;
@@ -210,7 +220,7 @@ public:
     bool ReadWoodMatgloss (vector<t_matgloss> & output);
     bool ReadMetalMatgloss(vector<t_matgloss> & output);
     bool ReadPlantMatgloss(vector<t_matgloss> & output);
-    // FIXME: add creatures for all the creature products
+    bool ReadCreatureMatgloss(vector<t_matgloss> & output);
 
     // read region surroundings, get their vectors of geolayers so we can do translation (or just hand the translation table to the client)
     // returns an array of 9 vectors of indices into stone matgloss
@@ -289,6 +299,10 @@ public:
     uint32_t InitReadVegetation();
     bool ReadVegetation(const uint32_t &index, t_tree_desc & shrubbery);
     void FinishReadVegetation();
+    
+    uint32_t InitReadCreatures();
+    bool ReadCreature(const uint32_t &index, t_creature & furball);
+    void FinishReadCreatures();
 };
 
 #endif

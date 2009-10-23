@@ -56,6 +56,7 @@ DFHackAPIImpl::DFHackAPIImpl(const string path_to_xml)
 {
     xml = path_to_xml;
     constructionsInited = false;
+    creaturesInited = false;
     buildingsInited = false;
     vegetationInited = false;
     pm = NULL;
@@ -378,6 +379,34 @@ bool DFHackAPIImpl::ReadPlantMatgloss(vector<t_matgloss> & plants)
     return true;
 }
 
+bool DFHackAPIImpl::ReadCreatureMatgloss(vector<t_matgloss> & creatures)
+{
+    int matgloss_address = offset_descriptor->getAddress("matgloss");
+    int matgloss_offset = offset_descriptor->getHexValue("matgloss_skip");
+    DfVector p_matgloss = dm->readVector(matgloss_address + matgloss_offset*4, 4);
+    
+    creatures.clear();
+    
+    // TODO: use green?
+    t_matgloss mat;
+    mat.fore = 7;
+    mat.back = 0;
+    mat.bright = 0;
+    for (uint32_t i = 0; i< p_matgloss.getSize();i++)
+    {
+        uint32_t temp;
+        
+        // read the matgloss pointer from the vector into temp
+        p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
+        
+        // read the string pointed at by
+        fill_char_buf(mat.id, dm->readSTLString(temp)); // reads a C string given an address
+        creatures.push_back(mat);
+    }
+    return true;
+}
+
+
 //vector<uint16_t> v_geology[eBiomeCount];
 bool DFHackAPIImpl::ReadGeology( vector < vector <uint16_t> >& assign )
 {
@@ -565,7 +594,7 @@ uint32_t DFHackAPIImpl::InitReadVegetation()
 {
     vegetationInited = true;
     int vegetation = offset_descriptor->getAddress("vegetation");
-    treeoffset = offset_descriptor->getOffset("tree_desc_offset");
+    tree_offset = offset_descriptor->getOffset("tree_desc_offset");
     assert(vegetation && treeoffset);
     p_veg = new DfVector(dm->readVector(vegetation,4));
     return p_veg->getSize();
@@ -579,10 +608,10 @@ bool DFHackAPIImpl::ReadVegetation(const uint32_t &index, t_tree_desc & shrubber
     // read pointer from vector at position
     p_veg->read(index,(uint8_t *)&temp);
     //read construction from memory
-    Mread(temp + treeoffset, sizeof(t_tree_desc), (uint8_t *) &shrubbery);
+    Mread(temp + tree_offset, sizeof(t_tree_desc), (uint8_t *) &shrubbery);
     // FIXME: this is completely wrong. type isn't just tree/shrub but also different kinds of trees. stuff that grows around ponds has its own type ID
     if(shrubbery.material.type == 3) shrubbery.material.type = 2;
-	return true;
+    return true;
 }
 
 
@@ -591,6 +620,36 @@ void DFHackAPIImpl::FinishReadVegetation()
     vegetationInited = false;
 }
 
+
+uint32_t DFHackAPIImpl::InitReadCreatures()
+{
+    creaturesInited = true;
+    int creatures = offset_descriptor->getAddress("creatures");
+    creature_pos_offset = offset_descriptor->getOffset("creature_position");
+    creature_type_offset = offset_descriptor->getOffset("creature_type");
+    assert(creatures && creatureposoffset && creaturetypeoffset);
+    p_cre = new DfVector(dm->readVector(creatures, 4));
+    return p_cre->getSize();
+}
+
+
+bool DFHackAPIImpl::ReadCreature(const uint32_t &index, t_creature & furball)
+{
+    assert(vegetationInited);
+    uint32_t temp;
+    // read pointer from vector at position
+    p_cre->read(index,(uint8_t *)&temp);
+    //read creature from memory
+    Mread(temp + creature_pos_offset, 3 * sizeof(uint16_t), (uint8_t *) &(furball.x)); // xyz really
+    Mread(temp + creature_type_offset, sizeof(uint32_t), (uint8_t *) &furball.type);
+    return true;
+}
+
+
+void DFHackAPIImpl::FinishReadCreatures()
+{
+    creaturesInited = false;
+}
 
 bool DFHackAPIImpl::Attach()
 {

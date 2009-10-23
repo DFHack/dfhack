@@ -35,7 +35,7 @@ distribution.
 
 #include <fstream>
 using namespace std;
-#include <integers.h>
+#include "integers.h"
 #include <assert.h>
 #include <string.h>
 

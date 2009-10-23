@@ -43,7 +43,7 @@ distribution.
 
 #include <string>
 #include <vector>
-#include <integers.h>
+#include "integers.h"
 using namespace std;
 
 class DFHackAPI;

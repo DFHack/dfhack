@@ -41,7 +41,7 @@ distribution.
 # endif
 #endif
 
-#include <integers.h>
+#include "integers.h"
 
 #ifdef __cplusplus
 # include <vector>

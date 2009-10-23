@@ -383,7 +383,7 @@ bool DFHackAPIImpl::ReadCreatureMatgloss(vector<t_matgloss> & creatures)
 {
     int matgloss_address = offset_descriptor->getAddress("matgloss");
     int matgloss_offset = offset_descriptor->getHexValue("matgloss_skip");
-    DfVector p_matgloss = dm->readVector(matgloss_address + matgloss_offset*4, 4);
+    DfVector p_matgloss = dm->readVector(matgloss_address + matgloss_offset*6, 4);
     
     creatures.clear();
     
@@ -595,7 +595,7 @@ uint32_t DFHackAPIImpl::InitReadVegetation()
     vegetationInited = true;
     int vegetation = offset_descriptor->getAddress("vegetation");
     tree_offset = offset_descriptor->getOffset("tree_desc_offset");
-    assert(vegetation && treeoffset);
+    assert(vegetation && tree_offset);
     p_veg = new DfVector(dm->readVector(vegetation,4));
     return p_veg->getSize();
 }
@@ -627,7 +627,7 @@ uint32_t DFHackAPIImpl::InitReadCreatures()
     int creatures = offset_descriptor->getAddress("creatures");
     creature_pos_offset = offset_descriptor->getOffset("creature_position");
     creature_type_offset = offset_descriptor->getOffset("creature_type");
-    assert(creatures && creatureposoffset && creaturetypeoffset);
+    assert(creatures && creature_pos_offset && creature_type_offset);
     p_cre = new DfVector(dm->readVector(creatures, 4));
     return p_cre->getSize();
 }
@@ -635,7 +635,7 @@ uint32_t DFHackAPIImpl::InitReadCreatures()
 
 bool DFHackAPIImpl::ReadCreature(const uint32_t &index, t_creature & furball)
 {
-    assert(vegetationInited);
+    assert(creaturesInited);
     uint32_t temp;
     // read pointer from vector at position
     p_cre->read(index,(uint8_t *)&temp);

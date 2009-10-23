@@ -368,6 +368,12 @@
         <!--<Address name="buildings">0x09332C80</Address>-->
         <!--<Address name="buildings">0x09332EF0</Address>-->
         <Address name="vegetation">0x09335CB0</Address>
+        <Address name="creatures">0x093326AC</Address>
+        
+        <!-- creature offsets -->
+        <Offset name="creature_position">0x4C</Offset>
+        <Offset name="creature_type">0x44</Offset>
+        
         <!-- tree and shrub offsets -->
         <Offset name="tree_desc_offset">0x40</Offset>
 
@@ -512,6 +518,7 @@
         <Address name="constructions">0x08F41918</Address>
         <Address name="buildings">0x08F55740</Address>
         <Address name="vegetation">0x08F58890</Address>
+        <Address name="creatures">0x08F55250</Address>
 
         <!-- size of the map -->
         <Address name="x_count">0x08F95BD0</Address>

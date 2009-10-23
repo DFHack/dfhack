@@ -25,7 +25,7 @@ distribution.
 /**
  * DO NOT USE THIS FILE DIRECTLY! USE MemAccess.h INSTEAD!
  */
-#include <stdint.h>
+#include "integers.h"
 
 inline
 uint8_t MreadByte (const uint32_t &offset)

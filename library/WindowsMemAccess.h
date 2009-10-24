@@ -140,32 +140,11 @@ void Mwrite (uint32_t offset, uint32_t size, uint8_t *source)
 inline
 const string MreadCString (const uint32_t &offset)
 {
-	string temp;
-	char temp_c[256];
-	DWORD read;
-	ReadProcessMemory(g_ProcessHandle, (int *) offset, temp_c, 255, &read);
-	temp_c[read+1] = 0;
-	temp = temp_c;
-	return temp;
-
-	// I'll let the original code go down in infamy, and burn. Burn. BURN. YES, BURN! DIE YOU HORRIBLE, HORRIBLE, CODE!
-	// Problems:
-	//  * Does not check counter < 255, so potential buffer overrun.
-	//  * Reads a single byte at a time, which is extremely inefficient (iirc, user -> kernel mode switch).
-	//  * It adds an unnecessary null termination.
-#if 0
     string temp;
     char temp_c[256];
-    int counter = 0;
-    char r;
-    do
-    {
-        r = MreadByte(offset+counter);
-        temp_c[counter] = r;
-        counter++;
-    } while (r);
-    temp_c[counter] = 0;
+    DWORD read;
+    ReadProcessMemory(g_ProcessHandle, (int *) offset, temp_c, 255, &read);
+    temp_c[read+1] = 0;
     temp = temp_c;
     return temp;
-#endif
 }

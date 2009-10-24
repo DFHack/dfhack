@@ -129,16 +129,6 @@ struct t_tree_desc
     uint16_t z;
 };
 
-struct t_creature
-{
-    uint16_t x;
-    uint16_t y;
-    uint16_t z;
-    uint32_t type;
-    uint32_t flags1;
-    uint32_t flags2;
-};
-
 /*
 case 10:
     ret += "leather";
@@ -213,6 +203,113 @@ enum BiomeOffset
     eSouth,
     eSouthEast,
     eBiomeCount
+};
+
+union t_creaturflags1
+{
+    uint32_t whole;
+    struct {
+        //0000 0001 - 0000 0080
+        unsigned int unk1 : 1;
+        unsigned int dead : 1;
+        unsigned int unk3 : 1;
+        unsigned int mood_survivor : 1;
+        unsigned int hostile : 1;
+        unsigned int unk6 : 1;
+        unsigned int unk7_friendly : 1;
+        unsigned int unk8_friendly : 1;
+        
+        //0000 0100 - 0000 8000
+        unsigned int unk9_not_on_unit_screen1 : 1;
+        unsigned int unk10 : 1;
+        unsigned int unk11_not_on_unit_screen2 : 1;
+        unsigned int unk12_friendly : 1;
+
+        unsigned int zombie : 1;
+        unsigned int skeletal : 1;
+        unsigned int unk15_not_part_of_fortress : 1; // resets to 0?
+        unsigned int unconscious : 1;
+        
+        // 0001 0000 - 0080 0000
+        unsigned int unk17_not_visible : 1; // hidden? caged?
+        unsigned int invader1 : 1;
+        unsigned int unk19_not_listed_among_dwarves : 1;
+        unsigned int invader2 : 1;
+        
+        unsigned int unk21 : 1;
+        unsigned int unk22 : 1;
+        unsigned int unk23 : 1;
+        unsigned int unk24 : 1;
+
+        // 0100 0000 - 8000 0000
+        unsigned int unk25 : 1;
+        unsigned int unk26_invisible_hidden : 1;
+        unsigned int tame : 1;
+        unsigned int unk28 : 1;
+        
+        unsigned int royal_guard : 1;
+        unsigned int fortress_guard : 1;
+        unsigned int unk31 : 1;
+        unsigned int unk32 : 1;
+        
+    } bits;
+};
+
+union t_creaturflags2
+{
+    uint32_t whole;
+    struct {
+        //0000 0001 - 0000 0080
+        unsigned int unk1 : 1;
+        unsigned int unk2 : 1;
+        unsigned int unk3 : 1;
+        unsigned int unk4 : 1;
+        unsigned int unk5 : 1;
+        unsigned int unk6 : 1;
+        unsigned int unk7 : 1; // commonly set on dwarves
+        unsigned int dead : 1; // another dead bit
+        
+        //0000 0100 - 0000 8000
+        unsigned int unk9 : 1;
+        unsigned int unk10 : 1;
+        unsigned int unk11 : 1;
+        unsigned int unk12 : 1;
+        unsigned int unk13 : 1;
+        unsigned int unk14 : 1;
+        unsigned int unk15 : 1;
+        unsigned int ground : 1;
+        
+        // 0001 0000 - 0080 0000
+        unsigned int flying : 1;
+        unsigned int slaughter : 1;
+        unsigned int underworld : 1;
+        unsigned int unk20 : 1;
+        unsigned int unk21 : 1;
+        unsigned int unk22 : 1;
+        unsigned int unk23 : 1;
+        unsigned int unk24 : 1;
+        
+        // 0100 0000 - 8000 0000
+        unsigned int unk25 : 1;
+        unsigned int unk26 : 1;
+        unsigned int unk27 : 1;
+        unsigned int unk28 : 1;
+        unsigned int unk29 : 1;
+        unsigned int unk30 : 1;
+        unsigned int unk31 : 1;
+        unsigned int unk32 : 1;
+        
+    } bits;
+};
+
+struct t_creature
+{
+    uint16_t x;
+    uint16_t y;
+    uint16_t z;
+    uint32_t type;
+    t_creaturflags1 flags1;
+    t_creaturflags2 flags2;
 };
 
 // TODO: research this further? consult DF hacker wizards?

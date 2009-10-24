@@ -46,10 +46,67 @@ int main (void)
         t_creature temp;
         DF.ReadCreature(i, temp);
         cout << "creature type " << creaturestypes[temp.type].id << ", position:" << temp.x << " " << temp.y << " "<< temp.z << endl;
+        
+        /*
+         * FLAGS 1
+         */
         cout << "flags1: ";
-        print_bits(temp.flags1, cout);
+        print_bits(temp.flags1.whole, cout);
+        cout << endl;
+        if(temp.flags1.bits.dead)
+        {
+            cout << "dead ";
+        }
+        if(temp.flags1.bits.unconscious)
+        {
+            cout << "unconscious ";
+        }
+        if(temp.flags1.bits.skeletal)
+        {
+            cout << "skeletal ";
+        }
+        if(temp.flags1.bits.zombie)
+        {
+            cout << "zombie ";
+        }
+        if(temp.flags1.bits.tame)
+        {
+            cout << "tame ";
+        }
+        if(temp.flags1.bits.royal_guard)
+        {
+            cout << "royal_guard ";
+        }
+        if(temp.flags1.bits.fortress_guard)
+        {
+            cout << "fortress_guard ";
+        }
+        /*
+        * FLAGS 2
+        */
         cout << endl << "flags2: ";
-        print_bits(temp.flags2, cout);
+        print_bits(temp.flags2.whole, cout);
+        cout << endl;
+        if(temp.flags2.bits.dead)
+        {
+            cout << "dead! ";
+        }
+        if(temp.flags2.bits.flying)
+        {
+            cout << "flying ";
+        }
+        if(temp.flags2.bits.ground)
+        {
+            cout << "grounded ";
+        }
+        if(temp.flags2.bits.slaughter)
+        {
+            cout << "slaughter ";
+        }
+        if(temp.flags2.bits.underworld)
+        {
+            cout << "from the underworld ";
+        }
         cout << endl << endl;
     }
     DF.FinishReadCreatures();

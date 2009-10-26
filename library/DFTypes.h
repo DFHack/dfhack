@@ -237,7 +237,7 @@ union t_creaturflags1
         unsigned int invader2 : 1;
         
         unsigned int unk21 : 1;
-        unsigned int unk22 : 1;
+        unsigned int hidden_ambusher : 1; // maybe
         unsigned int unk23 : 1;
         unsigned int unk24 : 1;
 

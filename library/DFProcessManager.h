@@ -41,7 +41,7 @@ class Process;
 */
 extern Process * g_pProcess; ///< current process. non-NULL when picked
 extern ProcessHandle g_ProcessHandle; ///< cache of handle to current process. used for speed reasons
-extern FILE * g_ProcessMemFile; ///< opened /proc/PID/mem, valid when attached
+extern int g_ProcessMemFile; ///< opened /proc/PID/mem, valid when attached
 
 class Process
 {

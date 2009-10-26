@@ -43,6 +43,12 @@ using namespace std;
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <dirent.h>
+#define __USE_FILE_OFFSET64
+#define _FILE_OFFSET_BITS 64
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #else
 #define WINVER 0x0500					// OpenThread(), PSAPI, Toolhelp32
 #define WIN32_LEAN_AND_MEAN

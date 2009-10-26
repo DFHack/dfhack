@@ -31,70 +31,79 @@ inline
 uint8_t MreadByte (const uint32_t &offset)
 {
     uint8_t val;
-    fseek(g_ProcessMemFile, offset,SEEK_SET);
-    fread ( &val, sizeof(uint8_t), 1, g_ProcessMemFile );
+    //fseek(g_ProcessMemFile, offset,SEEK_SET);
+    //fread ( &val, sizeof(uint8_t), 1, g_ProcessMemFile );
+    pread(g_ProcessMemFile, &val,1,offset);
     return val;
 }
 
 inline
 void MreadByte (const uint32_t &offset, uint8_t &val )
 {
-    fseek(g_ProcessMemFile, offset,SEEK_SET);
-    fread ( &val, sizeof(uint8_t), 1, g_ProcessMemFile );
+    //fseek(g_ProcessMemFile, offset,SEEK_SET);
+    //fread ( &val, sizeof(uint8_t), 1, g_ProcessMemFile );
+    pread(g_ProcessMemFile, &val,1,offset);
 }
 
 inline
 uint16_t MreadWord (const uint32_t &offset)
 {
     uint16_t val;
-    fseek(g_ProcessMemFile, offset,SEEK_SET);
-    fread ( &val, sizeof(uint16_t), 1, g_ProcessMemFile );
+    //fseek(g_ProcessMemFile, offset,SEEK_SET);
+    //fread ( &val, sizeof(uint16_t), 1, g_ProcessMemFile );
+    pread(g_ProcessMemFile, &val,2,offset);
     return val;
 }
 
 inline
 void MreadWord (const uint32_t &offset, uint16_t &val)
 {
-    fseek(g_ProcessMemFile, offset,SEEK_SET);
-    fread ( &val, sizeof(uint16_t), 1, g_ProcessMemFile );
+    //fseek(g_ProcessMemFile, offset,SEEK_SET);
+    //fread ( &val, sizeof(uint16_t), 1, g_ProcessMemFile );
+    pread(g_ProcessMemFile, &val,2,offset);
 }
 
 inline
 uint32_t MreadDWord (const uint32_t &offset)
 {
     uint32_t val;
-    fseek(g_ProcessMemFile, offset,SEEK_SET);
-    fread ( &val, sizeof(uint32_t), 1, g_ProcessMemFile );
+    //fseek(g_ProcessMemFile, offset,SEEK_SET);
+    //fread ( &val, sizeof(uint32_t), 1, g_ProcessMemFile );
+    pread(g_ProcessMemFile, &val,4,offset);
     return val;
 }
 inline
 void MreadDWord (const uint32_t &offset, uint32_t &val)
 {
-    fseek(g_ProcessMemFile, offset,SEEK_SET);
-    fread ( &val, sizeof(uint32_t), 1, g_ProcessMemFile );
+    //fseek(g_ProcessMemFile, offset,SEEK_SET);
+    //fread ( &val, sizeof(uint32_t), 1, g_ProcessMemFile );
+    pread(g_ProcessMemFile, &val,4,offset);
 }
 
 inline
 uint64_t MreadQuad (const uint32_t &offset)
 {
     uint64_t val;
-    fseek(g_ProcessMemFile, offset,SEEK_SET);
-    fread ( &val, sizeof(uint32_t), 1, g_ProcessMemFile );
+    //fseek(g_ProcessMemFile, offset,SEEK_SET);
+    //fread ( &val, sizeof(uint32_t), 1, g_ProcessMemFile );
+    pread(g_ProcessMemFile, &val,8,offset);
     return val;
 }
 
 inline
 void MreadQuad (const uint32_t &offset, uint64_t &val)
 {
-    fseek(g_ProcessMemFile, offset,SEEK_SET);
-    fread ( &val, sizeof(uint32_t), 1, g_ProcessMemFile );
+    //fseek(g_ProcessMemFile, offset,SEEK_SET);
+    //fread ( &val, sizeof(uint32_t), 1, g_ProcessMemFile );
+    pread(g_ProcessMemFile, &val,8,offset);
 }
 
 inline
 void Mread (const uint32_t &offset, const uint32_t &size, uint8_t *target)
 {
-    fseek(g_ProcessMemFile, offset,SEEK_SET);
-    fread ( target, 1, size, g_ProcessMemFile );
+    //fseek(g_ProcessMemFile, offset,SEEK_SET);
+    //fread ( target, 1, size, g_ProcessMemFile );
+    pread(g_ProcessMemFile, target,size,offset);
 }
 
 inline

@@ -37,7 +37,7 @@ distribution.
 /// HACK: global variables (only one process can be attached at the same time.)
 Process * g_pProcess; ///< current process. non-NULL when picked
 ProcessHandle g_ProcessHandle; ///< cache of handle to current process. used for speed reasons
-FILE * g_ProcessMemFile; ///< opened /proc/PID/mem, valid when attached
+int g_ProcessMemFile; ///< opened /proc/PID/mem, valid when attached
 
 
 #ifdef LINUX_BUILD

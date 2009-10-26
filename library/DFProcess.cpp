@@ -92,7 +92,7 @@ bool Process::attach()
     // HACK: Set the global process variables
     g_pProcess = this;
     g_ProcessHandle = my_handle;
-    g_ProcessMemFile = fopen(memFile.c_str(),"rb");
+    g_ProcessMemFile = open(memFile.c_str(),O_RDONLY);
     return true; // we are attached
 }
 
@@ -105,8 +105,8 @@ bool Process::detach()
 
     g_pProcess = NULL;
     g_ProcessHandle = 0;
-    fclose(g_ProcessMemFile);// close /proc/PID/mem
-    g_ProcessMemFile = NULL;
+    close(g_ProcessMemFile);// close /proc/PID/mem
+    g_ProcessMemFile = -1;
     return true;
 }
 

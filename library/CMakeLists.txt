@@ -1,5 +1,28 @@
 # don't use this file directly. use the one in the root folder of the project
 
+SET(PROJECT_HDRS
+DFCommon.h
+DFDataModel.h
+DFHackAPI.h
+DFHackAPIc.h
+DFMemAccess.h
+DFMemInfo.h
+DFProcessManager.h
+DFTileTypes.h
+DFTypes.h
+DFVector.h
+integers.h
+stdint_win.h
+LinuxMemAccess.h
+WindowsMemAccess.h
+
+md5/md5.h
+md5/md5wrapper.h
+
+tinyxml/tinystr.h
+tinyxml/tinyxml.h
+)
+
 SET(PROJECT_SRCS
 DFDataModel.cpp
 DFMemInfo.cpp
@@ -15,6 +38,10 @@ tinyxml/tinyxml.cpp
 tinyxml/tinyxmlerror.cpp
 tinyxml/tinyxmlparser.cpp
 )
+
+SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
+
+LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
 
 IF(UNIX)
   add_definitions(-DLINUX_BUILD)

@@ -545,6 +545,8 @@ bool DFHackAPIImpl::ReadBuilding(const uint32_t &index, t_building & building)
 
 void DFHackAPIImpl::FinishReadBuildings()
 {
+    delete p_bld;
+    p_bld = NULL;
     buildingsInited = false;
 }
 
@@ -586,6 +588,8 @@ bool DFHackAPIImpl::ReadConstruction(const uint32_t &index, t_construction & con
 
 void DFHackAPIImpl::FinishReadConstructions()
 {
+    delete p_cons;
+    p_cons = NULL;
     constructionsInited = false;
 }
 
@@ -617,6 +621,8 @@ bool DFHackAPIImpl::ReadVegetation(const uint32_t &index, t_tree_desc & shrubber
 
 void DFHackAPIImpl::FinishReadVegetation()
 {
+    delete p_veg;
+    p_veg = NULL;
     vegetationInited = false;
 }
 
@@ -652,6 +658,8 @@ bool DFHackAPIImpl::ReadCreature(const uint32_t &index, t_creature & furball)
 
 void DFHackAPIImpl::FinishReadCreatures()
 {
+    delete p_cre;
+    p_cre = NULL;
     creaturesInited = false;
 }
 

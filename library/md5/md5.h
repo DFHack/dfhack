@@ -45,7 +45,7 @@
 //----------------------------------------------------------------------
 //STL includes
 #include <string>
-#include "integers.h"
+#include "../integers.h"
 //----------------------------------------------------------------------
 //typedefs
 typedef unsigned char *POINTER;

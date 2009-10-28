@@ -169,13 +169,12 @@ case 24:
 
 */
 
-// FIXME: in order in which the raw vectors appear in df memory, move to XML
 enum MatglossType
 {
     Mat_Wood,
     Mat_Stone,
-    Mat_Plant,
     Mat_Metal,
+    Mat_Plant,
     Mat_Leather = 10,
     Mat_SilkCloth = 11,
     Mat_PlantCloth = 12,

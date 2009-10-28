@@ -25,8 +25,11 @@ distribution.
 #ifndef PROCESSUTIL_H_INCLUDED
 #define PROCESSUTIL_H_INCLUDED
 
+// SLOW!
+// #include "LinuxMemAccess-ptrace.h"
+
 #ifdef LINUX_BUILD
-    #include "LinuxMemAccess.h"
+    #include "LinuxMemAccess-memfiles.h"
 #else
     #include "WindowsMemAccess.h"
 #endif

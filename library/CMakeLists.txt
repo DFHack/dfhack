@@ -13,7 +13,8 @@ DFTypes.h
 DFVector.h
 integers.h
 stdint_win.h
-LinuxMemAccess.h
+LinuxMemAccess-memfiles.h
+LinuxMemAccess-ptrace.h
 WindowsMemAccess.h
 
 md5/md5.h

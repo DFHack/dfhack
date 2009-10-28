@@ -28,19 +28,26 @@ int main (void)
     DF.getSize(x_max,y_max,z_max);
     
     for(uint32_t i = 0; i< 1000;i++)
-    for(uint32_t x = 0; x< x_max;x++)
     {
-        for(uint32_t y = 0; y< y_max;y++)
+        if((i % 10) == 0)
         {
-            for(uint32_t z = 0; z< z_max;z++)
+            int percentage = i / 10;
+            cout << percentage << endl;
+        }
+        for(uint32_t x = 0; x< x_max;x++)
+        {
+            for(uint32_t y = 0; y< y_max;y++)
             {
-                if(DF.isValidBlock(x,y,z))
+                for(uint32_t z = 0; z< z_max;z++)
                 {
-                    DF.ReadTileTypes(x,y,z, (uint16_t *) tiletypes);
-                    DF.ReadDesignations(x,y,z, (uint32_t *) designations);
-                    DF.ReadOccupancy(x,y,z, (uint32_t *) occupancies);
-                    num_blocks ++;
-                    bytes_read += 256 * (4 + 4 + 2);
+                    if(DF.isValidBlock(x,y,z))
+                    {
+                        DF.ReadTileTypes(x,y,z, (uint16_t *) tiletypes);
+                        DF.ReadDesignations(x,y,z, (uint32_t *) designations);
+                        DF.ReadOccupancy(x,y,z, (uint32_t *) occupancies);
+                        num_blocks ++;
+                        bytes_read += 256 * (4 + 4 + 2);
+                    }
                 }
             }
         }

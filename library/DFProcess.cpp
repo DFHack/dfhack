@@ -86,14 +86,16 @@ bool Process::attach()
     {
         return false;
     }
+    cout << "Attach_start" << endl;
     // can we attach?
     if (ptrace(PTRACE_ATTACH , my_handle, NULL, NULL) == -1)
-    { 
+    {
         // no, we got an error
         perror("ptrace attach error");
         cerr << "attach failed on pid" << my_handle << endl;
         return false;
     }
+    cout << "Attach_after_ptrace" << endl;
     int status;
     while(true)
     {
@@ -113,12 +115,13 @@ bool Process::attach()
             break;
         }
     }
-    //cout << "Managed to attach to pid " << my_handle << endl;
+    cout << "Managed to attach to pid " << my_handle << endl;
     
     attached = true;
     g_pProcess = this;
     g_ProcessHandle = my_handle;
     g_ProcessMemFile = open(memFile.c_str(),O_RDONLY);
+    cout << "Attach_after_opening /proc/PID/mem" << endl;
     return true; // we are attached
 }
 

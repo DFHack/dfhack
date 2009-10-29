@@ -77,25 +77,50 @@ void Process::setMemFile(const string & memf)
 /*
  *     LINUX PART
  */
+
+// shamelessly stolen from dwarf therapist code. credit should go to the author there :)
 bool Process::attach()
 {
-    // TODO: check for errors!
+    // check if another process is attached
     if(g_pProcess != NULL)
     {
         return false;
     }
-
-    ptrace(PTRACE_ATTACH , my_handle, NULL, NULL);
-    wait(NULL); // wait for DF to be stopped.
+    // can we attach?
+    if (ptrace(PTRACE_ATTACH , my_handle, NULL, NULL) == -1)
+    { 
+        // no, we got an error
+        perror("ptrace attach error");
+        cerr << "attach failed on pid" << my_handle << endl;
+        return false;
+    }
+    int status;
+    while(true)
+    {
+        // we wait on the pid
+        pid_t w = waitpid(my_handle, &status, 0);
+        if (w == -1)
+        {
+            // child died
+            perror("wait inside attach()");
+            //LOGC << "child died?";
+            //exit(-1);
+            return false;
+        }
+        // stopped -> let's continue
+        if (WIFSTOPPED(status))
+        {
+            break;
+        }
+    }
+    cout << "Managed to attach to pid " << my_handle << endl;
+    
     attached = true;
-
-    // HACK: Set the global process variables
     g_pProcess = this;
     g_ProcessHandle = my_handle;
     g_ProcessMemFile = open(memFile.c_str(),O_RDONLY);
     return true; // we are attached
 }
-
 
 bool Process::detach()
 {

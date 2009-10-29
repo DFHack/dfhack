@@ -139,15 +139,33 @@ bool Process::attach()
 
 bool Process::detach()
 {
-    // TODO: check for errors.
-    ptrace(PTRACE_DETACH, my_handle, NULL, NULL);
-    attached = false;
-
-    g_pProcess = NULL;
-    g_ProcessHandle = 0;
-    close(g_ProcessMemFile);// close /proc/PID/mem
-    g_ProcessMemFile = -1;
-    return true;
+    int result = 0;
+    cout << "detach: start" << endl;
+    result = close(g_ProcessMemFile);// close /proc/PID/mem
+    if(result == -1)
+    {
+        cerr << "couldn't close /proc/"<< my_handle <<"/mem" << endl;
+        return false;
+    }
+    else
+    {
+        cout << "detach: after closing /proc/"<< my_handle <<"/mem" << endl;
+        g_ProcessMemFile = -1;
+        result = ptrace(PTRACE_DETACH, my_handle, NULL, NULL);
+        if(result == -1)
+        {
+            cerr << "couldn't detach from process pid" << my_handle << endl;
+            return false;
+        }
+        else
+        {
+            cout << "detach: after detaching from "<< my_handle << endl;
+            attached = false;
+            g_pProcess = NULL;
+            g_ProcessHandle = 0;
+            return true;
+        }
+    }
 }
 
 

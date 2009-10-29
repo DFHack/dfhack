@@ -682,10 +682,10 @@ bool DFHackAPIImpl::Attach()
 }
 
 
-// TODO: clean inited stuff here
 bool DFHackAPIImpl::Detach()
 {
-    p->detach();
+    if (!p->detach())
+        return false;
     if(pm != NULL)
         delete pm;
     pm = NULL;

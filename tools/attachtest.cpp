@@ -36,6 +36,7 @@ int main (void)
     bool all_ok = true;
     for (int i = 0; i < 1000; i++)
     {
+        cout << "Try " << i << endl;
         if(DF.Attach())
         {
             if(DF.Detach())
@@ -53,6 +54,7 @@ int main (void)
             cout << "cycle " << i << ", attach failed" << endl;
             all_ok = false;
         }
+        cout << endl;
     }
     if(!all_ok)
     {

@@ -57,11 +57,11 @@ int main (void)
         {
             cout << "dead ";
         }
-        if(temp.flags1.bits.unconscious)
+        if(temp.flags1.bits.on_ground)
         {
-            cout << "unconscious ";
+            cout << "on the ground, ";
         }
-        if(temp.flags1.bits.skeletal)
+        if(temp.flags1.bits.skeleton)
         {
             cout << "skeletal ";
         }
@@ -87,17 +87,17 @@ int main (void)
         cout << endl << "flags2: ";
         print_bits(temp.flags2.whole, cout);
         cout << endl;
-        if(temp.flags2.bits.dead)
+        if(temp.flags2.bits.killed)
         {
-            cout << "dead! ";
+            cout << "killed by kill function, ";
         }
-        if(temp.flags2.bits.flying)
+        if(temp.flags2.bits.resident)
         {
-            cout << "flying ";
+            cout << "resident ";
         }
-        if(temp.flags2.bits.ground)
+        if(temp.flags2.bits.gutted)
         {
-            cout << "grounded ";
+            cout << "gutted ";
         }
         if(temp.flags2.bits.slaughter)
         {

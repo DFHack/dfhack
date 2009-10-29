@@ -113,7 +113,7 @@ bool Process::attach()
             break;
         }
     }
-    cout << "Managed to attach to pid " << my_handle << endl;
+    //cout << "Managed to attach to pid " << my_handle << endl;
     
     attached = true;
     g_pProcess = this;

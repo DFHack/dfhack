@@ -5,7 +5,7 @@ IF(UNIX)
 add_definitions(-DLINUX_BUILD)
 ENDIF(UNIX)
 
-# a benchmark program
+# a benchmark program, reads the map 1000x
 ADD_EXECUTABLE(expbench expbench.cpp)
 TARGET_LINK_LIBRARIES(expbench dfhack)
 
@@ -24,3 +24,7 @@ TARGET_LINK_LIBRARIES(cleanmap dfhack)
 # creaturedump - basic creature dump - a test of the creature related exports
 ADD_EXECUTABLE(creaturedump creaturedump.cpp)
 TARGET_LINK_LIBRARIES(creaturedump dfhack)
+
+# attachtest - 100x attach/detach, 100x reads, 100x writes
+ADD_EXECUTABLE(attachtest attachtest.cpp)
+TARGET_LINK_LIBRARIES(attachtest dfhack)

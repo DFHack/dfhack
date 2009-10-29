@@ -94,6 +94,9 @@ bool Mread ( uint32_t offset, uint32_t size, uint8_t *target)
     return true;
 }
 
+/*
+* WRITING
+*/
 
 inline
 void MwriteDWord (uint32_t offset, uint32_t data)
@@ -106,8 +109,12 @@ inline
 void MwriteWord (uint32_t offset, uint16_t data)
 {
     uint32_t orig = MreadDWord(offset);
+    orig &= 0xFFFF0000;
+    orig |= data;
+    /*
     orig |= 0x0000FFFF;
     orig &= data;
+    */
     ptrace(PTRACE_POKEDATA,g_ProcessHandle, offset, orig);
 }
 
@@ -115,8 +122,12 @@ inline
 void MwriteByte (uint32_t offset, uint8_t data)
 {
     uint32_t orig = MreadDWord(offset);
+    orig &= 0xFFFFFF00;
+    orig |= data;
+    /*
     orig |= 0x000000FF;
     orig &= data;
+    */
     ptrace(PTRACE_POKEDATA,g_ProcessHandle, offset, orig);
 }
 
@@ -164,7 +175,7 @@ const std::string MreadCString (uint32_t offset)
         r = MreadByte(offset+counter);
         temp_c[counter] = r;
         counter++;
-    } while (r);
+    } while (r && counter < 255);
     temp_c[counter] = 0;
     temp = temp_c;
     return temp;

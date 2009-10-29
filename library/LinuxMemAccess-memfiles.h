@@ -31,18 +31,25 @@ distribution.
 #include <errno.h>
 using namespace std;
 
+// danger: uses recursion!
 inline
 void Mread (const uint32_t &offset, const uint32_t &size, uint8_t *target)
 {
+    if(size == 0) return;
+    
     int result;
     result = pread(g_ProcessMemFile, target,size,offset);
     if(result != size)
     {
-        cerr << "pread failed: can't read " << size << " bytes at addres " << offset << endl;
         if(result == -1)
         {
+            cerr << "pread failed: can't read " << size << " bytes at addres " << offset << endl;
             cerr << "errno: " << errno << endl;
             errno = 0;
+        }
+        else
+        {
+            Mread(offset + result, size - result, target + result);
         }
     }
 }

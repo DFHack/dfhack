@@ -145,6 +145,7 @@ bool Process::detach()
     if(result == -1)
     {
         cerr << "couldn't close /proc/"<< my_handle <<"/mem" << endl;
+        perror("mem file close");
         return false;
     }
     else
@@ -155,6 +156,7 @@ bool Process::detach()
         if(result == -1)
         {
             cerr << "couldn't detach from process pid" << my_handle << endl;
+            perror("ptrace detach");
             return false;
         }
         else

@@ -117,12 +117,24 @@ bool Process::attach()
     }
     cout << "Managed to attach to pid " << my_handle << endl;
     
-    attached = true;
-    g_pProcess = this;
-    g_ProcessHandle = my_handle;
-    g_ProcessMemFile = open(memFile.c_str(),O_RDONLY);
-    cout << "Attach_after_opening /proc/PID/mem" << endl;
-    return true; // we are attached
+    int proc_pid_mem = open(memFile.c_str(),O_RDONLY);
+    if(proc_pid_mem == -1)
+    {
+        ptrace(PTRACE_DETACH, my_handle, NULL, NULL);
+        cerr << "couldn't open /proc/" << my_handle << "/mem" << endl;
+        perror("open(memFile.c_str(),O_RDONLY)");
+        return false;
+    }
+    else
+    {
+        attached = true;
+        g_pProcess = this;
+        g_ProcessHandle = my_handle;
+        
+        g_ProcessMemFile = proc_pid_mem;
+        cout << "Attach_after_opening /proc/PID/mem" << endl;
+        return true; // we are attached
+    }
 }
 
 bool Process::detach()

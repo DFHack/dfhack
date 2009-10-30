@@ -170,10 +170,7 @@ int main (int argc, const char* argv[])
     {
         cout << stonetypes[p->first].id << " : " << p->second << endl;
     }
-    // wait for input on windows so the tool is still usable to some extent
-    #ifndef LINUX_BUILD
     cin.ignore();
-    #endif
     delete pDF;
     return 0;
 }

@@ -48,5 +48,7 @@ int main (void)
         }
     }
     delete pDF;
+    cout << "Done. Press any key to continue" << endl;
+    cin.ignore();
     return 0;
 }

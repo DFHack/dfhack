@@ -3,6 +3,7 @@
 #include <iostream>
 #include <integers.h>
 #include <vector>
+#include <ctime>
 using namespace std;
 
 #include <DFTypes.h>
@@ -10,6 +11,9 @@ using namespace std;
 
 int main (void)
 {
+    time_t start, end;
+    double time_diff;
+    
     uint32_t x_max,y_max,z_max;
     uint32_t num_blocks = 0;
     uint32_t bytes_read = 0;
@@ -27,6 +31,7 @@ int main (void)
     DF.InitMap();
     DF.getSize(x_max,y_max,z_max);
     
+    time(&start);
     for(uint32_t i = 0; i< 1000;i++)
     {
         if((i % 10) == 0)
@@ -52,8 +57,13 @@ int main (void)
             }
         }
     }
+    time(&end);
+    time_diff = difftime(end, start);
     cout << num_blocks << " blocks read" << endl;
     cout << bytes_read / (1024 * 1024) << " MB" << endl;
+    cout << "map export tests done in " << time_diff << " seconds." << endl;
+    cout << "Press any key to continue" << endl;
+    cin.ignore();
     delete pDF;
     return 0;
 }

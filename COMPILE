@@ -1,18 +1,34 @@
 Here's how you build dfhack!
 ----------------------------
 
-First, there is one dependency:
+First, there is one dependency, regrdless of the OS you use:
   cmake - it's the build system
 
-building the library is simple. Enter the build folder, run th tools. Like this:
-  cd build
-  cmake .. -DCMAKE_BUILD_TYPE:string=Release
-  make
+Building on Linux:
+--------------------
 
-Changing folder to build and using 'cmake ..' is important!
+* To run in the output folder (without installing):
+
+building the library is simple. Enter the build folder, run the tools. Like this:
+    
+cd build
+cmake .. -DCMAKE_BUILD_TYPE:string=Release -DMEMXML_DATA_PATH:path=.
+make
 
 This will build the library and its tools and place them in /output.
 You can also use a cmake-friendly IDE like KDevelop 4 or the cmake GUI program.
+
+* To be installed into the system or packaged
+
+cd build
+cmake -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=/usr -DMEMXML_DATA_PATH:path=/usr/share/dfhack ..
+make
+make install
+
+With this dfhack installs:
+library to $CMAKE_INSTALL_PREFIX/lib
+executables to $CMAKE_INSTALL_PREFIX/bin
+The Memory.xml file to /usr/share/dfhack
 
 Building on Windows:
 --------------------

@@ -111,5 +111,7 @@ int main (void)
     }
     DF.FinishReadCreatures();
     delete pDF;
+    cout << "Done. Press any key to continue" << endl;
+    cin.ignore();
     return 0;
 }

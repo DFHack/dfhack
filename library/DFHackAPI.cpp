@@ -31,10 +31,19 @@ distribution.
 #include "DFHackAPI.h"
 #include "DFMemInfo.h"
 
-#if defined(_MSC_VER) && _MSC_VER >= 1400
-#	define fill_char_buf(buf, str) strcpy_s((buf), sizeof(buf) / sizeof((buf)[0]), (str).c_str())
+#define _QUOTEME(x) #x
+#define QUOT(x) _QUOTEME(x)
+
+#ifdef USE_CONFIG_H
+    #include "config.h"
 #else
-#	define fill_char_buf(buf, str) strncpy((buf), (str).c_str(), sizeof(buf) / sizeof((buf)[0]))
+    #define MEMXML_DATA_PATH .
+#endif
+
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+    #define fill_char_buf(buf, str) strcpy_s((buf), sizeof(buf) / sizeof((buf)[0]), (str).c_str())
+#else
+    #define fill_char_buf(buf, str) strncpy((buf), (str).c_str(), sizeof(buf) / sizeof((buf)[0]))
 #endif
 
 /* TODO: Test these
@@ -43,7 +52,7 @@ distribution.
 
 DFHACKAPI DFHackAPI *CreateDFHackAPI0(const char *path_to_xml)
 {
-	return new DFHackAPIImpl(path_to_xml);
+    return new DFHackAPIImpl(path_to_xml);
 }
 
 // TODO: templating for vectors, simple copy constructor for stl vectors
@@ -54,7 +63,9 @@ DFHackAPIImpl::DFHackAPIImpl(const string path_to_xml)
 , pm(NULL), p(NULL), dm(NULL), offset_descriptor(NULL)
 , p_cons(NULL), p_bld(NULL), p_veg(NULL)
 {
-    xml = path_to_xml;
+    xml = QUOT(MEMXML_DATA_PATH);
+    xml += "/";
+    xml += path_to_xml;
     constructionsInited = false;
     creaturesInited = false;
     buildingsInited = false;

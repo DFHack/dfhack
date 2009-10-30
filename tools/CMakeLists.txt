@@ -6,25 +6,29 @@ add_definitions(-DLINUX_BUILD)
 ENDIF(UNIX)
 
 # a benchmark program, reads the map 1000x
-ADD_EXECUTABLE(expbench expbench.cpp)
-TARGET_LINK_LIBRARIES(expbench dfhack)
+ADD_EXECUTABLE(dfexpbench expbench.cpp)
+TARGET_LINK_LIBRARIES(dfexpbench dfhack)
 
 # a reveal clone
-ADD_EXECUTABLE(reveal reveal.cpp)
-TARGET_LINK_LIBRARIES(reveal dfhack)
+ADD_EXECUTABLE(dfreveal reveal.cpp)
+TARGET_LINK_LIBRARIES(dfreveal dfhack)
 
 # prospector - produces a list of available materials and their quantities
-ADD_EXECUTABLE(prospector prospector.cpp)
-TARGET_LINK_LIBRARIES(prospector dfhack)
+ADD_EXECUTABLE(dfprospector prospector.cpp)
+TARGET_LINK_LIBRARIES(dfprospector dfhack)
 
 # cleanmap - removes mud, snow, blood and similar stuff from a map. farmers beware
-ADD_EXECUTABLE(cleanmap cleanmap.cpp)
-TARGET_LINK_LIBRARIES(cleanmap dfhack)
+ADD_EXECUTABLE(dfcleanmap cleanmap.cpp)
+TARGET_LINK_LIBRARIES(dfcleanmap dfhack)
 
 # creaturedump - basic creature dump - a test of the creature related exports
-ADD_EXECUTABLE(creaturedump creaturedump.cpp)
-TARGET_LINK_LIBRARIES(creaturedump dfhack)
+ADD_EXECUTABLE(dfcreaturedump creaturedump.cpp)
+TARGET_LINK_LIBRARIES(dfcreaturedump dfhack)
 
 # attachtest - 100x attach/detach, 100x reads, 100x writes
-ADD_EXECUTABLE(attachtest attachtest.cpp)
-TARGET_LINK_LIBRARIES(attachtest dfhack)
+ADD_EXECUTABLE(dfattachtest attachtest.cpp)
+TARGET_LINK_LIBRARIES(dfattachtest dfhack)
+
+IF(UNIX)
+  install(TARGETS dfexpbench dfreveal dfreveal dfprospector dfcleanmap dfcreaturedump dfattachtest RUNTIME DESTINATION bin)
+ENDIF(UNIX)

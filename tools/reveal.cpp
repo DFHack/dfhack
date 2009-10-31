@@ -47,6 +47,7 @@ int main (void)
             }
         }
     }
+    DF.Detach();
     delete pDF;
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

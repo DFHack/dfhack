@@ -64,10 +64,11 @@ int main (void)
     time(&end);
     
     time_diff = difftime(end, start);
-
+    DF.Detach();
     cout << "attach tests done in " << time_diff << " seconds." << endl;
     cout << "Press any key to continue" << endl;
     cin.ignore();
+    
     delete pDF;
     return 0;
 }

@@ -57,6 +57,7 @@ int main (void)
             }
         }
     }
+    DF.Detach();
     time(&end);
     time_diff = difftime(end, start);
     cout << num_blocks << " blocks read" << endl;

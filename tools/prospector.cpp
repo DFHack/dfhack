@@ -170,6 +170,7 @@ int main (int argc, const char* argv[])
     {
         cout << stonetypes[p->first].id << " : " << p->second << endl;
     }
+    DF.Detach();
     cin.ignore();
     delete pDF;
     return 0;

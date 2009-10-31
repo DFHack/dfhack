@@ -677,13 +677,12 @@ void DFHackAPIImpl::FinishReadCreatures()
 bool DFHackAPIImpl::Attach()
 {
     // detach all processes, destroy manager
-    if(pm != NULL)
-        delete pm;
+    if(pm == NULL)
+        pm = new ProcessManager(xml); // FIXME: handle bad XML better
     // find a process (ProcessManager can find multiple when used properly)
-    pm = new ProcessManager(xml); // FIXME: handle bad XML better
     if(!pm->findProcessess())
-        return false; // FIXME: throw exceptions to distinguish errors? provide error code?
-    p = (*pm)[0]; // we just use the first found process
+        return false;
+    p = (*pm)[0];
     if(!p->attach())
         return false; // couldn't attach to process, no go
     offset_descriptor = p->getDescriptor();

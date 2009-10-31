@@ -110,6 +110,7 @@ int main (void)
         cout << endl << endl;
     }
     DF.FinishReadCreatures();
+    DF.Detach();
     delete pDF;
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

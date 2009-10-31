@@ -72,31 +72,74 @@ void Process::setMemFile(const string & memf)
     memFile = memf;
 }
 
-
 #ifdef LINUX_BUILD
 /*
  *     LINUX PART
  */
 
+
+//TODO: rewrite this. really. It's ugly as hell.
+bool isStopped(pid_t pid)
+{
+    char filename[256];
+    sprintf(filename, "/proc/%d/status", pid);
+    
+    // evil mess, that's a fitting name for this thing
+    FILE* evil = fopen(filename,"rb");
+    if(evil)
+    {
+        // zlo means evil in czech.
+        char zlo[256];
+        char zlo2[256];
+        char test;
+        // read first line, ignore
+        fgets(zlo,256,evil);
+        // read second line
+        fgets(zlo,256,evil);
+        sscanf(zlo,"State: %c %s",&test, zlo2 );
+        fclose(evil);
+        if(test == 'T')
+        {
+            string crap = zlo2;
+            if(crap == "(stopped)")
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    cerr << "couldn't open file " << filename << "assuming process stopped" << endl;
+    return true;
+}
+
 // shamelessly stolen from dwarf therapist code. credit should go to the author there :)
 bool Process::attach()
 {
+    int status;
+    cout << "Attach: start" << endl;
     // check if another process is attached
     if(g_pProcess != NULL)
     {
         return false;
     }
-    cout << "Attach_start" << endl;
+    if(!isStopped(my_handle))
+    {
+        kill(my_handle,SIGSTOP);
+        while (!isStopped(my_handle));
+    }
+    
+    cout << "Attach: after conditional stop" << endl;
     // can we attach?
     if (ptrace(PTRACE_ATTACH , my_handle, NULL, NULL) == -1)
     {
         // no, we got an error
         perror("ptrace attach error");
-        cerr << "attach failed on pid" << my_handle << endl;
+        cerr << "attach failed on pid " << my_handle << endl;
         return false;
     }
-    cout << "Attach_after_ptrace" << endl;
-    int status;
+    
+    cout << "Attach: after ptrace" << endl;
+    /*
     while(true)
     {
         // we wait on the pid
@@ -114,8 +157,8 @@ bool Process::attach()
         {
             break;
         }
-    }
-    cout << "Managed to attach to pid " << my_handle << endl;
+    }*/
+  //  cout << "Managed to attach to pid " << my_handle << endl;
     
     int proc_pid_mem = open(memFile.c_str(),O_RDONLY);
     if(proc_pid_mem == -1)
@@ -132,7 +175,7 @@ bool Process::attach()
         g_ProcessHandle = my_handle;
         
         g_ProcessMemFile = proc_pid_mem;
-        cout << "Attach_after_opening /proc/PID/mem" << endl;
+        cout << "Attach: after opening /proc/"<< my_handle <<"/mem" << endl;
         return true; // we are attached
     }
 }
@@ -161,10 +204,14 @@ bool Process::detach()
         }
         else
         {
-            cout << "detach: after detaching from "<< my_handle << endl;
+         //   cout << "detach: after detaching from "<< my_handle << endl;
             attached = false;
             g_pProcess = NULL;
             g_ProcessHandle = 0;
+            // continue, wait for it to recover
+            kill(my_handle,SIGCONT);
+            while (isStopped(my_handle));
+            // we finish
             return true;
         }
     }

@@ -122,7 +122,15 @@ bool Process::attach()
         {
             status = kill(my_handle,SIGSTOP);
             cout << "sent SIGSTOP" << endl;
-            if(status != -1) break;
+            if(status != -1)
+            {
+                break;
+            }
+            else
+            {
+                perror("kill(SIGSTOP)");
+                cin.ignore();
+            }
         }
         while (!isStopped(my_handle))
         {

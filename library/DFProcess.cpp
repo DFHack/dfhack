@@ -89,22 +89,17 @@ bool isStopped(pid_t pid)
     if(evil)
     {
         // zlo means evil in czech.
-        char zlo[256];
-        char zlo2[256];
+        char zlo[64];
         char test;
         // read first line, ignore
-        fgets(zlo,256,evil);
+        fgets(zlo,64,evil);
         // read second line
-        fgets(zlo,256,evil);
-        sscanf(zlo,"State: %c %s",&test, zlo2 );
+        fgets(zlo,64,evil);
+        sscanf(zlo,"State: %c",&test);
         fclose(evil);
         if(test == 'T')
         {
-            string crap = zlo2;
-            if(crap == "(stopped)")
-            {
-                return true;
-            }
+            return true;
         }
         return false;
     }
@@ -127,7 +122,7 @@ bool Process::attach()
         kill(my_handle,SIGSTOP);
         while (!isStopped(my_handle));
     }
-    
+    usleep(10000);
     cout << "Attach: after conditional stop" << endl;
     // can we attach?
     if (ptrace(PTRACE_ATTACH , my_handle, NULL, NULL) == -1)
@@ -137,7 +132,7 @@ bool Process::attach()
         cerr << "attach failed on pid " << my_handle << endl;
         return false;
     }
-    
+    usleep(10000);
     cout << "Attach: after ptrace" << endl;
     /*
     while(true)
@@ -182,6 +177,7 @@ bool Process::attach()
 
 bool Process::detach()
 {
+    if(!attached) return false;
     int result = 0;
     cout << "detach: start" << endl;
     result = close(g_ProcessMemFile);// close /proc/PID/mem
@@ -211,6 +207,7 @@ bool Process::detach()
             // continue, wait for it to recover
             kill(my_handle,SIGCONT);
             while (isStopped(my_handle));
+            usleep(10000);
             // we finish
             return true;
         }

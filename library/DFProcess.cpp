@@ -121,11 +121,7 @@ bool Process::attach()
         // kill (SIGSTOP)
         status = kill(my_handle,SIGSTOP);
         //cout << "sent SIGSTOP" << endl;
-        if(status != -1)
-        {
-            break;
-        }
-        else
+        if(status == -1)
         {
             perror("kill(SIGSTOP)");
             return false;

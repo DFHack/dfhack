@@ -120,7 +120,11 @@ bool Process::attach()
     if(!isStopped(my_handle))
     {
         kill(my_handle,SIGSTOP);
-        while (!isStopped(my_handle));
+        cout << "sent SIGSTOP" << endl;
+        while (!isStopped(my_handle))
+        {
+            cout << "wait step" << endl;
+        }
     }
     usleep(10000);
     cout << "Attach: after conditional stop" << endl;

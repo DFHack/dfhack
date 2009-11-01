@@ -110,7 +110,7 @@ bool isStopped(pid_t pid)
 bool Process::attach()
 {
     int status;
-    cout << "Attach: start" << endl;
+    //cout << "Attach: start" << endl;
     // check if another process is attached
     if(g_pProcess != NULL)
     {
@@ -118,28 +118,27 @@ bool Process::attach()
     }
     if(!isStopped(my_handle))
     {
-        for(int i = 0 ; i < 5 ; i++)
+        // kill (SIGSTOP)
+        status = kill(my_handle,SIGSTOP);
+        //cout << "sent SIGSTOP" << endl;
+        if(status != -1)
         {
-            status = kill(my_handle,SIGSTOP);
-            cout << "sent SIGSTOP" << endl;
-            if(status != -1)
-            {
-                break;
-            }
-            else
-            {
-                perror("kill(SIGSTOP)");
-                cin.ignore();
-            }
+            break;
         }
+        else
+        {
+            perror("kill(SIGSTOP)");
+            return false;
+        }
+        // wait for the process to stop
         while (!isStopped(my_handle))
         {
             usleep(5000);
-            cout << "wait step" << endl;
+            //cout << "wait step" << endl;
         }
     }
-    usleep(10000);
-    cout << "Attach: after conditional stop" << endl;
+    //usleep(10000);
+    //cout << "Attach: after conditional stop" << endl;
     // can we attach?
     if (ptrace(PTRACE_ATTACH , my_handle, NULL, NULL) == -1)
     {
@@ -148,8 +147,8 @@ bool Process::attach()
         cerr << "attach failed on pid " << my_handle << endl;
         return false;
     }
-    usleep(10000);
-    cout << "Attach: after ptrace" << endl;
+    //usleep(10000);
+    //cout << "Attach: after ptrace" << endl;
     /*
     while(true)
     {
@@ -186,7 +185,7 @@ bool Process::attach()
         g_ProcessHandle = my_handle;
         
         g_ProcessMemFile = proc_pid_mem;
-        cout << "Attach: after opening /proc/"<< my_handle <<"/mem" << endl;
+        //cout << "Attach: after opening /proc/"<< my_handle <<"/mem" << endl;
         return true; // we are attached
     }
 }
@@ -195,7 +194,7 @@ bool Process::detach()
 {
     if(!attached) return false;
     int result = 0;
-    cout << "detach: start" << endl;
+    //cout << "detach: start" << endl;
     result = close(g_ProcessMemFile);// close /proc/PID/mem
     if(result == -1)
     {
@@ -205,7 +204,7 @@ bool Process::detach()
     }
     else
     {
-        cout << "detach: after closing /proc/"<< my_handle <<"/mem" << endl;
+        //cout << "detach: after closing /proc/"<< my_handle <<"/mem" << endl;
         g_ProcessMemFile = -1;
         result = ptrace(PTRACE_DETACH, my_handle, NULL, NULL);
         if(result == -1)
@@ -223,7 +222,7 @@ bool Process::detach()
             // continue, wait for it to recover
             kill(my_handle,SIGCONT);
             while (isStopped(my_handle));
-            usleep(10000);
+            //usleep(10000);
             // we finish
             return true;
         }

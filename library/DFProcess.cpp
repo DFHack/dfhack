@@ -107,7 +107,6 @@ bool isStopped(pid_t pid)
     return true;
 }
 
-// shamelessly stolen from dwarf therapist code. credit should go to the author there :)
 bool Process::attach()
 {
     int status;
@@ -119,10 +118,15 @@ bool Process::attach()
     }
     if(!isStopped(my_handle))
     {
-        kill(my_handle,SIGSTOP);
-        cout << "sent SIGSTOP" << endl;
+        for(int i = 0 ; i < 5 ; i++)
+        {
+            status = kill(my_handle,SIGSTOP);
+            cout << "sent SIGSTOP" << endl;
+            if(status != -1) break;
+        }
         while (!isStopped(my_handle))
         {
+            usleep(5000);
             cout << "wait step" << endl;
         }
     }

@@ -29,6 +29,11 @@ TARGET_LINK_LIBRARIES(dfcreaturedump dfhack)
 ADD_EXECUTABLE(dfattachtest attachtest.cpp)
 TARGET_LINK_LIBRARIES(dfattachtest dfhack)
 
+# materialtest - just list the first material of each type
+ADD_EXECUTABLE(dfmaterialtest materialtest.cpp)
+TARGET_LINK_LIBRARIES(dfmaterialtest dfhack)
+
+
 IF(UNIX)
-  install(TARGETS dfexpbench dfreveal dfreveal dfprospector dfcleanmap dfcreaturedump dfattachtest RUNTIME DESTINATION bin)
+install(TARGETS dfexpbench dfreveal dfreveal dfprospector dfcleanmap dfcreaturedump dfattachtest dfmaterialtest RUNTIME DESTINATION bin)
 ENDIF(UNIX)

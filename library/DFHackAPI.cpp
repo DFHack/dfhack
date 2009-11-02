@@ -341,7 +341,7 @@ bool DFHackAPIImpl::ReadMetalMatgloss(vector<t_matgloss> & metals)
     int matgloss_address = offset_descriptor->getAddress("matgloss");
     int matgloss_offset = offset_descriptor->getHexValue("matgloss_skip");
     int matgloss_colors = offset_descriptor->getOffset("matgloss_metal_color");
-    DfVector p_matgloss = dm->readVector(matgloss_address + matgloss_offset*2, 4);
+    DfVector p_matgloss = dm->readVector(matgloss_address + matgloss_offset*3, 4);
 
     metals.clear();
 
@@ -367,7 +367,7 @@ bool DFHackAPIImpl::ReadPlantMatgloss(vector<t_matgloss> & plants)
 {
     int matgloss_address = offset_descriptor->getAddress("matgloss");
     int matgloss_offset = offset_descriptor->getHexValue("matgloss_skip");
-    DfVector p_matgloss = dm->readVector(matgloss_address + matgloss_offset*3, 4);
+    DfVector p_matgloss = dm->readVector(matgloss_address + matgloss_offset*2, 4);
 
     plants.clear();
 

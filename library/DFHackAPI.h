@@ -159,6 +159,8 @@ public:
     virtual uint32_t InitReadCreatures() = 0;
     virtual bool ReadCreature(const uint32_t &index, t_creature & furball) = 0;
     virtual void FinishReadCreatures() = 0;
+    
+    virtual void ReadRaw (const uint32_t &offset, const uint32_t &size, uint8_t *target) = 0;
 };
 
 #ifdef BUILD_DFHACK_LIB
@@ -305,6 +307,8 @@ public:
     uint32_t InitReadCreatures();
     bool ReadCreature(const uint32_t &index, t_creature & furball);
     void FinishReadCreatures();
+    
+    void ReadRaw (const uint32_t &offset, const uint32_t &size, uint8_t *target);
 };
 
 #endif

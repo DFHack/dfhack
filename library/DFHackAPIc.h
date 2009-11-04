@@ -133,7 +133,8 @@ extern "C"
     DFHACKAPI uint32_t DFHackAPI_InitReadCreatures (DFHackAPIHandle self);
     DFHACKAPI bool DFHackAPI_ReadCreature (DFHackAPIHandle self, const uint32_t *index, t_creature * furball);
     DFHACKAPI void DFHackAPI_FinishReadCreatures (DFHackAPIHandle self);
-
+    
+    DFHACKAPI void DFHackAPI_ReadRaw (DFHackAPIHandle self, const uint32_t &offset, const uint32_t &size, uint8_t *target);
 #ifdef __cplusplus
 }
 #endif // __cplusplus
@@ -472,7 +473,10 @@ public:
         DFHackAPI_FinishReadCreatures (handle);
     }
     
-    
+    inline void ReadRaw(const uint32_t &offset, const uint32_t &size, uint8_t *target)
+    {
+        DFHackAPI_ReadRaw(handle, offset, size, target);
+    }
 };
 #endif // __cplusplus
 

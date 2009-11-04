@@ -25,6 +25,11 @@ TARGET_LINK_LIBRARIES(dfcleanmap dfhack)
 ADD_EXECUTABLE(dfcreaturedump creaturedump.cpp)
 TARGET_LINK_LIBRARIES(dfcreaturedump dfhack)
 
+# buildingsdump - dump buildings and their raw data filtered by type
+ADD_EXECUTABLE(dfbuildingsdump buildingsdump.cpp)
+TARGET_LINK_LIBRARIES(dfbuildingsdump dfhack)
+
+
 # attachtest - 100x attach/detach, 100x reads, 100x writes
 ADD_EXECUTABLE(dfattachtest attachtest.cpp)
 TARGET_LINK_LIBRARIES(dfattachtest dfhack)

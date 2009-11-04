@@ -541,6 +541,7 @@ bool DFHackAPIImpl::ReadBuilding(const uint32_t &index, t_building & building)
     // transform
     int32_t type = -1;
     offset_descriptor->resolveClassId(temp, type);
+    building.origin = temp;
     building.vtable = bld_40d.vtable;
     building.x1 = bld_40d.x1;
     building.x2 = bld_40d.x2;
@@ -708,4 +709,9 @@ bool DFHackAPIImpl::Detach()
 bool DFHackAPIImpl::isAttached()
 {
 	return dm != NULL;
+}
+
+void DFHackAPIImpl::ReadRaw (const uint32_t &offset, const uint32_t &size, uint8_t *target)
+{
+    Mread(offset, size, target);
 }

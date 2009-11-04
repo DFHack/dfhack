@@ -352,7 +352,10 @@ extern "C"
     {
         self->FinishReadCreatures();
     }
-
+    DFHACKAPI void DFHackAPI_ReadRaw (DFHackAPIHandle self, const uint32_t &offset, const uint32_t &size, uint8_t *target)
+    {
+        self->ReadRaw(offset, size, target);
+    }
 #ifdef __cplusplus
 }
 #endif

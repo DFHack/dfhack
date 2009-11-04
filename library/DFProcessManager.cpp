@@ -157,7 +157,7 @@ bool ProcessManager::findProcessess()
             cmdline_path = dir_name + "cmdline";
             ifstream ifs ( cmdline_path.c_str() , ifstream::in );
             getline(ifs,cmdline);
-            if (cmdline.find("dwarfort.exe") != string::npos || cmdline.find("Dwarf Fortress.exe") != string::npos)
+            if (cmdline.find("dwarfort-w.exe") != string::npos || cmdline.find("dwarfort.exe") != string::npos || cmdline.find("Dwarf Fortress.exe") != string::npos)
             {
                 // put executable name and path together
                 exe_link = target_name;

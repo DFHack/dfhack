@@ -105,6 +105,7 @@ struct t_building_df40d
 //cooked
 struct t_building
 {
+    uint32_t origin;
     uint32_t vtable;
 
     uint32_t x1;

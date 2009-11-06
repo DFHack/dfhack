@@ -86,6 +86,8 @@
         <Offset name="biome_stuffs">0x1D64</Offset>
 
         <!-- creature offsets -->
+        <Offset name="first_name">0x00</Offset>
+        <Offset name="nick_name">0x1C</Offset>
         <Offset name="creature_position">0x94</Offset>
         <Offset name="creature_profession">0x88</Offset>
         <Offset name="creature_type">0x8C</Offset>
@@ -136,7 +138,7 @@
             <class vtable="0x0097beac" name="floor_bars"/>
             <class vtable="0x0097b0ec" name="cabinet"/>
             <class vtable="0x0097af8c" name="container"/>
-	    <class vtable="0x0097d60c" name="shop"/>
+            <class vtable="0x0097d60c" name="shop"/>
             <multiclass vtable="0x0097e10c" name="workshop" typeoffset="0xC8">
                 <class name="alchemists_laboratory" type="0x0"/>
                 <class name="carpenters_workshop"   type="0x1"/>
@@ -378,6 +380,8 @@
         <Address name="creatures">0x093326AC</Address>
         
         <!-- creature offsets -->
+        <Offset name="first_name">0x00</Offset>
+        <Offset name="nick_name">0x04</Offset>
         <Offset name="creature_position">0x4C</Offset>
         <Offset name="creature_type">0x44</Offset>
         <Offset name="creature_flags1">0x90</Offset>

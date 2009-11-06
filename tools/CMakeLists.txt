@@ -40,5 +40,17 @@ TARGET_LINK_LIBRARIES(dfmaterialtest dfhack)
 
 
 IF(UNIX)
-install(TARGETS dfexpbench dfreveal dfreveal dfprospector dfcleanmap dfcreaturedump dfattachtest dfmaterialtest RUNTIME DESTINATION bin)
+install(TARGETS
+dfexpbench
+dfreveal
+dfreveal
+dfprospector
+dfcleanmap
+dfcreaturedump
+dfattachtest
+dfmaterialtest
+dfbuildingsdump
+RUNTIME DESTINATION bin
+
+)
 ENDIF(UNIX)

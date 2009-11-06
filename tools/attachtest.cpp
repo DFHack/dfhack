@@ -65,8 +65,10 @@ int main (void)
     
     time_diff = difftime(end, start);
     cout << "attach tests done in " << time_diff << " seconds." << endl;
-    cout << "Press any key to continue" << endl;
+    #ifndef LINUX_BUILD
+    cout << "Done. Press any key to continue" << endl;
     cin.ignore();
+    #endif
     
     delete pDF;
     return 0;

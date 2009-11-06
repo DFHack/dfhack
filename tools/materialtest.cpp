@@ -39,8 +39,10 @@ int main (void)
     
     DF.Detach();
     delete pDF;
-    
+    #ifndef LINUX_BUILD
+    cout << "Done. Press any key to continue" << endl;
     cin.ignore();
+    #endif
     
     return 0;
 }

@@ -159,7 +159,7 @@ int main (int argc, const char* argv[])
                         {
                             materials[tempvein[xi][yi]] = 1;
                         }
-                    }    
+                    }
                 }
             }
         }
@@ -171,7 +171,10 @@ int main (int argc, const char* argv[])
         cout << stonetypes[p->first].id << " : " << p->second << endl;
     }
     DF.Detach();
+    #ifndef LINUX_BUILD
+    cout << "Done. Press any key to continue" << endl;
     cin.ignore();
+    #endif
     delete pDF;
     return 0;
 }

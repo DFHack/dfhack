@@ -41,6 +41,8 @@ distribution.
 #	endif
 #endif
 
+#define BUILD_DFHACK_LIB
+
 #include <string>
 #include <vector>
 #include "integers.h"
@@ -190,6 +192,8 @@ private:
     uint32_t creature_type_offset;
     uint32_t creature_flags1_offset;
     uint32_t creature_flags2_offset;
+    uint32_t creature_first_name_offset;
+    uint32_t creature_nick_name_offset;
     
     ProcessManager* pm;
     Process* p;

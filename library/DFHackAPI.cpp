@@ -647,7 +647,10 @@ uint32_t DFHackAPIImpl::InitReadCreatures()
     creature_type_offset = offset_descriptor->getOffset("creature_type");
     creature_flags1_offset = offset_descriptor->getOffset("creature_flags1");
     creature_flags2_offset = offset_descriptor->getOffset("creature_flags2");
-    assert(creatures && creature_pos_offset && creature_type_offset && creature_flags1_offset && creature_flags2_offset);
+    creature_first_name_offset = offset_descriptor->getOffset("first_name");
+    creature_nick_name_offset = offset_descriptor->getOffset("nick_name");
+    assert(creatures && creature_pos_offset && creature_type_offset &&
+    creature_flags1_offset && creature_flags2_offset && creature_nick_name_offset);
     p_cre = new DfVector(dm->readVector(creatures, 4));
     return p_cre->getSize();
 }
@@ -664,6 +667,9 @@ bool DFHackAPIImpl::ReadCreature(const uint32_t &index, t_creature & furball)
     Mread(temp + creature_type_offset, sizeof(uint32_t), (uint8_t *) &furball.type);
     Mread(temp + creature_flags1_offset, sizeof(uint32_t), (uint8_t *) &furball.flags1);
     Mread(temp + creature_flags2_offset, sizeof(uint32_t), (uint8_t *) &furball.flags2);
+    // names.
+    furball.first_name = dm->readSTLString(temp+creature_first_name_offset);
+    furball.nick_name = dm->readSTLString(temp+creature_nick_name_offset);
     return true;
 }
 

@@ -388,6 +388,8 @@ struct t_creature
     uint32_t type;
     t_creaturflags1 flags1;
     t_creaturflags2 flags2;
+    string first_name;
+    string nick_name;
 };
 
 // TODO: research this further? consult DF hacker wizards?

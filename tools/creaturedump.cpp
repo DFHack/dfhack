@@ -46,7 +46,21 @@ int main (void)
         t_creature temp;
         DF.ReadCreature(i, temp);
         cout << "creature type " << creaturestypes[temp.type].id << ", position:" << temp.x << " " << temp.y << " "<< temp.z << endl;
-        
+        bool addendl = false;
+        if(!temp.first_name.empty())
+        {
+            cout << "first name: " << temp.first_name;
+            addendl = true;
+        }
+        if(!temp.nick_name.empty())
+        {
+            cout << ", nick name: " << temp.nick_name;
+            addendl = true;
+        }
+        if(addendl)
+        {
+            cout << endl;
+        }
         /*
          * FLAGS 1
          */
@@ -112,7 +126,9 @@ int main (void)
     DF.FinishReadCreatures();
     DF.Detach();
     delete pDF;
+    #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();
+    #endif
     return 0;
 }

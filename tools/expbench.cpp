@@ -63,8 +63,10 @@ int main (void)
     cout << num_blocks << " blocks read" << endl;
     cout << bytes_read / (1024 * 1024) << " MB" << endl;
     cout << "map export tests done in " << time_diff << " seconds." << endl;
-    cout << "Press any key to continue" << endl;
+    #ifndef LINUX_BUILD
+    cout << "Done. Press any key to continue" << endl;
     cin.ignore();
+    #endif
     delete pDF;
     return 0;
 }

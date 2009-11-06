@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 #include <climits>
 #include <integers.h>
 #include <vector>
@@ -62,7 +63,7 @@ void interleave_hex (DFHackAPI& DF, vector < uint32_t > & addresses, uint32_t le
     cout << setfill('0');
 
     // output a header
-    cout << "       ";
+    cout << "line offset ";
     for (int obj = 0; obj < addresses.size(); obj++)
     {
         cout << "0x" << hex << setw(9) << addresses[obj] << "  ";
@@ -75,6 +76,9 @@ void interleave_hex (DFHackAPI& DF, vector < uint32_t > & addresses, uint32_t le
         {
             cout << endl;
         }
+        cout << setfill(' ');
+        cout << dec << setw(4) << offs/4 << " ";
+        cout << setfill('0');
         cout << "0x" << hex << setw(4) << offs << " ";
         for (int object = 0; object < bufs.size(); object++)
         {
@@ -108,7 +112,21 @@ void print_bits ( T val, std::ostream& out )
 
 int main (int argc,const char* argv[])
 {
-    if (argc != 2) return 1;
+    if (argc < 2 || argc > 3)
+    {
+        cout << "usage:" << endl;
+        cout << argv[0] << " object_name [number of lines]" << endl;
+        return 0;
+    }
+    int lines = 16;
+    if(argc == 3)
+    {
+        string s = argv[2]; //blah. I don't care
+        istringstream ins; // Declare an input string stream.
+        ins.str(s);        // Specify string to read.
+        ins >> lines;     // Reads the integers from the string.
+    }
+    
     vector<t_matgloss> creaturestypes;
     
     DFHackAPI *pDF = CreateDFHackAPI("Memory.xml");
@@ -133,11 +151,13 @@ int main (int argc,const char* argv[])
             addresses.push_back(temp.origin);
         }
     }
-    interleave_hex(DF,addresses,16);
+    interleave_hex(DF,addresses,lines / 4);
     DF.FinishReadBuildings();
     DF.Detach();
     delete pDF;
+#ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();
+#endif
     return 0;
 }

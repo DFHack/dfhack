@@ -647,25 +647,25 @@ uint32_t DFHackAPIImpl::InitReadCreatures()
     creature_type_offset = offset_descriptor->getOffset("creature_type");
     creature_flags1_offset = offset_descriptor->getOffset("creature_flags1");
     creature_flags2_offset = offset_descriptor->getOffset("creature_flags2");
-    creature_first_name_offset = offset_descriptor->getOffset("first_name");
-    creature_nick_name_offset = offset_descriptor->getOffset("nick_name");
-    creature_last_name_offset = offset_descriptor->getOffset("last_name");
-    creature_custom_profession_offset = offset_descriptor->getOffset("custom_profession");
-    creature_profession_offset = offset_descriptor->getOffset("creature_profession");
-    creature_sex_offset = offset_descriptor->getOffset("sex");
-    creature_id_offset = offset_descriptor->getOffset("id");
-    creature_squad_name_offset = offset_descriptor->getOffset("squad_name");
-    creature_squad_leader_id_offset = offset_descriptor->getOffset("squad_leader_id");
-    creature_money_offset = offset_descriptor->getOffset("money");
-    creature_current_job_offset = offset_descriptor->getOffset("current_job");
-    creature_current_job_id_offset = offset_descriptor->getOffset("current_job_id");
-    creature_strength_offset = offset_descriptor->getOffset("strength");
-    creature_agility_offset = offset_descriptor->getOffset("agility");
-    creature_toughness_offset = offset_descriptor->getOffset("toughness");
-    creature_skills_offset = offset_descriptor->getOffset("skills");
-    creature_labors_offset = offset_descriptor->getOffset("labors");
-    creature_happiness_offset = offset_descriptor->getOffset("happiness");
-    creature_traits_offset = offset_descriptor->getOffset("traits");
+    creature_first_name_offset = offset_descriptor->getOffset("creature_first_name");
+    creature_nick_name_offset = offset_descriptor->getOffset("creature_nick_name");
+    creature_last_name_offset = offset_descriptor->getOffset("creature_last_name");
+    creature_custom_profession_offset = offset_descriptor->getOffset("creature_custom_profession");
+    creature_profession_offset = offset_descriptor->getOffset("creature_creature_profession");
+    creature_sex_offset = offset_descriptor->getOffset("creature_sex");
+    creature_id_offset = offset_descriptor->getOffset("creature_id");
+    creature_squad_name_offset = offset_descriptor->getOffset("creature_squad_name");
+    creature_squad_leader_id_offset = offset_descriptor->getOffset("creature_squad_leader_id");
+    creature_money_offset = offset_descriptor->getOffset("creature_money");
+    creature_current_job_offset = offset_descriptor->getOffset("creature_current_job");
+    creature_current_job_id_offset = offset_descriptor->getOffset("creature_current_job_id");
+    creature_strength_offset = offset_descriptor->getOffset("creature_strength");
+    creature_agility_offset = offset_descriptor->getOffset("creature_agility");
+    creature_toughness_offset = offset_descriptor->getOffset("creature_toughness");
+    creature_skills_offset = offset_descriptor->getOffset("creature_skills");
+    creature_labors_offset = offset_descriptor->getOffset("creature_labors");
+    creature_happiness_offset = offset_descriptor->getOffset("creature_happiness");
+    creature_traits_offset = offset_descriptor->getOffset("creature_traits");
     assert(creatures && creature_pos_offset && creature_type_offset &&
     creature_flags1_offset && creature_flags2_offset && creature_nick_name_offset
     && creature_custom_profession_offset

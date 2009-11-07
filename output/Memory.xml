@@ -35,6 +35,328 @@
         <Offset name="occupancy">0x0664</Offset>
     </Entry>-->
 
+    <Entry version="meta-40d" os="all" id="meta-40d">
+        <Profession can_assign_labors="true" is_military="false" name="Miner">0</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Woodworker">1</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Carpenter">2</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Bowyer">3</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Woodcutter">4</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Stoneworker">5</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Engraver">6</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Mason">7</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Ranger">8</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Animal Caretaker">9</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Animal Trainer">10</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Hunter">11</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Trapper">12</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Animal Dissector">13</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Metalsmith">14</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Furnace Operator">15</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Weaponsmith">16</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Armorer">17</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Blacksmith">18</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Metalcrafter">19</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Jeweler">20</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Gem Cutter">21</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Gem Setter">22</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Craftsdwarf">23</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Woodcrafter">24</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Stonecrafter">25</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Leatherworker">26</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Bone Carver">27</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Weaver">28</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Clothier">29</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Glassmaker">30</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Strand Extractor">31</Profession>
+        <Profession can_assign_labors="false" female_name="Queen" is_military="false" name="King">32</Profession>
+        <Profession can_assign_labors="false" female_name="Queen Consort" is_military="false" name="King Consort">33</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Fishery Worker">34</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Fisherdwarf">35</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Fish Dissector">36</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Fish Cleaner">37</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Farmer">38</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Cheese Maker">39</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Milker">40</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Cook">41</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Thresher">42</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Miller">43</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Butcher">44</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Tanner">45</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Dyer">46</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Planter">47</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Herbalist">48</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Brewer">49</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Soap Maker">50</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Potash Maker">51</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Lye Maker">52</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Wood Burner">53</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Engineer">54</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Mechanic">55</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Siege Engineer">56</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Siege Operator">57</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Pump Operator">58</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Clerk">59</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Administrator">60</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Trader">61</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Architect">62</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Alchemist">63</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Tax Collector">64</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Hammerer">65</Profession>
+        <Profession can_assign_labors="false" female_name="Baroness" is_military="false" name="Baron">66</Profession>
+        <Profession can_assign_labors="false" female_name="Countess" is_military="false" name="Count">67</Profession>
+        <Profession can_assign_labors="false" female_name="Duchess" is_military="false" name="Duke">68</Profession>
+        <Profession can_assign_labors="false" female_name="Baroness Consort" is_military="false" name="Baron Consort">69</Profession>
+        <Profession can_assign_labors="false" female_name="Countess Consort" is_military="false" name="Count Consort">70</Profession>
+        <Profession can_assign_labors="false" female_name="Duchess Consort" is_military="false" name="Duke Consort">71</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Philosopher">72</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Advisor">73</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Dungeon Master">74</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Merchant">75</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Diplomat">76</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Guild Representative">77</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Merchant Baroness">78</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Merchant Princess">79</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Outpost Liaison">80</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Druid">81</Profession>
+        <Profession can_assign_labors="false" is_military="true" name="Champion">82</Profession>
+        <Profession can_assign_labors="true" is_military="true" name="Hammerdwarf">83</Profession>
+        <Profession can_assign_labors="false" is_military="true" name="Hammer Lord">84</Profession>
+        <Profession can_assign_labors="true" is_military="true" name="Speardwarf">85</Profession>
+        <Profession can_assign_labors="false" is_military="true" name="Spearmaster">86</Profession>
+        <Profession can_assign_labors="true" is_military="true" name="Marksdwarf">87</Profession>
+        <Profession can_assign_labors="false" is_military="true" name="Elite Crossbowdwarf">88</Profession>
+        <Profession can_assign_labors="true" is_military="true" name="Wrestler">89</Profession>
+        <Profession can_assign_labors="false" is_military="true" name="Elite Wrestler">90</Profession>
+        <Profession can_assign_labors="true" is_military="true" name="Axedwarf">91</Profession>
+        <Profession can_assign_labors="false" is_military="true" name="Axe Lord">92</Profession>
+        <Profession can_assign_labors="true" is_military="true" name="Swordsdwarf">93</Profession>
+        <Profession can_assign_labors="false" is_military="true" name="Swordmaster">94</Profession>
+        <Profession can_assign_labors="true" is_military="true" name="Macedwarf">95</Profession>
+        <Profession can_assign_labors="false" is_military="true" name="Mace Lord">96</Profession>
+        <Profession can_assign_labors="true" is_military="true" name="Pikedwarf">97</Profession>
+        <Profession can_assign_labors="false" is_military="true" name="Pikemaster">98</Profession>
+        <Profession can_assign_labors="false" is_military="true" name="Bowdwarf">99</Profession>
+        <Profession can_assign_labors="false" is_military="true" name="Elite Bowdwarf">100</Profession>
+        <Profession can_assign_labors="false" is_military="true" name="Blowgunner">101</Profession>
+        <Profession can_assign_labors="false" is_military="true" name="Elite Bowgunner">102</Profession>
+        <Profession can_assign_labors="true" is_military="true" name="Recruit">103</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="?Hunting creature?">104</Profession>
+        <Profession name= "?War creature?" can_assign_labors="false" is_military="false">105</Profession>
+        <Profession name="?Master thief?" can_assign_labors="false" is_military="false">106</Profession>
+        <Profession name="?Thief?" can_assign_labors="false" is_military="false">107</Profession>
+        <Profession can_assign_labors="true" is_military="false" name="Peasant">108</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Child">109</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Baby">110</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Drunk">111</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Lasher">112</Profession>
+        <Profession can_assign_labors="false" is_military="false" name="Master Lasher">113</Profession>
+        
+        <Job name="Carve Fortification">0</Job>
+        <Job name="Detail Wall">1</Job>
+        <Job name="Detail Floor">2</Job>
+        <Job name="Dig">3</Job>
+        <Job name="Carve Upward Staircase">4</Job>
+        <Job name="Carve Downward Staircase">5</Job>
+        <Job name="Carve Up/Down Staircase">6</Job>
+        <Job name="Carve Ramp">7</Job>
+        <Job name="Dig Channel">8</Job>
+        <Job name="Fell Tree">9</Job>
+        <Job name="Gather Plants">10</Job>
+        <Job name="Remove Construction">11</Job>
+        <Job name="Collect Webs">12</Job>
+        <Job name="Bring Item to Depot">13</Job>
+        <Job name="Bring Item to Shop">14</Job>
+        <Job name="Eat">15</Job>
+        <Job name="Get Provisions">16</Job>
+        <Job name="Drink">17</Job>
+        <Job name="Drink">18</Job>
+        <Job name="Fill Waterskin">19</Job>
+        <Job name="Sleep">20</Job>
+        <Job name="Collect Sand">21</Job>
+        <Job name="Fish">22</Job>
+        <Job name="Hunt">23</Job>
+        <Job name="Hunt for Small Creature">24</Job>
+        <Job name="Kidnap">25</Job>
+        <Job name="Beat Criminal">26</Job>
+        <Job name="Starting Fist Fight">27</Job>
+        <Job name="Collect Taxes">28</Job>
+        <Job name="Guard Tax Collector">29</Job>
+        <Job name="Catch Live Land Animal">30</Job>
+        <Job name="Catch Live Fish">31</Job>
+        <Job name="Return Kill">32</Job>
+        <Job name="Check Chest">33</Job>
+        <Job name="Store Owned Item">34</Job>
+        <Job name="Place Item in Tomb">35</Job>
+        <Job name="Store Item in Stockpile">36</Job>
+        <Job name="Store Item in Bag">37</Job>
+        <Job name="Store Item in Chest">38</Job>
+        <Job name="Store Item in Cabinet">39</Job>
+        <Job name="Store Weapon">40</Job>
+        <Job name="Store Armor">41</Job>
+        <Job name="Store Item in Barrel">42</Job>
+        <Job name="Store Item in Bin">43</Job>
+        <Job name="Seek Artifact">44</Job>
+        <Job name="Seek Infant">45</Job>
+        <Job name="Attend Party">46</Job>
+        <Job name="Shooting at Archery Range">47</Job>
+        <Job name="Sparring in Barracks">48</Job>
+        <Job name="Go Shopping A">49</Job>
+        <Job name="Go Shopping B">50</Job>
+        <Job name="Clean">51</Job>
+        <Job name="Rest">52</Job>
+        <Job name="Pickup Equipment">53</Job>
+        <Job name="Dump Item">54</Job>
+        <Job name="Strange Mood Crafter">55</Job>
+        <Job name="Strange Mood Jeweller">56</Job>
+        <Job name="Strange Mood C">57</Job>
+        <Job name="Strange Mood Metal">58</Job>
+        <Job name="Strange Mood E">59</Job>
+        <Job name="Strange Mood F">60</Job>
+        <Job name="Strange Mood Carpenter">61</Job>
+        <Job name="Strange Mood Mason">62</Job>
+        <Job name="Strange Mood Bowyer">63</Job>
+        <Job name="Strange Mood Tanner">64</Job>
+        <Job name="Strange Mood Weaver">65</Job>
+        <Job name="Strange Mood Glassmaker">66</Job>
+        <Job name="Strange Mood Mechanics">67</Job>
+        <Job name="Construct Building">68</Job>
+        <Job name="Construct Door">69</Job>
+        <Job name="Construct Floodgate">70</Job>
+        <Job name="Construct Bed">71</Job>
+        <Job name="Construct  Chair">72</Job>
+        <Job name="Construct  Coffin">73</Job>
+        <Job name="Construct Table">74</Job>
+        <Job name="Construct  Chest">75</Job>
+        <Job name="Construct Bin">76</Job>
+        <Job name="Construct Armor Stand">77</Job>
+        <Job name="Construct Weapon Rack">78</Job>
+        <Job name="Construct Cabinet">79</Job>
+        <Job name="Construct  Statue">80</Job>
+        <Job name="Construct XXX">81</Job>
+        <Job name="Make Raw XXX">82</Job>
+        <Job name="Make crafts">83</Job>
+        <Job name="Mint stuff">84</Job>
+        <Job name="Cut XX A">85</Job>
+        <Job name="Cut XX B">86</Job>
+        <Job name="Encrust">87</Job>
+        <Job name="?">88</Job>
+        <Job name="Destroy Building">89</Job>
+        <Job name="Smelt  Ore">90</Job>
+        <Job name="Smelt">91</Job>
+        <Job name="Melt a Metal Object">92</Job>
+        <Job name="Extract Metal Strands">93</Job>
+        <Job name="Tan a Hide">94</Job>
+        <Job name="Plant Seeds">95</Job>
+        <Job name="Harvest Plants">96</Job>
+        <Job name="Train Hunting Animal">97</Job>
+        <Job name="Train War Animal">98</Job>
+        <Job name="Forge/Make DDD ">99</Job>
+        <Job name="Forge  Anvil">100</Job>
+        <Job name="Construct Catapult Parts">101</Job>
+        <Job name="Construct Ballista Parts">102</Job>
+        <Job name="Forge/Make A">103</Job>
+        <Job name="Forge/Make B">104</Job>
+        <Job name="Forge/Make C">105</Job>
+        <Job name="Stud With XX">106</Job>
+        <Job name="Butcher an Animal">107</Job>
+        <Job name="Prepare a Raw Fish">108</Job>
+        <Job name="Mill Plants">109</Job>
+        <Job name="Bait Trap">110</Job>
+        <Job name="Milk Creature">111</Job>
+        <Job name="Make Cheese">112</Job>
+        <Job name="Process Plants">113</Job>
+        <Job name="Process Plants (Bag)">114</Job>
+        <Job name="Process Plants (Vial)">115</Job>
+        <Job name="Process Plants (Barrel)">116</Job>
+        <Job name="Prepare Meal">117</Job>
+        <Job name="Weave Thread">118</Job>
+        <Job name="Forge/Make D">119</Job>
+        <Job name="Forge/Make E">120</Job>
+        <Job name="Forge/Make F">121</Job>
+        <Job name="Forge Cage">122</Job>
+        <Job name="Forge Rope">123</Job>
+        <Job name="Forge  Flask">124</Job>
+        <Job name="Forge  Goblet">125</Job>
+        <Job name="Forge  Instrument">126</Job>
+        <Job name="Forge  Toy">127</Job>
+        <Job name="Forge  Animal Trap">128</Job>
+        <Job name="Forge  Barrel">129</Job>
+        <Job name="Forge  Bucket">130</Job>
+        <Job name="Forge  Window">131</Job>
+        <Job name="Make Totem">132</Job>
+        <Job name="Forge/Make G">133</Job>
+        <Job name="Decorate With Bone">134</Job>
+        <Job name="Make Backpack">135</Job>
+        <Job name="Make Quiver">136</Job>
+        <Job name="Forge Ballista Arrow Head">137</Job>
+        <Job name="Assemble">138</Job>
+        <Job name="Load Catapult">139</Job>
+        <Job name="Load Ballista">140</Job>
+        <Job name="Fire Catapult">141</Job>
+        <Job name="Fire Ballista">142</Job>
+        <Job name="Construct Mechanisms">143</Job>
+        <Job name="Forge/Make H">144</Job>
+        <Job name="Load Cage Trap">145</Job>
+        <Job name="Load Stone Trap">146</Job>
+        <Job name="Load Weapon Trap">147</Job>
+        <Job name="Clean Trap">148</Job>
+        <Job name="Cast Spell">149</Job>
+        <Job name="Link a Building to Trigger">150</Job>
+        <Job name="Pull the Lever">151</Job>
+        <Job name="Brew Drink">152</Job>
+        <Job name="?">153</Job>
+        <Job name="Extract from Plants">154</Job>
+        <Job name="Extract from Raw Fish">155</Job>
+        <Job name="Extract from Land Animal">156</Job>
+        <Job name="Tame a Small Animal">157</Job>
+        <Job name="Tame Large Animal">158</Job>
+        <Job name="Chain Animal">159</Job>
+        <Job name="Unchain Animal">160</Job>
+        <Job name="Unchain Pet">161</Job>
+        <Job name="Releasing Large Creature">162</Job>
+        <Job name="Releasing Pet">163</Job>
+        <Job name="Releasing Small Creature">164</Job>
+        <Job name="Handling Small Creature">165</Job>
+        <Job name="Handling Large Creature">166</Job>
+        <Job name="Large Creature Caging">167</Job>
+        <Job name="Small Creature Caging">168</Job>
+        <Job name="Recover Wounded">169</Job>
+        <Job name="Drain Aquarium">170</Job>
+        <Job name="Fill Aquarium">171</Job>
+        <Job name="Fill Pond">172</Job>
+        <Job name="Give Water A">173</Job>
+        <Job name="Give Food A">174</Job>
+        <Job name="Give Water B">175</Job>
+        <Job name="Give Food B">176</Job>
+        <Job name="Recover Pet">177</Job>
+        <Job name="Pit/Pond Large Animal">178</Job>
+        <Job name="Pit/Pond Small Animal">179</Job>
+        <Job name="Slaughter Animal">180</Job>
+        <Job name="Make Charcoal">181</Job>
+        <Job name="Make Ash">182</Job>
+        <Job name="Make Lye">183</Job>
+        <Job name="Make Potash From Lye">184</Job>
+        <Job name="Make Pearlash">185</Job>
+        <Job name="Render Fat">186</Job>
+        <Job name="Make Soap">187</Job>
+        <Job name="Fertilize Field">188</Job>
+        <Job name="Make Potash From Ash">189</Job>
+        <Job name="Dye Thread">190</Job>
+        <Job name="Dye Cloth">191</Job>
+        <Job name="Sew  Image">192</Job>
+        <Job name="Forge  Tube">193</Job>
+        <Job name="Operate Pump">194</Job>
+        <Job name="Manage Work Orders">195</Job>
+        <Job name="Update Stockpile Records">196</Job>
+        <Job name="Trade at Depot">197</Job>
+        <Job name="Construct Hatch Cover">198</Job>
+        <Job name="Construct Grate">199</Job>
+        <Job name="Remove Stairs/Ramps">200</Job>
+        <Job name="Construct  Quern">201</Job>
+        <Job name="Construct  Millstone">202</Job>
+    </Entry>
+
+
                     .,:rsr,
                   :2;,;r2A@@5
                   @2::s5A#@@@ @r.       .
@@ -55,7 +377,7 @@
                        and
                      W I N E
 
-    <Entry version="v0.28.181.40d" os="windows" id="40dwin">
+    <Entry version="v0.28.181.40d" os="windows" id="40dwin" base="meta-40d">
         <!-- identification -->
         <HexValue name="pe_timestamp">0x48C330DF</HexValue>
         <String name="md5">2c686c26307dcccd7c36cc79737ebe4f</String>
@@ -93,6 +415,24 @@
         <Offset name="creature_type">0x8C</Offset>
         <Offset name="creature_flags1">0xE4</Offset>
         <Offset name="creature_flags2">0xE8</Offset>
+        <Offset name="custom_profession">0x6c</Offset>
+        <Offset name="profession">0x88</Offset>
+        <Offset name="race">0x8C</Offset>
+        <Offset name="flags1">0xFC</Offset>
+        <Offset name="flags2">0x100</Offset>
+        <Offset name="sex">0x10A</Offset>
+        <Offset name="id">0x10C</Offset>
+        <Offset name="squad_name">0x1D8</Offset>
+        <Offset name="squad_leader_id">0x268</Offset>
+        <Offset name="money">0x2F8</Offset>
+        <Offset name="current_job">0x314</Offset>
+        <Offset name="strength">0x4f0</Offset>
+        <Offset name="agility">0x4f4</Offset>
+        <Offset name="toughness">0x4f8</Offset>
+        <Offset name="skills">0x504</Offset>
+        <Offset name="labors">0x544</Offset>
+        <Offset name="happiness">0x610</Offset>
+        <Offset name="traits">0x700</Offset>
 
         <!-- tree and shrub offsets -->
         <Offset name="tree_desc_offset">0x70</Offset>
@@ -310,6 +650,7 @@
         <Address name="matgloss">0x015FCE3C</Address>
         <!-- door: 0x8db5e4 -->
         <VTable rebase="-0xDC00" />
+				
     </Entry>
     <Entry version="v0.28.181.40d13" os="windows" id="40d13win" base="40d12win" rebase="0x5090">
         <!-- identification -->
@@ -341,7 +682,13 @@
         <String name="md5">59ab29021aca9f3c66b1ab102fb3ceea</String>
         <!-- map_data = 0x01601D84 -->
         <!-- door: 0x8e15d4, no VTable rebase needed -->
-    </Entry>
+		<!-- translation tables -->
+		<Address name="translation_vector">0x01604134</Address>
+		<Address name="language_vector">0x01604104</Address>
+		<Offset name="last_name">0x38</Offset>
+		<Offset name="word_table">0x58</Offset>
+		<Offset name="current_job_id">0x08</Offset>
+		</Entry>
 
                             .-"""-.
                            '       \
@@ -363,7 +710,7 @@
                    `"--...,+""""   `._,.-' 
 
 
-    <Entry version="v0.28.181.40d9" os="linux" id="40d9lin">
+    <Entry version="v0.28.181.40d9" os="linux" id="40d9lin" base="meta-40d">
         <!-- identification -->
         <String name="md5">992afd73855e787860277f53d18afcbb</String>
 
@@ -382,6 +729,7 @@
         <!-- creature offsets -->
         <Offset name="first_name">0x00</Offset>
         <Offset name="nick_name">0x04</Offset>
+        <Offset name="last_name">0x38</Offset>
         <Offset name="creature_position">0x4C</Offset>
         <Offset name="creature_type">0x44</Offset>
         <Offset name="creature_flags1">0x90</Offset>
@@ -389,17 +737,17 @@
         
         <!-- tree and shrub offsets -->
         <Offset name="tree_desc_offset">0x40</Offset>
-
+        
         <!-- size of the map -->
         <Address name="x_count">0x09372FD4</Address>
         <Address name="y_count">0x09372FD8</Address>
         <Address name="z_count">0x09372FDC</Address>
-
+        
         <!-- position of the map in world coords -->
         <Address name="region_x">0x09372FEC</Address>
         <Address name="region_y">0x09372FF0</Address>
         <Address name="region_z">0x09372FF4</Address>
-
+        
         <!-- map block offsets -->
         <Offset name="v_vein">0x08</Offset>
         <HexValue name="v_vein_size">0x2C</HexValue>
@@ -407,21 +755,21 @@
         <Offset name="designation">0x0254</Offset>
         <Offset name="occupancy">0x0654</Offset>
         <Offset name="biome_stuffs">0x1D54</Offset>
-
+        
         <!-- the world and its offsets -->
         <Address name="world">0x093745EC</Address>
         <Offset name="world_size_x">0x54</Offset>
         <Offset name="world_size_y">0x56</Offset>
         <Offset name="w_geoblocks">0x5A4</Offset>
         <Offset name="w_regions_arr">0x5C8</Offset>
-
+        
         <!-- values for the region structure -->
         <HexValue name="region_size">0x58</HexValue>
         <Offset name="region_geo_index_off">0x54</Offset>
-
+        
         <!-- geoblock offset(s?) -->
         <Offset name="geolayer_geoblock_offset">0x4</Offset>
-
+        
         <!-- matgloss vectors -->
         <Address name="matgloss">0x9374E88</Address>
         <HexValue name="matgloss_skip">0xC</HexValue>
@@ -444,7 +792,7 @@
             <class vtable="0x0879ab68" name="floor_bars"/>
             <class vtable="0x0879a568" name="cabinet"/>
             <class vtable="0x0879a3e8" name="container"/>
-	    <class vtable="0x0879a268" name="shop"/>
+            <class vtable="0x0879a268" name="shop"/>
             <multiclass vtable="0x08799688" name="workshop" typeoffset="0xAC">
                 <class name="alchemists_laboratory" type="0x0"/>
                 <class name="carpenters_workshop"   type="0x1"/>
@@ -525,27 +873,27 @@
     <Entry version="v0.28.181.40d12" os="linux" base="40d9lin" id="40d12lin">
         <!-- identification -->
         <String name="md5">4367c59934cbcf14f43fd3af6444c455</String>
-
+        
         <!-- map data -->
         <Address name="map_data">0x08F95BBC</Address>
         <Address name="constructions">0x08F41918</Address>
         <Address name="buildings">0x08F55740</Address>
         <Address name="vegetation">0x08F58890</Address>
         <Address name="creatures">0x08F55250</Address>
-
+        
         <!-- size of the map -->
         <Address name="x_count">0x08F95BD0</Address>
         <Address name="y_count">0x08F95BD4</Address>
         <Address name="z_count">0x08F95BD8</Address>
-
+        
         <!-- position of the map in world coords -->
         <Address name="region_x">0x08F95BE8</Address>
         <Address name="region_y">0x08F95BEC</Address>
         <Address name="region_z">0x08F95BF0</Address>
-
+        
         <!-- the world and its offsets -->
         <Address name="world">0x08F971E8</Address>
-
+        
         <!-- matgloss vectors -->
         <Address name="matgloss">0x08F97A84</Address>
         <VTable rebase="-0xd6f00" />
@@ -578,6 +926,7 @@
         <!-- map_data = 0x8F9ABDC -->
         <!--<class vtable="0x086c78c8" name="door"/>-->
     </Entry>
+
 </MemoryDescriptors>
 <!-- Windows logo by M$, spiderweb by jgs -->
 </DFExtractor>

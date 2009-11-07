@@ -27,10 +27,10 @@ distribution.
 
 struct t_matgloss
 {
-       char id[128];
-       uint8_t fore; // Annoyingly the offset for this differs between types
-       uint8_t back;
-       uint8_t bright;
+    char id[128];
+    uint8_t fore; // Annoyingly the offset for this differs between types
+    uint8_t back;
+    uint8_t bright;
 };
 struct t_vein
 {
@@ -72,18 +72,18 @@ struct t_construction
 };
 
 /*
-		dword vtable;
-		int minx;
-		int miny;
-		int centerx;
-		int maxx;
-		int maxy;
-		int centery;
-		int z;
-		dword height_not_used;
-		word  mattype;
-		word  matgloss;
-		word  type; // NOTE: the actual field is in a different place
+        dword vtable;
+        int minx;
+        int miny;
+        int centerx;
+        int maxx;
+        int maxy;
+        int centery;
+        int z;
+        dword height_not_used;
+        word  mattype;
+        word  matgloss;
+        word  type; // NOTE: the actual field is in a different place
 */
 
 //raw
@@ -390,8 +390,21 @@ struct t_creature
     t_creaturflags2 flags2;
     string first_name;
     string nick_name;
+    string last_name;
+    string trans_name;
+    string generic_name;
+    string profession;
+    string custom_profession;
+    string current_job;
+    uint32_t happiness;
+    uint32_t id;
+    uint32_t agility;
+    uint32_t strength;
+    uint32_t toughness;
+    uint32_t money;
+    uint32_t squad_leader_id;
+    uint8_t sex;
 };
-
 // TODO: research this further? consult DF hacker wizards?
 union t_designation
 {

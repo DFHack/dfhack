@@ -437,6 +437,14 @@ void ProcessManager::ParseEntry (TiXmlElement* entry, memory_info& mem, map <str
         {
             mem.setString(name, value);
         }
+		else if (type == "Profession")
+		{
+			mem.setProfession(value,name);
+		}
+		else if (type == "Job")
+		{
+			mem.setJob(value,name);
+		}
         else
         {
             cerr << "Unknown MemInfo type: " << type << endl;
@@ -450,7 +458,7 @@ bool ProcessManager::loadDescriptors(string path_to_xml)
 {
     TiXmlDocument doc( path_to_xml.c_str() );
     bool loadOkay = doc.LoadFile();
-    TiXmlHandle hDoc(&doc);
+	TiXmlHandle hDoc(&doc);
     TiXmlElement* pElem;
     TiXmlHandle hRoot(0);
     memory_info mem;

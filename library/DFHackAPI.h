@@ -194,6 +194,26 @@ private:
     uint32_t creature_flags2_offset;
     uint32_t creature_first_name_offset;
     uint32_t creature_nick_name_offset;
+    uint32_t creature_last_name_offset;
+
+    uint32_t creature_custom_profession_offset;
+    uint32_t creature_profession_offset;
+    uint32_t creature_sex_offset;
+    uint32_t creature_id_offset;
+    uint32_t creature_squad_name_offset;
+    uint32_t creature_squad_leader_id_offset;
+    uint32_t creature_money_offset;
+    uint32_t creature_current_job_offset;
+    uint32_t creature_current_job_id_offset;
+    uint32_t creature_strength_offset;
+    uint32_t creature_agility_offset;
+    uint32_t creature_toughness_offset;
+    uint32_t creature_skills_offset;
+    uint32_t creature_labors_offset;
+    uint32_t creature_happiness_offset;
+    uint32_t creature_traits_offset;
+
+    uint32_t dwarf_lang_table_offset;
     
     ProcessManager* pm;
     Process* p;
@@ -206,11 +226,18 @@ private:
     bool buildingsInited;
     bool vegetationInited;
     bool creaturesInited;
+
+    bool nameTablesInited;
+
     uint32_t tree_offset;
     DfVector *p_cre;
     DfVector *p_cons;
     DfVector *p_bld;
     DfVector *p_veg;
+
+    DfVector *p_trans;
+    DfVector *p_generic;
+    DfVector *p_dwarf_names;
     
     
 public:
@@ -311,6 +338,12 @@ public:
     uint32_t InitReadCreatures();
     bool ReadCreature(const uint32_t &index, t_creature & furball);
     void FinishReadCreatures();
+
+    void InitReadNameTables();
+    void FinishReadNameTables();
+    string getLastName(const uint32_t &index, bool use_generic=false);
+    string getProfession(const uint32_t &index);
+    string getJob(const uint32_t &index);
     
     void ReadRaw (const uint32_t &offset, const uint32_t &size, uint8_t *target);
 };

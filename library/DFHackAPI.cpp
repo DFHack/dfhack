@@ -649,12 +649,98 @@ uint32_t DFHackAPIImpl::InitReadCreatures()
     creature_flags2_offset = offset_descriptor->getOffset("creature_flags2");
     creature_first_name_offset = offset_descriptor->getOffset("first_name");
     creature_nick_name_offset = offset_descriptor->getOffset("nick_name");
+    creature_last_name_offset = offset_descriptor->getOffset("last_name");
+    creature_custom_profession_offset = offset_descriptor->getOffset("custom_profession");
+    creature_profession_offset = offset_descriptor->getOffset("creature_profession");
+    creature_sex_offset = offset_descriptor->getOffset("sex");
+    creature_id_offset = offset_descriptor->getOffset("id");
+    creature_squad_name_offset = offset_descriptor->getOffset("squad_name");
+    creature_squad_leader_id_offset = offset_descriptor->getOffset("squad_leader_id");
+    creature_money_offset = offset_descriptor->getOffset("money");
+    creature_current_job_offset = offset_descriptor->getOffset("current_job");
+    creature_current_job_id_offset = offset_descriptor->getOffset("current_job_id");
+    creature_strength_offset = offset_descriptor->getOffset("strength");
+    creature_agility_offset = offset_descriptor->getOffset("agility");
+    creature_toughness_offset = offset_descriptor->getOffset("toughness");
+    creature_skills_offset = offset_descriptor->getOffset("skills");
+    creature_labors_offset = offset_descriptor->getOffset("labors");
+    creature_happiness_offset = offset_descriptor->getOffset("happiness");
+    creature_traits_offset = offset_descriptor->getOffset("traits");
     assert(creatures && creature_pos_offset && creature_type_offset &&
-    creature_flags1_offset && creature_flags2_offset && creature_nick_name_offset);
+    creature_flags1_offset && creature_flags2_offset && creature_nick_name_offset
+    && creature_custom_profession_offset
+    && creature_profession_offset
+    && creature_sex_offset
+    && creature_id_offset
+    && creature_squad_name_offset
+    && creature_squad_leader_id_offset
+    && creature_money_offset
+    && creature_current_job_offset
+    && creature_strength_offset
+    && creature_agility_offset
+    && creature_toughness_offset
+    && creature_skills_offset
+    && creature_labors_offset
+    && creature_happiness_offset
+    && creature_traits_offset
+    );
     p_cre = new DfVector(dm->readVector(creatures, 4));
+    InitReadNameTables();
+
     return p_cre->getSize();
 }
 
+//This code was mostly adapted fromh dwarftherapist by chmod
+string DFHackAPIImpl::getLastName(const uint32_t &index, bool use_generic)
+{
+    string out; 
+    uint32_t wordIndex;
+    for (int i = 0; i<7;i++)
+    {
+        MreadDWord(index+i*4, wordIndex);
+        if(wordIndex == 0xFFFFFFFF)
+        {
+            break;
+        }
+        if(use_generic)
+        {
+            uint32_t genericPtr;
+            p_generic->read(wordIndex,(uint8_t *)&genericPtr);
+            out.append(dm->readSTLString(genericPtr));
+        }
+        else
+        {
+            uint32_t transPtr;
+            p_dwarf_names->read(wordIndex,(uint8_t *)&transPtr);
+            out.append(dm->readSTLString(transPtr));
+        }
+    }
+    return out;
+}
+
+string DFHackAPIImpl::getProfession(const uint32_t &index)
+{
+    string profession;
+    uint8_t profId = MreadByte(index);
+    profession = offset_descriptor->getProfession(profId);
+    return profession;
+}
+
+string DFHackAPIImpl::getJob(const uint32_t &index)
+{
+    string job;
+    uint32_t jobIdAddr = MreadDWord(index);
+    if(jobIdAddr != 0)
+    {
+        uint8_t jobId = MreadByte(jobIdAddr+creature_current_job_id_offset);
+        job = offset_descriptor->getJob(jobId);
+    }
+    else
+    {
+        job ="No Job";
+    }
+    return job;
+}
 
 bool DFHackAPIImpl::ReadCreature(const uint32_t &index, t_creature & furball)
 {
@@ -664,21 +750,70 @@ bool DFHackAPIImpl::ReadCreature(const uint32_t &index, t_creature & furball)
     p_cre->read(index,(uint8_t *)&temp);
     //read creature from memory
     Mread(temp + creature_pos_offset, 3 * sizeof(uint16_t), (uint8_t *) &(furball.x)); // xyz really
-    Mread(temp + creature_type_offset, sizeof(uint32_t), (uint8_t *) &furball.type);
-    Mread(temp + creature_flags1_offset, sizeof(uint32_t), (uint8_t *) &furball.flags1);
-    Mread(temp + creature_flags2_offset, sizeof(uint32_t), (uint8_t *) &furball.flags2);
-    // names.
+    MreadDWord(temp + creature_type_offset, furball.type);
+    MreadDWord(temp + creature_flags1_offset, furball.flags1.whole);
+    MreadDWord(temp + creature_flags2_offset, furball.flags2.whole);
+    // names
     furball.first_name = dm->readSTLString(temp+creature_first_name_offset);
-    furball.nick_name = dm->readSTLString(temp+creature_nick_name_offset);
+    furball.nick_name  = dm->readSTLString(temp+creature_nick_name_offset);
+    furball.trans_name = getLastName(temp+creature_last_name_offset);
+    furball.generic_name = getLastName(temp+creature_last_name_offset,true);
+    furball.custom_profession = dm->readSTLString(temp+creature_custom_profession_offset);
+    furball.profession = getProfession(temp+creature_profession_offset);
+    furball.current_job = getJob(temp+creature_current_job_offset);
+    
+    MreadDWord(temp + creature_happiness_offset, furball.happiness);
+    MreadDWord(temp + creature_id_offset, furball.id);
+    MreadDWord(temp + creature_agility_offset, furball.agility);
+    MreadDWord(temp + creature_strength_offset, furball.strength);
+    MreadDWord(temp + creature_toughness_offset, furball.toughness);
+    MreadDWord(temp + creature_money_offset, furball.money);
+    MreadDWord(temp + creature_squad_leader_id_offset, furball.squad_leader_id);
+    MreadByte(temp + creature_sex_offset, furball.sex);
     return true;
 }
 
+void DFHackAPIImpl::InitReadNameTables()
+{
+    int genericAddress = offset_descriptor->getAddress("language_vector");
+    int transAddress = offset_descriptor->getAddress("translation_vector");
+    int word_table_offset = offset_descriptor->getOffset("word_table");
+    
+    p_generic = new DfVector(dm->readVector(genericAddress, 4));
+    p_trans = new DfVector(dm->readVector(transAddress, 4));
+    uint32_t dwarf_entry = 0;
+    
+    for(uint32_t i = 0; i < p_trans->getSize();i++)
+    {
+        uint32_t namePtr;
+        p_trans->read(i,(uint8_t *)&namePtr);
+        string raceName = dm->readSTLString(namePtr);
+        
+        if(raceName == "DWARF")
+        {
+            dwarf_entry = namePtr;
+        }
+    }
+    
+    dwarf_lang_table_offset = dwarf_entry + word_table_offset-4;
+    p_dwarf_names = new DfVector(dm->readVector(dwarf_lang_table_offset,4));
+    nameTablesInited = true;
+}
+
+void DFHackAPIImpl::FinishReadNameTables()
+{
+    delete p_trans;
+    delete p_generic;
+    p_trans=p_generic=NULL;
+    nameTablesInited=false;
+}
 
 void DFHackAPIImpl::FinishReadCreatures()
 {
     delete p_cre;
     p_cre = NULL;
     creaturesInited = false;
+    FinishReadNameTables();
 }
 
 bool DFHackAPIImpl::Attach()
@@ -714,7 +849,7 @@ bool DFHackAPIImpl::Detach()
 
 bool DFHackAPIImpl::isAttached()
 {
-	return dm != NULL;
+    return dm != NULL;
 }
 
 void DFHackAPIImpl::ReadRaw (const uint32_t &offset, const uint32_t &size, uint8_t *target)

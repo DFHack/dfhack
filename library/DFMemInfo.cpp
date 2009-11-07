@@ -109,6 +109,8 @@ memory_info::memory_info(const memory_info &old)
     classes = old.classes;
     classsubtypes = old.classsubtypes;
     classindex = old.classindex;
+	professions = old.professions;
+	jobs = old.jobs;
 }
 
 
@@ -154,6 +156,24 @@ void memory_info::setHexValue (string key, string value)
 void memory_info::setString (string key, string value)
 {
     strings[key] = value;
+}
+
+void memory_info::setProfession (string key, string value)
+{
+	uint32_t keyInt = strtol(key.c_str(), NULL, 10);
+	if(professions.size() <= keyInt){
+		professions.resize(keyInt+1);
+	}
+	professions[keyInt] = value;
+}
+
+void memory_info::setJob (string key, string value)
+{
+	uint32_t keyInt = strtol(key.c_str(), NULL, 10);
+	if(jobs.size() <= keyInt){
+		jobs.resize(keyInt+1);
+	}
+    jobs[keyInt] = value;
 }
 
 
@@ -367,6 +387,27 @@ uint32_t memory_info::getHexValue (string key)
         return hexvals[key];
     }
     return 0;
+}
+
+// Get Profession
+string memory_info::getProfession (uint32_t key)
+{
+	if(professions.size() > key)
+	{
+		return professions[key];
+	}
+	else{
+		return string("");
+	}
+}
+
+// Get Job
+string memory_info::getJob (uint32_t key)
+{
+	if(jobs.size() > key){
+		return jobs[key];
+	}
+	return string("Job Does Not Exist");
 }
 
 

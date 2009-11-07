@@ -57,10 +57,47 @@ int main (void)
             cout << ", nick name: " << temp.nick_name;
             addendl = true;
         }
+        if(!temp.trans_name.empty()){
+            cout << ", trans name: " << temp.trans_name;
+            addendl =true;
+        }
+        if(!temp.generic_name.empty()){
+            cout << ", generic name: " << temp.generic_name;
+            addendl=true;
+        }
         if(addendl)
         {
             cout << endl;
+            addendl = false;
         }
+        if(!temp.profession.empty()){
+            cout << "profession: " << temp.profession;
+            addendl = false;
+        }
+        if(!temp.custom_profession.empty()){
+            cout << ", custom profession: " << temp.custom_profession;
+            addendl = false;
+        }
+        if(!temp.current_job.empty()){
+            cout << ", current job: " << temp.current_job;
+            addendl = false;
+        }
+        if(addendl)
+        {
+            cout << endl;
+            addendl = false;
+        }
+        cout << "happiness: " << temp.happiness << ", strength: " << temp.strength << ", agility: " 
+             << temp.agility << ", toughness: " << temp.toughness << ", money: " << temp.money;
+        cout << ", sex";
+        if(temp.sex == 0){
+            cout << ", Female";
+        }
+        else{
+            cout <<", Male";
+        }
+        cout << endl;
+
         /*
          * FLAGS 1
          */

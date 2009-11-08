@@ -644,14 +644,14 @@ uint32_t DFHackAPIImpl::InitReadCreatures()
     creaturesInited = true;
     int creatures = offset_descriptor->getAddress("creatures");
     creature_pos_offset = offset_descriptor->getOffset("creature_position");
-    creature_type_offset = offset_descriptor->getOffset("creature_type");
+    creature_type_offset = offset_descriptor->getOffset("creature_race");
     creature_flags1_offset = offset_descriptor->getOffset("creature_flags1");
     creature_flags2_offset = offset_descriptor->getOffset("creature_flags2");
     creature_first_name_offset = offset_descriptor->getOffset("creature_first_name");
     creature_nick_name_offset = offset_descriptor->getOffset("creature_nick_name");
     creature_last_name_offset = offset_descriptor->getOffset("creature_last_name");
     creature_custom_profession_offset = offset_descriptor->getOffset("creature_custom_profession");
-    creature_profession_offset = offset_descriptor->getOffset("creature_creature_profession");
+    creature_profession_offset = offset_descriptor->getOffset("creature_profession");
     creature_sex_offset = offset_descriptor->getOffset("creature_sex");
     creature_id_offset = offset_descriptor->getOffset("creature_id");
     creature_squad_name_offset = offset_descriptor->getOffset("creature_squad_name");
@@ -795,7 +795,7 @@ void DFHackAPIImpl::InitReadNameTables()
         }
     }
     
-    dwarf_lang_table_offset = dwarf_entry + word_table_offset-4;
+    dwarf_lang_table_offset = dwarf_entry + word_table_offset;
     p_dwarf_names = new DfVector(dm->readVector(dwarf_lang_table_offset,4));
     nameTablesInited = true;
 }

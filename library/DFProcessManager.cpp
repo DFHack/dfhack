@@ -391,6 +391,10 @@ void ProcessManager::ParseEntry (TiXmlElement* entry, memory_info& mem, map <str
         // users are free to use a sane kernel that doesn't do this kind of **** by default
         mem.setBase(0x0);
     }
+    else if ( os == "all")
+    {
+        // yay
+    }
     else
     {
         cerr << "unknown operating system " << os << endl;

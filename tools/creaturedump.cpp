@@ -71,7 +71,7 @@ int main (void)
             addendl = false;
         }
         if(!temp.profession.empty()){
-            cout << "profession: " << temp.profession;
+            cout << ", profession: " << temp.profession;
             addendl = false;
         }
         if(!temp.custom_profession.empty()){
@@ -87,7 +87,7 @@ int main (void)
             cout << endl;
             addendl = false;
         }
-        cout << "happiness: " << temp.happiness << ", strength: " << temp.strength << ", agility: " 
+        cout << ", happiness: " << temp.happiness << ", strength: " << temp.strength << ", agility: " 
              << temp.agility << ", toughness: " << temp.toughness << ", money: " << temp.money;
         cout << ", sex";
         if(temp.sex == 0){

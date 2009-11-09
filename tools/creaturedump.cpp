@@ -43,7 +43,7 @@ int main (void)
     uint32_t numCreatures = DF.InitReadCreatures();
     for(uint32_t i = 0; i < numCreatures; i++)
     {
-        t_creature temp;
+        t_creature temp = {0};
         DF.ReadCreature(i, temp);
         cout << "creature type " << creaturestypes[temp.type].id << ", position:" << temp.x << " " << temp.y << " "<< temp.z << endl;
         bool addendl = false;
@@ -88,7 +88,10 @@ int main (void)
             addendl = false;
         }
         cout << ", happiness: " << temp.happiness << ", strength: " << temp.strength << ", agility: " 
-             << temp.agility << ", toughness: " << temp.toughness << ", money: " << temp.money;
+            << temp.agility << ", toughness: " << temp.toughness << ", money: " << temp.money << ", id: " << temp.id;
+        if(temp.squad_leader_id != -1){
+            cout << ", squad_leader_id: " << temp.squad_leader_id;
+        }
         cout << ", sex";
         if(temp.sex == 0){
             cout << ", Female";
@@ -97,6 +100,14 @@ int main (void)
             cout <<", Male";
         }
         cout << endl;
+
+        //skills
+        for(unsigned int i = 0; i < temp.skills.size();i++){
+            if(i > 0){
+                cout << ", ";
+            }
+            cout << temp.skills[i].name << ": " << temp.skills[i].rating;
+        }
 
         /*
          * FLAGS 1

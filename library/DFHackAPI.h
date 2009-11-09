@@ -41,8 +41,6 @@ distribution.
 #	endif
 #endif
 
-#define BUILD_DFHACK_LIB
-
 #include <string>
 #include <vector>
 #include "integers.h"
@@ -239,6 +237,13 @@ private:
     DfVector *p_generic;
     DfVector *p_dwarf_names;
     
+    string getLastNameByAddress(const uint32_t &address, bool use_generic=false);
+    string getSquadNameByAddress(const uint32_t &address, bool use_generic=false);
+    string getProfessionByAddress(const uint32_t &address);
+    string getCurrentJobByAddress(const uint32_t &address);
+    void getSkillsByAddress(const uint32_t &address, vector<t_skill> &);
+	void getTraitsByAddress(const uint32_t &address, vector<t_trait> &);
+    void getLaborsByAddress(const uint32_t &address, vector<t_labor> &);
     
 public:
     DFHackAPIImpl(const string path_to_xml);
@@ -341,11 +346,16 @@ public:
 
     void InitReadNameTables();
     void FinishReadNameTables();
-    string getLastName(const uint32_t &index, bool use_generic=false);
-    string getProfession(const uint32_t &index);
-    string getJob(const uint32_t &index);
-    
+     
     void ReadRaw (const uint32_t &offset, const uint32_t &size, uint8_t *target);
+
+    string getLastName(const uint32_t &index, bool);
+    string getSquadName(const uint32_t &index, bool);
+    string getProfession(const uint32_t &index);
+    string getCurrentJob(const uint32_t &index);
+    vector<t_skill> getSkills(const uint32_t &index);
+	vector<t_trait> getTraits(const uint32_t &index);
+    vector<t_labor> getLabors(const uint32_t &index);
 };
 
 #endif

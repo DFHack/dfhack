@@ -354,6 +354,187 @@
         <Job name="Remove Stairs/Ramps">200</Job>
         <Job name="Construct  Quern">201</Job>
         <Job name="Construct  Millstone">202</Job>
+    
+        <Skill name="Miner">0</Skill>
+        <Skill name="Wood Cutter">1</Skill>
+        <Skill name="Carpenter">2</Skill>
+        <Skill name="Engraver">3</Skill>
+        <Skill name="Mason">4</Skill>
+        <Skill name="Animal Trainer">5</Skill>
+        <Skill name="Animal Caretaker">6</Skill>
+        <Skill name="Fish Dissector">7</Skill>
+        <Skill name="Animal Dissector">8</Skill>
+        <Skill name="Fish Cleaner">9</Skill>
+        <Skill name="Butcher">10</Skill>
+        <Skill name="Trapper">11</Skill>
+        <Skill name="Tanner">12</Skill>
+        <Skill name="Weaver">13</Skill>
+        <Skill name="Brewer">14</Skill>
+        <Skill name="Alchemist">15</Skill>
+        <Skill name="Clothier">16</Skill>
+        <Skill name="Miller">17</Skill>
+        <Skill name="Thresher">18</Skill>
+        <Skill name="Cheese Maker">19</Skill>
+        <Skill name="Milker">20</Skill>
+        <Skill name="Cook">21</Skill>
+        <Skill name="Grower">22</Skill>
+        <Skill name="Herbalist">23</Skill>
+        <Skill name="Fisherman">24</Skill>
+        <Skill name="Furnace Operator">25</Skill>
+        <Skill name="Strand Extractor">26</Skill>
+        <Skill name="Weaponsmith">27</Skill>
+        <Skill name="Armorer">28</Skill>
+        <Skill name="Metalsmith">29</Skill>
+        <Skill name="Gem Cutter">30</Skill>
+        <Skill name="Gem Setter">31</Skill>
+        <Skill name="Woodcrafter">32</Skill>
+        <Skill name="Stone Crafter">33</Skill>
+        <Skill name="Metal Crafter">34</Skill>
+        <Skill name="Glassmaker">35</Skill>
+        <Skill name="Leatherworker">36</Skill>
+        <Skill name="Bone Carver">37</Skill>
+        <Skill name="Wrestler">38</Skill>
+        <Skill name="Axeman">39</Skill>
+        <Skill name="Swordsman">40</Skill>
+        <Skill name="Knife User">41</Skill>
+        <Skill name="Maceman">42</Skill>
+        <Skill name="Hammerman">43</Skill>
+        <Skill name="Spearman">44</Skill>
+        <Skill name="Marksman">45</Skill>
+        <Skill name="Shield User">46</Skill>
+        <Skill name="Armor User">47</Skill>
+        <Skill name="Siege Engineer">48</Skill>
+        <Skill name="Siege Operator">49</Skill>
+        <Skill name="Bowyer">50</Skill>
+        <Skill name="Pikeman">51</Skill>
+        <Skill name="Lasher">52</Skill>
+        <Skill name="Bowman">53</Skill>
+        <Skill name="Blowgunner">54</Skill>
+        <Skill name="Thrower">55</Skill>
+        <Skill name="Mechanic">56</Skill>
+        <Skill name="Druid">57</Skill>
+        <Skill name="Ambusher">58</Skill>
+        <Skill name="Building Designer">59</Skill>
+        <Skill name="Woodburner">60</Skill>
+        <Skill name="Lye Maker">61</Skill>
+        <Skill name="Soaper">62</Skill>
+        <Skill name="Potash Maker">63</Skill>
+        <Skill name="Dyer">64</Skill>
+        <Skill name="Pump Operator">65</Skill>
+        <Skill name="Swimmer">66</Skill>
+        <Skill name="Persuader">67</Skill>
+        <Skill name="Negotiator">68</Skill>
+        <Skill name="Judge of Intent">69</Skill>
+        <Skill name="Appraiser">70</Skill>
+        <Skill name="Organizer">71</Skill>
+        <Skill name="Record Keeper">72</Skill>
+        <Skill name="Liar">73</Skill>
+        <Skill name="Intimitador">74</Skill>
+        <Skill name="Conversationalist">75</Skill>
+        <Skill name="Comedian">76</Skill>
+        <Skill name="Flatterer">77</Skill>
+        <Skill name="Consoler">78</Skill>
+        <Skill name="Pacifier">79</Skill>
+        
+        <Trait name="Nervousness" level_5="Is a nervous wreck" level_4="Is always tense and jittery" level_3="Is often nervous" level_2="Has a calm demeanor" level_1="Has a very calm demeanor" level_0="Has an incredibly calm demeanor">0</Trait>
+        <Trait name="Rage" level_5="In a constant state of internal rage" level_4="Very quick to anger" level_3="Quick to anger" level_2="Slow to anger" level_1="Very slow to anger" level_0="Never becomes angry">1</Trait>
+        <Trait name="Depression" level_5="Frequently depressed" level_4="Often sad and dejected" level_3="Often feels discouraged" level_2="Rarely feels discouraged" level_1="Almost never feels discouraged" level_0="Never feels discouraged">2</Trait>
+        <Trait name="Neurosis" level_5="Socially crippled by thoughts that everyone is watching and judging" level_4="Concerned about rejection and ridicule" level_3="Self-conscious" level_2="Comfortable in social situations" level_1="Very comfortable in social situations" level_0="Absolutely unfazed by the opinions of others">3</Trait>
+        <Trait name="Urge" level_5="Is ruled by irresistible cravings and urges" level_4="Feels strong urges and seeks short-term rewards" level_3="Occassionally overindulges" level_2="Doesn't often experience strong cravings or urges" level_1="Only rarely feels strong cravings or urges" level_0="Never feels tempted to overindulge in anything">4</Trait>
+        <Trait name="Stress" level_5="Becomes completely helpless in stressful situations" level_4="Cracks easily under pressure" level_3="Doesn't handle stress well" level_2="Can handle stress" level_1="Confident under pressure" level_0="Impervious to the effects of stress">5</Trait>
+        <Trait name="Friendly" level_5="Genuinely likes others, openly expresses positive feelings" level_4="Makes friends quickly" level_3="Very friendly" level_2="Somewhat reserved" level_1="Very distant and reserved" level_0="Does not actively seek friendships, incredibly distant and reserved">6</Trait>
+        <Trait name="Company" level_5="Truly treasures the company of others" level_4="Enjoys being in crowds" level_3="Enjoys the company of others" level_2="Tends to avoid crowds" level_1="Prefers to be alone" level_0="Considers time alone much more important than associating with others">7</Trait>
+        <Trait name="Leadership" level_5="Loves to take charge and direct activities" level_4="Very assertive" level_3="Assertive" level_2="Unassertive" level_1="Prefers that others handle the leadership roles" level_0="Never speaks out or attempts to direct activities">8</Trait>
+        <Trait name="Activeness" level_5="Constantly active and energetic" level_4="Very energetic and active" level_3="Very active" level_2="Relaxed" level_1="Lives life at a leisurely pace" level_0="Can't be bothered with frantic, fast-paced living">9</Trait>
+        <Trait name="Thrillseeking" level_5="Lives for risk and excitement" level_4="A risk-taker and a thrill-seeker" level_3="Loves a good thrill" level_2="Is not a risk-taker" level_1="Doesn't need thrills or risks in life" level_0="Entirely adverse to risk and excitement">10</Trait>
+        <Trait name="Optimism" level_5="Often feels filled with joy" level_4="Can be very happy and optimistic" level_3="Often cheerful" level_2="Rarely happy or enthusiastic" level_1="A pessimist" level_0="Never optimistic or enthusiastic about anything">11</Trait>
+        <Trait name="Imagination" level_5="Bored by reality and has a wonderful imagination" level_4="Incredibly creative" level_3="Has a fertile imagination" level_2="Isn't given to flights of fancy" level_1="Grounded in reality" level_0="Interested only in facts and the real world">12</Trait>
+        <Trait name="Artistic" level_5="Can easily become absorbed in art and the beauty of the natural world" level_4="Greatly appreciates art and natural beauty" level_3="Appreciates art and natural beauty" level_2="Does not have a great aesthetic sensitivity" level_1="Not interested in art" level_0="Completely uninterested in art">13</Trait>
+        <Trait name="Emotion" level_5="Has a profound understanding of own emotions" level_4="Has a great awareness of own emotions" level_3="Has a good awareness of own emotions" level_2="Tends not to openly express emotions" level_1="Mostly unaware of own emotions and rarely expresses them" level_0="Does not display own emotions and has no awareness of them">14</Trait>
+        <Trait name="Adventure" level_5="Highly adventurous and loves fresh experiences" level_4="Eager for new experiences" level_3="Likes to try new things" level_2="Prefers familiar routines" level_1="Uncomfortable with change" level_0="Resistant to change">15</Trait>
+        <Trait name="Thinking" level_5="Entranced by riddles and puzzles; loves to debate issues and ideas" level_4="Loves new and fresh ideas" level_3="Open-minded to new ideas" level_2="Dislikes intellectual discussions" level_1="Regards intellectual exercises as a waste of energy" level_0="Completely uninterested in ideas and debates over intellectual issues">16</Trait>
+        <Trait name="Rebelliousness" level_5="Revels in chaos and disorder" level_4="Loves to defy convention" level_3="Put off by authority and tradition" level_2="Admires tradition" level_1="Prefers stability and security to ambiguity and disorder" level_0="An ardent believer in convention and traditional society">17</Trait>
+        <Trait name="Trusting" level_5="Naturally trustful of everybody" level_4="Very trusting" level_3="Trusting" level_2="Slow to trust others" level_1="Does not trust others" level_0="Sees others as selfish and conniving">18</Trait>
+        <Trait name="Honesty" level_5="Incredibly frank and candid in dealings with others" level_4="Very straightforward with others" level_3="Candid and sincere in dealings with others" level_2="Guarded in relationships with others" level_1="Not straightforward when dealing with others" level_0="Believes that some deception is necessary in relationships with others">19</Trait>
+        <Trait name="Helpfulness" level_5="Truly fulfilled by assisting those in need" level_4="Finds helping others very rewarding" level_3="Finds helping others rewarding" level_2="Does not go out of own way to help others" level_1="Dislikes helping others" level_0="Views helping others as an imposition on own needs">20</Trait>
+        <Trait name="Compromising" level_5="Sacrifices own needs to get along with others" level_4="Dislikes confrontations" level_3="Willing to compromise with others" level_2="Doesn't like to compromise with others" level_1="Would rather intimidate others than compromise with them" level_0="Would never deny own needs just to compromise with somebody else">21</Trait>
+        <Trait name="Modesty" level_5="Would never claim to be better than somebody else" level_4="Finds immodesty distasteful" level_3="Modest" level_2="Immodest" level_1="Very willing to compare self favorably with others" level_0="Would never shy away from an opportunity to say they are better than somebody else">22</Trait>
+        <Trait name="Compassion" level_5="Incredibly compassionate and feels the pain of others" level_4="Easily moved to pity" level_3="Compassionate" level_2="Not easily moved to pity" level_1="Not affected by the suffering of others" level_0="Would never let an objective judgement be tempered by mercy or pity">23</Trait>
+        <Trait name="Confidence" level_5="Incredibly confident" level_4="Very confident" level_3="Confident" level_2="Lacks confidence" level_1="Does not feel effective in life" level_0="Always feels as if they are not in control of own life">24</Trait>
+        <Trait name="Organization" level_5="Loves to make lists and keep schedules" level_4="Tries to live a well-organized life" level_3="Organized" level_2="Disorganized" level_1="Very disorganized" level_0="Completely disorganized">25</Trait>
+        <Trait name="Lawfulness" level_5="Has a profound sense of duty and obligation" level_4="Has a strong sense of duty" level_3="Has a sense of duty" level_2="Finds rules confining" level_1="Dislikes contracts and regulations" level_0="Hates rules, contracts and other confining elements in own life">26</Trait>
+        <Trait name="Excellence" level_5="Constantly strives for perfection" level_4="Thinks it is incredibly important to strive for excellence" level_3="Strives for excellence" level_2="Doesn't go out of own way to do more work than necessary" level_1="Very rarely does more work than necessary" level_0="Does the bare minimum necessary to accomplish the task at hand">27</Trait>
+        <Trait name="Perseverance" level_5="Will persist in the face of any difficulty until the task is complete" level_4="Possesses great willpower" level_3="Is self-disciplined" level_2="Is occasionally given to procrastination" level_1="Has very little self-discipline" level_0="Rarely completes tasks and is often overcome by distractions">28</Trait>
+        <Trait name="Cautiousness" level_5="Thinks through every alternative and their consequences before acting" level_4="Extremely cautious" level_3="Takes time when making decisions" level_2="Often does the first thing that comes to mind" level_1="Acts impulsively" level_0="Always acts without considering alternatives or thinking through possibilities">29</Trait>
+
+        <Labor name="Mining">0</Labor>
+        <Labor name="Bowyer">66</Labor>
+        <Labor name="Carpentry">11</Labor>
+        <Labor name="Wood Cutting">10</Labor>
+        <Labor name="Masonry">13</Labor>
+        <Labor name="Stone Detailing">12</Labor>
+        <Labor name="Architecture">14</Labor>
+        <Labor name="Animal Training">15</Labor>
+        <Labor name="Animal Care">16</Labor>
+        <Labor name="Animal Dissection">20</Labor>
+        <Labor name="Hunting">38</Labor>
+        <Labor name="Trapping">19</Labor>
+        <Labor name="Armor Smithing">41</Labor>
+        <Labor name="Furnace Operating">39</Labor>
+        <Labor name="MetalCrafting">43</Labor>
+        <Labor name="Blacksmithing">42</Labor>
+        <Labor name="Weaponsmithing">40</Labor>
+        <Labor name="Gemcutting">44</Labor>
+        <Labor name="Gemsetting">45 </Labor>
+        <Labor name="BoneCarving">48</Labor>
+        <Labor name="Clothesmaking">27</Labor>
+        <Labor name="GlassMaking">49</Labor>
+        <Labor name="LeatherWorking">21</Labor>
+        <Labor name="Stonecrafting">47</Labor>
+        <Labor name="Weaving">26</Labor>
+        <Labor name="Woodcrafting">46</Labor>
+        <Labor name="Strand Extracting">50</Labor>
+        <Labor name="Brewing">23</Labor>
+        <Labor name="Butchery">18</Labor>
+        <Labor name="Cheesemaking">30</Labor>
+        <Labor name="Cooking">32</Labor>
+        <Labor name="Dyeing">71</Labor>
+        <Labor name="Farming">33</Labor>
+        <Labor name="Plant Gathering">34</Labor>
+        <Labor name="Lye Making">70</Labor>
+        <Labor name="Milking">31</Labor>
+        <Labor name="Milling">28</Labor>
+        <Labor name="Potash Making">69</Labor>
+        <Labor name="Soapmaking">25</Labor>
+        <Labor name="Tanning">22</Labor>
+        <Labor name="Plant Processing ">29</Labor>
+        <Labor name="Wood Burning">72</Labor>
+        <Labor name="Fishing">35</Labor>
+        <Labor name="Fish Cleaning">36</Labor>
+        <Labor name="Fish Dissection">37</Labor>
+        <Labor name="Mechanics">67</Labor>
+        <Labor name="Pump Operating">73</Labor>
+        <Labor name="Siege Engineering">64</Labor>
+        <Labor name="Siege Operating">65</Labor>
+        <Labor name="Health Care">17</Labor>
+        <Labor name="Animal Hauling">8</Labor>
+        <Labor name="Wood Hauling">2</Labor>
+        <Labor name="Item Hauling">6</Labor>
+        <Labor name="Food Hauling">4</Labor>
+        <Labor name="Stone Hauling">1</Labor>
+        <Labor name="Refuse Hauling">5</Labor>
+        <Labor name="Furniture Hauling">7</Labor>
+        <Labor name="Cleaning">9</Labor>
+        <Labor name="Burial">3</Labor>
+        <Labor name="Alchemy">24</Labor>
+        <Labor name="[Axe]">51</Labor>
+        <Labor name="[Sword]">52</Labor>
+        <Labor name="[Mace]">53</Labor>
+        <Labor name="[Hammer]">54</Labor>
+        <Labor name="[Spear]">55</Labor>
+        <Labor name="[Crossbow]">57</Labor>
+        <Labor name="[Unarmed]">-1</Labor>
+
     </Entry>
 
 

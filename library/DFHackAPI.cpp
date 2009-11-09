@@ -26,6 +26,7 @@ distribution.
 #   define BUILD_DFHACK_LIB
 #endif
 
+
 #include "DFCommon.h"
 #include "DFVector.h"
 #include "DFHackAPI.h"
@@ -658,7 +659,7 @@ uint32_t DFHackAPIImpl::InitReadCreatures()
     creature_squad_leader_id_offset = offset_descriptor->getOffset("creature_squad_leader_id");
     creature_money_offset = offset_descriptor->getOffset("creature_money");
     creature_current_job_offset = offset_descriptor->getOffset("creature_current_job");
-    creature_current_job_id_offset = offset_descriptor->getOffset("creature_current_job_id");
+    creature_current_job_id_offset = offset_descriptor->getOffset("current_job_id");
     creature_strength_offset = offset_descriptor->getOffset("creature_strength");
     creature_agility_offset = offset_descriptor->getOffset("creature_agility");
     creature_toughness_offset = offset_descriptor->getOffset("creature_toughness");
@@ -686,18 +687,17 @@ uint32_t DFHackAPIImpl::InitReadCreatures()
     );
     p_cre = new DfVector(dm->readVector(creatures, 4));
     InitReadNameTables();
-
     return p_cre->getSize();
 }
 
 //This code was mostly adapted fromh dwarftherapist by chmod
-string DFHackAPIImpl::getLastName(const uint32_t &index, bool use_generic)
+string DFHackAPIImpl::getLastNameByAddress(const uint32_t &address, bool use_generic)
 {
     string out; 
     uint32_t wordIndex;
     for (int i = 0; i<7;i++)
     {
-        MreadDWord(index+i*4, wordIndex);
+        MreadDWord(address+i*4, wordIndex);
         if(wordIndex == 0xFFFFFFFF)
         {
             break;
@@ -718,18 +718,53 @@ string DFHackAPIImpl::getLastName(const uint32_t &index, bool use_generic)
     return out;
 }
 
-string DFHackAPIImpl::getProfession(const uint32_t &index)
+string DFHackAPIImpl::getSquadNameByAddress(const uint32_t &address, bool use_generic)
+{
+    string out; 
+    uint32_t wordIndex;
+    for (int i = 0; i<6;i++)
+    {
+        MreadDWord(address+i*4, wordIndex);
+        if(wordIndex == 0xFFFFFFFF)
+        {
+            continue;
+        }
+        if(wordIndex == 0)
+        {
+            break;
+        }
+        if(use_generic)
+        {
+            uint32_t genericPtr;
+            p_generic->read(wordIndex,(uint8_t *)&genericPtr);
+            out.append(dm->readSTLString(genericPtr));
+        }
+        else
+        {
+            if(i == 4) // There will be a space in game if there is a name in the last 
+            {
+                out.append(" ");
+            }
+            uint32_t transPtr;
+            p_dwarf_names->read(wordIndex,(uint8_t *)&transPtr);
+            out.append(dm->readSTLString(transPtr));
+        }
+    }
+    return out;
+}
+
+string DFHackAPIImpl::getProfessionByAddress(const uint32_t &address)
 {
     string profession;
-    uint8_t profId = MreadByte(index);
+    uint8_t profId = MreadByte(address);
     profession = offset_descriptor->getProfession(profId);
     return profession;
 }
 
-string DFHackAPIImpl::getJob(const uint32_t &index)
+string DFHackAPIImpl::getCurrentJobByAddress(const uint32_t &address)
 {
     string job;
-    uint32_t jobIdAddr = MreadDWord(index);
+    uint32_t jobIdAddr = MreadDWord(address);
     if(jobIdAddr != 0)
     {
         uint8_t jobId = MreadByte(jobIdAddr+creature_current_job_id_offset);
@@ -742,6 +777,103 @@ string DFHackAPIImpl::getJob(const uint32_t &index)
     return job;
 }
 
+string DFHackAPIImpl::getLastName(const uint32_t &index, bool use_generic=false)
+{
+    assert(creaturesInited);
+    uint32_t temp;
+    // read pointer from vector at position
+    p_cre->read(index,(uint8_t *)&temp);
+    return(getLastNameByAddress(temp+creature_last_name_offset,use_generic));
+}
+string DFHackAPIImpl::getSquadName(const uint32_t &index, bool use_generic=false)
+{
+    assert(creaturesInited);
+    uint32_t temp;
+    // read pointer from vector at position
+    p_cre->read(index,(uint8_t *)&temp);
+    return(getSquadNameByAddress(temp+creature_squad_name_offset,use_generic));
+}
+string DFHackAPIImpl::getProfession(const uint32_t &index)
+{
+    assert(creaturesInited);
+    uint32_t temp;
+    // read pointer from vector at position
+    p_cre->read(index,(uint8_t *)&temp);
+    return(getProfessionByAddress(temp+creature_profession_offset));
+}
+string DFHackAPIImpl::getCurrentJob(const uint32_t &index)
+{
+    assert(creaturesInited);
+    uint32_t temp;
+    // read pointer from vector at position
+    p_cre->read(index,(uint8_t *)&temp);
+    return(getCurrentJobByAddress(temp+creature_current_job_offset));
+}
+vector<t_skill> DFHackAPIImpl::getSkills(const uint32_t &index)
+{
+    assert(creaturesInited);
+    uint32_t temp;
+    // read pointer from vector at position
+    p_cre->read(index,(uint8_t *)&temp);
+    vector<t_skill> tempSkillVec;
+    getSkillsByAddress(temp+creature_last_name_offset,tempSkillVec);
+    return(tempSkillVec);
+}
+
+vector<t_trait> DFHackAPIImpl::getTraits(const uint32_t &index)
+{
+    assert(creaturesInited);
+    uint32_t temp;
+    // read pointer from vector at position
+    p_cre->read(index,(uint8_t *)&temp);
+    vector<t_trait> tempTraitVec;
+    getTraitsByAddress(temp+creature_traits_offset,tempTraitVec);
+    return(tempTraitVec);
+}
+
+void DFHackAPIImpl::getSkillsByAddress(const uint32_t &address, vector<t_skill> & skills)
+{
+    DfVector* skillVector = new DfVector(dm->readVector(address,4));
+    for(uint32_t i = 0; i<skillVector->getSize();i++)
+    {
+        uint32_t temp;
+        skillVector->read(i, (uint8_t *) &temp);
+        t_skill tempSkill;
+        tempSkill.id= MreadByte(temp);
+        tempSkill.name = offset_descriptor->getSkill(tempSkill.id);
+        tempSkill.experience = MreadWord(temp+8);
+        tempSkill.rating = MreadByte(temp+4);
+//        for (int j = 0; j < tempSkill.rating; ++j) { //add up all the experience per level
+//		    tempSkill.experience += 500 + (j * 100);
+//	    }
+        skills.push_back(tempSkill);
+    }
+}
+
+void DFHackAPIImpl::getTraitsByAddress(const uint32_t &address, vector<t_trait> & traits)
+{
+    for(int i = 0; i < 30; i++)
+    {
+        t_trait tempTrait;
+        tempTrait.value =MreadWord(address+i*2);
+        tempTrait.displayTxt = offset_descriptor->getTrait(i,tempTrait.value);
+        tempTrait.name = offset_descriptor->getTraitName(i);
+        traits.push_back(tempTrait);
+    }
+}
+
+void DFHackAPIImpl::getLaborsByAddress(const uint32_t &address, vector<t_labor> & labors)
+{
+    uint8_t laborArray[102] = {0};
+    Mread(address, 102, laborArray);
+    for(int i = 0;i<102; i++)
+    {
+        t_labor tempLabor;
+        tempLabor.name = offset_descriptor->getLabor(i);
+        tempLabor.value = laborArray[i];
+        labors.push_back(tempLabor);
+    }
+}
 bool DFHackAPIImpl::ReadCreature(const uint32_t &index, t_creature & furball)
 {
     assert(creaturesInited);
@@ -756,19 +888,24 @@ bool DFHackAPIImpl::ReadCreature(const uint32_t &index, t_creature & furball)
     // names
     furball.first_name = dm->readSTLString(temp+creature_first_name_offset);
     furball.nick_name  = dm->readSTLString(temp+creature_nick_name_offset);
-    furball.trans_name = getLastName(temp+creature_last_name_offset);
-    furball.generic_name = getLastName(temp+creature_last_name_offset,true);
+    furball.trans_name = getLastNameByAddress(temp+creature_last_name_offset);
+    furball.generic_name = getLastNameByAddress(temp+creature_last_name_offset,true);
+    furball.generic_squad_name = getSquadNameByAddress(temp+creature_squad_name_offset, true);
+    furball.trans_squad_name = getSquadNameByAddress(temp+creature_squad_name_offset, false);
     furball.custom_profession = dm->readSTLString(temp+creature_custom_profession_offset);
-    furball.profession = getProfession(temp+creature_profession_offset);
-    furball.current_job = getJob(temp+creature_current_job_offset);
-    
+    furball.profession = getProfessionByAddress(temp+creature_profession_offset);
+    furball.current_job = getCurrentJobByAddress(temp+creature_current_job_offset);
+    getSkillsByAddress(temp+creature_skills_offset,furball.skills);
+    getTraitsByAddress(temp+creature_traits_offset,furball.traits);
+    getLaborsByAddress(temp+creature_labors_offset,furball.labors);
+
     MreadDWord(temp + creature_happiness_offset, furball.happiness);
     MreadDWord(temp + creature_id_offset, furball.id);
     MreadDWord(temp + creature_agility_offset, furball.agility);
     MreadDWord(temp + creature_strength_offset, furball.strength);
     MreadDWord(temp + creature_toughness_offset, furball.toughness);
     MreadDWord(temp + creature_money_offset, furball.money);
-    MreadDWord(temp + creature_squad_leader_id_offset, furball.squad_leader_id);
+    furball.squad_leader_id = int32_t(MreadDWord(temp + creature_squad_leader_id_offset));
     MreadByte(temp + creature_sex_offset, furball.sex);
     return true;
 }
@@ -820,13 +957,20 @@ bool DFHackAPIImpl::Attach()
 {
     // detach all processes, destroy manager
     if(pm == NULL)
+    {
         pm = new ProcessManager(xml); // FIXME: handle bad XML better
+    }
+    
     // find a process (ProcessManager can find multiple when used properly)
     if(!pm->findProcessess())
+    {
         return false;
+    }
     p = (*pm)[0];
     if(!p->attach())
+    {
         return false; // couldn't attach to process, no go
+    }
     offset_descriptor = p->getDescriptor();
     dm = p->getDataModel();
     // process is attached, everything went just fine... hopefully
@@ -837,9 +981,13 @@ bool DFHackAPIImpl::Attach()
 bool DFHackAPIImpl::Detach()
 {
     if (!p->detach())
+    {
         return false;
+    }
     if(pm != NULL)
+    {
         delete pm;
+    }
     pm = NULL;
     p = NULL;
     offset_descriptor = NULL;

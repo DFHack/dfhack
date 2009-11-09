@@ -380,6 +380,26 @@ union t_creaturflags2
     } bits;
 };
 
+struct t_labor
+{
+    string name;
+    uint8_t value;
+};
+struct t_skill
+{
+    string name;
+    uint16_t id;
+    uint32_t experience;
+    uint16_t rating;
+};
+
+struct t_trait
+{
+	uint16_t value;
+	string displayTxt;
+	string name;
+};
+
 struct t_creature
 {
     uint16_t x;
@@ -393,6 +413,8 @@ struct t_creature
     string last_name;
     string trans_name;
     string generic_name;
+    string generic_squad_name;
+    string trans_squad_name;
     string profession;
     string custom_profession;
     string current_job;
@@ -402,9 +424,13 @@ struct t_creature
     uint32_t strength;
     uint32_t toughness;
     uint32_t money;
-    uint32_t squad_leader_id;
+    int32_t squad_leader_id;
     uint8_t sex;
+    vector <t_skill> skills;
+	vector <t_trait> traits;
+    vector <t_labor> labors;
 };
+
 // TODO: research this further? consult DF hacker wizards?
 union t_designation
 {

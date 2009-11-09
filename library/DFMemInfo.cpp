@@ -29,7 +29,6 @@ distribution.
 #include "DFCommon.h"
 #include "DFMemInfo.h"
 #include <stdlib.h>
-#include <iostream>
 
 memory_info::memory_info()
 {
@@ -109,8 +108,11 @@ memory_info::memory_info(const memory_info &old)
     classes = old.classes;
     classsubtypes = old.classsubtypes;
     classindex = old.classindex;
-	professions = old.professions;
-	jobs = old.jobs;
+    professions = old.professions;
+    jobs = old.jobs;
+    skills = old.skills;
+	traits = old.traits;
+    labors = old.labors;
 }
 
 
@@ -158,24 +160,52 @@ void memory_info::setString (string key, string value)
     strings[key] = value;
 }
 
+void memory_info::setLabor(string key, string value)
+{
+    uint32_t keyInt = strtol(key.c_str(), NULL, 10);
+    labors[keyInt] = value;
+}
 void memory_info::setProfession (string key, string value)
 {
-	uint32_t keyInt = strtol(key.c_str(), NULL, 10);
-	if(professions.size() <= keyInt){
-		professions.resize(keyInt+1);
-	}
-	professions[keyInt] = value;
+    uint32_t keyInt = strtol(key.c_str(), NULL, 10);
+    if(professions.size() <= keyInt){
+        professions.resize(keyInt+1);
+    }
+    professions[keyInt] = value;
 }
 
 void memory_info::setJob (string key, string value)
 {
-	uint32_t keyInt = strtol(key.c_str(), NULL, 10);
-	if(jobs.size() <= keyInt){
-		jobs.resize(keyInt+1);
-	}
+    uint32_t keyInt = strtol(key.c_str(), NULL, 10);
+    if(jobs.size() <= keyInt){
+        jobs.resize(keyInt+1);
+    }
     jobs[keyInt] = value;
 }
 
+void memory_info::setSkill (string key, string value)
+{
+    uint32_t keyInt = strtol(key.c_str(), NULL, 10);
+    if(skills.size() <= keyInt){
+        skills.resize(keyInt+1);
+    }
+    skills[keyInt] = value;
+}
+
+void memory_info::setTrait(string key,string value,string zero,string one,string two,string three,string four,string five)
+{
+	uint32_t keyInt = strtol(key.c_str(), NULL, 10);
+	if(traits.size() <= keyInt){
+		traits.resize(keyInt+1);
+	}
+	traits[keyInt].push_back(zero);
+	traits[keyInt].push_back(one);
+	traits[keyInt].push_back(two);
+	traits[keyInt].push_back(three);
+	traits[keyInt].push_back(four);
+	traits[keyInt].push_back(five);
+	traits[keyInt].push_back(value);
+}
 
 // FIXME: next three methods should use some kind of custom container so it doesn't have to search so much.
 void memory_info::setClass (const char * name, const char * vtable)
@@ -392,24 +422,70 @@ uint32_t memory_info::getHexValue (string key)
 // Get Profession
 string memory_info::getProfession (uint32_t key)
 {
-	if(professions.size() > key)
-	{
-		return professions[key];
-	}
-	else{
-		return string("");
-	}
+    if(professions.size() > key)
+    {
+        return professions[key];
+    }
+    else{
+        return string("");
+    }
 }
 
 // Get Job
 string memory_info::getJob (uint32_t key)
 {
-	if(jobs.size() > key){
-		return jobs[key];
-	}
-	return string("Job Does Not Exist");
+    if(jobs.size() > key){
+        return jobs[key];
+    }
+    return string("Job Does Not Exist");
 }
 
+string memory_info::getSkill (uint32_t key)
+{
+    if(skills.size() > key){
+        return skills[key];
+    }
+    return string("Skill is not Defined");
+}
+
+string memory_info::getTrait (uint32_t key, uint32_t absVal)
+{
+	if(traits.size() > key){
+		int diff = abs(absVal-50);
+		if(diff < 10){
+			return string("");
+		}
+		if (absVal >= 91)
+			return traits[key][5];
+		else if (absVal >= 76)
+			return traits[key][4];
+		else if (absVal >= 61)
+			return traits[key][3];
+		else if (absVal >= 25)
+			return traits[key][2];
+		else if (absVal >= 10)
+			return traits[key][1];
+		else
+			return traits[key][0];
+	}
+	return string("Trait is not Defined");
+}
+
+string memory_info::getTraitName(uint32_t key)
+{
+	if(traits.size() > key){
+		return traits[key][traits[key].size()-1];
+	}
+	return string("Trait is not Defined");
+}
+
+string memory_info::getLabor (uint32_t key)
+{
+    if(labors.count(key)){
+        return labors[key];
+    }
+    return string("");
+}
 
 // Reset everything
 void memory_info::flush()

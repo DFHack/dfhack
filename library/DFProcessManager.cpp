@@ -449,6 +449,18 @@ void ProcessManager::ParseEntry (TiXmlElement* entry, memory_info& mem, map <str
 		{
 			mem.setJob(value,name);
 		}
+        else if (type == "Skill")
+		{
+			mem.setSkill(value,name);
+		}
+		else if (type == "Trait")
+		{
+			mem.setTrait(value, name,pMemEntry->Attribute("level_0"),pMemEntry->Attribute("level_1"),pMemEntry->Attribute("level_2"),pMemEntry->Attribute("level_3"),pMemEntry->Attribute("level_4"),pMemEntry->Attribute("level_5"));
+		}
+        else if (type == "Labor")
+        {
+            mem.setLabor(value,name);
+        }
         else
         {
             cerr << "Unknown MemInfo type: " << type << endl;

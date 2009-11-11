@@ -1,7 +1,7 @@
 # don't use this file directly. use the one in the root folder of the project
 
 SET(PROJECT_HDRS
-DFCommon.h
+DFCommonInternal.h
 DFDataModel.h
 DFHackAPI.h
 DFMemAccess.h

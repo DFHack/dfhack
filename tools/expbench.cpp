@@ -21,8 +21,7 @@ int main (void)
     t_designation designations[16][16];
     t_occupancy occupancies[16][16];
     
-    DFHackAPI *pDF = CreateDFHackAPI("Memory.xml");
-    DFHackAPI &DF = *pDF;
+    DFHack::API DF("Memory.xml");
     if(!DF.Attach())
     {
         cerr << "DF not found" << endl;
@@ -67,6 +66,5 @@ int main (void)
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();
     #endif
-    delete pDF;
     return 0;
 }

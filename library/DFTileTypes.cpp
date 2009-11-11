@@ -21,13 +21,10 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
-#ifndef BUILD_DFHACK_LIB
-#   define BUILD_DFHACK_LIB
-#endif
 
-#include "DFTileTypes.h"
+#include "DFCommonInternal.h"
 
-DFHACKAPI bool isWallTerrain(int in)
+bool DFHack::isWallTerrain(int in)
 {
     switch (in)
     {
@@ -185,7 +182,7 @@ DFHACKAPI bool isWallTerrain(int in)
     return false;
 }
 
-DFHACKAPI bool isFloorTerrain(int in)
+bool DFHack::isFloorTerrain(int in)
 {
     switch (in)
     {
@@ -344,7 +341,7 @@ DFHACKAPI bool isFloorTerrain(int in)
     return false;
 }
 
-DFHACKAPI bool isRampTerrain(int in)
+bool DFHack::isRampTerrain(int in)
 {
     switch (in)
     {
@@ -366,7 +363,7 @@ DFHACKAPI bool isRampTerrain(int in)
     return false;
 }
 
-DFHACKAPI bool isStairTerrain(int in)
+bool DFHack::isStairTerrain(int in)
 {
     switch (in)
     {
@@ -413,7 +410,7 @@ DFHACKAPI bool isStairTerrain(int in)
 
     return false;
 }
-DFHACKAPI bool isOpenTerrain(int in)
+bool DFHack::isOpenTerrain(int in)
 {
     switch (in)
     {
@@ -1051,22 +1048,22 @@ int picktexture(int in)
 
     return 6;
 }*/
-DFHACKAPI int getVegetationType(int in)
+int DFHack::getVegetationType(int in)
 {
     switch(in)
     {
         case 391: //dead tree
-            return TREE_DEAD;
+            return DFHack::TREE_DEAD;
         case 392: //dead sapling
-            return SAPLING_DEAD;
+            return DFHack::SAPLING_DEAD;
         case 393: //dead shrub
-            return SHRUB_DEAD;
+            return DFHack::SHRUB_DEAD;
         case 24: //tree
-            return TREE_OK;
+            return DFHack::TREE_OK;
         case 231: //sapling
-            return SAPLING_OK;
+            return DFHack::SAPLING_OK;
         case 34: //shrub
-            return SHRUB_OK;
+            return DFHack::SHRUB_OK;
     }
     // ????
     return -1;

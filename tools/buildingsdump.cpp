@@ -24,7 +24,7 @@ default 256
 address = absolute address of dump start
 length = length in lines. 1 line = 16 bytes
 */
-void hexdump (DFHackAPI& DF, uint32_t address, uint32_t length)
+void hexdump (DFHack::API& DF, uint32_t address, uint32_t length)
 {
     char *buf = new char[length * 16];
     
@@ -50,7 +50,7 @@ void hexdump (DFHackAPI& DF, uint32_t address, uint32_t length)
     delete buf;
 }
 
-void interleave_hex (DFHackAPI& DF, vector < uint32_t > & addresses, uint32_t length)
+void interleave_hex (DFHack::API& DF, vector < uint32_t > & addresses, uint32_t length)
 {
     vector <char * > bufs;
     
@@ -129,8 +129,7 @@ int main (int argc,const char* argv[])
     
     vector<t_matgloss> creaturestypes;
     
-    DFHackAPI *pDF = CreateDFHackAPI("Memory.xml");
-    DFHackAPI &DF = *pDF;
+    DFHack::API DF ("Memory.xml");
     if(!DF.Attach())
     {
         cerr << "DF not found" << endl;
@@ -154,7 +153,6 @@ int main (int argc,const char* argv[])
     interleave_hex(DF,addresses,lines / 4);
     DF.FinishReadBuildings();
     DF.Detach();
-    delete pDF;
 #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

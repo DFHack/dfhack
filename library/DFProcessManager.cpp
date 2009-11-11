@@ -22,17 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef BUILD_DFHACK_LIB
-#   define BUILD_DFHACK_LIB
-#endif
-
-#include "DFCommon.h"
-
-#include "DFDataModel.h"
-#include "DFMemInfo.h"
-
-#include "tinyxml/tinyxml.h"
-#include <iostream>
+#include "DFCommonInternal.h"
 
 /// HACK: global variables (only one process can be attached at the same time.)
 Process * g_pProcess; ///< current process. non-NULL when picked
@@ -44,8 +34,6 @@ int g_ProcessMemFile; ///< opened /proc/PID/mem, valid when attached
 /*
  *  LINUX version of the process finder.
  */
-
-#include "md5/md5wrapper.h"
 
 Process* ProcessManager::addProcess(const string & exe,ProcessHandle PH, const string & memFile)
 {

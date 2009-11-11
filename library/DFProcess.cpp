@@ -22,14 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef BUILD_DFHACK_LIB
-#   define BUILD_DFHACK_LIB
-#endif
-
-#include "DFCommon.h"
-#ifdef LINUX_BUILD
-#include <sys/wait.h>
-#endif
+#include "DFCommonInternal.h"
 
 
 Process::Process(DataModel * dm, memory_info* mi, ProcessHandle ph, uint32_t pid)

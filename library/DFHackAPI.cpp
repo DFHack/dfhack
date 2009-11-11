@@ -22,78 +22,134 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef BUILD_DFHACK_LIB
-#   define BUILD_DFHACK_LIB
-#endif
+#include "DFCommonInternal.h"
+using namespace DFHack;
 
-
-#include "DFCommon.h"
-#include "DFVector.h"
-#include "DFHackAPI.h"
-#include "DFMemInfo.h"
-
-#define _QUOTEME(x) #x
-#define QUOT(x) _QUOTEME(x)
-
-#ifdef USE_CONFIG_H
-    #include "config.h"
-#else
-    #define MEMXML_DATA_PATH .
-#endif
-
-#if defined(_MSC_VER) && _MSC_VER >= 1400
-    #define fill_char_buf(buf, str) strcpy_s((buf), sizeof(buf) / sizeof((buf)[0]), (str).c_str())
-#else
-    #define fill_char_buf(buf, str) strncpy((buf), (str).c_str(), sizeof(buf) / sizeof((buf)[0]))
-#endif
-
-/* TODO: Test these
-    matgloss other than stone/soil
-*/
-
-DFHACKAPI DFHackAPI *CreateDFHackAPI0(const char *path_to_xml)
+class API::Private
 {
-    return new DFHackAPIImpl(path_to_xml);
+    public:
+        Private()
+        : block(NULL)
+        , pm(NULL), p(NULL), dm(NULL), offset_descriptor(NULL)
+        , p_cons(NULL), p_bld(NULL), p_veg(NULL)
+        {}
+        uint32_t * block;
+        uint32_t x_block_count, y_block_count, z_block_count;
+        uint32_t regionX, regionY, regionZ;
+        uint32_t worldSizeX, worldSizeY;
+        
+        uint32_t tile_type_offset;
+        uint32_t designation_offset;
+        uint32_t occupancy_offset;
+        
+        uint32_t creature_pos_offset;
+        uint32_t creature_type_offset;
+        uint32_t creature_flags1_offset;
+        uint32_t creature_flags2_offset;
+        uint32_t creature_first_name_offset;
+        uint32_t creature_nick_name_offset;
+        uint32_t creature_last_name_offset;
+        
+        uint32_t creature_custom_profession_offset;
+        uint32_t creature_profession_offset;
+        uint32_t creature_sex_offset;
+        uint32_t creature_id_offset;
+        uint32_t creature_squad_name_offset;
+        uint32_t creature_squad_leader_id_offset;
+        uint32_t creature_money_offset;
+        uint32_t creature_current_job_offset;
+        uint32_t creature_current_job_id_offset;
+        uint32_t creature_strength_offset;
+        uint32_t creature_agility_offset;
+        uint32_t creature_toughness_offset;
+        uint32_t creature_skills_offset;
+        uint32_t creature_labors_offset;
+        uint32_t creature_happiness_offset;
+        uint32_t creature_traits_offset;
+        
+        uint32_t dwarf_lang_table_offset;
+        
+        ProcessManager* pm;
+        Process* p;
+        DataModel* dm;
+        memory_info* offset_descriptor;
+        vector<uint16_t> v_geology[eBiomeCount];
+        string xml;
+        
+        bool constructionsInited;
+        bool buildingsInited;
+        bool vegetationInited;
+        bool creaturesInited;
+        
+        bool nameTablesInited;
+        
+        uint32_t tree_offset;
+        DfVector *p_cre;
+        DfVector *p_cons;
+        DfVector *p_bld;
+        DfVector *p_veg;
+        
+        DfVector *p_trans;
+        DfVector *p_generic;
+        DfVector *p_dwarf_names;
+        
+        string getLastNameByAddress(const uint32_t &address, bool use_generic=false);
+        string getSquadNameByAddress(const uint32_t &address, bool use_generic=false);
+        string getProfessionByAddress(const uint32_t &address);
+        string getCurrentJobByAddress(const uint32_t &address);
+        void getSkillsByAddress(const uint32_t &address, vector<t_skill> &);
+        void getTraitsByAddress(const uint32_t &address, vector<t_trait> &);
+        void getLaborsByAddress(const uint32_t &address, vector<t_labor> &);
+        
+        string getLastName(const uint32_t &index, bool);
+        string getSquadName(const uint32_t &index, bool);
+        string getProfession(const uint32_t &index);
+        string getCurrentJob(const uint32_t &index);
+        vector<t_skill> getSkills(const uint32_t &index);
+        vector<t_trait> getTraits(const uint32_t &index);
+        vector<t_labor> getLabors(const uint32_t &index);
+        
+        void InitReadNameTables();
+        void FinishReadNameTables();
+};
+
+API::API(const string path_to_xml)
+: d(new Private())
+{
+    d->xml = QUOT(MEMXML_DATA_PATH);
+    d->xml += "/";
+    d->xml += path_to_xml;
+    d->constructionsInited = false;
+    d->creaturesInited = false;
+    d->buildingsInited = false;
+    d->vegetationInited = false;
+    d->pm = NULL;
 }
 
-// TODO: templating for vectors, simple copy constructor for stl vectors
-// TODO: encapsulate access to multidimensional arrays.
-
-DFHackAPIImpl::DFHackAPIImpl(const string path_to_xml)
-: block(NULL)
-, pm(NULL), p(NULL), dm(NULL), offset_descriptor(NULL)
-, p_cons(NULL), p_bld(NULL), p_veg(NULL)
+API::~API()
 {
-    xml = QUOT(MEMXML_DATA_PATH);
-    xml += "/";
-    xml += path_to_xml;
-    constructionsInited = false;
-    creaturesInited = false;
-    buildingsInited = false;
-    vegetationInited = false;
-    pm = NULL;
+    delete d;
 }
-
 
 /*-----------------------------------*
  *  Init the mapblock pointer array   *
  *-----------------------------------*/
-bool DFHackAPIImpl::InitMap()
+bool API::InitMap()
 {
     uint32_t    map_loc,   // location of the X array
                 temp_loc,  // block location
                 temp_locx, // iterator for the X array
                 temp_locy, // iterator for the Y array
                 temp_locz; // iterator for the Z array
-    uint32_t map_offset = offset_descriptor->getAddress("map_data");
-    uint32_t x_count_offset = offset_descriptor->getAddress("x_count");
-    uint32_t y_count_offset = offset_descriptor->getAddress("y_count");
-    uint32_t z_count_offset = offset_descriptor->getAddress("z_count");
+    uint32_t map_offset = d->offset_descriptor->getAddress("map_data");
+    uint32_t x_count_offset = d->offset_descriptor->getAddress("x_count");
+    uint32_t y_count_offset = d->offset_descriptor->getAddress("y_count");
+    uint32_t z_count_offset = d->offset_descriptor->getAddress("z_count");
 
     // get the offsets once here
-    tile_type_offset = offset_descriptor->getOffset("type");
-    designation_offset = offset_descriptor->getOffset("designation");
-    occupancy_offset = offset_descriptor->getOffset("occupancy");
+    d->tile_type_offset = d->offset_descriptor->getOffset("type");
+    d->designation_offset = d->offset_descriptor->getOffset("designation");
+    d->occupancy_offset = d->offset_descriptor->getOffset("occupancy");
 
     // get the map pointer
     map_loc = MreadDWord(map_offset);
@@ -104,60 +160,60 @@ bool DFHackAPIImpl::InitMap()
     }
 
     // get the size
-    x_block_count = MreadDWord(x_count_offset);
-    y_block_count = MreadDWord(y_count_offset);
-    z_block_count = MreadDWord(z_count_offset);
+    d->x_block_count = MreadDWord(x_count_offset);
+    d->y_block_count = MreadDWord(y_count_offset);
+    d->z_block_count = MreadDWord(z_count_offset);
 
     // alloc array for pinters to all blocks
-    block = new uint32_t[x_block_count*y_block_count*z_block_count];
+    d->block = new uint32_t[d->x_block_count*d->y_block_count*d->z_block_count];
 
     //read the memory from the map blocks - x -> map slice
-    for(uint32_t x = 0; x < x_block_count; x++)
+    for(uint32_t x = 0; x < d->x_block_count; x++)
     {
         temp_locx = map_loc + ( 4 * x );
         temp_locy = MreadDWord(temp_locx);
 
         // y -> map column
-        for(uint32_t y = 0; y < y_block_count; y++)
+        for(uint32_t y = 0; y < d->y_block_count; y++)
         {
             temp_locz = MreadDWord(temp_locy);
             temp_locy += 4;
 
             // z -> map block (16x16)
-            for(uint32_t z = 0; z < z_block_count; z++)
+            for(uint32_t z = 0; z < d->z_block_count; z++)
             {
                 temp_loc = MreadDWord(temp_locz);
                 temp_locz += 4;
-                block[x*y_block_count*z_block_count + y*z_block_count + z] = temp_loc;
+                d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z] = temp_loc;
             }
         }
     }
     return true;
 }
 
-bool DFHackAPIImpl::DestroyMap()
+bool API::DestroyMap()
 {
-	if (block != NULL)
-	{
-		delete [] block;
-		block = NULL;
-	}
+    if (d->block != NULL)
+    {
+        delete [] d->block;
+        d->block = NULL;
+    }
 
-	return true;
+    return true;
 }
 
-bool DFHackAPIImpl::isValidBlock(uint32_t x, uint32_t y, uint32_t z)
+bool API::isValidBlock(uint32_t x, uint32_t y, uint32_t z)
 {
-    return block[x*y_block_count*z_block_count + y*z_block_count + z] != NULL;
+    return d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z] != NULL;
 }
 
 // 256 * sizeof(uint16_t)
-bool DFHackAPIImpl::ReadTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
+bool API::ReadTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
 {
-    uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr!=NULL)
     {
-        Mread(addr+tile_type_offset, 256 * sizeof(uint16_t), (uint8_t *)buffer);
+        Mread(addr+d->tile_type_offset, 256 * sizeof(uint16_t), (uint8_t *)buffer);
         return true;
     }
     return false;
@@ -165,12 +221,12 @@ bool DFHackAPIImpl::ReadTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *
 
 
 // 256 * sizeof(uint32_t)
-bool DFHackAPIImpl::ReadDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
+bool API::ReadDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 {
-    uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr!=NULL)
     {
-        Mread(addr+designation_offset, 256 * sizeof(uint32_t), (uint8_t *)buffer);
+        Mread(addr+d->designation_offset, 256 * sizeof(uint32_t), (uint8_t *)buffer);
         return true;
     }
     return false;
@@ -178,12 +234,12 @@ bool DFHackAPIImpl::ReadDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_
 
 
 // 256 * sizeof(uint32_t)
-bool DFHackAPIImpl::ReadOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
+bool API::ReadOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 {
-    uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr!=NULL)
     {
-        Mread(addr+occupancy_offset, 256 * sizeof(uint32_t), (uint8_t *)buffer);
+        Mread(addr+d->occupancy_offset, 256 * sizeof(uint32_t), (uint8_t *)buffer);
         return true;
     }
     return false;
@@ -191,12 +247,12 @@ bool DFHackAPIImpl::ReadOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *
 
 
 // 256 * sizeof(uint16_t)
-bool DFHackAPIImpl::WriteTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
+bool API::WriteTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
 {
-    uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr!=NULL)
     {
-        Mwrite(addr+tile_type_offset, 256 * sizeof(uint16_t), (uint8_t *)buffer);
+        Mwrite(addr+d->tile_type_offset, 256 * sizeof(uint16_t), (uint8_t *)buffer);
         return true;
     }
     return false;
@@ -204,12 +260,12 @@ bool DFHackAPIImpl::WriteTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t 
 
 
 // 256 * sizeof(uint32_t)
-bool DFHackAPIImpl::WriteDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
+bool API::WriteDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 {
-    uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr!=NULL)
     {
-        Mwrite(addr+designation_offset, 256 * sizeof(uint32_t), (uint8_t *)buffer);
+        Mwrite(addr+d->designation_offset, 256 * sizeof(uint32_t), (uint8_t *)buffer);
         return true;
     }
     return false;
@@ -217,12 +273,12 @@ bool DFHackAPIImpl::WriteDesignations(uint32_t x, uint32_t y, uint32_t z, uint32
 
 
 // 256 * sizeof(uint32_t)
-bool DFHackAPIImpl::WriteOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
+bool API::WriteOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 {
-    uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr!=NULL)
     {
-        Mwrite(addr+occupancy_offset, 256 * sizeof(uint32_t), (uint8_t *)buffer);
+        Mwrite(addr+d->occupancy_offset, 256 * sizeof(uint32_t), (uint8_t *)buffer);
         return true;
     }
     return false;
@@ -231,10 +287,10 @@ bool DFHackAPIImpl::WriteOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t 
 
 //16 of them? IDK... there's probably just 7. Reading more doesn't cause errors as it's an array nested inside a block
 // 16 * sizeof(uint8_t)
-bool DFHackAPIImpl::ReadRegionOffsets(uint32_t x, uint32_t y, uint32_t z, uint8_t *buffer)
+bool API::ReadRegionOffsets(uint32_t x, uint32_t y, uint32_t z, uint8_t *buffer)
 {
-    uint32_t biome_stuffs = offset_descriptor->getOffset("biome_stuffs");
-    uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
+    uint32_t biome_stuffs = d->offset_descriptor->getOffset("biome_stuffs");
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr!=NULL)
     {
         Mread(addr+biome_stuffs, 16 * sizeof(uint8_t), buffer);
@@ -245,18 +301,18 @@ bool DFHackAPIImpl::ReadRegionOffsets(uint32_t x, uint32_t y, uint32_t z, uint8_
 
 
 // veins of a block, expects empty vein vector
-bool DFHackAPIImpl::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins)
+bool API::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins)
 {
-    uint32_t addr = block[x*y_block_count*z_block_count + y*z_block_count + z];
-    int veinvector = offset_descriptor->getOffset("v_vein");
-    int veinsize = offset_descriptor->getHexValue("v_vein_size");
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    int veinvector = d->offset_descriptor->getOffset("v_vein");
+    int veinsize = d->offset_descriptor->getHexValue("v_vein_size");
     veins.clear();
     if(addr!=NULL && veinvector && veinsize)
     {
         assert(sizeof(t_vein) == veinsize);
         // veins are stored as a vector of pointers to veins
         /*pointer is 4 bytes! we work with a 32bit program here, no matter what architecture we compile khazad for*/
-        DfVector p_veins = dm->readVector(addr + veinvector, 4);
+        DfVector p_veins = d->dm->readVector(addr + veinvector, 4);
 
         // read all veins
         for (uint32_t i = 0; i< p_veins.getSize();i++)
@@ -277,18 +333,18 @@ bool DFHackAPIImpl::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein
 
 
 // getter for map size
-void DFHackAPIImpl::getSize(uint32_t& x, uint32_t& y, uint32_t& z)
+void API::getSize(uint32_t& x, uint32_t& y, uint32_t& z)
 {
-    x = x_block_count;
-    y = y_block_count;
-    z = z_block_count;
+    x = d->x_block_count;
+    y = d->y_block_count;
+    z = d->z_block_count;
 }
 
-bool DFHackAPIImpl::ReadWoodMatgloss(vector<t_matgloss> & woods)
+bool API::ReadWoodMatgloss(vector<t_matgloss> & woods)
 {
-    int matgloss_address = offset_descriptor->getAddress("matgloss");
+    int matgloss_address = d->offset_descriptor->getAddress("matgloss");
     // TODO: find flag for autumnal coloring?
-    DfVector p_matgloss = dm->readVector(matgloss_address, 4);
+    DfVector p_matgloss = d->dm->readVector(matgloss_address, 4);
     
     woods.clear();
     
@@ -305,18 +361,19 @@ bool DFHackAPIImpl::ReadWoodMatgloss(vector<t_matgloss> & woods)
         p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
         
         // read the string pointed at by
-        fill_char_buf(mat.id, dm->readSTLString(temp)); // reads a C string given an address
+        fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
         woods.push_back(mat);
     }
     return true;
 }
 
-bool DFHackAPIImpl::ReadStoneMatgloss(vector<t_matgloss> & stones)
+bool API::ReadStoneMatgloss(vector<t_matgloss> & stones)
 {
-    int matgloss_address = offset_descriptor->getAddress("matgloss");
-    int matgloss_offset = offset_descriptor->getHexValue("matgloss_skip");
-    int matgloss_colors = offset_descriptor->getOffset("matgloss_stone_color");
-    DfVector p_matgloss = dm->readVector(matgloss_address + matgloss_offset, 4);
+    memory_info * minfo = d->offset_descriptor;
+    int matgloss_address = minfo->getAddress("matgloss");
+    int matgloss_offset = minfo->getHexValue("matgloss_skip");
+    int matgloss_colors = minfo->getOffset("matgloss_stone_color");
+    DfVector p_matgloss = d->dm->readVector(matgloss_address + matgloss_offset, 4);
 
     stones.clear();
 
@@ -327,7 +384,7 @@ bool DFHackAPIImpl::ReadStoneMatgloss(vector<t_matgloss> & stones)
         p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
         // read the string pointed at by
         t_matgloss mat;
-        fill_char_buf(mat.id, dm->readSTLString(temp)); // reads a C string given an address
+        fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
         mat.fore = (uint8_t)MreadWord(temp + matgloss_colors);
         mat.back = (uint8_t)MreadWord(temp + matgloss_colors + 2);
         mat.bright = (uint8_t)MreadWord(temp + matgloss_colors + 4);
@@ -337,12 +394,13 @@ bool DFHackAPIImpl::ReadStoneMatgloss(vector<t_matgloss> & stones)
 }
 
 
-bool DFHackAPIImpl::ReadMetalMatgloss(vector<t_matgloss> & metals)
+bool API::ReadMetalMatgloss(vector<t_matgloss> & metals)
 {
-    int matgloss_address = offset_descriptor->getAddress("matgloss");
-    int matgloss_offset = offset_descriptor->getHexValue("matgloss_skip");
-    int matgloss_colors = offset_descriptor->getOffset("matgloss_metal_color");
-    DfVector p_matgloss = dm->readVector(matgloss_address + matgloss_offset*3, 4);
+    memory_info * minfo = d->offset_descriptor;
+    int matgloss_address = minfo->getAddress("matgloss");
+    int matgloss_offset = minfo->getHexValue("matgloss_skip");
+    int matgloss_colors = minfo->getOffset("matgloss_metal_color");
+    DfVector p_matgloss = d->dm->readVector(matgloss_address + matgloss_offset*3, 4);
 
     metals.clear();
 
@@ -355,7 +413,7 @@ bool DFHackAPIImpl::ReadMetalMatgloss(vector<t_matgloss> & metals)
 
         // read the string pointed at by
         t_matgloss mat;
-        fill_char_buf(mat.id, dm->readSTLString(temp)); // reads a C string given an address
+        fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
         mat.fore = (uint8_t)MreadWord(temp + matgloss_colors);
         mat.back = (uint8_t)MreadWord(temp + matgloss_colors + 2);
         mat.bright = (uint8_t)MreadWord(temp + matgloss_colors + 4);
@@ -364,11 +422,12 @@ bool DFHackAPIImpl::ReadMetalMatgloss(vector<t_matgloss> & metals)
     return true;
 }
 
-bool DFHackAPIImpl::ReadPlantMatgloss(vector<t_matgloss> & plants)
+bool API::ReadPlantMatgloss(vector<t_matgloss> & plants)
 {
-    int matgloss_address = offset_descriptor->getAddress("matgloss");
-    int matgloss_offset = offset_descriptor->getHexValue("matgloss_skip");
-    DfVector p_matgloss = dm->readVector(matgloss_address + matgloss_offset*2, 4);
+    memory_info * minfo = d->offset_descriptor;
+    int matgloss_address = minfo->getAddress("matgloss");
+    int matgloss_offset = minfo->getHexValue("matgloss_skip");
+    DfVector p_matgloss = d->dm->readVector(matgloss_address + matgloss_offset*2, 4);
 
     plants.clear();
 
@@ -385,17 +444,18 @@ bool DFHackAPIImpl::ReadPlantMatgloss(vector<t_matgloss> & plants)
         p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
 
         // read the string pointed at by
-        fill_char_buf(mat.id, dm->readSTLString(temp)); // reads a C string given an address
+        fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
         plants.push_back(mat);
     }
     return true;
 }
 
-bool DFHackAPIImpl::ReadCreatureMatgloss(vector<t_matgloss> & creatures)
+bool API::ReadCreatureMatgloss(vector<t_matgloss> & creatures)
 {
-    int matgloss_address = offset_descriptor->getAddress("matgloss");
-    int matgloss_offset = offset_descriptor->getHexValue("matgloss_skip");
-    DfVector p_matgloss = dm->readVector(matgloss_address + matgloss_offset*6, 4);
+    memory_info * minfo = d->offset_descriptor;
+    int matgloss_address = minfo->getAddress("matgloss");
+    int matgloss_offset = minfo->getHexValue("matgloss_skip");
+    DfVector p_matgloss = d->dm->readVector(matgloss_address + matgloss_offset*6, 4);
     
     creatures.clear();
     
@@ -412,7 +472,7 @@ bool DFHackAPIImpl::ReadCreatureMatgloss(vector<t_matgloss> & creatures)
         p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
         
         // read the string pointed at by
-        fill_char_buf(mat.id, dm->readSTLString(temp)); // reads a C string given an address
+        fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
         creatures.push_back(mat);
     }
     return true;
@@ -420,20 +480,21 @@ bool DFHackAPIImpl::ReadCreatureMatgloss(vector<t_matgloss> & creatures)
 
 
 //vector<uint16_t> v_geology[eBiomeCount];
-bool DFHackAPIImpl::ReadGeology( vector < vector <uint16_t> >& assign )
+bool API::ReadGeology( vector < vector <uint16_t> >& assign )
 {
+    memory_info * minfo = d->offset_descriptor;
     // get needed addresses and offsets
-    int region_x_offset = offset_descriptor->getAddress("region_x");
-    int region_y_offset = offset_descriptor->getAddress("region_y");
-    int region_z_offset =  offset_descriptor->getAddress("region_z");
-    int world_offset =  offset_descriptor->getAddress("world");
-    int world_regions_offset =  offset_descriptor->getOffset("w_regions_arr");
-    int region_size =  offset_descriptor->getHexValue("region_size");
-    int region_geo_index_offset =  offset_descriptor->getOffset("region_geo_index_off");
-    int world_geoblocks_offset =  offset_descriptor->getOffset("w_geoblocks");
-    int world_size_x = offset_descriptor->getOffset("world_size_x");
-    int world_size_y = offset_descriptor->getOffset("world_size_y");
-    int geolayer_geoblock_offset = offset_descriptor->getOffset("geolayer_geoblock_offset");
+    int region_x_offset = minfo->getAddress("region_x");
+    int region_y_offset = minfo->getAddress("region_y");
+    int region_z_offset =  minfo->getAddress("region_z");
+    int world_offset =  minfo->getAddress("world");
+    int world_regions_offset =  minfo->getOffset("w_regions_arr");
+    int region_size =  minfo->getHexValue("region_size");
+    int region_geo_index_offset =  minfo->getOffset("region_geo_index_off");
+    int world_geoblocks_offset =  minfo->getOffset("w_geoblocks");
+    int world_size_x = minfo->getOffset("world_size_x");
+    int world_size_y = minfo->getOffset("world_size_y");
+    int geolayer_geoblock_offset = minfo->getOffset("geolayer_geoblock_offset");
 
     uint32_t regionX, regionY, regionZ;
     uint16_t worldSizeX, worldSizeY;
@@ -464,7 +525,7 @@ bool DFHackAPIImpl::ReadGeology( vector < vector <uint16_t> >& assign )
     uint32_t regions = MreadDWord(world_offset + world_regions_offset);
 
     // read the geoblock vector
-    DfVector geoblocks = dm->readVector(world_offset + world_geoblocks_offset,4);
+    DfVector geoblocks = d->dm->readVector(world_offset + world_geoblocks_offset,4);
 
     // iterate over 8 surrounding regions + local region
     for(int i = eNorthWest; i< eBiomeCount; i++)
@@ -490,7 +551,7 @@ bool DFHackAPIImpl::ReadGeology( vector < vector <uint16_t> >& assign )
         geoblocks.read(geoindex,(uint8_t *) &geoblock_off);
 
         // get the vector with pointer to layers
-        DfVector geolayers = dm->readVector(geoblock_off + geolayer_geoblock_offset , 4); // let's hope
+        DfVector geolayers = d->dm->readVector(geoblock_off + geolayer_geoblock_offset , 4); // let's hope
         // make sure we don't load crap
         assert(geolayers.getSize() > 0 && geolayers.getSize() <= 16);
 
@@ -501,47 +562,47 @@ bool DFHackAPIImpl::ReadGeology( vector < vector <uint16_t> >& assign )
             // read pointer to a layer
             geolayers.read(j, (uint8_t *) & geol_offset);
             // read word at pointer + 2, store in our geology vectors
-            v_geology[i].push_back(MreadWord(geol_offset + 2));
+            d->v_geology[i].push_back(MreadWord(geol_offset + 2));
         }
     }
     assign.clear();
     // TODO: clean this up
     for(int i = 0; i< eBiomeCount;i++)
     {
-        assign.push_back(v_geology[i]);
+        assign.push_back(d->v_geology[i]);
     }
     return true;
 }
 
 
 // returns number of buildings, expects v_buildingtypes that will later map t_building.type to its name
-uint32_t DFHackAPIImpl::InitReadBuildings(vector <string> &v_buildingtypes)
+uint32_t API::InitReadBuildings(vector <string> &v_buildingtypes)
 {
-    buildingsInited = true;
-    int buildings = offset_descriptor->getAddress("buildings");
+    d->buildingsInited = true;
+    int buildings = d->offset_descriptor->getAddress("buildings");
     assert(buildings);
-    p_bld = new DfVector( dm->readVector(buildings,4));
-    offset_descriptor->copyBuildings(v_buildingtypes);
-    return p_bld->getSize();
+    d->p_bld = new DfVector( d->dm->readVector(buildings,4));
+    d->offset_descriptor->copyBuildings(v_buildingtypes);
+    return d->p_bld->getSize();
 }
 
 
 // read one building
-bool DFHackAPIImpl::ReadBuilding(const uint32_t &index, t_building & building)
+bool API::ReadBuilding(const uint32_t &index, t_building & building)
 {
-    assert(buildingsInited);
+    assert(d->buildingsInited);
     uint32_t temp;
     t_building_df40d bld_40d;
 
     // read pointer from vector at position
-    p_bld->read(index,(uint8_t *)&temp);
+    d->p_bld->read(index,(uint8_t *)&temp);
 
     //read building from memory
     Mread(temp, sizeof(t_building_df40d), (uint8_t *)&bld_40d);
 
     // transform
     int32_t type = -1;
-    offset_descriptor->resolveClassId(temp, type);
+    d->offset_descriptor->resolveClassId(temp, type);
     building.origin = temp;
     building.vtable = bld_40d.vtable;
     building.x1 = bld_40d.x1;
@@ -552,39 +613,39 @@ bool DFHackAPIImpl::ReadBuilding(const uint32_t &index, t_building & building)
     building.material = bld_40d.material;
     building.type = type;
 
-	return true;
+    return true;
 }
 
 
-void DFHackAPIImpl::FinishReadBuildings()
+void API::FinishReadBuildings()
 {
-    delete p_bld;
-    p_bld = NULL;
-    buildingsInited = false;
+    delete d->p_bld;
+    d->p_bld = NULL;
+    d->buildingsInited = false;
 }
 
 
 //TODO: maybe do construction reading differently - this could go slow with many of them.
 // returns number of constructions, prepares a vector, returns total number of constructions
-uint32_t DFHackAPIImpl::InitReadConstructions()
+uint32_t API::InitReadConstructions()
 {
-    constructionsInited = true;
-    int constructions = offset_descriptor->getAddress("constructions");
+    d->constructionsInited = true;
+    int constructions = d->offset_descriptor->getAddress("constructions");
     assert(constructions);
 
-    p_cons = new DfVector(dm->readVector(constructions,4));
-    return p_cons->getSize();
+    d->p_cons = new DfVector(d->dm->readVector(constructions,4));
+    return d->p_cons->getSize();
 }
 
 
-bool DFHackAPIImpl::ReadConstruction(const uint32_t &index, t_construction & construction)
+bool API::ReadConstruction(const uint32_t &index, t_construction & construction)
 {
-    assert(constructionsInited);
+    assert(d->constructionsInited);
     t_construction_df40d c_40d;
     uint32_t temp;
 
     // read pointer from vector at position
-    p_cons->read((uint32_t)index,(uint8_t *)&temp);
+    d->p_cons->read((uint32_t)index,(uint8_t *)&temp);
 
     //read construction from memory
     Mread(temp, sizeof(t_construction_df40d), (uint8_t *)&c_40d);
@@ -599,99 +660,117 @@ bool DFHackAPIImpl::ReadConstruction(const uint32_t &index, t_construction & con
 }
 
 
-void DFHackAPIImpl::FinishReadConstructions()
+void API::FinishReadConstructions()
 {
-    delete p_cons;
-    p_cons = NULL;
-    constructionsInited = false;
+    delete d->p_cons;
+    d->p_cons = NULL;
+    d->constructionsInited = false;
 }
 
 
-uint32_t DFHackAPIImpl::InitReadVegetation()
+uint32_t API::InitReadVegetation()
 {
-    vegetationInited = true;
-    int vegetation = offset_descriptor->getAddress("vegetation");
-    tree_offset = offset_descriptor->getOffset("tree_desc_offset");
-    assert(vegetation && tree_offset);
-    p_veg = new DfVector(dm->readVector(vegetation,4));
-    return p_veg->getSize();
+    d->vegetationInited = true;
+    int vegetation = d->offset_descriptor->getAddress("vegetation");
+    d->tree_offset = d->offset_descriptor->getOffset("tree_desc_offset");
+    assert(vegetation && d->tree_offset);
+    d->p_veg = new DfVector(d->dm->readVector(vegetation,4));
+    return d->p_veg->getSize();
 }
 
 
-bool DFHackAPIImpl::ReadVegetation(const uint32_t &index, t_tree_desc & shrubbery)
+bool API::ReadVegetation(const uint32_t &index, t_tree_desc & shrubbery)
 {
-    assert(vegetationInited);
+    assert(d->vegetationInited);
     uint32_t temp;
     // read pointer from vector at position
-    p_veg->read(index,(uint8_t *)&temp);
+    d->p_veg->read(index,(uint8_t *)&temp);
     //read construction from memory
-    Mread(temp + tree_offset, sizeof(t_tree_desc), (uint8_t *) &shrubbery);
+    Mread(temp + d->tree_offset, sizeof(t_tree_desc), (uint8_t *) &shrubbery);
     // FIXME: this is completely wrong. type isn't just tree/shrub but also different kinds of trees. stuff that grows around ponds has its own type ID
     if(shrubbery.material.type == 3) shrubbery.material.type = 2;
     return true;
 }
 
 
-void DFHackAPIImpl::FinishReadVegetation()
+void API::FinishReadVegetation()
 {
-    delete p_veg;
-    p_veg = NULL;
-    vegetationInited = false;
+    delete d->p_veg;
+    d->p_veg = NULL;
+    d->vegetationInited = false;
 }
 
 
-uint32_t DFHackAPIImpl::InitReadCreatures()
+uint32_t API::InitReadCreatures()
 {
-    creaturesInited = true;
-    int creatures = offset_descriptor->getAddress("creatures");
-    creature_pos_offset = offset_descriptor->getOffset("creature_position");
-    creature_type_offset = offset_descriptor->getOffset("creature_race");
-    creature_flags1_offset = offset_descriptor->getOffset("creature_flags1");
-    creature_flags2_offset = offset_descriptor->getOffset("creature_flags2");
-    creature_first_name_offset = offset_descriptor->getOffset("creature_first_name");
-    creature_nick_name_offset = offset_descriptor->getOffset("creature_nick_name");
-    creature_last_name_offset = offset_descriptor->getOffset("creature_last_name");
-    creature_custom_profession_offset = offset_descriptor->getOffset("creature_custom_profession");
-    creature_profession_offset = offset_descriptor->getOffset("creature_profession");
-    creature_sex_offset = offset_descriptor->getOffset("creature_sex");
-    creature_id_offset = offset_descriptor->getOffset("creature_id");
-    creature_squad_name_offset = offset_descriptor->getOffset("creature_squad_name");
-    creature_squad_leader_id_offset = offset_descriptor->getOffset("creature_squad_leader_id");
-    creature_money_offset = offset_descriptor->getOffset("creature_money");
-    creature_current_job_offset = offset_descriptor->getOffset("creature_current_job");
-    creature_current_job_id_offset = offset_descriptor->getOffset("current_job_id");
-    creature_strength_offset = offset_descriptor->getOffset("creature_strength");
-    creature_agility_offset = offset_descriptor->getOffset("creature_agility");
-    creature_toughness_offset = offset_descriptor->getOffset("creature_toughness");
-    creature_skills_offset = offset_descriptor->getOffset("creature_skills");
-    creature_labors_offset = offset_descriptor->getOffset("creature_labors");
-    creature_happiness_offset = offset_descriptor->getOffset("creature_happiness");
-    creature_traits_offset = offset_descriptor->getOffset("creature_traits");
-    assert(creatures && creature_pos_offset && creature_type_offset &&
-    creature_flags1_offset && creature_flags2_offset && creature_nick_name_offset
-    && creature_custom_profession_offset
-    && creature_profession_offset
-    && creature_sex_offset
-    && creature_id_offset
-    && creature_squad_name_offset
-    && creature_squad_leader_id_offset
-    && creature_money_offset
-    && creature_current_job_offset
-    && creature_strength_offset
-    && creature_agility_offset
-    && creature_toughness_offset
-    && creature_skills_offset
-    && creature_labors_offset
-    && creature_happiness_offset
-    && creature_traits_offset
-    );
-    p_cre = new DfVector(dm->readVector(creatures, 4));
-    InitReadNameTables();
-    return p_cre->getSize();
+    memory_info * minfo = d->offset_descriptor;
+    int creatures = d->offset_descriptor->getAddress("creatures");
+    d->creature_pos_offset = minfo->getOffset("creature_position");
+    d->creature_type_offset = minfo->getOffset("creature_race");
+    d->creature_flags1_offset = minfo->getOffset("creature_flags1");
+    d->creature_flags2_offset = minfo->getOffset("creature_flags2");
+    d->creature_first_name_offset = minfo->getOffset("creature_first_name");
+    d->creature_nick_name_offset = minfo->getOffset("creature_nick_name");
+    d->creature_last_name_offset = minfo->getOffset("creature_last_name");
+    d->creature_custom_profession_offset = minfo->getOffset("creature_custom_profession");
+    d->creature_profession_offset = minfo->getOffset("creature_profession");
+    d->creature_sex_offset = minfo->getOffset("creature_sex");
+    d->creature_id_offset = minfo->getOffset("creature_id");
+    d->creature_squad_name_offset = minfo->getOffset("creature_squad_name");
+    d->creature_squad_leader_id_offset = minfo->getOffset("creature_squad_leader_id");
+    d->creature_money_offset = minfo->getOffset("creature_money");
+    d->creature_current_job_offset = minfo->getOffset("creature_current_job");
+    d->creature_current_job_id_offset = minfo->getOffset("current_job_id");
+    d->creature_strength_offset = minfo->getOffset("creature_strength");
+    d->creature_agility_offset = minfo->getOffset("creature_agility");
+    d->creature_toughness_offset = minfo->getOffset("creature_toughness");
+    d->creature_skills_offset = minfo->getOffset("creature_skills");
+    d->creature_labors_offset = minfo->getOffset("creature_labors");
+    d->creature_happiness_offset = minfo->getOffset("creature_happiness");
+    d->creature_traits_offset = minfo->getOffset("creature_traits");
+    if( creatures
+        && d->creature_pos_offset
+        && d->creature_type_offset
+        && d->creature_flags1_offset
+        && d->creature_flags2_offset
+        && d->creature_nick_name_offset
+        && d->creature_custom_profession_offset
+        && d->creature_profession_offset
+        && d->creature_sex_offset
+        && d->creature_id_offset
+        && d->creature_squad_name_offset
+        && d->creature_squad_leader_id_offset
+        && d->creature_money_offset
+        && d->creature_current_job_offset
+        && d->creature_strength_offset
+        && d->creature_agility_offset
+        && d->creature_toughness_offset
+        && d->creature_skills_offset
+        && d->creature_labors_offset
+        && d->creature_happiness_offset
+        && d->creature_traits_offset
+    )
+    {
+        d->p_cre = new DfVector(d->dm->readVector(creatures, 4));
+        d->InitReadNameTables();
+        //if(d->InitReadNameTables())
+        //{
+            d->creaturesInited = true;
+            return d->p_cre->getSize();
+        //}
+        //else
+        //{
+        //    return false;
+        //}
+    }
+    else
+    {
+        return false;
+    }
 }
 
 //This code was mostly adapted fromh dwarftherapist by chmod
-string DFHackAPIImpl::getLastNameByAddress(const uint32_t &address, bool use_generic)
+string API::Private::getLastNameByAddress(const uint32_t &address, bool use_generic)
 {
     string out; 
     uint32_t wordIndex;
@@ -718,7 +797,7 @@ string DFHackAPIImpl::getLastNameByAddress(const uint32_t &address, bool use_gen
     return out;
 }
 
-string DFHackAPIImpl::getSquadNameByAddress(const uint32_t &address, bool use_generic)
+string API::Private::getSquadNameByAddress(const uint32_t &address, bool use_generic)
 {
     string out; 
     uint32_t wordIndex;
@@ -753,7 +832,7 @@ string DFHackAPIImpl::getSquadNameByAddress(const uint32_t &address, bool use_ge
     return out;
 }
 
-string DFHackAPIImpl::getProfessionByAddress(const uint32_t &address)
+string API::Private::getProfessionByAddress(const uint32_t &address)
 {
     string profession;
     uint8_t profId = MreadByte(address);
@@ -761,7 +840,7 @@ string DFHackAPIImpl::getProfessionByAddress(const uint32_t &address)
     return profession;
 }
 
-string DFHackAPIImpl::getCurrentJobByAddress(const uint32_t &address)
+string API::Private::getCurrentJobByAddress(const uint32_t &address)
 {
     string job;
     uint32_t jobIdAddr = MreadDWord(address);
@@ -777,7 +856,7 @@ string DFHackAPIImpl::getCurrentJobByAddress(const uint32_t &address)
     return job;
 }
 
-string DFHackAPIImpl::getLastName(const uint32_t &index, bool use_generic=false)
+string API::Private::getLastName(const uint32_t &index, bool use_generic=false)
 {
     assert(creaturesInited);
     uint32_t temp;
@@ -785,7 +864,7 @@ string DFHackAPIImpl::getLastName(const uint32_t &index, bool use_generic=false)
     p_cre->read(index,(uint8_t *)&temp);
     return(getLastNameByAddress(temp+creature_last_name_offset,use_generic));
 }
-string DFHackAPIImpl::getSquadName(const uint32_t &index, bool use_generic=false)
+string API::Private::getSquadName(const uint32_t &index, bool use_generic=false)
 {
     assert(creaturesInited);
     uint32_t temp;
@@ -793,7 +872,7 @@ string DFHackAPIImpl::getSquadName(const uint32_t &index, bool use_generic=false
     p_cre->read(index,(uint8_t *)&temp);
     return(getSquadNameByAddress(temp+creature_squad_name_offset,use_generic));
 }
-string DFHackAPIImpl::getProfession(const uint32_t &index)
+string API::Private::getProfession(const uint32_t &index)
 {
     assert(creaturesInited);
     uint32_t temp;
@@ -801,7 +880,7 @@ string DFHackAPIImpl::getProfession(const uint32_t &index)
     p_cre->read(index,(uint8_t *)&temp);
     return(getProfessionByAddress(temp+creature_profession_offset));
 }
-string DFHackAPIImpl::getCurrentJob(const uint32_t &index)
+string API::Private::getCurrentJob(const uint32_t &index)
 {
     assert(creaturesInited);
     uint32_t temp;
@@ -809,7 +888,7 @@ string DFHackAPIImpl::getCurrentJob(const uint32_t &index)
     p_cre->read(index,(uint8_t *)&temp);
     return(getCurrentJobByAddress(temp+creature_current_job_offset));
 }
-vector<t_skill> DFHackAPIImpl::getSkills(const uint32_t &index)
+vector<t_skill> API::Private::getSkills(const uint32_t &index)
 {
     assert(creaturesInited);
     uint32_t temp;
@@ -820,7 +899,7 @@ vector<t_skill> DFHackAPIImpl::getSkills(const uint32_t &index)
     return(tempSkillVec);
 }
 
-vector<t_trait> DFHackAPIImpl::getTraits(const uint32_t &index)
+vector<t_trait> API::Private::getTraits(const uint32_t &index)
 {
     assert(creaturesInited);
     uint32_t temp;
@@ -831,7 +910,7 @@ vector<t_trait> DFHackAPIImpl::getTraits(const uint32_t &index)
     return(tempTraitVec);
 }
 
-void DFHackAPIImpl::getSkillsByAddress(const uint32_t &address, vector<t_skill> & skills)
+void API::Private::getSkillsByAddress(const uint32_t &address, vector<t_skill> & skills)
 {
     DfVector* skillVector = new DfVector(dm->readVector(address,4));
     for(uint32_t i = 0; i<skillVector->getSize();i++)
@@ -843,14 +922,18 @@ void DFHackAPIImpl::getSkillsByAddress(const uint32_t &address, vector<t_skill> 
         tempSkill.name = offset_descriptor->getSkill(tempSkill.id);
         tempSkill.experience = MreadWord(temp+8);
         tempSkill.rating = MreadByte(temp+4);
-//        for (int j = 0; j < tempSkill.rating; ++j) { //add up all the experience per level
-//		    tempSkill.experience += 500 + (j * 100);
-//	    }
+        /*
+        add up all the experience per level
+        for (int j = 0; j < tempSkill.rating; ++j) 
+        { 
+            tempSkill.experience += 500 + (j * 100);
+        }
+        */
         skills.push_back(tempSkill);
     }
 }
 
-void DFHackAPIImpl::getTraitsByAddress(const uint32_t &address, vector<t_trait> & traits)
+void API::Private::getTraitsByAddress(const uint32_t &address, vector<t_trait> & traits)
 {
     for(int i = 0; i < 30; i++)
     {
@@ -862,7 +945,7 @@ void DFHackAPIImpl::getTraitsByAddress(const uint32_t &address, vector<t_trait> 
     }
 }
 
-void DFHackAPIImpl::getLaborsByAddress(const uint32_t &address, vector<t_labor> & labors)
+void API::Private::getLaborsByAddress(const uint32_t &address, vector<t_labor> & labors)
 {
     uint8_t laborArray[102] = {0};
     Mread(address, 102, laborArray);
@@ -874,43 +957,43 @@ void DFHackAPIImpl::getLaborsByAddress(const uint32_t &address, vector<t_labor> 
         labors.push_back(tempLabor);
     }
 }
-bool DFHackAPIImpl::ReadCreature(const uint32_t &index, t_creature & furball)
+bool API::ReadCreature(const uint32_t &index, t_creature & furball)
 {
-    assert(creaturesInited);
+    assert(d->creaturesInited);
     uint32_t temp;
     // read pointer from vector at position
-    p_cre->read(index,(uint8_t *)&temp);
+    d->p_cre->read(index,(uint8_t *)&temp);
     //read creature from memory
-    Mread(temp + creature_pos_offset, 3 * sizeof(uint16_t), (uint8_t *) &(furball.x)); // xyz really
-    MreadDWord(temp + creature_type_offset, furball.type);
-    MreadDWord(temp + creature_flags1_offset, furball.flags1.whole);
-    MreadDWord(temp + creature_flags2_offset, furball.flags2.whole);
+    Mread(temp + d->creature_pos_offset, 3 * sizeof(uint16_t), (uint8_t *) &(furball.x)); // xyz really
+    MreadDWord(temp + d->creature_type_offset, furball.type);
+    MreadDWord(temp + d->creature_flags1_offset, furball.flags1.whole);
+    MreadDWord(temp + d->creature_flags2_offset, furball.flags2.whole);
     // names
-    furball.first_name = dm->readSTLString(temp+creature_first_name_offset);
-    furball.nick_name  = dm->readSTLString(temp+creature_nick_name_offset);
-    furball.trans_name = getLastNameByAddress(temp+creature_last_name_offset);
-    furball.generic_name = getLastNameByAddress(temp+creature_last_name_offset,true);
-    furball.generic_squad_name = getSquadNameByAddress(temp+creature_squad_name_offset, true);
-    furball.trans_squad_name = getSquadNameByAddress(temp+creature_squad_name_offset, false);
-    furball.custom_profession = dm->readSTLString(temp+creature_custom_profession_offset);
-    furball.profession = getProfessionByAddress(temp+creature_profession_offset);
-    furball.current_job = getCurrentJobByAddress(temp+creature_current_job_offset);
-    getSkillsByAddress(temp+creature_skills_offset,furball.skills);
-    getTraitsByAddress(temp+creature_traits_offset,furball.traits);
-    getLaborsByAddress(temp+creature_labors_offset,furball.labors);
+    furball.first_name = d->dm->readSTLString(temp+d->creature_first_name_offset);
+    furball.nick_name  = d->dm->readSTLString(temp+d->creature_nick_name_offset);
+    furball.trans_name = d->getLastNameByAddress(temp+d->creature_last_name_offset);
+    furball.generic_name = d->getLastNameByAddress(temp+d->creature_last_name_offset,true);
+    furball.generic_squad_name = d->getSquadNameByAddress(temp+d->creature_squad_name_offset, true);
+    furball.trans_squad_name = d->getSquadNameByAddress(temp+d->creature_squad_name_offset, false);
+    furball.custom_profession = d->dm->readSTLString(temp+d->creature_custom_profession_offset);
+    furball.profession = d->getProfessionByAddress(temp+d->creature_profession_offset);
+    furball.current_job = d->getCurrentJobByAddress(temp+d->creature_current_job_offset);
+    d->getSkillsByAddress(temp+d->creature_skills_offset,furball.skills);
+    d->getTraitsByAddress(temp+d->creature_traits_offset,furball.traits);
+    d->getLaborsByAddress(temp+d->creature_labors_offset,furball.labors);
 
-    MreadDWord(temp + creature_happiness_offset, furball.happiness);
-    MreadDWord(temp + creature_id_offset, furball.id);
-    MreadDWord(temp + creature_agility_offset, furball.agility);
-    MreadDWord(temp + creature_strength_offset, furball.strength);
-    MreadDWord(temp + creature_toughness_offset, furball.toughness);
-    MreadDWord(temp + creature_money_offset, furball.money);
-    furball.squad_leader_id = int32_t(MreadDWord(temp + creature_squad_leader_id_offset));
-    MreadByte(temp + creature_sex_offset, furball.sex);
+    MreadDWord(temp + d->creature_happiness_offset, furball.happiness);
+    MreadDWord(temp + d->creature_id_offset, furball.id);
+    MreadDWord(temp + d->creature_agility_offset, furball.agility);
+    MreadDWord(temp + d->creature_strength_offset, furball.strength);
+    MreadDWord(temp + d->creature_toughness_offset, furball.toughness);
+    MreadDWord(temp + d->creature_money_offset, furball.money);
+    furball.squad_leader_id = int32_t(MreadDWord(temp + d->creature_squad_leader_id_offset));
+    MreadByte(temp + d->creature_sex_offset, furball.sex);
     return true;
 }
 
-void DFHackAPIImpl::InitReadNameTables()
+void API::Private::InitReadNameTables()
 {
     int genericAddress = offset_descriptor->getAddress("language_vector");
     int transAddress = offset_descriptor->getAddress("translation_vector");
@@ -937,7 +1020,7 @@ void DFHackAPIImpl::InitReadNameTables()
     nameTablesInited = true;
 }
 
-void DFHackAPIImpl::FinishReadNameTables()
+void API::Private::FinishReadNameTables()
 {
     delete p_trans;
     delete p_generic;
@@ -945,62 +1028,62 @@ void DFHackAPIImpl::FinishReadNameTables()
     nameTablesInited=false;
 }
 
-void DFHackAPIImpl::FinishReadCreatures()
+void API::FinishReadCreatures()
 {
-    delete p_cre;
-    p_cre = NULL;
-    creaturesInited = false;
-    FinishReadNameTables();
+    delete d->p_cre;
+    d->p_cre = NULL;
+    d->creaturesInited = false;
+    d->FinishReadNameTables();
 }
 
-bool DFHackAPIImpl::Attach()
+bool API::Attach()
 {
     // detach all processes, destroy manager
-    if(pm == NULL)
+    if(d->pm == NULL)
     {
-        pm = new ProcessManager(xml); // FIXME: handle bad XML better
+        d->pm = new ProcessManager(d->xml); // FIXME: handle bad XML better
     }
     
     // find a process (ProcessManager can find multiple when used properly)
-    if(!pm->findProcessess())
+    if(!d->pm->findProcessess())
     {
         return false;
     }
-    p = (*pm)[0];
-    if(!p->attach())
+    d->p = (*d->pm)[0];
+    if(!d->p->attach())
     {
         return false; // couldn't attach to process, no go
     }
-    offset_descriptor = p->getDescriptor();
-    dm = p->getDataModel();
+    d->offset_descriptor = d->p->getDescriptor();
+    d->dm = d->p->getDataModel();
     // process is attached, everything went just fine... hopefully
     return true;
 }
 
 
-bool DFHackAPIImpl::Detach()
+bool API::Detach()
 {
-    if (!p->detach())
+    if (!d->p->detach())
     {
         return false;
     }
-    if(pm != NULL)
+    if(d->pm != NULL)
     {
-        delete pm;
+        delete d->pm;
     }
-    pm = NULL;
-    p = NULL;
-    offset_descriptor = NULL;
-    dm = NULL;
+    d->pm = NULL;
+    d->p = NULL;
+    d->offset_descriptor = NULL;
+    d->dm = NULL;
     return true;
 }
 
-bool DFHackAPIImpl::isAttached()
+bool API::isAttached()
 {
-    return dm != NULL;
+    return d->dm != NULL;
 }
 
-void DFHackAPIImpl::ReadRaw (const uint32_t &offset, const uint32_t &size, uint8_t *target)
+void API::ReadRaw (const uint32_t &offset, const uint32_t &size, uint8_t *target)
 {
     Mread(offset, size, target);
 }

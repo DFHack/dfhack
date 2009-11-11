@@ -427,7 +427,7 @@ struct t_creature
     int32_t squad_leader_id;
     uint8_t sex;
     vector <t_skill> skills;
-	vector <t_trait> traits;
+    vector <t_trait> traits;
     vector <t_labor> labors;
 };
 

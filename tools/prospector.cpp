@@ -55,8 +55,7 @@ int main (int argc, const char* argv[])
     vector< vector <uint16_t> > layerassign;
     
     // init the API
-    DFHackAPI *pDF = CreateDFHackAPI("Memory.xml");
-    DFHackAPI &DF = *pDF;
+    DFHack::API DF("Memory.xml");
     
     // attach
     if(!DF.Attach())
@@ -146,7 +145,7 @@ int main (int argc, const char* argv[])
                     {
                         // hidden tiles are ignored unless '-a' is provided on the command line
                         // non-wall tiles are ignored
-                        if(designations[xi][yi].bits.hidden && !showhidden || !isWallTerrain(tiletypes[xi][yi]))
+                        if(designations[xi][yi].bits.hidden && !showhidden || !DFHack::isWallTerrain(tiletypes[xi][yi]))
                             continue;
                         if(tempvein[xi][yi] < 0)
                             continue;
@@ -175,6 +174,5 @@ int main (int argc, const char* argv[])
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();
     #endif
-    delete pDF;
     return 0;
 }

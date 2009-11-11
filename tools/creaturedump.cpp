@@ -25,8 +25,7 @@ int main (void)
 {
     vector<t_matgloss> creaturestypes;
     
-    DFHackAPI *pDF = CreateDFHackAPI("Memory.xml");
-    DFHackAPI &DF = *pDF;
+    DFHack::API DF("Memory.xml");
     if(!DF.Attach())
     {
         cerr << "DF not found" << endl;
@@ -173,7 +172,6 @@ int main (void)
     }
     DF.FinishReadCreatures();
     DF.Detach();
-    delete pDF;
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

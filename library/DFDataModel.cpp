@@ -22,11 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef BUILD_DFHACK_LIB
-#   define BUILD_DFHACK_LIB
-#endif
-
-#include "DFCommon.h"
+#include "DFCommonInternal.h"
 
 
 DfVector DMWindows40d::readVector (uint32_t offset, uint32_t item_size)

@@ -15,10 +15,7 @@ int main (void)
 {
     time_t start, end;
     double time_diff;
-    
-    
-    DFHackAPI *pDF = CreateDFHackAPI("Memory.xml");
-    DFHackAPI &DF = *pDF;
+    DFHack::API DF("Memory.xml");
     if(!DF.Attach())
     {
         cerr << "DF not found" << endl;
@@ -69,7 +66,5 @@ int main (void)
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();
     #endif
-    
-    delete pDF;
     return 0;
 }

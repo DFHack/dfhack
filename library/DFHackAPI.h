@@ -175,11 +175,11 @@ public:
     
     bool InitViewAndCursor();
     
-    void getViewCoords (uint32_t &x, uint32_t &y, uint32_t &z);
-    void setViewCoords (const uint32_t &x, const uint32_t &y, const uint32_t &z);
+    bool getViewCoords (int32_t &x, int32_t &y, int32_t &z);
+    bool setViewCoords (const int32_t &x, const int32_t &y, const int32_t &z);
     
-    void getCursorCoords (uint32_t &x, uint32_t &y, uint32_t &z);
-    void setCursorCoords (const uint32_t &x, const uint32_t &y, const uint32_t &z);
+    bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
+    bool setCursorCoords (const int32_t &x, const int32_t &y, const int32_t &z);
 };
 
 } // namespace DFHack

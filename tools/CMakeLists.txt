@@ -38,6 +38,9 @@ TARGET_LINK_LIBRARIES(dfattachtest dfhack)
 ADD_EXECUTABLE(dfmaterialtest materialtest.cpp)
 TARGET_LINK_LIBRARIES(dfmaterialtest dfhack)
 
+# materialtest - just list the first material of each type
+ADD_EXECUTABLE(dfposition position.cpp)
+TARGET_LINK_LIBRARIES(dfposition dfhack)
 
 IF(UNIX)
 install(TARGETS
@@ -50,6 +53,7 @@ dfcreaturedump
 dfattachtest
 dfmaterialtest
 dfbuildingsdump
+dfposition
 RUNTIME DESTINATION bin
 
 )

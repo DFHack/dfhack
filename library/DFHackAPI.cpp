@@ -1105,8 +1105,8 @@ bool API::InitViewAndCursor()
 {
     
     d->window_x_offset = d->offset_descriptor->getAddress("window_x");
-    d->window_y_offset = d->offset_descriptor->getAddress("window_x");
-    d->window_z_offset = d->offset_descriptor->getAddress("window_x");
+    d->window_y_offset = d->offset_descriptor->getAddress("window_y");
+    d->window_z_offset = d->offset_descriptor->getAddress("window_z");
     d->cursor_xyz_offset = d->offset_descriptor->getAddress("cursor_xyz");
     if(d->window_x_offset && d->window_y_offset && d->window_z_offset)
     {
@@ -1119,35 +1119,40 @@ bool API::InitViewAndCursor()
     }
 }
 
-void API::getViewCoords (uint32_t &x, uint32_t &y, uint32_t &z)
+bool API::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
 {
     assert(d->cursorWindowInited);
-    MreadDWord(d->window_x_offset,x);
-    MreadDWord(d->window_y_offset,y);
-    MreadDWord(d->window_z_offset,z);
+    MreadDWord(d->window_x_offset,(uint32_t &)x);
+    MreadDWord(d->window_y_offset,(uint32_t &)y);
+    MreadDWord(d->window_z_offset,(uint32_t &)z);
+    return true;
 }
 //FIXME: confine writing of coords to map bounds?
-void API::setViewCoords (const uint32_t &x, const uint32_t &y, const uint32_t &z)
+bool API::setViewCoords (const int32_t &x, const int32_t &y, const int32_t &z)
 {
     assert(d->cursorWindowInited);
-    MwriteDWord(d->window_x_offset,x);
-    MwriteDWord(d->window_y_offset,y);
-    MwriteDWord(d->window_z_offset,z);
+    MwriteDWord(d->window_x_offset,(uint32_t &)x);
+    MwriteDWord(d->window_y_offset,(uint32_t &)y);
+    MwriteDWord(d->window_z_offset,(uint32_t &)z);
+    return true;
 }
 
-void API::getCursorCoords (uint32_t &x, uint32_t &y, uint32_t &z)
+bool API::getCursorCoords (int32_t &x, int32_t &y, int32_t &z)
 {
     assert(d->cursorWindowInited);
-    uint32_t coords[3];
-    Mread(d->cursor_xyz_offset,3*sizeof(uint32_t),(uint8_t *)coords);
+    int32_t coords[3];
+    Mread(d->cursor_xyz_offset,3*sizeof(int32_t),(uint8_t *)coords);
     x = coords[0];
     y = coords[1];
     z = coords[2];
+    if(x == -30000) return false;
+    return true;
 }
 //FIXME: confine writing of coords to map bounds?
-void API::setCursorCoords (const uint32_t &x, const uint32_t &y, const uint32_t &z)
+bool API::setCursorCoords (const int32_t &x, const int32_t &y, const int32_t &z)
 {
     assert(d->cursorWindowInited);
-    uint32_t coords[3] = {x,y,z};
-    Mwrite(d->cursor_xyz_offset,3*sizeof(uint32_t),(uint8_t *)coords);
+    int32_t coords[3] = {x,y,z};
+    Mwrite(d->cursor_xyz_offset,3*sizeof(int32_t),(uint8_t *)coords);
+    return true;
 }

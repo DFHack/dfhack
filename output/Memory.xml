@@ -891,6 +891,19 @@
         <String name="md5">59ab29021aca9f3c66b1ab102fb3ceea</String>
         <!-- map_data = 0x01601D84 -->
         <!-- door: 0x8e15d4, no VTable rebase needed -->
+        <Address name="cursor_xyz">0x009662B4</Address>
+        <Address name="window_x">0x00DA061C</Address>
+        <Address name="window_y">0x00DCE6C8</Address>
+        <Address name="window_z">0x00DCE6A4</Address>
+        <!--
+        <belal> for windows d16
+<belal> designation x   0x009662B4
+<belal> designation y   0x009662B8
+<belal> designation z   0x009662BC
+<belal> window x    0x00DA061C
+<belal> window y    0x00DCE6C8
+<belal> window z    0x00DCE6A4
+        -->
         </Entry>
 
                             .-"""-.

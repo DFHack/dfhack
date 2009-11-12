@@ -42,6 +42,11 @@ class API::Private
         uint32_t designation_offset;
         uint32_t occupancy_offset;
         
+        uint32_t window_x_offset;
+        uint32_t window_y_offset;
+        uint32_t window_z_offset;
+        uint32_t cursor_xyz_offset;
+        
         uint32_t creature_pos_offset;
         uint32_t creature_type_offset;
         uint32_t creature_flags1_offset;
@@ -80,6 +85,7 @@ class API::Private
         bool buildingsInited;
         bool vegetationInited;
         bool creaturesInited;
+        bool cursorWindowInited;
         
         bool nameTablesInited;
         
@@ -123,6 +129,7 @@ API::API(const string path_to_xml)
     d->creaturesInited = false;
     d->buildingsInited = false;
     d->vegetationInited = false;
+    d->cursorWindowInited = false;
     d->pm = NULL;
 }
 
@@ -153,6 +160,7 @@ bool API::InitMap()
 
     // get the map pointer
     map_loc = MreadDWord(map_offset);
+    //FIXME: very inadequate
     if (!map_loc)
     {
         // bad stuffz happend
@@ -1086,4 +1094,60 @@ bool API::isAttached()
 void API::ReadRaw (const uint32_t &offset, const uint32_t &size, uint8_t *target)
 {
     Mread(offset, size, target);
+}
+
+void API::WriteRaw (const uint32_t &offset, const uint32_t &size, uint8_t *source)
+{
+    Mwrite(offset, size, source);
+}
+
+bool API::InitViewAndCursor()
+{
+    
+    d->window_x_offset = d->offset_descriptor->getAddress("window_x");
+    d->window_y_offset = d->offset_descriptor->getAddress("window_x");
+    d->window_z_offset = d->offset_descriptor->getAddress("window_x");
+    d->cursor_xyz_offset = d->offset_descriptor->getAddress("cursor_xyz");
+    if(d->window_x_offset && d->window_y_offset && d->window_z_offset)
+    {
+        d->cursorWindowInited = true;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void API::getViewCoords (uint32_t &x, uint32_t &y, uint32_t &z)
+{
+    assert(d->cursorWindowInited);
+    MreadDWord(d->window_x_offset,x);
+    MreadDWord(d->window_y_offset,y);
+    MreadDWord(d->window_z_offset,z);
+}
+//FIXME: confine writing of coords to map bounds?
+void API::setViewCoords (const uint32_t &x, const uint32_t &y, const uint32_t &z)
+{
+    assert(d->cursorWindowInited);
+    MwriteDWord(d->window_x_offset,x);
+    MwriteDWord(d->window_y_offset,y);
+    MwriteDWord(d->window_z_offset,z);
+}
+
+void API::getCursorCoords (uint32_t &x, uint32_t &y, uint32_t &z)
+{
+    assert(d->cursorWindowInited);
+    uint32_t coords[3];
+    Mread(d->cursor_xyz_offset,3*sizeof(uint32_t),(uint8_t *)coords);
+    x = coords[0];
+    y = coords[1];
+    z = coords[2];
+}
+//FIXME: confine writing of coords to map bounds?
+void API::setCursorCoords (const uint32_t &x, const uint32_t &y, const uint32_t &z)
+{
+    assert(d->cursorWindowInited);
+    uint32_t coords[3] = {x,y,z};
+    Mwrite(d->cursor_xyz_offset,3*sizeof(uint32_t),(uint8_t *)coords);
 }

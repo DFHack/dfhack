@@ -171,6 +171,16 @@ public:
     void FinishReadCreatures();
     
     void ReadRaw (const uint32_t &offset, const uint32_t &size, uint8_t *target);
+    void WriteRaw (const uint32_t &offset, const uint32_t &size, uint8_t *source);
+    
+    bool InitViewAndCursor();
+    
+    void getViewCoords (uint32_t &x, uint32_t &y, uint32_t &z);
+    void setViewCoords (const uint32_t &x, const uint32_t &y, const uint32_t &z);
+    
+    void getCursorCoords (uint32_t &x, uint32_t &y, uint32_t &z);
+    void setCursorCoords (const uint32_t &x, const uint32_t &y, const uint32_t &z);
 };
-}
+
+} // namespace DFHack
 #endif // SIMPLEAPI_H_INCLUDED

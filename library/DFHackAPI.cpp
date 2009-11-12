@@ -106,17 +106,6 @@ class API::Private
         void getSkillsByAddress(const uint32_t &address, vector<t_skill> &);
         void getTraitsByAddress(const uint32_t &address, vector<t_trait> &);
         void getLaborsByAddress(const uint32_t &address, vector<t_labor> &);
-        
-        string getLastName(const uint32_t &index, bool);
-        string getSquadName(const uint32_t &index, bool);
-        string getProfession(const uint32_t &index);
-        string getCurrentJob(const uint32_t &index);
-        vector<t_skill> getSkills(const uint32_t &index);
-        vector<t_trait> getTraits(const uint32_t &index);
-        vector<t_labor> getLabors(const uint32_t &index);
-        
-        void InitReadNameTables();
-        void FinishReadNameTables();
 };
 
 API::API(const string path_to_xml)
@@ -760,7 +749,7 @@ uint32_t API::InitReadCreatures()
     )
     {
         d->p_cre = new DfVector(d->dm->readVector(creatures, 4));
-        d->InitReadNameTables();
+        InitReadNameTables();
         //if(d->InitReadNameTables())
         //{
             d->creaturesInited = true;
@@ -864,57 +853,57 @@ string API::Private::getCurrentJobByAddress(const uint32_t &address)
     return job;
 }
 
-string API::Private::getLastName(const uint32_t &index, bool use_generic=false)
+string API::getLastName(const uint32_t &index, bool use_generic=false)
 {
-    assert(creaturesInited);
+    assert(d->creaturesInited);
     uint32_t temp;
     // read pointer from vector at position
-    p_cre->read(index,(uint8_t *)&temp);
-    return(getLastNameByAddress(temp+creature_last_name_offset,use_generic));
+    d->p_cre->read(index,(uint8_t *)&temp);
+    return(d->getLastNameByAddress(temp+d->creature_last_name_offset,use_generic));
 }
-string API::Private::getSquadName(const uint32_t &index, bool use_generic=false)
+string API::getSquadName(const uint32_t &index, bool use_generic=false)
 {
-    assert(creaturesInited);
+    assert(d->creaturesInited);
     uint32_t temp;
     // read pointer from vector at position
-    p_cre->read(index,(uint8_t *)&temp);
-    return(getSquadNameByAddress(temp+creature_squad_name_offset,use_generic));
+    d->p_cre->read(index,(uint8_t *)&temp);
+    return(d->getSquadNameByAddress(temp+d->creature_squad_name_offset,use_generic));
 }
-string API::Private::getProfession(const uint32_t &index)
+string API::getProfession(const uint32_t &index)
 {
-    assert(creaturesInited);
+    assert(d->creaturesInited);
     uint32_t temp;
     // read pointer from vector at position
-    p_cre->read(index,(uint8_t *)&temp);
-    return(getProfessionByAddress(temp+creature_profession_offset));
+    d->p_cre->read(index,(uint8_t *)&temp);
+    return(d->getProfessionByAddress(temp+d->creature_profession_offset));
 }
-string API::Private::getCurrentJob(const uint32_t &index)
+string API::getCurrentJob(const uint32_t &index)
 {
-    assert(creaturesInited);
+    assert(d->creaturesInited);
     uint32_t temp;
     // read pointer from vector at position
-    p_cre->read(index,(uint8_t *)&temp);
-    return(getCurrentJobByAddress(temp+creature_current_job_offset));
+    d->p_cre->read(index,(uint8_t *)&temp);
+    return(d->getCurrentJobByAddress(temp+d->creature_current_job_offset));
 }
-vector<t_skill> API::Private::getSkills(const uint32_t &index)
+vector<t_skill> API::getSkills(const uint32_t &index)
 {
-    assert(creaturesInited);
+    assert(d->creaturesInited);
     uint32_t temp;
     // read pointer from vector at position
-    p_cre->read(index,(uint8_t *)&temp);
+    d->p_cre->read(index,(uint8_t *)&temp);
     vector<t_skill> tempSkillVec;
-    getSkillsByAddress(temp+creature_last_name_offset,tempSkillVec);
+    d->getSkillsByAddress(temp+d->creature_last_name_offset,tempSkillVec);
     return(tempSkillVec);
 }
 
-vector<t_trait> API::Private::getTraits(const uint32_t &index)
+vector<t_trait> API::getTraits(const uint32_t &index)
 {
-    assert(creaturesInited);
+    assert(d->creaturesInited);
     uint32_t temp;
     // read pointer from vector at position
-    p_cre->read(index,(uint8_t *)&temp);
+    d->p_cre->read(index,(uint8_t *)&temp);
     vector<t_trait> tempTraitVec;
-    getTraitsByAddress(temp+creature_traits_offset,tempTraitVec);
+    d->getTraitsByAddress(temp+d->creature_traits_offset,tempTraitVec);
     return(tempTraitVec);
 }
 
@@ -1001,21 +990,21 @@ bool API::ReadCreature(const uint32_t &index, t_creature & furball)
     return true;
 }
 
-void API::Private::InitReadNameTables()
+void API::InitReadNameTables()
 {
-    int genericAddress = offset_descriptor->getAddress("language_vector");
-    int transAddress = offset_descriptor->getAddress("translation_vector");
-    int word_table_offset = offset_descriptor->getOffset("word_table");
+    int genericAddress = d->offset_descriptor->getAddress("language_vector");
+    int transAddress = d->offset_descriptor->getAddress("translation_vector");
+    int word_table_offset = d->offset_descriptor->getOffset("word_table");
     
-    p_generic = new DfVector(dm->readVector(genericAddress, 4));
-    p_trans = new DfVector(dm->readVector(transAddress, 4));
+    d->p_generic = new DfVector(d->dm->readVector(genericAddress, 4));
+    d->p_trans = new DfVector(d->dm->readVector(transAddress, 4));
     uint32_t dwarf_entry = 0;
     
-    for(uint32_t i = 0; i < p_trans->getSize();i++)
+    for(uint32_t i = 0; i < d->p_trans->getSize();i++)
     {
         uint32_t namePtr;
-        p_trans->read(i,(uint8_t *)&namePtr);
-        string raceName = dm->readSTLString(namePtr);
+        d->p_trans->read(i,(uint8_t *)&namePtr);
+        string raceName = d->dm->readSTLString(namePtr);
         
         if(raceName == "DWARF")
         {
@@ -1023,17 +1012,17 @@ void API::Private::InitReadNameTables()
         }
     }
     
-    dwarf_lang_table_offset = dwarf_entry + word_table_offset;
-    p_dwarf_names = new DfVector(dm->readVector(dwarf_lang_table_offset,4));
-    nameTablesInited = true;
+    d->dwarf_lang_table_offset = dwarf_entry + word_table_offset;
+    d->p_dwarf_names = new DfVector(d->dm->readVector(d->dwarf_lang_table_offset,4));
+    d->nameTablesInited = true;
 }
 
-void API::Private::FinishReadNameTables()
+void API::FinishReadNameTables()
 {
-    delete p_trans;
-    delete p_generic;
-    p_trans=p_generic=NULL;
-    nameTablesInited=false;
+    delete d->p_trans;
+    delete d->p_generic;
+    d->p_trans=d->p_generic=NULL;
+    d->nameTablesInited=false;
 }
 
 void API::FinishReadCreatures()
@@ -1041,7 +1030,7 @@ void API::FinishReadCreatures()
     delete d->p_cre;
     d->p_cre = NULL;
     d->creaturesInited = false;
-    d->FinishReadNameTables();
+    FinishReadNameTables();
 }
 
 bool API::Attach()

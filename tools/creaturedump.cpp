@@ -42,7 +42,7 @@ int main (void)
     uint32_t numCreatures = DF.InitReadCreatures();
     for(uint32_t i = 0; i < numCreatures; i++)
     {
-        t_creature temp = {0};
+        t_creature temp;
         DF.ReadCreature(i, temp);
         cout << "creature type " << creaturestypes[temp.type].id << ", position:" << temp.x << " " << temp.y << " "<< temp.z << endl;
         bool addendl = false;

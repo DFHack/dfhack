@@ -71,6 +71,7 @@ void Process::setMemFile(const string & memf)
  */
 
 
+/*
 //TODO: rewrite this. really. It's ugly as hell.
 bool isStopped(pid_t pid)
 {
@@ -99,7 +100,7 @@ bool isStopped(pid_t pid)
     cerr << "couldn't open file " << filename << "assuming process stopped" << endl;
     return true;
 }
-
+*/
 bool Process::attach()
 {
     int status;
@@ -109,6 +110,7 @@ bool Process::attach()
     {
         return false;
     }
+    /*
     if(!isStopped(my_handle))
     {
         // kill (SIGSTOP)
@@ -126,6 +128,7 @@ bool Process::attach()
             //cout << "wait step" << endl;
         }
     }
+    */
     //usleep(10000);
     //cout << "Attach: after conditional stop" << endl;
     // can we attach?
@@ -138,7 +141,6 @@ bool Process::attach()
     }
     //usleep(10000);
     //cout << "Attach: after ptrace" << endl;
-    /*
     while(true)
     {
         // we wait on the pid
@@ -156,8 +158,8 @@ bool Process::attach()
         {
             break;
         }
-    }*/
-  //  cout << "Managed to attach to pid " << my_handle << endl;
+    }
+    //  cout << "Managed to attach to pid " << my_handle << endl;
     
     int proc_pid_mem = open(memFile.c_str(),O_RDONLY);
     if(proc_pid_mem == -1)
@@ -209,8 +211,8 @@ bool Process::detach()
             g_pProcess = NULL;
             g_ProcessHandle = 0;
             // continue, wait for it to recover
-            kill(my_handle,SIGCONT);
-            while (isStopped(my_handle));
+    //        kill(my_handle,SIGCONT);
+      //      while (isStopped(my_handle));
             //usleep(10000);
             // we finish
             return true;

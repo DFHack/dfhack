@@ -372,9 +372,10 @@ bool API::ReadStoneMatgloss(vector<t_matgloss> & stones)
     int matgloss_colors = minfo->getOffset("matgloss_stone_color");
     DfVector p_matgloss = d->dm->readVector(matgloss_address + matgloss_offset, 4);
 
-    stones.clear();
-
-    for (uint32_t i = 0; i< p_matgloss.getSize();i++)
+    int size = p_matgloss.getSize();
+    stones.resize(0);
+    stones.reserve(size);
+    for (uint32_t i = 0; i< size;i++)
     {
         uint32_t temp;
         // read the matgloss pointer from the vector into temp

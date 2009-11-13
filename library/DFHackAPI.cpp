@@ -98,7 +98,7 @@ class API::Private
         DfVector *p_trans;
         DfVector *p_generic;
         DfVector *p_dwarf_names;
-        
+        /*
         string getLastNameByAddress(const uint32_t &address, bool use_generic=false);
         string getSquadNameByAddress(const uint32_t &address, bool use_generic=false);
         string getProfessionByAddress(const uint32_t &address);
@@ -106,6 +106,7 @@ class API::Private
         void getSkillsByAddress(const uint32_t &address, vector<t_skill> &);
         void getTraitsByAddress(const uint32_t &address, vector<t_trait> &);
         void getLaborsByAddress(const uint32_t &address, vector<t_labor> &);
+        */
 };
 
 API::API(const string path_to_xml)
@@ -994,7 +995,7 @@ bool API::ReadCreature(const uint32_t &index, t_creature & furball)
     MreadByte(temp + d->creature_sex_offset, furball.sex);
     return true;
 }
-
+//FIXME: this just isn't enough
 void API::InitReadNameTables()
 {
     int genericAddress = d->offset_descriptor->getAddress("language_vector");

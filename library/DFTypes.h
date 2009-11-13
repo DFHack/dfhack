@@ -379,7 +379,7 @@ union t_creaturflags2
         
     } bits;
 };
-
+/*
 struct t_labor
 {
     string name;
@@ -426,9 +426,9 @@ struct t_skill
 
 struct t_trait
 {
-	uint16_t value;
-	string displayTxt;
-	string name;
+    uint16_t value;
+    string displayTxt;
+    string name;
     t_trait(){
         value=0;
     }
@@ -446,7 +446,7 @@ struct t_trait
         return *this;
     }
 };
-
+*/
 struct t_lastname
 {
     int names[7];

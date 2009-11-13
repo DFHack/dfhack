@@ -46,16 +46,17 @@ int main (void)
         DF.ReadCreature(i, temp);
         cout << "creature type " << creaturestypes[temp.type].id << ", position:" << temp.x << " " << temp.y << " "<< temp.z << endl;
         bool addendl = false;
-        if(!temp.first_name.empty())
+        if(temp.first_name[0])
         {
             cout << "first name: " << temp.first_name;
             addendl = true;
         }
-        if(!temp.nick_name.empty())
+        if(temp.nick_name[0])
         {
             cout << ", nick name: " << temp.nick_name;
             addendl = true;
         }
+        /*
         if(!temp.trans_name.empty()){
             cout << ", trans name: " << temp.trans_name;
             addendl =true;
@@ -64,11 +65,13 @@ int main (void)
             cout << ", generic name: " << temp.generic_name;
             addendl=true;
         }
+        */
         if(addendl)
         {
             cout << endl;
             addendl = false;
         }
+        /*
         if(!temp.profession.empty()){
             cout << ", profession: " << temp.profession;
             addendl = false;
@@ -81,6 +84,7 @@ int main (void)
             cout << ", current job: " << temp.current_job;
             addendl = false;
         }
+        */
         if(addendl)
         {
             cout << endl;
@@ -99,7 +103,7 @@ int main (void)
             cout <<", Male";
         }
         cout << endl;
-
+/*
         //skills
         for(unsigned int i = 0; i < temp.skills.size();i++){
             if(i > 0){
@@ -107,7 +111,7 @@ int main (void)
             }
             cout << temp.skills[i].name << ": " << temp.skills[i].rating;
         }
-
+*/
         /*
          * FLAGS 1
          */

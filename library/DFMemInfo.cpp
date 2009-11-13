@@ -442,40 +442,52 @@ string memory_info::getSkill (uint32_t key)
     return string("Skill is not Defined");
 }
 
-string memory_info::getTrait (uint32_t key, uint32_t absVal)
+// FIXME: ugly hack that needs to die
+int absolute (int number)
 {
-	if(traits.size() > key){
-		int diff = abs(absVal-50);
-		if(diff < 10){
-			return string("");
-		}
-		if (absVal >= 91)
-			return traits[key][5];
-		else if (absVal >= 76)
-			return traits[key][4];
-		else if (absVal >= 61)
-			return traits[key][3];
-		else if (absVal >= 25)
-			return traits[key][2];
-		else if (absVal >= 10)
-			return traits[key][1];
-		else
-			return traits[key][0];
-	}
-	return string("Trait is not Defined");
+    if (number < 0)
+        return -number;
+    return number;
+}
+
+string memory_info::getTrait (uint32_t traitIdx, uint32_t traitValue)
+{
+    if(traits.size() > traitIdx)
+    {
+        int diff = absolute(traitValue-50);
+        if(diff < 10)
+        {
+            return string("");
+        }
+        if (traitValue >= 91)
+            return traits[traitIdx][5];
+        else if (traitValue >= 76)
+            return traits[traitIdx][4];
+        else if (traitValue >= 61)
+            return traits[traitIdx][3];
+        else if (traitValue >= 25)
+            return traits[traitIdx][2];
+        else if (traitValue >= 10)
+            return traits[traitIdx][1];
+        else
+            return traits[traitIdx][0];
+    }
+    return string("Trait is not Defined");
 }
 
 string memory_info::getTraitName(uint32_t key)
 {
-	if(traits.size() > key){
-		return traits[key][traits[key].size()-1];
-	}
-	return string("Trait is not Defined");
+    if(traits.size() > key)
+    {
+        return traits[key][traits[key].size()-1];
+    }
+    return string("Trait is not Defined");
 }
 
 string memory_info::getLabor (uint32_t key)
 {
-    if(labors.count(key)){
+    if(labors.count(key))
+    {
         return labors[key];
     }
     return string("");

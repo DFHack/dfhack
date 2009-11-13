@@ -766,7 +766,7 @@ uint32_t API::InitReadCreatures()
         return false;
     }
 }
-
+/*
 //This code was mostly adapted fromh dwarftherapist by chmod
 string API::Private::getLastNameByAddress(const uint32_t &address, bool use_generic)
 {
@@ -920,13 +920,12 @@ void API::Private::getSkillsByAddress(const uint32_t &address, vector<t_skill> &
         tempSkill.name = offset_descriptor->getSkill(tempSkill.id);
         tempSkill.experience = MreadWord(temp+8);
         tempSkill.rating = MreadByte(temp+4);
-        /*
-        add up all the experience per level
-        for (int j = 0; j < tempSkill.rating; ++j) 
-        { 
-            tempSkill.experience += 500 + (j * 100);
-        }
-        */
+//        add up all the experience per level
+//        for (int j = 0; j < tempSkill.rating; ++j) 
+//        { 
+//            tempSkill.experience += 500 + (j * 100);
+//        }
+//        
         skills.push_back(tempSkill);
     }
 }
@@ -954,7 +953,7 @@ void API::Private::getLaborsByAddress(const uint32_t &address, vector<t_labor> &
         tempLabor.value = laborArray[i];
         labors.push_back(tempLabor);
     }
-}
+}*/
 bool API::ReadCreature(const uint32_t &index, t_creature & furball)
 {
     assert(d->creaturesInited);
@@ -966,27 +965,32 @@ bool API::ReadCreature(const uint32_t &index, t_creature & furball)
     MreadDWord(temp + d->creature_type_offset, furball.type);
     MreadDWord(temp + d->creature_flags1_offset, furball.flags1.whole);
     MreadDWord(temp + d->creature_flags2_offset, furball.flags2.whole);
-    // names
-    furball.first_name = d->dm->readSTLString(temp+d->creature_first_name_offset);
-    furball.nick_name  = d->dm->readSTLString(temp+d->creature_nick_name_offset);
-    furball.trans_name = d->getLastNameByAddress(temp+d->creature_last_name_offset);
-    furball.generic_name = d->getLastNameByAddress(temp+d->creature_last_name_offset,true);
-    furball.generic_squad_name = d->getSquadNameByAddress(temp+d->creature_squad_name_offset, true);
-    furball.trans_squad_name = d->getSquadNameByAddress(temp+d->creature_squad_name_offset, false);
-    furball.custom_profession = d->dm->readSTLString(temp+d->creature_custom_profession_offset);
+    // normal names
+    fill_char_buf(furball.first_name, d->dm->readSTLString(temp+d->creature_first_name_offset));
+    fill_char_buf(furball.nick_name, d->dm->readSTLString(temp+d->creature_nick_name_offset));
+    // crazy composited names
+    Mread(temp + d->creature_last_name_offset,sizeof(t_lastname), (uint8_t *) &furball.last_name );
+    Mread(temp + d->creature_squad_name_offset,sizeof(t_squadname), (uint8_t *) &furball.squad_name );
+    // custom profession
+    fill_char_buf(furball.custom_profession, d->dm->readSTLString(temp+d->creature_first_name_offset));
+    
+    /*
+    
     furball.profession = d->getProfessionByAddress(temp+d->creature_profession_offset);
     furball.current_job = d->getCurrentJobByAddress(temp+d->creature_current_job_offset);
+    
     d->getSkillsByAddress(temp+d->creature_skills_offset,furball.skills);
     d->getTraitsByAddress(temp+d->creature_traits_offset,furball.traits);
     d->getLaborsByAddress(temp+d->creature_labors_offset,furball.labors);
-
+    */
+    
     MreadDWord(temp + d->creature_happiness_offset, furball.happiness);
     MreadDWord(temp + d->creature_id_offset, furball.id);
     MreadDWord(temp + d->creature_agility_offset, furball.agility);
     MreadDWord(temp + d->creature_strength_offset, furball.strength);
     MreadDWord(temp + d->creature_toughness_offset, furball.toughness);
     MreadDWord(temp + d->creature_money_offset, furball.money);
-    furball.squad_leader_id = int32_t(MreadDWord(temp + d->creature_squad_leader_id_offset));
+    furball.squad_leader_id = (int32_t) MreadDWord(temp + d->creature_squad_leader_id_offset);
     MreadByte(temp + d->creature_sex_offset, furball.sex);
     return true;
 }

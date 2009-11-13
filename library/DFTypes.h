@@ -396,7 +396,6 @@ struct t_labor
         value=b.value;
         return *this;
     }
-
 };
 struct t_skill
 {
@@ -448,6 +447,16 @@ struct t_trait
     }
 };
 
+struct t_lastname
+{
+    int names[7];
+};
+
+struct t_squadname
+{
+    int names[6];
+};
+
 struct t_creature
 {
     uint16_t x;
@@ -456,16 +465,15 @@ struct t_creature
     uint32_t type;
     t_creaturflags1 flags1;
     t_creaturflags2 flags2;
-    string first_name;
-    string nick_name;
+    char first_name [128];
+    char nick_name [128];
+    t_lastname last_name;
+    t_squadname squad_name;
+    char custom_profession[128];
+    /*
     //string last_name;
-    string trans_name;
-    string generic_name;
-    string generic_squad_name;
-    string trans_squad_name;
-    string profession;
-    string custom_profession;
     string current_job;
+    */
     uint32_t happiness;
     uint32_t id;
     uint32_t agility;
@@ -474,6 +482,8 @@ struct t_creature
     uint32_t money;
     int32_t squad_leader_id;
     uint8_t sex;
+    uint8_t profession;
+    /*
     vector <t_skill> skills;
     vector <t_trait> traits;
     vector <t_labor> labors;
@@ -542,7 +552,7 @@ struct t_creature
         skills = b.skills;
         traits = b.traits;
         return *this;
-    }
+    }*/
 };
 
 // TODO: research this further? consult DF hacker wizards?

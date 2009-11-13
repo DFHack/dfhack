@@ -180,7 +180,7 @@ public:
     
     bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
     bool setCursorCoords (const int32_t &x, const int32_t &y, const int32_t &z);
-    
+    /*
     // FIXME: add a real creature class, move these
     string getLastName(const uint32_t &index, bool);
     string getSquadName(const uint32_t &index, bool);
@@ -189,7 +189,7 @@ public:
     vector<t_skill> getSkills(const uint32_t &index);
     vector<t_trait> getTraits(const uint32_t &index);
     vector<t_labor> getLabors(const uint32_t &index);
-    
+    */
     void InitReadNameTables();
     void FinishReadNameTables();
 };

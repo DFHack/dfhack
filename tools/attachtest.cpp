@@ -7,7 +7,6 @@
 #include <vector>
 #include <ctime>
 using namespace std;
-
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 

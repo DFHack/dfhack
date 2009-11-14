@@ -42,7 +42,7 @@ inline
 uint8_t MreadByte (const uint32_t &offset)
 {
     uint8_t result;
-    ReadProcessMemory(g_ProcessHandle, (int*) offset, &result, sizeof(uint8_t), NULL);
+    ReadProcessMemory(DFHack::g_ProcessHandle, (int*) offset, &result, sizeof(uint8_t), NULL);
     return result;
 }
 
@@ -50,7 +50,7 @@ uint8_t MreadByte (const uint32_t &offset)
 inline
 void MreadByte (const uint32_t &offset,uint8_t &result)
 {
-    ReadProcessMemory(g_ProcessHandle, (int*) offset, &result, sizeof(uint8_t), NULL);
+    ReadProcessMemory(DFHack::g_ProcessHandle, (int*) offset, &result, sizeof(uint8_t), NULL);
 }
 
 
@@ -58,7 +58,7 @@ inline
 uint16_t MreadWord (const uint32_t &offset)
 {
     uint16_t result;
-    ReadProcessMemory(g_ProcessHandle, (int*) offset, &result, sizeof(uint16_t), NULL);
+    ReadProcessMemory(DFHack::g_ProcessHandle, (int*) offset, &result, sizeof(uint16_t), NULL);
     return result;
 }
 
@@ -66,7 +66,7 @@ uint16_t MreadWord (const uint32_t &offset)
 inline
 void MreadWord (const uint32_t &offset, uint16_t &result)
 {
-    ReadProcessMemory(g_ProcessHandle, (int*) offset, &result, sizeof(uint16_t), NULL);
+    ReadProcessMemory(DFHack::g_ProcessHandle, (int*) offset, &result, sizeof(uint16_t), NULL);
 }
 
 
@@ -74,7 +74,7 @@ inline
 uint32_t MreadDWord (const uint32_t &offset)
 {
     uint32_t result;
-    ReadProcessMemory(g_ProcessHandle, (int*) offset, &result, sizeof(uint32_t), NULL);
+    ReadProcessMemory(DFHack::g_ProcessHandle, (int*) offset, &result, sizeof(uint32_t), NULL);
     return result;
 }
 
@@ -82,7 +82,7 @@ uint32_t MreadDWord (const uint32_t &offset)
 inline
 void MreadDWord (const uint32_t &offset, uint32_t &result)
 {
-    ReadProcessMemory(g_ProcessHandle, (int*) offset, &result, sizeof(uint32_t), NULL);
+    ReadProcessMemory(DFHack::g_ProcessHandle, (int*) offset, &result, sizeof(uint32_t), NULL);
 }
 
 
@@ -90,7 +90,7 @@ inline
 uint64_t MreadQuad (const uint32_t &offset)
 {
     uint64_t result;
-    ReadProcessMemory(g_ProcessHandle, (int*) offset, &result, sizeof(uint64_t), NULL);
+    ReadProcessMemory(DFHack::g_ProcessHandle, (int*) offset, &result, sizeof(uint64_t), NULL);
     return result;
 }
 
@@ -98,40 +98,40 @@ uint64_t MreadQuad (const uint32_t &offset)
 inline
 void MreadQuad (const uint32_t &offset, uint64_t &result)
 {
-    ReadProcessMemory(g_ProcessHandle, (int*) offset, &result, sizeof(uint64_t), NULL);
+    ReadProcessMemory(DFHack::g_ProcessHandle, (int*) offset, &result, sizeof(uint64_t), NULL);
 }
 
 
 inline
 void Mread (const uint32_t &offset, uint32_t size, uint8_t *target)
 {
-    ReadProcessMemory(g_ProcessHandle, (int*) offset, target, size, NULL);
+    ReadProcessMemory(DFHack::g_ProcessHandle, (int*) offset, target, size, NULL);
 }
 
 // WRITING
 inline
 void MwriteDWord (const uint32_t offset, uint32_t data)
 {
-    WriteProcessMemory(g_ProcessHandle, (int*) offset, &data, sizeof(uint32_t), NULL);
+    WriteProcessMemory(DFHack::g_ProcessHandle, (int*) offset, &data, sizeof(uint32_t), NULL);
 }
 
 // using these is expensive.
 inline
 void MwriteWord (uint32_t offset, uint16_t data)
 {
-    WriteProcessMemory(g_ProcessHandle, (int*) offset, &data, sizeof(uint16_t), NULL);
+    WriteProcessMemory(DFHack::g_ProcessHandle, (int*) offset, &data, sizeof(uint16_t), NULL);
 }
 
 inline
 void MwriteByte (uint32_t offset, uint8_t data)
 {
-    WriteProcessMemory(g_ProcessHandle, (int*) offset, &data, sizeof(uint8_t), NULL);
+    WriteProcessMemory(DFHack::g_ProcessHandle, (int*) offset, &data, sizeof(uint8_t), NULL);
 }
 
 inline
 void Mwrite (uint32_t offset, uint32_t size, uint8_t *source)
 {
-    WriteProcessMemory(g_ProcessHandle, (int*) offset, source, size, NULL);
+    WriteProcessMemory(DFHack::g_ProcessHandle, (int*) offset, source, size, NULL);
 }
 
 
@@ -143,7 +143,7 @@ const string MreadCString (const uint32_t &offset)
     string temp;
     char temp_c[256];
     DWORD read;
-    ReadProcessMemory(g_ProcessHandle, (int *) offset, temp_c, 255, &read);
+    ReadProcessMemory(DFHack::g_ProcessHandle, (int *) offset, temp_c, 255, &read);
     temp_c[read+1] = 0;
     temp = temp_c;
     return temp;

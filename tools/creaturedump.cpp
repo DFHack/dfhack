@@ -8,6 +8,7 @@ using namespace std;
 
 #include <DFTypes.h>
 #include <DFHackAPI.h>
+#include <DFMemInfo.h>
 
 template <typename T>
 void print_bits ( T val, std::ostream& out )
@@ -31,7 +32,8 @@ int main (void)
         cerr << "DF not found" << endl;
         return 1;
     }
-    
+
+    DFHack::memory_info mem = DF.getMemoryInfo();
     // get stone matgloss mapping
     if(!DF.ReadCreatureMatgloss(creaturestypes))
     {
@@ -44,7 +46,7 @@ int main (void)
     {
         t_creature temp;
         DF.ReadCreature(i, temp);
-        cout << "creature type " << creaturestypes[temp.type].id << ", position:" << temp.x << " " << temp.y << " "<< temp.z << endl;
+        cout << "creature type: " << creaturestypes[temp.type].id << ", position: " << temp.x << "x " << temp.y << "y "<< temp.z << "z" << endl;
         bool addendl = false;
         if(temp.first_name[0])
         {
@@ -71,36 +73,27 @@ int main (void)
             cout << endl;
             addendl = false;
         }
-        /*
-        if(!temp.profession.empty()){
-            cout << ", profession: " << temp.profession;
-            addendl = false;
-        }
-        if(!temp.custom_profession.empty()){
-            cout << ", custom profession: " << temp.custom_profession;
-            addendl = false;
-        }
-        if(!temp.current_job.empty()){
-            cout << ", current job: " << temp.current_job;
-            addendl = false;
-        }
-        */
-        if(addendl)
+        cout << "profession: " << mem.getProfession(temp.profession) << "(" << (int) temp.profession << ")";
+        if(temp.custom_profession[0])
         {
-            cout << endl;
-            addendl = false;
+            cout << ", custom profession: " << temp.custom_profession;
         }
-        cout << ", happiness: " << temp.happiness << ", strength: " << temp.strength << ", agility: " 
+        if(temp.current_job.active)
+        {
+            cout << ", current job: " << mem.getJob(temp.current_job.jobId);
+        }
+        cout << endl;
+        cout << "happiness: " << temp.happiness << ", strength: " << temp.strength << ", agility: " 
             << temp.agility << ", toughness: " << temp.toughness << ", money: " << temp.money << ", id: " << temp.id;
         if(temp.squad_leader_id != -1){
             cout << ", squad_leader_id: " << temp.squad_leader_id;
         }
-        cout << ", sex";
+        cout << ", sex: ";
         if(temp.sex == 0){
-            cout << ", Female";
+            cout << "Female";
         }
         else{
-            cout <<", Male";
+            cout <<"Male";
         }
         cout << endl;
 /*
@@ -158,19 +151,19 @@ int main (void)
         }
         if(temp.flags2.bits.resident)
         {
-            cout << "resident ";
+            cout << "resident, ";
         }
         if(temp.flags2.bits.gutted)
         {
-            cout << "gutted ";
+            cout << "gutted, ";
         }
         if(temp.flags2.bits.slaughter)
         {
-            cout << "slaughter ";
+            cout << "marked for slaughter, ";
         }
         if(temp.flags2.bits.underworld)
         {
-            cout << "from the underworld ";
+            cout << "from the underworld, ";
         }
         cout << endl << endl;
     }

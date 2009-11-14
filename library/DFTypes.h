@@ -25,6 +25,8 @@ distribution.
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 
+#include "Export.h"
+
 struct t_matgloss
 {
     char id[128];
@@ -447,16 +449,33 @@ struct t_trait
     }
 };
 */
+
+/*
+CREATURE
+*/
+
 struct t_lastname
 {
     int names[7];
 };
-
 struct t_squadname
 {
     int names[6];
 };
+struct t_skill
+{
+    uint16_t id;
+    uint32_t experience;
+    uint16_t rating;
+};
+struct t_job
+{
+    bool active;
+    uint8_t jobId;
+};
 
+#define NUM_CREATURE_TRAITS 30
+#define NUM_CREATURE_LABORS 102
 struct t_creature
 {
     uint16_t x;
@@ -469,11 +488,19 @@ struct t_creature
     char nick_name [128];
     t_lastname last_name;
     t_squadname squad_name;
+    uint8_t profession;
     char custom_profession[128];
+    // enabled labors
+    uint8_t labors[NUM_CREATURE_LABORS];
+    // personality traits
+    uint16_t traits[NUM_CREATURE_TRAITS];
+    uint8_t numSkills;
+    t_skill skills[256];
     /*
     //string last_name;
     string current_job;
     */
+    t_job current_job;
     uint32_t happiness;
     uint32_t id;
     uint32_t agility;
@@ -482,7 +509,6 @@ struct t_creature
     uint32_t money;
     int32_t squad_leader_id;
     uint8_t sex;
-    uint8_t profession;
     /*
     vector <t_skill> skills;
     vector <t_trait> traits;

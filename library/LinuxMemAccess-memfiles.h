@@ -38,7 +38,7 @@ void Mread (const uint32_t &offset, const uint32_t &size, uint8_t *target)
     if(size == 0) return;
     
     int result;
-    result = pread(g_ProcessMemFile, target,size,offset);
+    result = pread(DFHack::g_ProcessMemFile, target,size,offset);
     if(result != size)
     {
         if(result == -1)
@@ -102,7 +102,7 @@ void MreadDWord (const uint32_t &offset, uint32_t &val)
 inline
 void MwriteDWord (uint32_t offset, uint32_t data)
 {
-    ptrace(PTRACE_POKEDATA,g_ProcessHandle, offset, data);
+    ptrace(PTRACE_POKEDATA,DFHack::g_ProcessHandle, offset, data);
 }
 
 // using these is expensive.
@@ -116,7 +116,7 @@ void MwriteWord (uint32_t offset, uint16_t data)
     orig |= 0x0000FFFF;
     orig &= data;
     */
-    ptrace(PTRACE_POKEDATA,g_ProcessHandle, offset, orig);
+    ptrace(PTRACE_POKEDATA,DFHack::g_ProcessHandle, offset, orig);
 }
 
 inline
@@ -129,7 +129,7 @@ void MwriteByte (uint32_t offset, uint8_t data)
     orig |= 0x000000FF;
     orig &= data;
     */
-    ptrace(PTRACE_POKEDATA,g_ProcessHandle, offset, orig);
+    ptrace(PTRACE_POKEDATA,DFHack::g_ProcessHandle, offset, orig);
 }
 
 // blah. I hate the kernel devs for crippling /proc/PID/mem. THIS IS RIDICULOUS

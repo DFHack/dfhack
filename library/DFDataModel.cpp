@@ -23,7 +23,7 @@ distribution.
 */
 
 #include "DFCommonInternal.h"
-
+using namespace DFHack;
 
 DfVector DMWindows40d::readVector (uint32_t offset, uint32_t item_size)
 {

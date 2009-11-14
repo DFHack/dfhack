@@ -22,13 +22,19 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef PROCESSUTIL_H_INCLUDED
-#define PROCESSUTIL_H_INCLUDED
-
+/// TODO: add visibility for GCC?
 #ifdef LINUX_BUILD
-    #include "LinuxMemAccess-memfiles.h"
+#   ifndef DFHACK_EXPORT
+#       define DFHACK_EXPORT
+#   endif
 #else
-    #include "WindowsMemAccess.h"
+#   ifdef BUILD_DFHACK_LIB
+#       ifndef DFHACK_EXPORT
+#           define DFHACK_EXPORT __declspec(dllexport)
+#       endif
+#   else
+#       ifndef DFHACK_EXPORT
+#           define DFHACK_EXPORT __declspec(dllimport)
+#       endif
+#   endif
 #endif
-
-#endif // PROCESSUTIL_H_INCLUDED

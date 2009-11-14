@@ -24,6 +24,8 @@ distribution.
 
 #include "DFCommonInternal.h"
 
+using namespace DFHack;
+
 memory_info::memory_info()
 {
     base = 0;
@@ -105,7 +107,7 @@ memory_info::memory_info(const memory_info &old)
     professions = old.professions;
     jobs = old.jobs;
     skills = old.skills;
-	traits = old.traits;
+    traits = old.traits;
     labors = old.labors;
 }
 
@@ -159,10 +161,12 @@ void memory_info::setLabor(string key, string value)
     uint32_t keyInt = strtol(key.c_str(), NULL, 10);
     labors[keyInt] = value;
 }
+
 void memory_info::setProfession (string key, string value)
 {
     uint32_t keyInt = strtol(key.c_str(), NULL, 10);
-    if(professions.size() <= keyInt){
+    if(professions.size() <= keyInt)
+    {
         professions.resize(keyInt+1);
     }
     professions[keyInt] = value;
@@ -171,7 +175,8 @@ void memory_info::setProfession (string key, string value)
 void memory_info::setJob (string key, string value)
 {
     uint32_t keyInt = strtol(key.c_str(), NULL, 10);
-    if(jobs.size() <= keyInt){
+    if(jobs.size() <= keyInt)
+    {
         jobs.resize(keyInt+1);
     }
     jobs[keyInt] = value;
@@ -188,17 +193,18 @@ void memory_info::setSkill (string key, string value)
 
 void memory_info::setTrait(string key,string value,string zero,string one,string two,string three,string four,string five)
 {
-	uint32_t keyInt = strtol(key.c_str(), NULL, 10);
-	if(traits.size() <= keyInt){
-		traits.resize(keyInt+1);
-	}
-	traits[keyInt].push_back(zero);
-	traits[keyInt].push_back(one);
-	traits[keyInt].push_back(two);
-	traits[keyInt].push_back(three);
-	traits[keyInt].push_back(four);
-	traits[keyInt].push_back(five);
-	traits[keyInt].push_back(value);
+    uint32_t keyInt = strtol(key.c_str(), NULL, 10);
+    if(traits.size() <= keyInt)
+    {
+        traits.resize(keyInt+1);
+    }
+    traits[keyInt].push_back(zero);
+    traits[keyInt].push_back(one);
+    traits[keyInt].push_back(two);
+    traits[keyInt].push_back(three);
+    traits[keyInt].push_back(four);
+    traits[keyInt].push_back(five);
+    traits[keyInt].push_back(value);
 }
 
 // FIXME: next three methods should use some kind of custom container so it doesn't have to search so much.
@@ -475,20 +481,20 @@ string memory_info::getTrait (uint32_t traitIdx, uint32_t traitValue)
     return string("Trait is not Defined");
 }
 
-string memory_info::getTraitName(uint32_t key)
+string memory_info::getTraitName(uint32_t traitIdx)
 {
-    if(traits.size() > key)
+    if(traits.size() > traitIdx)
     {
-        return traits[key][traits[key].size()-1];
+        return traits[traitIdx][traits[traitIdx].size()-1];
     }
     return string("Trait is not Defined");
 }
 
-string memory_info::getLabor (uint32_t key)
+string memory_info::getLabor (uint32_t laborIdx)
 {
-    if(labors.count(key))
+    if(labors.count(laborIdx))
     {
-        return labors[key];
+        return labors[laborIdx];
     }
     return string("");
 }

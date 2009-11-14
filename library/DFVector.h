@@ -24,7 +24,8 @@ distribution.
 
 #ifndef DFVECTOR_H_INCLUDED
 #define DFVECTOR_H_INCLUDED
-
+namespace DFHack
+{
 class DfVector
 {
 private:
@@ -64,4 +65,5 @@ public:
     };
 };
 
+}
 #endif // DFVECTOR_H_INCLUDED

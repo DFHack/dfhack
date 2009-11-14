@@ -23,11 +23,12 @@ distribution.
 */
 
 #include "DFCommonInternal.h"
+using namespace DFHack;
 
 /// HACK: global variables (only one process can be attached at the same time.)
-Process * g_pProcess; ///< current process. non-NULL when picked
-ProcessHandle g_ProcessHandle; ///< cache of handle to current process. used for speed reasons
-int g_ProcessMemFile; ///< opened /proc/PID/mem, valid when attached
+Process * DFHack::g_pProcess; ///< current process. non-NULL when picked
+ProcessHandle DFHack::g_ProcessHandle; ///< cache of handle to current process. used for speed reasons
+int DFHack::g_ProcessMemFile; ///< opened /proc/PID/mem, valid when attached
 
 
 #ifdef LINUX_BUILD

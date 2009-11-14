@@ -23,7 +23,7 @@ distribution.
 */
 
 #include "DFCommonInternal.h"
-
+using namespace DFHack;
 
 Process::Process(DataModel * dm, memory_info* mi, ProcessHandle ph, uint32_t pid)
 {

@@ -114,6 +114,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     while (fgets(buffer, 1024, mapFile))
     {
         t_memrange temp;
+        temp.name[0] = 0;
         sscanf(buffer, "%llx-%llx %s %llx %2llu:%2llu %llu %s",
                &temp.start,
                &temp.end,

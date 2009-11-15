@@ -734,6 +734,11 @@
             <class vtable="0x0097c84c" name="archery_target"/>
             <class vtable="0x0097cdcc" name="restraint"/>
         </VTable>
+        
+        <Address name="cursor_xyz">0x9fc294</Address>
+        <Address name="window_x">0xd457f4</Address>
+        <Address name="window_y">0xd73868</Address>
+        <Address name="window_z">0xd73844</Address>
     </Entry>
     <!-- Windows 40d## sub-versions, should inherit only vtable from 40d -->
     <Entry version="v0.28.181.40d9" os="windows" id="40d9win" base="40dwin">
@@ -819,6 +824,10 @@
             <multiclass name="furnace" typeoffset="0x11A" />
             <multiclass name="mechanism" typeoffset="0x100" />
         </VTable>
+        <Address name="cursor_xyz">0x9662a4</Address>
+        <Address name="window_x">0xcae368</Address>
+        <Address name="window_y">0xcdc3dc</Address>
+        <Address name="window_z">0xcdc3b8</Address>
     </Entry>
     <Entry version="v0.28.181.40d11" os="windows" rebase="0x2d388" id="40d11win" base="40d9win">
         <!-- identification -->
@@ -826,6 +835,10 @@
         <String name="md5">6f81231b845e9c9dc29aaf57705ccc7c</String>
         <!-- door: 0x8e91e4 -->
         <VTable rebase="-0x1000" />
+        <Address name="cursor_xyz">0x9652a4</Address>
+        <Address name="window_x">0xcdf5a0</Address>
+        <Address name="window_y">0xd0d64c</Address>
+        <Address name="window_z">0xd0d628</Address>
     </Entry>
     <Entry version="v0.28.181.40d12" os="windows" id="40d12win" base="40d11win">
         <!-- identification -->
@@ -859,7 +872,11 @@
         <Address name="matgloss">0x015FCE3C</Address>
         <!-- door: 0x8db5e4 -->
         <VTable rebase="-0xDC00" />
-                
+        
+        <Address name="cursor_xyz">0x95f2b4</Address>
+        <Address name="window_x">0xd995a0</Address>
+        <Address name="window_y">0xdc764c</Address>
+        <Address name="window_z">0xdc7628</Address>        
     </Entry>
     <Entry version="v0.28.181.40d13" os="windows" id="40d13win" base="40d12win" rebase="0x5090">
         <!-- identification -->
@@ -868,6 +885,10 @@
         <!-- map_data = 0x015FFD5C -->
         <!-- door: 0x8df5ec -->
         <VTable rebase="0x4008" />
+        <Address name="cursor_xyz">0x009642b4</Address>
+        <Address name="window_x">0x00d9e600</Address>
+        <Address name="window_y">0x00dcc6ac</Address>
+        <Address name="window_z">0x00dcc688</Address>
     </Entry>
     <Entry version="v0.28.181.40d14" os="windows" id="40d14win" base="40d13win" rebase="0x2010">
         <!-- identification -->
@@ -876,6 +897,10 @@
         <!-- map_data = 0x01601D6C -->
         <!-- door: 0x8e15dc -->
         <VTable rebase="0x1FF0" />
+        <Address name="cursor_xyz">0x009662B4</Address>
+        <Address name="window_x">0x00DA060C</Address>
+        <Address name="window_y">0x00DCE6B8</Address>
+        <Address name="window_z">0x00DCE694</Address>
     </Entry>
     <Entry version="v0.28.181.40d15" os="windows" id="40d15win" base="40d14win" rebase="0x18">
         <!-- identification -->
@@ -884,6 +909,10 @@
         <!-- map_data = 0x01601D84 -->
         <!-- door: 0x8e15d4 -->
         <VTable rebase="-0x8" />
+        <Address name="cursor_xyz">0x009662B4</Address>
+        <Address name="window_x">0x00DA061C</Address>
+        <Address name="window_y">0x00DCE6C8</Address>
+        <Address name="window_z">0x00DCE6A4</Address>
     </Entry>
     <Entry version="v0.28.181.40d16" os="windows" base="40d15win">
         <!-- identification -->
@@ -891,19 +920,6 @@
         <String name="md5">59ab29021aca9f3c66b1ab102fb3ceea</String>
         <!-- map_data = 0x01601D84 -->
         <!-- door: 0x8e15d4, no VTable rebase needed -->
-        <Address name="cursor_xyz">0x009662B4</Address>
-        <Address name="window_x">0x00DA061C</Address>
-        <Address name="window_y">0x00DCE6C8</Address>
-        <Address name="window_z">0x00DCE6A4</Address>
-        <!--
-        <belal> for windows d16
-<belal> designation x   0x009662B4
-<belal> designation y   0x009662B8
-<belal> designation z   0x009662BC
-<belal> window x    0x00DA061C
-<belal> window y    0x00DCE6C8
-<belal> window z    0x00DCE6A4
-        -->
         </Entry>
 
                             .-"""-.
@@ -941,6 +957,11 @@
         <!--<Address name="buildings">0x09332EF0</Address>-->
         <Address name="vegetation">0x09335CB0</Address>
         <Address name="creatures">0x093326AC</Address>
+
+        <Address name="cursor_xyz">0x8877634</Address>
+        <Address name="window_x">0x8d17ff4</Address>
+        <Address name="window_y">0x8d17ff8</Address>
+        <Address name="window_z">0x8d17ffC</Address>
         
         <!-- translation tables -->
         <Address name="translation_vector">0x09374FA8</Address>
@@ -1107,6 +1128,7 @@
         <String name="md5">fb8ecac8a12af5d0d7b1707078985d0d</String>
         <!--TODO: <Address name="notes">0x092ab244</Address>-->
         <VTable rebase="-0x5e360" />
+        <Address name="cursor_xyz">0x88073d4</Address>
     </Entry>
     <!-- re-specified addresses here, offsets and hexvals remain same -->
     <Entry version="v0.28.181.40d12" os="linux" base="40d9lin" id="40d12lin">
@@ -1119,7 +1141,12 @@
         <Address name="buildings">0x08F55740</Address>
         <Address name="vegetation">0x08F58890</Address>
         <Address name="creatures">0x08F55250</Address>
-        
+
+        <Address name="cursor_xyz">0x0877B33C</Address>
+        <Address name="window_x">0x893ABD4</Address>
+        <Address name="window_y">0x893ABD8</Address>
+        <Address name="window_z">0x893ABDC</Address>
+
         <!-- translation tables -->
         <!-- these should be right -->
         <Address name="translation_vector">0x08F97BA4</Address>
@@ -1148,6 +1175,7 @@
         <String name="md5">2f3cb9d720e9fe8844c02c72a2b20bbd</String>
         <!-- map_data = 0x8F9ABDC -->
         <VTable rebase="0x3A00" />
+        <Address name="cursor_xyz">0x8780354</Address>
         <!--<class vtable="0x086C7368" name="door"/>-->
     </Entry>
     <Entry version="v0.28.181.40d14" os="linux" id="40d14lin" base="40d13lin">
@@ -1170,7 +1198,6 @@
         <!-- map_data = 0x8F9ABDC -->
         <!--<class vtable="0x086c78c8" name="door"/>-->
     </Entry>
-
 </MemoryDescriptors>
 <!-- Windows logo by M$, spiderweb by jgs -->
 </DFExtractor>

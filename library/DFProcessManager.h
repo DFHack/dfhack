@@ -25,6 +25,8 @@ distribution.
 #ifndef PROCESSMANAGER_H_INCLUDED
 #define PROCESSMANAGER_H_INCLUDED
 
+#include "Export.h"
+
 class TiXmlElement;
 
 namespace DFHack
@@ -47,7 +49,31 @@ namespace DFHack
     extern ProcessHandle g_ProcessHandle; ///< cache of handle to current process. used for speed reasons
     extern int g_ProcessMemFile; ///< opened /proc/PID/mem, valid when attached
 
-    class Process
+    // structure describing a memory range
+    struct DFHACK_EXPORT t_memrange
+    {
+        uint64_t start;
+        uint64_t end;
+        // memory range name (if any)
+        char name[1024];
+        // permission to read
+        bool read;
+        // permission to write
+        bool write;
+        // permission to execute
+        bool execute;
+        inline bool isInRange( uint64_t address)
+        {
+            if (address >= start && address <= end) return true;
+            return false;
+        }
+        inline void print()
+        {
+            cout << hex << start << " - " << end << "|" << (read ? "r" : "-") << (write ? "w" : "-") << (execute ? "x" : "-") << "|" << name << endl;
+        }
+    };
+
+    class DFHACK_EXPORT Process
     {
         friend class ProcessManager;
         protected:
@@ -65,6 +91,7 @@ namespace DFHack
             // Set up stuff so we can read memory
             bool attach();
             bool detach();
+            void getMemRanges( vector<t_memrange> & ranges );
             // is the process still there?
             memory_info *getDescriptor();
             DataModel *getDataModel();
@@ -73,7 +100,7 @@ namespace DFHack
     /*
      * Process manager
      */
-    class ProcessManager
+    class DFHACK_EXPORT ProcessManager
     {
     public:
         ProcessManager( string path_to_xml);

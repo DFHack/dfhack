@@ -33,6 +33,7 @@ distribution.
 namespace DFHack
 {
     class memory_info;
+    class Process;
 
     enum VegetationType
     {
@@ -178,6 +179,7 @@ namespace DFHack
         void FinishReadNameTables();
         
         memory_info getMemoryInfo();
+        Process * getProcess();
     };
 } // namespace DFHack
 #endif // SIMPLEAPI_H_INCLUDED

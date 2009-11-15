@@ -30,6 +30,7 @@ distribution.
 #include <map>
 
 #include <fstream>
+#include <iostream>
 using namespace std;
 #include "integers.h"
 #include <assert.h>

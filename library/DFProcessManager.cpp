@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+//#define LINUX_BUILD
 #include "DFCommonInternal.h"
 using namespace DFHack;
 
@@ -29,7 +30,6 @@ using namespace DFHack;
 Process * DFHack::g_pProcess; ///< current process. non-NULL when picked
 ProcessHandle DFHack::g_ProcessHandle; ///< cache of handle to current process. used for speed reasons
 int DFHack::g_ProcessMemFile; ///< opened /proc/PID/mem, valid when attached
-
 
 #ifdef LINUX_BUILD
 /*

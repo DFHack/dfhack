@@ -1171,3 +1171,7 @@ memory_info API::getMemoryInfo()
 {
     return *d->offset_descriptor;
 }
+Process * API::getProcess()
+{
+    return d->p;
+}

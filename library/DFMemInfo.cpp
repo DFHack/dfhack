@@ -340,7 +340,7 @@ void memory_info::copyBuildings(vector<string> & v_buildingtypes)
 }
 
 
-// change base of all addresses/vtable entries
+// change base of all addresses
 void memory_info::RebaseAddresses(int32_t new_base)
 {
     map<string, uint32_t>::iterator iter;
@@ -352,7 +352,7 @@ void memory_info::RebaseAddresses(int32_t new_base)
 }
 
 
-// change base of all addresses/vtable entries
+// change base of all addresses *and* vtable entries
 void memory_info::RebaseAll(int32_t new_base)
 {
     map<string, uint32_t>::iterator iter;

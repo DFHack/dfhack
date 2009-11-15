@@ -21,7 +21,6 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
-
 #include "DFCommonInternal.h"
 using namespace DFHack;
 
@@ -101,6 +100,33 @@ bool isStopped(pid_t pid)
     return true;
 }
 */
+
+void Process::getMemRanges( vector<t_memrange> & ranges )
+{
+    char buffer[1024];
+    char name[1024];
+    char permissions[5]; // r/-, w/-, x/-, p/s, 0
+    
+    sprintf(buffer, "/proc/%lu/maps", my_pid);
+    FILE *mapFile = ::fopen(buffer, "r");
+    uint64_t begin, end, offset, device1, device2, node;
+    
+    while (fgets(buffer, 1024, mapFile))
+    {
+        t_memrange temp;
+        sscanf(buffer, "%llx-%llx %s %llx %2llu:%2llu %llu %s",
+               &temp.start,
+               &temp.end,
+               (char*)&permissions,
+               &offset, &device1, &device2, &node,
+               (char*)&temp.name);
+        temp.read = permissions[0] == 'r';
+        temp.write = permissions[1] == 'w';
+        temp.execute = permissions[2] == 'x';
+        ranges.push_back(temp);
+    }
+}
+
 bool Process::attach()
 {
     int status;
@@ -221,6 +247,7 @@ bool Process::detach()
 }
 
 
+
 void Process::freeResources()
 {
     // nil
@@ -271,6 +298,23 @@ bool Process::detach()
     return false;*/
 }
 
+void Process::getMemRanges( vector<t_memrange> & ranges )
+{
+    // code here is taken from hexsearch by Silas Dunmore.
+    // As this IMHO isn't a 'sunstantial portion' of anything, I'm not including the MIT license here
+    
+    // I'm faking this, because there's no way I'm using VirtualQuery
+    
+    t_memrange temp;
+    uint32_t base = this->my_descriptor->getBase();
+    temp.start = base + 0x1000; // more fakery.
+    temp.end = base + MreadDWord(base+MreadDWord(base+0x3C)+0x50)-1; // yay for magic.
+    temp.read = 1;
+    temp.write = 1;
+    temp.execute = 0; // fake
+    strcpy(temp.name,"pants");// that's right. I'm calling it pants. Windows can go to HELL
+    ranges.push_back(temp);
+}
 
 void Process::freeResources()
 {

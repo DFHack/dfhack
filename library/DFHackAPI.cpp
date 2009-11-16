@@ -316,9 +316,9 @@ bool API::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins)
         for (uint32_t i = 0; i< p_veins.getSize();i++)
         {
             t_vein v;
-            uint32_t temp;
+            
             // read the vein pointer from the vector
-            p_veins.read((uint32_t)i,(uint8_t *)&temp);
+            uint32_t temp = *(uint32_t *) p_veins[i];
             // read the vein data (dereference pointer)
             Mread(temp, veinsize, (uint8_t *)&v);
             // store it in the vector
@@ -351,13 +351,11 @@ bool API::ReadWoodMatgloss(vector<t_matgloss> & woods)
     mat.fore = 7;
     mat.back = 0;
     mat.bright = 0;
-    for (uint32_t i = 0; i< p_matgloss.getSize();i++)
+    uint32_t size = p_matgloss.getSize();
+    for (uint32_t i = 0; i< size ;i++)
     {
-        uint32_t temp;
-        
         // read the matgloss pointer from the vector into temp
-        p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
-        
+        uint32_t temp = *(uint32_t *) p_matgloss[i];
         // read the string pointed at by
         fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
         woods.push_back(mat);
@@ -378,9 +376,8 @@ bool API::ReadStoneMatgloss(vector<t_matgloss> & stones)
     stones.reserve(size);
     for (uint32_t i = 0; i< size;i++)
     {
-        uint32_t temp;
         // read the matgloss pointer from the vector into temp
-        p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
+        uint32_t temp = *(uint32_t *) p_matgloss[i];
         // read the string pointed at by
         t_matgloss mat;
         fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
@@ -405,11 +402,8 @@ bool API::ReadMetalMatgloss(vector<t_matgloss> & metals)
 
     for (uint32_t i = 0; i< p_matgloss.getSize();i++)
     {
-        uint32_t temp;
-
         // read the matgloss pointer from the vector into temp
-        p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
-
+        uint32_t temp = *(uint32_t *) p_matgloss[i];
         // read the string pointed at by
         t_matgloss mat;
         fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
@@ -437,11 +431,8 @@ bool API::ReadPlantMatgloss(vector<t_matgloss> & plants)
     mat.bright = 0;
     for (uint32_t i = 0; i< p_matgloss.getSize();i++)
     {
-        uint32_t temp;
-
         // read the matgloss pointer from the vector into temp
-        p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
-
+        uint32_t temp = *(uint32_t *) p_matgloss[i];
         // read the string pointed at by
         fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
         plants.push_back(mat);
@@ -465,11 +456,8 @@ bool API::ReadCreatureMatgloss(vector<t_matgloss> & creatures)
     mat.bright = 0;
     for (uint32_t i = 0; i< p_matgloss.getSize();i++)
     {
-        uint32_t temp;
-        
         // read the matgloss pointer from the vector into temp
-        p_matgloss.read((uint32_t)i,(uint8_t *)&temp);
-        
+        uint32_t temp = *(uint32_t *) p_matgloss[i];
         // read the string pointed at by
         fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
         creatures.push_back(mat);
@@ -546,9 +534,9 @@ bool API::ReadGeology( vector < vector <uint16_t> >& assign )
         MreadWord(geoX + bioRY*region_size + region_geo_index_offset, geoindex);
 
         // get the geoblock from the geoblock vector using the geoindex
-        uint32_t geoblock_off;
-        geoblocks.read(geoindex,(uint8_t *) &geoblock_off);
-
+        // read the matgloss pointer from the vector into temp
+        uint32_t geoblock_off = *(uint32_t *) geoblocks[geoindex];
+        
         // get the vector with pointer to layers
         DfVector geolayers = d->dm->readVector(geoblock_off + geolayer_geoblock_offset , 4); // let's hope
         // make sure we don't load crap
@@ -557,9 +545,8 @@ bool API::ReadGeology( vector < vector <uint16_t> >& assign )
         // finally, read the layer matgloss
         for(uint32_t j = 0;j< geolayers.getSize();j++)
         {
-            int geol_offset;
             // read pointer to a layer
-            geolayers.read(j, (uint8_t *) & geol_offset);
+            uint32_t geol_offset = *(uint32_t *) geolayers[j];
             // read word at pointer + 2, store in our geology vectors
             d->v_geology[i].push_back(MreadWord(geol_offset + 2));
         }
@@ -590,11 +577,12 @@ uint32_t API::InitReadBuildings(vector <string> &v_buildingtypes)
 bool API::ReadBuilding(const int32_t &index, t_building & building)
 {
     assert(d->buildingsInited);
-    uint32_t temp;
+    
     t_building_df40d bld_40d;
 
     // read pointer from vector at position
-    d->p_bld->read(index,(uint8_t *)&temp);
+    uint32_t temp = *(uint32_t *) d->p_bld->at(index);
+    //d->p_bld->read(index,(uint8_t *)&temp);
 
     //read building from memory
     Mread(temp, sizeof(t_building_df40d), (uint8_t *)&bld_40d);
@@ -641,10 +629,9 @@ bool API::ReadConstruction(const int32_t &index, t_construction & construction)
 {
     assert(d->constructionsInited);
     t_construction_df40d c_40d;
-    uint32_t temp;
 
     // read pointer from vector at position
-    d->p_cons->read((uint32_t)index,(uint8_t *)&temp);
+    uint32_t temp = *(uint32_t *) d->p_cons->at(index);
 
     //read construction from memory
     Mread(temp, sizeof(t_construction_df40d), (uint8_t *)&c_40d);
@@ -681,9 +668,9 @@ uint32_t API::InitReadVegetation()
 bool API::ReadVegetation(const int32_t &index, t_tree_desc & shrubbery)
 {
     assert(d->vegetationInited);
-    uint32_t temp;
+//    uint32_t temp;
     // read pointer from vector at position
-    d->p_veg->read(index,(uint8_t *)&temp);
+    uint32_t temp = *(uint32_t *) d->p_veg->at(index);
     //read construction from memory
     Mread(temp + d->tree_offset, sizeof(t_tree_desc), (uint8_t *) &shrubbery);
     // FIXME: this is completely wrong. type isn't just tree/shrub but also different kinds of trees. stuff that grows around ponds has its own type ID
@@ -968,7 +955,7 @@ int32_t API::ReadCreatureInBox(int32_t index, t_creature & furball,
     while (index < size)
     {
         // read pointer from vector at position
-        d->p_cre->read(index,(uint8_t *)&temp);
+        uint32_t temp = *(uint32_t *) d->p_cre->at(index);
         Mread(temp + d->creature_pos_offset, 3 * sizeof(uint16_t), (uint8_t *) &coords);
         if(coords[0] >= x1 && coords[0] < x2)
         {
@@ -988,9 +975,8 @@ int32_t API::ReadCreatureInBox(int32_t index, t_creature & furball,
 bool API::ReadCreature(const int32_t &index, t_creature & furball)
 {
     assert(d->creaturesInited);
-    uint32_t temp;
     // read pointer from vector at position
-    d->p_cre->read(index,(uint8_t *)&temp);
+    uint32_t temp = *(uint32_t *) d->p_cre->at(index);
     //read creature from memory
     Mread(temp + d->creature_pos_offset, 3 * sizeof(uint16_t), (uint8_t *) &(furball.x)); // xyz really
     MreadDWord(temp + d->creature_type_offset, furball.type);
@@ -1014,8 +1000,8 @@ bool API::ReadCreature(const int32_t &index, t_creature & furball)
     furball.numSkills = skills.getSize();
     for(uint32_t i = 0; i<furball.numSkills;i++)
     {
-        uint32_t temp2;
-        skills.read(i, (uint8_t *) &temp2);
+        uint32_t temp2 = *(uint32_t *) skills[i];
+        //skills.read(i, (uint8_t *) &temp2);
         // a byte: this gives us 256 skills maximum.
         furball.skills[i].id= MreadByte(temp2);
         furball.skills[i].rating = MreadByte(temp2+4);
@@ -1054,8 +1040,10 @@ void API::InitReadNameTables()
     
     for(uint32_t i = 0; i < d->p_trans->getSize();i++)
     {
-        uint32_t namePtr;
-        d->p_trans->read(i,(uint8_t *)&namePtr);
+/*        uint32_t namePtr;
+        d->p_trans->read(i,(uint8_t *)&namePtr);*/
+        uint32_t namePtr = *(uint32_t *) d->p_trans->at(i);
+        
         string raceName = d->dm->readSTLString(namePtr);
         
         if(raceName == "DWARF")

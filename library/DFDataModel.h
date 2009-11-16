@@ -36,6 +36,7 @@ namespace DFHack
         // read a string
         virtual const string readSTLString (uint32_t offset) = 0;
         // read a vector from memory
+        //template <class T>
         virtual DfVector readVector (uint32_t offset, uint32_t item_size) = 0;
     };
 

@@ -156,6 +156,10 @@ namespace DFHack
         void FinishReadVegetation();
         
         uint32_t InitReadCreatures();
+        // returns index of creature actually read or -1 if no creature can be found
+        int32_t ReadCreatureInBox(int32_t index, t_creature & furball,
+                                  const uint16_t &x1, const uint16_t &y1,const uint16_t &z1,
+                                  const uint16_t &x2, const uint16_t &y2,const uint16_t &z2);
         bool ReadCreature(const int32_t &index, t_creature & furball);
         void FinishReadCreatures();
         

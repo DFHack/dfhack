@@ -85,12 +85,21 @@ namespace DFHack
             uint32_t my_pid;
             string memFile;
             bool attached;
+            bool suspended;
             void freeResources();
             void setMemFile(const string & memf);
         public:
             // Set up stuff so we can read memory
             bool attach();
             bool detach();
+            
+            bool suspend();
+            bool resume();
+            
+            bool isSuspended() {return suspended;};
+            bool isAttached() {return attached;};
+            
+            bool getThreadIDs(vector<uint32_t> & threads );
             void getMemRanges( vector<t_memrange> & ranges );
             // is the process still there?
             memory_info *getDescriptor();

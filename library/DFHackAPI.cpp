@@ -587,7 +587,7 @@ uint32_t API::InitReadBuildings(vector <string> &v_buildingtypes)
 
 
 // read one building
-bool API::ReadBuilding(const uint32_t &index, t_building & building)
+bool API::ReadBuilding(const int32_t &index, t_building & building)
 {
     assert(d->buildingsInited);
     uint32_t temp;
@@ -637,7 +637,7 @@ uint32_t API::InitReadConstructions()
 }
 
 
-bool API::ReadConstruction(const uint32_t &index, t_construction & construction)
+bool API::ReadConstruction(const int32_t &index, t_construction & construction)
 {
     assert(d->constructionsInited);
     t_construction_df40d c_40d;
@@ -678,7 +678,7 @@ uint32_t API::InitReadVegetation()
 }
 
 
-bool API::ReadVegetation(const uint32_t &index, t_tree_desc & shrubbery)
+bool API::ReadVegetation(const int32_t &index, t_tree_desc & shrubbery)
 {
     assert(d->vegetationInited);
     uint32_t temp;
@@ -955,7 +955,37 @@ void API::Private::getLaborsByAddress(const uint32_t &address, vector<t_labor> &
         labors.push_back(tempLabor);
         }
 }*/
-bool API::ReadCreature(const uint32_t &index, t_creature & furball)
+
+// returns index of creature actually read or -1 if no creature can be found
+int32_t API::ReadCreatureInBox(int32_t index, t_creature & furball,
+                               const uint16_t &x1, const uint16_t &y1,const uint16_t &z1,
+                               const uint16_t &x2, const uint16_t &y2,const uint16_t &z2)
+{
+    uint16_t coords[3];
+    assert(d->creaturesInited);
+    uint32_t temp;
+    uint32_t size = d->p_cre->getSize();
+    while (index < size)
+    {
+        // read pointer from vector at position
+        d->p_cre->read(index,(uint8_t *)&temp);
+        Mread(temp + d->creature_pos_offset, 3 * sizeof(uint16_t), (uint8_t *) &coords);
+        if(coords[0] >= x1 && coords[0] < x2)
+        {
+            if(coords[1] >= y1 && coords[1] < y2)
+            {
+                if(coords[2] >= z1 && coords[2] < z2)
+                {
+                    ReadCreature(index, furball);
+                    return index;
+                }
+            }
+        }
+        index++;
+    }
+}
+
+bool API::ReadCreature(const int32_t &index, t_creature & furball)
 {
     assert(d->creaturesInited);
     uint32_t temp;
@@ -1010,6 +1040,7 @@ bool API::ReadCreature(const uint32_t &index, t_creature & furball)
     MreadByte(temp + d->creature_sex_offset, furball.sex);
     return true;
 }
+
 //FIXME: this just isn't enough
 void API::InitReadNameTables()
 {
@@ -1099,6 +1130,19 @@ bool API::Detach()
 bool API::isAttached()
 {
     return d->dm != NULL;
+}
+
+bool API::Suspend()
+{
+    return d->p->suspend();
+}
+bool API::Resume()
+{
+    return d->p->resume();
+}
+bool API::isSuspended()
+{
+    return d->p->isSuspended();
 }
 
 void API::ReadRaw (const uint32_t &offset, const uint32_t &size, uint8_t *target)

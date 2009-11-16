@@ -62,6 +62,10 @@ namespace DFHack
         bool Attach();
         bool Detach();
         bool isAttached();
+        
+        bool Suspend();
+        bool Resume();
+        bool isSuspended();
         /**
          * Matgloss. next four methods look very similar. I could use two and move the processing one level up...
          * I'll keep it like this, even with the code duplication as it will hopefully get more features and separate data types later.
@@ -140,19 +144,19 @@ namespace DFHack
          * Buildings, constructions, plants, all pretty straighforward. InitReadBuildings returns all the building types as a mapping between a numeric values and strings
          */
         uint32_t InitReadConstructions();
-        bool ReadConstruction(const uint32_t &index, t_construction & construction);
+        bool ReadConstruction(const int32_t &index, t_construction & construction);
         void FinishReadConstructions();
 
         uint32_t InitReadBuildings(vector <string> &v_buildingtypes);
-        bool ReadBuilding(const uint32_t &index, t_building & building);
+        bool ReadBuilding(const int32_t &index, t_building & building);
         void FinishReadBuildings();
 
         uint32_t InitReadVegetation();
-        bool ReadVegetation(const uint32_t &index, t_tree_desc & shrubbery);
+        bool ReadVegetation(const int32_t &index, t_tree_desc & shrubbery);
         void FinishReadVegetation();
         
         uint32_t InitReadCreatures();
-        bool ReadCreature(const uint32_t &index, t_creature & furball);
+        bool ReadCreature(const int32_t &index, t_creature & furball);
         void FinishReadCreatures();
         
         void ReadRaw (const uint32_t &offset, const uint32_t &size, uint8_t *target);

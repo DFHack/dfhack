@@ -42,7 +42,7 @@ TARGET_LINK_LIBRARIES(dfmaterialtest dfhack)
 ADD_EXECUTABLE(dfposition position.cpp)
 TARGET_LINK_LIBRARIES(dfposition dfhack)
 
-# materialtest - just list the first material of each type
+# incremental - incremental memory search tool, a foreshadowing of the future direction of dfhack
 ADD_EXECUTABLE(dfincremental incrementalsearch.cpp)
 TARGET_LINK_LIBRARIES(dfincremental dfhack)
 
@@ -60,6 +60,5 @@ dfbuildingsdump
 dfposition
 dfincremental
 RUNTIME DESTINATION bin
-
 )
 ENDIF(UNIX)

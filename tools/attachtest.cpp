@@ -30,7 +30,7 @@ int main (void)
     cout << "Testing attach/detach"  << endl;
     time(&start);
     bool all_ok = true;
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 100; i++)
     {
         cout << "Try " << i << endl;
         if(DF.Attach())
@@ -61,6 +61,21 @@ int main (void)
     
     time_diff = difftime(end, start);
     cout << "attach tests done in " << time_diff << " seconds." << endl;
+    
+    cout << "Testing suspend/resume"  << endl;
+    DF.Attach();
+    time(&start);
+    for (int i = 0; i < 100; i++)
+    {
+        DF.Suspend();
+        cout << "Try " << i << endl;
+        DF.Resume();
+    }
+    time(&end);
+    DF.Detach();
+    time_diff = difftime(end, start);
+    cout << "suspend tests done in " << time_diff << " seconds." << endl;
+    
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

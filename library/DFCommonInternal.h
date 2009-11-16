@@ -69,6 +69,7 @@ using namespace std;
     #include <winbase.h>
     #include <winnt.h>
     #include <psapi.h>
+    #include <tlhelp32.h>
 #endif
 
 #ifndef BUILD_DFHACK_LIB

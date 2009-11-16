@@ -31,6 +31,7 @@ Process::Process(DataModel * dm, memory_info* mi, ProcessHandle ph, uint32_t pid
     my_handle = ph;
     my_pid = pid;
     attached = false;
+    suspended = false;
 }
 
 
@@ -70,36 +71,10 @@ void Process::setMemFile(const string & memf)
  */
 
 
-/*
-//TODO: rewrite this. really. It's ugly as hell.
-bool isStopped(pid_t pid)
+bool Process::getThreadIDs(vector<uint32_t> & threads )
 {
-    char filename[256];
-    sprintf(filename, "/proc/%d/status", pid);
-    
-    // evil mess, that's a fitting name for this thing
-    FILE* evil = fopen(filename,"rb");
-    if(evil)
-    {
-        // zlo means evil in czech.
-        char zlo[64];
-        char test;
-        // read first line, ignore
-        fgets(zlo,64,evil);
-        // read second line
-        fgets(zlo,64,evil);
-        sscanf(zlo,"State: %c",&test);
-        fclose(evil);
-        if(test == 'T')
-        {
-            return true;
-        }
-        return false;
-    }
-    cerr << "couldn't open file " << filename << "assuming process stopped" << endl;
-    return true;
+    return false;
 }
-*/
 
 void Process::getMemRanges( vector<t_memrange> & ranges )
 {
@@ -128,46 +103,19 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     }
 }
 
-bool Process::attach()
+bool Process::suspend()
 {
     int status;
-    //cout << "Attach: start" << endl;
-    // check if another process is attached
-    if(g_pProcess != NULL)
-    {
+    if(!attached)
         return false;
-    }
-    /*
-    if(!isStopped(my_handle))
-    {
-        // kill (SIGSTOP)
-        status = kill(my_handle,SIGSTOP);
-        //cout << "sent SIGSTOP" << endl;
-        if(status == -1)
-        {
-            perror("kill(SIGSTOP)");
-            return false;
-        }
-        // wait for the process to stop
-        while (!isStopped(my_handle))
-        {
-            usleep(5000);
-            //cout << "wait step" << endl;
-        }
-    }
-    */
-    //usleep(10000);
-    //cout << "Attach: after conditional stop" << endl;
-    // can we attach?
-    if (ptrace(PTRACE_ATTACH , my_handle, NULL, NULL) == -1)
+    if(suspended)
+        return true;
+    if (kill(my_handle, SIGSTOP) == -1)
     {
         // no, we got an error
-        perror("ptrace attach error");
-        cerr << "attach failed on pid " << my_handle << endl;
+        perror("kill SIGSTOP error");
         return false;
     }
-    //usleep(10000);
-    //cout << "Attach: after ptrace" << endl;
     while(true)
     {
         // we wait on the pid
@@ -175,9 +123,7 @@ bool Process::attach()
         if (w == -1)
         {
             // child died
-            perror("wait inside attach()");
-            //LOGC << "child died?";
-            //exit(-1);
+            perror("DF exited during suspend call");
             return false;
         }
         // stopped -> let's continue
@@ -186,7 +132,58 @@ bool Process::attach()
             break;
         }
     }
-    //  cout << "Managed to attach to pid " << my_handle << endl;
+    suspended = true;
+}
+
+bool Process::resume()
+{
+    int status;
+    if(!attached)
+        return false;
+    if(!suspended)
+        return true;
+    if (ptrace(PTRACE_CONT, my_handle, NULL, NULL) == -1)
+    {
+        // no, we got an error
+        perror("ptrace resume error");
+        return false;
+    }
+    suspended = false;
+}
+
+
+bool Process::attach()
+{
+    int status;
+    if(g_pProcess != NULL)
+    {
+        return false;
+    }
+    // can we attach?
+    if (ptrace(PTRACE_ATTACH , my_handle, NULL, NULL) == -1)
+    {
+        // no, we got an error
+        perror("ptrace attach error");
+        cerr << "attach failed on pid " << my_handle << endl;
+        return false;
+    }
+    while(true)
+    {
+        // we wait on the pid
+        pid_t w = waitpid(my_handle, &status, 0);
+        if (w == -1)
+        {
+            // child died
+            perror("wait inside attach()");
+            return false;
+        }
+        // stopped -> let's continue
+        if (WIFSTOPPED(status))
+        {
+            break;
+        }
+    }
+    suspended = true;
     
     int proc_pid_mem = open(memFile.c_str(),O_RDONLY);
     if(proc_pid_mem == -1)
@@ -203,7 +200,6 @@ bool Process::attach()
         g_ProcessHandle = my_handle;
         
         g_ProcessMemFile = proc_pid_mem;
-        //cout << "Attach: after opening /proc/"<< my_handle <<"/mem" << endl;
         return true; // we are attached
     }
 }
@@ -211,9 +207,10 @@ bool Process::attach()
 bool Process::detach()
 {
     if(!attached) return false;
+    if(!suspended) suspend();
     int result = 0;
-    //cout << "detach: start" << endl;
-    result = close(g_ProcessMemFile);// close /proc/PID/mem
+    // close /proc/PID/mem
+    result = close(g_ProcessMemFile);
     if(result == -1)
     {
         cerr << "couldn't close /proc/"<< my_handle <<"/mem" << endl;
@@ -222,7 +219,7 @@ bool Process::detach()
     }
     else
     {
-        //cout << "detach: after closing /proc/"<< my_handle <<"/mem" << endl;
+        // detach
         g_ProcessMemFile = -1;
         result = ptrace(PTRACE_DETACH, my_handle, NULL, NULL);
         if(result == -1)
@@ -233,15 +230,9 @@ bool Process::detach()
         }
         else
         {
-         //   cout << "detach: after detaching from "<< my_handle << endl;
             attached = false;
             g_pProcess = NULL;
             g_ProcessHandle = 0;
-            // continue, wait for it to recover
-    //        kill(my_handle,SIGCONT);
-      //      while (isStopped(my_handle));
-            //usleep(10000);
-            // we finish
             return true;
         }
     }
@@ -260,7 +251,45 @@ void Process::freeResources()
  *     WINDOWS PART
  */
 
-//FIXME: should support stopping and resuming the process
+bool Process::suspend()
+{
+    if(!attached)
+        return false;
+    if(suspended)
+    {
+        return true;
+    }
+    vector<uint32_t> threads;
+    getThreadIDs( threads );
+    for(int i = 0; i < /*threads.size()*/ 1; i++)
+    {
+        HANDLE thread_handle = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads[i]);
+        SuspendThread(thread_handle);
+        CloseHandle(thread_handle);
+    }
+    suspended = true;
+    return true;
+}
+
+bool Process::resume()
+{
+    if(!attached)
+        return false;
+    if(!suspended)
+    {
+        return true;
+    }
+    vector<uint32_t> threads;
+    getThreadIDs( threads );
+    for(int i = 0; i < /* threads.size() */ 1; i++)
+    {
+        HANDLE thread_handle = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads[i]);
+        ResumeThread(thread_handle);
+        CloseHandle(thread_handle);
+    }
+    suspended = false;
+    return true;
+}
 
 bool Process::attach()
 {
@@ -268,17 +297,12 @@ bool Process::attach()
     {
         return false;
     }
-    /*
-    if(DebugActiveProcess(my_pid))
-    {
-    */
-        attached = true;
-        g_pProcess = this;
-        g_ProcessHandle = my_handle;
+    attached = true;
+    g_pProcess = this;
+    g_ProcessHandle = my_handle;
+    suspend();
 
-        return true;
-    /*}
-    return false;*/
+    return true;
 }
 
 
@@ -288,16 +312,43 @@ bool Process::detach()
     {
         return false;
     }
-    //TODO: find a safer way to suspend processes
-    /*if(DebugActiveProcessStop(my_pid))
-    {*/
-        attached = false;
-        g_pProcess = NULL;
-        g_ProcessHandle = 0;
-        return true;
-    /*}
-    return false;*/
+    resume();
+    attached = false;
+    g_pProcess = NULL;
+    g_ProcessHandle = 0;
+    return true;
 }
+
+bool Process::getThreadIDs(vector<uint32_t> & threads )
+{
+    HANDLE AllThreads = INVALID_HANDLE_VALUE; 
+    THREADENTRY32 te32;
+    
+    AllThreads = CreateToolhelp32Snapshot( TH32CS_SNAPTHREAD, 0 ); 
+    if( AllThreads == INVALID_HANDLE_VALUE ) 
+    {
+        return false; 
+    }
+    te32.dwSize = sizeof(THREADENTRY32 ); 
+    
+    if( !Thread32First( AllThreads, &te32 ) ) 
+    {
+        CloseHandle( AllThreads );
+        return false;
+    }
+    
+    do 
+    { 
+        if( te32.th32OwnerProcessID == my_pid )
+        {
+            threads.push_back(te32.th32ThreadID);
+        }
+    } while( Thread32Next(AllThreads, &te32 ) ); 
+    
+    CloseHandle( AllThreads );
+    return true;
+}
+
 
 void Process::getMemRanges( vector<t_memrange> & ranges )
 {

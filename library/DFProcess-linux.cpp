@@ -100,7 +100,7 @@ Process::Process(uint32_t pid, vector <memory_info> & known_versions)
         {
             char exe_link[1024];
             // put executable name and path together
-            sprintf("%s/%s",target_name,cmdline.c_str());
+            sprintf(exe_link,"%s/%s",target_name,cmdline.c_str());
             
             // create wine process, add it to the vector
             d->identified = d->validate(exe_link,pid,mem_name,known_versions);

@@ -42,9 +42,9 @@ void searchLoop(DFHack::API & DF, vector <DFHack::t_memrange>& ranges, int size,
     while (1)
     {
         cout << ">>";
-        DF.Detach();
+        DF.Resume();
         std::getline(cin, select);
-        DF.Attach();
+        DF.Suspend();
         if(select == "p")
         {
             cout << "Found addresses:" << endl;

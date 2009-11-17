@@ -74,7 +74,7 @@ class API::Private
         
         uint32_t dwarf_lang_table_offset;
         
-        ProcessManager* pm;
+        ProcessEnumerator* pm;
         Process* p;
         DataModel* dm;
         memory_info* offset_descriptor;
@@ -1078,7 +1078,7 @@ bool API::Attach()
     // detach all processes, destroy manager
     if(d->pm == NULL)
     {
-        d->pm = new ProcessManager(d->xml); // FIXME: handle bad XML better
+        d->pm = new ProcessEnumerator(d->xml); // FIXME: handle bad XML better
     }
     
     // find a process (ProcessManager can find multiple when used properly)

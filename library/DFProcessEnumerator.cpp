@@ -22,7 +22,6 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-//#define LINUX_BUILD
 #include "DFCommonInternal.h"
 using namespace DFHack;
 
@@ -31,51 +30,29 @@ Process * DFHack::g_pProcess; ///< current process. non-NULL when picked
 ProcessHandle DFHack::g_ProcessHandle; ///< cache of handle to current process. used for speed reasons
 int DFHack::g_ProcessMemFile; ///< opened /proc/PID/mem, valid when attached
 
+class DFHack::ProcessEnumerator::Private
+{
+    public:
+        Private(){};
+        // memory info entries loaded from a file
+        std::vector<memory_info> meminfo;
+        Process * currentProcess;
+        ProcessHandle currentProcessHandle;
+        std::vector<Process *> processes;
+        bool loadDescriptors( string path_to_xml);
+        void ParseVTable(TiXmlElement* vtable, memory_info& mem);
+        void ParseEntry (TiXmlElement* entry, memory_info& mem, map <string ,TiXmlElement *>& knownEntries);
+        #ifdef LINUX_BUILD
+        Process* addProcess(const string & exe,ProcessHandle PH,const string & memFile);
+        #endif
+};
+
 #ifdef LINUX_BUILD
 /*
  *  LINUX version of the process finder.
  */
 
-Process* ProcessManager::addProcess(const string & exe,ProcessHandle PH, const string & memFile)
-{
-    md5wrapper md5;
-    // get hash of the running DF process
-    string hash = md5.getHashFromFile(exe);
-    vector<memory_info>::iterator it;
-
-    // iterate over the list of memory locations
-    for ( it=meminfo.begin() ; it < meminfo.end(); it++ )
-    {
-        if(hash == (*it).getString("md5")) // are the md5 hashes the same?
-        {
-            memory_info * m = &*it;
-            Process * ret;
-            //cout <<"Found process " << PH <<  ". It's DF version " << m->getVersion() << "." << endl;
-
-            // df can run under wine on Linux
-            if(memory_info::OS_WINDOWS == (*it).getOS())
-            {
-                ret= new Process(new DMWindows40d(),m,PH, PH);
-            }
-            else if (memory_info::OS_LINUX == (*it).getOS())
-            {
-                ret= new Process(new DMLinux40d(),m,PH, PH);
-            }
-            else
-            {
-                // some error happened, continue with next process
-                continue;
-            }
-            // tell Process about the /proc/PID/mem file
-            ret->setMemFile(memFile);
-            processes.push_back(ret);
-            return ret;
-        }
-    }
-    return NULL;
-}
-
-bool ProcessManager::findProcessess()
+bool ProcessEnumerator::findProcessess()
 {
     DIR *dir_p;
     struct dirent *dir_entry_p;
@@ -86,8 +63,7 @@ bool ProcessManager::findProcessess()
     string cmdline;
 
     // ALERT: buffer overrun potential
-    char target_name[1024];
-    int target_result;
+
     int errorcount;
     int result;
 
@@ -103,67 +79,19 @@ bool ProcessManager::findProcessess()
         {
             continue;
         }
-
-        // string manipulation - get /proc/PID/exe link and /proc/PID/mem names
-        dir_name = "/proc/";
-        dir_name += dir_entry_p->d_name;
-        dir_name += "/";
-        exe_link = dir_name + "exe";
-        string mem_name = dir_name + "mem";
-
-        // resolve /proc/PID/exe link
-        target_result = readlink(exe_link.c_str(), target_name, sizeof(target_name)-1);
-        if (target_result == -1)
+        Process *p = new Process(atoi(dir_entry_p->d_name),d->meminfo);
+        if(p->isIdentified())
         {
-            // bad result from link resolution, continue with another processed
-            continue;
+            d->processes.push_back(p);
         }
-        // make sure we have a null terminated string...
-        target_name[target_result] = 0;
-
-        // is this the regular linux DF?
-        if (strstr(target_name, "dwarfort.exe") != NULL)
+        else
         {
-            exe_link = target_name;
-            // get PID
-            result = atoi(dir_entry_p->d_name);
-            // create linux process, add it to the vector
-            addProcess(exe_link,result,mem_name);
-            // continue with next process
-            continue;
-        }
-
-        // FIXME: this fails when the wine process isn't started from the 'current working directory'. strip path data from cmdline
-        // is this windows version of Df running in wine?
-        if(strstr(target_name, "wine-preloader")!= NULL)
-        {
-            // get working directory
-            cwd_link = dir_name + "cwd";
-            target_result = readlink(cwd_link.c_str(), target_name, sizeof(target_name)-1);
-            target_name[target_result] = 0;
-
-            // got path to executable, do the same for its name
-            cmdline_path = dir_name + "cmdline";
-            ifstream ifs ( cmdline_path.c_str() , ifstream::in );
-            getline(ifs,cmdline);
-            if (cmdline.find("dwarfort-w.exe") != string::npos || cmdline.find("dwarfort.exe") != string::npos || cmdline.find("Dwarf Fortress.exe") != string::npos)
-            {
-                // put executable name and path together
-                exe_link = target_name;
-                exe_link += "/";
-                exe_link += cmdline;
-
-                // get PID
-                result = atoi(dir_entry_p->d_name);
-
-                // create wine process, add it to the vector
-                addProcess(exe_link,result,mem_name);
-            }
+            delete p;
         }
     }
     closedir(dir_p);
     // return value depends on if we found some DF processes
-    if(processes.size())
+    if(d->processes.size())
     {
         return true;
     }
@@ -199,18 +127,10 @@ bool EnableDebugPriv()
 }
 
 // WINDOWS version of the process finder
-bool ProcessManager::findProcessess()
+bool ProcessEnumerator::findProcessess()
 {
     // Get the list of process identifiers.
-    //TODO: make this dynamic. (call first to get the array size and second to really get process handles)
-    DWORD ProcArray[512], memoryNeeded, numProccesses;
-    HMODULE hmod = NULL;
-    DWORD junk;
-    HANDLE hProcess;
-    bool found = false;
-
-    IMAGE_NT_HEADERS32 pe_header;
-    IMAGE_SECTION_HEADER sections[16];
+    DWORD ProcArray[2048], memoryNeeded, numProccesses;
 
     EnableDebugPriv();
     if ( !EnumProcesses( ProcArray, sizeof(ProcArray), &memoryNeeded ) )
@@ -224,71 +144,24 @@ bool ProcessManager::findProcessess()
     // iterate through processes
     for ( int i = 0; i < (int)numProccesses; i++ )
     {
-        found = false;
-        
-        // open process
-        hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, ProcArray[i] );
-        if (NULL == hProcess)
-            continue;
-        
-        // try getting the first module of the process
-        if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk) == 0)
+        Process *p = new Process(ProcArray[i],d->meminfo);
+        if(p->isIdentified())
         {
-            CloseHandle(hProcess);
-            continue;
+            d->processes.push_back(p);
         }
-        
-        // got base ;)
-        uint32_t base = (uint32_t)hmod;
-        
-        // read from this process
-        g_ProcessHandle = hProcess;
-        uint32_t pe_offset = MreadDWord(base+0x3C);
-        Mread(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
-        Mread(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
-        
-        // see if there's a version entry that matches this process
-        vector<memory_info>::iterator it;
-        for ( it=meminfo.begin() ; it < meminfo.end(); it++ )
+        else
         {
-            // filter by OS
-            if(memory_info::OS_WINDOWS != (*it).getOS())
-                continue;
-            
-            // filter by timestamp
-            uint32_t pe_timestamp = (*it).getHexValue("pe_timestamp");
-            if (pe_timestamp != pe_header.FileHeader.TimeDateStamp)
-                continue;
-            
-            // all went well
-            {
-                printf("Match found! Using version %s.\n", (*it).getVersion().c_str());
-                // give the process a data model and memory layout fixed for the base of first module
-                memory_info *m = new memory_info(*it);
-                m->RebaseAll(base);
-                // keep track of created memory_info objects so we can destroy them later
-                destroy_meminfo.push_back(m);
-                // process is responsible for destroying its data model
-                Process *ret= new Process(new DMWindows40d(),m,hProcess, ProcArray[i]);
-                processes.push_back(ret);
-                found = true;
-                break; // break the iterator loop
-            }
-        }
-        // close handle of processes that aren't DF
-        if(!found)
-        {
-            CloseHandle(hProcess);
+            delete p;
         }
     }
-	if(processes.size())
+    if(d->processes.size())
         return true;
     return false;
 }
 #endif
 
 
-void ProcessManager::ParseVTable(TiXmlElement* vtable, memory_info& mem)
+void ProcessEnumerator::Private::ParseVTable(TiXmlElement* vtable, memory_info& mem)
 {
     TiXmlElement* pClassEntry;
     TiXmlElement* pClassSubEntry;
@@ -336,7 +209,7 @@ void ProcessManager::ParseVTable(TiXmlElement* vtable, memory_info& mem)
 
 
 
-void ProcessManager::ParseEntry (TiXmlElement* entry, memory_info& mem, map <string ,TiXmlElement *>& knownEntries)
+void ProcessEnumerator::Private::ParseEntry (TiXmlElement* entry, memory_info& mem, map <string ,TiXmlElement *>& knownEntries)
 {
     TiXmlElement* pMemEntry;
     const char *cstr_version = entry->Attribute("version");
@@ -459,7 +332,7 @@ void ProcessManager::ParseEntry (TiXmlElement* entry, memory_info& mem, map <str
 
 
 // load the XML file with offsets
-bool ProcessManager::loadDescriptors(string path_to_xml)
+bool ProcessEnumerator::Private::loadDescriptors(string path_to_xml)
 {
     TiXmlDocument doc( path_to_xml.c_str() );
     bool loadOkay = doc.LoadFile();
@@ -526,37 +399,34 @@ bool ProcessManager::loadDescriptors(string path_to_xml)
 }
 
 
-uint32_t ProcessManager::size()
+uint32_t ProcessEnumerator::size()
 {
-    return processes.size();
+    return d->processes.size();
 };
 
 
-Process * ProcessManager::operator[](uint32_t index)
+Process * ProcessEnumerator::operator[](uint32_t index)
 {
-    assert(index < processes.size());
-    return processes[index];
+    assert(index < d->processes.size());
+    return d->processes[index];
 };
 
 
-ProcessManager::ProcessManager( string path_to_xml )
+ProcessEnumerator::ProcessEnumerator( string path_to_xml )
+: d(new Private())
 {
-    currentProcess = NULL;
-    currentProcessHandle = 0;
-    loadDescriptors( path_to_xml );
+    d->currentProcess = NULL;
+    d->currentProcessHandle = 0;
+    d->loadDescriptors( path_to_xml );
 }
 
 
-ProcessManager::~ProcessManager()
+ProcessEnumerator::~ProcessEnumerator()
 {
     // delete all processes
-    for(uint32_t i = 0;i < processes.size();i++)
+    for(uint32_t i = 0;i < d->processes.size();i++)
     {
-        delete processes[i];
+        delete d->processes[i];
     }
-    //delete all generated memory_info stuff
-    for(uint32_t i = 0;i < destroy_meminfo.size();i++)
-    {
-        delete destroy_meminfo[i];
-    }
+    delete d;
 }

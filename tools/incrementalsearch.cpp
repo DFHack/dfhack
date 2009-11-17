@@ -21,7 +21,8 @@ using namespace std;
 
 #include <DFTypes.h>
 #include <DFHackAPI.h>
-#include <DFProcessManager.h>
+#include <DFProcessEnumerator.h>
+#include <DFProcess.h>
 #include <DFMemInfo.h>
 
 //TODO: lots of optimization

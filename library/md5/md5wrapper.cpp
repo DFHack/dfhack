@@ -109,34 +109,34 @@ std::string md5wrapper::getHashFromString(std::string text)
  */
 std::string md5wrapper::getHashFromFile(std::string filename)
 {
-	FILE *file;
-  	MD5_CTX context;
+    FILE *file;
+    MD5_CTX context;
 
-	int len;
-  	unsigned char buffer[1024], digest[16];
+    int len;
+    unsigned char buffer[1024], digest[16];
 
-	//open file
-  	if ((file = fopen (filename.c_str(), "rb")) == NULL)
-	{
-		return "-1";
-	}
+    //open file
+    if ((file = fopen (filename.c_str(), "rb")) == NULL)
+    {
+        return "-1";
+    }
 
-	//init md5
- 	md5->MD5Init (&context);
+    //init md5
+    md5->MD5Init (&context);
 
-	//read the filecontent
-	while ( (len = fread (buffer, 1, 1024, file)) )
-   	{
-		md5->MD5Update (&context, buffer, len);
-	}
+    //read the filecontent
+    while ( (len = fread (buffer, 1, 1024, file)) )
+    {
+        md5->MD5Update (&context, buffer, len);
+    }
 
-	/*
-	generate hash, close the file and return the
-	hash as std::string
-	*/
-	md5->MD5Final (digest, &context);
- 	fclose (file);
-	return convToString(digest);
+    /*
+    generate hash, close the file and return the
+    hash as std::string
+    */
+    md5->MD5Final (digest, &context);
+    fclose (file);
+    return convToString(digest);
  }
 
 /*

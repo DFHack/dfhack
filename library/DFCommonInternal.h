@@ -72,13 +72,30 @@ using namespace std;
     #include <tlhelp32.h>
 #endif
 
+#ifdef LINUX_BUILD
+typedef pid_t ProcessHandle;
+#else
+typedef HANDLE ProcessHandle;
+#endif
+
+namespace DFHack
+{
+    class Process;
+    /*
+    * Currently attached process and its handle
+    */
+    extern Process * g_pProcess; ///< current process. non-NULL when picked
+    extern ProcessHandle g_ProcessHandle; ///< cache of handle to current process. used for speed reasons
+    extern int g_ProcessMemFile; ///< opened /proc/PID/mem, valid when attached
+}
 #ifndef BUILD_DFHACK_LIB
 #   define BUILD_DFHACK_LIB
 #endif
 
 #include "DFTypes.h"
 #include "DFDataModel.h"
-#include "DFProcessManager.h"
+#include "DFProcess.h"
+#include "DFProcessEnumerator.h"
 #include "DFMemAccess.h"
 #include "DFVector.h"
 #include "DFMemInfo.h"

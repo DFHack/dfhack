@@ -22,13 +22,32 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef PROCESSUTIL_H_INCLUDED
-#define PROCESSUTIL_H_INCLUDED
+#ifndef PROCESSMANAGER_H_INCLUDED
+#define PROCESSMANAGER_H_INCLUDED
 
-#ifdef LINUX_BUILD
-    #include "MemAccess-linux.h"
-#else
-    #include "MemAccess-windows.h"
-#endif
+#include "Export.h"
 
-#endif // PROCESSUTIL_H_INCLUDED
+class TiXmlElement;
+
+namespace DFHack
+{
+    class memory_info;
+    class DataModel;
+    class Process;
+    
+    /*
+     * Process manager
+     */
+    class DFHACK_EXPORT ProcessEnumerator
+    {
+        class Private;
+        Private * const d;
+    public:
+        ProcessEnumerator( string path_to_xml);
+        ~ProcessEnumerator();
+        bool findProcessess();
+        uint32_t size();
+        Process * operator[](uint32_t index);
+    };
+}
+#endif // PROCESSMANAGER_H_INCLUDED

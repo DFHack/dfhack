@@ -22,33 +22,17 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef PROCESSMANAGER_H_INCLUDED
-#define PROCESSMANAGER_H_INCLUDED
+#ifndef PROCESS_H_INCLUDED
+#define PROCESS_H_INCLUDED
 
 #include "Export.h"
 
-class TiXmlElement;
-
 namespace DFHack
 {
-
     class memory_info;
     class DataModel;
     class Process;
     
-    #ifdef LINUX_BUILD
-    typedef pid_t ProcessHandle;
-    #else
-    typedef HANDLE ProcessHandle;
-    #endif
-
-    /*
-    * Currently attached process and its handle
-    */
-    extern Process * g_pProcess; ///< current process. non-NULL when picked
-    extern ProcessHandle g_ProcessHandle; ///< cache of handle to current process. used for speed reasons
-    extern int g_ProcessMemFile; ///< opened /proc/PID/mem, valid when attached
-
     // structure describing a memory range
     struct DFHACK_EXPORT t_memrange
     {
@@ -75,19 +59,12 @@ namespace DFHack
 
     class DFHACK_EXPORT Process
     {
-        friend class ProcessManager;
-        protected:
-            Process(DataModel * dm, memory_info* mi, ProcessHandle ph, uint32_t pid);
+        friend class ProcessEnumerator;
+        class Private;
+        private:
+            Private * const d;
+            Process(uint32_t pid, vector <memory_info> & known_versions);
             ~Process();
-            DataModel* my_datamodel;
-            memory_info * my_descriptor;
-            ProcessHandle my_handle;
-            uint32_t my_pid;
-            string memFile;
-            bool attached;
-            bool suspended;
-            void freeResources();
-            void setMemFile(const string & memf);
         public:
             // Set up stuff so we can read memory
             bool attach();
@@ -96,8 +73,9 @@ namespace DFHack
             bool suspend();
             bool resume();
             
-            bool isSuspended() {return suspended;};
-            bool isAttached() {return attached;};
+            bool isSuspended();
+            bool isAttached();
+            bool isIdentified();
             
             bool getThreadIDs(vector<uint32_t> & threads );
             void getMemRanges( vector<t_memrange> & ranges );
@@ -105,33 +83,5 @@ namespace DFHack
             memory_info *getDescriptor();
             DataModel *getDataModel();
     };
-
-    /*
-     * Process manager
-     */
-    class DFHACK_EXPORT ProcessManager
-    {
-    public:
-        ProcessManager( string path_to_xml);
-        ~ProcessManager();
-        bool findProcessess();
-        uint32_t size();
-        Process * operator[](uint32_t index);
-
-    private:
-        // memory info entries loaded from a file
-        std::vector<memory_info> meminfo;
-        // vector to keep track of dynamically created memory_info entries
-        std::vector<memory_info *> destroy_meminfo;
-        Process * currentProcess;
-        ProcessHandle currentProcessHandle;
-        std::vector<Process *> processes;
-        bool loadDescriptors( string path_to_xml);
-        void ParseVTable(TiXmlElement* vtable, memory_info& mem);
-        void ParseEntry (TiXmlElement* entry, memory_info& mem, map <string ,TiXmlElement *>& knownEntries);
-    #ifdef LINUX_BUILD
-        Process* addProcess(const string & exe,ProcessHandle PH,const string & memFile);
-    #endif
-    };
 }
-#endif // PROCESSMANAGER_H_INCLUDED
+#endif

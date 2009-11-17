@@ -42,9 +42,16 @@ TARGET_LINK_LIBRARIES(dfmaterialtest dfhack)
 ADD_EXECUTABLE(dfposition position.cpp)
 TARGET_LINK_LIBRARIES(dfposition dfhack)
 
-# incremental - incremental memory search tool, a foreshadowing of the future direction of dfhack
-ADD_EXECUTABLE(dfincremental incrementalsearch.cpp)
-TARGET_LINK_LIBRARIES(dfincremental dfhack)
+#currently only stable on linux
+IF(UNIX)
+    # incremental - incremental memory search tool, a foreshadowing of the future direction of dfhack
+    ADD_EXECUTABLE(dfincremental incrementalsearch.cpp)
+    TARGET_LINK_LIBRARIES(dfincremental dfhack)
+ENDIF(UNIX)
+
+# suspendtest - test if suspend works. df should stop responding when suspended by dfhack
+ADD_EXECUTABLE(dfsuspend suspendtest.cpp)
+TARGET_LINK_LIBRARIES(dfsuspend dfhack)
 
 IF(UNIX)
 install(TARGETS
@@ -59,6 +66,7 @@ dfmaterialtest
 dfbuildingsdump
 dfposition
 dfincremental
+dfsuspend
 RUNTIME DESTINATION bin
 )
 ENDIF(UNIX)

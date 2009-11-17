@@ -22,13 +22,11 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef PROCESSUTIL_H_INCLUDED
-#define PROCESSUTIL_H_INCLUDED
+/*
+DO NOT USE DIRECTLY, use DFProcess.h instead.
+*/
 
-#ifdef LINUX_BUILD
-    #include "MemAccess-linux.h"
-#else
-    #include "MemAccess-windows.h"
+#ifndef PROCESS_LIN_H_INCLUDED
+#define PROCESS_LIN_H_INCLUDED
+
 #endif
-
-#endif // PROCESSUTIL_H_INCLUDED

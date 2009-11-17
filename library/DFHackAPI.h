@@ -185,6 +185,10 @@ namespace DFHack
         */
         void InitReadNameTables();
         void FinishReadNameTables();
+
+        uint32_t InitReadItems();
+        bool ReadItem(const uint32_t &index, t_item & item);
+        void FinishReadItems();
         
         memory_info getMemoryInfo();
         Process * getProcess();

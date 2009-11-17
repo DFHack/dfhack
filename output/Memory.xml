@@ -920,6 +920,97 @@
         <String name="md5">59ab29021aca9f3c66b1ab102fb3ceea</String>
         <!-- map_data = 0x01601D84 -->
         <!-- door: 0x8e15d4, no VTable rebase needed -->
+        <Address name="items">15BDF50</Address>
+        <VTable>
+            <class vtable="0x008E04D4" name="item_liquid_misc" />
+            <class vtable="0x008E07AC" name="item_remains" />
+            <class vtable="0x008E0A84" name="item_vermin" />
+            <class vtable="0x008E0D5C" name="item_plant" />
+            <class vtable="0x008EFBB4" name="item_glob" />
+            <class vtable="0x008EFFEC" name="item_contaminant" />
+            <class vtable="0x008F15BC" name="item_meat" />
+            <class vtable="0x008F1894" name="item_fish" />
+            <class vtable="0x008F211C" name="item_door" />
+            <class vtable="0x008F23F4" name="item_bed" />
+            <class vtable="0x008F26CC" name="item_chair" />
+            <class vtable="0x008F29A4" name="item_flask" />
+            <class vtable="0x008F2C7C" name="item_barrel" />
+            <class vtable="0x008F2F54" name="item_table" />
+            <class vtable="0x008F322C" name="item_weapon" />
+            <class vtable="0x008F3504" name="item_armor" />
+            <class vtable="0x008F37DC" name="item_shoes" />
+            <class vtable="0x008F3AB4" name="item_shield" />
+            <class vtable="0x008F3D8C" name="item_helm" />
+            <class vtable="0x008F4064" name="item_gloves" />
+            <class vtable="0x008F433C" name="item_box" />
+            <class vtable="0x008F4614" name="item_ammo" />
+            <class vtable="0x008F48EC" name="item_pants" />
+            <class vtable="0x008F4BC4" name="item_backpack" />
+            <class vtable="0x008F4E9C" name="item_quiver" />
+            <class vtable="0x008F5174" name="item_coin" />
+            <class vtable="0x008F5DDC" name="item_powder_misc" />
+            <class vtable="0x008F60F4" name="item_corpse" />
+            <class vtable="0x008F63CC" name="item_corpsepiece" />
+            <class vtable="0x008F66A4" name="item_chain" />
+            <class vtable="0x008F697C" name="item_cage" />
+            <class vtable="0x008FF454" name="item_seeds" />
+            <class vtable="0x008FF72C" name="item_skin_raw" />
+            <class vtable="0x008FFA04" name="item_bones" />
+            <class vtable="0x008FFCDC" name="item_skull" />
+            <class vtable="0x008FFFB4" name="item_thread" />
+            <class vtable="0x0091142C" name="item_bar" />
+            <class vtable="0x00911704" name="item_smallgem" />
+            <class vtable="0x009119DC" name="item_blocks" />
+            <class vtable="0x00911CB4" name="item_rough" />
+            <class vtable="0x00911F8C" name="item_stone" />
+            <class vtable="0x00912264" name="item_rock" />
+            <class vtable="0x0091253C" name="item_wood" />
+            <class vtable="0x00912814" name="item_extract" />
+            <class vtable="0x00912AEC" name="item_potion" />
+            <class vtable="0x00912DC4" name="item_drink" />
+            <class vtable="0x0091309C" name="item_fish_raw" />
+            <class vtable="0x00913374" name="item_pet" />
+            <class vtable="0x0091364C" name="item_skin_tanned" />
+            <class vtable="0x00913924" name="item_shell" />
+            <class vtable="0x00913BFC" name="item_leaves" />
+            <class vtable="0x00913ED4" name="item_ballistaarrowhead" />
+            <class vtable="0x009141AC" name="item_cheese" />
+            <class vtable="0x00914484" name="item_food" />
+            <class vtable="0x0091475C" name="item_cloth" />
+            <class vtable="0x00914A34" name="item_floodgate" />
+            <class vtable="0x00914D0C" name="item_hatch_cover" />
+            <class vtable="0x00914FE4" name="item_grate" />
+            <class vtable="0x009152BC" name="item_goblet" />
+            <class vtable="0x00915594" name="item_instrument" />
+            <class vtable="0x0091586C" name="item_toy" />
+            <class vtable="0x00915B44" name="item_window" />
+            <class vtable="0x00915E1C" name="item_bucket" />
+            <class vtable="0x009160F4" name="item_animaltrap" />
+            <class vtable="0x009163CC" name="item_coffin" />
+            <class vtable="0x009166A4" name="item_statue" />
+            <class vtable="0x0091697C" name="item_quern" />
+            <class vtable="0x00916C54" name="item_millstone" />
+            <class vtable="0x00916F2C" name="item_bin" />
+            <class vtable="0x00917204" name="item_armorstand" />
+            <class vtable="0x009174DC" name="item_weaponrack" />
+            <class vtable="0x009177B4" name="item_cabinet" />
+            <class vtable="0x00917A8C" name="item_figurine" />
+            <class vtable="0x00917D64" name="item_amulet" />
+            <class vtable="0x0091803C" name="item_scepter" />
+            <class vtable="0x00918314" name="item_crown" />
+            <class vtable="0x009185EC" name="item_ring" />
+            <class vtable="0x009188C4" name="item_earring" />
+            <class vtable="0x00918B9C" name="item_bracelet" />
+            <class vtable="0x00918E74" name="item_gem" />
+            <class vtable="0x0091914C" name="item_anvil" />
+            <class vtable="0x00919424" name="item_totem" />
+            <class vtable="0x009196FC" name="item_catapultparts" />
+            <class vtable="0x009199D4" name="item_ballistaparts" />
+            <class vtable="0x00919CAC" name="item_siegeammo" />
+            <class vtable="0x00919F84" name="item_pipe_section" />
+            <class vtable="0x0091A25C" name="item_trapparts" />
+            <class vtable="0x0091A534" name="item_trapcomp" />
+        </VTable>
         </Entry>
 
                             .-"""-.

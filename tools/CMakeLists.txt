@@ -53,6 +53,10 @@ ENDIF(UNIX)
 ADD_EXECUTABLE(dfsuspend suspendtest.cpp)
 TARGET_LINK_LIBRARIES(dfsuspend dfhack)
 
+# itemdump - dump the item under the cursor
+ADD_EXECUTABLE(dfitemdump dfitemdump.cpp)
+TARGET_LINK_LIBRARIES(dfitemdump dfhack)
+
 IF(UNIX)
 install(TARGETS
 dfexpbench
@@ -66,6 +70,7 @@ dfmaterialtest
 dfbuildingsdump
 dfposition
 dfincremental
+dfitemdump
 dfsuspend
 RUNTIME DESTINATION bin
 )

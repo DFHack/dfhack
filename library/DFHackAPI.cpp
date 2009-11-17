@@ -86,6 +86,7 @@ class API::Private
         bool vegetationInited;
         bool creaturesInited;
         bool cursorWindowInited;
+        bool itemsInited;
         
         bool nameTablesInited;
         
@@ -98,6 +99,8 @@ class API::Private
         DfVector *p_trans;
         DfVector *p_generic;
         DfVector *p_dwarf_names;
+
+        DfVector *p_itm;
         /*
         string getLastNameByAddress(const uint32_t &address, bool use_generic=false);
         string getSquadNameByAddress(const uint32_t &address, bool use_generic=false);
@@ -120,6 +123,7 @@ API::API(const string path_to_xml)
     d->buildingsInited = false;
     d->vegetationInited = false;
     d->cursorWindowInited = false;
+    d->itemsInited = false;
     d->pm = NULL;
 }
 
@@ -1206,4 +1210,45 @@ memory_info API::getMemoryInfo()
 Process * API::getProcess()
 {
     return d->p;
+}
+ 
+uint32_t API::InitReadItems()
+{
+    int items = d->offset_descriptor->getAddress("items");
+    assert(items);
+    d->p_itm = new DfVector( d->dm->readVector(items,4));
+    d->itemsInited = true;
+    return d->p_itm->getSize();
+}
+bool API::ReadItem(const uint32_t &index, t_item & item)
+{
+    assert(d->buildingsInited && d->itemsInited);  //should change to the generic init rather than buildings
+    
+    t_item_df40d item_40d;
+
+    // read pointer from vector at position
+    uint32_t temp = *(uint32_t *) d->p_itm->at(index);
+
+    //read building from memory
+    Mread(temp, sizeof(t_item_df40d), (uint8_t *)&item_40d);
+ 
+    // transform
+    int32_t type = -1;
+    d->offset_descriptor->resolveClassId(temp, type);
+    item.origin = temp;
+    item.vtable = item_40d.vtable;
+    item.x = item_40d.x;
+    item.y = item_40d.y;
+    item.z = item_40d.z;
+    item.type = type;
+    item.ID = item_40d.ID;
+    item.flags = item_40d.flags;
+
+    return true;
+}
+void API::FinishReadItems()
+{
+    delete d->p_itm;
+    d->p_itm = NULL;
+    d->itemsInited = false;
 }

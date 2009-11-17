@@ -511,6 +511,36 @@ struct t_creature
     uint8_t sex;
 };
 
+//raw
+struct t_item_df40d
+{
+    uint32_t vtable;
+    uint16_t x;
+    uint16_t y;
+    uint16_t z;
+    uint32_t unk1;
+    uint32_t flags;
+    uint32_t unk2;
+    uint32_t ID;
+    // not complete
+};
+
+//cooked
+struct t_item
+{
+    uint32_t origin;
+    uint32_t vtable;
+
+    uint32_t x;
+    uint32_t y;
+    uint32_t z;
+    
+    uint32_t flags;
+    uint32_t ID;
+    uint32_t type;
+    // FIXME: not complete, we need building presence bitmaps for stuff like farm plots and stockpiles, orientation (N,E,S,W) and state (open/closed)
+};
+
 // TODO: research this further? consult DF hacker wizards?
 union t_designation
 {

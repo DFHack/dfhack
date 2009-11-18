@@ -96,6 +96,7 @@ namespace DFHack
 #include "DFDataModel.h"
 #include "DFProcess.h"
 #include "DFProcessEnumerator.h"
+#include "DFMemInfoManager.h"
 #include "DFMemAccess.h"
 #include "DFVector.h"
 #include "DFMemInfo.h"

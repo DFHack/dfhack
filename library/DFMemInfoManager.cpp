@@ -25,143 +25,7 @@ distribution.
 #include "DFCommonInternal.h"
 using namespace DFHack;
 
-/// HACK: global variables (only one process can be attached at the same time.)
-Process * DFHack::g_pProcess; ///< current process. non-NULL when picked
-ProcessHandle DFHack::g_ProcessHandle; ///< cache of handle to current process. used for speed reasons
-int DFHack::g_ProcessMemFile; ///< opened /proc/PID/mem, valid when attached
-
-class DFHack::ProcessEnumerator::Private
-{
-    public:
-        Private(){};
-        // memory info entries loaded from a file
-        std::vector<memory_info> meminfo;
-        Process * currentProcess;
-        ProcessHandle currentProcessHandle;
-        std::vector<Process *> processes;
-        bool loadDescriptors( string path_to_xml);
-        void ParseVTable(TiXmlElement* vtable, memory_info& mem);
-        void ParseEntry (TiXmlElement* entry, memory_info& mem, map <string ,TiXmlElement *>& knownEntries);
-        #ifdef LINUX_BUILD
-        Process* addProcess(const string & exe,ProcessHandle PH,const string & memFile);
-        #endif
-};
-
-#ifdef LINUX_BUILD
-/*
- *  LINUX version of the process finder.
- */
-
-bool ProcessEnumerator::findProcessess()
-{
-    DIR *dir_p;
-    struct dirent *dir_entry_p;
-    string dir_name;
-    string exe_link;
-    string cwd_link;
-    string cmdline_path;
-    string cmdline;
-
-    // ALERT: buffer overrun potential
-
-    int errorcount;
-    int result;
-
-    errorcount=0;
-    result=0;
-    // Open /proc/ directory
-    dir_p = opendir("/proc/");
-    // Reading /proc/ entries
-    while(NULL != (dir_entry_p = readdir(dir_p)))
-    {
-        // Only PID folders (numbers)
-        if (strspn(dir_entry_p->d_name, "0123456789") != strlen(dir_entry_p->d_name))
-        {
-            continue;
-        }
-        Process *p = new Process(atoi(dir_entry_p->d_name),d->meminfo);
-        if(p->isIdentified())
-        {
-            d->processes.push_back(p);
-        }
-        else
-        {
-            delete p;
-        }
-    }
-    closedir(dir_p);
-    // return value depends on if we found some DF processes
-    if(d->processes.size())
-    {
-        return true;
-    }
-    return false;
-}
-
-#else
-
-// some magic - will come in handy when we start doing debugger stuff on Windows
-bool EnableDebugPriv()
-{
-    bool               bRET = FALSE;
-    TOKEN_PRIVILEGES   tp;
-    HANDLE             hToken;
-
-    if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &tp.Privileges[0].Luid))
-    {
-        if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
-        {
-            if (hToken != INVALID_HANDLE_VALUE)
-            {
-                tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-                tp.PrivilegeCount = 1;
-                if (AdjustTokenPrivileges(hToken, FALSE, &tp, 0, 0, 0))
-                {
-                    bRET = TRUE;
-                }
-                CloseHandle(hToken);
-            }
-        }
-    }
-    return bRET;
-}
-
-// WINDOWS version of the process finder
-bool ProcessEnumerator::findProcessess()
-{
-    // Get the list of process identifiers.
-    DWORD ProcArray[2048], memoryNeeded, numProccesses;
-
-    EnableDebugPriv();
-    if ( !EnumProcesses( ProcArray, sizeof(ProcArray), &memoryNeeded ) )
-    {
-        return false;
-    }
-
-    // Calculate how many process identifiers were returned.
-    numProccesses = memoryNeeded / sizeof(DWORD);
-
-    // iterate through processes
-    for ( int i = 0; i < (int)numProccesses; i++ )
-    {
-        Process *p = new Process(ProcArray[i],d->meminfo);
-        if(p->isIdentified())
-        {
-            d->processes.push_back(p);
-        }
-        else
-        {
-            delete p;
-        }
-    }
-    if(d->processes.size())
-        return true;
-    return false;
-}
-#endif
-
-
-void ProcessEnumerator::Private::ParseVTable(TiXmlElement* vtable, memory_info& mem)
+void MemInfoManager::ParseVTable(TiXmlElement* vtable, memory_info& mem)
 {
     TiXmlElement* pClassEntry;
     TiXmlElement* pClassSubEntry;
@@ -209,7 +73,7 @@ void ProcessEnumerator::Private::ParseVTable(TiXmlElement* vtable, memory_info& 
 
 
 
-void ProcessEnumerator::Private::ParseEntry (TiXmlElement* entry, memory_info& mem, map <string ,TiXmlElement *>& knownEntries)
+void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info& mem, map <string ,TiXmlElement *>& knownEntries)
 {
     TiXmlElement* pMemEntry;
     const char *cstr_version = entry->Attribute("version");
@@ -232,7 +96,7 @@ void ProcessEnumerator::Private::ParseEntry (TiXmlElement* entry, memory_info& m
     string os = cstr_os;
     mem.setVersion(cstr_version);
     mem.setOS(cstr_os);
-
+    
     // offset inherited addresses by 'rebase'.
     int32_t rebase = 0;
     if(cstr_rebase)
@@ -240,7 +104,7 @@ void ProcessEnumerator::Private::ParseEntry (TiXmlElement* entry, memory_info& m
         rebase = mem.getBase() + strtol(cstr_rebase, NULL, 16);
         mem.RebaseAddresses(rebase);
     }
-
+    
     //set base to default, we're overwriting this because the previous rebase could cause havoc on Vista/7
     if(os == "windows")
     {
@@ -303,22 +167,22 @@ void ProcessEnumerator::Private::ParseEntry (TiXmlElement* entry, memory_info& m
         {
             mem.setString(name, value);
         }
-		else if (type == "Profession")
-		{
-			mem.setProfession(value,name);
-		}
-		else if (type == "Job")
-		{
-			mem.setJob(value,name);
-		}
+        else if (type == "Profession")
+        {
+            mem.setProfession(value,name);
+        }
+        else if (type == "Job")
+        {
+            mem.setJob(value,name);
+        }
         else if (type == "Skill")
-		{
-			mem.setSkill(value,name);
-		}
-		else if (type == "Trait")
-		{
-			mem.setTrait(value, name,pMemEntry->Attribute("level_0"),pMemEntry->Attribute("level_1"),pMemEntry->Attribute("level_2"),pMemEntry->Attribute("level_3"),pMemEntry->Attribute("level_4"),pMemEntry->Attribute("level_5"));
-		}
+        {
+            mem.setSkill(value,name);
+        }
+        else if (type == "Trait")
+        {
+            mem.setTrait(value, name,pMemEntry->Attribute("level_0"),pMemEntry->Attribute("level_1"),pMemEntry->Attribute("level_2"),pMemEntry->Attribute("level_3"),pMemEntry->Attribute("level_4"),pMemEntry->Attribute("level_5"));
+        }
         else if (type == "Labor")
         {
             mem.setLabor(value,name);
@@ -330,17 +194,22 @@ void ProcessEnumerator::Private::ParseEntry (TiXmlElement* entry, memory_info& m
     } // for
 } // method
 
+MemInfoManager::MemInfoManager(string path_to_xml)
+{
+    error = false;
+    loadFile(path_to_xml);
+}
 
 // load the XML file with offsets
-bool ProcessEnumerator::Private::loadDescriptors(string path_to_xml)
+bool MemInfoManager::loadFile(string path_to_xml)
 {
     TiXmlDocument doc( path_to_xml.c_str() );
     bool loadOkay = doc.LoadFile();
-	TiXmlHandle hDoc(&doc);
+    TiXmlHandle hDoc(&doc);
     TiXmlElement* pElem;
     TiXmlHandle hRoot(0);
     memory_info mem;
-
+    
     if ( loadOkay )
     {
         // block: name
@@ -388,45 +257,14 @@ bool ProcessEnumerator::Private::loadDescriptors(string path_to_xml)
             }
             // process found things here
         }
+        error = false;
         return true;
     }
     else
     {
         // load failed
         cerr << "Can't load memory offsets from memory.xml" << endl;
+        error = true;
         return false;
     }
-}
-
-
-uint32_t ProcessEnumerator::size()
-{
-    return d->processes.size();
-};
-
-
-Process * ProcessEnumerator::operator[](uint32_t index)
-{
-    assert(index < d->processes.size());
-    return d->processes[index];
-};
-
-
-ProcessEnumerator::ProcessEnumerator( string path_to_xml )
-: d(new Private())
-{
-    d->currentProcess = NULL;
-    d->currentProcessHandle = 0;
-    d->loadDescriptors( path_to_xml );
-}
-
-
-ProcessEnumerator::~ProcessEnumerator()
-{
-    // delete all processes
-    for(uint32_t i = 0;i < d->processes.size();i++)
-    {
-        delete d->processes[i];
-    }
-    delete d;
 }

@@ -6,6 +6,7 @@ DFDataModel.h
 DFHackAPI.h
 DFMemAccess.h
 DFMemInfo.h
+DFMemInfoManager.h
 DFProcessEnumerator.h
 DFProcess.h
 DFTileTypes.h
@@ -23,7 +24,7 @@ tinyxml/tinyxml.h
 SET(PROJECT_SRCS
 DFDataModel.cpp
 DFMemInfo.cpp
-DFProcessEnumerator.cpp
+DFMemInfoManager.cpp
 DFHackAPI.cpp
 DFTileTypes.cpp
 md5/md5.cpp
@@ -35,7 +36,6 @@ tinyxml/tinyxmlparser.cpp
 )
 
 SET(PROJECT_HDRS_LINUX
-DFProcess-linux.h
 MemAccess-linux.h
 )
 
@@ -46,10 +46,12 @@ stdint_win.h
 
 SET(PROJECT_SRCS_LINUX
 DFProcess-linux.cpp
+DFProcessEnumerator-linux.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
 DFProcess-windows.cpp
+DFProcessEnumerator-windows.cpp
 )
 
 IF(UNIX)

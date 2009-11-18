@@ -200,7 +200,7 @@ bool Process::resume()
 
 bool Process::attach()
 {
-    if(d->attached)
+    if(g_pProcess != NULL)
     {
         return false;
     }
@@ -256,7 +256,7 @@ bool Process::getThreadIDs(vector<uint32_t> & threads )
     return true;
 }
 
-
+//FIXME: use VirtualQuery to probe for memory ranges, cross-reference with base-corrected PE segment entries
 void Process::getMemRanges( vector<t_memrange> & ranges )
 {
     // code here is taken from hexsearch by Silas Dunmore.

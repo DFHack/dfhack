@@ -181,24 +181,18 @@ DataModel *Process::getDataModel()
     return d->my_datamodel;
 }
 
-
 memory_info * Process::getDescriptor()
 {
     return d->my_descriptor;
 }
 
-
-/*void Process::setMemFile(const string & memf)
-{
-    assert(!attached);
-    memFile = memf;
-}*/
-
+//FIXME: implement
 bool Process::getThreadIDs(vector<uint32_t> & threads )
 {
     return false;
 }
 
+//FIXME: cross-reference with ELF segment entries?
 void Process::getMemRanges( vector<t_memrange> & ranges )
 {
     char buffer[1024];

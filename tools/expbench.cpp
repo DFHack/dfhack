@@ -27,12 +27,12 @@ int main (void)
         cerr << "DF not found" << endl;
         return 1;
     }
-    DF.InitMap();
-    DF.getSize(x_max,y_max,z_max);
     
     time(&start);
     for(uint32_t i = 0; i< 1000;i++)
     {
+        DF.InitMap();
+        DF.getSize(x_max,y_max,z_max);
         if((i % 10) == 0)
         {
             int percentage = i / 10;
@@ -55,6 +55,7 @@ int main (void)
                 }
             }
         }
+        DF.DestroyMap();
     }
     DF.Detach();
     time(&end);

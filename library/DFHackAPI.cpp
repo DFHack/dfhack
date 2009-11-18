@@ -142,7 +142,7 @@ API::~API()
  *-----------------------------------*/
 bool API::InitMap()
 {
-    uint32_t    map_loc,   // location of the X array
+    uint32_t    x_array_loc,   // location of the X array
                 temp_loc,  // block location
                 temp_locx, // iterator for the X array
                 temp_locy, // iterator for the Y array
@@ -158,41 +158,42 @@ bool API::InitMap()
     d->occupancy_offset = d->offset_descriptor->getOffset("occupancy");
 
     // get the map pointer
-    map_loc = MreadDWord(map_offset);
+    x_array_loc = MreadDWord(map_offset);
     //FIXME: very inadequate
-    if (!map_loc)
+    if (!x_array_loc)
     {
         // bad stuffz happend
         return false;
     }
-
+    uint32_t mx, my, mz;
+    
     // get the size
-    d->x_block_count = MreadDWord(x_count_offset);
-    d->y_block_count = MreadDWord(y_count_offset);
-    d->z_block_count = MreadDWord(z_count_offset);
+    mx = d->x_block_count = MreadDWord(x_count_offset);
+    my = d->y_block_count = MreadDWord(y_count_offset);
+    mz = d->z_block_count = MreadDWord(z_count_offset);
 
-    // alloc array for pinters to all blocks
-    d->block = new uint32_t[d->x_block_count*d->y_block_count*d->z_block_count];
-
-    //read the memory from the map blocks - x -> map slice
-    for(uint32_t x = 0; x < d->x_block_count; x++)
+    // test for wrong map dimensions
+    if(mx == 0 || mx > 48 || my == 0 || my > 48 || mz == 0)
     {
-        temp_locx = map_loc + ( 4 * x );
-        temp_locy = MreadDWord(temp_locx);
-
+        return false;
+    }
+    
+    // alloc array for pinters to all blocks
+    d->block = new uint32_t[mx*my*mz];
+    uint32_t temp_x[mx];
+    uint32_t temp_y[my];
+    uint32_t temp_z[mz];
+    
+    Mread(x_array_loc,mx * sizeof(uint32_t),(uint8_t *)temp_x);
+    for(uint32_t x = 0; x < mx; x++)
+    {
+        Mread(temp_x[x],my * sizeof(uint32_t),(uint8_t *)temp_y);
         // y -> map column
-        for(uint32_t y = 0; y < d->y_block_count; y++)
+        for(uint32_t y = 0; y < my; y++)
         {
-            temp_locz = MreadDWord(temp_locy);
-            temp_locy += 4;
-
-            // z -> map block (16x16)
-            for(uint32_t z = 0; z < d->z_block_count; z++)
-            {
-                temp_loc = MreadDWord(temp_locz);
-                temp_locz += 4;
-                d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z] = temp_loc;
-            }
+            Mread(temp_y[y],
+                  mz * sizeof(uint32_t),
+                  (uint8_t *)(d->block + x*my*mz + y*mz));
         }
     }
     return true;

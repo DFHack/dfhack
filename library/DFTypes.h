@@ -538,6 +538,12 @@ struct t_item
     uint32_t flags;
     uint32_t ID;
     uint32_t type;
+    t_matglossPair material;
+    /*
+    uint8_t matType;
+    uint8_t material;
+    */
+ //   vector<uint8_t> bytes; used for item research
     // FIXME: not complete, we need building presence bitmaps for stuff like farm plots and stockpiles, orientation (N,E,S,W) and state (open/closed)
 };
 

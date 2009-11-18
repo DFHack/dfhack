@@ -173,6 +173,11 @@ namespace DFHack
         
         bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
         bool setCursorCoords (const int32_t &x, const int32_t &y, const int32_t &z);
+
+        bool InitViewSize();
+        bool getWindowSize(int32_t & width, int32_t & height);
+        bool setWindowSize(const int32_t & width, const int32_t & height);
+        
         /*
         // FIXME: add a real creature class, move these
         string getLastName(const uint32_t &index, bool);
@@ -183,6 +188,7 @@ namespace DFHack
         vector<t_trait> getTraits(const uint32_t &index);
         vector<t_labor> getLabors(const uint32_t &index);
         */
+        
         void InitReadNameTables();
         void FinishReadNameTables();
 

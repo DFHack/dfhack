@@ -46,6 +46,7 @@ class API::Private
         uint32_t window_y_offset;
         uint32_t window_z_offset;
         uint32_t cursor_xyz_offset;
+        uint32_t window_dims_offset;
         
         uint32_t creature_pos_offset;
         uint32_t creature_type_offset;
@@ -72,6 +73,8 @@ class API::Private
         uint32_t creature_happiness_offset;
         uint32_t creature_traits_offset;
         
+        uint32_t item_material_offset;
+
         uint32_t dwarf_lang_table_offset;
         
         ProcessEnumerator* pm;
@@ -86,6 +89,7 @@ class API::Private
         bool vegetationInited;
         bool creaturesInited;
         bool cursorWindowInited;
+        bool viewSizeInited;
         bool itemsInited;
         
         bool nameTablesInited;
@@ -123,6 +127,7 @@ API::API(const string path_to_xml)
     d->buildingsInited = false;
     d->vegetationInited = false;
     d->cursorWindowInited = false;
+    d->viewSizeInited = false;
     d->itemsInited = false;
     d->pm = NULL;
 }
@@ -1154,9 +1159,24 @@ bool API::InitViewAndCursor()
     d->window_y_offset = d->offset_descriptor->getAddress("window_y");
     d->window_z_offset = d->offset_descriptor->getAddress("window_z");
     d->cursor_xyz_offset = d->offset_descriptor->getAddress("cursor_xyz");
+    
     if(d->window_x_offset && d->window_y_offset && d->window_z_offset)
     {
         d->cursorWindowInited = true;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool API::InitViewSize()
+{
+    d->window_dims_offset = d->offset_descriptor->getAddress("window_dims");
+    if(d->window_dims_offset)
+    {
+        d->viewSizeInited = true;
         return true;
     }
     else
@@ -1202,6 +1222,23 @@ bool API::setCursorCoords (const int32_t &x, const int32_t &y, const int32_t &z)
     Mwrite(d->cursor_xyz_offset,3*sizeof(int32_t),(uint8_t *)coords);
     return true;
 }
+bool API::getWindowSize(int32_t &width, int32_t &height)
+{
+    assert(d->viewSizeInited);
+    int32_t coords[2];
+    Mread(d->window_dims_offset,2*sizeof(int32_t),(uint8_t *)coords);
+    width = coords[0];
+    height = coords[1];
+    return true;
+}
+////FIXME: I don't know what is going to happen if you try to set these to bad values, probably bad things...
+//bool API::setWindowSize(const int32_t &width, const int32_t &height)
+//{
+//    assert(d->viewSizeInited);
+//    int32_t coords[2] = {width,height};
+//    Mwrite(d->window_dims_offset,2*sizeof(int32_t),(uint8_t *)coords);
+//    return true;
+//}
 
 memory_info API::getMemoryInfo()
 {
@@ -1211,11 +1248,15 @@ Process * API::getProcess()
 {
     return d->p;
 }
- 
+
 uint32_t API::InitReadItems()
 {
     int items = d->offset_descriptor->getAddress("items");
     assert(items);
+    
+    d->item_material_offset = d->offset_descriptor->getOffset("item_materials");
+    assert(d->item_material_offset);
+    
     d->p_itm = new DfVector( d->dm->readVector(items,4));
     d->itemsInited = true;
     return d->p_itm->getSize();
@@ -1223,15 +1264,14 @@ uint32_t API::InitReadItems()
 bool API::ReadItem(const uint32_t &index, t_item & item)
 {
     assert(d->buildingsInited && d->itemsInited);  //should change to the generic init rather than buildings
-    
     t_item_df40d item_40d;
 
     // read pointer from vector at position
     uint32_t temp = *(uint32_t *) d->p_itm->at(index);
-
+    
     //read building from memory
     Mread(temp, sizeof(t_item_df40d), (uint8_t *)&item_40d);
- 
+
     // transform
     int32_t type = -1;
     d->offset_descriptor->resolveClassId(temp, type);
@@ -1243,7 +1283,13 @@ bool API::ReadItem(const uint32_t &index, t_item & item)
     item.type = type;
     item.ID = item_40d.ID;
     item.flags = item_40d.flags;
-
+    
+    //TODO  certain item types (creature based, threads, seeds, bags do not have the first matType byte, instead they have the material index only located at 0x68
+    Mread(temp+d->item_material_offset, sizeof(t_matglossPair), (uint8_t *) &item.material);
+    //for(int i = 0; i < 0xCC; i++){  // used for item research
+    //    uint8_t byte = MreadByte(temp+i);
+    //    item.bytes.push_back(byte);
+    //}   
     return true;
 }
 void API::FinishReadItems()

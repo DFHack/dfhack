@@ -913,6 +913,7 @@
         <Address name="window_x">0x00DA061C</Address>
         <Address name="window_y">0x00DCE6C8</Address>
         <Address name="window_z">0x00DCE6A4</Address>
+        <Address name="window_dims">0x01746E98</Address>
     </Entry>
     <Entry version="v0.28.181.40d16" os="windows" base="40d15win">
         <!-- identification -->
@@ -921,6 +922,7 @@
         <!-- map_data = 0x01601D84 -->
         <!-- door: 0x8e15d4, no VTable rebase needed -->
         <Address name="items">15BDF50</Address>
+        <Offset name="item_materials">0x68</Offset>
         <VTable>
             <class vtable="0x008E04D4" name="item_liquid_misc" />
             <class vtable="0x008E07AC" name="item_remains" />

@@ -37,6 +37,10 @@ namespace DFHack
             uint8_t* data;
             
         public:
+            DfVector()
+            {
+                data = 0;
+            };
             DfVector(uint32_t _start, uint32_t _size, uint32_t _item_size):
             start(_start),size(_size),item_size(_item_size)
             {
@@ -53,7 +57,8 @@ namespace DFHack
             };
             ~DfVector()
             {
-                delete [] data;
+                if(data)
+                    delete [] data;
             }
             // get offset of the specified index
             inline void* operator[] (uint32_t index)
@@ -73,48 +78,5 @@ namespace DFHack
                 return size;
             };
     };
-    
-    
-    // nice try, come again...
-    /*
-    template <typename T>
-    class DfVector
-    {
-    private:
-        // starting offset
-        uint32_t start;
-        // vector size
-        uint32_t size;
-        T* data;
-        
-    public:
-        DfVector(uint32_t _start, uint32_t _size):
-            start(_start),size(_size)
-        {
-            Mread(start,size*sizeof(T),data);
-        };
-        DfVector(const DfVector <T> & vec)
-        {
-            start = vec.start;
-            size = vec.size;
-            data = new T[size];
-            Mread(start,size*sizeof(T),data);
-        };
-        ~DfVector()
-        {
-            delete [] data;
-        }
-        // get offset of the specified index
-        inline T* operator[] (uint32_t index)
-        {
-            assert(index < size);
-            return data + index*sizeof(T);
-        };
-        // get vector size
-        inline uint32_t  getSize () 
-        {
-            return size;
-        };
-    };*/
 }
 #endif // DFVECTOR_H_INCLUDED

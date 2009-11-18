@@ -69,6 +69,7 @@ Process::Process(uint32_t pid, vector <memory_info> & known_versions)
     if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk) == 0)
     {
         CloseHandle(hProcess);
+        return; //if enumprocessModules fails, give up
     }
     
     // got base ;)

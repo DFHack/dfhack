@@ -178,11 +178,11 @@ bool API::InitMap()
         return false;
     }
     
-    // alloc array for pinters to all blocks
+    // alloc array for pointers to all blocks
     d->block = new uint32_t[mx*my*mz];
-    uint32_t temp_x[mx];
-    uint32_t temp_y[my];
-    uint32_t temp_z[mz];
+    uint32_t *temp_x = new uint32_t[mx];
+    uint32_t *temp_y = new uint32_t[my];
+    uint32_t *temp_z = new uint32_t[mz];
     
     Mread(x_array_loc,mx * sizeof(uint32_t),(uint8_t *)temp_x);
     for(uint32_t x = 0; x < mx; x++)
@@ -196,6 +196,9 @@ bool API::InitMap()
                   (uint8_t *)(d->block + x*my*mz + y*mz));
         }
     }
+    delete [] temp_x;
+    delete [] temp_y;
+    delete [] temp_z;
     return true;
 }
 

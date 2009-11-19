@@ -65,10 +65,11 @@ int main (void)
     cout << "Testing suspend/resume"  << endl;
     DF.Attach();
     time(&start);
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 1000000; i++)
     {
         DF.Suspend();
-        cout << "Try " << i << endl;
+		if(i%10000 == 0)
+			cout << i / 10000 << "%" << endl;
         DF.Resume();
     }
     time(&end);

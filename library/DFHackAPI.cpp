@@ -983,6 +983,7 @@ int32_t API::ReadCreatureInBox(int32_t index, t_creature & furball,
         }
         index++;
     }
+    return -1;
 }
 
 bool API::ReadCreature(const int32_t &index, t_creature & furball)

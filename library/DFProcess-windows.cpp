@@ -186,6 +186,16 @@ bool Process::suspend()
     return true;
 }
 
+bool Process::forceresume()
+{
+    if(!d->attached)
+        return false;
+    while (ResumeThread(d->my_main_thread) > 1);
+    d->suspended = false;
+    return true;
+}
+
+
 bool Process::resume()
 {
     if(!d->attached)

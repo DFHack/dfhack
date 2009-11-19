@@ -252,6 +252,11 @@ bool Process::suspend()
     d->suspended = true;
 }
 
+bool Process::forceresume()
+{
+    return resume();
+}
+
 bool Process::resume()
 {
     int status;

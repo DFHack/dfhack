@@ -63,8 +63,14 @@ namespace DFHack
         bool Detach();
         bool isAttached();
         
+        // stop DF from executing
         bool Suspend();
+        // resume DF
         bool Resume();
+        /**
+         * be careful with this one
+         */
+        bool ForceResume();
         bool isSuspended();
         /**
          * Matgloss. next four methods look very similar. I could use two and move the processing one level up...

@@ -72,6 +72,7 @@ namespace DFHack
             
             bool suspend();
             bool resume();
+            bool forceresume();
             
             bool isSuspended();
             bool isAttached();

@@ -1142,6 +1142,10 @@ bool API::Resume()
 {
     return d->p->resume();
 }
+bool API::ForceResume()
+{
+    return d->p->forceresume();
+}
 bool API::isSuspended()
 {
     return d->p->isSuspended();

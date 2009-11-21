@@ -142,11 +142,6 @@ API::~API()
  *-----------------------------------*/
 bool API::InitMap()
 {
-    uint32_t    x_array_loc,   // location of the X array
-                temp_loc,  // block location
-                temp_locx, // iterator for the X array
-                temp_locy, // iterator for the Y array
-                temp_locz; // iterator for the Z array
     uint32_t map_offset = d->offset_descriptor->getAddress("map_data");
     uint32_t x_count_offset = d->offset_descriptor->getAddress("x_count");
     uint32_t y_count_offset = d->offset_descriptor->getAddress("y_count");
@@ -157,8 +152,9 @@ bool API::InitMap()
     d->designation_offset = d->offset_descriptor->getOffset("designation");
     d->occupancy_offset = d->offset_descriptor->getOffset("occupancy");
 
+
     // get the map pointer
-    x_array_loc = MreadDWord(map_offset);
+    uint32_t    x_array_loc = MreadDWord(map_offset);
     //FIXME: very inadequate
     if (!x_array_loc)
     {
@@ -183,7 +179,7 @@ bool API::InitMap()
     uint32_t *temp_x = new uint32_t[mx];
     uint32_t *temp_y = new uint32_t[my];
     uint32_t *temp_z = new uint32_t[mz];
-    
+
     Mread(x_array_loc,mx * sizeof(uint32_t),(uint8_t *)temp_x);
     for(uint32_t x = 0; x < mx; x++)
     {
@@ -751,7 +747,7 @@ uint32_t API::InitReadCreatures()
     )
     {
         d->p_cre = new DfVector(d->dm->readVector(creatures, 4));
-        InitReadNameTables();
+        //InitReadNameTables();
         //if(d->InitReadNameTables())
         //{
             d->creaturesInited = true;
@@ -963,7 +959,6 @@ int32_t API::ReadCreatureInBox(int32_t index, t_creature & furball,
 {
     uint16_t coords[3];
     assert(d->creaturesInited);
-    uint32_t temp;
     uint32_t size = d->p_cre->getSize();
     while (index < size)
     {
@@ -1075,7 +1070,8 @@ void API::FinishReadNameTables()
 {
     delete d->p_trans;
     delete d->p_generic;
-    d->p_trans=d->p_generic=NULL;
+    delete d->p_dwarf_names;
+    d->p_trans=d->p_generic=d->p_dwarf_names=NULL;
     d->nameTablesInited=false;
 }
 
@@ -1084,7 +1080,7 @@ void API::FinishReadCreatures()
     delete d->p_cre;
     d->p_cre = NULL;
     d->creaturesInited = false;
-    FinishReadNameTables();
+    //FinishReadNameTables();
 }
 
 bool API::Attach()

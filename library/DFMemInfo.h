@@ -60,59 +60,63 @@ namespace DFHack
         memory_info(const memory_info&);
 
 
-        void RebaseAddresses(int32_t new_base);
-        void RebaseAll(int32_t new_base);
-        uint32_t getBase ();
-        void setBase (string);
-        void setBase (uint32_t);
+        void RebaseAddresses(const int32_t new_base);
+        void RebaseAll(const int32_t new_base);
+        uint32_t getBase () const;
+        void setBase (const string&);
+        void setBase (const uint32_t);
 
-        uint32_t getOffset (string);
-        uint32_t getAddress (string);
-        uint32_t getHexValue (string);
-        string getString (string);
-        string getProfession(uint32_t);
-        string getJob(uint32_t);
-        string getSkill (uint32_t);
-        string getTrait (uint32_t, uint32_t);
-        string getTraitName(uint32_t);
-        string getLabor (uint32_t);
+        uint32_t getOffset (const string&);
+        uint32_t getAddress (const string&);
+        uint32_t getHexValue (const string&);
+        uint32_t getOffset (const char *);
+        uint32_t getAddress (const char *);
+        uint32_t getHexValue (const char *);
+        
+        string getString (const string&);
+        string getProfession(const uint32_t) const;
+        string getJob(const uint32_t) const;
+        string getSkill (const uint32_t) const;
+        string getTrait (const uint32_t, const uint32_t) const;
+        string getTraitName(const uint32_t) const;
+        string getLabor (const uint32_t);
 
         void setVersion(const char *);
-        void setVersion(string);
+        void setVersion(const string&);
         string getVersion();
 
         void setOS(const char *);
-        void setOS(string);
-        void setOS(OSType);
-        OSType getOS();
+        void setOS(const string&);
+        void setOS(const OSType);
+        OSType getOS() const;
 
-        void setOffset (string, int32_t);
-        void setAddress (string, uint32_t);
-        void setHexValue (string, uint32_t);
+        void setOffset (const string &, const int32_t);
+        void setAddress (const string &, const uint32_t);
+        void setHexValue (const string &, const uint32_t);
 
-        void setOffset (string, const char *);
-        void setAddress (string, const char *);
-        void setHexValue (string, const char *);
-        void setString (string, const char *);
+        void setOffset (const string &, const char *);
+        void setAddress (const string &, const char *);
+        void setHexValue (const string &, const char *);
+        void setString (const string &, const char *);
 
-        void setOffset (string, string);
-        void setAddress (string, string);
-        void setHexValue (string, string);
-        void setString (string, string);
+        void setOffset (const string &, const string &);
+        void setAddress (const string &, const string &);
+        void setHexValue (const string &, const string &);
+        void setString (const string &, const string &);
 
-        void setProfession(string, string);
-        void setJob(string, string);
-        void setSkill(string, string);
-        void setTrait(string,string,string,string,string,string,string,string);
-        void setLabor(string, string);
+        void setProfession(const string &, const string &);
+        void setJob(const string &, const string &);
+        void setSkill(const string &, const string &);
+        void setTrait(const string &,const string &,const string &,const string &,const string &,const string &,const string &,const string &);
+        void setLabor(const string &, const string &);
 
-        void RebaseVTable(int32_t offset);
+        void RebaseVTable(const int32_t offset);
         void setClass (const char * name, const char * vtable);
         uint32_t setMultiClass (const char * name, const char * vtable, const char * typeoffset);
         void setMultiClassChild (uint32_t multi_index, const char * name, const char * type);
 
         // ALERT: uses memory reading directly
-        bool resolveClassId(uint32_t address, int32_t & classid);
+        bool resolveClassId(const uint32_t address, int32_t & classid);
         void copyBuildings(vector<string> & v_buildingtypes);
 
         void flush();

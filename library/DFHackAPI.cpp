@@ -41,6 +41,9 @@ class API::Private
         uint32_t tile_type_offset;
         uint32_t designation_offset;
         uint32_t occupancy_offset;
+        uint32_t biome_stuffs;
+        uint32_t veinvector;
+        uint32_t veinsize;
         
         uint32_t window_x_offset;
         uint32_t window_y_offset;
@@ -151,7 +154,10 @@ bool API::InitMap()
     d->tile_type_offset = d->offset_descriptor->getOffset("type");
     d->designation_offset = d->offset_descriptor->getOffset("designation");
     d->occupancy_offset = d->offset_descriptor->getOffset("occupancy");
-
+    d->biome_stuffs = d->offset_descriptor->getOffset("biome_stuffs");
+    
+    d->veinvector = d->offset_descriptor->getOffset("v_vein");
+    d->veinsize = d->offset_descriptor->getHexValue("v_vein_size");
 
     // get the map pointer
     uint32_t    x_array_loc = MreadDWord(map_offset);
@@ -211,14 +217,14 @@ bool API::DestroyMap()
 
 bool API::isValidBlock(uint32_t x, uint32_t y, uint32_t z)
 {
-    return d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z] != NULL;
+    return d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z] != 0;
 }
 
 // 256 * sizeof(uint16_t)
 bool API::ReadTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr!=NULL)
+    if (addr)
     {
         Mread(addr+d->tile_type_offset, 256 * sizeof(uint16_t), (uint8_t *)buffer);
         return true;
@@ -231,7 +237,7 @@ bool API::ReadTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
 bool API::ReadDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr!=NULL)
+    if (addr)
     {
         Mread(addr+d->designation_offset, 256 * sizeof(uint32_t), (uint8_t *)buffer);
         return true;
@@ -244,7 +250,7 @@ bool API::ReadDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 bool API::ReadOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr!=NULL)
+    if (addr)
     {
         Mread(addr+d->occupancy_offset, 256 * sizeof(uint32_t), (uint8_t *)buffer);
         return true;
@@ -257,7 +263,7 @@ bool API::ReadOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 bool API::WriteTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr!=NULL)
+    if (addr)
     {
         Mwrite(addr+d->tile_type_offset, 256 * sizeof(uint16_t), (uint8_t *)buffer);
         return true;
@@ -270,7 +276,7 @@ bool API::WriteTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
 bool API::WriteDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr!=NULL)
+    if (addr)
     {
         Mwrite(addr+d->designation_offset, 256 * sizeof(uint32_t), (uint8_t *)buffer);
         return true;
@@ -283,7 +289,7 @@ bool API::WriteDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer
 bool API::WriteOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr!=NULL)
+    if (addr)
     {
         Mwrite(addr+d->occupancy_offset, 256 * sizeof(uint32_t), (uint8_t *)buffer);
         return true;
@@ -296,11 +302,10 @@ bool API::WriteOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 // 16 * sizeof(uint8_t)
 bool API::ReadRegionOffsets(uint32_t x, uint32_t y, uint32_t z, uint8_t *buffer)
 {
-    uint32_t biome_stuffs = d->offset_descriptor->getOffset("biome_stuffs");
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr!=NULL)
+    if (addr)
     {
-        Mread(addr+biome_stuffs, 16 * sizeof(uint8_t), buffer);
+        Mread(addr+d->biome_stuffs, 16 * sizeof(uint8_t), buffer);
         return true;
     }
     return false;
@@ -311,25 +316,25 @@ bool API::ReadRegionOffsets(uint32_t x, uint32_t y, uint32_t z, uint8_t *buffer)
 bool API::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    int veinvector = d->offset_descriptor->getOffset("v_vein");
-    int veinsize = d->offset_descriptor->getHexValue("v_vein_size");
+    assert(sizeof(t_vein) == d->veinsize);
     veins.clear();
-    if(addr!=NULL && veinvector && veinsize)
+    if(addr && d->veinvector && d->veinsize)
     {
-        assert(sizeof(t_vein) == veinsize);
         // veins are stored as a vector of pointers to veins
         /*pointer is 4 bytes! we work with a 32bit program here, no matter what architecture we compile khazad for*/
-        DfVector p_veins = d->dm->readVector(addr + veinvector, 4);
-
+        DfVector p_veins = d->dm->readVector(addr + d->veinvector, 4);
+        uint32_t size = p_veins.getSize();
+        veins.reserve(size);
+        
         // read all veins
-        for (uint32_t i = 0; i< p_veins.getSize();i++)
+        for (uint32_t i = 0; i< size;i++)
         {
             t_vein v;
             
             // read the vein pointer from the vector
             uint32_t temp = *(uint32_t *) p_veins[i];
             // read the vein data (dereference pointer)
-            Mread(temp, veinsize, (uint8_t *)&v);
+            Mread(temp, d->veinsize, (uint8_t *)&v);
             // store it in the vector
             veins.push_back(v);
         }

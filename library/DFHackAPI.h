@@ -29,29 +29,12 @@ distribution.
 #include <string>
 #include <vector>
 #include "integers.h"
+#include "DFTileTypes.h"
 
 namespace DFHack
 {
     class memory_info;
     class Process;
-
-    enum VegetationType
-    {
-        TREE_DEAD,
-        TREE_OK,
-        SAPLING_DEAD,
-        SAPLING_OK,
-        SHRUB_DEAD,
-        SHRUB_OK
-    };
-
-    DFHACK_EXPORT bool isWallTerrain(int in);
-    DFHACK_EXPORT bool isFloorTerrain(int in);
-    DFHACK_EXPORT bool isRampTerrain(int in);
-    DFHACK_EXPORT bool isStairTerrain(int in);
-    DFHACK_EXPORT bool isOpenTerrain(int in);
-    DFHACK_EXPORT int getVegetationType(int in);
-        
     class DFHACK_EXPORT API
     {
         class Private;

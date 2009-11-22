@@ -39,7 +39,7 @@ void memory_info::setVersion(const char * v)
 }
 
 
-void memory_info::setVersion(string v)
+void memory_info::setVersion(const string &v)
 {
     version = v;
 }
@@ -63,7 +63,7 @@ void memory_info::setOS(const char *os)
 }
 
 
-void memory_info::setOS(string os)
+void memory_info::setOS(const string &os)
 {
     if(os == "windows")
         OS = OS_WINDOWS;
@@ -85,7 +85,7 @@ void memory_info::setOS(OSType os)
 }
 
 
-memory_info::OSType memory_info::getOS()
+memory_info::OSType memory_info::getOS() const
 {
     return OS;
 }
@@ -112,57 +112,57 @@ memory_info::memory_info(const memory_info &old)
 }
 
 
-uint32_t memory_info::getBase ()
+uint32_t memory_info::getBase () const
 {
     return base;
 }
 
 
-void memory_info::setBase (string s)
+void memory_info::setBase (const string &s)
 {
     base = strtol(s.c_str(), NULL, 16);
 }
 
 
-void memory_info::setBase (uint32_t b)
+void memory_info::setBase (const uint32_t b)
 {
     base = b;
 }
 
 
-void memory_info::setOffset (string key, string value)
+void memory_info::setOffset (const string & key, const string & value)
 {
     uint32_t offset = strtol(value.c_str(), NULL, 16);
     offsets[key] = offset;
 }
 
 
-void memory_info::setAddress (string key, string value)
+void memory_info::setAddress (const string & key, const string & value)
 {
     uint32_t address = strtol(value.c_str(), NULL, 16);
     addresses[key] = address;
 }
 
 
-void memory_info::setHexValue (string key, string value)
+void memory_info::setHexValue (const string & key, const string & value)
 {
     uint32_t hexval = strtol(value.c_str(), NULL, 16);
     hexvals[key] = hexval;
 }
 
 
-void memory_info::setString (string key, string value)
+void memory_info::setString (const string & key, const string & value)
 {
     strings[key] = value;
 }
 
-void memory_info::setLabor(string key, string value)
+void memory_info::setLabor(const string & key, const string & value)
 {
     uint32_t keyInt = strtol(key.c_str(), NULL, 10);
     labors[keyInt] = value;
 }
 
-void memory_info::setProfession (string key, string value)
+void memory_info::setProfession (const string & key, const string & value)
 {
     uint32_t keyInt = strtol(key.c_str(), NULL, 10);
     if(professions.size() <= keyInt)
@@ -172,7 +172,7 @@ void memory_info::setProfession (string key, string value)
     professions[keyInt] = value;
 }
 
-void memory_info::setJob (string key, string value)
+void memory_info::setJob (const string & key, const string & value)
 {
     uint32_t keyInt = strtol(key.c_str(), NULL, 10);
     if(jobs.size() <= keyInt)
@@ -182,7 +182,7 @@ void memory_info::setJob (string key, string value)
     jobs[keyInt] = value;
 }
 
-void memory_info::setSkill (string key, string value)
+void memory_info::setSkill (const string & key, const string & value)
 {
     uint32_t keyInt = strtol(key.c_str(), NULL, 10);
     if(skills.size() <= keyInt){
@@ -191,7 +191,14 @@ void memory_info::setSkill (string key, string value)
     skills[keyInt] = value;
 }
 
-void memory_info::setTrait(string key,string value,string zero,string one,string two,string three,string four,string five)
+void memory_info::setTrait(const string & key,
+                           const string & value,
+                           const string & zero,
+                           const string & one,
+                           const string & two,
+                           const string & three,
+                           const string & four,
+                           const string & five)
 {
     uint32_t keyInt = strtol(key.c_str(), NULL, 10);
     if(traits.size() <= keyInt)
@@ -341,7 +348,7 @@ void memory_info::copyBuildings(vector<string> & v_buildingtypes)
 
 
 // change base of all addresses
-void memory_info::RebaseAddresses(int32_t new_base)
+void memory_info::RebaseAddresses(const int32_t new_base)
 {
     map<string, uint32_t>::iterator iter;
     int32_t rebase = - (int32_t)base + new_base;
@@ -375,74 +382,115 @@ void memory_info::RebaseVTable(int32_t offset)
     }
 }
 
-
 // Get named address
-uint32_t memory_info::getAddress (string key)
+uint32_t memory_info::getAddress (const char *key)
 {
-    if(addresses.count(key))
+    map <string, uint32_t>::iterator iter = addresses.find(key);
+    
+    if(iter != addresses.end())
     {
-        return addresses[key];
+        return (*iter).second;
     }
     return 0;
 }
 
 
 // Get named offset
-uint32_t memory_info::getOffset (string key)
+uint32_t memory_info::getOffset (const char *key)
 {
-    if(offsets.count(key))
+    map <string, uint32_t>::iterator iter = offsets.find(key);
+    if(iter != offsets.end())
     {
-        return offsets[key];
+        return (*iter).second;
     }
     return 0;
 }
-
-
-// Get named string
-std::string memory_info::getString (string key)
-{
-    if(strings.count(key))
-    {
-        return strings[key];
-    }
-    else return string("");
-}
-
 
 // Get named numerical value
-uint32_t memory_info::getHexValue (string key)
+uint32_t memory_info::getHexValue (const char *key)
 {
-    if(hexvals.count(key))
+    map <string, uint32_t>::iterator iter = hexvals.find(key);
+    if(iter != hexvals.end())
     {
-        return hexvals[key];
+        return (*iter).second;
     }
     return 0;
+}
+
+
+// Get named address
+uint32_t memory_info::getAddress (const string &key)
+{
+    map <string, uint32_t>::iterator iter = addresses.find(key);
+    
+    if(iter != addresses.end())
+    {
+        return (*iter).second;
+    }
+    return 0;
+}
+
+
+// Get named offset
+uint32_t memory_info::getOffset (const string &key)
+{
+    map <string, uint32_t>::iterator iter = offsets.find(key);
+    if(iter != offsets.end())
+    {
+        return (*iter).second;
+    }
+    return 0;
+}
+
+// Get named numerical value
+uint32_t memory_info::getHexValue (const string &key)
+{
+    map <string, uint32_t>::iterator iter = hexvals.find(key);
+    if(iter != hexvals.end())
+    {
+        return (*iter).second;
+    }
+    return 0;
+}
+
+// Get named string
+std::string memory_info::getString (const string &key)
+{
+    map <string, string>::iterator iter = strings.find(key);
+    if(iter != strings.end())
+    {
+        return (*iter).second;
+    }
+    return string("");
 }
 
 // Get Profession
-string memory_info::getProfession (uint32_t key)
+string memory_info::getProfession (const uint32_t key) const
 {
     if(professions.size() > key)
     {
         return professions[key];
     }
-    else{
+    else
+    {
         return string("");
     }
 }
 
 // Get Job
-string memory_info::getJob (uint32_t key)
+string memory_info::getJob (const uint32_t key) const
 {
-    if(jobs.size() > key){
+    if(jobs.size() > key)
+    {
         return jobs[key];
     }
     return string("Job Does Not Exist");
 }
 
-string memory_info::getSkill (uint32_t key)
+string memory_info::getSkill (const uint32_t key) const
 {
-    if(skills.size() > key){
+    if(skills.size() > key)
+    {
         return skills[key];
     }
     return string("Skill is not Defined");
@@ -456,7 +504,7 @@ int absolute (int number)
     return number;
 }
 
-string memory_info::getTrait (uint32_t traitIdx, uint32_t traitValue)
+string memory_info::getTrait (const uint32_t traitIdx, const uint32_t traitValue) const
 {
     if(traits.size() > traitIdx)
     {
@@ -481,7 +529,7 @@ string memory_info::getTrait (uint32_t traitIdx, uint32_t traitValue)
     return string("Trait is not Defined");
 }
 
-string memory_info::getTraitName(uint32_t traitIdx)
+string memory_info::getTraitName(const uint32_t traitIdx) const
 {
     if(traits.size() > traitIdx)
     {
@@ -490,7 +538,7 @@ string memory_info::getTraitName(uint32_t traitIdx)
     return string("Trait is not Defined");
 }
 
-string memory_info::getLabor (uint32_t laborIdx)
+string memory_info::getLabor (const uint32_t laborIdx)
 {
     if(labors.count(laborIdx))
     {

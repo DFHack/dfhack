@@ -44,6 +44,40 @@ DfVector DMWindows40d::readVector (uint32_t offset, uint32_t item_size)
 };
 
 
+size_t DMWindows40d::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
+{
+    /*
+    MSVC++ string
+    ptr allocator
+    union
+    {
+        char[16] start;
+        char * start_ptr
+}
+Uint32 length
+Uint32 capacity
+*/
+    uint32_t start_offset = offset + 4;
+    size_t length = MreadDWord(offset + 20);
+    
+    size_t capacity = MreadDWord(offset + 24);
+    size_t read_real = min(length, bufcapacity-1);// keep space for null termination
+    
+    // read data from inside the string structure
+    if(capacity < 16)
+    {
+        Mread(start_offset, read_real , (uint8_t *)buffer);
+    }
+    else // read data from what the offset + 4 dword points to
+    {
+        start_offset = MreadDWord(start_offset);// dereference the start offset
+        Mread(start_offset, read_real, (uint8_t *)buffer);
+    }
+    
+    buffer[read_real] = 0;
+    return read_real;
+};
+
 const string DMWindows40d::readSTLString (uint32_t offset)
 {
     /*
@@ -96,10 +130,35 @@ DfVector DMLinux40d::readVector (uint32_t offset, uint32_t item_size)
     return DfVector(start,size,item_size);
 };
 
+struct _Rep_base
+{
+    uint32_t       _M_length;
+    uint32_t       _M_capacity;
+    uint32_t        _M_refcount;
+};
+
+size_t DMLinux40d::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
+{
+    _Rep_base header;
+    offset = MreadDWord(offset);
+    Mread(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
+    size_t read_real = min((size_t)header._M_length, bufcapacity-1);// keep space for null termination
+    Mread(offset,read_real,(uint8_t * )buffer);
+    buffer[read_real] = 0;
+    return read_real;
+};
 
 const string DMLinux40d::readSTLString (uint32_t offset)
 {
-    // GNU std::string is a single pointer (as far as we are concerned)
+    _Rep_base header;
+    
     offset = MreadDWord(offset);
-    return MreadCString(offset);
+    Mread(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
+    
+    // FIXME: use char* everywhere, avoid string
+    char * temp = new char[header._M_length+1];
+    Mread(offset,header._M_length+1,(uint8_t * )temp);
+    string ret(temp);
+    delete temp;
+    return ret;
 };

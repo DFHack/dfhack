@@ -173,6 +173,7 @@ Process::~Process()
     }
     // destroy data model. this is assigned by processmanager
     delete d->my_datamodel;
+    delete d;
 }
 
 

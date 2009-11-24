@@ -371,7 +371,10 @@ bool API::ReadWoodMatgloss(vector<t_matgloss> & woods)
         // read the matgloss pointer from the vector into temp
         uint32_t temp = *(uint32_t *) p_matgloss[i];
         // read the string pointed at by
+        /*
         fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
+        */
+        d->dm->readSTLString(temp,mat.id,128);
         woods.push_back(mat);
     }
     return true;
@@ -394,7 +397,8 @@ bool API::ReadStoneMatgloss(vector<t_matgloss> & stones)
         uint32_t temp = *(uint32_t *) p_matgloss[i];
         // read the string pointed at by
         t_matgloss mat;
-        fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
+        //fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
+        d->dm->readSTLString(temp,mat.id,128);
         mat.fore = (uint8_t)MreadWord(temp + matgloss_colors);
         mat.back = (uint8_t)MreadWord(temp + matgloss_colors + 2);
         mat.bright = (uint8_t)MreadWord(temp + matgloss_colors + 4);
@@ -420,7 +424,8 @@ bool API::ReadMetalMatgloss(vector<t_matgloss> & metals)
         uint32_t temp = *(uint32_t *) p_matgloss[i];
         // read the string pointed at by
         t_matgloss mat;
-        fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
+        //fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
+        d->dm->readSTLString(temp,mat.id,128);
         mat.fore = (uint8_t)MreadWord(temp + matgloss_colors);
         mat.back = (uint8_t)MreadWord(temp + matgloss_colors + 2);
         mat.bright = (uint8_t)MreadWord(temp + matgloss_colors + 4);
@@ -448,7 +453,8 @@ bool API::ReadPlantMatgloss(vector<t_matgloss> & plants)
         // read the matgloss pointer from the vector into temp
         uint32_t temp = *(uint32_t *) p_matgloss[i];
         // read the string pointed at by
-        fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
+        //fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
+        d->dm->readSTLString(temp,mat.id,128);
         plants.push_back(mat);
     }
     return true;
@@ -473,7 +479,8 @@ bool API::ReadCreatureMatgloss(vector<t_matgloss> & creatures)
         // read the matgloss pointer from the vector into temp
         uint32_t temp = *(uint32_t *) p_matgloss[i];
         // read the string pointed at by
-        fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
+        //fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
+        d->dm->readSTLString(temp,mat.id,128);
         creatures.push_back(mat);
     }
     return true;
@@ -997,13 +1004,16 @@ bool API::ReadCreature(const int32_t &index, t_creature & furball)
     MreadDWord(temp + d->creature_flags1_offset, furball.flags1.whole);
     MreadDWord(temp + d->creature_flags2_offset, furball.flags2.whole);
     // normal names
-    fill_char_buf(furball.first_name, d->dm->readSTLString(temp+d->creature_first_name_offset));
-    fill_char_buf(furball.nick_name, d->dm->readSTLString(temp+d->creature_nick_name_offset));
+    d->dm->readSTLString(temp+d->creature_first_name_offset,furball.first_name,128);
+    d->dm->readSTLString(temp+d->creature_nick_name_offset,furball.nick_name,128);
+    // custom profession
+    d->dm->readSTLString(temp+d->creature_nick_name_offset,furball.nick_name,128);
+    fill_char_buf(furball.custom_profession, d->dm->readSTLString(temp+d->creature_custom_profession_offset));
     // crazy composited names
     Mread(temp + d->creature_last_name_offset,sizeof(t_lastname), (uint8_t *) &furball.last_name );
     Mread(temp + d->creature_squad_name_offset,sizeof(t_squadname), (uint8_t *) &furball.squad_name );
-    // custom profession
-    fill_char_buf(furball.custom_profession, d->dm->readSTLString(temp+d->creature_custom_profession_offset));
+    
+    
     
     // labors
     Mread(temp+d->creature_labors_offset, NUM_CREATURE_LABORS, furball.labors);

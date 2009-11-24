@@ -144,7 +144,7 @@ Process::~Process()
     {
         CloseHandle(d->my_main_thread);
     }
-    
+    delete d;
 }
 
 

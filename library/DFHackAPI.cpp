@@ -563,6 +563,7 @@ bool API::ReadGeology( vector < vector <uint16_t> >& assign )
         // make sure we don't load crap
         assert(geolayers.getSize() > 0 && geolayers.getSize() <= 16);
 
+        d->v_geology[i].reserve(geolayers.getSize());
         // finally, read the layer matgloss
         for(uint32_t j = 0;j< geolayers.getSize();j++)
         {
@@ -573,6 +574,7 @@ bool API::ReadGeology( vector < vector <uint16_t> >& assign )
         }
     }
     assign.clear();
+    assign.reserve(eBiomeCount);
     // TODO: clean this up
     for(int i = 0; i< eBiomeCount;i++)
     {

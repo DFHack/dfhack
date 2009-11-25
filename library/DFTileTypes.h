@@ -712,7 +712,7 @@ namespace DFHack
         {"constructed stair up/down",STAIR_UPDOWN,CONSTRUCTED, VAR_1},
         {"constructed stair down",STAIR_DOWN,CONSTRUCTED, VAR_1},
         {"constructed stair up",STAIR_UP,CONSTRUCTED, VAR_1},
-        {"constructed ramp",STAIR_UPDOWN,CONSTRUCTED, VAR_1},
+        {"constructed ramp",RAMP,CONSTRUCTED, VAR_1},
         {0 ,EMPTY, AIR, VAR_1} // end
     };
     

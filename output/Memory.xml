@@ -739,6 +739,7 @@
         <Address name="window_x">0xd457f4</Address>
         <Address name="window_y">0xd73868</Address>
         <Address name="window_z">0xd73844</Address>
+        <Address name="window_dims">0x1706d4c</Address>
     </Entry>
     <!-- Windows 40d## sub-versions, should inherit only vtable from 40d -->
     <Entry version="v0.28.181.40d9" os="windows" id="40d9win" base="40dwin">
@@ -828,6 +829,7 @@
         <Address name="window_x">0xcae368</Address>
         <Address name="window_y">0xcdc3dc</Address>
         <Address name="window_z">0xcdc3b8</Address>
+        <Address name="window_dims">0x1676f14</Address>
     </Entry>
     <Entry version="v0.28.181.40d11" os="windows" rebase="0x2d388" id="40d11win" base="40d9win">
         <!-- identification -->
@@ -876,7 +878,9 @@
         <Address name="cursor_xyz">0x95f2b4</Address>
         <Address name="window_x">0xd995a0</Address>
         <Address name="window_y">0xdc764c</Address>
-        <Address name="window_z">0xdc7628</Address>        
+        <Address name="window_z">0xdc7628</Address>
+        <Address name="window_dims">0x173fde0</Address>
+        
     </Entry>
     <Entry version="v0.28.181.40d13" os="windows" id="40d13win" base="40d12win" rebase="0x5090">
         <!-- identification -->
@@ -913,7 +917,6 @@
         <Address name="window_x">0x00DA061C</Address>
         <Address name="window_y">0x00DCE6C8</Address>
         <Address name="window_z">0x00DCE6A4</Address>
-        <Address name="window_dims">0x01746E98</Address>
     </Entry>
     <Entry version="v0.28.181.40d16" os="windows" base="40d15win">
         <!-- identification -->
@@ -1055,6 +1058,7 @@
         <Address name="window_x">0x8d17ff4</Address>
         <Address name="window_y">0x8d17ff8</Address>
         <Address name="window_z">0x8d17ffC</Address>
+        <Address name="window_dims">0x95327b0</Address>
         
         <!-- translation tables -->
         <Address name="translation_vector">0x09374FA8</Address>
@@ -1222,6 +1226,7 @@
         <!--TODO: <Address name="notes">0x092ab244</Address>-->
         <VTable rebase="-0x5e360" />
         <Address name="cursor_xyz">0x88073d4</Address>
+        <Address name="window_dims">0x9510050</Address>
     </Entry>
     <!-- re-specified addresses here, offsets and hexvals remain same -->
     <Entry version="v0.28.181.40d12" os="linux" base="40d9lin" id="40d12lin">
@@ -1239,6 +1244,7 @@
         <Address name="window_x">0x893ABD4</Address>
         <Address name="window_y">0x893ABD8</Address>
         <Address name="window_z">0x893ABDC</Address>
+        <Address name="window_dims">0x091a647c</Address>
 
         <!-- translation tables -->
         <!-- these should be right -->
@@ -1270,6 +1276,7 @@
         <VTable rebase="0x3A00" />
         <Address name="cursor_xyz">0x8780354</Address>
         <!--<class vtable="0x086C7368" name="door"/>-->
+        <Address name="window_dims">0x091ab49c</Address>
     </Entry>
     <Entry version="v0.28.181.40d14" os="linux" id="40d14lin" base="40d13lin">
         <!-- identification -->

@@ -41,12 +41,14 @@ int main (void)
         return 1; 
     }
     
+    map<string, vector<string> > names;
+    DF.InitReadNameTables(names);
     uint32_t numCreatures = DF.InitReadCreatures();
     for(uint32_t i = 0; i < numCreatures; i++)
     {
         t_creature temp;
         DF.ReadCreature(i, temp);
-        cout << "creature type: " << creaturestypes[temp.type].id << ", position: " << temp.x << "x " << temp.y << "y "<< temp.z << "z" << endl;
+        cout << "address: " << temp.origin << " creature type: " << creaturestypes[temp.type].id << ", position: " << temp.x << "x " << temp.y << "y "<< temp.z << "z" << endl;
         bool addendl = false;
         if(temp.first_name[0])
         {
@@ -58,6 +60,12 @@ int main (void)
             cout << ", nick name: " << temp.nick_name;
             addendl = true;
         }
+        string transName = DF.TranslateName(temp.last_name,names,creaturestypes[temp.type].id);
+        if(!transName.empty()){
+            cout << ", trans name: " << transName;
+            addendl=true;
+        }
+        //cout << ", generic name: " << DF.TranslateName(temp.last_name,names,"GENERIC");
         /*
         if(!temp.trans_name.empty()){
             cout << ", trans name: " << temp.trans_name;

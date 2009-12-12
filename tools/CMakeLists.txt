@@ -57,6 +57,10 @@ TARGET_LINK_LIBRARIES(dfsuspend dfhack)
 ADD_EXECUTABLE(dfitemdump dfitemdump.cpp)
 TARGET_LINK_LIBRARIES(dfitemdump dfhack)
 
+# customCtreatureNameProf - change the custom names and professions of creatures, sends keys to df directly
+ADD_EXECUTABLE(dfcustomCreatureNameProf customCreatureNameProf.cpp)
+TARGET_LINK_LIBRARIES(dfcustomCreatureNameProf dfhack)
+
 IF(UNIX)
 install(TARGETS
 dfexpbench

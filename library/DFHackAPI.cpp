@@ -50,6 +50,9 @@ class API::Private
         uint32_t window_z_offset;
         uint32_t cursor_xyz_offset;
         uint32_t window_dims_offset;
+        uint32_t current_cursor_creature_offset;
+        uint32_t pause_state_offset;
+        uint32_t view_screen_offset;
         
         uint32_t creature_pos_offset;
         uint32_t creature_type_offset;
@@ -103,9 +106,9 @@ class API::Private
         DfVector *p_bld;
         DfVector *p_veg;
         
-        DfVector *p_trans;
-        DfVector *p_generic;
-        DfVector *p_dwarf_names;
+//        DfVector *p_trans;
+//        DfVector *p_generic;
+//        DfVector *p_dwarf_names;
 
         DfVector *p_itm;
         /*
@@ -271,6 +274,919 @@ bool API::WriteTileTypes(uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
     return false;
 }
 
+bool API::getCurrentCursorCreatures(vector<uint32_t> &addresses)
+{
+    assert(d->cursorWindowInited);
+    DfVector creUnderCursor = d->dm->readVector(d->current_cursor_creature_offset,4);
+    if(creUnderCursor.getSize() == 0){
+      return false;
+    }
+    addresses.clear();
+    for(int i =0;i<creUnderCursor.getSize();i++){
+      uint32_t temp = *(uint32_t *) creUnderCursor.at(i);
+      addresses.push_back(temp);
+    }
+    return true;
+}
+
+#ifdef LINUX_BUILD
+// ENUMARATE THROUGH WINDOWS AND DISPLAY THEIR TITLES
+Window EnumerateWindows (Display *display, Window rootWindow,const char *searchString)
+{
+   static int level = 0;
+   Window parent;
+   Window *children;
+   Window *child;
+   Window retWindow = BadWindow;
+   unsigned int noOfChildren;
+   int status;
+   int i;
+   
+   char * win_name;
+   status = XFetchName(display, rootWindow, &win_name);
+   
+   if ((status >= Success) && (win_name) && strcmp(win_name,searchString) == 0){
+     return rootWindow;
+   }
+
+   level++;
+   
+   status = XQueryTree (display, rootWindow, &rootWindow, &parent, &children, &noOfChildren);
+   
+   if (status == 0)
+   {
+      return BadWindow;
+   }
+   
+   if (noOfChildren == 0)
+   {
+      return BadWindow;
+   }
+   for (i=0; i < noOfChildren; i++)
+   {
+      Window tempWindow = EnumerateWindows (display, children[i], searchString);
+      if(tempWindow != BadWindow){
+	retWindow = tempWindow;
+	break;
+      }
+   }
+   
+   XFree ((char*) children);
+   return retWindow;
+}
+// END ENUMERATE WINDOWS
+Window getDFWindow(Display *dpy){
+  //  int numScreeens = ScreenCount(dpy);
+  for(int i = 0;i < ScreenCount(dpy);i++){
+    Window currWin = RootWindow(dpy, i);
+    Window retWindow = EnumerateWindows(dpy,currWin,"Dwarf Fortress");
+    if(retWindow != BadWindow){
+      return (retWindow);
+    }
+    //I would ideally like to find the dfwindow using the PID, but X11 Windows only know their processes pid if the _NET_WM_PID attribute is set, which it is not for SDL 1.2.  Supposedly SDL 1.3 will set this, but who knows when that will occur.
+  }
+  return(BadWindow);
+}
+bool setWMClientLeaderProperty(Display *dpy, Window &dfWin, Window &currentFocus)
+{
+  static bool propertySet;
+  if(propertySet)
+  {
+    return true;
+  }
+  Atom leaderAtom;
+    Atom type;
+    int format, status;
+    unsigned long nitems = 0;
+    unsigned long extra = 0;
+    unsigned char *data = 0;
+    Window result = 0;
+    leaderAtom = XInternAtom(dpy, "WM_CLIENT_LEADER", false);
+    status = XGetWindowProperty(dpy,currentFocus,leaderAtom,0L,1L,false,XA_WINDOW,&type,&format,&nitems,&extra,(unsigned char **) &data);
+    if(status == Success)
+      {
+	if(data != 0)
+	  {
+	  result = *((Window*) data);
+	  XFree(data);
+	}
+	else
+	  {
+	    Window curr = currentFocus;
+	    while(data == 0){
+	      Window parent;
+	      Window root;
+	      Window *children;
+	      uint numChildren;
+	      XQueryTree(dpy,curr, &root,&parent,&children,&numChildren);
+	      XGetWindowProperty(dpy,parent,leaderAtom,0L,1L,false,XA_WINDOW,&type,&format,&nitems,&extra,(unsigned char **) &data);
+	    }
+	    result = *((Window*) data);
+	    XFree(data);
+	  }
+      }
+    XChangeProperty(dpy,dfWin,leaderAtom,XA_WINDOW,32,PropModeReplace, (const unsigned char *)&result,1);
+    propertySet = true;
+    return true;
+}
+void API::TypeStr(const char *lpszString,int delay,bool useShift)
+{  
+  ForceResume();
+  Display *dpy = XOpenDisplay(NULL); // null opens the display in $DISPLAY
+  Window dfWin = getDFWindow(dpy);
+  if(dfWin != BadWindow)
+  {
+
+    XWindowAttributes currAttr;
+    Window currentFocus;
+    int currentRevert;
+    XGetInputFocus(dpy, &currentFocus,&currentRevert); //get current focus
+    setWMClientLeaderProperty(dpy,dfWin,currentFocus);
+    XGetWindowAttributes(dpy,dfWin,&currAttr);
+    if(currAttr.map_state == IsUnmapped){
+      XMapRaised(dpy,dfWin);
+    }
+    if(currAttr.map_state == IsUnviewable){
+      XRaiseWindow(dpy,dfWin);
+    }
+    XSync(dpy,false);
+    XSetInputFocus(dpy,dfWin,RevertToNone,CurrentTime);
+    XSync(dpy,false);
+    
+    char cChar;
+    KeyCode xkeycode;
+    char prevKey = 0;
+    int sleepAmnt = 0;
+    while((cChar=*lpszString++)) // loops through chars
+    {
+      xkeycode = XKeysymToKeycode(dpy,cChar); 
+      //HACK  add an extra shift up event, this fixes the problem of the same character twice in a row being displayed in df
+      XTestFakeKeyEvent(dpy,XKeysymToKeycode(dpy,XStringToKeysym("Shift_L")),false,CurrentTime);
+      if(useShift || cChar >= 'A' && cChar <= 'Z'){
+	XTestFakeKeyEvent(dpy,XKeysymToKeycode(dpy,XStringToKeysym("Shift_L")),true,CurrentTime);
+	XSync(dpy,false);
+      }
+      XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+      XSync(dpy,false);
+      XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+      XSync(dpy,false);
+      if(useShift || cChar >= 'A' && cChar <= 'Z'){
+	XTestFakeKeyEvent(dpy,XKeysymToKeycode(dpy,XStringToKeysym("Shift_L")),false,CurrentTime);
+	XSync(dpy,false);
+      }
+ 
+    }
+    if(currAttr.map_state == IsUnmapped){
+      //      XUnmapWindow(dpy,dfWin); if I unmap the window, it is no longer on the task bar, so just lower it instead
+      XLowerWindow(dpy,dfWin);
+    }
+    XSetInputFocus(dpy,currentFocus,currentRevert,CurrentTime);
+    XSync(dpy,true);
+  }
+  usleep(delay*1000);
+}
+
+void API::TypeSpecial(t_special command,int count,int delay)
+{
+  ForceResume();
+  if(command != WAIT){
+    KeySym mykeysym;
+    KeyCode xkeycode;
+    Display *dpy = XOpenDisplay(NULL); // null opens the display in $DISPLAY
+    Window dfWin = getDFWindow(dpy);
+    if(dfWin != BadWindow)
+    {
+      XWindowAttributes currAttr;
+      Window currentFocus;
+      int currentRevert;
+      XGetInputFocus(dpy, &currentFocus,&currentRevert); //get current focus
+      setWMClientLeaderProperty(dpy,dfWin,currentFocus);
+      XGetWindowAttributes(dpy,dfWin,&currAttr);
+      if(currAttr.map_state == IsUnmapped){
+	XMapRaised(dpy,dfWin);
+      }
+      if(currAttr.map_state == IsUnviewable){
+	XRaiseWindow(dpy,dfWin);
+      }
+      XSync(dpy,false);
+      XSetInputFocus(dpy,dfWin,RevertToParent,CurrentTime);
+
+      for(int i =0;i<count; i++)
+      {
+	//HACK  add an extra shift up event, this fixes the problem of the same character twice in a row being displayed in df
+	XTestFakeKeyEvent(dpy,XKeysymToKeycode(dpy,XStringToKeysym("Shift_L")),false,CurrentTime);
+
+	switch(command)
+	  {
+	  case ENTER:
+	    mykeysym = XStringToKeysym("Return");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case SPACE:
+	    mykeysym = XStringToKeysym("space");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case BACK_SPACE:
+	    mykeysym = XStringToKeysym("BackSpace");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case TAB:
+	    mykeysym = XStringToKeysym("Tab");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case CAPS_LOCK:
+	    mykeysym = XStringToKeysym("Caps_Lock");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case LEFT_SHIFT: // I am not positive that this will work to distinguish the left and right..
+	    mykeysym = XStringToKeysym("Shift_L");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case RIGHT_SHIFT:
+	    mykeysym = XStringToKeysym("Shift_R");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case LEFT_CONTROL:
+	    mykeysym = XStringToKeysym("Control_L");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	  case RIGHT_CONTROL:
+	    mykeysym = XStringToKeysym("Control_R");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case ALT:
+	    mykeysym = XStringToKeysym("Alt_L");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case ESCAPE:
+	    mykeysym = XStringToKeysym("Escape");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;	    
+	  case UP:
+	    mykeysym = XStringToKeysym("Up");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;      
+	  case DOWN:
+	    mykeysym = XStringToKeysym("Down");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case LEFT:
+	    mykeysym = XStringToKeysym("Left");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case RIGHT:
+	    mykeysym = XStringToKeysym("Right");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case F1:
+	    mykeysym = XStringToKeysym("F1");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case F2:
+	    mykeysym = XStringToKeysym("F2");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case F3:
+	    mykeysym = XStringToKeysym("F3");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case F4:
+	    mykeysym = XStringToKeysym("F4");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case F5:
+	    mykeysym = XStringToKeysym("F5");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case F6:
+	    mykeysym = XStringToKeysym("F6");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case F7:
+	    mykeysym = XStringToKeysym("F7");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case F8:
+	    mykeysym = XStringToKeysym("F8");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case F9:
+	    mykeysym = XStringToKeysym("F9");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case F11:
+	    mykeysym = XStringToKeysym("F11");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case F12:
+	    mykeysym = XStringToKeysym("F12");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case PAGE_UP:
+	    mykeysym = XStringToKeysym("Page_Up");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case PAGE_DOWN:
+	    mykeysym = XStringToKeysym("Page_Down");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case INSERT:
+	    mykeysym = XStringToKeysym("Insert");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEY_DELETE:
+	    mykeysym = XStringToKeysym("Delete");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case HOME:
+	    mykeysym = XStringToKeysym("Home");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case END:
+	    mykeysym = XStringToKeysym("End");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_DIVIDE:
+	    mykeysym = XStringToKeysym("KP_Divide");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_MULTIPLY:
+	    mykeysym = XStringToKeysym("KP_Multiply");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_SUBTRACT:
+	    mykeysym = XStringToKeysym("KP_Subtract");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_ADD:
+	    mykeysym = XStringToKeysym("KP_Add");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_ENTER:
+	    mykeysym = XStringToKeysym("KP_Enter");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_0:
+	    mykeysym = XStringToKeysym("KP_0");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_1:
+	    mykeysym = XStringToKeysym("KP_1");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_2:
+	    mykeysym = XStringToKeysym("KP_2");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_3:
+	    mykeysym = XStringToKeysym("KP_3");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_4:
+	    mykeysym = XStringToKeysym("KP_4");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_5:
+	    mykeysym = XStringToKeysym("KP_5");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_6:
+	    mykeysym = XStringToKeysym("KP_6");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_7:
+	    mykeysym = XStringToKeysym("KP_7");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_8:
+	    mykeysym = XStringToKeysym("KP_8");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_9:
+	    mykeysym = XStringToKeysym("KP_9");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  case KEYPAD_DECIMAL_POINT:
+	    mykeysym = XStringToKeysym("KP_Decimal");
+	    xkeycode = XKeysymToKeycode(dpy,mykeysym);
+	    XTestFakeKeyEvent(dpy,xkeycode,true,CurrentTime);
+	    XSync(dpy,true);
+	    XTestFakeKeyEvent(dpy,xkeycode,false,CurrentTime);
+	    XSync(dpy,true);
+	    break;
+	  }
+      }
+    if(currAttr.map_state == IsUnmapped){
+      XLowerWindow(dpy,dfWin); // can't unmap, because you lose task bar
+    }
+    XSetInputFocus(dpy,currentFocus,currentRevert,CurrentTime);
+    XSync(dpy,false);
+    }
+    if(command != WAIT){
+      usleep(delay*1000);
+    }
+  }
+  else
+  {
+    usleep(delay*1000 * count);
+  }
+}
+#else
+//Windows key handlers
+struct window{
+        HWND windowHandle;
+        uint32_t pid;
+    };
+BOOL CALLBACK EnumWindowsProc( HWND hwnd, LPARAM lParam){
+    uint32_t pid;
+    
+    GetWindowThreadProcessId(hwnd,(LPDWORD) &pid);
+    if(pid == ((window *) lParam)->pid){
+        ((window *) lParam)->windowHandle = hwnd;
+        return FALSE;
+    }
+    return TRUE;
+}
+void API::TypeStr(const char *lpszString,int delay, bool useShift)
+{   
+    //Resume();
+    ForceResume();
+    
+    //sendmessage needs a window handle HWND, so have to get that from the process HANDLE
+    HWND currentWindow = GetForegroundWindow();
+    window myWindow;
+    myWindow.pid = GetProcessId(DFHack::g_ProcessHandle);
+    EnumWindows(EnumWindowsProc, (LPARAM) &myWindow);
+
+    HWND nextWindow =GetWindow(myWindow.windowHandle,GW_HWNDNEXT);
+    
+    SetActiveWindow(myWindow.windowHandle);
+    SetForegroundWindow(myWindow.windowHandle);
+        
+    char cChar;
+        
+    while((cChar=*lpszString++)) // loops through chars
+    {
+        short vk=VkKeyScan(cChar); // keycode of char
+        if(useShift || (vk>>8)&1){ // char is capital, so need to hold down shift
+            //shift down
+            INPUT input[4] = {0};
+            input[0].type = INPUT_KEYBOARD;
+            input[0].ki.wVk = VK_SHIFT;
+
+            input[1].type = INPUT_KEYBOARD;
+            input[1].ki.wVk = vk;
+           
+            input[2].type = INPUT_KEYBOARD;
+            input[2].ki.wVk = vk;
+            input[2].ki.dwFlags = KEYEVENTF_KEYUP;
+                       
+            // shift up
+            input[3].type = INPUT_KEYBOARD;
+            input[3].ki.wVk = VK_SHIFT;
+            input[3].ki.dwFlags = KEYEVENTF_KEYUP;
+    
+            SendInput(4, input, sizeof(input[0]));
+        }
+        else{ 
+            INPUT input[2] = {0};
+            input[0].type = INPUT_KEYBOARD;
+            input[0].ki.wVk = vk;
+           
+            input[1].type = INPUT_KEYBOARD;
+            input[1].ki.wVk = vk;
+            input[1].ki.dwFlags = KEYEVENTF_KEYUP;
+            SendInput(2, input, sizeof(input[0]));
+        }
+    }   
+    SetForegroundWindow(currentWindow);
+    SetActiveWindow(currentWindow);
+    SetWindowPos(myWindow.windowHandle,nextWindow,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
+    Sleep(delay);
+    
+}
+void API::TypeSpecial(t_special command,int count,int delay)
+{
+    ForceResume();
+    if(command != WAIT)
+    {
+      HWND currentWindow = GetForegroundWindow();
+      window myWindow;
+      myWindow.pid = GetProcessId(DFHack::g_ProcessHandle);
+      EnumWindows(EnumWindowsProc, (LPARAM) &myWindow);
+    
+      HWND nextWindow =GetWindow(myWindow.windowHandle,GW_HWNDNEXT);
+      SetForegroundWindow(myWindow.windowHandle);
+      SetActiveWindow(myWindow.windowHandle);
+      INPUT shift;
+      shift.type = INPUT_KEYBOARD;
+      shift.ki.wVk = VK_SHIFT;
+      shift.ki.dwFlags = KEYEVENTF_KEYUP;
+      SendInput(1,&shift,sizeof(shift));
+      INPUT input[2] = {0};
+      input[0].type = INPUT_KEYBOARD;
+      input[1].type = INPUT_KEYBOARD;
+      input[1].ki.dwFlags = KEYEVENTF_KEYUP;
+      switch(command)
+	{
+    case ENTER:
+        input[0].ki.wVk = VK_RETURN;
+        input[1].ki.wVk = VK_RETURN;
+        break;
+    case SPACE:
+        input[0].ki.wVk = VK_SPACE;
+        input[1].ki.wVk = VK_SPACE;
+        break;
+    case BACK_SPACE:
+        input[0].ki.wVk = VK_BACK;
+        input[1].ki.wVk = VK_BACK;
+        break;
+    case TAB:
+        input[0].ki.wVk = VK_TAB;
+        input[1].ki.wVk = VK_TAB;
+        break;
+    case CAPS_LOCK:
+        input[0].ki.wVk = VK_CAPITAL;
+        input[1].ki.wVk = VK_CAPITAL;
+        break;
+    // These are only for pressing the modifier key itself, you can't do key combinations with them, like ctrl+C
+    case LEFT_SHIFT: // I am not positive that this will work to distinguish the left and right..
+        input[0].ki.wVk = VK_LSHIFT;
+        input[1].ki.wVk = VK_LSHIFT;
+        break;
+    case RIGHT_SHIFT:
+        input[0].ki.wVk = VK_RSHIFT;
+        input[1].ki.wVk = VK_RSHIFT;
+        break;
+    case LEFT_CONTROL:
+        input[0].ki.wVk = VK_LCONTROL;
+        input[1].ki.wVk = VK_LCONTROL;
+        break;
+    case RIGHT_CONTROL:
+        input[0].ki.wVk = VK_RCONTROL;
+        input[1].ki.wVk = VK_RCONTROL;
+        break;
+    case ALT:
+        input[0].ki.wVk = VK_MENU;
+        input[1].ki.wVk = VK_MENU;
+        break;
+    case ESCAPE:
+        input[0].ki.wVk = VK_ESCAPE;
+        input[1].ki.wVk = VK_ESCAPE;
+        break;
+    case UP:
+        input[0].ki.wVk = VK_UP;
+        input[1].ki.wVk = VK_UP;
+        break;
+    case DOWN:
+        input[0].ki.wVk = VK_DOWN;
+        input[1].ki.wVk = VK_DOWN;
+        break;
+    case LEFT:
+        input[0].ki.wVk = VK_LEFT;
+        input[1].ki.wVk = VK_LEFT;
+        break;
+    case RIGHT:
+        input[0].ki.wVk = VK_RIGHT;
+        input[1].ki.wVk = VK_RIGHT;
+        break;
+    case F1:
+        input[0].ki.wVk = VK_F1;
+        input[1].ki.wVk = VK_F1;
+        break;
+    case F2:
+        input[0].ki.wVk = VK_F2;
+        input[1].ki.wVk = VK_F2;
+        break;
+    case F3:
+        input[0].ki.wVk = VK_F3;
+        input[1].ki.wVk = VK_F3;
+        break;
+    case F4:
+        input[0].ki.wVk = VK_F4;
+        input[1].ki.wVk = VK_F4;
+        break;
+    case F5:
+        input[0].ki.wVk = VK_F5;
+        input[1].ki.wVk = VK_F5;
+        break;
+    case F6:
+        input[0].ki.wVk = VK_F6;
+        input[1].ki.wVk = VK_F6;
+        break;
+    case F7:
+        input[0].ki.wVk = VK_F7;
+        input[1].ki.wVk = VK_F7;
+        break;
+    case F8:
+        input[0].ki.wVk = VK_F8;
+        input[1].ki.wVk = VK_F8;
+        break;
+    case F9:
+        input[0].ki.wVk = VK_F9;
+        input[1].ki.wVk = VK_F9;
+        break;
+    case F10:
+        input[0].ki.wVk = VK_F10;
+        input[1].ki.wVk = VK_F10;
+        break;
+    case F11:
+        input[0].ki.wVk = VK_F11;
+        input[1].ki.wVk = VK_F11;
+        break;
+    case F12:
+        input[0].ki.wVk = VK_F12;
+        input[1].ki.wVk = VK_F12;
+        break;
+    case PAGE_UP:
+        input[0].ki.wVk = VK_PRIOR;
+        input[1].ki.wVk = VK_PRIOR;
+        break;
+    case PAGE_DOWN:
+        input[0].ki.wVk = VK_NEXT;
+        input[1].ki.wVk = VK_NEXT;
+        break;
+    case INSERT:
+        input[0].ki.wVk = VK_INSERT;
+        input[1].ki.wVk = VK_INSERT;
+        break;
+    case KEY_DELETE:
+        input[0].ki.wVk = VK_DELETE;
+        input[1].ki.wVk = VK_DELETE;
+        break;
+    case HOME:
+        input[0].ki.wVk = VK_HOME;
+        input[1].ki.wVk = VK_HOME;
+        break;
+    case END:
+        input[0].ki.wVk = VK_END;
+        input[1].ki.wVk = VK_END;
+        break;
+    case KEYPAD_DIVIDE:
+        input[0].ki.wVk = VK_DIVIDE;
+        input[1].ki.wVk = VK_DIVIDE;
+        break;
+    case KEYPAD_MULTIPLY:
+        input[0].ki.wVk = VK_MULTIPLY;
+        input[1].ki.wVk = VK_MULTIPLY;
+        break;
+    case KEYPAD_SUBTRACT:
+        input[0].ki.wVk = VK_SUBTRACT;
+        input[1].ki.wVk = VK_SUBTRACT;
+        break;
+    case KEYPAD_ADD:
+        input[0].ki.wVk = VK_ADD;
+        input[1].ki.wVk = VK_ADD;
+        break;
+    case KEYPAD_ENTER:
+        input[0].ki.wVk = VK_RETURN;
+        input[1].ki.wVk = VK_RETURN;
+        break;
+    case KEYPAD_0:
+        input[0].ki.wVk = VK_NUMPAD0;
+        input[1].ki.wVk = VK_NUMPAD0;
+        break;
+    case KEYPAD_1:
+        input[0].ki.wVk = VK_NUMPAD1;
+        input[1].ki.wVk = VK_NUMPAD1;
+        break;
+    case KEYPAD_2:
+        input[0].ki.wVk = VK_NUMPAD2;
+        input[1].ki.wVk = VK_NUMPAD2;
+        break;
+    case KEYPAD_3:
+        input[0].ki.wVk = VK_NUMPAD3;
+        input[1].ki.wVk = VK_NUMPAD3;
+        break;
+    case KEYPAD_4:
+        input[0].ki.wVk = VK_NUMPAD4;
+        input[1].ki.wVk = VK_NUMPAD4;
+        break;
+    case KEYPAD_5:
+        input[0].ki.wVk = VK_NUMPAD5;
+        input[1].ki.wVk = VK_NUMPAD5;
+        break;
+    case KEYPAD_6:
+        input[0].ki.wVk = VK_NUMPAD6;
+        input[1].ki.wVk = VK_NUMPAD6;
+        break;
+    case KEYPAD_7:
+        input[0].ki.wVk = VK_NUMPAD7;
+        input[1].ki.wVk = VK_NUMPAD7;
+        break;
+    case KEYPAD_8:
+        input[0].ki.wVk = VK_NUMPAD8;
+        input[1].ki.wVk = VK_NUMPAD8;
+        break;
+    case KEYPAD_9:
+        input[0].ki.wVk = VK_NUMPAD9;
+        input[1].ki.wVk = VK_NUMPAD9;
+        break;
+    case KEYPAD_DECIMAL_POINT:
+        input[0].ki.wVk = VK_SEPARATOR;
+        input[1].ki.wVk = VK_SEPARATOR;
+        break;
+    }
+    for(int i = 0; i<count;i++){
+        SendInput(2, input, sizeof(input[0]));
+    }
+    SetForegroundWindow(currentWindow);
+    SetActiveWindow(currentWindow);
+    SetWindowPos(myWindow.windowHandle,nextWindow,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
+    Sleep(delay);
+    }
+    else{
+      Sleep(delay*count);
+    }
+}
+#endif    
 
 // 256 * sizeof(uint32_t)
 bool API::WriteDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
@@ -283,7 +1199,6 @@ bool API::WriteDesignations(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer
     }
     return false;
 }
-
 
 // 256 * sizeof(uint32_t)
 bool API::WriteOccupancy(uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
@@ -1000,6 +1915,7 @@ bool API::ReadCreature(const int32_t &index, t_creature & furball)
     assert(d->creaturesInited);
     // read pointer from vector at position
     uint32_t temp = *(uint32_t *) d->p_cre->at(index);
+    furball.origin = temp;
     //read creature from memory
     Mread(temp + d->creature_pos_offset, 3 * sizeof(uint16_t), (uint8_t *) &(furball.x)); // xyz really
     MreadDWord(temp + d->creature_type_offset, furball.type);
@@ -1054,42 +1970,80 @@ bool API::ReadCreature(const int32_t &index, t_creature & furball)
 }
 
 //FIXME: this just isn't enough
-void API::InitReadNameTables()
+void API::InitReadNameTables(map< string, vector<string> > & nameTable)
 {
     int genericAddress = d->offset_descriptor->getAddress("language_vector");
     int transAddress = d->offset_descriptor->getAddress("translation_vector");
     int word_table_offset = d->offset_descriptor->getOffset("word_table");
     
-    d->p_generic = new DfVector(d->dm->readVector(genericAddress, 4));
-    d->p_trans = new DfVector(d->dm->readVector(transAddress, 4));
+    DfVector genericVec(d->dm->readVector(genericAddress, 4));
+    DfVector transVec(d->dm->readVector(transAddress, 4));
     uint32_t dwarf_entry = 0;
-    
-    for(uint32_t i = 0; i < d->p_trans->getSize();i++)
-    {
-/*        uint32_t namePtr;
-        d->p_trans->read(i,(uint8_t *)&namePtr);*/
-        uint32_t namePtr = *(uint32_t *) d->p_trans->at(i);
-        
-        string raceName = d->dm->readSTLString(namePtr);
-        
-        if(raceName == "DWARF")
-        {
-            dwarf_entry = namePtr;
-        }
+
+    for(int32_t i =0;i < genericVec.getSize();i++){
+        uint32_t genericNamePtr = *(uint32_t *) genericVec.at(i);
+        string genericName = d->dm->readSTLString(genericNamePtr);
+        nameTable["GENERIC"].push_back(genericName);
     }
     
-    d->dwarf_lang_table_offset = dwarf_entry + word_table_offset;
-    d->p_dwarf_names = new DfVector(d->dm->readVector(d->dwarf_lang_table_offset,4));
+    for(uint32_t i = 0; i < transVec.getSize();i++)
+    {
+        uint32_t transPtr = *(uint32_t *) transVec.at(i);
+        string transName = d->dm->readSTLString(transPtr);
+        DfVector trans_names_vec(d->dm->readVector(transPtr+word_table_offset,4));
+        for(uint32_t j =0;j<trans_names_vec.getSize();j++){
+            uint32_t transNamePtr = *(uint32_t *) trans_names_vec.at(j);
+            string name = d->dm->readSTLString(transNamePtr);
+            nameTable[transName].push_back(name);
+        }
+    }
     d->nameTablesInited = true;
+}
+
+string API::TranslateName(const t_lastname & last, const map<string, vector<string> > & nameTable,const string & language)
+{
+    string trans_last;
+    assert(d->nameTablesInited);
+    map<string, vector<string> >::const_iterator it;
+    it=nameTable.find(language);
+    if(it != nameTable.end()){
+        for(int i =0;i<7;i++){
+            if(last.names[i] == -1){
+                break;
+            }
+            trans_last.append(it->second[last.names[i]]);
+        }
+    }
+    return(trans_last);
+}
+string API::TranslateName(const t_squadname & squad, const map<string, vector<string> > & nameTable,const string & language)
+{
+    string trans_squad;
+    assert(d->nameTablesInited);
+    map<string, vector<string> >::const_iterator it;
+    it=nameTable.find(language);
+    if(it != nameTable.end()){
+        for(int i =0;i<7;i++){
+            if(squad.names[i] == 0xFFFFFFFF)
+            {
+                continue;
+            }
+            if(squad.names[i] == 0)
+            {
+                break;
+            }
+            if(i ==4){
+                trans_squad.append(" ");
+            }   
+            trans_squad.append(it->second[squad.names[i]]);
+        }
+    }
+    return(trans_squad);
 }
 
 void API::FinishReadNameTables()
 {
-    delete d->p_trans;
-    delete d->p_generic;
-    delete d->p_dwarf_names;
-    d->p_trans=d->p_generic=d->p_dwarf_names=NULL;
-    d->nameTablesInited=false;
+  d->nameTablesInited=false;
 }
 
 void API::FinishReadCreatures()
@@ -1176,11 +2130,14 @@ void API::WriteRaw (const uint32_t &offset, const uint32_t &size, uint8_t *sourc
 
 bool API::InitViewAndCursor()
 {
-    
     d->window_x_offset = d->offset_descriptor->getAddress("window_x");
     d->window_y_offset = d->offset_descriptor->getAddress("window_y");
     d->window_z_offset = d->offset_descriptor->getAddress("window_z");
     d->cursor_xyz_offset = d->offset_descriptor->getAddress("cursor_xyz");
+    d->current_cursor_creature_offset = d->offset_descriptor->getAddress("current_cursor_creature");
+
+    d->pause_state_offset = d->offset_descriptor->getAddress("pause_state");
+    d->view_screen_offset = d->offset_descriptor->getAddress("view_screen");
     
     if(d->window_x_offset && d->window_y_offset && d->window_z_offset)
     {
@@ -1275,6 +2232,8 @@ uint32_t API::InitReadItems()
 {
     int items = d->offset_descriptor->getAddress("items");
     assert(items);
+
+    cerr << hex << items;
     
     d->item_material_offset = d->offset_descriptor->getOffset("item_materials");
     assert(d->item_material_offset);
@@ -1319,4 +2278,26 @@ void API::FinishReadItems()
     delete d->p_itm;
     d->p_itm = NULL;
     d->itemsInited = false;
+}
+
+bool API::ReadPauseState()
+{
+    assert(d->cursorWindowInited);
+
+    uint32_t pauseState = MreadDWord(d->pause_state_offset);
+    return(pauseState);
+}
+
+bool API::ReadViewScreen(t_viewscreen &screen)
+{
+    assert(d->cursorWindowInited);
+    uint32_t last = MreadDWord(d->view_screen_offset);
+    uint32_t screenAddr = MreadDWord(last);
+    uint32_t nextScreenPtr = MreadDWord(last+4);
+    while(nextScreenPtr != 0){
+        last = nextScreenPtr;
+        screenAddr = MreadDWord(nextScreenPtr);
+        nextScreenPtr = MreadDWord(nextScreenPtr+4);
+    }
+    return d->offset_descriptor->resolveClassId(last, screen.type);
 }

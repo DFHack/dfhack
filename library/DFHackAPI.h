@@ -28,6 +28,7 @@ distribution.
 #include "Export.h"
 #include <string>
 #include <vector>
+#include <map>
 #include "integers.h"
 #include "DFTileTypes.h"
 
@@ -45,6 +46,14 @@ namespace DFHack
         bool Attach();
         bool Detach();
         bool isAttached();
+
+        void TypeStr(const char *lpszString,int delay = 0,bool useShift = false); //Capitals are shifted automatically, other keys !@# ect need to have useShift set for them
+        void TypeSpecial(t_special command,int count=1,int delay = 0);
+        
+        bool ReadPauseState(); //true if paused, false if not
+
+        bool ReadViewScreen(t_viewscreen &);
+        
         
         // stop DF from executing
         bool Suspend();
@@ -163,6 +172,8 @@ namespace DFHack
         bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
         bool setCursorCoords (const int32_t &x, const int32_t &y, const int32_t &z);
 
+	bool getCurrentCursorCreatures(vector<uint32_t> &addresses); // This returns false if there is nothing under the cursor, it puts the addresses in a the vector if there is
+
         bool InitViewSize();
         bool getWindowSize(int32_t & width, int32_t & height);
         bool setWindowSize(const int32_t & width, const int32_t & height);
@@ -177,9 +188,11 @@ namespace DFHack
         vector<t_trait> getTraits(const uint32_t &index);
         vector<t_labor> getLabors(const uint32_t &index);
         */
-        
-        void InitReadNameTables();
+        void InitReadNameTables(map< string, vector< string > > & nameTable);
         void FinishReadNameTables();
+
+        string TranslateName(const t_lastname & last, const map< string, vector< string > > &nameTable,const string & language="GENERIC");
+        string TranslateName(const t_squadname & squad, const map< string, vector< string > > &nameTable,const string & language="GENERIC");
 
         uint32_t InitReadItems();
         bool ReadItem(const uint32_t &index, t_item & item);

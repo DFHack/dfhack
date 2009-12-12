@@ -62,7 +62,11 @@ using namespace std;
     #include <sys/stat.h>
     #include <fcntl.h>
     #include <sys/wait.h>
+    #include <X11/Xlib.h>   //need for X11 functions
+    #include <X11/extensions/XTest.h> //need for Xtest
+    #include <X11/Xatom.h> //for the atom stuff
 #else
+    #define _WIN32_WINNT 0x0500 // needed for INPUT struct
     #define WINVER 0x0500					// OpenThread(), PSAPI, Toolhelp32
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>

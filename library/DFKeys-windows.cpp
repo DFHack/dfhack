@@ -25,6 +25,63 @@ distribution.
 #include "DFCommonInternal.h"
 using namespace DFHack;
 
+// should always reflect the enum in DFkeys.h
+const static int ksTable[NUM_SPECIALS]=
+{
+    VK_RETURN,
+    VK_SPACE,
+    VK_BACK,
+    VK_TAB,
+    VK_CAPITAL,
+    VK_LSHIFT,
+    VK_RSHIFT,
+    VK_LCONTROL,
+    VK_RCONTROL,
+    VK_MENU,
+    0, //XK_VoidSymbol, // WAIT
+    VK_ESCAPE,
+    VK_UP,
+    VK_DOWN,
+    VK_LEFT,
+    VK_RIGHT,
+    VK_F1,
+    VK_F2,
+    VK_F3,
+    VK_F4,
+    VK_F5,
+    VK_F6,
+    VK_F7,
+    VK_F8,
+    VK_F9,
+    VK_F10,
+    VK_F11,
+    VK_F12,
+    VK_PRIOR,
+    VK_NEXT,
+    VK_INSERT,
+    VK_DELETE,
+    VK_HOME,
+    VK_END,
+    VK_DIVIDE,
+    VK_MULTIPLY,
+    VK_SUBTRACT,
+    VK_ADD,
+    VK_RETURN,
+    VK_NUMPAD0,
+    VK_NUMPAD1,
+    VK_NUMPAD2,
+    VK_NUMPAD3,
+    VK_NUMPAD4,
+    VK_NUMPAD5,
+    VK_NUMPAD6,
+    VK_NUMPAD7,
+    VK_NUMPAD8,
+    VK_NUMPAD9,
+    VK_SEPARATOR
+};
+
+
+
 //Windows key handlers
 struct window
 {
@@ -125,206 +182,7 @@ void API::TypeSpecial (t_special command, int count, int delay)
         input[0].type = INPUT_KEYBOARD;
         input[1].type = INPUT_KEYBOARD;
         input[1].ki.dwFlags = KEYEVENTF_KEYUP;
-        switch (command)
-        {
-            case ENTER:
-                input[0].ki.wVk = VK_RETURN;
-                input[1].ki.wVk = VK_RETURN;
-                break;
-            case SPACE:
-                input[0].ki.wVk = VK_SPACE;
-                input[1].ki.wVk = VK_SPACE;
-                break;
-            case BACK_SPACE:
-                input[0].ki.wVk = VK_BACK;
-                input[1].ki.wVk = VK_BACK;
-                break;
-            case TAB:
-                input[0].ki.wVk = VK_TAB;
-                input[1].ki.wVk = VK_TAB;
-                break;
-            case CAPS_LOCK:
-                input[0].ki.wVk = VK_CAPITAL;
-                input[1].ki.wVk = VK_CAPITAL;
-                break;
-                // These are only for pressing the modifier key itself, you can't do key combinations with them, like ctrl+C
-            case LEFT_SHIFT: // I am not positive that this will work to distinguish the left and right..
-                input[0].ki.wVk = VK_LSHIFT;
-                input[1].ki.wVk = VK_LSHIFT;
-                break;
-            case RIGHT_SHIFT:
-                input[0].ki.wVk = VK_RSHIFT;
-                input[1].ki.wVk = VK_RSHIFT;
-                break;
-            case LEFT_CONTROL:
-                input[0].ki.wVk = VK_LCONTROL;
-                input[1].ki.wVk = VK_LCONTROL;
-                break;
-            case RIGHT_CONTROL:
-                input[0].ki.wVk = VK_RCONTROL;
-                input[1].ki.wVk = VK_RCONTROL;
-                break;
-            case ALT:
-                input[0].ki.wVk = VK_MENU;
-                input[1].ki.wVk = VK_MENU;
-                break;
-            case ESCAPE:
-                input[0].ki.wVk = VK_ESCAPE;
-                input[1].ki.wVk = VK_ESCAPE;
-                break;
-            case UP:
-                input[0].ki.wVk = VK_UP;
-                input[1].ki.wVk = VK_UP;
-                break;
-            case DOWN:
-                input[0].ki.wVk = VK_DOWN;
-                input[1].ki.wVk = VK_DOWN;
-                break;
-            case LEFT:
-                input[0].ki.wVk = VK_LEFT;
-                input[1].ki.wVk = VK_LEFT;
-                break;
-            case RIGHT:
-                input[0].ki.wVk = VK_RIGHT;
-                input[1].ki.wVk = VK_RIGHT;
-                break;
-            case F1:
-                input[0].ki.wVk = VK_F1;
-                input[1].ki.wVk = VK_F1;
-                break;
-            case F2:
-                input[0].ki.wVk = VK_F2;
-                input[1].ki.wVk = VK_F2;
-                break;
-            case F3:
-                input[0].ki.wVk = VK_F3;
-                input[1].ki.wVk = VK_F3;
-                break;
-            case F4:
-                input[0].ki.wVk = VK_F4;
-                input[1].ki.wVk = VK_F4;
-                break;
-            case F5:
-                input[0].ki.wVk = VK_F5;
-                input[1].ki.wVk = VK_F5;
-                break;
-            case F6:
-                input[0].ki.wVk = VK_F6;
-                input[1].ki.wVk = VK_F6;
-                break;
-            case F7:
-                input[0].ki.wVk = VK_F7;
-                input[1].ki.wVk = VK_F7;
-                break;
-            case F8:
-                input[0].ki.wVk = VK_F8;
-                input[1].ki.wVk = VK_F8;
-                break;
-            case F9:
-                input[0].ki.wVk = VK_F9;
-                input[1].ki.wVk = VK_F9;
-                break;
-            case F10:
-                input[0].ki.wVk = VK_F10;
-                input[1].ki.wVk = VK_F10;
-                break;
-            case F11:
-                input[0].ki.wVk = VK_F11;
-                input[1].ki.wVk = VK_F11;
-                break;
-            case F12:
-                input[0].ki.wVk = VK_F12;
-                input[1].ki.wVk = VK_F12;
-                break;
-            case PAGE_UP:
-                input[0].ki.wVk = VK_PRIOR;
-                input[1].ki.wVk = VK_PRIOR;
-                break;
-            case PAGE_DOWN:
-                input[0].ki.wVk = VK_NEXT;
-                input[1].ki.wVk = VK_NEXT;
-                break;
-            case INSERT:
-                input[0].ki.wVk = VK_INSERT;
-                input[1].ki.wVk = VK_INSERT;
-                break;
-            case KEY_DELETE:
-                input[0].ki.wVk = VK_DELETE;
-                input[1].ki.wVk = VK_DELETE;
-                break;
-            case HOME:
-                input[0].ki.wVk = VK_HOME;
-                input[1].ki.wVk = VK_HOME;
-                break;
-            case END:
-                input[0].ki.wVk = VK_END;
-                input[1].ki.wVk = VK_END;
-                break;
-            case KEYPAD_DIVIDE:
-                input[0].ki.wVk = VK_DIVIDE;
-                input[1].ki.wVk = VK_DIVIDE;
-                break;
-            case KEYPAD_MULTIPLY:
-                input[0].ki.wVk = VK_MULTIPLY;
-                input[1].ki.wVk = VK_MULTIPLY;
-                break;
-            case KEYPAD_SUBTRACT:
-                input[0].ki.wVk = VK_SUBTRACT;
-                input[1].ki.wVk = VK_SUBTRACT;
-                break;
-            case KEYPAD_ADD:
-                input[0].ki.wVk = VK_ADD;
-                input[1].ki.wVk = VK_ADD;
-                break;
-            case KEYPAD_ENTER:
-                input[0].ki.wVk = VK_RETURN;
-                input[1].ki.wVk = VK_RETURN;
-                break;
-            case KEYPAD_0:
-                input[0].ki.wVk = VK_NUMPAD0;
-                input[1].ki.wVk = VK_NUMPAD0;
-                break;
-            case KEYPAD_1:
-                input[0].ki.wVk = VK_NUMPAD1;
-                input[1].ki.wVk = VK_NUMPAD1;
-                break;
-            case KEYPAD_2:
-                input[0].ki.wVk = VK_NUMPAD2;
-                input[1].ki.wVk = VK_NUMPAD2;
-                break;
-            case KEYPAD_3:
-                input[0].ki.wVk = VK_NUMPAD3;
-                input[1].ki.wVk = VK_NUMPAD3;
-                break;
-            case KEYPAD_4:
-                input[0].ki.wVk = VK_NUMPAD4;
-                input[1].ki.wVk = VK_NUMPAD4;
-                break;
-            case KEYPAD_5:
-                input[0].ki.wVk = VK_NUMPAD5;
-                input[1].ki.wVk = VK_NUMPAD5;
-                break;
-            case KEYPAD_6:
-                input[0].ki.wVk = VK_NUMPAD6;
-                input[1].ki.wVk = VK_NUMPAD6;
-                break;
-            case KEYPAD_7:
-                input[0].ki.wVk = VK_NUMPAD7;
-                input[1].ki.wVk = VK_NUMPAD7;
-                break;
-            case KEYPAD_8:
-                input[0].ki.wVk = VK_NUMPAD8;
-                input[1].ki.wVk = VK_NUMPAD8;
-                break;
-            case KEYPAD_9:
-                input[0].ki.wVk = VK_NUMPAD9;
-                input[1].ki.wVk = VK_NUMPAD9;
-                break;
-            case KEYPAD_DECIMAL_POINT:
-                input[0].ki.wVk = VK_SEPARATOR;
-                input[1].ki.wVk = VK_SEPARATOR;
-                break;
-        }
+        input[0].ki.wVk = input[1].ki.wVk = ksTable[command];
         for (int i = 0; i < count;i++)
         {
             SendInput (2, input, sizeof (input[0]));

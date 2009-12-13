@@ -120,6 +120,7 @@ Window EnumerateWindows (Display *display, Window rootWindow, const char *search
     {
         return BadWindow;
     }
+    
     for (i = 0; i < noOfChildren; i++)
     {
         Window tempWindow = EnumerateWindows (display, children[i], searchString);
@@ -133,7 +134,7 @@ Window EnumerateWindows (Display *display, Window rootWindow, const char *search
     XFree ( (char*) children);
     return retWindow;
 }
-// END ENUMERATE WINDOWS
+
 bool getDFWindow (Display *dpy, Window& dfWindow, Window & rootWindow)
 {
     //  int numScreeens = ScreenCount(dpy);
@@ -149,51 +150,6 @@ bool getDFWindow (Display *dpy, Window& dfWindow, Window & rootWindow)
         //I would ideally like to find the dfwindow using the PID, but X11 Windows only know their processes pid if the _NET_WM_PID attribute is set, which it is not for SDL 1.2.  Supposedly SDL 1.3 will set this, but who knows when that will occur.
     }
     return false;
-}
-
-// FIXME: Too much black magic.
-bool setWMClientLeaderProperty (Display *dpy, Window &dfWin, Window &currentFocus)
-{
-    static bool propertySet;
-    if (propertySet)
-    {
-        return true;
-    }
-    Atom leaderAtom;
-    Atom type;
-    int format, status;
-    unsigned long nitems = 0;
-    unsigned long extra = 0;
-    unsigned char *data = 0;
-    Window result = 0;
-    leaderAtom = XInternAtom (dpy, "WM_CLIENT_LEADER", false);
-    status = XGetWindowProperty (dpy, currentFocus, leaderAtom, 0L, 1L, false, XA_WINDOW, &type, &format, &nitems, &extra, (unsigned char **) & data);
-    if (status == Success)
-    {
-        if (data != 0)
-        {
-            result = * ( (Window*) data);
-            XFree (data);
-        }
-        else
-        {
-            Window curr = currentFocus;
-            while (data == 0)
-            {
-                Window parent;
-                Window root;
-                Window *children;
-                uint numChildren;
-                XQueryTree (dpy, curr, &root, &parent, &children, &numChildren);
-                XGetWindowProperty (dpy, parent, leaderAtom, 0L, 1L, false, XA_WINDOW, &type, &format, &nitems, &extra, (unsigned char **) &data);
-            }
-            result = * ( (Window*) data);
-            XFree (data);
-        }
-    }
-    XChangeProperty (dpy, dfWin, leaderAtom, XA_WINDOW, 32, PropModeReplace, (const unsigned char *) &result, 1);
-    propertySet = true;
-    return true;
 }
 
 // let's hope it works
@@ -269,7 +225,6 @@ void API::TypeSpecial (t_special command, int count, int delay)
             {
                 mykeysym = ksTable[command];
                 xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                //XTestFakeKeyEvent (dpy, XKeysymToKeycode (dpy, XStringToKeysym ("Shift_L")), false, CurrentTime);
                 send_xkeyevent(dpy,dfWin,rootWin,ksTable[DFHack::LEFT_SHIFT],0,false, delay * 1000);
                 send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,true, delay * 1000);
                 send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,false, delay * 1000);
@@ -286,123 +241,3 @@ void API::TypeSpecial (t_special command, int count, int delay)
         usleep (delay*1000 * count);
     }
 }
-/*
-void API::TypeStr (const char *lpszString, int delay, bool useShift)
-{
-    ForceResume();
-    Display *dpy = XOpenDisplay (NULL); // null opens the display in $DISPLAY
-    Window dfWin;
-    Window rootWin;
-    if (getDFWindow (dpy, dfWin, rootWin))
-    {
-        XWindowAttributes currAttr;
-        Window currentFocus;
-        int currentRevert;
-        XGetInputFocus (dpy, &currentFocus, &currentRevert); //get current focus
-        setWMClientLeaderProperty (dpy, dfWin, currentFocus);
-        XGetWindowAttributes (dpy, dfWin, &currAttr);
-        if (currAttr.map_state == IsUnmapped)
-        {
-            XMapRaised (dpy, dfWin);
-        }
-        if (currAttr.map_state == IsUnviewable)
-        {
-            XRaiseWindow (dpy, dfWin);
-        }
-        XSync (dpy, false);
-        XSetInputFocus (dpy, dfWin, RevertToNone, CurrentTime);
-        XSync (dpy, false);
-
-        char cChar;
-        KeyCode xkeycode;
-        char prevKey = 0;
-        int sleepAmnt = 0;
-        while ( (cChar = *lpszString++)) // loops through chars
-        {
-            xkeycode = XKeysymToKeycode (dpy, cChar);
-            //HACK  add an extra shift up event, this fixes the problem of the same character twice in a row being displayed in df
-            XTestFakeKeyEvent (dpy, XKeysymToKeycode (dpy, XStringToKeysym ("Shift_L")), false, CurrentTime);
-            if (useShift || cChar >= 'A' && cChar <= 'Z')
-            {
-                XTestFakeKeyEvent (dpy, XKeysymToKeycode (dpy, XStringToKeysym ("Shift_L")), true, CurrentTime);
-                XSync (dpy, false);
-            }
-            XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-            XSync (dpy, false);
-            XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-            XSync (dpy, false);
-            if (useShift || cChar >= 'A' && cChar <= 'Z')
-            {
-                XTestFakeKeyEvent (dpy, XKeysymToKeycode (dpy, XStringToKeysym ("Shift_L")), false, CurrentTime);
-                XSync (dpy, false);
-            }
-            usleep(10000);
-        }
-        if (currAttr.map_state == IsUnmapped)
-        {
-            //      XUnmapWindow(dpy,dfWin); if I unmap the window, it is no longer on the task bar, so just lower it instead
-            XLowerWindow (dpy, dfWin);
-        }
-        XSetInputFocus (dpy, currentFocus, currentRevert, CurrentTime);
-        XSync (dpy, true);
-    }
-    usleep (delay*1000);
-}
-*/
-
-/*
-void API::TypeSpecial (t_special command, int count, int delay)
-{
-    ForceResume();
-    if (command != WAIT)
-    {
-        KeySym mykeysym;
-        KeyCode xkeycode;
-        Display *dpy = XOpenDisplay (NULL); // null opens the display in $DISPLAY
-        Window dfWin;
-        Window rootWin;
-        if (getDFWindow (dpy, dfWin, rootWin))
-        {
-            XWindowAttributes currAttr;
-            Window currentFocus;
-            int currentRevert;
-            XGetInputFocus (dpy, &currentFocus, &currentRevert); //get current focus
-            setWMClientLeaderProperty (dpy, dfWin, currentFocus);
-            XGetWindowAttributes (dpy, dfWin, &currAttr);
-            if (currAttr.map_state == IsUnmapped)
-            {
-                XMapRaised (dpy, dfWin);
-            }
-            if (currAttr.map_state == IsUnviewable)
-            {
-                XRaiseWindow (dpy, dfWin);
-            }
-            XSync (dpy, false);
-            XSetInputFocus (dpy, dfWin, RevertToParent, CurrentTime);
-
-            for (int i = 0;i < count; i++)
-            {
-                //HACK  add an extra shift up event, this fixes the problem of the same character twice in a row being displayed in df
-                XTestFakeKeyEvent (dpy, XKeysymToKeycode (dpy, ksTable[LEFT_SHIFT]), false, CurrentTime);
-                mykeysym = ksTable[command];
-                xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                XSync (dpy, true);
-                XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                XSync (dpy, true);
-                usleep(10000);
-            }
-            if (currAttr.map_state == IsUnmapped)
-            {
-                XLowerWindow (dpy, dfWin); // can't unmap, because you lose task bar
-            }
-            XSetInputFocus (dpy, currentFocus, currentRevert, CurrentTime);
-            XSync (dpy, false);
-        }
-    }
-    else
-    {
-        usleep (delay*1000 * count);
-    }
-}
-*/

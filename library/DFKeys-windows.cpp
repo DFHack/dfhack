@@ -100,6 +100,8 @@ BOOL CALLBACK EnumWindowsProc (HWND hwnd, LPARAM lParam)
     }
     return TRUE;
 }
+
+// TODO: investigate use of PostMessage() for input sending to background windows
 void API::TypeStr (const char *lpszString, int delay, bool useShift)
 {
     //Resume();

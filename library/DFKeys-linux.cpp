@@ -195,6 +195,30 @@ bool setWMClientLeaderProperty (Display *dpy, Window &dfWin, Window &currentFocu
     propertySet = true;
     return true;
 }
+
+// let's hope it works
+void send_xkeyevent(Display *display, Window dfW,Window rootW, int keycode, int modstate, int is_press, useconds_t delay)
+{
+    XKeyEvent event;
+    
+    event.display = display;
+    event.window = dfW;
+    event.root = rootW;
+    event.subwindow = None;
+    event.time = CurrentTime;
+    event.x = 1;
+    event.y = 1;
+    event.x_root = 1;
+    event.y_root = 1;
+    event.same_screen = true;
+    
+    event.type = (is_press ? KeyPress : KeyRelease);
+    event.keycode = keycode;
+    event.state = modstate;
+    XSendEvent(event.display, event.window, true, KeyPressMask, (XEvent *) &event);
+    usleep(delay);
+}
+
 void API::TypeStr (const char *lpszString, int delay, bool useShift)
 {
     ForceResume();
@@ -203,7 +227,74 @@ void API::TypeStr (const char *lpszString, int delay, bool useShift)
     Window rootWin;
     if (getDFWindow (dpy, dfWin, rootWin))
     {
-
+        char cChar;
+        KeyCode xkeycode;
+        char prevKey = 0;
+        int sleepAmnt = 0;
+        while ( (cChar = *lpszString++)) // loops through chars
+        {
+            xkeycode = XKeysymToKeycode (dpy, cChar);
+            if (useShift || cChar >= 'A' && cChar <= 'Z')
+            {
+                send_xkeyevent(dpy,dfWin,rootWin,xkeycode,ShiftMask,true, delay * 1000);
+                send_xkeyevent(dpy,dfWin,rootWin,xkeycode,ShiftMask,false, delay * 1000);
+                XSync (dpy, false);
+            }
+            else
+            {
+                send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,true, delay * 1000);
+                send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,false, delay * 1000);
+                XSync (dpy, false);
+            }
+        }
+    }
+    else
+    {
+        cout << "FAIL!" << endl;
+    }
+}
+void API::TypeSpecial (t_special command, int count, int delay)
+{
+    ForceResume();
+    if (command != WAIT)
+    {
+        KeySym mykeysym;
+        KeyCode xkeycode;
+        Display *dpy = XOpenDisplay (NULL); // null opens the display in $DISPLAY
+        Window dfWin;
+        Window rootWin;
+        if (getDFWindow (dpy, dfWin, rootWin))
+        {
+            for (int i = 0;i < count; i++)
+            {
+                mykeysym = ksTable[command];
+                xkeycode = XKeysymToKeycode (dpy, mykeysym);
+                //XTestFakeKeyEvent (dpy, XKeysymToKeycode (dpy, XStringToKeysym ("Shift_L")), false, CurrentTime);
+                send_xkeyevent(dpy,dfWin,rootWin,ksTable[DFHack::LEFT_SHIFT],0,false, delay * 1000);
+                send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,true, delay * 1000);
+                send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,false, delay * 1000);
+                XSync (dpy, false);
+            }
+        }
+        else
+        {
+            cout << "FAIL!" << endl;
+        }
+    }
+    else
+    {
+        usleep (delay*1000 * count);
+    }
+}
+/*
+void API::TypeStr (const char *lpszString, int delay, bool useShift)
+{
+    ForceResume();
+    Display *dpy = XOpenDisplay (NULL); // null opens the display in $DISPLAY
+    Window dfWin;
+    Window rootWin;
+    if (getDFWindow (dpy, dfWin, rootWin))
+    {
         XWindowAttributes currAttr;
         Window currentFocus;
         int currentRevert;
@@ -257,7 +348,9 @@ void API::TypeStr (const char *lpszString, int delay, bool useShift)
     }
     usleep (delay*1000);
 }
+*/
 
+/*
 void API::TypeSpecial (t_special command, int count, int delay)
 {
     ForceResume();
@@ -312,3 +405,4 @@ void API::TypeSpecial (t_special command, int count, int delay)
         usleep (delay*1000 * count);
     }
 }
+*/

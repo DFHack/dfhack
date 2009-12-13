@@ -150,6 +150,8 @@ bool getDFWindow (Display *dpy, Window& dfWindow, Window & rootWindow)
     }
     return false;
 }
+
+// FIXME: Too much black magic.
 bool setWMClientLeaderProperty (Display *dpy, Window &dfWin, Window &currentFocus)
 {
     static bool propertySet;
@@ -243,7 +245,7 @@ void API::TypeStr (const char *lpszString, int delay, bool useShift)
                 XTestFakeKeyEvent (dpy, XKeysymToKeycode (dpy, XStringToKeysym ("Shift_L")), false, CurrentTime);
                 XSync (dpy, false);
             }
-
+            usleep(10000);
         }
         if (currAttr.map_state == IsUnmapped)
         {
@@ -295,7 +297,7 @@ void API::TypeSpecial (t_special command, int count, int delay)
                 XSync (dpy, true);
                 XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
                 XSync (dpy, true);
-                usleep(20000);
+                usleep(10000);
             }
             if (currAttr.map_state == IsUnmapped)
             {

@@ -19,16 +19,16 @@ int main (void)
         cerr << "DF not found" << endl;
         return 1;
     }
-    vector <t_matgloss> Plants;
+    vector <DFHack::t_matgloss> Plants;
     DF.ReadPlantMatgloss(Plants);
     
-    vector <t_matgloss> Metals;
+    vector <DFHack::t_matgloss> Metals;
     DF.ReadMetalMatgloss(Metals);
     
-    vector <t_matgloss> Stones;
+    vector <DFHack::t_matgloss> Stones;
     DF.ReadStoneMatgloss(Stones);
     
-    vector <t_matgloss> CreatureTypes;
+    vector <DFHack::t_matgloss> CreatureTypes;
     DF.ReadCreatureMatgloss(CreatureTypes);
     
     cout << "Plant: " << Plants[0].id << endl;

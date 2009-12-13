@@ -127,7 +127,7 @@ int main (int argc,const char* argv[])
         ins >> lines;     // Reads the integers from the string.
     }
     
-    vector<t_matgloss> creaturestypes;
+    vector<DFHack::t_matgloss> creaturestypes;
     
     DFHack::API DF ("Memory.xml");
     if(!DF.Attach())
@@ -141,7 +141,7 @@ int main (int argc,const char* argv[])
     vector < uint32_t > addresses;
     for(uint32_t i = 0; i < numBuildings; i++)
     {
-        t_building temp;
+        DFHack::t_building temp;
         DF.ReadBuilding(i, temp);
         if(buildingtypes[temp.type] == argv[1])
         {

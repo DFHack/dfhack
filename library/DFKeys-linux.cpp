@@ -21,8 +21,14 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
-#define LINUX_BUILD
 #include "DFCommonInternal.h"
+
+#include <X11/Xlib.h>   //need for X11 functions
+#include <X11/extensions/XTest.h> //need for Xtest
+#include <X11/Xatom.h> //for the atom stuff
+#define XK_MISCELLANY
+#include <X11/keysymdef.h>
+
 using namespace DFHack;
 
 // ENUMARATE THROUGH WINDOWS AND DISPLAY THEIR TITLES
@@ -232,389 +238,154 @@ void API::TypeSpecial (t_special command, int count, int delay)
                 {
                     case ENTER:
                         mykeysym = XStringToKeysym ("Return");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case SPACE:
                         mykeysym = XStringToKeysym ("space");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case BACK_SPACE:
                         mykeysym = XStringToKeysym ("BackSpace");
-                        xkeycode = XK_BackSpace;
-                        xkeycode = XKeysymToKeycode (dpy, XK_BackSpace);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case TAB:
                         mykeysym = XStringToKeysym ("Tab");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case CAPS_LOCK:
                         mykeysym = XStringToKeysym ("Caps_Lock");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
-                    case LEFT_SHIFT: // I am not positive that this will work to distinguish the left and right..
+                    case LEFT_SHIFT:
                         mykeysym = XStringToKeysym ("Shift_L");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case RIGHT_SHIFT:
                         mykeysym = XStringToKeysym ("Shift_R");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case LEFT_CONTROL:
                         mykeysym = XStringToKeysym ("Control_L");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
+                        break;
                     case RIGHT_CONTROL:
                         mykeysym = XStringToKeysym ("Control_R");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case ALT:
                         mykeysym = XStringToKeysym ("Alt_L");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case ESCAPE:
                         mykeysym = XStringToKeysym ("Escape");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case UP:
                         mykeysym = XStringToKeysym ("Up");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case DOWN:
                         mykeysym = XStringToKeysym ("Down");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case LEFT:
                         mykeysym = XStringToKeysym ("Left");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case RIGHT:
                         mykeysym = XStringToKeysym ("Right");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case F1:
                         mykeysym = XStringToKeysym ("F1");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case F2:
                         mykeysym = XStringToKeysym ("F2");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case F3:
                         mykeysym = XStringToKeysym ("F3");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case F4:
                         mykeysym = XStringToKeysym ("F4");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case F5:
                         mykeysym = XStringToKeysym ("F5");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case F6:
                         mykeysym = XStringToKeysym ("F6");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case F7:
                         mykeysym = XStringToKeysym ("F7");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case F8:
                         mykeysym = XStringToKeysym ("F8");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case F9:
                         mykeysym = XStringToKeysym ("F9");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case F11:
                         mykeysym = XStringToKeysym ("F11");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case F12:
                         mykeysym = XStringToKeysym ("F12");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case PAGE_UP:
                         mykeysym = XStringToKeysym ("Page_Up");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case PAGE_DOWN:
                         mykeysym = XStringToKeysym ("Page_Down");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case INSERT:
                         mykeysym = XStringToKeysym ("Insert");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
-                    case KEY_DELETE:
+                    case DFHack::DELETE: // collides with some windows stuff otherwise?
                         mykeysym = XStringToKeysym ("Delete");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case HOME:
                         mykeysym = XStringToKeysym ("Home");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case END:
                         mykeysym = XStringToKeysym ("End");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_DIVIDE:
                         mykeysym = XStringToKeysym ("KP_Divide");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_MULTIPLY:
                         mykeysym = XStringToKeysym ("KP_Multiply");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_SUBTRACT:
                         mykeysym = XStringToKeysym ("KP_Subtract");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_ADD:
                         mykeysym = XStringToKeysym ("KP_Add");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_ENTER:
                         mykeysym = XStringToKeysym ("KP_Enter");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_0:
                         mykeysym = XStringToKeysym ("KP_0");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_1:
                         mykeysym = XStringToKeysym ("KP_1");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_2:
                         mykeysym = XStringToKeysym ("KP_2");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_3:
                         mykeysym = XStringToKeysym ("KP_3");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_4:
                         mykeysym = XStringToKeysym ("KP_4");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_5:
                         mykeysym = XStringToKeysym ("KP_5");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_6:
                         mykeysym = XStringToKeysym ("KP_6");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_7:
                         mykeysym = XStringToKeysym ("KP_7");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_8:
                         mykeysym = XStringToKeysym ("KP_8");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_9:
                         mykeysym = XStringToKeysym ("KP_9");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                     case KEYPAD_DECIMAL_POINT:
                         mykeysym = XStringToKeysym ("KP_Decimal");
-                        xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                        XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
-                        XSync (dpy, true);
-                        XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
-                        XSync (dpy, true);
                         break;
                 }
+                xkeycode = XKeysymToKeycode (dpy, mykeysym);
+                XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
+                XSync (dpy, true);
+                XTestFakeKeyEvent (dpy, xkeycode, false, CurrentTime);
+                XSync (dpy, true);
                 usleep(20000);
             }
             if (currAttr.map_state == IsUnmapped)

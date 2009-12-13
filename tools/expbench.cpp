@@ -18,8 +18,8 @@ int main (void)
     uint32_t num_blocks = 0;
     uint32_t bytes_read = 0;
     uint16_t tiletypes[16][16];
-    t_designation designations[16][16];
-    t_occupancy occupancies[16][16];
+    DFHack::t_designation designations[16][16];
+    DFHack::t_occupancy occupancies[16][16];
     
     DFHack::API DF("Memory.xml");
     if(!DF.Attach())

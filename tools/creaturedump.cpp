@@ -24,7 +24,7 @@ void print_bits ( T val, std::ostream& out )
 
 int main (void)
 {
-    vector<t_matgloss> creaturestypes;
+    vector<DFHack::t_matgloss> creaturestypes;
     
     DFHack::API DF("Memory.xml");
     if(!DF.Attach())
@@ -46,7 +46,7 @@ int main (void)
     uint32_t numCreatures = DF.InitReadCreatures();
     for(uint32_t i = 0; i < numCreatures; i++)
     {
-        t_creature temp;
+        DFHack::t_creature temp;
         DF.ReadCreature(i, temp);
         cout << "address: " << temp.origin << " creature type: " << creaturestypes[temp.type].id << ", position: " << temp.x << "x " << temp.y << "y "<< temp.z << "z" << endl;
         bool addendl = false;

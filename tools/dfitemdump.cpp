@@ -13,14 +13,14 @@ using namespace std;
 
 struct matGlosses 
 {
-        vector<t_matgloss> plantMat;
-        vector<t_matgloss> woodMat;
-        vector<t_matgloss> stoneMat;
-        vector<t_matgloss> metalMat;
-        vector<t_matgloss> creatureMat;
+    vector<DFHack::t_matgloss> plantMat;
+    vector<DFHack::t_matgloss> woodMat;
+    vector<DFHack::t_matgloss> stoneMat;
+    vector<DFHack::t_matgloss> metalMat;
+    vector<DFHack::t_matgloss> creatureMat;
 };
 
-void printItem(t_item item, const vector<string> & buildingTypes,const matGlosses & mat){
+void printItem(DFHack::t_item item, const vector<string> & buildingTypes,const matGlosses & mat){
     cout << dec << "Item at x:" << item.x << " y:" << item.y << " z:" << item.z << endl;
     cout << "Type: " << (int) item.type << " " << buildingTypes[item.type] << " Address: " << hex << item.origin << endl;
     cout << "Material: ";
@@ -120,10 +120,10 @@ int main ()
  //       }
         int32_t x,y,z;
         DF.getCursorCoords(x,y,z);
-        vector <t_item> foundItems;
+        vector <DFHack::t_item> foundItems;
         for(uint32_t i = 0; i < numItems; i++)
         {
-            t_item temp;
+            DFHack::t_item temp;
             DF.ReadItem(i, temp);
             if(temp.x == x && temp.y == y && temp.z == z)
             {

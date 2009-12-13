@@ -24,13 +24,13 @@ void print_bits ( T val, std::ostream& out )
 vector <string> buildingtypes;
 map<string, vector<string> > names;
 uint32_t numCreatures;
-vector<t_matgloss> creaturestypes;
+vector<DFHack::t_matgloss> creaturestypes;
 void printDwarves(DFHack::API & DF)
 {
     int dwarfCounter = 0;
     for(uint32_t i = 0; i < numCreatures; i++)
     {
-        t_creature temp;
+        DFHack::t_creature temp;
         DF.ReadCreature(i, temp);
         string type = creaturestypes[temp.type].id;
         if(type == "DWARF" && !temp.flags1.bits.dead && !temp.flags2.bits.killed){
@@ -55,7 +55,7 @@ void printDwarves(DFHack::API & DF)
     }
 }
 
-bool getDwarfSelection(DFHack::API & DF, t_creature & toChange,string & changeString, string & commandString,int & eraseAmount,int &dwarfNum,bool &isName)
+bool getDwarfSelection(DFHack::API & DF, DFHack::t_creature & toChange,string & changeString, string & commandString,int & eraseAmount,int &dwarfNum,bool &isName)
 {
     DF.ForceResume();
     static string lastText;
@@ -138,14 +138,14 @@ bool getDwarfSelection(DFHack::API & DF, t_creature & toChange,string & changeSt
 bool waitTillChanged(DFHack::API &DF, int creatureToCheck, string changeValue, bool isName)
 {
     DF.Suspend();
-    t_creature testCre;
+    DFHack::t_creature testCre;
     DF.ReadCreature(creatureToCheck,testCre);
     int tryCount = 0;
     if(isName)
     {
         while(testCre.nick_name != changeValue && tryCount <50)
         {
-            DF.TypeSpecial(WAIT,1,100);
+            DF.TypeSpecial(DFHack::WAIT,1,100);
             DF.Suspend();
             DF.ReadCreature(creatureToCheck,testCre);
             tryCount++;
@@ -155,7 +155,7 @@ bool waitTillChanged(DFHack::API &DF, int creatureToCheck, string changeValue, b
     {
         while(testCre.custom_profession != changeValue && tryCount < 50)
         {
-            DF.TypeSpecial(WAIT,1,100);
+            DF.TypeSpecial(DFHack::WAIT,1,100);
             DF.Suspend();
             DF.ReadCreature(creatureToCheck,testCre);
             tryCount++;
@@ -169,12 +169,12 @@ bool waitTillChanged(DFHack::API &DF, int creatureToCheck, string changeValue, b
 }
 bool waitTillScreenState(DFHack::API &DF, string screenState)
 {
-    t_viewscreen current;
+    DFHack::t_viewscreen current;
     DF.Suspend();
     DF.ReadViewScreen(current);
     int tryCount = 0;
     while(buildingtypes[current.type] != screenState && tryCount < 50){
-        DF.TypeSpecial(WAIT,1,100);
+        DF.TypeSpecial(DFHack::WAIT,1,100);
         DF.Suspend();
         DF.ReadViewScreen(current);
         tryCount++;
@@ -194,7 +194,7 @@ bool waitTillCursorState(DFHack::API &DF, bool On)
     bool cursorResult = DF.getCursorCoords(x,y,z);
     while(tryCount < 50 && On && !cursorResult || !On && cursorResult)
     {
-        DF.TypeSpecial(WAIT,1,100);
+        DF.TypeSpecial(DFHack::WAIT,1,100);
         tryCount++;
         DF.Suspend();
         cursorResult = DF.getCursorCoords(x,y,z);
@@ -230,7 +230,7 @@ int main (void)
     DF.InitViewAndCursor();
     DF.Suspend();
     printDwarves(DF);
-    t_creature toChange;
+    DFHack::t_creature toChange;
     string changeString,commandString;
     int eraseAmount;
     int toChangeNum;
@@ -252,7 +252,7 @@ int main (void)
             vector<uint32_t> underCursor;
             while(!DF.getCurrentCursorCreatures(underCursor))
             {
-                DF.TypeSpecial(WAIT,1,100);
+                DF.TypeSpecial(DFHack::WAIT,1,100);
                 DF.Suspend();
                 DF.setCursorCoords(toChange.x, toChange.y,toChange.z);
             }
@@ -275,20 +275,20 @@ int main (void)
             DF.TypeStr(commandString.c_str());
             if(waitTillScreenState(DF,"viewscreen_customize_unit"))
             {
-                DF.TypeSpecial(BACK_SPACE,eraseAmount);
+                DF.TypeSpecial(DFHack::BACK_SPACE,eraseAmount);
                 if(waitTillChanged(DF,toChangeNum,"",isName))
                 {
                     DF.TypeStr(changeString.c_str());
                     if(waitTillChanged(DF,toChangeNum,changeString,isName))
                     {
-                        DF.TypeSpecial(ENTER);
-                        DF.TypeSpecial(SPACE); // should take you to unit screen if everything worked
+                        DF.TypeSpecial(DFHack::ENTER);
+                        DF.TypeSpecial(DFHack::SPACE); // should take you to unit screen if everything worked
                         if(waitTillScreenState(DF,"viewscreen_unit"))
                         {
-                            DF.TypeSpecial(SPACE);
+                            DF.TypeSpecial(DFHack::SPACE);
                             if(waitTillScreenState(DF,"viewscreen_dwarfmode"))
                             {
-                                DF.TypeSpecial(SPACE);
+                                DF.TypeSpecial(DFHack::SPACE);
                                 if(waitTillCursorState(DF,false))
                                 {
                                     completed = true;

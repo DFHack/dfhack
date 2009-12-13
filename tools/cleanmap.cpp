@@ -13,7 +13,7 @@ int main (void)
     uint32_t x_max,y_max,z_max;
     uint32_t num_blocks = 0;
     uint32_t bytes_read = 0;
-    t_occupancy occupancies[256];
+    DFHack::t_occupancy occupancies[256];
     
     DFHack::API DF ("Memory.xml");
     if(!DF.Attach())

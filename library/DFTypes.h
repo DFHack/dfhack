@@ -27,6 +27,9 @@ distribution.
 
 #include "Export.h"
 
+namespace DFHack
+{
+
 struct t_matgloss
 {
     char id[128];
@@ -675,7 +678,7 @@ enum t_special
     PAGE_UP,
     PAGE_DOWN,
     INSERT,
-    KEY_DELETE, // DELETE is already defined in winnt.h, so can't redefine it here
+    DELETE,
     HOME,
     END,
     KEYPAD_DIVIDE,
@@ -701,4 +704,6 @@ struct t_viewscreen
     int32_t type;
     //There is more info in these objects, but I don't know what it is yet
 };
+
+}// namespace DFHack
 #endif // TYPES_H_INCLUDED

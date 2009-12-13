@@ -47,11 +47,11 @@ int main (int argc, const char* argv[])
     #endif
     uint32_t x_max,y_max,z_max;
     uint16_t tiletypes[16][16];
-    t_designation designations[16][16];
+    DFHack::t_designation designations[16][16];
     uint8_t regionoffsets[16];
     map <int16_t, uint32_t> materials;
     materials.clear();
-    vector<t_matgloss> stonetypes;
+    vector<DFHack::t_matgloss> stonetypes;
     vector< vector <uint16_t> > layerassign;
     
     // init the API
@@ -84,7 +84,7 @@ int main (int argc, const char* argv[])
     }
     
     int16_t tempvein [16][16];
-    vector <t_vein> veins;
+    vector <DFHack::t_vein> veins;
     // walk the map!
     for(uint32_t x = 0; x< x_max;x++)
     {

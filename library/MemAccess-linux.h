@@ -37,7 +37,7 @@ void Mread (const uint32_t &offset, const uint32_t &size, uint8_t *target)
 {
     if(size == 0) return;
     
-    int result;
+    ssize_t result;
     result = pread(DFHack::g_ProcessMemFile, target,size,offset);
     if(result != size)
     {
@@ -162,6 +162,7 @@ bool Mwrite (uint32_t offset, uint32_t size, uint8_t *source)
             return true;
         }
     }
+    return false; // dead code
 }
 
 inline

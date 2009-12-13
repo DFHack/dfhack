@@ -241,8 +241,8 @@ bool MemInfoManager::loadFile(string path_to_xml)
             for( ; pMemInfo; pMemInfo=pMemInfo->NextSiblingElement("Entry"))
             {
                 v_pEntries.push_back(pMemInfo);
-                const char *id;
-                if(id= pMemInfo->Attribute("id"))
+                const char *id = pMemInfo->Attribute("id");
+                if(id)
                 {
                     string str_id = id;
                     map_pNamedEntries[str_id] = pMemInfo;

@@ -87,14 +87,14 @@ bool ProcessEnumerator::findProcessess()
 uint32_t ProcessEnumerator::size()
 {
     return d->processes.size();
-};
+}
 
 
 Process * ProcessEnumerator::operator[](uint32_t index)
 {
     assert(index < d->processes.size());
     return d->processes[index];
-};
+}
 
 
 ProcessEnumerator::ProcessEnumerator( string path_to_xml )

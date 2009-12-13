@@ -135,9 +135,6 @@ bool Process::Private::validate(char * exe_file,uint32_t pid, char * memFile, ve
         if(hash == (*it).getString("md5")) // are the md5 hashes the same?
         {
             memory_info * m = &*it;
-            Process * ret;
-            //cout <<"Found process " << PH <<  ". It's DF version " << m->getVersion() << "." << endl;
-            
             // df can run under wine on Linux
             if(memory_info::OS_WINDOWS == (*it).getOS())
             {
@@ -197,12 +194,11 @@ bool Process::getThreadIDs(vector<uint32_t> & threads )
 void Process::getMemRanges( vector<t_memrange> & ranges )
 {
     char buffer[1024];
-    char name[1024];
     char permissions[5]; // r/-, w/-, x/-, p/s, 0
     
     sprintf(buffer, "/proc/%lu/maps", d->my_pid);
     FILE *mapFile = ::fopen(buffer, "r");
-    uint64_t begin, end, offset, device1, device2, node;
+    uint64_t offset, device1, device2, node;
     
     while (fgets(buffer, 1024, mapFile))
     {
@@ -251,6 +247,7 @@ bool Process::suspend()
         }
     }
     d->suspended = true;
+    return true;
 }
 
 bool Process::forceresume()
@@ -260,7 +257,6 @@ bool Process::forceresume()
 
 bool Process::resume()
 {
-    int status;
     if(!d->attached)
         return false;
     if(!d->suspended)
@@ -272,6 +268,7 @@ bool Process::resume()
         return false;
     }
     d->suspended = false;
+    return true;
 }
 
 

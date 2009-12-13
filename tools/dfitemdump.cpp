@@ -78,7 +78,6 @@ int main ()
     DF.ReadCreatureMatgloss(mat.creatureMat);
 
     vector <string> buildingtypes;
-    uint32_t numBuildings = DF.InitReadBuildings(buildingtypes);
     DF.InitViewAndCursor();
     cout << "q to quit, anything else to look up items at that location\n";
     while(1)
@@ -140,10 +139,11 @@ int main ()
         }
         else{
             cerr << "Please Select which item you want to display\n";
-            for(int j = 0; j < foundItems.size(); ++j){
+            for(uint32_t j = 0; j < foundItems.size(); ++j)
+            {
                 cerr << j << " " << buildingtypes[foundItems[j].type] << endl;
             }
-            int value;
+            uint32_t value;
             string input2;
             stringstream ss;
             getline(cin, input2);

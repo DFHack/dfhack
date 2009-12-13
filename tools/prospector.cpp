@@ -145,7 +145,7 @@ int main (int argc, const char* argv[])
                     {
                         // hidden tiles are ignored unless '-a' is provided on the command line
                         // non-wall tiles are ignored
-                        if(designations[xi][yi].bits.hidden && !showhidden || !DFHack::isWallTerrain(tiletypes[xi][yi]))
+                        if( (designations[xi][yi].bits.hidden && !showhidden) || !DFHack::isWallTerrain(tiletypes[xi][yi]))
                             continue;
                         if(tempvein[xi][yi] < 0)
                             continue;

@@ -24,8 +24,6 @@ distribution.
 #include "DFCommonInternal.h"
 
 #include <X11/Xlib.h>   //need for X11 functions
-#include <X11/extensions/XTest.h> //need for Xtest
-#include <X11/Xatom.h> //for the atom stuff
 #define XK_MISCELLANY
 #define XK_LATIN1
 #include <X11/keysymdef.h>
@@ -115,7 +113,7 @@ Window EnumerateWindows (Display *display, Window rootWindow, const char *search
     }
     
     // recurse into children
-    for (int i = 0; i < noOfChildren; i++)
+    for (uint32_t i = 0; i < noOfChildren; i++)
     {
         Window tempWindow = EnumerateWindows (display, children[i], searchString);
         if (tempWindow != BadWindow)
@@ -183,14 +181,12 @@ void API::TypeStr (const char *lpszString, int delay, bool useShift)
         char cChar;
         int realDelay = delay * 1000;
         KeyCode xkeycode;
-        char prevKey = 0;
-        int sleepAmnt = 0;
         while ( (cChar = *lpszString++)) // loops through chars
         {
             // HACK: the timing here is a strange beast
             xkeycode = XKeysymToKeycode (dpy, cChar);
             send_xkeyevent(dpy,dfWin,rootWin,XKeysymToKeycode(dpy, ksTable[DFHack::LEFT_SHIFT]),0,false, realDelay);
-            if (useShift || cChar >= 'A' && cChar <= 'Z')
+            if (useShift || (cChar >= 'A' && cChar <= 'Z'))
             {
                 send_xkeyevent(dpy,dfWin,rootWin,xkeycode,ShiftMask,true, realDelay);
                 send_xkeyevent(dpy,dfWin,rootWin,xkeycode,ShiftMask,false, realDelay);

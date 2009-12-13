@@ -192,7 +192,7 @@ enum MatglossType
     Mat_Potash = 20,
     Mat_Ashes = 20,
     Mat_PearlAsh = 21,
-    Mat_Soap = 24,
+    Mat_Soap = 24
     //NUM_MATGLOSS_TYPES
 };
 

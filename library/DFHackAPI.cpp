@@ -283,7 +283,7 @@ bool API::getCurrentCursorCreatures (vector<uint32_t> &addresses)
         return false;
     }
     addresses.clear();
-    for (int i = 0;i < creUnderCursor.getSize();i++)
+    for (uint32_t i = 0;i < creUnderCursor.getSize();i++)
     {
         uint32_t temp = * (uint32_t *) creUnderCursor.at (i);
         addresses.push_back (temp);
@@ -406,7 +406,7 @@ bool API::ReadStoneMatgloss (vector<t_matgloss> & stones)
     int matgloss_colors = minfo->getOffset ("matgloss_stone_color");
     DfVector p_matgloss = d->dm->readVector (matgloss_address + matgloss_offset, 4);
 
-    int size = p_matgloss.getSize();
+    uint32_t size = p_matgloss.getSize();
     stones.resize (0);
     stones.reserve (size);
     for (uint32_t i = 0; i < size;i++)
@@ -992,7 +992,7 @@ int32_t API::ReadCreatureInBox (int32_t index, t_creature & furball,
     uint16_t coords[3];
     assert (d->creaturesInited);
     uint32_t size = d->p_cre->getSize();
-    while (index < size)
+    while (uint32_t(index) < size)
     {
         // read pointer from vector at position
         uint32_t temp = * (uint32_t *) d->p_cre->at (index);
@@ -1056,7 +1056,8 @@ bool API::ReadCreature (const int32_t &index, t_creature & furball)
     furball.profession = MreadByte (temp + d->creature_profession_offset);
     // current job HACK: the job object isn't cleanly represented here
     uint32_t jobIdAddr = MreadDWord (temp + d->creature_current_job_offset);
-    if (furball.current_job.active = jobIdAddr != 0)
+    furball.current_job.active = jobIdAddr;
+    if (jobIdAddr)
     {
         furball.current_job.jobId = MreadByte (jobIdAddr + d->creature_current_job_id_offset);
     }
@@ -1081,9 +1082,8 @@ void API::InitReadNameTables (map< string, vector<string> > & nameTable)
 
     DfVector genericVec (d->dm->readVector (genericAddress, 4));
     DfVector transVec (d->dm->readVector (transAddress, 4));
-    uint32_t dwarf_entry = 0;
 
-    for (int32_t i = 0;i < genericVec.getSize();i++)
+    for (uint32_t i = 0;i < genericVec.getSize();i++)
     {
         uint32_t genericNamePtr = * (uint32_t *) genericVec.at (i);
         string genericName = d->dm->readSTLString (genericNamePtr);
@@ -1134,7 +1134,7 @@ string API::TranslateName (const t_squadname & squad, const map<string, vector<s
     {
         for (int i = 0;i < 7;i++)
         {
-            if (squad.names[i] == 0xFFFFFFFF)
+            if (squad.names[i] == -1)
             {
                 continue;
             }

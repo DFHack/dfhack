@@ -41,7 +41,7 @@ DfVector DMWindows40d::readVector (uint32_t offset, uint32_t item_size)
     uint32_t end = MreadDWord(offset+8);
     uint32_t size = (end - start) /4;
     return DfVector(start,size,item_size);
-};
+}
 
 
 size_t DMWindows40d::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
@@ -76,7 +76,7 @@ Uint32 capacity
     
     buffer[read_real] = 0;
     return read_real;
-};
+}
 
 const string DMWindows40d::readSTLString (uint32_t offset)
 {
@@ -111,7 +111,7 @@ const string DMWindows40d::readSTLString (uint32_t offset)
     string ret = temp;
     delete temp;
     return ret;
-};
+}
 
 
 DfVector DMLinux40d::readVector (uint32_t offset, uint32_t item_size)
@@ -128,7 +128,7 @@ DfVector DMLinux40d::readVector (uint32_t offset, uint32_t item_size)
     uint32_t end = MreadDWord(offset+4);
     uint32_t size = (end - start) /4;
     return DfVector(start,size,item_size);
-};
+}
 
 struct _Rep_base
 {
@@ -146,7 +146,7 @@ size_t DMLinux40d::readSTLString (uint32_t offset, char * buffer, size_t bufcapa
     Mread(offset,read_real,(uint8_t * )buffer);
     buffer[read_real] = 0;
     return read_real;
-};
+}
 
 const string DMLinux40d::readSTLString (uint32_t offset)
 {
@@ -161,4 +161,4 @@ const string DMLinux40d::readSTLString (uint32_t offset)
     string ret(temp);
     delete temp;
     return ret;
-};
+}

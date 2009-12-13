@@ -31,6 +31,7 @@ distribution.
 #include <map>
 #include "integers.h"
 #include "DFTileTypes.h"
+#include "DFKeys.h"
 
 namespace DFHack
 {

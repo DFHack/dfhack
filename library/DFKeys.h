@@ -79,7 +79,8 @@ enum t_special
     KEYPAD_7,
     KEYPAD_8,
     KEYPAD_9,
-    KEYPAD_DECIMAL_POINT
+    KEYPAD_DECIMAL_POINT,
+    NUM_SPECIALS
 };
 }
 #endif // KEYS_H_INCLUDED

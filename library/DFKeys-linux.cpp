@@ -27,9 +27,65 @@ distribution.
 #include <X11/extensions/XTest.h> //need for Xtest
 #include <X11/Xatom.h> //for the atom stuff
 #define XK_MISCELLANY
+#define XK_LATIN1
 #include <X11/keysymdef.h>
 
 using namespace DFHack;
+
+// should always reflect the enum in DFkeys.h
+const static KeySym ksTable[NUM_SPECIALS]=
+{
+    XK_Return,
+    XK_space,
+    XK_BackSpace,
+    XK_Tab,
+    XK_Caps_Lock,
+    XK_Shift_L,
+    XK_Shift_R,
+    XK_Control_L,
+    XK_Control_R,
+    XK_Alt_L,
+    XK_VoidSymbol, // WAIT
+    XK_Escape,
+    XK_Up,
+    XK_Down,
+    XK_Left,
+    XK_Right,
+    XK_F1,
+    XK_F2,
+    XK_F3,
+    XK_F4,
+    XK_F5,
+    XK_F6,
+    XK_F7,
+    XK_F8,
+    XK_F9,
+    XK_F10,
+    XK_F11,
+    XK_F12,
+    XK_Page_Up,
+    XK_Page_Down,
+    XK_Insert,
+    XK_Delete,
+    XK_Home,
+    XK_End,
+    XK_KP_Divide,
+    XK_KP_Multiply,
+    XK_KP_Subtract,
+    XK_KP_Add,
+    XK_KP_Enter,
+    XK_KP_0,
+    XK_KP_1,
+    XK_KP_2,
+    XK_KP_3,
+    XK_KP_4,
+    XK_KP_5,
+    XK_KP_6,
+    XK_KP_7,
+    XK_KP_8,
+    XK_KP_9,
+    XK_KP_Decimal
+};
 
 // ENUMARATE THROUGH WINDOWS AND DISPLAY THEIR TITLES
 Window EnumerateWindows (Display *display, Window rootWindow, const char *searchString)
@@ -232,155 +288,8 @@ void API::TypeSpecial (t_special command, int count, int delay)
             for (int i = 0;i < count; i++)
             {
                 //HACK  add an extra shift up event, this fixes the problem of the same character twice in a row being displayed in df
-                XTestFakeKeyEvent (dpy, XKeysymToKeycode (dpy, XStringToKeysym ("Shift_L")), false, CurrentTime);
-
-                switch (command)
-                {
-                    case ENTER:
-                        mykeysym = XStringToKeysym ("Return");
-                        break;
-                    case SPACE:
-                        mykeysym = XStringToKeysym ("space");
-                        break;
-                    case BACK_SPACE:
-                        mykeysym = XStringToKeysym ("BackSpace");
-                        break;
-                    case TAB:
-                        mykeysym = XStringToKeysym ("Tab");
-                        break;
-                    case CAPS_LOCK:
-                        mykeysym = XStringToKeysym ("Caps_Lock");
-                        break;
-                    case LEFT_SHIFT:
-                        mykeysym = XStringToKeysym ("Shift_L");
-                        break;
-                    case RIGHT_SHIFT:
-                        mykeysym = XStringToKeysym ("Shift_R");
-                        break;
-                    case LEFT_CONTROL:
-                        mykeysym = XStringToKeysym ("Control_L");
-                        break;
-                    case RIGHT_CONTROL:
-                        mykeysym = XStringToKeysym ("Control_R");
-                        break;
-                    case ALT:
-                        mykeysym = XStringToKeysym ("Alt_L");
-                        break;
-                    case ESCAPE:
-                        mykeysym = XStringToKeysym ("Escape");
-                        break;
-                    case UP:
-                        mykeysym = XStringToKeysym ("Up");
-                        break;
-                    case DOWN:
-                        mykeysym = XStringToKeysym ("Down");
-                        break;
-                    case LEFT:
-                        mykeysym = XStringToKeysym ("Left");
-                        break;
-                    case RIGHT:
-                        mykeysym = XStringToKeysym ("Right");
-                        break;
-                    case F1:
-                        mykeysym = XStringToKeysym ("F1");
-                        break;
-                    case F2:
-                        mykeysym = XStringToKeysym ("F2");
-                        break;
-                    case F3:
-                        mykeysym = XStringToKeysym ("F3");
-                        break;
-                    case F4:
-                        mykeysym = XStringToKeysym ("F4");
-                        break;
-                    case F5:
-                        mykeysym = XStringToKeysym ("F5");
-                        break;
-                    case F6:
-                        mykeysym = XStringToKeysym ("F6");
-                        break;
-                    case F7:
-                        mykeysym = XStringToKeysym ("F7");
-                        break;
-                    case F8:
-                        mykeysym = XStringToKeysym ("F8");
-                        break;
-                    case F9:
-                        mykeysym = XStringToKeysym ("F9");
-                        break;
-                    case F11:
-                        mykeysym = XStringToKeysym ("F11");
-                        break;
-                    case F12:
-                        mykeysym = XStringToKeysym ("F12");
-                        break;
-                    case PAGE_UP:
-                        mykeysym = XStringToKeysym ("Page_Up");
-                        break;
-                    case PAGE_DOWN:
-                        mykeysym = XStringToKeysym ("Page_Down");
-                        break;
-                    case INSERT:
-                        mykeysym = XStringToKeysym ("Insert");
-                        break;
-                    case DFHack::DELETE: // collides with some windows stuff otherwise?
-                        mykeysym = XStringToKeysym ("Delete");
-                        break;
-                    case HOME:
-                        mykeysym = XStringToKeysym ("Home");
-                        break;
-                    case END:
-                        mykeysym = XStringToKeysym ("End");
-                        break;
-                    case KEYPAD_DIVIDE:
-                        mykeysym = XStringToKeysym ("KP_Divide");
-                        break;
-                    case KEYPAD_MULTIPLY:
-                        mykeysym = XStringToKeysym ("KP_Multiply");
-                        break;
-                    case KEYPAD_SUBTRACT:
-                        mykeysym = XStringToKeysym ("KP_Subtract");
-                        break;
-                    case KEYPAD_ADD:
-                        mykeysym = XStringToKeysym ("KP_Add");
-                        break;
-                    case KEYPAD_ENTER:
-                        mykeysym = XStringToKeysym ("KP_Enter");
-                        break;
-                    case KEYPAD_0:
-                        mykeysym = XStringToKeysym ("KP_0");
-                        break;
-                    case KEYPAD_1:
-                        mykeysym = XStringToKeysym ("KP_1");
-                        break;
-                    case KEYPAD_2:
-                        mykeysym = XStringToKeysym ("KP_2");
-                        break;
-                    case KEYPAD_3:
-                        mykeysym = XStringToKeysym ("KP_3");
-                        break;
-                    case KEYPAD_4:
-                        mykeysym = XStringToKeysym ("KP_4");
-                        break;
-                    case KEYPAD_5:
-                        mykeysym = XStringToKeysym ("KP_5");
-                        break;
-                    case KEYPAD_6:
-                        mykeysym = XStringToKeysym ("KP_6");
-                        break;
-                    case KEYPAD_7:
-                        mykeysym = XStringToKeysym ("KP_7");
-                        break;
-                    case KEYPAD_8:
-                        mykeysym = XStringToKeysym ("KP_8");
-                        break;
-                    case KEYPAD_9:
-                        mykeysym = XStringToKeysym ("KP_9");
-                        break;
-                    case KEYPAD_DECIMAL_POINT:
-                        mykeysym = XStringToKeysym ("KP_Decimal");
-                        break;
-                }
+                XTestFakeKeyEvent (dpy, XKeysymToKeycode (dpy, ksTable[LEFT_SHIFT]), false, CurrentTime);
+                mykeysym = ksTable[command];
                 xkeycode = XKeysymToKeycode (dpy, mykeysym);
                 XTestFakeKeyEvent (dpy, xkeycode, true, CurrentTime);
                 XSync (dpy, true);

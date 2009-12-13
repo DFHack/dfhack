@@ -46,11 +46,13 @@ stdint_win.h
 
 SET(PROJECT_SRCS_LINUX
 DFProcess-linux.cpp
+DFKeys-linux.cpp
 DFProcessEnumerator-linux.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
 DFProcess-windows.cpp
+DFKeys-windows.cpp
 DFProcessEnumerator-windows.cpp
 )
 

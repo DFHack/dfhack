@@ -102,6 +102,7 @@ BOOL CALLBACK EnumWindowsProc (HWND hwnd, LPARAM lParam)
 }
 
 // TODO: investigate use of PostMessage() for input sending to background windows
+// TODO: also investigate possible problems with UIPI on Vista and 7
 void API::TypeStr (const char *lpszString, int delay, bool useShift)
 {
     //Resume();

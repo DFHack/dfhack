@@ -47,12 +47,18 @@ namespace DFHack
         bool Attach();
         bool Detach();
         bool isAttached();
-
-        void TypeStr(const char *lpszString,int delay = 0,bool useShift = false); //Capitals are shifted automatically, other keys !@# ect need to have useShift set for them
+        
+        // type a string into the DF window
+        //Capitals are shifted automatically, other keys !@# ect need to have useShift set for them
+        void TypeStr(const char *lpszString,int delay = 0,bool useShift = false);
+        
+        // type a special key into DF window $count times
         void TypeSpecial(t_special command,int count=1,int delay = 0);
         
-        bool ReadPauseState(); //true if paused, false if not
-
+        //true if paused, false if not
+        bool ReadPauseState(); 
+        
+        // read the DF menu view state
         bool ReadViewScreen(t_viewscreen &);
         
         
@@ -61,6 +67,7 @@ namespace DFHack
         // resume DF
         bool Resume();
         /**
+         * Force resume
          * be careful with this one
          */
         bool ForceResume();
@@ -155,7 +162,7 @@ namespace DFHack
         void FinishReadVegetation();
         
         uint32_t InitReadCreatures();
-        // returns index of creature actually read or -1 if no creature can be found
+        /// returns index of creature actually read or -1 if no creature can be found
         int32_t ReadCreatureInBox(int32_t index, t_creature & furball,
                                   const uint16_t &x1, const uint16_t &y1,const uint16_t &z1,
                                   const uint16_t &x2, const uint16_t &y2,const uint16_t &z2);
@@ -173,7 +180,8 @@ namespace DFHack
         bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
         bool setCursorCoords (const int32_t &x, const int32_t &y, const int32_t &z);
 
-	bool getCurrentCursorCreatures(vector<uint32_t> &addresses); // This returns false if there is nothing under the cursor, it puts the addresses in a the vector if there is
+        /// This returns false if there is nothing under the cursor, it puts the addresses in a vector if there is
+        bool getCurrentCursorCreatures(vector<uint32_t> &addresses); 
 
         bool InitViewSize();
         bool getWindowSize(int32_t & width, int32_t & height);

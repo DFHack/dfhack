@@ -61,7 +61,7 @@ enum t_special
     PAGE_UP,
     PAGE_DOWN,
     INSERT,
-    DELETE,
+    DFK_DELETE, // stupid windows fails here
     HOME,
     END,
     KEYPAD_DIVIDE,

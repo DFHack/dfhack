@@ -63,11 +63,11 @@ using namespace std;
     #include <fcntl.h>
     #include <sys/wait.h>
 #else
-    #define _WIN32_WINNT 0x0500 // needed for INPUT struct
-    #define WINVER 0x0500					// OpenThread(), PSAPI, Toolhelp32
+    #define _WIN32_WINNT 0x0501 // needed for INPUT struct
+    #define WINVER 0x0501					// OpenThread(), PSAPI, Toolhelp32
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
-    #include <winbase.h>
+    //#include <winbase.h>
     #include <winnt.h>
     #include <psapi.h>
     #include <tlhelp32.h>

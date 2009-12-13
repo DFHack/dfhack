@@ -189,7 +189,7 @@ void API::TypeStr (const char *lpszString, int delay, bool useShift)
         {
             // HACK: the timing here is a strange beast
             xkeycode = XKeysymToKeycode (dpy, cChar);
-            send_xkeyevent(dpy,dfWin,rootWin,ksTable[DFHack::LEFT_SHIFT],0,false, realDelay);
+            send_xkeyevent(dpy,dfWin,rootWin,XKeysymToKeycode(dpy, ksTable[DFHack::LEFT_SHIFT]),0,false, realDelay);
             if (useShift || cChar >= 'A' && cChar <= 'Z')
             {
                 send_xkeyevent(dpy,dfWin,rootWin,xkeycode,ShiftMask,true, realDelay);
@@ -228,7 +228,7 @@ void API::TypeSpecial (t_special command, int count, int delay)
                 // HACK: the timing here is a strange beast
                 mykeysym = ksTable[command];
                 xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                send_xkeyevent(dpy,dfWin,rootWin,ksTable[DFHack::LEFT_SHIFT],0,false, realDelay);
+                send_xkeyevent(dpy,dfWin,rootWin,XKeysymToKeycode(dpy, ksTable[DFHack::LEFT_SHIFT]),0,false, realDelay);
                 send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,true, realDelay);
                 send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,false, realDelay);
                 XSync (dpy, false);

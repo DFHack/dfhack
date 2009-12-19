@@ -24,9 +24,7 @@ distribution.
 #include "DFCommonInternal.h"
 
 #include <X11/Xlib.h>   //need for X11 functions
-#define XK_MISCELLANY
-#define XK_LATIN1
-#include <X11/keysymdef.h>
+#include <X11/keysym.h>
 
 //FIXME: 
 

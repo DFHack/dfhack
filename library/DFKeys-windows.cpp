@@ -103,6 +103,7 @@ BOOL CALLBACK EnumWindowsProc (HWND hwnd, LPARAM lParam)
 
 // TODO: investigate use of PostMessage() for input sending to background windows
 // TODO: also investigate possible problems with UIPI on Vista and 7
+
 void API::TypeStr (const char *lpszString, int delay, bool useShift)
 {
     //Resume();
@@ -114,54 +115,33 @@ void API::TypeStr (const char *lpszString, int delay, bool useShift)
     myWindow.pid = GetProcessId (DFHack::g_ProcessHandle);
     EnumWindows (EnumWindowsProc, (LPARAM) &myWindow);
 
-    HWND nextWindow = GetWindow (myWindow.windowHandle, GW_HWNDNEXT);
-
-    SetActiveWindow (myWindow.windowHandle);
-    SetForegroundWindow (myWindow.windowHandle);
-
     char cChar;
-
+    DWORD dfProccess = GetWindowThreadProcessId(myWindow.windowHandle,NULL);
+    DWORD currentProccess = GetWindowThreadProcessId(currentWindow,NULL);
+    AttachThreadInput(currentProccess,dfProccess,TRUE); //The two threads have to have attached input in order to change the keyboard state, which is needed to set the shift state
     while ( (cChar = *lpszString++)) // loops through chars
     {
         short vk = VkKeyScan (cChar); // keycode of char
         if (useShift || (vk >> 8) &1)   // char is capital, so need to hold down shift
         {
-            //shift down
-            INPUT input[4] = {0};
-            input[0].type = INPUT_KEYBOARD;
-            input[0].ki.wVk = VK_SHIFT;
-
-            input[1].type = INPUT_KEYBOARD;
-            input[1].ki.wVk = vk;
-
-            input[2].type = INPUT_KEYBOARD;
-            input[2].ki.wVk = vk;
-            input[2].ki.dwFlags = KEYEVENTF_KEYUP;
-
-            // shift up
-            input[3].type = INPUT_KEYBOARD;
-            input[3].ki.wVk = VK_SHIFT;
-            input[3].ki.dwFlags = KEYEVENTF_KEYUP;
-
-            SendInput (4, input, sizeof (input[0]));
+            BYTE keybstate[256] = {0};
+            BYTE keybstateOrig[256] = {0};
+            GetKeyboardState((LPBYTE)&keybstateOrig);
+            GetKeyboardState((LPBYTE)&keybstate);
+            keybstate[VK_SHIFT] |= 0x80; //Set shift state to on in variable
+            SetKeyboardState((LPBYTE)&keybstate); //set the current state to the variable
+            SendMessage(myWindow.windowHandle,WM_KEYDOWN,vk,0);
+            SendMessage(myWindow.windowHandle,WM_KEYUP,vk,0);
+            SetKeyboardState((LPBYTE)&keybstateOrig); // reset the shift state to the original state
         }
         else
         {
-            INPUT input[2] = {0};
-            input[0].type = INPUT_KEYBOARD;
-            input[0].ki.wVk = vk;
-
-            input[1].type = INPUT_KEYBOARD;
-            input[1].ki.wVk = vk;
-            input[1].ki.dwFlags = KEYEVENTF_KEYUP;
-            SendInput (2, input, sizeof (input[0]));
+            SendMessage(myWindow.windowHandle,WM_KEYDOWN,vk,0);
+            SendMessage(myWindow.windowHandle,WM_KEYUP,vk,0);
         }
     }
-    SetForegroundWindow (currentWindow);
-    SetActiveWindow (currentWindow);
-    SetWindowPos (myWindow.windowHandle, nextWindow, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    AttachThreadInput(currentProccess,dfProccess,FALSE); //detach the threads
     Sleep (delay);
-
 }
 void API::TypeSpecial (t_special command, int count, int delay)
 {
@@ -173,26 +153,11 @@ void API::TypeSpecial (t_special command, int count, int delay)
         myWindow.pid = GetProcessId (DFHack::g_ProcessHandle);
         EnumWindows (EnumWindowsProc, (LPARAM) &myWindow);
 
-        HWND nextWindow = GetWindow (myWindow.windowHandle, GW_HWNDNEXT);
-        SetForegroundWindow (myWindow.windowHandle);
-        SetActiveWindow (myWindow.windowHandle);
-        INPUT shift;
-        shift.type = INPUT_KEYBOARD;
-        shift.ki.wVk = VK_SHIFT;
-        shift.ki.dwFlags = KEYEVENTF_KEYUP;
-        SendInput (1, &shift, sizeof (shift));
-        INPUT input[2] = {0};
-        input[0].type = INPUT_KEYBOARD;
-        input[1].type = INPUT_KEYBOARD;
-        input[1].ki.dwFlags = KEYEVENTF_KEYUP;
-        input[0].ki.wVk = input[1].ki.wVk = ksTable[command];
         for (int i = 0; i < count;i++)
         {
-            SendInput (2, input, sizeof (input[0]));
+            SendMessage(myWindow.windowHandle,WM_KEYDOWN,ksTable[command],0);
+            SendMessage(myWindow.windowHandle,WM_KEYUP,ksTable[command],0);
         }
-        SetForegroundWindow (currentWindow);
-        SetActiveWindow (currentWindow);
-        SetWindowPos (myWindow.windowHandle, nextWindow, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
         Sleep (delay);
     }
     else

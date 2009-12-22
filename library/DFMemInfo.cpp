@@ -296,7 +296,7 @@ void memory_info::setMultiClassChild (uint32_t multi_index, const char * name, c
 
 bool memory_info::resolveClassId(uint32_t address, int32_t & classid)
 {
-    uint32_t vtable = MreadDWord(address);
+    uint32_t vtable = g_pProcess->readDWord(address);
     // FIXME: stupid search. we need a better container
     for(uint32_t i = 0;i< classes.size();i++)
     {
@@ -306,7 +306,7 @@ bool memory_info::resolveClassId(uint32_t address, int32_t & classid)
             if(classes[i].is_multiclass)
             {
                 vector <t_type>& vec = classsubtypes[classes[i].multi_index];
-                uint32_t type = MreadWord(address + classes[i].type_offset);
+                uint32_t type = g_pProcess->readWord(address + classes[i].type_offset);
                 //printf ("class %d:%s offset 0x%x\n", i , classes[i].classname.c_str(), classes[i].type_offset);
                 // return typed building if successful
                 for (uint32_t k = 0; k < vec.size();k++)

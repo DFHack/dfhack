@@ -25,9 +25,13 @@ distribution.
 #ifndef KEYS_H_INCLUDED
 #define KEYS_H_INCLUDED
 
+#include "Export.h"
+
 namespace DFHack
 {
 
+class Process;
+    
 enum t_special
 {
     ENTER,
@@ -82,5 +86,18 @@ enum t_special
     KEYPAD_DECIMAL_POINT,
     NUM_SPECIALS
 };
+
+class DFHACK_EXPORT DFWindow
+{
+    class Private;
+    private:
+        Private * d;
+    public:
+        DFWindow(Process * p);
+        ~DFWindow();
+        void TypeStr (const char *input, int delay = 0, bool useShift = false);
+        void TypeSpecial (t_special command, int count = 1, int delay = 0);
+};
+
 }
 #endif // KEYS_H_INCLUDED

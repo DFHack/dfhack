@@ -31,7 +31,7 @@ distribution.
 #include <map>
 #include "integers.h"
 #include "DFTileTypes.h"
-#include "DFKeys.h"
+#include "DFWindow.h"
 
 namespace DFHack
 {
@@ -47,13 +47,6 @@ namespace DFHack
         bool Attach();
         bool Detach();
         bool isAttached();
-        
-        // type a string into the DF window
-        //Capitals are shifted automatically, other keys !@# ect need to have useShift set for them
-        void TypeStr(const char *lpszString,int delay = 0,bool useShift = false);
-        
-        // type a special key into DF window $count times
-        void TypeSpecial(t_special command,int count=1,int delay = 0);
         
         //true if paused, false if not
         bool ReadPauseState(); 
@@ -209,6 +202,7 @@ namespace DFHack
         
         memory_info getMemoryInfo();
         Process * getProcess();
+        DFWindow * getWindow();
     };
 } // namespace DFHack
 #endif // SIMPLEAPI_H_INCLUDED

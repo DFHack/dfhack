@@ -609,10 +609,7 @@ union t_occupancy
     // splatter. everyone loves splatter.
     unsigned int mud : 1;
     unsigned int vomit :1;
-    unsigned int debris1 :1;
-    unsigned int debris2 :1;
-    unsigned int debris3 :1;
-    unsigned int debris4 :1;
+    unsigned int broken_arrows_color :4;
     unsigned int blood_g : 1;
     unsigned int blood_g2 : 1;
     unsigned int blood_b : 1;
@@ -631,7 +628,7 @@ union t_occupancy
     unsigned int slime2 : 1;
     unsigned int blood : 1;
     unsigned int blood2 : 1;
-    unsigned int debris5 : 1;
+    unsigned int broken_arrows_variant : 1;
     unsigned int snow : 1;
     } bits;
     struct {

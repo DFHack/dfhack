@@ -24,7 +24,7 @@ distribution.
 #include "DFCommonInternal.h"
 using namespace DFHack;
 
-class Process::Private
+class NormalProcess::Private
 {
     public:
         Private()
@@ -33,6 +33,7 @@ class Process::Private
             my_descriptor = NULL;
             my_handle = NULL;
             my_main_thread = NULL;
+            my_window = NULL;
             my_pid = 0;
             attached = false;
             suspended = false;
@@ -40,6 +41,7 @@ class Process::Private
         ~Private(){};
         DataModel* my_datamodel;
         memory_info * my_descriptor;
+        DFWindow * my_window;
         ProcessHandle my_handle;
         HANDLE my_main_thread;
         uint32_t my_pid;
@@ -49,7 +51,7 @@ class Process::Private
         bool identified;
 };
 
-Process::Process(uint32_t pid, vector <memory_info> & known_versions)
+NormalProcess::NormalProcess(uint32_t pid, vector <memory_info> & known_versions)
 : d(new Private())
 {
     HMODULE hmod = NULL;
@@ -69,17 +71,20 @@ Process::Process(uint32_t pid, vector <memory_info> & known_versions)
     if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk) == 0)
     {
         CloseHandle(hProcess);
+        cout << "EnumProcessModules fail'd" << endl;
         return; //if enumprocessModules fails, give up
     }
     
     // got base ;)
     uint32_t base = (uint32_t)hmod;
     
+    // temporarily assign this to allow some checks
+    d->my_handle = hProcess;
     // read from this process
-    g_ProcessHandle = hProcess;
-    uint32_t pe_offset = MreadDWord(base+0x3C);
-    Mread(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
-    Mread(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
+    uint32_t pe_offset = readDWord(base+0x3C);
+    read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
+    read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
+    d->my_handle = 0;
     
     // see if there's a version entry that matches this process
     vector<memory_info>::iterator it;
@@ -123,11 +128,15 @@ Process::Process(uint32_t pid, vector <memory_info> & known_versions)
     {
         CloseHandle(hProcess);
     }
+    else
+    {
+        d->my_window = new DFWindow(this);
+    }
 }
 /*
 */
 
-Process::~Process()
+NormalProcess::~NormalProcess()
 {
     if(d->attached)
     {
@@ -144,36 +153,50 @@ Process::~Process()
     {
         CloseHandle(d->my_main_thread);
     }
+    if(d->my_window)
+    {
+        delete d->my_window;
+    }
     delete d;
 }
 
 
-DataModel *Process::getDataModel()
+DataModel *NormalProcess::getDataModel()
 {
     return d->my_datamodel;
 }
 
 
-memory_info * Process::getDescriptor()
+memory_info * NormalProcess::getDescriptor()
 {
     return d->my_descriptor;
 }
 
-bool Process::isSuspended()
+DFWindow * NormalProcess::getWindow()
+{
+    return d->my_window;
+}
+
+int NormalProcess::getPID()
+{
+    return d->my_pid;
+}
+
+bool NormalProcess::isSuspended()
 {
     return d->suspended;
 }
-bool Process::isAttached()
+bool NormalProcess::isAttached()
 {
     return d->attached;
 }
 
-bool Process::isIdentified()
+bool NormalProcess::isIdentified()
 {
     return d->identified;
 }
 
-bool Process::suspend()
+bool NormalProcess::suspend()
 {
     if(!d->attached)
         return false;
@@ -186,7 +209,7 @@ bool Process::suspend()
     return true;
 }
 
-bool Process::forceresume()
+bool NormalProcess::forceresume()
 {
     if(!d->attached)
         return false;
@@ -196,7 +219,7 @@ bool Process::forceresume()
 }
 
 
-bool Process::resume()
+bool NormalProcess::resume()
 {
     if(!d->attached)
         return false;
@@ -209,7 +232,7 @@ bool Process::resume()
     return true;
 }
 
-bool Process::attach()
+bool NormalProcess::attach()
 {
     if(g_pProcess != NULL)
     {
@@ -217,14 +240,13 @@ bool Process::attach()
     }
     d->attached = true;
     g_pProcess = this;
-    g_ProcessHandle = d->my_handle;
     suspend();
 
     return true;
 }
 
 
-bool Process::detach()
+bool NormalProcess::detach()
 {
     if(!d->attached)
     {
@@ -233,11 +255,10 @@ bool Process::detach()
     resume();
     d->attached = false;
     g_pProcess = NULL;
-    g_ProcessHandle = 0;
     return true;
 }
 
-bool Process::getThreadIDs(vector<uint32_t> & threads )
+bool NormalProcess::getThreadIDs(vector<uint32_t> & threads )
 {
     HANDLE AllThreads = INVALID_HANDLE_VALUE; 
     THREADENTRY32 te32;
@@ -268,7 +289,7 @@ bool Process::getThreadIDs(vector<uint32_t> & threads )
 }
 
 //FIXME: use VirtualQuery to probe for memory ranges, cross-reference with base-corrected PE segment entries
-void Process::getMemRanges( vector<t_memrange> & ranges )
+void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
 {
     // code here is taken from hexsearch by Silas Dunmore.
     // As this IMHO isn't a 'sunstantial portion' of anything, I'm not including the MIT license here
@@ -278,10 +299,88 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     t_memrange temp;
     uint32_t base = d->my_descriptor->getBase();
     temp.start = base + 0x1000; // more fakery.
-    temp.end = base + MreadDWord(base+MreadDWord(base+0x3C)+0x50)-1; // yay for magic.
+    temp.end = base + readDWord(base+readDWord(base+0x3C)+0x50)-1; // yay for magic.
     temp.read = 1;
     temp.write = 1;
     temp.execute = 0; // fake
     strcpy(temp.name,"pants");// that's right. I'm calling it pants. Windows can go to HELL
     ranges.push_back(temp);
 }
+
+uint8_t NormalProcess::readByte (const uint32_t offset)
+{
+    uint8_t result;
+    ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint8_t), NULL);
+    return result;
+}
+
+void NormalProcess::readByte (const uint32_t offset,uint8_t &result)
+{
+    ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint8_t), NULL);
+}
+
+uint16_t NormalProcess::readWord (const uint32_t offset)
+{
+    uint16_t result;
+    ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint16_t), NULL);
+    return result;
+}
+
+void NormalProcess::readWord (const uint32_t offset, uint16_t &result)
+{
+    ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint16_t), NULL);
+}
+
+uint32_t NormalProcess::readDWord (const uint32_t offset)
+{
+    uint32_t result;
+    ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint32_t), NULL);
+    return result;
+}
+
+void NormalProcess::readDWord (const uint32_t offset, uint32_t &result)
+{
+    ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint32_t), NULL);
+}
+
+void NormalProcess::read (const uint32_t offset, uint32_t size, uint8_t *target)
+{
+    ReadProcessMemory(d->my_handle, (int*) offset, target, size, NULL);
+}
+
+// WRITING
+void NormalProcess::writeDWord (const uint32_t offset, uint32_t data)
+{
+    WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(uint32_t), NULL);
+}
+
+// using these is expensive.
+void NormalProcess::writeWord (uint32_t offset, uint16_t data)
+{
+    WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(uint16_t), NULL);
+}
+
+void NormalProcess::writeByte (uint32_t offset, uint8_t data)
+{
+    WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(uint8_t), NULL);
+}
+
+void NormalProcess::write (uint32_t offset, uint32_t size, const uint8_t *source)
+{
+    WriteProcessMemory(d->my_handle, (int*) offset, source, size, NULL);
+}
+
+
+
+///FIXME: reduce use of temporary objects
+const string NormalProcess::readCString (const uint32_t offset)
+{
+    string temp;
+    char temp_c[256];
+    DWORD read;
+    ReadProcessMemory(d->my_handle, (int *) offset, temp_c, 255, &read);
+    temp_c[read+1] = 0;
+    temp = temp_c;
+    return temp;
+}
+

@@ -37,8 +37,8 @@ DfVector DMWindows40d::readVector (uint32_t offset, uint32_t item_size)
         we don't care about alloc_end because we don't try to add stuff
         we also don't care about the allocator thing in front
     */
-    uint32_t start = MreadDWord(offset+4);
-    uint32_t end = MreadDWord(offset+8);
+    uint32_t start = g_pProcess->readDWord(offset+4);
+    uint32_t end = g_pProcess->readDWord(offset+8);
     uint32_t size = (end - start) /4;
     return DfVector(start,size,item_size);
 }
@@ -58,20 +58,20 @@ Uint32 length
 Uint32 capacity
 */
     uint32_t start_offset = offset + 4;
-    size_t length = MreadDWord(offset + 20);
+    size_t length = g_pProcess->readDWord(offset + 20);
     
-    size_t capacity = MreadDWord(offset + 24);
+    size_t capacity = g_pProcess->readDWord(offset + 24);
     size_t read_real = min(length, bufcapacity-1);// keep space for null termination
     
     // read data from inside the string structure
     if(capacity < 16)
     {
-        Mread(start_offset, read_real , (uint8_t *)buffer);
+        g_pProcess->read(start_offset, read_real , (uint8_t *)buffer);
     }
     else // read data from what the offset + 4 dword points to
     {
-        start_offset = MreadDWord(start_offset);// dereference the start offset
-        Mread(start_offset, read_real, (uint8_t *)buffer);
+        start_offset = g_pProcess->readDWord(start_offset);// dereference the start offset
+        g_pProcess->read(start_offset, read_real, (uint8_t *)buffer);
     }
     
     buffer[read_real] = 0;
@@ -92,19 +92,19 @@ const string DMWindows40d::readSTLString (uint32_t offset)
         Uint32 capacity
     */
     uint32_t start_offset = offset + 4;
-    uint32_t length = MreadDWord(offset + 20);
-    uint32_t capacity = MreadDWord(offset + 24);
+    uint32_t length = g_pProcess->readDWord(offset + 20);
+    uint32_t capacity = g_pProcess->readDWord(offset + 24);
     char * temp = new char[capacity+1];
     
     // read data from inside the string structure
     if(capacity < 16)
     {
-        Mread(start_offset, capacity, (uint8_t *)temp);
+        g_pProcess->read(start_offset, capacity, (uint8_t *)temp);
     }
     else // read data from what the offset + 4 dword points to
     {
-        start_offset = MreadDWord(start_offset);// dereference the start offset
-        Mread(start_offset, capacity, (uint8_t *)temp);
+        start_offset = g_pProcess->readDWord(start_offset);// dereference the start offset
+        g_pProcess->read(start_offset, capacity, (uint8_t *)temp);
     }
     
     temp[length] = 0;
@@ -124,8 +124,8 @@ DfVector DMLinux40d::readVector (uint32_t offset, uint32_t item_size)
 
         we don't care about alloc_end because we don't try to add stuff
     */
-    uint32_t start = MreadDWord(offset);
-    uint32_t end = MreadDWord(offset+4);
+    uint32_t start = g_pProcess->readDWord(offset);
+    uint32_t end = g_pProcess->readDWord(offset+4);
     uint32_t size = (end - start) /4;
     return DfVector(start,size,item_size);
 }
@@ -140,10 +140,10 @@ struct _Rep_base
 size_t DMLinux40d::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
     _Rep_base header;
-    offset = MreadDWord(offset);
-    Mread(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
+    offset = g_pProcess->readDWord(offset);
+    g_pProcess->read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
     size_t read_real = min((size_t)header._M_length, bufcapacity-1);// keep space for null termination
-    Mread(offset,read_real,(uint8_t * )buffer);
+    g_pProcess->read(offset,read_real,(uint8_t * )buffer);
     buffer[read_real] = 0;
     return read_real;
 }
@@ -152,12 +152,12 @@ const string DMLinux40d::readSTLString (uint32_t offset)
 {
     _Rep_base header;
     
-    offset = MreadDWord(offset);
-    Mread(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
+    offset = g_pProcess->readDWord(offset);
+    g_pProcess->read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
     
     // FIXME: use char* everywhere, avoid string
     char * temp = new char[header._M_length+1];
-    Mread(offset,header._M_length+1,(uint8_t * )temp);
+    g_pProcess->read(offset,header._M_length+1,(uint8_t * )temp);
     string ret(temp);
     delete temp;
     return ret;

@@ -22,9 +22,10 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "DFCommonInternal.h"
+#include <errno.h>
 using namespace DFHack;
 
-class Process::Private
+class NormalProcess::Private
 {
     public:
     Private()
@@ -32,23 +33,27 @@ class Process::Private
         my_datamodel = NULL;
         my_descriptor = NULL;
         my_handle = NULL;
+        my_window = NULL;
         my_pid = 0;
         attached = false;
         suspended = false;
+        memFileHandle = 0;
     };
     ~Private(){};
     DataModel* my_datamodel;
+    DFWindow* my_window;
     memory_info * my_descriptor;
     ProcessHandle my_handle;
     uint32_t my_pid;
     string memFile;
+    int memFileHandle;
     bool attached;
     bool suspended;
     bool identified;
     bool validate(char * exe_file, uint32_t pid, char * mem_file, vector <memory_info> & known_versions);
 };
 
-Process::Process(uint32_t pid, vector <memory_info> & known_versions)
+NormalProcess::NormalProcess(uint32_t pid, vector <memory_info> & known_versions)
 : d(new Private())
 {
     char dir_name [256];
@@ -81,6 +86,7 @@ Process::Process(uint32_t pid, vector <memory_info> & known_versions)
     {
         // create linux process, add it to the vector
         d->identified = d->validate(target_name,pid,mem_name,known_versions );
+        d->my_window = new DFWindow(this);
         return;
     }
     
@@ -104,25 +110,27 @@ Process::Process(uint32_t pid, vector <memory_info> & known_versions)
             
             // create wine process, add it to the vector
             d->identified = d->validate(exe_link,pid,mem_name,known_versions);
+            d->my_window = new DFWindow(this);
+            return;
         }
     }
 }
 
-bool Process::isSuspended()
+bool NormalProcess::isSuspended()
 {
     return d->suspended;
 }
-bool Process::isAttached()
+bool NormalProcess::isAttached()
 {
     return d->attached;
 }
 
-bool Process::isIdentified()
+bool NormalProcess::isIdentified()
 {
     return d->identified;
 }
 
-bool Process::Private::validate(char * exe_file,uint32_t pid, char * memFile, vector <memory_info> & known_versions)
+bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFile, vector <memory_info> & known_versions)
 {
     md5wrapper md5;
     // get hash of the running DF process
@@ -153,7 +161,7 @@ bool Process::Private::validate(char * exe_file,uint32_t pid, char * memFile, ve
                 // some error happened, continue with next process
                 continue;
             }
-            // tell Process about the /proc/PID/mem file
+            // tell NormalProcess about the /proc/PID/mem file
             this->memFile = memFile;
             identified = true;
             return true;
@@ -162,36 +170,49 @@ bool Process::Private::validate(char * exe_file,uint32_t pid, char * memFile, ve
     return false;
 }
 
-Process::~Process()
+NormalProcess::~NormalProcess()
 {
     if(d->attached)
     {
         detach();
     }
     // destroy data model. this is assigned by processmanager
-    delete d->my_datamodel;
+    if(d->my_datamodel)
+        delete d->my_datamodel;
+    if(d->my_window)
+        delete d->my_window;
     delete d;
 }
 
 
-DataModel *Process::getDataModel()
+DataModel *NormalProcess::getDataModel()
 {
     return d->my_datamodel;
 }
 
-memory_info * Process::getDescriptor()
+memory_info * NormalProcess::getDescriptor()
 {
     return d->my_descriptor;
 }
 
+DFWindow * NormalProcess::getWindow()
+{
+    return d->my_window;
+}
+
+int NormalProcess::getPID()
+{
+    return d->my_pid;
+}
+
 //FIXME: implement
-bool Process::getThreadIDs(vector<uint32_t> & threads )
+bool NormalProcess::getThreadIDs(vector<uint32_t> & threads )
 {
     return false;
 }
 
 //FIXME: cross-reference with ELF segment entries?
-void Process::getMemRanges( vector<t_memrange> & ranges )
+void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
 {
     char buffer[1024];
     char permissions[5]; // r/-, w/-, x/-, p/s, 0
@@ -217,7 +238,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     }
 }
 
-bool Process::suspend()
+bool NormalProcess::suspend()
 {
     int status;
     if(!d->attached)
@@ -250,12 +271,12 @@ bool Process::suspend()
     return true;
 }
 
-bool Process::forceresume()
+bool NormalProcess::forceresume()
 {
     return resume();
 }
 
-bool Process::resume()
+bool NormalProcess::resume()
 {
     if(!d->attached)
         return false;
@@ -272,7 +293,7 @@ bool Process::resume()
 }
 
 
-bool Process::attach()
+bool NormalProcess::attach()
 {
     int status;
     if(g_pProcess != NULL)
@@ -317,20 +338,19 @@ bool Process::attach()
     {
         d->attached = true;
         g_pProcess = this;
-        g_ProcessHandle = d->my_handle;
         
-        g_ProcessMemFile = proc_pid_mem;
+        d->memFileHandle = proc_pid_mem;
         return true; // we are attached
     }
 }
 
-bool Process::detach()
+bool NormalProcess::detach()
 {
     if(!d->attached) return false;
     if(!d->suspended) suspend();
     int result = 0;
     // close /proc/PID/mem
-    result = close(g_ProcessMemFile);
+    result = close(d->memFileHandle);
     if(result == -1)
     {
         cerr << "couldn't close /proc/"<< d->my_handle <<"/mem" << endl;
@@ -340,7 +360,6 @@ bool Process::detach()
     else
     {
         // detach
-        g_ProcessMemFile = -1;
         result = ptrace(PTRACE_DETACH, d->my_handle, NULL, NULL);
         if(result == -1)
         {
@@ -352,8 +371,148 @@ bool Process::detach()
         {
             d->attached = false;
             g_pProcess = NULL;
-            g_ProcessHandle = 0;
             return true;
         }
     }
 }
+
+
+// danger: uses recursion!
+void NormalProcess::read (const uint32_t offset, const uint32_t size, uint8_t *target)
+{
+    if(size == 0) return;
+    
+    ssize_t result;
+    result = pread(d->memFileHandle, target,size,offset);
+    if(result != size)
+    {
+        if(result == -1)
+        {
+            cerr << "pread failed: can't read " << size << " bytes at addres " << offset << endl;
+            cerr << "errno: " << errno << endl;
+            errno = 0;
+        }
+        else
+        {
+            read(offset + result, size - result, target + result);
+        }
+    }
+}
+
+uint8_t NormalProcess::readByte (const uint32_t offset)
+{
+    uint8_t val;
+    read(offset, 1, &val);
+    return val;
+}
+
+void NormalProcess::readByte (const uint32_t offset, uint8_t &val )
+{
+    read(offset, 1, &val);
+}
+
+uint16_t NormalProcess::readWord (const uint32_t offset)
+{
+    uint16_t val;
+    read(offset, 2, (uint8_t *) &val);
+    return val;
+}
+
+void NormalProcess::readWord (const uint32_t offset, uint16_t &val)
+{
+    read(offset, 2, (uint8_t *) &val);
+}
+
+uint32_t NormalProcess::readDWord (const uint32_t offset)
+{
+    uint32_t val;
+    read(offset, 4, (uint8_t *) &val);
+    return val;
+}
+void NormalProcess::readDWord (const uint32_t offset, uint32_t &val)
+{
+    read(offset, 4, (uint8_t *) &val);
+}
+
+/*
+ * WRITING
+ */
+
+void NormalProcess::writeDWord (uint32_t offset, uint32_t data)
+{
+    ptrace(PTRACE_POKEDATA,d->my_handle, offset, data);
+}
+
+// using these is expensive.
+void NormalProcess::writeWord (uint32_t offset, uint16_t data)
+{
+    uint32_t orig = readDWord(offset);
+    orig &= 0xFFFF0000;
+    orig |= data;
+    /*
+    orig |= 0x0000FFFF;
+    orig &= data;
+    */
+    ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+}
+
+void NormalProcess::writeByte (uint32_t offset, uint8_t data)
+{
+    uint32_t orig = readDWord(offset);
+    orig &= 0xFFFFFF00;
+    orig |= data;
+    /*
+    orig |= 0x000000FF;
+    orig &= data;
+    */
+    ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+}
+
+// blah. I hate the kernel devs for crippling /proc/PID/mem. THIS IS RIDICULOUS
+void NormalProcess::write (uint32_t offset, uint32_t size, const uint8_t *source)
+{
+    uint32_t indexptr = 0;
+    while (size > 0)
+    {
+        // default: we push 4 bytes
+        if(size >= 4)
+        {
+            writeDWord(offset, *(uint32_t *) (source + indexptr));
+            offset +=4;
+            indexptr +=4;
+            size -=4;
+        }
+        // last is either three or 2 bytes
+        else if(size >= 2)
+        {
+            writeWord(offset, *(uint16_t *) (source + indexptr));
+            offset +=2;
+            indexptr +=2;
+            size -=2;
+        }
+        // finishing move
+        else if(size == 1)
+        {
+            writeByte(offset, *(uint8_t *) (source + indexptr));
+            return;
+        }
+    }
+}
+
+const std::string NormalProcess::readCString (uint32_t offset)
+{
+    std::string temp;
+    char temp_c[256];
+    int counter = 0;
+    char r;
+    do
+    {
+        r = readByte(offset+counter);
+        temp_c[counter] = r;
+        counter++;
+    } while (r && counter < 255);
+    temp_c[counter] = 0;
+    temp = temp_c;
+    return temp;
+}
+

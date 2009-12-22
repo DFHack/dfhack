@@ -45,8 +45,9 @@ namespace DFHack
             start(_start),size(_size),item_size(_item_size)
             {
                 data = (uint8_t *) new char[size * item_size];
-                Mread(start,size*item_size, (uint8_t *)data);
+                g_pProcess->read(start,size*item_size, (uint8_t *)data);
             };
+            /*
             DfVector(const DfVector & vec)
             {
                 start = vec.start;
@@ -54,7 +55,7 @@ namespace DFHack
                 item_size = vec.item_size;
                 data = (uint8_t *) new char[size * item_size];
                 memcpy(data,vec.data,item_size * size);
-            };
+            };*/
             ~DfVector()
             {
                 if(data)

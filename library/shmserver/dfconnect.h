@@ -1,0 +1,102 @@
+#ifndef DFCONNECT_H
+#define DFCONNECT_H
+
+#define PINGPONG_VERSION 1
+#define SHM_KEY 123466
+#define SHM_SIZE 1024*1024
+
+/*
+    * read - parameters are address and length
+    * write - parameters are address, length and the actual data to write
+    * wait - sent to DF so that it waits for more commands
+    * end - sent to DF for breaking out of the wait 
+*/
+
+enum DF_PINGPONG
+{
+    DFPP_RUNNING = 0, // no command, normal server execution
+    
+    DFPP_VERSION, // protocol version query
+    DFPP_RET_VERSION, // return the protocol version
+    
+    DFPP_PID, // query for the process ID
+    DFPP_RET_PID, // return process ID
+    
+    // version 1 stuff below
+    DFPP_READ, // cl -> sv, read some data
+    DFPP_RET_DATA, // sv -> cl, returned data
+    
+    DFPP_READ_DWORD, // cl -> sv, read a dword
+    DFPP_RET_DWORD, // sv -> cl, returned dword
+
+    DFPP_READ_WORD, // cl -> sv, read a word
+    DFPP_RET_WORD, // sv -> cl, returned word
+
+    DFPP_READ_BYTE, // cl -> sv, read a byte
+    DFPP_RET_BYTE, // sv -> cl, returned byte
+    
+    DFPP_SV_ERROR, // there was a server error
+    DFPP_CL_ERROR, // there was a client error
+    
+    DFPP_WRITE,// client writes to server
+    DFPP_WRITE_DWORD,// client writes a DWORD to server
+    DFPP_WRITE_WORD,// client writes a WORD to server
+    DFPP_WRITE_BYTE,// client writes a BYTE to server
+    
+    DFPP_SUSPEND, // client notifies server to wait for commands (server is stalled in busy wait)
+    DFPP_SUSPENDED, // response to WAIT, server is stalled in busy wait
+    
+    // similar to DFPP_WRITE, writes to a local buffer, writes the same back to shm, sends DFPP_RET_DATA
+    // used for benchmarking
+    DFPP_BOUNCE,
+    
+    NUM_DFPP
+};
+
+
+enum DF_ERROR
+{
+    DFEE_INVALID_COMMAND,
+    DFEE_BUFFER_OVERFLOW
+};
+
+typedef struct
+{
+    uint32_t pingpong; // = 0
+} shm_cmd;
+
+typedef struct
+{
+    uint32_t pingpong;
+    uint32_t address;
+    uint32_t length;
+} shm_read;
+
+typedef shm_read shm_write;
+typedef shm_read shm_bounce;
+
+typedef struct
+{
+    uint32_t pingpong;
+} shm_ret_data;
+
+typedef struct
+{
+    uint32_t pingpong;
+    uint32_t address;
+} shm_read_small;
+
+typedef struct
+{
+    uint32_t pingpong;
+    uint32_t address;
+    uint32_t value;
+} shm_write_small;
+
+typedef struct
+{
+    uint32_t pingpong;
+    uint32_t value;
+} shm_retval;
+
+#endif

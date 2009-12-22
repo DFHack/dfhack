@@ -26,8 +26,6 @@ distribution.
 #include <X11/Xlib.h>   //need for X11 functions
 #include <X11/keysym.h>
 
-//FIXME: 
-
 using namespace DFHack;
 
 // should always reflect the enum in DFkeys.h
@@ -85,9 +83,43 @@ const static KeySym ksTable[NUM_SPECIALS]=
     XK_KP_Decimal
 };
 
-// Source: http://www.experts-exchange.com/OS/Unix/X_Windows/Q_21341279.html
-// find named window recursively
-Window EnumerateWindows (Display *display, Window rootWindow, const char *searchString)
+class DFWindow::Private
+{
+    public:
+        Private(Process * _p)
+        {
+            p=_p;
+        };
+        ~Private(){};
+        
+        // Source: http://www.experts-exchange.com/OS/Unix/X_Windows/Q_21341279.html
+        // find named window recursively
+        Window EnumerateWindows (Display *display, Window rootWindow, const char *searchString);
+        
+        // iterate through X screens, find the window
+        // FIXME: use _NET_WM_PID primarily and this current stuff only as a fallback
+        // see http://www.mail-archive.com/devel@xfree86.org/msg05818.html
+        bool getDFWindow (Display *dpy, Window& dfWindow, Window & rootWindow);
+        
+        // send synthetic key events to a window
+        // Source: http://homepage3.nifty.com/tsato/xvkbd/events.html
+        void send_xkeyevent(Display *display, Window dfW,Window rootW, int keycode, int modstate, int is_press, useconds_t delay);
+        
+        // our parent process
+        Process * p;
+};
+
+// ctor
+DFWindow::DFWindow (Process * p)
+{
+    d = new Private(p);
+}
+
+// dtor
+DFWindow::~DFWindow ()
+{}
+
+Window DFWindow::Private::EnumerateWindows (Display *display, Window rootWindow, const char *searchString)
 {
     Window parent;
     Window *children;
@@ -126,7 +158,7 @@ Window EnumerateWindows (Display *display, Window rootWindow, const char *search
     return retWindow;
 }
 
-bool getDFWindow (Display *dpy, Window& dfWindow, Window & rootWindow)
+bool DFWindow::Private::getDFWindow (Display *dpy, Window& dfWindow, Window & rootWindow)
 {
     //  int numScreeens = ScreenCount(dpy);
     for (int i = 0;i < ScreenCount (dpy);i++)
@@ -138,15 +170,11 @@ bool getDFWindow (Display *dpy, Window& dfWindow, Window & rootWindow)
             dfWindow = retWindow;
             return true;
         }
-        //I would ideally like to find the dfwindow using the PID, but X11 Windows only know their processes pid if the _NET_WM_PID attribute is set, which it is not for SDL 1.2.  Supposedly SDL 1.3 will set this, but who knows when that will occur.
     }
     return false;
 }
 
-// let's hope it works
-// Source: http://homepage3.nifty.com/tsato/xvkbd/events.html
-// TODO: is permission from original author needed here?
-void send_xkeyevent(Display *display, Window dfW,Window rootW, int keycode, int modstate, int is_press, useconds_t delay)
+void DFWindow::Private::send_xkeyevent(Display *display, Window dfW,Window rootW, int keycode, int modstate, int is_press, useconds_t delay)
 {
     XKeyEvent event;
     
@@ -168,32 +196,31 @@ void send_xkeyevent(Display *display, Window dfW,Window rootW, int keycode, int 
     usleep(delay);
 }
 
-void API::TypeStr (const char *lpszString, int delay, bool useShift)
+void DFWindow::TypeStr (const char *input, int delay, bool useShift)
 {
-    ForceResume();
     Display *dpy = XOpenDisplay (NULL); // null opens the display in $DISPLAY
     Window dfWin;
     Window rootWin;
-    if (getDFWindow (dpy, dfWin, rootWin))
+    if (d->getDFWindow (dpy, dfWin, rootWin))
     {
         char cChar;
         int realDelay = delay * 1000;
         KeyCode xkeycode;
-        while ( (cChar = *lpszString++)) // loops through chars
+        while ( (cChar = *input++)) // loops through chars
         {
             // HACK: the timing here is a strange beast
             xkeycode = XKeysymToKeycode (dpy, cChar);
-            send_xkeyevent(dpy,dfWin,rootWin,XKeysymToKeycode(dpy, ksTable[DFHack::LEFT_SHIFT]),0,false, realDelay);
+            d->send_xkeyevent(dpy,dfWin,rootWin,XKeysymToKeycode(dpy, ksTable[DFHack::LEFT_SHIFT]),0,false, realDelay);
             if (useShift || (cChar >= 'A' && cChar <= 'Z'))
             {
-                send_xkeyevent(dpy,dfWin,rootWin,xkeycode,ShiftMask,true, realDelay);
-                send_xkeyevent(dpy,dfWin,rootWin,xkeycode,ShiftMask,false, realDelay);
+                d->send_xkeyevent(dpy,dfWin,rootWin,xkeycode,ShiftMask,true, realDelay);
+                d->send_xkeyevent(dpy,dfWin,rootWin,xkeycode,ShiftMask,false, realDelay);
                 XSync (dpy, false);
             }
             else
             {
-                send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,true, realDelay);
-                send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,false, realDelay);
+                d->send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,true, realDelay);
+                d->send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,false, realDelay);
                 XSync (dpy, false);
             }
         }
@@ -204,9 +231,8 @@ void API::TypeStr (const char *lpszString, int delay, bool useShift)
     }
 }
 
-void API::TypeSpecial (t_special command, int count, int delay)
+void DFWindow::TypeSpecial (t_special command, int count, int delay)
 {
-    ForceResume();
     if (command != WAIT)
     {
         KeySym mykeysym;
@@ -215,16 +241,16 @@ void API::TypeSpecial (t_special command, int count, int delay)
         int realDelay = delay * 1000;
         Window dfWin;
         Window rootWin;
-        if (getDFWindow (dpy, dfWin, rootWin))
+        if (d->getDFWindow (dpy, dfWin, rootWin))
         {
             for (int i = 0;i < count; i++)
             {
                 // HACK: the timing here is a strange beast
                 mykeysym = ksTable[command];
                 xkeycode = XKeysymToKeycode (dpy, mykeysym);
-                send_xkeyevent(dpy,dfWin,rootWin,XKeysymToKeycode(dpy, ksTable[DFHack::LEFT_SHIFT]),0,false, realDelay);
-                send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,true, realDelay);
-                send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,false, realDelay);
+                d->send_xkeyevent(dpy,dfWin,rootWin,XKeysymToKeycode(dpy, ksTable[DFHack::LEFT_SHIFT]),0,false, realDelay);
+                d->send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,true, realDelay);
+                d->send_xkeyevent(dpy,dfWin,rootWin,xkeycode,0,false, realDelay);
                 XSync (dpy, false);
             }
         }

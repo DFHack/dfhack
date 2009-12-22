@@ -4,7 +4,6 @@ SET(PROJECT_HDRS
 DFCommonInternal.h
 DFDataModel.h
 DFHackAPI.h
-DFMemAccess.h
 DFMemInfo.h
 DFMemInfoManager.h
 DFProcessEnumerator.h
@@ -12,6 +11,7 @@ DFProcess.h
 DFTileTypes.h
 DFTypes.h
 DFVector.h
+DFWindow.h
 integers.h
 
 md5/md5.h
@@ -19,6 +19,8 @@ md5/md5wrapper.h
 
 tinyxml/tinystr.h
 tinyxml/tinyxml.h
+
+shmserver/dfconnect.h
 )
 
 SET(PROJECT_SRCS
@@ -36,23 +38,22 @@ tinyxml/tinyxmlparser.cpp
 )
 
 SET(PROJECT_HDRS_LINUX
-MemAccess-linux.h
 )
 
 SET(PROJECT_HDRS_WINDOWS
-MemAccess-windows.h
 stdint_win.h
 )
 
 SET(PROJECT_SRCS_LINUX
 DFProcess-linux.cpp
-DFKeys-linux.cpp
+DFProcess-linux-SHM.cpp
+DFWindow-linux.cpp
 DFProcessEnumerator-linux.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
 DFProcess-windows.cpp
-DFKeys-windows.cpp
+DFWindow-windows.cpp
 DFProcessEnumerator-windows.cpp
 )
 
@@ -84,7 +85,7 @@ IF(UNIX)
   find_library(X11_LIBRARY X11)
   SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -pedantic")
     
-  SET(PROJECT_LIBS ${X11_LIBRARY})
+  SET(PROJECT_LIBS ${X11_LIBRARY} rt)
 ELSE(UNIX)
   SET(PROJECT_LIBS psapi)
 ENDIF(UNIX)

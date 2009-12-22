@@ -79,47 +79,62 @@ const static int ksTable[NUM_SPECIALS]=
     VK_NUMPAD9,
     VK_SEPARATOR
 };
-
-
-
 //Windows key handlers
 struct window
 {
     HWND windowHandle;
     uint32_t pid;
 };
+
 BOOL CALLBACK EnumWindowsProc (HWND hwnd, LPARAM lParam)
 {
     uint32_t pid;
-
+    
     GetWindowThreadProcessId (hwnd, (LPDWORD) &pid);
     if (pid == ( (window *) lParam)->pid)
     {
         ( (window *) lParam)->windowHandle = hwnd;
         return FALSE;
     }
-    return TRUE;
+        return TRUE;
 }
 
-// TODO: investigate use of PostMessage() for input sending to background windows
-// TODO: also investigate possible problems with UIPI on Vista and 7
-
-void API::TypeStr (const char *lpszString, int delay, bool useShift)
+class DFWindow::Private
 {
-    //Resume();
-    ForceResume();
+    public:
+        Private(Process * _p)
+        {
+            p=_p;
+        };
+        ~Private(){};
+        // our parent process
+        Process * p;
+};
 
+// ctor
+DFWindow::DFWindow (Process * p)
+{
+    d = new Private(p);
+}
+
+// dtor
+DFWindow::~DFWindow ()
+{}
+
+// TODO: also investigate possible problems with UIPI on Vista and 7
+void DFWindow::TypeStr (const char *input, int delay, bool useShift)
+{
     //sendmessage needs a window handle HWND, so have to get that from the process HANDLE
     HWND currentWindow = GetForegroundWindow();
     window myWindow;
-    myWindow.pid = GetProcessId (DFHack::g_ProcessHandle);
+    myWindow.pid = d->p->getPID();
     EnumWindows (EnumWindowsProc, (LPARAM) &myWindow);
 
     char cChar;
     DWORD dfProccess = GetWindowThreadProcessId(myWindow.windowHandle,NULL);
     DWORD currentProccess = GetWindowThreadProcessId(currentWindow,NULL);
     AttachThreadInput(currentProccess,dfProccess,TRUE); //The two threads have to have attached input in order to change the keyboard state, which is needed to set the shift state
-    while ( (cChar = *lpszString++)) // loops through chars
+    while ( (cChar = *input++)) // loops through chars
     {
         short vk = VkKeyScan (cChar); // keycode of char
         if (useShift || (vk >> 8) &1)   // char is capital, so need to hold down shift
@@ -143,14 +158,14 @@ void API::TypeStr (const char *lpszString, int delay, bool useShift)
     AttachThreadInput(currentProccess,dfProccess,FALSE); //detach the threads
     Sleep (delay);
 }
-void API::TypeSpecial (t_special command, int count, int delay)
+
+void DFWindow::TypeSpecial (t_special command, int count, int delay)
 {
-    ForceResume();
     if (command != WAIT)
     {
         HWND currentWindow = GetForegroundWindow();
         window myWindow;
-        myWindow.pid = GetProcessId (DFHack::g_ProcessHandle);
+        myWindow.pid = d->p->getPID();
         EnumWindows (EnumWindowsProc, (LPARAM) &myWindow);
 
         for (int i = 0; i < count;i++)

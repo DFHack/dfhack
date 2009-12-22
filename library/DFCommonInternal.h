@@ -86,8 +86,6 @@ namespace DFHack
     * Currently attached process and its handle
     */
     extern Process * g_pProcess; ///< current process. non-NULL when picked
-    extern ProcessHandle g_ProcessHandle; ///< cache of handle to current process. used for speed reasons
-    extern int g_ProcessMemFile; ///< opened /proc/PID/mem, valid when attached
 }
 #ifndef BUILD_DFHACK_LIB
 #   define BUILD_DFHACK_LIB
@@ -96,9 +94,9 @@ namespace DFHack
 #include "DFTypes.h"
 #include "DFDataModel.h"
 #include "DFProcess.h"
+#include "DFWindow.h"
 #include "DFProcessEnumerator.h"
 #include "DFMemInfoManager.h"
-#include "DFMemAccess.h"
 #include "DFVector.h"
 #include "DFMemInfo.h"
 #include <stdlib.h>

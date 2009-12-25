@@ -34,52 +34,6 @@ using namespace DFHack;
 /// HACK: global variables (only one process can be attached at the same time.)
 Process * DFHack::g_pProcess; ///< current process. non-NULL when picked
 
-bool waitWhile (char *shm, int shmid, uint32_t state)
-{
-    uint32_t cnt = 0;
-    struct shmid_ds descriptor;
-    while (((shm_cmd *)shm)->pingpong == state)
-    {
-        if(cnt == 10000)
-        {
-            shmctl(shmid, IPC_STAT, &descriptor); 
-            if(descriptor.shm_nattch == 1)// DF crashed?
-            {
-                ((shm_cmd *)shm)->pingpong = DFPP_RUNNING;
-                fprintf(stderr,"dfhack: Broke out of loop, other process disappeared.\n");
-                return false;
-            }
-            else
-            {
-                cnt = 0;
-            }
-        }
-        cnt++;
-    }
-    if(((shm_cmd *)shm)->pingpong == DFPP_SV_ERROR) return false;
-    return true;
-}
-
-bool DF_TestBridgeVersion(char *shm, int shmid, bool & ret)
-{
-    ((shm_cmd *)shm)->pingpong = DFPP_VERSION;
-    if(!waitWhile(shm, shmid, DFPP_VERSION))
-        return false;
-    ((shm_cmd *)shm)->pingpong = DFPP_SUSPENDED;
-    ret =( ((shm_retval *)shm)->value == PINGPONG_VERSION );
-    return true;
-}
-
-bool DF_GetPID(char *shm, int shmid, pid_t & ret)
-{
-    ((shm_cmd *)shm)->pingpong = DFPP_PID;
-    if(!waitWhile(shm, shmid, DFPP_PID))
-        return false;
-    ((shm_cmd *)shm)->pingpong = DFPP_SUSPENDED;
-    ret = ((shm_retval *)shm)->value;
-    return true;
-}
-
 class DFHack::ProcessEnumerator::Private
 {
     public:
@@ -96,70 +50,16 @@ bool ProcessEnumerator::findProcessess()
     int errorcount;
     int result;
     
-    char *shm = 0;
-    int shmid;
     Process *p = 0;
-    /*
-     * Locate the segment.
-     */
-    if ((shmid = shmget(SHM_KEY, SHM_SIZE, 0666)) < 0)
+    p = new SHMProcess(d->meminfo->meminfo);
+    if(p->isIdentified())
     {
-        perror("shmget");
+        d->processes.push_back(p);
     }
     else
     {
-        if ((shm = (char *) shmat(shmid, NULL, 0)) == (char *) -1)
-        {
-            perror("shmat");
-        }
-        else
-        {
-            struct shmid_ds descriptor;
-            shmctl(shmid, IPC_STAT, &descriptor); 
-            /*
-            * Now we attach the segment to our data space.
-            */
-            
-            if(descriptor.shm_nattch != 2)// badness
-            {
-                fprintf(stderr,"dfhack: WTF\n");
-            }
-            else
-            {
-                bool bridgeOK;
-                if(!DF_TestBridgeVersion(shm, shmid, bridgeOK))
-                {
-                    fprintf(stderr,"DF terminated during reading\n");
-                }
-                else
-                {
-                    if(!bridgeOK)
-                    {
-                        fprintf(stderr,"SHM bridge version mismatch\n");
-                    }
-                    else
-                    {
-                        pid_t DFPID;
-                        if(DF_GetPID(shm, shmid, DFPID))
-                        {
-                            printf("shm: DF PID: %d\n",DFPID);
-                            p = new SHMProcess(DFPID,shmid,shm,d->meminfo->meminfo);
-                        }
-                    }
-                }
-            }
-            if(p && p->isIdentified())
-            {
-                cerr << "added process to vector" << endl;
-                d->processes.push_back(p);
-            }
-            else
-            {
-                // couldn't use the hooked process, make sure it's running fine
-                ((shm_cmd *)shm)->pingpong = DFPP_RUNNING;
-                delete p;
-            }
-        }
+        delete p;
+        p = 0;
     }
     
     // Open /proc/ directory

@@ -47,7 +47,7 @@ class SHMProcess::Private
     DataModel* my_datamodel;
     memory_info * my_descriptor;
     DFWindow * my_window;
-    uint32_t my_pid;
+    pid_t my_pid;
     char *my_shm;
     int my_shmid;
     
@@ -56,6 +56,8 @@ class SHMProcess::Private
     bool identified;
     bool validate(char * exe_file, uint32_t pid, vector <memory_info> & known_versions);
     bool waitWhile (DF_PINGPONG state);
+    bool DF_TestBridgeVersion(bool & ret);
+    bool DF_GetPID(pid_t & ret);
 };
 
 bool SHMProcess::Private::waitWhile (DF_PINGPONG state)
@@ -91,33 +93,98 @@ bool SHMProcess::Private::waitWhile (DF_PINGPONG state)
     return true;
 }
 
-SHMProcess::SHMProcess(uint32_t pid, int shmid, char * shm, vector <memory_info> & known_versions)
+bool SHMProcess::Private::DF_TestBridgeVersion(bool & ret)
+{
+    ((shm_cmd *)my_shm)->pingpong = DFPP_VERSION;
+    if(!waitWhile(DFPP_VERSION))
+        return false;
+    ((shm_cmd *)my_shm)->pingpong = DFPP_SUSPENDED;
+    ret =( ((shm_retval *)my_shm)->value == PINGPONG_VERSION );
+    return true;
+}
+
+bool SHMProcess::Private::DF_GetPID(pid_t & ret)
+{
+    ((shm_cmd *)my_shm)->pingpong = DFPP_PID;
+    if(!waitWhile(DFPP_PID))
+        return false;
+    ((shm_cmd *)my_shm)->pingpong = DFPP_SUSPENDED;
+    ret = ((shm_retval *)my_shm)->value;
+    return true;
+}
+
+SHMProcess::SHMProcess(vector <memory_info> & known_versions)
 : d(new Private())
 {
     char exe_link_name [256];
     char target_name[1024];
     int target_result;
     
-    sprintf(exe_link_name,"/proc/%d/exe", pid);
-    
-    // resolve /proc/PID/exe link
-    target_result = readlink(exe_link_name, target_name, sizeof(target_name)-1);
-    if (target_result == -1)
+        /*
+     * Locate the segment.
+     */
+    if ((d->my_shmid = shmget(SHM_KEY, SHM_SIZE, 0666)) < 0)
     {
-        perror("readlink");
-        return;
+        perror("shmget");
     }
-    // make sure we have a null terminated string...
-    target_name[target_result] = 0;
-    
-    // is this the regular linux DF?
-    // create linux process, add it to the vector
-    d->validate(target_name,pid,known_versions );
-    d->my_shmid = shmid;
-    d->my_shm = shm;
-    d->my_window = new DFWindow(this);
-    // make sure we restart the process
-    ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
+    else
+    {
+        if ((d->my_shm = (char *) shmat(d->my_shmid, NULL, 0)) == (char *) -1)
+        {
+            perror("shmat");
+        }
+        else
+        {
+            struct shmid_ds descriptor;
+            shmctl(d->my_shmid, IPC_STAT, &descriptor); 
+            /*
+            * Now we attach the segment to our data space.
+            */
+            
+            if(descriptor.shm_nattch != 2)// badness
+            {
+                fprintf(stderr,"dfhack: no DF or different client already connected\n");
+            }
+            else
+            {
+                bool bridgeOK;
+                if(!d->DF_TestBridgeVersion(bridgeOK))
+                {
+                    fprintf(stderr,"DF terminated during reading\n");
+                }
+                else
+                {
+                    if(!bridgeOK)
+                    {
+                        fprintf(stderr,"SHM bridge version mismatch\n");
+                    }
+                    else
+                    {
+                        if(d->DF_GetPID(d->my_pid))
+                        {
+                            sprintf(exe_link_name,"/proc/%d/exe", d->my_pid);
+                            // resolve /proc/PID/exe link
+                            target_result = readlink(exe_link_name, target_name, sizeof(target_name)-1);
+                            if (target_result == -1)
+                            {
+                                perror("readlink");
+                                return;
+                            }
+                            // make sure we have a null terminated string...
+                            target_name[target_result] = 0;
+                            
+                            // is this the regular linux DF?
+                            // create linux process, add it to the vector
+                            d->validate(target_name,d->my_pid,known_versions );
+                            d->my_window = new DFWindow(this);
+                        }
+                    }
+                }
+                // make sure we restart the process
+                ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
+            }
+        }
+    }
 }
 
 bool SHMProcess::isSuspended()

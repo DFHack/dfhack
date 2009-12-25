@@ -146,7 +146,7 @@ namespace DFHack
         class Private;
         private:
             Private * const d;
-            SHMProcess(uint32_t pid, int shmid, char * shm, vector <memory_info> & known_versions);
+            SHMProcess(vector <memory_info> & known_versions);
             ~SHMProcess();
         public:
             // Set up stuff so we can read memory

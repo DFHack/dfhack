@@ -120,71 +120,70 @@ SHMProcess::SHMProcess(vector <memory_info> & known_versions)
     char target_name[1024];
     int target_result;
     
-        /*
+    /*
      * Locate the segment.
      */
     if ((d->my_shmid = shmget(SHM_KEY, SHM_SIZE, 0666)) < 0)
     {
-        perror("shmget");
+        return;
     }
-    else
+    
+    /*
+     * Attach the segment
+     */
+    if ((d->my_shm = (char *) shmat(d->my_shmid, NULL, 0)) == (char *) -1)
     {
-        if ((d->my_shm = (char *) shmat(d->my_shmid, NULL, 0)) == (char *) -1)
-        {
-            perror("shmat");
-        }
-        else
-        {
-            struct shmid_ds descriptor;
-            shmctl(d->my_shmid, IPC_STAT, &descriptor); 
-            /*
-            * Now we attach the segment to our data space.
-            */
-            
-            if(descriptor.shm_nattch != 2)// badness
-            {
-                fprintf(stderr,"dfhack: no DF or different client already connected\n");
-            }
-            else
-            {
-                bool bridgeOK;
-                if(!d->DF_TestBridgeVersion(bridgeOK))
-                {
-                    fprintf(stderr,"DF terminated during reading\n");
-                }
-                else
-                {
-                    if(!bridgeOK)
-                    {
-                        fprintf(stderr,"SHM bridge version mismatch\n");
-                    }
-                    else
-                    {
-                        if(d->DF_GetPID(d->my_pid))
-                        {
-                            sprintf(exe_link_name,"/proc/%d/exe", d->my_pid);
-                            // resolve /proc/PID/exe link
-                            target_result = readlink(exe_link_name, target_name, sizeof(target_name)-1);
-                            if (target_result == -1)
-                            {
-                                perror("readlink");
-                                return;
-                            }
-                            // make sure we have a null terminated string...
-                            target_name[target_result] = 0;
-                            
-                            // is this the regular linux DF?
-                            // create linux process, add it to the vector
-                            d->validate(target_name,d->my_pid,known_versions );
-                            d->my_window = new DFWindow(this);
-                        }
-                    }
-                }
-                // make sure we restart the process
-                ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
-            }
-        }
+        return;
     }
+    
+    /*
+     * Check if there are two processes connected to the segment
+     */
+    struct shmid_ds descriptor;
+    shmctl(d->my_shmid, IPC_STAT, &descriptor); 
+    if(descriptor.shm_nattch != 2)// badness
+    {
+        fprintf(stderr,"dfhack: no DF or different client already connected\n");
+        return;
+    }
+    
+    /*
+     * Test bridge version, will also detect when we connect to something that doesn't respond
+     */
+    bool bridgeOK;
+    if(!d->DF_TestBridgeVersion(bridgeOK))
+    {
+        fprintf(stderr,"DF terminated during reading\n");
+        return;
+    }
+    if(!bridgeOK)
+    {
+        fprintf(stderr,"SHM bridge version mismatch\n");
+        return;
+    }
+    /*
+     * get the PID from DF
+     */
+    if(d->DF_GetPID(d->my_pid))
+    {
+        // find its binary
+        sprintf(exe_link_name,"/proc/%d/exe", d->my_pid);
+        target_result = readlink(exe_link_name, target_name, sizeof(target_name)-1);
+        if (target_result == -1)
+        {
+            perror("readlink");
+            return;
+        }
+        // make sure we have a null terminated string...
+        // see http://www.opengroup.org/onlinepubs/000095399/functions/readlink.html
+        target_name[target_result] = 0;
+        
+        // try to identify the DF version
+        d->validate(target_name, d->my_pid, known_versions);
+        d->my_window = new DFWindow(this);
+    }
+    // at this point, DF is stopped and waiting for commands. make it run again
+    ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
 }
 
 bool SHMProcess::isSuspended()
@@ -201,7 +200,7 @@ bool SHMProcess::isIdentified()
     return d->identified;
 }
 
-bool SHMProcess::Private::validate(char * exe_file,uint32_t pid, vector <memory_info> & known_versions)
+bool SHMProcess::Private::validate(char * exe_file, uint32_t pid, vector <memory_info> & known_versions)
 {
     md5wrapper md5;
     // get hash of the running DF process
@@ -214,7 +213,7 @@ bool SHMProcess::Private::validate(char * exe_file,uint32_t pid, vector <memory_
         if(hash == (*it).getString("md5")) // are the md5 hashes the same?
         {
             memory_info * m = &*it;
-            my_datamodel =new DMLinux40d();
+            my_datamodel = new DMLinux40d();
             my_descriptor = m;
             my_pid = pid;
             identified = true;
@@ -233,9 +232,13 @@ SHMProcess::~SHMProcess()
     }
     // destroy data model. this is assigned by processmanager
     if(d->my_datamodel)
+    {
         delete d->my_datamodel;
+    }
     if(d->my_window)
+    {
         delete d->my_window;
+    }
     delete d;
 }
 
@@ -297,12 +300,18 @@ bool SHMProcess::suspend()
 {
     int status;
     if(!d->attached)
+    {
         return false;
+    }
     if(d->suspended)
+    {
         return true;
+    }
     ((shm_cmd *)d->my_shm)->pingpong = DFPP_SUSPEND;
     if(!d->waitWhile(DFPP_SUSPEND))
+    {
         return false;
+    }
     d->suspended = true;
     return true;
 }
@@ -346,10 +355,17 @@ bool SHMProcess::attach()
 
 bool SHMProcess::detach()
 {
-    if(!d->attached) return false;
-    if(d->suspended) resume();
+    if(!d->attached)
+    {
+        return false;
+    }
+    if(d->suspended)
+    {
+        resume();
+    }
     d->attached = false;
     d->suspended = false;
+    return true;
 }
 
 

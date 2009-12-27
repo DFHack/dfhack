@@ -115,14 +115,19 @@ ProcessEnumerator::ProcessEnumerator( string path_to_xml )
     d->meminfo = new MemInfoManager(path_to_xml);
 }
 
-
-ProcessEnumerator::~ProcessEnumerator()
+ProcessEnumerator::purge()
 {
-    // delete all processes
     for(uint32_t i = 0;i < d->processes.size();i++)
     {
         delete d->processes[i];
     }
+    d->processes.clear();
+}
+
+ProcessEnumerator::~ProcessEnumerator()
+{
+    // delete all processes
+    purge();
     delete d->meminfo;
     delete d;
 }

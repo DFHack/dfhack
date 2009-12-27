@@ -12,6 +12,14 @@
     * end - sent to DF for breaking out of the wait 
 */
 
+enum DF_SHM_ERRORSTATE
+{
+    SHM_OK, // all OK
+    SHM_CANT_GET_SHM, // getting the SHM ID failed for some reason
+    SHM_CANT_ATTACH, // we can't attach the shm for some reason
+    SHM_SECOND_DF // we are a second DF process, can't use SHM at all
+};
+
 enum DF_PINGPONG
 {
     DFPP_RUNNING = 0, // no command, normal server execution

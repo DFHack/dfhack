@@ -1,0 +1,14 @@
+#!/bin/sh
+DF_DIR=$(dirname "$0")
+cd "${DF_DIR}"
+export SDL_DISABLE_LOCK_KEYS=1 # Work around for bug in Debian/Ubuntu SDL patch.
+#export SDL_VIDEO_CENTERED=1 # Centre the screen.  Messes up resizing.
+ldd dwarfort.exe | grep SDL_image | grep -qv "not found$"
+if [ $? -eq 0 ]; then
+ mkdir unused_libs
+ mv libs/libSDL* unused_libs/
+fi
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"./libs" # Update library search path.
+export LD_PRELOAD="./libs/dfconnect.so" # Hack DF!
+./dwarfort.exe $* # Go, go, go! :)
+

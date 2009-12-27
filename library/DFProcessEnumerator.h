@@ -48,6 +48,7 @@ namespace DFHack
         bool findProcessess();
         uint32_t size();
         Process * operator[](uint32_t index);
+        void purge(void);
     };
 }
 #endif // PROCESSMANAGER_H_INCLUDED

@@ -28,7 +28,49 @@ distribution.
 #include <sys/ipc.h>
 #include <time.h>
 #include "shmserver/dfconnect.h"
+#include <sys/time.h>
+#include <time.h>
+#include <linux/futex.h>
+#include <sys/syscall.h>
 using namespace DFHack;
+
+// a full memory barrier! better be safe than sorry.
+#define gcc_barrier asm volatile("" ::: "memory"); __sync_synchronize();
+
+/*
+* wait for futex
+* futex has to be aligned to 4 bytes
+* futex has to be equal to val (returns EWOULDBLOCK otherwise)
+* wait can be broken by arriving signals (returns EINTR)
+* returns 0 when broken by futex_wake
+*/
+inline int futex_wait(int * futex, int val)
+{
+    return syscall(SYS_futex, futex, FUTEX_WAIT, val, 0, 0, 0);
+}
+/*
+* wait for futex
+* futex has to be aligned to 4 bytes
+* futex has to be equal to val (returns EWOULDBLOCK otherwise)
+* wait can be broken by arriving signals (returns EINTR)
+* returns 0 when broken by futex_wake
+* returns ETIMEDOUT on timeout
+*/
+inline int futex_wait_timed(int * futex, int val, const struct timespec *timeout)
+{
+    return syscall(SYS_futex, futex, FUTEX_WAIT, val, timeout, 0, 0);
+}
+/*
+* wake up futex. returns number of waked processes
+*/
+inline int futex_wake(int * futex)
+{
+    return syscall(SYS_futex, futex, FUTEX_WAKE, 1, 0, 0, 0);
+}
+static timespec one_second = { 1,0 };
+static timespec five_second = { 5,0 };
+
+
 
 class SHMProcess::Private
 {
@@ -38,6 +80,8 @@ class SHMProcess::Private
         my_datamodel = NULL;
         my_descriptor = NULL;
         my_pid = 0;
+        my_shm = 0;
+        my_shmid = -1;
         my_window = NULL;
         attached = false;
         suspended = false;
@@ -54,6 +98,7 @@ class SHMProcess::Private
     bool attached;
     bool suspended;
     bool identified;
+    
     bool validate(char * exe_file, uint32_t pid, vector <memory_info> & known_versions);
     bool waitWhile (DF_PINGPONG state);
     bool DF_TestBridgeVersion(bool & ret);
@@ -71,6 +116,7 @@ bool SHMProcess::Private::waitWhile (DF_PINGPONG state)
             shmctl(my_shmid, IPC_STAT, &descriptor); 
             if(descriptor.shm_nattch == 1)// DF crashed?
             {
+                gcc_barrier
                 ((shm_cmd *)my_shm)->pingpong = DFPP_RUNNING;
                 attached = suspended = false;
                 return false;
@@ -96,8 +142,10 @@ bool SHMProcess::Private::waitWhile (DF_PINGPONG state)
 bool SHMProcess::Private::DF_TestBridgeVersion(bool & ret)
 {
     ((shm_cmd *)my_shm)->pingpong = DFPP_VERSION;
+    gcc_barrier
     if(!waitWhile(DFPP_VERSION))
         return false;
+    gcc_barrier
     ((shm_cmd *)my_shm)->pingpong = DFPP_SUSPENDED;
     ret =( ((shm_retval *)my_shm)->value == PINGPONG_VERSION );
     return true;
@@ -106,8 +154,10 @@ bool SHMProcess::Private::DF_TestBridgeVersion(bool & ret)
 bool SHMProcess::Private::DF_GetPID(pid_t & ret)
 {
     ((shm_cmd *)my_shm)->pingpong = DFPP_PID;
+    gcc_barrier
     if(!waitWhile(DFPP_PID))
         return false;
+    gcc_barrier
     ((shm_cmd *)my_shm)->pingpong = DFPP_SUSPENDED;
     ret = ((shm_retval *)my_shm)->value;
     return true;
@@ -139,11 +189,12 @@ SHMProcess::SHMProcess(vector <memory_info> & known_versions)
     /*
      * Check if there are two processes connected to the segment
      */
-    struct shmid_ds descriptor;
+    shmid_ds descriptor;
     shmctl(d->my_shmid, IPC_STAT, &descriptor); 
     if(descriptor.shm_nattch != 2)// badness
     {
-        fprintf(stderr,"dfhack: no DF or different client already connected\n");
+        fprintf(stderr,"dfhack: %d : invalid no. of processes connected\n", descriptor.shm_nattch);
+        fprintf(stderr,"detach: %d",shmdt(d->my_shm));
         return;
     }
     
@@ -182,8 +233,10 @@ SHMProcess::SHMProcess(vector <memory_info> & known_versions)
         d->validate(target_name, d->my_pid, known_versions);
         d->my_window = new DFWindow(this);
     }
+    gcc_barrier
     // at this point, DF is stopped and waiting for commands. make it run again
     ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
+    fprintf(stderr,"detach: %d",shmdt(d->my_shm));
 }
 
 bool SHMProcess::isSuspended()
@@ -238,6 +291,10 @@ SHMProcess::~SHMProcess()
     if(d->my_window)
     {
         delete d->my_window;
+    }
+    if(d->my_shm)
+    {
+        fprintf(stderr,"detach: %d",shmdt(d->my_shm));
     }
     delete d;
 }
@@ -341,15 +398,23 @@ bool SHMProcess::attach()
         cerr << "there's already a different process attached" << endl;
         return false;
     }
-    d->attached = true;
-    if(suspend())
+    /*
+    * Attach the segment
+    */
+    if ((d->my_shm = (char *) shmat(d->my_shmid, NULL, 0)) != (char *) -1)
     {
-        d->suspended = true;
-        g_pProcess = this;
-        return true;
+        d->attached = true;
+        if(suspend())
+        {
+            d->suspended = true;
+            g_pProcess = this;
+            return true;
+        }
+        d->attached = false;
+        cerr << "unable to suspend" << endl;
+        return false;
     }
-    d->attached = false;
-    cerr << "unable to suspend" << endl;
+    cerr << "unable to attach" << endl;
     return false;
 }
 
@@ -375,6 +440,7 @@ void SHMProcess::read (const uint32_t offset, const uint32_t size, uint8_t *targ
     assert (size < (SHM_SIZE - sizeof(shm_read)));
     ((shm_read *)d->my_shm)->address = offset;
     ((shm_read *)d->my_shm)->length = size;
+    gcc_barrier
     ((shm_read *)d->my_shm)->pingpong = DFPP_READ;
     d->waitWhile(DFPP_READ);
     memcpy (target, d->my_shm + sizeof(shm_ret_data),size);
@@ -383,6 +449,7 @@ void SHMProcess::read (const uint32_t offset, const uint32_t size, uint8_t *targ
 uint8_t SHMProcess::readByte (const uint32_t offset)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
+    gcc_barrier
     ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_BYTE;
     d->waitWhile(DFPP_READ_BYTE);
     return ((shm_retval *)d->my_shm)->value;
@@ -391,6 +458,7 @@ uint8_t SHMProcess::readByte (const uint32_t offset)
 void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
 {
     ((shm_read_small *)d->my_shm)->address = offset;
+    gcc_barrier
     ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_BYTE;
     d->waitWhile(DFPP_READ_BYTE);
     val = ((shm_retval *)d->my_shm)->value;
@@ -399,6 +467,7 @@ void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
 uint16_t SHMProcess::readWord (const uint32_t offset)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
+    gcc_barrier
     ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_WORD;
     d->waitWhile(DFPP_READ_WORD);
     return ((shm_retval *)d->my_shm)->value;
@@ -407,6 +476,7 @@ uint16_t SHMProcess::readWord (const uint32_t offset)
 void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
+    gcc_barrier
     ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_WORD;
     d->waitWhile(DFPP_READ_WORD);
     val = ((shm_retval *)d->my_shm)->value;
@@ -415,6 +485,7 @@ void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
 uint32_t SHMProcess::readDWord (const uint32_t offset)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
+    gcc_barrier
     ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_DWORD;
     d->waitWhile(DFPP_READ_DWORD);
     return ((shm_retval *)d->my_shm)->value;
@@ -422,6 +493,7 @@ uint32_t SHMProcess::readDWord (const uint32_t offset)
 void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
+    gcc_barrier
     ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_DWORD;
     d->waitWhile(DFPP_READ_DWORD);
     val = ((shm_retval *)d->my_shm)->value;
@@ -435,6 +507,7 @@ void SHMProcess::writeDWord (uint32_t offset, uint32_t data)
 {
     ((shm_write_small *)d->my_shm)->address = offset;
     ((shm_write_small *)d->my_shm)->value = data;
+    gcc_barrier
     ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_DWORD;
     d->waitWhile(DFPP_WRITE_DWORD);
 }
@@ -444,6 +517,7 @@ void SHMProcess::writeWord (uint32_t offset, uint16_t data)
 {
     ((shm_write_small *)d->my_shm)->address = offset;
     ((shm_write_small *)d->my_shm)->value = data;
+    gcc_barrier
     ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_WORD;
     d->waitWhile(DFPP_WRITE_WORD);
 }
@@ -452,6 +526,7 @@ void SHMProcess::writeByte (uint32_t offset, uint8_t data)
 {
     ((shm_write_small *)d->my_shm)->address = offset;
     ((shm_write_small *)d->my_shm)->value = data;
+    gcc_barrier
     ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_BYTE;
     d->waitWhile(DFPP_WRITE_BYTE);
 }
@@ -461,6 +536,7 @@ void SHMProcess::write (uint32_t offset, uint32_t size, const uint8_t *source)
     ((shm_write *)d->my_shm)->address = offset;
     ((shm_write *)d->my_shm)->length = size;
     memcpy(d->my_shm+sizeof(shm_write),source, size);
+    gcc_barrier
     ((shm_write *)d->my_shm)->pingpong = DFPP_WRITE;
     d->waitWhile(DFPP_WRITE);
 }

@@ -969,6 +969,10 @@ bool API::Attach()
     {
         d->pm = new ProcessEnumerator (d->xml); // FIXME: handle bad XML better
     }
+    else
+    {
+        d->pm->purge();
+    }
 
     // find a process (ProcessManager can find multiple when used properly)
     if (!d->pm->findProcessess())

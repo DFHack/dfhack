@@ -16,7 +16,7 @@ int main (void)
     
     uint32_t x_max,y_max,z_max;
     uint32_t num_blocks = 0;
-    uint32_t bytes_read = 0;
+    uint64_t bytes_read = 0;
     uint16_t tiletypes[16][16];
     DFHack::t_designation designations[16][16];
     DFHack::t_occupancy occupancies[16][16];

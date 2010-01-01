@@ -1090,6 +1090,17 @@
             <class vtable="0x009351A0" name="viewscreen_setupdwarfgame" />
             <class vtable="0x009351CC" name="viewscreen_layer_choose_language_name" />
         </VTable>
+        
+        <Offset name="item_type_name">0x24</Offset>
+        <Offset name="matgloss_creature_name">0x1C</Offset>
+        <Offset name="matgloss_wood_name">0x28</Offset>
+        <Offset name="matgloss_stone_name">0x24</Offset>
+        <Offset name="matgloss_metal_name">0x24</Offset>
+        <Offset name="matgloss_plant_name">0x24</Offset>
+        <Offset name="matgloss_plant_drink">0x5C</Offset>
+        <Offset name="matgloss_plant_food">0x94</Offset>
+        <Offset name="matgloss_plant_extract">0xB0</Offset>
+        
         </Entry>
 
                             .-"""-.
@@ -1162,6 +1173,7 @@
         <Offset name="creature_agility">0x0338</Offset>
         <Offset name="creature_toughness">0x033C</Offset>
         <Offset name="creature_skills">0x0340</Offset>
+	<Offset name="creature_likes">0x034C</Offset>
         <Offset name="creature_labors">0x0364</Offset>
         <Offset name="creature_happiness">0x0400</Offset>
         <Offset name="creature_traits">0x0490</Offset>
@@ -1538,6 +1550,15 @@
         <class vtable="0x087004A8" name="item_powder" />
         <class vtable="0x08700484" name="item_liquid" />
     </VTable>
+        <Offset name="item_type_name">0xC</Offset>
+        <Offset name="matgloss_creature_name">0x4</Offset>
+        <Offset name="matgloss_wood_name">0x10</Offset>
+        <Offset name="matgloss_stone_name">0xC</Offset>
+        <Offset name="matgloss_metal_name">0xC</Offset>
+        <Offset name="matgloss_plant_name">0xC</Offset>
+        <Offset name="matgloss_plant_drink">0x14</Offset>
+        <Offset name="matgloss_plant_food">0x1C</Offset>
+        <Offset name="matgloss_plant_extract">0x20</Offset>
     </Entry>
 </MemoryDescriptors>
 <!-- Windows logo by M$, spiderweb by jgs -->

@@ -74,6 +74,7 @@ namespace DFHack
         bool ReadWoodMatgloss (vector<t_matgloss> & output);
         bool ReadMetalMatgloss(vector<t_matgloss> & output);
         bool ReadPlantMatgloss(vector<t_matgloss> & output);
+        bool ReadPlantMatgloss (vector<t_matglossPlant> & plants);
         bool ReadCreatureMatgloss(vector<t_matgloss> & output);
 
         // read region surroundings, get their vectors of geolayers so we can do translation (or just hand the translation table to the client)
@@ -198,7 +199,9 @@ namespace DFHack
 
         string TranslateName(const t_lastname & last, const map< string, vector< string > > &nameTable,const string & language="GENERIC");
         string TranslateName(const t_squadname & squad, const map< string, vector< string > > &nameTable,const string & language="GENERIC");
-
+        
+        void WriteLabors(const uint32_t &index, uint8_t labors[NUM_CREATURE_LABORS]);
+        
         uint32_t InitReadItems();
         bool ReadItem(const uint32_t &index, t_item & item);
         void FinishReadItems();
@@ -206,6 +209,9 @@ namespace DFHack
         memory_info getMemoryInfo();
         Process * getProcess();
         DFWindow * getWindow();
+        
+        bool ReadAllMatgloss(vector< vector< string > > & all);
+        bool ReadItemTypes(vector< vector< t_itemType > > & itemTypes);
     };
 } // namespace DFHack
 #endif // SIMPLEAPI_H_INCLUDED

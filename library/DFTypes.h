@@ -32,11 +32,25 @@ namespace DFHack
 
 struct t_matgloss
 {
-    char id[128];
+    char id[128]; //the id in the raws
     uint8_t fore; // Annoyingly the offset for this differs between types
     uint8_t back;
     uint8_t bright;
+    char name[128]; //this is the name displayed ingame
 };
+
+struct t_matglossPlant
+{
+    char id[128]; //the id in the raws
+    uint8_t fore; // Annoyingly the offset for this differs between types
+    uint8_t back;
+    uint8_t bright;
+    char name[128]; //this is the name displayed ingame
+    char drink_name[128];  //the name this item becomes a drink
+    char food_name[128];
+    char extract_name[128];
+};
+
 struct t_vein
 {
     uint32_t vtable;
@@ -476,7 +490,14 @@ struct t_job
     bool active;
     uint8_t jobId;
 };
-
+struct t_like
+{
+    int16_t type;
+    int16_t itemClass;
+    int16_t itemIndex;
+    t_matglossPair material;
+    bool active;
+};
 #define NUM_CREATURE_TRAITS 30
 #define NUM_CREATURE_LABORS 102
 struct t_creature
@@ -504,6 +525,8 @@ struct t_creature
     //string last_name;
     string current_job;
     */
+    uint8_t numLikes;
+    t_like likes[32];
     t_job current_job;
     uint32_t happiness;
     uint32_t id;
@@ -550,6 +573,13 @@ struct t_item
     */
  //   vector<uint8_t> bytes; used for item research
     // FIXME: not complete, we need building presence bitmaps for stuff like farm plots and stockpiles, orientation (N,E,S,W) and state (open/closed)
+};
+
+// can add more here later, but this is fine for now
+struct t_itemType
+{
+    char id[128];
+    char name[128];
 };
 
 // TODO: research this further? consult DF hacker wizards?

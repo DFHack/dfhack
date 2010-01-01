@@ -209,8 +209,10 @@ namespace DFHack
         memory_info getMemoryInfo();
         Process * getProcess();
         DFWindow * getWindow();
-        
-        bool ReadAllMatgloss(vector< vector< string > > & all);
+        /*
+            // FIXME: BAD!
+            bool ReadAllMatgloss(vector< vector< string > > & all);
+        */
         bool ReadItemTypes(vector< vector< t_itemType > > & itemTypes);
     };
 } // namespace DFHack

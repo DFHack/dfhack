@@ -876,7 +876,7 @@ void API::getItemIndexesInBox(vector<uint32_t> &indexes,
     temp2 temp2;
     for(int i =0;i<size;i++){
         uint32_t temp = *(uint32_t *) d->p_itm->at(i);
-        Mread(temp+sizeof(uint32_t),5 * sizeof(uint16_t), (uint8_t *) &temp2);
+        g_pProcess->read(temp+sizeof(uint32_t),5 * sizeof(uint16_t), (uint8_t *) &temp2);
         if(temp2.flags & (1 << 0)){
             if (temp2.coords[0] >= x1 && temp2.coords[0] < x2)
             {
@@ -947,7 +947,7 @@ bool API::ReadCreature (const int32_t &index, t_creature & furball)
     for(uint32_t i = 0;i<furball.numLikes;i++)
     {
         uint32_t temp2 = *(uint32_t *) likes[i];
-        Mread(temp2,sizeof(t_like),(uint8_t *) &furball.likes[i]);
+        g_pProcess->read(temp2,sizeof(t_like),(uint8_t *) &furball.likes[i]);
     }
     
     g_pProcess->readDWord (temp + d->creature_happiness_offset, furball.happiness);
@@ -1332,6 +1332,9 @@ bool API::ReadItemTypes(vector< vector< t_itemType > > & itemTypes)
     }
     return true;
 }
+
+// FIXME: Too dangerous. Contains hardcoded addresses and some arbitrary stuff
+/*
 bool API::ReadAllMatgloss(vector< vector< string > > & all)
 {
     memory_info * minfo = d->offset_descriptor;
@@ -1381,3 +1384,4 @@ bool API::ReadAllMatgloss(vector< vector< string > > & all)
         all.push_back(stringsForVec);
  return true;
 }
+*/

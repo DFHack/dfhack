@@ -452,7 +452,7 @@ void SHMProcess::read (const uint32_t offset, const uint32_t size, uint8_t *targ
     gcc_barrier
     ((shm_read *)d->my_shm)->pingpong = DFPP_READ;
     d->waitWhile(DFPP_READ);
-    memcpy (target, d->my_shm + sizeof(shm_ret_data),size);
+    memcpy (target, d->my_shm + SHM_HEADER,size);
 }
 
 uint8_t SHMProcess::readByte (const uint32_t offset)
@@ -544,7 +544,7 @@ void SHMProcess::write (uint32_t offset, uint32_t size, const uint8_t *source)
 {
     ((shm_write *)d->my_shm)->address = offset;
     ((shm_write *)d->my_shm)->length = size;
-    memcpy(d->my_shm+sizeof(shm_write),source, size);
+    memcpy(d->my_shm+SHM_HEADER,source, size);
     gcc_barrier
     ((shm_write *)d->my_shm)->pingpong = DFPP_WRITE;
     d->waitWhile(DFPP_WRITE);

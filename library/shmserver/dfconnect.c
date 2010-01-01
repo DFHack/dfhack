@@ -39,6 +39,7 @@ distribution.
 #include <time.h>
 #include <linux/futex.h>
 #include <sys/syscall.h>
+#include <signal.h>
 
 // a full memory barrier! better be safe than sorry.
 #define gcc_barrier asm volatile("" ::: "memory"); __sync_synchronize();
@@ -181,8 +182,8 @@ void SHM_Act (void)
             /*
         case DFPP_BOUNCE:
             length = ((shm_bounce *)shm)->length;
-            memcpy(BigFat,shm + sizeof(shm_bounce),length);
-            memcpy(shm + sizeof(shm_ret_data),BigFat,length);
+            memcpy(BigFat,shm + SHM_HEADER,length);
+            memcpy(shm + SHM_HEADER,BigFat,length);
             ((shm_cmd *)shm)->pingpong = DFPP_RET_DATA;
             goto check_again;
             */
@@ -201,7 +202,7 @@ void SHM_Act (void)
         case DFPP_READ:
             length = ((shm_read *)shm)->length;
             address = ((shm_read *)shm)->address;
-            memcpy(shm + sizeof(shm_ret_data), (void *) address,length);
+            memcpy(shm + SHM_HEADER, (void *) address,length);
             gcc_barrier
             ((shm_cmd *)shm)->pingpong = DFPP_RET_DATA;
             goto check_again;
@@ -230,7 +231,7 @@ void SHM_Act (void)
         case DFPP_WRITE:
             address = ((shm_write *)shm)->address;
             length = ((shm_write *)shm)->length;
-            memcpy((void *)address, shm + sizeof(shm_write),length);
+            memcpy((void *)address, shm + SHM_HEADER,length);
             gcc_barrier
             ((shm_cmd *)shm)->pingpong = DFPP_SUSPENDED;
             goto check_again;

@@ -3,7 +3,9 @@
 
 #define PINGPONG_VERSION 1
 #define SHM_KEY 123466
-#define SHM_SIZE 1024*1024
+#define SHM_HEADER 1024
+#define SHM_BODY 1024*1024
+#define SHM_SIZE SHM_HEADER+SHM_BODY
 
 /*
     * read - parameters are address and length

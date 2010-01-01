@@ -393,7 +393,7 @@ bool SHMProcess::resume()
 bool SHMProcess::attach()
 {
     int status;
-    if(g_pProcess != NULL)
+    if(g_pProcess != 0)
     {
         cerr << "there's already a different process attached" << endl;
         return false;
@@ -412,6 +412,7 @@ bool SHMProcess::attach()
         }
         d->attached = false;
         cerr << "unable to suspend" << endl;
+        // FIXME: detach sehment here
         return false;
     }
     cerr << "unable to attach" << endl;
@@ -428,9 +429,17 @@ bool SHMProcess::detach()
     {
         resume();
     }
-    d->attached = false;
-    d->suspended = false;
-    return true;
+    // detach segment
+    if(shmdt(d->my_shm) != -1)
+    {
+        d->attached = false;
+        d->suspended = false;
+        g_pProcess = 0;
+        return true;
+    }
+    // fail if we can't detach
+    perror("failed to detach shared segment");
+    return false;
 }
 
 

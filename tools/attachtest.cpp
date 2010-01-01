@@ -68,8 +68,8 @@ int main (void)
     for (int i = 0; i < 1000000; i++)
     {
         DF.Suspend();
-		if(i%10000 == 0)
-			cout << i / 10000 << "%" << endl;
+        if(i%10000 == 0)
+            cout << i / 10000 << "%" << endl;
         DF.Resume();
     }
     time(&end);

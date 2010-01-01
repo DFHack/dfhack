@@ -811,6 +811,36 @@ int32_t API::ReadCreatureInBox (int32_t index, t_creature & furball,
     return -1;
 }
 
+void API::getItemIndexesInBox(vector<uint32_t> &indexes,
+                                const uint16_t &x1, const uint16_t &y1, const uint16_t &z1,
+                                const uint16_t &x2, const uint16_t &y2, const uint16_t &z2)
+{
+    assert(d->itemsInited);
+    indexes.clear();
+    uint32_t size = d->p_itm->getSize();
+    struct temp2{
+        uint16_t coords[3];
+        uint32_t flags;
+    };
+    temp2 temp2;
+    for(int i =0;i<size;i++){
+        uint32_t temp = *(uint32_t *) d->p_itm->at(i);
+        Mread(temp+sizeof(uint32_t),5 * sizeof(uint16_t), (uint8_t *) &temp2);
+        if(temp2.flags & (1 << 0)){
+            if (temp2.coords[0] >= x1 && temp2.coords[0] < x2)
+            {
+                if (temp2.coords[1] >= y1 && temp2.coords[1] < y2)
+                {
+                    if (temp2.coords[2] >= z1 && temp2.coords[2] < z2)
+                    {
+                        indexes.push_back(i);
+                    }
+                }
+            }
+        }
+    }
+}
+
 bool API::ReadCreature (const int32_t &index, t_creature & furball)
 {
     assert (d->creaturesInited);

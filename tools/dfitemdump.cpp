@@ -78,12 +78,13 @@ int main ()
     DF.ReadCreatureMatgloss(mat.creatureMat);
 
     vector <string> buildingtypes;
+    DF.InitReadBuildings(buildingtypes);
     DF.InitViewAndCursor();
     cout << "q to quit, anything else to look up items at that location\n";
     while(1)
     {
         string input;
-        DF.Resume();
+        DF.ForceResume();
         getline (cin, input);
         DF.Suspend();
         uint32_t numItems = DF.InitReadItems();

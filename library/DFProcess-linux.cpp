@@ -23,6 +23,7 @@ distribution.
 */
 #include "DFCommonInternal.h"
 #include <errno.h>
+#include <sys/ptrace.h>
 using namespace DFHack;
 
 class NormalProcess::Private

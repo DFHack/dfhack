@@ -180,6 +180,9 @@ namespace DFHack
         bool getWindowSize(int32_t & width, int32_t & height);
         bool setWindowSize(const int32_t & width, const int32_t & height);
         
+        void getItemIndexesInBox(vector<uint32_t> &indexes,
+                                const uint16_t &x1, const uint16_t &y1, const uint16_t &z1,
+                                const uint16_t &x2, const uint16_t &y2, const uint16_t &z2);
         /*
         // FIXME: add a real creature class, move these
         string getLastName(const uint32_t &index, bool);

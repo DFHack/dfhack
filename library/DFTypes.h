@@ -522,8 +522,9 @@ struct t_item_df40d
     uint16_t x;
     uint16_t y;
     uint16_t z;
-    uint32_t unk1;
+    //uint32_t unk1;
     uint32_t flags;
+    uint32_t unk1;
     uint32_t unk2;
     uint32_t ID;
     // not complete

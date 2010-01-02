@@ -1115,6 +1115,11 @@ bool API::Suspend()
 {
     return d->p->suspend();
 }
+bool API::AsyncSuspend()
+{
+    return d->p->asyncSuspend();
+}
+
 bool API::Resume()
 {
     return d->p->resume();

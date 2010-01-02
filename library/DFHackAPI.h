@@ -57,6 +57,8 @@ namespace DFHack
         
         // stop DF from executing
         bool Suspend();
+        // stop DF from executing, asynchronous, use with polling
+        bool AsyncSuspend();
         // resume DF
         bool Resume();
         /**

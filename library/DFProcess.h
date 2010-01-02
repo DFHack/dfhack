@@ -61,11 +61,20 @@ namespace DFHack
     class DFHACK_EXPORT Process
     {
         public:
+            // Set up stuff so we can read memory, suspends synchronously
             virtual bool attach() = 0;
+            // detach from DF, resume its execution if it's suspended
             virtual bool detach() = 0;
             
+            // synchronous suspend
+            // waits for DF to be actually suspended,
+            // this might take a while depending on implementation
             virtual bool suspend() = 0;
+            // asynchronous suspend to use together with polling and timers
+            virtual bool asyncSuspend() = 0;
+            // resume DF execution
             virtual bool resume() = 0;
+            // force-resume DF execution
             virtual bool forceresume() = 0;
             
             virtual uint32_t readDWord(const uint32_t address) = 0;
@@ -74,12 +83,12 @@ namespace DFHack
             virtual void readWord(const uint32_t address, uint16_t & value) = 0;
             virtual uint8_t readByte(const uint32_t address) = 0;
             virtual void readByte(const uint32_t address, uint8_t & value) = 0;
-            virtual void read( const uint32_t address, const uint32_t length, uint8_t* buffer) = 0;
+            virtual void read( uint32_t address, uint32_t length, uint8_t* buffer) = 0;
             
             virtual void writeDWord(const uint32_t address, const uint32_t value) = 0;
             virtual void writeWord(const uint32_t address, const uint16_t value) = 0;
             virtual void writeByte(const uint32_t address, const uint8_t value) = 0;
-            virtual void write(const uint32_t address,const uint32_t length, const uint8_t* buffer) = 0;
+            virtual void write(uint32_t address, uint32_t length, uint8_t* buffer) = 0;
 
             virtual const std::string readCString (uint32_t offset) = 0;
             
@@ -87,12 +96,18 @@ namespace DFHack
             virtual bool isAttached() = 0;
             virtual bool isIdentified() = 0;
             
+            // find the thread IDs of the process
             virtual bool getThreadIDs(vector<uint32_t> & threads ) = 0;
+            // get virtual memory ranges of the process (what is mapped where)
             virtual void getMemRanges( vector<t_memrange> & ranges ) = 0;
             
+            // get the flattened Memory.xml entry of this process
             virtual memory_info *getDescriptor() = 0;
+            // get the DataModel for reading stl containers (depends on the version of stl DF was compiled with)
             virtual DataModel *getDataModel() = 0;
+            // get the DF's window (first that can be found ~_~)
             virtual DFWindow * getWindow() = 0;
+            // get the DF Process ID
             virtual int getPID() = 0;
     };
 
@@ -105,11 +120,11 @@ namespace DFHack
             NormalProcess(uint32_t pid, vector <memory_info> & known_versions);
             ~NormalProcess();
         public:
-            // Set up stuff so we can read memory
             bool attach();
             bool detach();
             
             bool suspend();
+            bool asyncSuspend();
             bool resume();
             bool forceresume();
             
@@ -119,12 +134,12 @@ namespace DFHack
             void readWord(const uint32_t address, uint16_t & value);
             uint8_t readByte(const uint32_t address);
             void readByte(const uint32_t address, uint8_t & value);
-            void read( const uint32_t address, const uint32_t length, uint8_t* buffer);
+            void read( uint32_t address, uint32_t length, uint8_t* buffer);
             
             void writeDWord(const uint32_t address, const uint32_t value);
             void writeWord(const uint32_t address, const uint16_t value);
             void writeByte(const uint32_t address, const uint8_t value);
-            void write(const uint32_t address,const uint32_t length, const uint8_t* buffer);
+            void write(uint32_t address, uint32_t length, uint8_t* buffer);
 
             const std::string readCString (uint32_t offset);
             
@@ -154,6 +169,7 @@ namespace DFHack
             bool detach();
             
             bool suspend();
+            bool asyncSuspend();
             bool resume();
             bool forceresume();
             
@@ -163,12 +179,12 @@ namespace DFHack
             void readWord(const uint32_t address, uint16_t & value);
             uint8_t readByte(const uint32_t address);
             void readByte(const uint32_t address, uint8_t & value);
-            void read( const uint32_t address, const uint32_t length, uint8_t* buffer);
+            void read( uint32_t address, uint32_t length, uint8_t* buffer);
             
             void writeDWord(const uint32_t address, const uint32_t value);
             void writeWord(const uint32_t address, const uint16_t value);
             void writeByte(const uint32_t address, const uint8_t value);
-            void write(const uint32_t address,const uint32_t length, const uint8_t* buffer);
+            void write(uint32_t address, uint32_t length, uint8_t* buffer);
 
             const std::string readCString (uint32_t offset);
             

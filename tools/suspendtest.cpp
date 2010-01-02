@@ -31,13 +31,13 @@ int main (void)
     cout << "Suspended, DF should be suspended now" << endl;
     getline(cin, blah);
     
-	DF.Resume();
-	cout << "Resumed, testing ForceResume. Suspend using SysInternals Process Explorer" << endl;
-	getline(cin, blah);
+    DF.Resume();
+    cout << "Resumed, testing ForceResume. Suspend using SysInternals Process Explorer" << endl;
+    getline(cin, blah);
 
-	DF.ForceResume();
-	cout << "ForceResumed. DF should be running." << endl;
-	getline(cin, blah);
+    DF.ForceResume();
+    cout << "ForceResumed. DF should be running." << endl;
+    getline(cin, blah);
 
     if(!DF.Detach())
     {

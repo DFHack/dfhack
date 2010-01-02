@@ -196,6 +196,11 @@ bool NormalProcess::isIdentified()
     return d->identified;
 }
 
+bool NormalProcess::asyncSuspend()
+{
+    return suspend();
+}
+
 bool NormalProcess::suspend()
 {
     if(!d->attached)
@@ -365,7 +370,7 @@ void NormalProcess::writeByte (uint32_t offset, uint8_t data)
     WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(uint8_t), NULL);
 }
 
-void NormalProcess::write (uint32_t offset, uint32_t size, const uint8_t *source)
+void NormalProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
 {
     WriteProcessMemory(d->my_handle, (int*) offset, source, size, NULL);
 }

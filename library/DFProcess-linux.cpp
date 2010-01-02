@@ -239,6 +239,11 @@ void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
     }
 }
 
+bool NormalProcess::asyncSuspend()
+{
+    return suspend();
+}
+
 bool NormalProcess::suspend()
 {
     int status;
@@ -470,7 +475,7 @@ void NormalProcess::writeByte (uint32_t offset, uint8_t data)
 }
 
 // blah. I hate the kernel devs for crippling /proc/PID/mem. THIS IS RIDICULOUS
-void NormalProcess::write (uint32_t offset, uint32_t size, const uint8_t *source)
+void NormalProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
 {
     uint32_t indexptr = 0;
     while (size > 0)

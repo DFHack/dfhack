@@ -236,7 +236,6 @@ SHMProcess::SHMProcess(vector <memory_info> & known_versions)
     gcc_barrier
     // at this point, DF is stopped and waiting for commands. make it run again
     ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
-    fprintf(stderr,"detach: %d",shmdt(d->my_shm));
 }
 
 bool SHMProcess::isSuspended()
@@ -355,7 +354,6 @@ void SHMProcess::getMemRanges( vector<t_memrange> & ranges )
 
 bool SHMProcess::suspend()
 {
-    int status;
     if(!d->attached)
     {
         return false;
@@ -371,6 +369,28 @@ bool SHMProcess::suspend()
     }
     d->suspended = true;
     return true;
+}
+
+bool SHMProcess::asyncSuspend()
+{
+    if(!d->attached)
+    {
+        return false;
+    }
+    if(d->suspended)
+    {
+        return true;
+    }
+    if(((shm_cmd *)d->my_shm)->pingpong == DFPP_SUSPENDED)
+    {
+        d->suspended = true;
+        return true;
+    }
+    else
+    {
+        ((shm_cmd *)d->my_shm)->pingpong = DFPP_SUSPEND;
+        return false;
+    }
 }
 
 bool SHMProcess::forceresume()
@@ -442,17 +462,41 @@ bool SHMProcess::detach()
     return false;
 }
 
-
-// FIXME: use recursion
-void SHMProcess::read (const uint32_t offset, const uint32_t size, uint8_t *target)
+void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buffer)
 {
-    assert (size < (SHM_SIZE - sizeof(shm_read)));
-    ((shm_read *)d->my_shm)->address = offset;
-    ((shm_read *)d->my_shm)->length = size;
-    gcc_barrier
-    ((shm_read *)d->my_shm)->pingpong = DFPP_READ;
-    d->waitWhile(DFPP_READ);
-    memcpy (target, d->my_shm + SHM_HEADER,size);
+    // normal read under 1MB
+    if(size <= SHM_BODY)
+    {
+        ((shm_read *)d->my_shm)->address = src_address;
+        ((shm_read *)d->my_shm)->length = size;
+        gcc_barrier
+        ((shm_read *)d->my_shm)->pingpong = DFPP_READ;
+        d->waitWhile(DFPP_READ);
+        memcpy (target_buffer, d->my_shm + SHM_HEADER,size);
+    }
+    // a big read, we pull data over the shm in iterations
+    else
+    {
+        // first read equals the size of the SHM window
+        uint32_t to_read = SHM_BODY;
+        while (size)
+        {
+            // read to_read bytes from src_cursor
+            ((shm_read *)d->my_shm)->address = src_address;
+            ((shm_read *)d->my_shm)->length = to_read;
+            gcc_barrier
+            ((shm_read *)d->my_shm)->pingpong = DFPP_READ;
+            d->waitWhile(DFPP_READ);
+            memcpy (target_buffer, d->my_shm + SHM_HEADER,size);
+            // decrease size by bytes read
+            size -= to_read;
+            // move the cursors
+            src_address += to_read;
+            target_buffer += to_read;
+            // check how much to write in the next iteration
+            to_read = min(size, (uint32_t) SHM_BODY);
+        }
+    }
 }
 
 uint8_t SHMProcess::readByte (const uint32_t offset)
@@ -540,14 +584,41 @@ void SHMProcess::writeByte (uint32_t offset, uint8_t data)
     d->waitWhile(DFPP_WRITE_BYTE);
 }
 
-void SHMProcess::write (uint32_t offset, uint32_t size, const uint8_t *source)
+void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer)
 {
-    ((shm_write *)d->my_shm)->address = offset;
-    ((shm_write *)d->my_shm)->length = size;
-    memcpy(d->my_shm+SHM_HEADER,source, size);
-    gcc_barrier
-    ((shm_write *)d->my_shm)->pingpong = DFPP_WRITE;
-    d->waitWhile(DFPP_WRITE);
+    // normal write under 1MB
+    if(size <= SHM_BODY)
+    {
+        ((shm_write *)d->my_shm)->address = dst_address;
+        ((shm_write *)d->my_shm)->length = size;
+        memcpy(d->my_shm+SHM_HEADER,source_buffer, size);
+        gcc_barrier
+        ((shm_write *)d->my_shm)->pingpong = DFPP_WRITE;
+        d->waitWhile(DFPP_WRITE);
+    }
+    // a big write, we push this over the shm in iterations
+    else
+    {
+        // first write equals the size of the SHM window
+        uint32_t to_write = SHM_BODY;
+        while (size)
+        {
+            // write to_write bytes to dst_cursor
+            ((shm_write *)d->my_shm)->address = dst_address;
+            ((shm_write *)d->my_shm)->length = to_write;
+            memcpy(d->my_shm+SHM_HEADER,source_buffer, to_write);
+            gcc_barrier
+            ((shm_write *)d->my_shm)->pingpong = DFPP_WRITE;
+            d->waitWhile(DFPP_WRITE);
+            // decrease size by bytes written
+            size -= to_write;
+            // move the cursors
+            source_buffer += to_write;
+            dst_address += to_write;
+            // check how much to write in the next iteration
+            to_write = min(size, (uint32_t) SHM_BODY);
+        }
+    }
 }
 
 // FIXME: butt-fugly

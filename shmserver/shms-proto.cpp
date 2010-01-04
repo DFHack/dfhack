@@ -86,11 +86,7 @@ void SHM_Act (void)
             goto check_again;
             */
         case DFPP_PID:
-            #ifdef LINUX_BUILD
-                ((shm_retval *)shm)->value = getpid();
-            #else
-                ((shm_retval *)shm)->value = GetCurrentProcessId(void);
-            #endif
+            ((shm_retval *)shm)->value = getPID();
             full_barrier
             ((shm_retval *)shm)->pingpong = DFPP_RET_PID;
             goto check_again;

@@ -205,3 +205,7 @@ bool isValidSHM()
     shmctl(shmid, IPC_STAT, &descriptor);
     return descriptor.shm_nattch == 1;
 }
+uint32_t getPID()
+{
+    return getpid();
+}

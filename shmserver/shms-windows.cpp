@@ -27,5 +27,47 @@ distribution.
  */
 #include "shms.h"
 extern char *shm;
+// SDL functions used in 40d16
+/*
+SDL_AddTimer
+SDL_CondSignal
+SDL_CondWait
+SDL_ConvertSurface
+SDL_CreateCond
+SDL_CreateMutex
+SDL_CreateRGBSurface
+SDL_CreateRGBSurfaceFrom
+SDL_DestroyCond
+SDL_DestroyMutex
+SDL_EnableKeyRepeat
+SDL_EnableUNICODE
+SDL_FreeSurface
+SDL_GL_GetAttribute
+SDL_GL_SetAttribute
+SDL_GL_SwapBuffers
+SDL_GetError
+SDL_GetKeyState
+SDL_GetTicks
+SDL_GetVideoInfo
+SDL_Init
+SDL_LockSurface
+SDL_MapRGB
+SDL_PollEvent
+SDL_Quit
+SDL_RWFromFile
+SDL_RemoveTimer
+SDL_SaveBMP_RW
+SDL_SetAlpha
+SDL_SetColorKey
+SDL_SetModuleHandle
+SDL_SetVideoMode
+SDL_ShowCursor
+SDL_UnlockSurface
+SDL_UpperBlit
+SDL_WM_SetCaption
+SDL_WM_SetIcon
+SDL_mutexP
+SDL_strlcpy
+*/
 
 // TO BE DONE

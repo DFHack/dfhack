@@ -41,9 +41,6 @@ distribution.
 #include <sys/syscall.h>
 #include <signal.h>
 
-// a full memory barrier! better be safe than sorry.
-#define gcc_barrier asm volatile("" ::: "memory"); __sync_synchronize();
-
 /*
  * wait for futex
  * futex has to be aligned to 4 bytes
@@ -120,7 +117,7 @@ void SHM_Init ( void )
         errorstate = 1;
         return;
     }
-    gcc_barrier
+    full_barrier
     ((shm_cmd *)shm)->pingpong = DFPP_RUNNING; // make sure we don't stall or do crazy stuff
 }
 

@@ -34,7 +34,7 @@ distribution.
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <unistd.h>
-#include "dfconnect.h"
+#include "shms.h"
 #include <sys/time.h>
 #include <time.h>
 #include <linux/futex.h>
@@ -137,136 +137,6 @@ void SHM_Destroy ( void )
     fprintf(stderr,"dfhack: destroyed shared segment.\n");
 }
 
-void SHM_Act (void)
-{
-    if(errorstate)
-    {
-        return;
-    }
-    shmid_ds descriptor;
-    uint32_t numwaits = 0;
-    uint32_t length;
-    uint32_t address;
-    check_again: // goto target!!!
-    if(numwaits == 10000)
-    {
-        shmctl(shmid, IPC_STAT, &descriptor);
-        if(descriptor.shm_nattch == 1)// other guy crashed
-        {
-            gcc_barrier
-            ((shm_cmd *)shm)->pingpong = DFPP_RUNNING;
-            fprintf(stderr,"dfhack: Broke out of loop, other process disappeared.\n");
-            return;
-        }
-        else
-        {
-            numwaits = 0;
-        }
-    }
-    switch (((shm_cmd *)shm)->pingpong)
-    {
-        case DFPP_RET_VERSION:
-        case DFPP_RET_DATA:
-        case DFPP_RET_DWORD:
-        case DFPP_RET_WORD:
-        case DFPP_RET_BYTE:
-        case DFPP_SUSPENDED:
-        case DFPP_RET_PID:
-        case DFPP_SV_ERROR:
-            numwaits++;
-            goto check_again;
-        case DFPP_SUSPEND:
-            gcc_barrier
-            ((shm_cmd *)shm)->pingpong = DFPP_SUSPENDED;
-            goto check_again;
-            /*
-        case DFPP_BOUNCE:
-            length = ((shm_bounce *)shm)->length;
-            memcpy(BigFat,shm + SHM_HEADER,length);
-            memcpy(shm + SHM_HEADER,BigFat,length);
-            ((shm_cmd *)shm)->pingpong = DFPP_RET_DATA;
-            goto check_again;
-            */
-        case DFPP_PID:
-            ((shm_retval *)shm)->value = getpid();
-            gcc_barrier
-            ((shm_retval *)shm)->pingpong = DFPP_RET_PID;
-            goto check_again;
-            
-        case DFPP_VERSION:
-            ((shm_retval *)shm)->value = PINGPONG_VERSION;
-            gcc_barrier
-            ((shm_retval *)shm)->pingpong = DFPP_RET_VERSION;
-            goto check_again;
-            
-        case DFPP_READ:
-            length = ((shm_read *)shm)->length;
-            address = ((shm_read *)shm)->address;
-            memcpy(shm + SHM_HEADER, (void *) address,length);
-            gcc_barrier
-            ((shm_cmd *)shm)->pingpong = DFPP_RET_DATA;
-            goto check_again;
-            
-        case DFPP_READ_DWORD:
-            address = ((shm_read_small *)shm)->address;
-            ((shm_retval *)shm)->value = *((uint32_t*) address);
-            gcc_barrier
-            ((shm_retval *)shm)->pingpong = DFPP_RET_DWORD;
-            goto check_again;
-
-        case DFPP_READ_WORD:
-            address = ((shm_read_small *)shm)->address;
-            ((shm_retval *)shm)->value = *((uint16_t*) address);
-            gcc_barrier
-            ((shm_retval *)shm)->pingpong = DFPP_RET_WORD;
-            goto check_again;
-            
-        case DFPP_READ_BYTE:
-            address = ((shm_read_small *)shm)->address;
-            ((shm_retval *)shm)->value = *((uint8_t*) address);
-            gcc_barrier
-            ((shm_retval *)shm)->pingpong = DFPP_RET_BYTE;
-            goto check_again;
-            
-        case DFPP_WRITE:
-            address = ((shm_write *)shm)->address;
-            length = ((shm_write *)shm)->length;
-            memcpy((void *)address, shm + SHM_HEADER,length);
-            gcc_barrier
-            ((shm_cmd *)shm)->pingpong = DFPP_SUSPENDED;
-            goto check_again;
-            
-        case DFPP_WRITE_DWORD:
-            (*(uint32_t*)((shm_write_small *)shm)->address) = ((shm_write_small *)shm)->value;
-            gcc_barrier
-            ((shm_cmd *)shm)->pingpong = DFPP_SUSPENDED;
-            goto check_again;
-
-        case DFPP_WRITE_WORD:
-            (*(uint16_t*)((shm_write_small *)shm)->address) = ((shm_write_small *)shm)->value;
-            gcc_barrier
-            ((shm_cmd *)shm)->pingpong = DFPP_SUSPENDED;
-            goto check_again;
-        
-        case DFPP_WRITE_BYTE:
-            (*(uint8_t*)((shm_write_small *)shm)->address) = ((shm_write_small *)shm)->value;
-            gcc_barrier
-            ((shm_cmd *)shm)->pingpong = DFPP_SUSPENDED;
-            goto check_again;
-            
-        case DFPP_CL_ERROR:
-        case DFPP_RUNNING:
-            fprintf(stderr, "no. of waits: %d\n", numwaits);
-            break;
-            
-        default:
-            ((shm_retval *)shm)->value = DFEE_INVALID_COMMAND;
-            gcc_barrier
-            ((shm_retval *)shm)->pingpong = DFPP_SV_ERROR;
-            break;
-    }
-}
-
 // hook - called every tick in OpenGL mode of DF
 extern "C" void SDL_GL_SwapBuffers(void)
 {
@@ -331,3 +201,10 @@ extern "C" int SDL_Init(uint32_t flags)
     return _SDL_Init(flags);
 }
 
+// FIXME: add error checking?
+bool isValidSHM()
+{
+    shmid_ds descriptor;
+    shmctl(shmid, IPC_STAT, &descriptor);
+    return descriptor.shm_nattch == 1;
+}

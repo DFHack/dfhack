@@ -27,7 +27,7 @@ distribution.
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <time.h>
-#include "shmserver/dfconnect.h"
+#include "../shmserver/shms.h"
 #include <sys/time.h>
 #include <time.h>
 #include <linux/futex.h>

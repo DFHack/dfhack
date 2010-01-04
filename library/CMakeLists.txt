@@ -20,7 +20,7 @@ md5/md5wrapper.h
 tinyxml/tinystr.h
 tinyxml/tinyxml.h
 
-shmserver/dfconnect.h
+../shmserver/shms.h
 )
 
 SET(PROJECT_SRCS

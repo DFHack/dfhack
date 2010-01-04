@@ -1,5 +1,5 @@
 # main project file. use it from a build sub-folder, see COMPILE for details
-PROJECT (dfhack) 
+PROJECT (dfhack)
 cmake_minimum_required(VERSION 2.6)
 
 # disable warning, autosearch
@@ -25,6 +25,8 @@ SET( LIBRARY_OUTPUT_PATH ${dfhack_SOURCE_DIR}/output CACHE PATH "Output director
 SET( EXECUTABLE_OUTPUT_PATH ${dfhack_SOURCE_DIR}/output CACHE PATH "Output directory for the dfhack tools" )
 
 include_directories (${CMAKE_SOURCE_DIR}/library/)
+include_directories (${CMAKE_SOURCE_DIR}/shmserver/)
 
 add_subdirectory (library)
 add_subdirectory (tools)
+add_subdirectory (shmserver)

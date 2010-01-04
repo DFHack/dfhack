@@ -7,6 +7,19 @@
 #define SHM_BODY 1024*1024
 #define SHM_SIZE SHM_HEADER+SHM_BODY
 
+// a full memory barrier! better be safe than sorry.
+#ifdef LINUX_BUILD
+    #define full_barrier asm volatile("" ::: "memory"); __sync_synchronize();
+#else
+    // FIXME: detect MSVC here and use the right barrier magic
+    #define full_barrier ;
+/*
+    #pragma intrinsic(_ReadWriteBarrier)
+    #define full_barrier MFENCE; _ReadWriteBarrier();
+    */
+#endif
+
+
 /*
     * read - parameters are address and length
     * write - parameters are address, length and the actual data to write
@@ -108,5 +121,8 @@ typedef struct
     uint32_t pingpong;
     uint32_t value;
 } shm_retval;
+
+void SHM_Act (void);
+bool isValidSHM();
 
 #endif

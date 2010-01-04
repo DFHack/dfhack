@@ -27,7 +27,7 @@ distribution.
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <time.h>
-#include "shmserver/dfconnect.h"
+#include "../shmserver/shms.h"
 
 using namespace DFHack;
 

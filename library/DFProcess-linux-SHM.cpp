@@ -193,7 +193,7 @@ SHMProcess::SHMProcess(vector <memory_info> & known_versions)
     shmctl(d->my_shmid, IPC_STAT, &descriptor); 
     if(descriptor.shm_nattch != 2)// badness
     {
-        fprintf(stderr,"dfhack: %d : invalid no. of processes connected\n", descriptor.shm_nattch);
+        fprintf(stderr,"dfhack: %d : invalid no. of processes connected\n", (int) descriptor.shm_nattch);
         fprintf(stderr,"detach: %d",shmdt(d->my_shm));
         return;
     }
@@ -236,6 +236,7 @@ SHMProcess::SHMProcess(vector <memory_info> & known_versions)
     gcc_barrier
     // at this point, DF is stopped and waiting for commands. make it run again
     ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
+    shmdt(d->my_shm); // detach so we don't attach twice when attach() is called
 }
 
 bool SHMProcess::isSuspended()

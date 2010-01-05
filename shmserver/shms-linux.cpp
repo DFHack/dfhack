@@ -83,8 +83,8 @@ static int (*_SDL_Flip)(void * some_ptr) = 0;
 // various crud
 int counter = 0;
 int errorstate = 0;
-char *shm;
-int shmid;
+char *shm = 0;
+int shmid = 0;
 
 void SHM_Init ( void )
 {
@@ -139,7 +139,7 @@ extern "C" void SDL_GL_SwapBuffers(void)
 {
     if(_SDL_GL_SwapBuffers)
     {
-        if(((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
+        if(!errorstate && ((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
         {
             SHM_Act();
         }
@@ -153,7 +153,7 @@ extern "C" int SDL_Flip(void * some_ptr)
 {
     if(_SDL_Flip)
     {
-        if(((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
+        if(!errorstate && ((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
         {
             SHM_Act();
         }
@@ -169,8 +169,11 @@ extern "C" void SDL_Quit(void)
     {
         _SDL_Quit();
     }
-    fprintf(stderr,"dfhack: DF called SwapBuffers %d times\n", counter);
-    SHM_Destroy();
+    if(!errorstate)
+    {
+        fprintf(stderr,"dfhack: DF called SwapBuffers %d times\n", counter);
+        SHM_Destroy();
+    }
 }
 
 // hook - called at program start, initialize some stuffs we'll use later
@@ -203,7 +206,8 @@ bool isValidSHM()
 {
     shmid_ds descriptor;
     shmctl(shmid, IPC_STAT, &descriptor);
-    return descriptor.shm_nattch == 1;
+    fprintf(stderr,"ID %d, attached: %d\n",shmid, descriptor.shm_nattch);
+    return (descriptor.shm_nattch == 2);
 }
 uint32_t getPID()
 {

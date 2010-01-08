@@ -30,47 +30,10 @@ distribution.
 #include "../shmserver/shms.h"
 #include <sys/time.h>
 #include <time.h>
-#include <linux/futex.h>
-#include <sys/syscall.h>
 using namespace DFHack;
 
 // a full memory barrier! better be safe than sorry.
 #define gcc_barrier asm volatile("" ::: "memory"); __sync_synchronize();
-
-/*
-* wait for futex
-* futex has to be aligned to 4 bytes
-* futex has to be equal to val (returns EWOULDBLOCK otherwise)
-* wait can be broken by arriving signals (returns EINTR)
-* returns 0 when broken by futex_wake
-*/
-inline int futex_wait(int * futex, int val)
-{
-    return syscall(SYS_futex, futex, FUTEX_WAIT, val, 0, 0, 0);
-}
-/*
-* wait for futex
-* futex has to be aligned to 4 bytes
-* futex has to be equal to val (returns EWOULDBLOCK otherwise)
-* wait can be broken by arriving signals (returns EINTR)
-* returns 0 when broken by futex_wake
-* returns ETIMEDOUT on timeout
-*/
-inline int futex_wait_timed(int * futex, int val, const struct timespec *timeout)
-{
-    return syscall(SYS_futex, futex, FUTEX_WAIT, val, timeout, 0, 0);
-}
-/*
-* wake up futex. returns number of waked processes
-*/
-inline int futex_wake(int * futex)
-{
-    return syscall(SYS_futex, futex, FUTEX_WAKE, 1, 0, 0, 0);
-}
-static timespec one_second = { 1,0 };
-static timespec five_second = { 5,0 };
-
-
 
 class SHMProcess::Private
 {

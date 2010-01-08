@@ -31,7 +31,6 @@ distribution.
 #include <string.h>
 #include <unistd.h>
 #include "shms.h"
-#include <pthread.h>
 // various crud
 extern int errorstate;
 extern char *shm;

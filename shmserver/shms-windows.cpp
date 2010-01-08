@@ -37,9 +37,148 @@ distribution.
 #include "../library/integers.h"
 #include "shms.h"
 #include <stdio.h>
-int errorstate;
-char *shm;
-int shmid;
+int errorstate = 0;
+char *shm = 0;
+int shmid = 0;
+bool inited = 0;
+HANDLE shmHandle = 0;
+HANDLE DFSVMutex = 0;
+HANDLE DFCLMutex = 0;
+void SHM_Init ( void )
+{
+    // check that we do this only once per process
+    if(inited)
+    {
+        MessageBox(0,"SDL_Init was called twice or more!","FUN", MB_OK);
+        return;
+    }
+    inited = true;
+    
+    // create or open mutexes
+    DFSVMutex = CreateMutex( 0, 1, "DFSVMutex");
+    if(DFSVMutex == 0)
+    {
+        DFSVMutex = OpenMutex(SYNCHRONIZE,false, "DFSVMutex");
+        if(DFSVMutex == 0)
+        {
+            errorstate = 1;
+            return;
+        }
+    }
+    DFCLMutex = CreateMutex( 0, 0, "DFCLMutex");
+    if(DFCLMutex == 0)
+    {
+        DFCLMutex = OpenMutex(SYNCHRONIZE,false, "DFCLMutex");
+        if(DFCLMutex == 0)
+        {
+            CloseHandle(DFSVMutex);
+            errorstate = 1;
+            return;
+        }
+    }
+    
+    // try locking server mutex
+    uint32_t result;
+    result = WaitForSingleObject(DFSVMutex,0);
+    switch (result)
+    {
+        case WAIT_ABANDONED:
+        {
+            // picked up after a crashed DF process
+            // do some sanity checks on client attached
+            // otherwise the same thing as WAIT_OBJECT_0
+            break;
+        }
+        case WAIT_OBJECT_0:
+        {
+            // all right, we have the mutex and are the one and only DF server
+            break;
+        }
+        case WAIT_TIMEOUT:
+        case WAIT_FAILED:
+        default:
+        {
+            // error, bail
+            errorstate = 1;
+            CloseHandle(DFSVMutex);
+            CloseHandle(DFCLMutex);
+            return;
+        }
+    }
+    
+    // create virtual memory mapping
+    shmHandle = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,SHM_SIZE,"DFShm");
+    // if can't create or already exists -> nothing happens
+    if(!shmHandle || GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+        MessageBox(0,"Couldn't create SHM mapping","FUN", MB_OK);
+        errorstate = 1;
+        ReleaseMutex(DFSVMutex);
+        CloseHandle(DFSVMutex);
+        CloseHandle(DFCLMutex);
+        return;
+    }
+    // attempt to attach the created mapping
+    shm = (char *) MapViewOfFile(shmHandle,FILE_MAP_ALL_ACCESS, 0,0, SHM_SIZE);
+    if(shm)
+    {
+        ((shm_cmd *)shm)->pingpong = DFPP_RUNNING;
+        MessageBox(0,"Sucessfully mapped SHM","FUN", MB_OK);
+    }
+    else
+    {
+        MessageBox(0,"Couldn't attach SHM mapping","FUN", MB_OK);
+        errorstate = 1;
+        ReleaseMutex(DFSVMutex);
+        CloseHandle(DFSVMutex);
+        CloseHandle(DFCLMutex);
+    }
+}
+
+void SHM_Destroy ( void )
+{
+    if(errorstate)
+        return;
+    ReleaseMutex(DFSVMutex);
+    CloseHandle(DFSVMutex);
+    CloseHandle(DFCLMutex);
+}
+
+uint32_t getPID()
+{
+    return GetCurrentProcessId();
+}
+
+// is the other side still there?
+bool isValidSHM()
+{
+    // try if CL mutex is free
+    uint32_t result = WaitForSingleObject(DFCLMutex,0);
+    
+    switch (result)
+    {
+        case WAIT_ABANDONED:
+        case WAIT_OBJECT_0:
+        {
+            ReleaseMutex(DFCLMutex);
+            return false;
+        }
+        case WAIT_TIMEOUT:
+        {
+            // mutex is held by a process already
+            return true;
+        }   
+        default:
+        case WAIT_FAILED:
+        {
+            // TODO: now how do I respond to this?
+            return false;
+        }
+    }
+}
+
+/*************************************************************************/
+// boring wrappers beyond this point. Only fix when broken
 
 // function and variable pointer... we don't try to understand what SDL does here
 typedef void * fPtr;
@@ -496,12 +635,14 @@ static void (*_SDL_Quit)(void) = 0;
 extern "C" void SDL_Quit(void)
 {
     fprintf(stderr,"Quitting!\n");
+    SHM_Destroy();
     _SDL_Quit();
 }
 
 static void (*_SDL_GL_SwapBuffers)(void) = 0;
 extern "C" void SDL_GL_SwapBuffers(void)
 {
+    SHM_Act();
     _SDL_GL_SwapBuffers();
 }
 
@@ -569,15 +710,6 @@ extern "C" int SDL_Init(uint32_t flags)
     _SDL_FillRect = (int (*)(void*,void*,uint32_t))GetProcAddress(realSDLlib,"SDL_FillRect");
     
     fprintf(stderr,"Initized HOOKS!\n");
+    SHM_Init();
     return _SDL_Init(flags);
-}
-
-uint32_t getPID()
-{
-    return GetCurrentProcessId();
-}
-
-bool isValidSHM()
-{
-    return false;
 }

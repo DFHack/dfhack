@@ -85,9 +85,18 @@ int counter = 0;
 int errorstate = 0;
 char *shm = 0;
 int shmid = 0;
+bool inited = 0;
 
 void SHM_Init ( void )
 {
+    // check that we do this only once per process
+    if(inited)
+    {
+        fprintf("SDL_Init was called twice or more!\n");
+        return;
+    }
+    inited = true;
+    
     // name for the segment
     key_t key = 123466;
     

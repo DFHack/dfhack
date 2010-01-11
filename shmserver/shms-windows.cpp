@@ -100,6 +100,7 @@ void SHM_Init ( void )
         {
             // error, bail
             errorstate = 1;
+            MessageBox(0,"Could not aquire mutex","FUN", MB_OK);
             CloseHandle(DFSVMutex);
             CloseHandle(DFCLMutex);
             return;
@@ -452,7 +453,7 @@ extern "C" void SDL_WM_SetIcon(vPtr icon, uint8_t *mask)
 static int (*_SDL_FillRect)(vPtr dst, vPtr dstrect, uint32_t color) = 0;
 extern "C" int SDL_FillRect(vPtr dst, vPtr dstrect, uint32_t color)
 {
-    _SDL_FillRect(dst,dstrect,color);
+    return _SDL_FillRect(dst,dstrect,color);
 }
 
 /***** Events and input
@@ -646,10 +647,14 @@ extern "C" void SDL_GL_SwapBuffers(void)
     _SDL_GL_SwapBuffers();
 }
 
-
 static int (*_SDL_Init)(uint32_t flags) = 0;
 extern "C" int SDL_Init(uint32_t flags)
 {
+    char zlo[2560];
+    //backtrace (&zlo, 2559);
+    sprintf(zlo, "SDL_Init called from thread %d", GetCurrentThreadId());
+    MessageBox(0,zlo,"FUN", MB_OK);
+    
     HMODULE realSDLlib =  LoadLibrary("SDLreal.dll");
     if(!realSDLlib)
     {

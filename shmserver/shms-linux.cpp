@@ -92,7 +92,7 @@ void SHM_Init ( void )
     // check that we do this only once per process
     if(inited)
     {
-        fprintf("SDL_Init was called twice or more!\n");
+        fprintf(stderr, "SDL_Init was called twice or more!\n");
         return;
     }
     inited = true;

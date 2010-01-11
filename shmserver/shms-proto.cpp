@@ -26,10 +26,10 @@ distribution.
  * This is the source for the DF <-> dfhack shm bridge, server protocol part
  */
 #include <stdio.h>
-#include <stdint.h>
+#include "../library/integers.h"
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include "shms.h"
 // various crud
 extern int errorstate;

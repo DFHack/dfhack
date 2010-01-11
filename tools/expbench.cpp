@@ -31,7 +31,8 @@ int main (void)
     time(&start);
     for(uint32_t i = 0; i< 1000;i++)
     {
-        DF.InitMap();
+        if(!DF.InitMap())
+			break;
         DF.getSize(x_max,y_max,z_max);
         if((i % 10) == 0)
         {

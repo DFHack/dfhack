@@ -144,6 +144,7 @@ NormalProcess::~NormalProcess()
     }
     // destroy data model. this is assigned by processmanager
     delete d->my_datamodel;
+    // destroy our rebased copy of the memory descriptor
     delete d->my_descriptor;
     if(d->my_handle != NULL)
     {

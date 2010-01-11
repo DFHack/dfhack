@@ -68,6 +68,20 @@ bool ProcessEnumerator::findProcessess()
     // Get the list of process identifiers.
     DWORD ProcArray[2048], memoryNeeded, numProccesses;
 
+    {
+        Process *p = new SHMProcess(d->meminfo->meminfo);
+        if(p->isIdentified())
+        {
+            d->processes.push_back(p);
+			return true;
+        }
+        else
+        {
+            delete p;
+            p = 0;
+        }
+    }
+    
     EnableDebugPriv();
     if ( !EnumProcesses( ProcArray, sizeof(ProcArray), &memoryNeeded ) )
     {
@@ -81,14 +95,14 @@ bool ProcessEnumerator::findProcessess()
     // iterate through processes
     for ( int i = 0; i < (int)numProccesses; i++ )
     {
-        Process *p = new NormalProcess(ProcArray[i],d->meminfo->meminfo);
-        if(p->isIdentified())
+        Process *q = new NormalProcess(ProcArray[i],d->meminfo->meminfo);
+        if(q->isIdentified())
         {
-            d->processes.push_back(p);
+            d->processes.push_back(q);
         }
         else
         {
-            delete p;
+            delete q;
         }
     }
     if(d->processes.size())

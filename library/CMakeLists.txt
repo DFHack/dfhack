@@ -53,6 +53,7 @@ DFProcessEnumerator-linux.cpp
 
 SET(PROJECT_SRCS_WINDOWS
 DFProcess-windows.cpp
+DFProcess-windows-SHM.cpp
 DFWindow-windows.cpp
 DFProcessEnumerator-windows.cpp
 )

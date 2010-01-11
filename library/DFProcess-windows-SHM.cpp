@@ -22,19 +22,10 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "DFCommonInternal.h"
-#include <errno.h>
-#include <sys/shm.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <time.h>
 #include "../shmserver/shms.h"
-#include <sys/time.h>
-#include <time.h>
 using namespace DFHack;
 
 // a full memory barrier! better be safe than sorry.
-#define gcc_barrier asm volatile("" ::: "memory"); __sync_synchronize();
-
 class SHMProcess::Private
 {
     public:
@@ -44,44 +35,73 @@ class SHMProcess::Private
         my_descriptor = NULL;
         my_pid = 0;
         my_shm = 0;
-        my_shmid = -1;
         my_window = NULL;
         attached = false;
         suspended = false;
         identified = false;
+        DFSVMutex = 0;
+        DFCLMutex = 0;
     };
     ~Private(){};
     DataModel* my_datamodel;
     memory_info * my_descriptor;
     DFWindow * my_window;
-    pid_t my_pid;
+    uint32_t my_pid;
     char *my_shm;
-    int my_shmid;
+    HANDLE DFSVMutex;
+    HANDLE DFCLMutex;
     
     bool attached;
     bool suspended;
     bool identified;
     
-    bool validate(char * exe_file, uint32_t pid, vector <memory_info> & known_versions);
     bool waitWhile (DF_PINGPONG state);
+    bool isValidSV();
     bool DF_TestBridgeVersion(bool & ret);
-    bool DF_GetPID(pid_t & ret);
+    bool DF_GetPID(uint32_t & ret);
 };
+
+// is the other side still there?
+bool SHMProcess::Private::isValidSV()
+{
+    // try if CL mutex is free
+    uint32_t result = WaitForSingleObject(DFSVMutex,0);
+    
+    switch (result)
+    {
+        case WAIT_ABANDONED:
+        case WAIT_OBJECT_0:
+        {
+            ReleaseMutex(DFSVMutex);
+            return false;
+        }
+        case WAIT_TIMEOUT:
+        {
+            // mutex is held by DF
+            return true;
+        }   
+        default:
+        case WAIT_FAILED:
+        {
+            // TODO: now how do I respond to this?
+            return false;
+        }
+    }
+}
 
 bool SHMProcess::Private::waitWhile (DF_PINGPONG state)
 {
     uint32_t cnt = 0;
-    struct shmid_ds descriptor;
     while (((shm_cmd *)my_shm)->pingpong == state)
     {
         if(cnt == 10000)
         {
-            shmctl(my_shmid, IPC_STAT, &descriptor); 
-            if(descriptor.shm_nattch == 1)// DF crashed?
+            if(!isValidSV())// DF not there anymore?
             {
-                gcc_barrier
+                full_barrier
                 ((shm_cmd *)my_shm)->pingpong = DFPP_RUNNING;
                 attached = suspended = false;
+                ReleaseMutex(DFCLMutex);
                 return false;
             }
             else
@@ -105,22 +125,22 @@ bool SHMProcess::Private::waitWhile (DF_PINGPONG state)
 bool SHMProcess::Private::DF_TestBridgeVersion(bool & ret)
 {
     ((shm_cmd *)my_shm)->pingpong = DFPP_VERSION;
-    gcc_barrier
+    full_barrier
     if(!waitWhile(DFPP_VERSION))
         return false;
-    gcc_barrier
+    full_barrier
     ((shm_cmd *)my_shm)->pingpong = DFPP_SUSPENDED;
     ret =( ((shm_retval *)my_shm)->value == PINGPONG_VERSION );
     return true;
 }
 
-bool SHMProcess::Private::DF_GetPID(pid_t & ret)
+bool SHMProcess::Private::DF_GetPID(uint32_t & ret)
 {
     ((shm_cmd *)my_shm)->pingpong = DFPP_PID;
-    gcc_barrier
+    full_barrier
     if(!waitWhile(DFPP_PID))
         return false;
-    gcc_barrier
+    full_barrier
     ((shm_cmd *)my_shm)->pingpong = DFPP_SUSPENDED;
     ret = ((shm_retval *)my_shm)->value;
     return true;
@@ -132,47 +152,47 @@ SHMProcess::SHMProcess(vector <memory_info> & known_versions)
     char exe_link_name [256];
     char target_name[1024];
     int target_result;
-    
-    /*
-     * Locate the segment.
-     */
-    if ((d->my_shmid = shmget(SHM_KEY, SHM_SIZE, 0666)) < 0)
+    // get server and client mutex
+    d->DFSVMutex = OpenMutex(SYNCHRONIZE,false, "DFSVMutex");
+    if(d->DFSVMutex == 0)
+    {
+        return;
+    }
+    d->DFCLMutex = OpenMutex(SYNCHRONIZE,false, "DFCLMutex");
+    if(d->DFCLMutex == 0)
+    {
+        return;
+    }
+    if(!attach())
     {
         return;
     }
     
-    /*
-     * Attach the segment
-     */
-    if ((d->my_shm = (char *) shmat(d->my_shmid, NULL, 0)) == (char *) -1)
-    {
-        return;
-    }
+    // All seems to be OK so far. Attached and connected to something that looks like DF
     
-    /*
-     * Check if there are two processes connected to the segment
-     */
-    shmid_ds descriptor;
-    shmctl(d->my_shmid, IPC_STAT, &descriptor); 
-    if(descriptor.shm_nattch != 2)// badness
-    {
-        fprintf(stderr,"dfhack: %d : invalid no. of processes connected\n", (int) descriptor.shm_nattch);
-        fprintf(stderr,"detach: %d",shmdt(d->my_shm));
-        return;
-    }
-    
-    /*
-     * Test bridge version, will also detect when we connect to something that doesn't respond
-     */
+    // Test bridge version, will also detect when we connect to something that doesn't respond
     bool bridgeOK;
     if(!d->DF_TestBridgeVersion(bridgeOK))
     {
         fprintf(stderr,"DF terminated during reading\n");
+        UnmapViewOfFile(d->my_shm);
+        ReleaseMutex(d->DFCLMutex);
+        CloseHandle(d->DFSVMutex);
+        d->DFSVMutex = 0;
+        CloseHandle(d->DFCLMutex);
+        d->DFCLMutex = 0;
         return;
     }
     if(!bridgeOK)
     {
         fprintf(stderr,"SHM bridge version mismatch\n");
+        ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
+        UnmapViewOfFile(d->my_shm);
+        ReleaseMutex(d->DFCLMutex);
+        CloseHandle(d->DFSVMutex);
+        d->DFSVMutex = 0;
+        CloseHandle(d->DFCLMutex);
+        d->DFCLMutex = 0;
         return;
     }
     /*
@@ -180,26 +200,74 @@ SHMProcess::SHMProcess(vector <memory_info> & known_versions)
      */
     if(d->DF_GetPID(d->my_pid))
     {
-        // find its binary
-        sprintf(exe_link_name,"/proc/%d/exe", d->my_pid);
-        target_result = readlink(exe_link_name, target_name, sizeof(target_name)-1);
-        if (target_result == -1)
+        // try to identify the DF version
+        do // glorified goto
+        {  
+            IMAGE_NT_HEADERS32 pe_header;
+            IMAGE_SECTION_HEADER sections[16];
+            HMODULE hmod = NULL;
+            DWORD junk;
+            HANDLE hProcess;
+            bool found = false;
+            d->identified = false;
+            // open process, we only need the process open 
+            hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, d->my_pid );
+            if (NULL == hProcess)
+                break;
+            
+            // try getting the first module of the process
+            if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk) == 0)
+            {
+                CloseHandle(hProcess);
+                cout << "EnumProcessModules fail'd" << endl;
+                break;
+            }
+            // got base ;)
+            uint32_t base = (uint32_t)hmod;
+            
+            // read from this process
+            uint32_t pe_offset = readDWord(base+0x3C);
+            read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
+            read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
+            
+            // iterate over the list of memory locations
+            vector<memory_info>::iterator it;
+            for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
+            {
+                uint32_t pe_timestamp = (*it).getHexValue("pe_timestamp");
+                if (pe_timestamp == pe_header.FileHeader.TimeDateStamp)
+                {
+                    memory_info *m = new memory_info(*it);
+                    m->RebaseAll(base);
+                    d->my_datamodel = new DMWindows40d();
+                    d->my_descriptor = m;
+                    d->identified = true;
+                    cerr << "identified " << m->getVersion() << endl;
+                    break;
+                }
+            }
+            CloseHandle(hProcess);
+        } while (0); // glorified goto end
+        
+        if(d->identified)
         {
-            perror("readlink");
+            d->my_window = new DFWindow(this);
+        }
+        else
+        {
+            ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
+            UnmapViewOfFile(d->my_shm);
+            ReleaseMutex(d->DFCLMutex);
+            CloseHandle(d->DFSVMutex);
+            d->DFSVMutex = 0;
+            CloseHandle(d->DFCLMutex);
+            d->DFCLMutex = 0;
             return;
         }
-        // make sure we have a null terminated string...
-        // see http://www.opengroup.org/onlinepubs/000095399/functions/readlink.html
-        target_name[target_result] = 0;
-        
-        // try to identify the DF version
-        d->validate(target_name, d->my_pid, known_versions);
-        d->my_window = new DFWindow(this);
     }
-    gcc_barrier
-    // at this point, DF is stopped and waiting for commands. make it run again
-    ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
-    shmdt(d->my_shm); // detach so we don't attach twice when attach() is called
+    full_barrier
+    // at this point, DF is attached and suspended, make it run
+    detach();
 }
 
 bool SHMProcess::isSuspended()
@@ -216,30 +284,6 @@ bool SHMProcess::isIdentified()
     return d->identified;
 }
 
-bool SHMProcess::Private::validate(char * exe_file, uint32_t pid, vector <memory_info> & known_versions)
-{
-    md5wrapper md5;
-    // get hash of the running DF process
-    string hash = md5.getHashFromFile(exe_file);
-    vector<memory_info>::iterator it;
-    cerr << exe_file << " " << hash <<  endl;
-    // iterate over the list of memory locations
-    for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
-    {
-        if(hash == (*it).getString("md5")) // are the md5 hashes the same?
-        {
-            memory_info * m = &*it;
-            my_datamodel = new DMLinux40d();
-            my_descriptor = m;
-            my_pid = pid;
-            identified = true;
-            cerr << "identified " << m->getVersion() << endl;
-            return true;
-        }
-    }
-    return false;
-}
-
 SHMProcess::~SHMProcess()
 {
     if(d->attached)
@@ -251,13 +295,22 @@ SHMProcess::~SHMProcess()
     {
         delete d->my_datamodel;
     }
+    if(d->my_descriptor)
+    {
+        delete d->my_descriptor;
+    }
     if(d->my_window)
     {
         delete d->my_window;
     }
-    if(d->my_shm)
+    // release mutex handles we have
+    if(d->DFCLMutex)
     {
-        fprintf(stderr,"detach: %d",shmdt(d->my_shm));
+        CloseHandle(d->DFCLMutex);
+    }
+    if(d->DFSVMutex)
+    {
+        CloseHandle(d->DFSVMutex);
     }
     delete d;
 }
@@ -382,25 +435,45 @@ bool SHMProcess::attach()
         cerr << "there's already a different process attached" << endl;
         return false;
     }
-    /*
-    * Attach the segment
-    */
-    if ((d->my_shm = (char *) shmat(d->my_shmid, NULL, 0)) != (char *) -1)
+    if(d->attached)
     {
-        d->attached = true;
-        if(suspend())
-        {
-            d->suspended = true;
-            g_pProcess = this;
-            return true;
-        }
-        d->attached = false;
-        cerr << "unable to suspend" << endl;
-        // FIXME: detach sehment here
+        cerr << "already attached" << endl;
         return false;
     }
-    cerr << "unable to attach" << endl;
-    return false;
+    // check if DF is there
+    if(!d->isValidSV())
+    {
+        return false; // NOT
+    }
+    // try locking client mutex
+    uint32_t result = WaitForSingleObject(d->DFCLMutex,0);
+    if( result != WAIT_OBJECT_0 && result != WAIT_ABANDONED)
+    {
+        return false; // we couldn't lock it
+    }
+
+    // now try getting and attaching the shared memory
+    HANDLE shmHandle = OpenFileMapping(FILE_MAP_ALL_ACCESS,false,"DFShm");
+    if(!shmHandle)
+    {
+        ReleaseMutex(d->DFCLMutex);
+        return false; // we couldn't lock it
+    }
+
+    // attempt to attach the opened mapping
+    d->my_shm = (char *) MapViewOfFile(shmHandle,FILE_MAP_ALL_ACCESS, 0,0, SHM_SIZE);
+    if(!d->my_shm)
+    {
+        CloseHandle(shmHandle);
+        ReleaseMutex(d->DFCLMutex);
+        return false; // we couldn't attach the mapping
+    }
+    // we close the handle right here so we don't have to keep track of it
+    CloseHandle(shmHandle);
+	suspend();
+	g_pProcess = this;
+    d->attached = true;
+    return true;
 }
 
 bool SHMProcess::detach()
@@ -414,16 +487,13 @@ bool SHMProcess::detach()
         resume();
     }
     // detach segment
-    if(shmdt(d->my_shm) != -1)
-    {
-        d->attached = false;
-        d->suspended = false;
-        g_pProcess = 0;
-        return true;
-    }
-    // fail if we can't detach
-    perror("failed to detach shared segment");
-    return false;
+    UnmapViewOfFile(d->my_shm);
+    // release it for some other client
+    ReleaseMutex(d->DFCLMutex); // we keep the mutex handles
+    d->attached = false;
+    d->suspended = false;
+    g_pProcess = 0;
+    return true;
 }
 
 void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buffer)
@@ -433,7 +503,7 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
     {
         ((shm_read *)d->my_shm)->address = src_address;
         ((shm_read *)d->my_shm)->length = size;
-        gcc_barrier
+        full_barrier
         ((shm_read *)d->my_shm)->pingpong = DFPP_READ;
         d->waitWhile(DFPP_READ);
         memcpy (target_buffer, d->my_shm + SHM_HEADER,size);
@@ -448,7 +518,7 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
             // read to_read bytes from src_cursor
             ((shm_read *)d->my_shm)->address = src_address;
             ((shm_read *)d->my_shm)->length = to_read;
-            gcc_barrier
+            full_barrier
             ((shm_read *)d->my_shm)->pingpong = DFPP_READ;
             d->waitWhile(DFPP_READ);
             memcpy (target_buffer, d->my_shm + SHM_HEADER,size);
@@ -466,7 +536,7 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
 uint8_t SHMProcess::readByte (const uint32_t offset)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
-    gcc_barrier
+    full_barrier
     ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_BYTE;
     d->waitWhile(DFPP_READ_BYTE);
     return ((shm_retval *)d->my_shm)->value;
@@ -475,7 +545,7 @@ uint8_t SHMProcess::readByte (const uint32_t offset)
 void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
 {
     ((shm_read_small *)d->my_shm)->address = offset;
-    gcc_barrier
+    full_barrier
     ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_BYTE;
     d->waitWhile(DFPP_READ_BYTE);
     val = ((shm_retval *)d->my_shm)->value;
@@ -484,7 +554,7 @@ void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
 uint16_t SHMProcess::readWord (const uint32_t offset)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
-    gcc_barrier
+    full_barrier
     ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_WORD;
     d->waitWhile(DFPP_READ_WORD);
     return ((shm_retval *)d->my_shm)->value;
@@ -493,7 +563,7 @@ uint16_t SHMProcess::readWord (const uint32_t offset)
 void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
-    gcc_barrier
+    full_barrier
     ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_WORD;
     d->waitWhile(DFPP_READ_WORD);
     val = ((shm_retval *)d->my_shm)->value;
@@ -502,7 +572,7 @@ void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
 uint32_t SHMProcess::readDWord (const uint32_t offset)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
-    gcc_barrier
+    full_barrier
     ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_DWORD;
     d->waitWhile(DFPP_READ_DWORD);
     return ((shm_retval *)d->my_shm)->value;
@@ -510,7 +580,7 @@ uint32_t SHMProcess::readDWord (const uint32_t offset)
 void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
-    gcc_barrier
+    full_barrier
     ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_DWORD;
     d->waitWhile(DFPP_READ_DWORD);
     val = ((shm_retval *)d->my_shm)->value;
@@ -524,7 +594,7 @@ void SHMProcess::writeDWord (uint32_t offset, uint32_t data)
 {
     ((shm_write_small *)d->my_shm)->address = offset;
     ((shm_write_small *)d->my_shm)->value = data;
-    gcc_barrier
+    full_barrier
     ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_DWORD;
     d->waitWhile(DFPP_WRITE_DWORD);
 }
@@ -534,7 +604,7 @@ void SHMProcess::writeWord (uint32_t offset, uint16_t data)
 {
     ((shm_write_small *)d->my_shm)->address = offset;
     ((shm_write_small *)d->my_shm)->value = data;
-    gcc_barrier
+    full_barrier
     ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_WORD;
     d->waitWhile(DFPP_WRITE_WORD);
 }
@@ -543,7 +613,7 @@ void SHMProcess::writeByte (uint32_t offset, uint8_t data)
 {
     ((shm_write_small *)d->my_shm)->address = offset;
     ((shm_write_small *)d->my_shm)->value = data;
-    gcc_barrier
+    full_barrier
     ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_BYTE;
     d->waitWhile(DFPP_WRITE_BYTE);
 }
@@ -556,7 +626,7 @@ void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buf
         ((shm_write *)d->my_shm)->address = dst_address;
         ((shm_write *)d->my_shm)->length = size;
         memcpy(d->my_shm+SHM_HEADER,source_buffer, size);
-        gcc_barrier
+        full_barrier
         ((shm_write *)d->my_shm)->pingpong = DFPP_WRITE;
         d->waitWhile(DFPP_WRITE);
     }
@@ -571,7 +641,7 @@ void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buf
             ((shm_write *)d->my_shm)->address = dst_address;
             ((shm_write *)d->my_shm)->length = to_write;
             memcpy(d->my_shm+SHM_HEADER,source_buffer, to_write);
-            gcc_barrier
+            full_barrier
             ((shm_write *)d->my_shm)->pingpong = DFPP_WRITE;
             d->waitWhile(DFPP_WRITE);
             // decrease size by bytes written

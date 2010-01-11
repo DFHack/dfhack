@@ -92,6 +92,7 @@ bool SHMProcess::Private::isValidSV()
 bool SHMProcess::Private::waitWhile (DF_PINGPONG state)
 {
     uint32_t cnt = 0;
+    SCHED_YIELD // yield the CPU, valid only on single-core CPUs
     while (((shm_cmd *)my_shm)->pingpong == state)
     {
         if(cnt == 10000)

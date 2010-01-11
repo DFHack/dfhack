@@ -643,7 +643,10 @@ extern "C" void SDL_Quit(void)
 static void (*_SDL_GL_SwapBuffers)(void) = 0;
 extern "C" void SDL_GL_SwapBuffers(void)
 {
-    SHM_Act();
+    if(!errorstate && ((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
+    {
+        SHM_Act();
+    }
     _SDL_GL_SwapBuffers();
 }
 

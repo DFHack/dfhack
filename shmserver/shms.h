@@ -8,12 +8,26 @@
 #define SHM_SIZE SHM_HEADER+SHM_BODY
 
 
+// FIXME: add YIELD for linux, add single-core and multi-core compile targets for optimal speed
 #ifdef LINUX_BUILD
     // a full memory barrier! better be safe than sorry.
     #define full_barrier asm volatile("" ::: "memory"); __sync_synchronize();
+    #define SCHED_YIELD
 #else
+    // we need windows.h for Sleep()
+    #define _WIN32_WINNT 0x0501 // needed for INPUT struct
+    #define WINVER 0x0501                   // OpenThread(), PSAPI, Toolhelp32
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
+    #define SCHED_YIELD Sleep(0);
     // FIXME: detect MSVC here and use the right barrier magic
-    #define full_barrier
+	#ifdef __MINGW32__
+		#define full_barrier asm volatile("" ::: "memory");
+	#else
+		#include <intrin.h>
+		#pragma intrinsic(_ReadWriteBarrier)
+		#define full_barrier _ReadWriteBarrier();
+	#endif
 #endif
 
 
@@ -82,12 +96,12 @@ enum DF_ERROR
 
 typedef struct
 {
-    uint32_t pingpong; // = 0
+    volatile uint32_t pingpong; // = 0
 } shm_cmd;
 
 typedef struct
 {
-    uint32_t pingpong;
+    volatile uint32_t pingpong;
     uint32_t address;
     uint32_t length;
 } shm_read;
@@ -97,25 +111,25 @@ typedef shm_read shm_bounce;
 
 typedef struct
 {
-    uint32_t pingpong;
+    volatile uint32_t pingpong;
 } shm_ret_data;
 
 typedef struct
 {
-    uint32_t pingpong;
+    volatile uint32_t pingpong;
     uint32_t address;
 } shm_read_small;
 
 typedef struct
 {
-    uint32_t pingpong;
+    volatile uint32_t pingpong;
     uint32_t address;
     uint32_t value;
 } shm_write_small;
 
 typedef struct
 {
-    uint32_t pingpong;
+    volatile uint32_t pingpong;
     uint32_t value;
 } shm_retval;
 

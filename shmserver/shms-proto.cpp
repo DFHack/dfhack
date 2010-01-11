@@ -46,6 +46,7 @@ void SHM_Act (void)
     uint32_t length;
     uint32_t address;
     check_again: // goto target!!!
+    SCHED_YIELD // yield the CPU, valid only on single-core CPUs
     if(numwaits == 10000)
     {
         // this tests if there's a process on the other side
@@ -58,6 +59,7 @@ void SHM_Act (void)
             full_barrier
             ((shm_cmd *)shm)->pingpong = DFPP_RUNNING;
             fprintf(stderr,"dfhack: Broke out of loop, other process disappeared.\n");
+            //MessageBox(0,"Broke out of loop, other process disappeared.","FUN", MB_OK);
         }
     }
     switch (((shm_cmd *)shm)->pingpong)
@@ -154,6 +156,7 @@ void SHM_Act (void)
         case DFPP_CL_ERROR:
         case DFPP_RUNNING:
             fprintf(stderr, "no. of waits: %d\n", numwaits);
+            //MessageBox(0,"Broke out of loop properly","FUN", MB_OK);
             break;
             
         default:

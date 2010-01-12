@@ -80,9 +80,15 @@ enum DF_PINGPONG
     DFPP_SUSPEND, // client notifies server to wait for commands (server is stalled in busy wait)
     DFPP_SUSPENDED, // response to WAIT, server is stalled in busy wait
     
-    // similar to DFPP_WRITE, writes to a local buffer, writes the same back to shm, sends DFPP_RET_DATA
-    // used for benchmarking
-    DFPP_BOUNCE,
+    // all strings capped at 1MB
+    DFPP_READ_STL_STRING,// client requests contents of STL string at address
+    DFPP_READ_C_STRING,// client requests contents of a C string at address, max length (0 means zero terminated)
+    DFPP_RET_STRING, // sv -> cl length + string contents
+    DFPP_WRITE_STL_STRING,// client wants to set STL string at address to something
+    
+    // vector elements > 1MB are not supported because they don't fit into the shared memory
+    DFPP_READ_ENTIRE_VECTOR, // read an entire vector (parameters are address of vector object and size of items)
+    DFPP_RET_VECTOR_BODY, // a part of a vector is returned - no. of elements returned, no. of elements total, elements
     
     NUM_DFPP
 };

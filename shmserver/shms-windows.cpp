@@ -28,9 +28,6 @@ distribution.
  * using hacks like this sucks even more
  */
 
-#define _WIN32_WINNT 0x0501 // needed for INPUT struct
-#define WINVER 0x0501                   // OpenThread(), PSAPI, Toolhelp32
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <stdarg.h>
 

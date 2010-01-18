@@ -53,6 +53,7 @@ public:
     uint32_t current_cursor_creature_offset;
     uint32_t pause_state_offset;
     uint32_t view_screen_offset;
+    uint32_t current_menu_state_offset;
 
     uint32_t creature_pos_offset;
     uint32_t creature_type_offset;
@@ -1151,10 +1152,13 @@ bool API::InitViewAndCursor()
     d->cursor_xyz_offset = d->offset_descriptor->getAddress ("cursor_xyz");
     d->current_cursor_creature_offset = d->offset_descriptor->getAddress ("current_cursor_creature");
 
+    d->current_menu_state_offset = d->offset_descriptor->getAddress("current_menu_state");
     d->pause_state_offset = d->offset_descriptor->getAddress ("pause_state");
     d->view_screen_offset = d->offset_descriptor->getAddress ("view_screen");
-
-    if (d->window_x_offset && d->window_y_offset && d->window_z_offset)
+    
+    if (d->window_x_offset && d->window_y_offset && d->window_z_offset && 
+        d->current_cursor_creature_offset && d->current_menu_state_offset && 
+        d->pause_state_offset && d->view_screen_offset)
     {
         d->cursorWindowInited = true;
         return true;
@@ -1245,7 +1249,7 @@ uint32_t API::InitReadItems()
     int items = d->offset_descriptor->getAddress ("items");
     assert (items);
 
-    cerr << hex << items;
+    //cerr << hex << items;
 
     d->item_material_offset = d->offset_descriptor->getOffset ("item_materials");
     assert (d->item_material_offset);
@@ -1275,7 +1279,7 @@ bool API::ReadItem (const uint32_t &index, t_item & item)
     item.z = item_40d.z;
     item.type = type;
     item.ID = item_40d.ID;
-    item.flags = item_40d.flags;
+    item.flags.whole = item_40d.flags;
 
     //TODO  certain item types (creature based, threads, seeds, bags do not have the first matType byte, instead they have the material index only located at 0x68
     g_pProcess->read (temp + d->item_material_offset, sizeof (t_matglossPair), (uint8_t *) &item.material);
@@ -1298,6 +1302,12 @@ bool API::ReadPauseState()
 
     uint32_t pauseState = g_pProcess->readDWord (d->pause_state_offset);
     return (pauseState);
+}
+
+uint32_t API::ReadMenuState()
+{
+    assert (d->cursorWindowInited);
+    return(g_pProcess->readDWord(d->current_menu_state_offset));
 }
 
 bool API::ReadViewScreen (t_viewscreen &screen)

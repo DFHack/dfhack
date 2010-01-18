@@ -57,6 +57,10 @@ TARGET_LINK_LIBRARIES(dfsuspend dfhack)
 ADD_EXECUTABLE(dfitemdump dfitemdump.cpp)
 TARGET_LINK_LIBRARIES(dfitemdump dfhack)
 
+# itemdesignator - change some item designations (dump, forbid, on-fire) for all items of a given type and material
+ADD_EXECUTABLE(dfitemdesignator itemdesignator.cpp)
+TARGET_LINK_LIBRARIES(dfitemdesignator dfhack)
+
 # customCtreatureNameProf - change the custom names and professions of creatures, sends keys to df directly
 ADD_EXECUTABLE(dfcustomCreatureNameProf customCreatureNameProf.cpp)
 TARGET_LINK_LIBRARIES(dfcustomCreatureNameProf dfhack)

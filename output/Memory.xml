@@ -927,6 +927,7 @@
         <Address name="current_cursor_creature">0x01757F38</Address>
         <Address name="items">0x15BDF50</Address>
         <Offset name="item_materials">0x68</Offset>
+        <Address name="current_menu_state">0x013EF900</Address>
         <Address name="pause_state">0x13DC2EB</Address>
         <Address name="view_screen">0x013EF970</Address>
         <VTable>
@@ -1388,6 +1389,7 @@
     <Offset name="item_materials">0x50</Offset>
     <Address name="pause_state">0x8F35800</Address>
     <Address name="view_screen">0x878493c</Address>
+    <Address name="current_menu_state">0x8f467e0</Address>
     <VTable>
         <class vtable="0x086CA668" name="viewscreen_conversation" />
         <class vtable="0x086D52A8" name="viewscreen_setupadventure" />

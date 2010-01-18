@@ -1,7 +1,7 @@
 Here's how you build dfhack!
 ----------------------------
 
-First, there is one dependency, regrdless of the OS you use:
+First, there is one dependency, regardless of the OS you use:
   cmake - it's the build system
 
 Building on Linux:
@@ -30,6 +30,9 @@ library to $CMAKE_INSTALL_PREFIX/lib
 executables to $CMAKE_INSTALL_PREFIX/bin
 The Memory.xml file to /usr/share/dfhack
 
+A special library for adding a shared memory interface to DF is also compiled (libdfconnect.so)
+It can be put into DF/libs and preloaded using LD_PRELOAD
+
 Building on Windows:
 --------------------
 
@@ -48,6 +51,9 @@ You'll have to add C:\MinGW\ to your PATH variable.
  cmake .. -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE:string=Release
  mingw32-make
 
+A special library for adding a shared memory interface to DF is also compiled (SDL.dll)
+You can use it with DF by renaming the original SDL.dll to SDLreal.dll and dropping in the newly compiled library.
+
 * Using MSVC
 
 open up cmd and navigate to the dfhack\build folder, run cmake:
@@ -57,6 +63,9 @@ cmake ..
 This will generate MSVC solution and project files. Note that: you are working in the /build folder.
 Files added to projects will end up there! (and that's wrong). Any changes to the build system should
 be done by changing cmake configs and running cmake on them!
+
+A special library for adding a shared memory interface to DF is also compiled (SDL.dll)
+You can use it with DF by renaming the original SDL.dll to SDLreal.dll and dropping in the newly compiled library.
 
 * Using some other compiler:
 

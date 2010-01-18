@@ -20,65 +20,90 @@ struct matGlosses
     vector<DFHack::t_matgloss> creatureMat;
 };
 
-void printItem(DFHack::t_item item, const vector<string> & buildingTypes,const matGlosses & mat){
-    cout << dec << "Item at x:" << item.x << " y:" << item.y << " z:" << item.z << endl;
-    cout << "Type: " << (int) item.type << " " << buildingTypes[item.type] << " Address: " << hex << item.origin << endl;
-    cout << "Material: ";
-
-    //If the item is a thread, seed, or creature based, there is no MatType, so the MatType is actually the material
-    //This should probably be checked in the item function
-    if(item.type == 113 || item.type == 117) // item_thread or item_seeds
+string getMaterialType(DFHack::t_item item, const vector<string> & buildingTypes,const matGlosses & mat){
+    if(item.type == 85 || item.type == 113 || item.type == 117) // item_plant or item_thread or item_seeds
     {
-        cout << mat.plantMat[item.material.type].id;
+        return(string(mat.plantMat[item.material.type].id));
     }
-    else if(item.type == 114 || item.type == 115 || item.type == 116 || item.type==128 || item.type == 129|| item.type == 130|| item.type == 131) // item_skin_raw item_bones item_skill item_fish_raw item_pet item_skin_tanned item_shell
+    else if(item.type == 109 || item.type == 114 || item.type == 115 || item.type == 116 || item.type==128 || item.type == 129|| item.type == 130|| item.type == 131) // item_skin_raw item_bones item_skill item_fish_raw item_pet item_skin_tanned item_shell
     {
-        cout << mat.creatureMat[item.material.type].id;
+        return(string(mat.creatureMat[item.material.type].id));
+    }
+    else if(item.type == 124){ //wood
+        return(string(mat.woodMat[item.material.type].id));
+    }
+    else if(item.type == 118){ //blocks
+        return(string(mat.metalMat[item.material.index].id));
+    }
+    else if(item.type == 86){ // item_glob I don't know what those are in game, just ignore them
+        return(string(""));
     }
     else{
         switch (item.material.type)
         {
         case 0:
-            cout << mat.woodMat[item.material.index].id;
+            return(string(mat.woodMat[item.material.index].id));
             break;
         case 1:
-            cout << mat.stoneMat[item.material.index].id;
+            return(string(mat.stoneMat[item.material.index].id));
             break;
         case 2:
-            cout << mat.metalMat[item.material.index].id;
+            return(string(mat.metalMat[item.material.index].id));
             break;
         case 12: // don't ask me why this has such a large jump, maybe this is not actually the matType for plants, but they all have this set to 12
-            cout << mat.plantMat[item.material.index].id;
+            return(string(mat.plantMat[item.material.index].id));
             break;
+        case 3:
+        case 9:
+        case 10:
+        case 11:
         case 121:
-            cout << mat.creatureMat[item.material.index].id;
+            return(string(mat.creatureMat[item.material.index].id));
             break;
         default:
-            cerr << "invalid mat" << (int) item.material.type << " " << (int) item.material.index << endl;
+            //DF.setCursorCoords(item.x,item.y,item.z);
+            return(string(""));
         }
     }   
-    cout << endl;
 }
+void printItem(DFHack::t_item item, const vector<string> & buildingTypes,const matGlosses & mat){
+    cout << dec << "Item at x:" << item.x << " y:" << item.y << " z:" << item.z << endl;
+    cout << "Type: " << (int) item.type << " " << buildingTypes[item.type] << " Address: " << hex << item.origin << endl;
+    cout << "Material: ";
 
+    string itemType = getMaterialType(item,buildingTypes,mat);
+    cout << itemType << endl;
+}
 int main ()
 {
+
     DFHack::API DF ("Memory.xml");
+
     if(!DF.Attach())
     {
         cerr << "DF not found" << endl;
         return 1;
     }
-    
- 
+    DF.InitViewAndCursor();
     matGlosses mat;
     DF.ReadPlantMatgloss(mat.plantMat);
     DF.ReadWoodMatgloss(mat.woodMat);
     DF.ReadStoneMatgloss(mat.stoneMat);
     DF.ReadMetalMatgloss(mat.metalMat);
     DF.ReadCreatureMatgloss(mat.creatureMat);
+    DF.ForceResume();
 
     vector <string> buildingtypes;
     DF.InitReadBuildings(buildingtypes);
+    uint32_t numItems = DF.InitReadItems();
+    map< string, map<string,vector<uint32_t> > > count;
+    for(uint32_t i=0; i< numItems; i++){
+        DFHack::t_item temp;
+        DF.ReadItem(i,temp);
+   //     cout << int(temp.type) << endl;
+        count[buildingtypes[temp.type]][getMaterialType(temp,buildingtypes,mat)].push_back(i);
+    }
+  
     DF.InitViewAndCursor();
     cout << "q to quit, anything else to look up items at that location\n";
     while(1)
@@ -162,7 +187,7 @@ int main ()
   //          similarity.push_back(foundItems[value].bytes);
         }
         DF.FinishReadItems();
-    }
+    }    
     DF.FinishReadBuildings();
     DF.Detach();
 #ifndef LINUX_BUILD

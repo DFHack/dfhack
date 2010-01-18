@@ -33,7 +33,7 @@ Currently supported Dwarf Fortress versions:
 
 Using the library
 -----------------
-The library is compilable under Linux with GCC and under Windows with MinGW32 compiler.
+The library is compilable under Linux with GCC and under Windows with MinGW32 and MSVC compilers.
 It is using the cmake build system. See COMPILE for details.
 
 DFHack is using the zlib/libpng license. This makes it easy to link to it, use it in-source
@@ -43,22 +43,65 @@ thing to do :)
 At the time of writing there's no API reference or documentation. The code does have a lot
 of comments though.
 
-Main part of the API is in SimpleAPI.h and should be easy to grasp.
-You might also have to include a few other files:
-    * DFTypes.h    
-      defines many of the used data structures
-    * DFTileTypes.h
-      functions for translating map tile type values to useful properties (wall, flooer, etc.)
-    * DFMemAccess.h, together with at least ProcessManager.h
-      manual access to memory reading and writing functions.
+Using DFHack Tools
+------------------
+The project comes with a special extra library you should add to your DF installation.
+It's used to boost the transfer speed between DF and DFHack, and provide data consistency
+and synchronization. DFHack will work without the library, but at suboptimal speeds
+and the consistency of data written back to DF is questionable.
+
+!!!!Please not that on Windows this currently only works with DF 40d15 and 40d16!!!!
+On Linux, it works with the whole range of supported DF versions.
+
+ ** Installing on Windows
+ - Open your DF folder, locate SDL.dll and rename it to SDLreal.dll (making a backup of it is a good idea)
+ - Copy the DFHack SDL.dll into your DF folder.
+ - Restart DF if it is already running
+
+ ** Unistalling on Windows
+ - Open your DF folder, locate SDL.dll and delete it
+ - Rename SDLreal.dll to SDl.dll
+ - Restart DF if it is running
+
+
+ ** Installing on Linux
+ - Open your DF folder and the libs folder within it
+ - copy DFHack libdfconnect.so to the libs folder
+ - copy the df startup script, name it dfhacked
+ - open the new dfhacked startup script and add this line:
+     export LD_PRELOAD="./libs/libdfconnect.so" # Hack DF!
+   just before the line that launches DF
+
+   Here's an example how the file can look after the change:
+#!/bin/sh
+DF_DIR=$(dirname "$0")
+cd "${DF_DIR}"
+export SDL_DISABLE_LOCK_KEYS=1 # Work around for bug in Debian/Ubuntu SDL patch.
+#export SDL_VIDEO_CENTERED=1 # Centre the screen.  Messes up resizing.
+ldd dwarfort.exe | grep SDL_image | grep -qv "not found$"
+if [ $? -eq 0 ]; then
+ mkdir unused_libs
+ mv libs/libSDL* unused_libs/
+fi
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"./libs" # Update library search path.
+export LD_PRELOAD="./libs/libdfconnect.so" # Hack DF!
+./dwarfort.exe $* # Go, go, go! :)
+
+ - Use this new startup script to start DF
+
+ ** Uninstalling on Linux
+ - Open your DF and DF/libs folders
+ - Delete libdfconnect.so and the dfhacked startup script
+ - Go back to using the df startup script
 
 Tools
 -----
 All the DFHack tools are terminal programs. This might seem strange to Windows users,
-but they are meant mostly as examples for developers. Still, they can be useful and
+but these are meant mostly as examples for developers. Still, they can be useful and
 are cross-platform just like the library itself.
 
-!! On Windows, make sure your game is paused before using any of these !!
+If the tool writes back to DF's memory, make sure you are using the shared memory interface
+mentioned in the previous section!
 
 * expbench   - just exports the map 1000 times over. Meant to test how fast the
                DFHack<->DF interface is. This can take 3-30+ seconds, depending on
@@ -72,6 +115,25 @@ are cross-platform just like the library itself.
 
 * cleanmap   - cleans mud, vomit, snow and all kinds of bloody mess from the map. It will
                clean your irrigated farms too, so consider yourself warned.
+
+* dfattachtest - Benchmark for the Attach, Detach, Suspend and Resume functions
+
+* dfbuildingsdump - exports some basic data about buildings of a given type on the game map
+
+* dfcreaturedump - exports some basic data about all the dwarves
+
+* dfcustomCreatureNameProf - allws you to change nicknames and custom professions of your dwarves
+
+* dfincremental - incremental search utility - linux only right now
+
+* dfitemdump - lists items under the current DF cursor (40d16 only)
+
+* dfmaterialtest - tries to load all the material types from DF, shows the first entry of each type
+
+* dfposition - shows you the current view coordinates and window size in tiles
+               (may not be implemented for older DF versions)
+
+* dfsuspend - tests the behavior of Suspend and Resume functions
 
 Memory offset definitions
 -------------------------

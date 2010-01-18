@@ -168,16 +168,17 @@ bool waitTillChanged(DFHack::API &DF, int creatureToCheck, string changeValue, b
         cerr << "Something went wrong, make sure that DF is at the correct screen";
         return false;
     }
+    DF.Resume();
     return true;
 }
-bool waitTillScreenState(DFHack::API &DF, string screenState)
+bool waitTillScreenState(DFHack::API &DF, string screenState,bool EqualTo=true)
 {
     DFHack::DFWindow * w = DF.getWindow();
     DFHack::t_viewscreen current;
     DF.Suspend();
     DF.ReadViewScreen(current);
     int tryCount = 0;
-    while(buildingtypes[current.type] != screenState && tryCount < 50)
+    while(((EqualTo && buildingtypes[current.type] != screenState) || (!EqualTo && buildingtypes[current.type] == screenState)) && tryCount < 50)
     {
         DF.Resume();
         w->TypeSpecial(DFHack::WAIT,1,100);
@@ -189,6 +190,7 @@ bool waitTillScreenState(DFHack::API &DF, string screenState)
         cerr << "Something went wrong, DF at " << buildingtypes[current.type] << endl;
         return false;
     }
+    DF.Resume();
     return true;
 }
 
@@ -211,6 +213,69 @@ bool waitTillCursorState(DFHack::API &DF, bool On)
     {
         cerr << "Something went wrong, cursor at x: " << x << " y: " << y << " z: " << z << endl;
         return false;
+    }
+    DF.Resume();
+    return true;
+}
+bool waitTillMenuState(DFHack::API &DF, uint32_t menuState,bool EqualTo=true)
+{
+    int tryCount = 0;
+    DFHack::DFWindow * w = DF.getWindow();
+    DF.Suspend();
+    uint32_t testState = DF.ReadMenuState();
+    while(tryCount < 50 && ((EqualTo && menuState != testState) || (!EqualTo && menuState == testState)))
+    {
+        DF.Resume();
+        w->TypeSpecial(DFHack::WAIT,1,100);
+        tryCount++;
+        DF.Suspend();
+        testState = DF.ReadMenuState();
+    }
+    if(tryCount >= 50)
+    {
+        cerr << "Something went wrong, menuState: "<<testState << endl;
+        return false;
+    }
+    DF.Resume();
+    return true;
+}
+bool moveToBaseWindow(DFHack::API &DF)
+{
+    DFHack::DFWindow * w = DF.getWindow();
+    DFHack::t_viewscreen current;
+    DF.ReadViewScreen(current);
+    while(buildingtypes[current.type] != string("viewscreen_dwarfmode")){
+        w->TypeSpecial(DFHack::F9); // cancel out of text input in names
+//        DF.TypeSpecial(DFHack::ENTER); // cancel out of text input in hotkeys
+        w->TypeSpecial(DFHack::SPACE); // should move up a level
+        if(!waitTillScreenState(DF,buildingtypes[current.type],false)) return false; // wait until screen changes from current
+        DF.ReadViewScreen(current);
+    }
+    if(DF.ReadMenuState() != 0){// if menu state != 0 then there is a menu, so escape it
+        w->TypeSpecial(DFHack::F9);w->TypeSpecial(DFHack::ENTER); // exit out of any text prompts
+        w->TypeSpecial(DFHack::SPACE); // go back to base state
+        if(!waitTillMenuState(DF,0))return false;
+    }
+    DF.Resume();
+    return true;
+}
+
+bool setCursorToCreature(DFHack::API &DF)
+{
+    DFHack::DFWindow * w = DF.getWindow();
+    int32_t x,y,z;
+    DF.Suspend();
+    DF.getCursorCoords(x,y,z);
+    DF.Resume();
+    if(x == -30000){
+        w->TypeStr("v");
+        if(!waitTillCursorState(DF,true)) return false;
+    }
+    else{ // reset the cursor to be the creature cursor
+        w->TypeSpecial(DFHack::SPACE);
+        if(!waitTillCursorState(DF,false)) return false;
+        w->TypeStr("v");
+        if(!waitTillCursorState(DF,true)) return false;
     }
     return true;
 }
@@ -246,16 +311,9 @@ int main (void)
     DFHack::DFWindow * w = DF.getWindow();
     while(getDwarfSelection(DF,toChange,changeString,commandString,eraseAmount,toChangeNum,isName))
     {
+        start:
         bool completed = false;
-        int32_t x,y,z;
-        DF.Suspend();
-        DF.getCursorCoords(x,y,z);
-        if(x == -30000)// cursor not displayed
-        { 
-            DF.Resume();
-            w->TypeStr("v");
-        }
-        if(waitTillCursorState(DF,true))
+        if(moveToBaseWindow(DF) && setCursorToCreature(DF))
         {
             DF.Suspend();
             DF.setCursorCoords(toChange.x, toChange.y,toChange.z);
@@ -266,6 +324,7 @@ int main (void)
                 w->TypeSpecial(DFHack::WAIT,1,100);
                 DF.Suspend();
                 DF.setCursorCoords(toChange.x, toChange.y,toChange.z);
+                DF.ReadCreature(toChangeNum,toChange);
             }
             //CurrentCursorCreatures gives the creatures in the order that you see them with the 'k' cursor.  
             //The 'v' cursor displays them in the order of last, then first,second,third and so on
@@ -318,9 +377,7 @@ int main (void)
         }
         if(!completed){
             cerr << "Something went wrong, please reset DF to its original state, then press any key to continue" << endl;
-            string line;
-            DF.Resume();
-            getline(cin, line);
+            goto start;
         }
         DF.Suspend();
         printDwarves(DF);

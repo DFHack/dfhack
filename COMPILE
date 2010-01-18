@@ -12,7 +12,7 @@ Building on Linux:
 building the library is simple. Enter the build folder, run the tools. Like this:
     
 cd build
-cmake .. -DCMAKE_BUILD_TYPE:string=Release -DMEMXML_DATA_PATH:path=.
+cmake .. -DCMAKE_BUILD_TYPE:string=Release
 make
 
 This will build the library and its tools and place them in /output.

@@ -57,6 +57,11 @@ TARGET_LINK_LIBRARIES(dfsuspend dfhack)
 ADD_EXECUTABLE(dfitemdump dfitemdump.cpp)
 TARGET_LINK_LIBRARIES(dfitemdump dfhack)
 
+# bauxite - turn all mechanisms into bauxite mechanisms
+# Author: Alex Legg
+ADD_EXECUTABLE(dfbauxite dfbauxite.cpp)
+TARGET_LINK_LIBRARIES(dfbauxite dfhack)
+
 # itemdesignator - change some item designations (dump, forbid, on-fire) for all items of a given type and material
 ADD_EXECUTABLE(dfitemdesignator itemdesignator.cpp)
 TARGET_LINK_LIBRARIES(dfitemdesignator dfhack)

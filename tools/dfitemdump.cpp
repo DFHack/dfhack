@@ -84,6 +84,7 @@ int main ()
         cerr << "DF not found" << endl;
         return 1;
     }
+    DF.Suspend();
     DF.InitViewAndCursor();
     matGlosses mat;
     DF.ReadPlantMatgloss(mat.plantMat);
@@ -96,6 +97,7 @@ int main ()
     vector <string> buildingtypes;
     DF.InitReadBuildings(buildingtypes);
     uint32_t numItems = DF.InitReadItems();
+    /*
     map< string, map<string,vector<uint32_t> > > count;
     for(uint32_t i=0; i< numItems; i++){
         DFHack::t_item temp;
@@ -103,7 +105,8 @@ int main ()
    //     cout << int(temp.type) << endl;
         count[buildingtypes[temp.type]][getMaterialType(temp,buildingtypes,mat)].push_back(i);
     }
-  
+  */
+    
     DF.InitViewAndCursor();
     cout << "q to quit, anything else to look up items at that location\n";
     while(1)

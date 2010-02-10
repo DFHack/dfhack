@@ -806,7 +806,7 @@
         <HexValue name="pe_timestamp">0x49C82D3F</HexValue>
         <String name="md5">6f81231b845e9c9dc29aaf57705ccc7c</String>
         <!-- door: 0x8e91e4 -->
-        <VTable name="building_vtable" rebase="-0x1000" name="building_vtable" />
+        <VTable name="building_vtable" rebase="-0x1000" />
         <Address name="cursor_xyz">0x9652a4</Address>
         <Address name="window_x">0xcdf5a0</Address>
         <Address name="window_y">0xd0d64c</Address>
@@ -2110,7 +2110,7 @@
             <class vtable="0x086D0028" name="building_stockpile" />
             <class vtable="0x086D37C8" name="building_window_gem" />
             <class vtable="0x086D3968" name="building_window_glass" />
-        </Vtable>
+        </VTable>
     </Entry>
 </MemoryDescriptors>
 <!-- Windows logo by M$, spiderweb by jgs -->

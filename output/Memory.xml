@@ -1076,7 +1076,7 @@
     <Entry version="v0.28.181.40d17" os="windows" base="40d16win">
         <!-- identification -->
         <HexValue name="pe_timestamp">0x4B6B7879</HexValue>
-        <String name="md5">DE66405F54D98297303D439B3B7AA30E</String>
+        <String name="md5">de66405f54d98297303d439b3b7aa30e</String> <!-- THIS IS *NOT* A NUMBER -->
                  
         <Address name="map_data">0x016367DC</Address>
         <Address name="constructions">0x015DEEC8</Address>
@@ -1508,7 +1508,7 @@
             <class vtable="0x08797EA8" name="building_road_paved" />
             <class vtable="0x08797D28" name="building_road_dirt" />
             <class vtable="0x08798788" name="building_road" />
-            <class vtable="0x08798788" name="building_wagon" />
+            <class vtable="0x0879A0E8" name="building_wagon" />
             <class vtable="0x08799F68" name="building_tradedepot" />
             <multiclass vtable="0x08799688" name="building_workshop" typeoffset="0xAC">
                 <class name="building_alchemists_laboratory" type="0x0"/>
@@ -2076,7 +2076,7 @@
             <class vtable="0x086D0308" name="building_statue" />
             <class vtable="0x086D0488" name="building_well" />
             <class vtable="0x086CFEA8" name="building_coffin" />
-            <class vtable="0x086D0F08" name="building_shop" />
+            <class vtable="0x086D20E8" name="building_shop" />
             <class vtable="0x086D0F08" name="building_chair" />
             <class vtable="0x086D0C08" name="building_table" />
             <class vtable="0x086D0788" name="building_bed" />

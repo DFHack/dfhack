@@ -143,11 +143,19 @@ int main (int argc,const char* argv[])
     {
         DFHack::t_building temp;
         DF.ReadBuilding(i, temp);
-        if(buildingtypes[temp.type] == argv[1])
+        if(temp.type != 0xFFFFFFFF) // check if type isn't invalid
         {
-            //cout << buildingtypes[temp.type] << " 0x" << hex << temp.origin << endl;
-            //hexdump(DF, temp.origin, 16);
-            addresses.push_back(temp.origin);
+            if(buildingtypes[temp.type] == argv[1])
+            {
+                //cout << buildingtypes[temp.type] << " 0x" << hex << temp.origin << endl;
+                //hexdump(DF, temp.origin, 16);
+                addresses.push_back(temp.origin);
+            }
+        }
+        else
+        {
+            // couldn't translate type, print out the vtable
+            cout << "unknown vtable: " << temp.vtable << endl;
         }
     }
     interleave_hex(DF,addresses,lines / 4);

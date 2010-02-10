@@ -80,6 +80,7 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info& mem, map <str
     const char *cstr_os = entry->Attribute("os");
     const char *cstr_base = entry->Attribute("base");
     const char *cstr_rebase = entry->Attribute("rebase");
+//    printf("%s : %s\n",cstr_version, cstr_os);
     if(cstr_base)
     {
         string base = cstr_base;

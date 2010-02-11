@@ -70,6 +70,7 @@ const char * getMaterialType(DFHack::t_item item, const vector<string> & buildin
             return mat.creatureMat[item.material.index].id;
             break;
         default:
+            cout << "unknown material hit: " << item.material.type << " " << itemtype << endl;
             return 0;
         }
     }   
@@ -102,13 +103,14 @@ int main ()
     DF.ReadStoneMatgloss(mat.stoneMat);
     DF.ReadMetalMatgloss(mat.metalMat);
     DF.ReadCreatureMatgloss(mat.creatureMat);
-    DF.ForceResume();
+    //DF.ForceResume();
 
     vector <string> buildingtypes;
     DF.InitReadBuildings(buildingtypes);
     uint32_t numItems = DF.InitReadItems();
     map< string, map<string,vector<uint32_t> > > count;
     int failedItems = 0;
+    map <string, int > bad_mat_items;
     for(uint32_t i=0; i< numItems; i++)
     {
         DFHack::t_item temp;
@@ -122,11 +124,29 @@ int main ()
             }
             else
             {
-                cerr << "bad material string for item type: " << buildingtypes[temp.type] << "!" << endl;
+                if(bad_mat_items.count(buildingtypes[temp.type]))
+                {
+                    int tmp = bad_mat_items[buildingtypes[temp.type]];
+                    tmp ++;
+                    bad_mat_items[buildingtypes[temp.type]] = tmp;
+                }
+                else
+                {
+                    bad_mat_items[buildingtypes[temp.type]] = 1;
+                }
             }
         }
     }
     
+    map< string, int >::iterator it_bad;
+    if(! bad_mat_items.empty())
+    {
+        cout << "Items with badly assigned materials:" << endl;
+        for(it_bad = bad_mat_items.begin(); it_bad!=bad_mat_items.end();it_bad++)
+        {
+            cout << it_bad->first << " : " << it_bad->second << endl;
+        }
+    }
     map< string, map<string,vector<uint32_t> > >::iterator it1;
     int i =0;
     for(it1 = count.begin(); it1!=count.end();it1++)

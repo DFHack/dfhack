@@ -374,15 +374,18 @@ bool SHMProcess::suspend()
 {
     if(!d->attached)
     {
+        cerr << "couldn't suspend, not attached" << endl;
         return false;
     }
     if(d->suspended)
     {
+        cerr << "couldn't suspend, already suspended" << endl;
         return true;
     }
     ((shm_cmd *)d->my_shm)->pingpong = DFPP_SUSPEND;
     if(!d->waitWhile(DFPP_SUSPEND))
     {
+        cerr << "couldn't suspend, DF not responding to commands" << endl;
         return false;
     }
     d->suspended = true;
@@ -419,9 +422,15 @@ bool SHMProcess::forceresume()
 bool SHMProcess::resume()
 {
     if(!d->attached)
+    {
+        cerr << "couldn't resume because of no attachment" << endl;
         return false;
+    }
     if(!d->suspended)
+    {
+        cerr << "couldn't resume because of not being suspended" << endl;
         return true;
+    }
     ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
     d->suspended = false;
     return true;
@@ -471,9 +480,9 @@ bool SHMProcess::attach()
     }
     // we close the handle right here so we don't have to keep track of it
     CloseHandle(shmHandle);
-	suspend();
-	g_pProcess = this;
     d->attached = true;
+    suspend();
+    g_pProcess = this;
     return true;
 }
 

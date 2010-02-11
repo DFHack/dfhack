@@ -43,12 +43,14 @@ HANDLE DFSVMutex = 0;
 HANDLE DFCLMutex = 0;
 void SHM_Init ( void )
 {
+    /*
     // check that we do this only once per process
     if(inited)
     {
         MessageBox(0,"SDL_Init was called twice or more!","FUN", MB_OK);
         return;
     }
+    */
     inited = true;
     
     // create or open mutexes
@@ -97,7 +99,7 @@ void SHM_Init ( void )
         {
             // error, bail
             errorstate = 1;
-            MessageBox(0,"Could not aquire mutex","FUN", MB_OK);
+            MessageBox(0,"Could not aquire mutex","Error", MB_OK);
             CloseHandle(DFSVMutex);
             CloseHandle(DFCLMutex);
             return;
@@ -109,7 +111,7 @@ void SHM_Init ( void )
     // if can't create or already exists -> nothing happens
     if(!shmHandle || GetLastError() == ERROR_ALREADY_EXISTS)
     {
-        MessageBox(0,"Couldn't create SHM mapping","FUN", MB_OK);
+        MessageBox(0,"Couldn't create SHM mapping","Error", MB_OK);
         errorstate = 1;
         ReleaseMutex(DFSVMutex);
         CloseHandle(DFSVMutex);
@@ -121,11 +123,11 @@ void SHM_Init ( void )
     if(shm)
     {
         ((shm_cmd *)shm)->pingpong = DFPP_RUNNING;
-        MessageBox(0,"Sucessfully mapped SHM","FUN", MB_OK);
+        //MessageBox(0,"Sucessfully mapped SHM","FUN", MB_OK);
     }
     else
     {
-        MessageBox(0,"Couldn't attach SHM mapping","FUN", MB_OK);
+        MessageBox(0,"Couldn't attach SHM mapping","Error", MB_OK);
         errorstate = 1;
         ReleaseMutex(DFSVMutex);
         CloseHandle(DFSVMutex);
@@ -451,7 +453,8 @@ extern "C" int SDL_GL_SetAttribute(int attr, int value)
 static void (*_SDL_WM_SetCaption)(const char *title, const char *icon) = 0;
 extern "C" void SDL_WM_SetCaption(const char *title, const char *icon)
 {
-    _SDL_WM_SetCaption("DwarfHacked the Fortress of Hacks",icon);
+    //_SDL_WM_SetCaption("DwarfHacked the Fortress of Hacks",icon);
+    _SDL_WM_SetCaption(title,icon);
 }
 
 static void (*_SDL_WM_SetIcon)(vPtr icon, uint8_t *mask) = 0;
@@ -678,13 +681,10 @@ static int (*_SDL_Init)(uint32_t flags) = 0;
 extern "C" int SDL_Init(uint32_t flags)
 {
     char zlo[2560];
-    //backtrace (&zlo, 2559);
-    sprintf(zlo, "SDL_Init called from thread %d", GetCurrentThreadId());
-    MessageBox(0,zlo,"FUN", MB_OK);
-    
     HMODULE realSDLlib =  LoadLibrary("SDLreal.dll");
     if(!realSDLlib)
     {
+        MessageBox(0,"Can't load SDLreal.dll\n","Error", MB_OK);
         fprintf(stderr, "Can't load SDLreal.dll\n");
         return -1;
     }

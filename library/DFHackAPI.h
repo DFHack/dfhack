@@ -147,19 +147,19 @@ namespace DFHack
         /**
          * Buildings, constructions, plants, all pretty straighforward. InitReadBuildings returns all the building types as a mapping between a numeric values and strings
          */
-        uint32_t InitReadConstructions();
+        bool InitReadConstructions( uint32_t & numconstructions );
         bool ReadConstruction(const int32_t &index, t_construction & construction);
         void FinishReadConstructions();
 
-        uint32_t InitReadBuildings(vector <string> &v_buildingtypes);
+        bool InitReadBuildings ( uint32_t& numbuildings );
         bool ReadBuilding(const int32_t &index, t_building & building);
         void FinishReadBuildings();
 
-        uint32_t InitReadVegetation();
+        bool InitReadVegetation( uint32_t & numplants );
         bool ReadVegetation(const int32_t &index, t_tree_desc & shrubbery);
         void FinishReadVegetation();
         
-        uint32_t InitReadCreatures();
+        bool InitReadCreatures( uint32_t numcreatures );
         /// returns index of creature actually read or -1 if no creature can be found
         int32_t ReadCreatureInBox(int32_t index, t_creature & furball,
                                   const uint16_t &x1, const uint16_t &y1,const uint16_t &z1,
@@ -198,7 +198,7 @@ namespace DFHack
         vector<t_trait> getTraits(const uint32_t &index);
         vector<t_labor> getLabors(const uint32_t &index);
         */
-        void InitReadNameTables(map< string, vector< string > > & nameTable);
+        bool InitReadNameTables (map< string, vector<string> > & nameTable);
         void FinishReadNameTables();
 
         string TranslateName(const t_lastname & last, const map< string, vector< string > > &nameTable,const string & language="GENERIC");
@@ -206,9 +206,12 @@ namespace DFHack
         
         void WriteLabors(const uint32_t &index, uint8_t labors[NUM_CREATURE_LABORS]);
         
-        uint32_t InitReadItems();
+        bool InitReadItems(uint32_t & numitems);
         bool ReadItem(const uint32_t &index, t_item & item);
         void FinishReadItems();
+        
+        // wrapper for meminfo method of the same name
+        bool getClassIDMapping (vector <string>& objecttypes);
         
         memory_info getMemoryInfo();
         Process * getProcess();

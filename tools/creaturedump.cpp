@@ -144,19 +144,16 @@ likeType printLike(DFHack::t_like like, const matGlosses & mat,const vector< vec
 int main (void)
 {
     vector<DFHack::t_matgloss> creaturestypes;
-//    t_matglossPlant test;
     DFHack::API DF("Memory.xml");
     if(!DF.Attach())
     {
         cerr << "DF not found" << endl;
         return 1;
     }
-    vector <string> buildingtypes;
-    uint32_t numBuildings = DF.InitReadBuildings(buildingtypes);
-    //vector< vector <string> > all;
+    
     vector< vector <DFHack::t_itemType> > itemTypes;
     DF.ReadItemTypes(itemTypes);
-    //DF.ReadAllMatgloss(all);
+    
     matGlosses mat;
     DF.ReadPlantMatgloss(mat.plantMat);
     DF.ReadWoodMatgloss(mat.woodMat);
@@ -173,8 +170,17 @@ int main (void)
     }
     
     map<string, vector<string> > names;
-    DF.InitReadNameTables(names);
-    uint32_t numCreatures = DF.InitReadCreatures();
+    if(!DF.InitReadNameTables(names))
+    {
+        cerr << "Can't get name tables" << endl;
+        return 1;
+    }
+    uint32_t numCreatures;
+    if(!DF.InitReadCreatures(numCreatures))
+    {
+        cerr << "Can't get creatures" << endl;
+        return 1;
+    }
     for(uint32_t i = 0; i < numCreatures; i++)
     {
         DFHack::t_creature temp;

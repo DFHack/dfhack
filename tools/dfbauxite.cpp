@@ -63,17 +63,17 @@ int main ()
         return EXIT_FAILURE;
     }
     
-    //FIXME: very counter-intuitive, fix the API. This returns a mapping from the internal ID to the object name
-    //       internal IDs can be obtained by using resolveClassId
-    //FIXME: Proper error reporting/exceptions support is sorely needed
+    /*
+     * Get some basics needed for full access
+     */
+    proc = DF.getProcess();
+    meminfo = proc->getDescriptor();
+    
     /*
      * Get the object name/ID mapping
      */
-    vector <string> buildingtypes;
-    uint32_t numBuildings = DF.InitReadBuildings(buildingtypes);
-    
-    proc = DF.getProcess();
-    meminfo = proc->getDescriptor();
+    vector <string> objecttypes;
+    DF.getClassIDMapping (objecttypes);
     
     //FIXME: work on the 'supported features' system required
     /*
@@ -106,7 +106,7 @@ int main ()
         if(!meminfo->resolveClassId (temp, type))
             continue;
        
-        if(buildingtypes[type] == "item_trapparts")
+        if(objecttypes[type] == "item_trapparts")
         {
             proc->read (temp + item_material_offset, sizeof (DFHack::t_matglossPair), (uint8_t *) &item_40d_material);
 

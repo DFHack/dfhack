@@ -639,14 +639,21 @@ bool API::ReadGeology (vector < vector <uint16_t> >& assign)
 
 
 // returns number of buildings, expects v_buildingtypes that will later map t_building.type to its name
-uint32_t API::InitReadBuildings (vector <string> &v_buildingtypes)
+bool API::InitReadBuildings ( uint32_t& numbuildings )
 {
-    d->buildingsInited = true;
     int buildings = d->offset_descriptor->getAddress ("buildings");
-    assert (buildings);
-    d->p_bld = new DfVector (d->dm->readVector (buildings, 4));
-    d->offset_descriptor->copyBuildings (v_buildingtypes);
-    return d->p_bld->getSize();
+    if(buildings)
+    {
+        d->buildingsInited = true;
+        d->p_bld = new DfVector (d->dm->readVector (buildings, 4));
+        return true;
+    }
+    else
+    {
+        d->buildingsInited = false;
+        numbuildings = 0;
+        return false;
+    }
 }
 
 
@@ -691,14 +698,22 @@ void API::FinishReadBuildings()
 
 //TODO: maybe do construction reading differently - this could go slow with many of them.
 // returns number of constructions, prepares a vector, returns total number of constructions
-uint32_t API::InitReadConstructions()
+bool API::InitReadConstructions(uint32_t & numconstructions)
 {
-    d->constructionsInited = true;
     int constructions = d->offset_descriptor->getAddress ("constructions");
-    assert (constructions);
-
-    d->p_cons = new DfVector (d->dm->readVector (constructions, 4));
-    return d->p_cons->getSize();
+    if(constructions)
+    {
+        d->p_cons = new DfVector (d->dm->readVector (constructions, 4));
+        d->constructionsInited = true;
+        numconstructions = d->p_cons->getSize();
+        return true;
+    }
+    else
+    {
+        d->constructionsInited = false;
+        numconstructions = 0;
+        return false;
+    }
 }
 
 
@@ -731,14 +746,23 @@ void API::FinishReadConstructions()
 }
 
 
-uint32_t API::InitReadVegetation()
+bool API::InitReadVegetation(uint32_t & numplants)
 {
-    d->vegetationInited = true;
     int vegetation = d->offset_descriptor->getAddress ("vegetation");
     d->tree_offset = d->offset_descriptor->getOffset ("tree_desc_offset");
-    assert (vegetation && d->tree_offset);
-    d->p_veg = new DfVector (d->dm->readVector (vegetation, 4));
-    return d->p_veg->getSize();
+    if(vegetation && d->tree_offset)
+    {
+        d->vegetationInited = true;
+        d->p_veg = new DfVector (d->dm->readVector (vegetation, 4));
+        numplants = d->p_veg->getSize();
+        return true;
+    }
+    else
+    {
+        d->vegetationInited = false;
+        numplants = 0;
+        return false;
+    }
 }
 
 
@@ -764,7 +788,7 @@ void API::FinishReadVegetation()
 }
 
 
-uint32_t API::InitReadCreatures()
+bool API::InitReadCreatures( uint32_t numcreatures )
 {
     memory_info * minfo = d->offset_descriptor;
     int creatures = d->offset_descriptor->getAddress ("creatures");
@@ -818,18 +842,14 @@ uint32_t API::InitReadCreatures()
     {
         d->p_cre = new DfVector (d->dm->readVector (creatures, 4));
         //InitReadNameTables();
-        //if(d->InitReadNameTables())
-        //{
         d->creaturesInited = true;
-        return d->p_cre->getSize();
-        //}
-        //else
-        //{
-        //    return false;
-        //}
+        numcreatures =  d->p_cre->getSize();
+        return false;
     }
     else
     {
+        d->creaturesInited = false;
+        numcreatures = 0;
         return false;
     }
 }
@@ -968,35 +988,44 @@ void API::WriteLabors(const uint32_t &index, uint8_t labors[NUM_CREATURE_LABORS]
     WriteRaw(temp + d->creature_labors_offset, NUM_CREATURE_LABORS, labors);
 }
 
-void API::InitReadNameTables (map< string, vector<string> > & nameTable)
+bool API::InitReadNameTables (map< string, vector<string> > & nameTable)
 {
     int genericAddress = d->offset_descriptor->getAddress ("language_vector");
     int transAddress = d->offset_descriptor->getAddress ("translation_vector");
     int word_table_offset = d->offset_descriptor->getOffset ("word_table");
 
-    DfVector genericVec (d->dm->readVector (genericAddress, 4));
-    DfVector transVec (d->dm->readVector (transAddress, 4));
-
-    for (uint32_t i = 0;i < genericVec.getSize();i++)
+    if(genericAddress && transAddress && word_table_offset)
     {
-        uint32_t genericNamePtr = * (uint32_t *) genericVec.at (i);
-        string genericName = d->dm->readSTLString (genericNamePtr);
-        nameTable["GENERIC"].push_back (genericName);
-    }
+        DfVector genericVec (d->dm->readVector (genericAddress, 4));
+        DfVector transVec (d->dm->readVector (transAddress, 4));
 
-    for (uint32_t i = 0; i < transVec.getSize();i++)
-    {
-        uint32_t transPtr = * (uint32_t *) transVec.at (i);
-        string transName = d->dm->readSTLString (transPtr);
-        DfVector trans_names_vec (d->dm->readVector (transPtr + word_table_offset, 4));
-        for (uint32_t j = 0;j < trans_names_vec.getSize();j++)
+        for (uint32_t i = 0;i < genericVec.getSize();i++)
         {
-            uint32_t transNamePtr = * (uint32_t *) trans_names_vec.at (j);
-            string name = d->dm->readSTLString (transNamePtr);
-            nameTable[transName].push_back (name);
+            uint32_t genericNamePtr = * (uint32_t *) genericVec.at (i);
+            string genericName = d->dm->readSTLString (genericNamePtr);
+            nameTable["GENERIC"].push_back (genericName);
         }
+
+        for (uint32_t i = 0; i < transVec.getSize();i++)
+        {
+            uint32_t transPtr = * (uint32_t *) transVec.at (i);
+            string transName = d->dm->readSTLString (transPtr);
+            DfVector trans_names_vec (d->dm->readVector (transPtr + word_table_offset, 4));
+            for (uint32_t j = 0;j < trans_names_vec.getSize();j++)
+            {
+                uint32_t transNamePtr = * (uint32_t *) trans_names_vec.at (j);
+                string name = d->dm->readSTLString (transNamePtr);
+                nameTable[transName].push_back (name);
+            }
+        }
+        d->nameTablesInited = true;
+        return true;
     }
-    d->nameTablesInited = true;
+    else
+    {
+        d->nameTablesInited = false;
+        return false;
+    }
 }
 
 string API::TranslateName (const t_lastname & last, const map<string, vector<string> > & nameTable, const string & language)
@@ -1230,6 +1259,16 @@ bool API::getWindowSize (int32_t &width, int32_t &height)
     return true;
 }
 
+bool API::getClassIDMapping (vector <string>& objecttypes)
+{
+    if(isAttached())
+    {
+        d->offset_descriptor->getClassIDMapping(objecttypes);
+        return true;
+    }
+    return false;
+}
+
 memory_info API::getMemoryInfo()
 {
     return *d->offset_descriptor;
@@ -1244,19 +1283,24 @@ DFWindow * API::getWindow()
     return d->p->getWindow();
 }
 
-uint32_t API::InitReadItems()
+bool API::InitReadItems(uint32_t & numitems)
 {
     int items = d->offset_descriptor->getAddress ("items");
-    assert (items);
-
-    //cerr << hex << items;
-
     d->item_material_offset = d->offset_descriptor->getOffset ("item_materials");
-    assert (d->item_material_offset);
-
-    d->p_itm = new DfVector (d->dm->readVector (items, 4));
-    d->itemsInited = true;
-    return d->p_itm->getSize();
+    
+    if(items && d->item_material_offset)
+    {
+        d->p_itm = new DfVector (d->dm->readVector (items, 4));
+        d->itemsInited = true;
+        numitems = d->p_itm->getSize();
+        return true;
+    }
+    else
+    {
+        d->itemsInited = false;
+        numitems = 0;
+        return false;
+    }
 }
 bool API::ReadItem (const uint32_t &index, t_item & item)
 {

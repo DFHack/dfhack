@@ -329,11 +329,11 @@ bool memory_info::resolveClassId(uint32_t address, int32_t & classid)
 }
 
 // Flatten vtables into a index<->name mapping
-void memory_info::copyBuildings(vector<string> & v_buildingtypes)
+void memory_info::getClassIDMapping(vector<string> & v_ClassID2ObjName)
 {
     for(uint32_t i = 0;i< classes.size();i++)
     {
-        v_buildingtypes.push_back(classes[i].classname);
+        v_ClassID2ObjName.push_back(classes[i].classname);
         if(!classes[i].is_multiclass)
         {
             continue;
@@ -341,7 +341,7 @@ void memory_info::copyBuildings(vector<string> & v_buildingtypes)
         vector <t_type>& vec = classsubtypes[classes[i].multi_index];
         for (uint32_t k = 0; k < vec.size();k++)
         {
-            v_buildingtypes.push_back(vec[k].classname);
+            v_ClassID2ObjName.push_back(vec[k].classname);
         }
     }
 }

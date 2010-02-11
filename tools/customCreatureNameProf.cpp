@@ -21,7 +21,7 @@ void print_bits ( T val, std::ostream& out )
         val >>= 1;
     }
 }
-vector <string> buildingtypes;
+vector <string> objecttypes;
 map<string, vector<string> > names;
 uint32_t numCreatures;
 vector<DFHack::t_matgloss> creaturestypes;
@@ -176,7 +176,7 @@ bool waitTillScreenState(DFHack::API &DF, string screenState,bool EqualTo=true)
     DF.Suspend();
     DF.ReadViewScreen(current);
     int tryCount = 0;
-    while(((EqualTo && buildingtypes[current.type] != screenState) || (!EqualTo && buildingtypes[current.type] == screenState)) && tryCount < 50)
+    while(((EqualTo && objecttypes[current.type] != screenState) || (!EqualTo && objecttypes[current.type] == screenState)) && tryCount < 50)
     {
         DF.Resume();
         w->TypeSpecial(DFHack::WAIT,1,100);
@@ -185,7 +185,7 @@ bool waitTillScreenState(DFHack::API &DF, string screenState,bool EqualTo=true)
         tryCount++;
     }
     if(tryCount >= 50){
-        cerr << "Something went wrong, DF at " << buildingtypes[current.type] << endl;
+        cerr << "Something went wrong, DF at " << objecttypes[current.type] << endl;
         return false;
     }
     DF.Resume();
@@ -242,12 +242,12 @@ bool moveToBaseWindow(DFHack::API &DF)
     DFHack::DFWindow * w = DF.getWindow();
     DFHack::t_viewscreen current;
     DF.ReadViewScreen(current);
-    while(buildingtypes[current.type] != string("viewscreen_dwarfmode"))
+    while(objecttypes[current.type] != string("viewscreen_dwarfmode"))
     {
         w->TypeSpecial(DFHack::F9); // cancel out of text input in names
 //        DF.TypeSpecial(DFHack::ENTER); // cancel out of text input in hotkeys
         w->TypeSpecial(DFHack::SPACE); // should move up a level
-        if(!waitTillScreenState(DF,buildingtypes[current.type],false)) return false; // wait until screen changes from current
+        if(!waitTillScreenState(DF,objecttypes[current.type],false)) return false; // wait until screen changes from current
         DF.ReadViewScreen(current);
     }
     if(DF.ReadMenuState() != 0){// if menu state != 0 then there is a menu, so escape it
@@ -287,18 +287,22 @@ int main (void)
         return 1;
     }
     DF.Suspend();
-    //Need buildingtypes for the viewscreen vtables, this really should not be just buildings, as viewscreen and items both use the same interface
-    uint32_t numBuildings = DF.InitReadBuildings(buildingtypes);
-
+    if(!DF.getClassIDMapping(objecttypes))
+    {
+        cerr << "Can't get type info" << endl;
+        return 1;
+    }
+    
     DFHack::memory_info mem = DF.getMemoryInfo();
-    // get stone matgloss mapping
+    
     if(!DF.ReadCreatureMatgloss(creaturestypes))
     {
         cerr << "Can't get the creature types." << endl;
         return 1; 
     }
+    
     DF.InitReadNameTables(names);
-    numCreatures = DF.InitReadCreatures();
+    DF.InitReadCreatures(numCreatures);
     DF.InitViewAndCursor();
     printDwarves(DF);
     DFHack::t_creature toChange;

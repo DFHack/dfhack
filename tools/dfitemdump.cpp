@@ -94,20 +94,13 @@ int main ()
     DF.ReadCreatureMatgloss(mat.creatureMat);
     DF.ForceResume();
 
-    vector <string> buildingtypes;
-    DF.InitReadBuildings(buildingtypes);
-    uint32_t numItems = DF.InitReadItems();
-    /*
-    map< string, map<string,vector<uint32_t> > > count;
-    for(uint32_t i=0; i< numItems; i++){
-        DFHack::t_item temp;
-        DF.ReadItem(i,temp);
-   //     cout << int(temp.type) << endl;
-        count[buildingtypes[temp.type]][getMaterialType(temp,buildingtypes,mat)].push_back(i);
-    }
-  */
+    vector <string> objecttypes;
+    DF.getClassIDMapping(objecttypes);
     
+    uint32_t numItems;
+    DF.InitReadItems(numItems);
     DF.InitViewAndCursor();
+    
     cout << "q to quit, anything else to look up items at that location\n";
     while(1)
     {
@@ -115,37 +108,14 @@ int main ()
         DF.ForceResume();
         getline (cin, input);
         DF.Suspend();
-        uint32_t numItems = DF.InitReadItems();
+        //FIXME: why twice?
+        uint32_t numItems;
+        DF.InitReadItems(numItems);
         if(input == "q")
         {
             break;
         }
- //       else if(next == 'c'){
- //           cerr << "clearing similarity" << endl;
- //           similarity.clear();
- //           continue;
- //       }
-
- //       else if(next == 'p'){
- //           vector<bool> same(similarity[0].size(),true);
- //           for(int k =0; k < similarity.size(); k++){
- //               for(int j =0; j < similarity.size(); j++){
- //                   if(k != j){
- //                       for(int l =0; l < similarity[k].size(); l++){
- //                           if(similarity[k][l] != similarity[j][l]){
- //                               same[l] = false;
- //                           }
- //                       }
- //                   }
- //               }
- //           }
- //           for(int itr =0; itr < same.size(); itr++){
- //               if(same[itr] == true && similarity[0][itr] != 0){
- //                   cout << hex << itr << " " << hex << (int)similarity[0][itr] << endl;
- //               }
- //           }
- //           continue;
- //       }
+        
         int32_t x,y,z;
         DF.getCursorCoords(x,y,z);
         vector <DFHack::t_item> foundItems;
@@ -162,15 +132,16 @@ int main ()
         if(foundItems.size() == 0){
             cerr << "No Items at x:" << x << " y:" << y << " z:" << z << endl;
         }
-        else if(foundItems.size() == 1){
-            printItem(foundItems[0], buildingtypes,mat);
-  //          similarity.push_back(foundItems[0].bytes);
+        else if(foundItems.size() == 1)
+        {
+            printItem(foundItems[0], objecttypes ,mat);
         }
-        else{
+        else
+        {
             cerr << "Please Select which item you want to display\n";
             for(uint32_t j = 0; j < foundItems.size(); ++j)
             {
-                cerr << j << " " << buildingtypes[foundItems[j].type] << endl;
+                cerr << j << " " << objecttypes[foundItems[j].type] << endl;
             }
             uint32_t value;
             string input2;
@@ -178,7 +149,8 @@ int main ()
             getline(cin, input2);
             ss.str(input2);
             ss >> value;
-            while(value >= foundItems.size()){
+            while(value >= foundItems.size())
+            {
                 cerr << "invalid choice, please try again" << endl;
                 input2.clear();
                 ss.clear();
@@ -186,8 +158,7 @@ int main ()
                 ss.str(input2);
                 ss >> value;
             }
-            printItem(foundItems[value], buildingtypes,mat);
-  //          similarity.push_back(foundItems[value].bytes);
+            printItem(foundItems[value], objecttypes ,mat);
         }
         DF.FinishReadItems();
     }    

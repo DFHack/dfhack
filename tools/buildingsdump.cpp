@@ -136,30 +136,43 @@ int main (int argc,const char* argv[])
         return 1;
     }
     
-    vector <string> buildingtypes;
-    uint32_t numBuildings = DF.InitReadBuildings(buildingtypes);
-    vector < uint32_t > addresses;
-    for(uint32_t i = 0; i < numBuildings; i++)
+    /*
+    * Get the object name/ID mapping
+    */
+    vector <string> objecttypes;
+    DF.getClassIDMapping (objecttypes);
+    
+    uint32_t numBuildings;
+    if(DF.InitReadBuildings(numBuildings))
     {
-        DFHack::t_building temp;
-        DF.ReadBuilding(i, temp);
-        if(temp.type != 0xFFFFFFFF) // check if type isn't invalid
+        vector < uint32_t > addresses;
+        for(uint32_t i = 0; i < numBuildings; i++)
         {
-            if(buildingtypes[temp.type] == argv[1])
+            DFHack::t_building temp;
+            DF.ReadBuilding(i, temp);
+            if(temp.type != 0xFFFFFFFF) // check if type isn't invalid
             {
-                //cout << buildingtypes[temp.type] << " 0x" << hex << temp.origin << endl;
-                //hexdump(DF, temp.origin, 16);
-                addresses.push_back(temp.origin);
+                if(objecttypes[temp.type] == argv[1])
+                {
+                    //cout << buildingtypes[temp.type] << " 0x" << hex << temp.origin << endl;
+                    //hexdump(DF, temp.origin, 16);
+                    addresses.push_back(temp.origin);
+                }
+            }
+            else
+            {
+                // couldn't translate type, print out the vtable
+                cout << "unknown vtable: " << temp.vtable << endl;
             }
         }
-        else
-        {
-            // couldn't translate type, print out the vtable
-            cout << "unknown vtable: " << temp.vtable << endl;
-        }
+        interleave_hex(DF,addresses,lines / 4);
+        DF.FinishReadBuildings();
     }
-    interleave_hex(DF,addresses,lines / 4);
-    DF.FinishReadBuildings();
+    else
+    {
+        cerr << "buildings not supported for this DF version" << endl;
+    }
+
     DF.Detach();
 #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

@@ -141,8 +141,10 @@ int main ()
 {
 
     DFHack::API DF ("Memory.xml");
-    cout << "This utility lets you mass-designate items by type and material." << endl <<"Like set on fire all MICROCLINE item_stone..." << endl
-         << "Some unusual combinations might be untested and cause the program to crash..."<< endl << "so, watch your step and backup your fort" << endl;
+    cout << "This utility lets you mass-designate items by type and material." << endl
+         << "Like set on fire all MICROCLINE item_stone..." << endl
+         << "Some unusual combinations might be untested and cause the program to crash..."<< endl
+         << "so, watch your step and backup your fort" << endl;
     if(!DF.Attach())
     {
         cerr << "DF not found" << endl;
@@ -156,11 +158,11 @@ int main ()
     DF.ReadStoneMatgloss(mat.stoneMat);
     DF.ReadMetalMatgloss(mat.metalMat);
     DF.ReadCreatureMatgloss(mat.creatureMat);
-    //DF.ForceResume();
 
-    vector <string> buildingtypes;
-    DF.InitReadBuildings(buildingtypes);
-    uint32_t numItems = DF.InitReadItems();
+    vector <string> objecttypes;
+    DF.getClassIDMapping(objecttypes);
+    uint32_t numItems;
+    DF.InitReadItems(numItems);
     map< string, map<string,vector<uint32_t> > > count;
     int failedItems = 0;
     map <string, int > bad_mat_items;
@@ -170,22 +172,22 @@ int main ()
         DF.ReadItem(i,temp);
         if(temp.type != -1)
         {
-            string material = getMaterialType(temp,buildingtypes,mat);
+            string material = getMaterialType(temp,objecttypes,mat);
             if (material != "Invalid")
             {
-                count[buildingtypes[temp.type]][material].push_back(i);
+                count[objecttypes[temp.type]][material].push_back(i);
             }
             else
             {
-                if(bad_mat_items.count(buildingtypes[temp.type]))
+                if(bad_mat_items.count(objecttypes[temp.type]))
                 {
-                    int tmp = bad_mat_items[buildingtypes[temp.type]];
+                    int tmp = bad_mat_items[objecttypes[temp.type]];
                     tmp ++;
-                    bad_mat_items[buildingtypes[temp.type]] = tmp;
+                    bad_mat_items[objecttypes[temp.type]] = tmp;
                 }
                 else
                 {
-                    bad_mat_items[buildingtypes[temp.type]] = 1;
+                    bad_mat_items[objecttypes[temp.type]] = 1;
                 }
             }
         }
@@ -243,7 +245,7 @@ int main ()
     ss >> number2;
     
     decideAgain:
-    cout << "Select a designation - (d)ump, (f)orbid, (m)melt, on fi(r)e :" << flush;
+    cout << "Select a designation - (d)ump, (f)orbid, (m)melt, set on fi(r)e :" << flush;
     string designationType;
     getline(cin,designationType);
     DFHack::t_itemflags changeFlag = {0};
@@ -259,7 +261,7 @@ int main ()
     {
         changeFlag.bits.melt = 1;
     }
-    else if(designationType == "r" || designationType == "flame")
+    else if(designationType == "r" || designationType == "fire")
     {
         changeFlag.bits.on_fire = 1;
     }

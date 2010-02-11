@@ -20,13 +20,17 @@ struct matGlosses
     vector<DFHack::t_matgloss> creatureMat;
 };
 
-const char * getMaterialType(DFHack::t_item item, const vector<string> & buildingTypes,const matGlosses & mat)
+string getMaterialType(DFHack::t_item item, const vector<string> & buildingTypes,const matGlosses & mat)
 {
     string itemtype = buildingTypes[item.type];
     // plant thread seeds
-    if(itemtype == "item_plant" || itemtype == "item_thread" || itemtype == "item_seeds" || itemtype == "item_leaves")
+    if(itemtype == "item_plant" || itemtype == "item_thread" || itemtype == "item_seeds" || itemtype == "item_leaves" )
     {
         return mat.plantMat[item.material.type].id;
+    }
+    else if (itemtype == "item_drink") // drinks must have different offset for materials
+    {
+        return "Booze or something";
     }
     // item_skin_raw item_bones item_skull item_fish_raw item_pet item_skin_tanned item_shell
     else if(itemtype == "item_skin_raw" ||
@@ -37,7 +41,8 @@ const char * getMaterialType(DFHack::t_item item, const vector<string> & buildin
             itemtype == "item_horn"||
             itemtype == "item_skull" ||
             itemtype == "item_bones" ||
-            itemtype == "item_corpse"
+            itemtype == "item_corpse" ||
+            itemtype == "item_meat"
             )
     {
         return mat.creatureMat[item.material.type].id;
@@ -46,34 +51,82 @@ const char * getMaterialType(DFHack::t_item item, const vector<string> & buildin
     {
         return mat.woodMat[item.material.type].id;
     }
+    else if(itemtype == "item_bar")
+    {
+        return mat.metalMat[item.material.type].id;
+    }
     else
     {
+        /*
+    Mat_Wood,
+    Mat_Stone,
+    Mat_Metal,
+    Mat_Plant,
+    Mat_Leather = 10,
+    Mat_SilkCloth = 11,
+    Mat_PlantCloth = 12,
+    Mat_GreenGlass = 13,
+    Mat_ClearGlass = 14,
+    Mat_CrystalGlass = 15,
+    Mat_Ice = 17,
+    Mat_Charcoal =18,
+    Mat_Potash = 19,
+    Mat_Ashes = 20,
+    Mat_PearlAsh = 21,
+    Mat_Soap = 24,
+    */
         switch (item.material.type)
         {
-        case 0:
+        case DFHack::Mat_Wood:
             return mat.woodMat[item.material.index].id;
             break;
-        case 1:
+        case DFHack::Mat_Stone:
             return mat.stoneMat[item.material.index].id;
             break;
-        case 2:
+        case DFHack::Mat_Metal:
             return mat.metalMat[item.material.index].id;
             break;
-        case 12: // don't ask me why this has such a large jump, maybe this is not actually the matType for plants, but they all have this set to 12
-            return mat.plantMat[item.material.index].id;
+        //case DFHack::Mat_Plant:
+        case DFHack::Mat_PlantCloth:
+            //return mat.plantMat[item.material.index].id;
+            return string(mat.plantMat[item.material.index].id) + " plant";
             break;
-        case 3:
-        case 9:
-        case 10:
-        case 11:
-        case 121:
-            return mat.creatureMat[item.material.index].id;
-            break;
+        case 3: // bone
+            return string(mat.creatureMat[item.material.index].id) + " bone";
+        case 25: // fat
+            return string(mat.creatureMat[item.material.index].id) + " fat";
+        case 23: // tallow
+            return string(mat.creatureMat[item.material.index].id) + " tallow";
+        case 9: // shell
+            return string(mat.creatureMat[item.material.index].id) + " shell";
+        case DFHack::Mat_Leather: // really a generic creature material. meat for item_food, leather for item_box...
+            return string(mat.creatureMat[item.material.index].id);
+        case DFHack::Mat_SilkCloth:
+            return string(mat.creatureMat[item.material.index].id) + " silk";
+        case DFHack::Mat_Soap:
+            return string(mat.creatureMat[item.material.index].id) + " soap";
+        case DFHack::Mat_GreenGlass:
+            return "Green Glass";
+        case DFHack::Mat_ClearGlass:
+            return "Clear Glass";
+        case DFHack::Mat_CrystalGlass:
+            return "Crystal Glass";
+        case DFHack::Mat_Ice:
+            return "Ice";
+        case DFHack::Mat_Charcoal:
+            return "Charcoal";
+        /*case DFHack::Mat_Potash:
+            return "Potash";*/
+        case DFHack::Mat_Ashes:
+            return "Ashes";
+        case DFHack::Mat_PearlAsh:
+            return "Pearlash";
         default:
-            cout << "unknown material hit: " << item.material.type << " " << itemtype << endl;
-            return 0;
+            cout << "unknown material hit: " << item.material.type << " " << item.material.index  << " " << itemtype << endl;
+            return "Invalid";
         }
     }   
+    return "Invalid";
 }
 void printItem(DFHack::t_item item, const vector<string> & buildingTypes,const matGlosses & mat)
 {
@@ -117,8 +170,8 @@ int main ()
         DF.ReadItem(i,temp);
         if(temp.type != -1)
         {
-            const char * material = getMaterialType(temp,buildingtypes,mat);
-            if (material != 0)
+            string material = getMaterialType(temp,buildingtypes,mat);
+            if (material != "Invalid")
             {
                 count[buildingtypes[temp.type]][material].push_back(i);
             }

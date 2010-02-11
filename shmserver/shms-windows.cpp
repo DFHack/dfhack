@@ -423,6 +423,19 @@ SDL_FillRect
     int SDLCALL SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, Uint32 color);
 */
 
+
+static void * (*_SDL_GetVideoSurface)( void ) = 0;
+extern "C" void * SDL_GetVideoSurface(void)
+{
+    return _SDL_GetVideoSurface();
+}
+
+static void * (*_SDL_DisplayFormat)( void * surface ) = 0;
+extern "C" void * SDL_DisplayFormat(void *surface)
+{
+    return _SDL_DisplayFormat(surface);
+}
+
 static int (*_SDL_GL_GetAttribute)(int attr, int * value) = 0;
 extern "C" int SDL_GL_GetAttribute(int attr, int * value)
 {
@@ -647,6 +660,20 @@ extern "C" void SDL_GL_SwapBuffers(void)
     _SDL_GL_SwapBuffers();
 }
 
+// hook - called every tick in the 2D mode of DF
+static int (*_SDL_Flip)(void * some_ptr) = 0;
+extern "C" int SDL_Flip(void * some_ptr)
+{
+    if(_SDL_Flip)
+    {
+        if(!errorstate && ((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
+        {
+            SHM_Act();
+        }
+        return _SDL_Flip(some_ptr);
+    }
+}
+
 static int (*_SDL_Init)(uint32_t flags) = 0;
 extern "C" int SDL_Init(uint32_t flags)
 {
@@ -674,6 +701,8 @@ extern "C" int SDL_Init(uint32_t flags)
     _SDL_DestroyMutex = (void (*)(void*))GetProcAddress(realSDLlib,"SDL_DestroyMutex");
     _SDL_EnableKeyRepeat = (int (*)(int, int))GetProcAddress(realSDLlib,"SDL_EnableKeyRepeat");
     _SDL_EnableUNICODE = (int (*)(int))GetProcAddress(realSDLlib,"SDL_EnableUNICODE");
+    _SDL_GetVideoSurface = (void*(*)())GetProcAddress(realSDLlib,"SDL_GetVideoSurface");
+    _SDL_DisplayFormat = (void * (*) (void *))GetProcAddress(realSDLlib,"SDL_DisplayFormat");
     _SDL_FreeSurface = (void (*)(void*))GetProcAddress(realSDLlib,"SDL_FreeSurface");
     _SDL_GL_GetAttribute = (int (*)(int, int*))GetProcAddress(realSDLlib,"SDL_GL_GetAttribute");
     _SDL_GL_SetAttribute = (int (*)(int, int))GetProcAddress(realSDLlib,"SDL_GL_SetAttribute");
@@ -683,6 +712,7 @@ extern "C" int SDL_Init(uint32_t flags)
     _SDL_GetTicks = (uint32_t (*)())GetProcAddress(realSDLlib,"SDL_GetTicks");
     _SDL_GetVideoInfo = (void*(*)())GetProcAddress(realSDLlib,"SDL_GetVideoInfo");
     _SDL_Init = (int (*)(uint32_t))GetProcAddress(realSDLlib,"SDL_Init");
+    _SDL_Flip = (int (*)( void * )) GetProcAddress(realSDLlib, "SDL_Flip");
     _SDL_LockSurface = (int (*)(void*))GetProcAddress(realSDLlib,"SDL_LockSurface");
     _SDL_MapRGB = (uint32_t (*)(void*, uint8_t, uint8_t, uint8_t))GetProcAddress(realSDLlib,"SDL_MapRGB");
     _SDL_PollEvent = (int (*)(void*))GetProcAddress(realSDLlib,"SDL_PollEvent");

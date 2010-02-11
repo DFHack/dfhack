@@ -57,7 +57,6 @@ void printDwarves(DFHack::API & DF)
 
 bool getDwarfSelection(DFHack::API & DF, DFHack::t_creature & toChange,string & changeString, string & commandString,int & eraseAmount,int &dwarfNum,bool &isName)
 {
-    DF.ForceResume();
     static string lastText;
     bool dwarfSuccess = false;
     
@@ -65,26 +64,25 @@ bool getDwarfSelection(DFHack::API & DF, DFHack::t_creature & toChange,string & 
     {
         string input;
         cout << "\nSelect Dwarf to Change or q to Quit" << endl;
+        DF.Resume();
         getline (cin, input);
+        DF.Suspend();
         if(input == "q")
         {
             return false;
         }
         else if(input == "r")
         {
-            DF.Suspend();
             printDwarves(DF);
-            DF.Resume();
         }
         else if(!input.empty())
         {
             int num;
             stringstream(input) >> num;//= atol(input.c_str());
-            DF.Suspend();
             dwarfSuccess = DF.ReadCreature(num,toChange);
-            DF.Resume();
             string type = creaturestypes[toChange.type].id;
-            if(type != "DWARF"){
+            if(type != "DWARF")
+            {
                 dwarfSuccess = false;
             }
             else
@@ -244,7 +242,8 @@ bool moveToBaseWindow(DFHack::API &DF)
     DFHack::DFWindow * w = DF.getWindow();
     DFHack::t_viewscreen current;
     DF.ReadViewScreen(current);
-    while(buildingtypes[current.type] != string("viewscreen_dwarfmode")){
+    while(buildingtypes[current.type] != string("viewscreen_dwarfmode"))
+    {
         w->TypeSpecial(DFHack::F9); // cancel out of text input in names
 //        DF.TypeSpecial(DFHack::ENTER); // cancel out of text input in hotkeys
         w->TypeSpecial(DFHack::SPACE); // should move up a level
@@ -287,6 +286,7 @@ int main (void)
         cerr << "DF not found" << endl;
         return 1;
     }
+    DF.Suspend();
     //Need buildingtypes for the viewscreen vtables, this really should not be just buildings, as viewscreen and items both use the same interface
     uint32_t numBuildings = DF.InitReadBuildings(buildingtypes);
 
@@ -297,11 +297,9 @@ int main (void)
         cerr << "Can't get the creature types." << endl;
         return 1; 
     }
-   
     DF.InitReadNameTables(names);
     numCreatures = DF.InitReadCreatures();
     DF.InitViewAndCursor();
-    DF.Suspend();
     printDwarves(DF);
     DFHack::t_creature toChange;
     string changeString,commandString;
@@ -311,6 +309,11 @@ int main (void)
     DFHack::DFWindow * w = DF.getWindow();
     while(getDwarfSelection(DF,toChange,changeString,commandString,eraseAmount,toChangeNum,isName))
     {
+        // limit length, DF doesn't accept input after this point
+        if(changeString.size() > 39)
+        {
+            changeString.resize(39);
+        }
         start:
         bool completed = false;
         if(moveToBaseWindow(DF) && setCursorToCreature(DF))

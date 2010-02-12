@@ -92,7 +92,6 @@ int main ()
     DF.ReadStoneMatgloss(mat.stoneMat);
     DF.ReadMetalMatgloss(mat.metalMat);
     DF.ReadCreatureMatgloss(mat.creatureMat);
-    DF.ForceResume();
 
     vector <string> objecttypes;
     DF.getClassIDMapping(objecttypes);

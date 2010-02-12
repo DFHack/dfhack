@@ -153,109 +153,42 @@ SHMProcess::SHMProcess(vector <memory_info> & known_versions)
     char exe_link_name [256];
     char target_name[1024];
     int target_result;
-    // get server and client mutex
-    d->DFSVMutex = OpenMutex(SYNCHRONIZE,false, "DFSVMutex");
-    if(d->DFSVMutex == 0)
+    do
     {
-        return;
-    }
-    d->DFCLMutex = OpenMutex(SYNCHRONIZE,false, "DFCLMutex");
-    if(d->DFCLMutex == 0)
-    {
-        return;
-    }
-    if(!attach())
-    {
-        return;
-    }
-    
-    // All seems to be OK so far. Attached and connected to something that looks like DF
-    
-    // Test bridge version, will also detect when we connect to something that doesn't respond
-    bool bridgeOK;
-    if(!d->DF_TestBridgeVersion(bridgeOK))
-    {
-        fprintf(stderr,"DF terminated during reading\n");
-        UnmapViewOfFile(d->my_shm);
-        ReleaseMutex(d->DFCLMutex);
-        CloseHandle(d->DFSVMutex);
-        d->DFSVMutex = 0;
-        CloseHandle(d->DFCLMutex);
-        d->DFCLMutex = 0;
-        return;
-    }
-    if(!bridgeOK)
-    {
-        fprintf(stderr,"SHM bridge version mismatch\n");
-        ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
-        UnmapViewOfFile(d->my_shm);
-        ReleaseMutex(d->DFCLMutex);
-        CloseHandle(d->DFSVMutex);
-        d->DFSVMutex = 0;
-        CloseHandle(d->DFCLMutex);
-        d->DFCLMutex = 0;
-        return;
-    }
-    /*
-     * get the PID from DF
-     */
-    if(d->DF_GetPID(d->my_pid))
-    {
-        // try to identify the DF version
-        do // glorified goto
-        {  
-            IMAGE_NT_HEADERS32 pe_header;
-            IMAGE_SECTION_HEADER sections[16];
-            HMODULE hmod = NULL;
-            DWORD junk;
-            HANDLE hProcess;
-            bool found = false;
-            d->identified = false;
-            // open process, we only need the process open 
-            hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, d->my_pid );
-            if (NULL == hProcess)
-                break;
-            
-            // try getting the first module of the process
-            if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk) == 0)
-            {
-                CloseHandle(hProcess);
-                cout << "EnumProcessModules fail'd" << endl;
-                break;
-            }
-            // got base ;)
-            uint32_t base = (uint32_t)hmod;
-            
-            // read from this process
-            uint32_t pe_offset = readDWord(base+0x3C);
-            read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
-            read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
-            
-            // iterate over the list of memory locations
-            vector<memory_info>::iterator it;
-            for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
-            {
-                uint32_t pe_timestamp = (*it).getHexValue("pe_timestamp");
-                if (pe_timestamp == pe_header.FileHeader.TimeDateStamp)
-                {
-                    memory_info *m = new memory_info(*it);
-                    m->RebaseAll(base);
-                    d->my_datamodel = new DMWindows40d();
-                    d->my_descriptor = m;
-                    d->identified = true;
-                    cerr << "identified " << m->getVersion() << endl;
-                    break;
-                }
-            }
-            CloseHandle(hProcess);
-        } while (0); // glorified goto end
-        
-        if(d->identified)
+        // get server and client mutex
+        d->DFSVMutex = OpenMutex(SYNCHRONIZE,false, "DFSVMutex");
+        if(d->DFSVMutex == 0)
         {
-            d->my_window = new DFWindow(this);
+            break;
         }
-        else
+        d->DFCLMutex = OpenMutex(SYNCHRONIZE,false, "DFCLMutex");
+        if(d->DFCLMutex == 0)
         {
+            break;
+        }
+        if(!attach())
+        {
+            break;
+        }
+        
+        // All seems to be OK so far. Attached and connected to something that looks like DF
+        
+        // Test bridge version, will also detect when we connect to something that doesn't respond
+        bool bridgeOK;
+        if(!d->DF_TestBridgeVersion(bridgeOK))
+        {
+            fprintf(stderr,"DF terminated during reading\n");
+            UnmapViewOfFile(d->my_shm);
+            ReleaseMutex(d->DFCLMutex);
+            CloseHandle(d->DFSVMutex);
+            d->DFSVMutex = 0;
+            CloseHandle(d->DFCLMutex);
+            d->DFCLMutex = 0;
+            break;
+        }
+        if(!bridgeOK)
+        {
+            fprintf(stderr,"SHM bridge version mismatch\n");
             ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
             UnmapViewOfFile(d->my_shm);
             ReleaseMutex(d->DFCLMutex);
@@ -263,9 +196,79 @@ SHMProcess::SHMProcess(vector <memory_info> & known_versions)
             d->DFSVMutex = 0;
             CloseHandle(d->DFCLMutex);
             d->DFCLMutex = 0;
-            return;
+            break;
         }
-    }
+        /*
+         * get the PID from DF
+         */
+        if(d->DF_GetPID(d->my_pid))
+        {
+            // try to identify the DF version
+            do // glorified goto
+            {  
+                IMAGE_NT_HEADERS32 pe_header;
+                IMAGE_SECTION_HEADER sections[16];
+                HMODULE hmod = NULL;
+                DWORD junk;
+                HANDLE hProcess;
+                bool found = false;
+                d->identified = false;
+                // open process, we only need the process open 
+                hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, d->my_pid );
+                if (NULL == hProcess)
+                    break;
+                
+                // try getting the first module of the process
+                if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk) == 0)
+                {
+                    CloseHandle(hProcess);
+                    cout << "EnumProcessModules fail'd" << endl;
+                    break;
+                }
+                // got base ;)
+                uint32_t base = (uint32_t)hmod;
+                
+                // read from this process
+                uint32_t pe_offset = readDWord(base+0x3C);
+                read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
+                read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
+                
+                // iterate over the list of memory locations
+                vector<memory_info>::iterator it;
+                for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
+                {
+                    uint32_t pe_timestamp = (*it).getHexValue("pe_timestamp");
+                    if (pe_timestamp == pe_header.FileHeader.TimeDateStamp)
+                    {
+                        memory_info *m = new memory_info(*it);
+                        m->RebaseAll(base);
+                        d->my_datamodel = new DMWindows40d();
+                        d->my_descriptor = m;
+                        d->identified = true;
+                        cerr << "identified " << m->getVersion() << endl;
+                        break;
+                    }
+                }
+                CloseHandle(hProcess);
+            } while (0); // glorified goto end
+            
+            if(d->identified)
+            {
+                d->my_window = new DFWindow(this);
+            }
+            else
+            {
+                ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
+                UnmapViewOfFile(d->my_shm);
+                ReleaseMutex(d->DFCLMutex);
+                CloseHandle(d->DFSVMutex);
+                d->DFSVMutex = 0;
+                CloseHandle(d->DFCLMutex);
+                d->DFCLMutex = 0;
+                break;
+            }
+        }
+    } while (0);
     full_barrier
     // at this point, DF is attached and suspended, make it run
     detach();

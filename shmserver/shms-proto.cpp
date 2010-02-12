@@ -158,7 +158,22 @@ void SHM_Act (void)
             fprintf(stderr, "no. of waits: %d\n", numwaits);
             //MessageBox(0,"Broke out of loop properly","FUN", MB_OK);
             break;
-            
+
+        // client requests contents of STL string at address
+        /*case DFPP_READ_STL_STRING:
+            char * real = *(char **)((shm_read_small *)shm)->address;
+            strncpy(shm + SHM_HEADER,real,1024*1024-1);
+            full_barrier
+            ((shm_retval *)shm)->pingpong = DFPP_RET_STRING;
+            goto check_again;
+*/
+        // client requests contents of a C string at address, max length (0 means zero terminated)
+/*        case DFPP_READ_C_STRING:
+            break;
+        // sv -> cl length + string contents
+        // client wants to set STL string at address to something
+        case DFPP_WRITE_STL_STRING:
+            break;*/
         default:
             ((shm_retval *)shm)->value = DFEE_INVALID_COMMAND;
             full_barrier

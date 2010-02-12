@@ -1678,6 +1678,11 @@
         <Address name="pause_state">0x8F35800</Address> <!-- game is paused -->
         <Address name="view_screen">0x878493c</Address> <!-- address of ptr to view screen object -->
         <Address name="current_menu_state">0x8f467e0</Address> <!-- menu state - used to get out of menus with space key -->
+        <!-- engravings -->
+        <Address name="engravings_vector">0x8f468c0</Address>
+        <Offset name="engraving_xyz">0x0C</Offset> <!-- 3x word -->
+        <Offset name="engraving_imageindex">0x20</Offset> <!-- 1x dword -->
+        
         <VTable name="viewscreen_vtable">
             <class vtable="0x086CA668" name="viewscreen_conversation" />
             <class vtable="0x086D52A8" name="viewscreen_setupadventure" />

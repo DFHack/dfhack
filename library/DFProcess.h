@@ -117,9 +117,10 @@ namespace DFHack
         class Private;
         private:
             Private * const d;
+            
+        public:
             NormalProcess(uint32_t pid, vector <memory_info> & known_versions);
             ~NormalProcess();
-        public:
             bool attach();
             bool detach();
             
@@ -161,9 +162,10 @@ namespace DFHack
         class Private;
         private:
             Private * const d;
+            
+        public:
             SHMProcess(vector <memory_info> & known_versions);
             ~SHMProcess();
-        public:
             // Set up stuff so we can read memory
             bool attach();
             bool detach();

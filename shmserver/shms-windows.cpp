@@ -31,6 +31,8 @@ distribution.
 #include <windows.h>
 #include <stdarg.h>
 
+#define DFhackCExport extern "C" __declspec(dllexport)
+
 #include "../library/integers.h"
 #include "shms.h"
 #include <stdio.h>
@@ -43,14 +45,12 @@ HANDLE DFSVMutex = 0;
 HANDLE DFCLMutex = 0;
 void SHM_Init ( void )
 {
-    /*
     // check that we do this only once per process
     if(inited)
     {
-        MessageBox(0,"SDL_Init was called twice or more!","FUN", MB_OK);
+        //MessageBox(0,"SDL_Init was called twice or more!","FUN", MB_OK);
         return;
     }
-    */
     inited = true;
     
     // create or open mutexes
@@ -109,9 +109,18 @@ void SHM_Init ( void )
     // create virtual memory mapping
     shmHandle = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,SHM_SIZE,"DFShm");
     // if can't create or already exists -> nothing happens
-    if(!shmHandle || GetLastError() == ERROR_ALREADY_EXISTS)
+    if(GetLastError() == ERROR_ALREADY_EXISTS)
     {
-        MessageBox(0,"Couldn't create SHM mapping","Error", MB_OK);
+        MessageBox(0,"SHM bridge already in use","Error", MB_OK);
+        errorstate = 1;
+        ReleaseMutex(DFSVMutex);
+        CloseHandle(DFSVMutex);
+        CloseHandle(DFCLMutex);
+        return;
+    }
+    if(!shmHandle)
+    {
+        MessageBox(0,"Couldn't create SHM bridge","Error", MB_OK);
         errorstate = 1;
         ReleaseMutex(DFSVMutex);
         CloseHandle(DFSVMutex);
@@ -127,7 +136,7 @@ void SHM_Init ( void )
     }
     else
     {
-        MessageBox(0,"Couldn't attach SHM mapping","Error", MB_OK);
+        MessageBox(0,"Couldn't attach SHM bridge","Error", MB_OK);
         errorstate = 1;
         ReleaseMutex(DFSVMutex);
         CloseHandle(DFSVMutex);
@@ -197,25 +206,25 @@ SDL_DestroyCond
     void SDLCALL SDL_DestroyCond(SDL_cond *cond);
 */
 static vPtr (*_SDL_CreateCond)() = 0;
-extern "C" vPtr SDL_CreateCond()
+DFhackCExport vPtr SDL_CreateCond()
 {
     return _SDL_CreateCond();
 }
 
 static int (*_SDL_CondSignal)(vPtr cond) = 0;
-extern "C" int SDL_CondSignal(vPtr cond)
+DFhackCExport int SDL_CondSignal(vPtr cond)
 {
     return _SDL_CondSignal(cond);
 }
 
 static int (*_SDL_CondWait)(vPtr cond, vPtr mutex) = 0;
-extern "C" int SDL_CondWait(vPtr cond, vPtr mutex)
+DFhackCExport int SDL_CondWait(vPtr cond, vPtr mutex)
 {
     return _SDL_CondWait(cond, mutex);
 }
 
 static void (*_SDL_DestroyCond)(vPtr cond) = 0;
-extern "C" void SDL_DestroyCond(vPtr cond)
+DFhackCExport void SDL_DestroyCond(vPtr cond)
 {
     _SDL_DestroyCond(cond);
 }
@@ -230,19 +239,19 @@ SDL_DestroyMutex
     void SDLCALL SDL_DestroyMutex(SDL_mutex *mutex);
 */
 static vPtr (*_SDL_CreateMutex)(void) = 0;
-extern "C" vPtr SDL_CreateMutex(void)
+DFhackCExport vPtr SDL_CreateMutex(void)
 {
     return _SDL_CreateMutex();
 }
 
 static int (*_SDL_mutexP)(vPtr mutex) = 0;
-extern "C" int SDL_mutexP(vPtr mutex)
+DFhackCExport int SDL_mutexP(vPtr mutex)
 {
     return _SDL_mutexP(mutex);
 }
 
 static void (*_SDL_DestroyMutex)(vPtr mutex) = 0;
-extern "C" void SDL_DestroyMutex(vPtr mutex)
+DFhackCExport void SDL_DestroyMutex(vPtr mutex)
 {
     _SDL_DestroyMutex(mutex);
 }
@@ -258,19 +267,19 @@ SDL_GetTicks
     Uint32 SDLCALL SDL_GetTicks(void);
 */
 static vPtr (*_SDL_AddTimer)(uint32_t interval, fPtr callback, vPtr param) = 0;
-extern "C" vPtr SDL_AddTimer(uint32_t interval, fPtr callback, vPtr param)
+DFhackCExport vPtr SDL_AddTimer(uint32_t interval, fPtr callback, vPtr param)
 {
     return _SDL_AddTimer(interval, callback, param);
 }
 
 static bool (*_SDL_RemoveTimer)(vPtr timer) = 0;
-extern "C" bool SDL_RemoveTimer(vPtr timer)
+DFhackCExport bool SDL_RemoveTimer(vPtr timer)
 {
     return _SDL_RemoveTimer(timer);
 }
 
 static uint32_t (*_SDL_GetTicks)(void) = 0;
-extern "C" uint32_t SDL_GetTicks(void)
+DFhackCExport uint32_t SDL_GetTicks(void)
 {
     return _SDL_GetTicks();
 }
@@ -302,7 +311,7 @@ SDL_UnlockSurface
 
 static vPtr (*_SDL_CreateRGBSurface)(uint32_t flags, int width, int height, int depth,
                                      uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask) = 0;
-extern "C" vPtr SDL_CreateRGBSurface(uint32_t flags, int width, int height, int depth,
+DFhackCExport vPtr SDL_CreateRGBSurface(uint32_t flags, int width, int height, int depth,
                                      uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask)
 {
     return _SDL_CreateRGBSurface(flags, width, height, depth, Rmask, Gmask, Bmask, Amask);
@@ -310,32 +319,32 @@ extern "C" vPtr SDL_CreateRGBSurface(uint32_t flags, int width, int height, int 
 
 static vPtr (*_SDL_CreateRGBSurfaceFrom)(vPtr pixels, int width, int height, int depth, int pitch,
                                          uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask) = 0;
-extern "C" vPtr SDL_CreateRGBSurfaceFrom(vPtr pixels, int width, int height, int depth, int pitch,
+DFhackCExport vPtr SDL_CreateRGBSurfaceFrom(vPtr pixels, int width, int height, int depth, int pitch,
                                          uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask)
 {
     return _SDL_CreateRGBSurfaceFrom(pixels, width, height, depth, pitch, Rmask, Gmask, Bmask, Amask);
 }
 
 static void (*_SDL_FreeSurface)(vPtr surface) = 0;
-extern "C" void SDL_FreeSurface(vPtr surface)
+DFhackCExport void SDL_FreeSurface(vPtr surface)
 {
     _SDL_FreeSurface(surface);
 }
 
 static vPtr (*_SDL_ConvertSurface)(vPtr surface, vPtr format, uint32_t flags) = 0;
-extern "C" vPtr SDL_ConvertSurface(vPtr surface, vPtr format, uint32_t flags)
+DFhackCExport vPtr SDL_ConvertSurface(vPtr surface, vPtr format, uint32_t flags)
 {
     return _SDL_ConvertSurface(surface, format, flags);
 }
 
 static int (*_SDL_LockSurface)(vPtr surface) = 0;
-extern "C" int SDL_LockSurface(vPtr surface)
+DFhackCExport int SDL_LockSurface(vPtr surface)
 {
     return _SDL_LockSurface(surface);
 }
 
 static void (*_SDL_UnlockSurface)(vPtr surface) = 0;
-extern "C" void SDL_UnlockSurface(vPtr surface)
+DFhackCExport void SDL_UnlockSurface(vPtr surface)
 {
     _SDL_UnlockSurface(surface);
 }
@@ -368,42 +377,42 @@ SDL_UpperBlit
 */
 
 static uint32_t (*_SDL_MapRGB)(vPtr pixelformat, uint8_t r, uint8_t g, uint8_t b) = 0;
-extern "C" uint32_t SDL_MapRGB(vPtr pixelformat, uint8_t r, uint8_t g, uint8_t b)
+DFhackCExport uint32_t SDL_MapRGB(vPtr pixelformat, uint8_t r, uint8_t g, uint8_t b)
 {
     return _SDL_MapRGB(pixelformat,r,g,b);
 }
 
 static int (*_SDL_SaveBMP_RW)(vPtr surface, vPtr dst, int freedst) = 0;
-extern "C" int SDL_SaveBMP_RW(vPtr surface, vPtr dst, int freedst)
+DFhackCExport int SDL_SaveBMP_RW(vPtr surface, vPtr dst, int freedst)
 {
     return _SDL_SaveBMP_RW(surface,dst,freedst);
 }
 
 static int (*_SDL_SetAlpha)(vPtr surface, uint32_t flag, uint8_t alpha) = 0;
-extern "C" int SDL_SetAlpha(vPtr surface, uint32_t flag, uint8_t alpha)
+DFhackCExport int SDL_SetAlpha(vPtr surface, uint32_t flag, uint8_t alpha)
 {
     return _SDL_SetAlpha(surface,flag,alpha);
 }
 
 static int (*_SDL_SetColorKey)(vPtr surface, uint32_t flag, uint32_t key) = 0;
-extern "C" int SDL_SetColorKey(vPtr surface, uint32_t flag, uint32_t key)
+DFhackCExport int SDL_SetColorKey(vPtr surface, uint32_t flag, uint32_t key)
 {
     return _SDL_SetColorKey(surface,flag,key);
 }
 
 static vPtr (*_SDL_GetVideoInfo)(void) = 0;
-extern "C" vPtr SDL_GetVideoInfo(void)
+DFhackCExport vPtr SDL_GetVideoInfo(void)
 {
     return _SDL_GetVideoInfo();
 }
 
 static vPtr (*_SDL_SetVideoMode)(int width, int height, int bpp, uint32_t flags) = 0;
-extern "C" vPtr SDL_SetVideoMode(int width, int height, int bpp, uint32_t flags)
+DFhackCExport vPtr SDL_SetVideoMode(int width, int height, int bpp, uint32_t flags)
 {
     return _SDL_SetVideoMode(width, height, bpp, flags);
 }
 static int (*_SDL_UpperBlit)(vPtr src, vPtr srcrect, vPtr dst, vPtr dstrect) = 0;
-extern "C" int SDL_UpperBlit(vPtr src, vPtr srcrect, vPtr dst, vPtr dstrect)
+DFhackCExport int SDL_UpperBlit(vPtr src, vPtr srcrect, vPtr dst, vPtr dstrect)
 {
     return _SDL_UpperBlit(src, srcrect, dst, dstrect);
 }
@@ -427,44 +436,44 @@ SDL_FillRect
 
 
 static void * (*_SDL_GetVideoSurface)( void ) = 0;
-extern "C" void * SDL_GetVideoSurface(void)
+DFhackCExport void * SDL_GetVideoSurface(void)
 {
     return _SDL_GetVideoSurface();
 }
 
 static void * (*_SDL_DisplayFormat)( void * surface ) = 0;
-extern "C" void * SDL_DisplayFormat(void *surface)
+DFhackCExport void * SDL_DisplayFormat(void *surface)
 {
     return _SDL_DisplayFormat(surface);
 }
 
 static int (*_SDL_GL_GetAttribute)(int attr, int * value) = 0;
-extern "C" int SDL_GL_GetAttribute(int attr, int * value)
+DFhackCExport int SDL_GL_GetAttribute(int attr, int * value)
 {
     return _SDL_GL_GetAttribute(attr,value);
 }
 
 static int (*_SDL_GL_SetAttribute)(int attr, int value) = 0;
-extern "C" int SDL_GL_SetAttribute(int attr, int value)
+DFhackCExport int SDL_GL_SetAttribute(int attr, int value)
 {
     return _SDL_GL_SetAttribute(attr,value);
 }
 
 static void (*_SDL_WM_SetCaption)(const char *title, const char *icon) = 0;
-extern "C" void SDL_WM_SetCaption(const char *title, const char *icon)
+DFhackCExport void SDL_WM_SetCaption(const char *title, const char *icon)
 {
     //_SDL_WM_SetCaption("DwarfHacked the Fortress of Hacks",icon);
     _SDL_WM_SetCaption(title,icon);
 }
 
 static void (*_SDL_WM_SetIcon)(vPtr icon, uint8_t *mask) = 0;
-extern "C" void SDL_WM_SetIcon(vPtr icon, uint8_t *mask)
+DFhackCExport void SDL_WM_SetIcon(vPtr icon, uint8_t *mask)
 {
     _SDL_WM_SetIcon(icon, mask);
 }
 
 static int (*_SDL_FillRect)(vPtr dst, vPtr dstrect, uint32_t color) = 0;
-extern "C" int SDL_FillRect(vPtr dst, vPtr dstrect, uint32_t color)
+DFhackCExport int SDL_FillRect(vPtr dst, vPtr dstrect, uint32_t color)
 {
     return _SDL_FillRect(dst,dstrect,color);
 }
@@ -481,25 +490,25 @@ SDL_PollEvent
 */
 
 static int (*_SDL_EnableKeyRepeat)(int delay, int interval) = 0;
-extern "C" int SDL_EnableKeyRepeat(int delay, int interval)
+DFhackCExport int SDL_EnableKeyRepeat(int delay, int interval)
 {
     return _SDL_EnableKeyRepeat(delay, interval);
 }
 
 static int (*_SDL_EnableUNICODE)(int enable) = 0;
-extern "C" int SDL_EnableUNICODE(int enable)
+DFhackCExport int SDL_EnableUNICODE(int enable)
 {
     return _SDL_EnableUNICODE(enable);
 }
 
 static uint8_t * (*_SDL_GetKeyState)(int* numkeys) = 0;
-extern "C" uint8_t * SDL_GetKeyState(int* numkeys)
+DFhackCExport uint8_t * SDL_GetKeyState(int* numkeys)
 {
     return _SDL_GetKeyState(numkeys);
 }
 
 static int (*_SDL_PollEvent)(vPtr event) = 0;
-extern "C" int SDL_PollEvent(vPtr event)
+DFhackCExport int SDL_PollEvent(vPtr event)
 {
     return _SDL_PollEvent(event);
 }
@@ -516,13 +525,13 @@ SDL_Error
 */
 
 static char * (*_SDL_GetError)(void) = 0;
-extern "C" char * SDL_GetError(void)
+DFhackCExport char * SDL_GetError(void)
 {
     return _SDL_GetError();
 }
 
 static void (*_SDL_SetError)(const char *fmt, ...) = 0;
-extern "C" void SDL_SetError(const char *fmt, ...)
+DFhackCExport void SDL_SetError(const char *fmt, ...)
 {
     char buf[1024];
     va_list args;
@@ -533,13 +542,13 @@ extern "C" void SDL_SetError(const char *fmt, ...)
 }
 
 static void (*_SDL_ClearError)(void) = 0;
-extern "C" void SDL_ClearError(void)
+DFhackCExport void SDL_ClearError(void)
 {
     _SDL_ClearError();
 }
 
 static void (*_SDL_Error)(int code) = 0;
-extern "C" void SDL_Error(int code)
+DFhackCExport void SDL_Error(int code)
 {
     _SDL_Error(code);
 }
@@ -554,19 +563,19 @@ SDL_UnloadObject
 */
 
 static vPtr (*_SDL_LoadFunction)(void *handle, const char *name) = 0;
-extern "C" vPtr SDL_LoadFunction(void *handle, const char *name)
+DFhackCExport vPtr SDL_LoadFunction(void *handle, const char *name)
 {
     return _SDL_LoadFunction(handle, name);
 }
 
 static vPtr (*_SDL_LoadObject)(const char *sofile) = 0;
-extern "C" vPtr SDL_LoadObject(const char *sofile)
+DFhackCExport vPtr SDL_LoadObject(const char *sofile)
 {
     return _SDL_LoadObject(sofile);
 }
 
 static void (*_SDL_UnloadObject)(vPtr handle) = 0;
-extern "C" void SDL_UnloadObject(vPtr handle)
+DFhackCExport void SDL_UnloadObject(vPtr handle)
 {
     _SDL_UnloadObject(handle);
 }
@@ -581,19 +590,19 @@ SDL_ReadLE32
 */
 
 static uint32_t (*_SDL_ReadBE32)(vPtr src) = 0;
-extern "C" uint32_t SDL_ReadBE32(vPtr src)
+DFhackCExport uint32_t SDL_ReadBE32(vPtr src)
 {
     return _SDL_ReadBE32(src);
 }
 
 static uint16_t (*_SDL_ReadLE16)(vPtr src) = 0;
-extern "C" uint16_t SDL_ReadLE16(vPtr src)
+DFhackCExport uint16_t SDL_ReadLE16(vPtr src)
 {
     return _SDL_ReadLE16(src);
 }
 
 static uint32_t (*_SDL_ReadLE32)(vPtr src) = 0;
-extern "C" uint32_t SDL_ReadLE32(vPtr src)
+DFhackCExport uint32_t SDL_ReadLE32(vPtr src)
 {
     return _SDL_ReadLE32(src);
 }
@@ -610,25 +619,25 @@ SDL_strlcpy
 */
 
 static vPtr (*_SDL_RWFromFile)(const char* file, const char *mode) = 0;
-extern "C" vPtr SDL_RWFromFile(const char* file, const char *mode)
+DFhackCExport vPtr SDL_RWFromFile(const char* file, const char *mode)
 {
     return _SDL_RWFromFile(file, mode);
 }
 
 static void (*_SDL_SetModuleHandle)(vPtr hInst) = 0;
-extern "C" void SDL_SetModuleHandle(vPtr hInst)
+DFhackCExport void SDL_SetModuleHandle(vPtr hInst)
 {
     _SDL_SetModuleHandle(hInst);
 }
 
 static int (*_SDL_ShowCursor)(int toggle) = 0;
-extern "C" int SDL_ShowCursor(int toggle)
+DFhackCExport int SDL_ShowCursor(int toggle)
 {
     return _SDL_ShowCursor(toggle);
 }
 
 static size_t (*_SDL_strlcpy)(char *dst, const char *src, size_t maxlen) = 0;
-extern "C" size_t SDL_strlcpy(char *dst, const char *src, size_t maxlen)
+DFhackCExport size_t SDL_strlcpy(char *dst, const char *src, size_t maxlen)
 {
     if(!_SDL_strlcpy)
     {
@@ -646,7 +655,7 @@ SDL_GL_SwapBuffers
 */
 
 static void (*_SDL_Quit)(void) = 0;
-extern "C" void SDL_Quit(void)
+DFhackCExport void SDL_Quit(void)
 {
     fprintf(stderr,"Quitting!\n");
     SHM_Destroy();
@@ -654,7 +663,7 @@ extern "C" void SDL_Quit(void)
 }
 
 static void (*_SDL_GL_SwapBuffers)(void) = 0;
-extern "C" void SDL_GL_SwapBuffers(void)
+DFhackCExport void SDL_GL_SwapBuffers(void)
 {
     if(!errorstate && ((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
     {
@@ -665,7 +674,7 @@ extern "C" void SDL_GL_SwapBuffers(void)
 
 // hook - called every tick in the 2D mode of DF
 static int (*_SDL_Flip)(void * some_ptr) = 0;
-extern "C" int SDL_Flip(void * some_ptr)
+DFhackCExport int SDL_Flip(void * some_ptr)
 {
     if(_SDL_Flip)
     {
@@ -675,12 +684,12 @@ extern "C" int SDL_Flip(void * some_ptr)
         }
         return _SDL_Flip(some_ptr);
     }
+	return 0;
 }
 
 static int (*_SDL_Init)(uint32_t flags) = 0;
-extern "C" int SDL_Init(uint32_t flags)
+DFhackCExport int SDL_Init(uint32_t flags)
 {
-    char zlo[2560];
     HMODULE realSDLlib =  LoadLibrary("SDLreal.dll");
     if(!realSDLlib)
     {

@@ -62,6 +62,11 @@ TARGET_LINK_LIBRARIES(dfitemdump dfhack)
 ADD_EXECUTABLE(dfbauxite dfbauxite.cpp)
 TARGET_LINK_LIBRARIES(dfbauxite dfhack)
 
+# digger - designate for digging by tile class
+# Author: mizipzor
+ADD_EXECUTABLE(dfdigger digger.cpp)
+TARGET_LINK_LIBRARIES(dfdigger dfhack)
+
 # itemdesignator - change some item designations (dump, forbid, on-fire) for all items of a given type and material
 ADD_EXECUTABLE(dfitemdesignator itemdesignator.cpp)
 TARGET_LINK_LIBRARIES(dfitemdesignator dfhack)

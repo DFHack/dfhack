@@ -788,7 +788,7 @@ void API::FinishReadVegetation()
 }
 
 
-bool API::InitReadCreatures( uint32_t numcreatures )
+bool API::InitReadCreatures( uint32_t &numcreatures )
 {
     memory_info * minfo = d->offset_descriptor;
     int creatures = d->offset_descriptor->getAddress ("creatures");
@@ -844,7 +844,7 @@ bool API::InitReadCreatures( uint32_t numcreatures )
         //InitReadNameTables();
         d->creaturesInited = true;
         numcreatures =  d->p_cre->getSize();
-        return false;
+        return true;
     }
     else
     {

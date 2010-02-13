@@ -151,7 +151,7 @@ namespace DFHack
         bool ReadConstruction(const int32_t &index, t_construction & construction);
         void FinishReadConstructions();
 
-        bool InitReadBuildings ( uint32_t& numbuildings );
+        bool InitReadBuildings ( uint32_t & numbuildings );
         bool ReadBuilding(const int32_t &index, t_building & building);
         void FinishReadBuildings();
 
@@ -159,7 +159,7 @@ namespace DFHack
         bool ReadVegetation(const int32_t &index, t_tree_desc & shrubbery);
         void FinishReadVegetation();
         
-        bool InitReadCreatures( uint32_t numcreatures );
+        bool InitReadCreatures( uint32_t & numcreatures );
         /// returns index of creature actually read or -1 if no creature can be found
         int32_t ReadCreatureInBox(int32_t index, t_creature & furball,
                                   const uint16_t &x1, const uint16_t &y1,const uint16_t &z1,

@@ -54,7 +54,7 @@ int dig(DFHack::API& DF, vector<uint16_t>& targets)
                         {
                             //cout << "target found at: ";
                             //cout << x << "," << y << "," << z << "," << i << endl;
-                            designations[i].bits.dig = 1;
+                            designations[i].bits.dig = DFHack::designation_default;
                             ++count;
                         }
                     }

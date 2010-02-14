@@ -629,7 +629,27 @@ struct t_itemType
     char name[128];
 };
 
-// TODO: research this further? consult DF hacker wizards?
+
+enum e_traffic
+{
+    traffic_normal,
+    traffic_low,
+    traffic_high,
+    traffic_restricted
+};
+
+enum e_designation
+{
+    designation_no,
+    designation_default, // dig walls, remove stairs and ramps, gather plants, fell trees
+    designation_ud_stair, // dig up/down stairs
+    designation_channel, // dig a channel
+    designation_ramp, // dig ramp out of a wall
+    designation_d_stair, // dig a stair down
+    designation_u_stair, // dig a stair up
+    designation_7 // whatever
+};
+
 union t_designation
 {
     uint32_t whole;
@@ -639,10 +659,9 @@ union t_designation
 /*
  * All the different dig designations... needs more info, probably an enum
  */
-    unsigned int dig : 3;
-    unsigned int detail : 1;///<- wtf
-    unsigned int detail_event : 1;///<- more wtf
-    unsigned int hidden :1;
+    e_designation dig : 3;
+    unsigned int smooth : 2;
+    unsigned int hidden : 1;
 
 /*
  * This one is rather involved, but necessary to retrieve the base layer matgloss index
@@ -665,8 +684,8 @@ union t_designation
     unsigned int liquid_type : 1;
     unsigned int water_table : 1; // srsly. wtf?
     unsigned int rained : 1; // does this mean actual rain (as in the blue blocks) or a wet tile?
-    unsigned int traffic : 2; // needs enum
-    unsigned int flow_forbid : 1; // idk wtf bbq
+    e_traffic traffic : 2; // needs enum
+    unsigned int flow_forbid : 1; // what?
     unsigned int liquid_static : 1;
     unsigned int moss : 1;// I LOVE MOSS
     unsigned int feature_present : 1; // another wtf... is this required for magma pipes to work?

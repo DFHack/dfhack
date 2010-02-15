@@ -1,7 +1,7 @@
 #ifndef DFCONNECT_H
 #define DFCONNECT_H
 
-#define PINGPONG_VERSION 1
+#define PINGPONG_VERSION 2
 #define SHM_KEY 123466
 #define SHM_HEADER 1024
 #define SHM_BODY 1024*1024
@@ -138,6 +138,13 @@ typedef struct
     volatile uint32_t pingpong;
     uint32_t value;
 } shm_retval;
+
+typedef struct
+{
+    volatile uint32_t pingpong;
+    uint32_t length;
+} shm_retstr;
+
 
 void SHM_Act (void);
 bool isValidSHM();

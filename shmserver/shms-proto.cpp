@@ -29,6 +29,7 @@ distribution.
 #include "../library/integers.h"
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 //#include <unistd.h>
 #include "shms.h"
 // various crud
@@ -45,6 +46,7 @@ void SHM_Act (void)
     uint32_t numwaits = 0;
     uint32_t length;
     uint32_t address;
+    std::string * myStringPtr;
     check_again: // goto target!!!
     SCHED_YIELD // yield the CPU, valid only on single-core CPUs
     if(numwaits == 10000)
@@ -69,6 +71,7 @@ void SHM_Act (void)
         case DFPP_RET_DWORD:
         case DFPP_RET_WORD:
         case DFPP_RET_BYTE:
+        case DFPP_RET_STRING:
         case DFPP_SUSPENDED:
         case DFPP_RET_PID:
         case DFPP_SV_ERROR:
@@ -159,21 +162,22 @@ void SHM_Act (void)
             //MessageBox(0,"Broke out of loop properly","FUN", MB_OK);
             break;
 
-        // client requests contents of STL string at address
-        /*case DFPP_READ_STL_STRING:
-            char * real = *(char **)((shm_read_small *)shm)->address;
-            strncpy(shm + SHM_HEADER,real,1024*1024-1);
+        case DFPP_READ_STL_STRING:
+            myStringPtr = (std::string *) ((shm_read_small *)shm)->address;
+            ((shm_retval *)shm)->value = myStringPtr->length();
+            strncpy(shm+SHM_HEADER,myStringPtr->c_str(),myStringPtr->length()+1);// length + 1 for the null terminator
             full_barrier
             ((shm_retval *)shm)->pingpong = DFPP_RET_STRING;
             goto check_again;
-*/
-        // client requests contents of a C string at address, max length (0 means zero terminated)
-/*        case DFPP_READ_C_STRING:
-            break;
-        // sv -> cl length + string contents
-        // client wants to set STL string at address to something
+
         case DFPP_WRITE_STL_STRING:
-            break;*/
+            myStringPtr = (std::string *) ((shm_write *)shm)->address;
+            myStringPtr->assign((const char *) (shm + SHM_HEADER));
+            full_barrier
+            ((shm_cmd *)shm)->pingpong = DFPP_SUSPENDED;
+            goto check_again;
+
+
         default:
             ((shm_retval *)shm)->value = DFEE_INVALID_COMMAND;
             full_barrier

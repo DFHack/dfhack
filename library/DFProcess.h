@@ -30,9 +30,9 @@ distribution.
 namespace DFHack
 {
     class memory_info;
-    class DataModel;
     class Process;
     class DFWindow;
+    class DfVector;
     
     // structure describing a memory range
     struct DFHACK_EXPORT t_memrange
@@ -90,6 +90,13 @@ namespace DFHack
             virtual void writeByte(const uint32_t address, const uint8_t value) = 0;
             virtual void write(uint32_t address, uint32_t length, uint8_t* buffer) = 0;
 
+            // read a string
+            virtual const string readSTLString (uint32_t offset) = 0;
+            virtual size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity) = 0;
+            virtual void writeSTLString(const uint32_t address, const std::string writeString) = 0;
+            // read a vector from memory
+            virtual DfVector readVector (uint32_t offset, uint32_t item_size) = 0;
+            
             virtual const std::string readCString (uint32_t offset) = 0;
             
             virtual bool isSuspended() = 0;
@@ -103,8 +110,6 @@ namespace DFHack
             
             // get the flattened Memory.xml entry of this process
             virtual memory_info *getDescriptor() = 0;
-            // get the DataModel for reading stl containers (depends on the version of stl DF was compiled with)
-            virtual DataModel *getDataModel() = 0;
             // get the DF's window (first that can be found ~_~)
             virtual DFWindow * getWindow() = 0;
             // get the DF Process ID
@@ -142,6 +147,12 @@ namespace DFHack
             void writeByte(const uint32_t address, const uint8_t value);
             void write(uint32_t address, uint32_t length, uint8_t* buffer);
 
+            const string readSTLString (uint32_t offset);
+            size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
+            void writeSTLString(const uint32_t address, const std::string writeString){};
+            // read a vector from memory
+            DfVector readVector (uint32_t offset, uint32_t item_size);
+            
             const std::string readCString (uint32_t offset);
             
             bool isSuspended();
@@ -151,7 +162,6 @@ namespace DFHack
             bool getThreadIDs(vector<uint32_t> & threads );
             void getMemRanges( vector<t_memrange> & ranges );
             memory_info *getDescriptor();
-            DataModel *getDataModel();
             DFWindow * getWindow();
             int getPID();
     };
@@ -187,7 +197,13 @@ namespace DFHack
             void writeWord(const uint32_t address, const uint16_t value);
             void writeByte(const uint32_t address, const uint8_t value);
             void write(uint32_t address, uint32_t length, uint8_t* buffer);
-
+            
+            const string readSTLString (uint32_t offset);
+            size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
+            void writeSTLString(const uint32_t address, const std::string writeString);
+            // read a vector from memory
+            DfVector readVector (uint32_t offset, uint32_t item_size);
+            
             const std::string readCString (uint32_t offset);
             
             bool isSuspended();
@@ -197,9 +213,60 @@ namespace DFHack
             bool getThreadIDs(vector<uint32_t> & threads );
             void getMemRanges( vector<t_memrange> & ranges );
             memory_info *getDescriptor();
-            DataModel *getDataModel();
             DFWindow * getWindow();
             int getPID();
     };
+
+#ifdef LINUX_BUILD
+    class DFHACK_EXPORT WineProcess : virtual public Process
+    {
+        friend class ProcessEnumerator;
+        class Private;
+        private:
+            Private * const d;
+            
+        public:
+            WineProcess(uint32_t pid, vector <memory_info> & known_versions);
+            ~WineProcess();
+            bool attach();
+            bool detach();
+            
+            bool suspend();
+            bool asyncSuspend();
+            bool resume();
+            bool forceresume();
+            
+            uint32_t readDWord(const uint32_t address);
+            void readDWord(const uint32_t address, uint32_t & value);
+            uint16_t readWord(const uint32_t address);
+            void readWord(const uint32_t address, uint16_t & value);
+            uint8_t readByte(const uint32_t address);
+            void readByte(const uint32_t address, uint8_t & value);
+            void read( uint32_t address, uint32_t length, uint8_t* buffer);
+            
+            void writeDWord(const uint32_t address, const uint32_t value);
+            void writeWord(const uint32_t address, const uint16_t value);
+            void writeByte(const uint32_t address, const uint8_t value);
+            void write(uint32_t address, uint32_t length, uint8_t* buffer);
+
+            const string readSTLString (uint32_t offset);
+            size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
+            void writeSTLString(const uint32_t address, const std::string writeString){};
+            // read a vector from memory
+            DfVector readVector (uint32_t offset, uint32_t item_size);
+            
+            const std::string readCString (uint32_t offset);
+            
+            bool isSuspended();
+            bool isAttached();
+            bool isIdentified();
+            
+            bool getThreadIDs(vector<uint32_t> & threads );
+            void getMemRanges( vector<t_memrange> & ranges );
+            memory_info *getDescriptor();
+            DFWindow * getWindow();
+            int getPID();
+    };
+#endif
 }
 #endif

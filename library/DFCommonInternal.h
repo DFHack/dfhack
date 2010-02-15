@@ -92,7 +92,7 @@ namespace DFHack
 #endif
 
 #include "DFTypes.h"
-#include "DFDataModel.h"
+//#include "DFDataModel.h"
 #include "DFProcess.h"
 #include "DFWindow.h"
 #include "DFProcessEnumerator.h"

@@ -2,7 +2,6 @@
 
 SET(PROJECT_HDRS
 DFCommonInternal.h
-DFDataModel.h
 DFHackAPI.h
 DFMemInfo.h
 DFMemInfoManager.h
@@ -24,7 +23,6 @@ tinyxml/tinyxml.h
 )
 
 SET(PROJECT_SRCS
-DFDataModel.cpp
 DFMemInfo.cpp
 DFMemInfoManager.cpp
 DFHackAPI.cpp
@@ -47,6 +45,7 @@ stdint_win.h
 SET(PROJECT_SRCS_LINUX
 DFProcess-linux.cpp
 DFProcess-linux-SHM.cpp
+DFProcess-linux-wine.cpp
 DFWindow-linux.cpp
 DFProcessEnumerator-linux.cpp
 )

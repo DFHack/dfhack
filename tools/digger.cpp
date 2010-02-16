@@ -3,6 +3,12 @@
 // Usage: Call with a list of TileClass ids separated by a space,
 // every (visible) tile on the map with that id will be designated for digging.
 
+// NOTE currently only works with trees 
+
+// TODO add a sort of "sub-target" to dig() to make it able to designate stone as well
+// TODO add proper cli
+// TODO add interactive text based menu
+
 #include <iostream>
 #include <integers.h>
 #include <vector>

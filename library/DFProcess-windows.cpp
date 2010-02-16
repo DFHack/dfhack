@@ -29,7 +29,6 @@ class NormalProcess::Private
     public:
         Private()
         {
-            my_datamodel = NULL;
             my_descriptor = NULL;
             my_handle = NULL;
             my_main_thread = NULL;
@@ -39,7 +38,6 @@ class NormalProcess::Private
             suspended = false;
         };
         ~Private(){};
-        DataModel* my_datamodel;
         memory_info * my_descriptor;
         DFWindow * my_window;
         ProcessHandle my_handle;
@@ -109,7 +107,6 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info> & known_versions
             // keep track of created memory_info object so we can destroy it later
             d->my_descriptor = m;
             // process is responsible for destroying its data model
-            d->my_datamodel = new DMWindows40d();
             d->my_pid = pid;
             d->my_handle = hProcess;
             d->identified = true;
@@ -142,8 +139,6 @@ NormalProcess::~NormalProcess()
     {
         detach();
     }
-    // destroy data model. this is assigned by processmanager
-    delete d->my_datamodel;
     // destroy our rebased copy of the memory descriptor
     delete d->my_descriptor;
     if(d->my_handle != NULL)
@@ -160,13 +155,6 @@ NormalProcess::~NormalProcess()
     }
     delete d;
 }
-
-
-DataModel *NormalProcess::getDataModel()
-{
-    return d->my_datamodel;
-}
-
 
 memory_info * NormalProcess::getDescriptor()
 {
@@ -390,3 +378,89 @@ const string NormalProcess::readCString (const uint32_t offset)
     return temp;
 }
 
+DfVector NormalProcess::readVector (uint32_t offset, uint32_t item_size)
+{
+    /*
+        MSVC++ vector is four pointers long
+        ptr allocator
+        ptr start
+        ptr end
+        ptr alloc_end
+     
+        we don't care about alloc_end because we don't try to add stuff
+        we also don't care about the allocator thing in front
+    */
+    uint32_t start = g_pProcess->readDWord(offset+4);
+    uint32_t end = g_pProcess->readDWord(offset+8);
+    uint32_t size = (end - start) /4;
+    return DfVector(start,size,item_size);
+}
+
+size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
+{
+    /*
+    MSVC++ string
+    ptr allocator
+    union
+    {
+        char[16] start;
+        char * start_ptr
+}
+Uint32 length
+Uint32 capacity
+*/
+    uint32_t start_offset = offset + 4;
+    size_t length = g_pProcess->readDWord(offset + 20);
+    
+    size_t capacity = g_pProcess->readDWord(offset + 24);
+    size_t read_real = min(length, bufcapacity-1);// keep space for null termination
+    
+    // read data from inside the string structure
+    if(capacity < 16)
+    {
+        g_pProcess->read(start_offset, read_real , (uint8_t *)buffer);
+    }
+    else // read data from what the offset + 4 dword points to
+    {
+        start_offset = g_pProcess->readDWord(start_offset);// dereference the start offset
+        g_pProcess->read(start_offset, read_real, (uint8_t *)buffer);
+    }
+    
+    buffer[read_real] = 0;
+    return read_real;
+}
+
+const string NormalProcess::readSTLString (uint32_t offset)
+{
+    /*
+        MSVC++ string
+        ptr allocator
+        union
+        {
+            char[16] start;
+            char * start_ptr
+        }
+        Uint32 length
+        Uint32 capacity
+    */
+    uint32_t start_offset = offset + 4;
+    uint32_t length = g_pProcess->readDWord(offset + 20);
+    uint32_t capacity = g_pProcess->readDWord(offset + 24);
+    char * temp = new char[capacity+1];
+    
+    // read data from inside the string structure
+    if(capacity < 16)
+    {
+        g_pProcess->read(start_offset, capacity, (uint8_t *)temp);
+    }
+    else // read data from what the offset + 4 dword points to
+    {
+        start_offset = g_pProcess->readDWord(start_offset);// dereference the start offset
+        g_pProcess->read(start_offset, capacity, (uint8_t *)temp);
+    }
+    
+    temp[length] = 0;
+    string ret = temp;
+    delete temp;
+    return ret;
+}

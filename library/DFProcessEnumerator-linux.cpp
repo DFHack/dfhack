@@ -76,10 +76,21 @@ bool ProcessEnumerator::findProcessess()
         if(p2->isIdentified())
         {
             d->processes.push_back(p2);
+            continue;
         }
         else
         {
             delete p2;
+        }
+        Process *p3 = new WineProcess(atoi(dir_entry_p->d_name),d->meminfo->meminfo);
+        if(p3->isIdentified())
+        {
+            d->processes.push_back(p3);
+            continue;
+        }
+        else
+        {
+            delete p3;
         }
     }
     closedir(dir_p);

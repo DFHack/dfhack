@@ -40,7 +40,6 @@ class SHMProcess::Private
     public:
     Private()
     {
-        my_datamodel = NULL;
         my_descriptor = NULL;
         my_pid = 0;
         my_shm = 0;
@@ -51,7 +50,6 @@ class SHMProcess::Private
         identified = false;
     };
     ~Private(){};
-    DataModel* my_datamodel;
     memory_info * my_descriptor;
     DFWindow * my_window;
     pid_t my_pid;
@@ -229,7 +227,6 @@ bool SHMProcess::Private::validate(char * exe_file, uint32_t pid, vector <memory
         if(hash == (*it).getString("md5")) // are the md5 hashes the same?
         {
             memory_info * m = &*it;
-            my_datamodel = new DMLinux40d();
             my_descriptor = m;
             my_pid = pid;
             identified = true;
@@ -247,10 +244,6 @@ SHMProcess::~SHMProcess()
         detach();
     }
     // destroy data model. this is assigned by processmanager
-    if(d->my_datamodel)
-    {
-        delete d->my_datamodel;
-    }
     if(d->my_window)
     {
         delete d->my_window;
@@ -260,12 +253,6 @@ SHMProcess::~SHMProcess()
         fprintf(stderr,"detach: %d",shmdt(d->my_shm));
     }
     delete d;
-}
-
-
-DataModel *SHMProcess::getDataModel()
-{
-    return d->my_datamodel;
 }
 
 memory_info * SHMProcess::getDescriptor()
@@ -603,3 +590,50 @@ const std::string SHMProcess::readCString (uint32_t offset)
     return temp;
 }
 
+DfVector SHMProcess::readVector (uint32_t offset, uint32_t item_size)
+{
+    /*
+        GNU libstdc++ vector is three pointers long
+        ptr start
+        ptr end
+        ptr alloc_end
+
+        we don't care about alloc_end because we don't try to add stuff
+    */
+    uint32_t start = g_pProcess->readDWord(offset);
+    uint32_t end = g_pProcess->readDWord(offset+4);
+    uint32_t size = (end - start) /4;
+    return DfVector(start,size,item_size);
+}
+
+const std::string SHMProcess::readSTLString(uint32_t offset)
+{
+    ((shm_read_small *)d->my_shm)->address = offset;
+    full_barrier
+    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_STL_STRING;
+    d->waitWhile(DFPP_READ_STL_STRING);
+    //int length = ((shm_retval *)d->my_shm)->value;
+    return(string( (char *)d->my_shm+SHM_HEADER));
+}
+
+size_t SHMProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
+{
+    ((shm_read_small *)d->my_shm)->address = offset;
+    full_barrier
+    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_STL_STRING;
+    d->waitWhile(DFPP_READ_STL_STRING);
+    size_t length = ((shm_retval *)d->my_shm)->value;
+    size_t fit = min(bufcapacity - 1, length);
+    strncpy(buffer,(char *)d->my_shm+SHM_HEADER,fit);
+    buffer[fit] = 0;
+    return fit;
+}
+
+void SHMProcess::writeSTLString(const uint32_t address, const std::string writeString)
+{
+    ((shm_write_small *)d->my_shm)->address = address;
+    strncpy(d->my_shm+SHM_HEADER,writeString.c_str(),writeString.length()+1); // length + 1 for the null terminator
+    full_barrier
+    ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_STL_STRING;
+    d->waitWhile(DFPP_WRITE_STL_STRING);
+}

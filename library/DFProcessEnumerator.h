@@ -32,7 +32,6 @@ class TiXmlElement;
 namespace DFHack
 {
     class memory_info;
-    class DataModel;
     class Process;
     
     /*

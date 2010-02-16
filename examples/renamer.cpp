@@ -10,13 +10,15 @@ using namespace std;
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 #include <DFMemInfo.h>
+#include <DFProcess.h>
 
 template <typename T>
 void print_bits ( T val, std::ostream& out )
 {
     T n_bits = sizeof ( val ) * CHAR_BIT;
-    
-    for ( unsigned i = 0; i < n_bits; ++i ) {
+
+    for ( unsigned i = 0; i < n_bits; ++i )
+    {
         out<< !!( val & 1 ) << " ";
         val >>= 1;
     }
@@ -28,26 +30,30 @@ vector<DFHack::t_matgloss> creaturestypes;
 void printDwarves(DFHack::API & DF)
 {
     int dwarfCounter = 0;
-    for(uint32_t i = 0; i < numCreatures; i++)
+    for (uint32_t i = 0; i < numCreatures; i++)
     {
         DFHack::t_creature temp;
         DF.ReadCreature(i, temp);
         string type = creaturestypes[temp.type].id;
-        if(type == "DWARF" && !temp.flags1.bits.dead && !temp.flags2.bits.killed){
+        if (type == "DWARF" && !temp.flags1.bits.dead && !temp.flags2.bits.killed)
+        {
             cout << i << ":";
-            if(temp.nick_name[0])
+            if (temp.nick_name[0])
             {
                 cout << temp.nick_name;
             }
-            else{
+            else
+            {
                 cout << temp.first_name;
             }
             string transName = DF.TranslateName(temp.last_name,names,creaturestypes[temp.type].id);
             cout << " " << temp.custom_profession; //transName;
-            if(dwarfCounter%3 != 2){
+            if (dwarfCounter%3 != 2)
+            {
                 cout << '\t';
             }
-            else{
+            else
+            {
                 cout << endl;
             }
             dwarfCounter++;
@@ -59,29 +65,29 @@ bool getDwarfSelection(DFHack::API & DF, DFHack::t_creature & toChange,string & 
 {
     static string lastText;
     bool dwarfSuccess = false;
-    
-    while(!dwarfSuccess)
+
+    while (!dwarfSuccess)
     {
         string input;
         cout << "\nSelect Dwarf to Change or q to Quit" << endl;
         DF.Resume();
         getline (cin, input);
         DF.Suspend();
-        if(input == "q")
+        if (input == "q")
         {
             return false;
         }
-        else if(input == "r")
+        else if (input == "r")
         {
             printDwarves(DF);
         }
-        else if(!input.empty())
+        else if (!input.empty())
         {
             int num;
             stringstream(input) >> num;//= atol(input.c_str());
             dwarfSuccess = DF.ReadCreature(num,toChange);
             string type = creaturestypes[toChange.type].id;
-            if(type != "DWARF")
+            if (type != "DWARF")
             {
                 dwarfSuccess = false;
             }
@@ -92,21 +98,24 @@ bool getDwarfSelection(DFHack::API & DF, DFHack::t_creature & toChange,string & 
         }
     }
     bool changeType = false;
-    while(!changeType)
+    while (!changeType)
     {
         string input;
         cout << "\n(n)ickname or (p)rofession?" << endl;
         getline(cin, input);
-        if(input == "q"){
+        if (input == "q")
+        {
             return false;
         }
-        if(input == "n"){
+        if (input == "n")
+        {
             commandString = "pzyn";
             eraseAmount = string(toChange.nick_name).length();
             changeType = true;
             isName = true;
         }
-        else if(input == "p"){
+        else if (input == "p")
+        {
             commandString = "pzyp";
             eraseAmount = string(toChange.custom_profession).length();
             changeType = true;
@@ -114,18 +123,21 @@ bool getDwarfSelection(DFHack::API & DF, DFHack::t_creature & toChange,string & 
         }
     }
     bool changeValue = false;
-    while(!changeValue)
+    while (!changeValue)
     {
         string input;
         cout << "value to change to?" << endl;
         getline(cin, input);
-        if(input == "q"){
+        if (input == "q")
+        {
             return false;
         }
-        if(!lastText.empty() && input.empty()){
+        if (!lastText.empty() && input.empty())
+        {
             changeValue = true;
         }
-        else if( !input.empty()){
+        else if ( !input.empty())
+        {
             lastText = input;
             changeValue = true;
         }
@@ -140,9 +152,9 @@ bool waitTillChanged(DFHack::API &DF, int creatureToCheck, string changeValue, b
     DFHack::t_creature testCre;
     DF.ReadCreature(creatureToCheck,testCre);
     int tryCount = 0;
-    if(isName)
+    if (isName)
     {
-        while(testCre.nick_name != changeValue && tryCount <50)
+        while (testCre.nick_name != changeValue && tryCount <50)
         {
             DF.Resume();
             w->TypeSpecial(DFHack::WAIT,1,100);
@@ -153,7 +165,7 @@ bool waitTillChanged(DFHack::API &DF, int creatureToCheck, string changeValue, b
     }
     else
     {
-        while(testCre.custom_profession != changeValue && tryCount < 50)
+        while (testCre.custom_profession != changeValue && tryCount < 50)
         {
             DF.Resume();
             w->TypeSpecial(DFHack::WAIT,1,100);
@@ -162,13 +174,16 @@ bool waitTillChanged(DFHack::API &DF, int creatureToCheck, string changeValue, b
             tryCount++;
         }
     }
-    if(tryCount >= 50){
+    if (tryCount >= 50)
+    {
         cerr << "Something went wrong, make sure that DF is at the correct screen";
         return false;
     }
     DF.Resume();
     return true;
 }
+
+
 bool waitTillScreenState(DFHack::API &DF, string screenState,bool EqualTo=true)
 {
     DFHack::DFWindow * w = DF.getWindow();
@@ -176,7 +191,7 @@ bool waitTillScreenState(DFHack::API &DF, string screenState,bool EqualTo=true)
     DF.Suspend();
     DF.ReadViewScreen(current);
     int tryCount = 0;
-    while(((EqualTo && objecttypes[current.type] != screenState) || (!EqualTo && objecttypes[current.type] == screenState)) && tryCount < 50)
+    while (((EqualTo && objecttypes[current.type] != screenState) || (!EqualTo && objecttypes[current.type] == screenState)) && tryCount < 50)
     {
         DF.Resume();
         w->TypeSpecial(DFHack::WAIT,1,100);
@@ -184,13 +199,14 @@ bool waitTillScreenState(DFHack::API &DF, string screenState,bool EqualTo=true)
         DF.ReadViewScreen(current);
         tryCount++;
     }
-    if(tryCount >= 50){
+    if (tryCount >= 50) {
         cerr << "Something went wrong, DF at " << objecttypes[current.type] << endl;
         return false;
     }
     DF.Resume();
     return true;
 }
+
 
 bool waitTillCursorState(DFHack::API &DF, bool On)
 {
@@ -199,7 +215,7 @@ bool waitTillCursorState(DFHack::API &DF, bool On)
     int tryCount = 0;
     DF.Suspend();
     bool cursorResult = DF.getCursorCoords(x,y,z);
-    while(tryCount < 50 && On && !cursorResult || !On && cursorResult)
+    while (tryCount < 50 && On && !cursorResult || !On && cursorResult)
     {
         DF.Resume();
         w->TypeSpecial(DFHack::WAIT,1,100);
@@ -207,7 +223,7 @@ bool waitTillCursorState(DFHack::API &DF, bool On)
         DF.Suspend();
         cursorResult = DF.getCursorCoords(x,y,z);
     }
-    if(tryCount >= 50)
+    if (tryCount >= 50)
     {
         cerr << "Something went wrong, cursor at x: " << x << " y: " << y << " z: " << z << endl;
         return false;
@@ -215,13 +231,15 @@ bool waitTillCursorState(DFHack::API &DF, bool On)
     DF.Resume();
     return true;
 }
+
+
 bool waitTillMenuState(DFHack::API &DF, uint32_t menuState,bool EqualTo=true)
 {
     int tryCount = 0;
     DFHack::DFWindow * w = DF.getWindow();
     DF.Suspend();
     uint32_t testState = DF.ReadMenuState();
-    while(tryCount < 50 && ((EqualTo && menuState != testState) || (!EqualTo && menuState == testState)))
+    while (tryCount < 50 && ((EqualTo && menuState != testState) || (!EqualTo && menuState == testState)))
     {
         DF.Resume();
         w->TypeSpecial(DFHack::WAIT,1,100);
@@ -229,7 +247,7 @@ bool waitTillMenuState(DFHack::API &DF, uint32_t menuState,bool EqualTo=true)
         DF.Suspend();
         testState = DF.ReadMenuState();
     }
-    if(tryCount >= 50)
+    if (tryCount >= 50)
     {
         cerr << "Something went wrong, menuState: "<<testState << endl;
         return false;
@@ -237,27 +255,31 @@ bool waitTillMenuState(DFHack::API &DF, uint32_t menuState,bool EqualTo=true)
     DF.Resume();
     return true;
 }
+
+
 bool moveToBaseWindow(DFHack::API &DF)
 {
     DFHack::DFWindow * w = DF.getWindow();
     DFHack::t_viewscreen current;
     DF.ReadViewScreen(current);
-    while(objecttypes[current.type] != string("viewscreen_dwarfmode"))
+    while (objecttypes[current.type] != string("viewscreen_dwarfmode"))
     {
         w->TypeSpecial(DFHack::F9); // cancel out of text input in names
 //        DF.TypeSpecial(DFHack::ENTER); // cancel out of text input in hotkeys
         w->TypeSpecial(DFHack::SPACE); // should move up a level
-        if(!waitTillScreenState(DF,objecttypes[current.type],false)) return false; // wait until screen changes from current
+        if (!waitTillScreenState(DF,objecttypes[current.type],false)) return false; // wait until screen changes from current
         DF.ReadViewScreen(current);
     }
-    if(DF.ReadMenuState() != 0){// if menu state != 0 then there is a menu, so escape it
-        w->TypeSpecial(DFHack::F9);w->TypeSpecial(DFHack::ENTER); // exit out of any text prompts
+    if (DF.ReadMenuState() != 0) {// if menu state != 0 then there is a menu, so escape it
+        w->TypeSpecial(DFHack::F9);
+        w->TypeSpecial(DFHack::ENTER); // exit out of any text prompts
         w->TypeSpecial(DFHack::SPACE); // go back to base state
-        if(!waitTillMenuState(DF,0))return false;
+        if (!waitTillMenuState(DF,0))return false;
     }
     DF.Resume();
     return true;
 }
+
 
 bool setCursorToCreature(DFHack::API &DF)
 {
@@ -266,125 +288,158 @@ bool setCursorToCreature(DFHack::API &DF)
     DF.Suspend();
     DF.getCursorCoords(x,y,z);
     DF.Resume();
-    if(x == -30000){
+    if (x == -30000) {
         w->TypeStr("v");
-        if(!waitTillCursorState(DF,true)) return false;
+        if (!waitTillCursorState(DF,true)) return false;
     }
-    else{ // reset the cursor to be the creature cursor
+    else { // reset the cursor to be the creature cursor
         w->TypeSpecial(DFHack::SPACE);
-        if(!waitTillCursorState(DF,false)) return false;
+        if (!waitTillCursorState(DF,false)) return false;
         w->TypeStr("v");
-        if(!waitTillCursorState(DF,true)) return false;
+        if (!waitTillCursorState(DF,true)) return false;
     }
     return true;
 }
+
+
 int main (void)
-{   
+{
     DFHack::API DF("Memory.xml");
-    if(!DF.Attach())
+    if (!DF.Attach())
     {
         cerr << "DF not found" << endl;
         return 1;
     }
     DF.Suspend();
-    if(!DF.getClassIDMapping(objecttypes))
+    if (!DF.getClassIDMapping(objecttypes))
     {
         cerr << "Can't get type info" << endl;
         return 1;
     }
-    
+
     DFHack::memory_info mem = DF.getMemoryInfo();
-    
-    if(!DF.ReadCreatureMatgloss(creaturestypes))
+
+    if (!DF.ReadCreatureMatgloss(creaturestypes))
     {
         cerr << "Can't get the creature types." << endl;
-        return 1; 
+        return 1;
     }
-    
+
     DF.InitReadNameTables(names);
     DF.InitReadCreatures(numCreatures);
     DF.InitViewAndCursor();
-    printDwarves(DF);
+    DFHack::Process * p = DF.getProcess();
+    DFHack::DFWindow * w = DF.getWindow();
+
     DFHack::t_creature toChange;
     string changeString,commandString;
     int eraseAmount;
     int toChangeNum;
     bool isName;
-    DFHack::DFWindow * w = DF.getWindow();
-    while(getDwarfSelection(DF,toChange,changeString,commandString,eraseAmount,toChangeNum,isName))
+    bool useKeys = true;
+    string input2;
+
+    // use key event emulation or direct writing?
+    cout << "\nUse \n1:Key simulation\n2:Direct Writing" << endl;
+    getline(cin,input2);
+    if (input2 == "1")
+    {
+        useKeys = true;
+    }
+    else {
+        useKeys = false;
+    }
+    printDwarves(DF);
+
+    while (getDwarfSelection(DF,toChange,changeString,commandString,eraseAmount,toChangeNum,isName))
     {
         // limit length, DF doesn't accept input after this point
-        if(changeString.size() > 39)
+        if (changeString.size() > 39)
         {
             changeString.resize(39);
         }
-        start:
+start:
         bool completed = false;
-        if(moveToBaseWindow(DF) && setCursorToCreature(DF))
-        {
-            DF.Suspend();
-            DF.setCursorCoords(toChange.x, toChange.y,toChange.z);
-            vector<uint32_t> underCursor;
-            while(!DF.getCurrentCursorCreatures(underCursor))
+        if (useKeys) {
+            if (moveToBaseWindow(DF) && setCursorToCreature(DF))
             {
-                DF.Resume();
-                w->TypeSpecial(DFHack::WAIT,1,100);
                 DF.Suspend();
                 DF.setCursorCoords(toChange.x, toChange.y,toChange.z);
-                DF.ReadCreature(toChangeNum,toChange);
-            }
-            //CurrentCursorCreatures gives the creatures in the order that you see them with the 'k' cursor.  
-            //The 'v' cursor displays them in the order of last, then first,second,third and so on
-            //Pretty weird, but it works
-            //The only place that seems to display which creature is currently selected is on the stack, whose location is likely not static, so not usable
-            if(underCursor[underCursor.size()-1] != toChange.origin)
-            {
-                for(int i = 0;i<underCursor.size()-1;i++)
+                vector<uint32_t> underCursor;
+                while (!DF.getCurrentCursorCreatures(underCursor))
                 {
                     DF.Resume();
-                    w->TypeStr("v",100);
-                    if(underCursor[i] == toChange.origin)
-                    {
-                        break;
-                    }
+                    w->TypeSpecial(DFHack::WAIT,1,100);
+                    DF.Suspend();
+                    DF.setCursorCoords(toChange.x, toChange.y,toChange.z);
+                    DF.ReadCreature(toChangeNum,toChange);
                 }
-            }
-            DF.Resume();
-            w->TypeStr(commandString.c_str());
-            if(waitTillScreenState(DF,"viewscreen_customize_unit"))
-            {
-                DF.Resume();
-                w->TypeSpecial(DFHack::BACK_SPACE,eraseAmount);
-                if(waitTillChanged(DF,toChangeNum,"",isName))
+                //CurrentCursorCreatures gives the creatures in the order that you see them with the 'k' cursor.
+                //The 'v' cursor displays them in the order of last, then first,second,third and so on
+                //Pretty weird, but it works
+                //The only place that seems to display which creature is currently selected is on the stack, whose location is likely not static, so not usable
+                if (underCursor[underCursor.size()-1] != toChange.origin)
                 {
-                    DF.Resume();
-                    w->TypeStr(changeString.c_str());
-                    if(waitTillChanged(DF,toChangeNum,changeString,isName))
+                    for (int i = 0;i<underCursor.size()-1;i++)
                     {
                         DF.Resume();
-                        w->TypeSpecial(DFHack::ENTER);
-                        w->TypeSpecial(DFHack::SPACE); // should take you to unit screen if everything worked
-                        if(waitTillScreenState(DF,"viewscreen_unit"))
+                        w->TypeStr("v",100);
+                        if (underCursor[i] == toChange.origin)
+                        {
+                            break;
+                        }
+                    }
+                }
+                DF.Resume();
+                w->TypeStr(commandString.c_str());
+                if (waitTillScreenState(DF,"viewscreen_customize_unit"))
+                {
+                    DF.Resume();
+                    w->TypeSpecial(DFHack::BACK_SPACE,eraseAmount);
+                    if (waitTillChanged(DF,toChangeNum,"",isName))
+                    {
+                        DF.Resume();
+                        w->TypeStr(changeString.c_str());
+                        if (waitTillChanged(DF,toChangeNum,changeString,isName))
                         {
                             DF.Resume();
-                            w->TypeSpecial(DFHack::SPACE);
-                            if(waitTillScreenState(DF,"viewscreen_dwarfmode"))
+                            w->TypeSpecial(DFHack::ENTER);
+                            w->TypeSpecial(DFHack::SPACE); // should take you to unit screen if everything worked
+                            if (waitTillScreenState(DF,"viewscreen_unit"))
                             {
                                 DF.Resume();
                                 w->TypeSpecial(DFHack::SPACE);
-                                if(waitTillCursorState(DF,false))
+                                if (waitTillScreenState(DF,"viewscreen_dwarfmode"))
                                 {
-                                    completed = true;
+                                    DF.Resume();
+                                    w->TypeSpecial(DFHack::SPACE);
+                                    if (waitTillCursorState(DF,false))
+                                    {
+                                        completed = true;
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+            if (!completed) {
+                cerr << "Something went wrong, please reset DF to its original state, then press any key to continue" << endl;
+                goto start;
+            }
         }
-        if(!completed){
-            cerr << "Something went wrong, please reset DF to its original state, then press any key to continue" << endl;
-            goto start;
+        else
+        {
+            // will only work with the shm probably should check for it, but I don't know how,
+            // I have the writeString function do nothing for normal mode
+            if (commandString == "pzyn") // change nickname
+            {
+                p->writeSTLString(toChange.origin+mem.getOffset("creature_nick_name"),changeString);
+            }
+            else
+            {
+                p->writeSTLString(toChange.origin+mem.getOffset("creature_custom_profession"),changeString);
+            }
         }
         DF.Suspend();
         printDwarves(DF);

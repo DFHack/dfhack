@@ -30,7 +30,7 @@ class API::Private
 public:
     Private()
             : block (NULL)
-            , pm (NULL), p (NULL), dm (NULL), offset_descriptor (NULL)
+            , pm (NULL), p (NULL), offset_descriptor (NULL)
             , p_cons (NULL), p_bld (NULL), p_veg (NULL)
     {}
     uint32_t * block;
@@ -87,7 +87,6 @@ public:
 
     ProcessEnumerator* pm;
     Process* p;
-    DataModel* dm;
     memory_info* offset_descriptor;
     vector<uint16_t> v_geology[eBiomeCount];
     string xml;
@@ -265,7 +264,7 @@ bool API::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
 bool API::getCurrentCursorCreatures (vector<uint32_t> &addresses)
 {
     assert (d->cursorWindowInited);
-    DfVector creUnderCursor = d->dm->readVector (d->current_cursor_creature_offset, 4);
+    DfVector creUnderCursor = d->p->readVector (d->current_cursor_creature_offset, 4);
     if (creUnderCursor.getSize() == 0)
     {
         return false;
@@ -328,7 +327,7 @@ bool API::ReadVeins (uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins
     {
         // veins are stored as a vector of pointers to veins
         /*pointer is 4 bytes! we work with a 32bit program here, no matter what architecture we compile khazad for*/
-        DfVector p_veins = d->dm->readVector (addr + d->veinvector, 4);
+        DfVector p_veins = d->p->readVector (addr + d->veinvector, 4);
         uint32_t size = p_veins.getSize();
         veins.reserve (size);
 
@@ -364,7 +363,7 @@ bool API::ReadWoodMatgloss (vector<t_matgloss> & woods)
     int matgloss_address = d->offset_descriptor->getAddress ("matgloss");
     int matgloss_wood_name_offset = d->offset_descriptor->getOffset("matgloss_wood_name");
     // TODO: find flag for autumnal coloring?
-    DfVector p_matgloss = d->dm->readVector (matgloss_address, 4);
+    DfVector p_matgloss = d->p->readVector (matgloss_address, 4);
 
     woods.clear();
 
@@ -380,10 +379,10 @@ bool API::ReadWoodMatgloss (vector<t_matgloss> & woods)
         uint32_t temp = * (uint32_t *) p_matgloss[i];
         // read the string pointed at by
         /*
-        fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
+        fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
         */
-        d->dm->readSTLString (temp, mat.id, 128);
-        d->dm->readSTLString (temp+matgloss_wood_name_offset, mat.name, 128);
+        d->p->readSTLString (temp, mat.id, 128);
+        d->p->readSTLString (temp+matgloss_wood_name_offset, mat.name, 128);
         woods.push_back (mat);
     }
     return true;
@@ -397,7 +396,7 @@ bool API::ReadStoneMatgloss (vector<t_matgloss> & stones)
     int matgloss_colors = minfo->getOffset ("matgloss_stone_color");
     int matgloss_stone_name_offset = minfo->getOffset("matgloss_stone_name");
 
-    DfVector p_matgloss = d->dm->readVector (matgloss_address + matgloss_offset, 4);
+    DfVector p_matgloss = d->p->readVector (matgloss_address + matgloss_offset, 4);
 
     uint32_t size = p_matgloss.getSize();
     stones.resize (0);
@@ -408,9 +407,9 @@ bool API::ReadStoneMatgloss (vector<t_matgloss> & stones)
         uint32_t temp = * (uint32_t *) p_matgloss[i];
         // read the string pointed at by
         t_matgloss mat;
-        //fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
-        d->dm->readSTLString (temp, mat.id, 128);
-        d->dm->readSTLString (temp+matgloss_stone_name_offset, mat.name, 128);
+        //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
+        d->p->readSTLString (temp, mat.id, 128);
+        d->p->readSTLString (temp+matgloss_stone_name_offset, mat.name, 128);
         mat.fore = (uint8_t) g_pProcess->readWord (temp + matgloss_colors);
         mat.back = (uint8_t) g_pProcess->readWord (temp + matgloss_colors + 2);
         mat.bright = (uint8_t) g_pProcess->readWord (temp + matgloss_colors + 4);
@@ -427,7 +426,7 @@ bool API::ReadMetalMatgloss (vector<t_matgloss> & metals)
     int matgloss_offset = minfo->getHexValue ("matgloss_skip");
     int matgloss_colors = minfo->getOffset ("matgloss_metal_color");
     int matgloss_metal_name_offset = minfo->getOffset("matgloss_metal_name");
-    DfVector p_matgloss = d->dm->readVector (matgloss_address + matgloss_offset * 3, 4);
+    DfVector p_matgloss = d->p->readVector (matgloss_address + matgloss_offset * 3, 4);
 
     metals.clear();
 
@@ -437,9 +436,9 @@ bool API::ReadMetalMatgloss (vector<t_matgloss> & metals)
         uint32_t temp = * (uint32_t *) p_matgloss[i];
         // read the string pointed at by
         t_matgloss mat;
-        //fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
-        d->dm->readSTLString (temp, mat.id, 128);
-        d->dm->readSTLString (temp+matgloss_metal_name_offset, mat.name, 128);
+        //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
+        d->p->readSTLString (temp, mat.id, 128);
+        d->p->readSTLString (temp+matgloss_metal_name_offset, mat.name, 128);
         mat.fore = (uint8_t) g_pProcess->readWord (temp + matgloss_colors);
         mat.back = (uint8_t) g_pProcess->readWord (temp + matgloss_colors + 2);
         mat.bright = (uint8_t) g_pProcess->readWord (temp + matgloss_colors + 4);
@@ -454,7 +453,7 @@ bool API::ReadPlantMatgloss (vector<t_matgloss> & plants)
     int matgloss_address = minfo->getAddress ("matgloss");
     int matgloss_offset = minfo->getHexValue ("matgloss_skip");
     int matgloss_plant_name_offset = minfo->getOffset("matgloss_plant_name");
-    DfVector p_matgloss = d->dm->readVector (matgloss_address + matgloss_offset * 2, 4);
+    DfVector p_matgloss = d->p->readVector (matgloss_address + matgloss_offset * 2, 4);
 
     plants.clear();
 
@@ -468,9 +467,9 @@ bool API::ReadPlantMatgloss (vector<t_matgloss> & plants)
         // read the matgloss pointer from the vector into temp
         uint32_t temp = * (uint32_t *) p_matgloss[i];
         // read the string pointed at by
-        //fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
-        d->dm->readSTLString (temp, mat.id, 128);
-        d->dm->readSTLString (temp+matgloss_plant_name_offset, mat.name, 128);
+        //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
+        d->p->readSTLString (temp, mat.id, 128);
+        d->p->readSTLString (temp+matgloss_plant_name_offset, mat.name, 128);
         plants.push_back (mat);
     }
     return true;
@@ -485,7 +484,7 @@ bool API::ReadPlantMatgloss (vector<t_matglossPlant> & plants)
     int matgloss_plant_drink_offset = minfo->getOffset("matgloss_plant_drink");
     int matgloss_plant_food_offset = minfo->getOffset("matgloss_plant_food");
     int matgloss_plant_extract_offset = minfo->getOffset("matgloss_plant_extract");
-    DfVector p_matgloss = d->dm->readVector (matgloss_address + matgloss_offset * 2, 4);
+    DfVector p_matgloss = d->p->readVector (matgloss_address + matgloss_offset * 2, 4);
 
     plants.clear();
 
@@ -499,14 +498,14 @@ bool API::ReadPlantMatgloss (vector<t_matglossPlant> & plants)
         // read the matgloss pointer from the vector into temp
         uint32_t temp = * (uint32_t *) p_matgloss[i];
         // read the string pointed at by
-        //fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
-        d->dm->readSTLString (temp, mat.id, 128);
-        d->dm->readSTLString (temp+matgloss_plant_name_offset, mat.name, 128);
-        d->dm->readSTLString (temp+matgloss_plant_drink_offset, mat.drink_name, 128);
-        d->dm->readSTLString (temp+matgloss_plant_food_offset, mat.food_name, 128);
-        d->dm->readSTLString (temp+matgloss_plant_extract_offset, mat.extract_name, 128);
+        //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
+        d->p->readSTLString (temp, mat.id, 128);
+        d->p->readSTLString (temp+matgloss_plant_name_offset, mat.name, 128);
+        d->p->readSTLString (temp+matgloss_plant_drink_offset, mat.drink_name, 128);
+        d->p->readSTLString (temp+matgloss_plant_food_offset, mat.food_name, 128);
+        d->p->readSTLString (temp+matgloss_plant_extract_offset, mat.extract_name, 128);
         
-        //d->dm->readSTLString (temp
+        //d->p->readSTLString (temp
         plants.push_back (mat);
     }
     return true;
@@ -518,7 +517,7 @@ bool API::ReadCreatureMatgloss (vector<t_matgloss> & creatures)
     int matgloss_address = minfo->getAddress ("matgloss");
     int matgloss_offset = minfo->getHexValue ("matgloss_skip");
     int matgloss_creature_name_offset = minfo->getOffset("matgloss_creature_name");
-    DfVector p_matgloss = d->dm->readVector (matgloss_address + matgloss_offset * 6, 4);
+    DfVector p_matgloss = d->p->readVector (matgloss_address + matgloss_offset * 6, 4);
 
     creatures.clear();
 
@@ -532,9 +531,9 @@ bool API::ReadCreatureMatgloss (vector<t_matgloss> & creatures)
         // read the matgloss pointer from the vector into temp
         uint32_t temp = * (uint32_t *) p_matgloss[i];
         // read the string pointed at by
-        //fill_char_buf(mat.id, d->dm->readSTLString(temp)); // reads a C string given an address
-        d->dm->readSTLString (temp, mat.id, 128);
-        d->dm->readSTLString (temp+matgloss_creature_name_offset, mat.name, 128);
+        //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
+        d->p->readSTLString (temp, mat.id, 128);
+        d->p->readSTLString (temp+matgloss_creature_name_offset, mat.name, 128);
         creatures.push_back (mat);
     }
     return true;
@@ -587,7 +586,7 @@ bool API::ReadGeology (vector < vector <uint16_t> >& assign)
     uint32_t regions = g_pProcess->readDWord (world_offset + world_regions_offset);
 
     // read the geoblock vector
-    DfVector geoblocks = d->dm->readVector (world_offset + world_geoblocks_offset, 4);
+    DfVector geoblocks = d->p->readVector (world_offset + world_geoblocks_offset, 4);
 
     // iterate over 8 surrounding regions + local region
     for (int i = eNorthWest; i < eBiomeCount; i++)
@@ -613,7 +612,7 @@ bool API::ReadGeology (vector < vector <uint16_t> >& assign)
         uint32_t geoblock_off = * (uint32_t *) geoblocks[geoindex];
 
         // get the vector with pointer to layers
-        DfVector geolayers = d->dm->readVector (geoblock_off + geolayer_geoblock_offset , 4); // let's hope
+        DfVector geolayers = d->p->readVector (geoblock_off + geolayer_geoblock_offset , 4); // let's hope
         // make sure we don't load crap
         assert (geolayers.getSize() > 0 && geolayers.getSize() <= 16);
 
@@ -645,7 +644,7 @@ bool API::InitReadBuildings ( uint32_t& numbuildings )
     if(buildings)
     {
         d->buildingsInited = true;
-        d->p_bld = new DfVector (d->dm->readVector (buildings, 4));
+        d->p_bld = new DfVector (d->p->readVector (buildings, 4));
         return true;
     }
     else
@@ -703,7 +702,7 @@ bool API::InitReadConstructions(uint32_t & numconstructions)
     int constructions = d->offset_descriptor->getAddress ("constructions");
     if(constructions)
     {
-        d->p_cons = new DfVector (d->dm->readVector (constructions, 4));
+        d->p_cons = new DfVector (d->p->readVector (constructions, 4));
         d->constructionsInited = true;
         numconstructions = d->p_cons->getSize();
         return true;
@@ -753,7 +752,7 @@ bool API::InitReadVegetation(uint32_t & numplants)
     if(vegetation && d->tree_offset)
     {
         d->vegetationInited = true;
-        d->p_veg = new DfVector (d->dm->readVector (vegetation, 4));
+        d->p_veg = new DfVector (d->p->readVector (vegetation, 4));
         numplants = d->p_veg->getSize();
         return true;
     }
@@ -840,7 +839,7 @@ bool API::InitReadCreatures( uint32_t &numcreatures )
 	//       && d->creature_likes_offset
        )
     {
-        d->p_cre = new DfVector (d->dm->readVector (creatures, 4));
+        d->p_cre = new DfVector (d->p->readVector (creatures, 4));
         //InitReadNameTables();
         d->creaturesInited = true;
         numcreatures =  d->p_cre->getSize();
@@ -925,11 +924,11 @@ bool API::ReadCreature (const int32_t &index, t_creature & furball)
     g_pProcess->readDWord (temp + d->creature_flags1_offset, furball.flags1.whole);
     g_pProcess->readDWord (temp + d->creature_flags2_offset, furball.flags2.whole);
     // normal names
-    d->dm->readSTLString (temp + d->creature_first_name_offset, furball.first_name, 128);
-    d->dm->readSTLString (temp + d->creature_nick_name_offset, furball.nick_name, 128);
+    d->p->readSTLString (temp + d->creature_first_name_offset, furball.first_name, 128);
+    d->p->readSTLString (temp + d->creature_nick_name_offset, furball.nick_name, 128);
     // custom profession
-    d->dm->readSTLString (temp + d->creature_nick_name_offset, furball.nick_name, 128);
-    fill_char_buf (furball.custom_profession, d->dm->readSTLString (temp + d->creature_custom_profession_offset));
+    d->p->readSTLString (temp + d->creature_nick_name_offset, furball.nick_name, 128);
+    fill_char_buf (furball.custom_profession, d->p->readSTLString (temp + d->creature_custom_profession_offset));
     // crazy composited names
     g_pProcess->read (temp + d->creature_last_name_offset, sizeof (t_lastname), (uint8_t *) &furball.last_name);
     g_pProcess->read (temp + d->creature_squad_name_offset, sizeof (t_squadname), (uint8_t *) &furball.squad_name);
@@ -941,7 +940,7 @@ bool API::ReadCreature (const int32_t &index, t_creature & furball)
     // traits
     g_pProcess->read (temp + d->creature_traits_offset, sizeof (uint16_t) * NUM_CREATURE_TRAITS, (uint8_t *) &furball.traits);
     // learned skills
-    DfVector skills (d->dm->readVector (temp + d->creature_skills_offset, 4));
+    DfVector skills (d->p->readVector (temp + d->creature_skills_offset, 4));
     furball.numSkills = skills.getSize();
     for (uint32_t i = 0; i < furball.numSkills;i++)
     {
@@ -963,7 +962,7 @@ bool API::ReadCreature (const int32_t &index, t_creature & furball)
     }
     
     //likes
-    DfVector likes(d->dm->readVector(temp+d->creature_likes_offset,4));
+    DfVector likes(d->p->readVector(temp+d->creature_likes_offset,4));
     furball.numLikes = likes.getSize();
     for(uint32_t i = 0;i<furball.numLikes;i++)
     {
@@ -996,25 +995,25 @@ bool API::InitReadNameTables (map< string, vector<string> > & nameTable)
 
     if(genericAddress && transAddress && word_table_offset)
     {
-        DfVector genericVec (d->dm->readVector (genericAddress, 4));
-        DfVector transVec (d->dm->readVector (transAddress, 4));
+        DfVector genericVec (d->p->readVector (genericAddress, 4));
+        DfVector transVec (d->p->readVector (transAddress, 4));
 
         for (uint32_t i = 0;i < genericVec.getSize();i++)
         {
             uint32_t genericNamePtr = * (uint32_t *) genericVec.at (i);
-            string genericName = d->dm->readSTLString (genericNamePtr);
+            string genericName = d->p->readSTLString (genericNamePtr);
             nameTable["GENERIC"].push_back (genericName);
         }
 
         for (uint32_t i = 0; i < transVec.getSize();i++)
         {
             uint32_t transPtr = * (uint32_t *) transVec.at (i);
-            string transName = d->dm->readSTLString (transPtr);
-            DfVector trans_names_vec (d->dm->readVector (transPtr + word_table_offset, 4));
+            string transName = d->p->readSTLString (transPtr);
+            DfVector trans_names_vec (d->p->readVector (transPtr + word_table_offset, 4));
             for (uint32_t j = 0;j < trans_names_vec.getSize();j++)
             {
                 uint32_t transNamePtr = * (uint32_t *) trans_names_vec.at (j);
-                string name = d->dm->readSTLString (transNamePtr);
+                string name = d->p->readSTLString (transNamePtr);
                 nameTable[transName].push_back (name);
             }
         }
@@ -1113,7 +1112,6 @@ bool API::Attach()
         return false; // couldn't attach to process, no go
     }
     d->offset_descriptor = d->p->getDescriptor();
-    d->dm = d->p->getDataModel();
     // process is attached, everything went just fine... hopefully
     return true;
 }
@@ -1132,13 +1130,12 @@ bool API::Detach()
     d->pm = NULL;
     d->p = NULL;
     d->offset_descriptor = NULL;
-    d->dm = NULL;
     return true;
 }
 
 bool API::isAttached()
 {
-    return d->dm != NULL;
+    return d->p != NULL;
 }
 
 bool API::Suspend()
@@ -1290,7 +1287,7 @@ bool API::InitReadItems(uint32_t & numitems)
     
     if(items && d->item_material_offset)
     {
-        d->p_itm = new DfVector (d->dm->readVector (items, 4));
+        d->p_itm = new DfVector (d->p->readVector (items, 4));
         d->itemsInited = true;
         numitems = d->p_itm->getSize();
         return true;
@@ -1304,7 +1301,7 @@ bool API::InitReadItems(uint32_t & numitems)
 }
 bool API::ReadItem (const uint32_t &index, t_item & item)
 {
-    assert (d->buildingsInited && d->itemsInited); //should change to the generic init rather than buildings
+    assert (d->itemsInited); //should change to the generic init rather than buildings
     t_item_df40d item_40d;
 
     // read pointer from vector at position
@@ -1375,15 +1372,15 @@ bool API::ReadItemTypes(vector< vector< t_itemType > > & itemTypes)
     int matgloss_skip = minfo->getHexValue("matgloss_skip");
     int item_type_name_offset = minfo->getOffset("item_type_name");
     for(int i = 8;i<20;i++){
-        DfVector p_temp = d->dm->readVector(matgloss_address + i*matgloss_skip,4);
+        DfVector p_temp = d->p->readVector(matgloss_address + i*matgloss_skip,4);
         vector< t_itemType > typesForVec;
         for(uint32_t j =0; j<p_temp.getSize();j++)
         {
             t_itemType currType;
             uint32_t temp = *(uint32_t *) p_temp[j];
            // Mread(temp+40,sizeof(name),(uint8_t *) name);
-            d->dm->readSTLString(temp+4,currType.id,128);
-            d->dm->readSTLString(temp+item_type_name_offset,currType.name,128);
+            d->p->readSTLString(temp+4,currType.id,128);
+            d->p->readSTLString(temp+item_type_name_offset,currType.name,128);
             //stringsForVec.push_back(string(name));
             typesForVec.push_back(currType);
         }
@@ -1400,44 +1397,44 @@ bool API::ReadAllMatgloss(vector< vector< string > > & all)
     int matgloss_address = minfo->getAddress("matgloss");
     int matgloss_skip = minfo->getHexValue("matgloss_skip");
     for(int i = 0;i<7;i++){
-        DfVector p_temp = d->dm->readVector(matgloss_address + i*matgloss_skip,4);
+        DfVector p_temp = d->p->readVector(matgloss_address + i*matgloss_skip,4);
         vector< string > stringsForVec;
         for(uint32_t j =0; j<p_temp.getSize();j++)
         {
             uint32_t temp = *(uint32_t *) p_temp[j];
-            string tempStr = d->dm->readSTLString(temp);
+            string tempStr = d->p->readSTLString(temp);
             stringsForVec.push_back(tempStr);
         }
         all.push_back(stringsForVec);
     }
     for(int i = 7;i<22;i++){
-        DfVector p_temp = d->dm->readVector(matgloss_address + i*matgloss_skip,4);
+        DfVector p_temp = d->p->readVector(matgloss_address + i*matgloss_skip,4);
         vector< string > stringsForVec;
         for(uint32_t j =0; j<p_temp.getSize();j++)
         {
             uint32_t temp = *(uint32_t *) p_temp[j];
-            string tempStr = d->dm->readSTLString(temp+4);
+            string tempStr = d->p->readSTLString(temp+4);
             stringsForVec.push_back(tempStr);
         }
         all.push_back(stringsForVec);
     }
     for(int i = 22;i<25;i++){
-        DfVector p_temp = d->dm->readVector(matgloss_address + i*matgloss_skip,4);
+        DfVector p_temp = d->p->readVector(matgloss_address + i*matgloss_skip,4);
         vector< string > stringsForVec;
         for(uint32_t j =0; j<p_temp.getSize();j++)
         {
             uint32_t temp = *(uint32_t *) p_temp[j];
-            string tempStr = d->dm->readSTLString(temp);
+            string tempStr = d->p->readSTLString(temp);
             stringsForVec.push_back(tempStr);
         }
         all.push_back(stringsForVec);
     }
-    DfVector p_temp = d->dm->readVector(0x01604104,4);
+    DfVector p_temp = d->p->readVector(0x01604104,4);
     vector< string > stringsForVec;
         for(uint32_t j =0; j<p_temp.getSize();j++)
         {
             uint32_t temp = *(uint32_t *) p_temp[j];
-            string tempStr = d->dm->readSTLString(temp);
+            string tempStr = d->p->readSTLString(temp);
             stringsForVec.push_back(tempStr);
         }
         all.push_back(stringsForVec);

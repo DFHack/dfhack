@@ -29,4 +29,5 @@ include_directories (${CMAKE_SOURCE_DIR}/shmserver/)
 
 add_subdirectory (library)
 add_subdirectory (tools)
+add_subdirectory (examples)
 add_subdirectory (shmserver)

@@ -103,6 +103,7 @@ bool ProcessEnumerator::findProcessess()
         else
         {
             delete q;
+			q = 0;
         }
     }
     if(d->processes.size())

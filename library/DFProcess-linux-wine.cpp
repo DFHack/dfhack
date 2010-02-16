@@ -26,7 +26,7 @@ distribution.
 #include <sys/ptrace.h>
 using namespace DFHack;
 
-class NormalProcess::Private
+class WineProcess::Private
 {
     public:
     Private()
@@ -52,7 +52,7 @@ class NormalProcess::Private
     bool validate(char * exe_file, uint32_t pid, char * mem_file, vector <memory_info> & known_versions);
 };
 
-NormalProcess::NormalProcess(uint32_t pid, vector <memory_info> & known_versions)
+WineProcess::WineProcess(uint32_t pid, vector <memory_info> & known_versions)
 : d(new Private())
 {
     char dir_name [256];
@@ -88,23 +88,48 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info> & known_versions
         d->my_window = new DFWindow(this);
         return;
     }
+    
+    // FIXME: this fails when the wine process isn't started from the 'current working directory'. strip path data from cmdline
+    // is this windows version of Df running in wine?
+    if(strstr(target_name, "wine-preloader")!= NULL)
+    {
+        // get working directory
+        target_result = readlink(cwd_name, target_name, sizeof(target_name)-1);
+        target_name[target_result] = 0;
+        
+        // got path to executable, do the same for its name
+        ifstream ifs ( cmdline_name , ifstream::in );
+        string cmdline;
+        getline(ifs,cmdline);
+        if (cmdline.find("dwarfort-w.exe") != string::npos || cmdline.find("dwarfort.exe") != string::npos || cmdline.find("Dwarf Fortress.exe") != string::npos)
+        {
+            char exe_link[1024];
+            // put executable name and path together
+            sprintf(exe_link,"%s/%s",target_name,cmdline.c_str());
+            
+            // create wine process, add it to the vector
+            d->identified = d->validate(exe_link,pid,mem_name,known_versions);
+            d->my_window = new DFWindow(this);
+            return;
+        }
+    }
 }
 
-bool NormalProcess::isSuspended()
+bool WineProcess::isSuspended()
 {
     return d->suspended;
 }
-bool NormalProcess::isAttached()
+bool WineProcess::isAttached()
 {
     return d->attached;
 }
 
-bool NormalProcess::isIdentified()
+bool WineProcess::isIdentified()
 {
     return d->identified;
 }
 
-bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFile, vector <memory_info> & known_versions)
+bool WineProcess::Private::validate(char * exe_file,uint32_t pid, char * memFile, vector <memory_info> & known_versions)
 {
     md5wrapper md5;
     // get hash of the running DF process
@@ -114,20 +139,13 @@ bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFi
     // iterate over the list of memory locations
     for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
     {
-        if(hash == (*it).getString("md5")) // are the md5 hashes the same?
+        // are the md5 hashes the same?
+        if(memory_info::OS_WINDOWS == (*it).getOS() && hash == (*it).getString("md5"))
         {
             memory_info * m = &*it;
-            if (memory_info::OS_LINUX == (*it).getOS())
-            {
-                my_descriptor = m;
-                my_handle = my_pid = pid;
-            }
-            else
-            {
-                // some error happened, continue with next process
-                continue;
-            }
-            // tell NormalProcess about the /proc/PID/mem file
+            my_descriptor = m;
+            my_handle = my_pid = pid;
+            // tell WineProcess about the /proc/PID/mem file
             this->memFile = memFile;
             identified = true;
             return true;
@@ -136,41 +154,40 @@ bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFi
     return false;
 }
 
-NormalProcess::~NormalProcess()
+WineProcess::~WineProcess()
 {
     if(d->attached)
     {
         detach();
     }
-    // destroy data model. this is assigned by processmanager
     if(d->my_window)
         delete d->my_window;
     delete d;
 }
 
-memory_info * NormalProcess::getDescriptor()
+memory_info * WineProcess::getDescriptor()
 {
     return d->my_descriptor;
 }
 
-DFWindow * NormalProcess::getWindow()
+DFWindow * WineProcess::getWindow()
 {
     return d->my_window;
 }
 
-int NormalProcess::getPID()
+int WineProcess::getPID()
 {
     return d->my_pid;
 }
 
 //FIXME: implement
-bool NormalProcess::getThreadIDs(vector<uint32_t> & threads )
+bool WineProcess::getThreadIDs(vector<uint32_t> & threads )
 {
     return false;
 }
 
 //FIXME: cross-reference with ELF segment entries?
-void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
+void WineProcess::getMemRanges( vector<t_memrange> & ranges )
 {
     char buffer[1024];
     char permissions[5]; // r/-, w/-, x/-, p/s, 0
@@ -196,12 +213,12 @@ void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
     }
 }
 
-bool NormalProcess::asyncSuspend()
+bool WineProcess::asyncSuspend()
 {
     return suspend();
 }
 
-bool NormalProcess::suspend()
+bool WineProcess::suspend()
 {
     int status;
     if(!d->attached)
@@ -234,12 +251,12 @@ bool NormalProcess::suspend()
     return true;
 }
 
-bool NormalProcess::forceresume()
+bool WineProcess::forceresume()
 {
     return resume();
 }
 
-bool NormalProcess::resume()
+bool WineProcess::resume()
 {
     if(!d->attached)
         return false;
@@ -256,7 +273,7 @@ bool NormalProcess::resume()
 }
 
 
-bool NormalProcess::attach()
+bool WineProcess::attach()
 {
     int status;
     if(g_pProcess != NULL)
@@ -307,7 +324,7 @@ bool NormalProcess::attach()
     }
 }
 
-bool NormalProcess::detach()
+bool WineProcess::detach()
 {
     if(!d->attached) return false;
     if(!d->suspended) suspend();
@@ -341,7 +358,7 @@ bool NormalProcess::detach()
 
 
 // danger: uses recursion!
-void NormalProcess::read (const uint32_t offset, const uint32_t size, uint8_t *target)
+void WineProcess::read (const uint32_t offset, const uint32_t size, uint8_t *target)
 {
     if(size == 0) return;
     
@@ -362,37 +379,37 @@ void NormalProcess::read (const uint32_t offset, const uint32_t size, uint8_t *t
     }
 }
 
-uint8_t NormalProcess::readByte (const uint32_t offset)
+uint8_t WineProcess::readByte (const uint32_t offset)
 {
     uint8_t val;
     read(offset, 1, &val);
     return val;
 }
 
-void NormalProcess::readByte (const uint32_t offset, uint8_t &val )
+void WineProcess::readByte (const uint32_t offset, uint8_t &val )
 {
     read(offset, 1, &val);
 }
 
-uint16_t NormalProcess::readWord (const uint32_t offset)
+uint16_t WineProcess::readWord (const uint32_t offset)
 {
     uint16_t val;
     read(offset, 2, (uint8_t *) &val);
     return val;
 }
 
-void NormalProcess::readWord (const uint32_t offset, uint16_t &val)
+void WineProcess::readWord (const uint32_t offset, uint16_t &val)
 {
     read(offset, 2, (uint8_t *) &val);
 }
 
-uint32_t NormalProcess::readDWord (const uint32_t offset)
+uint32_t WineProcess::readDWord (const uint32_t offset)
 {
     uint32_t val;
     read(offset, 4, (uint8_t *) &val);
     return val;
 }
-void NormalProcess::readDWord (const uint32_t offset, uint32_t &val)
+void WineProcess::readDWord (const uint32_t offset, uint32_t &val)
 {
     read(offset, 4, (uint8_t *) &val);
 }
@@ -401,13 +418,13 @@ void NormalProcess::readDWord (const uint32_t offset, uint32_t &val)
  * WRITING
  */
 
-void NormalProcess::writeDWord (uint32_t offset, uint32_t data)
+void WineProcess::writeDWord (uint32_t offset, uint32_t data)
 {
     ptrace(PTRACE_POKEDATA,d->my_handle, offset, data);
 }
 
 // using these is expensive.
-void NormalProcess::writeWord (uint32_t offset, uint16_t data)
+void WineProcess::writeWord (uint32_t offset, uint16_t data)
 {
     uint32_t orig = readDWord(offset);
     orig &= 0xFFFF0000;
@@ -419,7 +436,7 @@ void NormalProcess::writeWord (uint32_t offset, uint16_t data)
     ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
 }
 
-void NormalProcess::writeByte (uint32_t offset, uint8_t data)
+void WineProcess::writeByte (uint32_t offset, uint8_t data)
 {
     uint32_t orig = readDWord(offset);
     orig &= 0xFFFFFF00;
@@ -432,7 +449,7 @@ void NormalProcess::writeByte (uint32_t offset, uint8_t data)
 }
 
 // blah. I hate the kernel devs for crippling /proc/PID/mem. THIS IS RIDICULOUS
-void NormalProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
+void WineProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
 {
     uint32_t indexptr = 0;
     while (size > 0)
@@ -462,7 +479,7 @@ void NormalProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
     }
 }
 
-const std::string NormalProcess::readCString (uint32_t offset)
+const std::string WineProcess::readCString (uint32_t offset)
 {
     std::string temp;
     char temp_c[256];
@@ -479,51 +496,89 @@ const std::string NormalProcess::readCString (uint32_t offset)
     return temp;
 }
 
-DfVector NormalProcess::readVector (uint32_t offset, uint32_t item_size)
+DfVector WineProcess::readVector (uint32_t offset, uint32_t item_size)
 {
     /*
-        GNU libstdc++ vector is three pointers long
+        MSVC++ vector is four pointers long
+        ptr allocator
         ptr start
         ptr end
         ptr alloc_end
-
+     
         we don't care about alloc_end because we don't try to add stuff
+        we also don't care about the allocator thing in front
     */
-    uint32_t start = g_pProcess->readDWord(offset);
-    uint32_t end = g_pProcess->readDWord(offset+4);
+    uint32_t start = g_pProcess->readDWord(offset+4);
+    uint32_t end = g_pProcess->readDWord(offset+8);
     uint32_t size = (end - start) /4;
     return DfVector(start,size,item_size);
 }
 
-struct _Rep_base
+size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
-    uint32_t       _M_length;
-    uint32_t       _M_capacity;
-    uint32_t        _M_refcount;
-};
-
-size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
-{
-    _Rep_base header;
-    offset = g_pProcess->readDWord(offset);
-    g_pProcess->read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
-    size_t read_real = min((size_t)header._M_length, bufcapacity-1);// keep space for null termination
-    g_pProcess->read(offset,read_real,(uint8_t * )buffer);
+    /*
+    MSVC++ string
+    ptr allocator
+    union
+    {
+        char[16] start;
+        char * start_ptr
+    }
+    Uint32 length
+    Uint32 capacity
+    */
+    uint32_t start_offset = offset + 4;
+    size_t length = g_pProcess->readDWord(offset + 20);
+    
+    size_t capacity = g_pProcess->readDWord(offset + 24);
+    size_t read_real = min(length, bufcapacity-1);// keep space for null termination
+    
+    // read data from inside the string structure
+    if(capacity < 16)
+    {
+        g_pProcess->read(start_offset, read_real , (uint8_t *)buffer);
+    }
+    else // read data from what the offset + 4 dword points to
+    {
+        start_offset = g_pProcess->readDWord(start_offset);// dereference the start offset
+        g_pProcess->read(start_offset, read_real, (uint8_t *)buffer);
+    }
+    
     buffer[read_real] = 0;
     return read_real;
 }
 
-const string NormalProcess::readSTLString (uint32_t offset)
+const string WineProcess::readSTLString (uint32_t offset)
 {
-    _Rep_base header;
+    /*
+        MSVC++ string
+        ptr allocator
+        union
+        {
+            char[16] start;
+            char * start_ptr
+        }
+        Uint32 length
+        Uint32 capacity
+    */
+    uint32_t start_offset = offset + 4;
+    uint32_t length = g_pProcess->readDWord(offset + 20);
+    uint32_t capacity = g_pProcess->readDWord(offset + 24);
+    char * temp = new char[capacity+1];
     
-    offset = g_pProcess->readDWord(offset);
-    g_pProcess->read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
+    // read data from inside the string structure
+    if(capacity < 16)
+    {
+        g_pProcess->read(start_offset, capacity, (uint8_t *)temp);
+    }
+    else // read data from what the offset + 4 dword points to
+    {
+        start_offset = g_pProcess->readDWord(start_offset);// dereference the start offset
+        g_pProcess->read(start_offset, capacity, (uint8_t *)temp);
+    }
     
-    // FIXME: use char* everywhere, avoid string
-    char * temp = new char[header._M_length+1];
-    g_pProcess->read(offset,header._M_length+1,(uint8_t * )temp);
-    string ret(temp);
+    temp[length] = 0;
+    string ret = temp;
     delete temp;
     return ret;
 }

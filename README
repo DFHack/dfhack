@@ -1,66 +1,84 @@
 Introduction
 ------------
-DFHack is a Dwarf Fortress memory access library and a set of basic tools using this library.
-The library is a work in progress, so things might change as more tools are written for it.
 
-It is an attempt to unite the various ways tools access DF memory and allow for easier development
-of new tools.
+DFHack is a Dwarf Fortress memory access library and a set of basic tools using 
+this library. The library is a work in progress, so things might change as more
+tools are written for it.
+
+It is an attempt to unite the various ways tools access DF memory and allow for
+easier development of new tools.
+
 
 Getting DFHack
 ----------------
+
 You can get the code at DFHack's sourceforge site:
   https://sourceforge.net/projects/dfhack/
 
 * subversion access: 
   svn co https://dfhack.svn.sourceforge.net/svnroot/dfhack/trunk dfhack 
 
+It is also available on github:
+  http://github.com/peterix/dfhack
+
+
 Compatibility
 -------------
+
 DFHack works on Windows XP, Vista, 7 or any modern Linux distribution.
 
-Windows 2000 is currently *not supported* due to missing OS functionality. If you know how
-to easily suspend processes, you can fix it :)
+Windows 2000 is currently *not supported* due to missing OS functionality.
+If you know how to easily suspend processes, you can fix it :)
 
 OSX is also not supported due to lack of developers with a Mac.
 
 Currently supported Dwarf Fortress versions:
 * Windows
   40d
-  40d9 - 40d16
+  40d9 - 40d17
 
 * Linux
-  40d9 - 40d16
+  40d9 - 40d17
+
 
 Using the library
 -----------------
-The library is compilable under Linux with GCC and under Windows with MinGW32 and MSVC compilers.
-It is using the cmake build system. See COMPILE for details.
 
-DFHack is using the zlib/libpng license. This makes it easy to link to it, use it in-source
-or add your own extensions. Contributing back to the dfhack repository is welcome and the right
-thing to do :)
+The library is compilable under Linux with GCC and under Windows with MinGW32
+and MSVC compilers. It is using the cmake build system. See COMPILE for details.
 
-At the time of writing there's no API reference or documentation. The code does have a lot
-of comments though.
+DFHack is using the zlib/libpng license. This makes it easy to link to it, use
+it in-source or add your own extensions. Contributing back to the dfhack
+repository is welcome and the right thing to do :)
+
+At the time of writing there's no API reference or documentation. The code does
+have a lot of comments though.
+
 
 Using DFHack Tools
 ------------------
-The project comes with a special extra library you should add to your DF installation.
-It's used to boost the transfer speed between DF and DFHack, and provide data consistency
-and synchronization. DFHack will work without the library, but at suboptimal speeds
-and the consistency of data written back to DF is questionable.
 
-!!!!Please not that on Windows this currently only works with DF 40d15 and 40d16!!!!
-On Linux, it works with the whole range of supported DF versions.
+The project comes with a special extra library you should add to your DF
+installation. It's used to boost the transfer speed between DF and DFHack, and
+provide data consistency and synchronization. DFHack will work without the
+library, but at suboptimal speeds and the consistency of data written back
+to DF is questionable.
+
+!!! on Windows this currently only works with DF 40d15, 40d16 and 40d17 !!!
+     On Linux, it works with the whole range of supported DF versions.
+
+!!!     use the pre-compiled library intended for your version of DF    !!!
+               You can find them in the 'precompiled' folder.
 
  ** Installing on Windows
- - Open your DF folder, locate SDL.dll and rename it to SDLreal.dll (making a backup of it is a good idea)
- - Copy the DFHack SDL.dll into your DF folder.
- - Restart DF if it is already running
+ - Open your DF folder, locate SDL.dll and rename it to SDLreal.dll (making
+   a backup of it is a good idea)
+ - Copy the right DFHack SDL.dll into your DF folder.
+ - Restart DF if it is running
 
  ** Unistalling on Windows
  - Open your DF folder, locate SDL.dll and delete it
- - Rename SDLreal.dll to SDl.dll
+ - Rename SDLreal.dll to SDL.dll
  - Restart DF if it is running
 
 
@@ -94,56 +112,40 @@ export LD_PRELOAD="./libs/libdfconnect.so" # Hack DF!
  - Delete libdfconnect.so and the dfhacked startup script
  - Go back to using the df startup script
 
+
 Tools
 -----
-All the DFHack tools are terminal programs. This might seem strange to Windows users,
-but these are meant mostly as examples for developers. Still, they can be useful and
-are cross-platform just like the library itself.
 
-If the tool writes back to DF's memory, make sure you are using the shared memory interface
-mentioned in the previous section!
+All the DFHack tools are terminal programs. This might seem strange to Windows
+users, but these are meant mostly as examples for developers. Still, they can
+be useful and are cross-platform just like the library itself.
 
-* expbench   - just exports the map 1000 times over. Meant to test how fast the
-               DFHack<->DF interface is. This can take 3-30+ seconds, depending on
-               your system and the size of the map.
+If the tool writes back to DF's memory, make sure you are using the shared
+memory interface mentioned in the previous section!
 
-* reveal     - plain old reveal tool. Demonstrates writing map data back to DF.
+* reveal     - plain old reveal tool. It reveals all the map blocks already
+               initialized by DF.
 
-* prospector - scans the map for minerals. by default it only scans only visible veins.
-               You can make it show hidden things with '-a' and base rock and soil layers
-               with '-b'. These can be combined ('-ab')
+* prospector - scans the map for minerals. by default it only scans only visible
+               veins. You can make it show hidden things with '-a' and base rock
+               and soil layers with '-b'. These can be combined ('-ab')
 
-* cleanmap   - cleans mud, vomit, snow and all kinds of bloody mess from the map. It will
-               clean your irrigated farms too, so consider yourself warned.
+* cleanmap   - cleans mud, vomit, snow and all kinds of mess from the map.
+               It will clean your irrigated farms too, so consider yourself
+               warned.
 
-* dfattachtest - Benchmark for the Attach, Detach, Suspend and Resume functions
+* dfincremental - incremental search utility.
 
-* dfbuildingsdump - exports some basic data about buildings of a given type on the game map
+* bauxite - converts all mechanisms into bauxite mechanisms.
 
-* dfcreaturedump - exports some basic data about all the dwarves
+* itemdesignator - Allows mass-designating items by type and material - dump,
+                   forbid, melt and set on fire ;)
 
-* dfcustomCreatureNameProf - allws you to change nicknames and custom professions of your dwarves
-
-* dfincremental - incremental search utility - linux only right now
-
-* dfitemdump - lists items under the current DF cursor (40d16 only)
-
-* dfmaterialtest - tries to load all the material types from DF, shows the first entry of each type
-
-* dfposition - shows you the current view coordinates and window size in tiles
-               (may not be implemented for older DF versions)
-
-* dfsuspend - tests the behavior of Suspend and Resume functions
-
+ 
 Memory offset definitions
 -------------------------
-The file with memory offset definitions used by dfhack can be found in the output folder. 
-It uses XML as the base format.
 
-It allows entry versioning and basing newer entries on older ones. These newer versions
-only have to specify the values that are different or a single 'rebase' value that is then
-used as an offset for all the addresses or object identifiers.
-
-This makes it possible to track the small d## releases pretty quickly.
+The file with memory offset definitions used by dfhack can be found in the
+output folder. 
 
 ~ EOF ~

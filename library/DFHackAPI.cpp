@@ -1301,7 +1301,7 @@ bool API::InitReadItems(uint32_t & numitems)
 }
 bool API::ReadItem (const uint32_t &index, t_item & item)
 {
-    assert (d->buildingsInited && d->itemsInited); //should change to the generic init rather than buildings
+    assert (d->itemsInited); //should change to the generic init rather than buildings
     t_item_df40d item_40d;
 
     // read pointer from vector at position

@@ -61,7 +61,7 @@ struct DigTarget
 {
 	int source_distance;	// the distance to the source coords, used for sorting
 	int x, y, z;
-	bool operator<(const DigTarget& o) { return source_distance < o.source_distance; }
+	bool operator<(const DigTarget& o) const { return source_distance < o.source_distance; }
 };
 
 int dig(DFHack::API& DF, 
@@ -170,8 +170,8 @@ int dig(DFHack::API& DF,
 		int grid_y = (*i).y/16;
 		int z = (*i).z;
 
-		int local_x = (*i).x-grid_x;
-		int local_y = (*i).y-grid_y;
+		int local_x = (*i).x%grid_x;
+		int local_y = (*i).y%grid_y;
 
 		cout << "designating at " << grid_x+local_x << " " << grid_y+local_y << " " << (*i).z;
 		cout << ", " << (*i).source_distance << " tiles to source" << endl;

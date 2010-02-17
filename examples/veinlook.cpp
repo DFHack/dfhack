@@ -1,171 +1,3 @@
-// produces a list of vein materials available on the map. can be run with '-a' modifier to show even unrevealed minerals deep underground
-// with -b modifier, it will show base layer materials too
-
-// TODO: use material colors to make the output prettier
-// TODO: needs the tiletype filter!
-// TODO: tile override materials
-// TODO: material types, trees, ice, constructions
-// TODO: GUI
-/*
-
-int main (int argc, const char* argv[])
-{
-    
-    bool showhidden = false;
-    bool showbaselayers = false;
-    for(int i = 0; i < argc; i++)
-    {
-        string test = argv[i];
-        if(test == "-a")
-        {
-            showhidden = true;
-        }
-        else if(test == "-b")
-        {
-            showbaselayers = true;
-        }
-        else if(test == "-ab" || test == "-ba")
-        {
-            showhidden = true;
-            showbaselayers = true;
-        }
-    }
-    // let's be more useful when double-clicked on windows
-    #ifndef LINUX_BUILD
-    showhidden = true;
-    #endif
-    uint32_t x_max,y_max,z_max;
-    uint16_t tiletypes[16][16];
-    DFHack::t_designation designations[16][16];
-    uint8_t regionoffsets[16];
-    map <int16_t, uint32_t> materials;
-    materials.clear();
-    vector<DFHack::t_matgloss> stonetypes;
-    vector< vector <uint16_t> > layerassign;
-    
-    // init the API
-    DFHack::API DF("Memory.xml");
-    
-    // attach
-    if(!DF.Attach())
-    {
-        cerr << "DF not found" << endl;
-        return 1;
-    }
-    
-    // init the map
-    DF.InitMap();
-    DF.getSize(x_max,y_max,z_max);
-    
-    // get stone matgloss mapping
-    if(!DF.ReadStoneMatgloss(stonetypes))
-    {
-        //DF.DestroyMap();
-        cerr << "Can't get the materials." << endl;
-        return 1; 
-    }
-    
-    // get region geology
-    if(!DF.ReadGeology( layerassign ))
-    {
-        cerr << "Can't get region geology." << endl;
-        return 1; 
-    }
-    
-    int16_t tempvein [16][16];
-    vector <DFHack::t_vein> veins;
-    // walk the map!
-    for(uint32_t x = 0; x< x_max;x++)
-    {
-        for(uint32_t y = 0; y< y_max;y++)
-        {
-            for(uint32_t z = 0; z< z_max;z++)
-            {
-                if(!DF.isValidBlock(x,y,z))
-                    continue;
-                
-                // read data
-                DF.ReadTileTypes(x,y,z, (uint16_t *) tiletypes);
-                DF.ReadDesignations(x,y,z, (uint32_t *) designations);
-                
-                memset(tempvein, -1, sizeof(tempvein));
-                veins.clear();
-                DF.ReadVeins(x,y,z,veins);
-                
-                if(showbaselayers)
-                {
-                    DF.ReadRegionOffsets(x,y,z, regionoffsets);
-                    // get the layer materials
-                    for(uint32_t xx = 0;xx<16;xx++)
-                    {
-                        for (uint32_t yy = 0; yy< 16;yy++)
-                        {
-                            tempvein[xx][yy] =
-                            layerassign
-                            [regionoffsets[designations[xx][yy].bits.biome]]
-                            [designations[xx][yy].bits.geolayer_index];
-                        }
-                    }
-                }
-                
-                // for each vein
-                for(int i = 0; i < (int)veins.size();i++)
-                {
-                    //iterate through vein rows
-                    for(uint32_t j = 0;j<16;j++)
-                    {
-                        //iterate through the bits
-                        for (uint32_t k = 0; k< 16;k++)
-                        {
-                            // and the bit array with a one-bit mask, check if the bit is set
-                            bool set = !!(((1 << k) & veins[i].assignment[j]) >> k);
-                            if(set)
-                            {
-                                // store matgloss
-                                tempvein[k][j] = veins[i].type;
-                            }
-                        }
-                    }
-                }
-                // count the material types
-                for(uint32_t xi = 0 ; xi< 16 ; xi++)
-                {
-                    for(uint32_t yi = 0 ; yi< 16 ; yi++)
-                    {
-                        // hidden tiles are ignored unless '-a' is provided on the command line
-                        // non-wall tiles are ignored
-                        if( (designations[xi][yi].bits.hidden && !showhidden) || !DFHack::isWallTerrain(tiletypes[xi][yi]))
-                            continue;
-                        if(tempvein[xi][yi] < 0)
-                            continue;
-                        
-                        if(materials.count(tempvein[xi][yi]))
-                        {
-                            materials[tempvein[xi][yi]] += 1;
-                        }
-                        else
-                        {
-                            materials[tempvein[xi][yi]] = 1;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    // print report
-    map<int16_t, uint32_t>::iterator p;
-    for(p = materials.begin(); p != materials.end(); p++)
-    {
-        cout << stonetypes[p->first].id << " : " << p->second << endl;
-    }
-    DF.Detach();
-    #ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
-    #endif
-    return 0;
-}
-*/
 #include <integers.h>
 #include <string.h> // for memset
 #include <string>
@@ -272,7 +104,6 @@ int puttile(int x, int y, int tiletype, int color)
             znak= '*';
             break;
     }
-//    wechochar(stdscr,znak);
     attron(COLOR_PAIR(color));
     mvwaddch(stdscr, y, x, znak);
     attroff(COLOR_PAIR(color));
@@ -292,7 +123,6 @@ void clrscr()
     wbkgd(stdscr, COLOR_PAIR(COLOR_BLACK));
     wclear(stdscr);
 }
-
 
 /*
     enum TileMaterial
@@ -442,18 +272,14 @@ main(int argc, char *argv[])
         finish(0);
     }
 
-    
-
-    //int16_t base [16][16];
-    //int16_t vein [16][16];
     int cursorX = x_max/2 - 1;
     int cursorY = y_max/2 - 1;
     int cursorZ = z_max/2 - 1;
+    
+    // FIXME: could fail on small forts
+    
     int vein = 0;
-    //int16_t tempvein [16][16];
     // walk the map!
-                
-   
     for (;;)
     {
         int c = getch();     /* refresh, accept single keystroke of input */
@@ -538,7 +364,7 @@ main(int argc, char *argv[])
         cprintf("X %d/%d, Y %d/%d, Z %d/%d. Vein %d of %d",cursorX + 1,x_max,cursorY + 1,y_max,cursorZ + 1,z_max,vein+1,veinVector.size());
         if(!veinVector.empty())
         {
-            if(vein != -1)
+            if(vein != -1 && vein < veinVector.size())
             {
                 string str = getGCCClassName(p, veinVector[vein].vtable);
                 if(str == "34block_square_event_frozen_liquidst")
@@ -557,7 +383,6 @@ main(int argc, char *argv[])
                             attron(A_STANDOUT);
                             puttile(i+16,j+16,tile, color);
                             attroff(A_STANDOUT);
-                            
                         }
                     }
                 }
@@ -585,7 +410,7 @@ main(int argc, char *argv[])
         DF.Resume();
         wrefresh(stdscr);
     }
-    finish(0);               /* we're done */
+    finish(0);
 }
 
 static void finish(int sig)

@@ -753,5 +753,16 @@ struct t_viewscreen
     //There is more info in these objects, but I don't know what it is yet
 };
 
+struct t_note
+{
+    char symbol;
+	uint16_t foreground;
+	uint16_t background;
+	char name[128];
+	uint16_t x;
+	uint16_t y;
+	uint16_t z;
+};
+
 }// namespace DFHack
 #endif // TYPES_H_INCLUDED

@@ -58,15 +58,14 @@ int manhattan_distance(int x, int y, int z, int xx, int yy, int zz)
 	return abs(x-xx)+abs(y-yy)+abs(z-zz);
 }
 
-class DigTarget
+struct DigTarget
 {
-public:
+//public:
 	DigTarget() :
 	    source_distance(0),
 		grid_x(0), grid_y(0),
 		local_x(0), local_y(0),
-		real_x(0), real_y(0), z(0),
-		valid(false)
+		real_x(0), real_y(0), z(0)
 		{
 		}
 
@@ -75,8 +74,7 @@ public:
 		int sourcex, int sourcey, int sourcez) :
 		//grid_x(realx/16), grid_y(realy/16),
 		//local_x(realx%16), local_y(realy%16),
-		real_x(realx), real_y(realy), z(_z),
-		valid(true)
+		real_x(realx), real_y(realy), z(_z)
 		{
 			grid_x = realx/16;
 			grid_y = realy/16;
@@ -98,9 +96,8 @@ public:
 		//	sourcex, sourcey, sourcez)),
 		grid_x(gridx), grid_y(gridy),
 		local_x(localx), local_y(localy),
-		z(_z),
-		//real_x(realx), real_y(realy), real_z(realz),
-		valid(true)
+		z(_z)
+		//real_x(realx), real_y(realy), real_z(realz)
 		{
 			real_x = (grid_x*16)+local_x;
 			real_y = (grid_y*16)+local_y;
@@ -119,10 +116,9 @@ public:
 	int z;
 	//int index;
 
-	const bool valid;
+	//const bool valid;
 
 	bool operator<(const DigTarget& o) const { return source_distance < o.source_distance; }
-	void operator=(const DigTarget& o) const { assert(false); } // dont use
 
 //private:
 //	int source_x, source_y, source_z;
@@ -252,7 +248,7 @@ void test()
 {
 	{
 		DigTarget dt;
-		assert(!dt.valid);
+		//assert(!dt.valid);
 	}
 
 	{
@@ -271,7 +267,7 @@ void test()
 
 		assert(dt.z == 16);
 		assert(dt.source_distance == 35);
-		assert(dt.valid);
+		//assert(dt.valid);
 	}
 
 	{
@@ -291,8 +287,25 @@ void test()
 
 		assert(dt.z == 16);
 		assert(dt.source_distance == 91);
-		assert(dt.valid);
+		//assert(dt.valid);
 	}
+
+	//{ // sorting
+	//	DigTarget a(
+	//		20, 35, 16, 
+	//		10, 12, 14);
+
+	//	DigTarget b(
+	//		2, 4, 16,
+	//		5, 10,
+	//		10, 12, 14);
+
+	//	vector<DigTarget> v;
+	//	v.push_back(b);
+	//	v.push_back(a);
+	//	sort(v.begin(), v.end());
+	//	assert(*(v.begin()) == a);
+	//}
 }
 
 int main (int argc, const char* argv[])

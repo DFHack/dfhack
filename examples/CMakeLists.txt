@@ -42,6 +42,12 @@ TARGET_LINK_LIBRARIES(dfitemdump dfhack)
 ADD_EXECUTABLE(dfdigger digger.cpp)
 TARGET_LINK_LIBRARIES(dfdigger dfhack)
 
+IF(UNIX)
+    # veinlook - look at the map... sort of
+    ADD_EXECUTABLE(dfveinlook veinlook.cpp)
+    TARGET_LINK_LIBRARIES(dfveinlook dfhack ncurses)
+ENDIF(UNIX)
+
 # renamer - change the custom names and professions of creatures, sends keys to df directly
 ADD_EXECUTABLE(dfrenamer renamer.cpp)
 TARGET_LINK_LIBRARIES(dfrenamer dfhack)
@@ -58,6 +64,7 @@ dfmaterialtest
 dfposition
 dfrenamer
 dfsuspend
+dfveinlook
 RUNTIME DESTINATION bin
 )
 ENDIF(UNIX)

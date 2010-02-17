@@ -215,7 +215,7 @@ bool isValidSHM()
 {
     shmid_ds descriptor;
     shmctl(shmid, IPC_STAT, &descriptor);
-    fprintf(stderr,"ID %d, attached: %d\n",shmid, descriptor.shm_nattch);
+    //fprintf(stderr,"ID %d, attached: %d\n",shmid, descriptor.shm_nattch);
     return (descriptor.shm_nattch == 2);
 }
 uint32_t getPID()

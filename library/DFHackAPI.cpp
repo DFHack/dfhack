@@ -321,7 +321,7 @@ bool API::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, uint8_t *buffer
 bool API::ReadVeins (uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    assert (sizeof (t_vein) == d->veinsize);
+    //assert (sizeof (t_vein) == d->veinsize);
     veins.clear();
     if (addr && d->veinvector && d->veinsize)
     {
@@ -340,6 +340,7 @@ bool API::ReadVeins (uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins
             uint32_t temp = * (uint32_t *) p_veins[i];
             // read the vein data (dereference pointer)
             g_pProcess->read (temp, d->veinsize, (uint8_t *) &v);
+            v.address_of = temp;
             // store it in the vector
             veins.push_back (v);
         }

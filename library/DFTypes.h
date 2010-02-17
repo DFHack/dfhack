@@ -58,6 +58,14 @@ struct t_vein
     int16_t assignment[16];
     int16_t unknown;
     uint32_t flags;
+    uint32_t address_of; // this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
+};
+
+// stores what tiles should appear when the ice melts
+struct t_frozenliquidvein
+{
+    uint32_t vtable;
+    int16_t tiles[16][16];
 };
 
 struct t_matglossPair

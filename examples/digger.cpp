@@ -16,6 +16,7 @@
 #include <list>
 #include <cstdlib>
 #include <algorithm>
+#include <assert.h>
 using namespace std;
 
 #include <DFTypes.h>
@@ -57,11 +58,75 @@ int manhattan_distance(int x, int y, int z, int xx, int yy, int zz)
 	return abs(x-xx)+abs(y-yy)+abs(z-zz);
 }
 
-struct DigTarget
+class DigTarget
 {
+public:
+	DigTarget() :
+	    source_distance(0),
+		grid_x(0), grid_y(0),
+		local_x(0), local_y(0),
+		real_x(0), real_y(0), z(0),
+		valid(false)
+		{
+		}
+
+	DigTarget(
+		int realx, int realy, int _z, 
+		int sourcex, int sourcey, int sourcez) :
+		//grid_x(realx/16), grid_y(realy/16),
+		//local_x(realx%16), local_y(realy%16),
+		real_x(realx), real_y(realy), z(_z),
+		valid(true)
+		{
+			grid_x = realx/16;
+			grid_y = realy/16;
+
+			local_x = realx%16;
+			local_y = realy%16;
+
+			source_distance = manhattan_distance(
+				real_x, real_y, z,
+				sourcex, sourcey, sourcez);
+		}
+
+	DigTarget(
+		int gridx, int gridy, int _z,
+		int localx, int localy,
+		int sourcex, int sourcey, int sourcez) :
+		//source_distance(manhattan_distance(
+		//	realx, realy, realz,
+		//	sourcex, sourcey, sourcez)),
+		grid_x(gridx), grid_y(gridy),
+		local_x(localx), local_y(localy),
+		z(_z),
+		//real_x(realx), real_y(realy), real_z(realz),
+		valid(true)
+		{
+			real_x = (grid_x*16)+local_x;
+			real_y = (grid_y*16)+local_y;
+
+			source_distance = manhattan_distance(
+				real_x, real_y, z,
+				sourcex, sourcey, sourcez);
+		}
+
 	int source_distance;	// the distance to the source coords, used for sorting
-	int x, y, z;
+		//int source_distance() const { return _source_distance; }
+
+	int grid_x, grid_y;
+	int local_x, local_y;
+	int real_x, real_y;
+	int z;
+	//int index;
+
+	const bool valid;
+
 	bool operator<(const DigTarget& o) const { return source_distance < o.source_distance; }
+	void operator=(const DigTarget& o) const { assert(false); } // dont use
+
+//private:
+//	int source_x, source_y, source_z;
+//	int _source_distance;
 };
 
 int dig(DFHack::API& DF, 
@@ -86,8 +151,8 @@ int dig(DFHack::API& DF,
 	cout << "============================" << endl;
 	cout << "source is " << x_source << " " << y_source << " " << z_source << endl;
 
-	int debugmaxx = 0;
-	int debugmaxy = 0;
+	//int debugmaxx = 0;
+	//int debugmaxy = 0;
     
     // walk the map
     for(uint32_t x = 0; x < x_max; x++)
@@ -121,26 +186,21 @@ int dig(DFHack::API& DF,
 								//designations[i].bits.dig = DFHack::designation_default;
 								//++count;
 
-								int world_x = (x*16)+lx;
-								int world_y = (y*16)+ly;
+								//int realx = (x*16)+lx;
+								//int realy = (y*16)+ly;
 
-								DigTarget dt;
-								dt.x = world_x;
-								dt.y = world_y;
-								dt.z = z;
-								dt.source_distance = manhattan_distance(
-									x_source, y_source, z_source,
-									//x, y, z, i);
-									world_x, world_y, z);
-								candidates.push_back(dt);
+								candidates.push_back(DigTarget(
+									x, y, z,
+									lx, ly,
+									x_source, y_source, z_source));
 
-								cout << "target found at " << world_x << " " << world_y << " " << z;
-								cout << ", " << dt.source_distance << " tiles to source" << endl;
+								//cout << "target found at " << world_x << " " << world_y << " " << z;
+								//cout << ", " << dt->source_distance << " tiles to source" << endl;
 
-								if (world_x > debugmaxx)
-									debugmaxx = world_x;
-								if (world_y > debugmaxy)
-									debugmaxy = world_y;
+								//if (world_x > debugmaxx)
+								//	debugmaxx = world_x;
+								//if (world_y > debugmaxy)
+								//	debugmaxy = world_y;
 							}
 						} // local y
                     } // local x
@@ -164,31 +224,81 @@ int dig(DFHack::API& DF,
 	cout << "source is " << x_source << " " << y_source << " " << z_source << endl;
 
 	// mark the tiles for actual digging
-	for (vector<DigTarget>::iterator i = candidates.begin(); i != candidates.end(); ++i)
+	for (vector<DigTarget>::const_iterator i = candidates.begin(); i != candidates.end(); ++i)
 	{
-		int grid_x = (*i).x/16;
-		int grid_y = (*i).y/16;
-		int z = (*i).z;
+		//int grid_x = (*i).x/16;
+		//int grid_y = (*i).y/16;
+		//int z = (*i).z;
 
-		int local_x = (*i).x%grid_x;
-		int local_y = (*i).y%grid_y;
+		//int local_x = (*i).x%grid_x;
+		//int local_y = (*i).y%grid_y;
 
-		cout << "designating at " << grid_x+local_x << " " << grid_y+local_y << " " << (*i).z;
+		cout << "designating at " << (*i).real_x << " " << (*i).real_y << " " << (*i).z;
 		cout << ", " << (*i).source_distance << " tiles to source" << endl;
 
 		// TODO this could probably be made much better, theres a big chance the trees are on the same grid
-		DF.ReadDesignations(grid_x, grid_y, z, (uint32_t *) designations);
-		designations[local_x][local_y].bits.dig = DFHack::designation_default;
-		DF.WriteDesignations(grid_x, grid_y, z, (uint32_t *) designations);
+		// TODO move into function in DigTarget
+		DF.ReadDesignations((*i).grid_x, (*i).grid_y, (*i).z, (uint32_t *) designations);
+		designations[(*i).local_x][(*i).local_y].bits.dig = DFHack::designation_default;
+		DF.WriteDesignations((*i).grid_x, (*i).grid_y, (*i).z, (uint32_t *) designations);
 	}
 
-	cout << debugmaxx << " " << debugmaxy << endl;
+	//cout << debugmaxx << " " << debugmaxy << endl;
 
 	return num;
 }
 
+void test()
+{
+	{
+		DigTarget dt;
+		assert(!dt.valid);
+	}
+
+	{
+		DigTarget dt(
+			20, 35, 16, 
+			10, 12, 14);
+
+		assert(dt.grid_x == 1);
+		assert(dt.grid_y == 2);
+
+		assert(dt.local_x == 4);
+		assert(dt.local_y == 3);
+
+		assert(dt.real_x == 20);
+		assert(dt.real_y == 35);
+
+		assert(dt.z == 16);
+		assert(dt.source_distance == 35);
+		assert(dt.valid);
+	}
+
+	{
+		DigTarget dt(
+			2, 4, 16,
+			5, 10,
+			10, 12, 14);
+
+		assert(dt.grid_x == 2);
+		assert(dt.grid_y == 4);
+
+		assert(dt.local_x == 5);
+		assert(dt.local_y == 10);
+
+		assert(dt.real_x == 37);
+		assert(dt.real_y == 74);
+
+		assert(dt.z == 16);
+		assert(dt.source_distance == 91);
+		assert(dt.valid);
+	}
+}
+
 int main (int argc, const char* argv[])
 {
+	test();
+
     vector<uint16_t> targets;
     for (int i = 1; i < argc; ++i)
     {

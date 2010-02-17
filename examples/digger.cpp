@@ -33,31 +33,34 @@ int vec_count(vector<uint16_t>& vec, uint16_t t)
     return count;
 }
 
-// manhattan distance
-int source_distance(int sx, int sy, int sz, 
-					int x, int y, int z, int i)
-{
-	// TODO changing x and y seems to be optimized away (?)
-	cout << x << " " << i << " " << i%16 << " " << x+(i%16) << endl;
+//// manhattan distance
+//int source_distance(int sx, int sy, int sz, 
+//					int x, int y, int z, int i)
+//{
+//	// TODO changing x and y seems to be optimized away (?)
+//	cout << x << " " << i << " " << i%16 << " " << x+(i%16) << endl;
+//
+//	// handle the fact that x,y,z refers to a 16x16 grid
+//	//x += i%16;
+//	//y += i/16;
+//	int dx = i%16;
+//	int dy = i/16;
+//	//x *= 16;
+//	//y *= 16;
+//	//x += dx;
+//	//y += dy;
+//	return abs(sx-(x+(i%16)))+abs(sy-(y+(i/16)))+abs(sz-z);
+//}
 
-	// handle the fact that x,y,z refers to a 16x16 grid
-	//x += i%16;
-	//y += i/16;
-	int dx = i%16;
-	int dy = i/16;
-	//x *= 16;
-	//y *= 16;
-	//x += dx;
-	//y += dy;
-	return abs(sx-(x+(i%16)))+abs(sy-(y+(i/16)))+abs(sz-z);
+int manhattan_distance(int x, int y, int z, int xx, int yy, int zz)
+{
+	return abs(x-xx)+abs(y-yy)+abs(z-zz);
 }
 
 struct DigTarget
 {
 	int source_distance;	// the distance to the source coords, used for sorting
-	int x, y, z;			// call read designations with these and you have the tile at i
-	int i;					// 0 <= i <= 255
-
+	int x, y, z;
 	bool operator<(const DigTarget& o) { return source_distance < o.source_distance; }
 };
 
@@ -72,13 +75,16 @@ int dig(DFHack::API& DF,
 		return 0; // max limit of 0, nothing to do
 
     uint32_t x_max,y_max,z_max;
-    DFHack::t_designation designations[256];
-    uint16_t tiles[256];
+    DFHack::t_designation designations[16][16];
+    uint16_t tiles[16][16];
     //uint32_t count = 0;
     DF.getSize(x_max,y_max,z_max);
 
 	// every tile found, will later be sorted by distance to source
 	vector<DigTarget> candidates;
+
+	cout << "============================" << endl;
+	cout << "source is " << x_source << " " << y_source << " " << z_source << endl;
     
     // walk the map
     for(uint32_t x = 0; x < x_max; x++)
@@ -98,29 +104,35 @@ int dig(DFHack::API& DF,
 
                     // search all tiles for dig targets:
 					// visible, not yet marked for dig and matching tile type
-                    for (uint32_t i = 0; i < 256; i++)
-                    {
-                        if (designations[i].bits.hidden == 0 && 
-							designations[i].bits.dig == 0 && 
-                            vec_count(targets, DFHack::tileTypeTable[tiles[i]].c) > 0)
-                        {
-                            //cout << "target found at: ";
-                            //cout << x << "," << y << "," << z << "," << i << endl;
+					for(uint32_t lx = 0; lx < 16; lx++)
+					{
+						for(uint32_t ly = 0; ly < 16; ly++)
+						{
+							if (designations[lx][ly].bits.hidden == 0 && 
+								designations[lx][ly].bits.dig == 0 && 
+								vec_count(targets, DFHack::tileTypeTable[tiles[lx][ly]].c) > 0)
+							{
+								//cout << "target found at: ";
+								//cout << x << "," << y << "," << z << "," << i << endl;
 
-                            //designations[i].bits.dig = DFHack::designation_default;
-                            //++count;
+								//designations[i].bits.dig = DFHack::designation_default;
+								//++count;
 
-							DigTarget dt;
-							dt.x = x;
-							dt.y = y;
-							dt.z = z;
-							dt.i = i;
-							dt.source_distance = source_distance(
-								x_source, y_source, z_source,
-								x, y, z, i);
-							candidates.push_back(dt);
-                        }
-                    }
+								DigTarget dt;
+								dt.x = x+lx;
+								dt.y = y+ly;
+								dt.z = z;
+								dt.source_distance = manhattan_distance(
+									x_source, y_source, z_source,
+									//x, y, z, i);
+									x+lx, y+ly, z);
+								candidates.push_back(dt);
+
+								cout << "target found at " << x+lx << " " << y+ly << " " << z;
+								cout << ", " << dt.source_distance << " tiles to source" << endl;
+							}
+						} // local y
+                    } // local x
                 }
             }
         }
@@ -137,13 +149,26 @@ int dig(DFHack::API& DF,
 	}
 	num = candidates.size();
 
+	cout << "============================" << endl;
+	cout << "source is " << x_source << " " << y_source << " " << z_source << endl;
+
 	// mark the tiles for actual digging
 	for (vector<DigTarget>::iterator i = candidates.begin(); i != candidates.end(); ++i)
 	{
+		int world_x = (*i).x/16;
+		int world_y = (*i).y/16;
+		int world_z = (*i).z;
+
+		int local_x = (*i).x-world_x;
+		int local_y = (*i).y-world_y;
+
+		cout << "designating at " << world_x+local_x << " " << world_y+local_y << " " << (*i).z;
+		cout << ", " << (*i).source_distance << " tiles to source" << endl;
+
 		// TODO this could probably be made much better, theres a big chance the trees are on the same grid
-		DF.ReadDesignations((*i).x, (*i).y, (*i).z, (uint32_t *) designations);
-		designations[(*i).i].bits.dig = DFHack::designation_default;
-		DF.WriteDesignations((*i).x, (*i).y, (*i).z, (uint32_t *) designations);
+		DF.ReadDesignations(world_x, world_y, world_z, (uint32_t *) designations);
+		designations[local_x][local_y].bits.dig = DFHack::designation_default;
+		DF.WriteDesignations(world_x, world_y, world_z, (uint32_t *) designations);
 	}
 
 	return num;

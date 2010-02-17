@@ -85,6 +85,9 @@ int dig(DFHack::API& DF,
 
 	cout << "============================" << endl;
 	cout << "source is " << x_source << " " << y_source << " " << z_source << endl;
+
+	int debugmaxx = 0;
+	int debugmaxy = 0;
     
     // walk the map
     for(uint32_t x = 0; x < x_max; x++)
@@ -118,18 +121,26 @@ int dig(DFHack::API& DF,
 								//designations[i].bits.dig = DFHack::designation_default;
 								//++count;
 
+								int world_x = (x*16)+lx;
+								int world_y = (y*16)+ly;
+
 								DigTarget dt;
-								dt.x = x+lx;
-								dt.y = y+ly;
+								dt.x = world_x;
+								dt.y = world_y;
 								dt.z = z;
 								dt.source_distance = manhattan_distance(
 									x_source, y_source, z_source,
 									//x, y, z, i);
-									x+lx, y+ly, z);
+									world_x, world_y, z);
 								candidates.push_back(dt);
 
-								cout << "target found at " << x+lx << " " << y+ly << " " << z;
+								cout << "target found at " << world_x << " " << world_y << " " << z;
 								cout << ", " << dt.source_distance << " tiles to source" << endl;
+
+								if (world_x > debugmaxx)
+									debugmaxx = world_x;
+								if (world_y > debugmaxy)
+									debugmaxy = world_y;
 							}
 						} // local y
                     } // local x
@@ -155,21 +166,23 @@ int dig(DFHack::API& DF,
 	// mark the tiles for actual digging
 	for (vector<DigTarget>::iterator i = candidates.begin(); i != candidates.end(); ++i)
 	{
-		int world_x = (*i).x/16;
-		int world_y = (*i).y/16;
-		int world_z = (*i).z;
+		int grid_x = (*i).x/16;
+		int grid_y = (*i).y/16;
+		int z = (*i).z;
 
-		int local_x = (*i).x-world_x;
-		int local_y = (*i).y-world_y;
+		int local_x = (*i).x-grid_x;
+		int local_y = (*i).y-grid_y;
 
-		cout << "designating at " << world_x+local_x << " " << world_y+local_y << " " << (*i).z;
+		cout << "designating at " << grid_x+local_x << " " << grid_y+local_y << " " << (*i).z;
 		cout << ", " << (*i).source_distance << " tiles to source" << endl;
 
 		// TODO this could probably be made much better, theres a big chance the trees are on the same grid
-		DF.ReadDesignations(world_x, world_y, world_z, (uint32_t *) designations);
+		DF.ReadDesignations(grid_x, grid_y, z, (uint32_t *) designations);
 		designations[local_x][local_y].bits.dig = DFHack::designation_default;
-		DF.WriteDesignations(world_x, world_y, world_z, (uint32_t *) designations);
+		DF.WriteDesignations(grid_x, grid_y, z, (uint32_t *) designations);
 	}
+
+	cout << debugmaxx << " " << debugmaxy << endl;
 
 	return num;
 }

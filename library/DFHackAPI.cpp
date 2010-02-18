@@ -83,6 +83,15 @@ public:
 
     uint32_t item_material_offset;
 
+	uint32_t note_foreground_offset;
+	uint32_t note_background_offset;
+	uint32_t note_name_offset;
+	uint32_t note_xyz_offset;
+	uint32_t hotkey_start;
+	uint32_t hotkey_mode_offset;
+	uint32_t hotkey_xyz_offset;
+	uint32_t hotkey_size;
+    
     uint32_t dwarf_lang_table_offset;
 
     ProcessEnumerator* pm;
@@ -98,6 +107,8 @@ public:
     bool cursorWindowInited;
     bool viewSizeInited;
     bool itemsInited;
+	bool notesInited;
+	bool hotkeyInited;
 
     bool nameTablesInited;
 
@@ -107,6 +118,7 @@ public:
     DfVector *p_bld;
     DfVector *p_veg;
     DfVector *p_itm;
+	DfVector *p_notes;
 };
 
 API::API (const string path_to_xml)
@@ -122,6 +134,8 @@ API::API (const string path_to_xml)
     d->cursorWindowInited = false;
     d->viewSizeInited = false;
     d->itemsInited = false;
+	d->notesInited = false;
+	d->hotkeyInited = false;
     d->pm = NULL;
 }
 
@@ -862,7 +876,79 @@ bool API::InitReadCreatures( uint32_t &numcreatures )
         return false;
     }
 }
-
+bool API::InitReadNotes( uint32_t &numnotes )
+{
+    memory_info * minfo = d->offset_descriptor;
+    int notes = d->offset_descriptor->getAddress ("notes");
+    d->note_foreground_offset = minfo->getOffset ("note_foreground");
+	d->note_background_offset = minfo->getOffset ("note_background");
+	d->note_name_offset = minfo->getOffset ("note_name");
+	d->note_xyz_offset = minfo->getOffset ("note_xyz");
+    
+    if (notes
+            && d->note_foreground_offset
+            && d->note_background_offset
+            && d->note_name_offset
+            && d->note_xyz_offset
+       )
+    {
+        d->p_notes = new DfVector (d->p->readVector (notes, 4));
+        //InitReadNameTables();
+        d->notesInited = true;
+        numnotes =  d->p_notes->getSize();
+        return true;
+    }
+    else
+    {
+        d->notesInited = false;
+        numnotes = 0;
+        return false;
+    }
+}
+bool API::ReadNote (const int32_t &index, t_note & note)
+{
+    assert (d->notesInited);
+    // read pointer from vector at position
+    uint32_t temp = * (uint32_t *) d->p_notes->at (index);
+	note.symbol = g_pProcess->readByte(temp);
+	note.foreground = g_pProcess->readWord(temp + d->note_foreground_offset);
+	note.background = g_pProcess->readWord(temp + d->note_background_offset);
+	d->p->readSTLString (temp + d->note_name_offset, note.name, 128);
+	g_pProcess->read (temp + d->note_xyz_offset, 3*sizeof (uint16_t), (uint8_t *) &note.x);
+	return true;
+}
+bool API::InitReadHotkeys( )
+{
+    memory_info * minfo = d->offset_descriptor;
+	d->hotkey_start = minfo->getAddress("hotkey_start");
+    d->hotkey_mode_offset = minfo->getOffset ("hotkey_mode");
+	d->hotkey_xyz_offset = minfo->getOffset("hotkey_xyz");
+	d->hotkey_size = minfo->getHexValue("hotkey_size");
+	    
+    if (d->hotkey_start && d->hotkey_mode_offset && d->hotkey_size)
+    {
+		d->hotkeyInited = true;
+		return true;
+    }
+    else
+    {
+        d->hotkeyInited = false;
+        return false;
+    }
+}
+bool API::ReadHotkeys(t_hotkey hotkeys[])
+{
+    assert (d->hotkeyInited);
+	uint32_t currHotkey = d->hotkey_start;
+	for(uint32_t i = 0 ; i < NUM_HOTKEYS ;i++)
+	{
+		d->p->readSTLString(currHotkey,hotkeys[i].name,10);
+		hotkeys[i].mode = g_pProcess->readWord(currHotkey+d->hotkey_mode_offset);
+		g_pProcess->read (currHotkey + d->hotkey_xyz_offset, 3*sizeof (int32_t), (uint8_t *) &hotkeys[i].x);
+		currHotkey+=d->hotkey_size;
+	}
+	return true;
+}
 // returns index of creature actually read or -1 if no creature can be found
 int32_t API::ReadCreatureInBox (int32_t index, t_creature & furball,
                                 const uint16_t &x1, const uint16_t &y1, const uint16_t &z1,
@@ -1094,6 +1180,13 @@ void API::FinishReadCreatures()
     delete d->p_cre;
     d->p_cre = NULL;
     d->creaturesInited = false;
+    //FinishReadNameTables();
+}
+void API::FinishReadNotes()
+{
+    delete d->p_notes;
+    d->p_notes = NULL;
+    d->notesInited = false;
     //FinishReadNameTables();
 }
 

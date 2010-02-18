@@ -48,8 +48,10 @@ int main (void)
 	DF.ReadHotkeys(hotkeys);
 	for(uint32_t i =0;i< NUM_HOTKEYS;i++)
 	{
-		cout << "x: " << hotkeys[i].x << "\ty: " << hotkeys[i].y << "\tz: " << hotkeys[i].z <<
-			"\ttext: " << hotkeys[i].name << endl;
+		if(hotkeys[i].mode != -1){
+			cout << "x: " << hotkeys[i].x << " y: " << hotkeys[i].y << " z: " << hotkeys[i].z <<
+				" text: " << hotkeys[i].name << endl;
+		}
 	}
 	DF.FinishReadNotes();
 	DF.Detach();

@@ -23,6 +23,7 @@ using namespace std;
 #include <DFTileTypes.h>
 #include <DFHackAPI.h>
 
+// counts the occurances of a certain element in a vector
 int vec_count(vector<uint16_t>& vec, uint16_t t)
 {
     int count = 0;
@@ -34,6 +35,26 @@ int vec_count(vector<uint16_t>& vec, uint16_t t)
     return count;
 }
 
+// splits a string on a certain char
+//
+// src is the string to split
+// delim is the delimiter to split the string around
+// tokens is filled with every occurance between delims
+void string_split(vector<string>& tokens, const std::string& src, const std::string& delim)
+{
+    std::string::size_type start = 0;
+    std::string::size_type end;
+    while (true) 
+    {
+        end = src.find(delim, start);
+        tokens.push_back(src.substr(start, end - start));
+        if (end == std::string::npos) // last token handled
+            break;
+        start = end + delim.size(); // skip next delim
+    }
+}
+
+// calculates the manhattan distance between two coords
 int manhattan_distance(int x, int y, int z, int xx, int yy, int zz)
 {
     return abs(x-xx)+abs(y-yy)+abs(z-zz);
@@ -179,6 +200,8 @@ int dig(DFHack::API& DF,
 
 void test()
 {
+    //////////////////////////
+    // DigTarget
     {
         DigTarget dt(
             20, 35, 16, 
@@ -196,7 +219,6 @@ void test()
         assert(dt.z == 16);
         assert(dt.source_distance == 35);
     }
-
     {
         DigTarget dt(
             2, 4, 16,
@@ -214,6 +236,29 @@ void test()
 
         assert(dt.z == 16);
         assert(dt.source_distance == 91);
+    }
+    
+    //////////////////////////
+    // string splitter
+    {
+        vector<string> tokens;
+        string src = "10,9,11";
+        string delim = ",";
+        string_split(tokens, src, delim);
+
+        assert(tokens.size() == 3);
+        assert(tokens[0] == "10");
+        assert(tokens[1] == "9");
+        assert(tokens[2] == "11");
+    }
+    {
+        vector<string> tokens;
+        string src = "10";
+        string delim = ",";
+        string_split(tokens, src, delim);
+
+        assert(tokens.size() == 1);
+        assert(tokens[0] == "10");
     }
 }
 

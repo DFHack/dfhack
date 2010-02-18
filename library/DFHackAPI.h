@@ -176,12 +176,12 @@ namespace DFHack
         
         bool InitViewAndCursor();
 
-		bool InitReadNotes( uint32_t & numnotes );
-		bool ReadNote(const int32_t &index, t_note & note);
-		void FinishReadNotes();
+        bool InitReadNotes( uint32_t & numnotes );
+        bool ReadNote(const int32_t &index, t_note & note);
+        void FinishReadNotes();
 
-		bool InitReadHotkeys( );
-		bool ReadHotkeys(t_hotkey hotkeys[]);
+        bool InitReadHotkeys( );
+        bool ReadHotkeys(t_hotkey hotkeys[]);
         
         bool getViewCoords (int32_t &x, int32_t &y, int32_t &z);
         bool setViewCoords (const int32_t &x, const int32_t &y, const int32_t &z);

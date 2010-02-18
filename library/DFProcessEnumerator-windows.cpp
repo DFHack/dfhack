@@ -73,7 +73,7 @@ bool ProcessEnumerator::findProcessess()
         if(p->isIdentified())
         {
             d->processes.push_back(p);
-			return true;
+            return true;
         }
         else
         {
@@ -103,7 +103,7 @@ bool ProcessEnumerator::findProcessess()
         else
         {
   //FIXME          delete q;
-			q = 0;
+            q = 0;
         }
     }
     if(d->processes.size())

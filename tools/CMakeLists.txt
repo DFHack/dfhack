@@ -30,6 +30,11 @@ TARGET_LINK_LIBRARIES(dfbauxite dfhack)
 ADD_EXECUTABLE(dfitemdesignator itemdesignator.cpp)
 TARGET_LINK_LIBRARIES(dfitemdesignator dfhack)
 
+# digger - designate for digging by tile class
+# Author: mizipzor
+ADD_EXECUTABLE(dfdigger digger.cpp)
+TARGET_LINK_LIBRARIES(dfdigger dfhack)
+
 IF(UNIX)
 install(TARGETS
 dfreveal

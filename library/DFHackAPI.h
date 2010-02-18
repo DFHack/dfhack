@@ -128,6 +128,10 @@ namespace DFHack
          * Return false/0 on failure, buffer allocated by client app, 256 items long
          */
         bool isValidBlock(uint32_t blockx, uint32_t blocky, uint32_t blockz);
+        /**
+         * Get the address of a block or 0 if block is not valid
+         */
+        uint32_t getBlockPtr (uint32_t x, uint32_t y, uint32_t z);
         
         bool ReadTileTypes(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint16_t *buffer); // 256 * sizeof(uint16_t)
         bool WriteTileTypes(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint16_t *buffer); // 256 * sizeof(uint16_t)

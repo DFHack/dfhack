@@ -58,7 +58,6 @@ dfattachtest
 dfbuildingsdump
 dfcreaturedump
 dfitemdump
-dfdigger
 dfexpbench
 dfmaterialtest
 dfposition

@@ -221,7 +221,16 @@ bool API::DestroyMap()
 
 bool API::isValidBlock (uint32_t x, uint32_t y, uint32_t z)
 {
+    if (x < 0 || x >= d->x_block_count || y < 0 || y >= d->y_block_count || z < 0 || z >= d->z_block_count)
+        return false;
     return d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z] != 0;
+}
+
+uint32_t API::getBlockPtr (uint32_t x, uint32_t y, uint32_t z)
+{
+    if (x < 0 || x >= d->x_block_count || y < 0 || y >= d->y_block_count || z < 0 || z >= d->z_block_count)
+        return 0;
+    return d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
 }
 
 // 256 * sizeof(uint16_t)

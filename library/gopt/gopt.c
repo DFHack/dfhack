@@ -56,7 +56,7 @@ void *gopt_sort( int *argc, const char **argv, const void *opt_specs ){
           else
             break;
         else {
-          const opt_spec_t *opt_spec_p= opt_specs;
+          const opt_spec_t *opt_spec_p= (const opt_spec_t*)opt_specs;
           for( ; opt_spec_p-> key; ++opt_spec_p )
             if( strchr( opt_spec_p-> shorts, (*arg_p)[1] )){
               opt_count+= opt_spec_p-> flags & GOPT_ARG ? 1 : strlen( (*arg_p) + 1 );
@@ -68,7 +68,7 @@ void *gopt_sort( int *argc, const char **argv, const void *opt_specs ){
   {
     const char **arg_p= argv + 1;
     const char **next_operand= arg_p;
-    opt_t *next_option= opts;
+    opt_t *next_option= (opt_t*)opts;
 
     if( ! opts ){
       perror( argv[0] );
@@ -79,7 +79,7 @@ void *gopt_sort( int *argc, const char **argv, const void *opt_specs ){
         if( '-' == (*arg_p)[1] )
           if( (*arg_p)[2] )
           {{{
-            const opt_spec_t *opt_spec_p= opt_specs;
+            const opt_spec_t *opt_spec_p= (const opt_spec_t*)opt_specs;
             const char* const *longs= opt_spec_p-> longs;
             next_option-> key= 0;
             while( *longs ){
@@ -114,11 +114,11 @@ void *gopt_sort( int *argc, const char **argv, const void *opt_specs ){
               free( opts );
               exit( EX_USAGE );              
             }
-            for( opt_spec_p= opt_specs; opt_spec_p-> key != next_option-> key; ++opt_spec_p );
+            for( opt_spec_p= (const opt_spec_t*)opt_specs; opt_spec_p-> key != next_option-> key; ++opt_spec_p );
             found_long:
             
             if( !( opt_spec_p-> flags & GOPT_REPEAT )){
-              const opt_t *opt_p= opts;
+              const opt_t *opt_p= (const opt_t*)opts;
               for( ; opt_p != next_option; ++opt_p )
                 if( opt_p-> key == opt_spec_p-> key ){
                   fprintf( stderr, "%s: --%.*s: option may not be repeated (in any long or short form)\n", argv[0], (int)strcspn( (*arg_p) + 2, "=" ), (*arg_p) + 2 );
@@ -157,12 +157,12 @@ void *gopt_sort( int *argc, const char **argv, const void *opt_specs ){
         {{{
           const char *short_opt= (*arg_p) + 1;
           for( ;*short_opt; ++short_opt ){
-            const opt_spec_t *opt_spec_p= opt_specs;
+            const opt_spec_t *opt_spec_p= (const opt_spec_t*)opt_specs;
             
             for( ; opt_spec_p-> key; ++opt_spec_p )
               if( strchr( opt_spec_p-> shorts, *short_opt )){
                 if( !( opt_spec_p-> flags & GOPT_REPEAT )){
-                  const opt_t *opt_p= opts;
+                  const opt_t *opt_p= (const opt_t*)opts;
                   for( ; opt_p != next_option; ++opt_p )
                     if( opt_p-> key == opt_spec_p-> key ){
                       fprintf( stderr, "%s: -%c: option may not be repeated (in any long or short form)\n", argv[0], *short_opt );
@@ -210,7 +210,7 @@ void *gopt_sort( int *argc, const char **argv, const void *opt_specs ){
 }
 
 size_t gopt( const void *vptr_opts, int key ){
-  const opt_t *opts= vptr_opts;
+  const opt_t *opts= (const opt_t*)vptr_opts;
   size_t count= 0;
   for( ; opts-> key; ++opts )
     count+= opts-> key == key;
@@ -219,7 +219,7 @@ size_t gopt( const void *vptr_opts, int key ){
 }
 
 size_t gopt_arg( const void *vptr_opts, int key, const char **arg ){
-  const opt_t *opts= vptr_opts;
+  const opt_t *opts= (const opt_t*)vptr_opts;
   size_t count= 0;
  
   for( ; opts-> key; ++opts )
@@ -232,7 +232,7 @@ size_t gopt_arg( const void *vptr_opts, int key, const char **arg ){
 }
 
 const char *gopt_arg_i( const void *vptr_opts, int key, size_t i ){
-  const opt_t *opts= vptr_opts;
+  const opt_t *opts= (const opt_t*)vptr_opts;
   
   for( ; opts-> key; ++opts )
     if( opts-> key == key ){
@@ -246,7 +246,7 @@ const char *gopt_arg_i( const void *vptr_opts, int key, size_t i ){
 size_t gopt_args( const void *vptr_opts, int key, const char **args, size_t args_len ){
   const char **args_stop= args + args_len;
   const char **args_ptr= args;
-  const opt_t *opts= vptr_opts;
+  const opt_t *opts= (const opt_t*)vptr_opts;
 
   for( ; opts-> key; ++opts )
     if( opts-> key == key ){

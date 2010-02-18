@@ -764,5 +764,15 @@ struct t_note
 	uint16_t z;
 };
 
+#define NUM_HOTKEYS 16
+struct t_hotkey
+{
+	char name[10];
+	int16_t mode;
+	int32_t x;
+	int32_t y;
+	int32_t z;
+};
+
 }// namespace DFHack
 #endif // TYPES_H_INCLUDED

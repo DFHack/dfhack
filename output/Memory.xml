@@ -1120,6 +1120,11 @@
         <Offset name="note_name">0x8</Offset>
         <Offset name="note_xyz">0x24</Offset>
         
+        <Address name="hotkey_start">0x14240DC</Address><!-- 0x018F40DC -->
+        <Offset name="hotkey_mode">0x1C</Offset>
+        <Offset name="hotkey_xyz">0x20</Offset>
+        <HexValue name="hotkey_size">0x2C</HexValue>
+        
         <VTable name="viewscreen_vtable">
             <class vtable="0x0092014C" name="viewscreen_conversation" />
             <class vtable="0x0092752C" name="viewscreen_option" />

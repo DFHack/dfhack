@@ -37,11 +37,6 @@ TARGET_LINK_LIBRARIES(dfsuspend dfhack)
 ADD_EXECUTABLE(dfitemdump dfitemdump.cpp)
 TARGET_LINK_LIBRARIES(dfitemdump dfhack)
 
-# digger - designate for digging by tile class
-# Author: mizipzor
-ADD_EXECUTABLE(dfdigger digger.cpp)
-TARGET_LINK_LIBRARIES(dfdigger dfhack)
-
 IF(UNIX)
     # veinlook - look at the map... sort of
     ADD_EXECUTABLE(dfveinlook veinlook.cpp)

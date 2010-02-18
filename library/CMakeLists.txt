@@ -19,6 +19,8 @@ md5/md5wrapper.h
 tinyxml/tinystr.h
 tinyxml/tinyxml.h
 
+gopt/gopt.h
+
 ../shmserver/shms.h
 )
 
@@ -33,6 +35,7 @@ tinyxml/tinystr.cpp
 tinyxml/tinyxml.cpp
 tinyxml/tinyxmlerror.cpp
 tinyxml/tinyxmlparser.cpp
+gopt/gopt.c
 )
 
 SET(PROJECT_HDRS_LINUX

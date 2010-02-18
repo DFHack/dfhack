@@ -407,6 +407,8 @@ main(int argc, char *argv[])
                             }
                         }
                     }
+                    gotoxy(0,52);
+                    cprintf("%s",stonetypes[veinVector[vein].type].name);
                 }
                 gotoxy(0,51);
                 cprintf("%s, address 0x%x",str.c_str(),veinVector[vein].address_of);

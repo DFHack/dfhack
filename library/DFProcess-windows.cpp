@@ -464,3 +464,12 @@ const string NormalProcess::readSTLString (uint32_t offset)
     delete temp;
     return ret;
 }
+
+string NormalProcess::readClassName (uint32_t vptr)
+{
+    int rtti = readDWord(vptr - 0x4);
+    int typeinfo = readDWord(rtti + 0xC);
+    string raw = readCString(typeinfo + 0xC); // skips the .?AV
+    raw.resize(raw.length() - 4);// trim st@@ from end
+    return raw;
+}

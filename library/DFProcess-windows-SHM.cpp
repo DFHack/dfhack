@@ -724,3 +724,12 @@ void SHMProcess::writeSTLString(const uint32_t address, const std::string writeS
     ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_STL_STRING;
     d->waitWhile(DFPP_WRITE_STL_STRING);
 }
+
+string SHMProcess::readClassName (uint32_t vptr)
+{
+    int rtti = readDWord(vptr - 0x4);
+    int typeinfo = readDWord(rtti + 0xC);
+    string raw = readCString(typeinfo + 0xC); // skips the .?AV
+    raw.resize(raw.length() - 4);// trim st@@ from end
+    return raw;
+}

@@ -96,6 +96,8 @@ namespace DFHack
             virtual void writeSTLString(const uint32_t address, const std::string writeString) = 0;
             // read a vector from memory
             virtual DfVector readVector (uint32_t offset, uint32_t item_size) = 0;
+            // get class name of an object with rtti/type info
+            virtual string readClassName(uint32_t vptr) = 0;
             
             virtual const std::string readCString (uint32_t offset) = 0;
             
@@ -152,6 +154,8 @@ namespace DFHack
             void writeSTLString(const uint32_t address, const std::string writeString){};
             // read a vector from memory
             DfVector readVector (uint32_t offset, uint32_t item_size);
+            // get class name of an object with rtti/type info
+            string readClassName(uint32_t vptr);
             
             const std::string readCString (uint32_t offset);
             
@@ -203,6 +207,8 @@ namespace DFHack
             void writeSTLString(const uint32_t address, const std::string writeString);
             // read a vector from memory
             DfVector readVector (uint32_t offset, uint32_t item_size);
+            // get class name of an object with rtti/type info
+            string readClassName(uint32_t vptr);
             
             const std::string readCString (uint32_t offset);
             
@@ -254,6 +260,8 @@ namespace DFHack
             void writeSTLString(const uint32_t address, const std::string writeString){};
             // read a vector from memory
             DfVector readVector (uint32_t offset, uint32_t item_size);
+            // get class name of an object with rtti/type info
+            string readClassName(uint32_t vptr);
             
             const std::string readCString (uint32_t offset);
             

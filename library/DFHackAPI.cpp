@@ -907,7 +907,8 @@ bool API::InitReadNotes( uint32_t &numnotes )
 }
 bool API::ReadNote (const int32_t &index, t_note & note)
 {
-    assert (d->notesInited);
+    if(!d->notesInited)
+        return false;
     // read pointer from vector at position
     uint32_t temp = * (uint32_t *) d->p_notes->at (index);
     note.symbol = g_pProcess->readByte(temp);
@@ -938,7 +939,8 @@ bool API::InitReadHotkeys( )
 }
 bool API::ReadHotkeys(t_hotkey hotkeys[])
 {
-    assert (d->hotkeyInited);
+    if (!d->hotkeyInited)
+        return false;
     uint32_t currHotkey = d->hotkey_start;
     for(uint32_t i = 0 ; i < NUM_HOTKEYS ;i++)
     {

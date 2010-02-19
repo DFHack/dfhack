@@ -1520,7 +1520,8 @@
         <Address name="matgloss">0x9374E88</Address>
         <HexValue name="matgloss_skip">0xC</HexValue>
         
-        <Address name="notes">0x09332C98</Address>
+        <!--<Address name="notes">0x09332C98</Address>-->
+        <Address name="notes">0x0931EA64</Address>
         <Offset name="note_foreground">0x2</Offset>
         <Offset name="note_background">0x4</Offset>
         <Offset name="note_name">0x8</Offset>

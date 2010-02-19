@@ -9,6 +9,5 @@ if [ $? -eq 0 ]; then
  mv libs/libSDL* unused_libs/
 fi
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"./libs" # Update library search path.
-export LD_PRELOAD="./libs/dfconnect.so" # Hack DF!
+export LD_PRELOAD="./libs/libdfconnect.so" # Hack DF!
 ./dwarfort.exe $* # Go, go, go! :)
-

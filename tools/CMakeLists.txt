@@ -31,13 +31,10 @@ TARGET_LINK_LIBRARIES(dfbauxite dfhack)
 ADD_EXECUTABLE(dfdigger digger.cpp)
 TARGET_LINK_LIBRARIES(dfdigger dfhack)
 
-
 # itemdesignator - change some item designations (dump, forbid, on-fire) for all items of a given type and material
 ADD_EXECUTABLE(dfitemdesignator itemdesignator.cpp)
 TARGET_LINK_LIBRARIES(dfitemdesignator dfhack)
 
-ADD_EXECUTABLE(dffindnameindexes findnameindexes.cpp)
-TARGET_LINK_LIBRARIES(dffindnameindexes dfhack)
 
 IF(UNIX)
 install(TARGETS

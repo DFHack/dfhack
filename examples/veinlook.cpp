@@ -449,6 +449,7 @@ static void finish(int sig)
     // ugly
     if(pDF)
     {
+        pDF->ForceResume();
         pDF->Detach();
     }
     endwin();

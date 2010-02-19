@@ -22,7 +22,7 @@ using namespace std;
 #include <DFTypes.h>
 #include <DFTileTypes.h>
 #include <DFHackAPI.h>
-#include <gopt/gopt.h>
+#include <argstream/argstream.h>
 
 // counts the occurances of a certain element in a vector
 int vec_count(vector<uint16_t>& vec, uint16_t t)
@@ -52,6 +52,20 @@ void string_split(vector<string>& tokens, const std::string& src, const std::str
         if (end == std::string::npos) // last token handled
             break;
         start = end + delim.size(); // skip next delim
+    }
+}
+
+void parse_int_csv(vector<uint16_t>& targets, const std::string& src)
+{    
+    std::string::size_type start = 0;
+    std::string::size_type end;
+    while (true) 
+    {
+        end = src.find(",", start);
+        targets.push_back(atoi(src.substr(start, end - start).c_str()));
+        if (end == std::string::npos) // last token handled
+            break;
+        start = end + 1; // skip next delim
     }
 }
 
@@ -261,27 +275,48 @@ void test()
         assert(tokens.size() == 1);
         assert(tokens[0] == "10");
     }
+    {
+        vector<uint16_t> targets;
+        parse_int_csv(targets, "9,10");
+        assert(targets[0] == 9);
+        assert(targets[1] == 10);
+    }
 }
 
-int main (int argc, const char* argv[])
+int main (int argc, char** argv)
 {
-    test();
-  void *options= gopt_sort( & argc, argv, gopt_start(
-      gopt_option( 'h', 0, gopt_shorts( 'h', '?' ), gopt_longs( "help", "HELP" )),
-      gopt_option( 'z', 0, gopt_shorts( 0 ), gopt_longs( "version" )),
-      gopt_option( 'v', GOPT_REPEAT, gopt_shorts( 'v' ), gopt_longs( "verbose" )),
-      gopt_option( 'o', GOPT_ARG, gopt_shorts( 'o' ), gopt_longs( "output" ))));
+test();
 
+    // Command line options
+    string s_targets;
+    string s_origin = "0,0,0";
+    bool verbose;
+    int max;
+    argstream as(argc,argv);
 
+    as  >>option('v',"verbose",verbose,"Active verbose mode") // TODO handle verbose
+        >>parameter('o',"origin",s_origin,"Close to where we should designate targets, format: x,y,z")
+        >>parameter('t',"targets",s_targets,"What kinds of tile we should designate, format: type1,type2")
+        >>parameter('m',"max",max,"The maximum limit of designated targets")
+        >>help();
+
+    // handle some commands
     vector<uint16_t> targets;
-    for (int i = 1; i < argc; ++i)
+    parse_int_csv(targets, s_targets);
+    
+    vector<uint16_t> origin;
+    parse_int_csv(origin, s_origin);
+
+    // sane check
+    if (!as.isOk())
     {
-        targets.push_back(atoi(argv[i]));
+        cout << as.errorLog();
     }
-    if (targets.size() == 0)
+    else if (targets.size() == 0 || origin.size() != 3)
     {
-        cout << "Usage: Call with a list of TileClass ids separated by a space,\n";
-        cout << "every (visible) tile on the map with that id will be designated for digging.\n\n";
+        //cout << "Usage: Call with a list of TileClass ids separated by a space,\n";
+        //cout << "every (visible) tile on the map with that id will be designated for digging.\n\n";
+        cout << as.usage();
     }
     else
     {
@@ -302,7 +337,7 @@ int main (int argc, const char* argv[])
         //	return 1;
         //}
 
-        int count = dig(DF, targets, 10, x_source, y_source, z_source); // <-- important part
+        int count = dig(DF, targets, 10, origin[0],origin[1],origin[2]); // <-- important part
         cout << count << " targets designated" << endl;
 
         DF.Detach();

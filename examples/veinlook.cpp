@@ -272,11 +272,12 @@ main(int argc, char *argv[])
         finish(0);
     }
 
+    // FIXME: could fail on small forts
     int cursorX = x_max/2 - 1;
     int cursorY = y_max/2 - 1;
     int cursorZ = z_max/2 - 1;
     
-    // FIXME: could fail on small forts
+    
     
     int vein = 0;
     // walk the map!
@@ -318,13 +319,15 @@ main(int argc, char *argv[])
         cursorY = max(cursorY, 0);
         cursorZ = max(cursorZ, 0);
         
-        cursorX = min(cursorX, x_max - 3);
-        cursorY = min(cursorY, y_max - 3);
-        cursorZ = min(cursorZ, z_max - 3);        
+        cursorX = min(cursorX, x_max - 1);
+        cursorY = min(cursorY, y_max - 1);
+        cursorZ = min(cursorZ, z_max - 1);        
 
         DF.Suspend();
-        for(int i = 0; i < 3; i++)
-            for(int j = 0; j < 3; j++)
+        for(int i = -1; i <= 1; i++)
+        {
+            for(int j = -1; j <= 1; j++)
+            {
                 if(DF.isValidBlock(cursorX+i,cursorY+j,cursorZ))
                 {
                     // read data
@@ -338,22 +341,24 @@ main(int argc, char *argv[])
                             color = pickColor(tiletypes[x][y]);
                             if(designations[x][y].bits.hidden)
                             {
-                                puttile(x+i*16,y+j*16,tiletypes[x][y], color);
+                                puttile(x+(i+1)*16,y+(j+1)*16,tiletypes[x][y], color);
                             }
                             else
                             {
                                 attron(A_STANDOUT);
-                                puttile(x+i*16,y+j*16,tiletypes[x][y], color);
+                                puttile(x+(i+1)*16,y+(j+1)*16,tiletypes[x][y], color);
                                 attroff(A_STANDOUT);
                             }
                         }
                     }
-                    if(i == 1 && j == 1)
+                    if(i == 0 && j == 0)
                     {
                         veinVector.clear();
                         DF.ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector);
                     }
                 }
+            }
+        }
         gotoxy(0,48);
         cprintf("arrow keys, PGUP, PGDN = navigate");
         gotoxy(0,49);
@@ -361,7 +366,7 @@ main(int argc, char *argv[])
         gotoxy(0,50);
         if(vein == veinVector.size()) vein = veinVector.size() - 1;
         if(vein < -1) vein = -1;
-        cprintf("X %d/%d, Y %d/%d, Z %d/%d. Vein %d of %d",cursorX + 1,x_max,cursorY + 1,y_max,cursorZ + 1,z_max,vein+1,veinVector.size());
+        cprintf("X %d/%d, Y %d/%d, Z %d/%d. Vein %d of %d",cursorX+1,x_max,cursorY+1,y_max,cursorZ,z_max,vein+1,veinVector.size());
         if(!veinVector.empty())
         {
             if(vein != -1 && vein < veinVector.size())
@@ -402,6 +407,8 @@ main(int argc, char *argv[])
                             }
                         }
                     }
+                    gotoxy(0,52);
+                    cprintf("%s",stonetypes[veinVector[vein].type].name);
                 }
                 gotoxy(0,51);
                 cprintf("%s, address 0x%x",str.c_str(),veinVector[vein].address_of);

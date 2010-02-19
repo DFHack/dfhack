@@ -128,6 +128,10 @@ namespace DFHack
          * Return false/0 on failure, buffer allocated by client app, 256 items long
          */
         bool isValidBlock(uint32_t blockx, uint32_t blocky, uint32_t blockz);
+        /**
+         * Get the address of a block or 0 if block is not valid
+         */
+        uint32_t getBlockPtr (uint32_t x, uint32_t y, uint32_t z);
         
         bool ReadTileTypes(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint16_t *buffer); // 256 * sizeof(uint16_t)
         bool WriteTileTypes(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint16_t *buffer); // 256 * sizeof(uint16_t)
@@ -172,12 +176,12 @@ namespace DFHack
         
         bool InitViewAndCursor();
 
-		bool InitReadNotes( uint32_t & numnotes );
-		bool ReadNote(const int32_t &index, t_note & note);
-		void FinishReadNotes();
+        bool InitReadNotes( uint32_t & numnotes );
+        bool ReadNote(const int32_t &index, t_note & note);
+        void FinishReadNotes();
 
-		bool InitReadHotkeys( );
-		bool ReadHotkeys(t_hotkey hotkeys[]);
+        bool InitReadHotkeys( );
+        bool ReadHotkeys(t_hotkey hotkeys[]);
         
         bool getViewCoords (int32_t &x, int32_t &y, int32_t &z);
         bool setViewCoords (const int32_t &x, const int32_t &y, const int32_t &z);

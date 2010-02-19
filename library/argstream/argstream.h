@@ -218,7 +218,7 @@ namespace
     {
     public:
         inline argstream(int argc,char** argv);
-        inline argstream(const char* c);
+        //inline argstream(const char* c);
         template<class T>
         friend argstream& operator>>(argstream& s,const ValueHolder<T>& v);
         friend inline argstream& operator>>(argstream& s,const OptionHolder& v);
@@ -408,34 +408,34 @@ namespace
     {
         parse(argc,argv);
     }
-    inline
-        argstream::argstream(const char* c)
-        : progName_(""),
-        minusActive_(true),
-        isOk_(true)
-    {
-        std::string s(c);
-        // Build argc, argv from s. We must add a dummy first element for
-        // progName because parse() expects it!!
-        std::deque<std::string> args;
-        args.push_back("");
-        std::istringstream is(s);
-        while (is.good())
-        {
-            std::string t;
-            is>>t;
-            args.push_back(t);
-        }
-        char* pargs[args.size()];
-        char** p = pargs;
-        for (std::deque<std::string>::const_iterator
-            iter = args.begin();
-            iter != args.end();++iter)
-        {
-            *p++ = const_cast<char*>(iter->c_str());
-        }
-        parse(args.size(),pargs);
-    }
+    //inline
+    //    argstream::argstream(const char* c)
+    //    : progName_(""),
+    //    minusActive_(true),
+    //    isOk_(true)
+    //{
+    //    std::string s(c);
+    //    // Build argc, argv from s. We must add a dummy first element for
+    //    // progName because parse() expects it!!
+    //    std::deque<std::string> args;
+    //    args.push_back("");
+    //    std::istringstream is(s);
+    //    while (is.good())
+    //    {
+    //        std::string t;
+    //        is>>t;
+    //        args.push_back(t);
+    //    }
+    //    char* pargs[args.size()];
+    //    char** p = pargs;
+    //    for (std::deque<std::string>::const_iterator
+    //        iter = args.begin();
+    //        iter != args.end();++iter)
+    //    {
+    //        *p++ = const_cast<char*>(iter->c_str());
+    //    }
+    //    parse(args.size(),pargs);
+    //}
     inline void
         argstream::parse(int argc,char** argv)
     {

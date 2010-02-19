@@ -158,7 +158,7 @@ void SHM_Act (void)
             
         case DFPP_CL_ERROR:
         case DFPP_RUNNING:
-            fprintf(stderr, "no. of waits: %d\n", numwaits);
+            //fprintf(stderr, "no. of waits: %d\n", numwaits);
             //MessageBox(0,"Broke out of loop properly","FUN", MB_OK);
             break;
 

@@ -16,6 +16,7 @@ using namespace DFHack;
 #include <signal.h>
 
 string error;
+API * pDF = 0;
 
 static void finish(int sig);
 
@@ -185,9 +186,21 @@ int pickColor(int tiletype)
 
 string getGCCClassName (Process * p, uint32_t vptr)
 {
-    int typeinfo = p->readDWord(vptr - 4);
-    int typestring = p->readDWord(typeinfo + 4);
-    return p->readCString(typestring);
+    int typeinfo = p->readDWord(vptr - 0x4);
+    int typestring = p->readDWord(typeinfo + 0x4);
+    string raw = p->readCString(typestring);
+    size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
+    size_t end = raw.length();
+    return raw.substr(start,end-start - 2); // trim the 'st' from the end
+}
+
+string getMSVCClassName (Process * p, uint32_t vptr)
+{
+    int rtti = p->readDWord(vptr - 0x4);
+    int typeinfo = p->readDWord(rtti + 0xC);
+    string raw = p->readCString(typeinfo + 0xC); // skips the .?AV
+    raw.resize(raw.length() - 4);// trim st@@ from end
+    return raw;
 }
 
 main(int argc, char *argv[])
@@ -241,17 +254,23 @@ main(int argc, char *argv[])
     
     // init the API
     DFHack::API DF("Memory.xml");
-    
+    pDF = &DF;
     // attach
     if(!DF.Attach())
     {
         error = "Can't find DF.";
+        pDF = 0;
         finish(0);
     }
     
     Process* p = DF.getProcess();
     // init the map
-    DF.InitMap();
+    if(!DF.InitMap())
+    {
+        error = "Can't find a map to look at.";
+        pDF = 0;
+        finish(0);
+    }
     
     DF.getSize(x_max_a,y_max_a,z_max_a);
     x_max = x_max_a;
@@ -262,6 +281,7 @@ main(int argc, char *argv[])
     if(!DF.ReadStoneMatgloss(stonetypes))
     {
         error = "Can't read stone types.";
+        pDF = 0;
         finish(0);
     }
     
@@ -269,6 +289,7 @@ main(int argc, char *argv[])
     if(!DF.ReadGeology( layerassign ))
     {
         error = "Can't read local geology.";
+        pDF = 0;
         finish(0);
     }
 
@@ -283,6 +304,7 @@ main(int argc, char *argv[])
     // walk the map!
     for (;;)
     {
+        DF.Resume();
         int c = getch();     /* refresh, accept single keystroke of input */
         clrscr();
         /* process the command keystroke */
@@ -371,8 +393,10 @@ main(int argc, char *argv[])
         {
             if(vein != -1 && vein < veinVector.size())
             {
-                string str = getGCCClassName(p, veinVector[vein].vtable);
-                if(str == "34block_square_event_frozen_liquidst")
+                //string str = getGCCClassName(p, veinVector[vein].vtable);
+                string className = p->readClassName(veinVector[vein].vtable);
+                //string str = "34block_square_event_frozen_liquidst";
+                if(className == "block_square_event_frozen_liquid")
                 {
                     t_frozenliquidvein frozen;
                     uint32_t size = sizeof(t_frozenliquidvein);
@@ -391,7 +415,7 @@ main(int argc, char *argv[])
                         }
                     }
                 }
-                else if (str == "28block_square_event_mineralst")
+                else if (className == "block_square_event_mineral")
                 {
                     //iterate through vein rows
                     for(uint32_t j = 0;j<16;j++)
@@ -411,17 +435,22 @@ main(int argc, char *argv[])
                     cprintf("%s",stonetypes[veinVector[vein].type].name);
                 }
                 gotoxy(0,51);
-                cprintf("%s, address 0x%x",str.c_str(),veinVector[vein].address_of);
+                cprintf("%s, address 0x%x",className.c_str(),veinVector[vein].address_of);
             }
         }
-        DF.Resume();
         wrefresh(stdscr);
     }
+    pDF = 0;
     finish(0);
 }
 
 static void finish(int sig)
 {
+    // ugly
+    if(pDF)
+    {
+        pDF->Detach();
+    }
     endwin();
     if(!error.empty())
     {

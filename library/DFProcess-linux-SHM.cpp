@@ -637,3 +637,13 @@ void SHMProcess::writeSTLString(const uint32_t address, const std::string writeS
     ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_STL_STRING;
     d->waitWhile(DFPP_WRITE_STL_STRING);
 }
+
+string SHMProcess::readClassName (uint32_t vptr)
+{
+    int typeinfo = readDWord(vptr - 0x4);
+    int typestring = readDWord(typeinfo + 0x4);
+    string raw = readCString(typestring);
+    size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
+    size_t end = raw.length();
+    return raw.substr(start,end-start - 2); // trim the 'st' from the end
+}

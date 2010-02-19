@@ -22,6 +22,7 @@ using namespace std;
 #include <DFTypes.h>
 #include <DFTileTypes.h>
 #include <DFHackAPI.h>
+#include <gopt/gopt.h>
 
 // counts the occurances of a certain element in a vector
 int vec_count(vector<uint16_t>& vec, uint16_t t)
@@ -265,6 +266,12 @@ void test()
 int main (int argc, const char* argv[])
 {
     test();
+  void *options= gopt_sort( & argc, argv, gopt_start(
+      gopt_option( 'h', 0, gopt_shorts( 'h', '?' ), gopt_longs( "help", "HELP" )),
+      gopt_option( 'z', 0, gopt_shorts( 0 ), gopt_longs( "version" )),
+      gopt_option( 'v', GOPT_REPEAT, gopt_shorts( 'v' ), gopt_longs( "verbose" )),
+      gopt_option( 'o', GOPT_ARG, gopt_shorts( 'o' ), gopt_longs( "output" ))));
+
 
     vector<uint16_t> targets;
     for (int i = 1; i < argc; ++i)

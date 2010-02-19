@@ -635,15 +635,17 @@ namespace
                 // The option and its associated value are removed, the subtle thing
                 // is that someother options might have this associated value too,
                 // which we must invalidate.
-                s.values_.erase(iter->second);      
-                for (std::map<std::string,argstream::value_iterator>::iterator
-                    jter = s.options_.begin();jter != s.options_.end();++jter)
-                {
-                    if (jter->second == iter->second)
-                    {
-                        jter->second = s.values_.end();
-                    }
-                }
+                s.values_.erase(iter->second);
+
+                // FIXME this loop seems to crash if a std::string is used as the value
+                //for (std::map<std::string,argstream::value_iterator>::iterator
+                //    jter = s.options_.begin();jter != s.options_.end();++jter)
+                //{
+                //    if (jter->second == iter->second)
+                //    {
+                //        jter->second = s.values_.end();
+                //    }
+                //}
                 s.options_.erase(iter);
             }
             else

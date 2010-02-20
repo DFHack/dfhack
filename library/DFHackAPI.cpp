@@ -41,6 +41,7 @@ public:
     uint32_t tile_type_offset;
     uint32_t designation_offset;
     uint32_t occupancy_offset;
+    uint32_t block_flags_offset;
     uint32_t biome_stuffs;
     uint32_t veinvector;
     uint32_t veinsize;
@@ -158,6 +159,7 @@ bool API::InitMap()
     d->tile_type_offset = d->offset_descriptor->getOffset ("type");
     d->designation_offset = d->offset_descriptor->getOffset ("designation");
     d->occupancy_offset = d->offset_descriptor->getOffset ("occupancy");
+    d->block_flags_offset = d->offset_descriptor->getOffset ("block_flags");
     d->biome_stuffs = d->offset_descriptor->getOffset ("biome_stuffs");
 
     d->veinvector = d->offset_descriptor->getOffset ("v_vein");
@@ -240,6 +242,27 @@ bool API::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
     if (addr)
     {
         g_pProcess->read (addr + d->tile_type_offset, 256 * sizeof (uint16_t), (uint8_t *) buffer);
+        return true;
+    }
+    return false;
+}
+
+bool API::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, uint32_t &flags)
+{
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
+    {
+        g_pProcess->read (addr + d->block_flags_offset, sizeof (uint32_t), (uint8_t *) &flags);
+        return true;
+    }
+    return false;
+}
+bool API::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, uint32_t flags)
+{
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
+    {
+        g_pProcess->write (addr + d->block_flags_offset, sizeof (uint32_t), (uint8_t *) &flags);
         return true;
     }
     return false;

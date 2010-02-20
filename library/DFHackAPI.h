@@ -142,6 +142,9 @@ namespace DFHack
         bool ReadOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint32_t *buffer); // 256 * sizeof(uint32_t)
         bool WriteOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint32_t *buffer); // 256 * sizeof(uint32_t)
         
+        bool ReadBlockFlags(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint32_t &flags);
+        bool WriteBlockFlags(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint32_t flags);
+        
         /// read region offsets of a block
         bool ReadRegionOffsets(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint8_t *buffer); // 16 * sizeof(uint8_t)
         

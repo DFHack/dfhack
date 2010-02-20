@@ -13,6 +13,7 @@ using namespace std;
 #include <DFHackAPI.h>
 #include <DFProcess.h>
 using namespace DFHack;
+#include <sstream>
 #include <curses.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -200,9 +201,9 @@ void hexdump (DFHack::API& DF, uint32_t address, uint32_t length, int filenum)
     char *buf = new char[reallength];
     ofstream myfile;
     
-    string name = "hexdump";
-    name += filenum;
-    name+= ".txt";
+    stringstream ss;
+    ss << "hexdump" << filenum << ".txt";
+    string name = ss.str();
     
     myfile.open (name.c_str());
     
@@ -328,14 +329,17 @@ main(int argc, char *argv[])
     
     bool dig = false;
     bool dump = false;
+    bool digbit = false;
     int vein = 0;
     int filenum = 0;
+    uint32_t blockflags = 0;
     uint32_t blockaddr = 0;
     // walk the map!
     for (;;)
     {
         dig = false;
         dump = false;
+        digbit = false;
         DF.Resume();
         int c = getch();     /* refresh, accept single keystroke of input */
         clrscr();
@@ -371,6 +375,9 @@ main(int argc, char *argv[])
                 break;
             case '-':
                 vein --;
+                break;
+            case 'z':
+                digbit = true;
                 break;
             default:
                 break;
@@ -425,11 +432,25 @@ main(int argc, char *argv[])
                         blockaddr = DF.getBlockPtr(cursorX+i,cursorY+j,cursorZ);
                         if(dump)
                         {
-                            hexdump(DF,blockaddr,0x1DB8,filenum);
+                            hexdump(DF,blockaddr,0x1E00/*0x1DB8*/,filenum);
                             filenum++;
                         }
                         if(dig)
                             DF.WriteDesignations(cursorX+i,cursorY+j,cursorZ, (uint32_t *) designations);
+                        DF.ReadBlockFlags(cursorX+i,cursorY+j,cursorZ,blockflags);
+                        if(digbit)
+                        {
+                            // toggle dig bit
+                            if(blockflags & 1)
+                            {
+                                blockflags &= 0xFFFFFFFE;
+                            }
+                            else
+                            {
+                                blockflags |= 1; // set first bit
+                            }
+                            DF.WriteBlockFlags(cursorX+i,cursorY+j,cursorZ,blockflags);
+                        }
                         veinVector.clear();
                         DF.ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector);
                     }
@@ -494,7 +515,7 @@ main(int argc, char *argv[])
             }
         }
         gotoxy (0,53);
-        cprintf("block address 0x%x",blockaddr);
+        cprintf("block address 0x%x, block flags 0x%x",blockaddr,blockflags);
         wrefresh(stdscr);
     }
     pDF = 0;

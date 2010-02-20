@@ -73,11 +73,11 @@ bool ProcessEnumerator::findProcessess()
         if(p->isIdentified())
         {
             d->processes.push_back(p);
-			return true;
+            return true;
         }
         else
         {
-            delete p;
+//FIXME            delete p;
             p = 0;
         }
     }
@@ -102,8 +102,8 @@ bool ProcessEnumerator::findProcessess()
         }
         else
         {
-            delete q;
-			q = 0;
+  //FIXME          delete q;
+            q = 0;
         }
     }
     if(d->processes.size())
@@ -134,7 +134,7 @@ void ProcessEnumerator::purge()
 {
     for(uint32_t i = 0;i < d->processes.size();i++)
     {
-        delete d->processes[i];
+ //FIXME       delete d->processes[i];
     }
     d->processes.clear();
 }

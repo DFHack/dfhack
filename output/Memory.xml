@@ -800,6 +800,18 @@
         <Address name="window_y">0xcdc3dc</Address>
         <Address name="window_z">0xcdc3b8</Address>
         <Address name="window_dims">0x1676f14</Address>
+        
+        <Address name="notes">0x012FDBAC</Address>
+        <Offset name="note_foreground">0x2</Offset>
+        <Offset name="note_background">0x4</Offset>
+        <Offset name="note_name">0x8</Offset>
+        <Offset name="note_xyz">0x24</Offset>
+        
+        <Address name="hotkey_start">0x012FDBE4</Address>
+        <Offset name="hotkey_mode">0x1C</Offset>
+        <Offset name="hotkey_xyz">0x20</Offset>
+        <HexValue name="hotkey_size">0x2C</HexValue>
+        
     </Entry>
     <Entry version="v0.28.181.40d11" os="windows" rebase="0x2d388" id="40d11win" base="40d9win">
         <!-- identification -->
@@ -811,6 +823,9 @@
         <Address name="window_x">0xcdf5a0</Address>
         <Address name="window_y">0xd0d64c</Address>
         <Address name="window_z">0xd0d628</Address>
+        
+        <Address name="notes">0x013E853C</Address>     
+        <Address name="hotkey_start">0x013E8574</Address>
     </Entry>
     <Entry version="v0.28.181.40d12" os="windows" id="40d12win" base="40d11win">
         <!-- identification -->
@@ -1113,6 +1128,9 @@
         <Address name="pause_state">0x01410CC1</Address>
         <Address name="view_screen">0x014243C4</Address>
         <Address name="current_cursor_creature">0x0178C994</Address>
+        
+        <Address name="notes">0x014240A4</Address>     
+        <Address name="hotkey_start">0x014240DC</Address>
         
         <VTable name="viewscreen_vtable">
             <class vtable="0x0092014C" name="viewscreen_conversation" />
@@ -1502,6 +1520,18 @@
         <Address name="matgloss">0x9374E88</Address>
         <HexValue name="matgloss_skip">0xC</HexValue>
         
+        <!--<Address name="notes">0x09332C98</Address>-->
+        <Address name="notes">0x0931EA64</Address>
+        <Offset name="note_foreground">0x2</Offset>
+        <Offset name="note_background">0x4</Offset>
+        <Offset name="note_name">0x8</Offset>
+        <Offset name="note_xyz">0xC</Offset>
+        
+        <Address name="hotkey_start">0x0931EA8C</Address>
+        <Offset name="hotkey_mode">0x4</Offset>
+        <Offset name="hotkey_xyz">0x8</Offset>
+        <HexValue name="hotkey_size">0x14</HexValue>
+                
         <!-- virtual tables extracted from DF -->
         <VTable name="building_vtable">
             <class vtable="0x08797448" name="building_construction" />
@@ -1603,6 +1633,8 @@
         <VTable rebase="-0x5e360" name="building_vtable" />
         <Address name="cursor_xyz">0x88073d4</Address>
         <Address name="window_dims">0x9510050</Address>
+
+        <Address name="notes">0x092AB244</Address>
     </Entry>
     <!-- re-specified addresses here, offsets and hexvals remain same -->
     <Entry version="v0.28.181.40d12" os="linux" base="40d9lin" id="40d12lin">
@@ -1643,6 +1675,10 @@
         <Address name="matgloss">0x08F97A84</Address>
         <VTable rebase="-0xd6f00" name="building_vtable" />
         <!--<class vtable="0x086C3968" name="door"/>-->
+        
+        <Address name="notes">0x08F41644</Address>
+        <Address name="hotkey_start">0x08F4166C</Address>
+        
     </Entry>
     <Entry version="v0.28.181.40d13" os="linux" id="40d13lin" base="40d12lin" rebase="0x5020">
         <!-- identification -->
@@ -1899,6 +1935,9 @@
         <Address name="pause_state">0x8f3d960</Address> <!-- game is paused -->
         <Address name="view_screen">0x878caa4</Address> <!-- address of ptr to view screen object, 'public gview' in IDA Pro -->
         <Address name="current_menu_state">0x8f4e940</Address> <!-- menu state - used to get out of menus with space key -->
+        
+        <Address name="notes">0x08F4E7C4</Address>
+        <Address name="hotkey_start">0x08F4E7EC</Address>
         
         <!--<VTable name="building_vtable" rebase="0xAE20" />--> <!-- Door: 0x86D26E8 -->
         <VTable name="viewscreen_vtable">

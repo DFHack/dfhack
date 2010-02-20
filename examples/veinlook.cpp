@@ -1,7 +1,9 @@
 #include <integers.h>
 #include <string.h> // for memset
 #include <string>
+#include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <map>
 using namespace std;
@@ -16,6 +18,7 @@ using namespace DFHack;
 #include <signal.h>
 
 string error;
+API * pDF = 0;
 
 static void finish(int sig);
 
@@ -181,14 +184,51 @@ int pickColor(int tiletype)
         case FIRE:
             return COLOR_RED;
     }
+
 }
 
-string getGCCClassName (Process * p, uint32_t vptr)
+/*
+address = absolute address of dump start
+length = length in bytes
+*/
+void hexdump (DFHack::API& DF, uint32_t address, uint32_t length, int filenum)
 {
-    int typeinfo = p->readDWord(vptr - 4);
-    int typestring = p->readDWord(typeinfo + 4);
-    return p->readCString(typestring);
+    uint32_t reallength;
+    uint32_t lines;
+    lines = (length / 16) + 1;
+    reallength = lines * 16;
+    char *buf = new char[reallength];
+    ofstream myfile;
+    
+    string name = "hexdump";
+    name += filenum;
+    name+= ".txt";
+    
+    myfile.open (name.c_str());
+    
+    DF.ReadRaw(address, reallength, (uint8_t *) buf);
+    for (int i = 0; i < lines; i++)
+    {
+        // leading offset
+        myfile << "0x" << hex << setw(4) << i*16 << " ";
+        // groups
+        for(int j = 0; j < 4; j++)
+        {
+            // bytes
+            for(int k = 0; k < 4; k++)
+            {
+                int idx = i * 16 + j * 4 + k;
+                
+                myfile << hex << setw(2) << int(static_cast<unsigned char>(buf[idx])) << " ";
+            }
+            myfile << " ";
+        }
+        myfile << endl;
+    }
+    delete buf;
+    myfile.close();
 }
+
 
 main(int argc, char *argv[])
 {
@@ -241,17 +281,23 @@ main(int argc, char *argv[])
     
     // init the API
     DFHack::API DF("Memory.xml");
-    
+    pDF = &DF;
     // attach
     if(!DF.Attach())
     {
         error = "Can't find DF.";
+        pDF = 0;
         finish(0);
     }
     
     Process* p = DF.getProcess();
     // init the map
-    DF.InitMap();
+    if(!DF.InitMap())
+    {
+        error = "Can't find a map to look at.";
+        pDF = 0;
+        finish(0);
+    }
     
     DF.getSize(x_max_a,y_max_a,z_max_a);
     x_max = x_max_a;
@@ -262,6 +308,7 @@ main(int argc, char *argv[])
     if(!DF.ReadStoneMatgloss(stonetypes))
     {
         error = "Can't read stone types.";
+        pDF = 0;
         finish(0);
     }
     
@@ -269,19 +316,27 @@ main(int argc, char *argv[])
     if(!DF.ReadGeology( layerassign ))
     {
         error = "Can't read local geology.";
+        pDF = 0;
         finish(0);
     }
 
+    // FIXME: could fail on small forts
     int cursorX = x_max/2 - 1;
     int cursorY = y_max/2 - 1;
     int cursorZ = z_max/2 - 1;
     
-    // FIXME: could fail on small forts
     
+    bool dig = false;
+    bool dump = false;
     int vein = 0;
+    int filenum = 0;
+    uint32_t blockaddr = 0;
     // walk the map!
     for (;;)
     {
+        dig = false;
+        dump = false;
+        DF.Resume();
         int c = getch();     /* refresh, accept single keystroke of input */
         clrscr();
         /* process the command keystroke */
@@ -308,6 +363,12 @@ main(int argc, char *argv[])
             case '+':
                 vein ++;
                 break;
+            case 'd':
+                dig = true;
+                break;
+            case 'o':
+                dump = true;
+                break;
             case '-':
                 vein --;
                 break;
@@ -318,13 +379,15 @@ main(int argc, char *argv[])
         cursorY = max(cursorY, 0);
         cursorZ = max(cursorZ, 0);
         
-        cursorX = min(cursorX, x_max - 3);
-        cursorY = min(cursorY, y_max - 3);
-        cursorZ = min(cursorZ, z_max - 3);        
+        cursorX = min(cursorX, x_max - 1);
+        cursorY = min(cursorY, y_max - 1);
+        cursorZ = min(cursorZ, z_max - 1);        
 
         DF.Suspend();
-        for(int i = 0; i < 3; i++)
-            for(int j = 0; j < 3; j++)
+        for(int i = -1; i <= 1; i++)
+        {
+            for(int j = -1; j <= 1; j++)
+            {
                 if(DF.isValidBlock(cursorX+i,cursorY+j,cursorZ))
                 {
                     // read data
@@ -334,26 +397,45 @@ main(int argc, char *argv[])
                     {
                         for(int y = 0; y < 16; y++)
                         {
+                            if(dig)
+                            {
+                                if(tileTypeTable[tiletypes[x][y]].c == WALL && tileTypeTable[tiletypes[x][y]].m == VEIN
+                                    || tileTypeTable[tiletypes[x][y]].c == TREE_OK || tileTypeTable[tiletypes[x][y]].c == TREE_DEAD)
+                                {
+                                    designations[x][y].bits.dig = designation_default;
+                                }
+                            }
                             int color = COLOR_BLACK;
                             color = pickColor(tiletypes[x][y]);
                             if(designations[x][y].bits.hidden)
                             {
-                                puttile(x+i*16,y+j*16,tiletypes[x][y], color);
+                                puttile(x+(i+1)*16,y+(j+1)*16,tiletypes[x][y], color);
                             }
                             else
                             {
                                 attron(A_STANDOUT);
-                                puttile(x+i*16,y+j*16,tiletypes[x][y], color);
+                                puttile(x+(i+1)*16,y+(j+1)*16,tiletypes[x][y], color);
                                 attroff(A_STANDOUT);
                             }
                         }
                     }
-                    if(i == 1 && j == 1)
+                    
+                    if(i == 0 && j == 0)
                     {
+                        blockaddr = DF.getBlockPtr(cursorX+i,cursorY+j,cursorZ);
+                        if(dump)
+                        {
+                            hexdump(DF,blockaddr,0x1DB8,filenum);
+                            filenum++;
+                        }
+                        if(dig)
+                            DF.WriteDesignations(cursorX+i,cursorY+j,cursorZ, (uint32_t *) designations);
                         veinVector.clear();
                         DF.ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector);
                     }
                 }
+            }
+        }
         gotoxy(0,48);
         cprintf("arrow keys, PGUP, PGDN = navigate");
         gotoxy(0,49);
@@ -361,13 +443,15 @@ main(int argc, char *argv[])
         gotoxy(0,50);
         if(vein == veinVector.size()) vein = veinVector.size() - 1;
         if(vein < -1) vein = -1;
-        cprintf("X %d/%d, Y %d/%d, Z %d/%d. Vein %d of %d",cursorX + 1,x_max,cursorY + 1,y_max,cursorZ + 1,z_max,vein+1,veinVector.size());
+        cprintf("X %d/%d, Y %d/%d, Z %d/%d. Vein %d of %d",cursorX+1,x_max,cursorY+1,y_max,cursorZ,z_max,vein+1,veinVector.size());
         if(!veinVector.empty())
         {
             if(vein != -1 && vein < veinVector.size())
             {
-                string str = getGCCClassName(p, veinVector[vein].vtable);
-                if(str == "34block_square_event_frozen_liquidst")
+                //string str = getGCCClassName(p, veinVector[vein].vtable);
+                string className = p->readClassName(veinVector[vein].vtable);
+                //string str = "34block_square_event_frozen_liquidst";
+                if(className == "block_square_event_frozen_liquid")
                 {
                     t_frozenliquidvein frozen;
                     uint32_t size = sizeof(t_frozenliquidvein);
@@ -386,7 +470,7 @@ main(int argc, char *argv[])
                         }
                     }
                 }
-                else if (str == "28block_square_event_mineralst")
+                else if (className == "block_square_event_mineral")
                 {
                     //iterate through vein rows
                     for(uint32_t j = 0;j<16;j++)
@@ -402,19 +486,29 @@ main(int argc, char *argv[])
                             }
                         }
                     }
+                    gotoxy(0,52);
+                    cprintf("%s",stonetypes[veinVector[vein].type].name);
                 }
                 gotoxy(0,51);
-                cprintf("%s, address 0x%x",str.c_str(),veinVector[vein].address_of);
+                cprintf("%s, address 0x%x",className.c_str(),veinVector[vein].address_of);
             }
         }
-        DF.Resume();
+        gotoxy (0,53);
+        cprintf("block address 0x%x",blockaddr);
         wrefresh(stdscr);
     }
+    pDF = 0;
     finish(0);
 }
 
 static void finish(int sig)
 {
+    // ugly
+    if(pDF)
+    {
+        pDF->ForceResume();
+        pDF->Detach();
+    }
     endwin();
     if(!error.empty())
     {

@@ -37,6 +37,11 @@ TARGET_LINK_LIBRARIES(dfsuspend dfhack)
 ADD_EXECUTABLE(dfitemdump dfitemdump.cpp)
 TARGET_LINK_LIBRARIES(dfitemdump dfhack)
 
+# hotkeynotedump - dumps the hotkeys and notes for the loaded map
+# Author: belal
+ADD_EXECUTABLE(dfhotkeynotedump hotkeynotedump.cpp)
+TARGET_LINK_LIBRARIES(dfhotkeynotedump dfhack)
+
 IF(UNIX)
     # veinlook - look at the map... sort of
     ADD_EXECUTABLE(dfveinlook veinlook.cpp)
@@ -53,7 +58,6 @@ dfattachtest
 dfbuildingsdump
 dfcreaturedump
 dfitemdump
-dfdigger
 dfexpbench
 dfmaterialtest
 dfposition

@@ -527,3 +527,13 @@ const string NormalProcess::readSTLString (uint32_t offset)
     delete temp;
     return ret;
 }
+
+string NormalProcess::readClassName (uint32_t vptr)
+{
+    int typeinfo = readDWord(vptr - 0x4);
+    int typestring = readDWord(typeinfo + 0x4);
+    string raw = readCString(typestring);
+    size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
+    size_t end = raw.length();
+    return raw.substr(start,end-start - 2); // trim the 'st' from the end
+}

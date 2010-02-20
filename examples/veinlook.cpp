@@ -12,6 +12,7 @@ using namespace std;
 #include <DFTileTypes.h>
 #include <DFHackAPI.h>
 #include <DFProcess.h>
+#include <DFMemInfo.h>
 using namespace DFHack;
 #include <sstream>
 #include <curses.h>
@@ -298,6 +299,7 @@ main(int argc, char *argv[])
         error = "Can't find a map to look at.";
         pDF = 0;
         finish(0);
+#include <DFMemInfo.h>
     }
     
     DF.getSize(x_max_a,y_max_a,z_max_a);
@@ -332,7 +334,7 @@ main(int argc, char *argv[])
     bool digbit = false;
     int vein = 0;
     int filenum = 0;
-    uint32_t blockflags = 0;
+    bool dirtybit = false;
     uint32_t blockaddr = 0;
     // walk the map!
     for (;;)
@@ -437,19 +439,11 @@ main(int argc, char *argv[])
                         }
                         if(dig)
                             DF.WriteDesignations(cursorX+i,cursorY+j,cursorZ, (uint32_t *) designations);
-                        DF.ReadBlockFlags(cursorX+i,cursorY+j,cursorZ,blockflags);
+                        DF.ReadDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
                         if(digbit)
                         {
-                            // toggle dig bit
-                            if(blockflags & 1)
-                            {
-                                blockflags &= 0xFFFFFFFE;
-                            }
-                            else
-                            {
-                                blockflags |= 1; // set first bit
-                            }
-                            DF.WriteBlockFlags(cursorX+i,cursorY+j,cursorZ,blockflags);
+                            dirtybit = !dirtybit;
+                            DF.WriteDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
                         }
                         veinVector.clear();
                         DF.ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector);
@@ -514,8 +508,12 @@ main(int argc, char *argv[])
                 cprintf("%s, address 0x%x",className.c_str(),veinVector[vein].address_of);
             }
         }
+        uint32_t sptr = blockaddr + p->getDescriptor()->getOffset("block_flags");
+        
         gotoxy (0,53);
-        cprintf("block address 0x%x, block flags 0x%x",blockaddr,blockflags);
+        cprintf("block address 0x%x",blockaddr);
+        gotoxy (0,54);
+        cprintf("dirty bit: %d",dirtybit);
         wrefresh(stdscr);
     }
     pDF = 0;

@@ -562,7 +562,6 @@
         <Offset name="designation">0x0264</Offset>
         <Offset name="occupancy">0x0664</Offset>
         <Offset name="biome_stuffs">0x1D64</Offset>
-        <Offset name="block_flags">0x1D78</Offset>
 
         <!-- creature offsets -->
         <Offset name="creature_first_name">0x00</Offset>
@@ -768,7 +767,6 @@
         <Offset name="designation">0x0284</Offset>
         <Offset name="occupancy">0x0684</Offset>  
         <Offset name="biome_stuffs">0x1D84</Offset>
-        <Offset name="block_flags">0x1DF8</Offset>
 
         <!-- the world and its offsets -->
         <Address name="world">0x015334F8</Address>
@@ -1503,7 +1501,6 @@
         <Offset name="designation">0x0254</Offset>
         <Offset name="occupancy">0x0654</Offset>
         <Offset name="biome_stuffs">0x1D54</Offset>
-        <Offset name="block_flags">0x1D68</Offset>
         
         <!-- the world and its offsets -->
         <Address name="world">0x093745EC</Address>

@@ -159,7 +159,6 @@ bool API::InitMap()
     d->tile_type_offset = d->offset_descriptor->getOffset ("type");
     d->designation_offset = d->offset_descriptor->getOffset ("designation");
     d->occupancy_offset = d->offset_descriptor->getOffset ("occupancy");
-    d->block_flags_offset = d->offset_descriptor->getOffset ("block_flags");
     d->biome_stuffs = d->offset_descriptor->getOffset ("biome_stuffs");
 
     d->veinvector = d->offset_descriptor->getOffset ("v_vein");
@@ -247,22 +246,28 @@ bool API::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
     return false;
 }
 
-bool API::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, uint32_t &flags)
+bool API::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr)
+    if(addr)
     {
-        g_pProcess->read (addr + d->block_flags_offset, sizeof (uint32_t), (uint8_t *) &flags);
+        uint32_t addr_of_struct = g_pProcess->readDWord(addr);
+        dirtybit = g_pProcess->readDWord(addr_of_struct) & 1;
         return true;
     }
     return false;
 }
-bool API::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, uint32_t flags)
+
+bool API::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->write (addr + d->block_flags_offset, sizeof (uint32_t), (uint8_t *) &flags);
+        uint32_t addr_of_struct = g_pProcess->readDWord(addr);
+        uint32_t dirtydword = g_pProcess->readDWord(addr_of_struct);
+        dirtydword &= 0xFFFFFFF0;
+        dirtydword |= dirtybit;
+        g_pProcess->writeDWord (addr_of_struct, dirtydword);
         return true;
     }
     return false;

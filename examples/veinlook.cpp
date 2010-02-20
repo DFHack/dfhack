@@ -1,7 +1,9 @@
 #include <integers.h>
 #include <string.h> // for memset
 #include <string>
+#include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <map>
 using namespace std;
@@ -182,26 +184,51 @@ int pickColor(int tiletype)
         case FIRE:
             return COLOR_RED;
     }
+
 }
 
-string getGCCClassName (Process * p, uint32_t vptr)
+/*
+address = absolute address of dump start
+length = length in bytes
+*/
+void hexdump (DFHack::API& DF, uint32_t address, uint32_t length, int filenum)
 {
-    int typeinfo = p->readDWord(vptr - 0x4);
-    int typestring = p->readDWord(typeinfo + 0x4);
-    string raw = p->readCString(typestring);
-    size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
-    size_t end = raw.length();
-    return raw.substr(start,end-start - 2); // trim the 'st' from the end
+    uint32_t reallength;
+    uint32_t lines;
+    lines = (length / 16) + 1;
+    reallength = lines * 16;
+    char *buf = new char[reallength];
+    ofstream myfile;
+    
+    string name = "hexdump";
+    name += filenum;
+    name+= ".txt";
+    
+    myfile.open (name.c_str());
+    
+    DF.ReadRaw(address, reallength, (uint8_t *) buf);
+    for (int i = 0; i < lines; i++)
+    {
+        // leading offset
+        myfile << "0x" << hex << setw(4) << i*16 << " ";
+        // groups
+        for(int j = 0; j < 4; j++)
+        {
+            // bytes
+            for(int k = 0; k < 4; k++)
+            {
+                int idx = i * 16 + j * 4 + k;
+                
+                myfile << hex << setw(2) << int(static_cast<unsigned char>(buf[idx])) << " ";
+            }
+            myfile << " ";
+        }
+        myfile << endl;
+    }
+    delete buf;
+    myfile.close();
 }
 
-string getMSVCClassName (Process * p, uint32_t vptr)
-{
-    int rtti = p->readDWord(vptr - 0x4);
-    int typeinfo = p->readDWord(rtti + 0xC);
-    string raw = p->readCString(typeinfo + 0xC); // skips the .?AV
-    raw.resize(raw.length() - 4);// trim st@@ from end
-    return raw;
-}
 
 main(int argc, char *argv[])
 {
@@ -299,11 +326,16 @@ main(int argc, char *argv[])
     int cursorZ = z_max/2 - 1;
     
     
-    
+    bool dig = false;
+    bool dump = false;
     int vein = 0;
+    int filenum = 0;
+    uint32_t blockaddr = 0;
     // walk the map!
     for (;;)
     {
+        dig = false;
+        dump = false;
         DF.Resume();
         int c = getch();     /* refresh, accept single keystroke of input */
         clrscr();
@@ -330,6 +362,12 @@ main(int argc, char *argv[])
                 break;
             case '+':
                 vein ++;
+                break;
+            case 'd':
+                dig = true;
+                break;
+            case 'o':
+                dump = true;
                 break;
             case '-':
                 vein --;
@@ -359,6 +397,14 @@ main(int argc, char *argv[])
                     {
                         for(int y = 0; y < 16; y++)
                         {
+                            if(dig)
+                            {
+                                if(tileTypeTable[tiletypes[x][y]].c == WALL && tileTypeTable[tiletypes[x][y]].m == VEIN
+                                    || tileTypeTable[tiletypes[x][y]].c == TREE_OK || tileTypeTable[tiletypes[x][y]].c == TREE_DEAD)
+                                {
+                                    designations[x][y].bits.dig = designation_default;
+                                }
+                            }
                             int color = COLOR_BLACK;
                             color = pickColor(tiletypes[x][y]);
                             if(designations[x][y].bits.hidden)
@@ -373,8 +419,17 @@ main(int argc, char *argv[])
                             }
                         }
                     }
+                    
                     if(i == 0 && j == 0)
                     {
+                        blockaddr = DF.getBlockPtr(cursorX+i,cursorY+j,cursorZ);
+                        if(dump)
+                        {
+                            hexdump(DF,blockaddr,0x1DB8,filenum);
+                            filenum++;
+                        }
+                        if(dig)
+                            DF.WriteDesignations(cursorX+i,cursorY+j,cursorZ, (uint32_t *) designations);
                         veinVector.clear();
                         DF.ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector);
                     }
@@ -438,6 +493,8 @@ main(int argc, char *argv[])
                 cprintf("%s, address 0x%x",className.c_str(),veinVector[vein].address_of);
             }
         }
+        gotoxy (0,53);
+        cprintf("block address 0x%x",blockaddr);
         wrefresh(stdscr);
     }
     pDF = 0;

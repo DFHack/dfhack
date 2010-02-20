@@ -765,7 +765,7 @@
         <HexValue name="v_vein_size">0x2C</HexValue>
         <Offset name="type">0x0082</Offset>
         <Offset name="designation">0x0284</Offset>
-        <Offset name="occupancy">0x0684</Offset>
+        <Offset name="occupancy">0x0684</Offset>  
         <Offset name="biome_stuffs">0x1D84</Offset>
 
         <!-- the world and its offsets -->

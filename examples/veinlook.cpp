@@ -12,7 +12,9 @@ using namespace std;
 #include <DFTileTypes.h>
 #include <DFHackAPI.h>
 #include <DFProcess.h>
+#include <DFMemInfo.h>
 using namespace DFHack;
+#include <sstream>
 #include <curses.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -200,9 +202,9 @@ void hexdump (DFHack::API& DF, uint32_t address, uint32_t length, int filenum)
     char *buf = new char[reallength];
     ofstream myfile;
     
-    string name = "hexdump";
-    name += filenum;
-    name+= ".txt";
+    stringstream ss;
+    ss << "hexdump" << filenum << ".txt";
+    string name = ss.str();
     
     myfile.open (name.c_str());
     
@@ -297,6 +299,7 @@ main(int argc, char *argv[])
         error = "Can't find a map to look at.";
         pDF = 0;
         finish(0);
+#include <DFMemInfo.h>
     }
     
     DF.getSize(x_max_a,y_max_a,z_max_a);
@@ -328,14 +331,17 @@ main(int argc, char *argv[])
     
     bool dig = false;
     bool dump = false;
+    bool digbit = false;
     int vein = 0;
     int filenum = 0;
+    bool dirtybit = false;
     uint32_t blockaddr = 0;
     // walk the map!
     for (;;)
     {
         dig = false;
         dump = false;
+        digbit = false;
         DF.Resume();
         int c = getch();     /* refresh, accept single keystroke of input */
         clrscr();
@@ -371,6 +377,9 @@ main(int argc, char *argv[])
                 break;
             case '-':
                 vein --;
+                break;
+            case 'z':
+                digbit = true;
                 break;
             default:
                 break;
@@ -425,11 +434,17 @@ main(int argc, char *argv[])
                         blockaddr = DF.getBlockPtr(cursorX+i,cursorY+j,cursorZ);
                         if(dump)
                         {
-                            hexdump(DF,blockaddr,0x1DB8,filenum);
+                            hexdump(DF,blockaddr,0x1E00/*0x1DB8*/,filenum);
                             filenum++;
                         }
                         if(dig)
                             DF.WriteDesignations(cursorX+i,cursorY+j,cursorZ, (uint32_t *) designations);
+                        DF.ReadDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
+                        if(digbit)
+                        {
+                            dirtybit = !dirtybit;
+                            DF.WriteDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
+                        }
                         veinVector.clear();
                         DF.ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector);
                     }
@@ -493,8 +508,12 @@ main(int argc, char *argv[])
                 cprintf("%s, address 0x%x",className.c_str(),veinVector[vein].address_of);
             }
         }
+        uint32_t sptr = blockaddr + p->getDescriptor()->getOffset("block_flags");
+        
         gotoxy (0,53);
         cprintf("block address 0x%x",blockaddr);
+        gotoxy (0,54);
+        cprintf("dirty bit: %d",dirtybit);
         wrefresh(stdscr);
     }
     pDF = 0;

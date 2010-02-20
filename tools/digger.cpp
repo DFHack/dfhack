@@ -213,6 +213,9 @@ int dig(DFHack::API& DF,
         DF.ReadDesignations((*i).grid_x, (*i).grid_y, (*i).z, (uint32_t *) designations);
         designations[(*i).local_x][(*i).local_y].bits.dig = DFHack::designation_default;
         DF.WriteDesignations((*i).grid_x, (*i).grid_y, (*i).z, (uint32_t *) designations);
+
+        // Mark as dirty so the jobs are properly picked up by the dwarves
+        DF.WriteDirtyBit((*i).grid_x, (*i).grid_y, (*i).z, true);
     }
 
     return num;
@@ -290,7 +293,7 @@ void test()
 
 int main (int argc, char** argv)
 {
-test();
+    //test();
 
     // Command line options
     string s_targets;

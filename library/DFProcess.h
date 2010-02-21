@@ -25,6 +25,7 @@ distribution.
 #ifndef PROCESS_H_INCLUDED
 #define PROCESS_H_INCLUDED
 
+#include <Tranquility.h>
 #include "Export.h"
 
 namespace DFHack
@@ -61,6 +62,8 @@ namespace DFHack
     class DFHACK_EXPORT Process
     {
         public:
+            // this is the single most important destructor ever. ~px
+            virtual ~Process(){};
             // Set up stuff so we can read memory, suspends synchronously
             virtual bool attach() = 0;
             // detach from DF, resume its execution if it's suspended

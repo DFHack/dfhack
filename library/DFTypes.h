@@ -25,6 +25,7 @@ distribution.
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 
+#include <Tranquility.h>
 #include "Export.h"
 
 namespace DFHack

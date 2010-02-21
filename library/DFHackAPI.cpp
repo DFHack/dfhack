@@ -271,7 +271,7 @@ bool API::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
         uint32_t addr_of_struct = g_pProcess->readDWord(addr);
         uint32_t dirtydword = g_pProcess->readDWord(addr_of_struct);
         dirtydword &= 0xFFFFFFF0;
-        dirtydword |= dirtybit;
+        dirtydword |= (uint32_t) dirtybit;
         g_pProcess->writeDWord (addr_of_struct, dirtydword);
         return true;
     }
@@ -1036,7 +1036,7 @@ void API::getItemIndexesInBox(vector<uint32_t> &indexes,
         uint32_t flags;
     };
     temp2 temp2;
-    for(int i =0;i<size;i++){
+    for(uint32_t i =0;i<size;i++){
         uint32_t temp = *(uint32_t *) d->p_itm->at(i);
         g_pProcess->read(temp+sizeof(uint32_t),5 * sizeof(uint16_t), (uint8_t *) &temp2);
         if(temp2.flags & (1 << 0)){
@@ -1097,11 +1097,16 @@ bool API::ReadCreature (const int32_t &index, t_creature & furball)
     furball.profession = g_pProcess->readByte (temp + d->creature_profession_offset);
     // current job HACK: the job object isn't cleanly represented here
     uint32_t jobIdAddr = g_pProcess->readDWord (temp + d->creature_current_job_offset);
-    furball.current_job.active = jobIdAddr;
+    
     if (jobIdAddr)
     {
+		furball.current_job.active = true;
         furball.current_job.jobId = g_pProcess->readByte (jobIdAddr + d->creature_current_job_id_offset);
     }
+	else
+	{
+		furball.current_job.active = false;
+	}
     
     //likes
     DfVector likes(d->p->readVector(temp+d->creature_likes_offset,4));
@@ -1491,7 +1496,7 @@ bool API::ReadPauseState()
     assert (d->cursorWindowInited);
 
     uint32_t pauseState = g_pProcess->readDWord (d->pause_state_offset);
-    return (pauseState);
+    return pauseState & 1;
 }
 
 uint32_t API::ReadMenuState()

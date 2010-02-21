@@ -25,6 +25,8 @@ distribution.
 #ifndef TILETYPES_H_INCLUDED
 #define TILETYPES_H_INCLUDED
 
+#include <Tranquility.h>
+
 namespace DFHack
 {
     enum TileClass

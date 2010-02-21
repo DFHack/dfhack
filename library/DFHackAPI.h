@@ -25,6 +25,8 @@ distribution.
 #ifndef SIMPLEAPI_H_INCLUDED
 #define SIMPLEAPI_H_INCLUDED
 
+#include <Tranquility.h>
+
 #include "Export.h"
 #include <string>
 #include <vector>

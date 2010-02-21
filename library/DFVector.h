@@ -24,6 +24,9 @@ distribution.
 
 #ifndef DFVECTOR_H_INCLUDED
 #define DFVECTOR_H_INCLUDED
+
+#include <Tranquility.h>
+
 namespace DFHack
 {
     class DfVector

@@ -148,9 +148,6 @@ bool SHMProcess::Private::DF_GetPID(uint32_t & ret)
 SHMProcess::SHMProcess(vector <memory_info> & known_versions)
 : d(new Private())
 {
-    char exe_link_name [256];
-    char target_name[1024];
-    int target_result;
     // get server and client mutex
     d->DFSVMutex = OpenMutex(SYNCHRONIZE,false, "DFSVMutex");
     if(d->DFSVMutex == 0)
@@ -427,7 +424,6 @@ bool SHMProcess::resume()
 
 bool SHMProcess::attach()
 {
-    int status;
     if(g_pProcess != 0)
     {
         cerr << "there's already a different process attached" << endl;

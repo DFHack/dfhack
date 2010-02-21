@@ -42,6 +42,11 @@ TARGET_LINK_LIBRARIES(dfitemdump dfhack)
 ADD_EXECUTABLE(dfhotkeynotedump hotkeynotedump.cpp)
 TARGET_LINK_LIBRARIES(dfhotkeynotedump dfhack)
 
+# findnameindexes
+# Author: belal
+ADD_EXECUTABLE(dffindnameindexes findnameindexes.cpp)
+TARGET_LINK_LIBRARIES(dffindnameindexes dfhack)
+
 IF(UNIX)
     # veinlook - look at the map... sort of
     ADD_EXECUTABLE(dfveinlook veinlook.cpp)

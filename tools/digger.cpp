@@ -327,17 +327,27 @@ int main (int argc, char** argv)
     else
     {
         DFHack::API DF("Memory.xml");
-        if(!DF.Attach())
+        if(DF.Attach())
         {
-            cerr << "DF not found" << endl;
-            return 1;
+            if (DF.InitMap())
+            {
+                int count = dig(DF, targets, 10, origin[0],origin[1],origin[2], verbose);
+                cout << count << " targets designated" << endl;
+
+                if (!DF.Detach())
+                {
+                    cerr << "Unable to detach DF process" << endl;
+                }
+            }
+            else
+            {
+                cerr << "Unable to init map" << endl;
+            }
         }
-        DF.InitMap();
-
-        int count = dig(DF, targets, 10, origin[0],origin[1],origin[2], verbose);
-        cout << count << " targets designated" << endl;
-
-        DF.Detach();
+        else
+        {   
+            cerr << "Unable to attach to DF process" << endl;
+        }
     }
 #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

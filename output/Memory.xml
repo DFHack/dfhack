@@ -704,7 +704,10 @@
             <class vtable="0x0097da2c" name="building_window_gem"/>
             <class vtable="0x0097db8c" name="building_window_glass"/>
         </VTable>
-        
+        <VTable name = "vein_vtable">
+            <class vtable="0x0097908c" name="block_square_event_frozen_liquid" />
+            <class vtable="0x00979074" name="block_square_event_mineral" />
+        </VTable>        
         <Address name="cursor_xyz">0x9fc294</Address>
         <Address name="window_x">0xd457f4</Address>
         <Address name="window_y">0xd73868</Address>
@@ -795,6 +798,10 @@
             <multiclass name="building_furnace" typeoffset="0x11A" />
             <multiclass name="building_trap" typeoffset="0x100" />
         </VTable>
+        <VTable name = "vein_vtable">
+            <class vtable="0x008e7d60" name="block_square_event_frozen_liquid" />
+            <class vtable="0x008e7d48" name="block_square_event_mineral" />
+        </VTable>        
         <Address name="cursor_xyz">0x9662a4</Address>
         <Address name="window_x">0xcae368</Address>
         <Address name="window_y">0xcdc3dc</Address>
@@ -859,12 +866,16 @@
         <Address name="matgloss">0x015FCE3C</Address>
         <!-- door: 0x8db5e4 -->
         <VTable name="building_vtable" rebase="-0xDC00" />
-        
+        <VTable name = "vein_vtable">
+            <class vtable="0x008d9158" name="block_square_event_frozen_liquid" />
+            <class vtable="0x008d9140" name="block_square_event_mineral" />
+        </VTable>
         <Address name="cursor_xyz">0x95f2b4</Address>
         <Address name="window_x">0xd995a0</Address>
         <Address name="window_y">0xdc764c</Address>
         <Address name="window_z">0xdc7628</Address>
         <Address name="window_dims">0x173fde0</Address>
+
         
     </Entry>
     <Entry version="v0.28.181.40d13" os="windows" id="40d13win" base="40d12win" rebase="0x5090">
@@ -1076,7 +1087,6 @@
             <class vtable="0x009351A0" name="viewscreen_setupdwarfgame" />
             <class vtable="0x009351CC" name="viewscreen_layer_choose_language_name" />
         </VTable>
-        
         <Offset name="item_type_name">0x24</Offset>
         <Offset name="matgloss_creature_name">0x1C</Offset>
         <Offset name="matgloss_wood_name">0x28</Offset>
@@ -1402,6 +1412,10 @@
             <class vtable="0x0091E444" name="building_road_paved" />
             <class vtable="0x0091E5AC" name="building_construction" />
         </VTable>
+        <VTable name = "vein_vtable">
+            <class vtable="0x00918cd0" name="block_square_event_frozen_liquid" />
+            <class vtable="0x00918cb8" name="block_square_event_mineral" />
+        </VTable>
     </Entry>
                             .-"""-.
                            '       \
@@ -1625,6 +1639,10 @@
             <class vtable="0x0879B948" name="building_window_gem" />
             <class vtable="0x0879BAE8" name="building_window_glass" />
         </VTable>
+        <VTable name = "vein_vtable">
+            <class vtable="0x08795628" name="block_square_event_frozen_liquid" />
+            <class vtable="0x08795568" name="block_square_event_mineral" />
+        </VTable>
     </Entry>
     <Entry version="v0.28.181.40d11" os="linux" base="40d9lin" rebase="-0x73820">
         <!-- identification -->
@@ -1678,7 +1696,10 @@
         
         <Address name="notes">0x08F41644</Address>
         <Address name="hotkey_start">0x08F4166C</Address>
-        
+        <VTable name = "vein_vtable">
+            <class vtable="0x086be6c8" name="block_square_event_frozen_liquid" />
+            <class vtable="0x086be608" name="block_square_event_mineral" />
+        </VTable>
     </Entry>
     <Entry version="v0.28.181.40d13" os="linux" id="40d13lin" base="40d12lin" rebase="0x5020">
         <!-- identification -->
@@ -2154,6 +2175,10 @@
             <class vtable="0x086D0028" name="building_stockpile" />
             <class vtable="0x086D37C8" name="building_window_gem" />
             <class vtable="0x086D3968" name="building_window_glass" />
+        </VTable>
+        <VTable name = "vein_vtable">
+            <class vtable="0x086cd448" name="block_square_event_frozen_liquid" />
+            <class vtable="0x086cd388" name="block_square_event_mineral" />
         </VTable>
     </Entry>
 </MemoryDescriptors>

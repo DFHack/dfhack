@@ -314,7 +314,10 @@ main(int argc, char *argv[])
         pDF = 0;
         finish(0);
     }
-    
+
+    vector <string> classes;
+    p->getDescriptor()->getClassIDMapping(classes);
+
     // get region geology
     if(!DF.ReadGeology( layerassign ))
     {
@@ -501,18 +504,23 @@ main(int argc, char *argv[])
                             }
                         }
                     }
-                    gotoxy(0,52);
+                    gotoxy(0,53);
                     cprintf("%s",stonetypes[veinVector[vein].type].name);
                 }
                 gotoxy(0,51);
-                cprintf("%s, address 0x%x",className.c_str(),veinVector[vein].address_of);
+                cprintf("%s, addr 0x%x, vptr 0x%x",className.c_str(),veinVector[vein].address_of, veinVector[vein].vtable);
+                gotoxy(0,52);
+                int32_t classID;
+                if(p->getDescriptor()->resolveClassId(veinVector[vein].address_of,classID))
+                {
+                    cprintf("mxml: %s",classes[classID].c_str());
+                }
             }
         }
         uint32_t sptr = blockaddr + p->getDescriptor()->getOffset("block_flags");
-        
-        gotoxy (0,53);
-        cprintf("block address 0x%x",blockaddr);
         gotoxy (0,54);
+        cprintf("block address 0x%x",blockaddr);
+        gotoxy (0,55);
         cprintf("dirty bit: %d",dirtybit);
         wrefresh(stdscr);
     }

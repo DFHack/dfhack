@@ -280,6 +280,7 @@ main(int argc, char *argv[])
     vector<DFHack::t_matgloss> stonetypes;
     vector< vector <uint16_t> > layerassign;
     vector<t_vein> veinVector;
+    vector<t_frozenliquidvein> IceVeinVector;
     
     // init the API
     DFHack::API DF("Memory.xml");
@@ -449,7 +450,8 @@ main(int argc, char *argv[])
                             DF.WriteDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
                         }
                         veinVector.clear();
-                        DF.ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector);
+                        IceVeinVector.clear();
+                        DF.ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector,IceVeinVector);
                     }
                 }
             }
@@ -459,21 +461,41 @@ main(int argc, char *argv[])
         gotoxy(0,49);
         cprintf("+,-                    = switch vein");
         gotoxy(0,50);
-        if(vein == veinVector.size()) vein = veinVector.size() - 1;
+        uint32_t mineralsize = veinVector.size();
+        uint32_t icesize = IceVeinVector.size();
+        uint32_t totalVeinSize =  mineralsize+ icesize;
+        if(vein == totalVeinSize) vein = totalVeinSize - 1;
         if(vein < -1) vein = -1;
-        cprintf("X %d/%d, Y %d/%d, Z %d/%d. Vein %d of %d",cursorX+1,x_max,cursorY+1,y_max,cursorZ,z_max,vein+1,veinVector.size());
-        if(!veinVector.empty())
+        cprintf("X %d/%d, Y %d/%d, Z %d/%d. Vein %d of %d",cursorX+1,x_max,cursorY+1,y_max,cursorZ,z_max,vein+1,totalVeinSize);
+        if(!veinVector.empty() || !IceVeinVector.empty())
         {
-            if(vein != -1 && vein < veinVector.size())
+            if(vein != -1 && vein < totalVeinSize)
             {
-                //string str = getGCCClassName(p, veinVector[vein].vtable);
-                string className = p->readClassName(veinVector[vein].vtable);
-                //string str = "34block_square_event_frozen_liquidst";
-                if(className == "block_square_event_frozen_liquid")
+                uint32_t realvein = 0;
+                if(vein < mineralsize)
                 {
-                    t_frozenliquidvein frozen;
-                    uint32_t size = sizeof(t_frozenliquidvein);
-                    p->read(veinVector[vein].address_of,size,(uint8_t *)&frozen);
+                    realvein = vein;
+                    //iterate through vein rows
+                    for(uint32_t j = 0;j<16;j++)
+                    {
+                        //iterate through the bits
+                        for (uint32_t k = 0; k< 16;k++)
+                        {
+                            // and the bit array with a one-bit mask, check if the bit is set
+                            bool set = !!(((1 << k) & veinVector[realvein].assignment[j]) >> k);
+                            if(set)
+                            {
+                                putch(k+16,j+16,'$',COLOR_RED);
+                            }
+                        }
+                    }
+                    gotoxy(0,51);
+                    cprintf("Mineral: %s",stonetypes[veinVector[vein].type].name);
+                }
+                else
+                {
+                    realvein = vein - mineralsize;
+                    t_frozenliquidvein &frozen = IceVeinVector[realvein];
                     for(uint32_t i = 0;i<16;i++)
                     {
                         for (uint32_t j = 0; j< 16;j++)
@@ -487,41 +509,18 @@ main(int argc, char *argv[])
                             attroff(A_STANDOUT);
                         }
                     }
-                }
-                else if (className == "block_square_event_mineral")
-                {
-                    //iterate through vein rows
-                    for(uint32_t j = 0;j<16;j++)
-                    {
-                        //iterate through the bits
-                        for (uint32_t k = 0; k< 16;k++)
-                        {
-                            // and the bit array with a one-bit mask, check if the bit is set
-                            bool set = !!(((1 << k) & veinVector[vein].assignment[j]) >> k);
-                            if(set)
-                            {
-                                putch(k+16,j+16,'$',COLOR_RED);
-                            }
-                        }
-                    }
-                    gotoxy(0,53);
-                    cprintf("%s",stonetypes[veinVector[vein].type].name);
-                }
-                gotoxy(0,51);
-                cprintf("%s, addr 0x%x, vptr 0x%x",className.c_str(),veinVector[vein].address_of, veinVector[vein].vtable);
-                gotoxy(0,52);
-                int32_t classID;
-                if(p->getDescriptor()->resolveClassId(veinVector[vein].address_of,classID))
-                {
-                    cprintf("mxml: %s",classes[classID].c_str());
+                    gotoxy(0,51);
+                    cprintf("ICE");
                 }
             }
         }
         uint32_t sptr = blockaddr + p->getDescriptor()->getOffset("block_flags");
-        gotoxy (0,54);
+        gotoxy (0,52);
         cprintf("block address 0x%x",blockaddr);
-        gotoxy (0,55);
+        gotoxy (0,53);
         cprintf("dirty bit: %d",dirtybit);
+        gotoxy (0,54);
+        cprintf ("d - dig veins, o - dump map block, z - toggle dirty bit");
         wrefresh(stdscr);
     }
     pDF = 0;

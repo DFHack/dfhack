@@ -328,6 +328,22 @@ bool memory_info::resolveClassId(uint32_t address, int32_t & classid)
     return false;
 }
 
+//ALERT: doesn't care about multiclasses
+uint32_t memory_info::getClassVPtr(string classname)
+{
+    // FIXME: another stupid search.
+    for(uint32_t i = 0;i< classes.size();i++)
+    {
+        //if(classes[i].)
+        if(classes[i].classname == classname) // got class
+        {
+            return classes[i].vtable;
+        }
+    }
+    // we failed to find anything that would match
+    return 0;
+}
+
 // Flatten vtables into a index<->name mapping
 void memory_info::getClassIDMapping(vector<string> & v_ClassID2ObjName)
 {

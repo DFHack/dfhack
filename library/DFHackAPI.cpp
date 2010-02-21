@@ -45,6 +45,8 @@ public:
     uint32_t biome_stuffs;
     uint32_t veinvector;
     uint32_t veinsize;
+    uint32_t vein_mineral_vptr;
+    uint32_t vein_ice_vptr;
 
     uint32_t window_x_offset;
     uint32_t window_y_offset;
@@ -163,6 +165,9 @@ bool API::InitMap()
 
     d->veinvector = d->offset_descriptor->getOffset ("v_vein");
     d->veinsize = d->offset_descriptor->getHexValue ("v_vein_size");
+    
+    d->vein_ice_vptr = d->offset_descriptor->getClassVPtr("block_square_event_frozen_liquid");
+    d->vein_mineral_vptr = d->offset_descriptor->getClassVPtr("block_square_event_mineral");
 
     // get the map pointer
     uint32_t    x_array_loc = g_pProcess->readDWord (map_offset);
@@ -367,13 +372,12 @@ bool API::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, uint8_t *buffer
     return false;
 }
 
-
-// veins of a block, expects empty vein vector
-bool API::ReadVeins (uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins)
+// veins of a block, expects empty vein vectors
+bool API::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins, vector <t_frozenliquidvein>& ices)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    //assert (sizeof (t_vein) == d->veinsize);
     veins.clear();
+    ices.clear();
     if (addr && d->veinvector && d->veinsize)
     {
         // veins are stored as a vector of pointers to veins
@@ -386,14 +390,26 @@ bool API::ReadVeins (uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins
         for (uint32_t i = 0; i < size;i++)
         {
             t_vein v;
+            t_frozenliquidvein fv;
 
             // read the vein pointer from the vector
             uint32_t temp = * (uint32_t *) p_veins[i];
-            // read the vein data (dereference pointer)
-            g_pProcess->read (temp, d->veinsize, (uint8_t *) &v);
-            v.address_of = temp;
-            // store it in the vector
-            veins.push_back (v);
+            uint32_t type = g_pProcess->readDWord(temp);
+            if(type == d->vein_mineral_vptr)
+            {
+                // read the vein data (dereference pointer)
+                g_pProcess->read (temp, sizeof(t_vein), (uint8_t *) &v);
+                v.address_of = temp;
+                // store it in the vector
+                veins.push_back (v);
+            }
+            else if(type == d->vein_ice_vptr)
+            {
+                // read the ice vein data (dereference pointer)
+                g_pProcess->read (temp, sizeof(t_frozenliquidvein), (uint8_t *) &fv);
+                // store it in the vector
+                ices.push_back (fv);
+            }
         }
         return true;
     }

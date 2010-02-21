@@ -118,6 +118,7 @@ namespace DFHack
         // ALERT: uses memory reading directly
         bool resolveClassId(const uint32_t address, int32_t & classid);
         void getClassIDMapping(vector<string> & v_ClassID2ObjName);
+        uint32_t getClassVPtr(string classname);
 
         void flush();
         

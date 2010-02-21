@@ -149,7 +149,7 @@ namespace DFHack
         bool ReadRegionOffsets(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint8_t *buffer); // 16 * sizeof(uint8_t)
         
         /// read aggregated veins of a block
-        bool ReadVeins(uint32_t blockx, uint32_t blocky, uint32_t blockz, vector <t_vein> & veins);
+        bool ReadVeins(uint32_t blockx, uint32_t blocky, uint32_t blockz, vector <t_vein> & veins, vector <t_frozenliquidvein>& ices);
         
         /**
          * Buildings, constructions, plants, all pretty straighforward. InitReadBuildings returns all the building types as a mapping between a numeric values and strings

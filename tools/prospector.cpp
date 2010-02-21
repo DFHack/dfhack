@@ -85,6 +85,7 @@ int main (int argc, const char* argv[])
     
     int16_t tempvein [16][16];
     vector <DFHack::t_vein> veins;
+    vector <DFHack::t_frozenliquidvein> iceveins;
     // walk the map!
     for(uint32_t x = 0; x< x_max;x++)
     {
@@ -101,7 +102,7 @@ int main (int argc, const char* argv[])
                 
                 memset(tempvein, -1, sizeof(tempvein));
                 veins.clear();
-                DF.ReadVeins(x,y,z,veins);
+                DF.ReadVeins(x,y,z,veins,iceveins);
                 
                 if(showbaselayers)
                 {

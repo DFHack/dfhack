@@ -1,14 +1,8 @@
 // digger.cpp
 
-// Usage: Call with a list of TileClass ids separated by a space,
-// every (visible) tile on the map with that id will be designated for digging.
-
 // NOTE currently only works with trees 
 
 // TODO add a sort of "sub-target" to dig() to make it able to designate stone as well
-// TODO add proper cli
-// TODO add interactive text based menu
-// TODO add ability to mark num closest to cursor
 
 #include <iostream>
 #include <integers.h>
@@ -25,6 +19,7 @@ using namespace std;
 #include <argstream/argstream.h>
 
 // counts the occurances of a certain element in a vector
+// used to determine of a given tile is a target
 int vec_count(vector<uint16_t>& vec, uint16_t t)
 {
     int count = 0;
@@ -55,6 +50,7 @@ void string_split(vector<string>& tokens, const std::string& src, const std::str
     }
 }
 
+// this is used to parse the command line options
 void parse_int_csv(vector<uint16_t>& targets, const std::string& src)
 {    
     std::string::size_type start = 0;
@@ -67,12 +63,6 @@ void parse_int_csv(vector<uint16_t>& targets, const std::string& src)
             break;
         start = end + 1; // skip next delim
     }
-}
-
-// calculates the manhattan distance between two coords
-int manhattan_distance(int x, int y, int z, int xx, int yy, int zz)
-{
-    return abs(x-xx)+abs(y-yy)+abs(z-zz);
 }
 
 struct DigTarget
@@ -117,14 +107,21 @@ struct DigTarget
             sourcex, sourcey, sourcez);
     }
 
-    int source_distance;	// the distance to the source coords, used for sorting
+    int source_distance;	    // the distance to the source coords, used for sorting
 
-    int grid_x, grid_y;
-    int local_x, local_y;
-    int real_x, real_y;
-    int z;
+    int grid_x, grid_y;         // what grid the target is in
+    int local_x, local_y;       // on what coord in the grid the target is in (0-16)
+    int real_x, real_y;         // real coordinates for target, thats grid*16+local
+    int z;                      // z position for target, stored plain since there arent z grids
 
     bool operator<(const DigTarget& o) const { return source_distance < o.source_distance; }
+
+private:
+    // calculates the manhattan distance between two coords
+    int manhattan_distance(int x, int y, int z, int xx, int yy, int zz)
+    {
+        return abs(x-xx)+abs(y-yy)+abs(z-zz);
+    }
 };
 
 int dig(DFHack::API& DF, 
@@ -132,7 +129,8 @@ int dig(DFHack::API& DF,
         int num = -1,
         const int x_source = 0, 
         const int y_source = 0, 
-        const int z_source = 0)
+        const int z_source = 0,
+        bool verbose = false)
 {
     if (num == 0)
         return 0; // max limit of 0, nothing to do
@@ -145,8 +143,8 @@ int dig(DFHack::API& DF,
     // every tile found, will later be sorted by distance to source
     vector<DigTarget> candidates;
 
-    //cout << "============================" << endl;
-    //cout << "source is " << x_source << " " << y_source << " " << z_source << endl;
+    if (verbose)
+        cout << "source is " << x_source << " " << y_source << " " << z_source << endl;
 
     // walk the map
     for(uint32_t x = 0; x < x_max; x++)
@@ -171,13 +169,17 @@ int dig(DFHack::API& DF,
                                 designations[lx][ly].bits.dig == 0 && 
                                 vec_count(targets, DFHack::tileTypeTable[tiles[lx][ly]].c) > 0)
                             {
-                                candidates.push_back(DigTarget(
+                                DigTarget dt(
                                     x, y, z,
                                     lx, ly,
-                                    x_source, y_source, z_source));
+                                    x_source, y_source, z_source);
+                                candidates.push_back(dt);
 
-                                //cout << "target found at " << world_x << " " << world_y << " " << z;
-                                //cout << ", " << dt->source_distance << " tiles to source" << endl;
+                                if (verbose) 
+                                {
+                                    cout << "target found at " << dt.real_x << " " << dt.real_y << " " << dt.z;
+                                    cout << ", " << dt.source_distance << " tiles to source" << endl;
+                                }
                             }
                         } // local y
                     } // local x
@@ -185,6 +187,7 @@ int dig(DFHack::API& DF,
             }
         }
     }
+
     // if we found more tiles than was requested, sort them by distance to source,
     // keep the front 'num' elements and drop the rest
     if (num != -1 && candidates.size() > (unsigned int)num)
@@ -194,20 +197,25 @@ int dig(DFHack::API& DF,
     }
     num = candidates.size();
 
-    //cout << "============================" << endl;
-    //cout << "source is " << x_source << " " << y_source << " " << z_source << endl;
+    if (verbose)
+        cout << "=== proceeding to designating targets ===" << endl;
 
     // mark the tiles for actual digging
     for (vector<DigTarget>::const_iterator i = candidates.begin(); i != candidates.end(); ++i)
     {
-        //cout << "designating at " << (*i).real_x << " " << (*i).real_y << " " << (*i).z;
-        //cout << ", " << (*i).source_distance << " tiles to source" << endl;
+        if (verbose)
+        {
+            cout << "designating at " << (*i).real_x << " " << (*i).real_y << " " << (*i).z;
+            cout << ", " << (*i).source_distance << " tiles to source" << endl;
+        }
 
         // TODO this could probably be made much better, theres a big chance the trees are on the same grid
-        // TODO move into function in DigTarget
         DF.ReadDesignations((*i).grid_x, (*i).grid_y, (*i).z, (uint32_t *) designations);
         designations[(*i).local_x][(*i).local_y].bits.dig = DFHack::designation_default;
         DF.WriteDesignations((*i).grid_x, (*i).grid_y, (*i).z, (uint32_t *) designations);
+
+        // Mark as dirty so the jobs are properly picked up by the dwarves
+        DF.WriteDirtyBit((*i).grid_x, (*i).grid_y, (*i).z, true);
     }
 
     return num;
@@ -285,22 +293,22 @@ void test()
 
 int main (int argc, char** argv)
 {
-test();
+    //test();
 
     // Command line options
     string s_targets;
-    string s_origin = "0,0,0";
+    string s_origin;
     bool verbose;
     int max;
     argstream as(argc,argv);
 
-    as  >>option('v',"verbose",verbose,"Active verbose mode") // TODO handle verbose
+    as  >>option('v',"verbose",verbose,"Active verbose mode")
         >>parameter('o',"origin",s_origin,"Close to where we should designate targets, format: x,y,z")
         >>parameter('t',"targets",s_targets,"What kinds of tile we should designate, format: type1,type2")
         >>parameter('m',"max",max,"The maximum limit of designated targets")
         >>help();
 
-    // handle some commands
+    // some commands need extra care
     vector<uint16_t> targets;
     parse_int_csv(targets, s_targets);
     
@@ -314,33 +322,32 @@ test();
     }
     else if (targets.size() == 0 || origin.size() != 3)
     {
-        //cout << "Usage: Call with a list of TileClass ids separated by a space,\n";
-        //cout << "every (visible) tile on the map with that id will be designated for digging.\n\n";
         cout << as.usage();
     }
     else
     {
         DFHack::API DF("Memory.xml");
-        if(!DF.Attach())
+        if(DF.Attach())
         {
-            cerr << "DF not found" << endl;
-            return 1;
+            if (DF.InitMap())
+            {
+                int count = dig(DF, targets, 10, origin[0],origin[1],origin[2], verbose);
+                cout << count << " targets designated" << endl;
+
+                if (!DF.Detach())
+                {
+                    cerr << "Unable to detach DF process" << endl;
+                }
+            }
+            else
+            {
+                cerr << "Unable to init map" << endl;
+            }
         }
-        DF.InitMap();
-
-        // TODO hack until we have a proper cli to specify origin
-        int x_source = 134, y_source = 134, z_source = 16; // my wagon starts here; cut trees close to wagon 
-        //DF.InitViewAndCursor();
-        //if (!DF.getViewCoords(x_source, y_source, z_source))
-        //{
-        //	cerr << "Enable cursor" << endl;
-        //	return 1;
-        //}
-
-        int count = dig(DF, targets, 10, origin[0],origin[1],origin[2]); // <-- important part
-        cout << count << " targets designated" << endl;
-
-        DF.Detach();
+        else
+        {   
+            cerr << "Unable to attach to DF process" << endl;
+        }
     }
 #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

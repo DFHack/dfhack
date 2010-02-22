@@ -49,10 +49,10 @@ class NormalProcess::Private
     bool attached;
     bool suspended;
     bool identified;
-    bool validate(char * exe_file, uint32_t pid, char * mem_file, vector <memory_info> & known_versions);
+    bool validate(char * exe_file, uint32_t pid, char * mem_file, vector <memory_info *> & known_versions);
 };
 
-NormalProcess::NormalProcess(uint32_t pid, vector <memory_info> & known_versions)
+NormalProcess::NormalProcess(uint32_t pid, vector< memory_info* >& known_versions)
 : d(new Private())
 {
     char dir_name [256];
@@ -104,20 +104,20 @@ bool NormalProcess::isIdentified()
     return d->identified;
 }
 
-bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFile, vector <memory_info> & known_versions)
+bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFile, vector <memory_info *> & known_versions)
 {
     md5wrapper md5;
     // get hash of the running DF process
     string hash = md5.getHashFromFile(exe_file);
-    vector<memory_info>::iterator it;
+    vector<memory_info *>::iterator it;
     
     // iterate over the list of memory locations
     for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
     {
-        if(hash == (*it).getString("md5")) // are the md5 hashes the same?
+        if(hash == (*it)->getString("md5")) // are the md5 hashes the same?
         {
-            memory_info * m = &*it;
-            if (memory_info::OS_LINUX == (*it).getOS())
+            memory_info * m = *it;
+            if (memory_info::OS_LINUX == m->getOS())
             {
                 my_descriptor = m;
                 my_handle = my_pid = pid;

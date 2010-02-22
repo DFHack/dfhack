@@ -21,7 +21,7 @@ int main (void)
         return 1;
     }
     
-    DFHack::memory_info mem = DF.getMemoryInfo();
+    DFHack::memory_info * mem = DF.getMemoryInfo();
     // get stone matgloss mapping
     uint32_t numNotes;
     if(!DF.InitReadNotes(numNotes))

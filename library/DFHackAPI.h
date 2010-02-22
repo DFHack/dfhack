@@ -229,7 +229,7 @@ namespace DFHack
         // wrapper for meminfo method of the same name
         bool getClassIDMapping (vector <string>& objecttypes);
         
-        memory_info getMemoryInfo();
+        memory_info *getMemoryInfo();
         Process * getProcess();
         DFWindow * getWindow();
         /*

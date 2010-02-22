@@ -49,10 +49,10 @@ class WineProcess::Private
     bool attached;
     bool suspended;
     bool identified;
-    bool validate(char * exe_file, uint32_t pid, char * mem_file, vector <memory_info> & known_versions);
+    bool validate(char * exe_file, uint32_t pid, char * mem_file, vector <memory_info *> & known_versions);
 };
 
-WineProcess::WineProcess(uint32_t pid, vector <memory_info> & known_versions)
+WineProcess::WineProcess(uint32_t pid, vector <memory_info *> & known_versions)
 : d(new Private())
 {
     char dir_name [256];
@@ -129,20 +129,20 @@ bool WineProcess::isIdentified()
     return d->identified;
 }
 
-bool WineProcess::Private::validate(char * exe_file,uint32_t pid, char * memFile, vector <memory_info> & known_versions)
+bool WineProcess::Private::validate(char* exe_file, uint32_t pid, char* mem_file, std::vector< memory_info* >& known_versions)
 {
     md5wrapper md5;
     // get hash of the running DF process
     string hash = md5.getHashFromFile(exe_file);
-    vector<memory_info>::iterator it;
+    vector<memory_info *>::iterator it;
     
     // iterate over the list of memory locations
     for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
     {
         // are the md5 hashes the same?
-        if(memory_info::OS_WINDOWS == (*it).getOS() && hash == (*it).getString("md5"))
+        if(memory_info::OS_WINDOWS == (*it)->getOS() && hash == (*it)->getString("md5"))
         {
-            memory_info * m = &*it;
+            memory_info * m = *it;
             my_descriptor = m;
             my_handle = my_pid = pid;
             // tell WineProcess about the /proc/PID/mem file

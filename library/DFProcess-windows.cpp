@@ -49,7 +49,7 @@ class NormalProcess::Private
         bool identified;
 };
 
-NormalProcess::NormalProcess(uint32_t pid, vector <memory_info> & known_versions)
+NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versions)
 : d(new Private())
 {
     HMODULE hmod = NULL;
@@ -85,24 +85,24 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info> & known_versions
     d->my_handle = 0;
     
     // see if there's a version entry that matches this process
-    vector<memory_info>::iterator it;
+    vector<memory_info*>::iterator it;
     for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
     {
         // filter by OS
-        if(memory_info::OS_WINDOWS != (*it).getOS())
+        if(memory_info::OS_WINDOWS != (*it)->getOS())
             continue;
         
         // filter by timestamp
-        uint32_t pe_timestamp = (*it).getHexValue("pe_timestamp");
+        uint32_t pe_timestamp = (*it)->getHexValue("pe_timestamp");
         if (pe_timestamp != pe_header.FileHeader.TimeDateStamp)
             continue;
         
         // all went well
         {
-            printf("Match found! Using version %s.\n", (*it).getVersion().c_str());
+            printf("Match found! Using version %s.\n", (*it)->getVersion().c_str());
             d->identified = true;
             // give the process a data model and memory layout fixed for the base of first module
-            memory_info *m = new memory_info(*it);
+            memory_info *m = new memory_info(**it);
             m->RebaseAll(base);
             // keep track of created memory_info object so we can destroy it later
             d->my_descriptor = m;

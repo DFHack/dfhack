@@ -60,7 +60,7 @@ class SHMProcess::Private
     bool suspended;
     bool identified;
     
-    bool validate(char * exe_file, uint32_t pid, vector <memory_info> & known_versions);
+    bool validate(char* exe_file, uint32_t pid, std::vector< memory_info* >& known_versions);
     bool waitWhile (DF_PINGPONG state);
     bool DF_TestBridgeVersion(bool & ret);
     bool DF_GetPID(pid_t & ret);
@@ -124,7 +124,7 @@ bool SHMProcess::Private::DF_GetPID(pid_t & ret)
     return true;
 }
 
-SHMProcess::SHMProcess(vector <memory_info> & known_versions)
+SHMProcess::SHMProcess(vector <memory_info *> & known_versions)
 : d(new Private())
 {
     char exe_link_name [256];
@@ -214,19 +214,19 @@ bool SHMProcess::isIdentified()
     return d->identified;
 }
 
-bool SHMProcess::Private::validate(char * exe_file, uint32_t pid, vector <memory_info> & known_versions)
+bool SHMProcess::Private::validate(char * exe_file, uint32_t pid, vector <memory_info *> & known_versions)
 {
     md5wrapper md5;
     // get hash of the running DF process
     string hash = md5.getHashFromFile(exe_file);
-    vector<memory_info>::iterator it;
+    vector<memory_info *>::iterator it;
     cerr << exe_file << " " << hash <<  endl;
     // iterate over the list of memory locations
     for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
     {
-        if(hash == (*it).getString("md5")) // are the md5 hashes the same?
+        if(hash == (*it)->getString("md5")) // are the md5 hashes the same?
         {
-            memory_info * m = &*it;
+            memory_info * m = *it;
             my_descriptor = m;
             my_pid = pid;
             identified = true;

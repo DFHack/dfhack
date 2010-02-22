@@ -46,9 +46,6 @@ bool ProcessEnumerator::findProcessess()
 {
     DIR *dir_p;
     struct dirent *dir_entry_p;
-
-    int errorcount;
-    int result;
     
     Process *p = 0;
     p = new SHMProcess(d->meminfo->meminfo);

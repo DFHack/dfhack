@@ -317,7 +317,7 @@ int main (void)
         return 1;
     }
 
-    DFHack::memory_info mem = DF.getMemoryInfo();
+    DFHack::memory_info * mem = DF.getMemoryInfo();
 
     if (!DF.ReadCreatureMatgloss(creaturestypes))
     {
@@ -434,11 +434,11 @@ start:
             // I have the writeString function do nothing for normal mode
             if (commandString == "pzyn") // change nickname
             {
-                p->writeSTLString(toChange.origin+mem.getOffset("creature_nick_name"),changeString);
+                p->writeSTLString(toChange.origin+mem->getOffset("creature_nick_name"),changeString);
             }
             else
             {
-                p->writeSTLString(toChange.origin+mem.getOffset("creature_custom_profession"),changeString);
+                p->writeSTLString(toChange.origin+mem->getOffset("creature_custom_profession"),changeString);
             }
         }
         DF.Suspend();

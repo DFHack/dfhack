@@ -25,7 +25,7 @@ distribution.
 #include "DFCommonInternal.h"
 using namespace DFHack;
 
-void MemInfoManager::ParseVTable(TiXmlElement* vtable, memory_info& mem)
+void MemInfoManager::ParseVTable(TiXmlElement* vtable, memory_info* mem)
 {
     TiXmlElement* pClassEntry;
     TiXmlElement* pClassSubEntry;
@@ -34,7 +34,7 @@ void MemInfoManager::ParseVTable(TiXmlElement* vtable, memory_info& mem)
     if(rebase)
     {
         int32_t rebase_offset = strtol(rebase, NULL, 16);
-        mem.RebaseVTable(rebase_offset);
+        mem->RebaseVTable(rebase_offset);
     }
     // parse vtable entries
     pClassEntry = vtable->FirstChildElement();
@@ -46,14 +46,14 @@ void MemInfoManager::ParseVTable(TiXmlElement* vtable, memory_info& mem)
         // it's a simple class
         if(type== "class")
         {
-            mem.setClass(cstr_name, cstr_vtable);
+            mem->setClass(cstr_name, cstr_vtable);
         }
         // it's a multi-type class
         else if (type == "multiclass")
         {
             // get offset of the type variable
             const char *cstr_typeoffset = pClassEntry->Attribute("typeoffset");
-            int mclass = mem.setMultiClass(cstr_name, cstr_vtable, cstr_typeoffset);
+            int mclass = mem->setMultiClass(cstr_name, cstr_vtable, cstr_typeoffset);
             // parse class sub-entries
             pClassSubEntry = pClassEntry->FirstChildElement();
             for(;pClassSubEntry;pClassSubEntry=pClassSubEntry->NextSiblingElement())
@@ -64,7 +64,7 @@ void MemInfoManager::ParseVTable(TiXmlElement* vtable, memory_info& mem)
                     // type is a value loaded from type offset
                     cstr_name = pClassSubEntry->Attribute("name");
                     const char *cstr_value = pClassSubEntry->Attribute("type");
-                    mem.setMultiClassChild(mclass,cstr_name,cstr_value);
+                    mem->setMultiClassChild(mclass,cstr_name,cstr_value);
                 }
             }
         }
@@ -73,14 +73,13 @@ void MemInfoManager::ParseVTable(TiXmlElement* vtable, memory_info& mem)
 
 
 
-void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info& mem, map <string ,TiXmlElement *>& knownEntries)
+void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <string ,TiXmlElement *>& knownEntries)
 {
     TiXmlElement* pMemEntry;
     const char *cstr_version = entry->Attribute("version");
     const char *cstr_os = entry->Attribute("os");
     const char *cstr_base = entry->Attribute("base");
     const char *cstr_rebase = entry->Attribute("rebase");
-//    printf("%s : %s\n",cstr_version, cstr_os);
     if(cstr_base)
     {
         string base = cstr_base;
@@ -95,28 +94,28 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info& mem, map <str
         return;
     }
     string os = cstr_os;
-    mem.setVersion(cstr_version);
-    mem.setOS(cstr_os);
+    mem->setVersion(cstr_version);
+    mem->setOS(cstr_os);
     
     // offset inherited addresses by 'rebase'.
     int32_t rebase = 0;
     if(cstr_rebase)
     {
-        rebase = mem.getBase() + strtol(cstr_rebase, NULL, 16);
-        mem.RebaseAddresses(rebase);
+        rebase = mem->getBase() + strtol(cstr_rebase, NULL, 16);
+        mem->RebaseAddresses(rebase);
     }
     
     //set base to default, we're overwriting this because the previous rebase could cause havoc on Vista/7
     if(os == "windows")
     {
         // set default image base. this is fixed for base relocation later
-        mem.setBase(0x400000);
+        mem->setBase(0x400000);
     }
     else if(os == "linux")
     {
         // this is wrong... I'm not going to do base image relocation on linux though.
         // users are free to use a sane kernel that doesn't do this kind of **** by default
-        mem.setBase(0x0);
+        mem->setBase(0x0);
     }
     else if ( os == "all")
     {
@@ -154,39 +153,39 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info& mem, map <str
         value = cstr_value;
         if (type == "HexValue")
         {
-            mem.setHexValue(name, value);
+            mem->setHexValue(name, value);
         }
         else if (type == "Address")
         {
-            mem.setAddress(name, value);
+            mem->setAddress(name, value);
         }
         else if (type == "Offset")
         {
-            mem.setOffset(name, value);
+            mem->setOffset(name, value);
         }
         else if (type == "String")
         {
-            mem.setString(name, value);
+            mem->setString(name, value);
         }
         else if (type == "Profession")
         {
-            mem.setProfession(value,name);
+            mem->setProfession(value,name);
         }
         else if (type == "Job")
         {
-            mem.setJob(value,name);
+            mem->setJob(value,name);
         }
         else if (type == "Skill")
         {
-            mem.setSkill(value,name);
+            mem->setSkill(value,name);
         }
         else if (type == "Trait")
         {
-            mem.setTrait(value, name,pMemEntry->Attribute("level_0"),pMemEntry->Attribute("level_1"),pMemEntry->Attribute("level_2"),pMemEntry->Attribute("level_3"),pMemEntry->Attribute("level_4"),pMemEntry->Attribute("level_5"));
+            mem->setTrait(value, name,pMemEntry->Attribute("level_0"),pMemEntry->Attribute("level_1"),pMemEntry->Attribute("level_2"),pMemEntry->Attribute("level_3"),pMemEntry->Attribute("level_4"),pMemEntry->Attribute("level_5"));
         }
         else if (type == "Labor")
         {
-            mem.setLabor(value,name);
+            mem->setLabor(value,name);
         }
         else
         {
@@ -235,6 +234,10 @@ bool MemInfoManager::loadFile(string path_to_xml)
         // transform elements
         {
             // trash existing list
+            for(int i = 0; i < meminfo.size(); i++)
+            {
+                delete meminfo[i];
+            }
             meminfo.clear();
             TiXmlElement* pMemInfo=hRoot.FirstChild( "MemoryDescriptors" ).FirstChild( "Entry" ).Element();
             map <string ,TiXmlElement *> map_pNamedEntries;
@@ -251,7 +254,7 @@ bool MemInfoManager::loadFile(string path_to_xml)
             }
             for(uint32_t i = 0; i< v_pEntries.size();i++)
             {
-                memory_info mem;
+                memory_info *mem = new memory_info();
                 //FIXME: add a set of entries processed in a step of this cycle, use it to check for infinite loops
                 /* recursive */ParseEntry( v_pEntries[i] , mem , map_pNamedEntries);
                 meminfo.push_back(mem);

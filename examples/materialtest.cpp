@@ -20,7 +20,7 @@ int main (void)
         return 1;
     }
     vector <DFHack::t_matgloss> Woods;
-    DF.ReadPlantMatgloss(Woods);
+    DF.ReadWoodMatgloss(Woods);
     
     vector <DFHack::t_matgloss> Plants;
     DF.ReadPlantMatgloss(Plants);

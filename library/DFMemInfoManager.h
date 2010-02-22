@@ -38,9 +38,9 @@ namespace DFHack
             bool loadFile( string path_to_xml);
             bool isInErrorState() const {return error;};
         private:
-            std::vector<memory_info> meminfo;
-            void ParseVTable(TiXmlElement* vtable, memory_info& mem);
-            void ParseEntry (TiXmlElement* entry, memory_info& mem, map <string ,TiXmlElement *>& knownEntries);
+            std::vector<memory_info*> meminfo;
+            void ParseVTable(TiXmlElement* vtable, memory_info* mem);
+            void ParseEntry (TiXmlElement* entry, memory_info* mem, map <string ,TiXmlElement *>& knownEntries);
             bool error;
     };
 }

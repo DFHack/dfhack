@@ -34,29 +34,18 @@ distribution.
 
 namespace DFHack
 {
+    
     class DFHACK_EXPORT memory_info
     {
+    private:
+        class Private;
+        Private * d;    
     public:
         enum OSType
         {
             OS_WINDOWS,
             OS_LINUX,
             OS_BAD
-        };
-        struct t_class
-        {
-            string classname;
-            uint32_t vtable;
-            bool is_multiclass;
-            uint32_t multi_index;
-            uint32_t assign;// index to typeclass array if multiclass. return value if not.
-            uint32_t type_offset; // offset of type data for multiclass
-        };
-        struct t_type
-        {
-            string classname;
-            uint32_t assign;
-            uint32_t type;
         };
         memory_info();
         memory_info(const memory_info&);
@@ -123,25 +112,6 @@ namespace DFHack
         uint32_t getClassVPtr(string classname);
 
         void flush();
-        
-    private:
-        map <string, uint32_t> addresses;
-        map <string, uint32_t> offsets;
-        map <string, uint32_t> hexvals;
-        map <string, string> strings;
-
-        vector<string> professions;
-        vector<string> jobs;
-        vector<string> skills;
-        vector< vector<string> > traits;
-        map <uint32_t, string> labors;
-
-        vector<t_class> classes;
-        vector<vector<t_type> > classsubtypes;
-        int32_t base;
-        uint32_t classindex;
-        string version;
-        OSType OS;
     };
 }
 #endif // MEMINFO_H_INCLUDED

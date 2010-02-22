@@ -129,7 +129,7 @@ namespace DFHack
             Private * const d;
             
         public:
-            NormalProcess(uint32_t pid, vector <memory_info> & known_versions);
+            NormalProcess(uint32_t pid, vector <memory_info *> & known_versions);
             ~NormalProcess();
             bool attach();
             bool detach();
@@ -181,7 +181,7 @@ namespace DFHack
             Private * const d;
             
         public:
-            SHMProcess(vector <memory_info> & known_versions);
+            SHMProcess(vector <memory_info *> & known_versions);
             ~SHMProcess();
             // Set up stuff so we can read memory
             bool attach();
@@ -235,7 +235,7 @@ namespace DFHack
             Private * const d;
             
         public:
-            WineProcess(uint32_t pid, vector <memory_info> & known_versions);
+            WineProcess(uint32_t pid, vector <memory_info *> & known_versions);
             ~WineProcess();
             bool attach();
             bool detach();

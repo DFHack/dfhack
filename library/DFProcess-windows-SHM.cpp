@@ -145,7 +145,7 @@ bool SHMProcess::Private::DF_GetPID(uint32_t & ret)
     return true;
 }
 
-SHMProcess::SHMProcess(vector <memory_info> & known_versions)
+SHMProcess::SHMProcess(vector <memory_info *> & known_versions)
 : d(new Private())
 {
     // get server and client mutex
@@ -227,13 +227,13 @@ SHMProcess::SHMProcess(vector <memory_info> & known_versions)
             read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
             
             // iterate over the list of memory locations
-            vector<memory_info>::iterator it;
+            vector<memory_info *>::iterator it;
             for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
             {
-                uint32_t pe_timestamp = (*it).getHexValue("pe_timestamp");
+                uint32_t pe_timestamp = (*it)->getHexValue("pe_timestamp");
                 if (pe_timestamp == pe_header.FileHeader.TimeDateStamp)
                 {
-                    memory_info *m = new memory_info(*it);
+                    memory_info *m = new memory_info(**it);
                     m->RebaseAll(base);
                     d->my_descriptor = m;
                     d->identified = true;

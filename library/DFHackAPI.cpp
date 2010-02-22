@@ -395,6 +395,7 @@ bool API::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins,
             // read the vein pointer from the vector
             uint32_t temp = * (uint32_t *) p_veins[i];
             uint32_t type = g_pProcess->readDWord(temp);
+try_again:
             if(type == d->vein_mineral_vptr)
             {
                 // read the vein data (dereference pointer)
@@ -410,6 +411,21 @@ bool API::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins,
                 // store it in the vector
                 ices.push_back (fv);
             }
+            //#define ___FIND_
+            #ifdef ___FIND_THEM
+            else if(g_pProcess->readClassName(type) == "block_square_event_frozen_liquid")
+            {
+                d->vein_ice_vptr = type;
+                cout << "block_square_event_frozen_liquid : 0x" << hex << type << endl;
+                goto try_again;
+            }
+            else if(g_pProcess->readClassName(type) == "block_square_event_mineral")
+            {
+                d->vein_mineral_vptr = type;
+                cout << "block_square_event_mineral : 0x" << hex << type << endl;
+                goto try_again;
+            }
+            #endif
         }
         return true;
     }
@@ -1420,9 +1436,9 @@ bool API::getClassIDMapping (vector <string>& objecttypes)
     return false;
 }
 
-memory_info API::getMemoryInfo()
+memory_info *API::getMemoryInfo()
 {
-    return *d->offset_descriptor;
+    return d->offset_descriptor;
 }
 Process * API::getProcess()
 {

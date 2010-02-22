@@ -161,7 +161,7 @@ int main (void)
     DF.ReadMetalMatgloss(mat.metalMat);
     DF.ReadCreatureMatgloss(mat.creatureMat);
     
-    DFHack::memory_info mem = DF.getMemoryInfo();
+    DFHack::memory_info *mem = DF.getMemoryInfo();
     // get stone matgloss mapping
     if(!DF.ReadCreatureMatgloss(creaturestypes))
     {
@@ -229,14 +229,14 @@ int main (void)
                 cout << endl;
                 addendl = false;
             }
-            cout << "profession: " << mem.getProfession(temp.profession) << "(" << (int) temp.profession << ")";
+            cout << "profession: " << mem->getProfession(temp.profession) << "(" << (int) temp.profession << ")";
             if(temp.custom_profession[0])
             {
                 cout << ", custom profession: " << temp.custom_profession;
             }
             if(temp.current_job.active)
             {
-                cout << ", current job: " << mem.getJob(temp.current_job.jobId);
+                cout << ", current job: " << mem->getJob(temp.current_job.jobId);
             }
             cout << endl;
             cout << "happiness: " << temp.happiness << ", strength: " << temp.strength << ", agility: " 

@@ -47,6 +47,11 @@ TARGET_LINK_LIBRARIES(dfhotkeynotedump dfhack)
 ADD_EXECUTABLE(dffindnameindexes findnameindexes.cpp)
 TARGET_LINK_LIBRARIES(dffindnameindexes dfhack)
 
+# settlementdump - dumps the settlements on the loaded map
+# Author: belal
+ADD_EXECUTABLE(dfsettlementdump settlementdump.cpp)
+TARGET_LINK_LIBRARIES(dfsettlementdump dfhack)
+
 IF(UNIX)
     # veinlook - look at the map... sort of
     ADD_EXECUTABLE(dfveinlook veinlook.cpp)

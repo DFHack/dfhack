@@ -1142,6 +1142,13 @@
         <Address name="notes">0x014240A4</Address>     
         <Address name="hotkey_start">0x014240DC</Address>
         
+        <Address name="settlement_current">0x16385DC</Address>
+        <Address name="settlements">0x1638510</Address>
+        
+        <Offset name="settlement_name">0x38</Offset>
+        <Offset name="settlement_world_xy">0x7a</Offset>
+        <Offset name="settlement_local_xy">0x100</Offset>
+        
         <VTable name="viewscreen_vtable">
             <class vtable="0x0092014C" name="viewscreen_conversation" />
             <class vtable="0x0092752C" name="viewscreen_option" />

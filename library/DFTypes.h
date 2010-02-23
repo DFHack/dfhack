@@ -775,5 +775,18 @@ struct t_hotkey
     int32_t z;
 };
 
+// local are numbered with top left as 0,0, name is indexes into the item vector
+struct t_settlement
+{
+	uint32_t origin;
+	int32_t name[2];
+	int16_t world_x;
+	int16_t world_y;
+	int16_t local_x1;
+	int16_t local_x2;
+	int16_t local_y1;
+	int16_t local_y2;
+};
+
 }// namespace DFHack
 #endif // TYPES_H_INCLUDED

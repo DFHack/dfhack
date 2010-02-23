@@ -94,6 +94,10 @@ public:
     uint32_t hotkey_mode_offset;
     uint32_t hotkey_xyz_offset;
     uint32_t hotkey_size;
+
+	uint32_t settlement_name_offset;
+	uint32_t settlement_world_xy_offset;
+	uint32_t settlement_local_xy_offset;
     
     uint32_t dwarf_lang_table_offset;
 
@@ -112,6 +116,7 @@ public:
     bool itemsInited;
     bool notesInited;
     bool hotkeyInited;
+	bool settlementsInited;
 
     bool nameTablesInited;
 
@@ -122,6 +127,8 @@ public:
     DfVector *p_veg;
     DfVector *p_itm;
     DfVector *p_notes;
+	DfVector *p_settlements;
+	DfVector *p_current_settlement;
 };
 
 API::API (const string path_to_xml)
@@ -139,6 +146,7 @@ API::API (const string path_to_xml)
     d->itemsInited = false;
     d->notesInited = false;
     d->hotkeyInited = false;
+	
     d->pm = NULL;
 }
 
@@ -944,7 +952,7 @@ bool API::InitReadCreatures( uint32_t &numcreatures )
 bool API::InitReadNotes( uint32_t &numnotes )
 {
     memory_info * minfo = d->offset_descriptor;
-    int notes = d->offset_descriptor->getAddress ("notes");
+    int notes = minfo->getAddress ("notes");
     d->note_foreground_offset = minfo->getOffset ("note_foreground");
     d->note_background_offset = minfo->getOffset ("note_background");
     d->note_name_offset = minfo->getOffset ("note_name");
@@ -958,7 +966,6 @@ bool API::InitReadNotes( uint32_t &numnotes )
        )
     {
         d->p_notes = new DfVector (d->p->readVector (notes, 4));
-        //InitReadNameTables();
         d->notesInited = true;
         numnotes =  d->p_notes->getSize();
         return true;
@@ -983,6 +990,68 @@ bool API::ReadNote (const int32_t &index, t_note & note)
     g_pProcess->read (temp + d->note_xyz_offset, 3*sizeof (uint16_t), (uint8_t *) &note.x);
     return true;
 }
+bool API::InitReadSettlements( uint32_t & numsettlements )
+{
+	memory_info * minfo = d->offset_descriptor;
+    int allSettlements = minfo->getAddress ("settlements");
+	int currentSettlement = minfo->getAddress("settlement_current");
+    d->settlement_name_offset = minfo->getOffset ("settlement_name");
+    d->settlement_world_xy_offset = minfo->getOffset ("settlement_world_xy");
+    d->settlement_local_xy_offset = minfo->getOffset ("settlement_local_xy");
+    
+    if (allSettlements && currentSettlement
+            && d->settlement_name_offset
+			&& d->settlement_world_xy_offset
+			&& d->settlement_local_xy_offset
+       )
+    {
+        d->p_settlements = new DfVector (d->p->readVector (allSettlements, 4));
+		d->p_current_settlement = new DfVector(d->p->readVector(currentSettlement,4));
+        d->settlementsInited = true;
+        numsettlements =  d->p_settlements->getSize();
+        return true;
+    }
+    else
+    {
+        d->settlementsInited = false;
+        numsettlements = 0;
+        return false;
+    }
+}	
+bool API::ReadSettlement(const int32_t &index, t_settlement & settlement)
+{
+	if(!d->settlementsInited)
+        return false;
+    // read pointer from vector at position
+    uint32_t temp = * (uint32_t *) d->p_settlements->at (index);
+	settlement.origin = temp;
+    g_pProcess->read(temp + d->settlement_name_offset, 2 * sizeof(int32_t), (uint8_t *) &settlement.name);
+	g_pProcess->read(temp + d->settlement_world_xy_offset, 2 * sizeof(int16_t), (uint8_t *) &settlement.world_x);
+	g_pProcess->read(temp + d->settlement_local_xy_offset, 4 * sizeof(int16_t), (uint8_t *) &settlement.local_x1);
+    return true;
+}
+bool API::ReadCurrentSettlement(t_settlement & settlement)
+{
+	if(!d->settlementsInited)
+		return false;
+    uint32_t temp = * (uint32_t *) d->p_current_settlement->at(0);
+	settlement.origin = temp;
+	g_pProcess->read(temp + d->settlement_name_offset, 2 * sizeof(int32_t), (uint8_t *) &settlement.name);
+	g_pProcess->read(temp + d->settlement_world_xy_offset, 2 * sizeof(int32_t), (uint8_t *) &settlement.world_x);
+	g_pProcess->read(temp + d->settlement_local_xy_offset, 4 * sizeof(int32_t), (uint8_t *) &settlement.local_x1);
+    return true;
+}
+
+void API::FinishReadSettlements()
+{
+    delete d->p_settlements;
+	delete d->p_current_settlement;
+    d->p_settlements = NULL;
+	d->p_current_settlement = NULL;
+    d->settlementsInited = false;
+}
+
+
 bool API::InitReadHotkeys( )
 {
     memory_info * minfo = d->offset_descriptor;
@@ -1195,6 +1264,26 @@ bool API::InitReadNameTables (map< string, vector<string> > & nameTable)
     }
 }
 
+string API::TranslateName (const int names[], int size, const map<string, vector<string> > & nameTable, const string & language)
+{
+	string trans;
+    assert (d->nameTablesInited);
+    map<string, vector<string> >::const_iterator it;
+    it = nameTable.find (language);
+    if (it != nameTable.end())
+    {
+        for (int i = 0;i < size;i++)
+        {
+            if (names[i] == -1)
+            {
+                break;
+            }
+            trans.append (it->second[names[i]]);
+        }
+    }
+    return (trans);
+}
+
 string API::TranslateName (const t_lastname & last, const map<string, vector<string> > & nameTable, const string & language)
 {
     string trans_last;
@@ -1259,7 +1348,6 @@ void API::FinishReadNotes()
     delete d->p_notes;
     d->p_notes = NULL;
     d->notesInited = false;
-    //FinishReadNameTables();
 }
 
 bool API::Attach()

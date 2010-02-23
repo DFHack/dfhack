@@ -185,6 +185,11 @@ namespace DFHack
         bool ReadNote(const int32_t &index, t_note & note);
         void FinishReadNotes();
 
+		bool InitReadSettlements( uint32_t & numsettlements );
+        bool ReadSettlement(const int32_t &index, t_settlement & settlement);
+		bool ReadCurrentSettlement(t_settlement & settlement);
+        void FinishReadSettlements();
+
         bool InitReadHotkeys( );
         bool ReadHotkeys(t_hotkey hotkeys[]);
         
@@ -219,6 +224,7 @@ namespace DFHack
 
         string TranslateName(const t_lastname & last, const map< string, vector< string > > &nameTable,const string & language="GENERIC");
         string TranslateName(const t_squadname & squad, const map< string, vector< string > > &nameTable,const string & language="GENERIC");
+		string TranslateName (const int names[], int size, const map<string, vector<string> > & nameTable, const string & language="GENERIC");
         
         void WriteLabors(const uint32_t &index, uint8_t labors[NUM_CREATURE_LABORS]);
         

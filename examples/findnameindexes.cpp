@@ -63,7 +63,7 @@ int main (void)
 	while(input != "q"){
 		for( map< string, vector<string> >::iterator it = names.begin();it != names.end(); it++){
 			for(uint32_t i = 0; i < it->second.size(); i++){
-				uint32_t found = input.find(tolower(it->second[i]));
+				uint32_t found = tolower(input).find(tolower(it->second[i]));
 				if(found != string::npos){
 					stringstream value;
 					value << setfill('0') << setw(8) << hex << endian_swap(i);

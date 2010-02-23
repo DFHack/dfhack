@@ -146,7 +146,7 @@ bool WineProcess::Private::validate(char* exe_file, uint32_t pid, char* mem_file
             my_descriptor = m;
             my_handle = my_pid = pid;
             // tell WineProcess about the /proc/PID/mem file
-            this->memFile = memFile;
+            memFile = mem_file;
             identified = true;
             return true;
         }
@@ -310,6 +310,7 @@ bool WineProcess::attach()
     if(proc_pid_mem == -1)
     {
         ptrace(PTRACE_DETACH, d->my_handle, NULL, NULL);
+        cerr << d->memFile << endl;
         cerr << "couldn't open /proc/" << d->my_handle << "/mem" << endl;
         perror("open(memFile.c_str(),O_RDONLY)");
         return false;

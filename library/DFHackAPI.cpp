@@ -411,7 +411,7 @@ try_again:
                 // store it in the vector
                 ices.push_back (fv);
             }
-            //#define ___FIND_
+            //#define ___FIND_THEM
             #ifdef ___FIND_THEM
             else if(g_pProcess->readClassName(type) == "block_square_event_frozen_liquid")
             {

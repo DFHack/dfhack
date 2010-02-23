@@ -41,51 +41,29 @@ distribution.
 #include <sys/syscall.h>
 #include <signal.h>
 
-/*
- * wait for futex
- * futex has to be aligned to 4 bytes
- * futex has to be equal to val (returns EWOULDBLOCK otherwise)
- * wait can be broken by arriving signals (returns EINTR)
- * returns 0 when broken by futex_wake
- */
-inline int futex_wait(int * futex, int val)
-{
-    return syscall(SYS_futex, futex, FUTEX_WAIT, val, 0, 0, 0);
-}
-/*
- * wait for futex
- * futex has to be aligned to 4 bytes
- * futex has to be equal to val (returns EWOULDBLOCK otherwise)
- * wait can be broken by arriving signals (returns EINTR)
- * returns 0 when broken by futex_wake
- * returns ETIMEDOUT on timeout
- */
-inline int futex_wait_timed(int * futex, int val, const struct timespec *timeout)
-{
-    return syscall(SYS_futex, futex, FUTEX_WAIT, val, timeout, 0, 0);
-}
-/*
- * wake up futex. returns number of waked processes
- */
-inline int futex_wake(int * futex)
-{
-    return syscall(SYS_futex, futex, FUTEX_WAKE, 1, 0, 0, 0);
-}
-static timespec one_second = { 1,0 };
-static timespec five_second = { 5,0 };
-
-
-// ptr to the real functions
-static void (*_SDL_GL_SwapBuffers)(void) = 0;
-static void (*_SDL_Quit)(void) = 0;
-static int (*_SDL_Init)(uint32_t flags) = 0;
-static int (*_SDL_Flip)(void * some_ptr) = 0;
 // various crud
 int counter = 0;
 int errorstate = 0;
 char *shm = 0;
 int shmid = 0;
 bool inited = 0;
+
+/*******************************************************************************
+*                           SHM part starts here                               *
+*******************************************************************************/
+
+// FIXME: add error checking?
+bool isValidSHM()
+{
+    shmid_ds descriptor;
+    shmctl(shmid, IPC_STAT, &descriptor);
+    //fprintf(stderr,"ID %d, attached: %d\n",shmid, descriptor.shm_nattch);
+    return (descriptor.shm_nattch == 2);
+}
+uint32_t getPID()
+{
+    return getpid();
+}
 
 void SHM_Init ( void )
 {
@@ -100,7 +78,8 @@ void SHM_Init ( void )
     // name for the segment
     key_t key = 123466;
     
-    // find previous segment, check if it's used by some processes. if it isn't, kill it with fire
+    // find previous segment, check if it's used by some processes.
+    // if it isn't, kill it with fire
     if ((shmid = shmget(key, SHM_SIZE, 0600)) != -1)
     {
         shmid_ds descriptor;
@@ -127,21 +106,36 @@ void SHM_Init ( void )
         return;
     }
     full_barrier
-    ((shm_cmd *)shm)->pingpong = DFPP_RUNNING; // make sure we don't stall or do crazy stuff
+    // make sure we don't stall or do crazy stuff
+    ((shm_cmd *)shm)->pingpong = DFPP_RUNNING;
 }
 
 void SHM_Destroy ( void )
 {
-    shmid_ds descriptor;
-    shmctl(shmid, IPC_STAT, &descriptor);
-    shmdt(shm);
-    while(descriptor.shm_nattch != 0)
+    if(inited && !errorstate)
     {
+        shmid_ds descriptor;
         shmctl(shmid, IPC_STAT, &descriptor);
+        shmdt(shm);
+        while(descriptor.shm_nattch != 0)
+        {
+            shmctl(shmid, IPC_STAT, &descriptor);
+        }
+        shmctl(shmid,IPC_RMID,NULL);
+        fprintf(stderr,"dfhack: destroyed shared segment.\n");
+        inited = false;
     }
-    shmctl(shmid,IPC_RMID,NULL);
-    fprintf(stderr,"dfhack: destroyed shared segment.\n");
 }
+
+/*******************************************************************************
+*                           SDL part starts here                               *
+*******************************************************************************/
+
+// ptr to the real functions
+static void (*_SDL_GL_SwapBuffers)(void) = 0;
+static void (*_SDL_Quit)(void) = 0;
+static int (*_SDL_Init)(uint32_t flags) = 0;
+static int (*_SDL_Flip)(void * some_ptr) = 0;
 
 // hook - called every tick in OpenGL mode of DF
 extern "C" void SDL_GL_SwapBuffers(void)
@@ -169,19 +163,19 @@ extern "C" int SDL_Flip(void * some_ptr)
         counter ++;
         return _SDL_Flip(some_ptr);
     }
+    return 0;
 }
 
 // hook - called at program exit
 extern "C" void SDL_Quit(void)
 {
+    if(!errorstate)
+    {
+        SHM_Destroy();
+    }
     if(_SDL_Quit)
     {
         _SDL_Quit();
-    }
-    if(!errorstate)
-    {
-        fprintf(stderr,"dfhack: DF called SwapBuffers %d times\n", counter);
-        SHM_Destroy();
     }
 }
 
@@ -210,15 +204,60 @@ extern "C" int SDL_Init(uint32_t flags)
     return _SDL_Init(flags);
 }
 
-// FIXME: add error checking?
-bool isValidSHM()
+/*******************************************************************************
+*                           NCURSES part starts here                           *
+*******************************************************************************/
+
+static int (*_refresh)(void) = 0;
+//extern NCURSES_EXPORT(int) refresh (void);
+extern "C" int refresh (void)
 {
-    shmid_ds descriptor;
-    shmctl(shmid, IPC_STAT, &descriptor);
-    //fprintf(stderr,"ID %d, attached: %d\n",shmid, descriptor.shm_nattch);
-    return (descriptor.shm_nattch == 2);
+    if(_refresh)
+    {
+        if(!errorstate && ((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
+        {
+            SHM_Act();
+        }
+        counter ++;
+        return _refresh();
+    }
+    return 0;
 }
-uint32_t getPID()
+
+static int (*_endwin)(void) = 0;
+//extern NCURSES_EXPORT(int) endwin (void);
+extern "C" int endwin (void)
 {
-    return getpid();
+    if(!errorstate)
+    {
+        SHM_Destroy();
+    }
+    if(_endwin)
+    {
+        return _endwin();
+    }
+}
+
+typedef void WINDOW;
+//extern NCURSES_EXPORT(WINDOW *) initscr (void);
+static WINDOW * (*_initscr)(void) = 0;
+extern "C" WINDOW * initscr (void)
+{
+    // find real functions
+    _refresh = (int (*)( void )) dlsym(RTLD_NEXT, "refresh");
+    _endwin = (int (*)( void )) dlsym(RTLD_NEXT, "endwin");
+    _initscr = (WINDOW * (*)( void )) dlsym(RTLD_NEXT, "initscr");
+    // check if we got them
+    if(_refresh && _endwin && _initscr)
+    {
+        fprintf(stderr,"dfhack: hooking successful\n");
+    }
+    else
+    {
+        // bail, this would be a disaster otherwise
+        fprintf(stderr,"dfhack: something went horribly wrong\n");
+        exit(1);
+    }
+    SHM_Init();
+    return _initscr();
 }

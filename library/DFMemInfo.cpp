@@ -28,6 +28,8 @@ distribution.
 #define BOOST_MULTI_INDEX_ENABLE_INVARIANT_CHECKING
 #define BOOST_MULTI_INDEX_ENABLE_SAFE_MODE
 #endif
+// really, we don't need it
+#define BOOST_MULTI_INDEX_DISABLE_SERIALIZATION
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>

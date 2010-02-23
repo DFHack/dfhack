@@ -26,6 +26,7 @@ SET( EXECUTABLE_OUTPUT_PATH ${dfhack_SOURCE_DIR}/output CACHE PATH "Output direc
 
 include_directories (${CMAKE_SOURCE_DIR}/library/)
 include_directories (${CMAKE_SOURCE_DIR}/shmserver/)
+include_directories (${CMAKE_SOURCE_DIR}/depends/)
 
 add_subdirectory (library)
 add_subdirectory (tools)

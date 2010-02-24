@@ -819,6 +819,13 @@
         <Offset name="hotkey_xyz">0x20</Offset>
         <HexValue name="hotkey_size">0x2C</HexValue>
         
+        <Address name="settlement_current">0x01533CC0</Address>
+        <Address name="settlements">0x01533BF4</Address>
+        
+        <Offset name="settlement_name">0x38</Offset>
+        <Offset name="settlement_world_xy">0x7a</Offset>
+        <Offset name="settlement_local_xy">0x100</Offset>
+        
     </Entry>
     <Entry version="v0.28.181.40d11" os="windows" rebase="0x2d388" id="40d11win" base="40d9win">
         <!-- identification -->
@@ -875,7 +882,9 @@
         <Address name="window_y">0xdc764c</Address>
         <Address name="window_z">0xdc7628</Address>
         <Address name="window_dims">0x173fde0</Address>
-
+        
+        <Address name="settlement_current">0x015FCACC</Address>
+        <Address name="settlements">0x015FCA00</Address>
         
     </Entry>
     <Entry version="v0.28.181.40d13" os="windows" id="40d13win" base="40d12win" rebase="0x5090">
@@ -1144,10 +1153,6 @@
         
         <Address name="settlement_current">0x16385DC</Address>
         <Address name="settlements">0x1638510</Address>
-        
-        <Offset name="settlement_name">0x38</Offset>
-        <Offset name="settlement_world_xy">0x7a</Offset>
-        <Offset name="settlement_local_xy">0x100</Offset>
         
         <VTable name="viewscreen_vtable">
             <class vtable="0x0092014C" name="viewscreen_conversation" />
@@ -1763,6 +1768,13 @@
         <Offset name="hotkey_mode">0x4</Offset>
         <Offset name="hotkey_xyz">0x8</Offset>
         <HexValue name="hotkey_size">0x14</HexValue>
+        
+        <Address name="settlement_current">0x09374BCC</Address>
+        <Address name="settlements">0x09374B60</Address>
+        
+        <Offset name="settlement_name">0x08</Offset>
+        <Offset name="settlement_world_xy">0x4a</Offset>
+        <Offset name="settlement_local_xy">0x94</Offset>
                 
         <!-- virtual tables extracted from DF -->
         <VTable name="building_vtable">
@@ -1914,6 +1926,10 @@
         
         <Address name="notes">0x08F41644</Address>
         <Address name="hotkey_start">0x08F4166C</Address>
+        
+        <Address name="settlement_current">0x08F977C8</Address>
+        <Address name="settlements">0x08F9775C</Address>
+        
         <VTable name = "vein_vtable">
             <class vtable="0x086be6c8" name="block_square_event_frozen_liquid" />
             <class vtable="0x086be608" name="block_square_event_mineral" />
@@ -2178,6 +2194,9 @@
         
         <Address name="notes">0x08F4E7C4</Address>
         <Address name="hotkey_start">0x08F4E7EC</Address>
+        
+        <Address name="settlement_current">0x08FA4948</Address>
+        <Address name="settlements">0x08FA48DC</Address>
         
         <!--<VTable name="building_vtable" rebase="0xAE20" />--> <!-- Door: 0x86D26E8 -->
         <VTable name="viewscreen_vtable">

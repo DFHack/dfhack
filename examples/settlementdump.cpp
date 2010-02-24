@@ -46,7 +46,7 @@ int main (int argc,const char* argv[])
 	}
 	// MSVC claims this is causing the heap to be corrupted, I think it is because the currentSettlement vector only has 1 item in it
 	cout << "Current Settlement\n";
-	DF.ReadCurrentSettlement(0,current);
+	DF.ReadCurrentSettlement(current);
 	printSettlement(DF,current,names);
 
 	DF.FinishReadNameTables();

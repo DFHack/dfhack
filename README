@@ -11,16 +11,13 @@ easier development of new tools.
 
 Getting DFHack
 ----------------
-
-You can get the code at DFHack's sourceforge site:
-  https://sourceforge.net/projects/dfhack/
-
-* subversion access: 
-  svn co https://dfhack.svn.sourceforge.net/svnroot/dfhack/trunk dfhack 
-
-It is also available on github:
+The project is currently hosted on github:
   http://github.com/peterix/dfhack
 
+There's an SVN repository at sourceforge, but will only be updated for major releases:
+  https://sourceforge.net/projects/dfhack/
+* subversion access: 
+  svn co https://dfhack.svn.sourceforge.net/svnroot/dfhack/trunk dfhack 
 
 Compatibility
 -------------
@@ -35,10 +32,10 @@ OSX is also not supported due to lack of developers with a Mac.
 Currently supported Dwarf Fortress versions:
 * Windows
   40d
-  40d9 - 40d17
+  40d9 - 40d18
 
 * Linux
-  40d9 - 40d17
+  40d9 - 40d18
 
 
 Using the library
@@ -64,11 +61,12 @@ provide data consistency and synchronization. DFHack will work without the
 library, but at suboptimal speeds and the consistency of data written back
 to DF is questionable.
 
-!!! on Windows this currently only works with DF 40d15, 40d16 and 40d17 !!!
+!!!     on Windows this currently only works with DF 40d15 - 40d18      !!!
      On Linux, it works with the whole range of supported DF versions.
 
-!!!     use the pre-compiled library intended for your version of DF    !!!
+!!! use the pre-compiled library intended for your OS and version of DF !!!
                You can find them in the 'precompiled' folder.
+               
 
  ** Installing on Windows
  - Open your DF folder, locate SDL.dll and rename it to SDLreal.dll (making
@@ -134,12 +132,37 @@ memory interface mentioned in the previous section!
                It will clean your irrigated farms too, so consider yourself
                warned.
 
-* dfincremental - incremental search utility.
+* incremental - incremental search utility.
 
 * bauxite - converts all mechanisms into bauxite mechanisms.
 
 * itemdesignator - Allows mass-designating items by type and material - dump,
                    forbid, melt and set on fire ;)
+* digger         - allows designating tiles for digging/cutting/ramp removal
+
+  A list of accepted tile classes:
+        1  = WALL
+        2  = PILLAR
+        3  = FORTIFICATION
+        
+        4  = STAIR_UP
+        5  = STAIR_DOWN
+        6  = STAIR_UPDOWN
+        
+        7  = RAMP
+        
+        8  = FLOOR
+        9  = TREE_DEAD
+        10 = TREE_OK
+        11 = SAPLING_DEAD
+        12 = SAPLING_OK
+        13 = SHRUB_DEAD
+        14 = SHRUB_OK
+        15 = BOULDER
+        16 = PEBBLES
+  
+  Example : dfdigger -o 100,100,15 -t 9,10 -m 10
+  This will start looking for trees at coords 100,100,15 and designate ten of them for cutting.
 
  
 Memory offset definitions

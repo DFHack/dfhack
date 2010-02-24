@@ -1416,6 +1416,9 @@
         <Address name="notes">0x014C069C</Address>     
         <Address name="hotkey_start">0x014C06D4</Address>
         
+        <Address name="settlement_current">0x016D4BD4</Address>
+        <Address name="settlements">0x16D4B08</Address>
+        
         <VTable name="viewscreen_vtable">
             <class vtable="0x008FE62C" name="viewscreen_conversation" />
             <class vtable="0x00905A0C" name="viewscreen_option" />
@@ -2477,6 +2480,9 @@
         
         <Address name="notes">0x08FF5764</Address>
         <Address name="hotkey_start">0x08FF578C</Address>
+        
+        <Address name="settlement_current">0x0904B8E8</Address>
+        <Address name="settlements">0x0904B87C</Address>
         
         <!--        NEEDS TESTING        -->
         <VTable name = "viewscreen_vtable">

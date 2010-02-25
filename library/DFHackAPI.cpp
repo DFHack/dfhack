@@ -733,6 +733,7 @@ bool API::InitReadBuildings ( uint32_t& numbuildings )
     {
         d->buildingsInited = true;
         d->p_bld = new DfVector (d->p->readVector (buildings, 4));
+        numbuildings = d->p_bld->getSize();
         return true;
     }
     else

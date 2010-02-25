@@ -141,6 +141,7 @@ int main (int argc,const char* argv[])
     uint32_t numBuildings;
     if(DF.InitReadBuildings(numBuildings))
     {
+        cout << numBuildings << endl;
         vector < uint32_t > addresses;
         for(uint32_t i = 0; i < numBuildings; i++)
         {

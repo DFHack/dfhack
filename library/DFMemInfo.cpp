@@ -325,7 +325,7 @@ void memory_info::setClassChild (t_class * parent, const char * name, const char
     vec.push_back(mcc);
     d->classindex++;
     
-//    cout << "    classtype " << name << ", assign " << mcc->assign << ", vtable  " << mcc->type << endl;
+    //cout << "    classtype " << name << ", assign " << mcc->assign << ", vtable  " << mcc->type << endl;
 }
 
 

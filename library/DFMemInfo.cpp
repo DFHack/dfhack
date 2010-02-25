@@ -63,12 +63,14 @@ class memory_info::Private
     
     // storage for class and multiclass
     vector<t_class *> classes;
-    //vector<vector<t_type> > classsubtypes;
+    
     // cache for faster name lookup, indexed by classID
     vector<string> classnames;
+    // index for the next added class
+    uint32_t classindex;
     
     int32_t base;
-    uint32_t classindex;
+    
     string version;
     OSType OS;
 };

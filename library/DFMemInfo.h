@@ -54,7 +54,7 @@ namespace DFHack
             vtable = old.vtable;
             assign = old.assign;
             type_offset = old.type_offset;
-            for(int i = 0; i < old.subs.size();i++)
+            for(uint32_t i = 0; i < old.subs.size();i++)
             {
                 t_type * t = new t_type (*old.subs[i]);
                 subs.push_back(t);

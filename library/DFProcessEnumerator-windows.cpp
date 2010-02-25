@@ -68,9 +68,7 @@ bool ProcessEnumerator::findProcessess()
     // Get the list of process identifiers.
     DWORD ProcArray[2048], memoryNeeded, numProccesses;
     {
-        Process *p = new SHMProcess(d->meminfo->meminfo);
-        delete p;
-        p = new SHMProcess(d->meminfo->meminfo);
+        Process * p = new SHMProcess(d->meminfo->meminfo);
         if(p->isIdentified())
         {
             d->processes.push_back(p);

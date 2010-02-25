@@ -72,6 +72,7 @@ namespace DFHack
             {
                 delete subs[i];
             }
+            subs.clear();
         }
         string classname;
         uint32_t vtable;

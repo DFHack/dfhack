@@ -94,7 +94,12 @@ memory_info::memory_info(const memory_info &old)
     d->hexvals = old.d->hexvals;
     d->strings = old.d->strings;
     d->base = old.d->base;
-    d->classes = old.d->classes;
+    //d->classes = old.d->classes;
+    for(int i = 0; i < old.d->classes.size(); i++)
+    {
+        t_class * copy = new t_class(*old.d->classes[i]);
+        d->classes.push_back(copy);
+    }
     d->classindex = old.d->classindex;
     d->professions = old.d->professions;
     d->jobs = old.d->jobs;
@@ -107,7 +112,7 @@ memory_info::memory_info(const memory_info &old)
 memory_info::~memory_info()
 {
     // delete the vtables
-    for(int i = 0; i < d->classes.size();i++)
+    for(uint32_t i = 0; i < d->classes.size();i++)
     {
         delete d->classes[i];
     }

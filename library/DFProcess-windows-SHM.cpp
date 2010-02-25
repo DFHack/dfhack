@@ -476,10 +476,6 @@ bool SHMProcess::detach()
     {
         return false;
     }
-    if(d->suspended)
-    {
-        resume();
-    }
     // detach segment
     UnmapViewOfFile(d->my_shm);
     // release it for some other client

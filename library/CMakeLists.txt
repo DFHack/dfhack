@@ -86,6 +86,7 @@ IF(UNIX)
   add_definitions(-DUSE_CONFIG_H)
   find_library(X11_LIBRARY X11)
   SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -pedantic")
+  SET(CMAKE_CXX_FLAGS "-fvisibility=hidden")
     
   SET(PROJECT_LIBS ${X11_LIBRARY} rt)
 ELSE(UNIX)

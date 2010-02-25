@@ -41,6 +41,8 @@ distribution.
 #include <sys/syscall.h>
 #include <signal.h>
 
+#define DFhackCExport extern "C" __attribute__ ((visibility("default")))
+
 // various crud
 int counter = 0;
 int errorstate = 0;
@@ -138,7 +140,7 @@ static int (*_SDL_Init)(uint32_t flags) = 0;
 static int (*_SDL_Flip)(void * some_ptr) = 0;
 
 // hook - called every tick in OpenGL mode of DF
-extern "C" void SDL_GL_SwapBuffers(void)
+DFhackCExport void SDL_GL_SwapBuffers(void)
 {
     if(_SDL_GL_SwapBuffers)
     {
@@ -152,7 +154,7 @@ extern "C" void SDL_GL_SwapBuffers(void)
 }
 
 // hook - called every tick in the 2D mode of DF
-extern "C" int SDL_Flip(void * some_ptr)
+DFhackCExport int SDL_Flip(void * some_ptr)
 {
     if(_SDL_Flip)
     {
@@ -167,7 +169,7 @@ extern "C" int SDL_Flip(void * some_ptr)
 }
 
 // hook - called at program exit
-extern "C" void SDL_Quit(void)
+DFhackCExport void SDL_Quit(void)
 {
     if(!errorstate)
     {
@@ -180,7 +182,7 @@ extern "C" void SDL_Quit(void)
 }
 
 // hook - called at program start, initialize some stuffs we'll use later
-extern "C" int SDL_Init(uint32_t flags)
+DFhackCExport int SDL_Init(uint32_t flags)
 {
     // find real functions
     _SDL_GL_SwapBuffers = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_GL_SwapBuffers");
@@ -210,7 +212,7 @@ extern "C" int SDL_Init(uint32_t flags)
 
 static int (*_refresh)(void) = 0;
 //extern NCURSES_EXPORT(int) refresh (void);
-extern "C" int refresh (void)
+DFhackCExport int refresh (void)
 {
     if(_refresh)
     {
@@ -226,7 +228,7 @@ extern "C" int refresh (void)
 
 static int (*_endwin)(void) = 0;
 //extern NCURSES_EXPORT(int) endwin (void);
-extern "C" int endwin (void)
+DFhackCExport int endwin (void)
 {
     if(!errorstate)
     {
@@ -241,7 +243,7 @@ extern "C" int endwin (void)
 typedef void WINDOW;
 //extern NCURSES_EXPORT(WINDOW *) initscr (void);
 static WINDOW * (*_initscr)(void) = 0;
-extern "C" WINDOW * initscr (void)
+DFhackCExport WINDOW * initscr (void)
 {
     // find real functions
     _refresh = (int (*)( void )) dlsym(RTLD_NEXT, "refresh");

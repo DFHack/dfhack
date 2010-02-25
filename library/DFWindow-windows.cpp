@@ -119,7 +119,9 @@ DFWindow::DFWindow (Process * p)
 
 // dtor
 DFWindow::~DFWindow ()
-{}
+{
+    delete d;
+}
 
 // TODO: also investigate possible problems with UIPI on Vista and 7
 void DFWindow::TypeStr (const char *input, int delay, bool useShift)

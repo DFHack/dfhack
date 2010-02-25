@@ -72,9 +72,10 @@ int main ()
     /*
      * Get the object name/ID mapping
      */
+    /*
     vector <string> objecttypes;
     DF.getClassIDMapping (objecttypes);
-    
+    */
     //FIXME: work on the 'supported features' system required
     /*
      * Check availability of required addresses and offsets (doing custom stuff here)
@@ -103,10 +104,13 @@ int main ()
         type = -1;
         
         // skip things we can't identify
-        if(!meminfo->resolveClassId (temp, type))
+        if(!meminfo->resolveObjectToClassID (temp, type))
+            continue;
+        string classname;
+        if(!meminfo->resolveClassIDToClassname (type, classname))
             continue;
        
-        if(objecttypes[type] == "item_trapparts")
+        if(classname == "item_trapparts")
         {
             proc->read (temp + item_material_offset, sizeof (DFHack::t_matglossPair), (uint8_t *) &item_40d_material);
 

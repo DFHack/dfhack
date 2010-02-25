@@ -316,9 +316,6 @@ main(int argc, char *argv[])
         finish(0);
     }
 
-    vector <string> classes;
-    p->getDescriptor()->getClassIDMapping(classes);
-
     // get region geology
     if(!DF.ReadGeology( layerassign ))
     {

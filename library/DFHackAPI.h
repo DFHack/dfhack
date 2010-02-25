@@ -225,10 +225,7 @@ namespace DFHack
         bool InitReadItems(uint32_t & numitems);
         bool ReadItem(const uint32_t &index, t_item & item);
         void FinishReadItems();
-        
-        // wrapper for meminfo method of the same name
-        bool getClassIDMapping (vector <string>& objecttypes);
-        
+
         memory_info *getMemoryInfo();
         Process * getProcess();
         DFWindow * getWindow();

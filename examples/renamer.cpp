@@ -23,7 +23,6 @@ void print_bits ( T val, std::ostream& out )
         val >>= 1;
     }
 }
-vector <string> objecttypes;
 map<string, vector<string> > names;
 uint32_t numCreatures;
 vector<DFHack::t_matgloss> creaturestypes;
@@ -190,8 +189,10 @@ bool waitTillScreenState(DFHack::API &DF, string screenState,bool EqualTo=true)
     DFHack::t_viewscreen current;
     DF.Suspend();
     DF.ReadViewScreen(current);
+    string nowScreenState;
+    DF.getMemoryInfo()->resolveClassIDToClassname(current.type,nowScreenState);
     int tryCount = 0;
-    while (((EqualTo && objecttypes[current.type] != screenState) || (!EqualTo && objecttypes[current.type] == screenState)) && tryCount < 50)
+    while (((EqualTo && nowScreenState != screenState) || (!EqualTo && nowScreenState == screenState)) && tryCount < 50)
     {
         DF.Resume();
         w->TypeSpecial(DFHack::WAIT,1,100);
@@ -200,7 +201,7 @@ bool waitTillScreenState(DFHack::API &DF, string screenState,bool EqualTo=true)
         tryCount++;
     }
     if (tryCount >= 50) {
-        cerr << "Something went wrong, DF at " << objecttypes[current.type] << endl;
+        cerr << "Something went wrong, DF at " << nowScreenState << endl;
         return false;
     }
     DF.Resume();
@@ -262,13 +263,16 @@ bool moveToBaseWindow(DFHack::API &DF)
     DFHack::DFWindow * w = DF.getWindow();
     DFHack::t_viewscreen current;
     DF.ReadViewScreen(current);
-    while (objecttypes[current.type] != string("viewscreen_dwarfmode"))
+    string classname;
+    DF.getMemoryInfo()->resolveClassIDToClassname(current.type,classname);
+    while (classname != "viewscreen_dwarfmode")
     {
         w->TypeSpecial(DFHack::F9); // cancel out of text input in names
 //        DF.TypeSpecial(DFHack::ENTER); // cancel out of text input in hotkeys
         w->TypeSpecial(DFHack::SPACE); // should move up a level
-        if (!waitTillScreenState(DF,objecttypes[current.type],false)) return false; // wait until screen changes from current
+        if (!waitTillScreenState(DF,classname,false)) return false; // wait until screen changes from current
         DF.ReadViewScreen(current);
+        DF.getMemoryInfo()->resolveClassIDToClassname(current.type,classname);
     }
     if (DF.ReadMenuState() != 0) {// if menu state != 0 then there is a menu, so escape it
         w->TypeSpecial(DFHack::F9);
@@ -311,11 +315,6 @@ int main (void)
         return 1;
     }
     DF.Suspend();
-    if (!DF.getClassIDMapping(objecttypes))
-    {
-        cerr << "Can't get type info" << endl;
-        return 1;
-    }
 
     DFHack::memory_info * mem = DF.getMemoryInfo();
 

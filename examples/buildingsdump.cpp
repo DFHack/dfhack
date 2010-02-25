@@ -10,6 +10,7 @@ using namespace std;
 
 #include <DFTypes.h>
 #include <DFHackAPI.h>
+#include <DFMemInfo.h>
 /*
 oh. fsck it. I'll do the hexdump now and add the things I found in a research/ folder
 groups of four bytes, 4 per line
@@ -135,12 +136,7 @@ int main (int argc,const char* argv[])
         cerr << "DF not found" << endl;
         return 1;
     }
-    
-    /*
-    * Get the object name/ID mapping
-    */
-    vector <string> objecttypes;
-    DF.getClassIDMapping (objecttypes);
+    DFHack::memory_info * mem = DF.getMemoryInfo();
     
     uint32_t numBuildings;
     if(DF.InitReadBuildings(numBuildings))
@@ -152,7 +148,9 @@ int main (int argc,const char* argv[])
             DF.ReadBuilding(i, temp);
             if(temp.type != 0xFFFFFFFF) // check if type isn't invalid
             {
-                if(objecttypes[temp.type] == argv[1])
+                string typestr;
+                mem->resolveClassIDToClassname(temp.type, typestr);
+                if(typestr == argv[1])
                 {
                     //cout << buildingtypes[temp.type] << " 0x" << hex << temp.origin << endl;
                     //hexdump(DF, temp.origin, 16);

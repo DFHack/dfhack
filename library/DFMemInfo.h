@@ -34,6 +34,51 @@ distribution.
 
 namespace DFHack
 {
+    /*
+    * Common data types
+    */
+    struct t_type
+    {
+        t_type(uint32_t assign, uint32_t type, string classname)
+        :classname(classname),assign(assign),type(type){};
+        string classname;
+        uint32_t assign;
+        uint32_t type;
+    };
+
+    struct t_class
+    {
+        t_class(const t_class &old)
+        {
+            classname = old.classname;
+            vtable = old.vtable;
+            assign = old.assign;
+            type_offset = old.type_offset;
+            for(int i = 0; i < old.subs.size();i++)
+            {
+                t_type * t = new t_type (*old.subs[i]);
+                subs.push_back(t);
+            }
+        }
+        t_class ()
+        {
+            vtable = 0;
+            assign = 0;
+            type_offset = 0;
+        }
+        ~t_class()
+        {
+            for(int i = 0; i < subs.size();i++)
+            {
+                delete subs[i];
+            }
+        }
+        string classname;
+        uint32_t vtable;
+        uint32_t assign;// index to typeclass array if multiclass. return value if not.
+        uint32_t type_offset; // offset of type data for multiclass
+        vector<t_type *> subs;
+    };
     
     class DFHACK_EXPORT memory_info
     {
@@ -49,7 +94,7 @@ namespace DFHack
         };
         memory_info();
         memory_info(const memory_info&);
-
+        ~memory_info();
 
         void RebaseAddresses(const int32_t new_base);
         void RebaseAll(const int32_t new_base);
@@ -102,16 +147,40 @@ namespace DFHack
         void setLabor(const string &, const string &);
 
         void RebaseVTable(const int32_t offset);
-        void setClass (const char * name, const char * vtable);
-        uint32_t setMultiClass (const char * name, const char * vtable, const char * typeoffset);
-        void setMultiClassChild (uint32_t multi_index, const char * name, const char * type);
+        
+        t_class * setClass (const char * classname, uint32_t vptr = 0, uint32_t typeoffset = 0);
+        void setClassChild (t_class * parent, const char * classname, const char * type);
 
-        // ALERT: uses memory reading directly
-        bool resolveClassId(const uint32_t address, int32_t & classid);
-        void getClassIDMapping(vector<string> & v_ClassID2ObjName);
-        uint32_t getClassVPtr(string classname);
-
-        void flush();
+        /*
+         * Get a classID from an address. The address has to point to the start of a virtual object (one with a virtual base class)
+         *   uses memory reading directly, needs suspend. input = address of the object
+         *   fails if it's unable to read from memory
+         */
+        bool resolveObjectToClassID (const uint32_t address, int32_t & classID);
+        
+        /*
+        * Get a classID from an address. The address has to point to the start of a virtual object (one with a virtual base class)
+        *   can fail if the class is not in the cache
+        */
+        bool resolveClassnameToClassID (const string classname, int32_t & classID);
+        //bool resolveClassnameToClassID (const char * classname, int32_t & classID);
+        
+        /*
+        * Get a vptr from a classname. Can fail if the type is not in the cache
+        * limited to normal classes, variable-dependent types will resolve to the base class
+        */
+        bool resolveClassnameToVPtr ( const string classname, uint32_t & vptr );
+        //bool resolveClassnameToVPtr ( const char * classname, uint32_t & vptr );
+        
+        /*
+        * Get a classname from a previous classID. Can fail if the type is not in the cache (you use bogus classID)
+        */
+        bool resolveClassIDToClassname (const int32_t classID, string & classname);
+        
+        /*
+        * Get the internal classID->classname mapping (for speed). DO NOT MANIPULATE THE VECTOR!
+        */
+        const vector<string> * getClassIDMapping();
     };
 }
 #endif // MEMINFO_H_INCLUDED

@@ -25,6 +25,16 @@ distribution.
 #include "DFCommonInternal.h"
 using namespace DFHack;
 
+MemInfoManager::~MemInfoManager()
+{
+    // for each in std::vector<memory_info*> meminfo;, delete
+    for(int i = 0; i < meminfo.size();i++)
+    {
+        delete meminfo[i];
+    }
+    meminfo.clear();
+}
+
 void MemInfoManager::ParseVTable(TiXmlElement* vtable, memory_info* mem)
 {
     TiXmlElement* pClassEntry;
@@ -43,17 +53,23 @@ void MemInfoManager::ParseVTable(TiXmlElement* vtable, memory_info* mem)
         string type = pClassEntry->Value();
         const char *cstr_name = pClassEntry->Attribute("name");
         const char *cstr_vtable = pClassEntry->Attribute("vtable");
+        uint32_t vtable = 0;
+        if(cstr_vtable)
+            vtable = strtol(cstr_vtable, NULL, 16);
         // it's a simple class
         if(type== "class")
         {
-            mem->setClass(cstr_name, cstr_vtable);
+            mem->setClass(cstr_name, vtable);
         }
         // it's a multi-type class
         else if (type == "multiclass")
         {
             // get offset of the type variable
             const char *cstr_typeoffset = pClassEntry->Attribute("typeoffset");
-            int mclass = mem->setMultiClass(cstr_name, cstr_vtable, cstr_typeoffset);
+            uint32_t typeoffset = 0;
+            if(cstr_typeoffset)
+                typeoffset = strtol(cstr_typeoffset, NULL, 16);
+            t_class * mclass = mem->setClass(cstr_name, vtable, typeoffset);
             // parse class sub-entries
             pClassSubEntry = pClassEntry->FirstChildElement();
             for(;pClassSubEntry;pClassSubEntry=pClassSubEntry->NextSiblingElement())
@@ -64,7 +80,7 @@ void MemInfoManager::ParseVTable(TiXmlElement* vtable, memory_info* mem)
                     // type is a value loaded from type offset
                     cstr_name = pClassSubEntry->Attribute("name");
                     const char *cstr_value = pClassSubEntry->Attribute("type");
-                    mem->setMultiClassChild(mclass,cstr_name,cstr_value);
+                    mem->setClassChild(mclass,cstr_name,cstr_value);
                 }
             }
         }

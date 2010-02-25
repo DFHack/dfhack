@@ -117,7 +117,9 @@ DFWindow::DFWindow (Process * p)
 
 // dtor
 DFWindow::~DFWindow ()
-{}
+{
+    delete d;
+}
 
 Window DFWindow::Private::EnumerateWindows (Display *display, Window rootWindow, const char *searchString)
 {

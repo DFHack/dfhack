@@ -10,6 +10,7 @@ using namespace std;
 
 #include <DFTypes.h>
 #include <DFHackAPI.h>
+#include <DFMemInfo.h>
 
 struct matGlosses 
 {
@@ -20,60 +21,124 @@ struct matGlosses
     vector<DFHack::t_matgloss> creatureMat;
 };
 
-string getMaterialType(DFHack::t_item item, const vector<string> & buildingTypes,const matGlosses & mat){
-    if(item.type == 85 || item.type == 113 || item.type == 117) // item_plant or item_thread or item_seeds
+string getMaterialType(DFHack::t_item item, const string & itemtype,const matGlosses & mat)
+{
+    // plant thread seeds
+    if(itemtype == "item_plant" || itemtype == "item_thread" || itemtype == "item_seeds" || itemtype == "item_leaves" )
     {
-        return(string(mat.plantMat[item.material.type].id));
+        return mat.plantMat[item.material.type].id;
     }
-    else if(item.type == 109 || item.type == 114 || item.type == 115 || item.type == 116 || item.type==128 || item.type == 129|| item.type == 130|| item.type == 131) // item_skin_raw item_bones item_skill item_fish_raw item_pet item_skin_tanned item_shell
+    else if (itemtype == "item_drink") // drinks must have different offset for materials
     {
-        return(string(mat.creatureMat[item.material.type].id));
+        return "Booze or something";
     }
-    else if(item.type == 124){ //wood
-        return(string(mat.woodMat[item.material.type].id));
+    // item_skin_raw item_bones item_skull item_fish_raw item_pet item_skin_tanned item_shell
+    else if(itemtype == "item_skin_raw" ||
+            itemtype == "item_skin_tanned" ||
+            itemtype == "item_fish_raw" ||
+            itemtype == "item_pet" ||
+            itemtype == "item_shell" ||
+            itemtype == "item_horn"||
+            itemtype == "item_skull" ||
+            itemtype == "item_bones" ||
+            itemtype == "item_corpse" ||
+            itemtype == "item_meat"
+            )
+    {
+        return mat.creatureMat[item.material.type].id;
     }
-    else if(item.type == 118){ //blocks
-        return(string(mat.metalMat[item.material.index].id));
+    else if(itemtype == "item_wood")
+    {
+        return mat.woodMat[item.material.type].id;
     }
-    else if(item.type == 86){ // item_glob I don't know what those are in game, just ignore them
-        return(string(""));
+    else if(itemtype == "item_bar")
+    {
+        return mat.metalMat[item.material.type].id;
     }
-    else{
+    else
+    {
+        /*
+    Mat_Wood,
+    Mat_Stone,
+    Mat_Metal,
+    Mat_Plant,
+    Mat_Leather = 10,
+    Mat_SilkCloth = 11,
+    Mat_PlantCloth = 12,
+    Mat_GreenGlass = 13,
+    Mat_ClearGlass = 14,
+    Mat_CrystalGlass = 15,
+    Mat_Ice = 17,
+    Mat_Charcoal =18,
+    Mat_Potash = 19,
+    Mat_Ashes = 20,
+    Mat_PearlAsh = 21,
+    Mat_Soap = 24,
+    */
         switch (item.material.type)
         {
-        case 0:
-            return(string(mat.woodMat[item.material.index].id));
+        case DFHack::Mat_Wood:
+            return mat.woodMat[item.material.index].id;
             break;
-        case 1:
-            return(string(mat.stoneMat[item.material.index].id));
+        case DFHack::Mat_Stone:
+            return mat.stoneMat[item.material.index].id;
             break;
-        case 2:
-            return(string(mat.metalMat[item.material.index].id));
+        case DFHack::Mat_Metal:
+            return mat.metalMat[item.material.index].id;
             break;
-        case 12: // don't ask me why this has such a large jump, maybe this is not actually the matType for plants, but they all have this set to 12
-            return(string(mat.plantMat[item.material.index].id));
+        //case DFHack::Mat_Plant:
+        case DFHack::Mat_PlantCloth:
+            //return mat.plantMat[item.material.index].id;
+            return string(mat.plantMat[item.material.index].id) + " plant";
             break;
-        case 3:
-        case 9:
-        case 10:
-        case 11:
-        case 121:
-            return(string(mat.creatureMat[item.material.index].id));
-            break;
+        case 3: // bone
+            return string(mat.creatureMat[item.material.index].id) + " bone";
+        case 25: // fat
+            return string(mat.creatureMat[item.material.index].id) + " fat";
+        case 23: // tallow
+            return string(mat.creatureMat[item.material.index].id) + " tallow";
+        case 9: // shell
+            return string(mat.creatureMat[item.material.index].id) + " shell";
+        case DFHack::Mat_Leather: // really a generic creature material. meat for item_food, leather for item_box...
+            return string(mat.creatureMat[item.material.index].id);
+        case DFHack::Mat_SilkCloth:
+            return string(mat.creatureMat[item.material.index].id) + " silk";
+        case DFHack::Mat_Soap:
+            return string(mat.creatureMat[item.material.index].id) + " soap";
+        case DFHack::Mat_GreenGlass:
+            return "Green Glass";
+        case DFHack::Mat_ClearGlass:
+            return "Clear Glass";
+        case DFHack::Mat_CrystalGlass:
+            return "Crystal Glass";
+        case DFHack::Mat_Ice:
+            return "Ice";
+        case DFHack::Mat_Charcoal:
+            return "Charcoal";
+        /*case DFHack::Mat_Potash:
+            return "Potash";*/
+        case DFHack::Mat_Ashes:
+            return "Ashes";
+        case DFHack::Mat_PearlAsh:
+            return "Pearlash";
         default:
-            //DF.setCursorCoords(item.x,item.y,item.z);
-            return(string(""));
+            cout << "unknown material hit: " << item.material.type << " " << item.material.index  << " " << itemtype << endl;
+            return "Invalid";
         }
     }   
+    return "Invalid";
 }
-void printItem(DFHack::t_item item, const vector<string> & buildingTypes,const matGlosses & mat){
+void printItem(DFHack::t_item item, const string & typeString,const matGlosses & mat)
+{
     cout << dec << "Item at x:" << item.x << " y:" << item.y << " z:" << item.z << endl;
-    cout << "Type: " << (int) item.type << " " << buildingTypes[item.type] << " Address: " << hex << item.origin << endl;
+    cout << "Type: " << (int) item.type << " " << typeString << " Address: " << hex << item.origin << endl;
     cout << "Material: ";
-
-    string itemType = getMaterialType(item,buildingTypes,mat);
+    
+    string itemType = getMaterialType(item,typeString,mat);
     cout << itemType << endl;
 }
+
+
 int main ()
 {
 
@@ -84,7 +149,7 @@ int main ()
         cerr << "DF not found" << endl;
         return 1;
     }
-    DF.Suspend();
+    DFHack::memory_info * mem = DF.getMemoryInfo();
     DF.InitViewAndCursor();
     matGlosses mat;
     DF.ReadPlantMatgloss(mat.plantMat);
@@ -93,8 +158,8 @@ int main ()
     DF.ReadMetalMatgloss(mat.metalMat);
     DF.ReadCreatureMatgloss(mat.creatureMat);
 
-    vector <string> objecttypes;
-    DF.getClassIDMapping(objecttypes);
+//    vector <string> objecttypes;
+//    DF.getClassIDMapping(objecttypes);
     
     uint32_t numItems;
     DF.InitReadItems(numItems);
@@ -133,14 +198,18 @@ int main ()
         }
         else if(foundItems.size() == 1)
         {
-            printItem(foundItems[0], objecttypes ,mat);
+            string itemtype;
+            mem->resolveClassIDToClassname(foundItems[0].type,itemtype);
+            printItem(foundItems[0], itemtype ,mat);
         }
         else
         {
             cerr << "Please Select which item you want to display\n";
+            string itemtype;
             for(uint32_t j = 0; j < foundItems.size(); ++j)
             {
-                cerr << j << " " << objecttypes[foundItems[j].type] << endl;
+                mem->resolveClassIDToClassname(foundItems[j].type,itemtype);
+                cerr << j << " " << itemtype << endl;
             }
             uint32_t value;
             string input2;
@@ -157,7 +226,8 @@ int main ()
                 ss.str(input2);
                 ss >> value;
             }
-            printItem(foundItems[value], objecttypes ,mat);
+            mem->resolveClassIDToClassname(foundItems[value].type,itemtype);
+            printItem(foundItems[value], itemtype ,mat);
         }
         DF.FinishReadItems();
     }    

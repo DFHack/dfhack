@@ -166,8 +166,12 @@ bool API::InitMap()
     d->veinvector = d->offset_descriptor->getOffset ("v_vein");
     d->veinsize = d->offset_descriptor->getHexValue ("v_vein_size");
     
-    d->vein_ice_vptr = d->offset_descriptor->getClassVPtr("block_square_event_frozen_liquid");
-    d->vein_mineral_vptr = d->offset_descriptor->getClassVPtr("block_square_event_mineral");
+    // these can fail and will be found when looking at the actual veins later
+    // basically a cache
+    d->vein_ice_vptr = 0;
+    d->offset_descriptor->resolveClassnameToVPtr("block_square_event_frozen_liquid", d->vein_ice_vptr);
+    d->vein_mineral_vptr = 0;
+    d->offset_descriptor->resolveClassnameToVPtr("block_square_event_mineral",d->vein_mineral_vptr);
 
     // get the map pointer
     uint32_t    x_array_loc = g_pProcess->readDWord (map_offset);
@@ -756,7 +760,7 @@ bool API::ReadBuilding (const int32_t &index, t_building & building)
 
     // transform
     int32_t type = -1;
-    d->offset_descriptor->resolveClassId (temp, type);
+    d->offset_descriptor->resolveObjectToClassID (temp, type);
     building.origin = temp;
     building.vtable = bld_40d.vtable;
     building.x1 = bld_40d.x1;
@@ -1425,7 +1429,7 @@ bool API::getWindowSize (int32_t &width, int32_t &height)
     height = coords[1];
     return true;
 }
-
+/*
 bool API::getClassIDMapping (vector <string>& objecttypes)
 {
     if(isAttached())
@@ -1435,7 +1439,7 @@ bool API::getClassIDMapping (vector <string>& objecttypes)
     }
     return false;
 }
-
+*/
 memory_info *API::getMemoryInfo()
 {
     return d->offset_descriptor;
@@ -1482,7 +1486,7 @@ bool API::ReadItem (const uint32_t &index, t_item & item)
 
     // transform
     int32_t type = -1;
-    d->offset_descriptor->resolveClassId (temp, type);
+    d->offset_descriptor->resolveObjectToClassID (temp, type);
     item.origin = temp;
     item.vtable = item_40d.vtable;
     item.x = item_40d.x;
@@ -1533,7 +1537,7 @@ bool API::ReadViewScreen (t_viewscreen &screen)
         screenAddr = g_pProcess->readDWord (nextScreenPtr);
         nextScreenPtr = g_pProcess->readDWord (nextScreenPtr + 4);
     }
-    return d->offset_descriptor->resolveClassId (last, screen.type);
+    return d->offset_descriptor->resolveObjectToClassID (last, screen.type);
 }
 bool API::ReadItemTypes(vector< vector< t_itemType > > & itemTypes)
 {

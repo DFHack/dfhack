@@ -44,28 +44,6 @@ using namespace boost::multi_index;
 */
 using namespace DFHack;
 
-
-/*
-* Common data types
-*/
-struct t_class
-{
-    string classname;
-    uint32_t vtable;
-    bool is_multiclass;
-    uint32_t multi_index;
-    uint32_t assign;// index to typeclass array if multiclass. return value if not.
-    uint32_t type_offset; // offset of type data for multiclass
-};
-
-struct t_type
-{
-    string classname;
-    uint32_t assign;
-    uint32_t type;
-};
-
-
 /*
  * Private data
  */
@@ -83,14 +61,19 @@ class memory_info::Private
     vector< vector<string> > traits;
     map <uint32_t, string> labors;
     
-    vector<t_class> classes;
-    vector<vector<t_type> > classsubtypes;
+    // storage for class and multiclass
+    vector<t_class *> classes;
+    //vector<vector<t_type> > classsubtypes;
+    // cache for faster name lookup, indexed by classID
+    vector<string> classnames;
+    
     int32_t base;
     uint32_t classindex;
     string version;
     OSType OS;
 };
 
+// normal constructor
 memory_info::memory_info()
 :d(new Private)
 {
@@ -98,6 +81,37 @@ memory_info::memory_info()
     d->classindex = 0;
 }
 
+// copy constructor
+memory_info::memory_info(const memory_info &old)
+:d(new Private)
+{
+    d->version = old.d->version;
+    d->OS = old.d->OS;
+    d->addresses = old.d->addresses;
+    d->offsets = old.d->offsets;
+    d->hexvals = old.d->hexvals;
+    d->strings = old.d->strings;
+    d->base = old.d->base;
+    d->classes = old.d->classes;
+    d->classindex = old.d->classindex;
+    d->professions = old.d->professions;
+    d->jobs = old.d->jobs;
+    d->skills = old.d->skills;
+    d->traits = old.d->traits;
+    d->labors = old.d->labors;
+}
+
+// destructor
+memory_info::~memory_info()
+{
+    // delete the vtables
+    for(int i = 0; i < d->classes.size();i++)
+    {
+        delete d->classes[i];
+    }
+    // delete our data
+    delete d;
+}
 
 void memory_info::setVersion(const char * v)
 {
@@ -155,29 +169,6 @@ memory_info::OSType memory_info::getOS() const
 {
     return d->OS;
 }
-
-
-// copy constructor
-memory_info::memory_info(const memory_info &old)
-:d(new Private)
-{
-    d->version = old.d->version;
-    d->OS = old.d->OS;
-    d->addresses = old.d->addresses;
-    d->offsets = old.d->offsets;
-    d->hexvals = old.d->hexvals;
-    d->strings = old.d->strings;
-    d->base = old.d->base;
-    d->classes = old.d->classes;
-    d->classsubtypes = old.d->classsubtypes;
-    d->classindex = old.d->classindex;
-    d->professions = old.d->professions;
-    d->jobs = old.d->jobs;
-    d->skills = old.d->skills;
-    d->traits = old.d->traits;
-    d->labors = old.d->labors;
-}
-
 
 uint32_t memory_info::getBase () const
 {
@@ -282,112 +273,107 @@ void memory_info::setTrait(const string & key,
 }
 
 // FIXME: next three methods should use some kind of custom container so it doesn't have to search so much.
-void memory_info::setClass (const char * name, const char * vtable)
+t_class * memory_info::setClass (const char * name, uint32_t vtable, uint32_t typeoffset)
 {
+    if(name == 0)
+        return 0;
     for (uint32_t i=0; i<d->classes.size(); i++)
     {
-        if(d->classes[i].classname == name)
+        if(d->classes[i]->classname == name)
         {
-            d->classes[i].vtable = strtol(vtable, NULL, 16);
-            return;
+            if(vtable != 0)
+                d->classes[i]->vtable = vtable;
+            if(typeoffset != 0)
+                d->classes[i]->type_offset = typeoffset;
+            return d->classes[i];
         }
     }
     
-    t_class cls;
-        cls.assign = d->classindex;
-        cls.classname = name;
-        cls.is_multiclass = false;
-        cls.type_offset = 0;
-        d->classindex++;
-        cls.vtable = strtol(vtable, NULL, 16);
-    d->classes.push_back(cls);
-    //cout << "class " << name << ", assign " << cls.assign << ", vtable  " << cls.vtable << endl;
-}
-
-
-// find old entry by name, rewrite, return its multi index. otherwise make a new one, append an empty vector of t_type to classtypes,  return its index.
-uint32_t memory_info::setMultiClass (const char * name, const char * vtable, const char * typeoffset)
-{
-    for (uint32_t i=0; i<d->classes.size(); i++)
-    {
-        if(d->classes[i].classname == name)
-        {
-            // vtable and typeoffset can be left out from the xml definition when there's already a named multiclass
-            if(vtable != NULL)
-                d->classes[i].vtable = strtol(vtable, NULL, 16);
-            if(typeoffset != NULL)
-                d->classes[i].type_offset = strtol(typeoffset, NULL, 16);
-            return d->classes[i].multi_index;
-        }
-    }
+    t_class *cls = new t_class();
+    // get an unique ID and add ourselves to the index
+    cls->assign = d->classindex;
+    cls->classname = name;
+    d->classnames.push_back(name);
+        
+    // vtables no longer a requirement
+    cls->vtable = vtable;
+        
+    // multi class yes/no
+    cls->type_offset = typeoffset;
     
-    //FIXME: add checking for vtable and typeoffset here. they HAVE to be valid. maybe change the return value into a bool and pass in multi index by reference?
-    t_class cls;
-        cls.assign = d->classindex;
-        cls.classname = name;
-        cls.is_multiclass = true;
-        cls.type_offset = strtol(typeoffset, NULL, 16);
-        cls.vtable = strtol(vtable, NULL, 16);
-        cls.multi_index = d->classsubtypes.size();
     d->classes.push_back(cls);
     d->classindex++;
-
-    vector<t_type> thistypes;
-    d->classsubtypes.push_back(thistypes);
-    //cout << "multiclass " << name << ", assign " << cls.assign << ", vtable  " << cls.vtable << endl;
-    return d->classsubtypes.size() - 1;
+    return cls;
+    
 }
 
 
-void memory_info::setMultiClassChild (uint32_t multi_index, const char * name, const char * type)
+void memory_info::setClassChild (t_class * parent, const char * name, const char * type)
 {
-    vector <t_type>& vec = d->classsubtypes[multi_index];
+    vector <t_type *>& vec = parent->subs;
     for (uint32_t i=0; i<vec.size(); i++)
     {
-        if(vec[i].classname == name)
+        if(vec[i]->classname == name)
         {
-            vec[i].type = strtol(type, NULL, 16);
+            vec[i]->type = strtol(type, NULL, 16);
             return;
         }
     }
     // new multiclass child
-    t_type mcc;
-        mcc.assign = d->classindex;
-        mcc.classname = name;
-        mcc.type = strtol(type, NULL, 16);
+    t_type *mcc = new t_type(d->classindex,strtol(type, NULL, 16),name);
+    d->classnames.push_back(name);
     vec.push_back(mcc);
     d->classindex++;
-    //cout << "    classtype " << name << ", assign " << mcc.assign << ", vtable  " << mcc.type << endl;
+    
+    cout << "    classtype " << name << ", assign " << mcc->assign << ", vtable  " << mcc->type << endl;
 }
 
 
-bool memory_info::resolveClassId(uint32_t address, int32_t & classid)
+bool memory_info::resolveObjectToClassID(const uint32_t address, int32_t & classid)
 {
     uint32_t vtable = g_pProcess->readDWord(address);
     // FIXME: stupid search. we need a better container
     for(uint32_t i = 0;i< d->classes.size();i++)
     {
-        if(d->classes[i].vtable == vtable) // got class
+        if(d->classes[i]->vtable == vtable) // got class
         {
             // if it is a multiclass, try resolving it
-            if(d->classes[i].is_multiclass)
+            if(d->classes[i]->type_offset)
             {
-                vector <t_type>& vec = d->classsubtypes[d->classes[i].multi_index];
-                uint32_t type = g_pProcess->readWord(address + d->classes[i].type_offset);
+                vector <t_type*>& vec = d->classes[i]->subs;
+                uint32_t type = g_pProcess->readWord(address + d->classes[i]->type_offset);
                 //printf ("class %d:%s offset 0x%x\n", i , classes[i].classname.c_str(), classes[i].type_offset);
                 // return typed building if successful
                 for (uint32_t k = 0; k < vec.size();k++)
                 {
-                    if(vec[k].type == type)
+                    if(vec[k]->type == type)
                     {
                         //cout << " multi " <<  address + classes[i].type_offset << " " << vec[k].classname << endl;
-                        classid = vec[k].assign;
+                        classid = vec[k]->assign;
                         return true;
                     }
                 }
             }
             // otherwise return the class we found
-            classid = d->classes[i].assign;
+            classid = d->classes[i]->assign;
+            return true;
+        }
+    }
+    string classname = g_pProcess->readClassName(vtable);
+    setClass(classname.c_str(),vtable);
+    return true;
+}
+
+//ALERT: doesn't care about multiclasses
+bool memory_info::resolveClassnameToVPtr(const string classname, uint32_t & vptr)
+{
+    // FIXME: another stupid search.
+    for(uint32_t i = 0;i< d->classes.size();i++)
+    {
+        //if(classes[i].)
+        if(d->classes[i]->classname == classname) // got class
+        {
+            vptr = d->classes[i]->vtable;
             return true;
         }
     }
@@ -395,38 +381,21 @@ bool memory_info::resolveClassId(uint32_t address, int32_t & classid)
     return false;
 }
 
-//ALERT: doesn't care about multiclasses
-uint32_t memory_info::getClassVPtr(string classname)
+bool memory_info::resolveClassIDToClassname (const int32_t classID, string & classname)
 {
-    // FIXME: another stupid search.
-    for(uint32_t i = 0;i< d->classes.size();i++)
+    if (classID >=0 && classID < d->classnames.size())
     {
-        //if(classes[i].)
-        if(d->classes[i].classname == classname) // got class
-        {
-            return d->classes[i].vtable;
-        }
+        classname = d->classnames[classID];
+        return true;
     }
-    // we failed to find anything that would match
-    return 0;
+    return false;
 }
 
-// Flatten vtables into a index<->name mapping
-void memory_info::getClassIDMapping(vector<string> & v_ClassID2ObjName)
+
+// return pointer to our internal classID -> className mapping
+const vector<string> * memory_info::getClassIDMapping()
 {
-    for(uint32_t i = 0;i< d->classes.size();i++)
-    {
-        v_ClassID2ObjName.push_back(d->classes[i].classname);
-        if(!d->classes[i].is_multiclass)
-        {
-            continue;
-        }
-        vector <t_type>& vec = d->classsubtypes[d->classes[i].multi_index];
-        for (uint32_t k = 0; k < vec.size();k++)
-        {
-            v_ClassID2ObjName.push_back(vec[k].classname);
-        }
-    }
+    return &d->classnames;
 }
 
 
@@ -458,10 +427,10 @@ void memory_info::RebaseAll(int32_t new_base)
 // change all vtable entries by offset
 void memory_info::RebaseVTable(int32_t offset)
 {
-    vector<t_class>::iterator iter;
+    vector<t_class *>::iterator iter;
     for(iter = d->classes.begin(); iter != d->classes.end(); iter++)
     {
-        iter->vtable += offset;
+        (*iter)->vtable += offset;
     }
 }
 
@@ -631,6 +600,8 @@ string memory_info::getLabor (const uint32_t laborIdx)
 }
 
 // Reset everything
+/*
+0xDEADC0DE
 void memory_info::flush()
 {
     d->base = 0;
@@ -639,8 +610,8 @@ void memory_info::flush()
     d->strings.clear();
     d->hexvals.clear();
     d->classes.clear();
-    d->classsubtypes.clear();
     d->classindex = 0;
     d->version = "";
     d->OS = OS_BAD;
 }
+*/

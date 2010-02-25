@@ -10,6 +10,7 @@ using namespace std;
 
 #include <DFTypes.h>
 #include <DFHackAPI.h>
+#include <DFMemInfo.h>
 
 struct matGlosses 
 {
@@ -20,9 +21,8 @@ struct matGlosses
     vector<DFHack::t_matgloss> creatureMat;
 };
 
-string getMaterialType(DFHack::t_item item, const vector<string> & buildingTypes,const matGlosses & mat)
+string getMaterialType(DFHack::t_item item, const string & itemtype,const matGlosses & mat)
 {
-    string itemtype = buildingTypes[item.type];
     // plant thread seeds
     if(itemtype == "item_plant" || itemtype == "item_thread" || itemtype == "item_seeds" || itemtype == "item_leaves" )
     {
@@ -128,13 +128,13 @@ string getMaterialType(DFHack::t_item item, const vector<string> & buildingTypes
     }   
     return "Invalid";
 }
-void printItem(DFHack::t_item item, const vector<string> & buildingTypes,const matGlosses & mat)
+void printItem(DFHack::t_item item, const string & typeString,const matGlosses & mat)
 {
     cout << dec << "Item at x:" << item.x << " y:" << item.y << " z:" << item.z << endl;
-    cout << "Type: " << (int) item.type << " " << buildingTypes[item.type] << " Address: " << hex << item.origin << endl;
+    cout << "Type: " << (int) item.type << " " << typeString << " Address: " << hex << item.origin << endl;
     cout << "Material: ";
 
-    string itemType = getMaterialType(item,buildingTypes,mat);
+    string itemType = getMaterialType(item,typeString,mat);
     cout << itemType << endl;
 }
 int main ()
@@ -150,6 +150,7 @@ int main ()
         cerr << "DF not found" << endl;
         return 1;
     }
+    DFHack::memory_info *mem = DF.getMemoryInfo();
     DF.Suspend();
     DF.InitViewAndCursor();
     matGlosses mat;
@@ -159,8 +160,8 @@ int main ()
     DF.ReadMetalMatgloss(mat.metalMat);
     DF.ReadCreatureMatgloss(mat.creatureMat);
 
-    vector <string> objecttypes;
-    DF.getClassIDMapping(objecttypes);
+//    vector <string> objecttypes;
+//    DF.getClassIDMapping(objecttypes);
     uint32_t numItems;
     DF.InitReadItems(numItems);
     map< string, map<string,vector<uint32_t> > > count;
@@ -170,24 +171,26 @@ int main ()
     {
         DFHack::t_item temp;
         DF.ReadItem(i,temp);
-        if(temp.type != -1)
+        if(temp.type != -1) // this should be the case pretty much always
         {
-            string material = getMaterialType(temp,objecttypes,mat);
+            string typestr;
+            mem->resolveClassIDToClassname(temp.type,typestr);
+            string material = getMaterialType(temp,typestr,mat);
             if (material != "Invalid")
             {
-                count[objecttypes[temp.type]][material].push_back(i);
+                count[typestr][material].push_back(i);
             }
             else
             {
-                if(bad_mat_items.count(objecttypes[temp.type]))
+                if(bad_mat_items.count(typestr))
                 {
-                    int tmp = bad_mat_items[objecttypes[temp.type]];
+                    int tmp = bad_mat_items[typestr];
                     tmp ++;
-                    bad_mat_items[objecttypes[temp.type]] = tmp;
+                    bad_mat_items[typestr] = tmp;
                 }
                 else
                 {
-                    bad_mat_items[objecttypes[temp.type]] = 1;
+                    bad_mat_items[typestr] = 1;
                 }
             }
         }
@@ -284,7 +287,7 @@ int main ()
         DF.WriteRaw(temp.origin+12,sizeof(uint32_t),(uint8_t *)&temp.flags.whole);
     }
 
-    DF.FinishReadBuildings();
+    DF.FinishReadItems();
     DF.Detach();
 #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

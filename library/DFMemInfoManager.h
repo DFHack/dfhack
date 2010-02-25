@@ -34,6 +34,7 @@ namespace DFHack
         friend class ProcessEnumerator;
         public:
             MemInfoManager(string path_to_xml);
+            ~MemInfoManager();
             // memory info entries loaded from a file
             bool loadFile( string path_to_xml);
             bool isInErrorState() const {return error;};

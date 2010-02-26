@@ -25,7 +25,7 @@ distribution.
 #ifndef MEMINFO_MANAGER_H_INCLUDED
 #define MEMINFO_MANAGER_H_INCLUDED
 
-#include <Tranquility.h>
+#include "Tranquility.h"
 
 namespace DFHack
 {

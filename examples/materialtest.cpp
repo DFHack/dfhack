@@ -1,6 +1,3 @@
-// Attach test
-// attachtest - 100x attach/detach, 100x reads, 100x writes
-
 #include <iostream>
 #include <climits>
 #include <integers.h>
@@ -39,6 +36,12 @@ int main (void)
     cout << "Metal: " << Metals[0].id << endl;
     cout << "Stone: " << Stones[0].id << endl;
     cout << "Creature: " << CreatureTypes[0].id << endl;
+    cout << endl;
+    cout << "Dumping all stones!" << endl;
+    for(int i = 0; i < Stones.size();i++)
+    {
+        cout << Stones[i].id << "$" << endl;;
+    }
     
     DF.Detach();
     #ifndef LINUX_BUILD

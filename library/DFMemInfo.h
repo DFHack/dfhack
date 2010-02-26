@@ -25,7 +25,7 @@ distribution.
 #ifndef MEMINFO_H_INCLUDED
 #define MEMINFO_H_INCLUDED
 
-#include <Tranquility.h>
+#include "Tranquility.h"
 
 #include "Export.h"
 #include <map>

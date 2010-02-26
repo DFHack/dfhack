@@ -25,7 +25,7 @@ distribution.
 #ifndef PROCESSMANAGER_H_INCLUDED
 #define PROCESSMANAGER_H_INCLUDED
 
-#include <Tranquility.h>
+#include "Tranquility.h"
 #include "Export.h"
 
 class TiXmlElement;

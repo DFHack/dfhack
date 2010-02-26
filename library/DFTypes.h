@@ -25,7 +25,7 @@ distribution.
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 
-#include <Tranquility.h>
+#include "Tranquility.h"
 #include "Export.h"
 
 namespace DFHack
@@ -269,52 +269,54 @@ bits:
 31  Is an important historical figure 
 */
 
+struct naked_creaturflags1
+{
+    unsigned int move_state : 1; // Can the dwarf move or are they waiting for their movement timer
+    unsigned int dead : 1; // might also be set for incoming/leaving critters that are alive
+    unsigned int has_mood : 1; // Currently in mood
+    unsigned int had_mood : 1; // Had a mood
+    
+    unsigned int marauder : 1; // wide class of invader/inside creature attackers
+    unsigned int drowning : 1;
+    unsigned int merchant : 1; // active merchant
+    unsigned int forest : 1; // used for units no longer linked to merchant/diplomacy, they just try to leave mostly
+    
+    unsigned int left : 1; // left the map
+    unsigned int rider : 1;
+    unsigned int incoming : 1;
+    unsigned int diplomat : 1;
+
+    unsigned int zombie : 1;
+    unsigned int skeleton : 1;
+    unsigned int can_swap : 1; // Can swap tiles during movement (prevents multiple swaps)
+    unsigned int on_ground : 1; // can be conscious
+    
+    unsigned int projectile : 1;
+    unsigned int active_invader : 1; // for organized ones
+    unsigned int hidden_in_ambush : 1;
+    unsigned int invader_origin : 1; // could be inactive and fleeing
+    
+    unsigned int coward : 1; // Will flee if invasion turns around
+    unsigned int hidden_ambusher : 1; // maybe
+    unsigned int invades : 1; // Active marauder/invader moving inward
+    unsigned int check_flows : 1; // Check against flows next time you get a chance
+
+    // 0100 0000 - 8000 0000
+    unsigned int ridden : 1;
+    unsigned int caged : 1;
+    unsigned int tame : 1;
+    unsigned int chained : 1;
+    
+    unsigned int royal_guard : 1;
+    unsigned int fortress_guard : 1;
+    unsigned int suppress_wield : 1; // Suppress wield for beatings/etc
+    unsigned int important_historical_figure : 1; // Is an important historical figure 
+};
+
 union t_creaturflags1
 {
     uint32_t whole;
-    struct {
-        unsigned int move_state : 1; // Can the dwarf move or are they waiting for their movement timer
-        unsigned int dead : 1; // might also be set for incoming/leaving critters that are alive
-        unsigned int has_mood : 1; // Currently in mood
-        unsigned int had_mood : 1; // Had a mood
-        
-        unsigned int marauder : 1; // wide class of invader/inside creature attackers
-        unsigned int drowning : 1;
-        unsigned int merchant : 1; // active merchant
-        unsigned int forest : 1; // used for units no longer linked to merchant/diplomacy, they just try to leave mostly
-        
-        unsigned int left : 1; // left the map
-        unsigned int rider : 1;
-        unsigned int incoming : 1;
-        unsigned int diplomat : 1;
-
-        unsigned int zombie : 1;
-        unsigned int skeleton : 1;
-        unsigned int can_swap : 1; // Can swap tiles during movement (prevents multiple swaps)
-        unsigned int on_ground : 1; // can be conscious
-        
-        unsigned int projectile : 1;
-        unsigned int active_invader : 1; // for organized ones
-        unsigned int hidden_in_ambush : 1;
-        unsigned int invader_origin : 1; // could be inactive and fleeing
-        
-        unsigned int coward : 1; // Will flee if invasion turns around
-        unsigned int hidden_ambusher : 1; // maybe
-        unsigned int invades : 1; // Active marauder/invader moving inward
-        unsigned int check_flows : 1; // Check against flows next time you get a chance
-
-        // 0100 0000 - 8000 0000
-        unsigned int ridden : 1;
-        unsigned int caged : 1;
-        unsigned int tame : 1;
-        unsigned int chained : 1;
-        
-        unsigned int royal_guard : 1;
-        unsigned int fortress_guard : 1;
-        unsigned int suppress_wield : 1; // Suppress wield for beatings/etc
-        unsigned int important_historical_figure : 1; // Is an important historical figure 
-        
-    } bits;
+    naked_creaturflags1 bits;
 };
 
 /*
@@ -360,53 +362,55 @@ bits:
 30  Roaming wilderness population source
 31  Roaming wilderness population source -- not a map feature 
 */
-
+struct naked_creaturflags2
+{
+    unsigned int swimming : 1;
+    unsigned int sparring : 1;
+    unsigned int no_notify : 1; // Do not notify about level gains (for embark etc)
+    unsigned int unused : 1;
+    
+    unsigned int calculated_nerves : 1;
+    unsigned int calculated_bodyparts : 1;
+    unsigned int important_historical_figure : 1; // slight variation
+    unsigned int killed : 1; // killed by kill() function
+    
+    unsigned int cleanup_1 : 1; // Must be forgotten by forget function (just cleanup)
+    unsigned int cleanup_2 : 1; // Must be deleted (cleanup)
+    unsigned int cleanup_3 : 1; // Recently forgotten (cleanup)
+    unsigned int for_trade : 1; // Offered for trade
+    
+    unsigned int trade_resolved : 1;
+    unsigned int has_breaks : 1;
+    unsigned int gutted : 1;
+    unsigned int circulatory_spray : 1;
+    
+    unsigned int locked_in_for_trading : 1;
+    unsigned int slaughter : 1; // marked for slaughter
+    unsigned int underworld : 1; // Underworld creature
+    unsigned int resident : 1; // Current resident
+    
+    unsigned int cleanup_4 : 1; // Marked for special cleanup as unused load from unit block on disk
+    unsigned int calculated_insulation : 1; // Insulation from clothing calculated
+    unsigned int visitor_uninvited : 1; // Uninvited guest
+    unsigned int visitor : 1; // visitor
+    
+    unsigned int calculated_inventory : 1; // Inventory order calculated
+    unsigned int vision_good : 1; // Vision -- have good part
+    unsigned int vision_damaged : 1; // Vision -- have damaged part
+    unsigned int vision_missing : 1; // Vision -- have missing part
+    
+    unsigned int breathing_good : 1; // Breathing -- have good part
+    unsigned int breathing_problem : 1; // Breathing -- having a problem
+    unsigned int roaming_wilderness_population_source : 1;
+    unsigned int roaming_wilderness_population_source_not_a_map_feature : 1;
+    
+};
 union t_creaturflags2
 {
     uint32_t whole;
-    struct {
-        unsigned int swimming : 1;
-        unsigned int sparring : 1;
-        unsigned int no_notify : 1; // Do not notify about level gains (for embark etc)
-        unsigned int unused : 1;
-        
-        unsigned int calculated_nerves : 1;
-        unsigned int calculated_bodyparts : 1;
-        unsigned int important_historical_figure : 1; // slight variation
-        unsigned int killed : 1; // killed by kill() function
-        
-        unsigned int cleanup_1 : 1; // Must be forgotten by forget function (just cleanup)
-        unsigned int cleanup_2 : 1; // Must be deleted (cleanup)
-        unsigned int cleanup_3 : 1; // Recently forgotten (cleanup)
-        unsigned int for_trade : 1; // Offered for trade
-        
-        unsigned int trade_resolved : 1;
-        unsigned int has_breaks : 1;
-        unsigned int gutted : 1;
-        unsigned int circulatory_spray : 1;
-        
-        unsigned int locked_in_for_trading : 1;
-        unsigned int slaughter : 1; // marked for slaughter
-        unsigned int underworld : 1; // Underworld creature
-        unsigned int resident : 1; // Current resident
-        
-        unsigned int cleanup_4 : 1; // Marked for special cleanup as unused load from unit block on disk
-        unsigned int calculated_insulation : 1; // Insulation from clothing calculated
-        unsigned int visitor_uninvited : 1; // Uninvited guest
-        unsigned int visitor : 1; // visitor
-        
-        unsigned int calculated_inventory : 1; // Inventory order calculated
-        unsigned int vision_good : 1; // Vision -- have good part
-        unsigned int vision_damaged : 1; // Vision -- have damaged part
-        unsigned int vision_missing : 1; // Vision -- have missing part
-        
-        unsigned int breathing_good : 1; // Breathing -- have good part
-        unsigned int breathing_problem : 1; // Breathing -- having a problem
-        unsigned int roaming_wilderness_population_source : 1;
-        unsigned int roaming_wilderness_population_source_not_a_map_feature : 1;
-        
-    } bits;
+    naked_creaturflags2 bits;
 };
+
 /*
 struct t_labor
 {
@@ -559,54 +563,57 @@ struct t_item_df40d
     uint32_t ID;
     // not complete
 };
+
 //From http://dwarffortresswiki.net/index.php/User:Rick/Memory_research
 //They all seem to be valid on 40d as well
+struct naked_itemflags
+{
+    unsigned int on_ground : 1; // Item on ground
+    unsigned int in_job : 1; // item currently being used in a job
+    unsigned int in_inventory : 1; // Item in a creatures inventory
+    unsigned int u_ngrd1 : 1; // only occurs when not on ground, unknown function
+    
+    unsigned int in_workshop : 1; // Item is in a workshops inventory
+    unsigned int u_ngrd2 : 1; // only occurs when not on ground, unknown function
+    unsigned int u_ngrd3 : 1; // only occurs when not on ground, unknown function
+    unsigned int rotten : 1; // Item is rotten
+    
+    unsigned int unk1 : 1; // unknown function
+    unsigned int u_ngrd4 : 1; // only occurs when not on ground, unknown function
+    unsigned int unk2 : 1; // unknown function
+    unsigned int u_ngrd5 : 1; // only occurs when not on ground, unknown function
+
+    unsigned int unk3 : 1; // unknown function
+    unsigned int u_ngrd6 : 1; // only occurs when not on ground, unknown function
+    unsigned int narrow : 1; // Item is narrow
+    unsigned int u_ngrd7 : 1; // only occurs when not on ground, unknown function
+            
+    unsigned int worn : 1; // item shows wear
+    unsigned int unk4 : 1; // unknown function
+    unsigned int u_ngrd8 : 1; // only occurs when not on ground, unknown function
+    unsigned int forbid : 1; // designate forbid item
+    
+    unsigned int unk5 : 1; // unknown function
+    unsigned int dump : 1; // designate dump item
+    unsigned int on_fire: 1; //indicates if item is on fire, Will Set Item On Fire if Set!
+    unsigned int melt : 1; // designate melt item, if item cannot be melted, does nothing it seems
+    
+    // 0100 0000 - 8000 0000
+    unsigned int hidden : 1; // designate hide item
+    unsigned int u_ngrd9 : 1; // only occurs when not on ground, unknown function
+    unsigned int unk6 : 1; // unknown function
+    unsigned int unk7 : 1; // unknown function
+    
+    unsigned int unk8 : 1; // unknown function
+    unsigned int unk9 : 1; // unknown function
+    unsigned int unk10 : 1; // unknown function
+    unsigned int unk11 : 1; // unknown function
+};
+
 union t_itemflags
 {
     uint32_t whole;
-    struct {
-        unsigned int on_ground : 1; // Item on ground
-        unsigned int in_job : 1; // item currently being used in a job
-        unsigned int in_inventory : 1; // Item in a creatures inventory
-        unsigned int u_ngrd1 : 1; // only occurs when not on ground, unknown function
-        
-        unsigned int in_workshop : 1; // Item is in a workshops inventory
-        unsigned int u_ngrd2 : 1; // only occurs when not on ground, unknown function
-        unsigned int u_ngrd3 : 1; // only occurs when not on ground, unknown function
-        unsigned int rotten : 1; // Item is rotten
-        
-        unsigned int unk1 : 1; // unknown function
-        unsigned int u_ngrd4 : 1; // only occurs when not on ground, unknown function
-        unsigned int unk2 : 1; // unknown function
-        unsigned int u_ngrd5 : 1; // only occurs when not on ground, unknown function
-
-        unsigned int unk3 : 1; // unknown function
-        unsigned int u_ngrd6 : 1; // only occurs when not on ground, unknown function
-        unsigned int narrow : 1; // Item is narrow
-        unsigned int u_ngrd7 : 1; // only occurs when not on ground, unknown function
-                
-        unsigned int worn : 1; // item shows wear
-        unsigned int unk4 : 1; // unknown function
-        unsigned int u_ngrd8 : 1; // only occurs when not on ground, unknown function
-        unsigned int forbid : 1; // designate forbid item
-        
-        unsigned int unk5 : 1; // unknown function
-        unsigned int dump : 1; // designate dump item
-        unsigned int on_fire: 1; //indicates if item is on fire, Will Set Item On Fire if Set!
-        unsigned int melt : 1; // designate melt item, if item cannot be melted, does nothing it seems
-        
-        // 0100 0000 - 8000 0000
-        unsigned int hidden : 1; // designate hide item
-        unsigned int u_ngrd9 : 1; // only occurs when not on ground, unknown function
-        unsigned int unk6 : 1; // unknown function
-        unsigned int unk7 : 1; // unknown function
-        
-        unsigned int unk8 : 1; // unknown function
-        unsigned int unk9 : 1; // unknown function
-        unsigned int unk10 : 1; // unknown function
-        unsigned int unk11 : 1; // unknown function
-        
-    } bits;
+    naked_itemflags bits;
 };
 
 //cooked
@@ -659,37 +666,35 @@ enum e_designation
     designation_7 // whatever
 };
 
-union t_designation
+struct naked_designation
 {
-    uint32_t whole;
-    struct {
     unsigned int flow_size : 3; // how much liquid is here?
     unsigned int pile : 1; // stockpile?
-/*
- * All the different dig designations... needs more info, probably an enum
- */
+    /*
+     * All the different dig designations... needs more info, probably an enum
+     */
     e_designation dig : 3;
     unsigned int smooth : 2;
     unsigned int hidden : 1;
 
-/*
- * This one is rather involved, but necessary to retrieve the base layer matgloss index
- * see http://www.bay12games.com/forum/index.php?topic=608.msg253284#msg253284 for details
- */
+    /*
+     * This one is rather involved, but necessary to retrieve the base layer matgloss index
+     * see http://www.bay12games.com/forum/index.php?topic=608.msg253284#msg253284 for details
+     */
     unsigned int geolayer_index :4;
     unsigned int light : 1;
     unsigned int subterranean : 1; // never seen the light of day?
     unsigned int skyview : 1; // sky is visible now, it rains in here when it rains
 
-/*
- * Probably similar to the geolayer_index. Only with a different set of offsets and different data.
- * we don't use this yet
- */
+    /*
+     * Probably similar to the geolayer_index. Only with a different set of offsets and different data.
+     * we don't use this yet
+     */
     unsigned int biome : 4;
-/*
-0 = water
-1 = magma
-*/
+    /*
+     * 0 = water
+     * 1 = magma
+     */
     unsigned int liquid_type : 1;
     unsigned int water_table : 1; // srsly. wtf?
     unsigned int rained : 1; // does this mean actual rain (as in the blue blocks) or a wet tile?
@@ -699,14 +704,17 @@ union t_designation
     unsigned int moss : 1;// I LOVE MOSS
     unsigned int feature_present : 1; // another wtf... is this required for magma pipes to work?
     unsigned int liquid_character : 2; // those ripples on streams?
-    } bits;
+};
+
+union t_designation
+{
+    uint32_t whole;
+    naked_designation bits;
 };
 
 // occupancy flags (rat,dwarf,horse,built wall,not build wall,etc)
-union t_occupancy
+struct naked_occupancy
 {
-    uint32_t whole;
-    struct {
     unsigned int building : 3;// building type... should be an enum?
     // 7 = door
     unsigned int unit : 1;
@@ -736,16 +744,24 @@ union t_occupancy
     unsigned int blood2 : 1;
     unsigned int broken_arrows_variant : 1;
     unsigned int snow : 1;
-    } bits;
-    struct {
-        unsigned int building : 3;// building type... should be an enum?
-        // 7 = door
-        unsigned int unit : 1;
-        unsigned int unit_grounded : 1;
-        unsigned int item : 1;
-        // splatter. everyone loves splatter.
-        unsigned int splatter : 26;
-    } unibits;
+};
+
+struct naked_occupancy_grouped
+{
+    unsigned int building : 3;// building type... should be an enum?
+    // 7 = door
+    unsigned int unit : 1;
+    unsigned int unit_grounded : 1;
+    unsigned int item : 1;
+    // splatter. everyone loves splatter.
+    unsigned int splatter : 26;
+};
+
+union t_occupancy
+{
+    uint32_t whole;
+    naked_occupancy bits;
+    naked_occupancy_grouped unibits;
 };
 
 struct t_viewscreen 

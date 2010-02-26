@@ -25,7 +25,7 @@ distribution.
 #ifndef DFVECTOR_H_INCLUDED
 #define DFVECTOR_H_INCLUDED
 
-#include <Tranquility.h>
+#include "Tranquility.h"
 
 namespace DFHack
 {

@@ -25,7 +25,7 @@ distribution.
 #ifndef KEYS_H_INCLUDED
 #define KEYS_H_INCLUDED
 
-#include <Tranquility.h>
+#include "Tranquility.h"
 #include "Export.h"
 
 namespace DFHack

@@ -25,7 +25,7 @@ distribution.
 #ifndef DFCOMMONINTERNAL_H_INCLUDED
 #define DFCOMMONINTERNAL_H_INCLUDED
 
-#include <Tranquility.h>
+#include "Tranquility.h"
 
 #include <string>
 #include <vector>

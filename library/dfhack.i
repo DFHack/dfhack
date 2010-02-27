@@ -22,7 +22,8 @@ namespace std
     %template(VeinVector) std::vector <DFHack::t_vein>;
     %template(IceVeinVector) std::vector <DFHack::t_frozenliquidvein>;
 }
-
+%define DFHACK_EXPORT
 /* Parse the header file to generate wrappers */
 %include "DFTypes.h"
 %include "DFHackAPI.h"
+%enddef DFHACK_EXPORT

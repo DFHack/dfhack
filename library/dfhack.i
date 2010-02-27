@@ -2,8 +2,9 @@
 %include "std_string.i"
 %include "std_vector.i"
 %include "stdint.i"
+
+/* This goes to the header of the wrapper code */
 %{
-/* Includes the header in the wrapper code */
 #define LINUX_BUILD
 #define SWIG_WRAPPER
 #include "DFTypes.h"

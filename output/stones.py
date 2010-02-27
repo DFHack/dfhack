@@ -7,3 +7,4 @@ if x.Attach():
     print "Dumping all stone"
     for matgloss in y:
       print "ID %s, name %s" % (matgloss.id, matgloss.name)
+  x.Detach()

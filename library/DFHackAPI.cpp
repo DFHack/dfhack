@@ -1102,8 +1102,8 @@ bool API::ReadHotkeys(t_hotkey hotkeys[])
 }
 // returns index of creature actually read or -1 if no creature can be found
 int32_t API::ReadCreatureInBox (int32_t index, t_creature & furball,
-                                const uint16_t &x1, const uint16_t &y1, const uint16_t &z1,
-                                const uint16_t &x2, const uint16_t &y2, const uint16_t &z2)
+                                const uint16_t x1, const uint16_t y1, const uint16_t z1,
+                                const uint16_t x2, const uint16_t y2, const uint16_t z2)
 {
     if (!d->creaturesInited) return -1;
     uint16_t coords[3];

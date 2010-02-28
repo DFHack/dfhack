@@ -9,23 +9,35 @@
 using namespace std;
 #include <DFTypes.h>
 #include <DFHackAPI.h>
+#include <DFError.h>
 
 int main (void)
 {
     time_t start, end;
     double time_diff;
     DFHack::API DF("Memory.xml");
-    if(!DF.Attach())
-    {
-        cerr << "DF not found" << endl;
-        return 1;
-    }
-    if(!DF.Detach())
-    {
-        cerr << "Can't detach from DF" << endl;
-        return 1;
-    }
+    //if(!DF.Attach())
+    //{
+    //    cerr << "DF not found" << endl;
+    //    return 1;
+    //}
+    //if(!DF.Detach())
+    //{
+    //    cerr << "Can't detach from DF" << endl;
+    //    return 1;
+    //}
     
+    try
+    {
+        DF.Attach();
+        DF.Detach();
+    }
+    catch (DFHack::Error::NoProcess& e)
+    {
+        cerr << e.what() << endl;
+        return 1;
+    }
+
     // attach/detach test
     cout << "Testing attach/detach"  << endl;
     time(&start);

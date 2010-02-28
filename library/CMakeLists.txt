@@ -2,6 +2,7 @@
 
 SET(PROJECT_HDRS
 DFCommonInternal.h
+DFError.h
 DFHackAPI.h
 DFMemInfo.h
 DFMemInfoManager.h

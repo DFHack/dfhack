@@ -23,6 +23,7 @@ distribution.
 */
 
 #include "DFCommonInternal.h"
+#include "DFError.h"
 using namespace DFHack;
 
 class API::Private
@@ -1369,14 +1370,16 @@ bool API::Attach()
     // find a process (ProcessManager can find multiple when used properly)
     if (!d->pm->findProcessess())
     {
-        cerr << "couldn't find a suitable process" << endl;
-        return false;
+        throw Error::NoProcess();
+        //cerr << "couldn't find a suitable process" << endl;
+        //return false;
     }
     d->p = (*d->pm) [0];
     if (!d->p->attach())
     {
-        cerr << "couldn't attach to process" << endl;
-        return false; // couldn't attach to process, no go
+        throw Error::CantAttach();
+        //cerr << "couldn't attach to process" << endl;
+        //return false; // couldn't attach to process, no go
     }
     d->offset_descriptor = d->p->getDescriptor();
     // process is attached, everything went just fine... hopefully

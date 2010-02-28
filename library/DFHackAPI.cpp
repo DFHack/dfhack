@@ -668,8 +668,12 @@ bool API::ReadGeology (vector < vector <uint16_t> >& assign)
         )
     )
     {
+        // FIXME should probably be moved into getAdress or getOffset for easy storing of 
+        // the missing definition
+        throw Error::MissingAddress();
+
         // fail if we don't have them
-        return false;
+        //return false;
     }
 
     // read position of the region inside DF world
@@ -751,7 +755,9 @@ bool API::InitReadBuildings ( uint32_t& numbuildings )
     {
         d->buildingsInited = false;
         numbuildings = 0;
-        return false;
+
+        throw Error::MissingAddress("buildings");
+        //return false;
     }
 }
 
@@ -1160,6 +1166,7 @@ bool API::getItemIndexesInBox(vector<uint32_t> &indexes,
             }
         }
     }
+    return true;
 }
 
 bool API::ReadCreature (const int32_t index, t_creature & furball)

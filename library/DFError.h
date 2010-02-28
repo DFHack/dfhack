@@ -71,6 +71,19 @@ namespace DFHack
                 return "both x and y needs to be between 0 and 48";
             }
         };
+
+        // a call to DFHack::mem_info::getAdress() failed
+        class MissingAddress  : public exception
+        {
+        public:
+            MissingAddress(const char* _address) : address(_address) {}
+            const std::string address;
+
+            virtual const char* what() const throw()
+            {
+                return "memory address missing";
+            }
+        };
     }
 }
 

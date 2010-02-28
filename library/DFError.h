@@ -26,6 +26,7 @@ distribution.
 #define ERROR_H_INCLUDED
 
 #include <string>
+#include <sstream>
 #include <exception>
 
 namespace DFHack
@@ -72,16 +73,39 @@ namespace DFHack
             }
         };
 
-        // a call to DFHack::mem_info::getAdress() failed
-        class MissingAddress  : public exception
+        // a call to DFHack::mem_info::get* failed
+        class MissingMemoryDefinition : public exception
         {
         public:
-            MissingAddress(const char* _address = "UNKNOWN") : address(_address) {}
-            const std::string address;
+            MissingMemoryDefinition(const char* _type, const char* _key) : type(_type), key(_key) {}
+            // Used by functios using integer keys, such as getTrait
+            MissingMemoryDefinition(const char* _type, uint32_t _key) : type(_type)
+            {
+                // FIXME fancy hex printer goes here
+                std::stringstream s;
+                s << _key;
+                key = s.str();
+            }
+
+            // (perhaps it should be an enum, but this is intended for easy printing/logging)
+            // type can be any of the following:
+            //
+            // address
+            // offset
+            // hexvalue
+            // string
+            // profession
+            // job
+            // skill
+            // trait
+            // traitname
+            // labor
+            const std::string type;
+            std::string key;
 
             virtual const char* what() const throw()
             {
-                return "memory address missing";
+                return "memory definition missing";
             }
         };
     }

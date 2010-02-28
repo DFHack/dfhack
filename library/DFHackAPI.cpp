@@ -23,7 +23,6 @@ distribution.
 */
 
 #include "DFCommonInternal.h"
-#include "DFError.h"
 using namespace DFHack;
 
 /*
@@ -659,23 +658,6 @@ bool API::ReadGeology (vector < vector <uint16_t> >& assign)
     uint32_t regionX, regionY, regionZ;
     uint16_t worldSizeX, worldSizeY;
 
-    // check if we have 'em all
-    if (
-        ! (
-            region_x_offset && region_y_offset && region_z_offset && world_size_x && world_size_y
-            && world_offset && world_regions_offset && world_geoblocks_offset && region_size
-            && region_geo_index_offset && geolayer_geoblock_offset
-        )
-    )
-    {
-        // FIXME should probably be moved into getAdress or getOffset for easy storing of 
-        // the missing definition
-        throw Error::MissingAddress();
-
-        // fail if we don't have them
-        //return false;
-    }
-
     // read position of the region inside DF world
     g_pProcess->readDWord (region_x_offset, regionX);
     g_pProcess->readDWord (region_y_offset, regionY);
@@ -744,21 +726,10 @@ bool API::ReadGeology (vector < vector <uint16_t> >& assign)
 bool API::InitReadBuildings ( uint32_t& numbuildings )
 {
     int buildings = d->offset_descriptor->getAddress ("buildings");
-    if(buildings)
-    {
-        d->buildingsInited = true;
-        d->p_bld = new DfVector (d->p->readVector (buildings, 4));
-        numbuildings = d->p_bld->getSize();
-        return true;
-    }
-    else
-    {
-        d->buildingsInited = false;
-        numbuildings = 0;
-
-        throw Error::MissingAddress("buildings");
-        //return false;
-    }
+    d->buildingsInited = true;
+    d->p_bld = new DfVector (d->p->readVector (buildings, 4));
+    numbuildings = d->p_bld->getSize();
+    return true;
 }
 
 
@@ -809,21 +780,10 @@ void API::FinishReadBuildings()
 bool API::InitReadConstructions(uint32_t & numconstructions)
 {
     int constructions = d->offset_descriptor->getAddress ("constructions");
-    if(constructions)
-    {
-        d->p_cons = new DfVector (d->p->readVector (constructions, 4));
-        d->constructionsInited = true;
-        numconstructions = d->p_cons->getSize();
-        return true;
-    }
-    else
-    {
-        d->constructionsInited = false;
-        numconstructions = 0;
-
-        throw Error::MissingAddress("constructions");
-        //return false;
-    }
+    d->p_cons = new DfVector (d->p->readVector (constructions, 4));
+    d->constructionsInited = true;
+    numconstructions = d->p_cons->getSize();
+    return true;
 }
 
 
@@ -861,22 +821,21 @@ void API::FinishReadConstructions()
 
 bool API::InitReadVegetation(uint32_t & numplants)
 {
-    int vegetation = d->offset_descriptor->getAddress ("vegetation");
-    d->tree_offset = d->offset_descriptor->getOffset ("tree_desc_offset");
-    if(vegetation && d->tree_offset)
+    try 
     {
+        int vegetation = d->offset_descriptor->getAddress ("vegetation");
+        d->tree_offset = d->offset_descriptor->getOffset ("tree_desc_offset");
+
         d->vegetationInited = true;
         d->p_veg = new DfVector (d->p->readVector (vegetation, 4));
         numplants = d->p_veg->getSize();
         return true;
     }
-    else
+    catch (Error::MissingMemoryDefinition&)
     {
         d->vegetationInited = false;
         numplants = 0;
-
-        throw Error::MissingAddress();
-        //return false;
+        throw;
     }
 }
 
@@ -908,99 +867,69 @@ void API::FinishReadVegetation()
 
 bool API::InitReadCreatures( uint32_t &numcreatures )
 {
-    memory_info * minfo = d->offset_descriptor;
-    int creatures = d->offset_descriptor->getAddress ("creatures");
-    d->creature_pos_offset = minfo->getOffset ("creature_position");
-    d->creature_type_offset = minfo->getOffset ("creature_race");
-    d->creature_flags1_offset = minfo->getOffset ("creature_flags1");
-    d->creature_flags2_offset = minfo->getOffset ("creature_flags2");
-    d->creature_first_name_offset = minfo->getOffset ("creature_first_name");
-    d->creature_nick_name_offset = minfo->getOffset ("creature_nick_name");
-    d->creature_last_name_offset = minfo->getOffset ("creature_last_name");
-    d->creature_custom_profession_offset = minfo->getOffset ("creature_custom_profession");
-    d->creature_profession_offset = minfo->getOffset ("creature_profession");
-    d->creature_sex_offset = minfo->getOffset ("creature_sex");
-    d->creature_id_offset = minfo->getOffset ("creature_id");
-    d->creature_squad_name_offset = minfo->getOffset ("creature_squad_name");
-    d->creature_squad_leader_id_offset = minfo->getOffset ("creature_squad_leader_id");
-    d->creature_money_offset = minfo->getOffset ("creature_money");
-    d->creature_current_job_offset = minfo->getOffset ("creature_current_job");
-    d->creature_current_job_id_offset = minfo->getOffset ("current_job_id");
-    d->creature_strength_offset = minfo->getOffset ("creature_strength");
-    d->creature_agility_offset = minfo->getOffset ("creature_agility");
-    d->creature_toughness_offset = minfo->getOffset ("creature_toughness");
-    d->creature_skills_offset = minfo->getOffset ("creature_skills");
-    d->creature_labors_offset = minfo->getOffset ("creature_labors");
-    d->creature_happiness_offset = minfo->getOffset ("creature_happiness");
-    d->creature_traits_offset = minfo->getOffset ("creature_traits");
-    d->creature_likes_offset = minfo->getOffset("creature_likes");
-    if (creatures
-            && d->creature_pos_offset
-            && d->creature_type_offset
-            && d->creature_flags1_offset
-            && d->creature_flags2_offset
-            && d->creature_nick_name_offset
-            && d->creature_custom_profession_offset
-            && d->creature_profession_offset
-            && d->creature_sex_offset
-            && d->creature_id_offset
-            && d->creature_squad_name_offset
-            && d->creature_squad_leader_id_offset
-            && d->creature_money_offset
-            && d->creature_current_job_offset
-            && d->creature_strength_offset
-            && d->creature_agility_offset
-            && d->creature_toughness_offset
-            && d->creature_skills_offset
-            && d->creature_labors_offset
-            && d->creature_happiness_offset
-            && d->creature_traits_offset
-    //       && d->creature_likes_offset
-       )
+    try
     {
+        memory_info * minfo = d->offset_descriptor;
+        int creatures = d->offset_descriptor->getAddress ("creatures");
+        d->creature_pos_offset = minfo->getOffset ("creature_position");
+        d->creature_type_offset = minfo->getOffset ("creature_race");
+        d->creature_flags1_offset = minfo->getOffset ("creature_flags1");
+        d->creature_flags2_offset = minfo->getOffset ("creature_flags2");
+        d->creature_first_name_offset = minfo->getOffset ("creature_first_name");
+        d->creature_nick_name_offset = minfo->getOffset ("creature_nick_name");
+        d->creature_last_name_offset = minfo->getOffset ("creature_last_name");
+        d->creature_custom_profession_offset = minfo->getOffset ("creature_custom_profession");
+        d->creature_profession_offset = minfo->getOffset ("creature_profession");
+        d->creature_sex_offset = minfo->getOffset ("creature_sex");
+        d->creature_id_offset = minfo->getOffset ("creature_id");
+        d->creature_squad_name_offset = minfo->getOffset ("creature_squad_name");
+        d->creature_squad_leader_id_offset = minfo->getOffset ("creature_squad_leader_id");
+        d->creature_money_offset = minfo->getOffset ("creature_money");
+        d->creature_current_job_offset = minfo->getOffset ("creature_current_job");
+        d->creature_current_job_id_offset = minfo->getOffset ("current_job_id");
+        d->creature_strength_offset = minfo->getOffset ("creature_strength");
+        d->creature_agility_offset = minfo->getOffset ("creature_agility");
+        d->creature_toughness_offset = minfo->getOffset ("creature_toughness");
+        d->creature_skills_offset = minfo->getOffset ("creature_skills");
+        d->creature_labors_offset = minfo->getOffset ("creature_labors");
+        d->creature_happiness_offset = minfo->getOffset ("creature_happiness");
+        d->creature_traits_offset = minfo->getOffset ("creature_traits");
+        d->creature_likes_offset = minfo->getOffset("creature_likes");
+
         d->p_cre = new DfVector (d->p->readVector (creatures, 4));
         //InitReadNameTables();
         d->creaturesInited = true;
         numcreatures =  d->p_cre->getSize();
         return true;
     }
-    else
+    catch (Error::MissingMemoryDefinition&)
     {
         d->creaturesInited = false;
         numcreatures = 0;
-
-        throw Error::MissingAddress();
-        //return false;
+        throw;
     }
 }
 bool API::InitReadNotes( uint32_t &numnotes )
 {
-    memory_info * minfo = d->offset_descriptor;
-    int notes = minfo->getAddress ("notes");
-    d->note_foreground_offset = minfo->getOffset ("note_foreground");
-    d->note_background_offset = minfo->getOffset ("note_background");
-    d->note_name_offset = minfo->getOffset ("note_name");
-    d->note_xyz_offset = minfo->getOffset ("note_xyz");
-    
-    if (notes
-            && d->note_foreground_offset
-            && d->note_background_offset
-            && d->note_name_offset
-            && d->note_xyz_offset
-       )
+    try
     {
+        memory_info * minfo = d->offset_descriptor;
+        int notes = minfo->getAddress ("notes");
+        d->note_foreground_offset = minfo->getOffset ("note_foreground");
+        d->note_background_offset = minfo->getOffset ("note_background");
+        d->note_name_offset = minfo->getOffset ("note_name");
+        d->note_xyz_offset = minfo->getOffset ("note_xyz");
+
         d->p_notes = new DfVector (d->p->readVector (notes, 4));
         d->notesInited = true;
         numnotes =  d->p_notes->getSize();
         return true;
     }
-    else
+    catch (Error::MissingMemoryDefinition&)
     {
         d->notesInited = false;
         numnotes = 0;
-
-        throw Error::MissingAddress();
-        //return false;
+        throw;
     }
 }
 bool API::ReadNote (const int32_t index, t_note & note)
@@ -1017,32 +946,26 @@ bool API::ReadNote (const int32_t index, t_note & note)
 }
 bool API::InitReadSettlements( uint32_t & numsettlements )
 {
-    memory_info * minfo = d->offset_descriptor;
-    int allSettlements = minfo->getAddress ("settlements");
-    int currentSettlement = minfo->getAddress("settlement_current");
-    d->settlement_name_offset = minfo->getOffset ("settlement_name");
-    d->settlement_world_xy_offset = minfo->getOffset ("settlement_world_xy");
-    d->settlement_local_xy_offset = minfo->getOffset ("settlement_local_xy");
-
-    if (allSettlements && currentSettlement
-            && d->settlement_name_offset
-            && d->settlement_world_xy_offset
-            && d->settlement_local_xy_offset
-       )
+    try
     {
+        memory_info * minfo = d->offset_descriptor;
+        int allSettlements = minfo->getAddress ("settlements");
+        int currentSettlement = minfo->getAddress("settlement_current");
+        d->settlement_name_offset = minfo->getOffset ("settlement_name");
+        d->settlement_world_xy_offset = minfo->getOffset ("settlement_world_xy");
+        d->settlement_local_xy_offset = minfo->getOffset ("settlement_local_xy");
+
         d->p_settlements = new DfVector (d->p->readVector (allSettlements, 4));
         d->p_current_settlement = new DfVector(d->p->readVector(currentSettlement,4));
         d->settlementsInited = true;
         numsettlements =  d->p_settlements->getSize();
         return true;
     }
-    else
+    catch (Error::MissingMemoryDefinition&)
     {
         d->settlementsInited = false;
         numsettlements = 0;
-
-        throw Error::MissingAddress();
-        //return false;
+        throw;
     }
 }
 bool API::ReadSettlement(const int32_t index, t_settlement & settlement)
@@ -1058,6 +981,7 @@ bool API::ReadSettlement(const int32_t index, t_settlement & settlement)
     g_pProcess->read(temp + d->settlement_local_xy_offset, 4 * sizeof(int16_t), (uint8_t *) &settlement.local_x1);
     return true;
 }
+
 bool API::ReadCurrentSettlement(t_settlement & settlement)
 {
     if(!d->settlementsInited) return false;
@@ -1089,23 +1013,21 @@ void API::FinishReadSettlements()
 
 bool API::InitReadHotkeys( )
 {
-    memory_info * minfo = d->offset_descriptor;
-    d->hotkey_start = minfo->getAddress("hotkey_start");
-    d->hotkey_mode_offset = minfo->getOffset ("hotkey_mode");
-    d->hotkey_xyz_offset = minfo->getOffset("hotkey_xyz");
-    d->hotkey_size = minfo->getHexValue("hotkey_size");
-        
-    if (d->hotkey_start && d->hotkey_mode_offset && d->hotkey_size)
+    try
     {
+        memory_info * minfo = d->offset_descriptor;
+        d->hotkey_start = minfo->getAddress("hotkey_start");
+        d->hotkey_mode_offset = minfo->getOffset ("hotkey_mode");
+        d->hotkey_xyz_offset = minfo->getOffset("hotkey_xyz");
+        d->hotkey_size = minfo->getHexValue("hotkey_size");
+
         d->hotkeyInited = true;
         return true;
     }
-    else
+    catch (Error::MissingMemoryDefinition&)
     {
         d->hotkeyInited = false;
-
-        throw Error::MissingAddress();
-        //return false;
+        throw;
     }
 }
 bool API::ReadHotkeys(t_hotkey hotkeys[])
@@ -1263,12 +1185,12 @@ void API::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
 
 bool API::InitReadNameTables (map< string, vector<string> > & nameTable)
 {
-    int genericAddress = d->offset_descriptor->getAddress ("language_vector");
-    int transAddress = d->offset_descriptor->getAddress ("translation_vector");
-    int word_table_offset = d->offset_descriptor->getOffset ("word_table");
-
-    if(genericAddress && transAddress && word_table_offset)
+    try
     {
+        int genericAddress = d->offset_descriptor->getAddress ("language_vector");
+        int transAddress = d->offset_descriptor->getAddress ("translation_vector");
+        int word_table_offset = d->offset_descriptor->getOffset ("word_table");
+
         DfVector genericVec (d->p->readVector (genericAddress, 4));
         DfVector transVec (d->p->readVector (transAddress, 4));
 
@@ -1294,12 +1216,10 @@ bool API::InitReadNameTables (map< string, vector<string> > & nameTable)
         d->nameTablesInited = true;
         return true;
     }
-    else
+    catch (Error::MissingMemoryDefinition&)
     {
         d->nameTablesInited = false;
-
-        throw Error::MissingAddress();
-        //return false;
+        throw;
     }
 }
 
@@ -1482,42 +1402,39 @@ void API::WriteRaw (const uint32_t offset, const uint32_t size, uint8_t *source)
 
 bool API::InitViewAndCursor()
 {
-    d->window_x_offset = d->offset_descriptor->getAddress ("window_x");
-    d->window_y_offset = d->offset_descriptor->getAddress ("window_y");
-    d->window_z_offset = d->offset_descriptor->getAddress ("window_z");
-    d->cursor_xyz_offset = d->offset_descriptor->getAddress ("cursor_xyz");
-    d->current_cursor_creature_offset = d->offset_descriptor->getAddress ("current_cursor_creature");
-
-    d->current_menu_state_offset = d->offset_descriptor->getAddress("current_menu_state");
-    d->pause_state_offset = d->offset_descriptor->getAddress ("pause_state");
-    d->view_screen_offset = d->offset_descriptor->getAddress ("view_screen");
-    
-    if (d->window_x_offset && d->window_y_offset && d->window_z_offset && 
-        d->current_cursor_creature_offset && d->current_menu_state_offset && 
-        d->pause_state_offset && d->view_screen_offset)
+    try
     {
+        d->window_x_offset = d->offset_descriptor->getAddress ("window_x");
+        d->window_y_offset = d->offset_descriptor->getAddress ("window_y");
+        d->window_z_offset = d->offset_descriptor->getAddress ("window_z");
+        d->cursor_xyz_offset = d->offset_descriptor->getAddress ("cursor_xyz");
+        d->current_cursor_creature_offset = d->offset_descriptor->getAddress ("current_cursor_creature");
+
+        d->current_menu_state_offset = d->offset_descriptor->getAddress("current_menu_state");
+        d->pause_state_offset = d->offset_descriptor->getAddress ("pause_state");
+        d->view_screen_offset = d->offset_descriptor->getAddress ("view_screen");
+
         d->cursorWindowInited = true;
         return true;
     }
-    else
+    catch (Error::MissingMemoryDefinition&)
     {
-        throw Error::MissingAddress();
-        //return false;
+        throw;
     }
 }
 
 bool API::InitViewSize()
 {
-    d->window_dims_offset = d->offset_descriptor->getAddress ("window_dims");
-    if (d->window_dims_offset)
+    try
     {
+        d->window_dims_offset = d->offset_descriptor->getAddress ("window_dims");
+
         d->viewSizeInited = true;
         return true;
     }
-    else
+    catch (Error::MissingMemoryDefinition&)
     {
-        throw Error::MissingAddress();
-        //return false;
+        throw;
     }
 }
 
@@ -1595,23 +1512,21 @@ DFWindow * API::getWindow()
 
 bool API::InitReadItems(uint32_t & numitems)
 {
-    int items = d->offset_descriptor->getAddress ("items");
-    d->item_material_offset = d->offset_descriptor->getOffset ("item_materials");
-    
-    if(items && d->item_material_offset)
+    try
     {
+        int items = d->offset_descriptor->getAddress ("items");
+        d->item_material_offset = d->offset_descriptor->getOffset ("item_materials");
+
         d->p_itm = new DfVector (d->p->readVector (items, 4));
         d->itemsInited = true;
         numitems = d->p_itm->getSize();
         return true;
     }
-    else
+    catch (Error::MissingMemoryDefinition&)
     {
         d->itemsInited = false;
         numitems = 0;
-
-        throw Error::MissingAddress();
-        //return false;
+        throw;
     }
 }
 bool API::ReadItem (const uint32_t index, t_item & item)

@@ -85,6 +85,7 @@ namespace DFHack
 #include "DFMemInfoManager.h"
 #include "DFVector.h"
 #include "DFMemInfo.h"
+#include "DFError.h"
 #include <stdlib.h>
 
 #include "tinyxml/tinyxml.h"

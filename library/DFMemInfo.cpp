@@ -450,7 +450,7 @@ uint32_t memory_info::getAddress (const char *key)
     {
         return (*iter).second;
     }
-    return 0;
+    throw Error::MissingMemoryDefinition("address", key);
 }
 
 
@@ -462,7 +462,7 @@ uint32_t memory_info::getOffset (const char *key)
     {
         return (*iter).second;
     }
-    return 0;
+    throw Error::MissingMemoryDefinition("offset", key);
 }
 
 // Get named numerical value
@@ -473,7 +473,7 @@ uint32_t memory_info::getHexValue (const char *key)
     {
         return (*iter).second;
     }
-    return 0;
+    throw Error::MissingMemoryDefinition("hexvalue", key);
 }
 
 
@@ -486,7 +486,7 @@ uint32_t memory_info::getAddress (const string &key)
     {
         return (*iter).second;
     }
-    return 0;
+    throw Error::MissingMemoryDefinition("address", key.c_str());
 }
 
 
@@ -498,7 +498,7 @@ uint32_t memory_info::getOffset (const string &key)
     {
         return (*iter).second;
     }
-    return 0;
+    throw Error::MissingMemoryDefinition("offset", key.c_str());
 }
 
 // Get named numerical value
@@ -509,7 +509,7 @@ uint32_t memory_info::getHexValue (const string &key)
     {
         return (*iter).second;
     }
-    return 0;
+    throw Error::MissingMemoryDefinition("hexvalue", key.c_str());
 }
 
 // Get named string
@@ -520,7 +520,7 @@ std::string memory_info::getString (const string &key)
     {
         return (*iter).second;
     }
-    return string("");
+    throw Error::MissingMemoryDefinition("string", key.c_str());
 }
 
 // Get Profession
@@ -530,10 +530,7 @@ string memory_info::getProfession (const uint32_t key) const
     {
         return d->professions[key];
     }
-    else
-    {
-        return string("");
-    }
+    throw Error::MissingMemoryDefinition("profession", key);
 }
 
 // Get Job
@@ -543,7 +540,7 @@ string memory_info::getJob (const uint32_t key) const
     {
         return d->jobs[key];
     }
-    return string("Job Does Not Exist");
+    throw Error::MissingMemoryDefinition("job", key);
 }
 
 string memory_info::getSkill (const uint32_t key) const
@@ -552,7 +549,7 @@ string memory_info::getSkill (const uint32_t key) const
     {
         return d->skills[key];
     }
-    return string("Skill is not Defined");
+    throw Error::MissingMemoryDefinition("skill", key);
 }
 
 // FIXME: ugly hack that needs to die
@@ -585,7 +582,7 @@ string memory_info::getTrait (const uint32_t traitIdx, const uint32_t traitValue
         else
             return d->traits[traitIdx][0];
     }
-    return string("Trait is not Defined");
+    throw Error::MissingMemoryDefinition("trait", traitIdx);
 }
 
 string memory_info::getTraitName(const uint32_t traitIdx) const
@@ -594,7 +591,7 @@ string memory_info::getTraitName(const uint32_t traitIdx) const
     {
         return d->traits[traitIdx][d->traits[traitIdx].size()-1];
     }
-    return string("Trait is not Defined");
+    throw Error::MissingMemoryDefinition("traitname", traitIdx);
 }
 
 string memory_info::getLabor (const uint32_t laborIdx)
@@ -603,7 +600,7 @@ string memory_info::getLabor (const uint32_t laborIdx)
     {
         return d->labors[laborIdx];
     }
-    return string("");
+    throw Error::MissingMemoryDefinition("labor", laborIdx);
 }
 
 // Reset everything

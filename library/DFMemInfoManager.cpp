@@ -101,14 +101,12 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
         string base = cstr_base;
         ParseEntry(knownEntries[base], mem, knownEntries);
     }
+
+    if (!cstr_version)
+        throw Error::MemoryXmlBadAttribute("version");
+    if (!cstr_os)
+        throw Error::MemoryXmlBadAttribute("os");
     
-    // mandatory attributes missing?
-    if(!(cstr_version && cstr_os))
-    {
-        cerr << "Bad entry in memory.xml detected, version or os attribute is missing.";
-        // skip if we don't have valid attributes
-        return;
-    }
     string os = cstr_os;
     mem->setVersion(cstr_version);
     mem->setOS(cstr_os);
@@ -139,8 +137,7 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
     }
     else
     {
-        cerr << "unknown operating system " << os << endl;
-        return;
+        throw Error::MemoryXmlBadAttribute("os");
     }
     
     // process additional entries
@@ -160,10 +157,9 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
             ParseVTable(pMemEntry, mem);
             continue;
         }
-        if( !(cstr_name && cstr_value))
+        if(!(cstr_name && cstr_value))
         {
-            cerr << "underspecified MemInfo entry" << endl;
-            continue;
+            throw Error::MemoryXmlUnderspecifiedEntry();
         }
         name = cstr_name;
         value = cstr_value;
@@ -205,7 +201,7 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
         }
         else
         {
-            cerr << "Unknown MemInfo type: " << type << endl;
+            throw Error::MemoryXmlUnknownType(type.c_str());
         }
     } // for
 } // method
@@ -220,71 +216,65 @@ MemInfoManager::MemInfoManager(string path_to_xml)
 bool MemInfoManager::loadFile(string path_to_xml)
 {
     TiXmlDocument doc( path_to_xml.c_str() );
-    bool loadOkay = doc.LoadFile();
+    //bool loadOkay = doc.LoadFile();
+    if (!doc.LoadFile())
+    {
+        error = true;
+        throw Error::MemoryXmlParse(doc.ErrorDesc(), doc.ErrorId(), doc.ErrorRow(), doc.ErrorCol());
+    }
     TiXmlHandle hDoc(&doc);
     TiXmlElement* pElem;
     TiXmlHandle hRoot(0);
     memory_info mem;
-    
-    if ( loadOkay )
+
+    // block: name
     {
-        // block: name
+        pElem=hDoc.FirstChildElement().Element();
+        // should always have a valid root but handle gracefully if it does
+        if (!pElem)
         {
-            pElem=hDoc.FirstChildElement().Element();
-            // should always have a valid root but handle gracefully if it does
-            if (!pElem)
-            {
-                cerr << "no pElem found" << endl;
-                return false;
-            }
-            string m_name=pElem->Value();
-            if(m_name != "DFExtractor")
-            {
-                cerr << "DFExtractor != " << m_name << endl;
-                return false;
-            }
-            //cout << "got DFExtractor XML!" << endl;
-            // save this for later
-            hRoot=TiXmlHandle(pElem);
+            error = true;
+            throw Error::MemoryXmlNoRoot();
         }
-        // transform elements
+        string m_name=pElem->Value();
+        if(m_name != "DFExtractor")
         {
-            // trash existing list
-            for(int i = 0; i < meminfo.size(); i++)
-            {
-                delete meminfo[i];
-            }
-            meminfo.clear();
-            TiXmlElement* pMemInfo=hRoot.FirstChild( "MemoryDescriptors" ).FirstChild( "Entry" ).Element();
-            map <string ,TiXmlElement *> map_pNamedEntries;
-            vector <TiXmlElement *> v_pEntries;
-            for( ; pMemInfo; pMemInfo=pMemInfo->NextSiblingElement("Entry"))
-            {
-                v_pEntries.push_back(pMemInfo);
-                const char *id = pMemInfo->Attribute("id");
-                if(id)
-                {
-                    string str_id = id;
-                    map_pNamedEntries[str_id] = pMemInfo;
-                }
-            }
-            for(uint32_t i = 0; i< v_pEntries.size();i++)
-            {
-                memory_info *mem = new memory_info();
-                //FIXME: add a set of entries processed in a step of this cycle, use it to check for infinite loops
-                /* recursive */ParseEntry( v_pEntries[i] , mem , map_pNamedEntries);
-                meminfo.push_back(mem);
-            }
-            // process found things here
+            error = true;
+            throw Error::MemoryXmlNoDFExtractor(m_name.c_str());
         }
-        error = false;
-        return true;
+        // save this for later
+        hRoot=TiXmlHandle(pElem);
     }
-    else
+    // transform elements
     {
-        // load failed
-        cerr << "Can't load memory offsets from memory.xml" << endl;
-        error = true;
-        return false;
+        // trash existing list
+        for(int i = 0; i < meminfo.size(); i++)
+        {
+            delete meminfo[i];
+        }
+        meminfo.clear();
+        TiXmlElement* pMemInfo=hRoot.FirstChild( "MemoryDescriptors" ).FirstChild( "Entry" ).Element();
+        map <string ,TiXmlElement *> map_pNamedEntries;
+        vector <TiXmlElement *> v_pEntries;
+        for( ; pMemInfo; pMemInfo=pMemInfo->NextSiblingElement("Entry"))
+        {
+            v_pEntries.push_back(pMemInfo);
+            const char *id = pMemInfo->Attribute("id");
+            if(id)
+            {
+                string str_id = id;
+                map_pNamedEntries[str_id] = pMemInfo;
+            }
+        }
+        for(uint32_t i = 0; i< v_pEntries.size();i++)
+        {
+            memory_info *mem = new memory_info();
+            //FIXME: add a set of entries processed in a step of this cycle, use it to check for infinite loops
+            /* recursive */ParseEntry( v_pEntries[i] , mem , map_pNamedEntries);
+            meminfo.push_back(mem);
+        }
+        // process found things here
     }
+    error = false;
+    return true;
 }

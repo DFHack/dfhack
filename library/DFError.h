@@ -108,7 +108,96 @@ namespace DFHack
 
             virtual const char* what() const throw()
             {
-                return "memory definition missing";
+                std::stringstream s;
+                s << "memory definition missing: type " << type << " key " << key;
+                return s.str().c_str();
+            }
+        };
+
+        // Syntax errors and whatnot, the xml cant be read
+        class DFHACK_EXPORT MemoryXmlParse : public std::exception
+        {
+        public:
+            MemoryXmlParse(const char* _desc, int _id, int _row, int _col) :
+                desc(_desc), id(_id), row(_row), col(_col) {}
+                
+            const std::string desc;
+            const int id;
+            const int row;
+            const int col;
+
+            virtual const char* what() const throw()
+            {
+                std::stringstream s;
+                s << "error " << id << ": " << desc << ", at row " << row << " col " << col;
+                return s.str().c_str();
+            }
+        };
+
+        class DFHACK_EXPORT MemoryXmlBadAttribute : public std::exception
+        {
+        public:
+            MemoryXmlBadAttribute(const char* _attr) : attr(_attr) {}
+
+            std::string attr;
+
+            virtual const char* what() const throw()
+            {
+                std::stringstream s;
+                s << "attribute is either missing or invalid: " << attr;
+                return s.str().c_str();
+            }
+        };
+
+        class DFHACK_EXPORT MemoryXmlNoRoot : public std::exception
+        {
+        public:
+            MemoryXmlNoRoot() {}
+
+            virtual const char* what() const throw()
+            {
+                return "no pElem found";
+            }
+        };
+
+        class DFHACK_EXPORT MemoryXmlNoDFExtractor : public std::exception
+        {
+        public:
+            MemoryXmlNoDFExtractor(const char* _name) : name(_name) {}
+
+            std::string name;
+
+            virtual const char* what() const throw()
+            {
+                std::stringstream s;
+                s << "DFExtractor != " << name;
+                return s.str().c_str();
+            }
+        };
+
+        class DFHACK_EXPORT MemoryXmlUnderspecifiedEntry : public std::exception
+        {
+        public:
+            MemoryXmlUnderspecifiedEntry() {}
+
+            virtual const char* what() const throw()
+            {
+                return "underspecified MemInfo entry, each entry needs to set both the name attribute and have a value";
+            }
+        };
+
+        class DFHACK_EXPORT MemoryXmlUnknownType : public std::exception
+        {
+        public:
+            MemoryXmlUnknownType(const char* _type) : type(_type) {}
+
+            std::string type;
+
+            virtual const char* what() const throw()
+            {
+                std::stringstream s;
+                s << "unknown MemInfo type: " << type;
+                return s.str().c_str();
             }
         };
     }

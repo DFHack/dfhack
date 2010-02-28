@@ -133,7 +133,7 @@ namespace DFHack
         /**
          * Get the address of a block or 0 if block is not valid
          */
-        uint32_t getBlockPtr (uint32_t x, uint32_t y, uint32_t z);
+        uint32_t getBlockPtr (uint32_t blockx, uint32_t blocky, uint32_t blockz);
         
         bool ReadTileTypes(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint16_t *buffer); // 256 * sizeof(uint16_t)
         bool WriteTileTypes(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint16_t *buffer); // 256 * sizeof(uint16_t)
@@ -157,36 +157,36 @@ namespace DFHack
          * Buildings, constructions, plants, all pretty straighforward. InitReadBuildings returns all the building types as a mapping between a numeric values and strings
          */
         bool InitReadConstructions( uint32_t & numconstructions );
-        bool ReadConstruction(const int32_t &index, t_construction & construction);
+        bool ReadConstruction(const int32_t index, t_construction & construction);
         void FinishReadConstructions();
 
         bool InitReadBuildings ( uint32_t & numbuildings );
-        bool ReadBuilding(const int32_t &index, t_building & building);
+        bool ReadBuilding(const int32_t index, t_building & building);
         void FinishReadBuildings();
 
         bool InitReadVegetation( uint32_t & numplants );
-        bool ReadVegetation(const int32_t &index, t_tree_desc & shrubbery);
+        bool ReadVegetation(const int32_t index, t_tree_desc & shrubbery);
         void FinishReadVegetation();
         
         bool InitReadCreatures( uint32_t & numcreatures );
         /// returns index of creature actually read or -1 if no creature can be found
-        int32_t ReadCreatureInBox(int32_t index, t_creature & furball,
-                                  const uint16_t &x1, const uint16_t &y1,const uint16_t &z1,
-                                  const uint16_t &x2, const uint16_t &y2,const uint16_t &z2);
-        bool ReadCreature(const int32_t &index, t_creature & furball);
+        int32_t ReadCreatureInBox(const int32_t index, t_creature & furball,
+                                  const uint16_t x1, const uint16_t y1,const uint16_t z1,
+                                  const uint16_t x2, const uint16_t y2,const uint16_t z2);
+        bool ReadCreature(const int32_t index, t_creature & furball);
         void FinishReadCreatures();
         
-        void ReadRaw (const uint32_t &offset, const uint32_t &size, uint8_t *target);
-        void WriteRaw (const uint32_t &offset, const uint32_t &size, uint8_t *source);
+        void ReadRaw (const uint32_t offset, const uint32_t size, uint8_t *target);
+        void WriteRaw (const uint32_t offset, const uint32_t size, uint8_t *source);
         
         bool InitViewAndCursor();
 
         bool InitReadNotes( uint32_t & numnotes );
-        bool ReadNote(const int32_t &index, t_note & note);
+        bool ReadNote(const int32_t index, t_note & note);
         void FinishReadNotes();
 
         bool InitReadSettlements( uint32_t & numsettlements );
-        bool ReadSettlement(const int32_t &index, t_settlement & settlement);
+        bool ReadSettlement(const int32_t index, t_settlement & settlement);
         bool ReadCurrentSettlement(t_settlement & settlement);
         void FinishReadSettlements();
 
@@ -194,10 +194,10 @@ namespace DFHack
         bool ReadHotkeys(t_hotkey hotkeys[]);
         
         bool getViewCoords (int32_t &x, int32_t &y, int32_t &z);
-        bool setViewCoords (const int32_t &x, const int32_t &y, const int32_t &z);
+        bool setViewCoords (const int32_t x, const int32_t y, const int32_t z);
         
         bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
-        bool setCursorCoords (const int32_t &x, const int32_t &y, const int32_t &z);
+        bool setCursorCoords (const int32_t x, const int32_t y, const int32_t z);
 
         /// This returns false if there is nothing under the cursor, it puts the addresses in a vector if there is
         bool getCurrentCursorCreatures(std::vector<uint32_t> &addresses); 
@@ -208,9 +208,9 @@ namespace DFHack
         bool setWindowSize(const int32_t & width, const int32_t & height);
         */
         
-        void getItemIndexesInBox(std::vector<uint32_t> &indexes,
-                                const uint16_t &x1, const uint16_t &y1, const uint16_t &z1,
-                                const uint16_t &x2, const uint16_t &y2, const uint16_t &z2);
+        bool getItemIndexesInBox(std::vector<uint32_t> &indexes,
+                                const uint16_t x1, const uint16_t y1, const uint16_t z1,
+                                const uint16_t x2, const uint16_t y2, const uint16_t z2);
         /*
         // FIXME: add a real creature class, move these
         string getLastName(const uint32_t &index, bool);
@@ -228,10 +228,10 @@ namespace DFHack
         std::string TranslateName(const t_squadname & squad, const std::map< std::string, std::vector< std::string > > &nameTable,const std::string & language="GENERIC");
         std::string TranslateName (const int names[], int size, const std::map<std::string, std::vector<std::string> > &nameTable, const std::string & language="GENERIC");
         
-        void WriteLabors(const uint32_t &index, uint8_t labors[NUM_CREATURE_LABORS]);
+        void WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
         
         bool InitReadItems(uint32_t & numitems);
-        bool ReadItem(const uint32_t &index, t_item & item);
+        bool ReadItem(const uint32_t index, t_item & item);
         void FinishReadItems();
 
         memory_info *getMemoryInfo();

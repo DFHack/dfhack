@@ -16,17 +16,6 @@ int main (void)
     time_t start, end;
     double time_diff;
     DFHack::API DF("Memory.xml");
-    //if(!DF.Attach())
-    //{
-    //    cerr << "DF not found" << endl;
-    //    return 1;
-    //}
-    //if(!DF.Detach())
-    //{
-    //    cerr << "Can't detach from DF" << endl;
-    //    return 1;
-    //}
-    
     try
     {
         DF.Attach();
@@ -77,11 +66,11 @@ int main (void)
     cout << "Testing suspend/resume"  << endl;
     DF.Attach();
     time(&start);
-    for (int i = 0; i < 1000000; i++)
+    for (int i = 0; i < 1000; i++)
     {
         DF.Suspend();
-        if(i%10000 == 0)
-            cout << i / 10000 << "%" << endl;
+        if(i%10 == 0)
+            cout << i / 10 << "%" << endl;
         DF.Resume();
     }
     time(&end);

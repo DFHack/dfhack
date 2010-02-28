@@ -29,15 +29,15 @@ int main (void)
     }
     
     time(&start);
-    for(uint32_t i = 0; i< 1000;i++)
+    for(uint32_t i = 0; i< 10000;i++)
     {
         if(!DF.InitMap())
             break;
         DF.getSize(x_max,y_max,z_max);
-        if((i % 10) == 0)
+        if((i % 100) == 0)
         {
-            int percentage = i / 10;
-            cout << percentage << endl;
+            int percentage = i / 100;
+            cout << percentage << " %" << endl;
         }
         for(uint32_t x = 0; x< x_max;x++)
         {

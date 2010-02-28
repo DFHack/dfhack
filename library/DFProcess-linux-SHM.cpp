@@ -30,6 +30,8 @@ distribution.
 #include "../shmserver/shms.h"
 #include <sys/time.h>
 #include <time.h>
+#include <sched.h>
+
 using namespace DFHack;
 
 // a full memory barrier! better be safe than sorry.
@@ -74,6 +76,7 @@ bool SHMProcess::Private::waitWhile (DF_PINGPONG state)
     {
         if(cnt == 10000)
         {
+            
             shmctl(my_shmid, IPC_STAT, &descriptor); 
             if(descriptor.shm_nattch == 1)// DF crashed?
             {
@@ -87,6 +90,7 @@ bool SHMProcess::Private::waitWhile (DF_PINGPONG state)
                 cnt = 0;
             }
         }
+        SCHED_YIELD
         cnt++;
     }
     if(((shm_cmd *)my_shm)->pingpong == DFPP_SV_ERROR)
@@ -254,10 +258,6 @@ SHMProcess::~SHMProcess()
     {
         delete d->my_window;
     }
-    if(d->my_shm)
-    {
-        fprintf(stderr,"detach: %d",shmdt(d->my_shm));
-    }
     delete d;
 }
 
@@ -411,6 +411,7 @@ bool SHMProcess::detach()
     {
         d->attached = false;
         d->suspended = false;
+        d->my_shm = 0;
         g_pProcess = 0;
         return true;
     }

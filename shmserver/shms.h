@@ -12,7 +12,9 @@
 #ifdef LINUX_BUILD
     // a full memory barrier! better be safe than sorry.
     #define full_barrier asm volatile("" ::: "memory"); __sync_synchronize();
-    #define SCHED_YIELD
+    #define SCHED_YIELD sched_yield(); // slow but allows the SHM to work on single-core
+    // #define SCHED_YIELD usleep(0); // extremely slow
+    // #define SCHED_YIELD // works only on multi-core
 #else
     // we need windows.h for Sleep()
     #define _WIN32_WINNT 0x0501 // needed for INPUT struct

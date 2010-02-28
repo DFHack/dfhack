@@ -224,14 +224,20 @@ bool SHMProcess::Private::validate(char * exe_file, uint32_t pid, vector <memory
     // iterate over the list of memory locations
     for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
     {
-        if(hash == (*it)->getString("md5")) // are the md5 hashes the same?
+        try{
+            if(hash == (*it)->getString("md5")) // are the md5 hashes the same?
+            {
+                memory_info * m = *it;
+                my_descriptor = m;
+                my_pid = pid;
+                identified = true;
+                cerr << "identified " << m->getVersion() << endl;
+                return true;
+            }
+        }
+        catch (Error::MissingMemoryDefinition&)
         {
-            memory_info * m = *it;
-            my_descriptor = m;
-            my_pid = pid;
-            identified = true;
-            cerr << "identified " << m->getVersion() << endl;
-            return true;
+            continue;
         }
     }
     return false;

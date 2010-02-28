@@ -23,6 +23,7 @@ distribution.
 */
 #include "DFCommonInternal.h"
 #include <errno.h>
+#include <DFError.h>
 #include <sys/ptrace.h>
 using namespace DFHack;
 
@@ -80,15 +81,6 @@ WineProcess::WineProcess(uint32_t pid, vector <memory_info *> & known_versions)
     // make sure we have a null terminated string...
     target_name[target_result] = 0;
     
-    // is this the regular linux DF?
-    if (strstr(target_name, "dwarfort.exe") != NULL)
-    {
-        // create linux process, add it to the vector
-        d->identified = d->validate(target_name,pid,mem_name,known_versions );
-        d->my_window = new DFWindow(this);
-        return;
-    }
-    
     // FIXME: this fails when the wine process isn't started from the 'current working directory'. strip path data from cmdline
     // is this windows version of Df running in wine?
     if(strstr(target_name, "wine-preloader")!= NULL)
@@ -139,8 +131,17 @@ bool WineProcess::Private::validate(char* exe_file, uint32_t pid, char* mem_file
     // iterate over the list of memory locations
     for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
     {
+        string thishash;
+        try
+        {
+            thishash = (*it)->getString("md5");
+        }
+        catch (Error::MissingMemoryDefinition& e)
+        {
+            continue;
+        }
         // are the md5 hashes the same?
-        if(memory_info::OS_WINDOWS == (*it)->getOS() && hash == (*it)->getString("md5"))
+        if(memory_info::OS_WINDOWS == (*it)->getOS() && hash == thishash)
         {
             memory_info * m = *it;
             my_descriptor = m;

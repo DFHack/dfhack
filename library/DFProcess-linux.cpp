@@ -114,23 +114,30 @@ bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFi
     // iterate over the list of memory locations
     for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
     {
-        if(hash == (*it)->getString("md5")) // are the md5 hashes the same?
+        try
         {
-            memory_info * m = *it;
-            if (memory_info::OS_LINUX == m->getOS())
+            if(hash == (*it)->getString("md5")) // are the md5 hashes the same?
             {
-                my_descriptor = m;
-                my_handle = my_pid = pid;
+                memory_info * m = *it;
+                if (memory_info::OS_LINUX == m->getOS())
+                {
+                    my_descriptor = m;
+                    my_handle = my_pid = pid;
+                }
+                else
+                {
+                    // some error happened, continue with next process
+                    continue;
+                }
+                // tell NormalProcess about the /proc/PID/mem file
+                this->memFile = memFile;
+                identified = true;
+                return true;
             }
-            else
-            {
-                // some error happened, continue with next process
-                continue;
-            }
-            // tell NormalProcess about the /proc/PID/mem file
-            this->memFile = memFile;
-            identified = true;
-            return true;
+        }
+        catch (Error::MissingMemoryDefinition&)
+        {
+            continue;
         }
     }
     return false;

@@ -30,6 +30,7 @@ DFMemInfo.cpp
 DFMemInfoManager.cpp
 DFHackAPI.cpp
 DFTileTypes.cpp
+DFVector.cpp
 md5/md5.cpp
 md5/md5wrapper.cpp
 tinyxml/tinystr.cpp

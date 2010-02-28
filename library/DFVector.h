@@ -26,10 +26,11 @@ distribution.
 #define DFVECTOR_H_INCLUDED
 
 #include "Tranquility.h"
+#include "Export.h"
 
 namespace DFHack
 {
-    class DfVector
+    class DFHACK_EXPORT DfVector
     {
         private:
             // starting offset
@@ -40,40 +41,20 @@ namespace DFHack
             uint8_t* data;
             
         public:
-            DfVector()
-            {
-                data = 0;
-            };
-            DfVector(uint32_t _start, uint32_t _size, uint32_t _item_size):
-            start(_start),size(_size),item_size(_item_size)
-            {
-                data = (uint8_t *) new char[size * item_size];
-                g_pProcess->read(start,size*item_size, (uint8_t *)data);
-            };
-            /*
-            DfVector(const DfVector & vec)
-            {
-                start = vec.start;
-                size = vec.size;
-                item_size = vec.item_size;
-                data = (uint8_t *) new char[size * item_size];
-                memcpy(data,vec.data,item_size * size);
-            };*/
-            ~DfVector()
-            {
-                if(data)
-                    delete [] data;
-            }
+            DfVector();
+            DfVector(uint32_t _start, uint32_t _size, uint32_t _item_size);
+            ~DfVector();
             // get offset of the specified index
             inline void* operator[] (uint32_t index)
             {
-                assert(index < size);
+                // FIXME: vector out of bounds exception
+                //assert(index < size);
                 return data + index*item_size;
             };
             // get offset of the specified index
             inline void* at (uint32_t index)
             {
-                assert(index < size);
+                //assert(index < size);
                 return data + index*item_size;
             };
             // get vector size

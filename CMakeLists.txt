@@ -23,6 +23,7 @@ SET(SO_VERSION "${SO_MAJOR_VERSION}.${SO_MINOR_VERSION}.${SO_BUILD_VERSION}")
 
 SET( LIBRARY_OUTPUT_PATH ${dfhack_SOURCE_DIR}/output CACHE PATH "Output directory for the dfhack library" )
 SET( EXECUTABLE_OUTPUT_PATH ${dfhack_SOURCE_DIR}/output CACHE PATH "Output directory for the dfhack tools" )
+SET( CMAKE_SWIG_OUTDIR ${dfhack_SOURCE_DIR}/output CACHE PATH "Global output directory for swig generated language wrappers" )
 
 include_directories (${CMAKE_SOURCE_DIR}/library/)
 include_directories (${CMAKE_SOURCE_DIR}/shmserver/)

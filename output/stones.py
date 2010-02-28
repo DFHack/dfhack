@@ -1,6 +1,7 @@
-import dfhack
-x = dfhack.API("Memory.xml")
-y = dfhack.MatglossVector()
+# -*- coding: utf-8 -*-
+import pydfhack
+x = pydfhack.API("Memory.xml")
+y = pydfhack.MatglossVector()
 
 if x.Attach():
   success,stones = x.ReadStoneMatgloss()

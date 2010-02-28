@@ -5,9 +5,27 @@ Author: Alex Legg
 Based on code from and uses DFHack - www.sourceforge.net/projects/dfhack
 */
 
-#include "DFCommonInternal.h"
+//#include <DFCommonInternal.h>
 #include <sstream>
+#include <iostream>
+#include <string.h>
+#include <cstdlib>
+#include <assert.h>
+#include <string>
+#include <vector>
 using namespace std;
+
+
+#include <integers.h>
+#include <Export.h>
+#include <DFError.h>
+#include <DFVector.h>
+#include <DFMemInfo.h>
+#include <DFProcess.h>
+#include <DFTypes.h>
+#include <DFHackAPI.h>
+using namespace DFHack;
+
 
 int main ()
 {
@@ -32,9 +50,7 @@ int main ()
 
     DF.Suspend();
     
-    /*
-     * Find out which material is bauxite
-     */
+    // Find out which material is bauxite
     if(!DF.ReadStoneMatgloss(stoneMat))
     {
         cout << "Materials not supported for this version of DF, exiting." << endl;
@@ -63,23 +79,15 @@ int main ()
         return EXIT_FAILURE;
     }
     
-    /*
-     * Get some basics needed for full access
-     */
+    // Get some basics needed for full access
     proc = DF.getProcess();
     meminfo = proc->getDescriptor();
     
-    /*
-     * Get the object name/ID mapping
-     */
-    /*
-    vector <string> objecttypes;
-    DF.getClassIDMapping (objecttypes);
-    */
+    // Get the object name/ID mapping
     //FIXME: work on the 'supported features' system required
-    /*
-     * Check availability of required addresses and offsets (doing custom stuff here)
-     */
+
+    // Check availability of required addresses and offsets (doing custom stuff here)
+
     items = meminfo->getAddress("items");
     item_material_offset = meminfo->getOffset("item_materials");
     if( !items || ! item_material_offset)
@@ -145,5 +153,6 @@ int main ()
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();
 #endif
+
     return 0;
 }

@@ -25,6 +25,7 @@ distribution.
 #ifndef ERROR_H_INCLUDED
 #define ERROR_H_INCLUDED
 
+#include "Export.h"
 #include <string>
 #include <sstream>
 #include <exception>
@@ -33,7 +34,7 @@ namespace DFHack
 {
     namespace Error
     {
-        class NoProcess : public exception
+        class DFHACK_EXPORT NoProcess : public std::exception
         {
         public:
             virtual const char* what() const throw()
@@ -42,7 +43,7 @@ namespace DFHack
             }
         };
 
-        class CantAttach : public exception
+        class DFHACK_EXPORT CantAttach : public std::exception
         {
         public:
             virtual const char* what() const throw()
@@ -51,7 +52,7 @@ namespace DFHack
             }
         };
 
-        class NoMapLoaded : public exception
+        class DFHACK_EXPORT NoMapLoaded : public std::exception
         {
         public:
             virtual const char* what() const throw()
@@ -60,7 +61,7 @@ namespace DFHack
             }
         };
 
-        class BadMapDimensions : public exception
+        class DFHACK_EXPORT BadMapDimensions : public std::exception
         {
         public:
             BadMapDimensions(uint32_t& _x, uint32_t& _y) : x(_x), y(_y) {}
@@ -74,7 +75,7 @@ namespace DFHack
         };
 
         // a call to DFHack::mem_info::get* failed
-        class MissingMemoryDefinition : public exception
+        class DFHACK_EXPORT MissingMemoryDefinition : public std::exception
         {
         public:
             MissingMemoryDefinition(const char* _type, const char* _key) : type(_type), key(_key) {}
@@ -86,6 +87,8 @@ namespace DFHack
                 s << _key;
                 key = s.str();
             }
+            virtual ~MissingMemoryDefinition() throw()
+            {};
 
             // (perhaps it should be an enum, but this is intended for easy printing/logging)
             // type can be any of the following:

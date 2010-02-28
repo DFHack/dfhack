@@ -26,6 +26,9 @@ distribution.
 #include "DFError.h"
 using namespace DFHack;
 
+/*
+FIXME: memset to 0?
+*/
 class API::Private
 {
 public:
@@ -96,9 +99,9 @@ public:
     uint32_t hotkey_xyz_offset;
     uint32_t hotkey_size;
 
-	uint32_t settlement_name_offset;
-	uint32_t settlement_world_xy_offset;
-	uint32_t settlement_local_xy_offset;
+    uint32_t settlement_name_offset;
+    uint32_t settlement_world_xy_offset;
+    uint32_t settlement_local_xy_offset;
     
     uint32_t dwarf_lang_table_offset;
 
@@ -117,8 +120,7 @@ public:
     bool itemsInited;
     bool notesInited;
     bool hotkeyInited;
-	bool settlementsInited;
-
+    bool settlementsInited;
     bool nameTablesInited;
 
     uint32_t tree_offset;
@@ -128,8 +130,8 @@ public:
     DfVector *p_veg;
     DfVector *p_itm;
     DfVector *p_notes;
-	DfVector *p_settlements;
-	DfVector *p_current_settlement;
+    DfVector *p_settlements;
+    DfVector *p_current_settlement;
 };
 
 API::API (const string path_to_xml)
@@ -147,7 +149,6 @@ API::API (const string path_to_xml)
     d->itemsInited = false;
     d->notesInited = false;
     d->hotkeyInited = false;
-	
     d->pm = NULL;
 }
 
@@ -234,7 +235,6 @@ bool API::DestroyMap()
         delete [] d->block;
         d->block = NULL;
     }
-
     return true;
 }
 
@@ -283,7 +283,7 @@ bool API::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
     {
         uint32_t addr_of_struct = g_pProcess->readDWord(addr);
         uint32_t dirtydword = g_pProcess->readDWord(addr_of_struct);
-        dirtydword &= 0xFFFFFFF0;
+        dirtydword &= 0xFFFFFFFE;
         dirtydword |= (uint32_t) dirtybit;
         g_pProcess->writeDWord (addr_of_struct, dirtydword);
         return true;
@@ -332,7 +332,7 @@ bool API::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
 
 bool API::getCurrentCursorCreatures (vector<uint32_t> &addresses)
 {
-    assert (d->cursorWindowInited);
+    if(d->cursorWindowInited) return false;
     DfVector creUnderCursor = d->p->readVector (d->current_cursor_creature_offset, 4);
     if (creUnderCursor.getSize() == 0)
     {
@@ -371,7 +371,7 @@ bool API::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
     return false;
 }
 
-
+// FIXME: this is bad. determine the real size!
 //16 of them? IDK... there's probably just 7. Reading more doesn't cause errors as it's an array nested inside a block
 // 16 * sizeof(uint8_t)
 bool API::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, uint8_t *buffer)
@@ -641,7 +641,7 @@ bool API::ReadCreatureMatgloss (vector<t_matgloss> & creatures)
 bool API::ReadGeology (vector < vector <uint16_t> >& assign)
 {
     memory_info * minfo = d->offset_descriptor;
-    // get needed addresses and offsets
+    // get needed addresses and offsets. Now this is what I call crazy.
     int region_x_offset = minfo->getAddress ("region_x");
     int region_y_offset = minfo->getAddress ("region_y");
     int region_z_offset =  minfo->getAddress ("region_z");
@@ -755,9 +755,9 @@ bool API::InitReadBuildings ( uint32_t& numbuildings )
 
 
 // read one building
-bool API::ReadBuilding (const int32_t &index, t_building & building)
+bool API::ReadBuilding (const int32_t index, t_building & building)
 {
-    assert (d->buildingsInited);
+    if(!d->buildingsInited) return false;
 
     t_building_df40d bld_40d;
 
@@ -787,8 +787,11 @@ bool API::ReadBuilding (const int32_t &index, t_building & building)
 
 void API::FinishReadBuildings()
 {
-    delete d->p_bld;
-    d->p_bld = NULL;
+    if(d->p_bld)
+    {
+        delete d->p_bld;
+        d->p_bld = NULL;
+    }
     d->buildingsInited = false;
 }
 
@@ -814,9 +817,9 @@ bool API::InitReadConstructions(uint32_t & numconstructions)
 }
 
 
-bool API::ReadConstruction (const int32_t &index, t_construction & construction)
+bool API::ReadConstruction (const int32_t index, t_construction & construction)
 {
-    assert (d->constructionsInited);
+    if(!d->constructionsInited) return false;
     t_construction_df40d c_40d;
 
     // read pointer from vector at position
@@ -837,8 +840,11 @@ bool API::ReadConstruction (const int32_t &index, t_construction & construction)
 
 void API::FinishReadConstructions()
 {
-    delete d->p_cons;
-    d->p_cons = NULL;
+    if(d->p_cons)
+    {
+        delete d->p_cons;
+        d->p_cons = NULL;
+    }
     d->constructionsInited = false;
 }
 
@@ -863,10 +869,10 @@ bool API::InitReadVegetation(uint32_t & numplants)
 }
 
 
-bool API::ReadVegetation (const int32_t &index, t_tree_desc & shrubbery)
+bool API::ReadVegetation (const int32_t index, t_tree_desc & shrubbery)
 {
-    assert (d->vegetationInited);
-//    uint32_t temp;
+    if(!d->vegetationInited)
+        return false;
     // read pointer from vector at position
     uint32_t temp = * (uint32_t *) d->p_veg->at (index);
     //read construction from memory
@@ -879,8 +885,11 @@ bool API::ReadVegetation (const int32_t &index, t_tree_desc & shrubbery)
 
 void API::FinishReadVegetation()
 {
-    delete d->p_veg;
-    d->p_veg = NULL;
+    if(d->p_veg)
+    {
+        delete d->p_veg;
+        d->p_veg = 0;
+    }
     d->vegetationInited = false;
 }
 
@@ -978,10 +987,9 @@ bool API::InitReadNotes( uint32_t &numnotes )
         return false;
     }
 }
-bool API::ReadNote (const int32_t &index, t_note & note)
+bool API::ReadNote (const int32_t index, t_note & note)
 {
-    if(!d->notesInited)
-        return false;
+    if(!d->notesInited) return false;
     // read pointer from vector at position
     uint32_t temp = * (uint32_t *) d->p_notes->at (index);
     note.symbol = g_pProcess->readByte(temp);
@@ -1019,12 +1027,11 @@ bool API::InitReadSettlements( uint32_t & numsettlements )
         return false;
     }
 }
-bool API::ReadSettlement(const int32_t &index, t_settlement & settlement)
+bool API::ReadSettlement(const int32_t index, t_settlement & settlement)
 {
-    if(!d->settlementsInited)
-        return false;
-    if(!d->p_settlements->getSize())
-        return false;
+    if(!d->settlementsInited) return false;
+    if(!d->p_settlements->getSize()) return false;
+    
     // read pointer from vector at position
     uint32_t temp = * (uint32_t *) d->p_settlements->at (index);
     settlement.origin = temp;
@@ -1035,10 +1042,9 @@ bool API::ReadSettlement(const int32_t &index, t_settlement & settlement)
 }
 bool API::ReadCurrentSettlement(t_settlement & settlement)
 {
-    if(!d->settlementsInited)
-        return false;
-    if(!d->p_current_settlement->getSize())
-        return false;
+    if(!d->settlementsInited) return false;
+    if(!d->p_current_settlement->getSize()) return false;
+    
     uint32_t temp = * (uint32_t *) d->p_current_settlement->at(0);
     settlement.origin = temp;
     g_pProcess->read(temp + d->settlement_name_offset, 2 * sizeof(int32_t), (uint8_t *) &settlement.name);
@@ -1049,10 +1055,16 @@ bool API::ReadCurrentSettlement(t_settlement & settlement)
 
 void API::FinishReadSettlements()
 {
-    delete d->p_settlements;
-    delete d->p_current_settlement;
-    d->p_settlements = NULL;
-    d->p_current_settlement = NULL;
+    if(d->p_settlements)
+    {
+        delete d->p_settlements;
+        d->p_settlements = NULL;
+    }
+    if(d->p_current_settlement)
+    {
+        delete d->p_current_settlement;
+        d->p_current_settlement = NULL;
+    }
     d->settlementsInited = false;
 }
 
@@ -1078,8 +1090,7 @@ bool API::InitReadHotkeys( )
 }
 bool API::ReadHotkeys(t_hotkey hotkeys[])
 {
-    if (!d->hotkeyInited)
-        return false;
+    if (!d->hotkeyInited) return false;
     uint32_t currHotkey = d->hotkey_start;
     for(uint32_t i = 0 ; i < NUM_HOTKEYS ;i++)
     {
@@ -1092,11 +1103,11 @@ bool API::ReadHotkeys(t_hotkey hotkeys[])
 }
 // returns index of creature actually read or -1 if no creature can be found
 int32_t API::ReadCreatureInBox (int32_t index, t_creature & furball,
-                                const uint16_t &x1, const uint16_t &y1, const uint16_t &z1,
-                                const uint16_t &x2, const uint16_t &y2, const uint16_t &z2)
+                                const uint16_t x1, const uint16_t y1, const uint16_t z1,
+                                const uint16_t x2, const uint16_t y2, const uint16_t z2)
 {
+    if (!d->creaturesInited) return -1;
     uint16_t coords[3];
-    assert (d->creaturesInited);
     uint32_t size = d->p_cre->getSize();
     while (uint32_t(index) < size)
     {
@@ -1119,11 +1130,11 @@ int32_t API::ReadCreatureInBox (int32_t index, t_creature & furball,
     return -1;
 }
 
-void API::getItemIndexesInBox(vector<uint32_t> &indexes,
-                                const uint16_t &x1, const uint16_t &y1, const uint16_t &z1,
-                                const uint16_t &x2, const uint16_t &y2, const uint16_t &z2)
+bool API::getItemIndexesInBox(vector<uint32_t> &indexes,
+                                const uint16_t x1, const uint16_t y1, const uint16_t z1,
+                                const uint16_t x2, const uint16_t y2, const uint16_t z2)
 {
-    assert(d->itemsInited);
+    if(!d->itemsInited) return false;
     indexes.clear();
     uint32_t size = d->p_itm->getSize();
     struct temp2{
@@ -1149,9 +1160,9 @@ void API::getItemIndexesInBox(vector<uint32_t> &indexes,
     }
 }
 
-bool API::ReadCreature (const int32_t &index, t_creature & furball)
+bool API::ReadCreature (const int32_t index, t_creature & furball)
 {
-    assert (d->creaturesInited);
+    if(!d->creaturesInited) return false;
     // read pointer from vector at position
     uint32_t temp = * (uint32_t *) d->p_cre->at (index);
     furball.origin = temp;
@@ -1195,13 +1206,13 @@ bool API::ReadCreature (const int32_t &index, t_creature & furball)
     
     if (jobIdAddr)
     {
-		furball.current_job.active = true;
+        furball.current_job.active = true;
         furball.current_job.jobId = g_pProcess->readByte (jobIdAddr + d->creature_current_job_id_offset);
     }
-	else
-	{
-		furball.current_job.active = false;
-	}
+    else
+    {
+        furball.current_job.active = false;
+    }
     
     //likes
     DfVector likes(d->p->readVector(temp+d->creature_likes_offset,4));
@@ -1223,7 +1234,7 @@ bool API::ReadCreature (const int32_t &index, t_creature & furball)
     return true;
 }
 
-void API::WriteLabors(const uint32_t &index, uint8_t labors[NUM_CREATURE_LABORS])
+void API::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
 {
     uint32_t temp = * (uint32_t *) d->p_cre->at (index);
     WriteRaw(temp + d->creature_labors_offset, NUM_CREATURE_LABORS, labors);
@@ -1271,7 +1282,7 @@ bool API::InitReadNameTables (map< string, vector<string> > & nameTable)
 
 string API::TranslateName (const int names[], int size, const map<string, vector<string> > & nameTable, const string & language)
 {
-	string trans;
+    string trans;
     assert (d->nameTablesInited);
     map<string, vector<string> >::const_iterator it;
     it = nameTable.find (language);
@@ -1343,22 +1354,28 @@ void API::FinishReadNameTables()
 
 void API::FinishReadCreatures()
 {
-    delete d->p_cre;
-    d->p_cre = NULL;
+    if(d->p_cre)
+    {
+        delete d->p_cre;
+        d->p_cre = 0;
+    }
     d->creaturesInited = false;
     //FinishReadNameTables();
 }
 void API::FinishReadNotes()
 {
-    delete d->p_notes;
-    d->p_notes = NULL;
+    if(d->p_notes)
+    {
+        delete d->p_notes;
+        d->p_notes = 0;
+    }
     d->notesInited = false;
 }
 
 bool API::Attach()
 {
     // detach all processes, destroy manager
-    if (d->pm == NULL)
+    if (d->pm == 0)
     {
         d->pm = new ProcessEnumerator (d->xml); // FIXME: handle bad XML better
     }
@@ -1430,12 +1447,12 @@ bool API::isSuspended()
     return d->p->isSuspended();
 }
 
-void API::ReadRaw (const uint32_t &offset, const uint32_t &size, uint8_t *target)
+void API::ReadRaw (const uint32_t offset, const uint32_t size, uint8_t *target)
 {
     g_pProcess->read (offset, size, target);
 }
 
-void API::WriteRaw (const uint32_t &offset, const uint32_t &size, uint8_t *source)
+void API::WriteRaw (const uint32_t offset, const uint32_t size, uint8_t *source)
 {
     g_pProcess->write (offset, size, source);
 }
@@ -1481,25 +1498,25 @@ bool API::InitViewSize()
 
 bool API::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
 {
-    assert (d->cursorWindowInited);
+    if (!d->cursorWindowInited) return false;
     g_pProcess->readDWord (d->window_x_offset, (uint32_t &) x);
     g_pProcess->readDWord (d->window_y_offset, (uint32_t &) y);
     g_pProcess->readDWord (d->window_z_offset, (uint32_t &) z);
     return true;
 }
 //FIXME: confine writing of coords to map bounds?
-bool API::setViewCoords (const int32_t &x, const int32_t &y, const int32_t &z)
+bool API::setViewCoords (const int32_t x, const int32_t y, const int32_t z)
 {
-    assert (d->cursorWindowInited);
-    g_pProcess->writeDWord (d->window_x_offset, (uint32_t &) x);
-    g_pProcess->writeDWord (d->window_y_offset, (uint32_t &) y);
-    g_pProcess->writeDWord (d->window_z_offset, (uint32_t &) z);
+    if (!d->cursorWindowInited) return false;
+    g_pProcess->writeDWord (d->window_x_offset, (uint32_t) x);
+    g_pProcess->writeDWord (d->window_y_offset, (uint32_t) y);
+    g_pProcess->writeDWord (d->window_z_offset, (uint32_t) z);
     return true;
 }
 
 bool API::getCursorCoords (int32_t &x, int32_t &y, int32_t &z)
 {
-    assert (d->cursorWindowInited);
+    if(!d->cursorWindowInited) return false;
     int32_t coords[3];
     g_pProcess->read (d->cursor_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
     x = coords[0];
@@ -1509,16 +1526,17 @@ bool API::getCursorCoords (int32_t &x, int32_t &y, int32_t &z)
     return true;
 }
 //FIXME: confine writing of coords to map bounds?
-bool API::setCursorCoords (const int32_t &x, const int32_t &y, const int32_t &z)
+bool API::setCursorCoords (const int32_t x, const int32_t y, const int32_t z)
 {
-    assert (d->cursorWindowInited);
+    if (!d->cursorWindowInited) return false;
     int32_t coords[3] = {x, y, z};
     g_pProcess->write (d->cursor_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
     return true;
 }
 bool API::getWindowSize (int32_t &width, int32_t &height)
 {
-    assert (d->viewSizeInited);
+    if(! d->viewSizeInited) return false;
+    
     int32_t coords[2];
     g_pProcess->read (d->window_dims_offset, 2*sizeof (int32_t), (uint8_t *) coords);
     width = coords[0];
@@ -1569,9 +1587,10 @@ bool API::InitReadItems(uint32_t & numitems)
         return false;
     }
 }
-bool API::ReadItem (const uint32_t &index, t_item & item)
+bool API::ReadItem (const uint32_t index, t_item & item)
 {
-    assert (d->itemsInited); //should change to the generic init rather than buildings
+    if (!d->itemsInited) return false;
+    
     t_item_df40d item_40d;
 
     // read pointer from vector at position
@@ -1602,14 +1621,18 @@ bool API::ReadItem (const uint32_t &index, t_item & item)
 }
 void API::FinishReadItems()
 {
-    delete d->p_itm;
-    d->p_itm = NULL;
+    if(d->p_itm)
+    {
+        delete d->p_itm;
+        d->p_itm = NULL;
+    }
     d->itemsInited = false;
 }
 
 bool API::ReadPauseState()
 {
-    assert (d->cursorWindowInited);
+    // replace with an exception
+    if(!d->cursorWindowInited) return false;
 
     uint32_t pauseState = g_pProcess->readDWord (d->pause_state_offset);
     return pauseState & 1;
@@ -1617,13 +1640,15 @@ bool API::ReadPauseState()
 
 uint32_t API::ReadMenuState()
 {
-    assert (d->cursorWindowInited);
-    return(g_pProcess->readDWord(d->current_menu_state_offset));
+    if(d->cursorWindowInited)
+        return(g_pProcess->readDWord(d->current_menu_state_offset));
+    return false;
 }
 
 bool API::ReadViewScreen (t_viewscreen &screen)
 {
-    assert (d->cursorWindowInited);
+    if (!d->cursorWindowInited) return false;
+    
     uint32_t last = g_pProcess->readDWord (d->view_screen_offset);
     uint32_t screenAddr = g_pProcess->readDWord (last);
     uint32_t nextScreenPtr = g_pProcess->readDWord (last + 4);
@@ -1635,13 +1660,15 @@ bool API::ReadViewScreen (t_viewscreen &screen)
     }
     return d->offset_descriptor->resolveObjectToClassID (last, screen.type);
 }
+
 bool API::ReadItemTypes(vector< vector< t_itemType > > & itemTypes)
 {
     memory_info * minfo = d->offset_descriptor;
     int matgloss_address = minfo->getAddress("matgloss");
     int matgloss_skip = minfo->getHexValue("matgloss_skip");
     int item_type_name_offset = minfo->getOffset("item_type_name");
-    for(int i = 8;i<20;i++){
+    for(int i = 8;i<20;i++)
+    {
         DfVector p_temp = d->p->readVector(matgloss_address + i*matgloss_skip,4);
         vector< t_itemType > typesForVec;
         for(uint32_t j =0; j<p_temp.getSize();j++)
@@ -1658,56 +1685,3 @@ bool API::ReadItemTypes(vector< vector< t_itemType > > & itemTypes)
     }
     return true;
 }
-
-// FIXME: Too dangerous. Contains hardcoded addresses and some arbitrary stuff
-/*
-bool API::ReadAllMatgloss(vector< vector< string > > & all)
-{
-    memory_info * minfo = d->offset_descriptor;
-    int matgloss_address = minfo->getAddress("matgloss");
-    int matgloss_skip = minfo->getHexValue("matgloss_skip");
-    for(int i = 0;i<7;i++){
-        DfVector p_temp = d->p->readVector(matgloss_address + i*matgloss_skip,4);
-        vector< string > stringsForVec;
-        for(uint32_t j =0; j<p_temp.getSize();j++)
-        {
-            uint32_t temp = *(uint32_t *) p_temp[j];
-            string tempStr = d->p->readSTLString(temp);
-            stringsForVec.push_back(tempStr);
-        }
-        all.push_back(stringsForVec);
-    }
-    for(int i = 7;i<22;i++){
-        DfVector p_temp = d->p->readVector(matgloss_address + i*matgloss_skip,4);
-        vector< string > stringsForVec;
-        for(uint32_t j =0; j<p_temp.getSize();j++)
-        {
-            uint32_t temp = *(uint32_t *) p_temp[j];
-            string tempStr = d->p->readSTLString(temp+4);
-            stringsForVec.push_back(tempStr);
-        }
-        all.push_back(stringsForVec);
-    }
-    for(int i = 22;i<25;i++){
-        DfVector p_temp = d->p->readVector(matgloss_address + i*matgloss_skip,4);
-        vector< string > stringsForVec;
-        for(uint32_t j =0; j<p_temp.getSize();j++)
-        {
-            uint32_t temp = *(uint32_t *) p_temp[j];
-            string tempStr = d->p->readSTLString(temp);
-            stringsForVec.push_back(tempStr);
-        }
-        all.push_back(stringsForVec);
-    }
-    DfVector p_temp = d->p->readVector(0x01604104,4);
-    vector< string > stringsForVec;
-        for(uint32_t j =0; j<p_temp.getSize();j++)
-        {
-            uint32_t temp = *(uint32_t *) p_temp[j];
-            string tempStr = d->p->readSTLString(temp);
-            stringsForVec.push_back(tempStr);
-        }
-        all.push_back(stringsForVec);
- return true;
-}
-*/

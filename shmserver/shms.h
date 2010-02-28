@@ -21,15 +21,15 @@
     #define WINVER 0x0501                   // OpenThread(), PSAPI, Toolhelp32
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
-    #define SCHED_YIELD Sleep(0);
+    #define SCHED_YIELD Sleep(0); // slow on single-core, but avoids infinite lockup
     // FIXME: detect MSVC here and use the right barrier magic
-	#ifdef __MINGW32__
-		#define full_barrier asm volatile("" ::: "memory");
-	#else
-		#include <intrin.h>
-		#pragma intrinsic(_ReadWriteBarrier)
-		#define full_barrier _ReadWriteBarrier();
-	#endif
+    #ifdef __MINGW32__
+        #define full_barrier asm volatile("" ::: "memory");
+    #else
+        #include <intrin.h>
+        #pragma intrinsic(_ReadWriteBarrier)
+        #define full_barrier _ReadWriteBarrier();
+    #endif
 #endif
 
 

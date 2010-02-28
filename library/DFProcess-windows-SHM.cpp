@@ -230,7 +230,15 @@ SHMProcess::SHMProcess(vector <memory_info *> & known_versions)
             vector<memory_info *>::iterator it;
             for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
             {
-                uint32_t pe_timestamp = (*it)->getHexValue("pe_timestamp");
+                uint32_t pe_timestamp;
+                try
+                {
+                    pe_timestamp = (*it)->getHexValue("pe_timestamp");
+                }
+                catch(Error::MissingMemoryDefinition& e)
+                {
+                    continue;
+                }
                 if (pe_timestamp == pe_header.FileHeader.TimeDateStamp)
                 {
                     memory_info *m = new memory_info(**it);

@@ -91,9 +91,16 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versio
         // filter by OS
         if(memory_info::OS_WINDOWS != (*it)->getOS())
             continue;
-        
-        // filter by timestamp
-        uint32_t pe_timestamp = (*it)->getHexValue("pe_timestamp");
+        uint32_t pe_timestamp;
+        // filter by timestamp, skip entries without a timestamp
+        try
+        {
+            pe_timestamp = (*it)->getHexValue("pe_timestamp");
+        }
+        catch(Error::MissingMemoryDefinition& e)
+        {
+            continue;
+        }
         if (pe_timestamp != pe_header.FileHeader.TimeDateStamp)
             continue;
         

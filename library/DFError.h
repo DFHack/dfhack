@@ -49,6 +49,28 @@ namespace DFHack
                 return "couldn't attach to process";
             }
         };
+
+        class NoMapLoaded : public exception
+        {
+        public:
+            virtual const char* what() const throw()
+            {
+                return "no map has been loaded in the dwarf fortress process";
+            }
+        };
+
+        class BadMapDimensions : public exception
+        {
+        public:
+            BadMapDimensions(uint32_t& _x, uint32_t& _y) : x(_x), y(_y) {}
+            const uint32_t x;
+            const uint32_t y;
+
+            virtual const char* what() const throw()
+            {
+                return "both x and y needs to be between 0 and 48";
+            }
+        };
     }
 }
 

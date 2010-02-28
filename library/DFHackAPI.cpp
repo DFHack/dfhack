@@ -184,12 +184,13 @@ bool API::InitMap()
     d->offset_descriptor->resolveClassnameToVPtr("block_square_event_mineral",d->vein_mineral_vptr);
 
     // get the map pointer
-    uint32_t    x_array_loc = g_pProcess->readDWord (map_offset);
+    uint32_t x_array_loc = g_pProcess->readDWord (map_offset);
     //FIXME: very inadequate
     if (!x_array_loc)
     {
+        throw Error::NoMapLoaded();
         // bad stuffz happend
-        return false;
+        //return false;
     }
     uint32_t mx, my, mz;
 
@@ -201,7 +202,8 @@ bool API::InitMap()
     // test for wrong map dimensions
     if (mx == 0 || mx > 48 || my == 0 || my > 48 || mz == 0)
     {
-        return false;
+        throw Error::BadMapDimensions(mx, my);
+        //return false;
     }
 
     // alloc array for pointers to all blocks

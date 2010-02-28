@@ -820,7 +820,9 @@ bool API::InitReadConstructions(uint32_t & numconstructions)
     {
         d->constructionsInited = false;
         numconstructions = 0;
-        return false;
+
+        throw Error::MissingAddress("constructions");
+        //return false;
     }
 }
 
@@ -872,7 +874,9 @@ bool API::InitReadVegetation(uint32_t & numplants)
     {
         d->vegetationInited = false;
         numplants = 0;
-        return false;
+
+        throw Error::MissingAddress();
+        //return false;
     }
 }
 
@@ -964,7 +968,9 @@ bool API::InitReadCreatures( uint32_t &numcreatures )
     {
         d->creaturesInited = false;
         numcreatures = 0;
-        return false;
+
+        throw Error::MissingAddress();
+        //return false;
     }
 }
 bool API::InitReadNotes( uint32_t &numnotes )
@@ -992,7 +998,9 @@ bool API::InitReadNotes( uint32_t &numnotes )
     {
         d->notesInited = false;
         numnotes = 0;
-        return false;
+
+        throw Error::MissingAddress();
+        //return false;
     }
 }
 bool API::ReadNote (const int32_t index, t_note & note)
@@ -1032,7 +1040,9 @@ bool API::InitReadSettlements( uint32_t & numsettlements )
     {
         d->settlementsInited = false;
         numsettlements = 0;
-        return false;
+
+        throw Error::MissingAddress();
+        //return false;
     }
 }
 bool API::ReadSettlement(const int32_t index, t_settlement & settlement)
@@ -1093,7 +1103,9 @@ bool API::InitReadHotkeys( )
     else
     {
         d->hotkeyInited = false;
-        return false;
+
+        throw Error::MissingAddress();
+        //return false;
     }
 }
 bool API::ReadHotkeys(t_hotkey hotkeys[])
@@ -1285,7 +1297,9 @@ bool API::InitReadNameTables (map< string, vector<string> > & nameTable)
     else
     {
         d->nameTablesInited = false;
-        return false;
+
+        throw Error::MissingAddress();
+        //return false;
     }
 }
 
@@ -1487,7 +1501,8 @@ bool API::InitViewAndCursor()
     }
     else
     {
-        return false;
+        throw Error::MissingAddress();
+        //return false;
     }
 }
 
@@ -1501,7 +1516,8 @@ bool API::InitViewSize()
     }
     else
     {
-        return false;
+        throw Error::MissingAddress();
+        //return false;
     }
 }
 
@@ -1593,7 +1609,9 @@ bool API::InitReadItems(uint32_t & numitems)
     {
         d->itemsInited = false;
         numitems = 0;
-        return false;
+
+        throw Error::MissingAddress();
+        //return false;
     }
 }
 bool API::ReadItem (const uint32_t index, t_item & item)

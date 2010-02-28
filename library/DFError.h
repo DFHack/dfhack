@@ -76,7 +76,7 @@ namespace DFHack
         class MissingAddress  : public exception
         {
         public:
-            MissingAddress(const char* _address) : address(_address) {}
+            MissingAddress(const char* _address = "UNKNOWN") : address(_address) {}
             const std::string address;
 
             virtual const char* what() const throw()

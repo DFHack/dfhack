@@ -1419,6 +1419,7 @@ bool API::InitViewAndCursor()
     }
     catch (Error::MissingMemoryDefinition&)
     {
+        d->cursorWindowInited = false;
         throw;
     }
 }
@@ -1434,6 +1435,7 @@ bool API::InitViewSize()
     }
     catch (Error::MissingMemoryDefinition&)
     {
+        d->viewSizeInited = false;
         throw;
     }
 }

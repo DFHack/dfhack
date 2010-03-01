@@ -87,8 +87,7 @@ namespace DFHack
                 s << _key;
                 key = s.str();
             }
-            virtual ~MissingMemoryDefinition() throw()
-            {};
+            virtual ~MissingMemoryDefinition() throw(){};
 
             // (perhaps it should be an enum, but this is intended for easy printing/logging)
             // type can be any of the following:
@@ -125,6 +124,8 @@ namespace DFHack
             const int id;
             const int row;
             const int col;
+            
+            virtual ~MemoryXmlParse() throw(){};
 
             virtual const char* what() const throw()
             {
@@ -140,6 +141,8 @@ namespace DFHack
             MemoryXmlBadAttribute(const char* _attr) : attr(_attr) {}
 
             std::string attr;
+            
+            virtual ~MemoryXmlBadAttribute() throw(){};
 
             virtual const char* what() const throw()
             {
@@ -153,6 +156,8 @@ namespace DFHack
         {
         public:
             MemoryXmlNoRoot() {}
+            
+            virtual ~MemoryXmlNoRoot() throw(){};
 
             virtual const char* what() const throw()
             {
@@ -164,6 +169,7 @@ namespace DFHack
         {
         public:
             MemoryXmlNoDFExtractor(const char* _name) : name(_name) {}
+            virtual ~MemoryXmlNoDFExtractor() throw(){};
 
             std::string name;
 
@@ -179,6 +185,7 @@ namespace DFHack
         {
         public:
             MemoryXmlUnderspecifiedEntry() {}
+            virtual ~MemoryXmlUnderspecifiedEntry() throw(){};
 
             virtual const char* what() const throw()
             {
@@ -190,6 +197,7 @@ namespace DFHack
         {
         public:
             MemoryXmlUnknownType(const char* _type) : type(_type) {}
+            virtual ~MemoryXmlUnknownType() throw(){};
 
             std::string type;
 

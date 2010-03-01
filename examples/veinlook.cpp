@@ -511,7 +511,6 @@ main(int argc, char *argv[])
                 }
             }
         }
-        uint32_t sptr = blockaddr + p->getDescriptor()->getOffset("block_flags");
         gotoxy (0,52);
         cprintf("block address 0x%x",blockaddr);
         gotoxy (0,53);

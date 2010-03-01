@@ -788,7 +788,9 @@
         <!-- matgloss vectors -->
         <Address name="matgloss">0x01534030</Address>
         <HexValue name="matgloss_skip">0x18</HexValue>
-
+        <!-- matgloss_stone_color verified -->
+        <!-- matgloss_metal_color verified -->
+        
         <!-- door: 0x8ea1e4 -->
         <VTable name="building_vtable" rebase="-0x91328">
             <!-- Isn't it just /lovely/ how simple things become?
@@ -1759,6 +1761,8 @@
         <!-- matgloss vectors -->
         <Address name="matgloss">0x9374E88</Address>
         <HexValue name="matgloss_skip">0xC</HexValue>
+        <Offset name="matgloss_stone_color">0x24</Offset>
+        <Offset name="matgloss_metal_color">0x18</Offset>
         
         <!--<Address name="notes">0x09332C98</Address>-->
         <Address name="notes">0x0931EA64</Address>

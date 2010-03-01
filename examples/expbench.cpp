@@ -29,15 +29,17 @@ int main (void)
     }
     
     time(&start);
-    for(uint32_t i = 0; i< 10000;i++)
+	uint32_t iterations = 1000;
+	cout << "doing " << iterations << " iterations" << endl;
+    for(uint32_t i = 0; i< iterations;i++)
     {
         if(!DF.InitMap())
             break;
         DF.getSize(x_max,y_max,z_max);
-        if((i % 100) == 0)
+        if(i%(iterations/100) == 0)
         {
-            int percentage = i / 100;
-            cout << percentage << " %" << endl;
+            int percentage = i / (iterations/100);
+            cout << "\b" << percentage << " %\xd"; // carridge return, not line feed, so percentage, less console spam :)
         }
         for(uint32_t x = 0; x< x_max;x++)
         {

@@ -4,15 +4,45 @@
 #include <integers.h>
 #include <vector>
 #include <ctime>
+#include <sstream>
+#include <string>
+
 using namespace std;
 
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 
-int main (void)
+void print_progress (int current, int total)
+{
+    if(total < 100)
+    {
+        cout << "\b" << current << " / " <<  total << " %\xd" << std::flush;
+    }
+    else
+    {
+        if( current % (total/100) == 0 )
+        {
+            int percentage = current / (total/100);
+            // carridge return, not line feed, so percentage, less console spam :)
+            cout << "\b" << percentage << " %\xd" << std::flush; // and a flush for good measure
+        }
+    }
+}
+
+int main (int numargs, char** args)
 {
     time_t start, end;
     double time_diff;
+    
+    
+    unsigned int iterations = 0;
+    if (numargs == 2)
+    {
+        istringstream input (args[1],istringstream::in);
+        input >> iterations;
+    }
+    if(iterations == 0)
+        iterations = 1000;
     
     uint32_t x_max,y_max,z_max;
     uint32_t num_blocks = 0;
@@ -29,18 +59,15 @@ int main (void)
     }
     
     time(&start);
-	uint32_t iterations = 1000;
-	cout << "doing " << iterations << " iterations" << endl;
+    
+    cout << "doing " << iterations << " iterations" << endl;
     for(uint32_t i = 0; i< iterations;i++)
     {
+        print_progress (i, iterations);
+        
         if(!DF.InitMap())
             break;
         DF.getSize(x_max,y_max,z_max);
-        if(i%(iterations/100) == 0)
-        {
-            int percentage = i / (iterations/100);
-            cout << "\b" << percentage << " %\xd"; // carridge return, not line feed, so percentage, less console spam :)
-        }
         for(uint32_t x = 0; x< x_max;x++)
         {
             for(uint32_t y = 0; y< y_max;y++)
@@ -53,7 +80,7 @@ int main (void)
                         DF.ReadDesignations(x,y,z, (uint32_t *) designations);
                         DF.ReadOccupancy(x,y,z, (uint32_t *) occupancies);
                         num_blocks ++;
-                        bytes_read += 256 * (4 + 4 + 2);
+                        bytes_read += sizeof(tiletypes) + sizeof(designations) + sizeof(occupancies);
                     }
                 }
             }
@@ -67,8 +94,8 @@ int main (void)
     cout << bytes_read / (1024 * 1024) << " MB" << endl;
     cout << "map export tests done in " << time_diff << " seconds." << endl;
     #ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
     #endif
     return 0;
 }

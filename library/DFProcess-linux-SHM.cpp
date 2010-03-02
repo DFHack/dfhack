@@ -37,7 +37,7 @@ using namespace DFHack;
 // a full memory barrier! better be safe than sorry.
 #define gcc_barrier asm volatile("" ::: "memory"); __sync_synchronize();
 
-class SHMProcess::Private
+class Process::Private
 {
     public:
     Private()
@@ -68,7 +68,7 @@ class SHMProcess::Private
     bool DF_GetPID(pid_t & ret);
 };
 
-bool SHMProcess::Private::waitWhile (DF_PINGPONG state)
+bool Process::Private::waitWhile (DF_PINGPONG state)
 {
     uint32_t cnt = 0;
     struct shmid_ds descriptor;
@@ -104,7 +104,7 @@ bool SHMProcess::Private::waitWhile (DF_PINGPONG state)
     return true;
 }
 
-bool SHMProcess::Private::DF_TestBridgeVersion(bool & ret)
+bool Process::Private::DF_TestBridgeVersion(bool & ret)
 {
     ((shm_cmd *)my_shm)->pingpong = DFPP_VERSION;
     gcc_barrier
@@ -116,7 +116,7 @@ bool SHMProcess::Private::DF_TestBridgeVersion(bool & ret)
     return true;
 }
 
-bool SHMProcess::Private::DF_GetPID(pid_t & ret)
+bool Process::Private::DF_GetPID(pid_t & ret)
 {
     ((shm_cmd *)my_shm)->pingpong = DFPP_PID;
     gcc_barrier
@@ -128,7 +128,7 @@ bool SHMProcess::Private::DF_GetPID(pid_t & ret)
     return true;
 }
 
-SHMProcess::SHMProcess(vector <memory_info *> & known_versions)
+Process::Process(vector <memory_info *> & known_versions)
 : d(new Private())
 {
     char exe_link_name [256];
@@ -204,21 +204,21 @@ SHMProcess::SHMProcess(vector <memory_info *> & known_versions)
     shmdt(d->my_shm); // detach so we don't attach twice when attach() is called
 }
 
-bool SHMProcess::isSuspended()
+bool Process::isSuspended()
 {
     return d->suspended;
 }
-bool SHMProcess::isAttached()
+bool Process::isAttached()
 {
     return d->attached;
 }
 
-bool SHMProcess::isIdentified()
+bool Process::isIdentified()
 {
     return d->identified;
 }
 
-bool SHMProcess::Private::validate(char * exe_file, uint32_t pid, vector <memory_info *> & known_versions)
+bool Process::Private::validate(char * exe_file, uint32_t pid, vector <memory_info *> & known_versions)
 {
     md5wrapper md5;
     // get hash of the running DF process
@@ -247,7 +247,7 @@ bool SHMProcess::Private::validate(char * exe_file, uint32_t pid, vector <memory
     return false;
 }
 
-SHMProcess::~SHMProcess()
+Process::~Process()
 {
     if(d->attached)
     {
@@ -261,29 +261,29 @@ SHMProcess::~SHMProcess()
     delete d;
 }
 
-memory_info * SHMProcess::getDescriptor()
+memory_info * Process::getDescriptor()
 {
     return d->my_descriptor;
 }
 
-DFWindow * SHMProcess::getWindow()
+DFWindow * Process::getWindow()
 {
     return d->my_window;
 }
 
-int SHMProcess::getPID()
+int Process::getPID()
 {
     return d->my_pid;
 }
 
 //FIXME: implement
-bool SHMProcess::getThreadIDs(vector<uint32_t> & threads )
+bool Process::getThreadIDs(vector<uint32_t> & threads )
 {
     return false;
 }
 
 //FIXME: cross-reference with ELF segment entries?
-void SHMProcess::getMemRanges( vector<t_memrange> & ranges )
+void Process::getMemRanges( vector<t_memrange> & ranges )
 {
     char buffer[1024];
     char permissions[5]; // r/-, w/-, x/-, p/s, 0
@@ -309,7 +309,7 @@ void SHMProcess::getMemRanges( vector<t_memrange> & ranges )
     }
 }
 
-bool SHMProcess::suspend()
+bool Process::suspend()
 {
     if(!d->attached)
     {
@@ -328,7 +328,7 @@ bool SHMProcess::suspend()
     return true;
 }
 
-bool SHMProcess::asyncSuspend()
+bool Process::asyncSuspend()
 {
     if(!d->attached)
     {
@@ -350,12 +350,12 @@ bool SHMProcess::asyncSuspend()
     }
 }
 
-bool SHMProcess::forceresume()
+bool Process::forceresume()
 {
     return resume();
 }
 
-bool SHMProcess::resume()
+bool Process::resume()
 {
     if(!d->attached)
         return false;
@@ -367,7 +367,7 @@ bool SHMProcess::resume()
 }
 
 
-bool SHMProcess::attach()
+bool Process::attach()
 {
     int status;
     if(g_pProcess != 0)
@@ -396,7 +396,7 @@ bool SHMProcess::attach()
     return false;
 }
 
-bool SHMProcess::detach()
+bool Process::detach()
 {
     if(!d->attached)
     {
@@ -420,7 +420,7 @@ bool SHMProcess::detach()
     return false;
 }
 
-void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buffer)
+void Process::read (uint32_t src_address, uint32_t size, uint8_t *target_buffer)
 {
     // normal read under 1MB
     if(size <= SHM_BODY)
@@ -457,7 +457,7 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
     }
 }
 
-uint8_t SHMProcess::readByte (const uint32_t offset)
+uint8_t Process::readByte (const uint32_t offset)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
     gcc_barrier
@@ -466,7 +466,7 @@ uint8_t SHMProcess::readByte (const uint32_t offset)
     return ((shm_retval *)d->my_shm)->value;
 }
 
-void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
+void Process::readByte (const uint32_t offset, uint8_t &val )
 {
     ((shm_read_small *)d->my_shm)->address = offset;
     gcc_barrier
@@ -475,7 +475,7 @@ void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
     val = ((shm_retval *)d->my_shm)->value;
 }
 
-uint16_t SHMProcess::readWord (const uint32_t offset)
+uint16_t Process::readWord (const uint32_t offset)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
     gcc_barrier
@@ -484,7 +484,7 @@ uint16_t SHMProcess::readWord (const uint32_t offset)
     return ((shm_retval *)d->my_shm)->value;
 }
 
-void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
+void Process::readWord (const uint32_t offset, uint16_t &val)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
     gcc_barrier
@@ -493,7 +493,7 @@ void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
     val = ((shm_retval *)d->my_shm)->value;
 }
 
-uint32_t SHMProcess::readDWord (const uint32_t offset)
+uint32_t Process::readDWord (const uint32_t offset)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
     gcc_barrier
@@ -501,7 +501,7 @@ uint32_t SHMProcess::readDWord (const uint32_t offset)
     d->waitWhile(DFPP_READ_DWORD);
     return ((shm_retval *)d->my_shm)->value;
 }
-void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
+void Process::readDWord (const uint32_t offset, uint32_t &val)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
     gcc_barrier
@@ -514,7 +514,7 @@ void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
  * WRITING
  */
 
-void SHMProcess::writeDWord (uint32_t offset, uint32_t data)
+void Process::writeDWord (uint32_t offset, uint32_t data)
 {
     ((shm_write_small *)d->my_shm)->address = offset;
     ((shm_write_small *)d->my_shm)->value = data;
@@ -524,7 +524,7 @@ void SHMProcess::writeDWord (uint32_t offset, uint32_t data)
 }
 
 // using these is expensive.
-void SHMProcess::writeWord (uint32_t offset, uint16_t data)
+void Process::writeWord (uint32_t offset, uint16_t data)
 {
     ((shm_write_small *)d->my_shm)->address = offset;
     ((shm_write_small *)d->my_shm)->value = data;
@@ -533,7 +533,7 @@ void SHMProcess::writeWord (uint32_t offset, uint16_t data)
     d->waitWhile(DFPP_WRITE_WORD);
 }
 
-void SHMProcess::writeByte (uint32_t offset, uint8_t data)
+void Process::writeByte (uint32_t offset, uint8_t data)
 {
     ((shm_write_small *)d->my_shm)->address = offset;
     ((shm_write_small *)d->my_shm)->value = data;
@@ -542,7 +542,7 @@ void SHMProcess::writeByte (uint32_t offset, uint8_t data)
     d->waitWhile(DFPP_WRITE_BYTE);
 }
 
-void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer)
+void Process::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer)
 {
     // normal write under 1MB
     if(size <= SHM_BODY)
@@ -580,7 +580,7 @@ void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buf
 }
 
 // FIXME: butt-fugly
-const std::string SHMProcess::readCString (uint32_t offset)
+const std::string Process::readCString (uint32_t offset)
 {
     std::string temp;
     char temp_c[256];
@@ -597,7 +597,7 @@ const std::string SHMProcess::readCString (uint32_t offset)
     return temp;
 }
 
-DfVector SHMProcess::readVector (uint32_t offset, uint32_t item_size)
+DfVector Process::readVector (uint32_t offset, uint32_t item_size)
 {
     /*
         GNU libstdc++ vector is three pointers long
@@ -613,7 +613,7 @@ DfVector SHMProcess::readVector (uint32_t offset, uint32_t item_size)
     return DfVector(start,size,item_size);
 }
 
-const std::string SHMProcess::readSTLString(uint32_t offset)
+const std::string Process::readSTLString(uint32_t offset)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
     full_barrier
@@ -623,7 +623,7 @@ const std::string SHMProcess::readSTLString(uint32_t offset)
     return(string( (char *)d->my_shm+SHM_HEADER));
 }
 
-size_t SHMProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
+size_t Process::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
     ((shm_read_small *)d->my_shm)->address = offset;
     full_barrier
@@ -636,7 +636,7 @@ size_t SHMProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapa
     return fit;
 }
 
-void SHMProcess::writeSTLString(const uint32_t address, const std::string writeString)
+void Process::writeSTLString(const uint32_t address, const std::string writeString)
 {
     ((shm_write_small *)d->my_shm)->address = address;
     strncpy(d->my_shm+SHM_HEADER,writeString.c_str(),writeString.length()+1); // length + 1 for the null terminator
@@ -645,7 +645,7 @@ void SHMProcess::writeSTLString(const uint32_t address, const std::string writeS
     d->waitWhile(DFPP_WRITE_STL_STRING);
 }
 
-string SHMProcess::readClassName (uint32_t vptr)
+string Process::readClassName (uint32_t vptr)
 {
     int typeinfo = readDWord(vptr - 0x4);
     int typestring = readDWord(typeinfo + 0x4);

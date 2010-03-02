@@ -61,135 +61,28 @@ namespace DFHack
 
     class DFHACK_EXPORT Process
     {
+        private:
+            class Private;
+            Private *d;
         public:
             // this is the single most important destructor ever. ~px
-            virtual ~Process(){};
-            // Set up stuff so we can read memory, suspends synchronously
-            virtual bool attach() = 0;
+            Process(vector <memory_info *> & known_versions);
+            ~Process();
+
+            // Set up stuff so we can read memory
+            bool attach();
             // detach from DF, resume its execution if it's suspended
-            virtual bool detach() = 0;
+            bool detach();
             
             // synchronous suspend
             // waits for DF to be actually suspended,
             // this might take a while depending on implementation
-            virtual bool suspend() = 0;
+            bool suspend();
             // asynchronous suspend to use together with polling and timers
-            virtual bool asyncSuspend() = 0;
+            bool asyncSuspend();
             // resume DF execution
-            virtual bool resume() = 0;
-            // force-resume DF execution
-            virtual bool forceresume() = 0;
-            
-            virtual uint32_t readDWord(const uint32_t address) = 0;
-            virtual void readDWord(const uint32_t address, uint32_t & value) = 0;
-            virtual uint16_t readWord(const uint32_t address) = 0;
-            virtual void readWord(const uint32_t address, uint16_t & value) = 0;
-            virtual uint8_t readByte(const uint32_t address) = 0;
-            virtual void readByte(const uint32_t address, uint8_t & value) = 0;
-            virtual void read( uint32_t address, uint32_t length, uint8_t* buffer) = 0;
-            
-            virtual void writeDWord(const uint32_t address, const uint32_t value) = 0;
-            virtual void writeWord(const uint32_t address, const uint16_t value) = 0;
-            virtual void writeByte(const uint32_t address, const uint8_t value) = 0;
-            virtual void write(uint32_t address, uint32_t length, uint8_t* buffer) = 0;
-
-            // read a string
-            virtual const string readSTLString (uint32_t offset) = 0;
-            virtual size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity) = 0;
-            virtual void writeSTLString(const uint32_t address, const std::string writeString) = 0;
-            // read a vector from memory
-            virtual DfVector readVector (uint32_t offset, uint32_t item_size) = 0;
-            // get class name of an object with rtti/type info
-            virtual string readClassName(uint32_t vptr) = 0;
-            
-            virtual const std::string readCString (uint32_t offset) = 0;
-            
-            virtual bool isSuspended() = 0;
-            virtual bool isAttached() = 0;
-            virtual bool isIdentified() = 0;
-            
-            // find the thread IDs of the process
-            virtual bool getThreadIDs(vector<uint32_t> & threads ) = 0;
-            // get virtual memory ranges of the process (what is mapped where)
-            virtual void getMemRanges( vector<t_memrange> & ranges ) = 0;
-            
-            // get the flattened Memory.xml entry of this process
-            virtual memory_info *getDescriptor() = 0;
-            // get the DF's window (first that can be found ~_~)
-            virtual DFWindow * getWindow() = 0;
-            // get the DF Process ID
-            virtual int getPID() = 0;
-    };
-
-    class DFHACK_EXPORT NormalProcess : virtual public Process
-    {
-        friend class ProcessEnumerator;
-        class Private;
-        private:
-            Private * const d;
-            
-        public:
-            NormalProcess(uint32_t pid, vector <memory_info *> & known_versions);
-            ~NormalProcess();
-            bool attach();
-            bool detach();
-            
-            bool suspend();
-            bool asyncSuspend();
             bool resume();
-            bool forceresume();
-            
-            uint32_t readDWord(const uint32_t address);
-            void readDWord(const uint32_t address, uint32_t & value);
-            uint16_t readWord(const uint32_t address);
-            void readWord(const uint32_t address, uint16_t & value);
-            uint8_t readByte(const uint32_t address);
-            void readByte(const uint32_t address, uint8_t & value);
-            void read( uint32_t address, uint32_t length, uint8_t* buffer);
-            
-            void writeDWord(const uint32_t address, const uint32_t value);
-            void writeWord(const uint32_t address, const uint16_t value);
-            void writeByte(const uint32_t address, const uint8_t value);
-            void write(uint32_t address, uint32_t length, uint8_t* buffer);
-
-            const string readSTLString (uint32_t offset);
-            size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
-            void writeSTLString(const uint32_t address, const std::string writeString){};
-            // read a vector from memory
-            DfVector readVector (uint32_t offset, uint32_t item_size);
-            // get class name of an object with rtti/type info
-            string readClassName(uint32_t vptr);
-            
-            const std::string readCString (uint32_t offset);
-            
-            bool isSuspended();
-            bool isAttached();
-            bool isIdentified();
-            
-            bool getThreadIDs(vector<uint32_t> & threads );
-            void getMemRanges( vector<t_memrange> & ranges );
-            memory_info *getDescriptor();
-            DFWindow * getWindow();
-            int getPID();
-    };
-    
-    class DFHACK_EXPORT SHMProcess : virtual public Process
-    {
-        friend class ProcessEnumerator;
-        class Private;
-        private:
-            Private * const d;
-            
-        public:
-            SHMProcess(vector <memory_info *> & known_versions);
-            ~SHMProcess();
-            // Set up stuff so we can read memory
-            bool attach();
-            bool detach();
-            
-            bool suspend();
-            bool asyncSuspend();
-            bool resume();
+            // force-resume DF execution - maybe nonsense in this branch? :P
             bool forceresume();
             
             uint32_t readDWord(const uint32_t address);
@@ -212,72 +105,22 @@ namespace DFHack
             DfVector readVector (uint32_t offset, uint32_t item_size);
             // get class name of an object with rtti/type info
             string readClassName(uint32_t vptr);
-            
             const std::string readCString (uint32_t offset);
             
             bool isSuspended();
             bool isAttached();
             bool isIdentified();
             
+            // find the thread IDs of the process
             bool getThreadIDs(vector<uint32_t> & threads );
+            // get virtual memory ranges of the process (what is mapped where)
             void getMemRanges( vector<t_memrange> & ranges );
+            // get the flattened Memory.xml entry of this process
             memory_info *getDescriptor();
+            // get the DF's window (first that can be found ~_~)
             DFWindow * getWindow();
+            // get the DF Process ID
             int getPID();
     };
-
-#ifdef LINUX_BUILD
-    class DFHACK_EXPORT WineProcess : virtual public Process
-    {
-        friend class ProcessEnumerator;
-        class Private;
-        private:
-            Private * const d;
-            
-        public:
-            WineProcess(uint32_t pid, vector <memory_info *> & known_versions);
-            ~WineProcess();
-            bool attach();
-            bool detach();
-            
-            bool suspend();
-            bool asyncSuspend();
-            bool resume();
-            bool forceresume();
-            
-            uint32_t readDWord(const uint32_t address);
-            void readDWord(const uint32_t address, uint32_t & value);
-            uint16_t readWord(const uint32_t address);
-            void readWord(const uint32_t address, uint16_t & value);
-            uint8_t readByte(const uint32_t address);
-            void readByte(const uint32_t address, uint8_t & value);
-            void read( uint32_t address, uint32_t length, uint8_t* buffer);
-            
-            void writeDWord(const uint32_t address, const uint32_t value);
-            void writeWord(const uint32_t address, const uint16_t value);
-            void writeByte(const uint32_t address, const uint8_t value);
-            void write(uint32_t address, uint32_t length, uint8_t* buffer);
-
-            const string readSTLString (uint32_t offset);
-            size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
-            void writeSTLString(const uint32_t address, const std::string writeString){};
-            // read a vector from memory
-            DfVector readVector (uint32_t offset, uint32_t item_size);
-            // get class name of an object with rtti/type info
-            string readClassName(uint32_t vptr);
-            
-            const std::string readCString (uint32_t offset);
-            
-            bool isSuspended();
-            bool isAttached();
-            bool isIdentified();
-            
-            bool getThreadIDs(vector<uint32_t> & threads );
-            void getMemRanges( vector<t_memrange> & ranges );
-            memory_info *getDescriptor();
-            DFWindow * getWindow();
-            int getPID();
-    };
-#endif
 }
 #endif

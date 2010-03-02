@@ -48,7 +48,7 @@ bool ProcessEnumerator::findProcessess()
     struct dirent *dir_entry_p;
     
     Process *p = 0;
-    p = new SHMProcess(d->meminfo->meminfo);
+    p = new Process(d->meminfo->meminfo);
     if(p->isIdentified())
     {
         d->processes.push_back(p);
@@ -58,7 +58,7 @@ bool ProcessEnumerator::findProcessess()
         delete p;
         p = 0;
     }
-    
+    /*
     // Open /proc/ directory
     dir_p = opendir("/proc/");
     // Reading /proc/ entries
@@ -91,6 +91,7 @@ bool ProcessEnumerator::findProcessess()
         }
     }
     closedir(dir_p);
+    */
     // return value depends on if we found some DF processes
     if(d->processes.size())
     {

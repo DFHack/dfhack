@@ -36,39 +36,13 @@ class DFHack::ProcessEnumerator::Private
         std::vector<Process *> processes;
 };
 
-// some magic - will come in handy when we start doing debugger stuff on Windows
-bool EnableDebugPriv()
-{
-    bool               bRET = FALSE;
-    TOKEN_PRIVILEGES   tp;
-    HANDLE             hToken;
-
-    if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &tp.Privileges[0].Luid))
-    {
-        if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
-        {
-            if (hToken != INVALID_HANDLE_VALUE)
-            {
-                tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-                tp.PrivilegeCount = 1;
-                if (AdjustTokenPrivileges(hToken, FALSE, &tp, 0, 0, 0))
-                {
-                    bRET = TRUE;
-                }
-                CloseHandle(hToken);
-            }
-        }
-    }
-    return bRET;
-}
-
 // WINDOWS version of the process finder
 bool ProcessEnumerator::findProcessess()
 {
     // Get the list of process identifiers.
     DWORD ProcArray[2048], memoryNeeded, numProccesses;
     {
-        Process * p = new SHMProcess(d->meminfo->meminfo);
+        Process * p = new Process(d->meminfo->meminfo);
         if(p->isIdentified())
         {
             d->processes.push_back(p);
@@ -80,7 +54,7 @@ bool ProcessEnumerator::findProcessess()
             p = 0;
         }
     }
-    
+    /*
     EnableDebugPriv();
     if ( !EnumProcesses( ProcArray, sizeof(ProcArray), &memoryNeeded ) )
     {
@@ -104,7 +78,7 @@ bool ProcessEnumerator::findProcessess()
             delete q;
             q = 0;
         }
-    }
+    }*/
     if(d->processes.size())
         return true;
     return false;

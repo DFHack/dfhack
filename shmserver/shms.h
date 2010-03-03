@@ -1,10 +1,10 @@
 #ifndef DFCONNECT_H
 #define DFCONNECT_H
 
-#define PINGPONG_VERSION 2
+#define CORE_VERSION 3
 #define SHM_KEY 123466
-#define SHM_HEADER 1024
-#define SHM_BODY 1024*1024
+#define SHM_HEADER 1024 // 1kB reserved for a header
+#define SHM_BODY 1024*1024 // 1MB reserved for bulk data transfer
 #define SHM_SIZE SHM_HEADER+SHM_BODY
 
 
@@ -32,14 +32,6 @@
     #endif
 #endif
 
-
-/*
-    * read - parameters are address and length
-    * write - parameters are address, length and the actual data to write
-    * wait - sent to DF so that it waits for more commands
-    * end - sent to DF for breaking out of the wait 
-*/
-
 enum DF_SHM_ERRORSTATE
 {
     SHM_OK, // all OK
@@ -48,51 +40,51 @@ enum DF_SHM_ERRORSTATE
     SHM_SECOND_DF // we are a second DF process, can't use SHM at all
 };
 
-enum DF_PINGPONG
+enum CORE_COMMAND
 {
-    DFPP_RUNNING = 0, // no command, normal server execution
+    CORE_RUNNING = 0, // no command, normal server execution
     
-    DFPP_VERSION, // protocol version query
-    DFPP_RET_VERSION, // return the protocol version
+    CORE_GET_VERSION, // protocol version query
+    CORE_RET_VERSION, // return the protocol version
     
-    DFPP_PID, // query for the process ID
-    DFPP_RET_PID, // return process ID
+    CORE_GET_PID, // query for the process ID
+    CORE_RET_PID, // return process ID
     
     // version 1 stuff below
-    DFPP_READ, // cl -> sv, read some data
-    DFPP_RET_DATA, // sv -> cl, returned data
+    CORE_DFPP_READ, // cl -> sv, read some data
+    CORE_RET_DATA, // sv -> cl, returned data
     
-    DFPP_READ_DWORD, // cl -> sv, read a dword
-    DFPP_RET_DWORD, // sv -> cl, returned dword
+    CORE_READ_DWORD, // cl -> sv, read a dword
+    CORE_RET_DWORD, // sv -> cl, returned dword
 
-    DFPP_READ_WORD, // cl -> sv, read a word
-    DFPP_RET_WORD, // sv -> cl, returned word
+    CORE_READ_WORD, // cl -> sv, read a word
+    CORE_RET_WORD, // sv -> cl, returned word
 
-    DFPP_READ_BYTE, // cl -> sv, read a byte
-    DFPP_RET_BYTE, // sv -> cl, returned byte
+    CORE_READ_BYTE, // cl -> sv, read a byte
+    CORE_RET_BYTE, // sv -> cl, returned byte
     
-    DFPP_SV_ERROR, // there was a server error
-    DFPP_CL_ERROR, // there was a client error
+    CORE_SV_ERROR, // there was a server error
+    CORE_CL_ERROR, // there was a client error
     
-    DFPP_WRITE,// client writes to server
-    DFPP_WRITE_DWORD,// client writes a DWORD to server
-    DFPP_WRITE_WORD,// client writes a WORD to server
-    DFPP_WRITE_BYTE,// client writes a BYTE to server
+    CORE_WRITE,// client writes to server
+    CORE_WRITE_DWORD,// client writes a DWORD to server
+    CORE_WRITE_WORD,// client writes a WORD to server
+    CORE_WRITE_BYTE,// client writes a BYTE to server
     
-    DFPP_SUSPEND, // client notifies server to wait for commands (server is stalled in busy wait)
-    DFPP_SUSPENDED, // response to WAIT, server is stalled in busy wait
+    CORE_SUSPEND, // client notifies server to wait for commands (server is stalled in busy wait)
+    CORE_SUSPENDED, // response to WAIT, server is stalled in busy wait
     
     // all strings capped at 1MB
-    DFPP_READ_STL_STRING,// client requests contents of STL string at address
-    DFPP_READ_C_STRING,// client requests contents of a C string at address, max length (0 means zero terminated)
-    DFPP_RET_STRING, // sv -> cl length + string contents
-    DFPP_WRITE_STL_STRING,// client wants to set STL string at address to something
+    CORE_READ_STL_STRING,// client requests contents of STL string at address
+    CORE_READ_C_STRING,// client requests contents of a C string at address, max length (0 means zero terminated)
+    CORE_RET_STRING, // sv -> cl length + string contents
+    CORE_WRITE_STL_STRING,// client wants to set STL string at address to something
     
-    // vector elements > 1MB are not supported because they don't fit into the shared memory
-    DFPP_READ_ENTIRE_VECTOR, // read an entire vector (parameters are address of vector object and size of items)
-    DFPP_RET_VECTOR_BODY, // a part of a vector is returned - no. of elements returned, no. of elements total, elements
+    // compare affinity and determine if using yield is required
+    CORE_SYNC_YIELD,// cl sends affinity to sv, sv sets yield
+    CORE_SYNC_YIELD_RET,// sv returns yield bool
     
-    NUM_DFPP
+    NUM_CORE_CMDS
 };
 
 
@@ -102,54 +94,31 @@ enum DF_ERROR
     DFEE_BUFFER_OVERFLOW
 };
 
-typedef struct
+typedef union
 {
-    volatile uint32_t pingpong; // = 0
+    struct
+    {
+        volatile uint16_t command;
+        volatile uint16_t module;
+    } parts;
+    volatile uint32_t pingpong;
+    inline void set(uint16_t module, uint16_t command)
+    {
+        pingpong = module + command << 16;
+    }
 } shm_cmd;
 
 typedef struct
 {
-    volatile uint32_t pingpong;
-    uint32_t address;
-    uint32_t length;
-} shm_read;
-
-typedef shm_read shm_write;
-typedef shm_read shm_bounce;
-
-typedef struct
-{
-    volatile uint32_t pingpong;
-} shm_ret_data;
-
-typedef struct
-{
-    volatile uint32_t pingpong;
-    uint32_t address;
-} shm_read_small;
-
-typedef struct
-{
-    volatile uint32_t pingpong;
+    shm_cmd cmd;
     uint32_t address;
     uint32_t value;
-} shm_write_small;
-
-typedef struct
-{
-    volatile uint32_t pingpong;
-    uint32_t value;
-} shm_retval;
-
-typedef struct
-{
-    volatile uint32_t pingpong;
     uint32_t length;
-} shm_retstr;
-
+} shm_header;
 
 void SHM_Act (void);
+void InitModules (void);
 bool isValidSHM();
-uint32_t getPID();
+uint32_t OS_getPID();
 
 #endif

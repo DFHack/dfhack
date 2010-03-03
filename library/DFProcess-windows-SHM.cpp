@@ -53,7 +53,7 @@ class Process::Private
     bool suspended;
     bool identified;
     
-    bool waitWhile (DF_PINGPONG state);
+    bool waitWhile (CORE_COMMAND state);
     bool isValidSV();
     bool DF_TestBridgeVersion(bool & ret);
     bool DF_GetPID(uint32_t & ret);
@@ -87,7 +87,7 @@ bool Process::Private::isValidSV()
     }
 }
 
-bool Process::Private::waitWhile (DF_PINGPONG state)
+bool Process::Private::waitWhile (CORE_COMMAND state)
 {
     uint32_t cnt = 0;
     SCHED_YIELD // yield the CPU, valid only on single-core CPUs
@@ -98,7 +98,7 @@ bool Process::Private::waitWhile (DF_PINGPONG state)
             if(!isValidSV())// DF not there anymore?
             {
                 full_barrier
-                ((shm_cmd *)my_shm)->pingpong = DFPP_RUNNING;
+                ((shm_cmd *)my_shm)->pingpong = CORE_RUNNING;
                 attached = suspended = false;
                 ReleaseMutex(DFCLMutex);
                 return false;
@@ -110,9 +110,9 @@ bool Process::Private::waitWhile (DF_PINGPONG state)
         }
         cnt++;
     }
-    if(((shm_cmd *)my_shm)->pingpong == DFPP_SV_ERROR)
+    if(((shm_cmd *)my_shm)->pingpong == CORE_SV_ERROR)
     {
-        ((shm_cmd *)my_shm)->pingpong = DFPP_RUNNING;
+        ((shm_cmd *)my_shm)->pingpong = CORE_RUNNING;
         attached = suspended = false;
         cerr << "shm server error!" << endl;
         assert (false);
@@ -123,25 +123,25 @@ bool Process::Private::waitWhile (DF_PINGPONG state)
 
 bool Process::Private::DF_TestBridgeVersion(bool & ret)
 {
-    ((shm_cmd *)my_shm)->pingpong = DFPP_VERSION;
+    ((shm_cmd *)my_shm)->pingpong = CORE_GET_VERSION;
     full_barrier
-    if(!waitWhile(DFPP_VERSION))
+    if(!waitWhile(CORE_GET_VERSION))
         return false;
     full_barrier
-    ((shm_cmd *)my_shm)->pingpong = DFPP_SUSPENDED;
-    ret =( ((shm_retval *)my_shm)->value == PINGPONG_VERSION );
+    ((shm_cmd *)my_shm)->pingpong = CORE_SUSPENDED;
+    ret =( ((shm_val *)my_shm)->value == CORE_VERSION );
     return true;
 }
 
 bool Process::Private::DF_GetPID(uint32_t & ret)
 {
-    ((shm_cmd *)my_shm)->pingpong = DFPP_PID;
+    ((shm_cmd *)my_shm)->pingpong = CORE_GET_PID;
     full_barrier
-    if(!waitWhile(DFPP_PID))
+    if(!waitWhile(CORE_GET_PID))
         return false;
     full_barrier
-    ((shm_cmd *)my_shm)->pingpong = DFPP_SUSPENDED;
-    ret = ((shm_retval *)my_shm)->value;
+    ((shm_cmd *)my_shm)->pingpong = CORE_SUSPENDED;
+    ret = ((shm_val *)my_shm)->value;
     return true;
 }
 
@@ -182,7 +182,7 @@ Process::Process(vector <memory_info *> & known_versions)
     if(!bridgeOK)
     {
         fprintf(stderr,"SHM bridge version mismatch\n");
-        ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
+        ((shm_cmd *)d->my_shm)->pingpong = CORE_RUNNING;
         UnmapViewOfFile(d->my_shm);
         ReleaseMutex(d->DFCLMutex);
         CloseHandle(d->DFSVMutex);
@@ -258,7 +258,7 @@ Process::Process(vector <memory_info *> & known_versions)
         }
         else
         {
-            ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
+            ((shm_cmd *)d->my_shm)->pingpong = CORE_RUNNING;
             UnmapViewOfFile(d->my_shm);
 			d->my_shm = 0;
             ReleaseMutex(d->DFCLMutex);
@@ -375,8 +375,8 @@ bool Process::suspend()
         cerr << "couldn't suspend, already suspended" << endl;
         return true;
     }
-    ((shm_cmd *)d->my_shm)->pingpong = DFPP_SUSPEND;
-    if(!d->waitWhile(DFPP_SUSPEND))
+    ((shm_cmd *)d->my_shm)->pingpong = CORE_SUSPEND;
+    if(!d->waitWhile(CORE_SUSPEND))
     {
         cerr << "couldn't suspend, DF not responding to commands" << endl;
         return false;
@@ -395,14 +395,14 @@ bool Process::asyncSuspend()
     {
         return true;
     }
-    if(((shm_cmd *)d->my_shm)->pingpong == DFPP_SUSPENDED)
+    if(((shm_cmd *)d->my_shm)->pingpong == CORE_SUSPENDED)
     {
         d->suspended = true;
         return true;
     }
     else
     {
-        ((shm_cmd *)d->my_shm)->pingpong = DFPP_SUSPEND;
+        ((shm_cmd *)d->my_shm)->pingpong = CORE_SUSPEND;
         return false;
     }
 }
@@ -424,7 +424,7 @@ bool Process::resume()
         cerr << "couldn't resume because of not being suspended" << endl;
         return true;
     }
-    ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
+    ((shm_cmd *)d->my_shm)->pingpong = CORE_RUNNING;
     d->suspended = false;
     return true;
 }
@@ -499,11 +499,11 @@ void Process::read (uint32_t src_address, uint32_t size, uint8_t *target_buffer)
     // normal read under 1MB
     if(size <= SHM_BODY)
     {
-        ((shm_read *)d->my_shm)->address = src_address;
-        ((shm_read *)d->my_shm)->length = size;
+        ((shm_addrlen *)d->my_shm)->address = src_address;
+        ((shm_addrlen *)d->my_shm)->length = size;
         full_barrier
-        ((shm_read *)d->my_shm)->pingpong = DFPP_READ;
-        d->waitWhile(DFPP_READ);
+        ((shm_cmd *)d->my_shm)->pingpong = CORE_DFPP_READ;
+        d->waitWhile(CORE_DFPP_READ);
         memcpy (target_buffer, d->my_shm + SHM_HEADER,size);
     }
     // a big read, we pull data over the shm in iterations
@@ -514,11 +514,11 @@ void Process::read (uint32_t src_address, uint32_t size, uint8_t *target_buffer)
         while (size)
         {
             // read to_read bytes from src_cursor
-            ((shm_read *)d->my_shm)->address = src_address;
-            ((shm_read *)d->my_shm)->length = to_read;
+            ((shm_addrlen *)d->my_shm)->address = src_address;
+            ((shm_addrlen *)d->my_shm)->length = to_read;
             full_barrier
-            ((shm_read *)d->my_shm)->pingpong = DFPP_READ;
-            d->waitWhile(DFPP_READ);
+            ((shm_cmd *)d->my_shm)->pingpong = CORE_DFPP_READ;
+            d->waitWhile(CORE_DFPP_READ);
             memcpy (target_buffer, d->my_shm + SHM_HEADER,size);
             // decrease size by bytes read
             size -= to_read;
@@ -533,55 +533,55 @@ void Process::read (uint32_t src_address, uint32_t size, uint8_t *target_buffer)
 
 uint8_t Process::readByte (const uint32_t offset)
 {
-    ((shm_read_small *)d->my_shm)->address = offset;
+    ((shm_addr *)d->my_shm)->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_BYTE;
-    d->waitWhile(DFPP_READ_BYTE);
-    return ((shm_retval *)d->my_shm)->value;
+    ((shm_cmd *)d->my_shm)->pingpong = CORE_READ_BYTE;
+    d->waitWhile(CORE_READ_BYTE);
+    return ((shm_val *)d->my_shm)->value;
 }
 
 void Process::readByte (const uint32_t offset, uint8_t &val )
 {
-    ((shm_read_small *)d->my_shm)->address = offset;
+    ((shm_addr *)d->my_shm)->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_BYTE;
-    d->waitWhile(DFPP_READ_BYTE);
-    val = ((shm_retval *)d->my_shm)->value;
+    ((shm_cmd *)d->my_shm)->pingpong = CORE_READ_BYTE;
+    d->waitWhile(CORE_READ_BYTE);
+    val = ((shm_val *)d->my_shm)->value;
 }
 
 uint16_t Process::readWord (const uint32_t offset)
 {
-    ((shm_read_small *)d->my_shm)->address = offset;
+    ((shm_addr *)d->my_shm)->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_WORD;
-    d->waitWhile(DFPP_READ_WORD);
-    return ((shm_retval *)d->my_shm)->value;
+    ((shm_cmd *)d->my_shm)->pingpong = CORE_READ_WORD;
+    d->waitWhile(CORE_READ_WORD);
+    return ((shm_val *)d->my_shm)->value;
 }
 
 void Process::readWord (const uint32_t offset, uint16_t &val)
 {
-    ((shm_read_small *)d->my_shm)->address = offset;
+    ((shm_addr *)d->my_shm)->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_WORD;
-    d->waitWhile(DFPP_READ_WORD);
-    val = ((shm_retval *)d->my_shm)->value;
+    ((shm_cmd *)d->my_shm)->pingpong = CORE_READ_WORD;
+    d->waitWhile(CORE_READ_WORD);
+    val = ((shm_val *)d->my_shm)->value;
 }
 
 uint32_t Process::readDWord (const uint32_t offset)
 {
-    ((shm_read_small *)d->my_shm)->address = offset;
+    ((shm_addr *)d->my_shm)->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_DWORD;
-    d->waitWhile(DFPP_READ_DWORD);
-    return ((shm_retval *)d->my_shm)->value;
+    ((shm_cmd *)d->my_shm)->pingpong = CORE_READ_DWORD;
+    d->waitWhile(CORE_READ_DWORD);
+    return ((shm_val *)d->my_shm)->value;
 }
 void Process::readDWord (const uint32_t offset, uint32_t &val)
 {
-    ((shm_read_small *)d->my_shm)->address = offset;
+    ((shm_addr *)d->my_shm)->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_DWORD;
-    d->waitWhile(DFPP_READ_DWORD);
-    val = ((shm_retval *)d->my_shm)->value;
+    ((shm_cmd *)d->my_shm)->pingpong = CORE_READ_DWORD;
+    d->waitWhile(CORE_READ_DWORD);
+    val = ((shm_val *)d->my_shm)->value;
 }
 
 /*
@@ -590,30 +590,30 @@ void Process::readDWord (const uint32_t offset, uint32_t &val)
 
 void Process::writeDWord (uint32_t offset, uint32_t data)
 {
-    ((shm_write_small *)d->my_shm)->address = offset;
-    ((shm_write_small *)d->my_shm)->value = data;
+    ((shm_addrval *)d->my_shm)->address = offset;
+    ((shm_addrval *)d->my_shm)->value = data;
     full_barrier
-    ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_DWORD;
-    d->waitWhile(DFPP_WRITE_DWORD);
+    ((shm_cmd *)d->my_shm)->pingpong = CORE_WRITE_DWORD;
+    d->waitWhile(CORE_WRITE_DWORD);
 }
 
 // using these is expensive.
 void Process::writeWord (uint32_t offset, uint16_t data)
 {
-    ((shm_write_small *)d->my_shm)->address = offset;
-    ((shm_write_small *)d->my_shm)->value = data;
+    ((shm_addrval *)d->my_shm)->address = offset;
+    ((shm_addrval *)d->my_shm)->value = data;
     full_barrier
-    ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_WORD;
-    d->waitWhile(DFPP_WRITE_WORD);
+    ((shm_cmd *)d->my_shm)->pingpong = CORE_WRITE_WORD;
+    d->waitWhile(CORE_WRITE_WORD);
 }
 
 void Process::writeByte (uint32_t offset, uint8_t data)
 {
-    ((shm_write_small *)d->my_shm)->address = offset;
-    ((shm_write_small *)d->my_shm)->value = data;
+    ((shm_addrval *)d->my_shm)->address = offset;
+    ((shm_addrval *)d->my_shm)->value = data;
     full_barrier
-    ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_BYTE;
-    d->waitWhile(DFPP_WRITE_BYTE);
+    ((shm_cmd *)d->my_shm)->pingpong = CORE_WRITE_BYTE;
+    d->waitWhile(CORE_WRITE_BYTE);
 }
 
 void Process::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer)
@@ -621,12 +621,12 @@ void Process::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer
     // normal write under 1MB
     if(size <= SHM_BODY)
     {
-        ((shm_write *)d->my_shm)->address = dst_address;
-        ((shm_write *)d->my_shm)->length = size;
+        ((shm_addrlen *)d->my_shm)->address = dst_address;
+        ((shm_addrlen *)d->my_shm)->length = size;
         memcpy(d->my_shm+SHM_HEADER,source_buffer, size);
         full_barrier
-        ((shm_write *)d->my_shm)->pingpong = DFPP_WRITE;
-        d->waitWhile(DFPP_WRITE);
+        ((shm_cmd *)d->my_shm)->pingpong = CORE_WRITE;
+        d->waitWhile(CORE_WRITE);
     }
     // a big write, we push this over the shm in iterations
     else
@@ -636,12 +636,12 @@ void Process::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer
         while (size)
         {
             // write to_write bytes to dst_cursor
-            ((shm_write *)d->my_shm)->address = dst_address;
-            ((shm_write *)d->my_shm)->length = to_write;
+            ((shm_addrlen *)d->my_shm)->address = dst_address;
+            ((shm_addrlen *)d->my_shm)->length = to_write;
             memcpy(d->my_shm+SHM_HEADER,source_buffer, to_write);
             full_barrier
-            ((shm_write *)d->my_shm)->pingpong = DFPP_WRITE;
-            d->waitWhile(DFPP_WRITE);
+            ((shm_cmd *)d->my_shm)->pingpong = CORE_WRITE;
+            d->waitWhile(CORE_WRITE);
             // decrease size by bytes written
             size -= to_write;
             // move the cursors
@@ -692,11 +692,11 @@ DfVector Process::readVector (uint32_t offset, uint32_t item_size)
 const std::string Process::readSTLString(uint32_t offset)
 {
     //offset -= 4; //msvc std::string pointers are 8 bytes ahead of their data, not 4
-    ((shm_read_small *)d->my_shm)->address = offset;
+    ((shm_addr *)d->my_shm)->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_STL_STRING;
-    d->waitWhile(DFPP_READ_STL_STRING);
-    int length = ((shm_retval *)d->my_shm)->value;
+    ((shm_cmd *)d->my_shm)->pingpong = CORE_READ_STL_STRING;
+    d->waitWhile(CORE_READ_STL_STRING);
+    int length = ((shm_val *)d->my_shm)->value;
 //    char temp_c[256];
 //    strncpy(temp_c, d->my_shm+SHM_HEADER,length+1); // length + 1 for the null terminator
     return(string(d->my_shm+SHM_HEADER));
@@ -705,11 +705,11 @@ const std::string Process::readSTLString(uint32_t offset)
 size_t Process::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
     //offset -= 4; //msvc std::string pointers are 8 bytes ahead of their data, not 4
-    ((shm_read_small *)d->my_shm)->address = offset;
+    ((shm_addr *)d->my_shm)->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_STL_STRING;
-    d->waitWhile(DFPP_READ_STL_STRING);
-    size_t length = ((shm_retval *)d->my_shm)->value;
+    ((shm_cmd *)d->my_shm)->pingpong = CORE_READ_STL_STRING;
+    d->waitWhile(CORE_READ_STL_STRING);
+    size_t length = ((shm_val *)d->my_shm)->value;
     size_t real = min(length, bufcapacity - 1);
     strncpy(buffer, d->my_shm+SHM_HEADER,real); // length + 1 for the null terminator
     buffer[real] = 0;
@@ -718,11 +718,11 @@ size_t Process::readSTLString (uint32_t offset, char * buffer, size_t bufcapacit
 
 void Process::writeSTLString(const uint32_t address, const std::string writeString)
 {
-    ((shm_write_small *)d->my_shm)->address = address/*-4*/;
+    ((shm_addr *)d->my_shm)->address = address/*-4*/;
     strncpy(d->my_shm+SHM_HEADER,writeString.c_str(),writeString.length()+1); // length + 1 for the null terminator
     full_barrier
-    ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_STL_STRING;
-    d->waitWhile(DFPP_WRITE_STL_STRING);
+    ((shm_cmd *)d->my_shm)->pingpong = CORE_WRITE_STL_STRING;
+    d->waitWhile(CORE_WRITE_STL_STRING);
 }
 
 string Process::readClassName (uint32_t vptr)

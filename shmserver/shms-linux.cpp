@@ -34,6 +34,8 @@ distribution.
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <unistd.h>
+#include <vector>
+#include <string>
 #include "shms.h"
 #include <sys/time.h>
 #include <time.h>
@@ -62,7 +64,7 @@ bool isValidSHM()
     //fprintf(stderr,"ID %d, attached: %d\n",shmid, descriptor.shm_nattch);
     return (descriptor.shm_nattch == 2);
 }
-uint32_t getPID()
+uint32_t OS_getPID()
 {
     return getpid();
 }
@@ -109,7 +111,8 @@ void SHM_Init ( void )
     }
     full_barrier
     // make sure we don't stall or do crazy stuff
-    ((shm_cmd *)shm)->pingpong = DFPP_RUNNING;
+    ((shm_cmd *)shm)->pingpong = CORE_RUNNING;
+    InitModules();
 }
 
 void SHM_Destroy ( void )
@@ -144,7 +147,7 @@ DFhackCExport void SDL_GL_SwapBuffers(void)
 {
     if(_SDL_GL_SwapBuffers)
     {
-        if(!errorstate && ((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
+        if(!errorstate && ((shm_cmd *)shm)->pingpong != CORE_RUNNING)
         {
             SHM_Act();
         }
@@ -158,7 +161,7 @@ DFhackCExport int SDL_Flip(void * some_ptr)
 {
     if(_SDL_Flip)
     {
-        if(!errorstate && ((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
+        if(!errorstate && ((shm_cmd *)shm)->pingpong != CORE_RUNNING)
         {
             SHM_Act();
         }
@@ -216,7 +219,7 @@ DFhackCExport int refresh (void)
 {
     if(_refresh)
     {
-        if(!errorstate && ((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
+        if(!errorstate && ((shm_cmd *)shm)->pingpong != CORE_RUNNING)
         {
             SHM_Act();
         }

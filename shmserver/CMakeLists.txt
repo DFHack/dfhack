@@ -5,7 +5,7 @@ shms.h
 )
 
 SET(PROJECT_SRCS
-shms-proto.cpp
+shms-core.cpp
 )
 
 SET(PROJECT_HDRS_LINUX

@@ -37,11 +37,8 @@ distribution.
 #include <vector>
 #include <string>
 #include "shms.h"
-#include <sys/time.h>
-#include <time.h>
-#include <linux/futex.h>
-#include <sys/syscall.h>
-#include <signal.h>
+#include "shms-core.h"
+#include <sched.h>
 
 #define DFhackCExport extern "C" __attribute__ ((visibility("default")))
 
@@ -67,6 +64,15 @@ bool isValidSHM()
 uint32_t OS_getPID()
 {
     return getpid();
+}
+
+uint32_t OS_getAffinity()
+{
+    cpu_set_t mask;
+    sched_getaffinity(0,sizeof(cpu_set_t),&mask);
+    // FIXME: truncation
+    uint32_t affinity = *(uint32_t *) &mask;
+    return affinity;
 }
 
 void SHM_Init ( void )

@@ -28,6 +28,7 @@ distribution.
 #include <sys/ipc.h>
 #include <time.h>
 #include "../shmserver/shms.h"
+#include "../shmserver/shms-core.h"
 #include <sys/time.h>
 #include <time.h>
 #include <sched.h>
@@ -68,22 +69,27 @@ class Process::Private
     bool waitWhile (CORE_COMMAND state);
     bool DF_TestBridgeVersion(bool & ret);
     bool DF_GetPID(pid_t & ret);
+    void DF_SyncAffinity(void);
 };
 
 // some helpful macros to keep the code bloat in check
 #define SHMCMD ((shm_cmd *)my_shm)->pingpong
 #define D_SHMCMD ((shm_cmd *)d->my_shm)->pingpong
 
-#define SHMHDR ((shm_header *)my_shm)
-#define D_SHMHDR ((shm_header *)d->my_shm)
+#define SHMHDR ((shm_core_hdr *)my_shm)
+#define D_SHMHDR ((shm_core_hdr *)d->my_shm)
 
+/*
+Yeah. with no way to synchronize things (locks are slow, the OS doesn't give us enough control over scheduling)
+we end up with this silly thing
+*/
 bool Process::Private::waitWhile (CORE_COMMAND state)
 {
     uint32_t cnt = 0;
     struct shmid_ds descriptor;
     while (SHMCMD == state)
     {
-        if(cnt == 10000)
+        if(cnt == 10000)// check if the other process is still there
         {
             
             shmctl(my_shmid, IPC_STAT, &descriptor); 
@@ -98,7 +104,10 @@ bool Process::Private::waitWhile (CORE_COMMAND state)
                 cnt = 0;
             }
         }
-        SCHED_YIELD
+        if(useYield)
+        {
+            SCHED_YIELD
+        }
         cnt++;
     }
     if(SHMCMD == CORE_SV_ERROR)
@@ -134,6 +143,31 @@ bool Process::Private::DF_GetPID(pid_t & ret)
     SHMCMD = CORE_SUSPENDED;
     ret = SHMHDR->value;
     return true;
+}
+
+uint32_t OS_getAffinity()
+{
+    cpu_set_t mask;
+    sched_getaffinity(0,sizeof(cpu_set_t),&mask);
+    // FIXME: truncation
+        uint32_t affinity = *(uint32_t *) &mask;
+        return affinity;
+}
+
+void Process::Private::DF_SyncAffinity( void )
+{
+    SHMHDR->value = OS_getAffinity();
+    gcc_barrier
+    SHMCMD = CORE_SYNC_YIELD;
+    gcc_barrier
+    if(!waitWhile(CORE_SYNC_YIELD))
+        return;
+    gcc_barrier
+    SHMCMD = CORE_SUSPENDED;
+    useYield = SHMHDR->value;
+    #ifdef DEBUG
+    if(useYield) cerr << "Using Yield!" << endl;
+    #endif
 }
 
 Process::Process(vector <memory_info *> & known_versions)
@@ -204,6 +238,7 @@ Process::Process(vector <memory_info *> & known_versions)
         
         // try to identify the DF version
         d->validate(target_name, d->my_pid, known_versions);
+        d->DF_SyncAffinity();
         d->my_window = new DFWindow(this);
     }
     gcc_barrier

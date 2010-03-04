@@ -23,6 +23,7 @@ distribution.
 */
 #include "DFCommonInternal.h"
 #include "../shmserver/shms.h"
+#include "../shmserver/shms-core.h"
 using namespace DFHack;
 
 // a full memory barrier! better be safe than sorry.
@@ -38,6 +39,7 @@ class Process::Private
         attached = false;
         suspended = false;
         identified = false;
+        useYield = 0;
         DFSVMutex = 0;
         DFCLMutex = 0;
     };
@@ -52,12 +54,21 @@ class Process::Private
     bool attached;
     bool suspended;
     bool identified;
+    bool useYield;
     
     bool waitWhile (CORE_COMMAND state);
     bool isValidSV();
     bool DF_TestBridgeVersion(bool & ret);
     bool DF_GetPID(uint32_t & ret);
+    void DF_SyncAffinity(void);
 };
+
+// some helpful macros to keep the code bloat in check
+#define SHMCMD ((shm_cmd *)my_shm)->pingpong
+#define D_SHMCMD ((shm_cmd *)d->my_shm)->pingpong
+
+#define SHMHDR ((shm_core_hdr *)my_shm)
+#define D_SHMHDR ((shm_core_hdr *)d->my_shm)
 
 // is the other side still there?
 bool Process::Private::isValidSV()
@@ -90,14 +101,17 @@ bool Process::Private::isValidSV()
 bool Process::Private::waitWhile (CORE_COMMAND state)
 {
     uint32_t cnt = 0;
-    SCHED_YIELD // yield the CPU, valid only on single-core CPUs
     while (((shm_cmd *)my_shm)->pingpong == state)
     {
+        // yield the CPU, only on single-core CPUs
+        if(useYield)
+        {
+            SCHED_YIELD
+        }
         if(cnt == 10000)
         {
             if(!isValidSV())// DF not there anymore?
             {
-                full_barrier
                 ((shm_cmd *)my_shm)->pingpong = CORE_RUNNING;
                 attached = suspended = false;
                 ReleaseMutex(DFCLMutex);
@@ -115,7 +129,6 @@ bool Process::Private::waitWhile (CORE_COMMAND state)
         ((shm_cmd *)my_shm)->pingpong = CORE_RUNNING;
         attached = suspended = false;
         cerr << "shm server error!" << endl;
-        assert (false);
         return false;
     }
     return true;
@@ -144,6 +157,34 @@ bool Process::Private::DF_GetPID(uint32_t & ret)
     ret = ((shm_val *)my_shm)->value;
     return true;
 }
+
+void Process::Private::DF_SyncAffinity(void)
+{
+
+}
+
+uint32_t OS_getAffinity()
+{
+    HANDLE hProcess = GetCurrentProcess();
+    DWORD dwProcessAffinityMask, dwSystemAffinityMask;
+    GetProcessAffinityMask( hProcess, &dwProcessAffinityMask, &dwSystemAffinityMask );
+    return dwProcessAffinityMask;
+}
+
+void Process::Private::DF_SyncAffinity( void )
+{
+    SHMHDR->value = OS_getAffinity();
+    full_barrier
+    SHMCMD = CORE_SYNC_YIELD;
+    full_barrier
+    if(!waitWhile(CORE_SYNC_YIELD))
+        return;
+    full_barrier
+    SHMCMD = CORE_SUSPENDED;
+    useYield = SHMHDR->value;
+    if(useYield) cerr << "Using Yield!" << endl;
+}
+
 
 Process::Process(vector <memory_info *> & known_versions)
 : d(new Private())
@@ -255,12 +296,13 @@ Process::Process(vector <memory_info *> & known_versions)
         if(d->identified)
         {
             d->my_window = new DFWindow(this);
+            d->DF_SyncAffinity();
         }
         else
         {
             ((shm_cmd *)d->my_shm)->pingpong = CORE_RUNNING;
             UnmapViewOfFile(d->my_shm);
-			d->my_shm = 0;
+            d->my_shm = 0;
             ReleaseMutex(d->DFCLMutex);
             CloseHandle(d->DFSVMutex);
             d->DFSVMutex = 0;

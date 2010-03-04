@@ -33,50 +33,7 @@ distribution.
 #include <string>
 #include <vector>
 #include "shms.h"
-
-enum DFPP_CmdType
-{
-    CANCELLATION, // we should jump out of the Act()
-    CLIENT_WAIT, // we are waiting for the client
-    FUNCTION, // we call a function as a result of the command
-};
-
-struct DFPP_command
-{
-    DFPP_CmdType type:32; // force the enum to 32 bits for compatibility reasons
-    std::string name;
-    void (*_function)(void);
-};
-
-struct DFPP_module
-{
-    inline void push_command(DFPP_CmdType type, const char * name, void (*_function)(void))
-    {
-        DFPP_command cmd;
-        cmd.type = type;
-        cmd.name = name;
-        cmd._function = _function;
-        commands.push_back(cmd);
-    }
-    inline void set_command(unsigned int index, DFPP_CmdType type, const char * name, void (*_function)(void))
-    {
-        DFPP_command cmd;
-        cmd.type = type;
-        cmd.name = name;
-        cmd._function = _function;
-        commands[index] = cmd;
-    }
-    inline void reserve (unsigned int numcommands)
-    {
-        commands.clear();
-        DFPP_command cmd = {CANCELLATION,"",0};
-        commands.resize(numcommands,cmd);
-    }
-    std::string name;
-    uint32_t version; // version
-    std::vector <DFPP_command> commands;
-    void * modulestate;
-};
+#include "shms-core.h"
 
 std::vector <DFPP_module> module_registry;
 
@@ -84,78 +41,59 @@ std::vector <DFPP_module> module_registry;
 extern int errorstate;
 extern char *shm;
 extern int shmid;
+bool useYield = 0;
 
-#define SHMHDR ((shm_header *)shm)
+#define SHMHDR ((shm_core_hdr *)shm)
 #define SHMCMD ((shm_cmd *)shm)->pingpong
 
 void GetCoreVersion (void)
 {
     SHMHDR->value = module_registry[0].version;
-    full_barrier
-    SHMCMD = CORE_RET_VERSION;
 }
 
 void GetPID (void)
 {
     SHMHDR->value = OS_getPID();
-    full_barrier
-    SHMCMD = CORE_RET_PID;
 }
 
 void ReadRaw (void)
 {
     memcpy(shm + SHM_HEADER, (void *) SHMHDR->address,SHMHDR->length);
-    full_barrier
-    SHMCMD = CORE_RET_DATA;
 }
 
 void ReadDWord (void)
 {
     SHMHDR->value = *((uint32_t*) SHMHDR->address);
-    full_barrier
-    SHMCMD = CORE_RET_DWORD;
 }
 
 void ReadWord (void)
 {
     SHMHDR->value = *((uint16_t*) SHMHDR->address);
-    full_barrier
-    SHMCMD = CORE_RET_WORD;
 }
 
 void ReadByte (void)
 {
     SHMHDR->value = *((uint8_t*) SHMHDR->address);
-    full_barrier
-    SHMCMD = CORE_RET_BYTE;
 }
 
 void WriteRaw (void)
 {
     memcpy((void *)SHMHDR->address, shm + SHM_HEADER,SHMHDR->length);
-    full_barrier
-    SHMCMD = CORE_SUSPENDED;
 }
 
 void WriteDWord (void)
 {
     (*(uint32_t*)SHMHDR->address) = SHMHDR->value;
-    full_barrier
-    SHMCMD = CORE_SUSPENDED;
 }
 
 void WriteWord (void)
 {
     (*(uint16_t*)SHMHDR->address) = SHMHDR->value;
-    full_barrier
-    SHMCMD = CORE_SUSPENDED;
 }
 
 void WriteByte (void)
 {
     (*(uint8_t*)SHMHDR->address) = SHMHDR->value;
-    full_barrier
-    SHMCMD = CORE_SUSPENDED;
 }
 
 void ReadSTLString (void)
@@ -163,10 +101,8 @@ void ReadSTLString (void)
     std::string * myStringPtr = (std::string *) SHMHDR->address;
     unsigned int l = myStringPtr->length();
     SHMHDR->value = l;
-    // there doesn't have to be a null terminator!
+    // FIXME: there doesn't have to be a null terminator!
     strncpy(shm+SHM_HEADER,myStringPtr->c_str(),l+1);
-    full_barrier
-    SHMCMD = CORE_RET_STRING;
 }
 
 void WriteSTLString (void)
@@ -174,13 +110,31 @@ void WriteSTLString (void)
     std::string * myStringPtr = (std::string *) SHMHDR->address;
     // here we DO expect a 0 terminator
     myStringPtr->assign((const char *) (shm + SHM_HEADER));
-    full_barrier
-    SHMCMD = CORE_SUSPENDED;    
 }
 
-void Suspend (void)
+// MIT HAKMEM bitcount
+int bitcount(uint32_t n)
 {
-    SHMCMD = CORE_SUSPENDED;    
+    register uint32_t tmp;
+    
+    tmp = n - ((n >> 1) & 033333333333) - ((n >> 2) & 011111111111);
+    return ((tmp + (tmp >> 3)) & 030707070707) % 63;
+}
+
+// get local and remote affinity, set up yield if required (single core available)
+void SyncYield (void)
+{
+    uint32_t local = OS_getAffinity();
+    uint32_t remote = SHMHDR->value;
+    uint32_t pool = local | remote;
+    if(bitcount(pool) == 1)
+    {
+        SHMHDR->value = useYield = 1;
+    }
+    else
+    {
+        SHMHDR->value = useYield = 0;
+    }
 }
 
 void InitCore(void)
@@ -191,41 +145,42 @@ void InitCore(void)
     core.modulestate = 0; // this one is dumb and has no real state
     
     core.reserve(NUM_CORE_CMDS);
-    core.set_command(CORE_RUNNING, CANCELLATION, "Running", NULL);
+    core.set_command(CORE_RUNNING, CANCELLATION, "Running");
     
-    core.set_command(CORE_GET_VERSION, FUNCTION,"Get core version",GetCoreVersion);
-    core.set_command(CORE_RET_VERSION, CLIENT_WAIT,"Core version return",0);
+    core.set_command(CORE_GET_VERSION, FUNCTION,"Get core version",GetCoreVersion, CORE_RET_VERSION);
+    core.set_command(CORE_RET_VERSION, CLIENT_WAIT,"Core version return");
     
-    core.set_command(CORE_GET_PID, FUNCTION, "Get PID", GetPID);
-    core.set_command(CORE_RET_PID, CLIENT_WAIT, "PID return", 0);
+    core.set_command(CORE_GET_PID, FUNCTION, "Get PID", GetPID, CORE_RET_PID);
+    core.set_command(CORE_RET_PID, CLIENT_WAIT, "PID return");
     
-    core.set_command(CORE_DFPP_READ, FUNCTION,"Raw read",ReadRaw);
-    core.set_command(CORE_RET_DATA, CLIENT_WAIT,"Raw read return",0);
+    core.set_command(CORE_DFPP_READ, FUNCTION,"Raw read",ReadRaw, CORE_RET_DATA);
+    core.set_command(CORE_RET_DATA, CLIENT_WAIT,"Raw read return");
 
-    core.set_command(CORE_READ_DWORD, FUNCTION,"Read DWORD",ReadDWord);
-    core.set_command(CORE_RET_DWORD, CLIENT_WAIT,"Read DWORD return",0);
+    core.set_command(CORE_READ_DWORD, FUNCTION,"Read DWORD",ReadDWord, CORE_RET_DWORD);
+    core.set_command(CORE_RET_DWORD, CLIENT_WAIT,"Read DWORD return");
 
-    core.set_command(CORE_READ_WORD, FUNCTION,"Read WORD",ReadWord);
-    core.set_command(CORE_RET_WORD, CLIENT_WAIT,"Read WORD return",0);
+    core.set_command(CORE_READ_WORD, FUNCTION,"Read WORD",ReadWord, CORE_RET_WORD);
+    core.set_command(CORE_RET_WORD, CLIENT_WAIT,"Read WORD return");
     
-    core.set_command(CORE_READ_BYTE, FUNCTION,"Read BYTE",ReadByte);
-    core.set_command(CORE_RET_BYTE, CLIENT_WAIT,"Read BYTE return",0);
+    core.set_command(CORE_READ_BYTE, FUNCTION,"Read BYTE",ReadByte, CORE_RET_BYTE);
+    core.set_command(CORE_RET_BYTE, CLIENT_WAIT,"Read BYTE return");
     
-    core.set_command(CORE_SV_ERROR, CANCELLATION, "Server error", 0);
-    core.set_command(CORE_CL_ERROR, CANCELLATION, "Client error", 0);
+    core.set_command(CORE_SV_ERROR, CANCELLATION, "Server error");
+    core.set_command(CORE_CL_ERROR, CANCELLATION, "Client error");
     
-    core.set_command(CORE_WRITE, FUNCTION, "Raw write", WriteRaw);
-    core.set_command(CORE_WRITE_DWORD, FUNCTION, "Write DWORD", WriteDWord);
-    core.set_command(CORE_WRITE_WORD, FUNCTION, "Write WORD", WriteWord);
-    core.set_command(CORE_WRITE_BYTE, FUNCTION, "Write BYTE", WriteByte);
+    core.set_command(CORE_WRITE, FUNCTION, "Raw write", WriteRaw, CORE_SUSPENDED);
+    core.set_command(CORE_WRITE_DWORD, FUNCTION, "Write DWORD", WriteDWord, CORE_SUSPENDED);
+    core.set_command(CORE_WRITE_WORD, FUNCTION, "Write WORD", WriteWord, CORE_SUSPENDED);
+    core.set_command(CORE_WRITE_BYTE, FUNCTION, "Write BYTE", WriteByte, CORE_SUSPENDED);
     
-    core.set_command(CORE_SUSPEND, FUNCTION, "Suspend", Suspend);
-    core.set_command(CORE_SUSPENDED, CLIENT_WAIT, "Suspended", 0);
+    core.set_command(CORE_SUSPEND, CLIENT_WAIT, "Suspend", 0 , CORE_SUSPENDED);
+    core.set_command(CORE_SUSPENDED, CLIENT_WAIT, "Suspended");
     
-    core.set_command(CORE_READ_STL_STRING, FUNCTION, "Read STL string", ReadSTLString);
-    core.set_command(CORE_READ_C_STRING, CLIENT_WAIT, "RESERVED", 0);
-    core.set_command(CORE_RET_STRING, CLIENT_WAIT, "Return string", 0);
-    core.set_command(CORE_WRITE_STL_STRING, FUNCTION, "Write STL string", WriteSTLString);
+    core.set_command(CORE_READ_STL_STRING, FUNCTION, "Read STL string", ReadSTLString, CORE_RET_STRING);
+    core.set_command(CORE_READ_C_STRING, CLIENT_WAIT, "RESERVED");
+    core.set_command(CORE_RET_STRING, CLIENT_WAIT, "Return string");
+    core.set_command(CORE_WRITE_STL_STRING, FUNCTION, "Write STL string", WriteSTLString, CORE_SUSPENDED);
+    core.set_command(CORE_SYNC_YIELD, FUNCTION, "Synchronize affinity/yield", SyncYield, CORE_SYNC_YIELD_RET);
     module_registry.push_back(core);
 }
 
@@ -233,6 +188,7 @@ void InitModules (void)
 {
     // create the core module
     InitCore();
+    // TODO: dynamic module init
 }
 
 void SHM_Act (void)
@@ -252,7 +208,7 @@ void SHM_Act (void)
         }
         else
         {
-            full_barrier
+            // full_barrier
             SHMCMD = CORE_RUNNING;
             fprintf(stderr,"dfhack: Broke out of loop, other process disappeared.\n");
         }
@@ -264,9 +220,16 @@ void SHM_Act (void)
     {
         cmd._function();
     }
+    if(cmd.nextState != -1)
+    {
+        SHMCMD = cmd.nextState;
+    }
     if(cmd.type != CANCELLATION)
     {
-        SCHED_YIELD
+        if(useYield)
+        {
+            SCHED_YIELD
+        }
         numwaits ++; // watchdog timeout
         goto check_again;
     }

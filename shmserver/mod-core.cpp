@@ -32,8 +32,12 @@ distribution.
 #include <string.h>
 #include <string>
 #include <vector>
+
+#define SHM_INTERNAL // for things only visible to the SHM
+
 #include "shms.h"
-#include "shms-core.h"
+#include "mod-core.h"
+#include "mod-maps.h"
 
 std::vector <DFPP_module> module_registry;
 
@@ -46,57 +50,57 @@ bool useYield = 0;
 #define SHMHDR ((shm_core_hdr *)shm)
 #define SHMCMD ((shm_cmd *)shm)->pingpong
 
-void GetCoreVersion (void)
+void GetCoreVersion (void * data)
 {
     SHMHDR->value = module_registry[0].version;
 }
 
-void GetPID (void)
+void GetPID (void * data)
 {
     SHMHDR->value = OS_getPID();
 }
 
-void ReadRaw (void)
+void ReadRaw (void * data)
 {
     memcpy(shm + SHM_HEADER, (void *) SHMHDR->address,SHMHDR->length);
 }
 
-void ReadDWord (void)
+void ReadDWord (void * data)
 {
     SHMHDR->value = *((uint32_t*) SHMHDR->address);
 }
 
-void ReadWord (void)
+void ReadWord (void * data)
 {
     SHMHDR->value = *((uint16_t*) SHMHDR->address);
 }
 
-void ReadByte (void)
+void ReadByte (void * data)
 {
     SHMHDR->value = *((uint8_t*) SHMHDR->address);
 }
 
-void WriteRaw (void)
+void WriteRaw (void * data)
 {
     memcpy((void *)SHMHDR->address, shm + SHM_HEADER,SHMHDR->length);
 }
 
-void WriteDWord (void)
+void WriteDWord (void * data)
 {
     (*(uint32_t*)SHMHDR->address) = SHMHDR->value;
 }
 
-void WriteWord (void)
+void WriteWord (void * data)
 {
     (*(uint16_t*)SHMHDR->address) = SHMHDR->value;
 }
 
-void WriteByte (void)
+void WriteByte (void * data)
 {
     (*(uint8_t*)SHMHDR->address) = SHMHDR->value;
 }
 
-void ReadSTLString (void)
+void ReadSTLString (void * data)
 {
     std::string * myStringPtr = (std::string *) SHMHDR->address;
     unsigned int l = myStringPtr->length();
@@ -105,7 +109,7 @@ void ReadSTLString (void)
     strncpy(shm+SHM_HEADER,myStringPtr->c_str(),l+1);
 }
 
-void WriteSTLString (void)
+void WriteSTLString (void * data)
 {
     std::string * myStringPtr = (std::string *) SHMHDR->address;
     // here we DO expect a 0 terminator
@@ -122,7 +126,7 @@ int bitcount(uint32_t n)
 }
 
 // get local and remote affinity, set up yield if required (single core available)
-void SyncYield (void)
+void SyncYield (void * data)
 {
     uint32_t local = OS_getAffinity();
     uint32_t remote = SHMHDR->value;
@@ -137,7 +141,33 @@ void SyncYield (void)
     }
 }
 
-void InitCore(void)
+void FindModule (void * data)
+{
+    bool found = false;
+    modulelookup * payload = (modulelookup *) (shm + SHM_HEADER);
+    std::string test = payload->name;
+    uint32_t version = payload->version;
+    for(unsigned int i = 0; i < module_registry.size();i++)
+    {
+        if(module_registry[i].name == test && module_registry[i].version == version)
+        {
+            // gotcha
+            SHMHDR->value = i;
+            found = true;
+            break;
+        }
+    }
+    if(found)
+    {
+        SHMHDR->error = false;
+    }
+    else
+    {
+        SHMHDR->error = true;
+    }
+}
+
+DFPP_module InitCore(void)
 {
     DFPP_module core;
     core.name = "Core";
@@ -181,14 +211,29 @@ void InitCore(void)
     core.set_command(CORE_RET_STRING, CLIENT_WAIT, "Return string");
     core.set_command(CORE_WRITE_STL_STRING, FUNCTION, "Write STL string", WriteSTLString, CORE_SUSPENDED);
     core.set_command(CORE_SYNC_YIELD, FUNCTION, "Synchronize affinity/yield", SyncYield, CORE_SYNC_YIELD_RET);
-    module_registry.push_back(core);
+    core.set_command(CORE_SYNC_YIELD_RET, CLIENT_WAIT, "Synchronize affinity/yield return");
+    
+    core.set_command(CORE_ACQUIRE_MODULE, FUNCTION, "Module lookup", FindModule, CORE_RET_MODULE);
+    core.set_command(CORE_RET_MODULE, CLIENT_WAIT, "Return module index or error");
+    return core;
 }
 
 void InitModules (void)
 {
     // create the core module
-    InitCore();
+    module_registry.push_back(InitCore());
+    module_registry.push_back(InitMaps());
     // TODO: dynamic module init
+}
+
+void KillModules (void)
+{
+    for(unsigned int i = 0; i < module_registry.size();i++)
+    {
+        if(module_registry[i].modulestate)
+            free(module_registry[i].modulestate);
+    }
+    module_registry.clear();
 }
 
 void SHM_Act (void)
@@ -215,10 +260,12 @@ void SHM_Act (void)
     }
     DFPP_module & mod = module_registry[((shm_cmd *)shm)->parts.module];
     DFPP_command & cmd = mod.commands[((shm_cmd *)shm)->parts.command];
-    //fprintf(stderr, "Client invoked  %s\n", cmd.name.c_str() );
+    //fprintf(stderr, "Client invoked %d:%d = ",((shm_cmd *)shm)->parts.module,((shm_cmd *)shm)->parts.command);
+    //fprintf(stderr, "%s\n",cmd.name.c_str());
+    
     if(cmd._function)
     {
-        cmd._function();
+        cmd._function(mod.modulestate);
     }
     if(cmd.nextState != -1)
     {

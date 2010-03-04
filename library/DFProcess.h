@@ -121,6 +121,12 @@ namespace DFHack
             DFWindow * getWindow();
             // get the DF Process ID
             int getPID();
+            // get module index by name and version. bool 1 = error
+            bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT);
+            // get the SHM start if available
+            char * getSHMStart (void);
+            // wait for a SHM state. returns 0 without the SHM
+            bool waitWhile (uint32_t state);
     };
 }
 #endif

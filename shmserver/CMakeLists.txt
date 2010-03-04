@@ -2,10 +2,13 @@
 
 SET(PROJECT_HDRS
 shms.h
+mod-core.h
+mod-maps.h
 )
 
 SET(PROJECT_SRCS
-shms-core.cpp
+mod-core.cpp
+mod-maps.cpp
 )
 
 SET(PROJECT_HDRS_LINUX

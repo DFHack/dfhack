@@ -764,6 +764,15 @@ union t_occupancy
     naked_occupancy_grouped unibits;
 };
 
+typedef struct
+{
+    int16_t tiletypes [16][16];
+    DFHack::t_designation designaton [16][16];
+    DFHack::t_occupancy occupancy [16][16];
+    uint8_t biome_indices [7];
+    uint32_t dirty_dword; // bit 1 set means that the block is to be included in job checks
+} mapblock40d;
+
 struct t_viewscreen 
 {
     int32_t type;

@@ -144,8 +144,6 @@ void clrscr()
         GRASS2,
         GRASS_DEAD,
         GRASS_DRY,
-#include <DFProcess.h>
-#include <DFProcess.h>
         DRIFTWOOD,
         HFS,
         MAGMA,
@@ -272,9 +270,12 @@ main(int argc, char *argv[])
     
     int x_max,y_max,z_max;
     uint32_t x_max_a,y_max_a,z_max_a;
+    /*
     uint16_t tiletypes[16][16];
     DFHack::t_designation designations[16][16];
     uint8_t regionoffsets[16];
+    */
+    mapblock40d Block;
     map <int16_t, uint32_t> materials;
     materials.clear();
     vector<DFHack::t_matgloss> stonetypes;
@@ -300,7 +301,6 @@ main(int argc, char *argv[])
         error = "Can't find a map to look at.";
         pDF = 0;
         finish(0);
-#include <DFMemInfo.h>
     }
     
     DF.getSize(x_max_a,y_max_a,z_max_a);
@@ -401,30 +401,34 @@ main(int argc, char *argv[])
                 if(DF.isValidBlock(cursorX+i,cursorY+j,cursorZ))
                 {
                     // read data
+                    DF.ReadBlock40d(cursorX+i,cursorY+j,cursorZ, &Block);
+                    /*
                     DF.ReadTileTypes(cursorX+i,cursorY+j,cursorZ, (uint16_t *) tiletypes);
                     DF.ReadDesignations(cursorX+i,cursorY+j,cursorZ, (uint32_t *) designations);
+                    */
                     for(int x = 0; x < 16; x++)
                     {
                         for(int y = 0; y < 16; y++)
                         {
                             if(dig)
                             {
-                                if(tileTypeTable[tiletypes[x][y]].c == WALL && tileTypeTable[tiletypes[x][y]].m == VEIN
-                                    || tileTypeTable[tiletypes[x][y]].c == TREE_OK || tileTypeTable[tiletypes[x][y]].c == TREE_DEAD)
+                                TileClass tc = tileTypeTable[Block.tiletypes[x][y]].c;
+                                TileMaterial tm = tileTypeTable[Block.tiletypes[x][y]].m;
+                                if( tc == WALL && tm == VEIN || tc == TREE_OK || tc == TREE_DEAD)
                                 {
-                                    designations[x][y].bits.dig = designation_default;
+                                    Block.designaton[x][y].bits.dig = designation_default;
                                 }
                             }
                             int color = COLOR_BLACK;
-                            color = pickColor(tiletypes[x][y]);
-                            if(designations[x][y].bits.hidden)
+                            color = pickColor(Block.tiletypes[x][y]);
+                            if(Block.designaton[x][y].bits.hidden)
                             {
-                                puttile(x+(i+1)*16,y+(j+1)*16,tiletypes[x][y], color);
+                                puttile(x+(i+1)*16,y+(j+1)*16,Block.tiletypes[x][y], color);
                             }
                             else
                             {
                                 attron(A_STANDOUT);
-                                puttile(x+(i+1)*16,y+(j+1)*16,tiletypes[x][y], color);
+                                puttile(x+(i+1)*16,y+(j+1)*16,Block.tiletypes[x][y], color);
                                 attroff(A_STANDOUT);
                             }
                         }
@@ -439,7 +443,7 @@ main(int argc, char *argv[])
                             filenum++;
                         }
                         if(dig)
-                            DF.WriteDesignations(cursorX+i,cursorY+j,cursorZ, (uint32_t *) designations);
+                            DF.WriteDesignations(cursorX+i,cursorY+j,cursorZ, (uint32_t *) Block.designaton);
                         DF.ReadDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
                         if(digbit)
                         {

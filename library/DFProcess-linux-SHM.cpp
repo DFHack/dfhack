@@ -28,7 +28,7 @@ distribution.
 #include <sys/ipc.h>
 #include <time.h>
 #include "../shmserver/shms.h"
-#include "../shmserver/shms-core.h"
+#include "../shmserver/mod-core.h"
 #include <sys/time.h>
 #include <time.h>
 #include <sched.h>
@@ -59,6 +59,7 @@ class Process::Private
     pid_t my_pid;
     char *my_shm;
     int my_shmid;
+    Process* q;
     
     bool attached;
     bool suspended;
@@ -66,10 +67,10 @@ class Process::Private
     bool useYield;
     
     bool validate(char* exe_file, uint32_t pid, std::vector< memory_info* >& known_versions);
-    bool waitWhile (CORE_COMMAND state);
     bool DF_TestBridgeVersion(bool & ret);
     bool DF_GetPID(pid_t & ret);
     void DF_SyncAffinity(void);
+    bool waitWhile (uint32_t state);
 };
 
 // some helpful macros to keep the code bloat in check
@@ -83,7 +84,7 @@ class Process::Private
 Yeah. with no way to synchronize things (locks are slow, the OS doesn't give us enough control over scheduling)
 we end up with this silly thing
 */
-bool Process::Private::waitWhile (CORE_COMMAND state)
+bool Process::Private::waitWhile (uint32_t state)
 {
     uint32_t cnt = 0;
     struct shmid_ds descriptor;
@@ -114,6 +115,48 @@ bool Process::Private::waitWhile (CORE_COMMAND state)
     {
         SHMCMD = CORE_RUNNING;
         attached = suspended = false;
+        cerr << "shm server error!" << endl;
+        assert (false);
+        return false;
+    }
+    return true;
+}
+
+/*
+Yeah. with no way to synchronize things (locks are slow, the OS doesn't give us enough control over scheduling)
+we end up with this silly thing
+*/
+bool Process::waitWhile (uint32_t state)
+{
+    uint32_t cnt = 0;
+    struct shmid_ds descriptor;
+    while (D_SHMCMD == state)
+    {
+        if(cnt == 10000)// check if the other process is still there
+        {
+            
+            shmctl(d->my_shmid, IPC_STAT, &descriptor); 
+            if(descriptor.shm_nattch == 1)// DF crashed?
+            {
+                D_SHMCMD = CORE_RUNNING;
+                d->attached = d->suspended = false;
+                return false;
+            }
+            else
+            {
+                cnt = 0;
+            }
+        }
+        if(d->useYield)
+        {
+            SCHED_YIELD
+        }
+        cnt++;
+    }
+    if(D_SHMCMD == CORE_SV_ERROR)
+    {
+        D_SHMCMD = CORE_RUNNING;
+        d->attached = d->suspended = false;
         cerr << "shm server error!" << endl;
         assert (false);
         return false;
@@ -363,7 +406,7 @@ bool Process::suspend()
         return true;
     }
     D_SHMCMD = CORE_SUSPEND;
-    if(!d->waitWhile(CORE_SUSPEND))
+    if(!waitWhile(CORE_SUSPEND))
     {
         return false;
     }
@@ -472,7 +515,7 @@ void Process::read (uint32_t src_address, uint32_t size, uint8_t *target_buffer)
         D_SHMHDR->length = size;
         gcc_barrier
         D_SHMCMD = CORE_DFPP_READ;
-        d->waitWhile(CORE_DFPP_READ);
+        waitWhile(CORE_DFPP_READ);
         memcpy (target_buffer, d->my_shm + SHM_HEADER,size);
     }
     // a big read, we pull data over the shm in iterations
@@ -487,7 +530,7 @@ void Process::read (uint32_t src_address, uint32_t size, uint8_t *target_buffer)
             D_SHMHDR->length = to_read;
             gcc_barrier
             D_SHMCMD = CORE_DFPP_READ;
-            d->waitWhile(CORE_DFPP_READ);
+            waitWhile(CORE_DFPP_READ);
             memcpy (target_buffer, d->my_shm + SHM_HEADER,size);
             // decrease size by bytes read
             size -= to_read;
@@ -505,7 +548,7 @@ uint8_t Process::readByte (const uint32_t offset)
     D_SHMHDR->address = offset;
     gcc_barrier
     D_SHMCMD = CORE_READ_BYTE;
-    d->waitWhile(CORE_READ_BYTE);
+    waitWhile(CORE_READ_BYTE);
     return D_SHMHDR->value;
 }
 
@@ -514,7 +557,7 @@ void Process::readByte (const uint32_t offset, uint8_t &val )
     D_SHMHDR->address = offset;
     gcc_barrier
     D_SHMCMD = CORE_READ_BYTE;
-    d->waitWhile(CORE_READ_BYTE);
+    waitWhile(CORE_READ_BYTE);
     val = D_SHMHDR->value;
 }
 
@@ -523,7 +566,7 @@ uint16_t Process::readWord (const uint32_t offset)
     D_SHMHDR->address = offset;
     gcc_barrier
     D_SHMCMD = CORE_READ_WORD;
-    d->waitWhile(CORE_READ_WORD);
+    waitWhile(CORE_READ_WORD);
     return D_SHMHDR->value;
 }
 
@@ -532,7 +575,7 @@ void Process::readWord (const uint32_t offset, uint16_t &val)
     D_SHMHDR->address = offset;
     gcc_barrier
     D_SHMCMD = CORE_READ_WORD;
-    d->waitWhile(CORE_READ_WORD);
+    waitWhile(CORE_READ_WORD);
     val = D_SHMHDR->value;
 }
 
@@ -541,7 +584,7 @@ uint32_t Process::readDWord (const uint32_t offset)
     D_SHMHDR->address = offset;
     gcc_barrier
     D_SHMCMD = CORE_READ_DWORD;
-    d->waitWhile(CORE_READ_DWORD);
+    waitWhile(CORE_READ_DWORD);
     return D_SHMHDR->value;
 }
 void Process::readDWord (const uint32_t offset, uint32_t &val)
@@ -549,7 +592,7 @@ void Process::readDWord (const uint32_t offset, uint32_t &val)
     D_SHMHDR->address = offset;
     gcc_barrier
     D_SHMCMD = CORE_READ_DWORD;
-    d->waitWhile(CORE_READ_DWORD);
+    waitWhile(CORE_READ_DWORD);
     val = D_SHMHDR->value;
 }
 
@@ -563,7 +606,7 @@ void Process::writeDWord (uint32_t offset, uint32_t data)
     D_SHMHDR->value = data;
     gcc_barrier
     D_SHMCMD = CORE_WRITE_DWORD;
-    d->waitWhile(CORE_WRITE_DWORD);
+    waitWhile(CORE_WRITE_DWORD);
 }
 
 // using these is expensive.
@@ -573,7 +616,7 @@ void Process::writeWord (uint32_t offset, uint16_t data)
     D_SHMHDR->value = data;
     gcc_barrier
     D_SHMCMD = CORE_WRITE_WORD;
-    d->waitWhile(CORE_WRITE_WORD);
+    waitWhile(CORE_WRITE_WORD);
 }
 
 void Process::writeByte (uint32_t offset, uint8_t data)
@@ -582,7 +625,7 @@ void Process::writeByte (uint32_t offset, uint8_t data)
     D_SHMHDR->value = data;
     gcc_barrier
     D_SHMCMD = CORE_WRITE_BYTE;
-    d->waitWhile(CORE_WRITE_BYTE);
+    waitWhile(CORE_WRITE_BYTE);
 }
 
 void Process::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer)
@@ -595,7 +638,7 @@ void Process::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer
         memcpy(d->my_shm+SHM_HEADER,source_buffer, size);
         gcc_barrier
         D_SHMCMD = CORE_WRITE;
-        d->waitWhile(CORE_WRITE);
+        waitWhile(CORE_WRITE);
     }
     // a big write, we push this over the shm in iterations
     else
@@ -610,7 +653,7 @@ void Process::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer
             memcpy(d->my_shm+SHM_HEADER,source_buffer, to_write);
             gcc_barrier
             D_SHMCMD = CORE_WRITE;
-            d->waitWhile(CORE_WRITE);
+            waitWhile(CORE_WRITE);
             // decrease size by bytes written
             size -= to_write;
             // move the cursors
@@ -661,7 +704,7 @@ const std::string Process::readSTLString(uint32_t offset)
     D_SHMHDR->address = offset;
     full_barrier
     D_SHMCMD = CORE_READ_STL_STRING;
-    d->waitWhile(CORE_READ_STL_STRING);
+    waitWhile(CORE_READ_STL_STRING);
     //int length = ((shm_retval *)d->my_shm)->value;
     return(string( (char *)d->my_shm+SHM_HEADER));
 }
@@ -671,7 +714,7 @@ size_t Process::readSTLString (uint32_t offset, char * buffer, size_t bufcapacit
     D_SHMHDR->address = offset;
     full_barrier
     D_SHMCMD = CORE_READ_STL_STRING;
-    d->waitWhile(CORE_READ_STL_STRING);
+    waitWhile(CORE_READ_STL_STRING);
     size_t length = D_SHMHDR->value;
     size_t fit = min(bufcapacity - 1, length);
     strncpy(buffer,(char *)d->my_shm+SHM_HEADER,fit);
@@ -685,7 +728,7 @@ void Process::writeSTLString(const uint32_t address, const std::string writeStri
     strncpy(d->my_shm+SHM_HEADER,writeString.c_str(),writeString.length()+1); // length + 1 for the null terminator
     full_barrier
     D_SHMCMD = CORE_WRITE_STL_STRING;
-    d->waitWhile(CORE_WRITE_STL_STRING);
+    waitWhile(CORE_WRITE_STL_STRING);
 }
 
 string Process::readClassName (uint32_t vptr)
@@ -696,4 +739,23 @@ string Process::readClassName (uint32_t vptr)
     size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
     size_t end = raw.length();
     return raw.substr(start,end-start - 2); // trim the 'st' from the end
+}
+
+// get module index by name and version. bool 1 = error
+bool Process::getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT)
+{
+    modulelookup * payload = (modulelookup *) (d->my_shm + SHM_HEADER);
+    payload->version = version;
+    strcpy(payload->name,name);
+    full_barrier
+    D_SHMCMD = CORE_ACQUIRE_MODULE;
+    waitWhile(CORE_ACQUIRE_MODULE);
+    if(D_SHMHDR->error) return false;
+    OUTPUT = D_SHMHDR->value;
+    return true;
+}
+
+char * Process::getSHMStart (void)
+{
+    return d->my_shm;
 }

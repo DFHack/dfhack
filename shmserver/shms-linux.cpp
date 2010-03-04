@@ -37,7 +37,7 @@ distribution.
 #include <vector>
 #include <string>
 #include "shms.h"
-#include "shms-core.h"
+#include "mod-core.h"
 #include <sched.h>
 
 #define DFhackCExport extern "C" __attribute__ ((visibility("default")))
@@ -125,6 +125,7 @@ void SHM_Destroy ( void )
 {
     if(inited && !errorstate)
     {
+        KillModules();
         shmid_ds descriptor;
         shmctl(shmid, IPC_STAT, &descriptor);
         shmdt(shm);

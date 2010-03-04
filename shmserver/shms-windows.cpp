@@ -37,6 +37,7 @@ distribution.
 #include <vector>
 #include <string>
 #include "shms.h"
+#include "mod-core.h"
 #include <cstdio>
 int errorstate = 0;
 char *shm = 0;
@@ -150,6 +151,7 @@ void SHM_Destroy ( void )
 {
     if(errorstate)
         return;
+    KillModules();
     ReleaseMutex(DFSVMutex);
     CloseHandle(DFSVMutex);
     CloseHandle(DFCLMutex);
@@ -159,6 +161,17 @@ uint32_t OS_getPID()
 {
     return GetCurrentProcessId();
 }
+
+// TODO: move to some utils file
+uint32_t OS_getAffinity()
+{
+    HANDLE hProcess = GetCurrentProcess();
+    DWORD dwProcessAffinityMask, dwSystemAffinityMask;
+    GetProcessAffinityMask( hProcess, &dwProcessAffinityMask, &dwSystemAffinityMask );
+    return dwProcessAffinityMask;
+}
+
+
 
 // is the other side still there?
 bool isValidSHM()

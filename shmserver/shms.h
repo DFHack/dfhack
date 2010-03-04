@@ -38,7 +38,7 @@ enum DFPP_CmdType
 
 struct DFPP_command
 {
-    void (*_function)(void);
+    void (*_function)(void *);
     DFPP_CmdType type:32; // force the enum to 32 bits for compatibility reasons
     std::string name;
     uint32_t nextState;
@@ -46,7 +46,21 @@ struct DFPP_command
 
 struct DFPP_module
 {
-    inline void set_command(const unsigned int index, const DFPP_CmdType type, const char * name, void (*_function)(void) = 0,uint32_t nextState = -1)
+    DFPP_module()
+    {
+        name = "Uninitialized module";
+        version = 0;
+        modulestate = 0;
+    }
+    // ALERT: the structures share state
+    DFPP_module(const DFPP_module & orig)
+    {
+        commands = orig.commands;
+        name = orig.name;
+        modulestate = orig.modulestate;
+        version = orig.version;
+    }
+    inline void set_command(const unsigned int index, const DFPP_CmdType type, const char * name, void (*_function)(void *) = 0,uint32_t nextState = -1)
     {
         commands[index].type = type;
         commands[index].name = name;
@@ -81,8 +95,10 @@ typedef union
 
 void SHM_Act (void);
 void InitModules (void);
+void KillModules (void);
 bool isValidSHM();
 uint32_t OS_getPID();
+DFPP_module InitMaps(void);
 uint32_t OS_getAffinity(); // limited to 32 processors. Silly, eh?
 
 #endif

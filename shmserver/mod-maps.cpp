@@ -3,7 +3,7 @@
 #include <integers.h>
 
 #include "shms.h"
-#include "shms-core.h"
+#include "mod-core.h"
 #include "mod-maps.h"
 #include <DFTypes.h>
 using namespace DFHack;
@@ -69,7 +69,7 @@ void ReadBlockByCoords (void * data)
     */
     mblock * *** mapArray = *(mblock * ****)offsets.map_offset;
     mblock * block = mapArray[SHMHDR->x][SHMHDR->y][SHMHDR->z];
-    fprintf(stderr, "Readblock: %d %d %d 0x%x\n", SHMHDR->x,SHMHDR->y,SHMHDR->z, block);
+    //fprintf(stderr, "Readblock: %d %d %d 0x%x\n", SHMHDR->x,SHMHDR->y,SHMHDR->z, block);
     if(block)
     {
         memcpy(&(SHMBLOCK->tiletypes), block + offsets.tile_type_offset, sizeof(SHMBLOCK->tiletypes));
@@ -85,7 +85,7 @@ void ReadBlockByCoords (void * data)
     }
 }
 
-DFPP_module InitMaps(std::vector <DFPP_module>* module_registry)
+DFPP_module InitMaps( void )
 {
     DFPP_module maps;
     maps.name = "Maps";
@@ -103,11 +103,9 @@ DFPP_module InitMaps(std::vector <DFPP_module>* module_registry)
     
     // will it fit into 1MB? We shouldn't assume this is the case
     maps.set_command(MAP_READ_BLOCKTREE, FUNCTION,"Get the tree of block pointers as a single structure", NullCommand, CORE_SUSPENDED);
-        
-    
-    
+
     // really doesn't fit into 1MB, there should be a streaming variant to better utilize context switches
     maps.set_command(MAP_READ_BLOCKS_3D, FUNCTION, "Read a range of blocks between two sets of coords", NullCommand, CORE_SUSPENDED);
     
-    module_registry->push_back(maps);
+    return maps;
 }

@@ -23,6 +23,9 @@ distribution.
 */
 
 #include "DFCommonInternal.h"
+#include "../shmserver/shms.h"
+#include "../shmserver/mod-core.h"
+#include "../shmserver/mod-maps.h"
 using namespace DFHack;
 
 /*
@@ -106,6 +109,7 @@ public:
 
     ProcessEnumerator* pm;
     Process* p;
+    char * shm_start;
     memory_info* offset_descriptor;
     vector<uint16_t> v_geology[eBiomeCount];
     string xml;
@@ -121,6 +125,8 @@ public:
     bool hotkeyInited;
     bool settlementsInited;
     bool nameTablesInited;
+    
+    uint32_t maps_module;
 
     uint32_t tree_offset;
     DfVector *p_cre;
@@ -149,12 +155,19 @@ API::API (const string path_to_xml)
     d->notesInited = false;
     d->hotkeyInited = false;
     d->pm = NULL;
+    d->shm_start = 0;
+    d->maps_module = 0;
 }
 
 API::~API()
 {
     delete d;
 }
+
+#define SHMCMD ((shm_cmd *)d->shm_start)->pingpong
+#define SHMHDR ((shm_core_hdr *)d->shm_start)
+#define SHMMAPSHDR ((Maps::shm_maps_hdr *)d->shm_start)
+#define SHMDATA(type) ((type *)(d->shm_start + SHM_HEADER))
 
 /*-----------------------------------*
  *  Init the mapblock pointer array   *
@@ -181,19 +194,43 @@ bool API::InitMap()
     d->offset_descriptor->resolveClassnameToVPtr("block_square_event_frozen_liquid", d->vein_ice_vptr);
     d->vein_mineral_vptr = 0;
     d->offset_descriptor->resolveClassnameToVPtr("block_square_event_mineral",d->vein_mineral_vptr);
-
+    
+    /*
+     * --> SHM initialization (if possible) <--
+     */
+    g_pProcess->getModuleIndex("Maps",1,d->maps_module);
+    
+    if(d->maps_module)
+    {
+        // supply the module with offsets so it can work with them
+        Maps::maps_offsets *off = SHMDATA(Maps::maps_offsets);
+        off->biome_stuffs = d->biome_stuffs;
+        off->designation_offset = d->designation_offset;
+        off->map_offset = map_offset;
+        off->occupancy_offset = d->occupancy_offset;
+        off->tile_type_offset = d->tile_type_offset;
+        off->vein_ice_vptr = d->vein_ice_vptr; // FIXME: not necessarily true, the shm server side needs a class lookup >_<
+        off->vein_mineral_vptr = d->vein_mineral_vptr; // FIXME: not necessarily true, the shm server side needs a class lookup >_<
+        off->veinvector = d->veinvector;
+        off->x_count_offset = x_count_offset;
+        off->y_count_offset = y_count_offset;
+        off->z_count_offset = z_count_offset;
+        full_barrier
+        const uint32_t cmd = Maps::MAP_INIT + d->maps_module << 16;
+        SHMCMD = cmd;
+        g_pProcess->waitWhile(cmd);
+        //cerr << "Map acceleration enabled!" << endl;
+    }
+    
     // get the map pointer
     uint32_t x_array_loc = g_pProcess->readDWord (map_offset);
-    //FIXME: very inadequate
     if (!x_array_loc)
     {
         throw Error::NoMapLoaded();
-        // bad stuffz happend
-        //return false;
     }
-    uint32_t mx, my, mz;
-
+    
     // get the size
+    uint32_t mx, my, mz;
     mx = d->x_block_count = g_pProcess->readDWord (x_count_offset);
     my = d->y_block_count = g_pProcess->readDWord (y_count_offset);
     mz = d->z_block_count = g_pProcess->readDWord (z_count_offset);
@@ -252,6 +289,41 @@ uint32_t API::getBlockPtr (uint32_t x, uint32_t y, uint32_t z)
         return 0;
     return d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
 }
+
+bool API::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer)
+{
+    if(d->shm_start && d->maps_module) // ACCELERATE!
+    {
+        SHMMAPSHDR->x = x;
+        SHMMAPSHDR->y = y;
+        SHMMAPSHDR->z = z;
+        const uint32_t cmd = Maps::MAP_READ_BLOCK_BY_COORDS + (d->maps_module << 16);
+        full_barrier
+        SHMCMD = cmd;
+        if(!g_pProcess->waitWhile(cmd))
+        {
+            return false;
+        }
+        memcpy(buffer,SHMDATA(mapblock40d),sizeof(mapblock40d));
+        return true;
+    }
+    else // plain old block read
+    {
+        uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+        if (addr)
+        {
+            g_pProcess->read (addr + d->tile_type_offset, sizeof (buffer->tiletypes), (uint8_t *) buffer->tiletypes);
+            g_pProcess->read (addr + d->occupancy_offset, sizeof (buffer->occupancy), (uint8_t *) buffer->occupancy);
+            g_pProcess->read (addr + d->designation_offset, sizeof (buffer->designaton), (uint8_t *) buffer->designaton);
+            g_pProcess->read (addr + d->biome_stuffs, sizeof (buffer->biome_indices), (uint8_t *) buffer->biome_indices);
+            uint32_t addr_of_struct = g_pProcess->readDWord(addr);
+            buffer->dirty_dword = g_pProcess->readDWord(addr_of_struct);
+            return true;
+        }
+        return false;
+    }
+}
+
 
 // 256 * sizeof(uint16_t)
 bool API::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
@@ -713,7 +785,7 @@ bool API::ReadGeology (vector < vector <uint16_t> >& assign)
     }
     assign.clear();
     assign.reserve (eBiomeCount);
-    // TODO: clean this up
+//     // TODO: clean this up
     for (int i = 0; i < eBiomeCount;i++)
     {
         assign.push_back (d->v_geology[i]);
@@ -1341,6 +1413,7 @@ bool API::Attach()
         //cerr << "couldn't attach to process" << endl;
         //return false; // couldn't attach to process, no go
     }
+    d->shm_start = d->p->getSHMStart();
     d->offset_descriptor = d->p->getDescriptor();
     // process is attached, everything went just fine... hopefully
     return true;
@@ -1359,6 +1432,7 @@ bool API::Detach()
     }
     d->pm = NULL;
     d->p = NULL;
+    d->shm_start = 0;
     d->offset_descriptor = NULL;
     return true;
 }

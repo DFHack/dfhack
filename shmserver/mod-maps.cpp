@@ -11,7 +11,6 @@ using namespace DFHack::Maps;
 
 #include <string.h>
 #include <malloc.h>
-#include <malloc.h>
 
 extern char *shm;
 
@@ -38,9 +37,9 @@ void GetMapSize (void *data)
     maps_modulestate * state = (maps_modulestate *) data;
     if(state->inited)
     {
-        SHMHDR->x = *((uint32_t *)state->offsets.x_count_offset);
-        SHMHDR->y = *((uint32_t *)state->offsets.y_count_offset);
-        SHMHDR->z = *((uint32_t *)state->offsets.z_count_offset);
+        SHMHDR->x = *(uint32_t *) (state->offsets.x_count_offset);
+        SHMHDR->y = *(uint32_t *) (state->offsets.y_count_offset);
+        SHMHDR->z = *(uint32_t *) (state->offsets.z_count_offset);
         SHMHDR->error = false;
     }
     else
@@ -86,7 +85,7 @@ void ReadBlockByCoords (void * data)
     }
 }
 
-DFPP_module InitMaps(void)
+DFPP_module InitMaps(std::vector <DFPP_module>* module_registry)
 {
     DFPP_module maps;
     maps.name = "Maps";
@@ -110,5 +109,5 @@ DFPP_module InitMaps(void)
     // really doesn't fit into 1MB, there should be a streaming variant to better utilize context switches
     maps.set_command(MAP_READ_BLOCKS_3D, FUNCTION, "Read a range of blocks between two sets of coords", NullCommand, CORE_SUSPENDED);
     
-    return maps;
+    module_registry->push_back(maps);
 }

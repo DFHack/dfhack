@@ -316,6 +316,7 @@ bool API::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer)
             g_pProcess->read (addr + d->occupancy_offset, sizeof (buffer->occupancy), (uint8_t *) buffer->occupancy);
             g_pProcess->read (addr + d->designation_offset, sizeof (buffer->designaton), (uint8_t *) buffer->designaton);
             g_pProcess->read (addr + d->biome_stuffs, sizeof (buffer->biome_indices), (uint8_t *) buffer->biome_indices);
+            buffer->origin = addr;
             uint32_t addr_of_struct = g_pProcess->readDWord(addr);
             buffer->dirty_dword = g_pProcess->readDWord(addr_of_struct);
             return true;

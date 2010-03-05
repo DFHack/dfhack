@@ -337,6 +337,7 @@ main(int argc, char *argv[])
     int filenum = 0;
     bool dirtybit = false;
     uint32_t blockaddr = 0;
+    uint32_t blockaddr2 = 0;
     // walk the map!
     for (;;)
     {
@@ -437,6 +438,7 @@ main(int argc, char *argv[])
                     if(i == 0 && j == 0)
                     {
                         blockaddr = DF.getBlockPtr(cursorX+i,cursorY+j,cursorZ);
+                        blockaddr2 = Block.origin;
                         if(dump)
                         {
                             hexdump(DF,blockaddr,0x1E00/*0x1DB8*/,filenum);
@@ -516,7 +518,7 @@ main(int argc, char *argv[])
             }
         }
         gotoxy (0,52);
-        cprintf("block address 0x%x",blockaddr);
+        cprintf("block address 0x%x 0x%x",blockaddr, blockaddr2);
         gotoxy (0,53);
         cprintf("dirty bit: %d",dirtybit);
         gotoxy (0,54);

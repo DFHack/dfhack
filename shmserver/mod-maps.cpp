@@ -77,6 +77,8 @@ void ReadBlockByCoords (void * data)
         memcpy(&(SHMBLOCK->occupancy), block + offsets.occupancy_offset, sizeof(SHMBLOCK->occupancy));
         memcpy(&(SHMBLOCK->biome_indices), block + offsets.biome_stuffs, sizeof(SHMBLOCK->biome_indices));
         SHMBLOCK->dirty_dword = *block->ptr_to_dirty;
+        
+        SHMBLOCK->origin = reinterpret_cast<uint32_t>(block);
         SHMHDR->error = false;
     }
     else

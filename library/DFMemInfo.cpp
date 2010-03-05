@@ -367,7 +367,8 @@ bool memory_info::resolveObjectToClassID(const uint32_t address, int32_t & class
         }
     }
     string classname = g_pProcess->readClassName(vtable);
-    setClass(classname.c_str(),vtable);
+    t_class * c = setClass(classname.c_str(),vtable);
+    classid = c->assign;
     return true;
 }
 
@@ -602,20 +603,3 @@ string memory_info::getLabor (const uint32_t laborIdx)
     }
     throw Error::MissingMemoryDefinition("labor", laborIdx);
 }
-
-// Reset everything
-/*
-0xDEADC0DE
-void memory_info::flush()
-{
-    d->base = 0;
-    d->addresses.clear();
-    d->offsets.clear();
-    d->strings.clear();
-    d->hexvals.clear();
-    d->classes.clear();
-    d->classindex = 0;
-    d->version = "";
-    d->OS = OS_BAD;
-}
-*/

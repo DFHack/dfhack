@@ -425,21 +425,16 @@ try_again:
                 // store it in the vector
                 ices.push_back (fv);
             }
-            //#define ___FIND_THEM
-            #ifdef ___FIND_THEM
             else if(g_pProcess->readClassName(type) == "block_square_event_frozen_liquid")
             {
                 d->vein_ice_vptr = type;
-                cout << "block_square_event_frozen_liquid : 0x" << hex << type << endl;
                 goto try_again;
             }
             else if(g_pProcess->readClassName(type) == "block_square_event_mineral")
             {
                 d->vein_mineral_vptr = type;
-                cout << "block_square_event_mineral : 0x" << hex << type << endl;
                 goto try_again;
             }
-            #endif
         }
         return true;
     }

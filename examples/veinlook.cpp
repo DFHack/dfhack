@@ -407,6 +407,7 @@ main(int argc, char *argv[])
                     DF.ReadTileTypes(cursorX+i,cursorY+j,cursorZ, (uint16_t *) tiletypes);
                     DF.ReadDesignations(cursorX+i,cursorY+j,cursorZ, (uint32_t *) designations);
                     */
+                    
                     for(int x = 0; x < 16; x++)
                     {
                         for(int y = 0; y < 16; y++)
@@ -441,9 +442,10 @@ main(int argc, char *argv[])
                         blockaddr2 = Block.origin;
                         if(dump)
                         {
-                            hexdump(DF,blockaddr,0x1E00/*0x1DB8*/,filenum);
+                            hexdump(DF,blockaddr,0x1E00,filenum);
                             filenum++;
                         }
+                        
                         if(dig)
                             DF.WriteDesignations(cursorX+i,cursorY+j,cursorZ, (uint32_t *) Block.designaton);
                         DF.ReadDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
@@ -455,6 +457,7 @@ main(int argc, char *argv[])
                         veinVector.clear();
                         IceVeinVector.clear();
                         DF.ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector,IceVeinVector);
+                        
                     }
                 }
             }

@@ -69,16 +69,22 @@ void ReadBlockByCoords (void * data)
     */
     mblock * *** mapArray = *(mblock * ****)offsets.map_offset;
     mblock * block = mapArray[SHMHDR->x][SHMHDR->y][SHMHDR->z];
-    //fprintf(stderr, "Readblock: %d %d %d 0x%x\n", SHMHDR->x,SHMHDR->y,SHMHDR->z, block);
+    /*
+    fprintf(stderr, "map_offset: 0x%x\n", offsets.map_offset);
+    fprintf(stderr, "x_array: 0x%x\n", mapArray);
+    fprintf(stderr, "y_array: 0x%x\n", mapArray[SHMHDR->x]);
+    fprintf(stderr, "z_array: 0x%x\n", mapArray[SHMHDR->x][SHMHDR->y]);
+    fprintf(stderr, "Readblock: %d %d %d 0x%x\n", SHMHDR->x,SHMHDR->y,SHMHDR->z, block);
+    */
     if(block)
     {
-        memcpy(&(SHMBLOCK->tiletypes), block + offsets.tile_type_offset, sizeof(SHMBLOCK->tiletypes));
-        memcpy(&(SHMBLOCK->designaton), block + offsets.designation_offset, sizeof(SHMBLOCK->designaton));
-        memcpy(&(SHMBLOCK->occupancy), block + offsets.occupancy_offset, sizeof(SHMBLOCK->occupancy));
-        memcpy(&(SHMBLOCK->biome_indices), block + offsets.biome_stuffs, sizeof(SHMBLOCK->biome_indices));
+        memcpy(&(SHMBLOCK->tiletypes), ((char *) block) + offsets.tile_type_offset, sizeof(SHMBLOCK->tiletypes));
+        memcpy(&(SHMBLOCK->designaton), ((char *) block) + offsets.designation_offset, sizeof(SHMBLOCK->designaton));
+        memcpy(&(SHMBLOCK->occupancy), ((char *) block) + offsets.occupancy_offset, sizeof(SHMBLOCK->occupancy));
+        memcpy(&(SHMBLOCK->biome_indices), ((char *) block) + offsets.biome_stuffs, sizeof(SHMBLOCK->biome_indices));
         SHMBLOCK->dirty_dword = *block->ptr_to_dirty;
         
-        SHMBLOCK->origin = reinterpret_cast<uint32_t>(block);
+        SHMBLOCK->origin = (uint32_t)block;
         SHMHDR->error = false;
     }
     else

@@ -128,40 +128,7 @@ we end up with this silly thing
 */
 bool Process::waitWhile (uint32_t state)
 {
-    uint32_t cnt = 0;
-    struct shmid_ds descriptor;
-    while (D_SHMCMD == state)
-    {
-        if(cnt == 10000)// check if the other process is still there
-        {
-            
-            shmctl(d->my_shmid, IPC_STAT, &descriptor); 
-            if(descriptor.shm_nattch == 1)// DF crashed?
-            {
-                D_SHMCMD = CORE_RUNNING;
-                d->attached = d->suspended = false;
-                return false;
-            }
-            else
-            {
-                cnt = 0;
-            }
-        }
-        if(d->useYield)
-        {
-            SCHED_YIELD
-        }
-        cnt++;
-    }
-    if(D_SHMCMD == CORE_SV_ERROR)
-    {
-        D_SHMCMD = CORE_RUNNING;
-        d->attached = d->suspended = false;
-        cerr << "shm server error!" << endl;
-        assert (false);
-        return false;
-    }
-    return true;
+    return d->waitWhile(state);
 }
 
 bool Process::Private::DF_TestBridgeVersion(bool & ret)

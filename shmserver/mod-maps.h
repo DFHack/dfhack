@@ -33,7 +33,7 @@ namespace DFHack
     namespace Maps
     {
 
-#define MAPS_VERSION 1
+#define MAPS_VERSION 2
 typedef struct
 {
     uint32_t map_offset;// = d->offset_descriptor->getAddress ("map_data");
@@ -89,8 +89,11 @@ enum MAPS_COMMAND
     MAP_GET_SIZE, // get the map size in 16x16x1 blocks
     MAP_READ_BLOCKTREE, // read the structure of pointers to blocks
     MAP_READ_BLOCK_BY_COORDS, // read block by cords
+    MAP_READ_BLOCK_BY_ADDRESS, // read block by address
+    MAP_WRITE_BLOCK,
     MAP_READ_BLOCKS_3D, // read blocks between two coords (volumetric)
     MAP_READ_ALL_BLOCKS, // read the entire map
+    MAP_REVEAL, // reveal the whole map
     NUM_MAPS_CMDS,
 };
     }

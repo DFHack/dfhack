@@ -55,27 +55,11 @@ struct mblock
 
 #define SHMBLOCK ((mapblock40d *)(shm + SHM_HEADER))
 
-void ReadBlockByCoords (void * data)
+inline void ReadBlockByAddress (void * data)
 {
     maps_modulestate * state = (maps_modulestate *) data;
     maps_offsets & offsets = state->offsets;
-    /* map_offset is a pointer to
-                  a pointer to
-                  an X block of pointers to
-                  an Y blocks of pointers to
-                  a Z blocks of pointers to
-                  map blocks
-    only Z blocks can have NULL pointers? TODO: verify
-    */
-    mblock * *** mapArray = *(mblock * ****)offsets.map_offset;
-    mblock * block = mapArray[SHMHDR->x][SHMHDR->y][SHMHDR->z];
-    /*
-    fprintf(stderr, "map_offset: 0x%x\n", offsets.map_offset);
-    fprintf(stderr, "x_array: 0x%x\n", mapArray);
-    fprintf(stderr, "y_array: 0x%x\n", mapArray[SHMHDR->x]);
-    fprintf(stderr, "z_array: 0x%x\n", mapArray[SHMHDR->x][SHMHDR->y]);
-    fprintf(stderr, "Readblock: %d %d %d 0x%x\n", SHMHDR->x,SHMHDR->y,SHMHDR->z, block);
-    */
+    mblock * block = (mblock *) SHMHDR->address;
     if(block)
     {
         memcpy(&(SHMBLOCK->tiletypes), ((char *) block) + offsets.tile_type_offset, sizeof(SHMBLOCK->tiletypes));
@@ -93,6 +77,23 @@ void ReadBlockByCoords (void * data)
     }
 }
 
+void ReadBlockByCoords (void * data)
+{
+    maps_modulestate * state = (maps_modulestate *) data;
+    maps_offsets & offsets = state->offsets;
+    /* map_offset is a pointer to
+                  a pointer to
+                  an X block of pointers to
+                  an Y blocks of pointers to
+                  a Z blocks of pointers to
+                  map blocks
+    only Z blocks can have NULL pointers? TODO: verify
+    */
+    mblock * *** mapArray = *(mblock * ****)offsets.map_offset;
+    SHMHDR->address = (uint32_t) mapArray[SHMHDR->x][SHMHDR->y][SHMHDR->z];
+    ReadBlockByAddress(data); // I wonder... will this inline properly?
+}
+
 DFPP_module InitMaps( void )
 {
     DFPP_module maps;
@@ -108,6 +109,7 @@ DFPP_module InitMaps( void )
     maps.set_command(MAP_INIT, FUNCTION, "Supply the module with offsets",InitOffsets,CORE_SUSPENDED);
     maps.set_command(MAP_GET_SIZE, FUNCTION, "Get map size in 16x16x1 tile blocks", GetMapSize, CORE_SUSPENDED);
     maps.set_command(MAP_READ_BLOCK_BY_COORDS, FUNCTION, "Read the whole block with specified coords", ReadBlockByCoords, CORE_SUSPENDED);
+    maps.set_command(MAP_READ_BLOCK_BY_ADDRESS, FUNCTION, "Read the whole block from an address", ReadBlockByAddress, CORE_SUSPENDED);
     
     // will it fit into 1MB? We shouldn't assume this is the case
     maps.set_command(MAP_READ_BLOCKTREE, FUNCTION,"Get the tree of block pointers as a single structure", NullCommand, CORE_SUSPENDED);

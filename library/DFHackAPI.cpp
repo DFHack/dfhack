@@ -198,7 +198,7 @@ bool API::InitMap()
     /*
      * --> SHM initialization (if possible) <--
      */
-    g_pProcess->getModuleIndex("Maps",1,d->maps_module);
+    g_pProcess->getModuleIndex("Maps",2,d->maps_module);
     
     if(d->maps_module)
     {

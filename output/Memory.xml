@@ -1318,6 +1318,109 @@
             <class vtable="0x00941CF0" name="building_holder" />
         </VTable>
     </Entry>
+    <Entry version="v0.28.181.40d19" os="windows" base="40d18win" id="40d19win">
+        <!-- identification -->
+        <!--<HexValue name="pe_timestamp">0x006BF5AA</HexValue>-->
+        <HexValue name="pe_timestamp">0x4B90268A</HexValue>
+        <String name="md5">13640a273d90af39425b798ae9823757</String> <!-- THIS IS *NOT* A NUMBER -->
+
+        <Address name="map_data">0x01555E14</Address>
+        <!--
+        <Address name="constructions">0x014FE504</Address>
+        <Address name="buildings">0x0151289C</Address>
+        <Address name="vegetation">0x01518A70</Address>
+        <Address name="creatures">0x01511EF0</Address>
+        <Address name="items">0x01511FE4</Address>
+        -->
+        
+        <Address name="constructions">0x014FE500</Address>
+        <Address name="buildings">0x01512898</Address>
+        <Address name="vegetation">0x01518A6C</Address>
+        <Address name="creatures">0x01511EEC</Address>
+        <Address name="items">0x01511FE0</Address>
+        
+        <!-- translation tables -->
+        <!--
+        <Address name="translation_vector">0x015581C8</Address>
+        <Address name="language_vector">0x01558198</Address>
+        -->
+        <Address name="translation_vector">0x015581C4</Address>
+        <Address name="language_vector">0x01558194</Address>
+
+        <!-- size of the map -->
+        <Address name="x_count">0x01555E34</Address>
+        <Address name="y_count">0x01555E38</Address>
+        <Address name="z_count">0x01555E3C</Address>
+
+        <!-- position of the map in world coords -->
+        <Address name="region_x">0x01555E4C</Address>
+        <Address name="region_y">0x01555E50</Address>
+        <Address name="region_z">0x01555E54</Address>
+
+        <!-- the world and its offsets -->
+        <Address name="world">0x0155744C</Address>
+        <!-- matgloss vectors -->
+        <Address name="matgloss">0x01557F84</Address>
+        
+        <Address name="cursor_xyz">0x0097A2B8</Address>
+        <Address name="window_x">0x00CF4230</Address>
+        <Address name="window_y">0x00D222DC</Address>
+        <Address name="window_z">0x00D222B8</Address>
+        <Address name="window_dims">0x0169AF28</Address>
+        <Address name="current_menu_state">0x016AC1A0</Address>
+        <Address name="pause_state">0x0132FF1E</Address>
+        <Address name="view_screen">0x013439FC</Address>
+        <!--<Address name="current_cursor_creature">0x016ABFCC</Address>-->
+        <Address name="current_cursor_creature">0x016ABFC8</Address>
+        
+        <!--
+        <Address name="notes">0x01558198</Address>     
+        <Address name="hotkey_start">0x01343714</Address>
+        
+        <Address name="settlement_current">0x01557C18</Address>
+        <Address name="settlements">0x01557B4C</Address>
+        
+        -->
+        <Address name="notes">0x01558194</Address>     
+        <Address name="hotkey_start">0x01343710</Address>
+        
+        <Address name="settlement_current">0x01557C14</Address>
+        <Address name="settlements">0x01557B48</Address>
+    </Entry>
+buildings*          ff 15 ? ? ? ? 8b 0d ? ? ? ? 39 34 99                
+constructions*          8B 0D ? ? ? ? 8B 04 B1 0F B7 54 24 20 66 01 10          
+creatures*          83 E4 F8 8B 0D ? ? ? ? A1 ? ? ? ? 53                
+current_cursor_creature*    72 08 ff d3 8b 0d ? ? ? ? 8b 0c b9              
+cursor              83 3D ? ? ? ? 00 C7 05 ? ? ? ? D0 8A FF FF          
+hotkey_start            83 C4 04 BE ? ? ? ? BF 10 00 00 00                  
+items*              FF 24 8D ? ? ? ? A1 ? ? ? ? 8B 0D ? ? ? ?           
+language_vector*        83 7D 44 FF 74 6D A1 ? ? ? ? 2B 05 ? ? ? ?          
+menu_state          C7 05 ? ? ? ? 25 00                     
+map_data            83 3D ? ? ? ? 00 89 4C 24 28 89 5C 24 24            
+matgloss*           F7 C3 00 20 00 00 74 20 A1 ? ? ? ? 2B 05 ? ? ? ?        
+notes*              a1 ? ? ? ? 2b 05 ? ? ? ? 8d 7c 24 30                
+pause_state         C0 E8 06 24 01 0F 84 DD 06 00 00 C6 05 ? ? ? ? 01       
+region_x            66 2B 05 ? ? ? ? 66 6B C9 30 66 6B C0 30            
+region_y            region_x + 4                            
+region_z            region_y + 4                            
+settlements         8B 0D ? ? ? ? 8B 0C A9 83 79  70 FF0                
+settlement_current      A1 ? ? ? ? 8B 1C 30 8B 83 A8 00 00 00 89 2C 24          
+translation_vector*     83 FB FF 75 51 8B 35 ? ? ? ? 2B 35 ? ? ? ? C1 FE 02 83 FE 01    
+vegetation*         C7 44 24 58 00 00 00 00 E8 ? ? ? ? 8B 0D ? ? ? ?        
+view_screen*            51 83 3D ? ? ? ? 00 53 56                   
+window_dims         75 2a 8b 35 ? ? ? ?                     
+world               B9 ? ? ? ? E8 ? ? ? ? 83 C0 E5 83 F8 02             
+                B8 D0 8A FF FF 33 D2 66 89 15 ? ? ? ? 8B 15 ? ? ? ? A3 ? ? ? ? A3 ? ? ? ? A3 ? ? ? ? A1 ? ? ? ? 
+window_x            A3 ? ? ? ?                              
+window_y            89 0D ? ? ? ?                           
+window_z            89 15 ? ? ? ? E9                        
+
+                88 1D ? ? ? ? 89 1D ? ? ? ? 
+x_count             89 1D ? ? ? ?                           
+y_count             89 1D ? ? ? ?                           0x01555E38
+z_count             89 1D ? ? ? ?                           0x01555E3C
+* = subtract 4
+    
                             .-"""-.
                            '       \
                           |,.  ,-.  |

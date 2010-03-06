@@ -52,6 +52,10 @@ TARGET_LINK_LIBRARIES(dffindnameindexes dfhack)
 ADD_EXECUTABLE(dfsettlementdump settlementdump.cpp)
 TARGET_LINK_LIBRARIES(dfsettlementdump dfhack)
 
+# veccheck - read vector values at address
+ADD_EXECUTABLE(dfvecc veccheck.cpp)
+TARGET_LINK_LIBRARIES(dfvecc dfhack)
+
 IF(UNIX)
     # veinlook - look at the map... sort of
     ADD_EXECUTABLE(dfveinlook veinlook.cpp)

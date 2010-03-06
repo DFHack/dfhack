@@ -2,6 +2,176 @@
 <DFExtractor>
 <!-- USE A FIXED WIDTH FONT! -->
   <MemoryDescriptors>
+  
+<!--A note about virtual types: many of those aren't enumerated in the vtable structure anymore
+    but are found dynamically. Here's a list of viewscreens for 40d:
+    viewscreen_conversation
+    viewscreen_setupadventure
+    viewscreen_dungeon_announce
+    viewscreen_dungeon_monsterstatus
+    viewscreen_dungeon_wrestle
+    viewscreen_adventure_log
+    viewscreen_adventure_travel
+    viewscreen_dungeonmode
+    viewscreen_selectitem
+    viewscreen_dwarfmode
+    viewscreen_layer_stockpile
+    viewscreen_layer_world_gen_param_preset
+    viewscreen_layer_world_gen_param
+    viewscreen_layer_export_play_map
+    viewscreen_layer_musicsound
+    viewscreen_layer_unit_relationship
+    viewscreen_layer_workshop_profile
+    viewscreen_layer
+    viewscreen_unit
+    viewscreen_customize_unit
+    viewscreen_savegame
+    viewscreen_loadgame
+    viewscreen_option
+    viewscreen_layer_currency
+    viewscreen_layer_reaction
+    viewscreen_layer_stone_restriction
+    viewscreen_layer_noblelist
+    viewscreen_job
+    viewscreen_building
+    viewscreen_item
+    viewscreen_noble
+    viewscreen_buildinglist
+    viewscreen_commandchain
+    viewscreen_squad
+    viewscreen_civlist
+    viewscreen_entity
+    viewscreen_treasurelist
+    viewscreen_unitjobs
+    viewscreen_createquota
+    viewscreen_jobmanagement
+    viewscreen_wages
+    viewscreen_stores
+    viewscreen_overallstatus
+    viewscreen_justice
+    viewscreen_price
+    viewscreen_pet
+    viewscreen_kitchenpref
+    viewscreen_announcelist
+    viewscreen_game_cleaner
+    viewscreen_title
+    viewscreen_legends
+    viewscreen_new_region
+    viewscreen_export_region
+    viewscreen_export_graphical_map
+    viewscreen_layer_assigntrade
+    viewscreen_requestagreement
+    viewscreen_tradeagreement
+    viewscreen_topicmeeting_takerequests
+    viewscreen_topicmeeting
+    viewscreen_meeting
+    viewscreen_barter
+    viewscreen_tradegoods
+    viewscreen_tradelist
+    viewscreen_textviewer
+    viewscreen_layer_choose_language_name
+    viewscreen_setupdwarfgame
+    viewscreen_choose_start_site
+    
+    And item types:
+    item_coin
+    item_trapcomp
+    item_siegeammo
+    item_quiver
+    item_backpack
+    item_pants
+    item_totem
+    item_anvil
+    item_gem
+    item_bracelet
+    item_earring
+    item_ring
+    item_crown
+    item_ammo
+    item_scepter
+    item_amulet
+    item_figurine
+    item_bin
+    item_box
+    item_gloves
+    item_helm
+    item_shield
+    item_shoes
+    item_armor
+    item_weapon
+    item_animaltrap
+    item_barrel
+    item_cage
+    item_toy
+    item_instrument
+    item_goblet
+    item_flask
+    item_chain
+    item_hatch_cover
+    item_floodgate
+    item_door
+    item_cloth
+    item_constructed
+    item_food
+    item_crafted
+    item_thread
+    item_cheese
+    item_ballistaarrowhead
+    item_shell
+    item_skull
+    item_bones
+    item_skin_tanned
+    item_skin_raw
+    item_pet
+    item_vermin
+    item_fish_raw
+    item_fish
+    item_meat
+    item_remains
+    item_corpsepiece
+    item_glob
+    item_liquid_misc
+    item_powder_misc
+    item_drink
+    item_extract
+    item_liquipowder
+    item_corpse
+    item_wood
+    item_stone
+    item_rough
+    item_blocks
+    item_smallgem
+    item_bar
+    item_actual
+    item_rock
+    item_grate
+    item_window
+    item_bucket
+    item_coffin
+    item_statue
+    item_quern
+    item_millstone
+    item_armorstand
+    item_weaponrack
+    item_cabinet
+    item_catapultparts
+    item_ballistaparts
+    item_trapparts
+    item_potion
+    item_pipe_section
+    item_leaves
+    item_plant
+    item_seeds
+    item_critter
+    item_powder
+    item_liquid
+        
+    Finally veins:
+    block_square_event_frozen_liquid
+    block_square_event_mineral
+    -->
+  
+  
     <Entry version="meta-40d" os="all" id="meta-40d">
         <Profession can_assign_labors="true" is_military="false" name="Miner">0</Profession>
         <Profession can_assign_labors="true" is_military="false" name="Woodworker">1</Profession>
@@ -937,167 +1107,7 @@
         <Address name="current_menu_state">0x013EF900</Address>
         <Address name="pause_state">0x13DC2EB</Address>
         <Address name="view_screen">0x013EF970</Address>
-        <VTable name="item_vtable">
-            <class vtable="0x008E04D4" name="item_liquid_misc" />
-            <class vtable="0x008E07AC" name="item_remains" />
-            <class vtable="0x008E0A84" name="item_vermin" />
-            <class vtable="0x008E0D5C" name="item_plant" />
-            <class vtable="0x008EFBB4" name="item_glob" />
-            <class vtable="0x008EFFEC" name="item_contaminant" />
-            <class vtable="0x008F15BC" name="item_meat" />
-            <class vtable="0x008F1894" name="item_fish" />
-            <class vtable="0x008F211C" name="item_door" />
-            <class vtable="0x008F23F4" name="item_bed" />
-            <class vtable="0x008F26CC" name="item_chair" />
-            <class vtable="0x008F29A4" name="item_flask" />
-            <class vtable="0x008F2C7C" name="item_barrel" />
-            <class vtable="0x008F2F54" name="item_table" />
-            <class vtable="0x008F322C" name="item_weapon" />
-            <class vtable="0x008F3504" name="item_armor" />
-            <class vtable="0x008F37DC" name="item_shoes" />
-            <class vtable="0x008F3AB4" name="item_shield" />
-            <class vtable="0x008F3D8C" name="item_helm" />
-            <class vtable="0x008F4064" name="item_gloves" />
-            <class vtable="0x008F433C" name="item_box" />
-            <class vtable="0x008F4614" name="item_ammo" />
-            <class vtable="0x008F48EC" name="item_pants" />
-            <class vtable="0x008F4BC4" name="item_backpack" />
-            <class vtable="0x008F4E9C" name="item_quiver" />
-            <class vtable="0x008F5174" name="item_coin" />
-            <class vtable="0x008F5DDC" name="item_powder_misc" />
-            <class vtable="0x008F60F4" name="item_corpse" />
-            <class vtable="0x008F63CC" name="item_corpsepiece" />
-            <class vtable="0x008F66A4" name="item_chain" />
-            <class vtable="0x008F697C" name="item_cage" />
-            <class vtable="0x008FF454" name="item_seeds" />
-            <class vtable="0x008FF72C" name="item_skin_raw" />
-            <class vtable="0x008FFA04" name="item_bones" />
-            <class vtable="0x008FFCDC" name="item_skull" />
-            <class vtable="0x008FFFB4" name="item_thread" />
-            <class vtable="0x0091142C" name="item_bar" />
-            <class vtable="0x00911704" name="item_smallgem" />
-            <class vtable="0x009119DC" name="item_blocks" />
-            <class vtable="0x00911CB4" name="item_rough" />
-            <class vtable="0x00911F8C" name="item_stone" />
-            <class vtable="0x00912264" name="item_rock" />
-            <class vtable="0x0091253C" name="item_wood" />
-            <class vtable="0x00912814" name="item_extract" />
-            <class vtable="0x00912AEC" name="item_potion" />
-            <class vtable="0x00912DC4" name="item_drink" />
-            <class vtable="0x0091309C" name="item_fish_raw" />
-            <class vtable="0x00913374" name="item_pet" />
-            <class vtable="0x0091364C" name="item_skin_tanned" />
-            <class vtable="0x00913924" name="item_shell" />
-            <class vtable="0x00913BFC" name="item_leaves" />
-            <class vtable="0x00913ED4" name="item_ballistaarrowhead" />
-            <class vtable="0x009141AC" name="item_cheese" />
-            <class vtable="0x00914484" name="item_food" />
-            <class vtable="0x0091475C" name="item_cloth" />
-            <class vtable="0x00914A34" name="item_floodgate" />
-            <class vtable="0x00914D0C" name="item_hatch_cover" />
-            <class vtable="0x00914FE4" name="item_grate" />
-            <class vtable="0x009152BC" name="item_goblet" />
-            <class vtable="0x00915594" name="item_instrument" />
-            <class vtable="0x0091586C" name="item_toy" />
-            <class vtable="0x00915B44" name="item_window" />
-            <class vtable="0x00915E1C" name="item_bucket" />
-            <class vtable="0x009160F4" name="item_animaltrap" />
-            <class vtable="0x009163CC" name="item_coffin" />
-            <class vtable="0x009166A4" name="item_statue" />
-            <class vtable="0x0091697C" name="item_quern" />
-            <class vtable="0x00916C54" name="item_millstone" />
-            <class vtable="0x00916F2C" name="item_bin" />
-            <class vtable="0x00917204" name="item_armorstand" />
-            <class vtable="0x009174DC" name="item_weaponrack" />
-            <class vtable="0x009177B4" name="item_cabinet" />
-            <class vtable="0x00917A8C" name="item_figurine" />
-            <class vtable="0x00917D64" name="item_amulet" />
-            <class vtable="0x0091803C" name="item_scepter" />
-            <class vtable="0x00918314" name="item_crown" />
-            <class vtable="0x009185EC" name="item_ring" />
-            <class vtable="0x009188C4" name="item_earring" />
-            <class vtable="0x00918B9C" name="item_bracelet" />
-            <class vtable="0x00918E74" name="item_gem" />
-            <class vtable="0x0091914C" name="item_anvil" />
-            <class vtable="0x00919424" name="item_totem" />
-            <class vtable="0x009196FC" name="item_catapultparts" />
-            <class vtable="0x009199D4" name="item_ballistaparts" />
-            <class vtable="0x00919CAC" name="item_siegeammo" />
-            <class vtable="0x00919F84" name="item_pipe_section" />
-            <class vtable="0x0091A25C" name="item_trapparts" />
-            <class vtable="0x0091A534" name="item_trapcomp" />
-        </VTable>
-        <VTable name="viewsceen_vtable">
-            <class vtable="0x008E6428" name="viewscreen_conversation" />
-            <class vtable="0x008ED474" name="viewscreen_option" />
-            <class vtable="0x008ED4A0" name="viewscreen_loadgame" />
-            <class vtable="0x008ED4CC" name="viewscreen_savegame" />
-            <class vtable="0x008ED4F8" name="viewscreen_customize_unit" />
-            <class vtable="0x008ED524" name="viewscreen_unit" />
-            <class vtable="0x008ED614" name="viewscreen_layer" />
-            <class vtable="0x008ED640" name="viewscreen_layer_workshop_profile" />
-            <class vtable="0x008ED66C" name="viewscreen_layer_unit_relationship" />
-            <class vtable="0x008ED698" name="viewscreen_layer_musicsound" />
-            <class vtable="0x008ED6C4" name="viewscreen_layer_export_play_map" />
-            <class vtable="0x008ED7B8" name="viewscreen_layer_world_gen_param" />
-            <class vtable="0x008ED7E4" name="viewscreen_layer_world_gen_param_preset" />
-            <class vtable="0x008ED810" name="viewscreen_layer_stockpile" />
-            <class vtable="0x008F01C0" name="viewscreen_dungeonmode" />
-            <class vtable="0x008F01EC" name="viewscreen_adventure_travel" />
-            <class vtable="0x008F0218" name="viewscreen_adventure_log" />
-            <class vtable="0x008F0244" name="viewscreen_dungeon_wrestle" />
-            <class vtable="0x008F0270" name="viewscreen_dungeon_monsterstatus" />
-            <class vtable="0x008F029C" name="viewscreen_dungeon_announce" />
-            <class vtable="0x008F02C8" name="viewscreen_setupadventure" />
-            <class vtable="0x008F0674" name="viewscreen_dwarfmode" />
-            <class vtable="0x008F06A4" name="viewscreen_selectitem" />
-            <class vtable="0x0090080C" name="viewscreen_export_graphical_map" />
-            <class vtable="0x00900838" name="viewscreen_export_region" />
-            <class vtable="0x00900864" name="viewscreen_new_region" />
-            <class vtable="0x00900890" name="viewscreen_legends" />
-            <class vtable="0x009008BC" name="viewscreen_title" />
-            <class vtable="0x009008E8" name="viewscreen_game_cleaner" />
-            <class vtable="0x00900914" name="viewscreen_announcelist" />
-            <class vtable="0x00900940" name="viewscreen_kitchenpref" />
-            <class vtable="0x0090096C" name="viewscreen_pet" />
-            <class vtable="0x00900998" name="viewscreen_price" />
-            <class vtable="0x009009C4" name="viewscreen_justice" />
-            <class vtable="0x009009F0" name="viewscreen_overallstatus" />
-            <class vtable="0x00900A1C" name="viewscreen_stores" />
-            <class vtable="0x00900A48" name="viewscreen_wages" />
-            <class vtable="0x00900A74" name="viewscreen_jobmanagement" />
-            <class vtable="0x00900AA0" name="viewscreen_createquota" />
-            <class vtable="0x00900ACC" name="viewscreen_unitjobs" />
-            <class vtable="0x00900AF8" name="viewscreen_treasurelist" />
-            <class vtable="0x00900B24" name="viewscreen_entity" />
-            <class vtable="0x00900B50" name="viewscreen_civlist" />
-            <class vtable="0x00900B7C" name="viewscreen_squad" />
-            <class vtable="0x00900BA8" name="viewscreen_commandchain" />
-            <class vtable="0x00900BD4" name="viewscreen_buildinglist" />
-            <class vtable="0x00900C00" name="viewscreen_noble" />
-            <class vtable="0x00900C2C" name="viewscreen_item" />
-            <class vtable="0x00900C58" name="viewscreen_building" />
-            <class vtable="0x00900C84" name="viewscreen_job" />
-            <class vtable="0x00900CB0" name="viewscreen_layer_noblelist" />
-            <class vtable="0x00900CDC" name="viewscreen_layer_stone_restriction" />
-            <class vtable="0x00900D08" name="viewscreen_layer_reaction" />
-            <class vtable="0x00900D34" name="viewscreen_layer_currency" />
-            <class vtable="0x00910A14" name="viewscreen_movieplayer" />
-            <class vtable="0x0092A1A8" name="viewscreen_keybindings" />
-            <class vtable="0x0092E984" name="viewscreen_textviewer" />
-            <class vtable="0x0092E9B0" name="viewscreen_tradelist" />
-            <class vtable="0x0092E9DC" name="viewscreen_tradegoods" />
-            <class vtable="0x0092EA08" name="viewscreen_barter" />
-            <class vtable="0x0092EA34" name="viewscreen_meeting" />
-            <class vtable="0x0092EA60" name="viewscreen_topicmeeting" />
-            <class vtable="0x0092EA8C" name="viewscreen_topicmeeting_takerequests" />
-            <class vtable="0x0092EAB8" name="viewscreen_tradeagreement" />
-            <class vtable="0x0092EAE4" name="viewscreen_requestagreement" />
-            <class vtable="0x0092EB10" name="viewscreen_layer_assigntrade" />
-            <class vtable="0x00935174" name="viewscreen_choose_start_site" />
-            <class vtable="0x009351A0" name="viewscreen_setupdwarfgame" />
-            <class vtable="0x009351CC" name="viewscreen_layer_choose_language_name" />
-        </VTable>
+        
         <Offset name="item_type_name">0x24</Offset>
         <Offset name="matgloss_creature_name">0x1C</Offset>
         <Offset name="matgloss_wood_name">0x28</Offset>
@@ -1156,168 +1166,6 @@
         <Address name="settlement_current">0x16385DC</Address>
         <Address name="settlements">0x1638510</Address>
         
-        <VTable name="viewscreen_vtable">
-            <class vtable="0x0092014C" name="viewscreen_conversation" />
-            <class vtable="0x0092752C" name="viewscreen_option" />
-            <class vtable="0x00927550" name="viewscreen_loadgame" />
-            <class vtable="0x00927574" name="viewscreen_savegame" />
-            <class vtable="0x00927598" name="viewscreen_customize_unit" />
-            <class vtable="0x009275BC" name="viewscreen_unit" />
-            <class vtable="0x009276A4" name="viewscreen_layer" />
-            <class vtable="0x009276C8" name="viewscreen_layer_workshop_profile" />
-            <class vtable="0x009276EC" name="viewscreen_layer_unit_relationship" />
-            <class vtable="0x00927710" name="viewscreen_layer_musicsound" />
-            <class vtable="0x00927734" name="viewscreen_layer_export_play_map" />
-            <class vtable="0x00927820" name="viewscreen_layer_world_gen_param" />
-            <class vtable="0x00927844" name="viewscreen_layer_world_gen_param_preset" />
-            <class vtable="0x00927868" name="viewscreen_layer_stockpile" />
-            <class vtable="0x0092A210" name="viewscreen_dungeonmode" />
-            <class vtable="0x0092A234" name="viewscreen_adventure_travel" />
-            <class vtable="0x0092A258" name="viewscreen_adventure_log" />
-            <class vtable="0x0092A27C" name="viewscreen_dungeon_wrestle" />
-            <class vtable="0x0092A2A0" name="viewscreen_dungeon_monsterstatus" />
-            <class vtable="0x0092A2C4" name="viewscreen_dungeon_announce" />
-            <class vtable="0x0092A2E8" name="viewscreen_setupadventure" />
-            <class vtable="0x0092A68C" name="viewscreen_dwarfmode" />
-            <class vtable="0x0092A6B4" name="viewscreen_selectitem" />
-            <class vtable="0x0093A394" name="viewscreen_export_graphical_map" />
-            <class vtable="0x0093A3B8" name="viewscreen_export_region" />
-            <class vtable="0x0093A3DC" name="viewscreen_new_region" />
-            <class vtable="0x0093A400" name="viewscreen_legends" />
-            <class vtable="0x0093A424" name="viewscreen_title" />
-            <class vtable="0x0093A448" name="viewscreen_game_cleaner" />
-            <class vtable="0x0093A46C" name="viewscreen_announcelist" />
-            <class vtable="0x0093A490" name="viewscreen_kitchenpref" />
-            <class vtable="0x0093A4B4" name="viewscreen_pet" />
-            <class vtable="0x0093A4D8" name="viewscreen_price" />
-            <class vtable="0x0093A4FC" name="viewscreen_justice" />
-            <class vtable="0x0093A520" name="viewscreen_overallstatus" />
-            <class vtable="0x0093A544" name="viewscreen_stores" />
-            <class vtable="0x0093A568" name="viewscreen_wages" />
-            <class vtable="0x0093A58C" name="viewscreen_jobmanagement" />
-            <class vtable="0x0093A5B0" name="viewscreen_createquota" />
-            <class vtable="0x0093A5D4" name="viewscreen_unitjobs" />
-            <class vtable="0x0093A5F8" name="viewscreen_treasurelist" />
-            <class vtable="0x0093A61C" name="viewscreen_entity" />
-            <class vtable="0x0093A640" name="viewscreen_civlist" />
-            <class vtable="0x0093A664" name="viewscreen_squad" />
-            <class vtable="0x0093A688" name="viewscreen_commandchain" />
-            <class vtable="0x0093A6AC" name="viewscreen_buildinglist" />
-            <class vtable="0x0093A6D0" name="viewscreen_noble" />
-            <class vtable="0x0093A6F4" name="viewscreen_item" />
-            <class vtable="0x0093A718" name="viewscreen_building" />
-            <class vtable="0x0093A73C" name="viewscreen_job" />
-            <class vtable="0x0093A760" name="viewscreen_layer_noblelist" />
-            <class vtable="0x0093A784" name="viewscreen_layer_stone_restriction" />
-            <class vtable="0x0093A7A8" name="viewscreen_layer_reaction" />
-            <class vtable="0x0093A7CC" name="viewscreen_layer_currency" />
-            <class vtable="0x0094AA84" name="viewscreen_movieplayer" />
-            <class vtable="0x0095F85C" name="viewscreen_textviewer" />
-            <class vtable="0x0095F880" name="viewscreen_tradelist" />
-            <class vtable="0x0095F8A4" name="viewscreen_tradegoods" />
-            <class vtable="0x0095F8C8" name="viewscreen_barter" />
-            <class vtable="0x0095F8EC" name="viewscreen_meeting" />
-            <class vtable="0x0095F910" name="viewscreen_topicmeeting" />
-            <class vtable="0x0095F934" name="viewscreen_topicmeeting_takerequests" />
-            <class vtable="0x0095F958" name="viewscreen_tradeagreement" />
-            <class vtable="0x0095F97C" name="viewscreen_requestagreement" />
-            <class vtable="0x0095F9A0" name="viewscreen_layer_assigntrade" />
-            <class vtable="0x00965FFC" name="viewscreen_choose_start_site" />
-            <class vtable="0x00966020" name="viewscreen_setupdwarfgame" />
-            <class vtable="0x00966044" name="viewscreen_layer_choose_language_name" />
-        </VTable>
-        <VTable name="item_vtable">
-            <class vtable="0x0091A084" name="item_liquid_misc" />
-            <class vtable="0x0091A35C" name="item_remains" />
-            <class vtable="0x0091A634" name="item_vermin" />
-            <class vtable="0x0091A90C" name="item_plant" />
-            <class vtable="0x00929C04" name="item_glob" />
-            <class vtable="0x0092BA04" name="item_meat" />
-            <class vtable="0x0092BCDC" name="item_fish" />
-            <class vtable="0x0092C564" name="item_door" />
-            <class vtable="0x0092C83C" name="item_bed" />
-            <class vtable="0x0092CB14" name="item_chair" />
-            <class vtable="0x0092CDEC" name="item_flask" />
-            <class vtable="0x0092D0C4" name="item_barrel" />
-            <class vtable="0x0092D39C" name="item_table" />
-            <class vtable="0x0092D674" name="item_weapon" />
-            <class vtable="0x0092D94C" name="item_armor" />
-            <class vtable="0x0092DC24" name="item_shoes" />
-            <class vtable="0x0092DEFC" name="item_shield" />
-            <class vtable="0x0092E1D4" name="item_helm" />
-            <class vtable="0x0092E4AC" name="item_gloves" />
-            <class vtable="0x0092E784" name="item_box" />
-            <class vtable="0x0092EA5C" name="item_ammo" />
-            <class vtable="0x0092ED34" name="item_pants" />
-            <class vtable="0x0092F00C" name="item_backpack" />
-            <class vtable="0x0092F2E4" name="item_quiver" />
-            <class vtable="0x0092F5BC" name="item_coin" />
-            <class vtable="0x00930224" name="item_powder_misc" />
-            <class vtable="0x0093053C" name="item_corpse" />
-            <class vtable="0x00930814" name="item_corpsepiece" />
-            <class vtable="0x00930AEC" name="item_chain" />
-            <class vtable="0x00930DC4" name="item_cage" />
-            <class vtable="0x00938FDC" name="item_seeds" />
-            <class vtable="0x009392B4" name="item_skin_raw" />
-            <class vtable="0x0093958C" name="item_bones" />
-            <class vtable="0x00939864" name="item_skull" />
-            <class vtable="0x00939B3C" name="item_thread" />
-            <class vtable="0x0093A314" name="item_stolen" />
-            <class vtable="0x0094A1EC" name="item_improvement" />
-            <class vtable="0x0094B494" name="item_bar" />
-            <class vtable="0x0094B76C" name="item_smallgem" />
-            <class vtable="0x0094BA44" name="item_blocks" />
-            <class vtable="0x0094BD1C" name="item_rough" />
-            <class vtable="0x0094BFF4" name="item_stone" />
-            <class vtable="0x0094C2CC" name="item_rock" />
-            <class vtable="0x0094C5A4" name="item_wood" />
-            <class vtable="0x0094C87C" name="item_extract" />
-            <class vtable="0x0094CB54" name="item_potion" />
-            <class vtable="0x0094CE2C" name="item_drink" />
-            <class vtable="0x0094D104" name="item_fish_raw" />
-            <class vtable="0x0094D3DC" name="item_pet" />
-            <class vtable="0x0094D6B4" name="item_skin_tanned" />
-            <class vtable="0x0094D98C" name="item_shell" />
-            <class vtable="0x0094DC64" name="item_leaves" />
-            <class vtable="0x0094DF3C" name="item_ballistaarrowhead" />
-            <class vtable="0x0094E214" name="item_cheese" />
-            <class vtable="0x0094E4EC" name="item_food" />
-            <class vtable="0x0094E7C4" name="item_cloth" />
-            <class vtable="0x0094EA9C" name="item_floodgate" />
-            <class vtable="0x0094ED74" name="item_hatch_cover" />
-            <class vtable="0x0094F04C" name="item_grate" />
-            <class vtable="0x0094F324" name="item_goblet" />
-            <class vtable="0x0094F5FC" name="item_instrument" />
-            <class vtable="0x0094F8D4" name="item_toy" />
-            <class vtable="0x0094FBAC" name="item_window" />
-            <class vtable="0x0094FE84" name="item_bucket" />
-            <class vtable="0x0095015C" name="item_animaltrap" />
-            <class vtable="0x00950434" name="item_coffin" />
-            <class vtable="0x0095070C" name="item_statue" />
-            <class vtable="0x009509E4" name="item_quern" />
-            <class vtable="0x00950CBC" name="item_millstone" />
-            <class vtable="0x00950F94" name="item_bin" />
-            <class vtable="0x0095126C" name="item_armorstand" />
-            <class vtable="0x00951544" name="item_weaponrack" />
-            <class vtable="0x0095181C" name="item_cabinet" />
-            <class vtable="0x00951AF4" name="item_figurine" />
-            <class vtable="0x00951DCC" name="item_amulet" />
-            <class vtable="0x009520A4" name="item_scepter" />
-            <class vtable="0x0095237C" name="item_crown" />
-            <class vtable="0x00952654" name="item_ring" />
-            <class vtable="0x0095292C" name="item_earring" />
-            <class vtable="0x00952C04" name="item_bracelet" />
-            <class vtable="0x00952EDC" name="item_gem" />
-            <class vtable="0x009531B4" name="item_anvil" />
-            <class vtable="0x0095348C" name="item_totem" />
-            <class vtable="0x00953764" name="item_catapultparts" />
-            <class vtable="0x00953A3C" name="item_ballistaparts" />
-            <class vtable="0x00953D14" name="item_siegeammo" />
-            <class vtable="0x00953FEC" name="item_pipe_section" />
-            <class vtable="0x009542C4" name="item_trapparts" />
-            <class vtable="0x0095459C" name="item_trapcomp" />
-            <class vtable="0x0095BDCC" name="item_type" />
-        </VTable>
         <VTable name="building_vtable">
             <!-- typeoffsets and sub-classes don't change here, only vtable addresses -->
             <multiclass vtable="0x0091DEA4" name="building_workshop" /> <!--typeoffset="0xAC"-->
@@ -1366,10 +1214,6 @@
             <class vtable="0x0091E2DC" name="building_road_dirt" />
             <class vtable="0x0091E444" name="building_road_paved" />
             <class vtable="0x0091E5AC" name="building_construction" />
-        </VTable>
-        <VTable name = "vein_vtable">
-            <class vtable="0x00918cd0" name="block_square_event_frozen_liquid" />
-            <class vtable="0x00918cb8" name="block_square_event_mineral" />
         </VTable>
     </Entry>
     
@@ -1421,173 +1265,6 @@
         <Address name="settlement_current">0x016D4BD4</Address>
         <Address name="settlements">0x16D4B08</Address>
         
-        <VTable name="viewscreen_vtable">
-            <class vtable="0x008FE62C" name="viewscreen_conversation" />
-            <class vtable="0x00905A0C" name="viewscreen_option" />
-            <class vtable="0x00905A30" name="viewscreen_loadgame" />
-            <class vtable="0x00905A54" name="viewscreen_savegame" />
-            <class vtable="0x00905A78" name="viewscreen_customize_unit" />
-            <class vtable="0x00905A9C" name="viewscreen_unit" />
-            <class vtable="0x00905B84" name="viewscreen_layer" />
-            <class vtable="0x00905BA8" name="viewscreen_layer_workshop_profile" />
-            <class vtable="0x00905BCC" name="viewscreen_layer_unit_relationship" />
-            <class vtable="0x00905BF0" name="viewscreen_layer_musicsound" />
-            <class vtable="0x00905C14" name="viewscreen_layer_export_play_map" />
-            <class vtable="0x00905D00" name="viewscreen_layer_world_gen_param" />
-            <class vtable="0x00905D24" name="viewscreen_layer_world_gen_param_preset" />
-            <class vtable="0x00905D48" name="viewscreen_layer_stockpile" />
-            <class vtable="0x009086F0" name="viewscreen_dungeonmode" />
-            <class vtable="0x00908714" name="viewscreen_adventure_travel" />
-            <class vtable="0x00908738" name="viewscreen_adventure_log" />
-            <class vtable="0x0090875C" name="viewscreen_dungeon_wrestle" />
-            <class vtable="0x00908780" name="viewscreen_dungeon_monsterstatus" />
-            <class vtable="0x009087A4" name="viewscreen_dungeon_announce" />
-            <class vtable="0x009087C8" name="viewscreen_setupadventure" />
-            <class vtable="0x00908B6C" name="viewscreen_dwarfmode" />
-            <class vtable="0x00908B94" name="viewscreen_selectitem" />
-            <class vtable="0x009188A4" name="viewscreen_export_graphical_map" />
-            <class vtable="0x009188C8" name="viewscreen_export_region" />
-            <class vtable="0x009188EC" name="viewscreen_new_region" />
-            <class vtable="0x00918910" name="viewscreen_legends" />
-            <class vtable="0x00918934" name="viewscreen_title" />
-            <class vtable="0x00918958" name="viewscreen_game_cleaner" />
-            <class vtable="0x0091897C" name="viewscreen_announcelist" />
-            <class vtable="0x009189A0" name="viewscreen_kitchenpref" />
-            <class vtable="0x009189C4" name="viewscreen_pet" />
-            <class vtable="0x009189E8" name="viewscreen_price" />
-            <class vtable="0x00918A0C" name="viewscreen_justice" />
-            <class vtable="0x00918A30" name="viewscreen_overallstatus" />
-            <class vtable="0x00918A54" name="viewscreen_stores" />
-            <class vtable="0x00918A78" name="viewscreen_wages" />
-            <class vtable="0x00918A9C" name="viewscreen_jobmanagement" />
-            <class vtable="0x00918AC0" name="viewscreen_createquota" />
-            <class vtable="0x00918AE4" name="viewscreen_unitjobs" />
-            <class vtable="0x00918B08" name="viewscreen_treasurelist" />
-            <class vtable="0x00918B2C" name="viewscreen_entity" />
-            <class vtable="0x00918B50" name="viewscreen_civlist" />
-            <class vtable="0x00918B74" name="viewscreen_squad" />
-            <class vtable="0x00918B98" name="viewscreen_commandchain" />
-            <class vtable="0x00918BBC" name="viewscreen_buildinglist" />
-            <class vtable="0x00918BE0" name="viewscreen_noble" />
-            <class vtable="0x00918C04" name="viewscreen_item" />
-            <class vtable="0x00918C28" name="viewscreen_building" />
-            <class vtable="0x00918C4C" name="viewscreen_job" />
-            <class vtable="0x00918C70" name="viewscreen_layer_noblelist" />
-            <class vtable="0x00918C94" name="viewscreen_layer_stone_restriction" />
-            <class vtable="0x00918CB8" name="viewscreen_layer_reaction" />
-            <class vtable="0x00918CDC" name="viewscreen_layer_currency" />
-            <class vtable="0x00928FD4" name="viewscreen_movieplayer" />
-            <class vtable="0x0093DDAC" name="viewscreen_textviewer" />
-            <class vtable="0x0093DDD0" name="viewscreen_tradelist" />
-            <class vtable="0x0093DDF4" name="viewscreen_tradegoods" />
-            <class vtable="0x0093DE18" name="viewscreen_barter" />
-            <class vtable="0x0093DE3C" name="viewscreen_meeting" />
-            <class vtable="0x0093DE60" name="viewscreen_topicmeeting" />
-            <class vtable="0x0093DE84" name="viewscreen_topicmeeting_takerequests" />
-            <class vtable="0x0093DEA8" name="viewscreen_tradeagreement" />
-            <class vtable="0x0093DECC" name="viewscreen_requestagreement" />
-            <class vtable="0x0093DEF0" name="viewscreen_layer_assigntrade" />
-            <class vtable="0x0094454C" name="viewscreen_choose_start_site" />
-            <class vtable="0x00944570" name="viewscreen_setupdwarfgame" />
-            <class vtable="0x00944594" name="viewscreen_layer_choose_language_name" />
-        </VTable>
-        <VTable name="item_vtable">
-            <class vtable="0x008F828C" name="item_actual" />
-            <class vtable="0x008F8564" name="item_liquid_misc" />
-            <class vtable="0x008F883C" name="item_remains" />
-            <class vtable="0x008F8B14" name="item_vermin" />
-            <class vtable="0x008F8DEC" name="item_plant" />
-            <class vtable="0x009059DC" name="item_designation" />
-            <class vtable="0x009080E4" name="item_glob" />
-            <class vtable="0x0090851C" name="item_contaminant" />
-            <class vtable="0x00909F14" name="item_meat" />
-            <class vtable="0x0090A1EC" name="item_fish" />
-            <class vtable="0x0090A4C4" name="item_crafted" />
-            <class vtable="0x0090A79C" name="item_constructed" />
-            <class vtable="0x0090AA74" name="item_door" />
-            <class vtable="0x0090AD4C" name="item_bed" />
-            <class vtable="0x0090B024" name="item_chair" />
-            <class vtable="0x0090B2FC" name="item_flask" />
-            <class vtable="0x0090B5D4" name="item_barrel" />
-            <class vtable="0x0090B8AC" name="item_table" />
-            <class vtable="0x0090BB84" name="item_weapon" />
-            <class vtable="0x0090BE5C" name="item_armor" />
-            <class vtable="0x0090C134" name="item_shoes" />
-            <class vtable="0x0090C40C" name="item_shield" />
-            <class vtable="0x0090C6E4" name="item_helm" />
-            <class vtable="0x0090C9BC" name="item_gloves" />
-            <class vtable="0x0090CC94" name="item_box" />
-            <class vtable="0x0090CF6C" name="item_ammo" />
-            <class vtable="0x0090D244" name="item_pants" />
-            <class vtable="0x0090D51C" name="item_backpack" />
-            <class vtable="0x0090D7F4" name="item_quiver" />
-            <class vtable="0x0090DACC" name="item_coin" />
-            <class vtable="0x0090E734" name="item_powder_misc" />
-            <class vtable="0x0090EA4C" name="item_corpse" />
-            <class vtable="0x0090ED24" name="item_corpsepiece" />
-            <class vtable="0x0090EFFC" name="item_chain" />
-            <class vtable="0x0090F2D4" name="item_cage" />
-            <class vtable="0x009174EC" name="item_seeds" />
-            <class vtable="0x009177C4" name="item_skin_raw" />
-            <class vtable="0x00917A9C" name="item_bones" />
-            <class vtable="0x00917D74" name="item_skull" />
-            <class vtable="0x0091804C" name="item_thread" />
-            <class vtable="0x00918824" name="item_stolen" />
-            <class vtable="0x009286FC" name="item_improvement" />
-            <class vtable="0x009299E4" name="item_bar" />
-            <class vtable="0x00929CBC" name="item_smallgem" />
-            <class vtable="0x00929F94" name="item_blocks" />
-            <class vtable="0x0092A26C" name="item_rough" />
-            <class vtable="0x0092A544" name="item_stone" />
-            <class vtable="0x0092A81C" name="item_rock" />
-            <class vtable="0x0092AAF4" name="item_wood" />
-            <class vtable="0x0092ADCC" name="item_extract" />
-            <class vtable="0x0092B0A4" name="item_potion" />
-            <class vtable="0x0092B37C" name="item_drink" />
-            <class vtable="0x0092B654" name="item_fish_raw" />
-            <class vtable="0x0092B92C" name="item_pet" />
-            <class vtable="0x0092BC04" name="item_skin_tanned" />
-            <class vtable="0x0092BEDC" name="item_shell" />
-            <class vtable="0x0092C1B4" name="item_leaves" />
-            <class vtable="0x0092C48C" name="item_ballistaarrowhead" />
-            <class vtable="0x0092C764" name="item_cheese" />
-            <class vtable="0x0092CA3C" name="item_food" />
-            <class vtable="0x0092CD14" name="item_cloth" />
-            <class vtable="0x0092CFEC" name="item_floodgate" />
-            <class vtable="0x0092D2C4" name="item_hatch_cover" />
-            <class vtable="0x0092D59C" name="item_grate" />
-            <class vtable="0x0092D874" name="item_goblet" />
-            <class vtable="0x0092DB4C" name="item_instrument" />
-            <class vtable="0x0092DE24" name="item_toy" />
-            <class vtable="0x0092E0FC" name="item_window" />
-            <class vtable="0x0092E3D4" name="item_bucket" />
-            <class vtable="0x0092E6AC" name="item_animaltrap" />
-            <class vtable="0x0092E984" name="item_coffin" />
-            <class vtable="0x0092EC5C" name="item_statue" />
-            <class vtable="0x0092EF34" name="item_quern" />
-            <class vtable="0x0092F20C" name="item_millstone" />
-            <class vtable="0x0092F4E4" name="item_bin" />
-            <class vtable="0x0092F7BC" name="item_armorstand" />
-            <class vtable="0x0092FA94" name="item_weaponrack" />
-            <class vtable="0x0092FD6C" name="item_cabinet" />
-            <class vtable="0x00930044" name="item_figurine" />
-            <class vtable="0x0093031C" name="item_amulet" />
-            <class vtable="0x009305F4" name="item_scepter" />
-            <class vtable="0x009308CC" name="item_crown" />
-            <class vtable="0x00930BA4" name="item_ring" />
-            <class vtable="0x00930E7C" name="item_earring" />
-            <class vtable="0x00931154" name="item_bracelet" />
-            <class vtable="0x0093142C" name="item_gem" />
-            <class vtable="0x00931704" name="item_anvil" />
-            <class vtable="0x009319DC" name="item_totem" />
-            <class vtable="0x00931CB4" name="item_catapultparts" />
-            <class vtable="0x00931F8C" name="item_ballistaparts" />
-            <class vtable="0x00932264" name="item_siegeammo" />
-            <class vtable="0x0093253C" name="item_pipe_section" />
-            <class vtable="0x00932814" name="item_trapparts" />
-            <class vtable="0x00932AEC" name="item_trapcomp" />
-            <class vtable="0x0093A31C" name="item_type" />
-        </VTable>
         <VTable name="building_vtable">
             <class vtable="0x008F6680" name="building_store" />
             <class vtable="0x008F7D0C" name="building_actual" />
@@ -1640,10 +1317,82 @@
             <class vtable="0x00941CB4" name="building_caged" />
             <class vtable="0x00941CF0" name="building_holder" />
         </VTable>
-        <VTable name = "vein_vtable">
-            <class vtable="0x8f71b0" name="block_square_event_frozen_liquid" />
-            <class vtable="0x8f7198" name="block_square_event_mineral" />
-        </VTable>
+    </Entry>
+    <Entry version="v0.28.181.40d19" os="windows" base="40d18win" id="40d19win">
+        <!-- identification -->
+        <!--<HexValue name="pe_timestamp">0x006BF5AA</HexValue>-->
+        <HexValue name="pe_timestamp">0x4B90268A</HexValue>
+        <String name="md5">13640a273d90af39425b798ae9823757</String> <!-- THIS IS *NOT* A NUMBER -->
+
+        <Address name="map_data">0x01555E14</Address>
+        <!--
+        <Address name="constructions">0x014FE504</Address>
+        <Address name="buildings">0x0151289C</Address>
+        <Address name="vegetation">0x01518A70</Address>
+        <Address name="creatures">0x01511EF0</Address>
+        <Address name="items">0x01511FE4</Address>
+        -->
+        
+        <Address name="constructions">0x014FE500</Address>
+        <Address name="buildings">0x01512898</Address>
+        <Address name="vegetation">0x01518A6C</Address>
+        <Address name="creatures">0x01511EEC</Address>
+        <Address name="items">0x01511FE0</Address>
+        
+        <!-- translation tables -->
+        <!--
+        <Address name="translation_vector">0x015581C8</Address>
+        <Address name="language_vector">0x01558198</Address>
+        -->
+        <Address name="translation_vector">0x015581C4</Address>
+        <Address name="language_vector">0x01558194</Address>
+
+        <!-- size of the map -->
+        <Address name="x_count">0x01555E34</Address>
+        <Address name="y_count">0x01555E38</Address>
+        <Address name="z_count">0x01555E3C</Address>
+
+        <!-- position of the map in world coords -->
+        <Address name="region_x">0x01555E4C</Address>
+        <Address name="region_y">0x01555E50</Address>
+        <Address name="region_z">0x01555E54</Address>
+
+        <!-- the world and its offsets -->
+        <Address name="world">0x0155744C</Address>
+        <!-- matgloss vectors -->
+        <Address name="matgloss">0x01557F84</Address>
+        
+        <Address name="cursor_xyz">0x0097A2B8</Address>
+        <Address name="window_x">0x00CF4230</Address>
+        <Address name="window_y">0x00D222DC</Address>
+        <Address name="window_z">0x00D222B8</Address>
+        <Address name="window_dims">0x0169AF28</Address>
+        <Address name="current_menu_state">0x016AC1A0</Address>
+        <Address name="pause_state">0x0132FF1E</Address>
+        <Address name="view_screen">0x013439FC</Address>
+        <!--<Address name="current_cursor_creature">0x016ABFCC</Address>-->
+        <Address name="current_cursor_creature">0x016ABFC8</Address>
+        
+        <!--
+        <Address name="notes">0x01558198</Address>     
+        <Address name="hotkey_start">0x01343714</Address>
+        
+        <Address name="settlement_current">0x01557C18</Address>
+        <Address name="settlements">0x01557B4C</Address>
+        
+        -->
+        <Address name="notes">0x01558194</Address>     
+        <Address name="hotkey_start">0x01343710</Address>
+        
+        <Address name="settlement_current">0x01557C14</Address>
+        <Address name="settlements">0x01557B48</Address>
+
+        <VTable name="building_vtable" rebase="0x2018" />
+    </Entry>
+    <Entry version="v0.28.181.40d19_2" os="windows" base="40d19win" id="40d19_2win" rebase="0x1000">
+        <HexValue name="pe_timestamp">0x4B918BB9</HexValue>
+        <String name="md5">af29004e1763bb3460faa11907c3ac90</String>
+        <VTable name="building_vtable" rebase="0x1000" />
     </Entry>
                             .-"""-.
                            '       \
@@ -1981,168 +1730,6 @@
         <Offset name="engraving_xyz">0x0C</Offset> <!-- 3x word -->
         <Offset name="engraving_imageindex">0x20</Offset> <!-- 1x dword -->
         
-        <VTable name="viewscreen_vtable">
-            <class vtable="0x086CA668" name="viewscreen_conversation" />
-            <class vtable="0x086D52A8" name="viewscreen_setupadventure" />
-            <class vtable="0x086D53A8" name="viewscreen_dungeon_announce" />
-            <class vtable="0x086D52E8" name="viewscreen_dungeon_monsterstatus" />
-            <class vtable="0x086D5328" name="viewscreen_dungeon_wrestle" />
-            <class vtable="0x086D5368" name="viewscreen_adventure_log" />
-            <class vtable="0x086D5428" name="viewscreen_adventure_travel" />
-            <class vtable="0x086D53E8" name="viewscreen_dungeonmode" />
-            <class vtable="0x086D6828" name="viewscreen_selectitem" />
-            <class vtable="0x086D6868" name="viewscreen_dwarfmode" />
-            <class vtable="0x086DC8C8" name="viewscreen_layer_stockpile" />
-            <class vtable="0x086DC888" name="viewscreen_layer_world_gen_param_preset" />
-            <class vtable="0x086DC848" name="viewscreen_layer_world_gen_param" />
-            <class vtable="0x086DC808" name="viewscreen_layer_export_play_map" />
-            <class vtable="0x086DC7C8" name="viewscreen_layer_musicsound" />
-            <class vtable="0x086DC788" name="viewscreen_layer_unit_relationship" />
-            <class vtable="0x086DC748" name="viewscreen_layer_workshop_profile" />
-            <class vtable="0x086DCA08" name="viewscreen_layer" />
-            <class vtable="0x086DCAE8" name="viewscreen_unit" />
-            <class vtable="0x086DCB28" name="viewscreen_customize_unit" />
-            <class vtable="0x086DCB68" name="viewscreen_savegame" />
-            <class vtable="0x086DCAA8" name="viewscreen_loadgame" />
-            <class vtable="0x086DCCA8" name="viewscreen_option" />
-            <class vtable="0x086E80E8" name="viewscreen_layer_currency" />
-            <class vtable="0x086E8128" name="viewscreen_layer_reaction" />
-            <class vtable="0x086E8168" name="viewscreen_layer_stone_restriction" />
-            <class vtable="0x086E80A8" name="viewscreen_layer_noblelist" />
-            <class vtable="0x086E7F68" name="viewscreen_job" />
-            <class vtable="0x086E7FA8" name="viewscreen_building" />
-            <class vtable="0x086E7FE8" name="viewscreen_item" />
-            <class vtable="0x086E8068" name="viewscreen_noble" />
-            <class vtable="0x086E81A8" name="viewscreen_buildinglist" />
-            <class vtable="0x086E8228" name="viewscreen_commandchain" />
-            <class vtable="0x086E8268" name="viewscreen_squad" />
-            <class vtable="0x086E82A8" name="viewscreen_civlist" />
-            <class vtable="0x086E82E8" name="viewscreen_entity" />
-            <class vtable="0x086E8328" name="viewscreen_treasurelist" />
-            <class vtable="0x086E8368" name="viewscreen_unitjobs" />
-            <class vtable="0x086E83A8" name="viewscreen_createquota" />
-            <class vtable="0x086E83E8" name="viewscreen_jobmanagement" />
-            <class vtable="0x086E8428" name="viewscreen_wages" />
-            <class vtable="0x086E8028" name="viewscreen_stores" />
-            <class vtable="0x086E81E8" name="viewscreen_overallstatus" />
-            <class vtable="0x086E84A8" name="viewscreen_justice" />
-            <class vtable="0x086E8468" name="viewscreen_price" />
-            <class vtable="0x086E84E8" name="viewscreen_pet" />
-            <class vtable="0x086E8528" name="viewscreen_kitchenpref" />
-            <class vtable="0x086E8568" name="viewscreen_announcelist" />
-            <class vtable="0x086E85E8" name="viewscreen_game_cleaner" />
-            <class vtable="0x086E85A8" name="viewscreen_title" />
-            <class vtable="0x086E86E8" name="viewscreen_legends" />
-            <class vtable="0x086E8628" name="viewscreen_new_region" />
-            <class vtable="0x086E8668" name="viewscreen_export_region" />
-            <class vtable="0x086E86A8" name="viewscreen_export_graphical_map" />
-            <class vtable="0x08709C28" name="viewscreen_layer_assigntrade" />
-            <class vtable="0x08709AE8" name="viewscreen_requestagreement" />
-            <class vtable="0x08709A28" name="viewscreen_tradeagreement" />
-            <class vtable="0x08709A68" name="viewscreen_topicmeeting_takerequests" />
-            <class vtable="0x08709AA8" name="viewscreen_topicmeeting" />
-            <class vtable="0x08709B28" name="viewscreen_meeting" />
-            <class vtable="0x08709BA8" name="viewscreen_barter" />
-            <class vtable="0x08709B68" name="viewscreen_tradegoods" />
-            <class vtable="0x08709BE8" name="viewscreen_tradelist" />
-            <class vtable="0x087099E8" name="viewscreen_textviewer" />
-            <class vtable="0x08713228" name="viewscreen_layer_choose_language_name" />
-            <class vtable="0x087131E8" name="viewscreen_setupdwarfgame" />
-            <class vtable="0x08713268" name="viewscreen_choose_start_site" />     
-        </VTable>
-        <VTable name="item_vtable">
-            <class vtable="0x086F5A08" name="item_coin" />
-            <class vtable="0x086F9C28" name="item_trapcomp" />
-            <class vtable="0x086F9F08" name="item_siegeammo" />
-            <class vtable="0x086F5FC8" name="item_quiver" />
-            <class vtable="0x086F62A8" name="item_backpack" />
-            <class vtable="0x086FA1E8" name="item_pants" />
-            <class vtable="0x086F8528" name="item_totem" />
-            <class vtable="0x086F33E8" name="item_anvil" />
-            <class vtable="0x086F6588" name="item_gem" />
-            <class vtable="0x086F6868" name="item_bracelet" />
-            <class vtable="0x086F6B48" name="item_earring" />
-            <class vtable="0x086F6E28" name="item_ring" />
-            <class vtable="0x086F7108" name="item_crown" />
-            <class vtable="0x086FA7A8" name="item_ammo" />
-            <class vtable="0x086F73E8" name="item_scepter" />
-            <class vtable="0x086F76C8" name="item_amulet" />
-            <class vtable="0x086F79A8" name="item_figurine" />
-            <class vtable="0x086F9668" name="item_bin" />
-            <class vtable="0x086F9388" name="item_box" />
-            <class vtable="0x086FAA88" name="item_gloves" />
-            <class vtable="0x086FAD68" name="item_helm" />
-            <class vtable="0x086FB048" name="item_shield" />
-            <class vtable="0x086FB328" name="item_shoes" />
-            <class vtable="0x086FB608" name="item_armor" />
-            <class vtable="0x086FB8E8" name="item_weapon" />
-            <class vtable="0x086FC748" name="item_animaltrap" />
-            <class vtable="0x086F9948" name="item_barrel" />
-            <class vtable="0x086FC468" name="item_cage" />
-            <class vtable="0x086FBBC8" name="item_toy" />
-            <class vtable="0x086FBEA8" name="item_instrument" />
-            <class vtable="0x086F7C88" name="item_goblet" />
-            <class vtable="0x086FCD08" name="item_flask" />
-            <class vtable="0x086F7F68" name="item_chain" />
-            <class vtable="0x086FE128" name="item_hatch_cover" />
-            <class vtable="0x086FDE48" name="item_floodgate" />
-            <class vtable="0x086FE408" name="item_door" />
-            <class vtable="0x086F8248" name="item_cloth" />
-            <class vtable="0x086D8A08" name="item_constructed" />
-            <class vtable="0x086FA4C8" name="item_food" />
-            <class vtable="0x086F3F68" name="item_crafted" />
-            <class vtable="0x086F90A8" name="item_thread" />
-            <class vtable="0x086F4AE8" name="item_cheese" />
-            <class vtable="0x086FCA28" name="item_ballistaarrowhead" />
-            <class vtable="0x086FCFE8" name="item_shell" />
-            <class vtable="0x086FD2C8" name="item_skull" />
-            <class vtable="0x086FE9C8" name="item_bones" />
-            <class vtable="0x086FD5A8" name="item_skin_tanned" />
-            <class vtable="0x086FD888" name="item_skin_raw" />
-            <class vtable="0x086FF828" name="item_pet" />
-            <class vtable="0x086FFB08" name="item_vermin" />
-            <class vtable="0x086F4248" name="item_fish_raw" />
-            <class vtable="0x086F4528" name="item_fish" />
-            <class vtable="0x086FEF88" name="item_meat" />
-            <class vtable="0x086FDB68" name="item_remains" />
-            <class vtable="0x086F5448" name="item_corpsepiece" />
-            <class vtable="0x086FECA8" name="item_glob" />
-            <class vtable="0x086FE6E8" name="item_liquid_misc" />
-            <class vtable="0x086F5CE8" name="item_powder_misc" />
-            <class vtable="0x086F4808" name="item_drink" />
-            <class vtable="0x086F4DC8" name="item_extract" />
-            <class vtable="0x086FF548" name="item_liquipowder" />
-            <class vtable="0x086F5728" name="item_corpse" />
-            <class vtable="0x086F36C8" name="item_wood" />
-            <class vtable="0x086F3C88" name="item_stone" />
-            <class vtable="0x086F39A8" name="item_rough" />
-            <class vtable="0x086F8808" name="item_blocks" />
-            <class vtable="0x086F8AE8" name="item_smallgem" />
-            <class vtable="0x086F8DC8" name="item_bar" />
-            <class vtable="0x086FC188" name="item_actual" />
-            <class vtable="0x087006E8" name="item_rock" />
-            <class vtable="0x087009E8" name="item_grate" />
-            <class vtable="0x08700CE8" name="item_window" />
-            <class vtable="0x08700FE8" name="item_bucket" />
-            <class vtable="0x087012E8" name="item_coffin" />
-            <class vtable="0x087015E8" name="item_statue" />
-            <class vtable="0x087018E8" name="item_quern" />
-            <class vtable="0x08701BE8" name="item_millstone" />
-            <class vtable="0x08701EE8" name="item_armorstand" />
-            <class vtable="0x087021E8" name="item_weaponrack" />
-            <class vtable="0x087024E8" name="item_cabinet" />
-            <class vtable="0x087027E8" name="item_catapultparts" />
-            <class vtable="0x08702AE8" name="item_ballistaparts" />
-            <class vtable="0x08702DE8" name="item_trapparts" />
-            <class vtable="0x087030E8" name="item_potion" />
-            <class vtable="0x087033E8" name="item_pipe_section" />
-            <class vtable="0x08713B48" name="item_leaves" />
-            <class vtable="0x087132A8" name="item_plant" />
-            <class vtable="0x08714108" name="item_seeds" />
-            <class vtable="0x0870038C" name="item_critter" />
-            <class vtable="0x087004A8" name="item_powder" />
-            <class vtable="0x08700484" name="item_liquid" />
-        </VTable>
         <Offset name="item_type_name">0xC</Offset>
         <Offset name="matgloss_creature_name">0x4</Offset>
         <Offset name="matgloss_wood_name">0x10</Offset>
@@ -2205,172 +1792,6 @@
         <Address name="settlement_current">0x08FA4948</Address>
         <Address name="settlements">0x08FA48DC</Address>
         
-        <!--<VTable name="building_vtable" rebase="0xAE20" />--> <!-- Door: 0x86D26E8 -->
-        <VTable name="viewscreen_vtable">
-            <class vtable="0x086D5488" name="viewscreen_conversation" />
-            <class vtable="0x086E0428" name="viewscreen_setupadventure" />
-            <class vtable="0x086E0528" name="viewscreen_dungeon_announce" />
-            <class vtable="0x086E0468" name="viewscreen_dungeon_monsterstatus" />
-            <class vtable="0x086E04A8" name="viewscreen_dungeon_wrestle" />
-            <class vtable="0x086E04E8" name="viewscreen_adventure_log" />
-            <class vtable="0x086E05A8" name="viewscreen_adventure_travel" />
-            <class vtable="0x086E0568" name="viewscreen_dungeonmode" />
-            <class vtable="0x086E19A8" name="viewscreen_selectitem" />
-            <class vtable="0x086E19E8" name="viewscreen_dwarfmode" />
-            <class vtable="0x086E7A48" name="viewscreen_layer_stockpile" />
-            <class vtable="0x086E7A08" name="viewscreen_layer_world_gen_param_preset" />
-            <class vtable="0x086E79C8" name="viewscreen_layer_world_gen_param" />
-            <class vtable="0x086E7988" name="viewscreen_layer_export_play_map" />
-            <class vtable="0x086E7948" name="viewscreen_layer_musicsound" />
-            <class vtable="0x086E7908" name="viewscreen_layer_unit_relationship" />
-            <class vtable="0x086E78C8" name="viewscreen_layer_workshop_profile" />
-            <class vtable="0x086E7B88" name="viewscreen_layer" />
-            <class vtable="0x086E7C68" name="viewscreen_unit" />
-            <class vtable="0x086E7CA8" name="viewscreen_customize_unit" />
-            <class vtable="0x086E7CE8" name="viewscreen_savegame" />
-            <class vtable="0x086E7C28" name="viewscreen_loadgame" />
-            <class vtable="0x086E7E28" name="viewscreen_option" />
-            <class vtable="0x086F2C48" name="viewscreen_layer_currency" />
-            <class vtable="0x086F2C88" name="viewscreen_layer_reaction" />
-            <class vtable="0x086F2CC8" name="viewscreen_layer_stone_restriction" />
-            <class vtable="0x086F2C08" name="viewscreen_layer_noblelist" />
-            <class vtable="0x086F2AC8" name="viewscreen_job" />
-            <class vtable="0x086F2B08" name="viewscreen_building" />
-            <class vtable="0x086F2B48" name="viewscreen_item" />
-            <class vtable="0x086F2BC8" name="viewscreen_noble" />
-            <class vtable="0x086F2D08" name="viewscreen_buildinglist" />
-            <class vtable="0x086F2D88" name="viewscreen_commandchain" />
-            <class vtable="0x086F2DC8" name="viewscreen_squad" />
-            <class vtable="0x086F2E08" name="viewscreen_civlist" />
-            <class vtable="0x086F2E48" name="viewscreen_entity" />
-            <class vtable="0x086F2E88" name="viewscreen_treasurelist" />
-            <class vtable="0x086F2EC8" name="viewscreen_unitjobs" />
-            <class vtable="0x086F2F08" name="viewscreen_createquota" />
-            <class vtable="0x086F2F48" name="viewscreen_jobmanagement" />
-            <class vtable="0x086F2F88" name="viewscreen_wages" />
-            <class vtable="0x086F2B88" name="viewscreen_stores" />
-            <class vtable="0x086F2D48" name="viewscreen_overallstatus" />
-            <class vtable="0x086F3008" name="viewscreen_justice" />
-            <class vtable="0x086F2FC8" name="viewscreen_price" />
-            <class vtable="0x086F3048" name="viewscreen_pet" />
-            <class vtable="0x086F3088" name="viewscreen_kitchenpref" />
-            <class vtable="0x086F30C8" name="viewscreen_announcelist" />
-            <class vtable="0x086F3148" name="viewscreen_game_cleaner" />
-            <class vtable="0x086F3108" name="viewscreen_title" />
-            <class vtable="0x086F3248" name="viewscreen_legends" />
-            <class vtable="0x086F3188" name="viewscreen_new_region" />
-            <class vtable="0x086F31C8" name="viewscreen_export_region" />
-            <class vtable="0x086F3208" name="viewscreen_export_graphical_map" />
-            <class vtable="0x08714748" name="viewscreen_layer_assigntrade" />
-            <class vtable="0x08714608" name="viewscreen_requestagreement" />
-            <class vtable="0x08714548" name="viewscreen_tradeagreement" />
-            <class vtable="0x08714588" name="viewscreen_topicmeeting_takerequests" />
-            <class vtable="0x087145C8" name="viewscreen_topicmeeting" />
-            <class vtable="0x08714648" name="viewscreen_meeting" />
-            <class vtable="0x087146C8" name="viewscreen_barter" />
-            <class vtable="0x08714688" name="viewscreen_tradegoods" />
-            <class vtable="0x084BF580" name="viewscreen_tradelist" />
-            <class vtable="0x08714508" name="viewscreen_textviewer" />
-            <class vtable="0x0871DD48" name="viewscreen_layer_choose_language_name" />
-            <class vtable="0x0871DD08" name="viewscreen_setupdwarfgame" />
-            <class vtable="0x0871DD88" name="viewscreen_choose_start_site" />
-        </VTable>
-        <VTable name="item_vtable">
-            <class vtable="0x086E38A8" name="item_table" />                                                                                                                                                    
-            <class vtable="0x086E3BA8" name="item_chair" />                                                                                                                                                    
-            <class vtable="0x08216208" name="item_bed" />                                                                                                                                                      
-            <class vtable="0x08700528" name="item_coin" />                                                                                                                                                     
-            <class vtable="0x08704748" name="item_trapcomp" />                                                                                                                                                 
-            <class vtable="0x08704A28" name="item_siegeammo" />                                                                                                                                                
-            <class vtable="0x08700AE8" name="item_quiver" />                                                                                                                                                                              
-            <class vtable="0x08700DC8" name="item_backpack" />                                                                                                                                                                            
-            <class vtable="0x08704D08" name="item_pants" />                                                                                                                                                                               
-            <class vtable="0x08703048" name="item_totem" />                                                                                                                                                                               
-            <class vtable="0x086FDF08" name="item_anvil" />                                                                                                                                                                               
-            <class vtable="0x087010A8" name="item_gem" />                                                                                                                                                                                 
-            <class vtable="0x08701388" name="item_bracelet" />                                                                                                                                                                            
-            <class vtable="0x08701668" name="item_earring" />                                                                                                                                                                             
-            <class vtable="0x08701948" name="item_ring" />                                                                                                                                                                                
-            <class vtable="0x08701C28" name="item_crown" />                                                                                                                                                                               
-            <class vtable="0x087052C8" name="item_ammo" />                                                                                                                                                                                
-            <class vtable="0x08701F08" name="item_scepter" />                                                                                                                                                                             
-            <class vtable="0x087021E8" name="item_amulet" />                                                                                                                                                                              
-            <class vtable="0x087024C8" name="item_figurine" />                                                                                                                                                                            
-            <class vtable="0x08704188" name="item_bin" />                                                                                                                                                                                 
-            <class vtable="0x08703EA8" name="item_box" />                                                                                                                                                                                 
-            <class vtable="0x087055A8" name="item_gloves" />                                                                                                                                                                              
-            <class vtable="0x08705888" name="item_helm" />                                                                                                                                                                                
-            <class vtable="0x08705B68" name="item_shield" />
-            <class vtable="0x08705E48" name="item_shoes" />
-            <class vtable="0x08706128" name="item_armor" />
-            <class vtable="0x08706408" name="item_weapon" />
-            <class vtable="0x08707268" name="item_animaltrap" />
-            <class vtable="0x08704468" name="item_barrel" />
-            <class vtable="0x08706F88" name="item_cage" />
-            <class vtable="0x087066E8" name="item_toy" />
-            <class vtable="0x087069C8" name="item_instrument" />
-            <class vtable="0x087027A8" name="item_goblet" />
-            <class vtable="0x08707828" name="item_flask" />
-            <class vtable="0x08702A88" name="item_chain" />
-            <class vtable="0x08708C48" name="item_hatch_cover" />
-            <class vtable="0x08708968" name="item_floodgate" />
-            <class vtable="0x08708F28" name="item_door" />
-            <class vtable="0x08702D68" name="item_cloth" />
-            <class vtable="0x086E3B88" name="item_constructed" />
-            <class vtable="0x08704FE8" name="item_food" />
-            <class vtable="0x086FEA88" name="item_crafted" />
-            <class vtable="0x08703BC8" name="item_thread" />
-            <class vtable="0x086FF608" name="item_cheese" />
-            <class vtable="0x08707548" name="item_ballistaarrowhead" />
-            <class vtable="0x08707B08" name="item_shell" />
-            <class vtable="0x08707DE8" name="item_skull" />
-            <class vtable="0x087094E8" name="item_bones" />
-            <class vtable="0x087080C8" name="item_skin_tanned" />
-            <class vtable="0x087083A8" name="item_skin_raw" />
-            <class vtable="0x0870A348" name="item_pet" />
-            <class vtable="0x0870A628" name="item_vermin" />
-            <class vtable="0x086FED68" name="item_fish_raw" />
-            <class vtable="0x086FF048" name="item_fish" />
-            <class vtable="0x08709AA8" name="item_meat" />
-            <class vtable="0x08708688" name="item_remains" />
-            <class vtable="0x086FFF68" name="item_corpsepiece" />
-            <class vtable="0x087097C8" name="item_glob" />
-            <class vtable="0x08709208" name="item_liquid_misc" />
-            <class vtable="0x08700808" name="item_powder_misc" />
-            <class vtable="0x086FF328" name="item_drink" />
-            <class vtable="0x086FF8E8" name="item_extract" />
-            <class vtable="0x0870A068" name="item_liquipowder" />
-            <class vtable="0x08700248" name="item_corpse" />
-            <class vtable="0x086FE1E8" name="item_wood" />
-            <class vtable="0x086FE7A8" name="item_stone" />
-            <class vtable="0x086FE4C8" name="item_rough" />
-            <class vtable="0x08703328" name="item_blocks" />
-            <class vtable="0x08703608" name="item_smallgem" />
-            <class vtable="0x087038E8" name="item_bar" />
-            <class vtable="0x08706CA8" name="item_actual" />
-            <class vtable="0x0870B208" name="item_rock" />
-            <class vtable="0x0870B508" name="item_grate" />
-            <class vtable="0x0870B808" name="item_window" />
-            <class vtable="0x0870BB08" name="item_bucket" />
-            <class vtable="0x0870BE08" name="item_coffin" />
-            <class vtable="0x0870C108" name="item_statue" />
-            <class vtable="0x0870C408" name="item_quern" />
-            <class vtable="0x0870C708" name="item_millstone" />
-            <class vtable="0x0870CA08" name="item_armorstand" />
-            <class vtable="0x0870CD08" name="item_weaponrack" />
-            <class vtable="0x0870D008" name="item_cabinet" />
-            <class vtable="0x0870D308" name="item_catapultparts" />
-            <class vtable="0x0870D608" name="item_ballistaparts" />
-            <class vtable="0x0870D908" name="item_trapparts" />
-            <class vtable="0x0870DC08" name="item_potion" />
-            <class vtable="0x0870DF08" name="item_pipe_section" />
-            <class vtable="0x0871E668" name="item_leaves" />
-            <class vtable="0x0871DDC8" name="item_plant" />
-            <class vtable="0x0871EC28" name="item_seeds" />
-            <class vtable="0x0870AEAC" name="item_critter" />
-            <class vtable="0x0870AFC8" name="item_powder" />
-            <class vtable="0x0870AFA4" name="item_liquid" />
-        </VTable>
         <VTable name="building_vtable">
             <class vtable="0x086CF2C8" name="building_construction" />
             <class vtable="0x086CFD28" name="building_road_paved" />
@@ -2420,10 +1841,6 @@
             <class vtable="0x086D0028" name="building_stockpile" />
             <class vtable="0x086D37C8" name="building_window_gem" />
             <class vtable="0x086D3968" name="building_window_glass" />
-        </VTable>
-        <VTable name = "vein_vtable">
-            <class vtable="0x086cd448" name="block_square_event_frozen_liquid" />
-            <class vtable="0x086cd388" name="block_square_event_mineral" />
         </VTable>
     </Entry>
     <Entry version="v0.28.181.40d18" os="linux" id="40d18lin" base="40d17lin">
@@ -2488,82 +1905,12 @@
         <Address name="settlement_current">0x0904B8E8</Address>
         <Address name="settlements">0x0904B87C</Address>
         
-        <!--        NEEDS TESTING        -->
-        <VTable name = "viewscreen_vtable">
-            <class vtable="0x0877D728" name="viewscreen_conversation" />
-            <class vtable="0x08788788" name="viewscreen_setupadventure" />
-            <class vtable="0x08788888" name="viewscreen_dungeon_announce" />
-            <class vtable="0x087887C8" name="viewscreen_dungeon_monsterstatus" />
-            <class vtable="0x08788808" name="viewscreen_dungeon_wrestle" />
-            <class vtable="0x08788848" name="viewscreen_adventure_log" />
-            <class vtable="0x08788908" name="viewscreen_adventure_travel" />
-            <class vtable="0x087888C8" name="viewscreen_dungeonmode" />
-            <class vtable="0x08789D08" name="viewscreen_selectitem" />
-            <class vtable="0x08789D48" name="viewscreen_dwarfmode" />
-            <class vtable="0x0878FEA8" name="viewscreen_layer_stockpile" />
-            <class vtable="0x0878FE68" name="viewscreen_layer_world_gen_param_preset" />
-            <class vtable="0x0878FE28" name="viewscreen_layer_world_gen_param" />
-            <class vtable="0x0878FDE8" name="viewscreen_layer_export_play_map" />
-            <class vtable="0x0878FDA8" name="viewscreen_layer_musicsound" />
-            <class vtable="0x0878FD68" name="viewscreen_layer_unit_relationship" />
-            <class vtable="0x0878FD28" name="viewscreen_layer_workshop_profile" />
-            <class vtable="0x0878FFE8" name="viewscreen_layer" />
-            <class vtable="0x087900C8" name="viewscreen_unit" />
-            <class vtable="0x08790108" name="viewscreen_customize_unit" />
-            <class vtable="0x08790148" name="viewscreen_savegame" />
-            <class vtable="0x08790088" name="viewscreen_loadgame" />
-            <class vtable="0x08790288" name="viewscreen_option" />
-            <class vtable="0x0879B248" name="viewscreen_layer_currency" />
-            <class vtable="0x0879B288" name="viewscreen_layer_reaction" />
-            <class vtable="0x0879B2C8" name="viewscreen_layer_stone_restriction" />
-            <class vtable="0x0879B208" name="viewscreen_layer_noblelist" />
-            <class vtable="0x0879B0C8" name="viewscreen_job" />
-            <class vtable="0x0879B108" name="viewscreen_building" />
-            <class vtable="0x0879B148" name="viewscreen_item" />
-            <class vtable="0x0879B1C8" name="viewscreen_noble" />
-            <class vtable="0x0879B308" name="viewscreen_buildinglist" />
-            <class vtable="0x0879B388" name="viewscreen_commandchain" />
-            <class vtable="0x0879B3C8" name="viewscreen_squad" />
-            <class vtable="0x0879B408" name="viewscreen_civlist" />
-            <class vtable="0x0879B448" name="viewscreen_entity" />
-            <class vtable="0x0879B488" name="viewscreen_treasurelist" />
-            <class vtable="0x0879B4C8" name="viewscreen_unitjobs" />
-            <class vtable="0x0879B508" name="viewscreen_createquota" />
-            <class vtable="0x0879B548" name="viewscreen_jobmanagement" />
-            <class vtable="0x0879B588" name="viewscreen_wages" />
-            <class vtable="0x0879B188" name="viewscreen_stores" />
-            <class vtable="0x0879B348" name="viewscreen_overallstatus" />
-            <class vtable="0x0879B608" name="viewscreen_justice" />
-            <class vtable="0x0879B5C8" name="viewscreen_price" />
-            <class vtable="0x0879B648" name="viewscreen_pet" />
-            <class vtable="0x0879B688" name="viewscreen_kitchenpref" />
-            <class vtable="0x0879B6C8" name="viewscreen_announcelist" />
-            <class vtable="0x0879B748" name="viewscreen_game_cleaner" />
-            <class vtable="0x0879B708" name="viewscreen_title" />
-            <class vtable="0x0879B848" name="viewscreen_legends" />
-            <class vtable="0x0879B788" name="viewscreen_new_region" />
-            <class vtable="0x0879B7C8" name="viewscreen_export_region" />
-            <class vtable="0x0879B808" name="viewscreen_export_graphical_map" />
-            <class vtable="0x087BD628" name="viewscreen_layer_assigntrade" />
-            <class vtable="0x087BD4E8" name="viewscreen_requestagreement" />
-            <class vtable="0x087BD428" name="viewscreen_tradeagreement" />
-            <class vtable="0x087BD468" name="viewscreen_topicmeeting_takerequests" />
-            <class vtable="0x087BD4A8" name="viewscreen_topicmeeting" />
-            <class vtable="0x087BD528" name="viewscreen_meeting" />
-            <class vtable="0x087BD5A8" name="viewscreen_barter" />
-            <class vtable="0x087BD568" name="viewscreen_tradegoods" />
-            <class vtable="0x087BD5E8" name="viewscreen_tradelist" />
-            <class vtable="0x087BD3E8" name="viewscreen_textviewer" />
-            <class vtable="0x087C7028" name="viewscreen_layer_choose_language_name" />
-            <class vtable="0x087C6FE8" name="viewscreen_setupdwarfgame" />
-            <class vtable="0x087C7068" name="viewscreen_choose_start_site" />
-        </VTable>
         <VTable name = "building_vtable">
             <class vtable="0x08777568" name="building_construction" />             
             <class vtable="0x08777FC8" name="building_road_paved" />               
             <class vtable="0x08777E48" name="building_road_dirt" />                
             <class vtable="0x08777E48" name="building_road" />                     
-            <class vtable="0x0877A208" name="building_wagon" />                    
+            <class vtable="0x0877A208" name="building_wagon" />
             <class vtable="0x0877A088" name="building_tradedepot" />               
             <class vtable="0x087797A8" name="building_workshop" />                 
             <class vtable="0x08779C28" name="building_furnace" />                  
@@ -2608,103 +1955,14 @@
             <class vtable="0x0877BA68" name="building_window_gem" />               
             <class vtable="0x0877BC08" name="building_window_glass" />
         </VTable>
-        <VTable>
-            <class vtable="0x087A91C8" name="item_coin" />                      
-            <class vtable="0x087AD3E8" name="item_trapcomp" />                  
-            <class vtable="0x087AD6C8" name="item_siegeammo" />                 
-            <class vtable="0x087A9788" name="item_quiver" />                    
-            <class vtable="0x087A9A68" name="item_backpack" />                  
-            <class vtable="0x087AD9A8" name="item_pants" />                     
-            <class vtable="0x087ABCE8" name="item_totem" />                     
-            <class vtable="0x087A6BA8" name="item_anvil" />                     
-            <class vtable="0x087A9D48" name="item_gem" />                       
-            <class vtable="0x087AA028" name="item_bracelet" />                  
-            <class vtable="0x087AA308" name="item_earring" />                   
-            <class vtable="0x087AA5E8" name="item_ring" />                      
-            <class vtable="0x087AA8C8" name="item_crown" />                     
-            <class vtable="0x087ADF68" name="item_ammo" />                      
-            <class vtable="0x087AABA8" name="item_scepter" />                   
-            <class vtable="0x087AAE88" name="item_amulet" />                    
-            <class vtable="0x087AB168" name="item_figurine" />                  
-            <class vtable="0x087ACE28" name="item_bin" />                       
-            <class vtable="0x087ACB48" name="item_box" />                       
-            <class vtable="0x087AE248" name="item_gloves" />                    
-            <class vtable="0x087AE528" name="item_helm" />                      
-            <class vtable="0x087AE808" name="item_shield" />
-            <class vtable="0x087AEAE8" name="item_shoes" />
-            <class vtable="0x087AEDC8" name="item_armor" />
-            <class vtable="0x087AF0A8" name="item_weapon" />
-            <class vtable="0x087AFF08" name="item_animaltrap" />
-            <class vtable="0x087AD108" name="item_barrel" />
-            <class vtable="0x087AFC28" name="item_cage" />
-            <class vtable="0x087AF388" name="item_toy" />
-            <class vtable="0x087AF668" name="item_instrument" />
-            <class vtable="0x087AB448" name="item_goblet" />
-            <class vtable="0x087B04C8" name="item_flask" />
-            <class vtable="0x087AB728" name="item_chain" />
-            <class vtable="0x087B18E8" name="item_hatch_cover" />
-            <class vtable="0x087B1608" name="item_floodgate" />
-            <class vtable="0x087B1BC8" name="item_door" />
-            <class vtable="0x087ABA08" name="item_cloth" />
-            <class vtable="0x0878BFC8" name="item_constructed" />
-            <class vtable="0x087ADC88" name="item_food" />
-            <class vtable="0x087A7728" name="item_crafted" />
-            <class vtable="0x087AC868" name="item_thread" />
-            <class vtable="0x087A82A8" name="item_cheese" />
-            <class vtable="0x087B01E8" name="item_ballistaarrowhead" />
-            <class vtable="0x087B07A8" name="item_shell" />
-            <class vtable="0x087B0A88" name="item_skull" />
-            <class vtable="0x087B2188" name="item_bones" />
-            <class vtable="0x087B0D68" name="item_skin_tanned" />
-            <class vtable="0x087B1048" name="item_skin_raw" />
-            <class vtable="0x087B2FE8" name="item_pet" />
-            <class vtable="0x087B32C8" name="item_vermin" />
-            <class vtable="0x087A7A08" name="item_fish_raw" />
-            <class vtable="0x087A7CE8" name="item_fish" />
-            <class vtable="0x087B2748" name="item_meat" />
-            <class vtable="0x087B1328" name="item_remains" />
-            <class vtable="0x087A8C08" name="item_corpsepiece" />
-            <class vtable="0x087B2468" name="item_glob" />
-            <class vtable="0x087B1EA8" name="item_liquid_misc" />
-            <class vtable="0x087A94A8" name="item_powder_misc" />
-            <class vtable="0x087A7FC8" name="item_drink" />
-            <class vtable="0x087A8588" name="item_extract" />
-            <class vtable="0x087B2D08" name="item_liquipowder" />
-            <class vtable="0x087A8EE8" name="item_corpse" />
-            <class vtable="0x087A6E88" name="item_wood" />
-            <class vtable="0x087A7448" name="item_stone" />
-            <class vtable="0x087A7168" name="item_rough" />
-            <class vtable="0x087ABFC8" name="item_blocks" />
-            <class vtable="0x087ABFC8" name="item_smallgem" />
-            <class vtable="0x087AC588" name="item_bar" />
-            <class vtable="0x087AF948" name="item_actual" />
-            <class vtable="0x087B3EA8" name="item_rock" />
-            <class vtable="0x087B41A8" name="item_grate" />
-            <class vtable="0x087B44A8" name="item_window" />
-            <class vtable="0x087B47A8" name="item_bucket" />
-            <class vtable="0x087B4AA8" name="item_coffin" />
-            <class vtable="0x087B4DA8" name="item_statue" />
-            <class vtable="0x084619C5" name="item_quern" />
-            <class vtable="0x087B53A8" name="item_millstone" />
-            <class vtable="0x087B56A8" name="item_armorstand" />
-            <class vtable="0x087B59A8" name="item_weaponrack" />
-            <class vtable="0x087B5CA8" name="item_cabinet" />
-            <class vtable="0x087B5FA8" name="item_catapultparts" />
-            <class vtable="0x087B62A8" name="item_ballistaparts" />
-            <class vtable="0x087B65A8" name="item_trapparts" />
-            <class vtable="0x087B68A8" name="item_potion" />
-            <class vtable="0x087B6BA8" name="item_pipe_section" />
-            <class vtable="0x087C7948" name="item_leaves" />
-            <class vtable="0x087C70A8" name="item_plant" />
-            <class vtable="0x087C7F08" name="item_seeds" />
-            <class vtable="0x087B3B4C" name="item_critter" />
-            <class vtable="0x087B3C68" name="item_powder" />
-            <class vtable="0x087B3C44" name="item_liquid" />
-        </VTable>
-        <VTable name = "vein_vtable">
-            <class vtable="0x08774e28" name="block_square_event_frozen_liquid" />
-            <class vtable="0x08774d68" name="block_square_event_mineral" />
-        </VTable>
+    </Entry>
+    <Entry version="v0.28.181.40d19" os="linux" id="40d19lin" base="40d18lin" rebase="-0xFE0">
+        <String name="md5">04c3ad13c657f59ba6fc135e156d721d</String>
+        <Address name="cursor_xyz">0x8832328</Address>
+        <Address name="window_dims">0x9189534</Address>
+        <!--verify this one: -->
+        <Address name="current_cursor_creature">0x9199580</Address>
+        <VTable name="building_vtable" rebase="-0xDE0" />
     </Entry>
 </MemoryDescriptors>
 <!-- Windows logo by M$, spiderweb by jgs -->

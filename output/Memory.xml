@@ -1386,41 +1386,14 @@
         
         <Address name="settlement_current">0x01557C14</Address>
         <Address name="settlements">0x01557B48</Address>
-    </Entry>
-buildings*          ff 15 ? ? ? ? 8b 0d ? ? ? ? 39 34 99                
-constructions*          8B 0D ? ? ? ? 8B 04 B1 0F B7 54 24 20 66 01 10          
-creatures*          83 E4 F8 8B 0D ? ? ? ? A1 ? ? ? ? 53                
-current_cursor_creature*    72 08 ff d3 8b 0d ? ? ? ? 8b 0c b9              
-cursor              83 3D ? ? ? ? 00 C7 05 ? ? ? ? D0 8A FF FF          
-hotkey_start            83 C4 04 BE ? ? ? ? BF 10 00 00 00                  
-items*              FF 24 8D ? ? ? ? A1 ? ? ? ? 8B 0D ? ? ? ?           
-language_vector*        83 7D 44 FF 74 6D A1 ? ? ? ? 2B 05 ? ? ? ?          
-menu_state          C7 05 ? ? ? ? 25 00                     
-map_data            83 3D ? ? ? ? 00 89 4C 24 28 89 5C 24 24            
-matgloss*           F7 C3 00 20 00 00 74 20 A1 ? ? ? ? 2B 05 ? ? ? ?        
-notes*              a1 ? ? ? ? 2b 05 ? ? ? ? 8d 7c 24 30                
-pause_state         C0 E8 06 24 01 0F 84 DD 06 00 00 C6 05 ? ? ? ? 01       
-region_x            66 2B 05 ? ? ? ? 66 6B C9 30 66 6B C0 30            
-region_y            region_x + 4                            
-region_z            region_y + 4                            
-settlements         8B 0D ? ? ? ? 8B 0C A9 83 79  70 FF0                
-settlement_current      A1 ? ? ? ? 8B 1C 30 8B 83 A8 00 00 00 89 2C 24          
-translation_vector*     83 FB FF 75 51 8B 35 ? ? ? ? 2B 35 ? ? ? ? C1 FE 02 83 FE 01    
-vegetation*         C7 44 24 58 00 00 00 00 E8 ? ? ? ? 8B 0D ? ? ? ?        
-view_screen*            51 83 3D ? ? ? ? 00 53 56                   
-window_dims         75 2a 8b 35 ? ? ? ?                     
-world               B9 ? ? ? ? E8 ? ? ? ? 83 C0 E5 83 F8 02             
-                B8 D0 8A FF FF 33 D2 66 89 15 ? ? ? ? 8B 15 ? ? ? ? A3 ? ? ? ? A3 ? ? ? ? A3 ? ? ? ? A1 ? ? ? ? 
-window_x            A3 ? ? ? ?                              
-window_y            89 0D ? ? ? ?                           
-window_z            89 15 ? ? ? ? E9                        
 
-                88 1D ? ? ? ? 89 1D ? ? ? ? 
-x_count             89 1D ? ? ? ?                           
-y_count             89 1D ? ? ? ?                           0x01555E38
-z_count             89 1D ? ? ? ?                           0x01555E3C
-* = subtract 4
-    
+        <VTable name="building_vtable" rebase="0x2018" />
+    </Entry>
+    <Entry version="v0.28.181.40d19_2" os="windows" base="40d19win" id="40d19_2win" rebase="0x1000">
+        <HexValue name="pe_timestamp">0x4B918BB9</HexValue>
+        <String name="md5">af29004e1763bb3460faa11907c3ac90</String>
+        <VTable name="building_vtable" rebase="0x1000" />
+    </Entry>
                             .-"""-.
                            '       \
                           |,.  ,-.  |
@@ -1937,7 +1910,7 @@ z_count             89 1D ? ? ? ?                           0x01555E3C
             <class vtable="0x08777FC8" name="building_road_paved" />               
             <class vtable="0x08777E48" name="building_road_dirt" />                
             <class vtable="0x08777E48" name="building_road" />                     
-            <class vtable="0x0877A208" name="building_wagon" />                    
+            <class vtable="0x0877A208" name="building_wagon" />
             <class vtable="0x0877A088" name="building_tradedepot" />               
             <class vtable="0x087797A8" name="building_workshop" />                 
             <class vtable="0x08779C28" name="building_furnace" />                  
@@ -1985,10 +1958,11 @@ z_count             89 1D ? ? ? ?                           0x01555E3C
     </Entry>
     <Entry version="v0.28.181.40d19" os="linux" id="40d19lin" base="40d18lin" rebase="-0xFE0">
         <String name="md5">04c3ad13c657f59ba6fc135e156d721d</String>
-        <Address name="cursor_xyz">0x8832328</Address> 0x8833324
-        <Address name="window_dims">0x9189534</Address> 0x925a59c
-        verify this one:
+        <Address name="cursor_xyz">0x8832328</Address>
+        <Address name="window_dims">0x9189534</Address>
+        <!--verify this one: -->
         <Address name="current_cursor_creature">0x9199580</Address>
+        <VTable name="building_vtable" rebase="-0xDE0" />
     </Entry>
 </MemoryDescriptors>
 <!-- Windows logo by M$, spiderweb by jgs -->

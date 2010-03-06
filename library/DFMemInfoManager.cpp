@@ -159,7 +159,7 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
         }
         if(!(cstr_name && cstr_value))
         {
-            throw Error::MemoryXmlUnderspecifiedEntry();
+            throw Error::MemoryXmlUnderspecifiedEntry(cstr_version);
         }
         name = cstr_name;
         value = cstr_value;

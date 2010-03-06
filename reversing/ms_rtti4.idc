@@ -1,6 +1,6 @@
 #include <idc.idc>
-#include <vtable.idc>
-#include <ms_rtti.idc>
+#include "vtable.idc"
+#include "ms_rtti.idc"
 
 static GetAsciizStr(x)
 {

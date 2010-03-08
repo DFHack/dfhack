@@ -168,9 +168,10 @@ int main (void)
         cerr << "Can't get the creature types." << endl;
         return 1; 
     }
-    
-    map<string, vector<string> > names;
-    if(!DF.InitReadNameTables(names))
+	
+	vector< vector<string> > englishWords;
+	vector< vector<string> > foreignWords;
+    if(!DF.InitReadNameTables(englishWords,foreignWords))
     {
         cerr << "Can't get name tables" << endl;
         return 1;
@@ -189,17 +190,17 @@ int main (void)
         {
             cout << "address: " << temp.origin << " creature type: " << creaturestypes[temp.type].id << ", position: " << temp.x << "x " << temp.y << "y "<< temp.z << "z" << endl;
             bool addendl = false;
-            if(temp.first_name[0])
+            if(temp.name.first_name[0])
             {
-                cout << "first name: " << temp.first_name;
+                cout << "first name: " << temp.name.first_name;
                 addendl = true;
             }
-            if(temp.nick_name[0])
+            if(temp.name.nickname[0])
             {
-                cout << ", nick name: " << temp.nick_name;
+                cout << ", nick name: " << temp.name.nickname;
                 addendl = true;
             }
-            string transName = DF.TranslateName(temp.last_name,names,creaturestypes[temp.type].id);
+            string transName = DF.TranslateName(temp.name,englishWords,foreignWords,false);
             if(!transName.empty())
             {
                 cout << ", trans name: " << transName;

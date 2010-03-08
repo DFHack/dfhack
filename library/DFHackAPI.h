@@ -221,12 +221,10 @@ namespace DFHack
         vector<t_trait> getTraits(const uint32_t &index);
         vector<t_labor> getLabors(const uint32_t &index);
         */
-        bool InitReadNameTables (std::map< std::string, std::vector<std::string> > & nameTable);
+        bool InitReadNameTables (std::vector< std::vector<std::string> > & translations , std::vector< std::vector<std::string> > & foreign_languages);
         void FinishReadNameTables();
 
-        std::string TranslateName(const t_lastname & last, const std::map< std::string, std::vector< std::string > > &nameTable,const std::string & language="GENERIC");
-        std::string TranslateName(const t_squadname & squad, const std::map< std::string, std::vector< std::string > > &nameTable,const std::string & language="GENERIC");
-        std::string TranslateName (const int names[], int size, const std::map<std::string, std::vector<std::string> > &nameTable, const std::string & language="GENERIC");
+        std::string TranslateName(const t_name & name,const std::vector< std::vector<std::string> > & translations ,const std::vector< std::vector<std::string> > & foreign_languages, bool inEnglish=true);
         
         void WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
         

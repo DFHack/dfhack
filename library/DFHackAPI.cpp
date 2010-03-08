@@ -36,6 +36,9 @@ public:
             , pm (NULL), p (NULL), offset_descriptor (NULL)
             , p_cons (NULL), p_bld (NULL), p_veg (NULL)
     {}
+
+	void readName(t_name & name, uint32_t address);
+
     uint32_t * block;
     uint32_t x_block_count, y_block_count, z_block_count;
     uint32_t regionX, regionY, regionZ;
@@ -61,14 +64,15 @@ public:
     uint32_t view_screen_offset;
     uint32_t current_menu_state_offset;
 
+	uint32_t name_firstname_offset;
+	uint32_t name_nickname_offset;
+	uint32_t name_words_offset;
+
     uint32_t creature_pos_offset;
     uint32_t creature_type_offset;
     uint32_t creature_flags1_offset;
     uint32_t creature_flags2_offset;
-    uint32_t creature_first_name_offset;
-    uint32_t creature_nick_name_offset;
-    uint32_t creature_last_name_offset;
-
+    uint32_t creature_name_offset;
     uint32_t creature_custom_profession_offset;
     uint32_t creature_profession_offset;
     uint32_t creature_sex_offset;
@@ -86,6 +90,8 @@ public:
     uint32_t creature_happiness_offset;
     uint32_t creature_traits_offset;
     uint32_t creature_likes_offset;
+	uint32_t creature_artifact_name_offset;
+	uint32_t creature_mood_offset;
 
     uint32_t item_material_offset;
 
@@ -865,14 +871,15 @@ bool API::InitReadCreatures( uint32_t &numcreatures )
     try
     {
         memory_info * minfo = d->offset_descriptor;
+		d->name_firstname_offset = minfo->getOffset("name_firstname");
+		d->name_nickname_offset = minfo->getOffset("name_nickname");
+		d->name_words_offset = minfo->getOffset("name_words");
         int creatures = d->offset_descriptor->getAddress ("creatures");
         d->creature_pos_offset = minfo->getOffset ("creature_position");
         d->creature_type_offset = minfo->getOffset ("creature_race");
         d->creature_flags1_offset = minfo->getOffset ("creature_flags1");
         d->creature_flags2_offset = minfo->getOffset ("creature_flags2");
-        d->creature_first_name_offset = minfo->getOffset ("creature_first_name");
-        d->creature_nick_name_offset = minfo->getOffset ("creature_nick_name");
-        d->creature_last_name_offset = minfo->getOffset ("creature_last_name");
+        d->creature_name_offset = minfo->getOffset ("creature_name");
         d->creature_custom_profession_offset = minfo->getOffset ("creature_custom_profession");
         d->creature_profession_offset = minfo->getOffset ("creature_profession");
         d->creature_sex_offset = minfo->getOffset ("creature_sex");
@@ -890,6 +897,8 @@ bool API::InitReadCreatures( uint32_t &numcreatures )
         d->creature_happiness_offset = minfo->getOffset ("creature_happiness");
         d->creature_traits_offset = minfo->getOffset ("creature_traits");
         d->creature_likes_offset = minfo->getOffset("creature_likes");
+		d->creature_artifact_name_offset = minfo->getOffset("creature_artifact_name");
+		d->creature_mood_offset = minfo->getOffset("creature_mood");
 
         d->p_cre = new DfVector (d->p->readVector (creatures, 4));
         //InitReadNameTables();
@@ -971,7 +980,7 @@ bool API::ReadSettlement(const int32_t index, t_settlement & settlement)
     // read pointer from vector at position
     uint32_t temp = * (uint32_t *) d->p_settlements->at (index);
     settlement.origin = temp;
-    g_pProcess->read(temp + d->settlement_name_offset, 2 * sizeof(int32_t), (uint8_t *) &settlement.name);
+	d->readName(settlement.name, temp + d->settlement_name_offset);
     g_pProcess->read(temp + d->settlement_world_xy_offset, 2 * sizeof(int16_t), (uint8_t *) &settlement.world_x);
     g_pProcess->read(temp + d->settlement_local_xy_offset, 4 * sizeof(int16_t), (uint8_t *) &settlement.local_x1);
     return true;
@@ -984,7 +993,7 @@ bool API::ReadCurrentSettlement(t_settlement & settlement)
     
     uint32_t temp = * (uint32_t *) d->p_current_settlement->at(0);
     settlement.origin = temp;
-    g_pProcess->read(temp + d->settlement_name_offset, 2 * sizeof(int32_t), (uint8_t *) &settlement.name);
+	d->readName(settlement.name, temp + d->settlement_name_offset);
     g_pProcess->read(temp + d->settlement_world_xy_offset, 2 * sizeof(int16_t), (uint8_t *) &settlement.world_x);
     g_pProcess->read(temp + d->settlement_local_xy_offset, 4 * sizeof(int16_t), (uint8_t *) &settlement.local_x1);
     return true;
@@ -1098,6 +1107,13 @@ bool API::getItemIndexesInBox(vector<uint32_t> &indexes,
     return true;
 }
 
+void API::Private::readName(t_name & name, uint32_t address)
+{
+	g_pProcess->readSTLString(address + name_firstname_offset , name.first_name, 128);
+	g_pProcess->readSTLString(address + name_nickname_offset , name.nickname, 128);
+	g_pProcess->read(address + name_words_offset ,48, (uint8_t *) name.words);
+}
+
 bool API::ReadCreature (const int32_t index, t_creature & furball)
 {
     if(!d->creaturesInited) return false;
@@ -1109,17 +1125,12 @@ bool API::ReadCreature (const int32_t index, t_creature & furball)
     g_pProcess->readDWord (temp + d->creature_type_offset, furball.type);
     g_pProcess->readDWord (temp + d->creature_flags1_offset, furball.flags1.whole);
     g_pProcess->readDWord (temp + d->creature_flags2_offset, furball.flags2.whole);
-    // normal names
-    d->p->readSTLString (temp + d->creature_first_name_offset, furball.first_name, 128);
-    d->p->readSTLString (temp + d->creature_nick_name_offset, furball.nick_name, 128);
+    // names
+    d->readName(furball.name,temp + d->creature_name_offset);
+	d->readName(furball.squad_name, temp + d->creature_squad_name_offset);
+	d->readName(furball.artifact_name, temp + d->creature_artifact_name_offset);
     // custom profession
-    d->p->readSTLString (temp + d->creature_nick_name_offset, furball.nick_name, 128);
     fill_char_buf (furball.custom_profession, d->p->readSTLString (temp + d->creature_custom_profession_offset));
-    // crazy composited names
-    g_pProcess->read (temp + d->creature_last_name_offset, sizeof (t_lastname), (uint8_t *) &furball.last_name);
-    g_pProcess->read (temp + d->creature_squad_name_offset, sizeof (t_squadname), (uint8_t *) &furball.squad_name);
-
-
 
     // labors
     g_pProcess->read (temp + d->creature_labors_offset, NUM_CREATURE_LABORS, furball.labors);
@@ -1161,6 +1172,9 @@ bool API::ReadCreature (const int32_t index, t_creature & furball)
         g_pProcess->read(temp2,sizeof(t_like),(uint8_t *) &furball.likes[i]);
     }
     
+	g_pProcess->readWord (temp + d->creature_mood_offset, furball.mood);
+
+
     g_pProcess->readDWord (temp + d->creature_happiness_offset, furball.happiness);
     g_pProcess->readDWord (temp + d->creature_id_offset, furball.id);
     g_pProcess->readDWord (temp + d->creature_agility_offset, furball.agility);
@@ -1178,7 +1192,7 @@ void API::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
     WriteRaw(temp + d->creature_labors_offset, NUM_CREATURE_LABORS, labors);
 }
 
-bool API::InitReadNameTables (map< string, vector<string> > & nameTable)
+bool API::InitReadNameTables(vector<vector<string>> & translations , vector<vector<string> > & foreign_languages) //(map< string, vector<string> > & nameTable)
 {
     try
     {
@@ -1189,23 +1203,28 @@ bool API::InitReadNameTables (map< string, vector<string> > & nameTable)
         DfVector genericVec (d->p->readVector (genericAddress, 4));
         DfVector transVec (d->p->readVector (transAddress, 4));
 
+		translations.resize(10);
         for (uint32_t i = 0;i < genericVec.getSize();i++)
         {
             uint32_t genericNamePtr = * (uint32_t *) genericVec.at (i);
-            string genericName = d->p->readSTLString (genericNamePtr);
-            nameTable["GENERIC"].push_back (genericName);
+			for(int i=0; i<10;i++)
+			{
+				string word = d->p->readSTLString (genericNamePtr + i * sizeof(string));
+				translations[i].push_back (word);
+			}
         }
 
+		foreign_languages.resize(transVec.getSize());
         for (uint32_t i = 0; i < transVec.getSize();i++)
         {
             uint32_t transPtr = * (uint32_t *) transVec.at (i);
-            string transName = d->p->readSTLString (transPtr);
+            //string transName = d->p->readSTLString (transPtr);
             DfVector trans_names_vec (d->p->readVector (transPtr + word_table_offset, 4));
             for (uint32_t j = 0;j < trans_names_vec.getSize();j++)
             {
                 uint32_t transNamePtr = * (uint32_t *) trans_names_vec.at (j);
                 string name = d->p->readSTLString (transNamePtr);
-                nameTable[transName].push_back (name);
+                foreign_languages[i].push_back (name);
             }
         }
         d->nameTablesInited = true;
@@ -1218,6 +1237,80 @@ bool API::InitReadNameTables (map< string, vector<string> > & nameTable)
     }
 }
 
+string API::TranslateName(const DFHack::t_name &name,const std::vector< std::vector<std::string> > & translations ,const std::vector< std::vector<std::string> > & foreign_languages, bool inEnglish)
+{
+	string out;
+	assert (d->nameTablesInited);
+    map<string, vector<string> >::const_iterator it;
+
+	if(!inEnglish) 
+	{
+		if(name.words[0] >=0 || name.words[1] >=0)
+		{
+			if(name.words[0]>=0) out.append(foreign_languages[name.language][name.words[0]]);
+			if(name.words[1]>=0) out.append(foreign_languages[name.language][name.words[1]]);
+			out[0] = toupper(out[0]);
+		}
+		if(name.words[5] >=0) 
+		{
+			string word;
+			for(int i=2;i<=5;i++)
+				if(name.words[i]>=0) word.append(foreign_languages[name.language][name.words[i]]);
+			word[0] = toupper(word[0]);
+			if(out.length() > 0) out.append(" ");
+			out.append(word);
+		}
+		if(name.words[6] >=0) 
+		{
+			string word;
+			word.append(foreign_languages[name.language][name.words[6]]);
+			word[0] = toupper(word[0]);
+			if(out.length() > 0) out.append(" ");
+			out.append(word);
+		}
+	} 
+	else
+	{
+		if(name.words[0] >=0 || name.words[1] >=0)
+		{
+			if(name.words[0]>=0) out.append(translations[name.parts_of_speech[0]+1][name.words[0]]);
+			if(name.words[1]>=0) out.append(translations[name.parts_of_speech[1]+1][name.words[1]]);
+			out[0] = toupper(out[0]);
+		}
+		if(name.words[5] >=0) 
+		{
+			if(out.length() > 0)
+				out.append(" the");
+			else
+				out.append("The");
+			string word;
+			for(int i=2;i<=5;i++)
+			{
+				if(name.words[i]>=0)
+				{
+					word = translations[name.parts_of_speech[i]+1][name.words[i]];
+					word[0] = toupper(word[0]);
+					out.append(" " + word);
+				}
+			}
+		}
+		if(name.words[6] >=0) 
+		{
+			if(out.length() > 0)
+				out.append(" of");
+			else
+				out.append("Of");
+			string word;
+			word.append(translations[name.parts_of_speech[6]+1][name.words[6]]);
+			word[0] = toupper(word[0]);
+			out.append(" " + word);
+		}
+	}
+	return out;
+}
+
+
+/*
 string API::TranslateName (const int names[], int size, const map<string, vector<string> > & nameTable, const string & language)
 {
     string trans;
@@ -1283,7 +1376,7 @@ string API::TranslateName (const t_squadname & squad, const map<string, vector<s
         }
     }
     return (trans_squad);
-}
+}*/
 
 void API::FinishReadNameTables()
 {

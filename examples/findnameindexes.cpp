@@ -50,8 +50,9 @@ int main (void)
         cerr << "DF not found" << endl;
         return 1;
     }
-	map< string, vector<string> > names;
-	if(!DF.InitReadNameTables(names))
+	vector< vector<string> > englishWords;
+	vector< vector<string> > foreignWords;
+    if(!DF.InitReadNameTables(englishWords,foreignWords))
 	{
 		cerr << "Could not get Names" << endl;
 		return 1;
@@ -61,7 +62,7 @@ int main (void)
     cout << "\nSelect Name to search or q to Quit" << endl;
     getline (cin, input);
 	while(input != "q"){
-		for( map< string, vector<string> >::iterator it = names.begin();it != names.end(); it++){
+		/*for( map< string, vector<string> >::iterator it = names.begin();it != names.end(); it++){
 			for(uint32_t i = 0; i < it->second.size(); i++){
 				uint32_t found = tolower(input).find(tolower(it->second[i]));
 				if(found != string::npos){
@@ -70,7 +71,7 @@ int main (void)
 					cout << it->first << " " << it->second[i] << " "  << groupBy2(value.str()) << endl;
 				}
 			}
-		}
+		}*/
 		DF.Resume();
 		getline(cin,input);
 	}

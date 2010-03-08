@@ -484,14 +484,17 @@ struct t_trait
 CREATURE
 */
 
-struct t_lastname
+
+struct t_name
 {
-    int names[7];
+	char first_name[128];
+	char nickname[128];
+	int words[7];
+	short parts_of_speech[7];
+	int language;
+	bool has_name;
 };
-struct t_squadname
-{
-    int names[6];
-};
+
 struct t_skill
 {
     uint16_t id;
@@ -522,10 +525,9 @@ struct t_creature
     uint32_t type;
     t_creaturflags1 flags1;
     t_creaturflags2 flags2;
-    char first_name [128];
-    char nick_name [128];
-    t_lastname last_name;
-    t_squadname squad_name;
+    t_name name;
+	t_name squad_name;
+	t_name artifact_name;
     uint8_t profession;
     char custom_profession[128];
     // enabled labors
@@ -541,6 +543,7 @@ struct t_creature
     uint8_t numLikes;
     t_like likes[32];
     t_job current_job;
+	uint16_t mood;
     uint32_t happiness;
     uint32_t id;
     uint32_t agility;
@@ -795,7 +798,7 @@ struct t_hotkey
 struct t_settlement
 {
     uint32_t origin;
-    int32_t name[2];
+    t_name name;
     int16_t world_x;
     int16_t world_y;
     int16_t local_x1;

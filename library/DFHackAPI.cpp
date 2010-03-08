@@ -1192,7 +1192,7 @@ void API::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
     WriteRaw(temp + d->creature_labors_offset, NUM_CREATURE_LABORS, labors);
 }
 
-bool API::InitReadNameTables(vector<vector<string>> & translations , vector<vector<string> > & foreign_languages) //(map< string, vector<string> > & nameTable)
+bool API::InitReadNameTables(vector<vector<string> > & translations , vector<vector<string> > & foreign_languages) //(map< string, vector<string> > & nameTable)
 {
     try
     {

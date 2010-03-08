@@ -85,8 +85,8 @@ void SHM_Init ( void )
     }
     inited = true;
     
-    // name for the segment
-    key_t key = 123466;
+    // name for the segment, an accident waiting to happen
+    key_t key = SHM_KEY + OS_getPID();
     
     // find previous segment, check if it's used by some processes.
     // if it isn't, kill it with fire

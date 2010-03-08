@@ -66,7 +66,7 @@ namespace DFHack
             Private *d;
         public:
             // this is the single most important destructor ever. ~px
-            Process(vector <memory_info *> & known_versions);
+            Process(uint32_t PID ,vector <memory_info *> & known_versions);
             ~Process();
 
             // Set up stuff so we can read memory

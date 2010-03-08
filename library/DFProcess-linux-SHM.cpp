@@ -180,7 +180,7 @@ void Process::Private::DF_SyncAffinity( void )
     #endif
 }
 
-Process::Process(vector <memory_info *> & known_versions)
+Process::Process(uint32_t PID, vector< memory_info* >& known_versions)
 : d(new Private())
 {
     char exe_link_name [256];
@@ -232,7 +232,7 @@ Process::Process(vector <memory_info *> & known_versions)
     /*
      * get the PID from DF
      */
-    if(d->DF_GetPID(d->my_pid))
+    if(d->DF_GetPID(d->my_pid) && d->my_pid == PID)
     {
         // find its binary
         sprintf(exe_link_name,"/proc/%d/exe", d->my_pid);

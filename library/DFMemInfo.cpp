@@ -100,6 +100,7 @@ memory_info::memory_info(const memory_info &old)
         t_class * copy = new t_class(*old.d->classes[i]);
         d->classes.push_back(copy);
     }
+    d->classnames = old.d->classnames;
     d->classindex = old.d->classindex;
     d->professions = old.d->professions;
     d->jobs = old.d->jobs;
@@ -340,9 +341,10 @@ bool memory_info::resolveObjectToClassID(const uint32_t address, int32_t & class
 {
     uint32_t vtable = g_pProcess->readDWord(address);
     // FIXME: stupid search. we need a better container
+    string classname = g_pProcess->readClassName(vtable);
     for(uint32_t i = 0;i< d->classes.size();i++)
     {
-        if(d->classes[i]->vtable == vtable) // got class
+        if(d->classes[i]->classname == classname) // got class
         {
             // if it is a multiclass, try resolving it
             if(d->classes[i]->type_offset)
@@ -366,7 +368,6 @@ bool memory_info::resolveObjectToClassID(const uint32_t address, int32_t & class
             return true;
         }
     }
-    string classname = g_pProcess->readClassName(vtable);
     t_class * c = setClass(classname.c_str(),vtable);
     classid = c->assign;
     return true;

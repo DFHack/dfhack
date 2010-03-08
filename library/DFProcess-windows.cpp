@@ -379,9 +379,9 @@ const string NormalProcess::readCString (const uint32_t offset)
     string temp;
     char temp_c[256];
     DWORD read;
-    ReadProcessMemory(d->my_handle, (int *) offset, temp_c, 255, &read);
+    ReadProcessMemory(d->my_handle, (int *) offset, temp_c, 254, &read); // needs to be 254+1 byte for the null term
     temp_c[read+1] = 0;
-    temp = temp_c;
+    temp.assign(temp_c);
     return temp;
 }
 

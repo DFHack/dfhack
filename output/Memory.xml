@@ -671,6 +671,55 @@
         <Labor name="[Spear]">55</Labor>
         <Labor name="[Crossbow]">57</Labor>
         <Labor name="[Unarmed]">-1</Labor>
+        
+        <VTable name="building_vtable">
+            <multiclass name="building_workshop" typeoffset="0xC8">
+                <class name="building_alchemists_laboratory" type="0x0"/>
+                <class name="building_carpenters_workshop"   type="0x1"/>
+                <class name="building_farmers_workshop"      type="0x2"/>
+                <class name="building_masons_workshop"       type="0x3"/>
+                <class name="building_craftdwarfs_workshop"  type="0x4"/>
+                <class name="building_jewelers_workshop"     type="0x5"/>
+                <class name="building_metalsmiths_workshop"  type="0x6"/>
+                <class name="building_magma_forge"           type="0x7"/>
+                <class name="building_bowyers_workshop"      type="0x8"/>
+                <class name="building_mechanics_workshop"    type="0x9"/>
+                <class name="building_siege_workshop"        type="0xA"/>
+                <class name="building_butchers_shop"         type="0xB"/>
+                <class name="building_leather_works"         type="0xC"/>
+                <class name="building_tanners_shop"          type="0xD"/>
+                <class name="building_clothiers_shop"        type="0xE"/>
+                <class name="building_fishery"               type="0xF"/>
+                <class name="building_still"                 type="0x10"/>
+                <class name="building_loom"                  type="0x11"/>
+                <class name="building_quern"                 type="0x12"/>
+                <class name="building_kennels"               type="0x13"/>
+                <class name="building_kitchen"               type="0x14"/>
+                <class name="building_ashery"                type="0x15"/>
+                <class name="building_dyers_shop"            type="0x16"/>
+                <class name="building_millstone"             type="0x17"/>
+            </multiclass>
+            <multiclass name="building_furnace" typeoffset="0xDA">
+                <class name="building_wood_furnace"          type="0x0"/>
+                <class name="building_smelter"               type="0x1"/>
+                <class name="building_glass_furnace"         type="0x2"/>
+                <class name="building_kiln"                  type="0x3"/>
+                <class name="building_magma_smelter"         type="0x4"/>
+                <class name="building_magma_glass_furnace"   type="0x5"/>
+                <class name="building_magma_kiln"            type="0x6"/>
+            </multiclass>
+            <multiclass name="building_siegeengine" typeoffset="0xC8">
+                <class name="building_catapult"              type="0x0"/>
+                <class name="building_ballista"              type="0x1"/>
+            </multiclass>
+            <multiclass name="building_trap" typeoffset="0xC8">
+                <class name="building_lever"                 type="0x0"/>
+                <class name="building_pressure_plate"        type="0x1"/>
+                <class name="building_cage_trap"             type="0x2"/>
+                <class name="building_stonefall_trap"        type="0x3"/>
+                <class name="building_weapon_trap"           type="0x4"/>
+            </multiclass>
+        </VTable>
 
     </Entry>
 
@@ -781,103 +830,7 @@
         <!-- only stone and metal have color loaded... -->
         <Offset name="matgloss_stone_color">0x84</Offset>
         <Offset name="matgloss_metal_color">0x60</Offset>
-
-        <VTable name="building_vtable">
-            <class vtable="0x0097e7ec" name="building_construction" />
-            <class vtable="0x0097e68c" name="building_road_paved"/>
-            <!-- missing dirt road -->
-            <!-- missing road -->
-            <class vtable="0x0097e3cc" name="building_wagon"/>
-            <class vtable="0x0097e26c" name="building_tradedepot"/>
-            <multiclass vtable="0x0097e10c" name="building_workshop" typeoffset="0xC8">
-                <class name="building_alchemists_laboratory" type="0x0"/>
-                <class name="building_carpenters_workshop"   type="0x1"/>
-                <class name="building_farmers_workshop"      type="0x2"/>
-                <class name="building_masons_workshop"       type="0x3"/>
-                <class name="building_craftdwarfs_workshop"  type="0x4"/>
-                <class name="building_jewelers_workshop"     type="0x5"/>
-                <class name="building_metalsmiths_workshop"  type="0x6"/>
-                <class name="building_magma_forge"           type="0x7"/>
-                <class name="building_bowyers_workshop"      type="0x8"/>
-                <class name="building_mechanics_workshop"    type="0x9"/>
-                <class name="building_siege_workshop"        type="0xA"/>
-                <class name="building_butchers_shop"         type="0xB"/>
-                <class name="building_leather_works"         type="0xC"/>
-                <class name="building_tanners_shop"          type="0xD"/>
-                <class name="building_clothiers_shop"        type="0xE"/>
-                <class name="building_fishery"               type="0xF"/>
-                <class name="building_still"                 type="0x10"/>
-                <class name="building_loom"                  type="0x11"/>
-                <class name="building_quern"                 type="0x12"/>
-                <class name="building_kennels"               type="0x13"/>
-                <class name="building_kitchen"               type="0x14"/>
-                <class name="building_ashery"                type="0x15"/>
-                <class name="building_dyers_shop"            type="0x16"/>
-                <class name="building_millstone"             type="0x17"/>
-            </multiclass>
-            <multiclass vtable="0x0097dfac" name="building_furnace" typeoffset="0xDA">
-                <class name="building_wood_furnace"          type="0x0"/>
-                <class name="building_smelter"               type="0x1"/>
-                <class name="building_glass_furnace"         type="0x2"/>
-                <class name="building_kiln"                  type="0x3"/>
-                <class name="building_magma_smelter"         type="0x4"/>
-                <class name="building_magma_glass_furnace"   type="0x5"/>
-                <class name="building_magma_kiln"            type="0x6"/>
-            </multiclass>
-            <class vtable="0x0097de4c" name="building_animaltrap" />
-            <class vtable="0x0097dcec" name="building_farmplot"/>
-            <!-- missing generic window -->
-            <class vtable="0x0097d8cc" name="building_statue"/>
-            <class vtable="0x00979e84" name="building_well"/>
-            <class vtable="0x0097d76c" name="building_coffin"/>
-            <class vtable="0x0097d60c" name="building_shop"/>
-            <class vtable="0x0097d4ac" name="building_chair"/>
-            <class vtable="0x0097d34c" name="building_table"/>
-            <class vtable="0x0097d1ec" name="building_bed"/>
-            <multiclass vtable="0x0097d08c" name="building_siegeengine" typeoffset="0xC8">
-                <class name="building_catapult"              type="0x0"/>
-                <class name="building_ballista"              type="0x1"/>
-            </multiclass>
-            <class vtable="0x0097cf2c" name="building_cage"/>
-            <class vtable="0x0097cdcc" name="building_chain"/>
-            <class vtable="0x0097cc6c" name="building_windmill"/>
-            <class vtable="0x0097cb0c" name="building_water_wheel"/>
-            <class vtable="0x0097c9ac" name="building_screw_pump"/>
-            <class vtable="0x0097c84c" name="building_archerytarget"/>
-            <class vtable="0x0097c6ec" name="building_weapon" /><!-- retractable spikes -->
-            <class vtable="0x0097c58c" name="building_support"/>
-            <class vtable="0x0097c42c" name="building_axle_vertical"/>
-            <class vtable="0x0097c2cc" name="building_axle_horizontal"/>
-            <class vtable="0x0097c16c" name="building_gear_assembly"/>
-            <multiclass vtable="0x0097c00c" name="building_trap" typeoffset="0xC8">
-                <class name="building_lever"                 type="0x0"/>
-                <class name="building_pressure_plate"        type="0x1"/>
-                <class name="building_cage_trap"             type="0x2"/>
-                <class name="building_stonefall_trap"        type="0x3"/>
-                <class name="building_weapon_trap"           type="0x4"/>
-            </multiclass>
-            <class vtable="0x0097beac" name="building_bars_floor"/>
-            <class vtable="0x0097bd4c" name="building_bars_vertical"/>
-            <class vtable="0x0097bbec" name="building_grate_floor"/>
-            <class vtable="0x0097ba8c" name="building_grate_wall"/>
-            <class vtable="0x0097b92c" name="building_floodgate"/>
-            <class vtable="0x0097b7cc" name="building_bridge"/>
-            <class vtable="0x0097b66c" name="building_hatch"/>
-            <class vtable="0x0097b50c" name="building_door"/>
-            <class vtable="0x0097b3ac" name="building_armorstand"/>
-            <class vtable="0x0097b24c" name="building_weaponrack"/>
-            <class vtable="0x0097b0ec" name="building_cabinet"/>
-            <class vtable="0x0097af8c" name="building_box"/>
-            <!-- missing building_actual -->
-            <class vtable="0x00979d34" name="building_civzone" />
-            <class vtable="0x00979fe4" name="building_stockpile" />
-            <class vtable="0x0097da2c" name="building_window_gem"/>
-            <class vtable="0x0097db8c" name="building_window_glass"/>
-        </VTable>
-        <VTable name = "vein_vtable">
-            <class vtable="0x0097908c" name="block_square_event_frozen_liquid" />
-            <class vtable="0x00979074" name="block_square_event_mineral" />
-        </VTable>        
+        
         <Address name="cursor_xyz">0x9fc294</Address>
         <Address name="window_x">0xd457f4</Address>
         <Address name="window_y">0xd73868</Address>
@@ -885,21 +838,39 @@
         <Address name="window_dims">0x1706d4c</Address>
     </Entry>
     <!-- Windows 40d## sub-versions, should inherit only vtable from 40d -->
-    <Entry version="v0.28.181.40d9" os="windows" id="40d9win" base="40dwin">
-        <!-- identification -->
-        <HexValue name="pe_timestamp">0x4967C2E0</HexValue>
-        <String name="md5">aea5a207b8b1cda942502f97a429f6c3</String>
-
-        <!-- map data -->
-        <Address name="map_data">0x01531EC0</Address>
-        <Address name="constructions">0x014da5e0</Address>
-        <Address name="buildings">0x014ee978</Address>
-        <Address name="vegetation">0x014F4B4C</Address>
-        <Address name="creatures">0x014edfcc</Address>
-
-        <!-- translation tables -->
-        <Address name="translation_vector">0x01534270</Address>
-        <Address name="language_vector">0x01534240</Address>
+    <Entry version="v0.28.181.40d2" os ="windows" id="40d2win" base="40dwin">
+        <HexValue name="pe_timestamp">0x4953556c</HexValue>
+        <String name="md5">B1A8CA1F91734EB492B7F54F6823CDDB</String>
+        <Address name="buildings">0x014d1db0</Address>
+        <Address name="constructions">0x014bda18</Address>
+        <Address name="creatures">0x014d1404</Address>
+        <Address name="current_cursor_creature">0x014d1de4</Address>
+        <Address name="current_menu_state">0x0165b5a8</Address>
+        <Address name="cursor_xyz">0x0094b27c</Address>
+        <Address name="hotkey_start">0x012e101c</Address>
+        <Address name="items">0x014d14f8</Address>
+        <Address name="language_vector">0x01517678</Address>
+        <Address name="map_data">0x015152f8</Address>
+        <Address name="matgloss">0x01517468</Address>
+        <Address name="notes">0x012e0fe4</Address>
+        <Address name="pause_state">0x012cefbf</Address>
+        <Address name="region_x">0x01515330</Address>
+        <Address name="region_y">0x01515334</Address>
+        <Address name="region_z">0x01515338</Address>
+        <Address name="settlement_current">0x015170f8</Address>
+        <Address name="settlements">0x0151702c</Address>
+        <Address name="translation_vector">0x015176a8</Address>
+        <Address name="vegetation">0x014d7f84</Address>
+        <Address name="view_screen">0x012ef340</Address>
+        <Address name="window_dims">0x0165a34c</Address>
+        <Address name="window_x">0x00c9333c</Address>
+        <Address name="window_y">0x00cc13b0</Address>
+        <Address name="window_z">0x00cc138c</Address>
+        <Address name="world">0x01516930</Address>
+        <Address name="x_count">0x01515318</Address>
+        <Address name="y_count">0x0151531c</Address>
+        <Address name="z_count">0x01515320</Address>
+        
         <Offset name="word_table">0x54</Offset>
         
         <!-- creature offsets -->
@@ -922,17 +893,7 @@
 
         <!-- tree and shrub offsets -->
         <Offset name="tree_desc_offset">0x70</Offset>
-
-        <!-- size of the map -->
-        <Address name="x_count">0x01531EE0</Address>
-        <Address name="y_count">0x01531EE4</Address>
-        <Address name="z_count">0x01531EE8</Address>
-
-        <!-- position of the map in world coords -->
-        <Address name="region_x">0x01531EF8</Address>
-        <Address name="region_y">0x01531EFC</Address>
-        <Address name="region_z">0x01531F00</Address>
-
+     
         <!-- map block offsets -->
         <Offset name="v_vein">0x10</Offset>
         <HexValue name="v_vein_size">0x2C</HexValue>
@@ -941,8 +902,6 @@
         <Offset name="occupancy">0x0684</Offset>  
         <Offset name="biome_stuffs">0x1D84</Offset>
 
-        <!-- the world and its offsets -->
-        <Address name="world">0x015334F8</Address>
         <Offset name="world_size_x">0x84</Offset>
         <Offset name="world_size_y">0x86</Offset>
         <Offset name="w_geoblocks">0x75C</Offset>
@@ -956,158 +915,20 @@
         <Offset name="geolayer_geoblock_offset">0xC</Offset>
 
         <!-- matgloss vectors -->
-        <Address name="matgloss">0x01534030</Address>
         <HexValue name="matgloss_skip">0x18</HexValue>
-        <!-- matgloss_stone_color verified -->
-        <!-- matgloss_metal_color verified -->
-        
-        <!-- door: 0x8ea1e4 -->
-        <VTable name="building_vtable" rebase="-0x91328">
-            <!-- Isn't it just /lovely/ how simple things become?
-                When you specify only typeoffset, nothing else is touched. Same for vtable. -->
-            <multiclass name="building_workshop" typeoffset="0x100" />
-            <multiclass name="building_siegeengine" typeoffset="0x100" />
-            <multiclass name="building_furnace" typeoffset="0x11A" />
-            <multiclass name="building_trap" typeoffset="0x100" />
-        </VTable>
-        <VTable name = "vein_vtable">
-            <class vtable="0x008e7d60" name="block_square_event_frozen_liquid" />
-            <class vtable="0x008e7d48" name="block_square_event_mineral" />
-        </VTable>        
-        <Address name="cursor_xyz">0x9662a4</Address>
-        <Address name="window_x">0xcae368</Address>
-        <Address name="window_y">0xcdc3dc</Address>
-        <Address name="window_z">0xcdc3b8</Address>
-        <Address name="window_dims">0x1676f14</Address>
-        
-        <Address name="notes">0x012FDBAC</Address>
         <Offset name="note_foreground">0x2</Offset>
         <Offset name="note_background">0x4</Offset>
         <Offset name="note_name">0x8</Offset>
         <Offset name="note_xyz">0x24</Offset>
         
-        <Address name="hotkey_start">0x012FDBE4</Address>
         <Offset name="hotkey_mode">0x1C</Offset>
         <Offset name="hotkey_xyz">0x20</Offset>
-        <HexValue name="hotkey_size">0x2C</HexValue>
-        
-        <Address name="settlement_current">0x01533CC0</Address>
-        <Address name="settlements">0x01533BF4</Address>
         
         <Offset name="settlement_name">0x38</Offset>
         <Offset name="settlement_world_xy">0x7a</Offset>
         <Offset name="settlement_local_xy">0x100</Offset>
         
-    </Entry>
-    <Entry version="v0.28.181.40d11" os="windows" rebase="0x2d388" id="40d11win" base="40d9win">
-        <!-- identification -->
-        <HexValue name="pe_timestamp">0x49C82D3F</HexValue>
-        <String name="md5">6f81231b845e9c9dc29aaf57705ccc7c</String>
-        <!-- door: 0x8e91e4 -->
-        <VTable name="building_vtable" rebase="-0x1000" />
-        <Address name="cursor_xyz">0x9652a4</Address>
-        <Address name="window_x">0xcdf5a0</Address>
-        <Address name="window_y">0xd0d64c</Address>
-        <Address name="window_z">0xd0d628</Address>
-        
-        <Address name="notes">0x013E853C</Address>     
-        <Address name="hotkey_start">0x013E8574</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d12" os="windows" id="40d12win" base="40d11win">
-        <!-- identification -->
-        <HexValue name="pe_timestamp">0x4A3CCB7F</HexValue>
-        <String name="md5">6ea1de36af8e1666bd6478736e298c4c</String>
-
-        <!-- map data -->
-        <Address name="map_data">0x015FACCC</Address>
-        <Address name="constructions">0x015A33B8</Address>
-        <Address name="buildings">0x015B7750</Address>
-        <Address name="vegetation">0x015BD924</Address>
-        <Address name="creatures">0x015B6DA4</Address>
-
-        <!-- translation tables -->
-        <Address name="translation_vector">0x015FD07C</Address>
-        <Address name="language_vector">0x015FD04C</Address>
-
-        <!-- size of the map -->
-        <Address name="x_count">0x015FACEC</Address>
-        <Address name="y_count">0x015FACF0</Address>
-        <Address name="z_count">0x015FACF4</Address>
-
-        <!-- position of the map in world coords -->
-        <Address name="region_x">0x015FAD04</Address>
-        <Address name="region_y">0x015FAD08</Address>
-        <Address name="region_z">0x015FAD0C</Address>
-
-        <!-- the world and its offsets -->
-        <Address name="world">0x015FC304</Address>
-        <!-- matgloss vectors -->
-        <Address name="matgloss">0x015FCE3C</Address>
-        <!-- door: 0x8db5e4 -->
-        <VTable name="building_vtable" rebase="-0xDC00" />
-        <VTable name = "vein_vtable">
-            <class vtable="0x008d9158" name="block_square_event_frozen_liquid" />
-            <class vtable="0x008d9140" name="block_square_event_mineral" />
-        </VTable>
-        <Address name="cursor_xyz">0x95f2b4</Address>
-        <Address name="window_x">0xd995a0</Address>
-        <Address name="window_y">0xdc764c</Address>
-        <Address name="window_z">0xdc7628</Address>
-        <Address name="window_dims">0x173fde0</Address>
-        
-        <Address name="settlement_current">0x015FCACC</Address>
-        <Address name="settlements">0x015FCA00</Address>
-        
-    </Entry>
-    <Entry version="v0.28.181.40d13" os="windows" id="40d13win" base="40d12win" rebase="0x5090">
-        <!-- identification -->
-        <HexValue name="pe_timestamp">0x4A51C26E</HexValue>
-        <String name="md5">04a8d8ce311d8ac75e4241bef68d3147</String>
-        <!-- map_data = 0x015FFD5C -->
-        <!-- door: 0x8df5ec -->
-        <VTable name="building_vtable" rebase="0x4008" />
-        <Address name="cursor_xyz">0x009642b4</Address>
-        <Address name="window_x">0x00d9e600</Address>
-        <Address name="window_y">0x00dcc6ac</Address>
-        <Address name="window_z">0x00dcc688</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d14" os="windows" id="40d14win" base="40d13win" rebase="0x2010">
-        <!-- identification -->
-        <HexValue name="pe_timestamp">0x4A8623D2</HexValue>
-        <String name="md5">781a2e51be4056a7320108f8f0df8a13</String>
-        <!-- map_data = 0x01601D6C -->
-        <!-- door: 0x8e15dc -->
-        <VTable name="building_vtable" rebase="0x1FF0" />
-        <Address name="cursor_xyz">0x009662B4</Address>
-        <Address name="window_x">0x00DA060C</Address>
-        <Address name="window_y">0x00DCE6B8</Address>
-        <Address name="window_z">0x00DCE694</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d15" os="windows" id="40d15win" base="40d14win" rebase="0x18">
-        <!-- identification -->
-        <HexValue name="pe_timestamp">0x4A9A6090</HexValue>
-        <String name="md5">12cc4a3dbb6e6dfd7bc7aee458b9471a</String>
-        <!-- map_data = 0x01601D84 -->
-        <!-- door: 0x8e15d4 -->
-        <VTable name="building_vtable" rebase="-0x8" />
-        <Address name="cursor_xyz">0x009662B4</Address>
-        <Address name="window_x">0x00DA061C</Address>
-        <Address name="window_y">0x00DCE6C8</Address>
-        <Address name="window_z">0x00DCE6A4</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d16" os="windows" id="40d16win" base="40d15win">
-        <!-- identification -->
-        <HexValue name="pe_timestamp">0x4A9B1A72</HexValue>
-        <String name="md5">59ab29021aca9f3c66b1ab102fb3ceea</String>
-        <!-- map_data = 0x01601D84 -->
-        <!-- door: 0x8e15d4, no VTable rebase needed -->
-        <Address name="current_cursor_creature">0x01757F38</Address>
-        <Address name="items">0x15BDF50</Address>
-        <Offset name="item_materials">0x68</Offset>
-        <Address name="current_menu_state">0x013EF900</Address>
-        <Address name="pause_state">0x13DC2EB</Address>
-        <Address name="view_screen">0x013EF970</Address>
-        
+        <Offset name="item_materials">0x68</Offset>      
         <Offset name="item_type_name">0x24</Offset>
         <Offset name="matgloss_creature_name">0x1C</Offset>
         <Offset name="matgloss_wood_name">0x28</Offset>
@@ -1118,281 +939,272 @@
         <Offset name="matgloss_plant_food">0x94</Offset>
         <Offset name="matgloss_plant_extract">0xB0</Offset>
         
+        <!-- I am just going to guess these actually start here -->
+        <VTable name="building_vtable">
+            <multiclass name="building_workshop" typeoffset="0x100" />
+            <multiclass name="building_siegeengine" typeoffset="0x100" />
+            <multiclass name="building_furnace" typeoffset="0x11A" />
+            <multiclass name="building_trap" typeoffset="0x100" />
+        </VTable>
+
+    </Entry>
+    <Entry version="v0.28.181.40d3" os ="windows" id="40d3win" base="40d2win" rebase="0x2018">
+        <HexValue name="pe_timestamp">0x4957716f</HexValue>
+        <String name="md5">9B6DA355562A4CDD345EA3046290499B</String>
+        <Address name="cursor_xyz">0x0094d27c</Address>
+        <Address name="pause_state">0x012d0fbf</Address>
+        <Address name="window_x">0x00c9533c</Address>
+        <Address name="window_y">0x00cc33b0</Address>
+        <Address name="window_z">0x00cc338c</Address>
+    </Entry>
+    <Entry version="v0.28.181.40d4" os ="windows" id="40d4win" base="40d3win" rebase="0x0">
+        <HexValue name="pe_timestamp">0x4957a0a2</HexValue>
+        <String name="md5">B77759DB7A6DD787BF98953FC5749D81</String>
+    </Entry>
+    <Entry version="v0.28.181.40d5" os ="windows" id="40d5win" base="40d4win" rebase="0x2018">
+        <HexValue name="pe_timestamp">0x495991c3</HexValue>
+        <String name="md5">A0792B81E5B8EC1DBDD627643E93B40D</String>
+        <Address name="cursor_xyz">0x0094f27c</Address>
+        <Address name="pause_state">0x012d2fbb</Address>
+        <Address name="window_x">0x00c97334</Address>
+        <Address name="window_y">0x00cc53a8</Address>
+        <Address name="window_z">0x00cc5384</Address>
+    </Entry>
+    <Entry version="v0.28.181.40d6" os ="windows" id="40d6win" base="40d5win" rebase="0x18a08">
+        <HexValue name="pe_timestamp">0x495cafd2</HexValue>
+        <String name="md5">D09E88A32FE57DE5973F78EF213271B6</String>
+        <Address name="cursor_xyz">0x009662a4</Address>
+        <Address name="pause_state">0x012e9fef</Address>
+        <Address name="window_x">0x00cae368</Address>
+        <Address name="window_y">0x00cdc3dc</Address>
+        <Address name="window_z">0x00cdc3b8</Address>
+    </Entry>
+    <Entry version="v0.28.181.40d7" os ="windows" id="40d7win" base="40d6win" rebase="0x190">
+        <HexValue name="pe_timestamp">0x495fcfef</HexValue>
+        <String name="md5">8E8E2A83D421E356A8047DC8830A7426</String>
+        <Address name="cursor_xyz">0x009662a4</Address>
+        <Address name="pause_state">0x012e9fef</Address>
+        <Address name="window_x">0x00cae368</Address>
+        <Address name="window_y">0x00cdc3dc</Address>
+        <Address name="window_z">0x00cdc3b8</Address>
+    </Entry>
+    <Entry version="v0.28.181.40d8" os ="windows" id="40d8win" base="40d7win" rebase="0x0">
+        <HexValue name="pe_timestamp">0x4963c928</HexValue>
+        <String name="md5">32253BEE114DD25EBBAA50D90B5C0A2A</String>
+    </Entry>
+    <Entry version="v0.28.181.40d9" os ="windows" id="40d9win" base="40d8win" rebase="0x0">
+        <HexValue name="pe_timestamp">0x4967c2e0</HexValue>
+        <String name="md5">AEA5A207B8B1CDA942502F97A429F6C3</String>
+    </Entry>
+    <Entry version="v0.28.181.40d10" os ="windows" id="40d10win" base="40d9win">
+        <HexValue name="pe_timestamp">0x49c59b94</HexValue>
+        <String name="md5">193193D8624F2F3F6D9D556FAB09B122</String>
+        <Address name="buildings">0x0151bd00</Address>
+        <Address name="constructions">0x01507968</Address>
+        <Address name="creatures">0x0151b354</Address>
+        <Address name="current_cursor_creature">0x0151bd34</Address>
+        <Address name="current_menu_state">0x016a54f8</Address>
+        <Address name="cursor_xyz">0x009652a4</Address>
+        <Address name="hotkey_start">0x0132e574</Address>
+        <Address name="items">0x0151b448</Address>
+        <Address name="language_vector">0x015615c8</Address>
+        <Address name="map_data">0x0155f248</Address>
+        <Address name="matgloss">0x015613b8</Address>
+        <Address name="notes">0x0132e53c</Address>
+        <Address name="pause_state">0x0131b25f</Address>
+        <Address name="region_x">0x0155f280</Address>
+        <Address name="region_y">0x0155f284</Address>
+        <Address name="region_z">0x0155f288</Address>
+        <Address name="settlement_current">0x01561048</Address>
+        <Address name="settlements">0x01560f7c</Address>
+        <Address name="translation_vector">0x015615f8</Address>
+        <Address name="vegetation">0x01521ed4</Address>
+        <Address name="view_screen">0x0133c898</Address>
+        <Address name="window_dims">0x016a429c</Address>
+        <Address name="window_x">0x00cdf5a0</Address>
+        <Address name="window_y">0x00d0d64c</Address>
+        <Address name="window_z">0x00d0d628</Address>
+        <Address name="world">0x01560880</Address>
+        <Address name="x_count">0x0155f268</Address>
+        <Address name="y_count">0x0155f26c</Address>
+        <Address name="z_count">0x0155f270</Address>
+    </Entry>
+    <Entry version="v0.28.181.40d11" os="windows" id="40d11win" base="40d9win" rebase="0x0">
+        <HexValue name="pe_timestamp">0x49c82d3f</HexValue>
+        <String name="md5">6F81231B845E9C9DC29AAF57705CCC7C</String>
+    </Entry>
+    <Entry version="v0.28.181.40d12" os="windows" id="40d12win" base="40d11win">
+        <HexValue name="pe_timestamp">0x4a3ccb7f</HexValue>
+        <String name="md5">6EA1DE36AF8E1666BD6478736E298C4C</String>
+        <Address name="buildings">0x015b7750</Address>
+        <Address name="constructions">0x015a33b8</Address>
+        <Address name="creatures">0x015b6da4</Address>
+        <Address name="current_cursor_creature">0x01750e7c</Address>
+        <Address name="current_menu_state">0x0095f410</Address>
+        <Address name="cursor_xyz">0x0095f2b4</Address>
+        <Address name="hotkey_start">0x013e8574</Address>
+        <Address name="items">0x015b6e98</Address>
+        <Address name="language_vector">0x015fd04c</Address>
+        <Address name="map_data">0x015faccc</Address>
+        <Address name="matgloss">0x015fce3c</Address>
+        <Address name="notes">0x013e853c</Address>
+        <Address name="pause_state">0x013d525f</Address>
+        <Address name="region_x">0x015fad04</Address>
+        <Address name="region_y">0x015fad08</Address>
+        <Address name="region_z">0x015fad0c</Address>
+        <Address name="settlement_current">0x015fcacc</Address>
+        <Address name="settlements">0x015fca00</Address>
+        <Address name="translation_vector">0x015fd07c</Address>
+        <Address name="vegetation">0x015bd924</Address>
+        <Address name="view_screen">0x015b6dc4</Address>
+        <Address name="window_dims">0x0173fde0</Address>
+        <Address name="window_x">0x00d995a0</Address>
+        <Address name="window_y">0x00dc764c</Address>
+        <Address name="window_z">0x00dc7628</Address>
+        <Address name="world">0x015fc304</Address>
+        <Address name="x_count">0x015facec</Address>
+        <Address name="y_count">0x015facf0</Address>
+        <Address name="z_count">0x015facf4</Address>
+    </Entry>
+    <Entry version="v0.28.181.40d13" os="windows" id="40d13win" base="40d12win" rebase="0x5090">
+        <HexValue name="pe_timestamp">0x4a51c26e</HexValue>
+        <String name="md5">04A8D8CE311D8AC75E4241BEF68D3147</String>
+        <Address name="current_menu_state">0x00964430</Address>
+        <Address name="cursor_xyz">0x009642b4</Address>
+        <Address name="pause_state">0x013da2bf</Address>
+        <Address name="window_x">0x00d9e600</Address>
+        <Address name="window_y">0x00dcc6ac</Address>
+        <Address name="window_z">0x00dcc688</Address>
+    </Entry>
+    <Entry version="v0.28.181.40d14" os="windows" id="40d14win" base="40d13win" rebase="0x2010">
+        <HexValue name="pe_timestamp">0x4a8623d2</HexValue>
+        <String name="md5">781A2E51BE4056A7320108F8F0DF8A13</String>
+        <Address name="current_menu_state">0x00966430</Address>
+        <Address name="cursor_xyz">0x009662b4</Address>
+        <Address name="pause_state">0x013dc2c7</Address>
+        <Address name="window_x">0x00da060c</Address>
+        <Address name="window_y">0x00dce6b8</Address>
+        <Address name="window_z">0x00dce694</Address>
+    </Entry>
+    <Entry version="v0.28.181.40d15" os="windows" id="40d15win" base="40d14win">
+        <HexValue name="pe_timestamp">0x4a9a6090</HexValue>
+        <String name="md5">12CC4A3DBB6E6DFD7BC7AEE458B9471A</String>
+        <Address name="buildings">0x015be808</Address>
+        <Address name="constructions">0x015aa470</Address>
+        <Address name="creatures">0x015bde5c</Address>
+        <Address name="current_cursor_creature">0x01757f3c</Address>
+        <Address name="current_menu_state">0x00966430</Address>
+        <Address name="cursor_xyz">0x009662b4</Address>
+        <Address name="hotkey_start">0x013ef62c</Address>
+        <Address name="items">0x015bdf50</Address>
+        <Address name="language_vector">0x01604104</Address>
+        <Address name="map_data">0x01601d84</Address>
+        <Address name="matgloss">0x01603ef4</Address>
+        <Address name="notes">0x013ef5f4</Address>
+        <Address name="pause_state">0x013dc2eb</Address>
+        <Address name="region_x">0x01601dbc</Address>
+        <Address name="region_y">0x01601dc0</Address>
+        <Address name="region_z">0x01601dc4</Address>
+        <Address name="settlement_current">0x01603b84</Address>
+        <Address name="settlements">0x01603ab8</Address>
+        <Address name="translation_vector">0x01604134</Address>
+        <Address name="vegetation">0x015c49dc</Address>
+        <Address name="view_screen">0x015bde7c</Address>
+        <Address name="window_dims">0x01746e98</Address>
+        <Address name="window_x">0x00da061c</Address>
+        <Address name="window_y">0x00dce6c8</Address>
+        <Address name="window_z">0x00dce6a4</Address>
+        <Address name="world">0x016033bc</Address>
+        <Address name="x_count">0x01601da4</Address>
+        <Address name="y_count">0x01601da8</Address>
+        <Address name="z_count">0x01601dac</Address>
+    </Entry>
+    <Entry version="v0.28.181.40d16" os="windows" id="40d16win" base="40d15win" rebase="0x0">
+        <HexValue name="pe_timestamp">0x4a9b1a72</HexValue>
+        <String name="md5">59AB29021ACA9F3C66B1AB102FB3CEEA</String>
     </Entry>
     <Entry version="v0.28.181.40d17" os="windows" base="40d16win" id="40d17win">
-        <!-- identification -->
-        <HexValue name="pe_timestamp">0x4B6B7879</HexValue>
-        <String name="md5">de66405f54d98297303d439b3b7aa30e</String> <!-- THIS IS *NOT* A NUMBER -->
-                 
-        <Address name="map_data">0x016367DC</Address>
-        <Address name="constructions">0x015DEEC8</Address>
-        <Address name="buildings">0x015F3260</Address>
-        <Address name="vegetation">0x015F9434</Address>
-        <Address name="creatures">0x015F28B4</Address>
-        <Address name="items">0x015F29A8</Address>
-
-        <!-- translation tables -->
-        <Address name="translation_vector">0x01638B8C</Address>
-        <Address name="language_vector">0x01638B5C</Address>
-
-        <!-- size of the map -->
-        <Address name="x_count">0x016367FC</Address>
-        <Address name="y_count">0x01636800</Address>
-        <Address name="z_count">0x01636804</Address>
-
-        <!-- position of the map in world coords -->
+        <HexValue name="pe_timestamp">0x4b6b7879</HexValue>
+        <String name="md5">DE66405F54D98297303D439B3B7AA30E</String>
+        <Address name="buildings">0x015f3260</Address>
+        <Address name="constructions">0x015deec8</Address>
+        <Address name="creatures">0x015f28b4</Address>
+        <Address name="current_cursor_creature">0x0178c994</Address>
+        <Address name="current_menu_state">0x0099ae08</Address>
+        <Address name="cursor_xyz">0x0099ac88</Address>
+        <Address name="hotkey_start">0x014240dc</Address>
+        <Address name="items">0x015f29a8</Address>
+        <Address name="language_vector">0x01638b5c</Address>
+        <Address name="map_data">0x016367dc</Address>
+        <Address name="matgloss">0x0163894c</Address>
+        <Address name="notes">0x014240a4</Address>
+        <Address name="pause_state">0x01410cc1</Address>
         <Address name="region_x">0x01636814</Address>
         <Address name="region_y">0x01636818</Address>
-        <Address name="region_z">0x0163681C</Address>
-
-        <!-- the world and its offsets -->
-        <Address name="world">0x01637E14</Address>
-        <!-- matgloss vectors -->
-        <Address name="matgloss">0x0163894C</Address>
-        
-        <Address name="cursor_xyz">0x0099AC88</Address>
-        <Address name="window_x">0x00DD4FEC</Address>
-        <Address name="window_y">0x00E03098</Address>
-        <Address name="window_z">0x00E03074</Address>
-        <Address name="window_dims">0x0177B8F0</Address>
-        <Address name="current_menu_state">0x0099AE0C</Address>
-        <Address name="pause_state">0x01410CC1</Address>
-        <Address name="view_screen">0x014243C4</Address>
-        <Address name="current_cursor_creature">0x0178C994</Address>
-        
-        <Address name="notes">0x014240A4</Address>     
-        <Address name="hotkey_start">0x014240DC</Address>
-        
-        <Address name="settlement_current">0x16385DC</Address>
-        <Address name="settlements">0x1638510</Address>
-        
-        <VTable name="building_vtable">
-            <!-- typeoffsets and sub-classes don't change here, only vtable addresses -->
-            <multiclass vtable="0x0091DEA4" name="building_workshop" /> <!--typeoffset="0xAC"-->
-            <multiclass vtable="0x0091CDC4" name="building_siegeengine"/> <!-- typeoffset="0xAC" -->
-            <multiclass vtable="0x0091DD3C" name="building_furnace" /> <!-- typeoffset="0xBA" -->
-            <multiclass vtable="0x0091BCE4" name="building_trap" /> <!-- typeoffset="0xAC" -->
-            <class vtable="0x0091982C" name="building_actual" />
-            <class vtable="0x00919994" name="building_civzone" />
-            <class vtable="0x00919AEC" name="building_well" />
-            <class vtable="0x00919C54" name="building_stockpile" />
-            <class vtable="0x0091AC04" name="building_box" />
-            <class vtable="0x0091AD6C" name="building_cabinet" />
-            <class vtable="0x0091AED4" name="building_weaponrack" />
-            <class vtable="0x0091B03C" name="building_armorstand" />
-            <class vtable="0x0091B1A4" name="building_door" />
-            <class vtable="0x0091B30C" name="building_hatch" />
-            <class vtable="0x0091B474" name="building_bridge" />
-            <class vtable="0x0091B5DC" name="building_floodgate" />
-            <class vtable="0x0091B744" name="building_grate_wall" />
-            <class vtable="0x0091B8AC" name="building_grate_floor" />
-            <class vtable="0x0091BA14" name="building_bars_vertical" />
-            <class vtable="0x0091BB7C" name="building_bars_floor" />
-            <class vtable="0x0091BE4C" name="building_gear_assembly" />
-            <class vtable="0x0091BFB4" name="building_axle_horizontal" />
-            <class vtable="0x0091C11C" name="building_axle_vertical" />
-            <class vtable="0x0091C284" name="building_support" />
-            <class vtable="0x0091C3EC" name="building_weapon" />
-            <class vtable="0x0091C554" name="building_archerytarget" />
-            <class vtable="0x0091C6BC" name="building_screw_pump" />
-            <class vtable="0x0091C824" name="building_water_wheel" />
-            <class vtable="0x0091C98C" name="building_windmill" />
-            <class vtable="0x0091CAF4" name="building_chain" />
-            <class vtable="0x0091CC5C" name="building_cage" />
-            <class vtable="0x0091CF2C" name="building_bed" />
-            <class vtable="0x0091D094" name="building_table" />
-            <class vtable="0x0091D1FC" name="building_chair" />
-            <class vtable="0x0091D364" name="building_shop" />
-            <class vtable="0x0091D4CC" name="building_coffin" />
-            <class vtable="0x0091D634" name="building_statue" />
-            <class vtable="0x0091D79C" name="building_window_gem" />
-            <class vtable="0x0091D904" name="building_window_glass" />
-            <class vtable="0x0091DA6C" name="building_farmplot" />
-            <class vtable="0x0091DBD4" name="building_animaltrap" />
-            <class vtable="0x0091E00C" name="building_tradedepot" />
-            <class vtable="0x0091E174" name="building_wagon" />
-            <class vtable="0x0091E2DC" name="building_road_dirt" />
-            <class vtable="0x0091E444" name="building_road_paved" />
-            <class vtable="0x0091E5AC" name="building_construction" />
-        </VTable>
+        <Address name="region_z">0x0163681c</Address>
+        <Address name="settlement_current">0x016385dc</Address>
+        <Address name="settlements">0x01638510</Address>
+        <Address name="translation_vector">0x01638b8c</Address>
+        <Address name="vegetation">0x015f9434</Address>
+        <Address name="view_screen">0x014243c4</Address>
+        <Address name="window_dims">0x0177b8f0</Address>
+        <Address name="window_x">0x00dd4fec</Address>
+        <Address name="window_y">0x00e03098</Address>
+        <Address name="window_z">0x00e03074</Address>
+        <Address name="world">0x01637e14</Address>
+        <Address name="x_count">0x016367fc</Address>
+        <Address name="y_count">0x01636800</Address>
+        <Address name="z_count">0x01636804</Address>
     </Entry>
     
-    <Entry version="v0.28.181.40d18" os="windows" base="40d17win" id="40d18win">
+    <Entry version="v0.28.181.40d18" os="windows" base="40d17win" id="40d18win" rebase="0x9c5f8">
         <!-- identification -->
         <!--<HexValue name="pe_timestamp">0x006BF5AA</HexValue>-->
         <HexValue name="pe_timestamp">0x4b81b00d</HexValue>
         <String name="md5">5cdc6f4804809f4d5cacdb66785e8cda</String> <!-- THIS IS *NOT* A NUMBER -->
-                 
-        <Address name="map_data">0x016D2DD4</Address>
-        <Address name="constructions">0x167B4C0</Address>
-        <Address name="buildings">0x168f858</Address>
-        <Address name="vegetation">0x01695A2C</Address>
-        <Address name="creatures">0x168EEAC</Address>
-        <Address name="items">0x0168EFA0</Address>
-
-        <!-- translation tables -->
-        <Address name="translation_vector">0x016D5184</Address>
-        <Address name="language_vector">0x016D5154</Address>
-
-        <!-- size of the map -->
-        <Address name="x_count">0x16D2DF4</Address>
-        <Address name="y_count">0x16D2DF8</Address>
-        <Address name="z_count">0x16D2DFC</Address>
-
-        <!-- position of the map in world coords -->
-        <Address name="region_x">0x016D2E0C</Address>
-        <Address name="region_y">0x016D2E10</Address>
-        <Address name="region_z">0x016D2E14</Address>
-
-        <!-- the world and its offsets -->
-        <Address name="world">0x016D440C</Address>
-        <!-- matgloss vectors -->
-        <Address name="matgloss">0x016D4F44</Address>
-        
-        <Address name="cursor_xyz">0x9772b8</Address>
-        <Address name="window_x">0xDB1584</Address>
-        <Address name="window_y">0xDDF630</Address>
-        <Address name="window_z">0xDDF60C</Address>
-        <Address name="window_dims">0x1817EE8</Address>
-        <Address name="current_menu_state">0x977438</Address>
-        <Address name="pause_state">0x014AD278</Address>
-        <Address name="view_screen">0x014C09BC</Address>
-        <Address name="current_cursor_creature">0x01828F8C</Address>
-        
-        <Address name="notes">0x014C069C</Address>     
-        <Address name="hotkey_start">0x014C06D4</Address>
-        
-        <Address name="settlement_current">0x016D4BD4</Address>
-        <Address name="settlements">0x16D4B08</Address>
-        
-        <VTable name="building_vtable">
-            <class vtable="0x008F6680" name="building_store" />
-            <class vtable="0x008F7D0C" name="building_actual" />
-            <class vtable="0x008F7E74" name="building_civzone" />
-            <class vtable="0x008F7FCC" name="building_well" />
-            <class vtable="0x008F8134" name="building_stockpile" />
-            <class vtable="0x008F90E4" name="building_box" />
-            <class vtable="0x008F924C" name="building_cabinet" />
-            <class vtable="0x008F93B4" name="building_weaponrack" />
-            <class vtable="0x008F951C" name="building_armorstand" />
-            <class vtable="0x008F9684" name="building_door" />
-            <class vtable="0x008F97EC" name="building_hatch" />
-            <class vtable="0x008F9954" name="building_bridge" />
-            <class vtable="0x008F9ABC" name="building_floodgate" />
-            <class vtable="0x008F9C24" name="building_grate_wall" />
-            <class vtable="0x008F9D8C" name="building_grate_floor" />
-            <class vtable="0x008F9EF4" name="building_bars_vertical" />
-            <class vtable="0x008FA05C" name="building_bars_floor" />
-            <multiclass vtable="0x008FA1C4" name="building_trap" />
-            <class vtable="0x008FA32C" name="building_gear_assembly" />
-            <class vtable="0x008FA494" name="building_axle_horizontal" />
-            <class vtable="0x008FA5FC" name="building_axle_vertical" />
-            <class vtable="0x008FA764" name="building_support" />
-            <class vtable="0x008FA8CC" name="building_weapon" />
-            <class vtable="0x008FAA34" name="building_archerytarget" />
-            <class vtable="0x008FAB9C" name="building_screw_pump" />
-            <class vtable="0x008FAD04" name="building_water_wheel" />
-            <class vtable="0x008FAE6C" name="building_windmill" />
-            <class vtable="0x008FAFD4" name="building_chain" />
-            <class vtable="0x008FB13C" name="building_cage" />
-            <multiclass vtable="0x008FB2A4" name="building_siegeengine" />
-            <class vtable="0x008FB40C" name="building_bed" />
-            <class vtable="0x008FB574" name="building_table" />
-            <class vtable="0x008FB6DC" name="building_chair" />
-            <class vtable="0x008FB844" name="building_shop" />
-            <class vtable="0x008FB9AC" name="building_coffin" />
-            <class vtable="0x008FBB14" name="building_statue" />
-            <class vtable="0x008FBC7C" name="building_window_gem" />
-            <class vtable="0x008FBDE4" name="building_window_glass" />
-            <class vtable="0x008FBF4C" name="building_farmplot" />
-            <class vtable="0x008FC0B4" name="building_animaltrap" />
-            <multiclass vtable="0x008FC21C" name="building_furnace" />
-            <multiclass vtable="0x008FC384" name="building_workshop" />
-            <class vtable="0x008FC4EC" name="building_tradedepot" />
-            <class vtable="0x008FC654" name="building_wagon" />
-            <class vtable="0x008FC7BC" name="building_road_dirt" />
-            <class vtable="0x008FC924" name="building_road_paved" />
-            <class vtable="0x008FCA8C" name="building_construction" />
-            <class vtable="0x00941C78" name="building_chain" />
-            <class vtable="0x00941CB4" name="building_caged" />
-            <class vtable="0x00941CF0" name="building_holder" />
-        </VTable>
+        <Address name="current_menu_state">0x00977438</Address>
+        <Address name="cursor_xyz">0x009772b8</Address>
+        <Address name="pause_state">0x014ad278</Address>
+        <Address name="window_x">0x00db1584</Address>
+        <Address name="window_y">0x00ddf630</Address>
+        <Address name="window_z">0x00ddf60c</Address>
     </Entry>
     <Entry version="v0.28.181.40d19" os="windows" base="40d18win" id="40d19win">
-        <!-- identification -->
-        <!--<HexValue name="pe_timestamp">0x006BF5AA</HexValue>-->
-        <HexValue name="pe_timestamp">0x4B90268A</HexValue>
-        <String name="md5">13640a273d90af39425b798ae9823757</String> <!-- THIS IS *NOT* A NUMBER -->
-
-        <Address name="map_data">0x01555E14</Address>
-        <!--
-        <Address name="constructions">0x014FE504</Address>
-        <Address name="buildings">0x0151289C</Address>
-        <Address name="vegetation">0x01518A70</Address>
-        <Address name="creatures">0x01511EF0</Address>
-        <Address name="items">0x01511FE4</Address>
-        -->
-        
-        <Address name="constructions">0x014FE500</Address>
+        <HexValue name="pe_timestamp">0x4b90268a</HexValue>
+        <String name="md5">13640A273D90AF39425B798AE9823757</String>
         <Address name="buildings">0x01512898</Address>
-        <Address name="vegetation">0x01518A6C</Address>
-        <Address name="creatures">0x01511EEC</Address>
-        <Address name="items">0x01511FE0</Address>
-        
-        <!-- translation tables -->
-        <!--
-        <Address name="translation_vector">0x015581C8</Address>
-        <Address name="language_vector">0x01558198</Address>
-        -->
-        <Address name="translation_vector">0x015581C4</Address>
-        <Address name="language_vector">0x01558194</Address>
-
-        <!-- size of the map -->
-        <Address name="x_count">0x01555E34</Address>
-        <Address name="y_count">0x01555E38</Address>
-        <Address name="z_count">0x01555E3C</Address>
-
-        <!-- position of the map in world coords -->
-        <Address name="region_x">0x01555E4C</Address>
-        <Address name="region_y">0x01555E50</Address>
-        <Address name="region_z">0x01555E54</Address>
-
-        <!-- the world and its offsets -->
-        <Address name="world">0x0155744C</Address>
-        <!-- matgloss vectors -->
-        <Address name="matgloss">0x01557F84</Address>
-        
-        <Address name="cursor_xyz">0x0097A2B8</Address>
-        <Address name="window_x">0x00CF4230</Address>
-        <Address name="window_y">0x00D222DC</Address>
-        <Address name="window_z">0x00D222B8</Address>
-        <Address name="window_dims">0x0169AF28</Address>
-        <Address name="current_menu_state">0x016AC1A0</Address>
-        <Address name="pause_state">0x0132FF1E</Address>
-        <Address name="view_screen">0x013439FC</Address>
-        <!--<Address name="current_cursor_creature">0x016ABFCC</Address>-->
-        <Address name="current_cursor_creature">0x016ABFC8</Address>
-        
-        <!--
-        <Address name="notes">0x01558198</Address>     
+        <Address name="constructions">0x014fe500</Address>
+        <Address name="creatures">0x01511eec</Address>
+        <Address name="current_cursor_creature">0x016abfcc</Address>
+        <Address name="current_menu_state">0x016ac1a0</Address>
+        <Address name="cursor_xyz">0x0097a2b8</Address>
         <Address name="hotkey_start">0x01343714</Address>
-        
-        <Address name="settlement_current">0x01557C18</Address>
-        <Address name="settlements">0x01557B4C</Address>
-        
-        -->
-        <Address name="notes">0x01558194</Address>     
-        <Address name="hotkey_start">0x01343710</Address>
-        
-        <Address name="settlement_current">0x01557C14</Address>
-        <Address name="settlements">0x01557B48</Address>
-
-        <VTable name="building_vtable" rebase="0x2018" />
+        <Address name="items">0x01511fe0</Address>
+        <Address name="language_vector">0x01558194</Address>
+        <Address name="map_data">0x01555e14</Address>
+        <Address name="matgloss">0x01557f84</Address>
+        <Address name="notes">0x013436dc</Address>
+        <Address name="pause_state">0x0132ff1e</Address>
+        <Address name="region_x">0x01555e4c</Address>
+        <Address name="region_y">0x01555e50</Address>
+        <Address name="region_z">0x01555e54</Address>
+        <Address name="settlement_current">0x01557c14</Address>
+        <Address name="settlements">0x01557b48</Address>
+        <Address name="translation_vector">0x015581c4</Address>
+        <Address name="vegetation">0x01518a6c</Address>
+        <Address name="view_screen">0x013439fc</Address>
+        <Address name="window_dims">0x0169af28</Address>
+        <Address name="window_x">0x00cf4230</Address>
+        <Address name="window_y">0x00d222dc</Address>
+        <Address name="window_z">0x00d222b8</Address>
+        <Address name="world">0x0155744c</Address>
+        <Address name="x_count">0x01555e34</Address>
+        <Address name="y_count">0x01555e38</Address>
+        <Address name="z_count">0x01555e3c</Address>
     </Entry>
     <Entry version="v0.28.181.40d19_2" os="windows" base="40d19win" id="40d19_2win" rebase="0x1000">
         <HexValue name="pe_timestamp">0x4B918BB9</HexValue>
         <String name="md5">af29004e1763bb3460faa11907c3ac90</String>
-        <VTable name="building_vtable" rebase="0x1000" />
     </Entry>
                             .-"""-.
                            '       \

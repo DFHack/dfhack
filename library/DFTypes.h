@@ -484,14 +484,14 @@ struct t_trait
 CREATURE
 */
 
-
+//#pragma pack(push,4)
 struct t_name
 {
 	char first_name[128];
 	char nickname[128];
-	int words[7];
-	short parts_of_speech[7];
-	int language;
+	int32_t words[7];
+	uint16_t parts_of_speech[7];
+	uint32_t language;
 	bool has_name;
 };
 
@@ -514,6 +514,8 @@ struct t_like
     t_matglossPair material;
     bool active;
 };
+//#pragma pack(pop)
+
 #define NUM_CREATURE_TRAITS 30
 #define NUM_CREATURE_LABORS 102
 struct t_creature

@@ -49,16 +49,7 @@ bool useYield = 0;
 
 #define SHMHDR ((shm_core_hdr *)shm)
 #define SHMCMD ((shm_cmd *)shm)->pingpong
-
-void GetCoreVersion (void * data)
-{
-    SHMHDR->value = module_registry[0].version;
-}
-
-void GetPID (void * data)
-{
-    SHMHDR->value = OS_getPID();
-}
+#define SHMDATA(type) ((type *)(shm + SHM_HEADER))
 
 void ReadRaw (void * data)
 {
@@ -126,19 +117,17 @@ int bitcount(uint32_t n)
 }
 
 // get local and remote affinity, set up yield if required (single core available)
-void SyncYield (void * data)
+void CoreAttach (void * data)
 {
+    // sync affinity
     uint32_t local = OS_getAffinity();
-    uint32_t remote = SHMHDR->value;
+    uint32_t remote = SHMDATA(coreattach)->cl_affinity;
     uint32_t pool = local | remote;
-    if(bitcount(pool) == 1)
-    {
-        SHMHDR->value = useYield = 1;
-    }
-    else
-    {
-        SHMHDR->value = useYield = 0;
-    }
+    SHMDATA(coreattach)->sv_useYield = useYield = (bitcount(pool) == 1);
+    // return our PID
+    SHMDATA(coreattach)->sv_PID = OS_getPID();
+    // return core version
+    SHMDATA(coreattach)->sv_version = module_registry[0].version;
 }
 
 void FindModule (void * data)
@@ -157,14 +146,33 @@ void FindModule (void * data)
             break;
         }
     }
-    if(found)
+    SHMHDR->error = !found;
+}
+
+void FindCommand (void * data)
+{
+    bool found = false;
+    commandlookup * payload = SHMDATA(commandlookup);
+    std::string modname = payload->module;
+    std::string cmdname = payload->name;
+    uint32_t version = payload->version;
+    for(unsigned int i = 0; i < module_registry.size();i++)
     {
-        SHMHDR->error = false;
+        if(module_registry[i].name == modname && module_registry[i].version == version)
+        {
+            for(unsigned int j = 0 ; j < module_registry[i].commands.size();j++)
+            {
+                if(module_registry[i].commands[j].name == cmdname)
+                {
+                    // gotcha
+                    SHMHDR->value = j + (i << 16);
+                    SHMHDR->error = false;
+                    return;
+                }
+            }
+        }
     }
-    else
-    {
-        SHMHDR->error = true;
-    }
+    SHMHDR->error = true;
 }
 
 DFPP_module InitCore(void)
@@ -176,45 +184,29 @@ DFPP_module InitCore(void)
     
     core.reserve(NUM_CORE_CMDS);
     core.set_command(CORE_RUNNING, CANCELLATION, "Running");
+    core.set_command(CORE_SUSPEND, CLIENT_WAIT, "Suspend", 0 , CORE_SUSPENDED);
+    core.set_command(CORE_SUSPENDED, CLIENT_WAIT, "Suspended");
     
-    core.set_command(CORE_GET_VERSION, FUNCTION,"Get core version",GetCoreVersion, CORE_RET_VERSION);
-    core.set_command(CORE_RET_VERSION, CLIENT_WAIT,"Core version return");
+    core.set_command(CORE_ATTACH, FUNCTION,"Core attach",CoreAttach, CORE_SUSPENDED);
     
-    core.set_command(CORE_GET_PID, FUNCTION, "Get PID", GetPID, CORE_RET_PID);
-    core.set_command(CORE_RET_PID, CLIENT_WAIT, "PID return");
+    core.set_command(CORE_DFPP_READ, FUNCTION,"Raw read",ReadRaw, CORE_SUSPENDED);
+    core.set_command(CORE_READ_DWORD, FUNCTION,"Read DWORD",ReadDWord, CORE_SUSPENDED);
+    core.set_command(CORE_READ_WORD, FUNCTION,"Read WORD",ReadWord, CORE_SUSPENDED);
+    core.set_command(CORE_READ_BYTE, FUNCTION,"Read BYTE",ReadByte, CORE_SUSPENDED);
     
-    core.set_command(CORE_DFPP_READ, FUNCTION,"Raw read",ReadRaw, CORE_RET_DATA);
-    core.set_command(CORE_RET_DATA, CLIENT_WAIT,"Raw read return");
-
-    core.set_command(CORE_READ_DWORD, FUNCTION,"Read DWORD",ReadDWord, CORE_RET_DWORD);
-    core.set_command(CORE_RET_DWORD, CLIENT_WAIT,"Read DWORD return");
-
-    core.set_command(CORE_READ_WORD, FUNCTION,"Read WORD",ReadWord, CORE_RET_WORD);
-    core.set_command(CORE_RET_WORD, CLIENT_WAIT,"Read WORD return");
-    
-    core.set_command(CORE_READ_BYTE, FUNCTION,"Read BYTE",ReadByte, CORE_RET_BYTE);
-    core.set_command(CORE_RET_BYTE, CLIENT_WAIT,"Read BYTE return");
-    
-    core.set_command(CORE_SV_ERROR, CANCELLATION, "Server error");
-    core.set_command(CORE_CL_ERROR, CANCELLATION, "Client error");
+    core.set_command(CORE_ERROR, CANCELLATION, "Error");
     
     core.set_command(CORE_WRITE, FUNCTION, "Raw write", WriteRaw, CORE_SUSPENDED);
     core.set_command(CORE_WRITE_DWORD, FUNCTION, "Write DWORD", WriteDWord, CORE_SUSPENDED);
     core.set_command(CORE_WRITE_WORD, FUNCTION, "Write WORD", WriteWord, CORE_SUSPENDED);
     core.set_command(CORE_WRITE_BYTE, FUNCTION, "Write BYTE", WriteByte, CORE_SUSPENDED);
     
-    core.set_command(CORE_SUSPEND, CLIENT_WAIT, "Suspend", 0 , CORE_SUSPENDED);
-    core.set_command(CORE_SUSPENDED, CLIENT_WAIT, "Suspended");
-    
-    core.set_command(CORE_READ_STL_STRING, FUNCTION, "Read STL string", ReadSTLString, CORE_RET_STRING);
+    core.set_command(CORE_READ_STL_STRING, FUNCTION, "Read STL string", ReadSTLString, CORE_SUSPENDED);
     core.set_command(CORE_READ_C_STRING, CLIENT_WAIT, "RESERVED");
-    core.set_command(CORE_RET_STRING, CLIENT_WAIT, "Return string");
     core.set_command(CORE_WRITE_STL_STRING, FUNCTION, "Write STL string", WriteSTLString, CORE_SUSPENDED);
-    core.set_command(CORE_SYNC_YIELD, FUNCTION, "Synchronize affinity/yield", SyncYield, CORE_SYNC_YIELD_RET);
-    core.set_command(CORE_SYNC_YIELD_RET, CLIENT_WAIT, "Synchronize affinity/yield return");
     
-    core.set_command(CORE_ACQUIRE_MODULE, FUNCTION, "Module lookup", FindModule, CORE_RET_MODULE);
-    core.set_command(CORE_RET_MODULE, CLIENT_WAIT, "Return module index or error");
+    core.set_command(CORE_ACQUIRE_MODULE, FUNCTION, "Module lookup", FindModule, CORE_SUSPENDED);
+    core.set_command(CORE_ACQUIRE_COMMAND, FUNCTION, "Command lookup", FindCommand, CORE_SUSPENDED);
     return core;
 }
 
@@ -253,24 +245,37 @@ void SHM_Act (void)
         }
         else
         {
-            // full_barrier
+            full_barrier
             SHMCMD = CORE_RUNNING;
             fprintf(stderr,"dfhack: Broke out of loop, other process disappeared.\n");
         }
     }
-    DFPP_module & mod = module_registry[((shm_cmd *)shm)->parts.module];
-    DFPP_command & cmd = mod.commands[((shm_cmd *)shm)->parts.command];
-    //fprintf(stderr, "Client invoked %d:%d = ",((shm_cmd *)shm)->parts.module,((shm_cmd *)shm)->parts.command);
-    //fprintf(stderr, "%s\n",cmd.name.c_str());
     
+    // this is very important! copying two words separately from the command variable leads to inconsistency.
+    // Always copy the thing in one go.
+    // Also, this whole SHM thing probably only works on intel processors
+    
+    volatile shm_cmd atomic = SHMHDR->cmd;
+    full_barrier
+    DFPP_module & mod = module_registry[atomic.parts.module];
+    DFPP_command & cmd = mod.commands[atomic.parts.command];
+    full_barrier
+    /*
+    fprintf(stderr, "Called %x\0", cmd._function);
+    fprintf(stderr, "Client invoked %d:%d = ",atomic.parts.module,atomic.parts.command);
+    fprintf(stderr, "%s\n",cmd.name.c_str());
+    */
+    full_barrier
     if(cmd._function)
     {
         cmd._function(mod.modulestate);
     }
+        full_barrier
     if(cmd.nextState != -1)
     {
         SHMCMD = cmd.nextState;
     }
+        full_barrier
     if(cmd.type != CANCELLATION)
     {
         if(useYield)

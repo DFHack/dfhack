@@ -67,9 +67,8 @@ class Process::Private
     bool useYield;
     
     bool validate(char* exe_file, uint32_t pid, std::vector< memory_info* >& known_versions);
-    bool DF_TestBridgeVersion(bool & ret);
-    bool DF_GetPID(pid_t & ret);
-    void DF_SyncAffinity(void);
+    
+    bool Aux_Core_Attach(bool & versionOK, pid_t & PID);
     bool waitWhile (uint32_t state);
 };
 
@@ -79,6 +78,9 @@ class Process::Private
 
 #define SHMHDR ((shm_core_hdr *)my_shm)
 #define D_SHMHDR ((shm_core_hdr *)d->my_shm)
+
+#define SHMDATA(type) ((type *)(my_shm + SHM_HEADER))
+#define D_SHMDATA(type) ((type *)(d->my_shm + SHM_HEADER))
 
 /*
 Yeah. with no way to synchronize things (locks are slow, the OS doesn't give us enough control over scheduling)
@@ -111,7 +113,7 @@ bool Process::Private::waitWhile (uint32_t state)
         }
         cnt++;
     }
-    if(SHMCMD == CORE_SV_ERROR)
+    if(SHMCMD == CORE_ERROR)
     {
         SHMCMD = CORE_RUNNING;
         attached = suspended = false;
@@ -131,53 +133,31 @@ bool Process::waitWhile (uint32_t state)
     return d->waitWhile(state);
 }
 
-bool Process::Private::DF_TestBridgeVersion(bool & ret)
-{
-    SHMCMD = CORE_GET_VERSION;
-    gcc_barrier
-    if(!waitWhile(CORE_GET_VERSION))
-        return false;
-    gcc_barrier
-    SHMCMD = CORE_SUSPENDED;
-    ret =( SHMHDR->value == CORE_VERSION );
-    return true;
-}
-
-bool Process::Private::DF_GetPID(pid_t & ret)
-{
-    SHMCMD = CORE_GET_PID;
-    gcc_barrier
-    if(!waitWhile(CORE_GET_PID))
-        return false;
-    gcc_barrier
-    SHMCMD = CORE_SUSPENDED;
-    ret = SHMHDR->value;
-    return true;
-}
-
 uint32_t OS_getAffinity()
 {
     cpu_set_t mask;
     sched_getaffinity(0,sizeof(cpu_set_t),&mask);
     // FIXME: truncation
-        uint32_t affinity = *(uint32_t *) &mask;
-        return affinity;
+    uint32_t affinity = *(uint32_t *) &mask;
+    return affinity;
 }
 
-void Process::Private::DF_SyncAffinity( void )
+
+bool Process::Private::Aux_Core_Attach(bool & versionOK, pid_t & PID)
 {
-    SHMHDR->value = OS_getAffinity();
+    SHMDATA(coreattach)->cl_affinity = OS_getAffinity();
     gcc_barrier
-    SHMCMD = CORE_SYNC_YIELD;
+    SHMCMD = CORE_ATTACH;
+    if(!waitWhile(CORE_ATTACH))
+        return false;
     gcc_barrier
-    if(!waitWhile(CORE_SYNC_YIELD))
-        return;
-    gcc_barrier
-    SHMCMD = CORE_SUSPENDED;
-    useYield = SHMHDR->value;
+    versionOK =( SHMDATA(coreattach)->sv_version == CORE_VERSION );
+    PID = SHMDATA(coreattach)->sv_PID;
+    useYield = SHMDATA(coreattach)->sv_useYield;
     #ifdef DEBUG
-    if(useYield) cerr << "Using Yield!" << endl;
+        if(useYield) cerr << "Using Yield!" << endl;
     #endif
+    return true;
 }
 
 Process::Process(uint32_t PID, vector< memory_info* >& known_versions)
@@ -190,7 +170,7 @@ Process::Process(uint32_t PID, vector< memory_info* >& known_versions)
     /*
      * Locate the segment.
      */
-    if ((d->my_shmid = shmget(SHM_KEY, SHM_SIZE, 0666)) < 0)
+    if ((d->my_shmid = shmget(SHM_KEY + PID, SHM_SIZE, 0666)) < 0)
     {
         return;
     }
@@ -216,41 +196,40 @@ Process::Process(uint32_t PID, vector< memory_info* >& known_versions)
     }
     
     /*
-     * Test bridge version, will also detect when we connect to something that doesn't respond
+     * Test bridge version, get PID, sync Yield
      */
     bool bridgeOK;
-    if(!d->DF_TestBridgeVersion(bridgeOK))
+    if(!d->Aux_Core_Attach(bridgeOK,d->my_pid))
     {
         fprintf(stderr,"DF terminated during reading\n");
+        shmdt(d->my_shm);
         return;
     }
     if(!bridgeOK)
     {
         fprintf(stderr,"SHM bridge version mismatch\n");
+        shmdt(d->my_shm);
         return;
     }
-    /*
-     * get the PID from DF
-     */
-    if(d->DF_GetPID(d->my_pid) && d->my_pid == PID)
+    
+    // find the binary
+    sprintf(exe_link_name,"/proc/%d/exe", d->my_pid);
+    target_result = readlink(exe_link_name, target_name, sizeof(target_name)-1);
+    if (target_result == -1)
     {
-        // find its binary
-        sprintf(exe_link_name,"/proc/%d/exe", d->my_pid);
-        target_result = readlink(exe_link_name, target_name, sizeof(target_name)-1);
-        if (target_result == -1)
-        {
-            perror("readlink");
-            return;
-        }
-        // make sure we have a null terminated string...
-        // see http://www.opengroup.org/onlinepubs/000095399/functions/readlink.html
-        target_name[target_result] = 0;
-        
-        // try to identify the DF version
-        d->validate(target_name, d->my_pid, known_versions);
-        d->DF_SyncAffinity();
-        d->my_window = new DFWindow(this);
+        perror("readlink");
+        shmdt(d->my_shm);
+        return;
     }
+    
+    // make sure we have a null terminated string...
+    // see http://www.opengroup.org/onlinepubs/000095399/functions/readlink.html
+    target_name[target_result] = 0;
+    
+    // try to identify the DF version
+    d->validate(target_name, d->my_pid, known_versions);
+    d->my_window = new DFWindow(this);
+
     gcc_barrier
     // at this point, DF is stopped and waiting for commands. make it run again
     D_SHMCMD = CORE_RUNNING;
@@ -708,16 +687,30 @@ string Process::readClassName (uint32_t vptr)
     return raw.substr(start,end-start - 2); // trim the 'st' from the end
 }
 
+// FIXME: having this around could lead to bad things in the hands of unsuspecting fools
+// *!!DON'T BE AN UNSUSPECTING FOOL!!*
+// the whole SHM thing works only because copying DWORDS is an atomic operation on i386 and x86_64 archs
 // get module index by name and version. bool 1 = error
 bool Process::getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT)
 {
     modulelookup * payload = (modulelookup *) (d->my_shm + SHM_HEADER);
     payload->version = version;
-    strcpy(payload->name,name);
+    
+    strncpy(payload->name,name,255);
+    payload->name[255] = 0;
+    
     full_barrier
+    
     D_SHMCMD = CORE_ACQUIRE_MODULE;
-    waitWhile(CORE_ACQUIRE_MODULE);
-    if(D_SHMHDR->error) return false;
+    if(!waitWhile(CORE_ACQUIRE_MODULE))
+    {
+        return false; // FIXME: throw a fatal exception instead
+    }
+    if(D_SHMHDR->error)
+    {
+        return false;
+    }
+    //fprintf(stderr,"%s v%d : %d\n", name, version, D_SHMHDR->value);
     OUTPUT = D_SHMHDR->value;
     return true;
 }

@@ -297,9 +297,10 @@ bool API::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer)
         SHMMAPSHDR->x = x;
         SHMMAPSHDR->y = y;
         SHMMAPSHDR->z = z;
-        const uint32_t cmd = Maps::MAP_READ_BLOCK_BY_COORDS + (d->maps_module << 16);
+        volatile uint32_t cmd = Maps::MAP_READ_BLOCK_BY_COORDS + (d->maps_module << 16);
         full_barrier
         SHMCMD = cmd;
+        full_barrier
         if(!g_pProcess->waitWhile(cmd))
         {
             return false;

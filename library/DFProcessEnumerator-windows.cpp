@@ -41,6 +41,31 @@ bool ProcessEnumerator::findProcessess()
 {
     // Get the list of process identifiers.
     DWORD ProcArray[2048], memoryNeeded, numProccesses;
+    //EnableDebugPriv();
+    if ( !EnumProcesses( ProcArray, sizeof(ProcArray), &memoryNeeded ) )
+    {
+        cout << "EnumProcesses fail'd" << endl;
+        return false;
+    }
+
+    // Calculate how many process identifiers were returned.
+    numProccesses = memoryNeeded / sizeof(DWORD);
+
+    // iterate through processes
+    for ( int i = 0; i < (int)numProccesses; i++ )
+    {
+        Process *p = new Process(ProcArray[i],d->meminfo->meminfo);
+        if(p->isIdentified())
+        {
+            d->processes.push_back(p);
+        }
+        else
+        {
+            delete p;
+            p = 0;
+        }
+    }
+    /*
     {
         Process * p = new Process(d->meminfo->meminfo);
         if(p->isIdentified())
@@ -54,31 +79,7 @@ bool ProcessEnumerator::findProcessess()
             p = 0;
         }
     }
-    /*
-    EnableDebugPriv();
-    if ( !EnumProcesses( ProcArray, sizeof(ProcArray), &memoryNeeded ) )
-    {
-        cout << "EnumProcesses fail'd" << endl;
-        return false;
-    }
-
-    // Calculate how many process identifiers were returned.
-    numProccesses = memoryNeeded / sizeof(DWORD);
-
-    // iterate through processes
-    for ( int i = 0; i < (int)numProccesses; i++ )
-    {
-        Process *q = new NormalProcess(ProcArray[i],d->meminfo->meminfo);
-        if(q->isIdentified())
-        {
-            d->processes.push_back(q);
-        }
-        else
-        {
-            delete q;
-            q = 0;
-        }
-    }*/
+    */
     if(d->processes.size())
         return true;
     return false;

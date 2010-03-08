@@ -58,9 +58,7 @@ class Process::Private
     
     bool waitWhile (uint32_t state);
     bool isValidSV();
-    bool DF_TestBridgeVersion(bool & ret);
-    bool DF_GetPID(uint32_t & ret);
-    void DF_SyncAffinity(void);
+    bool Aux_Core_Attach(bool & versionOK, uint32_t & PID);
 };
 
 // some helpful macros to keep the code bloat in check
@@ -69,6 +67,9 @@ class Process::Private
 
 #define SHMHDR ((shm_core_hdr *)my_shm)
 #define D_SHMHDR ((shm_core_hdr *)d->my_shm)
+
+#define SHMDATA(type) ((type *)(my_shm + SHM_HEADER))
+#define D_SHMDATA(type) ((type *)(d->my_shm + SHM_HEADER))
 
 // is the other side still there?
 bool Process::Private::isValidSV()
@@ -129,37 +130,13 @@ bool Process::Private::waitWhile (uint32_t state)
         }
         cnt++;
     }
-    if(SHMCMD == CORE_SV_ERROR)
+    if(SHMCMD == CORE_ERROR)
     {
         SHMCMD = CORE_RUNNING;
         attached = suspended = false;
         cerr << "shm server error!" << endl;
         return false;
     }
-    return true;
-}
-
-bool Process::Private::DF_TestBridgeVersion(bool & ret)
-{
-    SHMCMD = CORE_GET_VERSION;
-    full_barrier
-    if(!waitWhile(CORE_GET_VERSION))
-        return false;
-    full_barrier
-    SHMCMD = CORE_SUSPENDED;
-    ret =( SHMHDR->value == CORE_VERSION );
-    return true;
-}
-
-bool Process::Private::DF_GetPID(uint32_t & ret)
-{
-    SHMCMD = CORE_GET_PID;
-    full_barrier
-    if(!waitWhile(CORE_GET_PID))
-        return false;
-    full_barrier
-    SHMCMD = CORE_SUSPENDED;
-    ret = SHMHDR->value;
     return true;
 }
 
@@ -171,22 +148,24 @@ uint32_t OS_getAffinity()
     return dwProcessAffinityMask;
 }
 
-void Process::Private::DF_SyncAffinity( void )
+bool Process::Private::Aux_Core_Attach(bool & versionOK, uint32_t & PID)
 {
-    SHMHDR->value = OS_getAffinity();
+    SHMDATA(coreattach)->cl_affinity = OS_getAffinity();
     full_barrier
-    SHMCMD = CORE_SYNC_YIELD;
+    SHMCMD = CORE_ATTACH;
+    if(!waitWhile(CORE_ATTACH))
+        return false;
     full_barrier
-    if(!waitWhile(CORE_SYNC_YIELD))
-        return;
-    full_barrier
-    SHMCMD = CORE_SUSPENDED;
-    useYield = SHMHDR->value;
-    if(useYield) cerr << "Using Yield!" << endl;
+    versionOK =( SHMDATA(coreattach)->sv_version == CORE_VERSION );
+    PID = SHMDATA(coreattach)->sv_PID;
+    useYield = SHMDATA(coreattach)->sv_useYield;
+    #ifdef DEBUG
+        if(useYield) cerr << "Using Yield!" << endl;
+    #endif
+    return true;
 }
 
-
-Process::Process(vector <memory_info *> & known_versions)
+Process::Process(uint32_t PID, vector <memory_info *> & known_versions)
 : d(new Private())
 {
     // get server and client mutex
@@ -200,29 +179,28 @@ Process::Process(vector <memory_info *> & known_versions)
     {
         return;
     }
+    
+    // attach the SHM
     if(!attach())
     {
         return;
     }
     
-    // All seems to be OK so far. Attached and connected to something that looks like DF
-    
-    // Test bridge version, will also detect when we connect to something that doesn't respond
+    // Test bridge version, get PID, sync Yield
     bool bridgeOK;
-    if(!d->DF_TestBridgeVersion(bridgeOK))
+    bool error = 0;
+    if(!d->Aux_Core_Attach(bridgeOK,d->my_pid))
     {
         fprintf(stderr,"DF terminated during reading\n");
-        UnmapViewOfFile(d->my_shm);
-        ReleaseMutex(d->DFCLMutex);
-        CloseHandle(d->DFSVMutex);
-        d->DFSVMutex = 0;
-        CloseHandle(d->DFCLMutex);
-        d->DFCLMutex = 0;
-        return;
+        error = 1;
     }
-    if(!bridgeOK)
+    else if(!bridgeOK)
     {
         fprintf(stderr,"SHM bridge version mismatch\n");
+        error = 1;
+    }
+    if(error)
+    {
         D_SHMCMD = CORE_RUNNING;
         UnmapViewOfFile(d->my_shm);
         ReleaseMutex(d->DFCLMutex);
@@ -232,84 +210,78 @@ Process::Process(vector <memory_info *> & known_versions)
         d->DFCLMutex = 0;
         return;
     }
-    /*
-     * get the PID from DF
-     */
-    if(d->DF_GetPID(d->my_pid))
-    {
-        // try to identify the DF version
-        do // glorified goto
-        {  
-            IMAGE_NT_HEADERS32 pe_header;
-            IMAGE_SECTION_HEADER sections[16];
-            HMODULE hmod = NULL;
-            DWORD junk;
-            HANDLE hProcess;
-            bool found = false;
-            d->identified = false;
-            // open process, we only need the process open 
-            hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, d->my_pid );
-            if (NULL == hProcess)
-                break;
-            
-            // try getting the first module of the process
-            if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk) == 0)
-            {
-                CloseHandle(hProcess);
-                cout << "EnumProcessModules fail'd" << endl;
-                break;
-            }
-            // got base ;)
-            uint32_t base = (uint32_t)hmod;
-            
-            // read from this process
-            uint32_t pe_offset = readDWord(base+0x3C);
-            read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
-            read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
-            
-            // iterate over the list of memory locations
-            vector<memory_info *>::iterator it;
-            for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
-            {
-                uint32_t pe_timestamp;
-                try
-                {
-                    pe_timestamp = (*it)->getHexValue("pe_timestamp");
-                }
-                catch(Error::MissingMemoryDefinition& e)
-                {
-                    continue;
-                }
-                if (pe_timestamp == pe_header.FileHeader.TimeDateStamp)
-                {
-                    memory_info *m = new memory_info(**it);
-                    m->RebaseAll(base);
-                    d->my_descriptor = m;
-                    d->identified = true;
-                    cerr << "identified " << m->getVersion() << endl;
-                    break;
-                }
-            }
-            CloseHandle(hProcess);
-        } while (0); // glorified goto end
+
+    // try to identify the DF version
+    do // glorified goto
+    {  
+        IMAGE_NT_HEADERS32 pe_header;
+        IMAGE_SECTION_HEADER sections[16];
+        HMODULE hmod = NULL;
+        DWORD junk;
+        HANDLE hProcess;
+        bool found = false;
+        d->identified = false;
+        // open process, we only need the process open 
+        hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, d->my_pid );
+        if (NULL == hProcess)
+            break;
         
-        if(d->identified)
+        // try getting the first module of the process
+        if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk) == 0)
         {
-            d->my_window = new DFWindow(this);
-            d->DF_SyncAffinity();
+            CloseHandle(hProcess);
+            cout << "EnumProcessModules fail'd" << endl;
+            break;
         }
-        else
+        // got base ;)
+        uint32_t base = (uint32_t)hmod;
+        
+        // read from this process
+        uint32_t pe_offset = readDWord(base+0x3C);
+        read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
+        read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
+        
+        // iterate over the list of memory locations
+        vector<memory_info *>::iterator it;
+        for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
         {
-            D_SHMCMD = CORE_RUNNING;
-            UnmapViewOfFile(d->my_shm);
-            d->my_shm = 0;
-            ReleaseMutex(d->DFCLMutex);
-            CloseHandle(d->DFSVMutex);
-            d->DFSVMutex = 0;
-            CloseHandle(d->DFCLMutex);
-            d->DFCLMutex = 0;
-            return;
+            uint32_t pe_timestamp;
+            try
+            {
+                pe_timestamp = (*it)->getHexValue("pe_timestamp");
+            }
+            catch(Error::MissingMemoryDefinition& e)
+            {
+                continue;
+            }
+            if (pe_timestamp == pe_header.FileHeader.TimeDateStamp)
+            {
+                memory_info *m = new memory_info(**it);
+                m->RebaseAll(base);
+                d->my_descriptor = m;
+                d->identified = true;
+                cerr << "identified " << m->getVersion() << endl;
+                break;
+            }
         }
+        CloseHandle(hProcess);
+    } while (0); // glorified goto end
+    
+    if(d->identified)
+    {
+        d->my_window = new DFWindow(this);
+    }
+    else
+    {
+        D_SHMCMD = CORE_RUNNING;
+        UnmapViewOfFile(d->my_shm);
+        d->my_shm = 0;
+        ReleaseMutex(d->DFCLMutex);
+        CloseHandle(d->DFSVMutex);
+        d->DFSVMutex = 0;
+        CloseHandle(d->DFCLMutex);
+        d->DFCLMutex = 0;
+        return;
     }
     full_barrier
     // at this point, DF is attached and suspended, make it run

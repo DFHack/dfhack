@@ -23,7 +23,8 @@ void print_bits ( T val, std::ostream& out )
         val >>= 1;
     }
 }
-map<string, vector<string> > names;
+vector< vector<string> > englishWords;
+vector< vector<string> > foreignWords;
 uint32_t numCreatures;
 vector<DFHack::t_matgloss> creaturestypes;
 void printDwarves(DFHack::API & DF)
@@ -37,15 +38,15 @@ void printDwarves(DFHack::API & DF)
         if (type == "DWARF" && !temp.flags1.bits.dead && !temp.flags2.bits.killed)
         {
             cout << i << ":";
-            if (temp.nick_name[0])
+            if (temp.name.nickname[0])
             {
-                cout << temp.nick_name;
+                cout << temp.name.nickname;
             }
             else
             {
-                cout << temp.first_name;
+                cout << temp.name.first_name;
             }
-            string transName = DF.TranslateName(temp.last_name,names,creaturestypes[temp.type].id);
+            string transName = DF.TranslateName(temp.name,englishWords,foreignWords, false);
             cout << " " << temp.custom_profession; //transName;
             if (dwarfCounter%3 != 2)
             {
@@ -109,7 +110,7 @@ bool getDwarfSelection(DFHack::API & DF, DFHack::t_creature & toChange,string & 
         if (input == "n")
         {
             commandString = "pzyn";
-            eraseAmount = string(toChange.nick_name).length();
+            eraseAmount = string(toChange.name.nickname).length();
             changeType = true;
             isName = true;
         }
@@ -153,7 +154,7 @@ bool waitTillChanged(DFHack::API &DF, int creatureToCheck, string changeValue, b
     int tryCount = 0;
     if (isName)
     {
-        while (testCre.nick_name != changeValue && tryCount <50)
+        while (testCre.name.nickname != changeValue && tryCount <50)
         {
             DF.Resume();
             w->TypeSpecial(DFHack::WAIT,1,100);
@@ -324,7 +325,7 @@ int main (void)
         return 1;
     }
 
-    DF.InitReadNameTables(names);
+    DF.InitReadNameTables(englishWords,foreignWords);
     DF.InitReadCreatures(numCreatures);
     DF.InitViewAndCursor();
     DFHack::Process * p = DF.getProcess();

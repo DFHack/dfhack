@@ -543,6 +543,7 @@ struct t_creature
     uint8_t numLikes;
     t_like likes[32];
     t_job current_job;
+	uint16_t mood;
     uint32_t happiness;
     uint32_t id;
     uint32_t agility;
@@ -797,7 +798,7 @@ struct t_hotkey
 struct t_settlement
 {
     uint32_t origin;
-    int32_t name[2];
+    t_name name;
     int16_t world_x;
     int16_t world_y;
     int16_t local_x1;

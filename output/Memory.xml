@@ -730,12 +730,18 @@
         <Address name="language_vector">0x01534240</Address>
         <Offset name="word_table">0x54</Offset>
         
+        <!-- name struct -->
+        <Offset name="name_firstname">0x0</Offset>
+        <Offset name="name_nickname">0x1C</Offset>
+        <Offset name="name_words">0x38</Offset>
+        
         <!-- creature offsets -->
         <Offset name="creature_flags1">0xFC</Offset>
         <Offset name="creature_flags2">0x100</Offset>
         <Offset name="creature_sex">0x10A</Offset>
         <Offset name="creature_id">0x10C</Offset>
         <Offset name="creature_squad_name">0x198</Offset>
+        <Offset name="creature_mood">0x238</Offset>
         <Offset name="creature_squad_leader_id">0x268</Offset>
         <Offset name="creature_money">0x2F8</Offset>
         <Offset name="creature_current_job">0x314</Offset>
@@ -821,7 +827,7 @@
         <Address name="settlement_current">0x01533CC0</Address>
         <Address name="settlements">0x01533BF4</Address>
         
-        <Offset name="settlement_name">0x38</Offset>
+        <Offset name="settlement_name">0x0</Offset>
         <Offset name="settlement_world_xy">0x7a</Offset>
         <Offset name="settlement_local_xy">0x100</Offset>
         

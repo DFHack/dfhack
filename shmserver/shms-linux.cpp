@@ -33,6 +33,8 @@ distribution.
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <vector>
 #include <string>
@@ -49,10 +51,14 @@ char *shm = 0;
 int shmid = 0;
 bool inited = 0;
 
+int fd_svlock = 0;
+int fd_cllock = 0;
+
+
 /*******************************************************************************
 *                           SHM part starts here                               *
 *******************************************************************************/
-
+/*
 // FIXME: add error checking?
 bool isValidSHM()
 {
@@ -61,6 +67,25 @@ bool isValidSHM()
     //fprintf(stderr,"ID %d, attached: %d\n",shmid, descriptor.shm_nattch);
     return (descriptor.shm_nattch == 2);
 }
+*/
+
+// is the other side still there?
+bool isValidSHM()
+{
+    // try if CL lock file is free
+    int result = lockf(fd_cllock,F_TEST,0);
+    /*
+    F_TEST: Test the lock:
+    return 0 if the specified section is unlocked or locked by this process;
+    return -1, set errno to EAGAIN (EACCES on some other systems), if another process holds a lock.
+    */
+    
+    // if nobody holds the lock, the SHM isn't valid. file locks are unlocked when the owner closes or crashes.
+    if(result == 0) return false;
+    
+    return true;
+}
+
 uint32_t OS_getPID()
 {
     return getpid();
@@ -84,6 +109,23 @@ void SHM_Init ( void )
         return;
     }
     inited = true;
+    char name[256];
+    char name2[256];
+    
+    // make folder structure for our lock files
+    sprintf(name, "/tmp/DFHack/%d",OS_getPID());
+    mode_t createmode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
+    mkdir("/tmp/DFHack", createmode);
+    mkdir(name, createmode);
+    
+    // create and lock the server lock file
+    sprintf(name2, "%s/SVlock",name);
+    fd_svlock = open(name2,O_WRONLY | O_CREAT, createmode);
+    lockf( fd_svlock, F_LOCK, 0 );
+    
+    // create the client lock file
+    sprintf(name2, "%s/CLlock",name);
+    fd_cllock = open(name2,O_WRONLY | O_CREAT, createmode);
     
     // name for the segment, an accident waiting to happen
     key_t key = SHM_KEY + OS_getPID();
@@ -134,6 +176,14 @@ void SHM_Destroy ( void )
             shmctl(shmid, IPC_STAT, &descriptor);
         }
         shmctl(shmid,IPC_RMID,NULL);
+        
+        // unlock and close server lock, close client lock
+        lockf(fd_svlock,F_ULOCK,0);
+        close(fd_svlock);
+        close(fd_cllock);
+        fd_svlock = 0;
+        fd_cllock = 0;
+        
         fprintf(stderr,"dfhack: destroyed shared segment.\n");
         inited = false;
     }

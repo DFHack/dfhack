@@ -52,6 +52,8 @@ class SHMProcess::Private
         suspended = false;
         identified = false;
         useYield = false;
+        my_SVfileLock = -1;
+        my_CLfileLock = -1;
     };
     ~Private(){};
     memory_info * my_descriptor;
@@ -60,6 +62,8 @@ class SHMProcess::Private
     char *my_shm;
     int my_shmid;
     Process* q;
+    int my_SVfileLock;
+    int my_CLfileLock;
     
     bool attached;
     bool suspended;
@@ -70,6 +74,9 @@ class SHMProcess::Private
     
     bool Aux_Core_Attach(bool & versionOK, pid_t & PID);
     bool waitWhile (uint32_t state);
+    bool GetLocks();
+    bool AreLocksOk();
+    void FreeLocks();
 };
 
 // some helpful macros to keep the code bloat in check
@@ -95,7 +102,8 @@ bool SHMProcess::Private::waitWhile (uint32_t state)
         if(cnt == 10000)// check if the other process is still there
         {
             
-            shmctl(my_shmid, IPC_STAT, &descriptor); 
+            /*
+            shmctl(my_shmid, IPC_STAT, &descriptor);
             if(descriptor.shm_nattch == 1)// DF crashed or exited - no way to tell?
             {
                 //detach the shared memory
@@ -104,6 +112,24 @@ bool SHMProcess::Private::waitWhile (uint32_t state)
                 
                 // we aren't the current process anymore
                 g_pProcess = NULL;
+                
+                throw Error::SHMServerDisappeared();
+                return false;
+            }
+            else
+            {
+                cnt = 0;
+            }
+            */
+            if(!AreLocksOk())
+            {
+                //detach the shared memory
+                shmdt(my_shm);
+                attached = suspended = false;
+                
+                // we aren't the current process anymore
+                g_pProcess = NULL;
+                FreeLocks();
                 
                 throw Error::SHMServerDisappeared();
                 return false;
@@ -166,6 +192,72 @@ bool SHMProcess::Private::Aux_Core_Attach(bool & versionOK, pid_t & PID)
     return true;
 }
 
+bool SHMProcess::Private::AreLocksOk()
+{
+    // both locks are inited (we hold our lock)
+    if(my_CLfileLock != -1 && my_SVfileLock != -1) 
+    {
+        if(lockf(my_SVfileLock,F_TEST,0) == -1) // and server holds its lock
+        {
+            return true; // OK, locks are good
+        }
+    }
+    // locks are bad
+    return false;
+}
+
+void SHMProcess::Private::FreeLocks()
+{
+    if(my_CLfileLock != -1)
+    {
+        lockf(my_CLfileLock,F_ULOCK,0);
+        close(my_CLfileLock);
+        my_CLfileLock = -1;
+    }
+    if(my_SVfileLock != -1)
+    {
+        close(my_SVfileLock);
+        my_SVfileLock = -1;
+    }
+}
+
+bool SHMProcess::Private::GetLocks()
+{
+    char name[256];
+    // try to acquire locks
+    // look at the server lock, if it's locked, the server is present
+    sprintf(name, "/tmp/DFHack/%d/SVlock",my_pid,name);
+    my_SVfileLock = open(name,O_WRONLY);
+    if(my_SVfileLock == -1)
+    {
+        return false;
+    }
+    
+    if(lockf( my_SVfileLock, F_TEST, 0 ) != -1)
+    {
+        close(my_SVfileLock);
+        return false;
+    }
+    
+    // open the client lock, try to lock it
+    sprintf(name, "/tmp/DFHack/%d/CLlock",my_pid,name);
+    my_CLfileLock = open(name,O_WRONLY);
+    if(my_CLfileLock == -1)
+    {
+        close(my_SVfileLock);
+        return false;
+    }
+    if(lockf(my_CLfileLock,F_TLOCK, 0) == -1)
+    {
+        // couldn't acquire lock
+        close(my_SVfileLock);
+        close(my_CLfileLock);
+        return false;
+    }
+    // ok, we have all the locks!
+    return true;
+}
+
 SHMProcess::SHMProcess(uint32_t PID, vector< memory_info* >& known_versions)
 : d(new Private())
 {
@@ -189,18 +281,15 @@ SHMProcess::SHMProcess(uint32_t PID, vector< memory_info* >& known_versions)
         return;
     }
     
-    /*
-     * Check if there are two processes connected to the segment
-     */
-    shmid_ds descriptor;
-    shmctl(d->my_shmid, IPC_STAT, &descriptor); 
-    if(descriptor.shm_nattch != 2)// badness
+    // set pid and gets lock for it
+    d->my_pid = PID;
+    if(!d->GetLocks())
     {
-        fprintf(stderr,"dfhack: %d : invalid no. of processes connected\n", (int) descriptor.shm_nattch);
-        fprintf(stderr,"detach: %d",shmdt(d->my_shm));
+        fprintf(stderr,"Couldn't get locks for PID %d'\n", PID);
+        shmdt(d->my_shm);
         return;
     }
-    
+   
     /*
      * Test bridge version, get PID, sync Yield
      */
@@ -209,12 +298,16 @@ SHMProcess::SHMProcess(uint32_t PID, vector< memory_info* >& known_versions)
     {
         fprintf(stderr,"DF terminated during reading\n");
         shmdt(d->my_shm);
+        // free locks
+        d->FreeLocks();
         return;
     }
     if(!bridgeOK)
     {
         fprintf(stderr,"SHM bridge version mismatch\n");
         shmdt(d->my_shm);
+        // free locks
+        d->FreeLocks();
         return;
     }
     
@@ -225,6 +318,8 @@ SHMProcess::SHMProcess(uint32_t PID, vector< memory_info* >& known_versions)
     {
         perror("readlink");
         shmdt(d->my_shm);
+        // free locks
+        d->FreeLocks();
         return;
     }
     
@@ -240,6 +335,9 @@ SHMProcess::SHMProcess(uint32_t PID, vector< memory_info* >& known_versions)
     // at this point, DF is stopped and waiting for commands. make it run again
     D_SHMCMD = CORE_RUNNING;
     shmdt(d->my_shm); // detach so we don't attach twice when attach() is called
+    
+    // free locks
+    d->FreeLocks();
 }
 
 bool SHMProcess::isSuspended()
@@ -410,9 +508,16 @@ bool SHMProcess::attach()
     int status;
     if(g_pProcess != 0)
     {
-        cerr << "there's already a different process attached" << endl;
+        // FIXME: throw exception here - programmer error
+        cerr << "client is already attached to a process!" << endl;
         return false;
     }
+    if(!d->GetLocks())
+    {
+        cerr << "server is full or not really there!" << endl;
+        return false;
+    }
+
     /*
     * Attach the segment
     */
@@ -427,10 +532,12 @@ bool SHMProcess::attach()
         }
         d->attached = false;
         cerr << "unable to suspend" << endl;
-        // FIXME: detach sehment here
+        shmdt(d->my_shm);
+        d->FreeLocks();
         return false;
     }
     cerr << "unable to attach" << endl;
+    d->FreeLocks();
     return false;
 }
 
@@ -451,9 +558,11 @@ bool SHMProcess::detach()
         d->suspended = false;
         d->my_shm = 0;
         g_pProcess = 0;
+        d->FreeLocks();
         return true;
     }
     // fail if we can't detach
+    // FIXME: throw exception here??
     perror("failed to detach shared segment");
     return false;
 }

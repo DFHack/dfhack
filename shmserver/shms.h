@@ -1,10 +1,9 @@
 #ifndef DFCONNECT_H
 #define DFCONNECT_H
 
-#define PINGPONG_VERSION 2
 #define SHM_KEY 123466
-#define SHM_HEADER 1024
-#define SHM_BODY 1024*1024
+#define SHM_HEADER 1024 // 1kB reserved for a header
+#define SHM_BODY 1024*1024 // 1MB reserved for bulk data transfer
 #define SHM_SIZE SHM_HEADER+SHM_BODY
 
 
@@ -12,16 +11,14 @@
 #ifdef LINUX_BUILD
     // a full memory barrier! better be safe than sorry.
     #define full_barrier asm volatile("" ::: "memory"); __sync_synchronize();
-    #define SCHED_YIELD sched_yield(); // slow but allows the SHM to work on single-core
-    // #define SCHED_YIELD usleep(0); // extremely slow
-    // #define SCHED_YIELD // works only on multi-core
+    #define SCHED_YIELD sched_yield(); // a requirement for single-core
 #else
     // we need windows.h for Sleep()
     #define _WIN32_WINNT 0x0501 // needed for INPUT struct
     #define WINVER 0x0501                   // OpenThread(), PSAPI, Toolhelp32
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
-    #define SCHED_YIELD Sleep(0); // slow on single-core, but avoids infinite lockup
+    #define SCHED_YIELD Sleep(0); // avoids infinite lockup on single core
     // FIXME: detect MSVC here and use the right barrier magic
     #ifdef __MINGW32__
         #define full_barrier asm volatile("" ::: "memory");
@@ -32,124 +29,76 @@
     #endif
 #endif
 
-
-/*
-    * read - parameters are address and length
-    * write - parameters are address, length and the actual data to write
-    * wait - sent to DF so that it waits for more commands
-    * end - sent to DF for breaking out of the wait 
-*/
-
-enum DF_SHM_ERRORSTATE
+enum DFPP_CmdType
 {
-    SHM_OK, // all OK
-    SHM_CANT_GET_SHM, // getting the SHM ID failed for some reason
-    SHM_CANT_ATTACH, // we can't attach the shm for some reason
-    SHM_SECOND_DF // we are a second DF process, can't use SHM at all
+    CANCELLATION, // we should jump out of the Act()
+    CLIENT_WAIT, // we are waiting for the client
+    FUNCTION, // we call a function as a result of the command
 };
 
-enum DF_PINGPONG
+struct DFPP_command
 {
-    DFPP_RUNNING = 0, // no command, normal server execution
-    
-    DFPP_VERSION, // protocol version query
-    DFPP_RET_VERSION, // return the protocol version
-    
-    DFPP_PID, // query for the process ID
-    DFPP_RET_PID, // return process ID
-    
-    // version 1 stuff below
-    DFPP_READ, // cl -> sv, read some data
-    DFPP_RET_DATA, // sv -> cl, returned data
-    
-    DFPP_READ_DWORD, // cl -> sv, read a dword
-    DFPP_RET_DWORD, // sv -> cl, returned dword
-
-    DFPP_READ_WORD, // cl -> sv, read a word
-    DFPP_RET_WORD, // sv -> cl, returned word
-
-    DFPP_READ_BYTE, // cl -> sv, read a byte
-    DFPP_RET_BYTE, // sv -> cl, returned byte
-    
-    DFPP_SV_ERROR, // there was a server error
-    DFPP_CL_ERROR, // there was a client error
-    
-    DFPP_WRITE,// client writes to server
-    DFPP_WRITE_DWORD,// client writes a DWORD to server
-    DFPP_WRITE_WORD,// client writes a WORD to server
-    DFPP_WRITE_BYTE,// client writes a BYTE to server
-    
-    DFPP_SUSPEND, // client notifies server to wait for commands (server is stalled in busy wait)
-    DFPP_SUSPENDED, // response to WAIT, server is stalled in busy wait
-    
-    // all strings capped at 1MB
-    DFPP_READ_STL_STRING,// client requests contents of STL string at address
-    DFPP_READ_C_STRING,// client requests contents of a C string at address, max length (0 means zero terminated)
-    DFPP_RET_STRING, // sv -> cl length + string contents
-    DFPP_WRITE_STL_STRING,// client wants to set STL string at address to something
-    
-    // vector elements > 1MB are not supported because they don't fit into the shared memory
-    DFPP_READ_ENTIRE_VECTOR, // read an entire vector (parameters are address of vector object and size of items)
-    DFPP_RET_VECTOR_BODY, // a part of a vector is returned - no. of elements returned, no. of elements total, elements
-    
-    NUM_DFPP
+    void (*_function)(void *);
+    DFPP_CmdType type:32; // force the enum to 32 bits for compatibility reasons
+    std::string name;
+    uint32_t nextState;
 };
 
-
-enum DF_ERROR
+struct DFPP_module
 {
-    DFEE_INVALID_COMMAND,
-    DFEE_BUFFER_OVERFLOW
+    DFPP_module()
+    {
+        name = "Uninitialized module";
+        version = 0;
+        modulestate = 0;
+    }
+    // ALERT: the structures share state
+    DFPP_module(const DFPP_module & orig)
+    {
+        commands = orig.commands;
+        name = orig.name;
+        modulestate = orig.modulestate;
+        version = orig.version;
+    }
+    inline void set_command(const unsigned int index, const DFPP_CmdType type, const char * name, void (*_function)(void *) = 0,uint32_t nextState = -1)
+    {
+        commands[index].type = type;
+        commands[index].name = name;
+        commands[index]._function = _function;
+        commands[index].nextState = nextState;
+    }
+    inline void reserve (unsigned int numcommands)
+    {
+        commands.clear();
+        DFPP_command cmd = {0,CANCELLATION,"",0};
+        commands.resize(numcommands,cmd);
+    }
+    std::string name;
+    uint32_t version; // version
+    std::vector <DFPP_command> commands;
+    void * modulestate;
 };
 
-typedef struct
+typedef union
 {
-    volatile uint32_t pingpong; // = 0
+    struct
+    {
+        volatile uint16_t command;
+        volatile uint16_t module;
+    } parts;
+    volatile uint32_t pingpong;
+    inline void set(uint16_t module, uint16_t command)
+    {
+        pingpong = module + command << 16;
+    }
 } shm_cmd;
 
-typedef struct
-{
-    volatile uint32_t pingpong;
-    uint32_t address;
-    uint32_t length;
-} shm_read;
-
-typedef shm_read shm_write;
-typedef shm_read shm_bounce;
-
-typedef struct
-{
-    volatile uint32_t pingpong;
-} shm_ret_data;
-
-typedef struct
-{
-    volatile uint32_t pingpong;
-    uint32_t address;
-} shm_read_small;
-
-typedef struct
-{
-    volatile uint32_t pingpong;
-    uint32_t address;
-    uint32_t value;
-} shm_write_small;
-
-typedef struct
-{
-    volatile uint32_t pingpong;
-    uint32_t value;
-} shm_retval;
-
-typedef struct
-{
-    volatile uint32_t pingpong;
-    uint32_t length;
-} shm_retstr;
-
-
 void SHM_Act (void);
+void InitModules (void);
+void KillModules (void);
 bool isValidSHM();
-uint32_t getPID();
+uint32_t OS_getPID();
+DFPP_module InitMaps(void);
+uint32_t OS_getAffinity(); // limited to 32 processors. Silly, eh?
 
 #endif

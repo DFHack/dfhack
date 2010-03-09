@@ -47,9 +47,7 @@ int main (int numargs, char** args)
     uint32_t x_max,y_max,z_max;
     uint32_t num_blocks = 0;
     uint64_t bytes_read = 0;
-    uint16_t tiletypes[16][16];
-    DFHack::t_designation designations[16][16];
-    DFHack::t_occupancy occupancies[16][16];
+    DFHack::mapblock40d Block;
     
     DFHack::API DF("Memory.xml");
     if(!DF.Attach())
@@ -76,11 +74,9 @@ int main (int numargs, char** args)
                 {
                     if(DF.isValidBlock(x,y,z))
                     {
-                        DF.ReadTileTypes(x,y,z, (uint16_t *) tiletypes);
-                        DF.ReadDesignations(x,y,z, (uint32_t *) designations);
-                        DF.ReadOccupancy(x,y,z, (uint32_t *) occupancies);
+                        DF.ReadBlock40d(x, y, z, &Block);
                         num_blocks ++;
-                        bytes_read += sizeof(tiletypes) + sizeof(designations) + sizeof(occupancies);
+                        bytes_read += sizeof(DFHack::mapblock40d);
                     }
                 }
             }

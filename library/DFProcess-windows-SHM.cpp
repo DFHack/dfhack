@@ -23,6 +23,7 @@ distribution.
 */
 #include "DFCommonInternal.h"
 #include "../shmserver/shms.h"
+#include "../shmserver/mod-core.h"
 using namespace DFHack;
 
 // a full memory barrier! better be safe than sorry.
@@ -38,6 +39,7 @@ class SHMProcess::Private
         attached = false;
         suspended = false;
         identified = false;
+        useYield = 0;
         DFSVMutex = 0;
         DFCLMutex = 0;
     };
@@ -52,12 +54,22 @@ class SHMProcess::Private
     bool attached;
     bool suspended;
     bool identified;
+    bool useYield;
     
-    bool waitWhile (DF_PINGPONG state);
+    bool waitWhile (uint32_t state);
     bool isValidSV();
-    bool DF_TestBridgeVersion(bool & ret);
-    bool DF_GetPID(uint32_t & ret);
+    bool Aux_Core_Attach(bool & versionOK, uint32_t & PID);
 };
+
+// some helpful macros to keep the code bloat in check
+#define SHMCMD ((shm_cmd *)my_shm)->pingpong
+#define D_SHMCMD ((shm_cmd *)d->my_shm)->pingpong
+
+#define SHMHDR ((shm_core_hdr *)my_shm)
+#define D_SHMHDR ((shm_core_hdr *)d->my_shm)
+
+#define SHMDATA(type) ((type *)(my_shm + SHM_HEADER))
+#define D_SHMDATA(type) ((type *)(d->my_shm + SHM_HEADER))
 
 // is the other side still there?
 bool SHMProcess::Private::isValidSV()
@@ -87,20 +99,29 @@ bool SHMProcess::Private::isValidSV()
     }
 }
 
-bool SHMProcess::Private::waitWhile (DF_PINGPONG state)
+bool SHMProcess::waitWhile (uint32_t state)
+{
+    return d->waitWhile(state);
+}
+
+bool SHMProcess::Private::waitWhile (uint32_t state)
 {
     uint32_t cnt = 0;
-    SCHED_YIELD // yield the CPU, valid only on single-core CPUs
-    while (((shm_cmd *)my_shm)->pingpong == state)
+    while (SHMCMD == state)
     {
+        // yield the CPU, only on single-core CPUs
+        if(useYield)
+        {
+            SCHED_YIELD
+        }
         if(cnt == 10000)
         {
             if(!isValidSV())// DF not there anymore?
             {
-                full_barrier
-                ((shm_cmd *)my_shm)->pingpong = DFPP_RUNNING;
                 attached = suspended = false;
                 ReleaseMutex(DFCLMutex);
+                UnmapViewOfFile(my_shm);
+                throw Error::SHMServerDisappeared();
                 return false;
             }
             else
@@ -110,79 +131,84 @@ bool SHMProcess::Private::waitWhile (DF_PINGPONG state)
         }
         cnt++;
     }
-    if(((shm_cmd *)my_shm)->pingpong == DFPP_SV_ERROR)
+    if(SHMCMD == CORE_ERROR)
     {
-        ((shm_cmd *)my_shm)->pingpong = DFPP_RUNNING;
+        SHMCMD = CORE_RUNNING;
         attached = suspended = false;
         cerr << "shm server error!" << endl;
-        assert (false);
         return false;
     }
     return true;
 }
 
-bool SHMProcess::Private::DF_TestBridgeVersion(bool & ret)
+uint32_t OS_getAffinity()
 {
-    ((shm_cmd *)my_shm)->pingpong = DFPP_VERSION;
+    HANDLE hProcess = GetCurrentProcess();
+    DWORD dwProcessAffinityMask, dwSystemAffinityMask;
+    GetProcessAffinityMask( hProcess, &dwProcessAffinityMask, &dwSystemAffinityMask );
+    return dwProcessAffinityMask;
+}
+
+bool SHMProcess::Private::Aux_Core_Attach(bool & versionOK, uint32_t & PID)
+{
+    SHMDATA(coreattach)->cl_affinity = OS_getAffinity();
     full_barrier
-    if(!waitWhile(DFPP_VERSION))
+    SHMCMD = CORE_ATTACH;
+    if(!waitWhile(CORE_ATTACH))
         return false;
     full_barrier
-    ((shm_cmd *)my_shm)->pingpong = DFPP_SUSPENDED;
-    ret =( ((shm_retval *)my_shm)->value == PINGPONG_VERSION );
+    versionOK =( SHMDATA(coreattach)->sv_version == CORE_VERSION );
+    PID = SHMDATA(coreattach)->sv_PID;
+    useYield = SHMDATA(coreattach)->sv_useYield;
+    #ifdef DEBUG
+        if(useYield) cerr << "Using Yield!" << endl;
+    #endif
     return true;
 }
 
-bool SHMProcess::Private::DF_GetPID(uint32_t & ret)
-{
-    ((shm_cmd *)my_shm)->pingpong = DFPP_PID;
-    full_barrier
-    if(!waitWhile(DFPP_PID))
-        return false;
-    full_barrier
-    ((shm_cmd *)my_shm)->pingpong = DFPP_SUSPENDED;
-    ret = ((shm_retval *)my_shm)->value;
-    return true;
-}
-
-SHMProcess::SHMProcess(vector <memory_info *> & known_versions)
+SHMProcess::SHMProcess(uint32_t PID, vector <memory_info *> & known_versions)
 : d(new Private())
 {
+    char svmutexname [256];
+    sprintf(svmutexname,"DFSVMutex-%d",PID);
+    char clmutexname [256];
+    sprintf(clmutexname,"DFCLMutex-%d",PID);
+    
     // get server and client mutex
-    d->DFSVMutex = OpenMutex(SYNCHRONIZE,false, "DFSVMutex");
+    d->DFSVMutex = OpenMutex(SYNCHRONIZE,false, svmutexname);
     if(d->DFSVMutex == 0)
     {
         return;
     }
-    d->DFCLMutex = OpenMutex(SYNCHRONIZE,false, "DFCLMutex");
+    d->DFCLMutex = OpenMutex(SYNCHRONIZE,false, clmutexname);
     if(d->DFCLMutex == 0)
     {
         return;
     }
+    d->my_pid = PID;
+    
+    // attach the SHM
     if(!attach())
     {
         return;
     }
     
-    // All seems to be OK so far. Attached and connected to something that looks like DF
-    
-    // Test bridge version, will also detect when we connect to something that doesn't respond
+    // Test bridge version, get PID, sync Yield
     bool bridgeOK;
-    if(!d->DF_TestBridgeVersion(bridgeOK))
+    bool error = 0;
+    if(!d->Aux_Core_Attach(bridgeOK,d->my_pid))
     {
         fprintf(stderr,"DF terminated during reading\n");
-        UnmapViewOfFile(d->my_shm);
-        ReleaseMutex(d->DFCLMutex);
-        CloseHandle(d->DFSVMutex);
-        d->DFSVMutex = 0;
-        CloseHandle(d->DFCLMutex);
-        d->DFCLMutex = 0;
-        return;
+        error = 1;
     }
-    if(!bridgeOK)
+    else if(!bridgeOK)
     {
         fprintf(stderr,"SHM bridge version mismatch\n");
-        ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
+        error = 1;
+    }
+    if(error)
+    {
+        D_SHMCMD = CORE_RUNNING;
         UnmapViewOfFile(d->my_shm);
         ReleaseMutex(d->DFCLMutex);
         CloseHandle(d->DFSVMutex);
@@ -191,83 +217,78 @@ SHMProcess::SHMProcess(vector <memory_info *> & known_versions)
         d->DFCLMutex = 0;
         return;
     }
-    /*
-     * get the PID from DF
-     */
-    if(d->DF_GetPID(d->my_pid))
-    {
-        // try to identify the DF version
-        do // glorified goto
-        {  
-            IMAGE_NT_HEADERS32 pe_header;
-            IMAGE_SECTION_HEADER sections[16];
-            HMODULE hmod = NULL;
-            DWORD junk;
-            HANDLE hProcess;
-            bool found = false;
-            d->identified = false;
-            // open process, we only need the process open 
-            hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, d->my_pid );
-            if (NULL == hProcess)
-                break;
-            
-            // try getting the first module of the process
-            if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk) == 0)
-            {
-                CloseHandle(hProcess);
-                cout << "EnumProcessModules fail'd" << endl;
-                break;
-            }
-            // got base ;)
-            uint32_t base = (uint32_t)hmod;
-            
-            // read from this process
-            uint32_t pe_offset = readDWord(base+0x3C);
-            read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
-            read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
-            
-            // iterate over the list of memory locations
-            vector<memory_info *>::iterator it;
-            for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
-            {
-                uint32_t pe_timestamp;
-                try
-                {
-                    pe_timestamp = (*it)->getHexValue("pe_timestamp");
-                }
-                catch(Error::MissingMemoryDefinition& e)
-                {
-                    continue;
-                }
-                if (pe_timestamp == pe_header.FileHeader.TimeDateStamp)
-                {
-                    memory_info *m = new memory_info(**it);
-                    m->RebaseAll(base);
-                    d->my_descriptor = m;
-                    d->identified = true;
-                    cerr << "identified " << m->getVersion() << endl;
-                    break;
-                }
-            }
-            CloseHandle(hProcess);
-        } while (0); // glorified goto end
+
+    // try to identify the DF version
+    do // glorified goto
+    {  
+        IMAGE_NT_HEADERS32 pe_header;
+        IMAGE_SECTION_HEADER sections[16];
+        HMODULE hmod = NULL;
+        DWORD junk;
+        HANDLE hProcess;
+        bool found = false;
+        d->identified = false;
+        // open process, we only need the process open 
+        hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, d->my_pid );
+        if (NULL == hProcess)
+            break;
         
-        if(d->identified)
+        // try getting the first module of the process
+        if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk) == 0)
         {
-            d->my_window = new DFWindow(this);
+            CloseHandle(hProcess);
+            // cout << "EnumProcessModules fail'd" << endl;
+            break;
         }
-        else
+        // got base ;)
+        uint32_t base = (uint32_t)hmod;
+        
+        // read from this process
+        uint32_t pe_offset = readDWord(base+0x3C);
+        read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
+        read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
+        
+        // iterate over the list of memory locations
+        vector<memory_info *>::iterator it;
+        for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
         {
-            ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
-            UnmapViewOfFile(d->my_shm);
-			d->my_shm = 0;
-            ReleaseMutex(d->DFCLMutex);
-            CloseHandle(d->DFSVMutex);
-            d->DFSVMutex = 0;
-            CloseHandle(d->DFCLMutex);
-            d->DFCLMutex = 0;
-            return;
+            uint32_t pe_timestamp;
+            try
+            {
+                pe_timestamp = (*it)->getHexValue("pe_timestamp");
+            }
+            catch(Error::MissingMemoryDefinition& e)
+            {
+                continue;
+            }
+            if (pe_timestamp == pe_header.FileHeader.TimeDateStamp)
+            {
+                memory_info *m = new memory_info(**it);
+                m->RebaseAll(base);
+                d->my_descriptor = m;
+                d->identified = true;
+                cerr << "identified " << m->getVersion() << endl;
+                break;
+            }
         }
+        CloseHandle(hProcess);
+    } while (0); // glorified goto end
+    
+    if(d->identified)
+    {
+        d->my_window = new DFWindow(this);
+    }
+    else
+    {
+        D_SHMCMD = CORE_RUNNING;
+        UnmapViewOfFile(d->my_shm);
+        d->my_shm = 0;
+        ReleaseMutex(d->DFCLMutex);
+        CloseHandle(d->DFSVMutex);
+        d->DFSVMutex = 0;
+        CloseHandle(d->DFCLMutex);
+        d->DFCLMutex = 0;
+        return;
     }
     full_barrier
     // at this point, DF is attached and suspended, make it run
@@ -375,8 +396,8 @@ bool SHMProcess::suspend()
         cerr << "couldn't suspend, already suspended" << endl;
         return true;
     }
-    ((shm_cmd *)d->my_shm)->pingpong = DFPP_SUSPEND;
-    if(!d->waitWhile(DFPP_SUSPEND))
+    D_SHMCMD = CORE_SUSPEND;
+    if(!d->waitWhile(CORE_SUSPEND))
     {
         cerr << "couldn't suspend, DF not responding to commands" << endl;
         return false;
@@ -395,14 +416,14 @@ bool SHMProcess::asyncSuspend()
     {
         return true;
     }
-    if(((shm_cmd *)d->my_shm)->pingpong == DFPP_SUSPENDED)
+    if(D_SHMCMD == CORE_SUSPENDED)
     {
         d->suspended = true;
         return true;
     }
     else
     {
-        ((shm_cmd *)d->my_shm)->pingpong = DFPP_SUSPEND;
+        D_SHMCMD = CORE_SUSPEND;
         return false;
     }
 }
@@ -424,7 +445,7 @@ bool SHMProcess::resume()
         cerr << "couldn't resume because of not being suspended" << endl;
         return true;
     }
-    ((shm_cmd *)d->my_shm)->pingpong = DFPP_RUNNING;
+    D_SHMCMD = CORE_RUNNING;
     d->suspended = false;
     return true;
 }
@@ -454,8 +475,11 @@ bool SHMProcess::attach()
         return false; // we couldn't lock it
     }
 
+    char shmname [256];
+    sprintf(shmname,"DFShm-%d",d->my_pid);
+
     // now try getting and attaching the shared memory
-    HANDLE shmHandle = OpenFileMapping(FILE_MAP_ALL_ACCESS,false,"DFShm");
+    HANDLE shmHandle = OpenFileMapping(FILE_MAP_ALL_ACCESS,false,shmname);
     if(!shmHandle)
     {
         ReleaseMutex(d->DFCLMutex);
@@ -499,11 +523,11 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
     // normal read under 1MB
     if(size <= SHM_BODY)
     {
-        ((shm_read *)d->my_shm)->address = src_address;
-        ((shm_read *)d->my_shm)->length = size;
+        D_SHMHDR->address = src_address;
+        D_SHMHDR->length = size;
         full_barrier
-        ((shm_read *)d->my_shm)->pingpong = DFPP_READ;
-        d->waitWhile(DFPP_READ);
+        D_SHMCMD = CORE_DFPP_READ;
+        d->waitWhile(CORE_DFPP_READ);
         memcpy (target_buffer, d->my_shm + SHM_HEADER,size);
     }
     // a big read, we pull data over the shm in iterations
@@ -514,11 +538,11 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
         while (size)
         {
             // read to_read bytes from src_cursor
-            ((shm_read *)d->my_shm)->address = src_address;
-            ((shm_read *)d->my_shm)->length = to_read;
+            D_SHMHDR->address = src_address;
+            D_SHMHDR->length = to_read;
             full_barrier
-            ((shm_read *)d->my_shm)->pingpong = DFPP_READ;
-            d->waitWhile(DFPP_READ);
+            D_SHMCMD = CORE_DFPP_READ;
+            d->waitWhile(CORE_DFPP_READ);
             memcpy (target_buffer, d->my_shm + SHM_HEADER,size);
             // decrease size by bytes read
             size -= to_read;
@@ -533,55 +557,55 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
 
 uint8_t SHMProcess::readByte (const uint32_t offset)
 {
-    ((shm_read_small *)d->my_shm)->address = offset;
+    D_SHMHDR->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_BYTE;
-    d->waitWhile(DFPP_READ_BYTE);
-    return ((shm_retval *)d->my_shm)->value;
+    D_SHMCMD = CORE_READ_BYTE;
+    d->waitWhile(CORE_READ_BYTE);
+    return D_SHMHDR->value;
 }
 
 void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
 {
-    ((shm_read_small *)d->my_shm)->address = offset;
+    D_SHMHDR->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_BYTE;
-    d->waitWhile(DFPP_READ_BYTE);
-    val = ((shm_retval *)d->my_shm)->value;
+    D_SHMCMD = CORE_READ_BYTE;
+    d->waitWhile(CORE_READ_BYTE);
+    val = D_SHMHDR->value;
 }
 
 uint16_t SHMProcess::readWord (const uint32_t offset)
 {
-    ((shm_read_small *)d->my_shm)->address = offset;
+    D_SHMHDR->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_WORD;
-    d->waitWhile(DFPP_READ_WORD);
-    return ((shm_retval *)d->my_shm)->value;
+    D_SHMCMD = CORE_READ_WORD;
+    d->waitWhile(CORE_READ_WORD);
+    return D_SHMHDR->value;
 }
 
 void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
 {
-    ((shm_read_small *)d->my_shm)->address = offset;
+    D_SHMHDR->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_WORD;
-    d->waitWhile(DFPP_READ_WORD);
-    val = ((shm_retval *)d->my_shm)->value;
+    D_SHMCMD = CORE_READ_WORD;
+    d->waitWhile(CORE_READ_WORD);
+    val = D_SHMHDR->value;
 }
 
 uint32_t SHMProcess::readDWord (const uint32_t offset)
 {
-    ((shm_read_small *)d->my_shm)->address = offset;
+    D_SHMHDR->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_DWORD;
-    d->waitWhile(DFPP_READ_DWORD);
-    return ((shm_retval *)d->my_shm)->value;
+    D_SHMCMD = CORE_READ_DWORD;
+    d->waitWhile(CORE_READ_DWORD);
+    return D_SHMHDR->value;
 }
 void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
 {
-    ((shm_read_small *)d->my_shm)->address = offset;
+    D_SHMHDR->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_DWORD;
-    d->waitWhile(DFPP_READ_DWORD);
-    val = ((shm_retval *)d->my_shm)->value;
+    D_SHMCMD = CORE_READ_DWORD;
+    d->waitWhile(CORE_READ_DWORD);
+    val = D_SHMHDR->value;
 }
 
 /*
@@ -590,30 +614,30 @@ void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
 
 void SHMProcess::writeDWord (uint32_t offset, uint32_t data)
 {
-    ((shm_write_small *)d->my_shm)->address = offset;
-    ((shm_write_small *)d->my_shm)->value = data;
+    D_SHMHDR->address = offset;
+    D_SHMHDR->value = data;
     full_barrier
-    ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_DWORD;
-    d->waitWhile(DFPP_WRITE_DWORD);
+    D_SHMCMD = CORE_WRITE_DWORD;
+    d->waitWhile(CORE_WRITE_DWORD);
 }
 
 // using these is expensive.
 void SHMProcess::writeWord (uint32_t offset, uint16_t data)
 {
-    ((shm_write_small *)d->my_shm)->address = offset;
-    ((shm_write_small *)d->my_shm)->value = data;
+    D_SHMHDR->address = offset;
+    D_SHMHDR->value = data;
     full_barrier
-    ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_WORD;
-    d->waitWhile(DFPP_WRITE_WORD);
+    D_SHMCMD = CORE_WRITE_WORD;
+    d->waitWhile(CORE_WRITE_WORD);
 }
 
 void SHMProcess::writeByte (uint32_t offset, uint8_t data)
 {
-    ((shm_write_small *)d->my_shm)->address = offset;
-    ((shm_write_small *)d->my_shm)->value = data;
+    D_SHMHDR->address = offset;
+    D_SHMHDR->value = data;
     full_barrier
-    ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_BYTE;
-    d->waitWhile(DFPP_WRITE_BYTE);
+    D_SHMCMD = CORE_WRITE_BYTE;
+    d->waitWhile(CORE_WRITE_BYTE);
 }
 
 void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer)
@@ -621,12 +645,12 @@ void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buf
     // normal write under 1MB
     if(size <= SHM_BODY)
     {
-        ((shm_write *)d->my_shm)->address = dst_address;
-        ((shm_write *)d->my_shm)->length = size;
+        D_SHMHDR->address = dst_address;
+        D_SHMHDR->length = size;
         memcpy(d->my_shm+SHM_HEADER,source_buffer, size);
         full_barrier
-        ((shm_write *)d->my_shm)->pingpong = DFPP_WRITE;
-        d->waitWhile(DFPP_WRITE);
+        D_SHMCMD = CORE_WRITE;
+        d->waitWhile(CORE_WRITE);
     }
     // a big write, we push this over the shm in iterations
     else
@@ -636,12 +660,12 @@ void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buf
         while (size)
         {
             // write to_write bytes to dst_cursor
-            ((shm_write *)d->my_shm)->address = dst_address;
-            ((shm_write *)d->my_shm)->length = to_write;
+            D_SHMHDR->address = dst_address;
+            D_SHMHDR->length = to_write;
             memcpy(d->my_shm+SHM_HEADER,source_buffer, to_write);
             full_barrier
-            ((shm_write *)d->my_shm)->pingpong = DFPP_WRITE;
-            d->waitWhile(DFPP_WRITE);
+            D_SHMCMD = CORE_WRITE;
+            d->waitWhile(CORE_WRITE);
             // decrease size by bytes written
             size -= to_write;
             // move the cursors
@@ -692,11 +716,11 @@ DfVector SHMProcess::readVector (uint32_t offset, uint32_t item_size)
 const std::string SHMProcess::readSTLString(uint32_t offset)
 {
     //offset -= 4; //msvc std::string pointers are 8 bytes ahead of their data, not 4
-    ((shm_read_small *)d->my_shm)->address = offset;
+    D_SHMHDR->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_STL_STRING;
-    d->waitWhile(DFPP_READ_STL_STRING);
-    int length = ((shm_retval *)d->my_shm)->value;
+    D_SHMCMD = CORE_READ_STL_STRING;
+    d->waitWhile(CORE_READ_STL_STRING);
+    int length = D_SHMHDR->value;
 //    char temp_c[256];
 //    strncpy(temp_c, d->my_shm+SHM_HEADER,length+1); // length + 1 for the null terminator
     return(string(d->my_shm+SHM_HEADER));
@@ -705,11 +729,11 @@ const std::string SHMProcess::readSTLString(uint32_t offset)
 size_t SHMProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
     //offset -= 4; //msvc std::string pointers are 8 bytes ahead of their data, not 4
-    ((shm_read_small *)d->my_shm)->address = offset;
+    D_SHMHDR->address = offset;
     full_barrier
-    ((shm_read_small *)d->my_shm)->pingpong = DFPP_READ_STL_STRING;
-    d->waitWhile(DFPP_READ_STL_STRING);
-    size_t length = ((shm_retval *)d->my_shm)->value;
+    D_SHMCMD = CORE_READ_STL_STRING;
+    d->waitWhile(CORE_READ_STL_STRING);
+    size_t length = D_SHMHDR->value;
     size_t real = min(length, bufcapacity - 1);
     strncpy(buffer, d->my_shm+SHM_HEADER,real); // length + 1 for the null terminator
     buffer[real] = 0;
@@ -718,11 +742,11 @@ size_t SHMProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapa
 
 void SHMProcess::writeSTLString(const uint32_t address, const std::string writeString)
 {
-    ((shm_write_small *)d->my_shm)->address = address/*-4*/;
+    D_SHMHDR->address = address/*-4*/;
     strncpy(d->my_shm+SHM_HEADER,writeString.c_str(),writeString.length()+1); // length + 1 for the null terminator
     full_barrier
-    ((shm_write_small *)d->my_shm)->pingpong = DFPP_WRITE_STL_STRING;
-    d->waitWhile(DFPP_WRITE_STL_STRING);
+    D_SHMCMD = CORE_WRITE_STL_STRING;
+    d->waitWhile(CORE_WRITE_STL_STRING);
 }
 
 string SHMProcess::readClassName (uint32_t vptr)
@@ -732,4 +756,23 @@ string SHMProcess::readClassName (uint32_t vptr)
     string raw = readCString(typeinfo + 0xC); // skips the .?AV
     raw.resize(raw.length() - 4);// trim st@@ from end
     return raw;
+}
+
+// get module index by name and version. bool 1 = error
+bool SHMProcess::getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT)
+{
+    modulelookup * payload = (modulelookup *) (d->my_shm + SHM_HEADER);
+    payload->version = version;
+    strcpy(payload->name,name);
+    full_barrier
+    D_SHMCMD = CORE_ACQUIRE_MODULE;
+    d->waitWhile(CORE_ACQUIRE_MODULE);
+    if(D_SHMHDR->error) return false;
+    OUTPUT = D_SHMHDR->value;
+    return true;
+}
+
+char * SHMProcess::getSHMStart (void)
+{
+    return d->my_shm;
 }

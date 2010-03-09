@@ -34,12 +34,11 @@ distribution.
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <unistd.h>
+#include <vector>
+#include <string>
 #include "shms.h"
-#include <sys/time.h>
-#include <time.h>
-#include <linux/futex.h>
-#include <sys/syscall.h>
-#include <signal.h>
+#include "mod-core.h"
+#include <sched.h>
 
 #define DFhackCExport extern "C" __attribute__ ((visibility("default")))
 
@@ -62,9 +61,18 @@ bool isValidSHM()
     //fprintf(stderr,"ID %d, attached: %d\n",shmid, descriptor.shm_nattch);
     return (descriptor.shm_nattch == 2);
 }
-uint32_t getPID()
+uint32_t OS_getPID()
 {
     return getpid();
+}
+
+uint32_t OS_getAffinity()
+{
+    cpu_set_t mask;
+    sched_getaffinity(0,sizeof(cpu_set_t),&mask);
+    // FIXME: truncation
+    uint32_t affinity = *(uint32_t *) &mask;
+    return affinity;
 }
 
 void SHM_Init ( void )
@@ -77,8 +85,8 @@ void SHM_Init ( void )
     }
     inited = true;
     
-    // name for the segment
-    key_t key = 123466;
+    // name for the segment, an accident waiting to happen
+    key_t key = SHM_KEY + OS_getPID();
     
     // find previous segment, check if it's used by some processes.
     // if it isn't, kill it with fire
@@ -109,13 +117,15 @@ void SHM_Init ( void )
     }
     full_barrier
     // make sure we don't stall or do crazy stuff
-    ((shm_cmd *)shm)->pingpong = DFPP_RUNNING;
+    ((shm_cmd *)shm)->pingpong = CORE_RUNNING;
+    InitModules();
 }
 
 void SHM_Destroy ( void )
 {
     if(inited && !errorstate)
     {
+        KillModules();
         shmid_ds descriptor;
         shmctl(shmid, IPC_STAT, &descriptor);
         shmdt(shm);
@@ -144,7 +154,7 @@ DFhackCExport void SDL_GL_SwapBuffers(void)
 {
     if(_SDL_GL_SwapBuffers)
     {
-        if(!errorstate && ((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
+        if(!errorstate && ((shm_cmd *)shm)->pingpong != CORE_RUNNING)
         {
             SHM_Act();
         }
@@ -158,7 +168,7 @@ DFhackCExport int SDL_Flip(void * some_ptr)
 {
     if(_SDL_Flip)
     {
-        if(!errorstate && ((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
+        if(!errorstate && ((shm_cmd *)shm)->pingpong != CORE_RUNNING)
         {
             SHM_Act();
         }
@@ -216,7 +226,7 @@ DFhackCExport int refresh (void)
 {
     if(_refresh)
     {
-        if(!errorstate && ((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
+        if(!errorstate && ((shm_cmd *)shm)->pingpong != CORE_RUNNING)
         {
             SHM_Act();
         }

@@ -34,7 +34,10 @@ distribution.
 #define DFhackCExport extern "C" __declspec(dllexport)
 
 #include "../library/integers.h"
+#include <vector>
+#include <string>
 #include "shms.h"
+#include "mod-core.h"
 #include <stdio.h>
 int errorstate = 0;
 char *shm = 0;
@@ -53,21 +56,28 @@ void SHM_Init ( void )
     }
     inited = true;
     
+    char svmutexname [256];
+    sprintf(svmutexname,"DFSVMutex-%d",OS_getPID());
+    char clmutexname [256];
+    sprintf(clmutexname,"DFCLMutex-%d",OS_getPID());
+    char shmname [256];
+    sprintf(shmname,"DFShm-%d",OS_getPID());    
+    
     // create or open mutexes
-    DFSVMutex = CreateMutex( 0, 1, "DFSVMutex");
+    DFSVMutex = CreateMutex( 0, 1, svmutexname);
     if(DFSVMutex == 0)
     {
-        DFSVMutex = OpenMutex(SYNCHRONIZE,false, "DFSVMutex");
+        DFSVMutex = OpenMutex(SYNCHRONIZE,false, svmutexname);
         if(DFSVMutex == 0)
         {
             errorstate = 1;
             return;
         }
     }
-    DFCLMutex = CreateMutex( 0, 0, "DFCLMutex");
+    DFCLMutex = CreateMutex( 0, 0, clmutexname);
     if(DFCLMutex == 0)
     {
-        DFCLMutex = OpenMutex(SYNCHRONIZE,false, "DFCLMutex");
+        DFCLMutex = OpenMutex(SYNCHRONIZE,false, clmutexname);
         if(DFCLMutex == 0)
         {
             CloseHandle(DFSVMutex);
@@ -107,7 +117,7 @@ void SHM_Init ( void )
     }
     
     // create virtual memory mapping
-    shmHandle = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,SHM_SIZE,"DFShm");
+    shmHandle = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,SHM_SIZE,shmname);
     // if can't create or already exists -> nothing happens
     if(GetLastError() == ERROR_ALREADY_EXISTS)
     {
@@ -131,8 +141,7 @@ void SHM_Init ( void )
     shm = (char *) MapViewOfFile(shmHandle,FILE_MAP_ALL_ACCESS, 0,0, SHM_SIZE);
     if(shm)
     {
-        ((shm_cmd *)shm)->pingpong = DFPP_RUNNING;
-        //MessageBox(0,"Sucessfully mapped SHM","FUN", MB_OK);
+        ((shm_cmd *)shm)->pingpong = CORE_RUNNING;
     }
     else
     {
@@ -142,21 +151,34 @@ void SHM_Init ( void )
         CloseHandle(DFSVMutex);
         CloseHandle(DFCLMutex);
     }
+    InitModules();
 }
 
 void SHM_Destroy ( void )
 {
     if(errorstate)
         return;
+    KillModules();
     ReleaseMutex(DFSVMutex);
     CloseHandle(DFSVMutex);
     CloseHandle(DFCLMutex);
 }
 
-uint32_t getPID()
+uint32_t OS_getPID()
 {
     return GetCurrentProcessId();
 }
+
+// TODO: move to some utils file
+uint32_t OS_getAffinity()
+{
+    HANDLE hProcess = GetCurrentProcess();
+    DWORD dwProcessAffinityMask, dwSystemAffinityMask;
+    GetProcessAffinityMask( hProcess, &dwProcessAffinityMask, &dwSystemAffinityMask );
+    return dwProcessAffinityMask;
+}
+
+
 
 // is the other side still there?
 bool isValidSHM()
@@ -665,7 +687,7 @@ DFhackCExport void SDL_Quit(void)
 static void (*_SDL_GL_SwapBuffers)(void) = 0;
 DFhackCExport void SDL_GL_SwapBuffers(void)
 {
-    if(!errorstate && ((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
+    if(!errorstate && ((shm_cmd *)shm)->pingpong != CORE_RUNNING)
     {
         SHM_Act();
     }
@@ -678,7 +700,7 @@ DFhackCExport int SDL_Flip(void * some_ptr)
 {
     if(_SDL_Flip)
     {
-        if(!errorstate && ((shm_cmd *)shm)->pingpong != DFPP_RUNNING)
+        if(!errorstate && ((shm_cmd *)shm)->pingpong != CORE_RUNNING)
         {
             SHM_Act();
         }

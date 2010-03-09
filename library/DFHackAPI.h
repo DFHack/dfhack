@@ -135,6 +135,8 @@ namespace DFHack
          */
         uint32_t getBlockPtr (uint32_t blockx, uint32_t blocky, uint32_t blockz);
         
+        bool ReadBlock40d(uint32_t blockx, uint32_t blocky, uint32_t blockz, mapblock40d * buffer);
+        
         bool ReadTileTypes(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint16_t *buffer); // 256 * sizeof(uint16_t)
         bool WriteTileTypes(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint16_t *buffer); // 256 * sizeof(uint16_t)
         

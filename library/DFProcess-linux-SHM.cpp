@@ -96,10 +96,16 @@ bool Process::Private::waitWhile (uint32_t state)
         {
             
             shmctl(my_shmid, IPC_STAT, &descriptor); 
-            if(descriptor.shm_nattch == 1)// DF crashed?
+            if(descriptor.shm_nattch == 1)// DF crashed or exited - no way to tell?
             {
-                SHMCMD = CORE_RUNNING;
+                //detach the shared memory
+                shmdt(my_shm);
                 attached = suspended = false;
+                
+                // we aren't the current process anymore
+                g_pProcess = NULL;
+                
+                throw Error::SHMServerDisappeared();
                 return false;
             }
             else

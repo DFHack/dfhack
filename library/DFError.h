@@ -208,6 +208,17 @@ namespace DFHack
                 return s.str().c_str();
             }
         };
+        
+        class DFHACK_EXPORT SHMServerDisappeared : public std::exception
+        {
+        public:
+            SHMServerDisappeared(){}
+            virtual ~SHMServerDisappeared() throw(){};
+            virtual const char* what() const throw()
+            {
+                return "The server process has disappeared";
+            }
+        };
     }
 }
 

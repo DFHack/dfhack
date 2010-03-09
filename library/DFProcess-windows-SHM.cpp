@@ -118,9 +118,10 @@ bool Process::Private::waitWhile (uint32_t state)
         {
             if(!isValidSV())// DF not there anymore?
             {
-                SHMCMD = CORE_RUNNING;
                 attached = suspended = false;
                 ReleaseMutex(DFCLMutex);
+                UnmapViewOfFile(my_shm);
+                throw Error::SHMServerDisappeared();
                 return false;
             }
             else

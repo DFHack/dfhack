@@ -745,22 +745,38 @@
                      W I N E
 
     <Entry version="v0.28.181.40d" os="windows" id="40dwin" base="meta-40d">
-        <!-- identification -->
-        <HexValue name="pe_timestamp">0x48C330DF</HexValue>
+        <HexValue name="pe_timestamp">0x48c330df</HexValue>
         <String name="md5">2c686c26307dcccd7c36cc79737ebe4f</String>
-
-        <!-- map data -->
-        <Address name="map_data">0x015C4D58</Address>
-        <Address name="constructions">0x0156F8B0</Address>
         <Address name="buildings">0x015838a0</Address>
-        <Address name="vegetation">0x01587A24</Address>
-        <Address name="creatures">0x01583224</Address>
-
-        <!-- translation tables -->
-        <Address name="translation_vector">0x015c6ef0</Address>
+        <Address name="constructions">0x0156f8b0</Address>
+        <Address name="creatures">0x01583234</Address>
+        <Address name="current_cursor_creature">0x0fffffff</Address>
+        <Address name="current_menu_state">0x01393260</Address>
+        <Address name="cursor_xyz">0x009fc294</Address>
+        <Address name="hotkey_start">0x01392fb8</Address>
+        <Address name="items">0x0156f980</Address>
         <Address name="language_vector">0x015c6ed0</Address>
-        <Offset name="word_table">0x3C</Offset>
-        
+        <Address name="map_data">0x015c4d58</Address>
+        <Address name="matgloss">0x015c6d70</Address>
+        <Address name="notes">0x01392f5c</Address>
+        <Address name="pause_state">0x0138147f</Address>
+        <Address name="region_x">0x015c4d88</Address>
+        <Address name="region_y">0x015c4d8c</Address>
+        <Address name="region_z">0x015c4d90</Address>
+        <Address name="settlement_current">0x015c6a58</Address>
+        <Address name="settlements">0x015c69cc</Address>
+        <Address name="translation_vector">0x015c6ef0</Address>
+        <Address name="vegetation">0x01587a24</Address>
+        <Address name="view_screen">0x013a12a0</Address>
+        <Address name="window_dims">0x0138f68c</Address>
+        <Address name="window_x">0x00d457f4</Address>
+        <Address name="window_y">0x00d73868</Address>
+        <Address name="window_z">0x00d73844</Address>
+        <Address name="world">0x015c6388</Address>
+        <Address name="x_count">0x015c4d70</Address>
+        <Address name="y_count">0x015c4d74</Address>
+        <Address name="z_count">0x015c4d78</Address>
+
         <!-- job object offsets -->
         <Offset name="current_job_id">0x08</Offset>
 
@@ -805,7 +821,7 @@
         <Offset name="creature_labors">0x474</Offset>
         <Offset name="creature_happiness">0x520</Offset>
         <Offset name="creature_traits">0x5D0</Offset>
-
+        
         <!-- tree and shrub offsets -->
         <Offset name="tree_desc_offset">0x70</Offset>
 
@@ -836,6 +852,37 @@
         <Address name="window_y">0xd73868</Address>
         <Address name="window_z">0xd73844</Address>
         <Address name="window_dims">0x1706d4c</Address>
+        <Offset name="v_vein">0x08</Offset>
+        <HexValue name="v_vein_size">0x2C</HexValue>
+        <Offset name="type">0x0062</Offset>
+        <Offset name="designation">0x0264</Offset>
+        <Offset name="occupancy">0x0664</Offset>
+        <Offset name="biome_stuffs">0x1D64</Offset>
+        
+        <Offset name="word_table">0x54</Offset>
+        
+        <Offset name="note_foreground">0x2</Offset>
+        <Offset name="note_background">0x4</Offset>
+        <Offset name="note_name">0x8</Offset>
+        <Offset name="note_xyz">0x24</Offset>
+        
+        <Offset name="hotkey_mode">0x1C</Offset>
+        <Offset name="hotkey_xyz">0x20</Offset>
+        
+        <Offset name="settlement_name">0x38</Offset>
+        <Offset name="settlement_world_xy">0x7a</Offset>
+        <Offset name="settlement_local_xy">0x100</Offset>
+        
+        <Offset name="item_materials">0x68</Offset>      
+        <Offset name="item_type_name">0x24</Offset>
+        <Offset name="matgloss_creature_name">0x1C</Offset>
+        <Offset name="matgloss_wood_name">0x28</Offset>
+        <Offset name="matgloss_stone_name">0x24</Offset>
+        <Offset name="matgloss_metal_name">0x24</Offset>
+        <Offset name="matgloss_plant_name">0x24</Offset>
+        <Offset name="matgloss_plant_drink">0x5C</Offset>
+        <Offset name="matgloss_plant_food">0x94</Offset>
+        <Offset name="matgloss_plant_extract">0xB0</Offset>
     </Entry>
     <!-- Windows 40d## sub-versions, should inherit only vtable from 40d -->
     <Entry version="v0.28.181.40d2" os ="windows" id="40d2win" base="40dwin">

@@ -46,19 +46,6 @@ bool ProcessEnumerator::findProcessess()
 {
     DIR *dir_p;
     struct dirent *dir_entry_p;
-    /*
-    Process *p = 0;
-    p = new Process(d->meminfo->meminfo);
-    if(p->isIdentified())
-    {
-        d->processes.push_back(p);
-    }
-    else
-    {
-        delete p;
-        p = 0;
-    }
-    */
     // Open /proc/ directory
     dir_p = opendir("/proc/");
     // Reading /proc/ entries
@@ -69,7 +56,17 @@ bool ProcessEnumerator::findProcessess()
         {
             continue;
         }
-        Process *p2 = new Process(atoi(dir_entry_p->d_name),d->meminfo->meminfo);
+        Process *p1 = new SHMProcess(atoi(dir_entry_p->d_name),d->meminfo->meminfo);
+        if(p1->isIdentified())
+        {
+            d->processes.push_back(p1);
+            continue;
+        }
+        else
+        {
+            delete p1;
+        }
+        Process *p2 = new NormalProcess(atoi(dir_entry_p->d_name),d->meminfo->meminfo);
         if(p2->isIdentified())
         {
             d->processes.push_back(p2);
@@ -79,7 +76,6 @@ bool ProcessEnumerator::findProcessess()
         {
             delete p2;
         }
-        /*
         Process *p3 = new WineProcess(atoi(dir_entry_p->d_name),d->meminfo->meminfo);
         if(p3->isIdentified())
         {
@@ -90,10 +86,9 @@ bool ProcessEnumerator::findProcessess()
         {
             delete p3;
         }
-        */
+
     }
     closedir(dir_p);
-    
     // return value depends on if we found some DF processes
     if(d->processes.size())
     {

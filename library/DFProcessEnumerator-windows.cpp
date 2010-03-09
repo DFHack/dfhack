@@ -36,6 +36,32 @@ class DFHack::ProcessEnumerator::Private
         std::vector<Process *> processes;
 };
 
+// some magic - will come in handy when we start doing debugger stuff on Windows
+bool EnableDebugPriv()
+{
+    bool               bRET = FALSE;
+    TOKEN_PRIVILEGES   tp;
+    HANDLE             hToken;
+
+    if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &tp.Privileges[0].Luid))
+    {
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+        {
+            if (hToken != INVALID_HANDLE_VALUE)
+            {
+                tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+                tp.PrivilegeCount = 1;
+                if (AdjustTokenPrivileges(hToken, FALSE, &tp, 0, 0, 0))
+                {
+                    bRET = TRUE;
+                }
+                CloseHandle(hToken);
+            }
+        }
+    }
+    return bRET;
+}
+
 // WINDOWS version of the process finder
 bool ProcessEnumerator::findProcessess()
 {
@@ -50,11 +76,22 @@ bool ProcessEnumerator::findProcessess()
 
     // Calculate how many process identifiers were returned.
     numProccesses = memoryNeeded / sizeof(DWORD);
-
+    EnableDebugPriv();
+    
     // iterate through processes
     for ( int i = 0; i < (int)numProccesses; i++ )
     {
-        Process *p = new Process(ProcArray[i],d->meminfo->meminfo);
+        Process *p = new SHMProcess(ProcArray[i],d->meminfo->meminfo);
+        if(p->isIdentified())
+        {
+            d->processes.push_back(p);
+        }
+        else
+        {
+            delete p;
+            p = 0;
+        }
+        p = new NormalProcess(ProcArray[i],d->meminfo->meminfo);
         if(p->isIdentified())
         {
             d->processes.push_back(p);
@@ -65,21 +102,6 @@ bool ProcessEnumerator::findProcessess()
             p = 0;
         }
     }
-    /*
-    {
-        Process * p = new Process(d->meminfo->meminfo);
-        if(p->isIdentified())
-        {
-            d->processes.push_back(p);
-            return true;
-        }
-        else
-        {
-            delete p;
-            p = 0;
-        }
-    }
-    */
     if(d->processes.size())
         return true;
     return false;

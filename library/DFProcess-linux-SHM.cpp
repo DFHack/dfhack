@@ -38,7 +38,7 @@ using namespace DFHack;
 // a full memory barrier! better be safe than sorry.
 #define gcc_barrier asm volatile("" ::: "memory"); __sync_synchronize();
 
-class Process::Private
+class SHMProcess::Private
 {
     public:
     Private()
@@ -86,7 +86,7 @@ class Process::Private
 Yeah. with no way to synchronize things (locks are slow, the OS doesn't give us enough control over scheduling)
 we end up with this silly thing
 */
-bool Process::Private::waitWhile (uint32_t state)
+bool SHMProcess::Private::waitWhile (uint32_t state)
 {
     uint32_t cnt = 0;
     struct shmid_ds descriptor;
@@ -134,7 +134,7 @@ bool Process::Private::waitWhile (uint32_t state)
 Yeah. with no way to synchronize things (locks are slow, the OS doesn't give us enough control over scheduling)
 we end up with this silly thing
 */
-bool Process::waitWhile (uint32_t state)
+bool SHMProcess::waitWhile (uint32_t state)
 {
     return d->waitWhile(state);
 }
@@ -149,7 +149,7 @@ uint32_t OS_getAffinity()
 }
 
 
-bool Process::Private::Aux_Core_Attach(bool & versionOK, pid_t & PID)
+bool SHMProcess::Private::Aux_Core_Attach(bool & versionOK, pid_t & PID)
 {
     SHMDATA(coreattach)->cl_affinity = OS_getAffinity();
     gcc_barrier
@@ -166,7 +166,7 @@ bool Process::Private::Aux_Core_Attach(bool & versionOK, pid_t & PID)
     return true;
 }
 
-Process::Process(uint32_t PID, vector< memory_info* >& known_versions)
+SHMProcess::SHMProcess(uint32_t PID, vector< memory_info* >& known_versions)
 : d(new Private())
 {
     char exe_link_name [256];
@@ -242,21 +242,21 @@ Process::Process(uint32_t PID, vector< memory_info* >& known_versions)
     shmdt(d->my_shm); // detach so we don't attach twice when attach() is called
 }
 
-bool Process::isSuspended()
+bool SHMProcess::isSuspended()
 {
     return d->suspended;
 }
-bool Process::isAttached()
+bool SHMProcess::isAttached()
 {
     return d->attached;
 }
 
-bool Process::isIdentified()
+bool SHMProcess::isIdentified()
 {
     return d->identified;
 }
 
-bool Process::Private::validate(char * exe_file, uint32_t pid, vector <memory_info *> & known_versions)
+bool SHMProcess::Private::validate(char * exe_file, uint32_t pid, vector <memory_info *> & known_versions)
 {
     md5wrapper md5;
     // get hash of the running DF process
@@ -285,7 +285,7 @@ bool Process::Private::validate(char * exe_file, uint32_t pid, vector <memory_in
     return false;
 }
 
-Process::~Process()
+SHMProcess::~SHMProcess()
 {
     if(d->attached)
     {
@@ -299,29 +299,29 @@ Process::~Process()
     delete d;
 }
 
-memory_info * Process::getDescriptor()
+memory_info * SHMProcess::getDescriptor()
 {
     return d->my_descriptor;
 }
 
-DFWindow * Process::getWindow()
+DFWindow * SHMProcess::getWindow()
 {
     return d->my_window;
 }
 
-int Process::getPID()
+int SHMProcess::getPID()
 {
     return d->my_pid;
 }
 
 //FIXME: implement
-bool Process::getThreadIDs(vector<uint32_t> & threads )
+bool SHMProcess::getThreadIDs(vector<uint32_t> & threads )
 {
     return false;
 }
 
 //FIXME: cross-reference with ELF segment entries?
-void Process::getMemRanges( vector<t_memrange> & ranges )
+void SHMProcess::getMemRanges( vector<t_memrange> & ranges )
 {
     char buffer[1024];
     char permissions[5]; // r/-, w/-, x/-, p/s, 0
@@ -347,7 +347,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     }
 }
 
-bool Process::suspend()
+bool SHMProcess::suspend()
 {
     if(!d->attached)
     {
@@ -366,7 +366,7 @@ bool Process::suspend()
     return true;
 }
 
-bool Process::asyncSuspend()
+bool SHMProcess::asyncSuspend()
 {
     if(!d->attached)
     {
@@ -388,12 +388,12 @@ bool Process::asyncSuspend()
     }
 }
 
-bool Process::forceresume()
+bool SHMProcess::forceresume()
 {
     return resume();
 }
 
-bool Process::resume()
+bool SHMProcess::resume()
 {
     if(!d->attached)
         return false;
@@ -405,7 +405,7 @@ bool Process::resume()
 }
 
 
-bool Process::attach()
+bool SHMProcess::attach()
 {
     int status;
     if(g_pProcess != 0)
@@ -434,7 +434,7 @@ bool Process::attach()
     return false;
 }
 
-bool Process::detach()
+bool SHMProcess::detach()
 {
     if(!d->attached)
     {
@@ -458,7 +458,7 @@ bool Process::detach()
     return false;
 }
 
-void Process::read (uint32_t src_address, uint32_t size, uint8_t *target_buffer)
+void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buffer)
 {
     // normal read under 1MB
     if(size <= SHM_BODY)
@@ -495,7 +495,7 @@ void Process::read (uint32_t src_address, uint32_t size, uint8_t *target_buffer)
     }
 }
 
-uint8_t Process::readByte (const uint32_t offset)
+uint8_t SHMProcess::readByte (const uint32_t offset)
 {
     D_SHMHDR->address = offset;
     gcc_barrier
@@ -504,7 +504,7 @@ uint8_t Process::readByte (const uint32_t offset)
     return D_SHMHDR->value;
 }
 
-void Process::readByte (const uint32_t offset, uint8_t &val )
+void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
 {
     D_SHMHDR->address = offset;
     gcc_barrier
@@ -513,7 +513,7 @@ void Process::readByte (const uint32_t offset, uint8_t &val )
     val = D_SHMHDR->value;
 }
 
-uint16_t Process::readWord (const uint32_t offset)
+uint16_t SHMProcess::readWord (const uint32_t offset)
 {
     D_SHMHDR->address = offset;
     gcc_barrier
@@ -522,7 +522,7 @@ uint16_t Process::readWord (const uint32_t offset)
     return D_SHMHDR->value;
 }
 
-void Process::readWord (const uint32_t offset, uint16_t &val)
+void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
 {
     D_SHMHDR->address = offset;
     gcc_barrier
@@ -531,7 +531,7 @@ void Process::readWord (const uint32_t offset, uint16_t &val)
     val = D_SHMHDR->value;
 }
 
-uint32_t Process::readDWord (const uint32_t offset)
+uint32_t SHMProcess::readDWord (const uint32_t offset)
 {
     D_SHMHDR->address = offset;
     gcc_barrier
@@ -539,7 +539,7 @@ uint32_t Process::readDWord (const uint32_t offset)
     waitWhile(CORE_READ_DWORD);
     return D_SHMHDR->value;
 }
-void Process::readDWord (const uint32_t offset, uint32_t &val)
+void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
 {
     D_SHMHDR->address = offset;
     gcc_barrier
@@ -552,7 +552,7 @@ void Process::readDWord (const uint32_t offset, uint32_t &val)
  * WRITING
  */
 
-void Process::writeDWord (uint32_t offset, uint32_t data)
+void SHMProcess::writeDWord (uint32_t offset, uint32_t data)
 {
     D_SHMHDR->address = offset;
     D_SHMHDR->value = data;
@@ -562,7 +562,7 @@ void Process::writeDWord (uint32_t offset, uint32_t data)
 }
 
 // using these is expensive.
-void Process::writeWord (uint32_t offset, uint16_t data)
+void SHMProcess::writeWord (uint32_t offset, uint16_t data)
 {
     D_SHMHDR->address = offset;
     D_SHMHDR->value = data;
@@ -571,7 +571,7 @@ void Process::writeWord (uint32_t offset, uint16_t data)
     waitWhile(CORE_WRITE_WORD);
 }
 
-void Process::writeByte (uint32_t offset, uint8_t data)
+void SHMProcess::writeByte (uint32_t offset, uint8_t data)
 {
     D_SHMHDR->address = offset;
     D_SHMHDR->value = data;
@@ -580,7 +580,7 @@ void Process::writeByte (uint32_t offset, uint8_t data)
     waitWhile(CORE_WRITE_BYTE);
 }
 
-void Process::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer)
+void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer)
 {
     // normal write under 1MB
     if(size <= SHM_BODY)
@@ -618,7 +618,7 @@ void Process::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer
 }
 
 // FIXME: butt-fugly
-const std::string Process::readCString (uint32_t offset)
+const std::string SHMProcess::readCString (uint32_t offset)
 {
     std::string temp;
     char temp_c[256];
@@ -635,7 +635,7 @@ const std::string Process::readCString (uint32_t offset)
     return temp;
 }
 
-DfVector Process::readVector (uint32_t offset, uint32_t item_size)
+DfVector SHMProcess::readVector (uint32_t offset, uint32_t item_size)
 {
     /*
         GNU libstdc++ vector is three pointers long
@@ -651,7 +651,7 @@ DfVector Process::readVector (uint32_t offset, uint32_t item_size)
     return DfVector(start,size,item_size);
 }
 
-const std::string Process::readSTLString(uint32_t offset)
+const std::string SHMProcess::readSTLString(uint32_t offset)
 {
     D_SHMHDR->address = offset;
     full_barrier
@@ -661,7 +661,7 @@ const std::string Process::readSTLString(uint32_t offset)
     return(string( (char *)d->my_shm+SHM_HEADER));
 }
 
-size_t Process::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
+size_t SHMProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
     D_SHMHDR->address = offset;
     full_barrier
@@ -674,7 +674,7 @@ size_t Process::readSTLString (uint32_t offset, char * buffer, size_t bufcapacit
     return fit;
 }
 
-void Process::writeSTLString(const uint32_t address, const std::string writeString)
+void SHMProcess::writeSTLString(const uint32_t address, const std::string writeString)
 {
     D_SHMHDR->address = address;
     strncpy(d->my_shm+SHM_HEADER,writeString.c_str(),writeString.length()+1); // length + 1 for the null terminator
@@ -683,7 +683,7 @@ void Process::writeSTLString(const uint32_t address, const std::string writeStri
     waitWhile(CORE_WRITE_STL_STRING);
 }
 
-string Process::readClassName (uint32_t vptr)
+string SHMProcess::readClassName (uint32_t vptr)
 {
     int typeinfo = readDWord(vptr - 0x4);
     int typestring = readDWord(typeinfo + 0x4);
@@ -697,7 +697,7 @@ string Process::readClassName (uint32_t vptr)
 // *!!DON'T BE AN UNSUSPECTING FOOL!!*
 // the whole SHM thing works only because copying DWORDS is an atomic operation on i386 and x86_64 archs
 // get module index by name and version. bool 1 = error
-bool Process::getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT)
+bool SHMProcess::getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT)
 {
     modulelookup * payload = (modulelookup *) (d->my_shm + SHM_HEADER);
     payload->version = version;
@@ -721,7 +721,7 @@ bool Process::getModuleIndex (const char * name, const uint32_t version, uint32_
     return true;
 }
 
-char * Process::getSHMStart (void)
+char * SHMProcess::getSHMStart (void)
 {
     return d->my_shm;
 }

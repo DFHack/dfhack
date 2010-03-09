@@ -47,15 +47,15 @@ stdint_win.h
 )
 
 SET(PROJECT_SRCS_LINUX
-#DFProcess-linux.cpp
+DFProcess-linux.cpp
 DFProcess-linux-SHM.cpp
-#DFProcess-linux-wine.cpp
+DFProcess-linux-wine.cpp
 DFWindow-linux.cpp
 DFProcessEnumerator-linux.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
-#DFProcess-windows.cpp
+DFProcess-windows.cpp
 DFProcess-windows-SHM.cpp
 DFWindow-windows.cpp
 DFProcessEnumerator-windows.cpp

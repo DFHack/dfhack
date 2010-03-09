@@ -7,6 +7,7 @@
 #include <vector>
 using namespace std;
 
+#include <DFError.h>
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 #include <DFMemInfo.h>
@@ -434,11 +435,28 @@ start:
             // I have the writeString function do nothing for normal mode
             if (commandString == "pzyn") // change nickname
             {
-                p->writeSTLString(toChange.origin+mem->getOffset("creature_nick_name"),changeString);
+                try
+                {
+                    uint32_t nickname = mem->getOffset("creature_name") + mem->getOffset("name_nickname");
+                    p->writeSTLString(toChange.origin+nickname,changeString);
+                }
+                catch (DFHack::Error::MissingMemoryDefinition& e)
+                {
+                    cerr << "Writing creature nicknames unsupported in this version!" << endl;
+                }
             }
             else
             {
-                p->writeSTLString(toChange.origin+mem->getOffset("creature_custom_profession"),changeString);
+                try
+                {
+                    uint32_t custom_prof = mem->getOffset("creature_custom_profession");
+                    p->writeSTLString(toChange.origin+custom_prof,changeString);
+                }
+                catch (DFHack::Error::MissingMemoryDefinition& e)
+                {
+                    cerr << "Writing creature custom profession unsupported in this version!" << endl;
+                }
+
             }
         }
         DF.Suspend();

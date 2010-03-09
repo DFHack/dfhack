@@ -85,6 +85,7 @@ bool ProcessEnumerator::findProcessess()
         if(p->isIdentified())
         {
             d->processes.push_back(p);
+            continue;
         }
         else
         {
@@ -95,6 +96,7 @@ bool ProcessEnumerator::findProcessess()
         if(p->isIdentified())
         {
             d->processes.push_back(p);
+            continue;
         }
         else
         {

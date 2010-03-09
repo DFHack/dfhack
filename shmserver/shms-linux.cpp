@@ -183,7 +183,16 @@ void SHM_Destroy ( void )
         close(fd_cllock);
         fd_svlock = 0;
         fd_cllock = 0;
-        
+
+        // destroy lock files
+        char name[256];
+        char name2[256];
+        sprintf(name, "/tmp/DFHack/%d",OS_getPID());
+        sprintf(name2, "%s/SVlock",name);
+        unlink(name2);
+        sprintf(name2, "%s/CLlock",name);
+        unlink(name2);
+        rmdir(name);
         fprintf(stderr,"dfhack: destroyed shared segment.\n");
         inited = false;
     }

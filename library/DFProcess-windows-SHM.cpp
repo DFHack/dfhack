@@ -169,17 +169,23 @@ bool Process::Private::Aux_Core_Attach(bool & versionOK, uint32_t & PID)
 Process::Process(uint32_t PID, vector <memory_info *> & known_versions)
 : d(new Private())
 {
+    char svmutexname [256];
+    sprintf(svmutexname,"DFSVMutex-%d",PID);
+    char clmutexname [256];
+    sprintf(clmutexname,"DFCLMutex-%d",PID);
+    
     // get server and client mutex
-    d->DFSVMutex = OpenMutex(SYNCHRONIZE,false, "DFSVMutex");
+    d->DFSVMutex = OpenMutex(SYNCHRONIZE,false, svmutexname);
     if(d->DFSVMutex == 0)
     {
         return;
     }
-    d->DFCLMutex = OpenMutex(SYNCHRONIZE,false, "DFCLMutex");
+    d->DFCLMutex = OpenMutex(SYNCHRONIZE,false, clmutexname);
     if(d->DFCLMutex == 0)
     {
         return;
     }
+    d->my_pid = PID;
     
     // attach the SHM
     if(!attach())
@@ -469,8 +475,11 @@ bool Process::attach()
         return false; // we couldn't lock it
     }
 
+    char shmname [256];
+    sprintf(shmname,"DFShm-%d",d->my_pid);
+
     // now try getting and attaching the shared memory
-    HANDLE shmHandle = OpenFileMapping(FILE_MAP_ALL_ACCESS,false,"DFShm");
+    HANDLE shmHandle = OpenFileMapping(FILE_MAP_ALL_ACCESS,false,shmname);
     if(!shmHandle)
     {
         ReleaseMutex(d->DFCLMutex);

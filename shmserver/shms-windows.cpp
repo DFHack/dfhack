@@ -38,7 +38,7 @@ distribution.
 #include <string>
 #include "shms.h"
 #include "mod-core.h"
-#include <cstdio>
+#include <stdio.h>
 int errorstate = 0;
 char *shm = 0;
 int shmid = 0;
@@ -56,21 +56,28 @@ void SHM_Init ( void )
     }
     inited = true;
     
+    char svmutexname [256];
+    sprintf(svmutexname,"DFSVMutex-%d",OS_getPID());
+    char clmutexname [256];
+    sprintf(clmutexname,"DFCLMutex-%d",OS_getPID());
+    char shmname [256];
+    sprintf(shmname,"DFShm-%d",OS_getPID());    
+    
     // create or open mutexes
-    DFSVMutex = CreateMutex( 0, 1, "DFSVMutex");
+    DFSVMutex = CreateMutex( 0, 1, svmutexname);
     if(DFSVMutex == 0)
     {
-        DFSVMutex = OpenMutex(SYNCHRONIZE,false, "DFSVMutex");
+        DFSVMutex = OpenMutex(SYNCHRONIZE,false, svmutexname);
         if(DFSVMutex == 0)
         {
             errorstate = 1;
             return;
         }
     }
-    DFCLMutex = CreateMutex( 0, 0, "DFCLMutex");
+    DFCLMutex = CreateMutex( 0, 0, clmutexname);
     if(DFCLMutex == 0)
     {
-        DFCLMutex = OpenMutex(SYNCHRONIZE,false, "DFCLMutex");
+        DFCLMutex = OpenMutex(SYNCHRONIZE,false, clmutexname);
         if(DFCLMutex == 0)
         {
             CloseHandle(DFSVMutex);
@@ -110,7 +117,7 @@ void SHM_Init ( void )
     }
     
     // create virtual memory mapping
-    shmHandle = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,SHM_SIZE,"DFShm");
+    shmHandle = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,SHM_SIZE,shmname);
     // if can't create or already exists -> nothing happens
     if(GetLastError() == ERROR_ALREADY_EXISTS)
     {

@@ -183,30 +183,33 @@ DFPP_module InitCore(void)
     core.modulestate = 0; // this one is dumb and has no real state
     
     core.reserve(NUM_CORE_CMDS);
+    // basic states
     core.set_command(CORE_RUNNING, CANCELLATION, "Running");
     core.set_command(CORE_SUSPEND, CLIENT_WAIT, "Suspend", 0 , CORE_SUSPENDED);
     core.set_command(CORE_SUSPENDED, CLIENT_WAIT, "Suspended");
+    core.set_command(CORE_ERROR, CANCELLATION, "Error");
     
+    // utility commands
     core.set_command(CORE_ATTACH, FUNCTION,"Core attach",CoreAttach, CORE_SUSPENDED);
+    core.set_command(CORE_ACQUIRE_MODULE, FUNCTION, "Module lookup", FindModule, CORE_SUSPENDED);
+    core.set_command(CORE_ACQUIRE_COMMAND, FUNCTION, "Command lookup", FindCommand, CORE_SUSPENDED);
     
+    // raw reads
     core.set_command(CORE_DFPP_READ, FUNCTION,"Raw read",ReadRaw, CORE_SUSPENDED);
     core.set_command(CORE_READ_DWORD, FUNCTION,"Read DWORD",ReadDWord, CORE_SUSPENDED);
     core.set_command(CORE_READ_WORD, FUNCTION,"Read WORD",ReadWord, CORE_SUSPENDED);
     core.set_command(CORE_READ_BYTE, FUNCTION,"Read BYTE",ReadByte, CORE_SUSPENDED);
     
-    core.set_command(CORE_ERROR, CANCELLATION, "Error");
-    
+    // raw writes
     core.set_command(CORE_WRITE, FUNCTION, "Raw write", WriteRaw, CORE_SUSPENDED);
     core.set_command(CORE_WRITE_DWORD, FUNCTION, "Write DWORD", WriteDWord, CORE_SUSPENDED);
     core.set_command(CORE_WRITE_WORD, FUNCTION, "Write WORD", WriteWord, CORE_SUSPENDED);
     core.set_command(CORE_WRITE_BYTE, FUNCTION, "Write BYTE", WriteByte, CORE_SUSPENDED);
     
+    // stl string commands
     core.set_command(CORE_READ_STL_STRING, FUNCTION, "Read STL string", ReadSTLString, CORE_SUSPENDED);
     core.set_command(CORE_READ_C_STRING, CLIENT_WAIT, "RESERVED");
     core.set_command(CORE_WRITE_STL_STRING, FUNCTION, "Write STL string", WriteSTLString, CORE_SUSPENDED);
-    
-    core.set_command(CORE_ACQUIRE_MODULE, FUNCTION, "Module lookup", FindModule, CORE_SUSPENDED);
-    core.set_command(CORE_ACQUIRE_COMMAND, FUNCTION, "Command lookup", FindCommand, CORE_SUSPENDED);
     return core;
 }
 

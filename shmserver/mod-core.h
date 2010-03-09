@@ -26,7 +26,7 @@ distribution.
 #define SHMS_CORE_H
 
 // increment on every core change
-#define CORE_VERSION 6
+#define CORE_VERSION 7
 
 typedef struct
 {
@@ -60,37 +60,33 @@ typedef struct
 
 enum CORE_COMMAND
 {
-    // suspend / resume
+    // basic states
     CORE_RUNNING = 0, // no command, normal server execution
     CORE_SUSPEND, // client notifies server to wait for commands (server is stalled in busy wait)
     CORE_SUSPENDED, // response to WAIT, server is stalled in busy wait
-    
-    // aux
+    CORE_ERROR, // there was a server error
+        
+    // utility commands
     CORE_ATTACH, // compare affinity, get core version and process ID
-    
-    // reads
+    CORE_ACQUIRE_MODULE, // get index of a loaded module by name and version
+    CORE_ACQUIRE_COMMAND, // get module::command callsign by module name, command name and module version
+
+    // raw reads
     CORE_DFPP_READ, // cl -> sv, read some data
     CORE_READ_DWORD, // cl -> sv, read a dword
     CORE_READ_WORD, // cl -> sv, read a word
     CORE_READ_BYTE, // cl -> sv, read a byte
 
-    // writes
+    // raw writes
     CORE_WRITE,// client writes to server
     CORE_WRITE_DWORD,// client writes a DWORD to server
     CORE_WRITE_WORD,// client writes a WORD to server
     CORE_WRITE_BYTE,// client writes a BYTE to server
 
-    // error state
-    CORE_ERROR, // there was a server error
-    
     // string functions
     CORE_READ_STL_STRING,// client requests contents of STL string at address
     CORE_READ_C_STRING,// client requests contents of a C string at address, max length (0 means zero terminated)
     CORE_WRITE_STL_STRING,// client wants to set STL string at address to something
-    
-    // extension module enumeration 
-    CORE_ACQUIRE_MODULE, // get index of a loaded module by name and version
-    CORE_ACQUIRE_COMMAND, // get module::command callsign by module name, command name and module version
 
     // total commands
     NUM_CORE_CMDS

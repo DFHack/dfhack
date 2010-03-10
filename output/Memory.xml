@@ -862,12 +862,12 @@
         <Address name="current_cursor_creature">0x00d17c44</Address>
         <Address name="current_menu_state">0x01323d78</Address>
         <Address name="cursor_xyz">0x009d7284</Address>
-        <Address name="hotkey_start">0xffffffff</Address>
+        <Address name="hotkey_start">0xffffffff</Address> <!-- fix this -->
         <Address name="items">0x014ffc70</Address>
         <Address name="language_vector">0x01556fa8</Address>
         <Address name="map_data">0x01555048</Address>
         <Address name="matgloss">0x01556e48</Address>
-        <Address name="notes">0xffffffff</Address>
+        <Address name="notes">0xffffffff</Address> <!-- this is the version prior to notes being implemented -->
         <Address name="pause_state">0x8b010131</Address>
         <Address name="region_x">0x01555078</Address>
         <Address name="region_y">0x0155507c</Address>
@@ -1003,7 +1003,7 @@
         <Address name="buildings">0x015838a0</Address>
         <Address name="constructions">0x0156f8b0</Address>
         <Address name="creatures">0x01583234</Address>
-        <Address name="current_cursor_creature">0x0fffffff</Address>
+        <Address name="current_cursor_creature">0x00D870F4</Address>
         <Address name="current_menu_state">0x01393260</Address>
         <Address name="cursor_xyz">0x009fc294</Address>
         <Address name="hotkey_start">0x01392fb8</Address>
@@ -1141,11 +1141,11 @@
     <!-- Windows 40d## sub-versions, should inherit only vtable from 40d -->
     <Entry version="v0.28.181.40d2" os ="windows" id="40d2win" base="40dwin">
         <HexValue name="pe_timestamp">0x4953556c</HexValue>
-        <String name="md5">B1A8CA1F91734EB492B7F54F6823CDDB</String>
+        <String name="md5">b1a8ca1f91734eb492b7f54f6823cddb</String>
         <Address name="buildings">0x014d1db0</Address>
         <Address name="constructions">0x014bda18</Address>
         <Address name="creatures">0x014d1404</Address>
-        <Address name="current_cursor_creature">0x014d1de4</Address>
+        <Address name="current_cursor_creature">0x00cd4c3c</Address>
         <Address name="current_menu_state">0x0165b5a8</Address>
         <Address name="cursor_xyz">0x0094b27c</Address>
         <Address name="hotkey_start">0x012e101c</Address>
@@ -1251,7 +1251,8 @@
     </Entry>
     <Entry version="v0.28.181.40d3" os ="windows" id="40d3win" base="40d2win" rebase="0x2018">
         <HexValue name="pe_timestamp">0x4957716f</HexValue>
-        <String name="md5">9B6DA355562A4CDD345EA3046290499B</String>
+        <String name="md5">9b6da355562a4cdd345ea3046290499b</String>
+        <Address name="current_cursor_creature">0x00cd6c3c</Address>
         <Address name="cursor_xyz">0x0094d27c</Address>
         <Address name="pause_state">0x012d0fbf</Address>
         <Address name="window_x">0x00c9533c</Address>
@@ -1260,11 +1261,12 @@
     </Entry>
     <Entry version="v0.28.181.40d4" os ="windows" id="40d4win" base="40d3win" rebase="0x0">
         <HexValue name="pe_timestamp">0x4957a0a2</HexValue>
-        <String name="md5">B77759DB7A6DD787BF98953FC5749D81</String>
+        <String name="md5">b77759db7a6dd787bf98953fc5749d81</String>
     </Entry>
     <Entry version="v0.28.181.40d5" os ="windows" id="40d5win" base="40d4win" rebase="0x2018">
         <HexValue name="pe_timestamp">0x495991c3</HexValue>
-        <String name="md5">A0792B81E5B8EC1DBDD627643E93B40D</String>
+        <String name="md5">a0792b81e5b8ec1dbdd627643e93b40d</String>
+        <Address name="current_cursor_creature">0xcd8c34</Address>
         <Address name="cursor_xyz">0x0094f27c</Address>
         <Address name="pause_state">0x012d2fbb</Address>
         <Address name="window_x">0x00c97334</Address>
@@ -1273,7 +1275,8 @@
     </Entry>
     <Entry version="v0.28.181.40d6" os ="windows" id="40d6win" base="40d5win" rebase="0x18a08">
         <HexValue name="pe_timestamp">0x495cafd2</HexValue>
-        <String name="md5">D09E88A32FE57DE5973F78EF213271B6</String>
+        <String name="md5">d09e88a32fe57de5973f78ef213271b6</String>
+        <Address name="current_cursor_creature">0xcefc68</Address>
         <Address name="cursor_xyz">0x009662a4</Address>
         <Address name="pause_state">0x012e9fef</Address>
         <Address name="window_x">0x00cae368</Address>
@@ -1282,7 +1285,8 @@
     </Entry>
     <Entry version="v0.28.181.40d7" os ="windows" id="40d7win" base="40d6win" rebase="0x190">
         <HexValue name="pe_timestamp">0x495fcfef</HexValue>
-        <String name="md5">8E8E2A83D421E356A8047DC8830A7426</String>
+        <String name="md5">8e8e2a83d421e356a8047dc8830a7426</String>
+        <Address name="current_cursor_creature">0xcefc68</Address>
         <Address name="cursor_xyz">0x009662a4</Address>
         <Address name="pause_state">0x012e9fef</Address>
         <Address name="window_x">0x00cae368</Address>
@@ -1291,19 +1295,19 @@
     </Entry>
     <Entry version="v0.28.181.40d8" os ="windows" id="40d8win" base="40d7win" rebase="0x0">
         <HexValue name="pe_timestamp">0x4963c928</HexValue>
-        <String name="md5">32253BEE114DD25EBBAA50D90B5C0A2A</String>
+        <String name="md5">32253bee114dd25ebbaa50d90b5c0a2a</String>
     </Entry>
     <Entry version="v0.28.181.40d9" os ="windows" id="40d9win" base="40d8win" rebase="0x0">
         <HexValue name="pe_timestamp">0x4967c2e0</HexValue>
-        <String name="md5">AEA5A207B8B1CDA942502F97A429F6C3</String>
+        <String name="md5">aea5a207b8b1cda942502f97a429f6c3</String>
     </Entry>
     <Entry version="v0.28.181.40d10" os ="windows" id="40d10win" base="40d9win">
         <HexValue name="pe_timestamp">0x49c59b94</HexValue>
-        <String name="md5">193193D8624F2F3F6D9D556FAB09B122</String>
+        <String name="md5">193193d8624f2f3f6d9d556fab09b122</String>
         <Address name="buildings">0x0151bd00</Address>
         <Address name="constructions">0x01507968</Address>
         <Address name="creatures">0x0151b354</Address>
-        <Address name="current_cursor_creature">0x0151bd34</Address>
+        <Address name="current_cursor_creature">0x00d20ed8</Address>
         <Address name="current_menu_state">0x016a54f8</Address>
         <Address name="cursor_xyz">0x009652a4</Address>
         <Address name="hotkey_start">0x0132e574</Address>
@@ -1332,15 +1336,15 @@
     </Entry>
     <Entry version="v0.28.181.40d11" os="windows" id="40d11win" base="40d9win" rebase="0x0">
         <HexValue name="pe_timestamp">0x49c82d3f</HexValue>
-        <String name="md5">6F81231B845E9C9DC29AAF57705CCC7C</String>
+        <String name="md5">6f81231b845e9c9dc29aaf57705ccc7c</String>
     </Entry>
     <Entry version="v0.28.181.40d12" os="windows" id="40d12win" base="40d11win">
         <HexValue name="pe_timestamp">0x4a3ccb7f</HexValue>
-        <String name="md5">6EA1DE36AF8E1666BD6478736E298C4C</String>
+        <String name="md5">6ea1de36af8e1666bd6478736e298c4c</String>
         <Address name="buildings">0x015b7750</Address>
         <Address name="constructions">0x015a33b8</Address>
         <Address name="creatures">0x015b6da4</Address>
-        <Address name="current_cursor_creature">0x01750e7c</Address>
+        <Address name="current_cursor_creature">0x00ddaed8</Address>
         <Address name="current_menu_state">0x0095f410</Address>
         <Address name="cursor_xyz">0x0095f2b4</Address>
         <Address name="hotkey_start">0x013e8574</Address>
@@ -1369,7 +1373,8 @@
     </Entry>
     <Entry version="v0.28.181.40d13" os="windows" id="40d13win" base="40d12win" rebase="0x5090">
         <HexValue name="pe_timestamp">0x4a51c26e</HexValue>
-        <String name="md5">04A8D8CE311D8AC75E4241BEF68D3147</String>
+        <String name="md5">04a8d8ce311d8ac75e4241bef68d3147</String>
+        <Address name="current_cursor_creature">0x00ddff38</Address>
         <Address name="current_menu_state">0x00964430</Address>
         <Address name="cursor_xyz">0x009642b4</Address>
         <Address name="pause_state">0x013da2bf</Address>
@@ -1379,7 +1384,8 @@
     </Entry>
     <Entry version="v0.28.181.40d14" os="windows" id="40d14win" base="40d13win" rebase="0x2010">
         <HexValue name="pe_timestamp">0x4a8623d2</HexValue>
-        <String name="md5">781A2E51BE4056A7320108F8F0DF8A13</String>
+        <String name="md5">781a2e51be4056a7320108f8f0df8a13</String>
+        <Address name="current_cursor_creature">0x00de1f44</Address>
         <Address name="current_menu_state">0x00966430</Address>
         <Address name="cursor_xyz">0x009662b4</Address>
         <Address name="pause_state">0x013dc2c7</Address>
@@ -1389,11 +1395,11 @@
     </Entry>
     <Entry version="v0.28.181.40d15" os="windows" id="40d15win" base="40d14win">
         <HexValue name="pe_timestamp">0x4a9a6090</HexValue>
-        <String name="md5">12CC4A3DBB6E6DFD7BC7AEE458B9471A</String>
+        <String name="md5">12cc4a3dbb6e6dfd7bc7aee458b9471a</String>
         <Address name="buildings">0x015be808</Address>
         <Address name="constructions">0x015aa470</Address>
         <Address name="creatures">0x015bde5c</Address>
-        <Address name="current_cursor_creature">0x01757f3c</Address>
+        <Address name="current_cursor_creature">0x00de1f54</Address>
         <Address name="current_menu_state">0x00966430</Address>
         <Address name="cursor_xyz">0x009662b4</Address>
         <Address name="hotkey_start">0x013ef62c</Address>
@@ -1422,15 +1428,15 @@
     </Entry>
     <Entry version="v0.28.181.40d16" os="windows" id="40d16win" base="40d15win" rebase="0x0">
         <HexValue name="pe_timestamp">0x4a9b1a72</HexValue>
-        <String name="md5">59AB29021ACA9F3C66B1AB102FB3CEEA</String>
+        <String name="md5">59ab29021aca9f3c66b1ab102fb3ceea</String>
     </Entry>
-    <Entry version="v0.28.181.40d17" os="windows" base="40d16win" id="40d17win">
+    <Entry version="v0.28.181.40d17" os="windows" id="40d17win" base="40d16win">
         <HexValue name="pe_timestamp">0x4b6b7879</HexValue>
-        <String name="md5">DE66405F54D98297303D439B3B7AA30E</String>
+        <String name="md5">de66405f54d98297303d439b3b7aa30e</String>
         <Address name="buildings">0x015f3260</Address>
         <Address name="constructions">0x015deec8</Address>
         <Address name="creatures">0x015f28b4</Address>
-        <Address name="current_cursor_creature">0x0178c994</Address>
+        <Address name="current_cursor_creature">0x00e16924</Address>
         <Address name="current_menu_state">0x0099ae08</Address>
         <Address name="cursor_xyz">0x0099ac88</Address>
         <Address name="hotkey_start">0x014240dc</Address>
@@ -1463,6 +1469,7 @@
         <!--<HexValue name="pe_timestamp">0x006BF5AA</HexValue>-->
         <HexValue name="pe_timestamp">0x4b81b00d</HexValue>
         <String name="md5">5cdc6f4804809f4d5cacdb66785e8cda</String> <!-- THIS IS *NOT* A NUMBER -->
+        <Address name="current_cursor_creature">0x00df2ebc</Address>
         <Address name="current_menu_state">0x00977438</Address>
         <Address name="cursor_xyz">0x009772b8</Address>
         <Address name="pause_state">0x014ad278</Address>
@@ -1472,11 +1479,11 @@
     </Entry>
     <Entry version="v0.28.181.40d19" os="windows" base="40d18win" id="40d19win">
         <HexValue name="pe_timestamp">0x4b90268a</HexValue>
-        <String name="md5">13640A273D90AF39425B798AE9823757</String>
+        <String name="md5">13640a273d90af39425b798ae9823757</String>
         <Address name="buildings">0x01512898</Address>
         <Address name="constructions">0x014fe500</Address>
         <Address name="creatures">0x01511eec</Address>
-        <Address name="current_cursor_creature">0x016abfcc</Address>
+        <Address name="current_cursor_creature">0x00d35b68</Address>
         <Address name="current_menu_state">0x016ac1a0</Address>
         <Address name="cursor_xyz">0x0097a2b8</Address>
         <Address name="hotkey_start">0x01343714</Address>

@@ -743,8 +743,261 @@
                   W I N D O W S
                        and
                      W I N E
-
-    <Entry version="v0.28.181.40d" os="windows" id="40dwin" base="meta-40d">
+     <Entry version="v0.27.176.38a" os="windows" id="38awin" base="meta-40d">
+        <HexValue name="pe_timestamp">0x47b6fac2</HexValue>
+        <String name="md5">48c831b6f3950913b8e1aeada563d2db</String>
+        <Address name="buildings">0x014639f4</Address>
+        <Address name="constructions">0x01463288</Address>
+        <Address name="creatures">0x01463388</Address>
+        <Address name="current_cursor_creature">0x00c7bc00</Address>
+        <Address name="current_menu_state">0x01287d14</Address>
+        <Address name="cursor_xyz">0x00941288</Address>
+        <Address name="hotkey_start">0x01287a9c</Address>
+        <Address name="items">0x01463358</Address>
+        <Address name="language_vector">0x014a6994</Address>
+        <Address name="map_data">0x014a4eac</Address>
+        <Address name="matgloss">0x014a6834</Address>
+        <Address name="notes">0xffffffff</Address>
+        <Address name="pause_state">0x8b010127</Address>
+        <Address name="region_x">0x014a4edc</Address>
+        <Address name="region_y">0x014a4ee0</Address>
+        <Address name="region_z">0x014a4ee4</Address>
+        <Address name="settlement_current">0x014a6680</Address>
+        <Address name="settlements">0x014a671c</Address>
+        <Address name="translation_vector">0x014a69b4</Address>
+        <Address name="vegetation">0x01467b78</Address>
+        <Address name="view_screen">0x01295d58</Address>
+        <Address name="window_dims">0x01284184</Address>
+        <Address name="window_x">0x00941288</Address>
+        <Address name="window_y">0x00c2358c</Address>
+        <Address name="window_z">0x00c68350</Address>
+        <Address name="world">0x014a64dc</Address>
+        <Address name="x_count">0x014a4ec4</Address>
+        <Address name="y_count">0x014a4ec8</Address>
+        <Address name="z_count">0x014a4ecc</Address>
+    <Entry version="v0.27.176.38b" os="windows" id="38bwin" base="38awin">
+        <HexValue name="pe_timestamp">0x47c12f36</HexValue>
+        <String name="md5">8bd90fb6db8388f129fde224a35459de</String>
+        <Address name="buildings">0x01463bec</Address>
+        <Address name="constructions">0x01463480</Address>
+        <Address name="creatures">0x01463580</Address>
+        <Address name="current_cursor_creature">0x00c7bc04</Address>
+        <Address name="current_menu_state">0x01287d14</Address>
+        <Address name="cursor_xyz">0x0094128c</Address>
+        <Address name="hotkey_start">0x01287a9c</Address>
+        <Address name="items">0x01463550</Address>
+        <Address name="language_vector">0x014a6c60</Address>
+        <Address name="map_data">0x014a50a4</Address>
+        <Address name="matgloss">0x014a6b00</Address>
+        <Address name="notes">0xffffffff</Address>
+        <Address name="pause_state">0x8b010127</Address>
+        <Address name="region_x">0x014a50d4</Address>
+        <Address name="region_y">0x014a50d8</Address>
+        <Address name="region_z">0x014a50dc</Address>
+        <Address name="settlement_current">0x014a694c</Address>
+        <Address name="settlements">0x014a69e8</Address>
+        <Address name="translation_vector">0x014a6c80</Address>
+        <Address name="vegetation">0x01467d70</Address>
+        <Address name="view_screen">0x01295d58</Address>
+        <Address name="window_dims">0x01284184</Address>
+        <Address name="window_x">0x00c68354</Address>
+        <Address name="window_y">0x00c23594</Address>
+        <Address name="window_z">0x00c68354</Address> <!-- this is wrong -->
+        <Address name="world">0x014a66d4</Address>
+        <Address name="x_count">0x014a50bc</Address>
+        <Address name="y_count">0x014a50c0</Address>
+        <Address name="z_count">0x014a50c4</Address>
+    </Entry>
+    <Entry version="v0.27.176.38c" os="windows" id="38cwin" base="38bwin" rebase="0x1000">
+        <HexValue name="pe_timestamp">0x47c29583</HexValue>
+        <String name="md5">9147b5e922a30873fd1a742b1dea1724</String>
+        <Address name="notes">0xffffffff</Address>
+        <Address name="pause_state">0x8b010127</Address>       
+    </Entry>
+    <Entry version="v0.28.181.39a" os="windows" id="39awin" base="38cwin">
+        <HexValue name="pe_timestamp">0x487b4e8b</HexValue>
+        <String name="md5">4b3857a05590b9d9488900e575079e9d</String>
+        <Address name="buildings">0x01512b70</Address>
+        <Address name="constructions">0x014feb80</Address>
+        <Address name="creatures">0x01512504</Address>
+        <Address name="current_cursor_creature">0x00d16c20</Address>
+        <Address name="current_menu_state">0x01322d58</Address>
+        <Address name="cursor_xyz">0x009d6284</Address>
+        <Address name="hotkey_start">0x01322adc</Address>
+        <Address name="items">0x014fec50</Address>
+        <Address name="language_vector">0x01555f88</Address>
+        <Address name="map_data">0x01554028</Address>
+        <Address name="matgloss">0x01555e28</Address>
+        <Address name="notes">0xffffffff</Address>
+        <Address name="pause_state">0x8b010131</Address>
+        <Address name="region_x">0x01554058</Address>
+        <Address name="region_y">0x0155405c</Address>
+        <Address name="region_z">0x01554060</Address>
+        <Address name="settlement_current">0x01555ce8</Address>
+        <Address name="settlements">0x01555c6c</Address>
+        <Address name="translation_vector">0x01555fa8</Address>
+        <Address name="vegetation">0x01516cf4</Address>
+        <Address name="view_screen">0x01330d98</Address>
+        <Address name="window_dims">0x0131f1b4</Address>
+        <Address name="window_x">0x00cd5398</Address>
+        <Address name="window_y">0x00cb8dec</Address>
+        <Address name="window_z">0x00d03370</Address>
+        <Address name="world">0x01555658</Address>
+        <Address name="x_count">0x01554040</Address>
+        <Address name="y_count">0x01554044</Address>
+        <Address name="z_count">0x01554048</Address>
+    </Entry>
+    <Entry version="v0.28.181.39b" os="windows" id="39bwin" base="39awin" rebase="0x1000">
+        <HexValue name="pe_timestamp">0x487c9338</HexValue>
+        <String name="md5">52155dea390c2080fc16e4bbeb077164</String>
+        <Address name="notes">0xffffffff</Address>
+        <Address name="pause_state">0x8b010131</Address>
+    </Entry>
+    <Entry version="v0.28.181.39c" os="windows" id="39cwin" base="39bwin">
+        <HexValue name="pe_timestamp">0x487f2f30</HexValue>
+        <String name="md5">8f8cf06b1cd5ea102881a7cced767d4f</String>
+        <Address name="buildings">0x01513b90</Address>
+        <Address name="constructions">0x014ffba0</Address>
+        <Address name="creatures">0x01513524</Address>
+        <Address name="current_cursor_creature">0x00d17c44</Address>
+        <Address name="current_menu_state">0x01323d78</Address>
+        <Address name="cursor_xyz">0x009d7284</Address>
+        <Address name="hotkey_start">0xffffffff</Address>
+        <Address name="items">0x014ffc70</Address>
+        <Address name="language_vector">0x01556fa8</Address>
+        <Address name="map_data">0x01555048</Address>
+        <Address name="matgloss">0x01556e48</Address>
+        <Address name="notes">0xffffffff</Address>
+        <Address name="pause_state">0x8b010131</Address>
+        <Address name="region_x">0x01555078</Address>
+        <Address name="region_y">0x0155507c</Address>
+        <Address name="region_z">0x01555080</Address>
+        <Address name="settlement_current">0x01556d08</Address>
+        <Address name="settlements">0x01556c8c</Address>
+        <Address name="translation_vector">0x01556fc8</Address>
+        <Address name="vegetation">0x01517d14</Address>
+        <Address name="view_screen">0x01331db8</Address>
+        <Address name="window_dims">0x013201d4</Address>
+        <Address name="window_x">0x00cd63bc</Address>
+        <Address name="window_y">0x00cb9dec</Address>
+        <Address name="window_z">0x00d04394</Address>
+        <Address name="world">0x01556678</Address>
+        <Address name="x_count">0x01555060</Address>
+        <Address name="y_count">0x01555064</Address>
+        <Address name="z_count">0x01555068</Address>
+    </Entry>
+    <Entry version="v0.28.181.39d" os="windows" id="39dwin" base="39cwin">
+        <HexValue name="pe_timestamp">0x48873bc3</HexValue>
+        <String name="md5">8614a01593baef6e4a341e2f1a92ba06</String>
+        <Address name="buildings">0x0151ffb8</Address>
+        <Address name="constructions">0x0150bfc8</Address>
+        <Address name="creatures">0x0151f94c</Address>
+        <Address name="current_cursor_creature">0x00d23c4c</Address>
+        <Address name="current_menu_state">0x0132fdb0</Address>
+        <Address name="cursor_xyz">0x009e3284</Address>
+        <Address name="hotkey_start">0x0132fb34</Address>
+        <Address name="items">0x0150c098</Address>
+        <Address name="language_vector">0x015635cc</Address>
+        <Address name="map_data">0x01561470</Address>
+        <Address name="matgloss">0x0156346c</Address>
+        <Address name="notes">0x0132faac</Address>
+        <Address name="pause_state">0x8b010131</Address>
+        <Address name="region_x">0x015614a0</Address>
+        <Address name="region_y">0x015614a4</Address>
+        <Address name="region_z">0x015614a8</Address>
+        <Address name="settlement_current">0x01563154</Address>
+        <Address name="settlements">0x015630d8</Address>
+        <Address name="translation_vector">0x015635ec</Address>
+        <Address name="vegetation">0x0152413c</Address>
+        <Address name="view_screen">0x0133ddf0</Address>
+        <Address name="window_dims">0x0132c1dc</Address>
+        <Address name="window_x">0x00ce23c4</Address>
+        <Address name="window_y">0x00cc5df4</Address>
+        <Address name="window_z">0x00d1039c</Address>
+        <Address name="world">0x01562aa0</Address>
+        <Address name="x_count">0x01561488</Address>
+        <Address name="y_count">0x0156148c</Address>
+        <Address name="z_count">0x01561490</Address>
+    </Entry>
+    <Entry version="v0.28.181.39e" os="windows" id="39ewin" base="39dwin" rebase="0x0">
+        <HexValue name="pe_timestamp">0x4888672c</HexValue>
+        <String name="md5">32f68422f5b4d938549eed0565bcfb92</String>
+    </Entry>
+    <Entry version="v0.28.181.39f" os="windows" id="39fwin" base="39fwin">
+        <HexValue name="pe_timestamp">0x489d8c7f</HexValue>
+        <String name="md5">33db0401081058fb54252210bf371344</String>
+        <Address name="buildings">0x01576468</Address>
+        <Address name="constructions">0x01562478</Address>
+        <Address name="creatures">0x01575dfc</Address>
+        <Address name="current_cursor_creature">0x00d7a0fc</Address>
+        <Address name="current_menu_state">0x01386260</Address>
+        <Address name="cursor_xyz">0x009ef294</Address>
+        <Address name="hotkey_start">0x01385fe4</Address>
+        <Address name="items">0x01562548</Address>
+        <Address name="language_vector">0x015b9a7c</Address>
+        <Address name="map_data">0x015b7920</Address>
+        <Address name="matgloss">0x015b991c</Address>
+        <Address name="notes">0x01385f5c</Address>
+        <Address name="pause_state">0x5f010137</Address>
+        <Address name="region_x">0x015b7950</Address>
+        <Address name="region_y">0x015b7954</Address>
+        <Address name="region_z">0x015b7958</Address>
+        <Address name="settlement_current">0x015b9604</Address>
+        <Address name="settlements">0x015b9588</Address>
+        <Address name="translation_vector">0x015b9a9c</Address>
+        <Address name="vegetation">0x0157a5ec</Address>
+        <Address name="view_screen">0x013942a0</Address>
+        <Address name="window_dims">0x0138268c</Address>
+        <Address name="window_x">0x00d387fc</Address>
+        <Address name="window_y">0x00d66870</Address>
+        <Address name="window_z">0x00d6684c</Address>
+        <Address name="world">0x015b8f50</Address>
+        <Address name="x_count">0x015b7938</Address>
+        <Address name="y_count">0x015b793c</Address>
+        <Address name="z_count">0x015b7940</Address>
+    </Entry>
+    <Entry version="v0.28.181.40a" os="windows" id="40awin" base="39fwin">
+        <HexValue name="pe_timestamp">0x48a9727f</HexValue>
+        <String name="md5">441c76f45cfffc6abc6548e41c7e2218</String>
+        <Address name="buildings">0x015828a8</Address>
+        <Address name="constructions">0x0156e8b8</Address>
+        <Address name="creatures">0x0158223c</Address>
+        <Address name="current_cursor_creature">0x00d860fc</Address>
+        <Address name="current_menu_state">0x01392268</Address>
+        <Address name="cursor_xyz">0x009fb294</Address>
+        <Address name="hotkey_start">0x01391fc0</Address>
+        <Address name="items">0x0156e988</Address>
+        <Address name="language_vector">0x015c5ecc</Address>
+        <Address name="map_data">0x015c3d60</Address>
+        <Address name="matgloss">0x015c5d6c</Address>
+        <Address name="notes">0x01391f64</Address>
+        <Address name="pause_state">0x5f010138</Address>
+        <Address name="region_x">0x015c3d90</Address>
+        <Address name="region_y">0x015c3d94</Address>
+        <Address name="region_z">0x015c3d98</Address>
+        <Address name="settlement_current">0x015c5a54</Address>
+        <Address name="settlements">0x015c59c8</Address>
+        <Address name="translation_vector">0x015c5eec</Address>
+        <Address name="vegetation">0x01586a2c</Address>
+        <Address name="view_screen">0x013a02a8</Address>
+        <Address name="window_dims">0x0138e694</Address>
+        <Address name="window_x">0x00d447fc</Address>
+        <Address name="window_y">0x00d72870</Address>
+        <Address name="window_z">0x00d7284c</Address>
+        <Address name="world">0x015c5390</Address>
+        <Address name="x_count">0x015c3d78</Address>
+        <Address name="y_count">0x015c3d7c</Address>
+        <Address name="z_count">0x015c3d80</Address>
+    </Entry>
+    <Entry version="v0.28.181.40b" os="windows" id="40bwin" base="40awin" rebase="0x0">
+        <HexValue name="pe_timestamp">0x48ad547a</HexValue>
+        <String name="md5">65b4fa339d4081e934c1297d2a22234a</String>
+    </Entry>
+    <Entry version="v0.28.181.40c" os="windows" id="40cwin" base="40bwin" rebase="0x0">
+        <HexValue name="pe_timestamp">0x48ad802b</HexValue>
+        <String name="md5">15e95727019e76aa653538618c7e0cfd</String>
+    </Entry>
+    <Entry version="v0.28.181.40d" os="windows" id="40dwin" base="40cwin">
         <HexValue name="pe_timestamp">0x48c330df</HexValue>
         <String name="md5">2c686c26307dcccd7c36cc79737ebe4f</String>
         <Address name="buildings">0x015838a0</Address>
@@ -818,6 +1071,7 @@
         <Offset name="creature_agility">0x43C</Offset>
         <Offset name="creature_toughness">0x440</Offset>
         <Offset name="creature_skills">0x444</Offset>
+        <Offset name="creature_likes">0x458</Offset>
         <Offset name="creature_labors">0x474</Offset>
         <Offset name="creature_happiness">0x520</Offset>
         <Offset name="creature_traits">0x5D0</Offset>

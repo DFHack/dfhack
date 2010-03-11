@@ -71,7 +71,7 @@ typedef struct
 
 typedef struct
 {
-    shm_cmd cmd;
+    shm_cmd cmd[SHM_MAX_CLIENTS]; // MANDATORY!
     uint32_t x;
     uint32_t y;
     uint32_t z;

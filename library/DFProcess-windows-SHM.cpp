@@ -32,10 +32,10 @@ class SHMProcess::Private
     public:
     Private()
     {
-        my_descriptor = NULL;
-        my_pid = 0;
-        my_shm = 0;
-        my_window = NULL;
+        memdescriptor = NULL;
+        process_ID = 0;
+        shm_addr = 0;
+        window = NULL;
         attached = false;
         suspended = false;
         identified = false;
@@ -44,10 +44,10 @@ class SHMProcess::Private
         DFCLMutex = 0;
     };
     ~Private(){};
-    memory_info * my_descriptor;
-    DFWindow * my_window;
-    uint32_t my_pid;
-    char *my_shm;
+    memory_info * memdescriptor;
+    DFWindow * window;
+    uint32_t process_ID;
+    char *shm_addr;
     HANDLE DFSVMutex;
     HANDLE DFCLMutex;
     
@@ -120,7 +120,7 @@ bool SHMProcess::Private::waitWhile (uint32_t state)
             {
                 attached = suspended = false;
                 ReleaseMutex(DFCLMutex);
-                UnmapViewOfFile(my_shm);
+                UnmapViewOfFile(shm_addr);
                 throw Error::SHMServerDisappeared();
                 return false;
             }
@@ -185,7 +185,7 @@ SHMProcess::SHMProcess(uint32_t PID, vector <memory_info *> & known_versions)
     {
         return;
     }
-    d->my_pid = PID;
+    d->process_ID = PID;
     
     // attach the SHM
     if(!attach())
@@ -196,7 +196,7 @@ SHMProcess::SHMProcess(uint32_t PID, vector <memory_info *> & known_versions)
     // Test bridge version, get PID, sync Yield
     bool bridgeOK;
     bool error = 0;
-    if(!d->Aux_Core_Attach(bridgeOK,d->my_pid))
+    if(!d->Aux_Core_Attach(bridgeOK,d->process_ID))
     {
         fprintf(stderr,"DF terminated during reading\n");
         error = 1;
@@ -209,7 +209,7 @@ SHMProcess::SHMProcess(uint32_t PID, vector <memory_info *> & known_versions)
     if(error)
     {
         D_SHMCMD = CORE_RUNNING;
-        UnmapViewOfFile(d->my_shm);
+        UnmapViewOfFile(d->shm_addr);
         ReleaseMutex(d->DFCLMutex);
         CloseHandle(d->DFSVMutex);
         d->DFSVMutex = 0;
@@ -229,7 +229,7 @@ SHMProcess::SHMProcess(uint32_t PID, vector <memory_info *> & known_versions)
         bool found = false;
         d->identified = false;
         // open process, we only need the process open 
-        hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, d->my_pid );
+        hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, d->process_ID );
         if (NULL == hProcess)
             break;
         
@@ -265,7 +265,7 @@ SHMProcess::SHMProcess(uint32_t PID, vector <memory_info *> & known_versions)
             {
                 memory_info *m = new memory_info(**it);
                 m->RebaseAll(base);
-                d->my_descriptor = m;
+                d->memdescriptor = m;
                 d->identified = true;
                 cerr << "identified " << m->getVersion() << endl;
                 break;
@@ -276,13 +276,13 @@ SHMProcess::SHMProcess(uint32_t PID, vector <memory_info *> & known_versions)
     
     if(d->identified)
     {
-        d->my_window = new DFWindow(this);
+        d->window = new DFWindow(this);
     }
     else
     {
         D_SHMCMD = CORE_RUNNING;
-        UnmapViewOfFile(d->my_shm);
-        d->my_shm = 0;
+        UnmapViewOfFile(d->shm_addr);
+        d->shm_addr = 0;
         ReleaseMutex(d->DFCLMutex);
         CloseHandle(d->DFSVMutex);
         d->DFSVMutex = 0;
@@ -316,13 +316,13 @@ SHMProcess::~SHMProcess()
         detach();
     }
     // destroy data model. this is assigned by processmanager
-    if(d->my_descriptor)
+    if(d->memdescriptor)
     {
-        delete d->my_descriptor;
+        delete d->memdescriptor;
     }
-    if(d->my_window)
+    if(d->window)
     {
-        delete d->my_window;
+        delete d->window;
     }
     // release mutex handles we have
     if(d->DFCLMutex)
@@ -338,17 +338,17 @@ SHMProcess::~SHMProcess()
 
 memory_info * SHMProcess::getDescriptor()
 {
-    return d->my_descriptor;
+    return d->memdescriptor;
 }
 
 DFWindow * SHMProcess::getWindow()
 {
-    return d->my_window;
+    return d->window;
 }
 
 int SHMProcess::getPID()
 {
-    return d->my_pid;
+    return d->process_ID;
 }
 
 //FIXME: implement
@@ -363,7 +363,7 @@ void SHMProcess::getMemRanges( vector<t_memrange> & ranges )
     char buffer[1024];
     char permissions[5]; // r/-, w/-, x/-, p/s, 0
     
-    sprintf(buffer, "/proc/%lu/maps", d->my_pid);
+    sprintf(buffer, "/proc/%lu/maps", d->process_ID);
     FILE *mapFile = ::fopen(buffer, "r");
     uint64_t offset, device1, device2, node;
     
@@ -476,7 +476,7 @@ bool SHMProcess::attach()
     }
 
     char shmname [256];
-    sprintf(shmname,"DFShm-%d",d->my_pid);
+    sprintf(shmname,"DFShm-%d",d->process_ID);
 
     // now try getting and attaching the shared memory
     HANDLE shmHandle = OpenFileMapping(FILE_MAP_ALL_ACCESS,false,shmname);
@@ -487,8 +487,8 @@ bool SHMProcess::attach()
     }
 
     // attempt to attach the opened mapping
-    d->my_shm = (char *) MapViewOfFile(shmHandle,FILE_MAP_ALL_ACCESS, 0,0, SHM_SIZE);
-    if(!d->my_shm)
+    d->shm_addr = (char *) MapViewOfFile(shmHandle,FILE_MAP_ALL_ACCESS, 0,0, SHM_ALL_CLIENTS);
+    if(!d->shm_addr)
     {
         CloseHandle(shmHandle);
         ReleaseMutex(d->DFCLMutex);
@@ -509,7 +509,7 @@ bool SHMProcess::detach()
         return false;
     }
     // detach segment
-    UnmapViewOfFile(d->my_shm);
+    UnmapViewOfFile(d->shm_addr);
     // release it for some other client
     ReleaseMutex(d->DFCLMutex); // we keep the mutex handles
     d->attached = false;
@@ -528,7 +528,7 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
         full_barrier
         D_SHMCMD = CORE_DFPP_READ;
         d->waitWhile(CORE_DFPP_READ);
-        memcpy (target_buffer, d->my_shm + SHM_HEADER,size);
+        memcpy (target_buffer, d->shm_addr + SHM_HEADER,size);
     }
     // a big read, we pull data over the shm in iterations
     else
@@ -543,7 +543,7 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
             full_barrier
             D_SHMCMD = CORE_DFPP_READ;
             d->waitWhile(CORE_DFPP_READ);
-            memcpy (target_buffer, d->my_shm + SHM_HEADER,size);
+            memcpy (target_buffer, d->shm_addr + SHM_HEADER,size);
             // decrease size by bytes read
             size -= to_read;
             // move the cursors
@@ -647,7 +647,7 @@ void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buf
     {
         D_SHMHDR->address = dst_address;
         D_SHMHDR->length = size;
-        memcpy(d->my_shm+SHM_HEADER,source_buffer, size);
+        memcpy(d->shm_addr+SHM_HEADER,source_buffer, size);
         full_barrier
         D_SHMCMD = CORE_WRITE;
         d->waitWhile(CORE_WRITE);
@@ -662,7 +662,7 @@ void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buf
             // write to_write bytes to dst_cursor
             D_SHMHDR->address = dst_address;
             D_SHMHDR->length = to_write;
-            memcpy(d->my_shm+SHM_HEADER,source_buffer, to_write);
+            memcpy(d->shm_addr+SHM_HEADER,source_buffer, to_write);
             full_barrier
             D_SHMCMD = CORE_WRITE;
             d->waitWhile(CORE_WRITE);
@@ -723,7 +723,7 @@ const std::string SHMProcess::readSTLString(uint32_t offset)
     int length = D_SHMHDR->value;
 //    char temp_c[256];
 //    strncpy(temp_c, d->my_shm+SHM_HEADER,length+1); // length + 1 for the null terminator
-    return(string(d->my_shm+SHM_HEADER));
+    return(string(d->shm_addr+SHM_HEADER));
 }
 
 size_t SHMProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
@@ -735,7 +735,7 @@ size_t SHMProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapa
     d->waitWhile(CORE_READ_STL_STRING);
     size_t length = D_SHMHDR->value;
     size_t real = min(length, bufcapacity - 1);
-    strncpy(buffer, d->my_shm+SHM_HEADER,real); // length + 1 for the null terminator
+    strncpy(buffer, d->shm_addr+SHM_HEADER,real); // length + 1 for the null terminator
     buffer[real] = 0;
     return real;
 }
@@ -743,7 +743,7 @@ size_t SHMProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapa
 void SHMProcess::writeSTLString(const uint32_t address, const std::string writeString)
 {
     D_SHMHDR->address = address/*-4*/;
-    strncpy(d->my_shm+SHM_HEADER,writeString.c_str(),writeString.length()+1); // length + 1 for the null terminator
+    strncpy(d->shm_addr+SHM_HEADER,writeString.c_str(),writeString.length()+1); // length + 1 for the null terminator
     full_barrier
     D_SHMCMD = CORE_WRITE_STL_STRING;
     d->waitWhile(CORE_WRITE_STL_STRING);
@@ -761,7 +761,7 @@ string SHMProcess::readClassName (uint32_t vptr)
 // get module index by name and version. bool 1 = error
 bool SHMProcess::getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT)
 {
-    modulelookup * payload = (modulelookup *) (d->my_shm + SHM_HEADER);
+    modulelookup * payload = (modulelookup *) (d->shm_addr + SHM_HEADER);
     payload->version = version;
     strcpy(payload->name,name);
     full_barrier
@@ -774,5 +774,5 @@ bool SHMProcess::getModuleIndex (const char * name, const uint32_t version, uint
 
 char * SHMProcess::getSHMStart (void)
 {
-    return d->my_shm;
+    return d->shm_addr;
 }

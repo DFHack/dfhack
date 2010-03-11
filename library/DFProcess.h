@@ -123,8 +123,14 @@ namespace DFHack
             virtual bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) = 0;
             // get the SHM start if available
             virtual char * getSHMStart (void) = 0;
-            // wait for a SHM state. returns 0 without the SHM
+            // set a SHM command and wait for a response, return 0 on error or throw exception
+            virtual bool SetAndWait (uint32_t state) = 0;
+            /*
+            // wait while SHM command == state. returns 0 without the SHM
             virtual bool waitWhile (uint32_t state) = 0;
+            // set SHM command.
+            virtual void setCmd (uint32_t newstate) = 0;
+            */
     };
 
     class DFHACK_EXPORT NormalProcess : virtual public Process
@@ -181,8 +187,14 @@ namespace DFHack
             bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) {return false;};
             // get the SHM start if available
             char * getSHMStart (void){return 0;};
+            // set a SHM command and wait for a response
+            bool SetAndWait (uint32_t state){return false;};
+            /*
             // wait for a SHM state. returns 0 without the SHM
             bool waitWhile (uint32_t state){return false;};
+            // set SHM command.
+            void setCmd (uint32_t newstate){};
+            */
     };
     
     class DFHACK_EXPORT SHMProcess : virtual public Process
@@ -240,8 +252,13 @@ namespace DFHack
             bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT);
             // get the SHM start if available
             char * getSHMStart (void);
+            bool SetAndWait (uint32_t state);
+            /*
             // wait for a SHM state. returns 0 without the SHM
             bool waitWhile (uint32_t state);
+            // set SHM command.
+            void setCmd (uint32_t newstate);
+            */
     };
 
 #ifdef LINUX_BUILD
@@ -299,8 +316,13 @@ namespace DFHack
             bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) {return false;};
             // get the SHM start if available
             char * getSHMStart (void){return 0;};
+            bool SetAndWait (uint32_t state){return false;};
+            /*
             // wait for a SHM state. returns 0 without the SHM
             bool waitWhile (uint32_t state){return false;};
+            // set SHM command.
+            void setCmd (uint32_t newstate){};
+            */
     };
 #endif
 }

@@ -41,19 +41,22 @@ distribution.
 
 std::vector <DFPP_module> module_registry;
 
-// various crud
+// shared by shms_OS
 extern int errorstate;
 extern char *shm;
 extern int shmid;
+
+// file-globals
 bool useYield = 0;
+int currentClient = -1;
 
 #define SHMHDR ((shm_core_hdr *)shm)
-#define SHMCMD ((shm_cmd *)shm)->pingpong
+#define SHMCMDPP ((shm_core_hdr *) shm)->cmd[currentClient].pingpong
 #define SHMDATA(type) ((type *)(shm + SHM_HEADER))
 
 void ReadRaw (void * data)
 {
-    memcpy(shm + SHM_HEADER, (void *) SHMHDR->address,SHMHDR->length);
+    memcpy(SHMDATA(void), (void *) SHMHDR->address,SHMHDR->length);
 }
 
 void ReadDWord (void * data)
@@ -73,7 +76,7 @@ void ReadByte (void * data)
 
 void WriteRaw (void * data)
 {
-    memcpy((void *)SHMHDR->address, shm + SHM_HEADER,SHMHDR->length);
+    memcpy((void *)SHMHDR->address, SHMDATA(void),SHMHDR->length);
 }
 
 void WriteDWord (void * data)
@@ -97,14 +100,14 @@ void ReadSTLString (void * data)
     unsigned int l = myStringPtr->length();
     SHMHDR->value = l;
     // FIXME: there doesn't have to be a null terminator!
-    strncpy(shm+SHM_HEADER,myStringPtr->c_str(),l+1);
+    strncpy( SHMDATA(char),myStringPtr->c_str(),l+1);
 }
 
 void WriteSTLString (void * data)
 {
     std::string * myStringPtr = (std::string *) SHMHDR->address;
     // here we DO expect a 0 terminator
-    myStringPtr->assign((const char *) (shm + SHM_HEADER));
+    myStringPtr->assign( SHMDATA(const char) );
 }
 
 // MIT HAKMEM bitcount
@@ -133,7 +136,7 @@ void CoreAttach (void * data)
 void FindModule (void * data)
 {
     bool found = false;
-    modulelookup * payload = (modulelookup *) (shm + SHM_HEADER);
+    modulelookup * payload =  SHMDATA(modulelookup);
     std::string test = payload->name;
     uint32_t version = payload->version;
     for(unsigned int i = 0; i < module_registry.size();i++)
@@ -175,6 +178,11 @@ void FindCommand (void * data)
     SHMHDR->error = true;
 }
 
+void ReleaseSuspendLock( void * data )
+{
+    OS_releaseSuspendLock(currentClient);
+}
+
 DFPP_module InitCore(void)
 {
     DFPP_module core;
@@ -185,7 +193,9 @@ DFPP_module InitCore(void)
     core.reserve(NUM_CORE_CMDS);
     // basic states
     core.set_command(CORE_RUNNING, CANCELLATION, "Running");
-    core.set_command(CORE_SUSPEND, CLIENT_WAIT, "Suspend", 0 , CORE_SUSPENDED);
+    core.set_command(CORE_RUN, FUNCTION, "Run!",0,CORE_RUNNING);
+    core.set_command(CORE_STEP, CANCELLATION, "Suspend on next step",0,CORE_SUSPEND);// set command to CORE_SUSPEND, check next client
+    core.set_command(CORE_SUSPEND, FUNCTION, "Suspend", ReleaseSuspendLock , CORE_SUSPENDED);
     core.set_command(CORE_SUSPENDED, CLIENT_WAIT, "Suspended");
     core.set_command(CORE_ERROR, CANCELLATION, "Error");
     
@@ -195,7 +205,7 @@ DFPP_module InitCore(void)
     core.set_command(CORE_ACQUIRE_COMMAND, FUNCTION, "Command lookup", FindCommand, CORE_SUSPENDED);
     
     // raw reads
-    core.set_command(CORE_DFPP_READ, FUNCTION,"Raw read",ReadRaw, CORE_SUSPENDED);
+    core.set_command(CORE_READ, FUNCTION,"Raw read",ReadRaw, CORE_SUSPENDED);
     core.set_command(CORE_READ_DWORD, FUNCTION,"Read DWORD",ReadDWord, CORE_SUSPENDED);
     core.set_command(CORE_READ_WORD, FUNCTION,"Read WORD",ReadWord, CORE_SUSPENDED);
     core.set_command(CORE_READ_BYTE, FUNCTION,"Read BYTE",ReadByte, CORE_SUSPENDED);
@@ -233,60 +243,84 @@ void KillModules (void)
 
 void SHM_Act (void)
 {
+    volatile uint32_t atomic = 0;
     if(errorstate)
     {
         return;
     }
-    uint32_t numwaits = 0;
-    check_again: // goto target!!!
-    if(numwaits == 10000)
+    //static uint oldcl = 88;
+    for(currentClient = 0; currentClient < SHM_MAX_CLIENTS;currentClient++)
     {
-        // this tests if there's a process on the other side
-        if(isValidSHM())
+        // set the offset for the shared memory used for the client
+        uint32_t numwaits = 0;
+        check_again: // goto target!!!
+        if(numwaits == 10000)
         {
-            numwaits = 0;
+            // this tests if there's a process on the other side
+            if(isValidSHM(currentClient))
+            {
+                numwaits = 0;
+            }
+            else
+            {
+                full_barrier
+                SHMCMDPP = CORE_RUNNING;
+                fprintf(stderr,"dfhack: Broke out of loop, other process disappeared.\n");
+            }
         }
-        else
-        {
-            full_barrier
-            SHMCMD = CORE_RUNNING;
-            fprintf(stderr,"dfhack: Broke out of loop, other process disappeared.\n");
-        }
-    }
-    
-    // this is very important! copying two words separately from the command variable leads to inconsistency.
-    // Always copy the thing in one go.
-    // Also, this whole SHM thing probably only works on intel processors
-    
-    volatile shm_cmd atomic = SHMHDR->cmd;
-    full_barrier
-    DFPP_module & mod = module_registry[atomic.parts.module];
-    DFPP_command & cmd = mod.commands[atomic.parts.command];
-    full_barrier
-    /*
-    fprintf(stderr, "Called %x\0", cmd._function);
-    fprintf(stderr, "Client invoked %d:%d = ",atomic.parts.module,atomic.parts.command);
-    fprintf(stderr, "%s\n",cmd.name.c_str());
-    */
-    full_barrier
-    if(cmd._function)
-    {
-        cmd._function(mod.modulestate);
-    }
+        full_barrier // I don't want the compiler to reorder my code.
+
+
+        //fprintf(stderr,"%d: %x %x\n",currentClient, (uint) SHMHDR, (uint) &(SHMHDR->cmd[currentClient]));
+        
+        // this is very important! copying two words separately from the command variable leads to inconsistency.
+        // Always copy the thing in one go.
+        // Also, this whole SHM thing probably only works on intel processors
+        atomic  = *(uint32_t *) (shm + 4*currentClient); //SHMHDR->cmd[currentClient];
         full_barrier
-    if(cmd.nextState != -1)
-    {
-        SHMCMD = cmd.nextState;
-    }
-        full_barrier
-    if(cmd.type != CANCELLATION)
-    {
-        if(useYield)
+        
+        DFPP_module & mod = module_registry[ ((shm_cmd)atomic).parts.module ];
+        DFPP_command & cmd = mod.commands[ ((shm_cmd)atomic).parts.command ];
+        /*
+        if(atomic == CORE_RUNNING)
         {
-            SCHED_YIELD
+            // we are running again for this process
+            // reaquire the suspend lock
+            OS_lockSuspendLock(currentClient);
+            continue;
         }
-        numwaits ++; // watchdog timeout
-        goto check_again;
+        full_barrier
+        */
+        if(cmd._function)
+        {
+            cmd._function(mod.modulestate);
+        }
+        full_barrier
+        
+        if(cmd.nextState != -1)
+        {
+            fprintf(stderr, "Client %d invoked %d:%d = %x = ",
+                    currentClient,((shm_cmd)atomic).parts.module,((shm_cmd)atomic).parts.command, cmd._function);
+            fprintf(stderr, "%s\n",cmd.name.c_str());
+            // FIXME: WHAT HAPPENS WHEN A 'NEXTSTATE' IS FROM A DIFFERENT MODULE THAN 'CORE'? Yeah. It doesn't work.
+            SHMCMDPP = cmd.nextState;
+            fprintf(stderr, "Server set %d\n",cmd.nextState);
+        }
+        full_barrier
+        
+        if(cmd.type != CANCELLATION)
+        {
+            if(useYield)
+            {
+                SCHED_YIELD
+            }
+            numwaits ++; // watchdog timeout
+            goto check_again;
+        }
+        full_barrier
+        
+        // we are running again for this process
+        // reaquire the suspend lock
+        OS_lockSuspendLock(currentClient);
     }
 }
-

@@ -117,7 +117,7 @@ void SHM_Init ( void )
     }
     
     // create virtual memory mapping
-    shmHandle = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,SHM_SIZE,shmname);
+    shmHandle = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,SHM_ALL_CLIENTS,shmname);
     // if can't create or already exists -> nothing happens
     if(GetLastError() == ERROR_ALREADY_EXISTS)
     {
@@ -138,7 +138,7 @@ void SHM_Init ( void )
         return;
     }
     // attempt to attach the created mapping
-    shm = (char *) MapViewOfFile(shmHandle,FILE_MAP_ALL_ACCESS, 0,0, SHM_SIZE);
+    shm = (char *) MapViewOfFile(shmHandle,FILE_MAP_ALL_ACCESS, 0,0, SHM_ALL_CLIENTS);
     if(shm)
     {
         ((shm_cmd *)shm)->pingpong = CORE_RUNNING;

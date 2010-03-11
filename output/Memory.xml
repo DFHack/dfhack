@@ -744,6 +744,7 @@
                        and
                      W I N E
      <Entry version="v0.27.176.38a" os="windows" id="38awin" base="meta-40d">
+     
         <HexValue name="pe_timestamp">0x47b6fac2</HexValue>
         <String name="md5">48c831b6f3950913b8e1aeada563d2db</String>
         <Address name="buildings">0x014639f4</Address>
@@ -775,6 +776,98 @@
         <Address name="x_count">0x014a4ec4</Address>
         <Address name="y_count">0x014a4ec8</Address>
         <Address name="z_count">0x014a4ecc</Address>
+        
+                <!-- job object offsets -->
+        <Offset name="current_job_id">0x08</Offset>
+
+        <!-- map block offsets -->
+        <Offset name="v_vein">0x08</Offset>
+        <HexValue name="v_vein_size">0x2C</HexValue>
+        <Offset name="type">0x0062</Offset>
+        <Offset name="designation">0x0264</Offset>
+        <Offset name="occupancy">0x0664</Offset>
+        <Offset name="biome_stuffs">0x1D64</Offset>
+
+        <!-- creature offsets -->
+        <Offset name="creature_first_name">0x00</Offset>
+        <Offset name="creature_nick_name">0x1C</Offset>
+        <Offset name="creature_last_name">0x38</Offset>
+        <Offset name="creature_custom_profession">0x6c</Offset>
+        <Offset name="creature_profession">0x88</Offset>
+        <Offset name="creature_race">0x8C</Offset>
+        <Offset name="creature_position">0x94</Offset>
+        <Offset name="creature_flags1">0xE4</Offset>
+        <Offset name="creature_flags2">0xE8</Offset>
+        <Offset name="creature_sex">0xF2</Offset>
+        <Offset name="creature_id">0xF4</Offset>
+        <Offset name="creature_squad_name">0x1A4</Offset>
+        <Offset name="creature_squad_leader_id">0x228</Offset>
+        <Offset name="creature_money">0x2F8</Offset><!-- this is wrong -->
+        <Offset name="creature_current_job">0x2AC</Offset>
+        <Offset name="creature_strength">0x438</Offset>
+        <Offset name="creature_agility">0x43C</Offset>
+        <Offset name="creature_toughness">0x440</Offset>
+        <Offset name="creature_skills">0x444</Offset>
+        <Offset name="creature_likes">0x454</Offset>
+        <Offset name="creature_labors">0x474</Offset>
+        <Offset name="creature_happiness">0x520</Offset>
+        <Offset name="creature_traits">0x5D0</Offset>
+        
+        <!-- tree and shrub offsets -->
+        <Offset name="tree_desc_offset">0x70</Offset>
+
+        <!-- the world and its offsets -->
+        <Offset name="world_size_x">0x84</Offset>
+        <Offset name="world_size_y">0x86</Offset>
+        <Offset name="w_geoblocks">0x684</Offset>
+        <Offset name="w_regions_arr">0x6B4</Offset>
+
+        <!-- values for the region structure -->
+        <HexValue name="region_size">0x5C</HexValue>
+        <Offset name="region_geo_index_off">0x58</Offset>
+
+        <!-- geoblock offset(s?) -->
+        <Offset name="geolayer_geoblock_offset">0x4</Offset>
+
+        <!-- matgloss vectors -->
+        <HexValue name="matgloss_skip">0x10</HexValue>
+
+        <!-- only stone and metal have color loaded... -->
+        <Offset name="matgloss_stone_color">0x84</Offset>
+        <Offset name="matgloss_metal_color">0x60</Offset>
+        
+        <Offset name="v_vein">0x08</Offset>
+        <HexValue name="v_vein_size">0x2C</HexValue>
+        <Offset name="type">0x0062</Offset>
+        <Offset name="designation">0x0264</Offset>
+        <Offset name="occupancy">0x0664</Offset>
+        <Offset name="biome_stuffs">0x1D64</Offset>
+        
+        <Offset name="word_table">0x3C</Offset>
+        
+        <Offset name="note_foreground">0x2</Offset>
+        <Offset name="note_background">0x4</Offset>
+        <Offset name="note_name">0x8</Offset>
+        <Offset name="note_xyz">0x24</Offset>
+        
+        <Offset name="hotkey_mode">0x1C</Offset>
+        <Offset name="hotkey_xyz">0x20</Offset>
+        
+        <Offset name="settlement_name">0x38</Offset>
+        <Offset name="settlement_world_xy">0x7a</Offset>
+        <Offset name="settlement_local_xy">0x100</Offset>
+        
+        <Offset name="item_materials">0x68</Offset>      
+        <Offset name="item_type_name">0x24</Offset>
+        <Offset name="matgloss_creature_name">0x1C</Offset>
+        <Offset name="matgloss_wood_name">0x28</Offset>
+        <Offset name="matgloss_stone_name">0x24</Offset>
+        <Offset name="matgloss_metal_name">0x24</Offset>
+        <Offset name="matgloss_plant_name">0x24</Offset>
+        <Offset name="matgloss_plant_drink">0x5C</Offset>
+        <Offset name="matgloss_plant_food">0x94</Offset>
+        <Offset name="matgloss_plant_extract">0xB0</Offset>
+    </Entry>    
     <Entry version="v0.27.176.38b" os="windows" id="38bwin" base="38awin">
         <HexValue name="pe_timestamp">0x47c12f36</HexValue>
         <String name="md5">8bd90fb6db8388f129fde224a35459de</String>
@@ -800,9 +893,9 @@
         <Address name="vegetation">0x01467d70</Address>
         <Address name="view_screen">0x01295d58</Address>
         <Address name="window_dims">0x01284184</Address>
-        <Address name="window_x">0x00c68354</Address>
+        <Address name="window_x">0x00c3fb40</Address>
         <Address name="window_y">0x00c23594</Address>
-        <Address name="window_z">0x00c68354</Address> <!-- this is wrong -->
+        <Address name="window_z">0x00c68354</Address>
         <Address name="world">0x014a66d4</Address>
         <Address name="x_count">0x014a50bc</Address>
         <Address name="y_count">0x014a50c0</Address>
@@ -923,7 +1016,7 @@
         <HexValue name="pe_timestamp">0x4888672c</HexValue>
         <String name="md5">32f68422f5b4d938549eed0565bcfb92</String>
     </Entry>
-    <Entry version="v0.28.181.39f" os="windows" id="39fwin" base="39fwin">
+    <Entry version="v0.28.181.39f" os="windows" id="39fwin" base="39ewin">
         <HexValue name="pe_timestamp">0x489d8c7f</HexValue>
         <String name="md5">33db0401081058fb54252210bf371344</String>
         <Address name="buildings">0x01576468</Address>
@@ -1029,114 +1122,6 @@
         <Address name="x_count">0x015c4d70</Address>
         <Address name="y_count">0x015c4d74</Address>
         <Address name="z_count">0x015c4d78</Address>
-
-        <!-- job object offsets -->
-        <Offset name="current_job_id">0x08</Offset>
-
-        <!-- size of the map -->
-        <Address name="x_count">0x015C4D70</Address>
-        <Address name="y_count">0x015C4D74</Address>
-        <Address name="z_count">0x015C4D78</Address>
-
-        <!-- position of the map in world coords -->
-        <Address name="region_x">0x015C4D88</Address>
-        <Address name="region_y">0x015C4D8C</Address>
-        <Address name="region_z">0x015C4D90</Address>
-
-        <!-- map block offsets -->
-        <Offset name="v_vein">0x08</Offset>
-        <HexValue name="v_vein_size">0x2C</HexValue>
-        <Offset name="type">0x0062</Offset>
-        <Offset name="designation">0x0264</Offset>
-        <Offset name="occupancy">0x0664</Offset>
-        <Offset name="biome_stuffs">0x1D64</Offset>
-
-        <!-- creature offsets -->
-        <Offset name="creature_first_name">0x00</Offset>
-        <Offset name="creature_nick_name">0x1C</Offset>
-        <Offset name="creature_last_name">0x38</Offset>
-        <Offset name="creature_custom_profession">0x6c</Offset>
-        <Offset name="creature_profession">0x88</Offset>
-        <Offset name="creature_race">0x8C</Offset>
-        <Offset name="creature_position">0x94</Offset>
-        <Offset name="creature_flags1">0xE4</Offset>
-        <Offset name="creature_flags2">0xE8</Offset>
-        <Offset name="creature_sex">0xF2</Offset>
-        <Offset name="creature_id">0xF4</Offset>
-        <Offset name="creature_squad_name">0x1A4</Offset>
-        <Offset name="creature_squad_leader_id">0x228</Offset>
-        <Offset name="creature_money">0x2F8</Offset><!-- this is wrong -->
-        <Offset name="creature_current_job">0x2AC</Offset>
-        <Offset name="creature_strength">0x438</Offset>
-        <Offset name="creature_agility">0x43C</Offset>
-        <Offset name="creature_toughness">0x440</Offset>
-        <Offset name="creature_skills">0x444</Offset>
-        <Offset name="creature_likes">0x458</Offset>
-        <Offset name="creature_labors">0x474</Offset>
-        <Offset name="creature_happiness">0x520</Offset>
-        <Offset name="creature_traits">0x5D0</Offset>
-        
-        <!-- tree and shrub offsets -->
-        <Offset name="tree_desc_offset">0x70</Offset>
-
-        <!-- the world and its offsets -->
-        <Address name="world">0x015C6388</Address>
-        <Offset name="world_size_x">0x84</Offset>
-        <Offset name="world_size_y">0x86</Offset>
-        <Offset name="w_geoblocks">0x684</Offset>
-        <Offset name="w_regions_arr">0x6B4</Offset>
-
-        <!-- values for the region structure -->
-        <HexValue name="region_size">0x5C</HexValue>
-        <Offset name="region_geo_index_off">0x58</Offset>
-
-        <!-- geoblock offset(s?) -->
-        <Offset name="geolayer_geoblock_offset">0x4</Offset>
-
-        <!-- matgloss vectors -->
-        <Address name="matgloss">0x015C6D70</Address>
-        <HexValue name="matgloss_skip">0x10</HexValue>
-
-        <!-- only stone and metal have color loaded... -->
-        <Offset name="matgloss_stone_color">0x84</Offset>
-        <Offset name="matgloss_metal_color">0x60</Offset>
-        
-        <Address name="cursor_xyz">0x9fc294</Address>
-        <Address name="window_x">0xd457f4</Address>
-        <Address name="window_y">0xd73868</Address>
-        <Address name="window_z">0xd73844</Address>
-        <Address name="window_dims">0x1706d4c</Address>
-        <Offset name="v_vein">0x08</Offset>
-        <HexValue name="v_vein_size">0x2C</HexValue>
-        <Offset name="type">0x0062</Offset>
-        <Offset name="designation">0x0264</Offset>
-        <Offset name="occupancy">0x0664</Offset>
-        <Offset name="biome_stuffs">0x1D64</Offset>
-        
-        <Offset name="word_table">0x54</Offset>
-        
-        <Offset name="note_foreground">0x2</Offset>
-        <Offset name="note_background">0x4</Offset>
-        <Offset name="note_name">0x8</Offset>
-        <Offset name="note_xyz">0x24</Offset>
-        
-        <Offset name="hotkey_mode">0x1C</Offset>
-        <Offset name="hotkey_xyz">0x20</Offset>
-        
-        <Offset name="settlement_name">0x38</Offset>
-        <Offset name="settlement_world_xy">0x7a</Offset>
-        <Offset name="settlement_local_xy">0x100</Offset>
-        
-        <Offset name="item_materials">0x68</Offset>      
-        <Offset name="item_type_name">0x24</Offset>
-        <Offset name="matgloss_creature_name">0x1C</Offset>
-        <Offset name="matgloss_wood_name">0x28</Offset>
-        <Offset name="matgloss_stone_name">0x24</Offset>
-        <Offset name="matgloss_metal_name">0x24</Offset>
-        <Offset name="matgloss_plant_name">0x24</Offset>
-        <Offset name="matgloss_plant_drink">0x5C</Offset>
-        <Offset name="matgloss_plant_food">0x94</Offset>
-        <Offset name="matgloss_plant_extract">0xB0</Offset>
     </Entry>
     <!-- Windows 40d## sub-versions, should inherit only vtable from 40d -->
     <Entry version="v0.28.181.40d2" os ="windows" id="40d2win" base="40dwin">

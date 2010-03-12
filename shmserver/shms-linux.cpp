@@ -196,7 +196,7 @@ void SHM_Init ( void )
     // make sure we don't stall or do crazy stuff
     for(int i = 0; i < SHM_MAX_CLIENTS;i++)
     {
-        ((shm_cmd *)shm)[i].pingpong = CORE_RUNNING;
+        ((uint32_t *)shm)[i] = CORE_RUNNING;
     }
     InitModules();
 }

@@ -215,6 +215,7 @@ void SHMProcess::Private::FreeLocks()
     {
         close(suspend_lock);
         locked = false;
+        suspended = false;
         suspend_lock = -1;
     }
 }
@@ -327,8 +328,9 @@ SHMProcess::SHMProcess(uint32_t PID, vector< memory_info* >& known_versions)
     }
     if(!bridgeOK)
     {
-        detach();
         throw Error::SHMVersionMismatch();
+        detach();
+        
         return;
     }
     
@@ -473,11 +475,13 @@ bool SHMProcess::suspend()
     if(D_SHMCMD == CORE_RUN)
     {
         //fprintf(stderr,"%d invokes step\n",d->attachmentIdx);
+        // wait for the next window
         D_SHMCMD = CORE_STEP;
     }
     else
     {
         //fprintf(stderr,"%d invokes suspend\n",d->attachmentIdx);
+        // lock now
         D_SHMCMD = CORE_SUSPEND;
     }
     //fprintf(stderr,"waiting for lock\n");
@@ -579,24 +583,22 @@ bool SHMProcess::attach()
     /*
     * Attach the segment
     */
-    if ((d->shm_addr = (char *) shmat(d->shm_ID, NULL, 0)) != (char *) -1)
+    if ((d->shm_addr = (char *) shmat(d->shm_ID, NULL, 0)) == (char *) -1)
     {
-        d->attached = true;
-        if(suspend())
-        {
-            d->suspended = true;
-            g_pProcess = this;
-            return true;
-        }
-        d->attached = false;
-        cerr << "unable to suspend" << endl;
-        shmdt(d->shm_addr);
         d->FreeLocks();
+        cerr << "can't attach segment" << endl;
         return false;
     }
-    cerr << "unable to attach" << endl;
-    d->FreeLocks();
-    return false;
+    d->attached = true;
+    if(!suspend())
+    {
+        shmdt(d->shm_addr);
+        d->FreeLocks();
+        cerr << "unable to suspend" << endl;
+        return false;
+    }
+    g_pProcess = this;
+    return true;
 }
 
 bool SHMProcess::detach()

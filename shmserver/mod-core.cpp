@@ -51,7 +51,7 @@ bool useYield = 0;
 int currentClient = -1;
 
 #define SHMHDR ((shm_core_hdr *)shm)
-#define SHMCMDPP ((shm_core_hdr *) shm)->cmd[currentClient].pingpong
+#define SHMCMD ((uint32_t *)shm )[currentClient]
 #define SHMDATA(type) ((type *)(shm + SHM_HEADER))
 
 void ReadRaw (void * data)
@@ -264,7 +264,7 @@ void SHM_Act (void)
             else
             {
                 full_barrier
-                SHMCMDPP = CORE_RUNNING;
+                SHMCMD = CORE_RUNNING;
                 fprintf(stderr,"dfhack: Broke out of loop, other process disappeared.\n");
             }
         }
@@ -276,7 +276,7 @@ void SHM_Act (void)
         // this is very important! copying two words separately from the command variable leads to inconsistency.
         // Always copy the thing in one go.
         // Also, this whole SHM thing probably only works on intel processors
-        atomic  = *(uint32_t *) (shm + 4*currentClient); //SHMHDR->cmd[currentClient];
+        atomic  = SHMCMD;
         full_barrier
         
         DFPP_module & mod = module_registry[ ((shm_cmd)atomic).parts.module ];
@@ -303,7 +303,7 @@ void SHM_Act (void)
                     currentClient,((shm_cmd)atomic).parts.module,((shm_cmd)atomic).parts.command, cmd._function);
             fprintf(stderr, "%s\n",cmd.name.c_str());
             // FIXME: WHAT HAPPENS WHEN A 'NEXTSTATE' IS FROM A DIFFERENT MODULE THAN 'CORE'? Yeah. It doesn't work.
-            SHMCMDPP = cmd.nextState;
+            SHMCMD = cmd.nextState;
             fprintf(stderr, "Server set %d\n",cmd.nextState);
         }
         full_barrier

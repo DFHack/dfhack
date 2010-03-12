@@ -299,12 +299,17 @@ void SHM_Act (void)
         
         if(cmd.nextState != -1)
         {
+            /*
             fprintf(stderr, "Client %d invoked %d:%d = %x = ",
                     currentClient,((shm_cmd)atomic).parts.module,((shm_cmd)atomic).parts.command, cmd._function);
             fprintf(stderr, "%s\n",cmd.name.c_str());
+            */
             // FIXME: WHAT HAPPENS WHEN A 'NEXTSTATE' IS FROM A DIFFERENT MODULE THAN 'CORE'? Yeah. It doesn't work.
             SHMCMD = cmd.nextState;
+            /*
             fprintf(stderr, "Server set %d\n",cmd.nextState);
+            fflush(stderr); // make sure this finds its way to the terminal!
+            */
         }
         full_barrier
         

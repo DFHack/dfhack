@@ -100,7 +100,7 @@ class SHMProcess::Private
 bool SHMProcess::Private::SetAndWait (uint32_t state)
 {
     uint32_t cnt = 0;
-    if(!locked) return false;
+    if(!attached) return false;
     SHMCMD = state;
     while (SHMCMD == state)
     {
@@ -471,18 +471,26 @@ bool SHMProcess::suspend()
         return true;
     }
     
+    // FIXME: this should be controlled on the server side
+    // FIXME: IF server got CORE_RUN in this frame, interpret CORE_SUSPEND as CORE_STEP
     // did we just resume a moment ago?
     if(D_SHMCMD == CORE_RUN)
     {
         //fprintf(stderr,"%d invokes step\n",d->attachmentIdx);
         // wait for the next window
-        D_SHMCMD = CORE_STEP;
+        if(!d->SetAndWait(CORE_STEP))
+        {
+            throw Error::SHMLockingError("if(!d->SetAndWait(CORE_STEP))");
+        }
     }
     else
     {
         //fprintf(stderr,"%d invokes suspend\n",d->attachmentIdx);
         // lock now
-        D_SHMCMD = CORE_SUSPEND;
+        if(!d->SetAndWait(CORE_SUSPEND))
+        {
+            throw Error::SHMLockingError("if(!d->SetAndWait(CORE_SUSPEND))");
+        }
     }
     //fprintf(stderr,"waiting for lock\n");
     // we wait for the server to give up our suspend lock (held by default)
@@ -495,6 +503,7 @@ bool SHMProcess::suspend()
     return false;
 }
 
+// FIXME: needs a good think-through
 bool SHMProcess::asyncSuspend()
 {
     if(!d->attached)
@@ -552,16 +561,18 @@ bool SHMProcess::resume()
         return false;
     if(!d->suspended)
         return true;
-    // set core to run
-    D_SHMCMD = CORE_RUN;
-    d->suspended = false;
     // unlock the suspend lock
     if(lockf(d->suspend_lock,F_ULOCK,0) == 0)
     {
+        d->suspended = false;
         d->locked = false;
-        return true;
+        if(d->SetAndWait(CORE_RUN)) // we have to make sure the server responds!
+        {
+            return true;
+        }
+        throw Error::SHMLockingError("if(d->SetAndWait(CORE_RUN))");
     }
-    throw Error::SHMLockingError("bool SHMProcess::resume()");
+    throw Error::SHMLockingError("if(lockf(d->suspend_lock,F_ULOCK,0) == 0)");
     return false;
 }
 

@@ -331,7 +331,7 @@ bool API::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
     return false;
 }
 
-bool API::getCurrentCursorCreature (uint32_t & creature_index)
+bool API::getCurrentCursorCreature(uint32_t & creature_index)
 {
     if(!d->cursorWindowInited) return false;
     creature_index = g_pProcess->readDWord(d->current_cursor_creature_offset);

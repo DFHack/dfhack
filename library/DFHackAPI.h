@@ -199,7 +199,9 @@ namespace DFHack
         bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
         bool setCursorCoords (const int32_t x, const int32_t y, const int32_t z);
 
-        bool API::getCurrentCursorCreature (uint32_t & creature_index);
+        /// This returns false if there is nothing under the cursor, it puts the addresses in a vector if there is
+        bool getCurrentCursorCreature (uint32_t & creature_index);
+        
 
         bool InitViewSize();
         bool getWindowSize(int32_t & width, int32_t & height);

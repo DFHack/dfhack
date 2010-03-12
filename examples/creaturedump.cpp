@@ -35,6 +35,12 @@ enum likeType
     ITEM = 2,
     FOOD = 3
 };
+
+vector<DFHack::t_matgloss> creaturestypes;
+matGlosses mat;
+vector< vector <DFHack::t_itemType> > itemTypes;
+map<string, vector<string> > names;
+DFHack::memory_info *mem;
     
 likeType printLike(DFHack::t_like like, const matGlosses & mat,const vector< vector <DFHack::t_itemType> > & itemTypes)
 { // The function in DF which prints out the likes is a monster, it is a huge switch statement with tons of options and calls a ton of other functions as well, 
@@ -141,9 +147,154 @@ likeType printLike(DFHack::t_like like, const matGlosses & mat,const vector< vec
 }
 
 
+void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
+{
+    if(string(creaturestypes[creature.type].id) == "DWARF")
+    {
+        cout << "address: " << creature.origin << " creature type: " << creaturestypes[creature.type].id << ", position: " << creature.x << "x " << creature.y << "y "<< creature.z << "z" << endl;
+        bool addendl = false;
+        if(creature.first_name[0])
+        {
+            cout << "first name: " << creature.first_name;
+            addendl = true;
+        }
+        if(creature.nick_name[0])
+        {
+            cout << ", nick name: " << creature.nick_name;
+            addendl = true;
+        }
+        string transName = DF.TranslateName(creature.last_name,names,creaturestypes[creature.type].id);
+        if(!transName.empty())
+        {
+            cout << ", trans name: " << transName;
+            addendl=true;
+        }
+        //cout << ", generic name: " << DF.TranslateName(creature.last_name,names,"GENERIC");
+        /*
+        if(!creature.trans_name.empty()){
+            cout << ", trans name: " << creature.trans_name;
+            addendl =true;
+        }
+        if(!creature.generic_name.empty()){
+            cout << ", generic name: " << creature.generic_name;
+            addendl=true;
+        }
+        */
+        cout << ", likes: ";
+        for(uint32_t i = 0;i<creature.numLikes; i++)
+        {
+            if(printLike(creature.likes[i],mat,itemTypes))
+            {
+                cout << ", ";
+            }
+        }   
+        if(addendl)
+        {
+            cout << endl;
+            addendl = false;
+        }
+        cout << "profession: " << mem->getProfession(creature.profession) << "(" << (int) creature.profession << ")";
+        if(creature.custom_profession[0])
+        {
+            cout << ", custom profession: " << creature.custom_profession;
+        }
+        if(creature.current_job.active)
+        {
+            cout << ", current job: " << mem->getJob(creature.current_job.jobId);
+        }
+        cout << endl;
+        cout << "happiness: " << creature.happiness << ", strength: " << creature.strength << ", agility: " 
+             << creature.agility << ", toughness: " << creature.toughness << ", money: " << creature.money << ", id: " << creature.id;
+        if(creature.squad_leader_id != -1)
+        {
+            cout << ", squad_leader_id: " << creature.squad_leader_id;
+        }
+        cout << ", sex: ";
+        if(creature.sex == 0)
+        {
+            cout << "Female";
+        }
+        else
+        {
+            cout <<"Male";
+        }
+        cout << endl;
+    /*
+        //skills
+        for(unsigned int i = 0; i < creature.skills.size();i++){
+            if(i > 0){
+                cout << ", ";
+            }
+            cout << creature.skills[i].name << ": " << creature.skills[i].rating;
+        }
+    */
+        /*
+         * FLAGS 1
+         */
+        cout << "flags1: ";
+        print_bits(creature.flags1.whole, cout);
+        cout << endl;
+        if(creature.flags1.bits.dead)
+        {
+            cout << "dead ";
+        }
+        if(creature.flags1.bits.on_ground)
+        {
+            cout << "on the ground, ";
+        }
+        if(creature.flags1.bits.skeleton)
+        {
+            cout << "skeletal ";
+        }
+        if(creature.flags1.bits.zombie)
+        {
+            cout << "zombie ";
+        }
+        if(creature.flags1.bits.tame)
+        {
+            cout << "tame ";
+        }
+        if(creature.flags1.bits.royal_guard)
+        {
+            cout << "royal_guard ";
+        }
+        if(creature.flags1.bits.fortress_guard)
+        {
+            cout << "fortress_guard ";
+        }
+        /*
+        * FLAGS 2
+        */
+        cout << endl << "flags2: ";
+        print_bits(creature.flags2.whole, cout);
+        cout << endl;
+        if(creature.flags2.bits.killed)
+        {
+            cout << "killed by kill function, ";
+        }
+        if(creature.flags2.bits.resident)
+        {
+            cout << "resident, ";
+        }
+        if(creature.flags2.bits.gutted)
+        {
+            cout << "gutted, ";
+        }
+        if(creature.flags2.bits.slaughter)
+        {
+            cout << "marked for slaughter, ";
+        }
+        if(creature.flags2.bits.underworld)
+        {
+            cout << "from the underworld, ";
+        }
+        cout << endl << endl;
+    }
+}
+
+
 int main (void)
 {
-    vector<DFHack::t_matgloss> creaturestypes;
     DFHack::API DF("Memory.xml");
     if(!DF.Attach())
     {
@@ -151,25 +302,24 @@ int main (void)
         return 1;
     }
     
-    vector< vector <DFHack::t_itemType> > itemTypes;
+    
     DF.ReadItemTypes(itemTypes);
     
-    matGlosses mat;
+   
     DF.ReadPlantMatgloss(mat.plantMat);
     DF.ReadWoodMatgloss(mat.woodMat);
     DF.ReadStoneMatgloss(mat.stoneMat);
     DF.ReadMetalMatgloss(mat.metalMat);
     DF.ReadCreatureMatgloss(mat.creatureMat);
     
-    DFHack::memory_info *mem = DF.getMemoryInfo();
+    mem = DF.getMemoryInfo();
     // get stone matgloss mapping
     if(!DF.ReadCreatureMatgloss(creaturestypes))
     {
         cerr << "Can't get the creature types." << endl;
         return 1; 
     }
-    
-    map<string, vector<string> > names;
+   
     if(!DF.InitReadNameTables(names))
     {
         cerr << "Can't get name tables" << endl;
@@ -181,152 +331,20 @@ int main (void)
         cerr << "Can't get creatures" << endl;
         return 1;
     }
+    DF.InitViewAndCursor();
     for(uint32_t i = 0; i < numCreatures; i++)
     {
         DFHack::t_creature temp;
-        DF.ReadCreature(i, temp);
-        if(string(creaturestypes[temp.type].id) == "DWARF")
-        {
-            cout << "address: " << temp.origin << " creature type: " << creaturestypes[temp.type].id << ", position: " << temp.x << "x " << temp.y << "y "<< temp.z << "z" << endl;
-            bool addendl = false;
-            if(temp.first_name[0])
-            {
-                cout << "first name: " << temp.first_name;
-                addendl = true;
-            }
-            if(temp.nick_name[0])
-            {
-                cout << ", nick name: " << temp.nick_name;
-                addendl = true;
-            }
-            string transName = DF.TranslateName(temp.last_name,names,creaturestypes[temp.type].id);
-            if(!transName.empty())
-            {
-                cout << ", trans name: " << transName;
-                addendl=true;
-            }
-            //cout << ", generic name: " << DF.TranslateName(temp.last_name,names,"GENERIC");
-            /*
-            if(!temp.trans_name.empty()){
-                cout << ", trans name: " << temp.trans_name;
-                addendl =true;
-            }
-            if(!temp.generic_name.empty()){
-                cout << ", generic name: " << temp.generic_name;
-                addendl=true;
-            }
-            */
-            cout << ", likes: ";
-            for(uint32_t i = 0;i<temp.numLikes; i++)
-            {
-                if(printLike(temp.likes[i],mat,itemTypes))
-                {
-                    cout << ", ";
-                }
-            }   
-            if(addendl)
-            {
-                cout << endl;
-                addendl = false;
-            }
-            cout << "profession: " << mem->getProfession(temp.profession) << "(" << (int) temp.profession << ")";
-            if(temp.custom_profession[0])
-            {
-                cout << ", custom profession: " << temp.custom_profession;
-            }
-            if(temp.current_job.active)
-            {
-                cout << ", current job: " << mem->getJob(temp.current_job.jobId);
-            }
-            cout << endl;
-            cout << "happiness: " << temp.happiness << ", strength: " << temp.strength << ", agility: " 
-                 << temp.agility << ", toughness: " << temp.toughness << ", money: " << temp.money << ", id: " << temp.id;
-            if(temp.squad_leader_id != -1)
-            {
-                cout << ", squad_leader_id: " << temp.squad_leader_id;
-            }
-            cout << ", sex: ";
-            if(temp.sex == 0)
-            {
-                cout << "Female";
-            }
-            else
-            {
-                cout <<"Male";
-            }
-            cout << endl;
-        /*
-            //skills
-            for(unsigned int i = 0; i < temp.skills.size();i++){
-                if(i > 0){
-                    cout << ", ";
-                }
-                cout << temp.skills[i].name << ": " << temp.skills[i].rating;
-            }
-        */
-            /*
-             * FLAGS 1
-             */
-            cout << "flags1: ";
-            print_bits(temp.flags1.whole, cout);
-            cout << endl;
-            if(temp.flags1.bits.dead)
-            {
-                cout << "dead ";
-            }
-            if(temp.flags1.bits.on_ground)
-            {
-                cout << "on the ground, ";
-            }
-            if(temp.flags1.bits.skeleton)
-            {
-                cout << "skeletal ";
-            }
-            if(temp.flags1.bits.zombie)
-            {
-                cout << "zombie ";
-            }
-            if(temp.flags1.bits.tame)
-            {
-                cout << "tame ";
-            }
-            if(temp.flags1.bits.royal_guard)
-            {
-                cout << "royal_guard ";
-            }
-            if(temp.flags1.bits.fortress_guard)
-            {
-                cout << "fortress_guard ";
-            }
-            /*
-            * FLAGS 2
-            */
-            cout << endl << "flags2: ";
-            print_bits(temp.flags2.whole, cout);
-            cout << endl;
-            if(temp.flags2.bits.killed)
-            {
-                cout << "killed by kill function, ";
-            }
-            if(temp.flags2.bits.resident)
-            {
-                cout << "resident, ";
-            }
-            if(temp.flags2.bits.gutted)
-            {
-                cout << "gutted, ";
-            }
-            if(temp.flags2.bits.slaughter)
-            {
-                cout << "marked for slaughter, ";
-            }
-            if(temp.flags2.bits.underworld)
-            {
-                cout << "from the underworld, ";
-            }
-            cout << endl << endl;
-        }
+        DF.ReadCreature(i,temp);
+        printCreature(DF,temp);
     }
+    uint32_t currentIdx;
+    DFHack::t_creature currentCreature;
+    DF.getCurrentCursorCreature(currentIdx);
+    cout << "current creature" << endl;
+
+    DF.ReadCreature(currentIdx, currentCreature);
+    printCreature(DF,currentCreature);
     DF.FinishReadCreatures();
     DF.Detach();
     #ifndef LINUX_BUILD

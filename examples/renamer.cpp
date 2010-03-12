@@ -364,16 +364,18 @@ start:
             {
                 DF.Suspend();
                 DF.setCursorCoords(toChange.x, toChange.y,toChange.z);
-                vector<uint32_t> underCursor;
-                while (!DF.getCurrentCursorCreatures(underCursor))
+                uint32_t underCursor;
+                DF.getCurrentCursorCreature(underCursor);
+                while (underCursor != toChangeNum)
                 {
                     DF.Resume();
-                    w->TypeSpecial(DFHack::WAIT,1,100);
+                    w->TypeStr("v",100);
                     DF.Suspend();
                     DF.setCursorCoords(toChange.x, toChange.y,toChange.z);
                     DF.ReadCreature(toChangeNum,toChange);
+                    DF.getCurrentCursorCreature(underCursor);
                 }
-                //CurrentCursorCreatures gives the creatures in the order that you see them with the 'k' cursor.
+                /*//CurrentCursorCreatures gives the creatures in the order that you see them with the 'k' cursor.
                 //The 'v' cursor displays them in the order of last, then first,second,third and so on
                 //Pretty weird, but it works
                 //The only place that seems to display which creature is currently selected is on the stack, whose location is likely not static, so not usable
@@ -388,7 +390,7 @@ start:
                             break;
                         }
                     }
-                }
+                }*/
                 DF.Resume();
                 w->TypeStr(commandString.c_str());
                 if (waitTillScreenState(DF,"viewscreen_customize_unit"))

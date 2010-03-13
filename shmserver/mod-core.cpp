@@ -183,6 +183,12 @@ void ReleaseSuspendLock( void * data )
     OS_releaseSuspendLock(currentClient);
 }
 
+void AcquireSuspendLock( void * data )
+{
+    OS_lockSuspendLock(currentClient);
+}
+
+
 DFPP_module InitCore(void)
 {
     DFPP_module core;
@@ -193,7 +199,8 @@ DFPP_module InitCore(void)
     core.reserve(NUM_CORE_CMDS);
     // basic states
     core.set_command(CORE_RUNNING, CANCELLATION, "Running");
-    core.set_command(CORE_RUN, FUNCTION, "Run!",0,CORE_RUNNING);
+    //core.set_command(CORE_RUN, FUNCTION, "Run!",AcquireSuspendLock,CORE_RUNNING);
+    core.set_command(CORE_RUN, CANCELLATION, "Run!",0,CORE_RUNNING);
     core.set_command(CORE_STEP, CANCELLATION, "Suspend on next step",0,CORE_SUSPEND);// set command to CORE_SUSPEND, check next client
     core.set_command(CORE_SUSPEND, FUNCTION, "Suspend", ReleaseSuspendLock , CORE_SUSPENDED);
     core.set_command(CORE_SUSPENDED, CLIENT_WAIT, "Suspended");
@@ -300,16 +307,17 @@ void SHM_Act (void)
         if(cmd.nextState != -1)
         {
             /*
-            fprintf(stderr, "Client %d invoked %d:%d = %x = ",
-                    currentClient,((shm_cmd)atomic).parts.module,((shm_cmd)atomic).parts.command, cmd._function);
-            fprintf(stderr, "%s\n",cmd.name.c_str());
+            char text [512];
+            char text2 [512];
+            sprintf (text,"Client %d invoked %d:%d = %x = %s\n",currentClient,((shm_cmd)atomic).parts.module,((shm_cmd)atomic).parts.command, cmd._function,cmd.name.c_str());
+            sprintf(text2, "Server set %d\n",cmd.nextState);
             */
             // FIXME: WHAT HAPPENS WHEN A 'NEXTSTATE' IS FROM A DIFFERENT MODULE THAN 'CORE'? Yeah. It doesn't work.
             SHMCMD = cmd.nextState;
-            /*
-            fprintf(stderr, "Server set %d\n",cmd.nextState);
-            fflush(stderr); // make sure this finds its way to the terminal!
-            */
+            //MessageBox(0,text,text2, MB_OK);
+            
+            //fflush(stderr); // make sure this finds its way to the terminal!
+            
         }
         full_barrier
         

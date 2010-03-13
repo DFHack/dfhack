@@ -44,8 +44,65 @@ char *shm = 0;
 int shmid = 0;
 bool inited = 0;
 HANDLE shmHandle = 0;
+
 HANDLE DFSVMutex = 0;
-HANDLE DFCLMutex = 0;
+HANDLE DFCLMutex[SHM_MAX_CLIENTS];
+HANDLE DFCLSuspendMutex[SHM_MAX_CLIENTS];
+int held_DFCLSuspendMutex[SHM_MAX_CLIENTS];
+int numheld = SHM_MAX_CLIENTS;
+
+
+void OS_lockSuspendLock(int which)
+{
+    if(numheld == SHM_MAX_CLIENTS)
+        return;
+    // lock not held by server and can be picked up. OK.
+    if(held_DFCLSuspendMutex[which] == 0)
+    {
+        uint32_t state = WaitForSingleObject(DFCLSuspendMutex[which],INFINITE);
+        if(state == WAIT_ABANDONED || state == WAIT_OBJECT_0)
+        {
+            held_DFCLSuspendMutex[which] = 1;
+            numheld++;
+            return;
+        }
+        // lock couldn't be picked up!
+        errorstate = 1;
+        MessageBox(0,"Suspend lock locking failed. Further communication disabled!","Error", MB_OK);
+        return;
+    }
+    errorstate = 1;
+    MessageBox(0,"Server tried to lock already locked suspend lock?  Further communication disabled!","Error", MB_OK);
+    return;
+}
+
+void OS_releaseSuspendLock(int which)
+{
+    /*
+    if(which >=0 && which < SHM_MAX_CLIENTS)
+        return;
+    */
+    if(numheld != SHM_MAX_CLIENTS)
+    {
+        MessageBox(0,"Locking system failure. Further communication disabled!","Error", MB_OK);
+        errorstate = 1;
+        return;
+    }
+    // lock hel by server and can be released -> OK
+    if(held_DFCLSuspendMutex[which] == 1 && ReleaseMutex(DFCLSuspendMutex[which]))
+    {
+        numheld--;
+        held_DFCLSuspendMutex[which] = 0;
+    }
+    // locked and not can't be released? FAIL!
+    else if (held_DFCLSuspendMutex[which] == 1)
+    {
+        MessageBox(0,"Suspend lock failed to unlock.  Further communication disabled!","Error", MB_OK);
+        return;
+    }
+}
+
+
 void SHM_Init ( void )
 {
     // check that we do this only once per process
@@ -56,102 +113,81 @@ void SHM_Init ( void )
     }
     inited = true;
     
-    char svmutexname [256];
-    sprintf(svmutexname,"DFSVMutex-%d",OS_getPID());
+    
     char clmutexname [256];
-    sprintf(clmutexname,"DFCLMutex-%d",OS_getPID());
+    char clsmutexname [256];
     char shmname [256];
     sprintf(shmname,"DFShm-%d",OS_getPID());    
     
-    // create or open mutexes
+    // create a locked server mutex
+    char svmutexname [256];
+    sprintf(svmutexname,"DFSVMutex-%d",OS_getPID());
     DFSVMutex = CreateMutex( 0, 1, svmutexname);
     if(DFSVMutex == 0)
     {
-        DFSVMutex = OpenMutex(SYNCHRONIZE,false, svmutexname);
-        if(DFSVMutex == 0)
-        {
-            errorstate = 1;
-            return;
-        }
+        MessageBox(0,"Server mutex creation failed. Further communication disabled!","Error", MB_OK);
+        errorstate = 1;
+        return;
     }
-    DFCLMutex = CreateMutex( 0, 0, clmutexname);
-    if(DFCLMutex == 0)
+    // the mutex already existed. we don't want to know.
+    if(GetLastError() == ERROR_ALREADY_EXISTS)
     {
-        DFCLMutex = OpenMutex(SYNCHRONIZE,false, clmutexname);
-        if(DFCLMutex == 0)
-        {
-            CloseHandle(DFSVMutex);
-            errorstate = 1;
-            return;
-        }
+        MessageBox(0,"Server mutex already existed. Further communication disabled!","Error", MB_OK);
+        errorstate = 1;
+        return;
     }
     
-    // try locking server mutex
-    uint32_t result;
-    result = WaitForSingleObject(DFSVMutex,0);
-    switch (result)
+    // create client and suspend mutexes
+    for(int i = 0; i < SHM_MAX_CLIENTS; i++)
     {
-        case WAIT_ABANDONED:
+        sprintf(clmutexname,"DFCLMutex-%d-%d",OS_getPID(),i);
+        sprintf(clsmutexname,"DFCLSuspendMutex-%d-%d",OS_getPID(),i);
+        
+        DFCLMutex[i] = CreateMutex( 0, 0, clmutexname); // client mutex, not held
+        DFCLSuspendMutex[i] = CreateMutex( 0, 1, clsmutexname); // suspend mutexes held on start
+        held_DFCLSuspendMutex[i] = 1;
+        
+        if(DFCLMutex[i] == 0 || DFCLSuspendMutex[i] == 0 || GetLastError() == ERROR_ALREADY_EXISTS)
         {
-            // picked up after a crashed DF process
-            // do some sanity checks on client attached
-            // otherwise the same thing as WAIT_OBJECT_0
-            break;
-        }
-        case WAIT_OBJECT_0:
-        {
-            // all right, we have the mutex and are the one and only DF server
-            break;
-        }
-        case WAIT_TIMEOUT:
-        case WAIT_FAILED:
-        default:
-        {
-            // error, bail
+            MessageBox(0,"Client mutex creation failed. Close all tools before starting DF.","Error", MB_OK);
             errorstate = 1;
-            MessageBox(0,"Could not aquire mutex","Error", MB_OK);
-            CloseHandle(DFSVMutex);
-            CloseHandle(DFCLMutex);
             return;
         }
     }
-    
+
     // create virtual memory mapping
-    shmHandle = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,SHM_ALL_CLIENTS,shmname);
+    shmHandle = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,SHM_SIZE,shmname);
     // if can't create or already exists -> nothing happens
     if(GetLastError() == ERROR_ALREADY_EXISTS)
     {
         MessageBox(0,"SHM bridge already in use","Error", MB_OK);
         errorstate = 1;
-        ReleaseMutex(DFSVMutex);
-        CloseHandle(DFSVMutex);
-        CloseHandle(DFCLMutex);
         return;
     }
     if(!shmHandle)
     {
         MessageBox(0,"Couldn't create SHM bridge","Error", MB_OK);
         errorstate = 1;
-        ReleaseMutex(DFSVMutex);
-        CloseHandle(DFSVMutex);
-        CloseHandle(DFCLMutex);
         return;
     }
     // attempt to attach the created mapping
-    shm = (char *) MapViewOfFile(shmHandle,FILE_MAP_ALL_ACCESS, 0,0, SHM_ALL_CLIENTS);
+    shm = (char *) MapViewOfFile(shmHandle,FILE_MAP_ALL_ACCESS, 0,0, SHM_SIZE);
     if(shm)
     {
-        ((shm_cmd *)shm)->pingpong = CORE_RUNNING;
+        // make sure we don't stall or do crazy stuff
+        for(int i = 0; i < SHM_MAX_CLIENTS;i++)
+        {
+            ((uint32_t *)shm)[i] = CORE_RUNNING;
+        }
+        // init modules :)
+        InitModules();
     }
     else
     {
         MessageBox(0,"Couldn't attach SHM bridge","Error", MB_OK);
         errorstate = 1;
-        ReleaseMutex(DFSVMutex);
-        CloseHandle(DFSVMutex);
-        CloseHandle(DFCLMutex);
+        return;
     }
-    InitModules();
 }
 
 void SHM_Destroy ( void )
@@ -159,9 +195,13 @@ void SHM_Destroy ( void )
     if(errorstate)
         return;
     KillModules();
-    ReleaseMutex(DFSVMutex);
+    // get rid of all the locks
     CloseHandle(DFSVMutex);
-    CloseHandle(DFCLMutex);
+    for(int i=0; i < SHM_MAX_CLIENTS; i++)
+    {
+        CloseHandle(DFCLSuspendMutex[i]);
+        CloseHandle(DFCLMutex[i]);
+    }
 }
 
 uint32_t OS_getPID()
@@ -181,17 +221,18 @@ uint32_t OS_getAffinity()
 
 
 // is the other side still there?
-bool isValidSHM()
+bool isValidSHM(int which)
 {
-    // try if CL mutex is free
-    uint32_t result = WaitForSingleObject(DFCLMutex,0);
+    // try if CL mutex is free (by locking client mutex)
+    uint32_t result = WaitForSingleObject(DFCLMutex[which],0);
     
     switch (result)
     {
         case WAIT_ABANDONED:
         case WAIT_OBJECT_0:
         {
-            ReleaseMutex(DFCLMutex);
+            OS_lockSuspendLock(which);
+            ReleaseMutex(DFCLMutex[which]);
             return false;
         }
         case WAIT_TIMEOUT:

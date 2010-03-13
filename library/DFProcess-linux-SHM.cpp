@@ -50,7 +50,6 @@ class SHMProcess::Private
         shm_ID = -1;
         window = NULL;
         attached = false;
-        suspended = false;
         identified = false;
         useYield = false;
         server_lock = -1;
@@ -71,14 +70,14 @@ class SHMProcess::Private
     int suspend_lock;
     int attachmentIdx;
     
-    bool locked;
+
     
     bool attached;
-    bool suspended;
+    bool locked;
     bool identified;
     bool useYield;
     
-    bool validate(char* exe_file, uint32_t pid, std::vector< memory_info* >& known_versions);
+    bool validate(std::vector< memory_info* >& known_versions);
     
     bool Aux_Core_Attach(bool & versionOK, pid_t & PID);
     //bool waitWhile (uint32_t state);
@@ -110,13 +109,11 @@ bool SHMProcess::Private::SetAndWait (uint32_t state)
             {
                 //detach the shared memory
                 shmdt(shm_addr);
-                attached = suspended = identified = false;
+                FreeLocks();
+                attached = locked = identified = false;
                 // we aren't the current process anymore
                 g_pProcess = NULL;
-                FreeLocks();
-                
                 throw Error::SHMServerDisappeared();
-                return false;
             }
             else
             {
@@ -146,14 +143,6 @@ bool SHMProcess::SetAndWait (uint32_t state)
     return d->SetAndWait(state);
 }
 
-/*
-// set SHM command.
-void SHMProcess::setCmd (uint32_t newstate)
-{
-    if(d->attached && d->suspended)
-        D_SHMCMD = newstate;
-};
-*/
 uint32_t OS_getAffinity()
 {
     cpu_set_t mask;
@@ -161,25 +150,6 @@ uint32_t OS_getAffinity()
     // FIXME: truncation
     uint32_t affinity = *(uint32_t *) &mask;
     return affinity;
-}
-
-bool SHMProcess::Private::Aux_Core_Attach(bool & versionOK, pid_t & PID)
-{
-    if(!locked) return false;
-    
-    SHMDATA(coreattach)->cl_affinity = OS_getAffinity();
-    if(!SetAndWait(CORE_ATTACH)) return false;
-    /*
-    cerr <<"CORE_VERSION" << CORE_VERSION << endl;
-    cerr <<"server CORE_VERSION" << SHMDATA(coreattach)->sv_version << endl;
-    */
-    versionOK =( SHMDATA(coreattach)->sv_version == CORE_VERSION );
-    PID = SHMDATA(coreattach)->sv_PID;
-    useYield = SHMDATA(coreattach)->sv_useYield;
-    #ifdef DEBUG
-        if(useYield) cerr << "Using Yield!" << endl;
-    #endif
-    return true;
 }
 
 // test if we have client and server locks and the server is present
@@ -215,7 +185,6 @@ void SHMProcess::Private::FreeLocks()
     {
         close(suspend_lock);
         locked = false;
-        suspended = false;
         suspend_lock = -1;
     }
 }
@@ -229,7 +198,7 @@ bool SHMProcess::Private::GetLocks()
     server_lock = open(name,O_WRONLY);
     if(server_lock == -1)
     {
-        cerr << "can't open sv lock" << endl;
+        // cerr << "can't open sv lock" << endl;
         return false;
     }
     
@@ -289,27 +258,6 @@ bool SHMProcess::Private::GetLocks()
 SHMProcess::SHMProcess(uint32_t PID, vector< memory_info* >& known_versions)
 : d(new Private())
 {
-    char exe_link_name [256];
-    char target_name[1024];
-    int target_result;
-    
-    /*
-     * Locate the segment.
-     */
-    if ((d->shm_ID = shmget(SHM_KEY + PID, /*SHM_ALL_CLIENTS*/SHM_SIZE, 0666)) < 0)
-    {
-        return;
-    }
-    
-    /*
-     * Attach the segment
-     */
-    /*
-    if ((d->shm_addr = (char *) shmat(d->shm_ID, NULL, 0)) == (char *) -1)
-    {
-        return;
-    }
-    */
     d->process_ID = PID;
     if(!attach())
     {
@@ -324,31 +272,15 @@ SHMProcess::SHMProcess(uint32_t PID, vector< memory_info* >& known_versions)
     {
         detach();
         throw Error::SHMAttachFailure();
-        return;
     }
     if(!bridgeOK)
     {
+        detach();
         throw Error::SHMVersionMismatch();
-        detach();
-        
-        return;
     }
-    
-    // find the binary
-    sprintf(exe_link_name,"/proc/%d/exe", d->process_ID);
-    target_result = readlink(exe_link_name, target_name, sizeof(target_name)-1);
-    if (target_result == -1)
-    {
-        perror("readlink");
-        detach();
-        return;
-    }
-    // make sure we have a null terminated string...
-    // see http://www.opengroup.org/onlinepubs/000095399/functions/readlink.html
-    target_name[target_result] = 0;
     
     // try to identify the DF version (md5 the binary, compare with known versions)
-    d->validate(target_name, d->process_ID, known_versions);
+    d->validate(known_versions);
     d->window = new DFWindow(this);
     
     // detach
@@ -357,7 +289,7 @@ SHMProcess::SHMProcess(uint32_t PID, vector< memory_info* >& known_versions)
 
 bool SHMProcess::isSuspended()
 {
-    return d->suspended;
+    return d->locked;
 }
 bool SHMProcess::isAttached()
 {
@@ -369,11 +301,26 @@ bool SHMProcess::isIdentified()
     return d->identified;
 }
 
-bool SHMProcess::Private::validate(char * exe_file, uint32_t pid, vector <memory_info *> & known_versions)
+bool SHMProcess::Private::validate(vector <memory_info *> & known_versions)
 {
+    char exe_link_name [256];
+    char target_name[1024];
+    int target_result;
+    // find the binary
+    sprintf(exe_link_name,"/proc/%d/exe", process_ID);
+    target_result = readlink(exe_link_name, target_name, sizeof(target_name)-1);
+    if (target_result == -1)
+    {
+        perror("readlink");
+        return false;
+    }
+    // make sure we have a null terminated string...
+    // see http://www.opengroup.org/onlinepubs/000095399/functions/readlink.html
+    target_name[target_result] = 0;
+    
     md5wrapper md5;
     // get hash of the running DF process
-    string hash = md5.getHashFromFile(exe_file);
+    string hash = md5.getHashFromFile(target_name);
     vector<memory_info *>::iterator it;
     // cerr << exe_file << " " << hash <<  endl;
     // iterate over the list of memory locations
@@ -384,7 +331,6 @@ bool SHMProcess::Private::validate(char * exe_file, uint32_t pid, vector <memory
             {
                 memory_info * m = *it;
                 memdescriptor = m;
-                process_ID = pid;
                 identified = true;
                 // cerr << "identified " << m->getVersion() << endl;
                 return true;
@@ -427,9 +373,15 @@ int SHMProcess::getPID()
     return d->process_ID;
 }
 
-//FIXME: implement
+// there is only one we care about.
 bool SHMProcess::getThreadIDs(vector<uint32_t> & threads )
 {
+    if(d->attached)
+    {
+        threads.clear();
+        threads.push_back(d->process_ID);
+        return true;
+    }
     return false;
 }
 
@@ -466,7 +418,7 @@ bool SHMProcess::suspend()
     {
         return false;
     }
-    if(d->suspended)
+    if(d->locked)
     {
         return true;
     }
@@ -496,7 +448,6 @@ bool SHMProcess::suspend()
     // we wait for the server to give up our suspend lock (held by default)
     if(lockf(d->suspend_lock,F_LOCK,0) == 0)
     {
-        d->suspended = true;
         d->locked = true;
         return true;
     }
@@ -510,18 +461,17 @@ bool SHMProcess::asyncSuspend()
     {
         return false;
     }
-    if(d->suspended)
+    if(d->locked)
     {
         return true;
     }
-    
-    if(D_SHMCMD == CORE_SUSPENDED)
+    uint32_t cmd = D_SHMCMD;
+    if(cmd == CORE_SUSPENDED)
     {
         // we have to hold the lock to be really suspended
         if(lockf(d->suspend_lock,F_LOCK,0) == 0)
         {
             d->locked = true;
-            d->suspended = true;
             return true;
         }
         return false;
@@ -529,7 +479,11 @@ bool SHMProcess::asyncSuspend()
     else
     {
         // did we just resume a moment ago?
-        if(D_SHMCMD == CORE_RUN)
+        if(cmd == CORE_STEP)
+        {
+            return false;
+        }
+        else if(cmd == CORE_RUN)
         {
             D_SHMCMD = CORE_STEP;
         }
@@ -537,14 +491,6 @@ bool SHMProcess::asyncSuspend()
         {
             D_SHMCMD = CORE_SUSPEND;
         }
-        // try locking
-        if(lockf(d->suspend_lock,F_TLOCK,0) == 0)
-        {
-            d->locked = true;
-            d->suspended = true;
-            return true;
-        }
-        
         return false;
     }
 }
@@ -559,12 +505,11 @@ bool SHMProcess::resume()
 {
     if(!d->attached)
         return false;
-    if(!d->suspended)
+    if(!d->locked)
         return true;
     // unlock the suspend lock
     if(lockf(d->suspend_lock,F_ULOCK,0) == 0)
     {
-        d->suspended = false;
         d->locked = false;
         if(d->SetAndWait(CORE_RUN)) // we have to make sure the server responds!
         {
@@ -587,17 +532,27 @@ bool SHMProcess::attach()
     }
     if(!d->GetLocks())
     {
-        cerr << "server is full or not really there!" << endl;
+        //cerr << "server is full or not really there!" << endl;
         return false;
     }
 
+    /*
+    * Locate the segment.
+    */
+    if ((d->shm_ID = shmget(SHM_KEY + d->process_ID, SHM_SIZE, 0666)) < 0)
+    {
+        d->FreeLocks();
+        cerr << "can't find segment" << endl; // FIXME: throw
+        return false;
+    }
+    
     /*
     * Attach the segment
     */
     if ((d->shm_addr = (char *) shmat(d->shm_ID, NULL, 0)) == (char *) -1)
     {
         d->FreeLocks();
-        cerr << "can't attach segment" << endl;
+        cerr << "can't attach segment" << endl; // FIXME: throw
         return false;
     }
     d->attached = true;
@@ -618,18 +573,18 @@ bool SHMProcess::detach()
     {
         return false;
     }
-    if(d->suspended)
+    if(d->locked)
     {
         resume();
     }
     // detach segment
     if(shmdt(d->shm_addr) != -1)
     {
+        d->FreeLocks();
+        d->locked = false;
         d->attached = false;
-        d->suspended = false;
         d->shm_addr = 0;
         g_pProcess = 0;
-        d->FreeLocks();
         return true;
     }
     // fail if we can't detach
@@ -851,7 +806,6 @@ const std::string SHMProcess::readSTLString(uint32_t offset)
     D_SHMHDR->address = offset;
     full_barrier
     d->SetAndWait(CORE_READ_STL_STRING);
-    //int length = ((shm_retval *)d->my_shm)->value;
     return(string( D_SHMDATA(char) ));
 }
 
@@ -920,4 +874,23 @@ char * SHMProcess::getSHMStart (void)
     if(!d->locked) return 0; //THROW HERE!
         
     return /*d->shm_addr_with_cl_idx*/ d->shm_addr;
+}
+
+bool SHMProcess::Private::Aux_Core_Attach(bool & versionOK, pid_t & PID)
+{
+    if(!locked) throw Error::SHMAccessDenied();
+    
+    SHMDATA(coreattach)->cl_affinity = OS_getAffinity();
+    if(!SetAndWait(CORE_ATTACH)) return false;
+    /*
+    cerr <<"CORE_VERSION" << CORE_VERSION << endl;
+    cerr <<"server CORE_VERSION" << SHMDATA(coreattach)->sv_version << endl;
+    */
+    versionOK =( SHMDATA(coreattach)->sv_version == CORE_VERSION );
+    PID = SHMDATA(coreattach)->sv_PID;
+    useYield = SHMDATA(coreattach)->sv_useYield;
+    #ifdef DEBUG
+        if(useYield) cerr << "Using Yield!" << endl;
+    #endif
+    return true;
 }

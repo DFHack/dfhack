@@ -68,7 +68,7 @@ namespace DFHack
         }
         ~t_class()
         {
-            for(int i = 0; i < subs.size();i++)
+            for(uint32_t i = 0; i < subs.size();i++)
             {
                 delete subs[i];
             }

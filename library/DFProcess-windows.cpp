@@ -69,7 +69,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versio
     if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk) == 0)
     {
         CloseHandle(hProcess);
-        cout << "EnumProcessModules fail'd" << endl;
+        // cout << "EnumProcessModules fail'd" << endl;
         return; //if enumprocessModules fails, give up
     }
     

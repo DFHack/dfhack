@@ -119,6 +119,12 @@ namespace DFHack
             virtual DFWindow * getWindow() = 0;
             // get the DF Process ID
             virtual int getPID() = 0;
+            // get module index by name and version. bool 1 = error
+            virtual bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) = 0;
+            // get the SHM start if available
+            virtual char * getSHMStart (void) = 0;
+            // wait for a SHM state. returns 0 without the SHM
+            virtual bool waitWhile (uint32_t state) = 0;
     };
 
     class DFHACK_EXPORT NormalProcess : virtual public Process
@@ -171,6 +177,12 @@ namespace DFHack
             memory_info *getDescriptor();
             DFWindow * getWindow();
             int getPID();
+            // get module index by name and version. bool 1 = error
+            bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) {return false;};
+            // get the SHM start if available
+            char * getSHMStart (void){return 0;};
+            // wait for a SHM state. returns 0 without the SHM
+            bool waitWhile (uint32_t state){return false;};
     };
     
     class DFHACK_EXPORT SHMProcess : virtual public Process
@@ -181,7 +193,7 @@ namespace DFHack
             Private * const d;
             
         public:
-            SHMProcess(vector <memory_info *> & known_versions);
+            SHMProcess(uint32_t PID, vector <memory_info *> & known_versions);
             ~SHMProcess();
             // Set up stuff so we can read memory
             bool attach();
@@ -224,6 +236,12 @@ namespace DFHack
             memory_info *getDescriptor();
             DFWindow * getWindow();
             int getPID();
+            // get module index by name and version. bool 1 = error
+            bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT);
+            // get the SHM start if available
+            char * getSHMStart (void);
+            // wait for a SHM state. returns 0 without the SHM
+            bool waitWhile (uint32_t state);
     };
 
 #ifdef LINUX_BUILD
@@ -277,6 +295,12 @@ namespace DFHack
             memory_info *getDescriptor();
             DFWindow * getWindow();
             int getPID();
+            // get module index by name and version. bool 1 = error
+            bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) {return false;};
+            // get the SHM start if available
+            char * getSHMStart (void){return 0;};
+            // wait for a SHM state. returns 0 without the SHM
+            bool waitWhile (uint32_t state){return false;};
     };
 #endif
 }

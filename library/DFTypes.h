@@ -484,14 +484,17 @@ struct t_trait
 CREATURE
 */
 
-struct t_lastname
+//#pragma pack(push,4)
+struct t_name
 {
-    int names[7];
+	char first_name[128];
+	char nickname[128];
+	int32_t words[7];
+	uint16_t parts_of_speech[7];
+	uint32_t language;
+	bool has_name;
 };
-struct t_squadname
-{
-    int names[6];
-};
+
 struct t_skill
 {
     uint16_t id;
@@ -511,6 +514,8 @@ struct t_like
     t_matglossPair material;
     bool active;
 };
+//#pragma pack(pop)
+
 #define NUM_CREATURE_TRAITS 30
 #define NUM_CREATURE_LABORS 102
 struct t_creature
@@ -522,10 +527,9 @@ struct t_creature
     uint32_t type;
     t_creaturflags1 flags1;
     t_creaturflags2 flags2;
-    char first_name [128];
-    char nick_name [128];
-    t_lastname last_name;
-    t_squadname squad_name;
+    t_name name;
+	t_name squad_name;
+	t_name artifact_name;
     uint8_t profession;
     char custom_profession[128];
     // enabled labors
@@ -541,6 +545,7 @@ struct t_creature
     uint8_t numLikes;
     t_like likes[32];
     t_job current_job;
+	uint16_t mood;
     uint32_t happiness;
     uint32_t id;
     uint32_t agility;
@@ -764,6 +769,17 @@ union t_occupancy
     naked_occupancy_grouped unibits;
 };
 
+typedef struct
+{
+    int16_t tiletypes [16][16];
+    DFHack::t_designation designaton [16][16];
+    DFHack::t_occupancy occupancy [16][16];
+    // really a '7', but I use 8 to make it neater :)
+    uint8_t biome_indices [8];
+    uint32_t origin; // the address where it came from
+    uint32_t dirty_dword; // bit 1 set means that the block is to be included in job checks
+} mapblock40d;
+
 struct t_viewscreen 
 {
     int32_t type;
@@ -795,7 +811,7 @@ struct t_hotkey
 struct t_settlement
 {
     uint32_t origin;
-    int32_t name[2];
+    t_name name;
     int16_t world_x;
     int16_t world_y;
     int16_t local_x1;

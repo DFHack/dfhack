@@ -67,21 +67,7 @@ bool ProcessEnumerator::findProcessess()
 {
     // Get the list of process identifiers.
     DWORD ProcArray[2048], memoryNeeded, numProccesses;
-    {
-        Process * p = new SHMProcess(d->meminfo->meminfo);
-        if(p->isIdentified())
-        {
-            d->processes.push_back(p);
-            return true;
-        }
-        else
-        {
-            delete p;
-            p = 0;
-        }
-    }
-    
-    EnableDebugPriv();
+    //EnableDebugPriv();
     if ( !EnumProcesses( ProcArray, sizeof(ProcArray), &memoryNeeded ) )
     {
         cout << "EnumProcesses fail'd" << endl;
@@ -90,19 +76,32 @@ bool ProcessEnumerator::findProcessess()
 
     // Calculate how many process identifiers were returned.
     numProccesses = memoryNeeded / sizeof(DWORD);
-
+    EnableDebugPriv();
+    
     // iterate through processes
     for ( int i = 0; i < (int)numProccesses; i++ )
     {
-        Process *q = new NormalProcess(ProcArray[i],d->meminfo->meminfo);
-        if(q->isIdentified())
+        Process *p = new SHMProcess(ProcArray[i],d->meminfo->meminfo);
+        if(p->isIdentified())
         {
-            d->processes.push_back(q);
+            d->processes.push_back(p);
+            continue;
         }
         else
         {
-            delete q;
-            q = 0;
+            delete p;
+            p = 0;
+        }
+        p = new NormalProcess(ProcArray[i],d->meminfo->meminfo);
+        if(p->isIdentified())
+        {
+            d->processes.push_back(p);
+            continue;
+        }
+        else
+        {
+            delete p;
+            p = 0;
         }
     }
     if(d->processes.size())

@@ -26,7 +26,14 @@ string getMaterialType(DFHack::t_item item, const string & itemtype,const matGlo
     // plant thread seeds
     if(itemtype == "item_plant" || itemtype == "item_thread" || itemtype == "item_seeds" || itemtype == "item_leaves" )
     {
-        return mat.plantMat[item.material.type].id;
+        if(item.material.type >= 0 && item.material.type < mat.plantMat.size())
+        {
+            return mat.plantMat[item.material.type].id;
+        }
+        else
+        {
+            return "some invalid plant material";
+        }
     }
     else if (itemtype == "item_drink") // drinks must have different offset for materials
     {
@@ -45,15 +52,21 @@ string getMaterialType(DFHack::t_item item, const string & itemtype,const matGlo
             itemtype == "item_meat"
             )
     {
-        return mat.creatureMat[item.material.type].id;
+        if(item.material.type >= 0 && item.material.type < mat.creatureMat.size())
+            return mat.creatureMat[item.material.type].id;
+        return "bad material";
     }
     else if(itemtype == "item_wood")
     {
-        return mat.woodMat[item.material.type].id;
+        if(item.material.type >= 0 && item.material.type < mat.woodMat.size())
+            return mat.woodMat[item.material.type].id;
+        return "bad material";
     }
     else if(itemtype == "item_bar")
     {
-        return mat.metalMat[item.material.type].id;
+        if(item.material.type >= 0 && item.material.type < mat.metalMat.size())
+            return mat.metalMat[item.material.type].id;
+        return "bad material";
     }
     else
     {
@@ -78,49 +91,85 @@ string getMaterialType(DFHack::t_item item, const string & itemtype,const matGlo
         switch (item.material.type)
         {
         case DFHack::Mat_Wood:
-            return mat.woodMat[item.material.index].id;
-            break;
+            if(item.material.index >= 0 && item.material.index < mat.woodMat.size())
+                return mat.woodMat[item.material.index].id;
+            return "bad material";
+            
         case DFHack::Mat_Stone:
-            return mat.stoneMat[item.material.index].id;
-            break;
+            if(item.material.index >= 0 && item.material.index < mat.stoneMat.size())
+                return mat.stoneMat[item.material.index].id;
+            return "bad material";
+            
         case DFHack::Mat_Metal:
-            return mat.metalMat[item.material.index].id;
-            break;
+            if(item.material.index >= 0 && item.material.index < mat.metalMat.size())
+                return mat.metalMat[item.material.index].id;
+            return "bad material";
+            
         //case DFHack::Mat_Plant:
         case DFHack::Mat_PlantCloth:
             //return mat.plantMat[item.material.index].id;
-            return string(mat.plantMat[item.material.index].id) + " plant";
-            break;
+            if(item.material.index >= 0 && item.material.index < mat.plantMat.size())
+                return string(mat.plantMat[item.material.index].id) + " plant";
+            return "bad material";
+            
         case 3: // bone
-            return string(mat.creatureMat[item.material.index].id) + " bone";
+            if(item.material.index >= 0 && item.material.index < mat.creatureMat.size())
+                return string(mat.creatureMat[item.material.index].id) + " bone";
+            return "bad material";
+            
         case 25: // fat
-            return string(mat.creatureMat[item.material.index].id) + " fat";
+            if(item.material.index >= 0 && item.material.index < mat.creatureMat.size())
+                return string(mat.creatureMat[item.material.index].id) + " fat";
+            return "bad material";
+            
         case 23: // tallow
-            return string(mat.creatureMat[item.material.index].id) + " tallow";
+            if(item.material.index >= 0 && item.material.index < mat.creatureMat.size())
+                return string(mat.creatureMat[item.material.index].id) + " tallow";
+            return "bad material";
         case 9: // shell
-            return string(mat.creatureMat[item.material.index].id) + " shell";
+            if(item.material.index >= 0 && item.material.index < mat.creatureMat.size())
+                return string(mat.creatureMat[item.material.index].id) + " shell";
+            return "bad material";
+            
         case DFHack::Mat_Leather: // really a generic creature material. meat for item_food, leather for item_box...
-            return string(mat.creatureMat[item.material.index].id);
+            if(item.material.index >= 0 && item.material.index < mat.creatureMat.size())
+                return string(mat.creatureMat[item.material.index].id);
+            return "bad material";
+            
         case DFHack::Mat_SilkCloth:
-            return string(mat.creatureMat[item.material.index].id) + " silk";
+            if(item.material.index >= 0 && item.material.index < mat.creatureMat.size())
+                return string(mat.creatureMat[item.material.index].id) + " silk";
+            return "bad material";
+            
         case DFHack::Mat_Soap:
-            return string(mat.creatureMat[item.material.index].id) + " soap";
+            if(item.material.index >= 0 && item.material.index < mat.creatureMat.size())
+                return string(mat.creatureMat[item.material.index].id) + " soap";
+            return "bad material";
+            
         case DFHack::Mat_GreenGlass:
             return "Green Glass";
+            
         case DFHack::Mat_ClearGlass:
             return "Clear Glass";
+            
         case DFHack::Mat_CrystalGlass:
             return "Crystal Glass";
+            
         case DFHack::Mat_Ice:
             return "Ice";
+            
         case DFHack::Mat_Charcoal:
             return "Charcoal";
+            
         /*case DFHack::Mat_Potash:
             return "Potash";*/
+        
         case DFHack::Mat_Ashes:
             return "Ashes";
+            
         case DFHack::Mat_PearlAsh:
             return "Pearlash";
+            
         default:
             cout << "unknown material hit: " << item.material.type << " " << item.material.index  << " " << itemtype << endl;
             return "Invalid";

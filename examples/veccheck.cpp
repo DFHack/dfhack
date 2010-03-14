@@ -11,6 +11,7 @@ using namespace std;
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 #include <DFProcess.h>
+#include <DFMemInfo.h>
 
 int main (int numargs, const char ** args)
 {
@@ -28,6 +29,13 @@ int main (int numargs, const char ** args)
     else
     {
         DFHack::Process* p = DF.getProcess();
+        DFHack::memory_info* mem = DF.getMemoryInfo();
+        const vector<string> * names = mem->getClassIDMapping();
+        for(int i = 0; i < names->size();i++)
+        {
+            cout << i << " " << names->at(i) << endl;
+        }
+        /*
         #ifdef LINUX_BUILD
         cout << "start 0x" << hex << p->readDWord(addr+0x0) << endl;
         cout << "end   0x" << hex << p->readDWord(addr+0x4) << endl;
@@ -37,6 +45,7 @@ int main (int numargs, const char ** args)
         cout << "end   0x" << hex << p->readDWord(addr+0x8) << endl;
         cout << "cap   0x" << hex << p->readDWord(addr+0xC) << endl;
         #endif
+        */
     }
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

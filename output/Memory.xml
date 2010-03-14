@@ -719,8 +719,51 @@
                 <class name="building_stonefall_trap"        type="0x3"/>
                 <class name="building_weapon_trap"           type="0x4"/>
             </multiclass>
+            <class name="building_construction" />
+            <class name="building_road_paved" />
+            <class name="building_road_dirt" />
+            <class name="building_road" />
+            <class name="building_wagon" />
+            <class name="building_tradedepot" />
+            <class name="building_animaltrap" />
+            <class name="building_farmplot" />
+            <class name="building_window" />
+            <class name="building_statue" />
+            <class name="building_well" />
+            <class name="building_coffin" />
+            <class name="building_shop" />
+            <class name="building_chair" />
+            <class name="building_table" />
+            <class name="building_bed" />
+            <class name="building_cage" />
+            <class name="building_chain" />
+            <class name="building_windmill" />
+            <class name="building_water_wheel" />
+            <class name="building_screw_pump" />
+            <class name="building_archerytarget" />
+            <class name="building_weapon" /> <!-- retractable spikes -->
+            <class name="building_support" />
+            <class name="building_axle_vertical" />
+            <class name="building_axle_horizontal" />
+            <class name="building_gear_assembly" />
+            <class name="building_bars_floor" />
+            <class name="building_bars_vertical" />
+            <class name="building_grate_floor" />
+            <class name="building_grate_wall" />
+            <class name="building_floodgate" />
+            <class name="building_bridge" />
+            <class name="building_hatch" />
+            <class name="building_door" />
+            <class name="building_armorstand" />
+            <class name="building_weaponrack" />
+            <class name="building_cabinet" />
+            <class name="building_box" />
+            <class name="building_actual" />
+            <class name="building_civzone" />
+            <class name="building_stockpile" />
+            <class name="building_window_gem" />
+            <class name="building_window_glass" />
         </VTable>
-
     </Entry>
 
 

@@ -1696,6 +1696,12 @@
         <Offset name="matgloss_plant_drink">0x14</Offset>
         <Offset name="matgloss_plant_food">0x1C</Offset>
         <Offset name="matgloss_plant_extract">0x20</Offset>
+        <VTable name="building_vtable">
+            <multiclass name="building_workshop" typeoffset="0xAC" />
+            <multiclass name="building_furnace" typeoffset="0xBA" />
+            <multiclass name="building_siegeengine" typeoffset="0xAC" />
+            <multiclass name="building_trap" typeoffset="0xAC" />
+        </VTable>
     </Entry>
     <Entry version="v0.28.181.40d3" os="linux" id="40d3lin" base="40d2lin">
         <String name="md5">51c73ff46b2688aafaee0204efe91a94</String>

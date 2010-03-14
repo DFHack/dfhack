@@ -186,7 +186,7 @@ namespace DFHack
         bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
         bool setCursorCoords (const int32_t x, const int32_t y, const int32_t z);
 
-        bool getCurrentCursorCreatures(std::vector<uint32_t> &OUTPUT); 
+        bool getCurrentCursorCreature(uint32_t &OUTPUT);
 
         bool InitViewSize();
         

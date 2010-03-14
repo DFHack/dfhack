@@ -66,6 +66,9 @@ class memory_info::Private
     
     // cache for faster name lookup, indexed by classID
     vector<string> classnames;
+    // map between vptr and class id, needs further type id lookup for multi-classes, not inherited
+    map<uint32_t, t_class *> classIDs;
+    
     // index for the next added class
     uint32_t classindex;
     
@@ -336,41 +339,56 @@ void memory_info::setClassChild (t_class * parent, const char * name, const char
     //cout << "    classtype " << name << ", assign " << mcc->assign << ", vtable  " << mcc->type << endl;
 }
 
-
+// FIXME: stupid. we need a better container
 bool memory_info::resolveObjectToClassID(const uint32_t address, int32_t & classid)
 {
     uint32_t vtable = g_pProcess->readDWord(address);
-    // FIXME: stupid search. we need a better container
-    string classname = g_pProcess->readClassName(vtable);
-    for(uint32_t i = 0;i< d->classes.size();i++)
+    // try to find the vtable in our cache
+    map<uint32_t, t_class *>::iterator it;
+    it = d->classIDs.find(vtable);
+    t_class * cl;
+    
+    // class found in cache?
+    if(it != d->classIDs.end())
     {
-        if(d->classes[i]->classname == classname) // got class
-        {
-            // if it is a multiclass, try resolving it
-            if(d->classes[i]->type_offset)
-            {
-                vector <t_type*>& vec = d->classes[i]->subs;
-                uint32_t type = g_pProcess->readWord(address + d->classes[i]->type_offset);
-                //printf ("class %d:%s offset 0x%x\n", i , classes[i].classname.c_str(), classes[i].type_offset);
-                // return typed building if successful
-                for (uint32_t k = 0; k < vec.size();k++)
-                {
-                    if(vec[k]->type == type)
-                    {
-                        //cout << " multi " <<  address + classes[i].type_offset << " " << vec[k].classname << endl;
-                        classid = vec[k]->assign;
-                        return true;
-                    }
-                }
-            }
-            // otherwise return the class we found
-            classid = d->classes[i]->assign;
-            return true;
-        }
+        cl = (*it).second;
     }
-    t_class * c = setClass(classname.c_str(),vtable);
-    classid = c->assign;
-    return true;
+    else// couldn't find?
+    {
+        // we set up the class for the first time
+        string classname = g_pProcess->readClassName(vtable);
+        d->classIDs[vtable] = cl = setClass(classname.c_str(),vtable);
+    }
+    // and isn't a multi-class
+    if(!cl->type_offset)
+    {
+        // return
+        classid = cl->assign;
+        return true;
+    }
+    // and is a multiclass
+    else
+    {
+        // find the type
+        vector <t_type*>& vec = cl->subs;
+        uint32_t type = g_pProcess->readWord(address + cl->type_offset);
+        // return typed building if successful
+        //FIXME: the vector should map directly to the type IDs here, so we don't have to mess with O(n) search
+        for (uint32_t k = 0; k < vec.size();k++)
+        {
+            if(vec[k]->type == type)
+            {
+                //cout << " multi " <<  address + classes[i].type_offset << " " << vec[k].classname << endl;
+                classid = vec[k]->assign;
+                return true;
+            }
+        }
+        // couldn't find the type... now what do we do here? throw?
+        // this is a case where it might be a good idea, because it uncovers some deeper problems
+        // we return the parent class instead, it doesn't change the API semantics and sort-of makes sense
+        classid = cl->assign;
+        return true;
+    }
 }
 
 //ALERT: doesn't care about multiclasses

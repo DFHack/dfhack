@@ -545,7 +545,7 @@ struct t_creature
     uint8_t numLikes;
     t_like likes[32];
     t_job current_job;
-	uint16_t mood;
+	int16_t mood;
     uint32_t happiness;
     uint32_t id;
     uint32_t agility;

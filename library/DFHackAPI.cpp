@@ -431,23 +431,12 @@ bool API::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
     return false;
 }
 
-bool API::getCurrentCursorCreatures (vector<uint32_t> &addresses)
+bool API::getCurrentCursorCreature(uint32_t & creature_index)
 {
-    if(d->cursorWindowInited) return false;
-    DfVector creUnderCursor = d->p->readVector (d->current_cursor_creature_offset, 4);
-    if (creUnderCursor.getSize() == 0)
-    {
-        return false;
-    }
-    addresses.clear();
-    for (uint32_t i = 0;i < creUnderCursor.getSize();i++)
-    {
-        uint32_t temp = * (uint32_t *) creUnderCursor.at (i);
-        addresses.push_back (temp);
-    }
+    if(!d->cursorWindowInited) return false;
+    creature_index = g_pProcess->readDWord(d->current_cursor_creature_offset);
     return true;
 }
-
 // 256 * sizeof(uint32_t)
 bool API::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 {
@@ -1258,7 +1247,7 @@ bool API::ReadCreature (const int32_t index, t_creature & furball)
         g_pProcess->read(temp2,sizeof(t_like),(uint8_t *) &furball.likes[i]);
     }
     
-	g_pProcess->readWord (temp + d->creature_mood_offset, furball.mood);
+	furball.mood = (int16_t) g_pProcess->readWord (temp + d->creature_mood_offset);
 
 
     g_pProcess->readDWord (temp + d->creature_happiness_offset, furball.happiness);

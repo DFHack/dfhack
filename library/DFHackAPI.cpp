@@ -1247,7 +1247,7 @@ bool API::ReadCreature (const int32_t index, t_creature & furball)
         g_pProcess->read(temp2,sizeof(t_like),(uint8_t *) &furball.likes[i]);
     }
     
-	g_pProcess->readWord (temp + d->creature_mood_offset, furball.mood);
+	furball.mood = (int16_t) g_pProcess->readWord (temp + d->creature_mood_offset);
 
 
     g_pProcess->readDWord (temp + d->creature_happiness_offset, furball.happiness);

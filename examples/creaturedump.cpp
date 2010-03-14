@@ -150,7 +150,7 @@ likeType printLike(DFHack::t_like like, const matGlosses & mat,const vector< vec
 
 void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 {
-  if(string(creaturestypes[creature.type].id) == "DWARF")
+ if(string(creaturestypes[creature.type].id) == "DWARF")
     {
         cout << "address: " << creature.origin << " creature type: " << creaturestypes[creature.type].id << ", position: " << creature.x << "x " << creature.y << "y "<< creature.z << "z" << endl;
         bool addendl = false;
@@ -209,6 +209,9 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         if(creature.squad_leader_id != -1)
         {
             cout << ", squad_leader_id: " << creature.squad_leader_id;
+        }
+        if(creature.mood != -1){
+            cout << ", mood: " << creature.mood << " ";
         }
         cout << ", sex: ";
         if(creature.sex == 0)
@@ -289,8 +292,13 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         {
             cout << "from the underworld, ";
         }
-        cout << endl << endl;
+        cout << endl;
+        if(creature.flags1.bits.had_mood && (creature.mood == -1 || creature.mood == 8 ) ){
+            string artifact_name = DF.TranslateName(creature.artifact_name,englishWords,foreignWords,false);
+            cout << "artifact: " << artifact_name << endl;
+        }
     }
+    cout << endl;
 }
 
 
@@ -337,12 +345,13 @@ int main (void)
     {
         DFHack::t_creature temp;
         DF.ReadCreature(i,temp);
+        cout << "index " << i << " ";
         printCreature(DF,temp);
     }
     uint32_t currentIdx;
     DFHack::t_creature currentCreature;
     DF.getCurrentCursorCreature(currentIdx);
-    cout << "current creature" << endl;
+    cout << "current creature at index " << currentIdx << endl;
 
     DF.ReadCreature(currentIdx, currentCreature);
     printCreature(DF,currentCreature);

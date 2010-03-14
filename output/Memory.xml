@@ -787,6 +787,12 @@
         <Offset name="designation">0x0264</Offset>
         <Offset name="occupancy">0x0664</Offset>
         <Offset name="biome_stuffs">0x1D64</Offset>
+        
+        <!-- name struct -->
+        <Offset name="name_firstname">0x0</Offset>
+        <Offset name="name_nickname">0x1C</Offset>
+        <Offset name="name_words">0x38</Offset>
+        <HexValue name="sizeof_string">0x1C</HexValue> 
 
         <!-- creature offsets -->
         <Offset name="creature_name">0x00</Offset>
@@ -799,9 +805,11 @@
         <Offset name="creature_sex">0xF2</Offset>
         <Offset name="creature_id">0xF4</Offset>
         <Offset name="creature_squad_name">0x1A4</Offset>
+        <Offset name="creature_mood">0x1F8</Offset>
         <Offset name="creature_squad_leader_id">0x228</Offset>
         <Offset name="creature_money">0x2F8</Offset><!-- this is wrong -->
         <Offset name="creature_current_job">0x2AC</Offset>
+        <Offset name="creature_artifact_name">0x3CC</Offset>
         <Offset name="creature_strength">0x438</Offset>
         <Offset name="creature_agility">0x43C</Offset>
         <Offset name="creature_toughness">0x440</Offset>
@@ -851,7 +859,7 @@
         <Offset name="hotkey_mode">0x1C</Offset>
         <Offset name="hotkey_xyz">0x20</Offset>
         
-        <Offset name="settlement_name">0x38</Offset>
+        <Offset name="settlement_name">0x00</Offset>
         <Offset name="settlement_world_xy">0x7a</Offset>
         <Offset name="settlement_local_xy">0x100</Offset>
         
@@ -1127,7 +1135,7 @@
         <String name="md5">b1a8ca1f91734eb492b7f54f6823cddb</String>
         <Address name="buildings">0x014d1db0</Address>
         <Address name="constructions">0x014bda18</Address>
-        <Address name="creatures">0x014d1404</Address>
+        <Address name="creatures">0x014D141C</Address>
         <Address name="current_cursor_creature">0x00cd4c3c</Address>
         <Address name="current_menu_state">0x0165b5a8</Address>
         <Address name="cursor_xyz">0x0094b27c</Address>
@@ -1297,7 +1305,7 @@
         <String name="md5">193193d8624f2f3f6d9d556fab09b122</String>
         <Address name="buildings">0x0151bd00</Address>
         <Address name="constructions">0x01507968</Address>
-        <Address name="creatures">0x0151b354</Address>
+        <Address name="creatures">0x0151b36c</Address>
         <Address name="current_cursor_creature">0x00d20ed8</Address>
         <Address name="current_menu_state">0x016a54f8</Address>
         <Address name="cursor_xyz">0x009652a4</Address>
@@ -1334,7 +1342,7 @@
         <String name="md5">6ea1de36af8e1666bd6478736e298c4c</String>
         <Address name="buildings">0x015b7750</Address>
         <Address name="constructions">0x015a33b8</Address>
-        <Address name="creatures">0x015b6da4</Address>
+        <Address name="creatures">0x015b6dbc</Address>
         <Address name="current_cursor_creature">0x00ddaed8</Address>
         <Address name="current_menu_state">0x0095f410</Address>
         <Address name="cursor_xyz">0x0095f2b4</Address>
@@ -1389,7 +1397,7 @@
         <String name="md5">12cc4a3dbb6e6dfd7bc7aee458b9471a</String>
         <Address name="buildings">0x015be808</Address>
         <Address name="constructions">0x015aa470</Address>
-        <Address name="creatures">0x015bde5c</Address>
+        <Address name="creatures">0x015bde74</Address>
         <Address name="current_cursor_creature">0x00de1f54</Address>
         <Address name="current_menu_state">0x00966430</Address>
         <Address name="cursor_xyz">0x009662b4</Address>
@@ -1426,7 +1434,7 @@
         <String name="md5">de66405f54d98297303d439b3b7aa30e</String>
         <Address name="buildings">0x015f3260</Address>
         <Address name="constructions">0x015deec8</Address>
-        <Address name="creatures">0x015f28b4</Address>
+        <Address name="creatures">0x015f28cc</Address>
         <Address name="current_cursor_creature">0x00e16924</Address>
         <Address name="current_menu_state">0x0099ae08</Address>
         <Address name="cursor_xyz">0x0099ac88</Address>
@@ -1473,7 +1481,7 @@
         <String name="md5">13640a273d90af39425b798ae9823757</String>
         <Address name="buildings">0x01512898</Address>
         <Address name="constructions">0x014fe500</Address>
-        <Address name="creatures">0x01511eec</Address>
+        <Address name="creatures">0x01511f04</Address>
         <Address name="current_cursor_creature">0x00d35b68</Address>
         <Address name="current_menu_state">0x016ac1a0</Address>
         <Address name="cursor_xyz">0x0097a2b8</Address>

@@ -2,10 +2,12 @@
 #define DFCONNECT_H
 
 #define SHM_KEY 123466
+#define SHM_MAX_CLIENTS 4
 #define SHM_HEADER 1024 // 1kB reserved for a header
-#define SHM_BODY 1024*1024 // 1MB reserved for bulk data transfer
+#define SHM_BODY 1024*1024 // 4MB reserved for bulk data transfer
 #define SHM_SIZE SHM_HEADER+SHM_BODY
-
+//#define SHM_ALL_CLIENTS SHM_MAX_CLIENTS*(SHM_SIZE)
+//#define SHM_CL(client_idx) client_idx*(SHM_SIZE)
 
 // FIXME: add YIELD for linux, add single-core and multi-core compile targets for optimal speed
 #ifdef LINUX_BUILD
@@ -79,26 +81,28 @@ struct DFPP_module
     void * modulestate;
 };
 
-typedef union
+union shm_cmd
 {
     struct
-    {
-        volatile uint16_t command;
-        volatile uint16_t module;
-    } parts;
+        {
+            volatile uint16_t command;
+            volatile uint16_t module;
+        } parts;
     volatile uint32_t pingpong;
-    inline void set(uint16_t module, uint16_t command)
+    shm_cmd(volatile uint32_t z)
     {
-        pingpong = module + command << 16;
+        pingpong = z;
     }
-} shm_cmd;
+};
 
 void SHM_Act (void);
 void InitModules (void);
 void KillModules (void);
-bool isValidSHM();
+bool isValidSHM(int current);
 uint32_t OS_getPID();
 DFPP_module InitMaps(void);
 uint32_t OS_getAffinity(); // limited to 32 processors. Silly, eh?
+void OS_releaseSuspendLock(int currentClient);
+void OS_lockSuspendLock(int currentClient);
 
 #endif

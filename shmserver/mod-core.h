@@ -26,11 +26,11 @@ distribution.
 #define SHMS_CORE_H
 
 // increment on every core change
-#define CORE_VERSION 7
+#define CORE_VERSION 8
 
 typedef struct
 {
-    shm_cmd cmd;
+    shm_cmd cmd[SHM_MAX_CLIENTS]; // MANDATORY!
     uint32_t address;
     uint32_t value;
     uint32_t length;
@@ -62,6 +62,8 @@ enum CORE_COMMAND
 {
     // basic states
     CORE_RUNNING = 0, // no command, normal server execution
+    CORE_RUN, // sent by the client to restart the server execution
+    CORE_STEP, // client suspend sets step
     CORE_SUSPEND, // client notifies server to wait for commands (server is stalled in busy wait)
     CORE_SUSPENDED, // response to WAIT, server is stalled in busy wait
     CORE_ERROR, // there was a server error
@@ -72,7 +74,7 @@ enum CORE_COMMAND
     CORE_ACQUIRE_COMMAND, // get module::command callsign by module name, command name and module version
 
     // raw reads
-    CORE_DFPP_READ, // cl -> sv, read some data
+    CORE_READ, // cl -> sv, read some data
     CORE_READ_DWORD, // cl -> sv, read a dword
     CORE_READ_WORD, // cl -> sv, read a word
     CORE_READ_BYTE, // cl -> sv, read a byte

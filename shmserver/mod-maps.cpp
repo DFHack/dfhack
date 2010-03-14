@@ -19,7 +19,7 @@ extern char *shm;
 
 #define SHMHDR ((shm_maps_hdr *)shm)
 #define SHMCMD ((shm_cmd *)shm)->pingpong
-#define SHMDATA ((char *)(shm + SHM_HEADER))
+#define SHMDATA(type) ((type *)(shm + SHM_HEADER))
 
 void NullCommand (void* data)
 {
@@ -28,7 +28,7 @@ void NullCommand (void* data)
 void InitOffsets (void* data)
 {
     maps_modulestate * state = (maps_modulestate *) data;
-    memcpy((void *) &(state->offsets), SHMDATA, sizeof(maps_offsets));
+    memcpy((void *) &(state->offsets), SHMDATA(void), sizeof(maps_offsets));
     ((maps_modulestate *) data)->inited = true;
 }
 
@@ -53,8 +53,6 @@ struct mblock
     uint32_t * ptr_to_dirty;
 };
 
-#define SHMBLOCK ((mapblock40d *)(shm + SHM_HEADER))
-
 inline void ReadBlockByAddress (void * data)
 {
     maps_modulestate * state = (maps_modulestate *) data;
@@ -62,13 +60,13 @@ inline void ReadBlockByAddress (void * data)
     mblock * block = (mblock *) SHMHDR->address;
     if(block)
     {
-        memcpy(&(SHMBLOCK->tiletypes), ((char *) block) + offsets.tile_type_offset, sizeof(SHMBLOCK->tiletypes));
-        memcpy(&(SHMBLOCK->designaton), ((char *) block) + offsets.designation_offset, sizeof(SHMBLOCK->designaton));
-        memcpy(&(SHMBLOCK->occupancy), ((char *) block) + offsets.occupancy_offset, sizeof(SHMBLOCK->occupancy));
-        memcpy(&(SHMBLOCK->biome_indices), ((char *) block) + offsets.biome_stuffs, sizeof(SHMBLOCK->biome_indices));
-        SHMBLOCK->dirty_dword = *block->ptr_to_dirty;
+        memcpy(&(SHMDATA(mapblock40d)->tiletypes), ((char *) block) + offsets.tile_type_offset, sizeof(SHMDATA(mapblock40d)->tiletypes));
+        memcpy(&(SHMDATA(mapblock40d)->designaton), ((char *) block) + offsets.designation_offset, sizeof(SHMDATA(mapblock40d)->designaton));
+        memcpy(&(SHMDATA(mapblock40d)->occupancy), ((char *) block) + offsets.occupancy_offset, sizeof(SHMDATA(mapblock40d)->occupancy));
+        memcpy(&(SHMDATA(mapblock40d)->biome_indices), ((char *) block) + offsets.biome_stuffs, sizeof(SHMDATA(mapblock40d)->biome_indices));
+        SHMDATA(mapblock40d)->dirty_dword = *block->ptr_to_dirty;
         
-        SHMBLOCK->origin = (uint32_t)block;
+        SHMDATA(mapblock40d)->origin = (uint32_t)block;
         SHMHDR->error = false;
     }
     else

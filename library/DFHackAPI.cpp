@@ -190,7 +190,7 @@ API::~API()
     delete d;
 }
 
-#define SHMCMD ((shm_cmd *)d->shm_start)->pingpong
+#define SHMCMD(num) ((shm_cmd *)d->shm_start)[num]->pingpong
 #define SHMHDR ((shm_core_hdr *)d->shm_start)
 #define SHMMAPSHDR ((Maps::shm_maps_hdr *)d->shm_start)
 #define SHMDATA(type) ((type *)(d->shm_start + SHM_HEADER))
@@ -243,8 +243,7 @@ bool API::InitMap()
         off->z_count_offset = z_count_offset;
         full_barrier
         const uint32_t cmd = Maps::MAP_INIT + d->maps_module << 16;
-        SHMCMD = cmd;
-        g_pProcess->waitWhile(cmd);
+        g_pProcess->SetAndWait(cmd);
         //cerr << "Map acceleration enabled!" << endl;
     }
     
@@ -324,13 +323,8 @@ bool API::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer)
         SHMMAPSHDR->y = y;
         SHMMAPSHDR->z = z;
         volatile uint32_t cmd = Maps::MAP_READ_BLOCK_BY_COORDS + (d->maps_module << 16);
-        full_barrier
-        SHMCMD = cmd;
-        full_barrier
-        if(!g_pProcess->waitWhile(cmd))
-        {
+        if(!g_pProcess->SetAndWait(cmd))
             return false;
-        }
         memcpy(buffer,SHMDATA(mapblock40d),sizeof(mapblock40d));
         return true;
     }

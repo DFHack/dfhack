@@ -27,6 +27,7 @@ distribution.
 
 #include "Tranquility.h"
 #include "Export.h"
+#include <iostream>
 
 namespace DFHack
 {
@@ -55,7 +56,7 @@ namespace DFHack
         }
         inline void print()
         {
-            cout << hex << start << " - " << end << "|" << (read ? "r" : "-") << (write ? "w" : "-") << (execute ? "x" : "-") << "|" << name << endl;
+            std::cout << std::hex << start << " - " << end << "|" << (read ? "r" : "-") << (write ? "w" : "-") << (execute ? "x" : "-") << "|" << name << std::endl;
         }
     };
 

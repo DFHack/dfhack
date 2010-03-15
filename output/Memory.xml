@@ -847,7 +847,7 @@
         <Offset name="creature_flags2">0xE8</Offset>
         <Offset name="creature_sex">0xF2</Offset>
         <Offset name="creature_id">0xF4</Offset>
-        <Offset name="creature_squad_name">0x1A4</Offset>
+        <Offset name="creature_squad_name">0x158</Offset>
         <Offset name="creature_mood">0x1F8</Offset>
         <Offset name="creature_squad_leader_id">0x228</Offset>
         <Offset name="creature_money">0x2F8</Offset><!-- this is wrong -->

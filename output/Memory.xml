@@ -1257,8 +1257,6 @@
         <!-- geoblock offset(s?) -->
         <Offset name="geolayer_geoblock_offset">0xC</Offset>
 
-        <!-- matgloss vectors -->
-        <HexValue name="matgloss_skip">0x18</HexValue>
         <Offset name="note_foreground">0x2</Offset>
         <Offset name="note_background">0x4</Offset>
         <Offset name="note_name">0x8</Offset>
@@ -1266,6 +1264,7 @@
         
         <Offset name="hotkey_mode">0x1C</Offset>
         <Offset name="hotkey_xyz">0x20</Offset>
+        <HexValue name="hotkey_size">0x2C</HexValue>
         
         <Offset name="settlement_name">0x0</Offset>
         <Offset name="settlement_world_xy">0x7a</Offset>
@@ -1273,6 +1272,9 @@
         
         <Offset name="item_materials">0x68</Offset>      
         <Offset name="item_type_name">0x24</Offset>
+        
+        <!-- matgloss vectors -->
+        <HexValue name="matgloss_skip">0x18</HexValue>
         <Offset name="matgloss_creature_name">0x1C</Offset>
         <Offset name="matgloss_wood_name">0x28</Offset>
         <Offset name="matgloss_stone_name">0x24</Offset>

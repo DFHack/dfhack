@@ -187,6 +187,8 @@ API::API (const string path_to_xml)
 
 API::~API()
 {
+    // FIXME: call all finishread* methods here
+    Detach();
     delete d;
 }
 
@@ -1056,7 +1058,7 @@ bool API::ReadSettlement(const int32_t index, t_settlement & settlement)
     // read pointer from vector at position
     uint32_t temp = * (uint32_t *) d->p_settlements->at (index);
     settlement.origin = temp;
-	d->readName(settlement.name, temp + d->settlement_name_offset);
+    d->readName(settlement.name, temp + d->settlement_name_offset);
     g_pProcess->read(temp + d->settlement_world_xy_offset, 2 * sizeof(int16_t), (uint8_t *) &settlement.world_x);
     g_pProcess->read(temp + d->settlement_local_xy_offset, 4 * sizeof(int16_t), (uint8_t *) &settlement.local_x1);
     return true;
@@ -1069,7 +1071,7 @@ bool API::ReadCurrentSettlement(t_settlement & settlement)
     
     uint32_t temp = * (uint32_t *) d->p_current_settlement->at(0);
     settlement.origin = temp;
-	d->readName(settlement.name, temp + d->settlement_name_offset);
+    d->readName(settlement.name, temp + d->settlement_name_offset);
     g_pProcess->read(temp + d->settlement_world_xy_offset, 2 * sizeof(int16_t), (uint8_t *) &settlement.world_x);
     g_pProcess->read(temp + d->settlement_local_xy_offset, 4 * sizeof(int16_t), (uint8_t *) &settlement.local_x1);
     return true;
@@ -1196,8 +1198,8 @@ bool API::ReadCreature (const int32_t index, t_creature & furball)
     g_pProcess->readDWord (temp + d->creature_flags2_offset, furball.flags2.whole);
     // names
     d->readName(furball.name,temp + d->creature_name_offset);
-	d->readName(furball.squad_name, temp + d->creature_squad_name_offset);
-	d->readName(furball.artifact_name, temp + d->creature_artifact_name_offset);
+    d->readName(furball.squad_name, temp + d->creature_squad_name_offset);
+    d->readName(furball.artifact_name, temp + d->creature_artifact_name_offset);
     // custom profession
     fill_char_buf (furball.custom_profession, d->p->readSTLString (temp + d->creature_custom_profession_offset));
 
@@ -1439,6 +1441,8 @@ bool API::Attach()
 
 bool API::Detach()
 {
+    if(!d->p)
+        return false;
     if (!d->p->detach())
     {
         return false;

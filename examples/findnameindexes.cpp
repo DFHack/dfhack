@@ -1,4 +1,5 @@
-// Map cleaner. Removes all the snow, mud spills, blood and vomit from map tiles.
+// Dwarf fortress names are a complicated beast, in objects they are displayed as indexes into the language vectors
+// use this tool if you are trying to find what the indexes are for a displayed name, so you can then search for it in your object
 
 #include <iostream>
 #include <iomanip>
@@ -62,16 +63,28 @@ int main (void)
     cout << "\nSelect Name to search or q to Quit" << endl;
     getline (cin, input);
 	while(input != "q"){
-		/*for( map< string, vector<string> >::iterator it = names.begin();it != names.end(); it++){
-			for(uint32_t i = 0; i < it->second.size(); i++){
-				uint32_t found = tolower(input).find(tolower(it->second[i]));
-				if(found != string::npos){
-					stringstream value;
-					value << setfill('0') << setw(8) << hex << endian_swap(i);
-					cout << it->first << " " << it->second[i] << " "  << groupBy2(value.str()) << endl;
+        for( uint32_t i = 0; i < englishWords.size();i++){
+            for( uint32_t j = 0;j < englishWords[i].size();j++){
+                if(englishWords[i][j] != ""){
+				    uint32_t found = tolower(input).find(tolower(englishWords[i][j]));
+				    if(found != string::npos){
+					    stringstream value;
+					    value << setfill('0') << setw(8) << hex << endian_swap(j);
+					    cout << englishWords[i][j] << " "  << groupBy2(value.str()) << endl;
+                    }
 				}
 			}
-		}*/
+		}
+        for( uint32_t i = 0; i < foreignWords.size();i++){
+            for( uint32_t j = 0;j < foreignWords[i].size();j++){
+				uint32_t found = tolower(input).find(tolower(foreignWords[i][j]));
+				if(found != string::npos){
+					stringstream value;
+					value << setfill('0') << setw(8) << hex << endian_swap(j);
+					cout << foreignWords[i][j] << " "  << groupBy2(value.str()) << endl;
+				}
+			}
+		}
 		DF.Resume();
 		getline(cin,input);
 	}

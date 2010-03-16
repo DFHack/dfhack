@@ -1581,7 +1581,7 @@
         <String name="md5">7a0859795e972574e80fa3cebc9fcf85</String>
         <Address name="buildings">0x093154e0</Address>
         <Address name="constructions">0x093016b8</Address>
-        <Address name="creatures">0x09314ff0</Address>
+        <Address name="creatures">0x09355940</Address>
         <Address name="current_cursor_creature">0x09314ffc</Address>
         <Address name="current_menu_state">0x09301560</Address>
         <Address name="cursor_xyz">0x08859fc0</Address>
@@ -1630,10 +1630,12 @@
         <Offset name="creature_profession">0x0040</Offset>
         <Offset name="creature_sex">0x009E</Offset>
         <Offset name="creature_id">0x00A0</Offset>
-        <Offset name="creature_squad_name">0x0100</Offset>
-        <Offset name="creature_squad_leader_id">0x0100</Offset> <!-- completely bogus, needs cross-referencing with windows version -->
+        <Offset name="creature_squad_name">0x00F0</Offset>
+        <Offset name="creature_mood">0x160</Offset>
+        <Offset name="creature_squad_leader_id">0x00A0</Offset>
         <Offset name="creature_money">0x02F8</Offset> <!-- most probably wrong -->
         <Offset name="creature_current_job">0x0200</Offset>
+        <Offset name="creature_artifact_name">0x02F8</Offset>
         <Offset name="creature_strength">0x0334</Offset>
         <Offset name="creature_agility">0x0338</Offset>
         <Offset name="creature_toughness">0x033C</Offset>
@@ -1709,7 +1711,7 @@
         <String name="md5">51c73ff46b2688aafaee0204efe91a94</String>
         <Address name="buildings">0x09315f00</Address>
         <Address name="constructions">0x093020d8</Address>
-        <Address name="creatures">0x09315a10</Address>
+        <Address name="creatures">0x09356360</Address>
         <Address name="current_cursor_creature">0x09315a1c</Address>
         <Address name="current_menu_state">0x09301f80</Address>
         <Address name="cursor_xyz">0x0885a9e4</Address>
@@ -1749,7 +1751,7 @@
         <String name="md5">f756194db073f05b98fc6ce872c8757d</String>
         <Address name="buildings">0x09333e00</Address>
         <Address name="constructions">0x0931ffd8</Address>
-        <Address name="creatures">0x09333910</Address>
+        <Address name="creatures">0x09374260</Address>
         <Address name="current_cursor_creature">0x0933391c</Address>
         <Address name="current_menu_state">0x0931fe80</Address>
         <Address name="cursor_xyz">0x088788e4</Address>
@@ -1792,7 +1794,7 @@
         <String name="md5">cba6354000ec54865a161627605c3837</String>
         <Address name="buildings">0x092bf340</Address>
         <Address name="constructions">0x092ab518</Address>
-        <Address name="creatures">0x092bee50</Address>
+        <Address name="creatures">0x092bee5c</Address>
         <Address name="current_cursor_creature">0x0929a3c8</Address>
         <Address name="current_menu_state">0x092ab3c0</Address>
         <Address name="cursor_xyz">0x088073d4</Address>
@@ -1827,7 +1829,7 @@
         <String name="md5">4367c59934cbcf14f43fd3af6444c455</String>
         <Address name="buildings">0x08f55740</Address>
         <Address name="constructions">0x08f41918</Address>
-        <Address name="creatures">0x08f55250</Address>
+        <Address name="creatures">0x08f5525c</Address>
         <Address name="current_cursor_creature">0x08f307c8</Address>
         <Address name="current_menu_state">0x08f417c0</Address>
         <Address name="cursor_xyz">0x0877b33c</Address>
@@ -1863,7 +1865,7 @@
         <String name="md5">dab3ce6bc074529706a1e5fe1273108c</String>
         <Address name="buildings">0x08f5a760</Address>
         <Address name="constructions">0x08f46938</Address>
-        <Address name="creatures">0x08f5a270</Address>
+        <Address name="creatures">0x08f5a27c</Address>
         <Address name="current_cursor_creature">0x08f357e8</Address>
         <Address name="current_menu_state">0x08f467e0</Address>
         <Address name="cursor_xyz">0x08780354</Address>
@@ -1901,7 +1903,7 @@
         <String name="md5">8f55a6250f2550e28535b79db43d5f1a</String>
         <Address name="buildings">0x08f628c0</Address>
         <Address name="constructions">0x08f4ea98</Address>
-        <Address name="creatures">0x08f623d0</Address>
+        <Address name="creatures">0x08f623dc</Address>
         <Address name="current_cursor_creature">0x08f3d948</Address>
         <Address name="current_menu_state">0x08f4e940</Address>
         <Address name="cursor_xyz">0x0878c340</Address>
@@ -1933,7 +1935,7 @@
         <String name="md5">777e7d674d8908042307994cb75250ff</String>
         <Address name="buildings">0x09009860</Address>
         <Address name="constructions">0x08ff5a38</Address>
-        <Address name="creatures">0x09009370</Address>
+        <Address name="creatures">0x09009380</Address>
         <Address name="current_cursor_creature">0x08fe48e8</Address>
         <Address name="current_menu_state">0x08ff58e0</Address>
         <Address name="cursor_xyz">0x08833324</Address>
@@ -1965,7 +1967,7 @@
         <String name="md5">04c3ad13c657f59ba6fc135e156d721d</String>
         <Address name="buildings">0x09008880</Address>
         <Address name="constructions">0x08ff4a58</Address>
-        <Address name="creatures">0x09008390</Address>
+        <Address name="creatures">0x090083a0</Address>
         <Address name="current_cursor_creature">0x08fe3908</Address>
         <Address name="current_menu_state">0x08ff4900</Address>
         <Address name="cursor_xyz">0x08832328</Address>

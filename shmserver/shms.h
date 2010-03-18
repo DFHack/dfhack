@@ -31,6 +31,12 @@
     #endif
 #endif
 
+enum DFPP_Locking
+{
+    LOCKING_BUSY = 0,
+    LOCKING_LOCKS = 1
+};
+
 enum DFPP_CmdType
 {
     CANCELLATION, // we should jump out of the Act()
@@ -44,6 +50,7 @@ struct DFPP_command
     DFPP_CmdType type:32; // force the enum to 32 bits for compatibility reasons
     std::string name;
     uint32_t nextState;
+    DFPP_Locking locking;
 };
 
 struct DFPP_module
@@ -62,12 +69,13 @@ struct DFPP_module
         modulestate = orig.modulestate;
         version = orig.version;
     }
-    inline void set_command(const unsigned int index, const DFPP_CmdType type, const char * name, void (*_function)(void *) = 0,uint32_t nextState = -1)
+    inline void set_command(const unsigned int index, const DFPP_CmdType type, const char * name, void (*_function)(void *) = 0,uint32_t nextState = -1, DFPP_Locking locking = LOCKING_BUSY)
     {
         commands[index].type = type;
         commands[index].name = name;
         commands[index]._function = _function;
         commands[index].nextState = nextState;
+        commands[index].locking = locking;
     }
     inline void reserve (unsigned int numcommands)
     {

@@ -202,7 +202,7 @@ DFPP_module InitCore(void)
     //core.set_command(CORE_RUN, FUNCTION, "Run!",AcquireSuspendLock,CORE_RUNNING);
     core.set_command(CORE_RUN, CANCELLATION, "Run!",0,CORE_RUNNING);
     core.set_command(CORE_STEP, CANCELLATION, "Suspend on next step",0,CORE_SUSPEND);// set command to CORE_SUSPEND, check next client
-    core.set_command(CORE_SUSPEND, FUNCTION, "Suspend", ReleaseSuspendLock , CORE_SUSPENDED);
+    core.set_command(CORE_SUSPEND, FUNCTION, "Suspend", ReleaseSuspendLock , CORE_SUSPENDED, LOCKING_LOCKS);
     core.set_command(CORE_SUSPENDED, CLIENT_WAIT, "Suspended");
     core.set_command(CORE_ERROR, CANCELLATION, "Error");
     
@@ -298,13 +298,20 @@ void SHM_Act (void)
         }
         full_barrier
         */
+        // set next state BEFORE we act on the command - good for locks
+        if(cmd.locking == LOCKING_LOCKS)
+        {
+            if(cmd.nextState != -1) SHMCMD = cmd.nextState;
+        }
+        
         if(cmd._function)
         {
             cmd._function(mod.modulestate);
         }
         full_barrier
         
-        if(cmd.nextState != -1)
+        // set next state AFTER we act on the command - good for busy waits
+        if(cmd.locking == LOCKING_BUSY)
         {
             /*
             char text [512];
@@ -313,7 +320,7 @@ void SHM_Act (void)
             sprintf(text2, "Server set %d\n",cmd.nextState);
             */
             // FIXME: WHAT HAPPENS WHEN A 'NEXTSTATE' IS FROM A DIFFERENT MODULE THAN 'CORE'? Yeah. It doesn't work.
-            SHMCMD = cmd.nextState;
+            if(cmd.nextState != -1) SHMCMD = cmd.nextState;
             //MessageBox(0,text,text2, MB_OK);
             
             //fflush(stderr); // make sure this finds its way to the terminal!

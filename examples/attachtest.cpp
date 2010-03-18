@@ -26,7 +26,7 @@ int main (void)
         cerr << e.what() << endl;
         return 1;
     }
-
+/*
     // attach/detach test
     cout << "Testing attach/detach"  << endl;
     time(&start);
@@ -62,7 +62,7 @@ int main (void)
     
     time_diff = difftime(end, start);
     cout << "attach tests done in " << time_diff << " seconds." << endl;
-    
+    */
     cout << "Testing suspend/resume"  << endl;
     DF.Attach();
     time(&start);

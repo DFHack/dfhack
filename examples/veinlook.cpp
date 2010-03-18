@@ -275,9 +275,9 @@ main(int argc, char *argv[])
     DFHack::t_designation designations[16][16];
     uint8_t regionoffsets[16];
     */
-    mapblock40d Block;
     map <int16_t, uint32_t> materials;
     materials.clear();
+    mapblock40d blocks[3][3];
     vector<DFHack::t_matgloss> stonetypes;
     vector< vector <uint16_t> > layerassign;
     vector<t_vein> veinVector;
@@ -338,13 +338,16 @@ main(int argc, char *argv[])
     bool dirtybit = false;
     uint32_t blockaddr = 0;
     uint32_t blockaddr2 = 0;
-    // walk the map!
+    
+    // resume so we don't block DF while we wait for input
+    DF.Resume();
+    
     for (;;)
     {
         dig = false;
         dump = false;
         digbit = false;
-        DF.Resume();
+        
         int c = getch();     /* refresh, accept single keystroke of input */
         clrscr();
         /* process the command keystroke */
@@ -392,73 +395,82 @@ main(int argc, char *argv[])
         
         cursorX = min(cursorX, x_max - 1);
         cursorY = min(cursorY, y_max - 1);
-        cursorZ = min(cursorZ, z_max - 1);        
-
+        cursorZ = min(cursorZ, z_max - 1);
+        
+        // clear data before we suspend
+        memset(blocks,0,sizeof(blocks));
+        veinVector.clear();
+        IceVeinVector.clear();
+        dirtybit = 0;
+        
+        // Supend, read/write data
         DF.Suspend();
-        for(int i = -1; i <= 1; i++)
+        for(int i = -1; i <= 1; i++) for(int j = -1; j <= 1; j++)
         {
-            for(int j = -1; j <= 1; j++)
+            mapblock40d * Block = &blocks[i+1][j+1];
+            
+            if(DF.isValidBlock(cursorX+i,cursorY+j,cursorZ))
             {
-                if(DF.isValidBlock(cursorX+i,cursorY+j,cursorZ))
+                DF.ReadBlock40d(cursorX+i,cursorY+j,cursorZ, Block);
+                
+                // extra processing of the block in the middle
+                if(i == 0 && j == 0)
                 {
-                    // read data
-                    DF.ReadBlock40d(cursorX+i,cursorY+j,cursorZ, &Block);
-                    /*
-                    DF.ReadTileTypes(cursorX+i,cursorY+j,cursorZ, (uint16_t *) tiletypes);
-                    DF.ReadDesignations(cursorX+i,cursorY+j,cursorZ, (uint32_t *) designations);
-                    */
+                    // read veins
+                    DF.ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector,IceVeinVector);
                     
-                    for(int x = 0; x < 16; x++)
-                    {
-                        for(int y = 0; y < 16; y++)
-                        {
-                            if(dig)
-                            {
-                                TileClass tc = tileTypeTable[Block.tiletypes[x][y]].c;
-                                TileMaterial tm = tileTypeTable[Block.tiletypes[x][y]].m;
-                                if( tc == WALL && tm == VEIN || tc == TREE_OK || tc == TREE_DEAD)
-                                {
-                                    Block.designaton[x][y].bits.dig = designation_default;
-                                }
-                            }
-                            int color = COLOR_BLACK;
-                            color = pickColor(Block.tiletypes[x][y]);
-                            if(Block.designaton[x][y].bits.hidden)
-                            {
-                                puttile(x+(i+1)*16,y+(j+1)*16,Block.tiletypes[x][y], color);
-                            }
-                            else
-                            {
-                                attron(A_STANDOUT);
-                                puttile(x+(i+1)*16,y+(j+1)*16,Block.tiletypes[x][y], color);
-                                attroff(A_STANDOUT);
-                            }
-                        }
-                    }
+                    // get pointer to block
+                    blockaddr = DF.getBlockPtr(cursorX+i,cursorY+j,cursorZ);
+                    blockaddr2 = Block->origin;
                     
-                    if(i == 0 && j == 0)
+                    // dig all veins and trees
+                    if(dig)
                     {
-                        blockaddr = DF.getBlockPtr(cursorX+i,cursorY+j,cursorZ);
-                        blockaddr2 = Block.origin;
-                        if(dump)
+                        for(int x = 0; x < 16; x++) for(int y = 0; y < 16; y++)
                         {
-                            hexdump(DF,blockaddr,0x1E00,filenum);
-                            filenum++;
+                            TileClass tc = tileTypeTable[Block->tiletypes[x][y]].c;
+                            TileMaterial tm = tileTypeTable[Block->tiletypes[x][y]].m;
+                            if( tc == WALL && tm == VEIN || tc == TREE_OK || tc == TREE_DEAD)
+                            {
+                                Block->designaton[x][y].bits.dig = designation_default;
+                            }
                         }
-                        
-                        if(dig)
-                            DF.WriteDesignations(cursorX+i,cursorY+j,cursorZ, (uint32_t *) Block.designaton);
-                        DF.ReadDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
-                        if(digbit)
-                        {
-                            dirtybit = !dirtybit;
-                            DF.WriteDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
-                        }
-                        veinVector.clear();
-                        IceVeinVector.clear();
-                        DF.ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector,IceVeinVector);
-                        
+                        DF.WriteDesignations(cursorX+i,cursorY+j,cursorZ, (uint32_t *) Block->designaton);
                     }
+                    // do a dump of the block data
+                    if(dump)
+                    {
+                        hexdump(DF,blockaddr,0x1E00,filenum);
+                        filenum++;
+                    }
+                    // read/write dirty bit of the block
+                    DF.ReadDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
+                    if(digbit)
+                    {
+                        dirtybit = !dirtybit;
+                        DF.WriteDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
+                    }
+                }
+            }
+        }
+        // Resume, print stuff to the terminal
+        DF.Resume();
+        for(int i = -1; i <= 1; i++) for(int j = -1; j <= 1; j++)
+        {
+            mapblock40d * Block = &blocks[i+1][j+1];
+            for(int x = 0; x < 16; x++) for(int y = 0; y < 16; y++)
+            {
+                int color = COLOR_BLACK;
+                color = pickColor(Block->tiletypes[x][y]);
+                if(Block->designaton[x][y].bits.hidden)
+                {
+                    puttile(x+(i+1)*16,y+(j+1)*16,Block->tiletypes[x][y], color);
+                }
+                else
+                {
+                    attron(A_STANDOUT);
+                    puttile(x+(i+1)*16,y+(j+1)*16,Block->tiletypes[x][y], color);
+                    attroff(A_STANDOUT);
                 }
             }
         }

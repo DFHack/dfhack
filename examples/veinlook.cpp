@@ -349,6 +349,7 @@ main(int argc, char *argv[])
         digbit = false;
         
         int c = getch();     /* refresh, accept single keystroke of input */
+        flushinp();
         clrscr();
         /* process the command keystroke */
         switch(c)

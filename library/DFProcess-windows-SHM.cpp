@@ -471,19 +471,25 @@ bool SHMProcess::suspend()
     {
         //fprintf(stderr,"%d invokes step\n",d->attachmentIdx);
         // wait for the next window
+        /*
         if(!d->SetAndWait(CORE_STEP))
         {
             throw Error::SHMLockingError("if(!d->SetAndWait(CORE_STEP))");
         }
+        */
+        D_SHMCMD = CORE_STEP;
     }
     else
     {
         //fprintf(stderr,"%d invokes suspend\n",d->attachmentIdx);
         // lock now
+        /*
         if(!d->SetAndWait(CORE_SUSPEND))
         {
             throw Error::SHMLockingError("if(!d->SetAndWait(CORE_SUSPEND))");
         }
+        */
+        D_SHMCMD = CORE_SUSPEND;
     }
     //fprintf(stderr,"waiting for lock\n");
     // we wait for the server to give up our suspend lock (held by default)

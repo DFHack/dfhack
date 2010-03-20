@@ -103,7 +103,8 @@ bool SHMProcess::Private::SetAndWait (uint32_t state)
     SHMCMD = state;
     while (SHMCMD == state)
     {
-        if(cnt == 10000)// check if the other process is still there, don't hammer the kernel too much.
+        // check if the other process is still there
+        if(cnt == 10000)
         {
             if(!AreLocksOk())
             {
@@ -135,7 +136,8 @@ bool SHMProcess::Private::SetAndWait (uint32_t state)
 }
 
 /*
-Yeah. with no way to synchronize things (locks are slow, the OS doesn't give us enough control over scheduling)
+Yeah. with no way to synchronize things (locks are slow, the OS doesn't give us
+enough control over scheduling)
 we end up with this silly thing
 */
 bool SHMProcess::SetAndWait (uint32_t state)

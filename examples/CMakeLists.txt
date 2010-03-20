@@ -59,7 +59,7 @@ TARGET_LINK_LIBRARIES(dfvecc dfhack)
 IF(UNIX)
     # veinlook - look at the map... sort of
     ADD_EXECUTABLE(dfveinlook veinlook.cpp)
-    TARGET_LINK_LIBRARIES(dfveinlook dfhack ncurses)
+    TARGET_LINK_LIBRARIES(dfveinlook dfhack ncursesw)
 ENDIF(UNIX)
 
 # renamer - change the custom names and professions of creatures, sends keys to df directly

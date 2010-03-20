@@ -165,6 +165,11 @@ namespace DFHack
         bool InitReadBuildings ( uint32_t & numbuildings );
         bool ReadBuilding(const int32_t index, t_building & building);
         void FinishReadBuildings();
+        
+        bool InitReadEffects ( uint32_t & numeffects );
+        bool ReadEffect(const int32_t index, t_effect_df40d & effect);
+        bool WriteEffect(const int32_t index, const t_effect_df40d & effect);
+        void FinishReadEffects();
 
         bool InitReadVegetation( uint32_t & numplants );
         bool ReadVegetation(const int32_t index, t_tree_desc & shrubbery);

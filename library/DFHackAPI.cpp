@@ -124,6 +124,7 @@ public:
 
     bool constructionsInited;
     bool buildingsInited;
+    bool effectsInited;
     bool vegetationInited;
     bool creaturesInited;
     bool cursorWindowInited;
@@ -141,6 +142,7 @@ public:
     DfVector *p_cre;
     DfVector *p_cons;
     DfVector *p_bld;
+    DfVector *p_effect;
     DfVector *p_veg;
     DfVector *p_itm;
     DfVector *p_notes;
@@ -174,12 +176,15 @@ API::API (const string path_to_xml)
     d->constructionsInited = false;
     d->creaturesInited = false;
     d->buildingsInited = false;
+    d->effectsInited = false;
     d->vegetationInited = false;
     d->cursorWindowInited = false;
     d->viewSizeInited = false;
     d->itemsInited = false;
     d->notesInited = false;
     d->hotkeyInited = false;
+    d->namesInited = false;
+    d->nameTablesInited = false;
     d->pm = NULL;
     d->shm_start = 0;
     d->maps_module = 0;
@@ -852,6 +857,55 @@ void API::FinishReadBuildings()
         d->p_bld = NULL;
     }
     d->buildingsInited = false;
+}
+
+bool API::InitReadEffects ( uint32_t & numeffects )
+{
+    if(d->effectsInited)
+        FinishReadEffects();
+    int effects = d->offset_descriptor->getAddress ("effects_vector");
+    d->effectsInited = true;
+    d->p_effect = new DfVector (d->p->readVector (effects, 4));
+    numeffects = d->p_effect->getSize();
+    return true;
+}
+
+bool API::ReadEffect(const int32_t index, t_effect_df40d & effect)
+{
+    if(!d->effectsInited)
+        return false;
+    if(index >= d->p_effect->getSize())
+        return false;
+    
+    // read pointer from vector at position
+    uint32_t temp = * (uint32_t *) d->p_effect->at (index);
+    //read effect from memory
+    g_pProcess->read (temp, sizeof (t_effect_df40d), (uint8_t *) &effect);
+    return true;
+}
+
+// use with care!
+bool API::WriteEffect(const int32_t index, const t_effect_df40d & effect)
+{
+    if(!d->effectsInited)
+        return false;
+    if(index >= d->p_effect->getSize())
+        return false;
+    // read pointer from vector at position
+        uint32_t temp = * (uint32_t *) d->p_effect->at (index);
+    // write effect to memory
+    g_pProcess->write(temp,sizeof(t_effect_df40d), (uint8_t *) &effect);
+    return true;
+}
+
+void API::FinishReadEffects()
+{
+    if(d->p_effect)
+    {
+        delete d->p_effect;
+        d->p_effect = NULL;
+    }
+    d->effectsInited = false;
 }
 
 

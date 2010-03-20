@@ -15,12 +15,14 @@ using namespace std;
 #include <DFMemInfo.h>
 using namespace DFHack;
 #include <sstream>
-#include <curses.h>
+#include <cursesw.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <locale.h>
 
 string error;
 API * pDF = 0;
+
 
 static void finish(int sig);
 
@@ -31,6 +33,12 @@ int gotoxy(int x, int y)
 }
 
 int putch(int x, int y, int znak, int color)
+{
+    attron(COLOR_PAIR(color));
+    mvwaddch(stdscr, y, x, znak);
+    attroff(COLOR_PAIR(color));
+}
+int putwch(int x, int y, int znak, int color)
 {
     attron(COLOR_PAIR(color));
     mvwaddch(stdscr, y, x, znak);
@@ -71,6 +79,11 @@ int puttile(int x, int y, int tiletype, int color)
             znak = ' ';
             break;
         case WALL:
+            attron(COLOR_PAIR(color));
+            mvwaddwstr(stdscr, y, x, L"\u2593");
+            attroff(COLOR_PAIR(color));
+            //znak = ;
+            return 0;
         case FORTIFICATION:
             znak = '#';
             break;
@@ -235,7 +248,7 @@ main(int argc, char *argv[])
     /* initialize your non-curses data structures here */
 
     signal(SIGINT, finish);      /* arrange interrupts to terminate */
-
+    setlocale(LC_ALL,"");
     initscr();      /* initialize the curses library */
     keypad(stdscr, TRUE);  /* enable keyboard mapping */
     nonl();         /* tell curses not to do NL->CR/NL on output */
@@ -279,6 +292,7 @@ main(int argc, char *argv[])
     materials.clear();
     mapblock40d blocks[3][3];
     vector<DFHack::t_matgloss> stonetypes;
+    vector<DFHack::t_effect_df40d> effects;
     vector< vector <uint16_t> > layerassign;
     vector<t_vein> veinVector;
     vector<t_frozenliquidvein> IceVeinVector;
@@ -402,13 +416,25 @@ main(int argc, char *argv[])
         memset(blocks,0,sizeof(blocks));
         veinVector.clear();
         IceVeinVector.clear();
+        effects.clear();
         dirtybit = 0;
         
         // Supend, read/write data
         DF.Suspend();
+        uint32_t effectnum;
+        if(DF.InitReadEffects(effectnum))
+        {
+            for(uint32_t i = 0; i < effectnum;i++)
+            {
+                t_effect_df40d effect;
+                DF.ReadEffect(i,effect);
+                effects.push_back(effect);
+            }
+        }
         for(int i = -1; i <= 1; i++) for(int j = -1; j <= 1; j++)
         {
             mapblock40d * Block = &blocks[i+1][j+1];
+            
             
             if(DF.isValidBlock(cursorX+i,cursorY+j,cursorZ))
             {
@@ -463,15 +489,33 @@ main(int argc, char *argv[])
             {
                 int color = COLOR_BLACK;
                 color = pickColor(Block->tiletypes[x][y]);
-                if(Block->designaton[x][y].bits.hidden)
-                {
+                if(!Block->designaton[x][y].bits.hidden)
+                /*{
                     puttile(x+(i+1)*16,y+(j+1)*16,Block->tiletypes[x][y], color);
                 }
-                else
+                else*/
                 {
                     attron(A_STANDOUT);
                     puttile(x+(i+1)*16,y+(j+1)*16,Block->tiletypes[x][y], color);
                     attroff(A_STANDOUT);
+                }
+            }
+            // print effects for the center tile
+            
+            if(i == 0 && j == 0)
+            {
+                for(uint zz = 0; zz < effects.size();zz++)
+                {
+                    if(effects[zz].z == cursorZ && !effects[zz].isHidden)
+                    {
+                        // block coords to tile coords
+                        uint16_t x = effects[zz].x - (cursorX * 16);
+                        uint16_t y = effects[zz].y - (cursorY * 16);
+                        if(x < 16 && y < 16)
+                        {
+                            putch(x + 16,y + 16,'@',COLOR_WHITE);
+                        }
+                    }
                 }
             }
         }
@@ -500,6 +544,10 @@ main(int argc, char *argv[])
                         //iterate through the bits
                         for (uint32_t k = 0; k< 16;k++)
                         {
+                            if(tileTypeTable[blocks[1][1].tiletypes[k][j]].m != VEIN)
+                                continue;
+                            if(blocks[1][1].designaton[k][j].bits.hidden)
+                                continue;
                             // and the bit array with a one-bit mask, check if the bit is set
                             bool set = !!(((1 << k) & veinVector[realvein].assignment[j]) >> k);
                             if(set)

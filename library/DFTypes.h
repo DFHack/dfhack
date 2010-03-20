@@ -31,6 +31,28 @@ distribution.
 namespace DFHack
 {
 
+template <int SIZE>
+struct junk_fill
+{
+    uint8_t data[SIZE];
+    /*
+    void Dump()
+    {
+        cout<<hex;
+        for (int i=0;i<SIZE;i++)
+            cout<<setw(2)<<i<<" ";
+        cout<<endl;
+        for (int i=0;i<SIZE;i++)
+        {
+            cout<<setw(2)<<(int)data[i]<<" ";
+            if ((i%32)==32-1)
+                cout<<endl;
+        }
+        cout<<endl;
+    }
+    */
+};
+    
 struct t_matgloss
 {
     char id[128]; //the id in the raws
@@ -73,6 +95,37 @@ struct t_matglossPair
 {
     int16_t type;
     int16_t index;
+};
+
+// DF effects, by darius from the bay12 forum
+enum EFFECT_TYPE
+{
+    EFF_MIASMA=0,
+    EFF_WATER,
+    EFF_WATER2,
+    EFF_BLOOD,
+    EFF_DUST,
+    EFF_MAGMA,
+    EFF_SMOKE,
+    EFF_DRAGONFIRE,
+    EFF_FIRE,
+    EFF_WEBING,
+    EFF_BOILING, // uses matgloss
+    EFF_OCEANWAVE
+};
+struct t_effect_df40d //size 40
+{
+    uint16_t type;
+    t_matglossPair material;
+    int16_t lifetime;
+    uint16_t x;
+    uint16_t y;
+    uint16_t z; //14
+    int16_t x_direction;
+    int16_t y_direction;
+    junk_fill <12> unk4;
+    uint8_t canCreateNew;//??
+    uint8_t isHidden;
 };
 
 // raw

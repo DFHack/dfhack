@@ -1895,9 +1895,11 @@
     </Entry>
     <Entry version="v0.28.181.40d15" os="linux" id="40d15lin" base="40d14lin" rebase="0x0">
         <String name="md5">4f55a1dcc326786271f221de23c425b5</String>
+        
     </Entry>
     <Entry version="v0.28.181.40d16" os="linux" id="40d16lin" base="40d15lin" rebase="0x0">
         <String name="md5">022b933926e08da49c6df8649295f2b7</String>
+        <Address name="effects_vector">0x0893F2D0</Address>
     </Entry>
     <Entry version="v0.28.181.40d17" os="linux" id="40d17lin" base="40d16lin">
         <String name="md5">8f55a6250f2550e28535b79db43d5f1a</String>
@@ -1930,6 +1932,7 @@
         <Address name="x_count">0x08fa2d50</Address>
         <Address name="y_count">0x08fa2d54</Address>
         <Address name="z_count">0x08fa2d58</Address>
+        <Address name="effects_vector">0x08947438</Address>
     </Entry>
     <Entry version="v0.28.181.40d18" os="linux" id="40d18lin" base="40d17lin">
         <String name="md5">777e7d674d8908042307994cb75250ff</String>
@@ -1962,6 +1965,7 @@
         <Address name="x_count">0x09049cf0</Address>
         <Address name="y_count">0x09049cf4</Address>
         <Address name="z_count">0x09049cf8</Address>
+        <Address name="effects_vector">0x089EE3D8</Address>
     </Entry>
     <Entry version="v0.28.181.40d19" os="linux" id="40d19lin" base="40d18lin">
         <String name="md5">04c3ad13c657f59ba6fc135e156d721d</String>
@@ -1994,6 +1998,7 @@
         <Address name="x_count">0x09048d10</Address>
         <Address name="y_count">0x09048d14</Address>
         <Address name="z_count">0x09048d18</Address>
+        <Address name="effects_vector">0x089ED3F8</Address>
     </Entry>
 </MemoryDescriptors>
 <!-- Windows logo by M$, spiderweb by jgs -->

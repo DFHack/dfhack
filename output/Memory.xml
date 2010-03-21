@@ -1507,6 +1507,7 @@
         <Address name="x_count">0x016367fc</Address>
         <Address name="y_count">0x01636800</Address>
         <Address name="z_count">0x01636804</Address>
+        <Address name="effects_vector">0x0177C978</Address>
     </Entry>
     
     <Entry version="v0.28.181.40d18" os="windows" base="40d17win" id="40d18win" rebase="0x9c5f8">
@@ -1554,6 +1555,7 @@
         <Address name="x_count">0x01555e34</Address>
         <Address name="y_count">0x01555e38</Address>
         <Address name="z_count">0x01555e3c</Address>
+        <Address name="effects_vector">0x0169bfb0</Address>
     </Entry>
     <Entry version="v0.28.181.40d19_2" os="windows" base="40d19win" id="40d19_2win" rebase="0x1000">
         <HexValue name="pe_timestamp">0x4B918BB9</HexValue>

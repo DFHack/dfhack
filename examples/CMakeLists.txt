@@ -56,6 +56,11 @@ TARGET_LINK_LIBRARIES(dfsettlementdump dfhack)
 ADD_EXECUTABLE(dfvecc veccheck.cpp)
 TARGET_LINK_LIBRARIES(dfvecc dfhack)
 
+# catsplosion - Makes every cat pregnant, and almost due...
+# Author: Zhentar
+ADD_EXECUTABLE(dfcatsplosion catsplosion.cpp)
+TARGET_LINK_LIBRARIES(dfcatsplosion dfhack)
+
 IF(UNIX)
     # veinlook - look at the map... sort of
     ADD_EXECUTABLE(dfveinlook veinlook.cpp)

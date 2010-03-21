@@ -1221,9 +1221,13 @@
         <Offset name="creature_id">0x10C</Offset>
         <Offset name="creature_squad_name">0x198</Offset>
         <Offset name="creature_mood">0x238</Offset>
+        <Offset name="creature_pregnancy">0x23C</Offset>
         <Offset name="creature_squad_leader_id">0x268</Offset>
         <Offset name="creature_money">0x2F8</Offset>
         <Offset name="creature_current_job">0x314</Offset>
+        <Offset name="creature_blood_max">0x3C0</Offset>
+        <Offset name="creature_blood_current">0x3C4</Offset>
+        <Offset name="creature_bleed">0x3C8</Offset>
         <Offset name="creature_artifact_name">0x484</Offset>
         <Offset name="creature_strength">0x4F0</Offset>
         <Offset name="creature_agility">0x4F4</Offset>
@@ -1233,8 +1237,7 @@
         <Offset name="creature_labors">0x544</Offset>
         <Offset name="creature_happiness">0x610</Offset>
         <Offset name="creature_traits">0x700</Offset>
-      
-        <!-- tree and shrub offsets -->
+      <!-- tree and shrub offsets -->
         <Offset name="tree_desc_offset">0x70</Offset>
      
         <!-- map block offsets -->

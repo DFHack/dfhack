@@ -97,6 +97,10 @@ public:
     uint32_t creature_likes_offset;
 	uint32_t creature_artifact_name_offset;
 	uint32_t creature_mood_offset;
+	uint32_t creature_pregnancy_offset;
+	uint32_t creature_blood_max_offset;
+	uint32_t creature_blood_current_offset;
+	uint32_t creature_bleed_offset;
 
     uint32_t item_material_offset;
 
@@ -1030,7 +1034,10 @@ bool API::InitReadCreatures( uint32_t &numcreatures )
         d->creature_likes_offset = minfo->getOffset("creature_likes");
 		d->creature_artifact_name_offset = minfo->getOffset("creature_artifact_name");
 		d->creature_mood_offset = minfo->getOffset("creature_mood");
-
+		d->creature_pregnancy_offset = minfo->getOffset("creature_pregnancy");
+		d->creature_blood_max_offset = minfo->getOffset("creature_blood_max");
+		d->creature_blood_current_offset = minfo->getOffset("creature_blood_current");
+		d->creature_bleed_offset = minfo->getOffset("creature_bleed");
         d->p_cre = new DfVector (d->p->readVector (creatures, 4));
         //InitReadNameTables();
         d->creaturesInited = true;
@@ -1308,6 +1315,13 @@ bool API::ReadCreature (const int32_t index, t_creature & furball)
     g_pProcess->readDWord (temp + d->creature_money_offset, furball.money);
     furball.squad_leader_id = (int32_t) g_pProcess->readDWord (temp + d->creature_squad_leader_id_offset);
     g_pProcess->readByte (temp + d->creature_sex_offset, furball.sex);
+
+	g_pProcess->readDWord(temp+d->creature_pregnancy_offset, furball.pregnancy_timer);
+	furball.blood_max = (int32_t) g_pProcess->readDWord(temp+d->creature_blood_max_offset);
+	furball.blood_current = (int32_t) g_pProcess->readDWord(temp+d->creature_blood_current_offset);
+	g_pProcess->readDWord(temp+d->creature_bleed_offset, furball.bleed_rate);
+
+
     return true;
 }
 

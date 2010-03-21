@@ -1473,6 +1473,7 @@
     <Entry version="v0.28.181.40d16" os="windows" id="40d16win" base="40d15win" rebase="0x0">
         <HexValue name="pe_timestamp">0x4a9b1a72</HexValue>
         <String name="md5">59ab29021aca9f3c66b1ab102fb3ceea</String>
+        <Address name="effects_vector">0x01747F20</Address>
     </Entry>
     <Entry version="v0.28.181.40d17" os="windows" id="40d17win" base="40d16win">
         <HexValue name="pe_timestamp">0x4b6b7879</HexValue>

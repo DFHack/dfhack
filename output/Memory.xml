@@ -1148,6 +1148,7 @@
         <Address name="current_cursor_creature">0x00D870F4</Address>
         <Address name="current_menu_state">0x01393260</Address>
         <Address name="cursor_xyz">0x009fc294</Address>
+        <Address name="effects_vector">0x1583234</Address>
         <Address name="hotkey_start">0x01392fb8</Address>
         <Address name="items">0x0156f980</Address>
         <Address name="language_vector">0x015c6ed0</Address>
@@ -1182,6 +1183,7 @@
         <Address name="current_cursor_creature">0x00cd4c3c</Address>
         <Address name="current_menu_state">0x0165b5a8</Address>
         <Address name="cursor_xyz">0x0094b27c</Address>
+        <Address name="effects_vector">0x165b410</Address>
         <Address name="hotkey_start">0x012e101c</Address>
         <Address name="items">0x014d14f8</Address>
         <Address name="language_vector">0x01517678</Address>
@@ -1354,6 +1356,7 @@
         <Address name="current_cursor_creature">0x00d20ed8</Address>
         <Address name="current_menu_state">0x016a54f8</Address>
         <Address name="cursor_xyz">0x009652a4</Address>
+        <Address name="effects_vector">0x16a5360</Address>
         <Address name="hotkey_start">0x0132e574</Address>
         <Address name="items">0x0151b448</Address>
         <Address name="language_vector">0x015615c8</Address>
@@ -1391,6 +1394,7 @@
         <Address name="current_cursor_creature">0x00ddaed8</Address>
         <Address name="current_menu_state">0x0095f410</Address>
         <Address name="cursor_xyz">0x0095f2b4</Address>
+        <Address name="effects_vector">0x1740e60</Address>
         <Address name="hotkey_start">0x013e8574</Address>
         <Address name="items">0x015b6e98</Address>
         <Address name="language_vector">0x015fd04c</Address>
@@ -1446,6 +1450,7 @@
         <Address name="current_cursor_creature">0x00de1f54</Address>
         <Address name="current_menu_state">0x00966430</Address>
         <Address name="cursor_xyz">0x009662b4</Address>
+        <Address name="effects_vector">0x1747f20</Address>
         <Address name="hotkey_start">0x013ef62c</Address>
         <Address name="items">0x015bdf50</Address>
         <Address name="language_vector">0x01604104</Address>
@@ -1473,7 +1478,6 @@
     <Entry version="v0.28.181.40d16" os="windows" id="40d16win" base="40d15win" rebase="0x0">
         <HexValue name="pe_timestamp">0x4a9b1a72</HexValue>
         <String name="md5">59ab29021aca9f3c66b1ab102fb3ceea</String>
-        <Address name="effects_vector">0x01747F20</Address>
     </Entry>
     <Entry version="v0.28.181.40d17" os="windows" id="40d17win" base="40d16win">
         <HexValue name="pe_timestamp">0x4b6b7879</HexValue>
@@ -1484,6 +1488,7 @@
         <Address name="current_cursor_creature">0x00e16924</Address>
         <Address name="current_menu_state">0x0099ae08</Address>
         <Address name="cursor_xyz">0x0099ac88</Address>
+        <Address name="effects_vector">0x177c978</Address>
         <Address name="hotkey_start">0x014240dc</Address>
         <Address name="items">0x015f29a8</Address>
         <Address name="language_vector">0x01638b5c</Address>
@@ -1507,7 +1512,7 @@
         <Address name="x_count">0x016367fc</Address>
         <Address name="y_count">0x01636800</Address>
         <Address name="z_count">0x01636804</Address>
-        <Address name="effects_vector">0x0177C978</Address>
+        <Address name="effects_vector">0x0177c978</Address>
     </Entry>
     
     <Entry version="v0.28.181.40d18" os="windows" base="40d17win" id="40d18win" rebase="0x9c5f8">
@@ -1532,6 +1537,7 @@
         <Address name="current_cursor_creature">0x00d35b68</Address>
         <Address name="current_menu_state">0x016ac1a0</Address>
         <Address name="cursor_xyz">0x0097a2b8</Address>
+        <Address name="effects_vector">0x169bfb0</Address>
         <Address name="hotkey_start">0x01343714</Address>
         <Address name="items">0x01511fe0</Address>
         <Address name="language_vector">0x01558194</Address>
@@ -1555,7 +1561,6 @@
         <Address name="x_count">0x01555e34</Address>
         <Address name="y_count">0x01555e38</Address>
         <Address name="z_count">0x01555e3c</Address>
-        <Address name="effects_vector">0x0169bfb0</Address>
     </Entry>
     <Entry version="v0.28.181.40d19_2" os="windows" base="40d19win" id="40d19_2win" rebase="0x1000">
         <HexValue name="pe_timestamp">0x4B918BB9</HexValue>

@@ -1110,9 +1110,10 @@ bool API::ReadNote (const int32_t index, t_note & note)
 }
 bool API::InitReadSettlements( uint32_t & numsettlements )
 {
+    if(!d->InitReadNames()) return false;
     try
     {
-        d->InitReadNames();
+        
         memory_info * minfo = d->offset_descriptor;
         int allSettlements = minfo->getAddress ("settlements");
         int currentSettlement = minfo->getAddress("settlement_current");

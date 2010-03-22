@@ -1941,11 +1941,11 @@
         <String name="md5">777e7d674d8908042307994cb75250ff</String>
         <Address name="buildings">0x09009860</Address>
         <Address name="constructions">0x08ff5a38</Address>
-        <Address name="creatures">0x09009380</Address>
+        <Address name="creatures">0x0900937C</Address>
         <Address name="current_cursor_creature">0x08fe48e8</Address>
         <Address name="current_menu_state">0x08ff58e0</Address>
         <Address name="cursor_xyz">0x08833324</Address>
-        <Address name="hotkey_start">0x08f4e7ec</Address>
+        <Address name="hotkey_start">0x08FF578C</Address>
         <Address name="items">0x090093ec</Address>
         <Address name="language_vector">0x0904bcac</Address>
         <Address name="map_data">0x09049cdc</Address>
@@ -1974,7 +1974,7 @@
         <String name="md5">04c3ad13c657f59ba6fc135e156d721d</String>
         <Address name="buildings">0x09008880</Address>
         <Address name="constructions">0x08ff4a58</Address>
-        <Address name="creatures">0x090083a0</Address>
+        <Address name="creatures">0x0900839C</Address>
         <Address name="current_cursor_creature">0x08fe3908</Address>
         <Address name="current_menu_state">0x08ff4900</Address>
         <Address name="cursor_xyz">0x08832328</Address>

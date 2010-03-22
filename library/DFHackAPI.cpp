@@ -150,12 +150,18 @@ public:
     DfVector *p_current_settlement;
 };
 
-// FIXME: flesh it out
 bool API::Private::InitReadNames()
 {
-    name_firstname_offset = offset_descriptor->getOffset("name_firstname");
-    name_nickname_offset = offset_descriptor->getOffset("name_nickname");
-    name_words_offset = offset_descriptor->getOffset("name_words");
+    try
+    {
+        name_firstname_offset = offset_descriptor->getOffset("name_firstname");
+        name_nickname_offset = offset_descriptor->getOffset("name_nickname");
+        name_words_offset = offset_descriptor->getOffset("name_words");
+    }
+    catch(Error::MissingMemoryDefinition)
+    {
+        return false;
+    }
     return true;
 }
 
@@ -810,7 +816,15 @@ bool API::ReadGeology (vector < vector <uint16_t> >& assign)
 // returns number of buildings, expects v_buildingtypes that will later map t_building.type to its name
 bool API::InitReadBuildings ( uint32_t& numbuildings )
 {
-    int buildings = d->offset_descriptor->getAddress ("buildings");
+    int buildings = 0;
+    try
+    {
+        buildings = d->offset_descriptor->getAddress ("buildings");
+    }
+    catch(Error::MissingMemoryDefinition)
+    {
+        return false;
+    }
     d->buildingsInited = true;
     d->p_bld = new DfVector (d->p->readVector (buildings, 4));
     numbuildings = d->p_bld->getSize();
@@ -863,7 +877,15 @@ bool API::InitReadEffects ( uint32_t & numeffects )
 {
     if(d->effectsInited)
         FinishReadEffects();
-    int effects = d->offset_descriptor->getAddress ("effects_vector");
+    int effects = 0;
+    try
+    {
+        effects = d->offset_descriptor->getAddress ("effects_vector");
+    }
+    catch(Error::MissingMemoryDefinition)
+    {
+        return false;
+    }
     d->effectsInited = true;
     d->p_effect = new DfVector (d->p->readVector (effects, 4));
     numeffects = d->p_effect->getSize();
@@ -913,7 +935,15 @@ void API::FinishReadEffects()
 // returns number of constructions, prepares a vector, returns total number of constructions
 bool API::InitReadConstructions(uint32_t & numconstructions)
 {
-    int constructions = d->offset_descriptor->getAddress ("constructions");
+    int constructions = 0;
+    try
+    {
+        constructions = d->offset_descriptor->getAddress ("constructions");
+    }
+    catch(Error::MissingMemoryDefinition)
+    {
+        return false;
+    }
     d->p_cons = new DfVector (d->p->readVector (constructions, 4));
     d->constructionsInited = true;
     numconstructions = d->p_cons->getSize();
@@ -1001,10 +1031,10 @@ void API::FinishReadVegetation()
 
 bool API::InitReadCreatures( uint32_t &numcreatures )
 {
+    if(!d->InitReadNames()) return false;
     try
     {
         memory_info * minfo = d->offset_descriptor;
-        d->InitReadNames();
         int creatures = d->offset_descriptor->getAddress ("creatures");
         d->creature_pos_offset = minfo->getOffset ("creature_position");
         d->creature_type_offset = minfo->getOffset ("creature_race");
@@ -1028,11 +1058,10 @@ bool API::InitReadCreatures( uint32_t &numcreatures )
         d->creature_happiness_offset = minfo->getOffset ("creature_happiness");
         d->creature_traits_offset = minfo->getOffset ("creature_traits");
         d->creature_likes_offset = minfo->getOffset("creature_likes");
-		d->creature_artifact_name_offset = minfo->getOffset("creature_artifact_name");
-		d->creature_mood_offset = minfo->getOffset("creature_mood");
+        d->creature_artifact_name_offset = minfo->getOffset("creature_artifact_name");
+        d->creature_mood_offset = minfo->getOffset("creature_mood");
 
         d->p_cre = new DfVector (d->p->readVector (creatures, 4));
-        //InitReadNameTables();
         d->creaturesInited = true;
         numcreatures =  d->p_cre->getSize();
         return true;

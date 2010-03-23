@@ -15,7 +15,7 @@ using namespace std;
 #include <DFMemInfo.h>
 using namespace DFHack;
 #include <sstream>
-#include <cursesw.h>
+#include "fake-curses.h"
 #include <stdlib.h>
 #include <signal.h>
 #include <locale.h>

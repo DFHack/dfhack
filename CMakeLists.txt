@@ -1,6 +1,7 @@
 # main project file. use it from a build sub-folder, see COMPILE for details
 PROJECT (dfhack)
 cmake_minimum_required(VERSION 2.6)
+SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
 
 # disable warning, autosearch
 if(COMMAND cmake_policy)

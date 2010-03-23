@@ -58,9 +58,9 @@ TARGET_LINK_LIBRARIES(dfvecc dfhack)
 
 IF(UNIX)
     SET(CURSES_NEED_WIDE "YES")
-    SET(CURSES_USE_NCURSES "YES")
-    
+    SET(CURSES_NEED_NCURSES "YES")
     find_package(Curses)
+    
     IF(CURSES_FOUND)
         if(CURSES_HAVE_NCURSESW_NCURSES_H)
             SET(NCURSES_H "ncursesw/ncurses.h")
@@ -70,7 +70,7 @@ IF(UNIX)
             SET(NCURSES_H "ncursesw.h")
         elseif(CURSES_HAVE_CURSESW_H)
             SET(NCURSES_H "cursesw.h")
-        endif(CURSES_HAVE_NCURSESW_H)
+        endif(CURSES_HAVE_NCURSESW_NCURSES_H)
         IF(NCURSES_H)
             # OPTION( VARIABLE "Description" Initial state)
             #OPTION( WITH_FOO "Enable FOO support" ON )
@@ -82,7 +82,13 @@ IF(UNIX)
             ADD_EXECUTABLE(dfveinlook veinlook.cpp)
             INCLUDE_DIRECTORIES(${CURSES_INCLUDE_DIR})
             TARGET_LINK_LIBRARIES(dfveinlook dfhack ${CURSES_LIBRARIES})
+            install(TARGETS
+            dfveinlook
+            RUNTIME DESTINATION bin
+            )
         ENDIF(NCURSES_H)
+    ELSE(CURSES_FOUND)
+        MESSAGE(STATUS "Wide-character ncurses library not found - vainlook can't be built")
     ENDIF(CURSES_FOUND)
 ENDIF(UNIX)
 
@@ -101,7 +107,6 @@ dfmaterialtest
 dfposition
 dfrenamer
 dfsuspend
-dfveinlook
 RUNTIME DESTINATION bin
 )
 ENDIF(UNIX)

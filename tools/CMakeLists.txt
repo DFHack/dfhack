@@ -35,6 +35,9 @@ TARGET_LINK_LIBRARIES(dfdigger dfhack)
 ADD_EXECUTABLE(dfitemdesignator itemdesignator.cpp)
 TARGET_LINK_LIBRARIES(dfitemdesignator dfhack)
 
+# a magma creation toold
+ADD_EXECUTABLE(dfmagma_create magma_create.cpp)
+TARGET_LINK_LIBRARIES(dfmagma_create dfhack)
 
 IF(UNIX)
 install(TARGETS

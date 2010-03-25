@@ -21,12 +21,11 @@ int main (void)
         cerr << "DF not found" << endl;
         return 1;
     }
-    DF.InitMap();
 
     if (DF.InitViewAndCursor())
     {
         if(DF.getCursorCoords(x,y,z))
-            {
+        {
             if(DF.isValidBlock(x,y,z))
             {
                 DF.ReadDesignations((x/16),(y/16),(z/16), &designations);
@@ -36,7 +35,11 @@ int main (void)
                 DF.WriteDesignations(x,y,z, &designations);
                 cout << "Success" << endl;
             }
+            else
+                cout << "Failure 1" << endl;
         }
+        else
+            cout << "Failure 1" << endl;
     }
     else
         cout << "Process Failed" << endl;

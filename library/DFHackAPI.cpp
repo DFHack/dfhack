@@ -352,7 +352,7 @@ bool API::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer)
             g_pProcess->read (addr + d->biome_stuffs, sizeof (buffer->biome_indices), (uint8_t *) buffer->biome_indices);
             buffer->origin = addr;
             uint32_t addr_of_struct = g_pProcess->readDWord(addr);
-            buffer->dirty_dword = g_pProcess->readDWord(addr_of_struct);
+            buffer->blockflags.whole = g_pProcess->readDWord(addr_of_struct);
             return true;
         }
         return false;
@@ -399,8 +399,30 @@ bool API::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
     return false;
 }
 
+/// read/write the block flags
+bool API::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags &blockflags)
+{
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if(addr)
+    {
+        uint32_t addr_of_struct = g_pProcess->readDWord(addr);
+        blockflags.whole = g_pProcess->readDWord(addr_of_struct);
+        return true;
+    }
+    return false;
+}
+bool API::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags blockflags)
+{
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
+    {
+        uint32_t addr_of_struct = g_pProcess->readDWord(addr);
+        g_pProcess->writeDWord (addr_of_struct, blockflags.whole);
+        return true;
+    }
+    return false;
+}
 
-// 256 * sizeof(uint32_t)
 bool API::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];

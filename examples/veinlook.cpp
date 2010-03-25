@@ -100,8 +100,15 @@ int puttile(int x, int y, int tiletype, int color)
             znak = '=';
             break;
         case RAMP:
-            znak = '^';
-            break;
+            attron(COLOR_PAIR(color));
+            mvwaddwstr(stdscr, y, x, L"\u25B2");
+            attroff(COLOR_PAIR(color));
+            return 0;
+        case RAMP_TOP:
+            attron(COLOR_PAIR(color));
+            mvwaddwstr(stdscr, y, x, L"\u25BC");
+            attroff(COLOR_PAIR(color));
+            return 0;
         case FLOOR:
             znak = '.';
             break;

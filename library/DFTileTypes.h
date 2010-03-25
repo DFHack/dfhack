@@ -42,6 +42,7 @@ namespace DFHack
         STAIR_UPDOWN,
         
         RAMP,
+        RAMP_TOP,
         
         FLOOR,
         TREE_DEAD,
@@ -95,7 +96,7 @@ namespace DFHack
     {
         // 0
         {"void",EMPTY, AIR, VAR_1},
-        {"ramp top",EMPTY, AIR, VAR_1},
+        {"ramp top",RAMP_TOP, AIR, VAR_1},
         {"pool",FLOOR, SOIL, VAR_1},
         {0, EMPTY, AIR, VAR_1},
         {0, EMPTY, AIR, VAR_1},

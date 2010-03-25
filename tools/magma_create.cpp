@@ -30,11 +30,20 @@ int main (void)
             cout << "cursor coords: " << x << "/" << y << "/" << z << endl;
             if(DF.isValidBlock(x/16,y/16,z))
             {
-                DF.ReadDesignations((x/16),(y/16),(z/16), &designations);
-                
+                // place the magma
+                DF.ReadDesignations((x/16),(y/16),z, &designations);
                 designations[x%16][y%16].bits.flow_size = 7;
                 designations[x%16][y%16].bits.liquid_type = DFHack::liquid_magma;
                 DF.WriteDesignations(x/16,y/16,z, &designations);
+                
+                // make the magma flow :)
+                DFHack::t_blockflags bflags;
+                DF.ReadBlockFlags((x/16),(y/16),z,bflags);
+                // 0x00000001 = job-designated
+                // 0x0000000C = run flows? - both bit 3 and 4 required for making magma placed on a glacier flow
+                bflags.bits.liquid_1 = true;
+                bflags.bits.liquid_2 = true;
+                DF.WriteBlockFlags((x/16),(y/16),z,bflags);
                 cout << "Success" << endl;
             }
             else

@@ -161,6 +161,10 @@ namespace DFHack
         bool ReadDirtyBit(uint32_t blockx, uint32_t blocky, uint32_t blockz, bool &dirtybit);
         bool WriteDirtyBit(uint32_t blockx, uint32_t blocky, uint32_t blockz, bool dirtybit);
         
+        /// read/write the block flags
+        bool ReadBlockFlags(uint32_t blockx, uint32_t blocky, uint32_t blockz, t_blockflags &blockflags);
+        bool WriteBlockFlags(uint32_t blockx, uint32_t blocky, uint32_t blockz, t_blockflags blockflags);
+        
         /// read region offsets of a block - used for determining layer stone matgloss
         bool ReadRegionOffsets(uint32_t blockx, uint32_t blocky, uint32_t blockz, biome_indices40d *buffer);
         

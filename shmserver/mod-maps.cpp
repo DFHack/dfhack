@@ -64,7 +64,7 @@ inline void ReadBlockByAddress (void * data)
         memcpy(&(SHMDATA(mapblock40d)->designation), ((char *) block) + offsets.designation_offset, sizeof(SHMDATA(mapblock40d)->designation));
         memcpy(&(SHMDATA(mapblock40d)->occupancy), ((char *) block) + offsets.occupancy_offset, sizeof(SHMDATA(mapblock40d)->occupancy));
         memcpy(&(SHMDATA(mapblock40d)->biome_indices), ((char *) block) + offsets.biome_stuffs, sizeof(SHMDATA(mapblock40d)->biome_indices));
-        SHMDATA(mapblock40d)->dirty_dword = *block->ptr_to_dirty;
+        SHMDATA(mapblock40d)->blockflags.whole = *block->ptr_to_dirty;
         
         SHMDATA(mapblock40d)->origin = (uint32_t)block;
         SHMHDR->error = false;

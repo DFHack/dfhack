@@ -28,13 +28,13 @@ int main (void)
         if(DF.getCursorCoords(x,y,z))
         {
             cout << "cursor coords: " << x << "/" << y << "/" << z << endl;
-            if(DF.isValidBlock(x,y,z))
+            if(DF.isValidBlock(x/16,y/16,z))
             {
                 DF.ReadDesignations((x/16),(y/16),(z/16), &designations);
                 
                 designations[x%16][y%16].bits.flow_size = 7;
                 designations[x%16][y%16].bits.liquid_type = DFHack::liquid_magma;
-                DF.WriteDesignations(x,y,z, &designations);
+                DF.WriteDesignations(x/16,y/16,z, &designations);
                 cout << "Success" << endl;
             }
             else

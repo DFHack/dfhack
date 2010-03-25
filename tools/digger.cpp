@@ -136,8 +136,8 @@ int dig(DFHack::API& DF,
         return 0; // max limit of 0, nothing to do
 
     uint32_t x_max,y_max,z_max;
-    DFHack::t_designation designations[16][16];
-    uint16_t tiles[16][16];
+    DFHack::designations40d designations;
+    DFHack::tiletypes40d tiles;
     DF.getSize(x_max,y_max,z_max);
 
     // every tile found, will later be sorted by distance to source
@@ -156,8 +156,8 @@ int dig(DFHack::API& DF,
                 if(DF.isValidBlock(x,y,z))
                 {
                     // read block designations and tiletype
-                    DF.ReadDesignations(x,y,z, (uint32_t *) designations);
-                    DF.ReadTileTypes(x,y,z, (uint16_t *) tiles);
+                    DF.ReadDesignations(x,y,z, &designations);
+                    DF.ReadTileTypes(x,y,z, &tiles);
 
                     // search all tiles for dig targets:
                     // visible, not yet marked for dig and matching tile type
@@ -210,9 +210,9 @@ int dig(DFHack::API& DF,
         }
 
         // TODO this could probably be made much better, theres a big chance the trees are on the same grid
-        DF.ReadDesignations((*i).grid_x, (*i).grid_y, (*i).z, (uint32_t *) designations);
+        DF.ReadDesignations((*i).grid_x, (*i).grid_y, (*i).z, &designations);
         designations[(*i).local_x][(*i).local_y].bits.dig = DFHack::designation_default;
-        DF.WriteDesignations((*i).grid_x, (*i).grid_y, (*i).z, (uint32_t *) designations);
+        DF.WriteDesignations((*i).grid_x, (*i).grid_y, (*i).z, &designations);
 
         // Mark as dirty so the jobs are properly picked up by the dwarves
         DF.WriteDirtyBit((*i).grid_x, (*i).grid_y, (*i).z, true);

@@ -348,7 +348,7 @@ bool API::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer)
         {
             g_pProcess->read (addr + d->tile_type_offset, sizeof (buffer->tiletypes), (uint8_t *) buffer->tiletypes);
             g_pProcess->read (addr + d->occupancy_offset, sizeof (buffer->occupancy), (uint8_t *) buffer->occupancy);
-            g_pProcess->read (addr + d->designation_offset, sizeof (buffer->designaton), (uint8_t *) buffer->designaton);
+            g_pProcess->read (addr + d->designation_offset, sizeof (buffer->designation), (uint8_t *) buffer->designation);
             g_pProcess->read (addr + d->biome_stuffs, sizeof (buffer->biome_indices), (uint8_t *) buffer->biome_indices);
             buffer->origin = addr;
             uint32_t addr_of_struct = g_pProcess->readDWord(addr);
@@ -361,7 +361,7 @@ bool API::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer)
 
 
 // 256 * sizeof(uint16_t)
-bool API::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
+bool API::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
@@ -401,7 +401,7 @@ bool API::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
 
 
 // 256 * sizeof(uint32_t)
-bool API::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
+bool API::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
@@ -414,7 +414,7 @@ bool API::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer
 
 
 // 256 * sizeof(uint32_t)
-bool API::ReadOccupancy (uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
+bool API::ReadOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
@@ -427,7 +427,7 @@ bool API::ReadOccupancy (uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 
 
 // 256 * sizeof(uint16_t)
-bool API::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, uint16_t *buffer)
+bool API::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
@@ -445,7 +445,7 @@ bool API::getCurrentCursorCreature(uint32_t & creature_index)
     return true;
 }
 // 256 * sizeof(uint32_t)
-bool API::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
+bool API::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
@@ -457,7 +457,7 @@ bool API::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, uint32_t *buffe
 }
 
 // 256 * sizeof(uint32_t)
-bool API::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
+bool API::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
@@ -471,12 +471,12 @@ bool API::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, uint32_t *buffer)
 // FIXME: this is bad. determine the real size!
 //16 of them? IDK... there's probably just 7. Reading more doesn't cause errors as it's an array nested inside a block
 // 16 * sizeof(uint8_t)
-bool API::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, uint8_t *buffer)
+bool API::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices40d *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->read (addr + d->biome_stuffs, 16 * sizeof (uint8_t), buffer);
+        g_pProcess->read (addr + d->biome_stuffs, 16 * sizeof (uint8_t), (uint8_t *) buffer);
         return true;
     }
     return false;

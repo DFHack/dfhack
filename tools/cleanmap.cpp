@@ -13,7 +13,7 @@ int main (void)
     uint32_t x_max,y_max,z_max;
     uint32_t num_blocks = 0;
     uint32_t bytes_read = 0;
-    DFHack::t_occupancy occupancies[256];
+    DFHack::occupancies40d occupancies;
     
     DFHack::API DF ("Memory.xml");
     if(!DF.Attach())
@@ -34,14 +34,14 @@ int main (void)
                 if(DF.isValidBlock(x,y,z))
                 {
                     // read block designations
-                    DF.ReadOccupancy(x,y,z, (uint32_t *) occupancies);
+                    DF.ReadOccupancy(x,y,z, &occupancies);
                     // change the hidden flag to 0
-                    for (uint32_t i = 0; i < 256;i++)
+                    for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
                     {
-                        occupancies[i].unibits.splatter = 0;
+                        occupancies[i][j].unibits.splatter = 0;
                     }
                     // write the designations back
-                    DF.WriteOccupancy(x,y,z, (uint32_t *) occupancies);
+                    DF.WriteOccupancy(x,y,z, &occupancies);
                 }
             }
         }

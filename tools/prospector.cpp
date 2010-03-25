@@ -46,9 +46,9 @@ int main (int argc, const char* argv[])
     showhidden = true;
     #endif
     uint32_t x_max,y_max,z_max;
-    uint16_t tiletypes[16][16];
-    DFHack::t_designation designations[16][16];
-    uint8_t regionoffsets[16];
+    DFHack::tiletypes40d tiletypes;
+    DFHack::designations40d designations;
+    DFHack::biome_indices40d regionoffsets;
     map <int16_t, uint32_t> materials;
     materials.clear();
     vector<DFHack::t_matgloss> stonetypes;
@@ -97,8 +97,8 @@ int main (int argc, const char* argv[])
                     continue;
                 
                 // read data
-                DF.ReadTileTypes(x,y,z, (uint16_t *) tiletypes);
-                DF.ReadDesignations(x,y,z, (uint32_t *) designations);
+                DF.ReadTileTypes(x,y,z, &tiletypes);
+                DF.ReadDesignations(x,y,z, &designations);
                 
                 memset(tempvein, -1, sizeof(tempvein));
                 veins.clear();
@@ -106,7 +106,7 @@ int main (int argc, const char* argv[])
                 
                 if(showbaselayers)
                 {
-                    DF.ReadRegionOffsets(x,y,z, regionoffsets);
+                    DF.ReadRegionOffsets(x,y,z, &regionoffsets);
                     // get the layer materials
                     for(uint32_t xx = 0;xx<16;xx++)
                     {

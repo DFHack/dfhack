@@ -11,7 +11,7 @@ using namespace std;
 int main (void)
 {
     uint32_t x_max,y_max,z_max;
-    DFHack::t_designation designations[256];
+    DFHack::designations40d designations;
     
     DFHack::API DF("Memory.xml");
     if(!DF.Attach())
@@ -32,14 +32,14 @@ int main (void)
                 if(DF.isValidBlock(x,y,z))
                 {
                     // read block designations
-                    DF.ReadDesignations(x,y,z, (uint32_t *) designations);
+                    DF.ReadDesignations(x,y,z, &designations);
                     // change the hidden flag to 0
-                    for (uint32_t i = 0; i < 256;i++)
+                    for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
                     {
-                        designations[i].bits.hidden = 0;
+                        designations[i][j].bits.hidden = 0;
                     }
                     // write the designations back
-                    DF.WriteDesignations(x,y,z, (uint32_t *) designations);
+                    DF.WriteDesignations(x,y,z, &designations);
                 }
             }
         }

@@ -118,20 +118,22 @@ namespace DFHack
 
         bool isValidBlock(uint32_t blockx, uint32_t blocky, uint32_t blockz);
         uint32_t getBlockPtr (uint32_t blockx, uint32_t blocky, uint32_t blockz);
+
+        bool ReadBlock40d(uint32_t blockx, uint32_t blocky, uint32_t blockz, mapblock40d * OUTPUT);
+
+        bool ReadTileTypes(uint32_t blockx, uint32_t blocky, uint32_t blockz, tiletypes40d *OUTPUT);
+        bool WriteTileTypes(uint32_t blockx, uint32_t blocky, uint32_t blockz, tiletypes40d *INPUT);
         
-        bool ReadTileTypes(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint16_t *buffer);
-        bool WriteTileTypes(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint16_t *buffer);
+        bool ReadDesignations(uint32_t blockx, uint32_t blocky, uint32_t blockz, designations40d *OUTPUT);
+        bool WriteDesignations (uint32_t blockx, uint32_t blocky, uint32_t blockz, designations40d *INPUT);
         
-        bool ReadDesignations(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint32_t *buffer);
-        bool WriteDesignations (uint32_t blockx, uint32_t blocky, uint32_t blockz, uint32_t *buffer);
-        
-        bool ReadOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint32_t *buffer);
-        bool WriteOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint32_t *buffer);
+        bool ReadOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, occupancies40d *OUTPUT);
+        bool WriteOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, occupancies40d *INPUT);
 
         bool ReadDirtyBit(uint32_t blockx, uint32_t blocky, uint32_t blockz, bool &OUTPUT);
         bool WriteDirtyBit(uint32_t blockx, uint32_t blocky, uint32_t blockz, bool dirtybit);
         
-        bool ReadRegionOffsets(uint32_t blockx, uint32_t blocky, uint32_t blockz, uint8_t *buffer);
+        bool ReadRegionOffsets(uint32_t blockx, uint32_t blocky, uint32_t blockz, biome_indices40d *OUTPUT);
         
         bool ReadVeins(uint32_t blockx, uint32_t blocky, uint32_t blockz, std::vector <t_vein> & veins, std::vector <t_frozenliquidvein>& ices);
         

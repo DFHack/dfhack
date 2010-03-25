@@ -728,7 +728,7 @@ DFhackCExport void SDL_Quit(void)
 static void (*_SDL_GL_SwapBuffers)(void) = 0;
 DFhackCExport void SDL_GL_SwapBuffers(void)
 {
-    if(!errorstate && ((shm_cmd *)shm)->pingpong != CORE_RUNNING)
+    if(!errorstate)
     {
         SHM_Act();
     }
@@ -741,7 +741,7 @@ DFhackCExport int SDL_Flip(void * some_ptr)
 {
     if(_SDL_Flip)
     {
-        if(!errorstate && ((shm_cmd *)shm)->pingpong != CORE_RUNNING)
+        if(!errorstate)
         {
             SHM_Act();
         }

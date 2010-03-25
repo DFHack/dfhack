@@ -15,6 +15,7 @@ int main (void)
     DFHack::designations40d designations;
 
     DFHack::API DF("Memory.xml");
+
     if(!DF.Attach())
     {
         cerr << "DF not found" << endl;
@@ -22,17 +23,22 @@ int main (void)
     }
     DF.InitMap();
 
-    if(DF.getCursorCoords(x,y,z))
-        {
-        if(DF.isValidBlock(x,y,z))
-        {
-            DF.ReadDesignations((x/16),(y/16),(z/16), &designations);
+    if (DF.InitViewAndCursor())
+    {
+        if(DF.getCursorCoords(x,y,z))
+            {
+            if(DF.isValidBlock(x,y,z))
+            {
+                DF.ReadDesignations((x/16),(y/16),(z/16), &designations);
 
-            designations[x%16][y%16].bits.flow_size = 7;
-            designations[x%16][y%16].bits.liquid_type = DFHack::liquid_magma;
-            DF.WriteDesignations(x,y,z, &designations);
+                designations[x%16][y%16].bits.flow_size = 7;
+                designations[x%16][y%16].bits.liquid_type = DFHack::liquid_magma;
+                DF.WriteDesignations(x,y,z, &designations);
+            }
         }
     }
+    else
+        cout << "Process Failed" << endl;
     DF.Detach();
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

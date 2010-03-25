@@ -11,8 +11,8 @@ using namespace std;
 
 int main (void)
 {
-	uint32_t x,y,z;
-	DFHack::designations40d designations;
+    int32_t x,y,z;
+    DFHack::designations40d designations;
 
     DFHack::API DF("Memory.xml");
     if(!DF.Attach())
@@ -22,15 +22,17 @@ int main (void)
     }
     DF.InitMap();
 
-    DF.getCursorCoords(x,y,z);
+    if(DF.getCursorCoords(x,y,z))
+        {
+        if(DF.isValidBlock(x,y,z))
+        {
+            DF.ReadDesignations((x/16),(y/16),(z/16), &designations);
 
-    DF.ReadDesignations((x/16),(y/16),(z/16), &designations);
-    
-    
-    designations[x%16][y%16].bits.flow_size = 7;
-    designations[x%16][y%16].bits.liquid_type = liquid_magma;
-    
-    
+            designations[x%16][y%16].bits.flow_size = 7;
+            designations[x%16][y%16].bits.liquid_type = DFHack::liquid_magma;
+            DF.WriteDesignations(x,y,z, &designations);
+        }
+    }
     DF.Detach();
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

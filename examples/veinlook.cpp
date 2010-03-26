@@ -363,6 +363,8 @@ main(int argc, char *argv[])
     bool dirtybit = false;
     uint32_t blockaddr = 0;
     uint32_t blockaddr2 = 0;
+    t_blockflags bflags;
+    bflags.whole = 0;
     
     // resume so we don't block DF while we wait for input
     DF.Resume();
@@ -483,6 +485,7 @@ main(int argc, char *argv[])
                     }
                     // read/write dirty bit of the block
                     DF.ReadDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
+                    DF.ReadBlockFlags(cursorX+i,cursorY+j,cursorZ,bflags);
                     if(digbit)
                     {
                         dirtybit = !dirtybit;
@@ -593,7 +596,7 @@ main(int argc, char *argv[])
             }
         }
         gotoxy (0,52);
-        cprintf("block address 0x%x 0x%x",blockaddr, blockaddr2);
+        cprintf("block address 0x%x, flags 0x%08x",blockaddr, bflags.whole);
         gotoxy (0,53);
         cprintf("dirty bit: %d",dirtybit);
         gotoxy (0,54);

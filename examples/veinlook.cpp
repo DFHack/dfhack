@@ -78,6 +78,7 @@ int puttile(int x, int y, int tiletype, int color)
         case EMPTY:
             znak = ' ';
             break;
+        case PILLAR:
         case WALL:
             attron(COLOR_PAIR(color));
             mvwaddwstr(stdscr, y, x, L"\u2593");
@@ -86,9 +87,6 @@ int puttile(int x, int y, int tiletype, int color)
             return 0;
         case FORTIFICATION:
             znak = '#';
-            break;
-        case PILLAR:
-            znak = 'O';
             break;
         case STAIR_DOWN:
             znak = '>';

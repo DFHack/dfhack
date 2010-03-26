@@ -29,7 +29,8 @@ TARGET_LINK_LIBRARIES(dfmaterialtest dfhack)
 ADD_EXECUTABLE(dfposition position.cpp)
 TARGET_LINK_LIBRARIES(dfposition dfhack)
 
-# suspendtest - test if suspend works. df should stop responding when suspended by dfhack
+# suspendtest - test if suspend works. df should stop responding when suspended
+#               by dfhack
 ADD_EXECUTABLE(dfsuspend suspendtest.cpp)
 TARGET_LINK_LIBRARIES(dfsuspend dfhack)
 
@@ -44,8 +45,8 @@ TARGET_LINK_LIBRARIES(dfhotkeynotedump dfhack)
 
 # findnameindexes
 # Author: belal
-ADD_EXECUTABLE(dffindnameindexes findnameindexes.cpp)
-TARGET_LINK_LIBRARIES(dffindnameindexes dfhack)
+#ADD_EXECUTABLE(dffindnameindexes findnameindexes.cpp)
+#TARGET_LINK_LIBRARIES(dffindnameindexes dfhack)
 
 # settlementdump - dumps the settlements on the loaded map
 # Author: belal
@@ -53,8 +54,8 @@ ADD_EXECUTABLE(dfsettlementdump settlementdump.cpp)
 TARGET_LINK_LIBRARIES(dfsettlementdump dfhack)
 
 # veccheck - read vector values at address
-ADD_EXECUTABLE(dfvecc veccheck.cpp)
-TARGET_LINK_LIBRARIES(dfvecc dfhack)
+#ADD_EXECUTABLE(dfvecc veccheck.cpp)
+#TARGET_LINK_LIBRARIES(dfvecc dfhack)
 
 # catsplosion - Makes every cat pregnant, and almost due...
 # Author: Zhentar
@@ -97,21 +98,27 @@ IF(UNIX)
     ENDIF(CURSES_FOUND)
 ENDIF(UNIX)
 
-# renamer - change the custom names and professions of creatures, sends keys to df directly
+# renamer - change the custom names and professions of creatures, sends keys to
+#           df directly
+# Author: belal
 ADD_EXECUTABLE(dfrenamer renamer.cpp)
 TARGET_LINK_LIBRARIES(dfrenamer dfhack)
 
 IF(UNIX)
 install(TARGETS
 dfattachtest
-dfbuildingsdump
-dfcreaturedump
-dfitemdump
 dfexpbench
+dfcreaturedump
+dfbuildingsdump
 dfmaterialtest
 dfposition
-dfrenamer
 dfsuspend
+dfitemdump
+dfhotkeynotedump
+#dffindnameindexes
+dfsettlementdump
+dfrenamer
+#dfvecc
 dfcatsplosion
 RUNTIME DESTINATION bin
 )

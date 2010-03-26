@@ -17,9 +17,12 @@ TARGET_LINK_LIBRARIES(dfprospector dfhack)
 ADD_EXECUTABLE(dfcleanmap cleanmap.cpp)
 TARGET_LINK_LIBRARIES(dfcleanmap dfhack)
 
-# incrementalsearch - a bit like cheat engine, only DF-specific and very basic
+IF(UNIX)
+# incrementalsearch - a bit like cheat engine, only DF-specific, very basic
+# and Linux-only
 ADD_EXECUTABLE(dfincremental incrementalsearch.cpp)
 TARGET_LINK_LIBRARIES(dfincremental dfhack)
+ENDIF(UNIX)
 
 # bauxite - turn all mechanisms into bauxite mechanisms
 # Author: Alex Legg
@@ -31,22 +34,27 @@ TARGET_LINK_LIBRARIES(dfbauxite dfhack)
 ADD_EXECUTABLE(dfdigger digger.cpp)
 TARGET_LINK_LIBRARIES(dfdigger dfhack)
 
-# itemdesignator - change some item designations (dump, forbid, on-fire) for all items of a given type and material
+# itemdesignator - change some item designations (dump, forbid, on-fire) for all
+#                  items of a given type and material
+# Author: belal
 ADD_EXECUTABLE(dfitemdesignator itemdesignator.cpp)
 TARGET_LINK_LIBRARIES(dfitemdesignator dfhack)
 
-# a magma creation toold
+# a magma creation tool
+# Author: Aleric
 ADD_EXECUTABLE(dfmagma_create magma_create.cpp)
 TARGET_LINK_LIBRARIES(dfmagma_create dfhack)
 
 IF(UNIX)
 install(TARGETS
-dfreveal
-dfprospector
-dfcleanmap
-dfincremental
 dfbauxite
+dfcleanmap
+dfdigger
+dfincremental
 dfitemdesignator
+dfmagma_create
+dfprospector
+dfreveal
 RUNTIME DESTINATION bin
 )
 ENDIF(UNIX)

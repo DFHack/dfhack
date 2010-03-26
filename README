@@ -8,16 +8,31 @@ tools are written for it.
 It is an attempt to unite the various ways tools access DF memory and allow for
 easier development of new tools.
 
-
 Getting DFHack
 ----------------
-The project is currently hosted on github:
+The project is currently hosted on github, for both source and binaries:
   http://github.com/peterix/dfhack
 
-There's an SVN repository at sourceforge, but will only be updated for major releases:
-  https://sourceforge.net/projects/dfhack/
-* subversion access: 
-  svn co https://dfhack.svn.sourceforge.net/svnroot/dfhack/trunk dfhack 
+* Packages
+
+The library and tools are packaged for Archlinux and are available both in AUR
+and the arch-games repository.
+
+The package name is dfhack-git :)
+
+Clarification
+-------------
+
+'fake SDL.dll', 'SHM', 'libdfconnect' and 'shim library' are basically the same
+thing. A library that sits between DFHack and DF, provides some extra features,
+synchronisation and access control. You should use it for everything that writes
+data back to DF.
+
+You'll need the SHM to attach more than one tool to DF on Linux.
+The DFHack version of Dwarf Therapist requires it for writing creature names
+and professions.
+
+See 'Using DFHack Tools' for instructions on installing it.
 
 Compatibility
 -------------
@@ -31,15 +46,20 @@ OSX is also not supported due to lack of developers with a Mac.
 
 Currently supported Dwarf Fortress versions:
 * Windows
-  40d
-  40d9 - 40d18
+  38a - 40d19_2
 
 * Linux
-  40d9 - 40d18
+  40d2 - 40d19
 
+Currently supported DF versions *by the SHM*:
+* Windows
+  40d15 - 40d19
+  
+* Linux
+  40d9 - 40d19 (40d2 - 40d8 might work, but are untested)
 
-Using the library
------------------
+Using the library as a developer
+--------------------------------
 
 The library is compilable under Linux with GCC and under Windows with MinGW32
 and MSVC compilers. It is using the cmake build system. See COMPILE for details.
@@ -49,7 +69,7 @@ it in-source or add your own extensions. Contributing back to the dfhack
 repository is welcome and the right thing to do :)
 
 At the time of writing there's no API reference or documentation. The code does
-have a lot of comments though.
+have a lot of comments though (and getting better all the time).
 
 
 Using DFHack Tools
@@ -61,8 +81,8 @@ provide data consistency and synchronization. DFHack will work without the
 library, but at suboptimal speeds and the consistency of data written back
 to DF is questionable.
 
-!!!     on Windows this currently only works with DF 40d15 - 40d18      !!!
-     On Linux, it works with the whole range of supported DF versions.
+!!!     on Windows this currently only works with DF 40d15 - 40d19_2      !!!
+                  On Linux, it works with DF 40d9 - 40d19
 
 !!! use the pre-compiled library intended for your OS and version of DF !!!
                You can find them in the 'precompiled' folder.
@@ -83,27 +103,12 @@ to DF is questionable.
  ** Installing on Linux
  - Open your DF folder and the libs folder within it
  - copy DFHack libdfconnect.so to the libs folder
- - copy the df startup script, name it dfhacked
- - open the new dfhacked startup script and add this line:
-     export LD_PRELOAD="./libs/libdfconnect.so" # Hack DF!
-   just before the line that launches DF
-
-   Here's an example how the file can look after the change:
-#!/bin/sh
-DF_DIR=$(dirname "$0")
-cd "${DF_DIR}"
-export SDL_DISABLE_LOCK_KEYS=1 # Work around for bug in Debian/Ubuntu SDL patch.
-#export SDL_VIDEO_CENTERED=1 # Centre the screen.  Messes up resizing.
-ldd dwarfort.exe | grep SDL_image | grep -qv "not found$"
-if [ $? -eq 0 ]; then
- mkdir unused_libs
- mv libs/libSDL* unused_libs/
-fi
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"./libs" # Update library search path.
-export LD_PRELOAD="./libs/libdfconnect.so" # Hack DF!
-./dwarfort.exe $* # Go, go, go! :)
-
+ - copy the df-hacked script to your DF folder
  - Use this new startup script to start DF
+ 
+ ** Replacing libdfconnect.so
+ - Make sure you close DF before you replace this file! DF crashes whn you don't
+   close it first!
 
  ** Uninstalling on Linux
  - Open your DF and DF/libs folders
@@ -121,8 +126,15 @@ be useful and are cross-platform just like the library itself.
 If the tool writes back to DF's memory, make sure you are using the shared
 memory interface mentioned in the previous section!
 
+* catsplosion- Makes all cats pregnant and due in 100 game steps. Use with care.
+
+* magma_create - creates 7/7 magma at the DF's cursor
+
 * reveal     - plain old reveal tool. It reveals all the map blocks already
                initialized by DF.
+
+* veinlook   - a silly map viewer. It can mass-dig veins in a map square.
+               (Linux only)
 
 * prospector - scans the map for minerals. by default it only scans only visible
                veins. You can make it show hidden things with '-a' and base rock
@@ -132,7 +144,7 @@ memory interface mentioned in the previous section!
                It will clean your irrigated farms too, so consider yourself
                warned.
 
-* incremental - incremental search utility.
+* incrementalsearch - incremental search utility (Linux only).
 
 * bauxite - converts all mechanisms into bauxite mechanisms.
 
@@ -150,16 +162,17 @@ memory interface mentioned in the previous section!
         6  = STAIR_UPDOWN
         
         7  = RAMP
+        8  = RAMP_TOP
         
-        8  = FLOOR
-        9  = TREE_DEAD
-        10 = TREE_OK
-        11 = SAPLING_DEAD
-        12 = SAPLING_OK
-        13 = SHRUB_DEAD
-        14 = SHRUB_OK
-        15 = BOULDER
-        16 = PEBBLES
+        9  = FLOOR
+        10  = TREE_DEAD
+        11 = TREE_OK
+        12 = SAPLING_DEAD
+        13 = SAPLING_OK
+        14 = SHRUB_DEAD
+        15 = SHRUB_OK
+        16 = BOULDER
+        17 = PEBBLES
   
   Example : dfdigger -o 100,100,15 -t 9,10 -m 10
   This will start looking for trees at coords 100,100,15 and designate ten of them for cutting.
@@ -169,6 +182,6 @@ Memory offset definitions
 -------------------------
 
 The file with memory offset definitions used by dfhack can be found in the
-output folder. 
+output folder.
 
 ~ EOF ~

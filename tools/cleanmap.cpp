@@ -15,13 +15,30 @@ int main (void)
     uint32_t bytes_read = 0;
     DFHack::occupancies40d occupancies;
     
-    DFHack::API DF ("Memory.xml");
-    if(!DF.Attach())
+    DFHack::API DF("Memory.xml");
+    try
     {
-        cerr << "DF not found" << endl;
+        DF.Attach();
+    }
+    catch (exception& e)
+    {
+        cerr << e.what() << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         return 1;
     }
-    DF.InitMap();
+    
+    // init the map
+    if(!DF.InitMap())
+    {
+        cerr << "Can't init map." << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
+        return 1;
+    }
+    
     DF.getSize(x_max,y_max,z_max);
     
     // walk the map

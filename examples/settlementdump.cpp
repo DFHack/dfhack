@@ -31,43 +31,55 @@ void printSettlement(DFHack::API & DF, const DFHack::t_settlement & settlement, 
 
 int main (int argc,const char* argv[])
 {
-    DFHack::API DF ("Memory.xml");
-    if(!DF.Attach())
+    DFHack::API DF("Memory.xml");
+    try
     {
-        cerr << "DF not found" << endl;
+        DF.Attach();
+    }
+    catch (exception& e)
+    {
+        cerr << e.what() << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         return 1;
     }
+    
     DFHack::t_settlement current;
     uint32_t numSettlements;
     if(!DF.InitReadSettlements(numSettlements))
     {
-		cerr << "Could not read Settlements" << endl;
-		return 1;
-	}
-	vector< vector<string> > englishWords;
-	vector< vector<string> > foreignWords;
+        cerr << "Could not read Settlements" << endl;
+        return 1;
+    }
+    
+    vector< vector<string> > englishWords;
+    vector< vector<string> > foreignWords;
     if(!DF.InitReadNameTables(englishWords,foreignWords))
     {
         cerr << "Can't get name tables" << endl;
         return 1;
     }
-	cout << "Settlements\n";
-	/*for(uint32_t i =0;i<numSettlements;i++){
-		DFHack::t_settlement temp;
-		DF.ReadSettlement(i,temp);
-		printSettlement(DF,temp,englishWords,foreignWords);
-	}*/
-	// MSVC claims this is causing the heap to be corrupted, I think it is because the currentSettlement vector only has 1 item in it
-	cout << "Current Settlement\n";
-	if(DF.ReadCurrentSettlement(current))
-		printSettlement(DF,current,englishWords,foreignWords);
+    
+    cout << "Settlements\n";
+    /*for(uint32_t i =0;i<numSettlements;i++){
+        DFHack::t_settlement temp;
+        DF.ReadSettlement(i,temp);
+        printSettlement(DF,temp,englishWords,foreignWords);
+    }*/
+    // MSVC claims this is causing the heap to be corrupted, I think it is because the currentSettlement vector only has 1 item in it
+    
+    cout << "Current Settlement\n";
+    if(DF.ReadCurrentSettlement(current))
+        printSettlement(DF,current,englishWords,foreignWords);
 
-	DF.FinishReadNameTables();
-	DF.FinishReadSettlements();
-	DF.Detach();
-	#ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
+    DF.FinishReadNameTables();
+    DF.FinishReadSettlements();
+    DF.Detach();
+    
+    #ifndef LINUX_BUILD
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
     #endif
-	return 0;
+    return 0;
 }

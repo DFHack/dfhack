@@ -6,6 +6,7 @@
 #include <vector>
 using namespace std;
 
+#include <DFError.h>
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 #include <DFMemInfo.h>
@@ -152,7 +153,7 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 {
  if(string(creaturestypes[creature.type].id) == "DWARF")
     {
-		cout << "address: " << hex <<  creature.origin << dec << " creature type: " << creaturestypes[creature.type].id << ", position: " << creature.x << "x " << creature.y << "y "<< creature.z << "z" << endl;
+        cout << "address: " << hex <<  creature.origin << dec << " creature type: " << creaturestypes[creature.type].id << ", position: " << creature.x << "x " << creature.y << "y "<< creature.z << "z" << endl;
         bool addendl = false;
         if(creature.name.first_name[0])
         {
@@ -213,11 +214,11 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout <<"Male";
         }
         cout << endl;
-		
-		if(creature.pregnancy_timer > 0)
-			cout << "gives birth in " << creature.pregnancy_timer/1200 << " days. ";
-		cout << "Blood: " << creature.blood_current << "/" << creature.blood_max << " bleeding: " << creature.bleed_rate;
-		cout << endl;
+        
+        if(creature.pregnancy_timer > 0)
+            cout << "gives birth in " << creature.pregnancy_timer/1200 << " days. ";
+        cout << "Blood: " << creature.blood_current << "/" << creature.blood_max << " bleeding: " << creature.bleed_rate;
+        cout << endl;
 
     /*
         //skills
@@ -301,9 +302,16 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 int main (void)
 {
     DFHack::API DF("Memory.xml");
-    if(!DF.Attach())
+    try
     {
-        cerr << "DF not found" << endl;
+        DF.Attach();
+    }
+    catch (exception& e)
+    {
+        cerr << e.what() << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         return 1;
     }
     

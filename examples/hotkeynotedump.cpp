@@ -15,9 +15,16 @@ int main (void)
 {
     vector<DFHack::t_matgloss> creaturestypes;
     DFHack::API DF("Memory.xml");
-    if(!DF.Attach())
+    try
     {
-        cerr << "DF not found" << endl;
+        DF.Attach();
+    }
+    catch (exception& e)
+    {
+        cerr << e.what() << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         return 1;
     }
     

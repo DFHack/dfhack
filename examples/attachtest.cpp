@@ -1,5 +1,5 @@
 // Attach test
-// attachtest - 100x attach/detach, 100x reads, 100x writes
+// attachtest - 1000x suspend/resume
 
 #include <iostream>
 #include <climits>
@@ -21,9 +21,12 @@ int main (void)
         DF.Attach();
         DF.Detach();
     }
-    catch (DFHack::Error::NoProcess& e)
+    catch (exception& e)
     {
         cerr << e.what() << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         return 1;
     }
 /*
@@ -79,8 +82,8 @@ int main (void)
     cout << "suspend tests done in " << time_diff << " seconds." << endl;
     
     #ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
     #endif
     return 0;
 }

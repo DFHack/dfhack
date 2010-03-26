@@ -268,7 +268,9 @@ bool API::InitMap()
     uint32_t x_array_loc = g_pProcess->readDWord (map_offset);
     if (!x_array_loc)
     {
-        throw Error::NoMapLoaded();
+        return false;
+        // FIXME: only throw this due to programmer error, in the other map functions
+        //throw Error::NoMapLoaded();
     }
     
     // get the size

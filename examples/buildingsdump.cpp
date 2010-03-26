@@ -8,18 +8,10 @@
 #include <vector>
 using namespace std;
 
+#include <DFError.h>
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 #include <DFMemInfo.h>
-/*
-oh. fsck it. I'll do the hexdump now and add the things I found in a research/ folder
-groups of four bytes, 4 per line
-1 space between bytes
-2 between groups
-offset from the object start on the left
-and length set from command line
-default 256
-*/
 
 /*
 address = absolute address of dump start
@@ -131,9 +123,16 @@ int main (int argc,const char* argv[])
     vector<DFHack::t_matgloss> creaturestypes;
     
     DFHack::API DF ("Memory.xml");
-    if(!DF.Attach())
+    try
     {
-        cerr << "DF not found" << endl;
+        DF.Attach();
+    }
+    catch (exception& e)
+    {
+        cerr << e.what() << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         return 1;
     }
     DFHack::memory_info * mem = DF.getMemoryInfo();
@@ -173,9 +172,9 @@ int main (int argc,const char* argv[])
     }
 
     DF.Detach();
-#ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
-#endif
+    #ifndef LINUX_BUILD
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
+    #endif
     return 0;
 }

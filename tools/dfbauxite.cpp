@@ -41,14 +41,19 @@ int main ()
     int items;
     int found = 0, converted = 0;
 
-    DFHack::API DF ("Memory.xml");
-    if(!DF.Attach())
+    DFHack::API DF("Memory.xml");
+    try
     {
-        cerr << "DF not found" << endl;
+        DF.Attach();
+    }
+    catch (exception& e)
+    {
+        cerr << e.what() << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         return 1;
     }
-
-    DF.Suspend();
     
     // Find out which material is bauxite
     if(!DF.ReadStoneMatgloss(stoneMat))

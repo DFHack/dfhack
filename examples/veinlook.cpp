@@ -307,15 +307,19 @@ main(int argc, char *argv[])
     vector< vector <uint16_t> > layerassign;
     vector<t_vein> veinVector;
     vector<t_frozenliquidvein> IceVeinVector;
-    
-    // init the API
+
     DFHack::API DF("Memory.xml");
-    pDF = &DF;
-    // attach
-    if(!DF.Attach())
+    try
     {
-        error = "Can't find DF.";
-        pDF = 0;
+        DF.Attach();
+        pDF = &DF;
+    }
+    catch (exception& e)
+    {
+        cerr << e.what() << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         finish(0);
     }
     

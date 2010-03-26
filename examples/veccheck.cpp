@@ -22,31 +22,38 @@ int main (int numargs, const char ** args)
         input >> std::hex >> addr;
     }
     DFHack::API DF("Memory.xml");
-    if(!DF.Attach())
+    try
     {
-        cerr << "DF not found" << endl;
+        DF.Attach();
     }
-    else
+    catch (exception& e)
     {
-        DFHack::Process* p = DF.getProcess();
-        DFHack::memory_info* mem = DF.getMemoryInfo();
-        const vector<string> * names = mem->getClassIDMapping();
-        for(int i = 0; i < names->size();i++)
-        {
-            cout << i << " " << names->at(i) << endl;
-        }
-        /*
-        #ifdef LINUX_BUILD
-        cout << "start 0x" << hex << p->readDWord(addr+0x0) << endl;
-        cout << "end   0x" << hex << p->readDWord(addr+0x4) << endl;
-        cout << "cap   0x" << hex << p->readDWord(addr+0x8) << endl;
-        #else
-        cout << "start 0x" << hex << p->readDWord(addr+0x4) << endl;
-        cout << "end   0x" << hex << p->readDWord(addr+0x8) << endl;
-        cout << "cap   0x" << hex << p->readDWord(addr+0xC) << endl;
+        cerr << e.what() << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
         #endif
-        */
+        return 1;
     }
+    
+    DFHack::Process* p = DF.getProcess();
+    DFHack::memory_info* mem = DF.getMemoryInfo();
+    const vector<string> * names = mem->getClassIDMapping();
+    for(int i = 0; i < names->size();i++)
+    {
+        cout << i << " " << names->at(i) << endl;
+    }
+    /*
+    #ifdef LINUX_BUILD
+    cout << "start 0x" << hex << p->readDWord(addr+0x0) << endl;
+    cout << "end   0x" << hex << p->readDWord(addr+0x4) << endl;
+    cout << "cap   0x" << hex << p->readDWord(addr+0x8) << endl;
+    #else
+    cout << "start 0x" << hex << p->readDWord(addr+0x4) << endl;
+    cout << "end   0x" << hex << p->readDWord(addr+0x8) << endl;
+    cout << "cap   0x" << hex << p->readDWord(addr+0xC) << endl;
+    #endif
+    */
+
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

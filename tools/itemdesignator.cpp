@@ -194,9 +194,16 @@ int main ()
          << "Like set on fire all MICROCLINE item_stone..." << endl
          << "Some unusual combinations might be untested and cause the program to crash..."<< endl
          << "so, watch your step and backup your fort" << endl;
-    if(!DF.Attach())
+    try
     {
-        cerr << "DF not found" << endl;
+        DF.Attach();
+    }
+    catch (exception& e)
+    {
+        cerr << e.what() << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         return 1;
     }
     DFHack::memory_info *mem = DF.getMemoryInfo();

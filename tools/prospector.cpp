@@ -54,18 +54,29 @@ int main (int argc, const char* argv[])
     vector<DFHack::t_matgloss> stonetypes;
     vector< vector <uint16_t> > layerassign;
     
-    // init the API
     DFHack::API DF("Memory.xml");
-    
-    // attach
-    if(!DF.Attach())
+    try
     {
-        cerr << "DF not found" << endl;
+        DF.Attach();
+    }
+    catch (exception& e)
+    {
+        cerr << e.what() << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         return 1;
     }
     
     // init the map
-    DF.InitMap();
+    if(!DF.InitMap())
+    {
+        cerr << "Can't init map." << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
+        return 1;
+    }
     DF.getSize(x_max,y_max,z_max);
     
     // get stone matgloss mapping
@@ -73,6 +84,9 @@ int main (int argc, const char* argv[])
     {
         //DF.DestroyMap();
         cerr << "Can't get the materials." << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         return 1; 
     }
     
@@ -80,6 +94,9 @@ int main (int argc, const char* argv[])
     if(!DF.ReadGeology( layerassign ))
     {
         cerr << "Can't get region geology." << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         return 1; 
     }
     
@@ -172,8 +189,8 @@ int main (int argc, const char* argv[])
     }
     DF.Detach();
     #ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
     #endif
     return 0;
 }

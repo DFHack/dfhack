@@ -24,10 +24,12 @@ void print_bits ( T val, std::ostream& out )
         val >>= 1;
     }
 }
+
 vector< vector<string> > englishWords;
 vector< vector<string> > foreignWords;
 uint32_t numCreatures;
 vector<DFHack::t_matgloss> creaturestypes;
+
 void printDwarves(DFHack::API & DF)
 {
     int dwarfCounter = 0;
@@ -311,13 +313,19 @@ bool setCursorToCreature(DFHack::API &DF)
 int main (void)
 {
     DFHack::API DF("Memory.xml");
-    if (!DF.Attach())
+    try
     {
-        cerr << "DF not found" << endl;
+        DF.Attach();
+    }
+    catch (exception& e)
+    {
+        cerr << e.what() << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         return 1;
     }
-    DF.Suspend();
-
+    
     DFHack::memory_info * mem = DF.getMemoryInfo();
 
     if (!DF.ReadCreatureMatgloss(creaturestypes))

@@ -299,7 +299,7 @@ int main (int argc, char** argv)
     string s_targets;
     string s_origin;
     bool verbose;
-    int max;
+    int max = 10;
     argstream as(argc,argv);
 
     as  >>option('v',"verbose",verbose,"Active verbose mode")
@@ -327,31 +327,36 @@ int main (int argc, char** argv)
     else
     {
         DFHack::API DF("Memory.xml");
-        if(DF.Attach())
+        try
         {
-            if (DF.InitMap())
-            {
-                int count = dig(DF, targets, 10, origin[0],origin[1],origin[2], verbose);
-                cout << count << " targets designated" << endl;
+            DF.Attach();
+        }
+        catch (exception& e)
+        {
+            cerr << e.what() << endl;
+            #ifndef LINUX_BUILD
+                cin.ignore();
+            #endif
+            return 1;
+        }
+        if (DF.InitMap())
+        {
+            int count = dig(DF, targets, max, origin[0],origin[1],origin[2], verbose);
+            cout << count << " targets designated" << endl;
 
-                if (!DF.Detach())
-                {
-                    cerr << "Unable to detach DF process" << endl;
-                }
-            }
-            else
+            if (!DF.Detach())
             {
-                cerr << "Unable to init map" << endl;
+                cerr << "Unable to detach DF process" << endl;
             }
         }
         else
-        {   
-            cerr << "Unable to attach to DF process" << endl;
+        {
+            cerr << "Unable to init map" << endl;
         }
     }
-#ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
-#endif
+    #ifndef LINUX_BUILD
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
+    #endif
     return 0;
 }

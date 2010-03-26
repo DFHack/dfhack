@@ -8,6 +8,7 @@
 #include <vector>
 using namespace std;
 
+#include <DFError.h>
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 #include <DFMemInfo.h>
@@ -190,14 +191,20 @@ void printItem(DFHack::t_item item, const string & typeString,const matGlosses &
 
 int main ()
 {
-
-    DFHack::API DF ("Memory.xml");
-
-    if(!DF.Attach())
+    DFHack::API DF("Memory.xml");
+    try
     {
-        cerr << "DF not found" << endl;
+        DF.Attach();
+    }
+    catch (exception& e)
+    {
+        cerr << e.what() << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         return 1;
     }
+    
     DFHack::memory_info * mem = DF.getMemoryInfo();
     DF.InitViewAndCursor();
     matGlosses mat;
@@ -280,11 +287,10 @@ int main ()
         }
         DF.FinishReadItems();
     }    
-    DF.FinishReadBuildings();
     DF.Detach();
-#ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
-#endif
+    #ifndef LINUX_BUILD
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
+    #endif
     return 0;
 }

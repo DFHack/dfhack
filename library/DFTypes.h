@@ -607,6 +607,10 @@ struct t_creature
     uint32_t money;
     int32_t squad_leader_id;
     uint8_t sex;
+	uint32_t pregnancy_timer; //Countdown timer to giving birth
+	int32_t blood_max;
+	int32_t blood_current;
+	uint32_t bleed_rate;
 };
 //raw
 struct t_item_df40d

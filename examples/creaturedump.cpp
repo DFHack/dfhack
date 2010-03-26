@@ -152,7 +152,7 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 {
  if(string(creaturestypes[creature.type].id) == "DWARF")
     {
-        cout << "address: " << creature.origin << " creature type: " << creaturestypes[creature.type].id << ", position: " << creature.x << "x " << creature.y << "y "<< creature.z << "z" << endl;
+		cout << "address: " << hex <<  creature.origin << dec << " creature type: " << creaturestypes[creature.type].id << ", position: " << creature.x << "x " << creature.y << "y "<< creature.z << "z" << endl;
         bool addendl = false;
         if(creature.name.first_name[0])
         {
@@ -170,17 +170,7 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout << ", trans name: " << transName;
             addendl=true;
         }
-        //cout << ", generic name: " << DF.TranslateName(creature.last_name,names,"GENERIC");
-        /*
-        if(!creature.trans_name.empty()){
-            cout << ", trans name: " << creature.trans_name;
-            addendl =true;
-        }
-        if(!creature.generic_name.empty()){
-            cout << ", generic name: " << creature.generic_name;
-            addendl=true;
-        }
-        */
+
         cout << ", likes: ";
         for(uint32_t i = 0;i<creature.numLikes; i++)
         {
@@ -223,6 +213,12 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout <<"Male";
         }
         cout << endl;
+		
+		if(creature.pregnancy_timer > 0)
+			cout << "gives birth in " << creature.pregnancy_timer/1200 << " days. ";
+		cout << "Blood: " << creature.blood_current << "/" << creature.blood_max << " bleeding: " << creature.bleed_rate;
+		cout << endl;
+
     /*
         //skills
         for(unsigned int i = 0; i < creature.skills.size();i++){

@@ -192,8 +192,8 @@ namespace DFHack
          * Effects like mist, dragonfire or dust
          */
         bool InitReadEffects ( uint32_t & numeffects );
-        bool ReadEffect(const int32_t index, t_effect_df40d & effect);
-        bool WriteEffect(const int32_t index, const t_effect_df40d & effect);
+        bool ReadEffect(const uint32_t index, t_effect_df40d & effect);
+        bool WriteEffect(const uint32_t index, const t_effect_df40d & effect);
         void FinishReadEffects();
         
         /*

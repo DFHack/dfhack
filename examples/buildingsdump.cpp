@@ -109,6 +109,10 @@ int main (int argc,const char* argv[])
     {
         cout << "usage:" << endl;
         cout << argv[0] << " object_name [number of lines]" << endl;
+        #ifndef LINUX_BUILD
+            cout << "Done. Press any key to continue" << endl;
+            cin.ignore();
+        #endif
         return 0;
     }
     int lines = 16;

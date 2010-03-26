@@ -315,10 +315,25 @@ int main (void)
         return 1;
     }
     
-    
+    uint32_t numCreatures;
+    if(!DF.InitReadCreatures(numCreatures))
+    {
+        cerr << "Can't get creatures" << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
+        return 1;
+    }
+    if(!numCreatures)
+    {
+        cerr << "No creatures to print" << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
+        return 1;
+    }
+        
     DF.ReadItemTypes(itemTypes);
-    
-   
     DF.ReadPlantMatgloss(mat.plantMat);
     DF.ReadWoodMatgloss(mat.woodMat);
     DF.ReadStoneMatgloss(mat.stoneMat);
@@ -336,12 +351,6 @@ int main (void)
     if(!DF.InitReadNameTables(englishWords,foreignWords))
     {
         cerr << "Can't get name tables" << endl;
-        return 1;
-    }
-    uint32_t numCreatures;
-    if(!DF.InitReadCreatures(numCreatures))
-    {
-        cerr << "Can't get creatures" << endl;
         return 1;
     }
     DF.InitViewAndCursor();

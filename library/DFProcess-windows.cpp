@@ -97,7 +97,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versio
         {
             pe_timestamp = (*it)->getHexValue("pe_timestamp");
         }
-        catch(Error::MissingMemoryDefinition& e)
+        catch(Error::MissingMemoryDefinition&)
         {
             continue;
         }

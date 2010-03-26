@@ -28,7 +28,7 @@ using namespace DFHack;
 MemInfoManager::~MemInfoManager()
 {
     // for each in std::vector<memory_info*> meminfo;, delete
-    for(int i = 0; i < meminfo.size();i++)
+    for(uint32_t i = 0; i < meminfo.size();i++)
     {
         delete meminfo[i];
     }
@@ -248,7 +248,7 @@ bool MemInfoManager::loadFile(string path_to_xml)
     // transform elements
     {
         // trash existing list
-        for(int i = 0; i < meminfo.size(); i++)
+        for(uint32_t i = 0; i < meminfo.size(); i++)
         {
             delete meminfo[i];
         }

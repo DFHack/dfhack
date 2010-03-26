@@ -354,7 +354,7 @@ bool SHMProcess::Private::validate(vector <memory_info *> & known_versions)
         {
             pe_timestamp = (*it)->getHexValue("pe_timestamp");
         }
-        catch(Error::MissingMemoryDefinition& e)
+        catch(Error::MissingMemoryDefinition&)
         {
             continue;
         }

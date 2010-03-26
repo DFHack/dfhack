@@ -24,6 +24,16 @@ int main (void)
         return 1;
     }
     
+    if(!DF.InitMap())
+    {
+        cerr << "No map loaded, it would be unsafe to enumerate materials" << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
+        return 1;
+    }
+    DF.DestroyMap();
+    
     vector <DFHack::t_matgloss> Woods;
     DF.ReadWoodMatgloss(Woods);
     
@@ -46,7 +56,7 @@ int main (void)
     cout << "Creature: " << CreatureTypes[0].id << endl;
     cout << endl;
     cout << "Dumping all stones!" << endl;
-    for(int i = 0; i < Stones.size();i++)
+    for(uint32_t i = 0; i < Stones.size();i++)
     {
         cout << Stones[i].id << "$" << endl;;
     }

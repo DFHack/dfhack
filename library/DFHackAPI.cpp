@@ -259,7 +259,7 @@ bool API::InitMap()
         off->y_count_offset = y_count_offset;
         off->z_count_offset = z_count_offset;
         full_barrier
-        const uint32_t cmd = Maps::MAP_INIT + d->maps_module << 16;
+        const uint32_t cmd = Maps::MAP_INIT + (d->maps_module << 16);
         g_pProcess->SetAndWait(cmd);
         //cerr << "Map acceleration enabled!" << endl;
     }
@@ -920,7 +920,7 @@ bool API::InitReadEffects ( uint32_t & numeffects )
     return true;
 }
 
-bool API::ReadEffect(const int32_t index, t_effect_df40d & effect)
+bool API::ReadEffect(const uint32_t index, t_effect_df40d & effect)
 {
     if(!d->effectsInited)
         return false;
@@ -935,7 +935,7 @@ bool API::ReadEffect(const int32_t index, t_effect_df40d & effect)
 }
 
 // use with care!
-bool API::WriteEffect(const int32_t index, const t_effect_df40d & effect)
+bool API::WriteEffect(const uint32_t index, const t_effect_df40d & effect)
 {
     if(!d->effectsInited)
         return false;

@@ -114,16 +114,22 @@ int puttile(int x, int y, int tiletype, int color)
             break;
         case TREE_DEAD:
         case TREE_OK:
-            znak= 'Y';
-            break;
+            attron(COLOR_PAIR(color));
+            mvwaddwstr(stdscr, y, x, L"\u2663");
+            attroff(COLOR_PAIR(color));
+            return 0;
         case SAPLING_DEAD:
         case SAPLING_OK:
-            znak= 'i';
-            break;
+            attron(COLOR_PAIR(color));
+            mvwaddwstr(stdscr, y, x, L"\u03C4");
+            attroff(COLOR_PAIR(color));
+            return 0;
         case SHRUB_DEAD:
         case SHRUB_OK:
-            znak= 'o';
-            break;
+            attron(COLOR_PAIR(color));
+            mvwaddwstr(stdscr, y, x, L"\u2666");
+            attroff(COLOR_PAIR(color));
+            return 0;
         case BOULDER:
         case PEBBLES:
             znak= '*';

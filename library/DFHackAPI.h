@@ -221,7 +221,7 @@ namespace DFHack
         void ReadRaw (const uint32_t offset, const uint32_t size, uint8_t *target);
         void WriteRaw (const uint32_t offset, const uint32_t size, uint8_t *source);
         /// write labors of a creature (for Dwarf Therapist)
-        void WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
+        bool WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
         
         /*
          * Notes placed by the player

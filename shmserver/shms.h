@@ -108,7 +108,6 @@ void InitModules (void);
 void KillModules (void);
 bool isValidSHM(int current);
 uint32_t OS_getPID();
-DFPP_module InitMaps(void);
 uint32_t OS_getAffinity(); // limited to 32 processors. Silly, eh?
 void OS_releaseSuspendLock(int currentClient);
 void OS_lockSuspendLock(int currentClient);

@@ -17,6 +17,8 @@ extern char *shm;
 //TODO: circular buffer streaming primitives required
 //TODO: commands can fail without the proper offsets. Hot to handle that?
 
+namespace DFHack{ namespace Maps{ // start of namespace
+
 #define SHMHDR ((shm_maps_hdr *)shm)
 #define SHMCMD ((shm_cmd *)shm)->pingpong
 #define SHMDATA(type) ((type *)(shm + SHM_HEADER))
@@ -92,7 +94,7 @@ void ReadBlockByCoords (void * data)
     ReadBlockByAddress(data); // I wonder... will this inline properly?
 }
 
-DFPP_module InitMaps( void )
+DFPP_module Init( void )
 {
     DFPP_module maps;
     maps.name = "Maps";
@@ -117,3 +119,5 @@ DFPP_module InitMaps( void )
     
     return maps;
 }
+
+}} // end of namespace

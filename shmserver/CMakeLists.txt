@@ -9,6 +9,7 @@ mod-maps.h
 SET(PROJECT_SRCS
 mod-core.cpp
 mod-maps.cpp
+mod-creature40d.cpp
 )
 
 SET(PROJECT_HDRS_LINUX

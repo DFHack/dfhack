@@ -96,6 +96,8 @@ enum MAPS_COMMAND
     MAP_REVEAL, // reveal the whole map
     NUM_MAPS_CMDS,
 };
+DFPP_module Init(void);
+
     }
 }
 

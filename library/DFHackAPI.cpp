@@ -23,9 +23,10 @@ distribution.
 */
 
 #include "DFCommonInternal.h"
-#include "../shmserver/shms.h"
-#include "../shmserver/mod-core.h"
-#include "../shmserver/mod-maps.h"
+#include <shms.h>
+#include <mod-core.h>
+#include <mod-maps.h>
+#include <mod-creature40d.h>
 using namespace DFHack;
 
 /*
@@ -58,6 +59,8 @@ public:
     uint32_t veinsize;
     uint32_t vein_mineral_vptr;
     uint32_t vein_ice_vptr;
+    
+    uint32_t maps_module;
 
     uint32_t window_x_offset;
     uint32_t window_y_offset;
@@ -69,39 +72,14 @@ public:
     uint32_t view_screen_offset;
     uint32_t current_menu_state_offset;
 
-	uint32_t name_firstname_offset;
-	uint32_t name_nickname_offset;
-	uint32_t name_words_offset;
+    uint32_t name_firstname_offset;
+    uint32_t name_nickname_offset;
+    uint32_t name_words_offset;
 
-    uint32_t creature_pos_offset;
-    uint32_t creature_type_offset;
-    uint32_t creature_flags1_offset;
-    uint32_t creature_flags2_offset;
-    uint32_t creature_name_offset;
-    uint32_t creature_custom_profession_offset;
-    uint32_t creature_profession_offset;
-    uint32_t creature_sex_offset;
-    uint32_t creature_id_offset;
-    uint32_t creature_squad_name_offset;
-    uint32_t creature_squad_leader_id_offset;
-    uint32_t creature_money_offset;
-    uint32_t creature_current_job_offset;
-    uint32_t creature_current_job_id_offset;
-    uint32_t creature_strength_offset;
-    uint32_t creature_agility_offset;
-    uint32_t creature_toughness_offset;
-    uint32_t creature_skills_offset;
-    uint32_t creature_labors_offset;
-    uint32_t creature_happiness_offset;
-    uint32_t creature_traits_offset;
-    uint32_t creature_likes_offset;
-	uint32_t creature_artifact_name_offset;
-	uint32_t creature_mood_offset;
-	uint32_t creature_pregnancy_offset;
-	uint32_t creature_blood_max_offset;
-	uint32_t creature_blood_current_offset;
-	uint32_t creature_bleed_offset;
-
+    Creatures::creature_offsets creatures;
+    uint32_t creature_module;
+    
+    
     uint32_t item_material_offset;
 
     uint32_t note_foreground_offset;
@@ -139,8 +117,6 @@ public:
     bool hotkeyInited;
     bool settlementsInited;
     bool nameTablesInited;
-    
-    uint32_t maps_module;
 
     uint32_t tree_offset;
     DfVector *p_cre;
@@ -197,7 +173,9 @@ API::API (const string path_to_xml)
     d->nameTablesInited = false;
     d->pm = NULL;
     d->shm_start = 0;
+    
     d->maps_module = 0;
+    d->creature_module = 0;
 }
 
 API::~API()
@@ -210,6 +188,7 @@ API::~API()
 #define SHMCMD(num) ((shm_cmd *)d->shm_start)[num]->pingpong
 #define SHMHDR ((shm_core_hdr *)d->shm_start)
 #define SHMMAPSHDR ((Maps::shm_maps_hdr *)d->shm_start)
+#define SHMCREATURESHDR ((Creatures::shm_creature_hdr *)d->shm_start)
 #define SHMDATA(type) ((type *)(d->shm_start + SHM_HEADER))
 
 /*-----------------------------------*
@@ -322,14 +301,14 @@ bool API::DestroyMap()
 
 bool API::isValidBlock (uint32_t x, uint32_t y, uint32_t z)
 {
-    if (x < 0 || x >= d->x_block_count || y < 0 || y >= d->y_block_count || z < 0 || z >= d->z_block_count)
+    if ( x >= d->x_block_count || y >= d->y_block_count || z >= d->z_block_count)
         return false;
     return d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z] != 0;
 }
 
 uint32_t API::getBlockPtr (uint32_t x, uint32_t y, uint32_t z)
 {
-    if (x < 0 || x >= d->x_block_count || y < 0 || y >= d->y_block_count || z < 0 || z >= d->z_block_count)
+    if ( x >= d->x_block_count || y >= d->y_block_count || z >= d->z_block_count)
         return 0;
     return d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
 }
@@ -1063,40 +1042,66 @@ bool API::InitReadCreatures( uint32_t &numcreatures )
     try
     {
         memory_info * minfo = d->offset_descriptor;
-        int creatures = d->offset_descriptor->getAddress ("creatures");
-        d->creature_pos_offset = minfo->getOffset ("creature_position");
-        d->creature_type_offset = minfo->getOffset ("creature_race");
-        d->creature_flags1_offset = minfo->getOffset ("creature_flags1");
-        d->creature_flags2_offset = minfo->getOffset ("creature_flags2");
-        d->creature_name_offset = minfo->getOffset ("creature_name");
-        d->creature_custom_profession_offset = minfo->getOffset ("creature_custom_profession");
-        d->creature_profession_offset = minfo->getOffset ("creature_profession");
-        d->creature_sex_offset = minfo->getOffset ("creature_sex");
-        d->creature_id_offset = minfo->getOffset ("creature_id");
-        d->creature_squad_name_offset = minfo->getOffset ("creature_squad_name");
-        d->creature_squad_leader_id_offset = minfo->getOffset ("creature_squad_leader_id");
-        d->creature_money_offset = minfo->getOffset ("creature_money");
-        d->creature_current_job_offset = minfo->getOffset ("creature_current_job");
-        d->creature_current_job_id_offset = minfo->getOffset ("current_job_id");
-        d->creature_strength_offset = minfo->getOffset ("creature_strength");
-        d->creature_agility_offset = minfo->getOffset ("creature_agility");
-        d->creature_toughness_offset = minfo->getOffset ("creature_toughness");
-        d->creature_skills_offset = minfo->getOffset ("creature_skills");
-        d->creature_labors_offset = minfo->getOffset ("creature_labors");
-        d->creature_happiness_offset = minfo->getOffset ("creature_happiness");
-        d->creature_traits_offset = minfo->getOffset ("creature_traits");
-        d->creature_likes_offset = minfo->getOffset("creature_likes");
-        d->creature_artifact_name_offset = minfo->getOffset("creature_artifact_name");
-        d->creature_mood_offset = minfo->getOffset("creature_mood");
+        Creatures::creature_offsets & off = d->creatures;
+        off.creature_vector = minfo->getAddress ("creatures");
+        off.creature_pos_offset = minfo->getOffset ("creature_position");
+        off.creature_type_offset = minfo->getOffset ("creature_race");
+        off.creature_flags1_offset = minfo->getOffset ("creature_flags1");
+        off.creature_flags2_offset = minfo->getOffset ("creature_flags2");
+        off.creature_name_offset = minfo->getOffset ("creature_name");
+        off.creature_custom_profession_offset = minfo->getOffset ("creature_custom_profession");
+        off.creature_profession_offset = minfo->getOffset ("creature_profession");
+        off.creature_sex_offset = minfo->getOffset ("creature_sex");
+        off.creature_id_offset = minfo->getOffset ("creature_id");
+        off.creature_squad_name_offset = minfo->getOffset ("creature_squad_name");
+        off.creature_squad_leader_id_offset = minfo->getOffset ("creature_squad_leader_id");
+        off.creature_money_offset = minfo->getOffset ("creature_money");
+        off.creature_current_job_offset = minfo->getOffset ("creature_current_job");
+        off.creature_current_job_id_offset = minfo->getOffset ("current_job_id");
+        off.creature_strength_offset = minfo->getOffset ("creature_strength");
+        off.creature_agility_offset = minfo->getOffset ("creature_agility");
+        off.creature_toughness_offset = minfo->getOffset ("creature_toughness");
+        off.creature_skills_offset = minfo->getOffset ("creature_skills");
+        off.creature_labors_offset = minfo->getOffset ("creature_labors");
+        off.creature_happiness_offset = minfo->getOffset ("creature_happiness");
+        off.creature_traits_offset = minfo->getOffset ("creature_traits");
+        off.creature_likes_offset = minfo->getOffset("creature_likes");
+        off.creature_artifact_name_offset = minfo->getOffset("creature_artifact_name");
+        off.creature_mood_offset = minfo->getOffset("creature_mood");
         
-        d->creature_pregnancy_offset = minfo->getOffset("creature_pregnancy");
-        d->creature_blood_max_offset = minfo->getOffset("creature_blood_max");
-        d->creature_blood_current_offset = minfo->getOffset("creature_blood_current");
-        d->creature_bleed_offset = minfo->getOffset("creature_bleed");
+        off.creature_pregnancy_offset = minfo->getOffset("creature_pregnancy");
+        off.creature_blood_max_offset = minfo->getOffset("creature_blood_max");
+        off.creature_blood_current_offset = minfo->getOffset("creature_blood_current");
+        off.creature_bleed_offset = minfo->getOffset("creature_bleed");
         
-        d->p_cre = new DfVector (d->p->readVector (creatures, 4));
+        // name offsets for the creature module
+        off.name_firstname_offset = minfo->getOffset("name_firstname");
+        off.name_nickname_offset = minfo->getOffset("name_nickname");
+        off.name_words_offset = minfo->getOffset("name_words");
+        
+        d->p_cre = new DfVector (d->p->readVector (off.creature_vector, 4));
         d->creaturesInited = true;
         numcreatures =  d->p_cre->getSize();
+
+        /*
+         * --> SHM initialization (if possible) <--
+         */
+        g_pProcess->getModuleIndex("Creatures40d",1,d->creature_module);
+        
+        if(d->creature_module)
+        {
+            // supply the module with offsets so it can work with them
+            memcpy(SHMDATA(Creatures::creature_offsets),&d->creatures,sizeof(Creatures::creature_offsets));
+            const uint32_t cmd = Creatures::CREATURE_INIT + (d->creature_module << 16);
+            g_pProcess->SetAndWait(cmd);
+            //cerr << "Creature acceleration enabled!" << endl;
+        }
+        /*
+        else
+        {
+            cerr << "Creature acceleration NOT enabled!" << endl;
+        }
+        */
         return true;
     }
     catch (Error::MissingMemoryDefinition&)
@@ -1248,27 +1253,46 @@ int32_t API::ReadCreatureInBox (int32_t index, t_creature & furball,
                                 const uint16_t x2, const uint16_t y2, const uint16_t z2)
 {
     if (!d->creaturesInited) return -1;
-    uint16_t coords[3];
-    uint32_t size = d->p_cre->getSize();
-    while (uint32_t(index) < size)
+    if(d->creature_module)
     {
-        // read pointer from vector at position
-        uint32_t temp = * (uint32_t *) d->p_cre->at (index);
-        g_pProcess->read (temp + d->creature_pos_offset, 3 * sizeof (uint16_t), (uint8_t *) &coords);
-        if (coords[0] >= x1 && coords[0] < x2)
+        // supply the module with offsets so it can work with them
+        SHMCREATURESHDR->index = index;
+        SHMCREATURESHDR->x = x1;
+        SHMCREATURESHDR->y = y1;
+        SHMCREATURESHDR->z = z1;
+        SHMCREATURESHDR->x2 = x2;
+        SHMCREATURESHDR->y2 = y2;
+        SHMCREATURESHDR->z2 = z2;
+        const uint32_t cmd = Creatures::CREATURE_FIND_IN_BOX + (d->creature_module << 16);
+        g_pProcess->SetAndWait(cmd);
+        if(SHMCREATURESHDR->index != -1)
+            memcpy(&furball,SHMDATA(void),sizeof(t_creature));
+        return SHMCREATURESHDR->index;
+    }
+    else
+    {
+        uint16_t coords[3];
+        uint32_t size = d->p_cre->getSize();
+        while (uint32_t(index) < size)
         {
-            if (coords[1] >= y1 && coords[1] < y2)
+            // read pointer from vector at position
+            uint32_t temp = * (uint32_t *) d->p_cre->at (index);
+            g_pProcess->read (temp + d->creatures.creature_pos_offset, 3 * sizeof (uint16_t), (uint8_t *) &coords);
+            if (coords[0] >= x1 && coords[0] < x2)
             {
-                if (coords[2] >= z1 && coords[2] < z2)
+                if (coords[1] >= y1 && coords[1] < y2)
                 {
-                    ReadCreature (index, furball);
-                    return index;
+                    if (coords[2] >= z1 && coords[2] < z2)
+                    {
+                        ReadCreature (index, furball);
+                        return index;
+                    }
                 }
             }
+            index++;
         }
-        index++;
+        return -1;
     }
-    return -1;
 }
 
 bool API::getItemIndexesInBox(vector<uint32_t> &indexes,
@@ -1305,27 +1329,38 @@ bool API::getItemIndexesInBox(vector<uint32_t> &indexes,
 bool API::ReadCreature (const int32_t index, t_creature & furball)
 {
     if(!d->creaturesInited) return false;
+    if(d->creature_module)
+    {
+        // supply the module with offsets so it can work with them
+        SHMCREATURESHDR->index = index;
+        const uint32_t cmd = Creatures::CREATURE_AT_INDEX + (d->creature_module << 16);
+        g_pProcess->SetAndWait(cmd);
+        memcpy(&furball,SHMDATA(t_creature),sizeof(t_creature));
+        // cerr << "creature read from SHM!" << endl;
+        return true;
+    }
     // read pointer from vector at position
     uint32_t temp = * (uint32_t *) d->p_cre->at (index);
     furball.origin = temp;
+    Creatures::creature_offsets &offs = d->creatures;
     //read creature from memory
-    g_pProcess->read (temp + d->creature_pos_offset, 3 * sizeof (uint16_t), (uint8_t *) & (furball.x)); // xyz really
-    g_pProcess->readDWord (temp + d->creature_type_offset, furball.type);
-    g_pProcess->readDWord (temp + d->creature_flags1_offset, furball.flags1.whole);
-    g_pProcess->readDWord (temp + d->creature_flags2_offset, furball.flags2.whole);
+    g_pProcess->read (temp + offs.creature_pos_offset, 3 * sizeof (uint16_t), (uint8_t *) & (furball.x)); // xyz really
+    g_pProcess->readDWord (temp + offs.creature_type_offset, furball.type);
+    g_pProcess->readDWord (temp + offs.creature_flags1_offset, furball.flags1.whole);
+    g_pProcess->readDWord (temp + offs.creature_flags2_offset, furball.flags2.whole);
     // names
-    d->readName(furball.name,temp + d->creature_name_offset);
-    d->readName(furball.squad_name, temp + d->creature_squad_name_offset);
-    d->readName(furball.artifact_name, temp + d->creature_artifact_name_offset);
+    d->readName(furball.name,temp + offs.creature_name_offset);
+    d->readName(furball.squad_name, temp + offs.creature_squad_name_offset);
+    d->readName(furball.artifact_name, temp + offs.creature_artifact_name_offset);
     // custom profession
-    fill_char_buf (furball.custom_profession, d->p->readSTLString (temp + d->creature_custom_profession_offset));
+    fill_char_buf (furball.custom_profession, d->p->readSTLString (temp + offs.creature_custom_profession_offset));
 
     // labors
-    g_pProcess->read (temp + d->creature_labors_offset, NUM_CREATURE_LABORS, furball.labors);
+    g_pProcess->read (temp + offs.creature_labors_offset, NUM_CREATURE_LABORS, furball.labors);
     // traits
-    g_pProcess->read (temp + d->creature_traits_offset, sizeof (uint16_t) * NUM_CREATURE_TRAITS, (uint8_t *) &furball.traits);
+    g_pProcess->read (temp + offs.creature_traits_offset, sizeof (uint16_t) * NUM_CREATURE_TRAITS, (uint8_t *) &furball.traits);
     // learned skills
-    DfVector skills (d->p->readVector (temp + d->creature_skills_offset, 4));
+    DfVector skills (d->p->readVector (temp + offs.creature_skills_offset, 4));
     furball.numSkills = skills.getSize();
     for (uint32_t i = 0; i < furball.numSkills;i++)
     {
@@ -1337,54 +1372,55 @@ bool API::ReadCreature (const int32_t index, t_creature & furball)
         furball.skills[i].experience = g_pProcess->readWord (temp2 + 8);
     }
     // profession
-    furball.profession = g_pProcess->readByte (temp + d->creature_profession_offset);
+    furball.profession = g_pProcess->readByte (temp + offs.creature_profession_offset);
     // current job HACK: the job object isn't cleanly represented here
-    uint32_t jobIdAddr = g_pProcess->readDWord (temp + d->creature_current_job_offset);
-    
+    uint32_t jobIdAddr = g_pProcess->readDWord (temp + offs.creature_current_job_offset);
+
     if (jobIdAddr)
     {
         furball.current_job.active = true;
-        furball.current_job.jobId = g_pProcess->readByte (jobIdAddr + d->creature_current_job_id_offset);
+        furball.current_job.jobId = g_pProcess->readByte (jobIdAddr + offs.creature_current_job_id_offset);
     }
     else
     {
         furball.current_job.active = false;
     }
-    
+
     //likes
-    DfVector likes(d->p->readVector(temp+d->creature_likes_offset,4));
+    DfVector likes(d->p->readVector(temp + offs.creature_likes_offset,4));
     furball.numLikes = likes.getSize();
     for(uint32_t i = 0;i<furball.numLikes;i++)
     {
         uint32_t temp2 = *(uint32_t *) likes[i];
         g_pProcess->read(temp2,sizeof(t_like),(uint8_t *) &furball.likes[i]);
     }
-    
-	furball.mood = (int16_t) g_pProcess->readWord (temp + d->creature_mood_offset);
+
+    furball.mood = (int16_t) g_pProcess->readWord (temp + offs.creature_mood_offset);
 
 
-    g_pProcess->readDWord (temp + d->creature_happiness_offset, furball.happiness);
-    g_pProcess->readDWord (temp + d->creature_id_offset, furball.id);
-    g_pProcess->readDWord (temp + d->creature_agility_offset, furball.agility);
-    g_pProcess->readDWord (temp + d->creature_strength_offset, furball.strength);
-    g_pProcess->readDWord (temp + d->creature_toughness_offset, furball.toughness);
-    g_pProcess->readDWord (temp + d->creature_money_offset, furball.money);
-    furball.squad_leader_id = (int32_t) g_pProcess->readDWord (temp + d->creature_squad_leader_id_offset);
-    g_pProcess->readByte (temp + d->creature_sex_offset, furball.sex);
+    g_pProcess->readDWord (temp + offs.creature_happiness_offset, furball.happiness);
+    g_pProcess->readDWord (temp + offs.creature_id_offset, furball.id);
+    g_pProcess->readDWord (temp + offs.creature_agility_offset, furball.agility);
+    g_pProcess->readDWord (temp + offs.creature_strength_offset, furball.strength);
+    g_pProcess->readDWord (temp + offs.creature_toughness_offset, furball.toughness);
+    g_pProcess->readDWord (temp + offs.creature_money_offset, furball.money);
+    furball.squad_leader_id = (int32_t) g_pProcess->readDWord (temp + offs.creature_squad_leader_id_offset);
+    g_pProcess->readByte (temp + offs.creature_sex_offset, furball.sex);
 
-	g_pProcess->readDWord(temp+d->creature_pregnancy_offset, furball.pregnancy_timer);
-	furball.blood_max = (int32_t) g_pProcess->readDWord(temp+d->creature_blood_max_offset);
-	furball.blood_current = (int32_t) g_pProcess->readDWord(temp+d->creature_blood_current_offset);
-	g_pProcess->readDWord(temp+d->creature_bleed_offset, furball.bleed_rate);
+    g_pProcess->readDWord(temp + offs.creature_pregnancy_offset, furball.pregnancy_timer);
+    furball.blood_max = (int32_t) g_pProcess->readDWord(temp + offs.creature_blood_max_offset);
+    furball.blood_current = (int32_t) g_pProcess->readDWord(temp + offs.creature_blood_current_offset);
+    g_pProcess->readDWord(temp + offs.creature_bleed_offset, furball.bleed_rate);
 
 
     return true;
 }
 
-void API::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
+bool API::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
 {
+    if(!d->creaturesInited) return false;
     uint32_t temp = * (uint32_t *) d->p_cre->at (index);
-    WriteRaw(temp + d->creature_labors_offset, NUM_CREATURE_LABORS, labors);
+    WriteRaw(temp + d->creatures.creature_labors_offset, NUM_CREATURE_LABORS, labors);
 }
 
 bool API::InitReadNameTables(vector<vector<string> > & translations , vector<vector<string> > & foreign_languages) //(map< string, vector<string> > & nameTable)

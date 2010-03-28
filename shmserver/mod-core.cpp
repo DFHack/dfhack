@@ -38,6 +38,7 @@ distribution.
 #include "shms.h"
 #include "mod-core.h"
 #include "mod-maps.h"
+#include "mod-creature40d.h"
 
 std::vector <DFPP_module> module_registry;
 
@@ -234,7 +235,12 @@ void InitModules (void)
 {
     // create the core module
     module_registry.push_back(InitCore());
-    module_registry.push_back(InitMaps());
+    module_registry.push_back(DFHack::Maps::Init());
+    module_registry.push_back(DFHack::Creatures::Init());
+    for(int i = 0; i < module_registry.size();i++)
+    {
+        fprintf(stderr,"Initialized module %s, version %d\n",module_registry[i].name.c_str(),module_registry[i].version);
+    }
     // TODO: dynamic module init
 }
 

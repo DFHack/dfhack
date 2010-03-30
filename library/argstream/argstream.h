@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 Xavier Décoret <Xavier.Decoret@imag.fr>
+/* Copyright (C) 2004 Xavier Decoret <Xavier.Decoret@imag.fr>
 *
 * argsteam is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -156,6 +156,10 @@ namespace
     {
         return OptionHolder(s,l,desc);
     }
+    template <class T, class O>
+    class ValuesHolder;
+    template <typename T, typename O>
+    argstream& operator>> (argstream&, const ValuesHolder<T, O>&);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Interface of ValuesHolder
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

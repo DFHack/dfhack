@@ -1619,7 +1619,7 @@
       <Offset name="creature_squad_name">0x00F0</Offset>
       <Offset name="creature_mood">0x160</Offset>
       <Offset name="creature_pregnancy">0x164</Offset>
-      <Offset name="creature_squad_leader_id">0x00A0</Offset>
+      <Offset name="creature_squad_leader_id">0x190</Offset>
       <Offset name="creature_money">0x02F8</Offset> <!-- most probably wrong -->
       <Offset name="creature_current_job">0x0200</Offset>
       <Offset name="creature_blood_max">0x264</Offset>

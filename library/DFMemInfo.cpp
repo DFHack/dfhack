@@ -51,7 +51,7 @@ class memory_info::Private
 {
     public:
     map <string, uint32_t> addresses;
-    map <string, uint32_t> offsets;
+    map <string, int32_t> offsets;
     map <string, uint32_t> hexvals;
     map <string, string> strings;
     
@@ -201,7 +201,7 @@ void memory_info::setBase (const uint32_t b)
 
 void memory_info::setOffset (const string & key, const string & value)
 {
-    uint32_t offset = strtol(value.c_str(), NULL, 16);
+    int32_t offset = strtol(value.c_str(), NULL, 16);
     d->offsets[key] = offset;
 }
 
@@ -475,9 +475,9 @@ uint32_t memory_info::getAddress (const char *key)
 
 
 // Get named offset
-uint32_t memory_info::getOffset (const char *key)
+int32_t memory_info::getOffset (const char *key)
 {
-    map <string, uint32_t>::iterator iter = d->offsets.find(key);
+    map <string, int32_t>::iterator iter = d->offsets.find(key);
     if(iter != d->offsets.end())
     {
         return (*iter).second;
@@ -511,9 +511,9 @@ uint32_t memory_info::getAddress (const string &key)
 
 
 // Get named offset
-uint32_t memory_info::getOffset (const string &key)
+int32_t memory_info::getOffset (const string &key)
 {
-    map <string, uint32_t>::iterator iter = d->offsets.find(key);
+    map <string, int32_t>::iterator iter = d->offsets.find(key);
     if(iter != d->offsets.end())
     {
         return (*iter).second;

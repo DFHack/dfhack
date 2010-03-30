@@ -498,24 +498,6 @@ const std::string WineProcess::readCString (uint32_t offset)
     return temp;
 }
 
-DfVector WineProcess::readVector (uint32_t offset, uint32_t item_size)
-{
-    /*
-        MSVC++ vector is four pointers long
-        ptr allocator
-        ptr start
-        ptr end
-        ptr alloc_end
-     
-        we don't care about alloc_end because we don't try to add stuff
-        we also don't care about the allocator thing in front
-    */
-    uint32_t start = g_pProcess->readDWord(offset+4);
-    uint32_t end = g_pProcess->readDWord(offset+8);
-    uint32_t size = (end - start) /4;
-    return DfVector(start,size,item_size);
-}
-
 size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
     /*

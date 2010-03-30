@@ -103,10 +103,10 @@ namespace DFHack
         void setBase (const string&);
         void setBase (const uint32_t);
 
-        uint32_t getOffset (const string&);
+        int32_t getOffset (const string&);
         uint32_t getAddress (const string&);
         uint32_t getHexValue (const string&);
-        uint32_t getOffset (const char *);
+        int32_t getOffset (const char *);
         uint32_t getAddress (const char *);
         uint32_t getHexValue (const char *);
         

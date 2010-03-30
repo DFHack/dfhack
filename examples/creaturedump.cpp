@@ -151,8 +151,6 @@ likeType printLike(DFHack::t_like like, const matGlosses & mat,const vector< vec
 
 void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 {
- if(string(creaturestypes[creature.type].id) == "DWARF")
-    {
         cout << "address: " << hex <<  creature.origin << dec << " creature type: " << creaturestypes[creature.type].id << ", position: " << creature.x << "x " << creature.y << "y "<< creature.z << "z" << endl;
         bool addendl = false;
         if(creature.name.first_name[0])
@@ -294,7 +292,6 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             string artifact_name = DF.TranslateName(creature.artifact_name,englishWords,foreignWords,false);
             cout << "artifact: " << artifact_name << endl;
         }
-    }
     cout << endl;
 }
 
@@ -358,8 +355,11 @@ int main (void)
     {
         DFHack::t_creature temp;
         DF.ReadCreature(i,temp);
-        cout << "index " << i << " ";
-        printCreature(DF,temp);
+        if(string(creaturestypes[temp.type].id) == "DWARF")
+        {
+            cout << "index " << i << " ";
+            printCreature(DF,temp);
+        }
     }
     uint32_t currentIdx;
     DFHack::t_creature currentCreature;

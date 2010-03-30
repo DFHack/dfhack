@@ -30,6 +30,7 @@ distribution.
 
 namespace DFHack
 {
+    class Process;
     class DFHACK_EXPORT DfVector
     {
         private:
@@ -42,7 +43,7 @@ namespace DFHack
             
         public:
             DfVector();
-            DfVector(uint32_t _start, uint32_t _size, uint32_t _item_size);
+            DfVector(Process * p, uint32_t address, uint32_t item_size);
             ~DfVector();
             // get offset of the specified index
             inline void* operator[] (uint32_t index)

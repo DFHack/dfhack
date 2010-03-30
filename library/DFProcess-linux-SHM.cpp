@@ -789,24 +789,6 @@ const std::string SHMProcess::readCString (uint32_t offset)
     return temp;
 }
 
-DfVector SHMProcess::readVector (uint32_t offset, uint32_t item_size)
-{
-    if(!d->locked) throw Error::SHMAccessDenied();
-    
-    /*
-        GNU libstdc++ vector is three pointers long
-        ptr start
-        ptr end
-        ptr alloc_end
-
-        we don't care about alloc_end because we don't try to add stuff
-    */
-    uint32_t start = g_pProcess->readDWord(offset);
-    uint32_t end = g_pProcess->readDWord(offset+4);
-    uint32_t size = (end - start) /4;
-    return DfVector(start,size,item_size);
-}
-
 const std::string SHMProcess::readSTLString(uint32_t offset)
 {
     if(!d->locked) throw Error::SHMAccessDenied();

@@ -67,6 +67,8 @@ typedef struct
     uint32_t name_firstname_offset;
     uint32_t name_nickname_offset;
     uint32_t name_words_offset;
+    // HACK: vector address correction for SHM server
+    int32_t vector_correct;
 } creature_offsets;
 
 typedef struct

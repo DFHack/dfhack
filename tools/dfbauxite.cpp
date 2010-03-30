@@ -105,7 +105,7 @@ int main ()
         return EXIT_FAILURE;
     }
     
-    items_vector = new DFHack::DfVector (proc->readVector (items, 4));
+    items_vector = new DFHack::DfVector (proc, items, 4);
     for(uint32_t i = 0; i < items_vector->getSize(); i++)
     {
         // get pointer to object

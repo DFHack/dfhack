@@ -784,6 +784,8 @@
     <Entry version="v0.27.176.38a" os="windows" id="38awin" base="meta-40d">
       <HexValue name="pe_timestamp">0x47b6fac2</HexValue>
       <String name="md5">48c831b6f3950913b8e1aeada563d2db</String>
+      <Offset name="hacked_vector_start">0x0</Offset><!-- where a vector actually starts -->
+      <Offset name="hacked_vector_triplet">0x4</Offset><!-- where the vector triplet is -->
       <Address name="buildings">0x014639f4</Address>
       <Address name="constructions">0x01463288</Address>
       <Address name="creatures">0x01463388</Address>
@@ -1161,6 +1163,8 @@
     <Entry version="v0.28.181.40d2" os="windows" id="40d2win" base="40dwin">
       <HexValue name="pe_timestamp">0x4953556c</HexValue>
       <String name="md5">b1a8ca1f91734eb492b7f54f6823cddb</String>
+      <Offset name="hacked_vector_start">-0x8</Offset><!-- where a vector actually starts -->
+      <Offset name="hacked_vector_triplet">0x4</Offset><!-- where the vector triplet is -->
       <Address name="buildings">0x014d1db0</Address>
       <Address name="constructions">0x014bda18</Address>
       <Address name="creatures">0x014D141C</Address>
@@ -1562,6 +1566,8 @@
     
     <Entry version="v0.28.181.40d2" os="linux" id="40d2lin" base="meta-40d">
       <String name="md5">7a0859795e972574e80fa3cebc9fcf85</String>
+      <Offset name="hacked_vector_start">0x0</Offset><!-- where a vector actually starts -->
+      <Offset name="hacked_vector_triplet">0x0</Offset><!-- where the vector triplet is -->
       <Address name="buildings">0x093154e0</Address>
       <Address name="constructions">0x093016b8</Address>
       <Address name="creatures">0x09355940</Address>

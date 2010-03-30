@@ -44,7 +44,7 @@ void ReadCreatureAtIndex(void *data)
 {
     creature_modulestate * state = (creature_modulestate *) data;
     creature_offsets & offsets = state->offsets;
-    std::vector<char *> * creaturev = (std::vector<char *> *) offsets.creature_vector;
+    std::vector<char *> * creaturev = (std::vector<char *> *) (offsets.creature_vector + offsets.vector_correct);
     uint32_t length = creaturev->size();
     int32_t index = SHMHDR->index;
     
@@ -83,7 +83,7 @@ void ReadCreatureAtIndex(void *data)
         uint16_t experience;
     } raw_skill;
     // learned skills
-    std::vector <void *> * skillv = (std::vector <void *> *) (temp + offsets.creature_skills_offset);
+    std::vector <void *> * skillv = (std::vector <void *> *) (temp + offsets.creature_skills_offset + offsets.vector_correct);
     //DfVector skills (d->p->readVector (temp + offsets.creature_skills_offset, 4));
     furball->numSkills = skillv->size();
     for (uint32_t i = 0; i < furball->numSkills;i++)
@@ -110,7 +110,7 @@ void ReadCreatureAtIndex(void *data)
     }
 
     //likes
-    std::vector <t_like *> * likev = (std::vector <t_like *> *) (temp + offsets.creature_likes_offset);
+    std::vector <t_like *> * likev = (std::vector <t_like *> *) (temp + offsets.creature_likes_offset + offsets.vector_correct);
     furball->numLikes = likev->size();
     for(uint32_t i = 0;i<furball->numLikes;i++)
     {
@@ -149,7 +149,7 @@ void FindNextCreatureInBox (void * data)
     y = SHMHDR->y; y2 = SHMHDR->y2;
     z = SHMHDR->z; z2 = SHMHDR->x2;
 
-    std::vector<char *> * creaturev = (std::vector<char *> *) offsets.creature_vector;
+    std::vector<char *> * creaturev = (std::vector<char *> *) (offsets.creature_vector + offsets.vector_correct);
     
     uint32_t length = creaturev->size();
     typedef uint16_t coords[3];

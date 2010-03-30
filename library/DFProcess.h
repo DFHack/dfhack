@@ -98,8 +98,6 @@ namespace DFHack
             virtual const string readSTLString (uint32_t offset) = 0;
             virtual size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity) = 0;
             virtual void writeSTLString(const uint32_t address, const std::string writeString) = 0;
-            // read a vector from memory
-            virtual DfVector readVector (uint32_t offset, uint32_t item_size) = 0;
             // get class name of an object with rtti/type info
             virtual string readClassName(uint32_t vptr) = 0;
             
@@ -168,8 +166,6 @@ namespace DFHack
             const string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             void writeSTLString(const uint32_t address, const std::string writeString){};
-            // read a vector from memory
-            DfVector readVector (uint32_t offset, uint32_t item_size);
             // get class name of an object with rtti/type info
             string readClassName(uint32_t vptr);
             
@@ -233,8 +229,6 @@ namespace DFHack
             const string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             void writeSTLString(const uint32_t address, const std::string writeString);
-            // read a vector from memory
-            DfVector readVector (uint32_t offset, uint32_t item_size);
             // get class name of an object with rtti/type info
             string readClassName(uint32_t vptr);
             
@@ -297,8 +291,6 @@ namespace DFHack
             const string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             void writeSTLString(const uint32_t address, const std::string writeString){};
-            // read a vector from memory
-            DfVector readVector (uint32_t offset, uint32_t item_size);
             // get class name of an object with rtti/type info
             string readClassName(uint32_t vptr);
             

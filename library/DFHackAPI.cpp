@@ -220,7 +220,7 @@ bool API::InitMap()
     /*
      * --> SHM initialization (if possible) <--
      */
-    g_pProcess->getModuleIndex("Maps",2,d->maps_module);
+    g_pProcess->getModuleIndex("Maps",3,d->maps_module);
     
     if(d->maps_module)
     {
@@ -351,7 +351,7 @@ bool API::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffe
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->read (addr + d->tile_type_offset, 256 * sizeof (uint16_t), (uint8_t *) buffer);
+        g_pProcess->read (addr + d->tile_type_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
         return true;
     }
     return false;
@@ -413,7 +413,7 @@ bool API::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d 
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->read (addr + d->designation_offset, 256 * sizeof (uint32_t), (uint8_t *) buffer);
+        g_pProcess->read (addr + d->designation_offset, sizeof (designations40d), (uint8_t *) buffer);
         return true;
     }
     return false;
@@ -426,7 +426,7 @@ bool API::ReadOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buf
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->read (addr + d->occupancy_offset, 256 * sizeof (uint32_t), (uint8_t *) buffer);
+        g_pProcess->read (addr + d->occupancy_offset, sizeof (occupancies40d), (uint8_t *) buffer);
         return true;
     }
     return false;
@@ -439,7 +439,7 @@ bool API::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buff
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->write (addr + d->tile_type_offset, 256 * sizeof (uint16_t), (uint8_t *) buffer);
+        g_pProcess->write (addr + d->tile_type_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
         return true;
     }
     return false;
@@ -457,7 +457,7 @@ bool API::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->write (addr + d->designation_offset, 256 * sizeof (uint32_t), (uint8_t *) buffer);
+        g_pProcess->write (addr + d->designation_offset, sizeof (designations40d), (uint8_t *) buffer);
         return true;
     }
     return false;
@@ -469,7 +469,7 @@ bool API::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *bu
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->write (addr + d->occupancy_offset, 256 * sizeof (uint32_t), (uint8_t *) buffer);
+        g_pProcess->write (addr + d->occupancy_offset, sizeof (occupancies40d), (uint8_t *) buffer);
         return true;
     }
     return false;
@@ -483,7 +483,7 @@ bool API::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices40
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->read (addr + d->biome_stuffs, 16 * sizeof (uint8_t), (uint8_t *) buffer);
+        g_pProcess->read (addr + d->biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer);
         return true;
     }
     return false;

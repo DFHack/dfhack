@@ -853,7 +853,7 @@ union t_blockflags
 typedef int16_t tiletypes40d [16][16];
 typedef DFHack::t_designation designations40d [16][16];
 typedef DFHack::t_occupancy occupancies40d [16][16];
-typedef uint8_t biome_indices40d [8];
+typedef uint8_t biome_indices40d [16];
 
 typedef struct
 {

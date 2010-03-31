@@ -33,7 +33,7 @@ namespace DFHack
     namespace Maps
     {
 
-#define MAPS_VERSION 2
+#define MAPS_VERSION 3
 typedef struct
 {
     uint32_t map_offset;// = d->offset_descriptor->getAddress ("map_data");

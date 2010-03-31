@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import pydfhack
-x = pydfhack.API("Memory.xml")
-y = pydfhack.MatglossVector()
+DF = pydfhack.API("Memory.xml")
 
-if x.Attach():
-  success,stones = x.ReadStoneMatgloss()
+if DF.Attach():
+  success,stones = DF.ReadStoneMatgloss()
   if success:
     print "Dumping all stone"
     for matgloss in stones:
       print "ID %s, name %s" % (matgloss.id, matgloss.name)
-  x.Detach()
+  DF.Detach()

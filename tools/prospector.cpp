@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <stdio.h>
 using namespace std;
 
 #include <DFTypes.h>
@@ -103,6 +104,8 @@ int main (int argc, const char* argv[])
     int16_t tempvein [16][16];
     vector <DFHack::t_vein> veins;
     vector <DFHack::t_frozenliquidvein> iceveins;
+    uint32_t maximum_regionoffset = 0;
+    uint32_t num_overflows = 0;
     // walk the map!
     for(uint32_t x = 0; x< x_max;x++)
     {
@@ -129,9 +132,17 @@ int main (int argc, const char* argv[])
                     {
                         for (uint32_t yy = 0; yy< 16;yy++)
                         {
+                            uint8_t test = designations[xx][yy].bits.biome;
+                            if(test > maximum_regionoffset)
+                                maximum_regionoffset = test;
+                            if( test >= sizeof(regionoffsets))
+                            {
+                                num_overflows++;
+                                continue;
+                            }
                             tempvein[xx][yy] =
                             layerassign
-                            [regionoffsets[designations[xx][yy].bits.biome]]
+                            [regionoffsets[test]]
                             [designations[xx][yy].bits.geolayer_index];
                         }
                     }
@@ -182,6 +193,14 @@ int main (int argc, const char* argv[])
         }
     }
     // print report
+    cout << "Maximal regionoffset seen: " << maximum_regionoffset << ".";
+    if(maximum_regionoffset >= sizeof(regionoffsets) )
+    {
+        cout << " This is above the regionoffsets array size!" << endl;
+        cout << "Number of overflows: " << num_overflows;
+    }
+    cout << endl;
+    
     map<int16_t, uint32_t>::iterator p;
     for(p = materials.begin(); p != materials.end(); p++)
     {

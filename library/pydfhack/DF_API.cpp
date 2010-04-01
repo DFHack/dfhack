@@ -31,6 +31,7 @@ distribution.
 #include "DFTypes.h"
 #include "DFHackAPI.h"
 #include "UnionBase.cpp"
+//#include "MatGloss.cpp"
 
 using namespace std;
 using namespace DFHack;
@@ -118,7 +119,7 @@ static PyObject* DF_API_getIsSuspended(DF_API* self, void* closure)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to read suspension flag");
-		Py_RETURN_FALSE;
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -135,7 +136,7 @@ static PyObject* DF_API_getIsPaused(DF_API* self, void* closure)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to read pause state");
-		Py_RETURN_FALSE;
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -157,7 +158,7 @@ static PyObject* DF_API_getMenuState(DF_API* self, void* closure)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to read menu state");
-		Py_RETURN_NONE;
+		return NULL;
     }
     
     Py_RETURN_NONE;
@@ -185,7 +186,7 @@ static PyObject* DF_API_getViewCoords(DF_API* self, void* closure)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to get view coordinates");
-		Py_RETURN_NONE;
+		return NULL;
     }
     
     Py_RETURN_NONE;
@@ -206,7 +207,7 @@ static PyObject* DF_API_getSize(DF_API* self, void* closure)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to get view coordinates");
-		Py_RETURN_NONE;
+		return NULL;
     }
     
     Py_RETURN_NONE;
@@ -254,7 +255,7 @@ static PyObject* DF_API_Suspend(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to suspend");
-		Py_RETURN_FALSE;
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -271,7 +272,7 @@ static PyObject* DF_API_Resume(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to resume");
-		Py_RETURN_FALSE;
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -288,7 +289,7 @@ static PyObject* DF_API_AsyncSuspend(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to asynchronously suspend");
-		Py_RETURN_FALSE;
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -305,7 +306,7 @@ static PyObject* DF_API_ForceResume(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to force resume");
-		Py_RETURN_FALSE;
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -322,7 +323,7 @@ static PyObject* DF_API_InitMap(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to initialize map");
-		Py_RETURN_FALSE;
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -339,7 +340,7 @@ static PyObject* DF_API_DestroyMap(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to destroy map");
-		Py_RETURN_FALSE;
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -358,6 +359,7 @@ static PyObject* DF_API_InitReadConstructions(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to read constructions");
+		return NULL;
     }
     
     Py_RETURN_NONE;
@@ -376,6 +378,7 @@ static PyObject* DF_API_FinishReadConstructions(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to finish reading constructions");
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -394,6 +397,7 @@ static PyObject* DF_API_InitReadBuildings(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to read buildings");
+		return NULL;
     }
     
     Py_RETURN_NONE;
@@ -412,6 +416,7 @@ static PyObject* DF_API_FinishReadBuildings(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to finish reading buildings");
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -430,6 +435,7 @@ static PyObject* DF_API_InitReadEffects(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to read effects");
+		return NULL;
     }
     
     Py_RETURN_NONE;
@@ -448,6 +454,7 @@ static PyObject* DF_API_FinishReadEffects(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to finish reading effects");
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -466,6 +473,7 @@ static PyObject* DF_API_InitReadVegetation(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to read vegetation");
+		return NULL;
     }
     
     Py_RETURN_NONE;
@@ -484,6 +492,7 @@ static PyObject* DF_API_FinishReadVegetation(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to finish reading vegetation");
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -502,6 +511,7 @@ static PyObject* DF_API_InitReadCreatures(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to read creatures");
+		return NULL;
     }
     
     Py_RETURN_NONE;
@@ -520,6 +530,7 @@ static PyObject* DF_API_FinishReadCreatures(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to finish reading creatures");
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -538,6 +549,7 @@ static PyObject* DF_API_InitReadNotes(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to read notes");
+		return NULL;
     }
     
     Py_RETURN_NONE;
@@ -556,6 +568,7 @@ static PyObject* DF_API_FinishReadNotes(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to finish reading notes");
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -574,6 +587,7 @@ static PyObject* DF_API_InitReadSettlements(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to read settlements");
+		return NULL;
     }
     
     Py_RETURN_NONE;
@@ -592,6 +606,7 @@ static PyObject* DF_API_FinishReadSettlements(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to finish reading settlements");
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -610,6 +625,7 @@ static PyObject* DF_API_InitReadItems(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to read items");
+		return NULL;
     }
     
     Py_RETURN_NONE;
@@ -628,6 +644,7 @@ static PyObject* DF_API_FinishReadItems(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to finish reading items");
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -644,6 +661,7 @@ static PyObject* DF_API_InitReadHotkeys(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to initialize hotkey reader");
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -660,6 +678,7 @@ static PyObject* DF_API_InitViewSize(DF_API* self)
     catch(...)
     {
         PyErr_SetString(PyExc_ValueError, "Error trying to initialize view size");
+		return NULL;
     }
     
     Py_RETURN_FALSE;
@@ -849,6 +868,156 @@ static PyObject* DF_API_WriteDirtyBit(DF_API* self, PyObject* args)
 	}
 }
 
+static PyObject* DF_API_ReadStoneMatgloss(DF_API* self, PyObject* args)
+{
+	PyObject* list;
+	
+	if(self->api_Ptr == NULL)
+		return NULL;
+	else
+	{
+		std::vector<DFHack::t_matgloss> output;
+		std::vector<DFHack::t_matgloss>::iterator iter;
+		
+		if(!self->api_Ptr->ReadStoneMatgloss(output))
+		{
+			PyErr_SetString(PyExc_ValueError, "Error reading stone matgloss");
+			return NULL;
+		}
+		
+		list = PyList_New(0);
+		
+		for(iter = output.begin(); iter != output.end(); iter++)
+		{
+			t_matgloss item = *iter;
+			
+			PyList_Append(list, Py_BuildValue("sIIIs", item.id, item.fore, item.back, item.bright, item.name));
+		}
+		
+		return list;
+	}
+}
+
+static PyObject* DF_API_ReadWoodMatgloss(DF_API* self, PyObject* args)
+{
+	PyObject* list;
+	
+	if(self->api_Ptr == NULL)
+		return NULL;
+	else
+	{
+		std::vector<DFHack::t_matgloss> output;
+		std::vector<DFHack::t_matgloss>::iterator iter;
+		
+		if(!self->api_Ptr->ReadWoodMatgloss(output))
+		{
+			PyErr_SetString(PyExc_ValueError, "Error reading stone matgloss");
+			return NULL;
+		}
+		
+		list = PyList_New(0);
+		
+		for(iter = output.begin(); iter != output.end(); iter++)
+		{
+			t_matgloss item = *iter;
+			
+			PyList_Append(list, Py_BuildValue("sIIIs", item.id, item.fore, item.back, item.bright, item.name));
+		}
+		
+		return list;
+	}
+}
+
+static PyObject* DF_API_ReadMetalMatgloss(DF_API* self, PyObject* args)
+{
+	PyObject* list;
+	
+	if(self->api_Ptr == NULL)
+		return NULL;
+	else
+	{
+		std::vector<DFHack::t_matgloss> output;
+		std::vector<DFHack::t_matgloss>::iterator iter;
+		
+		if(!self->api_Ptr->ReadMetalMatgloss(output))
+		{
+			PyErr_SetString(PyExc_ValueError, "Error reading stone matgloss");
+			return NULL;
+		}
+		
+		list = PyList_New(0);
+		
+		for(iter = output.begin(); iter != output.end(); iter++)
+		{
+			t_matgloss item = *iter;
+			
+			PyList_Append(list, Py_BuildValue("sIIIs", item.id, item.fore, item.back, item.bright, item.name));
+		}
+		
+		return list;
+	}
+}
+
+static PyObject* DF_API_ReadPlantMatgloss(DF_API* self, PyObject* args)
+{
+	PyObject* list;
+	
+	if(self->api_Ptr == NULL)
+		return NULL;
+	else
+	{
+		std::vector<DFHack::t_matglossPlant> output;
+		std::vector<DFHack::t_matglossPlant>::iterator iter;
+		
+		if(!self->api_Ptr->ReadPlantMatgloss(output))
+		{
+			PyErr_SetString(PyExc_ValueError, "Error reading stone matgloss");
+			return NULL;
+		}
+		
+		list = PyList_New(0);
+		
+		for(iter = output.begin(); iter != output.end(); iter++)
+		{
+			t_matglossPlant item = *iter;
+			
+			PyList_Append(list, Py_BuildValue("sIIIssss", item.id, item.fore, item.back, item.bright, item.name, item.drink_name, item.food_name, item.extract_name));
+		}
+		
+		return list;
+	}
+}
+
+static PyObject* DF_API_ReadCreatureMatgloss(DF_API* self, PyObject* args)
+{
+	PyObject* list;
+	
+	if(self->api_Ptr == NULL)
+		return NULL;
+	else
+	{
+		std::vector<DFHack::t_matgloss> output;
+		std::vector<DFHack::t_matgloss>::iterator iter;
+		
+		if(!self->api_Ptr->ReadStoneMatgloss(output))
+		{
+			PyErr_SetString(PyExc_ValueError, "Error reading stone matgloss");
+			return NULL;
+		}
+		
+		list = PyList_New(0);
+		
+		for(iter = output.begin(); iter != output.end(); iter++)
+		{
+			t_matgloss item = *iter;
+			
+			PyList_Append(list, Py_BuildValue("sIIIs", item.id, item.fore, item.back, item.bright, item.name));
+		}
+		
+		return list;
+	}
+}
+
 static PyMethodDef DF_API_methods[] =
 {
     {"Attach", (PyCFunction)DF_API_Attach, METH_NOARGS, "Attach to the DF process"},
@@ -884,6 +1053,11 @@ static PyMethodDef DF_API_methods[] =
 	{"Write_Occupancy", (PyCFunction)DF_API_WriteOccupancy, METH_VARARGS, ""},
 	{"Read_Dirty_Bit", (PyCFunction)DF_API_ReadDirtyBit, METH_VARARGS, ""},
 	{"Write_Dirty_Bit", (PyCFunction)DF_API_WriteDirtyBit, METH_VARARGS, ""},
+	{"Read_Stone_Matgloss", (PyCFunction)DF_API_ReadStoneMatgloss, METH_NOARGS, ""},
+	{"Read_Wood_Matgloss", (PyCFunction)DF_API_ReadWoodMatgloss, METH_NOARGS, ""},
+	{"Read_Metal_Matgloss", (PyCFunction)DF_API_ReadMetalMatgloss, METH_NOARGS, ""},
+	{"Read_Plant_Matgloss", (PyCFunction)DF_API_ReadPlantMatgloss, METH_NOARGS, ""},
+	{"Read_Creature_Matgloss", (PyCFunction)DF_API_ReadCreatureMatgloss, METH_NOARGS, ""},
     {NULL}  // Sentinel
 };
 

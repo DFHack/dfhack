@@ -314,6 +314,27 @@ static PyObject* DF_API_getCurrentCursorCreature(DF_API* self, void* closure)
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_API_getWindowSize(DF_API* self, void* closure)
+{
+	int32_t width, height;
+	
+	try
+	{
+		if(self->api_Ptr != NULL)
+		{
+			self->api_Ptr->getWindowSize(width, height);
+			return Py_BuildValue("ii", width, height);
+		}
+	}
+	catch(...)
+	{
+		PyErr_SetString(PyExc_ValueError, "Error trying to get window size");
+		return NULL;
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyGetSetDef DF_API_getterSetters[] =
 {
     {"is_attached", (getter)DF_API_getIsAttached, NULL, "is_attached", NULL},
@@ -324,6 +345,7 @@ static PyGetSetDef DF_API_getterSetters[] =
 	{"map_size", (getter)DF_API_getSize, NULL, "max_size", NULL},
 	{"cursor_coords", (getter)DF_API_getCursorCoords, (setter)DF_API_setCursorCoords, "cursor_coords", NULL},
 	{"current_cursor_creature", (getter)DF_API_getCurrentCursorCreature, NULL, "current_cursor_creature", NULL},
+	{"window_size", (getter)DF_API_getWindowSize, NULL, "window_size", NULL},
     {NULL}  // Sentinel
 };
 
@@ -770,6 +792,33 @@ static PyObject* DF_API_InitReadHotkeys(DF_API* self)
     Py_RETURN_FALSE;
 }
 
+static PyObject* DF_API_ReadHotkeys(DF_API* self, PyObject* args)
+{
+	PyObject* list;
+	
+	if(self->api_Ptr == NULL)
+		return NULL;
+	else
+	{
+		DFHack::t_hotkey hotkeys[NUM_HOTKEYS];
+		
+		self->api_Ptr->ReadHotkeys(hotkeys);
+		
+		list = PyList_New(0);
+		
+		for(int i = 0; i < NUM_HOTKEYS; i++)
+		{
+			DFHack::t_hotkey key = hotkeys[i];
+			
+			PyList_Append(list, Py_BuildValue("siiii", key.name, key.mode, key.x, key.y, key.z));
+		}
+		
+		return list;
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyObject* DF_API_InitViewSize(DF_API* self)
 {
     try
@@ -1161,6 +1210,7 @@ static PyMethodDef DF_API_methods[] =
     {"Init_Read_Items", (PyCFunction)DF_API_InitReadItems, METH_NOARGS, "Initialize item reader"},
     {"Finish_Read_Items", (PyCFunction)DF_API_FinishReadItems, METH_NOARGS, "Shut down item reader"},
     {"Init_Read_Hotkeys", (PyCFunction)DF_API_InitReadHotkeys, METH_NOARGS, "Initialize hotkey reader"},
+	{"Read_Hotkeys", (PyCFunction)DF_API_ReadHotkeys, METH_NOARGS, ""},
     {"Init_View_Size", (PyCFunction)DF_API_InitViewSize, METH_NOARGS, "Initialize view size reader"},
 	{"Is_Valid_Block", (PyCFunction)DF_API_IsValidBlock, METH_VARARGS, ""},
 	{"Read_Designations", (PyCFunction)DF_API_ReadDesignations, METH_VARARGS, "Read a block's designations"},	

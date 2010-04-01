@@ -259,6 +259,8 @@ static PyObject* DF_API_getCursorCoords(DF_API* self, void* closure)
 		PyErr_SetString(PyExc_ValueError, "Error trying to get cursor coordinates");
 		return NULL;
 	}
+	
+	Py_RETURN_NONE;
 }
 
 static int DF_API_setCursorCoords(DF_API* self, PyObject* args, void* closure)
@@ -290,6 +292,28 @@ static int DF_API_setCursorCoords(DF_API* self, PyObject* args, void* closure)
 	return 0;
 }
 
+static PyObject* DF_API_getCurrentCursorCreature(DF_API* self, void* closure)
+{
+	uint32_t index;
+	
+	try
+	{
+		if(self->api_Ptr != NULL)
+		{
+			self->api_Ptr->getCurrentCursorCreature(index);
+			
+			return PyInt_FromLong(index);
+		}
+	}
+	catch(...)
+	{
+		PyErr_SetString(PyExc_ValueError, "Error trying to get current cursor creature");
+		return NULL;
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyGetSetDef DF_API_getterSetters[] =
 {
     {"is_attached", (getter)DF_API_getIsAttached, NULL, "is_attached", NULL},
@@ -299,6 +323,7 @@ static PyGetSetDef DF_API_getterSetters[] =
     {"view_coords", (getter)DF_API_getViewCoords, (setter)DF_API_setViewCoords, "view_coords", NULL},
 	{"map_size", (getter)DF_API_getSize, NULL, "max_size", NULL},
 	{"cursor_coords", (getter)DF_API_getCursorCoords, (setter)DF_API_setCursorCoords, "cursor_coords", NULL},
+	{"current_cursor_creature", (getter)DF_API_getCurrentCursorCreature, NULL, "current_cursor_creature", NULL},
     {NULL}  // Sentinel
 };
 
@@ -1109,19 +1134,6 @@ static PyObject* DF_API_InitViewAndCursor(DF_API* self, PyObject* args)
 	}
 }
 
-static PyObject* DF_API_InitViewSize(DF_API* self, PyObject* args)
-{
-	if(self->api_Ptr == NULL)
-		return NULL;
-	else
-	{
-		if(self->api_Ptr->InitViewSize())
-			Py_RETURN_TRUE;
-		else
-			Py_RETURN_FALSE;
-	}
-}
-
 static PyMethodDef DF_API_methods[] =
 {
     {"Attach", (PyCFunction)DF_API_Attach, METH_NOARGS, "Attach to the DF process"},
@@ -1163,7 +1175,6 @@ static PyMethodDef DF_API_methods[] =
 	{"Read_Plant_Matgloss", (PyCFunction)DF_API_ReadPlantMatgloss, METH_NOARGS, ""},
 	{"Read_Creature_Matgloss", (PyCFunction)DF_API_ReadCreatureMatgloss, METH_NOARGS, ""},
 	{"Init_View_And_Cursor", (PyCFunction)DF_API_InitViewAndCursor, METH_NOARGS, ""},
-	{"Init_View_Size", (PyCFunction)DF_API_InitViewSize, METH_NOARGS, ""},
     {NULL}  // Sentinel
 };
 

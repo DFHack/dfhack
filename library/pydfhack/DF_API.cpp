@@ -870,7 +870,7 @@ static PyObject* DF_API_WriteDirtyBit(DF_API* self, PyObject* args)
 
 static PyObject* DF_API_ReadStoneMatgloss(DF_API* self, PyObject* args)
 {
-	PyObject* list;
+	PyObject* dict;
 	
 	if(self->api_Ptr == NULL)
 		return NULL;
@@ -885,22 +885,22 @@ static PyObject* DF_API_ReadStoneMatgloss(DF_API* self, PyObject* args)
 			return NULL;
 		}
 		
-		list = PyList_New(0);
+		dict = PyDict_New();
 		
 		for(iter = output.begin(); iter != output.end(); iter++)
 		{
 			t_matgloss item = *iter;
 			
-			PyList_Append(list, Py_BuildValue("sIIIs", item.id, item.fore, item.back, item.bright, item.name));
+			PyDict_SetItemString(dict, item.id, Py_BuildValue("IIIs", item.fore, item.back, item.bright, item.name));
 		}
 		
-		return list;
+		return dict;
 	}
 }
 
 static PyObject* DF_API_ReadWoodMatgloss(DF_API* self, PyObject* args)
 {
-	PyObject* list;
+	PyObject* dict;
 	
 	if(self->api_Ptr == NULL)
 		return NULL;
@@ -911,26 +911,26 @@ static PyObject* DF_API_ReadWoodMatgloss(DF_API* self, PyObject* args)
 		
 		if(!self->api_Ptr->ReadWoodMatgloss(output))
 		{
-			PyErr_SetString(PyExc_ValueError, "Error reading stone matgloss");
+			PyErr_SetString(PyExc_ValueError, "Error reading wood matgloss");
 			return NULL;
 		}
 		
-		list = PyList_New(0);
+		dict = PyDict_New();
 		
 		for(iter = output.begin(); iter != output.end(); iter++)
 		{
 			t_matgloss item = *iter;
 			
-			PyList_Append(list, Py_BuildValue("sIIIs", item.id, item.fore, item.back, item.bright, item.name));
+			PyDict_SetItemString(dict, item.id, Py_BuildValue("IIIs", item.fore, item.back, item.bright, item.name));
 		}
 		
-		return list;
+		return dict;
 	}
 }
 
 static PyObject* DF_API_ReadMetalMatgloss(DF_API* self, PyObject* args)
 {
-	PyObject* list;
+	PyObject* dict;
 	
 	if(self->api_Ptr == NULL)
 		return NULL;
@@ -941,26 +941,26 @@ static PyObject* DF_API_ReadMetalMatgloss(DF_API* self, PyObject* args)
 		
 		if(!self->api_Ptr->ReadMetalMatgloss(output))
 		{
-			PyErr_SetString(PyExc_ValueError, "Error reading stone matgloss");
+			PyErr_SetString(PyExc_ValueError, "Error reading metal matgloss");
 			return NULL;
 		}
 		
-		list = PyList_New(0);
+		dict = PyDict_New();
 		
 		for(iter = output.begin(); iter != output.end(); iter++)
 		{
 			t_matgloss item = *iter;
 			
-			PyList_Append(list, Py_BuildValue("sIIIs", item.id, item.fore, item.back, item.bright, item.name));
+			PyDict_SetItemString(dict, item.id, Py_BuildValue("IIIs", item.fore, item.back, item.bright, item.name));
 		}
 		
-		return list;
+		return dict;
 	}
 }
 
 static PyObject* DF_API_ReadPlantMatgloss(DF_API* self, PyObject* args)
 {
-	PyObject* list;
+	PyObject* dict;
 	
 	if(self->api_Ptr == NULL)
 		return NULL;
@@ -975,22 +975,22 @@ static PyObject* DF_API_ReadPlantMatgloss(DF_API* self, PyObject* args)
 			return NULL;
 		}
 		
-		list = PyList_New(0);
+		dict = PyDict_New();
 		
 		for(iter = output.begin(); iter != output.end(); iter++)
 		{
 			t_matglossPlant item = *iter;
 			
-			PyList_Append(list, Py_BuildValue("sIIIssss", item.id, item.fore, item.back, item.bright, item.name, item.drink_name, item.food_name, item.extract_name));
+			PyDict_SetItemString(dict, item.id, Py_BuildValue("IIIssss", item.fore, item.back, item.bright, item.name, item.drink_name, item.food_name, item.extract_name));
 		}
 		
-		return list;
+		return dict;
 	}
 }
 
 static PyObject* DF_API_ReadCreatureMatgloss(DF_API* self, PyObject* args)
 {
-	PyObject* list;
+	PyObject* dict;
 	
 	if(self->api_Ptr == NULL)
 		return NULL;
@@ -1005,16 +1005,16 @@ static PyObject* DF_API_ReadCreatureMatgloss(DF_API* self, PyObject* args)
 			return NULL;
 		}
 		
-		list = PyList_New(0);
+		dict = PyDict_New();
 		
 		for(iter = output.begin(); iter != output.end(); iter++)
 		{
 			t_matgloss item = *iter;
 			
-			PyList_Append(list, Py_BuildValue("sIIIs", item.id, item.fore, item.back, item.bright, item.name));
+			PyDict_SetItemString(dict, item.id, Py_BuildValue("IIIs", item.fore, item.back, item.bright, item.name));
 		}
 		
-		return list;
+		return dict;
 	}
 }
 

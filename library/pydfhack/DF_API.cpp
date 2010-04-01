@@ -192,6 +192,35 @@ static PyObject* DF_API_getViewCoords(DF_API* self, void* closure)
     Py_RETURN_NONE;
 }
 
+static int DF_API_setViewCoords(DF_API* self, PyObject* args, void* closure)
+{
+	int32_t x, y, z;
+	
+	try
+	{
+		if(self->api_Ptr != NULL)
+		{
+			if(args == NULL)
+			{
+				PyErr_SetString(PyExc_TypeError, "Cannot delete view coordinates");
+				return -1;
+			}
+			
+			if(PyArg_ParseTuple(args, "iii", &x, &y, &z))
+			{
+				self->api_Ptr->setViewCoords(x, y, z);
+			}
+		}
+	}
+	catch(...)
+	{
+		PyErr_SetString(PyExc_ValueError, "Error trying to set view coordinates");
+		return -1;
+	}
+	
+	return 0;
+}
+
 static PyObject* DF_API_getSize(DF_API* self, void* closure)
 {
 	uint32_t x, y, z;
@@ -213,14 +242,63 @@ static PyObject* DF_API_getSize(DF_API* self, void* closure)
     Py_RETURN_NONE;
 }
 
+static PyObject* DF_API_getCursorCoords(DF_API* self, void* closure)
+{
+	int32_t x, y, z;
+	
+	try
+	{
+		if(self->api_Ptr != NULL)
+		{
+			self->api_Ptr->getCursorCoords(x, y, z);
+			return Py_BuildValue("iii", x, y, z);
+		}
+	}
+	catch(...)
+	{
+		PyErr_SetString(PyExc_ValueError, "Error trying to get cursor coordinates");
+		return NULL;
+	}
+}
+
+static int DF_API_setCursorCoords(DF_API* self, PyObject* args, void* closure)
+{
+	int32_t x, y, z;
+	
+	try
+	{
+		if(self->api_Ptr != NULL)
+		{
+			if(args == NULL)
+			{
+				PyErr_SetString(PyExc_TypeError, "Cannot delete view coordinates");
+				return -1;
+			}
+			
+			if(PyArg_ParseTuple(args, "iii", &x, &y, &z))
+			{
+				self->api_Ptr->setCursorCoords(x, y, z);
+			}
+		}
+	}
+	catch(...)
+	{
+		PyErr_SetString(PyExc_ValueError, "Error trying to set view coordinates");
+		return -1;
+	}
+	
+	return 0;
+}
+
 static PyGetSetDef DF_API_getterSetters[] =
 {
     {"is_attached", (getter)DF_API_getIsAttached, NULL, "is_attached", NULL},
     {"is_suspended", (getter)DF_API_getIsSuspended, NULL, "is_suspended", NULL},
     {"is_paused", (getter)DF_API_getIsPaused, NULL, "is_paused", NULL},
     {"menu_state", (getter)DF_API_getMenuState, NULL, "menu_state", NULL},
-    {"view_coords", (getter)DF_API_getViewCoords, NULL, "view_coords", NULL},
+    {"view_coords", (getter)DF_API_getViewCoords, (setter)DF_API_setViewCoords, "view_coords", NULL},
 	{"map_size", (getter)DF_API_getSize, NULL, "max_size", NULL},
+	{"cursor_coords", (getter)DF_API_getCursorCoords, (setter)DF_API_setCursorCoords, "cursor_coords", NULL},
     {NULL}  // Sentinel
 };
 
@@ -971,7 +1049,7 @@ static PyObject* DF_API_ReadPlantMatgloss(DF_API* self, PyObject* args)
 		
 		if(!self->api_Ptr->ReadPlantMatgloss(output))
 		{
-			PyErr_SetString(PyExc_ValueError, "Error reading stone matgloss");
+			PyErr_SetString(PyExc_ValueError, "Error reading plant matgloss");
 			return NULL;
 		}
 		
@@ -1001,7 +1079,7 @@ static PyObject* DF_API_ReadCreatureMatgloss(DF_API* self, PyObject* args)
 		
 		if(!self->api_Ptr->ReadStoneMatgloss(output))
 		{
-			PyErr_SetString(PyExc_ValueError, "Error reading stone matgloss");
+			PyErr_SetString(PyExc_ValueError, "Error reading creature matgloss");
 			return NULL;
 		}
 		
@@ -1015,6 +1093,32 @@ static PyObject* DF_API_ReadCreatureMatgloss(DF_API* self, PyObject* args)
 		}
 		
 		return dict;
+	}
+}
+
+static PyObject* DF_API_InitViewAndCursor(DF_API* self, PyObject* args)
+{
+	if(self->api_Ptr == NULL)
+		return NULL;
+	else
+	{
+		if(self->api_Ptr->InitViewAndCursor())
+			Py_RETURN_TRUE;
+		else
+			Py_RETURN_FALSE;
+	}
+}
+
+static PyObject* DF_API_InitViewSize(DF_API* self, PyObject* args)
+{
+	if(self->api_Ptr == NULL)
+		return NULL;
+	else
+	{
+		if(self->api_Ptr->InitViewSize())
+			Py_RETURN_TRUE;
+		else
+			Py_RETURN_FALSE;
 	}
 }
 
@@ -1058,6 +1162,8 @@ static PyMethodDef DF_API_methods[] =
 	{"Read_Metal_Matgloss", (PyCFunction)DF_API_ReadMetalMatgloss, METH_NOARGS, ""},
 	{"Read_Plant_Matgloss", (PyCFunction)DF_API_ReadPlantMatgloss, METH_NOARGS, ""},
 	{"Read_Creature_Matgloss", (PyCFunction)DF_API_ReadCreatureMatgloss, METH_NOARGS, ""},
+	{"Init_View_And_Cursor", (PyCFunction)DF_API_InitViewAndCursor, METH_NOARGS, ""},
+	{"Init_View_Size", (PyCFunction)DF_API_InitViewSize, METH_NOARGS, ""},
     {NULL}  // Sentinel
 };
 

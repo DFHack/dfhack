@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from pydfhack import *
 
 class DFAPI(API):

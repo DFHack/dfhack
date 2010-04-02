@@ -3,789 +3,39 @@
 <DFExtractor>
   <!-- USE A FIXED WIDTH FONT! -->
   <MemoryDescriptors>
-    <!--A note about virtual types: many of those aren't enumerated in the vtable structure anymore
-    but are found dynamically. Here's a list of viewscreens for 40d:
-    viewscreen_conversation
-    viewscreen_setupadventure
-    viewscreen_dungeon_announce
-    viewscreen_dungeon_monsterstatus
-    viewscreen_dungeon_wrestle
-    viewscreen_adventure_log
-    viewscreen_adventure_travel
-    viewscreen_dungeonmode
-    viewscreen_selectitem
-    viewscreen_dwarfmode
-    viewscreen_layer_stockpile
-    viewscreen_layer_world_gen_param_preset
-    viewscreen_layer_world_gen_param
-    viewscreen_layer_export_play_map
-    viewscreen_layer_musicsound
-    viewscreen_layer_unit_relationship
-    viewscreen_layer_workshop_profile
-    viewscreen_layer
-    viewscreen_unit
-    viewscreen_customize_unit
-    viewscreen_savegame
-    viewscreen_loadgame
-    viewscreen_option
-    viewscreen_layer_currency
-    viewscreen_layer_reaction
-    viewscreen_layer_stone_restriction
-    viewscreen_layer_noblelist
-    viewscreen_job
-    viewscreen_building
-    viewscreen_item
-    viewscreen_noble
-    viewscreen_buildinglist
-    viewscreen_commandchain
-    viewscreen_squad
-    viewscreen_civlist
-    viewscreen_entity
-    viewscreen_treasurelist
-    viewscreen_unitjobs
-    viewscreen_createquota
-    viewscreen_jobmanagement
-    viewscreen_wages
-    viewscreen_stores
-    viewscreen_overallstatus
-    viewscreen_justice
-    viewscreen_price
-    viewscreen_pet
-    viewscreen_kitchenpref
-    viewscreen_announcelist
-    viewscreen_game_cleaner
-    viewscreen_title
-    viewscreen_legends
-    viewscreen_new_region
-    viewscreen_export_region
-    viewscreen_export_graphical_map
-    viewscreen_layer_assigntrade
-    viewscreen_requestagreement
-    viewscreen_tradeagreement
-    viewscreen_topicmeeting_takerequests
-    viewscreen_topicmeeting
-    viewscreen_meeting
-    viewscreen_barter
-    viewscreen_tradegoods
-    viewscreen_tradelist
-    viewscreen_textviewer
-    viewscreen_layer_choose_language_name
-    viewscreen_setupdwarfgame
-    viewscreen_choose_start_site
+  
+  
+  
+  
+    <Entry version="meta-2010" os="all" id="meta-2010">
+    <Offset name="keep_me_happy">0x0</Offset>
+    <!--
     
-    And item types:
-    item_coin
-    item_trapcomp
-    item_siegeammo
-    item_quiver
-    item_backpack
-    item_pants
-    item_totem
-    item_anvil
-    item_gem
-    item_bracelet
-    item_earring
-    item_ring
-    item_crown
-    item_ammo
-    item_scepter
-    item_amulet
-    item_figurine
-    item_bin
-    item_box
-    item_gloves
-    item_helm
-    item_shield
-    item_shoes
-    item_armor
-    item_weapon
-    item_animaltrap
-    item_barrel
-    item_cage
-    item_toy
-    item_instrument
-    item_goblet
-    item_flask
-    item_chain
-    item_hatch_cover
-    item_floodgate
-    item_door
-    item_cloth
-    item_constructed
-    item_food
-    item_crafted
-    item_thread
-    item_cheese
-    item_ballistaarrowhead
-    item_shell
-    item_skull
-    item_bones
-    item_skin_tanned
-    item_skin_raw
-    item_pet
-    item_vermin
-    item_fish_raw
-    item_fish
-    item_meat
-    item_remains
-    item_corpsepiece
-    item_glob
-    item_liquid_misc
-    item_powder_misc
-    item_drink
-    item_extract
-    item_liquipowder
-    item_corpse
-    item_wood
-    item_stone
-    item_rough
-    item_blocks
-    item_smallgem
-    item_bar
-    item_actual
-    item_rock
-    item_grate
-    item_window
-    item_bucket
-    item_coffin
-    item_statue
-    item_quern
-    item_millstone
-    item_armorstand
-    item_weaponrack
-    item_cabinet
-    item_catapultparts
-    item_ballistaparts
-    item_trapparts
-    item_potion
-    item_pipe_section
-    item_leaves
-    item_plant
-    item_seeds
-    item_critter
-    item_powder
-    item_liquid
-        
-    Finally veins:
-    block_square_event_frozen_liquid
-    block_square_event_mineral
-    -->
-    <Entry version="meta-40d" os="all" id="meta-40d">
       <Profession can_assign_labors="true" is_military="false" name="Miner">0</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Woodworker">1</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Carpenter">2</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Bowyer">3</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Woodcutter">4</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Stoneworker">5</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Engraver">6</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Mason">7</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Ranger">8</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Animal Caretaker">9</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Animal Trainer">10</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Hunter">11</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Trapper">12</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Animal Dissector">13</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Metalsmith">14</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Furnace Operator">15</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Weaponsmith">16</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Armorer">17</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Blacksmith">18</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Metalcrafter">19</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Jeweler">20</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Gem Cutter">21</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Gem Setter">22</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Craftsdwarf">23</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Woodcrafter">24</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Stonecrafter">25</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Leatherworker">26</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Bone Carver">27</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Weaver">28</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Clothier">29</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Glassmaker">30</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Strand Extractor">31</Profession>
-      <Profession can_assign_labors="false" female_name="Queen" is_military="false" name="King">32</Profession>
-      <Profession can_assign_labors="false" female_name="Queen Consort" is_military="false" name="King Consort">33</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Fishery Worker">34</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Fisherdwarf">35</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Fish Dissector">36</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Fish Cleaner">37</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Farmer">38</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Cheese Maker">39</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Milker">40</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Cook">41</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Thresher">42</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Miller">43</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Butcher">44</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Tanner">45</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Dyer">46</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Planter">47</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Herbalist">48</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Brewer">49</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Soap Maker">50</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Potash Maker">51</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Lye Maker">52</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Wood Burner">53</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Engineer">54</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Mechanic">55</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Siege Engineer">56</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Siege Operator">57</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Pump Operator">58</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Clerk">59</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Administrator">60</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Trader">61</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Architect">62</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Alchemist">63</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Tax Collector">64</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Hammerer">65</Profession>
-      <Profession can_assign_labors="false" female_name="Baroness" is_military="false" name="Baron">66</Profession>
-      <Profession can_assign_labors="false" female_name="Countess" is_military="false" name="Count">67</Profession>
-      <Profession can_assign_labors="false" female_name="Duchess" is_military="false" name="Duke">68</Profession>
-      <Profession can_assign_labors="false" female_name="Baroness Consort" is_military="false" name="Baron Consort">69</Profession>
-      <Profession can_assign_labors="false" female_name="Countess Consort" is_military="false" name="Count Consort">70</Profession>
-      <Profession can_assign_labors="false" female_name="Duchess Consort" is_military="false" name="Duke Consort">71</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Philosopher">72</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Advisor">73</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Dungeon Master">74</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Merchant">75</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Diplomat">76</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Guild Representative">77</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Merchant Baroness">78</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Merchant Princess">79</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Outpost Liaison">80</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Druid">81</Profession>
-      <Profession can_assign_labors="false" is_military="true" name="Champion">82</Profession>
-      <Profession can_assign_labors="true" is_military="true" name="Hammerdwarf">83</Profession>
-      <Profession can_assign_labors="false" is_military="true" name="Hammer Lord">84</Profession>
-      <Profession can_assign_labors="true" is_military="true" name="Speardwarf">85</Profession>
-      <Profession can_assign_labors="false" is_military="true" name="Spearmaster">86</Profession>
-      <Profession can_assign_labors="true" is_military="true" name="Marksdwarf">87</Profession>
-      <Profession can_assign_labors="false" is_military="true" name="Elite Crossbowdwarf">88</Profession>
-      <Profession can_assign_labors="true" is_military="true" name="Wrestler">89</Profession>
-      <Profession can_assign_labors="false" is_military="true" name="Elite Wrestler">90</Profession>
-      <Profession can_assign_labors="true" is_military="true" name="Axedwarf">91</Profession>
-      <Profession can_assign_labors="false" is_military="true" name="Axe Lord">92</Profession>
-      <Profession can_assign_labors="true" is_military="true" name="Swordsdwarf">93</Profession>
-      <Profession can_assign_labors="false" is_military="true" name="Swordmaster">94</Profession>
-      <Profession can_assign_labors="true" is_military="true" name="Macedwarf">95</Profession>
-      <Profession can_assign_labors="false" is_military="true" name="Mace Lord">96</Profession>
-      <Profession can_assign_labors="true" is_military="true" name="Pikedwarf">97</Profession>
-      <Profession can_assign_labors="false" is_military="true" name="Pikemaster">98</Profession>
-      <Profession can_assign_labors="false" is_military="true" name="Bowdwarf">99</Profession>
-      <Profession can_assign_labors="false" is_military="true" name="Elite Bowdwarf">100</Profession>
-      <Profession can_assign_labors="false" is_military="true" name="Blowgunner">101</Profession>
-      <Profession can_assign_labors="false" is_military="true" name="Elite Bowgunner">102</Profession>
-      <Profession can_assign_labors="true" is_military="true" name="Recruit">103</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="?Hunting creature?">104</Profession>
-      <Profession name="?War creature?" can_assign_labors="false" is_military="false">105</Profession>
-      <Profession name="?Master thief?" can_assign_labors="false" is_military="false">106</Profession>
-      <Profession name="?Thief?" can_assign_labors="false" is_military="false">107</Profession>
-      <Profession can_assign_labors="true" is_military="false" name="Peasant">108</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Child">109</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Baby">110</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Drunk">111</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Lasher">112</Profession>
-      <Profession can_assign_labors="false" is_military="false" name="Master Lasher">113</Profession>
       <Job name="Carve Fortification">0</Job>
-      <Job name="Detail Wall">1</Job>
-      <Job name="Detail Floor">2</Job>
-      <Job name="Dig">3</Job>
-      <Job name="Carve Upward Staircase">4</Job>
-      <Job name="Carve Downward Staircase">5</Job>
-      <Job name="Carve Up/Down Staircase">6</Job>
-      <Job name="Carve Ramp">7</Job>
-      <Job name="Dig Channel">8</Job>
-      <Job name="Fell Tree">9</Job>
-      <Job name="Gather Plants">10</Job>
-      <Job name="Remove Construction">11</Job>
-      <Job name="Collect Webs">12</Job>
-      <Job name="Bring Item to Depot">13</Job>
-      <Job name="Bring Item to Shop">14</Job>
-      <Job name="Eat">15</Job>
-      <Job name="Get Provisions">16</Job>
-      <Job name="Drink">17</Job>
-      <Job name="Drink">18</Job>
-      <Job name="Fill Waterskin">19</Job>
-      <Job name="Sleep">20</Job>
-      <Job name="Collect Sand">21</Job>
-      <Job name="Fish">22</Job>
-      <Job name="Hunt">23</Job>
-      <Job name="Hunt for Small Creature">24</Job>
-      <Job name="Kidnap">25</Job>
-      <Job name="Beat Criminal">26</Job>
-      <Job name="Starting Fist Fight">27</Job>
-      <Job name="Collect Taxes">28</Job>
-      <Job name="Guard Tax Collector">29</Job>
-      <Job name="Catch Live Land Animal">30</Job>
-      <Job name="Catch Live Fish">31</Job>
-      <Job name="Return Kill">32</Job>
-      <Job name="Check Chest">33</Job>
-      <Job name="Store Owned Item">34</Job>
-      <Job name="Place Item in Tomb">35</Job>
-      <Job name="Store Item in Stockpile">36</Job>
-      <Job name="Store Item in Bag">37</Job>
-      <Job name="Store Item in Chest">38</Job>
-      <Job name="Store Item in Cabinet">39</Job>
-      <Job name="Store Weapon">40</Job>
-      <Job name="Store Armor">41</Job>
-      <Job name="Store Item in Barrel">42</Job>
-      <Job name="Store Item in Bin">43</Job>
-      <Job name="Seek Artifact">44</Job>
-      <Job name="Seek Infant">45</Job>
-      <Job name="Attend Party">46</Job>
-      <Job name="Shooting at Archery Range">47</Job>
-      <Job name="Sparring in Barracks">48</Job>
-      <Job name="Go Shopping A">49</Job>
-      <Job name="Go Shopping B">50</Job>
-      <Job name="Clean">51</Job>
-      <Job name="Rest">52</Job>
-      <Job name="Pickup Equipment">53</Job>
-      <Job name="Dump Item">54</Job>
-      <Job name="Strange Mood Crafter">55</Job>
-      <Job name="Strange Mood Jeweller">56</Job>
-      <Job name="Strange Mood C">57</Job>
-      <Job name="Strange Mood Metal">58</Job>
-      <Job name="Strange Mood E">59</Job>
-      <Job name="Strange Mood F">60</Job>
-      <Job name="Strange Mood Carpenter">61</Job>
-      <Job name="Strange Mood Mason">62</Job>
-      <Job name="Strange Mood Bowyer">63</Job>
-      <Job name="Strange Mood Tanner">64</Job>
-      <Job name="Strange Mood Weaver">65</Job>
-      <Job name="Strange Mood Glassmaker">66</Job>
-      <Job name="Strange Mood Mechanics">67</Job>
-      <Job name="Construct Building">68</Job>
-      <Job name="Construct Door">69</Job>
-      <Job name="Construct Floodgate">70</Job>
-      <Job name="Construct Bed">71</Job>
-      <Job name="Construct  Chair">72</Job>
-      <Job name="Construct  Coffin">73</Job>
-      <Job name="Construct Table">74</Job>
-      <Job name="Construct  Chest">75</Job>
-      <Job name="Construct Bin">76</Job>
-      <Job name="Construct Armor Stand">77</Job>
-      <Job name="Construct Weapon Rack">78</Job>
-      <Job name="Construct Cabinet">79</Job>
-      <Job name="Construct  Statue">80</Job>
-      <Job name="Construct XXX">81</Job>
-      <Job name="Make Raw XXX">82</Job>
-      <Job name="Make crafts">83</Job>
-      <Job name="Mint stuff">84</Job>
-      <Job name="Cut XX A">85</Job>
-      <Job name="Cut XX B">86</Job>
-      <Job name="Encrust">87</Job>
-      <Job name="?">88</Job>
-      <Job name="Destroy Building">89</Job>
-      <Job name="Smelt  Ore">90</Job>
-      <Job name="Smelt">91</Job>
-      <Job name="Melt a Metal Object">92</Job>
-      <Job name="Extract Metal Strands">93</Job>
-      <Job name="Tan a Hide">94</Job>
-      <Job name="Plant Seeds">95</Job>
-      <Job name="Harvest Plants">96</Job>
-      <Job name="Train Hunting Animal">97</Job>
-      <Job name="Train War Animal">98</Job>
-      <Job name="Forge/Make DDD ">99</Job>
-      <Job name="Forge  Anvil">100</Job>
-      <Job name="Construct Catapult Parts">101</Job>
-      <Job name="Construct Ballista Parts">102</Job>
-      <Job name="Forge/Make A">103</Job>
-      <Job name="Forge/Make B">104</Job>
-      <Job name="Forge/Make C">105</Job>
-      <Job name="Stud With XX">106</Job>
-      <Job name="Butcher an Animal">107</Job>
-      <Job name="Prepare a Raw Fish">108</Job>
-      <Job name="Mill Plants">109</Job>
-      <Job name="Bait Trap">110</Job>
-      <Job name="Milk Creature">111</Job>
-      <Job name="Make Cheese">112</Job>
-      <Job name="Process Plants">113</Job>
-      <Job name="Process Plants (Bag)">114</Job>
-      <Job name="Process Plants (Vial)">115</Job>
-      <Job name="Process Plants (Barrel)">116</Job>
-      <Job name="Prepare Meal">117</Job>
-      <Job name="Weave Thread">118</Job>
-      <Job name="Forge/Make D">119</Job>
-      <Job name="Forge/Make E">120</Job>
-      <Job name="Forge/Make F">121</Job>
-      <Job name="Forge Cage">122</Job>
-      <Job name="Forge Rope">123</Job>
-      <Job name="Forge  Flask">124</Job>
-      <Job name="Forge  Goblet">125</Job>
-      <Job name="Forge  Instrument">126</Job>
-      <Job name="Forge  Toy">127</Job>
-      <Job name="Forge  Animal Trap">128</Job>
-      <Job name="Forge  Barrel">129</Job>
-      <Job name="Forge  Bucket">130</Job>
-      <Job name="Forge  Window">131</Job>
-      <Job name="Make Totem">132</Job>
-      <Job name="Forge/Make G">133</Job>
-      <Job name="Decorate With Bone">134</Job>
-      <Job name="Make Backpack">135</Job>
-      <Job name="Make Quiver">136</Job>
-      <Job name="Forge Ballista Arrow Head">137</Job>
-      <Job name="Assemble">138</Job>
-      <Job name="Load Catapult">139</Job>
-      <Job name="Load Ballista">140</Job>
-      <Job name="Fire Catapult">141</Job>
-      <Job name="Fire Ballista">142</Job>
-      <Job name="Construct Mechanisms">143</Job>
-      <Job name="Forge/Make H">144</Job>
-      <Job name="Load Cage Trap">145</Job>
-      <Job name="Load Stone Trap">146</Job>
-      <Job name="Load Weapon Trap">147</Job>
-      <Job name="Clean Trap">148</Job>
-      <Job name="Cast Spell">149</Job>
-      <Job name="Link a Building to Trigger">150</Job>
-      <Job name="Pull the Lever">151</Job>
-      <Job name="Brew Drink">152</Job>
-      <Job name="?">153</Job>
-      <Job name="Extract from Plants">154</Job>
-      <Job name="Extract from Raw Fish">155</Job>
-      <Job name="Extract from Land Animal">156</Job>
-      <Job name="Tame a Small Animal">157</Job>
-      <Job name="Tame Large Animal">158</Job>
-      <Job name="Chain Animal">159</Job>
-      <Job name="Unchain Animal">160</Job>
-      <Job name="Unchain Pet">161</Job>
-      <Job name="Releasing Large Creature">162</Job>
-      <Job name="Releasing Pet">163</Job>
-      <Job name="Releasing Small Creature">164</Job>
-      <Job name="Handling Small Creature">165</Job>
-      <Job name="Handling Large Creature">166</Job>
-      <Job name="Large Creature Caging">167</Job>
-      <Job name="Small Creature Caging">168</Job>
-      <Job name="Recover Wounded">169</Job>
-      <Job name="Drain Aquarium">170</Job>
-      <Job name="Fill Aquarium">171</Job>
-      <Job name="Fill Pond">172</Job>
-      <Job name="Give Water A">173</Job>
-      <Job name="Give Food A">174</Job>
-      <Job name="Give Water B">175</Job>
-      <Job name="Give Food B">176</Job>
-      <Job name="Recover Pet">177</Job>
-      <Job name="Pit/Pond Large Animal">178</Job>
-      <Job name="Pit/Pond Small Animal">179</Job>
-      <Job name="Slaughter Animal">180</Job>
-      <Job name="Make Charcoal">181</Job>
-      <Job name="Make Ash">182</Job>
-      <Job name="Make Lye">183</Job>
-      <Job name="Make Potash From Lye">184</Job>
-      <Job name="Make Pearlash">185</Job>
-      <Job name="Render Fat">186</Job>
-      <Job name="Make Soap">187</Job>
-      <Job name="Fertilize Field">188</Job>
-      <Job name="Make Potash From Ash">189</Job>
-      <Job name="Dye Thread">190</Job>
-      <Job name="Dye Cloth">191</Job>
-      <Job name="Sew  Image">192</Job>
-      <Job name="Forge  Tube">193</Job>
-      <Job name="Operate Pump">194</Job>
-      <Job name="Manage Work Orders">195</Job>
-      <Job name="Update Stockpile Records">196</Job>
-      <Job name="Trade at Depot">197</Job>
-      <Job name="Construct Hatch Cover">198</Job>
-      <Job name="Construct Grate">199</Job>
-      <Job name="Remove Stairs/Ramps">200</Job>
-      <Job name="Construct  Quern">201</Job>
-      <Job name="Construct  Millstone">202</Job>
       <Skill name="Miner">0</Skill>
-      <Skill name="Wood Cutter">1</Skill>
-      <Skill name="Carpenter">2</Skill>
-      <Skill name="Engraver">3</Skill>
-      <Skill name="Mason">4</Skill>
-      <Skill name="Animal Trainer">5</Skill>
-      <Skill name="Animal Caretaker">6</Skill>
-      <Skill name="Fish Dissector">7</Skill>
-      <Skill name="Animal Dissector">8</Skill>
-      <Skill name="Fish Cleaner">9</Skill>
-      <Skill name="Butcher">10</Skill>
-      <Skill name="Trapper">11</Skill>
-      <Skill name="Tanner">12</Skill>
-      <Skill name="Weaver">13</Skill>
-      <Skill name="Brewer">14</Skill>
-      <Skill name="Alchemist">15</Skill>
-      <Skill name="Clothier">16</Skill>
-      <Skill name="Miller">17</Skill>
-      <Skill name="Thresher">18</Skill>
-      <Skill name="Cheese Maker">19</Skill>
-      <Skill name="Milker">20</Skill>
-      <Skill name="Cook">21</Skill>
-      <Skill name="Grower">22</Skill>
-      <Skill name="Herbalist">23</Skill>
-      <Skill name="Fisherman">24</Skill>
-      <Skill name="Furnace Operator">25</Skill>
-      <Skill name="Strand Extractor">26</Skill>
-      <Skill name="Weaponsmith">27</Skill>
-      <Skill name="Armorer">28</Skill>
-      <Skill name="Metalsmith">29</Skill>
-      <Skill name="Gem Cutter">30</Skill>
-      <Skill name="Gem Setter">31</Skill>
-      <Skill name="Woodcrafter">32</Skill>
-      <Skill name="Stone Crafter">33</Skill>
-      <Skill name="Metal Crafter">34</Skill>
-      <Skill name="Glassmaker">35</Skill>
-      <Skill name="Leatherworker">36</Skill>
-      <Skill name="Bone Carver">37</Skill>
-      <Skill name="Wrestler">38</Skill>
-      <Skill name="Axeman">39</Skill>
-      <Skill name="Swordsman">40</Skill>
-      <Skill name="Knife User">41</Skill>
-      <Skill name="Maceman">42</Skill>
-      <Skill name="Hammerman">43</Skill>
-      <Skill name="Spearman">44</Skill>
-      <Skill name="Marksman">45</Skill>
-      <Skill name="Shield User">46</Skill>
-      <Skill name="Armor User">47</Skill>
-      <Skill name="Siege Engineer">48</Skill>
-      <Skill name="Siege Operator">49</Skill>
-      <Skill name="Bowyer">50</Skill>
-      <Skill name="Pikeman">51</Skill>
-      <Skill name="Lasher">52</Skill>
-      <Skill name="Bowman">53</Skill>
-      <Skill name="Blowgunner">54</Skill>
-      <Skill name="Thrower">55</Skill>
-      <Skill name="Mechanic">56</Skill>
-      <Skill name="Druid">57</Skill>
-      <Skill name="Ambusher">58</Skill>
-      <Skill name="Building Designer">59</Skill>
-      <Skill name="Woodburner">60</Skill>
-      <Skill name="Lye Maker">61</Skill>
-      <Skill name="Soaper">62</Skill>
-      <Skill name="Potash Maker">63</Skill>
-      <Skill name="Dyer">64</Skill>
-      <Skill name="Pump Operator">65</Skill>
-      <Skill name="Swimmer">66</Skill>
-      <Skill name="Persuader">67</Skill>
-      <Skill name="Negotiator">68</Skill>
-      <Skill name="Judge of Intent">69</Skill>
-      <Skill name="Appraiser">70</Skill>
-      <Skill name="Organizer">71</Skill>
-      <Skill name="Record Keeper">72</Skill>
-      <Skill name="Liar">73</Skill>
-      <Skill name="Intimidator">74</Skill>
-      <Skill name="Conversationalist">75</Skill>
-      <Skill name="Comedian">76</Skill>
-      <Skill name="Flatterer">77</Skill>
-      <Skill name="Consoler">78</Skill>
-      <Skill name="Pacifier">79</Skill>
       <Trait name="Nervousness" level_5="Is a nervous wreck" level_4="Is always tense and jittery" level_3="Is often nervous" level_2="Has a calm demeanor" level_1="Has a very calm demeanor" level_0="Has an incredibly calm demeanor">0</Trait>
-      <Trait name="Rage" level_5="In a constant state of internal rage" level_4="Very quick to anger" level_3="Quick to anger" level_2="Slow to anger" level_1="Very slow to anger" level_0="Never becomes angry">1</Trait>
-      <Trait name="Depression" level_5="Frequently depressed" level_4="Often sad and dejected" level_3="Often feels discouraged" level_2="Rarely feels discouraged" level_1="Almost never feels discouraged" level_0="Never feels discouraged">2</Trait>
-      <Trait name="Neurosis" level_5="Socially crippled by thoughts that everyone is watching and judging" level_4="Concerned about rejection and ridicule" level_3="Self-conscious" level_2="Comfortable in social situations" level_1="Very comfortable in social situations" level_0="Absolutely unfazed by the opinions of others">3</Trait>
-      <Trait name="Urge" level_5="Is ruled by irresistible cravings and urges" level_4="Feels strong urges and seeks short-term rewards" level_3="Occassionally overindulges" level_2="Doesn't often experience strong cravings or urges" level_1="Only rarely feels strong cravings or urges" level_0="Never feels tempted to overindulge in anything">4</Trait>
-      <Trait name="Stress" level_5="Becomes completely helpless in stressful situations" level_4="Cracks easily under pressure" level_3="Doesn't handle stress well" level_2="Can handle stress" level_1="Confident under pressure" level_0="Impervious to the effects of stress">5</Trait>
-      <Trait name="Friendly" level_5="Genuinely likes others, openly expresses positive feelings" level_4="Makes friends quickly" level_3="Very friendly" level_2="Somewhat reserved" level_1="Very distant and reserved" level_0="Does not actively seek friendships, incredibly distant and reserved">6</Trait>
-      <Trait name="Company" level_5="Truly treasures the company of others" level_4="Enjoys being in crowds" level_3="Enjoys the company of others" level_2="Tends to avoid crowds" level_1="Prefers to be alone" level_0="Considers time alone much more important than associating with others">7</Trait>
-      <Trait name="Leadership" level_5="Loves to take charge and direct activities" level_4="Very assertive" level_3="Assertive" level_2="Unassertive" level_1="Prefers that others handle the leadership roles" level_0="Never speaks out or attempts to direct activities">8</Trait>
-      <Trait name="Activeness" level_5="Constantly active and energetic" level_4="Very energetic and active" level_3="Very active" level_2="Relaxed" level_1="Lives life at a leisurely pace" level_0="Can't be bothered with frantic, fast-paced living">9</Trait>
-      <Trait name="Thrillseeking" level_5="Lives for risk and excitement" level_4="A risk-taker and a thrill-seeker" level_3="Loves a good thrill" level_2="Is not a risk-taker" level_1="Doesn't need thrills or risks in life" level_0="Entirely adverse to risk and excitement">10</Trait>
-      <Trait name="Optimism" level_5="Often feels filled with joy" level_4="Can be very happy and optimistic" level_3="Often cheerful" level_2="Rarely happy or enthusiastic" level_1="A pessimist" level_0="Never optimistic or enthusiastic about anything">11</Trait>
-      <Trait name="Imagination" level_5="Bored by reality and has a wonderful imagination" level_4="Incredibly creative" level_3="Has a fertile imagination" level_2="Isn't given to flights of fancy" level_1="Grounded in reality" level_0="Interested only in facts and the real world">12</Trait>
-      <Trait name="Artistic" level_5="Can easily become absorbed in art and the beauty of the natural world" level_4="Greatly appreciates art and natural beauty" level_3="Appreciates art and natural beauty" level_2="Does not have a great aesthetic sensitivity" level_1="Not interested in art" level_0="Completely uninterested in art">13</Trait>
-      <Trait name="Emotion" level_5="Has a profound understanding of own emotions" level_4="Has a great awareness of own emotions" level_3="Has a good awareness of own emotions" level_2="Tends not to openly express emotions" level_1="Mostly unaware of own emotions and rarely expresses them" level_0="Does not display own emotions and has no awareness of them">14</Trait>
-      <Trait name="Adventure" level_5="Highly adventurous and loves fresh experiences" level_4="Eager for new experiences" level_3="Likes to try new things" level_2="Prefers familiar routines" level_1="Uncomfortable with change" level_0="Resistant to change">15</Trait>
-      <Trait name="Thinking" level_5="Entranced by riddles and puzzles; loves to debate issues and ideas" level_4="Loves new and fresh ideas" level_3="Open-minded to new ideas" level_2="Dislikes intellectual discussions" level_1="Regards intellectual exercises as a waste of energy" level_0="Completely uninterested in ideas and debates over intellectual issues">16</Trait>
-      <Trait name="Rebelliousness" level_5="Revels in chaos and disorder" level_4="Loves to defy convention" level_3="Put off by authority and tradition" level_2="Admires tradition" level_1="Prefers stability and security to ambiguity and disorder" level_0="An ardent believer in convention and traditional society">17</Trait>
-      <Trait name="Trusting" level_5="Naturally trustful of everybody" level_4="Very trusting" level_3="Trusting" level_2="Slow to trust others" level_1="Does not trust others" level_0="Sees others as selfish and conniving">18</Trait>
-      <Trait name="Honesty" level_5="Incredibly frank and candid in dealings with others" level_4="Very straightforward with others" level_3="Candid and sincere in dealings with others" level_2="Guarded in relationships with others" level_1="Not straightforward when dealing with others" level_0="Believes that some deception is necessary in relationships with others">19</Trait>
-      <Trait name="Helpfulness" level_5="Truly fulfilled by assisting those in need" level_4="Finds helping others very rewarding" level_3="Finds helping others rewarding" level_2="Does not go out of own way to help others" level_1="Dislikes helping others" level_0="Views helping others as an imposition on own needs">20</Trait>
-      <Trait name="Compromising" level_5="Sacrifices own needs to get along with others" level_4="Dislikes confrontations" level_3="Willing to compromise with others" level_2="Doesn't like to compromise with others" level_1="Would rather intimidate others than compromise with them" level_0="Would never deny own needs just to compromise with somebody else">21</Trait>
-      <Trait name="Modesty" level_5="Would never claim to be better than somebody else" level_4="Finds immodesty distasteful" level_3="Modest" level_2="Immodest" level_1="Very willing to compare self favorably with others" level_0="Would never shy away from an opportunity to say they are better than somebody else">22</Trait>
-      <Trait name="Compassion" level_5="Incredibly compassionate and feels the pain of others" level_4="Easily moved to pity" level_3="Compassionate" level_2="Not easily moved to pity" level_1="Not affected by the suffering of others" level_0="Would never let an objective judgement be tempered by mercy or pity">23</Trait>
-      <Trait name="Confidence" level_5="Incredibly confident" level_4="Very confident" level_3="Confident" level_2="Lacks confidence" level_1="Does not feel effective in life" level_0="Always feels as if they are not in control of own life">24</Trait>
-      <Trait name="Organization" level_5="Loves to make lists and keep schedules" level_4="Tries to live a well-organized life" level_3="Organized" level_2="Disorganized" level_1="Very disorganized" level_0="Completely disorganized">25</Trait>
-      <Trait name="Lawfulness" level_5="Has a profound sense of duty and obligation" level_4="Has a strong sense of duty" level_3="Has a sense of duty" level_2="Finds rules confining" level_1="Dislikes contracts and regulations" level_0="Hates rules, contracts and other confining elements in own life">26</Trait>
-      <Trait name="Excellence" level_5="Constantly strives for perfection" level_4="Thinks it is incredibly important to strive for excellence" level_3="Strives for excellence" level_2="Doesn't go out of own way to do more work than necessary" level_1="Very rarely does more work than necessary" level_0="Does the bare minimum necessary to accomplish the task at hand">27</Trait>
-      <Trait name="Perseverance" level_5="Will persist in the face of any difficulty until the task is complete" level_4="Possesses great willpower" level_3="Is self-disciplined" level_2="Is occasionally given to procrastination" level_1="Has very little self-discipline" level_0="Rarely completes tasks and is often overcome by distractions">28</Trait>
-      <Trait name="Cautiousness" level_5="Thinks through every alternative and their consequences before acting" level_4="Extremely cautious" level_3="Takes time when making decisions" level_2="Often does the first thing that comes to mind" level_1="Acts impulsively" level_0="Always acts without considering alternatives or thinking through possibilities">29</Trait>
       <Labor name="Mining">0</Labor>
-      <Labor name="Bowyer">66</Labor>
-      <Labor name="Carpentry">11</Labor>
-      <Labor name="Wood Cutting">10</Labor>
-      <Labor name="Masonry">13</Labor>
-      <Labor name="Stone Detailing">12</Labor>
-      <Labor name="Architecture">14</Labor>
-      <Labor name="Animal Training">15</Labor>
-      <Labor name="Animal Care">16</Labor>
-      <Labor name="Animal Dissection">20</Labor>
-      <Labor name="Hunting">38</Labor>
-      <Labor name="Trapping">19</Labor>
-      <Labor name="Armor Smithing">41</Labor>
-      <Labor name="Furnace Operating">39</Labor>
-      <Labor name="MetalCrafting">43</Labor>
-      <Labor name="Blacksmithing">42</Labor>
-      <Labor name="Weaponsmithing">40</Labor>
-      <Labor name="Gemcutting">44</Labor>
-      <Labor name="Gemsetting">45 </Labor>
-      <Labor name="BoneCarving">48</Labor>
-      <Labor name="Clothesmaking">27</Labor>
-      <Labor name="GlassMaking">49</Labor>
-      <Labor name="LeatherWorking">21</Labor>
-      <Labor name="Stonecrafting">47</Labor>
-      <Labor name="Weaving">26</Labor>
-      <Labor name="Woodcrafting">46</Labor>
-      <Labor name="Strand Extracting">50</Labor>
-      <Labor name="Brewing">23</Labor>
-      <Labor name="Butchery">18</Labor>
-      <Labor name="Cheesemaking">30</Labor>
-      <Labor name="Cooking">32</Labor>
-      <Labor name="Dyeing">71</Labor>
-      <Labor name="Farming">33</Labor>
-      <Labor name="Plant Gathering">34</Labor>
-      <Labor name="Lye Making">70</Labor>
-      <Labor name="Milking">31</Labor>
-      <Labor name="Milling">28</Labor>
-      <Labor name="Potash Making">69</Labor>
-      <Labor name="Soapmaking">25</Labor>
-      <Labor name="Tanning">22</Labor>
-      <Labor name="Plant Processing ">29</Labor>
-      <Labor name="Wood Burning">72</Labor>
-      <Labor name="Fishing">35</Labor>
-      <Labor name="Fish Cleaning">36</Labor>
-      <Labor name="Fish Dissection">37</Labor>
-      <Labor name="Mechanics">67</Labor>
-      <Labor name="Pump Operating">73</Labor>
-      <Labor name="Siege Engineering">64</Labor>
-      <Labor name="Siege Operating">65</Labor>
-      <Labor name="Health Care">17</Labor>
-      <Labor name="Animal Hauling">8</Labor>
-      <Labor name="Wood Hauling">2</Labor>
-      <Labor name="Item Hauling">6</Labor>
-      <Labor name="Food Hauling">4</Labor>
-      <Labor name="Stone Hauling">1</Labor>
-      <Labor name="Refuse Hauling">5</Labor>
-      <Labor name="Furniture Hauling">7</Labor>
-      <Labor name="Cleaning">9</Labor>
-      <Labor name="Burial">3</Labor>
-      <Labor name="Alchemy">24</Labor>
-      <Labor name="[Axe]">51</Labor>
-      <Labor name="[Sword]">52</Labor>
-      <Labor name="[Mace]">53</Labor>
-      <Labor name="[Hammer]">54</Labor>
-      <Labor name="[Spear]">55</Labor>
-      <Labor name="[Crossbow]">57</Labor>
-      <Labor name="[Unarmed]">-1</Labor>
       <VTable name="building_vtable">
         <multiclass name="building_workshop" typeoffset="0xC8">
           <class name="building_alchemists_laboratory" type="0x0"/>
-          <class name="building_carpenters_workshop" type="0x1"/>
-          <class name="building_farmers_workshop" type="0x2"/>
-          <class name="building_masons_workshop" type="0x3"/>
-          <class name="building_craftdwarfs_workshop" type="0x4"/>
-          <class name="building_jewelers_workshop" type="0x5"/>
-          <class name="building_metalsmiths_workshop" type="0x6"/>
-          <class name="building_magma_forge" type="0x7"/>
-          <class name="building_bowyers_workshop" type="0x8"/>
-          <class name="building_mechanics_workshop" type="0x9"/>
-          <class name="building_siege_workshop" type="0xA"/>
-          <class name="building_butchers_shop" type="0xB"/>
-          <class name="building_leather_works" type="0xC"/>
-          <class name="building_tanners_shop" type="0xD"/>
-          <class name="building_clothiers_shop" type="0xE"/>
-          <class name="building_fishery" type="0xF"/>
-          <class name="building_still" type="0x10"/>
-          <class name="building_loom" type="0x11"/>
-          <class name="building_quern" type="0x12"/>
-          <class name="building_kennels" type="0x13"/>
-          <class name="building_kitchen" type="0x14"/>
-          <class name="building_ashery" type="0x15"/>
-          <class name="building_dyers_shop" type="0x16"/>
-          <class name="building_millstone" type="0x17"/>
-        </multiclass>
-        <multiclass name="building_furnace" typeoffset="0xDA">
-          <class name="building_wood_furnace" type="0x0"/>
-          <class name="building_smelter" type="0x1"/>
-          <class name="building_glass_furnace" type="0x2"/>
-          <class name="building_kiln" type="0x3"/>
-          <class name="building_magma_smelter" type="0x4"/>
-          <class name="building_magma_glass_furnace" type="0x5"/>
-          <class name="building_magma_kiln" type="0x6"/>
-        </multiclass>
-        <multiclass name="building_siegeengine" typeoffset="0xC8">
-          <class name="building_catapult" type="0x0"/>
-          <class name="building_ballista" type="0x1"/>
-        </multiclass>
-        <multiclass name="building_trap" typeoffset="0xC8">
-          <class name="building_lever" type="0x0"/>
-          <class name="building_pressure_plate" type="0x1"/>
-          <class name="building_cage_trap" type="0x2"/>
-          <class name="building_stonefall_trap" type="0x3"/>
-          <class name="building_weapon_trap" type="0x4"/>
         </multiclass>
         <class name="building_construction"/>
-        <class name="building_road_paved"/>
-        <class name="building_road_dirt"/>
-        <class name="building_road"/>
-        <class name="building_wagon"/>
-        <class name="building_tradedepot"/>
-        <class name="building_animaltrap"/>
-        <class name="building_farmplot"/>
-        <class name="building_window"/>
-        <class name="building_statue"/>
-        <class name="building_well"/>
-        <class name="building_coffin"/>
-        <class name="building_shop"/>
-        <class name="building_chair"/>
-        <class name="building_table"/>
-        <class name="building_bed"/>
-        <class name="building_cage"/>
-        <class name="building_chain"/>
-        <class name="building_windmill"/>
-        <class name="building_water_wheel"/>
-        <class name="building_screw_pump"/>
-        <class name="building_archerytarget"/>
-        <class name="building_weapon"/>
-        <!-- retractable spikes -->
-        <class name="building_support"/>
-        <class name="building_axle_vertical"/>
-        <class name="building_axle_horizontal"/>
-        <class name="building_gear_assembly"/>
-        <class name="building_bars_floor"/>
-        <class name="building_bars_vertical"/>
-        <class name="building_grate_floor"/>
-        <class name="building_grate_wall"/>
-        <class name="building_floodgate"/>
-        <class name="building_bridge"/>
-        <class name="building_hatch"/>
-        <class name="building_door"/>
-        <class name="building_armorstand"/>
-        <class name="building_weaponrack"/>
-        <class name="building_cabinet"/>
-        <class name="building_box"/>
-        <class name="building_actual"/>
-        <class name="building_civzone"/>
-        <class name="building_stockpile"/>
-        <class name="building_window_gem"/>
-        <class name="building_window_glass"/>
       </VTable>
+      -->
     </Entry>
 
-
-                    .,:rsr,
-                  :2;,;r2A@@5
-                  @2::s5A#@@@ @r.       .
-                 sd;:riXA#@@ :@@@Gir;;AS9
-                 Bs::sS3A#@2 @@#AhXirsS#;
-                iHrLr5d#@@@ .@#95sr;;rie
-                i*'    `*@3 @@A2sr;:;r#5
-                :..:rll:    @@A5sr::r3@
-               @Hr;iZ#@@@@   `:rr;;;;:
-              S@r.;i2#@@@  @s.      ..
-              @2::ri2A@@# B@G2ir:...5i
-             :@r,r3X##@@  @G5sr:..,:A
-            .@Ar;;rSB@@# H#2sr;,..,is
-            .'       `* ,@ASs;:..,:B
-                         ;rr;:,..,:.
-                             `''' 
-                  W I N D O W S
-                       and
-                     W I N E
-     
+    <!--
+    
+    This is an example how an entry can look.
+    
     <Entry version="v0.27.176.38a" os="windows" id="38awin" base="meta-40d">
       <HexValue name="pe_timestamp">0x47b6fac2</HexValue>
       <String name="md5">48c831b6f3950913b8e1aeada563d2db</String>
-      <Offset name="hacked_vector_start">0x0</Offset><!-- where a vector actually starts -->
-      <Offset name="hacked_vector_triplet">0x4</Offset><!-- where the vector triplet is -->
+      
+      where a vector actually starts: <Offset name="hacked_vector_start">0x0</Offset>
+      where the vector triplet is: <Offset name="hacked_vector_triplet">0x4</Offset>
+      
       <Address name="buildings">0x014639f4</Address>
       <Address name="constructions">0x01463288</Address>
       <Address name="creatures">0x01463388</Address>
@@ -815,21 +65,29 @@
       <Address name="x_count">0x014a4ec4</Address>
       <Address name="y_count">0x014a4ec8</Address>
       <Address name="z_count">0x014a4ecc</Address>
-      <!-- job object offsets -->
+      
+      job object offsets
+      ==================
       <Offset name="current_job_id">0x08</Offset>
-      <!-- map block offsets -->
+      
+      map block offsets
+      =================
       <Offset name="v_vein">0x08</Offset>
       <HexValue name="v_vein_size">0x2C</HexValue>
       <Offset name="type">0x0062</Offset>
       <Offset name="designation">0x0264</Offset>
       <Offset name="occupancy">0x0664</Offset>
       <Offset name="biome_stuffs">0x1D64</Offset>
-      <!-- name struct -->
+      
+      name struct
+      ===========
       <Offset name="name_firstname">0x0</Offset>
       <Offset name="name_nickname">0x1C</Offset>
       <Offset name="name_words">0x38</Offset>
       <HexValue name="sizeof_string">0x1C</HexValue>
-      <!-- creature offsets -->
+      
+      creature offsets
+      ================
       <Offset name="creature_name">0x00</Offset>
       <Offset name="creature_custom_profession">0x6c</Offset>
       <Offset name="creature_profession">0x88</Offset>
@@ -857,29 +115,45 @@
       <Offset name="creature_labors">0x474</Offset>
       <Offset name="creature_happiness">0x520</Offset>
       <Offset name="creature_traits">0x5D0</Offset>
-      <!-- tree and shrub offsets -->
+      
+      tree and shrub offsets
+      ======================
       <Offset name="tree_desc_offset">0x70</Offset>
-      <!-- the world and its offsets -->
+      
+      the world and its offsets
+      =========================
       <Offset name="world_size_x">0x84</Offset>
       <Offset name="world_size_y">0x86</Offset>
       <Offset name="w_geoblocks">0x684</Offset>
       <Offset name="w_regions_arr">0x6B4</Offset>
-      <!-- values for the region structure -->
+      
+      values for the region structure
+      ===============================
       <HexValue name="region_size">0x5C</HexValue>
       <Offset name="region_geo_index_off">0x58</Offset>
-      <!-- geoblock offset(s?) -->
+      
+      geoblock offset(s?)
+      ===================
       <Offset name="geolayer_geoblock_offset">0x4</Offset>
-      <!-- matgloss vectors -->
+      
+      matgloss vectors
+      ================
       <HexValue name="matgloss_skip">0x10</HexValue>
-      <!-- only stone and metal have color loaded... -->
+      
+      only stone and metal have color loaded...
+      =========================================
       <Offset name="matgloss_stone_color">0x84</Offset>
       <Offset name="matgloss_metal_color">0x60</Offset>
+      
+      map block offsets
+      =================
       <Offset name="v_vein">0x08</Offset>
       <HexValue name="v_vein_size">0x2C</HexValue>
       <Offset name="type">0x0062</Offset>
       <Offset name="designation">0x0264</Offset>
       <Offset name="occupancy">0x0664</Offset>
       <Offset name="biome_stuffs">0x1D64</Offset>
+      
       <Offset name="word_table">0x3C</Offset>
       <Offset name="note_foreground">0x2</Offset>
       <Offset name="note_background">0x4</Offset>
@@ -892,6 +166,8 @@
       <Offset name="settlement_local_xy">0xD8</Offset>
       <Offset name="item_materials">0x68</Offset>
       <Offset name="item_type_name">0x24</Offset>
+      
+      
       <Offset name="matgloss_creature_name">0x1C</Offset>
       <Offset name="matgloss_wood_name">0x28</Offset>
       <Offset name="matgloss_stone_name">0x24</Offset>
@@ -901,655 +177,184 @@
       <Offset name="matgloss_plant_food">0x94</Offset>
       <Offset name="matgloss_plant_extract">0xB0</Offset>
     </Entry>
-    <Entry version="v0.27.176.38b" os="windows" id="38bwin" base="38awin">
-      <HexValue name="pe_timestamp">0x47c12f36</HexValue>
-      <String name="md5">8bd90fb6db8388f129fde224a35459de</String>
-      <Address name="buildings">0x01463bec</Address>
-      <Address name="constructions">0x01463480</Address>
-      <Address name="creatures">0x01463580</Address>
-      <Address name="current_cursor_creature">0x00c7bc04</Address>
-      <Address name="current_menu_state">0x01287d14</Address>
-      <Address name="cursor_xyz">0x0094128c</Address>
-      <Address name="hotkey_start">0x01287a9c</Address>
-      <Address name="items">0x01463550</Address>
-      <Address name="language_vector">0x014a6c60</Address>
-      <Address name="map_data">0x014a50a4</Address>
-      <Address name="matgloss">0x014a6b00</Address>
-      <Address name="notes">0xffffffff</Address>
-      <Address name="pause_state">0x8b010127</Address>
-      <Address name="region_x">0x014a50d4</Address>
-      <Address name="region_y">0x014a50d8</Address>
-      <Address name="region_z">0x014a50dc</Address>
-      <Address name="settlement_current">0x014a694c</Address>
-      <Address name="settlements">0x014a69e8</Address>
-      <Address name="translation_vector">0x014a6c80</Address>
-      <Address name="vegetation">0x01467d70</Address>
-      <Address name="view_screen">0x01295d58</Address>
-      <Address name="window_dims">0x01284184</Address>
-      <Address name="window_x">0x00c3fb40</Address>
-      <Address name="window_y">0x00c23594</Address>
-      <Address name="window_z">0x00c68354</Address>
-      <Address name="world">0x014a66d4</Address>
-      <Address name="x_count">0x014a50bc</Address>
-      <Address name="y_count">0x014a50c0</Address>
-      <Address name="z_count">0x014a50c4</Address>
+    -->
+    
+    
+                    .,:rsr,
+                  :2;,;r2A@@5
+                  @2::s5A#@@@ @r.       .
+                 sd;:riXA#@@ :@@@Gir;;AS9
+                 Bs::sS3A#@2 @@#AhXirsS#;
+                iHrLr5d#@@@ .@#95sr;;rie
+                i*'    `*@3 @@A2sr;:;r#5
+                :..:rll:    @@A5sr::r3@
+               @Hr;iZ#@@@@   `:rr;;;;:
+              S@r.;i2#@@@  @s.      ..
+              @2::ri2A@@# B@G2ir:...5i
+             :@r,r3X##@@  @G5sr:..,:A
+            .@Ar;;rSB@@# H#2sr;,..,is
+            .'       `* ,@ASs;:..,:B
+                         ;rr;:,..,:.
+                             `''' 
+                  W I N D O W S
+                       and
+                     W I N E
+                     
+                     
+
+    <Entry version="v0.31.01" os="windows" id="0.31.01">
+        <String name="md5">851c1190b6a7b42f2463967623d18575</String>
+        <HexValue name="pe_timestamp">0x4BB45F99</HexValue>
+
+        Basic things
+        ============
+        <HexValue name="sizeof_vector">0x18</HexValue>
+        <Offset name="vector_triplet">0xC</Offset>
+        <HexValue name="sizeof_string">0x1C</HexValue>
+
+        Position and window dimensions
+        ==============================
+        <Address name="window_x">0xe32798</Address>
+        <Address name="window_y">0xe60838</Address>
+        <Address name="window_z">0xe60814</Address>
+        <Address name="cursor_xyz">0xae82cc</Address>
+
+        <Address name="window_dims">0x17f5ab8</Address>
+        Found addresses: (next to each other!)
+        0x17f5ab8
+        0x17f5ac0
+        0x17f5ac8
+        0x17f5ad0
+
+        <Address name="pause_state">0x146e45f</Address>
+        Found addresses:
+        0x146e45f <!-- looks like a dword -->
+        0x185b677 <!-- looks like a word -->
+
+        Bogus: <Address name="current_cursor_creature">0xae82cc</Address>
+
+        <Address name="current_menu_state">0x017f6f38</Address>
+
+        Bogus: <Address name="view_screen">0xae82cc</Address>
+
+        Map stuff
+        =========
+        <Address name="map_data">0x016AD718</Address>
+        <Offset name="v_vein">0x10</Offset>
+        <Offset name="type">0x0092</Offset>
+        <Offset name="designation">0x029C</Offset>
+        <!--
+        No idea if those are still relevant. I'll assume NO
+        <Offset name="occupancy">0x0684</Offset>
+        <Offset name="biome_stuffs">0x1D84</Offset>
+        -->
+        
+        * map size in blocks *
+        <Address name="x_count_block">0x016ad738</Address>
+        <Address name="y_count_block">0x016ad73C</Address>
+        <Address name="z_count_block">0x016ad740</Address>
+        
+        * map size in tiles *
+        <Address name="x_count">0x016ad744</Address>
+        <Address name="y_count">0x016ad748</Address>
+        <Address name="z_count">0x016ad74C</Address>
+        
+        * Suspected region coords *
+        <Address name="region_x">0x016ad750</Address>
+        <Address name="region_y">0x016ad754</Address>
+        <Address name="region_z">0x016ad758</Address>
+
+        name struct
+        ===========
+        <Offset name="name_firstname">0x0</Offset>
+        <Offset name="name_nickname">0x1C</Offset>
+        <Offset name="name_words">0x38</Offset>
+
+        Creatures
+        =========
+        <Offset name="creature_name">0x0</Offset>
+        <Offset name="creature_position">0x90</Offset>
+        <Offset name="creature_flags1">0xF8</Offset>
+        <Offset name="creature_flags2">0xFC</Offset>
+        <Offset name="creature_sex">0x110</Offset>
+        <Offset name="creature_id">0x114</Offset>
+        <Offset name="creature_artifact_name">0x6D0</Offset>
+        <Offset name="creature_labors">0x770</Offset>
+      
+        <!-- 
+        addresses from belal: vectors might need 8 subtracted from 
+        buildings 0x0166f9a8
+        constructions 0xffffffff
+        creatures 0x0166eccc
+        current_cursor_creature 0x00ae82cc
+        current_menu_state 0x017f6f38
+        cursor_xyz 0x0166ecd4
+        effects_vector 0x017f6da0
+        hotkey_start 0x01476ecc
+        items 0x0166eda8
+        language_vector 0x016affe0
+        map_data 0x016ad718
+        matgloss 0xffffffff
+        notes 0x01474de8
+        pause_state 0x0146e45f
+        region_x 0x016ad750
+        region_y 0x016ad754
+        region_z 0x016ad758
+        settlement_current 0xffffffff
+        settlements 0x016af4a4
+        translation_vector 0x016b0010
+        vegetation 0x017f6da0
+        view_screen 0xffffffff
+        window_dims 0x017f5abc
+        window_x 0x00e32798
+        window_y 0x00e60838
+        window_z 0x00e60814
+        world 0x016aed50
+        x_count 0x016ad738
+        y_count 0x016ad73c
+        z_count 0x016ad740
+        -->
+      
+        <!--
+        <Address name="buildings">0x09008880</Address>
+        <Address name="constructions">0x08ff4a58</Address>
+        <Address name="creatures">0x0900839C</Address>
+        <Address name="current_cursor_creature">0x08fe3908</Address>
+        <Address name="current_menu_state">0x08ff4900</Address>
+        <Address name="cursor_xyz">0x08832328</Address>
+        <Address name="effects_vector">0x089ed3f8</Address>
+        <Address name="hotkey_start">0x08ff47ac</Address>
+        <Address name="items">0x0900840c</Address>
+        <Address name="language_vector">0x0904accc</Address>
+        <Address name="map_data">0x09048cfc</Address>
+        <Address name="matgloss">0x0904abc4</Address>
+        <Address name="notes">0x08ff4784</Address>
+        <Address name="pause_state">0xc60008fe</Address>
+        <Address name="region_x">0x09048d28</Address>
+        <Address name="region_y">0x09048d2c</Address>
+        <Address name="region_z">0x09048d30</Address>
+        <Address name="settlement_current">0x0904a908</Address>
+        <Address name="settlements">0x0904a89c</Address>
+        <Address name="translation_vector">0x0904ace4</Address>
+        <Address name="vegetation">0x0900b9d0</Address>
+        <Address name="view_screen">0x08832a60</Address>
+        <Address name="window_dims">0x091995fc</Address>
+        <Address name="window_x">0x089edd14</Address>
+        <Address name="window_y">0x089edd18</Address>
+        <Address name="window_z">0x089edd1c</Address>
+        <Address name="world">0x0904a328</Address>
+        <Address name="x_count">0x09048d10</Address>
+        <Address name="y_count">0x09048d14</Address>
+        <Address name="z_count">0x09048d18</Address>
+        -->
     </Entry>
-    <Entry version="v0.27.176.38c" os="windows" id="38cwin" base="38bwin" rebase="0x1000">
-      <HexValue name="pe_timestamp">0x47c29583</HexValue>
-      <String name="md5">9147b5e922a30873fd1a742b1dea1724</String>
-      <Address name="notes">0xffffffff</Address>
-      <Address name="pause_state">0x8b010127</Address>
-    </Entry>
-    <Entry version="v0.28.181.39a" os="windows" id="39awin" base="38cwin">
-      <HexValue name="pe_timestamp">0x487b4e8b</HexValue>
-      <String name="md5">4b3857a05590b9d9488900e575079e9d</String>
-      <Address name="buildings">0x01512b70</Address>
-      <Address name="constructions">0x014feb80</Address>
-      <Address name="creatures">0x01512504</Address>
-      <Address name="current_cursor_creature">0x00d16c20</Address>
-      <Address name="current_menu_state">0x01322d58</Address>
-      <Address name="cursor_xyz">0x009d6284</Address>
-      <Address name="hotkey_start">0x01322adc</Address>
-      <Address name="items">0x014fec50</Address>
-      <Address name="language_vector">0x01555f88</Address>
-      <Address name="map_data">0x01554028</Address>
-      <Address name="matgloss">0x01555e28</Address>
-      <Address name="notes">0xffffffff</Address>
-      <Address name="pause_state">0x8b010131</Address>
-      <Address name="region_x">0x01554058</Address>
-      <Address name="region_y">0x0155405c</Address>
-      <Address name="region_z">0x01554060</Address>
-      <Address name="settlement_current">0x01555ce8</Address>
-      <Address name="settlements">0x01555c6c</Address>
-      <Address name="translation_vector">0x01555fa8</Address>
-      <Address name="vegetation">0x01516cf4</Address>
-      <Address name="view_screen">0x01330d98</Address>
-      <Address name="window_dims">0x0131f1b4</Address>
-      <Address name="window_x">0x00cd5398</Address>
-      <Address name="window_y">0x00cb8dec</Address>
-      <Address name="window_z">0x00d03370</Address>
-      <Address name="world">0x01555658</Address>
-      <Address name="x_count">0x01554040</Address>
-      <Address name="y_count">0x01554044</Address>
-      <Address name="z_count">0x01554048</Address>
-    </Entry>
-    <Entry version="v0.28.181.39b" os="windows" id="39bwin" base="39awin" rebase="0x1000">
-      <HexValue name="pe_timestamp">0x487c9338</HexValue>
-      <String name="md5">52155dea390c2080fc16e4bbeb077164</String>
-      <Address name="notes">0xffffffff</Address>
-      <Address name="pause_state">0x8b010131</Address>
-    </Entry>
-    <Entry version="v0.28.181.39c" os="windows" id="39cwin" base="39bwin">
-      <HexValue name="pe_timestamp">0x487f2f30</HexValue>
-      <String name="md5">8f8cf06b1cd5ea102881a7cced767d4f</String>
-      <Address name="buildings">0x01513b90</Address>
-      <Address name="constructions">0x014ffba0</Address>
-      <Address name="creatures">0x01513524</Address>
-      <Address name="current_cursor_creature">0x00d17c44</Address>
-      <Address name="current_menu_state">0x01323d78</Address>
-      <Address name="cursor_xyz">0x009d7284</Address>
-      <Address name="hotkey_start">0xffffffff</Address>
-      <!-- fix this -->
-      <Address name="items">0x014ffc70</Address>
-      <Address name="language_vector">0x01556fa8</Address>
-      <Address name="map_data">0x01555048</Address>
-      <Address name="matgloss">0x01556e48</Address>
-      <Address name="notes">0xffffffff</Address>
-      <!-- this is the version prior to notes being implemented -->
-      <Address name="pause_state">0x8b010131</Address>
-      <Address name="region_x">0x01555078</Address>
-      <Address name="region_y">0x0155507c</Address>
-      <Address name="region_z">0x01555080</Address>
-      <Address name="settlement_current">0x01556d08</Address>
-      <Address name="settlements">0x01556c8c</Address>
-      <Address name="translation_vector">0x01556fc8</Address>
-      <Address name="vegetation">0x01517d14</Address>
-      <Address name="view_screen">0x01331db8</Address>
-      <Address name="window_dims">0x013201d4</Address>
-      <Address name="window_x">0x00cd63bc</Address>
-      <Address name="window_y">0x00cb9dec</Address>
-      <Address name="window_z">0x00d04394</Address>
-      <Address name="world">0x01556678</Address>
-      <Address name="x_count">0x01555060</Address>
-      <Address name="y_count">0x01555064</Address>
-      <Address name="z_count">0x01555068</Address>
-    </Entry>
-    <Entry version="v0.28.181.39d" os="windows" id="39dwin" base="39cwin">
-      <HexValue name="pe_timestamp">0x48873bc3</HexValue>
-      <String name="md5">8614a01593baef6e4a341e2f1a92ba06</String>
-      <Address name="buildings">0x0151ffb8</Address>
-      <Address name="constructions">0x0150bfc8</Address>
-      <Address name="creatures">0x0151f94c</Address>
-      <Address name="current_cursor_creature">0x00d23c4c</Address>
-      <Address name="current_menu_state">0x0132fdb0</Address>
-      <Address name="cursor_xyz">0x009e3284</Address>
-      <Address name="hotkey_start">0x0132fb34</Address>
-      <Address name="items">0x0150c098</Address>
-      <Address name="language_vector">0x015635cc</Address>
-      <Address name="map_data">0x01561470</Address>
-      <Address name="matgloss">0x0156346c</Address>
-      <Address name="notes">0x0132faac</Address>
-      <Address name="pause_state">0x8b010131</Address>
-      <Address name="region_x">0x015614a0</Address>
-      <Address name="region_y">0x015614a4</Address>
-      <Address name="region_z">0x015614a8</Address>
-      <Address name="settlement_current">0x01563154</Address>
-      <Address name="settlements">0x015630d8</Address>
-      <Address name="translation_vector">0x015635ec</Address>
-      <Address name="vegetation">0x0152413c</Address>
-      <Address name="view_screen">0x0133ddf0</Address>
-      <Address name="window_dims">0x0132c1dc</Address>
-      <Address name="window_x">0x00ce23c4</Address>
-      <Address name="window_y">0x00cc5df4</Address>
-      <Address name="window_z">0x00d1039c</Address>
-      <Address name="world">0x01562aa0</Address>
-      <Address name="x_count">0x01561488</Address>
-      <Address name="y_count">0x0156148c</Address>
-      <Address name="z_count">0x01561490</Address>
-    </Entry>
-    <Entry version="v0.28.181.39e" os="windows" id="39ewin" base="39dwin" rebase="0x0">
-      <HexValue name="pe_timestamp">0x4888672c</HexValue>
-      <String name="md5">32f68422f5b4d938549eed0565bcfb92</String>
-    </Entry>
-    <Entry version="v0.28.181.39f" os="windows" id="39fwin" base="39ewin">
-      <HexValue name="pe_timestamp">0x489d8c7f</HexValue>
-      <String name="md5">33db0401081058fb54252210bf371344</String>
-      <Address name="buildings">0x01576468</Address>
-      <Address name="constructions">0x01562478</Address>
-      <Address name="creatures">0x01575dfc</Address>
-      <Address name="current_cursor_creature">0x00d7a0fc</Address>
-      <Address name="current_menu_state">0x01386260</Address>
-      <Address name="cursor_xyz">0x009ef294</Address>
-      <Address name="hotkey_start">0x01385fe4</Address>
-      <Address name="items">0x01562548</Address>
-      <Address name="language_vector">0x015b9a7c</Address>
-      <Address name="map_data">0x015b7920</Address>
-      <Address name="matgloss">0x015b991c</Address>
-      <Address name="notes">0x01385f5c</Address>
-      <Address name="pause_state">0x5f010137</Address>
-      <Address name="region_x">0x015b7950</Address>
-      <Address name="region_y">0x015b7954</Address>
-      <Address name="region_z">0x015b7958</Address>
-      <Address name="settlement_current">0x015b9604</Address>
-      <Address name="settlements">0x015b9588</Address>
-      <Address name="translation_vector">0x015b9a9c</Address>
-      <Address name="vegetation">0x0157a5ec</Address>
-      <Address name="view_screen">0x013942a0</Address>
-      <Address name="window_dims">0x0138268c</Address>
-      <Address name="window_x">0x00d387fc</Address>
-      <Address name="window_y">0x00d66870</Address>
-      <Address name="window_z">0x00d6684c</Address>
-      <Address name="world">0x015b8f50</Address>
-      <Address name="x_count">0x015b7938</Address>
-      <Address name="y_count">0x015b793c</Address>
-      <Address name="z_count">0x015b7940</Address>
-    </Entry>
-    <Entry version="v0.28.181.40a" os="windows" id="40awin" base="39fwin">
-      <HexValue name="pe_timestamp">0x48a9727f</HexValue>
-      <String name="md5">441c76f45cfffc6abc6548e41c7e2218</String>
-      <Address name="buildings">0x015828a8</Address>
-      <Address name="constructions">0x0156e8b8</Address>
-      <Address name="creatures">0x0158223c</Address>
-      <Address name="current_cursor_creature">0x00d860fc</Address>
-      <Address name="current_menu_state">0x01392268</Address>
-      <Address name="cursor_xyz">0x009fb294</Address>
-      <Address name="hotkey_start">0x01391fc0</Address>
-      <Address name="items">0x0156e988</Address>
-      <Address name="language_vector">0x015c5ecc</Address>
-      <Address name="map_data">0x015c3d60</Address>
-      <Address name="matgloss">0x015c5d6c</Address>
-      <Address name="notes">0x01391f64</Address>
-      <Address name="pause_state">0x5f010138</Address>
-      <Address name="region_x">0x015c3d90</Address>
-      <Address name="region_y">0x015c3d94</Address>
-      <Address name="region_z">0x015c3d98</Address>
-      <Address name="settlement_current">0x015c5a54</Address>
-      <Address name="settlements">0x015c59c8</Address>
-      <Address name="translation_vector">0x015c5eec</Address>
-      <Address name="vegetation">0x01586a2c</Address>
-      <Address name="view_screen">0x013a02a8</Address>
-      <Address name="window_dims">0x0138e694</Address>
-      <Address name="window_x">0x00d447fc</Address>
-      <Address name="window_y">0x00d72870</Address>
-      <Address name="window_z">0x00d7284c</Address>
-      <Address name="world">0x015c5390</Address>
-      <Address name="x_count">0x015c3d78</Address>
-      <Address name="y_count">0x015c3d7c</Address>
-      <Address name="z_count">0x015c3d80</Address>
-    </Entry>
-    <Entry version="v0.28.181.40b" os="windows" id="40bwin" base="40awin" rebase="0x0">
-      <HexValue name="pe_timestamp">0x48ad547a</HexValue>
-      <String name="md5">65b4fa339d4081e934c1297d2a22234a</String>
-    </Entry>
-    <Entry version="v0.28.181.40c" os="windows" id="40cwin" base="40bwin" rebase="0x0">
-      <HexValue name="pe_timestamp">0x48ad802b</HexValue>
-      <String name="md5">15e95727019e76aa653538618c7e0cfd</String>
-    </Entry>
-    <Entry version="v0.28.181.40d" os="windows" id="40dwin" base="40cwin">
-      <HexValue name="pe_timestamp">0x48c330df</HexValue>
-      <String name="md5">2c686c26307dcccd7c36cc79737ebe4f</String>
-      <Address name="buildings">0x015838a0</Address>
-      <Address name="constructions">0x0156f8b0</Address>
-      <Address name="creatures">0x01583234</Address>
-      <Address name="current_cursor_creature">0x00D870F4</Address>
-      <Address name="current_menu_state">0x01393260</Address>
-      <Address name="cursor_xyz">0x009fc294</Address>
-      <Address name="effects_vector">0x1583234</Address>
-      <Address name="hotkey_start">0x01392fb8</Address>
-      <Address name="items">0x0156f980</Address>
-      <Address name="language_vector">0x015c6ed0</Address>
-      <Address name="map_data">0x015c4d58</Address>
-      <Address name="matgloss">0x015c6d70</Address>
-      <Address name="notes">0x01392f5c</Address>
-      <Address name="pause_state">0x0138147f</Address>
-      <Address name="region_x">0x015c4d88</Address>
-      <Address name="region_y">0x015c4d8c</Address>
-      <Address name="region_z">0x015c4d90</Address>
-      <Address name="settlement_current">0x015c6a58</Address>
-      <Address name="settlements">0x015c69cc</Address>
-      <Address name="translation_vector">0x015c6ef0</Address>
-      <Address name="vegetation">0x01587a24</Address>
-      <Address name="view_screen">0x013a12a0</Address>
-      <Address name="window_dims">0x0138f68c</Address>
-      <Address name="window_x">0x00d457f4</Address>
-      <Address name="window_y">0x00d73868</Address>
-      <Address name="window_z">0x00d73844</Address>
-      <Address name="world">0x015c6388</Address>
-      <Address name="x_count">0x015c4d70</Address>
-      <Address name="y_count">0x015c4d74</Address>
-      <Address name="z_count">0x015c4d78</Address>
-    </Entry>
-    <!-- Windows 40d## sub-versions, should inherit only vtable from 40d -->
-    <Entry version="v0.28.181.40d2" os="windows" id="40d2win" base="40dwin">
-      <HexValue name="pe_timestamp">0x4953556c</HexValue>
-      <String name="md5">b1a8ca1f91734eb492b7f54f6823cddb</String>
-      <Offset name="hacked_vector_start">-0x8</Offset><!-- where a vector actually starts -->
-      <Offset name="hacked_vector_triplet">0x4</Offset><!-- where the vector triplet is -->
-      <Address name="buildings">0x014d1db0</Address>
-      <Address name="constructions">0x014bda18</Address>
-      <Address name="creatures">0x014D141C</Address>
-      <Address name="current_cursor_creature">0x00cd4c3c</Address>
-      <Address name="current_menu_state">0x0165b5a8</Address>
-      <Address name="cursor_xyz">0x0094b27c</Address>
-      <Address name="effects_vector">0x165b410</Address>
-      <Address name="hotkey_start">0x012e101c</Address>
-      <Address name="items">0x014d14f8</Address>
-      <Address name="language_vector">0x01517678</Address>
-      <Address name="map_data">0x015152f8</Address>
-      <Address name="matgloss">0x01517468</Address>
-      <Address name="notes">0x012e0fe4</Address>
-      <Address name="pause_state">0x012cefbf</Address>
-      <Address name="region_x">0x01515330</Address>
-      <Address name="region_y">0x01515334</Address>
-      <Address name="region_z">0x01515338</Address>
-      <Address name="settlement_current">0x015170f8</Address>
-      <Address name="settlements">0x0151702c</Address>
-      <Address name="translation_vector">0x015176a8</Address>
-      <Address name="vegetation">0x014d7f84</Address>
-      <Address name="view_screen">0x012ef340</Address>
-      <Address name="window_dims">0x0165a34c</Address>
-      <Address name="window_x">0x00c9333c</Address>
-      <Address name="window_y">0x00cc13b0</Address>
-      <Address name="window_z">0x00cc138c</Address>
-      <Address name="world">0x01516930</Address>
-      <Address name="x_count">0x01515318</Address>
-      <Address name="y_count">0x0151531c</Address>
-      <Address name="z_count">0x01515320</Address>
-      <Offset name="word_table">0x54</Offset>
-      <!-- name struct -->
-      <Offset name="name_firstname">0x0</Offset>
-      <Offset name="name_nickname">0x1C</Offset>
-      <Offset name="name_words">0x38</Offset>
-      <HexValue name="sizeof_string">0x1C</HexValue>
-      <!-- TEST! Missing in 40d! -->
-      <!-- creature offsets -->
-      <Offset name="creature_flags1">0xFC</Offset>
-      <Offset name="creature_flags2">0x100</Offset>
-      <Offset name="creature_sex">0x10A</Offset>
-      <Offset name="creature_id">0x10C</Offset>
-      <Offset name="creature_squad_name">0x198</Offset>
-      <Offset name="creature_mood">0x238</Offset>
-      <Offset name="creature_pregnancy">0x23C</Offset>
-      <Offset name="creature_squad_leader_id">0x268</Offset>
-      <Offset name="creature_money">0x2F8</Offset>
-      <Offset name="creature_current_job">0x314</Offset>
-      <Offset name="creature_blood_max">0x3C0</Offset>
-      <Offset name="creature_blood_current">0x3C4</Offset>
-      <Offset name="creature_bleed">0x3C8</Offset>
-      <Offset name="creature_artifact_name">0x484</Offset>
-      <Offset name="creature_strength">0x4F0</Offset>
-      <Offset name="creature_agility">0x4F4</Offset>
-      <Offset name="creature_toughness">0x4F8</Offset>
-      <Offset name="creature_skills">0x504</Offset>
-      <Offset name="creature_likes">0x51C</Offset>
-      <Offset name="creature_labors">0x544</Offset>
-      <Offset name="creature_happiness">0x610</Offset>
-      <Offset name="creature_traits">0x700</Offset>
-      <!-- tree and shrub offsets -->
-      <Offset name="tree_desc_offset">0x70</Offset>
-      <!-- map block offsets -->
-      <Offset name="v_vein">0x10</Offset>
-      <HexValue name="v_vein_size">0x2C</HexValue>
-      <Offset name="type">0x0082</Offset>
-      <Offset name="designation">0x0284</Offset>
-      <Offset name="occupancy">0x0684</Offset>
-      <Offset name="biome_stuffs">0x1D84</Offset>
-      <Offset name="world_size_x">0x84</Offset>
-      <Offset name="world_size_y">0x86</Offset>
-      <Offset name="w_geoblocks">0x75C</Offset>
-      <Offset name="w_regions_arr">0x79C</Offset>
-      <!-- values for the region structure -->
-      <HexValue name="region_size">0x64</HexValue>
-      <Offset name="region_geo_index_off">0x60</Offset>
-      <!-- geoblock offset(s?) -->
-      <Offset name="geolayer_geoblock_offset">0xC</Offset>
-      <Offset name="note_foreground">0x2</Offset>
-      <Offset name="note_background">0x4</Offset>
-      <Offset name="note_name">0x8</Offset>
-      <Offset name="note_xyz">0x24</Offset>
-      <Offset name="hotkey_mode">0x1C</Offset>
-      <Offset name="hotkey_xyz">0x20</Offset>
-      <HexValue name="hotkey_size">0x2C</HexValue>
-      <Offset name="settlement_name">0x0</Offset>
-      <Offset name="settlement_world_xy">0x7a</Offset>
-      <Offset name="settlement_local_xy">0x100</Offset>
-      <Offset name="item_materials">0x68</Offset>
-      <Offset name="item_type_name">0x24</Offset>
-      <!-- matgloss vectors -->
-      <HexValue name="matgloss_skip">0x18</HexValue>
-      <Offset name="matgloss_creature_name">0x1C</Offset>
-      <Offset name="matgloss_wood_name">0x28</Offset>
-      <Offset name="matgloss_stone_name">0x24</Offset>
-      <Offset name="matgloss_metal_name">0x24</Offset>
-      <Offset name="matgloss_plant_name">0x24</Offset>
-      <Offset name="matgloss_plant_drink">0x5C</Offset>
-      <Offset name="matgloss_plant_food">0x94</Offset>
-      <Offset name="matgloss_plant_extract">0xB0</Offset>
-      <!-- I am just going to guess these actually start here -->
-      <VTable name="building_vtable">
-        <multiclass name="building_workshop" typeoffset="0x100"/>
-        <multiclass name="building_siegeengine" typeoffset="0x100"/>
-        <multiclass name="building_furnace" typeoffset="0x11A"/>
-        <multiclass name="building_trap" typeoffset="0x100"/>
-      </VTable>
-    </Entry>
-    <Entry version="v0.28.181.40d3" os="windows" id="40d3win" base="40d2win" rebase="0x2018">
-      <HexValue name="pe_timestamp">0x4957716f</HexValue>
-      <String name="md5">9b6da355562a4cdd345ea3046290499b</String>
-      <Address name="current_cursor_creature">0x00cd6c3c</Address>
-      <Address name="cursor_xyz">0x0094d27c</Address>
-      <Address name="pause_state">0x012d0fbf</Address>
-      <Address name="window_x">0x00c9533c</Address>
-      <Address name="window_y">0x00cc33b0</Address>
-      <Address name="window_z">0x00cc338c</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d4" os="windows" id="40d4win" base="40d3win" rebase="0x0">
-      <HexValue name="pe_timestamp">0x4957a0a2</HexValue>
-      <String name="md5">b77759db7a6dd787bf98953fc5749d81</String>
-    </Entry>
-    <Entry version="v0.28.181.40d5" os="windows" id="40d5win" base="40d4win" rebase="0x2018">
-      <HexValue name="pe_timestamp">0x495991c3</HexValue>
-      <String name="md5">a0792b81e5b8ec1dbdd627643e93b40d</String>
-      <Address name="current_cursor_creature">0xcd8c34</Address>
-      <Address name="cursor_xyz">0x0094f27c</Address>
-      <Address name="pause_state">0x012d2fbb</Address>
-      <Address name="window_x">0x00c97334</Address>
-      <Address name="window_y">0x00cc53a8</Address>
-      <Address name="window_z">0x00cc5384</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d6" os="windows" id="40d6win" base="40d5win" rebase="0x18a08">
-      <HexValue name="pe_timestamp">0x495cafd2</HexValue>
-      <String name="md5">d09e88a32fe57de5973f78ef213271b6</String>
-      <Address name="current_cursor_creature">0xcefc68</Address>
-      <Address name="cursor_xyz">0x009662a4</Address>
-      <Address name="pause_state">0x012e9fef</Address>
-      <Address name="window_x">0x00cae368</Address>
-      <Address name="window_y">0x00cdc3dc</Address>
-      <Address name="window_z">0x00cdc3b8</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d7" os="windows" id="40d7win" base="40d6win" rebase="0x190">
-      <HexValue name="pe_timestamp">0x495fcfef</HexValue>
-      <String name="md5">8e8e2a83d421e356a8047dc8830a7426</String>
-      <Address name="current_cursor_creature">0xcefc68</Address>
-      <Address name="cursor_xyz">0x009662a4</Address>
-      <Address name="pause_state">0x012e9fef</Address>
-      <Address name="window_x">0x00cae368</Address>
-      <Address name="window_y">0x00cdc3dc</Address>
-      <Address name="window_z">0x00cdc3b8</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d8" os="windows" id="40d8win" base="40d7win" rebase="0x0">
-      <HexValue name="pe_timestamp">0x4963c928</HexValue>
-      <String name="md5">32253bee114dd25ebbaa50d90b5c0a2a</String>
-    </Entry>
-    <Entry version="v0.28.181.40d9" os="windows" id="40d9win" base="40d8win" rebase="0x0">
-      <HexValue name="pe_timestamp">0x4967c2e0</HexValue>
-      <String name="md5">aea5a207b8b1cda942502f97a429f6c3</String>
-    </Entry>
-    <Entry version="v0.28.181.40d10" os="windows" id="40d10win" base="40d9win">
-      <HexValue name="pe_timestamp">0x49c59b94</HexValue>
-      <String name="md5">193193d8624f2f3f6d9d556fab09b122</String>
-      <Address name="buildings">0x0151bd00</Address>
-      <Address name="constructions">0x01507968</Address>
-      <Address name="creatures">0x0151b36c</Address>
-      <Address name="current_cursor_creature">0x00d20ed8</Address>
-      <Address name="current_menu_state">0x016a54f8</Address>
-      <Address name="cursor_xyz">0x009652a4</Address>
-      <Address name="effects_vector">0x16a5360</Address>
-      <Address name="hotkey_start">0x0132e574</Address>
-      <Address name="items">0x0151b448</Address>
-      <Address name="language_vector">0x015615c8</Address>
-      <Address name="map_data">0x0155f248</Address>
-      <Address name="matgloss">0x015613b8</Address>
-      <Address name="notes">0x0132e53c</Address>
-      <Address name="pause_state">0x0131b25f</Address>
-      <Address name="region_x">0x0155f280</Address>
-      <Address name="region_y">0x0155f284</Address>
-      <Address name="region_z">0x0155f288</Address>
-      <Address name="settlement_current">0x01561048</Address>
-      <Address name="settlements">0x01560f7c</Address>
-      <Address name="translation_vector">0x015615f8</Address>
-      <Address name="vegetation">0x01521ed4</Address>
-      <Address name="view_screen">0x0133c898</Address>
-      <Address name="window_dims">0x016a429c</Address>
-      <Address name="window_x">0x00cdf5a0</Address>
-      <Address name="window_y">0x00d0d64c</Address>
-      <Address name="window_z">0x00d0d628</Address>
-      <Address name="world">0x01560880</Address>
-      <Address name="x_count">0x0155f268</Address>
-      <Address name="y_count">0x0155f26c</Address>
-      <Address name="z_count">0x0155f270</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d11" os="windows" id="40d11win" base="40d10win" rebase="0x0">
-      <HexValue name="pe_timestamp">0x49c82d3f</HexValue>
-      <String name="md5">6f81231b845e9c9dc29aaf57705ccc7c</String>
-    </Entry>
-    <Entry version="v0.28.181.40d12" os="windows" id="40d12win" base="40d11win">
-      <HexValue name="pe_timestamp">0x4a3ccb7f</HexValue>
-      <String name="md5">6ea1de36af8e1666bd6478736e298c4c</String>
-      <Address name="buildings">0x015b7750</Address>
-      <Address name="constructions">0x015a33b8</Address>
-      <Address name="creatures">0x015b6dbc</Address>
-      <Address name="current_cursor_creature">0x00ddaed8</Address>
-      <Address name="current_menu_state">0x0095f410</Address>
-      <Address name="cursor_xyz">0x0095f2b4</Address>
-      <Address name="effects_vector">0x1740e60</Address>
-      <Address name="hotkey_start">0x013e8574</Address>
-      <Address name="items">0x015b6e98</Address>
-      <Address name="language_vector">0x015fd04c</Address>
-      <Address name="map_data">0x015faccc</Address>
-      <Address name="matgloss">0x015fce3c</Address>
-      <Address name="notes">0x013e853c</Address>
-      <Address name="pause_state">0x013d525f</Address>
-      <Address name="region_x">0x015fad04</Address>
-      <Address name="region_y">0x015fad08</Address>
-      <Address name="region_z">0x015fad0c</Address>
-      <Address name="settlement_current">0x015fcacc</Address>
-      <Address name="settlements">0x015fca00</Address>
-      <Address name="translation_vector">0x015fd07c</Address>
-      <Address name="vegetation">0x015bd924</Address>
-      <Address name="view_screen">0x015b6dc4</Address>
-      <Address name="window_dims">0x0173fde0</Address>
-      <Address name="window_x">0x00d995a0</Address>
-      <Address name="window_y">0x00dc764c</Address>
-      <Address name="window_z">0x00dc7628</Address>
-      <Address name="world">0x015fc304</Address>
-      <Address name="x_count">0x015facec</Address>
-      <Address name="y_count">0x015facf0</Address>
-      <Address name="z_count">0x015facf4</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d13" os="windows" id="40d13win" base="40d12win" rebase="0x5090">
-      <HexValue name="pe_timestamp">0x4a51c26e</HexValue>
-      <String name="md5">04a8d8ce311d8ac75e4241bef68d3147</String>
-      <Address name="current_cursor_creature">0x00ddff38</Address>
-      <Address name="current_menu_state">0x00964430</Address>
-      <Address name="cursor_xyz">0x009642b4</Address>
-      <Address name="pause_state">0x013da2bf</Address>
-      <Address name="window_x">0x00d9e600</Address>
-      <Address name="window_y">0x00dcc6ac</Address>
-      <Address name="window_z">0x00dcc688</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d14" os="windows" id="40d14win" base="40d13win" rebase="0x2010">
-      <HexValue name="pe_timestamp">0x4a8623d2</HexValue>
-      <String name="md5">781a2e51be4056a7320108f8f0df8a13</String>
-      <Address name="current_cursor_creature">0x00de1f44</Address>
-      <Address name="current_menu_state">0x00966430</Address>
-      <Address name="cursor_xyz">0x009662b4</Address>
-      <Address name="pause_state">0x013dc2c7</Address>
-      <Address name="window_x">0x00da060c</Address>
-      <Address name="window_y">0x00dce6b8</Address>
-      <Address name="window_z">0x00dce694</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d15" os="windows" id="40d15win" base="40d14win">
-      <HexValue name="pe_timestamp">0x4a9a6090</HexValue>
-      <String name="md5">12cc4a3dbb6e6dfd7bc7aee458b9471a</String>
-      <Address name="buildings">0x015be808</Address>
-      <Address name="constructions">0x015aa470</Address>
-      <Address name="creatures">0x015bde74</Address>
-      <Address name="current_cursor_creature">0x00de1f54</Address>
-      <Address name="current_menu_state">0x00966430</Address>
-      <Address name="cursor_xyz">0x009662b4</Address>
-      <Address name="effects_vector">0x1747f20</Address>
-      <Address name="hotkey_start">0x013ef62c</Address>
-      <Address name="items">0x015bdf50</Address>
-      <Address name="language_vector">0x01604104</Address>
-      <Address name="map_data">0x01601d84</Address>
-      <Address name="matgloss">0x01603ef4</Address>
-      <Address name="notes">0x013ef5f4</Address>
-      <Address name="pause_state">0x013dc2eb</Address>
-      <Address name="region_x">0x01601dbc</Address>
-      <Address name="region_y">0x01601dc0</Address>
-      <Address name="region_z">0x01601dc4</Address>
-      <Address name="settlement_current">0x01603b84</Address>
-      <Address name="settlements">0x01603ab8</Address>
-      <Address name="translation_vector">0x01604134</Address>
-      <Address name="vegetation">0x015c49dc</Address>
-      <Address name="view_screen">0x015bde7c</Address>
-      <Address name="window_dims">0x01746e98</Address>
-      <Address name="window_x">0x00da061c</Address>
-      <Address name="window_y">0x00dce6c8</Address>
-      <Address name="window_z">0x00dce6a4</Address>
-      <Address name="world">0x016033bc</Address>
-      <Address name="x_count">0x01601da4</Address>
-      <Address name="y_count">0x01601da8</Address>
-      <Address name="z_count">0x01601dac</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d16" os="windows" id="40d16win" base="40d15win" rebase="0x0">
-      <HexValue name="pe_timestamp">0x4a9b1a72</HexValue>
-      <String name="md5">59ab29021aca9f3c66b1ab102fb3ceea</String>
-    </Entry>
-    <Entry version="v0.28.181.40d17" os="windows" id="40d17win" base="40d16win">
-      <HexValue name="pe_timestamp">0x4b6b7879</HexValue>
-      <String name="md5">de66405f54d98297303d439b3b7aa30e</String>
-      <Address name="buildings">0x015f3260</Address>
-      <Address name="constructions">0x015deec8</Address>
-      <Address name="creatures">0x015f28cc</Address>
-      <Address name="current_cursor_creature">0x00e16924</Address>
-      <Address name="current_menu_state">0x0099ae08</Address>
-      <Address name="cursor_xyz">0x0099ac88</Address>
-      <Address name="effects_vector">0x177c978</Address>
-      <Address name="hotkey_start">0x014240dc</Address>
-      <Address name="items">0x015f29a8</Address>
-      <Address name="language_vector">0x01638b5c</Address>
-      <Address name="map_data">0x016367dc</Address>
-      <Address name="matgloss">0x0163894c</Address>
-      <Address name="notes">0x014240a4</Address>
-      <Address name="pause_state">0x01410cc1</Address>
-      <Address name="region_x">0x01636814</Address>
-      <Address name="region_y">0x01636818</Address>
-      <Address name="region_z">0x0163681c</Address>
-      <Address name="settlement_current">0x016385dc</Address>
-      <Address name="settlements">0x01638510</Address>
-      <Address name="translation_vector">0x01638b8c</Address>
-      <Address name="vegetation">0x015f9434</Address>
-      <Address name="view_screen">0x014243c4</Address>
-      <Address name="window_dims">0x0177b8f0</Address>
-      <Address name="window_x">0x00dd4fec</Address>
-      <Address name="window_y">0x00e03098</Address>
-      <Address name="window_z">0x00e03074</Address>
-      <Address name="world">0x01637e14</Address>
-      <Address name="x_count">0x016367fc</Address>
-      <Address name="y_count">0x01636800</Address>
-      <Address name="z_count">0x01636804</Address>
-      <Address name="effects_vector">0x0177c978</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d18" os="windows" base="40d17win" id="40d18win" rebase="0x9c5f8">
-      <!-- identification -->
-        <!--<HexValue name="pe_timestamp">0x006BF5AA</HexValue>-->
-      <HexValue name="pe_timestamp">0x4b81b00d</HexValue>
-      <String name="md5">5cdc6f4804809f4d5cacdb66785e8cda</String>
-      <!-- THIS IS *NOT* A NUMBER -->
-      <Address name="current_cursor_creature">0x00df2ebc</Address>
-      <Address name="current_menu_state">0x00977438</Address>
-      <Address name="cursor_xyz">0x009772b8</Address>
-      <Address name="pause_state">0x014ad278</Address>
-      <Address name="window_x">0x00db1584</Address>
-      <Address name="window_y">0x00ddf630</Address>
-      <Address name="window_z">0x00ddf60c</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d19" os="windows" base="40d18win" id="40d19win">
-      <HexValue name="pe_timestamp">0x4b90268a</HexValue>
-      <String name="md5">13640a273d90af39425b798ae9823757</String>
-      <Address name="buildings">0x01512898</Address>
-      <Address name="constructions">0x014fe500</Address>
-      <Address name="creatures">0x01511f04</Address>
-      <Address name="current_cursor_creature">0x00d35b68</Address>
-      <Address name="current_menu_state">0x016ac1a0</Address>
-      <Address name="cursor_xyz">0x0097a2b8</Address>
-      <Address name="effects_vector">0x169bfb0</Address>
-      <Address name="hotkey_start">0x01343714</Address>
-      <Address name="items">0x01511fe0</Address>
-      <Address name="language_vector">0x01558194</Address>
-      <Address name="map_data">0x01555e14</Address>
-      <Address name="matgloss">0x01557f84</Address>
-      <Address name="notes">0x013436dc</Address>
-      <Address name="pause_state">0x0132ff1e</Address>
-      <Address name="region_x">0x01555e4c</Address>
-      <Address name="region_y">0x01555e50</Address>
-      <Address name="region_z">0x01555e54</Address>
-      <Address name="settlement_current">0x01557c14</Address>
-      <Address name="settlements">0x01557b48</Address>
-      <Address name="translation_vector">0x015581c4</Address>
-      <Address name="vegetation">0x01518a6c</Address>
-      <Address name="view_screen">0x013439fc</Address>
-      <Address name="window_dims">0x0169af28</Address>
-      <Address name="window_x">0x00cf4230</Address>
-      <Address name="window_y">0x00d222dc</Address>
-      <Address name="window_z">0x00d222b8</Address>
-      <Address name="world">0x0155744c</Address>
-      <Address name="x_count">0x01555e34</Address>
-      <Address name="y_count">0x01555e38</Address>
-      <Address name="z_count">0x01555e3c</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d19_2" os="windows" base="40d19win" id="40d19_2win" rebase="0x1000">
-      <HexValue name="pe_timestamp">0x4B918BB9</HexValue>
-      <String name="md5">af29004e1763bb3460faa11907c3ac90</String>
-    </Entry>
+
                             .-"""-.
                            '       \
-                          |,.  ,-.  |
-                          |()L( ()| |
-                          |,'  `".| |
-                          |.___.',| `
+                          |,.  ,-.  |   _________________________
+                          |()L( ()| |   \                        \
+                          |,'  `".| |   /_  Nothing here yet :(   \
+                          |.___.',| `     \________________________\
                          .j `--"' `  `.
                         / '        '   \
                        / /          `   `.
@@ -1562,568 +367,8 @@
                 |         `.    __.j         )
                 |__        |--""___|      ,-'
                    `"--...,+""""   `._,.-' 
-
     
-    <Entry version="v0.28.181.40d2" os="linux" id="40d2lin" base="meta-40d">
-      <String name="md5">7a0859795e972574e80fa3cebc9fcf85</String>
-      <Offset name="hacked_vector_start">0x0</Offset><!-- where a vector actually starts -->
-      <Offset name="hacked_vector_triplet">0x0</Offset><!-- where the vector triplet is -->
-      <Address name="buildings">0x093154e0</Address>
-      <Address name="constructions">0x093016b8</Address>
-      <Address name="creatures">0x09355940</Address>
-      <Address name="current_cursor_creature">0x09314ffc</Address>
-      <Address name="current_menu_state">0x09301560</Address>
-      <Address name="cursor_xyz">0x08859fc0</Address>
-      <Address name="effects_vector">0x08cfa060</Address>
-      <Address name="hotkey_start">0x0930140c</Address>
-      <Address name="items">0x09356fd0</Address>
-      <Address name="language_vector">0x09314ffc</Address>
-      <Address name="map_data">0x09355964</Address>
-      <Address name="matgloss">0x09357808</Address>
-      <Address name="notes">0x093013e4</Address>
-      <Address name="pause_state">0x092f0580</Address>
-      <Address name="region_x">0x0935596c</Address>
-      <Address name="region_y">0x09355970</Address>
-      <Address name="region_z">0x09355974</Address>
-      <Address name="settlement_current">0x0935754c</Address>
-      <Address name="settlements">0x093574e0</Address>
-      <Address name="translation_vector">0x09357928</Address>
-      <Address name="vegetation">0x09318630</Address>
-      <Address name="view_screen">0x08b36c80</Address>
-      <Address name="window_dims">0x09355968</Address>
-      <Address name="window_x">0x08b36c84</Address>
-      <Address name="window_y">0x08cfa978</Address>
-      <Address name="window_z">0x08cfa97c</Address>
-      <Address name="world">0x09356f6c</Address>
-      <Address name="x_count">0x09355954</Address>
-      <Address name="y_count">0x09355958</Address>
-      <Address name="z_count">0x0935595c</Address>
-      <Offset name="word_table">0x1C</Offset>
-      <!-- name struct -->
-      <Offset name="name_firstname">0x0</Offset>
-      <Offset name="name_nickname">0x4</Offset>
-      <Offset name="name_words">0x8</Offset>
-      <HexValue name="sizeof_string">0x4</HexValue>
-      <!-- job object offsets -->
-      <Offset name="current_job_id">0x08</Offset>
-      <!-- creature offsets -->
-      <Offset name="creature_name">0x00</Offset>
-      <Offset name="creature_position">0x4C</Offset>
-      <Offset name="creature_race">0x44</Offset>
-      <Offset name="creature_flags1">0x90</Offset>
-      <Offset name="creature_flags2">0x94</Offset>
-      <Offset name="creature_custom_profession">0x003c</Offset>
-      <Offset name="creature_profession">0x0040</Offset>
-      <Offset name="creature_sex">0x009E</Offset>
-      <Offset name="creature_id">0x00A0</Offset> <!-- either this or the squad leader ID is wrong -->
-      <Offset name="creature_squad_name">0x00F0</Offset>
-      <Offset name="creature_mood">0x160</Offset>
-      <Offset name="creature_pregnancy">0x164</Offset>
-      <Offset name="creature_squad_leader_id">0x190</Offset>
-      <Offset name="creature_money">0x02F8</Offset> <!-- most probably wrong -->
-      <Offset name="creature_current_job">0x0200</Offset>
-      <Offset name="creature_blood_max">0x264</Offset>
-      <Offset name="creature_blood_current">0x268</Offset>
-      <Offset name="creature_bleed">0x26C</Offset>
-      <Offset name="creature_artifact_name">0x02F8</Offset>
-      <Offset name="creature_strength">0x0334</Offset>
-      <Offset name="creature_agility">0x0338</Offset>
-      <Offset name="creature_toughness">0x033C</Offset>
-      <Offset name="creature_skills">0x0340</Offset>
-      <Offset name="creature_likes">0x034C</Offset>
-      <Offset name="creature_labors">0x0364</Offset>
-      <Offset name="creature_happiness">0x0400</Offset>
-      <Offset name="creature_traits">0x0490</Offset>
-      <!-- tree and shrub offsets -->
-      <Offset name="tree_desc_offset">0x40</Offset>
-      <!-- map block offsets -->
-      <Offset name="v_vein">0x08</Offset>
-      <HexValue name="v_vein_size">0x2C</HexValue>
-      <Offset name="type">0x0052</Offset>
-      <Offset name="designation">0x0254</Offset>
-      <Offset name="occupancy">0x0654</Offset>
-      <Offset name="biome_stuffs">0x1D54</Offset>
-      <!-- the world and its offsets -->
-      <Offset name="world_size_x">0x54</Offset>
-      <Offset name="world_size_y">0x56</Offset>
-      <Offset name="w_geoblocks">0x5A4</Offset>
-      <Offset name="w_regions_arr">0x5C8</Offset>
-      <!-- values for the region structure -->
-      <HexValue name="region_size">0x58</HexValue>
-      <Offset name="region_geo_index_off">0x54</Offset>
-      <!-- geoblock offset(s?) -->
-      <Offset name="geolayer_geoblock_offset">0x4</Offset>
-      <!-- matgloss vectors -->
-      <HexValue name="matgloss_skip">0xC</HexValue>
-      <Offset name="matgloss_stone_color">0x24</Offset>
-      <Offset name="matgloss_metal_color">0x18</Offset>
-      <Offset name="note_foreground">0x2</Offset>
-      <Offset name="note_background">0x4</Offset>
-      <Offset name="note_name">0x8</Offset>
-      <Offset name="note_xyz">0xC</Offset>
-      <Offset name="hotkey_mode">0x4</Offset>
-      <Offset name="hotkey_xyz">0x8</Offset>
-      <HexValue name="hotkey_size">0x14</HexValue>
-      <Offset name="settlement_name">0x00</Offset>
-      <Offset name="settlement_world_xy">0x4a</Offset>
-      <Offset name="settlement_local_xy">0x94</Offset>
-      <Offset name="item_materials">0x50</Offset>
-      <Offset name="engraving_xyz">0x0C</Offset>
-      <!-- 3x word -->
-      <Offset name="engraving_imageindex">0x20</Offset>
-      <!-- 1x dword -->
-      <Offset name="item_type_name">0xC</Offset>
-      <Offset name="matgloss_creature_name">0x4</Offset>
-      <Offset name="matgloss_wood_name">0x10</Offset>
-      <Offset name="matgloss_stone_name">0xC</Offset>
-      <Offset name="matgloss_metal_name">0xC</Offset>
-      <Offset name="matgloss_plant_name">0xC</Offset>
-      <Offset name="matgloss_plant_drink">0x14</Offset>
-      <Offset name="matgloss_plant_food">0x1C</Offset>
-      <Offset name="matgloss_plant_extract">0x20</Offset>
-      <VTable name="building_vtable">
-        <multiclass name="building_workshop" typeoffset="0xAC"/>
-        <multiclass name="building_furnace" typeoffset="0xBA"/>
-        <multiclass name="building_siegeengine" typeoffset="0xAC"/>
-        <multiclass name="building_trap" typeoffset="0xAC"/>
-      </VTable>
-    </Entry>
-    <Entry version="v0.28.181.40d3" os="linux" id="40d3lin" base="40d2lin">
-      <String name="md5">51c73ff46b2688aafaee0204efe91a94</String>
-      <Address name="buildings">0x09315f00</Address>
-      <Address name="constructions">0x093020d8</Address>
-      <Address name="creatures">0x09356360</Address>
-      <Address name="current_cursor_creature">0x09315a1c</Address>
-      <Address name="current_menu_state">0x09301f80</Address>
-      <Address name="cursor_xyz">0x0885a9e4</Address>
-      <Address name="effects_vector">0x08cfaa80</Address>
-      <Address name="hotkey_start">0x09301e2c</Address>
-      <Address name="items">0x093579f0</Address>
-      <Address name="language_vector">0x09315a1c</Address>
-      <Address name="map_data">0x09356384</Address>
-      <Address name="matgloss">0x09358228</Address>
-      <Address name="notes">0x09301e04</Address>
-      <Address name="pause_state">0x092f0fa0</Address>
-      <Address name="region_x">0x0935638c</Address>
-      <Address name="region_y">0x09356390</Address>
-      <Address name="region_z">0x09356394</Address>
-      <Address name="settlement_current">0x09357f6c</Address>
-      <Address name="settlements">0x09357f00</Address>
-      <Address name="translation_vector">0x09358348</Address>
-      <Address name="vegetation">0x09319050</Address>
-      <Address name="view_screen">0x08b376a0</Address>
-      <Address name="window_dims">0x09356388</Address>
-      <Address name="window_x">0x08b376a4</Address>
-      <Address name="window_y">0x08cfb398</Address>
-      <Address name="window_z">0x08cfb39c</Address>
-      <Address name="world">0x0935798c</Address>
-      <Address name="x_count">0x09356374</Address>
-      <Address name="y_count">0x09356378</Address>
-      <Address name="z_count">0x0935637c</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d4" os="linux" id="40d4lin" base="40d3lin" rebase="0x380">
-      <String name="md5">c1eb408868c80fd1c726d2a917cd1b9a</String>
-      <Address name="cursor_xyz">0x0885ad54</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d5" os="linux" id="40d5lin" base="40d4lin" rebase="0xea0">
-      <String name="md5">59d497bfc3a523f0f40f34283ad59796</String>
-      <Address name="cursor_xyz">0x0885bbf0</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d6" os="linux" id="40d6lin" base="40d5lin">
-      <String name="md5">f756194db073f05b98fc6ce872c8757d</String>
-      <Address name="buildings">0x09333e00</Address>
-      <Address name="constructions">0x0931ffd8</Address>
-      <Address name="creatures">0x09374260</Address>
-      <Address name="current_cursor_creature">0x0933391c</Address>
-      <Address name="current_menu_state">0x0931fe80</Address>
-      <Address name="cursor_xyz">0x088788e4</Address>
-      <Address name="effects_vector">0x08d18980</Address>
-      <Address name="hotkey_start">0x0931fd2c</Address>
-      <Address name="items">0x093758f0</Address>
-      <Address name="language_vector">0x0933391c</Address>
-      <Address name="map_data">0x09374284</Address>
-      <Address name="matgloss">0x09376128</Address>
-      <Address name="notes">0x0931fd04</Address>
-      <Address name="pause_state">0x0930eea0</Address>
-      <Address name="region_x">0x0937428c</Address>
-      <Address name="region_y">0x09374290</Address>
-      <Address name="region_z">0x09374294</Address>
-      <Address name="settlement_current">0x09375e6c</Address>
-      <Address name="settlements">0x09375e00</Address>
-      <Address name="translation_vector">0x09376248</Address>
-      <Address name="vegetation">0x09336f50</Address>
-      <Address name="view_screen">0x08b555a0</Address>
-      <Address name="window_dims">0x09374288</Address>
-      <Address name="window_x">0x08b555a4</Address>
-      <Address name="window_y">0x08d19298</Address>
-      <Address name="window_z">0x08d1929c</Address>
-      <Address name="world">0x0937588c</Address>
-      <Address name="x_count">0x09374274</Address>
-      <Address name="y_count">0x09374278</Address>
-      <Address name="z_count">0x0937427c</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d7" os="linux" id="40d7lin" base="40d6lin" rebase="-0x1e0">
-      <String name="md5">b004b3876193633875956af752663f26</String>
-    </Entry>
-    <Entry version="v0.28.181.40d8" os="linux" id="40d8lin" base="40d7lin" rebase="-0x60">
-      <String name="md5">c8616fc74d79b3c8c40bbc1182fbd61c</String>
-      <Address name="cursor_xyz">0x088786a0</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d9" os="linux" id="40d9lin" base="40d8lin" rebase="-0x1060">
-      <String name="md5">992afd73855e787860277f53d18afcbb</String>
-      <Address name="cursor_xyz">0x08877630</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d10" os="linux" id="40d10lin" base="40d9lin">
-      <String name="md5">cba6354000ec54865a161627605c3837</String>
-      <Address name="buildings">0x092bf340</Address>
-      <Address name="constructions">0x092ab518</Address>
-      <Address name="creatures">0x092bee5c</Address>
-      <Address name="current_cursor_creature">0x0929a3c8</Address>
-      <Address name="current_menu_state">0x092ab3c0</Address>
-      <Address name="cursor_xyz">0x088073d4</Address>
-      <Address name="effects_vector">0x08ca3eb8</Address>
-      <Address name="hotkey_start">0x092ab26c</Address>
-      <Address name="items">0x092beecc</Address>
-      <Address name="language_vector">0x09301770</Address>
-      <Address name="map_data">0x092ff7a0</Address>
-      <Address name="matgloss">0x09301668</Address>
-      <Address name="notes">0x092ab244</Address>
-      <Address name="pause_state">0x0929a3e0</Address>
-      <Address name="region_x">0x092ff7cc</Address>
-      <Address name="region_y">0x092ff7d0</Address>
-      <Address name="region_z">0x092ff7d4</Address>
-      <Address name="settlement_current">0x093013ac</Address>
-      <Address name="settlements">0x09301340</Address>
-      <Address name="translation_vector">0x09301788</Address>
-      <Address name="vegetation">0x092c2490</Address>
-      <Address name="view_screen">0x08ae40a0</Address>
-      <Address name="window_dims">0x09510050</Address>
-      <Address name="window_x">0x08ca47d4</Address>
-      <Address name="window_y">0x08ca47d8</Address>
-      <Address name="window_z">0x08ca47dc</Address>
-      <Address name="world">0x09300dcc</Address>
-      <Address name="x_count">0x092ff7b4</Address>
-      <Address name="y_count">0x092ff7b8</Address>
-      <Address name="z_count">0x092ff7bc</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d11" os="linux" id="40d11lin" base="40d10lin" rebase="0x0">
-      <String name="md5">fb8ecac8a12af5d0d7b1707078985d0d</String>
-    </Entry>
-    <Entry version="v0.28.181.40d12" os="linux" id="40d12lin" base="40d11lin">
-      <String name="md5">4367c59934cbcf14f43fd3af6444c455</String>
-      <Address name="buildings">0x08f55740</Address>
-      <Address name="constructions">0x08f41918</Address>
-      <Address name="creatures">0x08f5525c</Address>
-      <Address name="current_cursor_creature">0x08f307c8</Address>
-      <Address name="current_menu_state">0x08f417c0</Address>
-      <Address name="cursor_xyz">0x0877b33c</Address>
-      <Address name="effects_vector">0x0893a2ac</Address>
-      <Address name="hotkey_start">0x08f4166c</Address>
-      <Address name="items">0x08f552cc</Address>
-      <Address name="language_vector">0x08f97b8c</Address>
-      <Address name="map_data">0x08f95bbc</Address>
-      <Address name="matgloss">0x08f97a84</Address>
-      <Address name="notes">0x08f41644</Address>
-      <Address name="pause_state">0x08f307e0</Address>
-      <Address name="region_x">0x08f95be8</Address>
-      <Address name="region_y">0x08f95bec</Address>
-      <Address name="region_z">0x08f95bf0</Address>
-      <Address name="settlement_current">0x08f977c8</Address>
-      <Address name="settlements">0x08f9775c</Address>
-      <Address name="translation_vector">0x08f97ba4</Address>
-      <Address name="vegetation">0x08f58890</Address>
-      <Address name="view_screen">0x0877f8e0</Address>
-      <Address name="window_dims">0x091a647c</Address>
-      <Address name="window_x">0x0893abd4</Address>
-      <Address name="window_y">0x0893abd8</Address>
-      <Address name="window_z">0x0893abdc</Address>
-      <Address name="world">0x08f971e8</Address>
-      <Address name="x_count">0x08f95bd0</Address>
-      <Address name="y_count">0x08f95bd4</Address>
-      <Address name="z_count">0x08f95bd8</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d13" os="linux" id="40d13lin" base="40d12lin" rebase="0x5020">
-      <String name="md5">2f3cb9d720e9fe8844c02c72a2b20bbd</String>
-      <Address name="cursor_xyz">0x08780344</Address>
-      <Address name="effects_vector">0x0893f2d0</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d14" os="linux" id="40d14lin" base="40d13lin">
-      <String name="md5">dab3ce6bc074529706a1e5fe1273108c</String>
-      <Address name="buildings">0x08f5a760</Address>
-      <Address name="constructions">0x08f46938</Address>
-      <Address name="creatures">0x08f5a27c</Address>
-      <Address name="current_cursor_creature">0x08f357e8</Address>
-      <Address name="current_menu_state">0x08f467e0</Address>
-      <Address name="cursor_xyz">0x08780354</Address>
-      <Address name="effects_vector">0x0893f2d0</Address>
-      <Address name="hotkey_start">0x08f4668c</Address>
-      <Address name="items">0x08f5a2ec</Address>
-      <Address name="language_vector">0x08f9cbac</Address>
-      <Address name="map_data">0x08f9abdc</Address>
-      <Address name="matgloss">0x08f9caa4</Address>
-      <Address name="notes">0x08f46664</Address>
-      <Address name="pause_state">0x08f35800</Address>
-      <Address name="region_x">0x08f9ac08</Address>
-      <Address name="region_y">0x08f9ac0c</Address>
-      <Address name="region_z">0x08f9ac10</Address>
-      <Address name="settlement_current">0x08f9c7e8</Address>
-      <Address name="settlements">0x08f9c77c</Address>
-      <Address name="translation_vector">0x08f9cbc4</Address>
-      <Address name="vegetation">0x08f5d8b0</Address>
-      <Address name="view_screen">0x08784900</Address>
-      <Address name="window_dims">0x091ab49c</Address>
-      <Address name="window_x">0x0893fbf4</Address>
-      <Address name="window_y">0x0893fbf8</Address>
-      <Address name="window_z">0x0893fbfc</Address>
-      <Address name="world">0x08f9c208</Address>
-      <Address name="x_count">0x08f9abf0</Address>
-      <Address name="y_count">0x08f9abf4</Address>
-      <Address name="z_count">0x08f9abf8</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d15" os="linux" id="40d15lin" base="40d14lin" rebase="0x0">
-      <String name="md5">4f55a1dcc326786271f221de23c425b5</String>
-    </Entry>
-    <Entry version="v0.28.181.40d16" os="linux" id="40d16lin" base="40d15lin" rebase="0x0">
-      <String name="md5">022b933926e08da49c6df8649295f2b7</String>
-    </Entry>
-    <Entry version="v0.28.181.40d17" os="linux" id="40d17lin" base="40d16lin">
-      <String name="md5">8f55a6250f2550e28535b79db43d5f1a</String>
-      <Address name="buildings">0x08f628c0</Address>
-      <Address name="constructions">0x08f4ea98</Address>
-      <Address name="creatures">0x08f623dc</Address>
-      <Address name="current_cursor_creature">0x08f3d948</Address>
-      <Address name="current_menu_state">0x08f4e940</Address>
-      <Address name="cursor_xyz">0x0878c340</Address>
-      <Address name="effects_vector">0x08947438</Address>
-      <Address name="hotkey_start">0x08f4e7ec</Address>
-      <Address name="items">0x08f6244c</Address>
-      <Address name="language_vector">0x08fa4d0c</Address>
-      <Address name="map_data">0x08fa2d3c</Address>
-      <Address name="matgloss">0x08fa4c04</Address>
-      <Address name="notes">0x08f4e7c4</Address>
-      <Address name="pause_state">0x660008f3</Address>
-      <Address name="region_x">0x08fa2d68</Address>
-      <Address name="region_y">0x08fa2d6c</Address>
-      <Address name="region_z">0x08fa2d70</Address>
-      <Address name="settlement_current">0x08fa4948</Address>
-      <Address name="settlements">0x08fa48dc</Address>
-      <Address name="translation_vector">0x08fa4d24</Address>
-      <Address name="vegetation">0x08f65a10</Address>
-      <Address name="view_screen">0x0878caa0</Address>
-      <Address name="window_dims">0x091b35fc</Address>
-      <Address name="window_x">0x08947d54</Address>
-      <Address name="window_y">0x08947d58</Address>
-      <Address name="window_z">0x08947d5c</Address>
-      <Address name="world">0x08fa4368</Address>
-      <Address name="x_count">0x08fa2d50</Address>
-      <Address name="y_count">0x08fa2d54</Address>
-      <Address name="z_count">0x08fa2d58</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d18" os="linux" id="40d18lin" base="40d17lin">
-      <String name="md5">777e7d674d8908042307994cb75250ff</String>
-      <Address name="buildings">0x09009860</Address>
-      <Address name="constructions">0x08ff5a38</Address>
-      <Address name="creatures">0x0900937C</Address>
-      <Address name="current_cursor_creature">0x08fe48e8</Address>
-      <Address name="current_menu_state">0x08ff58e0</Address>
-      <Address name="cursor_xyz">0x08833324</Address>
-      <Address name="effects_vector">0x089ee3d8</Address>
-      <Address name="hotkey_start">0x08FF578C</Address>
-      <Address name="items">0x090093ec</Address>
-      <Address name="language_vector">0x0904bcac</Address>
-      <Address name="map_data">0x09049cdc</Address>
-      <Address name="matgloss">0x0904bba4</Address>
-      <Address name="notes">0x08ff5764</Address>
-      <Address name="pause_state">0x08fe4900</Address>
-      <Address name="region_x">0x09049d08</Address>
-      <Address name="region_y">0x09049d0c</Address>
-      <Address name="region_z">0x09049d10</Address>
-      <Address name="settlement_current">0x0904b8e8</Address>
-      <Address name="settlements">0x0904b87c</Address>
-      <Address name="translation_vector">0x0904bcc4</Address>
-      <Address name="vegetation">0x0900c9b0</Address>
-      <Address name="view_screen">0x08833a40</Address>
-      <Address name="window_dims">0x0925a59c</Address>
-      <Address name="window_x">0x089eecf4</Address>
-      <Address name="window_y">0x089eecf8</Address>
-      <Address name="window_z">0x089eecfc</Address>
-      <Address name="world">0x0904b308</Address>
-      <Address name="x_count">0x09049cf0</Address>
-      <Address name="y_count">0x09049cf4</Address>
-      <Address name="z_count">0x09049cf8</Address>
-    </Entry>
-    <Entry version="v0.28.181.40d19" os="linux" id="40d19lin" base="40d18lin">
-      <String name="md5">04c3ad13c657f59ba6fc135e156d721d</String>
-      <Address name="buildings">0x09008880</Address>
-      <Address name="constructions">0x08ff4a58</Address>
-      <Address name="creatures">0x0900839C</Address>
-      <Address name="current_cursor_creature">0x08fe3908</Address>
-      <Address name="current_menu_state">0x08ff4900</Address>
-      <Address name="cursor_xyz">0x08832328</Address>
-      <Address name="effects_vector">0x089ed3f8</Address>
-      <Address name="hotkey_start">0x08ff47ac</Address>
-      <Address name="items">0x0900840c</Address>
-      <Address name="language_vector">0x0904accc</Address>
-      <Address name="map_data">0x09048cfc</Address>
-      <Address name="matgloss">0x0904abc4</Address>
-      <Address name="notes">0x08ff4784</Address>
-      <Address name="pause_state">0xc60008fe</Address>
-      <Address name="region_x">0x09048d28</Address>
-      <Address name="region_y">0x09048d2c</Address>
-      <Address name="region_z">0x09048d30</Address>
-      <Address name="settlement_current">0x0904a908</Address>
-      <Address name="settlements">0x0904a89c</Address>
-      <Address name="translation_vector">0x0904ace4</Address>
-      <Address name="vegetation">0x0900b9d0</Address>
-      <Address name="view_screen">0x08832a60</Address>
-      <Address name="window_dims">0x091995fc</Address>
-      <Address name="window_x">0x089edd14</Address>
-      <Address name="window_y">0x089edd18</Address>
-      <Address name="window_z">0x089edd1c</Address>
-      <Address name="world">0x0904a328</Address>
-      <Address name="x_count">0x09048d10</Address>
-      <Address name="y_count">0x09048d14</Address>
-      <Address name="z_count">0x09048d18</Address>
-    </Entry>
-    <!-- Windows logo by M$, spiderweb by jgs -->
-    <Entry version="v0.31.01" os="windows" id="0.31.01" model="2010">
-      <String name="md5">851c1190b6a7b42f2463967623d18575</String>
-      <HexValue name="pe_timestamp">0x4BB45F99</HexValue>
-      
-      <!-- basic stuff -->
-      <HexValue name="sizeof_vector">0x18</HexValue>
-      <Offset name="hacked_vector_start">0x0</Offset>
-      <Offset name="hacked_vector_triplet">0xC</Offset>
-      <HexValue name="sizeof_string">0x1C</HexValue>
-      
-      <!-- dfposition -->
-      <Address name="window_x">0xe32798</Address>
-      <Address name="window_y">0xe60838</Address>
-      <Address name="window_z">0xe60814</Address>
-      <Address name="cursor_xyz">0xae82cc</Address>
-      
-      <Address name="window_dims">0x17f5ab8</Address>
-      Found addresses: (next to each other!)
-        0x17f5ab8
-        0x17f5ac0
-        0x17f5ac8
-        0x17f5ad0
-        
-      <Address name="pause_state">0x146e45f</Address>
-      Found addresses:
-        0x146e45f <!-- looks like a dword -->
-        0x185b677 <!-- looks like a word -->
-        
-      Bogus: <Address name="current_cursor_creature">0xae82cc</Address>
-      
-      <Address name="current_menu_state">0x017f6f38</Address>
-      
-      Bogus: <Address name="view_screen">0xae82cc</Address>
-      
-      <!-- map stuff -->
-      <!-- map size in blocks -->
-      <Address name="x_count_block">0x016ad738</Address>
-      <Address name="y_count_block">0x016ad73C</Address>
-      <Address name="z_count_block">0x016ad740</Address>
-      <!-- map size in tiles -->
-      <Address name="x_count">0x016ad744</Address>
-      <Address name="y_count">0x016ad748</Address>
-      <Address name="z_count">0x016ad74C</Address>
-      <!-- suspected region coords -->
-      <Address name="region_x">0x016ad750</Address>
-      <Address name="region_y">0x016ad754</Address>
-      <Address name="region_z">0x016ad758</Address>
-      
-      <Address name="map_data">0x016AD718</Address>
-      <Offset name="v_vein">0x10</Offset>
-      <Offset name="type">0x0092</Offset>
-      <Offset name="designation">0x029C</Offset>
-      
-      <!-- name struct -->
-      <Offset name="name_firstname">0x0</Offset>
-      <Offset name="name_nickname">0x1C</Offset>
-      <Offset name="name_words">0x38</Offset>
-      
-      <!-- Creatures -->
-      <Offset name="creature_name">0x0</Offset>
-      <Offset name="creature_position">0x90</Offset>
-      <Offset name="creature_flags1">0xF8</Offset>
-      <Offset name="creature_flags2">0xFC</Offset>
-      <Offset name="creature_sex">0x110</Offset>
-      <Offset name="creature_id">0x114</Offset>
-      <Offset name="creature_artifact_name">0x6D0</Offset>
-      <Offset name="creature_labors">0x770</Offset>
-      <!--
-      No idea if those are still relevant. I'll assume NO
-      <Offset name="occupancy">0x0684</Offset>
-      <Offset name="biome_stuffs">0x1D84</Offset>
-      -->
-<!-- 
-addresses from belal: vectors might need 8 subtracted from 
-buildings 0x0166f9a8
-constructions 0xffffffff
-creatures 0x0166eccc
-current_cursor_creature 0x00ae82cc
-current_menu_state 0x017f6f38
-cursor_xyz 0x0166ecd4
-effects_vector 0x017f6da0
-hotkey_start 0x01476ecc
-items 0x0166eda8
-language_vector 0x016affe0
-map_data 0x016ad718
-matgloss 0xffffffff
-notes 0x01474de8
-pause_state 0x0146e45f
-region_x 0x016ad750
-region_y 0x016ad754
-region_z 0x016ad758
-settlement_current 0xffffffff
-settlements 0x016af4a4
-translation_vector 0x016b0010
-vegetation 0x017f6da0
-view_screen 0xffffffff
-window_dims 0x017f5abc
-window_x 0x00e32798
-window_y 0x00e60838
-window_z 0x00e60814
-world 0x016aed50
-x_count 0x016ad738
-y_count 0x016ad73c
-z_count 0x016ad740
-      -->
-      
-      <!--
-      <Address name="buildings">0x09008880</Address>
-      <Address name="constructions">0x08ff4a58</Address>
-      <Address name="creatures">0x0900839C</Address>
-      <Address name="current_cursor_creature">0x08fe3908</Address>
-      <Address name="current_menu_state">0x08ff4900</Address>
-      <Address name="cursor_xyz">0x08832328</Address>
-      <Address name="effects_vector">0x089ed3f8</Address>
-      <Address name="hotkey_start">0x08ff47ac</Address>
-      <Address name="items">0x0900840c</Address>
-      <Address name="language_vector">0x0904accc</Address>
-      <Address name="map_data">0x09048cfc</Address>
-      <Address name="matgloss">0x0904abc4</Address>
-      <Address name="notes">0x08ff4784</Address>
-      <Address name="pause_state">0xc60008fe</Address>
-      <Address name="region_x">0x09048d28</Address>
-      <Address name="region_y">0x09048d2c</Address>
-      <Address name="region_z">0x09048d30</Address>
-      <Address name="settlement_current">0x0904a908</Address>
-      <Address name="settlements">0x0904a89c</Address>
-      <Address name="translation_vector">0x0904ace4</Address>
-      <Address name="vegetation">0x0900b9d0</Address>
-      <Address name="view_screen">0x08832a60</Address>
-      <Address name="window_dims">0x091995fc</Address>
-      <Address name="window_x">0x089edd14</Address>
-      <Address name="window_y">0x089edd18</Address>
-      <Address name="window_z">0x089edd1c</Address>
-      <Address name="world">0x0904a328</Address>
-      <Address name="x_count">0x09048d10</Address>
-      <Address name="y_count">0x09048d14</Address>
-      <Address name="z_count">0x09048d18</Address>
-      -->
-    </Entry>
-  </MemoryDescriptors>
+    
+    <!-- Windows logo by Microsoft -->
+    </MemoryDescriptors>
 </DFExtractor>

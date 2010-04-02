@@ -1559,6 +1559,7 @@ void API::FinishReadCreatures()
     d->creaturesInited = false;
     //FinishReadNameTables();
 }
+
 void API::FinishReadNotes()
 {
     if(d->p_notes)

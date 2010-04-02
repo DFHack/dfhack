@@ -13,15 +13,6 @@ include/DFTypes.h
 include/DFVector.h
 include/DFWindow.h
 include/integers.h
-
-md5/md5.h
-md5/md5wrapper.h
-
-tinyxml/tinystr.h
-tinyxml/tinyxml.h
-
-argstream/argstream.h
-
 shm/shms.h
 )
 
@@ -31,12 +22,6 @@ DFMemInfoManager.cpp
 DFHackAPI.cpp
 DFTileTypes.cpp
 DFVector.cpp
-md5/md5.cpp
-md5/md5wrapper.cpp
-tinyxml/tinystr.cpp
-tinyxml/tinyxml.cpp
-tinyxml/tinyxmlerror.cpp
-tinyxml/tinyxmlparser.cpp
 )
 
 SET(PROJECT_HDRS_LINUX
@@ -90,9 +75,9 @@ IF(UNIX)
   SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -pedantic")
   SET(CMAKE_CXX_FLAGS "-fvisibility=hidden")
     
-  SET(PROJECT_LIBS ${X11_LIBRARY} rt)
+  SET(PROJECT_LIBS ${X11_LIBRARY} rt dfhack-md5 tixml-static)
 ELSE(UNIX)
-  SET(PROJECT_LIBS psapi)
+  SET(PROJECT_LIBS psapi dfhack-md5 tixml-static)
 ENDIF(UNIX)
 
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SRCS})

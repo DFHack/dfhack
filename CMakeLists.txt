@@ -28,11 +28,14 @@ SET( CMAKE_SWIG_OUTDIR ${dfhack_SOURCE_DIR}/output CACHE PATH "Global output dir
 
 include_directories (${CMAKE_SOURCE_DIR}/dfhack/include/)
 include_directories (${CMAKE_SOURCE_DIR}/dfhack/shm/)
-include_directories (${CMAKE_SOURCE_DIR}/dfhack/md5/)
-include_directories (${CMAKE_SOURCE_DIR}/dfhack/tinyxml/)
-include_directories (${CMAKE_SOURCE_DIR}/dfhack/argstream/)
+include_directories (${CMAKE_SOURCE_DIR}/dfhack/depends/md5/)
+include_directories (${CMAKE_SOURCE_DIR}/dfhack/depends/tinyxml/)
+include_directories (${CMAKE_SOURCE_DIR}/dfhack/depends/argstream/)
 
 add_subdirectory (dfhack)
 add_subdirectory (dfhack/shm)
+add_subdirectory (dfhack/depends/md5)
+add_subdirectory (dfhack/depends/tinyxml)
+#add_subdirectory (dfhack/depends/argstream)
 add_subdirectory (tools)
 add_subdirectory (examples)

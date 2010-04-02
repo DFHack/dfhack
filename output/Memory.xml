@@ -1991,8 +1991,10 @@
       <HexValue name="pe_timestamp">0x4BB45F99</HexValue>
       
       <!-- basic stuff -->
+      <HexValue name="sizeof_vector">0x18</HexValue>
       <Offset name="hacked_vector_start">0x0</Offset>
       <Offset name="hacked_vector_triplet">0xC</Offset>
+      <HexValue name="sizeof_string">0x1C</HexValue>
       
       <!-- dfposition -->
       <Address name="window_x">0xe32798</Address>
@@ -2036,6 +2038,21 @@
       <Offset name="v_vein">0x10</Offset>
       <Offset name="type">0x0092</Offset>
       <Offset name="designation">0x029C</Offset>
+      
+      <!-- name struct -->
+      <Offset name="name_firstname">0x0</Offset>
+      <Offset name="name_nickname">0x1C</Offset>
+      <Offset name="name_words">0x38</Offset>
+      
+      <!-- Creatures -->
+      <Offset name="creature_name">0x0</Offset>
+      <Offset name="creature_position">0x90</Offset>
+      <Offset name="creature_flags1">0xF8</Offset>
+      <Offset name="creature_flags2">0xFC</Offset>
+      <Offset name="creature_sex">0x110</Offset>
+      <Offset name="creature_id">0x114</Offset>
+      <Offset name="creature_artifact_name">0x6D0</Offset>
+      <Offset name="creature_labors">0x770</Offset>
       <!--
       No idea if those are still relevant. I'll assume NO
       <Offset name="occupancy">0x0684</Offset>

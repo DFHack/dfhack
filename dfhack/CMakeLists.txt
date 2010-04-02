@@ -79,7 +79,7 @@ SET( MEMXML_DATA_PATH . CACHE PATH "search path for Memory.xml")
 #OPTION( WITH_BAR "Enable BAR component" OFF )
 
 
-CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/library/config.h.cmake ${CMAKE_SOURCE_DIR}/library/config.h )
+CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/dfhack/config.h.cmake ${CMAKE_SOURCE_DIR}/dfhack/config.h )
 
 
 

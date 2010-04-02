@@ -355,7 +355,7 @@ int main (void)
     {
         DFHack::t_creature temp;
         DF.ReadCreature(i,temp);
-        if(string(creaturestypes[temp.type].id) == "DWARF")
+        //if(string(creaturestypes[temp.type].id) == "DWARF")
         {
             cout << "index " << i << " ";
             printCreature(DF,temp);

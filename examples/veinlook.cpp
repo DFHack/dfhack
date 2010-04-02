@@ -507,7 +507,7 @@ main(int argc, char *argv[])
             {
                 int color = COLOR_BLACK;
                 color = pickColor(Block->tiletypes[x][y]);
-                if(!Block->designation[x][y].bits.hidden)
+                //if(!Block->designation[x][y].bits.hidden)
                 /*{
                     puttile(x+(i+1)*16,y+(j+1)*16,Block->tiletypes[x][y], color);
                 }
@@ -524,7 +524,7 @@ main(int argc, char *argv[])
             {
                 for(uint zz = 0; zz < effects.size();zz++)
                 {
-                    if(effects[zz].z == cursorZ && !effects[zz].isHidden)
+                    if(effects[zz].z == cursorZ /*&& !effects[zz].isHidden*/)
                     {
                         // block coords to tile coords
                         uint16_t x = effects[zz].x - (cursorX * 16);
@@ -564,8 +564,10 @@ main(int argc, char *argv[])
                         {
                             if(tileTypeTable[blocks[1][1].tiletypes[k][j]].m != VEIN)
                                 continue;
+                            /*
                             if(blocks[1][1].designation[k][j].bits.hidden)
                                 continue;
+                            */
                             // and the bit array with a one-bit mask, check if the bit is set
                             bool set = !!(((1 << k) & veinVector[realvein].assignment[j]) >> k);
                             if(set)

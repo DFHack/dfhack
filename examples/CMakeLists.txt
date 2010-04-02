@@ -54,8 +54,8 @@ ADD_EXECUTABLE(dfsettlementdump settlementdump.cpp)
 TARGET_LINK_LIBRARIES(dfsettlementdump dfhack)
 
 # veccheck - read vector values at address
-#ADD_EXECUTABLE(dfvecc veccheck.cpp)
-#TARGET_LINK_LIBRARIES(dfvecc dfhack)
+ADD_EXECUTABLE(dfvecc veccheck.cpp)
+TARGET_LINK_LIBRARIES(dfvecc dfhack)
 
 # catsplosion - Makes every cat pregnant, and almost due...
 # Author: Zhentar

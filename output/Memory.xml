@@ -1986,5 +1986,91 @@
       <Address name="z_count">0x09048d18</Address>
     </Entry>
     <!-- Windows logo by M$, spiderweb by jgs -->
+    <Entry version="v0.31.01" os="windows" id="0.31.01" model="2010">
+      <String name="md5">851c1190b6a7b42f2463967623d18575</String>
+      <HexValue name="pe_timestamp">0x4BB45F99</HexValue>
+      
+      <!-- basic stuff -->
+      <Offset name="hacked_vector_start">0x0</Offset>
+      <Offset name="hacked_vector_triplet">0xC</Offset>
+      
+      <!-- dfposition -->
+      <Address name="window_x">0xe32798</Address>
+      <Address name="window_y">0xe60838</Address>
+      <Address name="window_z">0xe60814</Address>
+      <Address name="cursor_xyz">0xae82cc</Address>
+      
+      <Address name="window_dims">0x17f5ab8</Address>
+      Found addresses: (next to each other!)
+        0x17f5ab8
+        0x17f5ac0
+        0x17f5ac8
+        0x17f5ad0
+        
+      <Address name="pause_state">0x146e45f</Address>
+      Found addresses:
+        0x146e45f <!-- looks like a dword -->
+        0x185b677 <!-- looks like a word -->
+        
+      <Address name="current_cursor_creature">0xae82cc bogus</Address>
+      <Address name="current_menu_state">0xae82cc bogus</Address>
+      <Address name="view_screen">0xae82cc bogus</Address>
+      
+      <!-- map stuff -->
+      <!-- map size in blocks -->
+      <Address name="x_count_block">0x016ad738</Address>
+      <Address name="y_count_block">0x016ad73C</Address>
+      <Address name="z_count_block">0x016ad740</Address>
+      <!-- map size in tiles -->
+      <Address name="x_count">0x016ad744</Address>
+      <Address name="y_count">0x016ad748</Address>
+      <Address name="z_count">0x016ad74C</Address>
+      <!-- suspected region coords -->
+      <Address name="region_x">0x016ad750</Address>
+      <Address name="region_y">0x016ad754</Address>
+      <Address name="region_z">0x016ad758</Address>
+      
+      <Address name="map_data">0x016AD718</Address>
+      <Offset name="v_vein">0x10</Offset>
+      <Offset name="type">0x0092</Offset>
+      <Offset name="designation">0x029C</Offset>
+      <!--
+      No idea if those are still relevant
+      <Offset name="occupancy">0x0684</Offset>
+      <Offset name="biome_stuffs">0x1D84</Offset>
+      -->
+      <!--
+      <Address name="buildings">0x09008880</Address>
+      <Address name="constructions">0x08ff4a58</Address>
+      <Address name="creatures">0x0900839C</Address>
+      <Address name="current_cursor_creature">0x08fe3908</Address>
+      <Address name="current_menu_state">0x08ff4900</Address>
+      <Address name="cursor_xyz">0x08832328</Address>
+      <Address name="effects_vector">0x089ed3f8</Address>
+      <Address name="hotkey_start">0x08ff47ac</Address>
+      <Address name="items">0x0900840c</Address>
+      <Address name="language_vector">0x0904accc</Address>
+      <Address name="map_data">0x09048cfc</Address>
+      <Address name="matgloss">0x0904abc4</Address>
+      <Address name="notes">0x08ff4784</Address>
+      <Address name="pause_state">0xc60008fe</Address>
+      <Address name="region_x">0x09048d28</Address>
+      <Address name="region_y">0x09048d2c</Address>
+      <Address name="region_z">0x09048d30</Address>
+      <Address name="settlement_current">0x0904a908</Address>
+      <Address name="settlements">0x0904a89c</Address>
+      <Address name="translation_vector">0x0904ace4</Address>
+      <Address name="vegetation">0x0900b9d0</Address>
+      <Address name="view_screen">0x08832a60</Address>
+      <Address name="window_dims">0x091995fc</Address>
+      <Address name="window_x">0x089edd14</Address>
+      <Address name="window_y">0x089edd18</Address>
+      <Address name="window_z">0x089edd1c</Address>
+      <Address name="world">0x0904a328</Address>
+      <Address name="x_count">0x09048d10</Address>
+      <Address name="y_count">0x09048d14</Address>
+      <Address name="z_count">0x09048d18</Address>
+      -->
+    </Entry>
   </MemoryDescriptors>
 </DFExtractor>

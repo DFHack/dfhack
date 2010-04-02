@@ -4,11 +4,1537 @@
     <MemoryDescriptors>
         <Entry version="meta-2010" os="all" id="meta-2010">
             <Offset name="keep_me_happy">0x0</Offset>
+            ====================================================================
+                                        T R A I T S
+            ====================================================================
             <!--
-            <Profession can_assign_labors="true" is_military="false" name="Miner">0</Profession>
-            <Job name="Carve Fortification">0</Job>
-            <Skill name="Miner">0</Skill>
             <Trait name="Nervousness" level_5="Is a nervous wreck" level_4="Is always tense and jittery" level_3="Is often nervous" level_2="Has a calm demeanor" level_1="Has a very calm demeanor" level_0="Has an incredibly calm demeanor">0</Trait>
+            -->
+            ====================================================================
+                                   P R O F E S S I O N S
+            ====================================================================
+            TODO: Parse this and turn it into Profession tags.
+            Cross-reference with Memory-40d.xml
+            <!--
+            case 0:
+              result = sub_40FDD0("MINER");
+              break;
+            case 1:
+              result = sub_40FDD0("WOODWORKER");
+              break;
+            case 2:
+              result = sub_40FDD0("CARPENTER");
+              break;
+            case 3:
+              result = sub_40FDD0("BOWYER");
+              break;
+            case 4:
+              result = sub_40FDD0("WOODCUTTER");
+              break;
+            case 5:
+              result = sub_40FDD0("STONEWORKER");
+              break;
+            case 6:
+              result = sub_40FDD0("ENGRAVER");
+              break;
+            case 7:
+              result = sub_40FDD0("MASON");
+              break;
+            case 8:
+              result = sub_40FDD0("RANGER");
+              break;
+            case 9:
+              result = sub_40FDD0("ANIMAL_CARETAKER");
+              break;
+            case 10:
+              result = sub_40FDD0("ANIMAL_TRAINER");
+              break;
+            case 11:
+              result = sub_40FDD0("HUNTER");
+              break;
+            case 12:
+              result = sub_40FDD0("TRAPPER");
+              break;
+            case 13:
+              result = sub_40FDD0("ANIMAL_DISSECTOR");
+              break;
+            case 14:
+              result = sub_40FDD0("METALSMITH");
+              break;
+            case 15:
+              result = sub_40FDD0("FURNACE_OPERATOR");
+              break;
+            case 16:
+              result = sub_40FDD0("WEAPONSMITH");
+              break;
+            case 17:
+              result = sub_40FDD0("ARMORER");
+              break;
+            case 18:
+              result = sub_40FDD0("BLACKSMITH");
+              break;
+            case 19:
+              result = sub_40FDD0("METALCRAFTER");
+              break;
+            case 20:
+              result = sub_40FDD0("JEWELER");
+              break;
+            case 21:
+              result = sub_40FDD0("GEM_CUTTER");
+              break;
+            case 22:
+              result = sub_40FDD0("GEM_SETTER");
+              break;
+            case 23:
+              result = sub_40FDD0("CRAFTSMAN");
+              break;
+            case 24:
+              result = sub_40FDD0("WOODCRAFTER");
+              break;
+            case 25:
+              result = sub_40FDD0("STONECRAFTER");
+              break;
+            case 26:
+              result = sub_40FDD0("LEATHERWORKER");
+              break;
+            case 27:
+              result = sub_40FDD0("BONE_CARVER");
+              break;
+            case 28:
+              result = sub_40FDD0("WEAVER");
+              break;
+            case 29:
+              result = sub_40FDD0("CLOTHIER");
+              break;
+            case 30:
+              result = sub_40FDD0("GLASSMAKER");
+              break;
+            case 31:
+              result = sub_40FDD0("STRAND_EXTRACTOR");
+              break;
+            case 32:
+              result = sub_40FDD0("FISHERY_WORKER");
+              break;
+            case 33:
+              result = sub_40FDD0("FISHERMAN");
+              break;
+            case 34:
+              result = sub_40FDD0("FISH_DISSECTOR");
+              break;
+            case 35:
+              result = sub_40FDD0("FISH_CLEANER");
+              break;
+            case 36:
+              result = sub_40FDD0("FARMER");
+              break;
+            case 37:
+              result = sub_40FDD0("CHEESE_MAKER");
+              break;
+            case 38:
+              result = sub_40FDD0("MILKER");
+              break;
+            case 39:
+              result = sub_40FDD0("COOK");
+              break;
+            case 40:
+              result = sub_40FDD0("THRESHER");
+              break;
+            case 41:
+              result = sub_40FDD0("MILLER");
+              break;
+            case 42:
+              result = sub_40FDD0("BUTCHER");
+              break;
+            case 43:
+              result = sub_40FDD0("TANNER");
+              break;
+            case 44:
+              result = sub_40FDD0("DYER");
+              break;
+            case 45:
+              result = sub_40FDD0("PLANTER");
+              break;
+            case 46:
+              result = sub_40FDD0("HERBALIST");
+              break;
+            case 47:
+              result = sub_40FDD0("BREWER");
+              break;
+            case 48:
+              result = sub_40FDD0("SOAP_MAKER");
+              break;
+            case 49:
+              result = sub_40FDD0("POTASH_MAKER");
+              break;
+            case 50:
+              result = sub_40FDD0("LYE_MAKER");
+              break;
+            case 51:
+              result = sub_40FDD0("WOOD_BURNER");
+              break;
+            case 52:
+              result = sub_40FDD0("ENGINEER");
+              break;
+            case 53:
+              result = sub_40FDD0("MECHANIC");
+              break;
+            case 54:
+              result = sub_40FDD0("SIEGE_ENGINEER");
+              break;
+            case 55:
+              result = sub_40FDD0("SIEGE_OPERATOR");
+              break;
+            case 56:
+              result = sub_40FDD0("PUMP_OPERATOR");
+              break;
+            case 57:
+              result = sub_40FDD0("CLERK");
+              break;
+            case 60:
+              result = sub_40FDD0("ARCHITECT");
+              break;
+            case 62:
+              result = sub_40FDD0("DOCTOR");
+              break;
+            case 63:
+              result = sub_40FDD0("DIAGNOSER");
+              break;
+            case 64:
+              result = sub_40FDD0("BONE_SETTER");
+              break;
+            case 65:
+              result = sub_40FDD0("SUTURER");
+              break;
+            case 66:
+              result = sub_40FDD0("SURGEON");
+              break;
+            case 58:
+              result = sub_40FDD0("ADMINISTRATOR");
+              break;
+            case 59:
+              result = sub_40FDD0("TRADER");
+              break;
+            case 61:
+              result = sub_40FDD0("ALCHEMIST");
+              break;
+            case 67:
+              result = sub_40FDD0("MERCHANT");
+              break;
+            case 68:
+              result = sub_40FDD0("HAMMERMAN");
+              break;
+            case 69:
+              result = sub_40FDD0("MASTER_HAMMERMAN");
+              break;
+            case 70:
+              result = sub_40FDD0("SPEARMAN");
+              break;
+            case 71:
+              result = sub_40FDD0("MASTER_SPEARMAN");
+              break;
+            case 72:
+              result = sub_40FDD0("CROSSBOWMAN");
+              break;
+            case 73:
+              result = sub_40FDD0("MASTER_CROSSBOWMAN");
+              break;
+            case 74:
+              result = sub_40FDD0("WRESTLER");
+              break;
+            case 75:
+              result = sub_40FDD0("MASTER_WRESTLER");
+              break;
+            case 76:
+              result = sub_40FDD0("AXEMAN");
+              break;
+            case 77:
+              result = sub_40FDD0("MASTER_AXEMAN");
+              break;
+            case 78:
+              result = sub_40FDD0("SWORDSMAN");
+              break;
+            case 79:
+              result = sub_40FDD0("MASTER_SWORDSMAN");
+              break;
+            case 80:
+              result = sub_40FDD0("MACEMAN");
+              break;
+            case 81:
+              result = sub_40FDD0("MASTER_MACEMAN");
+              break;
+            case 82:
+              result = sub_40FDD0("PIKEMAN");
+              break;
+            case 83:
+              result = sub_40FDD0("MASTER_PIKEMAN");
+              break;
+            case 84:
+              result = sub_40FDD0("BOWMAN");
+              break;
+            case 85:
+              result = sub_40FDD0("MASTER_BOWMAN");
+              break;
+            case 86:
+              result = sub_40FDD0("BLOWGUNMAN");
+              break;
+            case 87:
+              result = sub_40FDD0("MASTER_BLOWGUNMAN");
+              break;
+            case 90:
+              result = sub_40FDD0("RECRUIT");
+              break;
+            case 91:
+              result = sub_40FDD0("TRAINED_HUNTER");
+              break;
+            case 92:
+              result = sub_40FDD0("TRAINED_WAR");
+              break;
+            case 93:
+              result = sub_40FDD0("MASTER_THIEF");
+              break;
+            case 94:
+              result = sub_40FDD0("THIEF");
+              break;
+            case 95:
+              result = sub_40FDD0("STANDARD");
+              break;
+            case 96:
+              result = sub_40FDD0("CHILD");
+              break;
+            case 97:
+              result = sub_40FDD0("BABY");
+              break;
+            case 98:
+              result = sub_40FDD0("DRUNK");
+              break;
+            case 88:
+              result = sub_40FDD0("LASHER");
+              break;
+            case 89:
+              result = sub_40FDD0("MASTER_LASHER");
+              break;
+            default:
+              result = sub_40A070("NONE", 4u);
+              break;
+              -->
+            ====================================================================
+                                          J O B S
+            ====================================================================
+            TODO: Parse this and turn it into Job tags
+            <!--
+            int __fastcall Job_descriptions(int a1, int a2, int a3, __int16 a4, __int16 a5, __int16 a6, int a7, int a8, int a9, char a10)
+            {
+              int v10; // ecx@1
+              int v11; // ebx@1
+              int v12; // esi@1
+              __int16 v13; // sp@1
+              void *v14; // edx@2
+              int v15; // eax@64
+              void *v16; // edx@71
+              void *v17; // edx@82
+              int v18; // ecx@84
+              char v19; // al@94
+              char v20; // al@123
+              void *v21; // edx@132
+              int v22; // ecx@132
+              char v23; // al@132
+              int v24; // ecx@134
+              int v25; // eax@134
+              int v26; // ecx@134
+              void *v27; // edx@136
+              int v28; // ecx@136
+              char v29; // al@136
+              int v30; // ecx@138
+              int v31; // eax@138
+              int v32; // ecx@138
+              void *v33; // edx@139
+              int v34; // ecx@139
+              char v35; // al@139
+              int v36; // ecx@141
+              int v37; // eax@141
+              int v38; // ecx@141
+              void *v39; // edx@142
+              char v41; // al@142
+              char v42; // al@144
+              void *v43; // edx@147
+              char v45; // al@147
+              void *v46; // edx@157
+              char v48; // al@157
+              char v49; // al@161
+              void *v50; // edx@164
+              int v51; // ecx@164
+              char v52; // al@164
+              void *v53; // edx@174
+              char v55; // al@174
+              void *v56; // edx@177
+              char v58; // al@177
+              void *v59; // edx@180
+              char v61; // al@180
+              void *v62; // edx@183
+              char v64; // al@183
+              void *v65; // edx@186
+              char v67; // al@186
+              char v68; // al@188
+              void *v69; // edx@191
+              char v71; // al@191
+              void *v72; // edx@197
+              int v73; // ecx@197
+              char v74; // al@197
+              int v75; // ecx@199
+              int v76; // eax@199
+              int v77; // ecx@199
+              void *v78; // edx@200
+              int v79; // ecx@200
+              char v80; // al@200
+              int v81; // ecx@202
+              int v82; // eax@202
+              int v83; // ecx@202
+              void *v84; // edx@209
+              int v85; // ecx@209
+              char v86; // al@209
+              int v87; // ecx@211
+              int v88; // eax@211
+              int v89; // ecx@211
+              void *v90; // edx@212
+              int v91; // ecx@212
+              char v92; // al@212
+              int v93; // ecx@214
+              int v94; // eax@214
+              int v95; // ecx@214
+              void *v96; // edx@215
+              char v98; // al@215
+              int v99; // ecx@218
+              int v100; // eax@218
+              int v101; // ecx@218
+              void *v102; // edx@219
+              int v103; // ecx@219
+              char v104; // al@219
+              int v105; // ecx@221
+              int v106; // eax@221
+              int v107; // ecx@221
+              void *v108; // edx@225
+              int v109; // ecx@225
+              char v110; // al@225
+              int v111; // ecx@227
+              int v112; // eax@228
+              int v113; // ecx@228
+              int v114; // ecx@229
+              int v115; // eax@229
+              int v116; // ecx@229
+              int v117; // eax@249
+              void *v119; // edx@260
+              char *v121; // [sp-8h] [bp-68h]@65
+              int v122; // [sp-4h] [bp-64h]@65
+              int v123; // [sp-4h] [bp-64h]@94
+              int v124; // [sp+14h] [bp-4Ch]@1
+              char v125; // [sp+18h] [bp-48h]@69
+              void *v126; // [sp+1Ch] [bp-44h]@1
+              int v127; // [sp+2Ch] [bp-34h]@1
+              unsigned int v128; // [sp+30h] [bp-30h]@1
+              char v129; // [sp+34h] [bp-2Ch]@65
+              char v130; // [sp+38h] [bp-28h]@65
+              int v131; // [sp+48h] [bp-18h]@65
+              int v132; // [sp+4Ch] [bp-14h]@65
+              unsigned int v133; // [sp+50h] [bp-10h]@1
+              int v134; // [sp+5Ch] [bp-4h]@1
+
+              v133 = (unsigned int)&v124 ^ dword_AE71F4;
+              v11 = a1;
+              v124 = a8;
+              v12 = a2;
+              v128 = 15;
+              v127 = 0;
+              LOBYTE(v126) = 0;
+              v134 = 0;
+              sub_4099E0(a3, 0, -1);
+              switch ( v13 )
+              {
+                case 68:
+                  v14 = "Construct Building";
+                  goto LABEL_330;
+                case 89:
+                  v14 = "Destroy Building";
+                  goto LABEL_330;
+                case 105:
+                  v14 = "Butcher an Animal";
+                  goto LABEL_330;
+                case 32:
+                  v14 = "Catch Live Fish";
+                  goto LABEL_330;
+                case 31:
+                  v14 = "Catch Live Land Animal";
+                  goto LABEL_330;
+                case 106:
+                  v14 = "Prepare a Raw Fish";
+                  goto LABEL_330;
+                case 107:
+                  v14 = "Mill Plants";
+                  goto LABEL_330;
+                case 111:
+                  v14 = "Process Plants";
+                  goto LABEL_330;
+                case 109:
+                  v14 = "Milk Creature";
+                  goto LABEL_330;
+                case 110:
+                  v14 = "Make Cheese";
+                  goto LABEL_330;
+                case 113:
+                  v14 = "Process Plants (Vial)";
+                  goto LABEL_330;
+                case 112:
+                  v14 = "Process Plants (Bag)";
+                  goto LABEL_330;
+                case 114:
+                  v14 = "Process Plants (Barrel)";
+                  goto LABEL_330;
+                case 188:
+                  v14 = "Make Lye";
+                  goto LABEL_330;
+                case 189:
+                  v14 = "Make Potash From Lye";
+                  goto LABEL_330;
+                case 191:
+                  v14 = "Make Potash From Ash";
+                  goto LABEL_330;
+                case 115:
+                  if ( (signed __int16)v11 == 2 )
+                  {
+                    v14 = "Prepare Easy Meal";
+                  }
+                  else
+                  {
+                    if ( (signed __int16)v11 == 3 )
+                    {
+                      v14 = "Prepare Fine Meal";
+                    }
+                    else
+                    {
+                      if ( (signed __int16)v11 != 4 )
+                        goto LABEL_332;
+                      v14 = "Prepare Lavish Meal";
+                    }
+                  }
+                  goto LABEL_330;
+                case 150:
+                  v14 = "Brew Drink";
+                  goto LABEL_330;
+                case 151:
+                  v14 = "Extract from Plants";
+                  goto LABEL_330;
+                case 152:
+                  v14 = "Extract from Raw Fish";
+                  goto LABEL_330;
+                case 153:
+                  v14 = "Extract from Land Animal";
+                  goto LABEL_330;
+                case 163:
+                  v14 = "Handle Large Creature";
+                  goto LABEL_330;
+                case 158:
+                  v14 = "Unchain Pet";
+                  goto LABEL_330;
+                case 159:
+                  v14 = "Release Large Creature";
+                  goto LABEL_330;
+                case 160:
+                  v14 = "Release Pet";
+                  goto LABEL_330;
+                case 161:
+                  v14 = "Release Small Creature";
+                  goto LABEL_330;
+                case 162:
+                  v14 = "Handle Small Creature";
+                  goto LABEL_330;
+                case 182:
+                  v14 = "Recover Pet";
+                  goto LABEL_330;
+                case 164:
+                  v14 = "Cage Large Creature";
+                  goto LABEL_330;
+                case 166:
+                  v14 = &dword_A6BEFC;
+                  goto LABEL_330;
+                case 167:
+                  v14 = &dword_A6BF0C;
+                  goto LABEL_330;
+                case 168:
+                  v14 = &dword_A6BF20;
+                  goto LABEL_330;
+                case 212:
+                  v14 = &dword_A6BF34;
+                  goto LABEL_330;
+                case 211:
+                  v14 = &dword_A6BF40;
+                  goto LABEL_330;
+                case 169:
+                  v14 = &dword_A6BF50;
+                  goto LABEL_330;
+                case 170:
+                  v14 = &dword_A6BF5C;
+                  goto LABEL_330;
+                case 171:
+                  v14 = "Surgery";
+                  goto LABEL_330;
+                case 172:
+                  v14 = &dword_A6BF6C;
+                  goto LABEL_330;
+                case 173:
+                  v14 = &dword_A6BF74;
+                  goto LABEL_330;
+                case 174:
+                  v14 = &dword_A6BF80;
+                  goto LABEL_330;
+                case 165:
+                  v14 = "Cage Small Creature";
+                  goto LABEL_330;
+                case 183:
+                  v14 = "Pit/Pond Large Animal";
+                  goto LABEL_330;
+                case 184:
+                  v14 = "Pit/Pond Small Animal";
+                  goto LABEL_330;
+                case 175:
+                  v14 = "Drain Aquarium";
+                  goto LABEL_330;
+                case 176:
+                  v14 = "Fill Aquarium";
+                  goto LABEL_330;
+                case 177:
+                  v14 = "Fill Pond";
+                  goto LABEL_330;
+                case 178:
+                case 180:
+                  v14 = &dword_A6BEE4;
+                  goto LABEL_330;
+                case 179:
+                case 181:
+                  v14 = &dword_A6BEF0;
+                  goto LABEL_330;
+                case 197:
+                  v14 = "Manage Work Orders";
+                  goto LABEL_330;
+                case 198:
+                  v14 = "Update Stockpile Records";
+                  goto LABEL_330;
+                case 205:
+                  v14 = "Upgrade Squad Equipment";
+                  goto LABEL_330;
+                case 206:
+                  v14 = "Prepare Equipment Manifests";
+                  goto LABEL_330;
+                case 199:
+                  v14 = "Trade at Depot";
+                  goto LABEL_330;
+                case 156:
+                  v14 = "Chain Animal";
+                  goto LABEL_330;
+                case 185:
+                  v14 = "Slaughter Animal";
+                  goto LABEL_330;
+                case 157:
+                  v14 = "Unchain Animal";
+                  goto LABEL_330;
+                case 155:
+                  sub_40FE10(v10, "Tame ", a3);
+                  if ( !v12 )
+                  {
+                    v14 = "a Large Animal";
+                    goto LABEL_330;
+                  }
+                  v15 = sub_78E660();
+                  if ( !v15 )
+                    goto LABEL_332;
+                  v132 = 15;
+                  v131 = 0;
+                  v130 = 0;
+                  LOBYTE(v134) = 1;
+                  sub_910740(v15, 0);
+                  v122 = 0;
+                  v121 = &v129;
+                  goto LABEL_66;
+                case 154:
+                  v14 = "Tame a Small Animal";
+                  goto LABEL_330;
+                case 83:
+                  sub_40FE10(v10, "Make ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Crafts";
+                  goto LABEL_330;
+                case 84:
+                  sub_40FE10(v10, "Mint ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Coins";
+                  goto LABEL_330;
+                case 85:
+                  v16 = "Cut ";
+                  goto LABEL_72;
+                case 86:
+                  sub_40FE10(v10, "Cut ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 0, 0);
+                  sub_40FF20(&v125, 0);
+                  goto LABEL_332;
+                case 132:
+                  sub_40FE10(v10, "Decorate With ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 0, 0);
+                  sub_40FF20(&v125, 0);
+                  goto LABEL_332;
+                case 104:
+                  v16 = "Stud With ";
+            LABEL_72:
+                  sub_40FE10(v10, v16, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 0, 0);
+                  sub_40FF20(&v125, 0);
+                  goto LABEL_332;
+                case 87:
+                  sub_40FE10(v10, "Encrust ", a3);
+                  if ( a9 & 0x400 )
+                    sub_40FE10(v10, "Finished Goods", a3);
+                  if ( a9 & 4 )
+                    sub_40FE10(v10, "Furniture", a3);
+                  if ( a9 & 0x40 )
+                    sub_40FE10(v10, "Ammo", a3);
+                  v17 = " With ";
+                  goto LABEL_83;
+                case 88:
+                  sub_40FE10(v10, "Encrust ", a3);
+                  if ( a9 & 0x400 )
+                    sub_40FE10(v18, "Finished Goods", a3);
+                  if ( a9 & 4 )
+                    sub_40FE10(v18, "Furniture", a3);
+                  if ( a9 & 0x40 )
+                    sub_40FE10(v18, "Ammo", a3);
+                  sub_40FE10(v18, " With ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 0, 0);
+                  sub_40FF20(&v125, 0);
+                  goto LABEL_332;
+                case 22:
+                  v14 = "Collect Sand";
+                  goto LABEL_330;
+                case 81:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Blocks";
+                  goto LABEL_330;
+                case 82:
+                  v17 = "Make Raw ";
+            LABEL_83:
+                  sub_40FE10(v10, v17, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 0, 0);
+                  sub_40FF20(&v125, 0);
+                  goto LABEL_332;
+                case 69:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v19 = sub_9B0C00(49);
+                  v123 = a3;
+                  if ( v19 )
+                    v14 = " Portal";
+                  else
+                    v14 = " Door";
+                  goto LABEL_331;
+                case 70:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Floodgate";
+                  goto LABEL_330;
+                case 200:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Hatch Cover";
+                  goto LABEL_330;
+                case 201:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Grate";
+                  goto LABEL_330;
+                case 74:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Table";
+                  goto LABEL_330;
+                case 209:
+                  v14 = "Construct Traction Bench";
+                  goto LABEL_330;
+                case 207:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Splint";
+                  goto LABEL_330;
+                case 208:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Crutch";
+                  goto LABEL_330;
+                case 79:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Cabinet";
+                  goto LABEL_330;
+                case 78:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Weapon Rack";
+                  goto LABEL_330;
+                case 77:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Armor Stand";
+                  goto LABEL_330;
+                case 76:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Bin";
+                  goto LABEL_330;
+                case 75:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  if ( (unsigned __int8)sub_9B0C00(49) )
+                  {
+                    v14 = " Box";
+                  }
+                  else
+                  {
+                    if ( (_WORD)v11 || (unsigned __int8)sub_9B0C00(47) )
+                    {
+                      if ( a10 & 2 )
+                      {
+                        v14 = " Chest";
+                      }
+                      else
+                      {
+                        v10 = 419;
+                        if ( (_WORD)v11 >= 419 && (_WORD)v11 <= 618 || a10 & 0x1D )
+                          v14 = " Bag";
+                        else
+                          v14 = " Chest";
+                      }
+                    }
+                    else
+                    {
+                      v14 = " Coffer";
+                    }
+                  }
+                  goto LABEL_330;
+                case 73:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  if ( (_WORD)v11 >= 419 && (_WORD)v11 <= 618 || a10 & 3 )
+                  {
+                    v14 = " Casket";
+                    goto LABEL_330;
+                  }
+                  v20 = sub_9B0C00(47);
+                  v123 = a3;
+                  if ( v20 )
+                    v14 = " Sarcophagus";
+                  else
+                    v14 = " Coffin";
+                  goto LABEL_331;
+                case 72:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  if ( (_WORD)v11 >= 419 && (v10 = 618, (_WORD)v11 <= 618) || a10 & 3 )
+                    v14 = " Chair";
+                  else
+                    v14 = " Throne";
+                  goto LABEL_330;
+                case 117:
+                  v23 = sub_9B0C00(47);
+                  v21 = "Forge ";
+                  if ( !v23 )
+                    v21 = "Make ";
+                  sub_40FE10(v22, v21, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  sub_40FE10(v24, &word_A4905C, a3);
+                  v25 = sub_53F2A0(v26);
+                  sub_40FF20(*(_DWORD *)v25 + 36, 0);
+                  goto LABEL_332;
+                case 130:
+                  v14 = "Make Totem";
+                  goto LABEL_330;
+                case 118:
+                  v29 = sub_9B0C00(47);
+                  v27 = "Forge ";
+                  if ( !v29 )
+                    v27 = "Make ";
+                  sub_40FE10(v28, v27, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  sub_40FE10(v30, &word_A4905C, a3);
+                  v31 = sub_53F2A0(v32);
+                  sub_40FF20(*(_DWORD *)v31 + 36, 0);
+                  goto LABEL_332;
+                case 119:
+                  v35 = sub_9B0C00(47);
+                  v33 = "Forge ";
+                  if ( !v35 )
+                    v33 = "Make ";
+                  sub_40FE10(v34, v33, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  sub_40FE10(v36, &word_A4905C, a3);
+                  v37 = sub_53F2A0(v38);
+                  sub_40FF20(*(_DWORD *)v37 + 36, 0);
+                  goto LABEL_332;
+                case 120:
+                  v41 = sub_9B0C00(47);
+                  v39 = "Forge ";
+                  if ( !v41 )
+                    v39 = "Make ";
+                  sub_40FE10(v10, v39, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v42 = sub_9B0C00(49);
+                  v123 = a3;
+                  if ( v42 )
+                    v14 = " Terrarium";
+                  else
+                    v14 = " Cage";
+                  goto LABEL_331;
+                case 121:
+                  v45 = sub_9B0C00(47);
+                  v43 = "Forge ";
+                  if ( !v45 )
+                    v43 = "Make ";
+                  sub_40FE10(v10, v43, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  if ( a10 & 2 )
+                  {
+                    v14 = " Chain";
+                  }
+                  else
+                  {
+                    if ( a10 & 8 || (v10 = 419, (_WORD)v11 >= 419) && (_WORD)v11 <= 618 || a10 & 0x15 )
+                      v14 = " Rope";
+                    else
+                      v14 = " Chain";
+                  }
+                  goto LABEL_330;
+                case 122:
+                  v48 = sub_9B0C00(47);
+                  v46 = "Forge ";
+                  if ( !v48 )
+                    v46 = "Make ";
+                  sub_40FE10(v10, v46, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  if ( a10 & 0x10 )
+                  {
+                    v14 = " Waterskin";
+                    goto LABEL_330;
+                  }
+                  v49 = sub_9B0C00(49);
+                  v123 = a3;
+                  if ( v49 )
+                    v14 = " Vial";
+                  else
+                    v14 = " Flask";
+                  goto LABEL_331;
+                case 123:
+                  v52 = sub_9B0C00(47);
+                  v50 = "Forge ";
+                  if ( !v52 )
+                    v50 = "Make ";
+                  sub_40FE10(v51, v50, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v10 = 419;
+                  if ( (_WORD)v11 >= 419 && (_WORD)v11 <= 618 || a10 & 3 )
+                  {
+                    v14 = " Cup";
+                  }
+                  else
+                  {
+                    if ( (_WORD)v11 || (unsigned __int8)sub_9B0C00(47) )
+                      v14 = " Goblet";
+                    else
+                      v14 = " Mug";
+                  }
+                  goto LABEL_330;
+                case 124:
+                  v55 = sub_9B0C00(47);
+                  v53 = "Forge ";
+                  if ( !v55 )
+                    v53 = "Make ";
+                  sub_40FE10(v10, v53, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Instrument";
+                  goto LABEL_330;
+                case 125:
+                  v58 = sub_9B0C00(47);
+                  v56 = "Forge ";
+                  if ( !v58 )
+                    v56 = "Make ";
+                  sub_40FE10(v10, v56, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Toy";
+                  goto LABEL_330;
+                case 126:
+                  v61 = sub_9B0C00(47);
+                  v59 = "Forge ";
+                  if ( !v61 )
+                    v59 = "Make ";
+                  sub_40FE10(v10, v59, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Animal Trap";
+                  goto LABEL_330;
+                case 127:
+                  v64 = sub_9B0C00(47);
+                  v62 = "Forge ";
+                  if ( !v64 )
+                    v62 = "Make ";
+                  sub_40FE10(v10, v62, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Barrel";
+                  goto LABEL_330;
+                case 195:
+                  v67 = sub_9B0C00(47);
+                  v65 = "Forge ";
+                  if ( !v67 )
+                    v65 = "Make ";
+                  sub_40FE10(v10, v65, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v68 = sub_9B0C00(49);
+                  v123 = a3;
+                  if ( v68 )
+                    v14 = " Tube";
+                  else
+                    v14 = " Pipe Section";
+                  goto LABEL_331;
+                case 128:
+                  v71 = sub_9B0C00(47);
+                  v69 = "Forge ";
+                  if ( !v71 )
+                    v69 = "Make ";
+                  sub_40FE10(v10, v69, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Bucket";
+                  goto LABEL_330;
+                case 129:
+                  sub_40FE10(v10, "Make ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Window";
+                  goto LABEL_330;
+                case 133:
+                  sub_40FE10(v10, "Make ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Backpack";
+                  goto LABEL_330;
+                case 134:
+                  sub_40FE10(v10, "Make ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Quiver";
+                  goto LABEL_330;
+                case 102:
+                  v74 = sub_9B0C00(47);
+                  v72 = "Forge ";
+                  if ( !v74 )
+                    v72 = "Make ";
+                  sub_40FE10(v73, v72, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  sub_40FE10(v75, &word_A4905C, a3);
+                  v76 = sub_53F2A0(v77);
+                  sub_40FF20(*(_DWORD *)v76 + 36, 0);
+                  goto LABEL_332;
+                case 103:
+                  v80 = sub_9B0C00(47);
+                  v78 = "Forge ";
+                  if ( !v80 )
+                    v78 = "Make ";
+                  sub_40FE10(v79, v78, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  sub_40FE10(v81, &word_A4905C, a3);
+                  v82 = sub_53F2A0(v83);
+                  sub_40FF20(*(_DWORD *)v82 + 36, 0);
+                  goto LABEL_332;
+                case 108:
+                  sub_40FE10(v10, "Bait Trap with ", a3);
+                  if ( a5 == 43 )
+                  {
+                    v14 = &off_A5110C;
+                  }
+                  else
+                  {
+                    if ( a5 == 47 )
+                    {
+                      v14 = "Meat";
+                    }
+                    else
+                    {
+                      if ( a5 != 48 )
+                        goto LABEL_332;
+            LABEL_206:
+                      v14 = "Fish";
+                    }
+                  }
+                  goto LABEL_330;
+                case 23:
+                  goto LABEL_206;
+                case 101:
+                  v86 = sub_9B0C00(47);
+                  v84 = "Forge ";
+                  if ( !v86 )
+                    v84 = "Make ";
+                  sub_40FE10(v85, v84, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  sub_40FE10(v87, &word_A4905C, a3);
+                  v88 = sub_53F2A0(v89);
+                  sub_40FF20(*(_DWORD *)v88 + 36, 0);
+                  goto LABEL_332;
+                case 97:
+                  v92 = sub_9B0C00(47);
+                  v90 = "Forge ";
+                  if ( !v92 )
+                    v90 = "Make ";
+                  sub_40FE10(v91, v90, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  sub_40FE10(v93, &word_A4905C, a3);
+                  v94 = sub_53F2A0(v95);
+                  sub_40FF20(*(_DWORD *)v94 + 36, 0);
+                  goto LABEL_332;
+                case 135:
+                  v98 = sub_9B0C00(47);
+                  v96 = "Forge ";
+                  if ( !v98 )
+                    v96 = "Make ";
+                  sub_40FE10(v10, v96, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Ballista Arrow Head";
+                  goto LABEL_330;
+                case 136:
+                  sub_40FE10(v10, "Assemble ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  sub_40FE10(v99, &word_A4905C, a3);
+                  v100 = sub_53F2A0(v101);
+                  sub_40FF20(*(_DWORD *)v100 + 36, 0);
+                  goto LABEL_332;
+                case 131:
+                  v104 = sub_9B0C00(47);
+                  v102 = "Forge ";
+                  if ( !v104 )
+                    v102 = "Make ";
+                  sub_40FE10(v103, v102, a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  sub_40FE10(v105, &word_A4905C, a3);
+                  v106 = sub_53F2A0(v107);
+                  sub_40FF20(*(_DWORD *)v106 + 64, 0);
+                  goto LABEL_332;
+                case 99:
+                  sub_40FE10(v10, "Construct", a3);
+                  if ( !(a10 & 2) )
+                  {
+                    sub_40FE10(v10, &word_A4905C, a3);
+                    sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                    sub_40FF20(&v125, 0);
+                  }
+                  v14 = " Catapult Parts";
+                  goto LABEL_330;
+                case 142:
+                  v110 = sub_9B0C00(47);
+                  v108 = "Forge ";
+                  if ( !v110 )
+                    v108 = "Make ";
+                  sub_40FE10(v109, v108, a3);
+                  v124 = a6;
+                  if ( *(_DWORD *)(*(_DWORD *)sub_53F2A0(v111) + 112) )
+                  {
+                    v112 = sub_53F2A0(v111);
+                    sub_40FF20(*(_DWORD *)v112 + 92, 0);
+                    sub_40FE10(v113, &word_A4905C, a3);
+                  }
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  sub_40FE10(v114, &word_A4905C, a3);
+                  v115 = sub_53F2A0(v116);
+                  sub_40FF20(*(_DWORD *)v115 + 36, 0);
+                  goto LABEL_332;
+                case 141:
+                  sub_40FE10(v10, "Construct", a3);
+                  if ( (_WORD)v11 )
+                  {
+                    sub_40FE10(v10, &word_A4905C, a3);
+                    sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                    sub_40FF20(&v125, 0);
+                  }
+                  v14 = " Mechanisms";
+                  goto LABEL_330;
+                case 100:
+                  sub_40FE10(v10, "Construct", a3);
+                  if ( !(a10 & 2) )
+                  {
+                    sub_40FE10(v10, &word_A4905C, a3);
+                    sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                    sub_40FF20(&v125, 0);
+                  }
+                  v14 = " Ballista Parts";
+                  goto LABEL_330;
+                case 98:
+                  sub_40FE10(v10, "Forge ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Anvil";
+                  goto LABEL_330;
+                case 71:
+                  sub_40FE10(v10, "Construct", a3);
+                  if ( (_WORD)v11 < 419 || (v10 = 618, (_WORD)v11 > 618) )
+                  {
+                    if ( !(a10 & 3) )
+                    {
+                      sub_40FE10(v10, &word_A4905C, a3);
+                      sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                      sub_40FF20(&v125, 0);
+                    }
+                  }
+                  v14 = " Bed";
+                  goto LABEL_330;
+                case 80:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Statue";
+                  goto LABEL_330;
+                case 203:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Quern";
+                  goto LABEL_330;
+                case 204:
+                  sub_40FE10(v10, "Construct ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Millstone";
+                  goto LABEL_330;
+                case 95:
+                  v14 = "Train Hunting Animal";
+                  goto LABEL_330;
+                case 96:
+                  v14 = "Train War Animal";
+                  goto LABEL_330;
+                case 186:
+                  v14 = "Make Charcoal";
+                  goto LABEL_330;
+                case 187:
+                  v14 = "Make Ash";
+                  goto LABEL_330;
+                case 213:
+                  v117 = sub_5ECDB0(&unk_16B8768, v124);
+                  if ( v117 )
+                  {
+                    sub_409970(v117 + 28);
+                    LOBYTE(v134) = 2;
+                    sub_427880();
+                    v122 = 0;
+                    v121 = &v129;
+            LABEL_66:
+                    sub_40FF20(v121, v122);
+                    sub_4099A0(&v129);
+                  }
+                  else
+                  {
+                    v14 = "Reaction";
+            LABEL_330:
+                    v123 = a3;
+            LABEL_331:
+                    sub_40FE10(v10, v14, v123);
+                  }
+            LABEL_332:
+                  if ( v128 >= 0x10 )
+                    operator delete(v126);
+                  return sub_9FD1AA(v124);
+                case 90:
+                  sub_40FE10(v10, "Smelt ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Ore";
+                  goto LABEL_330;
+                case 91:
+                  v14 = "Melt a Metal Object";
+                  goto LABEL_330;
+                case 92:
+                  v14 = "Extract Metal Strands";
+                  goto LABEL_330;
+                case 192:
+                  v14 = "Dye Thread";
+                  goto LABEL_330;
+                case 193:
+                  v14 = "Dye Cloth";
+                  goto LABEL_330;
+                case 194:
+                  sub_40FE10(v10, "Sew ", a3);
+                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
+                  sub_40FF20(&v125, 0);
+                  v14 = " Image";
+                  goto LABEL_330;
+                case 12:
+                  v14 = "Collect Webs";
+                  goto LABEL_330;
+                case 116:
+                  if ( (unsigned __int8)sub_9B0C00(47) )
+                  {
+                    v119 = "Weave Metal Cloth";
+                  }
+                  else
+                  {
+                    v119 = "Weave Thread into Silk";
+                    if ( !(a10 & 8) )
+                      v119 = "Weave Thread into Cloth";
+                  }
+                  sub_40FE10(v10, v119, a3);
+                  if ( !a9 )
+                    goto LABEL_332;
+                  v14 = " (Dyed Only)";
+                  goto LABEL_330;
+                case 94:
+                  v14 = "Harvest Plants";
+                  goto LABEL_330;
+                case 93:
+                  v14 = "Plant Seeds";
+                  goto LABEL_330;
+                case 190:
+                  v14 = "Fertilize Field";
+                  goto LABEL_330;
+                case 149:
+                  v14 = "Pull the Lever";
+                  goto LABEL_330;
+                case 148:
+                  v14 = "Link a Building to Trigger";
+                  goto LABEL_330;
+                case 0:
+                  v14 = "Carve Fortification";
+                  goto LABEL_330;
+                case 1:
+                  v14 = "Detail Wall";
+                  goto LABEL_330;
+                case 2:
+                  v14 = "Detail Floor";
+                  goto LABEL_330;
+                case 3:
+                  v14 = "Dig";
+                  goto LABEL_330;
+                case 202:
+                  v14 = "Remove Stairs/Ramps";
+                  goto LABEL_330;
+                case 11:
+                  v14 = "Remove Construction";
+                  goto LABEL_330;
+                case 4:
+                  v14 = "Carve Upward Staircase";
+                  goto LABEL_330;
+                case 5:
+                  v14 = "Carve Downward Staircase";
+                  goto LABEL_330;
+                case 6:
+                  v14 = "Carve Up/Down Staircase";
+                  goto LABEL_330;
+                case 7:
+                  v14 = "Carve Ramp";
+                  goto LABEL_330;
+                case 8:
+                  v14 = "Dig Channel";
+                  goto LABEL_330;
+                case 9:
+                  v14 = "Fell Tree";
+                  goto LABEL_330;
+                case 10:
+                  v14 = "Gather Plants";
+                  goto LABEL_330;
+                case 14:
+                  v14 = "Bring Item to Shop";
+                  goto LABEL_330;
+                case 13:
+                  v14 = "Bring Item to Depot";
+                  goto LABEL_330;
+                case 15:
+                  v14 = "Eat";
+                  goto LABEL_330;
+                case 16:
+                  v14 = "Get Provisions";
+                  goto LABEL_330;
+                case 210:
+                  v14 = "Clean Self";
+                  goto LABEL_330;
+                case 17:
+                case 18:
+                  v14 = "Drink";
+                  goto LABEL_330;
+                case 19:
+                case 20:
+                  v14 = "Fill Waterskin";
+                  goto LABEL_330;
+                case 21:
+                  v14 = "Sleep";
+                  goto LABEL_330;
+                case 26:
+                  v14 = "Kidnap";
+                  goto LABEL_330;
+                case 24:
+                  v14 = "Hunt";
+                  goto LABEL_330;
+                case 28:
+                  v14 = "Starting Fist Fight";
+                  goto LABEL_330;
+                case 27:
+                  v14 = "Beat Criminal";
+                  goto LABEL_330;
+                case 25:
+                  v14 = "Hunt for Small Creature";
+                  goto LABEL_330;
+                case 29:
+                  v14 = "Collect Taxes";
+                  goto LABEL_330;
+                case 30:
+                  v14 = "Guard Tax Collector";
+                  goto LABEL_330;
+                case 33:
+                  v14 = "Return Kill";
+                  goto LABEL_330;
+                case 34:
+                  v14 = "Check Chest";
+                  goto LABEL_330;
+                case 49:
+                case 50:
+                  v14 = "Go Shopping";
+                  goto LABEL_330;
+                case 48:
+                  v14 = "Attend Party";
+                  goto LABEL_330;
+                case 46:
+                  v14 = "Seek Artifact";
+                  goto LABEL_330;
+                case 47:
+                  v14 = "Seek Infant";
+                  goto LABEL_330;
+                case 35:
+                  v14 = "Store Owned Item";
+                  goto LABEL_330;
+                case 36:
+                  v14 = "Place Item in Tomb";
+                  goto LABEL_330;
+                case 37:
+                  v14 = "Store Item in Stockpile";
+                  goto LABEL_330;
+                case 38:
+                  v14 = "Store Item in Bag";
+                  goto LABEL_330;
+                case 44:
+                  v14 = "Store Item in Barrel";
+                  goto LABEL_330;
+                case 45:
+                  v14 = "Store Item in Bin";
+                  goto LABEL_330;
+                case 42:
+                  v14 = "Store Weapon";
+                  goto LABEL_330;
+                case 43:
+                  v14 = "Store Armor";
+                  goto LABEL_330;
+                case 39:
+                  v14 = "Store Item in Hospital";
+                  goto LABEL_330;
+                case 40:
+                  v14 = "Store Item in Chest";
+                  goto LABEL_330;
+                case 41:
+                  v14 = "Store Item in Cabinet";
+                  goto LABEL_330;
+                case 51:
+                  v14 = "Clean";
+                  goto LABEL_330;
+                case 52:
+                  v14 = "Rest";
+                  goto LABEL_330;
+                case 53:
+                  v14 = "Pickup Equipment";
+                  goto LABEL_330;
+                case 54:
+                  v14 = "Dump Item";
+                  goto LABEL_330;
+                case 55:
+                case 56:
+                case 57:
+                case 58:
+                case 59:
+                case 60:
+                case 61:
+                case 62:
+                case 63:
+                case 64:
+                case 65:
+                case 66:
+                case 67:
+                  v14 = "Strange Mood";
+                  goto LABEL_330;
+                case 146:
+                  v14 = "Clean Trap";
+                  goto LABEL_330;
+                case 137:
+                  v14 = "Load Catapult";
+                  goto LABEL_330;
+                case 138:
+                  v14 = "Load Ballista";
+                  goto LABEL_330;
+                case 139:
+                  v14 = "Fire Catapult";
+                  goto LABEL_330;
+                case 140:
+                  v14 = "Fire Ballista";
+                  goto LABEL_330;
+                case 196:
+                  v14 = "Operate Pump";
+                  goto LABEL_330;
+                case 143:
+                  v14 = "Load Cage Trap";
+                  goto LABEL_330;
+                case 144:
+                  v14 = "Load Stone Trap";
+                  goto LABEL_330;
+                case 145:
+                  v14 = "Load Weapon Trap";
+                  goto LABEL_330;
+                case 147:
+                  v14 = "Cast Spell";
+                  goto LABEL_330;
+                default:
+                  goto LABEL_332;
+              }
+            }
             -->
             ====================================================================
                                         S K I L L S
@@ -435,6 +1961,7 @@
     
     
     <!-- Windows logo by Microsoft -->
+    <!-- Tux logo by the Linux guys :) -->
     </MemoryDescriptors>
 </DFExtractor>
 

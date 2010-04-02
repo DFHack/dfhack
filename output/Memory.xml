@@ -1,184 +1,110 @@
 <?xml version="1.0"?>
-
+<!-- USE A FIXED WIDTH FONT! -->
 <DFExtractor>
-  <!-- USE A FIXED WIDTH FONT! -->
-  <MemoryDescriptors>
-  
-  
-  
-  
-    <Entry version="meta-2010" os="all" id="meta-2010">
-    <Offset name="keep_me_happy">0x0</Offset>
-    <!--
-    
-      <Profession can_assign_labors="true" is_military="false" name="Miner">0</Profession>
-      <Job name="Carve Fortification">0</Job>
-      <Skill name="Miner">0</Skill>
-      <Trait name="Nervousness" level_5="Is a nervous wreck" level_4="Is always tense and jittery" level_3="Is often nervous" level_2="Has a calm demeanor" level_1="Has a very calm demeanor" level_0="Has an incredibly calm demeanor">0</Trait>
-      <Labor name="Mining">0</Labor>
-      <VTable name="building_vtable">
-        <multiclass name="building_workshop" typeoffset="0xC8">
-          <class name="building_alchemists_laboratory" type="0x0"/>
-        </multiclass>
-        <class name="building_construction"/>
-      </VTable>
-      -->
+    <MemoryDescriptors>
+        <Entry version="meta-2010" os="all" id="meta-2010">
+            <Offset name="keep_me_happy">0x0</Offset>
+            <!--
+            <Profession can_assign_labors="true" is_military="false" name="Miner">0</Profession>
+            <Job name="Carve Fortification">0</Job>
+            <Skill name="Miner">0</Skill>
+            <Trait name="Nervousness" level_5="Is a nervous wreck" level_4="Is always tense and jittery" level_3="Is often nervous" level_2="Has a calm demeanor" level_1="Has a very calm demeanor" level_0="Has an incredibly calm demeanor">0</Trait>
+            -->
+            ====================================================================
+                                        L A B O R S
+            ====================================================================
+            <Labor name="Mining">0</Labor>
+            <Labor name="Stone Hauling">1</Labor>
+            <Labor name="Wood Hauling">2</Labor>
+            <Labor name="Burial">3</Labor>
+            <Labor name="Food Hauling">4</Labor>
+            <Labor name="Refuse Hauling">5</Labor>
+            <Labor name="Item Hauling">6</Labor>
+            <Labor name="Furniture Hauling">7</Labor>
+            <Labor name="Animal Hauling">8</Labor>
+            <Labor name="Cleaning">9</Labor>
+            <Labor name="Wood Cutting">10</Labor>
+            <Labor name="Carpentry">11</Labor>
+            <Labor name="Stone Detailing">12</Labor>
+            <Labor name="Masonry">13</Labor>
+            <Labor name="Architecture">14</Labor>
+            <Labor name="Animal Training">15</Labor>
+            <Labor name="Animal Care">16</Labor>
+            <Labor name="Diagnosis">17</Labor>
+            <Labor name="Surgery">18</Labor>
+            <Labor name="Setting Bones">19</Labor>
+            <Labor name="Suturing">20</Labor>
+            <Labor name="Dressing Wounds">21</Labor>
+            <Labor name="Feed Patients/Prisoners">22</Labor>
+            <Labor name="Recovering Wounded">23</Labor>
+            <Labor name="Butchery">24</Labor>
+            <Labor name="Trapping">25</Labor>
+            <Labor name="Small Animal Dissection">26</Labor>
+            <Labor name="Leatherworking">27</Labor>
+            <Labor name="Tanning">28</Labor>
+            <Labor name="Brewing">29</Labor>
+            <Labor name="Alchemy">30</Labor>
+            <Labor name="Soap Maker">31</Labor>
+            <Labor name="Weaving">32</Labor>
+            <Labor name="Clothesmaking">33</Labor>
+            <Labor name="Milling">34</Labor>
+            <Labor name="Plant Processing">35</Labor>
+            <Labor name="Cheese Making">36</Labor>
+            <Labor name="Milking">37</Labor>
+            <Labor name="Cooking">38</Labor>
+            <Labor name="Farming (Fields)">39</Labor>
+            <Labor name="Plant Gathering">40</Labor>
+            <Labor name="Fishing">41</Labor>
+            <Labor name="Fish Cleaning">42</Labor>
+            <Labor name="Fish Dissection">43</Labor>
+            <Labor name="Hunting">44</Labor>
+            <Labor name="Furnace Operating">45</Labor>
+            <Labor name="Weaponsmithing">46</Labor>
+            <Labor name="Armoring">47</Labor>
+            <Labor name="Blacksmithing">48</Labor>
+            <Labor name="Metalcrafting">49</Labor>
+            <Labor name="Gem Cutting">50</Labor>
+            <Labor name="Gem Setting">51</Labor>
+            <Labor name="Woodcrafting">52</Labor>
+            <Labor name="Stonecrafting">53</Labor>
+            <Labor name="Bone Carving">54</Labor>
+            <Labor name="Glassmaking">55</Labor>
+            <Labor name="Strand Extraction">56</Labor>
+            <Labor name="Siege Engineering">57</Labor>
+            <Labor name="Siege Operating">58</Labor>
+            <Labor name="Crossbow-making">59</Labor>
+            <Labor name="Mechanics">60</Labor>
+            <Labor name="Potash Making">61</Labor>
+            <Labor name="Lye Making">62</Labor>
+            <Labor name="Dyeing">63</Labor>
+            <Labor name="Wood Burning">64</Labor>
+            <Labor name="Pump Operating">65</Labor>
+            
+            * Labor groups *
+            <Labor name="Woodworking">4294967294</Labor>
+            <Labor name="Stoneworking">4294967293</Labor>
+            <Labor name="Hunting/Related">4294967292</Labor>
+            <Labor name="Healthcare">4294967291</Labor>
+            <Labor name="Farming/Related">4294967290</Labor>
+            <Labor name="Fishing/Related">4294967289</Labor>
+            <Labor name="Metalsmithing">4294967288</Labor>
+            <Labor name="Jewelry">4294967287</Labor>
+            <Labor name="Crafts">4294967286</Labor>
+            <Labor name="Engineering">4294967285</Labor>
+            <Labor name="Hauling">4294967284</Labor>
+            <Labor name="Other Jobs">4294967283</Labor>
+            ====================================================================
+                                    V -- T A B L E S
+                                    (for stonesense)
+            ====================================================================
+            <VTable name="building_vtable">
+                <multiclass name="building_workshop" typeoffset="0xC8">
+                    <class name="building_alchemists_laboratory" type="0x0"/>
+                </multiclass>
+                <class name="building_construction"/>
+            </VTable>
     </Entry>
 
-    <!--
-    
-    This is an example how an entry can look.
-    
-    <Entry version="v0.27.176.38a" os="windows" id="38awin" base="meta-40d">
-      <HexValue name="pe_timestamp">0x47b6fac2</HexValue>
-      <String name="md5">48c831b6f3950913b8e1aeada563d2db</String>
-      
-      where a vector actually starts: <Offset name="hacked_vector_start">0x0</Offset>
-      where the vector triplet is: <Offset name="hacked_vector_triplet">0x4</Offset>
-      
-      <Address name="buildings">0x014639f4</Address>
-      <Address name="constructions">0x01463288</Address>
-      <Address name="creatures">0x01463388</Address>
-      <Address name="current_cursor_creature">0x00c7bc00</Address>
-      <Address name="current_menu_state">0x01287d14</Address>
-      <Address name="cursor_xyz">0x00941288</Address>
-      <Address name="hotkey_start">0x01287a9c</Address>
-      <Address name="items">0x01463358</Address>
-      <Address name="language_vector">0x014a6994</Address>
-      <Address name="map_data">0x014a4eac</Address>
-      <Address name="matgloss">0x014a6834</Address>
-      <Address name="notes">0xffffffff</Address>
-      <Address name="pause_state">0x8b010127</Address>
-      <Address name="region_x">0x014a4edc</Address>
-      <Address name="region_y">0x014a4ee0</Address>
-      <Address name="region_z">0x014a4ee4</Address>
-      <Address name="settlement_current">0x014a6680</Address>
-      <Address name="settlements">0x014a671c</Address>
-      <Address name="translation_vector">0x014a69b4</Address>
-      <Address name="vegetation">0x01467b78</Address>
-      <Address name="view_screen">0x01295d58</Address>
-      <Address name="window_dims">0x01284184</Address>
-      <Address name="window_x">0x00941288</Address>
-      <Address name="window_y">0x00c2358c</Address>
-      <Address name="window_z">0x00c68350</Address>
-      <Address name="world">0x014a64dc</Address>
-      <Address name="x_count">0x014a4ec4</Address>
-      <Address name="y_count">0x014a4ec8</Address>
-      <Address name="z_count">0x014a4ecc</Address>
-      
-      job object offsets
-      ==================
-      <Offset name="current_job_id">0x08</Offset>
-      
-      map block offsets
-      =================
-      <Offset name="v_vein">0x08</Offset>
-      <HexValue name="v_vein_size">0x2C</HexValue>
-      <Offset name="type">0x0062</Offset>
-      <Offset name="designation">0x0264</Offset>
-      <Offset name="occupancy">0x0664</Offset>
-      <Offset name="biome_stuffs">0x1D64</Offset>
-      
-      name struct
-      ===========
-      <Offset name="name_firstname">0x0</Offset>
-      <Offset name="name_nickname">0x1C</Offset>
-      <Offset name="name_words">0x38</Offset>
-      <HexValue name="sizeof_string">0x1C</HexValue>
-      
-      creature offsets
-      ================
-      <Offset name="creature_name">0x00</Offset>
-      <Offset name="creature_custom_profession">0x6c</Offset>
-      <Offset name="creature_profession">0x88</Offset>
-      <Offset name="creature_race">0x8C</Offset>
-      <Offset name="creature_position">0x94</Offset>
-      <Offset name="creature_flags1">0xE4</Offset>
-      <Offset name="creature_flags2">0xE8</Offset>
-      <Offset name="creature_sex">0xF2</Offset>
-      <Offset name="creature_id">0xF4</Offset>
-      <Offset name="creature_squad_name">0x158</Offset>
-      <Offset name="creature_mood">0x1F8</Offset>
-      <Offset name="creature_pregnancy">0x1FC</Offset>
-      <Offset name="creature_squad_leader_id">0x228</Offset>
-      <Offset name="creature_money">0x2F8</Offset>
-      <Offset name="creature_current_job">0x2AC</Offset>
-      <Offset name="creature_blood_max">0x328</Offset>
-      <Offset name="creature_blood_current">0x32C</Offset>
-      <Offset name="creature_bleed">0x330</Offset>
-      <Offset name="creature_artifact_name">0x3CC</Offset>
-      <Offset name="creature_strength">0x438</Offset>
-      <Offset name="creature_agility">0x43C</Offset>
-      <Offset name="creature_toughness">0x440</Offset>
-      <Offset name="creature_skills">0x444</Offset>
-      <Offset name="creature_likes">0x454</Offset>
-      <Offset name="creature_labors">0x474</Offset>
-      <Offset name="creature_happiness">0x520</Offset>
-      <Offset name="creature_traits">0x5D0</Offset>
-      
-      tree and shrub offsets
-      ======================
-      <Offset name="tree_desc_offset">0x70</Offset>
-      
-      the world and its offsets
-      =========================
-      <Offset name="world_size_x">0x84</Offset>
-      <Offset name="world_size_y">0x86</Offset>
-      <Offset name="w_geoblocks">0x684</Offset>
-      <Offset name="w_regions_arr">0x6B4</Offset>
-      
-      values for the region structure
-      ===============================
-      <HexValue name="region_size">0x5C</HexValue>
-      <Offset name="region_geo_index_off">0x58</Offset>
-      
-      geoblock offset(s?)
-      ===================
-      <Offset name="geolayer_geoblock_offset">0x4</Offset>
-      
-      matgloss vectors
-      ================
-      <HexValue name="matgloss_skip">0x10</HexValue>
-      
-      only stone and metal have color loaded...
-      =========================================
-      <Offset name="matgloss_stone_color">0x84</Offset>
-      <Offset name="matgloss_metal_color">0x60</Offset>
-      
-      map block offsets
-      =================
-      <Offset name="v_vein">0x08</Offset>
-      <HexValue name="v_vein_size">0x2C</HexValue>
-      <Offset name="type">0x0062</Offset>
-      <Offset name="designation">0x0264</Offset>
-      <Offset name="occupancy">0x0664</Offset>
-      <Offset name="biome_stuffs">0x1D64</Offset>
-      
-      <Offset name="word_table">0x3C</Offset>
-      <Offset name="note_foreground">0x2</Offset>
-      <Offset name="note_background">0x4</Offset>
-      <Offset name="note_name">0x8</Offset>
-      <Offset name="note_xyz">0x24</Offset>
-      <Offset name="hotkey_mode">0x1C</Offset>
-      <Offset name="hotkey_xyz">0x20</Offset>
-      <Offset name="settlement_name">0x00</Offset>
-      <Offset name="settlement_world_xy">0x7a</Offset>
-      <Offset name="settlement_local_xy">0xD8</Offset>
-      <Offset name="item_materials">0x68</Offset>
-      <Offset name="item_type_name">0x24</Offset>
-      
-      
-      <Offset name="matgloss_creature_name">0x1C</Offset>
-      <Offset name="matgloss_wood_name">0x28</Offset>
-      <Offset name="matgloss_stone_name">0x24</Offset>
-      <Offset name="matgloss_metal_name">0x24</Offset>
-      <Offset name="matgloss_plant_name">0x24</Offset>
-      <Offset name="matgloss_plant_drink">0x5C</Offset>
-      <Offset name="matgloss_plant_food">0x94</Offset>
-      <Offset name="matgloss_plant_extract">0xB0</Offset>
-    </Entry>
-    -->
-    
     
                     .,:rsr,
                   :2;,;r2A@@5
@@ -202,7 +128,7 @@
                      
                      
 
-    <Entry version="v0.31.01" os="windows" id="0.31.01">
+    <Entry version="v0.31.01" os="windows" id="0.31.01" base="meta-2010">
         <String name="md5">851c1190b6a7b42f2463967623d18575</String>
         <HexValue name="pe_timestamp">0x4BB45F99</HexValue>
 
@@ -280,6 +206,7 @@
 
         Creatures
         =========
+        <Address name="creature_vector">0x0166eccc</Address>
         <Offset name="creature_name">0x0</Offset>
         <Offset name="creature_position">0x90</Offset>
         <Offset name="creature_flags1">0xF8</Offset>

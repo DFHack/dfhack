@@ -10,6 +10,1291 @@
             <!--
             <Trait name="Nervousness" level_5="Is a nervous wreck" level_4="Is always tense and jittery" level_3="Is often nervous" level_2="Has a calm demeanor" level_1="Has a very calm demeanor" level_0="Has an incredibly calm demeanor">0</Trait>
             -->
+            TODO: parse this, turn into Trait tags. Maybe most of it will be same as 40d.
+            <!--
+            int __userpurge sub_8FCC30<eax>(int a1<ebx>, int a2)
+            {
+              char v2; // al@1
+              int v3; // esi@1
+              char v4; // al@6
+              char v5; // al@11
+              char v6; // al@16
+              char v7; // al@21
+              void *v8; // eax@26
+              int v9; // edx@26
+              void *v10; // eax@28
+              int v11; // ecx@30
+              __int16 v12; // ax@31
+              int v13; // edi@31
+              int v14; // edx@33
+              int v15; // ecx@33
+              __int16 v16; // ax@34
+              int v17; // edx@35
+              __int16 v18; // ax@45
+              __int16 v19; // ax@56
+              __int16 v20; // ax@67
+              int v21; // eax@68
+              __int16 v22; // ax@78
+              __int16 v23; // ax@89
+              __int16 v24; // ax@100
+              __int16 v25; // ax@111
+              __int16 v26; // ax@122
+              __int16 v27; // ax@133
+              __int16 v28; // ax@144
+              __int16 v29; // ax@155
+              __int16 v30; // ax@166
+              __int16 v31; // ax@177
+              __int16 v32; // ax@188
+              int v33; // eax@189
+              int v34; // eax@189
+              int v35; // eax@191
+              int v36; // eax@191
+              int v37; // eax@193
+              int v38; // eax@193
+              int v39; // eax@197
+              int v40; // eax@197
+              int v41; // eax@198
+              int v42; // eax@198
+              __int16 v43; // ax@199
+              __int16 v44; // ax@210
+              __int16 v45; // ax@221
+              __int16 v46; // ax@232
+              __int16 v47; // ax@243
+              __int16 v48; // ax@254
+              int v49; // eax@261
+              int v50; // eax@261
+              int v51; // eax@264
+              int v52; // eax@264
+              __int16 v53; // ax@265
+              int v54; // eax@266
+              int v55; // eax@266
+              int v56; // eax@275
+              int v57; // eax@275
+              __int16 v58; // ax@276
+              int v59; // eax@285
+              int v60; // eax@285
+              int v61; // eax@286
+              int v62; // eax@286
+              __int16 v63; // ax@287
+              __int16 v64; // ax@298
+              int v65; // eax@308
+              int v66; // eax@308
+              int v67; // eax@308
+              int v68; // eax@308
+              int v69; // ST04_4@308
+              __int16 v70; // ax@309
+              __int16 v71; // ax@320
+              int v72; // eax@330
+              int v73; // eax@330
+              __int16 v74; // ax@331
+              int v75; // eax@338
+              int v76; // eax@338
+              __int16 v77; // ax@342
+              __int16 v78; // ax@353
+              void *v80; // [sp-8h] [bp-41Ch]@2
+              void *v81; // [sp-8h] [bp-41Ch]@7
+              void *v82; // [sp-8h] [bp-41Ch]@12
+              void *v83; // [sp-8h] [bp-41Ch]@17
+              void *v84; // [sp-8h] [bp-41Ch]@22
+              rsize_t v85; // [sp-4h] [bp-418h]@2
+              rsize_t v86; // [sp-4h] [bp-418h]@7
+              rsize_t v87; // [sp-4h] [bp-418h]@17
+              rsize_t v88; // [sp-4h] [bp-418h]@22
+              int v89; // [sp-4h] [bp-418h]@42
+              int v90; // [sp+10h] [bp-404h]@1
+              char v91; // [sp+14h] [bp-400h]@261
+              char v92; // [sp+30h] [bp-3E4h]@264
+              char v93; // [sp+4Ch] [bp-3C8h]@264
+              char v94; // [sp+68h] [bp-3ACh]@266
+              char v95; // [sp+84h] [bp-390h]@68
+              char v96; // [sp+A0h] [bp-374h]@266
+              char v97; // [sp+BCh] [bp-358h]@189
+              char v98; // [sp+D8h] [bp-33Ch]@275
+              char v99; // [sp+F4h] [bp-320h]@191
+              char v100; // [sp+110h] [bp-304h]@275
+              char v101; // [sp+12Ch] [bp-2E8h]@193
+              char v102; // [sp+148h] [bp-2CCh]@285
+              char v103; // [sp+164h] [bp-2B0h]@197
+              char v104; // [sp+180h] [bp-294h]@285
+              char v105; // [sp+19Ch] [bp-278h]@198
+              char v106; // [sp+1B8h] [bp-25Ch]@286
+              char v107; // [sp+1D4h] [bp-240h]@338
+              char v108; // [sp+1F0h] [bp-224h]@338
+              char v109; // [sp+20Ch] [bp-208h]@286
+              char v110; // [sp+228h] [bp-1ECh]@191
+              char v111; // [sp+244h] [bp-1D0h]@308
+              char v112; // [sp+260h] [bp-1B4h]@197
+              char v113; // [sp+27Ch] [bp-198h]@308
+              char v114; // [sp+298h] [bp-17Ch]@261
+              char v115; // [sp+2B4h] [bp-160h]@308
+              char v116; // [sp+2D0h] [bp-144h]@193
+              char v117; // [sp+2ECh] [bp-128h]@308
+              char v118; // [sp+308h] [bp-10Ch]@189
+              char v119; // [sp+324h] [bp-F0h]@330
+              char v120; // [sp+340h] [bp-D4h]@198
+              char v121; // [sp+35Ch] [bp-B8h]@330
+              int v122; // [sp+378h] [bp-9Ch]@189
+              void *v123; // [sp+37Ch] [bp-98h]@11
+              int v124; // [sp+38Ch] [bp-88h]@11
+              unsigned int v125; // [sp+390h] [bp-84h]@11
+              char v126; // [sp+394h] [bp-80h]@30
+              void *v127; // [sp+398h] [bp-7Ch]@21
+              int v128; // [sp+3A8h] [bp-6Ch]@21
+              unsigned int v129; // [sp+3ACh] [bp-68h]@21
+              void *v130; // [sp+3B4h] [bp-60h]@6
+              int v131; // [sp+3C4h] [bp-50h]@6
+              unsigned int v132; // [sp+3C8h] [bp-4Ch]@6
+              int v133; // [sp+3CCh] [bp-48h]@285
+              void *v134; // [sp+3D0h] [bp-44h]@16
+              int v135; // [sp+3E0h] [bp-34h]@16
+              unsigned int v136; // [sp+3E4h] [bp-30h]@16
+              char v137; // [sp+3E8h] [bp-2Ch]@286
+              void *v138; // [sp+3ECh] [bp-28h]@1
+              int v139; // [sp+3FCh] [bp-18h]@1
+              unsigned int v140; // [sp+400h] [bp-14h]@1
+              unsigned int v141; // [sp+404h] [bp-10h]@1
+              int v142; // [sp+410h] [bp-4h]@1
+
+              v141 = (unsigned int)&v90 ^ dword_AE71F4;
+              v3 = 0;
+              v140 = 15;
+              v139 = 0;
+              LOBYTE(v138) = 0;
+              v142 = 0;
+              v2 = *(_BYTE *)(a1 + 116);
+              if ( v2 == 1 )
+              {
+                v85 = 2;
+                v80 = "he";
+              }
+              else
+              {
+                if ( v2 )
+                {
+                  v85 = 2;
+                  v80 = &unk_A6C4C4;
+                }
+                else
+                {
+                  v85 = 3;
+                  v80 = &off_A6C4C0;
+                }
+              }
+              sub_40A070(v80, v85);
+              v132 = 15;
+              v131 = 0;
+              LOBYTE(v130) = 0;
+              LOBYTE(v142) = 1;
+              v4 = *(_BYTE *)(a1 + 116);
+              if ( v4 == 1 )
+              {
+                v86 = 3;
+                v81 = &off_A6C4C8;
+              }
+              else
+              {
+                if ( v4 )
+                {
+                  v86 = 2;
+                  v81 = &unk_A6C4C4;
+                }
+                else
+                {
+                  v86 = 3;
+                  v81 = &off_A6C4CC;
+                }
+              }
+              sub_40A070(v81, v86);
+              v125 = 15;
+              v124 = 0;
+              LOBYTE(v123) = 0;
+              LOBYTE(v142) = 2;
+              v5 = *(_BYTE *)(a1 + 116);
+              if ( v5 == 1 )
+              {
+                v82 = &off_A6C4E8;
+              }
+              else
+              {
+                if ( v5 )
+                  v82 = &off_A49054;
+                else
+                  v82 = &off_A6C4CC;
+              }
+              sub_40A070(v82, 3u);
+              v136 = 15;
+              v135 = 0;
+              LOBYTE(v134) = 0;
+              LOBYTE(v142) = 3;
+              v6 = *(_BYTE *)(a1 + 116);
+              if ( v6 == 1 )
+              {
+                v87 = 7;
+                v83 = "himself";
+              }
+              else
+              {
+                if ( v6 )
+                {
+                  v87 = 6;
+                  v83 = "itself";
+                }
+                else
+                {
+                  v87 = 7;
+                  v83 = "herself";
+                }
+              }
+              sub_40A070(v83, v87);
+              v129 = 15;
+              v128 = 0;
+              LOBYTE(v127) = 0;
+              LOBYTE(v142) = 4;
+              v7 = *(_BYTE *)(a1 + 116);
+              if ( v7 == 1 )
+              {
+                v88 = 2;
+                v84 = "he";
+              }
+              else
+              {
+                if ( v7 )
+                {
+                  v88 = 2;
+                  v84 = &unk_A6C4C4;
+                }
+                else
+                {
+                  v88 = 3;
+                  v84 = &off_A6C4C0;
+                }
+              }
+              sub_40A070(v84, v88);
+              v8 = v127;
+              if ( v129 < 0x10 )
+                v8 = &v127;
+              *(_BYTE *)v8 -= 97;
+              v10 = v127;
+              if ( v129 < 0x10 )
+                v10 = &v127;
+              *(_BYTE *)v10 += 65;
+              sub_410010((int)&v126, v9, (char *)&word_A4905C, 1u);
+              v11 = 0;
+              v90 = 0;
+              do
+              {
+                v13 = (signed __int16)v11;
+                v12 = *(_WORD *)(a1 + 2 * (signed __int16)v11 + 548);
+                if ( v12 < 40 || v12 > 60 )
+                {
+                  sub_40FF20(&v126, 0);
+                  switch ( v13 )
+                  {
+                    case 0:
+                      v16 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v16 > 90 )
+                      {
+                        v17 = (int)"is a nervous wreck";
+                        goto LABEL_363;
+                      }
+                      if ( v16 > 75 )
+                      {
+                        v17 = (int)"is always tense and jittery";
+                        goto LABEL_363;
+                      }
+                      if ( v16 > 60 )
+                      {
+                        v17 = (int)"is often nervous";
+                        goto LABEL_363;
+                      }
+                      if ( v16 >= 25 )
+                      {
+                        v17 = (int)"has a calm demeanor";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v16 < 10 )
+                        v17 = (int)"has an incredibly calm demeanor";
+                      else
+                        v17 = (int)"has a very calm demeanor";
+                      goto LABEL_364;
+                    case 1:
+                      v18 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v18 > 90 )
+                      {
+                        v17 = (int)"is in a constant state of internal rage";
+                        goto LABEL_363;
+                      }
+                      if ( v18 > 75 )
+                      {
+                        v17 = (int)"is very quick to anger";
+                        goto LABEL_363;
+                      }
+                      if ( v18 > 60 )
+                      {
+                        v17 = (int)"is quick to anger";
+                        goto LABEL_363;
+                      }
+                      if ( v18 >= 25 )
+                      {
+                        v17 = (int)"is slow to anger";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v18 < 10 )
+                        v17 = (int)"never becomes angry";
+                      else
+                        v17 = (int)"is very slow to anger";
+                      goto LABEL_364;
+                    case 2:
+                      v19 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v19 > 90 )
+                      {
+                        v17 = (int)"is frequently depressed";
+                        goto LABEL_363;
+                      }
+                      if ( v19 > 75 )
+                      {
+                        v17 = (int)"is often sad and dejected";
+                        goto LABEL_363;
+                      }
+                      if ( v19 > 60 )
+                      {
+                        v17 = (int)"often feels discouraged";
+                        goto LABEL_363;
+                      }
+                      if ( v19 >= 25 )
+                      {
+                        v17 = (int)"rarely feels discouraged";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v19 < 10 )
+                        v17 = (int)"never feels discouraged";
+                      else
+                        v17 = (int)"almost never feels discouraged";
+                      goto LABEL_364;
+                    case 3:
+                      v20 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v20 > 90 )
+                      {
+                        v21 = sub_41EC90("is socially crippled by thoughts that everyone is watching and judging ", v14);
+                        LOBYTE(v142) = 5;
+                        sub_40FF20(v21, 0);
+                        LOBYTE(v142) = 4;
+                        sub_4099A0(&v95);
+                        goto LABEL_365;
+                      }
+                      if ( v20 > 75 )
+                      {
+                        v17 = (int)"is concerned about rejection and ridicule";
+                        goto LABEL_363;
+                      }
+                      if ( v20 > 60 )
+                      {
+                        v17 = (int)"is self-conscious";
+                        goto LABEL_363;
+                      }
+                      if ( v20 >= 25 )
+                      {
+                        v17 = (int)"is comfortable in social situations";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v20 < 10 )
+                        v17 = (int)"is absolutely unfazed by the opinions of others";
+                      else
+                        v17 = (int)"is very comfortable in social situations";
+                      goto LABEL_364;
+                    case 4:
+                      v22 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v22 > 90 )
+                      {
+                        v17 = (int)"is ruled by irresistible cravings and urges";
+                        goto LABEL_363;
+                      }
+                      if ( v22 > 75 )
+                      {
+                        v17 = (int)"feels strong urges and seeks short-term rewards";
+                        goto LABEL_363;
+                      }
+                      if ( v22 > 60 )
+                      {
+                        v17 = (int)"occasionally overindulges";
+                        goto LABEL_363;
+                      }
+                      if ( v22 >= 25 )
+                      {
+                        v17 = (int)"doesn't often experience strong cravings or urges";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v22 < 10 )
+                        v17 = (int)"never feels tempted to overindulge in anything";
+                      else
+                        v17 = (int)"only rarely feels strong cravings or urges";
+                      goto LABEL_364;
+                    case 5:
+                      v23 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v23 > 90 )
+                      {
+                        v17 = (int)"becomes completely helpless in stressful situations";
+                        goto LABEL_363;
+                      }
+                      if ( v23 > 75 )
+                      {
+                        v17 = (int)"cracks easily under pressure";
+                        goto LABEL_363;
+                      }
+                      if ( v23 > 60 )
+                      {
+                        v17 = (int)"doesn't handle stress well";
+                        goto LABEL_363;
+                      }
+                      if ( v23 >= 25 )
+                      {
+                        v17 = (int)"can handle stress";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v23 < 10 )
+                        v17 = (int)"is impervious to the effects of stress";
+                      else
+                        v17 = (int)"is confident under pressure";
+                      goto LABEL_364;
+                    case 6:
+                      v24 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v24 > 90 )
+                      {
+                        v17 = (int)"genuinely likes others and openly expresses positive feelings toward them";
+                        goto LABEL_363;
+                      }
+                      if ( v24 > 75 )
+                      {
+                        v17 = (int)"makes friends quickly";
+                        goto LABEL_363;
+                      }
+                      if ( v24 > 60 )
+                      {
+                        v17 = (int)"is very friendly";
+                        goto LABEL_363;
+                      }
+                      if ( v24 >= 25 )
+                      {
+                        v17 = (int)"is somewhat reserved";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v24 < 10 )
+                        v17 = (int)"does not actively seek friendships and is incredibly distant and reserved";
+                      else
+                        v17 = (int)"is very distant and reserved";
+                      goto LABEL_364;
+                    case 7:
+                      v25 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v25 > 90 )
+                      {
+                        v17 = (int)"truly treasures the company of others";
+                        goto LABEL_363;
+                      }
+                      if ( v25 > 75 )
+                      {
+                        v17 = (int)"enjoys being in crowds";
+                        goto LABEL_363;
+                      }
+                      if ( v25 > 60 )
+                      {
+                        v17 = (int)"enjoys the company of others";
+                        goto LABEL_363;
+                      }
+                      if ( v25 >= 25 )
+                      {
+                        v17 = (int)"tends to avoid crowds";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v25 < 10 )
+                        v17 = (int)"considers spending time alone much more important than associating with others";
+                      else
+                        v17 = (int)"prefers to be alone";
+                      goto LABEL_364;
+                    case 8:
+                      v26 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v26 > 90 )
+                      {
+                        v17 = (int)"loves to take charge and direct activities";
+                        goto LABEL_363;
+                      }
+                      if ( v26 > 75 )
+                      {
+                        v17 = (int)"is very assertive";
+                        goto LABEL_363;
+                      }
+                      if ( v26 > 60 )
+                      {
+                        v17 = (int)"is assertive";
+                        goto LABEL_363;
+                      }
+                      if ( v26 >= 25 )
+                      {
+                        v17 = (int)"is unassertive";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v26 < 10 )
+                        v17 = (int)"never speaks out or attempts to direct activities";
+                      else
+                        v17 = (int)"prefers that others handle the leadership roles";
+                      goto LABEL_364;
+                    case 9:
+                      v27 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v27 > 90 )
+                      {
+                        v17 = (int)"is constantly active and energetic";
+                        goto LABEL_363;
+                      }
+                      if ( v27 > 75 )
+                      {
+                        v17 = (int)"is very energetic and active";
+                        goto LABEL_363;
+                      }
+                      if ( v27 > 60 )
+                      {
+                        v17 = (int)"is very active";
+                        goto LABEL_363;
+                      }
+                      if ( v27 >= 25 )
+                      {
+                        v17 = (int)"is relaxed";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v27 < 10 )
+                        v17 = (int)"can't be bothered with frantic, fast-paced living";
+                      else
+                        v17 = (int)"lives life at a leisurely pace";
+                      goto LABEL_364;
+                    case 10:
+                      v28 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v28 > 90 )
+                      {
+                        v17 = (int)"lives for risk and excitement";
+                        goto LABEL_363;
+                      }
+                      if ( v28 > 75 )
+                      {
+                        v17 = (int)"is a risk-taker and a thrill-seeker";
+                        goto LABEL_363;
+                      }
+                      if ( v28 > 60 )
+                      {
+                        v17 = (int)"loves a good thrill";
+                        goto LABEL_363;
+                      }
+                      if ( v28 >= 25 )
+                      {
+                        v17 = (int)"is not a risk-taker";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v28 < 10 )
+                        v17 = (int)"is entirely averse to risk and excitement";
+                      else
+                        v17 = (int)"doesn't need thrills or risks in life";
+                      goto LABEL_364;
+                    case 11:
+                      v29 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v29 > 90 )
+                      {
+                        v17 = (int)"often feels filled with joy";
+                        goto LABEL_363;
+                      }
+                      if ( v29 > 75 )
+                      {
+                        v17 = (int)"can be very happy and optimistic";
+                        goto LABEL_363;
+                      }
+                      if ( v29 > 60 )
+                      {
+                        v17 = (int)"is often cheerful";
+                        goto LABEL_363;
+                      }
+                      if ( v29 >= 25 )
+                      {
+                        v17 = (int)"is rarely happy or enthusiastic";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v29 < 10 )
+                        v17 = (int)"is never optimistic or enthusiastic about anything";
+                      else
+                        v17 = (int)"is a pessimist";
+                      goto LABEL_364;
+                    case 12:
+                      v30 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v30 > 90 )
+                      {
+                        v17 = (int)"is bored by reality and has a wonderful imagination";
+                        goto LABEL_363;
+                      }
+                      if ( v30 > 75 )
+                      {
+                        v17 = (int)"is incredibly creative";
+                        goto LABEL_363;
+                      }
+                      if ( v30 > 60 )
+                      {
+                        v17 = (int)"has a fertile imagination";
+                        goto LABEL_363;
+                      }
+                      if ( v30 >= 25 )
+                      {
+                        v17 = (int)"isn't given to flights of fancy";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v30 < 10 )
+                        v17 = (int)"is interested only in facts and the real world";
+                      else
+                        v17 = (int)"is grounded in reality";
+                      goto LABEL_364;
+                    case 13:
+                      v31 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v31 > 90 )
+                      {
+                        v17 = (int)"can easily become absorbed in art and the beauty of the natural world";
+                        goto LABEL_363;
+                      }
+                      if ( v31 > 75 )
+                      {
+                        v17 = (int)"greatly appreciates art and natural beauty";
+                        goto LABEL_363;
+                      }
+                      if ( v31 > 60 )
+                      {
+                        v17 = (int)"appreciates art and natural beauty";
+                        goto LABEL_363;
+                      }
+                      if ( v31 >= 25 )
+                      {
+                        v17 = (int)"does not have a great aesthetic sensitivity";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v31 < 10 )
+                        v17 = (int)"is completely uninterested in art";
+                      else
+                        v17 = (int)"is not interested in art";
+                      goto LABEL_364;
+                    case 14:
+                      v32 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v32 > 90 )
+                      {
+                        v33 = sub_41EC90("has a profound understanding of ", (int)&v122);
+                        LOBYTE(v142) = 6;
+                        v34 = sub_416630(v33, &v122);
+                        LOBYTE(v142) = 7;
+                        sub_40FF20(v34, 0);
+                        sub_4099A0(&v118);
+                        LOBYTE(v142) = 4;
+                        sub_4099A0(&v97);
+                        goto LABEL_365;
+                      }
+                      if ( v32 > 75 )
+                      {
+                        v35 = sub_41EC90("has a great awareness of ", v14);
+                        LOBYTE(v142) = 8;
+                        v36 = sub_416630(v35, &v122);
+                        LOBYTE(v142) = 9;
+                        sub_40FF20(v36, 0);
+                        sub_4099A0(&v110);
+                        LOBYTE(v142) = 4;
+                        sub_4099A0(&v99);
+                        goto LABEL_365;
+                      }
+                      if ( v32 > 60 )
+                      {
+                        v37 = sub_41EC90("has a good awareness of ", v14);
+                        LOBYTE(v142) = 10;
+                        v38 = sub_416630(v37, &v122);
+                        LOBYTE(v142) = 11;
+                        sub_40FF20(v38, 0);
+                        sub_4099A0(&v116);
+                        LOBYTE(v142) = 4;
+                        sub_4099A0(&v101);
+                        goto LABEL_365;
+                      }
+                      if ( v32 >= 25 )
+                      {
+                        v17 = (int)"tends not to openly express emotions";
+                        goto LABEL_363;
+                      }
+                      if ( v32 < 10 )
+                      {
+                        v41 = sub_41EC90("does not display ", v14);
+                        LOBYTE(v142) = 14;
+                        v42 = sub_416630(v41, &v122);
+                        LOBYTE(v142) = 15;
+                        sub_40FF20(v42, 0);
+                        sub_4099A0(&v120);
+                        LOBYTE(v142) = 4;
+                        sub_4099A0(&v105);
+                      }
+                      else
+                      {
+                        v39 = sub_41EC90("is mostly unaware of ", (int)&v122);
+                        LOBYTE(v142) = 12;
+                        v40 = sub_416630(v39, &v122);
+                        LOBYTE(v142) = 13;
+                        sub_40FF20(v40, 0);
+                        sub_4099A0(&v112);
+                        LOBYTE(v142) = 4;
+                        sub_4099A0(&v103);
+                      }
+                      goto LABEL_365;
+                    case 15:
+                      v43 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v43 > 90 )
+                      {
+                        v17 = (int)"is highly adventurous and loves fresh experiences";
+                        goto LABEL_363;
+                      }
+                      if ( v43 > 75 )
+                      {
+                        v17 = (int)"is eager for new experiences";
+                        goto LABEL_363;
+                      }
+                      if ( v43 > 60 )
+                      {
+                        v17 = (int)"likes to try new things";
+                        goto LABEL_363;
+                      }
+                      if ( v43 >= 25 )
+                      {
+                        v17 = (int)"prefers familiar routines";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v43 < 10 )
+                        v17 = (int)"is resistant to change";
+                      else
+                        v17 = (int)"is uncomfortable with change";
+                      goto LABEL_364;
+                    case 16:
+                      v44 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v44 > 90 )
+                      {
+                        v17 = (int)"is entranced by riddles and puzzles and loves to debate issues and ideas";
+                        goto LABEL_363;
+                      }
+                      if ( v44 > 75 )
+                      {
+                        v17 = (int)"loves new and fresh ideas";
+                        goto LABEL_363;
+                      }
+                      if ( v44 > 60 )
+                      {
+                        v17 = (int)"is open-minded to new ideas";
+                        goto LABEL_363;
+                      }
+                      if ( v44 >= 25 )
+                      {
+                        v17 = (int)"dislikes intellectual discussions";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v44 < 10 )
+                        v17 = (int)"is completely uninterested in ideas and debates over intellectual issues";
+                      else
+                        v17 = (int)"regards intellectual exercises as a waste of energy";
+                      goto LABEL_364;
+                    case 17:
+                      v45 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v45 > 90 )
+                      {
+                        v17 = (int)"revels in chaos and disorder";
+                        goto LABEL_363;
+                      }
+                      if ( v45 > 75 )
+                      {
+                        v17 = (int)"loves to defy convention";
+                        goto LABEL_363;
+                      }
+                      if ( v45 > 60 )
+                      {
+                        v17 = (int)"is put off by authority and tradition";
+                        goto LABEL_363;
+                      }
+                      if ( v45 >= 25 )
+                      {
+                        v17 = (int)"admires tradition";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v45 < 10 )
+                        v17 = (int)"is an ardent believer in convention and traditional society";
+                      else
+                        v17 = (int)"prefers stability and security to ambiguity and disorder";
+                      goto LABEL_364;
+                    case 18:
+                      v46 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v46 > 90 )
+                      {
+                        v17 = (int)"is naturally trustful of everybody";
+                        goto LABEL_363;
+                      }
+                      if ( v46 > 75 )
+                      {
+                        v17 = (int)"is very trusting";
+                        goto LABEL_363;
+                      }
+                      if ( v46 > 60 )
+                      {
+                        v17 = (int)"is trusting";
+                        goto LABEL_363;
+                      }
+                      if ( v46 >= 25 )
+                      {
+                        v17 = (int)"is slow to trust others";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v46 < 10 )
+                        v17 = (int)"sees others as selfish and conniving";
+                      else
+                        v17 = (int)"does not trust others";
+                      goto LABEL_364;
+                    case 19:
+                      v47 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v47 > 90 )
+                      {
+                        v17 = (int)"is incredibly frank and candid in dealings with others";
+                        goto LABEL_363;
+                      }
+                      if ( v47 > 75 )
+                      {
+                        v17 = (int)"is very straightforward with others";
+                        goto LABEL_363;
+                      }
+                      if ( v47 > 60 )
+                      {
+                        v17 = (int)"is candid and sincere in dealings with others";
+                        goto LABEL_363;
+                      }
+                      if ( v47 >= 25 )
+                      {
+                        v17 = (int)"is guarded in relationships with others";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v47 < 10 )
+                        v17 = (int)"believes that some deception is necessary in relationships with others";
+                      else
+                        v17 = (int)"is not straightforward when dealing with others";
+                      goto LABEL_364;
+                    case 20:
+                      v48 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v48 > 90 )
+                      {
+                        v17 = (int)"is truly fulfilled by assisting those in need";
+                        goto LABEL_363;
+                      }
+                      if ( v48 > 75 )
+                      {
+                        v17 = (int)"finds helping others very rewarding";
+                        goto LABEL_363;
+                      }
+                      if ( v48 > 60 )
+                      {
+                        v17 = (int)"finds helping others rewarding";
+                        goto LABEL_363;
+                      }
+                      if ( v48 >= 25 )
+                      {
+                        v49 = sub_41EC90("does not go out of ", v14);
+                        LOBYTE(v142) = 16;
+                        v50 = sub_416630(v49, &v122);
+                        LOBYTE(v142) = 17;
+                        sub_40FF20(v50, 0);
+                        sub_4099A0(&v114);
+                        LOBYTE(v142) = 4;
+                        sub_4099A0(&v91);
+                        goto LABEL_365;
+                      }
+                      if ( v48 >= 10 )
+                      {
+                        v17 = (int)"dislikes helping others";
+                        goto LABEL_363;
+                      }
+                      v51 = sub_41EC90("views helping others as an imposition on ", (int)&v122);
+                      LOBYTE(v142) = 18;
+                      v52 = sub_416630(v51, &v122);
+                      LOBYTE(v142) = 19;
+                      sub_40FF20(v52, 0);
+                      sub_4099A0(&v92);
+                      LOBYTE(v142) = 4;
+                      sub_4099A0(&v93);
+                      goto LABEL_365;
+                    case 21:
+                      v53 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v53 > 90 )
+                      {
+                        v54 = sub_41EC90("sacrifices ", v14);
+                        LOBYTE(v142) = 20;
+                        v55 = sub_416630(v54, &v122);
+                        LOBYTE(v142) = 21;
+                        sub_40FF20(v55, 0);
+                        sub_4099A0(&v94);
+                        LOBYTE(v142) = 4;
+                        sub_4099A0(&v96);
+                        goto LABEL_365;
+                      }
+                      if ( v53 > 75 )
+                      {
+                        v17 = (int)"dislikes confrontations";
+                        goto LABEL_363;
+                      }
+                      if ( v53 > 60 )
+                      {
+                        v17 = (int)"is willing to compromise with others";
+                        goto LABEL_363;
+                      }
+                      if ( v53 >= 25 )
+                      {
+                        v17 = (int)"doesn't like to compromise with others";
+                        goto LABEL_363;
+                      }
+                      if ( v53 >= 10 )
+                      {
+                        v17 = (int)"would rather intimidate others than compromise with them";
+                        goto LABEL_363;
+                      }
+                      v56 = sub_41EC90("would never deny ", v14);
+                      LOBYTE(v142) = 22;
+                      v57 = sub_416630(v56, &v122);
+                      LOBYTE(v142) = 23;
+                      sub_40FF20(v57, 0);
+                      sub_4099A0(&v98);
+                      LOBYTE(v142) = 4;
+                      sub_4099A0(&v100);
+                      goto LABEL_365;
+                    case 22:
+                      v58 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v58 > 90 )
+                      {
+                        v17 = (int)"would never claim to be better than somebody else";
+                        goto LABEL_363;
+                      }
+                      if ( v58 > 75 )
+                      {
+                        v17 = (int)"finds immodesty distasteful";
+                        goto LABEL_363;
+                      }
+                      if ( v58 > 60 )
+                      {
+                        v17 = (int)"is modest";
+                        goto LABEL_363;
+                      }
+                      if ( v58 >= 25 )
+                      {
+                        v17 = (int)"is immodest";
+                        goto LABEL_363;
+                      }
+                      if ( v58 < 10 )
+                      {
+                        v61 = sub_41EC90("would never shy away from an opportunity to say ", v14);
+                        LOBYTE(v142) = 26;
+                        v62 = sub_416630(v61, &v137);
+                        LOBYTE(v142) = 27;
+                        sub_40FF20(v62, 0);
+                        sub_4099A0(&v106);
+                        LOBYTE(v142) = 4;
+                        sub_4099A0(&v109);
+                      }
+                      else
+                      {
+                        v59 = sub_41EC90("is very willing to compare ", (int)&v133);
+                        LOBYTE(v142) = 24;
+                        v60 = sub_416630(v59, &v133);
+                        LOBYTE(v142) = 25;
+                        sub_40FF20(v60, 0);
+                        sub_4099A0(&v102);
+                        LOBYTE(v142) = 4;
+                        sub_4099A0(&v104);
+                      }
+                      goto LABEL_365;
+                    case 23:
+                      v63 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v63 > 90 )
+                      {
+                        v17 = (int)"is incredibly compassionate and feels the pain of others";
+                        goto LABEL_363;
+                      }
+                      if ( v63 > 75 )
+                      {
+                        v17 = (int)"is easily moved to pity";
+                        goto LABEL_363;
+                      }
+                      if ( v63 > 60 )
+                      {
+                        v17 = (int)"is compassionate";
+                        goto LABEL_363;
+                      }
+                      if ( v63 >= 25 )
+                      {
+                        v17 = (int)"is not easily moved to pity";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v63 < 10 )
+                        v17 = (int)"would never let an objective judgement be tempered by mercy or pity";
+                      else
+                        v17 = (int)"is not affected by the suffering of others";
+                      goto LABEL_364;
+                    case 24:
+                      v64 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v64 > 90 )
+                      {
+                        v17 = (int)"is incredibly confident";
+                        goto LABEL_363;
+                      }
+                      if ( v64 > 75 )
+                      {
+                        v17 = (int)"is very confident";
+                        goto LABEL_363;
+                      }
+                      if ( v64 > 60 )
+                      {
+                        v17 = (int)"is confident";
+                        goto LABEL_363;
+                      }
+                      if ( v64 >= 25 )
+                      {
+                        v17 = (int)"lacks confidence";
+                        goto LABEL_363;
+                      }
+                      if ( v64 >= 10 )
+                      {
+                        v17 = (int)"does not feel effective in life";
+                        goto LABEL_363;
+                      }
+                      v65 = sub_41EC90("always feels as if ", v14);
+                      LOBYTE(v142) = 28;
+                      v66 = sub_416630(v65, &v137);
+                      LOBYTE(v142) = 29;
+                      v67 = sub_4166E0(v66, &v122);
+                      LOBYTE(v142) = 30;
+                      v68 = sub_416630(v67, v69);
+                      LOBYTE(v142) = 31;
+                      sub_40FF20(v68, 0);
+                      sub_4099A0(&v111);
+                      sub_4099A0(&v113);
+                      sub_4099A0(&v115);
+                      LOBYTE(v142) = 4;
+                      sub_4099A0(&v117);
+                      goto LABEL_365;
+                    case 25:
+                      v70 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v70 > 90 )
+                      {
+                        v17 = (int)"loves to make lists and keep schedules";
+                        goto LABEL_363;
+                      }
+                      if ( v70 > 75 )
+                      {
+                        v17 = (int)"tries to live a well-organized life";
+                        goto LABEL_363;
+                      }
+                      if ( v70 > 60 )
+                      {
+                        v17 = (int)"is organized";
+                        goto LABEL_363;
+                      }
+                      if ( v70 >= 25 )
+                      {
+                        v17 = (int)"is disorganized";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v70 < 10 )
+                        v17 = (int)"is completely disorganized";
+                      else
+                        v17 = (int)"is very disorganized";
+                      goto LABEL_364;
+                    case 26:
+                      v71 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v71 > 90 )
+                      {
+                        v17 = (int)"has a profound sense of duty and obligation";
+                        goto LABEL_363;
+                      }
+                      if ( v71 > 75 )
+                      {
+                        v17 = (int)"has a strong sense of duty";
+                        goto LABEL_363;
+                      }
+                      if ( v71 > 60 )
+                      {
+                        v17 = (int)"has a sense of duty";
+                        goto LABEL_363;
+                      }
+                      if ( v71 >= 25 )
+                      {
+                        v17 = (int)"finds rules confining";
+                        goto LABEL_363;
+                      }
+                      if ( v71 >= 10 )
+                      {
+                        v17 = (int)"dislikes contracts and regulations";
+                        goto LABEL_363;
+                      }
+                      v72 = sub_41EC90("hates rules, contracts and other confining elements in ", v14);
+                      LOBYTE(v142) = 32;
+                      v73 = sub_416630(v72, &v122);
+                      LOBYTE(v142) = 33;
+                      sub_40FF20(v73, 0);
+                      sub_4099A0(&v119);
+                      LOBYTE(v142) = 4;
+                      sub_4099A0(&v121);
+                      goto LABEL_365;
+                    case 27:
+                      v74 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v74 > 90 )
+                      {
+                        v17 = (int)"constantly strives for perfection";
+                        goto LABEL_363;
+                      }
+                      if ( v74 > 75 )
+                      {
+                        v17 = (int)"thinks it is incredibly important to strive for excellence";
+                        goto LABEL_363;
+                      }
+                      if ( v74 > 60 )
+                      {
+                        v17 = (int)"strives for excellence";
+                        goto LABEL_363;
+                      }
+                      if ( v74 >= 25 )
+                      {
+                        v75 = sub_41EC90("doesn't go out of ", v14);
+                        LOBYTE(v142) = 34;
+                        v76 = sub_416630(v75, &v122);
+                        LOBYTE(v142) = 35;
+                        sub_40FF20(v76, 0);
+                        sub_4099A0(&v108);
+                        LOBYTE(v142) = 4;
+                        sub_4099A0(&v107);
+                        goto LABEL_365;
+                      }
+                      v89 = a2;
+                      if ( v74 < 10 )
+                        v17 = (int)"does the bare minimum necessary to accomplish the task at hand";
+                      else
+                        v17 = (int)"very rarely does more work than necessary";
+                      goto LABEL_364;
+                    case 28:
+                      v77 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v77 > 90 )
+                      {
+                        v17 = (int)"will persist in the face of any difficulty until the task is complete";
+            LABEL_363:
+                        v89 = a2;
+                        goto LABEL_364;
+                      }
+                      if ( v77 > 75 )
+                      {
+                        v17 = (int)"possesses great willpower";
+                        goto LABEL_363;
+                      }
+                      if ( v77 > 60 )
+                      {
+                        v17 = (int)"is self-disciplined";
+                        goto LABEL_363;
+                      }
+                      if ( v77 >= 25 )
+                      {
+                        v17 = (int)"is occasionally given to procrastination";
+                        goto LABEL_363;
+                      }
+                      v89 = a2;
+                      if ( v77 < 10 )
+                        v17 = (int)"rarely completes tasks and is often overcome by distractions";
+                      else
+                        v17 = (int)"has very little self-discipline";
+            LABEL_364:
+                      sub_40FE10(v15, (void *)v14, v89);
+            LABEL_365:
+                      sub_410010(a2, v14, ".  ", 3u);
+                      v11 = v90;
+                      v3 = 0;
+                      break;
+                    case 29:
+                      v78 = *(_WORD *)(a1 + 2 * v13 + 548);
+                      if ( v78 <= 90 )
+                      {
+                        if ( v78 <= 75 )
+                        {
+                          if ( v78 <= 60 )
+                          {
+                            if ( v78 < 25 )
+                            {
+                              v17 = (int)"acts impulsively";
+                              if ( v78 < 10 )
+                                v17 = (int)"always acts without considering alternatives or thinking through possibilities";
+                            }
+                            else
+                            {
+                              v17 = (int)"often does the first thing that comes to mind";
+                            }
+                          }
+                          else
+                          {
+                            v17 = (int)"takes time when making decisions";
+                          }
+                        }
+                        else
+                        {
+                          v17 = (int)"is extremely cautious";
+                        }
+                      }
+                      else
+                      {
+                        v17 = (int)"thinks through every alternative and its consequences before acting";
+                      }
+                      goto LABEL_363;
+                    default:
+                      goto LABEL_365;
+                  }
+                }
+                ++v11;
+                v90 = v11;
+              }
+              while ( (_WORD)v11 < 30 );
+              if ( v129 >= 0x10 )
+                operator delete(v127);
+              v129 = 15;
+              v128 = v3;
+              LOBYTE(v127) = 0;
+              if ( v136 >= 0x10 )
+                operator delete(v134);
+              v136 = 15;
+              v135 = v3;
+              LOBYTE(v134) = 0;
+              if ( v125 >= 0x10 )
+                operator delete(v123);
+              v125 = 15;
+              v124 = v3;
+              LOBYTE(v123) = 0;
+              if ( v132 >= 0x10 )
+                operator delete(v130);
+              v132 = 15;
+              v131 = v3;
+              LOBYTE(v130) = 0;
+              if ( v140 >= 0x10 )
+                operator delete(v138);
+              return sub_9FD1AA(v90);
+            }
+            -->
             ====================================================================
                                    P R O F E S S I O N S
             ====================================================================

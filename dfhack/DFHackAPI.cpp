@@ -1079,8 +1079,8 @@ bool API::InitReadCreatures( uint32_t &numcreatures )
         off.name_nickname_offset = minfo->getOffset("name_nickname");
         off.name_words_offset = minfo->getOffset("name_words");
         
-        // HACK: vector correction
-        off.vector_correct = minfo->getOffset("hacked_vector_start");
+        // HACK: vector correction. No longer relevant.
+        off.vector_correct = 0;
         
         d->p_cre = new DfVector (d->p, off.creature_vector, 4);
         d->creaturesInited = true;

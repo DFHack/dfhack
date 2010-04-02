@@ -64,29 +64,31 @@ int main (int numargs, const char ** args)
     DFHack::memory_info* mem = DF.getMemoryInfo();
     //const vector<string> * names = mem->getClassIDMapping();
     
-    DumpObjStr0Vector("Inorganics",p,0x16afd04);
+    DumpObjStr0Vector("Material templates",p, mem->getAddress("mat_templates"));
     
-    DumpObjStr0Vector("Organics - all",p,0x16afd1C);
+    DumpObjStr0Vector("Inorganics",p, mem->getAddress("mat_inorganics"));
     
-    DumpObjStr0Vector("Organics - filtered",p,0x16afd34);
+    DumpObjStr0Vector("Organics - all",p, mem->getAddress("mat_organics_all"));
     
-    DumpDWordVector("Some weird numbers",p,0x16afd4C);
+    DumpObjStr0Vector("Organics - plants",p, mem->getAddress("mat_organics_plants"));
     
-    DumpObjStr0Vector("Trees/wood",p,0x16afd64);
+    DumpDWordVector("Maybe map between all organics and plants",p, mem->getAddress("mat_unk1_numbers"));
     
-    DumpDWordVector("More weird numbers",p,0x16afd7C);
+    DumpObjStr0Vector("Trees/wood",p,  mem->getAddress("mat_organics_trees"));
     
-    DumpObjStr0Vector("WTF",p,0x16afd7C + 0x18 );
+    DumpDWordVector("Maybe map between all organics and trees",p, mem->getAddress("mat_unk2_numbers"));
     
-    DumpObjStr0Vector("WTF2",p,0x16afd7C + 0x18 + 0x18);
+    DumpObjStr0Vector("Body material templates",p, mem->getAddress("mat_body_material_templates"));
     
-    DumpObjStr0Vector("WTF3",p,0x16afd7C + 0x18 + 0x18 + 0x18 );
+    DumpObjStr0Vector("Body detail plans",p, mem->getAddress("mat_body_detail_plans"));
     
-    DumpObjStr0Vector("WTF4",p,0x16afd7C + 0x18 + 0x18 + 0x18 + 0x18);
+    DumpObjStr0Vector("Bodies",p, mem->getAddress("mat_bodies"));
     
-    DumpObjStr0Vector("WTF5",p,0x16afd7C + 0x18 + 0x18 + 0x18 + 0x18 + 0x18);
+    DumpObjStr0Vector("Bodygloss",p, mem->getAddress("mat_bodygloss"));
     
-    DumpObjStr0Vector("Creature types",p,0x16afd7C + 0x18 + 0x18 + 0x18 + 0x18 + 0x18 + 0x18);
+    DumpObjStr0Vector("Creature variations",p, mem->getAddress("mat_creature_variations"));
+    
+    DumpObjStr0Vector("Creature types",p, mem->getAddress("mat_creature_types"));
     
     
     #ifndef LINUX_BUILD

@@ -210,6 +210,14 @@
         ============
         <HexValue name="sizeof_vector">0x18</HexValue>
         <Offset name="vector_triplet">0xC</Offset>
+        Vector layout in MSVC 9:
+        DWORD Allocator
+        DWORD ?
+        DWORD ?
+        DWORD Start
+        DWORD End
+        DWORD AllocationEnd
+        
         <HexValue name="sizeof_string">0x1C</HexValue>
 
         Position and window dimensions
@@ -281,8 +289,27 @@
         <Offset name="creature_artifact_name">0x6D0</Offset>
         <Offset name="creature_labors">0x770</Offset>
       
+        Materials
+        =========
+        <!-- Number vectors are vector <uint32_t> -->
+        <!-- Others are vector<object *> -->
+        <Address name="mat_system_start">0x16afcec</Address>
+        <Address name="mat_templates">0x16afcec</Address>
+        <Address name="mat_inorganics">0x16afd04</Address>
+        <Address name="mat_organics_all">0x16afd1C</Address>
+        <Address name="mat_organics_plants">0x16afd34</Address>
+        <Address name="mat_unk1_numbers">0x16afd4C</Address> <!-- maybe maps beween organics_all and organics_plants -->
+        <Address name="mat_organics_trees">0x16afd64</Address>
+        <Address name="mat_unk2_numbers">0x16afd7C</Address> <!-- maybe maps beween organics_all and organics_trees -->
+        <Address name="mat_body_material_templates">0x16AFD94</Address>
+        <Address name="mat_body_detail_plans">0x16AFDAC</Address>
+        <Address name="mat_bodies">0x16AFDC4</Address>
+        <Address name="mat_bodygloss">0x16AFDDC</Address>
+        <Address name="mat_creature_variations">0x16AFDF4</Address>
+        <Address name="mat_creature_types">0x16AFE0C</Address>
+        
         <!-- 
-        addresses from belal: vectors might need 8 subtracted from 
+        addresses from belal: vectors might need 8 subtracted from them
         buildings 0x0166f9a8
         constructions 0xffffffff
         creatures 0x0166eccc
@@ -372,3 +399,5 @@
     <!-- Windows logo by Microsoft -->
     </MemoryDescriptors>
 </DFExtractor>
+
+

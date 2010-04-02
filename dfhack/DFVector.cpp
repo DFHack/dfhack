@@ -33,7 +33,7 @@ DfVector::DfVector(Process * p, uint32_t address, uint32_t _item_size)
     uint32_t triplet[3];
     item_size = _item_size;
     memory_info * mem = p->getDescriptor();
-    uint32_t offs =  mem->getOffset("hacked_vector_triplet");
+    uint32_t offs =  mem->getOffset("vector_triplet");
     
     p->read(address + offs, sizeof(triplet), (uint8_t *) &triplet);
     start = triplet[0];

@@ -88,8 +88,8 @@ namespace DFHack
 #include "DFError.h"
 #include <stdlib.h>
 
-#include "tinyxml/tinyxml.h"
-#include "md5/md5wrapper.h"
+#include <tinyxml.h>
+#include <md5wrapper.h>
 
 #include <iostream>
 #include "DFHackAPI.h"

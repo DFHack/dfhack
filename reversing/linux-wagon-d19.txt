@@ -1,0 +1,1 @@
+.rodata:08779424	16building_wagonst

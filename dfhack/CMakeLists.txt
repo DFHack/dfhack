@@ -1,18 +1,18 @@
 # don't use this file directly. use the one in the root folder of the project
 
 SET(PROJECT_HDRS
-DFCommonInternal.h
-DFError.h
-DFHackAPI.h
-DFMemInfo.h
-DFMemInfoManager.h
-DFProcessEnumerator.h
-DFProcess.h
-DFTileTypes.h
-DFTypes.h
-DFVector.h
-DFWindow.h
-integers.h
+include/DFCommonInternal.h
+include/DFError.h
+include/DFHackAPI.h
+include/DFMemInfo.h
+include/DFMemInfoManager.h
+include/DFProcessEnumerator.h
+include/DFProcess.h
+include/DFTileTypes.h
+include/DFTypes.h
+include/DFVector.h
+include/DFWindow.h
+include/integers.h
 
 md5/md5.h
 md5/md5wrapper.h
@@ -22,7 +22,7 @@ tinyxml/tinyxml.h
 
 argstream/argstream.h
 
-../shmserver/shms.h
+shm/shms.h
 )
 
 SET(PROJECT_SRCS
@@ -79,7 +79,7 @@ SET( MEMXML_DATA_PATH . CACHE PATH "search path for Memory.xml")
 #OPTION( WITH_BAR "Enable BAR component" OFF )
 
 
-CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/dfhack/config.h.cmake ${CMAKE_SOURCE_DIR}/dfhack/config.h )
+CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/dfhack/config.h.cmake ${CMAKE_SOURCE_DIR}/dfhack/include/config.h )
 
 
 

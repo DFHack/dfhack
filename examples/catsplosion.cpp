@@ -20,7 +20,7 @@ using namespace std;
 #include <DFHackAPI.h>
 #include <DFMemInfo.h>
 #include <DFProcess.h>
-#include <argstream/argstream.h>
+#include <argstream.h>
 
 
 vector<DFHack::t_matgloss> creaturestypes;

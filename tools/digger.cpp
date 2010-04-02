@@ -16,7 +16,7 @@ using namespace std;
 #include <DFTypes.h>
 #include <DFTileTypes.h>
 #include <DFHackAPI.h>
-#include <argstream/argstream.h>
+#include <argstream.h>
 
 // counts the occurances of a certain element in a vector
 // used to determine of a given tile is a target

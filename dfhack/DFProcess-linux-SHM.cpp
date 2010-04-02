@@ -27,8 +27,8 @@ distribution.
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <time.h>
-#include "../shmserver/shms.h"
-#include "../shmserver/mod-core.h"
+#include <shms.h>
+#include <mod-core.h>
 #include <sys/time.h>
 #include <time.h>
 #include <sched.h>

@@ -47,6 +47,7 @@ typedef struct
     uint32_t veinvector;// = d->offset_descriptor->getOffset ("v_vein");
     uint32_t vein_mineral_vptr;
     uint32_t vein_ice_vptr;
+    uint32_t vein_spatter_vptr;
     /*
     GEOLOGY
     uint32_t region_x_offset;// = minfo->getAddress ("region_x");

@@ -26,11 +26,13 @@ SET( LIBRARY_OUTPUT_PATH ${dfhack_SOURCE_DIR}/output CACHE PATH "Output director
 SET( EXECUTABLE_OUTPUT_PATH ${dfhack_SOURCE_DIR}/output CACHE PATH "Output directory for the dfhack tools" )
 SET( CMAKE_SWIG_OUTDIR ${dfhack_SOURCE_DIR}/output CACHE PATH "Global output directory for swig generated language wrappers" )
 
-include_directories (${CMAKE_SOURCE_DIR}/dfhack/)
-include_directories (${CMAKE_SOURCE_DIR}/shmserver/)
-include_directories (${CMAKE_SOURCE_DIR}/depends/)
+include_directories (${CMAKE_SOURCE_DIR}/dfhack/include/)
+include_directories (${CMAKE_SOURCE_DIR}/dfhack/shm/)
+include_directories (${CMAKE_SOURCE_DIR}/dfhack/md5/)
+include_directories (${CMAKE_SOURCE_DIR}/dfhack/tinyxml/)
+include_directories (${CMAKE_SOURCE_DIR}/dfhack/argstream/)
 
 add_subdirectory (dfhack)
+add_subdirectory (dfhack/shm)
 add_subdirectory (tools)
 add_subdirectory (examples)
-add_subdirectory (shmserver)

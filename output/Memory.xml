@@ -2012,9 +2012,11 @@
         0x146e45f <!-- looks like a dword -->
         0x185b677 <!-- looks like a word -->
         
-      <Address name="current_cursor_creature">0xae82cc bogus</Address>
-      <Address name="current_menu_state">0xae82cc bogus</Address>
-      <Address name="view_screen">0xae82cc bogus</Address>
+      Bogus: <Address name="current_cursor_creature">0xae82cc</Address>
+      
+      <Address name="current_menu_state">0x017f6f38</Address>
+      
+      Bogus: <Address name="view_screen">0xae82cc</Address>
       
       <!-- map stuff -->
       <!-- map size in blocks -->
@@ -2035,10 +2037,44 @@
       <Offset name="type">0x0092</Offset>
       <Offset name="designation">0x029C</Offset>
       <!--
-      No idea if those are still relevant
+      No idea if those are still relevant. I'll assume NO
       <Offset name="occupancy">0x0684</Offset>
       <Offset name="biome_stuffs">0x1D84</Offset>
       -->
+<!-- 
+addresses from belal: vectors might need 8 subtracted from 
+buildings 0x0166f9a8
+constructions 0xffffffff
+creatures 0x0166eccc
+current_cursor_creature 0x00ae82cc
+current_menu_state 0x017f6f38
+cursor_xyz 0x0166ecd4
+effects_vector 0x017f6da0
+hotkey_start 0x01476ecc
+items 0x0166eda8
+language_vector 0x016affe0
+map_data 0x016ad718
+matgloss 0xffffffff
+notes 0x01474de8
+pause_state 0x0146e45f
+region_x 0x016ad750
+region_y 0x016ad754
+region_z 0x016ad758
+settlement_current 0xffffffff
+settlements 0x016af4a4
+translation_vector 0x016b0010
+vegetation 0x017f6da0
+view_screen 0xffffffff
+window_dims 0x017f5abc
+window_x 0x00e32798
+window_y 0x00e60838
+window_z 0x00e60814
+world 0x016aed50
+x_count 0x016ad738
+y_count 0x016ad73c
+z_count 0x016ad740
+      -->
+      
       <!--
       <Address name="buildings">0x09008880</Address>
       <Address name="constructions">0x08ff4a58</Address>

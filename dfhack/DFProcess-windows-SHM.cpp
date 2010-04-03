@@ -22,8 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "DFCommonInternal.h"
-#include "../shmserver/shms.h"
-#include "../shmserver/mod-core.h"
+#include "shms.h"
+#include "mod-core.h"
 using namespace DFHack;
 
 // a full memory barrier! better be safe than sorry.

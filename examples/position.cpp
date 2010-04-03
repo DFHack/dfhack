@@ -29,25 +29,18 @@ int main (void)
     if (DF.InitViewAndCursor())
     {
        int32_t x,y,z;
+       int32_t width,height;
+       
        if(DF.getViewCoords(x,y,z))
             cout << "view coords: " << x << "/" << y << "/" << z << endl;
        if(DF.getCursorCoords(x,y,z))
             cout << "cursor coords: " << x << "/" << y << "/" << z << endl;
+       if(DF.getWindowSize(width,height))
+           cout << "window size : " << width << " " << height << endl;
     }
     else
     {
         cerr << "cursor and window parameters are unsupported on your version of DF" << endl;
-    }
-    
-    if(DF.InitViewSize())
-    {
-        int32_t width,height;
-        if(DF.getWindowSize(width,height))
-            cout << "window size : " << width << " " << height << endl;
-    }
-    else
-    {
-        cerr << "view size is unsupported on your version of DF" << endl;
     }
     
     if(!DF.Detach())

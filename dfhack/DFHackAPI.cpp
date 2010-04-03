@@ -29,153 +29,16 @@ distribution.
 #include <mod-creature40d.h>
 using namespace DFHack;
 
-/*
-FIXME: memset to 0?
-*/
-class API::Private
-{
-public:
-    Private()
-            : block (NULL)
-            , pm (NULL), p (NULL), offset_descriptor (NULL)
-            , p_cons (NULL), p_bld (NULL), p_veg (NULL)
-    {}
-
-    void readName(t_name & name, uint32_t address);
-    // get the name offsets
-    bool InitReadNames();
-    
-    uint32_t * block;
-    uint32_t x_block_count, y_block_count, z_block_count;
-    uint32_t regionX, regionY, regionZ;
-    uint32_t worldSizeX, worldSizeY;
-
-    uint32_t tile_type_offset;
-    uint32_t designation_offset;
-    uint32_t occupancy_offset;
-    uint32_t block_flags_offset;
-    uint32_t biome_stuffs;
-    uint32_t veinvector;
-    uint32_t veinsize;
-    uint32_t vein_mineral_vptr;
-    uint32_t vein_ice_vptr;
-    
-    uint32_t maps_module;
-
-    uint32_t window_x_offset;
-    uint32_t window_y_offset;
-    uint32_t window_z_offset;
-    uint32_t cursor_xyz_offset;
-    uint32_t window_dims_offset;
-    uint32_t current_cursor_creature_offset;
-    uint32_t pause_state_offset;
-    uint32_t view_screen_offset;
-    uint32_t current_menu_state_offset;
-
-    uint32_t name_firstname_offset;
-    uint32_t name_nickname_offset;
-    uint32_t name_words_offset;
-
-    Creatures::creature_offsets creatures;
-    uint32_t creature_module;
-    
-    
-    uint32_t item_material_offset;
-
-    uint32_t note_foreground_offset;
-    uint32_t note_background_offset;
-    uint32_t note_name_offset;
-    uint32_t note_xyz_offset;
-    uint32_t hotkey_start;
-    uint32_t hotkey_mode_offset;
-    uint32_t hotkey_xyz_offset;
-    uint32_t hotkey_size;
-
-    uint32_t settlement_name_offset;
-    uint32_t settlement_world_xy_offset;
-    uint32_t settlement_local_xy_offset;
-    
-    uint32_t dwarf_lang_table_offset;
-
-    ProcessEnumerator* pm;
-    Process* p;
-    char * shm_start;
-    memory_info* offset_descriptor;
-    vector<uint16_t> v_geology[eBiomeCount];
-    string xml;
-
-    bool constructionsInited;
-    bool buildingsInited;
-    bool effectsInited;
-    bool vegetationInited;
-    bool creaturesInited;
-    bool cursorWindowInited;
-    bool viewSizeInited;
-    bool itemsInited;
-    bool notesInited;
-    bool namesInited;
-    bool hotkeyInited;
-    bool settlementsInited;
-    bool nameTablesInited;
-
-    uint32_t tree_offset;
-    DfVector *p_cre;
-    DfVector *p_cons;
-    DfVector *p_bld;
-    DfVector *p_effect;
-    DfVector *p_veg;
-    DfVector *p_itm;
-    DfVector *p_notes;
-    DfVector *p_settlements;
-    DfVector *p_current_settlement;
-};
-
-bool API::Private::InitReadNames()
-{
-    try
-    {
-        name_firstname_offset = offset_descriptor->getOffset("name_firstname");
-        name_nickname_offset = offset_descriptor->getOffset("name_nickname");
-        name_words_offset = offset_descriptor->getOffset("name_words");
-    }
-    catch(Error::MissingMemoryDefinition)
-    {
-        return false;
-    }
-    return true;
-}
-
-
-void API::Private::readName(t_name & name, uint32_t address)
-{
-    g_pProcess->readSTLString(address + name_firstname_offset , name.first_name, 128);
-    g_pProcess->readSTLString(address + name_nickname_offset , name.nickname, 128);
-    g_pProcess->read(address + name_words_offset ,48, (uint8_t *) name.words);
-}
+#include "private/APIPrivate.h"
 
 API::API (const string path_to_xml)
-        : d (new Private())
+        : d (new APIPrivate())
 {
     d->xml = QUOT (MEMXML_DATA_PATH);
     d->xml += "/";
     d->xml += path_to_xml;
-    d->constructionsInited = false;
-    d->creaturesInited = false;
-    d->buildingsInited = false;
-    d->effectsInited = false;
-    d->vegetationInited = false;
-    d->cursorWindowInited = false;
-    d->viewSizeInited = false;
-    d->itemsInited = false;
-    d->notesInited = false;
-    d->hotkeyInited = false;
-    d->namesInited = false;
-    d->nameTablesInited = false;
     d->pm = NULL;
     d->shm_start = 0;
-    
-    d->maps_module = 0;
-    d->creature_module = 0;
 }
 
 API::~API()
@@ -185,641 +48,110 @@ API::~API()
     delete d;
 }
 
-#define SHMCMD(num) ((shm_cmd *)d->shm_start)[num]->pingpong
-#define SHMHDR ((shm_core_hdr *)d->shm_start)
-#define SHMMAPSHDR ((Maps::shm_maps_hdr *)d->shm_start)
-#define SHMCREATURESHDR ((Creatures::shm_creature_hdr *)d->shm_start)
-#define SHMDATA(type) ((type *)(d->shm_start + SHM_HEADER))
-
-/*-----------------------------------*
- *  Init the mapblock pointer array   *
- *-----------------------------------*/
-bool API::InitMap()
+bool API::Attach()
 {
-    uint32_t map_offset = d->offset_descriptor->getAddress ("map_data");
-    uint32_t x_count_offset = d->offset_descriptor->getAddress ("x_count");
-    uint32_t y_count_offset = d->offset_descriptor->getAddress ("y_count");
-    uint32_t z_count_offset = d->offset_descriptor->getAddress ("z_count");
-
-    // get the offsets once here
-    d->tile_type_offset = d->offset_descriptor->getOffset ("type");
-    d->designation_offset = d->offset_descriptor->getOffset ("designation");
-    d->occupancy_offset = d->offset_descriptor->getOffset ("occupancy");
-    d->biome_stuffs = d->offset_descriptor->getOffset ("biome_stuffs");
-
-    d->veinvector = d->offset_descriptor->getOffset ("v_vein");
-    d->veinsize = d->offset_descriptor->getHexValue ("v_vein_size");
-    
-    // these can fail and will be found when looking at the actual veins later
-    // basically a cache
-    d->vein_ice_vptr = 0;
-    d->offset_descriptor->resolveClassnameToVPtr("block_square_event_frozen_liquid", d->vein_ice_vptr);
-    d->vein_mineral_vptr = 0;
-    d->offset_descriptor->resolveClassnameToVPtr("block_square_event_mineral",d->vein_mineral_vptr);
-    
-    /*
-     * --> SHM initialization (if possible) <--
-     */
-    g_pProcess->getModuleIndex("Maps",3,d->maps_module);
-    
-    if(d->maps_module)
+    // detach all processes, destroy manager
+    if (d->pm == 0)
     {
-        // supply the module with offsets so it can work with them
-        Maps::maps_offsets *off = SHMDATA(Maps::maps_offsets);
-        off->biome_stuffs = d->biome_stuffs;
-        off->designation_offset = d->designation_offset;
-        off->map_offset = map_offset;
-        off->occupancy_offset = d->occupancy_offset;
-        off->tile_type_offset = d->tile_type_offset;
-        off->vein_ice_vptr = d->vein_ice_vptr; // FIXME: not necessarily true, the shm server side needs a class lookup >_<
-        off->vein_mineral_vptr = d->vein_mineral_vptr; // FIXME: not necessarily true, the shm server side needs a class lookup >_<
-        off->veinvector = d->veinvector;
-        off->x_count_offset = x_count_offset;
-        off->y_count_offset = y_count_offset;
-        off->z_count_offset = z_count_offset;
-        full_barrier
-        const uint32_t cmd = Maps::MAP_INIT + (d->maps_module << 16);
-        g_pProcess->SetAndWait(cmd);
-        //cerr << "Map acceleration enabled!" << endl;
+        d->pm = new ProcessEnumerator (d->xml); // FIXME: handle bad XML better
     }
-    
-    // get the map pointer
-    uint32_t x_array_loc = g_pProcess->readDWord (map_offset);
-    if (!x_array_loc)
+    else
     {
-        return false;
-        // FIXME: only throw this due to programmer error, in the other map functions
-        //throw Error::NoMapLoaded();
+        d->pm->purge();
     }
-    
-    // get the size
-    uint32_t mx, my, mz;
-    mx = d->x_block_count = g_pProcess->readDWord (x_count_offset);
-    my = d->y_block_count = g_pProcess->readDWord (y_count_offset);
-    mz = d->z_block_count = g_pProcess->readDWord (z_count_offset);
 
-    // test for wrong map dimensions
-    if (mx == 0 || mx > 48 || my == 0 || my > 48 || mz == 0)
+    // find a process (ProcessManager can find multiple when used properly)
+    if (!d->pm->findProcessess())
     {
-        throw Error::BadMapDimensions(mx, my);
+        throw Error::NoProcess();
+        //cerr << "couldn't find a suitable process" << endl;
         //return false;
     }
-
-    // alloc array for pointers to all blocks
-    d->block = new uint32_t[mx*my*mz];
-    uint32_t *temp_x = new uint32_t[mx];
-    uint32_t *temp_y = new uint32_t[my];
-    uint32_t *temp_z = new uint32_t[mz];
-
-    g_pProcess->read (x_array_loc, mx * sizeof (uint32_t), (uint8_t *) temp_x);
-    for (uint32_t x = 0; x < mx; x++)
+    d->p = (*d->pm) [0];
+    if (!d->p->attach())
     {
-        g_pProcess->read (temp_x[x], my * sizeof (uint32_t), (uint8_t *) temp_y);
-        // y -> map column
-        for (uint32_t y = 0; y < my; y++)
-        {
-            g_pProcess->read (temp_y[y],
-                   mz * sizeof (uint32_t),
-                   (uint8_t *) (d->block + x*my*mz + y*mz));
-        }
+        throw Error::CantAttach();
+        //cerr << "couldn't attach to process" << endl;
+        //return false; // couldn't attach to process, no go
     }
-    delete [] temp_x;
-    delete [] temp_y;
-    delete [] temp_z;
+    d->shm_start = d->p->getSHMStart();
+    d->offset_descriptor = d->p->getDescriptor();
+    // process is attached, everything went just fine... hopefully
     return true;
 }
 
-bool API::DestroyMap()
-{
-    if (d->block != NULL)
-    {
-        delete [] d->block;
-        d->block = NULL;
-    }
-    return true;
-}
 
-bool API::isValidBlock (uint32_t x, uint32_t y, uint32_t z)
+bool API::Detach()
 {
-    if ( x >= d->x_block_count || y >= d->y_block_count || z >= d->z_block_count)
+    if(!d->p)
         return false;
-    return d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z] != 0;
-}
-
-uint32_t API::getBlockPtr (uint32_t x, uint32_t y, uint32_t z)
-{
-    if ( x >= d->x_block_count || y >= d->y_block_count || z >= d->z_block_count)
-        return 0;
-    return d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-}
-
-bool API::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer)
-{
-    if(d->shm_start && d->maps_module) // ACCELERATE!
+    if (!d->p->detach())
     {
-        SHMMAPSHDR->x = x;
-        SHMMAPSHDR->y = y;
-        SHMMAPSHDR->z = z;
-        volatile uint32_t cmd = Maps::MAP_READ_BLOCK_BY_COORDS + (d->maps_module << 16);
-        if(!g_pProcess->SetAndWait(cmd))
-            return false;
-        memcpy(buffer,SHMDATA(mapblock40d),sizeof(mapblock40d));
-        return true;
-    }
-    else // plain old block read
-    {
-        uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-        if (addr)
-        {
-            g_pProcess->read (addr + d->tile_type_offset, sizeof (buffer->tiletypes), (uint8_t *) buffer->tiletypes);
-            g_pProcess->read (addr + d->occupancy_offset, sizeof (buffer->occupancy), (uint8_t *) buffer->occupancy);
-            g_pProcess->read (addr + d->designation_offset, sizeof (buffer->designation), (uint8_t *) buffer->designation);
-            g_pProcess->read (addr + d->biome_stuffs, sizeof (buffer->biome_indices), (uint8_t *) buffer->biome_indices);
-            buffer->origin = addr;
-            uint32_t addr_of_struct = g_pProcess->readDWord(addr);
-            buffer->blockflags.whole = g_pProcess->readDWord(addr_of_struct);
-            return true;
-        }
         return false;
     }
-}
-
-
-// 256 * sizeof(uint16_t)
-bool API::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
-{
-    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr)
+    if (d->pm != NULL)
     {
-        g_pProcess->read (addr + d->tile_type_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
-        return true;
+        delete d->pm;
     }
-    return false;
-}
-
-bool API::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
-{
-    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if(addr)
-    {
-        uint32_t addr_of_struct = g_pProcess->readDWord(addr);
-        dirtybit = g_pProcess->readDWord(addr_of_struct) & 1;
-        return true;
-    }
-    return false;
-}
-
-bool API::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
-{
-    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr)
-    {
-        uint32_t addr_of_struct = g_pProcess->readDWord(addr);
-        uint32_t dirtydword = g_pProcess->readDWord(addr_of_struct);
-        dirtydword &= 0xFFFFFFFE;
-        dirtydword |= (uint32_t) dirtybit;
-        g_pProcess->writeDWord (addr_of_struct, dirtydword);
-        return true;
-    }
-    return false;
-}
-
-/// read/write the block flags
-bool API::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags &blockflags)
-{
-    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if(addr)
-    {
-        uint32_t addr_of_struct = g_pProcess->readDWord(addr);
-        blockflags.whole = g_pProcess->readDWord(addr_of_struct);
-        return true;
-    }
-    return false;
-}
-bool API::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags blockflags)
-{
-    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr)
-    {
-        uint32_t addr_of_struct = g_pProcess->readDWord(addr);
-        g_pProcess->writeDWord (addr_of_struct, blockflags.whole);
-        return true;
-    }
-    return false;
-}
-
-bool API::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
-{
-    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr)
-    {
-        g_pProcess->read (addr + d->designation_offset, sizeof (designations40d), (uint8_t *) buffer);
-        return true;
-    }
-    return false;
-}
-
-
-// 256 * sizeof(uint32_t)
-bool API::ReadOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buffer)
-{
-    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr)
-    {
-        g_pProcess->read (addr + d->occupancy_offset, sizeof (occupancies40d), (uint8_t *) buffer);
-        return true;
-    }
-    return false;
-}
-
-
-// 256 * sizeof(uint16_t)
-bool API::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
-{
-    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr)
-    {
-        g_pProcess->write (addr + d->tile_type_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
-        return true;
-    }
-    return false;
-}
-
-bool API::getCurrentCursorCreature(uint32_t & creature_index)
-{
-    if(!d->cursorWindowInited) return false;
-    creature_index = g_pProcess->readDWord(d->current_cursor_creature_offset);
-    return true;
-}
-// 256 * sizeof(uint32_t)
-bool API::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
-{
-    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr)
-    {
-        g_pProcess->write (addr + d->designation_offset, sizeof (designations40d), (uint8_t *) buffer);
-        return true;
-    }
-    return false;
-}
-
-// 256 * sizeof(uint32_t)
-bool API::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buffer)
-{
-    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr)
-    {
-        g_pProcess->write (addr + d->occupancy_offset, sizeof (occupancies40d), (uint8_t *) buffer);
-        return true;
-    }
-    return false;
-}
-
-// FIXME: this is bad. determine the real size!
-//16 of them? IDK... there's probably just 7. Reading more doesn't cause errors as it's an array nested inside a block
-// 16 * sizeof(uint8_t)
-bool API::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices40d *buffer)
-{
-    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr)
-    {
-        g_pProcess->read (addr + d->biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer);
-        return true;
-    }
-    return false;
-}
-
-// veins of a block, expects empty vein vectors
-bool API::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins, vector <t_frozenliquidvein>& ices)
-{
-    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    veins.clear();
-    ices.clear();
-    if (addr && d->veinvector && d->veinsize)
-    {
-        // veins are stored as a vector of pointers to veins
-        /*pointer is 4 bytes! we work with a 32bit program here, no matter what architecture we compile khazad for*/
-        DfVector p_veins (d->p, addr + d->veinvector, 4);
-        uint32_t size = p_veins.getSize();
-        veins.reserve (size);
-
-        // read all veins
-        for (uint32_t i = 0; i < size;i++)
-        {
-            t_vein v;
-            t_frozenliquidvein fv;
-
-            // read the vein pointer from the vector
-            uint32_t temp = * (uint32_t *) p_veins[i];
-            uint32_t type = g_pProcess->readDWord(temp);
-try_again:
-            if(type == d->vein_mineral_vptr)
-            {
-                // read the vein data (dereference pointer)
-                g_pProcess->read (temp, sizeof(t_vein), (uint8_t *) &v);
-                v.address_of = temp;
-                // store it in the vector
-                veins.push_back (v);
-            }
-            else if(type == d->vein_ice_vptr)
-            {
-                // read the ice vein data (dereference pointer)
-                g_pProcess->read (temp, sizeof(t_frozenliquidvein), (uint8_t *) &fv);
-                // store it in the vector
-                ices.push_back (fv);
-            }
-            else if(g_pProcess->readClassName(type) == "block_square_event_frozen_liquid")
-            {
-                d->vein_ice_vptr = type;
-                goto try_again;
-            }
-            else if(g_pProcess->readClassName(type) == "block_square_event_mineral")
-            {
-                d->vein_mineral_vptr = type;
-                goto try_again;
-            }
-        }
-        return true;
-    }
-    return false;
-}
-
-
-// getter for map size
-void API::getSize (uint32_t& x, uint32_t& y, uint32_t& z)
-{
-    x = d->x_block_count;
-    y = d->y_block_count;
-    z = d->z_block_count;
-}
-
-bool API::ReadWoodMatgloss (vector<t_matgloss> & woods)
-{
-
-    int matgloss_address = d->offset_descriptor->getAddress ("matgloss");
-    int matgloss_wood_name_offset = d->offset_descriptor->getOffset("matgloss_wood_name");
-    // TODO: find flag for autumnal coloring?
-    DfVector p_matgloss(d->p, matgloss_address, 4);
-
-    woods.clear();
-
-    t_matgloss mat;
-    // TODO: use brown?
-    mat.fore = 7;
-    mat.back = 0;
-    mat.bright = 0;
-    uint32_t size = p_matgloss.getSize();
-    for (uint32_t i = 0; i < size ;i++)
-    {
-        // read the matgloss pointer from the vector into temp
-        uint32_t temp = * (uint32_t *) p_matgloss[i];
-        // read the string pointed at by
-        /*
-        fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
-        */
-        d->p->readSTLString (temp, mat.id, 128);
-        d->p->readSTLString (temp+matgloss_wood_name_offset, mat.name, 128);
-        woods.push_back (mat);
-    }
+    d->pm = NULL;
+    d->p = NULL;
+    d->shm_start = 0;
+    d->offset_descriptor = NULL;
     return true;
 }
 
-bool API::ReadStoneMatgloss (vector<t_matgloss> & stones)
+bool API::isAttached()
 {
-    memory_info * minfo = d->offset_descriptor;
-    int matgloss_address = minfo->getAddress ("matgloss");
-    int matgloss_offset = minfo->getHexValue ("matgloss_skip");
-    int matgloss_colors = minfo->getOffset ("matgloss_stone_color");
-    int matgloss_stone_name_offset = minfo->getOffset("matgloss_stone_name");
-
-    DfVector p_matgloss (d->p, matgloss_address + matgloss_offset, 4);
-
-    uint32_t size = p_matgloss.getSize();
-    stones.resize (0);
-    stones.reserve (size);
-    for (uint32_t i = 0; i < size;i++)
-    {
-        // read the matgloss pointer from the vector into temp
-        uint32_t temp = * (uint32_t *) p_matgloss[i];
-        // read the string pointed at by
-        t_matgloss mat;
-        //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
-        d->p->readSTLString (temp, mat.id, 128);
-        d->p->readSTLString (temp+matgloss_stone_name_offset, mat.name, 128);
-        mat.fore = (uint8_t) g_pProcess->readWord (temp + matgloss_colors);
-        mat.back = (uint8_t) g_pProcess->readWord (temp + matgloss_colors + 2);
-        mat.bright = (uint8_t) g_pProcess->readWord (temp + matgloss_colors + 4);
-        stones.push_back (mat);
-    }
-    return true;
+    return d->p != NULL;
 }
 
-
-bool API::ReadMetalMatgloss (vector<t_matgloss> & metals)
+bool API::Suspend()
 {
-    memory_info * minfo = d->offset_descriptor;
-    int matgloss_address = minfo->getAddress ("matgloss");
-    int matgloss_offset = minfo->getHexValue ("matgloss_skip");
-    int matgloss_colors = minfo->getOffset ("matgloss_metal_color");
-    int matgloss_metal_name_offset = minfo->getOffset("matgloss_metal_name");
-    DfVector p_matgloss(d->p, matgloss_address + matgloss_offset * 3, 4);
-
-    metals.clear();
-
-    for (uint32_t i = 0; i < p_matgloss.getSize();i++)
-    {
-        // read the matgloss pointer from the vector into temp
-        uint32_t temp = * (uint32_t *) p_matgloss[i];
-        // read the string pointed at by
-        t_matgloss mat;
-        //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
-        d->p->readSTLString (temp, mat.id, 128);
-        d->p->readSTLString (temp+matgloss_metal_name_offset, mat.name, 128);
-        mat.fore = (uint8_t) g_pProcess->readWord (temp + matgloss_colors);
-        mat.back = (uint8_t) g_pProcess->readWord (temp + matgloss_colors + 2);
-        mat.bright = (uint8_t) g_pProcess->readWord (temp + matgloss_colors + 4);
-        metals.push_back (mat);
-    }
-    return true;
+    return d->p->suspend();
+}
+bool API::AsyncSuspend()
+{
+    return d->p->asyncSuspend();
 }
 
-bool API::ReadPlantMatgloss (vector<t_matgloss> & plants)
+bool API::Resume()
 {
-    memory_info * minfo = d->offset_descriptor;
-    int matgloss_address = minfo->getAddress ("matgloss");
-    int matgloss_offset = minfo->getHexValue ("matgloss_skip");
-    int matgloss_plant_name_offset = minfo->getOffset("matgloss_plant_name");
-    DfVector p_matgloss(d->p, matgloss_address + matgloss_offset * 2, 4);
-
-    plants.clear();
-
-    // TODO: use green?
-    t_matgloss mat;
-    mat.fore = 7;
-    mat.back = 0;
-    mat.bright = 0;
-    for (uint32_t i = 0; i < p_matgloss.getSize();i++)
-    {
-        // read the matgloss pointer from the vector into temp
-        uint32_t temp = * (uint32_t *) p_matgloss[i];
-        // read the string pointed at by
-        //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
-        d->p->readSTLString (temp, mat.id, 128);
-        d->p->readSTLString (temp+matgloss_plant_name_offset, mat.name, 128);
-        plants.push_back (mat);
-    }
-    return true;
+    return d->p->resume();
+}
+bool API::ForceResume()
+{
+    return d->p->forceresume();
+}
+bool API::isSuspended()
+{
+    return d->p->isSuspended();
 }
 
-bool API::ReadPlantMatgloss (vector<t_matglossPlant> & plants)
+void API::ReadRaw (const uint32_t offset, const uint32_t size, uint8_t *target)
 {
-    memory_info * minfo = d->offset_descriptor;
-    int matgloss_address = minfo->getAddress ("matgloss");
-    int matgloss_offset = minfo->getHexValue ("matgloss_skip");
-    int matgloss_plant_name_offset = minfo->getOffset("matgloss_plant_name");
-    int matgloss_plant_drink_offset = minfo->getOffset("matgloss_plant_drink");
-    int matgloss_plant_food_offset = minfo->getOffset("matgloss_plant_food");
-    int matgloss_plant_extract_offset = minfo->getOffset("matgloss_plant_extract");
-    DfVector p_matgloss(d->p, matgloss_address + matgloss_offset * 2, 4);
-
-    plants.clear();
-
-    // TODO: use green?
-    t_matglossPlant mat;
-    mat.fore = 7;
-    mat.back = 0;
-    mat.bright = 0;
-    for (uint32_t i = 0; i < p_matgloss.getSize();i++)
-    {
-        // read the matgloss pointer from the vector into temp
-        uint32_t temp = * (uint32_t *) p_matgloss[i];
-        // read the string pointed at by
-        //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
-        d->p->readSTLString (temp, mat.id, 128);
-        d->p->readSTLString (temp+matgloss_plant_name_offset, mat.name, 128);
-        d->p->readSTLString (temp+matgloss_plant_drink_offset, mat.drink_name, 128);
-        d->p->readSTLString (temp+matgloss_plant_food_offset, mat.food_name, 128);
-        d->p->readSTLString (temp+matgloss_plant_extract_offset, mat.extract_name, 128);
-        
-        //d->p->readSTLString (temp
-        plants.push_back (mat);
-    }
-    return true;
+    g_pProcess->read (offset, size, target);
 }
 
-bool API::ReadCreatureMatgloss (vector<t_matgloss> & creatures)
+void API::WriteRaw (const uint32_t offset, const uint32_t size, uint8_t *source)
 {
-    memory_info * minfo = d->offset_descriptor;
-    int matgloss_address = minfo->getAddress ("matgloss");
-    int matgloss_offset = minfo->getHexValue ("matgloss_skip");
-    int matgloss_creature_name_offset = minfo->getOffset("matgloss_creature_name");
-    DfVector p_matgloss (d->p, matgloss_address + matgloss_offset * 6, 4);
-
-    creatures.clear();
-
-    // TODO: use green?
-    t_matgloss mat;
-    mat.fore = 7;
-    mat.back = 0;
-    mat.bright = 0;
-    for (uint32_t i = 0; i < p_matgloss.getSize();i++)
-    {
-        // read the matgloss pointer from the vector into temp
-        uint32_t temp = * (uint32_t *) p_matgloss[i];
-        // read the string pointed at by
-        //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
-        d->p->readSTLString (temp, mat.id, 128);
-        d->p->readSTLString (temp+matgloss_creature_name_offset, mat.name, 128);
-        creatures.push_back (mat);
-    }
-    return true;
+    g_pProcess->write (offset, size, source);
 }
 
-
-//vector<uint16_t> v_geology[eBiomeCount];
-bool API::ReadGeology (vector < vector <uint16_t> >& assign)
+memory_info *API::getMemoryInfo()
 {
-    memory_info * minfo = d->offset_descriptor;
-    // get needed addresses and offsets. Now this is what I call crazy.
-    int region_x_offset = minfo->getAddress ("region_x");
-    int region_y_offset = minfo->getAddress ("region_y");
-    int region_z_offset =  minfo->getAddress ("region_z");
-    int world_offset =  minfo->getAddress ("world");
-    int world_regions_offset =  minfo->getOffset ("w_regions_arr");
-    int region_size =  minfo->getHexValue ("region_size");
-    int region_geo_index_offset =  minfo->getOffset ("region_geo_index_off");
-    int world_geoblocks_offset =  minfo->getOffset ("w_geoblocks");
-    int world_size_x = minfo->getOffset ("world_size_x");
-    int world_size_y = minfo->getOffset ("world_size_y");
-    int geolayer_geoblock_offset = minfo->getOffset ("geolayer_geoblock_offset");
-
-    uint32_t regionX, regionY, regionZ;
-    uint16_t worldSizeX, worldSizeY;
-
-    // read position of the region inside DF world
-    g_pProcess->readDWord (region_x_offset, regionX);
-    g_pProcess->readDWord (region_y_offset, regionY);
-    g_pProcess->readDWord (region_z_offset, regionZ);
-
-    // get world size
-    g_pProcess->readWord (world_offset + world_size_x, worldSizeX);
-    g_pProcess->readWord (world_offset + world_size_y, worldSizeY);
-
-    // get pointer to first part of 2d array of regions
-    uint32_t regions = g_pProcess->readDWord (world_offset + world_regions_offset);
-
-    // read the geoblock vector
-    DfVector geoblocks (d->p, world_offset + world_geoblocks_offset, 4);
-
-    // iterate over 8 surrounding regions + local region
-    for (int i = eNorthWest; i < eBiomeCount; i++)
-    {
-        // check bounds, fix them if needed
-        int bioRX = regionX / 16 + (i % 3) - 1;
-        if (bioRX < 0) bioRX = 0;
-        if (bioRX >= worldSizeX) bioRX = worldSizeX - 1;
-        int bioRY = regionY / 16 + (i / 3) - 1;
-        if (bioRY < 0) bioRY = 0;
-        if (bioRY >= worldSizeY) bioRY = worldSizeY - 1;
-
-        // get pointer to column of regions
-        uint32_t geoX;
-        g_pProcess->readDWord (regions + bioRX*4, geoX);
-
-        // get index into geoblock vector
-        uint16_t geoindex;
-        g_pProcess->readWord (geoX + bioRY*region_size + region_geo_index_offset, geoindex);
-
-        // get the geoblock from the geoblock vector using the geoindex
-        // read the matgloss pointer from the vector into temp
-        uint32_t geoblock_off = * (uint32_t *) geoblocks[geoindex];
-
-        // get the vector with pointer to layers
-        DfVector geolayers (d->p, geoblock_off + geolayer_geoblock_offset , 4); // let's hope
-        // make sure we don't load crap
-        assert (geolayers.getSize() > 0 && geolayers.getSize() <= 16);
-
-        d->v_geology[i].reserve (geolayers.getSize());
-        // finally, read the layer matgloss
-        for (uint32_t j = 0;j < geolayers.getSize();j++)
-        {
-            // read pointer to a layer
-            uint32_t geol_offset = * (uint32_t *) geolayers[j];
-            // read word at pointer + 2, store in our geology vectors
-            d->v_geology[i].push_back (g_pProcess->readWord (geol_offset + 2));
-        }
-    }
-    assign.clear();
-    assign.reserve (eBiomeCount);
-//     // TODO: clean this up
-    for (int i = 0; i < eBiomeCount;i++)
-    {
-        assign.push_back (d->v_geology[i]);
-    }
-    return true;
+    return d->offset_descriptor;
+}
+Process * API::getProcess()
+{
+    return d->p;
 }
 
+DFWindow * API::getWindow()
+{
+    return d->p->getWindow();
+}
 
+/*
 // returns number of buildings, expects v_buildingtypes that will later map t_building.type to its name
 bool API::InitReadBuildings ( uint32_t& numbuildings )
 {
@@ -1034,86 +366,8 @@ void API::FinishReadVegetation()
     }
     d->vegetationInited = false;
 }
-
-
-bool API::InitReadCreatures( uint32_t &numcreatures )
-{
-    if(!d->InitReadNames()) return false;
-    try
-    {
-        memory_info * minfo = d->offset_descriptor;
-        Creatures::creature_offsets & off = d->creatures;
-        off.creature_vector = minfo->getAddress ("creatures");
-        off.creature_pos_offset = minfo->getOffset ("creature_position");
-        off.creature_type_offset = minfo->getOffset ("creature_race");
-        off.creature_flags1_offset = minfo->getOffset ("creature_flags1");
-        off.creature_flags2_offset = minfo->getOffset ("creature_flags2");
-        off.creature_name_offset = minfo->getOffset ("creature_name");
-        off.creature_custom_profession_offset = minfo->getOffset ("creature_custom_profession");
-        off.creature_profession_offset = minfo->getOffset ("creature_profession");
-        off.creature_sex_offset = minfo->getOffset ("creature_sex");
-        off.creature_id_offset = minfo->getOffset ("creature_id");
-        off.creature_squad_name_offset = minfo->getOffset ("creature_squad_name");
-        off.creature_squad_leader_id_offset = minfo->getOffset ("creature_squad_leader_id");
-        off.creature_money_offset = minfo->getOffset ("creature_money");
-        off.creature_current_job_offset = minfo->getOffset ("creature_current_job");
-        off.creature_current_job_id_offset = minfo->getOffset ("current_job_id");
-        off.creature_strength_offset = minfo->getOffset ("creature_strength");
-        off.creature_agility_offset = minfo->getOffset ("creature_agility");
-        off.creature_toughness_offset = minfo->getOffset ("creature_toughness");
-        off.creature_skills_offset = minfo->getOffset ("creature_skills");
-        off.creature_labors_offset = minfo->getOffset ("creature_labors");
-        off.creature_happiness_offset = minfo->getOffset ("creature_happiness");
-        off.creature_traits_offset = minfo->getOffset ("creature_traits");
-        off.creature_likes_offset = minfo->getOffset("creature_likes");
-        off.creature_artifact_name_offset = minfo->getOffset("creature_artifact_name");
-        off.creature_mood_offset = minfo->getOffset("creature_mood");
-        
-        off.creature_pregnancy_offset = minfo->getOffset("creature_pregnancy");
-        off.creature_blood_max_offset = minfo->getOffset("creature_blood_max");
-        off.creature_blood_current_offset = minfo->getOffset("creature_blood_current");
-        off.creature_bleed_offset = minfo->getOffset("creature_bleed");
-        
-        // name offsets for the creature module
-        off.name_firstname_offset = minfo->getOffset("name_firstname");
-        off.name_nickname_offset = minfo->getOffset("name_nickname");
-        off.name_words_offset = minfo->getOffset("name_words");
-        
-        // HACK: vector correction. No longer relevant.
-        off.vector_correct = 0;
-        
-        d->p_cre = new DfVector (d->p, off.creature_vector, 4);
-        d->creaturesInited = true;
-        numcreatures =  d->p_cre->getSize();
-
-        /*
-         * --> SHM initialization (if possible) <--
-         */
-        g_pProcess->getModuleIndex("Creatures40d",1,d->creature_module);
-        
-        if(d->creature_module)
-        {
-            // supply the module with offsets so it can work with them
-            memcpy(SHMDATA(Creatures::creature_offsets),&d->creatures,sizeof(Creatures::creature_offsets));
-            const uint32_t cmd = Creatures::CREATURE_INIT + (d->creature_module << 16);
-            g_pProcess->SetAndWait(cmd);
-            //cerr << "Creature acceleration enabled!" << endl;
-        }
-        /*
-        else
-        {
-            cerr << "Creature acceleration NOT enabled!" << endl;
-        }
-        */
-        return true;
-    }
-    catch (Error::MissingMemoryDefinition&)
-    {
-        d->creaturesInited = false;
-        numcreatures = 0;
-        throw;
-    }
-}
+*/
+/*
 bool API::InitReadNotes( uint32_t &numnotes )
 {
     try
@@ -1328,104 +582,8 @@ bool API::getItemIndexesInBox(vector<uint32_t> &indexes,
     }
     return true;
 }
-
-bool API::ReadCreature (const int32_t index, t_creature & furball)
-{
-    if(!d->creaturesInited) return false;
-    if(d->creature_module)
-    {
-        // supply the module with offsets so it can work with them
-        SHMCREATURESHDR->index = index;
-        const uint32_t cmd = Creatures::CREATURE_AT_INDEX + (d->creature_module << 16);
-        g_pProcess->SetAndWait(cmd);
-        memcpy(&furball,SHMDATA(t_creature),sizeof(t_creature));
-        // cerr << "creature read from SHM!" << endl;
-        return true;
-    }
-    // read pointer from vector at position
-    uint32_t temp = * (uint32_t *) d->p_cre->at (index);
-    furball.origin = temp;
-    Creatures::creature_offsets &offs = d->creatures;
-    //read creature from memory
-    g_pProcess->read (temp + offs.creature_pos_offset, 3 * sizeof (uint16_t), (uint8_t *) & (furball.x)); // xyz really
-    g_pProcess->readDWord (temp + offs.creature_type_offset, furball.type);
-    g_pProcess->readDWord (temp + offs.creature_flags1_offset, furball.flags1.whole);
-    g_pProcess->readDWord (temp + offs.creature_flags2_offset, furball.flags2.whole);
-    // names
-    d->readName(furball.name,temp + offs.creature_name_offset);
-    d->readName(furball.squad_name, temp + offs.creature_squad_name_offset);
-    d->readName(furball.artifact_name, temp + offs.creature_artifact_name_offset);
-    // custom profession
-    fill_char_buf (furball.custom_profession, d->p->readSTLString (temp + offs.creature_custom_profession_offset));
-
-    // labors
-    g_pProcess->read (temp + offs.creature_labors_offset, NUM_CREATURE_LABORS, furball.labors);
-    // traits
-    g_pProcess->read (temp + offs.creature_traits_offset, sizeof (uint16_t) * NUM_CREATURE_TRAITS, (uint8_t *) &furball.traits);
-    // learned skills
-    DfVector skills (d->p, temp + offs.creature_skills_offset, 4 );
-    furball.numSkills = skills.getSize();
-    for (uint32_t i = 0; i < furball.numSkills;i++)
-    {
-        uint32_t temp2 = * (uint32_t *) skills[i];
-        //skills.read(i, (uint8_t *) &temp2);
-        // a byte: this gives us 256 skills maximum.
-        furball.skills[i].id = g_pProcess->readByte (temp2);
-        furball.skills[i].rating = g_pProcess->readByte (temp2 + 4);
-        furball.skills[i].experience = g_pProcess->readWord (temp2 + 8);
-    }
-    // profession
-    furball.profession = g_pProcess->readByte (temp + offs.creature_profession_offset);
-    // current job HACK: the job object isn't cleanly represented here
-    uint32_t jobIdAddr = g_pProcess->readDWord (temp + offs.creature_current_job_offset);
-
-    if (jobIdAddr)
-    {
-        furball.current_job.active = true;
-        furball.current_job.jobId = g_pProcess->readByte (jobIdAddr + offs.creature_current_job_id_offset);
-    }
-    else
-    {
-        furball.current_job.active = false;
-    }
-
-    //likes
-    DfVector likes(d->p, temp + offs.creature_likes_offset, 4);
-    furball.numLikes = likes.getSize();
-    for(uint32_t i = 0;i<furball.numLikes;i++)
-    {
-        uint32_t temp2 = *(uint32_t *) likes[i];
-        g_pProcess->read(temp2,sizeof(t_like),(uint8_t *) &furball.likes[i]);
-    }
-
-    furball.mood = (int16_t) g_pProcess->readWord (temp + offs.creature_mood_offset);
-
-
-    g_pProcess->readDWord (temp + offs.creature_happiness_offset, furball.happiness);
-    g_pProcess->readDWord (temp + offs.creature_id_offset, furball.id);
-    g_pProcess->readDWord (temp + offs.creature_agility_offset, furball.agility);
-    g_pProcess->readDWord (temp + offs.creature_strength_offset, furball.strength);
-    g_pProcess->readDWord (temp + offs.creature_toughness_offset, furball.toughness);
-    g_pProcess->readDWord (temp + offs.creature_money_offset, furball.money);
-    furball.squad_leader_id = (int32_t) g_pProcess->readDWord (temp + offs.creature_squad_leader_id_offset);
-    g_pProcess->readByte (temp + offs.creature_sex_offset, furball.sex);
-
-    g_pProcess->readDWord(temp + offs.creature_pregnancy_offset, furball.pregnancy_timer);
-    furball.blood_max = (int32_t) g_pProcess->readDWord(temp + offs.creature_blood_max_offset);
-    furball.blood_current = (int32_t) g_pProcess->readDWord(temp + offs.creature_blood_current_offset);
-    g_pProcess->readDWord(temp + offs.creature_bleed_offset, furball.bleed_rate);
-
-
-    return true;
-}
-
-bool API::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
-{
-    if(!d->creaturesInited) return false;
-    uint32_t temp = * (uint32_t *) d->p_cre->at (index);
-    WriteRaw(temp + d->creatures.creature_labors_offset, NUM_CREATURE_LABORS, labors);
-}
-
+*/
+/*
 bool API::InitReadNameTables(vector<vector<string> > & translations , vector<vector<string> > & foreign_languages) //(map< string, vector<string> > & nameTable)
 {
     try
@@ -1569,208 +727,9 @@ void API::FinishReadNotes()
     }
     d->notesInited = false;
 }
-
-bool API::Attach()
-{
-    // detach all processes, destroy manager
-    if (d->pm == 0)
-    {
-        d->pm = new ProcessEnumerator (d->xml); // FIXME: handle bad XML better
-    }
-    else
-    {
-        d->pm->purge();
-    }
-
-    // find a process (ProcessManager can find multiple when used properly)
-    if (!d->pm->findProcessess())
-    {
-        throw Error::NoProcess();
-        //cerr << "couldn't find a suitable process" << endl;
-        //return false;
-    }
-    d->p = (*d->pm) [0];
-    if (!d->p->attach())
-    {
-        throw Error::CantAttach();
-        //cerr << "couldn't attach to process" << endl;
-        //return false; // couldn't attach to process, no go
-    }
-    d->shm_start = d->p->getSHMStart();
-    d->offset_descriptor = d->p->getDescriptor();
-    // process is attached, everything went just fine... hopefully
-    return true;
-}
-
-
-bool API::Detach()
-{
-    if(!d->p)
-        return false;
-    if (!d->p->detach())
-    {
-        return false;
-    }
-    if (d->pm != NULL)
-    {
-        delete d->pm;
-    }
-    d->pm = NULL;
-    d->p = NULL;
-    d->shm_start = 0;
-    d->offset_descriptor = NULL;
-    return true;
-}
-
-bool API::isAttached()
-{
-    return d->p != NULL;
-}
-
-bool API::Suspend()
-{
-    return d->p->suspend();
-}
-bool API::AsyncSuspend()
-{
-    return d->p->asyncSuspend();
-}
-
-bool API::Resume()
-{
-    return d->p->resume();
-}
-bool API::ForceResume()
-{
-    return d->p->forceresume();
-}
-bool API::isSuspended()
-{
-    return d->p->isSuspended();
-}
-
-void API::ReadRaw (const uint32_t offset, const uint32_t size, uint8_t *target)
-{
-    g_pProcess->read (offset, size, target);
-}
-
-void API::WriteRaw (const uint32_t offset, const uint32_t size, uint8_t *source)
-{
-    g_pProcess->write (offset, size, source);
-}
-
-bool API::InitViewAndCursor()
-{
-    try
-    {
-        d->window_x_offset = d->offset_descriptor->getAddress ("window_x");
-        d->window_y_offset = d->offset_descriptor->getAddress ("window_y");
-        d->window_z_offset = d->offset_descriptor->getAddress ("window_z");
-        d->cursor_xyz_offset = d->offset_descriptor->getAddress ("cursor_xyz");
-        d->current_cursor_creature_offset = d->offset_descriptor->getAddress ("current_cursor_creature");
-
-        d->current_menu_state_offset = d->offset_descriptor->getAddress("current_menu_state");
-        d->pause_state_offset = d->offset_descriptor->getAddress ("pause_state");
-        d->view_screen_offset = d->offset_descriptor->getAddress ("view_screen");
-
-        d->cursorWindowInited = true;
-        return true;
-    }
-    catch (Error::MissingMemoryDefinition&)
-    {
-        d->cursorWindowInited = false;
-        throw;
-    }
-}
-
-bool API::InitViewSize()
-{
-    try
-    {
-        d->window_dims_offset = d->offset_descriptor->getAddress ("window_dims");
-
-        d->viewSizeInited = true;
-        return true;
-    }
-    catch (Error::MissingMemoryDefinition&)
-    {
-        d->viewSizeInited = false;
-        throw;
-    }
-}
-
-bool API::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
-{
-    if (!d->cursorWindowInited) return false;
-    g_pProcess->readDWord (d->window_x_offset, (uint32_t &) x);
-    g_pProcess->readDWord (d->window_y_offset, (uint32_t &) y);
-    g_pProcess->readDWord (d->window_z_offset, (uint32_t &) z);
-    return true;
-}
-//FIXME: confine writing of coords to map bounds?
-bool API::setViewCoords (const int32_t x, const int32_t y, const int32_t z)
-{
-    if (!d->cursorWindowInited) return false;
-    g_pProcess->writeDWord (d->window_x_offset, (uint32_t) x);
-    g_pProcess->writeDWord (d->window_y_offset, (uint32_t) y);
-    g_pProcess->writeDWord (d->window_z_offset, (uint32_t) z);
-    return true;
-}
-
-bool API::getCursorCoords (int32_t &x, int32_t &y, int32_t &z)
-{
-    if(!d->cursorWindowInited) return false;
-    int32_t coords[3];
-    g_pProcess->read (d->cursor_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
-    x = coords[0];
-    y = coords[1];
-    z = coords[2];
-    if (x == -30000) return false;
-    return true;
-}
-//FIXME: confine writing of coords to map bounds?
-bool API::setCursorCoords (const int32_t x, const int32_t y, const int32_t z)
-{
-    if (!d->cursorWindowInited) return false;
-    int32_t coords[3] = {x, y, z};
-    g_pProcess->write (d->cursor_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
-    return true;
-}
-bool API::getWindowSize (int32_t &width, int32_t &height)
-{
-    if(! d->viewSizeInited) return false;
-    
-    int32_t coords[2];
-    g_pProcess->read (d->window_dims_offset, 2*sizeof (int32_t), (uint8_t *) coords);
-    width = coords[0];
-    height = coords[1];
-    return true;
-}
-/*
-bool API::getClassIDMapping (vector <string>& objecttypes)
-{
-    if(isAttached())
-    {
-        d->offset_descriptor->getClassIDMapping(objecttypes);
-        return true;
-    }
-    return false;
-}
 */
-memory_info *API::getMemoryInfo()
-{
-    return d->offset_descriptor;
-}
-Process * API::getProcess()
-{
-    return d->p;
-}
 
-DFWindow * API::getWindow()
-{
-    return d->p->getWindow();
-}
-
+/*
 bool API::InitReadItems(uint32_t & numitems)
 {
     try
@@ -1831,39 +790,8 @@ void API::FinishReadItems()
     }
     d->itemsInited = false;
 }
-
-bool API::ReadPauseState()
-{
-    // replace with an exception
-    if(!d->cursorWindowInited) return false;
-
-    uint32_t pauseState = g_pProcess->readDWord (d->pause_state_offset);
-    return pauseState & 1;
-}
-
-uint32_t API::ReadMenuState()
-{
-    if(d->cursorWindowInited)
-        return(g_pProcess->readDWord(d->current_menu_state_offset));
-    return false;
-}
-
-bool API::ReadViewScreen (t_viewscreen &screen)
-{
-    if (!d->cursorWindowInited) return false;
-    
-    uint32_t last = g_pProcess->readDWord (d->view_screen_offset);
-    uint32_t screenAddr = g_pProcess->readDWord (last);
-    uint32_t nextScreenPtr = g_pProcess->readDWord (last + 4);
-    while (nextScreenPtr != 0)
-    {
-        last = nextScreenPtr;
-        screenAddr = g_pProcess->readDWord (nextScreenPtr);
-        nextScreenPtr = g_pProcess->readDWord (nextScreenPtr + 4);
-    }
-    return d->offset_descriptor->resolveObjectToClassID (last, screen.type);
-}
-
+*/
+/*
 bool API::ReadItemTypes(vector< vector< t_itemType > > & itemTypes)
 {
     memory_info * minfo = d->offset_descriptor;
@@ -1888,3 +816,4 @@ bool API::ReadItemTypes(vector< vector< t_itemType > > & itemTypes)
     }
     return true;
 }
+*/

@@ -20,15 +20,30 @@ SET(PROJECT_SRCS
 DFMemInfo.cpp
 DFMemInfoManager.cpp
 DFHackAPI.cpp
+APIPrivate.cpp
 DFTileTypes.cpp
 DFVector.cpp
+
+depends/md5/md5.cpp
+depends/md5/md5wrapper.cpp
+
+depends/tinyxml/tinystr.cpp
+depends/tinyxml/tinyxml.cpp
+depends/tinyxml/tinyxmlerror.cpp
+depends/tinyxml/tinyxmlparser.cpp
+
+modules/Creatures.cpp
+modules/Gui.cpp
+modules/Maps.cpp
+modules/Materials.cpp
+modules/Position.cpp
 )
 
 SET(PROJECT_HDRS_LINUX
 )
 
 SET(PROJECT_HDRS_WINDOWS
-stdint_win.h
+include/stdint_win.h
 )
 
 SET(PROJECT_SRCS_LINUX
@@ -75,9 +90,9 @@ IF(UNIX)
   SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -pedantic")
   SET(CMAKE_CXX_FLAGS "-fvisibility=hidden")
     
-  SET(PROJECT_LIBS ${X11_LIBRARY} rt dfhack-md5 tixml-static)
+  SET(PROJECT_LIBS ${X11_LIBRARY} rt ) #dfhack-md5 dfhack-tixml
 ELSE(UNIX)
-  SET(PROJECT_LIBS psapi dfhack-md5 tixml-static)
+  SET(PROJECT_LIBS psapi)
 ENDIF(UNIX)
 
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SRCS})

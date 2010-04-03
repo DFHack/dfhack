@@ -1,15 +1,51 @@
+// Just show some position data
+
 #include <iostream>
 #include <climits>
 #include <integers.h>
 #include <vector>
+#include <sstream>
 #include <ctime>
 using namespace std;
 
 #include <DFTypes.h>
 #include <DFHackAPI.h>
+#include <DFProcess.h>
+#include <DFMemInfo.h>
+#include <DFVector.h>
 
-int main (void)
+void DumpObjStr0Vector (const char * name, DFHack::Process *p, uint32_t addr)
 {
+    cout << "----==== " << name << " ====----" << endl;
+    DFHack::DfVector vect(p,addr,4);
+    for(int i = 0; i < vect.getSize();i++)
+    {
+        uint32_t addr = *(uint32_t *) vect[i];
+        cout << p->readSTLString(addr) << endl;
+    }
+    cout << endl;
+}
+
+void DumpDWordVector (const char * name, DFHack::Process *p, uint32_t addr)
+{
+    cout << "----==== " << name << " ====----" << endl;
+    DFHack::DfVector vect(p,addr,4);
+    for(int i = 0; i < vect.getSize();i++)
+    {
+        uint32_t number = *(uint32_t *) vect[i];
+        cout << number << endl;
+    }
+    cout << endl;
+}
+
+int main (int numargs, const char ** args)
+{
+    uint32_t addr;
+    if (numargs == 2)
+    {
+        istringstream input (args[1],istringstream::in);
+        input >> std::hex >> addr;
+    }
     DFHack::API DF("Memory.xml");
     try
     {
@@ -24,48 +60,40 @@ int main (void)
         return 1;
     }
     
-    if(!DF.InitMap())
-    {
-        cerr << "No map loaded, it would be unsafe to enumerate materials" << endl;
-        #ifndef LINUX_BUILD
-            cin.ignore();
-        #endif
-        return 1;
-    }
-    DF.DestroyMap();
+    DFHack::Process* p = DF.getProcess();
+    DFHack::memory_info* mem = DF.getMemoryInfo();
+    //const vector<string> * names = mem->getClassIDMapping();
     
-    vector <DFHack::t_matgloss> Woods;
-    DF.ReadWoodMatgloss(Woods);
+    DumpObjStr0Vector("Material templates",p, mem->getAddress("mat_templates"));
     
-    vector <DFHack::t_matgloss> Plants;
-    DF.ReadPlantMatgloss(Plants);
+    DumpObjStr0Vector("Inorganics",p, mem->getAddress("mat_inorganics"));
     
-    vector <DFHack::t_matgloss> Metals;
-    DF.ReadMetalMatgloss(Metals);
+    DumpObjStr0Vector("Organics - all",p, mem->getAddress("mat_organics_all"));
     
-    vector <DFHack::t_matgloss> Stones;
-    DF.ReadStoneMatgloss(Stones);
+    DumpObjStr0Vector("Organics - plants",p, mem->getAddress("mat_organics_plants"));
     
-    vector <DFHack::t_matgloss> CreatureTypes;
-    DF.ReadCreatureMatgloss(CreatureTypes);
+    DumpDWordVector("Maybe map between all organics and plants",p, mem->getAddress("mat_unk1_numbers"));
     
-    cout << "Wood: " << Woods[0].id << endl;
-    cout << "Plant: " << Plants[0].id << endl;
-    cout << "Metal: " << Metals[0].id << endl;
-    cout << "Stone: " << Stones[0].id << endl;
-    cout << "Creature: " << CreatureTypes[0].id << endl;
-    cout << endl;
-    cout << "Dumping all stones!" << endl;
-    for(uint32_t i = 0; i < Stones.size();i++)
-    {
-        cout << Stones[i].id << "$" << endl;;
-    }
+    DumpObjStr0Vector("Trees/wood",p,  mem->getAddress("mat_organics_trees"));
     
-    DF.Detach();
+    DumpDWordVector("Maybe map between all organics and trees",p, mem->getAddress("mat_unk2_numbers"));
+    
+    DumpObjStr0Vector("Body material templates",p, mem->getAddress("mat_body_material_templates"));
+    
+    DumpObjStr0Vector("Body detail plans",p, mem->getAddress("mat_body_detail_plans"));
+    
+    DumpObjStr0Vector("Bodies",p, mem->getAddress("mat_bodies"));
+    
+    DumpObjStr0Vector("Bodygloss",p, mem->getAddress("mat_bodygloss"));
+    
+    DumpObjStr0Vector("Creature variations",p, mem->getAddress("mat_creature_variations"));
+    
+    DumpObjStr0Vector("Creature types",p, mem->getAddress("mat_creature_types"));
+    
+    
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();
     #endif
-    
     return 0;
 }

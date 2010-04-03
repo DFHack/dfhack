@@ -81,7 +81,7 @@ int main (int argc, const char* argv[])
     DF.getSize(x_max,y_max,z_max);
     
     // get stone matgloss mapping
-    if(!DF.ReadStoneMatgloss(stonetypes))
+    if(!DF.ReadInorganicMaterials(stonetypes))
     {
         //DF.DestroyMap();
         cerr << "Can't get the materials." << endl;
@@ -90,7 +90,7 @@ int main (int argc, const char* argv[])
         #endif
         return 1; 
     }
-    
+    /*
     // get region geology
     if(!DF.ReadGeology( layerassign ))
     {
@@ -100,7 +100,7 @@ int main (int argc, const char* argv[])
         #endif
         return 1; 
     }
-    
+    */
     int16_t tempvein [16][16];
     vector <DFHack::t_vein> veins;
     vector <DFHack::t_frozenliquidvein> iceveins;
@@ -123,7 +123,7 @@ int main (int argc, const char* argv[])
                 memset(tempvein, -1, sizeof(tempvein));
                 veins.clear();
                 DF.ReadVeins(x,y,z,veins,iceveins);
-                
+                /*
                 if(showbaselayers)
                 {
                     DF.ReadRegionOffsets(x,y,z, &regionoffsets);
@@ -147,7 +147,7 @@ int main (int argc, const char* argv[])
                         }
                     }
                 }
-                
+                */
                 // for each vein
                 for(int i = 0; i < (int)veins.size();i++)
                 {

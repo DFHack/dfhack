@@ -73,7 +73,7 @@ struct t_matglossPlant
     char food_name[128];
     char extract_name[128];
 };
-
+/*
 struct t_vein
 {
     uint32_t vtable;
@@ -83,7 +83,16 @@ struct t_vein
     uint32_t flags;
     uint32_t address_of; // this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
 };
-
+*/
+struct t_vein
+{
+    uint32_t vtable;
+    int32_t type;
+    int16_t assignment[16];
+    //int16_t unknown;
+    uint32_t flags;
+    uint32_t address_of; // this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
+};
 // stores what tiles should appear when the ice melts
 struct t_frozenliquidvein
 {

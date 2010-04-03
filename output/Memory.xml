@@ -3099,7 +3099,7 @@
         =========
         <Address name="map_data">0x016AD718</Address>
         <Offset name="v_vein">0x08</Offset>
-        <Offset name="type">0x0092</Offset>
+        <Offset name="type">0x009A</Offset>
         <Offset name="designation">0x029C</Offset>
         <!--
         No idea if those are still relevant. I'll assume NO

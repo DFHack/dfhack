@@ -338,13 +338,13 @@ main(int argc, char *argv[])
     z_max = z_max_a;
     
     // get stone matgloss mapping
-    if(!DF.ReadStoneMatgloss(stonetypes))
+    if(!DF.ReadInorganicMaterials(stonetypes))
     {
         error = "Can't read stone types.";
         pDF = 0;
         finish(0);
     }
-
+/*
     // get region geology
     if(!DF.ReadGeology( layerassign ))
     {
@@ -352,7 +352,7 @@ main(int argc, char *argv[])
         pDF = 0;
         finish(0);
     }
-
+*/
     // FIXME: could fail on small forts
     int cursorX = x_max/2 - 1;
     int cursorY = y_max/2 - 1;
@@ -439,6 +439,7 @@ main(int argc, char *argv[])
         // Supend, read/write data
         DF.Suspend();
         uint32_t effectnum;
+        /*
         if(DF.InitReadEffects(effectnum))
         {
             for(uint32_t i = 0; i < effectnum;i++)
@@ -448,6 +449,7 @@ main(int argc, char *argv[])
                 effects.push_back(effect);
             }
         }
+        */
         for(int i = -1; i <= 1; i++) for(int j = -1; j <= 1; j++)
         {
             mapblock40d * Block = &blocks[i+1][j+1];
@@ -562,8 +564,10 @@ main(int argc, char *argv[])
                         //iterate through the bits
                         for (uint32_t k = 0; k< 16;k++)
                         {
+                            /*
                             if(tileTypeTable[blocks[1][1].tiletypes[k][j]].m != VEIN)
                                 continue;
+                            */
                             /*
                             if(blocks[1][1].designation[k][j].bits.hidden)
                                 continue;
@@ -577,7 +581,7 @@ main(int argc, char *argv[])
                         }
                     }
                     gotoxy(0,51);
-                    cprintf("Mineral: %s",stonetypes[veinVector[vein].type].name);
+                    cprintf("Mineral: %s",stonetypes[veinVector[vein].type].id);
                 }
                 else
                 {

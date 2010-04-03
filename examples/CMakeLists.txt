@@ -62,41 +62,41 @@ TARGET_LINK_LIBRARIES(dfvecc dfhack)
 # ADD_EXECUTABLE(dfcatsplosion catsplosion.cpp)
 # TARGET_LINK_LIBRARIES(dfcatsplosion dfhack)
 
-# IF(UNIX)
-#     SET(CURSES_NEED_WIDE "YES")
-#     SET(CURSES_NEED_NCURSES "YES")
-#     find_package(Curses)
-#     
-#     IF(CURSES_FOUND)
-#         if(CURSES_HAVE_NCURSESW_NCURSES_H)
-#             SET(NCURSES_H "ncursesw/ncurses.h")
-#         elseif(CURSES_HAVE_NCURSESW_CURSES_H)
-#             SET(NCURSES_H "ncursesw/curses.h")
-#         elseif(CURSES_HAVE_NCURSESW_H)
-#             SET(NCURSES_H "ncursesw.h")
-#         elseif(CURSES_HAVE_CURSESW_H)
-#             SET(NCURSES_H "cursesw.h")
-#         endif(CURSES_HAVE_NCURSESW_NCURSES_H)
-#         IF(NCURSES_H)
-#             # OPTION( VARIABLE "Description" Initial state)
-#             #OPTION( WITH_FOO "Enable FOO support" ON )
-#             #OPTION( WITH_BAR "Enable BAR component" OFF )
-#             #SET( BAZ 18 )
-#             CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/fake-curses.h.cmake ${CMAKE_CURRENT_SOURCE_DIR}/fake-curses.h )
-#             
-#             # veinlook - look at the map... sort of
-#             ADD_EXECUTABLE(dfveinlook veinlook.cpp)
-#             INCLUDE_DIRECTORIES(${CURSES_INCLUDE_DIR})
-#             TARGET_LINK_LIBRARIES(dfveinlook dfhack ${CURSES_LIBRARIES})
-#             install(TARGETS
-#             dfveinlook
-#             RUNTIME DESTINATION bin
-#             )
-#         ENDIF(NCURSES_H)
-#     ELSE(CURSES_FOUND)
-#         MESSAGE(STATUS "Wide-character ncurses library not found - vainlook can't be built")
-#     ENDIF(CURSES_FOUND)
-# ENDIF(UNIX)
+IF(UNIX)
+    SET(CURSES_NEED_WIDE "YES")
+    SET(CURSES_NEED_NCURSES "YES")
+    find_package(Curses)
+    
+    IF(CURSES_FOUND)
+        if(CURSES_HAVE_NCURSESW_NCURSES_H)
+            SET(NCURSES_H "ncursesw/ncurses.h")
+        elseif(CURSES_HAVE_NCURSESW_CURSES_H)
+            SET(NCURSES_H "ncursesw/curses.h")
+        elseif(CURSES_HAVE_NCURSESW_H)
+            SET(NCURSES_H "ncursesw.h")
+        elseif(CURSES_HAVE_CURSESW_H)
+            SET(NCURSES_H "cursesw.h")
+        endif(CURSES_HAVE_NCURSESW_NCURSES_H)
+        IF(NCURSES_H)
+            # OPTION( VARIABLE "Description" Initial state)
+            #OPTION( WITH_FOO "Enable FOO support" ON )
+            #OPTION( WITH_BAR "Enable BAR component" OFF )
+            #SET( BAZ 18 )
+            CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/fake-curses.h.cmake ${CMAKE_CURRENT_SOURCE_DIR}/fake-curses.h )
+            
+            # veinlook - look at the map... sort of
+            ADD_EXECUTABLE(dfveinlook veinlook.cpp)
+            INCLUDE_DIRECTORIES(${CURSES_INCLUDE_DIR})
+            TARGET_LINK_LIBRARIES(dfveinlook dfhack ${CURSES_LIBRARIES})
+            install(TARGETS
+            dfveinlook
+            RUNTIME DESTINATION bin
+            )
+        ENDIF(NCURSES_H)
+    ELSE(CURSES_FOUND)
+        MESSAGE(STATUS "Wide-character ncurses library not found - vainlook can't be built")
+    ENDIF(CURSES_FOUND)
+ENDIF(UNIX)
 
 # renamer - change the custom names and professions of creatures, sends keys to
 #           df directly

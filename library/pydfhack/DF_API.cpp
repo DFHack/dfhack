@@ -905,9 +905,9 @@ static PyObject* DF_API_WriteDesignations(DF_API* self, PyObject* args)
 			
 			for(int j = 0; j < 16; j++)
 			{
-				UnionBase* obj = (UnionBase*)PyList_GetItem(innerList, j);
+				unsigned int obj = (unsigned int)PyInt_AsUnsignedLongMask(PyList_GetItem(innerList, j));
 				
-				designations[i][j].whole = obj->whole;
+				designations[i][j].whole = obj;
 			}
 		}
 		
@@ -967,9 +967,9 @@ static PyObject* DF_API_WriteOccupancy(DF_API* self, PyObject* args)
 			
 			for(int j = 0; j < 16; j++)
 			{
-				UnionBase* obj = (UnionBase*)PyList_GetItem(innerList, j);
+				unsigned int obj = PyInt_AsLong(PyList_GetItem(innerList, j));
 				
-				occupancies[i][j].whole = obj->whole;
+				occupancies[i][j].whole = obj;
 			}
 		}
 		

@@ -707,17 +707,6 @@ void API::FinishReadNameTables()
     d->nameTablesInited = false;
 }
 
-void API::FinishReadCreatures()
-{
-    if(d->p_cre)
-    {
-        delete d->p_cre;
-        d->p_cre = 0;
-    }
-    d->creaturesInited = false;
-    //FinishReadNameTables();
-}
-
 void API::FinishReadNotes()
 {
     if(d->p_notes)

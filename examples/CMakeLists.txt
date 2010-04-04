@@ -18,8 +18,8 @@ ADD_EXECUTABLE(dfexpbench expbench.cpp)
 TARGET_LINK_LIBRARIES(dfexpbench dfhack)
 
 # creaturedump - basic creature dump - a test of the creature related exports
-# ADD_EXECUTABLE(dfcreaturedump creaturedump.cpp)
-# TARGET_LINK_LIBRARIES(dfcreaturedump dfhack)
+ADD_EXECUTABLE(dfcreaturedump creaturedump.cpp)
+TARGET_LINK_LIBRARIES(dfcreaturedump dfhack)
 
 # materialtest - just list the first material of each type
 ADD_EXECUTABLE(dfmaterialtest materialtest.cpp)

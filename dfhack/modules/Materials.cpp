@@ -188,9 +188,16 @@ bool API::ReadPlantMaterials (vector<t_matgloss> & plants)
 {
     return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_organics_plants"), plants );
 }
-
+/*
+Gives bad results combined with the creature race field!
 bool API::ReadCreatureTypes (vector<t_matgloss> & creatures)
 {
     return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_creature_types"), creatures );
+    return true;
+}
+*/
+bool API::ReadCreatureTypes (vector<t_matgloss> & creatures)
+{
+    return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("creature_type_vector"), creatures );
     return true;
 }

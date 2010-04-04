@@ -33,7 +33,8 @@ distribution.
 #include <shms.h>
 #include <mod-core.h>
 #include <mod-maps.h>
-#include <mod-creature40d.h>
+// #include <mod-creature40d.h>
+#include <mod-creature2010.h>
 
 #define SHMCMD(num) ((shm_cmd *)d->shm_start)[num]->pingpong
 #define SHMHDR ((shm_core_hdr *)d->shm_start)

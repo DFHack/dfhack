@@ -3132,6 +3132,8 @@
         =========
         <Address name="creature_vector">0x0166ecc4</Address>
         <Offset name="creature_name">0x0</Offset>
+        <Offset name="creature_profession">0x88</Offset>
+        <Offset name="creature_race">0x8C</Offset>
         <Offset name="creature_position">0x90</Offset>
         <Offset name="creature_flags1">0xF8</Offset>
         <Offset name="creature_flags2">0xFC</Offset>
@@ -3174,8 +3176,10 @@
         <Address name="mat_bodygloss">0x16AFDDC</Address>
         <Address name="mat_creature_variations">0x16AFDF4</Address>
         
-        <!-- creature types -->
+        <!-- *raw* creature types -->
         <Address name="mat_creature_types">0x16AFE0C</Address>
+        <!-- creature types actually used for creatures? -->
+        <Address name="creature_type_vector">0x016AFE58</Address>
         <!--<Address name="mat_creature_types2">0x16AEE08</Address>-->
         
         <!-- 

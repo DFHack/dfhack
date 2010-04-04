@@ -186,7 +186,7 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout << endl;
             addendl = false;
         }
-        cout << "profession: " /*<< mem->getProfession(creature.profession) <<*/ "(" << (int) creature.profession << ")";
+        cout << "profession: " << mem->getProfession(creature.profession) << "(" << (int) creature.profession << ")";
         /*
         if(creature.custom_profession[0])
         {

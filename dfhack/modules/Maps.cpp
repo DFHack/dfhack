@@ -57,6 +57,7 @@ bool API::InitMap()
     /*
      * --> SHM initialization (if possible) <--
      */
+    /*
     g_pProcess->getModuleIndex("Maps2010",1,d->maps_module);
     
     if(d->maps_module)
@@ -77,7 +78,7 @@ bool API::InitMap()
         g_pProcess->SetAndWait(cmd);
         //cerr << "Map acceleration enabled!" << endl;
     }
-    
+    */
     // get the map pointer
     uint32_t x_array_loc = g_pProcess->readDWord (map_offset);
     if (!x_array_loc)

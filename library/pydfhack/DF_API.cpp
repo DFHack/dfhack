@@ -30,7 +30,7 @@ distribution.
 #include <vector>
 #include "DFTypes.h"
 #include "DFHackAPI.h"
-#include "UnionBase.cpp"
+//#include "UnionBase.cpp"
 //#include "MatGloss.cpp"
 
 using namespace std;

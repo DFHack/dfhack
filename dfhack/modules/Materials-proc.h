@@ -5,7 +5,9 @@
 */
 bool ReadInorganicMaterials (std::vector<t_matgloss> & output);
 bool ReadOrganicMaterials (std::vector<t_matgloss> & output);
+
 bool ReadWoodMaterials (std::vector<t_matgloss> & output);
 bool ReadPlantMaterials (std::vector<t_matgloss> & output);
-bool ReadPlantMaterials (std::vector<t_matglossPlant> & output);
+// bool ReadPlantMaterials (std::vector<t_matglossPlant> & output);
+
 bool ReadCreatureTypes (std::vector<t_matgloss> & output);

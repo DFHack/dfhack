@@ -25,44 +25,105 @@ distribution.
 #include "DFCommonInternal.h"
 #include "../private/APIPrivate.h"
 using namespace DFHack;
-
-
-
-bool API::ReadWoodMaterials (vector<t_matgloss> & woods)
-{
 /*
-    int matgloss_address = d->offset_descriptor->getAddress ("matgloss");
-    int matgloss_wood_name_offset = d->offset_descriptor->getOffset("matgloss_wood_name");
-    // TODO: find flag for autumnal coloring?
-    DfVector p_matgloss(d->p, matgloss_address, 4);
-
-    woods.clear();
-
-    t_matgloss mat;
-    // TODO: use brown?
-    mat.fore = 7;
-    mat.back = 0;
-    mat.bright = 0;
-    uint32_t size = p_matgloss.getSize();
-    for (uint32_t i = 0; i < size ;i++)
     {
-        // read the matgloss pointer from the vector into temp
-        uint32_t temp = * (uint32_t *) p_matgloss[i];
-        // read the string pointed at by
-        d->p->readSTLString (temp, mat.id, 128);
-        d->p->readSTLString (temp+matgloss_wood_name_offset, mat.name, 128);
-        woods.push_back (mat);
+LABEL_53:
+      if ( a1
+        || (signed int)a2 < 0
+        || a2 >= (inorg_end - inorg_start) >> 2
+        || (v13 = *(_DWORD *)(inorg_start + 4 * a2), !v13) )
+      {
+        switch ( a1 )
+        {
+          case 1:
+            sub_40FDD0("AMBER");
+            break;
+          case 2:
+            sub_40FDD0("CORAL");
+            break;
+          case 3:
+            sub_40FDD0("GLASS_GREEN");
+            break;
+          case 4:
+            sub_40FDD0("GLASS_CLEAR");
+            break;
+          case 5:
+            sub_40FDD0("GLASS_CRYSTAL");
+            break;
+          case 6:
+            sub_40FDD0("WATER");
+            break;
+          case 7:
+            sub_40FDD0("COAL");
+            break;
+          case 8:
+            sub_40FDD0("POTASH");
+            break;
+          case 9:
+            sub_40FDD0("ASH");
+            break;
+          case 10:
+            sub_40FDD0("PEARLASH");
+            break;
+          case 11:
+            sub_40FDD0("LYE");
+            break;
+          case 12:
+            sub_40FDD0("MUD");
+            break;
+          case 13:
+            sub_40FDD0("VOMIT");
+            break;
+          case 14:
+            sub_40FDD0("SALT");
+            break;
+          case 15:
+            sub_40FDD0("FILTH_B");
+            break;
+          case 16:
+            sub_40FDD0("FILTH_Y");
+            break;
+          case 17:
+            sub_40FDD0("UNKNOWN_SUBSTANCE");
+            break;
+          case 18:
+            sub_40FDD0("GRIME");
+            break;
+          default:
+            sub_40A070("NONE", 4u);
+            break;
+        }
+        result = sub_40A070("NONE", 4u);
+        if ( a1 == 7 )
+        {
+          result = a2;
+          if ( a2 )
+          {
+            if ( a2 == 1 )
+              result = sub_40A070("CHARCOAL", 8u);
+          }
+          else
+          {
+            result = sub_40A070("COKE", 4u);
+          }
+        }
+      }
+      else
+      {
+        sub_40A070("INORGANIC", 9u);
+        result = sub_409CA0(v13, 0, -1);
+      }
     }
-    */
-    return true;
-}
 
+*/
+
+/*
 bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
 {
     memory_info * minfo = d->offset_descriptor;
     int matgloss_address = minfo->getAddress ("mat_inorganics");
-    //int matgloss_colors = minfo->getOffset ("material_color");
-    //int matgloss_stone_name_offset = minfo->getOffset("matgloss_stone_name");
+    int matgloss_colors = minfo->getOffset ("material_color");
+    int matgloss_stone_name_offset = minfo->getOffset("matgloss_stone_name");
 
     DfVector p_matgloss (d->p, matgloss_address, 4);
 
@@ -75,114 +136,61 @@ bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
         uint32_t temp = * (uint32_t *) p_matgloss[i];
         // read the string pointed at by
         t_matgloss mat;
+        //cout << temp << endl;
         //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
         d->p->readSTLString (temp, mat.id, 128);
-        /*
+        
         d->p->readSTLString (temp+matgloss_stone_name_offset, mat.name, 128);
         mat.fore = (uint8_t) g_pProcess->readWord (temp + matgloss_colors);
         mat.back = (uint8_t) g_pProcess->readWord (temp + matgloss_colors + 2);
         mat.bright = (uint8_t) g_pProcess->readWord (temp + matgloss_colors + 4);
-        */
+        
         inorganic.push_back (mat);
     }
     return true;
-    
+}
+*/
+
+
+
+// good for now
+inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & names)
+{
+    DfVector p_matgloss (p, address, 4);
+    uint32_t size = p_matgloss.getSize();
+    names.clear();
+    names.reserve (size);
+    for (uint32_t i = 0; i < size;i++)
+    {
+        t_matgloss mat;
+        p->readSTLString (*(uint32_t *) p_matgloss[i], mat.id, 128);
+        names.push_back(mat);
+    }
+    return true;
+}
+
+bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
+{
+    return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_inorganics"), inorganic );
+}
+
+bool API::ReadOrganicMaterials (vector<t_matgloss> & organic)
+{
+    return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_organics_all"), organic );
+}
+
+bool API::ReadWoodMaterials (vector<t_matgloss> & trees)
+{
+    return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_organics_trees"), trees );
 }
 
 bool API::ReadPlantMaterials (vector<t_matgloss> & plants)
 {
-    /*
-    memory_info * minfo = d->offset_descriptor;
-    int matgloss_address = minfo->getAddress ("matgloss");
-    int matgloss_offset = minfo->getHexValue ("matgloss_skip");
-    int matgloss_plant_name_offset = minfo->getOffset("matgloss_plant_name");
-    DfVector p_matgloss(d->p, matgloss_address + matgloss_offset * 2, 4);
-
-    plants.clear();
-
-    // TODO: use green?
-    t_matgloss mat;
-    mat.fore = 7;
-    mat.back = 0;
-    mat.bright = 0;
-    for (uint32_t i = 0; i < p_matgloss.getSize();i++)
-    {
-        // read the matgloss pointer from the vector into temp
-        uint32_t temp = * (uint32_t *) p_matgloss[i];
-        // read the string pointed at by
-        //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
-        d->p->readSTLString (temp, mat.id, 128);
-        d->p->readSTLString (temp+matgloss_plant_name_offset, mat.name, 128);
-        plants.push_back (mat);
-    }
-    */
-    return true;
-}
-
-bool API::ReadPlantMaterials (vector<t_matglossPlant> & plants)
-{
-    /*
-    memory_info * minfo = d->offset_descriptor;
-    int matgloss_address = minfo->getAddress ("matgloss");
-    int matgloss_offset = minfo->getHexValue ("matgloss_skip");
-    int matgloss_plant_name_offset = minfo->getOffset("matgloss_plant_name");
-    int matgloss_plant_drink_offset = minfo->getOffset("matgloss_plant_drink");
-    int matgloss_plant_food_offset = minfo->getOffset("matgloss_plant_food");
-    int matgloss_plant_extract_offset = minfo->getOffset("matgloss_plant_extract");
-    DfVector p_matgloss(d->p, matgloss_address + matgloss_offset * 2, 4);
-
-    plants.clear();
-
-    // TODO: use green?
-    t_matglossPlant mat;
-    mat.fore = 7;
-    mat.back = 0;
-    mat.bright = 0;
-    for (uint32_t i = 0; i < p_matgloss.getSize();i++)
-    {
-        // read the matgloss pointer from the vector into temp
-        uint32_t temp = * (uint32_t *) p_matgloss[i];
-        // read the string pointed at by
-        //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
-        d->p->readSTLString (temp, mat.id, 128);
-        d->p->readSTLString (temp+matgloss_plant_name_offset, mat.name, 128);
-        d->p->readSTLString (temp+matgloss_plant_drink_offset, mat.drink_name, 128);
-        d->p->readSTLString (temp+matgloss_plant_food_offset, mat.food_name, 128);
-        d->p->readSTLString (temp+matgloss_plant_extract_offset, mat.extract_name, 128);
-        
-        //d->p->readSTLString (temp
-        plants.push_back (mat);
-    }
-    */
-    return true;
+    return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_organics_plants"), plants );
 }
 
 bool API::ReadCreatureTypes (vector<t_matgloss> & creatures)
 {
-    /*
-    memory_info * minfo = d->offset_descriptor;
-    int matgloss_address = minfo->getAddress ("matgloss");
-    int matgloss_offset = minfo->getHexValue ("matgloss_skip");
-    int matgloss_creature_name_offset = minfo->getOffset("matgloss_creature_name");
-    DfVector p_matgloss (d->p, matgloss_address + matgloss_offset * 6, 4);
-
-    creatures.clear();
-
-    // TODO: use green?
-    t_matgloss mat;
-    mat.fore = 7;
-    mat.back = 0;
-    mat.bright = 0;
-    for (uint32_t i = 0; i < p_matgloss.getSize();i++)
-    {
-        // read the matgloss pointer from the vector into temp
-        uint32_t temp = * (uint32_t *) p_matgloss[i];
-        // read the string pointed at by
-        //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
-        d->p->readSTLString (temp, mat.id, 128);
-        d->p->readSTLString (temp+matgloss_creature_name_offset, mat.name, 128);
-        creatures.push_back (mat);
-    }
-    */
+    return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_creature_types"), creatures );
     return true;
 }

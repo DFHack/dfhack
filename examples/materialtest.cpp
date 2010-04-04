@@ -63,7 +63,7 @@ int main (int numargs, const char ** args)
     DFHack::Process* p = DF.getProcess();
     DFHack::memory_info* mem = DF.getMemoryInfo();
     //const vector<string> * names = mem->getClassIDMapping();
-    
+    /*
     DumpObjStr0Vector("Material templates",p, mem->getAddress("mat_templates"));
     
     DumpObjStr0Vector("Inorganics",p, mem->getAddress("mat_inorganics"));
@@ -87,10 +87,30 @@ int main (int numargs, const char ** args)
     DumpObjStr0Vector("Bodygloss",p, mem->getAddress("mat_bodygloss"));
     
     DumpObjStr0Vector("Creature variations",p, mem->getAddress("mat_creature_variations"));
+    */
     
-    DumpObjStr0Vector("Creature types",p, mem->getAddress("mat_creature_types"));
+    cout << "----==== Inorganic ====----" << endl;
+    vector<DFHack::t_matgloss> matgloss;
+    DF.ReadInorganicMaterials (matgloss);
+    for(int i = 0; i < matgloss.size();i++)
+    {
+        cout << matgloss[i].id << endl;
+    }
     
-    
+    cout << endl << "----==== Organic ====----" << endl;
+    vector<DFHack::t_matgloss> organic;
+    DF.ReadOrganicMaterials (matgloss);
+    for(int i = 0; i < matgloss.size();i++)
+    {
+        cout << matgloss[i].id << endl;
+    }
+    cout << endl << "----==== Creature types ====----" << endl;
+    vector<DFHack::t_matgloss> creature;
+    DF.ReadCreatureTypes (matgloss);
+    for(int i = 0; i < matgloss.size();i++)
+    {
+        cout << matgloss[i].id << endl;
+    }
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

@@ -3176,6 +3176,7 @@
         
         <!-- creature types -->
         <Address name="mat_creature_types">0x16AFE0C</Address>
+        <!--<Address name="mat_creature_types2">0x16AEE08</Address>-->
         
         <!-- 
         addresses from belal: vectors might need 8 subtracted from them

@@ -89,7 +89,6 @@ struct t_vein
     uint32_t vtable;
     int32_t type;
     int16_t assignment[16];
-    //int16_t unknown;
     uint32_t flags;
     uint32_t address_of; // this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
 };

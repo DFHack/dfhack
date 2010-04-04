@@ -33,7 +33,7 @@ include_directories (${CMAKE_SOURCE_DIR}/dfhack/depends/tinyxml/)
 include_directories (${CMAKE_SOURCE_DIR}/dfhack/depends/argstream/)
 
 add_subdirectory (dfhack)
-add_subdirectory (dfhack/shm)
+#add_subdirectory (dfhack/shm)
 #FIXME: add exports for MSVC
 #add_subdirectory (dfhack/depends/md5)
 #add_subdirectory (dfhack/depends/tinyxml)

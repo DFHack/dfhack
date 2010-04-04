@@ -10,6 +10,8 @@ using namespace std;
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 #include <DFMemInfo.h>
+#include <modules/Materials.h>
+#include <modules/Creatures.h>
 
 template <typename T>
 void print_bits ( T val, std::ostream& out )
@@ -321,8 +323,11 @@ int main (void)
         return 1;
     }
     
+    DFHack::Creatures * Creatures = DF.getCreatures();
+    DFHack::Materials * Materials = DF.getMaterials();
+    
     uint32_t numCreatures;
-    if(!DF.InitReadCreatures(numCreatures))
+    if(!Creatures->Start(numCreatures))
     {
         cerr << "Can't get creatures" << endl;
         #ifndef LINUX_BUILD
@@ -348,7 +353,7 @@ int main (void)
     */
     mem = DF.getMemoryInfo();
     // get stone matgloss mapping
-    if(!DF.ReadCreatureTypes(creaturestypes))
+    if(!Materials->ReadCreatureTypes(creaturestypes))
     {
         cerr << "Can't get the creature types." << endl;
         return 1; 
@@ -364,7 +369,7 @@ int main (void)
     for(uint32_t i = 0; i < numCreatures; i++)
     {
         DFHack::t_creature temp;
-        DF.ReadCreature(i,temp);
+        Creatures->ReadCreature(i,temp);
         //if(string(creaturestypes[temp.type].id) == "DWARF")
         {
             cout << "index " << i << " ";
@@ -380,7 +385,7 @@ int main (void)
     DF.ReadCreature(currentIdx, currentCreature);
     printCreature(DF,currentCreature);
     */
-    DF.FinishReadCreatures();
+    Creatures->Finish();
     DF.Detach();
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

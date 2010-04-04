@@ -23,13 +23,25 @@ distribution.
 */
 
 #include "DFCommonInternal.h"
+
+#include "DFProcess.h"
+#include "DFProcessEnumerator.h"
+#include "DFHackAPI.h"
+#include "DFError.h"
+
 #include <shms.h>
 #include <mod-core.h>
 #include <mod-maps.h>
 #include <mod-creature40d.h>
-using namespace DFHack;
-
 #include "private/APIPrivate.h"
+
+#include "modules/Maps.h"
+#include "modules/Materials.h"
+#include "modules/Position.h"
+#include "modules/Gui.h"
+#include "modules/Creatures.h"
+
+using namespace DFHack;
 
 API::API (const string path_to_xml)
         : d (new APIPrivate())
@@ -149,6 +161,44 @@ Process * API::getProcess()
 DFWindow * API::getWindow()
 {
     return d->p->getWindow();
+}
+
+/*******************************************************************************
+                                M O D U L E S
+*******************************************************************************/
+Creatures * API::getCreatures()
+{
+    if(!d->creatures)
+        d->creatures = new Creatures(d);
+    return d->creatures;
+}
+
+Maps * API::getMaps()
+{
+    if(!d->maps)
+        d->maps = new Maps(d);
+    return d->maps;
+}
+
+Gui * API::getGui()
+{
+    if(!d->gui)
+        d->gui = new Gui(d);
+    return d->gui;
+}
+
+Position * API::getPosition()
+{
+    if(!d->position)
+        d->position = new Position(d);
+    return d->position;
+}
+
+Materials * API::getMaterials()
+{
+    if(!d->materials)
+        d->materials = new Materials(d);
+    return d->materials;
 }
 
 /*
@@ -504,53 +554,7 @@ bool API::ReadHotkeys(t_hotkey hotkeys[])
     }
     return true;
 }
-// returns index of creature actually read or -1 if no creature can be found
-int32_t API::ReadCreatureInBox (int32_t index, t_creature & furball,
-                                const uint16_t x1, const uint16_t y1, const uint16_t z1,
-                                const uint16_t x2, const uint16_t y2, const uint16_t z2)
-{
-    if (!d->creaturesInited) return -1;
-    if(d->creature_module)
-    {
-        // supply the module with offsets so it can work with them
-        SHMCREATURESHDR->index = index;
-        SHMCREATURESHDR->x = x1;
-        SHMCREATURESHDR->y = y1;
-        SHMCREATURESHDR->z = z1;
-        SHMCREATURESHDR->x2 = x2;
-        SHMCREATURESHDR->y2 = y2;
-        SHMCREATURESHDR->z2 = z2;
-        const uint32_t cmd = Creatures::CREATURE_FIND_IN_BOX + (d->creature_module << 16);
-        g_pProcess->SetAndWait(cmd);
-        if(SHMCREATURESHDR->index != -1)
-            memcpy(&furball,SHMDATA(void),sizeof(t_creature));
-        return SHMCREATURESHDR->index;
-    }
-    else
-    {
-        uint16_t coords[3];
-        uint32_t size = d->p_cre->getSize();
-        while (uint32_t(index) < size)
-        {
-            // read pointer from vector at position
-            uint32_t temp = * (uint32_t *) d->p_cre->at (index);
-            g_pProcess->read (temp + d->creatures.creature_pos_offset, 3 * sizeof (uint16_t), (uint8_t *) &coords);
-            if (coords[0] >= x1 && coords[0] < x2)
-            {
-                if (coords[1] >= y1 && coords[1] < y2)
-                {
-                    if (coords[2] >= z1 && coords[2] < z2)
-                    {
-                        ReadCreature (index, furball);
-                        return index;
-                    }
-                }
-            }
-            index++;
-        }
-        return -1;
-    }
-}
+
 
 bool API::getItemIndexesInBox(vector<uint32_t> &indexes,
                                 const uint16_t x1, const uint16_t y1, const uint16_t z1,

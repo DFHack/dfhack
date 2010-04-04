@@ -19,6 +19,8 @@ using namespace std;
 #include <DFTypes.h>
 #include <DFTileTypes.h>
 #include <DFHackAPI.h>
+#include <modules/Maps.h>
+#include <modules/Materials.h>
 
 int main (int argc, const char* argv[])
 {
@@ -69,8 +71,12 @@ int main (int argc, const char* argv[])
         return 1;
     }
     
+
+    DFHack::Maps * Maps = DF.getMaps();
+    DFHack::Materials * Mats = DF.getMaterials();
+    
     // init the map
-    if(!DF.InitMap())
+    if(!Maps->Start())
     {
         cerr << "Can't init map." << endl;
         #ifndef LINUX_BUILD
@@ -78,10 +84,10 @@ int main (int argc, const char* argv[])
         #endif
         return 1;
     }
-    DF.getSize(x_max,y_max,z_max);
+    Maps->getSize(x_max,y_max,z_max);
     
     // get stone matgloss mapping
-    if(!DF.ReadInorganicMaterials(stonetypes))
+    if(!Mats->ReadInorganicMaterials(stonetypes))
     {
         //DF.DestroyMap();
         cerr << "Can't get the materials." << endl;
@@ -113,16 +119,16 @@ int main (int argc, const char* argv[])
         {
             for(uint32_t z = 0; z< z_max;z++)
             {
-                if(!DF.isValidBlock(x,y,z))
+                if(!Maps->isValidBlock(x,y,z))
                     continue;
                 
                 // read data
-                DF.ReadTileTypes(x,y,z, &tiletypes);
-                DF.ReadDesignations(x,y,z, &designations);
+                Maps->ReadTileTypes(x,y,z, &tiletypes);
+                Maps->ReadDesignations(x,y,z, &designations);
                 
                 memset(tempvein, -1, sizeof(tempvein));
                 veins.clear();
-                DF.ReadVeins(x,y,z,veins,iceveins);
+                Maps->ReadVeins(x,y,z,veins,iceveins);
                 /*
                 if(showbaselayers)
                 {

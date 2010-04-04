@@ -25,72 +25,120 @@ distribution.
 #include "DFCommonInternal.h"
 #include "../private/APIPrivate.h"
 
-#define SHMCREATURESHDR ((Creatures2010::shm_creature_hdr *)d->shm_start)
+// we connect to those
+#include <shms.h>
+#include <mod-core.h>
+#include <mod-creature2010.h>
+#include "modules/Creatures.h"
+#include "DFVector.h"
+#include "DFMemInfo.h"
+#include "DFProcess.h"
+#include "DFError.h"
+#include "DFTypes.h"
+
+#define SHMCREATURESHDR ((Creatures2010::shm_creature_hdr *)d->d->shm_start)
+#define SHMCMD(num) ((shm_cmd *)d->d->shm_start)[num]->pingpong
+#define SHMHDR ((shm_core_hdr *)d->d->shm_start)
+#define SHMDATA(type) ((type *)(d->d->shm_start + SHM_HEADER))
 
 using namespace DFHack;
 
-bool API::InitReadCreatures( uint32_t &numcreatures )
+struct Creatures::Private
 {
-    if(!d->InitReadNames()) return false;
+    bool Inited;
+    bool Started;
+    Creatures2010::creature_offsets creatures;
+    uint32_t creature_module;
+    DfVector *p_cre;
+    APIPrivate *d;
+};
+
+Creatures::Creatures(APIPrivate* _d)
+{
+    d = new Private;
+    d->d = _d;
+    d->Inited = false;
+    d->Started = false;
+    d->d->InitReadNames(); // throws on error
     try
     {
-        memory_info * minfo = d->offset_descriptor;
-        Creatures2010::creature_offsets & off = d->creatures;
-        off.creature_vector = minfo->getAddress ("creature_vector");
-        off.creature_pos_offset = minfo->getOffset ("creature_position");
-        off.creature_profession_offset = minfo->getOffset ("creature_profession");
-        off.creature_race_offset = minfo->getOffset ("creature_race");
-        off.creature_flags1_offset = minfo->getOffset ("creature_flags1");
-        off.creature_flags2_offset = minfo->getOffset ("creature_flags2");
-        off.creature_name_offset = minfo->getOffset ("creature_name");
-        off.creature_sex_offset = minfo->getOffset ("creature_sex");
-        off.creature_id_offset = minfo->getOffset ("creature_id");
-        off.creature_labors_offset = minfo->getOffset ("creature_labors");
-        off.creature_happiness_offset = minfo->getOffset ("creature_happiness");
-        off.creature_artifact_name_offset = minfo->getOffset("creature_artifact_name");
+        memory_info * minfo = d->d->offset_descriptor;
+        Creatures2010::creature_offsets &creatures = d->creatures;
+        creatures.creature_vector = minfo->getAddress ("creature_vector");
+        creatures.creature_pos_offset = minfo->getOffset ("creature_position");
+        creatures.creature_profession_offset = minfo->getOffset ("creature_profession");
+        creatures.creature_race_offset = minfo->getOffset ("creature_race");
+        creatures.creature_flags1_offset = minfo->getOffset ("creature_flags1");
+        creatures.creature_flags2_offset = minfo->getOffset ("creature_flags2");
+        creatures.creature_name_offset = minfo->getOffset ("creature_name");
+        creatures.creature_sex_offset = minfo->getOffset ("creature_sex");
+        creatures.creature_id_offset = minfo->getOffset ("creature_id");
+        creatures.creature_labors_offset = minfo->getOffset ("creature_labors");
+        creatures.creature_happiness_offset = minfo->getOffset ("creature_happiness");
+        creatures.creature_artifact_name_offset = minfo->getOffset("creature_artifact_name");
         
         // name offsets for the creature module
-        off.name_firstname_offset = minfo->getOffset("name_firstname");
-        off.name_nickname_offset = minfo->getOffset("name_nickname");
-        off.name_words_offset = minfo->getOffset("name_words");
+        creatures.name_firstname_offset = minfo->getOffset("name_firstname");
+        creatures.name_nickname_offset = minfo->getOffset("name_nickname");
+        creatures.name_words_offset = minfo->getOffset("name_words");
         
-        d->p_cre = new DfVector (d->p, off.creature_vector, 4);
-        d->creaturesInited = true;
-        numcreatures =  d->p_cre->getSize();
-
-        // --> SHM initialization (if possible) <--
-        g_pProcess->getModuleIndex("Creatures2010",1,d->creature_module);
-        
-        if(d->creature_module)
+        // upload offsets to the SHM
+        if(g_pProcess->getModuleIndex("Creatures2010",1,d->creature_module))
         {
             // supply the module with offsets so it can work with them
-            memcpy(SHMDATA(Creatures2010::creature_offsets),&d->creatures,sizeof(Creatures2010::creature_offsets));
+            memcpy(SHMDATA(Creatures2010::creature_offsets),&creatures,sizeof(Creatures2010::creature_offsets));
             const uint32_t cmd = Creatures2010::CREATURE_INIT + (d->creature_module << 16);
             g_pProcess->SetAndWait(cmd);
         }
-        return true;
+        d->Inited = true;
     }
     catch (Error::MissingMemoryDefinition&)
     {
-        d->creaturesInited = false;
-        numcreatures = 0;
+        d->Inited = false;
         throw;
     }
 }
 
-bool API::ReadCreature (const int32_t index, t_creature & furball)
+Creatures::~Creatures()
 {
-    if(!d->creaturesInited) return false;
+    if(d->Started)
+        Finish();
+}
+
+bool Creatures::Start( uint32_t &numcreatures )
+{
+    d->p_cre = new DfVector (d->d->p, d->creatures.creature_vector, 4);
+    d->Started = true;
+    numcreatures =  d->p_cre->getSize();
+    return true;
+}
+
+bool Creatures::Finish()
+{
+    if(d->p_cre)
+    {
+        delete d->p_cre;
+        d->p_cre = 0;
+    }
+    d->Started = false;
+    return true;
+}
+
+bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
+{
+    if(!d->Started) return false;
+    // SHM fast path
     if(d->creature_module)
     {
-        // supply the module with offsets so it can work with them
         SHMCREATURESHDR->index = index;
         const uint32_t cmd = Creatures2010::CREATURE_AT_INDEX + (d->creature_module << 16);
         g_pProcess->SetAndWait(cmd);
         memcpy(&furball,SHMDATA(t_creature),sizeof(t_creature));
-        // cerr << "creature read from SHM!" << endl;
         return true;
     }
+    
+    // non-SHM slow path
+    
     // read pointer from vector at position
     uint32_t temp = * (uint32_t *) d->p_cre->at (index);
     furball.origin = temp;
@@ -101,9 +149,9 @@ bool API::ReadCreature (const int32_t index, t_creature & furball)
     g_pProcess->readDWord (temp + offs.creature_flags1_offset, furball.flags1.whole);
     g_pProcess->readDWord (temp + offs.creature_flags2_offset, furball.flags2.whole);
     // names
-    d->readName(furball.name,temp + offs.creature_name_offset);
+    d->d->readName(furball.name,temp + offs.creature_name_offset);
     //d->readName(furball.squad_name, temp + offs.creature_squad_name_offset);
-    d->readName(furball.artifact_name, temp + offs.creature_artifact_name_offset);
+    d->d->readName(furball.artifact_name, temp + offs.creature_artifact_name_offset);
     // custom profession
     //fill_char_buf (furball.custom_profession, d->p->readSTLString (temp + offs.creature_custom_profession_offset));
 
@@ -173,6 +221,56 @@ bool API::ReadCreature (const int32_t index, t_creature & furball)
 
     return true;
 }
+
+// returns index of creature actually read or -1 if no creature can be found
+int32_t Creatures::ReadCreatureInBox (int32_t index, t_creature & furball,
+                                const uint16_t x1, const uint16_t y1, const uint16_t z1,
+                                const uint16_t x2, const uint16_t y2, const uint16_t z2)
+{
+    if (!d->Started) return -1;
+    if(d->creature_module)
+    {
+        // supply the module with offsets so it can work with them
+        SHMCREATURESHDR->index = index;
+        SHMCREATURESHDR->x = x1;
+        SHMCREATURESHDR->y = y1;
+        SHMCREATURESHDR->z = z1;
+        SHMCREATURESHDR->x2 = x2;
+        SHMCREATURESHDR->y2 = y2;
+        SHMCREATURESHDR->z2 = z2;
+        const uint32_t cmd = Creatures2010::CREATURE_FIND_IN_BOX + (d->creature_module << 16);
+        g_pProcess->SetAndWait(cmd);
+        if(SHMCREATURESHDR->index != -1)
+            memcpy(&furball,SHMDATA(void),sizeof(t_creature));
+        return SHMCREATURESHDR->index;
+    }
+    else
+    {
+        uint16_t coords[3];
+        uint32_t size = d->p_cre->getSize();
+        while (uint32_t(index) < size)
+        {
+            // read pointer from vector at position
+            uint32_t temp = * (uint32_t *) d->p_cre->at (index);
+            g_pProcess->read (temp + d->creatures.creature_pos_offset, 3 * sizeof (uint16_t), (uint8_t *) &coords);
+            if (coords[0] >= x1 && coords[0] < x2)
+            {
+                if (coords[1] >= y1 && coords[1] < y2)
+                {
+                    if (coords[2] >= z1 && coords[2] < z2)
+                    {
+                        ReadCreature (index, furball);
+                        return index;
+                    }
+                }
+            }
+            index++;
+        }
+        return -1;
+    }
+}
+
+
 /*
 bool API::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
 {
@@ -189,13 +287,3 @@ bool API::getCurrentCursorCreature(uint32_t & creature_index)
     return true;
 }
 */
-void API::FinishReadCreatures()
-{
-    if(d->p_cre)
-    {
-        delete d->p_cre;
-        d->p_cre = 0;
-    }
-    d->creaturesInited = false;
-    //FinishReadNameTables();
-}

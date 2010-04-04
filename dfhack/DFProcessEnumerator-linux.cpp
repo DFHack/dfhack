@@ -23,6 +23,10 @@ distribution.
 */
 
 #include "DFCommonInternal.h"
+#include "DFProcessEnumerator.h"
+#include "DFProcess.h"
+#include "DFMemInfo.h"
+#include "DFMemInfoManager.h"
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/ipc.h>

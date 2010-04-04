@@ -77,6 +77,7 @@ namespace DFHack
 #   define BUILD_DFHACK_LIB
 #endif
 
+/*
 #include "DFTypes.h"
 //#include "DFDataModel.h"
 #include "DFProcess.h"
@@ -86,13 +87,14 @@ namespace DFHack
 #include "DFVector.h"
 #include "DFMemInfo.h"
 #include "DFError.h"
+*/
 #include <stdlib.h>
 
 #include <tinyxml.h>
 #include <md5wrapper.h>
 
 #include <iostream>
-#include "DFHackAPI.h"
+//#include "DFHackAPI.h"
 
 #define _QUOTEME(x) #x
 #define QUOT(x) _QUOTEME(x)

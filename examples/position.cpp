@@ -9,13 +9,16 @@ using namespace std;
 
 #include <DFTypes.h>
 #include <DFHackAPI.h>
+#include <modules/Position.h>
 
 int main (void)
 {
     DFHack::API DF("Memory.xml");
+    DFHack::Position * Position = 0;
     try
     {
         DF.Attach();
+        Position = DF.getPosition();
     }
     catch (exception& e)
     {
@@ -25,17 +28,16 @@ int main (void)
         #endif
         return 1;
     }
-    
-    if (DF.InitViewAndCursor())
+    if (Position)
     {
        int32_t x,y,z;
        int32_t width,height;
        
-       if(DF.getViewCoords(x,y,z))
+       if(Position->getViewCoords(x,y,z))
             cout << "view coords: " << x << "/" << y << "/" << z << endl;
-       if(DF.getCursorCoords(x,y,z))
+       if(Position->getCursorCoords(x,y,z))
             cout << "cursor coords: " << x << "/" << y << "/" << z << endl;
-       if(DF.getWindowSize(width,height))
+       if(Position->getWindowSize(width,height))
            cout << "window size : " << width << " " << height << endl;
     }
     else

@@ -23,6 +23,10 @@ distribution.
 */
 
 #include "DFCommonInternal.h"
+#include "DFProcessEnumerator.h"
+#include "DFProcess.h"
+#include "DFMemInfo.h"
+#include "DFMemInfoManager.h"
 using namespace DFHack;
 
 /// HACK: global variables (only one process can be attached at the same time.)

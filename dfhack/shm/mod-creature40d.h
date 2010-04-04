@@ -27,8 +27,10 @@ distribution.
 
 namespace DFHack
 {
-    namespace Creatures
+    namespace Server
     {
+        namespace Creatures
+        {
 
 #define CREATURES40D_VERSION 1
 typedef struct
@@ -100,6 +102,7 @@ enum CREATURE_COMMAND
 };
 DFPP_module Init(void);
 
+        }
     }
 }
 

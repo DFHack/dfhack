@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "DFCommonInternal.h"
+#include "DFWindow.h"
 
 #include <X11/Xlib.h>   //need for X11 functions
 #include <X11/keysym.h>

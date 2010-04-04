@@ -7,6 +7,7 @@ using namespace std;
 
 #include <DFTypes.h>
 #include <DFHackAPI.h>
+#include <modules/Maps.h>
 
 int main (void)
 {
@@ -27,8 +28,9 @@ int main (void)
         return 1;
     }
     
+    DFHack::Maps *Maps =DF.getMaps();
     // init the map
-    if(!DF.InitMap())
+    if(!Maps->Start())
     {
         cerr << "Can't init map." << endl;
         #ifndef LINUX_BUILD
@@ -37,7 +39,7 @@ int main (void)
         return 1;
     }
     
-    DF.getSize(x_max,y_max,z_max);
+    Maps->getSize(x_max,y_max,z_max);
     
     // walk the map
     for(uint32_t x = 0; x< x_max;x++)
@@ -46,17 +48,17 @@ int main (void)
         {
             for(uint32_t z = 0; z< z_max;z++)
             {
-                if(DF.isValidBlock(x,y,z))
+                if(Maps->isValidBlock(x,y,z))
                 {
                     // read block designations
-                    DF.ReadDesignations(x,y,z, &designations);
+                    Maps->ReadDesignations(x,y,z, &designations);
                     // change the hidden flag to 0
                     for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
                     {
                         designations[i][j].bits.hidden = 0;
                     }
                     // write the designations back
-                    DF.WriteDesignations(x,y,z, &designations);
+                    Maps->WriteDesignations(x,y,z, &designations);
                 }
             }
         }

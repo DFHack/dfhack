@@ -22,6 +22,11 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "DFCommonInternal.h"
+#include "DFProcess.h"
+#include "DFWindow.h"
+#include "DFMemInfo.h"
+#include "DFError.h"
+
 #include <errno.h>
 #include <sys/shm.h>
 #include <sys/types.h>

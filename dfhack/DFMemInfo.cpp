@@ -23,25 +23,10 @@ distribution.
 */
 
 #include "DFCommonInternal.h"
-/*
-#if !defined(NDEBUG)
-#define BOOST_MULTI_INDEX_ENABLE_INVARIANT_CHECKING
-#define BOOST_MULTI_INDEX_ENABLE_SAFE_MODE
-#endif
-// really, we don't need it
-#define BOOST_MULTI_INDEX_DISABLE_SERIALIZATION
+#include "DFMemInfo.h"
+#include "DFError.h"
+#include "DFProcess.h"
 
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/member.hpp>
-#include <boost/multi_index/ordered_index.hpp>
-#include <algorithm>
-#include <iostream>
-#include <iterator>
-#include <string>
-
-using boost::multi_index_container;
-using namespace boost::multi_index;
-*/
 using namespace DFHack;
 
 /*

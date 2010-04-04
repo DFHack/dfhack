@@ -23,6 +23,10 @@ distribution.
 */
 
 #include "DFCommonInternal.h"
+#include "DFMemInfo.h"
+#include "DFMemInfoManager.h"
+#include "DFError.h"
+
 using namespace DFHack;
 
 MemInfoManager::~MemInfoManager()

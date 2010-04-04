@@ -13,6 +13,7 @@ using namespace std;
 #include <DFProcess.h>
 #include <DFMemInfo.h>
 #include <DFVector.h>
+#include <modules/Materials.h>
 
 void DumpObjStr0Vector (const char * name, DFHack::Process *p, uint32_t addr)
 {
@@ -62,6 +63,8 @@ int main (int numargs, const char ** args)
     
     DFHack::Process* p = DF.getProcess();
     DFHack::memory_info* mem = DF.getMemoryInfo();
+    DFHack::Materials *Materials = DF.getMaterials();
+    
     //const vector<string> * names = mem->getClassIDMapping();
     /*
     DumpObjStr0Vector("Material templates",p, mem->getAddress("mat_templates"));
@@ -91,7 +94,7 @@ int main (int numargs, const char ** args)
     
     cout << "----==== Inorganic ====----" << endl;
     vector<DFHack::t_matgloss> matgloss;
-    DF.ReadInorganicMaterials (matgloss);
+    Materials->ReadInorganicMaterials (matgloss);
     for(int i = 0; i < matgloss.size();i++)
     {
         cout << matgloss[i].id << endl;
@@ -99,14 +102,14 @@ int main (int numargs, const char ** args)
     
     cout << endl << "----==== Organic ====----" << endl;
     vector<DFHack::t_matgloss> organic;
-    DF.ReadOrganicMaterials (matgloss);
+    Materials->ReadOrganicMaterials (matgloss);
     for(int i = 0; i < matgloss.size();i++)
     {
         cout << matgloss[i].id << endl;
     }
     cout << endl << "----==== Creature types ====----" << endl;
     vector<DFHack::t_matgloss> creature;
-    DF.ReadCreatureTypes (matgloss);
+    Materials->ReadCreatureTypes (matgloss);
     for(int i = 0; i < matgloss.size();i++)
     {
         cout << matgloss[i].id << endl;

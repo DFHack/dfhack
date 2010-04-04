@@ -23,6 +23,8 @@ distribution.
 */
 
 #include "DFCommonInternal.h"
+#include "DFWindow.h"
+#include "DFProcess.h"
 using namespace DFHack;
 
 // should always reflect the enum in DFkeys.h

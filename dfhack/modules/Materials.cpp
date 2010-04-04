@@ -24,7 +24,18 @@ distribution.
 
 #include "DFCommonInternal.h"
 #include "../private/APIPrivate.h"
+#include "modules/Materials.h"
+#include "DFVector.h"
+#include "DFMemInfo.h"
+#include "DFProcess.h"
+
 using namespace DFHack;
+
+Materials::Materials(APIPrivate * d_)
+{
+    d = d_;
+}
+Materials::~Materials(){}
 /*
     {
 LABEL_53:
@@ -169,34 +180,34 @@ inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & nam
     return true;
 }
 
-bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
+bool Materials::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
 {
     return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_inorganics"), inorganic );
 }
 
-bool API::ReadOrganicMaterials (vector<t_matgloss> & organic)
+bool Materials::ReadOrganicMaterials (vector<t_matgloss> & organic)
 {
     return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_organics_all"), organic );
 }
 
-bool API::ReadWoodMaterials (vector<t_matgloss> & trees)
+bool Materials::ReadWoodMaterials (vector<t_matgloss> & trees)
 {
     return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_organics_trees"), trees );
 }
 
-bool API::ReadPlantMaterials (vector<t_matgloss> & plants)
+bool Materials::ReadPlantMaterials (vector<t_matgloss> & plants)
 {
     return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_organics_plants"), plants );
 }
 /*
 Gives bad results combined with the creature race field!
-bool API::ReadCreatureTypes (vector<t_matgloss> & creatures)
+bool Materials::ReadCreatureTypes (vector<t_matgloss> & creatures)
 {
     return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_creature_types"), creatures );
     return true;
 }
 */
-bool API::ReadCreatureTypes (vector<t_matgloss> & creatures)
+bool Materials::ReadCreatureTypes (vector<t_matgloss> & creatures)
 {
     return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("creature_type_vector"), creatures );
     return true;

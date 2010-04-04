@@ -53,26 +53,6 @@ struct junk_fill
     */
 };
     
-struct t_matgloss
-{
-    char id[128]; //the id in the raws
-    uint8_t fore; // Annoyingly the offset for this differs between types
-    uint8_t back;
-    uint8_t bright;
-    char name[128]; //this is the name displayed ingame
-};
-
-struct t_matglossPlant
-{
-    char id[128]; //the id in the raws
-    uint8_t fore; // Annoyingly the offset for this differs between types
-    uint8_t back;
-    uint8_t bright;
-    char name[128]; //this is the name displayed ingame
-    char drink_name[128];  //the name this item becomes a drink
-    char food_name[128];
-    char extract_name[128];
-};
 /*
 struct t_vein
 {
@@ -548,12 +528,12 @@ CREATURE
 //#pragma pack(push,4)
 struct t_name
 {
-	char first_name[128];
-	char nickname[128];
-	int32_t words[7];
-	uint16_t parts_of_speech[7];
-	uint32_t language;
-	bool has_name;
+    char first_name[128];
+    char nickname[128];
+    int32_t words[7];
+    uint16_t parts_of_speech[7];
+    uint32_t language;
+    bool has_name;
 };
 
 struct t_skill
@@ -589,8 +569,8 @@ struct t_creature
     t_creaturflags1 flags1;
     t_creaturflags2 flags2;
     t_name name;
-	t_name squad_name;
-	t_name artifact_name;
+    t_name squad_name;
+    t_name artifact_name;
     uint8_t profession;
     char custom_profession[128];
     // enabled labors

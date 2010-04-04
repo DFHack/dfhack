@@ -41,7 +41,7 @@ enum DFPP_CmdType
 {
     CANCELLATION, // we should jump out of the Act()
     CLIENT_WAIT, // we are waiting for the client
-    FUNCTION, // we call a function as a result of the command
+    FUNCTION // we call a function as a result of the command
 };
 
 struct DFPP_command

@@ -8,17 +8,21 @@
 #include <map>
 using namespace std;
 
-#include <DFTypes.h>
-#include <DFTileTypes.h>
-#include <DFHackAPI.h>
-#include <DFProcess.h>
-#include <DFMemInfo.h>
-using namespace DFHack;
 #include <sstream>
 #include "fake-curses.h"
 #include <stdlib.h>
 #include <signal.h>
 #include <locale.h>
+
+#include <DFTypes.h>
+#include <DFTileTypes.h>
+#include <DFHackAPI.h>
+#include <DFProcess.h>
+#include <DFMemInfo.h>
+#include <modules/Maps.h>
+#include <modules/Materials.h>
+using namespace DFHack;
+
 
 string error;
 API * pDF = 0;
@@ -308,10 +312,16 @@ main(int argc, char *argv[])
     vector<t_vein> veinVector;
     vector<t_frozenliquidvein> IceVeinVector;
 
+    DFHack::Materials * Mats = 0;
+    DFHack::Maps * Maps = 0;
+    
+    
     DFHack::API DF("Memory.xml");
     try
     {
         DF.Attach();
+        Mats = DF.getMaterials();
+        Maps = DF.getMaps();
         pDF = &DF;
     }
     catch (exception& e)
@@ -325,20 +335,20 @@ main(int argc, char *argv[])
     
     Process* p = DF.getProcess();
     // init the map
-    if(!DF.InitMap())
+    if(!Maps->Start())
     {
         error = "Can't find a map to look at.";
         pDF = 0;
         finish(0);
     }
     
-    DF.getSize(x_max_a,y_max_a,z_max_a);
+    Maps->getSize(x_max_a,y_max_a,z_max_a);
     x_max = x_max_a;
     y_max = y_max_a;
     z_max = z_max_a;
     
     // get stone matgloss mapping
-    if(!DF.ReadInorganicMaterials(stonetypes))
+    if(!Mats->ReadInorganicMaterials(stonetypes))
     {
         error = "Can't read stone types.";
         pDF = 0;
@@ -455,18 +465,18 @@ main(int argc, char *argv[])
             mapblock40d * Block = &blocks[i+1][j+1];
             
             
-            if(DF.isValidBlock(cursorX+i,cursorY+j,cursorZ))
+            if(Maps->isValidBlock(cursorX+i,cursorY+j,cursorZ))
             {
-                DF.ReadBlock40d(cursorX+i,cursorY+j,cursorZ, Block);
+                Maps->ReadBlock40d(cursorX+i,cursorY+j,cursorZ, Block);
                 
                 // extra processing of the block in the middle
                 if(i == 0 && j == 0)
                 {
                     // read veins
-                    DF.ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector,IceVeinVector);
+                    Maps->ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector,IceVeinVector);
                     
                     // get pointer to block
-                    blockaddr = DF.getBlockPtr(cursorX+i,cursorY+j,cursorZ);
+                    blockaddr = Maps->getBlockPtr(cursorX+i,cursorY+j,cursorZ);
                     blockaddr2 = Block->origin;
                     
                     // dig all veins and trees
@@ -481,7 +491,7 @@ main(int argc, char *argv[])
                                 Block->designation[x][y].bits.dig = designation_default;
                             }
                         }
-                        DF.WriteDesignations(cursorX+i,cursorY+j,cursorZ, &(Block->designation));
+                        Maps->WriteDesignations(cursorX+i,cursorY+j,cursorZ, &(Block->designation));
                     }
                     // do a dump of the block data
                     if(dump)
@@ -490,12 +500,12 @@ main(int argc, char *argv[])
                         filenum++;
                     }
                     // read/write dirty bit of the block
-                    DF.ReadDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
-                    DF.ReadBlockFlags(cursorX+i,cursorY+j,cursorZ,bflags);
+                    Maps->ReadDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
+                    Maps->ReadBlockFlags(cursorX+i,cursorY+j,cursorZ,bflags);
                     if(digbit)
                     {
                         dirtybit = !dirtybit;
-                        DF.WriteDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
+                        Maps->WriteDirtyBit(cursorX+i,cursorY+j,cursorZ,dirtybit);
                     }
                 }
             }

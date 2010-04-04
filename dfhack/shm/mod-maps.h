@@ -30,8 +30,10 @@ distribution.
 
 namespace DFHack
 {
-    namespace Maps
+    namespace Server
     {
+        namespace Maps
+        {
 
 #define MAPS_VERSION 3
 typedef struct
@@ -95,10 +97,10 @@ enum MAPS_COMMAND
     MAP_READ_BLOCKS_3D, // read blocks between two coords (volumetric)
     MAP_READ_ALL_BLOCKS, // read the entire map
     MAP_REVEAL, // reveal the whole map
-    NUM_MAPS_CMDS,
+    NUM_MAPS_CMDS
 };
 DFPP_module Init(void);
-
+        }
     }
 }
 

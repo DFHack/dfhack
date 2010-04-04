@@ -29,86 +29,85 @@ distribution.
 #ifndef APIPRIVATE_H_INCLUDED
 #define APIPRIVATE_H_INCLUDED
 
-// we connect to those
-#include <shms.h>
-#include <mod-core.h>
-#include <mod-maps.h>
-// #include <mod-creature40d.h>
-#include <mod-creature2010.h>
-
-#define SHMCMD(num) ((shm_cmd *)d->shm_start)[num]->pingpong
-#define SHMHDR ((shm_core_hdr *)d->shm_start)
-#define SHMDATA(type) ((type *)(d->shm_start + SHM_HEADER))
-
 namespace DFHack
 {
+    class Materials;
+    class Gui;
+    class Position;
+    class Maps;
+    class Creatures;
+    class ProcessEnumerator;
+    class Process;
+    class memory_info;
+    struct t_name;
+    class APIPrivate
+    {
+    public:
+        APIPrivate();
+        ~APIPrivate();
+        void readName(t_name & name, uint32_t address);
+        // get the name offsets
+        bool InitReadNames();
+        
+        uint32_t name_firstname_offset;
+        uint32_t name_nickname_offset;
+        uint32_t name_words_offset;
+        
+        ProcessEnumerator* pm;
+        Process* p;
+        char * shm_start;
+        memory_info* offset_descriptor;
+        string xml;
+        
+        // Modules
+        Creatures * creatures;
+        Maps * maps;
+        Position * position;
+        Gui * gui;
+        Materials * materials;
 
-class APIPrivate
-{
-public:
-    APIPrivate();
-    void readName(t_name & name, uint32_t address);
-    // get the name offsets
-    bool InitReadNames();
-    
-    #include "../modules/Creatures-data.h"
-    #include "../modules/Maps-data.h"
-    #include "../modules/Position-data.h"
-    #include "../modules/Gui-data.h"
-    #include "../modules/Materials-data.h"
-    
-    uint32_t name_firstname_offset;
-    uint32_t name_nickname_offset;
-    uint32_t name_words_offset;
-    
-    ProcessEnumerator* pm;
-    Process* p;
-    char * shm_start;
-    memory_info* offset_descriptor;
-    string xml;
+        /*
+        uint32_t item_material_offset;
 
-    /*
-    uint32_t item_material_offset;
+        uint32_t note_foreground_offset;
+        uint32_t note_background_offset;
+        uint32_t note_name_offset;
+        uint32_t note_xyz_offset;
+        uint32_t hotkey_start;
+        uint32_t hotkey_mode_offset;
+        uint32_t hotkey_xyz_offset;
+        uint32_t hotkey_size;
 
-    uint32_t note_foreground_offset;
-    uint32_t note_background_offset;
-    uint32_t note_name_offset;
-    uint32_t note_xyz_offset;
-    uint32_t hotkey_start;
-    uint32_t hotkey_mode_offset;
-    uint32_t hotkey_xyz_offset;
-    uint32_t hotkey_size;
+        uint32_t settlement_name_offset;
+        uint32_t settlement_world_xy_offset;
+        uint32_t settlement_local_xy_offset;
+        
+        uint32_t dwarf_lang_table_offset;
 
-    uint32_t settlement_name_offset;
-    uint32_t settlement_world_xy_offset;
-    uint32_t settlement_local_xy_offset;
-    
-    uint32_t dwarf_lang_table_offset;
+        bool constructionsInited;
+        bool buildingsInited;
+        bool effectsInited;
+        bool vegetationInited;
+        
+        
+        bool itemsInited;
+        bool notesInited;
+        bool namesInited;
+        bool hotkeyInited;
+        bool settlementsInited;
+        bool nameTablesInited;
 
-    bool constructionsInited;
-    bool buildingsInited;
-    bool effectsInited;
-    bool vegetationInited;
-    
-    
-    bool itemsInited;
-    bool notesInited;
-    bool namesInited;
-    bool hotkeyInited;
-    bool settlementsInited;
-    bool nameTablesInited;
-
-    uint32_t tree_offset;
-    
-    DfVector *p_cons;
-    DfVector *p_bld;
-    DfVector *p_effect;
-    DfVector *p_veg;
-    DfVector *p_itm;
-    DfVector *p_notes;
-    DfVector *p_settlements;
-    DfVector *p_current_settlement;
-    */
-};
+        uint32_t tree_offset;
+        
+        DfVector *p_cons;
+        DfVector *p_bld;
+        DfVector *p_effect;
+        DfVector *p_veg;
+        DfVector *p_itm;
+        DfVector *p_notes;
+        DfVector *p_settlements;
+        DfVector *p_current_settlement;
+        */
+    };
 }
 #endif

@@ -24,6 +24,9 @@ distribution.
 
 #include "Tranquility.h"
 #include "DFCommonInternal.h"
+#include "DFVector.h"
+#include "DFMemInfo.h"
+#include "DFProcess.h"
 
 using namespace DFHack;
 

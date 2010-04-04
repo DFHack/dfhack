@@ -1,233 +1,212 @@
 from pydfhack import *
+from ctypes import *
 
 class DFAPI(API):
     def Read_Designations(self, x, y, z):
-        d_list = [DesignationFlags(d) for d in API.Read_Designations(self, x, y, z)]
+        temp = API.Read_Designations(self, x, y, z)
+        
+        d_list = []
+
+        for i in temp:
+            d = []
+
+            for j in i:
+                d.append(DesignationFlags(j))
+
+            d_list.append(d)
 
         return d_list
+    def Write_Designations(self, x, y, z, d_list):
+        temp = []
+
+        for i in d_list:
+            t = []
+
+            for j in i:
+                t.append(j.whole)
+
+            temp.append(t)
+
+        API.Write_Designations(self, x, y, z, temp)
     def Read_Occupancy(self, x, y, z):
-        o_list = [OccupancyFlags(o) for o in API.Read_Occupancy(self, x, y, z)]
+        temp = API.Read_Occupancy(self, x, y, z)
+        
+        o_list = []
+
+        for i in temp:
+            o = []
+
+            for j in i:
+                o.append(OccupancyFlags(j))
+
+            o_list.append(o)
 
         return o_list
 
-class CreatureFlags1(_UnionBase):
-    move_state = property(fget = lambda self: self._get_mask_bit(0),
-                          fset = lambda self, val: self._set_mask_bit(0, val))
-    dead = property(fget = lambda self: self._get_mask_bit(1),
-                    fset = lambda self, val: self._set_mask_bit(1, val))
-    has_mood = property(fget = lambda self: self._get_mask_bit(2),
-                        fset = lambda self, val: self._set_mask_bit(2, val))
-    had_mood = property(fget = lambda self: self._get_mask_bit(3),
-                        fset = lambda self, val: self._set_mask_bit(3, val))
-    
-    marauder = property(fget = lambda self: self._get_mask_bit(4),
-                        fset = lambda self, val: self._set_mask_bit(4, val))
-    drowning = property(fget = lambda self: self._get_mask_bit(5),
-                        fset = lambda self, val: self._set_mask_bit(5, val))
-    merchant = property(fget = lambda self: self._get_mask_bit(6),
-                        fset = lambda self, val: self._set_mask_bit(6, val))
-    forest = property(fget = lambda self: self._get_mask_bit(7),
-                      fset = lambda self, val: self._set_mask_bit(7, val))
-    
-    left = property(fget = lambda self: self._get_mask_bit(8),
-                    fset = lambda self, val: self._set_mask_bit(8, val))
-    rider = property(fget = lambda self: self._get_mask_bit(9),
-                     fset = lambda self, val: self._set_mask_bit(9, val))
-    incoming = property(fget = lambda self: self._get_mask_bit(10),
-                        fset = lambda self, val: self._set_mask_bit(10, val))
-    diplomat = property(fget = lambda self: self._get_mask_bit(11),
-                        fset = lambda self, val: self._set_mask_bit(11, val))
-    
-    zombie = property(fget = lambda self: self._get_mask_bit(12),
-                      fset = lambda self: self._set_mask_bit(12, val))
-    skeleton = property(fget = lambda self: self._get_mask_bit(13),
-                        fset = lambda self, val: self._set_mask_bit(13, val))
-    can_swap = property(fget = lambda self: self._get_mask_bit(14),
-                        fset = lambda self, val: self._set_mask_bit(14, val))
-    on_ground = property(fget = lambda self: self._get_mask_bit(15),
-                         fset = lambda self, val: self._set_mask_bit(15, val))
-    
-    projectile = property(fget = lambda self: self._get_mask_bit(16),
-                          fset = lambda self, val: self._set_mask_bit(16, val))
-    active_invader = property(fget = lambda self: self._get_mask_bit(17),
-                              fset = lambda self, val: self._set_mask_bit(17, val))
-    hidden_in_ambush = property(fget = lambda self: self._get_mask_bit(18),
-                                fset = lambda self, val: self._set_mask_bit(18, val))
-    invader_origin = property(fget = lambda self: self._get_mask_bit(19),
-                              fset = lambda self, val: self._set_mask_bit(19, val))
-    
-    coward = property(fget = lambda self: self._get_mask_bit(20),
-                      fset = lambda self, val: self._set_mask_bit(20, val))
-    hidden_ambusher = property(fget = lambda self: self._get_mask_bit(21),
-                               fset = lambda self, val: self._set_mask_bit(21, val))
-    invades = property(fget = lambda self: self._get_mask_bit(22),
-                       fset = lambda self, val: self._set_mask_bit(22, val))
-    check_flows = property(fget = lambda self: self._get_mask_bit(23),
-                           fset = lambda self, val: self._set_mask_bit(23, val))
-    
-    ridden = property(fget = lambda self: self._get_mask_bit(24),
-                      fset = lambda self, val: self._set_mask_bit(24, val))
-    caged = property(fget = lambda self: self._get_mask_bit(25),
-                     fset = lambda self, val: self._set_mask_bit(25, val))
-    tame = property(fget = lambda self: self._get_mask_bit(26),
-                    fset = lambda self, val: self._set_mask_bit(26, val))
-    chained = property(fget = lambda self: self._get_mask_bit(27),
-                       fset = lambda self, val: self._set_mask_bit(27, val))
-    
-    royal_guard = property(fget = lambda self: self._get_mask_bit(28),
-                           fset = lambda self, val: self._set_mask_bit(28, val))
-    fortress_guard = property(fget = lambda self: self._get_mask_bit(29),
-                              fset = lambda self, val: self._set_mask_bit(29, val))
-    suppress_wield = property(fget = lambda self: self._get_mask_bit(30),
-                              fset = lambda self, val: self._set_mask_bit(30, val))
-    important_historial_figure = property(fget = lambda self: self._get_mask_bit(31),
-                                          fset = lambda self, val: self._set_mask_bit(31, val))
+class DesignationStruct(Structure):
+    _fields_ = [("flow_size", c_uint, 3),
+                ("pile", c_uint, 1),
+                ("dig", c_uint, 3),
+                ("smooth", c_uint, 2),
+                ("hidden", c_uint, 1),
+                ("geolayer_index", c_uint, 4),
+                ("light", c_uint, 1),
+                ("subterranean", c_uint, 1),
+                ("skyview", c_uint, 1),
+                ("biome", c_uint, 4),
+                ("liquid_type", c_uint, 1),
+                ("water_table", c_uint, 1),
+                ("rained", c_uint, 1),
+                ("traffic", c_uint, 2),
+                ("flow_forbid", c_uint, 1),
+                ("liquid_static", c_uint, 1),
+                ("moss", c_uint, 1),
+                ("feature_present", c_uint, 1),
+                ("liquid_character", c_uint, 2)]
 
-class CreatureFlags2(_UnionBase):
-    swimming = property(fget = lambda self: self._get_mask_bit(0),
-                        fset = lambda self, val: self._set_mask_bit(0, val))
-    sparring = property(fget = lambda self: self._get_mask_bit(1),
-                        fset = lambda self, val: self._set_mask_bit(1, val))
-    no_notify = property(fget = lambda self: self._get_mask_bit(2),
-                         fset = lambda self, val: self._set_mask_bit(2, val))
-    unused = property(fget = lambda self: self._get_mask_bit(3),
-                      fset = lambda self, val: self._set_mask_bit(3, val))
+class DesignationFlags(Union):
+    _fields_ = [("whole", c_uint, 32),
+                ("bits", DesignationStruct)]
     
-    calculated_nerves = property(fget = lambda self: self._get_mask_bit(4),
-                                 fset = lambda self, val: self._set_mask_bit(4, val))
-    calculated_bodyparts = property(fget = lambda self: self._get_mask_bit(5),
-                                    fset = lambda self, val: self._set_mask_bit(5, val))
-    important_historical_figure = property(fget = lambda self: self._get_mask_bit(6),
-                                        fset = lambda self, val: self._set_mask_bit(6, val))
-    killed = property(fget = lambda self: self._get_mask_bit(7),
-                      fset = lambda self, val: self._set_mask_bit(7, val))
-    
-    cleanup_1 = property(fget = lambda self: self._get_mask_bit(8),
-                        fset = lambda self, val: self._set_mask_bit(8, val))
-    cleanup_2 = property(fget = lambda self: self._get_mask_bit(9),
-                         fset = lambda self, val: self._set_mask_bit(9, val))
-    cleanup_3 = property(fget = lambda self: self._get_mask_bit(10),
-                         fset = lambda self, val: self._set_mask_bit(10, val))
-    for_trade = property(fget = lambda self: self._get_mask_bit(11),
-                         fset = lambda self, val: self._set_mask_bit(11, val))
-    
-    trade_resolved = property(fget = lambda self: self._get_mask_bit(12),
-                              fset = lambda self: self._set_mask_bit(12, val))
-    has_breaks = property(fget = lambda self: self._get_mask_bit(13),
-                          fset = lambda self, val: self._set_mask_bit(13, val))
-    gutted = property(fget = lambda self: self._get_mask_bit(14),
-                      fset = lambda self, val: self._set_mask_bit(14, val))
-    circulatory_spray = property(fget = lambda self: self._get_mask_bit(15),
-                                 fset = lambda self, val: self._set_mask_bit(15, val))
-    
-    locked_in_for_trading = property(fget = lambda self: self._get_mask_bit(16),
-                                     fset = lambda self, val: self._set_mask_bit(16, val))
-    slaughter = property(fget = lambda self: self._get_mask_bit(17),
-                         fset = lambda self, val: self._set_mask_bit(17, val))
-    underworld = property(fget = lambda self: self._get_mask_bit(18),
-                          fset = lambda self, val: self._set_mask_bit(18, val))
-    resident = property(fget = lambda self: self._get_mask_bit(19),
-                        fset = lambda self, val: self._set_mask_bit(19, val))
-    
-    cleanup_4 = property(fget = lambda self: self._get_mask_bit(20),
-                         fset = lambda self, val: self._set_mask_bit(20, val))
-    calculated_insulation = property(fget = lambda self: self._get_mask_bit(21),
-                                     fset = lambda self, val: self._set_mask_bit(21, val))
-    visitor_uninvited = property(fget = lambda self: self._get_mask_bit(22),
-                                 fset = lambda self, val: self._set_mask_bit(22, val))
-    visitor = property(fget = lambda self: self._get_mask_bit(23),
-                       fset = lambda self, val: self._set_mask_bit(23, val))
-    
-    calculated_inventory = property(fget = lambda self: self._get_mask_bit(24),
-                                    fset = lambda self, val: self._set_mask_bit(24, val))
-    vision_good = property(fget = lambda self: self._get_mask_bit(25),
-                           fset = lambda self, val: self._set_mask_bit(25, val))
-    vision_damaged = property(fget = lambda self: self._get_mask_bit(26),
-                              fset = lambda self, val: self._set_mask_bit(26, val))
-    vision_missing = property(fget = lambda self: self._get_mask_bit(27),
-                              fset = lambda self, val: self._set_mask_bit(27, val))
-    
-    breathing_good = property(fget = lambda self: self._get_mask_bit(28),
-                              fset = lambda self, val: self._set_mask_bit(28, val))
-    breathing_problem = property(fget = lambda self: self._get_mask_bit(29),
-                                 fset = lambda self, val: self._set_mask_bit(29, val))
-    roaming_wilderness_population_source = property(fget = lambda self: self._get_mask_bit(30),
-                                                    fset = lambda self, val: self._set_mask_bit(30, val))
-    roaming_wilderness_population_source_not_a_map_feature = property(fget = lambda self: self._get_mask_bit(31),
-                                                                      fset = lambda self, val: self._set_mask_bit(31, val))
+    def __init__(self, initial = 0):
+            self.whole = initial
 
-class ItemFlags(_UnionBase):
-    on_ground = property(fget = lambda self: self._get_mask_bit(0),
-                          fset = lambda self, val: self._set_mask_bit(0, val))
-    in_job = property(fget = lambda self: self._get_mask_bit(1),
-                    fset = lambda self, val: self._set_mask_bit(1, val))
-    in_inventory = property(fget = lambda self: self._get_mask_bit(2),
-                        fset = lambda self, val: self._set_mask_bit(2, val))
-    u_ngrd1 = property(fget = lambda self: self._get_mask_bit(3),
-                        fset = lambda self, val: self._set_mask_bit(3, val))
-    
-    in_workshop = property(fget = lambda self: self._get_mask_bit(4),
-                        fset = lambda self, val: self._set_mask_bit(4, val))
-    u_ngrd2 = property(fget = lambda self: self._get_mask_bit(5),
-                        fset = lambda self, val: self._set_mask_bit(5, val))
-    u_ngrd3 = property(fget = lambda self: self._get_mask_bit(6),
-                        fset = lambda self, val: self._set_mask_bit(6, val))
-    rotten = property(fget = lambda self: self._get_mask_bit(7),
-                      fset = lambda self, val: self._set_mask_bit(7, val))
-    
-    unk1 = property(fget = lambda self: self._get_mask_bit(8),
-                    fset = lambda self, val: self._set_mask_bit(8, val))
-    u_ngrd4 = property(fget = lambda self: self._get_mask_bit(9),
-                     fset = lambda self, val: self._set_mask_bit(9, val))
-    unk2 = property(fget = lambda self: self._get_mask_bit(10),
-                        fset = lambda self, val: self._set_mask_bit(10, val))
-    u_ngrd5 = property(fget = lambda self: self._get_mask_bit(11),
-                        fset = lambda self, val: self._set_mask_bit(11, val))
-    
-    unk3 = property(fget = lambda self: self._get_mask_bit(12),
-                      fset = lambda self: self._set_mask_bit(12, val))
-    u_ngrd6 = property(fget = lambda self: self._get_mask_bit(13),
-                        fset = lambda self, val: self._set_mask_bit(13, val))
-    narrow = property(fget = lambda self: self._get_mask_bit(14),
-                        fset = lambda self, val: self._set_mask_bit(14, val))
-    u_ngrd7 = property(fget = lambda self: self._get_mask_bit(15),
-                         fset = lambda self, val: self._set_mask_bit(15, val))
-    
-    worn = property(fget = lambda self: self._get_mask_bit(16),
-                          fset = lambda self, val: self._set_mask_bit(16, val))
-    unk4 = property(fget = lambda self: self._get_mask_bit(17),
-                              fset = lambda self, val: self._set_mask_bit(17, val))
-    u_ngrd8 = property(fget = lambda self: self._get_mask_bit(18),
-                                fset = lambda self, val: self._set_mask_bit(18, val))
-    forbid = property(fget = lambda self: self._get_mask_bit(19),
-                              fset = lambda self, val: self._set_mask_bit(19, val))
-    
-    unk5 = property(fget = lambda self: self._get_mask_bit(20),
-                      fset = lambda self, val: self._set_mask_bit(20, val))
-    dump = property(fget = lambda self: self._get_mask_bit(21),
-                               fset = lambda self, val: self._set_mask_bit(21, val))
-    on_fire = property(fget = lambda self: self._get_mask_bit(22),
-                       fset = lambda self, val: self._set_mask_bit(22, val))
-    melt = property(fget = lambda self: self._get_mask_bit(23),
-                           fset = lambda self, val: self._set_mask_bit(23, val))
-    
-    hidden = property(fget = lambda self: self._get_mask_bit(24),
-                      fset = lambda self, val: self._set_mask_bit(24, val))
-    u_ngrd9 = property(fget = lambda self: self._get_mask_bit(25),
-                     fset = lambda self, val: self._set_mask_bit(25, val))
-    unk6 = property(fget = lambda self: self._get_mask_bit(26),
-                    fset = lambda self, val: self._set_mask_bit(26, val))
-    unk7 = property(fget = lambda self: self._get_mask_bit(27),
-                       fset = lambda self, val: self._set_mask_bit(27, val))
-    
-    unk8 = property(fget = lambda self: self._get_mask_bit(28),
-                           fset = lambda self, val: self._set_mask_bit(28, val))
-    unk9 = property(fget = lambda self: self._get_mask_bit(29),
-                              fset = lambda self, val: self._set_mask_bit(29, val))
-    unk10 = property(fget = lambda self: self._get_mask_bit(30),
-                              fset = lambda self, val: self._set_mask_bit(30, val))
-    unk11 = property(fget = lambda self: self._get_mask_bit(31),
-                                          fset = lambda self, val: self._set_mask_bit(31, val))
+class OccupancyStruct(Strucure):
+    _fields_ = [("building", c_uint, 3),
+                ("unit", c_uint, 1),
+                ("unit_grounded", c_uint, 1),
+                ("item", c_uint, 1),
+                ("splatter", c_uint, 26)]
+
+class OccupancyFlags(Union):
+    _fields_ = [("whole", c_uint, 32),
+                ("bits", OccupancyStruct)]
+
+    def __init__(self, initial = 0):
+        self.whole = initial
+
+class CreatureStruct1(Structure):
+    _fields_ = [("move_state", c_uint, 1),
+                ("dead", c_uint, 1),
+                ("has_mood", c_uint, 1),
+                ("had_mood", c_uint, 1),
+                ("marauder", c_uint, 1),
+                ("drowning", c_uint, 1),
+                ("merchant", c_uint, 1),
+                ("forest", c_uint, 1),
+                ("left", c_uint, 1),
+                ("rider", c_uint, 1),
+                ("incoming", c_uint, 1),
+                ("diplomat", c_uint, 1),
+                ("zombie", c_uint, 1),
+                ("skeleton", c_uint, 1),
+                ("can_swap", c_uint, 1),
+                ("on_ground", c_uint, 1),
+                ("projectile", c_uint, 1),
+                ("active_invader", c_uint, 1),
+                ("hidden_in_ambush", c_uint, 1),
+                ("invader_origin", c_uint, 1),
+                ("coward", c_uint, 1),
+                ("hidden_ambusher", c_uint, 1),
+                ("invades", c_uint, 1),
+                ("check_flows", c_uint, 1),
+                ("ridden", c_uint, 1),
+                ("caged", c_uint, 1),
+                ("tame", c_uint, 1),
+                ("chained", c_uint, 1),
+                ("royal_guard", c_uint, 1),
+                ("fortress_guard", c_uint, 1),
+                ("suppress_wield", c_uint, 1),
+                ("important_historical_figure", c_uint, 1)]
+
+class CreatureFlags1(Union):
+    _fields_ = [("whole", c_uint, 32),
+                ("bits", CreatureStruct1)]
+
+    def __init__(self, initial = 0):
+        self.whole = initial
+
+class CreatureStruct2(Structure):
+    _fields_ = [("swimming", c_uint, 1),
+                ("sparring", c_uint, 1),
+                ("no_notify", c_uint, 1),
+                ("unused", c_uint, 1),
+                ("calculated_nerves", c_uint, 1),
+                ("calculated_bodyparts", c_uint, 1),
+                ("important_historical_figure", c_uint, 1),
+                ("killed", c_uint, 1),
+                ("cleanup_1", c_uint, 1),
+                ("cleanup_2", c_uint, 1),
+                ("cleanup_3", c_uint, 1),
+                ("for_trade", c_uint, 1),
+                ("trade_resolved", c_uint, 1),
+                ("has_breaks", c_uint, 1),
+                ("gutted", c_uint, 1),
+                ("circulatory_spray", c_uint, 1),
+                ("locked_in_for_trading", c_uint, 1),
+                ("slaughter", c_uint, 1),
+                ("underworld", c_uint, 1),
+                ("resident", c_uint, 1),
+                ("cleanup_4", c_uint, 1),
+                ("calculated_insulation", c_uint, 1),
+                ("visitor_uninvited", c_uint, 1),
+                ("visitor", c_uint, 1),
+                ("calculated_inventory", c_uint, 1),
+                ("vision_good", c_uint, 1),
+                ("vision_damaged", c_uint, 1),
+                ("vision_missing", c_uint, 1),
+                ("breathing_good", c_uint, 1),
+                ("breathing_problem", c_uint, 1),
+                ("roaming_wilderness_population_source", c_uint, 1),
+                ("roaming_wilderness_population_source_not_a_map_feature", c_uint, 1)]
+
+class CreatureFlags2(Union):
+    _fields_ = [("whole", c_uint, 32),
+                ("bits", CreatureStruct2)]
+
+    def __init__(self, initial = 0):
+        self.whole = initial
+
+class ItemStruct(Structure):
+    _fields_ = [("on_ground", c_uint, 1),
+                ("in_job", c_uint, 1),
+                ("in_inventory", c_uint, 1),
+                ("u_ngrd1", c_uint, 1),
+                ("in_workshop", c_uint, 1),
+                ("u_ngrd2", c_uint, 1),
+                ("u_ngrd3", c_uint, 1),
+                ("rotten", c_uint, 1),
+                ("unk1", c_uint, 1),
+                ("u_ngrd4", c_uint, 1),
+                ("unk2", c_uint, 1),
+                ("u_ngrd5", c_uint, 1),
+                ("unk3", c_uint, 1),
+                ("u_ngrd6", c_uint, 1),
+                ("narrow", c_uint, 1),
+                ("u_ngrd7", c_uint, 1),
+                ("worn", c_uint, 1),
+                ("unk4", c_uint, 1),
+                ("u_ngrd8", c_uint, 1),
+                ("forbid", c_uint, 1),
+                ("unk5", c_uint, 1),
+                ("dump", c_uint, 1),
+                ("on_fire", c_uint, 1),
+                ("melt", c_uint, 1),
+                ("hidden", c_uint, 1),
+                ("u_ngrd9", c_uint, 1),
+                ("unk6", c_uint, 1),
+                ("unk7", c_uint, 1),
+                ("unk8", c_uint, 1),
+                ("unk9", c_uint, 1),
+                ("unk10", c_uint, 1),
+                ("unk11", c_uint, 1)]
+
+class ItemFlags(Union):
+    _fields_ = [("whole", c_uint, 32),
+                ("bits", ItemStruct)]
+
+    def __init__(self, initial = 0):
+        self.whole = initial
 
 dig_types = { "no" : 0,
               "default" : 1,
@@ -242,182 +221,3 @@ traffic_types = { "normal" : 0,
                   "low" : 1,
                   "high" : 2,
                   "restricted" : 3 }
-
-class DesignationFlags(_UnionBase):
-    def dig(self, dig_type):
-        if dig_type == "no":
-            self.dig_1 = False; self.dig_2 = False; self.dig_3 = False
-        elif dig_type == "default":
-            self.dig_1 = True; self.dig_2 = False; self.dig_3 = False
-        elif dig_type == "ud_stair":
-            self.dig_1 = False; self.dig_2 = True; self.dig_3 = False
-        elif dig_type == "channel":
-            self.dig_1 = True; self.dig_2 = True; self.dig_3 = False
-        elif dig_type == "ramp":
-            self.dig_1 = False; self.dig_2 = False; self.dig_3 = True
-        elif dig_type == "d_stair":
-            self.dig_1 = True; self.dig_2 = False; self.dig_3 = True
-        elif dig_type == "u_stair":
-            self.dig_1 = False; self.dig_2 = True; self.dig_3 = True
-        elif dig_type == "whatever":
-            self.dig_1 = True; self.dig_2 = True; self.dig_3 = True
-
-    def set_traffic(self, traffic_type):
-        if traffic_type == "normal":
-            self.traffic_1 = False; self.traffic_2 = False
-        elif traffic_type == "low":
-            self.traffic_1 = True; self.traffic_2 = False
-        elif traffic_type == "high":
-            self.traffic_1 = False; self.traffic_2 = True
-        elif traffic_type == "restricted":
-            self.traffic_1 = True; self.traffic_2 = True
-    
-    flow_size_1 = property(fget = lambda self: self._get_mask_bit(0),
-                          fset = lambda self, val: self._set_mask_bit(0, val))
-    flow_size_2 = property(fget = lambda self: self._get_mask_bit(1),
-                    fset = lambda self, val: self._set_mask_bit(1, val))
-    flow_size_3 = property(fget = lambda self: self._get_mask_bit(2),
-                        fset = lambda self, val: self._set_mask_bit(2, val))
-    pile = property(fget = lambda self: self._get_mask_bit(3),
-                        fset = lambda self, val: self._set_mask_bit(3, val))
-    
-    dig_1 = property(fget = lambda self: self._get_mask_bit(4),
-                        fset = lambda self, val: self._set_mask_bit(4, val))
-    dig_2 = property(fget = lambda self: self._get_mask_bit(5),
-                        fset = lambda self, val: self._set_mask_bit(5, val))
-    dig_3 = property(fget = lambda self: self._get_mask_bit(6),
-                        fset = lambda self, val: self._set_mask_bit(6, val))
-    smooth_1 = property(fget = lambda self: self._get_mask_bit(7),
-                      fset = lambda self, val: self._set_mask_bit(7, val))
-    
-    smooth_2 = property(fget = lambda self: self._get_mask_bit(8),
-                    fset = lambda self, val: self._set_mask_bit(8, val))
-    hidden = property(fget = lambda self: self._get_mask_bit(9),
-                      fset = lambda self, val: self._set_mask_bit(9, val))
-    geolayer_index_1 = property(fget = lambda self: self._get_mask_bit(10),
-                     fset = lambda self, val: self._set_mask_bit(10, val))
-    geolayer_index_2 = property(fget = lambda self: self._get_mask_bit(11),
-                        fset = lambda self, val: self._set_mask_bit(11, val))
-    
-    geolayer_index_3 = property(fget = lambda self: self._get_mask_bit(12),
-                        fset = lambda self, val: self._set_mask_bit(12, val))    
-    geolayer_index_4 = property(fget = lambda self: self._get_mask_bit(13),
-                      fset = lambda self: self._set_mask_bit(13, val))
-    light = property(fget = lambda self: self._get_mask_bit(14),
-                        fset = lambda self, val: self._set_mask_bit(14, val))
-    subterranean = property(fget = lambda self: self._get_mask_bit(15),
-                        fset = lambda self, val: self._set_mask_bit(15, val))
-    
-    skyview = property(fget = lambda self: self._get_mask_bit(16),
-                         fset = lambda self, val: self._set_mask_bit(16, val))    
-    biome_1 = property(fget = lambda self: self._get_mask_bit(17),
-                          fset = lambda self, val: self._set_mask_bit(17, val))
-    biome_2 = property(fget = lambda self: self._get_mask_bit(18),
-                              fset = lambda self, val: self._set_mask_bit(18, val))
-    biome_3 = property(fget = lambda self: self._get_mask_bit(19),
-                                fset = lambda self, val: self._set_mask_bit(19, val))
-    
-    biome_4 = property(fget = lambda self: self._get_mask_bit(20),
-                              fset = lambda self, val: self._set_mask_bit(20, val))    
-    liquid_type = property(fget = lambda self: self._get_mask_bit(21),
-                      fset = lambda self, val: self._set_mask_bit(21, val))
-    water_table = property(fget = lambda self: self._get_mask_bit(22),
-                               fset = lambda self, val: self._set_mask_bit(22, val))
-    rained = property(fget = lambda self: self._get_mask_bit(23),
-                       fset = lambda self, val: self._set_mask_bit(23, val))
-    
-    traffic_1 = property(fget = lambda self: self._get_mask_bit(24),
-                           fset = lambda self, val: self._set_mask_bit(24, val))    
-    traffic_2 = property(fget = lambda self: self._get_mask_bit(25),
-                      fset = lambda self, val: self._set_mask_bit(25, val))
-    flow_forbid = property(fget = lambda self: self._get_mask_bit(26),
-                     fset = lambda self, val: self._set_mask_bit(26, val))
-    liquid_static = property(fget = lambda self: self._get_mask_bit(27),
-                    fset = lambda self, val: self._set_mask_bit(27, val))
-    
-    moss = property(fget = lambda self: self._get_mask_bit(28),
-                       fset = lambda self, val: self._set_mask_bit(28, val))    
-    feature_present = property(fget = lambda self: self._get_mask_bit(29),
-                           fset = lambda self, val: self._set_mask_bit(29, val))
-    liquid_character_1 = property(fget = lambda self: self._get_mask_bit(30),
-                              fset = lambda self, val: self._set_mask_bit(30, val))
-    liquid_character_2 = property(fget = lambda self: self._get_mask_bit(31),
-                              fset = lambda self, val: self._set_mask_bit(31, val))
-
-class OccupancyFlags(_UnionBase):
-    def set_splatter(self, state):
-        if state:
-            self.whole &= 0xFFFFFFC0
-        else:
-            self.whole &= ~0xFFFFFFC0
-    building_1 = property(fget = lambda self: self._get_mask_bit(0),
-                          fset = lambda self, val: self._set_mask_bit(0, val))
-    building_2 = property(fget = lambda self: self._get_mask_bit(1),
-                    fset = lambda self, val: self._set_mask_bit(1, val))
-    building_3 = property(fget = lambda self: self._get_mask_bit(2),
-                        fset = lambda self, val: self._set_mask_bit(2, val))
-    unit = property(fget = lambda self: self._get_mask_bit(3),
-                        fset = lambda self, val: self._set_mask_bit(3, val))
-    
-    unit_grounded = property(fget = lambda self: self._get_mask_bit(4),
-                        fset = lambda self, val: self._set_mask_bit(4, val))
-    item = property(fget = lambda self: self._get_mask_bit(5),
-                        fset = lambda self, val: self._set_mask_bit(5, val))
-    mud = property(fget = lambda self: self._get_mask_bit(6),
-                        fset = lambda self, val: self._set_mask_bit(6, val))
-    vomit = property(fget = lambda self: self._get_mask_bit(7),
-                      fset = lambda self, val: self._set_mask_bit(7, val))
-    
-    broken_arrows_color_1 = property(fget = lambda self: self._get_mask_bit(8),
-                    fset = lambda self, val: self._set_mask_bit(8, val))
-    broken_arrows_color_2 = property(fget = lambda self: self._get_mask_bit(9),
-                     fset = lambda self, val: self._set_mask_bit(9, val))
-    broken_arrows_color_3 = property(fget = lambda self: self._get_mask_bit(10),
-                        fset = lambda self, val: self._set_mask_bit(10, val))
-    broken_arrows_color_4 = property(fget = lambda self: self._get_mask_bit(11),
-                        fset = lambda self, val: self._set_mask_bit(11, val))
-    
-    blood_g = property(fget = lambda self: self._get_mask_bit(12),
-                      fset = lambda self: self._set_mask_bit(12, val))
-    blood_g2 = property(fget = lambda self: self._get_mask_bit(13),
-                        fset = lambda self, val: self._set_mask_bit(13, val))
-    blood_b = property(fget = lambda self: self._get_mask_bit(14),
-                        fset = lambda self, val: self._set_mask_bit(14, val))
-    blood_b2 = property(fget = lambda self: self._get_mask_bit(15),
-                         fset = lambda self, val: self._set_mask_bit(15, val))
-    
-    blood_y = property(fget = lambda self: self._get_mask_bit(16),
-                          fset = lambda self, val: self._set_mask_bit(16, val))
-    blood_y2 = property(fget = lambda self: self._get_mask_bit(17),
-                              fset = lambda self, val: self._set_mask_bit(17, val))
-    blood_m = property(fget = lambda self: self._get_mask_bit(18),
-                                fset = lambda self, val: self._set_mask_bit(18, val))
-    blood_m2 = property(fget = lambda self: self._get_mask_bit(19),
-                              fset = lambda self, val: self._set_mask_bit(19, val))
-    
-    blood_c = property(fget = lambda self: self._get_mask_bit(20),
-                      fset = lambda self, val: self._set_mask_bit(20, val))
-    blood_c2 = property(fget = lambda self: self._get_mask_bit(21),
-                               fset = lambda self, val: self._set_mask_bit(21, val))
-    blood_w = property(fget = lambda self: self._get_mask_bit(22),
-                       fset = lambda self, val: self._set_mask_bit(22, val))
-    blood_w2 = property(fget = lambda self: self._get_mask_bit(23),
-                           fset = lambda self, val: self._set_mask_bit(23, val))
-    
-    blood_o = property(fget = lambda self: self._get_mask_bit(24),
-                      fset = lambda self, val: self._set_mask_bit(24, val))
-    blood_o2 = property(fget = lambda self: self._get_mask_bit(25),
-                     fset = lambda self, val: self._set_mask_bit(25, val))
-    slime = property(fget = lambda self: self._get_mask_bit(26),
-                    fset = lambda self, val: self._set_mask_bit(26, val))
-    slime2 = property(fget = lambda self: self._get_mask_bit(27),
-                       fset = lambda self, val: self._set_mask_bit(27, val))
-    
-    blood = property(fget = lambda self: self._get_mask_bit(28),
-                           fset = lambda self, val: self._set_mask_bit(28, val))
-    blood2 = property(fget = lambda self: self._get_mask_bit(29),
-                              fset = lambda self, val: self._set_mask_bit(29, val))
-    broken_arrows_variant = property(fget = lambda self: self._get_mask_bit(30),
-                              fset = lambda self, val: self._set_mask_bit(30, val))
-    snow = property(fget = lambda self: self._get_mask_bit(31),
-                                          fset = lambda self, val: self._set_mask_bit(31, val))

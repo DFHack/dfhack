@@ -125,6 +125,8 @@ static PyObject* DF_API_getIsSuspended(DF_API* self, void* closure)
     Py_RETURN_FALSE;
 }
 
+/*
+
 static PyObject* DF_API_getIsPaused(DF_API* self, void* closure)
 {
     try
@@ -335,17 +337,19 @@ static PyObject* DF_API_getWindowSize(DF_API* self, void* closure)
 	Py_RETURN_NONE;
 }
 
+*/
+
 static PyGetSetDef DF_API_getterSetters[] =
 {
     {"is_attached", (getter)DF_API_getIsAttached, NULL, "is_attached", NULL},
     {"is_suspended", (getter)DF_API_getIsSuspended, NULL, "is_suspended", NULL},
-    {"is_paused", (getter)DF_API_getIsPaused, NULL, "is_paused", NULL},
+    /*{"is_paused", (getter)DF_API_getIsPaused, NULL, "is_paused", NULL},
     {"menu_state", (getter)DF_API_getMenuState, NULL, "menu_state", NULL},
     {"view_coords", (getter)DF_API_getViewCoords, (setter)DF_API_setViewCoords, "view_coords", NULL},
 	{"map_size", (getter)DF_API_getSize, NULL, "max_size", NULL},
 	{"cursor_coords", (getter)DF_API_getCursorCoords, (setter)DF_API_setCursorCoords, "cursor_coords", NULL},
 	{"current_cursor_creature", (getter)DF_API_getCurrentCursorCreature, NULL, "current_cursor_creature", NULL},
-	{"window_size", (getter)DF_API_getWindowSize, NULL, "window_size", NULL},
+	{"window_size", (getter)DF_API_getWindowSize, NULL, "window_size", NULL},*/
     {NULL}  // Sentinel
 };
 
@@ -436,6 +440,8 @@ static PyObject* DF_API_ForceResume(DF_API* self)
     
     Py_RETURN_FALSE;
 }
+
+/*
 
 static PyObject* DF_API_InitMap(DF_API* self)
 {
@@ -1183,6 +1189,8 @@ static PyObject* DF_API_InitViewAndCursor(DF_API* self, PyObject* args)
 	}
 }
 
+*/
+
 static PyMethodDef DF_API_methods[] =
 {
     {"Attach", (PyCFunction)DF_API_Attach, METH_NOARGS, "Attach to the DF process"},
@@ -1191,7 +1199,7 @@ static PyMethodDef DF_API_methods[] =
     {"Resume", (PyCFunction)DF_API_Resume, METH_NOARGS, "Resume the DF process"},
     {"Async_Suspend", (PyCFunction)DF_API_AsyncSuspend, METH_NOARGS, "Asynchronously suspend the DF process"},
     {"Force_Resume", (PyCFunction)DF_API_ForceResume, METH_NOARGS, "Force the DF process to resume"},
-    {"Init_Map", (PyCFunction)DF_API_InitMap, METH_NOARGS, "Initialize the DFHack map reader"},
+    /*{"Init_Map", (PyCFunction)DF_API_InitMap, METH_NOARGS, "Initialize the DFHack map reader"},
     {"Destroy_Map", (PyCFunction)DF_API_DestroyMap, METH_NOARGS, "Shut down the DFHack map reader"},
     {"Init_Read_Constructions", (PyCFunction)DF_API_InitReadConstructions, METH_NOARGS, "Initialize construction reader"},
     {"Finish_Read_Constructions", (PyCFunction)DF_API_FinishReadConstructions, METH_NOARGS, "Shut down construction reader"},
@@ -1224,7 +1232,7 @@ static PyMethodDef DF_API_methods[] =
 	{"Read_Metal_Matgloss", (PyCFunction)DF_API_ReadMetalMatgloss, METH_NOARGS, ""},
 	{"Read_Plant_Matgloss", (PyCFunction)DF_API_ReadPlantMatgloss, METH_NOARGS, ""},
 	{"Read_Creature_Matgloss", (PyCFunction)DF_API_ReadCreatureMatgloss, METH_NOARGS, ""},
-	{"Init_View_And_Cursor", (PyCFunction)DF_API_InitViewAndCursor, METH_NOARGS, ""},
+	{"Init_View_And_Cursor", (PyCFunction)DF_API_InitViewAndCursor, METH_NOARGS, ""},*/
     {NULL}  // Sentinel
 };
 

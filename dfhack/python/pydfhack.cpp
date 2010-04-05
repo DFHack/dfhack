@@ -64,11 +64,16 @@ PyMODINIT_FUNC initpydfhack(void)
 	if(PyType_Ready(&DF_MemInfo_type) < 0)
 		return;
 	
+	if(PyType_Ready(&DF_Position_type) < 0)
+		return;
+	
 	module = Py_InitModule3("pydfhack", module_methods, "pydfhack extension module");
 	
 	Py_INCREF(&DF_API_type);
 	Py_INCREF(&DF_MemInfo_type);
+	Py_INCREF(&DF_Position_type);
 	
 	PyModule_AddObject(module, "API", (PyObject*)&DF_API_type);
 	PyModule_AddObject(module, "MemInfo", (PyObject*)&DF_MemInfo_type);
+	PyModule_AddObject(module, "Position", (PyObject*)&DF_Position_type);
 }

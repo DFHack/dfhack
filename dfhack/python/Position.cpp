@@ -26,7 +26,7 @@ distribution.
 #define __DFPOSITION__
 
 #include "Python.h"
-#include "Position.h"
+#include "modules/Position.h"
 
 using namespace DFHack;
 
@@ -55,7 +55,7 @@ static int DF_Position_init(DF_Position* self, PyObject* args, PyObject* kwds)
 	return 0;
 }
 
-static void DF_Position_dealloc(DF_API* self)
+static void DF_Position_dealloc(DF_Position* self)
 {
 	if(self != NULL)
 	{
@@ -78,7 +78,7 @@ static PyObject* DF_Position_getViewCoords(DF_Position* self, void* closure)
 	
 	if(self->pos_Ptr != NULL)
 	{
-		if(self->pos_Ptr->getViewCoords(&x, &y, &z))
+		if(self->pos_Ptr->getViewCoords(x, y, z))
 			return Py_BuildValue("iii", x, y, z);
 	}
 	
@@ -109,7 +109,7 @@ static PyObject* DF_Position_getCursorCoords(DF_Position* self, void* closure)
 	
 	if(self->pos_Ptr != NULL)
 	{
-		if(self->pos_Ptr->getCursorCoords(&x, &y, &z))
+		if(self->pos_Ptr->getCursorCoords(x, y, z))
 			return Py_BuildValue("iii", x, y, z);
 	}
 	
@@ -136,12 +136,12 @@ static PyObject* DF_Position_setCursorCoords(DF_Position* self, PyObject* args)
 
 static PyObject* DF_Position_getWindowSize(DF_Position* self, void* closure)
 {
-	int32_t x, y, z;
+	int32_t x, y;
 	
 	if(self->pos_Ptr != NULL)
 	{
-		if(self->pos_Ptr->getWindowSize(&x, &y, &z))
-			return Py_BuildValue("iii", x, y, z);
+		if(self->pos_Ptr->getWindowSize(x, y))
+			return Py_BuildValue("ii", x, y);
 	}
 	
 	Py_RETURN_NONE;

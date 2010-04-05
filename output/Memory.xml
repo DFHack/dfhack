@@ -2899,8 +2899,7 @@
         <Offset name="v_vein">0x08</Offset>
         <Offset name="type">0x009A</Offset>
         <Offset name="designation">0x029C</Offset>
-        
-        <!--<Offset name="occupancy">0x069c</Offset>-->
+        <!--<Offset name="occupancy">0x069c</Offset> seems unused, no watch hits--> 
         <Offset name="biome_stuffs">0x1D9C</Offset>
         <!--
 map_data_map_x_offset         0x0058
@@ -2917,11 +2916,6 @@ map_data_temperature2_offset  0x179c
 map_data_1960_offset          0x199c
 map_data_1b60_offset          0x1B9c
 -->
-        <!--
-        No idea if those are still relevant. I'll assume NO
-        
-        
-        -->
         
         * map size in blocks *
         <Address name="x_count_block">0x016ad738</Address>

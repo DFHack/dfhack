@@ -486,7 +486,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     // iterate over 8 surrounding regions + local region
     for (int i = eNorthWest; i < eBiomeCount; i++)
     {
-        // check bounds, fix them if needed
+        // check against worldmap boundaries, fix if needed
         int bioRX = regionX / 16 + (i % 3) - 1;
         if (bioRX < 0) bioRX = 0;
         if (bioRX >= worldSizeX) bioRX = worldSizeX - 1;
@@ -494,6 +494,8 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
         if (bioRY < 0) bioRY = 0;
         if (bioRY >= worldSizeY) bioRY = worldSizeY - 1;
 
+        /// regions are a 2d array. consists of pointers to arrays of regions
+        /// regions are of region_size size
         // get pointer to column of regions
         uint32_t geoX;
         g_pProcess->readDWord (regions + bioRX*4, geoX);
@@ -502,15 +504,18 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
         uint16_t geoindex;
         g_pProcess->readWord (geoX + bioRY*region_size + region_geo_index_offset, geoindex);
 
+        /// geology blocks are assigned to regions from a vector
         // get the geoblock from the geoblock vector using the geoindex
         // read the matgloss pointer from the vector into temp
         uint32_t geoblock_off = * (uint32_t *) geoblocks[geoindex];
 
+        /// geology blocks have a vector of layer descriptors
         // get the vector with pointer to layers
         DfVector geolayers (d->d->p, geoblock_off + geolayer_geoblock_offset , 4); // let's hope
         // make sure we don't load crap
         assert (geolayers.getSize() > 0 && geolayers.getSize() <= 16);
 
+        /// layer descriptor has a field that determines the type of stone/soil
         d->v_geology[i].reserve (geolayers.getSize());
         // finally, read the layer matgloss
         for (uint32_t j = 0;j < geolayers.getSize();j++)
@@ -523,7 +528,6 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     }
     assign.clear();
     assign.reserve (eBiomeCount);
-//     // TODO: clean this up
     for (int i = 0; i < eBiomeCount;i++)
     {
         assign.push_back (d->v_geology[i]);

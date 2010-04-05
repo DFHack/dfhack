@@ -45,13 +45,15 @@ namespace DFHack
     public:
         APIPrivate();
         ~APIPrivate();
+        
+        // names, used by a few other modules.
         void readName(t_name & name, uint32_t address);
         // get the name offsets
         bool InitReadNames();
-        
         uint32_t name_firstname_offset;
         uint32_t name_nickname_offset;
         uint32_t name_words_offset;
+        bool namesInited;
         
         ProcessEnumerator* pm;
         Process* p;
@@ -92,7 +94,6 @@ namespace DFHack
         
         bool itemsInited;
         bool notesInited;
-        bool namesInited;
         bool hotkeyInited;
         bool settlementsInited;
         bool nameTablesInited;

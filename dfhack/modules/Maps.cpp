@@ -54,7 +54,7 @@ struct Maps::Private
     bool Inited;
     bool Started;
     //uint32_t biome_stuffs;
-    //vector<uint16_t> v_geology[eBiomeCount];
+    vector<uint16_t> v_geology[eBiomeCount];
 };
 
 Maps::Maps(APIPrivate* _d)
@@ -73,7 +73,7 @@ Maps::Maps(APIPrivate* _d)
     off.z_count_offset = mem->getAddress ("z_count_block");
     off.tile_type_offset = mem->getOffset ("type");
     off.designation_offset = mem->getOffset ("designation");
-    //d->biome_stuffs = d->offset_descriptor->getOffset ("biome_stuffs");
+    off.biome_stuffs = mem->getOffset ("biome_stuffs");
     off.veinvector = mem->getOffset ("v_vein");
     
     // these can fail and will be found when looking at the actual veins later
@@ -312,18 +312,18 @@ bool Maps::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, designations40
 // FIXME: this is bad. determine the real size!
 //16 of them? IDK... there's probably just 7. Reading more doesn't cause errors as it's an array nested inside a block
 // 16 * sizeof(uint8_t)
-/*
+
 bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices40d *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->read (addr + d->biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer);
+        g_pProcess->read (addr + d->offsets.biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer);
         return true;
     }
     return false;
 }
-*/
+
 
 // veins of a block, expects empty vein vectors
 bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins, vector <t_frozenliquidvein>& ices)
@@ -391,22 +391,79 @@ void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z)
 }
 
 /*
-//vector<uint16_t> v_geology[eBiomeCount];
-bool API::ReadGeology (vector < vector <uint16_t> >& assign)
+__int16 __userpurge GetGeologicalRegion<ax>(__int16 block_X<cx>, int X<ebx>, __int16 block_Y<di>, int block_addr<esi>, int Y)
 {
-    memory_info * minfo = d->offset_descriptor;
+  char bio_off; // al@1
+  int tile_designation; // ecx@1
+  __int64 corrected_x; // qax@1
+  __int64 corrected_y; // qax@1
+  int difY; // eax@9
+  int difX; // edx@9
+  signed __int64 bio_off_2; // qax@9
+  signed __int64 bio_off_2_; // qtt@9
+  __int16 result; // ax@23
+
+  corrected_x = reg_off_x + (block_X + (signed int)*(_WORD *)(block_addr + 0x90)) / 48;
+  *(_WORD *)X = ((BYTE4(corrected_x) & 0xF) + (_DWORD)corrected_x) >> 4;
+  corrected_y = reg_off_y + (block_Y + (signed int)*(_WORD *)(block_addr + 0x92)) / 48;
+  *(_WORD *)Y = ((BYTE4(corrected_y) & 0xF) + (_DWORD)corrected_y) >> 4;
+  tile_designation = *(_DWORD *)(block_addr + 4 * (block_Y + 16 * block_X) + 0x29C);
+  bio_off = 0;
+  if ( tile_designation & 0x20000 )
+    bio_off = 1;
+  if ( tile_designation & 0x40000 )
+    bio_off |= 2u;
+  if ( tile_designation & 0x80000 )
+    bio_off |= 4u;
+  if ( tile_designation & 0x100000 )
+    bio_off |= 8u;
+  bio_off_2 = *(_BYTE *)(bio_off + block_addr + 0x1D9C);
+  bio_off_2_ = bio_off_2;
+  difY = bio_off_2 / 3;
+  difX = bio_off_2_ % 3;
+  if ( !difX )
+    --*(_WORD *)X;
+  if ( difX == 2 )
+    ++*(_WORD *)X;
+  if ( !difY )
+    --*(_WORD *)Y;
+  if ( difY == 2 )
+    ++*(_WORD *)Y;
+  if ( *(_WORD *)X < 0 )
+    *(_WORD *)X = 0;
+  if ( *(_WORD *)Y < 0 )
+    *(_WORD *)Y = 0;
+  if ( *(_WORD *)X >= (_WORD)World_size )
+    *(_WORD *)X = World_size - 1;
+  result = HIWORD(World_size);
+  if ( *(_WORD *)Y >= HIWORD(World_size) )
+  {
+    result = HIWORD(World_size) - 1;
+    *(_WORD *)Y = HIWORD(World_size) - 1;
+  }
+  return result;
+}
+*/
+
+//vector<uint16_t> v_geology[eBiomeCount];
+bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
+{
+    memory_info * minfo = d->d->offset_descriptor;
     // get needed addresses and offsets. Now this is what I call crazy.
     int region_x_offset = minfo->getAddress ("region_x");
     int region_y_offset = minfo->getAddress ("region_y");
     int region_z_offset =  minfo->getAddress ("region_z");
-    int world_offset =  minfo->getAddress ("world");
-    int world_regions_offset =  minfo->getOffset ("w_regions_arr");
+/*    <Address name="geoblock_vector">0x16AF52C</Address>
+    <Address name="ptr2_region_array">0x16AF574</Address>*/
+    int world_regions =  minfo->getAddress ("ptr2_region_array");
     int region_size =  minfo->getHexValue ("region_size");
     int region_geo_index_offset =  minfo->getOffset ("region_geo_index_off");
-    int world_geoblocks_offset =  minfo->getOffset ("w_geoblocks");
-    int world_size_x = minfo->getOffset ("world_size_x");
-    int world_size_y = minfo->getOffset ("world_size_y");
+    int world_geoblocks_vector =  minfo->getAddress ("geoblock_vector");
+    int world_size_x = minfo->getAddress ("world_size_x");
+    int world_size_y = minfo->getAddress ("world_size_y");
     int geolayer_geoblock_offset = minfo->getOffset ("geolayer_geoblock_offset");
+    
+    int type_inside_geolayer = minfo->getOffset ("type_inside_geolayer");
 
     uint32_t regionX, regionY, regionZ;
     uint16_t worldSizeX, worldSizeY;
@@ -417,14 +474,14 @@ bool API::ReadGeology (vector < vector <uint16_t> >& assign)
     g_pProcess->readDWord (region_z_offset, regionZ);
 
     // get world size
-    g_pProcess->readWord (world_offset + world_size_x, worldSizeX);
-    g_pProcess->readWord (world_offset + world_size_y, worldSizeY);
+    g_pProcess->readWord (world_size_x, worldSizeX);
+    g_pProcess->readWord (world_size_y, worldSizeY);
 
     // get pointer to first part of 2d array of regions
-    uint32_t regions = g_pProcess->readDWord (world_offset + world_regions_offset);
+    uint32_t regions = g_pProcess->readDWord (world_regions);
 
     // read the geoblock vector
-    DfVector geoblocks (d->p, world_offset + world_geoblocks_offset, 4);
+    DfVector geoblocks (d->d->p, world_geoblocks_vector, 4);
 
     // iterate over 8 surrounding regions + local region
     for (int i = eNorthWest; i < eBiomeCount; i++)
@@ -450,7 +507,7 @@ bool API::ReadGeology (vector < vector <uint16_t> >& assign)
         uint32_t geoblock_off = * (uint32_t *) geoblocks[geoindex];
 
         // get the vector with pointer to layers
-        DfVector geolayers (d->p, geoblock_off + geolayer_geoblock_offset , 4); // let's hope
+        DfVector geolayers (d->d->p, geoblock_off + geolayer_geoblock_offset , 4); // let's hope
         // make sure we don't load crap
         assert (geolayers.getSize() > 0 && geolayers.getSize() <= 16);
 
@@ -461,7 +518,7 @@ bool API::ReadGeology (vector < vector <uint16_t> >& assign)
             // read pointer to a layer
             uint32_t geol_offset = * (uint32_t *) geolayers[j];
             // read word at pointer + 2, store in our geology vectors
-            d->v_geology[i].push_back (g_pProcess->readWord (geol_offset + 2));
+            d->v_geology[i].push_back (g_pProcess->readWord (geol_offset + type_inside_geolayer));
         }
     }
     assign.clear();
@@ -473,4 +530,3 @@ bool API::ReadGeology (vector < vector <uint16_t> >& assign)
     }
     return true;
 }
-*/

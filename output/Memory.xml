@@ -2899,10 +2899,28 @@
         <Offset name="v_vein">0x08</Offset>
         <Offset name="type">0x009A</Offset>
         <Offset name="designation">0x029C</Offset>
+        
+        <!--<Offset name="occupancy">0x069c</Offset>-->
+        <Offset name="biome_stuffs">0x1D9C</Offset>
+        <!--
+map_data_map_x_offset         0x0058
+map_data_map_y_offset         0x005A
+map_data_type_offset          0x009a
+map_data_designation_offset   0x029c
+map_data_occupancy_offset     0x069c
+map_data_0a60_offset          0x0A9c
+map_data_pathfinding_offset   0x0D9c
+map_data_1160_offset          0x119c
+map_data_1360_offset          0x139c
+map_data_temperature1_offset  0x159c
+map_data_temperature2_offset  0x179c
+map_data_1960_offset          0x199c
+map_data_1b60_offset          0x1B9c
+-->
         <!--
         No idea if those are still relevant. I'll assume NO
-        <Offset name="occupancy">0x0684</Offset>
-        <Offset name="biome_stuffs">0x1D84</Offset>
+        
+        
         -->
         
         * map size in blocks *
@@ -2919,7 +2937,27 @@
         <Address name="region_x">0x016ad750</Address>
         <Address name="region_y">0x016ad754</Address>
         <Address name="region_z">0x016ad758</Address>
-
+        
+        * World size * (WORDs)
+        <Address name="world_size_x">0x016AEDD4</Address>
+        <Address name="world_size_y">0x016AEDD6</Address>
+        
+        <Address name="geoblock_vector">0x16AF52C</Address>
+        <Address name="ptr2_region_array">0x16AF574</Address>
+        
+        <!--
+        <Offset name="world_size_x">0x84</Offset>
+        <Offset name="world_size_y">0x86</Offset>
+        <Offset name="w_geoblocks">0x75C</Offset> vector
+        <Offset name="w_regions_arr">0x79C</Offset>
+        -->
+        <!-- values for the region structure -->
+        <HexValue name="region_size">0x64</HexValue>
+        <Offset name="region_geo_index_off">0x60</Offset>
+        <!-- geoblock offset(s?) -->
+        <Offset name="geolayer_geoblock_offset">0x4</Offset> vector
+        <Offset name="type_inside_geolayer">0x4</Offset> vector
+        
         Name struct
         ===========
         <Offset name="name_firstname">0x0</Offset>

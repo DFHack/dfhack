@@ -96,9 +96,9 @@ int main (int argc, const char* argv[])
         #endif
         return 1; 
     }
-    /*
+    
     // get region geology
-    if(!DF.ReadGeology( layerassign ))
+    if(!Maps->ReadGeology( layerassign ))
     {
         cerr << "Can't get region geology." << endl;
         #ifndef LINUX_BUILD
@@ -106,7 +106,7 @@ int main (int argc, const char* argv[])
         #endif
         return 1; 
     }
-    */
+    
     int16_t tempvein [16][16];
     vector <DFHack::t_vein> veins;
     vector <DFHack::t_frozenliquidvein> iceveins;
@@ -129,10 +129,10 @@ int main (int argc, const char* argv[])
                 memset(tempvein, -1, sizeof(tempvein));
                 veins.clear();
                 Maps->ReadVeins(x,y,z,veins,iceveins);
-                /*
+                
                 if(showbaselayers)
                 {
-                    DF.ReadRegionOffsets(x,y,z, &regionoffsets);
+                    Maps->ReadRegionOffsets(x,y,z, &regionoffsets);
                     // get the layer materials
                     for(uint32_t xx = 0;xx<16;xx++)
                     {
@@ -153,7 +153,7 @@ int main (int argc, const char* argv[])
                         }
                     }
                 }
-                */
+                
                 // for each vein
                 for(int i = 0; i < (int)veins.size();i++)
                 {

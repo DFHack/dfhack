@@ -30,6 +30,25 @@ distribution.
 #define PyMODINIT_FUNC void
 #endif
 
+extern "C"
+{
+void ReadRaw(DF_API* self, const uint32_t offset, const uint32_t size, uint8_t* target)
+{
+	if(self != NULL && self->api_Ptr != NULL)
+	{
+		self->api_Ptr->ReadRaw(offset, size, target);
+	}
+}
+
+void WriteRaw(DF_API* self, const uint32_t offset, const uint32_t size, uint8_t* source)
+{
+	if(self != NULL && self->api_Ptr != NULL)
+	{
+		self->api_Ptr->WriteRaw(offset, size, source);
+	}
+}
+}
+
 static PyMethodDef module_methods[] = 
 {
 	{NULL}		//Sentinel

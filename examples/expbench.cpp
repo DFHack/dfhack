@@ -11,6 +11,7 @@ using namespace std;
 
 #include <DFTypes.h>
 #include <DFHackAPI.h>
+#include <modules/Maps.h>
 
 void print_progress (int current, int total)
 {
@@ -48,11 +49,12 @@ int main (int numargs, char** args)
     uint32_t num_blocks = 0;
     uint64_t bytes_read = 0;
     DFHack::mapblock40d Block;
-    
+    DFHack::Maps *Maps = 0;
     DFHack::API DF("Memory.xml");
     try
     {
         DF.Attach();
+        Maps = DF.getMaps();
     }
     catch (exception& e)
     {
@@ -70,25 +72,25 @@ int main (int numargs, char** args)
     {
         print_progress (i, iterations);
         
-        if(!DF.InitMap())
+        if(!Maps->Start())
             break;
-        DF.getSize(x_max,y_max,z_max);
+        Maps->getSize(x_max,y_max,z_max);
         for(uint32_t x = 0; x< x_max;x++)
         {
             for(uint32_t y = 0; y< y_max;y++)
             {
                 for(uint32_t z = 0; z< z_max;z++)
                 {
-                    if(DF.isValidBlock(x,y,z))
+                    if(Maps->isValidBlock(x,y,z))
                     {
-                        DF.ReadBlock40d(x, y, z, &Block);
+                        Maps->ReadBlock40d(x, y, z, &Block);
                         num_blocks ++;
                         bytes_read += sizeof(DFHack::mapblock40d);
                     }
                 }
             }
         }
-        DF.DestroyMap();
+        Maps->Finish();
     }
     DF.Detach();
     time(&end);

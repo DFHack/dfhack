@@ -10,6 +10,8 @@ using namespace std;
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 #include <DFMemInfo.h>
+#include <modules/Materials.h>
+#include <modules/Creatures.h>
 
 template <typename T>
 void print_bits ( T val, std::ostream& out )
@@ -43,8 +45,8 @@ vector< vector <DFHack::t_itemType> > itemTypes;
 DFHack::memory_info *mem;
 vector< vector<string> > englishWords;
 vector< vector<string> > foreignWords;
-    
-likeType printLike(DFHack::t_like like, const matGlosses & mat,const vector< vector <DFHack::t_itemType> > & itemTypes)
+/*
+likeType printLike40d(DFHack::t_like like, const matGlosses & mat,const vector< vector <DFHack::t_itemType> > & itemTypes)
 { // The function in DF which prints out the likes is a monster, it is a huge switch statement with tons of options and calls a ton of other functions as well, 
     //so I am not going to try and put all the possibilites here, only the low hanging fruit, with stones and metals, as well as items,
     //you can easily find good canidates for military duty for instance
@@ -147,7 +149,7 @@ likeType printLike(DFHack::t_like like, const matGlosses & mat,const vector< vec
     }
     return(FAIL);
 }
-
+*/
 
 void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 {
@@ -163,13 +165,15 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout << ", nick name: " << creature.name.nickname;
             addendl = true;
         }
+        /*
         string transName = DF.TranslateName(creature.name,englishWords,foreignWords,false);
         if(!transName.empty())
         {
             cout << ", trans name: " << transName;
             addendl=true;
         }
-
+*/
+        /*
         cout << ", likes: ";
         for(uint32_t i = 0;i<creature.numLikes; i++)
         {
@@ -177,13 +181,15 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             {
                 cout << ", ";
             }
-        }   
+        } 
+        */  
         if(addendl)
         {
             cout << endl;
             addendl = false;
         }
         cout << "profession: " << mem->getProfession(creature.profession) << "(" << (int) creature.profession << ")";
+        /*
         if(creature.custom_profession[0])
         {
             cout << ", custom profession: " << creature.custom_profession;
@@ -192,16 +198,18 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         {
             cout << ", current job: " << mem->getJob(creature.current_job.jobId);
         }
+        */
         cout << endl;
-        cout << "happiness: " << creature.happiness << ", strength: " << creature.strength << ", agility: " 
-             << creature.agility << ", toughness: " << creature.toughness << ", money: " << creature.money << ", id: " << creature.id;
+        cout << "happiness: " << creature.happiness /*<< ", strength: " << creature.strength << ", agility: " 
+             << creature.agility << ", toughness: " << creature.toughness << ", money: " << creature.money*/ << ", id: " << creature.id;
+        /*
         if(creature.squad_leader_id != -1)
         {
             cout << ", squad_leader_id: " << creature.squad_leader_id;
         }
         if(creature.mood != -1){
             cout << ", mood: " << creature.mood << " ";
-        }
+        }*/
         cout << ", sex: ";
         if(creature.sex == 0)
         {
@@ -212,10 +220,11 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout <<"Male";
         }
         cout << endl;
-        
+        /*
         if(creature.pregnancy_timer > 0)
             cout << "gives birth in " << creature.pregnancy_timer/1200 << " days. ";
         cout << "Blood: " << creature.blood_current << "/" << creature.blood_max << " bleeding: " << creature.bleed_rate;
+        */
         cout << endl;
 
     /*
@@ -288,10 +297,12 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout << "from the underworld, ";
         }
         cout << endl;
-        if(creature.flags1.bits.had_mood && (creature.mood == -1 || creature.mood == 8 ) ){
+        /*
+        if(creature.flags1.bits.had_mood && (creature.mood == -1 || creature.mood == 8 ) )
+        {
             string artifact_name = DF.TranslateName(creature.artifact_name,englishWords,foreignWords,false);
             cout << "artifact: " << artifact_name << endl;
-        }
+        }*/
     cout << endl;
 }
 
@@ -312,8 +323,11 @@ int main (void)
         return 1;
     }
     
+    DFHack::Creatures * Creatures = DF.getCreatures();
+    DFHack::Materials * Materials = DF.getMaterials();
+    
     uint32_t numCreatures;
-    if(!DF.InitReadCreatures(numCreatures))
+    if(!Creatures->Start(numCreatures))
     {
         cerr << "Can't get creatures" << endl;
         #ifndef LINUX_BUILD
@@ -329,38 +343,40 @@ int main (void)
         #endif
         return 1;
     }
-        
+    /*
     DF.ReadItemTypes(itemTypes);
     DF.ReadPlantMatgloss(mat.plantMat);
     DF.ReadWoodMatgloss(mat.woodMat);
     DF.ReadStoneMatgloss(mat.stoneMat);
     DF.ReadMetalMatgloss(mat.metalMat);
     DF.ReadCreatureMatgloss(mat.creatureMat);
-    
+    */
     mem = DF.getMemoryInfo();
     // get stone matgloss mapping
-    if(!DF.ReadCreatureMatgloss(creaturestypes))
+    if(!Materials->ReadCreatureTypes(creaturestypes))
     {
         cerr << "Can't get the creature types." << endl;
         return 1; 
     }
-	
+	/*
     if(!DF.InitReadNameTables(englishWords,foreignWords))
     {
         cerr << "Can't get name tables" << endl;
         return 1;
     }
-    DF.InitViewAndCursor();
+    */
+    //DF.InitViewAndCursor();
     for(uint32_t i = 0; i < numCreatures; i++)
     {
         DFHack::t_creature temp;
-        DF.ReadCreature(i,temp);
-        if(string(creaturestypes[temp.type].id) == "DWARF")
+        Creatures->ReadCreature(i,temp);
+        //if(string(creaturestypes[temp.type].id) == "DWARF")
         {
             cout << "index " << i << " ";
             printCreature(DF,temp);
         }
     }
+    /*
     uint32_t currentIdx;
     DFHack::t_creature currentCreature;
     DF.getCurrentCursorCreature(currentIdx);
@@ -368,7 +384,8 @@ int main (void)
 
     DF.ReadCreature(currentIdx, currentCreature);
     printCreature(DF,currentCreature);
-    DF.FinishReadCreatures();
+    */
+    Creatures->Finish();
     DF.Detach();
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

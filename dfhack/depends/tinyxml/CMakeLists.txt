@@ -1,0 +1,1 @@
+ADD_LIBRARY(dfhack-tixml SHARED tinystr.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp)

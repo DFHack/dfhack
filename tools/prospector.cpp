@@ -13,11 +13,14 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <stdio.h>
 using namespace std;
 
 #include <DFTypes.h>
 #include <DFTileTypes.h>
 #include <DFHackAPI.h>
+#include <modules/Maps.h>
+#include <modules/Materials.h>
 
 int main (int argc, const char* argv[])
 {
@@ -68,8 +71,12 @@ int main (int argc, const char* argv[])
         return 1;
     }
     
+
+    DFHack::Maps * Maps = DF.getMaps();
+    DFHack::Materials * Mats = DF.getMaterials();
+    
     // init the map
-    if(!DF.InitMap())
+    if(!Maps->Start())
     {
         cerr << "Can't init map." << endl;
         #ifndef LINUX_BUILD
@@ -77,10 +84,10 @@ int main (int argc, const char* argv[])
         #endif
         return 1;
     }
-    DF.getSize(x_max,y_max,z_max);
+    Maps->getSize(x_max,y_max,z_max);
     
     // get stone matgloss mapping
-    if(!DF.ReadStoneMatgloss(stonetypes))
+    if(!Mats->ReadInorganicMaterials(stonetypes))
     {
         //DF.DestroyMap();
         cerr << "Can't get the materials." << endl;
@@ -91,7 +98,7 @@ int main (int argc, const char* argv[])
     }
     
     // get region geology
-    if(!DF.ReadGeology( layerassign ))
+    if(!Maps->ReadGeology( layerassign ))
     {
         cerr << "Can't get region geology." << endl;
         #ifndef LINUX_BUILD
@@ -103,6 +110,8 @@ int main (int argc, const char* argv[])
     int16_t tempvein [16][16];
     vector <DFHack::t_vein> veins;
     vector <DFHack::t_frozenliquidvein> iceveins;
+    uint32_t maximum_regionoffset = 0;
+    uint32_t num_overflows = 0;
     // walk the map!
     for(uint32_t x = 0; x< x_max;x++)
     {
@@ -110,28 +119,36 @@ int main (int argc, const char* argv[])
         {
             for(uint32_t z = 0; z< z_max;z++)
             {
-                if(!DF.isValidBlock(x,y,z))
+                if(!Maps->isValidBlock(x,y,z))
                     continue;
                 
                 // read data
-                DF.ReadTileTypes(x,y,z, &tiletypes);
-                DF.ReadDesignations(x,y,z, &designations);
+                Maps->ReadTileTypes(x,y,z, &tiletypes);
+                Maps->ReadDesignations(x,y,z, &designations);
                 
                 memset(tempvein, -1, sizeof(tempvein));
                 veins.clear();
-                DF.ReadVeins(x,y,z,veins,iceveins);
+                Maps->ReadVeins(x,y,z,veins,iceveins);
                 
                 if(showbaselayers)
                 {
-                    DF.ReadRegionOffsets(x,y,z, &regionoffsets);
+                    Maps->ReadRegionOffsets(x,y,z, &regionoffsets);
                     // get the layer materials
                     for(uint32_t xx = 0;xx<16;xx++)
                     {
                         for (uint32_t yy = 0; yy< 16;yy++)
                         {
+                            uint8_t test = designations[xx][yy].bits.biome;
+                            if(test > maximum_regionoffset)
+                                maximum_regionoffset = test;
+                            if( test >= sizeof(regionoffsets))
+                            {
+                                num_overflows++;
+                                continue;
+                            }
                             tempvein[xx][yy] =
                             layerassign
-                            [regionoffsets[designations[xx][yy].bits.biome]]
+                            [regionoffsets[test]]
                             [designations[xx][yy].bits.geolayer_index];
                         }
                     }
@@ -182,6 +199,14 @@ int main (int argc, const char* argv[])
         }
     }
     // print report
+    cout << "Maximal regionoffset seen: " << maximum_regionoffset << ".";
+    if(maximum_regionoffset >= sizeof(regionoffsets) )
+    {
+        cout << " This is above the regionoffsets array size!" << endl;
+        cout << "Number of overflows: " << num_overflows;
+    }
+    cout << endl;
+    
     map<int16_t, uint32_t>::iterator p;
     for(p = materials.begin(); p != materials.end(); p++)
     {

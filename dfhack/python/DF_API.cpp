@@ -30,6 +30,7 @@ distribution.
 #include "DFTypes.h"
 #include "DFHackAPI.h"
 #include "MemInfo.cpp"
+#include "Position.cpp"
 
 using namespace std;
 using namespace DFHack;
@@ -38,6 +39,7 @@ struct DF_API
 {
 	PyObject_HEAD
 	PyObject* mem_info;
+	PyObject* position;
 	DFHack::API* api_Ptr;
 };
 
@@ -62,6 +64,7 @@ static int DF_API_init(DF_API* self, PyObject* args, PyObject* kwds)
 	if(self->api_Ptr == NULL)
 	{
 		self->mem_info = NULL;
+		self->position = NULL;
 		
 		if(!PyArg_ParseTuple(args, "s", &memFileString))
 			return -1;
@@ -87,6 +90,7 @@ static void DF_API_dealloc(DF_API* self)
 		}
 		
 		Py_XDECREF(self->mem_info);
+		Py_XDECREF(self->position);
 		
 		self->ob_type->tp_free((PyObject*)self);
 	}
@@ -157,11 +161,41 @@ static PyObject* DF_API_getMemoryInfo(DF_API* self, void* closure)
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_API_getPosition(DF_API* self, void* closure)
+{
+	if(self->position != NULL)
+		return self->position;
+	
+	try
+	{
+		if(self->api_Ptr != NULL)
+		{
+			DFHack::Position* pos;
+			
+			pos = self->api_Ptr->getPosition();
+			
+			self->position = _PyObject_New(&DF_Position_type);
+			delete ((DF_Position*)(self->position))->pos_Ptr;
+			((DF_Position*)(self->position))->pos_Ptr = pos;
+			
+			return self->position;
+		}
+	}
+	catch(...)
+	{
+		PyErr_SetString(PyExc_ValueError, "Error trying to read position");
+		return NULL;
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyGetSetDef DF_API_getterSetters[] =
 {
     {"is_attached", (getter)DF_API_getIsAttached, NULL, "is_attached", NULL},
     {"is_suspended", (getter)DF_API_getIsSuspended, NULL, "is_suspended", NULL},
 	{"memory_info", (getter)DF_API_getMemoryInfo, NULL, "memory_info", NULL},
+	{"position", (getter)DF_API_getPosition, NULL, "position", NULL},
     {NULL}  // Sentinel
 };
 

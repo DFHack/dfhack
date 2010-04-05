@@ -23,7 +23,7 @@ distribution.
 */
 
 #include "Python.h"
-//#include "UnionBase.cpp"
+#include "MemInfo.cpp"
 #include "DF_API.cpp"
 
 #ifndef PyMODINIT_FUNC
@@ -47,7 +47,7 @@ void WriteRaw(DF_API* self, const uint32_t offset, const uint32_t size, uint8_t*
 		self->api_Ptr->WriteRaw(offset, size, source);
 	}
 }
-}
+};
 
 static PyMethodDef module_methods[] = 
 {
@@ -58,17 +58,17 @@ PyMODINIT_FUNC initpydfhack(void)
 {
 	PyObject* module;
 	
-	// if(PyType_Ready(&UnionBase_type) < 0)
-		// return;
-	
 	if(PyType_Ready(&DF_API_type) < 0)
+		return;
+	
+	if(PyType_Ready(&DF_MemInfo_type) < 0)
 		return;
 	
 	module = Py_InitModule3("pydfhack", module_methods, "pydfhack extension module");
 	
-	//Py_INCREF(&UnionBase_type);
 	Py_INCREF(&DF_API_type);
+	Py_INCREF(&DF_MemInfo_type);
 	
-	//PyModule_AddObject(module, "UnionBase", (PyObject*)&UnionBase_type);
 	PyModule_AddObject(module, "API", (PyObject*)&DF_API_type);
+	PyModule_AddObject(module, "MemInfo", (PyObject*)&DF_MemInfo_type);
 }

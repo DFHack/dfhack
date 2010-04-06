@@ -23,7 +23,7 @@ distribution.
 */
 
 #include "Python.h"
-#include "MemInfo.cpp"
+#include "DF_MemInfo.cpp"
 #include "DF_API.cpp"
 
 #ifndef PyMODINIT_FUNC

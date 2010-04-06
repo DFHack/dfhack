@@ -29,8 +29,8 @@ distribution.
 #include <string>
 #include "DFTypes.h"
 #include "DFHackAPI.h"
-#include "MemInfo.cpp"
-#include "Position.cpp"
+#include "DF_MemInfo.cpp"
+#include "DF_Position.cpp"
 
 using namespace std;
 using namespace DFHack;

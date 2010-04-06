@@ -31,6 +31,7 @@ distribution.
 #include "DFHackAPI.h"
 #include "DF_MemInfo.cpp"
 #include "DF_Position.cpp"
+#include "DF_Material.cpp"
 
 using namespace std;
 using namespace DFHack;
@@ -40,6 +41,7 @@ struct DF_API
 	PyObject_HEAD
 	PyObject* mem_info;
 	PyObject* position;
+	PyObject* material;
 	DFHack::API* api_Ptr;
 };
 
@@ -65,6 +67,7 @@ static int DF_API_init(DF_API* self, PyObject* args, PyObject* kwds)
 	{
 		self->mem_info = NULL;
 		self->position = NULL;
+		self->material = NULL;
 		
 		if(!PyArg_ParseTuple(args, "s", &memFileString))
 			return -1;
@@ -91,6 +94,7 @@ static void DF_API_dealloc(DF_API* self)
 		
 		Py_XDECREF(self->mem_info);
 		Py_XDECREF(self->position);
+		Py_XDECREF(self->material);
 		
 		self->ob_type->tp_free((PyObject*)self);
 	}
@@ -190,12 +194,42 @@ static PyObject* DF_API_getPosition(DF_API* self, void* closure)
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_API_getMaterial(DF_API* self, void* closure)
+{
+	if(self->material != NULL)
+		return self->material;
+	
+	try
+	{
+		if(self->api_Ptr != NULL)
+		{
+			DFHack::Materials* mat;
+			
+			mat = self->api_Ptr->getMaterials();
+			
+			self->material = _PyObject_New(&DF_Material_type);
+			delete ((DF_Material*)(self->material))->mat_Ptr;
+			((DF_Material*)(self->material))->mat_Ptr = mat;
+			
+			return self->material;
+		}
+	}
+	catch(...)
+	{
+		PyErr_SetString(PyExc_ValueError, "Error trying to read material");
+		return NULL;
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyGetSetDef DF_API_getterSetters[] =
 {
     {"is_attached", (getter)DF_API_getIsAttached, NULL, "is_attached", NULL},
     {"is_suspended", (getter)DF_API_getIsSuspended, NULL, "is_suspended", NULL},
 	{"memory_info", (getter)DF_API_getMemoryInfo, NULL, "memory_info", NULL},
 	{"position", (getter)DF_API_getPosition, NULL, "position", NULL},
+	{"material", (getter)DF_API_getMaterial, NULL, "material", NULL},
     {NULL}  // Sentinel
 };
 

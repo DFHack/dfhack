@@ -37,6 +37,7 @@ modules/Gui.cpp
 modules/Maps.cpp
 modules/Materials.cpp
 modules/Position.cpp
+modules/Translation.cpp
 )
 
 SET(PROJECT_HDRS_LINUX

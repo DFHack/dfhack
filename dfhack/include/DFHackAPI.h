@@ -154,14 +154,6 @@ namespace DFHack
         bool InitReadHotkeys( );
         bool ReadHotkeys(t_hotkey hotkeys[]);
         */
-        /*
-         * DF translation tables and name translation
-         */
-        /*
-        bool InitReadNameTables (std::vector< std::vector<std::string> > & translations , std::vector< std::vector<std::string> > & foreign_languages);
-        void FinishReadNameTables();
-        std::string TranslateName(const t_name & name,const std::vector< std::vector<std::string> > & translations ,const std::vector< std::vector<std::string> > & foreign_languages, bool inEnglish=true);
-        */
         
         /*
          * Item reading

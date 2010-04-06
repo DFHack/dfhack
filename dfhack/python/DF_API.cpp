@@ -145,15 +145,15 @@ static PyObject* DF_API_getMemoryInfo(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			DFHack::memory_info* mem;
-			
-			mem = self->api_Ptr->getMemoryInfo();
-			
 			self->mem_info = _PyObject_New(&DF_MemInfo_type);
-			delete ((DF_MemInfo*)(self->mem_info))->mem_Ptr;
-			((DF_MemInfo*)(self->mem_info))->mem_Ptr = mem;
 			
-			return self->mem_info;
+			if(self->mem_info != NULL)
+			{
+				((DF_MemInfo*)(self->mem_info))->mem_Ptr = self->api_Ptr->getMemoryInfo();
+				
+				if(((DF_MemInfo*)(self->mem_info))->mem_Ptr != NULL)
+					return self->mem_info;
+			}
 		}
 	}
 	catch(...)
@@ -174,15 +174,15 @@ static PyObject* DF_API_getPosition(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			DFHack::Position* pos;
-			
-			pos = self->api_Ptr->getPosition();
-			
 			self->position = _PyObject_New(&DF_Position_type);
-			delete ((DF_Position*)(self->position))->pos_Ptr;
-			((DF_Position*)(self->position))->pos_Ptr = pos;
 			
-			return self->position;
+			if(self->position != NULL)
+			{
+				((DF_Position*)(self->position))->pos_Ptr = self->api_Ptr->getPosition();
+				
+				if(((DF_Position*)(self->position))->pos_Ptr != NULL)
+					return self->position;
+			}
 		}
 	}
 	catch(...)
@@ -203,15 +203,15 @@ static PyObject* DF_API_getMaterial(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			DFHack::Materials* mat;
-			
-			mat = self->api_Ptr->getMaterials();
-			
 			self->material = _PyObject_New(&DF_Material_type);
-			delete ((DF_Material*)(self->material))->mat_Ptr;
-			((DF_Material*)(self->material))->mat_Ptr = mat;
 			
-			return self->material;
+			if(self->material != NULL)
+			{
+				((DF_Material*)(self->material))->mat_Ptr = self->api_Ptr->getMaterials();
+				
+				if(((DF_Material*)(self->material))->mat_Ptr != NULL)
+					return self->material;
+			}
 		}
 	}
 	catch(...)
@@ -229,7 +229,7 @@ static PyGetSetDef DF_API_getterSetters[] =
     {"is_suspended", (getter)DF_API_getIsSuspended, NULL, "is_suspended", NULL},
 	{"memory_info", (getter)DF_API_getMemoryInfo, NULL, "memory_info", NULL},
 	{"position", (getter)DF_API_getPosition, NULL, "position", NULL},
-	{"material", (getter)DF_API_getMaterial, NULL, "material", NULL},
+	{"materials", (getter)DF_API_getMaterial, NULL, "material", NULL},
     {NULL}  // Sentinel
 };
 

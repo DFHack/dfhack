@@ -37,6 +37,7 @@ distribution.
 
 namespace DFHack
 {
+
     class APIPrivate;
     class memory_info;
     class Process;
@@ -47,6 +48,7 @@ namespace DFHack
     class Position;
     class Gui;
     class Materials;
+    class Translation;
     
     class DFHACK_EXPORT API
     {
@@ -89,6 +91,7 @@ namespace DFHack
         Gui * getGui();
         Position * getPosition();
         Materials * getMaterials();
+        Translation * getTranslation();
         
         /*
          * Constructions (costructed walls, floors, ramps, etc...)

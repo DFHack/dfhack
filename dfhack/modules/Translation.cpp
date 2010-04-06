@@ -54,10 +54,10 @@ Translation::Translation(APIPrivate * d_)
     d->d = d_;
     d->Inited = d->Started = false;
     memory_info * mem = d->d->offset_descriptor;
-    int genericAddress = mem->getAddress ("language_vector");
-    int transAddress = mem->getAddress ("translation_vector");
-    int word_table_offset = mem->getOffset ("word_table");
-    int sizeof_string = mem->getHexValue ("sizeof_string");
+    d->genericAddress = mem->getAddress ("language_vector");
+    d->transAddress = mem->getAddress ("translation_vector");
+    d->word_table_offset = mem->getOffset ("word_table");
+    d->sizeof_string = mem->getHexValue ("sizeof_string");
     d->Inited = true;
 }
 
@@ -75,8 +75,8 @@ bool Translation::Start()
     Process * p = d->d->p;
     DfVector genericVec (p, d->genericAddress, 4);
     DfVector transVec (p, d->transAddress, 4);
-    DFDict translations = d->dicts.translations;
-    DFDict foreign_languages = d->dicts.foreign_languages;
+    DFDict & translations = d->dicts.translations;
+    DFDict & foreign_languages = d->dicts.foreign_languages;
 
     translations.resize(10);
     for (uint32_t i = 0;i < genericVec.getSize();i++)

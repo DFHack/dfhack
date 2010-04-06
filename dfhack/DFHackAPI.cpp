@@ -40,6 +40,7 @@ distribution.
 #include "modules/Position.h"
 #include "modules/Gui.h"
 #include "modules/Creatures.h"
+#include "modules/Translation.h"
 
 using namespace DFHack;
 
@@ -199,6 +200,13 @@ Materials * API::getMaterials()
     if(!d->materials)
         d->materials = new Materials(d);
     return d->materials;
+}
+
+Translation * API::getTranslation()
+{
+    if(!d->translation)
+        d->translation = new Translation(d);
+    return d->translation;
 }
 
 /*

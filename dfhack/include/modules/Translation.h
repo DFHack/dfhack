@@ -1,5 +1,5 @@
-#ifndef CL_MOD_POSITION
-#define CL_MOD_POSITION
+#ifndef CL_MOD_TRANSLATION
+#define CL_MOD_TRANSLATION
 /*
 * DF translation tables and name translation
 */

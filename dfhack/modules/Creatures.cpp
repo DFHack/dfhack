@@ -67,6 +67,7 @@ Creatures::Creatures(APIPrivate* _d)
         creatures.creature_vector = minfo->getAddress ("creature_vector");
         creatures.creature_pos_offset = minfo->getOffset ("creature_position");
         creatures.creature_profession_offset = minfo->getOffset ("creature_profession");
+        creatures.creature_custom_profession_offset = minfo->getOffset ("creature_custom_profession");
         creatures.creature_race_offset = minfo->getOffset ("creature_race");
         creatures.creature_flags1_offset = minfo->getOffset ("creature_flags1");
         creatures.creature_flags2_offset = minfo->getOffset ("creature_flags2");
@@ -153,7 +154,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     //d->readName(furball.squad_name, temp + offs.creature_squad_name_offset);
     d->d->readName(furball.artifact_name, temp + offs.creature_artifact_name_offset);
     // custom profession
-    //fill_char_buf (furball.custom_profession, d->p->readSTLString (temp + offs.creature_custom_profession_offset));
+    fill_char_buf (furball.custom_profession, g_pProcess->readSTLString (temp + offs.creature_custom_profession_offset));
 
     // labors
     g_pProcess->read (temp + offs.creature_labors_offset, NUM_CREATURE_LABORS, furball.labors);

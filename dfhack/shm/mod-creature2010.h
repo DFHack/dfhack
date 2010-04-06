@@ -37,6 +37,7 @@ typedef struct
     uint32_t creature_vector;
     uint32_t creature_pos_offset;
     uint32_t creature_profession_offset;
+    uint32_t creature_custom_profession_offset;
     uint32_t creature_race_offset;
     uint32_t creature_flags1_offset;
     uint32_t creature_flags2_offset;

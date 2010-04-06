@@ -1,7 +1,7 @@
 #ifndef CL_MOD_POSITION
 #define CL_MOD_POSITION
 /*
-* Translation of names
+* DF translation tables and name translation
 */
 #include "Export.h"
 namespace DFHack
@@ -21,9 +21,7 @@ namespace DFHack
         ~Translation();
         bool Start();
         bool Finish();
-        /*
-        * DF translation tables and name translation
-        */
+
         // Get pointer to the two dictionary structures
         Dicts * getDicts();
         // translate a name using the loaded dictionaries

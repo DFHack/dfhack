@@ -2972,6 +2972,11 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_artifact_name">0x6D0</Offset>
         <Offset name="creature_labors">0x770</Offset>
         <Offset name="creature_happiness">0x830</Offset>
+        
+        <!-- from DT -->
+        <Address name="dwarf_race_index">0x01470fbc</Address>DWORD, OK
+        This seems to be wrong:
+        creature_vector         = 0x0166ed2c
       
         Materials
         =========
@@ -3016,6 +3021,12 @@ map_data_1b60_offset          0x1B9c
         <!-- possible constructions -->
         <Address name="construction_vector">0x165b290</Address>
         <Offset name="sizeof_construction">0x14</Offset>
+        
+        Translations
+        ============
+        <Address name="language_vector">0x016B0008</Address>
+        <Address name="translation_vector">0x016AFFD8</Address>
+        <Offset name="word_table">0x58</Offset>
         
         <!-- 
         addresses from belal: vectors might need 8 subtracted from them

@@ -46,9 +46,6 @@ struct Translation::Private
     APIPrivate *d;
     bool Inited;
     bool Started;
-
-    //uint32_t biome_stuffs;
-    //vector<uint16_t> v_geology[eBiomeCount];
 };
 
 Translation::Translation(APIPrivate * d_)

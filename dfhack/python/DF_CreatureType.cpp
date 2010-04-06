@@ -69,6 +69,8 @@ struct DF_Creature_Base
 	PyObject* like_list;
 	PyObject* trait_list;
 	PyObject* labor_list;
+	
+	bool inited;
 };
 
 static PyObject* BuildCreature(DFHack::t_creature& creature)
@@ -128,12 +130,45 @@ static PyObject* BuildCreature(DFHack::t_creature& creature)
 
 // API type Allocation, Deallocation, and Initialization
 
+static PyObject* DF_Creature_Base_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
+{
+	DF_Creature_Base* self;
+	
+	self = (DF_Creature_Base*)type->tp_alloc(type, 0);
+	
+	if(self != NULL)
+		self->inited = false;
+	
+	return (PyObject*)self;
+}
+
+static int DF_Creature_Base_init(DF_Creature_Base* self, PyObject* args, PyObject* kwds)
+{
+	if(!inited)
+	{
+		self->origin = NULL;
+		self->flags1 = NULL;
+		self->flags2 = NULL;
+		self->name = NULL;
+		self->squad_name = NULL;
+		self->artifact_name = NULL;
+		
+		self->custom_profession = PyString_FromString("");
+		
+		self->labor_list = NULL;
+		self->trait_list = NULL;
+		self->skill_list = NULL;
+		self->like_list = NULL;
+	}
+	
+	return 0;
+}
+
 static void DF_Creature_Base_dealloc(DF_Creature_Base* self)
 {
 	if(self != NULL)
 	{
 		Py_CLEAR(self->position);
-		Py_CLEAR(self->c_type);
 		Py_CLEAR(self->flags1);
 		Py_CLEAR(self->flags2);
 		
@@ -169,7 +204,59 @@ static PyMemberDef DF_Creature_Base_members[] =
 	{"profession", T_INT, offsetof(DF_Creature_base, profession), 0, ""},
 	{"custom_profession", T_OBJECT_EX, offsetof(DF_Creature_Base, custom_profession), 0, ""},
 	{"happiness", T_SHORT, offsetof(DF_Creature_Base, happiness), 0, ""},
+	{"id", T_UINT, offsetof(DF_Creature_Base, c_id), 0, ""},
+	{"agility", T_UINT, offsetof(DF_Creature_Base, agility), 0, ""},
+	{"strength", T_UINT, offsetof(DF_Creature_Base, strength), 0, ""},
+	{"toughness", T_UINT, offsetof(DF_Creature_Base, toughness), 0, ""},
+	{"money", T_UINT, offsetof(DF_Creature_Base, money), 0, ""},
+	{"squad_leader_id", T_INT, offsetof(DF_Creature_Base, squad_leader_id), 0, ""},
+	{"sex", T_BYTE, offsetof(DF_Creature_Base, sex), 0, ""},
+	{"pregnancy_timer", T_UINT, offsetof(DF_Creature_Base, pregnancy_timer), 0, ""},
+	{"blood_max", T_INT, offsetof(DF_Creature_Base, blood_max), 0, ""},
+	{"blood_current", T_INT, offsetof(DF_Creature_Base, blood_current), 0, ""},
+	{"bleed_rate", T_UINT, offsetof(DF_Creature_Base, bleed_rate), 0, ""},
 	{NULL}
+};
+
+static PyObject* DF_Creature_Base_getLabors(DF_Creature_Base* self, void* closure)
+{
+	if(self->labor_list != NULL)
+		return self->labor_list;
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_Creature_Base_getTraits(DF_Creature_Base* self, void* closure)
+{
+	if(self->trait_list != NULL)
+		return self->trait_list;
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_Creature_Base_getSkills(DF_Creature_Base* self, void* closure)
+{
+	if(self->skill_list != NULL)
+		return self->skill_list;
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_Creature_Base_getLikes(DF_Creature_Base* self, void* closure)
+{
+	if(self->like_list != NULL)
+		return self->like_list;
+	
+	Py_RETURN_NONE;
+}
+
+static PyGetSetDef DF_Creature_Base_getterSetters[] =
+{
+	{"labors", (getter)DF_Creature_Base_getLabors, NULL, "labors", NULL},
+	{"traits", (getter)DF_Creature_Base_getTraits, NULL, "traits", NULL},
+	{"skills", (getter)DF_Creature_Base_getSkills, NULL, "skills", NULL},
+	{"likes", (getter)DF_Creature_Base_getLikes, NULL, "likes", NULL},
+	{NULL}	// Sentinel
 };
 
 static PyTypeObject DF_Creature_Base_type =
@@ -202,17 +289,17 @@ static PyTypeObject DF_Creature_Base_type =
     0,		               /* tp_weaklistoffset */
     0,		               /* tp_iter */
     0,		               /* tp_iternext */
-    DF_Creature_Base_methods,             /* tp_methods */
-    0,                      /* tp_members */
+    0,             /* tp_methods */
+    DF_Creature_Base_members,                      /* tp_members */
     DF_Creature_Base_getterSetters,      /* tp_getset */
     0,                         /* tp_base */
     0,                         /* tp_dict */
     0,                         /* tp_descr_get */
     0,                         /* tp_descr_set */
     0,                         /* tp_dictoffset */
-    0,      /* tp_init */
+    (initproc)DF_Creature_Base_init,      /* tp_init */
     0,                         /* tp_alloc */
-    0,                 /* tp_new */
+    DF_Creature_base_new,                 /* tp_new */
 };
 
 #endif

@@ -85,16 +85,16 @@ static void DF_API_dealloc(DF_API* self)
 {
 	if(self != NULL)
 	{
+		Py_CLEAR(self->mem_info);
+		Py_CLEAR(self->position);
+		Py_CLEAR(self->material);
+		
 		if(self->api_Ptr != NULL)
 		{
 			delete self->api_Ptr;
 			
 			self->api_Ptr = NULL;
 		}
-		
-		Py_XDECREF(self->mem_info);
-		Py_XDECREF(self->position);
-		Py_XDECREF(self->material);
 		
 		self->ob_type->tp_free((PyObject*)self);
 	}
@@ -145,7 +145,7 @@ static PyObject* DF_API_getMemoryInfo(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->mem_info = _PyObject_New(&DF_MemInfo_type);
+			self->mem_info = PyObject_Call((PyObject*)&DF_MemInfo_type, NULL, NULL);
 			
 			if(self->mem_info != NULL)
 			{
@@ -174,7 +174,7 @@ static PyObject* DF_API_getPosition(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->position = _PyObject_New(&DF_Position_type);
+			self->position = PyObject_Call((PyObject*)&DF_Position_type, NULL, NULL);
 			
 			if(self->position != NULL)
 			{
@@ -203,7 +203,7 @@ static PyObject* DF_API_getMaterial(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->material = _PyObject_New(&DF_Material_type);
+			self->material = PyObject_Call((PyObject*)&DF_Material_type, NULL, NULL);
 			
 			if(self->material != NULL)
 			{

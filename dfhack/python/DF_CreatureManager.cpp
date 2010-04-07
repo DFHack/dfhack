@@ -105,7 +105,7 @@ static PyObject* DF_CreatureManager_Finish(DF_CreatureManager* self, PyObject* a
 static PyObject* DF_CreatureManager_ReadCreature(DF_CreatureManager* self, PyObject* args)
 {
 	uint32_t index;
-	t_creature furball;
+	DFHack::t_creature furball;
 	
 	if(self->creature_Ptr != NULL)
 	{

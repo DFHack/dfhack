@@ -31,15 +31,17 @@ distribution.
 
 using namespace DFHack;
 
+#include "modules/Creatures.h"
+
 static PyObject* BuildMatglossPair(DFHack::t_matglossPair& matgloss)
 {
 	return Py_BuildValue("ii", matgloss.type, matgloss.index);
 }
 
-static PyObject* BuildTreeDesc(DFHack::t_tree_desc& tree)
-{
-	return Py_BuildValue("OO", BuildMatglossPair(tree.material), Py_BuildValue("III", tree.x, tree.y, tree.z));
-}
+// static PyObject* BuildTreeDesc(DFHack::t_tree_desc& tree)
+// {
+	// return Py_BuildValue("OO", BuildMatglossPair(tree.material), Py_BuildValue("III", tree.x, tree.y, tree.z));
+// }
 
 static PyObject* BuildSkill(DFHack::t_skill& skill)
 {

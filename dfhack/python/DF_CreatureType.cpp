@@ -29,9 +29,10 @@ distribution.
 #include "structmember.h"
 #include "DF_Imports.cpp"
 #include "DF_Helpers.cpp"
-#include "DFTypes.h"
 
 using namespace DFHack;
+
+#include "modules/Creatures.h"
 
 struct DF_Creature_Base
 {

@@ -57,6 +57,10 @@ TARGET_LINK_LIBRARIES(dfsuspend dfhack)
 ADD_EXECUTABLE(dfvecc veccheck.cpp)
 TARGET_LINK_LIBRARIES(dfvecc dfhack)
 
+# treedump - dump them trees!
+ADD_EXECUTABLE(dftreedump treedump.cpp)
+TARGET_LINK_LIBRARIES(dftreedump dfhack)
+
 # catsplosion - Makes every cat pregnant, and almost due...
 # Author: Zhentar
 # ADD_EXECUTABLE(dfcatsplosion catsplosion.cpp)

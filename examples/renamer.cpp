@@ -14,19 +14,8 @@ using namespace std;
 #include <DFProcess.h>
 #include <modules/Materials.h>
 #include <modules/Creatures.h>
-#include <modules/NameTables.h>
-
-template <typename T>
-void print_bits ( T val, std::ostream& out )
-{
-    T n_bits = sizeof ( val ) * CHAR_BIT;
-
-    for ( unsigned i = 0; i < n_bits; ++i )
-    {
-        out<< !!( val & 1 ) << " ";
-        val >>= 1;
-    }
-}
+#include <modules/Translation.h>
+#include "miscutils.h"
 
 vector< vector<string> > englishWords;
 vector< vector<string> > foreignWords;

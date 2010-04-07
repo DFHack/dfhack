@@ -15,30 +15,6 @@ using namespace std;
 #include <DFVector.h>
 #include <modules/Materials.h>
 
-void DumpObjStr0Vector (const char * name, DFHack::Process *p, uint32_t addr)
-{
-    cout << "----==== " << name << " ====----" << endl;
-    DFHack::DfVector vect(p,addr,4);
-    for(int i = 0; i < vect.getSize();i++)
-    {
-        uint32_t addr = *(uint32_t *) vect[i];
-        cout << p->readSTLString(addr) << endl;
-    }
-    cout << endl;
-}
-
-void DumpDWordVector (const char * name, DFHack::Process *p, uint32_t addr)
-{
-    cout << "----==== " << name << " ====----" << endl;
-    DFHack::DfVector vect(p,addr,4);
-    for(int i = 0; i < vect.getSize();i++)
-    {
-        uint32_t number = *(uint32_t *) vect[i];
-        cout << number << endl;
-    }
-    cout << endl;
-}
-
 int main (int numargs, const char ** args)
 {
     uint32_t addr;
@@ -64,33 +40,6 @@ int main (int numargs, const char ** args)
     DFHack::Process* p = DF.getProcess();
     DFHack::memory_info* mem = DF.getMemoryInfo();
     DFHack::Materials *Materials = DF.getMaterials();
-    
-    //const vector<string> * names = mem->getClassIDMapping();
-    /*
-    DumpObjStr0Vector("Material templates",p, mem->getAddress("mat_templates"));
-    
-    DumpObjStr0Vector("Inorganics",p, mem->getAddress("mat_inorganics"));
-    
-    DumpObjStr0Vector("Organics - all",p, mem->getAddress("mat_organics_all"));
-    
-    DumpObjStr0Vector("Organics - plants",p, mem->getAddress("mat_organics_plants"));
-    
-    DumpDWordVector("Maybe map between all organics and plants",p, mem->getAddress("mat_unk1_numbers"));
-    
-    DumpObjStr0Vector("Trees/wood",p,  mem->getAddress("mat_organics_trees"));
-    
-    DumpDWordVector("Maybe map between all organics and trees",p, mem->getAddress("mat_unk2_numbers"));
-    
-    DumpObjStr0Vector("Body material templates",p, mem->getAddress("mat_body_material_templates"));
-    
-    DumpObjStr0Vector("Body detail plans",p, mem->getAddress("mat_body_detail_plans"));
-    
-    DumpObjStr0Vector("Bodies",p, mem->getAddress("mat_bodies"));
-    
-    DumpObjStr0Vector("Bodygloss",p, mem->getAddress("mat_bodygloss"));
-    
-    DumpObjStr0Vector("Creature variations",p, mem->getAddress("mat_creature_variations"));
-    */
     
     cout << "----==== Inorganic ====----" << endl;
     vector<DFHack::t_matgloss> matgloss;

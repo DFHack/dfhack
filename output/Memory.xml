@@ -2859,7 +2859,7 @@
         <HexValue name="sizeof_vector">0x18</HexValue>
         <Offset name="vector_triplet">0xC</Offset>
         Vector layout in MSVC 9:
-        DWORD Allocator
+        DWORD Allocator?
         DWORD ?
         DWORD ?
         DWORD Start
@@ -2867,6 +2867,9 @@
         DWORD AllocationEnd
         
         <HexValue name="sizeof_string">0x1C</HexValue>
+        <!-- most probably a static object, because its parts are often
+             referenced as offset to this address *and* as addresses    -->
+        <Address name="WORLD">0x0165B188</Address>
 
         Position and window dimensions
         ==============================
@@ -3047,6 +3050,11 @@ map_data_1b60_offset          0x1B9c
         
         Effects
         =======
+        
+        :(
+        
+        Settlements
+        ===========
         
         :(
         

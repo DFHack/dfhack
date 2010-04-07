@@ -180,14 +180,6 @@ struct t_building
     // FIXME: not complete, we need building presence bitmaps for stuff like farm plots and stockpiles, orientation (N,E,S,W) and state (open/closed)
 };
 
-struct t_tree_desc
-{
-    t_matglossPair material;
-    uint16_t x;
-    uint16_t y;
-    uint16_t z;
-};
-
 /*
 case 10:
     ret += "leather";

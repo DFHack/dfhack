@@ -1,6 +1,7 @@
 // Just show some position data
 
 #include <iostream>
+#include <iomanip>
 #include <climits>
 #include <integers.h>
 #include <vector>
@@ -15,6 +16,9 @@ using namespace std;
 #include <DFMemInfo.h>
 #include <DFVector.h>
 #include <DFTypes.h>
+#include <modules/Vegetation.h>
+#include <modules/Materials.h>
+#include <modules/Position.h>
 
 void DumpObjStr0Vector (const char * name, DFHack::Process *p, uint32_t addr)
 {
@@ -50,6 +54,37 @@ void DumpDWordVector (const char * name, DFHack::Process *p, uint32_t addr)
     }
     cout << endl;
 }
+
+/*
+address = absolute address of dump start
+length = length in lines. 1 line = 16 bytes
+*/
+void hexdump (DFHack::API& DF, uint32_t address, uint32_t length)
+{
+    char *buf = new char[length * 16];
+    
+    DF.ReadRaw(address, length * 16, (uint8_t *) buf);
+    for (int i = 0; i < length; i++)
+    {
+        // leading offset
+        cout << "0x" << hex << setw(4) << i*16 << " ";
+        // groups
+        for(int j = 0; j < 4; j++)
+        {
+            // bytes
+            for(int k = 0; k < 4; k++)
+            {
+                int idx = i * 16 + j * 4 + k;
+                
+                cout << hex << setw(2) << int(static_cast<unsigned char>(buf[idx])) << " ";
+            }
+            cout << " ";
+        }
+        cout << endl;
+    }
+    delete buf;
+}
+
 
 int main (int numargs, const char ** args)
 {
@@ -99,6 +134,7 @@ int main (int numargs, const char ** args)
     /*
     DumpObjStr0Vector("Material templates",p, mem->getAddress("mat_templates"));
     */
+    /*
     DumpObjStr0Vector("Inorganics",p, mem->getAddress("mat_inorganics"));
     
     cout << "----==== Inorganics ====----" << endl;
@@ -109,7 +145,7 @@ int main (int numargs, const char ** args)
         cout << p->readSTLString(addr) << endl;
     }
     cout << endl;
-    
+    */
     /*
     DumpObjStr0Vector("Organics - all",p, mem->getAddress("mat_organics_all"));
     
@@ -133,6 +169,59 @@ int main (int numargs, const char ** args)
     
     DumpObjStr0Vector("Creature types",p, mem->getAddress("mat_creature_types"));
     */
+    DFHack::Position * pos = DF.getPosition();
+    DFHack::Vegetation * v = DF.getVegetation();
+    DFHack::Materials * mat = DF.getMaterials();
+    vector<DFHack::t_matgloss> organics;
+    mat->ReadOrganicMaterials(organics);
+    
+    int32_t x,y,z;
+    pos->getCursorCoords(x,y,z);
+    
+    
+    uint32_t numVegs = 0;
+    v->Start(numVegs);
+    if(x == -30000)
+    {
+        cout << "----==== Trees ====----" << endl;
+        for(uint32_t i =0; i < numVegs; i++)
+        {
+            DFHack::t_tree tree;
+            v->Read(i,tree);
+            printf("%d/%d/%d, %d:%d\n",tree.x,tree.y,tree.z,tree.type,tree.material);
+        }
+    }
+    else
+    {
+        cout << "----==== Tree at "<< x << "/" << y << "/" << z << " ====----" << endl;
+        for(uint32_t i =0; i < numVegs; i++)
+        {
+            DFHack::t_tree tree;
+            v->Read(i,tree);
+            if(tree.x == x && tree.y == y && tree.z == z)
+            {
+                printf("%d:%d = ",tree.type,tree.material);
+                if(tree.type == 1 || tree.type == 3)
+                {
+                    cout << "near-water ";
+                }
+                cout << organics[tree.material].id << " ";
+                if(tree.type == 0 || tree.type == 1)
+                {
+                    cout << "tree";
+                }
+                if(tree.type == 2 || tree.type == 3)
+                {
+                    cout << "shrub";
+                }
+                cout << endl;
+                printf("Address: 0x%x\n", tree.address);
+                hexdump(DF,tree.address,13);
+                break;
+            }
+        }
+    }
+    v->Finish();
     
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

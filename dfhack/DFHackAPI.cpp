@@ -41,6 +41,7 @@ distribution.
 #include "modules/Gui.h"
 #include "modules/Creatures.h"
 #include "modules/Translation.h"
+#include "modules/Vegetation.h"
 
 using namespace DFHack;
 
@@ -207,6 +208,13 @@ Translation * API::getTranslation()
     if(!d->translation)
         d->translation = new Translation(d);
     return d->translation;
+}
+
+Vegetation * API::getVegetation()
+{
+    if(!d->vegetation)
+        d->vegetation = new Vegetation(d);
+    return d->vegetation;
 }
 
 /*
@@ -379,51 +387,6 @@ void API::FinishReadConstructions()
     d->constructionsInited = false;
 }
 
-
-bool API::InitReadVegetation(uint32_t & numplants)
-{
-    try 
-    {
-        int vegetation = d->offset_descriptor->getAddress ("vegetation");
-        d->tree_offset = d->offset_descriptor->getOffset ("tree_desc_offset");
-
-        d->vegetationInited = true;
-        d->p_veg = new DfVector (d->p, vegetation, 4);
-        numplants = d->p_veg->getSize();
-        return true;
-    }
-    catch (Error::MissingMemoryDefinition&)
-    {
-        d->vegetationInited = false;
-        numplants = 0;
-        throw;
-    }
-}
-
-
-bool API::ReadVegetation (const int32_t index, t_tree_desc & shrubbery)
-{
-    if(!d->vegetationInited)
-        return false;
-    // read pointer from vector at position
-    uint32_t temp = * (uint32_t *) d->p_veg->at (index);
-    //read construction from memory
-    g_pProcess->read (temp + d->tree_offset, sizeof (t_tree_desc), (uint8_t *) &shrubbery);
-    // FIXME: this is completely wrong. type isn't just tree/shrub but also different kinds of trees. stuff that grows around ponds has its own type ID
-    if (shrubbery.material.type == 3) shrubbery.material.type = 2;
-    return true;
-}
-
-
-void API::FinishReadVegetation()
-{
-    if(d->p_veg)
-    {
-        delete d->p_veg;
-        d->p_veg = 0;
-    }
-    d->vegetationInited = false;
-}
 */
 /*
 bool API::InitReadNotes( uint32_t &numnotes )

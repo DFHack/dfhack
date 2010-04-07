@@ -49,6 +49,7 @@ namespace DFHack
     class Gui;
     class Materials;
     class Translation;
+    class Vegetation;
     
     class DFHACK_EXPORT API
     {
@@ -92,6 +93,7 @@ namespace DFHack
         Position * getPosition();
         Materials * getMaterials();
         Translation * getTranslation();
+        Vegetation * getVegetation();
         
         /*
          * Constructions (costructed walls, floors, ramps, etc...)

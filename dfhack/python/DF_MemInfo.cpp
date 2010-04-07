@@ -51,27 +51,13 @@ static PyObject* DF_MemInfo_new(PyTypeObject* type, PyObject* args, PyObject* kw
 	self = (DF_MemInfo*)type->tp_alloc(type, 0);
 	
 	if(self != NULL)
-	{
 		self->mem_Ptr = NULL;
-	}
 	
 	return (PyObject*)self;
 }
 
 static int DF_MemInfo_init(DF_MemInfo* self, PyObject* args, PyObject* kwds)
 {
-	DF_MemInfo* copy = NULL;
-	
-	if(self->mem_Ptr == NULL)
-	{
-		PyArg_ParseTuple(args, "|O", &copy);
-		
-		if(copy != NULL)
-			self->mem_Ptr = new DFHack::memory_info(*(copy->mem_Ptr));
-		else
-			self->mem_Ptr = new DFHack::memory_info();
-	}
-	
 	return 0;
 }
 

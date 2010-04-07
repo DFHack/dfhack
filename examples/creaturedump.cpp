@@ -168,6 +168,7 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         }
         
         DFHack::Translation *Tran = DF.getTranslation();
+        DFHack::memory_info *mem = DF.getMemoryInfo();
         
         string transName = Tran->TranslateName(creature.name,false);
         if(!transName.empty())
@@ -231,15 +232,18 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         */
         cout << endl;
 
-    /*
+    
         //skills
-        for(unsigned int i = 0; i < creature.skills.size();i++){
-            if(i > 0){
+        for(unsigned int i = 0; i < creature.numSkills;i++)
+        {
+            if(i > 0)
+            {
                 cout << ", ";
             }
-            cout << creature.skills[i].name << ": " << creature.skills[i].rating;
+            cout << mem->getSkill(creature.skills[i].id) << ": " << creature.skills[i].rating;
         }
-    */
+        cout << endl;
+    
         /*
          * FLAGS 1
          */
@@ -301,7 +305,6 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout << "from the underworld, ";
         }
         cout << endl;
-#include <modules/Translation.h>
         /*
         if(creature.flags1.bits.had_mood && (creature.mood == -1 || creature.mood == 8 ) )
         {

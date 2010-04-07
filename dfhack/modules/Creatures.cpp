@@ -77,6 +77,10 @@ Creatures::Creatures(APIPrivate* _d)
         creatures.creature_labors_offset = minfo->getOffset ("creature_labors");
         creatures.creature_happiness_offset = minfo->getOffset ("creature_happiness");
         creatures.creature_artifact_name_offset = minfo->getOffset("creature_artifact_name");
+        creatures.creature_soul_vector_offset = minfo->getOffset("creature_soul_vector");
+        
+        // soul offsets
+        creatures.soul_skills_vector_offset = minfo->getOffset("soul_skills_vector");
         
         // name offsets for the creature module
         creatures.name_firstname_offset = minfo->getOffset("name_firstname");
@@ -220,6 +224,20 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     g_pProcess->readDWord(temp + offs.creature_bleed_offset, furball.bleed_rate);
 */
 
+    // enum soul pointer vector
+    DfVector souls(g_pProcess,temp + offs.creature_soul_vector_offset,4);
+    // get first soul's skills
+    DfVector skills(g_pProcess, *(uint32_t *)souls.at(0) + offs.soul_skills_vector_offset,4 );
+    furball.numSkills = skills.getSize();
+    for (uint32_t i = 0; i < furball.numSkills;i++)
+    {
+        uint32_t temp2 = * (uint32_t *) skills[i];
+        //skills.read(i, (uint8_t *) &temp2);
+        // a byte: this gives us 256 skills maximum.
+        furball.skills[i].id = g_pProcess->readByte (temp2);
+        furball.skills[i].rating = g_pProcess->readByte (temp2 + 4);
+        furball.skills[i].experience = g_pProcess->readWord (temp2 + 8);
+    }
     return true;
 }
 

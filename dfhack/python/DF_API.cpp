@@ -32,6 +32,7 @@ distribution.
 #include "DF_MemInfo.cpp"
 #include "DF_Position.cpp"
 #include "DF_Material.cpp"
+#include "DF_CreatureManager.cpp"
 
 using namespace std;
 using namespace DFHack;
@@ -42,6 +43,7 @@ struct DF_API
 	PyObject* mem_info;
 	PyObject* position;
 	PyObject* material;
+	PyObject* creature;
 	DFHack::API* api_Ptr;
 };
 
@@ -68,6 +70,7 @@ static int DF_API_init(DF_API* self, PyObject* args, PyObject* kwds)
 		self->mem_info = NULL;
 		self->position = NULL;
 		self->material = NULL;
+		self->creature = NULL;
 		
 		if(!PyArg_ParseTuple(args, "s", &memFileString))
 			return -1;
@@ -88,6 +91,7 @@ static void DF_API_dealloc(DF_API* self)
 		Py_CLEAR(self->mem_info);
 		Py_CLEAR(self->position);
 		Py_CLEAR(self->material);
+		Py_CLEAR(self->creature);
 		
 		if(self->api_Ptr != NULL)
 		{
@@ -223,13 +227,43 @@ static PyObject* DF_API_getMaterial(DF_API* self, void* closure)
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_API_getCreature(DF_API* self, void* closure)
+{
+	if(self->creature != NULL)
+		return self->creature;
+	
+	try
+	{
+		if(self->api_Ptr != NULL)
+		{
+			self->creature = PyObject_Call((PyObject*)&DF_CreatureManager_type, NULL, NULL);
+			
+			if(self->creature != NULL)
+			{
+				((DF_CreatureManager*)(self->creature))->creature_Ptr = self->api_Ptr->getCreatures();
+				
+				if(((DF_CreatureManager*)(self->creature))->creature_Ptr != NULL)
+					return self->creature;
+			}
+		}
+	}
+	catch(...)
+	{
+		PyErr_SetString(PyExc_ValueError, "Error trying to read creature");
+		return NULL;
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyGetSetDef DF_API_getterSetters[] =
 {
     {"is_attached", (getter)DF_API_getIsAttached, NULL, "is_attached", NULL},
     {"is_suspended", (getter)DF_API_getIsSuspended, NULL, "is_suspended", NULL},
 	{"memory_info", (getter)DF_API_getMemoryInfo, NULL, "memory_info", NULL},
 	{"position", (getter)DF_API_getPosition, NULL, "position", NULL},
-	{"materials", (getter)DF_API_getMaterial, NULL, "material", NULL},
+	{"materials", (getter)DF_API_getMaterial, NULL, "materials", NULL},
+	{"creatures", (getter)DF_API_getCreature, NULL, "creatures", NULL},
     {NULL}  // Sentinel
 };
 

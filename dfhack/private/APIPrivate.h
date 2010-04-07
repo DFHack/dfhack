@@ -36,8 +36,10 @@ namespace DFHack
     class Position;
     class Maps;
     class Creatures;
+    class Translation;
     class ProcessEnumerator;
     class Process;
+    class Vegetation;
     class memory_info;
     struct t_name;
     class APIPrivate
@@ -67,6 +69,8 @@ namespace DFHack
         Position * position;
         Gui * gui;
         Materials * materials;
+        Translation * translation;
+        Vegetation * vegetation;
 
         /*
         uint32_t item_material_offset;

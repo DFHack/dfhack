@@ -40,6 +40,8 @@ distribution.
 #include "modules/Position.h"
 #include "modules/Gui.h"
 #include "modules/Creatures.h"
+#include "modules/Translation.h"
+#include "modules/Vegetation.h"
 
 using namespace DFHack;
 
@@ -199,6 +201,20 @@ Materials * API::getMaterials()
     if(!d->materials)
         d->materials = new Materials(d);
     return d->materials;
+}
+
+Translation * API::getTranslation()
+{
+    if(!d->translation)
+        d->translation = new Translation(d);
+    return d->translation;
+}
+
+Vegetation * API::getVegetation()
+{
+    if(!d->vegetation)
+        d->vegetation = new Vegetation(d);
+    return d->vegetation;
 }
 
 /*
@@ -371,51 +387,6 @@ void API::FinishReadConstructions()
     d->constructionsInited = false;
 }
 
-
-bool API::InitReadVegetation(uint32_t & numplants)
-{
-    try 
-    {
-        int vegetation = d->offset_descriptor->getAddress ("vegetation");
-        d->tree_offset = d->offset_descriptor->getOffset ("tree_desc_offset");
-
-        d->vegetationInited = true;
-        d->p_veg = new DfVector (d->p, vegetation, 4);
-        numplants = d->p_veg->getSize();
-        return true;
-    }
-    catch (Error::MissingMemoryDefinition&)
-    {
-        d->vegetationInited = false;
-        numplants = 0;
-        throw;
-    }
-}
-
-
-bool API::ReadVegetation (const int32_t index, t_tree_desc & shrubbery)
-{
-    if(!d->vegetationInited)
-        return false;
-    // read pointer from vector at position
-    uint32_t temp = * (uint32_t *) d->p_veg->at (index);
-    //read construction from memory
-    g_pProcess->read (temp + d->tree_offset, sizeof (t_tree_desc), (uint8_t *) &shrubbery);
-    // FIXME: this is completely wrong. type isn't just tree/shrub but also different kinds of trees. stuff that grows around ponds has its own type ID
-    if (shrubbery.material.type == 3) shrubbery.material.type = 2;
-    return true;
-}
-
-
-void API::FinishReadVegetation()
-{
-    if(d->p_veg)
-    {
-        delete d->p_veg;
-        d->p_veg = 0;
-    }
-    d->vegetationInited = false;
-}
 */
 /*
 bool API::InitReadNotes( uint32_t &numnotes )
@@ -588,129 +559,6 @@ bool API::getItemIndexesInBox(vector<uint32_t> &indexes,
 }
 */
 /*
-bool API::InitReadNameTables(vector<vector<string> > & translations , vector<vector<string> > & foreign_languages) //(map< string, vector<string> > & nameTable)
-{
-    try
-    {
-        int genericAddress = d->offset_descriptor->getAddress ("language_vector");
-        int transAddress = d->offset_descriptor->getAddress ("translation_vector");
-        int word_table_offset = d->offset_descriptor->getOffset ("word_table");
-        int sizeof_string = d->offset_descriptor->getHexValue ("sizeof_string");
-
-        DfVector genericVec (d->p, genericAddress, 4);
-        DfVector transVec (d->p, transAddress, 4);
-
-        translations.resize(10);
-        for (uint32_t i = 0;i < genericVec.getSize();i++)
-        {
-            uint32_t genericNamePtr = * (uint32_t *) genericVec.at (i);
-            for(int i=0; i<10;i++)
-            {
-                string word = d->p->readSTLString (genericNamePtr + i * sizeof_string);
-                translations[i].push_back (word);
-            }
-        }
-
-        foreign_languages.resize(transVec.getSize());
-        for (uint32_t i = 0; i < transVec.getSize();i++)
-        {
-            uint32_t transPtr = * (uint32_t *) transVec.at (i);
-            //string transName = d->p->readSTLString (transPtr);
-            DfVector trans_names_vec (d->p, transPtr + word_table_offset, 4);
-            for (uint32_t j = 0;j < trans_names_vec.getSize();j++)
-            {
-                uint32_t transNamePtr = * (uint32_t *) trans_names_vec.at (j);
-                string name = d->p->readSTLString (transNamePtr);
-                foreign_languages[i].push_back (name);
-            }
-        }
-        d->nameTablesInited = true;
-        return true;
-    }
-    catch (Error::MissingMemoryDefinition&)
-    {
-        d->nameTablesInited = false;
-        throw;
-    }
-}
-
-string API::TranslateName(const DFHack::t_name &name,const std::vector< std::vector<std::string> > & translations ,const std::vector< std::vector<std::string> > & foreign_languages, bool inEnglish)
-{
-    string out;
-    assert (d->nameTablesInited);
-    map<string, vector<string> >::const_iterator it;
-
-    if(!inEnglish) 
-    {
-        if(name.words[0] >=0 || name.words[1] >=0)
-        {
-            if(name.words[0]>=0) out.append(foreign_languages[name.language][name.words[0]]);
-            if(name.words[1]>=0) out.append(foreign_languages[name.language][name.words[1]]);
-            out[0] = toupper(out[0]);
-        }
-        if(name.words[5] >=0) 
-        {
-            string word;
-            for(int i=2;i<=5;i++)
-                if(name.words[i]>=0) word.append(foreign_languages[name.language][name.words[i]]);
-            word[0] = toupper(word[0]);
-            if(out.length() > 0) out.append(" ");
-            out.append(word);
-        }
-        if(name.words[6] >=0) 
-        {
-            string word;
-            word.append(foreign_languages[name.language][name.words[6]]);
-            word[0] = toupper(word[0]);
-            if(out.length() > 0) out.append(" ");
-            out.append(word);
-        }
-    } 
-    else
-    {
-        if(name.words[0] >=0 || name.words[1] >=0)
-        {
-            if(name.words[0]>=0) out.append(translations[name.parts_of_speech[0]+1][name.words[0]]);
-            if(name.words[1]>=0) out.append(translations[name.parts_of_speech[1]+1][name.words[1]]);
-            out[0] = toupper(out[0]);
-        }
-        if(name.words[5] >=0) 
-        {
-            if(out.length() > 0)
-                out.append(" the");
-            else
-                out.append("The");
-            string word;
-            for(int i=2;i<=5;i++)
-            {
-                if(name.words[i]>=0)
-                {
-                    word = translations[name.parts_of_speech[i]+1][name.words[i]];
-                    word[0] = toupper(word[0]);
-                    out.append(" " + word);
-                }
-            }
-        }
-        if(name.words[6] >=0) 
-        {
-            if(out.length() > 0)
-                out.append(" of");
-            else
-                out.append("Of");
-            string word;
-            word.append(translations[name.parts_of_speech[6]+1][name.words[6]]);
-            word[0] = toupper(word[0]);
-            out.append(" " + word);
-        }
-    }
-    return out;
-}
-
-void API::FinishReadNameTables()
-{
-    d->nameTablesInited = false;
-}
-
 void API::FinishReadNotes()
 {
     if(d->p_notes)

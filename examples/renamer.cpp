@@ -12,18 +12,10 @@ using namespace std;
 #include <DFHackAPI.h>
 #include <DFMemInfo.h>
 #include <DFProcess.h>
-
-template <typename T>
-void print_bits ( T val, std::ostream& out )
-{
-    T n_bits = sizeof ( val ) * CHAR_BIT;
-
-    for ( unsigned i = 0; i < n_bits; ++i )
-    {
-        out<< !!( val & 1 ) << " ";
-        val >>= 1;
-    }
-}
+#include <modules/Materials.h>
+#include <modules/Creatures.h>
+#include <modules/Translation.h>
+#include "miscutils.h"
 
 vector< vector<string> > englishWords;
 vector< vector<string> > foreignWords;
@@ -33,10 +25,11 @@ vector<DFHack::t_matgloss> creaturestypes;
 void printDwarves(DFHack::API & DF)
 {
     int dwarfCounter = 0;
+    DFHack::Creatures * c = DF.getCreatures();
     for (uint32_t i = 0; i < numCreatures; i++)
     {
         DFHack::t_creature temp;
-        DF.ReadCreature(i, temp);
+        c->ReadCreature(i, temp);
         string type = creaturestypes[temp.type].id;
         if (type == "DWARF" && !temp.flags1.bits.dead && !temp.flags2.bits.killed)
         {
@@ -148,6 +141,7 @@ bool getDwarfSelection(DFHack::API & DF, DFHack::t_creature & toChange,string & 
     changeString = lastText;
     return true;
 }
+
 bool waitTillChanged(DFHack::API &DF, int creatureToCheck, string changeValue, bool isName)
 {
     DFHack::DFWindow * w = DF.getWindow();
@@ -313,9 +307,13 @@ bool setCursorToCreature(DFHack::API &DF)
 int main (void)
 {
     DFHack::API DF("Memory.xml");
+    DFHack::Creatures *c;
+    DFHack::Materials *m;
     try
     {
         DF.Attach();
+        c = DF.getCreatures();
+        
     }
     catch (exception& e)
     {
@@ -328,15 +326,16 @@ int main (void)
     
     DFHack::memory_info * mem = DF.getMemoryInfo();
 
-    if (!DF.ReadCreatureMatgloss(creaturestypes))
+    
+    if (!m->ReadCreatureTypes(creaturestypes))
     {
         cerr << "Can't get the creature types." << endl;
         return 1;
     }
 
     DF.InitReadNameTables(englishWords,foreignWords);
-    DF.InitReadCreatures(numCreatures);
-    DF.InitViewAndCursor();
+    c->Start(numCreatures);
+    // DF.InitViewAndCursor();
     DFHack::Process * p = DF.getProcess();
     DFHack::DFWindow * w = DF.getWindow();
 

@@ -2800,6 +2800,7 @@
             <Labor name="Wood Burning">64</Labor>
             <Labor name="Pump Operating">65</Labor>
             
+            <!--
             * Labor groups *
             <Labor name="Woodworking">4294967294</Labor>
             <Labor name="Stoneworking">4294967293</Labor>
@@ -2813,6 +2814,7 @@
             <Labor name="Engineering">4294967285</Labor>
             <Labor name="Hauling">4294967284</Labor>
             <Labor name="Other Jobs">4294967283</Labor>
+            -->
             ====================================================================
                                     V -- T A B L E S
                                     (for stonesense)
@@ -2857,7 +2859,7 @@
         <HexValue name="sizeof_vector">0x18</HexValue>
         <Offset name="vector_triplet">0xC</Offset>
         Vector layout in MSVC 9:
-        DWORD Allocator
+        DWORD Allocator?
         DWORD ?
         DWORD ?
         DWORD Start
@@ -2865,6 +2867,9 @@
         DWORD AllocationEnd
         
         <HexValue name="sizeof_string">0x1C</HexValue>
+        <!-- most probably a static object, because its parts are often
+             referenced as offset to this address *and* as addresses    -->
+        <Address name="WORLD">0x0165B188</Address>
 
         Position and window dimensions
         ==============================
@@ -2962,6 +2967,7 @@ map_data_1b60_offset          0x1B9c
         =========
         <Address name="creature_vector">0x0166ecc4</Address>
         <Offset name="creature_name">0x0</Offset>
+        <Offset name="creature_custom_profession">0x6c</Offset>
         <Offset name="creature_profession">0x88</Offset>
         <Offset name="creature_race">0x8C</Offset>
         <Offset name="creature_position">0x90</Offset>
@@ -2972,6 +2978,14 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_artifact_name">0x6D0</Offset>
         <Offset name="creature_labors">0x770</Offset>
         <Offset name="creature_happiness">0x830</Offset>
+
+        <Offset name="creature_soul_vector">0x073C</Offset>
+        <Offset name="soul_skills_vector">0x1F4</Offset>
+        
+        <!-- from DT -->
+        <Address name="dwarf_race_index">0x01470fbc</Address>DWORD, OK
+        This seems to be wrong:
+        creature_vector         = 0x0166ed2c
       
         Materials
         =========
@@ -3012,6 +3026,39 @@ map_data_1b60_offset          0x1B9c
         <Address name="creature_type_vector">0x016AFE58</Address>
         <!--<Address name="mat_creature_types2">0x16AEE08</Address>-->
         
+        
+        Constructions
+        =============
+        <Address name="construction_vector">0x165b290</Address>
+        <Offset name="sizeof_construction">0x14</Offset>
+        
+        Translations
+        ============
+        <Address name="language_vector">0x016AFFD8</Address>
+        <Address name="translation_vector">0x016B0008</Address>
+        <Offset name="word_table">0x4C</Offset>
+        
+        Vegetation
+        ==========
+        <Address name="vegetation_vector">0x0167030C</Address> belal: 0x017f6d98 ... what?
+        <Offset name="tree_desc_offset">0x6C</Offset>
+        
+        Buildings
+        =========
+        
+        :(
+        
+        Effects
+        =======
+        
+        :(
+        
+        Settlements
+        ===========
+        
+        :(
+        
+        
         <!-- 
         addresses from belal: vectors might need 8 subtracted from them
         buildings 0x0166f9a8
@@ -3034,7 +3081,6 @@ map_data_1b60_offset          0x1B9c
         settlement_current 0xffffffff
         settlements 0x016af4a4
         translation_vector 0x016b0010
-        vegetation 0x017f6da0
         view_screen 0xffffffff
         window_dims 0x017f5abc
         window_x 0x00e32798

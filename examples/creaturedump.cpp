@@ -12,6 +12,7 @@ using namespace std;
 #include <DFMemInfo.h>
 #include <modules/Materials.h>
 #include <modules/Creatures.h>
+#include <modules/Translation.h>
 
 template <typename T>
 void print_bits ( T val, std::ostream& out )
@@ -165,14 +166,17 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout << ", nick name: " << creature.name.nickname;
             addendl = true;
         }
-        /*
-        string transName = DF.TranslateName(creature.name,englishWords,foreignWords,false);
+        
+        DFHack::Translation *Tran = DF.getTranslation();
+        DFHack::memory_info *mem = DF.getMemoryInfo();
+        
+        string transName = Tran->TranslateName(creature.name,false);
         if(!transName.empty())
         {
             cout << ", trans name: " << transName;
             addendl=true;
         }
-*/
+
         /*
         cout << ", likes: ";
         for(uint32_t i = 0;i<creature.numLikes; i++)
@@ -189,11 +193,12 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             addendl = false;
         }
         cout << "profession: " << mem->getProfession(creature.profession) << "(" << (int) creature.profession << ")";
-        /*
+        
         if(creature.custom_profession[0])
         {
             cout << ", custom profession: " << creature.custom_profession;
         }
+        /*
         if(creature.current_job.active)
         {
             cout << ", current job: " << mem->getJob(creature.current_job.jobId);
@@ -227,15 +232,37 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         */
         cout << endl;
 
-    /*
+    
         //skills
-        for(unsigned int i = 0; i < creature.skills.size();i++){
-            if(i > 0){
+        cout << "Skills" << endl;
+        for(unsigned int i = 0; i < creature.numSkills;i++)
+        {
+            if(i > 0)
+            {
                 cout << ", ";
             }
-            cout << creature.skills[i].name << ": " << creature.skills[i].rating;
+            cout << mem->getSkill(creature.skills[i].id) << ": " << creature.skills[i].rating;
         }
-    */
+        cout << endl;
+    
+        // labors
+        cout << "Labors" << endl;
+        for(unsigned int i = 0; i < NUM_CREATURE_LABORS;i++)
+        {
+            if(!creature.labors[i])
+                continue;
+            string laborname;
+            try
+            {
+                laborname = mem->getLabor(i);
+            }
+            catch(exception &)
+            {
+                break;
+            }
+            cout << laborname << ", ";
+        }
+        cout << endl;
         /*
          * FLAGS 1
          */
@@ -325,6 +352,7 @@ int main (void)
     
     DFHack::Creatures * Creatures = DF.getCreatures();
     DFHack::Materials * Materials = DF.getMaterials();
+    DFHack::Translation * Tran = DF.getTranslation();
     
     uint32_t numCreatures;
     if(!Creatures->Start(numCreatures))
@@ -358,19 +386,19 @@ int main (void)
         cerr << "Can't get the creature types." << endl;
         return 1; 
     }
-	/*
-    if(!DF.InitReadNameTables(englishWords,foreignWords))
+	
+    if(!Tran->Start())
     {
         cerr << "Can't get name tables" << endl;
         return 1;
     }
-    */
+    
     //DF.InitViewAndCursor();
     for(uint32_t i = 0; i < numCreatures; i++)
     {
         DFHack::t_creature temp;
         Creatures->ReadCreature(i,temp);
-        //if(string(creaturestypes[temp.type].id) == "DWARF")
+        if(string(creaturestypes[temp.type].id) == "DWARF")
         {
             cout << "index " << i << " ";
             printCreature(DF,temp);

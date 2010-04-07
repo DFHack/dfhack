@@ -11,6 +11,8 @@
 #include "modules/Maps.h"
 #include "modules/Materials.h"
 #include "modules/Position.h"
+#include "modules/Translation.h"
+#include "modules/Vegetation.h"
 #include "modules/Gui.h"
 
 using namespace DFHack;
@@ -23,6 +25,8 @@ APIPrivate::APIPrivate()
     position = 0;
     gui = 0;
     materials = 0;
+    translation = 0;
+    vegetation = 0;
 }
 
 APIPrivate::~APIPrivate()
@@ -32,6 +36,8 @@ APIPrivate::~APIPrivate()
     if(position) delete position;
     if(gui) delete gui;
     if(materials) delete materials;
+    if(translation) delete translation;
+    if(vegetation) delete vegetation;
 }
 
 bool APIPrivate::InitReadNames()

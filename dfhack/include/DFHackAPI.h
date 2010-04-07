@@ -37,6 +37,7 @@ distribution.
 
 namespace DFHack
 {
+
     class APIPrivate;
     class memory_info;
     class Process;
@@ -47,6 +48,8 @@ namespace DFHack
     class Position;
     class Gui;
     class Materials;
+    class Translation;
+    class Vegetation;
     
     class DFHACK_EXPORT API
     {
@@ -89,6 +92,8 @@ namespace DFHack
         Gui * getGui();
         Position * getPosition();
         Materials * getMaterials();
+        Translation * getTranslation();
+        Vegetation * getVegetation();
         
         /*
          * Constructions (costructed walls, floors, ramps, etc...)
@@ -153,14 +158,6 @@ namespace DFHack
         /*
         bool InitReadHotkeys( );
         bool ReadHotkeys(t_hotkey hotkeys[]);
-        */
-        /*
-         * DF translation tables and name translation
-         */
-        /*
-        bool InitReadNameTables (std::vector< std::vector<std::string> > & translations , std::vector< std::vector<std::string> > & foreign_languages);
-        void FinishReadNameTables();
-        std::string TranslateName(const t_name & name,const std::vector< std::vector<std::string> > & translations ,const std::vector< std::vector<std::string> > & foreign_languages, bool inEnglish=true);
         */
         
         /*

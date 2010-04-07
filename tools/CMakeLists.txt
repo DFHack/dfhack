@@ -42,8 +42,8 @@ ENDIF(UNIX)
 
 # a magma creation tool
 # Author: Aleric
-#ADD_EXECUTABLE(dfmagma_create magma_create.cpp)
-#TARGET_LINK_LIBRARIES(dfmagma_create dfhack)
+ADD_EXECUTABLE(dfmagma_create magma_create.cpp)
+TARGET_LINK_LIBRARIES(dfmagma_create dfhack)
 
 IF(UNIX)
 install(TARGETS

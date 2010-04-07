@@ -25,6 +25,18 @@ namespace DFHack
     {
         uint32_t vtable;
         int16_t tiles[16][16];
+        uint32_t address_of; // this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
+    };
+    
+    struct t_spattervein
+    {
+        uint32_t vtable;
+        uint16_t mat1;
+        uint16_t unk1;
+        uint32_t mat2;
+        uint16_t mat3;
+        uint8_t intensity[16][16];
+        uint32_t address_of; // this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
     };
     
     enum e_traffic
@@ -171,15 +183,14 @@ namespace DFHack
 
     typedef int16_t tiletypes40d [16][16];
     typedef DFHack::t_designation designations40d [16][16];
-    typedef DFHack::t_occupancy occupancies40d [16][16];
+//    typedef DFHack::t_occupancy occupancies40d [16][16];
     typedef uint8_t biome_indices40d [16];
 
     typedef struct
     {
         tiletypes40d tiletypes;
         designations40d designation;
-        occupancies40d occupancy;
-        // really a '7', but I use 8 to make it neater :)
+//        occupancies40d occupancy;
         biome_indices40d biome_indices;
         uint32_t origin; // the address where it came from
         t_blockflags blockflags;
@@ -265,10 +276,11 @@ namespace DFHack
         bool ReadDesignations(uint32_t blockx, uint32_t blocky, uint32_t blockz, designations40d *buffer);
         bool WriteDesignations (uint32_t blockx, uint32_t blocky, uint32_t blockz, designations40d *buffer);
 
+        /*
         /// read/write block occupancies
         bool ReadOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, occupancies40d *buffer);
         bool WriteOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, occupancies40d *buffer);
-
+*/
         /// read/write the block dirty bit - this is used to mark a map block so that DF scans it for designated jobs like digging
         bool ReadDirtyBit(uint32_t blockx, uint32_t blocky, uint32_t blockz, bool &dirtybit);
         bool WriteDirtyBit(uint32_t blockx, uint32_t blocky, uint32_t blockz, bool dirtybit);
@@ -281,7 +293,7 @@ namespace DFHack
         bool ReadRegionOffsets(uint32_t blockx, uint32_t blocky, uint32_t blockz, biome_indices40d *buffer);
 
         /// read aggregated veins of a block
-        bool ReadVeins(uint32_t blockx, uint32_t blocky, uint32_t blockz, std::vector <t_vein> & veins, std::vector <t_frozenliquidvein>& ices);
+        bool ReadVeins(uint32_t blockx, uint32_t blocky, uint32_t blockz, std::vector <t_vein> & veins, std::vector <t_frozenliquidvein>& ices, std::vector <t_spattervein>& splatter);
         
         private:
         struct Private;

@@ -110,6 +110,7 @@ int main (int argc, const char* argv[])
     int16_t tempvein [16][16];
     vector <DFHack::t_vein> veins;
     vector <DFHack::t_frozenliquidvein> iceveins;
+    vector <DFHack::t_spattervein> splatter;
     uint32_t maximum_regionoffset = 0;
     uint32_t num_overflows = 0;
     // walk the map!
@@ -128,7 +129,7 @@ int main (int argc, const char* argv[])
                 
                 memset(tempvein, -1, sizeof(tempvein));
                 veins.clear();
-                Maps->ReadVeins(x,y,z,veins,iceveins);
+                Maps->ReadVeins(x,y,z,veins,iceveins,splatter);
                 
                 if(showbaselayers)
                 {

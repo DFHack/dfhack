@@ -311,6 +311,7 @@ main(int argc, char *argv[])
     vector< vector <uint16_t> > layerassign;
     vector<t_vein> veinVector;
     vector<t_frozenliquidvein> IceVeinVector;
+    vector<t_spattervein> splatter;
 
     DFHack::Materials * Mats = 0;
     DFHack::Maps * Maps = 0;
@@ -444,6 +445,7 @@ main(int argc, char *argv[])
         veinVector.clear();
         IceVeinVector.clear();
         effects.clear();
+        splatter.clear();
         dirtybit = 0;
         
         // Supend, read/write data
@@ -473,7 +475,7 @@ main(int argc, char *argv[])
                 if(i == 0 && j == 0)
                 {
                     // read veins
-                    Maps->ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector,IceVeinVector);
+                    Maps->ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector,IceVeinVector,splatter);
                     
                     // get pointer to block
                     blockaddr = Maps->getBlockPtr(cursorX+i,cursorY+j,cursorZ);

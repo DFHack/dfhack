@@ -325,7 +325,7 @@ bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices4
 
 
 // veins of a block, expects empty vein vectors
-bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins, vector <t_frozenliquidvein>& ices)
+bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins, vector <t_frozenliquidvein>& ices, vector <t_spattervein> &splatter)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     veins.clear();
@@ -344,6 +344,7 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins
         {
             t_vein v;
             t_frozenliquidvein fv;
+            t_spattervein sv;
 
             // read the vein pointer from the vector
             uint32_t temp = * (uint32_t *) p_veins[i];
@@ -361,8 +362,17 @@ try_again:
             {
                 // read the ice vein data (dereference pointer)
                 g_pProcess->read (temp, sizeof(t_frozenliquidvein), (uint8_t *) &fv);
+                fv.address_of = temp;
                 // store it in the vector
                 ices.push_back (fv);
+            }
+            else if(type == off.vein_spatter_vptr)
+            {
+                // read the splatter vein data (dereference pointer)
+                g_pProcess->read (temp, sizeof(t_spattervein), (uint8_t *) &sv);
+                sv.address_of = temp;
+                // store it in the vector
+                splatter.push_back (sv);
             }
             else if(g_pProcess->readClassName(type) == "block_square_event_frozen_liquid")
             {
@@ -372,6 +382,11 @@ try_again:
             else if(g_pProcess->readClassName(type) == "block_square_event_mineral")
             {
                 off.vein_mineral_vptr = type;
+                goto try_again;
+            }
+            else if(g_pProcess->readClassName(type) == "block_square_event_material_spatter")
+            {
+                off.vein_spatter_vptr = type;
                 goto try_again;
             }
         }

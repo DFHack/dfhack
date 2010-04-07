@@ -25,16 +25,18 @@ distribution.
 #include "DFCommonInternal.h"
 #include "../private/APIPrivate.h"
 
-// we connect to those
-#include <shms.h>
-#include <mod-core.h>
-#include <mod-creature2010.h>
-#include "modules/Creatures.h"
 #include "DFVector.h"
 #include "DFMemInfo.h"
 #include "DFProcess.h"
 #include "DFError.h"
 #include "DFTypes.h"
+
+// we connect to those
+#include <shms.h>
+#include <mod-core.h>
+#include <mod-creature2010.h>
+#include "modules/Creatures.h"
+
 
 #define SHMCREATURESHDR ((Creatures2010::shm_creature_hdr *)d->d->shm_start)
 #define SHMCMD(num) ((shm_cmd *)d->d->shm_start)[num]->pingpong
@@ -162,22 +164,10 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
 
     // labors
     g_pProcess->read (temp + offs.creature_labors_offset, NUM_CREATURE_LABORS, furball.labors);
+    
     // traits
     //g_pProcess->read (temp + offs.creature_traits_offset, sizeof (uint16_t) * NUM_CREATURE_TRAITS, (uint8_t *) &furball.traits);
-    // learned skills
-    /*
-    DfVector skills (d->p, temp + offs.creature_skills_offset, 4 );
-    furball.numSkills = skills.getSize();
-    for (uint32_t i = 0; i < furball.numSkills;i++)
-    {
-        uint32_t temp2 = * (uint32_t *) skills[i];
-        //skills.read(i, (uint8_t *) &temp2);
-        // a byte: this gives us 256 skills maximum.
-        furball.skills[i].id = g_pProcess->readByte (temp2);
-        furball.skills[i].rating = g_pProcess->readByte (temp2 + 4);
-        furball.skills[i].experience = g_pProcess->readWord (temp2 + 8);
-    }
-    */
+
     // profession
     furball.profession = g_pProcess->readByte (temp + offs.creature_profession_offset);
     // current job HACK: the job object isn't cleanly represented here
@@ -290,14 +280,14 @@ int32_t Creatures::ReadCreatureInBox (int32_t index, t_creature & furball,
 }
 
 
-/*
-bool API::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
+
+bool Creatures::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
 {
-    if(!d->creaturesInited) return false;
+    if(!d->Started) return false;
     uint32_t temp = * (uint32_t *) d->p_cre->at (index);
-    WriteRaw(temp + d->creatures.creature_labors_offset, NUM_CREATURE_LABORS, labors);
+    g_pProcess->write(temp + d->creatures.creature_labors_offset, NUM_CREATURE_LABORS, labors);
 }
-*/
+
 /*
 bool API::getCurrentCursorCreature(uint32_t & creature_index)
 {

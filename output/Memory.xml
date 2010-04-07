@@ -2800,6 +2800,7 @@
             <Labor name="Wood Burning">64</Labor>
             <Labor name="Pump Operating">65</Labor>
             
+            <!--
             * Labor groups *
             <Labor name="Woodworking">4294967294</Labor>
             <Labor name="Stoneworking">4294967293</Labor>
@@ -2813,6 +2814,7 @@
             <Labor name="Engineering">4294967285</Labor>
             <Labor name="Hauling">4294967284</Labor>
             <Labor name="Other Jobs">4294967283</Labor>
+            -->
             ====================================================================
                                     V -- T A B L E S
                                     (for stonesense)

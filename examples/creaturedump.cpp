@@ -234,6 +234,7 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 
     
         //skills
+        cout << "Skills" << endl;
         for(unsigned int i = 0; i < creature.numSkills;i++)
         {
             if(i > 0)
@@ -244,6 +245,24 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         }
         cout << endl;
     
+        // labors
+        cout << "Labors" << endl;
+        for(unsigned int i = 0; i < NUM_CREATURE_LABORS;i++)
+        {
+            if(!creature.labors[i])
+                continue;
+            string laborname;
+            try
+            {
+                laborname = mem->getLabor(i);
+            }
+            catch(exception &)
+            {
+                break;
+            }
+            cout << laborname << ", ";
+        }
+        cout << endl;
         /*
          * FLAGS 1
          */

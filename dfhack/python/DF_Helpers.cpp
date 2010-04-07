@@ -38,7 +38,7 @@ static PyObject* BuildMatglossPair(DFHack::t_matglossPair& matgloss)
 
 static PyObject* BuildTreeDesc(DFHack::t_tree_desc& tree)
 {
-	Py_BuildValue("OO", BuildMatglossPair(tree.material), Py_BuildValue("III", tree.x, tree.y, tree.z));
+	return Py_BuildValue("OO", BuildMatglossPair(tree.material), Py_BuildValue("III", tree.x, tree.y, tree.z));
 }
 
 static PyObject* BuildSkill(DFHack::t_skill& skill)
@@ -53,7 +53,19 @@ static PyObject* BuildJob(DFHack::t_job& job)
 
 static PyObject* BuildItemType(DFHack::t_itemType& item)
 {
-	return Py_BuildValue("ss", PyString_FromString(item.id), PyString_FromString(item.name));
+	PyObject *id, *name;
+	
+	if(item.id[0])
+		id = PyString_FromString(item.id);
+	else
+		id = PyString_FromString("");
+	
+	if(item.name[0])
+		name = PyString_FromString(item.name);
+	else
+		name = PyString_FromString("");
+		
+	return Py_BuildValue("OO", id, name);
 }
 
 static PyObject* BuildLike(DFHack::t_like& like)
@@ -62,7 +74,7 @@ static PyObject* BuildLike(DFHack::t_like& like)
 	
 	item = Py_BuildValue("iii", like.type, like.itemClass, like.itemIndex);
 	
-	return Py_BuildValue("OOO", item, BuildMatglossPair(item.material), PyBool_FromLong((int)item.active));
+	return Py_BuildValue("OOO", item, BuildMatglossPair(like.material), PyBool_FromLong((int)like.active));
 }
 
 static PyObject* BuildNote(DFHack::t_note& note)
@@ -71,7 +83,12 @@ static PyObject* BuildNote(DFHack::t_note& note)
 	
 	PyDict_SetItemString(noteDict, "symbol", PyString_FromFormat("%c", note.symbol));
 	PyDict_SetItemString(noteDict, "fore_back", Py_BuildValue("II", note.foreground, note.background));
-	PyDict_SetItemString(noteDict, "name", PyString_FromString(note.name));
+	
+	if(note.name[0])
+		PyDict_SetItemString(noteDict, "name", PyString_FromString(note.name));
+	else
+		PyDict_SetItemString(noteDict, "name", PyString_FromString(""));
+		
 	PyDict_SetItemString(noteDict, "position", Py_BuildValue("III", note.x, note.y, note.z));
 	
 	return noteDict;
@@ -84,8 +101,16 @@ static PyObject* BuildName(DFHack::t_name& name)
 	
 	nameDict = PyDict_New();
 	
-	PyDict_SetItemString(nameDict, "first_name", PyString_FromString(name.first_name));
-	PyDict_SetItemString(nameDict, "nickname", PyString_FromString(name.nickname));
+	if(name.first_name[0])
+		PyDict_SetItemString(nameDict, "first_name", PyString_FromString(name.first_name));
+	else
+		PyDict_SetItemString(nameDict, "first_name", PyString_FromString(""));
+	
+	if(name.nickname[0])
+		PyDict_SetItemString(nameDict, "nickname", PyString_FromString(name.nickname));
+	else
+		PyDict_SetItemString(nameDict, "nickname", PyString_FromString(""));
+	
 	PyDict_SetItemString(nameDict, "language", PyInt_FromLong(name.language));
 	PyDict_SetItemString(nameDict, "has_name", PyBool_FromLong((int)name.has_name));
 	

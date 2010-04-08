@@ -1358,15 +1358,15 @@
             <Profession can_assign_labors="true" is_military="false" name="SIEGE_OPERATOR">55</Profession>
             <Profession can_assign_labors="true" is_military="false" name="PUMP_OPERATOR">56</Profession>
             <Profession can_assign_labors="true" is_military="false" name="CLERK">57</Profession>
+            <Profession can_assign_labors="true" is_military="false" name="ADMINISTRATOR">58</Profession>
+            <Profession can_assign_labors="true" is_military="false" name="TRADER">59</Profession>
             <Profession can_assign_labors="true" is_military="false" name="ARCHITECT">60</Profession>
+            <Profession can_assign_labors="true" is_military="false" name="ALCHEMIST">61</Profession>
             <Profession can_assign_labors="true" is_military="false" name="DOCTOR">62</Profession>
             <Profession can_assign_labors="true" is_military="false" name="DIAGNOSER">63</Profession>
             <Profession can_assign_labors="true" is_military="false" name="BONE_SETTER">64</Profession>
             <Profession can_assign_labors="true" is_military="false" name="SUTURER">65</Profession>
             <Profession can_assign_labors="true" is_military="false" name="SURGEON">66</Profession>
-            <Profession can_assign_labors="true" is_military="false" name="ADMINISTRATOR">58</Profession>
-            <Profession can_assign_labors="true" is_military="false" name="TRADER">59</Profession>
-            <Profession can_assign_labors="true" is_military="false" name="ALCHEMIST">61</Profession>
             <Profession can_assign_labors="true" is_military="false" name="MERCHANT">67</Profession>
             <Profession can_assign_labors="true" is_military="true" name="HAMMERMAN">68</Profession>
             <Profession can_assign_labors="true" is_military="true" name="MASTER_HAMMERMAN">69</Profession>
@@ -3026,6 +3026,8 @@ map_data_1b60_offset          0x1B9c
         <Address name="creature_type_vector">0x016AFE58</Address>
         <!--<Address name="mat_creature_types2">0x16AEE08</Address>-->
         
+        this is an array of 4B pointers to material templates and length 0x292
+        <Address name="array_for_spatters?">0x016b90cc</Address>
         
         Constructions
         =============

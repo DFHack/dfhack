@@ -61,6 +61,10 @@ TARGET_LINK_LIBRARIES(dfvecc dfhack)
 ADD_EXECUTABLE(dftreedump treedump.cpp)
 TARGET_LINK_LIBRARIES(dftreedump dfhack)
 
+# spatterdump - dump spatter 'veins'
+ADD_EXECUTABLE(dfspatterdump spatterdump.cpp)
+TARGET_LINK_LIBRARIES(dfspatterdump dfhack)
+
 # catsplosion - Makes every cat pregnant, and almost due...
 # Author: Zhentar
 # ADD_EXECUTABLE(dfcatsplosion catsplosion.cpp)

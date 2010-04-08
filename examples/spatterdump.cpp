@@ -49,6 +49,11 @@ int main (int numargs, const char ** args)
     
     DFHack::Maps *Maps =DF.getMaps();
     DFHack::Position *Pos =DF.getPosition();
+    DFHack::Materials *Mats =DF.getMaterials();
+    vector<t_matgloss> creature_types;
+    
+    Mats->ReadCreatureTypes(creature_types);
+    
     // init the map
     if(!Maps->Start())
     {
@@ -58,6 +63,7 @@ int main (int numargs, const char ** args)
         #endif
         return 1;
     }
+    
     int32_t cx, cy, cz;
     Maps->getSize(x_max,y_max,z_max);
     Pos->getCursorCoords(cx,cy,cz);
@@ -77,6 +83,8 @@ int main (int numargs, const char ** args)
                     for(int i = 0; i < splatter.size(); i++)
                     {
                         printf("Splatter %d\nmat1: %d\nunknown: %d\nmat2: %d\nmat3: %d\n",i,splatter[i].mat1,splatter[i].unk1,splatter[i].mat2,splatter[i].mat3);
+                        cout << PrintSplatterType(splatter[i].mat1,splatter[i].mat2,creature_types) << endl;
+                        printf("Address 0x%08x\n",splatter[i].address_of);
                         for(uint32_t yyy = 0; yyy < 16; yyy++)
                         {
                             cout << "|";
@@ -110,6 +118,9 @@ int main (int numargs, const char ** args)
             for(int i = 0; i < splatter.size(); i++)
             {
                 printf("Splatter %d\nmat1: %d\nunknown: %d\nmat2: %d\nmat3: %d\n",i,splatter[i].mat1,splatter[i].unk1,splatter[i].mat2,splatter[i].mat3);
+                PrintSplatterType(splatter[i].mat1,splatter[i].mat2,creature_types);
+                cout << endl;
+                printf("Address 0x%08x\n",splatter[i].address_of);
                 for(uint32_t y = 0; y < 16; y++)
                 {
                     cout << "|";

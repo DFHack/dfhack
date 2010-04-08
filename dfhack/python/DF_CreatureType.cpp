@@ -29,10 +29,9 @@ distribution.
 #include "structmember.h"
 #include "DF_Imports.cpp"
 #include "DF_Helpers.cpp"
+#include "modules/Creatures.h"
 
 using namespace DFHack;
-
-#include "modules/Creatures.h"
 
 struct DF_Creature_Base
 {
@@ -117,23 +116,23 @@ static void DF_Creature_Base_dealloc(DF_Creature_Base* self)
 {
 	if(self != NULL)
 	{
-		Py_CLEAR(self->position);
-		Py_CLEAR(self->flags1);
-		Py_CLEAR(self->flags2);
+		Py_XDECREF(self->position);
+		Py_XDECREF(self->flags1);
+		Py_XDECREF(self->flags2);
 
-		Py_CLEAR(self->custom_profession);	
-		Py_CLEAR(self->name);
-		Py_CLEAR(self->squad_name);
-		Py_CLEAR(self->artifact_name);
-		Py_CLEAR(self->current_job);
+		Py_XDECREF(self->custom_profession);	
+		Py_XDECREF(self->name);
+		Py_XDECREF(self->squad_name);
+		Py_XDECREF(self->artifact_name);
+		Py_XDECREF(self->current_job);
 		
-		Py_CLEAR(self->flags1);
-		Py_CLEAR(self->flags2);
+		Py_XDECREF(self->flags1);
+		Py_XDECREF(self->flags2);
 		
-		Py_CLEAR(self->labor_list);
-		Py_CLEAR(self->trait_list);
-		Py_CLEAR(self->skill_list);
-		Py_CLEAR(self->like_list);
+		Py_XDECREF(self->labor_list);
+		Py_XDECREF(self->trait_list);
+		Py_XDECREF(self->skill_list);
+		Py_XDECREF(self->like_list);
 		
 		// if(self->labor_list != NULL)
 			// PyList_Clear(self->labor_list);
@@ -222,55 +221,62 @@ static PyObject* BuildCreature(DFHack::t_creature& creature)
 	
 	obj = (DF_Creature_Base*)PyObject_Call((PyObject*)&DF_Creature_Base_type, NULL, NULL);
 	
-	obj->position = Py_BuildValue("III", creature.x, creature.y, creature.z);
-	obj->profession = creature.profession;
-	obj->c_type = creature.type;
-	obj->mood = creature.mood;
-	obj->happiness = creature.happiness;
-	obj->c_id = creature.id;
-	obj->agility = creature.agility;
-	obj->strength = creature.strength;
-	obj->toughness = creature.toughness;
-	obj->money = creature.money;
-	obj->squad_leader_id = creature.squad_leader_id;
-	obj->sex = creature.sex;
-	obj->pregnancy_timer = creature.pregnancy_timer;
-	obj->blood_max = creature.blood_max;
-	obj->blood_current = creature.blood_current;
-	obj->bleed_rate = creature.bleed_rate;
+	if(obj != NULL)
+	{
+		obj->position = Py_BuildValue("III", creature.x, creature.y, creature.z);
+		obj->profession = creature.profession;
+		obj->c_type = creature.type;
+		obj->mood = creature.mood;
+		obj->happiness = creature.happiness;
+		obj->c_id = creature.id;
+		obj->agility = creature.agility;
+		obj->strength = creature.strength;
+		obj->toughness = creature.toughness;
+		obj->money = creature.money;
+		obj->squad_leader_id = creature.squad_leader_id;
+		obj->sex = creature.sex;
+		obj->pregnancy_timer = creature.pregnancy_timer;
+		obj->blood_max = creature.blood_max;
+		obj->blood_current = creature.blood_current;
+		obj->bleed_rate = creature.bleed_rate;
+		
+		if(creature.custom_profession[0])
+			obj->custom_profession = PyString_FromString(creature.custom_profession);
+		
+		obj->flags1 = PyObject_Call(CreatureFlags1_type, PyInt_FromLong(creature.flags1.whole), NULL);
+		obj->flags2 = PyObject_Call(CreatureFlags2_type, PyInt_FromLong(creature.flags2.whole), NULL);
+		
+		obj->current_job = BuildJob(creature.current_job);
+		obj->name = BuildName(creature.name);
+		obj->squad_name = BuildName(creature.squad_name);
+		obj->artifact_name = BuildName(creature.artifact_name);
+		
+		obj->skill_list = PyList_New(creature.numSkills);
+		
+		for(int i = 0; i < creature.numSkills; i++)
+			PyList_SetItem(obj->skill_list, i, BuildSkill(creature.skills[i]));
+		
+		obj->like_list = PyList_New(creature.numLikes);
+		
+		for(int i = 0; i < creature.numLikes; i++)
+			PyList_SetItem(obj->like_list, i, BuildLike(creature.likes[i]));
+		
+		obj->labor_list = PyList_New(NUM_CREATURE_LABORS);
+		
+		for(int i = 0; i < NUM_CREATURE_LABORS; i++)
+			PyList_SetItem(obj->labor_list, i, PyInt_FromLong(creature.labors[i]));
+		
+		obj->trait_list = PyList_New(NUM_CREATURE_TRAITS);
+		
+		for(int i = 0; i < NUM_CREATURE_TRAITS; i++)
+			PyList_SetItem(obj->trait_list, i, PyInt_FromLong(creature.traits[i]));
+		
+		Py_INCREF((PyObject*)obj);
 	
-	if(creature.custom_profession[0])
-		obj->custom_profession = PyString_FromString(creature.custom_profession);
+		return (PyObject*)obj;
+	}
 	
-	obj->flags1 = PyObject_Call(CreatureFlags1_type, PyInt_FromLong(creature.flags1.whole), NULL);
-	obj->flags2 = PyObject_Call(CreatureFlags2_type, PyInt_FromLong(creature.flags2.whole), NULL);
-	
-	obj->current_job = BuildJob(creature.current_job);
-	obj->name = BuildName(creature.name);
-	obj->squad_name = BuildName(creature.squad_name);
-	obj->artifact_name = BuildName(creature.artifact_name);
-	
-	obj->skill_list = PyList_New(creature.numSkills);
-	
-	for(int i = 0; i < creature.numSkills; i++)
-		PyList_SetItem(obj->skill_list, i, BuildSkill(creature.skills[i]));
-	
-	obj->like_list = PyList_New(creature.numLikes);
-	
-	for(int i = 0; i < creature.numLikes; i++)
-		PyList_SetItem(obj->like_list, i, BuildLike(creature.likes[i]));
-	
-	obj->labor_list = PyList_New(NUM_CREATURE_LABORS);
-	
-	for(int i = 0; i < NUM_CREATURE_LABORS; i++)
-		PyList_SetItem(obj->labor_list, i, PyInt_FromLong(creature.labors[i]));
-	
-	obj->trait_list = PyList_New(NUM_CREATURE_TRAITS);
-	
-	for(int i = 0; i < NUM_CREATURE_TRAITS; i++)
-		PyList_SetItem(obj->trait_list, i, PyInt_FromLong(creature.traits[i]));
-	
-	return (PyObject*)obj;
+	Py_RETURN_NONE;
 }
 
 #endif

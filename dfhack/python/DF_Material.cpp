@@ -42,30 +42,53 @@ struct DF_Material
 
 // Helpers
 
-static PyObject* BuildMatgloss(t_matgloss matgloss)
+static PyObject* BuildMatgloss(t_matgloss& matgloss)
 {
 	PyObject* matDict;
+	PyObject* temp;
 	
 	matDict = PyDict_New();
 	
 	if(matgloss.id[0])
-		PyDict_SetItemString(matDict, "id", PyString_FromString(matgloss.id));
+		temp = PyString_FromString(matgloss.id);
 	else
-		PyDict_SetItemString(matDict, "id", PyString_FromString(""));
+		temp = PyString_FromString("");
 		
-	PyDict_SetItemString(matDict, "fore", PyInt_FromLong(matgloss.fore));
-	PyDict_SetItemString(matDict, "back", PyInt_FromLong(matgloss.back));
-	PyDict_SetItemString(matDict, "bright", PyInt_FromLong(matgloss.bright));
+	PyDict_SetItemString(matDict, "id", temp);
+	
+	Py_DECREF(temp);
+	
+	temp = PyInt_FromLong(matgloss.fore);
+		
+	PyDict_SetItemString(matDict, "fore", temp);
+	
+	Py_DECREF(temp);
+	
+	temp = PyInt_FromLong(matgloss.back);
+	
+	PyDict_SetItemString(matDict, "back", temp);
+	
+	Py_DECREF(temp);
+	
+	temp = PyInt_FromLong(matgloss.bright);
+	
+	PyDict_SetItemString(matDict, "bright", temp);
+	
+	Py_DECREF(temp);
 	
 	if(matgloss.name[0])
-		PyDict_SetItemString(matDict, "name", PyString_FromString(matgloss.name));
+		temp = PyString_FromString(matgloss.name);
 	else
-		PyDict_SetItemString(matDict, "name", PyString_FromString(""));
+		temp = PyString_FromString("");
+		
+	PyDict_SetItemString(matDict, "name", temp);
+	
+	Py_DECREF(temp);
 	
 	return matDict;
 }
 
-static PyObject* BuildMatglossPlant(t_matglossPlant matgloss)
+static PyObject* BuildMatglossPlant(t_matglossPlant& matgloss)
 {
 	PyObject* matDict;
 	
@@ -115,6 +138,8 @@ static PyObject* BuildMatglossList(std::vector<t_matgloss> & matVec)
 		PyObject* matgloss = BuildMatgloss(*matIter);
 		
 		PyList_Append(matList, matgloss);
+		
+		Py_DECREF(matgloss);
 	}
 	
 	return matList;

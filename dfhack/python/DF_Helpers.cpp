@@ -79,47 +79,86 @@ static PyObject* BuildLike(DFHack::t_like& like)
 	return Py_BuildValue("OOO", item, BuildMatglossPair(like.material), PyBool_FromLong((int)like.active));
 }
 
+//PyDict_SetItem and PyDict_SetItemString don't steal references, so this had to get a bit more complicated...
 static PyObject* BuildNote(DFHack::t_note& note)
 {
 	PyObject* noteDict = PyDict_New();
+	PyObject* temp;
 	
-	PyDict_SetItemString(noteDict, "symbol", PyString_FromFormat("%c", note.symbol));
-	PyDict_SetItemString(noteDict, "fore_back", Py_BuildValue("II", note.foreground, note.background));
+	temp = PyString_FromFormat("%c", note.symbol);
+	
+	PyDict_SetItemString(noteDict, "symbol", temp);
+	
+	Py_DECREF(temp);
+	
+	temp = Py_BuildValue("II", note.foreground, note.background);
+	
+	PyDict_SetItemString(noteDict, "fore_back", temp);
+	
+	Py_DECREF(temp);
 	
 	if(note.name[0])
-		PyDict_SetItemString(noteDict, "name", PyString_FromString(note.name));
+		temp = PyString_FromString(note.name);
 	else
-		PyDict_SetItemString(noteDict, "name", PyString_FromString(""));
+		PyString_FromString("");
 		
-	PyDict_SetItemString(noteDict, "position", Py_BuildValue("III", note.x, note.y, note.z));
+	PyDict_SetItemString(noteDict, "name", temp);
+	
+	Py_DECREF(temp);
+	
+	temp = Py_BuildValue("III", note.x, note.y, note.z);
+		
+	PyDict_SetItemString(noteDict, "position", temp);
+	
+	Py_DECREF(temp);
 	
 	return noteDict;
 }
 
+//same here...reference counting is kind of a pain, assuming I'm even doing it right...
 static PyObject* BuildName(DFHack::t_name& name)
 {
 	PyObject* nameDict;
 	PyObject *wordList, *speechList;
+	PyObject* temp;
+	int wordCount = 7;
 	
 	nameDict = PyDict_New();
 	
 	if(name.first_name[0])
-		PyDict_SetItemString(nameDict, "first_name", PyString_FromString(name.first_name));
+		temp = PyString_FromString(name.first_name);
 	else
-		PyDict_SetItemString(nameDict, "first_name", PyString_FromString(""));
+		temp = PyString_FromString("");
+		
+	PyDict_SetItemString(nameDict, "first_name", temp);
+	
+	Py_DECREF(temp);
 	
 	if(name.nickname[0])
-		PyDict_SetItemString(nameDict, "nickname", PyString_FromString(name.nickname));
+		temp = PyString_FromString(name.nickname);
 	else
-		PyDict_SetItemString(nameDict, "nickname", PyString_FromString(""));
+		temp = PyString_FromString("");
+		
+	PyDict_SetItemString(nameDict, "nickname", temp);
 	
-	PyDict_SetItemString(nameDict, "language", PyInt_FromLong(name.language));
-	PyDict_SetItemString(nameDict, "has_name", PyBool_FromLong((int)name.has_name));
+	Py_DECREF(temp);
 	
-	wordList = PyList_New(7);
-	speechList = PyList_New(7);
+	temp = PyInt_FromLong(name.language);
 	
-	for(int i = 0; i < 7; i++)
+	PyDict_SetItemString(nameDict, "language", temp);
+	
+	Py_DECREF(temp);
+	
+	temp = PyBool_FromLong((int)name.has_name);
+	
+	PyDict_SetItemString(nameDict, "has_name", temp);
+	
+	Py_DECREF(temp);
+	
+	wordList = PyList_New(wordCount);
+	speechList = PyList_New(wordCount);
+	
+	for(int i = 0; i < wordCount; i++)
 	{
 		PyList_SetItem(wordList, i, PyInt_FromLong(name.words[i]));
 		PyList_SetItem(wordList, i, PyInt_FromLong(name.parts_of_speech[i]));
@@ -128,6 +167,9 @@ static PyObject* BuildName(DFHack::t_name& name)
 	PyDict_SetItemString(nameDict, "words", wordList);
 	PyDict_SetItemString(nameDict, "parts_of_speech", speechList);
 	
+	Py_DECREF(wordList);
+	Py_DECREF(speechList);
+	
 	return nameDict;
 }
 
@@ -135,17 +177,35 @@ static PyObject* BuildSettlement(DFHack::t_settlement& settlement)
 {
 	PyObject* setDict;
 	PyObject *local_pos1, *local_pos2;
+	PyObject* temp;
 	
 	setDict = PyDict_New();
 	
-	PyDict_SetItemString(setDict, "origin", PyInt_FromLong(settlement.origin));
-	PyDict_SetItemString(setDict, "name", BuildName(settlement.name));
-	PyDict_SetItemString(setDict, "world_pos", Py_BuildValue("ii", settlement.world_x, settlement.world_y));
+	temp = PyInt_FromLong(settlement.origin);
+	
+	PyDict_SetItemString(setDict, "origin", temp);
+	
+	Py_DECREF(temp);
+	
+	temp = BuildName(settlement.name);
+	
+	PyDict_SetItemString(setDict, "name", temp);
+	
+	Py_DECREF(temp);
+	
+	temp = Py_BuildValue("ii", settlement.world_x, settlement.world_y);
+	
+	PyDict_SetItemString(setDict, "world_pos", temp);
+	
+	Py_DECREF(temp);
 	
 	local_pos1 = Py_BuildValue("ii", settlement.local_x1, settlement.local_y1);
 	local_pos2 = Py_BuildValue("ii", settlement.local_x2, settlement.local_y2);
 	
 	PyDict_SetItemString(setDict, "local_pos", Py_BuildValue("OO", local_pos1, local_pos2));
+	
+	Py_DECREF(local_pos1);
+	Py_DECREF(local_pos2);
 	
 	return setDict;
 }

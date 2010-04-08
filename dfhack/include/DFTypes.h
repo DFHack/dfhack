@@ -31,41 +31,6 @@ distribution.
 namespace DFHack
 {
 
-template <int SIZE>
-struct junk_fill
-{
-    uint8_t data[SIZE];
-    /*
-    void Dump()
-    {
-        cout<<hex;
-        for (int i=0;i<SIZE;i++)
-            cout<<setw(2)<<i<<" ";
-        cout<<endl;
-        for (int i=0;i<SIZE;i++)
-        {
-            cout<<setw(2)<<(int)data[i]<<" ";
-            if ((i%32)==32-1)
-                cout<<endl;
-        }
-        cout<<endl;
-    }
-    */
-};
-    
-/*
-struct t_vein
-{
-    uint32_t vtable;
-    int16_t type;
-    int16_t assignment[16];
-    int16_t unknown;
-    uint32_t flags;
-    uint32_t address_of; // this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
-};
-*/
-
-
 struct t_matglossPair
 {
     int16_t type;
@@ -73,6 +38,13 @@ struct t_matglossPair
 };
 
 // DF effects, by darius from the bay12 forum
+
+template <int SIZE>
+struct junk_fill
+{
+    uint8_t data[SIZE];
+};
+    
 enum EFFECT_TYPE
 {
     EFF_MIASMA=0,
@@ -88,6 +60,7 @@ enum EFFECT_TYPE
     EFF_BOILING, // uses matgloss
     EFF_OCEANWAVE
 };
+
 struct t_effect_df40d //size 40
 {
     uint16_t type;

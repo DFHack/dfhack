@@ -3026,7 +3026,7 @@ map_data_1b60_offset          0x1B9c
         <Address name="creature_type_vector">0x016AFE58</Address>
         <!--<Address name="mat_creature_types2">0x16AEE08</Address>-->
         
-        <!-- this is an array of length 0x 
+        this is an array of 4B pointers to material templates and length 0x292
         <Address name="array_for_spatters?">0x016b90cc</Address>
         
         Constructions

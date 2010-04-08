@@ -48,11 +48,19 @@ static PyObject* BuildMatgloss(t_matgloss matgloss)
 	
 	matDict = PyDict_New();
 	
-	PyDict_SetItemString(matDict, "id", PyString_FromString(matgloss.id));
+	if(matgloss.id[0])
+		PyDict_SetItemString(matDict, "id", PyString_FromString(matgloss.id));
+	else
+		PyDict_SetItemString(matDict, "id", PyString_FromString(""));
+		
 	PyDict_SetItemString(matDict, "fore", PyInt_FromLong(matgloss.fore));
 	PyDict_SetItemString(matDict, "back", PyInt_FromLong(matgloss.back));
 	PyDict_SetItemString(matDict, "bright", PyInt_FromLong(matgloss.bright));
-	PyDict_SetItemString(matDict, "name", PyString_FromString(matgloss.name));
+	
+	if(matgloss.name[0])
+		PyDict_SetItemString(matDict, "name", PyString_FromString(matgloss.name));
+	else
+		PyDict_SetItemString(matDict, "name", PyString_FromString(""));
 	
 	return matDict;
 }
@@ -63,14 +71,34 @@ static PyObject* BuildMatglossPlant(t_matglossPlant matgloss)
 	
 	matDict = PyDict_New();
 	
-	PyDict_SetItemString(matDict, "id", PyString_FromString(matgloss.id));
+	if(matgloss.id[0])
+		PyDict_SetItemString(matDict, "id", PyString_FromString(matgloss.id));
+	else
+		PyDict_SetItemString(matDict, "id", PyString_FromString(""));
+		
 	PyDict_SetItemString(matDict, "fore", PyInt_FromLong(matgloss.fore));
 	PyDict_SetItemString(matDict, "back", PyInt_FromLong(matgloss.back));
 	PyDict_SetItemString(matDict, "bright", PyInt_FromLong(matgloss.bright));
-	PyDict_SetItemString(matDict, "name", PyString_FromString(matgloss.name));
-	PyDict_SetItemString(matDict, "drink_name", PyString_FromString(matgloss.drink_name));
-	PyDict_SetItemString(matDict, "food_name", PyString_FromString(matgloss.food_name));
-	PyDict_SetItemString(matDict, "extract_name", PyString_FromString(matgloss.extract_name));
+	
+	if(matgloss.name[0])
+		PyDict_SetItemString(matDict, "name", PyString_FromString(matgloss.name));
+	else
+		PyDict_SetItemString(matDict, "name", PyString_FromString(""));
+	
+	if(matgloss.drink_name[0])
+		PyDict_SetItemString(matDict, "drink_name", PyString_FromString(matgloss.drink_name));
+	else
+		PyDict_SetItemString(matDict, "drink_name", PyString_FromString(""));
+	
+	if(matgloss.food_name[0])
+		PyDict_SetItemString(matDict, "food_name", PyString_FromString(matgloss.food_name));
+	else
+		PyDict_SetItemString(matDict, "food_name", PyString_FromString(""));
+	
+	if(matgloss.extract_name[0])
+		PyDict_SetItemString(matDict, "extract_name", PyString_FromString(matgloss.extract_name));
+	else
+		PyDict_SetItemString(matDict, "extract_name", PyString_FromString(""));
 	
 	return matDict;
 }

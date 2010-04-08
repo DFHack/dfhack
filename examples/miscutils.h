@@ -10,6 +10,8 @@
 #include <cstdio>
 using namespace std;
 
+#include <DFVector.h>
+
 void DumpObjStr0Vector (const char * name, DFHack::Process *p, uint32_t addr)
 {
     cout << "----==== " << name << " ====----" << endl;
@@ -133,5 +135,85 @@ void print_bits ( T val, std::ostream& out )
         val >>= 1;
     }
 }
+
+// this is probably completely bogus
+std::string PrintSplatterType (int16_t mat1, int32_t mat2, vector<DFHack::t_matgloss> &creature_types)
+{
+    std::string ret;
+    switch (mat1)
+    {
+        case 0:
+            return "Rock";
+        break;
+        case 1:
+            return "Amber";
+            break;
+        case 2:
+            return "Coral";
+            break;
+        case 3:
+            return "Green Glass";
+            break;
+        case 4:
+            return "Clear Glass";
+            break;
+        case 5:
+            return "Crystal Glass";
+            break;
+        case 6:
+            return "Ice";
+            break;
+        case 7:
+            return "Coal";
+            break;
+        case 8:
+            return "Potash";
+            break;
+        case 9:
+            return "Ash";
+            break;
+        case 10:
+            return "Pearlash";
+            break;
+        case 11:
+            return "Lye";
+            break;
+        case 12:
+            return "Mud";
+            break;
+        case 13:
+            return "Vomit";
+            break;
+        case 14:
+            return "Salt";
+            break;
+        case 15:
+            return "Filth";
+            break;
+        case 16:
+            return "Frozen? Filth";
+            break;
+        case 18:
+            return "Grime";
+            break;
+        case 0xF2:
+            return  "Very Specific Blood (references a named creature)";
+            break;
+        case 0x2A:
+        case 0x2B:
+            if(mat2 != -1)
+            {
+                ret += creature_types[mat2].id;
+                ret += " ";
+            }
+            ret += "Blood";
+            return ret;
+            break;
+        default:
+            return "Unknown";
+            break;
+    }
+}
+
 
 #endif

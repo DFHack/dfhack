@@ -24,81 +24,6 @@ using namespace std;
 
 using namespace DFHack;
 
-void PrintSplatterType (int16_t mat1, int32_t mat2, vector<t_matgloss> creature_types)
-{
-    switch (mat1)
-    {
-        case 0:
-            cout <<"Rock";
-        break;
-        case 1:
-            cout <<"Amber";
-            break;
-        case 2:
-            cout <<"Coral";
-            break;
-        case 3:
-            cout <<"Green Glass";
-            break;
-        case 4:
-            cout <<"Clear Glass";
-            break;
-        case 5:
-            cout <<"Crystal Glass";
-            break;
-        case 6:
-            cout <<"Ice";
-            break;
-        case 7:
-            cout <<"Coal";
-            break;
-        case 8:
-            cout <<"Potash";
-            break;
-        case 9:
-            cout <<"Ash";
-            break;
-        case 10:
-            cout <<"Pearlash";
-            break;
-        case 11:
-            cout <<"Lye";
-            break;
-        case 12:
-            cout <<"Mud";
-            break;
-        case 13:
-            cout <<"Vomit";
-            break;
-        case 14:
-            cout <<"Salt";
-            break;
-        case 15:
-            cout <<"Filth";
-            break;
-        case 16:
-            cout <<"Frozen? Filth";
-            break;
-        case 18:
-            cout <<"Grime";
-            break;
-        case 0xF2:
-            cout << "Very Specific Blood (references a named creature)";
-            break;
-        case 0x2A:
-        case 0x2B:
-            if(mat2 != -1)
-            {
-                cout << creature_types[mat2].id << " ";
-            }
-            cout<<"Blood";
-            break;
-        default:
-            cout <<"Unknown";
-            break;
-    }
-}
-
 char shades[10] = {'#','$','O','=','+','|','-','^','.',' '};
 int main (int numargs, const char ** args)
 {
@@ -158,8 +83,7 @@ int main (int numargs, const char ** args)
                     for(int i = 0; i < splatter.size(); i++)
                     {
                         printf("Splatter %d\nmat1: %d\nunknown: %d\nmat2: %d\nmat3: %d\n",i,splatter[i].mat1,splatter[i].unk1,splatter[i].mat2,splatter[i].mat3);
-                        PrintSplatterType(splatter[i].mat1,splatter[i].mat2,creature_types);
-                        cout << endl;
+                        cout << PrintSplatterType(splatter[i].mat1,splatter[i].mat2,creature_types) << endl;
                         printf("Address 0x%08x\n",splatter[i].address_of);
                         for(uint32_t yyy = 0; yyy < 16; yyy++)
                         {

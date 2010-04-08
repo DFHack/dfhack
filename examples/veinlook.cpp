@@ -21,6 +21,7 @@ using namespace std;
 #include <DFMemInfo.h>
 #include <modules/Maps.h>
 #include <modules/Materials.h>
+#include "miscutils.h"
 using namespace DFHack;
 
 
@@ -307,6 +308,7 @@ main(int argc, char *argv[])
     materials.clear();
     mapblock40d blocks[3][3];
     vector<DFHack::t_matgloss> stonetypes;
+    vector<DFHack::t_matgloss> creature_types;
     vector<DFHack::t_effect_df40d> effects;
     vector< vector <uint16_t> > layerassign;
     vector<t_vein> veinVector;
@@ -350,6 +352,13 @@ main(int argc, char *argv[])
     
     // get stone matgloss mapping
     if(!Mats->ReadInorganicMaterials(stonetypes))
+    {
+        error = "Can't read stone types.";
+        pDF = 0;
+        finish(0);
+    }
+    
+    if(!Mats->ReadCreatureTypes(creature_types))
     {
         error = "Can't read stone types.";
         pDF = 0;
@@ -558,11 +567,12 @@ main(int argc, char *argv[])
         gotoxy(0,50);
         uint32_t mineralsize = veinVector.size();
         uint32_t icesize = IceVeinVector.size();
-        uint32_t totalVeinSize =  mineralsize+ icesize;
+        uint32_t splattersize = splatter.size();
+        uint32_t totalVeinSize =  mineralsize+ icesize + splattersize;
         if(vein == totalVeinSize) vein = totalVeinSize - 1;
         if(vein < -1) vein = -1;
         cprintf("X %d/%d, Y %d/%d, Z %d/%d. Vein %d of %d",cursorX+1,x_max,cursorY+1,y_max,cursorZ,z_max,vein+1,totalVeinSize);
-        if(!veinVector.empty() || !IceVeinVector.empty())
+        if(!veinVector.empty() || !IceVeinVector.empty() || !splatter.empty())
         {
             if(vein != -1 && vein < totalVeinSize)
             {
@@ -595,7 +605,7 @@ main(int argc, char *argv[])
                     gotoxy(0,51);
                     cprintf("Mineral: %s",stonetypes[veinVector[vein].type].id);
                 }
-                else
+                else if (vein < mineralsize + icesize)
                 {
                     realvein = vein - mineralsize;
                     t_frozenliquidvein &frozen = IceVeinVector[realvein];
@@ -614,6 +624,26 @@ main(int argc, char *argv[])
                     }
                     gotoxy(0,51);
                     cprintf("ICE");
+                }
+                else
+                {
+                    realvein = vein - mineralsize - icesize;
+                    t_spattervein &bloodmud = splatter[realvein];
+                    for(uint32_t yyy = 0; yyy < 16; yyy++)
+                    {
+                        for(uint32_t xxx = 0; xxx < 16; xxx++) 
+                        {
+                            uint8_t intensity = splatter[realvein].intensity[xxx][yyy];
+                            if(intensity)
+                            {
+                                attron(A_STANDOUT);
+                                putch(xxx+16,yyy+16,'*', COLOR_RED);
+                                attroff(A_STANDOUT);
+                            }
+                        }
+                    }
+                    gotoxy(0,51);
+                    cprintf("Spatter: %s",PrintSplatterType(splatter[realvein].mat1,splatter[realvein].mat2,creature_types).c_str());
                 }
             }
         }

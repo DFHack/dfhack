@@ -24,6 +24,56 @@ using namespace std;
 
 using namespace DFHack;
 
+typedef uint32_t _DWORD;
+int get_material_vector(uint32_t vein_8, uint16_t vein_4, int WORLD_)
+{
+  int result; // eax@2
+  int v4; // ecx@11
+  int v5; // eax@12
+
+  if ( (uint16_t)(vein_4 - 0x1A3) > 0xC7u )
+  {
+    if ( ((int16_t)vein_4 < 19 || (int16_t)vein_4 > 0xDAu)
+      && (uint16_t)(vein_4 - 219) > 0xC7u )
+    {
+      if ( vein_4 )
+      {
+        if ( vein_4 > 0x292u )
+          result = 0;
+        else
+          result = *(_DWORD *)(WORLD_ + 4 * (int16_t)vein_4 + 0x5DF44);
+      }
+      else
+      {
+        if ( (signed int)vein_8 >= 0
+          && (v4 = *(_DWORD *)(WORLD_ + 0x54B88), vein_8 < (*(_DWORD *)(WORLD_ + 0x54B8C) - v4) >> 2)
+          && (v5 = *(_DWORD *)(v4 + 4 * vein_8)) != 0 )
+          result = v5 + 0x178;
+        else
+          result = *(_DWORD *)(WORLD_ + 0x5DF44);
+      }
+    }
+    else
+    {
+        /*
+      result = sub_4D47A0(vein_8, vein_4, WORLD_ + 0x54C84);
+      if ( !result )
+        result = *(_DWORD *)(WORLD_ + 0x5DF90);
+      */
+    }
+  }
+  else
+  {
+      /*
+    result = sub_41F430(WORLD_ + 0x54B94, vein_4);
+    if ( !result )
+      result = *(_DWORD *)(WORLD_ + 0x5E5D0);
+    */
+  }
+  return result;
+}
+
+
 char shades[10] = {'#','$','O','=','+','|','-','^','.',' '};
 int main (int numargs, const char ** args)
 {

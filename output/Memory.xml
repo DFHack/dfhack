@@ -2980,6 +2980,8 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_happiness">0x830</Offset>
 
         <Offset name="creature_soul_vector">0x073C</Offset>
+        <Offset name="creature_default_soul">0x0754</Offset>
+        
         <Offset name="soul_skills_vector">0x1F4</Offset>
         
         <!-- from DT -->
@@ -2992,11 +2994,16 @@ map_data_1b60_offset          0x1B9c
         <!-- Number vectors are vector <uint32_t> -->
         <!-- Others are vector<object *> -->
         <!-- first member of 'object' is a STL string with the name of said object -->
-        <Address name="mat_system_start">0x16afcec</Address>
+        
+        this is an array of 4B pointers to material templates and length 0x292
+        base_type_array = WORLD + 0x5DF44
+        <Address name="base_type_array">0x016b90cc</Address>
         <Address name="mat_templates">0x16afcec</Address>
         
         <!-- soil, stone, metal -->
+        inorganics vector = WORLD + 0x54B7C = 0x16AFD04
         <Address name="mat_inorganics">0x16afd04</Address>
+        <Offset name="inorganic_material_template_instantiation">0x178</Offset>
         
         <!-- wood and plant matter -->
         <Address name="mat_organics_all">0x16afd1C</Address>
@@ -3026,8 +3033,6 @@ map_data_1b60_offset          0x1B9c
         <Address name="creature_type_vector">0x016AFE58</Address>
         <!--<Address name="mat_creature_types2">0x16AEE08</Address>-->
         
-        this is an array of 4B pointers to material templates and length 0x292
-        <Address name="array_for_spatters?">0x016b90cc</Address>
         
         Constructions
         =============
@@ -3127,7 +3132,10 @@ map_data_1b60_offset          0x1B9c
         <Address name="z_count">0x09048d18</Address>
         -->
     </Entry>
-
+    <Entry version="v0.31.02" os="windows" id="0.31.02" base="0.31.01">
+        <String name="md5">23dfe141c7ea4e63ebb3c618a12b48ec</String>
+        <HexValue name="pe_timestamp">0x4BBDF378</HexValue>
+    </Entry>
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________

@@ -10,8 +10,8 @@ ADD_EXECUTABLE(dfattachtest attachtest.cpp)
 TARGET_LINK_LIBRARIES(dfattachtest dfhack)
 
 # buildingsdump - dump buildings and their raw data filtered by type
-#ADD_EXECUTABLE(dfbuildingsdump buildingsdump.cpp)
-#TARGET_LINK_LIBRARIES(dfbuildingsdump dfhack)
+ADD_EXECUTABLE(dfbuildingsdump buildingsdump.cpp)
+TARGET_LINK_LIBRARIES(dfbuildingsdump dfhack)
 
 # a benchmark program, reads the map 1000x
 ADD_EXECUTABLE(dfexpbench expbench.cpp)

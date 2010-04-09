@@ -12,6 +12,10 @@ using namespace std;
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 #include <DFMemInfo.h>
+#include <DFProcess.h>
+#include <DFTypes.h>
+#include <modules/Buildings.h>
+#include <modules/Materials.h>
 #include "miscutils.h"
 
 int main (int argc,const char* argv[])
@@ -51,20 +55,22 @@ int main (int argc,const char* argv[])
         return 1;
     }
     DFHack::memory_info * mem = DF.getMemoryInfo();
+    DFHack::Buildings * Bld = DF.getBuildings();
     
     uint32_t numBuildings;
-    if(DF.InitReadBuildings(numBuildings))
+    if(Bld->Start(numBuildings))
     {
         cout << numBuildings << endl;
         vector < uint32_t > addresses;
         for(uint32_t i = 0; i < numBuildings; i++)
         {
             DFHack::t_building temp;
-            DF.ReadBuilding(i, temp);
+            Bld->Read(i, temp);
             if(temp.type != 0xFFFFFFFF) // check if type isn't invalid
             {
                 string typestr;
                 mem->resolveClassIDToClassname(temp.type, typestr);
+                cout << typestr << endl;
                 if(typestr == argv[1])
                 {
                     //cout << buildingtypes[temp.type] << " 0x" << hex << temp.origin << endl;
@@ -79,7 +85,7 @@ int main (int argc,const char* argv[])
             }
         }
         interleave_hex(DF,addresses,lines / 4);
-        DF.FinishReadBuildings();
+        Bld->Finish();
     }
     else
     {

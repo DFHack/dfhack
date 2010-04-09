@@ -39,6 +39,7 @@ modules/Materials.cpp
 modules/Position.cpp
 modules/Translation.cpp
 modules/Vegetation.cpp
+modules/Buildings.cpp
 )
 
 SET(PROJECT_HDRS_LINUX

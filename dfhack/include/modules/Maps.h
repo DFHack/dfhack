@@ -39,6 +39,20 @@ namespace DFHack
         uint32_t address_of; // this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
     };
     
+    enum BiomeOffset
+    {
+        eNorthWest,
+        eNorth,
+        eNorthEast,
+        eWest,
+        eHere,
+        eEast,
+        eSouthWest,
+        eSouth,
+        eSouthEast,
+        eBiomeCount
+    };
+    
     enum e_traffic
     {
         traffic_normal,

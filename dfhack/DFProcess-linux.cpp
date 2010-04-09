@@ -530,5 +530,5 @@ string NormalProcess::readClassName (uint32_t vptr)
     string raw = readCString(typestring);
     size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
     size_t end = raw.length();
-    return raw.substr(start,end-start - 2); // trim the 'st' from the end
+    return raw.substr(start,end-start);
 }

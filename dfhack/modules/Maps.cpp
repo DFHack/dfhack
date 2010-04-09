@@ -376,17 +376,17 @@ try_again:
                 // store it in the vector
                 splatter.push_back (sv);
             }
-            else if(g_pProcess->readClassName(type) == "block_square_event_frozen_liquid")
+            else if(g_pProcess->readClassName(type) == "block_square_event_frozen_liquidst")
             {
                 off.vein_ice_vptr = type;
                 goto try_again;
             }
-            else if(g_pProcess->readClassName(type) == "block_square_event_mineral")
+            else if(g_pProcess->readClassName(type) == "block_square_event_mineralst")
             {
                 off.vein_mineral_vptr = type;
                 goto try_again;
             }
-            else if(g_pProcess->readClassName(type) == "block_square_event_material_spatter")
+            else if(g_pProcess->readClassName(type) == "block_square_event_material_spatterst")
             {
                 off.vein_spatter_vptr = type;
                 goto try_again;

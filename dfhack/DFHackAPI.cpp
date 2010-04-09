@@ -42,6 +42,7 @@ distribution.
 #include "modules/Creatures.h"
 #include "modules/Translation.h"
 #include "modules/Vegetation.h"
+#include "modules/Buildings.h"
 
 using namespace DFHack;
 
@@ -217,66 +218,15 @@ Vegetation * API::getVegetation()
     return d->vegetation;
 }
 
+Buildings * API::getBuildings()
+{
+    if(!d->buildings)
+        d->buildings = new Buildings(d);
+    return d->buildings;
+}
+
 /*
 // returns number of buildings, expects v_buildingtypes that will later map t_building.type to its name
-bool API::InitReadBuildings ( uint32_t& numbuildings )
-{
-    int buildings = 0;
-    try
-    {
-        buildings = d->offset_descriptor->getAddress ("buildings");
-    }
-    catch(Error::MissingMemoryDefinition)
-    {
-        return false;
-    }
-    d->buildingsInited = true;
-    d->p_bld = new DfVector (d->p,buildings, 4);
-    numbuildings = d->p_bld->getSize();
-    return true;
-}
-
-
-// read one building
-bool API::ReadBuilding (const int32_t index, t_building & building)
-{
-    if(!d->buildingsInited) return false;
-
-    t_building_df40d bld_40d;
-
-    // read pointer from vector at position
-    uint32_t temp = * (uint32_t *) d->p_bld->at (index);
-    //d->p_bld->read(index,(uint8_t *)&temp);
-
-    //read building from memory
-    g_pProcess->read (temp, sizeof (t_building_df40d), (uint8_t *) &bld_40d);
-
-    // transform
-    int32_t type = -1;
-    d->offset_descriptor->resolveObjectToClassID (temp, type);
-    building.origin = temp;
-    building.vtable = bld_40d.vtable;
-    building.x1 = bld_40d.x1;
-    building.x2 = bld_40d.x2;
-    building.y1 = bld_40d.y1;
-    building.y2 = bld_40d.y2;
-    building.z = bld_40d.z;
-    building.material = bld_40d.material;
-    building.type = type;
-
-    return true;
-}
-
-
-void API::FinishReadBuildings()
-{
-    if(d->p_bld)
-    {
-        delete d->p_bld;
-        d->p_bld = NULL;
-    }
-    d->buildingsInited = false;
-}
 
 bool API::InitReadEffects ( uint32_t & numeffects )
 {

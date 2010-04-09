@@ -50,6 +50,7 @@ namespace DFHack
     class Materials;
     class Translation;
     class Vegetation;
+    class Buildings;
     
     class DFHACK_EXPORT API
     {
@@ -94,6 +95,7 @@ namespace DFHack
         Materials * getMaterials();
         Translation * getTranslation();
         Vegetation * getVegetation();
+        Buildings * getBuildings();
         
         /*
          * Constructions (costructed walls, floors, ramps, etc...)
@@ -106,14 +108,6 @@ namespace DFHack
         /// cleanup after reading constructions
         void FinishReadConstructions();
 */
-        /*
-         * Buildings - also includes zones and stockpiles
-         */
-        /*
-        bool InitReadBuildings ( uint32_t & numbuildings );
-        bool ReadBuilding(const int32_t index, t_building & building);
-        void FinishReadBuildings();
-        */
         /*
          * Effects like mist, dragonfire or dust
          */

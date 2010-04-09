@@ -37,6 +37,7 @@ namespace DFHack
     class Maps;
     class Creatures;
     class Translation;
+    class Buildings;
     class ProcessEnumerator;
     class Process;
     class Vegetation;
@@ -71,6 +72,7 @@ namespace DFHack
         Materials * materials;
         Translation * translation;
         Vegetation * vegetation;
+        Buildings * buildings;
 
         /*
         uint32_t item_material_offset;

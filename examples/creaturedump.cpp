@@ -205,8 +205,15 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         }
         */
         cout << endl;
-        cout << "happiness: " << creature.happiness /*<< ", strength: " << creature.strength << ", agility: " 
-             << creature.agility << ", toughness: " << creature.toughness << ", money: " << creature.money*/ << ", id: " << creature.id;
+        cout << "happiness: "   << creature.happiness
+             << ", strength: "  << creature.strength.level 
+             << ", agility: "   << creature.agility.level
+             << ", toughness: " << creature.toughness.level
+             << ", endurance: " << creature.endurance.level
+             << ", recuperation: " << creature.recuperation.level
+             << ", disease resistance: " << creature.disease_resistance.level
+             //<< ", money: " << creature.money
+             << ", id: " << creature.id;
         /*
         if(creature.squad_leader_id != -1)
         {

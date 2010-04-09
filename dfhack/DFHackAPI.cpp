@@ -43,6 +43,7 @@ distribution.
 #include "modules/Translation.h"
 #include "modules/Vegetation.h"
 #include "modules/Buildings.h"
+#include "modules/Constructions.h"
 
 using namespace DFHack;
 
@@ -225,6 +226,13 @@ Buildings * API::getBuildings()
     return d->buildings;
 }
 
+Constructions * API::getConstructions()
+{
+    if(!d->constructions)
+        d->constructions = new Constructions(d);
+    return d->constructions;
+}
+
 /*
 // returns number of buildings, expects v_buildingtypes that will later map t_building.type to its name
 
@@ -283,58 +291,6 @@ void API::FinishReadEffects()
         d->p_effect = NULL;
     }
     d->effectsInited = false;
-}
-
-
-//TODO: maybe do construction reading differently - this could go slow with many of them.
-// returns number of constructions, prepares a vector, returns total number of constructions
-bool API::InitReadConstructions(uint32_t & numconstructions)
-{
-    int constructions = 0;
-    try
-    {
-        constructions = d->offset_descriptor->getAddress ("constructions");
-    }
-    catch(Error::MissingMemoryDefinition)
-    {
-        return false;
-    }
-    d->p_cons = new DfVector (d->p,constructions, 4);
-    d->constructionsInited = true;
-    numconstructions = d->p_cons->getSize();
-    return true;
-}
-
-
-bool API::ReadConstruction (const int32_t index, t_construction & construction)
-{
-    if(!d->constructionsInited) return false;
-    t_construction_df40d c_40d;
-
-    // read pointer from vector at position
-    uint32_t temp = * (uint32_t *) d->p_cons->at (index);
-
-    //read construction from memory
-    g_pProcess->read (temp, sizeof (t_construction_df40d), (uint8_t *) &c_40d);
-
-    // transform
-    construction.x = c_40d.x;
-    construction.y = c_40d.y;
-    construction.z = c_40d.z;
-    construction.material = c_40d.material;
-
-    return true;
-}
-
-
-void API::FinishReadConstructions()
-{
-    if(d->p_cons)
-    {
-        delete d->p_cons;
-        d->p_cons = NULL;
-    }
-    d->constructionsInited = false;
 }
 
 */

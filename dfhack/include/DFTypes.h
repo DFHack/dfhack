@@ -34,7 +34,7 @@ namespace DFHack
 struct t_matglossPair
 {
     int16_t type;
-    int16_t index;
+    int32_t index;
 };
 
 // DF effects, by darius from the bay12 forum
@@ -74,32 +74,6 @@ struct t_effect_df40d //size 40
     junk_fill <12> unk4;
     uint8_t canCreateNew;//??
     uint8_t isHidden;
-};
-
-// raw
-struct t_construction_df40d
-{
-    int16_t x;
-    int16_t y;
-    // 4
-    int16_t z;
-    int16_t unk1;
-    // 8
-    int16_t unk2;
-    t_matglossPair material; // C points to the index part
-//    int16_t mat_type;
-//    int16_t mat_idx;
-};
-
-// cooked
-struct t_construction
-{
-    uint16_t x;
-    uint16_t y;
-    uint16_t z;
-    t_matglossPair material;
-//    int16_t mat_type;
-//    int16_t mat_idx;
 };
 
 /*

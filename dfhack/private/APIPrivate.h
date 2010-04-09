@@ -41,6 +41,7 @@ namespace DFHack
     class ProcessEnumerator;
     class Process;
     class Vegetation;
+    class Constructions;
     class memory_info;
     struct t_name;
     class APIPrivate
@@ -73,6 +74,7 @@ namespace DFHack
         Translation * translation;
         Vegetation * vegetation;
         Buildings * buildings;
+        Constructions * constructions;
 
         /*
         uint32_t item_material_offset;
@@ -92,24 +94,7 @@ namespace DFHack
         
         uint32_t dwarf_lang_table_offset;
 
-        bool constructionsInited;
-        bool buildingsInited;
-        bool effectsInited;
-        bool vegetationInited;
-        
-        
-        bool itemsInited;
-        bool notesInited;
-        bool hotkeyInited;
-        bool settlementsInited;
-        bool nameTablesInited;
-
-        uint32_t tree_offset;
-        
-        DfVector *p_cons;
-        DfVector *p_bld;
         DfVector *p_effect;
-        DfVector *p_veg;
         DfVector *p_itm;
         DfVector *p_notes;
         DfVector *p_settlements;

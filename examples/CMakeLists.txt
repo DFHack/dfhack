@@ -13,6 +13,10 @@ TARGET_LINK_LIBRARIES(dfattachtest dfhack)
 ADD_EXECUTABLE(dfbuildingsdump buildingsdump.cpp)
 TARGET_LINK_LIBRARIES(dfbuildingsdump dfhack)
 
+# constructiondump - dump constructions!
+ADD_EXECUTABLE(dfconstructiondump construction_dump.cpp)
+TARGET_LINK_LIBRARIES(dfconstructiondump dfhack)
+
 # a benchmark program, reads the map 1000x
 ADD_EXECUTABLE(dfexpbench expbench.cpp)
 TARGET_LINK_LIBRARIES(dfexpbench dfhack)

@@ -51,6 +51,7 @@ namespace DFHack
     class Translation;
     class Vegetation;
     class Buildings;
+    class Constructions;
     
     class DFHACK_EXPORT API
     {
@@ -88,26 +89,33 @@ namespace DFHack
         void ReadRaw (const uint32_t offset, const uint32_t size, uint8_t *target);
         void WriteRaw (const uint32_t offset, const uint32_t size, uint8_t *source);
         
+        // get the creatures module
         Creatures * getCreatures();
+        
+        // get the maps module
         Maps * getMaps();
+        
+        // get the gui module
         Gui * getGui();
+        
+        // get the position module
         Position * getPosition();
+        
+        // get the materials module
         Materials * getMaterials();
+        
+        // get the translation module
         Translation * getTranslation();
+        
+        // get the vegetation module
         Vegetation * getVegetation();
+        
+        // get the buildings module
         Buildings * getBuildings();
         
-        /*
-         * Constructions (costructed walls, floors, ramps, etc...)
-         */
-        /*
-        /// start reading constructions. numconstructions is an output - total constructions present
-        bool InitReadConstructions( uint32_t & numconstructions );
-        /// read a construiction at index
-        bool ReadConstruction(const int32_t index, t_construction & construction);
-        /// cleanup after reading constructions
-        void FinishReadConstructions();
-*/
+        // get the constructions module
+        Constructions * getConstructions();
+        
         /*
          * Effects like mist, dragonfire or dust
          */

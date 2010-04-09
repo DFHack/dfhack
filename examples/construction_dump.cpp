@@ -42,6 +42,9 @@ int main (int numargs, const char ** args)
     DFHack::Position *Pos = DF.getPosition();
     
     DFHack::Constructions *Cons = DF.getConstructions();
+    DFHack::Materials *Mats = DF.getMaterials();
+    vector<t_matgloss> inorganics;
+    Mats->ReadInorganicMaterials(inorganics);
     uint32_t numConstr;
     Cons->Start(numConstr);
     
@@ -55,13 +58,31 @@ int main (int numargs, const char ** args)
             Cons->Read(i,con);
             if(cx == con.x && cy == con.y && cz == con.z)
             {
-                printf("Construction %d/%d/%d @ 0x%x - Material %d %d\n", con.x, con.y, con.z,con.origin, con.mat_type, con.mat_idx);
-                printf("Material form: %d ", con.type);
-                if(con.type == 4)
+                printf("Construction %d/%d/%d @ 0x%x\n", con.x, con.y, con.z,con.origin);
+                // inorganic stuff - we can recognize that
+                printf("Material: form %d, type %d, index %d\n",con.type, con.mat_type, con.mat_idx);
+                string matstr = "unknown";
+                if(con.mat_type == 0)
                 {
-                    printf("It is rough.");
+                    matstr = inorganics[con.mat_idx].id;
                 }
-                printf("\n");
+                switch(con.type)
+                {
+                    case constr_bar:
+                        printf("It is made of %s bars!\n",matstr.c_str());
+                        break;
+                    case constr_block:
+                        printf("It is made of %s blocks!\n",matstr.c_str());
+                        break;
+                    case constr_boulder:
+                        printf("It is made of %s stones!\n",matstr.c_str());
+                        break;
+                    case constr_logs:
+                        printf("It is made of %s logs!\n",matstr.c_str());
+                        break;
+                    default:
+                        printf("It is made of something we don't know yet! The material is %s.\n",matstr.c_str());
+                }
                 hexdump(DF,con.origin,2);
             }
         }

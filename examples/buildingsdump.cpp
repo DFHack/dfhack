@@ -109,6 +109,7 @@ int main (int argc,const char* argv[])
                         string typestr;
                         mem->resolveClassIDToClassname(temp.type, typestr);
                         printf("Address 0x%x, type %d (%s), %d/%d/%d\n",temp.origin, temp.type, typestr.c_str(), temp.x1,temp.y1,temp.z);
+                        printf("Material %d %d\n", temp.material.type, temp.material.index);
                         hexdump(DF,temp.origin,120);
                     }
                 }

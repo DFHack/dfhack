@@ -16,12 +16,16 @@ using namespace std;
 #include <DFTypes.h>
 #include <modules/Buildings.h>
 #include <modules/Materials.h>
+#include <modules/Position.h>
 #include "miscutils.h"
 
 int main (int argc,const char* argv[])
 {
+    int lines = 16;
+    int mode = 0;
     if (argc < 2 || argc > 3)
     {
+        /*
         cout << "usage:" << endl;
         cout << argv[0] << " object_name [number of lines]" << endl;
         #ifndef LINUX_BUILD
@@ -29,14 +33,15 @@ int main (int argc,const char* argv[])
             cin.ignore();
         #endif
         return 0;
+        */
     }
-    int lines = 16;
-    if(argc == 3)
+    else if(argc == 3)
     {
         string s = argv[2]; //blah. I don't care
         istringstream ins; // Declare an input string stream.
         ins.str(s);        // Specify string to read.
         ins >> lines;     // Reads the integers from the string.
+        mode = 1;
     }
     
     vector<DFHack::t_matgloss> creaturestypes;
@@ -56,35 +61,71 @@ int main (int argc,const char* argv[])
     }
     DFHack::memory_info * mem = DF.getMemoryInfo();
     DFHack::Buildings * Bld = DF.getBuildings();
+    DFHack::Position * Pos = DF.getPosition();
     
     uint32_t numBuildings;
     if(Bld->Start(numBuildings))
     {
-        cout << numBuildings << endl;
-        vector < uint32_t > addresses;
-        for(uint32_t i = 0; i < numBuildings; i++)
+        if(mode)
         {
-            DFHack::t_building temp;
-            Bld->Read(i, temp);
-            if(temp.type != 0xFFFFFFFF) // check if type isn't invalid
+            cout << numBuildings << endl;
+            vector < uint32_t > addresses;
+            for(uint32_t i = 0; i < numBuildings; i++)
             {
-                string typestr;
-                mem->resolveClassIDToClassname(temp.type, typestr);
-                cout << typestr << endl;
-                if(typestr == argv[1])
+                DFHack::t_building temp;
+                Bld->Read(i, temp);
+                if(temp.type != 0xFFFFFFFF) // check if type isn't invalid
                 {
-                    //cout << buildingtypes[temp.type] << " 0x" << hex << temp.origin << endl;
-                    //hexdump(DF, temp.origin, 16);
-                    addresses.push_back(temp.origin);
+                    string typestr;
+                    mem->resolveClassIDToClassname(temp.type, typestr);
+                    cout << typestr << endl;
+                    if(typestr == argv[1])
+                    {
+                        //cout << buildingtypes[temp.type] << " 0x" << hex << temp.origin << endl;
+                        //hexdump(DF, temp.origin, 16);
+                        addresses.push_back(temp.origin);
+                    }
+                }
+                else
+                {
+                    // couldn't translate type, print out the vtable
+                    cout << "unknown vtable: " << temp.vtable << endl;
+                }
+            }
+            interleave_hex(DF,addresses,lines / 4);
+        }
+        else // mode
+        {
+            int32_t x,y,z;
+            Pos->getCursorCoords(x,y,z);
+            if(x != -30000)
+            {
+                for(uint32_t i = 0; i < numBuildings; i++)
+                {
+                    DFHack::t_building temp;
+                    Bld->Read(i, temp);
+                    if(x >= temp.x1 && x <= temp.x2 && y >= temp.y1 && y <= temp.y2 && z == temp.z)
+                    {
+                        string typestr;
+                        mem->resolveClassIDToClassname(temp.type, typestr);
+                        printf("Address 0x%x, type %d (%s), %d/%d/%d\n",temp.origin, temp.type, typestr.c_str(), temp.x1,temp.y1,temp.z);
+                        hexdump(DF,temp.origin,120);
+                    }
                 }
             }
             else
             {
-                // couldn't translate type, print out the vtable
-                cout << "unknown vtable: " << temp.vtable << endl;
+                cout << numBuildings << endl;
+                for(uint32_t i = 0; i < numBuildings; i++)
+                {
+                    DFHack::t_building temp;
+                    Bld->Read(i, temp);
+                    string typestr;
+                    mem->resolveClassIDToClassname(temp.type, typestr);
+                    printf("Address 0x%x, type %d (%s), %d/%d/%d\n",temp.origin, temp.type, typestr.c_str(), temp.x1,temp.y1,temp.z);
+                }
             }
         }
-        interleave_hex(DF,addresses,lines / 4);
         Bld->Finish();
     }
     else

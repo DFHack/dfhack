@@ -2821,32 +2821,32 @@
             ====================================================================
         <VTable name="building_vtable">
             <multiclass name="building_workshopst" typeoffset="0x138">
-                <class name="building_alchemists_laboratoryst" type="0x0"/>
-                <class name="building_carpenters_workshopst" type="0x1"/>
-                <class name="building_farmers_workshopst" type="0x2"/>
-                <class name="building_masons_workshopst" type="0x3"/>
-                <class name="building_craftdwarfs_workshopst" type="0x4"/>
-                <class name="building_jewelers_workshopst" type="0x5"/>
-                <class name="building_metalsmiths_workshopst" type="0x6"/>
-                <class name="building_magma_forgest" type="0x7"/>
-                <class name="building_bowyers_workshopst" type="0x8"/>
-                <class name="building_mechanics_workshopst" type="0x9"/>
-                <class name="building_siege_workshopst" type="0xA"/>
-                <class name="building_butchers_shopst" type="0xB"/>
-                <class name="building_leather_worksst" type="0xC"/>
-                <class name="building_tanners_shopst" type="0xD"/>
-                <class name="building_clothiers_shopst" type="0xE"/>
-                <class name="building_fisheryst" type="0xF"/>
-                <class name="building_stillst" type="0x10"/>
-                <class name="building_loomst" type="0x11"/>
-                <class name="building_quernst" type="0x12"/>
-                <class name="building_kennelsst" type="0x13"/>
-                <class name="building_kitchenst" type="0x14"/>
-                <class name="building_asheryst" type="0x15"/>
-                <class name="building_dyers_shopst" type="0x16"/>
-                <class name="building_millstonest" type="0x17"/>
+                <!--<class name="building_alchemists_laboratoryst" type="0x0"/>-->
+                <class name="building_carpenters_workshopst" type="0x0"/>
+                <class name="building_farmers_workshopst" type="0x1"/>
+                <class name="building_masons_workshopst" type="0x2"/>
+                <class name="building_craftdwarfs_workshopst" type="0x3"/>
+                <class name="building_jewelers_workshopst" type="0x4"/>
+                <class name="building_metalsmiths_workshopst" type="0x5"/>
+                <class name="building_magma_forgest" type="0x6"/>
+                <class name="building_bowyers_workshopst" type="0x7"/>
+                <class name="building_mechanics_workshopst" type="0x8"/>
+                <class name="building_siege_workshopst" type="0x9"/>
+                <class name="building_butchers_shopst" type="0xA"/>
+                <class name="building_leather_worksst" type="0xB"/>
+                <class name="building_tanners_shopst" type="0xC"/>
+                <class name="building_clothiers_shopst" type="0xD"/>
+                <class name="building_fisheryst" type="0xE"/>
+                <class name="building_stillst" type="0xF"/>
+                <class name="building_loomst" type="0x10"/>
+                <class name="building_quernst" type="0x11"/>
+                <class name="building_kennelsst" type="0x12"/>
+                <class name="building_kitchenst" type="0x13"/>
+                <class name="building_asheryst" type="0x14"/>
+                <class name="building_dyers_shopst" type="0x15"/>
+                <class name="building_millstonest" type="0x16"/>
             </multiclass>
-            <multiclass name="building_furnacest" typeoffset="0xDA">
+            <multiclass name="building_furnacest" typeoffset="0x152">
                 <class name="building_wood_furnacest" type="0x0"/>
                 <class name="building_smelterst" type="0x1"/>
                 <class name="building_glass_furnacest" type="0x2"/>
@@ -2855,11 +2855,11 @@
                 <class name="building_magma_glass_furnacest" type="0x5"/>
                 <class name="building_magma_kilnst" type="0x6"/>
             </multiclass>
-            <multiclass name="building_siegeenginest" typeoffset="0xC8">
+            <multiclass name="building_siegeenginest" typeoffset="0x138">
                 <class name="building_catapultst" type="0x0"/>
                 <class name="building_ballistast" type="0x1"/>
             </multiclass>
-            <multiclass name="building_trapst" typeoffset="0xC8">
+            <multiclass name="building_trapst" typeoffset="0x138">
                 <class name="building_leverst" type="0x0"/>
                 <class name="building_pressure_platest" type="0x1"/>
                 <class name="building_cage_trapst" type="0x2"/>

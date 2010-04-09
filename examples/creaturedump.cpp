@@ -242,13 +242,13 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
     
         //skills
         cout << "Skills" << endl;
-        for(unsigned int i = 0; i < creature.numSkills;i++)
+        for(unsigned int i = 0; i < creature.defaultSoul.numSkills;i++)
         {
             if(i > 0)
             {
                 cout << ", ";
             }
-            cout << mem->getSkill(creature.skills[i].id) << ": " << creature.skills[i].rating;
+            cout << mem->getSkill(creature.defaultSoul.skills[i].id) << ": " << creature.defaultSoul.skills[i].rating;
         }
         cout << endl;
     

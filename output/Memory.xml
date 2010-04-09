@@ -3003,6 +3003,22 @@ map_data_1b60_offset          0x1B9c
         =====
         <Offset name="soul_name">0x0</Offset>
         <Offset name="soul_skills_vector">0x1F4</Offset>
+        <Offset name="soul_mental">0x88</Offset>
+        <!--
+        mid = AddStrucMember(id,"analytical_ability",   0X88,   0x60000400, GetStrucIdByName("s_attrib"),   28);
+        mid = AddStrucMember(id,"focus",    0XA4,   0x60000400, GetStrucIdByName("s_attrib"),   28);
+        mid = AddStrucMember(id,"willpower",    0XC0,   0x60000400, GetStrucIdByName("s_attrib"),   28);
+        mid = AddStrucMember(id,"creativity",   0XDC,   0x60000400, GetStrucIdByName("s_attrib"),   28);
+        mid = AddStrucMember(id,"intuition",    0XF8,   0x60000400, GetStrucIdByName("s_attrib"),   28);
+        mid = AddStrucMember(id,"patience", 0X114,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+        mid = AddStrucMember(id,"memory",   0X130,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+        mid = AddStrucMember(id,"linguistic_ability",   0X14C,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+        mid = AddStrucMember(id,"spatial_sense",    0X168,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+        mid = AddStrucMember(id,"musicality",   0X184,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+        mid = AddStrucMember(id,"kinesthetic_sense",    0X1A0,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+        mid = AddStrucMember(id,"empathy",  0X1BC,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+        mid = AddStrucMember(id,"social_awareness", 0X1D8,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+        -->
         
         Materials
         =========

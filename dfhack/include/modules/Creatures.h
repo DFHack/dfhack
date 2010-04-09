@@ -287,6 +287,30 @@ namespace DFHack
     // FIXME: define in Memory.xml instead?
     #define NUM_CREATURE_TRAITS 30
     #define NUM_CREATURE_LABORS 102
+    
+    struct t_soul
+    {
+        uint8_t numSkills;
+        t_skill skills[256];
+        /*
+        uint8_t numLikes;
+        t_like likes[32];
+        */
+        t_attrib analytical_ability;
+        t_attrib focus;
+        t_attrib willpower;
+        t_attrib creativity;
+        t_attrib intuition;
+        t_attrib patience;
+        t_attrib memory;
+        t_attrib linguistic_ability;
+        t_attrib spatial_sense;
+        t_attrib musicality;
+        t_attrib kinesthetic_sense;
+        t_attrib empathy;
+        t_attrib social_awareness;
+    };
+    
     struct t_creature
     {
         uint32_t origin;
@@ -308,13 +332,6 @@ namespace DFHack
         
         // enabled labors
         uint8_t labors[NUM_CREATURE_LABORS];
-        
-        uint8_t numSkills;
-        t_skill skills[256];
-        /*
-        uint8_t numLikes;
-        t_like likes[32];
-        */
         t_job current_job;
         
         uint32_t happiness;
@@ -328,6 +345,8 @@ namespace DFHack
         int32_t squad_leader_id;
         uint8_t sex;
         uint32_t pregnancy_timer; //Countdown timer to giving birth
+        
+        t_soul defaultSoul;
     };
     
     class APIPrivate;

@@ -34,20 +34,23 @@ namespace DFHack
 typedef struct
 {
     // creature offsets
-    uint32_t creature_vector;
-    uint32_t creature_pos_offset;
-    uint32_t creature_profession_offset;
-    uint32_t creature_custom_profession_offset;
-    uint32_t creature_race_offset;
-    uint32_t creature_flags1_offset;
-    uint32_t creature_flags2_offset;
-    uint32_t creature_name_offset;
-    uint32_t creature_sex_offset;
-    uint32_t creature_id_offset;
-    uint32_t creature_labors_offset;
-    uint32_t creature_happiness_offset;
-    uint32_t creature_artifact_name_offset;
-    uint32_t creature_soul_vector_offset;
+    uint32_t vector;
+    uint32_t pos_offset;
+    uint32_t profession_offset;
+    uint32_t custom_profession_offset;
+    uint32_t race_offset;
+    uint32_t flags1_offset;
+    uint32_t flags2_offset;
+    uint32_t name_offset;
+    uint32_t sex_offset;
+    uint32_t id_offset;
+    uint32_t labors_offset;
+    uint32_t happiness_offset;
+    uint32_t artifact_name_offset;
+    uint32_t physical_offset;
+    uint32_t mood_offset;
+    uint32_t soul_vector_offset;
+    uint32_t default_soul_offset;
     // soul offsets
     uint32_t soul_skills_vector_offset;
     // name offsets (needed for reading creature names)

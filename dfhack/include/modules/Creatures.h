@@ -273,6 +273,16 @@ namespace DFHack
         t_matglossPair material;
         bool active;
     };
+    struct t_attrib
+    {
+        uint32_t level;
+        uint32_t field_4;
+        uint32_t field_8;
+        uint32_t field_C;
+        uint32_t leveldiff;
+        uint32_t field_14;
+        uint32_t field_18;
+    };
 
     // FIXME: define in Memory.xml instead?
     #define NUM_CREATURE_TRAITS 30
@@ -283,36 +293,41 @@ namespace DFHack
         uint16_t x;
         uint16_t y;
         uint16_t z;
-        uint32_t type;
+        uint32_t race;
+        
         t_creaturflags1 flags1;
         t_creaturflags2 flags2;
+        
         t_name name;
-        t_name squad_name;
+        
+        int16_t mood;
         t_name artifact_name;
+        
         uint8_t profession;
         char custom_profession[128];
+        
         // enabled labors
         uint8_t labors[NUM_CREATURE_LABORS];
-        // personality traits
-        uint16_t traits[NUM_CREATURE_TRAITS];
+        
         uint8_t numSkills;
         t_skill skills[256];
+        /*
         uint8_t numLikes;
         t_like likes[32];
+        */
         t_job current_job;
-        int16_t mood;
+        
         uint32_t happiness;
         uint32_t id;
-        uint32_t agility;
-        uint32_t strength;
-        uint32_t toughness;
-        uint32_t money;
+        t_attrib strength;
+        t_attrib agility;
+        t_attrib toughness;
+        t_attrib endurance;
+        t_attrib recuperation;
+        t_attrib disease_resistance;
         int32_t squad_leader_id;
         uint8_t sex;
         uint32_t pregnancy_timer; //Countdown timer to giving birth
-        int32_t blood_max;
-        int32_t blood_current;
-        uint32_t bleed_rate;
     };
     
     class APIPrivate;

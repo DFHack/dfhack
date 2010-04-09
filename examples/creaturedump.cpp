@@ -154,7 +154,7 @@ likeType printLike40d(DFHack::t_like like, const matGlosses & mat,const vector< 
 
 void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 {
-        cout << "address: " << hex <<  creature.origin << dec << " creature type: " << creaturestypes[creature.type].id << ", position: " << creature.x << "x " << creature.y << "y "<< creature.z << "z" << endl;
+        cout << "address: " << hex <<  creature.origin << dec << " creature type: " << creaturestypes[creature.race].id << ", position: " << creature.x << "x " << creature.y << "y "<< creature.z << "z" << endl;
         bool addendl = false;
         if(creature.name.first_name[0])
         {
@@ -398,7 +398,7 @@ int main (void)
     {
         DFHack::t_creature temp;
         Creatures->ReadCreature(i,temp);
-        if(string(creaturestypes[temp.type].id) == "DWARF")
+        if(string(creaturestypes[temp.race].id) == "DWARF")
         {
             cout << "index " << i << " ";
             printCreature(DF,temp);

@@ -2963,9 +2963,13 @@ map_data_1b60_offset          0x1B9c
         <Offset name="name_nickname">0x1C</Offset>
         <Offset name="name_words">0x38</Offset>
 
+
+
         Creatures
         =========
         <Address name="creature_vector">0x0166ecc4</Address>
+        <Address name="dwarf_race_index">0x01470fbc</Address>
+        
         <Offset name="creature_name">0x0</Offset>
         <Offset name="creature_custom_profession">0x6c</Offset>
         <Offset name="creature_profession">0x88</Offset>
@@ -2975,20 +2979,31 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_flags2">0xFC</Offset>
         <Offset name="creature_sex">0x110</Offset>
         <Offset name="creature_id">0x114</Offset>
+        <Offset name="creature_side">0X120</Offset> <!-- what? -->
+        <Offset name="creature_soulskill_vector">0X1F4</Offset>
+        <Offset name="creature_mood">0x238</Offset>
+        
+        <Offset name="creature_physical">0x464</Offset>
+        <!--
+        <Offset name="creature_strength">0x464</Offset>
+        <Offset name="creature_agility">0x480</Offset>
+        <Offset name="creature_toughness">0x49C</Offset>
+        <Offset name="creature_endurance">0x4B8</Offset>
+        <Offset name="creature_recuperation">0x4D4</Offset>
+        <Offset name="creature_disease_resistance">0x4F0</Offset>
+        -->
+        <Offset name="creature_current_job">0x390</Offset> <!-- from chmod -->
         <Offset name="creature_artifact_name">0x6D0</Offset>
         <Offset name="creature_labors">0x770</Offset>
-        <Offset name="creature_happiness">0x830</Offset>
-
         <Offset name="creature_soul_vector">0x073C</Offset>
         <Offset name="creature_default_soul">0x0754</Offset>
-        
+        <Offset name="creature_happiness">0x830</Offset>
+
+        Souls
+        =====
+        <Offset name="soul_name">0x0</Offset>
         <Offset name="soul_skills_vector">0x1F4</Offset>
         
-        <!-- from DT -->
-        <Address name="dwarf_race_index">0x01470fbc</Address>DWORD, OK
-        This seems to be wrong:
-        creature_vector         = 0x0166ed2c
-      
         Materials
         =========
         <!-- Number vectors are vector <uint32_t> -->

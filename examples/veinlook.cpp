@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <vector>
 #include <map>
+#include <bitset>
 using namespace std;
 
 #include <sstream>
@@ -382,6 +383,8 @@ main(int argc, char *argv[])
     bool dig = false;
     bool dump = false;
     bool digbit = false;
+    bool dotwiddle;
+    unsigned char twiddle = 0;
     int vein = 0;
     int filenum = 0;
     bool dirtybit = false;
@@ -397,6 +400,7 @@ main(int argc, char *argv[])
     {
         dig = false;
         dump = false;
+        dotwiddle = false;
         digbit = false;
         
         int c = getch();     /* refresh, accept single keystroke of input */
@@ -438,6 +442,15 @@ main(int argc, char *argv[])
             case 'z':
                 digbit = true;
                 break;
+            case '/':
+                if(twiddle != 0) twiddle--;
+                break;
+            case '*':
+                twiddle++;
+                break;
+            case 't':
+                dotwiddle = true;
+                break;
             default:
                 break;
         }
@@ -448,6 +461,9 @@ main(int argc, char *argv[])
         cursorX = min(cursorX, x_max - 1);
         cursorY = min(cursorY, y_max - 1);
         cursorZ = min(cursorZ, z_max - 1);
+        
+        if(twiddle > 31)
+            twiddle = 31;
         
         // clear data before we suspend
         memset(blocks,0,sizeof(blocks));
@@ -504,6 +520,14 @@ main(int argc, char *argv[])
                         }
                         Maps->WriteDesignations(cursorX+i,cursorY+j,cursorZ, &(Block->designation));
                     }
+                    if(dotwiddle)
+                    {
+                        bitset<32> bs = Block->designation[0][0].whole;
+                        bs.flip(twiddle);
+                        Block->designation[0][0].whole = bs.to_ulong();
+                        Maps->WriteDesignations(cursorX+i,cursorY+j,cursorZ, &(Block->designation));
+                        dotwiddle = false;
+                    }
                     // do a dump of the block data
                     if(dump)
                     {
@@ -530,24 +554,27 @@ main(int argc, char *argv[])
             {
                 int color = COLOR_BLACK;
                 color = pickColor(Block->tiletypes[x][y]);
-                //if(!Block->designation[x][y].bits.hidden)
-                /*{
+                /*
+                if(!Block->designation[x][y].bits.hidden)
+                {
                     puttile(x+(i+1)*16,y+(j+1)*16,Block->tiletypes[x][y], color);
                 }
                 else*/
                 {
+                    
                     attron(A_STANDOUT);
                     puttile(x+(i+1)*16,y+(j+1)*16,Block->tiletypes[x][y], color);
                     attroff(A_STANDOUT);
+                    
                 }
             }
             // print effects for the center tile
-            
+            /*
             if(i == 0 && j == 0)
             {
                 for(uint zz = 0; zz < effects.size();zz++)
                 {
-                    if(effects[zz].z == cursorZ /*&& !effects[zz].isHidden*/)
+                    if(effects[zz].z == cursorZ && !effects[zz].isHidden)
                     {
                         // block coords to tile coords
                         uint16_t x = effects[zz].x - (cursorX * 16);
@@ -559,6 +586,7 @@ main(int argc, char *argv[])
                     }
                 }
             }
+            */
         }
         gotoxy(0,48);
         cprintf("arrow keys, PGUP, PGDN = navigate");
@@ -650,7 +678,7 @@ main(int argc, char *argv[])
         gotoxy (0,52);
         cprintf("block address 0x%x, flags 0x%08x",blockaddr, bflags.whole);
         gotoxy (0,53);
-        cprintf("dirty bit: %d",dirtybit);
+        cprintf("dirty bit: %d, twiddle: %d",dirtybit,twiddle);
         gotoxy (0,54);
         cprintf ("d - dig veins, o - dump map block, z - toggle dirty bit");
         wrefresh(stdscr);

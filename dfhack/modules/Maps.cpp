@@ -199,6 +199,8 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
         if (addr)
         {
             g_pProcess->read (addr + d->offsets.tile_type_offset, sizeof (buffer->tiletypes), (uint8_t *) buffer->tiletypes);
+            g_pProcess->read (addr + d->offsets.designation_offset, sizeof (buffer->designation), (uint8_t *) buffer->designation);
+            g_pProcess->read (addr + d->offsets.biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer->biome_indices);
             buffer->origin = addr;
             uint32_t addr_of_struct = g_pProcess->readDWord(addr);
             buffer->blockflags.whole = g_pProcess->readDWord(addr_of_struct);

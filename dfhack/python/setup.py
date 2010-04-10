@@ -2,9 +2,10 @@
 from distutils.core import setup, Extension
 
 e = Extension("pydfhack", 
-		sources=["UnionBase.cpp", "pydfhack.cpp", "DF_API.cpp"],
-        include_dirs=["..\\include"],
+		sources=["DF_MemInfo.cpp", "DF_API.cpp", "pydfhack.cpp"],
+        include_dirs=["..\\", "..\\include", "..\\depends\\md5", "..\\depends\\tinyxml"],
 		library_dirs=["..\\..\\output"],
-		libraries=["libdfhack"])
+		libraries=["libdfhack"],
+        export_symbols=["initpydfhack", "ReadRaw", "WriteRaw"])
 
 setup(name="PyDFHack", version="1.0", ext_modules=[e])

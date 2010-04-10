@@ -27,11 +27,12 @@ distribution.
 
 #include "Python.h"
 #include <string>
-#include <vector>
 #include "DFTypes.h"
 #include "DFHackAPI.h"
-#include "UnionBase.cpp"
-//#include "MatGloss.cpp"
+#include "DF_MemInfo.cpp"
+#include "DF_Position.cpp"
+#include "DF_Material.cpp"
+#include "DF_CreatureManager.cpp"
 
 using namespace std;
 using namespace DFHack;
@@ -39,6 +40,10 @@ using namespace DFHack;
 struct DF_API
 {
 	PyObject_HEAD
+	PyObject* mem_info;
+	PyObject* position;
+	PyObject* material;
+	PyObject* creature;
 	DFHack::API* api_Ptr;
 };
 
@@ -62,6 +67,11 @@ static int DF_API_init(DF_API* self, PyObject* args, PyObject* kwds)
 	
 	if(self->api_Ptr == NULL)
 	{
+		self->mem_info = NULL;
+		self->position = NULL;
+		self->material = NULL;
+		self->creature = NULL;
+		
 		if(!PyArg_ParseTuple(args, "s", &memFileString))
 			return -1;
 		
@@ -78,6 +88,11 @@ static void DF_API_dealloc(DF_API* self)
 {
 	if(self != NULL)
 	{
+		Py_CLEAR(self->mem_info);
+		Py_CLEAR(self->position);
+		Py_CLEAR(self->material);
+		Py_CLEAR(self->creature);
+		
 		if(self->api_Ptr != NULL)
 		{
 			delete self->api_Ptr;
@@ -125,210 +140,116 @@ static PyObject* DF_API_getIsSuspended(DF_API* self, void* closure)
     Py_RETURN_FALSE;
 }
 
-static PyObject* DF_API_getIsPaused(DF_API* self, void* closure)
+static PyObject* DF_API_getMemoryInfo(DF_API* self, void* closure)
 {
-    try
-    {
-        if(self->api_Ptr != NULL)
-            if(self->api_Ptr->ReadPauseState())
-                Py_RETURN_TRUE;
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to read pause state");
-		return NULL;
-    }
-    
-    Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_getMenuState(DF_API* self, void* closure)
-{
-    uint32_t menuState = 0;
-    
-    try
-    {
-        if(self->api_Ptr != NULL)
-        {
-            menuState = self->api_Ptr->ReadMenuState();
-            
-            return PyInt_FromLong(menuState);
-        }
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to read menu state");
-		return NULL;
-    }
-    
-    Py_RETURN_NONE;
-}
-
-static PyObject* DF_API_getViewCoords(DF_API* self, void* closure)
-{
-    int32_t x, y, z;
-    bool success;
-    
-    try
-    {
-        if(self->api_Ptr != NULL)
-        {
-            success = self->api_Ptr->getViewCoords(x, y, z);
-            
-            if(success)
-            {
-                return Py_BuildValue("iii", x, y, z);
-            }
-            else
-                Py_RETURN_NONE;
-        }
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to get view coordinates");
-		return NULL;
-    }
-    
-    Py_RETURN_NONE;
-}
-
-static int DF_API_setViewCoords(DF_API* self, PyObject* args, void* closure)
-{
-	int32_t x, y, z;
+	if(self->mem_info != NULL)
+		return self->mem_info;
 	
 	try
 	{
 		if(self->api_Ptr != NULL)
 		{
-			if(args == NULL)
-			{
-				PyErr_SetString(PyExc_TypeError, "Cannot delete view coordinates");
-				return -1;
-			}
+			self->mem_info = PyObject_Call((PyObject*)&DF_MemInfo_type, NULL, NULL);
 			
-			if(PyArg_ParseTuple(args, "iii", &x, &y, &z))
+			if(self->mem_info != NULL)
 			{
-				self->api_Ptr->setViewCoords(x, y, z);
+				((DF_MemInfo*)(self->mem_info))->mem_Ptr = self->api_Ptr->getMemoryInfo();
+				
+				if(((DF_MemInfo*)(self->mem_info))->mem_Ptr != NULL)
+					return self->mem_info;
 			}
 		}
 	}
 	catch(...)
 	{
-		PyErr_SetString(PyExc_ValueError, "Error trying to set view coordinates");
-		return -1;
-	}
-	
-	return 0;
-}
-
-static PyObject* DF_API_getSize(DF_API* self, void* closure)
-{
-	uint32_t x, y, z;
-	
-	try
-    {
-        if(self->api_Ptr != NULL)
-        {
-            self->api_Ptr->getSize(x, y, z);
-            return Py_BuildValue("III", x, y, z);
-        }
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to get view coordinates");
-		return NULL;
-    }
-    
-    Py_RETURN_NONE;
-}
-
-static PyObject* DF_API_getCursorCoords(DF_API* self, void* closure)
-{
-	int32_t x, y, z;
-	
-	try
-	{
-		if(self->api_Ptr != NULL)
-		{
-			self->api_Ptr->getCursorCoords(x, y, z);
-			return Py_BuildValue("iii", x, y, z);
-		}
-	}
-	catch(...)
-	{
-		PyErr_SetString(PyExc_ValueError, "Error trying to get cursor coordinates");
+		PyErr_SetString(PyExc_ValueError, "Error trying to read memory info");
 		return NULL;
 	}
 	
 	Py_RETURN_NONE;
 }
 
-static int DF_API_setCursorCoords(DF_API* self, PyObject* args, void* closure)
+static PyObject* DF_API_getPosition(DF_API* self, void* closure)
 {
-	int32_t x, y, z;
+	if(self->position != NULL)
+		return self->position;
 	
 	try
 	{
 		if(self->api_Ptr != NULL)
 		{
-			if(args == NULL)
-			{
-				PyErr_SetString(PyExc_TypeError, "Cannot delete view coordinates");
-				return -1;
-			}
+			self->position = PyObject_Call((PyObject*)&DF_Position_type, NULL, NULL);
 			
-			if(PyArg_ParseTuple(args, "iii", &x, &y, &z))
+			if(self->position != NULL)
 			{
-				self->api_Ptr->setCursorCoords(x, y, z);
+				((DF_Position*)(self->position))->pos_Ptr = self->api_Ptr->getPosition();
+				
+				if(((DF_Position*)(self->position))->pos_Ptr != NULL)
+					return self->position;
 			}
 		}
 	}
 	catch(...)
 	{
-		PyErr_SetString(PyExc_ValueError, "Error trying to set view coordinates");
-		return -1;
-	}
-	
-	return 0;
-}
-
-static PyObject* DF_API_getCurrentCursorCreature(DF_API* self, void* closure)
-{
-	uint32_t index;
-	
-	try
-	{
-		if(self->api_Ptr != NULL)
-		{
-			self->api_Ptr->getCurrentCursorCreature(index);
-			
-			return PyInt_FromLong(index);
-		}
-	}
-	catch(...)
-	{
-		PyErr_SetString(PyExc_ValueError, "Error trying to get current cursor creature");
+		PyErr_SetString(PyExc_ValueError, "Error trying to read position");
 		return NULL;
 	}
 	
 	Py_RETURN_NONE;
 }
 
-static PyObject* DF_API_getWindowSize(DF_API* self, void* closure)
+static PyObject* DF_API_getMaterial(DF_API* self, void* closure)
 {
-	int32_t width, height;
+	if(self->material != NULL)
+		return self->material;
 	
 	try
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->api_Ptr->getWindowSize(width, height);
-			return Py_BuildValue("ii", width, height);
+			self->material = PyObject_Call((PyObject*)&DF_Material_type, NULL, NULL);
+			
+			if(self->material != NULL)
+			{
+				((DF_Material*)(self->material))->mat_Ptr = self->api_Ptr->getMaterials();
+				
+				if(((DF_Material*)(self->material))->mat_Ptr != NULL)
+					return self->material;
+			}
 		}
 	}
 	catch(...)
 	{
-		PyErr_SetString(PyExc_ValueError, "Error trying to get window size");
+		PyErr_SetString(PyExc_ValueError, "Error trying to read material");
+		return NULL;
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_API_getCreature(DF_API* self, void* closure)
+{
+	if(self->creature != NULL)
+		return self->creature;
+	
+	try
+	{
+		if(self->api_Ptr != NULL)
+		{
+			self->creature = PyObject_Call((PyObject*)&DF_CreatureManager_type, NULL, NULL);
+			
+			if(self->creature != NULL)
+			{
+				((DF_CreatureManager*)(self->creature))->creature_Ptr = self->api_Ptr->getCreatures();
+				
+				if(((DF_CreatureManager*)(self->creature))->creature_Ptr != NULL)
+					return self->creature;
+			}
+		}
+	}
+	catch(...)
+	{
+		PyErr_SetString(PyExc_ValueError, "Error trying to read creature");
 		return NULL;
 	}
 	
@@ -339,13 +260,10 @@ static PyGetSetDef DF_API_getterSetters[] =
 {
     {"is_attached", (getter)DF_API_getIsAttached, NULL, "is_attached", NULL},
     {"is_suspended", (getter)DF_API_getIsSuspended, NULL, "is_suspended", NULL},
-    {"is_paused", (getter)DF_API_getIsPaused, NULL, "is_paused", NULL},
-    {"menu_state", (getter)DF_API_getMenuState, NULL, "menu_state", NULL},
-    {"view_coords", (getter)DF_API_getViewCoords, (setter)DF_API_setViewCoords, "view_coords", NULL},
-	{"map_size", (getter)DF_API_getSize, NULL, "max_size", NULL},
-	{"cursor_coords", (getter)DF_API_getCursorCoords, (setter)DF_API_setCursorCoords, "cursor_coords", NULL},
-	{"current_cursor_creature", (getter)DF_API_getCurrentCursorCreature, NULL, "current_cursor_creature", NULL},
-	{"window_size", (getter)DF_API_getWindowSize, NULL, "window_size", NULL},
+	{"memory_info", (getter)DF_API_getMemoryInfo, NULL, "memory_info", NULL},
+	{"position", (getter)DF_API_getPosition, NULL, "position", NULL},
+	{"materials", (getter)DF_API_getMaterial, NULL, "materials", NULL},
+	{"creatures", (getter)DF_API_getCreature, NULL, "creatures", NULL},
     {NULL}  // Sentinel
 };
 
@@ -437,752 +355,6 @@ static PyObject* DF_API_ForceResume(DF_API* self)
     Py_RETURN_FALSE;
 }
 
-static PyObject* DF_API_InitMap(DF_API* self)
-{
-    try
-    {
-        if(self->api_Ptr != NULL)
-            if(self->api_Ptr->InitMap())
-                Py_RETURN_TRUE;
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to initialize map");
-		return NULL;
-    }
-    
-    Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_DestroyMap(DF_API* self)
-{
-    try
-    {
-        if(self->api_Ptr != NULL)
-            if(self->api_Ptr->DestroyMap())
-                Py_RETURN_TRUE;
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to destroy map");
-		return NULL;
-    }
-    
-    Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_InitReadConstructions(DF_API* self)
-{
-    uint32_t numConstructions = 0;
-    
-    try
-    {
-        if(self->api_Ptr != NULL)
-            if(self->api_Ptr->InitReadConstructions(numConstructions))
-                return PyInt_FromLong(numConstructions);
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to read constructions");
-		return NULL;
-    }
-    
-    Py_RETURN_NONE;
-}
-
-static PyObject* DF_API_FinishReadConstructions(DF_API* self)
-{    
-    try
-    {
-        if(self->api_Ptr != NULL)
-        {
-            self->api_Ptr->FinishReadConstructions();
-            Py_RETURN_TRUE;
-        }
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to finish reading constructions");
-		return NULL;
-    }
-    
-    Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_InitReadBuildings(DF_API* self)
-{
-    uint32_t numBuildings = 0;
-    
-    try
-    {
-        if(self->api_Ptr != NULL)
-            if(self->api_Ptr->InitReadBuildings(numBuildings))
-                return PyInt_FromLong(numBuildings);
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to read buildings");
-		return NULL;
-    }
-    
-    Py_RETURN_NONE;
-}
-
-static PyObject* DF_API_FinishReadBuildings(DF_API* self)
-{    
-    try
-    {
-        if(self->api_Ptr != NULL)
-        {
-            self->api_Ptr->FinishReadBuildings();
-            Py_RETURN_TRUE;
-        }
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to finish reading buildings");
-		return NULL;
-    }
-    
-    Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_InitReadEffects(DF_API* self)
-{
-    uint32_t numEffects = 0;
-    
-    try
-    {
-        if(self->api_Ptr != NULL)
-            if(self->api_Ptr->InitReadEffects(numEffects))
-                return PyInt_FromLong(numEffects);
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to read effects");
-		return NULL;
-    }
-    
-    Py_RETURN_NONE;
-}
-
-static PyObject* DF_API_FinishReadEffects(DF_API* self)
-{    
-    try
-    {
-        if(self->api_Ptr != NULL)
-        {
-            self->api_Ptr->FinishReadEffects();
-            Py_RETURN_TRUE;
-        }
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to finish reading effects");
-		return NULL;
-    }
-    
-    Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_InitReadVegetation(DF_API* self)
-{
-    uint32_t numVegetation = 0;
-    
-    try
-    {
-        if(self->api_Ptr != NULL)
-            if(self->api_Ptr->InitReadVegetation(numVegetation))
-                return PyInt_FromLong(numVegetation);
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to read vegetation");
-		return NULL;
-    }
-    
-    Py_RETURN_NONE;
-}
-
-static PyObject* DF_API_FinishReadVegetation(DF_API* self)
-{    
-    try
-    {
-        if(self->api_Ptr != NULL)
-        {
-            self->api_Ptr->FinishReadVegetation();
-            Py_RETURN_TRUE;
-        }
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to finish reading vegetation");
-		return NULL;
-    }
-    
-    Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_InitReadCreatures(DF_API* self)
-{
-    uint32_t numCreatures = 0;
-    
-    try
-    {
-        if(self->api_Ptr != NULL)
-            if(self->api_Ptr->InitReadCreatures(numCreatures))
-                return PyInt_FromLong(numCreatures);
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to read creatures");
-		return NULL;
-    }
-    
-    Py_RETURN_NONE;
-}
-
-static PyObject* DF_API_FinishReadCreatures(DF_API* self)
-{    
-    try
-    {
-        if(self->api_Ptr != NULL)
-        {
-            self->api_Ptr->FinishReadCreatures();
-            Py_RETURN_TRUE;
-        }
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to finish reading creatures");
-		return NULL;
-    }
-    
-    Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_InitReadNotes(DF_API* self)
-{
-    uint32_t numNotes = 0;
-    
-    try
-    {
-        if(self->api_Ptr != NULL)
-            if(self->api_Ptr->InitReadNotes(numNotes))
-                return PyInt_FromLong(numNotes);
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to read notes");
-		return NULL;
-    }
-    
-    Py_RETURN_NONE;
-}
-
-static PyObject* DF_API_FinishReadNotes(DF_API* self)
-{    
-    try
-    {
-        if(self->api_Ptr != NULL)
-        {
-            self->api_Ptr->FinishReadNotes();
-            Py_RETURN_TRUE;
-        }
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to finish reading notes");
-		return NULL;
-    }
-    
-    Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_InitReadSettlements(DF_API* self)
-{
-    uint32_t numSettlements = 0;
-    
-    try
-    {
-        if(self->api_Ptr != NULL)
-            if(self->api_Ptr->InitReadSettlements(numSettlements))
-                return PyInt_FromLong(numSettlements);
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to read settlements");
-		return NULL;
-    }
-    
-    Py_RETURN_NONE;
-}
-
-static PyObject* DF_API_FinishReadSettlements(DF_API* self)
-{    
-    try
-    {
-        if(self->api_Ptr != NULL)
-        {
-            self->api_Ptr->FinishReadSettlements();
-            Py_RETURN_TRUE;
-        }
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to finish reading settlements");
-		return NULL;
-    }
-    
-    Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_InitReadItems(DF_API* self)
-{
-    uint32_t numItems = 0;
-    
-    try
-    {
-        if(self->api_Ptr != NULL)
-            if(self->api_Ptr->InitReadItems(numItems))
-                return PyInt_FromLong(numItems);
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to read items");
-		return NULL;
-    }
-    
-    Py_RETURN_NONE;
-}
-
-static PyObject* DF_API_FinishReadItems(DF_API* self)
-{    
-    try
-    {
-        if(self->api_Ptr != NULL)
-        {
-            self->api_Ptr->FinishReadItems();
-            Py_RETURN_TRUE;
-        }
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to finish reading items");
-		return NULL;
-    }
-    
-    Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_InitReadHotkeys(DF_API* self)
-{
-    try
-    {
-        if(self->api_Ptr != NULL)
-            if(self->api_Ptr->InitReadHotkeys())
-                Py_RETURN_TRUE;
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to initialize hotkey reader");
-		return NULL;
-    }
-    
-    Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_ReadHotkeys(DF_API* self, PyObject* args)
-{
-	PyObject* list;
-	
-	if(self->api_Ptr == NULL)
-		return NULL;
-	else
-	{
-		DFHack::t_hotkey hotkeys[NUM_HOTKEYS];
-		
-		self->api_Ptr->ReadHotkeys(hotkeys);
-		
-		list = PyList_New(0);
-		
-		for(int i = 0; i < NUM_HOTKEYS; i++)
-		{
-			DFHack::t_hotkey key = hotkeys[i];
-			
-			PyList_Append(list, Py_BuildValue("siiii", key.name, key.mode, key.x, key.y, key.z));
-		}
-		
-		return list;
-	}
-	
-	Py_RETURN_NONE;
-}
-
-static PyObject* DF_API_InitViewSize(DF_API* self)
-{
-    try
-    {
-        if(self->api_Ptr != NULL)
-            if(self->api_Ptr->InitViewSize())
-                Py_RETURN_TRUE;
-    }
-    catch(...)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error trying to initialize view size");
-		return NULL;
-    }
-    
-    Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_IsValidBlock(DF_API* self, PyObject* args)
-{
-	uint32_t blockx, blocky, blockz;
-	bool valid;
-	
-	if(self->api_Ptr != NULL)
-	{
-		if(!PyArg_ParseTuple(args, "III", &blockx, &blocky, &blockz))
-			Py_RETURN_NONE;
-		
-		valid = self->api_Ptr->isValidBlock(blockx, blocky, blockz);
-		
-		if(valid)
-			Py_RETURN_TRUE;
-		else
-			Py_RETURN_FALSE;
-	}
-	
-	Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_ReadDesignations(DF_API* self, PyObject* args)
-{
-	uint32_t blockx, blocky, blockz;
-	DFHack::designations40d designations;
-	PyObject* list = NULL;
-	
-	if(self->api_Ptr != NULL)
-	{
-		if(!PyArg_ParseTuple(args, "III", &blockx, &blocky, &blockz))
-			Py_RETURN_NONE;
-		
-		self->api_Ptr->ReadDesignations(blockx, blocky, blockz, &designations);
-		
-		list = PyList_New(16);
-		
-		for(int i = 0; i < 16; i++)
-		{
-			PyObject* innerList = PyList_New(16);
-			
-			for(int j = 0; j < 16; j++)
-			{
-				PyList_SetItem(innerList, j, PyInt_FromLong(designations[i][j].whole));
-			}
-			
-			PyList_SetItem(list, i, innerList);
-		}
-	}
-	
-	return list;
-}
-
-static PyObject* DF_API_WriteDesignations(DF_API* self, PyObject* args)
-{
-	uint32_t blockx, blocky, blockz;
-	DFHack::designations40d designations;
-	PyObject* list;
-	
-	if(self->api_Ptr != NULL)
-	{
-		if(!PyArg_ParseTuple(args, "IIIO", &blockx, &blocky, &blockz, &list))
-			Py_RETURN_NONE;
-		
-		for(int i = 0; i < 16; i++)
-		{
-			PyObject* innerList = PyList_GetItem(list, i);
-			
-			for(int j = 0; j < 16; j++)
-			{
-				UnionBase* obj = (UnionBase*)PyList_GetItem(innerList, j);
-				
-				designations[i][j].whole = obj->whole;
-			}
-		}
-		
-		self->api_Ptr->WriteDesignations(blockx, blocky, blockz, &designations);
-		
-		Py_RETURN_TRUE;
-	}
-	
-	Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_ReadOccupancy(DF_API* self, PyObject* args)
-{
-	uint32_t blockx, blocky, blockz;
-	DFHack::occupancies40d occupancies;
-	PyObject* list = NULL;
-	
-	if(self->api_Ptr != NULL)
-	{
-		if(!PyArg_ParseTuple(args, "III", &blockx, &blocky, &blockz))
-			Py_RETURN_NONE;
-		
-		self->api_Ptr->ReadOccupancy(blockx, blocky, blockz, &occupancies);
-		
-		list = PyList_New(16);
-		
-		for(int i = 0; i < 16; i++)
-		{
-			PyObject* innerList = PyList_New(16);
-			
-			for(int j = 0; j < 16; j++)
-			{
-				PyList_SetItem(innerList, j, PyInt_FromLong(occupancies[i][j].whole));
-			}
-			
-			PyList_SetItem(list, i, innerList);
-		}
-	}
-	
-	return list;
-}
-
-static PyObject* DF_API_WriteOccupancy(DF_API* self, PyObject* args)
-{
-	uint32_t blockx, blocky, blockz;
-	DFHack::occupancies40d occupancies;
-	PyObject* list;
-	
-	if(self->api_Ptr != NULL)
-	{
-		if(!PyArg_ParseTuple(args, "IIIO", &blockx, &blocky, &blockz, &list))
-			Py_RETURN_NONE;
-		
-		for(int i = 0; i < 16; i++)
-		{
-			PyObject* innerList = PyList_GetItem(list, i);
-			
-			for(int j = 0; j < 16; j++)
-			{
-				UnionBase* obj = (UnionBase*)PyList_GetItem(innerList, j);
-				
-				occupancies[i][j].whole = obj->whole;
-			}
-		}
-		
-		self->api_Ptr->WriteOccupancy(blockx, blocky, blockz, &occupancies);
-		
-		Py_RETURN_TRUE;
-	}
-	
-	Py_RETURN_FALSE;
-}
-
-static PyObject* DF_API_ReadDirtyBit(DF_API* self, PyObject* args)
-{
-	uint32_t blockx, blocky, blockz;
-	bool dirty;
-	
-	if(self->api_Ptr == NULL)
-		return NULL;
-	else
-	{
-		if(!PyArg_ParseTuple(args, "III", &blockx, &blocky, &blockz))
-			return NULL;
-		
-		self->api_Ptr->ReadDirtyBit(blockx, blocky, blockz, dirty);
-		
-		if(dirty)
-			Py_RETURN_TRUE;
-		else
-			Py_RETURN_FALSE;
-	}
-}
-
-static PyObject* DF_API_WriteDirtyBit(DF_API* self, PyObject* args)
-{
-	uint32_t blockx, blocky, blockz;
-	int dirtyFlag;
-	
-	if(self->api_Ptr == NULL)
-		return NULL;
-	else
-	{
-		if(!PyArg_ParseTuple(args, "IIIi", &blockx, &blocky, &blockz, &dirtyFlag))
-			return NULL;
-		
-		self->api_Ptr->WriteDirtyBit(blockx, blocky, blockz, dirtyFlag);
-		
-		Py_RETURN_TRUE;
-	}
-}
-
-static PyObject* DF_API_ReadStoneMatgloss(DF_API* self, PyObject* args)
-{
-	PyObject* dict;
-	
-	if(self->api_Ptr == NULL)
-		return NULL;
-	else
-	{
-		std::vector<DFHack::t_matgloss> output;
-		std::vector<DFHack::t_matgloss>::iterator iter;
-		
-		if(!self->api_Ptr->ReadStoneMatgloss(output))
-		{
-			PyErr_SetString(PyExc_ValueError, "Error reading stone matgloss");
-			return NULL;
-		}
-		
-		dict = PyDict_New();
-		
-		for(iter = output.begin(); iter != output.end(); iter++)
-		{
-			t_matgloss item = *iter;
-			
-			PyDict_SetItemString(dict, item.id, Py_BuildValue("IIIs", item.fore, item.back, item.bright, item.name));
-		}
-		
-		return dict;
-	}
-}
-
-static PyObject* DF_API_ReadWoodMatgloss(DF_API* self, PyObject* args)
-{
-	PyObject* dict;
-	
-	if(self->api_Ptr == NULL)
-		return NULL;
-	else
-	{
-		std::vector<DFHack::t_matgloss> output;
-		std::vector<DFHack::t_matgloss>::iterator iter;
-		
-		if(!self->api_Ptr->ReadWoodMatgloss(output))
-		{
-			PyErr_SetString(PyExc_ValueError, "Error reading wood matgloss");
-			return NULL;
-		}
-		
-		dict = PyDict_New();
-		
-		for(iter = output.begin(); iter != output.end(); iter++)
-		{
-			t_matgloss item = *iter;
-			
-			PyDict_SetItemString(dict, item.id, Py_BuildValue("IIIs", item.fore, item.back, item.bright, item.name));
-		}
-		
-		return dict;
-	}
-}
-
-static PyObject* DF_API_ReadMetalMatgloss(DF_API* self, PyObject* args)
-{
-	PyObject* dict;
-	
-	if(self->api_Ptr == NULL)
-		return NULL;
-	else
-	{
-		std::vector<DFHack::t_matgloss> output;
-		std::vector<DFHack::t_matgloss>::iterator iter;
-		
-		if(!self->api_Ptr->ReadMetalMatgloss(output))
-		{
-			PyErr_SetString(PyExc_ValueError, "Error reading metal matgloss");
-			return NULL;
-		}
-		
-		dict = PyDict_New();
-		
-		for(iter = output.begin(); iter != output.end(); iter++)
-		{
-			t_matgloss item = *iter;
-			
-			PyDict_SetItemString(dict, item.id, Py_BuildValue("IIIs", item.fore, item.back, item.bright, item.name));
-		}
-		
-		return dict;
-	}
-}
-
-static PyObject* DF_API_ReadPlantMatgloss(DF_API* self, PyObject* args)
-{
-	PyObject* dict;
-	
-	if(self->api_Ptr == NULL)
-		return NULL;
-	else
-	{
-		std::vector<DFHack::t_matglossPlant> output;
-		std::vector<DFHack::t_matglossPlant>::iterator iter;
-		
-		if(!self->api_Ptr->ReadPlantMatgloss(output))
-		{
-			PyErr_SetString(PyExc_ValueError, "Error reading plant matgloss");
-			return NULL;
-		}
-		
-		dict = PyDict_New();
-		
-		for(iter = output.begin(); iter != output.end(); iter++)
-		{
-			t_matglossPlant item = *iter;
-			
-			PyDict_SetItemString(dict, item.id, Py_BuildValue("IIIssss", item.fore, item.back, item.bright, item.name, item.drink_name, item.food_name, item.extract_name));
-		}
-		
-		return dict;
-	}
-}
-
-static PyObject* DF_API_ReadCreatureMatgloss(DF_API* self, PyObject* args)
-{
-	PyObject* dict;
-	
-	if(self->api_Ptr == NULL)
-		return NULL;
-	else
-	{
-		std::vector<DFHack::t_matgloss> output;
-		std::vector<DFHack::t_matgloss>::iterator iter;
-		
-		if(!self->api_Ptr->ReadStoneMatgloss(output))
-		{
-			PyErr_SetString(PyExc_ValueError, "Error reading creature matgloss");
-			return NULL;
-		}
-		
-		dict = PyDict_New();
-		
-		for(iter = output.begin(); iter != output.end(); iter++)
-		{
-			t_matgloss item = *iter;
-			
-			PyDict_SetItemString(dict, item.id, Py_BuildValue("IIIs", item.fore, item.back, item.bright, item.name));
-		}
-		
-		return dict;
-	}
-}
-
-static PyObject* DF_API_InitViewAndCursor(DF_API* self, PyObject* args)
-{
-	if(self->api_Ptr == NULL)
-		return NULL;
-	else
-	{
-		if(self->api_Ptr->InitViewAndCursor())
-			Py_RETURN_TRUE;
-		else
-			Py_RETURN_FALSE;
-	}
-}
-
 static PyMethodDef DF_API_methods[] =
 {
     {"Attach", (PyCFunction)DF_API_Attach, METH_NOARGS, "Attach to the DF process"},
@@ -1191,40 +363,6 @@ static PyMethodDef DF_API_methods[] =
     {"Resume", (PyCFunction)DF_API_Resume, METH_NOARGS, "Resume the DF process"},
     {"Async_Suspend", (PyCFunction)DF_API_AsyncSuspend, METH_NOARGS, "Asynchronously suspend the DF process"},
     {"Force_Resume", (PyCFunction)DF_API_ForceResume, METH_NOARGS, "Force the DF process to resume"},
-    {"Init_Map", (PyCFunction)DF_API_InitMap, METH_NOARGS, "Initialize the DFHack map reader"},
-    {"Destroy_Map", (PyCFunction)DF_API_DestroyMap, METH_NOARGS, "Shut down the DFHack map reader"},
-    {"Init_Read_Constructions", (PyCFunction)DF_API_InitReadConstructions, METH_NOARGS, "Initialize construction reader"},
-    {"Finish_Read_Constructions", (PyCFunction)DF_API_FinishReadConstructions, METH_NOARGS, "Shut down construction reader"},
-    {"Init_Read_Buildings", (PyCFunction)DF_API_InitReadBuildings, METH_NOARGS, "Initialize building reader"},
-    {"Finish_Read_Buildings", (PyCFunction)DF_API_FinishReadBuildings, METH_NOARGS, "Shut down building reader"},
-    {"Init_Read_Effects", (PyCFunction)DF_API_InitReadEffects, METH_NOARGS, "Initialize effect reader"},
-    {"Finish_Read_Effects", (PyCFunction)DF_API_FinishReadEffects, METH_NOARGS, "Shut down effect reader"},
-    {"Init_Read_Vegetation", (PyCFunction)DF_API_InitReadVegetation, METH_NOARGS, "Initialize vegetation reader"},
-    {"Finish_Read_Vegetation", (PyCFunction)DF_API_FinishReadVegetation, METH_NOARGS, "Shut down vegetation reader"},
-    {"Init_Read_Creatures", (PyCFunction)DF_API_InitReadCreatures, METH_NOARGS, "Initialize creature reader"},
-    {"Finish_Read_Creatures", (PyCFunction)DF_API_FinishReadCreatures, METH_NOARGS, "Shut down creature reader"},
-    {"Init_Read_Notes", (PyCFunction)DF_API_InitReadNotes, METH_NOARGS, "Initialize note reader"},
-    {"Finish_Read_Notes", (PyCFunction)DF_API_FinishReadNotes, METH_NOARGS, "Shut down note reader"},
-    {"Init_Read_Settlements", (PyCFunction)DF_API_InitReadSettlements, METH_NOARGS, "Initialize settlement reader"},
-    {"Finish_Read_Settlements", (PyCFunction)DF_API_FinishReadSettlements, METH_NOARGS, "Shut down settlement reader"},
-    {"Init_Read_Items", (PyCFunction)DF_API_InitReadItems, METH_NOARGS, "Initialize item reader"},
-    {"Finish_Read_Items", (PyCFunction)DF_API_FinishReadItems, METH_NOARGS, "Shut down item reader"},
-    {"Init_Read_Hotkeys", (PyCFunction)DF_API_InitReadHotkeys, METH_NOARGS, "Initialize hotkey reader"},
-	{"Read_Hotkeys", (PyCFunction)DF_API_ReadHotkeys, METH_NOARGS, ""},
-    {"Init_View_Size", (PyCFunction)DF_API_InitViewSize, METH_NOARGS, "Initialize view size reader"},
-	{"Is_Valid_Block", (PyCFunction)DF_API_IsValidBlock, METH_VARARGS, ""},
-	{"Read_Designations", (PyCFunction)DF_API_ReadDesignations, METH_VARARGS, "Read a block's designations"},	
-	{"Write_Designations", (PyCFunction)DF_API_WriteDesignations, METH_VARARGS, ""},
-	{"Read_Occupancy", (PyCFunction)DF_API_ReadOccupancy, METH_VARARGS, ""},
-	{"Write_Occupancy", (PyCFunction)DF_API_WriteOccupancy, METH_VARARGS, ""},
-	{"Read_Dirty_Bit", (PyCFunction)DF_API_ReadDirtyBit, METH_VARARGS, ""},
-	{"Write_Dirty_Bit", (PyCFunction)DF_API_WriteDirtyBit, METH_VARARGS, ""},
-	{"Read_Stone_Matgloss", (PyCFunction)DF_API_ReadStoneMatgloss, METH_NOARGS, ""},
-	{"Read_Wood_Matgloss", (PyCFunction)DF_API_ReadWoodMatgloss, METH_NOARGS, ""},
-	{"Read_Metal_Matgloss", (PyCFunction)DF_API_ReadMetalMatgloss, METH_NOARGS, ""},
-	{"Read_Plant_Matgloss", (PyCFunction)DF_API_ReadPlantMatgloss, METH_NOARGS, ""},
-	{"Read_Creature_Matgloss", (PyCFunction)DF_API_ReadCreatureMatgloss, METH_NOARGS, ""},
-	{"Init_View_And_Cursor", (PyCFunction)DF_API_InitViewAndCursor, METH_NOARGS, ""},
     {NULL}  // Sentinel
 };
 

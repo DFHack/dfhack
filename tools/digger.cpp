@@ -17,6 +17,7 @@ using namespace std;
 #include <DFTileTypes.h>
 #include <DFHackAPI.h>
 #include <argstream.h>
+#include <modules/Maps.h>
 
 // counts the occurances of a certain element in a vector
 // used to determine of a given tile is a target
@@ -124,7 +125,7 @@ private:
     }
 };
 
-int dig(DFHack::API& DF, 
+int dig(DFHack::Maps* Maps, 
         vector<uint16_t>& targets,
         int num = -1,
         const int x_source = 0, 
@@ -138,7 +139,7 @@ int dig(DFHack::API& DF,
     uint32_t x_max,y_max,z_max;
     DFHack::designations40d designations;
     DFHack::tiletypes40d tiles;
-    DF.getSize(x_max,y_max,z_max);
+    Maps->getSize(x_max,y_max,z_max);
 
     // every tile found, will later be sorted by distance to source
     vector<DigTarget> candidates;
@@ -153,11 +154,11 @@ int dig(DFHack::API& DF,
         {
             for(uint32_t z = 0; z < z_max; z++)
             {
-                if(DF.isValidBlock(x,y,z))
+                if(Maps->isValidBlock(x,y,z))
                 {
                     // read block designations and tiletype
-                    DF.ReadDesignations(x,y,z, &designations);
-                    DF.ReadTileTypes(x,y,z, &tiles);
+                    Maps->ReadDesignations(x,y,z, &designations);
+                    Maps->ReadTileTypes(x,y,z, &tiles);
 
                     // search all tiles for dig targets:
                     // visible, not yet marked for dig and matching tile type
@@ -165,7 +166,7 @@ int dig(DFHack::API& DF,
                     {
                         for(uint32_t ly = 0; ly < 16; ly++)
                         {
-                            if (designations[lx][ly].bits.hidden == 0 && 
+                            if (/*designations[lx][ly].bits.hidden == 0 && */
                                 designations[lx][ly].bits.dig == 0 && 
                                 vec_count(targets, DFHack::tileTypeTable[tiles[lx][ly]].c) > 0)
                             {
@@ -210,12 +211,12 @@ int dig(DFHack::API& DF,
         }
 
         // TODO this could probably be made much better, theres a big chance the trees are on the same grid
-        DF.ReadDesignations((*i).grid_x, (*i).grid_y, (*i).z, &designations);
+        Maps->ReadDesignations((*i).grid_x, (*i).grid_y, (*i).z, &designations);
         designations[(*i).local_x][(*i).local_y].bits.dig = DFHack::designation_default;
-        DF.WriteDesignations((*i).grid_x, (*i).grid_y, (*i).z, &designations);
+        Maps->WriteDesignations((*i).grid_x, (*i).grid_y, (*i).z, &designations);
 
         // Mark as dirty so the jobs are properly picked up by the dwarves
-        DF.WriteDirtyBit((*i).grid_x, (*i).grid_y, (*i).z, true);
+        Maps->WriteDirtyBit((*i).grid_x, (*i).grid_y, (*i).z, true);
     }
 
     return num;
@@ -339,11 +340,13 @@ int main (int argc, char** argv)
             #endif
             return 1;
         }
-        if (DF.InitMap())
+        DFHack::Maps *Maps = DF.getMaps();
+        if (Maps && Maps->Start())
         {
-            int count = dig(DF, targets, max, origin[0],origin[1],origin[2], verbose);
+            int count = dig(Maps, targets, max, origin[0],origin[1],origin[2], verbose);
             cout << count << " targets designated" << endl;
-
+            Maps->Finish();
+            
             if (!DF.Detach())
             {
                 cerr << "Unable to detach DF process" << endl;

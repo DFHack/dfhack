@@ -14,8 +14,8 @@ ADD_EXECUTABLE(dfprospector prospector.cpp)
 TARGET_LINK_LIBRARIES(dfprospector dfhack)
 
 # cleanmap - removes mud, snow, blood and similar stuff from a map. farmers beware
-#ADD_EXECUTABLE(dfcleanmap cleanmap.cpp)
-#TARGET_LINK_LIBRARIES(dfcleanmap dfhack)
+ADD_EXECUTABLE(dfcleanmap cleanmap.cpp)
+TARGET_LINK_LIBRARIES(dfcleanmap dfhack)
 
 IF(UNIX)
 # incrementalsearch - a bit like cheat engine, only DF-specific, very basic

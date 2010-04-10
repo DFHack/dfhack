@@ -7,13 +7,18 @@ using namespace std;
 
 #include <DFTypes.h>
 #include <DFHackAPI.h>
+#include <DFTypes.h>
+#include <stddef.h>
+#include <modules/Maps.h>
 
 int main (void)
 {
     uint32_t x_max,y_max,z_max;
     uint32_t num_blocks = 0;
     uint32_t bytes_read = 0;
-    DFHack::occupancies40d occupancies;
+    vector<DFHack::t_vein> veinVector;
+    vector<DFHack::t_frozenliquidvein> IceVeinVector;
+    vector<DFHack::t_spattervein> splatter;
     
     DFHack::API DF("Memory.xml");
     try
@@ -28,9 +33,10 @@ int main (void)
         #endif
         return 1;
     }
+    DFHack::Maps *Mapz = DF.getMaps();
     
     // init the map
-    if(!DF.InitMap())
+    if(!Mapz->Start())
     {
         cerr << "Can't init map." << endl;
         #ifndef LINUX_BUILD
@@ -39,7 +45,9 @@ int main (void)
         return 1;
     }
     
-    DF.getSize(x_max,y_max,z_max);
+    Mapz->getSize(x_max,y_max,z_max);
+        
+    uint8_t zeroes [16][16] = {0};
     
     // walk the map
     for(uint32_t x = 0; x< x_max;x++)
@@ -48,8 +56,20 @@ int main (void)
         {
             for(uint32_t z = 0; z< z_max;z++)
             {
-                if(DF.isValidBlock(x,y,z))
+                if(Mapz->isValidBlock(x,y,z))
                 {
+                    Mapz->ReadVeins(x,y,z,veinVector,IceVeinVector,splatter);
+                    for(uint32_t i = 0; i < splatter.size(); i++)
+                    {
+                        DFHack::t_spattervein & vein = splatter[i];
+                        if(vein.mat1 > 19)
+                        {
+                            uint32_t addr = vein.address_of;
+                            uint32_t offset = offsetof(DFHack::t_spattervein, intensity);
+                            DF.WriteRaw(addr + offset,sizeof(zeroes),(uint8_t *) zeroes);
+                        }
+                    }
+                    /*
                     // read block designations
                     DF.ReadOccupancy(x,y,z, &occupancies);
                     // change the hidden flag to 0
@@ -59,6 +79,7 @@ int main (void)
                     }
                     // write the designations back
                     DF.WriteOccupancy(x,y,z, &occupancies);
+                    */
                 }
             }
         }

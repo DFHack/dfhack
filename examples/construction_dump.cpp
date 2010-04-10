@@ -64,7 +64,9 @@ int main (int numargs, const char ** args)
                 string matstr = "unknown";
                 if(con.mat_type == 0)
                 {
-                    matstr = inorganics[con.mat_idx].id;
+                    if(con.mat_idx != 0xffffffff)
+                        matstr = inorganics[con.mat_idx].id;
+                    else matstr = "inorganic";
                 }
                 switch(con.type)
                 {

@@ -14,7 +14,7 @@ namespace DFHack
         constr_boulder = 4,
         constr_logs = 5,
     };
-    
+    #pragma pack(1)
     struct t_construction
     {
         //0
@@ -22,7 +22,7 @@ namespace DFHack
         uint16_t y;
         // 4
         uint16_t z;
-        e_construction_base type :16; // 4 = 'rough'
+        uint16_t form; // e_construction_base
         // 8
         uint16_t unk_8; // = -1 in many cases
         uint16_t mat_type;

@@ -60,7 +60,7 @@ int main (int numargs, const char ** args)
             {
                 printf("Construction %d/%d/%d @ 0x%x\n", con.x, con.y, con.z,con.origin);
                 // inorganic stuff - we can recognize that
-                printf("Material: form %d, type %d, index %d\n",con.type, con.mat_type, con.mat_idx);
+                printf("Material: form %d, type %d, index %d\n",con.form, con.mat_type, con.mat_idx);
                 string matstr = "unknown";
                 if(con.mat_type == 0)
                 {
@@ -68,7 +68,7 @@ int main (int numargs, const char ** args)
                         matstr = inorganics[con.mat_idx].id;
                     else matstr = "inorganic";
                 }
-                switch(con.type)
+                switch(con.form)
                 {
                     case constr_bar:
                         printf("It is made of %s bars!\n",matstr.c_str());

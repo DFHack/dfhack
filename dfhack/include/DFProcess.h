@@ -181,7 +181,7 @@ namespace DFHack
             DFWindow * getWindow();
             int getPID();
             // get module index by name and version. bool 1 = error
-            bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) {return false;};
+            bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) { OUTPUT=0; return false;};
             // get the SHM start if available
             char * getSHMStart (void){return 0;};
             // set a SHM command and wait for a response
@@ -306,7 +306,7 @@ namespace DFHack
             DFWindow * getWindow();
             int getPID();
             // get module index by name and version. bool 1 = error
-            bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) {return false;};
+            bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) {OUTPUT=0; return false;};
             // get the SHM start if available
             char * getSHMStart (void){return 0;};
             bool SetAndWait (uint32_t state){return false;};

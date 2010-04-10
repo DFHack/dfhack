@@ -56,8 +56,8 @@ int main (int numargs, const char ** args)
             if(cx == con.x && cy == con.y && cz == con.z)
             {
                 printf("Construction %d/%d/%d @ 0x%x - Material %d %d\n", con.x, con.y, con.z,con.origin, con.mat_type, con.mat_idx);
-                printf("Material form: %d ", con.type);
-                if(con.type == 4)
+                printf("Material form: %d ", con.form);
+                if(con.form == 4)
                 {
                     printf("It is rough.");
                 }

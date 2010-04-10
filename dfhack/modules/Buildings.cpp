@@ -121,4 +121,5 @@ bool Buildings::Finish()
         d->p_bld = NULL;
     }
     d->Started = false;
+    return true;
 }

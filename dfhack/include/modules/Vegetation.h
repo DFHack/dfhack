@@ -27,7 +27,7 @@ namespace DFHack
         uint32_t address;
     };
     
-    struct APIPrivate;
+    class APIPrivate;
     class DFHACK_EXPORT Vegetation
     {
         public:

@@ -39,7 +39,7 @@ namespace DFHack
         uint32_t origin;
     };
 
-    struct APIPrivate;
+    class APIPrivate;
     class DFHACK_EXPORT Constructions
     {
         public:

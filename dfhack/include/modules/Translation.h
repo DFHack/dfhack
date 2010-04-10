@@ -6,7 +6,7 @@
 #include "Export.h"
 namespace DFHack
 {
-    struct APIPrivate;
+    class APIPrivate;
     typedef std::vector< std::vector<std::string> > DFDict;
     typedef struct
     {

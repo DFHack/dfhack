@@ -9,6 +9,8 @@
     #pragma warning( disable: 4251 )
     // don't display bogus 'deprecation' and 'unsafe' warnings
     #pragma warning( disable: 4996 )
+    // disable stupid
+    #pragma warning( disable: 4800 )
 #endif
 
 #endif

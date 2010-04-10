@@ -395,7 +395,7 @@ bool memory_info::resolveClassnameToVPtr(const string classname, uint32_t & vptr
 
 bool memory_info::resolveClassIDToClassname (const int32_t classID, string & classname)
 {
-    if (classID >=0 && classID < d->classnames.size())
+    if (classID >=0 && (uint32_t)classID < d->classnames.size())
     {
         classname = d->classnames[classID];
         return true;

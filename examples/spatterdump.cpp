@@ -77,7 +77,6 @@ int get_material_vector(uint32_t vein_8, uint16_t vein_4, int WORLD_)
 char shades[10] = {'#','$','O','=','+','|','-','^','.',' '};
 int main (int numargs, const char ** args)
 {
-    uint32_t addr;
     uint32_t x_max,y_max,z_max;
     vector<t_vein> veinVector;
     vector<t_frozenliquidvein> IceVeinVector;
@@ -130,7 +129,7 @@ int main (int numargs, const char ** args)
                 {
                     printf("Block %d/%d/%d\n",x,y,z);
                     
-                    for(int i = 0; i < splatter.size(); i++)
+                    for(uint32_t i = 0; i < splatter.size(); i++)
                     {
                         printf("Splatter %d\nmat1: %d\nunknown: %d\nmat2: %d\nmat3: %d\n",i,splatter[i].mat1,splatter[i].unk1,splatter[i].mat2,splatter[i].mat3);
                         cout << PrintSplatterType(splatter[i].mat1,splatter[i].mat2,creature_types) << endl;
@@ -165,7 +164,7 @@ int main (int numargs, const char ** args)
         {
             printf("Block %d/%d/%d\n",bx,by,bz);
             
-            for(int i = 0; i < splatter.size(); i++)
+            for(uint32_t i = 0; i < splatter.size(); i++)
             {
                 printf("Splatter %d\nmat1: %d\nunknown: %d\nmat2: %d\nmat3: %d\n",i,splatter[i].mat1,splatter[i].unk1,splatter[i].mat2,splatter[i].mat3);
                 PrintSplatterType(splatter[i].mat1,splatter[i].mat2,creature_types);

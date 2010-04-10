@@ -6,7 +6,7 @@
 #include "Export.h"
 namespace DFHack
 {
-    struct APIPrivate;
+    class APIPrivate;
     class DFHACK_EXPORT Position
     {
         public:

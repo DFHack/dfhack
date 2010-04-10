@@ -292,6 +292,7 @@ bool Creatures::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LA
     if(!d->Started) return false;
     uint32_t temp = * (uint32_t *) d->p_cre->at (index);
     g_pProcess->write(temp + d->creatures.labors_offset, NUM_CREATURE_LABORS, labors);
+    return true;
 }
 
 /*

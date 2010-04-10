@@ -104,7 +104,7 @@ int main (int argc,const char* argv[])
                 {
                     DFHack::t_building temp;
                     Bld->Read(i, temp);
-                    if(x >= temp.x1 && x <= temp.x2 && y >= temp.y1 && y <= temp.y2 && z == temp.z)
+                    if((uint32_t)x >= temp.x1 && (uint32_t)x <= temp.x2 && (uint32_t)y >= temp.y1 && (uint32_t)y <= temp.y2 && (uint32_t)z == temp.z)
                     {
                         string typestr;
                         mem->resolveClassIDToClassname(temp.type, typestr);

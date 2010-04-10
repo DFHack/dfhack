@@ -25,7 +25,7 @@ namespace DFHack
         // FIXME: not complete, we need building presence bitmaps for stuff like farm plots and stockpiles, orientation (N,E,S,W) and state (open/closed)
     };
     
-    struct APIPrivate;
+    class APIPrivate;
     class DFHACK_EXPORT Buildings
     {
         public:

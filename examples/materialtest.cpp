@@ -44,7 +44,7 @@ int main (int numargs, const char ** args)
     cout << "----==== Inorganic ====----" << endl;
     vector<DFHack::t_matgloss> matgloss;
     Materials->ReadInorganicMaterials (matgloss);
-    for(int i = 0; i < matgloss.size();i++)
+    for(uint32_t i = 0; i < matgloss.size();i++)
     {
         cout << matgloss[i].id << endl;
     }
@@ -52,14 +52,14 @@ int main (int numargs, const char ** args)
     cout << endl << "----==== Organic ====----" << endl;
     vector<DFHack::t_matgloss> organic;
     Materials->ReadOrganicMaterials (matgloss);
-    for(int i = 0; i < matgloss.size();i++)
+    for(uint32_t i = 0; i < matgloss.size();i++)
     {
         cout << matgloss[i].id << endl;
     }
     cout << endl << "----==== Creature types ====----" << endl;
     vector<DFHack::t_matgloss> creature;
     Materials->ReadCreatureTypes (matgloss);
-    for(int i = 0; i < matgloss.size();i++)
+    for(uint32_t i = 0; i < matgloss.size();i++)
     {
         cout << matgloss[i].id << endl;
     }

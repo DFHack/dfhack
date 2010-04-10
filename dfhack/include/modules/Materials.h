@@ -6,7 +6,7 @@
 #include "Export.h"
 namespace DFHack
 {
-    struct APIPrivate;
+    class APIPrivate;
     
     struct t_matgloss
     {

@@ -2820,8 +2820,20 @@
                                     (for stonesense)
             ====================================================================
         <VTable name="building_vtable">
+            <multiclass name="building_trapst" typeoffset="0x138">
+                <class name="building_leverst" type="0x0"/>
+                <class name="building_pressure_platest" type="0x1"/>
+                <class name="building_cage_trapst" type="0x2"/>
+                <class name="building_stonefall_trapst" type="0x3"/>
+                <class name="building_weapon_trapst" type="0x4"/>
+            </multiclass>
+            <class name="building_constructionst"/>
+            <class name="building_road_pavedst"/>
+            <class name="building_road_dirtst"/>
+            <class name="building_roadst"/>
+            <class name="building_wagonst"/>
+            <class name="building_tradedepotst"/>
             <multiclass name="building_workshopst" typeoffset="0x138">
-                <!--<class name="building_alchemists_laboratoryst" type="0x0"/>-->
                 <class name="building_carpenters_workshopst" type="0x0"/>
                 <class name="building_farmers_workshopst" type="0x1"/>
                 <class name="building_masons_workshopst" type="0x2"/>
@@ -2855,33 +2867,22 @@
                 <class name="building_magma_glass_furnacest" type="0x5"/>
                 <class name="building_magma_kilnst" type="0x6"/>
             </multiclass>
-            <multiclass name="building_siegeenginest" typeoffset="0x138">
-                <class name="building_catapultst" type="0x0"/>
-                <class name="building_ballistast" type="0x1"/>
-            </multiclass>
-            <multiclass name="building_trapst" typeoffset="0x138">
-                <class name="building_leverst" type="0x0"/>
-                <class name="building_pressure_platest" type="0x1"/>
-                <class name="building_cage_trapst" type="0x2"/>
-                <class name="building_stonefall_trapst" type="0x3"/>
-                <class name="building_weapon_trapst" type="0x4"/>
-            </multiclass>
-            <class name="building_constructionst"/>
-            <class name="building_road_pavedst"/>
-            <class name="building_road_dirtst"/>
-            <class name="building_roadst"/>
-            <class name="building_wagonst"/>
-            <class name="building_tradedepotst"/>
             <class name="building_animaltrapst"/>
             <class name="building_farmplotst"/>
+            <class name="building_window_glassst"/>
+            <class name="building_window_gemst"/>
             <class name="building_windowst"/>
             <class name="building_statuest"/>
-            <class name="building_wellst"/>
             <class name="building_coffinst"/>
             <class name="building_shopst"/>
             <class name="building_chairst"/>
             <class name="building_tablest"/>
             <class name="building_bedst"/>
+            <class name="building_traction_benchst"/>
+            <multiclass name="building_siegeenginest" typeoffset="0x138">
+                <class name="building_catapultst" type="0x0"/>
+                <class name="building_ballistast" type="0x1"/>
+            </multiclass>
             <class name="building_cagest"/>
             <class name="building_chainst"/>
             <class name="building_windmillstst"/>
@@ -2893,6 +2894,7 @@
             <class name="building_axle_verticalst"/>
             <class name="building_axle_horizontalst"/>
             <class name="building_gear_assemblyst"/>
+            <class name="building_trapst"/>
             <class name="building_bars_floorst"/>
             <class name="building_bars_verticalst"/>
             <class name="building_grate_floorst"/>
@@ -2905,11 +2907,11 @@
             <class name="building_weaponrackst"/>
             <class name="building_cabinetst"/>
             <class name="building_boxst"/>
-            <class name="building_actualst"/>
-            <class name="building_civzonest"/>
             <class name="building_stockpilest"/>
-            <class name="building_window_gemst"/>
-            <class name="building_window_glassst"/>
+            <class name="building_wellst"/>
+            <class name="building_civzonest"/><!-- zone -->
+            <class name="building_actualst"/>
+            <class name="buildingst"/>
         </VTable>
     </Entry>
 

@@ -378,21 +378,28 @@ try_again:
             }
             else
             {
-                if(g_pProcess->readClassName(type) == "block_square_event_frozen_liquidst")
+                string cname = g_pProcess->readClassName(type);
+                if(ices && cname == "block_square_event_frozen_liquidst")
                 {
                     off.vein_ice_vptr = type;
                     goto try_again;
                 }
-                else if(g_pProcess->readClassName(type) == "block_square_event_mineralst")
+                else if(veins && cname == "block_square_event_mineralst")
                 {
                     off.vein_mineral_vptr = type;
                     goto try_again;
                 }
-                else if(g_pProcess->readClassName(type) == "block_square_event_material_spatterst")
+                else if(splatter && cname == "block_square_event_material_spatterst")
                 {
                     off.vein_spatter_vptr = type;
                     goto try_again;
                 }
+                #ifdef DEBUG
+                else
+                {
+                    cerr << "unknown vein " << cname << endl;
+                }
+                #endif
                 // or it was something we don't care about
             }
         }

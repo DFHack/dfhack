@@ -21,6 +21,10 @@ TARGET_LINK_LIBRARIES(dfvdig dfhack)
 ADD_EXECUTABLE(dfcleanmap cleanmap.cpp)
 TARGET_LINK_LIBRARIES(dfcleanmap dfhack)
 
+# unstuck - make DF run if something goes wrong with the 'normal' memory access method
+ADD_EXECUTABLE(dfunstuck unstuck.cpp)
+TARGET_LINK_LIBRARIES(dfunstuck dfhack)
+
 IF(UNIX)
 # incrementalsearch - a bit like cheat engine, only DF-specific, very basic
 # and Linux-only

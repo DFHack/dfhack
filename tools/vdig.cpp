@@ -105,20 +105,24 @@ class Block
     {
         return raw.designation[p.x][p.y];
     }
-    DFHack::t_designation setDesignationAt(Point p, DFHack::t_designation des)
+    bool setDesignationAt(Point p, DFHack::t_designation des)
     {
+        if(!valid) return false;
         dirty = true;
         //printf("setting block %d/%d/%d , %d %d\n",x,y,z, p.x, p.y);
         raw.designation[p.x][p.y] = des;
+        return true;
     }
     bool WriteDesignations ()
     {
+        if(!valid) return false;
         if(dirty)
         {
             //printf("writing %d/%d/%d\n",x,y,z);
             m->WriteDesignations(x,y,z, &raw.designation);
             m->WriteDirtyBit(x,y,z,true);
         }
+        return true;
     }
     bool valid;
     bool dirty;
@@ -171,6 +175,7 @@ class Layer
         {
             Block * nblo = new Block(Maps,blockcoord.x,blockcoord.y,z);
             blocks[blockcoord] = nblo;
+            return nblo;
         }
     }
     
@@ -234,6 +239,7 @@ class Layer
             p->second->WriteDesignations();
             //cout << stonetypes[p->first].id << " : " << p->second << endl;
         }
+        return true;
     }
     private:
     bool valid;

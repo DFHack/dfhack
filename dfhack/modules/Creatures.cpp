@@ -86,6 +86,7 @@ Creatures::Creatures(APIPrivate* _d)
         // soul offsets
         creatures.soul_skills_vector_offset = minfo->getOffset("soul_skills_vector");
         creatures.soul_mental_offset = minfo->getOffset("soul_mental");
+        creatures.soul_traits_offset = minfo->getOffset("soul_traits");
         
         // name offsets for the creature module
         creatures.name_firstname_offset = minfo->getOffset("name_firstname");
@@ -219,10 +220,11 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         furball.defaultSoul.skills[i].rating = g_pProcess->readByte (temp2 + 4);
         furball.defaultSoul.skills[i].experience = g_pProcess->readWord (temp2 + 8);
     }
-    g_pProcess->read(temp + offs.soul_mental_offset, sizeof(t_attrib) * 13, (uint8_t *)&furball.defaultSoul.analytical_ability);
+    // mental attributes are part of the soul
+    g_pProcess->read(soul + offs.soul_mental_offset, sizeof(t_attrib) * 13, (uint8_t *)&furball.defaultSoul.analytical_ability);
     
-    // traits
-    //g_pProcess->read (temp + offs.creature_traits_offset, sizeof (uint16_t) * NUM_CREATURE_TRAITS, (uint8_t *) &furball.traits);
+    // traits as well
+    g_pProcess->read(soul + offs.soul_traits_offset, sizeof (uint16_t) * NUM_CREATURE_TRAITS, (uint8_t *) &furball.defaultSoul.traits);
     
     //likes
     /*

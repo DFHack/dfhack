@@ -13,6 +13,10 @@ TARGET_LINK_LIBRARIES(dfreveal dfhack)
 ADD_EXECUTABLE(dfprospector prospector.cpp)
 TARGET_LINK_LIBRARIES(dfprospector dfhack)
 
+# vdig - dig the vein under the cursor
+ADD_EXECUTABLE(dfvdig vdig.cpp)
+TARGET_LINK_LIBRARIES(dfvdig dfhack)
+
 # cleanmap - removes mud, snow, blood and similar stuff from a map. farmers beware
 ADD_EXECUTABLE(dfcleanmap cleanmap.cpp)
 TARGET_LINK_LIBRARIES(dfcleanmap dfhack)

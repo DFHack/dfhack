@@ -74,7 +74,8 @@ namespace DFHack
         CAMPFIRE,
         FIRE,
         ASHES,
-        CONSTRUCTED
+        CONSTRUCTED,
+        CYAN_GLOW
     };
     enum TileVariant
     {
@@ -410,11 +411,11 @@ namespace DFHack
         {"ice floor" ,FLOOR, ICE, VAR_4},
         {"furrowed soil" ,FLOOR, SOIL, VAR_1},
         {"ice floor" ,FLOOR, ICE, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {"magma" ,FLOOR, MAGMA, VAR_1}, // is it really a floor?
+        {"semi-molten rock" ,WALL, MAGMA, VAR_1},// unminable magma wall
+        {"magma" ,FLOOR, MAGMA, VAR_1},
         {"soil wall" ,WALL, SOIL, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {"glowing floor" ,FLOOR, CYAN_GLOW, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {"smooth obsidian wall",WALL,OBSIDIAN,VAR_1},
         

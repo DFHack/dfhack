@@ -18,6 +18,7 @@ using namespace std;
 #include <DFTypes.h>
 #include <modules/Materials.h>
 #include <modules/Position.h>
+#include <modules/Maps.h>
 #include <modules/Constructions.h>
 #include "miscutils.h"
 
@@ -41,29 +42,22 @@ int main (int numargs, const char ** args)
     
     DFHack::Position *Pos = DF.getPosition();
     
-    DFHack::Constructions *Cons = DF.getConstructions();
-    uint32_t numConstr;
-    Cons->Start(numConstr);
+    DFHack::Maps *Maps = DF.getMaps();
+    Maps->Start();
     
     int32_t cx, cy, cz;
     Pos->getCursorCoords(cx,cy,cz);
     if(cx != -30000)
     {
-        t_construction con;
-        for(uint32_t i = 0; i < numConstr; i++)
+        uint32_t bx = cx / 16;
+        uint32_t tx = cx % 16;
+        uint32_t by = cy / 16;
+        uint32_t ty = cy % 16;
+        mapblock40d block;
+        if(Maps->ReadBlock40d(bx,by,cz,&block))
         {
-            Cons->Read(i,con);
-            if(cx == con.x && cy == con.y && cz == con.z)
-            {
-                printf("Construction %d/%d/%d @ 0x%x - Material %d %d\n", con.x, con.y, con.z,con.origin, con.mat_type, con.mat_idx);
-                printf("Material form: %d ", con.form);
-                if(con.form == 4)
-                {
-                    printf("It is rough.");
-                }
-                printf("\n");
-                hexdump(DF,con.origin,2);
-            }
+            int16_t tiletype = block.tiletypes[tx][ty];
+            cout << tiletype << endl;
         }
     }
     #ifndef LINUX_BUILD

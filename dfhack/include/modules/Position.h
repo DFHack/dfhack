@@ -6,6 +6,16 @@
 #include "Export.h"
 namespace DFHack
 {
+    #define NUM_HOTKEYS 16
+    struct t_hotkey
+    {
+        char name[10];
+        int16_t mode;
+        int32_t x;
+        int32_t y;
+        int32_t z;
+    };
+    
     class APIPrivate;
     class DFHACK_EXPORT Position
     {
@@ -21,6 +31,11 @@ namespace DFHack
         
         bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
         bool setCursorCoords (const int32_t x, const int32_t y, const int32_t z);
+        
+        /*
+        * Hotkeys (DF's zoom locations)
+        */
+        bool ReadHotkeys(t_hotkey hotkeys[]);
         
         /*
         * Window size in tiles

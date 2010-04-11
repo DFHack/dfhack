@@ -59,7 +59,6 @@ API::API (const string path_to_xml)
 
 API::~API()
 {
-    // FIXME: call all finishread* methods here
     Detach();
     delete d;
 }

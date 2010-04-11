@@ -327,76 +327,79 @@ bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices4
 
 
 // veins of a block, expects empty vein vectors
-bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein> & veins, vector <t_frozenliquidvein>& ices, vector <t_spattervein> &splatter)
+bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins, vector <t_frozenliquidvein>* ices, vector <t_spattervein> *splatter)
 {
+    t_vein v;
+    t_frozenliquidvein fv;
+    t_spattervein sv;
+    
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    veins.clear();
-    ices.clear();
+    if(veins) veins->clear();
+    if(ices) ices->clear();
+    if(splatter) splatter->clear();
+    
     Server::Maps::maps_offsets &off = d->offsets;
-    if (addr && off.veinvector)
+    if (addr)
     {
         // veins are stored as a vector of pointers to veins
         /*pointer is 4 bytes! we work with a 32bit program here, no matter what architecture we compile khazad for*/
         DfVector p_veins (d->d->p, addr + off.veinvector, 4);
         uint32_t size = p_veins.getSize();
-        veins.reserve (size);
-
         // read all veins
         for (uint32_t i = 0; i < size;i++)
         {
-            t_vein v;
-            t_frozenliquidvein fv;
-            t_spattervein sv;
-
             // read the vein pointer from the vector
             uint32_t temp = * (uint32_t *) p_veins[i];
             uint32_t type = g_pProcess->readDWord(temp);
 try_again:
-            if(type == off.vein_mineral_vptr)
+            if(veins && type == off.vein_mineral_vptr)
             {
                 // read the vein data (dereference pointer)
                 g_pProcess->read (temp, sizeof(t_vein), (uint8_t *) &v);
                 v.address_of = temp;
                 // store it in the vector
-                veins.push_back (v);
+                veins->push_back (v);
             }
-            else if(type == off.vein_ice_vptr)
+            else if(ices && type == off.vein_ice_vptr)
             {
                 // read the ice vein data (dereference pointer)
                 g_pProcess->read (temp, sizeof(t_frozenliquidvein), (uint8_t *) &fv);
                 fv.address_of = temp;
                 // store it in the vector
-                ices.push_back (fv);
+                ices->push_back (fv);
             }
-            else if(type == off.vein_spatter_vptr)
+            else if(splatter && type == off.vein_spatter_vptr)
             {
                 // read the splatter vein data (dereference pointer)
                 g_pProcess->read (temp, sizeof(t_spattervein), (uint8_t *) &sv);
                 sv.address_of = temp;
                 // store it in the vector
-                splatter.push_back (sv);
+                splatter->push_back (sv);
             }
-            else if(g_pProcess->readClassName(type) == "block_square_event_frozen_liquidst")
+            else
             {
-                off.vein_ice_vptr = type;
-                goto try_again;
-            }
-            else if(g_pProcess->readClassName(type) == "block_square_event_mineralst")
-            {
-                off.vein_mineral_vptr = type;
-                goto try_again;
-            }
-            else if(g_pProcess->readClassName(type) == "block_square_event_material_spatterst")
-            {
-                off.vein_spatter_vptr = type;
-                goto try_again;
+                if(g_pProcess->readClassName(type) == "block_square_event_frozen_liquidst")
+                {
+                    off.vein_ice_vptr = type;
+                    goto try_again;
+                }
+                else if(g_pProcess->readClassName(type) == "block_square_event_mineralst")
+                {
+                    off.vein_mineral_vptr = type;
+                    goto try_again;
+                }
+                else if(g_pProcess->readClassName(type) == "block_square_event_material_spatterst")
+                {
+                    off.vein_spatter_vptr = type;
+                    goto try_again;
+                }
+                // or it was something we don't care about
             }
         }
         return true;
     }
     return false;
 }
-
 
 // getter for map size
 void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z)

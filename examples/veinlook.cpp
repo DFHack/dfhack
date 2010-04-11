@@ -500,7 +500,7 @@ main(int argc, char *argv[])
                 if(i == 0 && j == 0)
                 {
                     // read veins
-                    Maps->ReadVeins(cursorX+i,cursorY+j,cursorZ,veinVector,IceVeinVector,splatter);
+                    Maps->ReadVeins(cursorX+i,cursorY+j,cursorZ,&veinVector,&IceVeinVector,&splatter);
                     
                     // get pointer to block
                     blockaddr = Maps->getBlockPtr(cursorX+i,cursorY+j,cursorZ);

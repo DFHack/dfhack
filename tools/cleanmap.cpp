@@ -16,8 +16,6 @@ int main (void)
     uint32_t x_max,y_max,z_max;
     uint32_t num_blocks = 0;
     uint32_t bytes_read = 0;
-    vector<DFHack::t_vein> veinVector;
-    vector<DFHack::t_frozenliquidvein> IceVeinVector;
     vector<DFHack::t_spattervein> splatter;
     
     DFHack::API DF("Memory.xml");
@@ -58,7 +56,7 @@ int main (void)
             {
                 if(Mapz->isValidBlock(x,y,z))
                 {
-                    Mapz->ReadVeins(x,y,z,veinVector,IceVeinVector,splatter);
+                    Mapz->ReadVeins(x,y,z,0,0,&splatter);
                     for(uint32_t i = 0; i < splatter.size(); i++)
                     {
                         DFHack::t_spattervein & vein = splatter[i];

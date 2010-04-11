@@ -214,15 +214,6 @@ struct t_note
     uint16_t z;
 };
 
-#define NUM_HOTKEYS 16
-struct t_hotkey
-{
-    char name[10];
-    int16_t mode;
-    int32_t x;
-    int32_t y;
-    int32_t z;
-};
 
 // local are numbered with top left as 0,0, name is indexes into the item vector
 struct t_settlement

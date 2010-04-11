@@ -124,7 +124,7 @@ int main (int numargs, const char ** args)
             if(Maps->isValidBlock(x,y,z))
             {
                 // look for splater veins
-                Maps->ReadVeins(x,y,z,veinVector,IceVeinVector,splatter);
+                Maps->ReadVeins(x,y,z,0,0,&splatter);
                 if(splatter.size())
                 {
                     printf("Block %d/%d/%d\n",x,y,z);
@@ -159,7 +159,7 @@ int main (int numargs, const char ** args)
         by = cy / 16;
         bz = cz;
         // look for splater veins
-        Maps->ReadVeins(bx,by,bz,veinVector,IceVeinVector,splatter);
+        Maps->ReadVeins(bx,by,bz,0,0,&splatter);
         if(splatter.size())
         {
             printf("Block %d/%d/%d\n",bx,by,bz);

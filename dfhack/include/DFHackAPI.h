@@ -155,14 +155,6 @@ namespace DFHack
         void FinishReadSettlements();
         */
         /*
-         * Hotkeys (DF's zoom locations)
-         */
-        /*
-        bool InitReadHotkeys( );
-        bool ReadHotkeys(t_hotkey hotkeys[]);
-        */
-        
-        /*
          * Item reading
          */
         /*

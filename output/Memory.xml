@@ -2885,7 +2885,7 @@
             </multiclass>
             <class name="building_cagest"/>
             <class name="building_chainst"/>
-            <class name="building_windmillstst"/>
+            <class name="building_windmillst"/>
             <class name="building_water_wheelst"/>
             <class name="building_screw_pumpst"/>
             <class name="building_archerytargetst"/>

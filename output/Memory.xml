@@ -3181,6 +3181,12 @@ map_data_1b60_offset          0x1B9c
         
         :(
         
+        Hotkeys
+        =======
+        <Address name="hotkey_start">0x01476ecc</Address>
+        <Offset name="hotkey_mode">0x1C</Offset>
+        <Offset name="hotkey_xyz">0x20</Offset>
+        <HexValue name="hotkey_size">0x2C</HexValue>
         
         <!-- 
         addresses from belal: vectors might need 8 subtracted from them

@@ -9,11 +9,11 @@ using namespace std;
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 #include <DFMemInfo.h>
+#include <modules/Position.h>
 
 
 int main (void)
 {
-    vector<DFHack::t_matgloss> creaturestypes;
     DFHack::API DF("Memory.xml");
     try
     {
@@ -29,18 +29,17 @@ int main (void)
     }
     
     DFHack::memory_info * mem = DF.getMemoryInfo();
+    DFHack::Position * Pos = DF.getPosition();
     // get stone matgloss mapping
+    /*
     uint32_t numNotes;
     if(!DF.InitReadNotes(numNotes))
     {
         cerr << "Can't get notes" << endl;
         return 1;
     }
-    if(!DF.InitReadHotkeys())
-    {
-        cerr << "Can't get hotkeys" << endl;
-        return 1;
-    }
+    */
+    /*
     cout << "Notes" << endl;
     for(uint32_t i = 0; i < numNotes; i++)
     {
@@ -50,15 +49,16 @@ int main (void)
             "\tsymbol: " << temp.symbol << "\tfg: " << temp.foreground << "\tbg: " << temp.background <<
             "\ttext: " << temp.name << endl;
     }
+    */
     cout << "Hotkeys" << endl;
     DFHack::t_hotkey hotkeys[NUM_HOTKEYS];
-    DF.ReadHotkeys(hotkeys);
+    Pos->ReadHotkeys(hotkeys);
     for(uint32_t i =0;i< NUM_HOTKEYS;i++)
     {
         cout << "x: " << hotkeys[i].x << "\ty: " << hotkeys[i].y << "\tz: " << hotkeys[i].z <<
             "\ttext: " << hotkeys[i].name << endl;
     }
-    DF.FinishReadNotes();
+    //DF.FinishReadNotes();
     DF.Detach();
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

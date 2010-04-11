@@ -397,41 +397,6 @@ void API::FinishReadSettlements()
     d->settlementsInited = false;
 }
 
-
-bool API::InitReadHotkeys( )
-{
-    try
-    {
-        memory_info * minfo = d->offset_descriptor;
-        d->hotkey_start = minfo->getAddress("hotkey_start");
-        d->hotkey_mode_offset = minfo->getOffset ("hotkey_mode");
-        d->hotkey_xyz_offset = minfo->getOffset("hotkey_xyz");
-        d->hotkey_size = minfo->getHexValue("hotkey_size");
-
-        d->hotkeyInited = true;
-        return true;
-    }
-    catch (Error::MissingMemoryDefinition&)
-    {
-        d->hotkeyInited = false;
-        throw;
-    }
-}
-bool API::ReadHotkeys(t_hotkey hotkeys[])
-{
-    if (!d->hotkeyInited) return false;
-    uint32_t currHotkey = d->hotkey_start;
-    for(uint32_t i = 0 ; i < NUM_HOTKEYS ;i++)
-    {
-        d->p->readSTLString(currHotkey,hotkeys[i].name,10);
-        hotkeys[i].mode = g_pProcess->readWord(currHotkey+d->hotkey_mode_offset);
-        g_pProcess->read (currHotkey + d->hotkey_xyz_offset, 3*sizeof (int32_t), (uint8_t *) &hotkeys[i].x);
-        currHotkey+=d->hotkey_size;
-    }
-    return true;
-}
-
-
 bool API::getItemIndexesInBox(vector<uint32_t> &indexes,
                                 const uint16_t x1, const uint16_t y1, const uint16_t z1,
                                 const uint16_t x2, const uint16_t y2, const uint16_t z2)

@@ -83,10 +83,6 @@ namespace DFHack
         uint32_t note_background_offset;
         uint32_t note_name_offset;
         uint32_t note_xyz_offset;
-        uint32_t hotkey_start;
-        uint32_t hotkey_mode_offset;
-        uint32_t hotkey_xyz_offset;
-        uint32_t hotkey_size;
 
         uint32_t settlement_name_offset;
         uint32_t settlement_world_xy_offset;

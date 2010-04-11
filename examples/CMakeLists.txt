@@ -44,8 +44,8 @@ TARGET_LINK_LIBRARIES(dfsuspend dfhack)
 
 # hotkeynotedump - dumps the hotkeys and notes for the loaded map
 # Author: belal
-# ADD_EXECUTABLE(dfhotkeynotedump hotkeynotedump.cpp)
-# TARGET_LINK_LIBRARIES(dfhotkeynotedump dfhack)
+ADD_EXECUTABLE(dfhotkeynotedump hotkeynotedump.cpp)
+TARGET_LINK_LIBRARIES(dfhotkeynotedump dfhack)
 
 # findnameindexes
 # Author: belal

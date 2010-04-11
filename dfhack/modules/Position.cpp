@@ -40,9 +40,15 @@ struct Position::Private
     uint32_t cursor_xyz_offset;
     uint32_t window_dims_offset;
     
+    uint32_t hotkey_start;
+    uint32_t hotkey_mode_offset;
+    uint32_t hotkey_xyz_offset;
+    uint32_t hotkey_size;
+    
     APIPrivate *d;
     bool Inited;
     bool Started;
+    bool StartedHotkeys;
     //uint32_t biome_stuffs;
     //vector<uint16_t> v_geology[eBiomeCount];
 };
@@ -51,36 +57,47 @@ Position::Position(APIPrivate * d_)
 {
     d = new Private;
     d->d = d_;
-    d->Inited = d->Started = false;
-    memory_info * mem = d->d->offset_descriptor;
-    d->window_x_offset = mem->getAddress ("window_x");
-    d->window_y_offset = mem->getAddress ("window_y");
-    d->window_z_offset = mem->getAddress ("window_z");
-    d->cursor_xyz_offset = mem->getAddress ("cursor_xyz");
-    d->window_dims_offset = mem->getAddress ("window_dims");
-    d->Inited = d->Started = true;
+    d->Inited = true;
+    d->StartedHotkeys = d->Started = false;
+    memory_info * mem;
+    try
+    {
+        mem = d->d->offset_descriptor;
+        d->window_x_offset = mem->getAddress ("window_x");
+        d->window_y_offset = mem->getAddress ("window_y");
+        d->window_z_offset = mem->getAddress ("window_z");
+        d->cursor_xyz_offset = mem->getAddress ("cursor_xyz");
+        d->window_dims_offset = mem->getAddress ("window_dims");
+        d->Started = true;
+    
+        d->hotkey_start = mem->getAddress("hotkey_start");
+        d->hotkey_mode_offset = mem->getOffset ("hotkey_mode");
+        d->hotkey_xyz_offset = mem->getOffset("hotkey_xyz");
+        d->hotkey_size = mem->getHexValue("hotkey_size");
+        d->StartedHotkeys = true;
+    }
+    catch(exception &){};
 }
 
 Position::~Position()
 {
     delete d;
 }
-/*
-bool Position::InitViewAndCursor()
+
+bool Position::ReadHotkeys(t_hotkey hotkeys[])
 {
-    try
+    if (!d->StartedHotkeys) return false;
+    uint32_t currHotkey = d->hotkey_start;
+    for(uint32_t i = 0 ; i < NUM_HOTKEYS ;i++)
     {
-        
-        d->Inited = true;
-        return true;
+        g_pProcess->readSTLString(currHotkey,hotkeys[i].name,10);
+        hotkeys[i].mode = g_pProcess->readWord(currHotkey+d->hotkey_mode_offset);
+        g_pProcess->read (currHotkey + d->hotkey_xyz_offset, 3*sizeof (int32_t), (uint8_t *) &hotkeys[i].x);
+        currHotkey+=d->hotkey_size;
     }
-    catch (Error::MissingMemoryDefinition&)
-    {
-        d->cursorWindowInited = false;
-        throw;
-    }
+    return true;
 }
-*/
+
 bool Position::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
 {
     if (!d->Inited) return false;

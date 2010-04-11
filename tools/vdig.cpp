@@ -271,7 +271,7 @@ int main (int argc, const char* argv[])
     // init the map
     if(!Maps->Start())
     {
-        cerr << "Can't init map." << endl;
+        cerr << "Can't init map. Make sure you have a map loaded in DF." << endl;
         DF.Detach();
         #ifndef LINUX_BUILD
             cin.ignore();
@@ -308,7 +308,7 @@ int main (int argc, const char* argv[])
         #endif
         return 1;
     }
-    printf("%d/%d/%d tiletype: %d, veinmat: %d, designation: 0x%x\n", cx,cy,cz, tt, veinmat, des.whole);
+    printf("%d/%d/%d tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, des.whole);
     stack <Point> flood;
     flood.push(xy);
     uint32_t tx_max = x_max * 16;

@@ -26,7 +26,7 @@ distribution.
 #define __DFHELPERS__
 
 #include "Python.h"
-#include "DF_Imports.cpp"
+//#include "DF_Imports.cpp"
 #include "DFTypes.h"
 
 using namespace DFHack;

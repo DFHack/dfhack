@@ -197,14 +197,14 @@ namespace DFHack
 
     typedef int16_t tiletypes40d [16][16];
     typedef DFHack::t_designation designations40d [16][16];
-//    typedef DFHack::t_occupancy occupancies40d [16][16];
+    typedef DFHack::t_occupancy occupancies40d [16][16];
     typedef uint8_t biome_indices40d [16];
 
     typedef struct
     {
         tiletypes40d tiletypes;
         designations40d designation;
-//        occupancies40d occupancy;
+        occupancies40d occupancy;
         biome_indices40d biome_indices;
         uint32_t origin; // the address where it came from
         t_blockflags blockflags;
@@ -290,11 +290,10 @@ namespace DFHack
         bool ReadDesignations(uint32_t blockx, uint32_t blocky, uint32_t blockz, designations40d *buffer);
         bool WriteDesignations (uint32_t blockx, uint32_t blocky, uint32_t blockz, designations40d *buffer);
 
-        /*
         /// read/write block occupancies
         bool ReadOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, occupancies40d *buffer);
         bool WriteOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, occupancies40d *buffer);
-*/
+
         /// read/write the block dirty bit - this is used to mark a map block so that DF scans it for designated jobs like digging
         bool ReadDirtyBit(uint32_t blockx, uint32_t blocky, uint32_t blockz, bool &dirtybit);
         bool WriteDirtyBit(uint32_t blockx, uint32_t blocky, uint32_t blockz, bool dirtybit);

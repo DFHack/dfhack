@@ -58,6 +58,7 @@ typedef struct
     uint32_t name_nickname_offset;
     uint32_t name_words_offset;
     uint32_t soul_mental_offset;
+    uint32_t soul_traits_offset;
 } creature_offsets;
 
 typedef struct

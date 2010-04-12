@@ -54,6 +54,7 @@ API::API (const string path_to_xml)
     d->xml += "/";
     d->xml += path_to_xml;
     d->pm = NULL;
+    d->p = 0;
     d->shm_start = 0;
 }
 

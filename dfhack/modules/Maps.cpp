@@ -72,6 +72,7 @@ Maps::Maps(APIPrivate* _d)
     off.z_count_offset = mem->getAddress ("z_count_block");
     off.tile_type_offset = mem->getOffset ("type");
     off.designation_offset = mem->getOffset ("designation");
+    off.occupancy_offset = mem->getOffset("occupancy");
     off.biome_stuffs = mem->getOffset ("biome_stuffs");
     off.veinvector = mem->getOffset ("v_vein");
     
@@ -156,6 +157,14 @@ bool Maps::Start()
     return true;
 }
 
+// getter for map size
+void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z)
+{
+    x = d->x_block_count;
+    y = d->y_block_count;
+    z = d->z_block_count;
+}
+
 bool Maps::Finish()
 {
     if (d->block != NULL)
@@ -165,6 +174,10 @@ bool Maps::Finish()
     }
     return true;
 }
+
+/*
+ * Block reading
+ */
 
 bool Maps::isValidBlock (uint32_t x, uint32_t y, uint32_t z)
 {
@@ -200,6 +213,7 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
         {
             g_pProcess->read (addr + d->offsets.tile_type_offset, sizeof (buffer->tiletypes), (uint8_t *) buffer->tiletypes);
             g_pProcess->read (addr + d->offsets.designation_offset, sizeof (buffer->designation), (uint8_t *) buffer->designation);
+            g_pProcess->read (addr + d->offsets.occupancy_offset, sizeof (buffer->occupancy), (uint8_t *) buffer->occupancy);
             g_pProcess->read (addr + d->offsets.biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer->biome_indices);
             buffer->origin = addr;
             uint32_t addr_of_struct = g_pProcess->readDWord(addr);
@@ -210,8 +224,10 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
     }
 }
 
+/*
+ * Tiletypes
+ */ 
 
-// 256 * sizeof(uint16_t)
 bool Maps::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
@@ -222,6 +238,21 @@ bool Maps::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buff
     }
     return false;
 }
+
+bool Maps::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
+{
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
+    {
+        g_pProcess->write (addr + d->offsets.tile_type_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
+        return true;
+    }
+    return false;
+}
+
+/*
+ * Dirty flags
+ */ 
 
 bool Maps::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
 {
@@ -274,6 +305,10 @@ bool Maps::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags bloc
     return false;
 }
 
+/*
+ * Designations
+ */ 
+
 bool Maps::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
@@ -285,20 +320,6 @@ bool Maps::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d
     return false;
 }
 
-// 256 * sizeof(uint16_t)
-bool Maps::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
-{
-    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-    if (addr)
-    {
-        g_pProcess->write (addr + d->offsets.tile_type_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
-        return true;
-    }
-    return false;
-}
-
-
-// 256 * sizeof(uint32_t)
 bool Maps::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
@@ -310,10 +331,35 @@ bool Maps::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, designations40
     return false;
 }
 
-// FIXME: this is bad. determine the real size!
-//16 of them? IDK... there's probably just 7. Reading more doesn't cause errors as it's an array nested inside a block
-// 16 * sizeof(uint8_t)
+/*
+ * Occupancies
+ */ 
 
+bool Maps::ReadOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buffer)
+{
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
+    {
+        g_pProcess->read (addr + d->offsets.occupancy_offset, sizeof (occupancies40d), (uint8_t *) buffer);
+        return true;
+    }
+    return false;
+}
+
+bool Maps::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buffer)
+{
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
+    {
+        g_pProcess->write (addr + d->offsets.occupancy_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
+        return true;
+    }
+    return false;
+}
+
+/*
+ * Region Offsets - used for layer geology
+ */ 
 bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices40d *buffer)
 {
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
@@ -325,8 +371,9 @@ bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices4
     return false;
 }
 
-
-// veins of a block, expects empty vein vectors
+/*
+ * Block events
+ */ 
 bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins, vector <t_frozenliquidvein>* ices, vector <t_spattervein> *splatter)
 {
     t_vein v;
@@ -378,35 +425,34 @@ try_again:
             }
             else
             {
-                if(g_pProcess->readClassName(type) == "block_square_event_frozen_liquidst")
+                string cname = g_pProcess->readClassName(type);
+                if(ices && cname == "block_square_event_frozen_liquidst")
                 {
                     off.vein_ice_vptr = type;
                     goto try_again;
                 }
-                else if(g_pProcess->readClassName(type) == "block_square_event_mineralst")
+                else if(veins && cname == "block_square_event_mineralst")
                 {
                     off.vein_mineral_vptr = type;
                     goto try_again;
                 }
-                else if(g_pProcess->readClassName(type) == "block_square_event_material_spatterst")
+                else if(splatter && cname == "block_square_event_material_spatterst")
                 {
                     off.vein_spatter_vptr = type;
                     goto try_again;
                 }
+                #ifdef DEBUG
+                else
+                {
+                    cerr << "unknown vein " << cname << endl;
+                }
+                #endif
                 // or it was something we don't care about
             }
         }
         return true;
     }
     return false;
-}
-
-// getter for map size
-void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z)
-{
-    x = d->x_block_count;
-    y = d->y_block_count;
-    z = d->z_block_count;
 }
 
 /*
@@ -464,7 +510,9 @@ __int16 __userpurge GetGeologicalRegion<ax>(__int16 block_X<cx>, int X<ebx>, __i
 }
 */
 
-//vector<uint16_t> v_geology[eBiomeCount];
+/*
+ * Layer geology
+ */
 bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 {
     memory_info * minfo = d->d->offset_descriptor;
@@ -472,8 +520,6 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     int region_x_offset = minfo->getAddress ("region_x");
     int region_y_offset = minfo->getAddress ("region_y");
     int region_z_offset =  minfo->getAddress ("region_z");
-/*    <Address name="geoblock_vector">0x16AF52C</Address>
-    <Address name="ptr2_region_array">0x16AF574</Address>*/
     int world_regions =  minfo->getAddress ("ptr2_region_array");
     int region_size =  minfo->getHexValue ("region_size");
     int region_geo_index_offset =  minfo->getOffset ("region_geo_index_off");

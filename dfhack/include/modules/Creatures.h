@@ -296,6 +296,7 @@ namespace DFHack
         uint8_t numLikes;
         t_like likes[32];
         */
+        uint16_t traits[NUM_CREATURE_TRAITS];
         t_attrib analytical_ability;
         t_attrib focus;
         t_attrib willpower;

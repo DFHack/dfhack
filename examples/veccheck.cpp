@@ -39,7 +39,7 @@ int main (int numargs, const char ** args)
         #endif
         return 1;
     }
-    
+    /*
     DFHack::Position *Pos = DF.getPosition();
     
     DFHack::Maps *Maps = DF.getMaps();
@@ -60,6 +60,25 @@ int main (int numargs, const char ** args)
             cout << tiletype << endl;
         }
     }
+    */
+    vector <string> classIdStrings;
+    DFHack::memory_info * minfo = DF.getMemoryInfo();
+    if(!minfo)
+    {
+        cerr <<"FAIL!" << endl;
+        return 1;
+    }
+    for(int i = 0; ; i++)
+    {
+        string temp;
+        if(!minfo->resolveClassIDToClassname(i, temp))
+        {
+            break;
+        }
+        classIdStrings.push_back(temp);
+    }
+    for (int i = 0; i < classIdStrings.size(); i++)
+        cout << i << ": " << classIdStrings[i] << endl;
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

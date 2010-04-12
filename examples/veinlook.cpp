@@ -675,6 +675,14 @@ main(int argc, char *argv[])
                 }
             }
         }
+        mapblock40d * Block = &blocks[1][1];
+        for(int x = 0; x < 16; x++) for(int y = 0; y < 16; y++)
+        {
+            if((Block->occupancy[x][y].whole & (1 << twiddle)))
+            {
+                putch(x + 16,y + 16,'@',COLOR_WHITE);
+            }
+        }
         gotoxy (0,52);
         cprintf("block address 0x%x, flags 0x%08x",blockaddr, bflags.whole);
         gotoxy (0,53);

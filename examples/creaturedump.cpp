@@ -10,6 +10,7 @@ using namespace std;
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 #include <DFMemInfo.h>
+#include <DFProcess.h>
 #include <modules/Materials.h>
 #include <modules/Creatures.h>
 #include <modules/Translation.h>
@@ -268,6 +269,15 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
                 break;
             }
             cout << laborname << ", ";
+        }
+        cout << endl;
+        
+        cout << "Traits" << endl;
+        for(uint32_t i = 0; i < 30;i++)
+        {
+            string trait = mem->getTrait (i, creature.defaultSoul.traits[i]);
+            if(!trait.empty())
+                cout << trait << ", ";
         }
         cout << endl;
         /*

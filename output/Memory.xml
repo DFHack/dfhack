@@ -7,1294 +7,216 @@
             ====================================================================
                                         T R A I T S
             ====================================================================
-            <!--
-            <Trait name="Nervousness" level_5="Is a nervous wreck" level_4="Is always tense and jittery" level_3="Is often nervous" level_2="Has a calm demeanor" level_1="Has a very calm demeanor" level_0="Has an incredibly calm demeanor">0</Trait>
-            -->
-            TODO: parse this, turn into Trait tags. Maybe most of it will be same as 40d.
-            <!--
-            int __userpurge sub_8FCC30<eax>(int a1<ebx>, int a2)
-            {
-              char v2; // al@1
-              int v3; // esi@1
-              char v4; // al@6
-              char v5; // al@11
-              char v6; // al@16
-              char v7; // al@21
-              void *v8; // eax@26
-              int v9; // edx@26
-              void *v10; // eax@28
-              int v11; // ecx@30
-              __int16 v12; // ax@31
-              int v13; // edi@31
-              int v14; // edx@33
-              int v15; // ecx@33
-              __int16 v16; // ax@34
-              int v17; // edx@35
-              __int16 v18; // ax@45
-              __int16 v19; // ax@56
-              __int16 v20; // ax@67
-              int v21; // eax@68
-              __int16 v22; // ax@78
-              __int16 v23; // ax@89
-              __int16 v24; // ax@100
-              __int16 v25; // ax@111
-              __int16 v26; // ax@122
-              __int16 v27; // ax@133
-              __int16 v28; // ax@144
-              __int16 v29; // ax@155
-              __int16 v30; // ax@166
-              __int16 v31; // ax@177
-              __int16 v32; // ax@188
-              int v33; // eax@189
-              int v34; // eax@189
-              int v35; // eax@191
-              int v36; // eax@191
-              int v37; // eax@193
-              int v38; // eax@193
-              int v39; // eax@197
-              int v40; // eax@197
-              int v41; // eax@198
-              int v42; // eax@198
-              __int16 v43; // ax@199
-              __int16 v44; // ax@210
-              __int16 v45; // ax@221
-              __int16 v46; // ax@232
-              __int16 v47; // ax@243
-              __int16 v48; // ax@254
-              int v49; // eax@261
-              int v50; // eax@261
-              int v51; // eax@264
-              int v52; // eax@264
-              __int16 v53; // ax@265
-              int v54; // eax@266
-              int v55; // eax@266
-              int v56; // eax@275
-              int v57; // eax@275
-              __int16 v58; // ax@276
-              int v59; // eax@285
-              int v60; // eax@285
-              int v61; // eax@286
-              int v62; // eax@286
-              __int16 v63; // ax@287
-              __int16 v64; // ax@298
-              int v65; // eax@308
-              int v66; // eax@308
-              int v67; // eax@308
-              int v68; // eax@308
-              int v69; // ST04_4@308
-              __int16 v70; // ax@309
-              __int16 v71; // ax@320
-              int v72; // eax@330
-              int v73; // eax@330
-              __int16 v74; // ax@331
-              int v75; // eax@338
-              int v76; // eax@338
-              __int16 v77; // ax@342
-              __int16 v78; // ax@353
-              void *v80; // [sp-8h] [bp-41Ch]@2
-              void *v81; // [sp-8h] [bp-41Ch]@7
-              void *v82; // [sp-8h] [bp-41Ch]@12
-              void *v83; // [sp-8h] [bp-41Ch]@17
-              void *v84; // [sp-8h] [bp-41Ch]@22
-              rsize_t v85; // [sp-4h] [bp-418h]@2
-              rsize_t v86; // [sp-4h] [bp-418h]@7
-              rsize_t v87; // [sp-4h] [bp-418h]@17
-              rsize_t v88; // [sp-4h] [bp-418h]@22
-              int v89; // [sp-4h] [bp-418h]@42
-              int v90; // [sp+10h] [bp-404h]@1
-              char v91; // [sp+14h] [bp-400h]@261
-              char v92; // [sp+30h] [bp-3E4h]@264
-              char v93; // [sp+4Ch] [bp-3C8h]@264
-              char v94; // [sp+68h] [bp-3ACh]@266
-              char v95; // [sp+84h] [bp-390h]@68
-              char v96; // [sp+A0h] [bp-374h]@266
-              char v97; // [sp+BCh] [bp-358h]@189
-              char v98; // [sp+D8h] [bp-33Ch]@275
-              char v99; // [sp+F4h] [bp-320h]@191
-              char v100; // [sp+110h] [bp-304h]@275
-              char v101; // [sp+12Ch] [bp-2E8h]@193
-              char v102; // [sp+148h] [bp-2CCh]@285
-              char v103; // [sp+164h] [bp-2B0h]@197
-              char v104; // [sp+180h] [bp-294h]@285
-              char v105; // [sp+19Ch] [bp-278h]@198
-              char v106; // [sp+1B8h] [bp-25Ch]@286
-              char v107; // [sp+1D4h] [bp-240h]@338
-              char v108; // [sp+1F0h] [bp-224h]@338
-              char v109; // [sp+20Ch] [bp-208h]@286
-              char v110; // [sp+228h] [bp-1ECh]@191
-              char v111; // [sp+244h] [bp-1D0h]@308
-              char v112; // [sp+260h] [bp-1B4h]@197
-              char v113; // [sp+27Ch] [bp-198h]@308
-              char v114; // [sp+298h] [bp-17Ch]@261
-              char v115; // [sp+2B4h] [bp-160h]@308
-              char v116; // [sp+2D0h] [bp-144h]@193
-              char v117; // [sp+2ECh] [bp-128h]@308
-              char v118; // [sp+308h] [bp-10Ch]@189
-              char v119; // [sp+324h] [bp-F0h]@330
-              char v120; // [sp+340h] [bp-D4h]@198
-              char v121; // [sp+35Ch] [bp-B8h]@330
-              int v122; // [sp+378h] [bp-9Ch]@189
-              void *v123; // [sp+37Ch] [bp-98h]@11
-              int v124; // [sp+38Ch] [bp-88h]@11
-              unsigned int v125; // [sp+390h] [bp-84h]@11
-              char v126; // [sp+394h] [bp-80h]@30
-              void *v127; // [sp+398h] [bp-7Ch]@21
-              int v128; // [sp+3A8h] [bp-6Ch]@21
-              unsigned int v129; // [sp+3ACh] [bp-68h]@21
-              void *v130; // [sp+3B4h] [bp-60h]@6
-              int v131; // [sp+3C4h] [bp-50h]@6
-              unsigned int v132; // [sp+3C8h] [bp-4Ch]@6
-              int v133; // [sp+3CCh] [bp-48h]@285
-              void *v134; // [sp+3D0h] [bp-44h]@16
-              int v135; // [sp+3E0h] [bp-34h]@16
-              unsigned int v136; // [sp+3E4h] [bp-30h]@16
-              char v137; // [sp+3E8h] [bp-2Ch]@286
-              void *v138; // [sp+3ECh] [bp-28h]@1
-              int v139; // [sp+3FCh] [bp-18h]@1
-              unsigned int v140; // [sp+400h] [bp-14h]@1
-              unsigned int v141; // [sp+404h] [bp-10h]@1
-              int v142; // [sp+410h] [bp-4h]@1
-
-              v141 = (unsigned int)&v90 ^ dword_AE71F4;
-              v3 = 0;
-              v140 = 15;
-              v139 = 0;
-              LOBYTE(v138) = 0;
-              v142 = 0;
-              v2 = *(_BYTE *)(a1 + 116);
-              if ( v2 == 1 )
-              {
-                v85 = 2;
-                v80 = "he";
-              }
-              else
-              {
-                if ( v2 )
-                {
-                  v85 = 2;
-                  v80 = &unk_A6C4C4;
-                }
-                else
-                {
-                  v85 = 3;
-                  v80 = &off_A6C4C0;
-                }
-              }
-              sub_40A070(v80, v85);
-              v132 = 15;
-              v131 = 0;
-              LOBYTE(v130) = 0;
-              LOBYTE(v142) = 1;
-              v4 = *(_BYTE *)(a1 + 116);
-              if ( v4 == 1 )
-              {
-                v86 = 3;
-                v81 = &off_A6C4C8;
-              }
-              else
-              {
-                if ( v4 )
-                {
-                  v86 = 2;
-                  v81 = &unk_A6C4C4;
-                }
-                else
-                {
-                  v86 = 3;
-                  v81 = &off_A6C4CC;
-                }
-              }
-              sub_40A070(v81, v86);
-              v125 = 15;
-              v124 = 0;
-              LOBYTE(v123) = 0;
-              LOBYTE(v142) = 2;
-              v5 = *(_BYTE *)(a1 + 116);
-              if ( v5 == 1 )
-              {
-                v82 = &off_A6C4E8;
-              }
-              else
-              {
-                if ( v5 )
-                  v82 = &off_A49054;
-                else
-                  v82 = &off_A6C4CC;
-              }
-              sub_40A070(v82, 3u);
-              v136 = 15;
-              v135 = 0;
-              LOBYTE(v134) = 0;
-              LOBYTE(v142) = 3;
-              v6 = *(_BYTE *)(a1 + 116);
-              if ( v6 == 1 )
-              {
-                v87 = 7;
-                v83 = "himself";
-              }
-              else
-              {
-                if ( v6 )
-                {
-                  v87 = 6;
-                  v83 = "itself";
-                }
-                else
-                {
-                  v87 = 7;
-                  v83 = "herself";
-                }
-              }
-              sub_40A070(v83, v87);
-              v129 = 15;
-              v128 = 0;
-              LOBYTE(v127) = 0;
-              LOBYTE(v142) = 4;
-              v7 = *(_BYTE *)(a1 + 116);
-              if ( v7 == 1 )
-              {
-                v88 = 2;
-                v84 = "he";
-              }
-              else
-              {
-                if ( v7 )
-                {
-                  v88 = 2;
-                  v84 = &unk_A6C4C4;
-                }
-                else
-                {
-                  v88 = 3;
-                  v84 = &off_A6C4C0;
-                }
-              }
-              sub_40A070(v84, v88);
-              v8 = v127;
-              if ( v129 < 0x10 )
-                v8 = &v127;
-              *(_BYTE *)v8 -= 97;
-              v10 = v127;
-              if ( v129 < 0x10 )
-                v10 = &v127;
-              *(_BYTE *)v10 += 65;
-              sub_410010((int)&v126, v9, (char *)&word_A4905C, 1u);
-              v11 = 0;
-              v90 = 0;
-              do
-              {
-                v13 = (signed __int16)v11;
-                v12 = *(_WORD *)(a1 + 2 * (signed __int16)v11 + 548);
-                if ( v12 < 40 || v12 > 60 )
-                {
-                  sub_40FF20(&v126, 0);
-                  switch ( v13 )
-                  {
-                    case 0:
-                      v16 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v16 > 90 )
-                      {
-                        v17 = (int)"is a nervous wreck";
-                        goto LABEL_363;
-                      }
-                      if ( v16 > 75 )
-                      {
-                        v17 = (int)"is always tense and jittery";
-                        goto LABEL_363;
-                      }
-                      if ( v16 > 60 )
-                      {
-                        v17 = (int)"is often nervous";
-                        goto LABEL_363;
-                      }
-                      if ( v16 >= 25 )
-                      {
-                        v17 = (int)"has a calm demeanor";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v16 < 10 )
-                        v17 = (int)"has an incredibly calm demeanor";
-                      else
-                        v17 = (int)"has a very calm demeanor";
-                      goto LABEL_364;
-                    case 1:
-                      v18 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v18 > 90 )
-                      {
-                        v17 = (int)"is in a constant state of internal rage";
-                        goto LABEL_363;
-                      }
-                      if ( v18 > 75 )
-                      {
-                        v17 = (int)"is very quick to anger";
-                        goto LABEL_363;
-                      }
-                      if ( v18 > 60 )
-                      {
-                        v17 = (int)"is quick to anger";
-                        goto LABEL_363;
-                      }
-                      if ( v18 >= 25 )
-                      {
-                        v17 = (int)"is slow to anger";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v18 < 10 )
-                        v17 = (int)"never becomes angry";
-                      else
-                        v17 = (int)"is very slow to anger";
-                      goto LABEL_364;
-                    case 2:
-                      v19 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v19 > 90 )
-                      {
-                        v17 = (int)"is frequently depressed";
-                        goto LABEL_363;
-                      }
-                      if ( v19 > 75 )
-                      {
-                        v17 = (int)"is often sad and dejected";
-                        goto LABEL_363;
-                      }
-                      if ( v19 > 60 )
-                      {
-                        v17 = (int)"often feels discouraged";
-                        goto LABEL_363;
-                      }
-                      if ( v19 >= 25 )
-                      {
-                        v17 = (int)"rarely feels discouraged";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v19 < 10 )
-                        v17 = (int)"never feels discouraged";
-                      else
-                        v17 = (int)"almost never feels discouraged";
-                      goto LABEL_364;
-                    case 3:
-                      v20 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v20 > 90 )
-                      {
-                        v21 = sub_41EC90("is socially crippled by thoughts that everyone is watching and judging ", v14);
-                        LOBYTE(v142) = 5;
-                        sub_40FF20(v21, 0);
-                        LOBYTE(v142) = 4;
-                        sub_4099A0(&v95);
-                        goto LABEL_365;
-                      }
-                      if ( v20 > 75 )
-                      {
-                        v17 = (int)"is concerned about rejection and ridicule";
-                        goto LABEL_363;
-                      }
-                      if ( v20 > 60 )
-                      {
-                        v17 = (int)"is self-conscious";
-                        goto LABEL_363;
-                      }
-                      if ( v20 >= 25 )
-                      {
-                        v17 = (int)"is comfortable in social situations";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v20 < 10 )
-                        v17 = (int)"is absolutely unfazed by the opinions of others";
-                      else
-                        v17 = (int)"is very comfortable in social situations";
-                      goto LABEL_364;
-                    case 4:
-                      v22 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v22 > 90 )
-                      {
-                        v17 = (int)"is ruled by irresistible cravings and urges";
-                        goto LABEL_363;
-                      }
-                      if ( v22 > 75 )
-                      {
-                        v17 = (int)"feels strong urges and seeks short-term rewards";
-                        goto LABEL_363;
-                      }
-                      if ( v22 > 60 )
-                      {
-                        v17 = (int)"occasionally overindulges";
-                        goto LABEL_363;
-                      }
-                      if ( v22 >= 25 )
-                      {
-                        v17 = (int)"doesn't often experience strong cravings or urges";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v22 < 10 )
-                        v17 = (int)"never feels tempted to overindulge in anything";
-                      else
-                        v17 = (int)"only rarely feels strong cravings or urges";
-                      goto LABEL_364;
-                    case 5:
-                      v23 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v23 > 90 )
-                      {
-                        v17 = (int)"becomes completely helpless in stressful situations";
-                        goto LABEL_363;
-                      }
-                      if ( v23 > 75 )
-                      {
-                        v17 = (int)"cracks easily under pressure";
-                        goto LABEL_363;
-                      }
-                      if ( v23 > 60 )
-                      {
-                        v17 = (int)"doesn't handle stress well";
-                        goto LABEL_363;
-                      }
-                      if ( v23 >= 25 )
-                      {
-                        v17 = (int)"can handle stress";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v23 < 10 )
-                        v17 = (int)"is impervious to the effects of stress";
-                      else
-                        v17 = (int)"is confident under pressure";
-                      goto LABEL_364;
-                    case 6:
-                      v24 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v24 > 90 )
-                      {
-                        v17 = (int)"genuinely likes others and openly expresses positive feelings toward them";
-                        goto LABEL_363;
-                      }
-                      if ( v24 > 75 )
-                      {
-                        v17 = (int)"makes friends quickly";
-                        goto LABEL_363;
-                      }
-                      if ( v24 > 60 )
-                      {
-                        v17 = (int)"is very friendly";
-                        goto LABEL_363;
-                      }
-                      if ( v24 >= 25 )
-                      {
-                        v17 = (int)"is somewhat reserved";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v24 < 10 )
-                        v17 = (int)"does not actively seek friendships and is incredibly distant and reserved";
-                      else
-                        v17 = (int)"is very distant and reserved";
-                      goto LABEL_364;
-                    case 7:
-                      v25 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v25 > 90 )
-                      {
-                        v17 = (int)"truly treasures the company of others";
-                        goto LABEL_363;
-                      }
-                      if ( v25 > 75 )
-                      {
-                        v17 = (int)"enjoys being in crowds";
-                        goto LABEL_363;
-                      }
-                      if ( v25 > 60 )
-                      {
-                        v17 = (int)"enjoys the company of others";
-                        goto LABEL_363;
-                      }
-                      if ( v25 >= 25 )
-                      {
-                        v17 = (int)"tends to avoid crowds";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v25 < 10 )
-                        v17 = (int)"considers spending time alone much more important than associating with others";
-                      else
-                        v17 = (int)"prefers to be alone";
-                      goto LABEL_364;
-                    case 8:
-                      v26 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v26 > 90 )
-                      {
-                        v17 = (int)"loves to take charge and direct activities";
-                        goto LABEL_363;
-                      }
-                      if ( v26 > 75 )
-                      {
-                        v17 = (int)"is very assertive";
-                        goto LABEL_363;
-                      }
-                      if ( v26 > 60 )
-                      {
-                        v17 = (int)"is assertive";
-                        goto LABEL_363;
-                      }
-                      if ( v26 >= 25 )
-                      {
-                        v17 = (int)"is unassertive";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v26 < 10 )
-                        v17 = (int)"never speaks out or attempts to direct activities";
-                      else
-                        v17 = (int)"prefers that others handle the leadership roles";
-                      goto LABEL_364;
-                    case 9:
-                      v27 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v27 > 90 )
-                      {
-                        v17 = (int)"is constantly active and energetic";
-                        goto LABEL_363;
-                      }
-                      if ( v27 > 75 )
-                      {
-                        v17 = (int)"is very energetic and active";
-                        goto LABEL_363;
-                      }
-                      if ( v27 > 60 )
-                      {
-                        v17 = (int)"is very active";
-                        goto LABEL_363;
-                      }
-                      if ( v27 >= 25 )
-                      {
-                        v17 = (int)"is relaxed";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v27 < 10 )
-                        v17 = (int)"can't be bothered with frantic, fast-paced living";
-                      else
-                        v17 = (int)"lives life at a leisurely pace";
-                      goto LABEL_364;
-                    case 10:
-                      v28 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v28 > 90 )
-                      {
-                        v17 = (int)"lives for risk and excitement";
-                        goto LABEL_363;
-                      }
-                      if ( v28 > 75 )
-                      {
-                        v17 = (int)"is a risk-taker and a thrill-seeker";
-                        goto LABEL_363;
-                      }
-                      if ( v28 > 60 )
-                      {
-                        v17 = (int)"loves a good thrill";
-                        goto LABEL_363;
-                      }
-                      if ( v28 >= 25 )
-                      {
-                        v17 = (int)"is not a risk-taker";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v28 < 10 )
-                        v17 = (int)"is entirely averse to risk and excitement";
-                      else
-                        v17 = (int)"doesn't need thrills or risks in life";
-                      goto LABEL_364;
-                    case 11:
-                      v29 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v29 > 90 )
-                      {
-                        v17 = (int)"often feels filled with joy";
-                        goto LABEL_363;
-                      }
-                      if ( v29 > 75 )
-                      {
-                        v17 = (int)"can be very happy and optimistic";
-                        goto LABEL_363;
-                      }
-                      if ( v29 > 60 )
-                      {
-                        v17 = (int)"is often cheerful";
-                        goto LABEL_363;
-                      }
-                      if ( v29 >= 25 )
-                      {
-                        v17 = (int)"is rarely happy or enthusiastic";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v29 < 10 )
-                        v17 = (int)"is never optimistic or enthusiastic about anything";
-                      else
-                        v17 = (int)"is a pessimist";
-                      goto LABEL_364;
-                    case 12:
-                      v30 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v30 > 90 )
-                      {
-                        v17 = (int)"is bored by reality and has a wonderful imagination";
-                        goto LABEL_363;
-                      }
-                      if ( v30 > 75 )
-                      {
-                        v17 = (int)"is incredibly creative";
-                        goto LABEL_363;
-                      }
-                      if ( v30 > 60 )
-                      {
-                        v17 = (int)"has a fertile imagination";
-                        goto LABEL_363;
-                      }
-                      if ( v30 >= 25 )
-                      {
-                        v17 = (int)"isn't given to flights of fancy";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v30 < 10 )
-                        v17 = (int)"is interested only in facts and the real world";
-                      else
-                        v17 = (int)"is grounded in reality";
-                      goto LABEL_364;
-                    case 13:
-                      v31 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v31 > 90 )
-                      {
-                        v17 = (int)"can easily become absorbed in art and the beauty of the natural world";
-                        goto LABEL_363;
-                      }
-                      if ( v31 > 75 )
-                      {
-                        v17 = (int)"greatly appreciates art and natural beauty";
-                        goto LABEL_363;
-                      }
-                      if ( v31 > 60 )
-                      {
-                        v17 = (int)"appreciates art and natural beauty";
-                        goto LABEL_363;
-                      }
-                      if ( v31 >= 25 )
-                      {
-                        v17 = (int)"does not have a great aesthetic sensitivity";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v31 < 10 )
-                        v17 = (int)"is completely uninterested in art";
-                      else
-                        v17 = (int)"is not interested in art";
-                      goto LABEL_364;
-                    case 14:
-                      v32 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v32 > 90 )
-                      {
-                        v33 = sub_41EC90("has a profound understanding of ", (int)&v122);
-                        LOBYTE(v142) = 6;
-                        v34 = sub_416630(v33, &v122);
-                        LOBYTE(v142) = 7;
-                        sub_40FF20(v34, 0);
-                        sub_4099A0(&v118);
-                        LOBYTE(v142) = 4;
-                        sub_4099A0(&v97);
-                        goto LABEL_365;
-                      }
-                      if ( v32 > 75 )
-                      {
-                        v35 = sub_41EC90("has a great awareness of ", v14);
-                        LOBYTE(v142) = 8;
-                        v36 = sub_416630(v35, &v122);
-                        LOBYTE(v142) = 9;
-                        sub_40FF20(v36, 0);
-                        sub_4099A0(&v110);
-                        LOBYTE(v142) = 4;
-                        sub_4099A0(&v99);
-                        goto LABEL_365;
-                      }
-                      if ( v32 > 60 )
-                      {
-                        v37 = sub_41EC90("has a good awareness of ", v14);
-                        LOBYTE(v142) = 10;
-                        v38 = sub_416630(v37, &v122);
-                        LOBYTE(v142) = 11;
-                        sub_40FF20(v38, 0);
-                        sub_4099A0(&v116);
-                        LOBYTE(v142) = 4;
-                        sub_4099A0(&v101);
-                        goto LABEL_365;
-                      }
-                      if ( v32 >= 25 )
-                      {
-                        v17 = (int)"tends not to openly express emotions";
-                        goto LABEL_363;
-                      }
-                      if ( v32 < 10 )
-                      {
-                        v41 = sub_41EC90("does not display ", v14);
-                        LOBYTE(v142) = 14;
-                        v42 = sub_416630(v41, &v122);
-                        LOBYTE(v142) = 15;
-                        sub_40FF20(v42, 0);
-                        sub_4099A0(&v120);
-                        LOBYTE(v142) = 4;
-                        sub_4099A0(&v105);
-                      }
-                      else
-                      {
-                        v39 = sub_41EC90("is mostly unaware of ", (int)&v122);
-                        LOBYTE(v142) = 12;
-                        v40 = sub_416630(v39, &v122);
-                        LOBYTE(v142) = 13;
-                        sub_40FF20(v40, 0);
-                        sub_4099A0(&v112);
-                        LOBYTE(v142) = 4;
-                        sub_4099A0(&v103);
-                      }
-                      goto LABEL_365;
-                    case 15:
-                      v43 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v43 > 90 )
-                      {
-                        v17 = (int)"is highly adventurous and loves fresh experiences";
-                        goto LABEL_363;
-                      }
-                      if ( v43 > 75 )
-                      {
-                        v17 = (int)"is eager for new experiences";
-                        goto LABEL_363;
-                      }
-                      if ( v43 > 60 )
-                      {
-                        v17 = (int)"likes to try new things";
-                        goto LABEL_363;
-                      }
-                      if ( v43 >= 25 )
-                      {
-                        v17 = (int)"prefers familiar routines";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v43 < 10 )
-                        v17 = (int)"is resistant to change";
-                      else
-                        v17 = (int)"is uncomfortable with change";
-                      goto LABEL_364;
-                    case 16:
-                      v44 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v44 > 90 )
-                      {
-                        v17 = (int)"is entranced by riddles and puzzles and loves to debate issues and ideas";
-                        goto LABEL_363;
-                      }
-                      if ( v44 > 75 )
-                      {
-                        v17 = (int)"loves new and fresh ideas";
-                        goto LABEL_363;
-                      }
-                      if ( v44 > 60 )
-                      {
-                        v17 = (int)"is open-minded to new ideas";
-                        goto LABEL_363;
-                      }
-                      if ( v44 >= 25 )
-                      {
-                        v17 = (int)"dislikes intellectual discussions";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v44 < 10 )
-                        v17 = (int)"is completely uninterested in ideas and debates over intellectual issues";
-                      else
-                        v17 = (int)"regards intellectual exercises as a waste of energy";
-                      goto LABEL_364;
-                    case 17:
-                      v45 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v45 > 90 )
-                      {
-                        v17 = (int)"revels in chaos and disorder";
-                        goto LABEL_363;
-                      }
-                      if ( v45 > 75 )
-                      {
-                        v17 = (int)"loves to defy convention";
-                        goto LABEL_363;
-                      }
-                      if ( v45 > 60 )
-                      {
-                        v17 = (int)"is put off by authority and tradition";
-                        goto LABEL_363;
-                      }
-                      if ( v45 >= 25 )
-                      {
-                        v17 = (int)"admires tradition";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v45 < 10 )
-                        v17 = (int)"is an ardent believer in convention and traditional society";
-                      else
-                        v17 = (int)"prefers stability and security to ambiguity and disorder";
-                      goto LABEL_364;
-                    case 18:
-                      v46 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v46 > 90 )
-                      {
-                        v17 = (int)"is naturally trustful of everybody";
-                        goto LABEL_363;
-                      }
-                      if ( v46 > 75 )
-                      {
-                        v17 = (int)"is very trusting";
-                        goto LABEL_363;
-                      }
-                      if ( v46 > 60 )
-                      {
-                        v17 = (int)"is trusting";
-                        goto LABEL_363;
-                      }
-                      if ( v46 >= 25 )
-                      {
-                        v17 = (int)"is slow to trust others";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v46 < 10 )
-                        v17 = (int)"sees others as selfish and conniving";
-                      else
-                        v17 = (int)"does not trust others";
-                      goto LABEL_364;
-                    case 19:
-                      v47 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v47 > 90 )
-                      {
-                        v17 = (int)"is incredibly frank and candid in dealings with others";
-                        goto LABEL_363;
-                      }
-                      if ( v47 > 75 )
-                      {
-                        v17 = (int)"is very straightforward with others";
-                        goto LABEL_363;
-                      }
-                      if ( v47 > 60 )
-                      {
-                        v17 = (int)"is candid and sincere in dealings with others";
-                        goto LABEL_363;
-                      }
-                      if ( v47 >= 25 )
-                      {
-                        v17 = (int)"is guarded in relationships with others";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v47 < 10 )
-                        v17 = (int)"believes that some deception is necessary in relationships with others";
-                      else
-                        v17 = (int)"is not straightforward when dealing with others";
-                      goto LABEL_364;
-                    case 20:
-                      v48 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v48 > 90 )
-                      {
-                        v17 = (int)"is truly fulfilled by assisting those in need";
-                        goto LABEL_363;
-                      }
-                      if ( v48 > 75 )
-                      {
-                        v17 = (int)"finds helping others very rewarding";
-                        goto LABEL_363;
-                      }
-                      if ( v48 > 60 )
-                      {
-                        v17 = (int)"finds helping others rewarding";
-                        goto LABEL_363;
-                      }
-                      if ( v48 >= 25 )
-                      {
-                        v49 = sub_41EC90("does not go out of ", v14);
-                        LOBYTE(v142) = 16;
-                        v50 = sub_416630(v49, &v122);
-                        LOBYTE(v142) = 17;
-                        sub_40FF20(v50, 0);
-                        sub_4099A0(&v114);
-                        LOBYTE(v142) = 4;
-                        sub_4099A0(&v91);
-                        goto LABEL_365;
-                      }
-                      if ( v48 >= 10 )
-                      {
-                        v17 = (int)"dislikes helping others";
-                        goto LABEL_363;
-                      }
-                      v51 = sub_41EC90("views helping others as an imposition on ", (int)&v122);
-                      LOBYTE(v142) = 18;
-                      v52 = sub_416630(v51, &v122);
-                      LOBYTE(v142) = 19;
-                      sub_40FF20(v52, 0);
-                      sub_4099A0(&v92);
-                      LOBYTE(v142) = 4;
-                      sub_4099A0(&v93);
-                      goto LABEL_365;
-                    case 21:
-                      v53 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v53 > 90 )
-                      {
-                        v54 = sub_41EC90("sacrifices ", v14);
-                        LOBYTE(v142) = 20;
-                        v55 = sub_416630(v54, &v122);
-                        LOBYTE(v142) = 21;
-                        sub_40FF20(v55, 0);
-                        sub_4099A0(&v94);
-                        LOBYTE(v142) = 4;
-                        sub_4099A0(&v96);
-                        goto LABEL_365;
-                      }
-                      if ( v53 > 75 )
-                      {
-                        v17 = (int)"dislikes confrontations";
-                        goto LABEL_363;
-                      }
-                      if ( v53 > 60 )
-                      {
-                        v17 = (int)"is willing to compromise with others";
-                        goto LABEL_363;
-                      }
-                      if ( v53 >= 25 )
-                      {
-                        v17 = (int)"doesn't like to compromise with others";
-                        goto LABEL_363;
-                      }
-                      if ( v53 >= 10 )
-                      {
-                        v17 = (int)"would rather intimidate others than compromise with them";
-                        goto LABEL_363;
-                      }
-                      v56 = sub_41EC90("would never deny ", v14);
-                      LOBYTE(v142) = 22;
-                      v57 = sub_416630(v56, &v122);
-                      LOBYTE(v142) = 23;
-                      sub_40FF20(v57, 0);
-                      sub_4099A0(&v98);
-                      LOBYTE(v142) = 4;
-                      sub_4099A0(&v100);
-                      goto LABEL_365;
-                    case 22:
-                      v58 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v58 > 90 )
-                      {
-                        v17 = (int)"would never claim to be better than somebody else";
-                        goto LABEL_363;
-                      }
-                      if ( v58 > 75 )
-                      {
-                        v17 = (int)"finds immodesty distasteful";
-                        goto LABEL_363;
-                      }
-                      if ( v58 > 60 )
-                      {
-                        v17 = (int)"is modest";
-                        goto LABEL_363;
-                      }
-                      if ( v58 >= 25 )
-                      {
-                        v17 = (int)"is immodest";
-                        goto LABEL_363;
-                      }
-                      if ( v58 < 10 )
-                      {
-                        v61 = sub_41EC90("would never shy away from an opportunity to say ", v14);
-                        LOBYTE(v142) = 26;
-                        v62 = sub_416630(v61, &v137);
-                        LOBYTE(v142) = 27;
-                        sub_40FF20(v62, 0);
-                        sub_4099A0(&v106);
-                        LOBYTE(v142) = 4;
-                        sub_4099A0(&v109);
-                      }
-                      else
-                      {
-                        v59 = sub_41EC90("is very willing to compare ", (int)&v133);
-                        LOBYTE(v142) = 24;
-                        v60 = sub_416630(v59, &v133);
-                        LOBYTE(v142) = 25;
-                        sub_40FF20(v60, 0);
-                        sub_4099A0(&v102);
-                        LOBYTE(v142) = 4;
-                        sub_4099A0(&v104);
-                      }
-                      goto LABEL_365;
-                    case 23:
-                      v63 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v63 > 90 )
-                      {
-                        v17 = (int)"is incredibly compassionate and feels the pain of others";
-                        goto LABEL_363;
-                      }
-                      if ( v63 > 75 )
-                      {
-                        v17 = (int)"is easily moved to pity";
-                        goto LABEL_363;
-                      }
-                      if ( v63 > 60 )
-                      {
-                        v17 = (int)"is compassionate";
-                        goto LABEL_363;
-                      }
-                      if ( v63 >= 25 )
-                      {
-                        v17 = (int)"is not easily moved to pity";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v63 < 10 )
-                        v17 = (int)"would never let an objective judgement be tempered by mercy or pity";
-                      else
-                        v17 = (int)"is not affected by the suffering of others";
-                      goto LABEL_364;
-                    case 24:
-                      v64 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v64 > 90 )
-                      {
-                        v17 = (int)"is incredibly confident";
-                        goto LABEL_363;
-                      }
-                      if ( v64 > 75 )
-                      {
-                        v17 = (int)"is very confident";
-                        goto LABEL_363;
-                      }
-                      if ( v64 > 60 )
-                      {
-                        v17 = (int)"is confident";
-                        goto LABEL_363;
-                      }
-                      if ( v64 >= 25 )
-                      {
-                        v17 = (int)"lacks confidence";
-                        goto LABEL_363;
-                      }
-                      if ( v64 >= 10 )
-                      {
-                        v17 = (int)"does not feel effective in life";
-                        goto LABEL_363;
-                      }
-                      v65 = sub_41EC90("always feels as if ", v14);
-                      LOBYTE(v142) = 28;
-                      v66 = sub_416630(v65, &v137);
-                      LOBYTE(v142) = 29;
-                      v67 = sub_4166E0(v66, &v122);
-                      LOBYTE(v142) = 30;
-                      v68 = sub_416630(v67, v69);
-                      LOBYTE(v142) = 31;
-                      sub_40FF20(v68, 0);
-                      sub_4099A0(&v111);
-                      sub_4099A0(&v113);
-                      sub_4099A0(&v115);
-                      LOBYTE(v142) = 4;
-                      sub_4099A0(&v117);
-                      goto LABEL_365;
-                    case 25:
-                      v70 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v70 > 90 )
-                      {
-                        v17 = (int)"loves to make lists and keep schedules";
-                        goto LABEL_363;
-                      }
-                      if ( v70 > 75 )
-                      {
-                        v17 = (int)"tries to live a well-organized life";
-                        goto LABEL_363;
-                      }
-                      if ( v70 > 60 )
-                      {
-                        v17 = (int)"is organized";
-                        goto LABEL_363;
-                      }
-                      if ( v70 >= 25 )
-                      {
-                        v17 = (int)"is disorganized";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v70 < 10 )
-                        v17 = (int)"is completely disorganized";
-                      else
-                        v17 = (int)"is very disorganized";
-                      goto LABEL_364;
-                    case 26:
-                      v71 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v71 > 90 )
-                      {
-                        v17 = (int)"has a profound sense of duty and obligation";
-                        goto LABEL_363;
-                      }
-                      if ( v71 > 75 )
-                      {
-                        v17 = (int)"has a strong sense of duty";
-                        goto LABEL_363;
-                      }
-                      if ( v71 > 60 )
-                      {
-                        v17 = (int)"has a sense of duty";
-                        goto LABEL_363;
-                      }
-                      if ( v71 >= 25 )
-                      {
-                        v17 = (int)"finds rules confining";
-                        goto LABEL_363;
-                      }
-                      if ( v71 >= 10 )
-                      {
-                        v17 = (int)"dislikes contracts and regulations";
-                        goto LABEL_363;
-                      }
-                      v72 = sub_41EC90("hates rules, contracts and other confining elements in ", v14);
-                      LOBYTE(v142) = 32;
-                      v73 = sub_416630(v72, &v122);
-                      LOBYTE(v142) = 33;
-                      sub_40FF20(v73, 0);
-                      sub_4099A0(&v119);
-                      LOBYTE(v142) = 4;
-                      sub_4099A0(&v121);
-                      goto LABEL_365;
-                    case 27:
-                      v74 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v74 > 90 )
-                      {
-                        v17 = (int)"constantly strives for perfection";
-                        goto LABEL_363;
-                      }
-                      if ( v74 > 75 )
-                      {
-                        v17 = (int)"thinks it is incredibly important to strive for excellence";
-                        goto LABEL_363;
-                      }
-                      if ( v74 > 60 )
-                      {
-                        v17 = (int)"strives for excellence";
-                        goto LABEL_363;
-                      }
-                      if ( v74 >= 25 )
-                      {
-                        v75 = sub_41EC90("doesn't go out of ", v14);
-                        LOBYTE(v142) = 34;
-                        v76 = sub_416630(v75, &v122);
-                        LOBYTE(v142) = 35;
-                        sub_40FF20(v76, 0);
-                        sub_4099A0(&v108);
-                        LOBYTE(v142) = 4;
-                        sub_4099A0(&v107);
-                        goto LABEL_365;
-                      }
-                      v89 = a2;
-                      if ( v74 < 10 )
-                        v17 = (int)"does the bare minimum necessary to accomplish the task at hand";
-                      else
-                        v17 = (int)"very rarely does more work than necessary";
-                      goto LABEL_364;
-                    case 28:
-                      v77 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v77 > 90 )
-                      {
-                        v17 = (int)"will persist in the face of any difficulty until the task is complete";
-            LABEL_363:
-                        v89 = a2;
-                        goto LABEL_364;
-                      }
-                      if ( v77 > 75 )
-                      {
-                        v17 = (int)"possesses great willpower";
-                        goto LABEL_363;
-                      }
-                      if ( v77 > 60 )
-                      {
-                        v17 = (int)"is self-disciplined";
-                        goto LABEL_363;
-                      }
-                      if ( v77 >= 25 )
-                      {
-                        v17 = (int)"is occasionally given to procrastination";
-                        goto LABEL_363;
-                      }
-                      v89 = a2;
-                      if ( v77 < 10 )
-                        v17 = (int)"rarely completes tasks and is often overcome by distractions";
-                      else
-                        v17 = (int)"has very little self-discipline";
-            LABEL_364:
-                      sub_40FE10(v15, (void *)v14, v89);
-            LABEL_365:
-                      sub_410010(a2, v14, ".  ", 3u);
-                      v11 = v90;
-                      v3 = 0;
-                      break;
-                    case 29:
-                      v78 = *(_WORD *)(a1 + 2 * v13 + 548);
-                      if ( v78 <= 90 )
-                      {
-                        if ( v78 <= 75 )
-                        {
-                          if ( v78 <= 60 )
-                          {
-                            if ( v78 < 25 )
-                            {
-                              v17 = (int)"acts impulsively";
-                              if ( v78 < 10 )
-                                v17 = (int)"always acts without considering alternatives or thinking through possibilities";
-                            }
-                            else
-                            {
-                              v17 = (int)"often does the first thing that comes to mind";
-                            }
-                          }
-                          else
-                          {
-                            v17 = (int)"takes time when making decisions";
-                          }
-                        }
-                        else
-                        {
-                          v17 = (int)"is extremely cautious";
-                        }
-                      }
-                      else
-                      {
-                        v17 = (int)"thinks through every alternative and its consequences before acting";
-                      }
-                      goto LABEL_363;
-                    default:
-                      goto LABEL_365;
-                  }
-                }
-                ++v11;
-                v90 = v11;
-              }
-              while ( (_WORD)v11 < 30 );
-              if ( v129 >= 0x10 )
-                operator delete(v127);
-              v129 = 15;
-              v128 = v3;
-              LOBYTE(v127) = 0;
-              if ( v136 >= 0x10 )
-                operator delete(v134);
-              v136 = 15;
-              v135 = v3;
-              LOBYTE(v134) = 0;
-              if ( v125 >= 0x10 )
-                operator delete(v123);
-              v125 = 15;
-              v124 = v3;
-              LOBYTE(v123) = 0;
-              if ( v132 >= 0x10 )
-                operator delete(v130);
-              v132 = 15;
-              v131 = v3;
-              LOBYTE(v130) = 0;
-              if ( v140 >= 0x10 )
-                operator delete(v138);
-              return sub_9FD1AA(v90);
-            }
-            -->
+            <Trait name="Nervousness"
+            level_5="Is a nervous wreck"
+            level_4="Is always tense and jittery"
+            level_3="Is often nervous"
+            level_2="Has a calm demeanor"
+            level_1="Has a very calm demeanor"
+            level_0="Has an incredibly calm demeanor">0</Trait>
+            <Trait name="Rage"
+            level_5="In a constant state of internal rage"
+            level_4="Very quick to anger"
+            level_3="Quick to anger"
+            level_2="Slow to anger"
+            level_1="Very slow to anger"
+            level_0="Never becomes angry">1</Trait>
+            <Trait name="Depression"
+            level_5="Frequently depressed"
+            level_4="Often sad and dejected"
+            level_3="Often feels discouraged"
+            level_2="Rarely feels discouraged"
+            level_1="Almost never feels discouraged"
+            level_0="Never feels discouraged">2</Trait>
+            <Trait name="Neurosis"
+            level_5="Socially crippled by thoughts that everyone is watching and judging"
+            level_4="Concerned about rejection and ridicule"
+            level_3="Self-conscious"
+            level_2="Comfortable in social situations"
+            level_1="Very comfortable in social situations"
+            level_0="Absolutely unfazed by the opinions of others">3</Trait>
+            <Trait name="Urge"
+            level_5="Is ruled by irresistible cravings and urges"
+            level_4="Feels strong urges and seeks short-term rewards"
+            level_3="Occassionally overindulges"
+            level_2="Doesn't often experience strong cravings or urges"
+            level_1="Only rarely feels strong cravings or urges"
+            level_0="Never feels tempted to overindulge in anything">4</Trait>
+            <Trait name="Stress"
+            level_5="Becomes completely helpless in stressful situations"
+            level_4="Cracks easily under pressure"
+            level_3="Doesn't handle stress well"
+            level_2="Can handle stress"
+            level_1="Confident under pressure"
+            level_0="Impervious to the effects of stress">5</Trait>
+            <Trait name="Friendly"
+            level_5="Genuinely likes others, openly expresses positive feelings"
+            level_4="Makes friends quickly"
+            level_3="Very friendly"
+            level_2="Somewhat reserved"
+            level_1="Very distant and reserved"
+            level_0="Does not actively seek friendships, incredibly distant and reserved">6</Trait>
+            <Trait name="Company"
+            level_5="Truly treasures the company of others"
+            level_4="Enjoys being in crowds"
+            level_3="Enjoys the company of others"
+            level_2="Tends to avoid crowds"
+            level_1="Prefers to be alone"
+            level_0="Considers time alone much more important than associating with others">7</Trait>
+            <Trait name="Leadership"
+            level_5="Loves to take charge and direct activities"
+            level_4="Very assertive"
+            level_3="Assertive"
+            level_2="Unassertive"
+            level_1="Prefers that others handle the leadership roles"
+            level_0="Never speaks out or attempts to direct activities">8</Trait>
+            <Trait name="Activeness"
+            level_5="Constantly active and energetic"
+            level_4="Very energetic and active"
+            level_3="Very active"
+            level_2="Relaxed"
+            level_1="Lives life at a leisurely pace"
+            level_0="Can't be bothered with frantic, fast-paced living">9</Trait>
+            <Trait name="Thrillseeking"
+            level_5="Lives for risk and excitement"
+            level_4="A risk-taker and a thrill-seeker"
+            level_3="Loves a good thrill"
+            level_2="Is not a risk-taker"
+            level_1="Doesn't need thrills or risks in life"
+            level_0="Entirely adverse to risk and excitement">10</Trait>
+            <Trait name="Optimism"
+            level_5="Often feels filled with joy"
+            level_4="Can be very happy and optimistic"
+            level_3="Often cheerful"
+            level_2="Rarely happy or enthusiastic"
+            level_1="A pessimist"
+            level_0="Never optimistic or enthusiastic about anything">11</Trait>
+            <Trait name="Imagination"
+            level_5="Bored by reality and has a wonderful imagination"
+            level_4="Incredibly creative"
+            level_3="Has a fertile imagination"
+            level_2="Isn't given to flights of fancy"
+            level_1="Grounded in reality"
+            level_0="Interested only in facts and the real world">12</Trait>
+            <Trait name="Artistic"
+            level_5="Can easily become absorbed in art and the beauty of the natural world"
+            level_4="Greatly appreciates art and natural beauty"
+            level_3="Appreciates art and natural beauty"
+            level_2="Does not have a great aesthetic sensitivity"
+            level_1="Not interested in art"
+            level_0="Completely uninterested in art">13</Trait>
+            <Trait name="Emotion"
+            level_5="Has a profound understanding of own emotions"
+            level_4="Has a great awareness of own emotions"
+            level_3="Has a good awareness of own emotions"
+            level_2="Tends not to openly express emotions"
+            level_1="Mostly unaware of own emotions and rarely expresses them"
+            level_0="Does not display own emotions and has no awareness of them">14</Trait>
+            <Trait name="Adventure"
+            level_5="Highly adventurous and loves fresh experiences"
+            level_4="Eager for new experiences"
+            level_3="Likes to try new things"
+            level_2="Prefers familiar routines"
+            level_1="Uncomfortable with change"
+            level_0="Resistant to change">15</Trait>
+            <Trait name="Thinking"
+            level_5="Entranced by riddles and puzzles; loves to debate issues and ideas"
+            level_4="Loves new and fresh ideas"
+            level_3="Open-minded to new ideas"
+            level_2="Dislikes intellectual discussions"
+            level_1="Regards intellectual exercises as a waste of energy"
+            level_0="Completely uninterested in ideas and debates over intellectual issues">16</Trait>
+            <Trait name="Rebelliousness"
+            level_5="Revels in chaos and disorder"
+            level_4="Loves to defy convention"
+            level_3="Put off by authority and tradition"
+            level_2="Admires tradition"
+            level_1="Prefers stability and security to ambiguity and disorder"
+            level_0="An ardent believer in convention and traditional society">17</Trait>
+            <Trait name="Trusting"
+            level_5="Naturally trustful of everybody"
+            level_4="Very trusting"
+            level_3="Trusting"
+            level_2="Slow to trust others"
+            level_1="Does not trust others"
+            level_0="Sees others as selfish and conniving">18</Trait>
+            <Trait name="Honesty"
+            level_5="Incredibly frank and candid in dealings with others"
+            level_4="Very straightforward with others"
+            level_3="Candid and sincere in dealings with others"
+            level_2="Guarded in relationships with others"
+            level_1="Not straightforward when dealing with others"
+            level_0="Believes that some deception is necessary in relationships with others">19</Trait>
+            <Trait name="Helpfulness"
+            level_5="Truly fulfilled by assisting those in need"
+            level_4="Finds helping others very rewarding"
+            level_3="Finds helping others rewarding"
+            level_2="Does not go out of own way to help others"
+            level_1="Dislikes helping others"
+            level_0="Views helping others as an imposition on own needs">20</Trait>
+            <Trait name="Compromising"
+            level_5="Sacrifices own needs to get along with others"
+            level_4="Dislikes confrontations"
+            level_3="Willing to compromise with others"
+            level_2="Doesn't like to compromise with others"
+            level_1="Would rather intimidate others than compromise with them"
+            level_0="Would never deny own needs just to compromise with somebody else">21</Trait>
+            <Trait name="Modesty"
+            level_5="Would never claim to be better than somebody else"
+            level_4="Finds immodesty distasteful"
+            level_3="Modest"
+            level_2="Immodest"
+            level_1="Very willing to compare self favorably with others"
+            level_0="Would never shy away from an opportunity to say they are better than somebody else">22</Trait>
+            <Trait name="Compassion"
+            level_5="Incredibly compassionate and feels the pain of others"
+            level_4="Easily moved to pity"
+            level_3="Compassionate"
+            level_2="Not easily moved to pity"
+            level_1="Not affected by the suffering of others"
+            level_0="Would never let an objective judgement be tempered by mercy or pity">23</Trait>
+            <Trait name="Confidence"
+            level_5="Incredibly confident"
+            level_4="Very confident"
+            level_3="Confident"
+            level_2="Lacks confidence"
+            level_1="Does not feel effective in life"
+            level_0="Always feels as if they are not in control of own life">24</Trait>
+            <Trait name="Organization"
+            level_5="Loves to make lists and keep schedules"
+            level_4="Tries to live a well-organized life"
+            level_3="Organized"
+            level_2="Disorganized"
+            level_1="Very disorganized"
+            level_0="Completely disorganized">25</Trait>
+            <Trait name="Lawfulness"
+            level_5="Has a profound sense of duty and obligation"
+            level_4="Has a strong sense of duty"
+            level_3="Has a sense of duty"
+            level_2="Finds rules confining"
+            level_1="Dislikes contracts and regulations"
+            level_0="Hates rules, contracts and other confining elements in own life">26</Trait>
+            <Trait name="Excellence"
+            level_5="Constantly strives for perfection"
+            level_4="Thinks it is incredibly important to strive for excellence"
+            level_3="Strives for excellence"
+            level_2="Doesn't go out of own way to do more work than necessary"
+            level_1="Very rarely does more work than necessary"
+            level_0="Does the bare minimum necessary to accomplish the task at hand">27</Trait>
+            <Trait name="Perseverance"
+            level_5="Will persist in the face of any difficulty until the task is complete"
+            level_4="Possesses great willpower"
+            level_3="Is self-disciplined"
+            level_2="Is occasionally given to procrastination"
+            level_1="Has very little self-discipline"
+            level_0="Rarely completes tasks and is often overcome by distractions">28</Trait>
+            <Trait name="Cautiousness"
+            level_5="Thinks through every alternative and their consequences before acting"
+            level_4="Extremely cautious"
+            level_3="Takes time when making decisions"
+            level_2="Often does the first thing that comes to mind"
+            level_1="Acts impulsively"
+            level_0="Always acts without considering alternatives or thinking through possibilities">29</Trait>
             ====================================================================
                                    P R O F E S S I O N S
             ====================================================================
@@ -1405,1220 +327,361 @@
             ====================================================================
             TODO: Parse this and turn it into Job tags
             <!--
-            int __fastcall Job_descriptions(int a1, int a2, int a3, __int16 a4, __int16 a5, __int16 a6, int a7, int a8, int a9, char a10)
-            {
-              int v10; // ecx@1
-              int v11; // ebx@1
-              int v12; // esi@1
-              __int16 v13; // sp@1
-              void *v14; // edx@2
-              int v15; // eax@64
-              void *v16; // edx@71
-              void *v17; // edx@82
-              int v18; // ecx@84
-              char v19; // al@94
-              char v20; // al@123
-              void *v21; // edx@132
-              int v22; // ecx@132
-              char v23; // al@132
-              int v24; // ecx@134
-              int v25; // eax@134
-              int v26; // ecx@134
-              void *v27; // edx@136
-              int v28; // ecx@136
-              char v29; // al@136
-              int v30; // ecx@138
-              int v31; // eax@138
-              int v32; // ecx@138
-              void *v33; // edx@139
-              int v34; // ecx@139
-              char v35; // al@139
-              int v36; // ecx@141
-              int v37; // eax@141
-              int v38; // ecx@141
-              void *v39; // edx@142
-              char v41; // al@142
-              char v42; // al@144
-              void *v43; // edx@147
-              char v45; // al@147
-              void *v46; // edx@157
-              char v48; // al@157
-              char v49; // al@161
-              void *v50; // edx@164
-              int v51; // ecx@164
-              char v52; // al@164
-              void *v53; // edx@174
-              char v55; // al@174
-              void *v56; // edx@177
-              char v58; // al@177
-              void *v59; // edx@180
-              char v61; // al@180
-              void *v62; // edx@183
-              char v64; // al@183
-              void *v65; // edx@186
-              char v67; // al@186
-              char v68; // al@188
-              void *v69; // edx@191
-              char v71; // al@191
-              void *v72; // edx@197
-              int v73; // ecx@197
-              char v74; // al@197
-              int v75; // ecx@199
-              int v76; // eax@199
-              int v77; // ecx@199
-              void *v78; // edx@200
-              int v79; // ecx@200
-              char v80; // al@200
-              int v81; // ecx@202
-              int v82; // eax@202
-              int v83; // ecx@202
-              void *v84; // edx@209
-              int v85; // ecx@209
-              char v86; // al@209
-              int v87; // ecx@211
-              int v88; // eax@211
-              int v89; // ecx@211
-              void *v90; // edx@212
-              int v91; // ecx@212
-              char v92; // al@212
-              int v93; // ecx@214
-              int v94; // eax@214
-              int v95; // ecx@214
-              void *v96; // edx@215
-              char v98; // al@215
-              int v99; // ecx@218
-              int v100; // eax@218
-              int v101; // ecx@218
-              void *v102; // edx@219
-              int v103; // ecx@219
-              char v104; // al@219
-              int v105; // ecx@221
-              int v106; // eax@221
-              int v107; // ecx@221
-              void *v108; // edx@225
-              int v109; // ecx@225
-              char v110; // al@225
-              int v111; // ecx@227
-              int v112; // eax@228
-              int v113; // ecx@228
-              int v114; // ecx@229
-              int v115; // eax@229
-              int v116; // ecx@229
-              int v117; // eax@249
-              void *v119; // edx@260
-              char *v121; // [sp-8h] [bp-68h]@65
-              int v122; // [sp-4h] [bp-64h]@65
-              int v123; // [sp-4h] [bp-64h]@94
-              int v124; // [sp+14h] [bp-4Ch]@1
-              char v125; // [sp+18h] [bp-48h]@69
-              void *v126; // [sp+1Ch] [bp-44h]@1
-              int v127; // [sp+2Ch] [bp-34h]@1
-              unsigned int v128; // [sp+30h] [bp-30h]@1
-              char v129; // [sp+34h] [bp-2Ch]@65
-              char v130; // [sp+38h] [bp-28h]@65
-              int v131; // [sp+48h] [bp-18h]@65
-              int v132; // [sp+4Ch] [bp-14h]@65
-              unsigned int v133; // [sp+50h] [bp-10h]@1
-              int v134; // [sp+5Ch] [bp-4h]@1
-
-              v133 = (unsigned int)&v124 ^ dword_AE71F4;
-              v11 = a1;
-              v124 = a8;
-              v12 = a2;
-              v128 = 15;
-              v127 = 0;
-              LOBYTE(v126) = 0;
-              v134 = 0;
-              sub_4099E0(a3, 0, -1);
-              switch ( v13 )
-              {
-                case 68:
-                  v14 = "Construct Building";
-                  goto LABEL_330;
-                case 89:
-                  v14 = "Destroy Building";
-                  goto LABEL_330;
-                case 105:
-                  v14 = "Butcher an Animal";
-                  goto LABEL_330;
-                case 32:
-                  v14 = "Catch Live Fish";
-                  goto LABEL_330;
-                case 31:
-                  v14 = "Catch Live Land Animal";
-                  goto LABEL_330;
-                case 106:
-                  v14 = "Prepare a Raw Fish";
-                  goto LABEL_330;
-                case 107:
-                  v14 = "Mill Plants";
-                  goto LABEL_330;
-                case 111:
-                  v14 = "Process Plants";
-                  goto LABEL_330;
-                case 109:
-                  v14 = "Milk Creature";
-                  goto LABEL_330;
-                case 110:
-                  v14 = "Make Cheese";
-                  goto LABEL_330;
-                case 113:
-                  v14 = "Process Plants (Vial)";
-                  goto LABEL_330;
-                case 112:
-                  v14 = "Process Plants (Bag)";
-                  goto LABEL_330;
-                case 114:
-                  v14 = "Process Plants (Barrel)";
-                  goto LABEL_330;
-                case 188:
-                  v14 = "Make Lye";
-                  goto LABEL_330;
-                case 189:
-                  v14 = "Make Potash From Lye";
-                  goto LABEL_330;
-                case 191:
-                  v14 = "Make Potash From Ash";
-                  goto LABEL_330;
-                case 115:
-                  if ( (signed __int16)v11 == 2 )
-                  {
-                    v14 = "Prepare Easy Meal";
-                  }
-                  else
-                  {
-                    if ( (signed __int16)v11 == 3 )
-                    {
-                      v14 = "Prepare Fine Meal";
-                    }
-                    else
-                    {
-                      if ( (signed __int16)v11 != 4 )
-                        goto LABEL_332;
-                      v14 = "Prepare Lavish Meal";
-                    }
-                  }
-                  goto LABEL_330;
-                case 150:
-                  v14 = "Brew Drink";
-                  goto LABEL_330;
-                case 151:
-                  v14 = "Extract from Plants";
-                  goto LABEL_330;
-                case 152:
-                  v14 = "Extract from Raw Fish";
-                  goto LABEL_330;
-                case 153:
-                  v14 = "Extract from Land Animal";
-                  goto LABEL_330;
-                case 163:
-                  v14 = "Handle Large Creature";
-                  goto LABEL_330;
-                case 158:
-                  v14 = "Unchain Pet";
-                  goto LABEL_330;
-                case 159:
-                  v14 = "Release Large Creature";
-                  goto LABEL_330;
-                case 160:
-                  v14 = "Release Pet";
-                  goto LABEL_330;
-                case 161:
-                  v14 = "Release Small Creature";
-                  goto LABEL_330;
-                case 162:
-                  v14 = "Handle Small Creature";
-                  goto LABEL_330;
-                case 182:
-                  v14 = "Recover Pet";
-                  goto LABEL_330;
-                case 164:
-                  v14 = "Cage Large Creature";
-                  goto LABEL_330;
-                case 166:
-                  v14 = &dword_A6BEFC;
-                  goto LABEL_330;
-                case 167:
-                  v14 = &dword_A6BF0C;
-                  goto LABEL_330;
-                case 168:
-                  v14 = &dword_A6BF20;
-                  goto LABEL_330;
-                case 212:
-                  v14 = &dword_A6BF34;
-                  goto LABEL_330;
-                case 211:
-                  v14 = &dword_A6BF40;
-                  goto LABEL_330;
-                case 169:
-                  v14 = &dword_A6BF50;
-                  goto LABEL_330;
-                case 170:
-                  v14 = &dword_A6BF5C;
-                  goto LABEL_330;
-                case 171:
-                  v14 = "Surgery";
-                  goto LABEL_330;
-                case 172:
-                  v14 = &dword_A6BF6C;
-                  goto LABEL_330;
-                case 173:
-                  v14 = &dword_A6BF74;
-                  goto LABEL_330;
-                case 174:
-                  v14 = &dword_A6BF80;
-                  goto LABEL_330;
-                case 165:
-                  v14 = "Cage Small Creature";
-                  goto LABEL_330;
-                case 183:
-                  v14 = "Pit/Pond Large Animal";
-                  goto LABEL_330;
-                case 184:
-                  v14 = "Pit/Pond Small Animal";
-                  goto LABEL_330;
-                case 175:
-                  v14 = "Drain Aquarium";
-                  goto LABEL_330;
-                case 176:
-                  v14 = "Fill Aquarium";
-                  goto LABEL_330;
-                case 177:
-                  v14 = "Fill Pond";
-                  goto LABEL_330;
-                case 178:
-                case 180:
-                  v14 = &dword_A6BEE4;
-                  goto LABEL_330;
-                case 179:
-                case 181:
-                  v14 = &dword_A6BEF0;
-                  goto LABEL_330;
-                case 197:
-                  v14 = "Manage Work Orders";
-                  goto LABEL_330;
-                case 198:
-                  v14 = "Update Stockpile Records";
-                  goto LABEL_330;
-                case 205:
-                  v14 = "Upgrade Squad Equipment";
-                  goto LABEL_330;
-                case 206:
-                  v14 = "Prepare Equipment Manifests";
-                  goto LABEL_330;
-                case 199:
-                  v14 = "Trade at Depot";
-                  goto LABEL_330;
-                case 156:
-                  v14 = "Chain Animal";
-                  goto LABEL_330;
-                case 185:
-                  v14 = "Slaughter Animal";
-                  goto LABEL_330;
-                case 157:
-                  v14 = "Unchain Animal";
-                  goto LABEL_330;
-                case 155:
-                  sub_40FE10(v10, "Tame ", a3);
-                  if ( !v12 )
-                  {
-                    v14 = "a Large Animal";
-                    goto LABEL_330;
-                  }
-                  v15 = sub_78E660();
-                  if ( !v15 )
-                    goto LABEL_332;
-                  v132 = 15;
-                  v131 = 0;
-                  v130 = 0;
-                  LOBYTE(v134) = 1;
-                  sub_910740(v15, 0);
-                  v122 = 0;
-                  v121 = &v129;
-                  goto LABEL_66;
-                case 154:
-                  v14 = "Tame a Small Animal";
-                  goto LABEL_330;
-                case 83:
-                  sub_40FE10(v10, "Make ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Crafts";
-                  goto LABEL_330;
-                case 84:
-                  sub_40FE10(v10, "Mint ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Coins";
-                  goto LABEL_330;
-                case 85:
-                  v16 = "Cut ";
-                  goto LABEL_72;
-                case 86:
-                  sub_40FE10(v10, "Cut ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 0, 0);
-                  sub_40FF20(&v125, 0);
-                  goto LABEL_332;
-                case 132:
-                  sub_40FE10(v10, "Decorate With ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 0, 0);
-                  sub_40FF20(&v125, 0);
-                  goto LABEL_332;
-                case 104:
-                  v16 = "Stud With ";
-            LABEL_72:
-                  sub_40FE10(v10, v16, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 0, 0);
-                  sub_40FF20(&v125, 0);
-                  goto LABEL_332;
-                case 87:
-                  sub_40FE10(v10, "Encrust ", a3);
-                  if ( a9 & 0x400 )
-                    sub_40FE10(v10, "Finished Goods", a3);
-                  if ( a9 & 4 )
-                    sub_40FE10(v10, "Furniture", a3);
-                  if ( a9 & 0x40 )
-                    sub_40FE10(v10, "Ammo", a3);
-                  v17 = " With ";
-                  goto LABEL_83;
-                case 88:
-                  sub_40FE10(v10, "Encrust ", a3);
-                  if ( a9 & 0x400 )
-                    sub_40FE10(v18, "Finished Goods", a3);
-                  if ( a9 & 4 )
-                    sub_40FE10(v18, "Furniture", a3);
-                  if ( a9 & 0x40 )
-                    sub_40FE10(v18, "Ammo", a3);
-                  sub_40FE10(v18, " With ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 0, 0);
-                  sub_40FF20(&v125, 0);
-                  goto LABEL_332;
-                case 22:
-                  v14 = "Collect Sand";
-                  goto LABEL_330;
-                case 81:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Blocks";
-                  goto LABEL_330;
-                case 82:
-                  v17 = "Make Raw ";
-            LABEL_83:
-                  sub_40FE10(v10, v17, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 0, 0);
-                  sub_40FF20(&v125, 0);
-                  goto LABEL_332;
-                case 69:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v19 = sub_9B0C00(49);
-                  v123 = a3;
-                  if ( v19 )
-                    v14 = " Portal";
-                  else
-                    v14 = " Door";
-                  goto LABEL_331;
-                case 70:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Floodgate";
-                  goto LABEL_330;
-                case 200:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Hatch Cover";
-                  goto LABEL_330;
-                case 201:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Grate";
-                  goto LABEL_330;
-                case 74:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Table";
-                  goto LABEL_330;
-                case 209:
-                  v14 = "Construct Traction Bench";
-                  goto LABEL_330;
-                case 207:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Splint";
-                  goto LABEL_330;
-                case 208:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Crutch";
-                  goto LABEL_330;
-                case 79:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Cabinet";
-                  goto LABEL_330;
-                case 78:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Weapon Rack";
-                  goto LABEL_330;
-                case 77:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Armor Stand";
-                  goto LABEL_330;
-                case 76:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Bin";
-                  goto LABEL_330;
-                case 75:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  if ( (unsigned __int8)sub_9B0C00(49) )
-                  {
-                    v14 = " Box";
-                  }
-                  else
-                  {
-                    if ( (_WORD)v11 || (unsigned __int8)sub_9B0C00(47) )
-                    {
-                      if ( a10 & 2 )
-                      {
-                        v14 = " Chest";
-                      }
-                      else
-                      {
-                        v10 = 419;
-                        if ( (_WORD)v11 >= 419 && (_WORD)v11 <= 618 || a10 & 0x1D )
-                          v14 = " Bag";
-                        else
-                          v14 = " Chest";
-                      }
-                    }
-                    else
-                    {
-                      v14 = " Coffer";
-                    }
-                  }
-                  goto LABEL_330;
-                case 73:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  if ( (_WORD)v11 >= 419 && (_WORD)v11 <= 618 || a10 & 3 )
-                  {
-                    v14 = " Casket";
-                    goto LABEL_330;
-                  }
-                  v20 = sub_9B0C00(47);
-                  v123 = a3;
-                  if ( v20 )
-                    v14 = " Sarcophagus";
-                  else
-                    v14 = " Coffin";
-                  goto LABEL_331;
-                case 72:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  if ( (_WORD)v11 >= 419 && (v10 = 618, (_WORD)v11 <= 618) || a10 & 3 )
-                    v14 = " Chair";
-                  else
-                    v14 = " Throne";
-                  goto LABEL_330;
-                case 117:
-                  v23 = sub_9B0C00(47);
-                  v21 = "Forge ";
-                  if ( !v23 )
-                    v21 = "Make ";
-                  sub_40FE10(v22, v21, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  sub_40FE10(v24, &word_A4905C, a3);
-                  v25 = sub_53F2A0(v26);
-                  sub_40FF20(*(_DWORD *)v25 + 36, 0);
-                  goto LABEL_332;
-                case 130:
-                  v14 = "Make Totem";
-                  goto LABEL_330;
-                case 118:
-                  v29 = sub_9B0C00(47);
-                  v27 = "Forge ";
-                  if ( !v29 )
-                    v27 = "Make ";
-                  sub_40FE10(v28, v27, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  sub_40FE10(v30, &word_A4905C, a3);
-                  v31 = sub_53F2A0(v32);
-                  sub_40FF20(*(_DWORD *)v31 + 36, 0);
-                  goto LABEL_332;
-                case 119:
-                  v35 = sub_9B0C00(47);
-                  v33 = "Forge ";
-                  if ( !v35 )
-                    v33 = "Make ";
-                  sub_40FE10(v34, v33, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  sub_40FE10(v36, &word_A4905C, a3);
-                  v37 = sub_53F2A0(v38);
-                  sub_40FF20(*(_DWORD *)v37 + 36, 0);
-                  goto LABEL_332;
-                case 120:
-                  v41 = sub_9B0C00(47);
-                  v39 = "Forge ";
-                  if ( !v41 )
-                    v39 = "Make ";
-                  sub_40FE10(v10, v39, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v42 = sub_9B0C00(49);
-                  v123 = a3;
-                  if ( v42 )
-                    v14 = " Terrarium";
-                  else
-                    v14 = " Cage";
-                  goto LABEL_331;
-                case 121:
-                  v45 = sub_9B0C00(47);
-                  v43 = "Forge ";
-                  if ( !v45 )
-                    v43 = "Make ";
-                  sub_40FE10(v10, v43, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  if ( a10 & 2 )
-                  {
-                    v14 = " Chain";
-                  }
-                  else
-                  {
-                    if ( a10 & 8 || (v10 = 419, (_WORD)v11 >= 419) && (_WORD)v11 <= 618 || a10 & 0x15 )
-                      v14 = " Rope";
-                    else
-                      v14 = " Chain";
-                  }
-                  goto LABEL_330;
-                case 122:
-                  v48 = sub_9B0C00(47);
-                  v46 = "Forge ";
-                  if ( !v48 )
-                    v46 = "Make ";
-                  sub_40FE10(v10, v46, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  if ( a10 & 0x10 )
-                  {
-                    v14 = " Waterskin";
-                    goto LABEL_330;
-                  }
-                  v49 = sub_9B0C00(49);
-                  v123 = a3;
-                  if ( v49 )
-                    v14 = " Vial";
-                  else
-                    v14 = " Flask";
-                  goto LABEL_331;
-                case 123:
-                  v52 = sub_9B0C00(47);
-                  v50 = "Forge ";
-                  if ( !v52 )
-                    v50 = "Make ";
-                  sub_40FE10(v51, v50, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v10 = 419;
-                  if ( (_WORD)v11 >= 419 && (_WORD)v11 <= 618 || a10 & 3 )
-                  {
-                    v14 = " Cup";
-                  }
-                  else
-                  {
-                    if ( (_WORD)v11 || (unsigned __int8)sub_9B0C00(47) )
-                      v14 = " Goblet";
-                    else
-                      v14 = " Mug";
-                  }
-                  goto LABEL_330;
-                case 124:
-                  v55 = sub_9B0C00(47);
-                  v53 = "Forge ";
-                  if ( !v55 )
-                    v53 = "Make ";
-                  sub_40FE10(v10, v53, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Instrument";
-                  goto LABEL_330;
-                case 125:
-                  v58 = sub_9B0C00(47);
-                  v56 = "Forge ";
-                  if ( !v58 )
-                    v56 = "Make ";
-                  sub_40FE10(v10, v56, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Toy";
-                  goto LABEL_330;
-                case 126:
-                  v61 = sub_9B0C00(47);
-                  v59 = "Forge ";
-                  if ( !v61 )
-                    v59 = "Make ";
-                  sub_40FE10(v10, v59, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Animal Trap";
-                  goto LABEL_330;
-                case 127:
-                  v64 = sub_9B0C00(47);
-                  v62 = "Forge ";
-                  if ( !v64 )
-                    v62 = "Make ";
-                  sub_40FE10(v10, v62, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Barrel";
-                  goto LABEL_330;
-                case 195:
-                  v67 = sub_9B0C00(47);
-                  v65 = "Forge ";
-                  if ( !v67 )
-                    v65 = "Make ";
-                  sub_40FE10(v10, v65, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v68 = sub_9B0C00(49);
-                  v123 = a3;
-                  if ( v68 )
-                    v14 = " Tube";
-                  else
-                    v14 = " Pipe Section";
-                  goto LABEL_331;
-                case 128:
-                  v71 = sub_9B0C00(47);
-                  v69 = "Forge ";
-                  if ( !v71 )
-                    v69 = "Make ";
-                  sub_40FE10(v10, v69, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Bucket";
-                  goto LABEL_330;
-                case 129:
-                  sub_40FE10(v10, "Make ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Window";
-                  goto LABEL_330;
-                case 133:
-                  sub_40FE10(v10, "Make ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Backpack";
-                  goto LABEL_330;
-                case 134:
-                  sub_40FE10(v10, "Make ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Quiver";
-                  goto LABEL_330;
-                case 102:
-                  v74 = sub_9B0C00(47);
-                  v72 = "Forge ";
-                  if ( !v74 )
-                    v72 = "Make ";
-                  sub_40FE10(v73, v72, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  sub_40FE10(v75, &word_A4905C, a3);
-                  v76 = sub_53F2A0(v77);
-                  sub_40FF20(*(_DWORD *)v76 + 36, 0);
-                  goto LABEL_332;
-                case 103:
-                  v80 = sub_9B0C00(47);
-                  v78 = "Forge ";
-                  if ( !v80 )
-                    v78 = "Make ";
-                  sub_40FE10(v79, v78, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  sub_40FE10(v81, &word_A4905C, a3);
-                  v82 = sub_53F2A0(v83);
-                  sub_40FF20(*(_DWORD *)v82 + 36, 0);
-                  goto LABEL_332;
-                case 108:
-                  sub_40FE10(v10, "Bait Trap with ", a3);
-                  if ( a5 == 43 )
-                  {
-                    v14 = &off_A5110C;
-                  }
-                  else
-                  {
-                    if ( a5 == 47 )
-                    {
-                      v14 = "Meat";
-                    }
-                    else
-                    {
-                      if ( a5 != 48 )
-                        goto LABEL_332;
-            LABEL_206:
-                      v14 = "Fish";
-                    }
-                  }
-                  goto LABEL_330;
-                case 23:
-                  goto LABEL_206;
-                case 101:
-                  v86 = sub_9B0C00(47);
-                  v84 = "Forge ";
-                  if ( !v86 )
-                    v84 = "Make ";
-                  sub_40FE10(v85, v84, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  sub_40FE10(v87, &word_A4905C, a3);
-                  v88 = sub_53F2A0(v89);
-                  sub_40FF20(*(_DWORD *)v88 + 36, 0);
-                  goto LABEL_332;
-                case 97:
-                  v92 = sub_9B0C00(47);
-                  v90 = "Forge ";
-                  if ( !v92 )
-                    v90 = "Make ";
-                  sub_40FE10(v91, v90, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  sub_40FE10(v93, &word_A4905C, a3);
-                  v94 = sub_53F2A0(v95);
-                  sub_40FF20(*(_DWORD *)v94 + 36, 0);
-                  goto LABEL_332;
-                case 135:
-                  v98 = sub_9B0C00(47);
-                  v96 = "Forge ";
-                  if ( !v98 )
-                    v96 = "Make ";
-                  sub_40FE10(v10, v96, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Ballista Arrow Head";
-                  goto LABEL_330;
-                case 136:
-                  sub_40FE10(v10, "Assemble ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  sub_40FE10(v99, &word_A4905C, a3);
-                  v100 = sub_53F2A0(v101);
-                  sub_40FF20(*(_DWORD *)v100 + 36, 0);
-                  goto LABEL_332;
-                case 131:
-                  v104 = sub_9B0C00(47);
-                  v102 = "Forge ";
-                  if ( !v104 )
-                    v102 = "Make ";
-                  sub_40FE10(v103, v102, a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  sub_40FE10(v105, &word_A4905C, a3);
-                  v106 = sub_53F2A0(v107);
-                  sub_40FF20(*(_DWORD *)v106 + 64, 0);
-                  goto LABEL_332;
-                case 99:
-                  sub_40FE10(v10, "Construct", a3);
-                  if ( !(a10 & 2) )
-                  {
-                    sub_40FE10(v10, &word_A4905C, a3);
-                    sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                    sub_40FF20(&v125, 0);
-                  }
-                  v14 = " Catapult Parts";
-                  goto LABEL_330;
-                case 142:
-                  v110 = sub_9B0C00(47);
-                  v108 = "Forge ";
-                  if ( !v110 )
-                    v108 = "Make ";
-                  sub_40FE10(v109, v108, a3);
-                  v124 = a6;
-                  if ( *(_DWORD *)(*(_DWORD *)sub_53F2A0(v111) + 112) )
-                  {
-                    v112 = sub_53F2A0(v111);
-                    sub_40FF20(*(_DWORD *)v112 + 92, 0);
-                    sub_40FE10(v113, &word_A4905C, a3);
-                  }
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  sub_40FE10(v114, &word_A4905C, a3);
-                  v115 = sub_53F2A0(v116);
-                  sub_40FF20(*(_DWORD *)v115 + 36, 0);
-                  goto LABEL_332;
-                case 141:
-                  sub_40FE10(v10, "Construct", a3);
-                  if ( (_WORD)v11 )
-                  {
-                    sub_40FE10(v10, &word_A4905C, a3);
-                    sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                    sub_40FF20(&v125, 0);
-                  }
-                  v14 = " Mechanisms";
-                  goto LABEL_330;
-                case 100:
-                  sub_40FE10(v10, "Construct", a3);
-                  if ( !(a10 & 2) )
-                  {
-                    sub_40FE10(v10, &word_A4905C, a3);
-                    sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                    sub_40FF20(&v125, 0);
-                  }
-                  v14 = " Ballista Parts";
-                  goto LABEL_330;
-                case 98:
-                  sub_40FE10(v10, "Forge ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Anvil";
-                  goto LABEL_330;
-                case 71:
-                  sub_40FE10(v10, "Construct", a3);
-                  if ( (_WORD)v11 < 419 || (v10 = 618, (_WORD)v11 > 618) )
-                  {
-                    if ( !(a10 & 3) )
-                    {
-                      sub_40FE10(v10, &word_A4905C, a3);
-                      sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                      sub_40FF20(&v125, 0);
-                    }
-                  }
-                  v14 = " Bed";
-                  goto LABEL_330;
-                case 80:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Statue";
-                  goto LABEL_330;
-                case 203:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Quern";
-                  goto LABEL_330;
-                case 204:
-                  sub_40FE10(v10, "Construct ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Millstone";
-                  goto LABEL_330;
-                case 95:
-                  v14 = "Train Hunting Animal";
-                  goto LABEL_330;
-                case 96:
-                  v14 = "Train War Animal";
-                  goto LABEL_330;
-                case 186:
-                  v14 = "Make Charcoal";
-                  goto LABEL_330;
-                case 187:
-                  v14 = "Make Ash";
-                  goto LABEL_330;
-                case 213:
-                  v117 = sub_5ECDB0(&unk_16B8768, v124);
-                  if ( v117 )
-                  {
-                    sub_409970(v117 + 28);
-                    LOBYTE(v134) = 2;
-                    sub_427880();
-                    v122 = 0;
-                    v121 = &v129;
-            LABEL_66:
-                    sub_40FF20(v121, v122);
-                    sub_4099A0(&v129);
-                  }
-                  else
-                  {
-                    v14 = "Reaction";
-            LABEL_330:
-                    v123 = a3;
-            LABEL_331:
-                    sub_40FE10(v10, v14, v123);
-                  }
-            LABEL_332:
-                  if ( v128 >= 0x10 )
-                    operator delete(v126);
-                  return sub_9FD1AA(v124);
-                case 90:
-                  sub_40FE10(v10, "Smelt ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Ore";
-                  goto LABEL_330;
-                case 91:
-                  v14 = "Melt a Metal Object";
-                  goto LABEL_330;
-                case 92:
-                  v14 = "Extract Metal Strands";
-                  goto LABEL_330;
-                case 192:
-                  v14 = "Dye Thread";
-                  goto LABEL_330;
-                case 193:
-                  v14 = "Dye Cloth";
-                  goto LABEL_330;
-                case 194:
-                  sub_40FE10(v10, "Sew ", a3);
-                  sub_9F11F0(&dword_165B188, v11, a7, 1, 0);
-                  sub_40FF20(&v125, 0);
-                  v14 = " Image";
-                  goto LABEL_330;
-                case 12:
-                  v14 = "Collect Webs";
-                  goto LABEL_330;
-                case 116:
-                  if ( (unsigned __int8)sub_9B0C00(47) )
-                  {
-                    v119 = "Weave Metal Cloth";
-                  }
-                  else
-                  {
-                    v119 = "Weave Thread into Silk";
-                    if ( !(a10 & 8) )
-                      v119 = "Weave Thread into Cloth";
-                  }
-                  sub_40FE10(v10, v119, a3);
-                  if ( !a9 )
-                    goto LABEL_332;
-                  v14 = " (Dyed Only)";
-                  goto LABEL_330;
-                case 94:
-                  v14 = "Harvest Plants";
-                  goto LABEL_330;
-                case 93:
-                  v14 = "Plant Seeds";
-                  goto LABEL_330;
-                case 190:
-                  v14 = "Fertilize Field";
-                  goto LABEL_330;
-                case 149:
-                  v14 = "Pull the Lever";
-                  goto LABEL_330;
-                case 148:
-                  v14 = "Link a Building to Trigger";
-                  goto LABEL_330;
-                case 0:
-                  v14 = "Carve Fortification";
-                  goto LABEL_330;
-                case 1:
-                  v14 = "Detail Wall";
-                  goto LABEL_330;
-                case 2:
-                  v14 = "Detail Floor";
-                  goto LABEL_330;
-                case 3:
-                  v14 = "Dig";
-                  goto LABEL_330;
-                case 202:
-                  v14 = "Remove Stairs/Ramps";
-                  goto LABEL_330;
-                case 11:
-                  v14 = "Remove Construction";
-                  goto LABEL_330;
-                case 4:
-                  v14 = "Carve Upward Staircase";
-                  goto LABEL_330;
-                case 5:
-                  v14 = "Carve Downward Staircase";
-                  goto LABEL_330;
-                case 6:
-                  v14 = "Carve Up/Down Staircase";
-                  goto LABEL_330;
-                case 7:
-                  v14 = "Carve Ramp";
-                  goto LABEL_330;
-                case 8:
-                  v14 = "Dig Channel";
-                  goto LABEL_330;
-                case 9:
-                  v14 = "Fell Tree";
-                  goto LABEL_330;
-                case 10:
-                  v14 = "Gather Plants";
-                  goto LABEL_330;
-                case 14:
-                  v14 = "Bring Item to Shop";
-                  goto LABEL_330;
-                case 13:
-                  v14 = "Bring Item to Depot";
-                  goto LABEL_330;
-                case 15:
-                  v14 = "Eat";
-                  goto LABEL_330;
-                case 16:
-                  v14 = "Get Provisions";
-                  goto LABEL_330;
-                case 210:
-                  v14 = "Clean Self";
-                  goto LABEL_330;
-                case 17:
-                case 18:
-                  v14 = "Drink";
-                  goto LABEL_330;
-                case 19:
-                case 20:
-                  v14 = "Fill Waterskin";
-                  goto LABEL_330;
-                case 21:
-                  v14 = "Sleep";
-                  goto LABEL_330;
-                case 26:
-                  v14 = "Kidnap";
-                  goto LABEL_330;
-                case 24:
-                  v14 = "Hunt";
-                  goto LABEL_330;
-                case 28:
-                  v14 = "Starting Fist Fight";
-                  goto LABEL_330;
-                case 27:
-                  v14 = "Beat Criminal";
-                  goto LABEL_330;
-                case 25:
-                  v14 = "Hunt for Small Creature";
-                  goto LABEL_330;
-                case 29:
-                  v14 = "Collect Taxes";
-                  goto LABEL_330;
-                case 30:
-                  v14 = "Guard Tax Collector";
-                  goto LABEL_330;
-                case 33:
-                  v14 = "Return Kill";
-                  goto LABEL_330;
-                case 34:
-                  v14 = "Check Chest";
-                  goto LABEL_330;
-                case 49:
-                case 50:
-                  v14 = "Go Shopping";
-                  goto LABEL_330;
-                case 48:
-                  v14 = "Attend Party";
-                  goto LABEL_330;
-                case 46:
-                  v14 = "Seek Artifact";
-                  goto LABEL_330;
-                case 47:
-                  v14 = "Seek Infant";
-                  goto LABEL_330;
-                case 35:
-                  v14 = "Store Owned Item";
-                  goto LABEL_330;
-                case 36:
-                  v14 = "Place Item in Tomb";
-                  goto LABEL_330;
-                case 37:
-                  v14 = "Store Item in Stockpile";
-                  goto LABEL_330;
-                case 38:
-                  v14 = "Store Item in Bag";
-                  goto LABEL_330;
-                case 44:
-                  v14 = "Store Item in Barrel";
-                  goto LABEL_330;
-                case 45:
-                  v14 = "Store Item in Bin";
-                  goto LABEL_330;
-                case 42:
-                  v14 = "Store Weapon";
-                  goto LABEL_330;
-                case 43:
-                  v14 = "Store Armor";
-                  goto LABEL_330;
-                case 39:
-                  v14 = "Store Item in Hospital";
-                  goto LABEL_330;
-                case 40:
-                  v14 = "Store Item in Chest";
-                  goto LABEL_330;
-                case 41:
-                  v14 = "Store Item in Cabinet";
-                  goto LABEL_330;
-                case 51:
-                  v14 = "Clean";
-                  goto LABEL_330;
-                case 52:
-                  v14 = "Rest";
-                  goto LABEL_330;
-                case 53:
-                  v14 = "Pickup Equipment";
-                  goto LABEL_330;
-                case 54:
-                  v14 = "Dump Item";
-                  goto LABEL_330;
-                case 55:
-                case 56:
-                case 57:
-                case 58:
-                case 59:
-                case 60:
-                case 61:
-                case 62:
-                case 63:
-                case 64:
-                case 65:
-                case 66:
-                case 67:
-                  v14 = "Strange Mood";
-                  goto LABEL_330;
-                case 146:
-                  v14 = "Clean Trap";
-                  goto LABEL_330;
-                case 137:
-                  v14 = "Load Catapult";
-                  goto LABEL_330;
-                case 138:
-                  v14 = "Load Ballista";
-                  goto LABEL_330;
-                case 139:
-                  v14 = "Fire Catapult";
-                  goto LABEL_330;
-                case 140:
-                  v14 = "Fire Ballista";
-                  goto LABEL_330;
-                case 196:
-                  v14 = "Operate Pump";
-                  goto LABEL_330;
-                case 143:
-                  v14 = "Load Cage Trap";
-                  goto LABEL_330;
-                case 144:
-                  v14 = "Load Stone Trap";
-                  goto LABEL_330;
-                case 145:
-                  v14 = "Load Weapon Trap";
-                  goto LABEL_330;
-                case 147:
-                  v14 = "Cast Spell";
-                  goto LABEL_330;
-                default:
-                  goto LABEL_332;
-              }
-            }
-            -->
+[dwarf_jobs]
+size=212
+0/name = "Carve Fortification"
+0/type = DIG
+1/name = "Detail Wall"
+1/type = TROWEL
+2/name = "Detail Floor"
+2/type = TROWEL
+3/name = "Dig"
+3/type = DIG
+4/name = "Carve Upward Staircase"
+4/type = DIG
+5/name = "Carve Downward Staircase"
+5/type = DIG
+6/name = "Carve Up/Down Staircase"
+6/type = DIG
+7/name = "Carve Ramp"
+7/type = DIG
+8/name = "Dig Channel"
+8/type = DIG
+9/name = "Fell Tree"
+9/type = CUT
+10/name = "Gather Plants"
+11/name = "Remove Construction"
+11/type = BUILD
+12/name = "Collect Webs"
+12/type = HAUL
+13/name = "Bring Item to Depot"
+13/type = HAUL
+14/name = "Bring Item to Shop"
+14/type = HAUL
+15/name = "Eat"
+15/type = FOOD
+16/name = "Get Provisions"
+16/type = FOOD
+17/name = "Drink"
+17/type = DRINK
+18/name = "Drink"
+18/type = DRINK
+19/name = "Fill Waterskin"
+19/type = DRINK
+20/name = "Fill Waterskin"
+20/type = DRINK
+21/name = "Sleep"
+21/type = REST
+22/name = "Collect Sand"
+22/type = HAUL
+23/name = "Fish"
+24/name = "Hunt"
+25/name = "Hunt for Small Creature"
+26/name = "Kidnap"
+26/type = FIGHT
+27/name = "Beat Criminal"
+27/type = FIGHT
+28/name = "Starting Fist Fight"
+28/type = FIGHT
+29/name = "Collect Taxes"
+30/name = "Guard Tax Collector"
+30/type = FIGHT
+31/name = "Catch Live Land Animal"
+32/name = "Catch Live Fish"
+33/name = "Return Kill"
+33/type = HAUL
+34/name = "Check Chesk"
+34/type = SEEK
+35/name = "Store Owned Item"
+35/type = HAUL
+36/name = "Place Item in Tomb"
+36/type = HAUL
+37/name = "Store Item in Stockpile"
+37/type = HAUL
+38/name = "Store Item in Bag"
+38/type = HAUL
+39/name = "Store Item in Hospital"
+39/type = HAUL
+40/name = "Store Item in Chest"
+40/type = HAUL
+41/name = "Store Item in Cabinet"
+41/type = HAUL
+42/name = "Store Weapon"
+42/type = HAUL
+43/name = "Store Armor"
+43/type = HAUL
+44/name = "Store Item in Barrel"
+44/type = HAUL
+45/name = "Store Item in Bin"
+45/type = HAUL
+46/name = "Seek Artifact"
+46/type = SEEK
+47/name = "Seek Infant"
+47/type = SEEK
+48/name = "Attend Party"
+48/type = DRINK
+49/name = "Go Shopping"
+50/name = "Go Shopping"
+51/name = "Clean"
+52/name = "Rest"
+52/type = REST
+53/name = "Pickup Equipment"
+53/type = SEEK
+54/name = "Dump Item"
+54/type = HAUL
+55/name = "Strange Mood Crafter"
+55/type = MOOD
+56/name = "Strange Mood Jeweller"
+56/type = MOOD
+57/name = "Strange Mood C"
+57/type = MOOD
+58/name = "Strange Mood Metal"
+58/type = MOOD
+59/name = "Strange Mood E"
+59/type = MOOD
+60/name = "Strange Mood F"
+60/type = MOOD
+61/name = "Strange Mood Carpenter"
+61/type = MOOD
+62/name = "Strange Mood Mason"
+62/type = MOOD
+63/name = "Strange Mood Bowyer"
+63/type = MOOD
+64/name = "Strange Mood Tanner"
+64/type = MOOD
+65/name = "Strange Mood Weaver"
+65/type = MOOD
+66/name = "Strange Mood Glassmaker"
+66/type = MOOD
+67/name = "Strange Mood Mechanics"
+67/type = MOOD
+68/name = "Construct Building"
+68/type = BUILD
+69/name = "Construct Door"
+68/type = BUILD
+70/name = "Construct Floodgate"
+70/type = BUILD
+71/name = "Construct ?? Bed"
+71/type = BUILD
+72/name = "Construct ?? Chair/Throne"
+72/type = BUILD
+73/name = "Construct ?? Casket/Sarcophagus/Coffin"
+73/type = BUILD
+74/name = "Construct ?? Table"
+74/type = BUILD
+75/name = "Construct ?? Box/Chest/Bag/Coffer"
+75/type = BUILD
+76/name = "Construct ?? Bin"
+76/type = BUILD
+77/name = "Construct ?? Armor Stand"
+77/type = BUILD
+78/name = "Construct ?? Weapon Rack"
+78/type = BUILD
+79/name = "Construct ?? Cabinet"
+79/type = BUILD
+80/name = "Construct ?? Statue"
+80/type = BUILD
+81/name = "Construct ?? Blocks"
+81/type = BUILD
+82/name = "Make Raw ??"
+83/name = "Make ?? Crafts"
+84/name = "Mint ?? Coins"
+85/name = "Cut ?A?"
+86/name = "Cut ?B?"
+87/name = "Encrust ?something? with ?somethings?"
+88/name = "Encrust ?something? with ?somethings?"
+89/name = "Destroy Building"
+89/type = BUILD
+90/name = "Smelt Ore"
+90/type = FURNACE
+91/name = "Melt a Metal Object"
+91/type = FORGE
+92/name = "Extract Metal Strands"
+92/type = FORGE
+93/name = "Plant Seeds"
+94/name = "Harvest Plants"
+95/name = "Train Hunting Animal"
+95/type = ANIMAL
+96/name = "Train War Animal"
+96/type = ANIMAL
+99/name = "Construct Catapult Parts"
+100/name = "Forge ?? Anvil"
+100/type = FORGE
+101/name = "Construct Catapult Parts"
+102/name = "Construct Ballista Parts"
+103/name = "Forge/Make A"
+103/type = FORGE
+104/name = "Stud with ?something?"
+105/name = "Butcher an Animal"
+106/name = "Prepare a Raw Fish"
+107/name = "Mill Plants"
+108/name = "Bait Trap with Meat/Gem/Fish"
+109/name = "Milk Creature"
+110/name = "Make Cheese"
+111/name = "Process Plants"
+112/name = "Process Plants (Bag)"
+113/name = "Process Plants (Vial)"
+114/name = "Process Plants (Barrel)"
+115/name = "Prepare ?? Meal"
+116/name = "Weave ?? into ??"
+117/name = "Forge/Make ?? something"
+117/type = BUILD
+118/name = "Weave Thread"
+119/name = "Forge/Make D"
+119/type = FORGE
+120/name = "Forge/Make E"
+120/type = FORGE
+121/name = "Forge/Make F"
+121/type = FORGE
+122/name = "Forge/Make Waterskin/Vial/Flask"
+122/type = FORGE
+123/name = "Forge Rope"
+123/type = FORGE
+124/name = "Forge  Flask"
+124/type = FORGE
+125/name = "Forge  Goblet"
+125/type = FORGE
+126/name = "Forge  Instrument"
+126/type = FORGE
+127/name = "Forge  Toy"
+127/type = FORGE
+128/name = "Forge  Animal Trap"
+128/type = FORGE
+129/name = "Forge  Barrel"
+129/type = FORGE
+130/name = "Make Totel"
+130/type = FORGE
+131/name = "Forge Bolts"
+131/type = FORGE
+132/name = "Decorate With ?something?"
+133/name = "Forge/Make G"
+133/type = FORGE
+134/name = "Decorate With Bone"
+135/name = "Make Backpack"
+136/name = "Make Quiver"
+137/name = "Load Catapult"
+138/name = "Load Ballista"
+139/name = "Fire Catapult"
+140/name = "Fire Ballista"
+141/name = "Construct Mechanisms"
+141/type = BUILD
+142/name = "Fire Ballista"
+143/name = "Load Cage Trap"
+144/name = "Load Stone Trap"
+145/name = "Load Weapon Trap"
+146/name = "Clean Trap"
+147/name = "Cast Spell"
+148/name = "Link a Building to Trigger"
+149/name = "Pull the Lever"
+150/name = "Brew Drink"
+150/type = DRINK
+151/name = "Extract from Plants"
+152/name = "Extract from Raw Fish"
+153/name = "Extract from Land Animal"
+154/name = "Tame Small Animal"
+154/type = ANIMAL
+155/name = "Tame ?something?"
+155/type = ANIMAL
+156/name = "Chain Animal"
+156/type = ANIMAL
+157/name = "Unchain Animal"
+157/type = ANIMAL
+158/name = "Unchain Pet"
+158/type = ANIMAL
+159/name = "Release Large Creature"
+159/type = ANIMAL
+160/name = "Release Pet"
+160/type = ANIMAL
+161/name = "Release Small Creature"
+161/type = ANIMAL
+162/name = "Handle Small Creature"
+162/type = ANIMAL
+163/name = "Handle Large Creature"
+163/type = ANIMAL
+164/name = "Cage Large Creature"
+164/type = ANIMAL
+165/name = "Cage Small Creature"
+165/type = ANIMAL
+166/name = "Recover Wounded"
+166/type = MEDICAL
+167/name = "Diagnose Patient"
+167/type = MEDICAL
+168/name = "Immobilize Break"
+168/type = MEDICAL
+169/name = "Dress Wound"
+169/type = MEDICAL
+170/name = "Clean Patient"
+170/type = MEDICAL
+171/name = "Surgery"
+171/type = MEDICAL
+172/name = "Suture"
+172/type = MEDICAL
+173/name = "Set Bone"
+173/type = MEDICAL
+174/name = "Place In Traction"
+174/type = MEDICAL
+175/name = "Drain Aquarium"
+176/name = "Fill Aquarium"
+177/name = "Fill Pond"
+178/name = "Give Water"
+178/type = MEDICAL
+179/name = "Give Food"
+179/type = MEDICAL
+180/name = "Give Water"
+180/type = MEDICAL
+181/name = "Give Food"
+181/type = MEDICAL
+182/name = "Recover Pet"
+183/name = "Pit/Pond Large Animal"
+183/type = ANIMAL
+184/name = "Pit/Pond Small Animal"
+184/type = ANIMAL
+185/name = "Slaughter Animal"
+185/type = ANIMAL
+186/name = "Make Charcoal"
+186/type = FURNACE
+187/name = "Make Ash"
+187/type = FURNACE
+188/name = "Make Lye"
+189/name = "Make Potash From Lye"
+190/name = "Fertilize Field"
+191/name = "Make Potash From Ash"
+192/name = "Dye Thread"
+193/name = "Dye Cloth"
+194/name = "Sew ?? Image"
+195/name = "Manage Work Orders"
+195/type = ADMIN
+196/name = "Operate Pump"
+197/name = "Manage Work Orders"
+197/type = ADMIN
+198/name = "Update Stockpile Records"
+198/type = ADMIN
+199/name = "Trade at Depot"
+199/type = ADMIN
+200/name = "Construct ?? Hatch Cover"
+200/type = BUILD
+201/name = "Construct ?? Grate"
+201/type = BUILD
+202/name = "Remove Stairs/Ramps"
+202/type = DIG
+203/name = "Construct ?? Quern"
+203/type = BUILD
+205/name = "Upgrade Squad Equipment"
+205/type = HAUL
+206/name = "Prepare Equipment Manifests"
+206/type = ADMIN
+207/name = "Construct ?? Splint"
+207/type = BUILD
+208/name = "Construct ?? Crutch"
+208/type = BUILD
+209/name = "Construct Traction Bench"
+209/type = BUILD
+210/name = "Clean Self"
+211/name = "Bring Crutch"
+211/type = MEDICAL
+212/name = "Apply Cast"
+212/type = MEDICAL
+-->
             ====================================================================
                                         S K I L L S
             ====================================================================
@@ -2820,8 +883,20 @@
                                     (for stonesense)
             ====================================================================
         <VTable name="building_vtable">
+            <multiclass name="building_trapst" typeoffset="0x138">
+                <class name="building_leverst" type="0x0"/>
+                <class name="building_pressure_platest" type="0x1"/>
+                <class name="building_cage_trapst" type="0x2"/>
+                <class name="building_stonefall_trapst" type="0x3"/>
+                <class name="building_weapon_trapst" type="0x4"/>
+            </multiclass>
+            <class name="building_constructionst"/>
+            <class name="building_road_pavedst"/>
+            <class name="building_road_dirtst"/>
+            <class name="building_roadst"/>
+            <class name="building_wagonst"/>
+            <class name="building_tradedepotst"/>
             <multiclass name="building_workshopst" typeoffset="0x138">
-                <!--<class name="building_alchemists_laboratoryst" type="0x0"/>-->
                 <class name="building_carpenters_workshopst" type="0x0"/>
                 <class name="building_farmers_workshopst" type="0x1"/>
                 <class name="building_masons_workshopst" type="0x2"/>
@@ -2855,36 +930,25 @@
                 <class name="building_magma_glass_furnacest" type="0x5"/>
                 <class name="building_magma_kilnst" type="0x6"/>
             </multiclass>
-            <multiclass name="building_siegeenginest" typeoffset="0x138">
-                <class name="building_catapultst" type="0x0"/>
-                <class name="building_ballistast" type="0x1"/>
-            </multiclass>
-            <multiclass name="building_trapst" typeoffset="0x138">
-                <class name="building_leverst" type="0x0"/>
-                <class name="building_pressure_platest" type="0x1"/>
-                <class name="building_cage_trapst" type="0x2"/>
-                <class name="building_stonefall_trapst" type="0x3"/>
-                <class name="building_weapon_trapst" type="0x4"/>
-            </multiclass>
-            <class name="building_constructionst"/>
-            <class name="building_road_pavedst"/>
-            <class name="building_road_dirtst"/>
-            <class name="building_roadst"/>
-            <class name="building_wagonst"/>
-            <class name="building_tradedepotst"/>
             <class name="building_animaltrapst"/>
             <class name="building_farmplotst"/>
+            <class name="building_window_glassst"/>
+            <class name="building_window_gemst"/>
             <class name="building_windowst"/>
             <class name="building_statuest"/>
-            <class name="building_wellst"/>
             <class name="building_coffinst"/>
             <class name="building_shopst"/>
             <class name="building_chairst"/>
             <class name="building_tablest"/>
             <class name="building_bedst"/>
+            <class name="building_traction_benchst"/>
+            <multiclass name="building_siegeenginest" typeoffset="0x138">
+                <class name="building_catapultst" type="0x0"/>
+                <class name="building_ballistast" type="0x1"/>
+            </multiclass>
             <class name="building_cagest"/>
             <class name="building_chainst"/>
-            <class name="building_windmillstst"/>
+            <class name="building_windmillst"/>
             <class name="building_water_wheelst"/>
             <class name="building_screw_pumpst"/>
             <class name="building_archerytargetst"/>
@@ -2893,6 +957,7 @@
             <class name="building_axle_verticalst"/>
             <class name="building_axle_horizontalst"/>
             <class name="building_gear_assemblyst"/>
+            <class name="building_trapst"/>
             <class name="building_bars_floorst"/>
             <class name="building_bars_verticalst"/>
             <class name="building_grate_floorst"/>
@@ -2905,11 +970,11 @@
             <class name="building_weaponrackst"/>
             <class name="building_cabinetst"/>
             <class name="building_boxst"/>
-            <class name="building_actualst"/>
-            <class name="building_civzonest"/>
             <class name="building_stockpilest"/>
-            <class name="building_window_gemst"/>
-            <class name="building_window_glassst"/>
+            <class name="building_wellst"/>
+            <class name="building_civzonest"/><!-- zone -->
+            <class name="building_actualst"/>
+            <class name="buildingst"/>
         </VTable>
     </Entry>
 
@@ -2990,7 +1055,7 @@
         <Offset name="v_vein">0x08</Offset>
         <Offset name="type">0x009A</Offset>
         <Offset name="designation">0x029C</Offset>
-        <!--<Offset name="occupancy">0x069c</Offset> seems unused, no watch hits--> 
+        <Offset name="occupancy">0x069c</Offset>
         <Offset name="biome_stuffs">0x1D9C</Offset>
         <!--
 map_data_map_x_offset         0x0058
@@ -3089,7 +1154,9 @@ map_data_1b60_offset          0x1B9c
         =====
         <Offset name="soul_name">0x0</Offset>
         <Offset name="soul_skills_vector">0x1F4</Offset>
+        <Offset name="soul_traits">0x224</Offset>
         <Offset name="soul_mental">0x88</Offset>
+
         <!--
         mid = AddStrucMember(id,"analytical_ability",   0X88,   0x60000400, GetStrucIdByName("s_attrib"),   28);
         mid = AddStrucMember(id,"focus",    0XA4,   0x60000400, GetStrucIdByName("s_attrib"),   28);
@@ -3219,39 +1286,6 @@ map_data_1b60_offset          0x1B9c
         x_count 0x016ad738
         y_count 0x016ad73c
         z_count 0x016ad740
-        -->
-      
-        <!--
-        <Address name="buildings">0x09008880</Address>
-        <Address name="constructions">0x08ff4a58</Address>
-        <Address name="creatures">0x0900839C</Address>
-        <Address name="current_cursor_creature">0x08fe3908</Address>
-        <Address name="current_menu_state">0x08ff4900</Address>
-        <Address name="cursor_xyz">0x08832328</Address>
-        <Address name="effects_vector">0x089ed3f8</Address>
-        <Address name="hotkey_start">0x08ff47ac</Address>
-        <Address name="items">0x0900840c</Address>
-        <Address name="language_vector">0x0904accc</Address>
-        <Address name="map_data">0x09048cfc</Address>
-        <Address name="matgloss">0x0904abc4</Address>
-        <Address name="notes">0x08ff4784</Address>
-        <Address name="pause_state">0xc60008fe</Address>
-        <Address name="region_x">0x09048d28</Address>
-        <Address name="region_y">0x09048d2c</Address>
-        <Address name="region_z">0x09048d30</Address>
-        <Address name="settlement_current">0x0904a908</Address>
-        <Address name="settlements">0x0904a89c</Address>
-        <Address name="translation_vector">0x0904ace4</Address>
-        <Address name="vegetation">0x0900b9d0</Address>
-        <Address name="view_screen">0x08832a60</Address>
-        <Address name="window_dims">0x091995fc</Address>
-        <Address name="window_x">0x089edd14</Address>
-        <Address name="window_y">0x089edd18</Address>
-        <Address name="window_z">0x089edd1c</Address>
-        <Address name="world">0x0904a328</Address>
-        <Address name="x_count">0x09048d10</Address>
-        <Address name="y_count">0x09048d14</Address>
-        <Address name="z_count">0x09048d18</Address>
         -->
     </Entry>
     <Entry version="v0.31.02" os="windows" id="0.31.02" base="0.31.01">

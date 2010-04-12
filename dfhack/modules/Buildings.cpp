@@ -52,9 +52,12 @@ struct t_building_df40d
 struct Buildings::Private
 {
     uint32_t buildings_vector;
-    // translation
+    uint32_t custom_workshop_vector;
+    uint32_t building_custom_workshop_type;
+    uint32_t custom_workshop_type;
+    uint32_t custom_workshop_name;
+    int32_t custom_workshop_id;
     DfVector * p_bld;
-    
     APIPrivate *d;
     bool Inited;
     bool Started;
@@ -66,7 +69,12 @@ Buildings::Buildings(APIPrivate * d_)
     d->d = d_;
     d->Inited = d->Started = false;
     memory_info * mem = d->d->offset_descriptor;
+    d->custom_workshop_vector = mem->getAddress("custom_workshop_vector");
+    d->building_custom_workshop_type = mem->getOffset("building_custom_workshop_type");
+    d->custom_workshop_type = mem->getOffset("custom_workshop_type");
+    d->custom_workshop_name = mem->getOffset("custom_workshop_name");
     d->buildings_vector = mem->getAddress ("buildings_vector");
+    mem->resolveClassnameToClassID("building_custom_workshop", d->custom_workshop_id);
     d->Inited = true;
 }
 
@@ -122,4 +130,33 @@ bool Buildings::Finish()
     }
     d->Started = false;
     return true;
+}
+
+bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
+{
+    DfVector p_matgloss (g_pProcess, d->custom_workshop_vector, 4);
+    uint32_t size = p_matgloss.getSize();
+    btypes.clear();
+    for (uint32_t i = 0; i < size;i++)
+    {
+        string out = g_pProcess->readSTLString (*(uint32_t *) p_matgloss[i] + d->custom_workshop_name);
+        uint32_t type = g_pProcess->readDWord (*(uint32_t *) p_matgloss[i] + d->custom_workshop_type);
+        #ifdef DEBUG
+            cout << out << ": " << type << endl;
+        #endif
+        btypes[type] = out;
+    }
+    return true;
+}
+
+int32_t Buildings::GetCustomWorkshopType(t_building & building)
+{
+    int32_t type = (int32_t)building.type;
+    int32_t ret = -1;
+    if(type != -1 && type == d->custom_workshop_id)
+    {
+        // read the custom workshop subtype
+        ret = (int32_t) g_pProcess->readDWord(building.origin + d->building_custom_workshop_type);
+    }
+    return ret;
 }

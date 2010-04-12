@@ -393,6 +393,22 @@ bool memory_info::resolveClassnameToVPtr(const string classname, uint32_t & vptr
     return false;
 }
 
+bool memory_info::resolveClassnameToClassID (const string classname, int32_t & classID)
+{
+    // FIXME: another stupid search.
+    classID = -1;
+    for(uint32_t i = 0;i< d->classnames.size();i++)
+    {
+        if(d->classnames[i] == classname)
+        {
+            classID = i;
+            return true;
+        }
+    }
+    // we failed to find anything that would match
+    return false;
+}
+
 bool memory_info::resolveClassIDToClassname (const int32_t classID, string & classname)
 {
     if (classID >=0 && (uint32_t)classID < d->classnames.size())

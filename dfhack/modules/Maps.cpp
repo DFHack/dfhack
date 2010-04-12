@@ -72,6 +72,7 @@ Maps::Maps(APIPrivate* _d)
     off.z_count_offset = mem->getAddress ("z_count_block");
     off.tile_type_offset = mem->getOffset ("type");
     off.designation_offset = mem->getOffset ("designation");
+    off.occupancy_offset = mem->getOffset("occupancy");
     off.biome_stuffs = mem->getOffset ("biome_stuffs");
     off.veinvector = mem->getOffset ("v_vein");
     

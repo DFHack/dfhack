@@ -587,6 +587,17 @@ main(int argc, char *argv[])
                 }
             }
             */
+            if(i == 0 && j == 0)
+            {
+                for(int x = 0; x < 16; x++) for(int y = 0; y < 16; y++)
+                {
+                    if((Block->designation[x][y].whole & twiddle) == 1)
+                    {
+                        putch(x + 16,y + 16,'@',COLOR_WHITE);
+                    }
+                }
+            }
+
         }
         gotoxy(0,48);
         cprintf("arrow keys, PGUP, PGDN = navigate");

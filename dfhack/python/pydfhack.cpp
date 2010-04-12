@@ -23,7 +23,7 @@ distribution.
 */
 
 #include "Python.h"
-#include "DF_Imports.cpp"
+//#include "DF_Imports.cpp"
 #include "DF_MemInfo.cpp"
 #include "DF_Material.cpp"
 #include "DF_CreatureType.cpp"
@@ -93,8 +93,8 @@ PyMODINIT_FUNC initpydfhack(void)
 	PyModule_AddObject(module, "MemInfo", (PyObject*)&DF_MemInfo_type);
 	PyModule_AddObject(module, "Position", (PyObject*)&DF_Position_type);
 	PyModule_AddObject(module, "Materials", (PyObject*)&DF_Material_type);
-	PyModule_AddObject(module, "Creature_Base", (PyObject*)&DF_Position_type);
-	PyModule_AddObject(module, "CreatureManager", (PyObject*)&DF_Material_type);
+	PyModule_AddObject(module, "Creature_Base", (PyObject*)&DF_Creature_Base_type);
+	PyModule_AddObject(module, "CreatureManager", (PyObject*)&DF_CreatureManager_type);
 	
-	DoImports();
+	//DoImports();
 }

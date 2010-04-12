@@ -83,6 +83,7 @@ Creatures::Creatures(APIPrivate* _d)
         creatures.default_soul_offset = minfo->getOffset("creature_default_soul");
         creatures.physical_offset = minfo->getOffset("creature_physical");
         creatures.mood_offset = minfo->getOffset("creature_mood");
+        creatures.pickup_equipment_bit = minfo->getOffset("creature_pickup_equipment_bit");
         // soul offsets
         creatures.soul_skills_vector_offset = minfo->getOffset("soul_skills_vector");
         creatures.soul_mental_offset = minfo->getOffset("soul_mental");
@@ -294,6 +295,10 @@ bool Creatures::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LA
     if(!d->Started) return false;
     uint32_t temp = * (uint32_t *) d->p_cre->at (index);
     g_pProcess->write(temp + d->creatures.labors_offset, NUM_CREATURE_LABORS, labors);
+    uint32_t pickup_equip;
+    g_pProcess->readDWord(temp + d->creatures.pickup_equipment_bit, pickup_equip);
+    pickup_equip |= 1u;
+    g_pProcess->writeDWord(temp + d->creatures.pickup_equipment_bit, pickup_equip);
     return true;
 }
 

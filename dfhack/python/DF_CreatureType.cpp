@@ -27,7 +27,7 @@ distribution.
 
 #include "Python.h"
 #include "structmember.h"
-#include "DF_Imports.cpp"
+//#include "DF_Imports.cpp"
 #include "DF_Helpers.cpp"
 #include "modules/Creatures.h"
 
@@ -100,6 +100,11 @@ static PyObject* DF_Creature_Base_new(PyTypeObject* type, PyObject* args, PyObje
 	}
 	
 	return (PyObject*)self;
+}
+
+static int DF_Creature_Base_init(DF_Creature_Base* self, PyObject* args, PyObject* kwd)
+{
+	return 0;
 }
 
 static void DF_Creature_Base_dealloc(DF_Creature_Base* self)
@@ -193,7 +198,7 @@ static PyTypeObject DF_Creature_Base_type =
     0,                         /* tp_descr_get */
     0,                         /* tp_descr_set */
     0,                         /* tp_dictoffset */
-    0,      /* tp_init */
+    (initproc)DF_Creature_Base_init,      /* tp_init */
     0,                         /* tp_alloc */
     DF_Creature_Base_new,                 /* tp_new */
 };
@@ -234,8 +239,8 @@ static PyObject* BuildCreature(DFHack::t_creature& creature)
 		obj->labor_list = PyList_New(NUM_CREATURE_LABORS);
 		
 		for(int i = 0; i < NUM_CREATURE_LABORS; i++)
-			PyList_SetItem(obj->labor_list, i, PyInt_FromLong(creature.labors[i]));
-	
+			PyList_SET_ITEM(obj->labor_list, i, PyInt_FromLong(creature.labors[i]));
+		
 		return (PyObject*)obj;
 	}
 	

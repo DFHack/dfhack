@@ -86,22 +86,37 @@ static int DF_API_init(DF_API* self, PyObject* args, PyObject* kwds)
 
 static void DF_API_dealloc(DF_API* self)
 {
+	PySys_WriteStdout("API dealloc\n");
+	
 	if(self != NULL)
 	{
-		Py_CLEAR(self->mem_info);
-		Py_CLEAR(self->position);
-		Py_CLEAR(self->material);
-		Py_CLEAR(self->creature);
+		PySys_WriteStdout("creature xdecref\n");
+		Py_XDECREF(self->creature);
+		
+		PySys_WriteStdout("mem_info xdecref\n");
+		Py_XDECREF(self->mem_info);
+		
+		PySys_WriteStdout("position xdecref\n");
+		Py_XDECREF(self->position);
+		
+		PySys_WriteStdout("material xdecref\n");
+		Py_XDECREF(self->material);
 		
 		if(self->api_Ptr != NULL)
 		{
+			PySys_WriteStdout("api_Ptr = %i\n", (int)self->api_Ptr);
+			
 			delete self->api_Ptr;
+			
+			PySys_WriteStdout("api_Ptr deleted\n");
 			
 			self->api_Ptr = NULL;
 		}
 		
 		self->ob_type->tp_free((PyObject*)self);
 	}
+	
+	PySys_WriteStdout("API dealloc done\n");
 }
 
 // Accessors

@@ -33,6 +33,8 @@ using namespace DFHack;
 
 #include "modules/Creatures.h"
 
+#define DICTADD(d, name, item) PyDict_SetItemString(d, name, item); Py_DECREF(item)
+
 static PyObject* BuildMatglossPair(DFHack::t_matglossPair& matgloss)
 {
 	return Py_BuildValue("ii", matgloss.type, matgloss.index);
@@ -48,9 +50,24 @@ static PyObject* BuildSkill(DFHack::t_skill& skill)
 	return Py_BuildValue("III", skill.id, skill.experience, skill.rating);
 }
 
+static PyObject* BuildSkillList(DFHack::t_skill (&skills)[256], uint8_t numSkills)
+{
+	PyObject* list = PyList_New(numSkills);
+	
+	for(int i = 0; i < numSkills; i++)
+		PyList_SET_ITEM(list, i, BuildSkill(skills[i]));
+	
+	return list;
+}
+
 static PyObject* BuildJob(DFHack::t_job& job)
 {
 	return Py_BuildValue("Oi", PyBool_FromLong((int)job.active), job.jobId);
+}
+
+static PyObject* BuildAttribute(DFHack::t_attrib& at)
+{
+	return Py_BuildValue("IIIIIII", at.level, at.field_4, at.field_8, at.field_C, at.leveldiff, at.field_14, at.field_18);
 }
 
 static PyObject* BuildItemType(DFHack::t_itemType& item)
@@ -86,31 +103,20 @@ static PyObject* BuildNote(DFHack::t_note& note)
 	PyObject* temp;
 	
 	temp = PyString_FromFormat("%c", note.symbol);
-	
-	PyDict_SetItemString(noteDict, "symbol", temp);
-	
-	Py_DECREF(temp);
+	DICTADD(noteDict, "symbol", temp);
 	
 	temp = Py_BuildValue("II", note.foreground, note.background);
-	
-	PyDict_SetItemString(noteDict, "fore_back", temp);
-	
-	Py_DECREF(temp);
+	DICTADD(noteDict, "fore_back", temp);
 	
 	if(note.name[0])
 		temp = PyString_FromString(note.name);
 	else
 		PyString_FromString("");
-		
-	PyDict_SetItemString(noteDict, "name", temp);
 	
-	Py_DECREF(temp);
+	DICTADD(noteDict, "name", temp);
 	
 	temp = Py_BuildValue("III", note.x, note.y, note.z);
-		
-	PyDict_SetItemString(noteDict, "position", temp);
-	
-	Py_DECREF(temp);
+	DICTADD(noteDict, "position", temp);
 	
 	return noteDict;
 }
@@ -129,46 +135,33 @@ static PyObject* BuildName(DFHack::t_name& name)
 		temp = PyString_FromString(name.first_name);
 	else
 		temp = PyString_FromString("");
-		
-	PyDict_SetItemString(nameDict, "first_name", temp);
 	
-	Py_DECREF(temp);
+	DICTADD(nameDict, "first_name", temp);
 	
 	if(name.nickname[0])
 		temp = PyString_FromString(name.nickname);
 	else
 		temp = PyString_FromString("");
-		
-	PyDict_SetItemString(nameDict, "nickname", temp);
 	
-	Py_DECREF(temp);
+	DICTADD(nameDict, "nickname", temp);
 	
 	temp = PyInt_FromLong(name.language);
-	
-	PyDict_SetItemString(nameDict, "language", temp);
-	
-	Py_DECREF(temp);
+	DICTADD(nameDict, "language", temp);
 	
 	temp = PyBool_FromLong((int)name.has_name);
-	
-	PyDict_SetItemString(nameDict, "has_name", temp);
-	
-	Py_DECREF(temp);
+	DICTADD(nameDict, "has_name", temp);
 	
 	wordList = PyList_New(wordCount);
 	speechList = PyList_New(wordCount);
 	
 	for(int i = 0; i < wordCount; i++)
 	{
-		PyList_SetItem(wordList, i, PyInt_FromLong(name.words[i]));
-		PyList_SetItem(wordList, i, PyInt_FromLong(name.parts_of_speech[i]));
+		PyList_SET_ITEM(wordList, i, PyInt_FromLong(name.words[i]));
+		PyList_SET_ITEM(speechList, i, PyInt_FromLong(name.parts_of_speech[i]));
 	}
 	
-	PyDict_SetItemString(nameDict, "words", wordList);
-	PyDict_SetItemString(nameDict, "parts_of_speech", speechList);
-	
-	Py_DECREF(wordList);
-	Py_DECREF(speechList);
+	DICTADD(nameDict, "words", wordList);
+	DICTADD(nameDict, "parts_of_speech", speechList);
 	
 	return nameDict;
 }
@@ -182,32 +175,72 @@ static PyObject* BuildSettlement(DFHack::t_settlement& settlement)
 	setDict = PyDict_New();
 	
 	temp = PyInt_FromLong(settlement.origin);
-	
-	PyDict_SetItemString(setDict, "origin", temp);
-	
-	Py_DECREF(temp);
+	DICTADD(setDict, "origin", temp);
 	
 	temp = BuildName(settlement.name);
-	
-	PyDict_SetItemString(setDict, "name", temp);
-	
-	Py_DECREF(temp);
+	DICTADD(setDict, "name", temp);
 	
 	temp = Py_BuildValue("ii", settlement.world_x, settlement.world_y);
-	
-	PyDict_SetItemString(setDict, "world_pos", temp);
-	
-	Py_DECREF(temp);
+	DICTADD(setDict, "world_pos", temp);
 	
 	local_pos1 = Py_BuildValue("ii", settlement.local_x1, settlement.local_y1);
 	local_pos2 = Py_BuildValue("ii", settlement.local_x2, settlement.local_y2);
 	
-	PyDict_SetItemString(setDict, "local_pos", Py_BuildValue("OO", local_pos1, local_pos2));
-	
-	Py_DECREF(local_pos1);
-	Py_DECREF(local_pos2);
+	temp = Py_BuildValue("OO", local_pos1, local_pos2);
+	DICTADD(setDict, "local_pos", temp);
 	
 	return setDict;
+}
+
+static PyObject* BuildSoul(DFHack::t_soul& soul)
+{
+	PyObject *soulDict, *skillList, *temp;
+	
+	soulDict = PyDict_New();
+	
+	skillList = BuildSkillList(soul.skills, soul.numSkills);
+	DICTADD(soulDict, "skills", skillList);
+	
+	temp = BuildAttribute(soul.analytical_ability);
+	DICTADD(soulDict, "analytical_ability", temp);
+	
+	temp = BuildAttribute(soul.focus);
+	DICTADD(soulDict, "focus", temp);
+	
+	temp = BuildAttribute(soul.willpower);
+	DICTADD(soulDict, "willpower", temp);
+	
+	temp = BuildAttribute(soul.creativity);
+	DICTADD(soulDict, "creativity", temp);
+	
+	temp = BuildAttribute(soul.intuition);
+	DICTADD(soulDict, "intuition", temp);
+	
+	temp = BuildAttribute(soul.patience);
+	DICTADD(soulDict, "patience", temp);
+	
+	temp = BuildAttribute(soul.memory);
+	DICTADD(soulDict, "memory", temp);
+	
+	temp = BuildAttribute(soul.linguistic_ability);
+	DICTADD(soulDict, "linguistic_ability", temp);
+	
+	temp = BuildAttribute(soul.spatial_sense);
+	DICTADD(soulDict, "spatial_sense", temp);
+	
+	temp = BuildAttribute(soul.musicality);
+	DICTADD(soulDict, "musicality", temp);
+	
+	temp = BuildAttribute(soul.kinesthetic_sense);
+	DICTADD(soulDict, "kinesthetic_sense", temp);
+	
+	temp = BuildAttribute(soul.empathy);
+	DICTADD(soulDict, "empathy", temp);
+	
+	temp = BuildAttribute(soul.social_awareness);	
+	DICTADD(soulDict, "social_awareness", temp);
+	
+	return soulDict;
 }
 
 #endif

@@ -166,17 +166,27 @@ static int DF_Material_init(DF_Material* self, PyObject* args, PyObject* kwds)
 
 static void DF_Material_dealloc(DF_Material* self)
 {
+	PySys_WriteStdout("material dealloc\n");
+	
 	if(self != NULL)
 	{
+		PySys_WriteStdout("material not NULL\n");
+		
 		if(self->mat_Ptr != NULL)
 		{
+			PySys_WriteStdout("mat_Ptr = %i\n", (int)self->mat_Ptr);
+			
 			delete self->mat_Ptr;
+			
+			PySys_WriteStdout("mat_Ptr deleted\n");
 			
 			self->mat_Ptr = NULL;
 		}
 		
 		self->ob_type->tp_free((PyObject*)self);
 	}
+	
+	PySys_WriteStdout("material dealloc done\n");
 }
 
 // Type methods

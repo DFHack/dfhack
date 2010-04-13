@@ -168,6 +168,14 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout << ", trans name: " << transName;
             addendl=true;
         }
+        
+        transName = Tran->TranslateName(creature.name,true);
+        if(!transName.empty())
+        {
+            cout << ", last name: " << transName;
+            addendl=true;
+        }
+
 
         /*
         cout << ", likes: ";

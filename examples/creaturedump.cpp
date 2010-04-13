@@ -332,12 +332,12 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout << "from the underworld, ";
         }
         cout << endl;
-        /*
+        
         if(creature.flags1.bits.had_mood && (creature.mood == -1 || creature.mood == 8 ) )
         {
-            string artifact_name = DF.TranslateName(creature.artifact_name,englishWords,foreignWords,false);
+            string artifact_name = Tran->TranslateName(creature.artifact_name,false);
             cout << "artifact: " << artifact_name << endl;
-        }*/
+        }
     cout << endl;
 }
 

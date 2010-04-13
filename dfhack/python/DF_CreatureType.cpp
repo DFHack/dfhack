@@ -87,6 +87,8 @@ static PyObject* DF_Creature_Base_new(PyTypeObject* type, PyObject* args, PyObje
 		self->name = PyString_FromString("");
 		self->artifact_name = PyString_FromString("");
 		
+		self->position = NULL;
+		
 		self->strength = NULL;
 		self->agility = NULL;
 		self->toughness = NULL;
@@ -136,8 +138,10 @@ static void DF_Creature_Base_dealloc(DF_Creature_Base* self)
 static PyMemberDef DF_Creature_Base_members[] =
 {
 	{"origin", T_UINT, offsetof(DF_Creature_Base, origin), 0, ""},
+	{"position", T_OBJECT_EX, offsetof(DF_Creature_Base, position), 0, ""},
 	{"_flags1", T_UINT, offsetof(DF_Creature_Base, flags1), 0, ""},
 	{"_flags2", T_UINT, offsetof(DF_Creature_Base, flags2), 0, ""},
+	{"race", T_UINT, offsetof(DF_Creature_Base, race), 0, ""},
 	{"name", T_OBJECT_EX, offsetof(DF_Creature_Base, name), 0, ""},
 	{"artifact_name", T_OBJECT_EX, offsetof(DF_Creature_Base, artifact_name), 0, ""},
 	{"profession", T_INT, offsetof(DF_Creature_Base, profession), 0, ""},
@@ -211,11 +215,13 @@ static PyObject* BuildCreature(DFHack::t_creature& creature)
 	
 	if(obj != NULL)
 	{
+		obj->origin = creature.origin;
 		obj->position = Py_BuildValue("III", creature.x, creature.y, creature.z);
 		obj->profession = creature.profession;
 		obj->mood = creature.mood;
 		obj->happiness = creature.happiness;
 		obj->c_id = creature.id;
+		obj->race = creature.race;
 		obj->agility = BuildAttribute(creature.agility);
 		obj->strength = BuildAttribute(creature.strength);
 		obj->toughness = BuildAttribute(creature.toughness);

@@ -14,17 +14,8 @@ using namespace std;
 #include <modules/Materials.h>
 #include <modules/Creatures.h>
 #include <modules/Translation.h>
+#include "miscutils.h"
 
-template <typename T>
-void print_bits ( T val, std::ostream& out )
-{
-    T n_bits = sizeof ( val ) * CHAR_BIT;
-    
-    for ( unsigned i = 0; i < n_bits; ++i ) {
-        out<< !!( val & 1 ) << " ";
-        val >>= 1;
-    }
-}
 struct matGlosses 
 {
     vector<DFHack::t_matglossPlant> plantMat;
@@ -240,46 +231,46 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         */
         cout << endl;
 
-    
-        //skills
-        cout << "Skills" << endl;
-        for(unsigned int i = 0; i < creature.defaultSoul.numSkills;i++)
+        if(creature.has_default_soul)
         {
-            if(i > 0)
+            //skills
+            cout << "Skills" << endl;
+            for(unsigned int i = 0; i < creature.defaultSoul.numSkills;i++)
             {
-                cout << ", ";
+                if(i > 0)
+                {
+                    cout << ", ";
+                }
+                cout << mem->getSkill(creature.defaultSoul.skills[i].id) << ": " << creature.defaultSoul.skills[i].rating;
             }
-            cout << mem->getSkill(creature.defaultSoul.skills[i].id) << ": " << creature.defaultSoul.skills[i].rating;
-        }
-        cout << endl;
-    
-        // labors
-        cout << "Labors" << endl;
-        for(unsigned int i = 0; i < NUM_CREATURE_LABORS;i++)
-        {
-            if(!creature.labors[i])
-                continue;
-            string laborname;
-            try
+            cout << endl;
+            cout << "Traits" << endl;
+            for(uint32_t i = 0; i < 30;i++)
             {
-                laborname = mem->getLabor(i);
+                string trait = mem->getTrait (i, creature.defaultSoul.traits[i]);
+                if(!trait.empty()) cout << trait << ", ";
             }
-            catch(exception &)
+            cout << endl;
+                    
+            // labors
+            cout << "Labors" << endl;
+            for(unsigned int i = 0; i < NUM_CREATURE_LABORS;i++)
             {
-                break;
+                if(!creature.labors[i])
+                    continue;
+                string laborname;
+                try
+                {
+                    laborname = mem->getLabor(i);
+                }
+                catch(exception &)
+                {
+                    break;
+                }
+                cout << laborname << ", ";
             }
-            cout << laborname << ", ";
+            cout << endl;
         }
-        cout << endl;
-        
-        cout << "Traits" << endl;
-        for(uint32_t i = 0; i < 30;i++)
-        {
-            string trait = mem->getTrait (i, creature.defaultSoul.traits[i]);
-            if(!trait.empty())
-                cout << trait << ", ";
-        }
-        cout << endl;
         /*
          * FLAGS 1
          */
@@ -409,18 +400,21 @@ int main (void)
         cerr << "Can't get name tables" << endl;
         return 1;
     }
-    
+    vector<uint32_t> addrs;
     //DF.InitViewAndCursor();
     for(uint32_t i = 0; i < numCreatures; i++)
     {
         DFHack::t_creature temp;
         Creatures->ReadCreature(i,temp);
-        if(string(creaturestypes[temp.race].id) == "DWARF")
+        //if(string(creaturestypes[temp.race].id) == "DWARF")
         {
             cout << "index " << i << " ";
+            
             printCreature(DF,temp);
+            addrs.push_back(temp.origin);
         }
     }
+    interleave_hex(DF,addrs,200);
     /*
     uint32_t currentIdx;
     DFHack::t_creature currentCreature;

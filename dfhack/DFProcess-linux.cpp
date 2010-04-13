@@ -365,6 +365,7 @@ void NormalProcess::read (const uint32_t offset, const uint32_t size, uint8_t *t
             cerr << "pread failed: can't read " << size << " bytes at addres " << offset << endl;
             cerr << "errno: " << errno << endl;
             errno = 0;
+            throw Error::MemoryAccessDenied();
         }
         else
         {
@@ -500,10 +501,10 @@ struct _Rep_base
 size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
     _Rep_base header;
-    offset = g_pProcess->readDWord(offset);
-    g_pProcess->read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
+    offset = readDWord(offset);
+    read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
     size_t read_real = min((size_t)header._M_length, bufcapacity-1);// keep space for null termination
-    g_pProcess->read(offset,read_real,(uint8_t * )buffer);
+    read(offset,read_real,(uint8_t * )buffer);
     buffer[read_real] = 0;
     return read_real;
 }
@@ -512,12 +513,12 @@ const string NormalProcess::readSTLString (uint32_t offset)
 {
     _Rep_base header;
     
-    offset = g_pProcess->readDWord(offset);
-    g_pProcess->read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
+    offset = readDWord(offset);
+    read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
     
     // FIXME: use char* everywhere, avoid string
     char * temp = new char[header._M_length+1];
-    g_pProcess->read(offset,header._M_length+1,(uint8_t * )temp);
+    read(offset,header._M_length+1,(uint8_t * )temp);
     string ret(temp);
     delete temp;
     return ret;

@@ -210,23 +210,27 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     DfVector souls(g_pProcess,temp + offs.creature_soul_vector_offset,4);
     */
     uint32_t soul = g_pProcess->readDWord(temp + offs.default_soul_offset);
-    // get first soul's skills
-    DfVector skills(g_pProcess, soul + offs.soul_skills_vector_offset, 4 );
-    furball.defaultSoul.numSkills = skills.getSize();
-    for (uint32_t i = 0; i < furball.defaultSoul.numSkills;i++)
+    furball.has_default_soul = false;
+    if(soul)
     {
-        uint32_t temp2 = * (uint32_t *) skills[i];
-        // a byte: this gives us 256 skills maximum.
-        furball.defaultSoul.skills[i].id = g_pProcess->readByte (temp2);
-        furball.defaultSoul.skills[i].rating = g_pProcess->readByte (temp2 + 4);
-        furball.defaultSoul.skills[i].experience = g_pProcess->readWord (temp2 + 8);
+        furball.has_default_soul = true;
+        // get first soul's skills
+        DfVector skills(g_pProcess, soul + offs.soul_skills_vector_offset, 4 );
+        furball.defaultSoul.numSkills = skills.getSize();
+        for (uint32_t i = 0; i < furball.defaultSoul.numSkills;i++)
+        {
+            uint32_t temp2 = * (uint32_t *) skills[i];
+            // a byte: this gives us 256 skills maximum.
+            furball.defaultSoul.skills[i].id = g_pProcess->readByte (temp2);
+            furball.defaultSoul.skills[i].rating = g_pProcess->readByte (temp2 + 4);
+            furball.defaultSoul.skills[i].experience = g_pProcess->readWord (temp2 + 8);
+        }
+        // mental attributes are part of the soul
+        g_pProcess->read(soul + offs.soul_mental_offset, sizeof(t_attrib) * 13, (uint8_t *)&furball.defaultSoul.analytical_ability);
+        
+        // traits as well
+        g_pProcess->read(soul + offs.soul_traits_offset, sizeof (uint16_t) * NUM_CREATURE_TRAITS, (uint8_t *) &furball.defaultSoul.traits);
     }
-    // mental attributes are part of the soul
-    g_pProcess->read(soul + offs.soul_mental_offset, sizeof(t_attrib) * 13, (uint8_t *)&furball.defaultSoul.analytical_ability);
-    
-    // traits as well
-    g_pProcess->read(soul + offs.soul_traits_offset, sizeof (uint16_t) * NUM_CREATURE_TRAITS, (uint8_t *) &furball.defaultSoul.traits);
-    
     //likes
     /*
     DfVector likes(d->p, temp + offs.creature_likes_offset, 4);

@@ -236,11 +236,11 @@ namespace DFHack
                 return s.str().c_str();
             }
         };
-        class DFHACK_EXPORT SHMAccessDenied : public std::exception
+        class DFHACK_EXPORT MemoryAccessDenied : public std::exception
         {
         public:
-            SHMAccessDenied() {}
-            virtual ~SHMAccessDenied() throw(){};
+            MemoryAccessDenied() {}
+            virtual ~MemoryAccessDenied() throw(){};
             
             std::string type;
             

@@ -346,7 +346,7 @@ namespace DFHack
         int32_t squad_leader_id;
         uint8_t sex;
         uint32_t pregnancy_timer; //Countdown timer to giving birth
-        
+        bool has_default_soul;
         t_soul defaultSoul;
     };
     

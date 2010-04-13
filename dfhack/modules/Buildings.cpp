@@ -134,6 +134,8 @@ bool Buildings::Finish()
 
 bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 {
+    if(!d->Started)
+        return false;
     DfVector p_matgloss (g_pProcess, d->custom_workshop_vector, 4);
     uint32_t size = p_matgloss.getSize();
     btypes.clear();
@@ -151,6 +153,8 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 
 int32_t Buildings::GetCustomWorkshopType(t_building & building)
 {
+    if(!d->Inited)
+        return false;
     int32_t type = (int32_t)building.type;
     int32_t ret = -1;
     if(type != -1 && type == d->custom_workshop_id)

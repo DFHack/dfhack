@@ -377,6 +377,7 @@ void WineProcess::read (const uint32_t offset, const uint32_t size, uint8_t *tar
             cerr << "pread failed: can't read " << size << " bytes at addres " << offset << endl;
             cerr << "errno: " << errno << endl;
             errno = 0;
+            throw Error::MemoryAccessDenied();
         }
         else
         {
@@ -516,20 +517,20 @@ size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcap
     Uint32 capacity
     */
     uint32_t start_offset = offset + 4;
-    size_t length = g_pProcess->readDWord(offset + 20);
+    size_t length = readDWord(offset + 20);
     
-    size_t capacity = g_pProcess->readDWord(offset + 24);
+    size_t capacity = readDWord(offset + 24);
     size_t read_real = min(length, bufcapacity-1);// keep space for null termination
     
     // read data from inside the string structure
     if(capacity < 16)
     {
-        g_pProcess->read(start_offset, read_real , (uint8_t *)buffer);
+        read(start_offset, read_real , (uint8_t *)buffer);
     }
     else // read data from what the offset + 4 dword points to
     {
-        start_offset = g_pProcess->readDWord(start_offset);// dereference the start offset
-        g_pProcess->read(start_offset, read_real, (uint8_t *)buffer);
+        start_offset = readDWord(start_offset);// dereference the start offset
+        read(start_offset, read_real, (uint8_t *)buffer);
     }
     
     buffer[read_real] = 0;
@@ -550,19 +551,19 @@ const string WineProcess::readSTLString (uint32_t offset)
         Uint32 capacity
     */
     uint32_t start_offset = offset + 4;
-    uint32_t length = g_pProcess->readDWord(offset + 20);
-    uint32_t capacity = g_pProcess->readDWord(offset + 24);
+    uint32_t length = readDWord(offset + 20);
+    uint32_t capacity = readDWord(offset + 24);
     char * temp = new char[capacity+1];
     
     // read data from inside the string structure
     if(capacity < 16)
     {
-        g_pProcess->read(start_offset, capacity, (uint8_t *)temp);
+        read(start_offset, capacity, (uint8_t *)temp);
     }
     else // read data from what the offset + 4 dword points to
     {
-        start_offset = g_pProcess->readDWord(start_offset);// dereference the start offset
-        g_pProcess->read(start_offset, capacity, (uint8_t *)temp);
+        start_offset = readDWord(start_offset);// dereference the start offset
+        read(start_offset, capacity, (uint8_t *)temp);
     }
     
     temp[length] = 0;

@@ -26,7 +26,8 @@ distribution.
 #define __DFHELPERS__
 
 #include "Python.h"
-//#include "DF_Imports.cpp"
+#include <stdio.h>
+#include <string.h>
 #include "DFTypes.h"
 
 using namespace DFHack;
@@ -39,11 +40,6 @@ static PyObject* BuildMatglossPair(DFHack::t_matglossPair& matgloss)
 {
 	return Py_BuildValue("ii", matgloss.type, matgloss.index);
 }
-
-// static PyObject* BuildTreeDesc(DFHack::t_tree_desc& tree)
-// {
-	// return Py_BuildValue("OO", BuildMatglossPair(tree.material), Py_BuildValue("III", tree.x, tree.y, tree.z));
-// }
 
 static PyObject* BuildSkill(DFHack::t_skill& skill)
 {
@@ -164,6 +160,82 @@ static PyObject* BuildName(DFHack::t_name& name)
 	DICTADD(nameDict, "parts_of_speech", speechList);
 	
 	return nameDict;
+}
+
+static DFHack::t_name ReverseBuildName(PyObject* nameDict)
+{
+	PyObject *temp, *listTemp;
+	int boolTemp, arrLength;
+	Py_ssize_t listLength, strLength;
+	char* strTemp;
+	DFHack::t_name name;
+	
+	temp = PyDict_GetItemString(nameDict, "language");
+	name.language = (uint32_t)PyInt_AsLong(temp);
+	
+	temp = PyDict_GetItemString(nameDict, "has_name");
+	
+	boolTemp = (int)PyInt_AsLong(temp);
+	
+	if(boolTemp != 0)
+		name.has_name = true;
+	else
+		name.has_name = false;
+	
+	//I seriously doubt the name arrays will change length, but why take chances?
+	listTemp = PyDict_GetItemString(nameDict, "words");
+	
+	arrLength = sizeof(name.words) / sizeof(uint32_t);
+	listLength = PyList_Size(listTemp);
+	
+	if(listLength < arrLength)
+		arrLength = listLength;
+	
+	for(int i = 0; i < arrLength; i++)
+		name.words[i] = (uint32_t)PyInt_AsLong(PyList_GetItem(listTemp, i));
+	
+	listTemp = PyDict_GetItemString(nameDict, "parts_of_speech");
+	
+	arrLength = sizeof(name.parts_of_speech) / sizeof(uint16_t);
+	listLength = PyList_Size(listTemp);
+	
+	if(listLength < arrLength)
+		arrLength = listLength;
+	
+	for(int i = 0; i < arrLength; i++)
+		name.parts_of_speech[i] = (uint16_t)PyInt_AsLong(PyList_GetItem(listTemp, i));
+	
+	temp = PyDict_GetItemString(nameDict, "first_name");
+	strLength = PyString_Size(temp);
+	strTemp = PyString_AsString(temp);
+	
+	if(strLength > 128)
+	{
+		strncpy(name.first_name, strTemp, 127);
+		name.first_name[127] = '\0';
+	}
+	else
+	{
+		strncpy(name.first_name, strTemp, strLength);
+		name.first_name[strLength] = '\0';
+	}
+	
+	temp = PyDict_GetItemString(nameDict, "nickname");
+	strLength = PyString_Size(temp);
+	strTemp = PyString_AsString(temp);
+	
+	if(strLength > 128)
+	{
+		strncpy(name.nickname, strTemp, 127);
+		name.nickname[127] = '\0';
+	}
+	else
+	{
+		strncpy(name.nickname, strTemp, strLength);
+		name.nickname[strLength] = '\0';
+	}
+	
+	return name;
 }
 
 static PyObject* BuildSettlement(DFHack::t_settlement& settlement)

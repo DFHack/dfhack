@@ -379,14 +379,7 @@ int main (void)
         #endif
         return 1;
     }
-    /*
-    DF.ReadItemTypes(itemTypes);
-    DF.ReadPlantMatgloss(mat.plantMat);
-    DF.ReadWoodMatgloss(mat.woodMat);
-    DF.ReadStoneMatgloss(mat.stoneMat);
-    DF.ReadMetalMatgloss(mat.metalMat);
-    DF.ReadCreatureMatgloss(mat.creatureMat);
-    */
+
     mem = DF.getMemoryInfo();
     // get stone matgloss mapping
     if(!Materials->ReadCreatureTypes(creaturestypes))
@@ -406,7 +399,7 @@ int main (void)
     {
         DFHack::t_creature temp;
         Creatures->ReadCreature(i,temp);
-        //if(string(creaturestypes[temp.race].id) == "DWARF")
+        if(string(creaturestypes[temp.race].id) == "DWARF")
         {
             cout << "index " << i << " ";
             
@@ -414,7 +407,7 @@ int main (void)
             addrs.push_back(temp.origin);
         }
     }
-    interleave_hex(DF,addrs,200);
+    //interleave_hex(DF,addrs,200);
     /*
     uint32_t currentIdx;
     DFHack::t_creature currentCreature;

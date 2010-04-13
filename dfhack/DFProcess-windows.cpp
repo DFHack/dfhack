@@ -82,11 +82,21 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versio
     
     // temporarily assign this to allow some checks
     d->my_handle = hProcess;
+    d->my_main_thread = 0;
     // read from this process
-    uint32_t pe_offset = readDWord(base+0x3C);
-    read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
-    read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
-    d->my_handle = 0;
+    try
+    {
+        uint32_t pe_offset = readDWord(base+0x3C);
+        read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
+        read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
+        d->my_handle = 0;
+    }
+    catch (exception &)
+    {
+        CloseHandle(hProcess);
+        d->my_handle = 0;
+        return;
+    }
     
     // see if there's a version entry that matches this process
     vector<memory_info*>::iterator it;
@@ -356,7 +366,7 @@ void NormalProcess::readDWord (const uint32_t offset, uint32_t &result)
 
 void NormalProcess::read (const uint32_t offset, uint32_t size, uint8_t *target)
 {
-    if(ReadProcessMemory(d->my_handle, (int*) offset, target, size, NULL))
+    if(!ReadProcessMemory(d->my_handle, (int*) offset, target, size, NULL))
         throw Error::MemoryAccessDenied();
 }
 

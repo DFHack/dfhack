@@ -27,7 +27,6 @@ int main (void)
         #endif
         return 1;
     }
-    
     cout << "Attached, DF should be suspended now" << endl;
     getline(cin, blah);
     

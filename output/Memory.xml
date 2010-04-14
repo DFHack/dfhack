@@ -1178,16 +1178,23 @@ map_data_1b60_offset          0x1B9c
         
         Materials
         =========
-        <!-- soil, stone, metal -->
+        soil, stone, metal
         inorganics vector = WORLD + 0x54B7C = 0x16AFD04
         <Address name="mat_inorganics">0x16afd04</Address>
         
-        <!-- wood and plant matter -->
+        wood and plant matter, WORLD + 0x54B94
         <Address name="mat_organics_all">0x16afd1C</Address>
         
-        <!-- creature types actually used for creatures? -->
+        plant matter, WORLD + 0x54BAC
+        <Address name="mat_organics_plants">0x16afd34</Address>
+        
+        just wood, WORLD + 0x54BDC
+        <Address name="mat_organics_trees">0x16afd64</Address>
+        
+        creature types actually used for creatures, WORLD + 0x54CD0
         <Address name="creature_type_vector">0x016AFE58</Address>
-
+        
+        
         <!--
         NOT used yet
         
@@ -1202,14 +1209,12 @@ map_data_1b60_offset          0x1B9c
         <Address name="base_type_array">0x016b90cc</Address>
         <Address name="mat_templates">0x16afcec</Address>        
         
-        plant matter
-        <Address name="mat_organics_plants">0x16afd34</Address>
+        
         
         maybe maps beween organics_all and organics_plants
         <Address name="mat_unk1_numbers">0x16afd4C</Address> 
         
-        just wood
-        <Address name="mat_organics_trees">0x16afd64</Address>
+        
         
         maybe maps beween organics_all and organics_trees
         <Address name="mat_unk2_numbers">0x16afd7C</Address> 
@@ -1353,7 +1358,6 @@ map_data_1b60_offset          0x1B9c
         =========
         <Address name="creature_vector">0x166FD0C</Address>
         <Address name="dwarf_race_index">0x01471fbc</Address>
-        <!-- SOUL OFFSETS NEED FIXING -->
         <Offset name="creature_name">0x0</Offset>
         <Offset name="creature_custom_profession">0x6c</Offset>
         <Offset name="creature_profession">0x88</Offset>
@@ -1363,7 +1367,7 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_flags2">0xFC</Offset>
         <Offset name="creature_sex">0x110</Offset>
         <Offset name="creature_id">0x114</Offset>
-        <Offset name="creature_side">0X120</Offset> <!-- what? -->
+        <Offset name="creature_side">0X120</Offset>
         <Offset name="creature_soulskill_vector">0X1F4</Offset>
         <Offset name="creature_pickup_equipment_bit">0X21C</Offset>
         <Offset name="creature_mood">0x238</Offset>
@@ -1387,15 +1391,21 @@ map_data_1b60_offset          0x1B9c
         
         Materials
         =========
-        <!-- soil, stone, metal -->
+        soil, stone, metal
         inorganics vector = WORLD + 0x54B7C = 0x16B0D4C
         <Address name="mat_inorganics">0x16B0D4C</Address>
         
-        <!-- wood and plant matter -->
-        <Address name="mat_organics_all">0x16B0D64</Address> inorg + 0x18
+        wood and plant matter, WORLD + 0x54B94
+        <Address name="mat_organics_all">0x16B0D64</Address>
         
-        <!-- creature types actually used for creatures? -->
-        <Address name="creature_type_vector">0x16B0EA0</Address> inorg + 0x154
+        plant matter, WORLD + 0x54BAC
+        <Address name="mat_organics_plants">0x16B0D7C</Address>
+        
+        just wood, WORLD + 0x54BDC
+        <Address name="mat_organics_trees">0x16B0DAC</Address>
+        
+        creature types actually used for creatures, WORLD + 0x54CD0
+        <Address name="creature_type_vector">0x16B0EA0</Address>
         
         Constructions
         =============

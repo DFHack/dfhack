@@ -56,12 +56,24 @@ int main (int numargs, const char ** args)
     {
         cout << i << ": " << matgloss[i].id << endl;
     }
+    cout << endl << "----==== Organic - trees ====----" << endl;
+    Materials->ReadWoodMaterials (matgloss);
+    for(uint32_t i = 0; i < matgloss.size();i++)
+    {
+        cout << i << ": " << matgloss[i].id << endl;
+    }
+    cout << endl << "----==== Organic - plants ====----" << endl;
+    Materials->ReadPlantMaterials (matgloss);
+    for(uint32_t i = 0; i < matgloss.size();i++)
+    {
+        cout << i << ": " << matgloss[i].id << endl;
+    }
     cout << endl << "----==== Creature types ====----" << endl;
     vector<DFHack::t_matgloss> creature;
     Materials->ReadCreatureTypes (matgloss);
     for(uint32_t i = 0; i < matgloss.size();i++)
     {
-        cout << i << ": " << matgloss[i].id << endl;
+        cout << i << ": " << matgloss[i].id << endl ;
     }
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

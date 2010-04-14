@@ -22,8 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef __DFConstructionS__
-#define __DFConstructionS__
+#ifndef __DFCONSTRUCTIONS__
+#define __DFCONSTRUCTIONS__
 
 #include "Python.h"
 #include "modules/Constructions.h"

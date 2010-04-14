@@ -29,6 +29,7 @@ distribution.
 #include "DF_CreatureType.cpp"
 #include "DF_CreatureManager.cpp"
 #include "DF_Translate.cpp"
+#include "DF_Vegetation.cpp"
 #include "DF_API.cpp"
 
 #ifndef PyMODINIT_FUNC
@@ -84,6 +85,9 @@ PyMODINIT_FUNC initpydfhack(void)
 	if(PyType_Ready(&DF_Translate_type) < 0)
 		return;
 	
+	if(PyType_Ready(&DF_Vegetation_type) < 0)
+		return;
+	
 	module = Py_InitModule3("pydfhack", module_methods, "pydfhack extension module");
 	
 	Py_INCREF(&DF_API_type);
@@ -93,6 +97,7 @@ PyMODINIT_FUNC initpydfhack(void)
 	Py_INCREF(&DF_Creature_Base_type);
 	Py_INCREF(&DF_CreatureManager_type);
 	Py_INCREF(&DF_Translate_type);
+	Py_INCREF(&DF_Vegetation_type);
 	
 	PyModule_AddObject(module, "API", (PyObject*)&DF_API_type);
 	PyModule_AddObject(module, "MemInfo", (PyObject*)&DF_MemInfo_type);
@@ -101,6 +106,7 @@ PyMODINIT_FUNC initpydfhack(void)
 	PyModule_AddObject(module, "Creature_Base", (PyObject*)&DF_Creature_Base_type);
 	PyModule_AddObject(module, "CreatureManager", (PyObject*)&DF_CreatureManager_type);
 	PyModule_AddObject(module, "Translate", (PyObject*)&DF_Translate_type);
+	PyModule_AddObject(module, "Vegetation", (PyObject*)&DF_Vegetation_type);
 	
 	//DoImports();
 }

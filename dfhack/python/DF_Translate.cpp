@@ -90,26 +90,69 @@ static void DF_Translate_dealloc(DF_Translate* self)
 
 // Type methods
 
-static PyObject* DF_Translate_GetDicts(DF_Translate* self, PyObject* args)
-{
-	PyObject* dict;
-	Dicts* t_dicts;
-	
-	if(self->tran_Ptr != NULL)
-	{
-		t_dicts = self->tran_Ptr->getDicts();
-	}
-}
-
 static PyObject* DF_Translate_Start(DF_Translate* self, PyObject* args)
 {
-	Dicts* t_dicts;
+	DFHack::Dicts* t_dicts;
+	std::vector<std::string> wordVec;
+	PyObject *list, *tempDict;
 	
 	if(self->tran_Ptr != NULL)
 	{
 		if(self->tran_Ptr->Start())
 		{
+			Py_CLEAR(self->dict);
+			
 			t_dicts = self->tran_Ptr->getDicts();
+			
+			DFHack::DFDict & translations = t_dicts->translations;
+			DFHack::DFDict & foreign_languages = t_dicts->foreign_languages;
+			
+			self->dict = PyDict_New();
+			tempDict = PyDict_New();
+			
+			for(uint32_t i = 0; i < translations.size(); i++)
+			{
+				uint32_t size = translations[i].size();
+				uint32_t j = 0;
+				
+				list = PyList_New(size);
+				
+				for(; j < size; j++)
+					PyList_SET_ITEM(list, j, PyString_FromString(translations[i][j].c_str()));
+				
+				PyObject* key = PyInt_FromLong(j);
+				PyDict_SetItem(tempDict, key, list);
+				
+				Py_DECREF(key);
+				Py_DECREF(list);
+			}
+			
+			PyDict_SetItemString(self->dict, "translations", tempDict);
+			
+			Py_DECREF(tempDict);
+			
+			tempDict = PyDict_New();
+			
+			for(uint32_t i = 0; i < foreign_languages.size(); i++)
+			{
+				uint32_t size = foreign_languages[i].size();
+				uint32_t j = 0;
+				
+				list = PyList_New(size);
+				
+				for(; j < size; j++)
+					PyList_SET_ITEM(list, j, PyString_FromString(foreign_languages[i][j].c_str()));
+				
+				PyObject* key = PyInt_FromLong(j);
+				PyDict_SetItem(tempDict, key, list);
+				
+				Py_DECREF(key);
+				Py_DECREF(list);
+			}
+			
+			PyDict_SetItemString(self->dict, "foreign_languages", tempDict);
+			
+			Py_DECREF(tempDict);
 			
 			Py_RETURN_TRUE;
 		}
@@ -125,7 +168,14 @@ static PyObject* DF_Translate_Finish(DF_Translate* self, PyObject* args)
 	if(self->tran_Ptr != NULL)
 	{
 		if(self->tran_Ptr->Finish())
+		{
+			if(self->dict != NULL)
+				PyDict_Clear(self->dict);
+			
+			Py_CLEAR(self->dict);
+			
 			Py_RETURN_TRUE;
+		}
 		else
 			Py_RETURN_FALSE;
 	}
@@ -156,14 +206,31 @@ static PyObject* DF_Translate_TranslateName(DF_Translate* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
-
-
 static PyMethodDef DF_Translate_methods[] =
 {
 	{"Start", (PyCFunction)DF_Translate_Start, METH_NOARGS, ""},
 	{"Finish", (PyCFunction)DF_Translate_Finish, METH_NOARGS, ""},
 	{"Translate_Name", (PyCFunction)DF_Translate_TranslateName, METH_VARARGS, ""},
 	{NULL}	//Sentinel
+};
+
+// Getters/Setters
+
+static PyObject* DF_Translate_getDicts(DF_Translate* self, PyObject* args)
+{	
+	if(self->tran_Ptr != NULL)
+	{
+		if(self->dict != NULL)
+			return self->dict;
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyGetSetDef DF_Translate_getterSetters[] =
+{
+    {"dictionaries", (getter)DF_Translate_getDicts, NULL, "dictionaries", NULL},
+    {NULL}  // Sentinel
 };
 
 static PyTypeObject DF_Translate_type =
@@ -198,7 +265,7 @@ static PyTypeObject DF_Translate_type =
     0,		               /* tp_iternext */
     DF_Translate_methods,             /* tp_methods */
     0,                      /* tp_members */
-    0,      /* tp_getset */
+    DF_Translate_getterSetters,      /* tp_getset */
     0,                         /* tp_base */
     0,                         /* tp_dict */
     0,                         /* tp_descr_get */

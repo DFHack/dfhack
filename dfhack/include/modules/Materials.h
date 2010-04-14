@@ -29,6 +29,20 @@ namespace DFHack
         char extract_name[128];
     };
     
+    struct t_creaturecaste
+    {
+        char rawname[128];
+        char singular[128];
+        char plural[128];
+        char adjective[128];
+    };
+    
+    struct t_creaturetype
+    {
+        char rawname[128];
+        vector <t_creaturecaste> castes;
+    };
+    
     class DFHACK_EXPORT Materials
     {
         public:
@@ -45,6 +59,7 @@ namespace DFHack
         
         // TODO: maybe move to creatures?
         bool ReadCreatureTypes (std::vector<t_matgloss> & output);
+        bool ReadCreatureTypesEx (vector<t_creaturetype> & creatures);
         private:
             APIPrivate* d;
     };

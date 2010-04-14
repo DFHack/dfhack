@@ -212,3 +212,34 @@ bool Materials::ReadCreatureTypes (vector<t_matgloss> & creatures)
     return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("creature_type_vector"), creatures );
     return true;
 }
+
+bool Materials::ReadCreatureTypesEx (vector<t_creaturetype> & creatures)
+{
+    DfVector p_races (g_pProcess, d->offset_descriptor->getAddress ("creature_type_vector"), 4);
+    uint32_t castes_vector_offset = d->offset_descriptor->getOffset ("creature_type_caste_vector");
+    uint32_t sizeof_string = d->offset_descriptor->getHexValue ("sizeof_string");
+    uint32_t size = p_races.getSize();
+    uint32_t sizecas = 0;
+    creatures.clear();
+    creatures.reserve (size);
+    for (uint32_t i = 0; i < size;i++)
+    {
+        t_creaturetype mat;
+        g_pProcess->readSTLString (*(uint32_t *) p_races[i], mat.rawname, sizeof(mat.rawname));
+        DfVector p_castes(g_pProcess,(*(uint32_t *) p_races[i]) + castes_vector_offset, 4);
+        sizecas = p_castes.getSize();
+        for (uint32_t j = 0; j < sizecas;j++)
+        {
+            t_creaturecaste caste;
+            uint32_t caste_start = *(uint32_t *)p_castes[j];
+            g_pProcess->readSTLString (caste_start, caste.rawname, sizeof(caste.rawname));
+            g_pProcess->readSTLString (caste_start + sizeof_string, caste.singular, sizeof(caste.singular));
+            g_pProcess->readSTLString (caste_start + 2 * sizeof_string, caste.plural, sizeof(caste.plural));
+            g_pProcess->readSTLString (caste_start + 3 * sizeof_string, caste.adjective, sizeof(caste.adjective));
+            mat.castes.push_back(caste);
+        }
+        creatures.push_back(mat);
+    }
+    return true;
+}
+

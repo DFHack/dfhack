@@ -407,7 +407,7 @@ int main (void)
     {
         DFHack::t_creature temp;
         Creatures->ReadCreature(i,temp);
-        if(string(creaturestypes[temp.race].id) == "DWARF")
+        if(string(creaturestypes[temp.race].id) == "HORSE")
         {
             cout << "index " << i << " ";
             
@@ -415,7 +415,7 @@ int main (void)
             addrs.push_back(temp.origin);
         }
     }
-    //interleave_hex(DF,addrs,200);
+    interleave_hex(DF,addrs,200);
     /*
     uint32_t currentIdx;
     DFHack::t_creature currentCreature;

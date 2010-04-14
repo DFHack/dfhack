@@ -69,11 +69,22 @@ int main (int numargs, const char ** args)
         cout << i << ": " << matgloss[i].id << endl;
     }
     cout << endl << "----==== Creature types ====----" << endl;
-    vector<DFHack::t_matgloss> creature;
-    Materials->ReadCreatureTypes (matgloss);
-    for(uint32_t i = 0; i < matgloss.size();i++)
+    vector<DFHack::t_creaturetype> creature;
+    Materials->ReadCreatureTypesEx (creature);
+    for(uint32_t i = 0; i < creature.size();i++)
     {
-        cout << i << ": " << matgloss[i].id << endl ;
+        cout << i << ": " << creature[i].rawname << endl;
+        vector<DFHack::t_creaturecaste> & castes = creature[i].castes;
+        for(uint32_t j = 0; j < castes.size();j++)
+        {
+            cout << " ["
+            << castes[j].rawname << ":"
+            << castes[j].singular << ":"
+            << castes[j].plural << ":"
+            << castes[j].adjective << "] ";
+            cout << endl;
+        }
+        cout << endl;
     }
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

@@ -1191,9 +1191,10 @@ map_data_1b60_offset          0x1B9c
         just wood, WORLD + 0x54BDC
         <Address name="mat_organics_trees">0x16afd64</Address>
         
-        creature types actually used for creatures, WORLD + 0x54CD0
+        creature types actually used for creatures,
+        WORLD + 0x54CD0
         <Address name="creature_type_vector">0x016AFE58</Address>
-        
+        <Offset name="creature_type_caste_vector">0x138</Offset>
         
         <!--
         NOT used yet
@@ -1370,8 +1371,9 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_side">0X120</Offset>
         <Offset name="creature_soulskill_vector">0X1F4</Offset>
         <Offset name="creature_pickup_equipment_bit">0X21C</Offset>
-        <Offset name="creature_mood">0x238</Offset>
-        <!--<Offset name="creature_pregnancy">0x23C</Offset>-->
+        <!--<Offset name="creature_mood">0x238</Offset>-->
+        <Offset name="creature_pregnancy">0x28C</Offset>
+        <Offset name="creature_pregnancy_ptr">0x290</Offset>
         
         <Offset name="creature_physical">0x464</Offset>
         <!--

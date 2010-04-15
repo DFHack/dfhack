@@ -350,7 +350,7 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 }
 
 
-int main (void)
+int main (int numargs, char ** args)
 {
     DFHack::API DF("Memory.xml");
     try
@@ -365,6 +365,9 @@ int main (void)
         #endif
         return 1;
     }
+    string check = "";
+    if(numargs == 2)
+        check = args[1];
     
     DFHack::Creatures * Creatures = DF.getCreatures();
     DFHack::Materials * Materials = DF.getMaterials();
@@ -407,7 +410,7 @@ int main (void)
     {
         DFHack::t_creature temp;
         Creatures->ReadCreature(i,temp);
-        if(string(creaturestypes[temp.race].id) == "HORSE")
+        if(check.empty() || string(creaturestypes[temp.race].id) == check)
         {
             cout << "index " << i << " ";
             

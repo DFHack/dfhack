@@ -69,10 +69,10 @@ TARGET_LINK_LIBRARIES(dftreedump dfhack)
 ADD_EXECUTABLE(dfspatterdump spatterdump.cpp)
 TARGET_LINK_LIBRARIES(dfspatterdump dfhack)
 
-# catsplosion - Makes every cat pregnant, and almost due...
+# catsplosion - Accelerates pregnancy
 # Author: Zhentar
-# ADD_EXECUTABLE(dfcatsplosion catsplosion.cpp)
-# TARGET_LINK_LIBRARIES(dfcatsplosion dfhack)
+ADD_EXECUTABLE(dfcatsplosion catsplosion.cpp)
+TARGET_LINK_LIBRARIES(dfcatsplosion dfhack)
 
 IF(UNIX)
     SET(CURSES_NEED_WIDE "YES")

@@ -36,7 +36,7 @@ namespace DFHack
         char plural[128];
         char adjective[128];
     };
-    
+    // this doesn't transfer well across the shm gap...
     struct t_creaturetype
     {
         char rawname[128];

@@ -344,7 +344,7 @@ namespace DFHack
         t_attrib recuperation;
         t_attrib disease_resistance;
         int32_t squad_leader_id;
-        uint8_t sex;
+        uint8_t sex; // really a caste
         uint32_t pregnancy_timer; //Countdown timer to giving birth
         bool has_default_soul;
         t_soul defaultSoul;

@@ -33,29 +33,33 @@ static PyObject* CreatureFlags2_type = NULL;
 static PyObject* DesignationFlags_type = NULL;
 static PyObject* OccupancyFlags_type = NULL;
 static PyObject* ItemFlags_type = NULL;
+static PyObject* BlockFlags_type = NULL;
 
 static PyObject* TypesModule = NULL;
 static PyObject* Note_type = NULL;
 static PyObject* Construction_type = NULL;
 static PyObject* Name_type = NULL;
+static PyObject* MapBlock40d_type = NULL;
 
 static void DoImports()
 {
 	if(TypesModule == NULL)
 	{
 		FlagsModule = PyImport_ImportModule("pydfhackflags");
-		
+				
 		CreatureFlags1_type = PyObject_GetAttrString(FlagsModule, "CreatureFlags1");
 		CreatureFlags2_type = PyObject_GetAttrString(FlagsModule, "CreatureFlags2");
 		DesignationFlags_type = PyObject_GetAttrString(FlagsModule, "DesignationFlags");
 		OccupancyFlags_type = PyObject_GetAttrString(FlagsModule, "OccupancyFlags");
 		ItemFlags_type = PyObject_GetAttrString(FlagsModule, "ItemFlags");
+		BlockFlags_type = PyObject_GetAttrString(FlagsModule, "BlockFlags");
 		
 		TypesModule = PyImport_ImportModule("pydftypes");
-		
+
 		Note_type = PyObject_GetAttrString(TypesModule, "Note");
 		Construction_type = PyObject_GetAttrString(TypesModule, "Construction");
 		Name_type = PyObject_GetAttrString(TypesModule, "Name");
+		MapBlock40d_type = PyObject_GetAttrString(TypesModule, "MapBlock40d");
 	}
 }
 

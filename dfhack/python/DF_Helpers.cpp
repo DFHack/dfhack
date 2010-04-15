@@ -29,12 +29,14 @@ distribution.
 #include <stdio.h>
 #include <string.h>
 #include "DFTypes.h"
+#include "DF_Imports.cpp"
 
 using namespace DFHack;
 
 #include "modules/Creatures.h"
 
 #define DICTADD(d, name, item) PyDict_SetItemString(d, name, item); Py_DECREF(item)
+#define OBJSET(o, name, item) PyObject_SetAttrString(o, name, item); Py_DECREF(item)
 
 static PyObject* BuildMatglossPair(DFHack::t_matglossPair& matgloss)
 {
@@ -92,60 +94,53 @@ static PyObject* BuildLike(DFHack::t_like& like)
 	return Py_BuildValue("OOO", item, BuildMatglossPair(like.material), PyBool_FromLong((int)like.active));
 }
 
-//PyDict_SetItem and PyDict_SetItemString don't steal references, so this had to get a bit more complicated...
 static PyObject* BuildNote(DFHack::t_note& note)
 {
-	PyObject* noteDict = PyDict_New();
-	PyObject* temp;
-	
-	temp = PyString_FromFormat("%c", note.symbol);
-	DICTADD(noteDict, "symbol", temp);
-	
-	temp = Py_BuildValue("II", note.foreground, note.background);
-	DICTADD(noteDict, "fore_back", temp);
+	PyObject* noteObj;
+	PyObject *args, *name, *position;
 	
 	if(note.name[0])
-		temp = PyString_FromString(note.name);
+		name = PyString_FromString(note.name);
 	else
-		PyString_FromString("");
+		name = PyString_FromString("");
 	
-	DICTADD(noteDict, "name", temp);
+	position = Py_BuildValue("III", note.x, note.y, note.z);
 	
-	temp = Py_BuildValue("III", note.x, note.y, note.z);
-	DICTADD(noteDict, "position", temp);
+	args = Py_BuildValue("cIIsO", note.symbol, note.foreground, note.background, name, position);
 	
-	return noteDict;
+	noteObj = PyObject_CallObject(Note_type, args);
+	
+	return noteObj;
 }
 
-//same here...reference counting is kind of a pain, assuming I'm even doing it right...
 static PyObject* BuildName(DFHack::t_name& name)
 {
-	PyObject* nameDict;
+	PyObject* nameObj;
 	PyObject *wordList, *speechList;
 	PyObject* temp;
 	int wordCount = 7;
 	
-	nameDict = PyDict_New();
+	nameObj = PyObject_CallObject(Name_type, NULL);
 	
 	if(name.first_name[0])
 		temp = PyString_FromString(name.first_name);
 	else
 		temp = PyString_FromString("");
 	
-	DICTADD(nameDict, "first_name", temp);
+	OBJSET(nameObj, "first_name", temp);
 	
 	if(name.nickname[0])
 		temp = PyString_FromString(name.nickname);
 	else
 		temp = PyString_FromString("");
 	
-	DICTADD(nameDict, "nickname", temp);
+	OBJSET(nameObj, "nickname", temp);
 	
 	temp = PyInt_FromLong(name.language);
-	DICTADD(nameDict, "language", temp);
+	OBJSET(nameObj, "language", temp);
 	
 	temp = PyBool_FromLong((int)name.has_name);
-	DICTADD(nameDict, "has_name", temp);
+	OBJSET(nameObj, "has_name", temp);
 	
 	wordList = PyList_New(wordCount);
 	speechList = PyList_New(wordCount);
@@ -156,13 +151,13 @@ static PyObject* BuildName(DFHack::t_name& name)
 		PyList_SET_ITEM(speechList, i, PyInt_FromLong(name.parts_of_speech[i]));
 	}
 	
-	DICTADD(nameDict, "words", wordList);
-	DICTADD(nameDict, "parts_of_speech", speechList);
+	OBJSET(nameObj, "words", wordList);
+	OBJSET(nameObj, "parts_of_speech", speechList);
 	
-	return nameDict;
+	return nameObj;
 }
 
-static DFHack::t_name ReverseBuildName(PyObject* nameDict)
+static DFHack::t_name ReverseBuildName(PyObject* nameObj)
 {
 	PyObject *temp, *listTemp;
 	int boolTemp, arrLength;
@@ -170,10 +165,10 @@ static DFHack::t_name ReverseBuildName(PyObject* nameDict)
 	char* strTemp;
 	DFHack::t_name name;
 	
-	temp = PyDict_GetItemString(nameDict, "language");
+	temp = PyObject_GetAttrString(nameObj, "language");
 	name.language = (uint32_t)PyInt_AsLong(temp);
 	
-	temp = PyDict_GetItemString(nameDict, "has_name");
+	temp = PyObject_GetAttrString(nameObj, "has_name");
 	
 	boolTemp = (int)PyInt_AsLong(temp);
 	
@@ -183,7 +178,7 @@ static DFHack::t_name ReverseBuildName(PyObject* nameDict)
 		name.has_name = false;
 	
 	//I seriously doubt the name arrays will change length, but why take chances?
-	listTemp = PyDict_GetItemString(nameDict, "words");
+	listTemp = PyObject_GetAttrString(nameObj, "words");
 	
 	arrLength = sizeof(name.words) / sizeof(uint32_t);
 	listLength = PyList_Size(listTemp);
@@ -194,7 +189,7 @@ static DFHack::t_name ReverseBuildName(PyObject* nameDict)
 	for(int i = 0; i < arrLength; i++)
 		name.words[i] = (uint32_t)PyInt_AsLong(PyList_GetItem(listTemp, i));
 	
-	listTemp = PyDict_GetItemString(nameDict, "parts_of_speech");
+	listTemp = PyObject_GetAttrString(nameObj, "parts_of_speech");
 	
 	arrLength = sizeof(name.parts_of_speech) / sizeof(uint16_t);
 	listLength = PyList_Size(listTemp);
@@ -205,7 +200,7 @@ static DFHack::t_name ReverseBuildName(PyObject* nameDict)
 	for(int i = 0; i < arrLength; i++)
 		name.parts_of_speech[i] = (uint16_t)PyInt_AsLong(PyList_GetItem(listTemp, i));
 	
-	temp = PyDict_GetItemString(nameDict, "first_name");
+	temp = PyObject_GetAttrString(nameObj, "first_name");
 	strLength = PyString_Size(temp);
 	strTemp = PyString_AsString(temp);
 	
@@ -220,7 +215,7 @@ static DFHack::t_name ReverseBuildName(PyObject* nameDict)
 		name.first_name[strLength] = '\0';
 	}
 	
-	temp = PyDict_GetItemString(nameDict, "nickname");
+	temp = PyObject_GetAttrString(nameObj, "nickname");
 	strLength = PyString_Size(temp);
 	strTemp = PyString_AsString(temp);
 	

@@ -1,48 +1,5 @@
 # -*- coding: utf-8 -*-
-from pydfhack import *
-from ctypes import *
-
-class DFAPI(API):
-    def Read_Designations(self, x, y, z):
-        temp = API.Read_Designations(self, x, y, z)
-        
-        d_list = []
-
-        for i in temp:
-            d = []
-
-            for j in i:
-                d.append(DesignationFlags(j))
-
-            d_list.append(d)
-
-        return d_list
-    def Write_Designations(self, x, y, z, d_list):
-        temp = []
-
-        for i in d_list:
-            t = []
-
-            for j in i:
-                t.append(j.whole)
-
-            temp.append(t)
-
-        API.Write_Designations(self, x, y, z, temp)
-    def Read_Occupancy(self, x, y, z):
-        temp = API.Read_Occupancy(self, x, y, z)
-        
-        o_list = []
-
-        for i in temp:
-            o = []
-
-            for j in i:
-                o.append(OccupancyFlags(j))
-
-            o_list.append(o)
-
-        return o_list
+from ctypes import Structure, Union
 
 class DesignationStruct(Structure):
     _fields_ = [("flow_size", c_uint, 3),

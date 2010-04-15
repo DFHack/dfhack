@@ -50,8 +50,8 @@ TARGET_LINK_LIBRARIES(dfdigger dfhack)
 
 # a magma creation tool
 # Author: Aleric
-ADD_EXECUTABLE(dfmagma_create magma_create.cpp)
-TARGET_LINK_LIBRARIES(dfmagma_create dfhack)
+ADD_EXECUTABLE(dfliquids liquids.cpp)
+TARGET_LINK_LIBRARIES(dfliquids dfhack)
 
 IF(UNIX)
 install(TARGETS

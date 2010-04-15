@@ -157,6 +157,19 @@ static PyObject* BuildTileTypes40d(DFHack::tiletypes40d& types)
 	return list;
 }
 
+static void ReverseBuildTileTypes40d(PyObject* list, DFHack::tiletypes40d t_types)
+{
+	PyObject* innerList;
+	
+	for(int i = 0; i < 16; i++)
+	{
+		innerList = PyList_GetItem(list, i);
+		
+		for(int j = 0; j < 16; j++)
+			t_types[i][j] = (uint16_t)PyInt_AsLong(PyList_GetItem(innerList, j));
+	}
+}
+
 static PyObject* BuildOccupancies40d(DFHack::occupancies40d& occ)
 {
 	PyObject *list, *temp, *args;
@@ -172,12 +185,27 @@ static PyObject* BuildOccupancies40d(DFHack::occupancies40d& occ)
 			args = Py_BuildValue("(I)", occ[i][j].whole);
 			
 			PyList_SET_ITEM(temp, j, PyObject_CallObject(OccupancyFlags_type, args));
+			
+			Py_DECREF(args);
 		}
 		
 		PyList_SET_ITEM(list, i, temp);
 	}
 	
 	return list;
+}
+
+static void ReverseBuildOccupancies40d(PyObject* list, DFHack::occupancies40d occ)
+{
+	PyObject* innerList;
+	
+	for(int i = 0; i < 16; i++)
+	{
+		innerList = PyList_GetItem(list, i);
+		
+		for(int j = 0; j < 16; j++)
+			occ[i][j].whole = (uint32_t)PyInt_AsLong(PyList_GetItem(innerList, j));
+	}
 }
 
 static PyObject* BuildDesignations40d(DFHack::designations40d& des)
@@ -194,13 +222,28 @@ static PyObject* BuildDesignations40d(DFHack::designations40d& des)
 		{
 			args = Py_BuildValue("(I)", des[i][j].whole);
 			
-			PyList_SET_ITEM(temp, j, PyObject_CallObject(DesignationFlags_type, args));
+			PyList_SET_ITEM(temp, j, PyObject_Call(DesignationFlags_type, args, NULL));
+			
+			Py_DECREF(args);
 		}
 		
 		PyList_SET_ITEM(list, i, temp);
 	}
 	
 	return list;
+}
+
+static void ReverseBuildDesignations40d(PyObject* list, DFHack::designations40d& des)
+{
+	PyObject* innerList;
+	
+	for(int i = 0; i < 16; i++)
+	{
+		innerList = PyList_GetItem(list, i);
+		
+		for(int j = 0; j < 16; j++)
+			des[i][j].whole = (uint32_t)PyInt_AsLong(PyList_GET_ITEM(innerList, j));
+	}
 }
 
 static PyObject* BuildBiomeIndices40d(DFHack::biome_indices40d& idx)
@@ -213,6 +256,12 @@ static PyObject* BuildBiomeIndices40d(DFHack::biome_indices40d& idx)
 		PyList_SET_ITEM(list, i, PyInt_FromLong(idx[i]));
 	
 	return list;
+}
+
+static void ReverseBuildBiomeIndices40d(PyObject* list, DFHack::biome_indices40d bio)
+{
+	for(int i = 0; i < 16; i++)
+		bio[i] = (uint8_t)PyInt_AsLong(PyList_GetItem(list, i));
 }
 
 static PyObject* BuildMapBlock40d(DFHack::mapblock40d& block)
@@ -340,6 +389,21 @@ static PyObject* DF_Map_IsValidBlock(DF_Map* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_Map_GetBlockPtr(DF_Map* self, PyObject* args)
+{
+	uint32_t x, y, z;
+	
+	if(self->m_Ptr != NULL)
+	{
+		if(!PyArg_ParseTuple(args, "III", &x, &y, &z))
+			return NULL;
+		
+		return PyInt_FromLong(self->m_Ptr->getBlockPtr(x, y, z));
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyObject* DF_Map_ReadBlock40d(DF_Map* self, PyObject* args)
 {
 	uint32_t x, y, z;
@@ -378,6 +442,29 @@ static PyObject* DF_Map_ReadTileTypes(DF_Map* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_Map_WriteTileTypes(DF_Map* self, PyObject* args)
+{
+	PyObject* tileList;
+	uint32_t x, y, z;
+	
+	if(self->m_Ptr != NULL)
+	{
+		if(!PyArg_ParseTuple(args, "IIIO", &x, &y, &z, &tileList))
+			return NULL;
+		
+		tiletypes40d t_types;
+		
+		ReverseBuildTileTypes40d(tileList, t_types);
+		
+		if(self->m_Ptr->WriteTileTypes(x, y, z, &t_types))
+			Py_RETURN_TRUE;
+		else
+			Py_RETURN_FALSE;
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyObject* DF_Map_ReadDesignations(DF_Map* self, PyObject* args)
 {
 	uint32_t x, y, z;
@@ -387,10 +474,33 @@ static PyObject* DF_Map_ReadDesignations(DF_Map* self, PyObject* args)
 		if(!PyArg_ParseTuple(args, "III", &x, &y, &z))
 			return NULL;
 		
-		designations40d des;
+		DFHack::designations40d des;
 		
 		if(self->m_Ptr->ReadDesignations(x, y, z, &des))
 			return BuildDesignations40d(des);
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_Map_WriteDesignations(DF_Map* self, PyObject* args)
+{
+	PyObject* desList;
+	uint32_t x, y, z;
+	
+	if(self->m_Ptr != NULL)
+	{
+		if(!PyArg_ParseTuple(args, "IIIO", &x, &y, &z, &desList))
+			return NULL;
+		
+		designations40d des;
+		
+		ReverseBuildDesignations40d(desList, des);
+		
+		if(self->m_Ptr->WriteDesignations(x, y, z, &des))
+			Py_RETURN_TRUE;
+		else
+			Py_RETURN_FALSE;
 	}
 	
 	Py_RETURN_NONE;
@@ -409,6 +519,29 @@ static PyObject* DF_Map_ReadOccupancy(DF_Map* self, PyObject* args)
 		
 		if(self->m_Ptr->ReadOccupancy(x, y, z, &occ))
 			return BuildOccupancies40d(occ);
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_Map_WriteOccupancy(DF_Map* self, PyObject* args)
+{
+	PyObject* occList;
+	uint32_t x, y, z;
+	
+	if(self->m_Ptr != NULL)
+	{
+		if(!PyArg_ParseTuple(args, "IIIO", &x, &y, &z, &occList))
+			return NULL;
+		
+		occupancies40d occ;
+		
+		ReverseBuildOccupancies40d(occList, occ);
+		
+		if(self->m_Ptr->WriteOccupancy(x, y, z, &occ))
+			Py_RETURN_TRUE;
+		else
+			Py_RETURN_FALSE;
 	}
 	
 	Py_RETURN_NONE;
@@ -435,6 +568,30 @@ static PyObject* DF_Map_ReadDirtyBit(DF_Map* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_Map_WriteDirtyBit(DF_Map* self, PyObject* args)
+{
+	uint32_t x, y, z, b;
+	bool bit;
+	
+	if(self->m_Ptr != NULL)
+	{
+		if(!PyArg_ParseTuple(args, "IIIi", &x, &y, &z, &b))
+			return NULL;
+		
+		if(b != 0)
+			bit = true;
+		else
+			bit = false;
+		
+		if(self->m_Ptr->WriteDirtyBit(x, y, z, bit))
+			Py_RETURN_TRUE;
+		else
+			Py_RETURN_FALSE;
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyObject* DF_Map_ReadBlockFlags(DF_Map* self, PyObject* args)
 {
 	uint32_t x, y, z;
@@ -448,6 +605,28 @@ static PyObject* DF_Map_ReadBlockFlags(DF_Map* self, PyObject* args)
 		
 		if(self->m_Ptr->ReadBlockFlags(x, y, z, flags))
 			return PyInt_FromLong(flags.whole);
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_Map_WriteBlockFlags(DF_Map* self, PyObject* args)
+{
+	uint32_t x, y, z, whole;
+	
+	if(self->m_Ptr != NULL)
+	{
+		if(!PyArg_ParseTuple(args, "IIII", &x, &y, &z, &whole))
+			return NULL;
+		
+		t_blockflags blockFlags;
+		
+		blockFlags.whole = whole;
+		
+		if(self->m_Ptr->WriteBlockFlags(x, y, z, blockFlags))
+			Py_RETURN_TRUE;
+		else
+			Py_RETURN_FALSE;
 	}
 	
 	Py_RETURN_NONE;
@@ -478,10 +657,15 @@ static PyMethodDef DF_Map_methods[] =
 	{"Is_Valid_Block", (PyCFunction)DF_Map_IsValidBlock, METH_VARARGS, ""},
 	{"Read_Block_40d", (PyCFunction)DF_Map_ReadBlock40d, METH_VARARGS, ""},
 	{"Read_Tile_Types", (PyCFunction)DF_Map_ReadTileTypes, METH_VARARGS, ""},
+	{"Write_Tile_Types", (PyCFunction)DF_Map_WriteTileTypes, METH_VARARGS, ""},
 	{"Read_Designations", (PyCFunction)DF_Map_ReadDesignations, METH_VARARGS, ""},
+	{"Write_Designations", (PyCFunction)DF_Map_WriteDesignations, METH_VARARGS, ""},
 	{"Read_Occupancy", (PyCFunction)DF_Map_ReadOccupancy, METH_VARARGS, ""},
+	{"Write_Occupancy", (PyCFunction)DF_Map_WriteOccupancy, METH_VARARGS, ""},
 	{"Read_Dirty_Bit", (PyCFunction)DF_Map_ReadDirtyBit, METH_VARARGS, ""},
+	{"Write_Dirty_Bit", (PyCFunction)DF_Map_WriteDirtyBit, METH_VARARGS, ""},
 	{"Read_Block_Flags", (PyCFunction)DF_Map_ReadBlockFlags, METH_VARARGS, ""},
+	{"Write_Block_Flags", (PyCFunction)DF_Map_WriteBlockFlags, METH_VARARGS, ""},
 	{"Read_Region_Offsets", (PyCFunction)DF_Map_ReadRegionOffsets, METH_VARARGS, ""},
 	{NULL}	//Sentinel
 };
@@ -496,7 +680,7 @@ static PyObject* DF_Map_getSize(DF_Map* self, void* closure)
 	{
 		self->m_Ptr->getSize(x, y, z);
 		
-		return PyTuple_Pack(3, x, y, z);
+		return Py_BuildValue("III", x, y, z);
 	}
 	
 	Py_RETURN_NONE;
@@ -504,7 +688,7 @@ static PyObject* DF_Map_getSize(DF_Map* self, void* closure)
 
 static PyGetSetDef DF_Map_getterSetters[] =
 {
-    {"size", (getter)DF_Map_getSize, NULL, "dictionaries", NULL},
+    {"size", (getter)DF_Map_getSize, NULL, "size", NULL},
     {NULL}  // Sentinel
 };
 

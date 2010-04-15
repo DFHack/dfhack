@@ -32,6 +32,7 @@ distribution.
 using namespace std;
 
 #include "modules/Maps.h"
+#include "DF_Imports.cpp"
 #include "DF_Helpers.cpp"
 
 using namespace DFHack;
@@ -58,7 +59,7 @@ static PyObject* BuildVein(DFHack::t_vein& v)
 	temp = PyList_New(16);
 	
 	for(int i = 0; i < 16; i++)
-		PyList_SET_ITEM(temp, i, PyInt_FromLong(v.assignment[i]);
+		PyList_SET_ITEM(temp, i, PyInt_FromLong(v.assignment[i]));
 	
 	DICTADD(t_dict, "assignment", temp);
 	
@@ -85,7 +86,7 @@ static PyObject* BuildFrozenLiquidVein(DFHack::t_frozenliquidvein& v)
 		temp = PyList_New(16);
 		
 		for(int j = 0; j < 16; j++)
-			PyList_SET_ITEM(temp, j, PyInt_FromLong(v.tiles[i][j]);
+			PyList_SET_ITEM(temp, j, PyInt_FromLong(v.tiles[i][j]));
 		
 		PyList_SET_ITEM(list, i, temp);
 	}
@@ -127,7 +128,7 @@ static PyObject* BuildSpatterVein(DFHack::t_spattervein& v)
 		temp = PyList_New(16);
 		
 		for(int j = 0; j < 16; j++)
-			PyList_SET_ITEM(temp, j, PyInt_FromLong(v.intensity[i][j]);
+			PyList_SET_ITEM(temp, j, PyInt_FromLong(v.intensity[i][j]));
 		
 		PyList_SET_ITEM(list, i, temp);
 	}
@@ -158,7 +159,7 @@ static PyObject* BuildTileTypes40d(DFHack::tiletypes40d& types)
 
 static PyObject* BuildOccupancies40d(DFHack::occupancies40d& occ)
 {
-	PyObject *list, *temp;
+	PyObject *list, *temp, *args;
 	
 	list = PyList_New(16);
 	
@@ -167,7 +168,11 @@ static PyObject* BuildOccupancies40d(DFHack::occupancies40d& occ)
 		temp = PyList_New(16);
 		
 		for(int j = 0; j < 16; j++)
-			PyList_SET_ITEM(temp, j, PyInt_FromLong(occ[i][j].whole));
+		{
+			args = Py_BuildValue("(I)", occ[i][j].whole);
+			
+			PyList_SET_ITEM(temp, j, PyObject_CallObject(OccupancyFlags_type, args));
+		}
 		
 		PyList_SET_ITEM(list, i, temp);
 	}
@@ -177,7 +182,7 @@ static PyObject* BuildOccupancies40d(DFHack::occupancies40d& occ)
 
 static PyObject* BuildDesignations40d(DFHack::designations40d& des)
 {
-	PyObject *list, *temp;
+	PyObject *list, *temp, *args;
 	
 	list = PyList_New(16);
 	
@@ -186,7 +191,11 @@ static PyObject* BuildDesignations40d(DFHack::designations40d& des)
 		temp = PyList_New(16);
 		
 		for(int j = 0; j < 16; j++)
-			PyList_SET_ITEM(temp, j, PyInt_FromLong(des[i][j].whole));
+		{
+			args = Py_BuildValue("(I)", des[i][j].whole);
+			
+			PyList_SET_ITEM(temp, j, PyObject_CallObject(DesignationFlags_type, args));
+		}
 		
 		PyList_SET_ITEM(list, i, temp);
 	}
@@ -201,37 +210,40 @@ static PyObject* BuildBiomeIndices40d(DFHack::biome_indices40d& idx)
 	list = PyList_New(16);
 	
 	for(int i = 0; i < 16; i++)
-		PyList_SET_ITEM(list, i, PyInt_FromLong(idx[i]);
+		PyList_SET_ITEM(list, i, PyInt_FromLong(idx[i]));
 	
 	return list;
 }
 
 static PyObject* BuildMapBlock40d(DFHack::mapblock40d& block)
 {
-	PyObject* t_dict;
-	PyObject* temp;
+	PyObject *b_Obj;
+	PyObject *temp, *args;
 	
-	t_dict = PyDict_New();
+	b_Obj = PyObject_CallObject(MapBlock40d_type, NULL);
 	
 	temp = BuildTileTypes40d(block.tiletypes);
-	DICTADD(t_dict, "tiletypes", temp);
+	OBJSET(b_Obj, "tiletypes", temp);
 	
 	temp = BuildDesignations40d(block.designation);
-	DICTADD(t_dict, "designation", temp);
+	OBJSET(b_Obj, "designation", temp);
 	
 	temp = BuildOccupancies40d(block.occupancy);
-	DICTADD(t_dict, "occupancy", temp);
+	OBJSET(b_Obj, "occupancy", temp);
 	
-	temp = BuildBiomeIdices40d(block.biome_indices);
-	DICTADD(t_dict, "biome_indices", temp);
+	temp = BuildBiomeIndices40d(block.biome_indices);
+	OBJSET(b_Obj, "biome_indices", temp);
 	
 	temp = PyInt_FromLong(block.origin);
-	DICTADD(t_dict, "origin", temp);
+	OBJSET(b_Obj, "origin", temp);
+	
+	args = Py_BuildValue("(I)", block.blockflags.whole);
+	temp = PyObject_CallObject(BlockFlags_type, args);
 	
 	temp = PyInt_FromLong(block.blockflags.whole);
-	DICTADD(t_dict, "_blockflags", temp);
+	OBJSET(b_Obj, "blockflags", temp);
 	
-	return t_dict;
+	return b_Obj;
 }
 
 struct DF_Map
@@ -328,6 +340,26 @@ static PyObject* DF_Map_IsValidBlock(DF_Map* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_Map_ReadBlock40d(DF_Map* self, PyObject* args)
+{
+	uint32_t x, y, z;
+	
+	if(self->m_Ptr != NULL)
+	{
+		if(!PyArg_ParseTuple(args, "III", &x, &y, &z))
+			return NULL;
+		
+		mapblock40d mapblock;
+		
+		if(self->m_Ptr->ReadBlock40d(x, y, z, &mapblock))
+			Py_RETURN_TRUE;
+		else
+			Py_RETURN_FALSE;
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyObject* DF_Map_ReadTileTypes(DF_Map* self, PyObject* args)
 {
 	uint32_t x, y, z;
@@ -392,7 +424,7 @@ static PyObject* DF_Map_ReadDirtyBit(DF_Map* self, PyObject* args)
 		if(!PyArg_ParseTuple(args, "III", &x, &y, &z))
 			return NULL;
 		
-		self->m_Ptr->ReadDirtyBit(x, y, z, &bit)
+		self->m_Ptr->ReadDirtyBit(x, y, z, bit);
 		
 		if(bit)
 			Py_RETURN_TRUE;
@@ -414,7 +446,7 @@ static PyObject* DF_Map_ReadBlockFlags(DF_Map* self, PyObject* args)
 		
 		t_blockflags flags;
 		
-		if(self->m_Ptr->ReadBlockFlags(x, y, z, &flags))
+		if(self->m_Ptr->ReadBlockFlags(x, y, z, flags))
 			return PyInt_FromLong(flags.whole);
 	}
 	
@@ -439,6 +471,21 @@ static PyObject* DF_Map_ReadRegionOffsets(DF_Map* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
+static PyMethodDef DF_Map_methods[] =
+{
+	{"Start", (PyCFunction)DF_Map_Start, METH_NOARGS, ""},
+	{"Finish", (PyCFunction)DF_Map_Finish, METH_NOARGS, ""},
+	{"Is_Valid_Block", (PyCFunction)DF_Map_IsValidBlock, METH_VARARGS, ""},
+	{"Read_Block_40d", (PyCFunction)DF_Map_ReadBlock40d, METH_VARARGS, ""},
+	{"Read_Tile_Types", (PyCFunction)DF_Map_ReadTileTypes, METH_VARARGS, ""},
+	{"Read_Designations", (PyCFunction)DF_Map_ReadDesignations, METH_VARARGS, ""},
+	{"Read_Occupancy", (PyCFunction)DF_Map_ReadOccupancy, METH_VARARGS, ""},
+	{"Read_Dirty_Bit", (PyCFunction)DF_Map_ReadDirtyBit, METH_VARARGS, ""},
+	{"Read_Block_Flags", (PyCFunction)DF_Map_ReadBlockFlags, METH_VARARGS, ""},
+	{"Read_Region_Offsets", (PyCFunction)DF_Map_ReadRegionOffsets, METH_VARARGS, ""},
+	{NULL}	//Sentinel
+};
+
 // Getter/Setter
 
 static PyObject* DF_Map_getSize(DF_Map* self, void* closure)
@@ -454,5 +501,54 @@ static PyObject* DF_Map_getSize(DF_Map* self, void* closure)
 	
 	Py_RETURN_NONE;
 }
+
+static PyGetSetDef DF_Map_getterSetters[] =
+{
+    {"size", (getter)DF_Map_getSize, NULL, "dictionaries", NULL},
+    {NULL}  // Sentinel
+};
+
+static PyTypeObject DF_Map_type =
+{
+    PyObject_HEAD_INIT(NULL)
+    0,                         /*ob_size*/
+    "pydfhack.Map",             /*tp_name*/
+    sizeof(DF_Map), /*tp_basicsize*/
+    0,                         /*tp_itemsize*/
+    (destructor)DF_Map_dealloc,                         /*tp_dealloc*/
+    0,                         /*tp_print*/
+    0,                         /*tp_getattr*/
+    0,                         /*tp_setattr*/
+    0,                         /*tp_compare*/
+    0,                         /*tp_repr*/
+    0,                         /*tp_as_number*/
+    0,                         /*tp_as_sequence*/
+    0,                         /*tp_as_mapping*/
+    0,                         /*tp_hash */
+    0,                         /*tp_call*/
+    0,                         /*tp_str*/
+    0,                         /*tp_getattro*/
+    0,                         /*tp_setattro*/
+    0,                         /*tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,        /*tp_flags*/
+    "pydfhack Map objects",           /* tp_doc */
+    0,		               /* tp_traverse */
+    0,		               /* tp_clear */
+    0,		               /* tp_richcompare */
+    0,		               /* tp_weaklistoffset */
+    0,		               /* tp_iter */
+    0,		               /* tp_iternext */
+    DF_Map_methods,             /* tp_methods */
+    0,                      /* tp_members */
+    DF_Map_getterSetters,      /* tp_getset */
+    0,                         /* tp_base */
+    0,                         /* tp_dict */
+    0,                         /* tp_descr_get */
+    0,                         /* tp_descr_set */
+    0,                         /* tp_dictoffset */
+    (initproc)DF_Map_init,      /* tp_init */
+    0,                         /* tp_alloc */
+    DF_Map_new,                 /* tp_new */
+};
 
 #endif

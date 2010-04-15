@@ -8,3 +8,6 @@ class Name(object):
 
 class Soul(object):
     pass
+
+class MapBlock40d(object):
+    pass

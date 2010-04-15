@@ -96,6 +96,12 @@ PyMODINIT_FUNC initpydfhack(void)
 	if(PyType_Ready(&DF_Construction_type) < 0)
 		return;
 	
+	if(PyType_Ready(&DF_Map_type) < 0)
+		return;
+	
+	if(PyType_Ready(&DF_GUI_type) < 0)
+		return;
+	
 	module = Py_InitModule3("pydfhack", module_methods, "pydfhack extension module");
 	
 	Py_INCREF(&DF_API_type);
@@ -106,6 +112,10 @@ PyMODINIT_FUNC initpydfhack(void)
 	Py_INCREF(&DF_CreatureManager_type);
 	Py_INCREF(&DF_Translate_type);
 	Py_INCREF(&DF_Vegetation_type);
+	Py_INCREF(&DF_Building_type);
+	Py_INCREF(&DF_Construction_type);
+	Py_INCREF(&DF_Map_type);
+	Py_INCREF(&DF_GUI_type);
 	
 	PyModule_AddObject(module, "API", (PyObject*)&DF_API_type);
 	PyModule_AddObject(module, "MemInfo", (PyObject*)&DF_MemInfo_type);
@@ -116,7 +126,10 @@ PyMODINIT_FUNC initpydfhack(void)
 	PyModule_AddObject(module, "Translate", (PyObject*)&DF_Translate_type);
 	PyModule_AddObject(module, "Vegetation", (PyObject*)&DF_Vegetation_type);
 	PyModule_AddObject(module, "Building", (PyObject*)&DF_Building_type);
-	PyModule_AddObject(module, "Construction", (PyObject*)&DF_Construction_type);
+	PyModule_AddObject(module, "ConstructionManager", (PyObject*)&DF_Construction_type);
+	PyModule_AddObject(module, "Map", (PyObject*)&DF_Map_type);
+	PyModule_AddObject(module, "GUI", (PyObject*)&DF_GUI_type);
+	
 	
 	DoImports();
 }

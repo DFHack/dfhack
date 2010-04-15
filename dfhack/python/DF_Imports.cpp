@@ -27,24 +27,35 @@ distribution.
 
 #include "Python.h"
 
-static PyObject* TypesModule = NULL;
+static PyObject* FlagsModule = NULL;
 static PyObject* CreatureFlags1_type = NULL;
 static PyObject* CreatureFlags2_type = NULL;
 static PyObject* DesignationFlags_type = NULL;
 static PyObject* OccupancyFlags_type = NULL;
 static PyObject* ItemFlags_type = NULL;
 
+static PyObject* TypesModule = NULL;
+static PyObject* Note_type = NULL;
+static PyObject* Construction_type = NULL;
+static PyObject* Name_type = NULL;
+
 static void DoImports()
 {
 	if(TypesModule == NULL)
 	{
+		FlagsModule = PyImport_ImportModule("pydfhackflags");
+		
+		CreatureFlags1_type = PyObject_GetAttrString(FlagsModule, "CreatureFlags1");
+		CreatureFlags2_type = PyObject_GetAttrString(FlagsModule, "CreatureFlags2");
+		DesignationFlags_type = PyObject_GetAttrString(FlagsModule, "DesignationFlags");
+		OccupancyFlags_type = PyObject_GetAttrString(FlagsModule, "OccupancyFlags");
+		ItemFlags_type = PyObject_GetAttrString(FlagsModule, "ItemFlags");
+		
 		TypesModule = PyImport_ImportModule("pydftypes");
 		
-		CreatureFlags1_type = PyObject_GetAttrString(TypesModule, "CreatureFlags1");
-		CreatureFlags2_type = PyObject_GetAttrString(TypesModule, "CreatureFlags2");
-		DesignationFlags_type = PyObject_GetAttrString(TypesModule, "DesignationFlags");
-		OccupancyFlags_type = PyObject_GetAttrString(TypesModule, "OccupancyFlags");
-		ItemFlags_type = PyObject_GetAttrString(TypesModule, "ItemFlags");
+		Note_type = PyObject_GetAttrString(TypesModule, "Note");
+		Construction_type = PyObject_GetAttrString(TypesModule, "Construction");
+		Name_type = PyObject_GetAttrString(TypesModule, "Name");
 	}
 }
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ctypes import Structure, Union
+from ctypes import Structure, Union, c_uint
 
 class DesignationStruct(Structure):
     _fields_ = [("flow_size", c_uint, 3),
@@ -29,7 +29,7 @@ class DesignationFlags(Union):
     def __init__(self, initial = 0):
             self.whole = initial
 
-class OccupancyStruct(Strucure):
+class OccupancyStruct(Structure):
     _fields_ = [("building", c_uint, 3),
                 ("unit", c_uint, 1),
                 ("unit_grounded", c_uint, 1),
@@ -179,3 +179,17 @@ traffic_types = { "normal" : 0,
                   "low" : 1,
                   "high" : 2,
                   "restricted" : 3 }
+
+class BlockFlagStruct(Structure):
+    _fields_ = [("designated", c_uint, 1),
+                    ("unk_1", c_uint, 1),
+                    ("liquid_1", c_uint, 1),
+                    ("liquid_2", c_uint, 1),
+                    ("unk_2", c_uint, 28)]
+
+class BlockFlags(Union):
+    _fields_ = [("whole", c_uint, 32),
+                    ("bits", BlockFlagStruct)]
+    
+    def __init__(self, inital = 0):
+        self.whole = initial

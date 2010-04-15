@@ -124,8 +124,8 @@ class Block
         }
         return true;
     }
-    bool valid;
-    bool dirty;
+    volatile bool valid;
+    volatile bool dirty;
     DFHack::Maps * m;
     DFHack::mapblock40d raw;
     uint32_t x;
@@ -173,9 +173,13 @@ class Layer
         }
         else
         {
-            Block * nblo = new Block(Maps,blockcoord.x,blockcoord.y,z);
-            blocks[blockcoord] = nblo;
-            return nblo;
+            if(blockcoord.x < x_bmax && blockcoord.y < y_bmax)
+            {
+                Block * nblo = new Block(Maps,blockcoord.x,blockcoord.y,z);
+                blocks[blockcoord] = nblo;
+                return nblo;
+            }
+            return 0;
         }
     }
     
@@ -242,7 +246,7 @@ class Layer
         return true;
     }
     private:
-    bool valid;
+    volatile bool valid;
     uint32_t z;
     uint32_t x_bmax;
     uint32_t y_bmax;
@@ -287,6 +291,9 @@ int main (int argc, const char* argv[])
     
     int32_t cx, cy, cz;
     Maps->getSize(x_max,y_max,z_max);
+    uint32_t tx_max = x_max * 16;
+    uint32_t ty_max = y_max * 16;
+    
     Pos->getCursorCoords(cx,cy,cz);
     while(cx == -30000)
     {
@@ -296,10 +303,19 @@ int main (int argc, const char* argv[])
         DF.Suspend();
         Pos->getCursorCoords(cx,cy,cz);
     }
-    
+    Point xy ((uint32_t)cx,(uint32_t)cy);
+    if(xy.x == 0 || xy.x == tx_max - 1 || xy.y == 0 || xy.y == ty_max - 1)
+    {
+        cerr << "I won't dig the borders. That would be cheating!" << endl;
+        DF.Detach();
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
+        return 1;
+    }
     Layer * L = new Layer(Maps,cz);
     
-    Point xy ((uint32_t)cx,(uint32_t)cy);
+    
     DFHack::t_designation des = L->designationAt(xy);
     int16_t tt = L->tiletypeAt(xy);
     int16_t veinmat = L->materialAt(xy);
@@ -317,8 +333,7 @@ int main (int argc, const char* argv[])
     printf("%d/%d/%d tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, des.whole);
     stack <Point> flood;
     flood.push(xy);
-    uint32_t tx_max = x_max * 16;
-    uint32_t ty_max = y_max * 16;
+
 
     while( !flood.empty() )  
     {  
@@ -335,29 +350,29 @@ int main (int argc, const char* argv[])
         if(L->setDesignationAt(current,des))
         {
             L->clearMaterialAt(current);
-            if(current.x < tx_max)
+            if(current.x < tx_max - 2)
             {
                 flood.push(Point(current.x + 1, current.y));
-                if(current.y < ty_max)
+                if(current.y < ty_max - 2)
                 {
                     flood.push(Point(current.x + 1, current.y + 1));
                     flood.push(Point(current.x, current.y + 1));
                 }
-                if(current.y != 0)
+                if(current.y > 1)
                 {
                     flood.push(Point(current.x + 1, current.y - 1));
                     flood.push(Point(current.x, current.y - 1));
                 }
             }
-            if(current.x != 0)
+            if(current.x > 1)
             {
                 flood.push(Point(current.x - 1, current.y));
-                if(current.y < ty_max)
+                if(current.y < ty_max - 2)
                 {
                     flood.push(Point(current.x - 1, current.y + 1));
                     flood.push(Point(current.x, current.y + 1));
                 }
-                if(current.y != 0)
+                if(current.y > 1)
                 {
                     flood.push(Point(current.x - 1, current.y - 1));
                     flood.push(Point(current.x, current.y - 1));

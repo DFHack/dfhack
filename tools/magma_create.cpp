@@ -33,36 +33,91 @@ int main (void)
         #endif
         return 1;
     }
-    
-    Maps->Start();
-
-    if(Position->getCursorCoords(x,y,z))
+    bool end = false;
+    cout << "Welcome to the liquid spawner. type 'help' for a list of available commands." << endl;
+    string mode="magma";
+    int amount = 7;
+    while(!end)
     {
-        cout << "cursor coords: " << x << "/" << y << "/" << z << endl;
-        if(Maps->isValidBlock(x/16,y/16,z))
+        DF.Resume();
+        string command = "";
+        cout << mode << ":" << amount << " >";
+        getline(cin, command);
+        if(command=="help")
         {
-            // place the magma
-            Maps->ReadDesignations((x/16),(y/16),z, &designations);
-            designations[x%16][y%16].bits.flow_size = 7;
-            designations[x%16][y%16].bits.liquid_type = DFHack::liquid_magma;
-            Maps->WriteDesignations(x/16,y/16,z, &designations);
-            
-            // make the magma flow :)
-            DFHack::t_blockflags bflags;
-            Maps->ReadBlockFlags((x/16),(y/16),z,bflags);
-            // 0x00000001 = job-designated
-            // 0x0000000C = run flows? - both bit 3 and 4 required for making magma placed on a glacier flow
-            bflags.bits.liquid_1 = true;
-            bflags.bits.liquid_2 = true;
-            Maps->WriteBlockFlags((x/16),(y/16),z,bflags);
-            Maps->Finish();
-            cout << "Success" << endl;
+            cout << "m      - switch to magma" << endl
+                 << "w      - switch to water" << endl
+                 << "return - put liquid" << endl
+                 << "0-7    - set liquid amount" << endl
+                 << "q      - quit" << endl
+                 << "help   - print this list of commands" << endl;
         }
-        else
-            cout << "Failure 1" << endl;
+        else if(command == "m")
+        {
+            mode = "magma";
+        }
+        else if(command == "w")
+        {
+            mode = "water";
+        }
+        else if(command == "q")
+        {
+            end = true;
+        }
+        // blah blah, bad code, bite me.
+        else if(command == "0")
+            amount = 0;
+        else if(command == "1")
+            amount = 1;
+        else if(command == "2")
+            amount = 2;
+        else if(command == "3")
+            amount = 3;
+        else if(command == "4")
+            amount = 4;
+        else if(command == "5")
+            amount = 5;
+        else if(command == "6")
+            amount = 6;
+        else if(command == "7")
+            amount = 7;
+        else// if(command.empty())
+        {
+            DF.Suspend();
+            Maps->Start();
+            if(Position->getCursorCoords(x,y,z))
+            {
+                cout << "cursor coords: " << x << "/" << y << "/" << z << endl;
+                if(Maps->isValidBlock(x/16,y/16,z))
+                {
+                    // place the magma
+                    Maps->ReadDesignations((x/16),(y/16),z, &designations);
+                    designations[x%16][y%16].bits.flow_size = amount;
+                    if(mode == "magma")
+                        designations[x%16][y%16].bits.liquid_type = DFHack::liquid_magma;
+                    if(mode == "water")
+                        designations[x%16][y%16].bits.liquid_type = DFHack::liquid_water;
+                    Maps->WriteDesignations(x/16,y/16,z, &designations);
+                    
+                    // make the magma flow :)
+                    DFHack::t_blockflags bflags;
+                    Maps->ReadBlockFlags((x/16),(y/16),z,bflags);
+                    // 0x00000001 = job-designated
+                    // 0x0000000C = run flows? - both bit 3 and 4 required for making magma placed on a glacier flow
+                    bflags.bits.liquid_1 = true;
+                    bflags.bits.liquid_2 = true;
+                    Maps->WriteBlockFlags((x/16),(y/16),z,bflags);
+                    Maps->Finish();
+                    cout << "OK" << endl;
+                }
+                else
+                    cout << "Not a valid block." << endl;
+            }
+            else
+                cout << "NO" << endl;
+            Maps->Finish();
+        }
     }
-    else
-        cout << "Failure 2" << endl;
     DF.Detach();
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

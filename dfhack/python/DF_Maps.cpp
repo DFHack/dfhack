@@ -39,45 +39,45 @@ using namespace DFHack;
 
 static PyObject* BuildVein(DFHack::t_vein& v)
 {
-	PyObject* t_dict;
+	PyObject* vObj;
 	PyObject* temp;
 	
-	t_dict = PyDict_New();
+	vObj = PyObject_Call(Vein_type, NULL, NULL);
 	
 	temp = PyInt_FromLong(v.vtable);
-	DICTADD(t_dict, "vtable", temp);
+	OBJSET(vObj, "vtable", temp);
 	
 	temp = PyInt_FromLong(v.type);
-	DICTADD(t_dict, "type", temp);
+	OBJSET(vObj, "type", temp);
 	
 	temp = PyInt_FromLong(v.flags);
-	DICTADD(t_dict, "flags", temp);
+	OBJSET(vObj, "flags", temp);
 	
 	temp = PyInt_FromLong(v.address_of);
-	DICTADD(t_dict, "address", temp);
+	OBJSET(vObj, "address", temp);
 	
 	temp = PyList_New(16);
 	
 	for(int i = 0; i < 16; i++)
 		PyList_SET_ITEM(temp, i, PyInt_FromLong(v.assignment[i]));
 	
-	DICTADD(t_dict, "assignment", temp);
+	OBJSET(vObj, "assignment", temp);
 	
-	return t_dict;
+	return vObj;
 }
 
 static PyObject* BuildFrozenLiquidVein(DFHack::t_frozenliquidvein& v)
 {
-	PyObject* t_dict;
+	PyObject* vObj;
 	PyObject *temp, *list;
 	
-	t_dict = PyDict_New();
+	vObj = PyObject_Call(FrozenLiquidVein_type, NULL, NULL);
 	
 	temp = PyInt_FromLong(v.vtable);
-	DICTADD(t_dict, "vtable", temp);
+	OBJSET(vObj, "vtable", temp);
 	
 	temp = PyInt_FromLong(v.address_of);
-	DICTADD(t_dict, "address", temp);
+	OBJSET(vObj, "address", temp);
 	
 	list = PyList_New(16);
 	
@@ -91,35 +91,35 @@ static PyObject* BuildFrozenLiquidVein(DFHack::t_frozenliquidvein& v)
 		PyList_SET_ITEM(list, i, temp);
 	}
 	
-	DICTADD(t_dict, "tiles", list);
+	OBJSET(vObj, "tiles", list);
 	
-	return t_dict;
+	return vObj;
 }
 
 static PyObject* BuildSpatterVein(DFHack::t_spattervein& v)
 {
-	PyObject* t_dict;
+	PyObject* vObj;
 	PyObject *temp, *list;
 	
-	t_dict = PyDict_New();
+	vObj = PyObject_Call(SpatterVein_type, NULL, NULL);
 	
 	temp = PyInt_FromLong(v.vtable);
-	DICTADD(t_dict, "vtable", temp);
+	OBJSET(vObj, "vtable", temp);
 	
 	temp = PyInt_FromLong(v.address_of);
-	DICTADD(t_dict, "address", temp);
+	OBJSET(vObj, "address", temp);
 	
 	temp = PyInt_FromLong(v.mat1);
-	DICTADD(t_dict, "mat1", temp);
+	OBJSET(vObj, "mat1", temp);
 	
 	temp = PyInt_FromLong(v.unk1);
-	DICTADD(t_dict, "unk1", temp);
+	OBJSET(vObj, "unk1", temp);
 	
 	temp = PyInt_FromLong(v.mat2);
-	DICTADD(t_dict, "mat2", temp);
+	OBJSET(vObj, "mat2", temp);
 	
 	temp = PyInt_FromLong(v.mat3);
-	DICTADD(t_dict, "mat3", temp);
+	OBJSET(vObj, "mat3", temp);
 	
 	list = PyList_New(16);
 	
@@ -133,9 +133,71 @@ static PyObject* BuildSpatterVein(DFHack::t_spattervein& v)
 		PyList_SET_ITEM(list, i, temp);
 	}
 	
-	DICTADD(t_dict, "intensity", list);
+	OBJSET(vObj, "intensity", list);
 	
-	return t_dict;
+	return vObj;
+}
+
+static PyObject* BuildVeinDict(std::vector<t_vein>& veins, std::vector<t_frozenliquidvein>& ices, std::vector<t_spattervein>& splatter)
+{
+	PyObject* vDict;
+	PyObject* vList;
+	int veinSize;
+	
+	vDict = PyDict_New();
+	
+	veinSize = veins.size();
+	
+	if(veinSize <= 0)
+	{
+		Py_INCREF(Py_None);
+		DICTADD(vDict, "veins", Py_None);
+	}
+	else
+	{
+		vList = PyList_New(veinSize);
+		
+		for(int i = 0; i < veinSize; i++)
+			PyList_SET_ITEM(vList, i, BuildVein(veins[i]));
+		
+		DICTADD(vDict, "veins", vList);
+	}
+	
+	veinSize = ices.size();
+	
+	if(veinSize <= 0)
+	{
+		Py_INCREF(Py_None);
+		DICTADD(vDict, "ices", Py_None);
+	}
+	else
+	{
+		vList = PyList_New(veinSize);
+		
+		for(int i = 0; i < veinSize; i++)
+			PyList_SET_ITEM(vList, i, BuildFrozenLiquidVein(ices[i]));
+		
+		DICTADD(vDict, "ices", vList);
+	}
+	
+	veinSize = splatter.size();
+	
+	if(veinSize <= 0)
+	{
+		Py_INCREF(Py_None);
+		DICTADD(vDict, "spatter", Py_None);
+	}
+	else
+	{
+		vList = PyList_New(veinSize);
+		
+		for(int i = 0; i < veinSize; i++)
+			PyList_SET_ITEM(vList, i, BuildSpatterVein(splatter[i]));
+		
+		DICTADD(vDict, "spatter", vList);
+	}
+	
+	return vDict;
 }
 
 static PyObject* BuildTileTypes40d(DFHack::tiletypes40d& types)
@@ -184,7 +246,7 @@ static PyObject* BuildOccupancies40d(DFHack::occupancies40d& occ)
 		{
 			args = Py_BuildValue("(I)", occ[i][j].whole);
 			
-			PyList_SET_ITEM(temp, j, PyObject_CallObject(OccupancyFlags_type, args));
+			PyList_SET_ITEM(temp, j, PyObject_Call(OccupancyFlags_type, args, NULL));
 			
 			Py_DECREF(args);
 		}
@@ -269,7 +331,7 @@ static PyObject* BuildMapBlock40d(DFHack::mapblock40d& block)
 	PyObject *b_Obj;
 	PyObject *temp, *args;
 	
-	b_Obj = PyObject_CallObject(MapBlock40d_type, NULL);
+	b_Obj = PyObject_Call(MapBlock40d_type, NULL, NULL);
 	
 	temp = BuildTileTypes40d(block.tiletypes);
 	OBJSET(b_Obj, "tiletypes", temp);
@@ -366,6 +428,42 @@ static PyObject* DF_Map_Finish(DF_Map* self, PyObject* args)
 			Py_RETURN_TRUE;
 		else
 			Py_RETURN_FALSE;
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_Map_ReadGeology(DF_Map* self, PyObject* args)
+{
+	PyObject *list, *temp;
+	int outerSize, innerSize;
+	
+	if(self->m_Ptr != NULL)
+	{
+		std::vector< std::vector<uint16_t> > geoVec;
+		
+		if(self->m_Ptr->ReadGeology(geoVec))
+		{
+			outerSize = geoVec.size();
+			
+			list = PyList_New(outerSize);
+			
+			for(int i = 0; i < outerSize; i++)
+			{
+				std::vector<uint16_t> innerVec = geoVec[i];
+				
+				innerSize = innerVec.size();
+				
+				temp = PyList_New(innerSize);
+				
+				for(int j = 0; j < innerSize; j++)
+					PyList_SET_ITEM(temp, j, PyInt_FromLong(innerVec[i]));
+				
+				PyList_SET_ITEM(list, i, temp);
+			}
+			
+			return list;
+		}
 	}
 	
 	Py_RETURN_NONE;
@@ -650,10 +748,33 @@ static PyObject* DF_Map_ReadRegionOffsets(DF_Map* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_Map_ReadVeins(DF_Map* self, PyObject* args, PyObject* kwds)
+{
+	uint32_t x, y, z;
+	
+	if(self->m_Ptr != NULL)
+	{
+		if(!PyArg_ParseTuple(args, "III", &x, &y, &z))
+			return NULL;
+		
+		std::vector<t_vein> veins;
+		std::vector<t_frozenliquidvein> ices;
+		std::vector<t_spattervein> splatter;
+		
+		if(self->m_Ptr->ReadVeins(x, y, z, &veins, &ices, &splatter))
+		{
+			return BuildVeinDict(veins, ices, splatter);
+		}
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef DF_Map_methods[] =
 {
 	{"Start", (PyCFunction)DF_Map_Start, METH_NOARGS, ""},
 	{"Finish", (PyCFunction)DF_Map_Finish, METH_NOARGS, ""},
+	{"Read_Geology", (PyCFunction)DF_Map_ReadGeology, METH_NOARGS, ""},
 	{"Is_Valid_Block", (PyCFunction)DF_Map_IsValidBlock, METH_VARARGS, ""},
 	{"Read_Block_40d", (PyCFunction)DF_Map_ReadBlock40d, METH_VARARGS, ""},
 	{"Read_Tile_Types", (PyCFunction)DF_Map_ReadTileTypes, METH_VARARGS, ""},

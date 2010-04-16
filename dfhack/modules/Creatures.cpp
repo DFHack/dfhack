@@ -51,6 +51,7 @@ struct Creatures::Private
     bool Started;
     Creatures2010::creature_offsets creatures;
     uint32_t creature_module;
+    uint32_t dwarf_race_index_addr;
     DfVector *p_cre;
     APIPrivate *d;
 };
@@ -93,7 +94,7 @@ Creatures::Creatures(APIPrivate* _d)
         creatures.name_firstname_offset = minfo->getOffset("name_firstname");
         creatures.name_nickname_offset = minfo->getOffset("name_nickname");
         creatures.name_words_offset = minfo->getOffset("name_words");
-        
+        d->dwarf_race_index_addr = minfo->getAddress("dwarf_race_index");
         // upload offsets to the SHM
         if(g_pProcess->getModuleIndex("Creatures2010",1,d->creature_module))
         {
@@ -304,6 +305,12 @@ bool Creatures::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LA
     pickup_equip |= 1u;
     g_pProcess->writeDWord(temp + d->creatures.pickup_equipment_bit, pickup_equip);
     return true;
+}
+
+uint32_t Creatures::GetDwarfRaceIndex()
+{
+    if(!d->Inited) return 0;
+    return g_pProcess->readDWord(d->dwarf_race_index_addr);
 }
 
 /*

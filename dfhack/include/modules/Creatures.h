@@ -368,7 +368,7 @@ namespace DFHack
         bool ReadCreature(const int32_t index, t_creature & furball);
         /// write labors of a creature (for Dwarf Therapist)
         bool WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
-        
+        uint32_t GetDwarfRaceIndex ( void );
         private:
         struct Private;
         Private *d;

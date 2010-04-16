@@ -40,6 +40,9 @@ static PyObject* Note_type = NULL;
 static PyObject* Construction_type = NULL;
 static PyObject* Name_type = NULL;
 static PyObject* MapBlock40d_type = NULL;
+static PyObject* Vein_type = NULL;
+static PyObject* FrozenLiquidVein_type = NULL;
+static PyObject* SpatterVein_type = NULL;
 
 static void DoImports()
 {
@@ -60,6 +63,9 @@ static void DoImports()
 		Construction_type = PyObject_GetAttrString(TypesModule, "Construction");
 		Name_type = PyObject_GetAttrString(TypesModule, "Name");
 		MapBlock40d_type = PyObject_GetAttrString(TypesModule, "MapBlock40d");
+		Vein_type = PyObject_GetAttrString(TypesModule, "Vein");
+		FrozenLiquidVein_type = PyObject_GetAttrString(TypesModule, "FrozenLiquidVein");
+		SpatterVein_type = PyObject_GetAttrString(TypesModule, "SpatterVein");
 	}
 }
 

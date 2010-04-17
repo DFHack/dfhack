@@ -10,12 +10,15 @@ using namespace std;
 #include <DFHackAPI.h>
 #include <modules/Maps.h>
 #include <modules/Position.h>
+#include <DFTileTypes.h>
 
 int main (void)
 {
     int32_t x,y,z;
     DFHack::designations40d designations;
-
+    DFHack::tiletypes40d tiles;
+    uint32_t x_max,y_max,z_max;
+    
     DFHack::API DF("Memory.xml");
     DFHack::Maps * Maps;
     DFHack::Position * Position;
@@ -41,6 +44,7 @@ int main (void)
     int amount = 7;
     while(!end)
     {
+        Maps->getSize(x_max,y_max,z_max);
         DF.Resume();
         string command = "";
         cout <<"[" << mode << ":" << amount << ":" << flowmode << "]# ";
@@ -50,6 +54,7 @@ int main (void)
             cout << "Modes:" << endl
                  << "m             - switch to magma" << endl
                  << "w             - switch to water" << endl
+                 << "o             - make obsidian wall instead" << endl
                  << "f             - flow bits only" << endl
                  << "Properties:" << endl
                  << "f+            - make the spawned liquid flow" << endl
@@ -71,6 +76,14 @@ int main (void)
         else if(command == "m")
         {
             mode = "magma";
+        }
+        else if(command == "o")
+        {
+            mode = "obsidian";
+        }
+        else if(command == "clmn")
+        {
+            mode = "column";
         }
         else if(command == "w")
         {
@@ -142,30 +155,55 @@ int main (void)
                     cout << "Not a valid block." << endl;
                     break;
                 }
-                // place the magma
-                Maps->ReadDesignations((x/16),(y/16),z, &designations);
-                if(brush == "point")
+                if(mode == "obsidian")
                 {
-                    if(mode != "flowbits")
-                        designations[x%16][y%16].bits.flow_size = amount;
-                    if(mode == "magma")
-                        designations[x%16][y%16].bits.liquid_type = DFHack::liquid_magma;
-                    else if(mode == "water")
-                        designations[x%16][y%16].bits.liquid_type = DFHack::liquid_water;
+                    Maps->ReadTileTypes((x/16),(y/16),z, &tiles);
+                    tiles[x%16][y%16] = 331;
+                    Maps->WriteTileTypes((x/16),(y/16),z, &tiles);
+                }
+                else if(mode == "column")
+                {
+                    int zzz = z;
+                    int16_t tile;
+                    while ( zzz < z_max )
+                    {
+                        Maps->ReadTileTypes((x/16),(y/16),zzz, &tiles);
+                        tile = tiles[x%16][y%16];
+                        if (DFHack::tileTypeTable[tile].c == DFHack::WALL)
+                            break;
+                        tiles[x%16][y%16] = 331;
+                        Maps->WriteTileTypes((x/16),(y/16),zzz, &tiles);
+                        zzz++;
+                    } 
                 }
                 else
                 {
-                    for(uint32_t xx = 0; xx < 16; xx++) for(uint32_t yy = 0; yy < 16; yy++)
+                    // place the magma
+                    Maps->ReadDesignations((x/16),(y/16),z, &designations);
+                    
+                    if(brush == "point")
                     {
                         if(mode != "flowbits")
-                            designations[xx][yy].bits.flow_size = amount;
+                            designations[x%16][y%16].bits.flow_size = amount;
                         if(mode == "magma")
-                            designations[xx][yy].bits.liquid_type = DFHack::liquid_magma;
+                            designations[x%16][y%16].bits.liquid_type = DFHack::liquid_magma;
                         else if(mode == "water")
-                            designations[xx][yy].bits.liquid_type = DFHack::liquid_water;
+                            designations[x%16][y%16].bits.liquid_type = DFHack::liquid_water;
                     }
+                    else
+                    {
+                        for(uint32_t xx = 0; xx < 16; xx++) for(uint32_t yy = 0; yy < 16; yy++)
+                        {
+                            if(mode != "flowbits")
+                                designations[xx][yy].bits.flow_size = amount;
+                            if(mode == "magma")
+                                designations[xx][yy].bits.liquid_type = DFHack::liquid_magma;
+                            else if(mode == "water")
+                                designations[xx][yy].bits.liquid_type = DFHack::liquid_water;
+                        }
+                    }
+                    Maps->WriteDesignations(x/16,y/16,z, &designations);
                 }
-                Maps->WriteDesignations(x/16,y/16,z, &designations);
                 
                 // make the magma flow :)
                 DFHack::t_blockflags bflags;

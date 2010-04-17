@@ -36,6 +36,7 @@ int main (void)
     bool end = false;
     cout << "Welcome to the liquid spawner. type 'help' for a list of available commands, 'q' to quit." << endl;
     string mode="magma";
+    string brush="point";
     string flowmode="f+";
     int amount = 7;
     while(!end)
@@ -55,6 +56,9 @@ int main (void)
                  << "f.            - don't change flow state (read state in flow mode)" << endl
                  << "f-            - make the spawned liquid static" << endl
                  << "0-7           - set liquid amount" << endl
+                 << "Brush:" << endl
+                 << "point         - single tile" << endl
+                 << "block         - block with cursor in it" << endl
                  << "Other:" << endl
                  << "q             - quit" << endl
                  << "help          - print this list of commands" << endl
@@ -75,6 +79,14 @@ int main (void)
         else if(command == "f")
         {
             mode = "flowbits";
+        }
+        else if(command == "point")
+        {
+            brush = "point";
+        }
+        else if(command == "block")
+        {
+            brush = "block";
         }
         else if(command == "q")
         {
@@ -132,12 +144,27 @@ int main (void)
                 }
                 // place the magma
                 Maps->ReadDesignations((x/16),(y/16),z, &designations);
-                if(mode != "flowbits")
-                    designations[x%16][y%16].bits.flow_size = amount;
-                if(mode == "magma")
-                    designations[x%16][y%16].bits.liquid_type = DFHack::liquid_magma;
-                else if(mode == "water")
-                    designations[x%16][y%16].bits.liquid_type = DFHack::liquid_water;
+                if(brush == "point")
+                {
+                    if(mode != "flowbits")
+                        designations[x%16][y%16].bits.flow_size = amount;
+                    if(mode == "magma")
+                        designations[x%16][y%16].bits.liquid_type = DFHack::liquid_magma;
+                    else if(mode == "water")
+                        designations[x%16][y%16].bits.liquid_type = DFHack::liquid_water;
+                }
+                else
+                {
+                    for(uint32_t xx = 0; xx < 16; xx++) for(uint32_t yy = 0; yy < 16; yy++)
+                    {
+                        if(mode != "flowbits")
+                            designations[xx][yy].bits.flow_size = amount;
+                        if(mode == "magma")
+                            designations[xx][yy].bits.liquid_type = DFHack::liquid_magma;
+                        else if(mode == "water")
+                            designations[xx][yy].bits.liquid_type = DFHack::liquid_water;
+                    }
+                }
                 Maps->WriteDesignations(x/16,y/16,z, &designations);
                 
                 // make the magma flow :)

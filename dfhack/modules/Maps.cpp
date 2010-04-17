@@ -70,12 +70,14 @@ Maps::Maps(APIPrivate* _d)
     off.x_count_offset = mem->getAddress ("x_count_block");
     off.y_count_offset = mem->getAddress ("y_count_block");
     off.z_count_offset = mem->getAddress ("z_count_block");
-    off.tile_type_offset = mem->getOffset ("type");
-    off.designation_offset = mem->getOffset ("designation");
-    off.occupancy_offset = mem->getOffset("occupancy");
-    off.biome_stuffs = mem->getOffset ("biome_stuffs");
-    off.veinvector = mem->getOffset ("v_vein");
-    
+    off.tile_type_offset = mem->getOffset ("map_data_type");
+    off.designation_offset = mem->getOffset ("map_data_designation");
+    off.occupancy_offset = mem->getOffset("map_data_occupancy");
+    off.biome_stuffs = mem->getOffset ("map_data_biome_stuffs");
+    off.veinvector = mem->getOffset ("map_data_vein_vector");
+    off.temperature1_offset = mem->getOffset ("map_data_temperature1_offset");
+    off.temperature2_offset = mem->getOffset ("map_data_temperature2_offset");
+
     // these can fail and will be found when looking at the actual veins later
     // basically a cache
     off.vein_ice_vptr = 0;
@@ -352,6 +354,36 @@ bool Maps::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *b
     if (addr)
     {
         g_pProcess->write (addr + d->offsets.occupancy_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
+        return true;
+    }
+    return false;
+}
+
+/*
+ * Temperatures
+ */ 
+bool Maps::ReadTemperatures(uint32_t x, uint32_t y, uint32_t z, t_temperatures *temp1, t_temperatures *temp2)
+{
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
+    {
+        if(temp1)
+            g_pProcess->read (addr + d->offsets.temperature1_offset, sizeof (t_temperatures), (uint8_t *) temp1);
+        if(temp2)
+            g_pProcess->read (addr + d->offsets.temperature2_offset, sizeof (t_temperatures), (uint8_t *) temp2);
+        return true;
+    }
+    return false;
+}
+bool Maps::WriteTemperatures (uint32_t x, uint32_t y, uint32_t z, t_temperatures *temp1, t_temperatures *temp2)
+{
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
+    {
+        if(temp1)
+            g_pProcess->write (addr + d->offsets.temperature1_offset, sizeof (t_temperatures), (uint8_t *) temp1);
+        if(temp2)
+            g_pProcess->write (addr + d->offsets.temperature2_offset, sizeof (t_temperatures), (uint8_t *) temp2);
         return true;
     }
     return false;

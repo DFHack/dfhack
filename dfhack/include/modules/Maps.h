@@ -199,6 +199,7 @@ namespace DFHack
     typedef DFHack::t_designation designations40d [16][16];
     typedef DFHack::t_occupancy occupancies40d [16][16];
     typedef uint8_t biome_indices40d [16];
+    typedef uint16_t t_temperatures [16][16];
 
     typedef struct
     {
@@ -290,6 +291,10 @@ namespace DFHack
         bool ReadDesignations(uint32_t blockx, uint32_t blocky, uint32_t blockz, designations40d *buffer);
         bool WriteDesignations (uint32_t blockx, uint32_t blocky, uint32_t blockz, designations40d *buffer);
 
+        /// read/write temperatures
+        bool ReadTemperatures(uint32_t blockx, uint32_t blocky, uint32_t blockz, t_temperatures *temp1, t_temperatures *temp2);
+        bool WriteTemperatures (uint32_t blockx, uint32_t blocky, uint32_t blockz, t_temperatures *temp1, t_temperatures *temp2);
+        
         /// read/write block occupancies
         bool ReadOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, occupancies40d *buffer);
         bool WriteOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, occupancies40d *buffer);

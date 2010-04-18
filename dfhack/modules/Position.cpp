@@ -46,6 +46,7 @@ struct Position::Private
     uint32_t hotkey_size;
     
     APIPrivate *d;
+    Process * owner;
     bool Inited;
     bool Started;
     bool StartedHotkeys;
@@ -57,6 +58,7 @@ Position::Position(APIPrivate * d_)
 {
     d = new Private;
     d->d = d_;
+    d->owner = d_->p;
     d->Inited = true;
     d->StartedHotkeys = d->Started = false;
     memory_info * mem;
@@ -88,11 +90,13 @@ bool Position::ReadHotkeys(t_hotkey hotkeys[])
 {
     if (!d->StartedHotkeys) return false;
     uint32_t currHotkey = d->hotkey_start;
+    Process * p = d->owner;
+    
     for(uint32_t i = 0 ; i < NUM_HOTKEYS ;i++)
     {
-        g_pProcess->readSTLString(currHotkey,hotkeys[i].name,10);
-        hotkeys[i].mode = g_pProcess->readWord(currHotkey+d->hotkey_mode_offset);
-        g_pProcess->read (currHotkey + d->hotkey_xyz_offset, 3*sizeof (int32_t), (uint8_t *) &hotkeys[i].x);
+        p->readSTLString(currHotkey,hotkeys[i].name,10);
+        hotkeys[i].mode = p->readWord(currHotkey+d->hotkey_mode_offset);
+        p->read (currHotkey + d->hotkey_xyz_offset, 3*sizeof (int32_t), (uint8_t *) &hotkeys[i].x);
         currHotkey+=d->hotkey_size;
     }
     return true;
@@ -101,9 +105,11 @@ bool Position::ReadHotkeys(t_hotkey hotkeys[])
 bool Position::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
 {
     if (!d->Inited) return false;
-    g_pProcess->readDWord (d->window_x_offset, (uint32_t &) x);
-    g_pProcess->readDWord (d->window_y_offset, (uint32_t &) y);
-    g_pProcess->readDWord (d->window_z_offset, (uint32_t &) z);
+    Process * p = d->owner;
+    
+    p->readDWord (d->window_x_offset, (uint32_t &) x);
+    p->readDWord (d->window_y_offset, (uint32_t &) y);
+    p->readDWord (d->window_z_offset, (uint32_t &) z);
     return true;
 }
 
@@ -111,9 +117,11 @@ bool Position::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
 bool Position::setViewCoords (const int32_t x, const int32_t y, const int32_t z)
 {
     if (!d->Inited) return false;
-    g_pProcess->writeDWord (d->window_x_offset, (uint32_t) x);
-    g_pProcess->writeDWord (d->window_y_offset, (uint32_t) y);
-    g_pProcess->writeDWord (d->window_z_offset, (uint32_t) z);
+    Process * p = d->owner;
+    
+    p->writeDWord (d->window_x_offset, (uint32_t) x);
+    p->writeDWord (d->window_y_offset, (uint32_t) y);
+    p->writeDWord (d->window_z_offset, (uint32_t) z);
     return true;
 }
 
@@ -121,7 +129,7 @@ bool Position::getCursorCoords (int32_t &x, int32_t &y, int32_t &z)
 {
     if(!d->Inited) return false;
     int32_t coords[3];
-    g_pProcess->read (d->cursor_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
+    d->owner->read (d->cursor_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
     x = coords[0];
     y = coords[1];
     z = coords[2];
@@ -134,7 +142,7 @@ bool Position::setCursorCoords (const int32_t x, const int32_t y, const int32_t 
 {
     if (!d->Inited) return false;
     int32_t coords[3] = {x, y, z};
-    g_pProcess->write (d->cursor_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
+    d->owner->write (d->cursor_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
     return true;
 }
 
@@ -143,7 +151,7 @@ bool Position::getWindowSize (int32_t &width, int32_t &height)
     if(!d->Inited) return false;
     
     int32_t coords[2];
-    g_pProcess->read (d->window_dims_offset, 2*sizeof (int32_t), (uint8_t *) coords);
+    d->owner->read (d->window_dims_offset, 2*sizeof (int32_t), (uint8_t *) coords);
     width = coords[0];
     height = coords[1];
     return true;

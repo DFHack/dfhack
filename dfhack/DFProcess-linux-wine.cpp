@@ -149,6 +149,7 @@ bool WineProcess::Private::validate(char* exe_file, uint32_t pid, char* mem_file
         {
             memory_info * m = *it;
             my_descriptor = m;
+            m->setParentProcess((Process*)this);
             my_handle = my_pid = pid;
             // tell WineProcess about the /proc/PID/mem file
             memFile = mem_file;
@@ -281,9 +282,11 @@ bool WineProcess::resume()
 bool WineProcess::attach()
 {
     int status;
-    if(g_pProcess != NULL)
+    if(d->attached)
     {
-        return false;
+        if(!d->suspended)
+            return suspend();
+        return true;
     }
     // can we attach?
     if (ptrace(PTRACE_ATTACH , d->my_handle, NULL, NULL) == -1)
@@ -323,7 +326,6 @@ bool WineProcess::attach()
     else
     {
         d->attached = true;
-        g_pProcess = this;
         
         d->memFileHandle = proc_pid_mem;
         return true; // we are attached
@@ -356,7 +358,6 @@ bool WineProcess::detach()
         else
         {
             d->attached = false;
-            g_pProcess = NULL;
             return true;
         }
     }

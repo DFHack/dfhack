@@ -127,6 +127,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versio
             m->RebaseAll(base);
             // keep track of created memory_info object so we can destroy it later
             d->my_descriptor = m;
+            m->setParentProcess(this);
             // process is responsible for destroying its data model
             d->my_pid = pid;
             d->my_handle = hProcess;
@@ -249,12 +250,13 @@ bool NormalProcess::resume()
 
 bool NormalProcess::attach()
 {
-    if(g_pProcess != NULL)
+    if(d->attached)
     {
-        return false;
+        if(!d->suspended)
+            return suspend();
+        return true;
     }
     d->attached = true;
-    g_pProcess = this;
     suspend();
 
     return true;
@@ -269,7 +271,6 @@ bool NormalProcess::detach()
     }
     resume();
     d->attached = false;
-    g_pProcess = NULL;
     return true;
 }
 

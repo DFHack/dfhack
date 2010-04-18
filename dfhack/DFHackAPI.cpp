@@ -145,12 +145,12 @@ bool API::isSuspended()
 
 void API::ReadRaw (const uint32_t offset, const uint32_t size, uint8_t *target)
 {
-    g_pProcess->read (offset, size, target);
+    d->p->read (offset, size, target);
 }
 
 void API::WriteRaw (const uint32_t offset, const uint32_t size, uint8_t *source)
 {
-    g_pProcess->write (offset, size, source);
+    d->p->write (offset, size, source);
 }
 
 memory_info *API::getMemoryInfo()
@@ -265,7 +265,7 @@ bool API::ReadEffect(const uint32_t index, t_effect_df40d & effect)
     // read pointer from vector at position
     uint32_t temp = d->p_effect->at (index);
     //read effect from memory
-    g_pProcess->read (temp, sizeof (t_effect_df40d), (uint8_t *) &effect);
+    d->p->read (temp, sizeof (t_effect_df40d), (uint8_t *) &effect);
     return true;
 }
 
@@ -279,7 +279,7 @@ bool API::WriteEffect(const uint32_t index, const t_effect_df40d & effect)
     // read pointer from vector at position
         uint32_t temp = d->p_effect->at (index);
     // write effect to memory
-    g_pProcess->write(temp,sizeof(t_effect_df40d), (uint8_t *) &effect);
+    d->p->write(temp,sizeof(t_effect_df40d), (uint8_t *) &effect);
     return true;
 }
 
@@ -323,11 +323,11 @@ bool API::ReadNote (const int32_t index, t_note & note)
     if(!d->notesInited) return false;
     // read pointer from vector at position
     uint32_t temp = d->p_notes->at (index);
-    note.symbol = g_pProcess->readByte(temp);
-    note.foreground = g_pProcess->readWord(temp + d->note_foreground_offset);
-    note.background = g_pProcess->readWord(temp + d->note_background_offset);
+    note.symbol = d->p->readByte(temp);
+    note.foreground = d->p->readWord(temp + d->note_foreground_offset);
+    note.background = d->p->readWord(temp + d->note_background_offset);
     d->p->readSTLString (temp + d->note_name_offset, note.name, 128);
-    g_pProcess->read (temp + d->note_xyz_offset, 3*sizeof (uint16_t), (uint8_t *) &note.x);
+    d->p->read (temp + d->note_xyz_offset, 3*sizeof (uint16_t), (uint8_t *) &note.x);
     return true;
 }
 bool API::InitReadSettlements( uint32_t & numsettlements )
@@ -365,8 +365,8 @@ bool API::ReadSettlement(const int32_t index, t_settlement & settlement)
     uint32_t temp = d->p_settlements->at (index);
     settlement.origin = temp;
     d->readName(settlement.name, temp + d->settlement_name_offset);
-    g_pProcess->read(temp + d->settlement_world_xy_offset, 2 * sizeof(int16_t), (uint8_t *) &settlement.world_x);
-    g_pProcess->read(temp + d->settlement_local_xy_offset, 4 * sizeof(int16_t), (uint8_t *) &settlement.local_x1);
+    d->p->read(temp + d->settlement_world_xy_offset, 2 * sizeof(int16_t), (uint8_t *) &settlement.world_x);
+    d->p->read(temp + d->settlement_local_xy_offset, 4 * sizeof(int16_t), (uint8_t *) &settlement.local_x1);
     return true;
 }
 
@@ -378,8 +378,8 @@ bool API::ReadCurrentSettlement(t_settlement & settlement)
     uint32_t temp = d->p_current_settlement->at(0);
     settlement.origin = temp;
     d->readName(settlement.name, temp + d->settlement_name_offset);
-    g_pProcess->read(temp + d->settlement_world_xy_offset, 2 * sizeof(int16_t), (uint8_t *) &settlement.world_x);
-    g_pProcess->read(temp + d->settlement_local_xy_offset, 4 * sizeof(int16_t), (uint8_t *) &settlement.local_x1);
+    d->p->read(temp + d->settlement_world_xy_offset, 2 * sizeof(int16_t), (uint8_t *) &settlement.world_x);
+    d->p->read(temp + d->settlement_local_xy_offset, 4 * sizeof(int16_t), (uint8_t *) &settlement.local_x1);
     return true;
 }
 
@@ -412,7 +412,7 @@ bool API::getItemIndexesInBox(vector<uint32_t> &indexes,
     temp2 temp2;
     for(uint32_t i =0;i<size;i++){
         uint32_t temp = d->p_itm->at(i);
-        g_pProcess->read(temp+sizeof(uint32_t),5 * sizeof(uint16_t), (uint8_t *) &temp2);
+        d->p->read(temp+sizeof(uint32_t),5 * sizeof(uint16_t), (uint8_t *) &temp2);
         if(temp2.flags & (1 << 0)){
             if (temp2.coords[0] >= x1 && temp2.coords[0] < x2)
             {
@@ -471,7 +471,7 @@ bool API::ReadItem (const uint32_t index, t_item & item)
     uint32_t temp = d->p_itm->at (index);
 
     //read building from memory
-    g_pProcess->read (temp, sizeof (t_item_df40d), (uint8_t *) &item_40d);
+    d->p->read (temp, sizeof (t_item_df40d), (uint8_t *) &item_40d);
 
     // transform
     int32_t type = -1;
@@ -486,7 +486,7 @@ bool API::ReadItem (const uint32_t index, t_item & item)
     item.flags.whole = item_40d.flags;
 
     //TODO  certain item types (creature based, threads, seeds, bags do not have the first matType byte, instead they have the material index only located at 0x68
-    g_pProcess->read (temp + d->item_material_offset, sizeof (t_matglossPair), (uint8_t *) &item.material);
+    d->p->read (temp + d->item_material_offset, sizeof (t_matglossPair), (uint8_t *) &item.material);
     //for(int i = 0; i < 0xCC; i++){  // used for item research
     //    uint8_t byte = MreadByte(temp+i);
     //    item.bytes.push_back(byte);

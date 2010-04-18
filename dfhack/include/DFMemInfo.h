@@ -35,6 +35,12 @@ distribution.
 namespace DFHack
 {
     /*
+    * Stubs
+    */
+    
+    class Process;
+    
+    /*
     * Common data types
     */
     struct t_type
@@ -148,6 +154,7 @@ namespace DFHack
         void setLabor(const string &, const string &);
 
         void RebaseVTable(const int32_t offset);
+        void setParentProcess(Process * _p);
         
         t_class * setClass (const char * classname, uint32_t vptr = 0, uint32_t typeoffset = 0);
         void setClassChild (t_class * parent, const char * classname, const char * type);

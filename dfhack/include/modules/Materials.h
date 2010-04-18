@@ -61,7 +61,8 @@ namespace DFHack
         bool ReadCreatureTypes (std::vector<t_matgloss> & output);
         bool ReadCreatureTypesEx (vector<t_creaturetype> & creatures);
         private:
-            APIPrivate* d;
+            class Private;
+            Private* d;
     };
 }
 #endif

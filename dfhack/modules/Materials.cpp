@@ -31,9 +31,21 @@ distribution.
 
 using namespace DFHack;
 
+class Materials::Private
+{
+    public:
+    APIPrivate *d;
+    Process * owner;
+    /*
+    bool Inited;
+    bool Started;
+    */
+};
+
 Materials::Materials(APIPrivate * d_)
 {
-    d = d_;
+    d->d = d_;
+    d->owner = d_->p;
 }
 Materials::~Materials(){}
 /*
@@ -131,12 +143,13 @@ LABEL_53:
 /*
 bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
 {
-    memory_info * minfo = d->offset_descriptor;
+    Process *p = d->owner;
+    memory_info * minfo = p->getDescriptor();
     int matgloss_address = minfo->getAddress ("mat_inorganics");
     int matgloss_colors = minfo->getOffset ("material_color");
     int matgloss_stone_name_offset = minfo->getOffset("matgloss_stone_name");
 
-    DfVector <uint32_t> p_matgloss (d->p, matgloss_address);
+    DfVector <uint32_t> p_matgloss (p, matgloss_address);
 
     uint32_t size = p_matgloss.getSize();
     inorganic.resize (0);
@@ -149,12 +162,12 @@ bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
         t_matgloss mat;
         //cout << temp << endl;
         //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
-        d->p->readSTLString (temp, mat.id, 128);
+        p->readSTLString (temp, mat.id, 128);
         
-        d->p->readSTLString (temp+matgloss_stone_name_offset, mat.name, 128);
-        mat.fore = (uint8_t) g_pProcess->readWord (temp + matgloss_colors);
-        mat.back = (uint8_t) g_pProcess->readWord (temp + matgloss_colors + 2);
-        mat.bright = (uint8_t) g_pProcess->readWord (temp + matgloss_colors + 4);
+        p->readSTLString (temp+matgloss_stone_name_offset, mat.name, 128);
+        mat.fore = (uint8_t) p->readWord (temp + matgloss_colors);
+        mat.back = (uint8_t) p->readWord (temp + matgloss_colors + 2);
+        mat.bright = (uint8_t) p->readWord (temp + matgloss_colors + 4);
         
         inorganic.push_back (mat);
     }
@@ -182,42 +195,37 @@ inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & nam
 
 bool Materials::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
 {
-    return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_inorganics"), inorganic );
+    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("mat_inorganics"), inorganic );
 }
 
 bool Materials::ReadOrganicMaterials (vector<t_matgloss> & organic)
 {
-    return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_organics_all"), organic );
+    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("mat_organics_all"), organic );
 }
 
 bool Materials::ReadWoodMaterials (vector<t_matgloss> & trees)
 {
-    return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_organics_trees"), trees );
+    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("mat_organics_trees"), trees );
 }
 
 bool Materials::ReadPlantMaterials (vector<t_matgloss> & plants)
 {
-    return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_organics_plants"), plants );
+    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("mat_organics_plants"), plants );
 }
-/*
-Gives bad results combined with the creature race field!
+
 bool Materials::ReadCreatureTypes (vector<t_matgloss> & creatures)
 {
-    return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("mat_creature_types"), creatures );
-    return true;
-}
-*/
-bool Materials::ReadCreatureTypes (vector<t_matgloss> & creatures)
-{
-    return ReadNamesOnly(d->p, d->offset_descriptor->getAddress ("creature_type_vector"), creatures );
+    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("creature_type_vector"), creatures );
     return true;
 }
 
 bool Materials::ReadCreatureTypesEx (vector<t_creaturetype> & creatures)
 {
-    DfVector <uint32_t> p_races (g_pProcess, d->offset_descriptor->getAddress ("creature_type_vector"));
-    uint32_t castes_vector_offset = d->offset_descriptor->getOffset ("creature_type_caste_vector");
-    uint32_t sizeof_string = d->offset_descriptor->getHexValue ("sizeof_string");
+    Process *p = d->owner;
+    memory_info *mem = d->owner->getDescriptor();
+    DfVector <uint32_t> p_races (p, mem->getAddress ("creature_type_vector"));
+    uint32_t castes_vector_offset = mem->getOffset ("creature_type_caste_vector");
+    uint32_t sizeof_string = mem->getHexValue ("sizeof_string");
     uint32_t size = p_races.size();
     uint32_t sizecas = 0;
     creatures.clear();
@@ -225,17 +233,17 @@ bool Materials::ReadCreatureTypesEx (vector<t_creaturetype> & creatures)
     for (uint32_t i = 0; i < size;i++)
     {
         t_creaturetype mat;
-        g_pProcess->readSTLString (p_races[i], mat.rawname, sizeof(mat.rawname));
-        DfVector <uint32_t> p_castes(g_pProcess,p_races[i] + castes_vector_offset);
+        p->readSTLString (p_races[i], mat.rawname, sizeof(mat.rawname));
+        DfVector <uint32_t> p_castes(p, p_races[i] + castes_vector_offset);
         sizecas = p_castes.size();
         for (uint32_t j = 0; j < sizecas;j++)
         {
             t_creaturecaste caste;
             uint32_t caste_start = p_castes[j];
-            g_pProcess->readSTLString (caste_start, caste.rawname, sizeof(caste.rawname));
-            g_pProcess->readSTLString (caste_start + sizeof_string, caste.singular, sizeof(caste.singular));
-            g_pProcess->readSTLString (caste_start + 2 * sizeof_string, caste.plural, sizeof(caste.plural));
-            g_pProcess->readSTLString (caste_start + 3 * sizeof_string, caste.adjective, sizeof(caste.adjective));
+            p->readSTLString (caste_start, caste.rawname, sizeof(caste.rawname));
+            p->readSTLString (caste_start + sizeof_string, caste.singular, sizeof(caste.singular));
+            p->readSTLString (caste_start + 2 * sizeof_string, caste.plural, sizeof(caste.plural));
+            p->readSTLString (caste_start + 3 * sizeof_string, caste.adjective, sizeof(caste.adjective));
             mat.castes.push_back(caste);
         }
         creatures.push_back(mat);

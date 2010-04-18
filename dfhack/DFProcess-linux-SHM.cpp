@@ -118,7 +118,6 @@ bool SHMProcess::Private::SetAndWait (uint32_t state)
                 FreeLocks();
                 attached = locked = identified = false;
                 // we aren't the current process anymore
-                g_pProcess = NULL;
                 throw Error::SHMServerDisappeared();
             }
             else
@@ -338,6 +337,7 @@ bool SHMProcess::Private::validate(vector <memory_info *> & known_versions)
             {
                 memory_info * m = *it;
                 memdescriptor = m;
+                m->setParentProcess((Process*)this);
                 identified = true;
                 // cerr << "identified " << m->getVersion() << endl;
                 return true;
@@ -537,11 +537,11 @@ bool SHMProcess::resume()
 
 bool SHMProcess::attach()
 {
-    if(g_pProcess != 0)
+    if(d->attached)
     {
-        // FIXME: throw exception here - programmer error
-        cerr << "client is already attached to a process!" << endl;
-        return false;
+        if(!d->locked)
+            return suspend();
+        return true;
     }
     if(!d->GetLocks())
     {
@@ -576,7 +576,6 @@ bool SHMProcess::attach()
         cerr << "unable to suspend" << endl;
         return false;
     }
-    g_pProcess = this;
     return true;
 }
 
@@ -597,7 +596,6 @@ bool SHMProcess::detach()
         d->locked = false;
         d->attached = false;
         d->shm_addr = 0;
-        g_pProcess = 0;
         return true;
     }
     // fail if we can't detach

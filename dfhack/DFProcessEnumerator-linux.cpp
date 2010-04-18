@@ -35,9 +35,6 @@ distribution.
 
 using namespace DFHack;
 
-/// HACK: global variables (only one process can be attached at the same time.)
-Process * DFHack::g_pProcess; ///< current process. non-NULL when picked
-
 class DFHack::ProcessEnumerator::Private
 {
     public:

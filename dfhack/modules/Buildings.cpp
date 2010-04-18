@@ -59,6 +59,7 @@ struct Buildings::Private
     int32_t custom_workshop_id;
     DfVector <uint32_t> * p_bld;
     APIPrivate *d;
+    Process * owner;
     bool Inited;
     bool Started;
 };
@@ -67,6 +68,7 @@ Buildings::Buildings(APIPrivate * d_)
 {
     d = new Private;
     d->d = d_;
+    d->owner = d_->p;
     d->Inited = d->Started = false;
     memory_info * mem = d->d->offset_descriptor;
     d->custom_workshop_vector = mem->getAddress("custom_workshop_vector");
@@ -87,7 +89,7 @@ Buildings::~Buildings()
 
 bool Buildings::Start(uint32_t & numbuildings)
 {
-    d->p_bld = new DfVector <uint32_t> (g_pProcess, d->buildings_vector);
+    d->p_bld = new DfVector <uint32_t> (d->owner, d->buildings_vector);
     numbuildings = d->p_bld->size();
     d->Started = true;
     return true;
@@ -104,7 +106,7 @@ bool Buildings::Read (const uint32_t index, t_building & building)
     //d->p_bld->read(index,(uint8_t *)&temp);
 
     //read building from memory
-    g_pProcess->read (temp, sizeof (t_building_df40d), (uint8_t *) &bld_40d);
+    d->owner->read (temp, sizeof (t_building_df40d), (uint8_t *) &bld_40d);
 
     // transform
     int32_t type = -1;
@@ -136,13 +138,16 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 {
     if(!d->Started)
         return false;
-    DfVector <uint32_t> p_matgloss (g_pProcess, d->custom_workshop_vector);
+    
+    Process * p = d->owner;
+    DfVector <uint32_t> p_matgloss (p, d->custom_workshop_vector);
     uint32_t size = p_matgloss.size();
     btypes.clear();
+    
     for (uint32_t i = 0; i < size;i++)
     {
-        string out = g_pProcess->readSTLString (p_matgloss[i] + d->custom_workshop_name);
-        uint32_t type = g_pProcess->readDWord (p_matgloss[i] + d->custom_workshop_type);
+        string out = p->readSTLString (p_matgloss[i] + d->custom_workshop_name);
+        uint32_t type = p->readDWord (p_matgloss[i] + d->custom_workshop_type);
         #ifdef DEBUG
             cout << out << ": " << type << endl;
         #endif
@@ -160,7 +165,7 @@ int32_t Buildings::GetCustomWorkshopType(t_building & building)
     if(type != -1 && type == d->custom_workshop_id)
     {
         // read the custom workshop subtype
-        ret = (int32_t) g_pProcess->readDWord(building.origin + d->building_custom_workshop_type);
+        ret = (int32_t) d->owner->readDWord(building.origin + d->building_custom_workshop_type);
     }
     return ret;
 }

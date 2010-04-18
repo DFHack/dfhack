@@ -27,41 +27,61 @@ distribution.
 
 #include "Tranquility.h"
 #include "Export.h"
-
 namespace DFHack
 {
     class Process;
+    template <class T>
     class DFHACK_EXPORT DfVector
     {
         private:
-            // starting offset
-            uint32_t start;
-            // vector size
-            uint32_t size;
-            uint32_t item_size;
-            uint8_t* data;
-            
+            uint32_t _start;// starting offset
+            uint32_t _size;// vector size
+            T * data; // cached data
         public:
-            DfVector();
-            DfVector(Process * p, uint32_t address, uint32_t item_size);
-            ~DfVector();
+            DfVector(Process * p, uint32_t address)
+            {
+                uint32_t triplet[3];
+                memory_info * mem = p->getDescriptor();
+                uint32_t offs =  mem->getOffset("vector_triplet");
+                
+                p->read(address + offs, sizeof(triplet), (uint8_t *) &triplet);
+                _start = triplet[0];
+                uint32_t byte_size = triplet[1] - triplet[0];
+                _size = byte_size / sizeof(T);
+                data = new T[_size];
+                p->read(_start,byte_size, (uint8_t *)data);
+            };
+            DfVector()
+            {
+                data = 0;
+            };
+            ~DfVector()
+            {
+                if(data)
+                    delete [] data;
+            };
             // get offset of the specified index
-            inline void* operator[] (uint32_t index)
+            inline T& operator[] (uint32_t index)
             {
                 // FIXME: vector out of bounds exception
                 //assert(index < size);
-                return data + index*item_size;
+                return data[index];
             };
             // get offset of the specified index
-            inline void* at (uint32_t index)
+            inline T& at (uint32_t index)
             {
                 //assert(index < size);
-                return data + index*item_size;
+                return data[index];
             };
             // get vector size
-            inline uint32_t  getSize () 
+            inline uint32_t size () 
             {
-                return size;
+                return _size;
+            };
+            // get vector start
+            inline uint32_t start () 
+            {
+                return _start;
             };
     };
 }

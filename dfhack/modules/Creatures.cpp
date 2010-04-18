@@ -25,9 +25,9 @@ distribution.
 #include "DFCommonInternal.h"
 #include "../private/APIPrivate.h"
 
-#include "DFVector.h"
 #include "DFMemInfo.h"
 #include "DFProcess.h"
+#include "DFVector.h"
 #include "DFError.h"
 #include "DFTypes.h"
 
@@ -52,7 +52,7 @@ struct Creatures::Private
     Creatures2010::creature_offsets creatures;
     uint32_t creature_module;
     uint32_t dwarf_race_index_addr;
-    DfVector *p_cre;
+    DfVector <uint32_t> *p_cre;
     APIPrivate *d;
 };
 
@@ -120,9 +120,9 @@ Creatures::~Creatures()
 
 bool Creatures::Start( uint32_t &numcreatures )
 {
-    d->p_cre = new DfVector (d->d->p, d->creatures.vector, 4);
+    d->p_cre = new DfVector <uint32_t> (d->d->p, d->creatures.vector);
     d->Started = true;
-    numcreatures =  d->p_cre->getSize();
+    numcreatures =  d->p_cre->size();
     return true;
 }
 
@@ -153,7 +153,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     // non-SHM slow path
     
     // read pointer from vector at position
-    uint32_t temp = * (uint32_t *) d->p_cre->at (index);
+    uint32_t temp = d->p_cre->at (index);
     furball.origin = temp;
     Creatures2010::creature_offsets &offs = d->creatures;
     
@@ -208,7 +208,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
 
     /*
     // enum soul pointer vector
-    DfVector souls(g_pProcess,temp + offs.creature_soul_vector_offset,4);
+    DfVector <uint32_t> souls(g_pProcess,temp + offs.creature_soul_vector_offset);
     */
     uint32_t soul = g_pProcess->readDWord(temp + offs.default_soul_offset);
     furball.has_default_soul = false;
@@ -216,11 +216,11 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     {
         furball.has_default_soul = true;
         // get first soul's skills
-        DfVector skills(g_pProcess, soul + offs.soul_skills_vector_offset, 4 );
-        furball.defaultSoul.numSkills = skills.getSize();
+        DfVector <uint32_t> skills(g_pProcess, soul + offs.soul_skills_vector_offset);
+        furball.defaultSoul.numSkills = skills.size();
         for (uint32_t i = 0; i < furball.defaultSoul.numSkills;i++)
         {
-            uint32_t temp2 = * (uint32_t *) skills[i];
+            uint32_t temp2 = skills[i];
             // a byte: this gives us 256 skills maximum.
             furball.defaultSoul.skills[i].id = g_pProcess->readByte (temp2);
             furball.defaultSoul.skills[i].rating = g_pProcess->readByte (temp2 + 4);
@@ -234,7 +234,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     }
     //likes
     /*
-    DfVector likes(d->p, temp + offs.creature_likes_offset, 4);
+    DfVector <uint32_t> likes(d->p, temp + offs.creature_likes_offset);
     furball.numLikes = likes.getSize();
     for(uint32_t i = 0;i<furball.numLikes;i++)
     {
@@ -270,11 +270,11 @@ int32_t Creatures::ReadCreatureInBox (int32_t index, t_creature & furball,
     else
     {
         uint16_t coords[3];
-        uint32_t size = d->p_cre->getSize();
+        uint32_t size = d->p_cre->size();
         while (uint32_t(index) < size)
         {
             // read pointer from vector at position
-            uint32_t temp = * (uint32_t *) d->p_cre->at (index);
+            uint32_t temp = d->p_cre->at(index);
             g_pProcess->read (temp + d->creatures.pos_offset, 3 * sizeof (uint16_t), (uint8_t *) &coords);
             if (coords[0] >= x1 && coords[0] < x2)
             {
@@ -298,7 +298,7 @@ int32_t Creatures::ReadCreatureInBox (int32_t index, t_creature & furball,
 bool Creatures::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
 {
     if(!d->Started) return false;
-    uint32_t temp = * (uint32_t *) d->p_cre->at (index);
+    uint32_t temp = d->p_cre->at (index);
     g_pProcess->write(temp + d->creatures.labors_offset, NUM_CREATURE_LABORS, labors);
     uint32_t pickup_equip;
     g_pProcess->readDWord(temp + d->creatures.pickup_equipment_bit, pickup_equip);

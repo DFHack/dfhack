@@ -16,6 +16,7 @@ using namespace std;
 #include <locale.h>
 #include <math.h>
 
+#include <DFGlobal.h>
 #include <DFTypes.h>
 #include <DFTileTypes.h>
 #include <DFHackAPI.h>

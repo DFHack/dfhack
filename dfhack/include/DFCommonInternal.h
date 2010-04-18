@@ -22,6 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include "DFGlobal.h"
+
 #ifndef DFCOMMONINTERNAL_H_INCLUDED
 #define DFCOMMONINTERNAL_H_INCLUDED
 
@@ -65,14 +67,6 @@ typedef pid_t ProcessHandle;
 typedef HANDLE ProcessHandle;
 #endif
 
-namespace DFHack
-{
-    class Process;
-    /*
-    * Currently attached process and its handle
-    */
-    extern Process * g_pProcess; ///< current process. non-NULL when picked
-}
 #ifndef BUILD_DFHACK_LIB
 #   define BUILD_DFHACK_LIB
 #endif

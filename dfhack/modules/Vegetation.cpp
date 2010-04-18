@@ -38,7 +38,7 @@ struct Vegetation::Private
     uint32_t vegetation_vector;
     uint32_t tree_desc_offset;
     // translation
-    DfVector * p_veg;
+    DfVector <uint32_t> * p_veg;
     
     APIPrivate *d;
     bool Inited;
@@ -65,8 +65,8 @@ Vegetation::~Vegetation()
 
 bool Vegetation::Start(uint32_t & numplants)
 {
-    d->p_veg = new DfVector (g_pProcess, d->vegetation_vector, 4);
-    numplants = d->p_veg->getSize();
+    d->p_veg = new DfVector <uint32_t> (g_pProcess, d->vegetation_vector);
+    numplants = d->p_veg->size();
     d->Started = true;
     return true;
 }
@@ -77,7 +77,7 @@ bool Vegetation::Read (const uint32_t index, t_tree & shrubbery)
     if(!d->Started)
         return false;
     // read pointer from vector at position
-    uint32_t temp = * (uint32_t *) d->p_veg->at (index);
+    uint32_t temp = d->p_veg->at (index);
     // read from memory
     g_pProcess->read (temp + d->tree_desc_offset, sizeof (t_tree), (uint8_t *) &shrubbery);
     shrubbery.address = temp;

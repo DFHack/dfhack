@@ -250,7 +250,7 @@ bool API::InitReadEffects ( uint32_t & numeffects )
         return false;
     }
     d->effectsInited = true;
-    d->p_effect = new DfVector (d->p, effects, 4);
+    d->p_effect = new DfVector (d->p, effects);
     numeffects = d->p_effect->getSize();
     return true;
 }
@@ -263,7 +263,7 @@ bool API::ReadEffect(const uint32_t index, t_effect_df40d & effect)
         return false;
     
     // read pointer from vector at position
-    uint32_t temp = * (uint32_t *) d->p_effect->at (index);
+    uint32_t temp = d->p_effect->at (index);
     //read effect from memory
     g_pProcess->read (temp, sizeof (t_effect_df40d), (uint8_t *) &effect);
     return true;
@@ -277,7 +277,7 @@ bool API::WriteEffect(const uint32_t index, const t_effect_df40d & effect)
     if(index >= d->p_effect->getSize())
         return false;
     // read pointer from vector at position
-        uint32_t temp = * (uint32_t *) d->p_effect->at (index);
+        uint32_t temp = d->p_effect->at (index);
     // write effect to memory
     g_pProcess->write(temp,sizeof(t_effect_df40d), (uint8_t *) &effect);
     return true;
@@ -306,7 +306,7 @@ bool API::InitReadNotes( uint32_t &numnotes )
         d->note_name_offset = minfo->getOffset ("note_name");
         d->note_xyz_offset = minfo->getOffset ("note_xyz");
 
-        d->p_notes = new DfVector (d->p, notes, 4);
+        d->p_notes = new DfVector (d->p, notes);
         d->notesInited = true;
         numnotes =  d->p_notes->getSize();
         return true;
@@ -322,7 +322,7 @@ bool API::ReadNote (const int32_t index, t_note & note)
 {
     if(!d->notesInited) return false;
     // read pointer from vector at position
-    uint32_t temp = * (uint32_t *) d->p_notes->at (index);
+    uint32_t temp = d->p_notes->at (index);
     note.symbol = g_pProcess->readByte(temp);
     note.foreground = g_pProcess->readWord(temp + d->note_foreground_offset);
     note.background = g_pProcess->readWord(temp + d->note_background_offset);
@@ -343,8 +343,8 @@ bool API::InitReadSettlements( uint32_t & numsettlements )
         d->settlement_world_xy_offset = minfo->getOffset ("settlement_world_xy");
         d->settlement_local_xy_offset = minfo->getOffset ("settlement_local_xy");
 
-        d->p_settlements = new DfVector (d->p, allSettlements, 4);
-        d->p_current_settlement = new DfVector(d->p, currentSettlement,4);
+        d->p_settlements = new DfVector (d->p, allSettlements);
+        d->p_current_settlement = new DfVector(d->p, currentSettlement);
         d->settlementsInited = true;
         numsettlements =  d->p_settlements->getSize();
         return true;
@@ -362,7 +362,7 @@ bool API::ReadSettlement(const int32_t index, t_settlement & settlement)
     if(!d->p_settlements->getSize()) return false;
     
     // read pointer from vector at position
-    uint32_t temp = * (uint32_t *) d->p_settlements->at (index);
+    uint32_t temp = d->p_settlements->at (index);
     settlement.origin = temp;
     d->readName(settlement.name, temp + d->settlement_name_offset);
     g_pProcess->read(temp + d->settlement_world_xy_offset, 2 * sizeof(int16_t), (uint8_t *) &settlement.world_x);
@@ -375,7 +375,7 @@ bool API::ReadCurrentSettlement(t_settlement & settlement)
     if(!d->settlementsInited) return false;
     if(!d->p_current_settlement->getSize()) return false;
     
-    uint32_t temp = * (uint32_t *) d->p_current_settlement->at(0);
+    uint32_t temp = d->p_current_settlement->at(0);
     settlement.origin = temp;
     d->readName(settlement.name, temp + d->settlement_name_offset);
     g_pProcess->read(temp + d->settlement_world_xy_offset, 2 * sizeof(int16_t), (uint8_t *) &settlement.world_x);
@@ -411,7 +411,7 @@ bool API::getItemIndexesInBox(vector<uint32_t> &indexes,
     };
     temp2 temp2;
     for(uint32_t i =0;i<size;i++){
-        uint32_t temp = *(uint32_t *) d->p_itm->at(i);
+        uint32_t temp = d->p_itm->at(i);
         g_pProcess->read(temp+sizeof(uint32_t),5 * sizeof(uint16_t), (uint8_t *) &temp2);
         if(temp2.flags & (1 << 0)){
             if (temp2.coords[0] >= x1 && temp2.coords[0] < x2)
@@ -449,7 +449,7 @@ bool API::InitReadItems(uint32_t & numitems)
         int items = d->offset_descriptor->getAddress ("items");
         d->item_material_offset = d->offset_descriptor->getOffset ("item_materials");
 
-        d->p_itm = new DfVector (d->p, items, 4);
+        d->p_itm = new DfVector (d->p, items);
         d->itemsInited = true;
         numitems = d->p_itm->getSize();
         return true;
@@ -468,7 +468,7 @@ bool API::ReadItem (const uint32_t index, t_item & item)
     t_item_df40d item_40d;
 
     // read pointer from vector at position
-    uint32_t temp = * (uint32_t *) d->p_itm->at (index);
+    uint32_t temp = d->p_itm->at (index);
 
     //read building from memory
     g_pProcess->read (temp, sizeof (t_item_df40d), (uint8_t *) &item_40d);
@@ -512,7 +512,7 @@ bool API::ReadItemTypes(vector< vector< t_itemType > > & itemTypes)
     int item_type_name_offset = minfo->getOffset("item_type_name");
     for(int i = 8;i<20;i++)
     {
-        DfVector p_temp (d->p, matgloss_address + i*matgloss_skip,4);
+        DfVector p_temp (d->p, matgloss_address + i*matgloss_skip);
         vector< t_itemType > typesForVec;
         for(uint32_t j =0; j<p_temp.getSize();j++)
         {

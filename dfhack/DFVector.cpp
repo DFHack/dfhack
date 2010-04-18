@@ -24,34 +24,8 @@ distribution.
 
 #include "Tranquility.h"
 #include "DFCommonInternal.h"
-#include "DFVector.h"
 #include "DFMemInfo.h"
 #include "DFProcess.h"
-
+#include "DFVector.h"
 using namespace DFHack;
 
-
-DfVector::DfVector(Process * p, uint32_t address, uint32_t _item_size)
-{
-    uint32_t triplet[3];
-    item_size = _item_size;
-    memory_info * mem = p->getDescriptor();
-    uint32_t offs =  mem->getOffset("vector_triplet");
-    
-    p->read(address + offs, sizeof(triplet), (uint8_t *) &triplet);
-    start = triplet[0];
-    uint32_t byte_size = triplet[1] - triplet[0];
-    size = byte_size / item_size;
-    data = (uint8_t *) new char[byte_size];
-    g_pProcess->read(start,byte_size, (uint8_t *)data);
-};
-DfVector::DfVector()
-{
-    data = 0;
-};
-            
-DfVector::~DfVector()
-{
-    if(data)
-        delete [] data;
-};

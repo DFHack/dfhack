@@ -422,13 +422,13 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins,
     {
         // veins are stored as a vector of pointers to veins
         /*pointer is 4 bytes! we work with a 32bit program here, no matter what architecture we compile khazad for*/
-        DfVector p_veins (d->d->p, addr + off.veinvector, 4);
-        uint32_t size = p_veins.getSize();
+        DfVector <uint32_t> p_veins (d->d->p, addr + off.veinvector);
+        uint32_t size = p_veins.size();
         // read all veins
         for (uint32_t i = 0; i < size;i++)
         {
             // read the vein pointer from the vector
-            uint32_t temp = * (uint32_t *) p_veins[i];
+            uint32_t temp = p_veins[i];
             uint32_t type = g_pProcess->readDWord(temp);
 try_again:
             if(veins && type == off.vein_mineral_vptr)
@@ -578,7 +578,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     uint32_t regions = g_pProcess->readDWord (world_regions);
 
     // read the geoblock vector
-    DfVector geoblocks (d->d->p, world_geoblocks_vector, 4);
+    DfVector <uint32_t> geoblocks (d->d->p, world_geoblocks_vector);
 
     // iterate over 8 surrounding regions + local region
     for (int i = eNorthWest; i < eBiomeCount; i++)
@@ -604,21 +604,21 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
         /// geology blocks are assigned to regions from a vector
         // get the geoblock from the geoblock vector using the geoindex
         // read the matgloss pointer from the vector into temp
-        uint32_t geoblock_off = * (uint32_t *) geoblocks[geoindex];
+        uint32_t geoblock_off = geoblocks[geoindex];
 
         /// geology blocks have a vector of layer descriptors
         // get the vector with pointer to layers
-        DfVector geolayers (d->d->p, geoblock_off + geolayer_geoblock_offset , 4); // let's hope
+        DfVector <uint32_t> geolayers (d->d->p, geoblock_off + geolayer_geoblock_offset); // let's hope
         // make sure we don't load crap
-        assert (geolayers.getSize() > 0 && geolayers.getSize() <= 16);
+        assert (geolayers.size() > 0 && geolayers.size() <= 16);
 
         /// layer descriptor has a field that determines the type of stone/soil
-        d->v_geology[i].reserve (geolayers.getSize());
+        d->v_geology[i].reserve (geolayers.size());
         // finally, read the layer matgloss
-        for (uint32_t j = 0;j < geolayers.getSize();j++)
+        for (uint32_t j = 0;j < geolayers.size();j++)
         {
             // read pointer to a layer
-            uint32_t geol_offset = * (uint32_t *) geolayers[j];
+            uint32_t geol_offset = geolayers[j];
             // read word at pointer + 2, store in our geology vectors
             d->v_geology[i].push_back (g_pProcess->readWord (geol_offset + type_inside_geolayer));
         }

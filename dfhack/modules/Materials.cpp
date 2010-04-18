@@ -25,9 +25,9 @@ distribution.
 #include "DFCommonInternal.h"
 #include "../private/APIPrivate.h"
 #include "modules/Materials.h"
-#include "DFVector.h"
 #include "DFMemInfo.h"
 #include "DFProcess.h"
+#include "DFVector.h"
 
 using namespace DFHack;
 
@@ -136,7 +136,7 @@ bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
     int matgloss_colors = minfo->getOffset ("material_color");
     int matgloss_stone_name_offset = minfo->getOffset("matgloss_stone_name");
 
-    DfVector p_matgloss (d->p, matgloss_address, 4);
+    DfVector <uint32_t> p_matgloss (d->p, matgloss_address);
 
     uint32_t size = p_matgloss.getSize();
     inorganic.resize (0);
@@ -144,7 +144,7 @@ bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
     for (uint32_t i = 0; i < size;i++)
     {
         // read the matgloss pointer from the vector into temp
-        uint32_t temp = * (uint32_t *) p_matgloss[i];
+        uint32_t temp = p_matgloss[i];
         // read the string pointed at by
         t_matgloss mat;
         //cout << temp << endl;
@@ -167,14 +167,14 @@ bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
 // good for now
 inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & names)
 {
-    DfVector p_matgloss (p, address, 4);
-    uint32_t size = p_matgloss.getSize();
+    DfVector <uint32_t> p_matgloss (p, address);
+    uint32_t size = p_matgloss.size();
     names.clear();
     names.reserve (size);
     for (uint32_t i = 0; i < size;i++)
     {
         t_matgloss mat;
-        p->readSTLString (*(uint32_t *) p_matgloss[i], mat.id, 128);
+        p->readSTLString (p_matgloss[i], mat.id, 128);
         names.push_back(mat);
     }
     return true;
@@ -215,23 +215,23 @@ bool Materials::ReadCreatureTypes (vector<t_matgloss> & creatures)
 
 bool Materials::ReadCreatureTypesEx (vector<t_creaturetype> & creatures)
 {
-    DfVector p_races (g_pProcess, d->offset_descriptor->getAddress ("creature_type_vector"), 4);
+    DfVector <uint32_t> p_races (g_pProcess, d->offset_descriptor->getAddress ("creature_type_vector"));
     uint32_t castes_vector_offset = d->offset_descriptor->getOffset ("creature_type_caste_vector");
     uint32_t sizeof_string = d->offset_descriptor->getHexValue ("sizeof_string");
-    uint32_t size = p_races.getSize();
+    uint32_t size = p_races.size();
     uint32_t sizecas = 0;
     creatures.clear();
     creatures.reserve (size);
     for (uint32_t i = 0; i < size;i++)
     {
         t_creaturetype mat;
-        g_pProcess->readSTLString (*(uint32_t *) p_races[i], mat.rawname, sizeof(mat.rawname));
-        DfVector p_castes(g_pProcess,(*(uint32_t *) p_races[i]) + castes_vector_offset, 4);
-        sizecas = p_castes.getSize();
+        g_pProcess->readSTLString (p_races[i], mat.rawname, sizeof(mat.rawname));
+        DfVector <uint32_t> p_castes(g_pProcess,p_races[i] + castes_vector_offset);
+        sizecas = p_castes.size();
         for (uint32_t j = 0; j < sizecas;j++)
         {
             t_creaturecaste caste;
-            uint32_t caste_start = *(uint32_t *)p_castes[j];
+            uint32_t caste_start = p_castes[j];
             g_pProcess->readSTLString (caste_start, caste.rawname, sizeof(caste.rawname));
             g_pProcess->readSTLString (caste_start + sizeof_string, caste.singular, sizeof(caste.singular));
             g_pProcess->readSTLString (caste_start + 2 * sizeof_string, caste.plural, sizeof(caste.plural));

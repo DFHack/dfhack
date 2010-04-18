@@ -34,7 +34,6 @@ namespace DFHack
     class memory_info;
     class Process;
     class DFWindow;
-    class DfVector;
     
     // structure describing a memory range
     struct DFHACK_EXPORT t_memrange

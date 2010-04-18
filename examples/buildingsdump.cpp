@@ -8,6 +8,7 @@
 #include <vector>
 using namespace std;
 
+#include <DFGlobal.h>
 #include <DFError.h>
 #include <DFTypes.h>
 #include <DFHackAPI.h>

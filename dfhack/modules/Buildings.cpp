@@ -57,7 +57,7 @@ struct Buildings::Private
     uint32_t custom_workshop_type;
     uint32_t custom_workshop_name;
     int32_t custom_workshop_id;
-    DfVector * p_bld;
+    DfVector <uint32_t> * p_bld;
     APIPrivate *d;
     bool Inited;
     bool Started;
@@ -87,8 +87,8 @@ Buildings::~Buildings()
 
 bool Buildings::Start(uint32_t & numbuildings)
 {
-    d->p_bld = new DfVector (g_pProcess, d->buildings_vector, 4);
-    numbuildings = d->p_bld->getSize();
+    d->p_bld = new DfVector <uint32_t> (g_pProcess, d->buildings_vector);
+    numbuildings = d->p_bld->size();
     d->Started = true;
     return true;
 }
@@ -100,7 +100,7 @@ bool Buildings::Read (const uint32_t index, t_building & building)
     t_building_df40d bld_40d;
 
     // read pointer from vector at position
-    uint32_t temp = * (uint32_t *) d->p_bld->at (index);
+    uint32_t temp = d->p_bld->at (index);
     //d->p_bld->read(index,(uint8_t *)&temp);
 
     //read building from memory
@@ -136,13 +136,13 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 {
     if(!d->Started)
         return false;
-    DfVector p_matgloss (g_pProcess, d->custom_workshop_vector, 4);
-    uint32_t size = p_matgloss.getSize();
+    DfVector <uint32_t> p_matgloss (g_pProcess, d->custom_workshop_vector);
+    uint32_t size = p_matgloss.size();
     btypes.clear();
     for (uint32_t i = 0; i < size;i++)
     {
-        string out = g_pProcess->readSTLString (*(uint32_t *) p_matgloss[i] + d->custom_workshop_name);
-        uint32_t type = g_pProcess->readDWord (*(uint32_t *) p_matgloss[i] + d->custom_workshop_type);
+        string out = g_pProcess->readSTLString (p_matgloss[i] + d->custom_workshop_name);
+        uint32_t type = g_pProcess->readDWord (p_matgloss[i] + d->custom_workshop_type);
         #ifdef DEBUG
             cout << out << ": " << type << endl;
         #endif

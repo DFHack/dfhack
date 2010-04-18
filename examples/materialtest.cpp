@@ -8,6 +8,7 @@
 #include <ctime>
 using namespace std;
 
+#include <DFGlobal.h>
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 #include <DFProcess.h>

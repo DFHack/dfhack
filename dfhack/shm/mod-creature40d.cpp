@@ -84,7 +84,6 @@ void ReadCreatureAtIndex(void *data)
     } raw_skill;
     // learned skills
     std::vector <void *> * skillv = (std::vector <void *> *) (temp + offsets.creature_skills_offset + offsets.vector_correct);
-    //DfVector skills (d->p->readVector (temp + offsets.creature_skills_offset, 4));
     furball->numSkills = skillv->size();
     for (uint32_t i = 0; i < furball->numSkills;i++)
     {

@@ -73,15 +73,15 @@ bool Translation::Start()
     if(!d->Inited)
         return false;
     Process * p = d->d->p;
-    DfVector genericVec (p, d->genericAddress, 4);
-    DfVector transVec (p, d->transAddress, 4);
+    DfVector <uint32_t> genericVec (p, d->genericAddress);
+    DfVector <uint32_t> transVec (p, d->transAddress);
     DFDict & translations = d->dicts.translations;
     DFDict & foreign_languages = d->dicts.foreign_languages;
 
     translations.resize(10);
-    for (uint32_t i = 0;i < genericVec.getSize();i++)
+    for (uint32_t i = 0;i < genericVec.size();i++)
     {
-        uint32_t genericNamePtr = * (uint32_t *) genericVec.at (i);
+        uint32_t genericNamePtr = genericVec.at(i);
         for(int i=0; i<10;i++)
         {
             string word = p->readSTLString (genericNamePtr + i * d->sizeof_string);
@@ -89,15 +89,15 @@ bool Translation::Start()
         }
     }
 
-    foreign_languages.resize(transVec.getSize());
-    for (uint32_t i = 0; i < transVec.getSize();i++)
+    foreign_languages.resize(transVec.size());
+    for (uint32_t i = 0; i < transVec.size();i++)
     {
-        uint32_t transPtr = * (uint32_t *) transVec.at (i);
-        //string transName = d->p->readSTLString (transPtr);
-        DfVector trans_names_vec (p, transPtr + d->word_table_offset, 4);
-        for (uint32_t j = 0;j < trans_names_vec.getSize();j++)
+        uint32_t transPtr = transVec.at(i);
+        
+        DfVector <uint32_t> trans_names_vec (p, transPtr + d->word_table_offset);
+        for (uint32_t j = 0;j < trans_names_vec.size();j++)
         {
-            uint32_t transNamePtr = * (uint32_t *) trans_names_vec.at (j);
+            uint32_t transNamePtr = trans_names_vec.at(j);
             string name = p->readSTLString (transNamePtr);
             foreign_languages[i].push_back (name);
         }

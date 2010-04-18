@@ -1060,6 +1060,7 @@ size=212
         <Offset name="map_data_temperature1_offset">0x159c</Offset>
         <Offset name="map_data_temperature2_offset">0x179c</Offset>
         <Offset name="map_data_biome_stuffs">0x1D9C</Offset>
+        <Offset name="map_data_pathfinding_offset">0x0D9c</Offset>
         <!--
 map_data_map_x_offset         0x0058
 map_data_map_y_offset         0x005A

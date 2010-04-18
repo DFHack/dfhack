@@ -142,7 +142,6 @@ bool Maps::Start()
     d->block = new uint32_t[mx*my*mz];
     uint32_t *temp_x = new uint32_t[mx];
     uint32_t *temp_y = new uint32_t[my];
-    uint32_t *temp_z = new uint32_t[mz];
 
     p->read (x_array_loc, mx * sizeof (uint32_t), (uint8_t *) temp_x);
     for (uint32_t x = 0; x < mx; x++)
@@ -158,7 +157,6 @@ bool Maps::Start()
     }
     delete [] temp_x;
     delete [] temp_y;
-    delete [] temp_z;
     return true;
 }
 

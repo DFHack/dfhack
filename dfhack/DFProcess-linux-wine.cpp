@@ -34,7 +34,7 @@ using namespace DFHack;
 class WineProcess::Private
 {
     public:
-    Private()
+    Private(Process * self_)
     {
         my_descriptor = NULL;
         my_handle = NULL;
@@ -43,10 +43,12 @@ class WineProcess::Private
         attached = false;
         suspended = false;
         memFileHandle = 0;
+        self = self_;
     };
     ~Private(){};
     DFWindow* my_window;
     memory_info * my_descriptor;
+    Process * self;
     ProcessHandle my_handle;
     uint32_t my_pid;
     string memFile;
@@ -58,7 +60,7 @@ class WineProcess::Private
 };
 
 WineProcess::WineProcess(uint32_t pid, vector <memory_info *> & known_versions)
-: d(new Private())
+: d(new Private(this))
 {
     char dir_name [256];
     char exe_link_name [256];
@@ -69,6 +71,7 @@ WineProcess::WineProcess(uint32_t pid, vector <memory_info *> & known_versions)
     int target_result;
     
     d->identified = false;
+    d->my_descriptor = 0;
     
     sprintf(dir_name,"/proc/%d/", pid);
     sprintf(exe_link_name,"/proc/%d/exe", pid);
@@ -147,9 +150,11 @@ bool WineProcess::Private::validate(char* exe_file, uint32_t pid, char* mem_file
         // are the md5 hashes the same?
         if(memory_info::OS_WINDOWS == (*it)->getOS() && hash == thishash)
         {
-            memory_info * m = *it;
+            
+            // keep track of created memory_info object so we can destroy it later
+            memory_info *m = new memory_info(**it);
             my_descriptor = m;
-            m->setParentProcess((Process*)this);
+            m->setParentProcess(dynamic_cast<Process *>( self ));
             my_handle = my_pid = pid;
             // tell WineProcess about the /proc/PID/mem file
             memFile = mem_file;
@@ -166,6 +171,9 @@ WineProcess::~WineProcess()
     {
         detach();
     }
+    // destroy our copy of the memory descriptor
+    if(d->my_descriptor)
+        delete d->my_descriptor;
     if(d->my_window)
         delete d->my_window;
     delete d;

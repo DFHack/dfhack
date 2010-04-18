@@ -46,7 +46,7 @@ using namespace DFHack;
 class SHMProcess::Private
 {
     public:
-    Private()
+    Private(Process * self_)
     {
         memdescriptor = NULL;
         process_ID = 0;
@@ -62,10 +62,12 @@ class SHMProcess::Private
         suspend_lock = -1;
         attachmentIdx = 0;
         locked = false;
+        self = self_;
     };
     ~Private(){};
     memory_info * memdescriptor;
     DFWindow * window;
+    Process * self;
     pid_t process_ID;
     char *shm_addr;
     int shm_ID;
@@ -262,9 +264,10 @@ bool SHMProcess::Private::GetLocks()
 }
 
 SHMProcess::SHMProcess(uint32_t PID, vector< memory_info* >& known_versions)
-: d(new Private())
+: d(new Private(this))
 {
     d->process_ID = PID;
+    d->memdescriptor = 0;
     if(!attach())
     {
         // couldn't attach to process
@@ -335,9 +338,9 @@ bool SHMProcess::Private::validate(vector <memory_info *> & known_versions)
         try{
             if(hash == (*it)->getString("md5")) // are the md5 hashes the same?
             {
-                memory_info * m = *it;
+                memory_info *m = new memory_info(**it);
                 memdescriptor = m;
-                m->setParentProcess((Process*)this);
+                m->setParentProcess(dynamic_cast<Process *>( self ));
                 identified = true;
                 // cerr << "identified " << m->getVersion() << endl;
                 return true;
@@ -357,7 +360,8 @@ SHMProcess::~SHMProcess()
     {
         detach();
     }
-    // destroy data model. this is assigned by processmanager
+    if(d->memdescriptor)
+        delete d->memdescriptor;
     if(d->window)
     {
         delete d->window;

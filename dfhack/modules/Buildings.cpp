@@ -110,7 +110,7 @@ bool Buildings::Read (const uint32_t index, t_building & building)
 
     // transform
     int32_t type = -1;
-    d->d->offset_descriptor->resolveObjectToClassID (temp, type);
+    d->owner->getDescriptor()->resolveObjectToClassID (temp, type);
     building.origin = temp;
     building.vtable = bld_40d.vtable;
     building.x1 = bld_40d.x1;

@@ -44,10 +44,14 @@ class Materials::Private
 
 Materials::Materials(APIPrivate * d_)
 {
+    d = new Private;
     d->d = d_;
     d->owner = d_->p;
 }
-Materials::~Materials(){}
+Materials::~Materials()
+{
+    delete d;
+}
 /*
     {
 LABEL_53:

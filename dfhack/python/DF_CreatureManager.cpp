@@ -59,17 +59,27 @@ static int DF_CreatureManager_init(DF_CreatureManager* self, PyObject* args, PyO
 
 static void DF_CreatureManager_dealloc(DF_CreatureManager* self)
 {
+	PySys_WriteStdout("creature manager dealloc\n");
+	
 	if(self != NULL)
-	{		
+	{
+		PySys_WriteStdout("creature manager not NULL\n");
+		
 		if(self->creature_Ptr != NULL)
 		{
+			PySys_WriteStdout("creature_Ptr = %i\n", (int)self->creature_Ptr);
+			
 			delete self->creature_Ptr;
+			
+			PySys_WriteStdout("creature_Ptr deleted\n");
 			
 			self->creature_Ptr = NULL;
 		}
 		
 		self->ob_type->tp_free((PyObject*)self);
 	}
+	
+	PySys_WriteStdout("creature manager dealloc done\n");
 }
 
 // Type methods

@@ -33,6 +33,11 @@ distribution.
 #include "DF_Position.cpp"
 #include "DF_Material.cpp"
 #include "DF_CreatureManager.cpp"
+#include "DF_Maps.cpp"
+#include "DF_GUI.cpp"
+#include "DF_Vegetation.cpp"
+#include "DF_Translate.cpp"
+#include "DF_Constructions.cpp"
 
 using namespace std;
 using namespace DFHack;
@@ -44,6 +49,11 @@ struct DF_API
 	PyObject* position;
 	PyObject* material;
 	PyObject* creature;
+	PyObject* map;
+	PyObject* translate;
+	PyObject* construction;
+	PyObject* vegetation;
+	PyObject* gui;
 	DFHack::API* api_Ptr;
 };
 
@@ -71,6 +81,11 @@ static int DF_API_init(DF_API* self, PyObject* args, PyObject* kwds)
 		self->position = NULL;
 		self->material = NULL;
 		self->creature = NULL;
+		self->map = NULL;
+		self->translate = NULL;
+		self->construction = NULL;
+		self->vegetation = NULL;
+		self->gui = NULL;
 		
 		if(!PyArg_ParseTuple(args, "s", &memFileString))
 			return -1;
@@ -86,22 +101,52 @@ static int DF_API_init(DF_API* self, PyObject* args, PyObject* kwds)
 
 static void DF_API_dealloc(DF_API* self)
 {
+	PySys_WriteStdout("API dealloc\n");
+	
 	if(self != NULL)
 	{
-		Py_CLEAR(self->mem_info);
-		Py_CLEAR(self->position);
-		Py_CLEAR(self->material);
-		Py_CLEAR(self->creature);
+		PySys_WriteStdout("creature xdecref\n");
+		Py_XDECREF(self->creature);
+		
+		PySys_WriteStdout("mem_info xdecref\n");
+		Py_XDECREF(self->mem_info);
+		
+		PySys_WriteStdout("position xdecref\n");
+		Py_XDECREF(self->position);
+		
+		PySys_WriteStdout("material xdecref\n");
+		Py_XDECREF(self->material);
+		
+		PySys_WriteStdout("map xdecref\n");
+		Py_XDECREF(self->map);
+		
+		PySys_WriteStdout("translate xdecref\n");
+		Py_XDECREF(self->translate);
+		
+		PySys_WriteStdout("construction xdecref\n");
+		Py_XDECREF(self->construction);
+		
+		PySys_WriteStdout("vegetation xdecref\n");
+		Py_XDECREF(self->vegetation);
+		
+		PySys_WriteStdout("gui xdecref\n");
+		Py_XDECREF(self->gui);
 		
 		if(self->api_Ptr != NULL)
 		{
+			PySys_WriteStdout("api_Ptr = %i\n", (int)self->api_Ptr);
+			
 			delete self->api_Ptr;
+			
+			PySys_WriteStdout("api_Ptr deleted\n");
 			
 			self->api_Ptr = NULL;
 		}
 		
 		self->ob_type->tp_free((PyObject*)self);
 	}
+	
+	PySys_WriteStdout("API dealloc done\n");
 }
 
 // Accessors
@@ -256,6 +301,151 @@ static PyObject* DF_API_getCreature(DF_API* self, void* closure)
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_API_getMap(DF_API* self, void* closure)
+{
+	if(self->map != NULL)
+		return self->map;
+	
+	try
+	{
+		if(self->api_Ptr != NULL)
+		{
+			self->map = PyObject_Call((PyObject*)&DF_Map_type, NULL, NULL);
+			
+			if(self->map != NULL)
+			{
+				((DF_Map*)(self->map))->m_Ptr = self->api_Ptr->getMaps();
+				
+				if(((DF_Map*)(self->map))->m_Ptr != NULL)
+					return self->map;
+			}
+		}
+	}
+	catch(...)
+	{
+		PyErr_SetString(PyExc_ValueError, "Error trying to read map");
+		return NULL;
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_API_getTranslation(DF_API* self, void* closure)
+{
+	if(self->translate != NULL)
+		return self->translate;
+	
+	try
+	{
+		if(self->api_Ptr != NULL)
+		{
+			self->translate = PyObject_Call((PyObject*)&DF_Translate_type, NULL, NULL);
+			
+			if(self->translate != NULL)
+			{
+				((DF_Translate*)(self->translate))->tran_Ptr = self->api_Ptr->getTranslation();
+				
+				if(((DF_Translate*)(self->translate))->tran_Ptr != NULL)
+					return self->translate;
+			}
+		}
+	}
+	catch(...)
+	{
+		PyErr_SetString(PyExc_ValueError, "Error trying to read translation");
+		return NULL;
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_API_getConstruction(DF_API* self, void* closure)
+{
+	if(self->construction != NULL)
+		return self->construction;
+	
+	try
+	{
+		if(self->api_Ptr != NULL)
+		{
+			self->construction = PyObject_Call((PyObject*)&DF_Construction_type, NULL, NULL);
+			
+			if(self->construction != NULL)
+			{
+				((DF_Construction*)(self->construction))->c_Ptr = self->api_Ptr->getConstructions();
+				
+				if(((DF_Construction*)(self->construction))->c_Ptr != NULL)
+					return self->construction;
+			}
+		}
+	}
+	catch(...)
+	{
+		PyErr_SetString(PyExc_ValueError, "Error trying to read constructions");
+		return NULL;
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_API_getVegetation(DF_API* self, void* closure)
+{
+	if(self->vegetation != NULL)
+		return self->vegetation;
+	
+	try
+	{
+		if(self->api_Ptr != NULL)
+		{
+			self->vegetation = PyObject_Call((PyObject*)&DF_Vegetation_type, NULL, NULL);
+			
+			if(self->vegetation != NULL)
+			{
+				((DF_Vegetation*)(self->vegetation))->veg_Ptr = self->api_Ptr->getVegetation();
+				
+				if(((DF_Vegetation*)(self->vegetation))->veg_Ptr != NULL)
+					return self->vegetation;
+			}
+		}
+	}
+	catch(...)
+	{
+		PyErr_SetString(PyExc_ValueError, "Error trying to read vegetation");
+		return NULL;
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_API_getGUI(DF_API* self, void* closure)
+{
+	if(self->gui != NULL)
+		return self->gui;
+	
+	try
+	{
+		if(self->api_Ptr != NULL)
+		{
+			self->gui = PyObject_Call((PyObject*)&DF_GUI_type, NULL, NULL);
+			
+			if(self->gui != NULL)
+			{
+				((DF_GUI*)(self->gui))->g_Ptr = self->api_Ptr->getGui();
+				
+				if(((DF_GUI*)(self->gui))->g_Ptr != NULL)
+					return self->gui;
+			}
+		}
+	}
+	catch(...)
+	{
+		PyErr_SetString(PyExc_ValueError, "Error trying to read gui");
+		return NULL;
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyGetSetDef DF_API_getterSetters[] =
 {
     {"is_attached", (getter)DF_API_getIsAttached, NULL, "is_attached", NULL},
@@ -264,6 +454,11 @@ static PyGetSetDef DF_API_getterSetters[] =
 	{"position", (getter)DF_API_getPosition, NULL, "position", NULL},
 	{"materials", (getter)DF_API_getMaterial, NULL, "materials", NULL},
 	{"creatures", (getter)DF_API_getCreature, NULL, "creatures", NULL},
+	{"maps", (getter)DF_API_getMap, NULL, "maps", NULL},
+	{"translation", (getter)DF_API_getTranslation, NULL, "translation", NULL},
+	{"constructions", (getter)DF_API_getConstruction, NULL, "constructions", NULL},
+	{"vegetation", (getter)DF_API_getVegetation, NULL, "vegetation", NULL},
+	{"gui", (getter)DF_API_getGUI, NULL, "gui", NULL},
     {NULL}  // Sentinel
 };
 

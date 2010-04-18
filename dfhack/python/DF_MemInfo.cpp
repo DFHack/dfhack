@@ -63,17 +63,27 @@ static int DF_MemInfo_init(DF_MemInfo* self, PyObject* args, PyObject* kwds)
 
 static void DF_MemInfo_dealloc(DF_MemInfo* self)
 {
+	PySys_WriteStdout("mem_info dealloc\n");
+	
 	if(self != NULL)
 	{
+		PySys_WriteStdout("mem_info not NULL\n");
+		
 		if(self->mem_Ptr != NULL)
 		{
+			PySys_WriteStdout("mem_Ptr = %i\n", (int)self->mem_Ptr);
+			
 			delete self->mem_Ptr;
+			
+			PySys_WriteStdout("mem_Ptr deleted\n");
 			
 			self->mem_Ptr = NULL;
 		}
 		
 		self->ob_type->tp_free((PyObject*)self);
 	}
+	
+	PySys_WriteStdout("mem_info dealloc done\n");
 }
 
 // Setters/Getters

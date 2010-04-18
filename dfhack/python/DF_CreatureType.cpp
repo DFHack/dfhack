@@ -27,7 +27,7 @@ distribution.
 
 #include "Python.h"
 #include "structmember.h"
-#include "DF_Imports.cpp"
+//#include "DF_Imports.cpp"
 #include "DF_Helpers.cpp"
 #include "modules/Creatures.h"
 
@@ -39,35 +39,26 @@ struct DF_Creature_Base
 	
 	// simple type stuff
 	uint32_t origin;
-	uint32_t c_type;
+	uint32_t race;
 	uint8_t profession;
 	uint16_t mood;
 	uint32_t happiness;
 	uint32_t c_id;
-	uint32_t agility;
-	uint32_t strength;
-	uint32_t toughness;
-	uint32_t money;
 	int32_t squad_leader_id;
 	uint8_t sex;
 	uint32_t pregnancy_timer;
-	int32_t blood_max, blood_current;
-	uint32_t bleed_rate;
+	uint32_t flags1, flags2;
 	
 	PyObject* custom_profession;
 	
 	// composites
 	PyObject* position;
-	PyObject *name, *squad_name, *artifact_name;
+	PyObject *name, *artifact_name;
 	PyObject* current_job;
-	
-	// customs
-	PyObject *flags1, *flags2;
+	PyObject *strength, *agility, *toughness, *endurance, *recuperation, *disease_resistance;
+	PyObject* defaultSoul;
 	
 	// lists
-	PyObject* skill_list;
-	PyObject* like_list;
-	PyObject* trait_list;
 	PyObject* labor_list;
 };
 
@@ -82,34 +73,40 @@ static PyObject* DF_Creature_Base_new(PyTypeObject* type, PyObject* args, PyObje
 	if(self != NULL)
 	{
 		self->origin = 0;
-		self->c_type = 0;
 		self->profession = 0;
 		self->mood = 0;
 		self->happiness = 0;
 		self->c_id = 0;
-		self->agility = 0;
-		self->strength = 0;
-		self->toughness = 0;
-		self->money = 0;
 		self->squad_leader_id = 0;
 		self->sex = 0;
 		self->pregnancy_timer = 0;
-		self->blood_max = 0;
-		self->blood_current = 0;
-		self->bleed_rate = 0;
+		self->flags1 = 0;
+		self->flags2 = 0;
 		
 		self->custom_profession = PyString_FromString("");
 		self->name = PyString_FromString("");
-		self->squad_name = PyString_FromString("");
 		self->artifact_name = PyString_FromString("");
 		
-		self->skill_list = NULL;
-		self->like_list = NULL;
-		self->trait_list = NULL;
+		self->position = NULL;
+		
+		self->strength = NULL;
+		self->agility = NULL;
+		self->toughness = NULL;
+		self->endurance = NULL;
+		self->recuperation = NULL;
+		self->disease_resistance = NULL;
+		
+		self->defaultSoul = NULL;
+		
 		self->labor_list = NULL;
 	}
 	
 	return (PyObject*)self;
+}
+
+static int DF_Creature_Base_init(DF_Creature_Base* self, PyObject* args, PyObject* kwd)
+{
+	return 0;
 }
 
 static void DF_Creature_Base_dealloc(DF_Creature_Base* self)
@@ -117,31 +114,22 @@ static void DF_Creature_Base_dealloc(DF_Creature_Base* self)
 	if(self != NULL)
 	{
 		Py_XDECREF(self->position);
-		Py_XDECREF(self->flags1);
-		Py_XDECREF(self->flags2);
 
 		Py_XDECREF(self->custom_profession);	
 		Py_XDECREF(self->name);
-		Py_XDECREF(self->squad_name);
 		Py_XDECREF(self->artifact_name);
 		Py_XDECREF(self->current_job);
 		
-		Py_XDECREF(self->flags1);
-		Py_XDECREF(self->flags2);
+		Py_XDECREF(self->strength);
+		Py_XDECREF(self->agility);
+		Py_XDECREF(self->toughness);
+		Py_XDECREF(self->endurance);
+		Py_XDECREF(self->recuperation);
+		Py_XDECREF(self->disease_resistance);
+		
+		Py_XDECREF(self->defaultSoul);
 		
 		Py_XDECREF(self->labor_list);
-		Py_XDECREF(self->trait_list);
-		Py_XDECREF(self->skill_list);
-		Py_XDECREF(self->like_list);
-		
-		// if(self->labor_list != NULL)
-			// PyList_Clear(self->labor_list);
-		// if(self->trait_list != NULL)
-			// PyList_Clear(self->trait_list);
-		// if(self->skill_list != NULL)
-			// PyList_Clear(self->skill_list);
-		// if(self->like_list != NULL)
-			// PyList_Clear(self->like_list);
 		
 		self->ob_type->tp_free((PyObject*)self);
 	}
@@ -150,15 +138,19 @@ static void DF_Creature_Base_dealloc(DF_Creature_Base* self)
 static PyMemberDef DF_Creature_Base_members[] =
 {
 	{"origin", T_UINT, offsetof(DF_Creature_Base, origin), 0, ""},
-	{"type", T_UINT, offsetof(DF_Creature_Base, c_type), 0, ""},
-	{"flags1", T_OBJECT_EX, offsetof(DF_Creature_Base, flags1), 0, ""},
-	{"flags2", T_OBJECT_EX, offsetof(DF_Creature_Base, flags2), 0, ""},
+	{"position", T_OBJECT_EX, offsetof(DF_Creature_Base, position), 0, ""},
+	{"_flags1", T_UINT, offsetof(DF_Creature_Base, flags1), 0, ""},
+	{"_flags2", T_UINT, offsetof(DF_Creature_Base, flags2), 0, ""},
+	{"race", T_UINT, offsetof(DF_Creature_Base, race), 0, ""},
 	{"name", T_OBJECT_EX, offsetof(DF_Creature_Base, name), 0, ""},
-	{"squad_name", T_OBJECT_EX, offsetof(DF_Creature_Base, squad_name), 0, ""},
 	{"artifact_name", T_OBJECT_EX, offsetof(DF_Creature_Base, artifact_name), 0, ""},
 	{"profession", T_INT, offsetof(DF_Creature_Base, profession), 0, ""},
 	{"custom_profession", T_OBJECT_EX, offsetof(DF_Creature_Base, custom_profession), 0, ""},
 	{"happiness", T_SHORT, offsetof(DF_Creature_Base, happiness), 0, ""},
+	{"mood", T_SHORT, offsetof(DF_Creature_Base, mood), 0, ""},
+	{"squad_leader_id", T_INT, offsetof(DF_Creature_Base, squad_leader_id), 0, ""},
+	{"sex", T_UBYTE, offsetof(DF_Creature_Base, sex), 0, ""},
+	{"pregnancy_timer", T_UINT, offsetof(DF_Creature_Base, pregnancy_timer), 0, ""},
 	{NULL}	//Sentinel
 };
 
@@ -210,7 +202,7 @@ static PyTypeObject DF_Creature_Base_type =
     0,                         /* tp_descr_get */
     0,                         /* tp_descr_set */
     0,                         /* tp_dictoffset */
-    0,      /* tp_init */
+    (initproc)DF_Creature_Base_init,      /* tp_init */
     0,                         /* tp_alloc */
     DF_Creature_Base_new,                 /* tp_new */
 };
@@ -223,56 +215,38 @@ static PyObject* BuildCreature(DFHack::t_creature& creature)
 	
 	if(obj != NULL)
 	{
+		obj->origin = creature.origin;
 		obj->position = Py_BuildValue("III", creature.x, creature.y, creature.z);
 		obj->profession = creature.profession;
-		obj->c_type = creature.type;
 		obj->mood = creature.mood;
 		obj->happiness = creature.happiness;
 		obj->c_id = creature.id;
-		obj->agility = creature.agility;
-		obj->strength = creature.strength;
-		obj->toughness = creature.toughness;
-		obj->money = creature.money;
+		obj->race = creature.race;
+		obj->agility = BuildAttribute(creature.agility);
+		obj->strength = BuildAttribute(creature.strength);
+		obj->toughness = BuildAttribute(creature.toughness);
+		obj->endurance = BuildAttribute(creature.endurance);
+		obj->recuperation = BuildAttribute(creature.recuperation);
+		obj->disease_resistance = BuildAttribute(creature.disease_resistance);
 		obj->squad_leader_id = creature.squad_leader_id;
 		obj->sex = creature.sex;
 		obj->pregnancy_timer = creature.pregnancy_timer;
-		obj->blood_max = creature.blood_max;
-		obj->blood_current = creature.blood_current;
-		obj->bleed_rate = creature.bleed_rate;
 		
 		if(creature.custom_profession[0])
 			obj->custom_profession = PyString_FromString(creature.custom_profession);
 		
-		obj->flags1 = PyObject_Call(CreatureFlags1_type, PyInt_FromLong(creature.flags1.whole), NULL);
-		obj->flags2 = PyObject_Call(CreatureFlags2_type, PyInt_FromLong(creature.flags2.whole), NULL);
+		obj->flags1 = creature.flags1.whole;
+		obj->flags2 = creature.flags2.whole;
 		
 		obj->current_job = BuildJob(creature.current_job);
 		obj->name = BuildName(creature.name);
-		obj->squad_name = BuildName(creature.squad_name);
 		obj->artifact_name = BuildName(creature.artifact_name);
-		
-		obj->skill_list = PyList_New(creature.numSkills);
-		
-		for(int i = 0; i < creature.numSkills; i++)
-			PyList_SetItem(obj->skill_list, i, BuildSkill(creature.skills[i]));
-		
-		obj->like_list = PyList_New(creature.numLikes);
-		
-		for(int i = 0; i < creature.numLikes; i++)
-			PyList_SetItem(obj->like_list, i, BuildLike(creature.likes[i]));
 		
 		obj->labor_list = PyList_New(NUM_CREATURE_LABORS);
 		
 		for(int i = 0; i < NUM_CREATURE_LABORS; i++)
-			PyList_SetItem(obj->labor_list, i, PyInt_FromLong(creature.labors[i]));
+			PyList_SET_ITEM(obj->labor_list, i, PyInt_FromLong(creature.labors[i]));
 		
-		obj->trait_list = PyList_New(NUM_CREATURE_TRAITS);
-		
-		for(int i = 0; i < NUM_CREATURE_TRAITS; i++)
-			PyList_SetItem(obj->trait_list, i, PyInt_FromLong(creature.traits[i]));
-		
-		Py_INCREF((PyObject*)obj);
-	
 		return (PyObject*)obj;
 	}
 	

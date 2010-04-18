@@ -52,7 +52,7 @@ class SHMProcess::Private
     ~Private(){};
     memory_info * memdescriptor;
     DFWindow * window;
-    SHMProcess * q;
+    SHMProcess * self;
     uint32_t process_ID;
     char *shm_addr;
     HANDLE DFSVMutex;
@@ -281,7 +281,7 @@ SHMProcess::SHMProcess(uint32_t PID, vector <memory_info *> & known_versions)
 : d(new Private())
 {
     d->process_ID = PID;
-    d->q = this;
+    d->self = this;
     // attach the SHM
     if(!attach())
     {
@@ -344,9 +344,9 @@ bool SHMProcess::Private::validate(vector <memory_info *> & known_versions)
     uint32_t base = (uint32_t)hmod;
     
     // read from this process
-    uint32_t pe_offset = q->readDWord(base+0x3C);
-    q->read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
-    q->read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
+    uint32_t pe_offset = self->readDWord(base+0x3C);
+    self->read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
+    self->read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
     
     // iterate over the list of memory locations
     vector<memory_info *>::iterator it;
@@ -366,7 +366,7 @@ bool SHMProcess::Private::validate(vector <memory_info *> & known_versions)
             memory_info *m = new memory_info(**it);
             m->RebaseAll(base);
             memdescriptor = m;
-            m->setParentProcess(this);
+            m->setParentProcess(self);
             identified = true;
             cerr << "identified " << m->getVersion() << endl;
             CloseHandle(hProcess);

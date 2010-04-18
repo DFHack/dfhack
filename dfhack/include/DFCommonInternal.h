@@ -22,11 +22,13 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "DFGlobal.h"
-
 #ifndef DFCOMMONINTERNAL_H_INCLUDED
 #define DFCOMMONINTERNAL_H_INCLUDED
 
+// this makes everything that includes this file export symbols whn using DFHACK_EXPORT (see Export.h)
+#define BUILD_DFHACK_LIB
+
+#include "DFGlobal.h"
 #include "Tranquility.h"
 
 #include <string>

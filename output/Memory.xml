@@ -1200,7 +1200,9 @@ map_data_1b60_offset          0x1B9c
         WORLD + 0x54CD0
         <Address name="creature_type_vector">0x016AFE58</Address>
         <Offset name="creature_type_caste_vector">0x138</Offset>
-        
+	<Offset name="creature_tile">0xE0</Offset>
+	<Offset name="creature_tile_color">0xF6</Offset>
+ 
         <!--
         NOT used yet
         

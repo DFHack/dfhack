@@ -33,7 +33,7 @@ enum likeType
     FOOD = 3
 };
 
-vector<DFHack::t_matgloss> creaturestypes;
+vector<DFHack::t_creaturetype> creaturestypes;
 matGlosses mat;
 vector< vector <DFHack::t_itemType> > itemTypes;
 DFHack::memory_info *mem;
@@ -147,7 +147,13 @@ likeType printLike40d(DFHack::t_like like, const matGlosses & mat,const vector< 
 
 void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 {
-        cout << "address: " << hex <<  creature.origin << dec << " creature type: " << creaturestypes[creature.race].id << ", position: " << creature.x << "x " << creature.y << "y "<< creature.z << "z" << endl;
+	cout << "address: " << hex <<  creature.origin << dec << " creature type: " << creaturestypes[creature.race].rawname 
+                << "[" << creaturestypes[creature.race].tile_character
+                << "," << creaturestypes[creature.race].tilecolor.fore
+                << "," << creaturestypes[creature.race].tilecolor.back
+                << "," << creaturestypes[creature.race].tilecolor.bright
+                << "]"
+                << ", position: " << creature.x << "x " << creature.y << "y "<< creature.z << "z" << endl;
         bool addendl = false;
         if(creature.name.first_name[0])
         {
@@ -394,7 +400,7 @@ int main (int numargs, char ** args)
 
     mem = DF.getMemoryInfo();
     // get stone matgloss mapping
-    if(!Materials->ReadCreatureTypes(creaturestypes))
+    if(!Materials->ReadCreatureTypesEx(creaturestypes))
     {
         cerr << "Can't get the creature types." << endl;
         return 1; 
@@ -411,7 +417,7 @@ int main (int numargs, char ** args)
     {
         DFHack::t_creature temp;
         Creatures->ReadCreature(i,temp);
-        if(check.empty() || string(creaturestypes[temp.race].id) == check)
+        if(check.empty() || string(creaturestypes[temp.race].rawname) == check)
         {
             cout << "index " << i << " ";
             

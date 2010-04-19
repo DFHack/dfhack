@@ -41,6 +41,13 @@ namespace DFHack
     {
         char rawname[128];
         vector <t_creaturecaste> castes;
+	uint8_t tile_character;
+	struct
+	{
+		uint16_t fore;
+		uint16_t back;
+		uint16_t bright;
+	} tilecolor;
     };
     
     class DFHACK_EXPORT Materials

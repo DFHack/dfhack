@@ -232,6 +232,8 @@ bool Materials::ReadCreatureTypesEx (vector<t_creaturetype> & creatures)
     uint32_t sizeof_string = mem->getHexValue ("sizeof_string");
     uint32_t size = p_races.size();
     uint32_t sizecas = 0;
+    uint32_t tile_offset = mem->getOffset ("creature_tile");
+    uint32_t tile_color_offset = mem->getOffset ("creature_tile_color");
     creatures.clear();
     creatures.reserve (size);
     for (uint32_t i = 0; i < size;i++)
@@ -250,6 +252,10 @@ bool Materials::ReadCreatureTypesEx (vector<t_creaturetype> & creatures)
             p->readSTLString (caste_start + 3 * sizeof_string, caste.adjective, sizeof(caste.adjective));
             mat.castes.push_back(caste);
         }
+	mat.tile_character = p->readByte( p_races[i] + tile_offset );
+        mat.tilecolor.fore = p->readWord( p_races[i] + tile_color_offset );
+        mat.tilecolor.back = p->readWord( p_races[i] + tile_color_offset + 2 );
+        mat.tilecolor.bright = p->readWord( p_races[i] + tile_color_offset + 4 );
         creatures.push_back(mat);
     }
     return true;

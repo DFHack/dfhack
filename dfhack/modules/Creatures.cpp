@@ -331,7 +331,6 @@ int32_t Creatures::GetDwarfCivId()
 {
     if(!d->Inited) return -1;
     Process * p = d->owner;
-    printf("civid=%p\n", d->dwarf_civ_id_addr);
     return p->readDWord(d->dwarf_civ_id_addr);
 }
 /*

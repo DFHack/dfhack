@@ -6,6 +6,7 @@
 #include <stack>
 #include <map>
 #include <stdio.h>
+#include <cstdlib>
 using namespace std;
 
 #include <DFTypes.h>
@@ -15,53 +16,66 @@ using namespace std;
 #include <modules/Position.h>
 #include <modules/Materials.h>
 #include <DFTileTypes.h>
+#include <argstream.h>
 
 #define MAX_DIM 0x300
 class Point
 {
     public:
-    Point(uint32_t x, uint32_t y)
+    Point(uint32_t x, uint32_t y, uint32_t z)
     {
         this->x = x;
         this->y = y;
+        this->z = z;
+    }
+    Point()
+    {
+        x = y = z = 0;
     }
     bool operator==(const Point &other) const
     {
-        return (other.x == x && other.y == y);
+        return (other.x == x && other.y == y && other.z == z);
     }
     bool operator<(const Point &other) const
     {
-        return ( (y*MAX_DIM + x) < (other.y*MAX_DIM + other.x));
+        return ( (y*z*1000 + y*MAX_DIM + x) < (other.y*other.z*1000 + other.y*MAX_DIM + other.x));
     }
     Point operator/(int number) const
     {
-        return Point(x/number, y/number);
+        return Point(x/number, y/number, z);
     }
     Point operator%(int number) const
     {
-        return Point(x%number, y%number);
+        return Point(x%number, y%number, z);
+    }
+    Point operator-(int number) const
+    {
+        return Point(x,y,z-number);
+    }
+    Point operator+(int number) const
+    {
+        return Point(x,y,z+number);
     }
     uint32_t x;
     uint32_t y;
+    uint32_t z;
 };
 
 class Block
 {
     public:
-    Block(DFHack::Maps *_m, uint32_t x_, uint32_t y_, uint32_t z_)
+    Block(DFHack::Maps *_m, Point _bcoord)
     {
         vector <DFHack::t_vein> veins;
         m = _m;
         dirty = false;
         valid = false;
-        x = x_;
-        y = y_;
-        z = z_;
-        if(m->ReadBlock40d(x_,y_,z_,&raw))
+        bcoord = _bcoord;
+        if(m->ReadBlock40d(bcoord.x,bcoord.y,bcoord.z,&raw))
         {
             memset(materials,-1,sizeof(materials));
             memset(bitmap,0,sizeof(bitmap));
-            m->ReadVeins(x,y,z,&veins);
+            m->ReadVeins(bcoord.x,bcoord.y,bcoord.z,&veins);
             // for each vein
             for(int i = 0; i < (int)veins.size();i++)
             {
@@ -119,8 +133,8 @@ class Block
         if(dirty)
         {
             //printf("writing %d/%d/%d\n",x,y,z);
-            m->WriteDesignations(x,y,z, &raw.designation);
-            m->WriteDirtyBit(x,y,z,true);
+            m->WriteDesignations(bcoord.x,bcoord.y,bcoord.z, &raw.designation);
+            m->WriteDirtyBit(bcoord.x,bcoord.y,bcoord.z,true);
         }
         return true;
     }
@@ -128,27 +142,22 @@ class Block
     volatile bool dirty;
     DFHack::Maps * m;
     DFHack::mapblock40d raw;
-    uint32_t x;
-    uint32_t y;
-    uint32_t z;
+    Point bcoord;
     int16_t materials[16][16];
     int8_t bitmap[16][16];
 };
 
-class Layer
+class MapCache
 {
     public:
-    Layer(DFHack::Maps * Maps, uint32_t _z)
+    MapCache(DFHack::Maps * Maps)
     {
         valid = 0;
         this->Maps = Maps;
-        z = _z;
-        uint32_t z_max;
         Maps->getSize(x_bmax, y_bmax, z_max);
-        if(z < z_max)
-            valid = true;
+        valid = true;
     };
-    ~Layer()
+    ~MapCache()
     {
         map<Point, Block *>::iterator p;
         for(p = blocks.begin(); p != blocks.end(); p++)
@@ -173,9 +182,9 @@ class Layer
         }
         else
         {
-            if(blockcoord.x < x_bmax && blockcoord.y < y_bmax)
+            if(blockcoord.x < x_bmax && blockcoord.y < y_bmax && blockcoord.z < z_max)
             {
-                Block * nblo = new Block(Maps,blockcoord.x,blockcoord.y,z);
+                Block * nblo = new Block(Maps,blockcoord);
                 blocks[blockcoord] = nblo;
                 return nblo;
             }
@@ -234,6 +243,15 @@ class Layer
         }
         return false;
     }
+    bool testCoord (Point tilecoord)
+    {
+        Block * b= BlockAt(tilecoord / 16);
+        if(b && b->valid)
+        {
+            return true;
+        }
+        return false;
+    }
     
     bool WriteAll()
     {
@@ -247,17 +265,30 @@ class Layer
     }
     private:
     volatile bool valid;
-    uint32_t z;
     uint32_t x_bmax;
     uint32_t y_bmax;
     uint32_t x_tmax;
     uint32_t y_tmax;
+    uint32_t z_max;
     DFHack::Maps * Maps;
     map<Point, Block *> blocks;
 };
 
-int main (int argc, const char* argv[])
+int main (int argc, char* argv[])
 {
+    // Command line options
+    bool updown = false;
+    argstream as(argc,argv);
+
+    as  >>option('x',"updown",updown,"Dig up and down stairs to reach other z-levels.")
+        >>help();
+
+    // sane check
+    if (!as.isOk())
+    {
+        cout << as.errorLog();
+        return 1;
+    }
     
     DFHack::API DF("Memory.xml");
     try
@@ -303,7 +334,7 @@ int main (int argc, const char* argv[])
         DF.Suspend();
         Pos->getCursorCoords(cx,cy,cz);
     }
-    Point xy ((uint32_t)cx,(uint32_t)cy);
+    Point xy ((uint32_t)cx,(uint32_t)cy,cz);
     if(xy.x == 0 || xy.x == tx_max - 1 || xy.y == 0 || xy.y == ty_max - 1)
     {
         cerr << "I won't dig the borders. That would be cheating!" << endl;
@@ -313,7 +344,7 @@ int main (int argc, const char* argv[])
         #endif
         return 1;
     }
-    Layer * L = new Layer(Maps,cz);
+    MapCache * L = new MapCache(Maps);
     
     
     DFHack::t_designation des = L->designationAt(xy);
@@ -345,39 +376,93 @@ int main (int argc, const char* argv[])
             continue;
         
         // found a good tile, dig+unset material
+        
         DFHack::t_designation des = L->designationAt(current);
-        des.bits.dig = DFHack::designation_default;
-        if(L->setDesignationAt(current,des))
+        DFHack::t_designation des_minus;
+        DFHack::t_designation des_plus;
+        int16_t vmat_minus;
+        int16_t vmat_plus;
+        bool below = 0;
+        bool above = 0;
+        if(updown)
+        {
+            if(L->testCoord(current-1))
+            {
+                below = 1;
+            }
+            des_minus = L->designationAt(current-1);
+            vmat_minus = L->materialAt(current-1);
+            if(L->testCoord(current+1))
+            {
+                above = 1;
+            }
+            des_plus = L->designationAt(current+1);
+            vmat_plus = L->materialAt(current+1);
+        }
+        if(L->testCoord(current))
         {
             L->clearMaterialAt(current);
             if(current.x < tx_max - 2)
             {
-                flood.push(Point(current.x + 1, current.y));
+                flood.push(Point(current.x + 1, current.y, current.z));
                 if(current.y < ty_max - 2)
                 {
-                    flood.push(Point(current.x + 1, current.y + 1));
-                    flood.push(Point(current.x, current.y + 1));
+                    flood.push(Point(current.x + 1, current.y + 1,current.z));
+                    flood.push(Point(current.x, current.y + 1,current.z));
                 }
                 if(current.y > 1)
                 {
-                    flood.push(Point(current.x + 1, current.y - 1));
-                    flood.push(Point(current.x, current.y - 1));
+                    flood.push(Point(current.x + 1, current.y - 1,current.z));
+                    flood.push(Point(current.x, current.y - 1,current.z));
                 }
             }
             if(current.x > 1)
             {
-                flood.push(Point(current.x - 1, current.y));
+                flood.push(Point(current.x - 1, current.y,current.z));
                 if(current.y < ty_max - 2)
                 {
-                    flood.push(Point(current.x - 1, current.y + 1));
-                    flood.push(Point(current.x, current.y + 1));
+                    flood.push(Point(current.x - 1, current.y + 1,current.z));
+                    flood.push(Point(current.x, current.y + 1,current.z));
                 }
                 if(current.y > 1)
                 {
-                    flood.push(Point(current.x - 1, current.y - 1));
-                    flood.push(Point(current.x, current.y - 1));
+                    flood.push(Point(current.x - 1, current.y - 1,current.z));
+                    flood.push(Point(current.x, current.y - 1,current.z));
                 }
             }
+            if(updown)
+            {
+                if(current.z > 0 && below && vmat_minus == vmat2)
+                {
+                    flood.push(Point(current.x, current.y,current.z - 1));
+                    
+                    if(des_minus.bits.dig == DFHack::designation_d_stair)
+                        des_minus.bits.dig = DFHack::designation_ud_stair;
+                    else
+                        des_minus.bits.dig = DFHack::designation_u_stair;
+                    L->setDesignationAt(current-1,des_minus);
+                    
+                    des.bits.dig = DFHack::designation_d_stair;
+                }
+                if(current.z < z_max - 1 && above && vmat_plus == vmat2)
+                {
+                    flood.push(Point(current.x, current.y,current.z + 1));
+                    
+                    if(des_plus.bits.dig == DFHack::designation_u_stair)
+                        des_plus.bits.dig = DFHack::designation_ud_stair;
+                    else
+                        des_plus.bits.dig = DFHack::designation_d_stair;
+                    L->setDesignationAt(current+1,des_plus);
+                    
+                    if(des.bits.dig == DFHack::designation_d_stair)
+                        des.bits.dig = DFHack::designation_ud_stair;
+                    else
+                        des.bits.dig = DFHack::designation_u_stair;
+                }
+            }
+            if(des.bits.dig == DFHack::designation_no)
+                des.bits.dig = DFHack::designation_default;
+            L->setDesignationAt(current,des);
         }
     }
     L->WriteAll();

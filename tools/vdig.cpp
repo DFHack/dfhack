@@ -38,7 +38,7 @@ class Point
     }
     bool operator<(const Point &other) const
     {
-        return ( (y*z*1000 + y*MAX_DIM + x) < (other.y*other.z*1000 + other.y*MAX_DIM + other.x));
+        return ( (z*MAX_DIM*MAX_DIM + y*MAX_DIM + x) < (other.z*MAX_DIM*MAX_DIM + other.y*MAX_DIM + other.x));
     }
     Point operator/(int number) const
     {
@@ -344,17 +344,17 @@ int main (int argc, char* argv[])
         #endif
         return 1;
     }
-    MapCache * L = new MapCache(Maps);
+    MapCache * MCache = new MapCache(Maps);
     
     
-    DFHack::t_designation des = L->designationAt(xy);
-    int16_t tt = L->tiletypeAt(xy);
-    int16_t veinmat = L->materialAt(xy);
+    DFHack::t_designation des = MCache->designationAt(xy);
+    int16_t tt = MCache->tiletypeAt(xy);
+    int16_t veinmat = MCache->materialAt(xy);
     
     if( veinmat == -1 )
     {
         cerr << "This tile is non-vein. Bye :)" << endl;
-        delete L;
+        delete MCache;
         DF.Detach();
         #ifndef LINUX_BUILD
             cin.ignore();
@@ -370,38 +370,40 @@ int main (int argc, char* argv[])
     {  
         Point current = flood.top();
         flood.pop();
-        int16_t vmat2 = L->materialAt(current);
+        int16_t vmat2 = MCache->materialAt(current);
         
         if(vmat2!=veinmat)
             continue;
         
         // found a good tile, dig+unset material
         
-        DFHack::t_designation des = L->designationAt(current);
+        DFHack::t_designation des = MCache->designationAt(current);
         DFHack::t_designation des_minus;
         DFHack::t_designation des_plus;
-        int16_t vmat_minus;
-        int16_t vmat_plus;
+        des_plus.whole = des_minus.whole = 0;
+        int16_t vmat_minus = -1;
+        int16_t vmat_plus = -1;
         bool below = 0;
         bool above = 0;
         if(updown)
         {
-            if(L->testCoord(current-1))
+            if(MCache->testCoord(current-1))
             {
                 below = 1;
+                des_minus = MCache->designationAt(current-1);
+                vmat_minus = MCache->materialAt(current-1);
             }
-            des_minus = L->designationAt(current-1);
-            vmat_minus = L->materialAt(current-1);
-            if(L->testCoord(current+1))
+            
+            if(MCache->testCoord(current+1))
             {
                 above = 1;
+                des_plus = MCache->designationAt(current+1);
+                vmat_plus = MCache->materialAt(current+1);
             }
-            des_plus = L->designationAt(current+1);
-            vmat_plus = L->materialAt(current+1);
         }
-        if(L->testCoord(current))
+        if(MCache->testCoord(current))
         {
-            L->clearMaterialAt(current);
+            MCache->clearMaterialAt(current);
             if(current.x < tx_max - 2)
             {
                 flood.push(Point(current.x + 1, current.y, current.z));
@@ -434,25 +436,25 @@ int main (int argc, char* argv[])
             {
                 if(current.z > 0 && below && vmat_minus == vmat2)
                 {
-                    flood.push(Point(current.x, current.y,current.z - 1));
+                    flood.push(current-1);
                     
                     if(des_minus.bits.dig == DFHack::designation_d_stair)
                         des_minus.bits.dig = DFHack::designation_ud_stair;
                     else
                         des_minus.bits.dig = DFHack::designation_u_stair;
-                    L->setDesignationAt(current-1,des_minus);
+                    MCache->setDesignationAt(current-1,des_minus);
                     
                     des.bits.dig = DFHack::designation_d_stair;
                 }
                 if(current.z < z_max - 1 && above && vmat_plus == vmat2)
                 {
-                    flood.push(Point(current.x, current.y,current.z + 1));
+                    flood.push(current+ 1);
                     
                     if(des_plus.bits.dig == DFHack::designation_u_stair)
                         des_plus.bits.dig = DFHack::designation_ud_stair;
                     else
                         des_plus.bits.dig = DFHack::designation_d_stair;
-                    L->setDesignationAt(current+1,des_plus);
+                    MCache->setDesignationAt(current+1,des_plus);
                     
                     if(des.bits.dig == DFHack::designation_d_stair)
                         des.bits.dig = DFHack::designation_ud_stair;
@@ -462,11 +464,11 @@ int main (int argc, char* argv[])
             }
             if(des.bits.dig == DFHack::designation_no)
                 des.bits.dig = DFHack::designation_default;
-            L->setDesignationAt(current,des);
+            MCache->setDesignationAt(current,des);
         }
     }
-    L->WriteAll();
-    delete L;
+    MCache->WriteAll();
+    delete MCache;
     DF.Detach();
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;

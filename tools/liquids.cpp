@@ -17,6 +17,7 @@ int main (void)
     int32_t x,y,z;
     DFHack::designations40d designations;
     DFHack::tiletypes40d tiles;
+    DFHack::t_temperatures temp1,temp2;
     uint32_t x_max,y_max,z_max;
     
     DFHack::API DF("Memory.xml");
@@ -180,11 +181,16 @@ int main (void)
                 {
                     // place the magma
                     Maps->ReadDesignations((x/16),(y/16),z, &designations);
-                    
+                    Maps->ReadTemperatures((x/16),(y/16),z, &temp1, &temp2);
                     if(brush == "point")
                     {
                         if(mode != "flowbits")
+                        {
+                            // fix temperatures so we don't produce lethal heat traps
+                            if(amount == 0 || designations[x%16][y%16].bits.liquid_type == DFHack::liquid_magma && mode == "water")
+                                temp1[x%16][y%16] = temp2[x%16][y%16] = 10015;
                             designations[x%16][y%16].bits.flow_size = amount;
+                        }
                         if(mode == "magma")
                             designations[x%16][y%16].bits.liquid_type = DFHack::liquid_magma;
                         else if(mode == "water")
@@ -195,13 +201,19 @@ int main (void)
                         for(uint32_t xx = 0; xx < 16; xx++) for(uint32_t yy = 0; yy < 16; yy++)
                         {
                             if(mode != "flowbits")
+                            {
+                                // fix temperatures so we don't produce lethal heat traps
+                                if(amount == 0 || designations[xx][yy].bits.liquid_type == DFHack::liquid_magma && mode == "water")
+                                    temp1[xx%16][yy%16] = temp2[xx%16][yy%16] = 10015;
                                 designations[xx][yy].bits.flow_size = amount;
+                            }
                             if(mode == "magma")
                                 designations[xx][yy].bits.liquid_type = DFHack::liquid_magma;
                             else if(mode == "water")
                                 designations[xx][yy].bits.liquid_type = DFHack::liquid_water;
                         }
                     }
+                    Maps->WriteTemperatures((x/16),(y/16),z, &temp1, &temp2);
                     Maps->WriteDesignations(x/16,y/16,z, &designations);
                 }
                 

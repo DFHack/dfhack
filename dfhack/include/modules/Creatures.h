@@ -319,6 +319,7 @@ namespace DFHack
         uint16_t y;
         uint16_t z;
         uint32_t race;
+        int32_t civ;
         
         t_creaturflags1 flags1;
         t_creaturflags2 flags2;
@@ -369,6 +370,7 @@ namespace DFHack
         /// write labors of a creature (for Dwarf Therapist)
         bool WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
         uint32_t GetDwarfRaceIndex ( void );
+        int32_t GetDwarfCivId ( void );
         private:
         struct Private;
         Private *d;

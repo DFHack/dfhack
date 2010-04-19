@@ -1124,6 +1124,7 @@ map_data_1b60_offset          0x1B9c
         =========
         <Address name="creature_vector">0x0166ecc4</Address>
         <Address name="dwarf_race_index">0x01470fbc</Address>
+        <Address name="dwarf_civ_id">0x01470fb0</Address>
         
         <Offset name="creature_name">0x0</Offset>
         <Offset name="creature_custom_profession">0x6c</Offset>
@@ -1134,7 +1135,7 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_flags2">0xFC</Offset>
         <Offset name="creature_sex">0x110</Offset>
         <Offset name="creature_id">0x114</Offset>
-        <Offset name="creature_side">0X120</Offset> <!-- what? -->
+	<Offset name="creature_civ">0X120</Offset>
         <Offset name="creature_soulskill_vector">0X1F4</Offset>
         <Offset name="creature_pickup_equipment_bit">0X21C</Offset>
         <Offset name="creature_mood">0x238</Offset>
@@ -1375,7 +1376,7 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_flags2">0xFC</Offset>
         <Offset name="creature_sex">0x110</Offset>
         <Offset name="creature_id">0x114</Offset>
-        <Offset name="creature_side">0X120</Offset>
+        <Offset name="creature_civ">0X120</Offset>
         <Offset name="creature_soulskill_vector">0X1F4</Offset>
         <Offset name="creature_pickup_equipment_bit">0X21C</Offset>
         <!--<Offset name="creature_mood">0x238</Offset>-->

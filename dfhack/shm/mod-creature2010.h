@@ -39,6 +39,7 @@ typedef struct
     uint32_t profession_offset;
     uint32_t custom_profession_offset;
     uint32_t race_offset;
+    int32_t civ_offset;
     uint32_t flags1_offset;
     uint32_t flags2_offset;
     uint32_t name_offset;

@@ -52,6 +52,7 @@ struct Creatures::Private
     Creatures2010::creature_offsets creatures;
     uint32_t creature_module;
     uint32_t dwarf_race_index_addr;
+    uint32_t dwarf_civ_id_addr;
     DfVector <uint32_t> *p_cre;
     APIPrivate *d;
     Process *owner;
@@ -74,6 +75,7 @@ Creatures::Creatures(APIPrivate* _d)
         creatures.profession_offset = minfo->getOffset ("creature_profession");
         creatures.custom_profession_offset = minfo->getOffset ("creature_custom_profession");
         creatures.race_offset = minfo->getOffset ("creature_race");
+        creatures.civ_offset = minfo->getOffset ("creature_civ");
         creatures.flags1_offset = minfo->getOffset ("creature_flags1");
         creatures.flags2_offset = minfo->getOffset ("creature_flags2");
         creatures.name_offset = minfo->getOffset ("creature_name");
@@ -97,6 +99,7 @@ Creatures::Creatures(APIPrivate* _d)
         creatures.name_nickname_offset = minfo->getOffset("name_nickname");
         creatures.name_words_offset = minfo->getOffset("name_words");
         d->dwarf_race_index_addr = minfo->getAddress("dwarf_race_index");
+        d->dwarf_civ_id_addr = minfo->getAddress("dwarf_civ_id");
         // upload offsets to the SHM
         if(p->getModuleIndex("Creatures2010",1,d->creature_module))
         {
@@ -170,6 +173,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     p->readDWord (temp + offs.id_offset, furball.id);
     p->read (temp + offs.pos_offset, 3 * sizeof (uint16_t), (uint8_t *) & (furball.x)); // xyz really
     p->readDWord (temp + offs.race_offset, furball.race);
+    furball.civ = p->readDWord (temp + offs.civ_offset);
     p->readByte (temp + offs.sex_offset, furball.sex);
     p->readDWord (temp + offs.flags1_offset, furball.flags1.whole);
     p->readDWord (temp + offs.flags2_offset, furball.flags2.whole);
@@ -323,6 +327,13 @@ uint32_t Creatures::GetDwarfRaceIndex()
     return p->readDWord(d->dwarf_race_index_addr);
 }
 
+int32_t Creatures::GetDwarfCivId()
+{
+    if(!d->Inited) return -1;
+    Process * p = d->owner;
+    printf("civid=%p\n", d->dwarf_civ_id_addr);
+    return p->readDWord(d->dwarf_civ_id_addr);
+}
 /*
 bool Creatures::getCurrentCursorCreature(uint32_t & creature_index)
 {

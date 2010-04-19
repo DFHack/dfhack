@@ -85,8 +85,10 @@ int main (void)
     cout << "Press any key to unreveal. Don't close DF or unpause in that case!" << endl;
     cin.ignore();
     cout << "Unrevealing... please wait." << endl;
-    DF.Attach();
     // FIXME: do some consistency checks here!
+    DF.Attach();
+    Maps = DF.getMaps();
+    Maps->Start();
     for(int i = 0; i < hidesaved.size();i++)
     {
         hideblock & hb = hidesaved[i];

@@ -113,6 +113,62 @@ bool API::Detach()
     d->p = NULL;
     d->shm_start = 0;
     d->offset_descriptor = NULL;
+    // invalidate all modules
+    if(d->creatures)
+    {
+        delete d->creatures;
+        d->creatures = 0;
+    }
+    if(d->creatures)
+    {
+        delete d->creatures;
+        d->creatures = 0;
+    }
+    if(d->maps)
+    {
+        delete d->maps;
+        d->maps = 0;
+    }
+    if(d->gui)
+    {
+        delete d->gui;
+        d->gui = 0;
+    }
+    if(d->position)
+    {
+        delete d->position;
+        d->position = 0;
+    }
+    if(d->materials)
+    {
+        delete d->materials;
+        d->materials = 0;
+    }
+    if(d->gui)
+    {
+        delete d->gui;
+        d->gui = 0;
+    }
+    if(d->translation)
+    {
+        delete d->translation;
+        d->translation = 0;
+    }
+    if(d->vegetation)
+    {
+        delete d->vegetation;
+        d->vegetation = 0;
+    }
+    if(d->constructions)
+    {
+        delete d->constructions;
+        d->constructions = 0;
+    }
+    if(d->translation)
+    {
+        delete d->translation;
+        d->translation = 0;
+    }
     return true;
 }
 

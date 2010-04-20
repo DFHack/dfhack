@@ -114,9 +114,10 @@ namespace DFHack
         e_traffic traffic : 2; // needs enum
         unsigned int flow_forbid : 1; // what?
         unsigned int liquid_static : 1;
-        unsigned int moss : 1;// I LOVE MOSS
-        unsigned int feature_present : 1; // another wtf... is this required for magma pipes to work?
+        unsigned int feature_type_1 : 1; // this tile is a part of a feature
+        unsigned int feature_type_2 : 1; // this tile is a part of a feature
         unsigned int liquid_character : 2; // those ripples on streams?
+        
     };
 
     union t_designation

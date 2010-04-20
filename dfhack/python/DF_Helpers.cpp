@@ -43,6 +43,16 @@ static PyObject* BuildMatglossPair(DFHack::t_matglossPair& matgloss)
 	return Py_BuildValue("ii", matgloss.type, matgloss.index);
 }
 
+static DFHack::t_matglossPair ReverseBuildMatglossPair(PyObject* mObj)
+{
+	DFHack::t_matglossPair mPair;
+	
+	mPair.type = (int16_t)PyInt_AsLong(PyTuple_GetItem(mObj, 0));
+	mPair.index = (int32_t)PyInt_AsLong(PyTuple_GetItem(mObj, 1));
+	
+	return mPair;
+}
+
 static PyObject* BuildSkill(DFHack::t_skill& skill)
 {
 	return Py_BuildValue("III", skill.id, skill.experience, skill.rating);

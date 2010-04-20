@@ -223,6 +223,26 @@ bool Materials::ReadCreatureTypes (vector<t_matgloss> & creatures)
     return true;
 }
 
+bool Materials::ReadDescriptorColors (vector<t_descriptor_color> & color)
+{
+	Process * p = d->owner;
+	DfVector <uint32_t> p_colors (p, p->getDescriptor()->getAddress ("descriptor_colors_vector"));
+	uint32_t size = p_colors.size();
+	
+	color.clear();
+	color.reserve(size);
+	for (uint32_t i = 0; i < size;i++)
+	{
+		t_descriptor_color col;
+		p->readSTLString (p_colors[i] + p->getDescriptor()->getOffset ("descriptor_rawname"), col.id, 128);
+		p->readSTLString (p_colors[i] + p->getDescriptor()->getOffset ("descriptor_name"), col.name, 128);
+		col.r = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_r") );
+		col.v = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_v") );
+		col.b = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_b") );
+		color.push_back(col);
+	}
+}
+
 bool Materials::ReadCreatureTypesEx (vector<t_creaturetype> & creatures)
 {
     Process *p = d->owner;

@@ -17,6 +17,15 @@ namespace DFHack
         char name[128]; //this is the name displayed ingame
     };
 
+    struct t_descriptor_color
+    {
+	    char id[128]; // id in the raws
+	    float r;
+	    float v;
+	    float b;
+	    char name[128]; //displayed name
+    };
+
     struct t_matglossPlant
     {
         char id[128]; //the id in the raws
@@ -67,6 +76,8 @@ namespace DFHack
         // TODO: maybe move to creatures?
         bool ReadCreatureTypes (std::vector<t_matgloss> & output);
         bool ReadCreatureTypesEx (vector<t_creaturetype> & creatures);
+
+	bool ReadDescriptorColors(std::vector<t_descriptor_color> & output);
         private:
             class Private;
             Private* d;

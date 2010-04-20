@@ -1061,6 +1061,15 @@ size=212
         <Offset name="map_data_temperature2_offset">0x179c</Offset>
         <Offset name="map_data_biome_stuffs">0x1D9C</Offset>
         <Offset name="map_data_pathfinding_offset">0x0D9c</Offset>
+        <Offset name="map_data_feature1">0x2C</Offset> adamantine?
+        <Offset name="map_data_feature2">0x30</Offset> hell?
+
+        WORLD + 0x54374
+        <Address name="feature2_vector">0x16AF4FC</Address>
+        <Offset name= "feature2_funcptr_">0x100</Offset>
+        WORLD + 0x54440
+        <Address name="feature1_start_ptr">0x16AF5C8</Address>
+
         <!--
 map_data_map_x_offset         0x0058
 map_data_map_y_offset         0x005A
@@ -1088,8 +1097,11 @@ map_data_1b60_offset          0x1B9c
         <Address name="z_count">0x016ad74C</Address>
         
         * Suspected region coords *
+        WORLD + 0x525C8
         <Address name="region_x">0x016ad750</Address>
+        WORLD + 0x525CC
         <Address name="region_y">0x016ad754</Address>
+        WORLD + 0x525D0
         <Address name="region_z">0x016ad758</Address>
         
         * World size * (WORDs)
@@ -1135,7 +1147,7 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_flags2">0xFC</Offset>
         <Offset name="creature_sex">0x110</Offset>
         <Offset name="creature_id">0x114</Offset>
-	<Offset name="creature_civ">0X120</Offset>
+        <Offset name="creature_civ">0X120</Offset>
         <Offset name="creature_soulskill_vector">0X1F4</Offset>
         <Offset name="creature_pickup_equipment_bit">0X21C</Offset>
         <Offset name="creature_mood">0x238</Offset>
@@ -1201,8 +1213,8 @@ map_data_1b60_offset          0x1B9c
         WORLD + 0x54CD0
         <Address name="creature_type_vector">0x016AFE58</Address>
         <Offset name="creature_type_caste_vector">0x138</Offset>
-	<Offset name="creature_tile">0xE0</Offset>
-	<Offset name="creature_tile_color">0xF6</Offset>
+        <Offset name="creature_tile">0xE0</Offset>
+        <Offset name="creature_tile_color">0xF6</Offset>
  
         <!--
         NOT used yet
@@ -1363,6 +1375,11 @@ map_data_1b60_offset          0x1B9c
         <Address name="geoblock_vector">0x16B0574</Address>
         <Address name="ptr2_region_array">0x16B05BC</Address>
         
+        * features *
+        WORLD + 0x54374
+        <Address name="feature2_vector">0x16B0544</Address>
+        <Address name="feature1_start_ptr">0x16B0610</Address>
+        
         Creatures
         =========
         <Address name="creature_vector">0x166FD0C</Address>
@@ -1396,6 +1413,7 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_soul_vector">0x0740</Offset>
         <Offset name="creature_default_soul">0x0758</Offset>
         <Offset name="creature_happiness">0x834</Offset>
+        
         
         Materials
         =========

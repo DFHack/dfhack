@@ -430,6 +430,17 @@ void WineProcess::readDWord (const uint32_t offset, uint32_t &val)
     read(offset, 4, (uint8_t *) &val);
 }
 
+float WineProcess::readFloat (const uint32_t offset)
+{
+    float val;
+    read(offset, 4, (uint8_t *) &val);
+    return val;
+}
+void WineProcess::readFloat (const uint32_t offset, float &val)
+{
+    read(offset, 4, (uint8_t *) &val);
+}
+
 /*
  * WRITING
  */

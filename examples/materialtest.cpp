@@ -87,6 +87,17 @@ int main (int numargs, const char ** args)
         }
         cout << endl;
     }
+    cout << endl << "----==== Color descriptors ====----" << endl;
+    vector<DFHack::t_descriptor_color> colors;
+    Materials->ReadDescriptorColors(colors);
+    for(uint32_t i = 0; i < colors.size();i++)
+    {
+	cout << i << ": " << colors[i].id << " - " << colors[i].name << "["
+		<< (unsigned int) (colors[i].r*255) << ":"
+		<< (unsigned int) (colors[i].v*255) << ":"
+		<< (unsigned int) (colors[i].b*255) << ":"
+		<< "]" << endl;
+    }
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

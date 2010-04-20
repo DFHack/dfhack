@@ -159,16 +159,16 @@ int main (int numargs, const char ** args)
                 int32_t idx = p->readDWord(block.origin + block_feature1);
                 if(idx != -1)
                 {
-                    uint64_t region_x_local = cursorX / 48 + regionX;
+                    uint64_t bigblock_x = cursorX / 48 + regionX;
                     // blah, dumb disassembly. too tired to think
-                    uint16_t v12 = ((region_x_local % 16) + region_x_local) / 16;
+                    uint16_t v12 = ((bigblock_x % 16) + bigblock_x) / 16;
                     uint64_t region_y_local = (cursorY / 48 + regionY) / 16;
                     // deref pointer to the humongo-structure
                     uint32_t base = p->readDWord(feature1_start_ptr);
                     // this is just a few pointers to arrays of 16B (4 DWORD) structs
                     uint32_t array_elem = p->readDWord(base + (v12 / 16) * 4);
                     // second element of the struct is a pointer
-                    uint32_t wtf = p->readDWord(array_elem + (16*(region_y_local/16)) + 4);
+                    uint32_t wtf = p->readDWord(array_elem + (16*(region_y_local/16)) + 4); // rounding!
                     if(wtf)
                     {
                         uint32_t feat_vector = wtf + 24 * (region_y_local % 16);

@@ -365,6 +365,20 @@ void NormalProcess::readDWord (const uint32_t offset, uint32_t &result)
         throw Error::MemoryAccessDenied();
 }
 
+float NormalProcess::readFloat (const uint32_t offset)
+{
+    float result;
+    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(float), NULL))
+        throw Error::MemoryAccessDenied();
+    return result;
+}
+
+void NormalProcess::readFloat (const uint32_t offset, float &result)
+{
+    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(float), NULL))
+        throw Error::MemoryAccessDenied();
+}
+
 void NormalProcess::read (const uint32_t offset, uint32_t size, uint8_t *target)
 {
     if(!ReadProcessMemory(d->my_handle, (int*) offset, target, size, NULL))

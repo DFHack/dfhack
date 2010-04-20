@@ -704,6 +704,25 @@ void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
     val = D_SHMHDR->value;
 }
 
+float SHMProcess::readFloat (const uint32_t offset)
+{
+    if(!d->locked) throw Error::MemoryAccessDenied();
+    
+    D_SHMHDR->address = offset;
+    gcc_barrier
+    d->SetAndWait(CORE_READ_DWORD);
+    return D_SHMHDR->value;
+}
+void SHMProcess::readFloat (const uint32_t offset, float &val)
+{
+    if(!d->locked) throw Error::MemoryAccessDenied();
+    
+    D_SHMHDR->address = offset;
+    gcc_barrier
+    d->SetAndWait(CORE_READ_DWORD);
+    val = D_SHMHDR->value;
+}
+
 /*
  * WRITING
  */

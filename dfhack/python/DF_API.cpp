@@ -29,6 +29,7 @@ distribution.
 #include <string>
 #include "DFTypes.h"
 #include "DFHackAPI.h"
+#include "DF_Imports.cpp"
 #include "DF_MemInfo.cpp"
 #include "DF_Position.cpp"
 #include "DF_Material.cpp"
@@ -54,6 +55,8 @@ struct DF_API
 	PyObject* construction;
 	PyObject* vegetation;
 	PyObject* gui;
+	
+	PyObject* map_type;
 	DFHack::API* api_Ptr;
 };
 
@@ -86,6 +89,8 @@ static int DF_API_init(DF_API* self, PyObject* args, PyObject* kwds)
 		self->construction = NULL;
 		self->vegetation = NULL;
 		self->gui = NULL;
+		
+		self->map_type = (PyObject*)&DF_Map_type;
 		
 		if(!PyArg_ParseTuple(args, "s", &memFileString))
 			return -1;
@@ -310,7 +315,7 @@ static PyObject* DF_API_getMap(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->map = PyObject_Call((PyObject*)&DF_Map_type, NULL, NULL);
+			self->map = PyObject_CallObject(self->map_type, NULL);
 			
 			if(self->map != NULL)
 			{
@@ -446,6 +451,31 @@ static PyObject* DF_API_getGUI(DF_API* self, void* closure)
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_API_getMapType(DF_API* self, void* closure)
+{
+	return self->map_type;
+}
+
+static int DF_API_setMapType(DF_API* self, PyObject* value)
+{
+	if(PyType_Check(value) <= 0)
+	{
+		PySys_WriteStdout("failed type check");
+		PyErr_SetString(PyExc_TypeError, "value must be a type object");
+		return NULL;
+	}
+	if(PyObject_IsSubclass(value, (PyObject*)&DF_Map_type) <= 0)
+	{
+		PySys_WriteStdout("failed subclass check");
+		PyErr_SetString(PyExc_TypeError, "value must be descended from pydfhack._MapManager");
+		return NULL;
+	}
+	
+	self->map_type = value;
+	
+	return 0;
+}
+
 static PyGetSetDef DF_API_getterSetters[] =
 {
     {"is_attached", (getter)DF_API_getIsAttached, NULL, "is_attached", NULL},
@@ -459,6 +489,7 @@ static PyGetSetDef DF_API_getterSetters[] =
 	{"constructions", (getter)DF_API_getConstruction, NULL, "constructions", NULL},
 	{"vegetation", (getter)DF_API_getVegetation, NULL, "vegetation", NULL},
 	{"gui", (getter)DF_API_getGUI, NULL, "gui", NULL},
+	{"map_type", (getter)DF_API_getMapType, (setter)DF_API_setMapType, "map_type", NULL},
     {NULL}  // Sentinel
 };
 

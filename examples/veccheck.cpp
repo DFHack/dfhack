@@ -128,48 +128,52 @@ int main (int numargs, const char ** args)
     
     Maps->Start();
     
-    int32_t cx, cy, cz;
-    Pos->getCursorCoords(cx,cy,cz);
-    if(cx != -30000)
+    int32_t cursorX, cursorY, cursorZ;
+    Pos->getCursorCoords(cursorX,cursorY,cursorZ);
+    if(cursorX != -30000)
     {
-        uint32_t bx = cx / 16;
-        uint32_t tx = cx % 16;
-        uint32_t by = cy / 16;
-        uint32_t ty = cy % 16;
+        uint32_t blockX = cursorX / 16;
+        uint32_t tileX = cursorX % 16;
+        uint32_t blockY = cursorY / 16;
+        uint32_t tileY = cursorY % 16;
         mapblock40d block;
-        if(Maps->ReadBlock40d(bx,by,cz,&block))
+        if(Maps->ReadBlock40d(blockX,blockY,cursorZ,&block))
         {
             printf("block addr: 0x%x\n", block.origin);
-            int16_t tiletype = block.tiletypes[tx][ty];
-            naked_designation &des = block.designation[tx][ty].bits;
-            uint32_t &desw = block.designation[tx][ty].whole;
-            print_bits<uint32_t>(block.designation[tx][ty].whole,cout);
+            int16_t tiletype = block.tiletypes[tileX][tileY];
+            naked_designation &des = block.designation[tileX][tileY].bits;
+            uint32_t &desw = block.designation[tileX][tileY].whole;
+            print_bits<uint32_t>(block.designation[tileX][tileY].whole,cout);
             cout << endl;
-            print_bits<uint32_t>(block.occupancy[tx][ty].whole,cout);
+            print_bits<uint32_t>(block.occupancy[tileX][tileY].whole,cout);
             cout << endl;
             // tiletype
             cout <<"tiletype: " << tiletype;
             if(tileTypeTable[tiletype].name)
                 cout << " = " << tileTypeTable[tiletype].name;
             cout << endl;
-            // feature present
+            // features present
             if(des.feature_type_1)
             {
                 cout << "feature type 1 present: " << p->readDWord(block.origin + block_feature1) << endl;
                 int32_t idx = p->readDWord(block.origin + block_feature1);
                 if(idx != -1)
                 {
-                    uint64_t region_x_local = cx / 48 + regionX;
+                    uint64_t region_x_local = cursorX / 48 + regionX;
                     // blah, dumb disassembly. too tired to think
-                    uint16_t v12 = ((uint8_t(region_x_local) & 0xF) + (uint32_t)region_x_local) >> 4;
-                    region_x_local = (cy / 48 + regionY) / 16;
+                    uint16_t v12 = ((region_x_local % 16) + region_x_local) / 16;
+                    uint64_t region_y_local = (cursorY / 48 + regionY) / 16;
+                    // deref pointer to the humongo-structure
                     uint32_t base = p->readDWord(feature1_start_ptr);
-                    uint32_t array_elem = p->readDWord(base + (v12 >> 4) * 4);
-                    uint32_t wtf = p->readDWord(array_elem + 16 * (int16_t(region_x_local) >> 4) + 4) ;
+                    // this is just a few pointers to arrays of 16B (4 DWORD) structs
+                    uint32_t array_elem = p->readDWord(base + (v12 / 16) * 4);
+                    // second element of the struct is a pointer
+                    uint32_t wtf = p->readDWord(array_elem + (16*(region_y_local/16)) + 4);
                     if(wtf)
                     {
-                        uint32_t feat_vector = wtf + 24 * (int16_t)tx + 16 * v12 % 16;
+                        uint32_t feat_vector = wtf + 24 * (region_y_local % 16);
                         DfVector<uint32_t> p_features(p, feat_vector);
+                        printf("feature addr: 0x%x\n", p_features[idx]);
                         string name = p->readClassName(p->readDWord( p_features[idx] ));
                         cout << name << endl;
                     }
@@ -188,7 +192,6 @@ int main (int numargs, const char ** args)
                         printf("feature descriptor?: 0x%x\n", feat_ptr);
                         string name = p->readClassName(p->readDWord( feat_ptr));
                         cout << name << endl;
-                        //string SHMProcess::readClassName (uint32_t vptr)
                     }
                 }
             }
@@ -211,7 +214,7 @@ int main (int numargs, const char ** args)
                 cout << "rained?" << endl;
             if(des.smooth)
                 cout << "smooth?" << endl;
-            uint32_t designato = block.origin + designatus + (tx * 16 + ty) * sizeof(t_designation);
+            uint32_t designato = block.origin + designatus + (tileX * 16 + tileY) * sizeof(t_designation);
             printf("designation offset: 0x%x\n", designato);
             /*
             block.designation[tx][ty].bits.moss = 1;

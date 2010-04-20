@@ -33,7 +33,7 @@ using namespace DFHack;
 class NormalProcess::Private
 {
     public:
-    Private()
+    Private(Process * self_)
     {
         my_descriptor = NULL;
         my_handle = NULL;
@@ -42,6 +42,7 @@ class NormalProcess::Private
         attached = false;
         suspended = false;
         memFileHandle = 0;
+        self = self_;
     };
     ~Private(){};
     DFWindow* my_window;
@@ -53,11 +54,12 @@ class NormalProcess::Private
     bool attached;
     bool suspended;
     bool identified;
+    Process * self;
     bool validate(char * exe_file, uint32_t pid, char * mem_file, vector <memory_info *> & known_versions);
 };
 
 NormalProcess::NormalProcess(uint32_t pid, vector< memory_info* >& known_versions)
-: d(new Private())
+: d(new Private(this))
 {
     char dir_name [256];
     char exe_link_name [256];
@@ -68,6 +70,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector< memory_info* >& known_version
     int target_result;
     
     d->identified = false;
+    d->my_descriptor = 0;
     
     sprintf(dir_name,"/proc/%d/", pid);
     sprintf(exe_link_name,"/proc/%d/exe", pid);
@@ -125,7 +128,9 @@ bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFi
                 memory_info * m = *it;
                 if (memory_info::OS_LINUX == m->getOS())
                 {
-                    my_descriptor = m;
+                    memory_info *m2 = new memory_info(*m);
+                    my_descriptor = m2;
+                    m2->setParentProcess(dynamic_cast<Process *>( self ));
                     my_handle = my_pid = pid;
                 }
                 else
@@ -153,6 +158,9 @@ NormalProcess::~NormalProcess()
     {
         detach();
     }
+    // destroy our copy of the memory descriptor
+    if(d->my_descriptor)
+        delete d->my_descriptor;
     // destroy data model. this is assigned by processmanager
     if(d->my_window)
         delete d->my_window;
@@ -270,9 +278,11 @@ bool NormalProcess::resume()
 bool NormalProcess::attach()
 {
     int status;
-    if(g_pProcess != NULL)
+    if(d->attached)
     {
-        return false;
+        if(!d->suspended)
+            return suspend();
+        return true;
     }
     // can we attach?
     if (ptrace(PTRACE_ATTACH , d->my_handle, NULL, NULL) == -1)
@@ -311,7 +321,6 @@ bool NormalProcess::attach()
     else
     {
         d->attached = true;
-        g_pProcess = this;
         
         d->memFileHandle = proc_pid_mem;
         return true; // we are attached
@@ -344,7 +353,6 @@ bool NormalProcess::detach()
         else
         {
             d->attached = false;
-            g_pProcess = NULL;
             return true;
         }
     }
@@ -365,6 +373,7 @@ void NormalProcess::read (const uint32_t offset, const uint32_t size, uint8_t *t
             cerr << "pread failed: can't read " << size << " bytes at addres " << offset << endl;
             cerr << "errno: " << errno << endl;
             errno = 0;
+            throw Error::MemoryAccessDenied();
         }
         else
         {
@@ -404,6 +413,17 @@ uint32_t NormalProcess::readDWord (const uint32_t offset)
     return val;
 }
 void NormalProcess::readDWord (const uint32_t offset, uint32_t &val)
+{
+    read(offset, 4, (uint8_t *) &val);
+}
+
+float NormalProcess::readFloat (const uint32_t offset)
+{
+    float val;
+    read(offset, 4, (uint8_t *) &val);
+    return val;
+}
+void NormalProcess::readFloat (const uint32_t offset, float &val)
 {
     read(offset, 4, (uint8_t *) &val);
 }
@@ -500,10 +520,10 @@ struct _Rep_base
 size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
     _Rep_base header;
-    offset = g_pProcess->readDWord(offset);
-    g_pProcess->read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
+    offset = readDWord(offset);
+    read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
     size_t read_real = min((size_t)header._M_length, bufcapacity-1);// keep space for null termination
-    g_pProcess->read(offset,read_real,(uint8_t * )buffer);
+    read(offset,read_real,(uint8_t * )buffer);
     buffer[read_real] = 0;
     return read_real;
 }
@@ -512,12 +532,12 @@ const string NormalProcess::readSTLString (uint32_t offset)
 {
     _Rep_base header;
     
-    offset = g_pProcess->readDWord(offset);
-    g_pProcess->read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
+    offset = readDWord(offset);
+    read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
     
     // FIXME: use char* everywhere, avoid string
     char * temp = new char[header._M_length+1];
-    g_pProcess->read(offset,header._M_length+1,(uint8_t * )temp);
+    read(offset,header._M_length+1,(uint8_t * )temp);
     string ret(temp);
     delete temp;
     return ret;

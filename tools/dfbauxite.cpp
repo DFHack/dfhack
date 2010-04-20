@@ -31,7 +31,7 @@ int main ()
 {
     DFHack::Process *proc;
     DFHack::memory_info *meminfo;
-    DFHack::DfVector *items_vector;
+    DFHack::DfVector <uint32_t> *items_vector;
     DFHack::t_item_df40d item_40d;
     DFHack::t_matglossPair item_40d_material;
     vector<DFHack::t_matgloss> stoneMat;
@@ -105,11 +105,11 @@ int main ()
         return EXIT_FAILURE;
     }
     
-    items_vector = new DFHack::DfVector (proc, items, 4);
-    for(uint32_t i = 0; i < items_vector->getSize(); i++)
+    items_vector = new DFHack::DfVector <uint32_t> (proc, items);
+    for(uint32_t i = 0; i < items_vector->size(); i++)
     {
         // get pointer to object
-        temp = * (uint32_t *) items_vector->at (i);
+        temp = items_vector->at (i);
         // read object
         proc->read (temp, sizeof (DFHack::t_item_df40d), (uint8_t *) &item_40d);
 

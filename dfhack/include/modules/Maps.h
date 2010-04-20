@@ -114,9 +114,10 @@ namespace DFHack
         e_traffic traffic : 2; // needs enum
         unsigned int flow_forbid : 1; // what?
         unsigned int liquid_static : 1;
-        unsigned int moss : 1;// I LOVE MOSS
-        unsigned int feature_present : 1; // another wtf... is this required for magma pipes to work?
+        unsigned int feature_type_1 : 1; // this tile is a part of a feature
+        unsigned int feature_type_2 : 1; // this tile is a part of a feature
         unsigned int liquid_character : 2; // those ripples on streams?
+        
     };
 
     union t_designation
@@ -199,6 +200,7 @@ namespace DFHack
     typedef DFHack::t_designation designations40d [16][16];
     typedef DFHack::t_occupancy occupancies40d [16][16];
     typedef uint8_t biome_indices40d [16];
+    typedef uint16_t t_temperatures [16][16];
 
     typedef struct
     {
@@ -290,6 +292,10 @@ namespace DFHack
         bool ReadDesignations(uint32_t blockx, uint32_t blocky, uint32_t blockz, designations40d *buffer);
         bool WriteDesignations (uint32_t blockx, uint32_t blocky, uint32_t blockz, designations40d *buffer);
 
+        /// read/write temperatures
+        bool ReadTemperatures(uint32_t blockx, uint32_t blocky, uint32_t blockz, t_temperatures *temp1, t_temperatures *temp2);
+        bool WriteTemperatures (uint32_t blockx, uint32_t blocky, uint32_t blockz, t_temperatures *temp1, t_temperatures *temp2);
+        
         /// read/write block occupancies
         bool ReadOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, occupancies40d *buffer);
         bool WriteOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, occupancies40d *buffer);

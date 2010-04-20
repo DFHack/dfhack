@@ -6,6 +6,7 @@
 #include <vector>
 using namespace std;
 
+#include <DFGlobal.h>
 #include <DFError.h>
 #include <DFTypes.h>
 #include <DFHackAPI.h>
@@ -14,17 +15,8 @@ using namespace std;
 #include <modules/Materials.h>
 #include <modules/Creatures.h>
 #include <modules/Translation.h>
+#include "miscutils.h"
 
-template <typename T>
-void print_bits ( T val, std::ostream& out )
-{
-    T n_bits = sizeof ( val ) * CHAR_BIT;
-    
-    for ( unsigned i = 0; i < n_bits; ++i ) {
-        out<< !!( val & 1 ) << " ";
-        val >>= 1;
-    }
-}
 struct matGlosses 
 {
     vector<DFHack::t_matglossPlant> plantMat;
@@ -41,7 +33,7 @@ enum likeType
     FOOD = 3
 };
 
-vector<DFHack::t_matgloss> creaturestypes;
+vector<DFHack::t_creaturetype> creaturestypes;
 matGlosses mat;
 vector< vector <DFHack::t_itemType> > itemTypes;
 DFHack::memory_info *mem;
@@ -155,7 +147,13 @@ likeType printLike40d(DFHack::t_like like, const matGlosses & mat,const vector< 
 
 void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 {
-        cout << "address: " << hex <<  creature.origin << dec << " creature type: " << creaturestypes[creature.race].id << ", position: " << creature.x << "x " << creature.y << "y "<< creature.z << "z" << endl;
+	cout << "address: " << hex <<  creature.origin << dec << " creature type: " << creaturestypes[creature.race].rawname 
+                << "[" << creaturestypes[creature.race].tile_character
+                << "," << creaturestypes[creature.race].tilecolor.fore
+                << "," << creaturestypes[creature.race].tilecolor.back
+                << "," << creaturestypes[creature.race].tilecolor.bright
+                << "]"
+                << ", position: " << creature.x << "x " << creature.y << "y "<< creature.z << "z" << endl;
         bool addendl = false;
         if(creature.name.first_name[0])
         {
@@ -177,6 +175,14 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout << ", trans name: " << transName;
             addendl=true;
         }
+        
+        transName = Tran->TranslateName(creature.name,true);
+        if(!transName.empty())
+        {
+            cout << ", last name: " << transName;
+            addendl=true;
+        }
+
 
         /*
         cout << ", likes: ";
@@ -240,46 +246,46 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         */
         cout << endl;
 
-    
-        //skills
-        cout << "Skills" << endl;
-        for(unsigned int i = 0; i < creature.defaultSoul.numSkills;i++)
+        if(creature.has_default_soul)
         {
-            if(i > 0)
+            //skills
+            cout << "Skills" << endl;
+            for(unsigned int i = 0; i < creature.defaultSoul.numSkills;i++)
             {
-                cout << ", ";
+                if(i > 0)
+                {
+                    cout << ", ";
+                }
+                cout << mem->getSkill(creature.defaultSoul.skills[i].id) << ": " << creature.defaultSoul.skills[i].rating;
             }
-            cout << mem->getSkill(creature.defaultSoul.skills[i].id) << ": " << creature.defaultSoul.skills[i].rating;
-        }
-        cout << endl;
-    
-        // labors
-        cout << "Labors" << endl;
-        for(unsigned int i = 0; i < NUM_CREATURE_LABORS;i++)
-        {
-            if(!creature.labors[i])
-                continue;
-            string laborname;
-            try
+            cout << endl;
+            cout << "Traits" << endl;
+            for(uint32_t i = 0; i < 30;i++)
             {
-                laborname = mem->getLabor(i);
+                string trait = mem->getTrait (i, creature.defaultSoul.traits[i]);
+                if(!trait.empty()) cout << trait << ", ";
             }
-            catch(exception &)
+            cout << endl;
+                    
+            // labors
+            cout << "Labors" << endl;
+            for(unsigned int i = 0; i < NUM_CREATURE_LABORS;i++)
             {
-                break;
+                if(!creature.labors[i])
+                    continue;
+                string laborname;
+                try
+                {
+                    laborname = mem->getLabor(i);
+                }
+                catch(exception &)
+                {
+                    break;
+                }
+                cout << laborname << ", ";
             }
-            cout << laborname << ", ";
+            cout << endl;
         }
-        cout << endl;
-        
-        cout << "Traits" << endl;
-        for(uint32_t i = 0; i < 30;i++)
-        {
-            string trait = mem->getTrait (i, creature.defaultSoul.traits[i]);
-            if(!trait.empty())
-                cout << trait << ", ";
-        }
-        cout << endl;
         /*
          * FLAGS 1
          */
@@ -341,17 +347,17 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout << "from the underworld, ";
         }
         cout << endl;
-        /*
+        
         if(creature.flags1.bits.had_mood && (creature.mood == -1 || creature.mood == 8 ) )
         {
-            string artifact_name = DF.TranslateName(creature.artifact_name,englishWords,foreignWords,false);
+            string artifact_name = Tran->TranslateName(creature.artifact_name,false);
             cout << "artifact: " << artifact_name << endl;
-        }*/
+        }
     cout << endl;
 }
 
 
-int main (void)
+int main (int numargs, char ** args)
 {
     DFHack::API DF("Memory.xml");
     try
@@ -366,6 +372,9 @@ int main (void)
         #endif
         return 1;
     }
+    string check = "";
+    if(numargs == 2)
+        check = args[1];
     
     DFHack::Creatures * Creatures = DF.getCreatures();
     DFHack::Materials * Materials = DF.getMaterials();
@@ -388,17 +397,10 @@ int main (void)
         #endif
         return 1;
     }
-    /*
-    DF.ReadItemTypes(itemTypes);
-    DF.ReadPlantMatgloss(mat.plantMat);
-    DF.ReadWoodMatgloss(mat.woodMat);
-    DF.ReadStoneMatgloss(mat.stoneMat);
-    DF.ReadMetalMatgloss(mat.metalMat);
-    DF.ReadCreatureMatgloss(mat.creatureMat);
-    */
+
     mem = DF.getMemoryInfo();
     // get stone matgloss mapping
-    if(!Materials->ReadCreatureTypes(creaturestypes))
+    if(!Materials->ReadCreatureTypesEx(creaturestypes))
     {
         cerr << "Can't get the creature types." << endl;
         return 1; 
@@ -409,18 +411,21 @@ int main (void)
         cerr << "Can't get name tables" << endl;
         return 1;
     }
-    
+    vector<uint32_t> addrs;
     //DF.InitViewAndCursor();
     for(uint32_t i = 0; i < numCreatures; i++)
     {
         DFHack::t_creature temp;
         Creatures->ReadCreature(i,temp);
-        if(string(creaturestypes[temp.race].id) == "DWARF")
+        if(check.empty() || string(creaturestypes[temp.race].rawname) == check)
         {
             cout << "index " << i << " ";
+            
             printCreature(DF,temp);
+            addrs.push_back(temp.origin);
         }
     }
+    interleave_hex(DF,addrs,200);
     /*
     uint32_t currentIdx;
     DFHack::t_creature currentCreature;

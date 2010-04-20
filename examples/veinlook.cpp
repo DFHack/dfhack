@@ -14,7 +14,9 @@ using namespace std;
 #include <stdlib.h>
 #include <signal.h>
 #include <locale.h>
+#include <math.h>
 
+#include <DFGlobal.h>
 #include <DFTypes.h>
 #include <DFTileTypes.h>
 #include <DFHackAPI.h>
@@ -29,6 +31,22 @@ using namespace DFHack;
 string error;
 API * pDF = 0;
 
+
+struct t_tempz
+{
+    int32_t limit;
+    int character;
+};
+
+t_tempz temp_limits[]=
+{
+    {50, '.'},
+    {100, '+'},
+    {500, '*'},
+    {1000, '#'},
+    {2000, '!'}
+};
+#define NUM_LIMITS 5
 
 static void finish(int sig);
 
@@ -315,6 +333,8 @@ main(int argc, char *argv[])
     vector<t_vein> veinVector;
     vector<t_frozenliquidvein> IceVeinVector;
     vector<t_spattervein> splatter;
+    t_temperatures b_temp1;
+    t_temperatures b_temp2;
 
     DFHack::Materials * Mats = 0;
     DFHack::Maps * Maps = 0;
@@ -392,6 +412,13 @@ main(int argc, char *argv[])
     uint32_t blockaddr2 = 0;
     t_blockflags bflags;
     bflags.whole = 0;
+    enum e_tempmode
+    {
+        TEMP_NO,
+        TEMP_1,
+        TEMP_2
+    };
+    e_tempmode temperature = TEMP_NO;
     
     // resume so we don't block DF while we wait for input
     DF.Resume();
@@ -450,6 +477,15 @@ main(int argc, char *argv[])
                 break;
             case 't':
                 dotwiddle = true;
+                break;
+            case 'b':
+                temperature = TEMP_NO;
+                break;
+            case 'n':
+                temperature = TEMP_1;
+                break;
+            case 'm':
+                temperature = TEMP_2;
                 break;
             default:
                 break;
@@ -520,6 +556,9 @@ main(int argc, char *argv[])
                         }
                         Maps->WriteDesignations(cursorX+i,cursorY+j,cursorZ, &(Block->designation));
                     }
+                    
+                    // read temperature data
+                    Maps->ReadTemperatures(cursorX+i,cursorY+j,cursorZ,&b_temp1, &b_temp2 );
                     if(dotwiddle)
                     {
                         bitset<32> bs = Block->designation[0][0].whole;
@@ -528,6 +567,7 @@ main(int argc, char *argv[])
                         Maps->WriteDesignations(cursorX+i,cursorY+j,cursorZ, &(Block->designation));
                         dotwiddle = false;
                     }
+                    
                     // do a dump of the block data
                     if(dump)
                     {
@@ -588,11 +628,11 @@ main(int argc, char *argv[])
             }
             */
         }
-        gotoxy(0,48);
+        gotoxy(50,0);
         cprintf("arrow keys, PGUP, PGDN = navigate");
-        gotoxy(0,49);
+        gotoxy(50,1);
         cprintf("+,-                    = switch vein");
-        gotoxy(0,50);
+        gotoxy(50,2);
         uint32_t mineralsize = veinVector.size();
         uint32_t icesize = IceVeinVector.size();
         uint32_t splattersize = splatter.size();
@@ -630,7 +670,7 @@ main(int argc, char *argv[])
                             }
                         }
                     }
-                    gotoxy(0,51);
+                    gotoxy(50,3);
                     cprintf("Mineral: %s",stonetypes[veinVector[vein].type].id);
                 }
                 else if (vein < mineralsize + icesize)
@@ -650,7 +690,7 @@ main(int argc, char *argv[])
                             attroff(A_STANDOUT);
                         }
                     }
-                    gotoxy(0,51);
+                    gotoxy(50,3);
                     cprintf("ICE");
                 }
                 else
@@ -670,25 +710,78 @@ main(int argc, char *argv[])
                             }
                         }
                     }
-                    gotoxy(0,51);
+                    gotoxy(50,3);
                     cprintf("Spatter: %s",PrintSplatterType(splatter[realvein].mat1,splatter[realvein].mat2,creature_types).c_str());
                 }
             }
         }
         mapblock40d * Block = &blocks[1][1];
-        for(int x = 0; x < 16; x++) for(int y = 0; y < 16; y++)
+        t_temperatures * ourtemp;
+        if(temperature == TEMP_NO)
         {
-            if((Block->occupancy[x][y].whole & (1 << twiddle)))
+            for(int x = 0; x < 16; x++) for(int y = 0; y < 16; y++)
             {
-                putch(x + 16,y + 16,'@',COLOR_WHITE);
+                if((Block->occupancy[x][y].whole & (1 << twiddle)))
+                {
+                    putch(x + 16,y + 16,'@',COLOR_WHITE);
+                }
             }
         }
-        gotoxy (0,52);
+        else
+        {
+            if(temperature == TEMP_1)
+                ourtemp = &b_temp1;
+            else if(temperature == TEMP_2)
+                ourtemp = &b_temp2;
+            uint64_t sum = 0;
+            uint16_t min, max;
+            min = max = (*ourtemp)[0][0];
+            for(int x = 0; x < 16; x++) for(int y = 0; y < 16; y++)
+            {
+                uint16_t temp = (*ourtemp)[x][y];
+                if(temp < min) min = temp;
+                if(temp > max) max = temp;
+                sum += temp;
+            }
+            uint64_t average = sum/256;
+            gotoxy (50,8);
+            if(temperature == TEMP_1)
+                cprintf ("temperature1 [°U] (min,avg,max): %d,%d,%d", min, average, max);
+            else if(temperature == TEMP_2)
+                cprintf ("temperature2 [°U] (min,avg,max): %d,%d,%d", min, average, max);
+            
+            for(int x = 0; x < 16; x++) for(int y = 0; y < 16; y++)
+            {
+                int32_t temper = (int32_t) (*ourtemp)[x][y];
+                temper -= average;
+                uint32_t abs_temp = abs(temper);
+                int color;
+                unsigned char character = ' ';
+                if(temper >= 0)
+                    color = COLOR_RED;
+                else
+                    color = COLOR_BLUE;
+                
+                for(int i = 0; i < NUM_LIMITS; i++)
+                {
+                    if(temp_limits[i].limit < abs_temp)
+                        character = temp_limits[i].character;
+                    else break;
+                }
+                if( character != ' ')
+                {
+                    putch(x + 16,y + 16,character,color);
+                }
+            }
+        }
+        gotoxy (50,4);
         cprintf("block address 0x%x, flags 0x%08x",blockaddr, bflags.whole);
-        gotoxy (0,53);
+        gotoxy (50,5);
         cprintf("dirty bit: %d, twiddle: %d",dirtybit,twiddle);
-        gotoxy (0,54);
+        gotoxy (50,6);
         cprintf ("d - dig veins, o - dump map block, z - toggle dirty bit");
+        gotoxy (50,7);
+        cprintf ("b - no temperature, n - temperature 1, m - temperature 2");
         wrefresh(stdscr);
     }
     pDF = 0;

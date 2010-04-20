@@ -10,11 +10,11 @@
 #include <cstdio>
 using namespace std;
 
+#include <DFGlobal.h>
 #include <DFTypes.h>
 #include <DFHackAPI.h>
 #include <DFProcess.h>
 #include <DFMemInfo.h>
-#include <DFVector.h>
 #include <DFTypes.h>
 #include <modules/Materials.h>
 #include <modules/Position.h>

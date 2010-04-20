@@ -920,6 +920,7 @@ size=212
                 <class name="building_asheryst" type="0x14"/>
                 <class name="building_dyers_shopst" type="0x15"/>
                 <class name="building_millstonest" type="0x16"/>
+                <class name="building_custom_workshop" type="0x17" />
             </multiclass>
             <multiclass name="building_furnacest" typeoffset="0x152">
                 <class name="building_wood_furnacest" type="0x0"/>
@@ -1052,11 +1053,23 @@ size=212
         Map stuff
         =========
         <Address name="map_data">0x016AD718</Address>
-        <Offset name="v_vein">0x08</Offset>
-        <Offset name="type">0x009A</Offset>
-        <Offset name="designation">0x029C</Offset>
-        <Offset name="occupancy">0x069c</Offset>
-        <Offset name="biome_stuffs">0x1D9C</Offset>
+        <Offset name="map_data_vein_vector">0x08</Offset>
+        <Offset name="map_data_type">0x009A</Offset>
+        <Offset name="map_data_designation">0x029C</Offset>
+        <Offset name="map_data_occupancy">0x069c</Offset>
+        <Offset name="map_data_temperature1_offset">0x159c</Offset>
+        <Offset name="map_data_temperature2_offset">0x179c</Offset>
+        <Offset name="map_data_biome_stuffs">0x1D9C</Offset>
+        <Offset name="map_data_pathfinding_offset">0x0D9c</Offset>
+        <Offset name="map_data_feature1">0x2C</Offset> adamantine?
+        <Offset name="map_data_feature2">0x30</Offset> hell?
+
+        WORLD + 0x54374
+        <Address name="feature2_vector">0x16AF4FC</Address>
+        <Offset name= "feature2_funcptr_">0x100</Offset>
+        WORLD + 0x54440
+        <Address name="feature1_start_ptr">0x16AF5C8</Address>
+
         <!--
 map_data_map_x_offset         0x0058
 map_data_map_y_offset         0x005A
@@ -1084,8 +1097,11 @@ map_data_1b60_offset          0x1B9c
         <Address name="z_count">0x016ad74C</Address>
         
         * Suspected region coords *
+        WORLD + 0x525C8
         <Address name="region_x">0x016ad750</Address>
+        WORLD + 0x525CC
         <Address name="region_y">0x016ad754</Address>
+        WORLD + 0x525D0
         <Address name="region_z">0x016ad758</Address>
         
         * World size * (WORDs)
@@ -1120,6 +1136,7 @@ map_data_1b60_offset          0x1B9c
         =========
         <Address name="creature_vector">0x0166ecc4</Address>
         <Address name="dwarf_race_index">0x01470fbc</Address>
+        <Address name="dwarf_civ_id">0x01470fb0</Address>
         
         <Offset name="creature_name">0x0</Offset>
         <Offset name="creature_custom_profession">0x6c</Offset>
@@ -1130,9 +1147,13 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_flags2">0xFC</Offset>
         <Offset name="creature_sex">0x110</Offset>
         <Offset name="creature_id">0x114</Offset>
-        <Offset name="creature_side">0X120</Offset> <!-- what? -->
+        <Offset name="creature_civ">0X120</Offset>
         <Offset name="creature_soulskill_vector">0X1F4</Offset>
+        <Offset name="creature_pickup_equipment_bit">0X21C</Offset>
         <Offset name="creature_mood">0x238</Offset>
+        
+        <Offset name="creature_pregnancy">0x28C</Offset>
+        <Offset name="creature_pregnancy_ptr">0x290</Offset>
         
         <Offset name="creature_physical">0x464</Offset>
         <!--
@@ -1175,68 +1196,90 @@ map_data_1b60_offset          0x1B9c
         
         Materials
         =========
-        <!-- Number vectors are vector <uint32_t> -->
-        <!-- Others are vector<object *> -->
-        <!-- first member of 'object' is a STL string with the name of said object -->
+        soil, stone, metal
+        inorganics vector = WORLD + 0x54B7C = 0x16AFD04
+        <Address name="mat_inorganics">0x16afd04</Address>
+        
+        wood and plant matter, WORLD + 0x54B94
+        <Address name="mat_organics_all">0x16afd1C</Address>
+        
+        plant matter, WORLD + 0x54BAC
+        <Address name="mat_organics_plants">0x16afd34</Address>
+        
+        just wood, WORLD + 0x54BDC
+        <Address name="mat_organics_trees">0x16afd64</Address>
+        
+        creature types actually used for creatures,
+        WORLD + 0x54CD0
+        <Address name="creature_type_vector">0x016AFE58</Address>
+        <Offset name="creature_type_caste_vector">0x138</Offset>
+        <Offset name="creature_tile">0xE0</Offset>
+        <Offset name="creature_tile_color">0xF6</Offset>
+ 
+        <!--
+        NOT used yet
+        
+        Number vectors are vector <uint32_t>
+        Others are vector<object *>
+        first member of 'object' is a STL string with the name of said object
+
+        <Offset name="inorganic_material_template_instantiation">0x178</Offset>
         
         this is an array of 4B pointers to material templates and length 0x292
         base_type_array = WORLD + 0x5DF44
         <Address name="base_type_array">0x016b90cc</Address>
-        <Address name="mat_templates">0x16afcec</Address>
+        <Address name="mat_templates">0x16afcec</Address>        
         
-        <!-- soil, stone, metal -->
-        inorganics vector = WORLD + 0x54B7C = 0x16AFD04
-        <Address name="mat_inorganics">0x16afd04</Address>
-        <Offset name="inorganic_material_template_instantiation">0x178</Offset>
         
-        <!-- wood and plant matter -->
-        <Address name="mat_organics_all">0x16afd1C</Address>
         
-        <!-- plant matter -->
-        <Address name="mat_organics_plants">0x16afd34</Address>
-        
-        <!-- maybe maps beween organics_all and organics_plants -->
+        maybe maps beween organics_all and organics_plants
         <Address name="mat_unk1_numbers">0x16afd4C</Address> 
         
-        <!-- wood -->
-        <Address name="mat_organics_trees">0x16afd64</Address>
         
-        <!-- maybe maps beween organics_all and organics_trees -->
+        
+        maybe maps beween organics_all and organics_trees
         <Address name="mat_unk2_numbers">0x16afd7C</Address> 
         
-        <!-- body material stuff -->
+        body material stuff
         <Address name="mat_body_material_templates">0x16AFD94</Address>
         <Address name="mat_body_detail_plans">0x16AFDAC</Address>
         <Address name="mat_bodies">0x16AFDC4</Address>
         <Address name="mat_bodygloss">0x16AFDDC</Address>
         <Address name="mat_creature_variations">0x16AFDF4</Address>
         
-        <!-- *raw* creature types -->
+        *raw* creature types
         <Address name="mat_creature_types">0x16AFE0C</Address>
-        <!-- creature types actually used for creatures? -->
-        <Address name="creature_type_vector">0x016AFE58</Address>
-        <!--<Address name="mat_creature_types2">0x16AEE08</Address>-->
-        
+        -->
         
         Constructions
         =============
+        WORLD + 0x108
         <Address name="construction_vector">0x165b290</Address>
         <Offset name="sizeof_construction">0x14</Offset>
         
         Translations
         ============
+        WORLD + 0x54E50
         <Address name="language_vector">0x016AFFD8</Address>
+        WORLD + 0x54E80
         <Address name="translation_vector">0x016B0008</Address>
         <Offset name="word_table">0x4C</Offset>
         
         Vegetation
         ==========
+        WORLD + 0x15184
         <Address name="vegetation_vector">0x0167030C</Address> belal: 0x017f6d98 ... what?
         <Offset name="tree_desc_offset">0x6C</Offset>
         
         Buildings
         =========
+        WORLD + 0x14818
         <Address name="buildings_vector">0x0166f9a0</Address>
+        <Offset name="building_custom_workshop_type">0x164</Offset>
+        WORLD + 0x5D610
+        <Address name="custom_workshop_vector">0x016B8798</Address>
+        <Offset name="custom_workshop_name">0x4</Offset>
+        <Offset name="custom_workshop_type">0x20</Offset>
         
         Effects
         =======
@@ -1291,6 +1334,141 @@ map_data_1b60_offset          0x1B9c
     <Entry version="v0.31.02" os="windows" id="0.31.02" base="0.31.01">
         <String name="md5">23dfe141c7ea4e63ebb3c618a12b48ec</String>
         <HexValue name="pe_timestamp">0x4BBDF378</HexValue>
+    </Entry>
+    <Entry version="v0.31.03" os="windows" id="0.31.03" base="0.31.01" rebase="0x1000">
+        <String name="md5">94641d97a0ecff6f2194e3d0b310d946</String>
+        <HexValue name="pe_timestamp">0x4BC3C470</HexValue>
+        
+        WORLD: 0x0165c1d0 ?
+        
+        Position
+        ========
+        <Address name="window_dims">0x17f6b00</Address> Was 0x17f5ab8
+        0x17f6b00
+        0x17f6b08
+        0x17f6b10
+        
+        Map
+        ===
+        <Address name="map_data">0x016AE760</Address>
+        
+        * map size in blocks *
+        <Address name="x_count_block">0x016AE780</Address>
+        <Address name="y_count_block">0x016AE784</Address>
+        <Address name="z_count_block">0x016AE788</Address>
+        
+        * map size in tiles *
+        <Address name="x_count">0x016AE78C</Address>
+        <Address name="y_count">0x016AE790</Address>
+        <Address name="z_count">0x016AE794</Address>
+        
+        * Suspected region coords *
+        <Address name="region_x">0x016AE798</Address>
+        <Address name="region_y">0x016AE79C</Address>
+        <Address name="region_z">0x016AE7A0</Address>
+        
+        * World size * (WORDs)
+        <Address name="world_size_x">0x016AFE1C</Address>
+        <Address name="world_size_y">0x016AFE1E</Address>
+        
+        * geology *
+        <Address name="geoblock_vector">0x16B0574</Address>
+        <Address name="ptr2_region_array">0x16B05BC</Address>
+        
+        * features *
+        WORLD + 0x54374
+        <Address name="feature2_vector">0x16B0544</Address>
+        <Address name="feature1_start_ptr">0x16B0610</Address>
+        
+        Creatures
+        =========
+        <Address name="creature_vector">0x166FD0C</Address>
+        <Address name="dwarf_race_index">0x01471fbc</Address>
+        <Offset name="creature_name">0x0</Offset>
+        <Offset name="creature_custom_profession">0x6c</Offset>
+        <Offset name="creature_profession">0x88</Offset>
+        <Offset name="creature_race">0x8C</Offset>
+        <Offset name="creature_position">0x90</Offset>
+        <Offset name="creature_flags1">0xF8</Offset>
+        <Offset name="creature_flags2">0xFC</Offset>
+        <Offset name="creature_sex">0x110</Offset>
+        <Offset name="creature_id">0x114</Offset>
+        <Offset name="creature_civ">0X120</Offset>
+        <Offset name="creature_soulskill_vector">0X1F4</Offset>
+        <Offset name="creature_pickup_equipment_bit">0X21C</Offset>
+        <!--<Offset name="creature_mood">0x238</Offset>-->
+        
+        <Offset name="creature_physical">0x464</Offset>
+        <!--
+        <Offset name="creature_strength">0x464</Offset>
+        <Offset name="creature_agility">0x480</Offset>
+        <Offset name="creature_toughness">0x49C</Offset>
+        <Offset name="creature_endurance">0x4B8</Offset>
+        <Offset name="creature_recuperation">0x4D4</Offset>
+        <Offset name="creature_disease_resistance">0x4F0</Offset>
+        -->
+        <Offset name="creature_current_job">0x390</Offset> <!-- from chmod -->
+        <Offset name="creature_artifact_name">0x6D4</Offset>
+        <Offset name="creature_labors">0x774</Offset>
+        <Offset name="creature_soul_vector">0x0740</Offset>
+        <Offset name="creature_default_soul">0x0758</Offset>
+        <Offset name="creature_happiness">0x834</Offset>
+        
+        
+        Materials
+        =========
+        soil, stone, metal
+        inorganics vector = WORLD + 0x54B7C = 0x16B0D4C
+        <Address name="mat_inorganics">0x16B0D4C</Address>
+        
+        wood and plant matter, WORLD + 0x54B94
+        <Address name="mat_organics_all">0x16B0D64</Address>
+        
+        plant matter, WORLD + 0x54BAC
+        <Address name="mat_organics_plants">0x16B0D7C</Address>
+        
+        just wood, WORLD + 0x54BDC
+        <Address name="mat_organics_trees">0x16B0DAC</Address>
+        
+        creature types actually used for creatures, WORLD + 0x54CD0
+        <Address name="creature_type_vector">0x16B0EA0</Address>
+        
+        Constructions
+        =============
+        WORLD + 0x108
+        <Address name="construction_vector">0x165C2D8</Address>
+        
+        Translations
+        ============
+        WORLD + 0x54E50
+        <Address name="language_vector">0x016B1020</Address>
+        WORLD + 0x54E80
+        <Address name="translation_vector">0x16B1050</Address>
+        
+        Vegetation
+        ==========
+        WORLD + 0x15184
+        <Address name="vegetation_vector">0x1671354</Address>
+        
+        Buildings
+        =========
+        WORLD + 0x14818
+        <Address name="buildings_vector">0x16709E8</Address>
+        WORLD + 0x5D610
+        <Address name="custom_workshop_vector">0x16B97E0</Address>
+        <Offset name="custom_workshop_name">0x4</Offset>
+	<Offset name="custom_workshop_type">0x20</Offset>
+
+	Descriptor colors
+	=================
+	<Address name="descriptor_shape_vector">0x16B9780</Address>
+	<Offset name="descriptor_rawname">0x0</Offset>
+	<Offset name="descriptor_name">0x4C</Offset>
+	<Address name="descriptor_colors_vector">0x16B9768</Address>
+	<Offset name="descriptor_color_r">0x6C</Offset> floats !
+	<Offset name="descriptor_color_v">0x70</Offset>
+	<Offset name="descriptor_color_b">0x74</Offset>
+        
     </Entry>
                             .-"""-.
                            '       \

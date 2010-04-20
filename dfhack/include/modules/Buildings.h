@@ -32,8 +32,14 @@ namespace DFHack
         Buildings(APIPrivate * d);
         ~Buildings();
         bool Start(uint32_t & numBuildings);
+        // read one building at offset
         bool Read (const uint32_t index, t_building & building);
         bool Finish();
+        
+        // read a vector of names
+        bool ReadCustomWorkshopTypes(map <uint32_t, string> & btypes);
+        // returns -1 on error, >= 0 for real value
+        int32_t GetCustomWorkshopType(t_building & building);
         
         private:
         struct Private;

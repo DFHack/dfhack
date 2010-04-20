@@ -47,6 +47,8 @@ typedef struct
     uint32_t occupancy_offset;// = d->offset_descriptor->getOffset ("occupancy");
     uint32_t biome_stuffs;// = d->offset_descriptor->getOffset ("biome_stuffs");
     uint32_t veinvector;// = d->offset_descriptor->getOffset ("v_vein");
+    uint32_t temperature1_offset;
+    uint32_t temperature2_offset;
     uint32_t vein_mineral_vptr;
     uint32_t vein_ice_vptr;
     uint32_t vein_spatter_vptr;

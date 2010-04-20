@@ -8,6 +8,7 @@
 #include <vector>
 using namespace std;
 
+#include <DFGlobal.h>
 #include <DFError.h>
 #include <DFTypes.h>
 #include <DFHackAPI.h>
@@ -44,7 +45,7 @@ int main (int argc,const char* argv[])
         mode = 1;
     }
     
-    vector<DFHack::t_matgloss> creaturestypes;
+    map <uint32_t, string> custom_workshop_types;
     
     DFHack::API DF ("Memory.xml");
     try
@@ -59,6 +60,7 @@ int main (int argc,const char* argv[])
         #endif
         return 1;
     }
+    
     DFHack::memory_info * mem = DF.getMemoryInfo();
     DFHack::Buildings * Bld = DF.getBuildings();
     DFHack::Position * Pos = DF.getPosition();
@@ -66,6 +68,7 @@ int main (int argc,const char* argv[])
     uint32_t numBuildings;
     if(Bld->Start(numBuildings))
     {
+        Bld->ReadCustomWorkshopTypes(custom_workshop_types);
         if(mode)
         {
             cout << numBuildings << endl;
@@ -110,6 +113,11 @@ int main (int argc,const char* argv[])
                         mem->resolveClassIDToClassname(temp.type, typestr);
                         printf("Address 0x%x, type %d (%s), %d/%d/%d\n",temp.origin, temp.type, typestr.c_str(), temp.x1,temp.y1,temp.z);
                         printf("Material %d %d\n", temp.material.type, temp.material.index);
+                        int32_t custom;
+                        if((custom = Bld->GetCustomWorkshopType(temp)) != -1)
+                        {
+                            printf("Custom workshop type %s (%d)\n",custom_workshop_types[custom].c_str(),custom);
+                        }
                         hexdump(DF,temp.origin,120);
                     }
                 }

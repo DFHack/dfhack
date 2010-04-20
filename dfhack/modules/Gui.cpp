@@ -40,6 +40,7 @@ struct Gui::Private
     uint32_t current_cursor_creature_offset;
     uint32_t current_menu_state_offset;
     APIPrivate *d;
+    Process * owner;
 };
 
 Gui::Gui(APIPrivate * _d)
@@ -47,6 +48,7 @@ Gui::Gui(APIPrivate * _d)
     
     d = new Private;
     d->d = _d;
+    d->owner = _d->p;
     d->Inited = d->Started = true;
     
     memory_info * mem = d->d->offset_descriptor;
@@ -76,29 +78,30 @@ bool Gui::ReadPauseState()
     // replace with an exception
     if(!d->Inited) return false;
 
-    uint32_t pauseState = g_pProcess->readDWord (d->pause_state_offset);
+    uint32_t pauseState = d->owner->readDWord (d->pause_state_offset);
     return pauseState & 1;
 }
 
 uint32_t Gui::ReadMenuState()
 {
     if(d->Inited)
-        return(g_pProcess->readDWord(d->current_menu_state_offset));
+        return(d->owner->readDWord(d->current_menu_state_offset));
     return false;
 }
 
 bool Gui::ReadViewScreen (t_viewscreen &screen)
 {
     if (!d->Inited) return false;
+    Process * p = d->owner;
     
-    uint32_t last = g_pProcess->readDWord (d->view_screen_offset);
-    uint32_t screenAddr = g_pProcess->readDWord (last);
-    uint32_t nextScreenPtr = g_pProcess->readDWord (last + 4);
+    uint32_t last = p->readDWord (d->view_screen_offset);
+    uint32_t screenAddr = p->readDWord (last);
+    uint32_t nextScreenPtr = p->readDWord (last + 4);
     while (nextScreenPtr != 0)
     {
         last = nextScreenPtr;
-        screenAddr = g_pProcess->readDWord (nextScreenPtr);
-        nextScreenPtr = g_pProcess->readDWord (nextScreenPtr + 4);
+        screenAddr = p->readDWord (nextScreenPtr);
+        nextScreenPtr = p->readDWord (nextScreenPtr + 4);
     }
     return d->d->offset_descriptor->resolveObjectToClassID (last, screen.type);
 }

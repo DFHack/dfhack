@@ -34,7 +34,7 @@ using namespace DFHack;
 class WineProcess::Private
 {
     public:
-    Private()
+    Private(Process * self_)
     {
         my_descriptor = NULL;
         my_handle = NULL;
@@ -43,10 +43,12 @@ class WineProcess::Private
         attached = false;
         suspended = false;
         memFileHandle = 0;
+        self = self_;
     };
     ~Private(){};
     DFWindow* my_window;
     memory_info * my_descriptor;
+    Process * self;
     ProcessHandle my_handle;
     uint32_t my_pid;
     string memFile;
@@ -58,7 +60,7 @@ class WineProcess::Private
 };
 
 WineProcess::WineProcess(uint32_t pid, vector <memory_info *> & known_versions)
-: d(new Private())
+: d(new Private(this))
 {
     char dir_name [256];
     char exe_link_name [256];
@@ -69,6 +71,7 @@ WineProcess::WineProcess(uint32_t pid, vector <memory_info *> & known_versions)
     int target_result;
     
     d->identified = false;
+    d->my_descriptor = 0;
     
     sprintf(dir_name,"/proc/%d/", pid);
     sprintf(exe_link_name,"/proc/%d/exe", pid);
@@ -147,8 +150,11 @@ bool WineProcess::Private::validate(char* exe_file, uint32_t pid, char* mem_file
         // are the md5 hashes the same?
         if(memory_info::OS_WINDOWS == (*it)->getOS() && hash == thishash)
         {
-            memory_info * m = *it;
+            
+            // keep track of created memory_info object so we can destroy it later
+            memory_info *m = new memory_info(**it);
             my_descriptor = m;
+            m->setParentProcess(dynamic_cast<Process *>( self ));
             my_handle = my_pid = pid;
             // tell WineProcess about the /proc/PID/mem file
             memFile = mem_file;
@@ -165,6 +171,9 @@ WineProcess::~WineProcess()
     {
         detach();
     }
+    // destroy our copy of the memory descriptor
+    if(d->my_descriptor)
+        delete d->my_descriptor;
     if(d->my_window)
         delete d->my_window;
     delete d;
@@ -281,9 +290,11 @@ bool WineProcess::resume()
 bool WineProcess::attach()
 {
     int status;
-    if(g_pProcess != NULL)
+    if(d->attached)
     {
-        return false;
+        if(!d->suspended)
+            return suspend();
+        return true;
     }
     // can we attach?
     if (ptrace(PTRACE_ATTACH , d->my_handle, NULL, NULL) == -1)
@@ -323,7 +334,6 @@ bool WineProcess::attach()
     else
     {
         d->attached = true;
-        g_pProcess = this;
         
         d->memFileHandle = proc_pid_mem;
         return true; // we are attached
@@ -356,7 +366,6 @@ bool WineProcess::detach()
         else
         {
             d->attached = false;
-            g_pProcess = NULL;
             return true;
         }
     }
@@ -377,6 +386,7 @@ void WineProcess::read (const uint32_t offset, const uint32_t size, uint8_t *tar
             cerr << "pread failed: can't read " << size << " bytes at addres " << offset << endl;
             cerr << "errno: " << errno << endl;
             errno = 0;
+            throw Error::MemoryAccessDenied();
         }
         else
         {
@@ -416,6 +426,17 @@ uint32_t WineProcess::readDWord (const uint32_t offset)
     return val;
 }
 void WineProcess::readDWord (const uint32_t offset, uint32_t &val)
+{
+    read(offset, 4, (uint8_t *) &val);
+}
+
+float WineProcess::readFloat (const uint32_t offset)
+{
+    float val;
+    read(offset, 4, (uint8_t *) &val);
+    return val;
+}
+void WineProcess::readFloat (const uint32_t offset, float &val)
 {
     read(offset, 4, (uint8_t *) &val);
 }
@@ -516,20 +537,20 @@ size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcap
     Uint32 capacity
     */
     uint32_t start_offset = offset + 4;
-    size_t length = g_pProcess->readDWord(offset + 20);
+    size_t length = readDWord(offset + 20);
     
-    size_t capacity = g_pProcess->readDWord(offset + 24);
+    size_t capacity = readDWord(offset + 24);
     size_t read_real = min(length, bufcapacity-1);// keep space for null termination
     
     // read data from inside the string structure
     if(capacity < 16)
     {
-        g_pProcess->read(start_offset, read_real , (uint8_t *)buffer);
+        read(start_offset, read_real , (uint8_t *)buffer);
     }
     else // read data from what the offset + 4 dword points to
     {
-        start_offset = g_pProcess->readDWord(start_offset);// dereference the start offset
-        g_pProcess->read(start_offset, read_real, (uint8_t *)buffer);
+        start_offset = readDWord(start_offset);// dereference the start offset
+        read(start_offset, read_real, (uint8_t *)buffer);
     }
     
     buffer[read_real] = 0;
@@ -550,19 +571,19 @@ const string WineProcess::readSTLString (uint32_t offset)
         Uint32 capacity
     */
     uint32_t start_offset = offset + 4;
-    uint32_t length = g_pProcess->readDWord(offset + 20);
-    uint32_t capacity = g_pProcess->readDWord(offset + 24);
+    uint32_t length = readDWord(offset + 20);
+    uint32_t capacity = readDWord(offset + 24);
     char * temp = new char[capacity+1];
     
     // read data from inside the string structure
     if(capacity < 16)
     {
-        g_pProcess->read(start_offset, capacity, (uint8_t *)temp);
+        read(start_offset, capacity, (uint8_t *)temp);
     }
     else // read data from what the offset + 4 dword points to
     {
-        start_offset = g_pProcess->readDWord(start_offset);// dereference the start offset
-        g_pProcess->read(start_offset, capacity, (uint8_t *)temp);
+        start_offset = readDWord(start_offset);// dereference the start offset
+        read(start_offset, capacity, (uint8_t *)temp);
     }
     
     temp[length] = 0;

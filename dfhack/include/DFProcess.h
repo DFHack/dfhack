@@ -34,7 +34,6 @@ namespace DFHack
     class memory_info;
     class Process;
     class DFWindow;
-    class DfVector;
     
     // structure describing a memory range
     struct DFHACK_EXPORT t_memrange
@@ -82,7 +81,9 @@ namespace DFHack
             virtual bool forceresume() = 0;
             
             virtual uint32_t readDWord(const uint32_t address) = 0;
+            virtual float readFloat(const uint32_t address) = 0;
             virtual void readDWord(const uint32_t address, uint32_t & value) = 0;
+            virtual void readFloat(const uint32_t address, float & value) = 0;
             virtual uint16_t readWord(const uint32_t address) = 0;
             virtual void readWord(const uint32_t address, uint16_t & value) = 0;
             virtual uint8_t readByte(const uint32_t address) = 0;
@@ -151,7 +152,9 @@ namespace DFHack
             bool forceresume();
             
             uint32_t readDWord(const uint32_t address);
+            float readFloat(const uint32_t address);
             void readDWord(const uint32_t address, uint32_t & value);
+            void readFloat(const uint32_t address, float & value);
             uint16_t readWord(const uint32_t address);
             void readWord(const uint32_t address, uint16_t & value);
             uint8_t readByte(const uint32_t address);
@@ -214,7 +217,9 @@ namespace DFHack
             bool forceresume();
             
             uint32_t readDWord(const uint32_t address);
+            float readFloat(const uint32_t address);
             void readDWord(const uint32_t address, uint32_t & value);
+            void readFloat(const uint32_t address, float & value);
             uint16_t readWord(const uint32_t address);
             void readWord(const uint32_t address, uint16_t & value);
             uint8_t readByte(const uint32_t address);
@@ -276,7 +281,9 @@ namespace DFHack
             bool forceresume();
             
             uint32_t readDWord(const uint32_t address);
+            float readFloat(const uint32_t address);
             void readDWord(const uint32_t address, uint32_t & value);
+            void readFloat(const uint32_t address, float & value);
             uint16_t readWord(const uint32_t address);
             void readWord(const uint32_t address, uint16_t & value);
             uint8_t readByte(const uint32_t address);

@@ -21,28 +21,34 @@ using namespace std;
 #include <DFMemInfo.h>
 #include <DFProcess.h>
 #include <argstream.h>
+#include <modules/Materials.h>
+#include <modules/Creatures.h>
 
-
-vector<DFHack::t_matgloss> creaturestypes;
-DFHack::memory_info *mem;
-DFHack::Process *proc;
-uint32_t creature_pregnancy_offset;
-
-bool femaleonly = 0;
-bool showcreatures = 0;
-int maxpreg = 1000; // random start value, since its not required and im not sure how to set it to infinity
-list<string> s_creatures;
+using namespace DFHack;
 
 int main ( int argc, char** argv )
 {
+    vector<DFHack::t_creaturetype> creaturestypes;
+    DFHack::memory_info *mem;
+    DFHack::Process *proc;
+    uint32_t creature_pregnancy_offset;
+    
+    //bool femaleonly = 0;
+    bool showcreatures = 0;
+    int maxpreg = 1000; // random start value, since its not required and im not sure how to set it to infinity
+    list<string> s_creatures;
+    
     // parse input, handle this nice and neat before we get to the connecting
     argstream as(argc,argv);
-    as  >>option('f',"female",femaleonly,"Impregnate females only")
+    as // >>option('f',"female",femaleonly,"Impregnate females only")
         >>option('s',"show",showcreatures,"Show creature list (read only)")
         >>parameter('m',"max",maxpreg,"The maximum limit of pregnancies ", false)
         >>values<string>(back_inserter(s_creatures), "any number of creatures")
         >>help();
-
+        
+    // make the creature list unique
+    s_creatures.unique();
+    
     if (!as.isOk())
     {
         cout << as.errorLog();
@@ -58,8 +64,9 @@ int main ( int argc, char** argv )
     }
     else if (s_creatures.size() == 0 && showcreatures != 1)
     {
-        cout << as.usage();
-        return(1);
+        cout << as.usage() << endl << "---------------------------------------" << endl;
+        cout << "Creature list empty, assuming CATs" << endl;
+        s_creatures.push_back("CAT");
     }
 
     DFHack::API DF("Memory.xml");
@@ -78,9 +85,11 @@ int main ( int argc, char** argv )
 
     proc = DF.getProcess();
     mem = DF.getMemoryInfo();
+    DFHack::Materials *Mats = DF.getMaterials();
+    DFHack::Creatures *Cre = DF.getCreatures();
     creature_pregnancy_offset = mem->getOffset("creature_pregnancy");
 
-    if(!DF.ReadCreatureMatgloss(creaturestypes))
+    if(!Mats->ReadCreatureTypesEx(creaturestypes))
     {
         cerr << "Can't get the creature types." << endl;
         #ifndef LINUX_BUILD
@@ -90,7 +99,7 @@ int main ( int argc, char** argv )
     }
 
     uint32_t numCreatures;
-    if(!DF.InitReadCreatures(numCreatures))
+    if(!Cre->Start(numCreatures))
     {
         cerr << "Can't get creatures" << endl;
         #ifndef LINUX_BUILD
@@ -104,68 +113,62 @@ int main ( int argc, char** argv )
     string sextype;
 
     // shows all the creatures and returns.
-    if (showcreatures == 1)
-    {
-        int maxlength = 0;
-        map<string,uint32_t> male_counts;
-        map<string,uint32_t> female_counts;
-        for(uint32_t i =0;i < numCreatures;i++)
-        {
-            DFHack::t_creature creature;
-            DF.ReadCreature(i,creature);
-            if(creature.sex == 1){
-                male_counts[creaturestypes[creature.type].id]++;
-                female_counts[creaturestypes[creature.type].id]+=0; //auto initialize the females as well
-            }
-            else{
-                female_counts[creaturestypes[creature.type].id]++;
-                male_counts[creaturestypes[creature.type].id]+=0;
-            }
-        }
-        cout << "Type\t\t\tMale #\tFemale #" << endl;
-        for(map<string, uint32_t>::iterator it1 = male_counts.begin();it1!=male_counts.end();it1++)
-        {
-            cout << it1->first << "\t\t" << it1->second << "\t" << female_counts[it1->first] << endl;
-        }
-        return(1);
-    }
 
-    for(uint32_t i = 0; i < numCreatures && totalchanged != maxpreg; i++)
+    int maxlength = 0;
+    map<string, vector <t_creature> > male_counts;
+    map<string, vector <t_creature> > female_counts;
+    
+    // classify
+    for(uint32_t i =0;i < numCreatures;i++)
     {
         DFHack::t_creature creature;
-        DF.ReadCreature(i,creature);
-        if (showcreatures == 1)
+        Cre->ReadCreature(i,creature);
+        DFHack::t_creaturetype & crt = creaturestypes[creature.race];
+        string castename = crt.castes[creature.sex].rawname;
+        if(castename == "FEMALE")
         {
-            if (creature.sex == 0) { sextype = "Female"; } else { sextype = "Male";}
-            cout << string(creaturestypes[creature.type].id) << ":" << sextype << "" << endl;
+            female_counts[creaturestypes[creature.race].rawname].push_back(creature);
+            male_counts[creaturestypes[creature.race].rawname].size();
         }
-        else
+        else // male, other, etc.
         {
-            s_creatures.unique();
-            for (list<string>::iterator it = s_creatures.begin(); it != s_creatures.end(); ++it)
+            male_counts[creaturestypes[creature.race].rawname].push_back(creature);
+            female_counts[creaturestypes[creature.race].rawname].size(); //auto initialize the females as well
+        }
+    }
+    
+    // print (optional)
+    if (showcreatures == 1)
+    {
+        cout << "Type\t\tMale #\tFemale #" << endl;
+        for(map<string, vector <t_creature> >::iterator it1 = male_counts.begin();it1!=male_counts.end();it1++)
+        {
+            cout << it1->first << "\t\t" << it1->second.size() << "\t" << female_counts[it1->first].size() << endl;
+        }
+    }
+    
+    // process
+    for (list<string>::iterator it = s_creatures.begin(); it != s_creatures.end(); ++it)
+    {
+        std::string clinput = *it;
+        std::transform(clinput.begin(), clinput.end(), clinput.begin(), ::toupper);
+        vector <t_creature> &females = female_counts[clinput];
+        uint32_t sz_fem = females.size();
+        totalcount += sz_fem;
+        for(uint32_t i = 0; i < sz_fem && totalchanged != maxpreg; i++)
+        {
+            t_creature & female = females[i];
+            uint32_t preg_timer = proc->readDWord(female.origin + creature_pregnancy_offset);
+            if(preg_timer != 0)
             {
-                std::string clinput = *it;
-                std::transform(clinput.begin(), clinput.end(), clinput.begin(), ::toupper);
-                if(string(creaturestypes[creature.type].id) == clinput)
-                {
-                    if((femaleonly == 1 && creature.sex == 0) || (femaleonly != 1))
-                    {
-                        proc->writeDWord(creature.origin + creature_pregnancy_offset, rand() % 100 + 1);
-                        totalchanged+=1;
-                        totalcount+=1;
-                    }
-                    else
-                    {
-                        totalcount+=1;
-                    }
-                }
+                proc->writeDWord(female.origin + creature_pregnancy_offset, rand() % 100 + 1);
+                totalchanged++;
             }
         }
     }
 
-    cout << totalchanged << " animals impregnated out of a possible " << totalcount << "." << endl;
-
-    DF.FinishReadCreatures();
+    cout << totalchanged << " pregnancies accelerated. Total creatures checked: " << totalcount << "." << endl;
+    Cre->Finish();
     DF.Detach();
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;

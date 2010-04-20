@@ -82,11 +82,21 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versio
     
     // temporarily assign this to allow some checks
     d->my_handle = hProcess;
+    d->my_main_thread = 0;
     // read from this process
-    uint32_t pe_offset = readDWord(base+0x3C);
-    read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
-    read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
-    d->my_handle = 0;
+    try
+    {
+        uint32_t pe_offset = readDWord(base+0x3C);
+        read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
+        read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
+        d->my_handle = 0;
+    }
+    catch (exception &)
+    {
+        CloseHandle(hProcess);
+        d->my_handle = 0;
+        return;
+    }
     
     // see if there's a version entry that matches this process
     vector<memory_info*>::iterator it;
@@ -117,6 +127,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versio
             m->RebaseAll(base);
             // keep track of created memory_info object so we can destroy it later
             d->my_descriptor = m;
+            m->setParentProcess(this);
             // process is responsible for destroying its data model
             d->my_pid = pid;
             d->my_handle = hProcess;
@@ -239,12 +250,13 @@ bool NormalProcess::resume()
 
 bool NormalProcess::attach()
 {
-    if(g_pProcess != NULL)
+    if(d->attached)
     {
-        return false;
+        if(!d->suspended)
+            return suspend();
+        return true;
     }
     d->attached = true;
-    g_pProcess = this;
     suspend();
 
     return true;
@@ -259,7 +271,6 @@ bool NormalProcess::detach()
     }
     resume();
     d->attached = false;
-    g_pProcess = NULL;
     return true;
 }
 
@@ -315,64 +326,89 @@ void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
 uint8_t NormalProcess::readByte (const uint32_t offset)
 {
     uint8_t result;
-    ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint8_t), NULL);
+    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint8_t), NULL))
+        throw Error::MemoryAccessDenied();
     return result;
 }
 
 void NormalProcess::readByte (const uint32_t offset,uint8_t &result)
 {
-    ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint8_t), NULL);
+    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint8_t), NULL))
+        throw Error::MemoryAccessDenied();
 }
 
 uint16_t NormalProcess::readWord (const uint32_t offset)
 {
     uint16_t result;
-    ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint16_t), NULL);
+    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint16_t), NULL))
+        throw Error::MemoryAccessDenied();
     return result;
 }
 
 void NormalProcess::readWord (const uint32_t offset, uint16_t &result)
 {
-    ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint16_t), NULL);
+    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint16_t), NULL))
+        throw Error::MemoryAccessDenied();
 }
 
 uint32_t NormalProcess::readDWord (const uint32_t offset)
 {
     uint32_t result;
-    ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint32_t), NULL);
+    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint32_t), NULL))
+        throw Error::MemoryAccessDenied();
     return result;
 }
 
 void NormalProcess::readDWord (const uint32_t offset, uint32_t &result)
 {
-    ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint32_t), NULL);
+    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint32_t), NULL))
+        throw Error::MemoryAccessDenied();
+}
+
+float NormalProcess::readFloat (const uint32_t offset)
+{
+    float result;
+    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(float), NULL))
+        throw Error::MemoryAccessDenied();
+    return result;
+}
+
+void NormalProcess::readFloat (const uint32_t offset, float &result)
+{
+    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(float), NULL))
+        throw Error::MemoryAccessDenied();
 }
 
 void NormalProcess::read (const uint32_t offset, uint32_t size, uint8_t *target)
 {
-    ReadProcessMemory(d->my_handle, (int*) offset, target, size, NULL);
+    if(!ReadProcessMemory(d->my_handle, (int*) offset, target, size, NULL))
+        throw Error::MemoryAccessDenied();
 }
 
 // WRITING
 void NormalProcess::writeDWord (const uint32_t offset, uint32_t data)
 {
-    WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(uint32_t), NULL);
+    if(!WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(uint32_t), NULL))
+        throw Error::MemoryAccessDenied();
 }
 
 // using these is expensive.
 void NormalProcess::writeWord (uint32_t offset, uint16_t data)
 {
-    WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(uint16_t), NULL);
+    if(!WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(uint16_t), NULL))
+        throw Error::MemoryAccessDenied();
 }
 
 void NormalProcess::writeByte (uint32_t offset, uint8_t data)
 {
-    WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(uint8_t), NULL);
+    if(!WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(uint8_t), NULL))
+        throw Error::MemoryAccessDenied();
 }
 
 void NormalProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
 {
-    WriteProcessMemory(d->my_handle, (int*) offset, source, size, NULL);
+    if(!WriteProcessMemory(d->my_handle, (int*) offset, source, size, NULL))
+        throw Error::MemoryAccessDenied();
 }
 
 
@@ -383,7 +419,9 @@ const string NormalProcess::readCString (const uint32_t offset)
     string temp;
     char temp_c[256];
     DWORD read;
-    ReadProcessMemory(d->my_handle, (int *) offset, temp_c, 254, &read); // needs to be 254+1 byte for the null term
+    if(!ReadProcessMemory(d->my_handle, (int *) offset, temp_c, 254, &read))
+        throw Error::MemoryAccessDenied();
+    // needs to be 254+1 byte for the null term
     temp_c[read+1] = 0;
     temp.assign(temp_c);
     return temp;
@@ -403,20 +441,20 @@ Uint32 length
 Uint32 capacity
 */
     uint32_t start_offset = offset + 4;
-    size_t length = g_pProcess->readDWord(offset + 20);
+    size_t length = readDWord(offset + 20);
     
-    size_t capacity = g_pProcess->readDWord(offset + 24);
+    size_t capacity = readDWord(offset + 24);
     size_t read_real = min(length, bufcapacity-1);// keep space for null termination
     
     // read data from inside the string structure
     if(capacity < 16)
     {
-        g_pProcess->read(start_offset, read_real , (uint8_t *)buffer);
+        read(start_offset, read_real , (uint8_t *)buffer);
     }
     else // read data from what the offset + 4 dword points to
     {
-        start_offset = g_pProcess->readDWord(start_offset);// dereference the start offset
-        g_pProcess->read(start_offset, read_real, (uint8_t *)buffer);
+        start_offset = readDWord(start_offset);// dereference the start offset
+        read(start_offset, read_real, (uint8_t *)buffer);
     }
     
     buffer[read_real] = 0;
@@ -437,19 +475,19 @@ const string NormalProcess::readSTLString (uint32_t offset)
         Uint32 capacity
     */
     uint32_t start_offset = offset + 4;
-    uint32_t length = g_pProcess->readDWord(offset + 20);
-    uint32_t capacity = g_pProcess->readDWord(offset + 24);
+    uint32_t length = readDWord(offset + 20);
+    uint32_t capacity = readDWord(offset + 24);
     char * temp = new char[capacity+1];
     
     // read data from inside the string structure
     if(capacity < 16)
     {
-        g_pProcess->read(start_offset, capacity, (uint8_t *)temp);
+        read(start_offset, capacity, (uint8_t *)temp);
     }
     else // read data from what the offset + 4 dword points to
     {
-        start_offset = g_pProcess->readDWord(start_offset);// dereference the start offset
-        g_pProcess->read(start_offset, capacity, (uint8_t *)temp);
+        start_offset = readDWord(start_offset);// dereference the start offset
+        read(start_offset, capacity, (uint8_t *)temp);
     }
     
     temp[length] = 0;

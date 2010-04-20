@@ -46,7 +46,7 @@ using namespace DFHack;
 class SHMProcess::Private
 {
     public:
-    Private()
+    Private(Process * self_)
     {
         memdescriptor = NULL;
         process_ID = 0;
@@ -62,10 +62,12 @@ class SHMProcess::Private
         suspend_lock = -1;
         attachmentIdx = 0;
         locked = false;
+        self = self_;
     };
     ~Private(){};
     memory_info * memdescriptor;
     DFWindow * window;
+    Process * self;
     pid_t process_ID;
     char *shm_addr;
     int shm_ID;
@@ -118,7 +120,6 @@ bool SHMProcess::Private::SetAndWait (uint32_t state)
                 FreeLocks();
                 attached = locked = identified = false;
                 // we aren't the current process anymore
-                g_pProcess = NULL;
                 throw Error::SHMServerDisappeared();
             }
             else
@@ -263,9 +264,10 @@ bool SHMProcess::Private::GetLocks()
 }
 
 SHMProcess::SHMProcess(uint32_t PID, vector< memory_info* >& known_versions)
-: d(new Private())
+: d(new Private(this))
 {
     d->process_ID = PID;
+    d->memdescriptor = 0;
     if(!attach())
     {
         // couldn't attach to process
@@ -336,8 +338,9 @@ bool SHMProcess::Private::validate(vector <memory_info *> & known_versions)
         try{
             if(hash == (*it)->getString("md5")) // are the md5 hashes the same?
             {
-                memory_info * m = *it;
+                memory_info *m = new memory_info(**it);
                 memdescriptor = m;
+                m->setParentProcess(dynamic_cast<Process *>( self ));
                 identified = true;
                 // cerr << "identified " << m->getVersion() << endl;
                 return true;
@@ -357,7 +360,8 @@ SHMProcess::~SHMProcess()
     {
         detach();
     }
-    // destroy data model. this is assigned by processmanager
+    if(d->memdescriptor)
+        delete d->memdescriptor;
     if(d->window)
     {
         delete d->window;
@@ -537,11 +541,11 @@ bool SHMProcess::resume()
 
 bool SHMProcess::attach()
 {
-    if(g_pProcess != 0)
+    if(d->attached)
     {
-        // FIXME: throw exception here - programmer error
-        cerr << "client is already attached to a process!" << endl;
-        return false;
+        if(!d->locked)
+            return suspend();
+        return true;
     }
     if(!d->GetLocks())
     {
@@ -576,7 +580,6 @@ bool SHMProcess::attach()
         cerr << "unable to suspend" << endl;
         return false;
     }
-    g_pProcess = this;
     return true;
 }
 
@@ -597,7 +600,6 @@ bool SHMProcess::detach()
         d->locked = false;
         d->attached = false;
         d->shm_addr = 0;
-        g_pProcess = 0;
         return true;
     }
     // fail if we can't detach
@@ -608,7 +610,7 @@ bool SHMProcess::detach()
 
 void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buffer)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
     
     // normal read under 1MB
     if(size <= SHM_BODY)
@@ -645,7 +647,7 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
 
 uint8_t SHMProcess::readByte (const uint32_t offset)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
     
     D_SHMHDR->address = offset;
     gcc_barrier
@@ -655,7 +657,7 @@ uint8_t SHMProcess::readByte (const uint32_t offset)
 
 void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
     
     D_SHMHDR->address = offset;
     gcc_barrier
@@ -665,7 +667,7 @@ void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
 
 uint16_t SHMProcess::readWord (const uint32_t offset)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
     
     D_SHMHDR->address = offset;
     gcc_barrier
@@ -675,7 +677,7 @@ uint16_t SHMProcess::readWord (const uint32_t offset)
 
 void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
     
     D_SHMHDR->address = offset;
     gcc_barrier
@@ -685,7 +687,7 @@ void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
 
 uint32_t SHMProcess::readDWord (const uint32_t offset)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
     
     D_SHMHDR->address = offset;
     gcc_barrier
@@ -694,7 +696,26 @@ uint32_t SHMProcess::readDWord (const uint32_t offset)
 }
 void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
+    
+    D_SHMHDR->address = offset;
+    gcc_barrier
+    d->SetAndWait(CORE_READ_DWORD);
+    val = D_SHMHDR->value;
+}
+
+float SHMProcess::readFloat (const uint32_t offset)
+{
+    if(!d->locked) throw Error::MemoryAccessDenied();
+    
+    D_SHMHDR->address = offset;
+    gcc_barrier
+    d->SetAndWait(CORE_READ_DWORD);
+    return D_SHMHDR->value;
+}
+void SHMProcess::readFloat (const uint32_t offset, float &val)
+{
+    if(!d->locked) throw Error::MemoryAccessDenied();
     
     D_SHMHDR->address = offset;
     gcc_barrier
@@ -708,7 +729,7 @@ void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
 
 void SHMProcess::writeDWord (uint32_t offset, uint32_t data)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
     
     D_SHMHDR->address = offset;
     D_SHMHDR->value = data;
@@ -719,7 +740,7 @@ void SHMProcess::writeDWord (uint32_t offset, uint32_t data)
 // using these is expensive.
 void SHMProcess::writeWord (uint32_t offset, uint16_t data)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
     
     D_SHMHDR->address = offset;
     D_SHMHDR->value = data;
@@ -729,7 +750,7 @@ void SHMProcess::writeWord (uint32_t offset, uint16_t data)
 
 void SHMProcess::writeByte (uint32_t offset, uint8_t data)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
     
     D_SHMHDR->address = offset;
     D_SHMHDR->value = data;
@@ -739,7 +760,7 @@ void SHMProcess::writeByte (uint32_t offset, uint8_t data)
 
 void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
     
     // normal write under 1MB
     if(size <= SHM_BODY)
@@ -777,7 +798,7 @@ void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buf
 // FIXME: butt-fugly
 const std::string SHMProcess::readCString (uint32_t offset)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
         
     std::string temp;
     char temp_c[256];
@@ -796,7 +817,7 @@ const std::string SHMProcess::readCString (uint32_t offset)
 
 const std::string SHMProcess::readSTLString(uint32_t offset)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
         
     D_SHMHDR->address = offset;
     full_barrier
@@ -806,7 +827,7 @@ const std::string SHMProcess::readSTLString(uint32_t offset)
 
 size_t SHMProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
         
     D_SHMHDR->address = offset;
     full_barrier
@@ -820,7 +841,7 @@ size_t SHMProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapa
 
 void SHMProcess::writeSTLString(const uint32_t address, const std::string writeString)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
         
     D_SHMHDR->address = address;
     strncpy(D_SHMDATA(char),writeString.c_str(),writeString.length()+1); // length + 1 for the null terminator
@@ -830,7 +851,7 @@ void SHMProcess::writeSTLString(const uint32_t address, const std::string writeS
 
 string SHMProcess::readClassName (uint32_t vptr)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
         
     int typeinfo = readDWord(vptr - 0x4);
     int typestring = readDWord(typeinfo + 0x4);
@@ -843,7 +864,7 @@ string SHMProcess::readClassName (uint32_t vptr)
 // get module index by name and version. bool 0 = error
 bool SHMProcess::getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT)
 {
-    if(!d->locked) throw Error::SHMAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied();
         
     modulelookup * payload = D_SHMDATA(modulelookup);
     payload->version = version;
@@ -873,7 +894,7 @@ char * SHMProcess::getSHMStart (void)
 
 bool SHMProcess::Private::Aux_Core_Attach(bool & versionOK, pid_t & PID)
 {
-    if(!locked) throw Error::SHMAccessDenied();
+    if(!locked) throw Error::MemoryAccessDenied();
     
     SHMDATA(coreattach)->cl_affinity = OS_getAffinity();
     if(!SetAndWait(CORE_ATTACH)) return false;

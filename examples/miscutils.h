@@ -10,15 +10,17 @@
 #include <cstdio>
 using namespace std;
 
+#include <DFProcess.h>
+#include <DFMemInfo.h>
 #include <DFVector.h>
 
 void DumpObjStr0Vector (const char * name, DFHack::Process *p, uint32_t addr)
 {
     cout << "----==== " << name << " ====----" << endl;
-    DFHack::DfVector vect(p,addr,4);
-    for(uint32_t i = 0; i < vect.getSize();i++)
+    DFHack::DfVector <uint32_t> vect(p,addr);
+    for(uint32_t i = 0; i < vect.size();i++)
     {
-        uint32_t addr = *(uint32_t *) vect[i];
+        uint32_t addr = vect[i];
         cout << p->readSTLString(addr) << endl;
     }
     cout << endl;
@@ -26,10 +28,10 @@ void DumpObjStr0Vector (const char * name, DFHack::Process *p, uint32_t addr)
 void DumpObjVtables (const char * name, DFHack::Process *p, uint32_t addr)
 {
     cout << "----==== " << name << " ====----" << endl;
-    DFHack::DfVector vect(p,addr,4);
-    for(uint32_t i = 0; i < vect.getSize();i++)
+    DFHack::DfVector <uint32_t> vect(p,addr);
+    for(uint32_t i = 0; i < vect.size();i++)
     {
-        uint32_t addr = *(uint32_t *) vect[i];
+        uint32_t addr = vect[i];
         uint32_t vptr = p->readDWord(addr);
         cout << p->readClassName(vptr) << endl;
     }
@@ -38,10 +40,10 @@ void DumpObjVtables (const char * name, DFHack::Process *p, uint32_t addr)
 void DumpDWordVector (const char * name, DFHack::Process *p, uint32_t addr)
 {
     cout << "----==== " << name << " ====----" << endl;
-    DFHack::DfVector vect(p,addr,4);
-    for(uint32_t i = 0; i < vect.getSize();i++)
+    DFHack::DfVector <uint32_t> vect(p,addr);
+    for(uint32_t i = 0; i < vect.size();i++)
     {
-        uint32_t number = *(uint32_t *) vect[i];
+        uint32_t number = vect[i];
         cout << number << endl;
     }
     cout << endl;

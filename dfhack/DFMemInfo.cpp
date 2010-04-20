@@ -58,6 +58,7 @@ class memory_info::Private
     uint32_t classindex;
     
     int32_t base;
+    Process * p; // the process this belongs to
     
     string version;
     OSType OS;
@@ -68,6 +69,7 @@ memory_info::memory_info()
 :d(new Private)
 {
     d->base = 0;
+    d->p = 0;
     d->classindex = 0;
 }
 
@@ -95,6 +97,10 @@ memory_info::memory_info(const memory_info &old)
     d->skills = old.d->skills;
     d->traits = old.d->traits;
     d->labors = old.d->labors;
+}
+void memory_info::setParentProcess(Process * _p)
+{
+    d->p = _p;
 }
 
 // destructor
@@ -327,7 +333,7 @@ void memory_info::setClassChild (t_class * parent, const char * name, const char
 // FIXME: stupid. we need a better container
 bool memory_info::resolveObjectToClassID(const uint32_t address, int32_t & classid)
 {
-    uint32_t vtable = g_pProcess->readDWord(address);
+    uint32_t vtable = d->p->readDWord(address);
     // try to find the vtable in our cache
     map<uint32_t, t_class *>::iterator it;
     it = d->classIDs.find(vtable);
@@ -341,7 +347,7 @@ bool memory_info::resolveObjectToClassID(const uint32_t address, int32_t & class
     else// couldn't find?
     {
         // we set up the class for the first time
-        string classname = g_pProcess->readClassName(vtable);
+        string classname = d->p->readClassName(vtable);
         d->classIDs[vtable] = cl = setClass(classname.c_str(),vtable);
     }
     // and isn't a multi-class
@@ -356,7 +362,7 @@ bool memory_info::resolveObjectToClassID(const uint32_t address, int32_t & class
     {
         // find the type
         vector <t_type*>& vec = cl->subs;
-        uint32_t type = g_pProcess->readWord(address + cl->type_offset);
+        uint32_t type = d->p->readWord(address + cl->type_offset);
         // return typed building if successful
         //FIXME: the vector should map directly to the type IDs here, so we don't have to mess with O(n) search
         for (uint32_t k = 0; k < vec.size();k++)
@@ -386,6 +392,22 @@ bool memory_info::resolveClassnameToVPtr(const string classname, uint32_t & vptr
         if(d->classes[i]->classname == classname) // got class
         {
             vptr = d->classes[i]->vtable;
+            return true;
+        }
+    }
+    // we failed to find anything that would match
+    return false;
+}
+
+bool memory_info::resolveClassnameToClassID (const string classname, int32_t & classID)
+{
+    // FIXME: another stupid search.
+    classID = -1;
+    for(uint32_t i = 0;i< d->classnames.size();i++)
+    {
+        if(d->classnames[i] == classname)
+        {
+            classID = i;
             return true;
         }
     }

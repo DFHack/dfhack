@@ -51,6 +51,7 @@ struct Maps::Private
     Server::Maps::maps_offsets offsets;
     
     APIPrivate *d;
+    Process * owner;
     bool Inited;
     bool Started;
     vector<uint16_t> v_geology[eBiomeCount];
@@ -60,9 +61,10 @@ Maps::Maps(APIPrivate* _d)
 {
     d = new Private;
     d->d = _d;
+    Process *p = d->owner = _d->p;
     d->Inited = d->Started = false;
     
-    DFHack::memory_info * mem = d->d->offset_descriptor;
+    DFHack::memory_info * mem = p->getDescriptor();
     Server::Maps::maps_offsets &off = d->offsets;
     
     // get the offsets once here
@@ -70,12 +72,14 @@ Maps::Maps(APIPrivate* _d)
     off.x_count_offset = mem->getAddress ("x_count_block");
     off.y_count_offset = mem->getAddress ("y_count_block");
     off.z_count_offset = mem->getAddress ("z_count_block");
-    off.tile_type_offset = mem->getOffset ("type");
-    off.designation_offset = mem->getOffset ("designation");
-    off.occupancy_offset = mem->getOffset("occupancy");
-    off.biome_stuffs = mem->getOffset ("biome_stuffs");
-    off.veinvector = mem->getOffset ("v_vein");
-    
+    off.tile_type_offset = mem->getOffset ("map_data_type");
+    off.designation_offset = mem->getOffset ("map_data_designation");
+    off.occupancy_offset = mem->getOffset("map_data_occupancy");
+    off.biome_stuffs = mem->getOffset ("map_data_biome_stuffs");
+    off.veinvector = mem->getOffset ("map_data_vein_vector");
+    off.temperature1_offset = mem->getOffset ("map_data_temperature1_offset");
+    off.temperature2_offset = mem->getOffset ("map_data_temperature2_offset");
+
     // these can fail and will be found when looking at the actual veins later
     // basically a cache
     off.vein_ice_vptr = 0;
@@ -85,14 +89,14 @@ Maps::Maps(APIPrivate* _d)
 
     // upload offsets to SHM server if possible
     d->maps_module = 0;
-    if(g_pProcess->getModuleIndex("Maps2010",1,d->maps_module))
+    if(p->getModuleIndex("Maps2010",1,d->maps_module))
     {
         // supply the module with offsets so it can work with them
         Server::Maps::maps_offsets *off2 = SHMDATA(Server::Maps::maps_offsets);
         memcpy(off2, &(d->offsets), sizeof(Server::Maps::maps_offsets));
         full_barrier
         const uint32_t cmd = Server::Maps::MAP_INIT + (d->maps_module << 16);
-        g_pProcess->SetAndWait(cmd);
+        p->SetAndWait(cmd);
     }
     d->Inited = true;
 }
@@ -112,9 +116,10 @@ bool Maps::Start()
         return false;
     if(d->Started)
         Finish();
+    Process *p = d->owner;
     Server::Maps::maps_offsets &off = d->offsets;
     // get the map pointer
-    uint32_t x_array_loc = g_pProcess->readDWord (off.map_offset);
+    uint32_t x_array_loc = p->readDWord (off.map_offset);
     if (!x_array_loc)
     {
         return false;
@@ -122,9 +127,9 @@ bool Maps::Start()
     
     // get the size
     uint32_t mx, my, mz;
-    mx = d->x_block_count = g_pProcess->readDWord (off.x_count_offset);
-    my = d->y_block_count = g_pProcess->readDWord (off.y_count_offset);
-    mz = d->z_block_count = g_pProcess->readDWord (off.z_count_offset);
+    mx = d->x_block_count = p->readDWord (off.x_count_offset);
+    my = d->y_block_count = p->readDWord (off.y_count_offset);
+    mz = d->z_block_count = p->readDWord (off.z_count_offset);
 
     // test for wrong map dimensions
     if (mx == 0 || mx > 48 || my == 0 || my > 48 || mz == 0)
@@ -137,23 +142,21 @@ bool Maps::Start()
     d->block = new uint32_t[mx*my*mz];
     uint32_t *temp_x = new uint32_t[mx];
     uint32_t *temp_y = new uint32_t[my];
-    uint32_t *temp_z = new uint32_t[mz];
 
-    g_pProcess->read (x_array_loc, mx * sizeof (uint32_t), (uint8_t *) temp_x);
+    p->read (x_array_loc, mx * sizeof (uint32_t), (uint8_t *) temp_x);
     for (uint32_t x = 0; x < mx; x++)
     {
-        g_pProcess->read (temp_x[x], my * sizeof (uint32_t), (uint8_t *) temp_y);
+        p->read (temp_x[x], my * sizeof (uint32_t), (uint8_t *) temp_y);
         // y -> map column
         for (uint32_t y = 0; y < my; y++)
         {
-            g_pProcess->read (temp_y[y],
+            p->read (temp_y[y],
                    mz * sizeof (uint32_t),
                    (uint8_t *) (d->block + x*my*mz + y*mz));
         }
     }
     delete [] temp_x;
     delete [] temp_y;
-    delete [] temp_z;
     return true;
 }
 
@@ -195,13 +198,14 @@ uint32_t Maps::getBlockPtr (uint32_t x, uint32_t y, uint32_t z)
 
 bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer)
 {
+    Process *p = d->owner;
     if(d->d->shm_start && d->maps_module) // ACCELERATE!
     {
         SHMMAPSHDR->x = x;
         SHMMAPSHDR->y = y;
         SHMMAPSHDR->z = z;
         volatile uint32_t cmd = Server::Maps::MAP_READ_BLOCK_BY_COORDS + (d->maps_module << 16);
-        if(!g_pProcess->SetAndWait(cmd))
+        if(!p->SetAndWait(cmd))
             return false;
         memcpy(buffer,SHMDATA(mapblock40d),sizeof(mapblock40d));
         return true;
@@ -211,13 +215,13 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
         uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
         if (addr)
         {
-            g_pProcess->read (addr + d->offsets.tile_type_offset, sizeof (buffer->tiletypes), (uint8_t *) buffer->tiletypes);
-            g_pProcess->read (addr + d->offsets.designation_offset, sizeof (buffer->designation), (uint8_t *) buffer->designation);
-            g_pProcess->read (addr + d->offsets.occupancy_offset, sizeof (buffer->occupancy), (uint8_t *) buffer->occupancy);
-            g_pProcess->read (addr + d->offsets.biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer->biome_indices);
+            p->read (addr + d->offsets.tile_type_offset, sizeof (buffer->tiletypes), (uint8_t *) buffer->tiletypes);
+            p->read (addr + d->offsets.designation_offset, sizeof (buffer->designation), (uint8_t *) buffer->designation);
+            p->read (addr + d->offsets.occupancy_offset, sizeof (buffer->occupancy), (uint8_t *) buffer->occupancy);
+            p->read (addr + d->offsets.biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer->biome_indices);
             buffer->origin = addr;
-            uint32_t addr_of_struct = g_pProcess->readDWord(addr);
-            buffer->blockflags.whole = g_pProcess->readDWord(addr_of_struct);
+            uint32_t addr_of_struct = p->readDWord(addr);
+            buffer->blockflags.whole = p->readDWord(addr_of_struct);
             return true;
         }
         return false;
@@ -233,7 +237,7 @@ bool Maps::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buff
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->read (addr + d->offsets.tile_type_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
+        d->owner->read (addr + d->offsets.tile_type_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
         return true;
     }
     return false;
@@ -244,7 +248,7 @@ bool Maps::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buf
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->write (addr + d->offsets.tile_type_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
+        d->owner->write (addr + d->offsets.tile_type_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
         return true;
     }
     return false;
@@ -259,8 +263,9 @@ bool Maps::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if(addr)
     {
-        uint32_t addr_of_struct = g_pProcess->readDWord(addr);
-        dirtybit = g_pProcess->readDWord(addr_of_struct) & 1;
+        Process * p = d->owner;
+        uint32_t addr_of_struct = p->readDWord(addr);
+        dirtybit = p->readDWord(addr_of_struct) & 1;
         return true;
     }
     return false;
@@ -271,11 +276,12 @@ bool Maps::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        uint32_t addr_of_struct = g_pProcess->readDWord(addr);
-        uint32_t dirtydword = g_pProcess->readDWord(addr_of_struct);
+        Process * p = d->owner;
+        uint32_t addr_of_struct = p->readDWord(addr);
+        uint32_t dirtydword = p->readDWord(addr_of_struct);
         dirtydword &= 0xFFFFFFFE;
         dirtydword |= (uint32_t) dirtybit;
-        g_pProcess->writeDWord (addr_of_struct, dirtydword);
+        p->writeDWord (addr_of_struct, dirtydword);
         return true;
     }
     return false;
@@ -287,8 +293,9 @@ bool Maps::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags &bloc
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if(addr)
     {
-        uint32_t addr_of_struct = g_pProcess->readDWord(addr);
-        blockflags.whole = g_pProcess->readDWord(addr_of_struct);
+        Process * p = d->owner;
+        uint32_t addr_of_struct = p->readDWord(addr);
+        blockflags.whole = p->readDWord(addr_of_struct);
         return true;
     }
     return false;
@@ -298,8 +305,9 @@ bool Maps::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags bloc
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        uint32_t addr_of_struct = g_pProcess->readDWord(addr);
-        g_pProcess->writeDWord (addr_of_struct, blockflags.whole);
+        Process * p = d->owner;
+        uint32_t addr_of_struct = p->readDWord(addr);
+        p->writeDWord (addr_of_struct, blockflags.whole);
         return true;
     }
     return false;
@@ -314,7 +322,7 @@ bool Maps::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->read (addr + d->offsets.designation_offset, sizeof (designations40d), (uint8_t *) buffer);
+        d->owner->read (addr + d->offsets.designation_offset, sizeof (designations40d), (uint8_t *) buffer);
         return true;
     }
     return false;
@@ -325,7 +333,7 @@ bool Maps::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, designations40
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->write (addr + d->offsets.designation_offset, sizeof (designations40d), (uint8_t *) buffer);
+        d->owner->write (addr + d->offsets.designation_offset, sizeof (designations40d), (uint8_t *) buffer);
         return true;
     }
     return false;
@@ -340,7 +348,7 @@ bool Maps::ReadOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *bu
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->read (addr + d->offsets.occupancy_offset, sizeof (occupancies40d), (uint8_t *) buffer);
+        d->owner->read (addr + d->offsets.occupancy_offset, sizeof (occupancies40d), (uint8_t *) buffer);
         return true;
     }
     return false;
@@ -351,7 +359,37 @@ bool Maps::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *b
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->write (addr + d->offsets.occupancy_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
+        d->owner->write (addr + d->offsets.occupancy_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
+        return true;
+    }
+    return false;
+}
+
+/*
+ * Temperatures
+ */ 
+bool Maps::ReadTemperatures(uint32_t x, uint32_t y, uint32_t z, t_temperatures *temp1, t_temperatures *temp2)
+{
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
+    {
+        if(temp1)
+            d->owner->read (addr + d->offsets.temperature1_offset, sizeof (t_temperatures), (uint8_t *) temp1);
+        if(temp2)
+            d->owner->read (addr + d->offsets.temperature2_offset, sizeof (t_temperatures), (uint8_t *) temp2);
+        return true;
+    }
+    return false;
+}
+bool Maps::WriteTemperatures (uint32_t x, uint32_t y, uint32_t z, t_temperatures *temp1, t_temperatures *temp2)
+{
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
+    {
+        if(temp1)
+            d->owner->write (addr + d->offsets.temperature1_offset, sizeof (t_temperatures), (uint8_t *) temp1);
+        if(temp2)
+            d->owner->write (addr + d->offsets.temperature2_offset, sizeof (t_temperatures), (uint8_t *) temp2);
         return true;
     }
     return false;
@@ -365,7 +403,7 @@ bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices4
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        g_pProcess->read (addr + d->offsets.biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer);
+        d->owner->read (addr + d->offsets.biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer);
         return true;
     }
     return false;
@@ -379,6 +417,7 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins,
     t_vein v;
     t_frozenliquidvein fv;
     t_spattervein sv;
+    Process* p = d->owner;
     
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if(veins) veins->clear();
@@ -390,19 +429,19 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins,
     {
         // veins are stored as a vector of pointers to veins
         /*pointer is 4 bytes! we work with a 32bit program here, no matter what architecture we compile khazad for*/
-        DfVector p_veins (d->d->p, addr + off.veinvector, 4);
-        uint32_t size = p_veins.getSize();
+        DfVector <uint32_t> p_veins (p, addr + off.veinvector);
+        uint32_t size = p_veins.size();
         // read all veins
         for (uint32_t i = 0; i < size;i++)
         {
             // read the vein pointer from the vector
-            uint32_t temp = * (uint32_t *) p_veins[i];
-            uint32_t type = g_pProcess->readDWord(temp);
+            uint32_t temp = p_veins[i];
+            uint32_t type = p->readDWord(temp);
 try_again:
             if(veins && type == off.vein_mineral_vptr)
             {
                 // read the vein data (dereference pointer)
-                g_pProcess->read (temp, sizeof(t_vein), (uint8_t *) &v);
+                p->read (temp, sizeof(t_vein), (uint8_t *) &v);
                 v.address_of = temp;
                 // store it in the vector
                 veins->push_back (v);
@@ -410,7 +449,7 @@ try_again:
             else if(ices && type == off.vein_ice_vptr)
             {
                 // read the ice vein data (dereference pointer)
-                g_pProcess->read (temp, sizeof(t_frozenliquidvein), (uint8_t *) &fv);
+                p->read (temp, sizeof(t_frozenliquidvein), (uint8_t *) &fv);
                 fv.address_of = temp;
                 // store it in the vector
                 ices->push_back (fv);
@@ -418,14 +457,14 @@ try_again:
             else if(splatter && type == off.vein_spatter_vptr)
             {
                 // read the splatter vein data (dereference pointer)
-                g_pProcess->read (temp, sizeof(t_spattervein), (uint8_t *) &sv);
+                p->read (temp, sizeof(t_spattervein), (uint8_t *) &sv);
                 sv.address_of = temp;
                 // store it in the vector
                 splatter->push_back (sv);
             }
             else
             {
-                string cname = g_pProcess->readClassName(type);
+                string cname = p->readClassName(type);
                 if(ices && cname == "block_square_event_frozen_liquidst")
                 {
                     off.vein_ice_vptr = type;
@@ -516,6 +555,7 @@ __int16 __userpurge GetGeologicalRegion<ax>(__int16 block_X<cx>, int X<ebx>, __i
 bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 {
     memory_info * minfo = d->d->offset_descriptor;
+    Process *p = d->owner;
     // get needed addresses and offsets. Now this is what I call crazy.
     int region_x_offset = minfo->getAddress ("region_x");
     int region_y_offset = minfo->getAddress ("region_y");
@@ -534,19 +574,19 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     uint16_t worldSizeX, worldSizeY;
 
     // read position of the region inside DF world
-    g_pProcess->readDWord (region_x_offset, regionX);
-    g_pProcess->readDWord (region_y_offset, regionY);
-    g_pProcess->readDWord (region_z_offset, regionZ);
+    p->readDWord (region_x_offset, regionX);
+    p->readDWord (region_y_offset, regionY);
+    p->readDWord (region_z_offset, regionZ);
 
     // get world size
-    g_pProcess->readWord (world_size_x, worldSizeX);
-    g_pProcess->readWord (world_size_y, worldSizeY);
+    p->readWord (world_size_x, worldSizeX);
+    p->readWord (world_size_y, worldSizeY);
 
     // get pointer to first part of 2d array of regions
-    uint32_t regions = g_pProcess->readDWord (world_regions);
+    uint32_t regions = p->readDWord (world_regions);
 
     // read the geoblock vector
-    DfVector geoblocks (d->d->p, world_geoblocks_vector, 4);
+    DfVector <uint32_t> geoblocks (d->d->p, world_geoblocks_vector);
 
     // iterate over 8 surrounding regions + local region
     for (int i = eNorthWest; i < eBiomeCount; i++)
@@ -563,32 +603,32 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
         /// regions are of region_size size
         // get pointer to column of regions
         uint32_t geoX;
-        g_pProcess->readDWord (regions + bioRX*4, geoX);
+        p->readDWord (regions + bioRX*4, geoX);
 
         // get index into geoblock vector
         uint16_t geoindex;
-        g_pProcess->readWord (geoX + bioRY*region_size + region_geo_index_offset, geoindex);
+        p->readWord (geoX + bioRY*region_size + region_geo_index_offset, geoindex);
 
         /// geology blocks are assigned to regions from a vector
         // get the geoblock from the geoblock vector using the geoindex
         // read the matgloss pointer from the vector into temp
-        uint32_t geoblock_off = * (uint32_t *) geoblocks[geoindex];
+        uint32_t geoblock_off = geoblocks[geoindex];
 
         /// geology blocks have a vector of layer descriptors
         // get the vector with pointer to layers
-        DfVector geolayers (d->d->p, geoblock_off + geolayer_geoblock_offset , 4); // let's hope
+        DfVector <uint32_t> geolayers (p, geoblock_off + geolayer_geoblock_offset); // let's hope
         // make sure we don't load crap
-        assert (geolayers.getSize() > 0 && geolayers.getSize() <= 16);
+        assert (geolayers.size() > 0 && geolayers.size() <= 16);
 
         /// layer descriptor has a field that determines the type of stone/soil
-        d->v_geology[i].reserve (geolayers.getSize());
+        d->v_geology[i].reserve (geolayers.size());
         // finally, read the layer matgloss
-        for (uint32_t j = 0;j < geolayers.getSize();j++)
+        for (uint32_t j = 0;j < geolayers.size();j++)
         {
             // read pointer to a layer
-            uint32_t geol_offset = * (uint32_t *) geolayers[j];
+            uint32_t geol_offset = geolayers[j];
             // read word at pointer + 2, store in our geology vectors
-            d->v_geology[i].push_back (g_pProcess->readWord (geol_offset + type_inside_geolayer));
+            d->v_geology[i].push_back (p->readWord (geol_offset + type_inside_geolayer));
         }
     }
     assign.clear();

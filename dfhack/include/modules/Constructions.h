@@ -14,7 +14,7 @@ namespace DFHack
         constr_boulder = 4,
         constr_logs = 5,
     };
-    #pragma pack(1)
+    #pragma pack(push, 1)
     struct t_construction
     {
         //0
@@ -38,7 +38,7 @@ namespace DFHack
         // added later by dfhack
         uint32_t origin;
     };
-
+    #pragma pack (pop)
     class APIPrivate;
     class DFHACK_EXPORT Constructions
     {

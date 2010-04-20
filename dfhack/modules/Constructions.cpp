@@ -37,9 +37,10 @@ struct Constructions::Private
 {
     uint32_t construction_vector;
     // translation
-    DfVector * p_cons;
+    DfVector <uint32_t> * p_cons;
     
     APIPrivate *d;
+    Process * owner;
     bool Inited;
     bool Started;
 };
@@ -48,6 +49,7 @@ Constructions::Constructions(APIPrivate * d_)
 {
     d = new Private;
     d->d = d_;
+    d->owner = d_->p;
     d->p_cons = 0;
     d->Inited = d->Started = false;
     memory_info * mem = d->d->offset_descriptor;
@@ -64,8 +66,8 @@ Constructions::~Constructions()
 
 bool Constructions::Start(uint32_t & numconstructions)
 {
-    d->p_cons = new DfVector (g_pProcess, d->construction_vector, 4);
-    numconstructions = d->p_cons->getSize();
+    d->p_cons = new DfVector <uint32_t> (d->owner, d->construction_vector);
+    numconstructions = d->p_cons->size();
     d->Started = true;
     return true;
 }
@@ -76,10 +78,10 @@ bool Constructions::Read (const uint32_t index, t_construction & construction)
     if(!d->Started) return false;
 
     // read pointer from vector at position
-    uint32_t temp = * (uint32_t *) d->p_cons->at (index);
+    uint32_t temp = d->p_cons->at (index);
 
     //read construction from memory
-    g_pProcess->read (temp, sizeof (t_construction), (uint8_t *) &construction);
+    d->owner->read (temp, sizeof (t_construction), (uint8_t *) &construction);
 
     // transform
     construction.origin = temp;

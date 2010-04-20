@@ -39,6 +39,7 @@ typedef struct
     uint32_t profession_offset;
     uint32_t custom_profession_offset;
     uint32_t race_offset;
+    int32_t civ_offset;
     uint32_t flags1_offset;
     uint32_t flags2_offset;
     uint32_t name_offset;
@@ -49,6 +50,7 @@ typedef struct
     uint32_t artifact_name_offset;
     uint32_t physical_offset;
     uint32_t mood_offset;
+    uint32_t pickup_equipment_bit;
     uint32_t soul_vector_offset;
     uint32_t default_soul_offset;
     // soul offsets

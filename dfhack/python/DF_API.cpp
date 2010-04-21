@@ -57,6 +57,9 @@ struct DF_API
 	PyObject* gui;
 	
 	PyObject* map_type;
+	PyObject* vegetation_type;
+	PyObject* gui_type;
+	
 	DFHack::API* api_Ptr;
 };
 
@@ -91,6 +94,8 @@ static int DF_API_init(DF_API* self, PyObject* args, PyObject* kwds)
 		self->gui = NULL;
 		
 		self->map_type = (PyObject*)&DF_Map_type;
+		self->vegetation_type = (PyObject*)&DF_Vegetation_type;
+		self->gui_type = (PyObject*)&DF_GUI_type;
 		
 		if(!PyArg_ParseTuple(args, "s", &memFileString))
 			return -1;
@@ -402,7 +407,7 @@ static PyObject* DF_API_getVegetation(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->vegetation = PyObject_Call((PyObject*)&DF_Vegetation_type, NULL, NULL);
+			self->vegetation = PyObject_CallObject(self->vegetation_type, NULL);
 			
 			if(self->vegetation != NULL)
 			{
@@ -431,7 +436,7 @@ static PyObject* DF_API_getGUI(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->gui = PyObject_Call((PyObject*)&DF_GUI_type, NULL, NULL);
+			self->gui = PyObject_CallObject(self->gui_type, NULL);
 			
 			if(self->gui != NULL)
 			{
@@ -476,6 +481,56 @@ static int DF_API_setMapType(DF_API* self, PyObject* value)
 	return 0;
 }
 
+static PyObject* DF_API_getVegetationType(DF_API* self, void* closure)
+{
+	return self->vegetation_type;
+}
+
+static int DF_API_setVegetationType(DF_API* self, PyObject* value)
+{
+	if(PyType_Check(value) <= 0)
+	{
+		PySys_WriteStdout("failed type check");
+		PyErr_SetString(PyExc_TypeError, "value must be a type object");
+		return NULL;
+	}
+	if(PyObject_IsSubclass(value, (PyObject*)&DF_Vegetation_type) <= 0)
+	{
+		PySys_WriteStdout("failed subclass check");
+		PyErr_SetString(PyExc_TypeError, "value must be descended from pydfhack._VegetationManager");
+		return NULL;
+	}
+	
+	self->vegetation_type = value;
+	
+	return 0;
+}
+
+static PyObject* DF_API_getGUIType(DF_API* self, void* closure)
+{
+	return self->gui_type;
+}
+
+static int DF_API_setGUIType(DF_API* self, PyObject* value)
+{
+	if(PyType_Check(value) <= 0)
+	{
+		PySys_WriteStdout("failed type check");
+		PyErr_SetString(PyExc_TypeError, "value must be a type object");
+		return NULL;
+	}
+	if(PyObject_IsSubclass(value, (PyObject*)&DF_GUI_type) <= 0)
+	{
+		PySys_WriteStdout("failed subclass check");
+		PyErr_SetString(PyExc_TypeError, "value must be descended from pydfhack._GUIManager");
+		return NULL;
+	}
+	
+	self->gui_type = value;
+	
+	return 0;
+}
+
 static PyGetSetDef DF_API_getterSetters[] =
 {
     {"is_attached", (getter)DF_API_getIsAttached, NULL, "is_attached", NULL},
@@ -489,7 +544,9 @@ static PyGetSetDef DF_API_getterSetters[] =
 	{"constructions", (getter)DF_API_getConstruction, NULL, "constructions", NULL},
 	{"vegetation", (getter)DF_API_getVegetation, NULL, "vegetation", NULL},
 	{"gui", (getter)DF_API_getGUI, NULL, "gui", NULL},
-	{"map_type", (getter)DF_API_getMapType, (setter)DF_API_setMapType, "map_type", NULL},
+	{"_map_mgr_type", (getter)DF_API_getMapType, (setter)DF_API_setMapType, "_map_mgr_type", NULL},
+	{"_vegetation_mgr_type", (getter)DF_API_getVegetationType, (setter)DF_API_setVegetationType, "_vegetation_mgr_type", NULL},
+	{"_gui_mgr_type", (getter)DF_API_getGUIType, (setter)DF_API_setGUIType, "_gui_mgr_type", NULL},
     {NULL}  // Sentinel
 };
 

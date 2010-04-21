@@ -31,6 +31,7 @@ distribution.
 
 using namespace std;
 
+#include "DFTypes.h"
 #include "modules/Maps.h"
 #include "DF_Imports.cpp"
 #include "DF_Helpers.cpp"
@@ -304,7 +305,7 @@ static void ReverseBuildDesignations40d(PyObject* list, DFHack::designations40d&
 		innerList = PyList_GET_ITEM(list, i);
 		
 		for(int j = 0; j < 16; j++)
-			des[i][j].whole = (uint32_t)PyInt_AsLong(PyList_GET_ITEM(innerList, j));
+			des[i][j].whole = (uint32_t)PyInt_AS_LONG(PyList_GET_ITEM(innerList, j));
 	}
 }
 
@@ -581,8 +582,6 @@ static PyObject* DF_Map_ReadDesignations(DF_Map* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
-static DFHack::designations40d writeDes;
-
 static PyObject* DF_Map_WriteDesignations(DF_Map* self, PyObject* args)
 {
 	PyObject* desList;
@@ -592,6 +591,8 @@ static PyObject* DF_Map_WriteDesignations(DF_Map* self, PyObject* args)
 	{
 		if(!PyArg_ParseTuple(args, "IIIO", &x, &y, &z, &desList))
 			return NULL;
+		
+		DFHack::designations40d writeDes;
 		
 		ReverseBuildDesignations40d(desList, writeDes);
 		

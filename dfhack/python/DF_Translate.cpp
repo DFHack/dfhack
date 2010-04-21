@@ -31,7 +31,9 @@ distribution.
 
 using namespace std;
 
+#include "DFTypes.h"
 #include "modules/Translation.h"
+#include "DF_Helpers.cpp"
 
 using namespace DFHack;
 

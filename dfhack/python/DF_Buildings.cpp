@@ -26,6 +26,12 @@ distribution.
 #define __DFBUILDINGS__
 
 #include "Python.h"
+#include <map>
+#include <string>
+
+using namespace std;
+
+#include "DFTypes.h"
 #include "modules/Buildings.h"
 #include "DF_Helpers.cpp"
 

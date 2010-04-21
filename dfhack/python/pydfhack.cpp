@@ -117,7 +117,7 @@ PyMODINIT_FUNC initpydfhack(void)
 	Py_INCREF(&DF_Map_type);
 	Py_INCREF(&DF_GUI_type);
 	
-	PyModule_AddObject(module, "API", (PyObject*)&DF_API_type);
+	PyModule_AddObject(module, "_API", (PyObject*)&DF_API_type);
 	PyModule_AddObject(module, "_MemInfo", (PyObject*)&DF_MemInfo_type);
 	PyModule_AddObject(module, "_PositionManager", (PyObject*)&DF_Position_type);
 	PyModule_AddObject(module, "_MaterialsManager", (PyObject*)&DF_Material_type);

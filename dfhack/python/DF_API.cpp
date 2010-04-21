@@ -467,13 +467,13 @@ static int DF_API_setMapType(DF_API* self, PyObject* value)
 	{
 		PySys_WriteStdout("failed type check");
 		PyErr_SetString(PyExc_TypeError, "value must be a type object");
-		return NULL;
+		return -1;
 	}
 	if(PyObject_IsSubclass(value, (PyObject*)&DF_Map_type) <= 0)
 	{
 		PySys_WriteStdout("failed subclass check");
 		PyErr_SetString(PyExc_TypeError, "value must be descended from pydfhack._MapManager");
-		return NULL;
+		return -1;
 	}
 	
 	self->map_type = value;
@@ -492,13 +492,13 @@ static int DF_API_setVegetationType(DF_API* self, PyObject* value)
 	{
 		PySys_WriteStdout("failed type check");
 		PyErr_SetString(PyExc_TypeError, "value must be a type object");
-		return NULL;
+		return -1;
 	}
 	if(PyObject_IsSubclass(value, (PyObject*)&DF_Vegetation_type) <= 0)
 	{
 		PySys_WriteStdout("failed subclass check");
 		PyErr_SetString(PyExc_TypeError, "value must be descended from pydfhack._VegetationManager");
-		return NULL;
+		return -1;
 	}
 	
 	self->vegetation_type = value;
@@ -517,13 +517,13 @@ static int DF_API_setGUIType(DF_API* self, PyObject* value)
 	{
 		PySys_WriteStdout("failed type check");
 		PyErr_SetString(PyExc_TypeError, "value must be a type object");
-		return NULL;
+		return -1;
 	}
 	if(PyObject_IsSubclass(value, (PyObject*)&DF_GUI_type) <= 0)
 	{
 		PySys_WriteStdout("failed subclass check");
 		PyErr_SetString(PyExc_TypeError, "value must be descended from pydfhack._GUIManager");
-		return NULL;
+		return -1;
 	}
 	
 	self->gui_type = value;
@@ -653,7 +653,7 @@ static PyTypeObject DF_API_type =
 {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
-    "pydfhack.API",             /*tp_name*/
+    "pydfhack._API",             /*tp_name*/
     sizeof(DF_API), /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)DF_API_dealloc,                         /*tp_dealloc*/
@@ -672,7 +672,7 @@ static PyTypeObject DF_API_type =
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,        /*tp_flags*/
-    "pydfhack API objects",           /* tp_doc */
+    "pydfhack _API objects",           /* tp_doc */
     0,		               /* tp_traverse */
     0,		               /* tp_clear */
     0,		               /* tp_richcompare */

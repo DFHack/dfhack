@@ -1408,6 +1408,7 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_disease_resistance">0x4F0</Offset>
         -->
         <Offset name="creature_current_job">0x390</Offset> <!-- from chmod -->
+        <Offset name="creature_appearance_vector">0x604</Offset> the first one seems to be the index in the raw list of skin colors
         <Offset name="creature_artifact_name">0x6D4</Offset>
         <Offset name="creature_labors">0x774</Offset>
         <Offset name="creature_soul_vector">0x0740</Offset>

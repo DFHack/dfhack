@@ -189,7 +189,7 @@ static PyObject* DF_Building_ReadCustomWorkshopTypes(DF_Building* self, PyObject
 			
 			for(bIter = bTypes.begin(); bIter != bTypes.end(); bIter++)
 			{
-				PyObject* temp = Py_BuildValue("is", (*bIter).first, (*bIter).second);
+				PyObject* temp = Py_BuildValue("is", (*bIter).first, (*bIter).second.c_str());
 				
 				PyDict_MergeFromSeq2(bDict, temp, 1);
 			}

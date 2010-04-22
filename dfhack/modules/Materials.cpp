@@ -230,6 +230,8 @@ bool Materials::ReadDescriptorColors (vector<t_descriptor_color> & color)
 	uint32_t size = p_colors.size();
 	
 	color.clear();
+	if(size == 0)
+		return false;
 	color.reserve(size);
 	for (uint32_t i = 0; i < size;i++)
 	{
@@ -241,6 +243,7 @@ bool Materials::ReadDescriptorColors (vector<t_descriptor_color> & color)
 		col.b = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_b") );
 		color.push_back(col);
 	}
+	return true;
 }
 
 bool Materials::ReadCreatureTypesEx (vector<t_creaturetype> & creatures)

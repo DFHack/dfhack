@@ -281,6 +281,7 @@ void hexdump (DFHack::API& DF, uint32_t address, uint32_t length, int filenum)
 // blockaddr = address of the block
 // blockX, blockY = local map X and Y coords in 16x16 of the block
 // printX, printX = where to print stuff on the screen
+/*
 void do_features(Process* p, uint32_t blockaddr, uint32_t blockX, uint32_t blockY, int printX, int printY, vector<DFHack::t_matgloss> &stonetypes)
 {
     memory_info* mem = p->getDescriptor();
@@ -337,14 +338,6 @@ void do_features(Process* p, uint32_t blockaddr, uint32_t blockX, uint32_t block
             gotoxy(printX,printY+6);
             cprintf("local feature vector: 0x%x\n", feat_vector);
             DfVector<uint32_t> p_features(p, feat_vector);
-            /*
-            for(int k = 0 ; k < p_features.size();k++)
-            {
-                printf("feature %d addr: 0x%x\n", k, p_features[k]);
-                string name = p->readClassName(p->readDWord( p_features[k] ));
-                cout << name << endl;
-            }
-            */
             gotoxy(printX,printY + 7);
             cprintf("feature %d addr: 0x%x\n", idx, p_features[idx]);
             if(idx >= p_features.size())
@@ -418,8 +411,91 @@ void do_features(Process* p, uint32_t blockaddr, uint32_t blockX, uint32_t block
         }
     }
 }
-
-
+*/
+void do_features(API& DF, mapblock40d * block, uint32_t blockX, uint32_t blockY, int printX, int printY, vector<DFHack::t_matgloss> &stonetypes)
+{
+    Maps * Maps = DF.getMaps();
+    Process * p = DF.getProcess();
+    if(!Maps)
+        return;
+    vector<DFHack::t_feature> global_features;
+    std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> > local_features;
+    if(!Maps->ReadGlobalFeatures(global_features))
+        return;
+    if(!Maps->ReadLocalFeatures(local_features))
+        return;
+    
+    planecoord pc;
+    pc.dim.x = blockX;
+    pc.dim.y = blockY;
+    int16_t idx =block->global_feature;
+    if(idx != -1)
+    {
+        t_feature &ftr =global_features[idx];
+        gotoxy(printX,printY);
+        cprintf( "global feature present: %d @ 0x%x\n", idx, ftr.origin);
+        if(ftr.discovered )
+        {
+            gotoxy(printX,printY+1);
+            cprintf("You've discovered it already!");
+        }
+        if(ftr.type == feature_Underworld)
+        {
+            char * matname = "unknown";
+            // is stone?
+            if(ftr.main_material == 0)
+            {
+                matname = stonetypes[ftr.sub_material].id;
+            }
+            gotoxy(printX,printY+2);
+            cprintf("Underworld, material %d/%d : %s", ftr.main_material, ftr.sub_material, matname);
+        }
+        else
+        {
+            gotoxy(printX,printY+2);
+            string name = p->readClassName(p->readDWord( ftr.origin ));
+            cprintf("%s", name.c_str());
+        }
+    }
+    idx =block->local_feature;
+    if(idx != -1)
+    {
+        vector <t_feature *> &ftrv = local_features[pc];
+        if(idx < ftrv.size())
+        {
+            t_feature & ftr = *ftrv[idx];
+            gotoxy(printX,printY + 4);
+            cprintf( "local feature present: %d @ 0x%x\n", idx, ftr.origin);
+            if(ftr.discovered )
+            {
+                gotoxy(printX,printY+ 5);
+                cprintf("You've discovered it already!");
+            }
+            if(ftr.type == feature_Adamantine_Tube)
+            {
+                char * matname = "unknown";
+                // is stone?
+                if(ftr.main_material == 0)
+                {
+                    matname = stonetypes[ftr.sub_material].id;
+                }
+                gotoxy(printX,printY+6);
+                cprintf("Underworld, material %d/%d : %s", ftr.main_material, ftr.sub_material, matname);
+            }
+            else
+            {
+                gotoxy(printX,printY+6);
+                string name = p->readClassName(p->readDWord( ftr.origin ));
+                cprintf("%s", name.c_str());
+            }
+        }
+        else
+        {
+            gotoxy(printX,printY + 4);
+            cprintf( "local feature vector overflow: %d", idx);
+        }
+    }
+}
 
 main(int argc, char *argv[])
 {
@@ -677,7 +753,7 @@ main(int argc, char *argv[])
                 // extra processing of the block in the middle
                 if(i == 0 && j == 0)
                 {
-                    do_features(p, Block->origin, cursorX, cursorY, 50,10, stonetypes);
+                    do_features(DF, Block, cursorX, cursorY, 50,10, stonetypes);
                     // read veins
                     Maps->ReadVeins(cursorX+i,cursorY+j,cursorZ,&veinVector,&IceVeinVector,&splatter);
                     

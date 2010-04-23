@@ -38,7 +38,7 @@ namespace DFHack
         e_feature type;
         int16_t main_material;
         int32_t sub_material;
-        bool discovered; // maybe, placeholder. should work for rivers in adventure mode
+        bool discovered; // placeholder.
         uint32_t origin;
     };
     

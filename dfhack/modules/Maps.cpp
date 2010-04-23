@@ -55,134 +55,11 @@ struct Maps::Private
     bool Inited;
     bool Started;
     
-    vector <t_feature> global_features;
     // map between feature address and the read object
     map <uint32_t, t_feature> local_feature_store;
-    // map between mangled coords and pointer to feature
-    map <planecoord, vector<t_feature *> > local_features;
     
     vector<uint16_t> v_geology[eBiomeCount];
 };
-
-bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > & local_features )
-{
-    Process * p = d->owner;
-    memory_info * mem = p->getDescriptor();
-    // deref pointer to the humongo-structure
-    uint32_t base = p->readDWord(mem->getAddress("local_feature_start_ptr"));
-    uint32_t sizeof_vec = mem->getHexValue("sizeof_vector");
-    const uint32_t sizeof_elem = 16;
-    const uint32_t offset_elem = 4;
-    
-    local_features.clear();
-    
-    for(uint blockX = 0; blockX < d->x_block_count; blockX ++)
-        for(uint blockY = 0; blockY < d->x_block_count; blockY ++)
-    {
-        //uint64_t block48_x = blockX / 3 + d->regionX;
-        //uint16_t region_x_plus8 = ( block48_x + 8 ) / 16;
-        
-        // region X coord offset by 8 big blocks (48x48 tiles)
-        uint16_t region_x_plus8 = ( blockX / 3 + d->regionX + 8 ) / 16;
-        
-        // plain region Y coord
-        uint64_t region_y_local = ( blockY / 3 + d->regionY     ) / 16;
-        
-        // this is just a few pointers to arrays of 16B (4 DWORD) structs
-        uint32_t array_elem = p->readDWord(base + (region_x_plus8 / 16) * 4);
-        
-        // 16B structs, second DWORD of the struct is a pointer
-        uint32_t wtf = p->readDWord(array_elem + ( sizeof_elem * (region_y_local/16)) + offset_elem); 
-        if(wtf)
-        {
-            // wtf + sizeof(vector<ptr>) * crap;
-            uint32_t feat_vector = wtf + sizeof_vec * (16 * (region_x_plus8 % 16) + (region_y_local % 16));
-            DfVector<uint32_t> p_features(p, feat_vector);
-            uint size = p_features.size();
-            planecoord pc;
-            pc.dim.x = blockX;
-            pc.dim.y = blockY;
-            std::vector<t_feature *> tempvec;
-            for(uint i = 0; i < size; i++)
-            {
-                uint32_t cur_ptr = p_features[i];
-                
-                map <uint32_t, t_feature>::iterator it;
-                it = d->local_feature_store.find(cur_ptr);
-                // do we already have the feature?
-                if(it != d->local_feature_store.end())
-                {
-                    // push pointer to existing feature
-                    tempvec.push_back(&((*it).second));
-                }
-                // no?
-                else
-                {
-                    // create, add to store
-                    t_feature tftemp;
-                    tftemp.discovered = p->readDWord(cur_ptr + 4);
-                    tftemp.origin = cur_ptr;
-                    string name = p->readClassName(p->readDWord( cur_ptr ));
-                    if(name == "feature_init_deep_special_tubest")
-                    {
-                        tftemp.main_material = p->readWord( cur_ptr + 0x30 );
-                        tftemp.sub_material = p->readDWord( cur_ptr + 0x34 );
-                        tftemp.type = feature_Adamantine_Tube;
-                    }
-                    else
-                    {
-                        tftemp.main_material = -1;
-                        tftemp.sub_material = -1;
-                        tftemp.type = feature_Other;
-                    }
-                    d->local_feature_store[cur_ptr] = tftemp;
-                    // push pointer
-                    tempvec.push_back(&(d->local_feature_store[cur_ptr]));
-                }
-            }
-            local_features[pc] = tempvec;
-        }
-    }
-    return true;
-}
-
-bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
-{
-    Process * p = d->owner;
-    memory_info * mem = p->getDescriptor();
-    
-    uint32_t global_feature_vector = mem->getAddress("global_feature_vector");
-    uint32_t global_feature_funcptr = mem->getOffset("global_feature_funcptr_");
-    DfVector<uint32_t> p_features (p,global_feature_vector);
-    
-    features.clear();
-    uint size = p_features.size();
-    features.reserve(size);
-    for(uint i = 0; i < size; i++)
-    {
-        t_feature temp;
-        uint32_t feat_ptr = p->readDWord(p_features[i] + global_feature_funcptr );
-        temp.origin = feat_ptr;
-        temp.discovered = p->readDWord( feat_ptr + 4 ); // maybe, placeholder
-        
-        // FIXME: use the memory_info cache mechanisms
-        string name = p->readClassName(p->readDWord( feat_ptr));
-        if(name == "feature_init_underworld_from_layerst")
-        {
-            temp.main_material = p->readWord( feat_ptr + 0x34 );
-            temp.sub_material = p->readDWord( feat_ptr + 0x38 );
-            temp.type = feature_Underworld;
-        }
-        else
-        {
-            temp.main_material = -1;
-            temp.sub_material = -1;
-            temp.type = feature_Other;
-        }
-        features.push_back(temp);
-    }
-    return true;
-}
 
 Maps::Maps(APIPrivate* _d)
 {
@@ -320,8 +197,10 @@ void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z)
     z = d->z_block_count;
 }
 
+// invalidates local and global features!
 bool Maps::Finish()
 {
+    d->local_feature_store.clear();
     if (d->block != NULL)
     {
         delete [] d->block;
@@ -771,6 +650,131 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     for (int i = 0; i < eBiomeCount;i++)
     {
         assign.push_back (d->v_geology[i]);
+    }
+    return true;
+}
+
+bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > & local_features )
+{
+    Process * p = d->owner;
+    memory_info * mem = p->getDescriptor();
+    // deref pointer to the humongo-structure
+    uint32_t base = p->readDWord(mem->getAddress("local_feature_start_ptr"));
+    uint32_t sizeof_vec = mem->getHexValue("sizeof_vector");
+    const uint32_t sizeof_elem = 16;
+    const uint32_t offset_elem = 4;
+    const uint32_t main_mat_offset = 0x30;
+    const uint32_t sub_mat_offset = 0x34;
+    
+    local_features.clear();
+    
+    for(uint blockX = 0; blockX < d->x_block_count; blockX ++)
+        for(uint blockY = 0; blockY < d->x_block_count; blockY ++)
+    {
+        //uint64_t block48_x = blockX / 3 + d->regionX;
+        //uint16_t region_x_plus8 = ( block48_x + 8 ) / 16;
+        
+        // region X coord offset by 8 big blocks (48x48 tiles)
+        uint16_t region_x_plus8 = ( blockX / 3 + d->regionX + 8 ) / 16;
+        
+        // plain region Y coord
+        uint64_t region_y_local = ( blockY / 3 + d->regionY     ) / 16;
+        
+        // this is just a few pointers to arrays of 16B (4 DWORD) structs
+        uint32_t array_elem = p->readDWord(base + (region_x_plus8 / 16) * 4);
+        
+        // 16B structs, second DWORD of the struct is a pointer
+        uint32_t wtf = p->readDWord(array_elem + ( sizeof_elem * (region_y_local/16)) + offset_elem); 
+        if(wtf)
+        {
+            // wtf + sizeof(vector<ptr>) * crap;
+            uint32_t feat_vector = wtf + sizeof_vec * (16 * (region_x_plus8 % 16) + (region_y_local % 16));
+            DfVector<uint32_t> p_features(p, feat_vector);
+            uint size = p_features.size();
+            planecoord pc;
+            pc.dim.x = blockX;
+            pc.dim.y = blockY;
+            std::vector<t_feature *> tempvec;
+            for(uint i = 0; i < size; i++)
+            {
+                uint32_t cur_ptr = p_features[i];
+                
+                map <uint32_t, t_feature>::iterator it;
+                it = d->local_feature_store.find(cur_ptr);
+                // do we already have the feature?
+                if(it != d->local_feature_store.end())
+                {
+                    // push pointer to existing feature
+                    tempvec.push_back(&((*it).second));
+                }
+                // no?
+                else
+                {
+                    // create, add to store
+                    t_feature tftemp;
+                    tftemp.discovered = false; //= p->readDWord(cur_ptr + 4);
+                    tftemp.origin = cur_ptr;
+                    string name = p->readClassName(p->readDWord( cur_ptr ));
+                    if(name == "feature_init_deep_special_tubest")
+                    {
+                        tftemp.main_material = p->readWord( cur_ptr + main_mat_offset );
+                        tftemp.sub_material = p->readDWord( cur_ptr + sub_mat_offset );
+                        tftemp.type = feature_Adamantine_Tube;
+                    }
+                    else
+                    {
+                        tftemp.main_material = -1;
+                        tftemp.sub_material = -1;
+                        tftemp.type = feature_Other;
+                    }
+                    d->local_feature_store[cur_ptr] = tftemp;
+                    // push pointer
+                    tempvec.push_back(&(d->local_feature_store[cur_ptr]));
+                }
+            }
+            local_features[pc] = tempvec;
+        }
+    }
+    return true;
+}
+
+bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
+{
+    Process * p = d->owner;
+    memory_info * mem = p->getDescriptor();
+    
+    uint32_t global_feature_vector = mem->getAddress("global_feature_vector");
+    uint32_t global_feature_funcptr = mem->getOffset("global_feature_funcptr_");
+    const uint32_t main_mat_offset = 0x34;
+    const uint32_t sub_mat_offset = 0x38;
+    DfVector<uint32_t> p_features (p,global_feature_vector);
+    
+    features.clear();
+    uint size = p_features.size();
+    features.reserve(size);
+    for(uint i = 0; i < size; i++)
+    {
+        t_feature temp;
+        uint32_t feat_ptr = p->readDWord(p_features[i] + global_feature_funcptr );
+        temp.origin = feat_ptr;
+        //temp.discovered = p->readDWord( feat_ptr + 4 ); // maybe, placeholder
+        temp.discovered = false;
+        
+        // FIXME: use the memory_info cache mechanisms
+        string name = p->readClassName(p->readDWord( feat_ptr));
+        if(name == "feature_init_underworld_from_layerst")
+        {
+            temp.main_material = p->readWord( feat_ptr + main_mat_offset );
+            temp.sub_material = p->readDWord( feat_ptr + sub_mat_offset );
+            temp.type = feature_Underworld;
+        }
+        else
+        {
+            temp.main_material = -1;
+            temp.sub_material = -1;
+            temp.type = feature_Other;
+        }
+        features.push_back(temp);
     }
     return true;
 }

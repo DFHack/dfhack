@@ -1061,14 +1061,14 @@ size=212
         <Offset name="map_data_temperature2_offset">0x179c</Offset>
         <Offset name="map_data_biome_stuffs">0x1D9C</Offset>
         <Offset name="map_data_pathfinding_offset">0x0D9c</Offset>
-        <Offset name="map_data_feature1">0x2C</Offset> adamantine?
-        <Offset name="map_data_feature2">0x30</Offset> hell?
+        <Offset name="map_data_feature_local">0x2C</Offset> local features
+        <Offset name="map_data_feature_global">0x30</Offset> global features
 
         WORLD + 0x54374
-        <Address name="feature2_vector">0x16AF4FC</Address>
-        <Offset name= "feature2_funcptr_">0x100</Offset>
+        <Address name="global_feature_vector">0x16AF4FC</Address>
+        <Offset name= "global_feature_funcptr_">0x100</Offset>
         WORLD + 0x54440
-        <Address name="feature1_start_ptr">0x16AF5C8</Address>
+        <Address name="local_feature_start_ptr">0x16AF5C8</Address>
 
         <!--
 map_data_map_x_offset         0x0058
@@ -1377,8 +1377,9 @@ map_data_1b60_offset          0x1B9c
         
         * features *
         WORLD + 0x54374
-        <Address name="feature2_vector">0x16B0544</Address>
-        <Address name="feature1_start_ptr">0x16B0610</Address>
+        <Address name="global_feature_vector">0x16B0544</Address>
+        WORLD + 0x54440
+        <Address name="local_feature_start_ptr">0x16B0610</Address>
         
         Creatures
         =========

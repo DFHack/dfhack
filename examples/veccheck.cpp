@@ -113,18 +113,18 @@ int main (int numargs, const char ** args)
     DFHack::Maps *Maps = DF.getMaps();
     DFHack::Process * p = DF.getProcess();
     uint32_t designatus = mem->getOffset("map_data_designation");
-    uint32_t block_feature1 = mem->getOffset("map_data_feature1");
-    uint32_t block_feature2 = mem->getOffset("map_data_feature2");
+    uint32_t block_feature1 = mem->getOffset("map_data_feature_local");
+    uint32_t block_feature2 = mem->getOffset("map_data_feature_global");
     uint32_t region_x_offset = mem->getAddress("region_x");
     uint32_t region_y_offset = mem->getAddress("region_y");
     uint32_t region_z_offset = mem->getAddress("region_z");
-    uint32_t feature1_start_ptr = mem->getAddress("feature1_start_ptr");
-    uint32_t regionX, regionY, regionZ;
+    uint32_t feature1_start_ptr = mem->getAddress("local_feature_start_ptr");
+    int32_t regionX, regionY, regionZ;
     
     // read position of the region inside DF world
-    p->readDWord (region_x_offset, regionX);
-    p->readDWord (region_y_offset, regionY);
-    p->readDWord (region_z_offset, regionZ);
+    p->readDWord (region_x_offset, (uint32_t &)regionX);
+    p->readDWord (region_y_offset, (uint32_t &)regionY);
+    p->readDWord (region_z_offset, (uint32_t &)regionZ);
     
     Maps->Start();
     
@@ -152,46 +152,78 @@ int main (int numargs, const char ** args)
             if(tileTypeTable[tiletype].name)
                 cout << " = " << tileTypeTable[tiletype].name;
             cout << endl;
-            // features present
-            if(des.feature_type_1)
+            // local feature present
+            if(des.feature_local)
             {
-                cout << "feature type 1 present: " << p->readDWord(block.origin + block_feature1) << endl;
-                int32_t idx = p->readDWord(block.origin + block_feature1);
+                cout << "local feature present: " << p->readWord(block.origin + block_feature1) << endl;
+                int16_t idx = p->readWord(block.origin + block_feature1);
                 if(idx != -1)
                 {
-                    uint64_t bigblock_x = cursorX / 48 + regionX;
-                    // blah, dumb disassembly. too tired to think
-                    uint16_t v12 = ((bigblock_x % 16) + bigblock_x) / 16;
+                    uint64_t block48_x = cursorX / 48 + regionX;
+                    cout << "cursorX: " << cursorX << ", regionX:" << regionX << endl;
+                    cout << "bigblock_x: " << block48_x << endl;
+                    
+                    uint16_t v12 = ((block48_x & 0xF) + block48_x) >> 4;
+                    uint16_t v12b = block48_x / 16;
+                    cout << "v12: " << v12 << " : " << v12b <<  endl;
+                    
                     uint64_t region_y_local = (cursorY / 48 + regionY) / 16;
+                    cout << "region_y_local: " << region_y_local << endl;
+                    
                     // deref pointer to the humongo-structure
                     uint32_t base = p->readDWord(feature1_start_ptr);
+                    cout << "base! : " << base << endl;
                     // this is just a few pointers to arrays of 16B (4 DWORD) structs
                     uint32_t array_elem = p->readDWord(base + (v12 / 16) * 4);
+                    cout << "array_elem : " << array_elem << endl;
                     // second element of the struct is a pointer
                     uint32_t wtf = p->readDWord(array_elem + (16*(region_y_local/16)) + 4); // rounding!
+                                       
+                    cout << "wtf : " << wtf << " @" << array_elem + (16*(region_y_local/16)) <<  endl;
                     if(wtf)
                     {
-                        uint32_t feat_vector = wtf + 24 * (region_y_local % 16);
+                        //v14 = v10 + 24 * ((signed __int16)_tX + 16 * v9 % 16);
+                        uint32_t feat_vector = wtf + 24 * ((region_y_local % 16) + 16 * (v12 % 16));
+                        cout << "local feature vector: " << feat_vector << endl;
                         DfVector<uint32_t> p_features(p, feat_vector);
-                        printf("feature addr: 0x%x\n", p_features[idx]);
+                        /*
+                        for(int k = 0 ; k < p_features.size();k++)
+                        {
+                            printf("feature %d addr: 0x%x\n", k, p_features[k]);
+                            string name = p->readClassName(p->readDWord( p_features[k] ));
+                            cout << name << endl;
+                        }
+                        */
+                        printf("feature %d addr: 0x%x\n", idx, p_features[idx]);
                         string name = p->readClassName(p->readDWord( p_features[idx] ));
+                        bool discovered = p->readDWord( p_features[idx] + 4 );
                         cout << name << endl;
+                        if(discovered)
+                        {
+                            cout << "You've discovered it already!" << endl;
+                        }
                     }
                 }
             }
-            if(des.feature_type_2)
+            // global feature present
+            if(des.feature_global)
             {
-                int32_t idx = p->readDWord(block.origin + block_feature2);
-                cout << "feature type 2 present: " << idx << endl;
+                int16_t idx = p->readWord(block.origin + block_feature2);
+                cout << "global feature present: " << idx << endl;
                 if(idx != -1)
                 {
-                    DfVector<uint32_t> p_features (p,mem->getAddress("feature2_vector"));
+                    DfVector<uint32_t> p_features (p,mem->getAddress("global_feature_vector"));
                     if(idx < p_features.size())
                     {
-                        uint32_t feat_ptr = p->readDWord(p_features[idx] + mem->getOffset("feature2_funcptr_"));
+                        uint32_t feat_ptr = p->readDWord(p_features[idx] + mem->getOffset("global_feature_funcptr_"));
                         printf("feature descriptor?: 0x%x\n", feat_ptr);
                         string name = p->readClassName(p->readDWord( feat_ptr));
+                        bool discovered = p->readDWord( p_features[idx] + 4 );
                         cout << name << endl;
+                        if(discovered)
+                        {
+                            cout << "You've discovered it already!" << endl;
+                        }
                     }
                 }
             }

@@ -78,14 +78,22 @@ namespace DFHack
         class DFHACK_EXPORT MissingMemoryDefinition : public std::exception
         {
         public:
-            MissingMemoryDefinition(const char* _type, const char* _key) : type(_type), key(_key) {}
+            MissingMemoryDefinition(const char* _type, const char* _key) : type(_type), key(_key)
+            {
+                std::stringstream s;
+                s << "memory definition missing: type " << type << " key " << key;
+                full = s.str();
+            }
             // Used by functios using integer keys, such as getTrait
             MissingMemoryDefinition(const char* _type, uint32_t _key) : type(_type)
             {
-                // FIXME fancy hex printer goes here
+                std::stringstream s1;
+                s1 << _key;
+                key = s1.str();
+                
                 std::stringstream s;
-                s << _key;
-                key = s.str();
+                s << "memory definition missing: type " << type << " key " << key;
+                full = s.str();
             }
             virtual ~MissingMemoryDefinition() throw(){};
 
@@ -102,14 +110,13 @@ namespace DFHack
             // trait
             // traitname
             // labor
+            std::string full;
             const std::string type;
             std::string key;
 
             virtual const char* what() const throw()
             {
-                std::stringstream s;
-                s << "memory definition missing: type " << type << " key " << key;
-                return s.str().c_str();
+                return full.c_str();
             }
         };
 
@@ -117,9 +124,16 @@ namespace DFHack
         class DFHACK_EXPORT MemoryXmlParse : public std::exception
         {
         public:
-            MemoryXmlParse(const char* _desc, int _id, int _row, int _col) :
-                desc(_desc), id(_id), row(_row), col(_col) {}
+            MemoryXmlParse(const char* _desc, int _id, int _row, int _col)
+            :desc(_desc), id(_id), row(_row), col(_col)
+            {
+                std::stringstream s;
+                s << "error " << id << ": " << desc << ", at row " << row << " col " << col;
+                full = s.str();
+            }
                 
+                
+            std::string full;
             const std::string desc;
             const int id;
             const int row;
@@ -129,26 +143,27 @@ namespace DFHack
 
             virtual const char* what() const throw()
             {
-                std::stringstream s;
-                s << "error " << id << ": " << desc << ", at row " << row << " col " << col;
-                return s.str().c_str();
+                return full.c_str();
             }
         };
 
         class DFHACK_EXPORT MemoryXmlBadAttribute : public std::exception
         {
         public:
-            MemoryXmlBadAttribute(const char* _attr) : attr(_attr) {}
-
+            MemoryXmlBadAttribute(const char* _attr) : attr(_attr)
+            {
+                std::stringstream s;
+                s << "attribute is either missing or invalid: " << attr;
+                full = s.str();
+            }
+            std::string full;
             std::string attr;
             
             virtual ~MemoryXmlBadAttribute() throw(){};
 
             virtual const char* what() const throw()
             {
-                std::stringstream s;
-                s << "attribute is either missing or invalid: " << attr;
-                return s.str().c_str();
+                return full.c_str();
             }
         };
 
@@ -168,46 +183,58 @@ namespace DFHack
         class DFHACK_EXPORT MemoryXmlNoDFExtractor : public std::exception
         {
         public:
-            MemoryXmlNoDFExtractor(const char* _name) : name(_name) {}
-            virtual ~MemoryXmlNoDFExtractor() throw(){};
-
-            std::string name;
-
-            virtual const char* what() const throw()
+            MemoryXmlNoDFExtractor(const char* _name) : name(_name)
             {
                 std::stringstream s;
                 s << "DFExtractor != " << name;
-                return s.str().c_str();
+                full = s.str();
+            }
+            virtual ~MemoryXmlNoDFExtractor() throw(){};
+
+            std::string name;
+            std::string full;
+
+            virtual const char* what() const throw()
+            {
+                return full.c_str();
             }
         };
 
         class DFHACK_EXPORT MemoryXmlUnderspecifiedEntry : public std::exception
         {
         public:
-            MemoryXmlUnderspecifiedEntry(const char * _where) : where(_where) {}
-            virtual ~MemoryXmlUnderspecifiedEntry() throw(){};
-            std::string where;
-            virtual const char* what() const throw()
+            MemoryXmlUnderspecifiedEntry(const char * _where) : where(_where)
             {
                 std::stringstream s;
                 s << "underspecified MemInfo entry, each entry needs to set both the name attribute and have a value. parent: " << where;
-                return s.str().c_str();
+                full = s.str();
+            }
+            virtual ~MemoryXmlUnderspecifiedEntry() throw(){};
+            std::string where;
+            std::string full;
+            virtual const char* what() const throw()
+            {
+                return full.c_str();
             }
         };
 
         class DFHACK_EXPORT MemoryXmlUnknownType : public std::exception
         {
         public:
-            MemoryXmlUnknownType(const char* _type) : type(_type) {}
-            virtual ~MemoryXmlUnknownType() throw(){};
-
-            std::string type;
-
-            virtual const char* what() const throw()
+            MemoryXmlUnknownType(const char* _type) : type(_type)
             {
                 std::stringstream s;
                 s << "unknown MemInfo type: " << type;
-                return s.str().c_str();
+                full = s.str();
+            }
+            virtual ~MemoryXmlUnknownType() throw(){};
+
+            std::string type;
+            std::string full;
+
+            virtual const char* what() const throw()
+            {
+                return full.c_str();
             }
         };
         
@@ -224,16 +251,20 @@ namespace DFHack
         class DFHACK_EXPORT SHMLockingError : public std::exception
         {
         public:
-            SHMLockingError(const char* _type) : type(_type) {}
-            virtual ~SHMLockingError() throw(){};
-            
-            std::string type;
-            
-            virtual const char* what() const throw()
+            SHMLockingError(const char* _type) : type(_type)
             {
                 std::stringstream s;
                 s << "SHM locking error: " << type;
-                return s.str().c_str();
+                full = s.str();
+            }
+            virtual ~SHMLockingError() throw(){};
+            
+            std::string type;
+            std::string full;
+            
+            virtual const char* what() const throw()
+            {
+                return full.c_str();
             }
         };
         class DFHACK_EXPORT MemoryAccessDenied : public std::exception
@@ -241,9 +272,6 @@ namespace DFHack
         public:
             MemoryAccessDenied() {}
             virtual ~MemoryAccessDenied() throw(){};
-            
-            std::string type;
-            
             virtual const char* what() const throw()
             {
                 return "SHM ACCESS DENIED";
@@ -254,9 +282,6 @@ namespace DFHack
         public:
             SHMVersionMismatch() {}
             virtual ~SHMVersionMismatch() throw(){};
-            
-            std::string type;
-            
             virtual const char* what() const throw()
             {
                 return "SHM VERSION MISMATCH";
@@ -267,9 +292,6 @@ namespace DFHack
         public:
             SHMAttachFailure() {}
             virtual ~SHMAttachFailure() throw(){};
-            
-            std::string type;
-            
             virtual const char* what() const throw()
             {
                 return "SHM ATTACH FAILURE";

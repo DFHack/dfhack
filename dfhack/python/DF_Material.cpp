@@ -31,6 +31,8 @@ distribution.
 using namespace std;
 
 #include "modules/Materials.h"
+#include "DF_Imports.cpp"
+#include "DF_Helpers.cpp"
 
 using namespace DFHack;
 
@@ -44,23 +46,16 @@ struct DF_Material
 
 static PyObject* BuildMatgloss(t_matgloss& matgloss)
 {
-	PyObject* matDict;
-	PyObject* list;
+	PyObject* matObj;
+	PyObject* args;
 	
-	matDict = PyDict_New();
-	list = PyList_New(5);
+	args = Py_BuildValue("siiis", matgloss.id, matgloss.fore, matgloss.back, matgloss.bright, matgloss.name);
 	
-	PyList_SET_ITEM(list, 0, Py_BuildValue("ss", "id", matgloss.id));
-	PyList_SET_ITEM(list, 1, Py_BuildValue("si", "fore", matgloss.fore));
-	PyList_SET_ITEM(list, 2, Py_BuildValue("si", "back", matgloss.back));
-	PyList_SET_ITEM(list, 3, Py_BuildValue("si", "bright", matgloss.bright));
-	PyList_SET_ITEM(list, 4, Py_BuildValue("ss", "name", matgloss.name));
+	matObj = PyObject_CallObject(Matgloss_type, args);
 	
-	PyDict_MergeFromSeq2(matDict, list, 0);
+	Py_DECREF(args);
 	
-	Py_DECREF(list);
-	
-	return matDict;
+	return matObj;
 }
 
 static PyObject* BuildMatglossPlant(t_matglossPlant& matgloss)
@@ -122,23 +117,16 @@ static PyObject* BuildMatglossList(std::vector<t_matgloss> & matVec)
 
 static PyObject* BuildDescriptorColor(t_descriptor_color& color)
 {
-	PyObject* matDict;
-	PyObject* list;
+	PyObject* descObj;
+	PyObject* args;
 	
-	matDict = PyDict_New();
-	list = PyList_New(5);
+	args = Py_BuildValue("sfffs", color.id, color.r, color.v, color.b, color.name);
 	
-	PyList_SET_ITEM(list, 0, Py_BuildValue("ss", "id", color.id));
-	PyList_SET_ITEM(list, 1, Py_BuildValue("sf", "r", color.r));
-	PyList_SET_ITEM(list, 2, Py_BuildValue("sf", "v", color.v));
-	PyList_SET_ITEM(list, 3, Py_BuildValue("sf", "b", color.b));
-	PyList_SET_ITEM(list, 4, Py_BuildValue("ss", "name", color.name));
+	descObj = PyObject_CallObject(DescriptorColor_type, args);
 	
-	PyDict_MergeFromSeq2(matDict, list, 0);
+	Py_DECREF(args);
 	
-	Py_DECREF(list);
-	
-	return matDict;
+	return descObj;
 }
 
 static PyObject* BuildDescriptorColorList(std::vector<t_descriptor_color>& colors)
@@ -162,22 +150,16 @@ static PyObject* BuildDescriptorColorList(std::vector<t_descriptor_color>& color
 
 static PyObject* BuildCreatureCaste(t_creaturecaste& caste)
 {
-	PyObject* matDict;
-	PyObject* list;
+	PyObject* casteObj;
+	PyObject* args;
 	
-	matDict = PyDict_New();
-	list = PyList_New(4);
+	args = Py_BuildValue("ssss", caste.rawname, caste.singular, caste.plural, caste.adjective);
 	
-	PyList_SET_ITEM(list, 0, Py_BuildValue("ss", "rawname", caste.rawname));
-	PyList_SET_ITEM(list, 1, Py_BuildValue("ss", "singular", caste.singular));
-	PyList_SET_ITEM(list, 2, Py_BuildValue("ss", "plural", caste.plural));
-	PyList_SET_ITEM(list, 3, Py_BuildValue("ss", "adjective", caste.adjective));
+	casteObj = PyObject_CallObject(CreatureCaste_type, args);
 	
-	PyDict_MergeFromSeq2(matDict, list, 0);
+	Py_DECREF(args);
 	
-	Py_DECREF(list);
-	
-	return matDict;
+	return casteObj;
 }
 
 static PyObject* BuildCreatureCasteList(std::vector<t_creaturecaste>& castes)
@@ -201,23 +183,17 @@ static PyObject* BuildCreatureCasteList(std::vector<t_creaturecaste>& castes)
 
 static PyObject* BuildCreatureTypeEx(t_creaturetype& creature)
 {
-	PyObject* c_type;
-	PyObject* list;
+	PyObject* cObj;
+	PyObject* args;
 	
-	c_type = PyDict_New();
-	list = PyList_New(6);
+	args = Py_BuildValue("sOiO", creature.rawname, BuildCreatureCasteList(creature.castes), creature.tile_character, \
+									BuildTileColor(creature.tilecolor.fore, creature.tilecolor.back, creature.tilecolor.bright));
 	
-	PyList_SET_ITEM(list, 0, Py_BuildValue("ss", "rawname", creature.rawname));
-	PyList_SET_ITEM(list, 1, Py_BuildValue("sO", "castes", BuildCreatureCasteList(creature.castes)));
-	PyList_SET_ITEM(list, 2, Py_BuildValue("si", "tile_character", creature.tile_character));
-	PyList_SET_ITEM(list, 3, Py_BuildValue("si", "fore", creature.tilecolor.fore));
-	PyList_SET_ITEM(list, 4, Py_BuildValue("si", "back", creature.tilecolor.back));
-	PyList_SET_ITEM(list, 5, Py_BuildValue("si", "bright", creature.tilecolor.bright));
+	cObj = PyObject_CallObject(CreatureTypeEx_type, args);
 	
-	PyDict_MergeFromSeq2(c_type, list, 0);
-	Py_DECREF(list);
+	Py_DECREF(args);
 	
-	return c_type;
+	return cObj;
 }
 
 static PyObject* BuildCreatureTypeExList(std::vector<t_creaturetype>& creatures)

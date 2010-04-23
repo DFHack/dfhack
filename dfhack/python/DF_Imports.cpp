@@ -43,10 +43,23 @@ static PyObject* MapBlock40d_type = NULL;
 static PyObject* Vein_type = NULL;
 static PyObject* FrozenLiquidVein_type = NULL;
 static PyObject* SpatterVein_type = NULL;
+static PyObject* Position2D_type = NULL;
+static PyObject* Position3D_type = NULL;
+static PyObject* Rectangle_type = NULL;
+static PyObject* Settlement_type = NULL;
+static PyObject* Attribute_type = NULL;
+static PyObject* Skill_type = NULL;
+static PyObject* Soul_type = NULL;
+static PyObject* Tree_type = NULL;
+static PyObject* CreatureCaste_type = NULL;
+static PyObject* Matgloss_type = NULL;
+static PyObject* DescriptorColor_type = NULL;
+static PyObject* CreatureTypeEx_type = NULL;
+static PyObject* TileColor_type = NULL;
 
 static void DoImports()
 {
-	if(TypesModule == NULL)
+	if(FlagsModule == NULL)
 	{
 		FlagsModule = PyImport_ImportModule("pydfhackflags");
 				
@@ -56,7 +69,9 @@ static void DoImports()
 		OccupancyFlags_type = PyObject_GetAttrString(FlagsModule, "OccupancyFlags");
 		ItemFlags_type = PyObject_GetAttrString(FlagsModule, "ItemFlags");
 		BlockFlags_type = PyObject_GetAttrString(FlagsModule, "BlockFlags");
-		
+	}
+	if(TypesModule == NULL)
+	{
 		TypesModule = PyImport_ImportModule("pydftypes");
 
 		Note_type = PyObject_GetAttrString(TypesModule, "Note");
@@ -66,6 +81,19 @@ static void DoImports()
 		Vein_type = PyObject_GetAttrString(TypesModule, "Vein");
 		FrozenLiquidVein_type = PyObject_GetAttrString(TypesModule, "FrozenLiquidVein");
 		SpatterVein_type = PyObject_GetAttrString(TypesModule, "SpatterVein");
+		Position2D_type = PyObject_GetAttrString(TypesModule, "Position2D");
+		Position3D_type = PyObject_GetAttrString(TypesModule, "Position3D");
+		Rectangle_type = PyObject_GetAttrString(TypesModule, "Rectangle");
+		Settlement_type = PyObject_GetAttrString(TypesModule, "Settlement");
+		Attribute_type = PyObject_GetAttrString(TypesModule, "Attribute");
+		Skill_type = PyObject_GetAttrString(TypesModule, "Skill");
+		Soul_type = PyObject_GetAttrString(TypesModule, "Soul");
+		Tree_type = PyObject_GetAttrString(TypesModule, "Tree");
+		CreatureCaste_type = PyObject_GetAttrString(TypesModule, "CreatureCaste");
+		Matgloss_type = PyObject_GetAttrString(TypesModule, "Matgloss");
+		DescriptorColor_type = PyObject_GetAttrString(TypesModule, "DescriptorColor");
+		CreatureTypeEx_type = PyObject_GetAttrString(TypesModule, "CreatureTypeEx");
+		TileColor_type = PyObject_GetAttrString(TypesModule, "TileColor");
 	}
 }
 

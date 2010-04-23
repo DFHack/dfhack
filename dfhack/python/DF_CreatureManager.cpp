@@ -201,7 +201,7 @@ static PyObject* DF_CreatureManager_WriteLabors(DF_CreatureManager* self, PyObje
 			
 			sprintf(errBuff, "list must contain at least %u entries", NUM_CREATURE_LABORS);
 			
-			PyErr_SetString(PyExc_StandardError, errBuff)
+			PyErr_SetString(PyExc_StandardError, errBuff);
 			return NULL;
 		}
 		

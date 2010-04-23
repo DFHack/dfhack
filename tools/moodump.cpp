@@ -2,6 +2,7 @@
 #include <climits>
 #include <integers.h>
 #include <vector>
+#include <stdio.h>
 using namespace std;
 
 #include <DFGlobal.h>
@@ -93,7 +94,9 @@ int main (int numargs, char ** args)
 	unsigned int current_job;
 	unsigned int mat_start;
 	unsigned int mat_end;
-	unsigned int j;
+	unsigned int j,k;
+	unsigned int matptr;
+	unsigned int tmp;
 
         Creatures->ReadCreature(i,temp);
 	if(temp.mood)
@@ -102,6 +105,27 @@ int main (int numargs, char ** args)
 		current_job = p->readDWord(temp.origin + 0x390);
 		mat_start = p->readDWord(current_job + 0xa4 + 4*3);
 		mat_end = p->readDWord(current_job + 0xa4 + 4*4);
+		for(j=mat_start;j<mat_end;j+=4)
+		{
+			matptr = p->readDWord(j);
+			for(k=0;k<4;k++)
+				printf("%.4X ", p->readWord(matptr + k*2));
+			for(k=0;k<3;k++)
+				printf("%.8X ", p->readDWord(matptr + k*4 + 0x8));
+			for(k=0;k<2;k++)
+				printf("%.4X ", p->readWord(matptr + k*2 + 0x14));
+			for(k=0;k<3;k++)
+				printf("%.8X ", p->readDWord(matptr + k*4 + 0x18));
+			for(k=0;k<4;k++)
+				printf("%.2X ", p->readByte(matptr + k + 0x24));
+			for(k=0;k<6;k++)
+				printf("%.8X ", p->readDWord(matptr + k*4 + 0x28));
+			for(k=0;k<4;k++)
+				printf("%.2X ", p->readByte(matptr + k + 0x40));
+			for(k=0;k<9;k++)
+				printf("%.8X ", p->readDWord(matptr + k*4 + 0x44));
+			printf("\n");
+		}
 	}
     }
     Creatures->Finish();

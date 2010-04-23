@@ -327,7 +327,6 @@ namespace DFHack
         t_name name;
         
         int16_t mood;
-	int16_t mood_skill;
         t_name artifact_name;
         
         uint8_t profession;

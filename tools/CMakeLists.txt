@@ -5,10 +5,6 @@ IF(UNIX)
 add_definitions(-DLINUX_BUILD)
 ENDIF(UNIX)
 
-# a moodump clone
-ADD_EXECUTABLE(dfmoodump moodump.cpp)
-TARGET_LINK_LIBRARIES(dfmoodump dfhack)
-
 # a reveal clone
 ADD_EXECUTABLE(dfreveal reveal.cpp)
 TARGET_LINK_LIBRARIES(dfreveal dfhack)
@@ -67,7 +63,6 @@ dfincremental
 #dfmagma_create
 dfprospector
 dfreveal
-dfmoodump
 RUNTIME DESTINATION bin
 )
 ENDIF(UNIX)

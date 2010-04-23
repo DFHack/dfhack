@@ -1399,6 +1399,7 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_pickup_equipment_bit">0X21C</Offset>
         <!--<Offset name="creature_mood">0x238</Offset>-->
         
+        <Offset name="creature_mood">0x288</Offset>
         <Offset name="creature_physical">0x464</Offset>
         <!--
         <Offset name="creature_strength">0x464</Offset>

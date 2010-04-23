@@ -114,8 +114,8 @@ namespace DFHack
         e_traffic traffic : 2; // needs enum
         unsigned int flow_forbid : 1; // what?
         unsigned int liquid_static : 1;
-        unsigned int feature_type_1 : 1; // this tile is a part of a feature
-        unsigned int feature_type_2 : 1; // this tile is a part of a feature
+        unsigned int feature_local : 1; // this tile is a part of a feature
+        unsigned int feature_global : 1; // this tile is a part of a feature
         unsigned int liquid_character : 2; // those ripples on streams?
         
     };

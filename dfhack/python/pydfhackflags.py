@@ -18,8 +18,8 @@ class DesignationStruct(Structure):
                 ("traffic", c_uint, 2),
                 ("flow_forbid", c_uint, 1),
                 ("liquid_static", c_uint, 1),
-                ("moss", c_uint, 1),
-                ("feature_present", c_uint, 1),
+                ("feature_local", c_uint, 1),
+                ("feature_global", c_uint, 1),
                 ("liquid_character", c_uint, 2)]
 
 class DesignationFlags(Union):

@@ -345,11 +345,11 @@ void do_features(Process* p, uint32_t blockaddr, uint32_t blockX, uint32_t block
                 cout << name << endl;
             }
             */
-            gotoxy(printX,printY+7);
+            gotoxy(printX,printY + 7);
             cprintf("feature %d addr: 0x%x\n", idx, p_features[idx]);
             if(idx >= p_features.size())
             {
-                gotoxy(printX,printY+8);
+                gotoxy(printX,printY + 8);
                 cprintf("ERROR, out of vector bounds.");
             }
             else

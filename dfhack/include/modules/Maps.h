@@ -11,7 +11,37 @@ namespace DFHack
     /***************************************************************************
                                     T Y P E S
     ***************************************************************************/
-
+    
+    enum e_feature
+    {
+        feature_Adamantine_Tube,
+        feature_Underworld,
+        // add stuff here, don't reorder or delete
+        feature_Other = 10000,
+    };
+    union planecoord
+    {
+        uint32_t xy;
+        struct 
+        {
+            uint16_t x;
+            uint16_t y;
+        } dim;
+        bool operator<(const planecoord &other) const
+        {
+            if(other.xy < xy) return true;
+            return false;
+        }
+    };
+    struct t_feature
+    {
+        e_feature type;
+        int16_t main_material;
+        int32_t sub_material;
+        bool discovered; // maybe, placeholder. should work for rivers in adventure mode
+        uint32_t origin;
+    };
+    
     struct t_vein
     {
         uint32_t vtable;
@@ -52,7 +82,7 @@ namespace DFHack
         eSouthEast,
         eBiomeCount
     };
-    
+
     enum e_traffic
     {
         traffic_normal,
@@ -210,6 +240,8 @@ namespace DFHack
         biome_indices40d biome_indices;
         uint32_t origin; // the address where it came from
         t_blockflags blockflags;
+        int16_t global_feature;
+        int16_t local_feature;
     } mapblock40d;
 
     /***************************************************************************
@@ -259,7 +291,14 @@ namespace DFHack
             }
          */
         bool ReadGeology( std::vector < std::vector <uint16_t> >& assign );
-
+        vector <t_feature> global_features;
+        // map between feature address and the read object
+            map <uint32_t, t_feature> local_feature_store;
+            // map between mangled coords and pointer to feature
+                
+        
+        bool ReadGlobalFeatures( std::vector <t_feature> & features);
+        bool ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > & local_features );
         /*
          * BLOCK DATA
          */

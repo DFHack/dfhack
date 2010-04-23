@@ -49,12 +49,18 @@ int main (int argc, const char* argv[])
     showhidden = true;
     #endif
     uint32_t x_max,y_max,z_max;
+    /*
     DFHack::tiletypes40d tiletypes;
     DFHack::designations40d designations;
     DFHack::biome_indices40d regionoffsets;
+    */
+    DFHack::mapblock40d Block;
     map <int16_t, uint32_t> materials;
     materials.clear();
     vector<DFHack::t_matgloss> stonetypes;
+    vector<DFHack::t_feature> global_features;
+    std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> > local_features;
+    
     vector< vector <uint16_t> > layerassign;
     
     DFHack::API DF("Memory.xml");
@@ -86,6 +92,23 @@ int main (int argc, const char* argv[])
     }
     Maps->getSize(x_max,y_max,z_max);
     
+    if(!Maps->ReadGlobalFeatures(global_features))
+    {
+        cerr << "Can't get global features." << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
+        return 1; 
+    }
+
+    if(!Maps->ReadLocalFeatures(local_features))
+    {
+        cerr << "Can't get local features." << endl;
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
+        return 1; 
+    }
     // get stone matgloss mapping
     if(!Mats->ReadInorganicMaterials(stonetypes))
     {
@@ -122,8 +145,9 @@ int main (int argc, const char* argv[])
                     continue;
                 
                 // read data
-                Maps->ReadTileTypes(x,y,z, &tiletypes);
-                Maps->ReadDesignations(x,y,z, &designations);
+                Maps->ReadBlock40d(x,y,z, &Block);
+                //Maps->ReadTileTypes(x,y,z, &tiletypes);
+                //Maps->ReadDesignations(x,y,z, &designations);
                 
                 memset(tempvein, -1, sizeof(tempvein));
                 veins.clear();
@@ -131,24 +155,24 @@ int main (int argc, const char* argv[])
                 
                 if(showbaselayers)
                 {
-                    Maps->ReadRegionOffsets(x,y,z, &regionoffsets);
+                    //Maps->ReadRegionOffsets(x,y,z, &regionoffsets);
                     // get the layer materials
                     for(uint32_t xx = 0;xx<16;xx++)
                     {
                         for (uint32_t yy = 0; yy< 16;yy++)
                         {
-                            uint8_t test = designations[xx][yy].bits.biome;
+                            uint8_t test = Block.designation[xx][yy].bits.biome;
                             if(test > maximum_regionoffset)
                                 maximum_regionoffset = test;
-                            if( test >= sizeof(regionoffsets))
+                            if( test >= sizeof(Block.biome_indices))
                             {
                                 num_overflows++;
                                 continue;
                             }
                             tempvein[xx][yy] =
                             layerassign
-                            [regionoffsets[test]]
-                            [designations[xx][yy].bits.geolayer_index];
+                            [Block.biome_indices[test]]
+                            [Block.designation[xx][yy].bits.geolayer_index];
                         }
                     }
                 }
@@ -172,6 +196,56 @@ int main (int argc, const char* argv[])
                         }
                     }
                 }
+                
+                // global feature overrides
+                int16_t idx = Block.global_feature;
+                if( idx != -1 && uint16_t(idx) < global_features.size() && global_features[idx].type == DFHack::feature_Underworld)
+                {
+                    for(uint32_t xi = 0 ; xi< 16 ; xi++) for(uint32_t yi = 0 ; yi< 16 ; yi++)
+                    {
+                        if(Block.designation[xi][yi].bits.feature_global)
+                        {
+                            if(global_features[idx].main_material == 0) // stone
+                            {
+                                tempvein[xi][yi] = global_features[idx].sub_material;
+                            }
+                            else
+                            {
+                                tempvein[xi][yi] = -1;
+                            }
+                        }
+                    }
+                }
+                
+                idx = Block.local_feature;
+                if( idx != -1 )
+                {
+                    DFHack::planecoord pc;
+                    pc.dim.x = x;
+                    pc.dim.y = y;
+                    std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> >::iterator it;
+                    it = local_features.find(pc);
+                    if(it != local_features.end())
+                    {
+                        std::vector<DFHack::t_feature *>& vectr = (*it).second;
+                        if(uint16_t(idx) < vectr.size() && vectr[idx]->type == DFHack::feature_Adamantine_Tube)
+                            for(uint32_t xi = 0 ; xi< 16 ; xi++) for(uint32_t yi = 0 ; yi< 16 ; yi++)
+                            {
+                                if(Block.designation[xi][yi].bits.feature_global)
+                                {
+                                    if(vectr[idx]->main_material == 0) // stone
+                                    {
+                                        tempvein[xi][yi] = vectr[idx]->sub_material;
+                                    }
+                                    else
+                                    {
+                                        tempvein[xi][yi] = -1;
+                                    }
+                                }
+                            }
+                    }
+                }
+                
                 // count the material types
                 for(uint32_t xi = 0 ; xi< 16 ; xi++)
                 {
@@ -179,7 +253,7 @@ int main (int argc, const char* argv[])
                     {
                         // hidden tiles are ignored unless '-a' is provided on the command line
                         // non-wall tiles are ignored
-                        if( (designations[xi][yi].bits.hidden && !showhidden) || !DFHack::isWallTerrain(tiletypes[xi][yi]))
+                        if( (Block.designation[xi][yi].bits.hidden && !showhidden) || !DFHack::isWallTerrain(Block.tiletypes[xi][yi]))
                             continue;
                         if(tempvein[xi][yi] < 0)
                             continue;
@@ -199,7 +273,7 @@ int main (int argc, const char* argv[])
     }
     // print report
     cout << "Maximal regionoffset seen: " << maximum_regionoffset << ".";
-    if(maximum_regionoffset >= sizeof(regionoffsets) )
+    if(maximum_regionoffset >= sizeof(Block.biome_indices) )
     {
         cout << " This is above the regionoffsets array size!" << endl;
         cout << "Number of overflows: " << num_overflows;
@@ -209,7 +283,14 @@ int main (int argc, const char* argv[])
     map<int16_t, uint32_t>::iterator p;
     for(p = materials.begin(); p != materials.end(); p++)
     {
-        cout << stonetypes[p->first].id << " : " << p->second << endl;
+        if(p->first == -1)
+        {
+            cout << "Non-stone" << " : " << p->second << endl;
+        }
+        else
+        {
+            cout << stonetypes[p->first].id << " : " << p->second << endl;
+        }
     }
     DF.Detach();
     #ifndef LINUX_BUILD

@@ -163,10 +163,11 @@ int main (int numargs, const char ** args)
                     cout << "cursorX: " << cursorX << ", regionX:" << regionX << endl;
                     cout << "bigblock_x: " << block48_x << endl;
                     
-                    uint16_t v12 = ((block48_x & 0xF) + block48_x) >> 4;
-                    uint16_t v12b = block48_x / 16;
-                    cout << "v12: " << v12 << " : " << v12b <<  endl;
-                    
+                    // region X coord offset by 8 big blocks (48x48 tiles)
+                    uint16_t region_x_plus8 = ( block48_x + 8 ) / 16;
+                    //uint16_t v12b = block48_x / 16;
+                    //cout << "v12: " << v12 << " : " << v12b <<  endl;
+                    // plain region Y coord
                     uint64_t region_y_local = (cursorY / 48 + regionY) / 16;
                     cout << "region_y_local: " << region_y_local << endl;
                     
@@ -174,7 +175,7 @@ int main (int numargs, const char ** args)
                     uint32_t base = p->readDWord(feature1_start_ptr);
                     cout << "base! : " << base << endl;
                     // this is just a few pointers to arrays of 16B (4 DWORD) structs
-                    uint32_t array_elem = p->readDWord(base + (v12 / 16) * 4);
+                    uint32_t array_elem = p->readDWord(base + (region_x_plus8 / 16) * 4);
                     cout << "array_elem : " << array_elem << endl;
                     // second element of the struct is a pointer
                     uint32_t wtf = p->readDWord(array_elem + (16*(region_y_local/16)) + 4); // rounding!
@@ -183,7 +184,7 @@ int main (int numargs, const char ** args)
                     if(wtf)
                     {
                         //v14 = v10 + 24 * ((signed __int16)_tX + 16 * v9 % 16);
-                        uint32_t feat_vector = wtf + 24 * ((region_y_local % 16) + 16 * (v12 % 16));
+                        uint32_t feat_vector = wtf + 24 * ((region_y_local % 16) + 16 * (region_x_plus8 % 16));
                         cout << "local feature vector: " << feat_vector << endl;
                         DfVector<uint32_t> p_features(p, feat_vector);
                         /*

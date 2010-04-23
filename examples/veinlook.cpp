@@ -277,6 +277,149 @@ void hexdump (DFHack::API& DF, uint32_t address, uint32_t length, int filenum)
     myfile.close();
 }
 
+// p = attached process
+// blockaddr = address of the block
+// blockX, blockY = local map X and Y coords in 16x16 of the block
+// printX, printX = where to print stuff on the screen
+void do_features(Process* p, uint32_t blockaddr, uint32_t blockX, uint32_t blockY, int printX, int printY, vector<DFHack::t_matgloss> &stonetypes)
+{
+    memory_info* mem = p->getDescriptor();
+    uint32_t block_feature1 = mem->getOffset("map_data_feature_local");
+    uint32_t block_feature2 = mem->getOffset("map_data_feature_global");
+    uint32_t region_x_offset = mem->getAddress("region_x");
+    uint32_t region_y_offset = mem->getAddress("region_y");
+    uint32_t region_z_offset = mem->getAddress("region_z");
+    uint32_t feature1_start_ptr = mem->getAddress("local_feature_start_ptr");
+    int32_t regionX, regionY, regionZ;
+    
+    // read position of the region inside DF world
+    p->readDWord (region_x_offset, (uint32_t &)regionX);
+    p->readDWord (region_y_offset, (uint32_t &)regionY);
+    p->readDWord (region_z_offset, (uint32_t &)regionZ);
+    // local feature present ?
+    int16_t idx = p->readWord(blockaddr + block_feature1);
+    if(idx != -1)
+    {
+        gotoxy(printX,printY);
+        cprintf("local feature present: %d", idx);
+        
+        uint64_t block48_x = blockX / 3 + regionX;
+        gotoxy(printX,printY+1);
+        cprintf("blockX: %d, regionX: %d\nbigblock_x: %d\n", blockX, regionX, block48_x);
+        
+        // region X coord offset by 8 big blocks (48x48 tiles)
+        uint16_t region_x_plus8 = ( block48_x + 8 ) / 16;
+        //uint16_t v12b = block48_x / 16;
+        //cout << "v12: " << v12 << " : " << v12b <<  endl;
+        // plain region Y coord
+        uint64_t region_y_local = (blockY / 3 + regionY) / 16;
+        gotoxy(printX,printY+2);
+        cprintf("region_y_local: %d\n", region_y_local);
+        
+        // deref pointer to the humongo-structure
+        uint32_t base = p->readDWord(feature1_start_ptr);
+        gotoxy(printX,printY+3);
+        cprintf("region_y_local: 0x%x\n", base);
+        
+        // this is just a few pointers to arrays of 16B (4 DWORD) structs
+        uint32_t array_elem = p->readDWord(base + (region_x_plus8 / 16) * 4);
+        gotoxy(printX,printY+4);
+        cprintf("array_elem: 0x%x\n", array_elem);
+        
+        // second element of the struct is a pointer
+        uint32_t wtf = p->readDWord(array_elem + (16*(region_y_local/16)) + 4); // rounding!
+        gotoxy(printX,printY+5);
+        cprintf("wtf : 0x%x @ 0x%x\n", wtf, array_elem + (16*(region_y_local/16)) );
+        if(wtf)
+        {
+            //v14 = v10 + 24 * ((signed __int16)_tX + 16 * v9 % 16);
+            uint32_t feat_vector = wtf + 24 * (16 * (region_x_plus8 % 16) + (region_y_local % 16));
+            gotoxy(printX,printY+6);
+            cprintf("local feature vector: 0x%x\n", feat_vector);
+            DfVector<uint32_t> p_features(p, feat_vector);
+            /*
+            for(int k = 0 ; k < p_features.size();k++)
+            {
+                printf("feature %d addr: 0x%x\n", k, p_features[k]);
+                string name = p->readClassName(p->readDWord( p_features[k] ));
+                cout << name << endl;
+            }
+            */
+            gotoxy(printX,printY+7);
+            cprintf("feature %d addr: 0x%x\n", idx, p_features[idx]);
+            if(idx >= p_features.size())
+            {
+                gotoxy(printX,printY+8);
+                cprintf("ERROR, out of vector bounds.");
+            }
+            else
+            {
+                string name = p->readClassName(p->readDWord( p_features[idx] ));
+                bool discovered = p->readDWord( p_features[idx] + 4 );
+                gotoxy(printX,printY+8);
+                cprintf("%s", name.c_str());
+                if(discovered)
+                {
+                    gotoxy(printX,printY+9);
+                    cprintf("You've discovered it already!");
+                }
+                
+                if(name == "feature_init_deep_special_tubest")
+                {
+                    int32_t master_type = p->readWord( p_features[idx] + 0x30 );
+                    int32_t slave_type = p->readDWord( p_features[idx] + 0x34 );
+                    char * matname = "unknown";
+                    // is stone?
+                    if(master_type == 0)
+                    {
+                        matname = stonetypes[slave_type].id;
+                    }
+                    gotoxy(printX,printY+10);
+                    cprintf("material %d/%d : %s", master_type, slave_type, matname);
+                    
+                }
+            }
+        }
+    }
+    // global feature present
+    idx = p->readWord(blockaddr + block_feature2);
+    if(idx != -1)
+    {
+        gotoxy(printX,printY+11);
+        cprintf( "global feature present: %d\n", idx);
+        DfVector<uint32_t> p_features (p,mem->getAddress("global_feature_vector"));
+        if(idx < p_features.size())
+        {
+            uint32_t feat_ptr = p->readDWord(p_features[idx] + mem->getOffset("global_feature_funcptr_"));
+            gotoxy(printX,printY+12);
+            cprintf("feature descriptor?: 0x%x\n", feat_ptr);
+            string name = p->readClassName(p->readDWord( feat_ptr));
+            bool discovered = p->readDWord( feat_ptr + 4 );
+            gotoxy(printX,printY+13);
+            cprintf("%s", name.c_str());
+            if(discovered)
+            {
+                gotoxy(printX,printY+14);
+                cout << "You've discovered it already!" << endl;
+            }
+            if(name == "feature_init_underworld_from_layerst")
+            {
+                int16_t master_type = p->readWord( feat_ptr + 0x34 );
+                int32_t slave_type = p->readDWord( feat_ptr + 0x38 );
+                char * matname = "unknown";
+                // is stone?
+                if(master_type == 0)
+                {
+                    matname = stonetypes[slave_type].id;
+                }
+                gotoxy(printX,printY+15);
+                cprintf("material %d/%d : %s", master_type, slave_type, matname);
+            }
+        }
+    }
+}
+
+
 
 main(int argc, char *argv[])
 {
@@ -531,10 +674,10 @@ main(int argc, char *argv[])
             if(Maps->isValidBlock(cursorX+i,cursorY+j,cursorZ))
             {
                 Maps->ReadBlock40d(cursorX+i,cursorY+j,cursorZ, Block);
-                
                 // extra processing of the block in the middle
                 if(i == 0 && j == 0)
                 {
+                    do_features(p, Block->origin, cursorX, cursorY, 50,10, stonetypes);
                     // read veins
                     Maps->ReadVeins(cursorX+i,cursorY+j,cursorZ,&veinVector,&IceVeinVector,&splatter);
                     

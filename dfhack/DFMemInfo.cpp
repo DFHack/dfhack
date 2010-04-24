@@ -227,7 +227,7 @@ void memory_info::setProfession (const string & key, const string & value)
     uint32_t keyInt = strtol(key.c_str(), NULL, 10);
     if(d->professions.size() <= keyInt)
     {
-        d->professions.resize(keyInt+1);
+        d->professions.resize(keyInt+1,"");
     }
     d->professions[keyInt] = value;
 }

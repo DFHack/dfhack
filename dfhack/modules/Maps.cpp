@@ -668,14 +668,14 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
     
     local_features.clear();
     
-    for(uint blockX = 0; blockX < d->x_block_count; blockX ++)
-        for(uint blockY = 0; blockY < d->x_block_count; blockY ++)
+    for(uint32_t blockX = 0; blockX < d->x_block_count; blockX ++)
+        for(uint32_t blockY = 0; blockY < d->x_block_count; blockY ++)
     {
         //uint64_t block48_x = blockX / 3 + d->regionX;
         //uint16_t region_x_plus8 = ( block48_x + 8 ) / 16;
         
         // region X coord offset by 8 big blocks (48x48 tiles)
-        uint16_t region_x_plus8 = ( blockX / 3 + d->regionX + 8 ) / 16;
+        uint16_t region_x_plus8 = ( blockX / 3 + d->regionX /*+ 8*/ ) / 16;
         
         // plain region Y coord
         uint64_t region_y_local = ( blockY / 3 + d->regionY     ) / 16;
@@ -690,12 +690,12 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
             // wtf + sizeof(vector<ptr>) * crap;
             uint32_t feat_vector = wtf + sizeof_vec * (16 * (region_x_plus8 % 16) + (region_y_local % 16));
             DfVector<uint32_t> p_features(p, feat_vector);
-            uint size = p_features.size();
+            uint32_t size = p_features.size();
             planecoord pc;
             pc.dim.x = blockX;
             pc.dim.y = blockY;
             std::vector<t_feature *> tempvec;
-            for(uint i = 0; i < size; i++)
+            for(uint32_t i = 0; i < size; i++)
             {
                 uint32_t cur_ptr = p_features[i];
                 
@@ -750,9 +750,9 @@ bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
     DfVector<uint32_t> p_features (p,global_feature_vector);
     
     features.clear();
-    uint size = p_features.size();
+    uint32_t size = p_features.size();
     features.reserve(size);
-    for(uint i = 0; i < size; i++)
+    for(uint32_t i = 0; i < size; i++)
     {
         t_feature temp;
         uint32_t feat_ptr = p->readDWord(p_features[i] + global_feature_funcptr );

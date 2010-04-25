@@ -18,8 +18,8 @@ class DesignationStruct(Structure):
                 ("traffic", c_uint, 2),
                 ("flow_forbid", c_uint, 1),
                 ("liquid_static", c_uint, 1),
-                ("moss", c_uint, 1),
-                ("feature_present", c_uint, 1),
+                ("feature_local", c_uint, 1),
+                ("feature_global", c_uint, 1),
                 ("liquid_character", c_uint, 2)]
 
 class DesignationFlags(Union):
@@ -28,6 +28,9 @@ class DesignationFlags(Union):
     
     def __init__(self, initial = 0):
             self.whole = initial
+    
+    def __int__(self):
+        return self.whole
 
 class OccupancyStruct(Structure):
     _fields_ = [("building", c_uint, 3),
@@ -42,6 +45,9 @@ class OccupancyFlags(Union):
 
     def __init__(self, initial = 0):
         self.whole = initial
+    
+    def __int__(self):
+        return self.whole
 
 class CreatureStruct1(Structure):
     _fields_ = [("move_state", c_uint, 1),
@@ -83,6 +89,9 @@ class CreatureFlags1(Union):
 
     def __init__(self, initial = 0):
         self.whole = initial
+    
+    def __int__(self):
+        return self.whole
 
 class CreatureStruct2(Structure):
     _fields_ = [("swimming", c_uint, 1),
@@ -124,6 +133,9 @@ class CreatureFlags2(Union):
 
     def __init__(self, initial = 0):
         self.whole = initial
+    
+    def __int__(self):
+        return self.whole
 
 class ItemStruct(Structure):
     _fields_ = [("on_ground", c_uint, 1),
@@ -165,6 +177,9 @@ class ItemFlags(Union):
 
     def __init__(self, initial = 0):
         self.whole = initial
+    
+    def __int__(self):
+        return self.whole
 
 dig_types = { "no" : 0,
               "default" : 1,
@@ -193,3 +208,6 @@ class BlockFlags(Union):
     
     def __init__(self, inital = 0):
         self.whole = initial
+    
+    def __int__(self):
+        return self.whole

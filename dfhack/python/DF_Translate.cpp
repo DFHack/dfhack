@@ -31,7 +31,9 @@ distribution.
 
 using namespace std;
 
+#include "DFTypes.h"
 #include "modules/Translation.h"
+#include "DF_Helpers.cpp"
 
 using namespace DFHack;
 
@@ -237,7 +239,7 @@ static PyTypeObject DF_Translate_type =
 {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
-    "pydfhack.Translate",             /*tp_name*/
+    "pydfhack._TranslationManager",             /*tp_name*/
     sizeof(DF_Translate), /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)DF_Translate_dealloc,                         /*tp_dealloc*/
@@ -256,7 +258,7 @@ static PyTypeObject DF_Translate_type =
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,        /*tp_flags*/
-    "pydfhack Translate objects",           /* tp_doc */
+    "pydfhack TranslationManager object",           /* tp_doc */
     0,		               /* tp_traverse */
     0,		               /* tp_clear */
     0,		               /* tp_richcompare */

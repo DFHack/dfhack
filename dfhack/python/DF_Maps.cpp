@@ -31,6 +31,7 @@ distribution.
 
 using namespace std;
 
+#include "DFTypes.h"
 #include "modules/Maps.h"
 #include "DF_Imports.cpp"
 #include "DF_Helpers.cpp"
@@ -301,10 +302,10 @@ static void ReverseBuildDesignations40d(PyObject* list, DFHack::designations40d&
 	
 	for(int i = 0; i < 16; i++)
 	{
-		innerList = PyList_GetItem(list, i);
+		innerList = PyList_GET_ITEM(list, i);
 		
 		for(int j = 0; j < 16; j++)
-			des[i][j].whole = (uint32_t)PyInt_AsLong(PyList_GET_ITEM(innerList, j));
+			des[i][j].whole = (uint32_t)PyInt_AS_LONG(PyList_GET_ITEM(innerList, j));
 	}
 }
 
@@ -591,11 +592,11 @@ static PyObject* DF_Map_WriteDesignations(DF_Map* self, PyObject* args)
 		if(!PyArg_ParseTuple(args, "IIIO", &x, &y, &z, &desList))
 			return NULL;
 		
-		designations40d des;
+		DFHack::designations40d writeDes;
 		
-		ReverseBuildDesignations40d(desList, des);
+		ReverseBuildDesignations40d(desList, writeDes);
 		
-		if(self->m_Ptr->WriteDesignations(x, y, z, &des))
+		if(self->m_Ptr->WriteDesignations(x, y, z, &writeDes))
 			Py_RETURN_TRUE;
 		else
 			Py_RETURN_FALSE;
@@ -817,7 +818,7 @@ static PyTypeObject DF_Map_type =
 {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
-    "pydfhack.Map",             /*tp_name*/
+    "pydfhack._MapManager",             /*tp_name*/
     sizeof(DF_Map), /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)DF_Map_dealloc,                         /*tp_dealloc*/
@@ -836,7 +837,7 @@ static PyTypeObject DF_Map_type =
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,        /*tp_flags*/
-    "pydfhack Map objects",           /* tp_doc */
+    "pydfhack MapManager object",           /* tp_doc */
     0,		               /* tp_traverse */
     0,		               /* tp_clear */
     0,		               /* tp_richcompare */

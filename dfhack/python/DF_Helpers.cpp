@@ -28,24 +28,86 @@ distribution.
 #include "Python.h"
 #include <stdio.h>
 #include <string.h>
+#include <vector>
+
+using namespace std;
+
 #include "DFTypes.h"
 #include "DF_Imports.cpp"
 
 using namespace DFHack;
 
 #include "modules/Creatures.h"
+#include "modules/Materials.h"
 
 #define DICTADD(d, name, item) PyDict_SetItemString(d, name, item); Py_DECREF(item)
 #define OBJSET(o, name, item) PyObject_SetAttrString(o, name, item); Py_DECREF(item)
+
+static PyObject* BuildTileColor(uint16_t fore, uint16_t back, uint16_t bright)
+{
+	PyObject *tObj, *args;
+	
+	args = Py_BuildValue("iii", fore, back, bright);
+	
+	tObj = PyObject_CallObject(TileColor_type, args);
+	
+	Py_DECREF(args);
+	
+	return tObj;
+}
+
+static PyObject* BuildPosition2D(uint16_t x, uint16_t y)
+{
+	PyObject *posObj, *args;
+	
+	args = Py_BuildValue("ii", x, y);
+	
+	posObj = PyObject_CallObject(Position2D_type, args);
+	
+	Py_DECREF(args);
+	
+	return posObj;
+}
+
+static PyObject* BuildPosition3D(uint16_t x, uint16_t y, uint16_t z)
+{
+	PyObject *posObj, *args;
+	
+	args = Py_BuildValue("iii", x, y, z);
+	
+	posObj = PyObject_CallObject(Position3D_type, args);
+	
+	Py_DECREF(args);
+	
+	return posObj;
+}
 
 static PyObject* BuildMatglossPair(DFHack::t_matglossPair& matgloss)
 {
 	return Py_BuildValue("ii", matgloss.type, matgloss.index);
 }
 
+static DFHack::t_matglossPair ReverseBuildMatglossPair(PyObject* mObj)
+{
+	DFHack::t_matglossPair mPair;
+	
+	mPair.type = (int16_t)PyInt_AsLong(PyTuple_GetItem(mObj, 0));
+	mPair.index = (int32_t)PyInt_AsLong(PyTuple_GetItem(mObj, 1));
+	
+	return mPair;
+}
+
 static PyObject* BuildSkill(DFHack::t_skill& skill)
 {
-	return Py_BuildValue("III", skill.id, skill.experience, skill.rating);
+	PyObject *args, *skillObj;
+	
+	args = Py_BuildValue("III", skill.id, skill.experience, skill.rating);
+	
+	skillObj = PyObject_CallObject(Skill_type, args);
+	
+	Py_DECREF(args);
+	
+	return skillObj;
 }
 
 static PyObject* BuildSkillList(DFHack::t_skill (&skills)[256], uint8_t numSkills)
@@ -65,24 +127,20 @@ static PyObject* BuildJob(DFHack::t_job& job)
 
 static PyObject* BuildAttribute(DFHack::t_attrib& at)
 {
-	return Py_BuildValue("IIIIIII", at.level, at.field_4, at.field_8, at.field_C, at.leveldiff, at.field_14, at.field_18);
+	PyObject *args, *attrObj;
+	
+	args = Py_BuildValue("IIIIIII", at.level, at.field_4, at.field_8, at.field_C, at.leveldiff, at.field_14, at.field_18);
+	
+	attrObj = PyObject_CallObject(Attribute_type, args);
+	
+	Py_DECREF(args);
+	
+	return attrObj;
 }
 
 static PyObject* BuildItemType(DFHack::t_itemType& item)
 {
-	PyObject *id, *name;
-	
-	if(item.id[0])
-		id = PyString_FromString(item.id);
-	else
-		id = PyString_FromString("");
-	
-	if(item.name[0])
-		name = PyString_FromString(item.name);
-	else
-		name = PyString_FromString("");
-		
-	return Py_BuildValue("OO", id, name);
+	return Py_BuildValue("ss", item.id, item.name);
 }
 
 static PyObject* BuildLike(DFHack::t_like& like)
@@ -97,18 +155,19 @@ static PyObject* BuildLike(DFHack::t_like& like)
 static PyObject* BuildNote(DFHack::t_note& note)
 {
 	PyObject* noteObj;
-	PyObject *args, *name, *position;
+	PyObject *args, *position;
 	
-	if(note.name[0])
-		name = PyString_FromString(note.name);
-	else
-		name = PyString_FromString("");
+	args = Py_BuildValue("III", note.x, note.y, note.z);
 	
-	position = Py_BuildValue("III", note.x, note.y, note.z);
+	position = PyObject_CallObject(Position3D_type, args);
 	
-	args = Py_BuildValue("cIIsO", note.symbol, note.foreground, note.background, name, position);
+	Py_DECREF(args);
+	
+	args = Py_BuildValue("cIIsO", note.symbol, note.foreground, note.background, note.name, position);
 	
 	noteObj = PyObject_CallObject(Note_type, args);
+	
+	Py_DECREF(args);
 	
 	return noteObj;
 }
@@ -235,33 +294,36 @@ static DFHack::t_name ReverseBuildName(PyObject* nameObj)
 
 static PyObject* BuildSettlement(DFHack::t_settlement& settlement)
 {
-	PyObject* setDict;
-	PyObject *local_pos1, *local_pos2;
-	PyObject* temp;
+	PyObject* setObj;
+	PyObject *world_pos, *local_pos, *args;
 	
-	setDict = PyDict_New();
+	args = Py_BuildValue("ii", settlement.world_x, settlement.world_y);
 	
-	temp = PyInt_FromLong(settlement.origin);
-	DICTADD(setDict, "origin", temp);
+	world_pos = PyObject_CallObject(Position2D_type, args);
 	
-	temp = BuildName(settlement.name);
-	DICTADD(setDict, "name", temp);
+	Py_DECREF(args);
 	
-	temp = Py_BuildValue("ii", settlement.world_x, settlement.world_y);
-	DICTADD(setDict, "world_pos", temp);
+	args = Py_BuildValue("iiii", settlement.local_x1, settlement.local_y1, settlement.local_x2, settlement.local_y2);
 	
-	local_pos1 = Py_BuildValue("ii", settlement.local_x1, settlement.local_y1);
-	local_pos2 = Py_BuildValue("ii", settlement.local_x2, settlement.local_y2);
+	local_pos = PyObject_CallObject(Rectangle_type, args);
 	
-	temp = Py_BuildValue("OO", local_pos1, local_pos2);
-	DICTADD(setDict, "local_pos", temp);
+	Py_DECREF(args);
 	
-	return setDict;
+	args = Py_BuildValue("iOOO", settlement.origin, BuildName(settlement.name), world_pos, local_pos);
+	
+	setObj = PyObject_CallObject(Settlement_type, args);
+	
+	Py_DECREF(args);
+	
+	return setObj;
 }
 
 static PyObject* BuildSoul(DFHack::t_soul& soul)
 {
-	PyObject *soulDict, *skillList, *temp;
+	PyObject *soulDict, *skillList, *temp, *emptyArgs;
+	PyObject* soulObj;
+	
+	emptyArgs = Py_BuildValue("()");
 	
 	soulDict = PyDict_New();
 	
@@ -307,7 +369,11 @@ static PyObject* BuildSoul(DFHack::t_soul& soul)
 	temp = BuildAttribute(soul.social_awareness);	
 	DICTADD(soulDict, "social_awareness", temp);
 	
-	return soulDict;
+	soulObj = PyObject_Call(Soul_type, emptyArgs, soulDict);
+	
+	Py_DECREF(emptyArgs);
+	
+	return soulObj;
 }
 
 #endif

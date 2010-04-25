@@ -186,6 +186,7 @@ bool Maps::Start()
     }
     delete [] temp_x;
     delete [] temp_y;
+    d->Started = true;
     return true;
 }
 
@@ -656,6 +657,10 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 
 bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > & local_features )
 {
+    // can't be used without a map!
+    if(!d->block)
+        return false;
+    
     Process * p = d->owner;
     memory_info * mem = p->getDescriptor();
     // deref pointer to the humongo-structure
@@ -675,10 +680,12 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
         //uint16_t region_x_plus8 = ( block48_x + 8 ) / 16;
         
         // region X coord offset by 8 big blocks (48x48 tiles)
-        uint16_t region_x_plus8 = ( blockX / 3 + d->regionX /*+ 8*/ ) / 16;
-        
+        uint16_t region_x_plus8 = ( (blockX / 3 ) + d->regionX /*+ 8*/ ) / 16;
+        //((BYTE4(region_x_local) & 0xF) + (_DWORD)region_x_local) >> 4;
+        //int16_t region_x_local = (blockX / 3) + d->regionX;
+        //int16_t region_x_plus8 = ((region_x_local & 0xF) + region_x_local) >> 4;
         // plain region Y coord
-        uint64_t region_y_local = ( blockY / 3 + d->regionY     ) / 16;
+        uint64_t region_y_local = ( (blockY / 3) + d->regionY ) / 16;
         
         // this is just a few pointers to arrays of 16B (4 DWORD) structs
         uint32_t array_elem = p->readDWord(base + (region_x_plus8 / 16) * 4);
@@ -740,6 +747,10 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
 
 bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
 {
+    // can't be used without a map!
+    if(!d->block)
+        return false;
+    
     Process * p = d->owner;
     memory_info * mem = p->getDescriptor();
     

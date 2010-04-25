@@ -231,7 +231,7 @@ int main (int argc, const char* argv[])
                         if(uint16_t(idx) < vectr.size() && vectr[idx]->type == DFHack::feature_Adamantine_Tube)
                             for(uint32_t xi = 0 ; xi< 16 ; xi++) for(uint32_t yi = 0 ; yi< 16 ; yi++)
                             {
-                                if(Block.designation[xi][yi].bits.feature_global)
+                                if(Block.designation[xi][yi].bits.feature_local && DFHack::isWallTerrain(Block.tiletypes[xi][yi]))
                                 {
                                     if(vectr[idx]->main_material == 0) // stone
                                     {

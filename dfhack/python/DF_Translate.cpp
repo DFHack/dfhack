@@ -196,6 +196,12 @@ static PyObject* DF_Translate_TranslateName(DF_Translate* self, PyObject* args)
 		if(PyArg_ParseTuple(args, "O|i", &nameObj, &inEnglish))
 			return NULL;
 		
+		if(PyObject_IsInstance(nameObj, Name_type) != 1)
+		{
+			PyErr_SetString(PyExc_TypeError, "argument 1 must be a Name object");
+			return NULL;
+		}
+		
 		name = ReverseBuildName(nameObj);
 		
 		std::string nameStr = self->tran_Ptr->TranslateName(name, (bool)inEnglish);

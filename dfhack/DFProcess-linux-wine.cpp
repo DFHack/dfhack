@@ -442,46 +442,93 @@ void WineProcess::readFloat (const uint32_t offset, float &val)
     read(offset, 4, (uint8_t *) &val);
 }
 
+void WineProcess::readQuad (const uint32_t offset, uint64_t &val)
+{
+    read(offset, 8, (uint8_t *) &val);
+}
+
+uint64_t WineProcess::readQuad (const uint32_t offset)
+{
+    uint64_t val;
+    read(offset, 8, (uint8_t *) &val);
+    return val;
+}
+
 /*
  * WRITING
  */
 
+void WineProcess::writeQuad (uint32_t offset, const uint64_t data)
+{
+    #ifdef HAVE_64_BIT
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, data);
+    #else
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, (uint32_t) data);
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset+4, (uint32_t) (data >> 32));
+    #endif
+}
+
 void WineProcess::writeDWord (uint32_t offset, uint32_t data)
 {
-    ptrace(PTRACE_POKEDATA,d->my_handle, offset, data);
+    #ifdef HAVE_64_BIT
+        uint64_t orig = readQuad(offset);
+        orig &= 0xFFFFFFFF00000000;
+        orig |= data;
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+    #else
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, data);
+    #endif
 }
 
 // using these is expensive.
 void WineProcess::writeWord (uint32_t offset, uint16_t data)
 {
-    uint32_t orig = readDWord(offset);
-    /*;
-    uint16_t & zz = (uint16_t&) orig;
-    zz = data;
-    */
-    
-    orig &= 0xFFFF0000;
-    orig |= data;
-    
-    ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+    #ifdef HAVE_64_BIT
+        uint64_t orig = readQuad(offset);
+        orig &= 0xFFFFFFFFFFFF0000;
+        orig |= data;
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+    #else
+        uint32_t orig = readDWord(offset);
+        orig &= 0xFFFF0000;
+        orig |= data;
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+    #endif
 }
 
 void WineProcess::writeByte (uint32_t offset, uint8_t data)
 {
-    uint32_t orig = readDWord(offset);
-    orig &= 0xFFFFFF00;
-    orig |= data;
-    ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+    #ifdef HAVE_64_BIT
+        uint64_t orig = readQuad(offset);
+        orig &= 0xFFFFFFFFFFFFFF00;
+        orig |= data;
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+    #else
+        uint32_t orig = readDWord(offset);
+        orig &= 0xFFFFFF00;
+        orig |= data;
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+    #endif
 }
 
 // blah. I hate the kernel devs for crippling /proc/PID/mem. THIS IS RIDICULOUS
 void WineProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
 {
-    printf("0x%x, size %d\n", source, size);
     uint32_t count = 0;
     uint32_t indexptr = 0;
     while (size > 0)
     {
+        #ifdef HAVE_64_BIT
+            // quad!
+            if(size >= 8)
+            {
+                writeQuad(offset, *(uint64_t *) (source + indexptr));
+                offset +=8;
+                indexptr +=8;
+                size -=8;
+            }
+            else
+        #endif
         // default: we push 4 bytes
         if(size >= 4)
         {
@@ -489,7 +536,6 @@ void WineProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
             offset +=4;
             indexptr +=4;
             size -=4;
-            count +=4;
         }
         // last is either three or 2 bytes
         else if(size >= 2)
@@ -498,17 +544,14 @@ void WineProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
             offset +=2;
             indexptr +=2;
             size -=2;
-            count +=2;
         }
         // finishing move
         else if(size == 1)
         {
             writeByte(offset, *(uint8_t *) (source + indexptr));
-            count ++;
             return;
         }
     }
-    printf("written %d\n", count);
 }
 
 const std::string WineProcess::readCString (uint32_t offset)

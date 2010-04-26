@@ -428,46 +428,91 @@ void NormalProcess::readFloat (const uint32_t offset, float &val)
     read(offset, 4, (uint8_t *) &val);
 }
 
+uint64_t NormalProcess::readQuad (const uint32_t offset)
+{
+    uint64_t val;
+    read(offset, 8, (uint8_t *) &val);
+    return val;
+}
+void NormalProcess::readQuad (const uint32_t offset, uint64_t &val)
+{
+    read(offset, 8, (uint8_t *) &val);
+}
 /*
  * WRITING
  */
 
+void NormalProcess::writeQuad (uint32_t offset, const uint64_t data)
+{
+    #ifdef HAVE_64_BIT
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, data);
+    #else
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, (uint32_t) data);
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset+4, (uint32_t) (data >> 32));
+    #endif
+}
+
 void NormalProcess::writeDWord (uint32_t offset, uint32_t data)
 {
-    ptrace(PTRACE_POKEDATA,d->my_handle, offset, data);
+    #ifdef HAVE_64_BIT
+        uint64_t orig = readQuad(offset);
+        orig &= 0xFFFFFFFF00000000;
+        orig |= data;
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+    #else
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, data);
+    #endif
 }
 
 // using these is expensive.
 void NormalProcess::writeWord (uint32_t offset, uint16_t data)
 {
-    uint32_t orig = readDWord(offset);
-    orig &= 0xFFFF0000;
-    orig |= data;
-    /*
-    orig |= 0x0000FFFF;
-    orig &= data;
-    */
-    ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+    #ifdef HAVE_64_BIT
+        uint64_t orig = readQuad(offset);
+        orig &= 0xFFFFFFFFFFFF0000;
+        orig |= data;
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+    #else
+        uint32_t orig = readDWord(offset);
+        orig &= 0xFFFF0000;
+        orig |= data;
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+    #endif
 }
 
 void NormalProcess::writeByte (uint32_t offset, uint8_t data)
 {
-    uint32_t orig = readDWord(offset);
-    orig &= 0xFFFFFF00;
-    orig |= data;
-    /*
-    orig |= 0x000000FF;
-    orig &= data;
-    */
-    ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+    #ifdef HAVE_64_BIT
+        uint64_t orig = readQuad(offset);
+        orig &= 0xFFFFFFFFFFFFFF00;
+        orig |= data;
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+    #else
+        uint32_t orig = readDWord(offset);
+        orig &= 0xFFFFFF00;
+        orig |= data;
+        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
+    #endif
 }
 
 // blah. I hate the kernel devs for crippling /proc/PID/mem. THIS IS RIDICULOUS
 void NormalProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
 {
+    uint32_t count = 0;
     uint32_t indexptr = 0;
     while (size > 0)
     {
+        #ifdef HAVE_64_BIT
+            // quad!
+            if(size >= 8)
+            {
+                writeQuad(offset, *(uint64_t *) (source + indexptr));
+                offset +=8;
+                indexptr +=8;
+                size -=8;
+            }
+            else
+        #endif
         // default: we push 4 bytes
         if(size >= 4)
         {

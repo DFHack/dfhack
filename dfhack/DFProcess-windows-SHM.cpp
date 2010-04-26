@@ -769,7 +769,7 @@ float SHMProcess::readFloat (const uint32_t offset)
     D_SHMHDR->address = offset;
     full_barrier
     d->SetAndWait(CORE_READ_DWORD);
-    return D_SHMHDR->value;
+    return (float) D_SHMHDR->value;
 }
 void SHMProcess::readFloat (const uint32_t offset, float &val)
 {
@@ -778,13 +778,41 @@ void SHMProcess::readFloat (const uint32_t offset, float &val)
     D_SHMHDR->address = offset;
     full_barrier
     d->SetAndWait(CORE_READ_DWORD);
-    val = D_SHMHDR->value;
+    val = (float) D_SHMHDR->value;
 }
-
+uint64_t SHMProcess::readQuad (const uint32_t offset)
+{
+    if(!d->locked) throw Error::MemoryAccessDenied();
+    
+    D_SHMHDR->address = offset;
+    full_barrier
+    d->SetAndWait(CORE_READ_QUAD);
+    return D_SHMHDR->Qvalue;
+}
+void SHMProcess::readQuad (const uint32_t offset, uint64_t &val)
+{
+    if(!d->locked) throw Error::MemoryAccessDenied();
+    
+    D_SHMHDR->address = offset;
+    full_barrier
+    d->SetAndWait(CORE_READ_QUAD);
+    val = D_SHMHDR->Qvalue;
+}
 
 /*
  * WRITING
  */
+
+void SHMProcess::writeQuad (uint32_t offset, uint64_t data)
+{
+    if(!d->locked) throw Error::MemoryAccessDenied();
+    
+    D_SHMHDR->address = offset;
+    D_SHMHDR->Qvalue = data;
+    full_barrier
+    d->SetAndWait(CORE_WRITE_QUAD);
+}
+
 
 void SHMProcess::writeDWord (uint32_t offset, uint32_t data)
 {

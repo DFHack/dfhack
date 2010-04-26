@@ -60,6 +60,11 @@ void ReadRaw (void * data)
     memcpy(SHMDATA(void), (void *) SHMHDR->address,SHMHDR->length);
 }
 
+void ReadQuad (void * data)
+{
+    SHMHDR->Qvalue = *((uint64_t*) SHMHDR->address);
+}
+
 void ReadDWord (void * data)
 {
     SHMHDR->value = *((uint32_t*) SHMHDR->address);
@@ -78,6 +83,11 @@ void ReadByte (void * data)
 void WriteRaw (void * data)
 {
     memcpy((void *)SHMHDR->address, SHMDATA(void),SHMHDR->length);
+}
+
+void WriteQuad (void * data)
+{
+    (*(uint64_t*)SHMHDR->address) = SHMHDR->Qvalue;
 }
 
 void WriteDWord (void * data)
@@ -214,12 +224,14 @@ DFPP_module InitCore(void)
     
     // raw reads
     core.set_command(CORE_READ, FUNCTION,"Raw read",ReadRaw, CORE_SUSPENDED);
+    core.set_command(CORE_READ_QUAD, FUNCTION,"Read QUAD",ReadQuad, CORE_SUSPENDED);
     core.set_command(CORE_READ_DWORD, FUNCTION,"Read DWORD",ReadDWord, CORE_SUSPENDED);
     core.set_command(CORE_READ_WORD, FUNCTION,"Read WORD",ReadWord, CORE_SUSPENDED);
     core.set_command(CORE_READ_BYTE, FUNCTION,"Read BYTE",ReadByte, CORE_SUSPENDED);
     
     // raw writes
     core.set_command(CORE_WRITE, FUNCTION, "Raw write", WriteRaw, CORE_SUSPENDED);
+    core.set_command(CORE_WRITE_QUAD, FUNCTION, "Write QUAD", WriteQuad, CORE_SUSPENDED);
     core.set_command(CORE_WRITE_DWORD, FUNCTION, "Write DWORD", WriteDWord, CORE_SUSPENDED);
     core.set_command(CORE_WRITE_WORD, FUNCTION, "Write WORD", WriteWord, CORE_SUSPENDED);
     core.set_command(CORE_WRITE_BYTE, FUNCTION, "Write BYTE", WriteByte, CORE_SUSPENDED);

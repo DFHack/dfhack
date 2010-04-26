@@ -80,21 +80,28 @@ namespace DFHack
             // force-resume DF execution
             virtual bool forceresume() = 0;
             
+            virtual uint64_t readQuad(const uint32_t address) = 0;
+            virtual void readQuad(const uint32_t address, uint64_t & value) = 0;
+            virtual void writeQuad(const uint32_t address, const uint64_t value) = 0;
+            
             virtual uint32_t readDWord(const uint32_t address) = 0;
-            virtual float readFloat(const uint32_t address) = 0;
             virtual void readDWord(const uint32_t address, uint32_t & value) = 0;
+            virtual void writeDWord(const uint32_t address, const uint32_t value) = 0;
+            
+            virtual float readFloat(const uint32_t address) = 0;
             virtual void readFloat(const uint32_t address, float & value) = 0;
+            
             virtual uint16_t readWord(const uint32_t address) = 0;
             virtual void readWord(const uint32_t address, uint16_t & value) = 0;
+            virtual void writeWord(const uint32_t address, const uint16_t value) = 0;
+            
             virtual uint8_t readByte(const uint32_t address) = 0;
             virtual void readByte(const uint32_t address, uint8_t & value) = 0;
-            virtual void read( uint32_t address, uint32_t length, uint8_t* buffer) = 0;
-            
-            virtual void writeDWord(const uint32_t address, const uint32_t value) = 0;
-            virtual void writeWord(const uint32_t address, const uint16_t value) = 0;
             virtual void writeByte(const uint32_t address, const uint8_t value) = 0;
+            
+            virtual void read( uint32_t address, uint32_t length, uint8_t* buffer) = 0;
             virtual void write(uint32_t address, uint32_t length, uint8_t* buffer) = 0;
-
+            
             // read a string
             virtual const string readSTLString (uint32_t offset) = 0;
             virtual size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity) = 0;
@@ -151,21 +158,28 @@ namespace DFHack
             bool resume();
             bool forceresume();
             
+            uint64_t readQuad(const uint32_t address);
+            void readQuad(const uint32_t address, uint64_t & value);
+            void writeQuad(const uint32_t address, const uint64_t value);
+            
             uint32_t readDWord(const uint32_t address);
-            float readFloat(const uint32_t address);
             void readDWord(const uint32_t address, uint32_t & value);
+            void writeDWord(const uint32_t address, const uint32_t value);
+            
+            float readFloat(const uint32_t address);
             void readFloat(const uint32_t address, float & value);
+            
             uint16_t readWord(const uint32_t address);
             void readWord(const uint32_t address, uint16_t & value);
+            void writeWord(const uint32_t address, const uint16_t value);
+            
             uint8_t readByte(const uint32_t address);
             void readByte(const uint32_t address, uint8_t & value);
-            void read( uint32_t address, uint32_t length, uint8_t* buffer);
-            
-            void writeDWord(const uint32_t address, const uint32_t value);
-            void writeWord(const uint32_t address, const uint16_t value);
             void writeByte(const uint32_t address, const uint8_t value);
+            
+            void read( uint32_t address, uint32_t length, uint8_t* buffer);
             void write(uint32_t address, uint32_t length, uint8_t* buffer);
-
+            
             const string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             void writeSTLString(const uint32_t address, const std::string writeString){};
@@ -216,19 +230,26 @@ namespace DFHack
             bool resume();
             bool forceresume();
             
+            uint64_t readQuad(const uint32_t address);
+            void readQuad(const uint32_t address, uint64_t & value);
+            void writeQuad(const uint32_t address, const uint64_t value);
+            
             uint32_t readDWord(const uint32_t address);
-            float readFloat(const uint32_t address);
             void readDWord(const uint32_t address, uint32_t & value);
+            void writeDWord(const uint32_t address, const uint32_t value);
+            
+            float readFloat(const uint32_t address);
             void readFloat(const uint32_t address, float & value);
+            
             uint16_t readWord(const uint32_t address);
             void readWord(const uint32_t address, uint16_t & value);
+            void writeWord(const uint32_t address, const uint16_t value);
+            
             uint8_t readByte(const uint32_t address);
             void readByte(const uint32_t address, uint8_t & value);
-            void read( uint32_t address, uint32_t length, uint8_t* buffer);
-            
-            void writeDWord(const uint32_t address, const uint32_t value);
-            void writeWord(const uint32_t address, const uint16_t value);
             void writeByte(const uint32_t address, const uint8_t value);
+            
+            void read( uint32_t address, uint32_t length, uint8_t* buffer);
             void write(uint32_t address, uint32_t length, uint8_t* buffer);
             
             const string readSTLString (uint32_t offset);
@@ -280,19 +301,26 @@ namespace DFHack
             bool resume();
             bool forceresume();
             
+            uint64_t readQuad(const uint32_t address);
+            void readQuad(const uint32_t address, uint64_t & value);
+            void writeQuad(const uint32_t address, const uint64_t value);
+            
             uint32_t readDWord(const uint32_t address);
-            float readFloat(const uint32_t address);
             void readDWord(const uint32_t address, uint32_t & value);
+            void writeDWord(const uint32_t address, const uint32_t value);
+            
+            float readFloat(const uint32_t address);
             void readFloat(const uint32_t address, float & value);
+            
             uint16_t readWord(const uint32_t address);
             void readWord(const uint32_t address, uint16_t & value);
+            void writeWord(const uint32_t address, const uint16_t value);
+            
             uint8_t readByte(const uint32_t address);
             void readByte(const uint32_t address, uint8_t & value);
-            void read( uint32_t address, uint32_t length, uint8_t* buffer);
-            
-            void writeDWord(const uint32_t address, const uint32_t value);
-            void writeWord(const uint32_t address, const uint16_t value);
             void writeByte(const uint32_t address, const uint8_t value);
+            
+            void read( uint32_t address, uint32_t length, uint8_t* buffer);
             void write(uint32_t address, uint32_t length, uint8_t* buffer);
 
             const string readSTLString (uint32_t offset);

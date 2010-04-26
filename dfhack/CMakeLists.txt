@@ -81,7 +81,13 @@ SET( MEMXML_DATA_PATH . CACHE PATH "search path for Memory.xml")
 # OPTION( VARIABLE "Description" Initial state)
 #OPTION( WITH_FOO "Enable FOO support" ON )
 #OPTION( WITH_BAR "Enable BAR component" OFF )
-
+    
+# Are we 64bit? (Damn you, ptrace()!)
+IF( CMAKE_SIZEOF_VOID_P MATCHES 4 )
+    SET( HAVE_64_BIT 0 )
+ELSE( CMAKE_SIZEOF_VOID_P MATCHES 4 )
+    SET( HAVE_64_BIT 1 )
+ENDIF( CMAKE_SIZEOF_VOID_P MATCHES 4 )
 
 CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/dfhack/config.h.cmake ${CMAKE_SOURCE_DIR}/dfhack/include/config.h )
 
@@ -110,8 +116,8 @@ IF(UNIX)
   install(FILES ${CMAKE_SOURCE_DIR}/output/Memory.xml DESTINATION share/dfhack)
 ENDIF(UNIX)
 
-# SWIG stuff
-FIND_PACKAGE(SWIG)
+# SWIG stuff is dead
+# FIND_PACKAGE(SWIG)
 
 #IF(SWIG_FOUND)
 #    INCLUDE(${SWIG_USE_FILE})

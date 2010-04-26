@@ -365,6 +365,20 @@ void NormalProcess::readDWord (const uint32_t offset, uint32_t &result)
         throw Error::MemoryAccessDenied();
 }
 
+uint64_t NormalProcess::readQuad (const uint32_t offset)
+{
+    uint64_t result;
+    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint64_t), NULL))
+        throw Error::MemoryAccessDenied();
+    return result;
+}
+
+void NormalProcess::readQuad (const uint32_t offset, uint64_t &result)
+{
+    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint64_t), NULL))
+        throw Error::MemoryAccessDenied();
+}
+
 float NormalProcess::readFloat (const uint32_t offset)
 {
     float result;
@@ -386,22 +400,28 @@ void NormalProcess::read (const uint32_t offset, uint32_t size, uint8_t *target)
 }
 
 // WRITING
+void NormalProcess::writeQuad (const uint32_t offset, uint64_t data)
+{
+    if(!WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(data), NULL))
+        throw Error::MemoryAccessDenied();
+}
+
 void NormalProcess::writeDWord (const uint32_t offset, uint32_t data)
 {
-    if(!WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(uint32_t), NULL))
+    if(!WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(data), NULL))
         throw Error::MemoryAccessDenied();
 }
 
 // using these is expensive.
 void NormalProcess::writeWord (uint32_t offset, uint16_t data)
 {
-    if(!WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(uint16_t), NULL))
+    if(!WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(data), NULL))
         throw Error::MemoryAccessDenied();
 }
 
 void NormalProcess::writeByte (uint32_t offset, uint8_t data)
 {
-    if(!WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(uint8_t), NULL))
+    if(!WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(data), NULL))
         throw Error::MemoryAccessDenied();
 }
 

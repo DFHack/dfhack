@@ -26,7 +26,7 @@ distribution.
 #define SHMS_CORE_H
 
 // increment on every core change
-#define CORE_VERSION 8
+#define CORE_VERSION 10
 
 typedef struct
 {
@@ -35,6 +35,7 @@ typedef struct
     uint32_t value;
     uint32_t length;
     uint32_t error;
+    uint64_t Qvalue;
 } shm_core_hdr;
 
 typedef struct
@@ -67,7 +68,7 @@ enum CORE_COMMAND
     CORE_SUSPEND, // client notifies server to wait for commands (server is stalled in busy wait)
     CORE_SUSPENDED, // response to WAIT, server is stalled in busy wait
     CORE_ERROR, // there was a server error
-        
+    
     // utility commands
     CORE_ATTACH, // compare affinity, get core version and process ID
     CORE_ACQUIRE_MODULE, // get index of a loaded module by name and version
@@ -75,12 +76,14 @@ enum CORE_COMMAND
 
     // raw reads
     CORE_READ, // cl -> sv, read some data
+    CORE_READ_QUAD, // cl -> sv, read a quad
     CORE_READ_DWORD, // cl -> sv, read a dword
     CORE_READ_WORD, // cl -> sv, read a word
     CORE_READ_BYTE, // cl -> sv, read a byte
 
     // raw writes
     CORE_WRITE,// client writes to server
+    CORE_WRITE_QUAD,// client writes a QUAD to server
     CORE_WRITE_DWORD,// client writes a DWORD to server
     CORE_WRITE_WORD,// client writes a WORD to server
     CORE_WRITE_BYTE,// client writes a BYTE to server

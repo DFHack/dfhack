@@ -249,6 +249,19 @@ int main (int numargs, const char ** args)
                 cout << "smooth?" << endl;
             uint32_t designato = block.origin + designatus + (tileX * 16 + tileY) * sizeof(t_designation);
             printf("designation offset: 0x%x\n", designato);
+            if(des.light)
+                cout << "L";
+            else
+                cout << " ";
+            if(des.skyview)
+                cout << "S";
+            else
+                cout << " ";
+            if(des.subterranean)
+                cout << "U";
+            else
+                cout << " ";
+            cout << endl;
             /*
             block.designation[tx][ty].bits.moss = 1;
             block.designation[tx][ty].bits.geolayer_index = 15;

@@ -86,6 +86,14 @@ int main (void)
         {
             mode = "column";
         }
+        else if(command == "starruby")
+        {
+            mode = "starruby";
+        }
+        else if(command == "darkhide")
+        {
+            mode = "darkhide";
+        }
         else if(command == "w")
         {
             mode = "water";
@@ -176,6 +184,58 @@ int main (void)
                         Maps->WriteTileTypes((x/16),(y/16),zzz, &tiles);
                         zzz++;
                     } 
+                }
+                // quick hack, do not use for serious stuff
+                
+                else if(mode == "starruby")
+                {
+                    if(Maps->isValidBlock((x/16),(y/16),z))
+                    {
+                        Maps->ReadTileTypes((x/16),(y/16),z, &tiles);
+                        Maps->ReadDesignations((x/16),(y/16),z, &designations);
+                        Maps->ReadTemperatures((x/16),(y/16),z, &temp1, &temp2);
+                        cout << "sizeof(designations) = " << sizeof(designations) << endl;
+                        cout << "sizeof(tiletypes) = " << sizeof(tiles) << endl;
+                        for(uint32_t xx = 0; xx < 16; xx++) for(uint32_t yy = 0; yy < 16; yy++)
+                        {
+                            
+                            cout<< xx << " " << yy <<": " << tiles[xx][yy] << endl;
+                            tiles[xx][yy] = 335;// 45
+                            DFHack::naked_designation & des = designations[xx][yy].bits;
+                            des.feature_local = true;
+                            des.feature_global = false;
+                            des.flow_size = 0;
+                            des.skyview = 0;
+                            des.light = 0;
+                            des.subterranean = 1;
+                            
+                            temp1[xx][yy] = 10015;
+                            temp2[xx][yy] = 10015;
+                            
+                        }
+                        Maps->WriteTemperatures((x/16),(y/16),z, &temp1, &temp2);
+                        Maps->WriteDesignations((x/16),(y/16),z, &designations);
+                        Maps->WriteTileTypes((x/16),(y/16),z, &tiles);
+                        Maps->WriteLocalFeature((x/16),(y/16),z, 36);
+                    }
+                }
+                else if(mode == "darkhide")
+                {
+                    int16_t zzz = z;
+                    while ( zzz >=0 )
+                    {
+                        if(Maps->isValidBlock((x/16),(y/16),zzz))
+                        {
+                            int xx = x %16;
+                            int yy = y %16;
+                            Maps->ReadDesignations((x/16),(y/16),zzz, &designations);
+                            designations[xx][yy].bits.skyview = 0;
+                            designations[xx][yy].bits.light = 0;
+                            designations[xx][yy].bits.subterranean = 1;
+                            Maps->WriteDesignations((x/16),(y/16),zzz, &designations);
+                        }
+                        zzz --;
+                    }
                 }
                 else
                 {

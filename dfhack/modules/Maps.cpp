@@ -443,6 +443,43 @@ bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices4
     return false;
 }
 
+bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, int16_t & local, int16_t & global)
+{
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
+    {
+        Process * p = d->owner;
+        p->readWord(addr + d->offsets.global_feature_offset, (uint16_t&) global);
+        p->readWord(addr + d->offsets.local_feature_offset, (uint16_t&)local);
+        return true;
+    }
+    return false;
+}
+
+bool Maps::WriteLocalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t local)
+{
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
+    {
+        Process * p = d->owner;
+        p->writeWord(addr + d->offsets.local_feature_offset, (uint16_t&)local);
+        return true;
+    }
+    return false;
+}
+
+bool Maps::WriteGlobalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t global)
+{
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
+    {
+        Process * p = d->owner;
+        p->writeWord(addr + d->offsets.global_feature_offset, (uint16_t&)global);
+        return true;
+    }
+    return false;
+}
+
 /*
  * Block events
  */ 

@@ -348,6 +348,10 @@ namespace DFHack
                             t_blockflags &blockflags);
         bool WriteBlockFlags(uint32_t blockx, uint32_t blocky, uint32_t blockz,
                              t_blockflags blockflags);
+        /// read/write features
+        bool ReadFeatures(uint32_t blockx, uint32_t blocky, uint32_t blockz, int16_t & local, int16_t & global);
+        bool WriteLocalFeature(uint32_t blockx, uint32_t blocky, uint32_t blockz, int16_t local = -1);
+        bool WriteGlobalFeature(uint32_t blockx, uint32_t blocky, uint32_t blockz, int16_t local = -1);
 
         /// read region offsets of a block - used for determining layer stone matgloss
         bool ReadRegionOffsets(uint32_t blockx, uint32_t blocky, uint32_t blockz,

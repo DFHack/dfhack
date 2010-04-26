@@ -29,6 +29,7 @@ distribution.
 #include <errno.h>
 #include <DFError.h>
 #include <sys/ptrace.h>
+#include <stdio.h>
 using namespace DFHack;
 
 class WineProcess::Private
@@ -454,12 +455,14 @@ void WineProcess::writeDWord (uint32_t offset, uint32_t data)
 void WineProcess::writeWord (uint32_t offset, uint16_t data)
 {
     uint32_t orig = readDWord(offset);
+    /*;
+    uint16_t & zz = (uint16_t&) orig;
+    zz = data;
+    */
+    
     orig &= 0xFFFF0000;
     orig |= data;
-    /*
-    orig |= 0x0000FFFF;
-    orig &= data;
-    */
+    
     ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
 }
 
@@ -468,16 +471,14 @@ void WineProcess::writeByte (uint32_t offset, uint8_t data)
     uint32_t orig = readDWord(offset);
     orig &= 0xFFFFFF00;
     orig |= data;
-    /*
-    orig |= 0x000000FF;
-    orig &= data;
-    */
     ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
 }
 
 // blah. I hate the kernel devs for crippling /proc/PID/mem. THIS IS RIDICULOUS
 void WineProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
 {
+    printf("0x%x, size %d\n", source, size);
+    uint32_t count = 0;
     uint32_t indexptr = 0;
     while (size > 0)
     {
@@ -488,6 +489,7 @@ void WineProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
             offset +=4;
             indexptr +=4;
             size -=4;
+            count +=4;
         }
         // last is either three or 2 bytes
         else if(size >= 2)
@@ -496,14 +498,17 @@ void WineProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
             offset +=2;
             indexptr +=2;
             size -=2;
+            count +=2;
         }
         // finishing move
         else if(size == 1)
         {
             writeByte(offset, *(uint8_t *) (source + indexptr));
+            count ++;
             return;
         }
     }
+    printf("written %d\n", count);
 }
 
 const std::string WineProcess::readCString (uint32_t offset)

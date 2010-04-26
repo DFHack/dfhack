@@ -702,6 +702,8 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
     memory_info * mem = p->getDescriptor();
     // deref pointer to the humongo-structure
     uint32_t base = p->readDWord(mem->getAddress("local_feature_start_ptr"));
+    if(!base)
+        return false;
     uint32_t sizeof_vec = mem->getHexValue("sizeof_vector");
     const uint32_t sizeof_elem = 16;
     const uint32_t offset_elem = 4;

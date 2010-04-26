@@ -88,6 +88,7 @@ Creatures::Creatures(APIPrivate* _d)
         creatures.default_soul_offset = minfo->getOffset("creature_default_soul");
         creatures.physical_offset = minfo->getOffset("creature_physical");
         creatures.mood_offset = minfo->getOffset("creature_mood");
+        creatures.mood_skill_offset = minfo->getOffset("creature_mood_skill");
         creatures.pickup_equipment_bit = minfo->getOffset("creature_pickup_equipment_bit");
 	creatures.current_job_offset = minfo->getOffset("creature_current_job");
         // soul offsets
@@ -185,6 +186,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         
     // mood stuff
     furball.mood = (int16_t) p->readWord (temp + offs.mood_offset);
+    furball.mood_skill = p->readWord (temp + offs.mood_skill_offset);
     d->d->readName(furball.artifact_name, temp + offs.artifact_name_offset);
     
     // custom profession

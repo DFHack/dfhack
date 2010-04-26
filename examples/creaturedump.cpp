@@ -243,7 +243,7 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 
 	if(creature.mood != -1)
 	{
-		cout << "mood: " << creature.mood << endl;
+		cout << "mood: " << creature.mood << ", skill: " << mem->getSkill(creature.mood_skill) << endl;
 		vector<DFHack::t_material> mat;
 		char * maintype;
 		if(Creatures->ReadJob(&creature, mat))

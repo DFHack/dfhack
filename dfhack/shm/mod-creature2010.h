@@ -50,6 +50,7 @@ typedef struct
     uint32_t artifact_name_offset;
     uint32_t physical_offset;
     uint32_t mood_offset;
+    uint32_t mood_skill_offset;
     uint32_t pickup_equipment_bit;
     uint32_t soul_vector_offset;
     uint32_t default_soul_offset;

@@ -245,10 +245,43 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 	{
 		cout << "mood: " << creature.mood << endl;
 		vector<DFHack::t_material> mat;
+		char * maintype;
 		if(Creatures->ReadJob(&creature, mat))
 		{
 			for(unsigned int i = 0; i < mat.size(); i++)
-				printf("\t%.4x %.4x %.4x\n", mat[i].typeA, mat[i].typeB, mat[i].typeC);
+			{
+				switch(mat[i].typeA)
+				{
+					case 0:
+						maintype = (char*)"metal bars";
+						break;
+					case 1:
+						maintype = (char*)"cut gems";
+						break;
+					case 2:
+						maintype = (char*)"blocks";
+						break;
+					case 3:
+						maintype = (char*)"rough gem/glass";
+						break;
+					case 4:
+						maintype = (char*)"stone";
+						break;
+					case 5:
+						maintype = (char*)"logs";
+						break;
+					case 54:
+						maintype = (char*)"leather";
+						break;
+					case 57:
+						maintype = (char*)"cloth";
+						break;
+					default:
+						maintype = (char*)"????";
+						break;
+				}
+				printf("\t%s\t%.4x %.4x\n", maintype, mat[i].typeB, mat[i].typeC);
+			}
 		}
 	}
 

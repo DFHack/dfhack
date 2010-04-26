@@ -3,6 +3,7 @@
 #include <iostream>
 #include <climits>
 #include <integers.h>
+#include <string.h>
 #include <vector>
 using namespace std;
 
@@ -39,6 +40,7 @@ vector< vector <DFHack::t_itemType> > itemTypes;
 DFHack::memory_info *mem;
 vector< vector<string> > englishWords;
 vector< vector<string> > foreignWords;
+DFHack::Creatures * Creatures = NULL;
 /*
 likeType printLike40d(DFHack::t_like like, const matGlosses & mat,const vector< vector <DFHack::t_itemType> > & itemTypes)
 { // The function in DF which prints out the likes is a monster, it is a huge switch statement with tons of options and calls a ton of other functions as well, 
@@ -239,6 +241,69 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout <<"Male";
         }
         cout << endl;
+
+	if(creature.mood != -1)
+	{
+		cout << "mood: " << creature.mood << ", skill: " << mem->getSkill(creature.mood_skill) << endl;
+		vector<DFHack::t_material> mymat;
+		char maintype[512];
+		if(Creatures->ReadJob(&creature, mymat))
+		{
+			for(unsigned int i = 0; i < mymat.size(); i++)
+			{
+				strcpy(maintype, "???");
+				switch(mymat[i].typeA)
+				{
+					case 0:
+						if(mymat[i].typeD>=0)
+						{
+							if(mymat[i].typeD<=mat.metalMat.size())
+								sprintf(maintype, "%s bar", mat.metalMat[mymat[i].typeD].id);
+							else
+								strcpy(maintype, "invalid metal bar");
+						}
+						else
+							strcpy(maintype, "any metal bar");
+						break;
+					case 1:
+						strcpy(maintype, "cut gem");
+						break;
+					case 2:
+						strcpy(maintype, "block");
+						break;
+					case 3:
+						switch(mymat[i].typeC)
+						{
+							case 3: strcpy(maintype, "raw green glass"); break;
+							case 4: strcpy(maintype, "raw clear glass"); break;
+							case 5: strcpy(maintype, "raw crystal glass"); break;
+							default: strcpy(maintype, "raw gems"); break;
+						}
+						break;
+					case 4:
+						strcpy(maintype, "raw stone");
+						break;
+					case 5:
+						strcpy(maintype, "wood log");
+						break;
+					case 24:
+						strcpy(maintype, "weapon?");
+						break;
+					case 54:
+						strcpy(maintype, "leather");
+						break;
+					case 57:
+						strcpy(maintype, "cloth");
+						break;
+					default:
+						strcpy(maintype, "unknown");
+						break;
+				}
+				printf("\t%s(%d)\t%d %d %d - %.8x\n", maintype, mymat[i].typeA, mymat[i].typeB, mymat[i].typeC, mymat[i].typeD, mymat[i].flags);
+			}
+		}
+	}
+
         /*
         if(creature.pregnancy_timer > 0)
             cout << "gives birth in " << creature.pregnancy_timer/1200 << " days. ";
@@ -376,7 +441,7 @@ int main (int numargs, char ** args)
     if(numargs == 2)
         check = args[1];
     
-    DFHack::Creatures * Creatures = DF.getCreatures();
+    Creatures = DF.getCreatures();
     DFHack::Materials * Materials = DF.getMaterials();
     DFHack::Translation * Tran = DF.getTranslation();
     
@@ -399,7 +464,11 @@ int main (int numargs, char ** args)
     }
 
     mem = DF.getMemoryInfo();
-    // get stone matgloss mapping
+	if(!Materials->ReadInorganicMaterials(mat.metalMat))
+	{
+		cerr << "Can't get the inorganics types." << endl;
+		return 1;
+	}
     if(!Materials->ReadCreatureTypesEx(creaturestypes))
     {
         cerr << "Can't get the creature types." << endl;

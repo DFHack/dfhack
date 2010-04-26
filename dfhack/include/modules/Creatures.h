@@ -260,10 +260,20 @@ namespace DFHack
         uint32_t experience;
         uint16_t rating;
     };
+    struct t_material
+    {
+        int16_t typeA;
+        int16_t typeB;
+        int16_t typeC;
+        int32_t typeD;
+	uint32_t flags;
+    };
     struct t_job
     {
         bool active;
-        uint8_t jobId;
+        uint32_t jobId;
+        uint8_t jobType;
+	uint32_t occupationPtr;
     };
     struct t_like
     {
@@ -283,6 +293,7 @@ namespace DFHack
         uint32_t field_14;
         uint32_t field_18;
     };
+
 
     // FIXME: define in Memory.xml instead?
     #define NUM_CREATURE_TRAITS 30
@@ -327,6 +338,7 @@ namespace DFHack
         t_name name;
         
         int16_t mood;
+        int16_t mood_skill;
         t_name artifact_name;
         
         uint8_t profession;
@@ -371,6 +383,7 @@ namespace DFHack
         bool WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
         uint32_t GetDwarfRaceIndex ( void );
         int32_t GetDwarfCivId ( void );
+	bool ReadJob(const t_creature * furball, vector<t_material> & mat);
         private:
         struct Private;
         Private *d;

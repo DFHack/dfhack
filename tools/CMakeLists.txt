@@ -9,6 +9,10 @@ ENDIF(UNIX)
 ADD_EXECUTABLE(dfreveal reveal.cpp)
 TARGET_LINK_LIBRARIES(dfreveal dfhack)
 
+# a reveal clone
+ADD_EXECUTABLE(dfmoodump moodump.cpp)
+TARGET_LINK_LIBRARIES(dfmoodump dfhack)
+
 # prospector - produces a list of available materials and their quantities
 ADD_EXECUTABLE(dfprospector prospector.cpp)
 TARGET_LINK_LIBRARIES(dfprospector dfhack)
@@ -63,6 +67,7 @@ dfincremental
 #dfmagma_create
 dfprospector
 dfreveal
+dfmoodump
 RUNTIME DESTINATION bin
 )
 ENDIF(UNIX)

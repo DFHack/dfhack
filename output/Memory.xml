@@ -1429,6 +1429,7 @@ map_data_1b60_offset          0x1B9c
 	<Offset name="job_material_maintype">0x0</Offset> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
 	<Offset name="job_material_sectype1">0x2</Offset> always -1
 	<Offset name="job_material_sectype2">0x4</Offset> subtype ?
+	<Offset name="job_material_sectype3">0x8</Offset> subtype ?
 	<Offset name="job_material_flags">0x18</Offset> set only for shell / bone mood requirements ?
         
         Materials

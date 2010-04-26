@@ -262,13 +262,22 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 						maintype = (char*)"block";
 						break;
 					case 3:
-						maintype = (char*)"rough gem/glass";
+						switch(mat[i].typeC)
+						{
+							case 3: maintype = (char*)"raw green glass"; break;
+							case 4: maintype = (char*)"raw clear glass"; break;
+							case 5: maintype = (char*)"raw crystal glass"; break;
+							default: maintype = (char*)"raw gems"; break;
+						}
 						break;
 					case 4:
 						maintype = (char*)"raw stone";
 						break;
 					case 5:
 						maintype = (char*)"wood log";
+						break;
+					case 24:
+						maintype = (char*)"weapon?";
 						break;
 					case 54:
 						maintype = (char*)"leather";
@@ -280,7 +289,7 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 						maintype = (char*)"unknown";
 						break;
 				}
-				printf("\t%s(%d)\t%d %d - %.8x\n", maintype, mat[i].typeA, mat[i].typeB, mat[i].typeC, mat[i].flags);
+				printf("\t%s(%d)\t%d %d %d - %.8x\n", maintype, mat[i].typeA, mat[i].typeB, mat[i].typeC, mat[i].typeD, mat[i].flags);
 			}
 		}
 	}

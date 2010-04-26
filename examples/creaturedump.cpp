@@ -39,6 +39,7 @@ vector< vector <DFHack::t_itemType> > itemTypes;
 DFHack::memory_info *mem;
 vector< vector<string> > englishWords;
 vector< vector<string> > foreignWords;
+DFHack::Creatures * Creatures = NULL;
 /*
 likeType printLike40d(DFHack::t_like like, const matGlosses & mat,const vector< vector <DFHack::t_itemType> > & itemTypes)
 { // The function in DF which prints out the likes is a monster, it is a huge switch statement with tons of options and calls a ton of other functions as well, 
@@ -239,6 +240,18 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             cout <<"Male";
         }
         cout << endl;
+
+	if(creature.mood != -1)
+	{
+		cout << "mood: " << creature.mood << endl;
+		vector<DFHack::t_material> mat;
+		if(Creatures->ReadJob(&creature, mat))
+		{
+			for(unsigned int i = 0; i < mat.size(); i++)
+				printf("\t%.4x %.4x %.4x\n", mat[i].typeA, mat[i].typeB, mat[i].typeC);
+		}
+	}
+
         /*
         if(creature.pregnancy_timer > 0)
             cout << "gives birth in " << creature.pregnancy_timer/1200 << " days. ";
@@ -376,7 +389,7 @@ int main (int numargs, char ** args)
     if(numargs == 2)
         check = args[1];
     
-    DFHack::Creatures * Creatures = DF.getCreatures();
+    Creatures = DF.getCreatures();
     DFHack::Materials * Materials = DF.getMaterials();
     DFHack::Translation * Tran = DF.getTranslation();
     

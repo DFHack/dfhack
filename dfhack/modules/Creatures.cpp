@@ -89,6 +89,7 @@ Creatures::Creatures(APIPrivate* _d)
         creatures.physical_offset = minfo->getOffset("creature_physical");
         creatures.mood_offset = minfo->getOffset("creature_mood");
         creatures.pickup_equipment_bit = minfo->getOffset("creature_pickup_equipment_bit");
+	creatures.current_job_offset = minfo->getOffset("creature_current_job");
         // soul offsets
         creatures.soul_skills_vector_offset = minfo->getOffset("soul_skills_vector");
         creatures.soul_mental_offset = minfo->getOffset("soul_mental");
@@ -157,6 +158,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     }
     
     // non-SHM slow path
+    memory_info * minfo = d->d->offset_descriptor;
     
     // read pointer from vector at position
     uint32_t temp = d->p_cre->at (index);
@@ -193,6 +195,19 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     
     // profession
     furball.profession = p->readByte (temp + offs.profession_offset);
+
+    furball.current_job.occupationPtr = p->readDWord (temp + offs.current_job_offset);
+    if(furball.current_job.occupationPtr)
+    {
+        furball.current_job.active = true;
+        furball.current_job.jobType = p->readByte (furball.current_job.occupationPtr + minfo->getOffset("job_type") );
+        furball.current_job.jobId = p->readDWord (furball.current_job.occupationPtr + minfo->getOffset("job_id") );
+    }
+    else
+    {
+        furball.current_job.active = false;;
+    }
+
 
     // current job HACK: the job object isn't cleanly represented here
     /*
@@ -342,3 +357,23 @@ bool Creatures::getCurrentCursorCreature(uint32_t & creature_index)
     return true;
 }
 */
+
+bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
+{
+    unsigned int i;
+    if(!d->Inited) return false;
+    if(!furball->current_job.active) return false;
+    Process * p = d->owner;
+    memory_info * minfo = d->d->offset_descriptor;
+
+    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + minfo->getOffset("job_materials_vector"));
+    mat.resize(cmats.size());
+    for(i=0;i<cmats.size();i++)
+    {
+        printf("!");
+	mat[i].typeA = p->readWord(cmats[i] + minfo->getOffset("job_material_maintype"));
+	mat[i].typeB = p->readWord(cmats[i] + minfo->getOffset("job_material_sectype1"));
+	mat[i].typeC = p->readWord(cmats[i] + minfo->getOffset("job_material_sectype2"));
+    }
+    return true;
+}

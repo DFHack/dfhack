@@ -265,6 +265,7 @@ namespace DFHack
         int16_t typeA;
         int16_t typeB;
         int16_t typeC;
+	uint32_t flags;
     };
     struct t_job
     {

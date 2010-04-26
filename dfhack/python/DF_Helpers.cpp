@@ -90,9 +90,19 @@ static PyObject* BuildMatglossPair(DFHack::t_matglossPair& matgloss)
 static DFHack::t_matglossPair ReverseBuildMatglossPair(PyObject* mObj)
 {
 	DFHack::t_matglossPair mPair;
+	PyObject* temp;
 	
-	mPair.type = (int16_t)PyInt_AsLong(PyTuple_GetItem(mObj, 0));
-	mPair.index = (int32_t)PyInt_AsLong(PyTuple_GetItem(mObj, 1));
+	temp = PyTuple_GetItem(mObj, 0);
+	
+	mPair.type = (int16_t)PyInt_AsLong(temp);
+	
+	Py_DECREF(temp);
+	
+	temp = PyTuple_GetItem(mObj, 1);
+	
+	mPair.index = (int32_t)PyInt_AsLong(temp);
+	
+	Py_DECREF(temp);
 	
 	return mPair;
 }
@@ -172,46 +182,28 @@ static PyObject* BuildNote(DFHack::t_note& note)
 	return noteObj;
 }
 
+static int NAME_WORD_COUNT = 7;
+
 static PyObject* BuildName(DFHack::t_name& name)
 {
 	PyObject* nameObj;
-	PyObject *wordList, *speechList;
-	PyObject* temp;
-	int wordCount = 7;
+	PyObject *wordList, *speechList, *args;
 	
-	nameObj = PyObject_CallObject(Name_type, NULL);
+	wordList = PyList_New(NAME_WORD_COUNT);
+	speechList = PyList_New(NAME_WORD_COUNT);
 	
-	if(name.first_name[0])
-		temp = PyString_FromString(name.first_name);
-	else
-		temp = PyString_FromString("");
-	
-	OBJSET(nameObj, "first_name", temp);
-	
-	if(name.nickname[0])
-		temp = PyString_FromString(name.nickname);
-	else
-		temp = PyString_FromString("");
-	
-	OBJSET(nameObj, "nickname", temp);
-	
-	temp = PyInt_FromLong(name.language);
-	OBJSET(nameObj, "language", temp);
-	
-	temp = PyBool_FromLong((int)name.has_name);
-	OBJSET(nameObj, "has_name", temp);
-	
-	wordList = PyList_New(wordCount);
-	speechList = PyList_New(wordCount);
-	
-	for(int i = 0; i < wordCount; i++)
+	for(int i = 0; i < NAME_WORD_COUNT; i++)
 	{
 		PyList_SET_ITEM(wordList, i, PyInt_FromLong(name.words[i]));
 		PyList_SET_ITEM(speechList, i, PyInt_FromLong(name.parts_of_speech[i]));
 	}
 	
-	OBJSET(nameObj, "words", wordList);
-	OBJSET(nameObj, "parts_of_speech", speechList);
+	args = Py_BuildValue("ssiOOO", name.first_name, name.nickname, name.language, \
+									PyBool_FromLong((int)name.has_name), wordList, speechList);
+	
+	nameObj = PyObject_CallObject(Name_type, args);
+	
+	Py_DECREF(args);
 	
 	return nameObj;
 }
@@ -219,8 +211,8 @@ static PyObject* BuildName(DFHack::t_name& name)
 static DFHack::t_name ReverseBuildName(PyObject* nameObj)
 {
 	PyObject *temp, *listTemp;
-	int boolTemp, arrLength;
-	Py_ssize_t listLength, strLength;
+	int boolTemp;
+	Py_ssize_t strLength;
 	char* strTemp;
 	DFHack::t_name name;
 	
@@ -231,37 +223,32 @@ static DFHack::t_name ReverseBuildName(PyObject* nameObj)
 	
 	boolTemp = (int)PyInt_AsLong(temp);
 	
+	Py_DECREF(temp);
+	
 	if(boolTemp != 0)
 		name.has_name = true;
 	else
 		name.has_name = false;
 	
-	//I seriously doubt the name arrays will change length, but why take chances?
 	listTemp = PyObject_GetAttrString(nameObj, "words");
 	
-	arrLength = sizeof(name.words) / sizeof(uint32_t);
-	listLength = PyList_Size(listTemp);
-	
-	if(listLength < arrLength)
-		arrLength = listLength;
-	
-	for(int i = 0; i < arrLength; i++)
+	for(int i = 0; i < NAME_WORD_COUNT; i++)
 		name.words[i] = (uint32_t)PyInt_AsLong(PyList_GetItem(listTemp, i));
+	
+	Py_DECREF(listTemp);
 	
 	listTemp = PyObject_GetAttrString(nameObj, "parts_of_speech");
 	
-	arrLength = sizeof(name.parts_of_speech) / sizeof(uint16_t);
-	listLength = PyList_Size(listTemp);
-	
-	if(listLength < arrLength)
-		arrLength = listLength;
-	
-	for(int i = 0; i < arrLength; i++)
+	for(int i = 0; i < NAME_WORD_COUNT; i++)
 		name.parts_of_speech[i] = (uint16_t)PyInt_AsLong(PyList_GetItem(listTemp, i));
+	
+	Py_DECREF(listTemp);
 	
 	temp = PyObject_GetAttrString(nameObj, "first_name");
 	strLength = PyString_Size(temp);
 	strTemp = PyString_AsString(temp);
+	
+	Py_DECREF(temp);
 	
 	if(strLength > 128)
 	{
@@ -277,6 +264,8 @@ static DFHack::t_name ReverseBuildName(PyObject* nameObj)
 	temp = PyObject_GetAttrString(nameObj, "nickname");
 	strLength = PyString_Size(temp);
 	strTemp = PyString_AsString(temp);
+	
+	Py_DECREF(temp);
 	
 	if(strLength > 128)
 	{

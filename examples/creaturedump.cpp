@@ -3,6 +3,7 @@
 #include <iostream>
 #include <climits>
 #include <integers.h>
+#include <string.h>
 #include <vector>
 using namespace std;
 
@@ -244,52 +245,61 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 	if(creature.mood != -1)
 	{
 		cout << "mood: " << creature.mood << ", skill: " << mem->getSkill(creature.mood_skill) << endl;
-		vector<DFHack::t_material> mat;
-		char * maintype;
-		if(Creatures->ReadJob(&creature, mat))
+		vector<DFHack::t_material> mymat;
+		char maintype[512];
+		if(Creatures->ReadJob(&creature, mymat))
 		{
-			for(unsigned int i = 0; i < mat.size(); i++)
+			for(unsigned int i = 0; i < mymat.size(); i++)
 			{
-				switch(mat[i].typeA)
+				strcpy(maintype, "???");
+				switch(mymat[i].typeA)
 				{
 					case 0:
-						maintype = (char*)"metal bar";
+						if(mymat[i].typeD>=0)
+						{
+							if(mymat[i].typeD<=mat.metalMat.size())
+								sprintf(maintype, "%s bar", mat.metalMat[mymat[i].typeD].name);
+							else
+								strcpy(maintype, "invalid metal bar");
+						}
+						else
+							strcpy(maintype, "any metal bar");
 						break;
 					case 1:
-						maintype = (char*)"cut gem";
+						strcpy(maintype, "cut gem");
 						break;
 					case 2:
-						maintype = (char*)"block";
+						strcpy(maintype, "block");
 						break;
 					case 3:
-						switch(mat[i].typeC)
+						switch(mymat[i].typeC)
 						{
-							case 3: maintype = (char*)"raw green glass"; break;
-							case 4: maintype = (char*)"raw clear glass"; break;
-							case 5: maintype = (char*)"raw crystal glass"; break;
-							default: maintype = (char*)"raw gems"; break;
+							case 3: strcpy(maintype, "raw green glass"); break;
+							case 4: strcpy(maintype, "raw clear glass"); break;
+							case 5: strcpy(maintype, "raw crystal glass"); break;
+							default: strcpy(maintype, "raw gems"); break;
 						}
 						break;
 					case 4:
-						maintype = (char*)"raw stone";
+						strcpy(maintype, "raw stone");
 						break;
 					case 5:
-						maintype = (char*)"wood log";
+						strcpy(maintype, "wood log");
 						break;
 					case 24:
-						maintype = (char*)"weapon?";
+						strcpy(maintype, "weapon?");
 						break;
 					case 54:
-						maintype = (char*)"leather";
+						strcpy(maintype, "leather");
 						break;
 					case 57:
-						maintype = (char*)"cloth";
+						strcpy(maintype, "cloth");
 						break;
 					default:
-						maintype = (char*)"unknown";
+						strcpy(maintype, "unknown");
 						break;
 				}
-				printf("\t%s(%d)\t%d %d %d - %.8x\n", maintype, mat[i].typeA, mat[i].typeB, mat[i].typeC, mat[i].typeD, mat[i].flags);
+				printf("\t%s(%d)\t%d %d %d - %.8x\n", maintype, mymat[i].typeA, mymat[i].typeB, mymat[i].typeC, mymat[i].typeD, mymat[i].flags);
 			}
 		}
 	}

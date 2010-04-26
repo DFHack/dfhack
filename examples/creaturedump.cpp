@@ -280,7 +280,7 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 						maintype = (char*)"????";
 						break;
 				}
-				printf("\t%s\t%.4x %.4x\n", maintype, mat[i].typeB, mat[i].typeC);
+				printf("\t%s\t%d %d\n", maintype, mat[i].typeB, mat[i].typeC);
 			}
 		}
 	}

@@ -253,22 +253,22 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 				switch(mat[i].typeA)
 				{
 					case 0:
-						maintype = (char*)"metal bars";
+						maintype = (char*)"metal bar";
 						break;
 					case 1:
-						maintype = (char*)"cut gems";
+						maintype = (char*)"cut gem";
 						break;
 					case 2:
-						maintype = (char*)"blocks";
+						maintype = (char*)"block";
 						break;
 					case 3:
 						maintype = (char*)"rough gem/glass";
 						break;
 					case 4:
-						maintype = (char*)"stone";
+						maintype = (char*)"raw stone";
 						break;
 					case 5:
-						maintype = (char*)"logs";
+						maintype = (char*)"wood log";
 						break;
 					case 54:
 						maintype = (char*)"leather";

@@ -372,9 +372,9 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
     mat.resize(cmats.size());
     for(i=0;i<cmats.size();i++)
     {
-	mat[i].typeA = p->readWord(cmats[i] + minfo->getOffset("job_material_maintype"));
-	mat[i].typeB = p->readWord(cmats[i] + minfo->getOffset("job_material_sectype1"));
-	mat[i].typeC = p->readWord(cmats[i] + minfo->getOffset("job_material_sectype2"));
+        mat[i].typeA = p->readWord(cmats[i] + minfo->getOffset("job_material_maintype"));
+        mat[i].typeB = p->readWord(cmats[i] + minfo->getOffset("job_material_sectype1"));
+        mat[i].typeC = p->readWord(cmats[i] + minfo->getOffset("job_material_sectype2"));
     }
     return true;
 }

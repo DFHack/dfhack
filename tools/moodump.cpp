@@ -74,7 +74,13 @@ int main (int numargs, char ** args)
         return 1;
     }
     mem = DF.getMemoryInfo();
-    // get stone matgloss mapping
+
+	if(!Materials->ReadInorganicMaterials(mat.metalMat))
+	{
+		cerr << "Can't get the inorganics types." << endl;
+		return 1;
+	}
+    
     if(!Materials->ReadCreatureTypesEx(creaturestypes))
     {
         cerr << "Can't get the creature types." << endl;

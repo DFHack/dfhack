@@ -26,6 +26,12 @@ distribution.
 #define __DFBUILDINGS__
 
 #include "Python.h"
+#include <map>
+#include <string>
+
+using namespace std;
+
+#include "DFTypes.h"
 #include "modules/Buildings.h"
 #include "DF_Helpers.cpp"
 
@@ -38,22 +44,40 @@ static PyObject* BuildBuilding(DFHack::t_building& building)
 	
 	t_dict = PyDict_New();
 	
-	temp = PyInt_FromLong(building.origin);
-	DICTADD(t_dict, "origin", temp);
+	temp = Py_BuildValue("(si)(si)(si)(sO)(s((ii)(ii)i))", \
+		"origin", building.origin, \
+		"vtable", building.vtable, \
+		"type", building.type, \
+		"material", BuildMatglossPair(building.material), \
+		"bounds", Py_BuildValue("(ii)(ii)i", building.x1, building.y1, building.x2, building.y2, building.z));
 	
-	temp = PyInt_FromLong(building.vtable);
-	DICTADD(t_dict, "vtable", temp);
-	
-	temp = PyInt_FromLong(building.type);
-	DICTADD(t_dict, "type", temp);
-	
-	temp = BuildMatglossPair(building.material);
-	DICTADD(t_dict, "material", temp);
-	
-	temp = PyTuple_Pack(2, PyTuple_Pack(2, building.x1, building.y1), PyTuple_Pack(2, building.x2, building.y2));
-	DICTADD(t_dict, "bounds", temp);
+	PyDict_MergeFromSeq2(t_dict, temp, 0);
 	
 	return t_dict;
+}
+
+static DFHack::t_building ReverseBuildBuilding(PyObject* bDict)
+{
+	PyObject* temp;
+	uint32_t x1, y1, x2, y2, z;
+	DFHack::t_building building;
+	
+	building.origin = (uint32_t)PyInt_AsLong(PyDict_GetItemString(bDict, "origin"));
+	building.vtable = (uint32_t)PyInt_AsLong(PyDict_GetItemString(bDict, "vtable"));
+	building.material = ReverseBuildMatglossPair(PyDict_GetItemString(bDict, "material"));
+	building.type = (uint32_t)PyInt_AsLong(PyDict_GetItemString(bDict, "type"));
+	
+	temp = PyDict_GetItemString(bDict, "bounds");
+	
+	PyArg_ParseTuple(temp, "(ii)(ii)i", &x1, &y1, &x2, &y2, &z);
+	
+	building.x1 = x1;
+	building.y1 = y1;
+	building.x2 = x2;
+	building.y2 = y2;
+	building.z = z;
+	
+	return building;
 }
 
 struct DF_Building
@@ -151,11 +175,53 @@ static PyObject* DF_Building_Read(DF_Building* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_Building_ReadCustomWorkshopTypes(DF_Building* self, PyObject* args)
+{
+	PyObject* bDict;
+	std::map<uint32_t, string> bTypes;
+	std::map<uint32_t, string>::iterator bIter;
+	
+	if(self->b_Ptr != NULL)
+	{
+		if(self->b_Ptr->ReadCustomWorkshopTypes(bTypes))
+		{
+			bDict = PyDict_New();
+			
+			for(bIter = bTypes.begin(); bIter != bTypes.end(); bIter++)
+			{
+				PyObject* temp = Py_BuildValue("is", (*bIter).first, (*bIter).second.c_str());
+				
+				PyDict_MergeFromSeq2(bDict, temp, 1);
+			}
+			
+			return bDict;
+		}
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_Building_GetCustomWorkshopType(DF_Building* self, PyObject* args)
+{
+	DFHack::t_building building;
+	
+	if(self->b_Ptr != NULL)
+	{
+		building = ReverseBuildBuilding(args);
+		
+		return PyInt_FromLong(self->b_Ptr->GetCustomWorkshopType(building));
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef DF_Building_methods[] =
 {
     {"Start", (PyCFunction)DF_Building_Start, METH_NOARGS, ""},
     {"Finish", (PyCFunction)DF_Building_Finish, METH_NOARGS, ""},
     {"Read", (PyCFunction)DF_Building_Read, METH_VARARGS, ""},
+	{"Read_Custom_Workshop_Types", (PyCFunction)DF_Building_ReadCustomWorkshopTypes, METH_NOARGS, ""},
+	{"Get_Custom_Workshop_Type", (PyCFunction)DF_Building_GetCustomWorkshopType, METH_VARARGS, ""},
     {NULL}  // Sentinel
 };
 

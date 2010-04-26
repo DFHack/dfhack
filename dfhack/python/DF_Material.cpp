@@ -31,6 +31,8 @@ distribution.
 using namespace std;
 
 #include "modules/Materials.h"
+#include "DF_Imports.cpp"
+#include "DF_Helpers.cpp"
 
 using namespace DFHack;
 
@@ -44,48 +46,16 @@ struct DF_Material
 
 static PyObject* BuildMatgloss(t_matgloss& matgloss)
 {
-	PyObject* matDict;
-	PyObject* temp;
+	PyObject* matObj;
+	PyObject* args;
 	
-	matDict = PyDict_New();
+	args = Py_BuildValue("siiis", matgloss.id, matgloss.fore, matgloss.back, matgloss.bright, matgloss.name);
 	
-	if(matgloss.id[0])
-		temp = PyString_FromString(matgloss.id);
-	else
-		temp = PyString_FromString("");
-		
-	PyDict_SetItemString(matDict, "id", temp);
+	matObj = PyObject_CallObject(Matgloss_type, args);
 	
-	Py_DECREF(temp);
+	Py_DECREF(args);
 	
-	temp = PyInt_FromLong(matgloss.fore);
-		
-	PyDict_SetItemString(matDict, "fore", temp);
-	
-	Py_DECREF(temp);
-	
-	temp = PyInt_FromLong(matgloss.back);
-	
-	PyDict_SetItemString(matDict, "back", temp);
-	
-	Py_DECREF(temp);
-	
-	temp = PyInt_FromLong(matgloss.bright);
-	
-	PyDict_SetItemString(matDict, "bright", temp);
-	
-	Py_DECREF(temp);
-	
-	if(matgloss.name[0])
-		temp = PyString_FromString(matgloss.name);
-	else
-		temp = PyString_FromString("");
-		
-	PyDict_SetItemString(matDict, "name", temp);
-	
-	Py_DECREF(temp);
-	
-	return matDict;
+	return matObj;
 }
 
 static PyObject* BuildMatglossPlant(t_matglossPlant& matgloss)
@@ -143,6 +113,106 @@ static PyObject* BuildMatglossList(std::vector<t_matgloss> & matVec)
 	}
 	
 	return matList;
+}
+
+static PyObject* BuildDescriptorColor(t_descriptor_color& color)
+{
+	PyObject* descObj;
+	PyObject* args;
+	
+	args = Py_BuildValue("sfffs", color.id, color.r, color.v, color.b, color.name);
+	
+	descObj = PyObject_CallObject(DescriptorColor_type, args);
+	
+	Py_DECREF(args);
+	
+	return descObj;
+}
+
+static PyObject* BuildDescriptorColorList(std::vector<t_descriptor_color>& colors)
+{
+	PyObject* colorList;
+	std::vector<t_descriptor_color>::iterator colorIter;
+	
+	colorList = PyList_New(0);
+	
+	for(colorIter = colors.begin(); colorIter != colors.end(); colorIter++)
+	{
+		PyObject* color = BuildDescriptorColor(*colorIter);
+		
+		PyList_Append(colorList, color);
+		
+		Py_DECREF(colorList);
+	}
+	
+	return colorList;
+}
+
+static PyObject* BuildCreatureCaste(t_creaturecaste& caste)
+{
+	PyObject* casteObj;
+	PyObject* args;
+	
+	args = Py_BuildValue("ssss", caste.rawname, caste.singular, caste.plural, caste.adjective);
+	
+	casteObj = PyObject_CallObject(CreatureCaste_type, args);
+	
+	Py_DECREF(args);
+	
+	return casteObj;
+}
+
+static PyObject* BuildCreatureCasteList(std::vector<t_creaturecaste>& castes)
+{
+	PyObject* casteList;
+	std::vector<t_creaturecaste>::iterator casteIter;
+	
+	casteList = PyList_New(0);
+	
+	for(casteIter = castes.begin(); casteIter != castes.end(); casteIter++)
+	{
+		PyObject* caste = BuildCreatureCaste(*casteIter);
+		
+		PyList_Append(casteList, caste);
+		
+		Py_DECREF(caste);
+	}
+	
+	return casteList;
+}
+
+static PyObject* BuildCreatureTypeEx(t_creaturetype& creature)
+{
+	PyObject* cObj;
+	PyObject* args;
+	
+	args = Py_BuildValue("sOiO", creature.rawname, BuildCreatureCasteList(creature.castes), creature.tile_character, \
+									BuildTileColor(creature.tilecolor.fore, creature.tilecolor.back, creature.tilecolor.bright));
+	
+	cObj = PyObject_CallObject(CreatureTypeEx_type, args);
+	
+	Py_DECREF(args);
+	
+	return cObj;
+}
+
+static PyObject* BuildCreatureTypeExList(std::vector<t_creaturetype>& creatures)
+{
+	PyObject* creatureList;
+	std::vector<t_creaturetype>::iterator creatureIter;
+	
+	creatureList = PyList_New(0);
+	
+	for(creatureIter = creatures.begin(); creatureIter != creatures.end(); creatureIter++)
+	{
+		PyObject* creature = BuildCreatureTypeEx(*creatureIter);
+		
+		PyList_Append(creatureList, creature);
+		
+		Py_DECREF(creature);
+	}
+	
+	return creatureList;
 }
 
 // API type Allocation, Deallocation, and Initialization
@@ -266,6 +336,36 @@ static PyObject* DF_Material_ReadCreatureTypes(DF_Material* self, PyObject* args
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_Material_ReadCreatureTypesEx(DF_Material* self, PyObject* args)
+{
+	if(self->mat_Ptr != NULL)
+	{
+		std::vector<DFHack::t_creaturetype> creatureVec;
+		
+		if(self->mat_Ptr->ReadCreatureTypesEx(creatureVec))
+		{
+			return BuildCreatureTypeExList(creatureVec);
+		}
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_Material_ReadDescriptorColors(DF_Material* self, PyObject* args)
+{
+	if(self->mat_Ptr != NULL)
+	{
+		std::vector<DFHack::t_descriptor_color> colorVec;
+		
+		if(self->mat_Ptr->ReadDescriptorColors(colorVec))
+		{
+			return BuildDescriptorColorList(colorVec);
+		}
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef DF_Material_methods[] =
 {
 	{"Read_Inorganic_Materials", (PyCFunction)DF_Material_ReadInorganicMaterials, METH_NOARGS, ""},
@@ -273,6 +373,8 @@ static PyMethodDef DF_Material_methods[] =
 	{"Read_Wood_Materials", (PyCFunction)DF_Material_ReadWoodMaterials, METH_NOARGS, ""},
 	{"Read_Plant_Materials", (PyCFunction)DF_Material_ReadPlantMaterials, METH_NOARGS, ""},
 	{"Read_Creature_Types", (PyCFunction)DF_Material_ReadCreatureTypes, METH_NOARGS, ""},
+	{"Read_Creature_Types_Ex", (PyCFunction)DF_Material_ReadCreatureTypesEx, METH_NOARGS, ""},
+	{"Read_Descriptor_Colors", (PyCFunction)DF_Material_ReadDescriptorColors, METH_NOARGS, ""},
 	{NULL}	//Sentinel
 };
 

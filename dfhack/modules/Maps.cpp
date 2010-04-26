@@ -54,6 +54,10 @@ struct Maps::Private
     Process * owner;
     bool Inited;
     bool Started;
+    
+    // map between feature address and the read object
+    map <uint32_t, t_feature> local_feature_store;
+    
     vector<uint16_t> v_geology[eBiomeCount];
 };
 
@@ -77,9 +81,29 @@ Maps::Maps(APIPrivate* _d)
     off.occupancy_offset = mem->getOffset("map_data_occupancy");
     off.biome_stuffs = mem->getOffset ("map_data_biome_stuffs");
     off.veinvector = mem->getOffset ("map_data_vein_vector");
+    off.local_feature_offset = mem->getOffset ("map_data_feature_local");
+    off.global_feature_offset = mem->getOffset ("map_data_feature_global");
+            
     off.temperature1_offset = mem->getOffset ("map_data_temperature1_offset");
     off.temperature2_offset = mem->getOffset ("map_data_temperature2_offset");
-
+    off.region_x_offset = mem->getAddress ("region_x");
+    off.region_y_offset = mem->getAddress ("region_y");
+    off.region_z_offset =  mem->getAddress ("region_z");
+    
+    
+    off.world_regions =  mem->getAddress ("ptr2_region_array");
+    off.region_size =  mem->getHexValue ("region_size");
+    off.region_geo_index_offset =  mem->getOffset ("region_geo_index_off");
+    off.geolayer_geoblock_offset = mem->getOffset ("geolayer_geoblock_offset");
+    off.world_geoblocks_vector =  mem->getAddress ("geoblock_vector");
+    off.type_inside_geolayer = mem->getOffset ("type_inside_geolayer");
+    
+    off.world_size_x = mem->getAddress ("world_size_x");
+    off.world_size_y = mem->getAddress ("world_size_y");
+    
+    
+    
+    
     // these can fail and will be found when looking at the actual veins later
     // basically a cache
     off.vein_ice_vptr = 0;
@@ -138,6 +162,11 @@ bool Maps::Start()
         //return false;
     }
 
+    // read position of the region inside DF world
+    p->readDWord (off.region_x_offset, d->regionX);
+    p->readDWord (off.region_y_offset, d->regionY);
+    p->readDWord (off.region_z_offset, d->regionZ);
+
     // alloc array for pointers to all blocks
     d->block = new uint32_t[mx*my*mz];
     uint32_t *temp_x = new uint32_t[mx];
@@ -157,6 +186,7 @@ bool Maps::Start()
     }
     delete [] temp_x;
     delete [] temp_y;
+    d->Started = true;
     return true;
 }
 
@@ -168,8 +198,10 @@ void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z)
     z = d->z_block_count;
 }
 
+// invalidates local and global features!
 bool Maps::Finish()
 {
+    d->local_feature_store.clear();
     if (d->block != NULL)
     {
         delete [] d->block;
@@ -219,6 +251,8 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
             p->read (addr + d->offsets.designation_offset, sizeof (buffer->designation), (uint8_t *) buffer->designation);
             p->read (addr + d->offsets.occupancy_offset, sizeof (buffer->occupancy), (uint8_t *) buffer->occupancy);
             p->read (addr + d->offsets.biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer->biome_indices);
+            p->readWord(addr + d->offsets.global_feature_offset, (uint16_t&) buffer->global_feature);
+            p->readWord(addr + d->offsets.local_feature_offset, (uint16_t&)buffer->local_feature);
             buffer->origin = addr;
             uint32_t addr_of_struct = p->readDWord(addr);
             buffer->blockflags.whole = p->readDWord(addr_of_struct);
@@ -557,45 +591,26 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     memory_info * minfo = d->d->offset_descriptor;
     Process *p = d->owner;
     // get needed addresses and offsets. Now this is what I call crazy.
-    int region_x_offset = minfo->getAddress ("region_x");
-    int region_y_offset = minfo->getAddress ("region_y");
-    int region_z_offset =  minfo->getAddress ("region_z");
-    int world_regions =  minfo->getAddress ("ptr2_region_array");
-    int region_size =  minfo->getHexValue ("region_size");
-    int region_geo_index_offset =  minfo->getOffset ("region_geo_index_off");
-    int world_geoblocks_vector =  minfo->getAddress ("geoblock_vector");
-    int world_size_x = minfo->getAddress ("world_size_x");
-    int world_size_y = minfo->getAddress ("world_size_y");
-    int geolayer_geoblock_offset = minfo->getOffset ("geolayer_geoblock_offset");
-    
-    int type_inside_geolayer = minfo->getOffset ("type_inside_geolayer");
-
-    uint32_t regionX, regionY, regionZ;
     uint16_t worldSizeX, worldSizeY;
-
-    // read position of the region inside DF world
-    p->readDWord (region_x_offset, regionX);
-    p->readDWord (region_y_offset, regionY);
-    p->readDWord (region_z_offset, regionZ);
-
+    Server::Maps::maps_offsets &off = d->offsets;
     // get world size
-    p->readWord (world_size_x, worldSizeX);
-    p->readWord (world_size_y, worldSizeY);
+    p->readWord (off.world_size_x, worldSizeX);
+    p->readWord (off.world_size_y, worldSizeY);
 
     // get pointer to first part of 2d array of regions
-    uint32_t regions = p->readDWord (world_regions);
+    uint32_t regions = p->readDWord (off.world_regions);
 
     // read the geoblock vector
-    DfVector <uint32_t> geoblocks (d->d->p, world_geoblocks_vector);
+    DfVector <uint32_t> geoblocks (d->d->p, off.world_geoblocks_vector);
 
     // iterate over 8 surrounding regions + local region
     for (int i = eNorthWest; i < eBiomeCount; i++)
     {
         // check against worldmap boundaries, fix if needed
-        int bioRX = regionX / 16 + (i % 3) - 1;
+        int bioRX = d->regionX / 16 + (i % 3) - 1;
         if (bioRX < 0) bioRX = 0;
         if (bioRX >= worldSizeX) bioRX = worldSizeX - 1;
-        int bioRY = regionY / 16 + (i / 3) - 1;
+        int bioRY = d->regionY / 16 + (i / 3) - 1;
         if (bioRY < 0) bioRY = 0;
         if (bioRY >= worldSizeY) bioRY = worldSizeY - 1;
 
@@ -607,7 +622,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 
         // get index into geoblock vector
         uint16_t geoindex;
-        p->readWord (geoX + bioRY*region_size + region_geo_index_offset, geoindex);
+        p->readWord (geoX + bioRY*off.region_size + off.region_geo_index_offset, geoindex);
 
         /// geology blocks are assigned to regions from a vector
         // get the geoblock from the geoblock vector using the geoindex
@@ -616,7 +631,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 
         /// geology blocks have a vector of layer descriptors
         // get the vector with pointer to layers
-        DfVector <uint32_t> geolayers (p, geoblock_off + geolayer_geoblock_offset); // let's hope
+        DfVector <uint32_t> geolayers (p, geoblock_off + off.geolayer_geoblock_offset); // let's hope
         // make sure we don't load crap
         assert (geolayers.size() > 0 && geolayers.size() <= 16);
 
@@ -628,7 +643,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
             // read pointer to a layer
             uint32_t geol_offset = geolayers[j];
             // read word at pointer + 2, store in our geology vectors
-            d->v_geology[i].push_back (p->readWord (geol_offset + type_inside_geolayer));
+            d->v_geology[i].push_back (p->readWord (geol_offset + off.type_inside_geolayer));
         }
     }
     assign.clear();
@@ -636,6 +651,141 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     for (int i = 0; i < eBiomeCount;i++)
     {
         assign.push_back (d->v_geology[i]);
+    }
+    return true;
+}
+
+bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > & local_features )
+{
+    // can't be used without a map!
+    if(!d->block)
+        return false;
+    
+    Process * p = d->owner;
+    memory_info * mem = p->getDescriptor();
+    // deref pointer to the humongo-structure
+    uint32_t base = p->readDWord(mem->getAddress("local_feature_start_ptr"));
+    uint32_t sizeof_vec = mem->getHexValue("sizeof_vector");
+    const uint32_t sizeof_elem = 16;
+    const uint32_t offset_elem = 4;
+    const uint32_t main_mat_offset = 0x30;
+    const uint32_t sub_mat_offset = 0x34;
+    
+    local_features.clear();
+    
+    for(uint32_t blockX = 0; blockX < d->x_block_count; blockX ++)
+        for(uint32_t blockY = 0; blockY < d->x_block_count; blockY ++)
+    {
+        //uint64_t block48_x = blockX / 3 + d->regionX;
+        //uint16_t region_x_plus8 = ( block48_x + 8 ) / 16;
+        
+        // region X coord offset by 8 big blocks (48x48 tiles)
+        uint16_t region_x_plus8 = ( (blockX / 3 ) + d->regionX /*+ 8*/ ) / 16;
+        //((BYTE4(region_x_local) & 0xF) + (_DWORD)region_x_local) >> 4;
+        //int16_t region_x_local = (blockX / 3) + d->regionX;
+        //int16_t region_x_plus8 = ((region_x_local & 0xF) + region_x_local) >> 4;
+        // plain region Y coord
+        uint64_t region_y_local = ( (blockY / 3) + d->regionY ) / 16;
+        
+        // this is just a few pointers to arrays of 16B (4 DWORD) structs
+        uint32_t array_elem = p->readDWord(base + (region_x_plus8 / 16) * 4);
+        
+        // 16B structs, second DWORD of the struct is a pointer
+        uint32_t wtf = p->readDWord(array_elem + ( sizeof_elem * (region_y_local/16)) + offset_elem); 
+        if(wtf)
+        {
+            // wtf + sizeof(vector<ptr>) * crap;
+            uint32_t feat_vector = wtf + sizeof_vec * (16 * (region_x_plus8 % 16) + (region_y_local % 16));
+            DfVector<uint32_t> p_features(p, feat_vector);
+            uint32_t size = p_features.size();
+            planecoord pc;
+            pc.dim.x = blockX;
+            pc.dim.y = blockY;
+            std::vector<t_feature *> tempvec;
+            for(uint32_t i = 0; i < size; i++)
+            {
+                uint32_t cur_ptr = p_features[i];
+                
+                map <uint32_t, t_feature>::iterator it;
+                it = d->local_feature_store.find(cur_ptr);
+                // do we already have the feature?
+                if(it != d->local_feature_store.end())
+                {
+                    // push pointer to existing feature
+                    tempvec.push_back(&((*it).second));
+                }
+                // no?
+                else
+                {
+                    // create, add to store
+                    t_feature tftemp;
+                    tftemp.discovered = false; //= p->readDWord(cur_ptr + 4);
+                    tftemp.origin = cur_ptr;
+                    string name = p->readClassName(p->readDWord( cur_ptr ));
+                    if(name == "feature_init_deep_special_tubest")
+                    {
+                        tftemp.main_material = p->readWord( cur_ptr + main_mat_offset );
+                        tftemp.sub_material = p->readDWord( cur_ptr + sub_mat_offset );
+                        tftemp.type = feature_Adamantine_Tube;
+                    }
+                    else
+                    {
+                        tftemp.main_material = -1;
+                        tftemp.sub_material = -1;
+                        tftemp.type = feature_Other;
+                    }
+                    d->local_feature_store[cur_ptr] = tftemp;
+                    // push pointer
+                    tempvec.push_back(&(d->local_feature_store[cur_ptr]));
+                }
+            }
+            local_features[pc] = tempvec;
+        }
+    }
+    return true;
+}
+
+bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
+{
+    // can't be used without a map!
+    if(!d->block)
+        return false;
+    
+    Process * p = d->owner;
+    memory_info * mem = p->getDescriptor();
+    
+    uint32_t global_feature_vector = mem->getAddress("global_feature_vector");
+    uint32_t global_feature_funcptr = mem->getOffset("global_feature_funcptr_");
+    const uint32_t main_mat_offset = 0x34;
+    const uint32_t sub_mat_offset = 0x38;
+    DfVector<uint32_t> p_features (p,global_feature_vector);
+    
+    features.clear();
+    uint32_t size = p_features.size();
+    features.reserve(size);
+    for(uint32_t i = 0; i < size; i++)
+    {
+        t_feature temp;
+        uint32_t feat_ptr = p->readDWord(p_features[i] + global_feature_funcptr );
+        temp.origin = feat_ptr;
+        //temp.discovered = p->readDWord( feat_ptr + 4 ); // maybe, placeholder
+        temp.discovered = false;
+        
+        // FIXME: use the memory_info cache mechanisms
+        string name = p->readClassName(p->readDWord( feat_ptr));
+        if(name == "feature_init_underworld_from_layerst")
+        {
+            temp.main_material = p->readWord( feat_ptr + main_mat_offset );
+            temp.sub_material = p->readDWord( feat_ptr + sub_mat_offset );
+            temp.type = feature_Underworld;
+        }
+        else
+        {
+            temp.main_material = -1;
+            temp.sub_material = -1;
+            temp.type = feature_Other;
+        }
+        features.push_back(temp);
     }
     return true;
 }

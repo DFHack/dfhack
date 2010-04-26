@@ -33,24 +33,16 @@ using namespace DFHack;
 
 static PyObject* BuildTree(DFHack::t_tree& tree)
 {
-	PyObject* t_dict;
-	PyObject* temp;
+	PyObject* t_Obj;
+	PyObject* args;
 	
-	t_dict = PyDict_New();
+	args = Py_BuildValue("iiOi", tree.type, tree.material, BuildPosition3D(tree.x, tree.y, tree.z), tree.address);
 	
-	temp = PyInt_FromLong(tree.type);
-	DICTADD(t_dict, "type", temp);
+	t_Obj = PyObject_CallObject(Tree_type, args);
 	
-	temp = PyInt_FromLong(tree.material);
-	DICTADD(t_dict, "material", temp);
+	Py_DECREF(args);
 	
-	temp = PyTuple_Pack(3, tree.x, tree.y, tree.z);
-	DICTADD(t_dict, "position", temp);
-	
-	temp = PyInt_FromLong(tree.address);
-	DICTADD(t_dict, "address", temp);
-	
-	return t_dict;
+	return t_Obj;
 }
 
 struct DF_Vegetation

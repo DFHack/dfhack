@@ -66,6 +66,10 @@ API::~API()
 
 bool API::Attach()
 {
+    if(d->p != NULL)
+    {
+        return d->p->suspend();
+    }
     // detach all processes, destroy manager
     if (d->pm == 0)
     {

@@ -42,6 +42,9 @@ typedef struct
     uint32_t x_count_offset;// = d->offset_descriptor->getAddress ("x_count");
     uint32_t y_count_offset;// = d->offset_descriptor->getAddress ("y_count");
     uint32_t z_count_offset;// = d->offset_descriptor->getAddress ("z_count");
+    /*
+     Block
+    */
     uint32_t tile_type_offset;// = d->offset_descriptor->getOffset ("type");
     uint32_t designation_offset;// = d->offset_descriptor->getOffset ("designation");
     uint32_t occupancy_offset;// = d->offset_descriptor->getOffset ("occupancy");
@@ -49,23 +52,27 @@ typedef struct
     uint32_t veinvector;// = d->offset_descriptor->getOffset ("v_vein");
     uint32_t temperature1_offset;
     uint32_t temperature2_offset;
+    uint32_t global_feature_offset;
+    uint32_t local_feature_offset;
+    
     uint32_t vein_mineral_vptr;
     uint32_t vein_ice_vptr;
     uint32_t vein_spatter_vptr;
     /*
     GEOLOGY
+    */
     uint32_t region_x_offset;// = minfo->getAddress ("region_x");
     uint32_t region_y_offset;// = minfo->getAddress ("region_y");
     uint32_t region_z_offset;// =  minfo->getAddress ("region_z");
-    uint32_t world_offset;// =  minfo->getAddress ("world");
-    uint32_t world_regions_offset;// =  minfo->getOffset ("w_regions_arr");
+    
+    uint32_t world_regions;// mem->getAddress ("ptr2_region_array");
     uint32_t region_size;// =  minfo->getHexValue ("region_size");
     uint32_t region_geo_index_offset;// =  minfo->getOffset ("region_geo_index_off");
-    uint32_t world_geoblocks_offset;// =  minfo->getOffset ("w_geoblocks");
+    uint32_t world_geoblocks_vector;// =  minfo->getOffset ("geoblock_vector");
     uint32_t world_size_x;// = minfo->getOffset ("world_size_x");
     uint32_t world_size_y;// = minfo->getOffset ("world_size_y");
     uint32_t geolayer_geoblock_offset;// = minfo->getOffset ("geolayer_geoblock_offset");
-    */
+    uint32_t type_inside_geolayer;// = mem->getOffset ("type_inside_geolayer");
 } maps_offsets;
 
 typedef struct

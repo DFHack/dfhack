@@ -29,6 +29,7 @@ distribution.
 #include <string>
 #include "DFTypes.h"
 #include "DFHackAPI.h"
+#include "DF_Imports.cpp"
 #include "DF_MemInfo.cpp"
 #include "DF_Position.cpp"
 #include "DF_Material.cpp"
@@ -54,6 +55,11 @@ struct DF_API
 	PyObject* construction;
 	PyObject* vegetation;
 	PyObject* gui;
+	
+	PyObject* map_type;
+	PyObject* vegetation_type;
+	PyObject* gui_type;
+	
 	DFHack::API* api_Ptr;
 };
 
@@ -86,6 +92,10 @@ static int DF_API_init(DF_API* self, PyObject* args, PyObject* kwds)
 		self->construction = NULL;
 		self->vegetation = NULL;
 		self->gui = NULL;
+		
+		self->map_type = (PyObject*)&DF_Map_type;
+		self->vegetation_type = (PyObject*)&DF_Vegetation_type;
+		self->gui_type = (PyObject*)&DF_GUI_type;
 		
 		if(!PyArg_ParseTuple(args, "s", &memFileString))
 			return -1;
@@ -310,7 +320,7 @@ static PyObject* DF_API_getMap(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->map = PyObject_Call((PyObject*)&DF_Map_type, NULL, NULL);
+			self->map = PyObject_CallObject(self->map_type, NULL);
 			
 			if(self->map != NULL)
 			{
@@ -397,7 +407,7 @@ static PyObject* DF_API_getVegetation(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->vegetation = PyObject_Call((PyObject*)&DF_Vegetation_type, NULL, NULL);
+			self->vegetation = PyObject_CallObject(self->vegetation_type, NULL);
 			
 			if(self->vegetation != NULL)
 			{
@@ -426,7 +436,7 @@ static PyObject* DF_API_getGUI(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->gui = PyObject_Call((PyObject*)&DF_GUI_type, NULL, NULL);
+			self->gui = PyObject_CallObject(self->gui_type, NULL);
 			
 			if(self->gui != NULL)
 			{
@@ -446,6 +456,81 @@ static PyObject* DF_API_getGUI(DF_API* self, void* closure)
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_API_getMapType(DF_API* self, void* closure)
+{
+	return self->map_type;
+}
+
+static int DF_API_setMapType(DF_API* self, PyObject* value)
+{
+	if(PyType_Check(value) <= 0)
+	{
+		PySys_WriteStdout("failed type check");
+		PyErr_SetString(PyExc_TypeError, "value must be a type object");
+		return -1;
+	}
+	if(PyObject_IsSubclass(value, (PyObject*)&DF_Map_type) <= 0)
+	{
+		PySys_WriteStdout("failed subclass check");
+		PyErr_SetString(PyExc_TypeError, "value must be descended from pydfhack._MapManager");
+		return -1;
+	}
+	
+	self->map_type = value;
+	
+	return 0;
+}
+
+static PyObject* DF_API_getVegetationType(DF_API* self, void* closure)
+{
+	return self->vegetation_type;
+}
+
+static int DF_API_setVegetationType(DF_API* self, PyObject* value)
+{
+	if(PyType_Check(value) <= 0)
+	{
+		PySys_WriteStdout("failed type check");
+		PyErr_SetString(PyExc_TypeError, "value must be a type object");
+		return -1;
+	}
+	if(PyObject_IsSubclass(value, (PyObject*)&DF_Vegetation_type) <= 0)
+	{
+		PySys_WriteStdout("failed subclass check");
+		PyErr_SetString(PyExc_TypeError, "value must be descended from pydfhack._VegetationManager");
+		return -1;
+	}
+	
+	self->vegetation_type = value;
+	
+	return 0;
+}
+
+static PyObject* DF_API_getGUIType(DF_API* self, void* closure)
+{
+	return self->gui_type;
+}
+
+static int DF_API_setGUIType(DF_API* self, PyObject* value)
+{
+	if(PyType_Check(value) <= 0)
+	{
+		PySys_WriteStdout("failed type check");
+		PyErr_SetString(PyExc_TypeError, "value must be a type object");
+		return -1;
+	}
+	if(PyObject_IsSubclass(value, (PyObject*)&DF_GUI_type) <= 0)
+	{
+		PySys_WriteStdout("failed subclass check");
+		PyErr_SetString(PyExc_TypeError, "value must be descended from pydfhack._GUIManager");
+		return -1;
+	}
+	
+	self->gui_type = value;
+	
+	return 0;
+}
+
 static PyGetSetDef DF_API_getterSetters[] =
 {
     {"is_attached", (getter)DF_API_getIsAttached, NULL, "is_attached", NULL},
@@ -459,6 +544,9 @@ static PyGetSetDef DF_API_getterSetters[] =
 	{"constructions", (getter)DF_API_getConstruction, NULL, "constructions", NULL},
 	{"vegetation", (getter)DF_API_getVegetation, NULL, "vegetation", NULL},
 	{"gui", (getter)DF_API_getGUI, NULL, "gui", NULL},
+	{"_map_mgr_type", (getter)DF_API_getMapType, (setter)DF_API_setMapType, "_map_mgr_type", NULL},
+	{"_vegetation_mgr_type", (getter)DF_API_getVegetationType, (setter)DF_API_setVegetationType, "_vegetation_mgr_type", NULL},
+	{"_gui_mgr_type", (getter)DF_API_getGUIType, (setter)DF_API_setGUIType, "_gui_mgr_type", NULL},
     {NULL}  // Sentinel
 };
 
@@ -565,7 +653,7 @@ static PyTypeObject DF_API_type =
 {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
-    "pydfhack.API",             /*tp_name*/
+    "pydfhack._API",             /*tp_name*/
     sizeof(DF_API), /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)DF_API_dealloc,                         /*tp_dealloc*/
@@ -584,7 +672,7 @@ static PyTypeObject DF_API_type =
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,        /*tp_flags*/
-    "pydfhack API objects",           /* tp_doc */
+    "pydfhack _API objects",           /* tp_doc */
     0,		               /* tp_traverse */
     0,		               /* tp_clear */
     0,		               /* tp_richcompare */

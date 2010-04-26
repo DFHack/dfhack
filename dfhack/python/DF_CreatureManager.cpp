@@ -26,6 +26,7 @@ distribution.
 #define __DFCREATURES__
 
 #include "Python.h"
+#include "stdio.h"
 #include "DFTypes.h"
 #include "modules/Creatures.h"
 #include "DF_CreatureType.cpp"
@@ -155,12 +156,76 @@ static PyObject* DF_CreatureManager_ReadCreatureInBox(DF_CreatureManager* self, 
 	Py_RETURN_NONE;
 }
 
+static PyObject* DF_CreatureManager_GetDwarfRaceIndex(DF_CreatureManager* self, PyObject* args)
+{
+	if(self->creature_Ptr != NULL)
+	{
+		return PyInt_FromLong(self->creature_Ptr->GetDwarfRaceIndex());
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_CreatureManager_GetDwarfCivId(DF_CreatureManager* self, PyObject* args)
+{
+	if(self->creature_Ptr != NULL)
+	{
+		return PyInt_FromLong(self->creature_Ptr->GetDwarfCivId());
+	}
+	
+	Py_RETURN_NONE;
+}
+
+static PyObject* DF_CreatureManager_WriteLabors(DF_CreatureManager* self, PyObject* args)
+{
+	int32_t index;
+	PyObject* laborList;
+	
+	
+	if(self->creature_Ptr != NULL)
+	{
+		uint8_t laborArray[NUM_CREATURE_LABORS];
+		
+		if(!PyArg_ParseTuple(args, "iO", &index, &laborList))
+			return NULL;
+		
+		if(!PyList_Check(laborList))
+		{
+			PyErr_SetString(PyExc_TypeError, "argument 2 must be a list");
+			return NULL;
+		}
+		
+		if(PyList_Size(laborList) < NUM_CREATURE_LABORS)
+		{
+			char errBuff[50];
+			
+			sprintf(errBuff, "list must contain at least %u entries", NUM_CREATURE_LABORS);
+			
+			PyErr_SetString(PyExc_StandardError, errBuff);
+			return NULL;
+		}
+		
+		for(int i = 0; i < NUM_CREATURE_LABORS; i++)
+			laborArray[i] = (uint8_t)PyInt_AsLong(PyList_GET_ITEM(laborList, i));
+		
+		if(self->creature_Ptr->WriteLabors(index, laborArray))
+			Py_RETURN_TRUE;
+		else
+			Py_RETURN_FALSE;
+	}
+	
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef DF_CreatureManager_methods[] =
 {
     {"Start", (PyCFunction)DF_CreatureManager_Start, METH_NOARGS, ""},
     {"Finish", (PyCFunction)DF_CreatureManager_Finish, METH_NOARGS, ""},
     {"Read_Creature", (PyCFunction)DF_CreatureManager_ReadCreature, METH_VARARGS, ""},
     {"Read_Creature_In_Box", (PyCFunction)DF_CreatureManager_ReadCreatureInBox, METH_VARARGS, ""},
+	{"Write_Labors", (PyCFunction)DF_CreatureManager_WriteLabors, METH_VARARGS, ""},
+	{"Get_Dwarf_Race_Index", (PyCFunction)DF_CreatureManager_GetDwarfRaceIndex, METH_NOARGS, ""},
+	{"Get_Dwarf_Civ_id", (PyCFunction)DF_CreatureManager_GetDwarfCivId, METH_NOARGS, ""},
     {NULL}  // Sentinel
 };
 

@@ -117,18 +117,18 @@ PyMODINIT_FUNC initpydfhack(void)
 	Py_INCREF(&DF_Map_type);
 	Py_INCREF(&DF_GUI_type);
 	
-	PyModule_AddObject(module, "API", (PyObject*)&DF_API_type);
-	PyModule_AddObject(module, "MemInfo", (PyObject*)&DF_MemInfo_type);
-	PyModule_AddObject(module, "Position", (PyObject*)&DF_Position_type);
-	PyModule_AddObject(module, "Materials", (PyObject*)&DF_Material_type);
-	PyModule_AddObject(module, "Creature_Base", (PyObject*)&DF_Creature_Base_type);
-	PyModule_AddObject(module, "CreatureManager", (PyObject*)&DF_CreatureManager_type);
-	PyModule_AddObject(module, "Translate", (PyObject*)&DF_Translate_type);
-	PyModule_AddObject(module, "Vegetation", (PyObject*)&DF_Vegetation_type);
-	PyModule_AddObject(module, "Building", (PyObject*)&DF_Building_type);
-	PyModule_AddObject(module, "ConstructionManager", (PyObject*)&DF_Construction_type);
-	PyModule_AddObject(module, "Map", (PyObject*)&DF_Map_type);
-	PyModule_AddObject(module, "GUI", (PyObject*)&DF_GUI_type);
+	PyModule_AddObject(module, "_API", (PyObject*)&DF_API_type);
+	PyModule_AddObject(module, "_MemInfo", (PyObject*)&DF_MemInfo_type);
+	PyModule_AddObject(module, "_PositionManager", (PyObject*)&DF_Position_type);
+	PyModule_AddObject(module, "_MaterialsManager", (PyObject*)&DF_Material_type);
+	PyModule_AddObject(module, "_Creature_Base", (PyObject*)&DF_Creature_Base_type);
+	PyModule_AddObject(module, "_CreatureManager", (PyObject*)&DF_CreatureManager_type);
+	PyModule_AddObject(module, "_TranslationManager", (PyObject*)&DF_Translate_type);
+	PyModule_AddObject(module, "_VegetationManager", (PyObject*)&DF_Vegetation_type);
+	PyModule_AddObject(module, "_BuildingManager", (PyObject*)&DF_Building_type);
+	PyModule_AddObject(module, "_ConstructionManager", (PyObject*)&DF_Construction_type);
+	PyModule_AddObject(module, "_MapManager", (PyObject*)&DF_Map_type);
+	PyModule_AddObject(module, "_GUIManager", (PyObject*)&DF_GUI_type);
 	
 	
 	DoImports();

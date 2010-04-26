@@ -276,14 +276,11 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 					case 57:
 						maintype = (char*)"cloth";
 						break;
-					case -1:
-						maintype = (char*)"bones/shell";
-						break;
 					default:
-						maintype = (char*)"????";
+						maintype = (char*)"unknown";
 						break;
 				}
-				printf("\t%s\t%d %d - %.8x\n", maintype, mat[i].typeB, mat[i].typeC, mat[i].flags);
+				printf("\t%s(%d)\t%d %d - %.8x\n", maintype, mat[i].typeA, mat[i].typeB, mat[i].typeC, mat[i].flags);
 			}
 		}
 	}

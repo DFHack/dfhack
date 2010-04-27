@@ -242,67 +242,67 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         }
         cout << endl;
 
-	if(creature.mood != -1)
-	{
-		cout << "mood: " << creature.mood << ", skill: " << mem->getSkill(creature.mood_skill) << endl;
-		vector<DFHack::t_material> mymat;
-		char maintype[512];
-		if(Creatures->ReadJob(&creature, mymat))
-		{
-			for(unsigned int i = 0; i < mymat.size(); i++)
-			{
-				strcpy(maintype, "???");
-				switch(mymat[i].typeA)
-				{
-					case 0:
-						if(mymat[i].typeD>=0)
-						{
-							if(mymat[i].typeD<=mat.metalMat.size())
-								sprintf(maintype, "%s bar", mat.metalMat[mymat[i].typeD].id);
-							else
-								strcpy(maintype, "invalid metal bar");
-						}
-						else
-							strcpy(maintype, "any metal bar");
-						break;
-					case 1:
-						strcpy(maintype, "cut gem");
-						break;
-					case 2:
-						strcpy(maintype, "block");
-						break;
-					case 3:
-						switch(mymat[i].typeC)
-						{
-							case 3: strcpy(maintype, "raw green glass"); break;
-							case 4: strcpy(maintype, "raw clear glass"); break;
-							case 5: strcpy(maintype, "raw crystal glass"); break;
-							default: strcpy(maintype, "raw gems"); break;
-						}
-						break;
-					case 4:
-						strcpy(maintype, "raw stone");
-						break;
-					case 5:
-						strcpy(maintype, "wood log");
-						break;
-					case 24:
-						strcpy(maintype, "weapon?");
-						break;
-					case 54:
-						strcpy(maintype, "leather");
-						break;
-					case 57:
-						strcpy(maintype, "cloth");
-						break;
-					default:
-						strcpy(maintype, "unknown");
-						break;
-				}
-				printf("\t%s(%d)\t%d %d %d - %.8x\n", maintype, mymat[i].typeA, mymat[i].typeB, mymat[i].typeC, mymat[i].typeD, mymat[i].flags);
-			}
-		}
-	}
+        if(creature.mood != -1)
+        {
+            cout << "mood: " << creature.mood << ", skill: " << mem->getSkill(creature.mood_skill) << endl;
+            vector<DFHack::t_material> mymat;
+            char maintype[512];
+            if(Creatures->ReadJob(&creature, mymat))
+            {
+                for(unsigned int i = 0; i < mymat.size(); i++)
+                {
+                    strcpy(maintype, "???");
+                    switch(mymat[i].typeA)
+                    {
+                        case 0:
+                            if(mymat[i].typeD>=0)
+                            {
+                                if(mymat[i].typeD<=mat.metalMat.size())
+                                    sprintf(maintype, "%s bar", mat.metalMat[mymat[i].typeD].id);
+                                else
+                                    strcpy(maintype, "invalid metal bar");
+                            }
+                            else
+                                strcpy(maintype, "any metal bar");
+                            break;
+                        case 1:
+                            strcpy(maintype, "cut gem");
+                            break;
+                        case 2:
+                            strcpy(maintype, "block");
+                            break;
+                        case 3:
+                            switch(mymat[i].typeC)
+                            {
+                                case 3: strcpy(maintype, "raw green glass"); break;
+                                case 4: strcpy(maintype, "raw clear glass"); break;
+                                case 5: strcpy(maintype, "raw crystal glass"); break;
+                                default: strcpy(maintype, "raw gems"); break;
+                            }
+                            break;
+                        case 4:
+                            strcpy(maintype, "raw stone");
+                            break;
+                        case 5:
+                            strcpy(maintype, "wood log");
+                            break;
+                        case 24:
+                            strcpy(maintype, "weapon?");
+                            break;
+                        case 54:
+                            strcpy(maintype, "leather");
+                            break;
+                        case 57:
+                            strcpy(maintype, "cloth");
+                            break;
+                        default:
+                            strcpy(maintype, "unknown");
+                            break;
+                    }
+                    printf("\t%s(%d)\t%d %d %d - %.8x\n", maintype, mymat[i].typeA, mymat[i].typeB, mymat[i].typeC, mymat[i].typeD, mymat[i].flags);
+                }
+            }
+        }
 
         /*
         if(creature.pregnancy_timer > 0)
@@ -494,7 +494,10 @@ int main (int numargs, char ** args)
             addrs.push_back(temp.origin);
         }
     }
-    interleave_hex(DF,addrs,200);
+    if(addrs.size() <= 10)
+    {
+        interleave_hex(DF,addrs,200);
+    }
     /*
     uint32_t currentIdx;
     DFHack::t_creature currentCreature;

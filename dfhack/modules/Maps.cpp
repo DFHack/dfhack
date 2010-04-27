@@ -767,6 +767,12 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
                         tftemp.sub_material = p->readDWord( cur_ptr + sub_mat_offset );
                         tftemp.type = feature_Adamantine_Tube;
                     }
+                    else if(name == "feature_init_deep_surface_portalst")
+                    {
+                        tftemp.main_material = p->readWord( cur_ptr + main_mat_offset );
+                        tftemp.sub_material = p->readDWord( cur_ptr + sub_mat_offset );
+                        tftemp.type = feature_Hell_Temple;
+                    }
                     else
                     {
                         tftemp.main_material = -1;

@@ -14,10 +14,17 @@ namespace DFHack
     
     enum e_feature
     {
+        feature_Other,
         feature_Adamantine_Tube,
         feature_Underworld,
-        // add stuff here, don't reorder or delete
-        feature_Other = 10000,
+        feature_Hell_Temple,
+    };
+    static char * sa_feature[]=
+    {
+        "Other",
+        "Adamantine Tube",
+        "Underworld",
+        "Hell Temple"
     };
     union planecoord
     {

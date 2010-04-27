@@ -439,20 +439,17 @@ void do_features(API& DF, mapblock40d * block, uint32_t blockX, uint32_t blockY,
             gotoxy(printX,printY+1);
             cprintf("You've discovered it already!");
         }
-        if(ftr.type == feature_Underworld)
+        
+        char * matname = "unknown";
+        // is stone?
+        if(ftr.main_material == 0)
         {
-            char * matname = "unknown";
-            // is stone?
-            if(ftr.main_material == 0)
-            {
-                matname = stonetypes[ftr.sub_material].id;
-            }
-            gotoxy(printX,printY+2);
-            cprintf("Underworld, material %d/%d : %s", ftr.main_material, ftr.sub_material, matname);
+            matname = stonetypes[ftr.sub_material].id;
         }
-        else
+        gotoxy(printX,printY+2);
+        cprintf("%d:%s, material %d/%d : %s", ftr.type, sa_feature[ftr.type], ftr.main_material, ftr.sub_material, matname);
         {
-            gotoxy(printX,printY+2);
+            gotoxy(printX,printY+3);
             string name = p->readClassName(p->readDWord( ftr.origin ));
             cprintf("%s", name.c_str());
         }
@@ -471,23 +468,18 @@ void do_features(API& DF, mapblock40d * block, uint32_t blockX, uint32_t blockY,
                 gotoxy(printX,printY+ 5);
                 cprintf("You've discovered it already!");
             }
-            if(ftr.type == feature_Adamantine_Tube)
+            char * matname = "unknown";
+            // is stone?
+            if(ftr.main_material == 0)
             {
-                char * matname = "unknown";
-                // is stone?
-                if(ftr.main_material == 0)
-                {
-                    matname = stonetypes[ftr.sub_material].id;
-                }
-                gotoxy(printX,printY+6);
-                cprintf("Underworld, material %d/%d : %s", ftr.main_material, ftr.sub_material, matname);
+                matname = stonetypes[ftr.sub_material].id;
             }
-            else
-            {
-                gotoxy(printX,printY+6);
-                string name = p->readClassName(p->readDWord( ftr.origin ));
-                cprintf("%s", name.c_str());
-            }
+            gotoxy(printX,printY+6);
+            cprintf("%d:%s, material %d/%d : %s", ftr.type, sa_feature[ftr.type], ftr.main_material, ftr.sub_material, matname);
+            
+            gotoxy(printX,printY+7);
+            string name = p->readClassName(p->readDWord( ftr.origin ));
+            cprintf("%s", name.c_str());
         }
         else
         {

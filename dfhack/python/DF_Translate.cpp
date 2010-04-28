@@ -1,6 +1,6 @@
 /*
 www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
+Copyright (c) 2009 Petr MrÃ¡zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -75,7 +75,7 @@ static void DF_Translate_dealloc(DF_Translate* self)
 		{
 			Py_XDECREF(self->dict);
 			
-			PySys_WriteStdout("tran_Ptr = %i\n", (int)self->tran_Ptr);
+			PySys_WriteStdout("tran_Ptr = 0x%x\n", self->tran_Ptr);
 			
 			delete self->tran_Ptr;
 			

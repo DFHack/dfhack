@@ -1,6 +1,6 @@
 /*
 www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
+Copyright (c) 2009 Petr MrÃ¡zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -64,7 +64,7 @@ static void DF_GUI_dealloc(DF_GUI* self)
 		
 		if(self->g_Ptr != NULL)
 		{
-			PySys_WriteStdout("g_Ptr = %i\n", (int)self->g_Ptr);
+			PySys_WriteStdout("g_Ptr = 0x%x\n", self->g_Ptr);
 			
 			delete self->g_Ptr;
 			

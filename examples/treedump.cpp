@@ -49,8 +49,7 @@ int main (int numargs, const char ** args)
     DFHack::Position * pos = DF.getPosition();
     DFHack::Vegetation * v = DF.getVegetation();
     DFHack::Materials * mat = DF.getMaterials();
-    vector<DFHack::t_matgloss> organics;
-    mat->ReadOrganicMaterials(organics);
+    mat->ReadOrganicMaterials();
     
     int32_t x,y,z;
     pos->getCursorCoords(x,y,z);
@@ -82,7 +81,7 @@ int main (int numargs, const char ** args)
                 {
                     cout << "near-water ";
                 }
-                cout << organics[tree.material].id << " ";
+                cout << mat->organic[tree.material].id << " ";
                 if(tree.type == 0 || tree.type == 1)
                 {
                     cout << "tree";

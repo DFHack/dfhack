@@ -43,8 +43,7 @@ int main (int numargs, const char ** args)
     
     DFHack::Constructions *Cons = DF.getConstructions();
     DFHack::Materials *Mats = DF.getMaterials();
-    vector<t_matgloss> inorganics;
-    Mats->ReadInorganicMaterials(inorganics);
+    Mats->ReadInorganicMaterials();
     uint32_t numConstr;
     Cons->Start(numConstr);
     
@@ -65,7 +64,7 @@ int main (int numargs, const char ** args)
                 if(con.mat_type == 0)
                 {
                     if(con.mat_idx != 0xffffffff)
-                        matstr = inorganics[con.mat_idx].id;
+                        matstr = Mats->inorganic[con.mat_idx].id;
                     else matstr = "inorganic";
                 }
                 switch(con.form)

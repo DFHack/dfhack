@@ -43,39 +43,36 @@ int main (int numargs, const char ** args)
     DFHack::Materials *Materials = DF.getMaterials();
     
     cout << "----==== Inorganic ====----" << endl;
-    vector<DFHack::t_matgloss> matgloss;
-    Materials->ReadInorganicMaterials (matgloss);
-    for(uint32_t i = 0; i < matgloss.size();i++)
+    Materials->ReadInorganicMaterials ();
+    for(uint32_t i = 0; i < Materials->inorganic.size();i++)
     {
-        cout << i << ": " << matgloss[i].id << endl;
+        cout << i << ": " << Materials->inorganic[i].id << endl;
     }
     
     cout << endl << "----==== Organic ====----" << endl;
-    vector<DFHack::t_matgloss> organic;
-    Materials->ReadOrganicMaterials (matgloss);
-    for(uint32_t i = 0; i < matgloss.size();i++)
+    Materials->ReadOrganicMaterials ();
+    for(uint32_t i = 0; i < Materials->organic.size();i++)
     {
-        cout << i << ": " << matgloss[i].id << endl;
+        cout << i << ": " << Materials->organic[i].id << endl;
     }
     cout << endl << "----==== Organic - trees ====----" << endl;
-    Materials->ReadWoodMaterials (matgloss);
-    for(uint32_t i = 0; i < matgloss.size();i++)
+    Materials->ReadWoodMaterials ();
+    for(uint32_t i = 0; i < Materials->tree.size();i++)
     {
-        cout << i << ": " << matgloss[i].id << endl;
+        cout << i << ": " << Materials->tree[i].id << endl;
     }
     cout << endl << "----==== Organic - plants ====----" << endl;
-    Materials->ReadPlantMaterials (matgloss);
-    for(uint32_t i = 0; i < matgloss.size();i++)
+    Materials->ReadPlantMaterials ();
+    for(uint32_t i = 0; i < Materials->plant.size();i++)
     {
-        cout << i << ": " << matgloss[i].id << endl;
+        cout << i << ": " << Materials->plant[i].id << endl;
     }
     cout << endl << "----==== Creature types ====----" << endl;
-    vector<DFHack::t_creaturetype> creature;
-    Materials->ReadCreatureTypesEx (creature);
-    for(uint32_t i = 0; i < creature.size();i++)
+    Materials->ReadCreatureTypesEx ();
+    for(uint32_t i = 0; i < Materials->raceEx.size();i++)
     {
-        cout << i << ": " << creature[i].rawname << endl;
-        vector<DFHack::t_creaturecaste> & castes = creature[i].castes;
+        cout << i << ": " << Materials->raceEx[i].rawname << endl;
+        vector<DFHack::t_creaturecaste> & castes = Materials->raceEx[i].castes;
         for(uint32_t j = 0; j < castes.size();j++)
         {
             cout << " ["
@@ -88,14 +85,13 @@ int main (int numargs, const char ** args)
         cout << endl;
     }
     cout << endl << "----==== Color descriptors ====----" << endl;
-    vector<DFHack::t_descriptor_color> colors;
-    Materials->ReadDescriptorColors(colors);
-    for(uint32_t i = 0; i < colors.size();i++)
+    Materials->ReadDescriptorColors();
+    for(uint32_t i = 0; i < Materials->color.size();i++)
     {
-	cout << i << ": " << colors[i].id << " - " << colors[i].name << "["
-		<< (unsigned int) (colors[i].r*255) << ":"
-		<< (unsigned int) (colors[i].v*255) << ":"
-		<< (unsigned int) (colors[i].b*255) << ":"
+	cout << i << ": " << Materials->color[i].id << " - " << Materials->color[i].name << "["
+		<< (unsigned int) (Materials->color[i].r*255) << ":"
+		<< (unsigned int) (Materials->color[i].v*255) << ":"
+		<< (unsigned int) (Materials->color[i].b*255) << ":"
 		<< "]" << endl;
     }
     #ifndef LINUX_BUILD

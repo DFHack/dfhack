@@ -57,7 +57,6 @@ int main (int argc, const char* argv[])
     DFHack::mapblock40d Block;
     map <int16_t, uint32_t> materials;
     materials.clear();
-    vector<DFHack::t_matgloss> stonetypes;
     vector<DFHack::t_feature> global_features;
     std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> > local_features;
     
@@ -110,7 +109,7 @@ int main (int argc, const char* argv[])
         return 1; 
     }
     // get stone matgloss mapping
-    if(!Mats->ReadInorganicMaterials(stonetypes))
+    if(!Mats->ReadInorganicMaterials())
     {
         //DF.DestroyMap();
         cerr << "Can't get the materials." << endl;
@@ -289,7 +288,7 @@ int main (int argc, const char* argv[])
         }
         else
         {
-            cout << stonetypes[p->first].id << " : " << p->second << endl;
+            cout << Mats->inorganic[p->first].id << " : " << p->second << endl;
         }
     }
     DF.Detach();

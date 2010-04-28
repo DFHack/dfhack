@@ -18,14 +18,6 @@ using namespace std;
 #include <modules/Translation.h>
 #include "miscutils.h"
 
-struct matGlosses 
-{
-    vector<DFHack::t_matglossPlant> plantMat;
-    vector<DFHack::t_matgloss> woodMat;
-    vector<DFHack::t_matgloss> stoneMat;
-    vector<DFHack::t_matgloss> metalMat;
-    vector<DFHack::t_matgloss> creatureMat;
-};
 enum likeType
 {
     FAIL = 0,
@@ -34,8 +26,7 @@ enum likeType
     FOOD = 3
 };
 
-vector<DFHack::t_creaturetype> creaturestypes;
-matGlosses mat;
+DFHack::Materials * Materials;
 vector< vector <DFHack::t_itemType> > itemTypes;
 DFHack::memory_info *mem;
 vector< vector<string> > englishWords;
@@ -149,11 +140,11 @@ likeType printLike40d(DFHack::t_like like, const matGlosses & mat,const vector< 
 
 void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 {
-	cout << "address: " << hex <<  creature.origin << dec << " creature type: " << creaturestypes[creature.race].rawname 
-                << "[" << creaturestypes[creature.race].tile_character
-                << "," << creaturestypes[creature.race].tilecolor.fore
-                << "," << creaturestypes[creature.race].tilecolor.back
-                << "," << creaturestypes[creature.race].tilecolor.bright
+	cout << "address: " << hex <<  creature.origin << dec << " creature type: " << Materials->raceEx[creature.race].rawname 
+                << "[" << Materials->raceEx[creature.race].tile_character
+                << "," << Materials->raceEx[creature.race].tilecolor.fore
+                << "," << Materials->raceEx[creature.race].tilecolor.back
+                << "," << Materials->raceEx[creature.race].tilecolor.bright
                 << "]"
                 << ", position: " << creature.x << "x " << creature.y << "y "<< creature.z << "z" << endl;
         bool addendl = false;
@@ -242,7 +233,7 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         }
         cout << endl;
 
-        if(creature.mood != -1)
+        if((creature.mood != -1) && (creature.mood<5))
         {
             cout << "mood: " << creature.mood << ", skill: " << mem->getSkill(creature.mood_skill) << endl;
             vector<DFHack::t_material> mymat;
@@ -257,8 +248,8 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
                         case 0:
                             if(mymat[i].typeD>=0)
                             {
-                                if(mymat[i].typeD<=mat.metalMat.size())
-                                    sprintf(maintype, "%s bar", mat.metalMat[mymat[i].typeD].id);
+                                if(mymat[i].typeD<=Materials->inorganic.size())
+                                    sprintf(maintype, "%s bar", Materials->inorganic[mymat[i].typeD].id);
                                 else
                                     strcpy(maintype, "invalid metal bar");
                             }
@@ -289,12 +280,21 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
                         case 24:
                             strcpy(maintype, "weapon?");
                             break;
+			case 26:
+			    strcpy(maintype, "footwear");
+			    break;
+			case 28:
+			    strcpy(maintype, "headwear");
+			    break;
                         case 54:
                             strcpy(maintype, "leather");
                             break;
                         case 57:
                             strcpy(maintype, "cloth");
                             break;
+			case 71:
+			    strcpy(maintype, "food");
+			    break;
                         default:
                             strcpy(maintype, "unknown");
                             break;
@@ -464,12 +464,12 @@ int main (int numargs, char ** args)
     }
 
     mem = DF.getMemoryInfo();
-	if(!Materials->ReadInorganicMaterials(mat.metalMat))
-	{
-		cerr << "Can't get the inorganics types." << endl;
-		return 1;
-	}
-    if(!Materials->ReadCreatureTypesEx(creaturestypes))
+    if(!Materials->ReadInorganicMaterials())
+    {
+	    cerr << "Can't get the inorganics types." << endl;
+	    return 1;
+    }
+    if(!Materials->ReadCreatureTypesEx())
     {
         cerr << "Can't get the creature types." << endl;
         return 1; 
@@ -486,7 +486,7 @@ int main (int numargs, char ** args)
     {
         DFHack::t_creature temp;
         Creatures->ReadCreature(i,temp);
-        if(check.empty() || string(creaturestypes[temp.race].rawname) == check)
+        if(check.empty() || string(Materials->raceEx[temp.race].rawname) == check)
         {
             cout << "index " << i << " ";
             

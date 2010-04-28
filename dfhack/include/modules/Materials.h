@@ -75,19 +75,35 @@ namespace DFHack
         
         Materials(DFHack::APIPrivate * _d);
         ~Materials();
+
+	std::vector<t_matgloss> inorganic;
+	std::vector<t_matgloss> organic;
+	std::vector<t_matgloss> tree;
+	std::vector<t_matgloss> plant;
+	std::vector<t_matgloss> race;
+	std::vector<t_creaturetype> raceEx;
+	std::vector<t_descriptor_color> color;
         
+        bool ReadInorganicMaterials (void);
+        bool ReadOrganicMaterials (void);
+        bool ReadWoodMaterials (void);
+        bool ReadPlantMaterials (void);
+        bool ReadCreatureTypes (void);
+        bool ReadCreatureTypesEx (void);
+	bool ReadDescriptorColors(void);
+
+	void ReadAllMaterials(void);
+	/*
         bool ReadInorganicMaterials (std::vector<t_matgloss> & output);
         bool ReadOrganicMaterials (std::vector<t_matgloss> & output);
-        
         bool ReadWoodMaterials (std::vector<t_matgloss> & output);
         bool ReadPlantMaterials (std::vector<t_matgloss> & output);
-        // bool ReadPlantMaterials (std::vector<t_matglossPlant> & output);
         
         // TODO: maybe move to creatures?
         bool ReadCreatureTypes (std::vector<t_matgloss> & output);
         bool ReadCreatureTypesEx (vector<t_creaturetype> & creatures);
-
 	bool ReadDescriptorColors(std::vector<t_descriptor_color> & output);
+	*/
         private:
             class Private;
             Private* d;

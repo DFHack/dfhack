@@ -197,33 +197,33 @@ inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & nam
     return true;
 }
 
-bool Materials::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
+bool Materials::ReadInorganicMaterials (void)
 {
     return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("mat_inorganics"), inorganic );
 }
 
-bool Materials::ReadOrganicMaterials (vector<t_matgloss> & organic)
+bool Materials::ReadOrganicMaterials (void)
 {
     return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("mat_organics_all"), organic );
 }
 
-bool Materials::ReadWoodMaterials (vector<t_matgloss> & trees)
+bool Materials::ReadWoodMaterials (void)
 {
-    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("mat_organics_trees"), trees );
+    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("mat_organics_trees"), tree );
 }
 
-bool Materials::ReadPlantMaterials (vector<t_matgloss> & plants)
+bool Materials::ReadPlantMaterials (void)
 {
-    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("mat_organics_plants"), plants );
+    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("mat_organics_plants"), plant );
 }
 
-bool Materials::ReadCreatureTypes (vector<t_matgloss> & creatures)
+bool Materials::ReadCreatureTypes (void)
 {
-    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("creature_type_vector"), creatures );
+    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("creature_type_vector"), race );
     return true;
 }
 
-bool Materials::ReadDescriptorColors (vector<t_descriptor_color> & color)
+bool Materials::ReadDescriptorColors (void)
 {
 	Process * p = d->owner;
 	DfVector <uint32_t> p_colors (p, p->getDescriptor()->getAddress ("descriptor_colors_vector"));
@@ -246,7 +246,7 @@ bool Materials::ReadDescriptorColors (vector<t_descriptor_color> & color)
 	return true;
 }
 
-bool Materials::ReadCreatureTypesEx (vector<t_creaturetype> & creatures)
+bool Materials::ReadCreatureTypesEx (void)
 {
     Process *p = d->owner;
     memory_info *mem = d->owner->getDescriptor();
@@ -257,8 +257,8 @@ bool Materials::ReadCreatureTypesEx (vector<t_creaturetype> & creatures)
     uint32_t sizecas = 0;
     uint32_t tile_offset = mem->getOffset ("creature_tile");
     uint32_t tile_color_offset = mem->getOffset ("creature_tile_color");
-    creatures.clear();
-    creatures.reserve (size);
+    raceEx.clear();
+    raceEx.reserve (size);
     for (uint32_t i = 0; i < size;i++)
     {
         t_creaturetype mat;
@@ -279,8 +279,18 @@ bool Materials::ReadCreatureTypesEx (vector<t_creaturetype> & creatures)
         mat.tilecolor.fore = p->readWord( p_races[i] + tile_color_offset );
         mat.tilecolor.back = p->readWord( p_races[i] + tile_color_offset + 2 );
         mat.tilecolor.bright = p->readWord( p_races[i] + tile_color_offset + 4 );
-        creatures.push_back(mat);
+        raceEx.push_back(mat);
     }
     return true;
 }
 
+void Materials::ReadAllMaterials(void)
+{
+	this->ReadInorganicMaterials();
+        this->ReadOrganicMaterials();
+        this->ReadWoodMaterials();
+        this->ReadPlantMaterials();
+        this->ReadCreatureTypes();
+        this->ReadCreatureTypesEx();
+	this->ReadDescriptorColors();
+}

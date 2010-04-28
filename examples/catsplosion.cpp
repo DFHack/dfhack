@@ -28,7 +28,6 @@ using namespace DFHack;
 
 int main ( int argc, char** argv )
 {
-    vector<DFHack::t_creaturetype> creaturestypes;
     DFHack::memory_info *mem;
     DFHack::Process *proc;
     uint32_t creature_pregnancy_offset;
@@ -89,7 +88,7 @@ int main ( int argc, char** argv )
     DFHack::Creatures *Cre = DF.getCreatures();
     creature_pregnancy_offset = mem->getOffset("creature_pregnancy");
 
-    if(!Mats->ReadCreatureTypesEx(creaturestypes))
+    if(!Mats->ReadCreatureTypesEx())
     {
         cerr << "Can't get the creature types." << endl;
         #ifndef LINUX_BUILD
@@ -123,17 +122,17 @@ int main ( int argc, char** argv )
     {
         DFHack::t_creature creature;
         Cre->ReadCreature(i,creature);
-        DFHack::t_creaturetype & crt = creaturestypes[creature.race];
+        DFHack::t_creaturetype & crt = Mats->raceEx[creature.race];
         string castename = crt.castes[creature.sex].rawname;
         if(castename == "FEMALE")
         {
-            female_counts[creaturestypes[creature.race].rawname].push_back(creature);
-            male_counts[creaturestypes[creature.race].rawname].size();
+            female_counts[Mats->raceEx[creature.race].rawname].push_back(creature);
+            male_counts[Mats->raceEx[creature.race].rawname].size();
         }
         else // male, other, etc.
         {
-            male_counts[creaturestypes[creature.race].rawname].push_back(creature);
-            female_counts[creaturestypes[creature.race].rawname].size(); //auto initialize the females as well
+            male_counts[Mats->raceEx[creature.race].rawname].push_back(creature);
+            female_counts[Mats->raceEx[creature.race].rawname].size(); //auto initialize the females as well
         }
     }
     

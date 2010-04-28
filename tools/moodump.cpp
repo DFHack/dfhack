@@ -15,17 +15,7 @@ using namespace std;
 #include <modules/Creatures.h>
 #include <modules/Translation.h>
 
-struct matGlosses 
-{
-    vector<DFHack::t_matglossPlant> plantMat;
-    vector<DFHack::t_matgloss> woodMat;
-    vector<DFHack::t_matgloss> stoneMat;
-    vector<DFHack::t_matgloss> metalMat;
-    vector<DFHack::t_matgloss> creatureMat;
-};
-
-vector<DFHack::t_creaturetype> creaturestypes;
-matGlosses mat;
+DFHack::Materials * Materials;
 vector< vector <DFHack::t_itemType> > itemTypes;
 DFHack::memory_info *mem;
 vector< vector<string> > englishWords;
@@ -53,7 +43,7 @@ int main (int numargs, char ** args)
         check = args[1];
     
     DFHack::Creatures * Creatures = DF.getCreatures();
-    DFHack::Materials * Materials = DF.getMaterials();
+    Materials = DF.getMaterials();
     DFHack::Translation * Tran = DF.getTranslation();
     
     uint32_t numCreatures;
@@ -75,13 +65,13 @@ int main (int numargs, char ** args)
     }
     mem = DF.getMemoryInfo();
 
-	if(!Materials->ReadInorganicMaterials(mat.metalMat))
-	{
-		cerr << "Can't get the inorganics types." << endl;
-		return 1;
-	}
+    if(!Materials->ReadInorganicMaterials())
+    {
+	    cerr << "Can't get the inorganics types." << endl;
+	    return 1;
+    }
     
-    if(!Materials->ReadCreatureTypesEx(creaturestypes))
+    if(!Materials->ReadCreatureTypesEx())
     {
         cerr << "Can't get the creature types." << endl;
         return 1; 

@@ -93,6 +93,8 @@ namespace DFHack
 	bool ReadDescriptorColors(void);
 
 	void ReadAllMaterials(void);
+
+	std::string getDescription(t_material & mat);
 	/*
         bool ReadInorganicMaterials (std::vector<t_matgloss> & output);
         bool ReadOrganicMaterials (std::vector<t_matgloss> & output);

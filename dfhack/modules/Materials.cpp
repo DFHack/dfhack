@@ -294,3 +294,70 @@ void Materials::ReadAllMaterials(void)
         this->ReadCreatureTypesEx();
 	this->ReadDescriptorColors();
 }
+
+std::string Materials::getDescription(t_material & mat)
+{
+	std::string out;
+
+	switch(mat.typeA)
+	{
+		case 0:
+			if(mat.typeD>=0)
+			{
+				if(mat.typeD<=this->inorganic.size())
+				{
+					out.append(this->inorganic[mat.typeD].id);
+					out.append(" bar");
+				}
+				else
+					out = "invalid bar";
+			}
+			else
+				out = "any metal bar";
+			break;
+		case 1:
+			out = "cut gem";
+			break;
+		case 2:
+			out = "block";
+			break;
+		case 3:
+			switch(mat.typeC)
+			{
+				case 3: out = "raw green glass"; break;
+				case 4: out = "raw clear glass"; break;
+				case 5: out = "raw crystal glass"; break;
+				default: out = "raw gems"; break;
+			}
+			break;
+		case 4:
+			out = "raw stone";
+			break;
+		case 5:
+			out = "wood log";
+			break;
+		case 24:
+			out = "weapon?";
+			break;
+		case 26:
+			out = "footwear";
+			break;
+		case 28:
+			out = "headwear";
+			break;
+		case 54:
+			out = "leather";
+			break;
+		case 57:
+			out = "cloth";
+			break;
+		case 71:
+			out = "food";
+			break;
+		default:
+			out = "unknown";
+			break;
+	}
+	return out;
+}
+

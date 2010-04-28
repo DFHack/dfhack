@@ -27,6 +27,8 @@ distribution.
 
 #include "Python.h"
 #include <string>
+#include "integers.h"
+
 #include "DFTypes.h"
 #include "DFHackAPI.h"
 #include "DF_Imports.cpp"

@@ -26,6 +26,7 @@ distribution.
 #define __DFVEGETATION__
 
 #include "Python.h"
+#include "integers.h"
 #include "modules/Vegetation.h"
 #include "DF_Helpers.cpp"
 

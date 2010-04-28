@@ -26,6 +26,7 @@ distribution.
 #define __DFPOSITION__
 
 #include "Python.h"
+#include "integers.h"
 #include "modules/Position.h"
 
 using namespace DFHack;

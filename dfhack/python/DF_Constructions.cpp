@@ -26,6 +26,7 @@ distribution.
 #define __DFCONSTRUCTIONS__
 
 #include "Python.h"
+#include "integers.h"
 #include "modules/Constructions.h"
 #include "DF_Helpers.cpp"
 

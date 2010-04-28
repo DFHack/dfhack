@@ -26,6 +26,7 @@ distribution.
 #define __DFGUI__
 
 #include "Python.h"
+#include "integers.h"
 #include "DFTypes.h"
 #include "modules/Gui.h"
 

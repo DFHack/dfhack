@@ -28,6 +28,7 @@ distribution.
 #include "Python.h"
 #include "stdio.h"
 #include <vector>
+#include "integers.h"
 #include "DFTypes.h"
 #include "modules/Creatures.h"
 #include "DF_CreatureType.cpp"

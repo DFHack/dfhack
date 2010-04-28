@@ -28,6 +28,7 @@ distribution.
 #include "Python.h"
 #include <map>
 #include <string>
+#include "integers.h"
 
 using namespace std;
 

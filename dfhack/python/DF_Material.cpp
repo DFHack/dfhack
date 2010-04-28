@@ -27,6 +27,7 @@ distribution.
 
 #include "Python.h"
 #include <vector>
+#include "integers.h"
 
 using namespace std;
 

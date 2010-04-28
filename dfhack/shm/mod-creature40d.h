@@ -98,7 +98,7 @@ enum CREATURE_COMMAND
     CREATURE_INIT = 0, // initialization
     CREATURE_FIND_IN_BOX,
     CREATURE_AT_INDEX,
-    NUM_CREATURE_CMDS,
+    NUM_CREATURE_CMDS
 };
 DFPP_module Init(void);
 

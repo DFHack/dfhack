@@ -12,7 +12,7 @@ namespace DFHack
         constr_bar = 0,
         constr_block = 2,
         constr_boulder = 4,
-        constr_logs = 5,
+        constr_logs = 5
     };
     #pragma pack(push, 1)
     struct t_construction

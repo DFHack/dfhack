@@ -17,14 +17,14 @@ namespace DFHack
         feature_Other,
         feature_Adamantine_Tube,
         feature_Underworld,
-        feature_Hell_Temple,
+        feature_Hell_Temple
     };
     static char * sa_feature[]=
     {
-        "Other",
-        "Adamantine Tube",
-        "Underworld",
-        "Hell Temple"
+        (char*)"Other",
+        (char*)"Adamantine Tube",
+        (char*)"Underworld",
+        (char*)"Hell Temple"
     };
     union planecoord
     {

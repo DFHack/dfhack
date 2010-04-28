@@ -199,7 +199,24 @@ inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & nam
 
 bool Materials::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
 {
-    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("mat_inorganics"), inorganic );
+    Process * p = d->owner;
+    DfVector <uint32_t> p_matgloss (p, d->owner->getDescriptor()->getAddress ("mat_inorganics"));
+    uint32_t size = p_matgloss.size();
+    inorganic.clear();
+    inorganic.reserve (size);
+    for (uint32_t i = 0; i < size;i++)
+    {
+        t_matgloss mat;
+        
+        p->readSTLString (p_matgloss[i], mat.id, 128);
+        //p->readSTLString (p_matgloss[i] + mat_name, mat.name, 128);
+        mat.name[0] = 0;
+        mat.fore = 0;
+        mat.back = 0;
+        mat.bright = 0;
+        inorganic.push_back(mat);
+    }
+    return true;
 }
 
 bool Materials::ReadOrganicMaterials (vector<t_matgloss> & organic)

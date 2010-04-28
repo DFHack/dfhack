@@ -35,6 +35,7 @@ distribution.
 #include <shms.h>
 #include <mod-core.h>
 #include <mod-creature2010.h>
+#include "modules/Materials.h"
 #include "modules/Creatures.h"
 
 

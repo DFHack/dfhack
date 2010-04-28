@@ -7,9 +7,9 @@
 #include "DFMemInfo.h"
 #include "DFProcess.h"
 
+#include "modules/Materials.h"
 #include "modules/Creatures.h"
 #include "modules/Maps.h"
-#include "modules/Materials.h"
 #include "modules/Position.h"
 #include "modules/Translation.h"
 #include "modules/Vegetation.h"

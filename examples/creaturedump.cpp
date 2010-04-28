@@ -442,7 +442,7 @@ int main (int numargs, char ** args)
         check = args[1];
     
     Creatures = DF.getCreatures();
-    DFHack::Materials * Materials = DF.getMaterials();
+    Materials = DF.getMaterials();
     DFHack::Translation * Tran = DF.getTranslation();
     
     uint32_t numCreatures;

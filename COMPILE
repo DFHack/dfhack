@@ -1,20 +1,10 @@
 Here's how you build dfhack!
 ----------------------------
 
-First, there is one dependency, regardless of the OS you use:
-  cmake - it's the build system
-
-
 Dependencies
 ============
 
 You'll need cmake and 'a' compiler for building the main lib and the various tools.
-To build the libdfconnect on Linux, you'll have to make a 32bit build.
-To build the fake SDL.dll on Windows, you'll have to use MSVC 2008 Express and make
-a Release or RelWithDebInfo build.
-
-The python bindings require SWIG and the python devel libs for building.
-
 (Linux only) Veinlook requires the wide-character ncurses library (libncursesw)
 
 Building on Linux:
@@ -86,8 +76,33 @@ MSVC generates. For example from 'output/' to 'output/Release/'
 I'm afraid you are on your own. dfhack wasn't tested with any other compiler.
 Try using a different cmake generator that's intended for your tools.
 
+Build targets
+-------------
 
-Building the shared memory hook library (SHM)
+dfhack has a few build targets.
+If you're only after the library run 'make dfhack'.
+'make' will build everything.
+'make expbench' will build the expbench testing program and the library.
+
+Build types
+-----------
+
+cmake allows you to pick a build type by changing this variable: CMAKE_BUILD_TYPE
+
+cmake .. -DCMAKE_BUILD_TYPE:string=BUILD_TYPE
+
+Without specifying a build type or 'None', cmake uses the CMAKE_CXX_FLAGS
+variable for building.
+Valid an useful build types include 'Release', 'Debug' and 'RelWithDebInfo'.
+There are others, but they aren't really that useful.
+
+Have fun.
+
+--------------------------------------------------------------------------------
+**Deprecated*Deprecated*Deprecated*Deprecated*Deprecated*Deprecated*Deprecated**
+--------------------------------------------------------------------------------
+
+Building the shared memory hook library (SHM) 
 ---------------------------------------------
 
 Unlike the rest of DFHack, The SHM needs special treatment when it comes to
@@ -142,26 +157,3 @@ String writing is best tested with a fresh throw-away fort and dfrenamer.
 Embark, give one dwarf a very long name using dfrenamer and save/exit.
 If DF crashes during the save sequence, your SHM is not compatible with DF and
 the throw-away fort is most probably lost.
-
-
-Build targets
--------------
-
-dfhack has a few build targets.
-If you're only after the library run 'make dfhack'.
-'make' will build everything.
-'make expbench' will build the expbench testing program and the library.
-
-Build types
------------
-
-cmake allows you to pick a build type by changing this variable: CMAKE_BUILD_TYPE
-
-cmake .. -DCMAKE_BUILD_TYPE:string=BUILD_TYPE
-
-Without specifying a build type or 'None', cmake uses the CMAKE_CXX_FLAGS
-variable for building.
-Valid an useful build types include 'Release', 'Debug' and 'RelWithDebInfo'.
-There are others, but they aren't really that useful.
-
-Have fun.

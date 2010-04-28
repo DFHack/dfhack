@@ -20,20 +20,6 @@ and the arch-games repository.
 
 The package name is dfhack-git :)
 
-Clarification
--------------
-
-'fake SDL.dll', 'SHM', 'libdfconnect' and 'shim library' are basically the same
-thing. A library that sits between DFHack and DF, provides some extra features,
-synchronisation and access control. You should use it for everything that writes
-data back to DF.
-
-You'll need the SHM to attach more than one tool to DF on Linux.
-The DFHack version of Dwarf Therapist requires it for writing creature names
-and professions.
-
-See 'Using DFHack Tools' for instructions on installing it.
-
 Compatibility
 -------------
 
@@ -46,17 +32,10 @@ OSX is also not supported due to lack of developers with a Mac.
 
 Currently supported Dwarf Fortress versions:
 * Windows
-  38a - 40d19_2
+  0.31.01 - 0.31.03
 
 * Linux
-  40d2 - 40d19
-
-Currently supported DF versions *by the SHM*:
-* Windows
-  40d15 - 40d19
-  
-* Linux
-  40d9 - 40d19 (40d2 - 40d8 might work, but are untested)
+  wine together with the Windows versions
 
 Using the library as a developer
 --------------------------------
@@ -72,112 +51,34 @@ At the time of writing there's no API reference or documentation. The code does
 have a lot of comments though (and getting better all the time).
 
 
-Using DFHack Tools
-------------------
-
-The project comes with a special extra library you should add to your DF
-installation. It's used to boost the transfer speed between DF and DFHack, and
-provide data consistency and synchronization. DFHack will work without the
-library, but at suboptimal speeds and the consistency of data written back
-to DF is questionable.
-
-!!!     on Windows this currently only works with DF 40d15 - 40d19_2      !!!
-                  On Linux, it works with DF 40d9 - 40d19
-
-!!! use the pre-compiled library intended for your OS and version of DF !!!
-               You can find them in the 'precompiled' folder.
-               
-
- ** Installing on Windows
- - Open your DF folder, locate SDL.dll and rename it to SDLreal.dll (making
-   a backup of it is a good idea)
- - Copy the right DFHack SDL.dll into your DF folder.
- - Restart DF if it is running
-
- ** Unistalling on Windows
- - Open your DF folder, locate SDL.dll and delete it
- - Rename SDLreal.dll to SDL.dll
- - Restart DF if it is running
-
-
- ** Installing on Linux
- - Open your DF folder and the libs folder within it
- - copy DFHack libdfconnect.so to the libs folder
- - copy the df-hacked script to your DF folder
- - Use this new startup script to start DF
- 
- ** Replacing libdfconnect.so
- - Make sure you close DF before you replace this file! DF crashes whn you don't
-   close it first!
-
- ** Uninstalling on Linux
- - Open your DF and DF/libs folders
- - Delete libdfconnect.so and the dfhacked startup script
- - Go back to using the df startup script
-
-
 Tools
 -----
-
 All the DFHack tools are terminal programs. This might seem strange to Windows
 users, but these are meant mostly as examples for developers. Still, they can
 be useful and are cross-platform just like the library itself.
 
-If the tool writes back to DF's memory, make sure you are using the shared
-memory interface mentioned in the previous section!
+ - dfcleanmap  : Cleans all the splatter that get scattered all over the map.
+                 Only exception is mud. It leaves mud alone.
+ - dfexpbench  : Just a simple benchmark of the data export speed.
+ - dfliquids   : A command prompt for liquid creation and manipulation
+                 (the Moses effect included!)
+                 Also allows painting obsidian walls directly.
+                 Note:
+                 Spawning and deleting liquids can F up pathing data and
+                 temperatures (creating heat traps). You've been warned.
+ - dfposition  : Prints the current DF window properties and cursor position.
+ - dfprospector: Lists all available minerals on the map and how much
+                 of them there is.
+ - dfreveal    : Reveals the whole map, waits for input and hides it again.
+                 If you close the tool while it waits, the map remains revealed.
+ - dfsuspend   : Test of the process suspend/resume mechanism.
+ - dfunstuck   : Use if you prematurely close any of the tools and DF
+                 appears to be stuck.
+ - dfvdig      : Designates a whole vein for digging. Point the cursor at a vein
+                 and run this thing :)
 
-* catsplosion- Makes all cats pregnant and due in 100 game steps. Use with care.
+ - Your tool here:  Write one ;)
 
-* magma_create - creates 7/7 magma at the DF's cursor
-
-* reveal     - plain old reveal tool. It reveals all the map blocks already
-               initialized by DF.
-
-* veinlook   - a silly map viewer. It can mass-dig veins in a map square.
-               (Linux only)
-
-* prospector - scans the map for minerals. by default it only scans only visible
-               veins. You can make it show hidden things with '-a' and base rock
-               and soil layers with '-b'. These can be combined ('-ab')
-
-* cleanmap   - cleans mud, vomit, snow and all kinds of mess from the map.
-               It will clean your irrigated farms too, so consider yourself
-               warned.
-
-* incrementalsearch - incremental search utility (Linux only).
-
-* bauxite - converts all mechanisms into bauxite mechanisms.
-
-* itemdesignator - Allows mass-designating items by type and material - dump,
-                   forbid, melt and set on fire ;)
-* digger         - allows designating tiles for digging/cutting/ramp removal
-
-  A list of accepted tile classes:
-        1  = WALL
-        2  = PILLAR
-        3  = FORTIFICATION
-        
-        4  = STAIR_UP
-        5  = STAIR_DOWN
-        6  = STAIR_UPDOWN
-        
-        7  = RAMP
-        8  = RAMP_TOP
-        
-        9  = FLOOR
-        10  = TREE_DEAD
-        11 = TREE_OK
-        12 = SAPLING_DEAD
-        13 = SAPLING_OK
-        14 = SHRUB_DEAD
-        15 = SHRUB_OK
-        16 = BOULDER
-        17 = PEBBLES
-  
-  Example : dfdigger -o 100,100,15 -t 9,10 -m 10
-  This will start looking for trees at coords 100,100,15 and designate ten of them for cutting.
-
- 
 Memory offset definitions
 -------------------------
 

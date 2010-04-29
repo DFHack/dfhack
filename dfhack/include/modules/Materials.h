@@ -49,7 +49,7 @@ namespace DFHack
     struct t_creaturetype
     {
         char rawname[128];
-        vector <t_creaturecaste> castes;
+	std::vector <t_creaturecaste> castes;
 	uint8_t tile_character;
 	struct
 	{

@@ -28,6 +28,7 @@ distribution.
 #include "Python.h"
 #include <stdio.h>
 #include <string.h>
+#include <string>
 #include <vector>
 
 using namespace std;
@@ -37,8 +38,8 @@ using namespace std;
 
 using namespace DFHack;
 
-#include "modules/Creatures.h"
 #include "modules/Materials.h"
+#include "modules/Creatures.h"
 
 #define DICTADD(d, name, item) PyDict_SetItemString(d, name, item); Py_DECREF(item)
 #define OBJSET(o, name, item) PyObject_SetAttrString(o, name, item); Py_DECREF(item)

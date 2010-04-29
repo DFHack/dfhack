@@ -27,6 +27,7 @@ distribution.
 
 #include "Python.h"
 #include <vector>
+#include <string>
 #include "integers.h"
 
 using namespace std;
@@ -266,11 +267,9 @@ static PyObject* DF_Material_ReadInorganicMaterials(DF_Material* self, PyObject*
 {
 	if(self->mat_Ptr != NULL)
 	{
-		std::vector<DFHack::t_matgloss> matVec;
-		
-		if(self->mat_Ptr->ReadInorganicMaterials(matVec))
+		if(self->mat_Ptr->ReadInorganicMaterials())
 		{
-			return BuildMatglossList(matVec);
+			return BuildMatglossList(self->mat_Ptr->inorganic);
 		}
 	}
 	
@@ -281,11 +280,9 @@ static PyObject* DF_Material_ReadOrganicMaterials(DF_Material* self, PyObject* a
 {
 	if(self->mat_Ptr != NULL)
 	{
-		std::vector<DFHack::t_matgloss> matVec;
-		
-		if(self->mat_Ptr->ReadOrganicMaterials(matVec))
+		if(self->mat_Ptr->ReadOrganicMaterials())
 		{
-			return BuildMatglossList(matVec);
+			return BuildMatglossList(self->mat_Ptr->organic);
 		}
 	}
 	
@@ -296,11 +293,9 @@ static PyObject* DF_Material_ReadWoodMaterials(DF_Material* self, PyObject* args
 {
 	if(self->mat_Ptr != NULL)
 	{
-		std::vector<DFHack::t_matgloss> matVec;
-		
-		if(self->mat_Ptr->ReadWoodMaterials(matVec))
+		if(self->mat_Ptr->ReadWoodMaterials())
 		{
-			return BuildMatglossList(matVec);
+			return BuildMatglossList(self->mat_Ptr->tree);
 		}
 	}
 	
@@ -311,11 +306,9 @@ static PyObject* DF_Material_ReadPlantMaterials(DF_Material* self, PyObject* arg
 {
 	if(self->mat_Ptr != NULL)
 	{
-		std::vector<DFHack::t_matgloss> matVec;
-		
-		if(self->mat_Ptr->ReadPlantMaterials(matVec))
+		if(self->mat_Ptr->ReadPlantMaterials())
 		{
-			return BuildMatglossList(matVec);
+			return BuildMatglossList(self->mat_Ptr->plant);
 		}
 	}
 	
@@ -326,11 +319,9 @@ static PyObject* DF_Material_ReadCreatureTypes(DF_Material* self, PyObject* args
 {
 	if(self->mat_Ptr != NULL)
 	{
-		std::vector<DFHack::t_matgloss> matVec;
-		
-		if(self->mat_Ptr->ReadCreatureTypes(matVec))
+		if(self->mat_Ptr->ReadCreatureTypes())
 		{
-			return BuildMatglossList(matVec);
+			return BuildMatglossList(self->mat_Ptr->race);
 		}
 	}
 	
@@ -341,11 +332,9 @@ static PyObject* DF_Material_ReadCreatureTypesEx(DF_Material* self, PyObject* ar
 {
 	if(self->mat_Ptr != NULL)
 	{
-		std::vector<DFHack::t_creaturetype> creatureVec;
-		
-		if(self->mat_Ptr->ReadCreatureTypesEx(creatureVec))
+		if(self->mat_Ptr->ReadCreatureTypesEx())
 		{
-			return BuildCreatureTypeExList(creatureVec);
+			return BuildCreatureTypeExList(self->mat_Ptr->raceEx);
 		}
 	}
 	
@@ -356,11 +345,9 @@ static PyObject* DF_Material_ReadDescriptorColors(DF_Material* self, PyObject* a
 {
 	if(self->mat_Ptr != NULL)
 	{
-		std::vector<DFHack::t_descriptor_color> colorVec;
-		
-		if(self->mat_Ptr->ReadDescriptorColors(colorVec))
+		if(self->mat_Ptr->ReadDescriptorColors())
 		{
-			return BuildDescriptorColorList(colorVec);
+			return BuildDescriptorColorList(self->mat_Ptr->color);
 		}
 	}
 	

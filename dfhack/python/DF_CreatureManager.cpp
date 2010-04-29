@@ -25,11 +25,13 @@ distribution.
 #ifndef __DFCREATURES__
 #define __DFCREATURES__
 
+#include <string>
 #include "Python.h"
 #include "stdio.h"
 #include <vector>
 #include "integers.h"
 #include "DFTypes.h"
+#include "modules/Materials.h"
 #include "modules/Creatures.h"
 #include "DF_CreatureType.cpp"
 

@@ -39,8 +39,8 @@ ADD_EXECUTABLE(dfsuspend suspendtest.cpp)
 TARGET_LINK_LIBRARIES(dfsuspend dfhack)
 
 # itemdump - dump the item under the cursor
-# ADD_EXECUTABLE(dfitemdump dfitemdump.cpp)
-# TARGET_LINK_LIBRARIES(dfitemdump dfhack)
+ADD_EXECUTABLE(dfitemdump dfitemdump.cpp)
+TARGET_LINK_LIBRARIES(dfitemdump dfhack)
 
 # hotkeynotedump - dumps the hotkeys and notes for the loaded map
 # Author: belal

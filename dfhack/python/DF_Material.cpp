@@ -1,6 +1,6 @@
 /*
 www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mr·zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
+Copyright (c) 2009 Petr Mr√°zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -27,6 +27,7 @@ distribution.
 
 #include "Python.h"
 #include <vector>
+#include "integers.h"
 
 using namespace std;
 
@@ -244,7 +245,7 @@ static void DF_Material_dealloc(DF_Material* self)
 		
 		if(self->mat_Ptr != NULL)
 		{
-			PySys_WriteStdout("mat_Ptr = %i\n", (int)self->mat_Ptr);
+			PySys_WriteStdout("mat_Ptr = 0x%x\n", self->mat_Ptr);
 			
 			delete self->mat_Ptr;
 			

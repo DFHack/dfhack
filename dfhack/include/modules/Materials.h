@@ -19,11 +19,11 @@ namespace DFHack
 
     struct t_descriptor_color
     {
-	    char id[128]; // id in the raws
-	    float r;
-	    float v;
-	    float b;
-	    char name[128]; //displayed name
+        char id[128]; // id in the raws
+        float r;
+        float v;
+        float b;
+        char name[128]; //displayed name
     };
 
     struct t_matglossPlant

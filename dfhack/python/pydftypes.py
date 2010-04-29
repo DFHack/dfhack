@@ -17,9 +17,7 @@ Matgloss = namedtuple("Matgloss", "id, fore, back, bright, name")
 DescriptorColor = namedtuple("DescriptorColor", "id, r, v, b, name")
 CreatureTypeEx = namedtuple("CreatureTypeEx", "rawname, castes, tile_character, tilecolor")
 TileColor = namedtuple("TileColor", "fore, back, bright")
-
-class Name(object):
-    __slots__ = ["first_name", "nickname", "language", "has_name", "words", "parts_of_speech"]
+Name = namedtuple("Name", "first_name, nickname, language, has_name, words, parts_of_speech")
 
 class Soul(object):
     def __init__(self, *args, **kwds):

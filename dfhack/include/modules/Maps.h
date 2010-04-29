@@ -19,7 +19,7 @@ namespace DFHack
         feature_Underworld,
         feature_Hell_Temple
     };
-    static char * sa_feature[]=
+    static const char * sa_feature[]=
     {
         (char*)"Other",
         (char*)"Adamantine Tube",

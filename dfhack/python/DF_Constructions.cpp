@@ -1,6 +1,6 @@
 /*
 www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
+Copyright (c) 2009 Petr MrÃ¡zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -26,6 +26,7 @@ distribution.
 #define __DFCONSTRUCTIONS__
 
 #include "Python.h"
+#include "integers.h"
 #include "modules/Constructions.h"
 #include "DF_Helpers.cpp"
 
@@ -104,7 +105,7 @@ static void DF_Construction_dealloc(DF_Construction* self)
 		
 		if(self->c_Ptr != NULL)
 		{
-			PySys_WriteStdout("c_Ptr = %i\n", (int)self->c_Ptr);
+			PySys_WriteStdout("c_Ptr = 0x%x\n", self->c_Ptr);
 			
 			delete self->c_Ptr;
 			

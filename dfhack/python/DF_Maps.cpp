@@ -1,6 +1,6 @@
 /*
 www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mr·zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
+Copyright (c) 2009 Petr Mr√°zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -28,10 +28,12 @@ distribution.
 #include "Python.h"
 #include <vector>
 #include <string>
+#include "integers.h"
 
 using namespace std;
 
 #include "DFTypes.h"
+#include <map>
 #include "modules/Maps.h"
 #include "DF_Imports.cpp"
 #include "DF_Helpers.cpp"
@@ -391,7 +393,7 @@ static void DF_Map_dealloc(DF_Map* self)
 		
 		if(self->m_Ptr != NULL)
 		{
-			PySys_WriteStdout("m_Ptr = %i\n", (int)self->m_Ptr);
+			PySys_WriteStdout("m_Ptr = 0x%x\n", self->m_Ptr);
 			
 			delete self->m_Ptr;
 			

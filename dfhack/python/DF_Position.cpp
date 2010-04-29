@@ -1,6 +1,6 @@
 /*
 www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mr·zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
+Copyright (c) 2009 Petr Mr√°zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -26,6 +26,7 @@ distribution.
 #define __DFPOSITION__
 
 #include "Python.h"
+#include "integers.h"
 #include "modules/Position.h"
 
 using namespace DFHack;

@@ -27,6 +27,8 @@ distribution.
 
 #include "Python.h"
 #include <string>
+#include "integers.h"
+
 #include "DFTypes.h"
 #include "DFHackAPI.h"
 #include "DF_Imports.cpp"
@@ -144,7 +146,7 @@ static void DF_API_dealloc(DF_API* self)
 		
 		if(self->api_Ptr != NULL)
 		{
-			PySys_WriteStdout("api_Ptr = %i\n", (int)self->api_Ptr);
+			PySys_WriteStdout("api_Ptr = 0x%x\n", self->api_Ptr);
 			
 			delete self->api_Ptr;
 			

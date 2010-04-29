@@ -375,7 +375,7 @@ namespace DFHack
         bool WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
         uint32_t GetDwarfRaceIndex ( void );
         int32_t GetDwarfCivId ( void );
-	bool ReadJob(const t_creature * furball, vector<t_material> & mat);
+        bool ReadJob(const t_creature * furball, std::vector<t_material> & mat);
         private:
         struct Private;
         Private *d;

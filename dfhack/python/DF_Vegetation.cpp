@@ -1,6 +1,6 @@
 /*
 www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
+Copyright (c) 2009 Petr MrÃ¡zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -26,6 +26,7 @@ distribution.
 #define __DFVEGETATION__
 
 #include "Python.h"
+#include "integers.h"
 #include "modules/Vegetation.h"
 #include "DF_Helpers.cpp"
 
@@ -78,7 +79,7 @@ static void DF_Vegetation_dealloc(DF_Vegetation* self)
 		
 		if(self->veg_Ptr != NULL)
 		{
-			PySys_WriteStdout("veg_Ptr = %i\n", (int)self->veg_Ptr);
+			PySys_WriteStdout("veg_Ptr = 0x%x\n", self->veg_Ptr);
 			
 			delete self->veg_Ptr;
 			

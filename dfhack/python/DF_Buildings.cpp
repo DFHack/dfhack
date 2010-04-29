@@ -1,6 +1,6 @@
 /*
 www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mr·zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
+Copyright (c) 2009 Petr Mr√°zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -28,6 +28,7 @@ distribution.
 #include "Python.h"
 #include <map>
 #include <string>
+#include "integers.h"
 
 using namespace std;
 
@@ -113,7 +114,7 @@ static void DF_Building_dealloc(DF_Building* self)
 		
 		if(self->b_Ptr != NULL)
 		{
-			PySys_WriteStdout("b_Ptr = %i\n", (int)self->b_Ptr);
+			PySys_WriteStdout("b_Ptr = 0x%x\n", self->b_Ptr);
 			
 			delete self->b_Ptr;
 			

@@ -1,0 +1,4 @@
+#!/bin/bash
+python linsetup.py build_ext
+cp build/lib.linux-i686-2.6/pydfhack.so .
+rm -r build

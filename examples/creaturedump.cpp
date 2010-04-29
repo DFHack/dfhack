@@ -242,7 +242,7 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             {
                 for(unsigned int i = 0; i < mymat.size(); i++)
                 {
-                    printf("\t%s(%d)\t%d %d %d - %.8x\n", Materials->getDescription(mymat[i]).c_str(), mymat[i].typeA, mymat[i].typeB, mymat[i].typeC, mymat[i].typeD, mymat[i].flags);
+                    printf("\t%s(%d)\t%d %d %d - %.8x\n", Materials->getDescription(mymat[i]).c_str(), mymat[i].itemType, mymat[i].typeB, mymat[i].subType, mymat[i].index, mymat[i].flags);
                 }
             }
         }

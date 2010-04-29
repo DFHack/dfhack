@@ -299,14 +299,14 @@ std::string Materials::getDescription(t_material & mat)
 {
 	std::string out;
 
-	switch(mat.typeA)
+	switch(mat.itemType)
 	{
 		case 0:
-			if(mat.typeD>=0)
+			if(mat.index>=0)
 			{
-				if(mat.typeD<=this->inorganic.size())
+				if(mat.index<=this->inorganic.size())
 				{
-					out.append(this->inorganic[mat.typeD].id);
+					out.append(this->inorganic[mat.index].id);
 					out.append(" bar");
 				}
 				else
@@ -322,7 +322,7 @@ std::string Materials::getDescription(t_material & mat)
 			out = "block";
 			break;
 		case 3:
-			switch(mat.typeC)
+			switch(mat.subType)
 			{
 				case 3: out = "raw green glass"; break;
 				case 4: out = "raw clear glass"; break;

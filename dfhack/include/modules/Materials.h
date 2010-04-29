@@ -62,10 +62,10 @@ namespace DFHack
     // this structure describes what are things made of in the DF world
     struct t_material
     {
-	    int16_t typeA;
+	    int16_t itemType;
 	    int16_t typeB;
-	    int16_t typeC;
-	    int32_t typeD;
+	    int16_t subType;
+	    int32_t index;
 	    uint32_t flags;
     };
     

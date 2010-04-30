@@ -1443,7 +1443,10 @@ map_data_1b60_offset          0x1B9c
         =========
         soil, stone, metal
         inorganics vector = WORLD + 0x54B7C = 0x16B0D4C
-        <Address name="mat_inorganics">0x16B0D4C</Address>
+	<Address name="mat_inorganics">0x16B0D4C</Address>
+
+	stuff like glass, coke, ...
+	<Address name="mat_other">0x16BA114</Address>
         
         wood and plant matter, WORLD + 0x54B94
         <Address name="mat_organics_all">0x16B0D64</Address>

@@ -32,7 +32,12 @@ std::string getMatDesc(int32_t typeB, int32_t typeC, int32_t typeD)
 				if(typeC>0x292)
 					return "?";
 				else
-					return "stuff";
+				{
+					if(typeC>=Materials->other.size())
+						return "stuff";
+					else
+						return Materials->other[typeC].rawname;
+				}
 			else
 				return Materials->inorganic[typeD].id;
 		}

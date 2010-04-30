@@ -46,6 +46,11 @@ namespace DFHack
         char adjective[128];
     };
 
+    struct t_matglossOther
+    {
+	    char rawname[128];
+    };
+
     struct t_creatureextract
     {
 	    char rawname[128];
@@ -89,6 +94,7 @@ namespace DFHack
 	std::vector<t_matgloss> race;
 	std::vector<t_creaturetype> raceEx;
 	std::vector<t_descriptor_color> color;
+	std::vector<t_matglossOther> other;
         
         bool ReadInorganicMaterials (void);
         bool ReadOrganicMaterials (void);
@@ -97,6 +103,7 @@ namespace DFHack
         bool ReadCreatureTypes (void);
         bool ReadCreatureTypesEx (void);
 	bool ReadDescriptorColors(void);
+	bool ReadOthers (void);
 
 	void ReadAllMaterials(void);
 

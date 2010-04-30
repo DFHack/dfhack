@@ -25,25 +25,30 @@ distribution.
 #ifndef DFHACK_C_API
 #define DFHACK_C_API
 
+#include "Export.h"
+#include "integers.h"
+
 typedef void DFHackObject;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-__declspec(dllexport) DFHackObject* API_Alloc(const char* path_to_xml);
-/*
-static void API_Free(DFHackObject* api);
+EXPORT DFHackObject* API_Alloc(const char* path_to_xml);
+EXPORT void API_Free(DFHackObject* api);
 
-static bool API_Attach(DFHackObject* api);
-static bool API_Detach(DFHackObject* api);
-static bool API_isAttached(DFHackObject* api);
+EXPORT int API_Attach(DFHackObject* api);
+EXPORT int API_Detach(DFHackObject* api);
+EXPORT int API_isAttached(DFHackObject* api);
 
-static bool API_Suspend(DFHackObject* api);
-static bool API_Resume(DFHackObject* api);
-static bool API_isSuspended(DFHackObject* api);
-static bool API_ForceResume(DFHackObject* api);
-*/
+EXPORT int API_Suspend(DFHackObject* api);
+EXPORT int API_Resume(DFHackObject* api);
+EXPORT int API_isSuspended(DFHackObject* api);
+EXPORT int API_ForceResume(DFHackObject* api);
+EXPORT int API_AsyncSuspend(DFHackObject* api);
+
+EXPORT void API_ReadRaw(DFHackObject* api, const uint32_t offset, const uint32_t size, uint8_t* target);
+EXPORT void API_WriteRaw(DFHackObject* api, const uint32_t offset, const uint32_t size, uint8_t* source);
 
 #ifdef __cplusplus
 }

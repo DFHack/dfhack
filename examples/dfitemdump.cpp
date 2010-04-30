@@ -104,13 +104,14 @@ int main ()
 					uint32_t dtypefunc = p->readDWord(dvtable + 20);
 					uint64_t dtypefunct = p->readQuad(dtypefunc);
 					uint32_t dtype = 0;
+					uint32_t dqual = p->readWord(decoration + 20);
 					if( (dtypefunct&0xFFFFFFFFFFFF00FFLL) == 0xCCCCC300000000B8LL)
 						dtype = (dtypefunct>>8)&0xfffffff;
 					else
 						printf("bad decoration type function, address=%p\n", (void*) dtypefunc);
 					if(sep)
 						printf(",");
-					printf("%s[%d]", ddesc.c_str(), dtype);
+					printf("%s[t=%d,q=%d]", ddesc.c_str(), dtype, dqual);
 					sep = true;
 				}
 			}

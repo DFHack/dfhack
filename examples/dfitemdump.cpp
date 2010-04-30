@@ -151,7 +151,9 @@ int main ()
 				printf("bad typeB func @%p\n", (void*) funcB);
 		}
 
-		if( (funcCt&0xFFFFFF0000FFFFFFLL) == 0xC300000000818B66 )
+		if(funcCt == 0xCCCCCCCCC3FFC883LL)
+			typeC = -1;
+		else if( (funcCt&0xFFFFFF0000FFFFFFLL) == 0xC300000000818B66 )
 		{
 			uint32_t off1 = (funcCt>>24)&0xffff;
 			typeC = p->readWord(p_items[i] + off1);
@@ -159,7 +161,9 @@ int main ()
 		else
 			printf("bad typeC func @%p\n", (void*) funcC);
 
-		if( (funcDt&0xFFFFFFFF0000FFFFLL) == 0xCCC300000000818BLL )
+		if(funcDt == 0xCCCCCCCCC3FFC883LL)
+			typeD = -1;
+		else if( (funcDt&0xFFFFFFFF0000FFFFLL) == 0xCCC300000000818BLL )
 		{
 			uint32_t off1 = (funcDt>>16) & 0xffff;
 			typeD = p->readDWord(p_items[i] + off1);

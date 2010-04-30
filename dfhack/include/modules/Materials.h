@@ -45,11 +45,17 @@ namespace DFHack
         char plural[128];
         char adjective[128];
     };
+
+    struct t_creatureextract
+    {
+	    char rawname[128];
+    };
     // this doesn't transfer well across the shm gap...
     struct t_creaturetype
     {
         char rawname[128];
 	std::vector <t_creaturecaste> castes;
+	std::vector <t_creatureextract> extract;
 	uint8_t tile_character;
 	struct
 	{

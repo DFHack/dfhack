@@ -269,6 +269,7 @@ bool Materials::ReadCreatureTypesEx (void)
     memory_info *mem = d->owner->getDescriptor();
     DfVector <uint32_t> p_races (p, mem->getAddress ("creature_type_vector"));
     uint32_t castes_vector_offset = mem->getOffset ("creature_type_caste_vector");
+    uint32_t extract_vector_offset = mem->getOffset ("creature_type_extract_vector");
     uint32_t sizeof_string = mem->getHexValue ("sizeof_string");
     uint32_t size = p_races.size();
     uint32_t sizecas = 0;
@@ -296,6 +297,14 @@ bool Materials::ReadCreatureTypesEx (void)
         mat.tilecolor.fore = p->readWord( p_races[i] + tile_color_offset );
         mat.tilecolor.back = p->readWord( p_races[i] + tile_color_offset + 2 );
         mat.tilecolor.bright = p->readWord( p_races[i] + tile_color_offset + 4 );
+	
+	DfVector <uint32_t> p_extract(p, p_races[i] + extract_vector_offset);
+	for(uint32_t j = 0; j < p_extract.size(); j++)
+	{
+		t_creatureextract extract;
+		p->readSTLString( p_extract[j], extract.rawname, sizeof(extract.rawname));
+		mat.extract.push_back(extract);
+	}
         raceEx.push_back(mat);
     }
     return true;

@@ -12,6 +12,7 @@ include/DFTileTypes.h
 include/DFTypes.h
 include/DFVector.h
 include/DFWindow.h
+include/DFHackAPI_C.h
 include/integers.h
 shm/shms.h
 )
@@ -23,6 +24,7 @@ DFHackAPI.cpp
 APIPrivate.cpp
 DFTileTypes.cpp
 DFVector.cpp
+DFHackAPI_C.cpp
 
 depends/md5/md5.cpp
 depends/md5/md5wrapper.cpp
@@ -91,7 +93,7 @@ ENDIF( CMAKE_SIZEOF_VOID_P MATCHES 4 )
 
 CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/dfhack/config.h.cmake ${CMAKE_SOURCE_DIR}/dfhack/include/config.h )
 
-
+ADD_DEFINITIONS(-DBUILD_DFHACK_LIB)
 
 IF(UNIX)
   add_definitions(-DLINUX_BUILD)

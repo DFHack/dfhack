@@ -162,8 +162,9 @@ int main ()
 			printf("bad typeD func @%p\n", (void*) funcD);
 
 //		printf("%p\t%.16LX\t", (void*) func2, funct2);
-		printf("%d\t%p\t%s\t%d\t[%d,%d,%d]", type, (void*)vtable, desc.c_str(), quality, typeB, typeC, typeD);
-		//printf("\t%p\t%.16LX", (void *) funcD, funcDt);
+		printf("%d\t%p\t%s\t%d\t[%d,%d,%d -> %s]", type, (void*)vtable, desc.c_str(), quality,
+				typeB, typeC, typeD, getMatDesc(typeC, typeD).c_str());
+//		printf("\t%p\t%.16LX", (void *) funcD, funcDt);
 		if(hasDecorations && false)
 		{
 			bool sep = false;

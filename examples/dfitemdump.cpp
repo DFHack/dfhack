@@ -49,24 +49,34 @@ int main ()
 	uint32_t size = p_items.size();
 
 
-	printf("vtable\ttype\tname\n");
+	printf("type\tvtable\tname\tquality\n");
 	for(i=0;i<size;i++)
 	{
 		uint32_t vtable = p->readDWord(p_items[i]);
 		uint32_t func0 = p->readDWord(vtable);
-		uint64_t func = p->readQuad(func0);
-		uint32_t type = (func>>8)&0xffff;
+		uint64_t funct0 = p->readQuad(func0);
+		uint32_t func1 = p->readDWord(vtable+0x238);
+		uint64_t funct1 = p->readQuad(func1);
+		uint32_t type = (funct0>>8)&0xffff;
+		uint32_t quality = 0;
 		string desc = p->readClassName(vtable);
 
-		if( (func&0xFFFFFFFFFF000000LL) != 0xCCCCC30000000000LL )
+		if( (funct0&0xFFFFFFFFFF000000LL) != 0xCCCCC30000000000LL )
 		{
-			if(func == 0xCCCCCCCCCCC3C033LL)
+			if(funct0 == 0xCCCCCCCCCCC3C033LL)
 				type = 0;
 			else
-				printf("bad func vtable=%p func=%.16LX\n", (void*)vtable, func);
+				printf("bad func vtable=%p func=%.16LX\n", (void*)vtable, funct0);
 		}
 
-		printf("%d\t%p\t%s\n", type, (void*)vtable, desc.c_str());
+		if(funct1 == 0xC300000092818B66LL)
+			quality = p->readWord(p_items[i]+0x92);
+		else if(funct1 == 0xCCCCCCCCCCC3C033)
+			quality = 0;
+		else
+			printf("bad quality function address=%p\n", (void*) func1);
+
+		printf("%d\t%p\t%s\t%d\n", type, (void*)vtable, desc.c_str(), quality);
 	}
 
 #ifndef LINUX_BUILD

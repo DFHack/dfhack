@@ -180,7 +180,7 @@ int main ()
 		printf("%d\t%p\t%s\t%d\t[%d,%d,%d -> %s]", type, (void*)vtable, desc.c_str(), quality,
 				typeB, typeC, typeD, getMatDesc(typeB, typeC, typeD).c_str());
 //		printf("\t%p\t%.16LX", (void *) funcD, funcDt);
-		if(hasDecorations && false)
+		if(hasDecorations)
 		{
 			bool sep = false;
 			printf("\tdeco=[");

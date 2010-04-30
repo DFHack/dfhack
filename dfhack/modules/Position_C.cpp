@@ -25,6 +25,7 @@ distribution.
 #include "modules/Position_C.h"
 #include "integers.h"
 
+#include "DFCommonInternal.h"
 #include "modules/Position.h"
 
 using namespace DFHack;
@@ -35,7 +36,7 @@ extern "C" {
 
 int Position_getViewCoords(DFHackObject* pos, int32_t* x, int32_t* y, int32_t* z)
 {
-	if(pos != 0)
+	if(pos != NULL)
 	{
 		int32_t tx, ty, tz;
 		
@@ -56,7 +57,7 @@ int Position_getViewCoords(DFHackObject* pos, int32_t* x, int32_t* y, int32_t* z
 
 int Position_setViewCoords(DFHackObject* pos, int32_t x, int32_t y, int32_t z)
 {
-	if(pos != 0)
+	if(pos != NULL)
 	{
 		if(((DFHack::Position*)pos)->setViewCoords(x, y, z))
 			return 1;
@@ -70,7 +71,7 @@ int Position_setViewCoords(DFHackObject* pos, int32_t x, int32_t y, int32_t z)
 
 int Position_getCursorCoords(DFHackObject* pos, int32_t* x, int32_t* y, int32_t* z)
 {
-	if(pos != 0)
+	if(pos != NULL)
 	{
 		int32_t tx, ty, tz;
 		
@@ -91,7 +92,7 @@ int Position_getCursorCoords(DFHackObject* pos, int32_t* x, int32_t* y, int32_t*
 
 int Position_setCursorCoords(DFHackObject* pos, int32_t x, int32_t y, int32_t z)
 {
-	if(pos != 0)
+	if(pos != NULL)
 	{
 		if(((DFHack::Position*)pos)->setCursorCoords(x, y, z))
 			return 1;
@@ -104,7 +105,7 @@ int Position_setCursorCoords(DFHackObject* pos, int32_t x, int32_t y, int32_t z)
 
 int Position_getWindowSize(DFHackObject* pos, int32_t* width, int32_t* height)
 {
-	if(pos != 0)
+	if(pos != NULL)
 	{
 		int32_t tw, th;
 		

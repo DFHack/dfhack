@@ -22,7 +22,7 @@ using namespace std;
 
 DFHack::Materials * Materials;
 
-std::string getMatDesc(uint32_t typeC, uint32_t typeD)
+std::string getMatDesc(int32_t typeB, int32_t typeC, int32_t typeD)
 {
 	if( (typeC<419) || (typeC>618) )
 	{
@@ -34,13 +34,24 @@ std::string getMatDesc(uint32_t typeC, uint32_t typeD)
 				else
 					return "stuff";
 			else
-				return "inorganic";
+				return Materials->inorganic[typeD].id;
 		}
 		else
-			return "body product";
+		{
+			if(typeD>=Materials->raceEx.size())
+				return "unknown race";
+			typeC-=19;
+			if((typeC<0) || (typeC>=Materials->raceEx[typeD].extract.size()))
+			{
+				return string(Materials->raceEx[typeD].rawname).append(" extract");
+			}
+			return std::string(Materials->raceEx[typeD].rawname).append(" ").append(Materials->raceEx[typeD].extract[typeC].rawname);
+		}
 	}
 	else
-		return "organic";
+	{
+		return Materials->organic[typeD].id;
+	}
 }
 
 int main ()
@@ -163,7 +174,7 @@ int main ()
 
 //		printf("%p\t%.16LX\t", (void*) func2, funct2);
 		printf("%d\t%p\t%s\t%d\t[%d,%d,%d -> %s]", type, (void*)vtable, desc.c_str(), quality,
-				typeB, typeC, typeD, getMatDesc(typeC, typeD).c_str());
+				typeB, typeC, typeD, getMatDesc(typeB, typeC, typeD).c_str());
 //		printf("\t%p\t%.16LX", (void *) funcD, funcDt);
 		if(hasDecorations && false)
 		{
@@ -190,7 +201,7 @@ int main ()
 						printf("bad decoration type function, address=%p\n", (void*) dtypefunc);
 					if(sep)
 						printf(",");
-					printf("%s[t=%d,q=%d,%s{%d,%d}]", ddesc.c_str(), dtype, dqual, getMatDesc(dtypeC, dtypeD).c_str(), dtypeC, dtypeD);
+					printf("%s[t=%d,q=%d,%s{%d,%d}]", ddesc.c_str(), dtype, dqual, getMatDesc(-1, dtypeC, dtypeD).c_str(), dtypeC, dtypeD);
 					sep = true;
 				}
 			}

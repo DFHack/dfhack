@@ -22,6 +22,27 @@ using namespace std;
 
 DFHack::Materials * Materials;
 
+std::string getMatDesc(uint32_t typeC, uint32_t typeD)
+{
+	if( (typeC<419) || (typeC>618) )
+	{
+		if( (typeC<19) || (typeC>218) )
+		{
+			if(typeC)
+				if(typeC>0x292)
+					return "?";
+				else
+					return "stuff";
+			else
+				return "inorganic";
+		}
+		else
+			return "body product";
+	}
+	else
+		return "organic";
+}
+
 int main ()
 {
 	DFHack::API DF("Memory.xml");
@@ -60,6 +81,16 @@ int main ()
 		uint32_t func2 = p->readDWord(vtable+0x288);
 		uint64_t funct2 = p->readQuad(func2);
 		uint32_t type = (funct0>>8)&0xffff;
+
+		uint32_t funcB = p->readDWord(vtable + 4);
+		uint32_t funcC = p->readDWord(vtable + 8);
+		uint32_t funcD = p->readDWord(vtable + 12);
+		uint64_t funcBt = p->readQuad(funcB);
+		uint64_t funcCt = p->readQuad(funcC);
+		uint64_t funcDt = p->readQuad(funcD);
+		int16_t typeB = -1;
+		int16_t typeC = -1;
+		int32_t typeD = -1;
 		uint32_t quality = 0;
 		bool hasDecorations;
 		string desc = p->readClassName(vtable);
@@ -86,9 +117,54 @@ int main ()
 		else
 			printf("bad decoration function address=%p\n", (void*) func2);
 
+		if(funcBt == 0xCCCCCCCCC3FFC883LL)
+			typeB = -1;
+		else
+		{
+			uint64_t funcBtEnd = p->readQuad(funcB+8);
+			if( 
+				((funcBt&0xFFFFFFFF0000FFFFLL) == 0x8B6600000000818BLL) &&
+				((funcBtEnd&0xFFFFFFFFFFFF00FFLL) == 0xCCCCCCCCCCC30040LL) )
+			{
+				uint32_t off1 = (funcBt>>16) & 0xffff;
+				uint32_t off2 = (funcBtEnd>>8) & 0xff;
+				uint32_t pt1 = p->readDWord(p_items[i] + off1);
+				typeB = p->readWord(pt1 + off2);
+			}
+			else if((funcBt&0xFFFFFF0000FFFFFFLL)==0xC300000000818B66LL)
+			{
+				uint32_t off1 = (funcBt>>24) & 0xffff;
+				typeB = p->readWord(p_items[i] + off1);
+			}
+			else
+				printf("bad typeB func @%p\n", (void*) funcB);
+		}
+
+		if( (funcCt&0xFFFFFF0000FFFFFFLL) == 0xC300000000818B66 )
+		{
+			uint32_t off1 = (funcCt>>24)&0xffff;
+			typeC = p->readWord(p_items[i] + off1);
+		}
+		else
+			printf("bad typeC func @%p\n", (void*) funcC);
+
+		if( (funcDt&0xFFFFFFFF0000FFFFLL) == 0xCCC300000000818BLL )
+		{
+			uint32_t off1 = (funcDt>>16) & 0xffff;
+			typeD = p->readDWord(p_items[i] + off1);
+		}
+		else if ( (funcDt&0xFFFFFF0000FFFFFFLL) == 0xC30000000081BF0FLL )
+		{
+			uint32_t off1 = (funcDt>>24) & 0xffff;
+			typeD = (int16_t) p->readWord(p_items[i] + off1);
+		}
+		else
+			printf("bad typeD func @%p\n", (void*) funcD);
+
 //		printf("%p\t%.16LX\t", (void*) func2, funct2);
-		printf("%d\t%p\t%s\t%d", type, (void*)vtable, desc.c_str(), quality);
-		if(hasDecorations)
+		printf("%d\t%p\t%s\t%d\t[%d,%d,%d]", type, (void*)vtable, desc.c_str(), quality, typeB, typeC, typeD);
+		//printf("\t%p\t%.16LX", (void *) funcD, funcDt);
+		if(hasDecorations && false)
 		{
 			bool sep = false;
 			printf("\tdeco=[");
@@ -103,6 +179,8 @@ int main ()
 					string ddesc = p->readClassName(dvtable);
 					uint32_t dtypefunc = p->readDWord(dvtable + 20);
 					uint64_t dtypefunct = p->readQuad(dtypefunc);
+					uint32_t dtypeC = p->readWord(decoration + 0x4);
+					uint32_t dtypeD = p->readDWord(decoration + 0x8);
 					uint32_t dtype = 0;
 					uint32_t dqual = p->readWord(decoration + 20);
 					if( (dtypefunct&0xFFFFFFFFFFFF00FFLL) == 0xCCCCC300000000B8LL)
@@ -111,7 +189,7 @@ int main ()
 						printf("bad decoration type function, address=%p\n", (void*) dtypefunc);
 					if(sep)
 						printf(",");
-					printf("%s[t=%d,q=%d]", ddesc.c_str(), dtype, dqual);
+					printf("%s[t=%d,q=%d,%s{%d,%d}]", ddesc.c_str(), dtype, dqual, getMatDesc(dtypeC, dtypeD).c_str(), dtypeC, dtypeD);
 					sep = true;
 				}
 			}

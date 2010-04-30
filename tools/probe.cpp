@@ -25,73 +25,6 @@ using namespace std;
 #include <DFTileTypes.h>
 
 using namespace DFHack;
-/*
-int __userpurge get_feature_at<eax>(__int16 tZ<ax>, __int16 tY<cx>, int world_base<ebx>, signed __int16 tX)
-{
-    int block; // ebp@1
-    signed __int16 __tX; // di@1
-    signed int _tY; // esi@1
-    int designation; // eax@2
-    int _tX; // ecx@2
-    signed int v9; // eax@4
-    int v10; // edx@4
-    __int64 region_x_local; // qax@4
-    __int16 v12; // cx@4
-    __int16 v13; // ax@5
-    int v14; // esi@5
-    int result; // eax@7
-    unsigned int some_stuff; // ebp@10
-    int v17; // edx@11
-    int _designation; // [sp+10h] [bp+4h]@2
-
-    __tX = tX;
-    LOWORD(_tY) = tY;
-    block = getBlock(world_base, tX, tY, tZ);
-    if ( !block )
-        goto LABEL_17;
-    _tX = tX;
-    _tY = (signed __int16)_tY;
-    designation = *(_DWORD *)(block + 0x29C + 4 * ((signed __int16)_tY % 16 + 16 * tX % 16));
-    _designation = designation;
-    if ( designation & 0x10000000 && *(_WORD *)(block + 0x2C) != -1 )// first feature_present bit - adamantine
-    {
-        region_x_local = __tX / 48 + *(_DWORD *)(world_base + 0x525C8);// tile_x / 48 + region_x
-        v12 = ((BYTE4(region_x_local) & 0xF) + (_DWORD)region_x_local) >> 4;
-        WORD2(region_x_local) = (_tY / 48 + *(_DWORD *)(world_base + 0x525CC)) / 16;// tile_y / 48 + region_y
-        v9 = v12;
-        _tX = SWORD2(region_x_local);
-        v10 = *(_DWORD *)(*(_DWORD *)(*(_DWORD *)(world_base + 0x54440) + 4 * (v9 >> 4))
-                          + 16 * (SWORD2(region_x_local) >> 4)
-                          + 4);
-        if ( v10 )
-        {
-            _tX %= 16;
-            v14 = v10 + 24 * ((signed __int16)_tX + 16 * v9 % 16);
-            v13 = *(_WORD *)(block + 0x2C);
-            if ( v13 >= 0 )
-            {
-                _tX = (*(_DWORD *)(v14 + 16) - *(_DWORD *)(v14 + 12)) >> 2;
-                if ( v13 < (unsigned int)_tX )
-                    return *(_DWORD *)sub_519100(_tX, v10);
-            }
-        }
-        designation = _designation;
-    }
-    if ( designation & 0x20000000 && (some_stuff = *(_DWORD *)(block + 0x30), some_stuff != -1) )// second feature_present bit - slade and hell
-    {
-        v17 = (*(_DWORD *)(world_base + 0x54384) - *(_DWORD *)(world_base + 0x54380)) >> 2;
-        if ( some_stuff >= v17 )
-            _invalid_parameter_noinfo(_tX, v17);
-        result = *(_DWORD *)(*(_DWORD *)(*(_DWORD *)(world_base + 0x54380) + 4 * some_stuff) + 0x100);
-    }
-    else
-    {
-LABEL_17:
-        result = 0;
-    }
-    return result;
-}
-*/
 int main (int numargs, const char ** args)
 {
     DFHack::API DF("Memory.xml");
@@ -182,17 +115,17 @@ int main (int numargs, const char ** args)
             uint32_t designato = block.origin + designatus + (tileX * 16 + tileY) * sizeof(t_designation);
             printf("designation offset: 0x%x\n", designato);
             if(des.light)
-                cout << "L";
+                cout << "Light ";
             else
-                cout << " ";
+                cout << "      ";
             if(des.skyview)
-                cout << "S";
+                cout << "SkyView ";
             else
-                cout << " ";
+                cout << "        ";
             if(des.subterranean)
-                cout << "U";
+                cout << "Underground ";
             else
-                cout << " ";
+                cout << "            ";
             cout << endl;
         }
     }

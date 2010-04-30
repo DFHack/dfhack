@@ -19,7 +19,7 @@ using namespace std;
 #include <modules/Materials.h>
 #include <modules/Position.h>
 #include <modules/Constructions.h>
-#include "miscutils.h"
+#include <DFMiscUtils.h>
 
 using namespace DFHack;
 

@@ -29,6 +29,10 @@ TARGET_LINK_LIBRARIES(dfcleanmap dfhack)
 ADD_EXECUTABLE(dfunstuck unstuck.cpp)
 TARGET_LINK_LIBRARIES(dfunstuck dfhack)
 
+# probe - map tile probe
+ADD_EXECUTABLE(dfprobe probe.cpp)
+TARGET_LINK_LIBRARIES(dfprobe dfhack)
+
 IF(UNIX)
 # incrementalsearch - a bit like cheat engine, only DF-specific, very basic
 # and Linux-only

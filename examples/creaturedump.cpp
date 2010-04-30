@@ -16,7 +16,7 @@ using namespace std;
 #include <modules/Materials.h>
 #include <modules/Creatures.h>
 #include <modules/Translation.h>
-#include "miscutils.h"
+#include <DFMiscUtils.h>
 
 enum likeType
 {

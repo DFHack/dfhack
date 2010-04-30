@@ -20,7 +20,7 @@ using namespace std;
 #include <modules/Vegetation.h>
 #include <modules/Materials.h>
 #include <modules/Position.h>
-#include "miscutils.h"
+#include <DFMiscUtils.h>
 
 int main (int numargs, const char ** args)
 {

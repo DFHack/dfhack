@@ -18,7 +18,7 @@ using namespace std;
 #include <modules/Buildings.h>
 #include <modules/Materials.h>
 #include <modules/Position.h>
-#include "miscutils.h"
+#include <DFMiscUtils.h>
 
 int main (int argc,const char* argv[])
 {

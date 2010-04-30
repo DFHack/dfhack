@@ -24,7 +24,7 @@ using namespace std;
 #include <DFMemInfo.h>
 #include <modules/Maps.h>
 #include <modules/Materials.h>
-#include "miscutils.h"
+#include <DFMiscUtils.h>
 using namespace DFHack;
 
 
@@ -537,8 +537,6 @@ main(int argc, char *argv[])
     map <int16_t, uint32_t> materials;
     materials.clear();
     mapblock40d blocks[3][3];
-    vector<DFHack::t_matgloss> stonetypes;
-    vector<DFHack::t_matgloss> creature_types;
     vector<DFHack::t_effect_df40d> effects;
     vector< vector <uint16_t> > layerassign;
     vector<t_vein> veinVector;
@@ -583,14 +581,14 @@ main(int argc, char *argv[])
     z_max = z_max_a;
     
     // get stone matgloss mapping
-    if(!Mats->ReadInorganicMaterials(stonetypes))
+    if(!Mats->ReadInorganicMaterials())
     {
         error = "Can't read stone types.";
         pDF = 0;
         finish(0);
     }
     
-    if(!Mats->ReadCreatureTypes(creature_types))
+    if(!Mats->ReadCreatureTypes())
     {
         error = "Can't read stone types.";
         pDF = 0;
@@ -745,7 +743,7 @@ main(int argc, char *argv[])
                 // extra processing of the block in the middle
                 if(i == 0 && j == 0)
                 {
-                    do_features(DF, Block, cursorX, cursorY, 50,10, stonetypes);
+                    do_features(DF, Block, cursorX, cursorY, 50,10, Mats->inorganic);
                     // read veins
                     Maps->ReadVeins(cursorX+i,cursorY+j,cursorZ,&veinVector,&IceVeinVector,&splatter);
                     
@@ -882,7 +880,7 @@ main(int argc, char *argv[])
                         }
                     }
                     gotoxy(50,3);
-                    cprintf("Mineral: %s",stonetypes[veinVector[vein].type].id);
+                    cprintf("Mineral: %s",Mats->inorganic[veinVector[vein].type].id);
                 }
                 else if (vein < mineralsize + icesize)
                 {
@@ -922,7 +920,7 @@ main(int argc, char *argv[])
                         }
                     }
                     gotoxy(50,3);
-                    cprintf("Spatter: %s",PrintSplatterType(splatter[realvein].mat1,splatter[realvein].mat2,creature_types).c_str());
+                    cprintf("Spatter: %s",PrintSplatterType(splatter[realvein].mat1,splatter[realvein].mat2,Mats->race).c_str());
                 }
             }
         }

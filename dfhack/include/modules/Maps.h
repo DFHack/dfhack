@@ -298,9 +298,9 @@ namespace DFHack
             }
          */
         bool ReadGeology( std::vector < std::vector <uint16_t> >& assign );
-        vector <t_feature> global_features;
+        std::vector <t_feature> global_features;
         // map between feature address and the read object
-            map <uint32_t, t_feature> local_feature_store;
+            std::map <uint32_t, t_feature> local_feature_store;
             // map between mangled coords and pointer to feature
                 
         

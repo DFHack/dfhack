@@ -50,6 +50,11 @@ ENDIF(UNIX)
 ADD_EXECUTABLE(dfdigger digger.cpp)
 TARGET_LINK_LIBRARIES(dfdigger dfhack)
 
+# digger2 - designate for digging from a text file
+# Author: rOut
+ADD_EXECUTABLE(dfdigger2 digger2.cpp)
+TARGET_LINK_LIBRARIES(dfdigger2 dfhack)
+
 # itemdesignator - change some item designations (dump, forbid, on-fire) for all
 #                  items of a given type and material
 # Author: belal

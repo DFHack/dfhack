@@ -31,7 +31,7 @@ distribution.
 using namespace std;
 
 #include "Export.h"
-#include "DFCommonInternal.h"
+//#include "DFCommonInternal.h"
 #include "DFMemInfo.h"
 
 using namespace DFHack;

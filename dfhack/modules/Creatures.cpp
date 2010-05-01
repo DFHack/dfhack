@@ -191,7 +191,8 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     d->d->readName(furball.artifact_name, temp + offs.artifact_name_offset);
     
     // custom profession
-    fill_char_buf (furball.custom_profession, p->readSTLString (temp + offs.custom_profession_offset));
+    p->readSTLString(temp + offs.custom_profession_offset, furball.custom_profession, sizeof(furball.custom_profession));
+    //fill_char_buf (furball.custom_profession, p->readSTLString (temp + offs.custom_profession_offset));
 
     // labors
     p->read (temp + offs.labors_offset, NUM_CREATURE_LABORS, furball.labors);

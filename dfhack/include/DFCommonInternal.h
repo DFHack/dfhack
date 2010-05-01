@@ -25,23 +25,43 @@ distribution.
 #ifndef DFCOMMONINTERNAL_H_INCLUDED
 #define DFCOMMONINTERNAL_H_INCLUDED
 
-// this makes everything that includes this file export symbols whn using DFHACK_EXPORT (see Export.h)
-#define BUILD_DFHACK_LIB
+// this makes everything that includes this file export symbols when using DFHACK_EXPORT (see Export.h)
+#ifndef BUILD_DFHACK_LIB
+    #define BUILD_DFHACK_LIB
+#endif
 
+// wizardry for the cmake-generated config.h
+#define _QUOTEME(x) #x
+#define QUOT(x) _QUOTEME(x)
+
+#ifdef USE_CONFIG_H // set by cmake for Linux builds
+    #include "config.h"
+#else
+    #define MEMXML_DATA_PATH .
+#endif
+
+// one file for globals
 #include "DFGlobal.h"
+
+// one file for telling the MSVC compiler where it can shove its pointless warnings
 #include "Tranquility.h"
 
+// basic stl containers and IO stuff
 #include <string>
 #include <vector>
 #include <map>
-
 #include <fstream>
 #include <iostream>
 using namespace std;
+
+// C99 integer types
 #include "integers.h"
+// C includes
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 
+// platform includes and defines
 #ifdef LINUX_BUILD
     #include <sys/types.h>
     #include <sys/ptrace.h>
@@ -53,59 +73,26 @@ using namespace std;
     #include <fcntl.h>
     #include <sys/wait.h>
 #else
+    // WINDOWS
     #define _WIN32_WINNT 0x0501 // needed for INPUT struct
-    #define WINVER 0x0501					// OpenThread(), PSAPI, Toolhelp32
+    #define WINVER 0x0501       // OpenThread(), PSAPI, Toolhelp32
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
-    //#include <winbase.h>
     #include <winnt.h>
     #include <psapi.h>
     #include <tlhelp32.h>
 #endif
 
-#ifdef LINUX_BUILD
-typedef pid_t ProcessHandle;
-#else
-typedef HANDLE ProcessHandle;
-#endif
-
-#ifndef BUILD_DFHACK_LIB
-#   define BUILD_DFHACK_LIB
-#endif
-
-/*
-#include "DFTypes.h"
-//#include "DFDataModel.h"
-#include "DFProcess.h"
-#include "DFWindow.h"
-#include "DFProcessEnumerator.h"
-#include "DFMemInfoManager.h"
-#include "DFVector.h"
-#include "DFMemInfo.h"
-#include "DFError.h"
-*/
-#include <stdlib.h>
-
+// dfhack dependencies
 #include <tinyxml.h>
 #include <md5wrapper.h>
 
-#include <iostream>
-//#include "DFHackAPI.h"
-
-#define _QUOTEME(x) #x
-#define QUOT(x) _QUOTEME(x)
-
-#ifdef USE_CONFIG_H
-#include "config.h"
-#else
-#define MEMXML_DATA_PATH .
-#endif
-
+/*
 #if defined(_MSC_VER) && _MSC_VER >= 1400
 #define fill_char_buf(buf, str) strcpy_s((buf), sizeof(buf) / sizeof((buf)[0]), (str).c_str())
 #else
 #define fill_char_buf(buf, str) strncpy((buf), (str).c_str(), sizeof(buf) / sizeof((buf)[0]))
 #endif
-
+*/
 
 #endif // DFCOMMONINTERNAL_H_INCLUDED

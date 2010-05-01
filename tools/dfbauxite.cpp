@@ -5,7 +5,6 @@ Author: Alex Legg
 Based on code from and uses DFHack - www.sourceforge.net/projects/dfhack
 */
 
-//#include <DFCommonInternal.h>
 #include <sstream>
 #include <iostream>
 #include <string.h>

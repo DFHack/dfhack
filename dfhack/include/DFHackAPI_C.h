@@ -1,6 +1,6 @@
 /*
 www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mr·zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
+Copyright (c) 2009 Petr Mr√°zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -34,21 +34,21 @@ typedef void DFHackObject;
 extern "C" {
 #endif
 
-EXPORT DFHackObject* API_Alloc(const char* path_to_xml);
-EXPORT void API_Free(DFHackObject* api);
+DFHACK_EXPORT DFHackObject* API_Alloc(const char* path_to_xml);
+DFHACK_EXPORT void API_Free(DFHackObject* api);
 
-EXPORT int API_Attach(DFHackObject* api);
-EXPORT int API_Detach(DFHackObject* api);
-EXPORT int API_isAttached(DFHackObject* api);
+DFHACK_EXPORT int API_Attach(DFHackObject* api);
+DFHACK_EXPORT int API_Detach(DFHackObject* api);
+DFHACK_EXPORT int API_isAttached(DFHackObject* api);
 
-EXPORT int API_Suspend(DFHackObject* api);
-EXPORT int API_Resume(DFHackObject* api);
-EXPORT int API_isSuspended(DFHackObject* api);
-EXPORT int API_ForceResume(DFHackObject* api);
-EXPORT int API_AsyncSuspend(DFHackObject* api);
+DFHACK_EXPORT int API_Suspend(DFHackObject* api);
+DFHACK_EXPORT int API_Resume(DFHackObject* api);
+DFHACK_EXPORT int API_isSuspended(DFHackObject* api);
+DFHACK_EXPORT int API_ForceResume(DFHackObject* api);
+DFHACK_EXPORT int API_AsyncSuspend(DFHackObject* api);
 
-EXPORT void API_ReadRaw(DFHackObject* api, const uint32_t offset, const uint32_t size, uint8_t* target);
-EXPORT void API_WriteRaw(DFHackObject* api, const uint32_t offset, const uint32_t size, uint8_t* source);
+DFHACK_EXPORT void API_ReadRaw(DFHackObject* api, const uint32_t offset, const uint32_t size, uint8_t* target);
+DFHACK_EXPORT void API_WriteRaw(DFHackObject* api, const uint32_t offset, const uint32_t size, uint8_t* source);
 
 #ifdef __cplusplus
 }

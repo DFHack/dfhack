@@ -1,6 +1,6 @@
 /*
 www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mr·zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
+Copyright (c) 2009 Petr Mr√°zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -33,13 +33,13 @@ distribution.
 extern "C" {
 #endif
 
-EXPORT int Position_getViewCoords(DFHackObject* pos, int32_t* x, int32_t* y, int32_t* z);
-EXPORT int Position_setViewCoords(DFHackObject* pos, const int32_t x, const int32_t y, const int32_t z);
+DFHACK_EXPORT int Position_getViewCoords(DFHackObject* pos, int32_t* x, int32_t* y, int32_t* z);
+DFHACK_EXPORT int Position_setViewCoords(DFHackObject* pos, const int32_t x, const int32_t y, const int32_t z);
 
-EXPORT int Position_getCursorCoords(DFHackObject* pos, int32_t* x, int32_t* y, int32_t* z);
-EXPORT int Position_setCursorCoords(DFHackObject* pos, const int32_t x, const int32_t y, const int32_t z);
+DFHACK_EXPORT int Position_getCursorCoords(DFHackObject* pos, int32_t* x, int32_t* y, int32_t* z);
+DFHACK_EXPORT int Position_setCursorCoords(DFHackObject* pos, const int32_t x, const int32_t y, const int32_t z);
 
-EXPORT int Position_getWindowSize(DFHackObject* pos, int32_t* width, int32_t* height);
+DFHACK_EXPORT int Position_getWindowSize(DFHackObject* pos, int32_t* width, int32_t* height);
 
 #ifdef __cplusplus
 }

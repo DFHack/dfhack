@@ -50,7 +50,7 @@ class WineProcess::Private
     DFWindow* my_window;
     memory_info * my_descriptor;
     Process * self;
-    ProcessHandle my_handle;
+    pid_t my_handle;
     uint32_t my_pid;
     string memFile;
     int memFileHandle;

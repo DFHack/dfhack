@@ -44,7 +44,7 @@ class NormalProcess::Private
         ~Private(){};
         memory_info * my_descriptor;
         DFWindow * my_window;
-        ProcessHandle my_handle;
+        HANDLE my_handle;
         HANDLE my_main_thread;
         uint32_t my_pid;
         string memFile;

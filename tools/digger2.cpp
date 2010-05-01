@@ -1,8 +1,15 @@
-// digger.cpp
-
-// NOTE currently only works with trees 
-
-// TODO add a sort of "sub-target" to dig() to make it able to designate stone as well
+/**
+ * @file digger2.cpp
+ * @author rOut
+ * 
+ * Improved digger tool.
+ *
+ * Takes a text file as first an only argument.
+ * The text file is read as a grid, and every character represents a designation for a tile.
+ * Allowed characters are 'd' for dig, 'u' for up stairs, 'j' for down stairs, 'i' for up and down stairs, 'h' for channel, 'r' for upward ramp and 'x' to remove designation.
+ * Other characters don't do anything and can be used for padding.
+ * The designation pattern is the wrote in game memory, centered on the current cursor position. Thus, the game needs to be in designation mode or, perhaps, any other mode that have a cursor.
+ */
 
 #include <iostream>
 #include <fstream>

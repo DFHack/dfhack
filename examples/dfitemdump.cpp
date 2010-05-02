@@ -18,6 +18,7 @@ using namespace std;
 #include <DFProcess.h>
 #include <DFVector.h>
 #include <modules/Materials.h>
+#include <modules/Items.h>
 
 
 DFHack::Materials * Materials;
@@ -69,6 +70,7 @@ int main ()
     DFHack::API DF("Memory.xml");
     DFHack::Process * p;
     unsigned int i,j;
+	DFHack::Items * Items;
 
     try
     {
@@ -89,6 +91,7 @@ int main ()
     p = DF.getProcess();
     DFHack::DfVector <uint32_t> p_items (p, p->getDescriptor()->getAddress ("items_vector"));
     uint32_t size = p_items.size();
+	Items = DF.getItems();
 
 
     printf("type\tvtable\tname\tquality\tdecorate\n");
@@ -115,6 +118,9 @@ int main ()
         uint32_t quality = 0;
         bool hasDecorations;
         string desc = p->readClassName(vtable);
+		DFHack::t_item itm;
+
+		Items->getItemData(p_items[i], itm);
 
         if ( (funct0&0xFFFFFFFFFF000000LL) != 0xCCCCC30000000000LL )
         {
@@ -190,6 +196,8 @@ int main ()
         printf("%d\t%p\t%s\t%d\t[%d,%d,%d -> %s]", type, (void*)vtable, desc.c_str(), quality,
                typeB, typeC, typeD, getMatDesc(typeB, typeC, typeD).c_str());
 //      printf("\t%p\t%.16LX", (void *) funcD, funcDt);
+		if( (type!=itm.matdesc.itemType) || (typeB!=itm.matdesc.subType) || (typeC!=itm.matdesc.subIndex) || (typeD!=itm.matdesc.index) )
+			printf("\tbad[%d,%d,%d,%d]", itm.matdesc.itemType, itm.matdesc.subType, itm.matdesc.subIndex, itm.matdesc.index);
         if (hasDecorations)
         {
             bool sep = false;

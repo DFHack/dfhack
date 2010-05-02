@@ -98,6 +98,13 @@ Accessor::Accessor(uint32_t function, Process *p)
 			return;
 		}
 	}
+	if( (funcText&0xFFFFFF0000FFFFFFLL) == 0xC30000000081BF0FLL )
+	{
+		/* movsx   eax, word ptr [ecx+xx]; ret */
+		this->type = ACCESSOR_INDIRECT;
+		this->offset1 = (funcText>>24) & 0xffff;
+		return;
+	}
 	if( (funcText&0xFFFFFFFF0000FFFFLL) == 0xCCC300000000818BLL )
 	{
 		/* mov eax, [ecx+xx]; ret; */
@@ -111,6 +118,8 @@ Accessor::Accessor(uint32_t function, Process *p)
 
 int32_t Accessor::getValue(uint32_t objectPtr)
 {
+	int32_t sout;
+
 	switch(this->type)
 	{
 	case ACCESSOR_CONSTANT:
@@ -120,7 +129,7 @@ int32_t Accessor::getValue(uint32_t objectPtr)
 		switch(this->dataWidth)
 		{
 		case 2:
-			return p->readWord(objectPtr + this->offset1);
+			return (int16_t) p->readWord(objectPtr + this->offset1);
 		case 4:
 			return p->readDWord(objectPtr + this->offset1);
 		default:
@@ -131,7 +140,7 @@ int32_t Accessor::getValue(uint32_t objectPtr)
 		switch(this->dataWidth)
 		{
 		case 2:
-			return p->readWord(p->readDWord(objectPtr + this->offset1) + this->offset2);
+			return (int16_t) p->readWord(p->readDWord(objectPtr + this->offset1) + this->offset2);
 		case 4:
 			return p->readDWord(p->readDWord(objectPtr + this->offset1) + this->offset2);
 		default:
@@ -167,6 +176,8 @@ bool ItemDesc::getItem(uint32_t itemptr, DFHack::t_item &item)
 	item.matdesc.subType = this->ASubType->getValue(itemptr);
 	item.matdesc.subIndex = this->ASubIndex->getValue(itemptr);
 	item.matdesc.index = this->AIndex->getValue(itemptr);
+	if(item.matdesc.index == 0xffff)
+		printf("wtf");
 	item.quality = this->AQuality->getValue(itemptr);
 	item.quantity = 1; /* TODO */
 	return true;

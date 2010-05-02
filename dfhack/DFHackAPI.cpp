@@ -37,6 +37,7 @@ distribution.
 
 #include "modules/Maps.h"
 #include "modules/Materials.h"
+#include "modules/Items.h"
 #include "modules/Position.h"
 #include "modules/Gui.h"
 #include "modules/Creatures.h"
@@ -148,6 +149,11 @@ bool API::Detach()
         delete d->materials;
         d->materials = 0;
     }
+	if(d->items)
+	{
+		delete d->items;
+		d->items = 0;
+	}
     if(d->gui)
     {
         delete d->gui;
@@ -263,6 +269,13 @@ Materials * API::getMaterials()
     if(!d->materials)
         d->materials = new Materials(d);
     return d->materials;
+}
+
+Items * API::getItems()
+{
+    if(!d->items)
+        d->items = new Items(d);
+    return d->items;
 }
 
 Translation * API::getTranslation()

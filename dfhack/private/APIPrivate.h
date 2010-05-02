@@ -36,6 +36,7 @@ namespace DFHack
     class Position;
     class Maps;
     class Creatures;
+	class Items;
     class Translation;
     class Buildings;
     class ProcessEnumerator;
@@ -71,6 +72,7 @@ namespace DFHack
         Position * position;
         Gui * gui;
         Materials * materials;
+		Items * items;
         Translation * translation;
         Vegetation * vegetation;
         Buildings * buildings;

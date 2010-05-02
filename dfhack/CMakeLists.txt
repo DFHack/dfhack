@@ -36,6 +36,7 @@ depends/tinyxml/tinyxmlparser.cpp
 
 modules/Creatures.cpp
 modules/Gui.cpp
+modules/Items.cpp
 modules/Maps.cpp
 modules/Materials.cpp
 modules/Position.cpp

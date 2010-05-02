@@ -1502,6 +1502,12 @@ map_data_1b60_offset          0x1B9c
 	Items
 	=====
 	<Address name="items_vector">0x166FE00</Address>
+	List of offsets in the VTable :
+	<Offset name="item_type_accessor">0x0</Offset>
+	<Offset name="item_subtype_accessor">0x4</Offset>
+	<Offset name="item_subindex_accessor">0x8</Offset>
+	<Offset name="item_index_accessor">0xC</Offset>
+	<Offset name="item_quality_accessor">0x238</Offset>
 
 	<Offset name="item_improvement_vector">0xA0</Offset>
 	<Offset name="item_improvement_quality">0x14</Offset> 

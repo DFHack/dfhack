@@ -74,8 +74,8 @@ namespace DFHack
     struct t_material
     {
 	    int16_t itemType;
-	    int16_t typeB;
 	    int16_t subType;
+	    int16_t subIndex;
 	    int32_t index;
 	    uint32_t flags;
     };

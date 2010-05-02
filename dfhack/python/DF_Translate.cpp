@@ -24,6 +24,7 @@ distribution.
 
 #ifndef __DFTRANSLATE__
 #define __DFTRANSLATE__
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 
 #include "Python.h"
 #include <vector>

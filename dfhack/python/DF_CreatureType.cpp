@@ -135,6 +135,8 @@ static void DF_Creature_Base_dealloc(DF_Creature_Base* self)
 	}
 }
 
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+
 static PyMemberDef DF_Creature_Base_members[] =
 {
 	{"origin", T_UINT, offsetof(DF_Creature_Base, origin), 0, ""},

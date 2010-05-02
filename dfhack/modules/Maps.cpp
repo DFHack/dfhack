@@ -834,3 +834,4 @@ bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
     }
     return true;
 }
+

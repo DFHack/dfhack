@@ -44,137 +44,113 @@ extern "C" {
 
 DFHackObject* API_Alloc(const char* path_to_xml)
 {
-	DFHack::API* api = new DFHack::API(std::string(path_to_xml));
-	return (DFHackObject*)api;
+    DFHack::API* api = new DFHack::API(std::string(path_to_xml));
+    return (DFHackObject*)api;
 }
 
+//FIXME: X:\dfhack\DFHackAPI_C.cpp:56: warning: deleting `DFHackObject* ' is undefined
 void API_Free(DFHackObject* api)
 {
-	if(api != NULL)
-	{
-		delete api;
-		api = NULL;
-	}
+    if(api != NULL)
+    {
+        delete api;
+        api = NULL;
+    }
 }
 
 int API_Attach(DFHackObject* api)
 {
-	if(api != NULL)
-	{
-		if(((DFHack::API*)api)->Attach())
-			return 1;
-		else
-			return 0;
-	}
-	
-	return -1;
+    if(api != NULL)
+    {
+        return ((DFHack::API*)api)->Attach();
+    }
+    return -1;
 }
 
 int API_Detach(DFHackObject* api)
 {
-	if(api != NULL)
-	{
-		if(((DFHack::API*)api)->Detach())
-			return 1;
-		else
-			return 0;
-	}
-	
-	return -1;
+    if(api != NULL)
+    {
+        return ((DFHack::API*)api)->Detach();
+    }
+
+    return -1;
 }
 
 int API_isAttached(DFHackObject* api)
 {
-	if(api != NULL)
-	{
-		if(((DFHack::API*)api)->isAttached())
-			return 1;
-		else
-			return 0;
-	}
-	
-	return -1;
+    if(api != NULL)
+    {
+        return ((DFHack::API*)api)->isAttached();
+    }
+
+    return -1;
 }
 
 int API_Suspend(DFHackObject* api)
 {
-	if(api != NULL)
-	{
-		if(((DFHack::API*)api)->Suspend())
-			return 1;
-		else
-			return 0;
-	}
-	
-	return -1;
+    if(api != NULL)
+    {
+        return ((DFHack::API*)api)->Suspend();
+    }
+
+    return -1;
 }
 
 int API_Resume(DFHackObject* api)
 {
-	if(api != NULL)
-	{
-		if(((DFHack::API*)api)->Resume())
-			return 1;
-		else
-			return 0;
-	}
-	
-	return -1;
+    if(api != NULL)
+    {
+        return ((DFHack::API*)api)->Resume();
+    }
+
+    return -1;
 }
 
 int API_isSuspended(DFHackObject* api)
 {
-	if(api != NULL)
-	{
-		if(((DFHack::API*)api)->isSuspended())
-			return 1;
-		else
-			return 0;
-	}
-	
-	return -1;
+    if(api != NULL)
+    {
+        return ((DFHack::API*)api)->isSuspended();
+    }
+
+    return -1;
 }
 
 int API_ForceResume(DFHackObject* api)
 {
-	if(api != NULL)
-	{
-		if(((DFHack::API*)api)->ForceResume())
-			return 1;
-		else
-			return 0;
-	}
-	
-	return -1;
+    if(api != NULL)
+    {
+        return ((DFHack::API*)api)->ForceResume();
+    }
+
+    return -1;
 }
 
 int API_AsyncSuspend(DFHackObject* api)
 {
-	if(api != NULL)
-	{
-		if(((DFHack::API*)api)->AsyncSuspend())
-			return 1;
-		else
-			return 0;
-	}
-	
-	return -1;
+    if(api != NULL)
+    {
+        return ((DFHack::API*)api)->AsyncSuspend();
+    }
+
+    return -1;
 }
 
 void API_ReadRaw(DFHackObject* api, const uint32_t offset, const uint32_t size, uint8_t* target)
 {
-	if(api != NULL)
-	{
-		((DFHack::API*)api)->ReadRaw(offset, size, target);
-	}
+    if(api != NULL)
+    {
+        ((DFHack::API*)api)->ReadRaw(offset, size, target);
+    }
 }
 
 void API_WriteRaw(DFHackObject* api, const uint32_t offset, const uint32_t size, uint8_t* source)
 {
-	if(api != NULL)
-	{
-		((DFHack::API*)api)->WriteRaw(offset, size, source);
-	}
+    if(api != NULL)
+    {
+        ((DFHack::API*)api)->WriteRaw(offset, size, source);
+    }
 }
 
 #ifdef __cplusplus

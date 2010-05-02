@@ -629,3 +629,4 @@ string memory_info::getLabor (const uint32_t laborIdx)
     }
     throw Error::MissingMemoryDefinition("labor", laborIdx);
 }
+

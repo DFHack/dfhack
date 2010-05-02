@@ -26,7 +26,7 @@ distribution.
 #define __DFCREATURES__
 
 #include <string>
-#include "Python.h"
+#include <Python.h>
 #include "stdio.h"
 #include <vector>
 #include "integers.h"

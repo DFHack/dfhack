@@ -162,7 +162,7 @@ int puttile(int x, int y, int tiletype, int color)
     attroff(COLOR_PAIR(color));
 }
 
-int cprintf(char *fmt, ...)
+int cprintf(const char *fmt, ...)
 {
     va_list ap; 
     va_start(ap, fmt);
@@ -440,7 +440,7 @@ void do_features(API& DF, mapblock40d * block, uint32_t blockX, uint32_t blockY,
             cprintf("You've discovered it already!");
         }
         
-        char * matname = "unknown";
+        char * matname = (char *) "unknown";
         // is stone?
         if(ftr.main_material == 0)
         {
@@ -468,7 +468,7 @@ void do_features(API& DF, mapblock40d * block, uint32_t blockX, uint32_t blockY,
                 gotoxy(printX,printY+ 5);
                 cprintf("You've discovered it already!");
             }
-            char * matname = "unknown";
+            char * matname = (char *) "unknown";
             // is stone?
             if(ftr.main_material == 0)
             {

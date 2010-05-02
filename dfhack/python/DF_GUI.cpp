@@ -24,6 +24,7 @@ distribution.
 
 #ifndef __DFGUI__
 #define __DFGUI__
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 
 #include "Python.h"
 #include "integers.h"

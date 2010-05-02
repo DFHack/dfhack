@@ -24,6 +24,7 @@ distribution.
 
 #ifndef __DF_MEMINFO__
 #define __DF_MEMINFO__
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 
 #include "Python.h"
 #include <string>
@@ -31,7 +32,6 @@ distribution.
 using namespace std;
 
 #include "Export.h"
-//#include "DFCommonInternal.h"
 #include "DFMemInfo.h"
 
 using namespace DFHack;

@@ -1,6 +1,6 @@
 /*
 www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
+Copyright (c) 2009 Petr MrÃ¡zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -36,91 +36,91 @@ extern "C" {
 
 int Position_getViewCoords(DFHackObject* pos, int32_t* x, int32_t* y, int32_t* z)
 {
-	if(pos != NULL)
-	{
-		int32_t tx, ty, tz;
-		
-		if(((DFHack::Position*)pos)->getViewCoords(tx, ty, tz))
-		{
-			*x = tx;
-			*y = ty;
-			*z = tz;
-			
-			return 1;
-		}
-		else
-			return 0;
-	}
-	
-	return -1;
+    if(pos != NULL)
+    {
+        int32_t tx, ty, tz;
+        
+        if(((DFHack::Position*)pos)->getViewCoords(tx, ty, tz))
+        {
+            *x = tx;
+            *y = ty;
+            *z = tz;
+            
+            return 1;
+        }
+        else
+            return 0;
+    }
+
+    return -1;
 }
 
 int Position_setViewCoords(DFHackObject* pos, int32_t x, int32_t y, int32_t z)
 {
-	if(pos != NULL)
-	{
-		if(((DFHack::Position*)pos)->setViewCoords(x, y, z))
-			return 1;
-		else
-			return 0;
-	}
-	
-	return -1;
+    if(pos != NULL)
+    {
+        if(((DFHack::Position*)pos)->setViewCoords(x, y, z))
+            return 1;
+        else
+            return 0;
+    }
+
+    return -1;
 }
 
 
 int Position_getCursorCoords(DFHackObject* pos, int32_t* x, int32_t* y, int32_t* z)
 {
-	if(pos != NULL)
-	{
-		int32_t tx, ty, tz;
-		
-		if(((DFHack::Position*)pos)->getCursorCoords(tx, ty, tz))
-		{
-			*x = tx;
-			*y = ty;
-			*z = tz;
-			
-			return 1;
-		}
-		else
-			return 0;
-	}
-	
-	return -1;
+    if(pos != NULL)
+    {
+        int32_t tx, ty, tz;
+        
+        if(((DFHack::Position*)pos)->getCursorCoords(tx, ty, tz))
+        {
+            *x = tx;
+            *y = ty;
+            *z = tz;
+            
+            return 1;
+        }
+        else
+            return 0;
+    }
+
+    return -1;
 }
 
 int Position_setCursorCoords(DFHackObject* pos, int32_t x, int32_t y, int32_t z)
 {
-	if(pos != NULL)
-	{
-		if(((DFHack::Position*)pos)->setCursorCoords(x, y, z))
-			return 1;
-		else
-			return 0;
-	}
-	
-	return -1;
+    if(pos != NULL)
+    {
+        if(((DFHack::Position*)pos)->setCursorCoords(x, y, z))
+            return 1;
+        else
+            return 0;
+    }
+
+    return -1;
 }
 
 int Position_getWindowSize(DFHackObject* pos, int32_t* width, int32_t* height)
 {
-	if(pos != NULL)
-	{
-		int32_t tw, th;
-		
-		if(((DFHack::Position*)pos)->getWindowSize(tw, th))
-		{
-			*width = tw;
-			*height = th;
-			
-			return 1;
-		}
-		else
-			return 0;
-	}
-	
-	return -1;
+    if(pos != NULL)
+    {
+        int32_t tw, th;
+        
+        if(((DFHack::Position*)pos)->getWindowSize(tw, th))
+        {
+            *width = tw;
+            *height = th;
+            
+            return 1;
+        }
+        else
+            return 0;
+    }
+
+    return -1;
 }
 
 #ifdef __cplusplus

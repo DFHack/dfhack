@@ -24,6 +24,7 @@ distribution.
 
 #ifndef __DFMAPS__
 #define __DFMAPS__
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 
 #include "Python.h"
 #include <vector>

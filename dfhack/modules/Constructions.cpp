@@ -98,3 +98,4 @@ bool Constructions::Finish()
     d->Started = false;
     return true;
 }
+

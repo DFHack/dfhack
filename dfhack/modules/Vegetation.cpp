@@ -96,3 +96,4 @@ bool Vegetation::Finish()
     d->Started = false;
     return true;
 }
+

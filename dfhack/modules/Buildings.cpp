@@ -169,3 +169,4 @@ int32_t Buildings::GetCustomWorkshopType(t_building & building)
     }
     return ret;
 }
+

@@ -14,6 +14,11 @@ using namespace std;
 #include <DFMemInfo.h>
 #include <DFVector.h>
 
+/*
+ * This is a header full of ugly, volatile things.
+ * Only for use of official DFHack tools!
+ */
+
 void DumpObjStr0Vector (const char * name, DFHack::Process *p, uint32_t addr)
 {
     cout << "----==== " << name << " ====----" << endl;
@@ -216,6 +221,5 @@ std::string PrintSplatterType (int16_t mat1, int32_t mat2, vector<DFHack::t_matg
             break;
     }
 }
-
-
 #endif
+

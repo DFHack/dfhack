@@ -156,3 +156,4 @@ bool Position::getWindowSize (int32_t &width, int32_t &height)
     height = coords[1];
     return true;
 }
+

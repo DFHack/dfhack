@@ -24,6 +24,7 @@ distribution.
 
 #ifndef __DFPOSITION__
 #define __DFPOSITION__
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 
 #include "Python.h"
 #include "integers.h"

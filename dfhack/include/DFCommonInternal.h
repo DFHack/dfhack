@@ -96,3 +96,4 @@ using namespace std;
 */
 
 #endif // DFCOMMONINTERNAL_H_INCLUDED
+

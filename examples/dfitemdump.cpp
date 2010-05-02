@@ -22,55 +22,13 @@ using namespace std;
 
 
 DFHack::Materials * Materials;
-
-std::string getMatDesc(int32_t typeB, int32_t typeC, int32_t typeD)
-{
-    if ( (typeC<419) || (typeC>618) )
-    {
-        if ( (typeC<19) || (typeC>218) )
-        {
-            if (typeC)
-                if (typeC>0x292)
-                    return "?";
-                else
-                {
-                    if (typeC>=Materials->other.size())
-                        return "stuff";
-                    else
-                    {
-                        if (typeD==-1)
-                            return std::string(Materials->other[typeC].rawname);
-                        else
-                            return std::string(Materials->other[typeC].rawname) + " derivate";
-                    }
-                }
-            else
-                return Materials->inorganic[typeD].id;
-        }
-        else
-        {
-            if (typeD>=Materials->raceEx.size())
-                return "unknown race";
-            typeC-=19;
-            if ((typeC<0) || (typeC>=Materials->raceEx[typeD].extract.size()))
-            {
-                return string(Materials->raceEx[typeD].rawname).append(" extract");
-            }
-            return std::string(Materials->raceEx[typeD].rawname).append(" ").append(Materials->raceEx[typeD].extract[typeC].rawname);
-        }
-    }
-    else
-    {
-        return Materials->organic[typeD].id;
-    }
-}
+DFHack::Items * Items;
 
 int main ()
 {
     DFHack::API DF("Memory.xml");
     DFHack::Process * p;
     unsigned int i,j;
-	DFHack::Items * Items;
 
     try
     {
@@ -193,10 +151,11 @@ int main ()
             printf("bad typeD func @%p\n", (void*) funcD);
 
 //      printf("%p\t%.16LX\t", (void*) func2, funct2);
-        printf("%d\t%p\t%s\t%d\t[%d,%d,%d -> %s]", type, (void*)vtable, desc.c_str(), quality,
-               typeB, typeC, typeD, getMatDesc(typeB, typeC, typeD).c_str());
+        printf("%d\t%p\t%s\t%d\t[%d,%d,%d]", type, (void*)vtable, desc.c_str(), quality,
+               typeB, typeC, typeD);
+		printf("\t%s", Items->getItemDescription(p_items[i], Materials).c_str());
 //      printf("\t%p\t%.16LX", (void *) funcD, funcDt);
-		if( (type!=itm.matdesc.itemType) || (typeB!=itm.matdesc.subType) || (typeC!=itm.matdesc.subIndex) || (typeD!=itm.matdesc.index) )
+		if( (type!=itm.matdesc.itemType) || (typeB!=itm.matdesc.subType) || (typeC!=itm.matdesc.subIndex) || (typeD!=itm.matdesc.index) || (quality!=itm.quality) )
 			printf("\tbad[%d,%d,%d,%d]", itm.matdesc.itemType, itm.matdesc.subType, itm.matdesc.subIndex, itm.matdesc.index);
         if (hasDecorations)
         {
@@ -223,7 +182,7 @@ int main ()
                         printf("bad decoration type function, address=%p\n", (void*) dtypefunc);
                     if (sep)
                         printf(",");
-                    printf("%s[t=%d,q=%d,%s{%d,%d}]", ddesc.c_str(), dtype, dqual, getMatDesc(-1, dtypeC, dtypeD).c_str(), dtypeC, dtypeD);
+                    //printf("%s[t=%d,q=%d,%s{%d,%d}]", ddesc.c_str(), dtype, dqual, getMatDesc(-1, dtypeC, dtypeD).c_str(), dtypeC, dtypeD);
                     sep = true;
                 }
             }

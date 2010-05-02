@@ -116,10 +116,16 @@ Accessor::Accessor(uint32_t function, Process *p)
 	printf("bad accessor @0x%x\n", function);
 }
 
+bool Accessor::isConstant()
+{
+	if(this->type == ACCESSOR_CONSTANT)
+		return true;
+	else
+		return false;
+}
+
 int32_t Accessor::getValue(uint32_t objectPtr)
 {
-	int32_t sout;
-
 	switch(this->type)
 	{
 	case ACCESSOR_CONSTANT:
@@ -161,13 +167,21 @@ ItemDesc::ItemDesc(uint32_t VTable, Process *p)
 	uint32_t funcOffsetQuality = p->getDescriptor()->getOffset("item_quality_accessor");
 	this->vtable = VTable;
 	this->p = p;
-	this->className = p->readClassName(VTable);
+	this->className = p->readClassName(VTable).substr(5);
+	this->className.resize(this->className.size()-2);
 	this->AMainType = new Accessor( p->readDWord( VTable + funcOffsetA ), p);
 	this->ASubType = new Accessor( p->readDWord( VTable + funcOffsetB ), p);
 	this->ASubIndex = new Accessor( p->readDWord( VTable + funcOffsetC ), p);
 	this->AIndex = new Accessor( p->readDWord( VTable + funcOffsetD ), p);
 	this->AQuality = new Accessor( p->readDWord( VTable + funcOffsetQuality ), p);
 	this->hasDecoration = false;
+	if(this->AMainType->isConstant())
+		this->mainType = this->AMainType->getValue(0);
+	else
+	{
+		fprintf(stderr, "Bad item main type at function %p\n", (void*) p->readDWord( VTable + funcOffsetA ));
+		this->mainType = 0;
+	}
 }
 
 bool ItemDesc::getItem(uint32_t itemptr, DFHack::t_item &item)
@@ -176,8 +190,6 @@ bool ItemDesc::getItem(uint32_t itemptr, DFHack::t_item &item)
 	item.matdesc.subType = this->ASubType->getValue(itemptr);
 	item.matdesc.subIndex = this->ASubIndex->getValue(itemptr);
 	item.matdesc.index = this->AIndex->getValue(itemptr);
-	if(item.matdesc.index == 0xffff)
-		printf("wtf");
 	item.quality = this->AQuality->getValue(itemptr);
 	item.quantity = 1; /* TODO */
 	return true;
@@ -195,6 +207,7 @@ bool Items::getItemData(uint32_t itemptr, DFHack::t_item &item)
 		uint32_t vtable = p->readDWord(itemptr);
 		desc = new ItemDesc(vtable, p);
 		this->descVTable[vtable] = desc;
+		this->descType[desc->mainType] = desc;
 	}
 	else
 		desc = it->second;
@@ -202,12 +215,37 @@ bool Items::getItemData(uint32_t itemptr, DFHack::t_item &item)
 	return desc->getItem(itemptr, item);
 }
 
-std::string Items::getItemDescription(uint32_t itemptr)
+std::string Items::getItemClass(int32_t index)
+{
+	std::map<int32_t, ItemDesc *>::iterator it;
+	std::string out;
+
+	it = this->descType.find(index);
+	if(it==this->descType.end())
+		return "unknown";
+	out = it->second->className;
+	return out;
+}
+
+std::string Items::getItemDescription(uint32_t itemptr, Materials * Materials)
 {
 	DFHack::t_item item;
 	std::string out;
 
 	if(!this->getItemData(itemptr, item))
 		return "??";
-	return "!!";
+	switch(item.quality)
+	{
+		case 0: break;
+		case 1: out.append("Well crafted "); break;
+		case 2: out.append("Finely crafted "); break;
+		case 3: out.append("Superior quality "); break;
+		case 4: out.append("Exceptionnal "); break;
+		case 5: out.append("Masterful "); break;
+		default: out.append("Crazy quality "); break;
+	}
+	out.append(Materials->getDescription(item.matdesc));
+	out.append(" ");
+	out.append(this->getItemClass(item.matdesc.itemType));
+	return out;
 }

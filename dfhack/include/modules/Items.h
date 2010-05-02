@@ -23,6 +23,7 @@ public:
 	Accessor(uint32_t function, Process * p);
 	Accessor(accessor_type type, int32_t constant, uint32_t offset1, uint32_t offset2, uint32_t dataWidth, Process * p);
 	int32_t getValue(uint32_t objectPtr);
+	bool isConstant();
 };
 
 struct t_item
@@ -47,6 +48,7 @@ public:
 	bool getItem(uint32_t itemptr, t_item & item);
 	std::string className;
 	uint32_t vtable;
+	uint32_t mainType;
 };
 
 class DFHACK_EXPORT Items
@@ -54,12 +56,13 @@ class DFHACK_EXPORT Items
 public:
 	Items(DFHack::APIPrivate * _d);
 	~Items();
-	std::string getItemDescription(uint32_t itemptr);
+	std::string getItemDescription(uint32_t itemptr, Materials * Materials);
+	std::string getItemClass(int32_t index);
 	bool getItemData(uint32_t itemptr, t_item & item);
 private:
 	class Private;
 	Private* d;
-	/*std::map<int32_t, ItemDesc *> descType;  might be useful later */
+	std::map<int32_t, ItemDesc *> descType;
 	std::map<uint32_t, ItemDesc *> descVTable;
 };
 }

@@ -347,66 +347,52 @@ void Materials::ReadAllMaterials(void)
 std::string Materials::getDescription(t_material & mat)
 {
 	std::string out;
+	int32_t typeC;
 
-	switch(mat.itemType)
-	{
-		case 0:
-			if(mat.index>=0)
-			{
-				if(uint32_t(mat.index) <= this->inorganic.size())
-				{
-					out.append(this->inorganic[mat.index].id);
-					out.append(" bar");
-				}
-				else
-					out = "invalid bar";
-			}
-			else
-				out = "any metal bar";
-			break;
-		case 1:
-			out = "cut gem";
-			break;
-		case 2:
-			out = "block";
-			break;
-		case 3:
-			switch(mat.subType)
-			{
-				case 3: out = "raw green glass"; break;
-				case 4: out = "raw clear glass"; break;
-				case 5: out = "raw crystal glass"; break;
-				default: out = "raw gems"; break;
-			}
-			break;
-		case 4:
-			out = "raw stone";
-			break;
-		case 5:
-			out = "wood log";
-			break;
-		case 24:
-			out = "weapon?";
-			break;
-		case 26:
-			out = "footwear";
-			break;
-		case 28:
-			out = "headwear";
-			break;
-		case 54:
-			out = "leather";
-			break;
-		case 57:
-			out = "cloth";
-			break;
-		case 71:
-			out = "food";
-			break;
-		default:
-			out = "unknown";
-			break;
-	}
+	if ( (mat.subIndex<419) || (mat.subIndex>618) )
+    {
+        if ( (mat.subIndex<19) || (mat.subIndex>218) )
+        {
+            if (mat.subIndex)
+                if (mat.subIndex>0x292)
+                    return "?";
+                else
+                {
+                    if (mat.subIndex>=this->other.size())
+					{
+						if(mat.subIndex>=this->raceEx.size())
+							return "stuff";
+						else
+							return this->raceEx[mat.subIndex].rawname;
+					}
+                    else
+                    {
+                        if (mat.index==-1)
+                            return std::string(this->other[mat.subIndex].rawname);
+                        else
+                            return std::string(this->other[mat.subIndex].rawname) + " derivate";
+                    }
+                }
+            else
+                return this->inorganic[mat.index].id;
+        }
+        else
+        {
+            if (mat.index>=this->raceEx.size())
+                return "unknown race";
+            typeC = mat.subIndex;
+			typeC -=19;
+            if ((typeC<0) || (typeC>=this->raceEx[mat.index].extract.size()))
+            {
+                return string(this->raceEx[mat.index].rawname).append(" extract");
+            }
+            return std::string(this->raceEx[mat.index].rawname).append(" ").append(this->raceEx[mat.index].extract[typeC].rawname);
+        }
+    }
+    else
+    {
+        return this->organic[mat.index].id;
+    }
 	return out;
 }
 

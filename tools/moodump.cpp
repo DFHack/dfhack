@@ -92,7 +92,6 @@ int main (int numargs, char ** args)
 	unsigned int mat_end;
 	unsigned int j,k;
 	unsigned int matptr;
-	unsigned int tmp;
 
     Creatures->ReadCreature(i,temp);
 	if(temp.mood>=0)

@@ -237,7 +237,6 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         {
             cout << "mood: " << creature.mood << ", skill: " << mem->getSkill(creature.mood_skill) << endl;
             vector<DFHack::t_material> mymat;
-            char maintype[512];
             if(Creatures->ReadJob(&creature, mymat))
             {
                 for(unsigned int i = 0; i < mymat.size(); i++)

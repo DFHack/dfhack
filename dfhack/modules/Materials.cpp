@@ -353,7 +353,7 @@ std::string Materials::getDescription(t_material & mat)
 		case 0:
 			if(mat.index>=0)
 			{
-				if(mat.index<=this->inorganic.size())
+				if(uint32_t(mat.index) <= this->inorganic.size())
 				{
 					out.append(this->inorganic[mat.index].id);
 					out.append(" bar");

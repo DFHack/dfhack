@@ -24,6 +24,7 @@ distribution.
 
 #ifndef __DFMAPS__
 #define __DFMAPS__
+#include "Tranquility.h"
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
 #include "Python.h"

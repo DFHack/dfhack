@@ -730,7 +730,7 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
         uint32_t array_elem = p->readDWord(base + (region_x_plus8 / 16) * 4);
         
         // 16B structs, second DWORD of the struct is a pointer
-        uint32_t wtf = p->readDWord(array_elem + ( sizeof_elem * (region_y_local/16)) + offset_elem); 
+        uint32_t wtf = p->readDWord(array_elem + ( sizeof_elem * ( (uint32_t)region_y_local/16)) + offset_elem); 
         if(wtf)
         {
             // wtf + sizeof(vector<ptr>) * crap;

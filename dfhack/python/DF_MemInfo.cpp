@@ -24,6 +24,7 @@ distribution.
 
 #ifndef __DF_MEMINFO__
 #define __DF_MEMINFO__
+#include "Tranquility.h"
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
 #include "Python.h"
@@ -32,6 +33,7 @@ distribution.
 using namespace std;
 
 #include "Export.h"
+#include "integers.h"
 #include "DFMemInfo.h"
 
 using namespace DFHack;

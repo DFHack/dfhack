@@ -24,6 +24,7 @@ distribution.
 
 #ifndef __DFGUI__
 #define __DFGUI__
+#include "Tranquility.h"
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
 #include "Python.h"

@@ -20,8 +20,13 @@ class NeedsStart(object):
             return False
         
     def Start(self):
+        if self.started:
+            return True
+        
         if self.api.prepare():
             self.started = self.cls.Start(self)
+            if self.started:
+                self.api.started.append(self)
             return self.started
         else:
             return False
@@ -32,6 +37,8 @@ class NeedsStart(object):
         if self.started:
             self.cls.Finish(self)
             self.started = False
+            if self in self.api.started:
+                self.api.started.remove(self)
 
     finish = Finish
 

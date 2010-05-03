@@ -49,11 +49,14 @@ DFHackObject* API_Alloc(const char* path_to_xml)
 }
 
 //FIXME: X:\dfhack\DFHackAPI_C.cpp:56: warning: deleting `DFHackObject* ' is undefined
+//DC:  Yeah, I forgot that trying to delete a void pointer might be a bad idea.  This works now.
 void API_Free(DFHackObject* api)
 {
     if(api != NULL)
     {
-        delete api;
+		DFHack::API* a = (DFHack::API*)api;
+        delete a;
+		
         api = NULL;
     }
 }

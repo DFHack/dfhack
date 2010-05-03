@@ -10,7 +10,14 @@ class Point(object):
         self.block = block
     
     def get_block(self):
-        return Point(self.x/16, self.y/16, self.z, True)
+        if not self.block:
+            return Point(self.x/16, self.y/16, self.z, True)
+        else:
+            return self
+
+    @property
+    def xyz(self):
+        return (self.x, self.y, self.z)
     
     def __repr__(self):
         b = ''

@@ -11,6 +11,12 @@ class Point(object):
     
     def get_block(self):
         return Point(self.x/16, self.y/16, self.z, True)
+    
+    def __repr__(self):
+        b = ''
+        if self.block:
+            b = ', Block'
+        return "<Point({0.x}, {0.y}, {0.z}{1})>".format(self, b)
        
 class Block(object):
     """

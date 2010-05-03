@@ -21,3 +21,7 @@ build*/
 
 #fake curses header
 examples/fake-curses.h
+
+# Python binding binaries
+\.pyc
+

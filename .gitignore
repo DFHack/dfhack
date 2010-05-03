@@ -23,5 +23,5 @@ build*/
 examples/fake-curses.h
 
 # Python binding binaries
-.pyc
-
+*.pyc
+dfhack/python/pydfhack.so

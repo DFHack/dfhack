@@ -1,9 +1,8 @@
 #!/usr/bin/python
 import sys
 import pydfhack
-import pydfapi
 from smarthttp.lib.containers import SmartDict
-DF = pydfapi.API("Memory.xml")
+DF = pydfhack.API("Memory.xml")
 
 DF.Attach()
 
@@ -19,7 +18,7 @@ if cursor:
 maps.Finish()
 DF.Resume()
 
-locs = dict(pydfhack=pydfhack, API=pydfhack._API, DF=DF, pos=pos, maps=maps, msize=msize, cursor=cursor, block=block)
+locs = dict(pydfhack=pydfhack, API=pydfhack.API, DF=DF, pos=pos, maps=maps, msize=msize, cursor=cursor, block=block)
 
 banner = """DFHack Shell\n\n"""\
          """\tpydfhack = {pydfhack}\n"""\

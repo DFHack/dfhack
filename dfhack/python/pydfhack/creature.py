@@ -10,7 +10,7 @@ class Creature(NeedsStart, _CreatureManager):
     api = None
     cls = _CreatureManager
     def __init__(self, api, *args, **kwds):
-        cls.__init__(self, args, kwds)
+        self.cls.__init__(self, args, kwds)
         self.api = api
 
     @suspend

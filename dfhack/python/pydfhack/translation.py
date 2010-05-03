@@ -3,23 +3,18 @@
 Python class for DF_Hack::Translation
 """
 from ._pydfhack import _TranslationManager
-class Translation(_TranslationManager):
+from .mixins import NeedsStart
+from .decorators import suspend
+
+class Translation(NeedsStart, _TranslationManager):
     api = None
-    started = False
+    cls = _TranslationManager
     def __init__(self, api, *args, **kwds):
-        _TranslationManager.__init__(self, args, kwds)
+        self.cls.__init__(self, args, kwds)
         self.api = api
 
-    def prepare(self):
-        """
-        Enforce Suspend/Start
-        """
-        if self.api.prepare():
-            if not self.started:
-                self.started = self.Start()
-            return self.started
-        else:
-            return False
-                
-        
+    def get_dictionaries(self):
+        return self.dictionaries
 
+    def Translate_Name(self, *args, **kw):
+        return self.cls.Translate_Name(self, *args, **kw)

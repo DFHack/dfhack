@@ -3,23 +3,16 @@
 Python class for DF_Hack::Construction
 """
 from ._pydfhack import _ConstructionManager
-class Construction(_ConstructionManager):
+from .mixins import NeedsStart
+from .decorators import suspend
+
+class Construction(NeedsStart, _ConstructionManager):
     api = None
-    started = False
+    cls = _ConstructionManager
     def __init__(self, api, *args, **kwds):
-        _ConstructionManager.__init__(self, args, kwds)
+        self.cls.__init__(self, args, kwds)
         self.api = api
 
-    def prepare(self):
-        """
-        Enforce Suspend/Start
-        """
-        if self.api.prepare():
-            if not self.started:
-                self.started = self.Start()
-            return self.started
-        else:
-            return False
-                
-        
-
+    @suspend
+    def Read(self, *args, **kw):
+        return self.cls.Read(self, *args, **kw)

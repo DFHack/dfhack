@@ -7,13 +7,13 @@ except ImportError:
     from setuptools import setup, find_packages
 from distutils.core import Extension
 
-e = Extension("pydfhack", 
+e = Extension("_pydfhack", 
 		sources=["DF_API.cpp", "DF_Buildings.cpp", "DF_Constructions.cpp", "DF_CreatureManager.cpp", "DF_GUI.cpp", "DF_Maps.cpp", "DF_Material.cpp", "DF_Position.cpp", "DF_Translate.cpp", "DF_Vegetation.cpp", "pydfhack.cpp"],
         include_dirs=["../", "../include", "../depends/md5", "../depends/tinyxml"],
 		library_dirs=["..\\..\\output"],
         #extra_compile_args=["-w"],
 		libraries=["libdfhack"],
-        export_symbols=["initpydfhack", "ReadRaw", "WriteRaw"])
+        export_symbols=["init_pydfhack", "ReadRaw", "WriteRaw"])
 
 setup(
     name="PyDFHack",

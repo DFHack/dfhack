@@ -62,7 +62,7 @@ static PyMethodDef module_methods[] =
 	{NULL}		//Sentinel
 };
 
-PyMODINIT_FUNC initpydfhack(void)
+PyMODINIT_FUNC init_pydfhack(void)
 {
 	PyObject* module;
 	

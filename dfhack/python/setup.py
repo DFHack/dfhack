@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
-from distutils.core import setup, Extension
+try:
+    from setuptools import setup, find_packages
+except ImportError:
+    from ez_setup import use_setuptools
+    use_setuptools()
+    from setuptools import setup, find_packages
+from distutils.core import Extension
 
 e = Extension("pydfhack", 
 		sources=["DF_API.cpp", "DF_Buildings.cpp", "DF_Constructions.cpp", "DF_CreatureManager.cpp", "DF_GUI.cpp", "DF_Maps.cpp", "DF_Material.cpp", "DF_Position.cpp", "DF_Translate.cpp", "DF_Vegetation.cpp", "pydfhack.cpp"],
@@ -9,4 +15,13 @@ e = Extension("pydfhack",
 		libraries=["libdfhack"],
         export_symbols=["initpydfhack", "ReadRaw", "WriteRaw"])
 
-setup(name="PyDFHack", version="1.0", ext_modules=[e])
+setup(
+    name="PyDFHack",
+    description="Python wrapper and bindings for DFHack library",
+    version="1.0",
+    packages=find_packages(exclude=['ez_setup']),
+    include_package_data=True,
+    test_suite='nose.collector',
+    zip_safe=False,
+    ext_modules=[e],
+    )

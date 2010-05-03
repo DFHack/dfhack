@@ -24,4 +24,5 @@ examples/fake-curses.h
 
 # Python binding binaries
 *.pyc
-dfhack/python/pydfhack.so
+dfhack/python/pydfhack/_pydfhack.so
+dfhack/python/PyDFHack.egg-info

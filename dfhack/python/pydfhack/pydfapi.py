@@ -11,12 +11,9 @@ from .vegetation import Vegetation
 from .gui import GUI
 class API(_pydfhack._API):
     started = None
-    
-    for file in ["Memory.xml", os.path.join("..","..","output","Memory.xml")]:
-        if os.path.isfile(file):
-            datafile = file
-            break
-    else:
+    path = os.path.dirname(os.path.abspath(__file__))
+    datafile = os.path.join(path, "Memory.xml")
+    if not os.path.isfile(datafile):
         raise ImportError, "Memory.xml not found."
 	
     def prepare(self):

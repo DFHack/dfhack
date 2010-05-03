@@ -17,7 +17,10 @@ class Position(NoStart, _PositionManager):
     @suspend
     def get_cursor(self):
         coords = self.cursor_coords
-        return Point(*coords)
+        if coords:
+            return Point(*coords)
+        else:
+            return None
 
     @suspend
     def get_window_size(self):
@@ -28,3 +31,12 @@ class Position(NoStart, _PositionManager):
     def get_view_coords(self):
         coords = self.view_coords
         return Point(*coords)
+
+    @suspend
+    def get_cursor_tile(self):
+        point = self.get_cursor()
+        if point:
+            tile = self.api.maps.get_tile(point=point)
+            return tile
+        else:
+            return None

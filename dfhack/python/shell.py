@@ -1,24 +1,24 @@
 #!/usr/bin/python
 import sys
 import pydfhack
-from smarthttp.lib.containers import SmartDict
 DF = pydfhack.API("Memory.xml")
 
 DF.Attach()
 
 pos = DF.position
 maps = DF.maps
-maps.Start()
-cursor = pos.cursor_coords
-msize = maps.size
-block = SmartDict()
+refc = dict(pydfhack=pydfhack, API=pydfhack.API, DF=DF, pos=pos, maps=maps)
+cursor = pos.get_cursor()
+msize = maps.get_size()
+block = None
+tile  = None
 if cursor:
-    block.coords = (cursor[0]/16, cursor[1]/16, cursor[2])
-    block.tiles  = maps.Read_Tile_Types(block.coords[0], block.coords[1], block.coords[2])
-maps.Finish()
+    block  = maps.get_block(point=cursor)
+    if block:
+        tile = block.get_tile(point=cursor)
 DF.Resume()
 
-locs = dict(pydfhack=pydfhack, API=pydfhack.API, DF=DF, pos=pos, maps=maps, msize=msize, cursor=cursor, block=block)
+locs = dict(pydfhack=pydfhack, API=pydfhack.API, DF=DF, pos=pos, maps=maps, msize=msize, cursor=cursor, block=block, tile=tile)
 
 banner = """DFHack Shell\n\n"""\
          """\tpydfhack = {pydfhack}\n"""\
@@ -28,10 +28,11 @@ banner = """DFHack Shell\n\n"""\
          """\tmaps     = {maps}\n"""\
          """\tmsize    = {msize}\n"""\
          """\tcursor   = {cursor}\n"""\
-         """\tblock    = {block}\n""".format(**locs)
+         """\tblock    = {block}\n"""\
+         """\ttile     = {tile}\n""".format(**locs)
 
 from IPython.Shell import IPShellEmbed
 shell = IPShellEmbed()
 shell.set_banner(shell.IP.BANNER + '\n\n' + banner)
 shell(local_ns=locs, global_ns={})
-
+DF.Detach()

@@ -1,4 +1,4 @@
-import _pydfhack, os
+import _pydfhack, os, copy
 from .blocks import Point, Block
 from .meminfo import MemInfo
 from .position import Position
@@ -44,9 +44,28 @@ class API(_pydfhack._API):
         self._gui_mgr_type = GUI
         self.started = []
 
+    def Attach(self, *args, **kw):
+        print "API.Attach()"
+        return _pydfhack._API.Attach(self, *args, **kw)
+
+    def Detach(self, *args, **kw):
+        print "API.Detach()"
+        return _pydfhack._API.Detach(self, *args, **kw)
+
+    def Suspend(self, *args, **kw):
+        print "API.Suspend()"
+        return _pydfhack._API.Suspend(self, *args, **kw)
+        
     def Resume(self):
-        # Explicitly Finish() all started modules
-        for m in self.started[:]:
-            m.Finish()
-        self.started = []
-        _pydfhack._API.Resume(self)
+        print "API.Resume()"
+        # Reference counting is fcked, so leave it alone for now
+        
+        ## Explicitly Finish() all started modules
+        #print self.started
+        #started = copy.copy(self.started)
+        #print started
+        #for m in started:
+        #    print m
+        #    m.Finish()
+        #self.started = []
+        return _pydfhack._API.Resume(self)

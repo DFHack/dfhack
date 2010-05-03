@@ -61,7 +61,12 @@ static void DoImports()
 {
 	if(FlagsModule == NULL)
 	{
-		FlagsModule = PyImport_ImportModule("pydfhackflags");
+		FlagsModule = PyImport_ImportModule("pydfhack.pydfhackflags");
+		if (PyErr_Occurred())
+		{
+			PyErr_Print();
+			return ;
+		}
 				
 		CreatureFlags1_type = PyObject_GetAttrString(FlagsModule, "CreatureFlags1");
 		CreatureFlags2_type = PyObject_GetAttrString(FlagsModule, "CreatureFlags2");
@@ -72,7 +77,12 @@ static void DoImports()
 	}
 	if(TypesModule == NULL)
 	{
-		TypesModule = PyImport_ImportModule("pydftypes");
+		TypesModule = PyImport_ImportModule("pydfhack.pydftypes");
+		if (PyErr_Occurred())
+		{
+			PyErr_Print();
+			return ;
+		}
 
 		Note_type = PyObject_GetAttrString(TypesModule, "Note");
 		Construction_type = PyObject_GetAttrString(TypesModule, "Construction");

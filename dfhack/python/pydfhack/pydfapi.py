@@ -15,6 +15,9 @@ class API(_pydfhack._API):
     datafile = os.path.join(path, "Memory.xml")
     if not os.path.isfile(datafile):
         raise ImportError, "Memory.xml not found."
+
+    # Rude hack to bypass xml location restrictions
+    datafile = "./" + "../"*20 + datafile
 	
     def prepare(self):
         """

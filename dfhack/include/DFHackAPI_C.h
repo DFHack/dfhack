@@ -47,6 +47,21 @@ DFHACK_EXPORT int API_isSuspended(DFHackObject* api);
 DFHACK_EXPORT int API_ForceResume(DFHackObject* api);
 DFHACK_EXPORT int API_AsyncSuspend(DFHackObject* api);
 
+DFHACK_EXPORT DFHackObject* API_getMemoryInfo(DFHackObject* api);
+DFHACK_EXPORT DFHackObject* API_getProcess(DFHackObject* api);
+DFHACK_EXPORT DFHackObject* API_getWindow(DFHackObject* api);
+
+DFHACK_EXPORT DFHackObject* API_getCreatures(DFHackObject* api);
+DFHACK_EXPORT DFHackObject* API_getMaps(DFHackObject* api);
+DFHACK_EXPORT DFHackObject* API_getGui(DFHackObject* api);
+DFHACK_EXPORT DFHackObject* API_getPosition(DFHackObject* api);
+DFHACK_EXPORT DFHackObject* API_getMaterials(DFHackObject* api);
+DFHACK_EXPORT DFHackObject* API_getTranslation(DFHackObject* api);
+DFHACK_EXPORT DFHackObject* API_getVegetation(DFHackObject* api);
+DFHACK_EXPORT DFHackObject* API_getBuildings(DFHackObject* api);
+DFHACK_EXPORT DFHackObject* API_getConstructions(DFHackObject* api);
+
+//these are DANGEROUS...can crash/segfault DF, turn the seas to blood, call up the Antichrist, etc
 DFHACK_EXPORT void API_ReadRaw(DFHackObject* api, const uint32_t offset, const uint32_t size, uint8_t* target);
 DFHACK_EXPORT void API_WriteRaw(DFHackObject* api, const uint32_t offset, const uint32_t size, uint8_t* source);
 

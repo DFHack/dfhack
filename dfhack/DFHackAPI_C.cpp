@@ -140,6 +140,128 @@ int API_AsyncSuspend(DFHackObject* api)
     return -1;
 }
 
+//module getters
+
+DFHackObject* API_getMemoryInfo(DFHackObject* api)
+{
+	if(api != NULL)
+	{
+		return (DFHackObject*)((DFHack::API*)api)->getMemoryInfo();
+	}
+	
+	return NULL;
+}
+
+DFHackObject* API_getProcess(DFHackObject* api)
+{
+	if(api != NULL)
+	{
+		return (DFHackObject*)((DFHack::API*)api)->getProcess();
+	}
+	
+	return NULL;
+}
+
+DFHackObject* API_getWindow(DFHackObject* api)
+{
+	if(api != NULL)
+	{
+		return (DFHackObject*)((DFHack::API*)api)->getWindow();
+	}
+	
+	return NULL;
+}
+
+DFHackObject* API_getCreatures(DFHackObject* api)
+{
+	if(api != NULL)
+	{
+		return (DFHackObject*)((DFHack::API*)api)->getCreatures();
+	}
+	
+	return NULL;
+}
+
+DFHackObject* API_getMaps(DFHackObject* api)
+{
+	if(api != NULL)
+	{
+		return (DFHackObject*)((DFHack::API*)api)->getMaps();
+	}
+	
+	return NULL;
+}
+
+DFHackObject* API_getGui(DFHackObject* api)
+{
+	if(api != NULL)
+	{
+		return (DFHackObject*)((DFHack::API*)api)->getGui();
+	}
+	
+	return NULL;
+}
+
+DFHackObject* API_getPosition(DFHackObject* api)
+{
+	if(api != NULL)
+	{
+		return (DFHackObject*)((DFHack::API*)api)->getPosition();
+	}
+	
+	return NULL;
+}
+
+DFHackObject* API_getMaterials(DFHackObject* api)
+{
+	if(api != NULL)
+	{
+		return (DFHackObject*)((DFHack::API*)api)->getMaterials();
+	}
+	
+	return NULL;
+}
+
+DFHackObject* API_getTranslation(DFHackObject* api)
+{
+	if(api != NULL)
+	{
+		return (DFHackObject*)((DFHack::API*)api)->getTranslation();
+	}
+	
+	return NULL;
+}
+
+DFHackObject* API_getVegetation(DFHackObject* api)
+{
+	if(api != NULL)
+	{
+		return (DFHackObject*)((DFHack::API*)api)->getVegetation();
+	}
+	
+	return NULL;
+}
+
+DFHackObject* API_getBuildings(DFHackObject* api)
+{
+	if(api != NULL)
+	{
+		return (DFHackObject*)((DFHack::API*)api)->getBuildings();
+	}
+	
+	return NULL;
+}
+
+DFHackObject* API_getConstructions(DFHackObject* api)
+{
+	if(api != NULL)
+	{
+		return (DFHackObject*)((DFHack::API*)api)->getConstructions();
+	}
+	
+	return NULL;
+}
+
 void API_ReadRaw(DFHackObject* api, const uint32_t offset, const uint32_t size, uint8_t* target)
 {
     if(api != NULL)

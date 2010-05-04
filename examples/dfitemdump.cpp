@@ -178,7 +178,9 @@ int main ()
                     uint32_t dqual = p->readWord(decoration + 20);
                     if ( (dtypefunct&0xFFFFFFFFFFFF00FFLL) == 0xCCCCC300000000B8LL)
                         dtype = (dtypefunct>>8)&0xfffffff;
-                    else
+                    else if ( dtypefunct == 0xCCCCCCCCCCC3C033LL)
+                        dtype = 0;
+		    else
                         printf("bad decoration type function, address=%p\n", (void*) dtypefunc);
                     if (sep)
                         printf(",");

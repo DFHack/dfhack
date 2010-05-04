@@ -33,6 +33,24 @@ struct t_item
 	int32_t quality;
 };
 
+struct t_improvement
+{
+	t_material matdesc;
+	int32_t quality;
+};
+
+class DFHACK_EXPORT ItemImprovementDesc
+{
+private:
+	Accessor * AType;
+	Process * p;
+public:
+	ItemImprovementDesc(uint32_t VTable, Process * p);
+	bool getImprovement(uint32_t descptr, t_improvement & imp);
+	uint32_t vtable;
+	uint32_t maintype;
+};
+
 class DFHACK_EXPORT ItemDesc
 {
 private:
@@ -49,6 +67,7 @@ public:
 	std::string className;
 	uint32_t vtable;
 	uint32_t mainType;
+	std::vector<ItemImprovementDesc> improvement;
 };
 
 class DFHACK_EXPORT Items

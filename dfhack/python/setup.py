@@ -17,7 +17,7 @@ if platform.system() == 'Windows':
             break
     else:
         raise Exception("dfhack.lib is not found")
-    osspec = dict(library_dirs=lib_dirs)
+    osspec = dict(library_dirs=[lib_dirs])
                     
 elif platform.system() == 'Linux':
     osspec = dict(extra_compile_args=["-DLINUX_BUILD", "-w"],

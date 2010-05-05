@@ -100,16 +100,22 @@ int main (int numargs, const char ** args)
             cout << endl;
             for(uint32_t k = 0; k < castes[j].ColorModifier.size(); k++)
             {
-                cout << "    colormod[" << k << "] ";
-                for(uint32_t l = 0; l < castes[j].ColorModifier[k].size(); l++)
+                cout << "    colormod[" << castes[j].ColorModifier[k].part << "] ";
+                for(uint32_t l = 0; l < castes[j].ColorModifier[k].colorlist.size(); l++)
                 {
-                    if( castes[j].ColorModifier[k][l] < Materials->color.size() )
-                        cout << Materials->color[castes[j].ColorModifier[k][l]].name << " ";
+                    if( castes[j].ColorModifier[k].colorlist[l] < Materials->color.size() )
+                        cout << Materials->color[castes[j].ColorModifier[k].colorlist[l]].name << " ";
                     else
-                        cout << Materials->alldesc[castes[j].ColorModifier[k][l]].id << " ";
+                        cout << Materials->alldesc[castes[j].ColorModifier[k].colorlist[l]].id << " ";
                 }
                 cout << endl;
             }
+            cout << "     body: ";
+            for(uint32_t k = 0; k < castes[j].bodypart.size(); k++)
+            {
+                cout << castes[j].bodypart[k].category << " ";
+            }
+            cout << endl;
         }
         cout << endl;
     }

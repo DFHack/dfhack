@@ -295,10 +295,18 @@ bool Materials::ReadCreatureTypesEx (void)
     uint32_t extract_vector_offset = mem->getOffset ("creature_type_extract_vector");
     uint32_t sizeof_string = mem->getHexValue ("sizeof_string");
     uint32_t caste_colormod_offset = mem->getOffset ("caste_color_modifiers");
+    uint32_t caste_bodypart_offset = mem->getOffset ("caste_bodypart_vector");
+    uint32_t bodypart_id_offset = mem->getOffset ("bodypart_id");
+    uint32_t bodypart_category_offset = mem->getOffset ("bodypart_category");
+    uint32_t bodypart_layers_offset = mem->getOffset ("bodypart_layers_vector");
+    uint32_t bodypart_singular_offset = mem->getOffset ("bodypart_singular_vector");
+    uint32_t bodypart_plural_offset = mem->getOffset ("bodypart_plural_vector");
+    uint32_t color_modifier_part_offset = mem->getOffset ("color_modifier_part");
     uint32_t size = p_races.size();
     uint32_t sizecas = 0;
     uint32_t sizecolormod;
     uint32_t sizecolorlist;
+    uint32_t sizebp;
     uint32_t tile_offset = mem->getOffset ("creature_tile");
     uint32_t tile_color_offset = mem->getOffset ("creature_tile_color");
     raceEx.clear();
@@ -311,24 +319,40 @@ bool Materials::ReadCreatureTypesEx (void)
         sizecas = p_castes.size();
         for (uint32_t j = 0; j < sizecas;j++)
         {
+            /* caste name */
             t_creaturecaste caste;
             uint32_t caste_start = p_castes[j];
             p->readSTLString (caste_start, caste.rawname, sizeof(caste.rawname));
             p->readSTLString (caste_start + sizeof_string, caste.singular, sizeof(caste.singular));
             p->readSTLString (caste_start + 2 * sizeof_string, caste.plural, sizeof(caste.plural));
             p->readSTLString (caste_start + 3 * sizeof_string, caste.adjective, sizeof(caste.adjective));
+
+            /* color mod reading */
             DfVector <uint32_t> p_colormod(p, caste_start + caste_colormod_offset);
             sizecolormod = p_colormod.size();
             caste.ColorModifier.resize(sizecolormod);
-            
             for(uint32_t k = 0; k < sizecolormod;k++)
             {
                 DfVector <uint32_t> p_colorlist(p, p_colormod[k]);
                 sizecolorlist = p_colorlist.size();
-                caste.ColorModifier[k].resize(sizecolorlist);
+                caste.ColorModifier[k].colorlist.resize(sizecolorlist);
                 for(uint32_t l = 0; l < sizecolorlist; l++)
-                    caste.ColorModifier[k][l] = p_colorlist[l];
+                    caste.ColorModifier[k].colorlist[l] = p_colorlist[l];
+                p->readSTLString( p_colormod[k] + color_modifier_part_offset, caste.ColorModifier[k].part, sizeof(caste.ColorModifier[k].part));
             }
+
+            /* body parts */
+            DfVector <uint32_t> p_bodypart(p, caste_start + caste_bodypart_offset);
+            caste.bodypart.empty();
+            sizebp = p_bodypart.size();
+            for(uint32_t k = 0; k < sizebp; k++)
+            {
+                t_bodypart part;
+                p->readSTLString (p_bodypart[k] + bodypart_id_offset, part.id, sizeof(part.id));
+                p->readSTLString (p_bodypart[k] + bodypart_category_offset, part.category, sizeof(part.category));
+                caste.bodypart.push_back(part);
+            }
+
             mat.castes.push_back(caste);
         }
 	mat.tile_character = p->readByte( p_races[i] + tile_offset );

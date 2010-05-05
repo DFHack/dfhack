@@ -37,6 +37,20 @@ namespace DFHack
         char food_name[128];
         char extract_name[128];
     };
+
+    struct t_bodypart
+    {
+        char id[128];
+        char category[128];
+        char single[128];
+        char plural[128];
+    };
+
+    struct t_colormodifier
+    {
+        char part[128];
+        std::vector<uint32_t> colorlist;
+    };
     
     struct t_creaturecaste
     {
@@ -44,7 +58,8 @@ namespace DFHack
         char singular[128];
         char plural[128];
         char adjective[128];
-        std::vector<std::vector<uint32_t> > ColorModifier;
+        std::vector<t_colormodifier> ColorModifier;
+        std::vector<t_bodypart> bodypart;
     };
 
     struct t_matglossOther

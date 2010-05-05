@@ -1,3 +1,4 @@
+from ctypes import *
 from collections import namedtuple
 
 Position2D = namedtuple("Position2D", "x, y")
@@ -13,11 +14,11 @@ Attribute = namedtuple("Attribute", "level, field_4, field_8, field_C, leveldiff
 Skill = namedtuple("Skill", "id, experience, rating")
 Tree = namedtuple("Tree", "type, material, position, address")
 CreatureCaste = namedtuple("CreatureCaste", "rawname, singular, plural, adjective")
-Matgloss = namedtuple("Matgloss", "id, fore, back, bright, name")
-DescriptorColor = namedtuple("DescriptorColor", "id, r, v, b, name")
 CreatureTypeEx = namedtuple("CreatureTypeEx", "rawname, castes, tile_character, tilecolor")
 TileColor = namedtuple("TileColor", "fore, back, bright")
 Name = namedtuple("Name", "first_name, nickname, language, has_name, words, parts_of_speech")
+
+char_array = c_char * 128
 
 class Soul(object):
     def __init__(self, *args, **kwds):
@@ -27,3 +28,23 @@ class Soul(object):
 
 class MapBlock40d(object):
     pass
+
+class ViewScreen(Structure):
+    _fields_ = [("type", c_int)]
+
+class Matgloss(Structure):
+    _fields_ = [("id", char_array),
+                ("fore", c_byte),
+                ("back", c_byte),
+                ("bright", c_byte),
+                ("name", char_array)]
+
+class Descriptor_Color(Structure):
+    _fields_ = [("id", char_array),
+                ("r", c_float),
+                ("v", c_float),
+                ("b", c_float),
+                ("name", char_array)]
+
+class MatglossOther(Structure):
+    _fields_ = [("rawname", char_array)]

@@ -416,7 +416,10 @@ std::string Materials::getDescription(t_material & mat)
                     }
                 }
             else
-                return this->inorganic[mat.index].id;
+				if(mat.index<0)
+					return "any inorganic";
+				else
+					return this->inorganic[mat.index].id;
         }
         else
         {

@@ -14,21 +14,27 @@ if platform.system() == 'Windows':
     for libdir in ["..", path.join("..",".."), path.join("..", "..", "output"), path.join("..", "..", "output", "Release")]:
         if path.isfile(path.join(libdir, "dfhack.lib")):
             lib_dirs = libdir
+            libraries=["dfhack"]
+            break
+        if path.isfile(path.join(libdir, "libdfhack.dll")):
+            lib_dirs = libdir
+            libraries = ["libdfhack"]
             break
     else:
         raise Exception("dfhack.lib is not found")
-    osspec = dict(library_dirs=[lib_dirs])
+    osspec = dict(library_dirs=[lib_dirs],
+                  libraries=libraries)
                     
 elif platform.system() == 'Linux':
     osspec = dict(extra_compile_args=["-DLINUX_BUILD", "-w"],
-             library_dirs=[path.join("..","..","output")])
+             library_dirs=[path.join("..","..","output")],
+             libraries=["dfhack"])
 
 e = Extension("pydfhack._pydfhack", 
               sources=["DF_API.cpp", "DF_Buildings.cpp", "DF_Constructions.cpp", "DF_CreatureManager.cpp",\
                        "DF_GUI.cpp", "DF_Maps.cpp", "DF_Material.cpp", "DF_Position.cpp", "DF_Translate.cpp",\
                        "DF_Vegetation.cpp", "pydfhack.cpp"],
               include_dirs=["../", path.join("..", "include"), path.join("..","depends","md5"), path.join("..","depends","tinyxml")],
-              libraries=["dfhack"],
               export_symbols=["init_pydfhack", "ReadRaw", "WriteRaw"],
               **osspec)
 

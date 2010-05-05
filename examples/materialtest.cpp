@@ -74,7 +74,7 @@ int main (int numargs, const char ** args)
 	cout << i << ": " << Materials->color[i].id << " - " << Materials->color[i].name << "["
 		<< (unsigned int) (Materials->color[i].r*255) << ":"
 		<< (unsigned int) (Materials->color[i].v*255) << ":"
-		<< (unsigned int) (Materials->color[i].b*255) << ":"
+		<< (unsigned int) (Materials->color[i].b*255)
 		<< "]" << endl;
     }
     cout << endl << "----==== All descriptors ====----" << endl;

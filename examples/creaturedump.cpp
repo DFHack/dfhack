@@ -204,6 +204,22 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         }
         */
         cout << endl;
+        cout << "Appearance : ";
+        for(unsigned int i = 0; i<creature.nbcolors ; i++)
+        {
+            cout << Materials->raceEx[creature.race].castes[creature.caste].ColorModifier[i].part << " ";
+            uint32_t color = Materials->raceEx[creature.race].castes[creature.caste].ColorModifier[i].colorlist[creature.color[i]];
+            if(color<Materials->color.size())
+                cout << Materials->color[color].name << "[" 
+                    << (unsigned int) (Materials->color[color].r*255) << ":"
+                    << (unsigned int) (Materials->color[color].v*255) << ":"
+                    << (unsigned int) (Materials->color[color].b*255) << "]";
+            else
+                cout << Materials->alldesc[color].id;
+            cout << " - ";
+
+        }
+        cout << endl;
         cout << "happiness: "   << creature.happiness
              << ", strength: "  << creature.strength.level 
              << ", agility: "   << creature.agility.level
@@ -359,6 +375,8 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             string artifact_name = Tran->TranslateName(creature.artifact_name,false);
             cout << "artifact: " << artifact_name << endl;
         }
+
+
     cout << endl;
 }
 
@@ -405,16 +423,7 @@ int main (int numargs, char ** args)
     }
 
     mem = DF.getMemoryInfo();
-    if(!Materials->ReadInorganicMaterials())
-    {
-	    cerr << "Can't get the inorganics types." << endl;
-	    return 1;
-    }
-    if(!Materials->ReadCreatureTypesEx())
-    {
-        cerr << "Can't get the creature types." << endl;
-        return 1; 
-    }
+    Materials->ReadAllMaterials();
 	
     if(!Tran->Start())
     {

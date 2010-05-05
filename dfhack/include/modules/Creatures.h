@@ -314,7 +314,9 @@ namespace DFHack
         t_attrib empathy;
         t_attrib social_awareness;
     };
-    
+
+#define MAX_COLORS  15
+
     struct t_creature
     {
         uint32_t origin;
@@ -349,10 +351,13 @@ namespace DFHack
         t_attrib recuperation;
         t_attrib disease_resistance;
         int32_t squad_leader_id;
-        uint8_t sex; // really a caste
+        uint8_t sex;
+        uint16_t caste;
         uint32_t pregnancy_timer; //Countdown timer to giving birth
         bool has_default_soul;
         t_soul defaultSoul;
+        uint32_t nbcolors;
+        uint32_t color[MAX_COLORS];
     };
     
     class APIPrivate;

@@ -81,6 +81,7 @@ Creatures::Creatures(APIPrivate* _d)
         creatures.flags2_offset = minfo->getOffset ("creature_flags2");
         creatures.name_offset = minfo->getOffset ("creature_name");
         creatures.sex_offset = minfo->getOffset ("creature_sex");
+        creatures.caste_offset = minfo->getOffset ("creature_caste");
         creatures.id_offset = minfo->getOffset ("creature_id");
         creatures.labors_offset = minfo->getOffset ("creature_labors");
         creatures.happiness_offset = minfo->getOffset ("creature_happiness");
@@ -96,6 +97,9 @@ Creatures::Creatures(APIPrivate* _d)
         creatures.soul_skills_vector_offset = minfo->getOffset("soul_skills_vector");
         creatures.soul_mental_offset = minfo->getOffset("soul_mental");
         creatures.soul_traits_offset = minfo->getOffset("soul_traits");
+        
+        // appearance
+        creatures.appearance_vector_offset = minfo->getOffset("creature_appearance_vector");
         
         // name offsets for the creature module
         creatures.name_firstname_offset = minfo->getOffset("name_firstname");
@@ -179,6 +183,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     p->readDWord (temp + offs.race_offset, furball.race);
     furball.civ = p->readDWord (temp + offs.civ_offset);
     p->readByte (temp + offs.sex_offset, furball.sex);
+    p->readWord (temp + offs.caste_offset, furball.caste);
     p->readDWord (temp + offs.flags1_offset, furball.flags1.whole);
     p->readDWord (temp + offs.flags2_offset, furball.flags2.whole);
     
@@ -257,6 +262,15 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         
         // traits as well
         p->read(soul + offs.soul_traits_offset, sizeof (uint16_t) * NUM_CREATURE_TRAITS, (uint8_t *) &furball.defaultSoul.traits);
+    }
+
+    DfVector <uint32_t> app(p, temp + offs.appearance_vector_offset);
+    furball.nbcolors = app.size();
+    if(furball.nbcolors>MAX_COLORS)
+        furball.nbcolors = MAX_COLORS;
+    for(uint32_t i = 0; i < furball.nbcolors; i++)
+    {
+        furball.color[i] = app[i];
     }
     //likes
     /*

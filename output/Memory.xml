@@ -1422,6 +1422,8 @@ map_data_1b60_offset          0x1B9c
         <!--<Offset name="creature_mood">0x238</Offset>-->
         
         <Offset name="creature_mood">0x288</Offset>
+        <Offset name="creature_birth_year">0x298</Offset>
+        <Offset name="creature_birth_month">0x29C</Offset>
         <Offset name="creature_physical">0x464</Offset>
         <!--
         <Offset name="creature_strength">0x464</Offset>
@@ -1439,6 +1441,10 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_soul_vector">0x0740</Offset>
         <Offset name="creature_default_soul">0x0758</Offset>
         <Offset name="creature_happiness">0x834</Offset>
+
+        Castes
+        ======
+        <Offset name="caste_color_modifiers">0xACC</Offset>
 
         Materials
         =========

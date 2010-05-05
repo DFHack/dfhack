@@ -293,8 +293,11 @@ bool Materials::ReadCreatureTypesEx (void)
     uint32_t castes_vector_offset = mem->getOffset ("creature_type_caste_vector");
     uint32_t extract_vector_offset = mem->getOffset ("creature_type_extract_vector");
     uint32_t sizeof_string = mem->getHexValue ("sizeof_string");
+    uint32_t caste_colormod_offset = mem->getOffset ("caste_color_modifiers");
     uint32_t size = p_races.size();
     uint32_t sizecas = 0;
+    uint32_t sizecolormod;
+    uint32_t sizecolorlist;
     uint32_t tile_offset = mem->getOffset ("creature_tile");
     uint32_t tile_color_offset = mem->getOffset ("creature_tile_color");
     raceEx.clear();
@@ -313,6 +316,18 @@ bool Materials::ReadCreatureTypesEx (void)
             p->readSTLString (caste_start + sizeof_string, caste.singular, sizeof(caste.singular));
             p->readSTLString (caste_start + 2 * sizeof_string, caste.plural, sizeof(caste.plural));
             p->readSTLString (caste_start + 3 * sizeof_string, caste.adjective, sizeof(caste.adjective));
+            DfVector <uint32_t> p_colormod(p, caste_start + caste_colormod_offset);
+            sizecolormod = p_colormod.size();
+            caste.ColorModifier.resize(sizecolormod);
+            
+            for(uint32_t k = 0; k < sizecolormod;k++)
+            {
+                DfVector <uint32_t> p_colorlist(p, p_colormod[k]);
+                sizecolorlist = p_colorlist.size();
+                caste.ColorModifier[k].resize(sizecolorlist);
+                for(uint32_t l = 0; l < sizecolorlist; l++)
+                    caste.ColorModifier[k][l] = p_colorlist[l];
+            }
             mat.castes.push_back(caste);
         }
 	mat.tile_character = p->readByte( p_races[i] + tile_offset );
@@ -327,6 +342,8 @@ bool Materials::ReadCreatureTypesEx (void)
 		p->readSTLString( p_extract[j], extract.rawname, sizeof(extract.rawname));
 		mat.extract.push_back(extract);
 	}
+
+
         raceEx.push_back(mat);
     }
     return true;

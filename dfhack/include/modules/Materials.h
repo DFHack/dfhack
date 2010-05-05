@@ -44,6 +44,7 @@ namespace DFHack
         char singular[128];
         char plural[128];
         char adjective[128];
+        std::vector<std::vector<uint32_t> > ColorModifier;
     };
 
     struct t_matglossOther

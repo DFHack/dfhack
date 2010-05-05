@@ -81,6 +81,13 @@ int main (int numargs, const char ** args)
             << castes[j].plural << ":"
             << castes[j].adjective << "] ";
             cout << endl;
+            for(uint32_t k = 0; k < castes[j].ColorModifier.size(); k++)
+            {
+                cout << "    colormod[" << k << "] ";
+                for(uint32_t l = 0; l < castes[j].ColorModifier[k].size(); l++)
+                    cout << castes[j].ColorModifier[k][l] << " ";
+                cout << endl;
+            }
         }
         cout << endl;
     }

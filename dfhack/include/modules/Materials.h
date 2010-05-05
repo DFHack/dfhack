@@ -95,6 +95,7 @@ namespace DFHack
 		std::vector<t_creaturetype> raceEx;
 		std::vector<t_descriptor_color> color;
 		std::vector<t_matglossOther> other;
+		std::vector<t_matgloss> alldesc;
 
 		bool ReadInorganicMaterials (void);
 		bool ReadOrganicMaterials (void);

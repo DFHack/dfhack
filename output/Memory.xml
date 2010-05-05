@@ -1498,13 +1498,14 @@ map_data_1b60_offset          0x1B9c
 
 	Descriptor colors
 	=================
-	<Address name="descriptor_shape_vector">0x16B9780</Address>
+	<Address name="descriptor_vectors_start">0x16B9780</Address>
 	<Offset name="descriptor_rawname">0x0</Offset>
 	<Offset name="descriptor_name">0x4C</Offset>
-	<Address name="descriptor_colors_vector">0x16B9768</Address>
+	<Address name="descriptor_colors_vector">0x16B9768</Address> this includes RVB
 	<Offset name="descriptor_color_r">0x6C</Offset> floats !
 	<Offset name="descriptor_color_v">0x70</Offset>
 	<Offset name="descriptor_color_b">0x74</Offset>
+	<Address name="descriptor_all_colors">0x16B9798</Address> A list of all colors, including eyes and stuff
 
 	Items
 	=====

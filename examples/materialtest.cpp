@@ -67,6 +67,23 @@ int main (int numargs, const char ** args)
     {
         cout << i << ": " << Materials->plant[i].id << endl;
     }
+    cout << endl << "----==== Color descriptors ====----" << endl;
+    Materials->ReadDescriptorColors();
+    for(uint32_t i = 0; i < Materials->color.size();i++)
+    {
+	cout << i << ": " << Materials->color[i].id << " - " << Materials->color[i].name << "["
+		<< (unsigned int) (Materials->color[i].r*255) << ":"
+		<< (unsigned int) (Materials->color[i].v*255) << ":"
+		<< (unsigned int) (Materials->color[i].b*255) << ":"
+		<< "]" << endl;
+    }
+    cout << endl << "----==== All descriptors ====----" << endl;
+    Materials->ReadDescriptorColors();
+    for(uint32_t i = 0; i < Materials->alldesc.size();i++)
+    {
+	cout << i << ": " << Materials->alldesc[i].id << endl;
+    }
+
     cout << endl << "----==== Creature types ====----" << endl;
     Materials->ReadCreatureTypesEx ();
     for(uint32_t i = 0; i < Materials->raceEx.size();i++)
@@ -85,21 +102,16 @@ int main (int numargs, const char ** args)
             {
                 cout << "    colormod[" << k << "] ";
                 for(uint32_t l = 0; l < castes[j].ColorModifier[k].size(); l++)
-                    cout << castes[j].ColorModifier[k][l] << " ";
+                {
+                    if( castes[j].ColorModifier[k][l] < Materials->color.size() )
+                        cout << Materials->color[castes[j].ColorModifier[k][l]].name << " ";
+                    else
+                        cout << Materials->alldesc[castes[j].ColorModifier[k][l]].id << " ";
+                }
                 cout << endl;
             }
         }
         cout << endl;
-    }
-    cout << endl << "----==== Color descriptors ====----" << endl;
-    Materials->ReadDescriptorColors();
-    for(uint32_t i = 0; i < Materials->color.size();i++)
-    {
-	cout << i << ": " << Materials->color[i].id << " - " << Materials->color[i].name << "["
-		<< (unsigned int) (Materials->color[i].r*255) << ":"
-		<< (unsigned int) (Materials->color[i].v*255) << ":"
-		<< (unsigned int) (Materials->color[i].b*255) << ":"
-		<< "]" << endl;
     }
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

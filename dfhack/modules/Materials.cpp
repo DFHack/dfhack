@@ -282,6 +282,7 @@ bool Materials::ReadDescriptorColors (void)
 		col.b = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_b") );
 		color.push_back(col);
 	}
+        return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("descriptor_all_colors"), alldesc );
 	return true;
 }
 

@@ -234,6 +234,7 @@ std::string Items::getItemClass(int32_t index)
 			case 5: return "log";
 			case 54: return "leather";
 			case 57: return "cloth";
+			case -1: return "probably bone or shell, but I really don't know";
 			default: return "unknown";
 		}
 	}

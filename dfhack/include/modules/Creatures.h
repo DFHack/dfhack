@@ -265,7 +265,7 @@ namespace DFHack
         bool active;
         uint32_t jobId;
         uint8_t jobType;
-	uint32_t occupationPtr;
+		uint32_t occupationPtr;
     };
     struct t_like
     {

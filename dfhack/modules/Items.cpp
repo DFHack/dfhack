@@ -222,7 +222,21 @@ std::string Items::getItemClass(int32_t index)
 
 	it = this->descType.find(index);
 	if(it==this->descType.end())
-		return "unknown";
+	{
+		/* these are dummy values for mood decoding */
+		switch(index)
+		{
+			case 0: return "bar";
+			case 1: return "cut gem";
+			case 2: return "block";
+			case 3: return "raw gem";
+			case 4: return "raw stone";
+			case 5: return "log";
+			case 54: return "leather";
+			case 57: return "cloth";
+			default: return "unknown";
+		}
+	}
 	out = it->second->className;
 	return out;
 }

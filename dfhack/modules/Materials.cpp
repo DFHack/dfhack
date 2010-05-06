@@ -402,10 +402,11 @@ std::string Materials::getDescription(t_material & mat)
                 {
                     if (mat.subIndex>=this->other.size())
 					{
+						if(mat.subIndex<0)
+							return "any";
 						if(mat.subIndex>=this->raceEx.size())
 							return "stuff";
-						else
-							return this->raceEx[mat.subIndex].rawname;
+						return this->raceEx[mat.subIndex].rawname;
 					}
                     else
                     {

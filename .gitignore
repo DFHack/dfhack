@@ -21,3 +21,10 @@ build*/
 
 #fake curses header
 examples/fake-curses.h
+
+# Python binding binaries
+*.pyc
+dfhack/python/pydfhack/_pydfhack.so
+dfhack/python/PyDFHack.egg-info
+dfhack/python/build
+dfhack/python/dist

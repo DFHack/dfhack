@@ -58,7 +58,13 @@ struct DF_API
 	PyObject* vegetation;
 	PyObject* gui;
 	
+	PyObject* mem_info_type;
+	PyObject* position_type;
+	PyObject* material_type;
+	PyObject* creature_type;
 	PyObject* map_type;
+	PyObject* translate_type;
+	PyObject* construction_type;
 	PyObject* vegetation_type;
 	PyObject* gui_type;
 	
@@ -95,6 +101,7 @@ static int DF_API_init(DF_API* self, PyObject* args, PyObject* kwds)
 		self->vegetation = NULL;
 		self->gui = NULL;
 		
+		self->position_type = (PyObject*)&DF_Position_type;
 		self->map_type = (PyObject*)&DF_Map_type;
 		self->vegetation_type = (PyObject*)&DF_Vegetation_type;
 		self->gui_type = (PyObject*)&DF_GUI_type;
@@ -206,7 +213,10 @@ static PyObject* DF_API_getMemoryInfo(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->mem_info = PyObject_Call((PyObject*)&DF_MemInfo_type, NULL, NULL);
+                        PyObject *apiarg;
+                        apiarg = PyTuple_New(1);
+                        PyTuple_SetItem(apiarg, 0, (PyObject*)self);
+			self->mem_info = PyObject_CallObject(self->mem_info_type, apiarg);
 			
 			if(self->mem_info != NULL)
 			{
@@ -235,7 +245,10 @@ static PyObject* DF_API_getPosition(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->position = PyObject_Call((PyObject*)&DF_Position_type, NULL, NULL);
+                        PyObject *apiarg;
+                        apiarg = PyTuple_New(1);
+                        PyTuple_SetItem(apiarg, 0, (PyObject*)self);
+			self->position = PyObject_CallObject(self->position_type, apiarg);
 			
 			if(self->position != NULL)
 			{
@@ -264,7 +277,10 @@ static PyObject* DF_API_getMaterial(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->material = PyObject_Call((PyObject*)&DF_Material_type, NULL, NULL);
+                        PyObject *apiarg;
+                        apiarg = PyTuple_New(1);
+                        PyTuple_SetItem(apiarg, 0, (PyObject*)self);
+			self->material = PyObject_CallObject(self->material_type, apiarg);
 			
 			if(self->material != NULL)
 			{
@@ -293,7 +309,10 @@ static PyObject* DF_API_getCreature(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->creature = PyObject_Call((PyObject*)&DF_CreatureManager_type, NULL, NULL);
+                        PyObject *apiarg;
+                        apiarg = PyTuple_New(1);
+                        PyTuple_SetItem(apiarg, 0, (PyObject*)self);
+			self->creature = PyObject_CallObject(self->creature_type, apiarg);
 			
 			if(self->creature != NULL)
 			{
@@ -322,7 +341,10 @@ static PyObject* DF_API_getMap(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->map = PyObject_CallObject(self->map_type, NULL);
+			PyObject *apiarg;
+			apiarg = PyTuple_New(1);
+			PyTuple_SetItem(apiarg, 0, (PyObject*)self);
+			self->map = PyObject_CallObject(self->map_type, apiarg);
 			
 			if(self->map != NULL)
 			{
@@ -351,7 +373,10 @@ static PyObject* DF_API_getTranslation(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->translate = PyObject_Call((PyObject*)&DF_Translate_type, NULL, NULL);
+                        PyObject *apiarg;
+                        apiarg = PyTuple_New(1);
+                        PyTuple_SetItem(apiarg, 0, (PyObject*)self);
+			self->translate = PyObject_CallObject(self->translate_type, apiarg);
 			
 			if(self->translate != NULL)
 			{
@@ -380,7 +405,10 @@ static PyObject* DF_API_getConstruction(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->construction = PyObject_Call((PyObject*)&DF_Construction_type, NULL, NULL);
+                        PyObject *apiarg;
+                        apiarg = PyTuple_New(1);
+                        PyTuple_SetItem(apiarg, 0, (PyObject*)self);
+			self->construction = PyObject_CallObject(self->construction_type, apiarg);
 			
 			if(self->construction != NULL)
 			{
@@ -409,7 +437,10 @@ static PyObject* DF_API_getVegetation(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->vegetation = PyObject_CallObject(self->vegetation_type, NULL);
+                        PyObject *apiarg;
+                        apiarg = PyTuple_New(1);
+                        PyTuple_SetItem(apiarg, 0, (PyObject*)self);
+			self->vegetation = PyObject_CallObject(self->vegetation_type, apiarg);
 			
 			if(self->vegetation != NULL)
 			{
@@ -438,7 +469,10 @@ static PyObject* DF_API_getGUI(DF_API* self, void* closure)
 	{
 		if(self->api_Ptr != NULL)
 		{
-			self->gui = PyObject_CallObject(self->gui_type, NULL);
+                        PyObject *apiarg;
+                        apiarg = PyTuple_New(1);
+                        PyTuple_SetItem(apiarg, 0, (PyObject*)self);
+			self->gui = PyObject_CallObject(self->gui_type, apiarg);
 			
 			if(self->gui != NULL)
 			{
@@ -456,6 +490,105 @@ static PyObject* DF_API_getGUI(DF_API* self, void* closure)
 	}
 	
 	Py_RETURN_NONE;
+}
+static PyObject* DF_API_getMemInfoType(DF_API* self, void* closure)
+{
+        return self->mem_info_type;
+}
+
+static int DF_API_setMemInfoType(DF_API* self, PyObject* value)
+{
+        if(PyType_Check(value) <= 0)
+        {
+                PySys_WriteStdout("failed type check");
+                PyErr_SetString(PyExc_TypeError, "value must be a type object");
+                return -1;
+        }
+        if(PyObject_IsSubclass(value, (PyObject*)&DF_MemInfo_type) <= 0)
+        {
+                PySys_WriteStdout("failed subclass check");
+                PyErr_SetString(PyExc_TypeError, "value must be descended from _pydfhack._MemInfo");
+                return -1;
+        }
+
+        self->mem_info_type = value;
+
+        return 0;
+}
+
+static PyObject* DF_API_getPositionType(DF_API* self, void* closure)
+{
+        return self->position_type;
+}
+
+static int DF_API_setPositionType(DF_API* self, PyObject* value)
+{
+        if(PyType_Check(value) <= 0)
+        {
+                PySys_WriteStdout("failed type check");
+                PyErr_SetString(PyExc_TypeError, "value must be a type object");
+                return -1;
+        }
+        if(PyObject_IsSubclass(value, (PyObject*)&DF_Position_type) <= 0)
+        {
+                PySys_WriteStdout("failed subclass check");
+                PyErr_SetString(PyExc_TypeError, "value must be descended from _pydfhack._PositionManager");
+                return -1;
+        }
+
+        self->position_type = value;
+
+        return 0;
+}
+
+static PyObject* DF_API_getMaterialType(DF_API* self, void* closure)
+{
+        return self->material_type;
+}
+
+static int DF_API_setMaterialType(DF_API* self, PyObject* value)
+{
+        if(PyType_Check(value) <= 0)
+        {
+                PySys_WriteStdout("failed type check");
+                PyErr_SetString(PyExc_TypeError, "value must be a type object");
+                return -1;
+        }
+        if(PyObject_IsSubclass(value, (PyObject*)&DF_Material_type) <= 0)
+        {
+                PySys_WriteStdout("failed subclass check");
+                PyErr_SetString(PyExc_TypeError, "value must be descended from pydfhack._MaterialManager");
+                return -1;
+        }
+
+        self->material_type = value;
+
+        return 0;
+}
+
+static PyObject* DF_API_getCreatureType(DF_API* self, void* closure)
+{
+        return self->creature_type;
+}
+
+static int DF_API_setCreatureType(DF_API* self, PyObject* value)
+{
+        if(PyType_Check(value) <= 0)
+        {
+                PySys_WriteStdout("failed type check");
+                PyErr_SetString(PyExc_TypeError, "value must be a type object");
+                return -1;
+        }
+        if(PyObject_IsSubclass(value, (PyObject*)&DF_CreatureManager_type) <= 0)
+        {
+                PySys_WriteStdout("failed subclass check");
+                PyErr_SetString(PyExc_TypeError, "value must be descended from pydfhack._CreatureManager");
+                return -1;
+        }
+
+        self->creature_type = value;
+
+        return 0;
 }
 
 static PyObject* DF_API_getMapType(DF_API* self, void* closure)
@@ -481,6 +614,54 @@ static int DF_API_setMapType(DF_API* self, PyObject* value)
 	self->map_type = value;
 	
 	return 0;
+}
+static PyObject* DF_API_getTranslateType(DF_API* self, void* closure)
+{
+        return self->translate_type;
+}
+
+static int DF_API_setTranslateType(DF_API* self, PyObject* value)
+{
+        if(PyType_Check(value) <= 0)
+        {
+                PySys_WriteStdout("failed type check");
+                PyErr_SetString(PyExc_TypeError, "value must be a type object");
+                return -1;
+        }
+        if(PyObject_IsSubclass(value, (PyObject*)&DF_Translate_type) <= 0)
+        {
+                PySys_WriteStdout("failed subclass check");
+                PyErr_SetString(PyExc_TypeError, "value must be descended from pydfhack._TranslateManager");
+                return -1;
+        }
+
+        self->translate_type = value;
+
+        return 0;
+}
+static PyObject* DF_API_getConstructionType(DF_API* self, void* closure)
+{
+        return self->construction_type;
+}
+
+static int DF_API_setConstructionType(DF_API* self, PyObject* value)
+{
+        if(PyType_Check(value) <= 0)
+        {
+                PySys_WriteStdout("failed type check");
+                PyErr_SetString(PyExc_TypeError, "value must be a type object");
+                return -1;
+        }
+        if(PyObject_IsSubclass(value, (PyObject*)&DF_Construction_type) <= 0)
+        {
+                PySys_WriteStdout("failed subclass check");
+                PyErr_SetString(PyExc_TypeError, "value must be descended from pydfhack._ConstructionManager");
+                return -1;
+        }
+
+        self->construction_type = value;
+
+        return 0;
 }
 
 static PyObject* DF_API_getVegetationType(DF_API* self, void* closure)
@@ -546,7 +727,13 @@ static PyGetSetDef DF_API_getterSetters[] =
 	{"constructions", (getter)DF_API_getConstruction, NULL, "constructions", NULL},
 	{"vegetation", (getter)DF_API_getVegetation, NULL, "vegetation", NULL},
 	{"gui", (getter)DF_API_getGUI, NULL, "gui", NULL},
+	{"_mem_info_mgr_type", (getter)DF_API_getMemInfoType, (setter)DF_API_setMemInfoType, "_mem_info_mgr_type", NULL},
+	{"_position_mgr_type", (getter)DF_API_getPositionType, (setter)DF_API_setPositionType, "_position_mgr_type", NULL},
+	{"_material_mgr_type", (getter)DF_API_getMaterialType, (setter)DF_API_setMaterialType, "_material_mgr_type", NULL},
+	{"_creature_mgr_type", (getter)DF_API_getCreatureType, (setter)DF_API_setCreatureType, "_creature_mgr_type", NULL},
 	{"_map_mgr_type", (getter)DF_API_getMapType, (setter)DF_API_setMapType, "_map_mgr_type", NULL},
+	{"_translate_mgr_type", (getter)DF_API_getTranslateType, (setter)DF_API_setTranslateType, "_translate_mgr_type", NULL},
+	{"_construction_mgr_type", (getter)DF_API_getConstructionType, (setter)DF_API_setConstructionType, "_construction_mgr_type", NULL},
 	{"_vegetation_mgr_type", (getter)DF_API_getVegetationType, (setter)DF_API_setVegetationType, "_vegetation_mgr_type", NULL},
 	{"_gui_mgr_type", (getter)DF_API_getGUIType, (setter)DF_API_setGUIType, "_gui_mgr_type", NULL},
     {NULL}  // Sentinel

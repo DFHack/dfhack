@@ -62,7 +62,7 @@ static PyMethodDef module_methods[] =
 	{NULL}		//Sentinel
 };
 
-PyMODINIT_FUNC initpydfhack(void)
+PyMODINIT_FUNC init_pydfhack(void)
 {
 	PyObject* module;
 	
@@ -102,7 +102,7 @@ PyMODINIT_FUNC initpydfhack(void)
 	if(PyType_Ready(&DF_GUI_type) < 0)
 		return;
 	
-	module = Py_InitModule3("pydfhack", module_methods, "pydfhack extension module");
+	module = Py_InitModule3("_pydfhack", module_methods, "pydfhack extension module");
 	
 	Py_INCREF(&DF_API_type);
 	Py_INCREF(&DF_MemInfo_type);

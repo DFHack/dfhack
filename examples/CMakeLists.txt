@@ -74,6 +74,10 @@ TARGET_LINK_LIBRARIES(dfspatterdump dfhack)
 ADD_EXECUTABLE(dfcatsplosion catsplosion.cpp)
 TARGET_LINK_LIBRARIES(dfcatsplosion dfhack)
 
+# flows - check flows impact on fps
+ADD_EXECUTABLE(dfflows flows.cpp)
+TARGET_LINK_LIBRARIES(dfflows dfhack)
+
 IF(UNIX)
     SET(CURSES_NEED_WIDE "YES")
     SET(CURSES_NEED_NCURSES "NO")

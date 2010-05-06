@@ -46,6 +46,8 @@ modules/Buildings.cpp
 modules/Constructions.cpp
 
 modules/Position_C.cpp
+modules/Gui_C.cpp
+modules/Materials_C.cpp
 )
 
 SET(PROJECT_HDRS_LINUX

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import pydfhack
-DF = pydfhack._API("Memory.xml")
+from pydfhack import API
+DF = API("Memory.xml")
 
 if DF.Attach():
   Mats = DF.materials

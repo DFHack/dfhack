@@ -9,7 +9,6 @@ Note = namedtuple("Note", "symbol, foreground, background, name, position")
 Settlement = namedtuple("Settlement", "origin, name, world_pos, local_pos")
 Attribute = namedtuple("Attribute", "level, field_4, field_8, field_C, leveldiff, field_14, field_18");
 Skill = namedtuple("Skill", "id, experience, rating")
-Tree = namedtuple("Tree", "type, material, position, address")
 CreatureCaste = namedtuple("CreatureCaste", "rawname, singular, plural, adjective")
 CreatureTypeEx = namedtuple("CreatureTypeEx", "rawname, castes, tile_character, tilecolor")
 TileColor = namedtuple("TileColor", "fore, back, bright")
@@ -94,7 +93,7 @@ class MatglossPair(Structure):
     _fields_ = [("type", c_short),
                 ("index", c_int)]
 
-class Descriptor_Color(Structure):
+class DescriptorColor(Structure):
     _fields_ = [("id", c_char * 128),
                 ("r", c_float),
                 ("v", c_float),
@@ -132,3 +131,11 @@ class Construction(Structure):
                 ("unk5", c_ushort),
                 ("unk6", c_uint),
                 ("origin", c_uint)]
+
+class Tree(Structure):
+    _fields_ = [("type", c_ushort),
+                ("material", c_ushort),
+                ("x", c_ushort),
+                ("y", c_ushort),
+                ("z", c_ushort),
+                ("address", c_uint)]

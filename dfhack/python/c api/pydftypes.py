@@ -91,8 +91,8 @@ class Matgloss(Structure):
                 ("name", c_char * 128)]
 
 class MatglossPair(Structure):
-    _fields_ [("type", c_short),
-              ("index", c_int)]
+    _fields_ = [("type", c_short),
+                ("index", c_int)]
 
 class Descriptor_Color(Structure):
     _fields_ = [("id", c_char * 128),

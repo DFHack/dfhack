@@ -218,8 +218,8 @@ class Materials(object):
     def get_description(self, material):
         return libdfhack.Materials_getDescription(self._mat_ptr, byref(material))
 
-    def _allocate_matgloss_array(self, count):
-        arr_type = Matgloss * count
+    def _allocate_array(self, t_type, count):
+        arr_type = t_type * count
 
         arr = arr_type()
 
@@ -230,7 +230,7 @@ class Materials(object):
 
     def update_inorganic_cache(self):
         def update_callback(count):
-            allocated = self._allocate_matgloss_array(count)
+            allocated = self._allocate_array(Matgloss, count)
 
             self.inorganic = allocated[0]
 
@@ -242,7 +242,7 @@ class Materials(object):
 
     def update_organic_cache(self):
         def update_callback(count):
-            allocated = self._allocate_matgloss_array(count)
+            allocated = self._allocate_array(Matgloss, count)
 
             self.organic = allocated[0]
 
@@ -254,7 +254,7 @@ class Materials(object):
 
     def update_tree_cache(self):
         def update_callback(count):
-            allocated = self._allocate_matgloss_array(count)
+            allocated = self._allocate_array(Matgloss, count)
 
             self.tree = allocated[0]
 
@@ -266,7 +266,7 @@ class Materials(object):
 
     def update_plant_cache(self):
         def update_callback(count):
-            allocated = self._allocate_matgloss_array(count)
+            allocated = self._allocate_array(Matgloss, count)
 
             self.plant = allocated[0]
 
@@ -278,7 +278,7 @@ class Materials(object):
 
     def update_race_cache(self):
         def update_callback(count):
-            allocated = self._allocate_matgloss_array(count)
+            allocated = self._allocate_array(Matgloss, count)
 
             self.race = allocated[0]
 
@@ -287,6 +287,30 @@ class Materials(object):
         callback = arr_create_func(update_callback)
 
         return libdfhack.Materials_getRace(self._mat_ptr, callback)
+
+    def update_color_cache(self):
+        def update_callback(count):
+            allocated = self._allocate_array(DescriptorColor, count)
+
+            self.color = allocated[0]
+            
+            return allocated[1]
+
+        callback = arr_create_func(update_callback)
+
+        return libdfhack.Materials_getColor(self._mat_ptr, callback)
+
+    def update_other_cache(self):
+        def update_callback(count):
+            allocated = self._allocate_array(MatglossOther, count)
+
+            self.other = allocated[0]
+            
+            return allocated[1]
+
+        callback = arr_create_func(update_callback)
+
+        return libdfhack.Materials_getOther(self._mat_ptr, callback)
 
 libdfhack.Maps_getSize.argtypes = [ c_void_p, uint_ptr, uint_ptr, uint_ptr ]
 libdfhack.Maps_ReadTileTypes.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(TileTypes40d) ]
@@ -315,51 +339,69 @@ class Maps(object):
     def read_tile_types(self, x, y, z):
         tt = TileTypes40d()
 
-        if libdfhack.Maps_ReadTileTypes(self._map_ptr, *_uintify(x, y, z), tt) > 0:
+        ux, uy, uz = _uintify(x, y, z)
+
+        if libdfhack.Maps_ReadTileTypes(self._map_ptr, ux, uy, uz, tt) > 0:
             return tt
         else:
             return None
 
     def write_tile_types(self, x, y, z, tt):
-        return libdfhack.Maps_WriteTileTypes(self._map_ptr, *_uintify(x, y, z), tt) > 0
+        ux, uy, uz = _uintify(x, y, z)
+        
+        return libdfhack.Maps_WriteTileTypes(self._map_ptr,  ux, uy, uz, tt) > 0
 
     def read_designations(self, x, y, z):
         d = Designations40d()
 
-        if libdfhack.Maps_ReadDesignations(self._map_ptr, *_uintify(x, y, z), d) > 0:
+        ux, uy, uz = _uintify(x, y, z)
+
+        if libdfhack.Maps_ReadDesignations(self._map_ptr, ux, uy, uz, d) > 0:
             return d
         else:
             return None
 
     def write_designations(self, x, y, z, d):
-        return libdfhack.Maps_WriteDesignations(self._map_ptr, *_uintify(x, y, z), d) > 0
+        ux, uy, uz = _uintify(x, y, z)
+        
+        return libdfhack.Maps_WriteDesignations(self._map_ptr, ux, uy, uz, d) > 0
 
     def read_temperatures(self, x, y, z):
         t = Temperatures()
 
-        if libdfhack.Maps_ReadDesignations(self._map_ptr, *_uintify(x, y, z), t) > 0:
+        ux, uy, uz = _uintify(x, y, z)
+
+        if libdfhack.Maps_ReadDesignations(self._map_ptr, ux, uy, uz, t) > 0:
             return t
         else:
             return None
 
     def write_temperatures(self, x, y, z, t):
-        return libdfhack.Maps_WriteDesignations(self._map_ptr, *_uintify(x, y, z), t) > 0
+        ux, uy, uz = _uintify(x, y, z)
+        
+        return libdfhack.Maps_WriteDesignations(self._map_ptr, ux, uy, uz, t) > 0
 
     def read_occupancy(self, x, y, z):
         o = Occupancies40d()
 
-        if libdfhack.Maps_ReadDesignations(self._map_ptr, *_uintify(x, y, z), o) > 0:
+        ux, uy, uz = _uintify(x, y, z)
+
+        if libdfhack.Maps_ReadDesignations(self._map_ptr, ux, uy, uz, o) > 0:
             return o
         else:
             return None
 
     def write_designations(self, x, y, z, o):
-        return libdfhack.Maps_WriteDesignations(self._map_ptr, *_uintify(x, y, z), o) > 0
+        ux, uy, uz = _uintify(x, y, z)
+        
+        return libdfhack.Maps_WriteDesignations(self._map_ptr, ux, uy, uz, o) > 0
 
     def read_dirty_bit(self, x, y, z):
         bit = c_int(0)
 
-        if libdfhack.Maps_ReadDirtyBit(self._map_ptr, *_uintify(x, y, z), byref(bit)) > 0:
+        ux, uy, uz = _uintify(x, y, z)
+
+        if libdfhack.Maps_ReadDirtyBit(self._map_ptr, ux, uy, uz, byref(bit)) > 0:
             if bit > 0:
                 return True
             else:
@@ -368,7 +410,54 @@ class Maps(object):
             return None
 
     def write_dirty_bit(self, x, y, z, dirty):
-        return libdfhack.Maps_WriteDirtyBit(self._map_ptr, *_uintify(x, y, z), c_int(dirty)) > 0
+        ux, uy, uz = _uintify(x, y, z)
+        
+        return libdfhack.Maps_WriteDirtyBit(self._map_ptr, ux, uy, uz, c_int(dirty)) > 0
+
+    def read_features(self, x, y, z):
+        lf = c_short()
+        gf = c_short()
+
+        ux, uy, uz = _uintify(x, y, z)
+
+        libdfhack.Maps_ReadFeatures(self._map_ptr, ux, uy, uz, byref(lf), byref(fg))
+
+        return (lf, gf)
+
+    def write_local_feature(self, x, y, z, local_feature = -1):
+        ux, uy, uz = _uintify(x, y, z)
+        
+        return libdfhack.Maps_WriteLocalFeature(self._map_ptr, ux, uy, uz, c_short(local_feature)) > 0
+
+    def write_global_feature(self, x, y, z, global_feature = -1):
+        ux, uy, uz = _uintify(x, y, z)
+        
+        return libdfhack.Maps_WriteGlobalFeature(self._map_ptr, ux, uy, uz, c_short(global_feature)) > 0
+
+    def read_block_flags(self, x, y, z):
+        bf = BlockFlags()
+
+        ux, uy, uz = _uintify(x, y, z)
+
+        if libdfhack.Maps_ReadBlockFlags(self._map_ptr, ux, uy, uz, byref(bf)) > 0:
+            return bf
+        else:
+            return None
+
+    def write_block_flags(self, x, y, z, block_flags):
+        ux, uy, uz = _uintify(x, y, z)
+        
+        return libdfhack.Maps_WriteBlockFlags(self._map_ptr, ux, uy, uz, block_flags) > 0
+
+    def read_region_offsets(self, x, y, z):
+        bi = BiomeIndices40d()
+
+        ux, uy, uz = _uintify(x, y, z)
+
+        if libdfhack.Maps_ReadRegionOffsets(self._map_ptr, ux, uy, uz, byref(bi)) > 0:
+            return bi
+        else:
+            return None
 
     @property
     def size(self):
@@ -382,6 +471,77 @@ class Maps(object):
             return (int(x.value), int(y.value), int(z.value))
         else:
             return (-1, -1, -1)
+
+class Constructions(object):
+    def __init__(self, ptr):
+        self._c_ptr = ptr
+
+    def start(self):
+        num = c_uint()
+
+        if libdfhack.Constructions_Start(self._c_ptr, byref(num)) > 0:
+            return int(num.value)
+        else:
+            return -1
+
+    def finish(self):
+        return libdfhack.Constructions_Finish(self._c_ptr) > 0
+
+    def read(self, index):
+        c = Construction()
+
+        if libdfhack.Constructions_Read(self._c_ptr, c_uint(index), byref(c)) > 0:
+            return c
+        else:
+            return None
+
+libdfhack.Buildings_GetCustomWorkshopType.argtypes = [ c_void_p, POINTER(CustomWorkshop) ]
+
+def Buildings(object):
+    def __init__(self, ptr):
+        self._b_ptr = ptr
+
+    def start(self):
+        num = c_uint()
+
+        if libdfhack.Buildings_Start(self._b_ptr, byref(num)) > 0:
+            return int(num.value)
+        else:
+            return -1
+
+    def finish(self):
+        return libdfhack.Buildings_Finish(self._b_ptr) > 0
+
+    def read(self, index):
+        b = Building()
+
+        if libdfhack.Buildings_Read(self._b_ptr, c_uint(index), byref(b)) > 0:
+            return b
+        else:
+            return None
+
+    def read_custom_workshop_types(self):
+        def read_callback(count):
+            arr_type = CustomWorkshop * count
+
+            arr = arr_type()
+            workshop_types = arr
+
+            ptr = c_void_p()
+            ptr = addressof(arr)
+
+            return ptr
+
+        workshop_types = None
+
+        if libdfhack.Buildings_ReadCustomWorkshopTypes(self._b_ptr, read_callback) > 0:
+            return workshop_types
+        else:
+            return None
+
+    def get_custom_workshop_type(self, custom_workshop):
+        return libdfhack.Buildings_GetCustomWorkshopType(self._b_ptr, byref(custom_workshop))
+        
 
 def reveal():
     df = API("Memory.xml")

@@ -4,6 +4,9 @@ from pydftypes import *
 int_ptr = POINTER(c_int)
 uint_ptr = POINTER(c_uint)
 
+def _uintify(x, y, z):
+    return (c_uint(x), c_uint(y), c_uint(z))
+
 libdfhack = cdll.libdfhack
 libdfhack.API_Alloc.restype = c_void_p
 libdfhack.API_Free.argtypes = [ c_void_p ]
@@ -28,6 +31,7 @@ class API(object):
 
         self._pos_obj = None
         self._mat_obj = None
+        self._map_obj = None
 
     def __del__(self):
         libdfhack.API_Free(self._api_ptr)
@@ -81,6 +85,18 @@ class API(object):
                 return None
         else:
             return self._mat_obj
+
+    @property
+    def maps(self):
+        if self._map_obj is None:
+            ptr = libdfhack.API_getMaps(self._api_ptr)
+
+            if ptr is not None:
+                return Maps(ptr)
+            else:
+                return None
+        else:
+            return self._map_obj
 
 class Position(object):
     def __init__(self, ptr):
@@ -155,7 +171,7 @@ libdfhack.Materials_getOrganic.argtypes = get_arg_types
 libdfhack.Materials_getTree.argtypes = get_arg_types
 libdfhack.Materials_getPlant.argtypes = get_arg_types
 libdfhack.Materials_getRace.argtypes = get_arg_types
-libdfhack.Materials_getRaceEx.argtypes = get_arg_types
+#libdfhack.Materials_getRaceEx.argtypes = get_arg_types
 libdfhack.Materials_getColor.argtypes = get_arg_types
 libdfhack.Materials_getOther.argtypes = get_arg_types
 
@@ -271,3 +287,123 @@ class Materials(object):
         callback = arr_create_func(update_callback)
 
         return libdfhack.Materials_getRace(self._mat_ptr, callback)
+
+libdfhack.Maps_getSize.argtypes = [ c_void_p, uint_ptr, uint_ptr, uint_ptr ]
+libdfhack.Maps_ReadTileTypes.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(TileTypes40d) ]
+libdfhack.Maps_WriteTileTypes.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(TileTypes40d) ]
+libdfhack.Maps_ReadDesignations.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Designations40d) ]
+libdfhack.Maps_WriteDesignations.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Designations40d) ]
+libdfhack.Maps_ReadTemperatures.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Temperatures) ]
+libdfhack.Maps_WriteTemperatures.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Temperatures) ]
+libdfhack.Maps_ReadOccupancy.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Occupancies40d) ]
+libdfhack.Maps_WriteOccupancy.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Occupancies40d) ]
+libdfhack.Maps_ReadRegionOffsets.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(BiomeIndices40d) ]
+
+class Maps(object):
+    def __init__(self, ptr):
+        self._map_ptr = ptr
+
+    def start(self):
+        return libdfhack.Maps_Start(self._map_ptr) > 0
+
+    def finish(self):
+        return libdfhack.Maps_Finish(self._map_ptr) > 0
+
+    def is_valid_block(self, x, y, z):
+        return libdfhack.Maps_isValidBlock(self._map_ptr, *_uintify(x, y, z)) > 0
+
+    def read_tile_types(self, x, y, z):
+        tt = TileTypes40d()
+
+        if libdfhack.Maps_ReadTileTypes(self._map_ptr, *_uintify(x, y, z), tt) > 0:
+            return tt
+        else:
+            return None
+
+    def write_tile_types(self, x, y, z, tt):
+        return libdfhack.Maps_WriteTileTypes(self._map_ptr, *_uintify(x, y, z), tt) > 0
+
+    def read_designations(self, x, y, z):
+        d = Designations40d()
+
+        if libdfhack.Maps_ReadDesignations(self._map_ptr, *_uintify(x, y, z), d) > 0:
+            return d
+        else:
+            return None
+
+    def write_designations(self, x, y, z, d):
+        return libdfhack.Maps_WriteDesignations(self._map_ptr, *_uintify(x, y, z), d) > 0
+
+    def read_temperatures(self, x, y, z):
+        t = Temperatures()
+
+        if libdfhack.Maps_ReadDesignations(self._map_ptr, *_uintify(x, y, z), t) > 0:
+            return t
+        else:
+            return None
+
+    def write_temperatures(self, x, y, z, t):
+        return libdfhack.Maps_WriteDesignations(self._map_ptr, *_uintify(x, y, z), t) > 0
+
+    def read_occupancy(self, x, y, z):
+        o = Occupancies40d()
+
+        if libdfhack.Maps_ReadDesignations(self._map_ptr, *_uintify(x, y, z), o) > 0:
+            return o
+        else:
+            return None
+
+    def write_designations(self, x, y, z, o):
+        return libdfhack.Maps_WriteDesignations(self._map_ptr, *_uintify(x, y, z), o) > 0
+
+    def read_dirty_bit(self, x, y, z):
+        bit = c_int(0)
+
+        if libdfhack.Maps_ReadDirtyBit(self._map_ptr, *_uintify(x, y, z), byref(bit)) > 0:
+            if bit > 0:
+                return True
+            else:
+                return False
+        else:
+            return None
+
+    def write_dirty_bit(self, x, y, z, dirty):
+        return libdfhack.Maps_WriteDirtyBit(self._map_ptr, *_uintify(x, y, z), c_int(dirty)) > 0
+
+    @property
+    def size(self):
+        x = c_uint()
+        y = c_uint()
+        z = c_uint()
+
+        retval = libdfhack.Maps_getSize(self._map_ptr, byref(x), byref(y), byref(z))
+
+        if retval > 0:
+            return (int(x.value), int(y.value), int(z.value))
+        else:
+            return (-1, -1, -1)
+
+def reveal():
+    df = API("Memory.xml")
+    df.attach()
+
+    m = df.maps
+
+    m.start()
+
+    m_x, m_y, m_z = m.size
+
+    for x in xrange(m_x):
+        for y in xrange(m_y):
+            for z in xrange(m_z):
+                if m.is_valid_block(x, y, z):
+                    d = m.read_designations(x, y, z)
+
+                    for i in d:
+                        for j in i:
+                            j.bits.hidden = 0
+
+                    m.write_designations(x, y, z, d)
+
+    m.finish()
+    df.detach()

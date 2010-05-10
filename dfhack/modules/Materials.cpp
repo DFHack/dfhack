@@ -24,6 +24,7 @@ distribution.
 
 #include "DFCommonInternal.h"
 #include "../private/APIPrivate.h"
+#include "DFTypes.h"
 #include "modules/Materials.h"
 #include "DFMemInfo.h"
 #include "DFProcess.h"

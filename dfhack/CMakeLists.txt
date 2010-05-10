@@ -52,6 +52,7 @@ modules/Buildings_C.cpp
 modules/Constructions_C.cpp
 modules/Maps_C.cpp
 modules/Vegetation_C.cpp
+modules/Creatures_C.cpp
 )
 
 SET(PROJECT_HDRS_LINUX

@@ -16,7 +16,6 @@ using namespace std;
 #include <modules/Translation.h>
 
 DFHack::Materials * Materials;
-vector< vector <DFHack::t_itemType> > itemTypes;
 DFHack::memory_info *mem;
 vector< vector<string> > englishWords;
 vector< vector<string> > foreignWords;

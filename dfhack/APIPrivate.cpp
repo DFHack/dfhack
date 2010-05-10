@@ -31,6 +31,7 @@ APIPrivate::APIPrivate()
     vegetation = 0;
     buildings = 0;
     constructions = 0;
+	items = 0;
 }
 
 APIPrivate::~APIPrivate()

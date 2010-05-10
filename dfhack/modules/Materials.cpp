@@ -282,6 +282,7 @@ bool Materials::ReadDescriptorColors (void)
 		col.b = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_b") );
 		color.push_back(col);
 	}
+        return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("descriptor_all_colors"), alldesc );
 	return true;
 }
 
@@ -293,8 +294,19 @@ bool Materials::ReadCreatureTypesEx (void)
     uint32_t castes_vector_offset = mem->getOffset ("creature_type_caste_vector");
     uint32_t extract_vector_offset = mem->getOffset ("creature_type_extract_vector");
     uint32_t sizeof_string = mem->getHexValue ("sizeof_string");
+    uint32_t caste_colormod_offset = mem->getOffset ("caste_color_modifiers");
+    uint32_t caste_bodypart_offset = mem->getOffset ("caste_bodypart_vector");
+    uint32_t bodypart_id_offset = mem->getOffset ("bodypart_id");
+    uint32_t bodypart_category_offset = mem->getOffset ("bodypart_category");
+    uint32_t bodypart_layers_offset = mem->getOffset ("bodypart_layers_vector");
+    uint32_t bodypart_singular_offset = mem->getOffset ("bodypart_singular_vector");
+    uint32_t bodypart_plural_offset = mem->getOffset ("bodypart_plural_vector");
+    uint32_t color_modifier_part_offset = mem->getOffset ("color_modifier_part");
     uint32_t size = p_races.size();
     uint32_t sizecas = 0;
+    uint32_t sizecolormod;
+    uint32_t sizecolorlist;
+    uint32_t sizebp;
     uint32_t tile_offset = mem->getOffset ("creature_tile");
     uint32_t tile_color_offset = mem->getOffset ("creature_tile_color");
     raceEx.clear();
@@ -307,12 +319,40 @@ bool Materials::ReadCreatureTypesEx (void)
         sizecas = p_castes.size();
         for (uint32_t j = 0; j < sizecas;j++)
         {
+            /* caste name */
             t_creaturecaste caste;
             uint32_t caste_start = p_castes[j];
             p->readSTLString (caste_start, caste.rawname, sizeof(caste.rawname));
             p->readSTLString (caste_start + sizeof_string, caste.singular, sizeof(caste.singular));
             p->readSTLString (caste_start + 2 * sizeof_string, caste.plural, sizeof(caste.plural));
             p->readSTLString (caste_start + 3 * sizeof_string, caste.adjective, sizeof(caste.adjective));
+
+            /* color mod reading */
+            DfVector <uint32_t> p_colormod(p, caste_start + caste_colormod_offset);
+            sizecolormod = p_colormod.size();
+            caste.ColorModifier.resize(sizecolormod);
+            for(uint32_t k = 0; k < sizecolormod;k++)
+            {
+                DfVector <uint32_t> p_colorlist(p, p_colormod[k]);
+                sizecolorlist = p_colorlist.size();
+                caste.ColorModifier[k].colorlist.resize(sizecolorlist);
+                for(uint32_t l = 0; l < sizecolorlist; l++)
+                    caste.ColorModifier[k].colorlist[l] = p_colorlist[l];
+                p->readSTLString( p_colormod[k] + color_modifier_part_offset, caste.ColorModifier[k].part, sizeof(caste.ColorModifier[k].part));
+            }
+
+            /* body parts */
+            DfVector <uint32_t> p_bodypart(p, caste_start + caste_bodypart_offset);
+            caste.bodypart.empty();
+            sizebp = p_bodypart.size();
+            for(uint32_t k = 0; k < sizebp; k++)
+            {
+                t_bodypart part;
+                p->readSTLString (p_bodypart[k] + bodypart_id_offset, part.id, sizeof(part.id));
+                p->readSTLString (p_bodypart[k] + bodypart_category_offset, part.category, sizeof(part.category));
+                caste.bodypart.push_back(part);
+            }
+
             mat.castes.push_back(caste);
         }
 	mat.tile_character = p->readByte( p_races[i] + tile_offset );
@@ -327,6 +367,8 @@ bool Materials::ReadCreatureTypesEx (void)
 		p->readSTLString( p_extract[j], extract.rawname, sizeof(extract.rawname));
 		mat.extract.push_back(extract);
 	}
+
+
         raceEx.push_back(mat);
     }
     return true;
@@ -347,66 +389,56 @@ void Materials::ReadAllMaterials(void)
 std::string Materials::getDescription(t_material & mat)
 {
 	std::string out;
+	int32_t typeC;
 
-	switch(mat.itemType)
-	{
-		case 0:
-			if(mat.index>=0)
-			{
-				if(uint32_t(mat.index) <= this->inorganic.size())
-				{
-					out.append(this->inorganic[mat.index].id);
-					out.append(" bar");
-				}
+	if ( (mat.subIndex<419) || (mat.subIndex>618) )
+    {
+        if ( (mat.subIndex<19) || (mat.subIndex>218) )
+        {
+            if (mat.subIndex)
+                if (mat.subIndex>0x292)
+                    return "?";
+                else
+                {
+                    if (mat.subIndex>=this->other.size())
+					{
+						if(mat.subIndex<0)
+							return "any";
+						if(mat.subIndex>=this->raceEx.size())
+							return "stuff";
+						return this->raceEx[mat.subIndex].rawname;
+					}
+                    else
+                    {
+                        if (mat.index==-1)
+                            return std::string(this->other[mat.subIndex].rawname);
+                        else
+                            return std::string(this->other[mat.subIndex].rawname) + " derivate";
+                    }
+                }
+            else
+				if(mat.index<0)
+					return "any inorganic";
 				else
-					out = "invalid bar";
-			}
-			else
-				out = "any metal bar";
-			break;
-		case 1:
-			out = "cut gem";
-			break;
-		case 2:
-			out = "block";
-			break;
-		case 3:
-			switch(mat.subType)
-			{
-				case 3: out = "raw green glass"; break;
-				case 4: out = "raw clear glass"; break;
-				case 5: out = "raw crystal glass"; break;
-				default: out = "raw gems"; break;
-			}
-			break;
-		case 4:
-			out = "raw stone";
-			break;
-		case 5:
-			out = "wood log";
-			break;
-		case 24:
-			out = "weapon?";
-			break;
-		case 26:
-			out = "footwear";
-			break;
-		case 28:
-			out = "headwear";
-			break;
-		case 54:
-			out = "leather";
-			break;
-		case 57:
-			out = "cloth";
-			break;
-		case 71:
-			out = "food";
-			break;
-		default:
-			out = "unknown";
-			break;
-	}
+					return this->inorganic[mat.index].id;
+        }
+        else
+        {
+            if (mat.index>=this->raceEx.size())
+                return "unknown race";
+            typeC = mat.subIndex;
+			typeC -=19;
+            if ((typeC<0) || (typeC>=this->raceEx[mat.index].extract.size()))
+            {
+                return string(this->raceEx[mat.index].rawname).append(" extract");
+            }
+            return std::string(this->raceEx[mat.index].rawname).append(" ").append(this->raceEx[mat.index].extract[typeC].rawname);
+        }
+    }
+    else
+    {
+        return this->organic[mat.index].id;
+    }
 	return out;
 }
 

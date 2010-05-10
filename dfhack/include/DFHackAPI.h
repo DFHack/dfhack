@@ -52,6 +52,7 @@ namespace DFHack
     class Vegetation;
     class Buildings;
     class Constructions;
+	class Items;
     
     class DFHACK_EXPORT API
     {
@@ -103,6 +104,9 @@ namespace DFHack
         
         // get the materials module
         Materials * getMaterials();
+
+		// get the items module
+        Items * getItems();
         
         // get the translation module
         Translation * getTranslation();

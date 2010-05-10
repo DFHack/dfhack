@@ -18,51 +18,11 @@ using namespace std;
 #include <DFProcess.h>
 #include <DFVector.h>
 #include <modules/Materials.h>
+#include <modules/Items.h>
 
 
 DFHack::Materials * Materials;
-
-std::string getMatDesc(int32_t typeB, int32_t typeC, int32_t typeD)
-{
-    if ( (typeC<419) || (typeC>618) )
-    {
-        if ( (typeC<19) || (typeC>218) )
-        {
-            if (typeC)
-                if (typeC>0x292)
-                    return "?";
-                else
-                {
-                    if (typeC>=Materials->other.size())
-                        return "stuff";
-                    else
-                    {
-                        if (typeD==-1)
-                            return std::string(Materials->other[typeC].rawname);
-                        else
-                            return std::string(Materials->other[typeC].rawname) + " derivate";
-                    }
-                }
-            else
-                return Materials->inorganic[typeD].id;
-        }
-        else
-        {
-            if (typeD>=Materials->raceEx.size())
-                return "unknown race";
-            typeC-=19;
-            if ((typeC<0) || (typeC>=Materials->raceEx[typeD].extract.size()))
-            {
-                return string(Materials->raceEx[typeD].rawname).append(" extract");
-            }
-            return std::string(Materials->raceEx[typeD].rawname).append(" ").append(Materials->raceEx[typeD].extract[typeC].rawname);
-        }
-    }
-    else
-    {
-        return Materials->organic[typeD].id;
-    }
-}
+DFHack::Items * Items;
 
 int main ()
 {
@@ -89,6 +49,7 @@ int main ()
     p = DF.getProcess();
     DFHack::DfVector <uint32_t> p_items (p, p->getDescriptor()->getAddress ("items_vector"));
     uint32_t size = p_items.size();
+	Items = DF.getItems();
 
 
     printf("type\tvtable\tname\tquality\tdecorate\n");
@@ -115,6 +76,9 @@ int main ()
         uint32_t quality = 0;
         bool hasDecorations;
         string desc = p->readClassName(vtable);
+		DFHack::t_item itm;
+
+		Items->getItemData(p_items[i], itm);
 
         if ( (funct0&0xFFFFFFFFFF000000LL) != 0xCCCCC30000000000LL )
         {
@@ -187,9 +151,12 @@ int main ()
             printf("bad typeD func @%p\n", (void*) funcD);
 
 //      printf("%p\t%.16LX\t", (void*) func2, funct2);
-        printf("%d\t%p\t%s\t%d\t[%d,%d,%d -> %s]", type, (void*)vtable, desc.c_str(), quality,
-               typeB, typeC, typeD, getMatDesc(typeB, typeC, typeD).c_str());
+        printf("%d\t%p\t%s\t%d\t[%d,%d,%d]", type, (void*)vtable, desc.c_str(), quality,
+               typeB, typeC, typeD);
+		printf("\t%s", Items->getItemDescription(p_items[i], Materials).c_str());
 //      printf("\t%p\t%.16LX", (void *) funcD, funcDt);
+		if( (type!=itm.matdesc.itemType) || (typeB!=itm.matdesc.subType) || (typeC!=itm.matdesc.subIndex) || (typeD!=itm.matdesc.index) || (quality!=itm.quality) )
+			printf("\tbad[%d,%d,%d,%d]", itm.matdesc.itemType, itm.matdesc.subType, itm.matdesc.subIndex, itm.matdesc.index);
         if (hasDecorations)
         {
             bool sep = false;
@@ -211,11 +178,13 @@ int main ()
                     uint32_t dqual = p->readWord(decoration + 20);
                     if ( (dtypefunct&0xFFFFFFFFFFFF00FFLL) == 0xCCCCC300000000B8LL)
                         dtype = (dtypefunct>>8)&0xfffffff;
-                    else
+                    else if ( dtypefunct == 0xCCCCCCCCCCC3C033LL)
+                        dtype = 0;
+		    else
                         printf("bad decoration type function, address=%p\n", (void*) dtypefunc);
                     if (sep)
                         printf(",");
-                    printf("%s[t=%d,q=%d,%s{%d,%d}]", ddesc.c_str(), dtype, dqual, getMatDesc(-1, dtypeC, dtypeD).c_str(), dtypeC, dtypeD);
+                    //printf("%s[t=%d,q=%d,%s{%d,%d}]", ddesc.c_str(), dtype, dqual, getMatDesc(-1, dtypeC, dtypeD).c_str(), dtypeC, dtypeD);
                     sep = true;
                 }
             }

@@ -44,6 +44,7 @@ typedef struct
     uint32_t flags2_offset;
     uint32_t name_offset;
     uint32_t sex_offset;
+    uint32_t caste_offset;
     uint32_t id_offset;
     uint32_t labors_offset;
     uint32_t happiness_offset;
@@ -63,6 +64,7 @@ typedef struct
     uint32_t name_words_offset;
     uint32_t soul_mental_offset;
     uint32_t soul_traits_offset;
+    uint32_t appearance_vector_offset;
 } creature_offsets;
 
 typedef struct

@@ -169,34 +169,6 @@ union t_itemflags
 };
 
 //cooked
-struct t_item
-{
-    uint32_t origin;
-    uint32_t vtable;
-
-    uint32_t x;
-    uint32_t y;
-    uint32_t z;
-    
-    t_itemflags flags;
-    uint32_t ID;
-    uint32_t type;
-    t_matglossPair material;
-    /*
-    uint8_t matType;
-    uint8_t material;
-    */
- //   vector<uint8_t> bytes; used for item research
-    // FIXME: not complete, we need building presence bitmaps for stuff like farm plots and stockpiles, orientation (N,E,S,W) and state (open/closed)
-};
-
-// can add more here later, but this is fine for now
-struct t_itemType
-{
-    char id[128];
-    char name[128];
-};
-
 struct t_viewscreen 
 {
     int32_t type;

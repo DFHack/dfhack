@@ -1413,7 +1413,8 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_position">0x90</Offset>
         <Offset name="creature_flags1">0xF8</Offset>
         <Offset name="creature_flags2">0xFC</Offset>
-        <Offset name="creature_sex">0x110</Offset>
+        <Offset name="creature_caste">0x110</Offset>
+        <Offset name="creature_sex">0x112</Offset>
         <Offset name="creature_id">0x114</Offset>
         <Offset name="creature_civ">0X120</Offset>
         <Offset name="creature_soulskill_vector">0X1F4</Offset>
@@ -1421,6 +1422,8 @@ map_data_1b60_offset          0x1B9c
         <!--<Offset name="creature_mood">0x238</Offset>-->
         
         <Offset name="creature_mood">0x288</Offset>
+        <Offset name="creature_birth_year">0x298</Offset>
+        <Offset name="creature_birth_month">0x29C</Offset>
         <Offset name="creature_physical">0x464</Offset>
         <!--
         <Offset name="creature_strength">0x464</Offset>
@@ -1432,12 +1435,26 @@ map_data_1b60_offset          0x1B9c
         -->
         <Offset name="creature_current_job">0x390</Offset> <!-- from chmod -->
         <Offset name="creature_mood_skill">0x394</Offset> the skill that will be increased at the end of the mood (or not)
-        <Offset name="creature_appearance_vector">0x604</Offset> seems to be indexes in the list of possible colors defined in the raws for each group
+        <Offset name="creature_appearance_vector">0x604</Offset>
         <Offset name="creature_artifact_name">0x6D4</Offset>
         <Offset name="creature_labors">0x774</Offset>
         <Offset name="creature_soul_vector">0x0740</Offset>
         <Offset name="creature_default_soul">0x0758</Offset>
         <Offset name="creature_happiness">0x834</Offset>
+
+        Castes
+        ======
+        <Offset name="caste_bodypart_vector">0x51C</Offset>
+        <Offset name="caste_color_modifiers">0xACC</Offset>
+        <Offset name="color_modifier_part">0x70</Offset>
+
+        Body Parts
+        ==========
+        <Offset name="bodypart_id">0x0</Offset>
+        <Offset name="bodypart_category">0x1C</Offset>
+        <Offset name="bodypart_layers_vector">0x44</Offset>
+        <Offset name="bodypart_singular_vector">0x78</Offset>
+        <Offset name="bodypart_plural_vector">0x90</Offset>
 
         Materials
         =========
@@ -1491,20 +1508,30 @@ map_data_1b60_offset          0x1B9c
 
 	Descriptor colors
 	=================
-	<Address name="descriptor_shape_vector">0x16B9780</Address>
+	<Address name="descriptor_vectors_start">0x16B9780</Address>
 	<Offset name="descriptor_rawname">0x0</Offset>
 	<Offset name="descriptor_name">0x4C</Offset>
-	<Address name="descriptor_colors_vector">0x16B9768</Address>
+	<Address name="descriptor_colors_vector">0x16B9768</Address> this includes RVB
 	<Offset name="descriptor_color_r">0x6C</Offset> floats !
 	<Offset name="descriptor_color_v">0x70</Offset>
 	<Offset name="descriptor_color_b">0x74</Offset>
+	<Address name="descriptor_all_colors">0x16B9798</Address> A list of all colors, including eyes and stuff
 
 	Items
 	=====
 	<Address name="items_vector">0x166FE00</Address>
+	List of offsets in the VTable :
+	<Offset name="item_type_accessor">0x0</Offset>
+	<Offset name="item_subtype_accessor">0x4</Offset>
+	<Offset name="item_subindex_accessor">0x8</Offset>
+	<Offset name="item_index_accessor">0xC</Offset>
+	<Offset name="item_quality_accessor">0x238</Offset>
 
 	<Offset name="item_improvement_vector">0xA0</Offset>
+	<Offset name="item_improvement_subindex">0x4</Offset> 
+	<Offset name="item_improvement_index">0x8</Offset> 
 	<Offset name="item_improvement_quality">0x14</Offset> 
+	<Offset name="item_type_accessor">0x14</Offset>  (in the vtable)
         
     </Entry>
                             .-"""-.

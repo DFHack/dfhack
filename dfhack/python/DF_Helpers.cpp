@@ -148,12 +148,12 @@ static PyObject* BuildAttribute(DFHack::t_attrib& at)
 	
 	return attrObj;
 }
-
+/*
 static PyObject* BuildItemType(DFHack::t_itemType& item)
 {
 	return Py_BuildValue("ss", item.id, item.name);
 }
-
+*/
 static PyObject* BuildLike(DFHack::t_like& like)
 {
 	PyObject* item;

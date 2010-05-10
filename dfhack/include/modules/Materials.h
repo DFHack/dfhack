@@ -37,6 +37,20 @@ namespace DFHack
         char food_name[128];
         char extract_name[128];
     };
+
+    struct t_bodypart
+    {
+        char id[128];
+        char category[128];
+        char single[128];
+        char plural[128];
+    };
+
+    struct t_colormodifier
+    {
+        char part[128];
+        std::vector<uint32_t> colorlist;
+    };
     
     struct t_creaturecaste
     {
@@ -44,6 +58,8 @@ namespace DFHack
         char singular[128];
         char plural[128];
         char adjective[128];
+        std::vector<t_colormodifier> ColorModifier;
+        std::vector<t_bodypart> bodypart;
     };
 
     struct t_matglossOther
@@ -74,55 +90,55 @@ namespace DFHack
     struct t_material
     {
 	    int16_t itemType;
-	    int16_t typeB;
 	    int16_t subType;
+	    int16_t subIndex;
 	    int32_t index;
 	    uint32_t flags;
     };
     
     class DFHACK_EXPORT Materials
     {
-        public:
-        
-        Materials(DFHack::APIPrivate * _d);
-        ~Materials();
+	public:
+		Materials(DFHack::APIPrivate * _d);
+		~Materials();
 
-	std::vector<t_matgloss> inorganic;
-	std::vector<t_matgloss> organic;
-	std::vector<t_matgloss> tree;
-	std::vector<t_matgloss> plant;
-	std::vector<t_matgloss> race;
-	std::vector<t_creaturetype> raceEx;
-	std::vector<t_descriptor_color> color;
-	std::vector<t_matglossOther> other;
-        
-        bool ReadInorganicMaterials (void);
-        bool ReadOrganicMaterials (void);
-        bool ReadWoodMaterials (void);
-        bool ReadPlantMaterials (void);
-        bool ReadCreatureTypes (void);
-        bool ReadCreatureTypesEx (void);
-	bool ReadDescriptorColors(void);
-	bool ReadOthers (void);
+		std::vector<t_matgloss> inorganic;
+		std::vector<t_matgloss> organic;
+		std::vector<t_matgloss> tree;
+		std::vector<t_matgloss> plant;
+		std::vector<t_matgloss> race;
+		std::vector<t_creaturetype> raceEx;
+		std::vector<t_descriptor_color> color;
+		std::vector<t_matglossOther> other;
+		std::vector<t_matgloss> alldesc;
 
-	void ReadAllMaterials(void);
+		bool ReadInorganicMaterials (void);
+		bool ReadOrganicMaterials (void);
+		bool ReadWoodMaterials (void);
+		bool ReadPlantMaterials (void);
+		bool ReadCreatureTypes (void);
+		bool ReadCreatureTypesEx (void);
+		bool ReadDescriptorColors(void);
+		bool ReadOthers (void);
 
-	std::string getDescription(t_material & mat);
-	/*
-        bool ReadInorganicMaterials (std::vector<t_matgloss> & output);
-        bool ReadOrganicMaterials (std::vector<t_matgloss> & output);
-        bool ReadWoodMaterials (std::vector<t_matgloss> & output);
-        bool ReadPlantMaterials (std::vector<t_matgloss> & output);
-        
-        // TODO: maybe move to creatures?
-        bool ReadCreatureTypes (std::vector<t_matgloss> & output);
-        bool ReadCreatureTypesEx (vector<t_creaturetype> & creatures);
-	bool ReadDescriptorColors(std::vector<t_descriptor_color> & output);
-	*/
-        private:
-            class Private;
-            Private* d;
-    };
+		void ReadAllMaterials(void);
+
+		std::string getDescription(t_material & mat);
+		/*
+		bool ReadInorganicMaterials (std::vector<t_matgloss> & output);
+		bool ReadOrganicMaterials (std::vector<t_matgloss> & output);
+		bool ReadWoodMaterials (std::vector<t_matgloss> & output);
+		bool ReadPlantMaterials (std::vector<t_matgloss> & output);
+
+		// TODO: maybe move to creatures?
+		bool ReadCreatureTypes (std::vector<t_matgloss> & output);
+		bool ReadCreatureTypesEx (vector<t_creaturetype> & creatures);
+		bool ReadDescriptorColors(std::vector<t_descriptor_color> & output);
+		*/
+	private:
+		class Private;
+		Private* d;
+	};
 }
 #endif
 

@@ -67,6 +67,23 @@ int main (int numargs, const char ** args)
     {
         cout << i << ": " << Materials->plant[i].id << endl;
     }
+    cout << endl << "----==== Color descriptors ====----" << endl;
+    Materials->ReadDescriptorColors();
+    for(uint32_t i = 0; i < Materials->color.size();i++)
+    {
+	cout << i << ": " << Materials->color[i].id << " - " << Materials->color[i].name << "["
+		<< (unsigned int) (Materials->color[i].r*255) << ":"
+		<< (unsigned int) (Materials->color[i].v*255) << ":"
+		<< (unsigned int) (Materials->color[i].b*255)
+		<< "]" << endl;
+    }
+    cout << endl << "----==== All descriptors ====----" << endl;
+    Materials->ReadDescriptorColors();
+    for(uint32_t i = 0; i < Materials->alldesc.size();i++)
+    {
+	cout << i << ": " << Materials->alldesc[i].id << endl;
+    }
+
     cout << endl << "----==== Creature types ====----" << endl;
     Materials->ReadCreatureTypesEx ();
     for(uint32_t i = 0; i < Materials->raceEx.size();i++)
@@ -81,18 +98,26 @@ int main (int numargs, const char ** args)
             << castes[j].plural << ":"
             << castes[j].adjective << "] ";
             cout << endl;
+            for(uint32_t k = 0; k < castes[j].ColorModifier.size(); k++)
+            {
+                cout << "    colormod[" << castes[j].ColorModifier[k].part << "] ";
+                for(uint32_t l = 0; l < castes[j].ColorModifier[k].colorlist.size(); l++)
+                {
+                    if( castes[j].ColorModifier[k].colorlist[l] < Materials->color.size() )
+                        cout << Materials->color[castes[j].ColorModifier[k].colorlist[l]].name << " ";
+                    else
+                        cout << Materials->alldesc[castes[j].ColorModifier[k].colorlist[l]].id << " ";
+                }
+                cout << endl;
+            }
+            cout << "     body: ";
+            for(uint32_t k = 0; k < castes[j].bodypart.size(); k++)
+            {
+                cout << castes[j].bodypart[k].category << " ";
+            }
+            cout << endl;
         }
         cout << endl;
-    }
-    cout << endl << "----==== Color descriptors ====----" << endl;
-    Materials->ReadDescriptorColors();
-    for(uint32_t i = 0; i < Materials->color.size();i++)
-    {
-	cout << i << ": " << Materials->color[i].id << " - " << Materials->color[i].name << "["
-		<< (unsigned int) (Materials->color[i].r*255) << ":"
-		<< (unsigned int) (Materials->color[i].v*255) << ":"
-		<< (unsigned int) (Materials->color[i].b*255) << ":"
-		<< "]" << endl;
     }
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;

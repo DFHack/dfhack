@@ -53,6 +53,8 @@ modules/Constructions_C.cpp
 modules/Maps_C.cpp
 modules/Vegetation_C.cpp
 modules/Creatures_C.cpp
+modules/Translation_C.cpp
+modules/Items_C.cpp
 )
 
 SET(PROJECT_HDRS_LINUX

@@ -40,6 +40,9 @@ extern "C" {
 DFHACK_EXPORT int Translation_Start(DFHackObject* trans);
 DFHACK_EXPORT int Translation_Finish(DFHackObject* trans);
 
+DFHACK_EXPORT char* Translation_TranslateNameEnglish(DFHackObject* trans, const DFHack::t_name* name, char* (*char_buffer_create)(int));
+DFHACK_EXPORT char* Translation_TranslateNameNonEnglish(DFHackObject* trans, const DFHack::t_name* name, char* (*char_buffer_create)(int));
+
 #ifdef __cplusplus
 }
 #endif

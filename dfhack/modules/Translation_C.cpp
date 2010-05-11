@@ -23,6 +23,10 @@ distribution.
 */
 
 #include "integers.h"
+#include <string>
+
+using namespace std;
+
 #include "DFCommonInternal.h"
 #include "DFTypes.h"
 #include "modules/Translation.h"
@@ -52,6 +56,64 @@ int Translation_Finish(DFHackObject* trans)
 	}
 	
 	return -1;
+}
+
+char* Translation_TranslateNameEnglish(DFHackObject* trans, const DFHack::t_name* name, char* (*char_buffer_create)(int))
+{
+	if(trans != NULL)
+	{
+		std::string nameTrans = ((DFHack::Translation*)trans)->TranslateName(*name, true);
+		
+		if(nameTrans.size() > 0)
+		{
+			char* buf = (*char_buffer_create)(nameTrans.size());
+			
+			if(buf != NULL)
+			{
+				size_t len = nameTrans.copy(buf, nameTrans.size());
+				
+				if(len > 0)			
+					buf[len] = '\0';
+				else
+					buf[0] = '\0';
+			}
+			
+			return buf;
+		}
+		else
+			return NULL;
+	}
+	
+	return NULL;
+}
+
+char* Translation_TranslateNameNonEnglish(DFHackObject* trans, const DFHack::t_name* name, char* (*char_buffer_create)(int))
+{
+	if(trans != NULL)
+	{
+		std::string nameTrans = ((DFHack::Translation*)trans)->TranslateName(*name, false);
+		
+		if(nameTrans.size() > 0)
+		{
+			char* buf = (*char_buffer_create)(nameTrans.size());
+			
+			if(buf != NULL)
+			{
+				size_t len = nameTrans.copy(buf, nameTrans.size());
+				
+				if(len > 0)			
+					buf[len] = '\0';
+				else
+					buf[0] = '\0';
+			}
+			
+			return buf;
+		}
+		else
+			return NULL;
+	}
+	
+	return NULL;
 }
 
 #ifdef __cplusplus

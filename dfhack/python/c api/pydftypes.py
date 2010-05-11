@@ -3,16 +3,12 @@ from collections import namedtuple
 from pydfhackflags import *
 from enum import *
 
-Position3D = namedtuple("Position3D", "x, y, z")
-Rectangle = namedtuple("Rectangle", "x1, y1, x2, y2")
-Note = namedtuple("Note", "symbol, foreground, background, name, position")
-Settlement = namedtuple("Settlement", "origin, name, world_pos, local_pos")
-Attribute = namedtuple("Attribute", "level, field_4, field_8, field_C, leveldiff, field_14, field_18");
-Skill = namedtuple("Skill", "id, experience, rating")
-CreatureCaste = namedtuple("CreatureCaste", "rawname, singular, plural, adjective")
-CreatureTypeEx = namedtuple("CreatureTypeEx", "rawname, castes, tile_character, tilecolor")
-TileColor = namedtuple("TileColor", "fore, back, bright")
-Name = namedtuple("Name", "first_name, nickname, language, has_name, words, parts_of_speech")
+libdfhack = cdll.libdfhack
+
+int_ptr = POINTER(c_int)
+uint_ptr = POINTER(c_uint)
+
+_arr_create_func = CFUNCTYPE(c_void_p, c_int)
 
 TileTypes40d = ((c_int * 16) * 16)
 BiomeIndices40d = c_ubyte * 16
@@ -61,12 +57,6 @@ class SpatterVein(Structure):
                 ("mat3", c_ushort),
                 ("intensity", ((c_ubyte * 16) * 16)),
                 ("address_of", c_uint)]
-
-class Soul(object):
-    def __init__(self, *args, **kwds):
-        if kwds:
-            for k, v in kwds.iteritems():
-                self.__dict__[k] = v
 
 class MapBlock40d(Structure):
     _fields_ = [("tiletypes", TileTypes40d),
@@ -139,3 +129,130 @@ class Tree(Structure):
                 ("y", c_ushort),
                 ("z", c_ushort),
                 ("address", c_uint)]
+
+class Material(Structure):
+    _fields_ = [("itemType", c_short),
+                ("subType", c_short),
+                ("subIndex", c_short),
+                ("index", c_int),
+                ("flags", c_uint)]
+
+class Skill(Structure):
+    _fields_ = [("id", c_ushort),
+                ("experience", c_uint),
+                ("rating", c_ushort)]
+
+class Job(Structure):
+    _fields_ = [("active", c_byte),
+                ("jobId", c_uint),
+                ("jobType", c_ubyte),
+                ("occupationPtr", c_uint)]
+
+class Like(Structure):
+    _fields_ = [("type", c_short),
+                ("itemClass", c_short),
+                ("itemIndex", c_short),
+                ("material", MatglossPair),
+                ("active", c_byte)]
+
+class Attribute(Structure):
+    _fields_ = [("level", c_uint),
+                ("field_4", c_uint),
+                ("field_8", c_uint),
+                ("field_C", c_uint),
+                ("leveldiff", c_uint),
+                ("field_14", c_uint),
+                ("field_18", c_uint)]
+
+class Name(Structure):
+    _fields_ = [("first_name", (c_char * 128)),
+                ("nickname", (c_char * 128)),
+                ("words", (c_int * 7)),
+                ("parts_of_speech", (c_ushort * 7)),
+                ("language", c_uint),
+                ("has_name", c_byte)]
+
+class Note(Structure):
+    _fields_ = [("symbol", c_char),
+                ("foreground", c_ushort),
+                ("background", c_ushort),
+                ("name", (c_char * 128)),
+                ("x", c_ushort),
+                ("y", c_ushort),
+                ("z", c_ushort)]
+
+class Settlement(Structure):
+    _fields_ = [("origin", c_uint),
+                ("name", Name),
+                ("world_x", c_short),
+                ("world_y", c_short),
+                ("local_x1", c_short),
+                ("local_x2", c_short),
+                ("local_y1", c_short),
+                ("local_y2", c_short)]
+
+_NUM_CREATURE_TRAITS = 30
+_NUM_CREATURE_LABORS = 102
+
+class Soul(Structure):
+    _fields_ = [("numSkills", c_ubyte),
+                ("skills", (Skill * 256)),
+                ("traits", (c_ushort * _NUM_CREATURE_TRAITS)),
+                ("analytical_ability", Attribute),
+                ("focus", Attribute),
+                ("willpower", Attribute),
+                ("creativity", Attribute),
+                ("intuition", Attribute),
+                ("patience", Attribute),
+                ("memory", Attribute),
+                ("linguistic_ability", Attribute),
+                ("spatial_sense", Attribute),
+                ("musicality", Attribute),
+                ("kinesthetic_sense", Attribute),
+                ("empathy", Attribute),
+                ("social_awareness", Attribute)]
+
+_MAX_COLORS = 15
+
+class Creature(Structure):
+    _fields_ = [("origin", c_uint),
+                ("x", c_ushort),
+                ("y", c_ushort),
+                ("z", c_ushort),
+                ("race", c_uint),
+                ("civ", c_int),
+                ("flags1", CreatureFlags1),
+                ("flags2", CreatureFlags2),
+                ("name", Name),
+                ("mood", c_short),
+                ("mood_skill", c_short),
+                ("artifact_name", Name),
+                ("profession", c_ubyte),
+                ("custom_profession", (c_char * 128)),
+                ("labors", (c_ubyte * _NUM_CREATURE_LABORS)),
+                ("current_job", Job),
+                ("happiness", c_uint),
+                ("id", c_uint),
+                ("strength", Attribute),
+                ("agility", Attribute),
+                ("toughness", Attribute),
+                ("endurance", Attribute),
+                ("recuperation", Attribute),
+                ("disease_resistance", Attribute),
+                ("squad_leader_id", c_int),
+                ("sex", c_ubyte),
+                ("caste", c_ushort),
+                ("pregnancy_timer", c_uint),
+                ("has_default_soul", c_byte),
+                ("defaultSoul", Soul),
+                ("nbcolors", c_uint),
+                ("color", (c_uint * _MAX_COLORS))]
+
+class CreatureExtract(Structure):
+    _fields_ = [("rawname", (c_char * 128))]
+
+class BodyPart(Structure):
+    _fields_ = [("id", (c_char * 128)),
+                ("category", (c_char * 128)),
+                ("single", (c_char * 128)),
+                ("plural", (c_char * 128))]

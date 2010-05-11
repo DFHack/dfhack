@@ -262,6 +262,16 @@ DFHackObject* API_getConstructions(DFHackObject* api)
 	return NULL;
 }
 
+DFHackObject* API_getItems(DFHackObject* api)
+{
+	if(api != NULL)
+	{
+		return (DFHackObject*)((DFHack::API*)api)->getItems();
+	}
+	
+	return NULL;
+}
+
 void API_ReadRaw(DFHackObject* api, const uint32_t offset, const uint32_t size, uint8_t* target)
 {
     if(api != NULL)

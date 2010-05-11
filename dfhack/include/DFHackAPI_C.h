@@ -60,6 +60,7 @@ DFHACK_EXPORT DFHackObject* API_getTranslation(DFHackObject* api);
 DFHACK_EXPORT DFHackObject* API_getVegetation(DFHackObject* api);
 DFHACK_EXPORT DFHackObject* API_getBuildings(DFHackObject* api);
 DFHACK_EXPORT DFHackObject* API_getConstructions(DFHackObject* api);
+DFHACK_EXPORT DFHackObject* API_getItems(DFHackObject* api);
 
 //these are DANGEROUS...can crash/segfault DF, turn the seas to blood, call up the Antichrist, etc
 DFHACK_EXPORT void API_ReadRaw(DFHackObject* api, const uint32_t offset, const uint32_t size, uint8_t* target);

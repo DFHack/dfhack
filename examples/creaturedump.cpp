@@ -204,6 +204,7 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         }
         */
         cout << endl;
+        cout << "Born on the year " << creature.birth_year << ", month " << (creature.birth_time/1200/28) << ", day " << ((creature.birth_time/1200) % 28 + 1) << endl;
         cout << "Appearance : ";
         for(unsigned int i = 0; i<creature.nbcolors ; i++)
         {

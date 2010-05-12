@@ -117,7 +117,10 @@ int main (int numargs, const char ** args)
             cout << endl;
             for(uint32_t k = 0; k < castes[j].ColorModifier.size(); k++)
             {
-                cout << "    colormod[" << castes[j].ColorModifier[k].part << "] ";
+                cout << "    colormod[" << castes[j].ColorModifier[k].part;
+                if(castes[j].ColorModifier[k].startdate>0)
+                    cout << " start:" << castes[j].ColorModifier[k].startdate << " days, end:" << castes[j].ColorModifier[k].enddate << " days";
+                cout << "] ";
                 for(uint32_t l = 0; l < castes[j].ColorModifier[k].colorlist.size(); l++)
                 {
                     if( castes[j].ColorModifier[k].colorlist[l] < Materials->color.size() )

@@ -16,6 +16,7 @@ using namespace std;
 #include <modules/Materials.h>
 #include <modules/Creatures.h>
 #include <modules/Translation.h>
+#include <modules/World.h>
 #include <DFMiscUtils.h>
 
 enum likeType
@@ -31,6 +32,8 @@ DFHack::memory_info *mem;
 vector< vector<string> > englishWords;
 vector< vector<string> > foreignWords;
 DFHack::Creatures * Creatures = NULL;
+uint32_t current_year;
+uint32_t current_tick;
 /*
 likeType printLike40d(DFHack::t_like like, const matGlosses & mat,const vector< vector <DFHack::t_itemType> > & itemTypes)
 { // The function in DF which prints out the likes is a monster, it is a huge switch statement with tons of options and calls a ton of other functions as well, 
@@ -139,6 +142,7 @@ likeType printLike40d(DFHack::t_like like, const matGlosses & mat,const vector< 
 
 void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 {
+    uint32_t dayoflife;
 	cout << "address: " << hex <<  creature.origin << dec << " creature type: " << Materials->raceEx[creature.race].rawname 
                 << "[" << Materials->raceEx[creature.race].tile_character
                 << "," << Materials->raceEx[creature.race].tilecolor.fore
@@ -204,6 +208,8 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
         }
         */
         cout << endl;
+        dayoflife = creature.birth_year*12*28 + creature.birth_time/1200;
+        cout << "Born on the year " << creature.birth_year << ", month " << (creature.birth_time/1200/28) << ", day " << ((creature.birth_time/1200) % 28 + 1) << ", " << dayoflife << " days lived." << endl;
         cout << "Appearance : ";
         for(unsigned int i = 0; i<creature.nbcolors ; i++)
         {
@@ -216,6 +222,14 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
                     << (unsigned int) (Materials->color[color].b*255) << "]";
             else
                 cout << Materials->alldesc[color].id;
+            if( Materials->raceEx[creature.race].castes[creature.caste].ColorModifier[i].startdate > 0 )
+            {
+                if( (Materials->raceEx[creature.race].castes[creature.caste].ColorModifier[i].startdate <= dayoflife) &&
+                    (Materials->raceEx[creature.race].castes[creature.caste].ColorModifier[i].enddate > dayoflife) )
+                    cout << "[active]";
+                else
+                    cout << "[inactive]";
+            }
             cout << " - ";
 
         }
@@ -383,6 +397,7 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 
 int main (int numargs, char ** args)
 {
+    DFHack::World * World;
     DFHack::API DF("Memory.xml");
     try
     {
@@ -402,6 +417,9 @@ int main (int numargs, char ** args)
     
     Creatures = DF.getCreatures();
     Materials = DF.getMaterials();
+    World = DF.getWorld();
+    current_year = World->ReadCurrentYear();
+    current_tick = World->ReadCurrentTick();
     DFHack::Translation * Tran = DF.getTranslation();
     
     uint32_t numCreatures;

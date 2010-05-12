@@ -50,6 +50,8 @@ namespace DFHack
     {
         char part[128];
         std::vector<uint32_t> colorlist;
+        uint32_t startdate; /* in days */
+        uint32_t enddate; /* in days */
     };
     
     struct t_creaturecaste

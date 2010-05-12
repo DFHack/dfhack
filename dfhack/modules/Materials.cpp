@@ -304,6 +304,8 @@ bool Materials::ReadCreatureTypesEx (void)
     uint32_t bodypart_singular_offset = mem->getOffset ("bodypart_singular_vector");
     uint32_t bodypart_plural_offset = mem->getOffset ("bodypart_plural_vector");
     uint32_t color_modifier_part_offset = mem->getOffset ("color_modifier_part");
+    uint32_t color_modifier_startdate_offset = mem->getOffset ("color_modifier_startdate");
+    uint32_t color_modifier_enddate_offset = mem->getOffset ("color_modifier_enddate");
     uint32_t size = p_races.size();
     uint32_t sizecas = 0;
     uint32_t sizecolormod;
@@ -341,6 +343,8 @@ bool Materials::ReadCreatureTypesEx (void)
                 for(uint32_t l = 0; l < sizecolorlist; l++)
                     caste.ColorModifier[k].colorlist[l] = p_colorlist[l];
                 p->readSTLString( p_colormod[k] + color_modifier_part_offset, caste.ColorModifier[k].part, sizeof(caste.ColorModifier[k].part));
+                caste.ColorModifier[k].startdate = p->readDWord( p_colormod[k] + color_modifier_startdate_offset );
+                caste.ColorModifier[k].enddate = p->readDWord( p_colormod[k] + color_modifier_enddate_offset );
             }
 
             /* body parts */

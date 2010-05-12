@@ -14,6 +14,7 @@
 #include "modules/Translation.h"
 #include "modules/Vegetation.h"
 #include "modules/Gui.h"
+#include "modules/World.h"
 #include "modules/Buildings.h"
 #include "modules/Constructions.h"
 
@@ -26,12 +27,13 @@ APIPrivate::APIPrivate()
     maps = 0;
     position = 0;
     gui = 0;
+    world = 0;
     materials = 0;
     translation = 0;
     vegetation = 0;
     buildings = 0;
     constructions = 0;
-	items = 0;
+    items = 0;
 }
 
 APIPrivate::~APIPrivate()
@@ -45,6 +47,7 @@ APIPrivate::~APIPrivate()
     if(vegetation) delete vegetation;
     if(buildings) delete buildings;
     if(constructions) delete constructions;
+    if(world) delete world;
 }
 
 bool APIPrivate::InitReadNames()

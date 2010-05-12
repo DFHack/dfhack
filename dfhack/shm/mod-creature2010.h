@@ -65,6 +65,8 @@ typedef struct
     uint32_t soul_mental_offset;
     uint32_t soul_traits_offset;
     uint32_t appearance_vector_offset;
+    uint32_t birth_year_offset;
+    uint32_t birth_time_offset;
 } creature_offsets;
 
 typedef struct

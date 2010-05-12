@@ -100,6 +100,10 @@ Creatures::Creatures(APIPrivate* _d)
         
         // appearance
         creatures.appearance_vector_offset = minfo->getOffset("creature_appearance_vector");
+
+        //birth
+        creatures.birth_year_offset = minfo->getOffset("creature_birth_year");
+        creatures.birth_time_offset = minfo->getOffset("creature_birth_time");
         
         // name offsets for the creature module
         creatures.name_firstname_offset = minfo->getOffset("name_firstname");
@@ -217,6 +221,8 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         furball.current_job.active = false;;
     }
 
+    furball.birth_year = p->readDWord (temp + offs.birth_year_offset );
+    furball.birth_time = p->readDWord (temp + offs.birth_time_offset );
 
     // current job HACK: the job object isn't cleanly represented here
     /*

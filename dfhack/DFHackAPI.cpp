@@ -40,6 +40,7 @@ distribution.
 #include "modules/Items.h"
 #include "modules/Position.h"
 #include "modules/Gui.h"
+#include "modules/World.h"
 #include "modules/Creatures.h"
 #include "modules/Translation.h"
 #include "modules/Vegetation.h"
@@ -139,6 +140,11 @@ bool API::Detach()
         delete d->gui;
         d->gui = 0;
     }
+    if(d->world)
+    {
+        delete d->world;
+        d->world = 0;
+    }
     if(d->position)
     {
         delete d->position;
@@ -149,15 +155,10 @@ bool API::Detach()
         delete d->materials;
         d->materials = 0;
     }
-	if(d->items)
-	{
-		delete d->items;
-		d->items = 0;
-	}
-    if(d->gui)
+    if(d->items)
     {
-        delete d->gui;
-        d->gui = 0;
+        delete d->items;
+        d->items = 0;
     }
     if(d->translation)
     {
@@ -255,6 +256,13 @@ Gui * API::getGui()
     if(!d->gui)
         d->gui = new Gui(d);
     return d->gui;
+}
+
+World * API::getWorld()
+{
+    if(!d->world)
+        d->world = new World(d);
+    return d->world;
 }
 
 Position * API::getPosition()

@@ -1132,11 +1132,6 @@ map_data_1b60_offset          0x1B9c
         <Offset name="name_nickname">0x1C</Offset>
         <Offset name="name_words">0x38</Offset>
 
-        Time
-        ====
-        <Address name="current_month">0x0e47e08</Address>
-        <Address name="current_year">0x0e79f00</Address>
-
         Creatures
         =========
         <Address name="creature_vector">0x0166ecc4</Address>
@@ -1541,6 +1536,11 @@ map_data_1b60_offset          0x1B9c
 	<Offset name="item_improvement_quality">0x14</Offset> 
 	<Offset name="item_type_accessor">0x14</Offset>  (in the vtable)
         
+        Time
+        ====
+        <Address name="current_tick">0x0e47e08</Address>
+        <Address name="current_year">0x0e79f00</Address>
+
     </Entry>
                             .-"""-.
                            '       \

@@ -33,10 +33,11 @@ namespace DFHack
 {
     class Materials;
     class Gui;
+    class World;
     class Position;
     class Maps;
     class Creatures;
-	class Items;
+    class Items;
     class Translation;
     class Buildings;
     class ProcessEnumerator;
@@ -71,8 +72,9 @@ namespace DFHack
         Maps * maps;
         Position * position;
         Gui * gui;
+        World * world;
         Materials * materials;
-		Items * items;
+        Items * items;
         Translation * translation;
         Vegetation * vegetation;
         Buildings * buildings;

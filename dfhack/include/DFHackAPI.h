@@ -47,12 +47,13 @@ namespace DFHack
     class Creatures;
     class Position;
     class Gui;
+    class World;
     class Materials;
     class Translation;
     class Vegetation;
     class Buildings;
     class Constructions;
-	class Items;
+    class Items;
     
     class DFHACK_EXPORT API
     {
@@ -98,6 +99,9 @@ namespace DFHack
         
         // get the gui module
         Gui * getGui();
+
+        // get the world module
+        World * getWorld();
         
         // get the position module
         Position * getPosition();

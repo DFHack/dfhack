@@ -32,6 +32,7 @@ distribution.
 
 using namespace std;
 
+#include "DFTypes.h"
 #include "modules/Materials.h"
 #include "DF_Imports.cpp"
 #include "DF_Helpers.cpp"

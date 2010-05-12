@@ -24,11 +24,12 @@ distribution.
 
 #include "DFCommonInternal.h"
 #include "../private/APIPrivate.h"
-#include "modules/Materials.h"
-#include "modules/Items.h"
+#include "DFTypes.h"
 #include "DFMemInfo.h"
 #include "DFProcess.h"
 #include "DFVector.h"
+#include "modules/Materials.h"
+#include "modules/Items.h"
 
 using namespace DFHack;
 

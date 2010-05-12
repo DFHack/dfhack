@@ -24,6 +24,7 @@ distribution.
 
 #include "DFCommonInternal.h"
 #include "../private/APIPrivate.h"
+#include "DFTypes.h"
 #include "modules/Materials.h"
 #include "DFMemInfo.h"
 #include "DFProcess.h"
@@ -296,6 +297,7 @@ bool Materials::ReadCreatureTypesEx (void)
     uint32_t sizeof_string = mem->getHexValue ("sizeof_string");
     uint32_t caste_colormod_offset = mem->getOffset ("caste_color_modifiers");
     uint32_t caste_bodypart_offset = mem->getOffset ("caste_bodypart_vector");
+    uint32_t caste_attributes_offset = mem->getOffset ("caste_attributes");
     uint32_t bodypart_id_offset = mem->getOffset ("bodypart_id");
     uint32_t bodypart_category_offset = mem->getOffset ("bodypart_category");
     uint32_t bodypart_layers_offset = mem->getOffset ("bodypart_layers_vector");
@@ -352,6 +354,9 @@ bool Materials::ReadCreatureTypesEx (void)
                 p->readSTLString (p_bodypart[k] + bodypart_category_offset, part.category, sizeof(part.category));
                 caste.bodypart.push_back(part);
             }
+
+
+            p->read(caste_start + caste_attributes_offset, sizeof(t_attrib) * (6+11), (uint8_t *)&caste.strength);
 
             mat.castes.push_back(caste);
         }

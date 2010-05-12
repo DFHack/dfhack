@@ -30,6 +30,7 @@ distribution.
 using namespace std;
 
 #include "DFCommonInternal.h"
+#include "DFTypes.h"
 #include "modules/Materials.h"
 #include "modules/Materials_C.h"
 

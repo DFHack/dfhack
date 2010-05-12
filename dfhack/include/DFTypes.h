@@ -199,6 +199,17 @@ struct t_settlement
     int16_t local_y1;
     int16_t local_y2;
 };
+    
+struct t_attrib
+{
+    uint32_t level;
+    uint32_t field_4;
+    uint32_t field_8;
+    uint32_t field_C;
+    uint32_t leveldiff;
+    uint32_t field_14;
+    uint32_t field_18;
+};
 
 }// namespace DFHack
 #endif // TYPES_H_INCLUDED

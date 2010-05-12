@@ -30,6 +30,7 @@ distribution.
 using namespace std;
 
 #include "DFCommonInternal.h"
+#include "DFTypes.h"
 #include "modules/Materials.h"
 #include "modules/Materials_C.h"
 
@@ -223,7 +224,7 @@ int Materials_getOtherSize(DFHackObject* mat)
 
 //vector getters
 
-int Materials_getInorganic(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int))
+int Materials_getInorganic(DFHackObject* mat, t_matgloss* (*t_matgloss_buffer_create)(int))
 {
 	if(mat != NULL)
 	{
@@ -231,7 +232,7 @@ int Materials_getInorganic(DFHackObject* mat, void* (*t_matgloss_buffer_create)(
 		
 		if(materials->inorganic.size() > 0)
 		{
-			t_matgloss* buf = (t_matgloss*)((*t_matgloss_buffer_create)(materials->inorganic.size()));
+			t_matgloss* buf = ((*t_matgloss_buffer_create)(materials->inorganic.size()));
 			
 			if(buf != NULL)
 			{
@@ -249,7 +250,7 @@ int Materials_getInorganic(DFHackObject* mat, void* (*t_matgloss_buffer_create)(
 	return -1;
 }
 
-int Materials_getOrganic(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int))
+int Materials_getOrganic(DFHackObject* mat, t_matgloss* (*t_matgloss_buffer_create)(int))
 {
 	if(mat != NULL)
 	{
@@ -257,7 +258,7 @@ int Materials_getOrganic(DFHackObject* mat, void* (*t_matgloss_buffer_create)(in
 		
 		if(materials->organic.size() > 0)
 		{
-			t_matgloss* buf = (t_matgloss*)((*t_matgloss_buffer_create)(materials->organic.size()));
+			t_matgloss* buf = ((*t_matgloss_buffer_create)(materials->organic.size()));
 			
 			if(buf != NULL)
 			{
@@ -275,7 +276,7 @@ int Materials_getOrganic(DFHackObject* mat, void* (*t_matgloss_buffer_create)(in
 	return -1;
 }
 
-int Materials_getTree(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int))
+int Materials_getTree(DFHackObject* mat, t_matgloss* (*t_matgloss_buffer_create)(int))
 {
 	if(mat != NULL)
 	{
@@ -283,7 +284,7 @@ int Materials_getTree(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int))
 		
 		if(materials->tree.size() > 0)
 		{
-			t_matgloss* buf = (t_matgloss*)((*t_matgloss_buffer_create)(materials->tree.size()));
+			t_matgloss* buf = ((*t_matgloss_buffer_create)(materials->tree.size()));
 			
 			if(buf != NULL)
 			{
@@ -301,7 +302,7 @@ int Materials_getTree(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int))
 	return -1;
 }
 
-int Materials_getPlant(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int))
+int Materials_getPlant(DFHackObject* mat, t_matgloss* (*t_matgloss_buffer_create)(int))
 {
 	if(mat != NULL)
 	{
@@ -309,7 +310,7 @@ int Materials_getPlant(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int)
 		
 		if(materials->plant.size() > 0)
 		{
-			t_matgloss* buf = (t_matgloss*)((*t_matgloss_buffer_create)(materials->plant.size()));
+			t_matgloss* buf = ((*t_matgloss_buffer_create)(materials->plant.size()));
 			
 			if(buf != NULL)
 			{
@@ -327,7 +328,7 @@ int Materials_getPlant(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int)
 	return -1;
 }
 
-int Materials_getRace(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int))
+int Materials_getRace(DFHackObject* mat, t_matgloss* (*t_matgloss_buffer_create)(int))
 {
 	if(mat != NULL)
 	{
@@ -335,7 +336,7 @@ int Materials_getRace(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int))
 		
 		if(materials->race.size() > 0)
 		{
-			t_matgloss* buf = (t_matgloss*)((*t_matgloss_buffer_create)(materials->race.size()));
+			t_matgloss* buf = ((*t_matgloss_buffer_create)(materials->race.size()));
 			
 			if(buf != NULL)
 			{
@@ -355,7 +356,7 @@ int Materials_getRace(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int))
 
 //race_ex getter goes here...
 
-int Materials_getColor(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int))
+int Materials_getColor(DFHackObject* mat, t_descriptor_color* (*t_descriptor_color_buffer_create)(int))
 {
 	if(mat != NULL)
 	{
@@ -363,7 +364,7 @@ int Materials_getColor(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int)
 		
 		if(materials->color.size() > 0)
 		{
-			t_descriptor_color* buf = (t_descriptor_color*)((*t_matgloss_buffer_create)(materials->color.size()));
+			t_descriptor_color* buf = ((*t_descriptor_color_buffer_create)(materials->color.size()));
 			
 			if(buf != NULL)
 			{
@@ -381,7 +382,7 @@ int Materials_getColor(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int)
 	return -1;
 }
 
-int Materials_getOther(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int))
+int Materials_getOther(DFHackObject* mat, t_matglossOther* (*t_matglossOther_buffer_create)(int))
 {
 	if(mat != NULL)
 	{
@@ -389,7 +390,7 @@ int Materials_getOther(DFHackObject* mat, void* (*t_matgloss_buffer_create)(int)
 		
 		if(materials->other.size() > 0)
 		{
-			t_matglossOther* buf = (t_matglossOther*)((*t_matgloss_buffer_create)(materials->other.size()));
+			t_matglossOther* buf = ((*t_matglossOther_buffer_create)(materials->other.size()));
 			
 			if(buf != NULL)
 			{

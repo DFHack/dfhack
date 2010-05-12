@@ -96,7 +96,24 @@ int main (int numargs, const char ** args)
             << castes[j].rawname << ":"
             << castes[j].singular << ":"
             << castes[j].plural << ":"
-            << castes[j].adjective << "] ";
+            << castes[j].adjective << "] ["
+            << "st:" << castes[j].strength.level << "/"
+            << "ag:" << castes[j].agility.level << "/"
+            << "to:" << castes[j].toughness.level << "/"
+            << "en:" << castes[j].endurance.level << "/"
+            << "re:" << castes[j].recuperation.level << "/"
+            << "di:" << castes[j].disease_resistance.level << "/"
+            << "an:" << castes[j].analytical_ability.level << "/"
+            << "fo:" << castes[j].focus.level << "/"
+            << "wi:" << castes[j].willpower.level << "/"
+            << "cr:" << castes[j].creativity.level << "/"
+            << "in:" << castes[j].intuition.level << "/"
+            << "pa:" << castes[j].patience.level << "/"
+            << "me:" << castes[j].memory.level << "/"
+            << "li:" << castes[j].linguistic_ability.level << "/"
+            << "sp:" << castes[j].spatial_sense.level << "/"
+            << "mu:" << castes[j].musicality.level << "/"
+            << "ki:" << castes[j].kinesthetic_sense.level << "]";
             cout << endl;
             for(uint32_t k = 0; k < castes[j].ColorModifier.size(); k++)
             {

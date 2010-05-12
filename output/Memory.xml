@@ -1445,6 +1445,8 @@ map_data_1b60_offset          0x1B9c
         Castes
         ======
         <Offset name="color_modifier_part">0x70</Offset>
+        <Offset name="color_modifier_startdate">0x64</Offset>
+        <Offset name="color_modifier_enddate">0x68</Offset>
         <Offset name="caste_bodypart_vector">0x51C</Offset>
         <Offset name="caste_color_modifiers">0xACC</Offset>
         <Offset name="caste_attributes">0x654</Offset>

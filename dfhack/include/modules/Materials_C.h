@@ -39,8 +39,8 @@ extern "C" {
 #endif
 
 typedef t_matgloss* (*MatglossBufferFunc)(int);
-typedef t_descriptor_color* (*DescriptorColorBufferFunc(int);
-typedef t_matglossOther* (*MatglossOtherBufferFunc(int);
+typedef t_descriptor_color* (*DescriptorColorBufferFunc)(int);
+typedef t_matglossOther* (*MatglossOtherBufferFunc)(int);
 
 DFHACK_EXPORT int Materials_ReadInorganicMaterials(DFHackObject* mat);
 DFHACK_EXPORT int Materials_ReadOrganicMaterials(DFHackObject* mat);

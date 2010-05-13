@@ -30,12 +30,17 @@ distribution.
 #include "DFTypes.h"
 #include "modules/Materials.h"
 #include "DFHackAPI_C.h"
+#include "DFTypes_C.h"
 
 using namespace DFHack;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef t_matgloss* (*MatglossBufferFunc)(int);
+typedef t_descriptor_color* (*DescriptorColorBufferFunc(int);
+typedef t_matglossOther* (*MatglossOtherBufferFunc(int);
 
 DFHACK_EXPORT int Materials_ReadInorganicMaterials(DFHackObject* mat);
 DFHACK_EXPORT int Materials_ReadOrganicMaterials(DFHackObject* mat);
@@ -59,20 +64,20 @@ DFHACK_EXPORT int Materials_getRaceExSize(DFHackObject* mat);
 DFHACK_EXPORT int Materials_getColorSize(DFHackObject* mat);
 DFHACK_EXPORT int Materials_getOtherSize(DFHackObject* mat);
 
-DFHACK_EXPORT int Materials_getInorganic(DFHackObject* mat, t_matgloss* (*t_matgloss_buffer_create)(int));
-DFHACK_EXPORT int Materials_getOrganic(DFHackObject* mat, t_matgloss* (*t_matgloss_buffer_create)( int));
-DFHACK_EXPORT int Materials_getTree(DFHackObject* mat, t_matgloss* (*t_matgloss_buffer_create)(int));
-DFHACK_EXPORT int Materials_getPlant(DFHackObject* mat, t_matgloss* (*t_matgloss_buffer_create)(int));
-DFHACK_EXPORT int Materials_getRace(DFHackObject* mat, t_matgloss* (*t_matgloss_buffer_create)(int));
+DFHACK_EXPORT int Materials_getInorganic(DFHackObject* mat, MatglossBufferFunc callback);
+DFHACK_EXPORT int Materials_getOrganic(DFHackObject* mat, MatglossBufferFunc callback);
+DFHACK_EXPORT int Materials_getTree(DFHackObject* mat, MatglossBufferFunc callback);
+DFHACK_EXPORT int Materials_getPlant(DFHackObject* mat, MatglossBufferFunc callback);
+DFHACK_EXPORT int Materials_getRace(DFHackObject* mat, MatglossBufferFunc callback);
 
 /*doomchild:  
 	I haven't done getRaceEx yet, because I'm not sure about the best way to make the t_creaturetype struct
 	accessible from C.
 */
-// DFHACK_EXPORT int Materials_getRaceEx(DFHackObject* mat, t_creaturetype* (*t_creaturetype_buffer_create)(int));
+//DFHACK_EXPORT int Materials_getRaceEx(DFHackObject* mat, c_creaturetype* (*c_creaturetype_buffer_create)(c_creaturetype_descriptor*, int));
 
-DFHACK_EXPORT int Materials_getColor(DFHackObject* mat, t_descriptor_color* (*t_descriptor_color_buffer_create)(int));
-DFHACK_EXPORT int Materials_getOther(DFHackObject* mat, t_matglossOther* (*t_matglossOther_buffer_create)(int));
+DFHACK_EXPORT int Materials_getColor(DFHackObject* mat, DescriptorColorBufferFunc callback);
+DFHACK_EXPORT int Materials_getOther(DFHackObject* mat, MatglossOtherBufferFunc callback);
 
 #ifdef __cplusplus
 }

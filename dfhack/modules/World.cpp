@@ -22,6 +22,18 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+/*
+FIXME: Japa said that he had to do this with the time stuff he got from here
+       Investigate.
+
+    currentYear = Wold->ReadCurrentYear();
+    currentTick = Wold->ReadCurrentTick();
+    currentMonth = (currentTick+9)/33600;
+    currentDay = ((currentTick+9)%33600)/1200;
+    currentHour = ((currentTick+9)-(((currentMonth*28)+currentDay)*1200))/50;
+    currentTickRel = (currentTick+9)-(((((currentMonth*28)+currentDay)*24)+currentHour)*50);
+    */
+
 #include "DFCommonInternal.h"
 #include "../private/APIPrivate.h"
 #include "modules/World.h"

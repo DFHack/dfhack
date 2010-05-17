@@ -25,6 +25,7 @@ APIPrivate.cpp
 DFTileTypes.cpp
 DFVector.cpp
 DFHackAPI_C.cpp
+DFTypes_C.cpp
 
 depends/md5/md5.cpp
 depends/md5/md5wrapper.cpp

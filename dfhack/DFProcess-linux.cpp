@@ -370,7 +370,7 @@ void NormalProcess::read (const uint32_t offset, const uint32_t size, uint8_t *t
     {
         if(result == -1)
         {
-            cerr << "pread failed: can't read " << size << " bytes at addres " << offset << endl;
+            cerr << "pread failed: can't read 0x" << hex << size << " bytes at address 0x" << offset << endl;
             cerr << "errno: " << errno << endl;
             errno = 0;
             throw Error::MemoryAccessDenied();

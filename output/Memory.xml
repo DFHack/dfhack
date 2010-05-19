@@ -1550,21 +1550,43 @@ map_data_1b60_offset          0x1B9c
         <Address name="dwarf_race_index">0x1471FBC</Address> 
 	<Address name="dwarf_civ_id">0x1471FB0</Address>
 	
-	<Address name="mat_inorganics">0x16BD0B0</Address> 0x16B0D4C
-	<Address name="mat_other">0x16C6478</Address> 0x16BA114
-        <Address name="mat_organics_all">0x16BD0C8</Address> 0x16B0D64
-        <Address name="mat_organics_plants">0x16bd0e0</Address> 0x16B0D7C
-        <Address name="mat_organics_trees">0x16bd110</Address> 0x16B0DAC
-	<Address name="creature_type_vector">0x16BD204</Address> 0x16B0EA0
-	<Address name="mat_stuff">0x16C6478</Address> 0x16BA114
+	<Address name="mat_inorganics">0x16BD0B0</Address> 
+	<Address name="mat_other">0x16C6478</Address> 
+        <Address name="mat_organics_all">0x16BD0C8</Address> 
+        <Address name="mat_organics_plants">0x16bd0e0</Address> 
+        <Address name="mat_organics_trees">0x16bd110</Address> 
+	<Address name="creature_type_vector">0x16BD204</Address> 
+	<Address name="mat_stuff">0x16C6478</Address> 
 
-	<Address name="language_vector">0x16BD384</Address> 0x016B1020
-        <Address name="translation_vector">0x16BD3B4</Address> 0x16B1050
-	<Address name="descriptor_colors_vector">0x16C5ACC</Address> 0x16B9768
-	<Address name="descriptor_vectors_start">0x16C5AE4</Address> 0x16B9780
-	<Address name="descriptor_all_colors">0x16C5AFC</Address> 0x16B9798
-        <Address name="current_tick">0xE78780</Address> 0x0e47e08
-        <Address name="current_year">0xEAA878</Address> 0x0e79f00
+	<Address name="language_vector">0x16BD384</Address> 
+        <Address name="translation_vector">0x16BD3B4</Address> 
+	<Address name="descriptor_colors_vector">0x16C5ACC</Address> 
+	<Address name="descriptor_vectors_start">0x16C5AE4</Address> 
+	<Address name="descriptor_all_colors">0x16C5AFC</Address> 
+        <Address name="current_tick">0xE78780</Address> 
+	<Address name="current_year">0xEAA878</Address> 
+
+	<Address name="map_data">0x016BAAC4</Address> 
+        <Address name="x_count_block">0x016BAAE4</Address> 
+        <Address name="y_count_block">0x016BAAE8</Address> 
+        <Address name="z_count_block">0x016BAAEC</Address> 
+        <Address name="x_count">0x016BAAF0</Address> 
+        <Address name="y_count">0x016BAAF4</Address> 
+        <Address name="z_count">0x016BAAF8</Address> 
+        <Address name="region_x">0x016BAAFC</Address> 
+        <Address name="region_y">0x016BAB00</Address> 
+        <Address name="region_z">0x016BAB04</Address> 
+        <Address name="world_size_x">0x16BC180</Address> 
+        <Address name="world_size_y">0x16BC182</Address> 
+        <Address name="geoblock_vector">0x16BC8D8</Address> 
+        <Address name="ptr2_region_array">0x16BC920</Address> 
+        <Address name="global_feature_vector">0x16BC8A8</Address> 
+        <Address name="local_feature_start_ptr">0x16BC974</Address> 
+	
+	<Address name="construction_vector">0x1664CD8</Address> 
+        <Address name="vegetation_vector">0x1679D54</Address>
+        <Address name="buildings_vector">0x16793e8</Address> 
+	<Address name="items_vector">0x1678800</Address>
     </Entry>
         
                             .-"""-.

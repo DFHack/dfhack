@@ -1587,6 +1587,8 @@ map_data_1b60_offset          0x1B9c
         <Address name="vegetation_vector">0x1679D54</Address>
         <Address name="buildings_vector">0x16793e8</Address> 
 	<Address name="items_vector">0x1678800</Address>
+
+	<Offset name="item_type_accessor">0x0</Offset> Why do i have to redefine this ???
     </Entry>
         
                             .-"""-.

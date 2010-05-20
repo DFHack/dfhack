@@ -90,7 +90,7 @@ int main (int argc, const char* argv[])
         return 1;
     }
     Maps->getSize(x_max,y_max,z_max);
-    
+    /*
     if(!Maps->ReadGlobalFeatures(global_features))
     {
         cerr << "Can't get global features." << endl;
@@ -107,7 +107,7 @@ int main (int argc, const char* argv[])
             cin.ignore();
         #endif
         return 1; 
-    }
+    }*/
     // get stone matgloss mapping
     if(!Mats->ReadInorganicMaterials())
     {
@@ -118,7 +118,7 @@ int main (int argc, const char* argv[])
         #endif
         return 1; 
     }
-    
+    /*
     // get region geology
     if(!Maps->ReadGeology( layerassign ))
     {
@@ -128,7 +128,7 @@ int main (int argc, const char* argv[])
         #endif
         return 1; 
     }
-    
+    */
     int16_t tempvein [16][16];
     vector <DFHack::t_vein> veins;
     uint32_t maximum_regionoffset = 0;

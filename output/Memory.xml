@@ -1586,7 +1586,13 @@ map_data_1b60_offset          0x1B9c
 	<Address name="construction_vector">0x1664CD8</Address> 
         <Address name="vegetation_vector">0x1679D54</Address>
         <Address name="buildings_vector">0x16793e8</Address> 
-	<Address name="items_vector">0x1678800</Address>
+        <Address name="items_vector">0x1678800</Address>
+
+        <Address name="window_dims">0x18030fc</Address> 0x17f6b00
+        <Address name="window_x">0xe640dc</Address>0xe32798 01
+        <Address name="window_y">0xe921b0</Address>0xe60838 01
+        <Address name="window_z">0xe9218c</Address>0xe60814 01
+        <Address name="cursor_xyz">0xae92c8</Address>0xae82cc 01
 
 	<Offset name="item_type_accessor">0x0</Offset> Why do i have to redefine this ???
     </Entry>

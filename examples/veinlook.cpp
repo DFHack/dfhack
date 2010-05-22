@@ -587,7 +587,7 @@ main(int argc, char *argv[])
         pDF = 0;
         finish(0);
     }
-    
+    /*
     if(!Mats->ReadCreatureTypes())
     {
         error = "Can't read stone types.";

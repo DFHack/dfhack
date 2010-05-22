@@ -707,8 +707,8 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
     uint32_t sizeof_vec = mem->getHexValue("sizeof_vector");
     const uint32_t sizeof_elem = 16;
     const uint32_t offset_elem = 4;
-    const uint32_t main_mat_offset = 0x30;
-    const uint32_t sub_mat_offset = 0x34;
+    const uint32_t main_mat_offset = mem->getOffset("local_feature_mat"); // 0x30
+    const uint32_t sub_mat_offset = mem->getOffset("local_feature_submat"); // 0x34
     
     local_features.clear();
     
@@ -801,8 +801,8 @@ bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
     
     uint32_t global_feature_vector = mem->getAddress("global_feature_vector");
     uint32_t global_feature_funcptr = mem->getOffset("global_feature_funcptr_");
-    const uint32_t main_mat_offset = 0x34;
-    const uint32_t sub_mat_offset = 0x38;
+    const uint32_t main_mat_offset = mem->getOffset("global_feature_mat"); // 0x34
+    const uint32_t sub_mat_offset = mem->getOffset("global_feature_submat"); // 0x38
     DfVector<uint32_t> p_features (p,global_feature_vector);
     
     features.clear();

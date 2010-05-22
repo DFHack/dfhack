@@ -1069,9 +1069,12 @@ size=212
         WORLD + 0x54374
         <Address name="global_feature_vector">0x16AF4FC</Address>
         <Offset name= "global_feature_funcptr_">0x100</Offset>
+        <Offset name="global_feature_mat">0x34</Offset>
+        <Offset name="global_feature_submat">0x38</Offset>
         WORLD + 0x54440
         <Address name="local_feature_start_ptr">0x16AF5C8</Address>
-
+        <Offset name="local_feature_mat">0x30</Offset>
+        <Offset name="local_feature_submat">0x34</Offset>
         <!--
 map_data_map_x_offset         0x0058
 map_data_map_y_offset         0x005A
@@ -1634,7 +1637,7 @@ map_data_1b60_offset          0x1B9c
         
         <!-- most probably a static object, because its parts are often
              referenced as offset to this address *and* as addresses    -->
-        <Address name="WORLD">0x0</Address> 0x0165B188
+        <Address name="WORLD">0x92D00C0</Address> 0x0165B188
 
         Position and window dimensions
         ==============================
@@ -1656,7 +1659,7 @@ map_data_1b60_offset          0x1B9c
 -->
         Map stuff
         =========
-        <Address name="map_data">0x9322d20</Address>
+        <Address name="map_data">0x9322d20</Address> WORLD + 0x52C60
         <Offset name="map_data_vein_vector">0x08</Offset>
         <Offset name="map_data_feature_local">0x20</Offset>
         <Offset name="map_data_feature_global">0x24</Offset>
@@ -1670,11 +1673,15 @@ map_data_1b60_offset          0x1B9c
 
         Map Features
         ============
-        WORLD + 0x54374
-        <Address name="global_feature_vector">0x16AF4FC</Address>
-        <Offset name= "global_feature_funcptr_">0x100</Offset>
-        WORLD + 0x54440
-        <Address name="local_feature_start_ptr">0x16AF5C8</Address>
+        WORLD + 0x5487C
+        <Address name="global_feature_vector">0x932493C</Address>
+        <Offset name= "global_feature_funcptr_">0x94</Offset>
+        <Offset name="global_feature_mat">0x28</Offset>
+        <Offset name="global_feature_submat">0x2C</Offset>
+        WORLD + 0x548F4
+        <Address name="local_feature_start_ptr">0x93249B4</Address>
+        <Offset name="local_feature_mat">0x24</Offset>
+        <Offset name="local_feature_submat">0x28</Offset>
 
         * map size in blocks *
         <Address name="x_count_block">0x9322d34</Address> 0x016ad738

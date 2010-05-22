@@ -594,6 +594,7 @@ main(int argc, char *argv[])
         pDF = 0;
         finish(0);
     }
+    */
 /*
     // get region geology
     if(!DF.ReadGeology( layerassign ))

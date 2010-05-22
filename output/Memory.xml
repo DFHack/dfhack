@@ -1544,7 +1544,6 @@ map_data_1b60_offset          0x1B9c
         <Address name="current_tick">0x0e47e08</Address>
         <Address name="current_year">0x0e79f00</Address>
     </Entry>
-    
     <Entry version="v0.31.04" os="windows" id="0.31.04" base="0.31.03" rebase="0x0">
         <String name="md5">655a895c5b90d15eb9bb71e28c6c62e5</String>
         <HexValue name="pe_timestamp">0x4bf014fa</HexValue>
@@ -1702,16 +1701,19 @@ map_data_1b60_offset          0x1B9c
         <Address name="region_z">0x9322d54</Address> 0x016ad758
         
         * World size * (WORDs)
-        <Address name="world_size_x">0x016AEDD4</Address> FIX
-        <Address name="world_size_y">0x016AEDD6</Address> FIX
-        
-        <Address name="geoblock_vector">0x16AF52C</Address> FIX
-        <Address name="ptr2_region_array">0x16AF574</Address> FIX
+        WORLD + 0x542E0
+        <Address name="world_size_x">0x93243A0</Address> 0x016AEDD4
+        WORLD + 0x542E2
+        <Address name="world_size_y">0x93243A2</Address> 0x016AEDD6
+        WORLD + 0x54894
+        <Address name="geoblock_vector">0x9324954</Address> FIX 0x16AF52C
+        WORLD + 0x548B8
+        <Address name="ptr2_region_array">0x9324978</Address> FIX 0x16AF574
         
         values for the region structure
         ===============================
-        <HexValue name="region_size">0x64</HexValue> FIX
-        <Offset name="region_geo_index_off">0x60</Offset> FIX
+        <HexValue name="region_size">0x58</HexValue> 0x64 FIX
+        <Offset name="region_geo_index_off">0x54</Offset> 0x60 FIX
         geoblock offsets
         ================
         <Offset name="geolayer_geoblock_offset">0x4</Offset> vector
@@ -1722,186 +1724,6 @@ map_data_1b60_offset          0x1B9c
         <Offset name="name_firstname">0x0</Offset>
         <Offset name="name_nickname">0x4</Offset>
         <Offset name="name_words">0x8</Offset>
-        <!--
-        Creatures
-        =========
-        <Address name="creature_vector">0x0166ecc4</Address>
-        <Address name="dwarf_race_index">0x01470fbc</Address>
-        <Address name="dwarf_civ_id">0x01470fb0</Address>
-        
-        <Offset name="creature_name">0x0</Offset>
-        <Offset name="creature_custom_profession">0x6c</Offset>
-        <Offset name="creature_profession">0x88</Offset>
-        <Offset name="creature_race">0x8C</Offset>
-        <Offset name="creature_position">0x90</Offset>
-        <Offset name="creature_flags1">0xF8</Offset>
-        <Offset name="creature_flags2">0xFC</Offset>
-        <Offset name="creature_sex">0x110</Offset>
-        <Offset name="creature_id">0x114</Offset>
-        <Offset name="creature_civ">0X120</Offset>
-        <Offset name="creature_soulskill_vector">0X1F4</Offset>
-        <Offset name="creature_pickup_equipment_bit">0X21C</Offset>
-        <Offset name="creature_mood">0x288</Offset>
-        
-        <Offset name="creature_pregnancy">0x28C</Offset>
-        <Offset name="creature_pregnancy_ptr">0x290</Offset>
-        <Offset name="creature_birth_year">0x298</Offset>
-        <Offset name="creature_birth_time">0x29C</Offset>
-        
-        <Offset name="creature_physical">0x464</Offset>
-        <Offset name="creature_current_job">0x390</Offset>
-        
-        <Offset name="creature_mood_skill">0x394</Offset> the skill that will be increased at the end of the mood (or not)
-        <Offset name="creature_appearance_vector">0x604</Offset> seems to be indexes in the list of possible colors defined in the raws for each group
-        
-        <Offset name="creature_artifact_name">0x6D0</Offset>
-        <Offset name="creature_labors">0x770</Offset>
-        <Offset name="creature_soul_vector">0x073C</Offset>
-        <Offset name="creature_default_soul">0x0754</Offset>
-        <Offset name="creature_happiness">0x830</Offset>
-
-        Souls
-        =====
-        <Offset name="soul_name">0x0</Offset>
-        <Offset name="soul_skills_vector">0x1F4</Offset>
-        <Offset name="soul_traits">0x224</Offset>
-        <Offset name="soul_mental">0x88</Offset>
-
-        Job structure
-        =============
-        <Offset name="job_id">0x0</Offset> Incrementaly assigned
-        <Offset name="job_type">0x8</Offset> seems to be just like the old occupations
-        <Offset name="job_materials_vector">0xa4</Offset>
-
-        Job materials
-        =============
-        <Offset name="job_material_maintype">0x0</Offset> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
-        <Offset name="job_material_sectype1">0x2</Offset> subsubtype ?
-        <Offset name="job_material_sectype2">0x4</Offset> subtype ?
-        <Offset name="job_material_sectype3">0x8</Offset> index of material (for example, 2 is for silver)
-        <Offset name="job_material_flags">0x18</Offset> set only for shell / bone mood requirements ?
-        -->
-        Materials
-        =========
-        soil, stone, metal
-        inorganics vector = WORLD + 0x54B7C = 0x16AFD04
-        <Address name="mat_inorganics">0x9324e68</Address>0x16afd04
-        
-        wood and plant matter, WORLD + 0x54B94
-        <Address name="mat_organics_all">0x9324E74</Address>
-        
-        plant matter, WORLD + 0x54BAC
-        <Address name="mat_organics_plants">0x9324E80</Address>
-        
-        just wood, WORLD + 0x54BDC
-        <Address name="mat_organics_trees">0x9324E98</Address>
-        <!--
-        creature types actually used for creatures,
-        WORLD + 0x54CD0
-        <Address name="creature_type_vector">0x016AFE58</Address>
-        <Offset name="creature_type_caste_vector">0x138</Offset>
-        <Offset name="creature_type_extract_vector">0x1A14</Offset>
-        <Offset name="creature_tile">0xE0</Offset>
-        <Offset name="creature_tile_color">0xF6</Offset>
-
-        
-        Constructions
-        =============
-        WORLD + 0x108
-        <Address name="construction_vector">0x165b290</Address>
-        <Offset name="sizeof_construction">0x14</Offset>
-        
-        Translations
-        ============
-        WORLD + 0x54E50
-        <Address name="language_vector">0x016AFFD8</Address>
-        WORLD + 0x54E80
-        <Address name="translation_vector">0x016B0008</Address>
-        <Offset name="word_table">0x4C</Offset>
-        
-        Vegetation
-        ==========
-        WORLD + 0x15184
-        <Address name="vegetation_vector">0x0167030C</Address> belal: 0x017f6d98 ... what?
-        <Offset name="tree_desc_offset">0x6C</Offset>
-        
-        Buildings
-        =========
-        WORLD + 0x14818
-        <Address name="buildings_vector">0x0166f9a0</Address>
-        <Offset name="building_custom_workshop_type">0x164</Offset>
-        WORLD + 0x5D610
-        <Address name="custom_workshop_vector">0x016B8798</Address>
-        <Offset name="custom_workshop_name">0x4</Offset>
-        <Offset name="custom_workshop_type">0x20</Offset>
-        
-        Effects
-        =======
-        
-        :(
-        
-        Settlements
-        ===========
-        
-        :(
-        
-        Hotkeys
-        =======
-        <Address name="hotkey_start">0x01476ecc</Address>
-        <Offset name="hotkey_mode">0x1C</Offset>
-        <Offset name="hotkey_xyz">0x20</Offset>
-        <HexValue name="hotkey_size">0x2C</HexValue>
- -->        
-<!--
-        <HexValue name="sizeof_vector">0xC</HexValue>
-        <Offset name="vector_triplet">0x0</Offset>
-
-        Name struct
-        ===========
-        <Offset name="name_firstname">0x0</Offset>
-        <Offset name="name_nickname">0x4</Offset>
-        <Offset name="name_words">0x8</Offset>
-        <HexValue name="sizeof_string">0x4</HexValue>
-
-        Position
-        ========
-        <Address name="window_dims">0</Address> Was 0x17f5ab8
-        0x17f6b00
-        0x17f6b08
-        0x17f6b10
-        
-        Map
-        ===
-        <Address name="map_data">1</Address>
-        
-        * map size in blocks *
-        <Address name="x_count_block">2</Address>
-        <Address name="y_count_block">3</Address>
-        <Address name="z_count_block">4</Address>
-        
-        * map size in tiles *
-        <Address name="x_count">5</Address>
-        <Address name="y_count">6</Address>
-        <Address name="z_count">7</Address>
-        
-        * Suspected region coords *
-        <Address name="region_x">8</Address>
-        <Address name="region_y">9</Address>
-        <Address name="region_z">10</Address>
-        
-        * World size * (WORDs)
-        <Address name="world_size_x">11</Address>
-        <Address name="world_size_y">12</Address>
-        
-        * geology *
-        <Address name="geoblock_vector">13</Address>
-        <Address name="ptr2_region_array">14</Address>
-        
-        * features *
-        WORLD + 0x54374
-        <Address name="global_feature_vector">15</Address>
-        WORLD + 0x54440
-        <Address name="local_feature_start_ptr">16</Address>
         
         Creatures
         =========
@@ -1959,6 +1781,91 @@ map_data_1b60_offset          0x1B9c
         <Offset name="bodypart_singular_vector">0x78</Offset>
         <Offset name="bodypart_plural_vector">0x90</Offset>
 
+        Job structure
+        =============
+        <Offset name="job_id">0x0</Offset> Incrementaly assigned
+        <Offset name="job_type">0x8</Offset> seems to be just like the old occupations
+        <Offset name="job_materials_vector">0xa4</Offset>
+
+        Job materials
+        =============
+        <Offset name="job_material_maintype">0x0</Offset> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
+        <Offset name="job_material_sectype1">0x2</Offset> subsubtype ?
+        <Offset name="job_material_sectype2">0x4</Offset> subtype ?
+        <Offset name="job_material_sectype3">0x8</Offset> index of material (for example, 2 is for silver)
+        <Offset name="job_material_flags">0x18</Offset> set only for shell / bone mood requirements ?
+        
+        Materials
+        =========
+        soil, stone, metal
+        inorganics vector = WORLD + 0x54B7C = 0x16AFD04
+        <Address name="mat_inorganics">0x9324e68</Address>0x16afd04
+        
+        wood and plant matter, WORLD + 0x54B94
+        <Address name="mat_organics_all">0x9324E74</Address>
+        
+        plant matter, WORLD + 0x54BAC
+        <Address name="mat_organics_plants">0x9324E80</Address>
+        
+        just wood, WORLD + 0x54BDC
+        <Address name="mat_organics_trees">0x9324E98</Address>
+
+        creature types actually used for creatures,
+        <Address name="creature_type_vector">0x09324F14</Address>
+        <Offset name="creature_type_caste_vector">0x138</Offset>
+        <Offset name="creature_type_extract_vector">0x1A14</Offset>
+        <Offset name="creature_tile">0xE0</Offset>
+        <Offset name="creature_tile_color">0xF6</Offset>
+<!--
+        
+        Constructions
+        =============
+        WORLD + 0x108
+        <Address name="construction_vector">0x165b290</Address>
+        <Offset name="sizeof_construction">0x14</Offset>
+        
+        Translations
+        ============
+        WORLD + 0x54E50
+        <Address name="language_vector">0x016AFFD8</Address>
+        WORLD + 0x54E80
+        <Address name="translation_vector">0x016B0008</Address>
+        <Offset name="word_table">0x4C</Offset>
+        
+        Vegetation
+        ==========
+        WORLD + 0x15184
+        <Address name="vegetation_vector">0x0167030C</Address> belal: 0x017f6d98 ... what?
+        <Offset name="tree_desc_offset">0x6C</Offset>
+        
+        Buildings
+        =========
+        WORLD + 0x14818
+        <Address name="buildings_vector">0x0166f9a0</Address>
+        <Offset name="building_custom_workshop_type">0x164</Offset>
+        WORLD + 0x5D610
+        <Address name="custom_workshop_vector">0x016B8798</Address>
+        <Offset name="custom_workshop_name">0x4</Offset>
+        <Offset name="custom_workshop_type">0x20</Offset>
+        
+        Effects
+        =======
+        
+        :(
+        
+        Settlements
+        ===========
+        
+        :(
+        
+        Hotkeys
+        =======
+        <Address name="hotkey_start">0x01476ecc</Address>
+        <Offset name="hotkey_mode">0x1C</Offset>
+        <Offset name="hotkey_xyz">0x20</Offset>
+        <HexValue name="hotkey_size">0x2C</HexValue>
+ -->        
+<!--
         Materials
         =========
         <Address name="mat_inorganics">0x9324E64</Address>

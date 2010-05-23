@@ -58,11 +58,10 @@ void DumpDWordVector (const char * name, DFHack::Process *p, uint32_t addr)
 address = absolute address of dump start
 length = length in lines. 1 line = 16 bytes
 */
-void hexdump (DFHack::API& DF, uint32_t address, uint32_t length)
+void hexdump (DFHack::Context *DF, uint32_t address, uint32_t length)
 {
     char *buf = new char[length * 16];
-    
-    DF.ReadRaw(address, length * 16, (uint8_t *) buf);
+    DF->ReadRaw(address, length * 16, (uint8_t *) buf);
     for (uint32_t i = 0; i < length; i++)
     {
         // leading offset
@@ -74,7 +73,6 @@ void hexdump (DFHack::API& DF, uint32_t address, uint32_t length)
             for(int k = 0; k < 4; k++)
             {
                 int idx = i * 16 + j * 4 + k;
-                
                 cout << hex << setw(2) << int(static_cast<unsigned char>(buf[idx])) << " ";
             }
             cout << " ";
@@ -84,14 +82,14 @@ void hexdump (DFHack::API& DF, uint32_t address, uint32_t length)
     delete buf;
 }
 
-void interleave_hex (DFHack::API& DF, vector < uint32_t > & addresses, uint32_t length)
+void interleave_hex (DFHack::Context* DF, vector < uint32_t > & addresses, uint32_t length)
 {
     vector <char * > bufs;
     
     for(uint32_t counter = 0; counter < addresses.size(); counter ++)
     {
         char * buf = new char[length * 16];
-        DF.ReadRaw(addresses[counter], length * 16, (uint8_t *) buf);
+        DF->ReadRaw(addresses[counter], length * 16, (uint8_t *) buf);
         bufs.push_back(buf);
     }
     cout << setfill('0');

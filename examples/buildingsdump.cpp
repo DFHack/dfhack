@@ -11,7 +11,8 @@ using namespace std;
 #include <DFGlobal.h>
 #include <DFError.h>
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <DFMemInfo.h>
 #include <DFProcess.h>
 #include <DFTypes.h>
@@ -47,10 +48,12 @@ int main (int argc,const char* argv[])
     
     map <uint32_t, string> custom_workshop_types;
     
-    DFHack::API DF ("Memory.xml");
+    DFHack::ContextManager DFMgr ("Memory.xml");
+    DFHack::Context *DF;
     try
     {
-        DF.Attach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
     }
     catch (exception& e)
     {
@@ -61,9 +64,9 @@ int main (int argc,const char* argv[])
         return 1;
     }
     
-    DFHack::memory_info * mem = DF.getMemoryInfo();
-    DFHack::Buildings * Bld = DF.getBuildings();
-    DFHack::Position * Pos = DF.getPosition();
+    DFHack::memory_info * mem = DF->getMemoryInfo();
+    DFHack::Buildings * Bld = DF->getBuildings();
+    DFHack::Position * Pos = DF->getPosition();
     
     uint32_t numBuildings;
     if(Bld->Start(numBuildings))
@@ -107,7 +110,12 @@ int main (int argc,const char* argv[])
                 {
                     DFHack::t_building temp;
                     Bld->Read(i, temp);
-                    if((uint32_t)x >= temp.x1 && (uint32_t)x <= temp.x2 && (uint32_t)y >= temp.y1 && (uint32_t)y <= temp.y2 && (uint32_t)z == temp.z)
+                    if(    (uint32_t)x >= temp.x1
+                        && (uint32_t)x <= temp.x2
+                        && (uint32_t)y >= temp.y1
+                        && (uint32_t)y <= temp.y2
+                        && (uint32_t)z == temp.z
+                      )
                     {
                         string typestr;
                         mem->resolveClassIDToClassname(temp.type, typestr);
@@ -142,7 +150,7 @@ int main (int argc,const char* argv[])
         cerr << "buildings not supported for this DF version" << endl;
     }
 
-    DF.Detach();
+    DF->Detach();
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();

@@ -22,12 +22,14 @@
 
 #include <DFTypes.h>
 #include <DFTileTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <argstream.h>
 #include <modules/Maps.h>
 #include <modules/Position.h>
 
 #define BLOCK_SIZE 16
+
 
 void dig(DFHack::Maps* layers, DFHack::Position* position, ::std::vector< ::std::string >& dig_map, bool verbose = false) {
   int32_t x_cent;
@@ -141,10 +143,11 @@ int main(int argc, char** argv) {
   }
   dig_map.resize(dig_map.size() - 1);
 
-  DFHack::API DF("Memory.xml");
+  DFHack::ContextManager DFMgr("Memory.xml");
+  DFHack::Context * DF = DFMgr.getSingleContext();
 
   try {
-    DF.Attach();
+    DF->Attach();
   } catch (::std::exception& e) {
     ::std::cerr << e.what() << ::std::endl;
 #ifndef LINUX_BUILD
@@ -153,15 +156,15 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  DFHack::Maps *layers = DF.getMaps();
+  DFHack::Maps *layers = DF->getMaps();
   if (layers && layers->Start()) {
 
-    dig(layers, DF.getPosition(), dig_map, true);
+    dig(layers, DF->getPosition(), dig_map, true);
 
     ::std::cout << "Finished digging" << ::std::endl;
     layers->Finish();
 
-    if (!DF.Detach()) {
+    if (!DF->Detach()) {
       ::std::cerr << "Unable to detach DF process" << ::std::endl;
     }
 

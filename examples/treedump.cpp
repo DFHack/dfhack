@@ -12,7 +12,8 @@ using namespace std;
 
 #include <DFGlobal.h>
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <DFProcess.h>
 #include <DFMemInfo.h>
 #include <DFVector.h>
@@ -30,10 +31,12 @@ int main (int numargs, const char ** args)
         istringstream input (args[1],istringstream::in);
         input >> std::hex >> addr;
     }
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context * DF;
     try
     {
-        DF.Attach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
     }
     catch (exception& e)
     {
@@ -44,11 +47,11 @@ int main (int numargs, const char ** args)
         return 1;
     }
     
-    DFHack::Process* p = DF.getProcess();
-    DFHack::memory_info* mem = DF.getMemoryInfo();
-    DFHack::Position * pos = DF.getPosition();
-    DFHack::Vegetation * v = DF.getVegetation();
-    DFHack::Materials * mat = DF.getMaterials();
+    DFHack::Process* p = DF->getProcess();
+    DFHack::memory_info* mem = DF->getMemoryInfo();
+    DFHack::Position * pos = DF->getPosition();
+    DFHack::Vegetation * v = DF->getVegetation();
+    DFHack::Materials * mat = DF->getMaterials();
     mat->ReadOrganicMaterials();
     
     int32_t x,y,z;

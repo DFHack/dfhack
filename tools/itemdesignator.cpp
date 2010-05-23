@@ -189,7 +189,7 @@ void printItem(DFHack::t_item item, const string & typeString,const matGlosses &
 int main ()
 {
 
-    DFHack::API DF ("Memory.xml");
+    DFHack::ContextManager DF ("Memory.xml");
     cout << "This utility lets you mass-designate items by type and material." << endl
          << "Like set on fire all MICROCLINE item_stone..." << endl
          << "Some unusual combinations might be untested and cause the program to crash..."<< endl

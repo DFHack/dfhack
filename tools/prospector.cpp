@@ -18,7 +18,8 @@ using namespace std;
 
 #include <DFTypes.h>
 #include <DFTileTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <modules/Maps.h>
 #include <modules/Materials.h>
 
@@ -62,10 +63,12 @@ int main (int argc, const char* argv[])
     
     vector< vector <uint16_t> > layerassign;
     
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context *DF;
     try
     {
-        DF.Attach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
     }
     catch (exception& e)
     {
@@ -77,8 +80,8 @@ int main (int argc, const char* argv[])
     }
     
 
-    DFHack::Maps * Maps = DF.getMaps();
-    DFHack::Materials * Mats = DF.getMaterials();
+    DFHack::Maps * Maps = DF->getMaps();
+    DFHack::Materials * Mats = DF->getMaterials();
     
     // init the map
     if(!Maps->Start())
@@ -291,7 +294,7 @@ int main (int argc, const char* argv[])
             cout << Mats->inorganic[p->first].id << " : " << p->second << endl;
         }
     }
-    DF.Detach();
+    DF->Detach();
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();

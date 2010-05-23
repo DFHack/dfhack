@@ -19,7 +19,8 @@ using namespace std;
 #include <DFGlobal.h>
 #include <DFTypes.h>
 #include <DFTileTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <DFProcess.h>
 #include <DFMemInfo.h>
 #include <modules/Maps.h>
@@ -29,7 +30,7 @@ using namespace DFHack;
 
 
 string error;
-API * pDF = 0;
+Context * pDF = 0;
 
 
 struct t_tempz
@@ -239,7 +240,7 @@ int pickColor(int tiletype)
 address = absolute address of dump start
 length = length in bytes
 */
-void hexdump (DFHack::API& DF, uint32_t address, uint32_t length, int filenum)
+void hexdump (DFHack::Context* DF, uint32_t address, uint32_t length, int filenum)
 {
     uint32_t reallength;
     uint32_t lines;
@@ -254,7 +255,7 @@ void hexdump (DFHack::API& DF, uint32_t address, uint32_t length, int filenum)
     
     myfile.open (name.c_str());
     
-    DF.ReadRaw(address, reallength, (uint8_t *) buf);
+    DF->ReadRaw(address, reallength, (uint8_t *) buf);
     for (int i = 0; i < lines; i++)
     {
         // leading offset
@@ -412,10 +413,10 @@ void do_features(Process* p, uint32_t blockaddr, uint32_t blockX, uint32_t block
     }
 }
 */
-void do_features(API& DF, mapblock40d * block, uint32_t blockX, uint32_t blockY, int printX, int printY, vector<DFHack::t_matgloss> &stonetypes)
+void do_features(Context* DF, mapblock40d * block, uint32_t blockX, uint32_t blockY, int printX, int printY, vector<DFHack::t_matgloss> &stonetypes)
 {
-    Maps * Maps = DF.getMaps();
-    Process * p = DF.getProcess();
+    Maps * Maps = DF->getMaps();
+    Process * p = DF->getProcess();
     if(!Maps)
         return;
     vector<DFHack::t_feature> global_features;
@@ -549,13 +550,14 @@ main(int argc, char *argv[])
     DFHack::Maps * Maps = 0;
     
     
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context* DF;
     try
     {
-        DF.Attach();
-        Mats = DF.getMaterials();
-        Maps = DF.getMaps();
-        pDF = &DF;
+        pDF = DF = DFMgr.getSingleContext();
+        DF->Attach();
+        Mats = DF->getMaterials();
+        Maps = DF->getMaps();
     }
     catch (exception& e)
     {
@@ -566,12 +568,11 @@ main(int argc, char *argv[])
         finish(0);
     }
     
-    Process* p = DF.getProcess();
+    Process* p = DF->getProcess();
     // init the map
     if(!Maps->Start())
     {
         error = "Can't find a map to look at.";
-        pDF = 0;
         finish(0);
     }
     
@@ -631,7 +632,7 @@ main(int argc, char *argv[])
     e_tempmode temperature = TEMP_NO;
     
     // resume so we don't block DF while we wait for input
-    DF.Resume();
+    DF->Resume();
     
     for (;;)
     {
@@ -697,6 +698,10 @@ main(int argc, char *argv[])
             case 'm':
                 temperature = TEMP_2;
                 break;
+            case 27: // escape key
+                DF->Detach();
+                return 0;
+                break;
             default:
                 break;
         }
@@ -720,7 +725,7 @@ main(int argc, char *argv[])
         dirtybit = 0;
         
         // Supend, read/write data
-        DF.Suspend();
+        DF->Suspend();
         uint32_t effectnum;
         /*
         if(DF.InitReadEffects(effectnum))
@@ -796,7 +801,7 @@ main(int argc, char *argv[])
             }
         }
         // Resume, print stuff to the terminal
-        DF.Resume();
+        DF->Resume();
         for(int i = -1; i <= 1; i++) for(int j = -1; j <= 1; j++)
         {
             mapblock40d * Block = &blocks[i+1][j+1];

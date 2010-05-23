@@ -7,6 +7,10 @@
 namespace DFHack
 {
 
+class Context;
+class DFContextPrivate;
+
+
 enum accessor_type {ACCESSOR_CONSTANT, ACCESSOR_INDIRECT, ACCESSOR_DOUBLE_INDIRECT};
 
 /* this is used to store data about the way accessors work */
@@ -73,7 +77,7 @@ public:
 class DFHACK_EXPORT Items
 {
 public:
-	Items(DFHack::APIPrivate * _d);
+	Items(DFContextPrivate * _d);
 	~Items();
 	std::string getItemDescription(uint32_t itemptr, Materials * Materials);
 	std::string getItemClass(int32_t index);

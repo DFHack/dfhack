@@ -22,7 +22,7 @@ vector< vector<string> > foreignWords;
 uint32_t numCreatures;
 vector<DFHack::t_matgloss> creaturestypes;
 
-void printDwarves(DFHack::API & DF)
+void printDwarves(DFHack::ContextManager & DF)
 {
     int dwarfCounter = 0;
     DFHack::Creatures * c = DF.getCreatures();
@@ -57,7 +57,7 @@ void printDwarves(DFHack::API & DF)
     }
 }
 
-bool getDwarfSelection(DFHack::API & DF, DFHack::t_creature & toChange,string & changeString, string & commandString,int & eraseAmount,int &dwarfNum,bool &isName)
+bool getDwarfSelection(DFHack::ContextManager & DF, DFHack::t_creature & toChange,string & changeString, string & commandString,int & eraseAmount,int &dwarfNum,bool &isName)
 {
     static string lastText;
     bool dwarfSuccess = false;
@@ -142,7 +142,7 @@ bool getDwarfSelection(DFHack::API & DF, DFHack::t_creature & toChange,string & 
     return true;
 }
 
-bool waitTillChanged(DFHack::API &DF, int creatureToCheck, string changeValue, bool isName)
+bool waitTillChanged(DFHack::ContextManager &DF, int creatureToCheck, string changeValue, bool isName)
 {
     DFHack::DFWindow * w = DF.getWindow();
     DF.Suspend();
@@ -181,7 +181,7 @@ bool waitTillChanged(DFHack::API &DF, int creatureToCheck, string changeValue, b
 }
 
 
-bool waitTillScreenState(DFHack::API &DF, string screenState,bool EqualTo=true)
+bool waitTillScreenState(DFHack::ContextManager &DF, string screenState,bool EqualTo=true)
 {
     DFHack::DFWindow * w = DF.getWindow();
     DFHack::t_viewscreen current;
@@ -207,7 +207,7 @@ bool waitTillScreenState(DFHack::API &DF, string screenState,bool EqualTo=true)
 }
 
 
-bool waitTillCursorState(DFHack::API &DF, bool On)
+bool waitTillCursorState(DFHack::ContextManager &DF, bool On)
 {
     DFHack::DFWindow * w = DF.getWindow();
     int32_t x,y,z;
@@ -232,7 +232,7 @@ bool waitTillCursorState(DFHack::API &DF, bool On)
 }
 
 
-bool waitTillMenuState(DFHack::API &DF, uint32_t menuState,bool EqualTo=true)
+bool waitTillMenuState(DFHack::ContextManager &DF, uint32_t menuState,bool EqualTo=true)
 {
     int tryCount = 0;
     DFHack::DFWindow * w = DF.getWindow();
@@ -256,7 +256,7 @@ bool waitTillMenuState(DFHack::API &DF, uint32_t menuState,bool EqualTo=true)
 }
 
 
-bool moveToBaseWindow(DFHack::API &DF)
+bool moveToBaseWindow(DFHack::ContextManager &DF)
 {
     DFHack::DFWindow * w = DF.getWindow();
     DFHack::t_viewscreen current;
@@ -283,7 +283,7 @@ bool moveToBaseWindow(DFHack::API &DF)
 }
 
 
-bool setCursorToCreature(DFHack::API &DF)
+bool setCursorToCreature(DFHack::ContextManager &DF)
 {
     DFHack::DFWindow * w = DF.getWindow();
     int32_t x,y,z;
@@ -306,7 +306,7 @@ bool setCursorToCreature(DFHack::API &DF)
 
 int main (void)
 {
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DF("Memory.xml");
     DFHack::Creatures *c;
     DFHack::Materials *m;
     try

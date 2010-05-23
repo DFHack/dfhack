@@ -10,7 +10,8 @@
 using namespace std;
 
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <modules/Maps.h>
 
 void print_progress (int current, int total)
@@ -50,11 +51,13 @@ int main (int numargs, char** args)
     uint64_t bytes_read = 0;
     DFHack::mapblock40d Block;
     DFHack::Maps *Maps = 0;
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context *DF;
     try
     {
-        DF.Attach();
-        Maps = DF.getMaps();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
+        Maps = DF->getMaps();
     }
     catch (exception& e)
     {
@@ -92,7 +95,7 @@ int main (int numargs, char** args)
         }
         Maps->Finish();
     }
-    DF.Detach();
+    DF->Detach();
     time(&end);
     time_diff = difftime(end, start);
     cout << num_blocks << " blocks read" << endl;

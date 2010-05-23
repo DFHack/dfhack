@@ -4,10 +4,12 @@
 #include <iostream>
 #include <integers.h>
 #include <vector>
+#include <map>
 using namespace std;
 
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <modules/Maps.h>
 #include <modules/Position.h>
 #include <DFTileTypes.h>
@@ -20,14 +22,16 @@ int main (void)
     DFHack::t_temperatures temp1,temp2;
     uint32_t x_max,y_max,z_max;
     
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context *DF;
     DFHack::Maps * Maps;
     DFHack::Position * Position;
     try
     {
-        DF.Attach();
-        Maps = DF.getMaps();
-        Position = DF.getPosition();
+        DF=DFMgr.getSingleContext();
+        DF->Attach();
+        Maps = DF->getMaps();
+        Position = DF->getPosition();
     }
     catch (exception& e)
     {
@@ -46,7 +50,7 @@ int main (void)
     while(!end)
     {
         Maps->getSize(x_max,y_max,z_max);
-        DF.Resume();
+        DF->Resume();
         string command = "";
         cout <<"[" << mode << ":" << amount << ":" << flowmode << "]# ";
         getline(cin, command);
@@ -145,7 +149,7 @@ int main (void)
             amount = 7;
         else if(command.empty())
         {
-            DF.Suspend();
+            DF->Suspend();
             do
             {
                 if(!Maps->Start())
@@ -303,7 +307,7 @@ int main (void)
             } while (0);
         }
     }
-    DF.Detach();
+    DF->Detach();
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

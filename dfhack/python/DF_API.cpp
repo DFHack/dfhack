@@ -68,7 +68,7 @@ struct DF_API
 	PyObject* vegetation_type;
 	PyObject* gui_type;
 	
-	DFHack::API* api_Ptr;
+	DFHack::ContextManager* api_Ptr;
 };
 
 // API type Allocation, Deallocation, and Initialization
@@ -110,7 +110,7 @@ static int DF_API_init(DF_API* self, PyObject* args, PyObject* kwds)
 			return -1;
 		
 		if(memFileString)
-			self->api_Ptr = new DFHack::API(std::string(memFileString));
+			self->api_Ptr = new DFHack::ContextManager(std::string(memFileString));
 		else
 			return -1;
 	}

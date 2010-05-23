@@ -8,18 +8,21 @@
 #include <ctime>
 using namespace std;
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <DFError.h>
 
 int main (void)
 {
     time_t start, end;
     double time_diff;
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context* DF;
     try
     {
-        DF.Attach();
-        DF.Detach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
+        DF->Detach();
     }
     catch (exception& e)
     {
@@ -67,17 +70,17 @@ int main (void)
     cout << "attach tests done in " << time_diff << " seconds." << endl;
     */
     cout << "Testing suspend/resume"  << endl;
-    DF.Attach();
+    DF->Attach();
     time(&start);
     for (int i = 0; i < 1000; i++)
     {
-        DF.Suspend();
+        DF->Suspend();
         if(i%10 == 0)
             cout << i / 10 << "%" << endl;
-        DF.Resume();
+        DF->Resume();
     }
     time(&end);
-    DF.Detach();
+    DF->Detach();
     time_diff = difftime(end, start);
     cout << "suspend tests done in " << time_diff << " seconds." << endl;
     

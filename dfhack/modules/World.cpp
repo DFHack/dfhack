@@ -49,11 +49,11 @@ struct World::Private
     bool Started;
     uint32_t year_offset;
     uint32_t tick_offset;
-    APIPrivate *d;
+    DFContextPrivate *d;
     Process * owner;
 };
 
-World::World(APIPrivate * _d)
+World::World(DFContextPrivate * _d)
 {
     
     d = new Private;

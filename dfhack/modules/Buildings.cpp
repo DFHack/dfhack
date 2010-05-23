@@ -58,13 +58,13 @@ struct Buildings::Private
     uint32_t custom_workshop_name;
     int32_t custom_workshop_id;
     DfVector <uint32_t> * p_bld;
-    APIPrivate *d;
+    DFContextPrivate *d;
     Process * owner;
     bool Inited;
     bool Started;
 };
 
-Buildings::Buildings(APIPrivate * d_)
+Buildings::Buildings(DFContextPrivate * d_)
 {
     d = new Private;
     d->d = d_;

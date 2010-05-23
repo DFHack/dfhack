@@ -44,7 +44,7 @@ extern "C" {
 
 DFHackObject* API_Alloc(const char* path_to_xml)
 {
-    DFHack::API* api = new DFHack::API(std::string(path_to_xml));
+    DFHack::ContextManager* api = new DFHack::ContextManager(std::string(path_to_xml));
     return (DFHackObject*)api;
 }
 
@@ -54,7 +54,7 @@ void API_Free(DFHackObject* api)
 {
     if(api != NULL)
     {
-		DFHack::API* a = (DFHack::API*)api;
+		DFHack::ContextManager* a = (DFHack::ContextManager*)api;
         delete a;
 		
         api = NULL;
@@ -65,7 +65,7 @@ int API_Attach(DFHackObject* api)
 {
     if(api != NULL)
     {
-        return ((DFHack::API*)api)->Attach();
+        return ((DFHack::ContextManager*)api)->Attach();
     }
     return -1;
 }
@@ -74,7 +74,7 @@ int API_Detach(DFHackObject* api)
 {
     if(api != NULL)
     {
-        return ((DFHack::API*)api)->Detach();
+        return ((DFHack::ContextManager*)api)->Detach();
     }
 
     return -1;
@@ -84,7 +84,7 @@ int API_isAttached(DFHackObject* api)
 {
     if(api != NULL)
     {
-        return ((DFHack::API*)api)->isAttached();
+        return ((DFHack::ContextManager*)api)->isAttached();
     }
 
     return -1;
@@ -94,7 +94,7 @@ int API_Suspend(DFHackObject* api)
 {
     if(api != NULL)
     {
-        return ((DFHack::API*)api)->Suspend();
+        return ((DFHack::ContextManager*)api)->Suspend();
     }
 
     return -1;
@@ -104,7 +104,7 @@ int API_Resume(DFHackObject* api)
 {
     if(api != NULL)
     {
-        return ((DFHack::API*)api)->Resume();
+        return ((DFHack::ContextManager*)api)->Resume();
     }
 
     return -1;
@@ -114,7 +114,7 @@ int API_isSuspended(DFHackObject* api)
 {
     if(api != NULL)
     {
-        return ((DFHack::API*)api)->isSuspended();
+        return ((DFHack::ContextManager*)api)->isSuspended();
     }
 
     return -1;
@@ -124,7 +124,7 @@ int API_ForceResume(DFHackObject* api)
 {
     if(api != NULL)
     {
-        return ((DFHack::API*)api)->ForceResume();
+        return ((DFHack::ContextManager*)api)->ForceResume();
     }
 
     return -1;
@@ -134,7 +134,7 @@ int API_AsyncSuspend(DFHackObject* api)
 {
     if(api != NULL)
     {
-        return ((DFHack::API*)api)->AsyncSuspend();
+        return ((DFHack::ContextManager*)api)->AsyncSuspend();
     }
 
     return -1;
@@ -146,7 +146,7 @@ DFHackObject* API_getMemoryInfo(DFHackObject* api)
 {
 	if(api != NULL)
 	{
-		return (DFHackObject*)((DFHack::API*)api)->getMemoryInfo();
+		return (DFHackObject*)((DFHack::ContextManager*)api)->getMemoryInfo();
 	}
 	
 	return NULL;
@@ -156,7 +156,7 @@ DFHackObject* API_getProcess(DFHackObject* api)
 {
 	if(api != NULL)
 	{
-		return (DFHackObject*)((DFHack::API*)api)->getProcess();
+		return (DFHackObject*)((DFHack::ContextManager*)api)->getProcess();
 	}
 	
 	return NULL;
@@ -166,7 +166,7 @@ DFHackObject* API_getWindow(DFHackObject* api)
 {
 	if(api != NULL)
 	{
-		return (DFHackObject*)((DFHack::API*)api)->getWindow();
+		return (DFHackObject*)((DFHack::ContextManager*)api)->getWindow();
 	}
 	
 	return NULL;
@@ -176,7 +176,7 @@ DFHackObject* API_getCreatures(DFHackObject* api)
 {
 	if(api != NULL)
 	{
-		return (DFHackObject*)((DFHack::API*)api)->getCreatures();
+		return (DFHackObject*)((DFHack::ContextManager*)api)->getCreatures();
 	}
 	
 	return NULL;
@@ -186,7 +186,7 @@ DFHackObject* API_getMaps(DFHackObject* api)
 {
 	if(api != NULL)
 	{
-		return (DFHackObject*)((DFHack::API*)api)->getMaps();
+		return (DFHackObject*)((DFHack::ContextManager*)api)->getMaps();
 	}
 	
 	return NULL;
@@ -196,7 +196,7 @@ DFHackObject* API_getGui(DFHackObject* api)
 {
 	if(api != NULL)
 	{
-		return (DFHackObject*)((DFHack::API*)api)->getGui();
+		return (DFHackObject*)((DFHack::ContextManager*)api)->getGui();
 	}
 	
 	return NULL;
@@ -206,7 +206,7 @@ DFHackObject* API_getPosition(DFHackObject* api)
 {
 	if(api != NULL)
 	{
-		return (DFHackObject*)((DFHack::API*)api)->getPosition();
+		return (DFHackObject*)((DFHack::ContextManager*)api)->getPosition();
 	}
 	
 	return NULL;
@@ -216,7 +216,7 @@ DFHackObject* API_getMaterials(DFHackObject* api)
 {
 	if(api != NULL)
 	{
-		return (DFHackObject*)((DFHack::API*)api)->getMaterials();
+		return (DFHackObject*)((DFHack::ContextManager*)api)->getMaterials();
 	}
 	
 	return NULL;
@@ -226,7 +226,7 @@ DFHackObject* API_getTranslation(DFHackObject* api)
 {
 	if(api != NULL)
 	{
-		return (DFHackObject*)((DFHack::API*)api)->getTranslation();
+		return (DFHackObject*)((DFHack::ContextManager*)api)->getTranslation();
 	}
 	
 	return NULL;
@@ -236,7 +236,7 @@ DFHackObject* API_getVegetation(DFHackObject* api)
 {
 	if(api != NULL)
 	{
-		return (DFHackObject*)((DFHack::API*)api)->getVegetation();
+		return (DFHackObject*)((DFHack::ContextManager*)api)->getVegetation();
 	}
 	
 	return NULL;
@@ -246,7 +246,7 @@ DFHackObject* API_getBuildings(DFHackObject* api)
 {
 	if(api != NULL)
 	{
-		return (DFHackObject*)((DFHack::API*)api)->getBuildings();
+		return (DFHackObject*)((DFHack::ContextManager*)api)->getBuildings();
 	}
 	
 	return NULL;
@@ -256,7 +256,7 @@ DFHackObject* API_getConstructions(DFHackObject* api)
 {
 	if(api != NULL)
 	{
-		return (DFHackObject*)((DFHack::API*)api)->getConstructions();
+		return (DFHackObject*)((DFHack::ContextManager*)api)->getConstructions();
 	}
 	
 	return NULL;
@@ -266,7 +266,7 @@ DFHackObject* API_getItems(DFHackObject* api)
 {
 	if(api != NULL)
 	{
-		return (DFHackObject*)((DFHack::API*)api)->getItems();
+		return (DFHackObject*)((DFHack::ContextManager*)api)->getItems();
 	}
 	
 	return NULL;
@@ -276,7 +276,7 @@ void API_ReadRaw(DFHackObject* api, const uint32_t offset, const uint32_t size, 
 {
     if(api != NULL)
     {
-        ((DFHack::API*)api)->ReadRaw(offset, size, target);
+        ((DFHack::ContextManager*)api)->ReadRaw(offset, size, target);
     }
 }
 
@@ -284,7 +284,7 @@ void API_WriteRaw(DFHackObject* api, const uint32_t offset, const uint32_t size,
 {
     if(api != NULL)
     {
-        ((DFHack::API*)api)->WriteRaw(offset, size, source);
+        ((DFHack::ContextManager*)api)->WriteRaw(offset, size, source);
     }
 }
 

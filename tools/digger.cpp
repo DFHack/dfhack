@@ -15,7 +15,8 @@ using namespace std;
 
 #include <DFTypes.h>
 #include <DFTileTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <argstream.h>
 #include <modules/Maps.h>
 
@@ -327,10 +328,11 @@ int main (int argc, char** argv)
     }
     else
     {
-        DFHack::API DF("Memory.xml");
+        DFHack::ContextManager DFMgr("Memory.xml");
+        DFHack::Context *DF = DFMgr.getSingleContext();
         try
         {
-            DF.Attach();
+            DF->Attach();
         }
         catch (exception& e)
         {
@@ -340,14 +342,14 @@ int main (int argc, char** argv)
             #endif
             return 1;
         }
-        DFHack::Maps *Maps = DF.getMaps();
+        DFHack::Maps *Maps = DF->getMaps();
         if (Maps && Maps->Start())
         {
             int count = dig(Maps, targets, max, origin[0],origin[1],origin[2], verbose);
             cout << count << " targets designated" << endl;
             Maps->Finish();
             
-            if (!DF.Detach())
+            if (!DF->Detach())
             {
                 cerr << "Unable to detach DF process" << endl;
             }

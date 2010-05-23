@@ -377,7 +377,7 @@ void NormalProcess::read (const uint32_t offset, const uint32_t size, uint8_t *t
         }
         else
         {
-            read(offset + result, size - result, target + result);
+            this->read(offset + result, size - result, target + result);
         }
     }
 }

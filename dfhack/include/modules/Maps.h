@@ -255,13 +255,13 @@ namespace DFHack
                              C L I E N T   M O D U L E
     ***************************************************************************/
     
-    class APIPrivate;
+    class DFContextPrivate;
     struct t_viewscreen;
     class DFHACK_EXPORT Maps
     {
         public:
         
-        Maps(DFHack::APIPrivate * d);
+        Maps(DFHack::DFContextPrivate * d);
         ~Maps();
         bool Start();
         bool Finish();
@@ -300,10 +300,9 @@ namespace DFHack
         bool ReadGeology( std::vector < std::vector <uint16_t> >& assign );
         std::vector <t_feature> global_features;
         // map between feature address and the read object
-            std::map <uint32_t, t_feature> local_feature_store;
-            // map between mangled coords and pointer to feature
-                
-        
+        std::map <uint32_t, t_feature> local_feature_store;
+        // map between mangled coords and pointer to feature
+
         bool ReadGlobalFeatures( std::vector <t_feature> & features);
         bool ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > & local_features );
         /*

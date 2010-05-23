@@ -11,7 +11,8 @@ using namespace std;
 
 #include <DFTypes.h>
 #include <DFTileTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <modules/Maps.h>
 #include <modules/Position.h>
 #include <modules/Materials.h>
@@ -289,11 +290,13 @@ int main (int argc, char* argv[])
         cout << as.errorLog();
         return 1;
     }
-    
-    DFHack::API DF("Memory.xml");
+
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context * DF;
     try
     {
-        DF.Attach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
     }
     catch (exception& e)
     {
@@ -305,15 +308,15 @@ int main (int argc, char* argv[])
     }
     
     uint32_t x_max,y_max,z_max;
-    DFHack::Maps * Maps = DF.getMaps();
-    DFHack::Materials * Mats = DF.getMaterials();
-    DFHack::Position * Pos = DF.getPosition();
+    DFHack::Maps * Maps = DF->getMaps();
+    DFHack::Materials * Mats = DF->getMaterials();
+    DFHack::Position * Pos = DF->getPosition();
     
     // init the map
     if(!Maps->Start())
     {
         cerr << "Can't init map. Make sure you have a map loaded in DF." << endl;
-        DF.Detach();
+        DF->Detach();
         #ifndef LINUX_BUILD
             cin.ignore();
         #endif
@@ -329,16 +332,16 @@ int main (int argc, char* argv[])
     while(cx == -30000)
     {
         cerr << "Cursor is not active. Point the cursor at a vein." << endl;
-        DF.Resume();
+        DF->Resume();
         cin.ignore();
-        DF.Suspend();
+        DF->Suspend();
         Pos->getCursorCoords(cx,cy,cz);
     }
     Point xy ((uint32_t)cx,(uint32_t)cy,cz);
     if(xy.x == 0 || xy.x == tx_max - 1 || xy.y == 0 || xy.y == ty_max - 1)
     {
         cerr << "I won't dig the borders. That would be cheating!" << endl;
-        DF.Detach();
+        DF->Detach();
         #ifndef LINUX_BUILD
             cin.ignore();
         #endif
@@ -355,7 +358,7 @@ int main (int argc, char* argv[])
     {
         cerr << "This tile is non-vein. Bye :)" << endl;
         delete MCache;
-        DF.Detach();
+        DF->Detach();
         #ifndef LINUX_BUILD
             cin.ignore();
         #endif
@@ -469,7 +472,7 @@ int main (int argc, char* argv[])
     }
     MCache->WriteAll();
     delete MCache;
-    DF.Detach();
+    DF->Detach();
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();

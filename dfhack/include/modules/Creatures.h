@@ -353,12 +353,12 @@ namespace DFHack
         uint32_t birth_time;
     };
     
-    class APIPrivate;
+    class DFContextPrivate;
     struct t_creature;
     class DFHACK_EXPORT Creatures
     {
         public:
-        Creatures(DFHack::APIPrivate * d);
+        Creatures(DFHack::DFContextPrivate * d);
         ~Creatures();
         bool Start( uint32_t & numCreatures);
         bool Finish();

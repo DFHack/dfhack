@@ -55,11 +55,11 @@ struct Creatures::Private
     uint32_t dwarf_race_index_addr;
     uint32_t dwarf_civ_id_addr;
     DfVector <uint32_t> *p_cre;
-    APIPrivate *d;
+    DFContextPrivate *d;
     Process *owner;
 };
 
-Creatures::Creatures(APIPrivate* _d)
+Creatures::Creatures(DFContextPrivate* _d)
 {
     d = new Private;
     d->d = _d;

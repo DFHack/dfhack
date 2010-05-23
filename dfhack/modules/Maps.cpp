@@ -50,7 +50,7 @@ struct Maps::Private
     uint32_t maps_module;
     Server::Maps::maps_offsets offsets;
     
-    APIPrivate *d;
+    DFContextPrivate *d;
     Process * owner;
     bool Inited;
     bool Started;
@@ -61,7 +61,7 @@ struct Maps::Private
     vector<uint16_t> v_geology[eBiomeCount];
 };
 
-Maps::Maps(APIPrivate* _d)
+Maps::Maps(DFContextPrivate* _d)
 {
     d = new Private;
     d->d = _d;

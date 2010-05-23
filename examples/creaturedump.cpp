@@ -10,7 +10,8 @@ using namespace std;
 #include <DFGlobal.h>
 #include <DFError.h>
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <DFMemInfo.h>
 #include <DFProcess.h>
 #include <modules/Materials.h>
@@ -140,7 +141,7 @@ likeType printLike40d(DFHack::t_like like, const matGlosses & mat,const vector< 
 }
 */
 
-void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
+void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
 {
     uint32_t dayoflife;
 	cout << "address: " << hex <<  creature.origin << dec << " creature type: " << Materials->raceEx[creature.race].rawname 
@@ -162,8 +163,8 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
             addendl = true;
         }
         
-        DFHack::Translation *Tran = DF.getTranslation();
-        DFHack::memory_info *mem = DF.getMemoryInfo();
+        DFHack::Translation *Tran = DF->getTranslation();
+        DFHack::memory_info *mem = DF->getMemoryInfo();
         
         string transName = Tran->TranslateName(creature.name,false);
         if(!transName.empty())
@@ -398,10 +399,12 @@ void printCreature(DFHack::API & DF, const DFHack::t_creature & creature)
 int main (int numargs, char ** args)
 {
     DFHack::World * World;
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context* DF;
     try
     {
-        DF.Attach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
     }
     catch (exception& e)
     {
@@ -415,12 +418,12 @@ int main (int numargs, char ** args)
     if(numargs == 2)
         check = args[1];
     
-    Creatures = DF.getCreatures();
-    Materials = DF.getMaterials();
-    World = DF.getWorld();
+    Creatures = DF->getCreatures();
+    Materials = DF->getMaterials();
+    World = DF->getWorld();
     current_year = World->ReadCurrentYear();
     current_tick = World->ReadCurrentTick();
-    DFHack::Translation * Tran = DF.getTranslation();
+    DFHack::Translation * Tran = DF->getTranslation();
     
     uint32_t numCreatures;
     if(!Creatures->Start(numCreatures))
@@ -440,7 +443,7 @@ int main (int numargs, char ** args)
         return 1;
     }
 
-    mem = DF.getMemoryInfo();
+    mem = DF->getMemoryInfo();
     Materials->ReadAllMaterials();
 	
     if(!Tran->Start())
@@ -476,7 +479,7 @@ int main (int numargs, char ** args)
     printCreature(DF,currentCreature);
     */
     Creatures->Finish();
-    DF.Detach();
+    DF->Detach();
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

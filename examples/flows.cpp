@@ -6,7 +6,8 @@
 using namespace std;
 
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <modules/Maps.h>
 
 int main (void)
@@ -14,10 +15,14 @@ int main (void)
     uint32_t x_max,y_max,z_max;
     DFHack::designations40d designations;
     
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context * DF;
+    DFHack::Maps *Maps;
     try
     {
-        DF.Attach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
+        Maps = DF->getMaps();
     }
     catch (exception& e)
     {
@@ -27,8 +32,6 @@ int main (void)
         #endif
         return 1;
     }
-    
-    DFHack::Maps *Maps =DF.getMaps();
     // init the map
     if(!Maps->Start())
     {

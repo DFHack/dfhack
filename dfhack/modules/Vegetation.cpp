@@ -40,13 +40,13 @@ struct Vegetation::Private
     // translation
     DfVector <uint32_t> * p_veg;
     
-    APIPrivate *d;
+    DFContextPrivate *d;
     Process * owner;
     bool Inited;
     bool Started;
 };
 
-Vegetation::Vegetation(APIPrivate * d_)
+Vegetation::Vegetation(DFContextPrivate * d_)
 {
     d = new Private;
     d->owner = d_->p;

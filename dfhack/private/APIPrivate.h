@@ -46,11 +46,11 @@ namespace DFHack
     class Constructions;
     class memory_info;
     struct t_name;
-    class APIPrivate
+    class DFContextPrivate
     {
     public:
-        APIPrivate();
-        ~APIPrivate();
+        DFContextPrivate();
+        ~DFContextPrivate();
         
         // names, used by a few other modules.
         void readName(t_name & name, uint32_t address);

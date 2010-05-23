@@ -40,7 +40,7 @@ int main ()
     int items;
     int found = 0, converted = 0;
 
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DF("Memory.xml");
     try
     {
         DF.Attach();

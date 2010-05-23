@@ -36,7 +36,7 @@ using namespace DFHack;
 class Items::Private
 {
     public:
-    APIPrivate *d;
+    DFContextPrivate *d;
     Process * owner;
     /*
     bool Inited;
@@ -44,7 +44,7 @@ class Items::Private
     */
 };
 
-Items::Items(APIPrivate * d_)
+Items::Items(DFContextPrivate * d_)
 {
     d = new Private;
     d->d = d_;

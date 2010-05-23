@@ -35,7 +35,7 @@ using namespace DFHack;
 class Materials::Private
 {
     public:
-    APIPrivate *d;
+    DFContextPrivate *d;
     Process * owner;
     /*
     bool Inited;
@@ -43,7 +43,7 @@ class Materials::Private
     */
 };
 
-Materials::Materials(APIPrivate * d_)
+Materials::Materials(DFContextPrivate * d_)
 {
     d = new Private;
     d->d = d_;

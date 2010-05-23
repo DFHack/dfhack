@@ -20,7 +20,7 @@
 
 using namespace DFHack;
 
-APIPrivate::APIPrivate()
+DFContextPrivate::DFContextPrivate()
 {
     // init modules
     creatures = 0;
@@ -36,7 +36,7 @@ APIPrivate::APIPrivate()
     items = 0;
 }
 
-APIPrivate::~APIPrivate()
+DFContextPrivate::~DFContextPrivate()
 {
     if(creatures) delete creatures;
     if(maps) delete maps;
@@ -50,7 +50,7 @@ APIPrivate::~APIPrivate()
     if(world) delete world;
 }
 
-bool APIPrivate::InitReadNames()
+bool DFContextPrivate::InitReadNames()
 {
     name_firstname_offset = offset_descriptor->getOffset("name_firstname");
     name_nickname_offset = offset_descriptor->getOffset("name_nickname");
@@ -58,7 +58,7 @@ bool APIPrivate::InitReadNames()
     return true;
 }
 
-void APIPrivate::readName(t_name & name, uint32_t address)
+void DFContextPrivate::readName(t_name & name, uint32_t address)
 {
     p->readSTLString(address + name_firstname_offset , name.first_name, 128);
     p->readSTLString(address + name_nickname_offset , name.nickname, 128);

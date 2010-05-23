@@ -39,11 +39,11 @@ struct Gui::Private
     uint32_t view_screen_offset;
     uint32_t current_cursor_creature_offset;
     uint32_t current_menu_state_offset;
-    APIPrivate *d;
+    DFContextPrivate *d;
     Process * owner;
 };
 
-Gui::Gui(APIPrivate * _d)
+Gui::Gui(DFContextPrivate * _d)
 {
     
     d = new Private;

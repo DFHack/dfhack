@@ -17,7 +17,8 @@ using namespace std;
 
 #include <DFError.h>
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <DFMemInfo.h>
 #include <DFProcess.h>
 #include <argstream.h>
@@ -68,10 +69,12 @@ int main ( int argc, char** argv )
         s_creatures.push_back("CAT");
     }
 
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context *DF;
     try
     {
-        DF.Attach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
     }
     catch (exception& e)
     {
@@ -82,10 +85,10 @@ int main ( int argc, char** argv )
         return 1;
     }
 
-    proc = DF.getProcess();
-    mem = DF.getMemoryInfo();
-    DFHack::Materials *Mats = DF.getMaterials();
-    DFHack::Creatures *Cre = DF.getCreatures();
+    proc = DF->getProcess();
+    mem = DF->getMemoryInfo();
+    DFHack::Materials *Mats = DF->getMaterials();
+    DFHack::Creatures *Cre = DF->getCreatures();
     creature_pregnancy_offset = mem->getOffset("creature_pregnancy");
 
     if(!Mats->ReadCreatureTypesEx())
@@ -168,7 +171,7 @@ int main ( int argc, char** argv )
 
     cout << totalchanged << " pregnancies accelerated. Total creatures checked: " << totalcount << "." << endl;
     Cre->Finish();
-    DF.Detach();
+    DF->Detach();
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();

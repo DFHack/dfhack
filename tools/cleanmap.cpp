@@ -3,10 +3,13 @@
 #include <iostream>
 #include <integers.h>
 #include <vector>
+#include <map>
 using namespace std;
 
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
+#include <DFMemInfo.h>
 #include <DFTypes.h>
 #include <stddef.h>
 #include <modules/Maps.h>
@@ -18,10 +21,11 @@ int main (void)
     uint32_t bytes_read = 0;
     vector<DFHack::t_spattervein> splatter;
     
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context *DF = DFMgr.getSingleContext();
     try
     {
-        DF.Attach();
+        DF->Attach();
     }
     catch (exception& e)
     {
@@ -31,7 +35,7 @@ int main (void)
         #endif
         return 1;
     }
-    DFHack::Maps *Mapz = DF.getMaps();
+    DFHack::Maps *Mapz = DF->getMaps();
     
     // init the map
     if(!Mapz->Start())
@@ -64,25 +68,14 @@ int main (void)
                         {
                             uint32_t addr = vein.address_of;
                             uint32_t offset = offsetof(DFHack::t_spattervein, intensity);
-                            DF.WriteRaw(addr + offset,sizeof(zeroes),(uint8_t *) zeroes);
+                            DF->WriteRaw(addr + offset,sizeof(zeroes),(uint8_t *) zeroes);
                         }
                     }
-                    /*
-                    // read block designations
-                    DF.ReadOccupancy(x,y,z, &occupancies);
-                    // change the hidden flag to 0
-                    for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
-                    {
-                        occupancies[i][j].unibits.splatter = 0;
-                    }
-                    // write the designations back
-                    DF.WriteOccupancy(x,y,z, &occupancies);
-                    */
                 }
             }
         }
     }
-    DF.Detach();
+    DF->Detach();
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

@@ -9,15 +9,18 @@
 using namespace std;
 
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 
 int main (void)
 {
     string blah;
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context *DF;
     try
     {
-        DF.Attach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
     }
     catch (exception& e)
     {
@@ -27,12 +30,12 @@ int main (void)
         #endif
         return 1;
     }
-    
-    DF.ForceResume();
+
+    DF->ForceResume();
     cout << "DF should be running again :)" << endl;
     getline(cin, blah);
 
-    if(!DF.Detach())
+    if(!DF->Detach())
     {
         cerr << "Can't detach from DF" << endl;
         return 1;

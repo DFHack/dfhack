@@ -45,7 +45,7 @@ struct Position::Private
     uint32_t hotkey_xyz_offset;
     uint32_t hotkey_size;
     
-    APIPrivate *d;
+    DFContextPrivate *d;
     Process * owner;
     bool Inited;
     bool Started;
@@ -54,7 +54,7 @@ struct Position::Private
     //vector<uint16_t> v_geology[eBiomeCount];
 };
 
-Position::Position(APIPrivate * d_)
+Position::Position(DFContextPrivate * d_)
 {
     d = new Private;
     d->d = d_;

@@ -8,17 +8,20 @@
 using namespace std;
 
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <modules/Position.h>
 
 int main (void)
 {
-    DFHack::API DF("Memory.xml");
     DFHack::Position * Position = 0;
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context * DF;
     try
     {
-        DF.Attach();
-        Position = DF.getPosition();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
+        Position = DF->getPosition();
     }
     catch (exception& e)
     {
@@ -45,7 +48,7 @@ int main (void)
         cerr << "cursor and window parameters are unsupported on your version of DF" << endl;
     }
     
-    if(!DF.Detach())
+    if(!DF->Detach())
     {
         cerr << "Can't detach from DF" << endl;
     }

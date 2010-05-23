@@ -12,7 +12,8 @@ using namespace std;
 
 #include <DFGlobal.h>
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <DFProcess.h>
 #include <DFMemInfo.h>
 #include <DFVector.h>
@@ -83,10 +84,12 @@ int main (int numargs, const char ** args)
     vector<t_frozenliquidvein> IceVeinVector;
     vector<t_spattervein> splatter;
 
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context * DF;
     try
     {
-        DF.Attach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
     }
     catch (exception& e)
     {
@@ -97,9 +100,9 @@ int main (int numargs, const char ** args)
         return 1;
     }
     
-    DFHack::Maps *Maps =DF.getMaps();
-    DFHack::Position *Pos =DF.getPosition();
-    DFHack::Materials *Mats =DF.getMaterials();
+    DFHack::Maps *Maps =DF->getMaps();
+    DFHack::Position *Pos =DF->getPosition();
+    DFHack::Materials *Mats =DF->getMaterials();
     
     Mats->ReadCreatureTypes();
     

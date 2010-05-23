@@ -13,7 +13,8 @@ using namespace std;
 
 #include <DFError.h>
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <DFMemInfo.h>
 #include <DFProcess.h>
 #include <DFVector.h>
@@ -26,13 +27,14 @@ DFHack::Items * Items;
 
 int main ()
 {
-    DFHack::API DF("Memory.xml");
     DFHack::Process * p;
     unsigned int i,j;
-
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context * DF;
     try
     {
-        DF.Attach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
     }
     catch (exception& e)
     {
@@ -43,13 +45,13 @@ int main ()
         return 1;
     }
 
-    DFHack::memory_info * mem = DF.getMemoryInfo();
-    Materials = DF.getMaterials();
+    DFHack::memory_info * mem = DF->getMemoryInfo();
+    Materials = DF->getMaterials();
     Materials->ReadAllMaterials();
-    p = DF.getProcess();
+    p = DF->getProcess();
     DFHack::DfVector <uint32_t> p_items (p, p->getDescriptor()->getAddress ("items_vector"));
     uint32_t size = p_items.size();
-	Items = DF.getItems();
+	Items = DF->getItems();
 
 
     printf("type\tvtable\tname\tquality\tdecorate\n");

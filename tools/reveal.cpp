@@ -3,10 +3,12 @@
 #include <iostream>
 #include <integers.h>
 #include <vector>
+#include <map>
 using namespace std;
 
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <modules/Maps.h>
 
 
@@ -23,10 +25,12 @@ int main (void)
     uint32_t x_max,y_max,z_max;
     DFHack::designations40d designations;
     
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context *DF;
     try
     {
-        DF.Attach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
     }
     catch (exception& e)
     {
@@ -37,7 +41,7 @@ int main (void)
         return 1;
     }
     
-    DFHack::Maps *Maps =DF.getMaps();
+    DFHack::Maps *Maps =DF->getMaps();
     // init the map
     if(!Maps->Start())
     {
@@ -80,14 +84,14 @@ int main (void)
         }
     }
     // FIXME: force game pause here!
-    DF.Detach();
+    DF->Detach();
     cout << "Map revealed. Close window/force exit to keep it that way." << endl;
     cout << "Press any key to unreveal. Don't close DF or unpause in that case!" << endl;
     cin.ignore();
     cout << "Unrevealing... please wait." << endl;
     // FIXME: do some consistency checks here!
-    DF.Attach();
-    Maps = DF.getMaps();
+    DF->Attach();
+    Maps = DF->getMaps();
     Maps->Start();
     for(int i = 0; i < hidesaved.size();i++)
     {

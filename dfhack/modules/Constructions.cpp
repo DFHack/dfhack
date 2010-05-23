@@ -39,13 +39,13 @@ struct Constructions::Private
     // translation
     DfVector <uint32_t> * p_cons;
     
-    APIPrivate *d;
+    DFContextPrivate *d;
     Process * owner;
     bool Inited;
     bool Started;
 };
 
-Constructions::Constructions(APIPrivate * d_)
+Constructions::Constructions(DFContextPrivate * d_)
 {
     d = new Private;
     d->d = d_;

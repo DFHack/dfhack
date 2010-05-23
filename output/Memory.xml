@@ -1798,16 +1798,16 @@ map_data_1b60_offset          0x1B9c
         Materials
         =========
         soil, stone, metal
-        inorganics vector = WORLD + 0x54B7C = 0x16AFD04
+        inorganics vector
         <Address name="mat_inorganics">0x9324e68</Address>0x16afd04
         
-        wood and plant matter, WORLD + 0x54B94
+        wood and plant matter
         <Address name="mat_organics_all">0x9324E74</Address>
         
-        plant matter, WORLD + 0x54BAC
+        plant matter
         <Address name="mat_organics_plants">0x9324E80</Address>
         
-        just wood, WORLD + 0x54BDC
+        just wood
         <Address name="mat_organics_trees">0x9324E98</Address>
 
         creature types actually used for creatures,
@@ -1816,6 +1816,14 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_type_extract_vector">0x1A14</Offset>
         <Offset name="creature_tile">0xE0</Offset>
         <Offset name="creature_tile_color">0xF6</Offset>
+
+        Translations
+        ============
+        WORLD + 0x54E50
+        <Address name="language_vector">23</Address>
+        WORLD + 0x54E80
+        <Address name="translation_vector">24</Address>
+        <Offset name="word_table">0x4C</Offset>
 <!--
         
         Constructions
@@ -1892,14 +1900,6 @@ map_data_1b60_offset          0x1B9c
         =============
         WORLD + 0x108
         <Address name="construction_vector">22</Address>
-        
-        Translations
-        ============
-        WORLD + 0x54E50
-        <Address name="language_vector">23</Address>
-        WORLD + 0x54E80
-        <Address name="translation_vector">24</Address>
-        <Offset name="word_table">0x4C</Offset>
         
         Vegetation
         ==========

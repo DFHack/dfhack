@@ -43,12 +43,12 @@ struct Translation::Private
     // translation
     Dicts dicts;
     
-    APIPrivate *d;
+    DFContextPrivate *d;
     bool Inited;
     bool Started;
 };
 
-Translation::Translation(APIPrivate * d_)
+Translation::Translation(DFContextPrivate * d_)
 {
     d = new Private;
     d->d = d_;

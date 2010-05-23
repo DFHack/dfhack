@@ -45,7 +45,7 @@ uint32_t endian_swap(uint32_t x)
 
 int main (void)
 {
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DF("Memory.xml");
     try
     {
         DF.Attach();

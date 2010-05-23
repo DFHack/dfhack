@@ -12,7 +12,7 @@ include/DFTileTypes.h
 include/DFTypes.h
 include/DFVector.h
 include/DFWindow.h
-include/DFHackAPI_C.h
+#include/DFHackAPI_C.h
 include/integers.h
 shm/shms.h
 )
@@ -20,12 +20,13 @@ shm/shms.h
 SET(PROJECT_SRCS
 DFMemInfo.cpp
 DFMemInfoManager.cpp
-DFHackAPI.cpp
+DFContextManager.cpp
+DFContext.cpp
 APIPrivate.cpp
 DFTileTypes.cpp
 DFVector.cpp
-DFHackAPI_C.cpp
-DFTypes_C.cpp
+#DFHackAPI_C.cpp
+#DFTypes_C.cpp
 
 depends/md5/md5.cpp
 depends/md5/md5wrapper.cpp
@@ -47,16 +48,16 @@ modules/Vegetation.cpp
 modules/Buildings.cpp
 modules/Constructions.cpp
 
-modules/Position_C.cpp
-modules/Gui_C.cpp
-modules/Materials_C.cpp
-modules/Buildings_C.cpp
-modules/Constructions_C.cpp
-modules/Maps_C.cpp
-modules/Vegetation_C.cpp
-modules/Creatures_C.cpp
-modules/Translation_C.cpp
-modules/Items_C.cpp
+#modules/Position_C.cpp
+#modules/Gui_C.cpp
+#modules/Materials_C.cpp
+#modules/Buildings_C.cpp
+#modules/Constructions_C.cpp
+#modules/Maps_C.cpp
+#modules/Vegetation_C.cpp
+#modules/Creatures_C.cpp
+#modules/Translation_C.cpp
+#modules/Items_C.cpp
 )
 
 SET(PROJECT_HDRS_LINUX

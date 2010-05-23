@@ -12,7 +12,8 @@ using namespace std;
 
 #include <DFGlobal.h>
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <DFProcess.h>
 #include <DFMemInfo.h>
 #include <DFTypes.h>
@@ -25,10 +26,12 @@ using namespace DFHack;
 
 int main (int numargs, const char ** args)
 {
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context* DF;
     try
     {
-        DF.Attach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
     }
     catch (exception& e)
     {
@@ -39,10 +42,10 @@ int main (int numargs, const char ** args)
         return 1;
     }
     
-    DFHack::Position *Pos = DF.getPosition();
+    DFHack::Position *Pos = DF->getPosition();
     
-    DFHack::Constructions *Cons = DF.getConstructions();
-    DFHack::Materials *Mats = DF.getMaterials();
+    DFHack::Constructions *Cons = DF->getConstructions();
+    DFHack::Materials *Mats = DF->getMaterials();
     Mats->ReadInorganicMaterials();
     uint32_t numConstr;
     Cons->Start(numConstr);

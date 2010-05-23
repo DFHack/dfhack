@@ -12,7 +12,8 @@ using namespace std;
 
 #include <DFGlobal.h>
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <DFProcess.h>
 #include <DFMemInfo.h>
 #include <DFVector.h>
@@ -94,10 +95,13 @@ LABEL_17:
 */
 int main (int numargs, const char ** args)
 {
-    DFHack::API DF("Memory.xml");
+    
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context * DF;
     try
     {
-        DF.Attach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
     }
     catch (exception& e)
     {
@@ -108,10 +112,10 @@ int main (int numargs, const char ** args)
         return 1;
     }
     
-    DFHack::Position *Pos = DF.getPosition();
-    DFHack::memory_info* mem = DF.getMemoryInfo();
-    DFHack::Maps *Maps = DF.getMaps();
-    DFHack::Process * p = DF.getProcess();
+    DFHack::Position *Pos = DF->getPosition();
+    DFHack::memory_info* mem = DF->getMemoryInfo();
+    DFHack::Maps *Maps = DF->getMaps();
+    DFHack::Process * p = DF->getProcess();
     uint32_t designatus = mem->getOffset("map_data_designation");
     uint32_t block_feature1 = mem->getOffset("map_data_feature_local");
     uint32_t block_feature2 = mem->getOffset("map_data_feature_global");

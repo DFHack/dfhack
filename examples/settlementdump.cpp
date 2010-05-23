@@ -11,7 +11,7 @@ using namespace std;
 #include <stdio.h>
 
 
-void printSettlement(DFHack::API & DF, const DFHack::t_settlement & settlement, const vector< vector<string> > &englishWords, const vector< vector<string> > &foreignWords)
+void printSettlement(DFHack::ContextManager & DF, const DFHack::t_settlement & settlement, const vector< vector<string> > &englishWords, const vector< vector<string> > &foreignWords)
 {
     cout << "First name: " << settlement.name.first_name << endl <<  "Nickname: " << settlement.name.nickname << endl;
     cout << settlement.name.words[0] << " " << settlement.name.words[1] << " " << settlement.name.words[2] << " "
@@ -31,7 +31,7 @@ void printSettlement(DFHack::API & DF, const DFHack::t_settlement & settlement, 
 
 int main (int argc,const char* argv[])
 {
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DF("Memory.xml");
     try
     {
         DF.Attach();

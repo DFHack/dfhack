@@ -7,17 +7,20 @@
 using namespace std;
 
 #include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFContextManager.h>
+#include <DFContext.h>
 #include <DFMemInfo.h>
 #include <modules/Position.h>
 
 
 int main (void)
 {
-    DFHack::API DF("Memory.xml");
+    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::Context * DF;
     try
     {
-        DF.Attach();
+        DF = DFMgr.getSingleContext();
+        DF->Attach();
     }
     catch (exception& e)
     {
@@ -28,8 +31,8 @@ int main (void)
         return 1;
     }
     
-    DFHack::memory_info * mem = DF.getMemoryInfo();
-    DFHack::Position * Pos = DF.getPosition();
+    DFHack::memory_info * mem = DF->getMemoryInfo();
+    DFHack::Position * Pos = DF->getPosition();
     // get stone matgloss mapping
     /*
     uint32_t numNotes;
@@ -59,7 +62,7 @@ int main (void)
             "\ttext: " << hotkeys[i].name << endl;
     }
     //DF.FinishReadNotes();
-    DF.Detach();
+    DF->Detach();
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

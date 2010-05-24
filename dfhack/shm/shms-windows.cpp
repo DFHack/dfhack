@@ -33,7 +33,7 @@ distribution.
 
 #define DFhackCExport extern "C" __declspec(dllexport)
 
-#include "../library/integers.h"
+#include "../include/integers.h"
 #include <vector>
 #include <string>
 #include "shms.h"
@@ -50,7 +50,7 @@ HANDLE DFCLMutex[SHM_MAX_CLIENTS];
 HANDLE DFCLSuspendMutex[SHM_MAX_CLIENTS];
 int held_DFCLSuspendMutex[SHM_MAX_CLIENTS];
 int numheld = SHM_MAX_CLIENTS;
-
+bool FirstCall();
 
 void OS_lockSuspendLock(int which)
 {
@@ -108,7 +108,7 @@ void SHM_Init ( void )
     // check that we do this only once per process
     if(inited)
     {
-        //MessageBox(0,"SDL_Init was called twice or more!","FUN", MB_OK);
+        MessageBox(0,"SHM_Init was called twice or more!","FUN", MB_OK);
         return;
     }
     inited = true;
@@ -717,21 +717,41 @@ SDL_GL_SwapBuffers
     void SDLCALL SDL_GL_SwapBuffers(void);
 */
 
+
+// hook - called at program exit
 static void (*_SDL_Quit)(void) = 0;
 DFhackCExport void SDL_Quit(void)
 {
     fprintf(stderr,"Quitting!\n");
-    SHM_Destroy();
-    _SDL_Quit();
+    if(!errorstate)
+    {
+        SHM_Destroy();
+        errorstate = true;
+    }
+    if(_SDL_Quit)
+    {
+        _SDL_Quit();
+    }
+}
+// this is supported from 0.31.04 forward
+DFhackCExport int SDL_NumJoysticks(void)
+{
+    if(errorstate)
+        return -1;
+    if(!inited)
+    {
+        SHM_Init();
+        return -2;
+    }
+    SHM_Act();
+    return -3;
 }
 
 static void (*_SDL_GL_SwapBuffers)(void) = 0;
 DFhackCExport void SDL_GL_SwapBuffers(void)
 {
-    if(!errorstate)
-    {
-        SHM_Act();
-    }
+    if(!inited)
+        FirstCall();
     _SDL_GL_SwapBuffers();
 }
 
@@ -739,26 +759,120 @@ DFhackCExport void SDL_GL_SwapBuffers(void)
 static int (*_SDL_Flip)(void * some_ptr) = 0;
 DFhackCExport int SDL_Flip(void * some_ptr)
 {
-    if(_SDL_Flip)
-    {
-        if(!errorstate)
-        {
-            SHM_Act();
-        }
-        return _SDL_Flip(some_ptr);
-    }
-	return 0;
+    if(!inited)
+        FirstCall();
+    return _SDL_Flip(some_ptr);
 }
 
 static int (*_SDL_Init)(uint32_t flags) = 0;
 DFhackCExport int SDL_Init(uint32_t flags)
+{
+    if(!inited)
+        FirstCall();
+    return _SDL_Init(flags);
+}
+
+/*
+MORE CRAP
+*/
+static void * (*_SDL_CreateSemaphore)(uint32_t initial_value) = 0;
+DFhackCExport void *SDL_CreateSemaphore(uint32_t initial_value)
+{
+    if(!inited)
+        FirstCall();
+    return _SDL_CreateSemaphore(initial_value);
+}
+
+static void * (*_SDL_CreateThread)(int (*fn)(void *), void *data) = 0;
+DFhackCExport void *SDL_CreateThread(int (*fn)(void *), void *data)
+{
+    if(!inited)
+        FirstCall();
+    return _SDL_CreateThread(fn,data);
+}
+
+
+static void (*_SDL_Delay)(uint32_t ms) = 0;
+DFhackCExport void SDL_Delay(uint32_t ms)
+{
+    if(!inited)
+        FirstCall();
+    _SDL_Delay(ms);
+}
+
+static void (*_SDL_DestroySemaphore)(void *sem) = 0;
+DFhackCExport void SDL_DestroySemaphore(void *sem)
+{
+    if(!inited)
+        FirstCall();
+    _SDL_DestroySemaphore(sem);
+}
+
+static uint8_t (*_SDL_GetAppState)(void) = 0;
+DFhackCExport uint8_t SDL_GetAppState(void)
+{
+    if(!inited)
+        FirstCall();
+    return _SDL_GetAppState();
+}
+
+static uint8_t (*_SDL_GetMouseState)(int *, int *) = 0;
+DFhackCExport uint8_t SDL_GetMouseState(int *x, int *y)
+{
+    if(!inited)
+        FirstCall();
+    return _SDL_GetMouseState(x,y);
+}
+
+static int (*_SDL_InitSubSystem)(uint32_t flags) = 0;
+DFhackCExport int SDL_InitSubSystem(uint32_t flags)
+{
+    if(!inited)
+        FirstCall();
+    return _SDL_InitSubSystem(flags);
+}
+
+static int (*_SDL_SemPost)(void *sem) = 0;
+DFhackCExport int SDL_SemPost(void *sem)
+{
+    if(!inited)
+        FirstCall();
+    return _SDL_SemPost(sem);
+}
+
+static int (*_SDL_SemTryWait)(void *sem) = 0;
+DFhackCExport int SDL_SemTryWait(void *sem)
+{
+    if(!inited)
+        FirstCall();
+    return _SDL_SemTryWait(sem);
+}
+
+static int (*_SDL_SemWait)(void *sem) = 0;
+DFhackCExport int SDL_SemWait(void *sem)
+{
+    if(!inited)
+        FirstCall();
+    return _SDL_SemWait(sem);
+}
+
+static uint32_t (*_SDL_ThreadID)(void) = 0;
+DFhackCExport uint32_t SDL_ThreadID(void)
+{
+    if(!inited)
+        FirstCall();
+    return _SDL_ThreadID();
+}
+
+// this has to be thread-safe. Let's hope it is.
+bool FirstCall()
 {
     HMODULE realSDLlib =  LoadLibrary("SDLreal.dll");
     if(!realSDLlib)
     {
         MessageBox(0,"Can't load SDLreal.dll\n","Error", MB_OK);
         fprintf(stderr, "Can't load SDLreal.dll\n");
-        return -1;
+        return 0;
     }
     // stuff for DF
     _SDL_AddTimer = (void*(*)(uint32_t, void*, void*)) GetProcAddress(realSDLlib,"SDL_AddTimer");
@@ -816,7 +930,19 @@ DFhackCExport int SDL_Init(uint32_t flags)
     _SDL_UnloadObject = (void (*)(void*))GetProcAddress(realSDLlib,"SDL_UnloadObject");
     _SDL_FillRect = (int (*)(void*,void*,uint32_t))GetProcAddress(realSDLlib,"SDL_FillRect");
     
+    // new in DF 0.31.04
+    _SDL_CreateSemaphore = (void* (*)(uint32_t))GetProcAddress(realSDLlib,"SDL_CreateSemaphore");
+    _SDL_CreateThread = (void* (*)(int (*fn)(void *), void *data))GetProcAddress(realSDLlib,"SDL_CreateThread");
+    _SDL_Delay = (void (*)(uint32_t))GetProcAddress(realSDLlib,"SDL_Delay");
+    _SDL_DestroySemaphore = (void (*)(void *))GetProcAddress(realSDLlib,"SDL_DestroySemaphore");
+    _SDL_GetAppState = (uint8_t (*)(void))GetProcAddress(realSDLlib,"SDL_GetAppState");
+    _SDL_GetMouseState = (uint8_t (*)(int *, int *))GetProcAddress(realSDLlib,"SDL_GetMouseState");
+    _SDL_InitSubSystem = (int (*)(uint32_t))GetProcAddress(realSDLlib,"SDL_InitSubSystem");
+    _SDL_SemPost = (int (*)(void *))GetProcAddress(realSDLlib,"SDL_SemPost");
+    _SDL_SemTryWait = (int (*)(void *))GetProcAddress(realSDLlib,"SDL_SemTryWait");
+    _SDL_SemWait = (int (*)(void *))GetProcAddress(realSDLlib,"SDL_SemWait");
+    _SDL_ThreadID = (uint32_t (*)(void))GetProcAddress(realSDLlib,"SDL_ThreadID");
+    
     fprintf(stderr,"Initized HOOKS!\n");
-    SHM_Init();
-    return _SDL_Init(flags);
+    return 1;
 }

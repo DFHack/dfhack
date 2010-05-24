@@ -1,13 +1,15 @@
 #include <string>
 #include <vector>
+#include <map>
 #include <integers.h>
 
 #include "shms.h"
 #include "mod-core.h"
 #include "mod-maps.h"
 #include <DFTypes.h>
+#include <modules/Maps.h>
 using namespace DFHack;
-using namespace DFHack::Maps;
+using namespace DFHack::Server::Maps;
 
 #include <string.h>
 #include <malloc.h>
@@ -17,7 +19,9 @@ extern char *shm;
 //TODO: circular buffer streaming primitives required
 //TODO: commands can fail without the proper offsets. Hot to handle that?
 
-namespace DFHack{ namespace Maps{ // start of namespace
+namespace DFHack{
+    namespace Server{ // start of namespace
+        namespace Maps{ // start of namespace
 
 #define SHMHDR ((shm_maps_hdr *)shm)
 #define SHMCMD ((shm_cmd *)shm)->pingpong
@@ -68,7 +72,10 @@ inline void ReadBlockByAddress (void * data)
         memcpy(&(SHMDATA(mapblock40d)->biome_indices), ((char *) block) + offsets.biome_stuffs, sizeof(SHMDATA(mapblock40d)->biome_indices));
         SHMDATA(mapblock40d)->blockflags.whole = *block->ptr_to_dirty;
         
-        SHMDATA(mapblock40d)->origin = (uint32_t)block;
+        SHMDATA(mapblock40d)->local_feature = *(int16_t *)((char*) block + offsets.local_feature_offset);
+        SHMDATA(mapblock40d)->global_feature = *(int16_t *)((char*) block + offsets.global_feature_offset);
+        
+        SHMDATA(mapblock40d)->origin = (uint32_t)(uint64_t)block; // this is STUPID
         SHMHDR->error = false;
     }
     else
@@ -90,7 +97,7 @@ void ReadBlockByCoords (void * data)
     only Z blocks can have NULL pointers? TODO: verify
     */
     mblock * *** mapArray = *(mblock * ****)offsets.map_offset;
-    SHMHDR->address = (uint32_t) mapArray[SHMHDR->x][SHMHDR->y][SHMHDR->z];
+    SHMHDR->address = (uint32_t) (uint64_t) mapArray[SHMHDR->x][SHMHDR->y][SHMHDR->z];// this is STUPID
     ReadBlockByAddress(data); // I wonder... will this inline properly?
 }
 
@@ -120,4 +127,4 @@ DFPP_module Init( void )
     return maps;
 }
 
-}} // end of namespace
+}}} // end of namespace

@@ -6,6 +6,7 @@
 #include "mod-core.h"
 #include "mod-creature40d.h"
 #include <DFTypes.h>
+#include <modules/Creatures.h>
 
 #include <string.h>
 #include <malloc.h>
@@ -14,7 +15,9 @@
 
 extern char *shm;
 
-namespace DFHack{ namespace Creatures{ // start of namespace
+namespace DFHack{
+    namespace Server{
+        namespace Creatures{ // start of namespace
 
 #define SHMHDR ((shm_creature_hdr *)shm)
 #define SHMDATA(type) ((type *)(shm + SHM_HEADER))
@@ -191,4 +194,4 @@ DFPP_module Init( void )
     return creatures;
 }
 
-}} // end of namespace
+}}} // end of namespace

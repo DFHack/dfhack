@@ -111,6 +111,7 @@ Creatures::Creatures(DFContextPrivate* _d)
         creatures.name_words_offset = minfo->getOffset("name_words");
         d->dwarf_race_index_addr = minfo->getAddress("dwarf_race_index");
         d->dwarf_civ_id_addr = minfo->getAddress("dwarf_civ_id");
+        /*
         // upload offsets to the SHM
         if(p->getModuleIndex("Creatures2010",1,d->creature_module))
         {
@@ -119,6 +120,7 @@ Creatures::Creatures(DFContextPrivate* _d)
             const uint32_t cmd = Creatures2010::CREATURE_INIT + (d->creature_module << 16);
             p->SetAndWait(cmd);
         }
+        */
         d->Inited = true;
     }
     catch (Error::MissingMemoryDefinition&)
@@ -158,6 +160,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     if(!d->Started) return false;
     // SHM fast path
     Process * p = d->owner;
+    /*
     if(d->creature_module)
     {
         SHMCREATURESHDR->index = index;
@@ -166,7 +169,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         memcpy(&furball,SHMDATA(t_creature),sizeof(t_creature));
         return true;
     }
-    
+    */
     // non-SHM slow path
     memory_info * minfo = d->d->offset_descriptor;
     
@@ -300,7 +303,7 @@ int32_t Creatures::ReadCreatureInBox (int32_t index, t_creature & furball,
         return -1;
     
     Process *p = d->owner;
-    
+    /*
     if(d->creature_module)
     {
         // supply the module with offsets so it can work with them
@@ -317,7 +320,7 @@ int32_t Creatures::ReadCreatureInBox (int32_t index, t_creature & furball,
             memcpy(&furball,SHMDATA(void),sizeof(t_creature));
         return SHMCREATURESHDR->index;
     }
-    else
+    else*/
     {
         uint16_t coords[3];
         uint32_t size = d->p_cre->size();

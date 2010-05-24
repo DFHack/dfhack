@@ -27,7 +27,7 @@ distribution.
  */
 
 #include <stdio.h>
-#include "../library/integers.h"
+#include "../include/integers.h"
 #include <stdlib.h>
 #include <string.h>
 #include <string>
@@ -247,8 +247,8 @@ void InitModules (void)
 {
     // create the core module
     module_registry.push_back(InitCore());
-    module_registry.push_back(DFHack::Maps::Init());
-    module_registry.push_back(DFHack::Creatures::Init());
+    module_registry.push_back(DFHack::Server::Maps::Init());
+    //module_registry.push_back(DFHack::Server::Creatures::Init());
     for(int i = 0; i < module_registry.size();i++)
     {
         fprintf(stderr,"Initialized module %s, version %d\n",module_registry[i].name.c_str(),module_registry[i].version);

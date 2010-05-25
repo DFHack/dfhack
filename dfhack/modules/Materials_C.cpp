@@ -225,7 +225,7 @@ int Materials_getOtherSize(DFHackObject* mat)
 
 //vector getters
 
-int Materials_getInorganic(DFHackObject* mat)
+t_matgloss* Materials_getInorganic(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
@@ -239,19 +239,15 @@ int Materials_getInorganic(DFHackObject* mat)
 			{
 				copy(materials->inorganic.begin(), materials->inorganic.end(), buf);
 				
-				return 1;
+				return buf;
 			}
-			else
-				return -1;
 		}
-		else
-			return 0;
 	}
 	
-	return -1;
+	return NULL;
 }
 
-int Materials_getOrganic(DFHackObject* mat)
+t_matgloss* Materials_getOrganic(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
@@ -265,19 +261,15 @@ int Materials_getOrganic(DFHackObject* mat)
 			{
 				copy(materials->organic.begin(), materials->organic.end(), buf);
 				
-				return 1;
+				return buf;
 			}
-			else
-				return -1;
 		}
-		else
-			return 0;
 	}
 	
-	return -1;
+	return NULL;
 }
 
-int Materials_getTree(DFHackObject* mat)
+t_matgloss* Materials_getTree(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
@@ -291,19 +283,15 @@ int Materials_getTree(DFHackObject* mat)
 			{
 				copy(materials->tree.begin(), materials->tree.end(), buf);
 				
-				return 1;
+				return buf;
 			}
-			else
-				return -1;
 		}
-		else
-			return 0;
 	}
 	
-	return -1;
+	return NULL;
 }
 
-int Materials_getPlant(DFHackObject* mat)
+t_matgloss* Materials_getPlant(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
@@ -317,19 +305,15 @@ int Materials_getPlant(DFHackObject* mat)
 			{
 				copy(materials->plant.begin(), materials->plant.end(), buf);
 				
-				return 1;
+				return buf;
 			}
-			else
-				return -1;
 		}
-		else
-			return 0;
 	}
 	
-	return -1;
+	return NULL;
 }
 
-int Materials_getRace(DFHackObject* mat)
+t_matgloss* Materials_getRace(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
@@ -343,61 +327,40 @@ int Materials_getRace(DFHackObject* mat)
 			{
 				copy(materials->race.begin(), materials->race.end(), buf);
 				
-				return 1;
+				return buf;
 			}
-			else
-				return -1;
 		}
-		else
-			return 0;
 	}
 	
-	return -1;
+	return NULL;
 }
 
 //race_ex getter goes here...
-// int Materials_getRaceEx(DFHackObject* mat, c_creaturetype* (*c_creaturetype_buffer_create)(c_creaturetype_descriptor*, int))
-// {
-	// if(mat != NULL)
-	// {
-		// DFHack::Materials* materials = (DFHack::Materials*)mat;
+c_creaturetype* Materials_getRaceEx(DFHackObject* mat)
+{
+	if(mat != NULL)
+	{
+		DFHack::Materials* materials = (DFHack::Materials*)mat;
+		int matSize = materials->raceEx.size();
 		
-		// if(materials->raceEx.size() > 0)
-		// {
-			// std::vector<t_creaturetype> types = materials->raceEx;
-			// int typessize = types.size();
+		if(matSize > 0)
+		{
+			c_creaturetype* buf = ((*alloc_creaturetype_buffer_callback)(matSize));
 			
-			// c_creaturetype_descriptor* descriptors = (c_creaturetype_descriptor*)malloc(sizeof(c_creaturetype_descriptor) * typessize);
-			
-			// for(int i = 0; i < typessize; i++)
-			// {
-				// descriptors[i].castesCount = types[i].castes.size();
-				// descriptors[i].extractCount = types[i].extract.size();
-			// }
-			
-			// c_creaturetype* buf = ((*c_creaturetype_buffer_create)(descriptors, typessize));
-			
-			// for(int i = 0; i < typessize; i++)
-			// {
-				// t_creaturetype current = types[i];
+			if(buf != NULL)
+			{
+				for(int i = 0; i < matSize; i++)
+					CreatureTypeConvert(&materials->raceEx[i], &buf[i]);
 				
-				// strncpy(buf[i].rawname, current.rawname, 128);
-				// buf[i].rawname[127] = '\0';
-				
-				// buf[i].tile_character = current.tile_character;
-				// buf[i].tilecolor = current.tilecolor;
-				
-				// current.extract.copy(buf[i].extract, current.extract.size());
-			// }
-			
-			// free(descriptors);
-		// }
-	// }
+				return buf;
+			}
+		}
+	}
 	
-	// return -1;
-// }
+	return NULL;
+}
 
-int Materials_getColor(DFHackObject* mat)
+t_descriptor_color* Materials_getColor(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
@@ -411,19 +374,15 @@ int Materials_getColor(DFHackObject* mat)
 			{
 				copy(materials->color.begin(), materials->color.end(), buf);
 				
-				return 1;
+				return buf;
 			}
-			else
-				return -1;
 		}
-		else
-			return 0;
 	}
 	
-	return -1;
+	return NULL;
 }
 
-int Materials_getOther(DFHackObject* mat)
+t_matglossOther* Materials_getOther(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
@@ -437,16 +396,12 @@ int Materials_getOther(DFHackObject* mat)
 			{
 				copy(materials->other.begin(), materials->other.end(), buf);
 				
-				return 1;
+				return buf;
 			}
-			else
-				return -1;
 		}
-		else
-			return 0;
 	}
 	
-	return -1;
+	return NULL;
 }
 
 #ifdef __cplusplus

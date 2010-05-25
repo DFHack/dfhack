@@ -66,7 +66,9 @@ Context::~Context()
 bool Context::isValid()
 {
     //FIXME: check for error states here
-    if(d->p->isIdentified());
+    if(d->p->isIdentified())
+        return true;
+    return false;
 }
 
 bool Context::Attach()

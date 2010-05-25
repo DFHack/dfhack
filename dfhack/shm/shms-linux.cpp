@@ -247,13 +247,27 @@ void SHM_Destroy ( void )
 /*******************************************************************************
 *                           SDL part starts here                               *
 *******************************************************************************/
+// this is supported from 0.31.04 forward
+DFhackCExport int SDL_NumJoysticks(void)
+{
+    if(errorstate)
+        return -1;
+    if(!inited)
+    {
+        SHM_Init();
+        return -2;
+    }
+    SHM_Act();
+    return -3;
+}
+
 
 // ptr to the real functions
-static void (*_SDL_GL_SwapBuffers)(void) = 0;
+//static void (*_SDL_GL_SwapBuffers)(void) = 0;
 static void (*_SDL_Quit)(void) = 0;
 static int (*_SDL_Init)(uint32_t flags) = 0;
-static int (*_SDL_Flip)(void * some_ptr) = 0;
-
+//static int (*_SDL_Flip)(void * some_ptr) = 0;
+/*
 // hook - called every tick in OpenGL mode of DF
 DFhackCExport void SDL_GL_SwapBuffers(void)
 {
@@ -267,7 +281,8 @@ DFhackCExport void SDL_GL_SwapBuffers(void)
         _SDL_GL_SwapBuffers();
     }
 }
-
+*/
+/*
 // hook - called every tick in the 2D mode of DF
 DFhackCExport int SDL_Flip(void * some_ptr)
 {
@@ -282,6 +297,7 @@ DFhackCExport int SDL_Flip(void * some_ptr)
     }
     return 0;
 }
+*/
 
 // hook - called at program exit
 DFhackCExport void SDL_Quit(void)
@@ -289,6 +305,7 @@ DFhackCExport void SDL_Quit(void)
     if(!errorstate)
     {
         SHM_Destroy();
+        errorstate = true;
     }
     if(_SDL_Quit)
     {
@@ -300,13 +317,13 @@ DFhackCExport void SDL_Quit(void)
 DFhackCExport int SDL_Init(uint32_t flags)
 {
     // find real functions
-    _SDL_GL_SwapBuffers = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_GL_SwapBuffers");
+    //_SDL_GL_SwapBuffers = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_GL_SwapBuffers");
     _SDL_Init = (int (*)( uint32_t )) dlsym(RTLD_NEXT, "SDL_Init");
-    _SDL_Flip = (int (*)( void * )) dlsym(RTLD_NEXT, "SDL_Flip");
+    //_SDL_Flip = (int (*)( void * )) dlsym(RTLD_NEXT, "SDL_Flip");
     _SDL_Quit = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_Quit");
 
     // check if we got them
-    if(_SDL_GL_SwapBuffers && _SDL_Init && _SDL_Quit)
+    if(/*_SDL_GL_SwapBuffers &&*/ _SDL_Init && _SDL_Quit)
     {
         fprintf(stderr,"dfhack: hooking successful\n");
     }
@@ -314,13 +331,14 @@ DFhackCExport int SDL_Init(uint32_t flags)
     {
         // bail, this would be a disaster otherwise
         fprintf(stderr,"dfhack: something went horribly wrong\n");
+        errorstate = true;
         exit(1);
     }
-    SHM_Init();
+    //SHM_Init();
     
     return _SDL_Init(flags);
 }
-
+//*/
 /*******************************************************************************
 *                           NCURSES part starts here                           *
 *******************************************************************************/
@@ -331,11 +349,13 @@ DFhackCExport int refresh (void)
 {
     if(_refresh)
     {
+        /*
         if(!errorstate)
         {
             SHM_Act();
         }
         counter ++;
+        */
         return _refresh();
     }
     return 0;
@@ -348,11 +368,13 @@ DFhackCExport int endwin (void)
     if(!errorstate)
     {
         SHM_Destroy();
+        errorstate = true;
     }
     if(_endwin)
     {
         return _endwin();
     }
+    return 0;
 }
 
 typedef void WINDOW;
@@ -361,7 +383,7 @@ static WINDOW * (*_initscr)(void) = 0;
 DFhackCExport WINDOW * initscr (void)
 {
     // find real functions
-    _refresh = (int (*)( void )) dlsym(RTLD_NEXT, "refresh");
+    //_refresh = (int (*)( void )) dlsym(RTLD_NEXT, "refresh");
     _endwin = (int (*)( void )) dlsym(RTLD_NEXT, "endwin");
     _initscr = (WINDOW * (*)( void )) dlsym(RTLD_NEXT, "initscr");
     // check if we got them
@@ -375,6 +397,6 @@ DFhackCExport WINDOW * initscr (void)
         fprintf(stderr,"dfhack: something went horribly wrong\n");
         exit(1);
     }
-    SHM_Init();
+    //SHM_Init();
     return _initscr();
 }

@@ -84,6 +84,7 @@ uint32_t ContextManager::Refresh()
         Context * c = new Context(d->pEnum->operator[](i));
         d->contexts.push_back(c);
     }
+    return d->contexts.size();
 }
 uint32_t ContextManager::size()
 {

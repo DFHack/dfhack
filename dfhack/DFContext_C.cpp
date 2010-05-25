@@ -31,6 +31,7 @@ distribution.
 #include "DFTileTypes.h"
 #include "DFTypes.h"
 #include "DFWindow.h"
+#include "DFContextManager.h"
 #include "DFContext.h"
 
 using namespace std;
@@ -106,7 +107,7 @@ DFHackObject* ContextManager_getContext(DFHackObject* contextMgr, uint32_t index
 		if(index >= mgr->size())
 			return NULL;
 		
-		return (DFHackObject*)mgr[index];
+		return (DFHackObject*)((DFHack::Context*)((*mgr)[index]));
 	}
 	
 	return NULL;

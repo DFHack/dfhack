@@ -42,6 +42,10 @@ typedef t_matgloss* (*MatglossBufferFunc)(int);
 typedef t_descriptor_color* (*DescriptorColorBufferFunc)(int);
 typedef t_matglossOther* (*MatglossOtherBufferFunc)(int);
 
+MatglossBufferFunc alloc_matgloss_buffer_callback;
+DescriptorColorBufferFunc alloc_descriptor_buffer_callback;
+MatglossOtherBufferFunc alloc_matgloss_other_buffer_callback;
+
 DFHACK_EXPORT int Materials_ReadInorganicMaterials(DFHackObject* mat);
 DFHACK_EXPORT int Materials_ReadOrganicMaterials(DFHackObject* mat);
 DFHACK_EXPORT int Materials_ReadWoodMaterials(DFHackObject* mat);
@@ -64,11 +68,11 @@ DFHACK_EXPORT int Materials_getRaceExSize(DFHackObject* mat);
 DFHACK_EXPORT int Materials_getColorSize(DFHackObject* mat);
 DFHACK_EXPORT int Materials_getOtherSize(DFHackObject* mat);
 
-DFHACK_EXPORT int Materials_getInorganic(DFHackObject* mat, MatglossBufferFunc callback);
-DFHACK_EXPORT int Materials_getOrganic(DFHackObject* mat, MatglossBufferFunc callback);
-DFHACK_EXPORT int Materials_getTree(DFHackObject* mat, MatglossBufferFunc callback);
-DFHACK_EXPORT int Materials_getPlant(DFHackObject* mat, MatglossBufferFunc callback);
-DFHACK_EXPORT int Materials_getRace(DFHackObject* mat, MatglossBufferFunc callback);
+DFHACK_EXPORT int Materials_getInorganic(DFHackObject* mat);
+DFHACK_EXPORT int Materials_getOrganic(DFHackObject* mat);
+DFHACK_EXPORT int Materials_getTree(DFHackObject* mat);
+DFHACK_EXPORT int Materials_getPlant(DFHackObject* mat);
+DFHACK_EXPORT int Materials_getRace(DFHackObject* mat);
 
 /*doomchild:  
 	I haven't done getRaceEx yet, because I'm not sure about the best way to make the t_creaturetype struct
@@ -76,8 +80,8 @@ DFHACK_EXPORT int Materials_getRace(DFHackObject* mat, MatglossBufferFunc callba
 */
 //DFHACK_EXPORT int Materials_getRaceEx(DFHackObject* mat, c_creaturetype* (*c_creaturetype_buffer_create)(c_creaturetype_descriptor*, int));
 
-DFHACK_EXPORT int Materials_getColor(DFHackObject* mat, DescriptorColorBufferFunc callback);
-DFHACK_EXPORT int Materials_getOther(DFHackObject* mat, MatglossOtherBufferFunc callback);
+DFHACK_EXPORT int Materials_getColor(DFHackObject* mat);
+DFHACK_EXPORT int Materials_getOther(DFHackObject* mat);
 
 #ifdef __cplusplus
 }

@@ -265,26 +265,26 @@ bool Materials::ReadOthers(void)
 
 bool Materials::ReadDescriptorColors (void)
 {
-	Process * p = d->owner;
-	DfVector <uint32_t> p_colors (p, p->getDescriptor()->getAddress ("descriptor_colors_vector"));
-	uint32_t size = p_colors.size();
-	
-	color.clear();
-	if(size == 0)
-		return false;
-	color.reserve(size);
-	for (uint32_t i = 0; i < size;i++)
-	{
-		t_descriptor_color col;
-		p->readSTLString (p_colors[i] + p->getDescriptor()->getOffset ("descriptor_rawname"), col.id, 128);
-		p->readSTLString (p_colors[i] + p->getDescriptor()->getOffset ("descriptor_name"), col.name, 128);
-		col.r = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_r") );
-		col.v = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_v") );
-		col.b = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_b") );
-		color.push_back(col);
-	}
-        return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("descriptor_all_colors"), alldesc );
-	return true;
+    Process * p = d->owner;
+    DfVector <uint32_t> p_colors (p, p->getDescriptor()->getAddress ("descriptor_colors_vector"));
+    uint32_t size = p_colors.size();
+
+    color.clear();
+    if(size == 0)
+        return false;
+    color.reserve(size);
+    for (uint32_t i = 0; i < size;i++)
+    {
+        t_descriptor_color col;
+        p->readSTLString (p_colors[i] + p->getDescriptor()->getOffset ("descriptor_rawname"), col.id, 128);
+        p->readSTLString (p_colors[i] + p->getDescriptor()->getOffset ("descriptor_name"), col.name, 128);
+        col.r = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_r") );
+        col.v = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_v") );
+        col.b = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_b") );
+        color.push_back(col);
+    }
+    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("descriptor_all_colors"), alldesc );
+    return true;
 }
 
 bool Materials::ReadCreatureTypesEx (void)
@@ -364,20 +364,18 @@ bool Materials::ReadCreatureTypesEx (void)
 
             mat.castes.push_back(caste);
         }
-	mat.tile_character = p->readByte( p_races[i] + tile_offset );
+        mat.tile_character = p->readByte( p_races[i] + tile_offset );
         mat.tilecolor.fore = p->readWord( p_races[i] + tile_color_offset );
         mat.tilecolor.back = p->readWord( p_races[i] + tile_color_offset + 2 );
         mat.tilecolor.bright = p->readWord( p_races[i] + tile_color_offset + 4 );
-	
-	DfVector <uint32_t> p_extract(p, p_races[i] + extract_vector_offset);
-	for(uint32_t j = 0; j < p_extract.size(); j++)
-	{
-		t_creatureextract extract;
-		p->readSTLString( p_extract[j], extract.rawname, sizeof(extract.rawname));
-		mat.extract.push_back(extract);
-	}
 
-
+        DfVector <uint32_t> p_extract(p, p_races[i] + extract_vector_offset);
+        for(uint32_t j = 0; j < p_extract.size(); j++)
+        {
+            t_creatureextract extract;
+            p->readSTLString( p_extract[j], extract.rawname, sizeof(extract.rawname));
+            mat.extract.push_back(extract);
+        }
         raceEx.push_back(mat);
     }
     return true;
@@ -385,14 +383,14 @@ bool Materials::ReadCreatureTypesEx (void)
 
 void Materials::ReadAllMaterials(void)
 {
-	this->ReadInorganicMaterials();
-        this->ReadOrganicMaterials();
-        this->ReadWoodMaterials();
-        this->ReadPlantMaterials();
-        this->ReadCreatureTypes();
-        this->ReadCreatureTypesEx();
-	this->ReadDescriptorColors();
-	this->ReadOthers();
+    this->ReadInorganicMaterials();
+    this->ReadOrganicMaterials();
+    this->ReadWoodMaterials();
+    this->ReadPlantMaterials();
+    this->ReadCreatureTypes();
+    this->ReadCreatureTypesEx();
+    this->ReadDescriptorColors();
+    this->ReadOthers();
 }
 
 std::string Materials::getDescription(t_material & mat)

@@ -1727,7 +1727,7 @@ map_data_1b60_offset          0x1B9c
         
         Creatures
         =========
-        <Address name="creature_vector">0x092E3A9C</Address>
+        <Address name="creature_vector">0x092E3AA0</Address>
         <Address name="dwarf_race_index">0x092CB608</Address>
         <Address name="dwarf_civ_id">0x092CB5FC</Address>
         <Offset name="creature_name">0x0</Offset>

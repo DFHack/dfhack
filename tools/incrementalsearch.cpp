@@ -143,7 +143,7 @@ void searchLoopVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange
                 if(!ranges[i].read)
                     continue;
                 //loop
-                for(uint64_t offset = ranges[i].start;offset <= ranges[i].end - sizeof(vecTriplet); offset++)
+                for(uint64_t offset = ranges[i].start;offset <= ranges[i].end - sizeof(vecTriplet); offset+=4)
                 {
                     DF->ReadRaw(offset, sizeof(vecTriplet), (uint8_t *) &load);
                     if(load.start <= load.finish && load.finish <= load.alloc_finish)

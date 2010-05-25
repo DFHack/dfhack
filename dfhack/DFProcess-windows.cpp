@@ -438,7 +438,7 @@ const string NormalProcess::readCString (const uint32_t offset)
 {
     string temp;
     char temp_c[256];
-    DWORD read;
+    SIZE_T read;
     if(!ReadProcessMemory(d->my_handle, (int *) offset, temp_c, 254, &read))
         throw Error::MemoryAccessDenied();
     // needs to be 254+1 byte for the null term

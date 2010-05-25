@@ -1,9 +1,17 @@
 from ctypes import *
-from collections import namedtuple
 from pydfhackflags import *
 from enum import *
+from util import *
 
 libdfhack = cdll.libdfhack
+
+libdfhack.alloc_byte_buffer_callback = alloc_byte_buffer
+libdfhack.alloc_ubyte_buffer_callback = alloc_ubyte_buffer
+libdfhack.alloc_short_buffer_callback = alloc_short_buffer
+libdfhack.alloc_ushort_buffer_callback = alloc_ushort_buffer
+libdfhack.alloc_int_buffer_callback = alloc_int_buffer
+libdfhack.alloc_uint_buffer_callback = alloc_uint_buffer
+libdfhack.alloc_char_buffer_callback = alloc_char_buffer
 
 int_ptr = POINTER(c_int)
 uint_ptr = POINTER(c_uint)
@@ -79,6 +87,13 @@ class Matgloss(Structure):
                 ("bright", c_byte),
                 ("name", c_char * 128)]
 
+def _alloc_matgloss_buffer_callback(count):
+    allocated = _allocate_array(Matgloss, count)
+
+    return allocated[1]
+
+libdfhack.alloc_matgloss_buffer_callback = CFUNCTYPE(POINTER(Matgloss), c_int)(_alloc_matgloss_buffer_callback)
+
 class MatglossPair(Structure):
     _fields_ = [("type", c_short),
                 ("index", c_int)]
@@ -90,8 +105,22 @@ class DescriptorColor(Structure):
                 ("b", c_float),
                 ("name", c_char * 128)]
 
+def _alloc_descriptor_buffer_callback(count):
+    allocated = _allocate_array(DescriptorColor, count)
+
+    return allocated[1]
+
+libdfhack.alloc_descriptor_buffer_callback = CFUNCTYPE(POINTER(DescriptorColor), c_int)(_alloc_descriptor_buffer_callback)
+
 class MatglossOther(Structure):
     _fields_ = [("rawname", c_char * 128)]
+
+def _alloc_matgloss_other_buffer_callback(count):
+    allocated = _allocate_array(MatglossOther, count)
+
+    return allocated[1]
+
+libdfhack.alloc_matgloss_other_buffer_callback = CFUNCTYPE(POINTER(MatglossOther), c_int)(_alloc_matgloss_other_buffer_callback)
 
 class Building(Structure):
     _fields_ = [("origin", c_uint),
@@ -256,3 +285,19 @@ class BodyPart(Structure):
                 ("category", (c_char * 128)),
                 ("single", (c_char * 128)),
                 ("plural", (c_char * 128))]
+
+class ColorModifier(Structure):
+    _fields_ = [("part", (c_char * 128)),
+                ("colorlist", POINTER(c_uint)),
+                ("colorlistLength", c_uint)]
+
+    def __init__(self):
+        self.part[0] = '\0'
+        self.colorlistLength = 0
+
+ColorModifierPtr = POINTER(ColorModifier)
+
+def _alloc_empty_colormodifier_callback():
+    return ColorModifierPtr(ColorModifier())
+
+libdfhack.alloc_empty_colormodifier_callback = CFUNCTYPE(ColorModifierPtr)(_alloc_empty_colormodifier_callback)

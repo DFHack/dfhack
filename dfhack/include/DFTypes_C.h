@@ -37,6 +37,14 @@ using namespace DFHack;
 extern "C" {
 #endif
 
+int8_t* (*alloc_byte_buffer_callback)(uint32_t);
+int16_t* (*alloc_short_buffer_callback)(uint32_t);
+int32_t* (*alloc_int_buffer_callback)(uint32_t);
+
+uint8_t* (*alloc_ubyte_buffer_callback)(uint32_t);
+uint16_t* (*alloc_ushort_buffer_callback)(uint32_t);
+uint32_t* (*alloc_uint_buffer_callback)(uint32_t);
+
 struct c_colormodifier
 {
 	char part[128];
@@ -44,8 +52,9 @@ struct c_colormodifier
 	uint32_t colorlistLength;
 };
 
-c_colormodifier* ColorModifier_New();
-void ColorModifier_Free(c_colormodifier* src);
+c_colormodifier* (*alloc_empty_colormodifier_callback)(void);
+c_colormodifier* (*alloc_colormodifier_callback)(const char*, uint32_t);
+c_colormodifier* (*alloc_colormodifier_buffer_callback)(uint32_t);
 
 struct c_creaturecaste
 {
@@ -61,8 +70,9 @@ struct c_creaturecaste
 	uint32_t bodypartLength;
 };
 
-c_creaturecaste* CreatureCaste_New();
-void CreatureCaste_Free(c_creaturecaste* src);
+c_creaturecaste* (*alloc_empty_creaturecaste_callback)(void);
+c_creaturecaste* (*alloc_creaturecaste_callback)(const char*, const char*, const char*, const char*, uint32_t, uint32_t);
+c_creaturecaste* (*alloc_creaturecaste_buffer_callback)(uint32_t);
 
 struct c_creaturetype
 {
@@ -84,8 +94,9 @@ struct c_creaturetype
 	} tilecolor;
 };
 
-c_creaturetype* CreatureType_New();
-void CreatureType_Free(c_creaturetype* src);
+c_creaturetype* (*alloc_empty_creaturetype_callback)(void);
+c_creaturetype* (*alloc_creaturetype_callback)(const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t);
+c_creaturetype* (*alloc_creaturetype_buffer_callback)(uint32_t);
 
 #ifdef __cplusplus
 }

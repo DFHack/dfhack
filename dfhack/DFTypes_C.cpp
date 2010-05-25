@@ -32,136 +32,44 @@ using namespace std;
 
 #include "DFCommonInternal.h"
 #include "DFTypes.h"
-#include "modules/Materials.h"
 #include "DFTypes_C.h"
+#include "modules/Materials.h"
 
 using namespace DFHack;
 
-
-/*
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-c_colormodifier* ColorModifier_New()
-{
-	c_colormodifier* temp;
-	
-	temp = (c_colormodifier*)malloc(sizeof(c_colormodifier));
-	
-	if(temp == NULL)
-		return NULL;
-	
-	temp->part[0] = '\0';
-	temp->colorlist = NULL;
-	temp->colorlistLength = 0;
-	
-	return temp;
-}
+int8_t* (*alloc_byte_buffer_callback)(uint32_t) = NULL;
+int16_t* (*alloc_short_buffer_callback)(uint32_t) = NULL;
+int32_t* (*alloc_int_buffer_callback)(uint32_t) = NULL;
 
-void ColorModifier_Free(c_colormodifier* src)
-{
-	if(src != NULL)
-	{
-		if(src->colorlist != NULL)
-			free(src->colorlist);
-		
-		free(src);
-	}
-}
+uint8_t* (*alloc_ubyte_buffer_callback)(uint32_t) = NULL;
+uint16_t* (*alloc_ushort_buffer_callback)(uint32_t) = NULL;
+uint32_t* (*alloc_uint_buffer_callback)(uint32_t) = NULL;
 
-c_creaturecaste* CreatureCaste_New()
-{
-	c_creaturecaste* temp;
-	
-	temp = (c_creaturecaste*)malloc(sizeof(c_creaturecaste));
-	
-	if(temp == NULL)
-		return NULL;
-	
-	temp->rawname[0] = '\0';
-	temp->singular[0] = '\0';
-	temp->plural[0] = '\0';
-	temp->adjective[0] = '\0';
-	
-	temp->ColorModifier = NULL;
-	temp->colorModifierLength = 0;
-	
-	temp->bodypart = NULL;
-	temp->bodypartLength = 0;
-	
-	return temp;
-}
+char* (*alloc_char_buffer_callback)(uint32_t) = NULL;
 
-void CreatureCaste_Free(c_creaturecaste* src)
-{
-	if(src != NULL)
-	{
-		if(src->bodypart != NULL)
-			free(src->bodypart);
-		
-		if(src->ColorModifier != NULL)
-		{
-			for(int i = 0; i < src->colorModifierLength; i++)
-				ColorModifier_Free(&src->ColorModifier[i]);
-			
-			free(src->ColorModifier);
-		}
-		
-		free(src);
-	}
-}
+t_matgloss* (*alloc_matgloss_buffer_callback)(int) = NULL;
+t_descriptor_color* (*alloc_descriptor_buffer_callback)(int) = NULL;
+t_matglossOther* (*alloc_matgloss_other_buffer_callback)(int) = NULL;
 
-c_creaturetype* CreatureType_New()
-{
-	c_creaturetype* temp;
-	
-	temp = (c_creaturetype*)malloc(sizeof(c_creaturetype));
-	
-	if(temp == NULL)
-		return NULL;
-	
-	temp->rawname[0] = '\0';
-	
-	temp->castes = NULL;
-	temp->castesCount = 0;
-	
-	temp->extract = NULL;
-	temp->extractCount = 0;
-	
-	temp->tile_character = 0;
-	
-	temp->tilecolor.fore = 0;
-	temp->tilecolor.back = 0;
-	temp->tilecolor.bright = 0;
-	
-	return temp;
-}
+c_colormodifier* (*alloc_empty_colormodifier_callback)(void) = NULL;
+c_colormodifier* (*alloc_colormodifier_callback)(const char*, uint32_t) = NULL;
+c_colormodifier* (*alloc_colormodifier_buffer_callback)(uint32_t) = NULL;
 
-void CreatureType_Free(c_creaturetype* src)
-{
-	if(src != NULL)
-	{
-		if(src->castes != NULL)
-		{
-			for(int i = 0; i < src->castesCount; i++)
-				CreatureCaste_Free(&src->castes[i]);
-			
-			free(src->castes);
-		}
-		
-		if(src->extract != NULL)
-			free(src->extract);
-		
-		free(src);
-	}
-}
+c_creaturecaste* (*alloc_empty_creaturecaste_callback)(void) = NULL;
+c_creaturecaste* (*alloc_creaturecaste_callback)(const char*, const char*, const char*, const char*, uint32_t, uint32_t) = NULL;
+c_creaturecaste* (*alloc_creaturecaste_buffer_callback)(uint32_t) = NULL;
+
+c_creaturetype* (*alloc_empty_creaturetype_callback)(void) = NULL;
+c_creaturetype* (*alloc_creaturetype_callback)(const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t) = NULL;
+c_creaturetype* (*alloc_creaturetype_buffer_callback)(uint32_t) = NULL;
 
 #ifdef __cplusplus
 }
 #endif
-
-*/
 
 int ColorListConvert(t_colormodifier* src, c_colormodifier* dest)
 {

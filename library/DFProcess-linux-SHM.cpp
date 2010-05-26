@@ -609,7 +609,7 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
     else
     {
         // first read equals the size of the SHM window
-        uint32_t to_read = SHM_BODY - 1024;
+        uint32_t to_read = SHM_BODY;
         while (size)
         {
             // read to_read bytes from src_cursor
@@ -617,7 +617,7 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
             D_SHMHDR->length = to_read;
             gcc_barrier
             d->SetAndWait(CORE_READ);
-            memcpy (target_buffer, D_SHMDATA(void) ,size);
+            memcpy (target_buffer, D_SHMDATA(void) ,to_read);
             // decrease size by bytes read
             size -= to_read;
             // move the cursors

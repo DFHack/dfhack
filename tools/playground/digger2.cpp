@@ -13,21 +13,15 @@
 
 #include <iostream>
 #include <fstream>
-#include <integers.h>
 #include <vector>
+#include <string>
 #include <list>
 #include <cstdlib>
 #include <algorithm>
 #include <assert.h>
-
-#include <DFTypes.h>
-#include <DFTileTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
+using namespace std;
 #include <argstream.h>
-#include <modules/Maps.h>
-#include <modules/Position.h>
-
+#include <DFHack.h>
 #define BLOCK_SIZE 16
 
 

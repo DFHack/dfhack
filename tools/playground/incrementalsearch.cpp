@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <climits>
-#include <integers.h>
 #include <vector>
 #include <map>
 #include <ctime>
@@ -19,12 +18,7 @@ using namespace std;
     #include <windows.h>
 #endif
 
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <DFProcessEnumerator.h>
-#include <DFProcess.h>
-#include <DFMemInfo.h>
+#include <DFHack.h>
 
 //TODO: lots of optimization
 void searchLoop(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges, int size, int alignment)

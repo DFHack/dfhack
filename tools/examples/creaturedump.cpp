@@ -2,23 +2,11 @@
 
 #include <iostream>
 #include <climits>
-#include <integers.h>
 #include <string.h>
 #include <vector>
 using namespace std;
 
-#include <DFGlobal.h>
-#include <DFError.h>
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <DFMemInfo.h>
-#include <DFProcess.h>
-#include <modules/Materials.h>
-#include <modules/Creatures.h>
-#include <modules/Translation.h>
-#include <modules/World.h>
-#include <DFMiscUtils.h>
+#include <DFHack.h>
 
 enum likeType
 {

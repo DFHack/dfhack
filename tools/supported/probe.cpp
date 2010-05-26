@@ -3,27 +3,13 @@
 #include <iostream>
 #include <iomanip>
 #include <climits>
-#include <integers.h>
 #include <vector>
 #include <sstream>
 #include <ctime>
 #include <cstdio>
 using namespace std;
 
-#include <DFGlobal.h>
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <DFProcess.h>
-#include <DFMemInfo.h>
-#include <DFVector.h>
-#include <DFTypes.h>
-#include <modules/Materials.h>
-#include <modules/Position.h>
-#include <modules/Maps.h>
-#include <modules/Constructions.h>
-#include <DFMiscUtils.h>
-#include <DFTileTypes.h>
+#include <DFHack.h>
 
 using namespace DFHack;
 int main (int numargs, const char ** args)

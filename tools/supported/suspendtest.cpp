@@ -2,15 +2,12 @@
 
 #include <iostream>
 #include <climits>
-#include <integers.h>
 #include <vector>
 #include <ctime>
 #include <string>
 using namespace std;
 
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
+#include <DFHack.h>
 int main (void)
 {
     string blah;

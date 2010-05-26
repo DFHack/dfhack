@@ -7,19 +7,10 @@
 #include <iomanip>
 #include <sstream>
 #include <climits>
-#include <integers.h>
 #include <vector>
 using namespace std;
 
-#include <DFError.h>
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <DFMemInfo.h>
-#include <DFProcess.h>
-#include <DFVector.h>
-#include <modules/Materials.h>
-#include <modules/Items.h>
+#include <DFHack.h>
 
 
 DFHack::Materials * Materials;

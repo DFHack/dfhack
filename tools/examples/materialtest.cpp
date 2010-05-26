@@ -2,20 +2,12 @@
 
 #include <iostream>
 #include <climits>
-#include <integers.h>
 #include <vector>
 #include <sstream>
 #include <ctime>
 using namespace std;
 
-#include <DFGlobal.h>
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <DFProcess.h>
-#include <DFMemInfo.h>
-#include <DFVector.h>
-#include <modules/Materials.h>
+#include <DFHack.h>
 
 int main (int numargs, const char ** args)
 {

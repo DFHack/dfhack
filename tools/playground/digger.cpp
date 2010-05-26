@@ -5,7 +5,6 @@
 // TODO add a sort of "sub-target" to dig() to make it able to designate stone as well
 
 #include <iostream>
-#include <integers.h>
 #include <vector>
 #include <list>
 #include <cstdlib>
@@ -13,12 +12,8 @@
 #include <assert.h>
 using namespace std;
 
-#include <DFTypes.h>
-#include <DFTileTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
+#include <DFHack.h>
 #include <argstream.h>
-#include <modules/Maps.h>
 
 // counts the occurances of a certain element in a vector
 // used to determine of a given tile is a target

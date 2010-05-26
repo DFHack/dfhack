@@ -2,17 +2,11 @@
 // enable magma buildings at this time.
 
 #include <iostream>
-#include <integers.h>
 #include <vector>
 #include <map>
 using namespace std;
 
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <modules/Maps.h>
-#include <modules/Position.h>
-#include <DFTileTypes.h>
+#include <DFHack.h>
 
 int main (void)
 {

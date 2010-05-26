@@ -1,16 +1,11 @@
 // This is a reveal program. It reveals the map.
 
 #include <iostream>
-#include <integers.h>
 #include <vector>
 #include <map>
 using namespace std;
 
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <modules/Maps.h>
-
+#include <DFHack.h>
 
 struct hideblock
 {

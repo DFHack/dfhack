@@ -1,7 +1,6 @@
 // This program exports the entire map from DF. Takes roughly 6.6 seconds for 1000 cycles on my Linux machine. ~px
 
 #include <iostream>
-#include <integers.h>
 #include <vector>
 #include <ctime>
 #include <sstream>
@@ -9,10 +8,7 @@
 
 using namespace std;
 
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <modules/Maps.h>
+#include <DFHack.h>
 
 void print_progress (int current, int total)
 {

@@ -3,14 +3,10 @@
 
 #include <iostream>
 #include <climits>
-#include <integers.h>
 #include <vector>
 #include <ctime>
 using namespace std;
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <DFError.h>
+#include <DFHack.h>
 
 int main (void)
 {

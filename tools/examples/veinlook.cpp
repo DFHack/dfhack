@@ -1,4 +1,3 @@
-#include <integers.h>
 #include <string.h> // for memset
 #include <string>
 #include <fstream>
@@ -16,16 +15,7 @@ using namespace std;
 #include <locale.h>
 #include <math.h>
 
-#include <DFGlobal.h>
-#include <DFTypes.h>
-#include <DFTileTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <DFProcess.h>
-#include <DFMemInfo.h>
-#include <modules/Maps.h>
-#include <modules/Materials.h>
-#include <DFMiscUtils.h>
+#include <DFHack.h>
 using namespace DFHack;
 
 

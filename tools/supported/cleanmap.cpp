@@ -1,18 +1,12 @@
 // Map cleaner. Removes all the snow, mud spills, blood and vomit from map tiles.
 
 #include <iostream>
-#include <integers.h>
 #include <vector>
 #include <map>
+#include <stddef.h>
 using namespace std;
 
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <DFMemInfo.h>
-#include <DFTypes.h>
-#include <stddef.h>
-#include <modules/Maps.h>
+#include <DFHack.h>
 
 int main (void)
 {

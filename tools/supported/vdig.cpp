@@ -1,5 +1,4 @@
 #include <iostream>
-#include <integers.h>
 #include <string.h> // for memset
 #include <string>
 #include <vector>
@@ -9,14 +8,7 @@
 #include <cstdlib>
 using namespace std;
 
-#include <DFTypes.h>
-#include <DFTileTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <modules/Maps.h>
-#include <modules/Position.h>
-#include <modules/Materials.h>
-#include <DFTileTypes.h>
+#include <DFHack.h>
 #include <argstream.h>
 
 #define MAX_DIM 0x300

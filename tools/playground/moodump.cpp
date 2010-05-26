@@ -1,20 +1,9 @@
 #include <iostream>
 #include <climits>
-#include <integers.h>
 #include <vector>
 #include <stdio.h>
 using namespace std;
-
-#include <DFGlobal.h>
-#include <DFError.h>
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <DFMemInfo.h>
-#include <DFProcess.h>
-#include <modules/Materials.h>
-#include <modules/Creatures.h>
-#include <modules/Translation.h>
+#include <DFHack.h>
 
 DFHack::Materials * Materials;
 DFHack::memory_info *mem;

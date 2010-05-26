@@ -4,22 +4,10 @@
 #include <iomanip>
 #include <sstream>
 #include <climits>
-#include <integers.h>
 #include <vector>
 using namespace std;
 
-#include <DFGlobal.h>
-#include <DFError.h>
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <DFMemInfo.h>
-#include <DFProcess.h>
-#include <DFTypes.h>
-#include <modules/Buildings.h>
-#include <modules/Materials.h>
-#include <modules/Position.h>
-#include <DFMiscUtils.h>
+#include <DFHack.h>
 
 int main (int argc,const char* argv[])
 {

@@ -4,7 +4,6 @@
 // and due within 2 in-game hours...
 
 #include <iostream>
-#include <integers.h>
 #include <cstdlib>
 #include <assert.h>
 #include <climits>
@@ -15,15 +14,8 @@
 #include <iterator>
 using namespace std;
 
-#include <DFError.h>
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <DFMemInfo.h>
-#include <DFProcess.h>
+#include <DFHack.h>
 #include <argstream.h>
-#include <modules/Materials.h>
-#include <modules/Creatures.h>
 
 using namespace DFHack;
 

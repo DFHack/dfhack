@@ -8,7 +8,6 @@
 // TODO: GUI
 
 #include <iostream>
-#include <integers.h>
 #include <string.h> // for memset
 #include <string>
 #include <vector>
@@ -16,12 +15,7 @@
 #include <stdio.h>
 using namespace std;
 
-#include <DFTypes.h>
-#include <DFTileTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <modules/Maps.h>
-#include <modules/Materials.h>
+#include <DFHack.h>
 
 int main (int argc, const char* argv[])
 {

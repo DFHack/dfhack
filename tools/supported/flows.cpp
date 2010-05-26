@@ -1,14 +1,10 @@
 // This tool counts static tiles and active flows of water and magma.
 
 #include <iostream>
-#include <integers.h>
 #include <vector>
 using namespace std;
 
-#include <DFTypes.h>
-#include <DFContextManager.h>
-#include <DFContext.h>
-#include <modules/Maps.h>
+#include <DFHack.h>
 
 int main (void)
 {

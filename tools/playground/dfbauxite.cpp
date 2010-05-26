@@ -15,14 +15,13 @@ Based on code from and uses DFHack - www.sourceforge.net/projects/dfhack
 using namespace std;
 
 
-#include <integers.h>
-#include <Export.h>
+#include <DFIntegers.h>
+#include <DFExport.h>
 #include <DFError.h>
 #include <DFVector.h>
 #include <DFMemInfo.h>
 #include <DFProcess.h>
 #include <DFTypes.h>
-#include <DFHackAPI.h>
 using namespace DFHack;
 
 

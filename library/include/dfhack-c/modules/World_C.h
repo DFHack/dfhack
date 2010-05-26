@@ -1,6 +1,6 @@
 /*
 www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mr√°zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
+Copyright (c) 2009 Petr Mr·zek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -22,21 +22,23 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef VEGETATION_C_API
-#define VEGETATION_C_API
+#ifndef WORLD_C_API
+#define WORLD_C_API
 
 #include "DFHack_C.h"
-#include "dfhack/DFTypes.h"
-#include "dfhack/modules/Vegetation.h"
+#include "dfhack/modules/World.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-DFHACK_EXPORT int Vegetation_Start(DFHackObject* veg, uint32_t* numTrees);
-DFHACK_EXPORT int Vegetation_Finish(DFHackObject* veg);
+DFHACK_EXPORT int World_Start(DFHackObject* world);
+DFHACK_EXPORT int World_Finish(DFHackObject* world);
 
-DFHACK_EXPORT int Vegetation_Read(DFHackObject* veg, const uint32_t index, t_tree* shrubbery);
+DFHACK_EXPORT int World_ReadCurrentTick(DFHackObject* world, uint32_t* tick);
+DFHACK_EXPORT int World_ReadCurrentYear(DFHackObject* world, uint32_t* year);
+DFHACK_EXPORT int World_ReadCurrentMonth(DFHackObject* world, uint32_t* month);
+DFHACK_EXPORT int World_ReadCurrentDay(DFHackObject* world, uint32_t* day);
 
 #ifdef __cplusplus
 }

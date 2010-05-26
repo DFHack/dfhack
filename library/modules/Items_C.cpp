@@ -22,24 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include <map>
-#include <vector>
-#include <string>
-#include "dfhack/DFExport.h"
-#include "dfhack/DFIntegers.h"
-#include "DFHack_C.h"
-
-#include "dfhack/DFTypes.h"
-
-using namespace std;
-using namespace DFHack;
-
-#include "dfhack/DFProcess.h"
-#include "dfhack/modules/Materials.h"
-#include "dfhack/modules/Items.h"
-#include "dfhack-c/DFTypes_C.h"
 #include "dfhack-c/modules/Items_C.h"
-
 
 #ifdef __cplusplus
 extern "C" {

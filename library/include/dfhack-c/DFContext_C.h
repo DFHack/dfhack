@@ -25,10 +25,7 @@ distribution.
 #ifndef DFHACK_C_CONTEXT
 #define DFHACK_C_CONTEXT
 
-#include "dfhack/DFExport.h"
-#include "dfhack/DFIntegers.h"
-
-typedef void DFHackObject;
+#include "DFHack_C.h"
 
 #ifdef __cplusplus
 extern "C" {

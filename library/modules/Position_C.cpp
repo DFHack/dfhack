@@ -22,15 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include <vector>
-#include <string>
 #include "dfhack-c/modules/Position_C.h"
-#include "dfhack/DFIntegers.h"
-
-#include "Internal.h"
-#include "dfhack/modules/Position.h"
-
-using namespace DFHack;
 
 #ifdef __cplusplus
 extern "C" {

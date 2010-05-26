@@ -25,11 +25,9 @@ distribution.
 #ifndef GUI_C_API
 #define GUI_C_API
 
-#include "dfhack/DFExport.h"
-#include "dfhack/DFIntegers.h"
+#include "DFHack_C.h"
 #include "dfhack/DFTypes.h"
-
-using namespace DFHack;
+#include "dfhack/modules/Gui.h"
 
 #ifdef __cplusplus
 extern "C" {

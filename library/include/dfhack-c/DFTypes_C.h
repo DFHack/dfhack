@@ -25,12 +25,9 @@ distribution.
 #ifndef TYPES_C_API
 #define TYPES_C_API
 
-#include "dfhack/DFExport.h"
-#include "dfhack/DFIntegers.h"
+#include "DFHack_C.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Materials.h"
-
-using namespace DFHack;
 
 #ifdef __cplusplus
 extern "C" {

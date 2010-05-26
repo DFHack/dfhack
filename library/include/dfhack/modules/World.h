@@ -8,12 +8,12 @@
 
 namespace DFHack
 {
-    class DFContextPrivate;
+    class DFContextShared;
     class DFHACK_EXPORT World
     {
         public:
         
-        World(DFHack::DFContextPrivate * d);
+        World(DFHack::DFContextShared * d);
         ~World();
         bool Start();
         bool Finish();

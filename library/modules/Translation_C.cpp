@@ -27,7 +27,7 @@ distribution.
 
 using namespace std;
 
-#include "dfhack/DFCommonInternal.h"
+#include "Internal.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Translation.h"
 #include "dfhack-c/modules/Translation_C.h"

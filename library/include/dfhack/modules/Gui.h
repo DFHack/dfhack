@@ -8,13 +8,13 @@
 
 namespace DFHack
 {
-    class DFContextPrivate;
+    class DFContextShared;
     struct t_viewscreen;
     class DFHACK_EXPORT Gui
     {
         public:
         
-        Gui(DFHack::DFContextPrivate * d);
+        Gui(DFHack::DFContextShared * d);
         ~Gui();
         bool Start();
         bool Finish();

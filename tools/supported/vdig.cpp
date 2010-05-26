@@ -9,6 +9,7 @@
 using namespace std;
 
 #include <DFHack.h>
+#include <dfhack/DFTileTypes.h>
 #include <argstream.h>
 
 #define MAX_DIM 0x300

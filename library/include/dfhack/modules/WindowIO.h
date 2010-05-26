@@ -25,8 +25,8 @@ distribution.
 #ifndef KEYS_H_INCLUDED
 #define KEYS_H_INCLUDED
 
-#include "DFPragma.h"
-#include "DFExport.h"
+#include "dfhack/DFPragma.h"
+#include "dfhack/DFExport.h"
 
 namespace DFHack
 {
@@ -87,15 +87,15 @@ enum t_special
     KEYPAD_DECIMAL_POINT,
     NUM_SPECIALS
 };
-
-class DFHACK_EXPORT DFWindow
+class DFContextShared;
+class DFHACK_EXPORT WindowIO
 {
     class Private;
     private:
         Private * d;
     public:
-        DFWindow(Process * p);
-        ~DFWindow();
+        WindowIO(DFHack::DFContextShared * d);
+        ~WindowIO();
         void TypeStr (const char *input, int delay = 0, bool useShift = false);
         void TypeSpecial (t_special command, int count = 1, int delay = 0);
 };

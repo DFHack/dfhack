@@ -21,11 +21,12 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
-#include "dfhack/DFCommonInternal.h"
-#include "dfhack/DFWindow.h"
+#include "Internal.h"
+#include "dfhack/modules/WindowIO.h"
 
 #include <X11/Xlib.h>   //need for X11 functions
 #include <X11/keysym.h>
+#include <ContextShared.h>
 
 using namespace DFHack;
 
@@ -84,7 +85,7 @@ const static KeySym ksTable[NUM_SPECIALS]=
     XK_KP_Decimal
 };
 
-class DFWindow::Private
+class WindowIO::Private
 {
     public:
         Private(Process * _p)
@@ -111,18 +112,18 @@ class DFWindow::Private
 };
 
 // ctor
-DFWindow::DFWindow (Process * p)
+WindowIO::WindowIO (DFContextShared * csh)
 {
-    d = new Private(p);
+    d = new Private(csh->p);
 }
 
 // dtor
-DFWindow::~DFWindow ()
+WindowIO::~WindowIO ()
 {
     delete d;
 }
 
-Window DFWindow::Private::EnumerateWindows (Display *display, Window rootWindow, const char *searchString)
+Window WindowIO::Private::EnumerateWindows (Display *display, Window rootWindow, const char *searchString)
 {
     Window parent;
     Window *children;
@@ -161,7 +162,7 @@ Window DFWindow::Private::EnumerateWindows (Display *display, Window rootWindow,
     return retWindow;
 }
 
-bool DFWindow::Private::getDFWindow (Display *dpy, Window& dfWindow, Window & rootWindow)
+bool WindowIO::Private::getDFWindow (Display *dpy, Window& dfWindow, Window & rootWindow)
 {
     //  int numScreeens = ScreenCount(dpy);
     for (int i = 0;i < ScreenCount (dpy);i++)
@@ -177,7 +178,7 @@ bool DFWindow::Private::getDFWindow (Display *dpy, Window& dfWindow, Window & ro
     return false;
 }
 
-void DFWindow::Private::send_xkeyevent(Display *display, Window dfW,Window rootW, int keycode, int modstate, int is_press, useconds_t delay)
+void WindowIO::Private::send_xkeyevent(Display *display, Window dfW,Window rootW, int keycode, int modstate, int is_press, useconds_t delay)
 {
     XKeyEvent event;
     
@@ -199,7 +200,7 @@ void DFWindow::Private::send_xkeyevent(Display *display, Window dfW,Window rootW
     usleep(delay);
 }
 
-void DFWindow::TypeStr (const char *input, int delay, bool useShift)
+void WindowIO::TypeStr (const char *input, int delay, bool useShift)
 {
     Display *dpy = XOpenDisplay (NULL); // null opens the display in $DISPLAY
     Window dfWin;
@@ -234,7 +235,7 @@ void DFWindow::TypeStr (const char *input, int delay, bool useShift)
     }
 }
 
-void DFWindow::TypeSpecial (t_special command, int count, int delay)
+void WindowIO::TypeSpecial (t_special command, int count, int delay)
 {
     if (command != WAIT)
     {

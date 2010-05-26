@@ -22,9 +22,9 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFCommonInternal.h"
-#include "../private/APIPrivate.h"
-//#include "modules/Translation.h"
+#include "Internal.h"
+#include "ContextShared.h"
+
 #include "dfhack/DFMemInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
@@ -39,13 +39,13 @@ struct Constructions::Private
     // translation
     DfVector <uint32_t> * p_cons;
     
-    DFContextPrivate *d;
+    DFContextShared *d;
     Process * owner;
     bool Inited;
     bool Started;
 };
 
-Constructions::Constructions(DFContextPrivate * d_)
+Constructions::Constructions(DFContextShared * d_)
 {
     d = new Private;
     d->d = d_;

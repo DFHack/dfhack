@@ -24,7 +24,7 @@ distribution.
 
 #include "dfhack/DFIntegers.h"
 
-#include "dfhack/DFCommonInternal.h"
+#include "Internal.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Constructions.h"
 #include "dfhack-c/modules/Constructions_C.h"

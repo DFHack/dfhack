@@ -29,7 +29,7 @@ distribution.
 
 using namespace std;
 
-#include "dfhack/DFCommonInternal.h"
+#include "Internal.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Buildings.h"
 #include "dfhack-c/modules/Buildings_C.h"

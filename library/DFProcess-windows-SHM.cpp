@@ -21,7 +21,7 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
-#include "dfhack/DFCommonInternal.h"
+#include "Internal.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFWindow.h"
 #include "dfhack/DFMemInfo.h"
@@ -39,7 +39,6 @@ class SHMProcess::Private
         memdescriptor = NULL;
         process_ID = 0;
         shm_addr = 0;
-        window = NULL;
         attached = false;
         locked = false;
         identified = false;
@@ -51,7 +50,6 @@ class SHMProcess::Private
     };
     ~Private(){};
     memory_info * memdescriptor;
-    DFWindow * window;
     SHMProcess * self;
     uint32_t process_ID;
     char *shm_addr;
@@ -300,7 +298,6 @@ SHMProcess::SHMProcess(uint32_t PID, vector <memory_info *> & known_versions)
         throw Error::SHMVersionMismatch();
     }
     d->validate(known_versions);
-    d->window = new DFWindow(this);
     // at this point, DF is attached and suspended, make it run
     detach();
 }
@@ -386,21 +383,12 @@ SHMProcess::~SHMProcess()
     {
         delete d->memdescriptor;
     }
-    if(d->window)
-    {
-        delete d->window;
-    }
     delete d;
 }
 
 memory_info * SHMProcess::getDescriptor()
 {
     return d->memdescriptor;
-}
-
-DFWindow * SHMProcess::getWindow()
-{
-    return d->window;
 }
 
 int SHMProcess::getPID()

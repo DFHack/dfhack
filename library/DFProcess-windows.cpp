@@ -21,7 +21,7 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
-#include "dfhack/DFCommonInternal.h"
+#include "Internal.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFWindow.h"
 #include "dfhack/DFMemInfo.h"
@@ -36,14 +36,12 @@ class NormalProcess::Private
             my_descriptor = NULL;
             my_handle = NULL;
             my_main_thread = NULL;
-            my_window = NULL;
             my_pid = 0;
             attached = false;
             suspended = false;
         };
         ~Private(){};
         memory_info * my_descriptor;
-        DFWindow * my_window;
         HANDLE my_handle;
         HANDLE my_main_thread;
         uint32_t my_pid;
@@ -147,10 +145,6 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versio
     {
         CloseHandle(hProcess);
     }
-    else
-    {
-        d->my_window = new DFWindow(this);
-    }
 }
 /*
 */
@@ -171,21 +165,12 @@ NormalProcess::~NormalProcess()
     {
         CloseHandle(d->my_main_thread);
     }
-    if(d->my_window)
-    {
-        delete d->my_window;
-    }
     delete d;
 }
 
 memory_info * NormalProcess::getDescriptor()
 {
     return d->my_descriptor;
-}
-
-DFWindow * NormalProcess::getWindow()
-{
-    return d->my_window;
 }
 
 int NormalProcess::getPID()

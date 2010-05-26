@@ -30,7 +30,7 @@ distribution.
 #include "dfhack/DFIntegers.h"
 #include "dfhack/DFTileTypes.h"
 #include "dfhack/DFTypes.h"
-#include "dfhack/DFWindow.h"
+//#include "dfhack/modules/WindowIO.h"
 #include "dfhack/DFContextManager.h"
 #include "dfhack/DFContext.h"
 

@@ -41,10 +41,10 @@ distribution.
 #endif
 
 // one file for globals
-#include "DFGlobal.h"
+#include "dfhack/DFGlobal.h"
 
 // one file for telling the MSVC compiler where it can shove its pointless warnings
-#include "DFPragma.h"
+#include "dfhack/DFPragma.h"
 
 // basic stl containers and IO stuff
 #include <string>
@@ -55,7 +55,7 @@ distribution.
 using namespace std;
 
 // C99 integer types
-#include "DFIntegers.h"
+#include "dfhack/DFIntegers.h"
 // C includes
 #include <assert.h>
 #include <string.h>

@@ -22,8 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFCommonInternal.h"
-#include "../private/APIPrivate.h"
+#include "Internal.h"
+#include "ContextShared.h"
 #include "dfhack/modules/Gui.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFMemInfo.h"
@@ -39,11 +39,11 @@ struct Gui::Private
     uint32_t view_screen_offset;
     uint32_t current_cursor_creature_offset;
     uint32_t current_menu_state_offset;
-    DFContextPrivate *d;
+    DFContextShared *d;
     Process * owner;
 };
 
-Gui::Gui(DFContextPrivate * _d)
+Gui::Gui(DFContextShared * _d)
 {
     
     d = new Private;

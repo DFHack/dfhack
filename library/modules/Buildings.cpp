@@ -22,8 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFCommonInternal.h"
-#include "../private/APIPrivate.h"
+#include "Internal.h"
+#include "ContextShared.h"
 
 #include "dfhack/DFMemInfo.h"
 #include "dfhack/DFProcess.h"
@@ -59,13 +59,13 @@ struct Buildings::Private
     uint32_t custom_workshop_name;
     int32_t custom_workshop_id;
     DfVector <uint32_t> * p_bld;
-    DFContextPrivate *d;
+    DFContextShared *d;
     Process * owner;
     bool Inited;
     bool Started;
 };
 
-Buildings::Buildings(DFContextPrivate * d_)
+Buildings::Buildings(DFContextShared * d_)
 {
     d = new Private;
     d->d = d_;

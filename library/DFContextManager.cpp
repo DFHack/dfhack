@@ -22,7 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFCommonInternal.h"
+#include "Internal.h"
 
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFProcessEnumerator.h"
@@ -36,7 +36,7 @@ distribution.
 #include <mod-core.h>
 #include <mod-maps.h>
 #include <mod-creature40d.h>
-#include "private/APIPrivate.h"
+#include "private/ContextShared.h"
 
 using namespace DFHack;
 namespace DFHack

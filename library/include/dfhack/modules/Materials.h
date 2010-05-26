@@ -6,7 +6,7 @@
 #include "dfhack/DFExport.h"
 namespace DFHack
 {
-    class DFContextPrivate;
+    class DFContextShared;
     
     struct t_matgloss
     {
@@ -119,7 +119,7 @@ namespace DFHack
     class DFHACK_EXPORT Materials
     {
 	public:
-		Materials(DFHack::DFContextPrivate * _d);
+		Materials(DFHack::DFContextShared * _d);
 		~Materials();
 
 		std::vector<t_matgloss> inorganic;

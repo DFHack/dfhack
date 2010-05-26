@@ -16,6 +16,8 @@ using namespace std;
 #include <math.h>
 
 #include <DFHack.h>
+#include <dfhack/DFTileTypes.h>
+
 using namespace DFHack;
 
 

@@ -27,11 +27,11 @@ namespace DFHack
         uint32_t address;
     };
     
-    class DFContextPrivate;
+    class DFContextShared;
     class DFHACK_EXPORT Vegetation
     {
         public:
-        Vegetation(DFContextPrivate * d);
+        Vegetation(DFContextShared * d);
         ~Vegetation();
         bool Start(uint32_t & numTrees);
         bool Read (const uint32_t index, t_tree & shrubbery);

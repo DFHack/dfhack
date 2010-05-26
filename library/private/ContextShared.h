@@ -42,15 +42,16 @@ namespace DFHack
     class Buildings;
     class ProcessEnumerator;
     class Process;
+    class WindowIO;
     class Vegetation;
     class Constructions;
     class memory_info;
     struct t_name;
-    class DFContextPrivate
+    class DFContextShared
     {
     public:
-        DFContextPrivate();
-        ~DFContextPrivate();
+        DFContextShared();
+        ~DFContextShared();
         
         // names, used by a few other modules.
         void readName(t_name & name, uint32_t address);
@@ -79,6 +80,7 @@ namespace DFHack
         Vegetation * vegetation;
         Buildings * buildings;
         Constructions * constructions;
+        WindowIO * windowio;
 
         /*
         uint32_t item_material_offset;

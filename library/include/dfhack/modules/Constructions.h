@@ -39,11 +39,11 @@ namespace DFHack
         uint32_t origin;
     };
     #pragma pack (pop)
-    class DFContextPrivate;
+    class DFContextShared;
     class DFHACK_EXPORT Constructions
     {
         public:
-        Constructions(DFContextPrivate * d);
+        Constructions(DFContextShared * d);
         ~Constructions();
         bool Start(uint32_t & numConstructions);
         bool Read (const uint32_t index, t_construction & constr);

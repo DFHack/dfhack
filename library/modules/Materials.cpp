@@ -22,8 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFCommonInternal.h"
-#include "../private/APIPrivate.h"
+#include "Internal.h"
+#include "ContextShared.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/DFMemInfo.h"
@@ -35,7 +35,7 @@ using namespace DFHack;
 class Materials::Private
 {
     public:
-    DFContextPrivate *d;
+    DFContextShared *d;
     Process * owner;
     /*
     bool Inited;
@@ -43,7 +43,7 @@ class Materials::Private
     */
 };
 
-Materials::Materials(DFContextPrivate * d_)
+Materials::Materials(DFContextShared * d_)
 {
     d = new Private;
     d->d = d_;

@@ -16,12 +16,12 @@ namespace DFHack
         int32_t z;
     };
     
-    class DFContextPrivate;
+    class DFContextShared;
     class DFHACK_EXPORT Position
     {
         public:
         
-        Position(DFContextPrivate * d);
+        Position(DFContextShared * d);
         ~Position();
         /*
         * Cursor and window coords

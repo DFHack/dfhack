@@ -255,13 +255,13 @@ namespace DFHack
                              C L I E N T   M O D U L E
     ***************************************************************************/
     
-    class DFContextPrivate;
+    class DFContextShared;
     struct t_viewscreen;
     class DFHACK_EXPORT Maps
     {
         public:
         
-        Maps(DFHack::DFContextPrivate * d);
+        Maps(DFHack::DFContextShared * d);
         ~Maps();
         bool Start();
         bool Finish();

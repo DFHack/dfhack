@@ -22,8 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFCommonInternal.h"
-#include "../private/APIPrivate.h"
+#include "Internal.h"
+#include "ContextShared.h"
 
 #include "dfhack/DFMemInfo.h"
 #include "dfhack/DFProcess.h"
@@ -41,13 +41,13 @@ struct Vegetation::Private
     // translation
     DfVector <uint32_t> * p_veg;
     
-    DFContextPrivate *d;
+    DFContextShared *d;
     Process * owner;
     bool Inited;
     bool Started;
 };
 
-Vegetation::Vegetation(DFContextPrivate * d_)
+Vegetation::Vegetation(DFContextShared * d_)
 {
     d = new Private;
     d->owner = d_->p;

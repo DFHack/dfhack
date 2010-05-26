@@ -16,6 +16,7 @@
 using namespace std;
 
 #include <DFHack.h>
+#include <dfhack/DFTileTypes.h>
 
 int main (int argc, const char* argv[])
 {

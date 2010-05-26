@@ -27,7 +27,7 @@ distribution.
 #include "dfhack-c/modules/Position_C.h"
 #include "dfhack/DFIntegers.h"
 
-#include "dfhack/DFCommonInternal.h"
+#include "Internal.h"
 #include "dfhack/modules/Position.h"
 
 using namespace DFHack;

@@ -10,6 +10,7 @@
 using namespace std;
 
 #include <DFHack.h>
+#include <dfhack/DFTileTypes.h>
 
 using namespace DFHack;
 int main (int numargs, const char ** args)

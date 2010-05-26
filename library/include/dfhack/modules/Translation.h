@@ -6,7 +6,7 @@
 #include "dfhack/DFExport.h"
 namespace DFHack
 {
-    class DFContextPrivate;
+    class DFContextShared;
     typedef std::vector< std::vector<std::string> > DFDict;
     typedef struct
     {
@@ -17,7 +17,7 @@ namespace DFHack
     class DFHACK_EXPORT Translation
     {
         public:
-        Translation(DFContextPrivate * d);
+        Translation(DFContextShared * d);
         ~Translation();
         bool Start();
         bool Finish();

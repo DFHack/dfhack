@@ -22,11 +22,11 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFCommonInternal.h"
+#include "Internal.h"
 #include <shms.h>
 #include <mod-core.h>
 #include <mod-maps.h>
-#include "../private/APIPrivate.h"
+#include "ContextShared.h"
 #include "dfhack/modules/Maps.h"
 #include "dfhack/DFError.h"
 #include "dfhack/DFMemInfo.h"
@@ -50,7 +50,7 @@ struct Maps::Private
     uint32_t maps_module;
     Server::Maps::maps_offsets offsets;
     
-    DFContextPrivate *d;
+    DFContextShared *d;
     Process * owner;
     bool Inited;
     bool Started;
@@ -61,7 +61,7 @@ struct Maps::Private
     vector<uint16_t> v_geology[eBiomeCount];
 };
 
-Maps::Maps(DFContextPrivate* _d)
+Maps::Maps(DFContextShared* _d)
 {
     d = new Private;
     d->d = _d;

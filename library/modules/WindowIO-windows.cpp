@@ -22,8 +22,9 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFCommonInternal.h"
-#include "dfhack/DFWindow.h"
+#include "Internal.h"
+#include "ContextShared.h"
+#include "dfhack/modules/WindowIO.h"
 #include "dfhack/DFProcess.h"
 using namespace DFHack;
 
@@ -101,7 +102,7 @@ BOOL CALLBACK EnumWindowsProc (HWND hwnd, LPARAM lParam)
         return TRUE;
 }
 
-class DFWindow::Private
+class WindowIO::Private
 {
     public:
         Private(Process * _p)
@@ -114,19 +115,19 @@ class DFWindow::Private
 };
 
 // ctor
-DFWindow::DFWindow (Process * p)
+WindowIO::WindowIO (DFContextShared * schr)
 {
-    d = new Private(p);
+    d = new Private(schr->p);
 }
 
 // dtor
-DFWindow::~DFWindow ()
+WindowIO::~WindowIO ()
 {
     delete d;
 }
 
 // TODO: also investigate possible problems with UIPI on Vista and 7
-void DFWindow::TypeStr (const char *input, int delay, bool useShift)
+void WindowIO::TypeStr (const char *input, int delay, bool useShift)
 {
     //sendmessage needs a window handle HWND, so have to get that from the process HANDLE
     HWND currentWindow = GetForegroundWindow();
@@ -163,7 +164,7 @@ void DFWindow::TypeStr (const char *input, int delay, bool useShift)
     Sleep (delay);
 }
 
-void DFWindow::TypeSpecial (t_special command, int count, int delay)
+void WindowIO::TypeSpecial (t_special command, int count, int delay)
 {
     if (command != WAIT)
     {

@@ -25,15 +25,12 @@ distribution.
 #ifndef CONTEXTMANAGER_H_INCLUDED
 #define CONTEXTMANAGER_H_INCLUDED
 
+
 #include "DFPragma.h"
 #include "DFExport.h"
 #include <string>
 #include <vector>
 #include <map>
-#include "DFIntegers.h"
-#include "DFTileTypes.h"
-#include "DFTypes.h"
-#include "DFWindow.h"
 
 namespace DFHack
 {

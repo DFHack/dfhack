@@ -23,7 +23,7 @@ distribution.
 */
 
 #include "dfhack/DFIntegers.h"
-#include "dfhack/DFCommonInternal.h"
+#include "Internal.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack-c/modules/Vegetation_C.h"

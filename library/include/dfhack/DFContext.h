@@ -41,7 +41,9 @@ namespace DFHack
     class Buildings;
     class Constructions;
     class memory_info;
-    class DFContextPrivate;
+    class DFContextShared;
+    class WindowIO;
+    class Process;
     
     class DFHACK_EXPORT Context
     {
@@ -69,7 +71,6 @@ namespace DFHack
         bool ForceResume();
         
         memory_info *getMemoryInfo();
-        DFWindow * getWindow();
         Process* getProcess();
         
         void ReadRaw (const uint32_t offset, const uint32_t size, uint8_t *target);
@@ -108,6 +109,9 @@ namespace DFHack
         
         // get the constructions module
         Constructions * getConstructions();
+        
+        // get the Window management and I/O module
+        WindowIO * getWindow();
         /*
          * Effects like mist, dragonfire or dust
          */
@@ -167,7 +171,7 @@ namespace DFHack
         */
         //bool ReadItemTypes(std::vector< std::vector< t_itemType > > & itemTypes);
     private:
-        DFContextPrivate * d;
+        DFContextShared * d;
     };
 }
 #endif //CONTEXT_H_INCLUDED

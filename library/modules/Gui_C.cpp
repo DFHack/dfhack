@@ -27,7 +27,7 @@ distribution.
 #include "dfhack-c/modules/Gui_C.h"
 #include "dfhack/DFIntegers.h"
 
-#include "dfhack/DFCommonInternal.h"
+#include "Internal.h"
 #include "dfhack/modules/Gui.h"
 
 using namespace DFHack;
@@ -68,7 +68,7 @@ int Gui_ReadPauseState(DFHackObject* gui)
 
 int Gui_ReadViewScreen(DFHackObject* gui, t_viewscreen* viewscreen)
 {
-	int result;
+	//int result;
 	
 	if(gui != NULL)
 	{

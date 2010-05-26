@@ -22,8 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFCommonInternal.h"
-#include "../private/APIPrivate.h"
+#include "Internal.h"
+#include "ContextShared.h"
 #include "dfhack/modules/Position.h"
 #include "dfhack/DFMemInfo.h"
 #include "dfhack/DFProcess.h"
@@ -42,14 +42,14 @@ struct Position::Private
     uint32_t hotkey_xyz_offset;
     uint32_t hotkey_size;
 
-    DFContextPrivate *d;
+    DFContextShared *d;
     Process * owner;
     bool Inited;
     bool Started;
     bool StartedHotkeys;
 };
 
-Position::Position(DFContextPrivate * d_)
+Position::Position(DFContextShared * d_)
 {
     d = new Private;
     d->d = d_;

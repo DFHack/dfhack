@@ -20,8 +20,10 @@
 #include <algorithm>
 #include <assert.h>
 using namespace std;
+
 #include <argstream.h>
 #include <DFHack.h>
+#include <dfhack/DFTileTypes.h>
 #define BLOCK_SIZE 16
 
 

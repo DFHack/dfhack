@@ -25,11 +25,11 @@ namespace DFHack
         // FIXME: not complete, we need building presence bitmaps for stuff like farm plots and stockpiles, orientation (N,E,S,W) and state (open/closed)
     };
     
-    class DFContextPrivate;
+    class DFContextShared;
     class DFHACK_EXPORT Buildings
     {
         public:
-        Buildings(DFContextPrivate * d);
+        Buildings(DFContextShared * d);
         ~Buildings();
         bool Start(uint32_t & numBuildings);
         // read one building at offset

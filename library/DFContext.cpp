@@ -22,7 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFCommonInternal.h"
+#include "Internal.h"
 
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFProcessEnumerator.h"
@@ -34,7 +34,7 @@ distribution.
 #include <mod-core.h>
 #include <mod-maps.h>
 #include <mod-creature40d.h>
-#include "private/APIPrivate.h"
+#include "private/ContextShared.h"
 
 #include "dfhack/modules/Maps.h"
 #include "dfhack/modules/Materials.h"
@@ -47,10 +47,11 @@ distribution.
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack/modules/Buildings.h"
 #include "dfhack/modules/Constructions.h"
+#include "dfhack/modules/WindowIO.h"
 
 using namespace DFHack;
 
-Context::Context (Process* p) : d (new DFContextPrivate())
+Context::Context (Process* p) : d (new DFContextShared())
 {
     d->p = p;
     d->offset_descriptor = p->getDescriptor();
@@ -191,14 +192,10 @@ memory_info *Context::getMemoryInfo()
 {
     return d->offset_descriptor;
 }
+
 Process * Context::getProcess()
 {
     return d->p;
-}
-
-DFWindow * Context::getWindow()
-{
-    return d->p->getWindow();
 }
 
 /*******************************************************************************
@@ -223,6 +220,13 @@ Gui * Context::getGui()
     if(!d->gui)
         d->gui = new Gui(d);
     return d->gui;
+}
+
+WindowIO * Context::getWindow()
+{
+    if(!d->windowio)
+        d->windowio = new WindowIO(d);
+    return d->windowio;
 }
 
 World * Context::getWorld()

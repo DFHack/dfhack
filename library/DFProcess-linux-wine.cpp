@@ -21,9 +21,8 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
-#include "dfhack/DFCommonInternal.h"
+#include "Internal.h"
 #include "dfhack/DFProcess.h"
-#include "dfhack/DFWindow.h"
 #include "dfhack/DFMemInfo.h"
 #include "dfhack/DFError.h"
 #include <errno.h>
@@ -38,7 +37,6 @@ class WineProcess::Private
     {
         my_descriptor = NULL;
         my_handle = NULL;
-        my_window = NULL;
         my_pid = 0;
         attached = false;
         suspended = false;
@@ -46,7 +44,6 @@ class WineProcess::Private
         self = self_;
     };
     ~Private(){};
-    DFWindow* my_window;
     memory_info * my_descriptor;
     Process * self;
     pid_t my_handle;
@@ -108,7 +105,6 @@ WineProcess::WineProcess(uint32_t pid, vector <memory_info *> & known_versions)
             
             // create wine process, add it to the vector
             d->identified = d->validate(exe_link,pid,mem_name,known_versions);
-            d->my_window = new DFWindow(this);
             return;
         }
     }
@@ -174,19 +170,12 @@ WineProcess::~WineProcess()
     // destroy our copy of the memory descriptor
     if(d->my_descriptor)
         delete d->my_descriptor;
-    if(d->my_window)
-        delete d->my_window;
     delete d;
 }
 
 memory_info * WineProcess::getDescriptor()
 {
     return d->my_descriptor;
-}
-
-DFWindow * WineProcess::getWindow()
-{
-    return d->my_window;
 }
 
 int WineProcess::getPID()
@@ -513,7 +502,6 @@ void WineProcess::writeByte (uint32_t offset, uint8_t data)
 // blah. I hate the kernel devs for crippling /proc/PID/mem. THIS IS RIDICULOUS
 void WineProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
 {
-    uint32_t count = 0;
     uint32_t indexptr = 0;
     while (size > 0)
     {

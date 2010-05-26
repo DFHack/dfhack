@@ -22,8 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFCommonInternal.h"
-#include "../private/APIPrivate.h"
+#include "Internal.h"
+#include "ContextShared.h"
 
 #include "dfhack/DFMemInfo.h"
 #include "dfhack/DFProcess.h"
@@ -55,11 +55,11 @@ struct Creatures::Private
     uint32_t dwarf_race_index_addr;
     uint32_t dwarf_civ_id_addr;
     DfVector <uint32_t> *p_cre;
-    DFContextPrivate *d;
+    DFContextShared *d;
     Process *owner;
 };
 
-Creatures::Creatures(DFContextPrivate* _d)
+Creatures::Creatures(DFContextShared* _d)
 {
     d = new Private;
     d->d = _d;

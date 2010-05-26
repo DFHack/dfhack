@@ -34,8 +34,8 @@ FIXME: Japa said that he had to do this with the time stuff he got from here
     currentTickRel = (currentTick+9)-(((((currentMonth*28)+currentDay)*24)+currentHour)*50);
     */
 
-#include "dfhack/DFCommonInternal.h"
-#include "../private/APIPrivate.h"
+#include "Internal.h"
+#include "ContextShared.h"
 #include "dfhack/modules/World.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFMemInfo.h"
@@ -49,11 +49,11 @@ struct World::Private
     bool Started;
     uint32_t year_offset;
     uint32_t tick_offset;
-    DFContextPrivate *d;
+    DFContextShared *d;
     Process * owner;
 };
 
-World::World(DFContextPrivate * _d)
+World::World(DFContextShared * _d)
 {
     
     d = new Private;

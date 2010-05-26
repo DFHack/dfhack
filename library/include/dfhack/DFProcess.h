@@ -33,7 +33,7 @@ namespace DFHack
 {
     class memory_info;
     class Process;
-    class DFWindow;
+    class Window;
     
     // structure describing a memory range
     struct DFHACK_EXPORT t_memrange
@@ -122,8 +122,6 @@ namespace DFHack
             
             // get the flattened Memory.xml entry of this process
             virtual memory_info *getDescriptor() = 0;
-            // get the DF's window (first that can be found ~_~)
-            virtual DFWindow * getWindow() = 0;
             // get the DF Process ID
             virtual int getPID() = 0;
             // get module index by name and version. bool 1 = error
@@ -195,7 +193,6 @@ namespace DFHack
             bool getThreadIDs(vector<uint32_t> & threads );
             void getMemRanges( vector<t_memrange> & ranges );
             memory_info *getDescriptor();
-            DFWindow * getWindow();
             int getPID();
             // get module index by name and version. bool 1 = error
             bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) { OUTPUT=0; return false;};
@@ -267,7 +264,6 @@ namespace DFHack
             bool getThreadIDs(vector<uint32_t> & threads );
             void getMemRanges( vector<t_memrange> & ranges );
             memory_info *getDescriptor();
-            DFWindow * getWindow();
             int getPID();
             // get module index by name and version. bool 1 = error
             bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT);
@@ -338,7 +334,6 @@ namespace DFHack
             bool getThreadIDs(vector<uint32_t> & threads );
             void getMemRanges( vector<t_memrange> & ranges );
             memory_info *getDescriptor();
-            DFWindow * getWindow();
             int getPID();
             // get module index by name and version. bool 1 = error
             bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) {OUTPUT=0; return false;};

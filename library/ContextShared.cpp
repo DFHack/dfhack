@@ -17,6 +17,7 @@
 #include "dfhack/modules/World.h"
 #include "dfhack/modules/Buildings.h"
 #include "dfhack/modules/Constructions.h"
+#include "dfhack/modules/WindowIO.h"
 
 using namespace DFHack;
 

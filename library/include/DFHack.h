@@ -1,4 +1,4 @@
-﻿#ifndef DFHACK_API_H
+#ifndef DFHACK_API_H
 #define DFHACK_API_H
 
 #include "dfhack/DFIntegers.h"

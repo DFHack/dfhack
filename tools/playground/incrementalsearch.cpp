@@ -156,7 +156,40 @@ void searchLoopVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange
         }
     }
 }
-
+void mkcopy(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges, uint32_t element_size)
+{
+    DFMgr.Refresh();
+    DFHack::Context * DF = DFMgr.getSingleContext();
+    DF->Attach();
+    for (int i = 0; i < ranges.size();i++)
+    {
+        // can't read? range is invalid to us
+        if(!ranges[i].read)
+            continue;
+        char * buffah = (char *) malloc(ranges[i].end - ranges[i].start);
+        if(buffah)
+        {
+            DF->ReadRaw(ranges[i].start,ranges[i].end - ranges[i].start, (uint8_t *) buffah);
+            cerr << "buffer  for range " << i << " allocated and filled" << endl;
+            free(buffah);
+            cerr << "and freed" << endl;
+        }
+        else
+            cerr << "buffer for range " << i << " failed to allocate" << endl;
+        //loop
+        /*
+        for(uint64_t offset = ranges[i].start;offset <= ranges[i].end - sizeof(vecTriplet); offset+=4)
+        {
+            DF->ReadRaw(offset, sizeof(vecTriplet), (uint8_t *) &load);
+            if(load.start <= load.finish && load.finish <= load.alloc_finish)
+                if((load.finish - load.start) / element_size == length)
+                    found.push_back(offset);
+        }
+        */
+    }
+    DF->Detach();
+    DFMgr.purge();
+}
 
 int main (void)
 {
@@ -325,6 +358,7 @@ int main (void)
     }
     else if(mode == 3)// string
     {
+        mkcopy(DFMgr, selected_ranges,0);
         //searchLoopString(DF, selected_ranges);
     }
     #ifndef LINUX_BUILD

@@ -609,7 +609,7 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
     else
     {
         // first read equals the size of the SHM window
-        uint32_t to_read = SHM_BODY;
+        uint32_t to_read = SHM_BODY - 1024;
         while (size)
         {
             // read to_read bytes from src_cursor

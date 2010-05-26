@@ -23,7 +23,6 @@ distribution.
 */
 #include "Internal.h"
 #include "dfhack/DFProcess.h"
-#include "dfhack/DFWindow.h"
 #include "dfhack/DFMemInfo.h"
 #include "dfhack/DFError.h"
 #include "shms.h"

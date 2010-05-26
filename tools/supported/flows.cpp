@@ -1,4 +1,4 @@
-// This is a reveal program. It reveals the map.
+// This tool counts static tiles and active flows of water and magma.
 
 #include <iostream>
 #include <integers.h>
@@ -45,7 +45,7 @@ int main (void)
     Maps->getSize(x_max,y_max,z_max);
     // walk the map, count flowing tiles, magma, water
     uint32_t flow1=0, flow2=0, flowboth=0, water=0, magma=0;
-    cout << "Counting flows and liquids .";
+    cout << "Counting flows and liquids ...";
     for(uint32_t x = 0; x< x_max;x++)
     {
         for(uint32_t y = 0; y< y_max;y++)
@@ -69,18 +69,19 @@ int main (void)
                         if (designations[i][j].bits.liquid_type == DFHack::liquid_water)
                             water++;
                     }
-                    // Maps->WriteDesignations(x, y, z, &designations);
-                    // Maps->WriteBlockFlags(x, y, z, bflags);
-                    cout << ".";
                 }
             }
         }
     }
-    cout << endl << "Done." << endl;
     cout << "Blocks with liquid_1=true: " << flow1 << endl;
     cout << "Blocks with liquid_2=true: " << flow2 << endl;
     cout << "Blocks with both: " << flowboth << endl;
     cout << "Water tiles: " << water << endl;
     cout << "Magma tiles: " << magma << endl;
+    
+    cout << endl << "Done." << endl;
+    #ifndef LINUX_BUILD
+        cin.ignore();
+    #endif
     return 0;
 }

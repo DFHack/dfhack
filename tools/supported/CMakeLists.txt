@@ -9,10 +9,6 @@ ENDIF(UNIX)
 ADD_EXECUTABLE(dfreveal reveal.cpp)
 TARGET_LINK_LIBRARIES(dfreveal dfhack)
 
-# a reveal clone
-ADD_EXECUTABLE(dfmoodump moodump.cpp)
-TARGET_LINK_LIBRARIES(dfmoodump dfhack)
-
 # prospector - produces a list of available materials and their quantities
 ADD_EXECUTABLE(dfprospector prospector.cpp)
 TARGET_LINK_LIBRARIES(dfprospector dfhack)
@@ -33,50 +29,41 @@ TARGET_LINK_LIBRARIES(dfunstuck dfhack)
 ADD_EXECUTABLE(dfprobe probe.cpp)
 TARGET_LINK_LIBRARIES(dfprobe dfhack)
 
-IF(UNIX)
-# incrementalsearch - a bit like cheat engine, only DF-specific, very basic
-# and Linux-only
-ADD_EXECUTABLE(dfincremental incrementalsearch.cpp)
-TARGET_LINK_LIBRARIES(dfincremental dfhack)
-ENDIF(UNIX)
+# attachtest - 100x attach/detach, suspend/resume
+ADD_EXECUTABLE(dfattachtest attachtest.cpp)
+TARGET_LINK_LIBRARIES(dfattachtest dfhack)
 
-# bauxite - turn all mechanisms into bauxite mechanisms
-# Author: Alex Legg
-#ADD_EXECUTABLE(dfbauxite dfbauxite.cpp)
-#TARGET_LINK_LIBRARIES(dfbauxite dfhack)
+# a benchmark program, reads the map 1000x
+ADD_EXECUTABLE(dfexpbench expbench.cpp)
+TARGET_LINK_LIBRARIES(dfexpbench dfhack)
 
-# digger - designate for digging by tile class
-# Author: mizipzor
-ADD_EXECUTABLE(dfdigger digger.cpp)
-TARGET_LINK_LIBRARIES(dfdigger dfhack)
+# suspendtest - test if suspend works. df should stop responding when suspended
+#               by dfhack
+ADD_EXECUTABLE(dfsuspend suspendtest.cpp)
+TARGET_LINK_LIBRARIES(dfsuspend dfhack)
 
-# digger2 - designate for digging from a text file
-# Author: rOut
-ADD_EXECUTABLE(dfdigger2 digger2.cpp)
-TARGET_LINK_LIBRARIES(dfdigger2 dfhack)
+# flows - check flows impact on fps
+ADD_EXECUTABLE(dfflows flows.cpp)
+TARGET_LINK_LIBRARIES(dfflows dfhack)
 
-# itemdesignator - change some item designations (dump, forbid, on-fire) for all
-#                  items of a given type and material
-# Author: belal
-#ADD_EXECUTABLE(dfitemdesignator itemdesignator.cpp)
-#TARGET_LINK_LIBRARIES(dfitemdesignator dfhack)
-
-# a magma creation tool
-# Author: Aleric
+# liquids manipulation tool
+# Original author: Aleric
 ADD_EXECUTABLE(dfliquids liquids.cpp)
 TARGET_LINK_LIBRARIES(dfliquids dfhack)
 
 IF(UNIX)
 install(TARGETS
-#dfbauxite
-#dfcleanmap
-#dfdigger
-dfincremental
-#dfitemdesignator
-#dfmagma_create
-dfprospector
 dfreveal
-dfmoodump
+dfprospector
+dfvdig
+dfcleanmap
+dfunstuck
+dfprobe
+dfattachtest
+dfexpbench
+dfsuspend
+dfflows
+dfliquids
 RUNTIME DESTINATION bin
 )
 ENDIF(UNIX)

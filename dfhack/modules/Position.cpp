@@ -29,9 +29,6 @@ distribution.
 #include "DFProcess.h"
 using namespace DFHack;
 
-
-
-
 struct Position::Private
 {
     uint32_t window_x_offset;
@@ -39,19 +36,17 @@ struct Position::Private
     uint32_t window_z_offset;
     uint32_t cursor_xyz_offset;
     uint32_t window_dims_offset;
-    
+
     uint32_t hotkey_start;
     uint32_t hotkey_mode_offset;
     uint32_t hotkey_xyz_offset;
     uint32_t hotkey_size;
-    
+
     DFContextPrivate *d;
     Process * owner;
     bool Inited;
     bool Started;
     bool StartedHotkeys;
-    //uint32_t biome_stuffs;
-    //vector<uint16_t> v_geology[eBiomeCount];
 };
 
 Position::Position(DFContextPrivate * d_)
@@ -71,7 +66,7 @@ Position::Position(DFContextPrivate * d_)
         d->cursor_xyz_offset = mem->getAddress ("cursor_xyz");
         d->window_dims_offset = mem->getAddress ("window_dims");
         d->Started = true;
-    
+
         d->hotkey_start = mem->getAddress("hotkey_start");
         d->hotkey_mode_offset = mem->getOffset ("hotkey_mode");
         d->hotkey_xyz_offset = mem->getOffset("hotkey_xyz");
@@ -88,10 +83,13 @@ Position::~Position()
 
 bool Position::ReadHotkeys(t_hotkey hotkeys[])
 {
-    if (!d->StartedHotkeys) return false;
+    if (!d->StartedHotkeys)
+    {
+        return false;
+    }
     uint32_t currHotkey = d->hotkey_start;
     Process * p = d->owner;
-    
+
     for(uint32_t i = 0 ; i < NUM_HOTKEYS ;i++)
     {
         p->readSTLString(currHotkey,hotkeys[i].name,10);
@@ -106,7 +104,7 @@ bool Position::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
 {
     if (!d->Inited) return false;
     Process * p = d->owner;
-    
+
     p->readDWord (d->window_x_offset, (uint32_t &) x);
     p->readDWord (d->window_y_offset, (uint32_t &) y);
     p->readDWord (d->window_z_offset, (uint32_t &) z);
@@ -116,9 +114,12 @@ bool Position::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
 //FIXME: confine writing of coords to map bounds?
 bool Position::setViewCoords (const int32_t x, const int32_t y, const int32_t z)
 {
-    if (!d->Inited) return false;
+    if (!d->Inited)
+    {
+        return false;
+    }
     Process * p = d->owner;
-    
+
     p->writeDWord (d->window_x_offset, (uint32_t) x);
     p->writeDWord (d->window_y_offset, (uint32_t) y);
     p->writeDWord (d->window_z_offset, (uint32_t) z);
@@ -149,7 +150,7 @@ bool Position::setCursorCoords (const int32_t x, const int32_t y, const int32_t 
 bool Position::getWindowSize (int32_t &width, int32_t &height)
 {
     if(!d->Inited) return false;
-    
+
     int32_t coords[2];
     d->owner->read (d->window_dims_offset, 2*sizeof (int32_t), (uint8_t *) coords);
     width = coords[0];

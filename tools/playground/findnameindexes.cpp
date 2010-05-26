@@ -1,5 +1,8 @@
-// Dwarf fortress names are a complicated beast, in objects they are displayed as indexes into the language vectors
-// use this tool if you are trying to find what the indexes are for a displayed name, so you can then search for it in your object
+// Dwarf fortress names are a complicated beast, in objects they are displayed
+// as indexes into the language vectors
+//
+// use this tool if you are trying to find what the indexes are for a displayed
+// name, so you can then search for it in your object
 
 #include <iostream>
 #include <iomanip>

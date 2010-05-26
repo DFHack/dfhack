@@ -32,8 +32,8 @@ using namespace std;
 
 #include "DFCommonInternal.h"
 #include "DFTypes.h"
-#include "modules/Materials.h"
 #include "DFTypes_C.h"
+#include "modules/Materials.h"
 
 using namespace DFHack;
 
@@ -41,119 +41,31 @@ using namespace DFHack;
 extern "C" {
 #endif
 
-c_colormodifier* ColorModifier_New()
-{
-	c_colormodifier* temp;
-	
-	temp = (c_colormodifier*)malloc(sizeof(c_colormodifier));
-	
-	if(temp == NULL)
-		return NULL;
-	
-	temp->part[0] = '\0';
-	temp->colorlist = NULL;
-	temp->colorlistLength = 0;
-	
-	return temp;
-}
+int8_t* (*alloc_byte_buffer_callback)(uint32_t) = NULL;
+int16_t* (*alloc_short_buffer_callback)(uint32_t) = NULL;
+int32_t* (*alloc_int_buffer_callback)(uint32_t) = NULL;
 
-void ColorModifier_Free(c_colormodifier* src)
-{
-	if(src != NULL)
-	{
-		if(src->colorlist != NULL)
-			free(src->colorlist);
-		
-		free(src);
-	}
-}
+uint8_t* (*alloc_ubyte_buffer_callback)(uint32_t) = NULL;
+uint16_t* (*alloc_ushort_buffer_callback)(uint32_t) = NULL;
+uint32_t* (*alloc_uint_buffer_callback)(uint32_t) = NULL;
 
-c_creaturecaste* CreatureCaste_New()
-{
-	c_creaturecaste* temp;
-	
-	temp = (c_creaturecaste*)malloc(sizeof(c_creaturecaste));
-	
-	if(temp == NULL)
-		return NULL;
-	
-	temp->rawname[0] = '\0';
-	temp->singular[0] = '\0';
-	temp->plural[0] = '\0';
-	temp->adjective[0] = '\0';
-	
-	temp->ColorModifier = NULL;
-	temp->colorModifierLength = 0;
-	
-	temp->bodypart = NULL;
-	temp->bodypartLength = 0;
-	
-	return temp;
-}
+char* (*alloc_char_buffer_callback)(uint32_t) = NULL;
 
-void CreatureCaste_Free(c_creaturecaste* src)
-{
-	if(src != NULL)
-	{
-		if(src->bodypart != NULL)
-			free(src->bodypart);
-		
-		if(src->ColorModifier != NULL)
-		{
-			for(int i = 0; i < src->colorModifierLength; i++)
-				ColorModifier_Free(&src->ColorModifier[i]);
-			
-			free(src->ColorModifier);
-		}
-		
-		free(src);
-	}
-}
+t_matgloss* (*alloc_matgloss_buffer_callback)(int) = NULL;
+t_descriptor_color* (*alloc_descriptor_buffer_callback)(int) = NULL;
+t_matglossOther* (*alloc_matgloss_other_buffer_callback)(int) = NULL;
 
-c_creaturetype* CreatureType_New()
-{
-	c_creaturetype* temp;
-	
-	temp = (c_creaturetype*)malloc(sizeof(c_creaturetype));
-	
-	if(temp == NULL)
-		return NULL;
-	
-	temp->rawname[0] = '\0';
-	
-	temp->castes = NULL;
-	temp->castesCount = 0;
-	
-	temp->extract = NULL;
-	temp->extractCount = 0;
-	
-	temp->tile_character = 0;
-	
-	temp->tilecolor.fore = 0;
-	temp->tilecolor.back = 0;
-	temp->tilecolor.bright = 0;
-	
-	return temp;
-}
+c_colormodifier* (*alloc_empty_colormodifier_callback)(void) = NULL;
+c_colormodifier* (*alloc_colormodifier_callback)(const char*, uint32_t) = NULL;
+c_colormodifier* (*alloc_colormodifier_buffer_callback)(uint32_t) = NULL;
 
-void CreatureType_Free(c_creaturetype* src)
-{
-	if(src != NULL)
-	{
-		if(src->castes != NULL)
-		{
-			for(int i = 0; i < src->castesCount; i++)
-				CreatureCaste_Free(&src->castes[i]);
-			
-			free(src->castes);
-		}
-		
-		if(src->extract != NULL)
-			free(src->extract);
-		
-		free(src);
-	}
-}
+c_creaturecaste* (*alloc_empty_creaturecaste_callback)(void) = NULL;
+c_creaturecaste* (*alloc_creaturecaste_callback)(const char*, const char*, const char*, const char*, uint32_t, uint32_t) = NULL;
+c_creaturecaste* (*alloc_creaturecaste_buffer_callback)(uint32_t) = NULL;
+
+c_creaturetype* (*alloc_empty_creaturetype_callback)(void) = NULL;
+c_creaturetype* (*alloc_creaturetype_callback)(const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t) = NULL;
+c_creaturetype* (*alloc_creaturetype_buffer_callback)(uint32_t) = NULL;
 
 #ifdef __cplusplus
 }
@@ -161,13 +73,10 @@ void CreatureType_Free(c_creaturetype* src)
 
 int ColorListConvert(t_colormodifier* src, c_colormodifier* dest)
 {
-	if(src == NULL || dest == NULL)
+	if(src == NULL)
 		return -1;
 	
-	strcpy(dest->part, src->part);
-	
-	dest->colorlistLength = src->colorlist.size();
-	dest->colorlist = (uint32_t*)malloc(sizeof(uint32_t) * dest->colorlistLength);
+	dest = ((*alloc_colormodifier_callback)(src->part, src->colorlist.size()));
 	
 	copy(src->colorlist.begin(), src->colorlist.end(), dest->colorlist);
 	
@@ -176,22 +85,13 @@ int ColorListConvert(t_colormodifier* src, c_colormodifier* dest)
 
 int CreatureCasteConvert(t_creaturecaste* src, c_creaturecaste* dest)
 {
-	if(src == NULL || dest == NULL)
+	if(src == NULL)
 		return -1;
 	
-	strcpy(dest->rawname, src->rawname);
-	strcpy(dest->singular, src->singular);
-	strcpy(dest->plural, src->plural);
-	strcpy(dest->adjective, src->adjective);
-	
-	dest->colorModifierLength = src->ColorModifier.size();
-	dest->ColorModifier = (c_colormodifier*)malloc(sizeof(c_colormodifier) * dest->colorModifierLength);
+	dest = ((*alloc_creaturecaste_callback)(src->rawname, src->singular, src->plural, src->adjective, src->ColorModifier.size(), src->bodypart.size()));
 	
 	for(int i = 0; i < dest->colorModifierLength; i++)
 		ColorListConvert(&src->ColorModifier[i], &dest->ColorModifier[i]);
-	
-	dest->bodypartLength = src->bodypart.size();
-	dest->bodypart = (t_bodypart*)malloc(sizeof(t_bodypart) * dest->bodypartLength);
 	
 	copy(src->bodypart.begin(), src->bodypart.end(), dest->bodypart);
 	
@@ -200,25 +100,13 @@ int CreatureCasteConvert(t_creaturecaste* src, c_creaturecaste* dest)
 
 int CreatureTypeConvert(t_creaturetype* src, c_creaturetype* dest)
 {
-	if(src == NULL || dest == NULL)
+	if(src == NULL)
 		return -1;
 	
-	strcpy(dest->rawname, src->rawname);
-	
-	dest->tilecolor.fore = src->tilecolor.fore;
-	dest->tilecolor.back = src->tilecolor.back;
-	dest->tilecolor.bright = src->tilecolor.bright;
-	
-	dest->tile_character = src->tile_character;
-	
-	dest->castesCount = src->castes.size();
-	dest->castes = (c_creaturecaste*)malloc(sizeof(c_creaturecaste) * dest->castesCount);
+	dest = ((*alloc_creaturetype_callback)(src->rawname, src->castes.size(), src->extract.size(), src->tile_character, src->tilecolor.fore, src->tilecolor.back, src->tilecolor.bright));
 	
 	for(int i = 0; i < dest->castesCount; i++)
 		CreatureCasteConvert(&src->castes[i], &dest->castes[i]);
-	
-	dest->extractCount = src->extract.size();
-	dest->extract = (t_creatureextract*)malloc(sizeof(t_creatureextract) * dest->extractCount);
 	
 	copy(src->extract.begin(), src->extract.end(), dest->extract);
 	

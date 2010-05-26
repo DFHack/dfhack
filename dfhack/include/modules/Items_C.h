@@ -27,18 +27,20 @@ distribution.
 
 #include "Export.h"
 #include "integers.h"
+#include "DFCommonInternal.h"
+
+using namespace DFHack;
+
 #include "DFTypes.h"
 #include "modules/Items.h"
 #include "DFHackAPI_C.h"
-
-using namespace DFHack;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-DFHACK_EXPORT char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObject* mats, char* (*char_buffer_create)(int));
-DFHACK_EXPORT char* Items_getItemClass(DFHackObject* items, int32_t index, char* (*char_buffer_create)(int));
+DFHACK_EXPORT char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObject* mats);
+DFHACK_EXPORT char* Items_getItemClass(DFHackObject* items, int32_t index);
 DFHACK_EXPORT int Items_getItemData(DFHackObject* items, uint32_t itemptr, t_item* item);
 
 #ifdef __cplusplus

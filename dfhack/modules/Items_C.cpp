@@ -22,25 +22,27 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include "Export.h"
 #include "integers.h"
-#include <string>
+#include <map>
+#include <vector>
+#include "DFTypes.h"
 
 using namespace std;
+using namespace DFHack;
 
-#include "DFCommonInternal.h"
-#include "DFTypes.h"
-#include "DFHackAPI.h"
+#include "DFProcess.h"
 #include "modules/Materials.h"
 #include "modules/Items.h"
+#include "DFTypes_C.h"
 #include "modules/Items_C.h"
 
-using namespace DFHack;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObject* mats, char* (*char_buffer_create)(int))
+char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObject* mats)
 {
 	if(items != NULL && mats != NULL)
 	{
@@ -48,7 +50,7 @@ char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObje
 		
 		if(desc.size() > 0)
 		{
-			char* buf = (*char_buffer_create)(desc.size());
+			char* buf = (*alloc_char_buffer_callback)(desc.size());
 			
 			if(buf != NULL)
 			{
@@ -67,7 +69,7 @@ char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObje
 	return NULL;
 }
 
-char* Items_getItemClass(DFHackObject* items, int32_t index, char* (*char_buffer_create)(int))
+char* Items_getItemClass(DFHackObject* items, int32_t index)
 {
 	if(items != NULL)
 	{
@@ -75,7 +77,7 @@ char* Items_getItemClass(DFHackObject* items, int32_t index, char* (*char_buffer
 		
 		if(iclass.size() > 0)
 		{
-			char* buf = (*char_buffer_create)(iclass.size());
+			char* buf = (*alloc_char_buffer_callback)(iclass.size());
 			
 			if(buf != NULL)
 			{

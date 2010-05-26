@@ -33,7 +33,7 @@ using namespace std;
 #include "dfhack/DFCommonInternal.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack-c/DFTypes_C.h"
-#include "modules/Materials.h"
+#include "dfhack/modules/Materials.h"
 
 using namespace DFHack;
 

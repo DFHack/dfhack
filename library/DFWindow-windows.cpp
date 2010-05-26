@@ -22,9 +22,9 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "DFCommonInternal.h"
-#include "DFWindow.h"
-#include "DFProcess.h"
+#include "dfhack/DFCommonInternal.h"
+#include "dfhack/DFWindow.h"
+#include "dfhack/DFProcess.h"
 using namespace DFHack;
 
 // should always reflect the enum in DFkeys.h

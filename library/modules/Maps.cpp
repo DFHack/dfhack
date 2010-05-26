@@ -27,7 +27,7 @@ distribution.
 #include <mod-core.h>
 #include <mod-maps.h>
 #include "../private/APIPrivate.h"
-#include "modules/Maps.h"
+#include "dfhack/modules/Maps.h"
 #include "dfhack/DFError.h"
 #include "dfhack/DFMemInfo.h"
 #include "dfhack/DFProcess.h"

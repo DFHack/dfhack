@@ -64,7 +64,7 @@ SET(PROJECT_HDRS_LINUX
 )
 
 SET(PROJECT_HDRS_WINDOWS
-include/stdint_win.h
+include/dfhack/DFstdint_win.h
 )
 
 SET(PROJECT_SRCS_LINUX
@@ -133,19 +133,60 @@ IF(UNIX)
   install(FILES ${CMAKE_SOURCE_DIR}/output/Memory.xml DESTINATION share/dfhack)
 ENDIF(UNIX)
 
-# SWIG stuff is dead
-# FIND_PACKAGE(SWIG)
+################################################################################
+# DFCONNECT
+###
 
-#IF(SWIG_FOUND)
-#    INCLUDE(${SWIG_USE_FILE})
-#    FIND_PACKAGE(PythonLibs)
-#    IF(PYTHONLIBS_FOUND)
-#        INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
-#        SET(CMAKE_SWIG_FLAGS "-c++")
-#        SET_SOURCE_FILES_PROPERTIES(pydfhack.i PROPERTIES CPLUSPLUS ON)
-#        SET(CMAKE_DFHACK_SWIG_OUTDIR ${dfhack_SOURCE_DIR}/output CACHE PATH "Directory where Java wrapped libraries will be saved.")
-#        # SET_SOURCE_FILES_PROPERTIES(pydfhack.i PROPERTIES SWIG_FLAGS "-includeall")
-#        SWIG_ADD_MODULE(pydfhack python pydfhack.i)
-#        SWIG_LINK_LIBRARIES(pydfhack ${PYTHON_LIBRARIES} dfhack)
-#    ENDIF(PYTHONLIBS_FOUND)
-#ENDIF(SWIG_FOUND)
+SET(DFCONNECT_HDRS
+shm/shms.h
+shm/mod-core.h
+shm/mod-maps.h
+)
+
+SET(PROJECT_SRCS
+shm/mod-core.cpp
+shm/mod-maps.cpp
+#mod-creature40d.cpp
+)
+
+SET(PROJECT_HDRS_LINUX
+)
+
+SET(PROJECT_HDRS_WINDOWS
+)
+
+SET(PROJECT_SRCS_LINUX
+shm/shms-linux.cpp
+)
+
+SET(PROJECT_SRCS_WINDOWS
+shm/shms-windows.cpp
+)
+
+IF(UNIX)
+    LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_LINUX})
+    LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_LINUX})
+ELSE(UNIX)
+    LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_WINDOWS})
+    LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_WINDOWS})
+ENDIF(UNIX)
+
+
+SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
+
+LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
+
+#IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    IF(UNIX)
+        add_definitions(-DLINUX_BUILD)
+        SET(PROJECT_LIBS rt)
+        SET(CMAKE_CXX_FLAGS "-fvisibility=hidden")
+        ADD_LIBRARY(dfconnect SHARED ${PROJECT_SRCS})
+        TARGET_LINK_LIBRARIES(dfconnect ${PROJECT_LIBS})
+    ELSE(UNIX)
+        #  SET(PROJECT_LIBS psapi)
+        ADD_LIBRARY(SDL SHARED ${PROJECT_SRCS})
+        TARGET_LINK_LIBRARIES(SDL ${PROJECT_LIBS})
+    ENDIF(UNIX)
+#ENDIF(CMAKE_SIZEOF_VOID_P EQUAL 4)
+

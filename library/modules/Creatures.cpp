@@ -35,8 +35,8 @@ distribution.
 #include <shms.h>
 #include <mod-core.h>
 #include <mod-creature2010.h>
-#include "modules/Materials.h"
-#include "modules/Creatures.h"
+#include "dfhack/modules/Materials.h"
+#include "dfhack/modules/Creatures.h"
 
 
 #define SHMCREATURESHDR ((Creatures2010::shm_creature_hdr *)d->d->shm_start)

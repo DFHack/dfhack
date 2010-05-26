@@ -36,7 +36,7 @@ FIXME: Japa said that he had to do this with the time stuff he got from here
 
 #include "dfhack/DFCommonInternal.h"
 #include "../private/APIPrivate.h"
-#include "modules/World.h"
+#include "dfhack/modules/World.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFMemInfo.h"
 #include "dfhack/DFTypes.h"

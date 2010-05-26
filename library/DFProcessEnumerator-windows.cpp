@@ -22,11 +22,11 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "DFCommonInternal.h"
-#include "DFProcessEnumerator.h"
-#include "DFProcess.h"
-#include "DFMemInfo.h"
-#include "DFMemInfoManager.h"
+#include "dfhack/DFCommonInternal.h"
+#include "dfhack/DFProcessEnumerator.h"
+#include "dfhack/DFProcess.h"
+#include "dfhack/DFMemInfo.h"
+#include "dfhack/DFMemInfoManager.h"
 using namespace DFHack;
 
 class DFHack::ProcessEnumerator::Private

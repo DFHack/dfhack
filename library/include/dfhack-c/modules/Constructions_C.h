@@ -22,15 +22,14 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef CREATURES_C_API
-#define CREATURES_C_API
+#ifndef CONSTRUCTIONS_C_API
+#define CONSTRUCTIONS_C_API
 
 #include "dfhack/DFExport.h"
 #include "dfhack/DFIntegers.h"
-#include "DFHack_C.h"
 #include "dfhack/DFTypes.h"
-#include "modules/Materials.h"
-#include "modules/Creatures.h"
+#include "dfhack/modules/Constructions.h"
+#include "DFHack_C.h"
 
 using namespace DFHack;
 
@@ -38,20 +37,10 @@ using namespace DFHack;
 extern "C" {
 #endif
 
-DFHACK_EXPORT int Creatures_Start(DFHackObject* cPtr, uint32_t* numCreatures);
-DFHACK_EXPORT int Creatures_Finish(DFHackObject* cPtr);
+DFHACK_EXPORT int Constructions_Start(DFHackObject* c_Ptr, uint32_t* numConstructions);
+DFHACK_EXPORT int Constructions_Finish(DFHackObject* c_Ptr);
 
-DFHACK_EXPORT int32_t Creatures_ReadCreatureInBox(DFHackObject* cPtr, const int32_t index, t_creature* furball, 
-													const uint16_t x1, const uint16_t y1, const uint16_t z1, 
-													const uint16_t x2, const uint16_t y2, const uint16_t z2);
-
-DFHACK_EXPORT int Creatures_ReadCreature(DFHackObject* cPtr, const int32_t index, t_creature* furball);
-DFHACK_EXPORT int Creatures_WriteLabors(DFHackObject* cPtr, const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
-
-DFHACK_EXPORT uint32_t Creatures_GetDwarfRaceIndex(DFHackObject* cPtr);
-DFHACK_EXPORT int32_t Creatures_GetDwarfCivId(DFHackObject* cPtr);
-
-DFHACK_EXPORT int Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball, t_material* (*t_material_buffer_create)(int));
+DFHACK_EXPORT int Constructions_Read(DFHackObject* c_Ptr, const uint32_t index, t_construction* construction);
 
 #ifdef __cplusplus
 }

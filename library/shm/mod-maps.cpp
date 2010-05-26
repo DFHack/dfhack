@@ -1,13 +1,13 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <DFIntegers.h>
+#include <dfhack/DFIntegers.h>
 
 #include "shms.h"
 #include "mod-core.h"
 #include "mod-maps.h"
-#include <DFTypes.h>
-#include <modules/Maps.h>
+#include <dfhack/DFTypes.h>
+#include <dfhack/modules/Maps.h>
 using namespace DFHack;
 using namespace DFHack::Server::Maps;
 

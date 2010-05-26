@@ -24,12 +24,12 @@ distribution.
 
 #include "dfhack/DFCommonInternal.h"
 #include "../private/APIPrivate.h"
-#include "modules/Translation.h"
+//#include "modules/Translation.h"
 #include "dfhack/DFMemInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
 #include "dfhack/DFTypes.h"
-#include "modules/Constructions.h"
+#include "dfhack/modules/Constructions.h"
 
 using namespace DFHack;
 

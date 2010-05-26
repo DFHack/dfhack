@@ -22,26 +22,36 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef ITEMS_C_API
-#define ITEMS_C_API
+#ifndef CREATURES_C_API
+#define CREATURES_C_API
 
 #include "dfhack/DFExport.h"
 #include "dfhack/DFIntegers.h"
-#include "dfhack/DFCommonInternal.h"
+#include "DFHack_C.h"
+#include "dfhack/DFTypes.h"
+#include "dfhack/modules/Materials.h"
+#include "dfhack/modules/Creatures.h"
 
 using namespace DFHack;
-
-#include "dfhack/DFTypes.h"
-#include "modules/Items.h"
-#include "DFHack_C.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-DFHACK_EXPORT char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObject* mats);
-DFHACK_EXPORT char* Items_getItemClass(DFHackObject* items, int32_t index);
-DFHACK_EXPORT int Items_getItemData(DFHackObject* items, uint32_t itemptr, t_item* item);
+DFHACK_EXPORT int Creatures_Start(DFHackObject* cPtr, uint32_t* numCreatures);
+DFHACK_EXPORT int Creatures_Finish(DFHackObject* cPtr);
+
+DFHACK_EXPORT int32_t Creatures_ReadCreatureInBox(DFHackObject* cPtr, const int32_t index, t_creature* furball, 
+													const uint16_t x1, const uint16_t y1, const uint16_t z1, 
+													const uint16_t x2, const uint16_t y2, const uint16_t z2);
+
+DFHACK_EXPORT int Creatures_ReadCreature(DFHackObject* cPtr, const int32_t index, t_creature* furball);
+DFHACK_EXPORT int Creatures_WriteLabors(DFHackObject* cPtr, const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
+
+DFHACK_EXPORT uint32_t Creatures_GetDwarfRaceIndex(DFHackObject* cPtr);
+DFHACK_EXPORT int32_t Creatures_GetDwarfCivId(DFHackObject* cPtr);
+
+DFHACK_EXPORT int Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball, t_material* (*t_material_buffer_create)(int));
 
 #ifdef __cplusplus
 }

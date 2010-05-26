@@ -7,16 +7,16 @@
 #include "dfhack/DFMemInfo.h"
 #include "dfhack/DFProcess.h"
 
-#include "modules/Materials.h"
-#include "modules/Creatures.h"
-#include "modules/Maps.h"
-#include "modules/Position.h"
-#include "modules/Translation.h"
-#include "modules/Vegetation.h"
-#include "modules/Gui.h"
-#include "modules/World.h"
-#include "modules/Buildings.h"
-#include "modules/Constructions.h"
+#include "dfhack/modules/Materials.h"
+#include "dfhack/modules/Creatures.h"
+#include "dfhack/modules/Maps.h"
+#include "dfhack/modules/Position.h"
+#include "dfhack/modules/Translation.h"
+#include "dfhack/modules/Vegetation.h"
+#include "dfhack/modules/Gui.h"
+#include "dfhack/modules/World.h"
+#include "dfhack/modules/Buildings.h"
+#include "dfhack/modules/Constructions.h"
 
 using namespace DFHack;
 

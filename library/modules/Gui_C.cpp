@@ -24,11 +24,11 @@ distribution.
 #include <vector>
 #include <string>
 #include "DFHack_C.h"
-#include "modules/Gui_C.h"
+#include "dfhack-c/modules/Gui_C.h"
 #include "dfhack/DFIntegers.h"
 
 #include "dfhack/DFCommonInternal.h"
-#include "modules/Gui.h"
+#include "dfhack/modules/Gui.h"
 
 using namespace DFHack;
 

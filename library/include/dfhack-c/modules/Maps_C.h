@@ -34,7 +34,7 @@ distribution.
 using namespace std;
 
 #include "dfhack/DFTypes.h"
-#include "modules/Maps.h"
+#include "dfhack/modules/Maps.h"
 #include "DFHack_C.h"
 
 using namespace DFHack;

@@ -35,10 +35,10 @@ using namespace std;
 using namespace DFHack;
 
 #include "dfhack/DFProcess.h"
-#include "modules/Materials.h"
-#include "modules/Items.h"
+#include "dfhack/modules/Materials.h"
+#include "dfhack/modules/Items.h"
 #include "dfhack-c/DFTypes_C.h"
-#include "modules/Items_C.h"
+#include "dfhack-c/modules/Items_C.h"
 
 
 #ifdef __cplusplus

@@ -28,7 +28,7 @@ distribution.
 #include "dfhack/DFExport.h"
 #include "dfhack/DFIntegers.h"
 #include "dfhack/DFTypes.h"
-#include "modules/Materials.h"
+#include "dfhack/modules/Materials.h"
 
 using namespace DFHack;
 

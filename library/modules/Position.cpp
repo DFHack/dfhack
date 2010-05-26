@@ -24,7 +24,7 @@ distribution.
 
 #include "dfhack/DFCommonInternal.h"
 #include "../private/APIPrivate.h"
-#include "modules/Position.h"
+#include "dfhack/modules/Position.h"
 #include "dfhack/DFMemInfo.h"
 #include "dfhack/DFProcess.h"
 using namespace DFHack;

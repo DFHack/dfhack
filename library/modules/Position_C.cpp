@@ -24,11 +24,11 @@ distribution.
 
 #include <vector>
 #include <string>
-#include "modules/Position_C.h"
+#include "dfhack-c/modules/Position_C.h"
 #include "dfhack/DFIntegers.h"
 
 #include "dfhack/DFCommonInternal.h"
-#include "modules/Position.h"
+#include "dfhack/modules/Position.h"
 
 using namespace DFHack;
 

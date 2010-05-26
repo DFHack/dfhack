@@ -31,9 +31,9 @@ using namespace std;
 
 #include "dfhack/DFCommonInternal.h"
 #include "dfhack/DFTypes.h"
-#include "modules/Materials.h"
+#include "dfhack/modules/Materials.h"
 #include "dfhack-c/DFTypes_C.h"
-#include "modules/Materials_C.h"
+#include "dfhack-c/modules/Materials_C.h"
 
 using namespace DFHack;
 

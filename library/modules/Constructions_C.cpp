@@ -26,8 +26,8 @@ distribution.
 
 #include "dfhack/DFCommonInternal.h"
 #include "dfhack/DFTypes.h"
-#include "modules/Constructions.h"
-#include "modules/Constructions_C.h"
+#include "dfhack/modules/Constructions.h"
+#include "dfhack-c/modules/Constructions_C.h"
 
 using namespace DFHack;
 

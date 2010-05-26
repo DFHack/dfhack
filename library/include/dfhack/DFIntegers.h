@@ -11,6 +11,6 @@ You can turn off the include by defining SKIP_DFHACK_STDINT
     #ifndef _MSC_VER
         #include <stdint.h>
     #else
-        #include "stdint_win.h"
+        #include "DFstdint_win.h"
     #endif
 #endif

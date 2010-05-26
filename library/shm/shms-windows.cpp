@@ -33,7 +33,7 @@ distribution.
 
 #define DFhackCExport extern "C" __declspec(dllexport)
 
-#include "../include/DFIntegers.h"
+#include "dfhack/DFIntegers.h"
 #include <vector>
 #include <string>
 #include "shms.h"

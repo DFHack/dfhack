@@ -22,13 +22,13 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef CONSTRUCTIONS_C_API
-#define CONSTRUCTIONS_C_API
+#ifndef BUILDINGS_C_API
+#define BUILDINGS_C_API
 
 #include "dfhack/DFExport.h"
 #include "dfhack/DFIntegers.h"
 #include "dfhack/DFTypes.h"
-#include "modules/Constructions.h"
+#include "dfhack/modules/Buildings.h"
 #include "DFHack_C.h"
 
 using namespace DFHack;
@@ -37,10 +37,19 @@ using namespace DFHack;
 extern "C" {
 #endif
 
-DFHACK_EXPORT int Constructions_Start(DFHackObject* c_Ptr, uint32_t* numConstructions);
-DFHACK_EXPORT int Constructions_Finish(DFHackObject* c_Ptr);
+struct t_customWorkshop
+{
+	uint32_t index;
+	char name[256];
+};
 
-DFHACK_EXPORT int Constructions_Read(DFHackObject* c_Ptr, const uint32_t index, t_construction* construction);
+DFHACK_EXPORT int Buildings_Start(DFHackObject* b_Ptr, uint32_t* numBuildings);
+DFHACK_EXPORT int Buildings_Finish(DFHackObject* b_Ptr);
+
+DFHACK_EXPORT int Buildings_Read(DFHackObject* b_Ptr, const uint32_t index, t_building* building);
+
+DFHACK_EXPORT int Buildings_ReadCustomWorkshopTypes(DFHackObject* b_Ptr, void* (*t_customWorkshop_buffer_create)(uint32_t));
+DFHACK_EXPORT int Buildings_GetCustomWorkshopType(DFHackObject* b_Ptr, t_building* building);
 
 #ifdef __cplusplus
 }

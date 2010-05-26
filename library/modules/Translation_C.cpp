@@ -29,8 +29,8 @@ using namespace std;
 
 #include "dfhack/DFCommonInternal.h"
 #include "dfhack/DFTypes.h"
-#include "modules/Translation.h"
-#include "modules/Translation_C.h"
+#include "dfhack/modules/Translation.h"
+#include "dfhack-c/modules/Translation_C.h"
 
 using namespace DFHack;
 

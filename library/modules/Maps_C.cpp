@@ -31,8 +31,8 @@ using namespace std;
 
 #include "dfhack/DFCommonInternal.h"
 #include "dfhack/DFTypes.h"
-#include "modules/Maps.h"
-#include "modules/Maps_C.h"
+#include "dfhack/modules/Maps.h"
+#include "dfhack-c/modules/Maps_C.h"
 
 using namespace DFHack;
 

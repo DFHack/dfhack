@@ -22,34 +22,26 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef BUILDINGS_C_API
-#define BUILDINGS_C_API
+#ifndef ITEMS_C_API
+#define ITEMS_C_API
 
 #include "dfhack/DFExport.h"
 #include "dfhack/DFIntegers.h"
-#include "dfhack/DFTypes.h"
-#include "modules/Buildings.h"
-#include "DFHack_C.h"
+#include "dfhack/DFCommonInternal.h"
 
 using namespace DFHack;
+
+#include "dfhack/DFTypes.h"
+#include "dfhack/modules/Items.h"
+#include "DFHack_C.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct t_customWorkshop
-{
-	uint32_t index;
-	char name[256];
-};
-
-DFHACK_EXPORT int Buildings_Start(DFHackObject* b_Ptr, uint32_t* numBuildings);
-DFHACK_EXPORT int Buildings_Finish(DFHackObject* b_Ptr);
-
-DFHACK_EXPORT int Buildings_Read(DFHackObject* b_Ptr, const uint32_t index, t_building* building);
-
-DFHACK_EXPORT int Buildings_ReadCustomWorkshopTypes(DFHackObject* b_Ptr, void* (*t_customWorkshop_buffer_create)(uint32_t));
-DFHACK_EXPORT int Buildings_GetCustomWorkshopType(DFHackObject* b_Ptr, t_building* building);
+DFHACK_EXPORT char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObject* mats);
+DFHACK_EXPORT char* Items_getItemClass(DFHackObject* items, int32_t index);
+DFHACK_EXPORT int Items_getItemData(DFHackObject* items, uint32_t itemptr, t_item* item);
 
 #ifdef __cplusplus
 }

@@ -21,11 +21,11 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
-#include "DFCommonInternal.h"
-#include "DFProcess.h"
-#include "DFWindow.h"
-#include "DFMemInfo.h"
-#include "DFError.h"
+#include "dfhack/DFCommonInternal.h"
+#include "dfhack/DFProcess.h"
+#include "dfhack/DFWindow.h"
+#include "dfhack/DFMemInfo.h"
+#include "dfhack/DFError.h"
 using namespace DFHack;
 
 class NormalProcess::Private

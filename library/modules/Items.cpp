@@ -28,8 +28,8 @@ distribution.
 #include "dfhack/DFMemInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
-#include "modules/Materials.h"
-#include "modules/Items.h"
+#include "dfhack/modules/Materials.h"
+#include "dfhack/modules/Items.h"
 
 using namespace DFHack;
 

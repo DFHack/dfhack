@@ -31,9 +31,9 @@ distribution.
 using namespace std;
 
 #include "dfhack/DFTypes.h"
-#include "modules/Materials.h"
-#include "modules/Creatures.h"
-#include "modules/Creatures_C.h"
+#include "dfhack/modules/Materials.h"
+#include "dfhack/modules/Creatures.h"
+#include "dfhack-c/modules/Creatures_C.h"
 #include "DFHack_C.h"
 
 using namespace DFHack;

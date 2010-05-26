@@ -27,7 +27,7 @@ distribution.
  */
 
 #include <stdio.h>
-#include "../include/DFIntegers.h"
+#include "dfhack/DFIntegers.h"
 #include <stdlib.h>
 #include <string.h>
 #include <string>

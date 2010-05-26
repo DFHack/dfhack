@@ -31,8 +31,8 @@ using namespace std;
 
 #include "dfhack/DFCommonInternal.h"
 #include "dfhack/DFTypes.h"
-#include "modules/Buildings.h"
-#include "modules/Buildings_C.h"
+#include "dfhack/modules/Buildings.h"
+#include "dfhack-c/modules/Buildings_C.h"
 
 using namespace DFHack;
 

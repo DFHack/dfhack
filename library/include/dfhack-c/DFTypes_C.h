@@ -33,19 +33,19 @@ distribution.
 extern "C" {
 #endif
 
-DFHACK_EXPORT extern int8_t* (*alloc_byte_buffer_callback)(uint32_t);
-DFHACK_EXPORT extern int16_t* (*alloc_short_buffer_callback)(uint32_t);
-DFHACK_EXPORT extern int32_t* (*alloc_int_buffer_callback)(uint32_t);
+DFHACK_EXPORT extern int (*alloc_byte_buffer_callback)(int8_t*, uint32_t);
+DFHACK_EXPORT extern int (*alloc_short_buffer_callback)(int16_t*, uint32_t);
+DFHACK_EXPORT extern int (*alloc_int_buffer_callback)(int32_t*, uint32_t);
 
-DFHACK_EXPORT extern uint8_t* (*alloc_ubyte_buffer_callback)(uint32_t);
-DFHACK_EXPORT extern uint16_t* (*alloc_ushort_buffer_callback)(uint32_t);
-DFHACK_EXPORT extern uint32_t* (*alloc_uint_buffer_callback)(uint32_t);
+DFHACK_EXPORT extern int (*alloc_ubyte_buffer_callback)(uint8_t*, uint32_t);
+DFHACK_EXPORT extern int (*alloc_ushort_buffer_callback)(uint16_t*, uint32_t);
+DFHACK_EXPORT extern int (*alloc_uint_buffer_callback)(uint32_t*, uint32_t);
 
-DFHACK_EXPORT extern char* (*alloc_char_buffer_callback)(uint32_t);
+DFHACK_EXPORT extern int (*alloc_char_buffer_callback)(char*, uint32_t);
 
-DFHACK_EXPORT extern t_matgloss* (*alloc_matgloss_buffer_callback)(int);
-DFHACK_EXPORT extern t_descriptor_color* (*alloc_descriptor_buffer_callback)(int);
-DFHACK_EXPORT extern t_matglossOther* (*alloc_matgloss_other_buffer_callback)(int);
+DFHACK_EXPORT extern int (*alloc_matgloss_buffer_callback)(t_matgloss*, uint32_t);
+DFHACK_EXPORT extern int (*alloc_descriptor_buffer_callback)(t_descriptor_color*, uint32_t);
+DFHACK_EXPORT extern int (*alloc_matgloss_other_buffer_callback)(t_matglossOther*, uint32_t);
 
 struct c_colormodifier
 {
@@ -54,9 +54,9 @@ struct c_colormodifier
 	uint32_t colorlistLength;
 };
 
-DFHACK_EXPORT extern c_colormodifier* (*alloc_empty_colormodifier_callback)(void);
-DFHACK_EXPORT extern c_colormodifier* (*alloc_colormodifier_callback)(const char*, uint32_t);
-DFHACK_EXPORT extern c_colormodifier* (*alloc_colormodifier_buffer_callback)(uint32_t);
+DFHACK_EXPORT extern int (*alloc_empty_colormodifier_callback)(c_colormodifier*);
+DFHACK_EXPORT extern int (*alloc_colormodifier_callback)(c_colormodifier*, const char*, uint32_t);
+DFHACK_EXPORT extern int (*alloc_colormodifier_buffer_callback)(c_colormodifier*, uint32_t);
 
 struct c_creaturecaste
 {
@@ -72,9 +72,9 @@ struct c_creaturecaste
 	uint32_t bodypartLength;
 };
 
-DFHACK_EXPORT extern c_creaturecaste* (*alloc_empty_creaturecaste_callback)(void);
-DFHACK_EXPORT extern c_creaturecaste* (*alloc_creaturecaste_callback)(const char*, const char*, const char*, const char*, uint32_t, uint32_t);
-DFHACK_EXPORT extern c_creaturecaste* (*alloc_creaturecaste_buffer_callback)(uint32_t);
+DFHACK_EXPORT extern int (*alloc_empty_creaturecaste_callback)(c_creaturecaste*);
+DFHACK_EXPORT extern int (*alloc_creaturecaste_callback)(c_creaturecaste*, const char*, const char*, const char*, const char*, uint32_t, uint32_t);
+DFHACK_EXPORT extern int (*alloc_creaturecaste_buffer_callback)(c_creaturecaste*, uint32_t);
 
 struct c_creaturetype
 {
@@ -96,9 +96,9 @@ struct c_creaturetype
 	} tilecolor;
 };
 
-DFHACK_EXPORT extern c_creaturetype* (*alloc_empty_creaturetype_callback)(void);
-DFHACK_EXPORT extern c_creaturetype* (*alloc_creaturetype_callback)(const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t);
-DFHACK_EXPORT extern c_creaturetype* (*alloc_creaturetype_buffer_callback)(uint32_t);
+DFHACK_EXPORT extern int (*alloc_empty_creaturetype_callback)(c_creaturetype*);
+DFHACK_EXPORT extern int (*alloc_creaturetype_callback)(c_creaturetype*, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t);
+DFHACK_EXPORT extern int (*alloc_creaturetype_buffer_callback)(c_creaturetype*, uint32_t);
 
 #ifdef __cplusplus
 }

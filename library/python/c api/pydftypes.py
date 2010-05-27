@@ -87,12 +87,15 @@ class Matgloss(Structure):
                 ("bright", c_byte),
                 ("name", c_char * 128)]
 
-def _alloc_matgloss_buffer_callback(count):
+def _alloc_matgloss_buffer_callback(ptr, count):
     allocated = _allocate_array(Matgloss, count)
 
-    return allocated[1]
+    ptr = addressof(allocated[0])
 
-libdfhack.alloc_matgloss_buffer_callback = CFUNCTYPE(POINTER(Matgloss), c_int)(_alloc_matgloss_buffer_callback)
+    return 1
+
+_matgloss_functype = CFUNCTYPE(c_int, POINTER(Matgloss), c_uint)
+libdfhack.alloc_matgloss_buffer_callback = _matgloss_functype(_alloc_matgloss_buffer_callback)
 
 class MatglossPair(Structure):
     _fields_ = [("type", c_short),
@@ -105,12 +108,15 @@ class DescriptorColor(Structure):
                 ("b", c_float),
                 ("name", c_char * 128)]
 
-def _alloc_descriptor_buffer_callback(count):
+def _alloc_descriptor_buffer_callback(ptr, count):
     allocated = _allocate_array(DescriptorColor, count)
 
-    return allocated[1]
+    ptr = addressof(allocated[0])
 
-libdfhack.alloc_descriptor_buffer_callback = CFUNCTYPE(POINTER(DescriptorColor), c_int)(_alloc_descriptor_buffer_callback)
+    return 1
+
+_descriptor_functype = CFUNCTYPE(c_int, POINTER(DescriptorColor), c_uint)
+libdfhack.alloc_descriptor_buffer_callback = _descriptor_functype(_alloc_descriptor_buffer_callback)
 
 class MatglossOther(Structure):
     _fields_ = [("rawname", c_char * 128)]
@@ -118,9 +124,12 @@ class MatglossOther(Structure):
 def _alloc_matgloss_other_buffer_callback(count):
     allocated = _allocate_array(MatglossOther, count)
 
-    return allocated[1]
+    ptr = addressof(allocated[0])
 
-libdfhack.alloc_matgloss_other_buffer_callback = CFUNCTYPE(POINTER(MatglossOther), c_int)(_alloc_matgloss_other_buffer_callback)
+    return 1
+
+_matgloss_other_functype = CFUNCTYPE(c_int, POINTER(MatglossOther), c_uint)
+libdfhack.alloc_matgloss_other_buffer_callback = _matgloss_other_functype(_alloc_matgloss_other_buffer_callback)
 
 class Building(Structure):
     _fields_ = [("origin", c_uint),
@@ -297,7 +306,10 @@ class ColorModifier(Structure):
 
 ColorModifierPtr = POINTER(ColorModifier)
 
-def _alloc_empty_colormodifier_callback():
-    return ColorModifierPtr(ColorModifier())
+def _alloc_empty_colormodifier_callback(ptr):
+    ptr = ColorModifierPtr(ColorModifier())
 
-libdfhack.alloc_empty_colormodifier_callback = CFUNCTYPE(ColorModifierPtr)(_alloc_empty_colormodifier_callback)
+    return 1
+
+_empty_colormodifier_functype = CFUNCTYPE(c_int, ColorModifierPtr)
+libdfhack.alloc_empty_colormodifier_callback = _empty_colormodifier_functype(_alloc_empty_colormodifier_callback)

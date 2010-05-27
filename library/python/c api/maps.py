@@ -1,6 +1,6 @@
 from ctypes import *
-from pydftypes import libdfhack
-from util import _uintify
+from pydftypes import *
+from util import _uintify, uint_ptr
 
 libdfhack.Maps_getSize.argtypes = [ c_void_p, uint_ptr, uint_ptr, uint_ptr ]
 libdfhack.Maps_ReadTileTypes.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(TileTypes40d) ]

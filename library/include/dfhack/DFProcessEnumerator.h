@@ -28,13 +28,10 @@ distribution.
 #include "DFPragma.h"
 #include "DFExport.h"
 
-class TiXmlElement;
-
 namespace DFHack
 {
     class memory_info;
     class Process;
-    
     /*
      * Process manager
      */
@@ -43,8 +40,9 @@ namespace DFHack
         class Private;
         Private * const d;
     public:
-        ProcessEnumerator( string path_to_xml);
+        ProcessEnumerator( string path_to_xml );
         ~ProcessEnumerator();
+        bool Refresh(vector <Process *> * invalidated_processes = 0);
         bool findProcessess();
         uint32_t size();
         Process * operator[](uint32_t index);

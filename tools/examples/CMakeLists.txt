@@ -47,6 +47,10 @@ TARGET_LINK_LIBRARIES(dftreedump dfhack)
 ADD_EXECUTABLE(dfspatterdump spatterdump.cpp)
 TARGET_LINK_LIBRARIES(dfspatterdump dfhack)
 
+# processenum - demonstrates the use of ProcessEnumerator
+ADD_EXECUTABLE(dfprocessenum processenum.cpp)
+TARGET_LINK_LIBRARIES(dfprocessenum dfhack)
+
 IF(UNIX)
     SET(CURSES_NEED_WIDE "YES")
     SET(CURSES_NEED_NCURSES "NO")

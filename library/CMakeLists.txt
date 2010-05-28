@@ -57,6 +57,7 @@ DFMemInfo.cpp
 DFMemInfoManager.cpp
 DFContextManager.cpp
 DFContext.cpp
+DFProcessEnumerator.cpp
 ContextShared.cpp
 DFContext_C.cpp
 DFTypes_C.cpp
@@ -105,14 +106,12 @@ DFProcess-linux.cpp
 DFProcess-linux-SHM.cpp
 DFProcess-linux-wine.cpp
 modules/WindowIO-linux.cpp
-DFProcessEnumerator-linux.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
 DFProcess-windows.cpp
 DFProcess-windows-SHM.cpp
 modules/WindowIO-windows.cpp
-DFProcessEnumerator-windows.cpp
 )
 
 IF(UNIX)

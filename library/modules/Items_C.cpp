@@ -28,6 +28,8 @@ distribution.
 extern "C" {
 #endif
 
+//FIXME: beware of bad null-termination! I haven't tested anything here, but it seems that it could be corrupting or truncating strings.
+
 char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObject* mats)
 {
 	if(items != NULL && mats != NULL)
@@ -36,7 +38,8 @@ char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObje
 		
 		if(desc.size() > 0)
 		{
-			char* buf = (*alloc_char_buffer_callback)(desc.size());
+			char* buf;
+            (*alloc_char_buffer_callback)(buf,desc.size());
 			
 			if(buf != NULL)
 			{
@@ -63,8 +66,8 @@ char* Items_getItemClass(DFHackObject* items, int32_t index)
 		
 		if(iclass.size() > 0)
 		{
-			char* buf = (*alloc_char_buffer_callback)(iclass.size());
-			
+            char* buf;
+            (*alloc_char_buffer_callback)(buf, iclass.size());
 			if(buf != NULL)
 			{
 				size_t len = iclass.copy(buf, iclass.size());

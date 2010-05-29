@@ -25,15 +25,10 @@ distribution.
 #ifndef ITEMS_C_API
 #define ITEMS_C_API
 
-#include "dfhack/DFExport.h"
-#include "dfhack/DFIntegers.h"
-#include "Internal.h"
-
-using namespace DFHack;
-
-#include "dfhack/DFTypes.h"
-#include "dfhack/modules/Items.h"
 #include "DFHack_C.h"
+#include "dfhack/DFProcess.h"
+#include "dfhack-c/DFTypes_C.h"
+#include "dfhack/modules/Items.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -25,19 +25,9 @@ distribution.
 #ifndef MAPS_C_API
 #define MAPS_C_API
 
-#include "dfhack/DFExport.h"
-#include "dfhack/DFIntegers.h"
-#include <vector>
-#include <map>
-#include <string>
-
-using namespace std;
-
+#include "DFHack_C.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Maps.h"
-#include "DFHack_C.h"
-
-using namespace DFHack;
 
 #ifdef __cplusplus
 extern "C" {

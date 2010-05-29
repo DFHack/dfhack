@@ -170,7 +170,9 @@ class Context(object):
         return self._tran_obj
 
 def reveal():
-    df = API("Memory.xml")
+    df_cm = ContextManager("Memory.xml")
+    df = df_cm.get_single_context()
+    
     df.attach()
 
     m = df.maps
@@ -192,4 +194,12 @@ def reveal():
                     m.write_designations(x, y, z, d)
 
     m.finish()
+    df.detach()
+
+def resume():
+    df_cm = ContextManager("Memory.xml")
+    df = df_cm.get_single_context()
+
+    df.attach()
+    df.force_resume()
     df.detach()

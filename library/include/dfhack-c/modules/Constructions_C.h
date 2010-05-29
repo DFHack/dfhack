@@ -25,13 +25,9 @@ distribution.
 #ifndef CONSTRUCTIONS_C_API
 #define CONSTRUCTIONS_C_API
 
-#include "dfhack/DFExport.h"
-#include "dfhack/DFIntegers.h"
+#include "DFHack_C.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Constructions.h"
-#include "DFHack_C.h"
-
-using namespace DFHack;
 
 #ifdef __cplusplus
 extern "C" {

@@ -92,6 +92,8 @@ modules/Position_C.cpp
 modules/Materials_C.cpp
 modules/Translation_C.cpp
 modules/Vegetation_C.cpp
+modules/WindowIO_C.cpp
+modules/World_C.cpp
 )
 
 SET(PROJECT_HDRS_LINUX

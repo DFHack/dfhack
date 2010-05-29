@@ -130,6 +130,13 @@ ContextManager::ContextManager (const string path_to_xml) : d (new Private())
 ContextManager::~ContextManager()
 {
     purge();
+    // process enumerator has to be destroyed after we detach from processes
+    // because it tracks and destroys them
+    if(d->pEnum)
+    {
+        delete d->pEnum;
+        d->pEnum = 0;
+    }
     delete d;
 }
 
@@ -174,7 +181,6 @@ uint32_t ContextManager::Refresh( BadContexts* bad_contexts )
         // no expired contexts are in the d->contexts vector now
         // all processes remaining in 'expired' are now destroyed along with it
     }
-    
     int numProcesses = d->pEnum->size();
     int numContexts = d->contexts.size();
     vector <Context *> newContexts;
@@ -207,12 +213,14 @@ uint32_t ContextManager::size()
 {
     return d->contexts.size();
 }
+
 Context * ContextManager::operator[](uint32_t index)
 {
     if (index < d->contexts.size())
         return d->contexts[index];
     return 0;
 }
+
 Context * ContextManager::getSingleContext()
 {
     if(!d->contexts.size())
@@ -228,16 +236,11 @@ Context * ContextManager::getSingleContext()
     }
     throw DFHack::Error::NoProcess();
 }
+
 void ContextManager::purge(void)
 {
     for(int i = 0; i < d->contexts.size();i++)
         delete d->contexts[i];
     d->contexts.clear();
-    // process enumerator has to be destroyed after we detach from processes
-    // because it tracks and destroys them
-    if(d->pEnum)
-    {
-        delete d->pEnum;
-        d->pEnum = 0;
-    }
+    d->pEnum->purge();
 }

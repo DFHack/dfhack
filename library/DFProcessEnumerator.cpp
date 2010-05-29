@@ -44,7 +44,76 @@ class DFHack::ProcessEnumerator::Private
         void EnumPIDs (vector <ProcessID> &PIDs);
 };
 
-#ifdef LINUX_BUILD
+class DFHack::BadProcesses::Private
+{
+    public:
+        Private(){};
+        PROC_V bad;
+};
+
+BadProcesses::BadProcesses():d(new Private()){}
+
+BadProcesses::~BadProcesses()
+{
+    clear();
+    delete d;
+}
+
+bool BadProcesses::Contains(Process* p)
+{
+    for(int i = 0; i < d->bad.size(); i++)
+    {
+        if(d->bad[i] == p)
+            return true;
+    }
+    return false;
+}
+
+bool BadProcesses::excise(Process* p)
+{
+    vector<Process*>::iterator it = d->bad.begin();
+    while(it != d->bad.end())
+    {
+        if((*it) == p)
+        {
+            d->bad.erase(it);
+            return true;
+        }
+        else
+        {
+            it++;
+        }
+    }
+    return false;
+}
+
+uint32_t BadProcesses::size()
+{
+    return d->bad.size();
+}
+
+void BadProcesses::clear()
+{
+    for(int i = 0; i < d->bad.size(); i++)
+    {
+        delete d->bad[i];
+    }
+    d->bad.clear();
+}
+
+void BadProcesses::push_back(Process* p)
+{
+    if(p)
+        d->bad.push_back(p);
+}
+
+Process * BadProcesses::operator[](uint32_t index)
+{
+    if(index < d->bad.size())
+        return d->bad[index];
+    return 0;
+}
+
 //FIXME: wasteful
 Process *ProcessEnumerator::Private::GetProcessObject(ProcessID ID)
 {
@@ -54,21 +123,23 @@ Process *ProcessEnumerator::Private::GetProcessObject(ProcessID ID)
         return p1;
     else
         delete p1;
-
+    
     Process *p2 = new NormalProcess(ID.pid,meminfo->meminfo);
     if(p2->isIdentified())
         return p2;
     else
         delete p2;
-
+#ifdef LINUX_BUILD
     Process *p3 = new WineProcess(ID.pid,meminfo->meminfo);
     if(p3->isIdentified())
         return p3;
     else
         delete p3;
     return 0;
+#endif
 }
 
+#ifdef LINUX_BUILD
 void ProcessEnumerator::Private::EnumPIDs (vector <ProcessID> &PIDs)
 {
     DIR *dir_p;
@@ -104,22 +175,6 @@ void ProcessEnumerator::Private::EnumPIDs (vector <ProcessID> &PIDs)
 #endif
 
 #ifndef LINUX_BUILD
-Process *ProcessEnumerator::Private::GetProcessObject(ProcessID ID)
-{
-    
-    Process *p1 = new SHMProcess(ID.pid,meminfo->meminfo);
-    if(p1->isIdentified())
-        return p1;
-    else
-        delete p1;
-
-    Process *p2 = new NormalProcess(ID.pid,meminfo->meminfo);
-    if(p2->isIdentified())
-        return p2;
-    else
-        delete p2;
-    return 0;
-}
 // some magic - will come in handy when we start doing debugger stuff on Windows
 bool EnableDebugPriv()
 {
@@ -199,19 +254,19 @@ void ProcessEnumerator::Private::EnumPIDs (vector <ProcessID> &PIDs)
 }
 #endif
 
-bool ProcessEnumerator::Refresh( PROC_V * invalidated_processes)
+bool ProcessEnumerator::Refresh( BadProcesses* invalidated_processes)
 {
     // PIDs to process
     vector <ProcessID> PIDs;
     // this will be the new process map
     PID2PROC temporary;
-    // clear the vector other access
+    // clear the vector
     d->Processes.clear();
     if(invalidated_processes)
         invalidated_processes->clear();
-    
+
     d->EnumPIDs(PIDs);
-    
+
     for(uint64_t i = 0; i < PIDs.size();i++)
     {
         ProcessID & PID = PIDs[i];

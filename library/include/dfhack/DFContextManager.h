@@ -35,18 +35,36 @@ distribution.
 namespace DFHack
 {
     class Context;
-    class DFContextMgrPrivate;
+    class BadContexts;
+    class Process;
+
     class DFHACK_EXPORT ContextManager
     {
-        DFContextMgrPrivate * const d;
+        class Private;
+        Private * const d;
     public:
         ContextManager(const std::string path_to_xml);
         ~ContextManager();
-        uint32_t Refresh();
+        uint32_t Refresh(BadContexts* bad_contexts = 0);
         uint32_t size();
         Context * operator[](uint32_t index);
         Context * getSingleContext();
         void purge(void);
+    };
+    class DFHACK_EXPORT BadContexts
+    {
+        class Private;
+        Private * const d;
+        void push_back(Context * c);
+        friend class ContextManager;
+    public:
+        BadContexts();
+        ~BadContexts();
+        bool Contains(Context* c);
+        bool Contains(Process* p);
+        uint32_t size();
+        void clear();
+        Context * operator[](uint32_t index);
     };
 } // namespace DFHack
 #endif // CONTEXTMANAGER_H_INCLUDED

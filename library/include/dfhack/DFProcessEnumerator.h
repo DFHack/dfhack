@@ -32,6 +32,7 @@ namespace DFHack
 {
     class memory_info;
     class Process;
+    class BadProcesses;
     /*
      * Process manager
      */
@@ -42,11 +43,26 @@ namespace DFHack
     public:
         ProcessEnumerator( string path_to_xml );
         ~ProcessEnumerator();
-        bool Refresh(vector <Process *> * invalidated_processes = 0);
+        bool Refresh(BadProcesses * invalidated_processes = 0);
         bool findProcessess();
         uint32_t size();
         Process * operator[](uint32_t index);
         void purge(void);
+    };
+    class DFHACK_EXPORT BadProcesses
+    {
+        class Private;
+        Private * const d;
+        void push_back(Process * p);
+        friend class ProcessEnumerator;
+    public:
+        BadProcesses();
+        ~BadProcesses();
+        bool Contains(Process* p);
+        bool excise (Process* p);
+        uint32_t size();
+        void clear();
+        Process * operator[](uint32_t index);
     };
 }
 #endif // PROCESSMANAGER_H_INCLUDED

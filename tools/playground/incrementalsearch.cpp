@@ -23,26 +23,27 @@ class SegmentedFinder;
 class SegmentFinder
 {
     public:
-    SegmentFinder(DFHack::t_memrange & mr, DFHack::Context * DF)
+    SegmentFinder(DFHack::t_memrange & mr, DFHack::Context * DF, SegmentedFinder * SF)
     {
         _DF = DF;
         mr_ = mr;
         mr_.buffer = (uint8_t *)malloc (mr_.end - mr_.start);
         DF->ReadRaw(mr_.start,(mr_.end - mr_.start),mr_.buffer);
+        _SF = SF;
     }
     ~SegmentFinder()
     {
         delete mr_.buffer;
     }
-    template <class T, typename P >
-    bool Find (T needle,  const uint8_t increment ,vector <uint64_t> &found, vector <uint64_t> &newfound, P oper)
+    template <class needleType, class hayType, typename comparator >
+    bool Find (needleType needle,  const uint8_t increment ,vector <uint64_t> &found, vector <uint64_t> &newfound, comparator oper)
     {
         if(found.empty())
         {
             //loop
-            for(uint64_t offset = 0; offset < (mr_.end - mr_.start) - sizeof(T); offset += increment)
+            for(uint64_t offset = 0; offset < (mr_.end - mr_.start) - sizeof(hayType); offset += increment)
             {
-                if( (*(T *)(mr_.buffer + offset)) == needle)
+                if( oper(_SF,(hayType *)(mr_.buffer + offset), needle) )
                     newfound.push_back(mr_.start + offset);
             }
         }
@@ -53,7 +54,7 @@ class SegmentFinder
                 if(mr_.isInRange(found[i]))
                 {
                     uint64_t corrected = found[i] - mr_.start;
-                    if( oper((T *)(mr_.buffer + corrected), needle) )
+                    if( oper(_SF,(hayType *)(mr_.buffer + corrected), needle) )
                         newfound.push_back(found[i]);
                 }
             }
@@ -62,6 +63,7 @@ class SegmentFinder
     }
     private:
     friend class SegmentedFinder;
+    SegmentedFinder * _SF;
     DFHack::Context * _DF;
     DFHack::t_memrange mr_;
 };
@@ -74,7 +76,7 @@ class SegmentedFinder
         _DF = DF;
         for(int i = 0; i < ranges.size(); i++)
         {
-            segments.push_back(new SegmentFinder(ranges[i], DF));
+            segments.push_back(new SegmentFinder(ranges[i], DF, this));
         }
     }
     ~SegmentedFinder()
@@ -93,18 +95,30 @@ class SegmentedFinder
                 return segments[i];
             }
         }
+        return 0;
     }
-    template<class T, typename P>
-    bool Find (const T dword, const uint8_t increment, vector <uint64_t> &found, vector <uint64_t> &newfound, P oper)
+    template <class needleType, class hayType, typename comparator >
+    bool Find (const needleType needle, const uint8_t increment, vector <uint64_t> &found, vector <uint64_t> &newfound, comparator oper)
     {
         newfound.clear();
         for(int i = 0; i < segments.size(); i++)
         {
-            segments[i]->Find<T,P>(dword, increment, found, newfound, oper);
+            segments[i]->Find<needleType,hayType,comparator>(needle, increment, found, newfound, oper);
         }
         found.clear();
         found = newfound;
         return !(found.empty());
+    }
+    uint8_t * translate(uint64_t address)
+    {
+        for(int i = 0; i < segments.size(); i++)
+        {
+            if(segments[i]->mr_.isInRange(address))
+            {
+                return segments[i]->mr_.buffer + address - segments[i]->mr_.start;
+            }
+        }
+        return 0;
     }
     private:
     DFHack::Context * _DF;
@@ -112,22 +126,67 @@ class SegmentedFinder
 };
 
 template <typename T>
-bool equalityP (T *x, T y)
+bool equalityP (SegmentedFinder* s, T *x, T y)
 {
     return (*x) == y;
 }
 
-typedef struct
+struct vecTriplet
 {
     uint32_t start;
     uint32_t finish;
     uint32_t alloc_finish;
-} vecTriplet;
+};
 
-template <typename T>
-bool vectorLength (T *x, T y)
+template <typename Needle>
+bool vectorLength (SegmentedFinder* s, vecTriplet *x, Needle &y)
 {
-    return (*x) == y;
+    if(x->start <= x->finish && x->finish <= x->alloc_finish)
+        if((x->finish - x->start) == y)
+            return true;
+    return false;
+}
+
+bool vectorString (SegmentedFinder* s, vecTriplet *x, const char *y)
+{
+    if(x->start <= x->finish && x->finish <= x->alloc_finish)
+    {
+        // deref ptr start, get ptr to firt object
+        uint8_t *deref1 = s->translate(x->start);
+        if(!deref1)
+            return false;
+        uint32_t object_ptr = *(uint32_t *)deref1;
+        if(!object_ptr)
+            return false;
+        // deref ptr to first object, get ptr to string
+        deref1 = s->translate(object_ptr);
+        if(!deref1)
+            return false;
+        uint32_t string_ptr = *(uint32_t *)deref1;
+        if(!string_ptr)
+            return false;
+        // get string location in our local cache
+        deref1 = s->translate(string_ptr);
+        if(!deref1)
+            return false;
+        char * str = (char *) deref1;
+        if(!str)
+            return false;
+        if(strcmp(y, str) == 0)
+            return true;
+    }
+    return false;
+}
+
+bool vectorAll (SegmentedFinder* s, vecTriplet *x, int )
+{
+    if(x->start <= x->finish && x->finish <= x->alloc_finish)
+    {
+        if(s->getSegmentForAddress(x->start) == s->getSegmentForAddress(x->finish)
+            && s->getSegmentForAddress(x->finish) == s->getSegmentForAddress(x->alloc_finish))
+            return true;
+    }
+    return false;
 }
 
 //TODO: lots of optimization
@@ -163,13 +222,13 @@ void searchLoop(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ran
             switch(size)
             {
                 case 1:
-                    sf.Find<uint8_t>(test1,alignment,found,newfound, equalityP<uint8_t>);
+                    sf.Find<uint8_t,uint8_t>(test1,alignment,found,newfound, equalityP<uint8_t>);
                     break;
                 case 2:
-                    sf.Find<uint16_t>(test1,alignment,found,newfound, equalityP<uint16_t>);
+                    sf.Find<uint16_t,uint16_t>(test1,alignment,found,newfound, equalityP<uint16_t>);
                     break;
                 case 4:
-                    sf.Find<uint32_t>(test1,alignment,found,newfound, equalityP<uint32_t>);
+                    sf.Find<uint32_t,uint32_t>(test1,alignment,found,newfound, equalityP<uint32_t>);
                     break;
             }
             if( found.size() == 1)
@@ -185,25 +244,12 @@ void searchLoop(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ran
     }
 }
 
-/*
-class VecVerifyPredicate
-{
-    public:
-    VecVerifyPredicate(){}
-    bool operator()(vecTriplet * vt, uint64_t length)
-    {
-        if(vt.start <= vt.finish && vt.finish <= vt.alloc_finish)
-            return true;
-        return false;
-    }
-};
-*/
 void searchLoopVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges, uint32_t element_size)
 {
     vecTriplet load;
     uint32_t length;
-    vector <int64_t> found;
-    vector <int64_t> newfound;
+    vector <uint64_t> found;
+    vector <uint64_t> newfound;
     found.reserve(100000);
     newfound.reserve(100000);
     //bool initial = 1;
@@ -230,24 +276,16 @@ void searchLoopVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange
 
             // clear the list of found addresses
             found.clear();
-
-            // for each range
-            for (int i = 0; i < ranges.size();i++)
+            SegmentedFinder sf(ranges,DF);
+            sf.Find<int ,vecTriplet>(0,4,found,newfound, vectorAll);
+            sf.Find<uint32_t,vecTriplet>(length*element_size,4,found,newfound, vectorLength<uint32_t>);
+            if( found.size() == 1)
             {
-                // can't read? range is invalid to us
-                if(!ranges[i].read)
-                    continue;
-                //loop
-                for(uint64_t offset = ranges[i].start;offset <= ranges[i].end - sizeof(vecTriplet); offset+=4)
-                {
-                    DF->ReadRaw(offset, sizeof(vecTriplet), (uint8_t *) &load);
-                    if(load.start <= load.finish && load.finish <= load.alloc_finish)
-                        if((load.finish - load.start) / element_size == length)
-                            found.push_back(offset);
-                }
+                cout << "Found an address!" << endl;
+                cout << hex << "0x" << found[0] << endl;
             }
-            cout << "found " << found.size() << " addresses" << endl;
-
+            else
+                cout << "Found " << dec << found.size() << " addresses." << endl;
             // detach again
             DF->Detach();
         }
@@ -257,40 +295,57 @@ void searchLoopVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange
         }
     }
 }
-void mkcopy(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges, uint32_t element_size)
+
+void searchLoopStrObjVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
 {
-    DFMgr.Refresh();
-    DFHack::Context * DF = DFMgr.getSingleContext();
-    DF->Attach();
-    for (int i = 0; i < ranges.size();i++)
+    vector <uint64_t> found;
+    vector <uint64_t> newfound;
+    found.reserve(100000);
+    newfound.reserve(100000);
+    cout << "search ready - insert string" << endl;
+    string select;
+    while (1)
     {
-        // can't read? range is invalid to us
-        if(!ranges[i].read)
-            continue;
-        char * buffah = (char *) malloc(ranges[i].end - ranges[i].start);
-        if(buffah)
+        cout << ">>";
+        std::getline(cin, select);
+        if(select == "p")
         {
-            DF->ReadRaw(ranges[i].start,ranges[i].end - ranges[i].start, (uint8_t *) buffah);
-            cerr << "buffer  for range " << i << " allocated and filled" << endl;
-            free(buffah);
-            cerr << "and freed" << endl;
+            cout << "Found vectors:" << endl;
+            for(int i = 0; i < found.size();i++)
+            {
+                cout << hex << "0x" << found[i] << endl;
+            }
+        }
+        else if(!select.empty())
+        {
+            // refresh the list of processes, get first suitable, attach
+            DFMgr.Refresh();
+            DFHack::Context * DF = DFMgr.getSingleContext();
+            DF->Attach();
+
+            // clear the list of found addresses
+            found.clear();
+            SegmentedFinder sf(ranges,DF);
+            sf.Find<int ,vecTriplet>(0,4,found,newfound, vectorAll);
+            sf.Find<const char * ,vecTriplet>(select.c_str(),4,found,newfound, vectorString);
+            if( found.size() == 1)
+            {
+                cout << "Found an address!" << endl;
+                cout << hex << "0x" << found[0] << endl;
+            }
+            else
+                cout << "Found " << dec << found.size() << " addresses." << endl;
+            // detach again
+            DF->Detach();
         }
         else
-            cerr << "buffer for range " << i << " failed to allocate" << endl;
-        //loop
-        /*
-        for(uint64_t offset = ranges[i].start;offset <= ranges[i].end - sizeof(vecTriplet); offset+=4)
         {
-            DF->ReadRaw(offset, sizeof(vecTriplet), (uint8_t *) &load);
-            if(load.start <= load.finish && load.finish <= load.alloc_finish)
-                if((load.finish - load.start) / element_size == length)
-                    found.push_back(offset);
+            break;
         }
-        */
     }
-    DF->Detach();
-    DFMgr.purge();
 }
+
+
 inline void printRange(DFHack::t_memrange * tpr)
 {
     std::cout << std::hex << tpr->start << " - " << tpr->end << "|" << (tpr->read ? "r" : "-") << (tpr->write ? "w" : "-") << (tpr->execute ? "x" : "-") << "|" << tpr->name << std::endl;
@@ -462,8 +517,7 @@ int main (void)
     }
     else if(mode == 3)// string
     {
-        mkcopy(DFMgr, selected_ranges,0);
-        //searchLoopString(DF, selected_ranges);
+        searchLoopStrObjVector(DFMgr, selected_ranges);
     }
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;

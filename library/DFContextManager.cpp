@@ -23,10 +23,10 @@ distribution.
 */
 
 #include "Internal.h"
+#include "DFMemInfoManager.h"
 
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFProcessEnumerator.h"
-#include "dfhack/DFMemInfoManager.h"
 #include "dfhack/DFError.h"
 
 #include "dfhack/DFContext.h"

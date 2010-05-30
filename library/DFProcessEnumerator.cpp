@@ -23,10 +23,12 @@ distribution.
 */
 
 #include "Internal.h"
+#include "DFMemInfoManager.h"
+
 #include "dfhack/DFProcessEnumerator.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFMemInfo.h"
-#include "dfhack/DFMemInfoManager.h"
+
 
 using namespace DFHack;
 
@@ -223,7 +225,7 @@ uint64_t FileTime_to_POSIX(FILETIME ft)
 void ProcessEnumerator::Private::EnumPIDs (vector <ProcessID> &PIDs)
 {
     FILETIME ftCreate, ftExit, ftKernel, ftUser;
-    
+
     PIDs.clear(); // make sure the vector is clear
 
     // Get the list of process identifiers.
@@ -254,7 +256,7 @@ void ProcessEnumerator::Private::EnumPIDs (vector <ProcessID> &PIDs)
 }
 #endif
 
-bool ProcessEnumerator::Refresh( BadProcesses* invalidated_processes)
+bool ProcessEnumerator::Refresh( BadProcesses* invalidated_processes )
 {
     // PIDs to process
     vector <ProcessID> PIDs;
@@ -328,11 +330,6 @@ bool ProcessEnumerator::Refresh( BadProcesses* invalidated_processes)
         return true;
     }
     return false;
-}
-
-bool ProcessEnumerator::findProcessess()
-{
-    return Refresh();
 }
 
 uint32_t ProcessEnumerator::size()

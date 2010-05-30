@@ -85,7 +85,7 @@ namespace DFHack
         uint32_t type_offset; // offset of type data for multiclass
         vector<t_type *> subs;
     };
-    
+
     class DFHACK_EXPORT memory_info
     {
     private:
@@ -114,7 +114,7 @@ namespace DFHack
         int32_t getOffset (const char *);
         uint32_t getAddress (const char *);
         uint32_t getHexValue (const char *);
-        
+
         std::string getString (const std::string&);
         std::string getProfession(const uint32_t) const;
         std::string getJob(const uint32_t) const;
@@ -154,34 +154,34 @@ namespace DFHack
 
         void RebaseVTable(const int32_t offset);
         void setParentProcess(Process * _p);
-        
+
         t_class * setClass (const char * classname, uint32_t vptr = 0, uint32_t typeoffset = 0);
         void setClassChild (t_class * parent, const char * classname, const char * type);
 
-        /*
+        /**
          * Get a classID from an address. The address has to point to the start of a virtual object (one with a virtual base class)
          *   uses memory reading directly, needs suspend. input = address of the object
          *   fails if it's unable to read from memory
          */
         bool resolveObjectToClassID (const uint32_t address, int32_t & classID);
-        
-        /*
+
+        /**
         * Get a ClassID when you know the classname. can fail if the class is not in the cache
         */
         bool resolveClassnameToClassID (const std::string classname, int32_t & classID);
-        
-        /*
+
+        /**
         * Get a vptr from a classname. Can fail if the type is not in the cache
         * limited to normal classes, variable-dependent types will resolve to the base class
         */
         bool resolveClassnameToVPtr ( const std::string classname, uint32_t & vptr );
-        
-        /*
+
+        /**
         * Get a classname from a previous classID. Can fail if the type is not in the cache (you use bogus classID)
         */
         bool resolveClassIDToClassname (const int32_t classID, std::string & classname);
-        
-        /*
+
+        /**
         * Get the internal classID->classname mapping (for speed). DO NOT MANIPULATE THE VECTOR!
         */
         const vector<std::string> * getClassIDMapping();

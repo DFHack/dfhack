@@ -23,8 +23,9 @@ distribution.
 */
 
 #include "Internal.h"
+#include "DFMemInfoManager.h"
+
 #include "dfhack/DFMemInfo.h"
-#include "dfhack/DFMemInfoManager.h"
 #include "dfhack/DFError.h"
 
 using namespace DFHack;

@@ -25,10 +25,12 @@ distribution.
 #ifndef MEMINFO_MANAGER_H_INCLUDED
 #define MEMINFO_MANAGER_H_INCLUDED
 
-#include "DFPragma.h"
+#include "dfhack/DFPragma.h"
 
+class TiXmlElement;
 namespace DFHack
 {
+    class memory_info;
     class MemInfoManager
     {
         friend class ProcessEnumerator;

@@ -44,74 +44,78 @@ namespace DFHack
     class DFContextShared;
     class WindowIO;
     class Process;
-    
+
     class DFHACK_EXPORT Context
     {
         public:
         Context(Process * p);
         ~Context();
-        
+
         bool isValid();
-        
+
         bool Attach();
         bool Detach();
         bool isAttached();
-        
+
         /// stop the tracked process
         bool Suspend();
+        /// @return true if the process is stopped
         bool isSuspended();
-        
+
         /// stop the tracked process, asynchronous
         bool AsyncSuspend();
-        
+
         /// resume the tracked process
         bool Resume();
-        
+
         /// forces resume on Windows. This can be a bad thing with multiple tools running!
         bool ForceResume();
-        
+
         memory_info *getMemoryInfo();
         Process* getProcess();
-        
+
         void ReadRaw (const uint32_t offset, const uint32_t size, uint8_t *target);
         void WriteRaw (const uint32_t offset, const uint32_t size, uint8_t *source);
 
         // FIXME: this is crap.
-        // get the creatures module
+
+        /// get the creatures module
         Creatures * getCreatures();
-        
-        // get the maps module
+
+        /// get the maps module
         Maps * getMaps();
-        
-        // get the gui module
+
+        /// get the gui module
         Gui * getGui();
 
-        // get the world module
+        /// get the world module
         World * getWorld();
-        
-        // get the position module
+
+        /// get the position module
         Position * getPosition();
-        
-        // get the materials module
+
+        /// get the materials module
         Materials * getMaterials();
 
-        // get the items module
+        /// get the items module
         Items * getItems();
-        
-        // get the translation module
+
+        /// get the translation module
         Translation * getTranslation();
-        
-        // get the vegetation module
+
+        /// get the vegetation module
         Vegetation * getVegetation();
-        
-        // get the buildings module
+
+        /// get the buildings module
         Buildings * getBuildings();
-        
-        // get the constructions module
+
+        /// get the constructions module
         Constructions * getConstructions();
-        
-        // get the Window management and I/O module
+
+        /// get the Window management and I/O module
         WindowIO * getWindow();
+
+        // DEAD CODE, WAITING TO BE UPDATED TO DF2010
         /*
          * Effects like mist, dragonfire or dust
          */

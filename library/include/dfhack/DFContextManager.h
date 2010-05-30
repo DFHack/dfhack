@@ -74,7 +74,7 @@ namespace DFHack
         /**
         * Get a context by index
         * @param index index of the context to be returned
-        * @return pointer to a Context
+        * @return pointer to a Context. 0 if the index is out of range.
         */
         Context * operator[](uint32_t index);
 
@@ -106,37 +106,37 @@ namespace DFHack
     public:
         BadContexts();
         /**
-        * Destructor.
-        * All Processes and Contexts tracked by the BadContexts object will be destroyed also.
-        */
+         * Destructor.
+         * All Processes and Contexts tracked by the BadContexts object will be destroyed also.
+         */
         ~BadContexts();
 
         /**
-        * Test if a Context is among the invalidated Contexts
-        * @param c pointer to a Context to be checked
-        * @return true if the Context is among the invalidated. false otherwise.
-        */
+         * Test if a Context is among the invalidated Contexts
+         * @param c pointer to a Context to be checked
+         * @return true if the Context is among the invalidated. false otherwise.
+         */
         bool Contains(Context* c);
 
         /**
-        * Test if a Process is among the invalidated Processes/Contexts
-        * @param p pointer to a Process to be checked
-        * @see DFHack::Process
-        * @return true if the Process is among the invalidated. false otherwise.
-        */
+         * Test if a Process is among the invalidated Processes/Contexts
+         * @param p pointer to a Process to be checked
+         * @see DFHack::Process
+         * @return true if the Process is among the invalidated. false otherwise.
+         */
         bool Contains(Process* p);
 
         /**
-        * Get the number of tracked invalid contexts.
-        * @return Number of tracked invalid contexts
-        */
+         * Get the number of tracked invalid contexts.
+         * @return Number of tracked invalid contexts
+         */
         uint32_t size();
 
         /**
-        * Get an invalid Context by index
-        * @param index index of the invalid Context to be returned
-        * @return pointer to an invalid Context
-        */
+         * Get an invalid Context by index
+         * @param index index of the invalid Context to be returned
+         * @return pointer to an invalid Context
+         */
         Context * operator[](uint32_t index);
     };
 } // namespace DFHack

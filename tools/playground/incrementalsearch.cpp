@@ -189,6 +189,20 @@ bool vectorAll (SegmentedFinder* s, vecTriplet *x, int )
     return false;
 }
 
+bool findString (SegmentedFinder* s, uint32_t *addr, const char * compare )
+{
+    // read string pointer
+    uint32_t addrx = *addr;
+    // translat to local scheme
+    char *deref1 = (char *) s->translate(addrx);
+    // verify
+    if(!deref1)
+        return false;
+    if(strcmp(deref1, compare) == 0)
+        return true;
+    return false;
+}
+
 //TODO: lots of optimization
 void searchLoop(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges, int size, int alignment)
 {
@@ -345,6 +359,54 @@ void searchLoopStrObjVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_me
     }
 }
 
+void searchLoopStr(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+{
+    vector <uint64_t> found;
+    vector <uint64_t> newfound;
+    found.reserve(1000);
+    newfound.reserve(1000);
+    cout << "search ready - insert string" << endl;
+    string select;
+    while (1)
+    {
+        cout << ">>";
+        std::getline(cin, select);
+        if(select == "p")
+        {
+            cout << "Found strings:" << endl;
+            for(int i = 0; i < found.size();i++)
+            {
+                cout << hex << "0x" << found[i] << endl;
+            }
+        }
+        else if(!select.empty())
+        {
+            // refresh the list of processes, get first suitable, attach
+            DFMgr.Refresh();
+            DFHack::Context * DF = DFMgr.getSingleContext();
+            DF->Attach();
+
+            // clear the list of found addresses
+            found.clear();
+            SegmentedFinder sf(ranges,DF);
+            sf.Find< const char * ,uint32_t>(select.c_str(),1,found,newfound, findString);
+            if( found.size() == 1)
+            {
+                cout << "Found a string!" << endl;
+                cout << hex << "0x" << found[0] << endl;
+            }
+            else
+                cout << "Found " << dec << found.size() << " strings." << endl;
+            // detach again
+            DF->Detach();
+        }
+        else
+        {
+            break;
+        }
+    }
+}
+
 
 inline void printRange(DFHack::t_memrange * tpr)
 {
@@ -420,7 +482,7 @@ int main (void)
         printRange(&(selected_ranges[i]));
     }
     try_again_type:
-    cout << "Select search type: 1=number(default), 2=vector, 3=string" << endl;
+    cout << "Select search type: 1=number(default), 2=vector, 3=vector>object>string, 4=string" << endl;
     cout << ">>";
     std::getline(cin, select);
     int mode;
@@ -430,7 +492,7 @@ int main (void)
     }
     else if( sscanf(select.c_str(), "%d", &mode) == 1 )
     {
-        if(mode != 1 && mode != 2 && mode != 3)
+        if(mode != 1 && mode != 2 && mode != 3 && mode != 4)
         {
             goto try_again_type;
         }
@@ -515,9 +577,13 @@ int main (void)
         DF->Detach();
         searchLoopVector(DFMgr, selected_ranges,size);
     }
-    else if(mode == 3)// string
+    else if(mode == 3)// vector>object>string
     {
         searchLoopStrObjVector(DFMgr, selected_ranges);
+    }
+    else if(mode == 4)// string
+    {
+        searchLoopStr(DFMgr, selected_ranges);
     }
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;

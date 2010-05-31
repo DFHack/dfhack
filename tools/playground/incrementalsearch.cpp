@@ -109,16 +109,33 @@ class SegmentedFinder
         found = newfound;
         return !(found.empty());
     }
-    uint8_t * translate(uint64_t address)
+    template <typename T>
+    T * Translate(uint64_t address)
     {
         for(int i = 0; i < segments.size(); i++)
         {
             if(segments[i]->mr_.isInRange(address))
             {
-                return segments[i]->mr_.buffer + address - segments[i]->mr_.start;
+                return (T *) (segments[i]->mr_.buffer + address - segments[i]->mr_.start);
             }
         }
         return 0;
+    }
+    template <typename T>
+    T Read(uint64_t address)
+    {
+        return *Translate<T>(address);
+    }
+    template <typename T>
+    bool Read(uint64_t address, T& target)
+    {
+        T * test = Translate<T>(address);
+        if(test)
+        {
+            target = *test;
+            return true;
+        }
+        return false;
     }
     private:
     DFHack::Context * _DF;
@@ -152,24 +169,32 @@ bool vectorString (SegmentedFinder* s, vecTriplet *x, const char *y)
     if(x->start <= x->finish && x->finish <= x->alloc_finish)
     {
         // deref ptr start, get ptr to firt object
-        uint8_t *deref1 = s->translate(x->start);
+        uint32_t object_ptr;
+        if(!s->Read(x->start,object_ptr))
+            return false;
+        uint32_t string_ptr;
+        if(!s->Read(object_ptr,string_ptr))
+            return false;
+        char * str = s->Translate<char>(string_ptr);
+        /*
+        uint8_t *deref1 = s->Translate(x->start);
         if(!deref1)
             return false;
         uint32_t object_ptr = *(uint32_t *)deref1;
         if(!object_ptr)
             return false;
         // deref ptr to first object, get ptr to string
-        deref1 = s->translate(object_ptr);
+        deref1 = s->Translate(object_ptr);
         if(!deref1)
             return false;
         uint32_t string_ptr = *(uint32_t *)deref1;
         if(!string_ptr)
             return false;
         // get string location in our local cache
-        deref1 = s->translate(string_ptr);
+        deref1 = s->Translate(string_ptr);
         if(!deref1)
             return false;
-        char * str = (char *) deref1;
+        char * str = (char *) deref1;*/
         if(!str)
             return false;
         if(strcmp(y, str) == 0)
@@ -194,7 +219,7 @@ bool findString (SegmentedFinder* s, uint32_t *addr, const char * compare )
     // read string pointer
     uint32_t addrx = *addr;
     // translat to local scheme
-    char *deref1 = (char *) s->translate(addrx);
+    char *deref1 = (char *) s->Translate<char>(addrx);
     // verify
     if(!deref1)
         return false;
@@ -584,43 +609,41 @@ int main (void)
         uint64_t word_table_offset;
         uint64_t DWARF_vector;
         uint64_t DWARF_object;
-
-        cout << "Creating finder..." << endl;
         SegmentedFinder sf(selected_ranges, DF);
+
         // enumerate all vectors
-        cout << "enumerating vectors..." << endl;
         sf.Find<int ,vecTriplet>(0,4,allVectors, vectorAll);
-        cout << "done." << endl;
+
         // find lang vector (neutral word table)
         to_filter = allVectors;
-        cout << "searching for lang vector" << endl;
         sf.Find<const char * ,vecTriplet>("ABBEY",4,to_filter, vectorString);
         uint64_t lang_addr = to_filter[0];
-        cout << "lang vector: " << hex << "0x" << lang_addr << endl;
 
         // find dwarven language word table
         to_filter = allVectors;
         sf.Find<const char * ,vecTriplet>("kulet",4,to_filter, vectorString);
         kulet_vector = to_filter[0];
-        to_filter = allVectors;
+
         // find vector of languages
+        to_filter = allVectors;
         sf.Find<const char * ,vecTriplet>("DWARF",4,to_filter, vectorString);
+
         // verify
         for(int i = 0; i < to_filter.size(); i++)
         {
-            vecTriplet * vec = (vecTriplet *) sf.translate(to_filter[i]);
-            if(((vec->finish - vec->start) / 4) == 4)
+            vecTriplet * vec = sf.Translate<vecTriplet>(to_filter[i]);
+            if(((vec->finish - vec->start) / 4) == 4) // verified
             {
-                // verified, print the vector address
                 DWARF_vector = to_filter[i];
-                cout << "translation vector: " << hex << "0x" << DWARF_vector << endl;
-                DWARF_object = *(uint32_t *) sf.translate(vec->start);
+                DWARF_object = sf.Read<uint32_t>(vec->start);
                 // compute word table offset from dwarf word table and dwarf language object addresses
                 word_table_offset = kulet_vector - DWARF_object;
-                cout << "word table offset: " << hex << "0x" << word_table_offset << endl;
                 break;
             }
         }
+        cout << "translation vector: " << hex << "0x" << DWARF_vector << endl;
+        cout << "lang vector: " << hex << "0x" << lang_addr << endl;
+        cout << "word table offset: " << hex << "0x" << word_table_offset << endl;
     }
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;

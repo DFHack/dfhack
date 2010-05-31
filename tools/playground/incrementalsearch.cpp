@@ -1,5 +1,5 @@
-// this will be an incremental search tool in the future. now it is just a memory region dump thing
-
+// this is an incremental search tool. It only works on Linux.
+// here be dragons... and ugly code :P
 #include <iostream>
 #include <climits>
 #include <vector>
@@ -98,9 +98,9 @@ class SegmentedFinder
         return 0;
     }
     template <class needleType, class hayType, typename comparator >
-    bool Find (const needleType needle, const uint8_t increment, vector <uint64_t> &found, vector <uint64_t> &newfound, comparator oper)
+    bool Find (const needleType needle, const uint8_t increment, vector <uint64_t> &found, comparator oper)
     {
-        newfound.clear();
+        vector <uint64_t> newfound;
         for(int i = 0; i < segments.size(); i++)
         {
             segments[i]->Find<needleType,hayType,comparator>(needle, increment, found, newfound, oper);
@@ -208,9 +208,7 @@ void searchLoop(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ran
 {
     uint32_t test1;
     vector <uint64_t> found;
-    vector <uint64_t> newfound;
     found.reserve(100);
-    newfound.reserve(100);
     //bool initial = 1;
     cout << "search ready - insert integers, 'p' for results" << endl;
     string select;
@@ -236,13 +234,13 @@ void searchLoop(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ran
             switch(size)
             {
                 case 1:
-                    sf.Find<uint8_t,uint8_t>(test1,alignment,found,newfound, equalityP<uint8_t>);
+                    sf.Find<uint8_t,uint8_t>(test1,alignment,found, equalityP<uint8_t>);
                     break;
                 case 2:
-                    sf.Find<uint16_t,uint16_t>(test1,alignment,found,newfound, equalityP<uint16_t>);
+                    sf.Find<uint16_t,uint16_t>(test1,alignment,found, equalityP<uint16_t>);
                     break;
                 case 4:
-                    sf.Find<uint32_t,uint32_t>(test1,alignment,found,newfound, equalityP<uint32_t>);
+                    sf.Find<uint32_t,uint32_t>(test1,alignment,found, equalityP<uint32_t>);
                     break;
             }
             if( found.size() == 1)
@@ -263,9 +261,7 @@ void searchLoopVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange
     vecTriplet load;
     uint32_t length;
     vector <uint64_t> found;
-    vector <uint64_t> newfound;
-    found.reserve(100000);
-    newfound.reserve(100000);
+    found.reserve(100);
     //bool initial = 1;
     cout << "search ready - insert vector length" << endl;
     string select;
@@ -291,8 +287,8 @@ void searchLoopVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange
             // clear the list of found addresses
             found.clear();
             SegmentedFinder sf(ranges,DF);
-            sf.Find<int ,vecTriplet>(0,4,found,newfound, vectorAll);
-            sf.Find<uint32_t,vecTriplet>(length*element_size,4,found,newfound, vectorLength<uint32_t>);
+            sf.Find<int ,vecTriplet>(0,4,found,vectorAll);
+            sf.Find<uint32_t,vecTriplet>(length*element_size,4,found,vectorLength<uint32_t>);
             if( found.size() == 1)
             {
                 cout << "Found an address!" << endl;
@@ -313,9 +309,6 @@ void searchLoopVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange
 void searchLoopStrObjVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
 {
     vector <uint64_t> found;
-    vector <uint64_t> newfound;
-    found.reserve(100000);
-    newfound.reserve(100000);
     cout << "search ready - insert string" << endl;
     string select;
     while (1)
@@ -340,8 +333,8 @@ void searchLoopStrObjVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_me
             // clear the list of found addresses
             found.clear();
             SegmentedFinder sf(ranges,DF);
-            sf.Find<int ,vecTriplet>(0,4,found,newfound, vectorAll);
-            sf.Find<const char * ,vecTriplet>(select.c_str(),4,found,newfound, vectorString);
+            sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
+            sf.Find<const char * ,vecTriplet>(select.c_str(),4,found, vectorString);
             if( found.size() == 1)
             {
                 cout << "Found an address!" << endl;
@@ -362,9 +355,6 @@ void searchLoopStrObjVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_me
 void searchLoopStr(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
 {
     vector <uint64_t> found;
-    vector <uint64_t> newfound;
-    found.reserve(1000);
-    newfound.reserve(1000);
     cout << "search ready - insert string" << endl;
     string select;
     while (1)
@@ -389,7 +379,7 @@ void searchLoopStr(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& 
             // clear the list of found addresses
             found.clear();
             SegmentedFinder sf(ranges,DF);
-            sf.Find< const char * ,uint32_t>(select.c_str(),1,found,newfound, findString);
+            sf.Find< const char * ,uint32_t>(select.c_str(),1,found, findString);
             if( found.size() == 1)
             {
                 cout << "Found a string!" << endl;
@@ -482,7 +472,7 @@ int main (void)
         printRange(&(selected_ranges[i]));
     }
     try_again_type:
-    cout << "Select search type: 1=number(default), 2=vector, 3=vector>object>string, 4=string" << endl;
+    cout << "Select search type: 1=number(default), 2=vector, 3=vector>object>string, 4=string, 5=automated lang tables" << endl;
     cout << ">>";
     std::getline(cin, select);
     int mode;
@@ -492,7 +482,7 @@ int main (void)
     }
     else if( sscanf(select.c_str(), "%d", &mode) == 1 )
     {
-        if(mode != 1 && mode != 2 && mode != 3 && mode != 4)
+        if(mode != 1 && mode != 2 && mode != 3 && mode != 4 && mode != 5)
         {
             goto try_again_type;
         }
@@ -501,6 +491,7 @@ int main (void)
     {
         goto try_again_type;
     }
+
     if(mode == 1)
     {
         // input / validation of variable size
@@ -584,6 +575,52 @@ int main (void)
     else if(mode == 4)// string
     {
         searchLoopStr(DFMgr, selected_ranges);
+    }
+    else if(mode == 5) // find lang tables and stuff
+    {
+        vector <uint64_t> allVectors;
+        vector <uint64_t> to_filter;
+        uint64_t kulet_vector;
+        uint64_t word_table_offset;
+        uint64_t DWARF_vector;
+        uint64_t DWARF_object;
+
+        cout << "Creating finder..." << endl;
+        SegmentedFinder sf(selected_ranges, DF);
+        // enumerate all vectors
+        cout << "enumerating vectors..." << endl;
+        sf.Find<int ,vecTriplet>(0,4,allVectors, vectorAll);
+        cout << "done." << endl;
+        // find lang vector (neutral word table)
+        to_filter = allVectors;
+        cout << "searching for lang vector" << endl;
+        sf.Find<const char * ,vecTriplet>("ABBEY",4,to_filter, vectorString);
+        uint64_t lang_addr = to_filter[0];
+        cout << "lang vector: " << hex << "0x" << lang_addr << endl;
+
+        // find dwarven language word table
+        to_filter = allVectors;
+        sf.Find<const char * ,vecTriplet>("kulet",4,to_filter, vectorString);
+        kulet_vector = to_filter[0];
+        to_filter = allVectors;
+        // find vector of languages
+        sf.Find<const char * ,vecTriplet>("DWARF",4,to_filter, vectorString);
+        // verify
+        for(int i = 0; i < to_filter.size(); i++)
+        {
+            vecTriplet * vec = (vecTriplet *) sf.translate(to_filter[i]);
+            if(((vec->finish - vec->start) / 4) == 4)
+            {
+                // verified, print the vector address
+                DWARF_vector = to_filter[i];
+                cout << "translation vector: " << hex << "0x" << DWARF_vector << endl;
+                DWARF_object = *(uint32_t *) sf.translate(vec->start);
+                // compute word table offset from dwarf word table and dwarf language object addresses
+                word_table_offset = kulet_vector - DWARF_object;
+                cout << "word table offset: " << hex << "0x" << word_table_offset << endl;
+                break;
+            }
+        }
     }
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;

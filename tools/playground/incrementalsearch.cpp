@@ -172,29 +172,12 @@ bool vectorString (SegmentedFinder* s, vecTriplet *x, const char *y)
         uint32_t object_ptr;
         if(!s->Read(x->start,object_ptr))
             return false;
+        // deref ptr to first object, get ptr to string
         uint32_t string_ptr;
         if(!s->Read(object_ptr,string_ptr))
             return false;
-        char * str = s->Translate<char>(string_ptr);
-        /*
-        uint8_t *deref1 = s->Translate(x->start);
-        if(!deref1)
-            return false;
-        uint32_t object_ptr = *(uint32_t *)deref1;
-        if(!object_ptr)
-            return false;
-        // deref ptr to first object, get ptr to string
-        deref1 = s->Translate(object_ptr);
-        if(!deref1)
-            return false;
-        uint32_t string_ptr = *(uint32_t *)deref1;
-        if(!string_ptr)
-            return false;
         // get string location in our local cache
-        deref1 = s->Translate(string_ptr);
-        if(!deref1)
-            return false;
-        char * str = (char *) deref1;*/
+        char * str = s->Translate<char>(string_ptr);
         if(!str)
             return false;
         if(strcmp(y, str) == 0)
@@ -216,14 +199,12 @@ bool vectorAll (SegmentedFinder* s, vecTriplet *x, int )
 
 bool findString (SegmentedFinder* s, uint32_t *addr, const char * compare )
 {
-    // read string pointer
-    uint32_t addrx = *addr;
-    // translat to local scheme
-    char *deref1 = (char *) s->Translate<char>(addrx);
+    // read string pointer, translate to local scheme
+    char *str = s->Translate<char>(*addr);
     // verify
-    if(!deref1)
+    if(!str)
         return false;
-    if(strcmp(deref1, compare) == 0)
+    if(strcmp(str, compare) == 0)
         return true;
     return false;
 }

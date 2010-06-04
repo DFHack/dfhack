@@ -63,6 +63,10 @@ using namespace std;
 
 // platform includes and defines
 #ifdef LINUX_BUILD
+    #ifdef MACOSX_BUILD
+	// Yes, LINUX_BUILD is defined on MACOSX, there is so much in common.
+	#include <sys/sysctl.h>
+    #endif
     #include <sys/types.h>
     #include <sys/ptrace.h>
     #include <dirent.h>

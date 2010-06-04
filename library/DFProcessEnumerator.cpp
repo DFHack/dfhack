@@ -141,6 +141,37 @@ Process *ProcessEnumerator::Private::GetProcessObject(ProcessID ID)
     return 0;
 }
 
+#ifdef MACOSX_BUILD
+static const int sc_name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
+
+void ProcessEnumerator::Private::EnumPIDs (vector <ProcessID> &PIDs)
+{
+    kinfo_proc *r = NULL;
+    size_t len;
+
+    len = 0;
+    if (sysctl((int *) sc_name, (sizeof(sc_name)/sizeof(*sc_name)) - 1,
+	       NULL, &len, NULL, 0) == -1)
+    {
+        perror("sysctl");
+	exit(1);
+    }
+    r = (kinfo_proc *) malloc(len);
+    if (sysctl((int *) sc_name, (sizeof(sc_name)/sizeof(*sc_name)) - 1,
+	       r, &len, NULL, 0) == -1)
+    {
+        perror("sysctl");
+	free(r);
+	exit(1);
+    }
+    for (int i = 0; i < len/sizeof(kinfo_proc); i++)
+    {
+        timeval &t = r[i].kp_proc.p_starttime;
+        PIDs.push_back(ProcessID(t.tv_sec, r[i].kp_proc.p_pid));
+    }
+    free(r);
+}
+#else
 #ifdef LINUX_BUILD
 void ProcessEnumerator::Private::EnumPIDs (vector <ProcessID> &PIDs)
 {
@@ -174,6 +205,7 @@ void ProcessEnumerator::Private::EnumPIDs (vector <ProcessID> &PIDs)
     }
     closedir(dir_p);
 }
+#endif
 #endif
 
 #ifndef LINUX_BUILD

@@ -96,6 +96,7 @@ namespace DFHack
         {
             OS_WINDOWS,
             OS_LINUX,
+	    OS_MACOSX,
             OS_BAD
         };
         memory_info();

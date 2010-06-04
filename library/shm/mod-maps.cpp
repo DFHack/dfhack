@@ -12,7 +12,9 @@ using namespace DFHack;
 using namespace DFHack::Server::Maps;
 
 #include <string.h>
+#ifndef MACOSX_BUILD
 #include <malloc.h>
+#endif
 
 extern char *shm;
 

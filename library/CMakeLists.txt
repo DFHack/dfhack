@@ -112,6 +112,13 @@ DFProcess-linux-wine.cpp
 modules/WindowIO-linux.cpp
 )
 
+SET(PROJECT_SRCS_MACOSX
+DFProcess-macosx.cpp
+DFProcess-macosx-SHM.cpp
+DFProcess-macosx-wine.cpp
+modules/WindowIO-linux.cpp
+)
+
 SET(PROJECT_SRCS_WINDOWS
 DFProcess-windows.cpp
 DFProcess-windows-SHM.cpp
@@ -120,7 +127,11 @@ modules/WindowIO-windows.cpp
 
 IF(UNIX)
     LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_LINUX})
-    LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_LINUX})
+    IF(APPLE)
+        LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_MACOSX})
+    ELSE(APPLE)
+        LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_LINUX})
+    ENDIF(APPLE)
 ELSE(UNIX)
     LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_WINDOWS})
     LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_WINDOWS})
@@ -147,13 +158,19 @@ CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/library/config.h.cmake ${CMAKE_SOURCE_DIR}/l
 ADD_DEFINITIONS(-DBUILD_DFHACK_LIB)
 
 IF(UNIX)
+  # We define LINUX_BUILD on MacOSX, making use of the linux code where possible
   add_definitions(-DLINUX_BUILD)
   add_definitions(-DUSE_CONFIG_H)
   find_library(X11_LIBRARY X11)
   SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
   SET(CMAKE_CXX_FLAGS "-fvisibility=hidden")
-    
-  SET(PROJECT_LIBS ${X11_LIBRARY} rt ) #dfhack-md5 dfhack-tixml
+
+  IF(APPLE)
+    add_definitions(-DMACOSX_BUILD)
+    SET(PROJECT_LIBS ${X11_LIBRARY}) #rt dfhack-md5 dfhack-tixml
+  ELSE(APPLE)
+    SET(PROJECT_LIBS ${X11_LIBRARY} rt ) #dfhack-md5 dfhack-tixml
+  ENDIF(APPLE)
 ELSE(UNIX)
   SET(PROJECT_LIBS psapi)
 ENDIF(UNIX)
@@ -195,13 +212,21 @@ SET(PROJECT_SRCS_LINUX
 shm/shms-linux.cpp
 )
 
+SET(PROJECT_SRCS_MACOSX
+shm/shms-macosx.cpp
+)
+
 SET(PROJECT_SRCS_WINDOWS
 shm/shms-windows.cpp
 )
 
 IF(UNIX)
     LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_LINUX})
-    LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_LINUX})
+    IF(APPLE)
+    	LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_MACOSX})
+    ELSE(APPLE)
+        LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_LINUX})
+    ENDIF(APPLE)
 ELSE(UNIX)
     LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_WINDOWS})
     LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_WINDOWS})
@@ -215,10 +240,14 @@ LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
 #IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
     IF(UNIX)
         add_definitions(-DLINUX_BUILD)
-        SET(PROJECT_LIBS rt)
-        SET(CMAKE_CXX_FLAGS "-fvisibility=hidden")
-        ADD_LIBRARY(dfconnect SHARED ${PROJECT_SRCS})
-        TARGET_LINK_LIBRARIES(dfconnect ${PROJECT_LIBS})
+        IF(APPLE)
+            add_definitions(-DMACOSX_BUILD)
+        ELSE(APPLE)
+            SET(PROJECT_LIBS rt)
+            SET(CMAKE_CXX_FLAGS "-fvisibility=hidden")
+            ADD_LIBRARY(dfconnect SHARED ${PROJECT_SRCS})
+            TARGET_LINK_LIBRARIES(dfconnect ${PROJECT_LIBS})
+        ENDIF(APPLE)
     ELSE(UNIX)
         #  SET(PROJECT_LIBS psapi)
         ADD_LIBRARY(SDL SHARED ${PROJECT_SRCS})

@@ -11,6 +11,7 @@
 using namespace std;
 
 #include <DFHack.h>
+#include <dfhack/DFVector.h>
 
 
 DFHack::Materials * Materials;

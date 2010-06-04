@@ -15,8 +15,9 @@ using namespace std;
 #include <locale.h>
 #include <math.h>
 
+#define DFHACK_WANT_MISCUTILS
+#define DFHACK_WANT_TILETYPES
 #include <DFHack.h>
-#include <dfhack/DFTileTypes.h>
 
 using namespace DFHack;
 

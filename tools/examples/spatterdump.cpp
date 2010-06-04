@@ -8,7 +8,7 @@
 #include <ctime>
 #include <cstdio>
 using namespace std;
-
+#define DFHACK_WANT_MISCUTILS
 #include <DFHack.h>
 
 using namespace DFHack;

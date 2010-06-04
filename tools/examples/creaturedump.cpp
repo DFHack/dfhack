@@ -4,8 +4,10 @@
 #include <climits>
 #include <string.h>
 #include <vector>
+#include <stdio.h>
 using namespace std;
 
+#define DFHACK_WANT_MISCUTILS
 #include <DFHack.h>
 
 enum likeType

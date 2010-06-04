@@ -5,8 +5,10 @@
 #include <sstream>
 #include <climits>
 #include <vector>
-using namespace std;
+#include <stdio.h>
+//using namespace std;
 
+#define DFHACK_WANT_MISCUTILS
 #include <DFHack.h>
 
 int main (int argc,const char* argv[])
@@ -27,14 +29,14 @@ int main (int argc,const char* argv[])
     }
     else if(argc == 3)
     {
-        string s = argv[2]; //blah. I don't care
-        istringstream ins; // Declare an input string stream.
+        std::string s = argv[2]; //blah. I don't care
+        std::istringstream ins; // Declare an input string stream.
         ins.str(s);        // Specify string to read.
         ins >> lines;     // Reads the integers from the string.
         mode = 1;
     }
     
-    map <uint32_t, string> custom_workshop_types;
+    std::map <uint32_t, std::string> custom_workshop_types;
     
     DFHack::ContextManager DFMgr ("Memory.xml");
     DFHack::Context *DF;
@@ -43,9 +45,9 @@ int main (int argc,const char* argv[])
         DF = DFMgr.getSingleContext();
         DF->Attach();
     }
-    catch (exception& e)
+    catch (std::exception& e)
     {
-        cerr << e.what() << endl;
+        std::cerr << e.what() << std::endl;
         #ifndef LINUX_BUILD
             cin.ignore();
         #endif
@@ -62,17 +64,17 @@ int main (int argc,const char* argv[])
         Bld->ReadCustomWorkshopTypes(custom_workshop_types);
         if(mode)
         {
-            cout << numBuildings << endl;
-            vector < uint32_t > addresses;
+            std::cout << numBuildings << std::endl;
+            std::vector < uint32_t > addresses;
             for(uint32_t i = 0; i < numBuildings; i++)
             {
                 DFHack::t_building temp;
                 Bld->Read(i, temp);
                 if(temp.type != 0xFFFFFFFF) // check if type isn't invalid
                 {
-                    string typestr;
+                    std::string typestr;
                     mem->resolveClassIDToClassname(temp.type, typestr);
-                    cout << typestr << endl;
+                    std::cout << typestr << std::endl;
                     if(typestr == argv[1])
                     {
                         //cout << buildingtypes[temp.type] << " 0x" << hex << temp.origin << endl;
@@ -83,7 +85,7 @@ int main (int argc,const char* argv[])
                 else
                 {
                     // couldn't translate type, print out the vtable
-                    cout << "unknown vtable: " << temp.vtable << endl;
+                    std::cout << "unknown vtable: " << temp.vtable << std::endl;
                 }
             }
             interleave_hex(DF,addresses,lines / 4);
@@ -105,7 +107,7 @@ int main (int argc,const char* argv[])
                         && (uint32_t)z == temp.z
                       )
                     {
-                        string typestr;
+                        std::string typestr;
                         mem->resolveClassIDToClassname(temp.type, typestr);
                         printf("Address 0x%x, type %d (%s), %d/%d/%d\n",temp.origin, temp.type, typestr.c_str(), temp.x1,temp.y1,temp.z);
                         printf("Material %d %d\n", temp.material.type, temp.material.index);
@@ -120,12 +122,12 @@ int main (int argc,const char* argv[])
             }
             else
             {
-                cout << numBuildings << endl;
+                std::cout << numBuildings << std::endl;
                 for(uint32_t i = 0; i < numBuildings; i++)
                 {
                     DFHack::t_building temp;
                     Bld->Read(i, temp);
-                    string typestr;
+                    std::string typestr;
                     mem->resolveClassIDToClassname(temp.type, typestr);
                     printf("Address 0x%x, type %d (%s), %d/%d/%d\n",temp.origin, temp.type, typestr.c_str(), temp.x1,temp.y1,temp.z);
                 }
@@ -135,12 +137,12 @@ int main (int argc,const char* argv[])
     }
     else
     {
-        cerr << "buildings not supported for this DF version" << endl;
+        std::cerr << "buildings not supported for this DF version" << std::endl;
     }
 
     DF->Detach();
     #ifndef LINUX_BUILD
-        cout << "Done. Press any key to continue" << endl;
+        std::cout << "Done. Press any key to continue" << std::endl;
         cin.ignore();
     #endif
     return 0;

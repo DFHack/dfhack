@@ -136,13 +136,13 @@ namespace DFHack
             virtual void write(uint32_t address, uint32_t length, uint8_t* buffer) = 0;
 
             /// read an STL string
-            virtual const string readSTLString (uint32_t offset) = 0;
+            virtual const std::string readSTLString (uint32_t offset) = 0;
             /// read an STL string
             virtual size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity) = 0;
             /// write an STL string
             virtual void writeSTLString(const uint32_t address, const std::string writeString) = 0;
             /// get class name of an object with rtti/type info
-            virtual string readClassName(uint32_t vptr) = 0;
+            virtual std::string readClassName(uint32_t vptr) = 0;
 
             /// read a null-terminated C string
             virtual const std::string readCString (uint32_t offset) = 0;
@@ -155,9 +155,9 @@ namespace DFHack
             virtual bool isIdentified() = 0;
 
             /// find the thread IDs of the process
-            virtual bool getThreadIDs(vector<uint32_t> & threads ) = 0;
+            virtual bool getThreadIDs(std::vector<uint32_t> & threads ) = 0;
             /// get virtual memory ranges of the process (what is mapped where)
-            virtual void getMemRanges( vector<t_memrange> & ranges ) = 0;
+            virtual void getMemRanges(std::vector<t_memrange> & ranges ) = 0;
 
             /// get the flattened Memory.xml entry of this process
             virtual memory_info *getDescriptor() = 0;
@@ -182,7 +182,7 @@ namespace DFHack
         private:
             Private * const d;
         public:
-            NormalProcess(uint32_t pid, vector <memory_info *> & known_versions);
+            NormalProcess(uint32_t pid, std::vector <memory_info *> & known_versions);
             ~NormalProcess();
             bool attach();
             bool detach();
@@ -214,11 +214,11 @@ namespace DFHack
             void read( uint32_t address, uint32_t length, uint8_t* buffer);
             void write(uint32_t address, uint32_t length, uint8_t* buffer);
             
-            const string readSTLString (uint32_t offset);
+            const std::string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             void writeSTLString(const uint32_t address, const std::string writeString){};
             // get class name of an object with rtti/type info
-            string readClassName(uint32_t vptr);
+            std::string readClassName(uint32_t vptr);
             
             const std::string readCString (uint32_t offset);
             
@@ -226,8 +226,8 @@ namespace DFHack
             bool isAttached();
             bool isIdentified();
             
-            bool getThreadIDs(vector<uint32_t> & threads );
-            void getMemRanges( vector<t_memrange> & ranges );
+            bool getThreadIDs(std::vector<uint32_t> & threads );
+            void getMemRanges(std::vector<t_memrange> & ranges );
             memory_info *getDescriptor();
             int getPID();
             // get module index by name and version. bool 1 = error
@@ -246,7 +246,7 @@ namespace DFHack
             Private * const d;
             
         public:
-            SHMProcess(uint32_t PID, vector <memory_info *> & known_versions);
+            SHMProcess(uint32_t PID, std::vector <memory_info *> & known_versions);
             ~SHMProcess();
             // Set up stuff so we can read memory
             bool attach();
@@ -279,11 +279,11 @@ namespace DFHack
             void read( uint32_t address, uint32_t length, uint8_t* buffer);
             void write(uint32_t address, uint32_t length, uint8_t* buffer);
             
-            const string readSTLString (uint32_t offset);
+            const std::string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             void writeSTLString(const uint32_t address, const std::string writeString);
             // get class name of an object with rtti/type info
-            string readClassName(uint32_t vptr);
+            std::string readClassName(uint32_t vptr);
             
             const std::string readCString (uint32_t offset);
             
@@ -291,8 +291,8 @@ namespace DFHack
             bool isAttached();
             bool isIdentified();
             
-            bool getThreadIDs(vector<uint32_t> & threads );
-            void getMemRanges( vector<t_memrange> & ranges );
+            bool getThreadIDs(std::vector<uint32_t> & threads );
+            void getMemRanges(std::vector<t_memrange> & ranges );
             memory_info *getDescriptor();
             int getPID();
             // get module index by name and version. bool 1 = error
@@ -311,7 +311,7 @@ namespace DFHack
             Private * const d;
             
         public:
-            WineProcess(uint32_t pid, vector <memory_info *> & known_versions);
+            WineProcess(uint32_t pid, std::vector <memory_info *> & known_versions);
             ~WineProcess();
             bool attach();
             bool detach();
@@ -343,11 +343,11 @@ namespace DFHack
             void read( uint32_t address, uint32_t length, uint8_t* buffer);
             void write(uint32_t address, uint32_t length, uint8_t* buffer);
 
-            const string readSTLString (uint32_t offset);
+            const std::string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             void writeSTLString(const uint32_t address, const std::string writeString){};
             // get class name of an object with rtti/type info
-            string readClassName(uint32_t vptr);
+            std::string readClassName(uint32_t vptr);
             
             const std::string readCString (uint32_t offset);
             
@@ -355,8 +355,8 @@ namespace DFHack
             bool isAttached();
             bool isIdentified();
             
-            bool getThreadIDs(vector<uint32_t> & threads );
-            void getMemRanges( vector<t_memrange> & ranges );
+            bool getThreadIDs(std::vector<uint32_t> & threads );
+            void getMemRanges(std::vector<t_memrange> & ranges );
             memory_info *getDescriptor();
             int getPID();
             // get module index by name and version. bool 1 = error

@@ -35,7 +35,7 @@ distribution.
 #include "dfhack/DFExport.h"
 #include "dfhack/DFIntegers.h"
 
-using namespace std;
+
 using namespace DFHack;
 
 typedef void DFHackObject;

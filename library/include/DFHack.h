@@ -1,6 +1,7 @@
 #ifndef DFHACK_API_H
 #define DFHACK_API_H
 
+// DFHack core classes and types
 #include "dfhack/DFIntegers.h"
 #include "dfhack/DFGlobal.h"
 #include "dfhack/DFError.h"
@@ -10,7 +11,7 @@
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFTypes.h"
 
-
+// DFHack modules
 #include "dfhack/modules/Buildings.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Position.h"
@@ -22,5 +23,10 @@
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack/modules/Maps.h"
 
-#include "dfhack/DFMiscUtils.h"
+#ifdef DFHACK_WANT_MISCUTILS
+    #include "dfhack/DFMiscUtils.h"
+#endif
+#ifdef DFHACK_WANT_TILETYPES
+    #include "dfhack/DFTileTypes.h"
+#endif
 #endif

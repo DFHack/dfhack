@@ -27,64 +27,13 @@ distribution.
 
 #include "DFPragma.h"
 #include "DFExport.h"
-#include <map>
-#include <vector>
-#include <string>
-
 namespace DFHack
 {
     /*
     * Stubs
     */
-    
     class Process;
-    
-    /*
-    * Common data types
-    */
-    struct t_type
-    {
-        t_type(uint32_t assign, uint32_t type, std::string classname)
-        :classname(classname),assign(assign),type(type){};
-        std::string classname;
-        uint32_t assign;
-        uint32_t type;
-    };
-
-    struct t_class
-    {
-        t_class(const t_class &old)
-        {
-            classname = old.classname;
-            vtable = old.vtable;
-            assign = old.assign;
-            type_offset = old.type_offset;
-            for(uint32_t i = 0; i < old.subs.size();i++)
-            {
-                t_type * t = new t_type (*old.subs[i]);
-                subs.push_back(t);
-            }
-        }
-        t_class ()
-        {
-            vtable = 0;
-            assign = 0;
-            type_offset = 0;
-        }
-        ~t_class()
-        {
-            for(uint32_t i = 0; i < subs.size();i++)
-            {
-                delete subs[i];
-            }
-            subs.clear();
-        }
-        std::string classname;
-        uint32_t vtable;
-        uint32_t assign;// index to typeclass array if multiclass. return value if not.
-        uint32_t type_offset; // offset of type data for multiclass
-        vector<t_type *> subs;
-    };
+    struct t_class;
 
     class DFHACK_EXPORT memory_info
     {
@@ -184,7 +133,7 @@ namespace DFHack
         /**
         * Get the internal classID->classname mapping (for speed). DO NOT MANIPULATE THE VECTOR!
         */
-        const vector<std::string> * getClassIDMapping();
+        const std::vector<std::string> * getClassIDMapping();
     };
 }
 #endif // MEMINFO_H_INCLUDED

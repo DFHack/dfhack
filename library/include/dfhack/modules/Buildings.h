@@ -37,7 +37,7 @@ namespace DFHack
         bool Finish();
         
         // read a vector of names
-        bool ReadCustomWorkshopTypes(map <uint32_t, string> & btypes);
+        bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
         // returns -1 on error, >= 0 for real value
         int32_t GetCustomWorkshopType(t_building & building);
         

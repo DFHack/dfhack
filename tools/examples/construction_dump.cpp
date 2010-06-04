@@ -7,8 +7,9 @@
 #include <sstream>
 #include <ctime>
 #include <cstdio>
-using namespace std;
+#include <stdio.h>
 
+#define DFHACK_WANT_MISCUTILS
 #include <DFHack.h>
 using namespace DFHack;
 
@@ -21,9 +22,9 @@ int main (int numargs, const char ** args)
         DF = DFMgr.getSingleContext();
         DF->Attach();
     }
-    catch (exception& e)
+    catch (std::exception& e)
     {
-        cerr << e.what() << endl;
+        std::cerr << e.what() << std::endl;
         #ifndef LINUX_BUILD
             cin.ignore();
         #endif
@@ -51,7 +52,7 @@ int main (int numargs, const char ** args)
                 printf("Construction %d/%d/%d @ 0x%x\n", con.x, con.y, con.z,con.origin);
                 // inorganic stuff - we can recognize that
                 printf("Material: form %d, type %d, index %d\n",con.form, con.mat_type, con.mat_idx);
-                string matstr = "unknown";
+                std::string matstr = "unknown";
                 if(con.mat_type == 0)
                 {
                     if(con.mat_idx != 0xffffffff)

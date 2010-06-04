@@ -151,7 +151,7 @@ bool vectorString (SegmentedFinder* s, vecTriplet *x, const char *y)
 {
     uint32_t object_ptr;
     uint32_t idx = x->start;
-    // iterato over vector of pointers
+    // iterate over vector of pointers
     for(uint32_t idx = x->start; idx < x->finish; idx += sizeof(uint32_t))
     {
         // deref ptr idx, get ptr to object
@@ -173,7 +173,31 @@ bool vectorString (SegmentedFinder* s, vecTriplet *x, const char *y)
     return false;
 }
 
-// test if the address is within a vector's array
+// find a vector of 32bit pointers, where the first object pointed to has a string 'y' as the first member
+bool vectorStringFirst (SegmentedFinder* s, vecTriplet *x, const char *y)
+{
+    uint32_t object_ptr;
+    uint32_t idx = x->start;
+    // deref ptr idx, get ptr to object
+    if(!s->Read(idx,object_ptr))
+    {
+        return false;
+    }
+    // deref ptr to first object, get ptr to string
+    uint32_t string_ptr;
+    if(!s->Read(object_ptr,string_ptr))
+        return false;
+    // get string location in our local cache
+    char * str = s->Translate<char>(string_ptr);
+    if(!str)
+        return false;
+    if(strcmp(y, str) == 0)
+        return true;
+    return false;
+}
+
+// test if the address is between vector.start and vector.finish
+// not very useful alone, but could be a good step to filter some things
 bool vectorAddrWithin (SegmentedFinder* s, vecTriplet *x, uint32_t address)
 {
     if(address < x->finish && address >= x->start)
@@ -182,6 +206,7 @@ bool vectorAddrWithin (SegmentedFinder* s, vecTriplet *x, uint32_t address)
 }
 
 // test if an object address is within the vector of pointers
+//
 bool vectorOfPtrWithin (SegmentedFinder* s, vecTriplet *x, uint32_t address)
 {
     uint32_t object_ptr;

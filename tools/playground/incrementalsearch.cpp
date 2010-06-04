@@ -137,11 +137,11 @@ bool Incremental ( vector <uint64_t> &found, const char * what, T& output,
     string select;
     if(found.empty())
     {
-        cout << "search ready - insert " << what << ", 'p' for results" << endl;
+        cout << "search ready - insert " << what << ", 'p' for results, 'p #' to limit number of results" << endl;
     }
     else if( found.size() == 1)
     {
-        cout << "Found an "<< singular <<"!" << endl;
+        cout << "Found single "<< singular <<"!" << endl;
         cout << hex << "0x" << found[0] << endl;
     }
     else
@@ -151,7 +151,17 @@ bool Incremental ( vector <uint64_t> &found, const char * what, T& output,
     incremental_more:
     cout << ">>";
     std::getline(cin, select);
-    if(select == "p")
+    size_t num = 0;
+    if( sscanf(select.c_str(),"p %d", &num) && num > 0)
+    {
+        cout << "Found "<< plural <<":" << endl;
+        for(int i = 0; i < min(found.size(), num);i++)
+        {
+            cout << hex << "0x" << found[i] << endl;
+        }
+        goto incremental_more;
+    }
+    else if(select == "p")
     {
         cout << "Found "<< plural <<":" << endl;
         for(int i = 0; i < found.size();i++)
@@ -168,18 +178,21 @@ bool Incremental ( vector <uint64_t> &found, const char * what, T& output,
     {
         stringstream ss (stringstream::in | stringstream::out);
         ss << select;
-        ss >> output;
+        ss >> hex >> output;
         if(ss.fail())
         {
-            cout << "not a valid value for type: " << what << endl;
-            goto incremental_more;
+            ss >> dec >> output;
+            if(ss.fail())
+            {
+                cout << "not a valid value for type: " << what << endl;
+                goto incremental_more;
+            }
         }
         return true;
     }
 }
 
-//TODO: lots of optimization
-void searchLoop(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+void FindIntegers(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
 {
     // input / validation of variable size
     int size;
@@ -219,7 +232,7 @@ void searchLoop(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ran
     }
 }
 
-void searchLoopVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges )
+void FindVectorByLength(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges )
 {
     int element_size;
     do
@@ -242,7 +255,7 @@ void searchLoopVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange
     }
 }
 
-void searchLoopStrObjVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+void FindVectorByObjectRawname(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
 {
     vector <uint64_t> found;
     string select;
@@ -260,7 +273,76 @@ void searchLoopStrObjVector(DFHack::ContextManager & DFMgr, vector <DFHack::t_me
     }
 }
 
-void searchLoopStr(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+void FindVectorByFirstObjectRawname(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+{
+    vector <uint64_t> found;
+    string select;
+    while (Incremental(found, "raw name",select,"vector","vectors"))
+    {
+        // clear the list of found addresses -- this is a one-shot
+        found.clear();
+        DFMgr.Refresh();
+        DFHack::Context * DF = DFMgr.getSingleContext();
+        DF->Attach();
+        SegmentedFinder sf(ranges,DF);
+        sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
+        sf.Find<const char * ,vecTriplet>(select.c_str(),4,found, vectorStringFirst);
+        DF->Detach();
+    }
+}
+
+struct VectorSizeFunctor : public binary_function<uint64_t, uint64_t, bool>
+{
+    VectorSizeFunctor(SegmentedFinder & sf):sf_(sf){}
+    bool operator()( uint64_t lhs, uint64_t rhs)
+    {
+        vecTriplet* left = sf_.Translate<vecTriplet>(lhs);
+        vecTriplet* right = sf_.Translate<vecTriplet>(rhs);
+        return ((left->finish - left->start) < (right->finish - right->start));
+    }
+    SegmentedFinder & sf_;
+};
+
+void FindVectorByBounds(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+{
+    vector <uint64_t> found;
+    uint32_t select;
+    while (Incremental(found, "address between vector.start and vector.end",select,"vector","vectors"))
+    {
+        // clear the list of found addresses -- this is a one-shot
+        found.clear();
+        DFMgr.Refresh();
+        DFHack::Context * DF = DFMgr.getSingleContext();
+        DF->Attach();
+        SegmentedFinder sf(ranges,DF);
+        sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
+        sf.Find<uint32_t ,vecTriplet>(select,4,found, vectorAddrWithin);
+        // sort by size of vector
+        std::sort(found.begin(), found.end(), VectorSizeFunctor(sf));
+        DF->Detach();
+    }
+}
+
+void FindPtrVectorsByObjectAddress(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+{
+    vector <uint64_t> found;
+    uint32_t select;
+    while (Incremental(found, "object address",select,"vector","vectors"))
+    {
+        // clear the list of found addresses -- this is a one-shot
+        found.clear();
+        DFMgr.Refresh();
+        DFHack::Context * DF = DFMgr.getSingleContext();
+        DF->Attach();
+        SegmentedFinder sf(ranges,DF);
+        sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
+        sf.Find<uint32_t ,vecTriplet>(select,4,found, vectorOfPtrWithin);
+        DF->Detach();
+    }
+}
+
+
+void FindStrings(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
 {
     vector <uint64_t> found;
     string select;
@@ -290,17 +372,17 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
 
     // find lang vector (neutral word table)
     to_filter = allVectors;
-    sf.Find<const char * ,vecTriplet>("ABBEY",4,to_filter, vectorString);
+    sf.Find<const char * ,vecTriplet>("ABBEY",4,to_filter, vectorStringFirst);
     uint64_t lang_addr = to_filter[0];
 
     // find dwarven language word table
     to_filter = allVectors;
-    sf.Find<const char * ,vecTriplet>("kulet",4,to_filter, vectorString);
+    sf.Find<const char * ,vecTriplet>("kulet",4,to_filter, vectorStringFirst);
     kulet_vector = to_filter[0];
 
     // find vector of languages
     to_filter = allVectors;
-    sf.Find<const char * ,vecTriplet>("DWARF",4,to_filter, vectorString);
+    sf.Find<const char * ,vecTriplet>("DWARF",4,to_filter, vectorStringFirst);
 
     // verify
     for(int i = 0; i < to_filter.size(); i++)
@@ -352,24 +434,30 @@ int main (void)
     } while (mode < 1 || mode > 8 );
     switch (mode)
     {
-        case 1:// integers
-            searchLoop(DFMgr, selected_ranges);
+        case 1:
+            FindIntegers(DFMgr, selected_ranges);
             break;
-        case 2:// vector by length and item size
-            searchLoopVector(DFMgr, selected_ranges);
+        case 2:
+            FindVectorByLength(DFMgr, selected_ranges);
             break;
-        case 3:// vector>object>string
-            searchLoopStrObjVector(DFMgr, selected_ranges);
+        case 3:
+            FindVectorByObjectRawname(DFMgr, selected_ranges);
             break;
-        case 4:// string
-            searchLoopStr(DFMgr, selected_ranges);
+        case 4:
+            FindStrings(DFMgr, selected_ranges);
             break;
         case 5:
             automatedLangtables(DF,selected_ranges);
             break;
         case 6:
+            FindVectorByBounds(DFMgr,selected_ranges);
+            break;
         case 7:
+            FindPtrVectorsByObjectAddress(DFMgr,selected_ranges);
+            break;
         case 8:
+            FindVectorByFirstObjectRawname(DFMgr, selected_ranges);
+            break;
         default:
             cout << "not implemented :(" << endl;
     }

@@ -27,9 +27,11 @@ include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
 include_directories (${CMAKE_SOURCE_DIR}/library/private/)
 
 SET(PROJECT_HDRS
+private/DFMemInfoManager.h
+private/ContextShared.h
+private/Internal.h
 include/dfhack/DFError.h
 include/dfhack/DFMemInfo.h
-include/dfhack/DFMemInfoManager.h
 include/dfhack/DFProcessEnumerator.h
 include/dfhack/DFProcess.h
 include/dfhack/DFTileTypes.h

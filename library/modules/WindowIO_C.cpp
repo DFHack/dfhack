@@ -22,6 +22,9 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include <vector>
+#include <map>
+#include <string>
 using namespace std;
 
 #include "dfhack/DFIntegers.h"

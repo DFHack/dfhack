@@ -137,8 +137,8 @@ Process *ProcessEnumerator::Private::GetProcessObject(ProcessID ID)
         return p3;
     else
         delete p3;
-    return 0;
 #endif
+    return 0;
 }
 
 #ifdef LINUX_BUILD

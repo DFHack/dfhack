@@ -26,6 +26,31 @@ inline void printRange(DFHack::t_memrange * tpr)
     std::cout << std::hex << tpr->start << " - " << tpr->end << "|" << (tpr->read ? "r" : "-") << (tpr->write ? "w" : "-") << (tpr->execute ? "x" : "-") << "|" << tpr->name << std::endl;
 }
 
+string rdWinString( char * offset, SegmentedFinder & sf )
+{
+    char * start_offset = offset + 4;
+    uint32_t length = *(uint32_t *)(offset + 20);
+    uint32_t capacity = *(uint32_t *)(offset + 24);
+    char * temp = new char[capacity+1];
+
+    // read data from inside the string structure
+    if(capacity < 16)
+    {
+        memcpy(temp, start_offset,capacity);
+        //read(start_offset, capacity, (uint8_t *)temp);
+    }
+    else // read data from what the offset + 4 dword points to
+    {
+        start_offset = sf.Translate<char>(*(uint32_t*)start_offset);
+        memcpy(temp, start_offset,capacity);
+    }
+
+    temp[length] = 0;
+    string ret = temp;
+    delete temp;
+    return ret;
+}
+
 bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges)
 {
     vector <DFHack::t_memrange> ranges;
@@ -79,10 +104,17 @@ bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges
     }
     end++;
     cout << "selected ranges:" <<endl;
-    selected_ranges.insert(selected_ranges.begin(),ranges.begin() + start, ranges.begin() + end);
-    for(int i = 0; i< selected_ranges.size();i++)
+    vector <DFHack::t_memrange>::iterator it;
+    it = ranges.begin() + start;
+    while (it != ranges.begin() + end)
     {
-        printRange(&(selected_ranges[i]));
+        // check if readable
+        if((*it).read)
+        {
+            selected_ranges.push_back(*it);
+            printRange(&*it);
+        }
+        it++;
     }
 }
 
@@ -357,31 +389,109 @@ void FindStrings(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ra
     }
 }
 
+void printFound(vector <uint64_t> &found, const char * what)
+{
+    cout << what << ":" << endl;
+    for(int i = 0; i < found.size();i++)
+    {
+        cout << hex << "0x" << found[i] << endl;
+    }
+}
+
+void printFoundStrVec(vector <uint64_t> &found, const char * what, SegmentedFinder & s)
+{
+    cout << what << ":" << endl;
+    for(int i = 0; i < found.size();i++)
+    {
+        cout << hex << "0x" << found[i] << endl;
+        cout << "--------------------------" << endl;
+        vecTriplet * vt = s.Translate<vecTriplet>(found[i]);
+        if(vt)
+        {
+            int j = 0;
+            for(uint32_t idx = vt->start; idx < vt->finish; idx += sizeof(uint32_t))
+            {
+                uint32_t object_ptr;
+                // deref ptr idx, get ptr to object
+                if(!s.Read(idx,object_ptr))
+                {
+                    cout << "BAD!" << endl;
+                    break;
+                }
+                // deref ptr to first object, get ptr to string
+                uint32_t string_ptr;
+                if(!s.Read(object_ptr,string_ptr))
+                {
+                    cout << "BAD!" << endl;
+                    break;
+                }
+                // get string location in our local cache
+                char * str = s.Translate<char>(string_ptr);
+                if(!str)
+                {
+                    cout << "BAD!" << endl;
+                    break;
+                }
+                cout << dec << j << ": " << str << endl;
+                j++;
+            }
+        }
+        else
+        {
+            cout << "BAD!" << endl;
+            break;
+        }
+        cout << "--------------------------" << endl;
+    }
+}
+
+
 void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& ranges)
 {
     vector <uint64_t> allVectors;
+    vector <uint64_t> filtVectors;
     vector <uint64_t> to_filter;
+
+    cout << "stealing memory..." << endl;
+    SegmentedFinder sf(ranges, DF);
+    cout << "looking for vectors..." << endl;
+    sf.Find<int ,vecTriplet>(0,4,allVectors, vectorAll);
+
+    // trim vectors. anything with > 10000 entries is not interesting
+    for(uint64_t i = 0; i < allVectors.size();i++)
+    {
+        vecTriplet* vtrip = sf.Translate<vecTriplet>(allVectors[i]);
+        if(vtrip)
+        {
+            uint64_t length = (vtrip->finish - vtrip->start) / 4;
+            if(length < 10000 )
+            {
+                filtVectors.push_back(allVectors[i]);
+            }
+        }
+    }
+
+    cout << "-------------------" << endl;
+    cout << "!!LANGUAGE TABLES!!" << endl;
+    cout << "-------------------" << endl;
+
     uint64_t kulet_vector;
     uint64_t word_table_offset;
     uint64_t DWARF_vector;
     uint64_t DWARF_object;
-    SegmentedFinder sf(ranges, DF);
-
-    // enumerate all vectors
-    sf.Find<int ,vecTriplet>(0,4,allVectors, vectorAll);
 
     // find lang vector (neutral word table)
-    to_filter = allVectors;
+    to_filter = filtVectors;
     sf.Find<const char * ,vecTriplet>("ABBEY",4,to_filter, vectorStringFirst);
     uint64_t lang_addr = to_filter[0];
 
     // find dwarven language word table
-    to_filter = allVectors;
+    to_filter = filtVectors;
     sf.Find<const char * ,vecTriplet>("kulet",4,to_filter, vectorStringFirst);
     kulet_vector = to_filter[0];
 
     // find vector of languages
-    to_filter = allVectors;
+    to_filter = filtVectors;
     sf.Find<const char * ,vecTriplet>("DWARF",4,to_filter, vectorStringFirst);
 
     // verify
@@ -400,6 +510,76 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
     cout << "translation vector: " << hex << "0x" << DWARF_vector << endl;
     cout << "lang vector: " << hex << "0x" << lang_addr << endl;
     cout << "word table offset: " << hex << "0x" << word_table_offset << endl;
+
+    cout << "-------------" << endl;
+    cout << "!!MATERIALS!!" << endl;
+    cout << "-------------" << endl;
+    // inorganics vector
+    to_filter = filtVectors;
+    //sf.Find<uint32_t,vecTriplet>(257 * 4,4,to_filter,vectorLength<uint32_t>);
+    sf.Find<const char * ,vecTriplet>("IRON",4,to_filter, vectorStringFirst);
+    sf.Find<const char * ,vecTriplet>("RAW_ADAMANTINE",4,to_filter, vectorString);
+    sf.Find<const char * ,vecTriplet>("BLOODSTONE",4,to_filter, vectorString);
+    printFound(to_filter,"inorganics");
+
+    // organics vector
+    to_filter = filtVectors;
+    sf.Find<uint32_t,vecTriplet>(52 * 4,4,to_filter,vectorLength<uint32_t>);
+    sf.Find<const char * ,vecTriplet>("MUSHROOM_HELMET_PLUMP",4,to_filter, vectorStringFirst);
+    printFound(to_filter,"organics");
+
+    // tree vector
+    to_filter = filtVectors;
+    sf.Find<uint32_t,vecTriplet>(31 * 4,4,to_filter,vectorLength<uint32_t>);
+    sf.Find<const char * ,vecTriplet>("MANGROVE",4,to_filter, vectorStringFirst);
+    printFound(to_filter,"trees");
+
+    // plant vector
+    to_filter = filtVectors;
+    sf.Find<uint32_t,vecTriplet>(21 * 4,4,to_filter,vectorLength<uint32_t>);
+    sf.Find<const char * ,vecTriplet>("MUSHROOM_HELMET_PLUMP",4,to_filter, vectorStringFirst);
+    printFound(to_filter,"plants");
+
+    // color descriptors
+    //AMBER, 112
+    to_filter = filtVectors;
+    sf.Find<uint32_t,vecTriplet>(112 * 4,4,to_filter,vectorLength<uint32_t>);
+    sf.Find<const char * ,vecTriplet>("AMBER",4,to_filter, vectorStringFirst);
+    printFound(to_filter,"color descriptors");
+    if(!to_filter.empty())
+    {
+        uint64_t vec = to_filter[0];
+        vecTriplet *vtColors = sf.Translate<vecTriplet>(vec);
+        uint32_t colorObj = sf.Read<uint32_t>(vtColors->start);
+        cout << "Amber color:" << hex << "0x" << colorObj << endl;
+        // TODO: find string 'amber', the floats
+    }
+
+    // all descriptors
+    //AMBER, 338
+    to_filter = filtVectors;
+    sf.Find<uint32_t,vecTriplet>(338 * 4,4,to_filter,vectorLength<uint32_t>);
+    sf.Find<const char * ,vecTriplet>("AMBER",4,to_filter, vectorStringFirst);
+    printFound(to_filter,"all descriptors");
+
+    // creature type
+    //ELEPHANT, ?? (demons abound)
+    to_filter = filtVectors;
+    //sf.Find<uint32_t,vecTriplet>(338 * 4,4,to_filter,vectorLength<uint32_t>);
+    sf.Find<const char * ,vecTriplet>("ELEPHANT",4,to_filter, vectorString);
+    sf.Find<const char * ,vecTriplet>("CAT",4,to_filter, vectorString);
+    sf.Find<const char * ,vecTriplet>("DWARF",4,to_filter, vectorString);
+    sf.Find<const char * ,vecTriplet>("WAMBLER_FLUFFY",4,to_filter, vectorString);
+    sf.Find<const char * ,vecTriplet>("TOAD",4,to_filter, vectorString);
+    sf.Find<const char * ,vecTriplet>("DEMON_1",4,to_filter, vectorString);
+
+    vector <uint64_t> toad_first = to_filter;
+    vector <uint64_t> elephant_first = to_filter;
+    sf.Find<const char * ,vecTriplet>("TOAD",4,toad_first, vectorStringFirst);
+    sf.Find<const char * ,vecTriplet>("ELEPHANT",4,elephant_first, vectorStringFirst);
+    printFound(toad_first,"toad-first creature types");
+    printFound(elephant_first,"elephant-first creature types");
+    printFound(to_filter,"all creature types");
 }
 
 int main (void)
@@ -425,7 +605,7 @@ int main (void)
 
     string prompt =
     "Select search type: 1=number(default), 2=vector by length, 3=vector>object>string,\n"
-    "                    4=string, 5=automated lang tables, 6=vector by address in its array,\n"
+    "                    4=string, 5=automated offset search, 6=vector by address in its array,\n"
     "                    7=pointer vector by address of an object, 8=vector>first object>string\n";
     int mode;
     do

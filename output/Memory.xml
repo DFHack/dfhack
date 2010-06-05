@@ -1621,115 +1621,52 @@ map_data_1b60_offset          0x1B9c
     <!-- Windows logo by Microsoft -->
     <!-- Tux logo by the Linux guys :) -->
 
-    <Entry version="v0.30_04" os="linux" id="30_04lin" base="meta-2010">
-        <String name="md5">1d759a11af258263ef5c139d6d9a3e15</String>
+    <Entry version="linux-offsets-2010" os="all" id="linux-offsets-2010" base="meta-2010">
         Basic things
         ============
-        <HexValue name="sizeof_vector">0xC</HexValue>
-        <Offset name="vector_triplet">0x0</Offset>
-        <HexValue name="sizeof_string">0x4</HexValue>
-        <!-- MAYBE
-        <HexValue name="sizeof_string">0x4</HexValue>
-        <HexValue name="sizeof_vector">0x10</HexValue>
-        <Offset name="vector_triplet">0x4</Offset>
-        -->
+        <HexValue name="sizeof_vector">0xC</HexValue> VERIFIED
+        <Offset name="vector_triplet">0x0</Offset> VERIFIED
+        <HexValue name="sizeof_string">0x4</HexValue> VERIFIED
+
+        MAP BLOCK OFFSETS
+        =================
+        <Offset name="map_data_vein_vector">0x08</Offset> VERIFIED
+        <Offset name="map_data_feature_local">0x20</Offset> VERIFIED
+        <Offset name="map_data_feature_global">0x24</Offset> VERIFIED
+        <Offset name="map_data_type">0x006A</Offset> VERIFIED
+        <Offset name="map_data_designation">0x026C</Offset> VERIFIED
+        <Offset name="map_data_occupancy">0x066c</Offset> VERIFIED
+        <Offset name="map_data_temperature1_offset">0x156c</Offset> VERIFIED
+        <Offset name="map_data_temperature2_offset">0x176c</Offset> VERIFIED
+        <Offset name="map_data_biome_stuffs">0x1D6C</Offset> VERIFIED
+        <Offset name="map_data_pathfinding_offset">0x0D6c</Offset> VERIFIED
         
-        <!-- most probably a static object, because its parts are often
-             referenced as offset to this address *and* as addresses    -->
-        <Address name="WORLD">0x92D00C0</Address> 0x0165B188
-
-        Position and window dimensions
-        ==============================
-        <Address name="window_x">0x8cd3b18</Address> 0xe32798
-        <Address name="window_y">0x8cd3b1c</Address> 0xe60838
-        <Address name="window_z">0x8cd3b20</Address> 0xe60814
-        <Address name="cursor_xyz">0x8b17370</Address> 0xae82cc
-
-        <Address name="window_dims">0x9464d6c</Address> 0x17f5ab8
-        GUI State
-        =========
-        <Address name="pause_state">0x92c971c</Address> 0x146e45f
-<!--
-        Bogus: <Address name="current_cursor_creature">0xae82cc</Address>
-
-        <Address name="current_menu_state">0x017f6f38</Address>
-
-        Bogus: <Address name="view_screen">0xae82cc</Address>
--->
-        Map stuff
-        =========
-        <Address name="map_data">0x9322d20</Address> WORLD + 0x52C60
-        <Offset name="map_data_vein_vector">0x08</Offset>
-        <Offset name="map_data_feature_local">0x20</Offset>
-        <Offset name="map_data_feature_global">0x24</Offset>
-        <Offset name="map_data_type">0x006A</Offset>
-        <Offset name="map_data_designation">0x026C</Offset>
-        <Offset name="map_data_occupancy">0x066c</Offset>
-        <Offset name="map_data_temperature1_offset">0x156c</Offset>
-        <Offset name="map_data_temperature2_offset">0x176c</Offset>
-        <Offset name="map_data_biome_stuffs">0x1D6C</Offset>
-        <Offset name="map_data_pathfinding_offset">0x0D6c</Offset>
-
-        Map Features
-        ============
-        WORLD + 0x5487C
-        <Address name="global_feature_vector">0x932493C</Address>
-        <Offset name= "global_feature_funcptr_">0x94</Offset>
-        <Offset name="global_feature_mat">0x28</Offset>
-        <Offset name="global_feature_submat">0x2C</Offset>
-        WORLD + 0x548F4
-        <Address name="local_feature_start_ptr">0x93249B4</Address>
-        <Offset name="local_feature_mat">0x24</Offset>
-        <Offset name="local_feature_submat">0x28</Offset>
-
-        * map size in blocks *
-        <Address name="x_count_block">0x9322d34</Address> 0x016ad738
-        <Address name="y_count_block">0x9322d38</Address>0x016ad73C
-        <Address name="z_count_block">0x9322d3C</Address>0x016ad740
+        MAP FEATURE OFFSETS
+        ===================
+        <Offset name= "global_feature_funcptr_">0x94</Offset> VERIFIED
+        <Offset name="global_feature_mat">0x28</Offset> VERIFIED
+        <Offset name="global_feature_submat">0x2C</Offset> VERIFIED
         
-        * map size in tiles *
-        <Address name="x_count">0x9322d40</Address> 0x016ad744
-        <Address name="y_count">0x9322d44</Address> 0x016ad748
-        <Address name="z_count">0x9322d48</Address> 0x016ad74C
-        
-        * region coords *
-        WORLD + 0x525C8
-        <Address name="region_x">0x9322d4C</Address> 0x016ad750
-        WORLD + 0x525CC
-        <Address name="region_y">0x9322d50</Address> 0x016ad754
-        WORLD + 0x525D0
-        <Address name="region_z">0x9322d54</Address> 0x016ad758
-        
-        * World size * (WORDs)
-        WORLD + 0x542E0
-        <Address name="world_size_x">0x93243A0</Address> 0x016AEDD4
-        WORLD + 0x542E2
-        <Address name="world_size_y">0x93243A2</Address> 0x016AEDD6
-        WORLD + 0x54894
-        <Address name="geoblock_vector">0x9324954</Address> FIX 0x16AF52C
-        WORLD + 0x548B8
-        <Address name="ptr2_region_array">0x9324978</Address> FIX 0x16AF574
-        
+        <Offset name="local_feature_mat">0x24</Offset> VERIFIED
+        <Offset name="local_feature_submat">0x28</Offset> VERIFIED
+
         values for the region structure
         ===============================
-        <HexValue name="region_size">0x58</HexValue> 0x64 FIX
-        <Offset name="region_geo_index_off">0x54</Offset> 0x60 FIX
+        <HexValue name="region_size">0x58</HexValue> VERIFIED
+        <Offset name="region_geo_index_off">0x54</Offset> VERIFIED
         geoblock offsets
         ================
-        <Offset name="geolayer_geoblock_offset">0x4</Offset> vector
-        <Offset name="type_inside_geolayer">0x4</Offset> vector
+        <Offset name="geolayer_geoblock_offset">0x4</Offset> VERIFIED
+        <Offset name="type_inside_geolayer">0x4</Offset> VERIFIED
         
         Name struct
         ===========
-        <Offset name="name_firstname">0x0</Offset>
-        <Offset name="name_nickname">0x4</Offset>
-        <Offset name="name_words">0x8</Offset>
-        
-        Creatures
-        =========
-        <Address name="creature_vector">0x092E3AA0</Address>
-        <Address name="dwarf_race_index">0x092CB608</Address>
-        <Address name="dwarf_civ_id">0x092CB5FC</Address>
+        <Offset name="name_firstname">0x0</Offset> VERIFIED
+        <Offset name="name_nickname">0x4</Offset> VERIFIED
+        <Offset name="name_words">0x8</Offset> VERIFIED
+
+        Creature offsets
+        ================
         <Offset name="creature_name">0x0</Offset>
         <Offset name="creature_custom_profession">0x6c</Offset>
         <Offset name="creature_profession">0x3c</Offset> *
@@ -1794,6 +1731,102 @@ map_data_1b60_offset          0x1B9c
         <Offset name="job_material_sectype2">0x4</Offset> subtype ?
         <Offset name="job_material_sectype3">0x8</Offset> index of material (for example, 2 is for silver)
         <Offset name="job_material_flags">0x18</Offset> set only for shell / bone mood requirements ?
+
+        Creature type offsets
+        =====================
+        <Offset name="creature_type_caste_vector">0x138</Offset>
+        <Offset name="creature_type_extract_vector">0x1A14</Offset>
+        <Offset name="creature_tile">0xE0</Offset>
+        <Offset name="creature_tile_color">0xF6</Offset>
+        <!--
+        struct CreatureType
+        {
+            Vector<CreatureCasteType*> creature_type_caste_vector (0x138);
+            Vector<CreatureExtractType*> creature_type_extract_vector (0x1A14);
+            Offset creature_tile (0xE0);
+            Offset creature_tile_color (0xF6);
+        }
+        -->
+
+        Color descriptors
+        =================
+        <Offset name="descriptor_rawname">0x0</Offset> VERIFIED
+        <Offset name="descriptor_name">0x1C</Offset> VERIFIED
+        <Offset name="descriptor_color_r">0x24</Offset> VERIFIED
+        <Offset name="descriptor_color_v">0x28</Offset> VERIFIED
+        <Offset name="descriptor_color_b">0x2C</Offset> VERIFIED
+
+        Language tables
+        ===============
+        <Offset name="word_table">0x1C</Offset>
+
+        Constructions
+        =============
+        <Offset name="sizeof_construction">0x14</Offset>
+    </Entry>
+
+    <Entry version="v0.30_04" os="linux" id="30_04lin" base="linux-offsets-2010">
+        <String name="md5">1d759a11af258263ef5c139d6d9a3e15</String>
+        <!-- most probably a static object, because its parts are often
+             referenced as offset to this address *and* as addresses    -->
+        <Address name="WORLD">0x92D00C0</Address>
+
+        Position and window dimensions
+        ==============================
+        <Address name="window_x">0x8cd3b18</Address>
+        <Address name="window_y">0x8cd3b1c</Address>
+        <Address name="window_z">0x8cd3b20</Address>
+        <Address name="cursor_xyz">0x8b17370</Address>
+        <Address name="window_dims">0x9464d6c</Address>
+
+        GUI State
+        =========
+        <Address name="pause_state">0x92c971c</Address>
+
+        Map data
+        =========
+        <Address name="map_data">0x9322d20</Address> WORLD + 0x52C60
+
+        Map Features
+        ============
+        WORLD + 0x5487C
+        <Address name="global_feature_vector">0x932493C</Address>
+        WORLD + 0x548F4
+        <Address name="local_feature_start_ptr">0x93249B4</Address>
+
+        * map size in blocks *
+        <Address name="x_count_block">0x9322d34</Address>
+        <Address name="y_count_block">0x9322d38</Address>
+        <Address name="z_count_block">0x9322d3C</Address>
+        
+        * map size in tiles *
+        <Address name="x_count">0x9322d40</Address>
+        <Address name="y_count">0x9322d44</Address>
+        <Address name="z_count">0x9322d48</Address>
+        
+        * region coords *
+        WORLD + 0x525C8
+        <Address name="region_x">0x9322d4C</Address>
+        WORLD + 0x525CC
+        <Address name="region_y">0x9322d50</Address>
+        WORLD + 0x525D0
+        <Address name="region_z">0x9322d54</Address>
+        
+        * World size * (WORDs)
+        WORLD + 0x542E0
+        <Address name="world_size_x">0x93243A0</Address>
+        WORLD + 0x542E2
+        <Address name="world_size_y">0x93243A2</Address>
+        WORLD + 0x54894
+        <Address name="geoblock_vector">0x9324954</Address>
+        WORLD + 0x548B8
+        <Address name="ptr2_region_array">0x9324978</Address>
+        
+        Creatures
+        =========
+        <Address name="creature_vector">0x092E3AA0</Address>
+        <Address name="dwarf_race_index">0x092CB608</Address>
+        <Address name="dwarf_civ_id">0x092CB5FC</Address>
         
         Materials
         =========
@@ -1812,42 +1845,30 @@ map_data_1b60_offset          0x1B9c
 
         creature types actually used for creatures,
         <Address name="creature_type_vector">0x09324F14</Address>
-        <Offset name="creature_type_caste_vector">0x138</Offset>
-        <Offset name="creature_type_extract_vector">0x1A14</Offset>
-        <Offset name="creature_tile">0xE0</Offset>
-        <Offset name="creature_tile_color">0xF6</Offset>
         <!--
-        struct CreatureCasteType
-        {
-            ?
-        };
-        struct CreatureExtractType
-        {
-            ?
-        };
-        struct CreatureType
-        {
-            Vector<CreatureCasteType*> creature_type_caste_vector (0x138);
-            Vector<CreatureExtractType*> creature_type_extract_vector (0x1A14);
-            Offset creature_tile (0xE0);
-            Offset creature_tile_color (0xF6);
-        }
-        Vector<CreatureType*> creature_type_vector (0x09324F14);
+            Vector<CreatureType*> creature_type_vector (0x09324F14);
         -->
 
+        Color descriptors
+        =================
+        <Address name="descriptor_colors_vector">0x9329378</Address> VERIFIED
+        <Address name="descriptor_all_colors">0x9329390</Address> VERIFIED
         Translations
         ============
         WORLD + 0x54E50
         <Address name="language_vector">0x9324fd4</Address>
         WORLD + 0x54E80
         <Address name="translation_vector">0x9324fec</Address>
-        <Offset name="word_table">0x1C</Offset>
 
         Constructions
         =============
         WORLD + 0x84
         <Address name="construction_vector">0x92D0144</Address> 0x165b290
-        <Offset name="sizeof_construction">0x14</Offset>
+
+        Time
+        ====
+        <Address name="current_year">0x92C9680</Address>
+        <Address name="current_tick">0x92C9688</Address>
 <!--
         
         Vegetation
@@ -1951,10 +1972,9 @@ map_data_1b60_offset          0x1B9c
         <Offset name="item_improvement_quality">0x14</Offset>
         <Offset name="item_type_accessor">0x14</Offset>  (in the vtable)
         -->
-        Time
-        ====
-        <Address name="current_tick">0x92C9688</Address>
-        <Address name="current_year">0x92C9680</Address>
+    </Entry>
+    <Entry version="v0.31.05" os="linux" id="30_05lin" base="linux-offsets-2010">
+        <String name="md5">fea3801a26538b1741f3cc9294139fca</String>
     </Entry>
     </MemoryDescriptors>
 </DFExtractor>

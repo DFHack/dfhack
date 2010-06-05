@@ -88,15 +88,16 @@ int main (void)
     }
     // next test ContextManager and BadContexts
     {
-        cout << "Testing ProcessEnumerator" << endl;
+        cout << "Testing ContextManager" << endl;
         ContextManager Cman("Memory.xml");
         memory_info * mem;
         do
         {
-            // make the ProcessEnumerator update its list of Processes
+            // make the ContextManager update its list of Contexts
             // by passing the pointer to 'inval', we make it export expired
-            // processes instead of destroying them outright
-            // (processes expire when the OS kills them for whatever reason)
+            // contexts instead of destroying them outright
+            // (contexts expire when the OS kills their process for whatever
+            //  reason)
             BadContexts inval;
             Cman.Refresh(&inval);
             int nCont = Cman.size();

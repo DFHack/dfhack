@@ -23,9 +23,15 @@
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack/modules/Maps.h"
 
+/*
+ * This is a header full of ugly, volatile things.
+ * Only for use of official DFHack tools!
+ */
 #ifdef DFHACK_WANT_MISCUTILS
     #include "dfhack/DFMiscUtils.h"
 #endif
+
+// define this to get the static tiletype->properties mapping
 #ifdef DFHACK_WANT_TILETYPES
     #include "dfhack/DFTileTypes.h"
 #endif

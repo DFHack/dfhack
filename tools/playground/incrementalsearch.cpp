@@ -208,19 +208,18 @@ bool Incremental ( vector <uint64_t> &found, const char * what, T& output,
     }
     else
     {
-        stringstream ss (stringstream::in | stringstream::out);
-        ss << select;
-        ss >> hex >> output;
-        if(ss.fail())
+        if( sscanf(select.c_str(),"0x%x", &output) == 1 )
         {
-            ss >> dec >> output;
-            if(ss.fail())
-            {
-                cout << "not a valid value for type: " << what << endl;
-                goto incremental_more;
-            }
+            cout << dec << output << endl;
+            return true;
         }
-        return true;
+        if( sscanf(select.c_str(),"%d", &output) == 1 )
+        {
+            cout << dec << output << endl;
+            return true;
+        }
+        cout << "not a valid value for type: " << what << endl;
+        goto incremental_more;
     }
 }
 

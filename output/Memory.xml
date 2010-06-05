@@ -1975,6 +1975,25 @@ map_data_1b60_offset          0x1B9c
     </Entry>
     <Entry version="v0.31.05" os="linux" id="30_05lin" base="linux-offsets-2010">
         <String name="md5">fea3801a26538b1741f3cc9294139fca</String>
+        <!-- most probably a static object, because its parts are often
+             referenced as offset to this address *and* as addresses    -->
+        <Address name="WORLD">0x92D00C0</Address> BOGUS!
+
+        Position and window dimensions
+        ==============================
+        <Address name="window_x">0x8b0d36c</Address> BOGUS!
+        <Address name="window_y">0x8b0d370</Address> BOGUS!
+        <Address name="window_z">0x8b0d374</Address> BOGUS!
+        <Address name="cursor_xyz">0x8b0d36c</Address> VERIFIED
+        <Address name="window_dims">0x8b0d370</Address> BOGUS!
+        GUI State
+        =========
+        <Address name="pause_state">0x92bf73c</Address> VERIFIED
+
+        Map data
+        ========
+        WORLD + 0x52C60?
+        <Address name="map_data">0x9322d20</Address>
     </Entry>
     </MemoryDescriptors>
 </DFExtractor>

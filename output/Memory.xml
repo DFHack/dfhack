@@ -1600,7 +1600,7 @@ map_data_1b60_offset          0x1B9c
     <Entry version="v0.31.05" os="windows" id="0.31.05" base="0.31.04" rebase="0x8010">
         <String name="md5">394ff63fc00fedd5df0b36e4beb589bc</String>
         <HexValue name="pe_timestamp">0x4c091569</HexValue>
-        <Address name="creature_vector">0x1678704</Address> CHMOD
+        <!--<Address name="creature_vector">0x1678704</Address> CHMOD-->
         <Address name="dwarf_race_index">0x014abee4</Address> CHMOD
         <Address name="dwarf_civ_id">0x1471FB0</Address> BOGUS!
 <!--

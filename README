@@ -32,10 +32,12 @@ OSX is also not supported due to lack of developers with a Mac.
 
 Currently supported Dwarf Fortress versions:
 * Windows
-  0.31.01 - 0.31.03
+  0.31.01 - 0.31.03 legacy
+  0.31.04 - 0.31.05 SDL
 
 * Linux
-  wine together with the Windows versions
+  0.31.04 - 0.31.05 native. There are missing offsets but Map tools should be OK.
+  All Windows versions through wine.
 
 Using the library as a developer
 --------------------------------
@@ -162,6 +164,8 @@ be useful and are cross-platform just like the library itself.
  - dfvdig      : Designates a whole vein for digging. Point the cursor at a vein
                  and run this thing :)
 
+ - dfflows     : A tool for checking how many liquid tiles are actively checked
+                 for flows.
  - Your tool here:  Write one ;)
 
 

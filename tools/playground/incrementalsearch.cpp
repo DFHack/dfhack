@@ -218,6 +218,14 @@ bool Incremental ( vector <uint64_t> &found, const char * what, T& output,
             //cout << dec << output << endl;
             return true;
         }
+
+        stringstream ss (stringstream::in | stringstream::out);
+        ss << select;
+        ss >> output;
+        if(!ss.fail())
+        {
+            return true;
+        }
         cout << "not a valid value for type: " << what << endl;
         goto incremental_more;
     }
@@ -431,7 +439,7 @@ void printFoundStrVec(vector <uint64_t> &found, const char * what, SegmentedFind
                     cout << "BAD!" << endl;
                     break;
                 }
-                cout << dec << j << ": " << str << endl;
+                cout << dec << j << ":" << hex << "0x" << object_ptr << " : " << str << endl;
                 j++;
             }
         }
@@ -516,7 +524,8 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
     // inorganics vector
     to_filter = filtVectors;
     //sf.Find<uint32_t,vecTriplet>(257 * 4,4,to_filter,vectorLength<uint32_t>);
-    sf.Find<const char * ,vecTriplet>("IRON",4,to_filter, vectorStringFirst);
+    sf.Find<const char * ,vecTriplet>("IRON",4,to_filter, vectorString);
+    sf.Find<const char * ,vecTriplet>("ONYX",4,to_filter, vectorString);
     sf.Find<const char * ,vecTriplet>("RAW_ADAMANTINE",4,to_filter, vectorString);
     sf.Find<const char * ,vecTriplet>("BLOODSTONE",4,to_filter, vectorString);
     printFound(to_filter,"inorganics");
@@ -576,7 +585,7 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
     vector <uint64_t> elephant_first = to_filter;
     sf.Find<const char * ,vecTriplet>("TOAD",4,toad_first, vectorStringFirst);
     sf.Find<const char * ,vecTriplet>("ELEPHANT",4,elephant_first, vectorStringFirst);
-    printFound(toad_first,"toad-first creature types");
+    printFoundStrVec(toad_first,"toad-first creature types",sf);
     printFound(elephant_first,"elephant-first creature types");
     printFound(to_filter,"all creature types");
 }
@@ -602,6 +611,9 @@ int main (void)
     vector <DFHack::t_memrange> selected_ranges;
     getRanges(p,selected_ranges);
 
+    DFHack::memory_info *minfo = DF->getMemoryInfo();
+    DFHack::memory_info::OSType os = minfo->getOS();
+
     string prompt =
     "Select search type: 1=number(default), 2=vector by length, 3=vector>object>string,\n"
     "                    4=string, 5=automated offset search, 6=vector by address in its array,\n"
@@ -614,27 +626,34 @@ int main (void)
     switch (mode)
     {
         case 1:
+            DF->Detach();
             FindIntegers(DFMgr, selected_ranges);
             break;
         case 2:
+            DF->Detach();
             FindVectorByLength(DFMgr, selected_ranges);
             break;
         case 3:
+            DF->Detach();
             FindVectorByObjectRawname(DFMgr, selected_ranges);
             break;
         case 4:
+            DF->Detach();
             FindStrings(DFMgr, selected_ranges);
             break;
         case 5:
             automatedLangtables(DF,selected_ranges);
             break;
         case 6:
+            DF->Detach();
             FindVectorByBounds(DFMgr,selected_ranges);
             break;
         case 7:
+            DF->Detach();
             FindPtrVectorsByObjectAddress(DFMgr,selected_ranges);
             break;
         case 8:
+            DF->Detach();
             FindVectorByFirstObjectRawname(DFMgr, selected_ranges);
             break;
         default:

@@ -210,12 +210,12 @@ bool Incremental ( vector <uint64_t> &found, const char * what, T& output,
     {
         if( sscanf(select.c_str(),"0x%x", &output) == 1 )
         {
-            cout << dec << output << endl;
+            //cout << dec << output << endl;
             return true;
         }
         if( sscanf(select.c_str(),"%d", &output) == 1 )
         {
-            cout << dec << output << endl;
+            //cout << dec << output << endl;
             return true;
         }
         cout << "not a valid value for type: " << what << endl;

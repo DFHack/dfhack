@@ -1845,14 +1845,12 @@ map_data_1b60_offset          0x1B9c
 
         creature types actually used for creatures,
         <Address name="creature_type_vector">0x09324F14</Address>
-        <!--
-            Vector<CreatureType*> creature_type_vector (0x09324F14);
-        -->
 
         Color descriptors
         =================
         <Address name="descriptor_colors_vector">0x9329378</Address> VERIFIED
         <Address name="descriptor_all_colors">0x9329390</Address> VERIFIED
+
         Translations
         ============
         WORLD + 0x54E50
@@ -1977,15 +1975,15 @@ map_data_1b60_offset          0x1B9c
         <String name="md5">fea3801a26538b1741f3cc9294139fca</String>
         <!-- most probably a static object, because its parts are often
              referenced as offset to this address *and* as addresses    -->
-        <Address name="WORLD">0x92D00C0</Address> BOGUS!
+        <Address name="WORLD">0x92C60E0</Address> MOST PROBABLY BOGUS!
 
         Position and window dimensions
         ==============================
-        <Address name="window_x">0x8b0d36c</Address> BOGUS!
-        <Address name="window_y">0x8b0d370</Address> BOGUS!
-        <Address name="window_z">0x8b0d374</Address> BOGUS!
+        <Address name="window_x">0x8cc9b38</Address> VERIFIED
+        <Address name="window_y">0x8cc9b3c</Address> VERIFIED
+        <Address name="window_z">0x8cc9b40</Address> VERIFIED
         <Address name="cursor_xyz">0x8b0d36c</Address> VERIFIED
-        <Address name="window_dims">0x8b0d370</Address> BOGUS!
+        <Address name="window_dims">0x945ad8c</Address> VERIFIED
         GUI State
         =========
         <Address name="pause_state">0x92bf73c</Address> VERIFIED
@@ -1993,7 +1991,72 @@ map_data_1b60_offset          0x1B9c
         Map data
         ========
         WORLD + 0x52C60?
-        <Address name="map_data">0x9322d20</Address>
+        <Address name="map_data">0x9318D40</Address>
+
+        Map Features
+        ============
+        WORLD + 0x5487C?
+        <Address name="global_feature_vector">0x931A95C</Address>
+        WORLD + 0x548F4?
+        <Address name="local_feature_start_ptr">0x931A9D4</Address>
+
+        * map size in blocks *
+        <Address name="x_count_block">0x9318D54</Address> VERIFIED
+        <Address name="y_count_block">0x9318D58</Address> VERIFIED
+        <Address name="z_count_block">0x9318D5C</Address> VERIFIED
+        
+        * map size in tiles *
+        <Address name="x_count">0x9318D60</Address> VERIFIED
+        <Address name="y_count">0x9318D64</Address> VERIFIED
+        <Address name="z_count">0x9318D68</Address> VERIFIED
+        
+        * region coords *
+        WORLD + 0x525C8
+        <Address name="region_x">0x9318D6C</Address> VERIFIED
+        WORLD + 0x525CC
+        <Address name="region_y">0x9318D70</Address> VERIFIED
+        WORLD + 0x525D0
+        <Address name="region_z">0x9318D74</Address> VERIFIED (old = 0x9322d54)
+        
+        * World size * (WORDs)
+        WORLD + 0x542E0
+        <Address name="world_size_x">0x931A3C0</Address> old = 0x93243A0
+        WORLD + 0x542E2
+        <Address name="world_size_y">0x931A3C2</Address> old = 0x93243A2
+        WORLD + 0x54894
+        <Address name="geoblock_vector">0x931A974</Address> old = 0x9324954
+        WORLD + 0x548B8
+        <Address name="ptr2_region_array">0x931A998</Address> old = 0x9324978
+
+        Materials
+        =========
+        soil, stone, metal
+        inorganics vector
+        <Address name="mat_inorganics">0x931ae88</Address>
+        
+        wood and plant matter
+        <Address name="mat_organics_all">0x931ae94</Address>
+        
+        plant matter
+        <Address name="mat_organics_plants">0x931aea0</Address>
+        
+        just wood
+        <Address name="mat_organics_trees">0x931aeb8</Address>
+
+        creature types actually used for creatures,
+        <Address name="creature_type_vector">0x931af34</Address>
+
+        Color descriptors
+        =================
+        <Address name="descriptor_colors_vector">0x931f398</Address> VERIFIED
+        <Address name="descriptor_all_colors">0x931f3b0</Address> VERIFIED
+
+        Translations
+        ============
+        WORLD + 0x54E50
+        <Address name="language_vector">0x931aff4</Address>
+        WORLD + 0x54E80
+        <Address name="translation_vector">0x931b00c</Address>
     </Entry>
     </MemoryDescriptors>
 </DFExtractor>

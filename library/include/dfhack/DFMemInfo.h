@@ -107,7 +107,7 @@ namespace DFHack
 			const std::string &, const std::string &, const std::string &);
         void setLabor(const std::string &, const std::string &);
 		void setLevel(const std::string &nLevel, const std::string &nName,
-			const std::string &nMin_xp, const std::string &nMax_xp);
+			const std::string &nXp);
 
         void RebaseVTable(const int32_t offset);
         void setParentProcess(Process * _p);

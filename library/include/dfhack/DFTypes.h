@@ -215,8 +215,7 @@ struct t_level
 {
 	uint32_t level;
 	std::string name;
-	uint32_t min_xp;
-	uint32_t max_xp;
+	uint32_t xpNxtLvl;
 };
 
 }// namespace DFHack

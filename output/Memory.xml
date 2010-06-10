@@ -799,27 +799,27 @@ size=212
             ====================================================================
                                         L E V E L S
             ====================================================================
-            <Level id="0" name="Dabbling" min_xp="1" max_xp="499"/>
-            <Level id="1" name="Novice" min_xp="500" max_xp="1099"/>
-            <Level id="2" name="Adequate" min_xp="1100" max_xp="1799"/>
-            <Level id="3" name="Competent" min_xp="1800" max_xp="2599"/>
-            <Level id="4" name="Skilled" min_xp="2600" max_xp="3499"/>
-            <Level id="5" name="Proficient" min_xp="3500" max_xp="4499"/>
-            <Level id="6" name="Talented" min_xp="4500" max_xp="5599"/>
-            <Level id="7" name="Adept" min_xp="5600" max_xp="6799"/>
-            <Level id="8" name="Expert" min_xp="6800" max_xp="8099"/>
-            <Level id="9" name="Professional" min_xp="8100" max_xp="9499"/>
-            <Level id="10" name="Accomplished" min_xp="9500" max_xp="10999"/>
-            <Level id="11" name="Great" min_xp="11000" max_xp="12599"/>
-            <Level id="12" name="Master" min_xp="12600" max_xp="14299"/>
-            <Level id="13" name="High Master" min_xp="14300" max_xp="16099"/>
-            <Level id="14" name="Grand Master" min_xp="16100" max_xp="17999"/>
-            <Level id="15" name="Legendary" min_xp="18000" max_xp="19999"/>
-            <Level id="16" name="Legendary+1" min_xp="20000" max_xp="22099"/> TODO verify level 16 and up's existence in DF2010
-            <Level id="17" name="Legendary+2" min_xp="22100" max_xp="24299"/>
-            <Level id="18" name="Legendary+3" min_xp="24300" max_xp="26599"/>
-            <Level id="19" name="Legendary+4" min_xp="26600" max_xp="28999"/>
-            <Level id="20" name="Legendary+5" min_xp="29000" max_xp="30000"/> No max xp on last level but 30000 is nice and round
+            <Level id="0" name="Dabbling" xpNxtLvl="500"/>
+            <Level id="1" name="Novice" xpNxtLvl="600"/>
+            <Level id="2" name="Adequate" xpNxtLvl="700"/>
+            <Level id="3" name="Competent" xpNxtLvl="800"/>
+            <Level id="4" name="Skilled" xpNxtLvl="900"/>
+            <Level id="5" name="Proficient" xpNxtLvl="1000"/>
+            <Level id="6" name="Talented" xpNxtLvl="1100"/>
+            <Level id="7" name="Adept" xpNxtLvl="1200"/>
+            <Level id="8" name="Expert" xpNxtLvl="1300"/>
+            <Level id="9" name="Professional" xpNxtLvl="1400"/>
+            <Level id="10" name="Accomplished" xpNxtLvl="1500"/>
+            <Level id="11" name="Great" xpNxtLvl="1600"/>
+            <Level id="12" name="Master" xpNxtLvl="1700"/>
+            <Level id="13" name="High Master" xpNxtLvl="1800"/>
+            <Level id="14" name="Grand Master" xpNxtLvl="1900"/>
+            <Level id="15" name="Legendary" xpNxtLvl="2000"/>
+            <Level id="16" name="Legendary+1" xpNxtLvl="2100"/> TODO verify level 16 and up's existence in DF2010
+            <Level id="17" name="Legendary+2" xpNxtLvl="2200"/>
+            <Level id="18" name="Legendary+3" xpNxtLvl="2300"/>
+            <Level id="19" name="Legendary+4" xpNxtLvl="2400"/>
+            <Level id="20" name="Legendary+5" xpNxtLvl="-1"/> -1 for no cap
                     
             ====================================================================
                                         L A B O R S

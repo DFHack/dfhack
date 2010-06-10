@@ -210,7 +210,7 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
         }
 		else if (type == "Level")
         {
-			mem->setLevel(value, name, pMemEntry->Attribute("min_xp"), pMemEntry->Attribute("max_xp"));
+			mem->setLevel(value, name, pMemEntry->Attribute("xpNxtLvl"));
         }
         else
         {

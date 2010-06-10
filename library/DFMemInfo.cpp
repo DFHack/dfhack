@@ -307,8 +307,7 @@ void memory_info::setSkill (const string & key, const string & value)
 
 void memory_info::setLevel(const std::string &nLevel,
 						   const std::string &nName,
-						   const std::string &nMin_xp, 
-						   const std::string &nMax_xp)
+						   const std::string &nXp)
 {
 	uint32_t keyInt = strtol(nLevel.c_str(), NULL, 10);
     
@@ -317,8 +316,7 @@ void memory_info::setLevel(const std::string &nLevel,
 	
 	d->levels[keyInt].level = keyInt;
 	d->levels[keyInt].name = nName;
-	d->levels[keyInt].min_xp = strtol(nMin_xp.c_str(), NULL, 10);
-	d->levels[keyInt].max_xp = strtol(nMax_xp.c_str(), NULL, 10);
+	d->levels[keyInt].xpNxtLvl = strtol(nXp.c_str(), NULL, 10);
 }
 
 void memory_info::setTrait(const string & key,

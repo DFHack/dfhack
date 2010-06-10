@@ -463,7 +463,7 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
     SegmentedFinder sf(ranges, DF);
     cout << "looking for vectors..." << endl;
     sf.Find<int ,vecTriplet>(0,4,allVectors, vectorAll);
-
+/*
     // trim vectors. anything with > 10000 entries is not interesting
     for(uint64_t i = 0; i < allVectors.size();i++)
     {
@@ -477,7 +477,8 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
             }
         }
     }
-
+*/
+    filtVectors = allVectors;
     cout << "-------------------" << endl;
     cout << "!!LANGUAGE TABLES!!" << endl;
     cout << "-------------------" << endl;

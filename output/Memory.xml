@@ -1603,6 +1603,13 @@ map_data_1b60_offset          0x1B9c
         <!--<Address name="creature_vector">0x1678704</Address> CHMOD-->
         <Address name="dwarf_race_index">0x014abee4</Address> CHMOD
         <Address name="dwarf_civ_id">0x1471FB0</Address> BOGUS!
+        <Address name="window_dims">0x180b10c</Address> LOOKS O.K.
+        <Address name="window_x">0xe6c0dc</Address> VERIFIED
+        <Address name="window_y">0xe9a1b0</Address> VERIFIED
+        <Address name="window_z">0xe9a18c</Address> VERIFIED
+        <Address name="cursor_xyz">0xaf12cc</Address> VERIFIED
+        <Address name="current_tick">0xE80780</Address> LOOKS O.K.
+        <Address name="current_year">0xEB2878</Address> LOOKS O.K.
 <!--
         <Address name="mat_inorganics">0x16BD0B0</Address> 
         <Address name="mat_organics_all">0x16BD0C8</Address> 
@@ -1622,8 +1629,6 @@ map_data_1b60_offset          0x1B9c
         <Address name="language_vector">0x016c539c</Address> CHMOD
         <Address name="translation_vector">0x016c53cc</Address> CHMOD
         -->
-        <Address name="current_tick">0xE80780</Address> LOOKS O.K.
-        <Address name="current_year">0xEB2878</Address> LOOKS O.K.
 <!--
         <Address name="map_data">0x16c2ad4</Address> old 0x016BAAC4
         <Address name="x_count_block">0x16c2af4</Address> old 0x016BAAE4
@@ -1647,16 +1652,20 @@ map_data_1b60_offset          0x1B9c
         <Address name="buildings_vector">0x16793e8</Address> 
         <Address name="items_vector">0x1678800</Address> 
 -->
-        <Address name="window_dims">0x180b10c</Address> LOOKS O.K.
-        <Address name="window_x">0xe6c0dc</Address> VERIFIED
-        <Address name="window_y">0xe9a1b0</Address> VERIFIED
-        <Address name="window_z">0xe9a18c</Address> VERIFIED
-        <Address name="cursor_xyz">0xaf12cc</Address> VERIFIED
-
         <Offset name="item_type_accessor">0x0</Offset> Why do i have to redefine this ???
         ... what?
     </Entry>
-        
+    <Entry version="v0.31.06" os="windows" id="0.31.06" base="0.31.05" rebase="0x10">
+        <String name="md5">c4b7e37dafa2716e31d29110968ac64e</String>
+        <HexValue name="pe_timestamp">0x4c0f83d5</HexValue>
+        <Address name="cursor_xyz">0xaf12d0</Address>
+[addresses]
+translation_vector      = 0x016c53dc
+language_vector         = 0x016c53ac
+creature_vector         = 0x0168071c
+dwarf_race_index        = 0x014abef4
+    </Entry>
+
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________
@@ -2116,6 +2125,9 @@ map_data_1b60_offset          0x1B9c
         <Address name="language_vector">0x931aff4</Address>
         WORLD + 0x54E80
         <Address name="translation_vector">0x931b00c</Address>
+    </Entry>
+    <Entry version="v0.31.06" os="linux" id="30_06lin" base="linux-offsets-2010">
+        <String name="md5">13a1c19e8f59b74e307e094e2a0f28c3</String>
     </Entry>
     </MemoryDescriptors>
 </DFExtractor>

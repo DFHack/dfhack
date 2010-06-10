@@ -4,6 +4,7 @@
     <MemoryDescriptors>
         <Entry version="meta-2010" os="all" id="meta-2010">
             <Offset name="keep_me_happy">0x0</Offset>
+            
             ====================================================================
                                         T R A I T S
             ====================================================================
@@ -217,6 +218,7 @@
             level_2="Often does the first thing that comes to mind"
             level_1="Acts impulsively"
             level_0="Always acts without considering alternatives or thinking through possibilities">29</Trait>
+            
             ====================================================================
                                    P R O F E S S I O N S
             ====================================================================
@@ -322,6 +324,7 @@
             <Profession can_assign_labors="true" is_military="true" name="LASHER">88</Profession>
             <Profession can_assign_labors="true" is_military="true" name="MASTER_LASHER">89</Profession>
             <Profession can_assign_labors="true" is_military="false" name="None">90</Profession>
+            
             ====================================================================
                                           J O B S
             ====================================================================
@@ -792,137 +795,32 @@ size=212
             <Skill name="Bone Setting">62</Skill>
             <Skill name="Suturing">63</Skill>
             <Skill name="Crutch-walking">64</Skill>
-          
+			
             ====================================================================
                                         L E V E L S
             ====================================================================
-            <Level>
-              <id>0</id>
-              <name>Dabbling</name>
-              <min_xp>1</min_xp>
-              <max_xp>499</max_xp>
-            </Level>
-            <Level>
-              <id>1</id>
-              <name>Novice</name>
-              <min_xp>500</min_xp>
-              <max_xp>1099</max_xp>
-            </Level>
-            <Level>
-              <id>2</id>
-              <name>Adequate</name>
-              <min_xp>1100</min_xp>
-              <max_xp>1799</max_xp>
-            </Level>
-            <Level>
-              <id>3</id>
-              <name>Competent</name>
-              <min_xp>1800</min_xp>
-              <max_xp>2599</max_xp>
-            </Level>
-            <Level>
-              <id>4</id>
-              <name>Skilled</name>
-              <min_xp>2600</min_xp>
-              <max_xp>3499</max_xp>
-            </Level>
-            <Level>
-              <id>5</id>
-              <name>Proficient</name>
-              <min_xp>3500</min_xp>
-              <max_xp>4499</max_xp>
-            </Level>
-            <Level>
-              <id>6</id>
-              <name>Talented</name>
-              <min_xp>4500</min_xp>
-              <max_xp>5599</max_xp>
-            </Level>
-            <Level>
-              <id>7</id>
-              <name>Adept</name>
-              <min_xp>5600</min_xp>
-              <max_xp>6799</max_xp>
-            </Level>
-            <Level>
-              <id>8</id>
-              <name>Expert</name>
-              <min_xp>6800</min_xp>
-              <max_xp>8099</max_xp>
-            </Level>
-            <Level>
-              <id>9</id>
-              <name>Professional</name>
-              <min_xp>8100</min_xp>
-              <max_xp>9499</max_xp>
-            </Level>
-            <Level>
-              <id>10</id>
-              <name>Accomplished</name>
-              <min_xp>9500</min_xp>
-              <max_xp>10999</max_xp>
-            </Level>
-            <Level>
-              <id>11</id>
-              <name>Great</name>
-              <min_xp>11000</min_xp>
-              <max_xp>12599</max_xp>
-            </Level>
-            <Level>
-              <id>12</id>
-              <name>Master</name>
-              <min_xp>12600</min_xp>
-              <max_xp>14299</max_xp>
-            </Level>
-            <Level>
-              <id>13</id>
-              <name>High Master</name>
-              <min_xp>14300</min_xp>
-              <max_xp>16099</max_xp>
-            </Level>
-            <Level>
-              <id>14</id>
-              <name>Grand Master</name>
-              <min_xp>16100</min_xp>
-              <max_xp>17999</max_xp>
-            </Level>
-            <Level>
-              <id>15</id>
-              <name>Legendary</name>
-              <min_xp>18000</min_xp>
-              <max_xp>19999</max_xp>
-            </Level>
-            <Level>
-              <id>16</id>
-              <name>Legendary+1</name>
-              <min_xp>20000</min_xp>
-              <max_xp>22099</max_xp>
-            </Level>
-            <Level>
-              <id>17</id>
-              <name>Legendary+2</name>
-              <min_xp>22100</min_xp>
-              <max_xp>24299</max_xp>
-            </Level>
-            <Level>
-              <id>18</id>
-              <name>Legendary+3</name>
-              <min_xp>24300</min_xp>
-              <max_xp>26599</max_xp>
-            </Level>
-            <Level>
-              <id>19</id>
-              <name>Legendary+4</name>
-              <min_xp>26600</min_xp>
-              <max_xp>28999</max_xp>
-            </Level>
-            <Level>
-              <id>20</id>
-              <name>Legendary+5</name>
-              <min_xp>29000</min_xp>
-              <max_xp>30000</max_xp>
-            </Level>
-
+            <Level id="0" name="Dabbling" min_xp="1" max_xp="499"/>
+            <Level id="1" name="Novice" min_xp="500" max_xp="1099"/>
+            <Level id="2" name="Adequate" min_xp="1100" max_xp="1799"/>
+            <Level id="3" name="Competent" min_xp="1800" max_xp="2599"/>
+            <Level id="4" name="Skilled" min_xp="2600" max_xp="3499"/>
+            <Level id="5" name="Proficient" min_xp="3500" max_xp="4499"/>
+            <Level id="6" name="Talented" min_xp="4500" max_xp="5599"/>
+            <Level id="7" name="Adept" min_xp="5600" max_xp="6799"/>
+            <Level id="8" name="Expert" min_xp="6800" max_xp="8099"/>
+            <Level id="9" name="Professional" min_xp="8100" max_xp="9499"/>
+            <Level id="10" name="Accomplished" min_xp="9500" max_xp="10999"/>
+            <Level id="11" name="Great" min_xp="11000" max_xp="12599"/>
+            <Level id="12" name="Master" min_xp="12600" max_xp="14299"/>
+            <Level id="13" name="High Master" min_xp="14300" max_xp="16099"/>
+            <Level id="14" name="Grand Master" min_xp="16100" max_xp="17999"/>
+            <Level id="15" name="Legendary" min_xp="18000" max_xp="19999"/>
+            <Level id="16" name="Legendary+1" min_xp="20000" max_xp="22099"/> TODO verify level 16 and up's existence in DF2010
+            <Level id="17" name="Legendary+2" min_xp="22100" max_xp="24299"/>
+            <Level id="18" name="Legendary+3" min_xp="24300" max_xp="26599"/>
+            <Level id="19" name="Legendary+4" min_xp="26600" max_xp="28999"/>
+            <Level id="20" name="Legendary+5" min_xp="29000" max_xp="30000"/> No max xp on last level but 30000 is nice and round
+                    
             ====================================================================
                                         L A B O R S
             ====================================================================

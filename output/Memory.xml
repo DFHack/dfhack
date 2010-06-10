@@ -2154,8 +2154,9 @@ dwarf_race_index        = 0x014abef4
         WORLD + 0x54E80
         <Address name="translation_vector">0x931b00c</Address>
     </Entry>
-    <Entry version="v0.31.06" os="linux" id="30_06lin" base="linux-offsets-2010">
+    <Entry version="v0.31.06" os="linux" id="30_06lin" base="30_05lin" rebase="-0x20E0">
         <String name="md5">13a1c19e8f59b74e307e094e2a0f28c3</String>
+        <Address name="cursor_xyz">0x8b0b328</Address> VERIFIED
     </Entry>
     </MemoryDescriptors>
 </DFExtractor>

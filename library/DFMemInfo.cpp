@@ -312,8 +312,8 @@ void memory_info::setLevel(const std::string &nLevel,
 {
 	uint32_t keyInt = strtol(nLevel.c_str(), NULL, 10);
     
-	if(d->skills.size() <= keyInt)
-		d->skills.resize(keyInt+1);
+	if(d->levels.size() <= keyInt)
+		d->levels.resize(keyInt+1);
 	
 	d->levels[keyInt].level = keyInt;
 	d->levels[keyInt].name = nName;

@@ -211,5 +211,13 @@ struct t_attrib
     uint32_t field_18;
 };
 
+struct t_level
+{
+	uint32_t level;
+	std::string name;
+	uint32_t min_xp;
+	uint32_t max_xp;
+};
+
 }// namespace DFHack
 #endif // TYPES_H_INCLUDED

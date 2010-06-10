@@ -27,6 +27,8 @@ distribution.
 
 #include "DFPragma.h"
 #include "DFExport.h"
+#include "dfhack/DFTypes.h"
+
 namespace DFHack
 {
     /*
@@ -72,6 +74,8 @@ namespace DFHack
         std::string getTraitName(const uint32_t) const;
         std::string getLabor (const uint32_t);
 
+		DFHack::t_level getLevelInfo(const uint32_t level) const;
+
         void setVersion(const char *);
         void setVersion(const std::string&);
         std::string getVersion();
@@ -98,8 +102,12 @@ namespace DFHack
         void setProfession(const std::string &, const std::string &);
         void setJob(const std::string &, const std::string &);
         void setSkill(const std::string &, const std::string &);
-        void setTrait(const std::string &,const std::string &,const std::string &,const std::string &,const std::string &,const std::string &,const std::string &,const std::string &);
+        void setTrait(const std::string &, const std::string &, const std::string &,
+			const std::string &, const std::string &,
+			const std::string &, const std::string &, const std::string &);
         void setLabor(const std::string &, const std::string &);
+		void setLevel(const std::string &nLevel, const std::string &nName,
+			const std::string &nMin_xp, const std::string &nMax_xp);
 
         void RebaseVTable(const int32_t offset);
         void setParentProcess(Process * _p);

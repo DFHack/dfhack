@@ -33,10 +33,10 @@ OSX is also not supported due to lack of developers with a Mac.
 Currently supported Dwarf Fortress versions:
 * Windows
   0.31.01 - 0.31.03 legacy
-  0.31.04 - 0.31.05 SDL
+  0.31.04 - 0.31.06 SDL
 
 * Linux
-  0.31.04 - 0.31.05 native. There are missing offsets but Map tools should be OK.
+  0.31.04 - 0.31.06 native. There are missing offsets but Map tools should be OK.
   All Windows versions through wine.
 
 Using the library as a developer

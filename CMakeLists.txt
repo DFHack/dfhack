@@ -1,3 +1,4 @@
+INCLUDE(CPack)
 # main project file. use it from a build sub-folder, see COMPILE for details
 PROJECT (dfhack)
 cmake_minimum_required(VERSION 2.6)

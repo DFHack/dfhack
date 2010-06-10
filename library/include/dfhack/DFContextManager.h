@@ -126,6 +126,8 @@ namespace DFHack
          */
         bool Contains(Process* p);
 
+        // TODO: Add excise(Context *) method
+
         /**
          * Get the number of tracked invalid contexts.
          * @return Number of tracked invalid contexts

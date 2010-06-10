@@ -27,6 +27,8 @@ distribution.
 #include "dfhack/DFError.h"
 #include "dfhack/DFProcess.h"
 
+//Inital amount of space in levels vector (since we usually know the number, efficent!)
+#define NUM_RESERVE_LVLS 20
 using namespace DFHack;
 
 /*
@@ -92,6 +94,7 @@ class memory_info::Private
     vector<string> professions;
     vector<string> jobs;
     vector<string> skills;
+	vector<DFHack::t_level> levels;
     vector< vector<string> > traits;
     map <uint32_t, string> labors;
     
@@ -120,6 +123,7 @@ memory_info::memory_info()
     d->base = 0;
     d->p = 0;
     d->classindex = 0;
+	d->levels.reserve(NUM_RESERVE_LVLS);
 }
 
 // copy constructor
@@ -146,6 +150,7 @@ memory_info::memory_info(const memory_info &old)
     d->skills = old.d->skills;
     d->traits = old.d->traits;
     d->labors = old.d->labors;
+	d->levels = old.d->levels;
 }
 void memory_info::setParentProcess(Process * _p)
 {
@@ -298,6 +303,22 @@ void memory_info::setSkill (const string & key, const string & value)
         d->skills.resize(keyInt+1);
     }
     d->skills[keyInt] = value;
+}
+
+void memory_info::setLevel(const std::string &nLevel,
+						   const std::string &nName,
+						   const std::string &nMin_xp, 
+						   const std::string &nMax_xp)
+{
+	uint32_t keyInt = strtol(nLevel.c_str(), NULL, 10);
+    
+	if(d->levels.size() <= keyInt)
+		d->levels.resize(keyInt+1);
+	
+	d->levels[keyInt].level = keyInt;
+	d->levels[keyInt].name = nName;
+	d->levels[keyInt].min_xp = strtol(nMin_xp.c_str(), NULL, 10);
+	d->levels[keyInt].max_xp = strtol(nMax_xp.c_str(), NULL, 10);
 }
 
 void memory_info::setTrait(const string & key,
@@ -626,6 +647,15 @@ string memory_info::getSkill (const uint32_t key) const
         return d->skills[key];
     }
     throw Error::MissingMemoryDefinition("skill", key);
+}
+
+DFHack::t_level memory_info::getLevelInfo(const uint32_t level) const
+{
+	if(d->levels.size() > level)
+    {
+        return d->levels[level];
+    }
+    throw Error::MissingMemoryDefinition("Level", level);
 }
 
 // FIXME: ugly hack that needs to die

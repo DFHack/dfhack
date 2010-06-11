@@ -203,23 +203,33 @@ bool EnableDebugPriv()
     return bRET;
 }
 
+typedef union
+{
+    struct
+    {
+        uint32_t LowDword;
+        uint32_t HighDword;
+    };
+    uint64_t Quad;
+} TWO_DWORDS;
+
 // Convert Windows FileTime structs to POSIX timestamp
 // from http://frenk.wordpress.com/2009/12/14/convert-filetime-to-unix-timestamp/
 uint64_t FileTime_to_POSIX(FILETIME ft)
 {
     // takes the last modified date
-    LARGE_INTEGER date, adjust;
-    date.HighPart = ft.dwHighDateTime;
-    date.LowPart = ft.dwLowDateTime;
+    TWO_DWORDS date, adjust;
+    date.HighDword = ft.dwHighDateTime;
+    date.LowDword = ft.dwLowDateTime;
 
     // 100-nanoseconds = milliseconds * 10000
-    adjust.QuadPart = 11644473600000 * 10000;
+    adjust.Quad = 11644473600000 * 10000;
 
     // removes the diff between 1970 and 1601
-    date.QuadPart -= adjust.QuadPart;
+    date.Quad -= adjust.Quad;
 
     // converts back from 100-nanoseconds to seconds
-    return date.QuadPart / 10000000;
+    return date.Quad / 10000000;
 }
 
 void ProcessEnumerator::Private::EnumPIDs (vector <ProcessID> &PIDs)

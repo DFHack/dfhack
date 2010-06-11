@@ -223,13 +223,13 @@ uint64_t FileTime_to_POSIX(FILETIME ft)
     date.LowDword = ft.dwLowDateTime;
 
     // 100-nanoseconds = milliseconds * 10000
-    adjust.Quad = 11644473600000 * 10000;
+    adjust.Quad = 11644473600000LL * 10000LL;
 
     // removes the diff between 1970 and 1601
     date.Quad -= adjust.Quad;
 
     // converts back from 100-nanoseconds to seconds
-    return date.Quad / 10000000;
+    return date.Quad / 10000000LL;
 }
 
 void ProcessEnumerator::Private::EnumPIDs (vector <ProcessID> &PIDs)

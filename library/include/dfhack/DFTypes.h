@@ -203,7 +203,7 @@ struct t_settlement
 struct t_attrib
 {
     uint32_t level;
-    uint32_t field_4;
+    uint32_t field_4; // offset from beginning, purpose unknown
     uint32_t field_8;
     uint32_t field_C;
     uint32_t leveldiff;

@@ -346,20 +346,29 @@ int32_t Creatures::ReadCreatureInBox (int32_t index, t_creature & furball,
     }
 }
 
-
-
 bool Creatures::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
 {
-    if(!d->Started) return false;
-    uint32_t temp = d->p_cre->at (index);
-    Process * p = d->owner;
-    
-    p->write(temp + d->creatures.labors_offset, NUM_CREATURE_LABORS, labors);
-    uint32_t pickup_equip;
-    p->readDWord(temp + d->creatures.pickup_equipment_bit, pickup_equip);
-    pickup_equip |= 1u;
-    p->writeDWord(temp + d->creatures.pickup_equipment_bit, pickup_equip);
-    return true;
+	if(!d->Started) return false;
+	uint32_t temp = d->p_cre->at (index);
+	Process * p = d->owner;
+
+	p->write(temp + d->creatures.labors_offset, NUM_CREATURE_LABORS, labors);
+	uint32_t pickup_equip;
+	p->readDWord(temp + d->creatures.pickup_equipment_bit, pickup_equip);
+	pickup_equip |= 1u;
+	p->writeDWord(temp + d->creatures.pickup_equipment_bit, pickup_equip);
+	return true;
+}
+
+bool Creatures::WriteHappiness(const uint32_t index, const uint32_t happinessValue)
+{
+	if(!d->Started) 
+		return false;
+
+	uint32_t temp = d->p_cre->at (index);
+	Process * p = d->owner;
+	p->writeDWord (temp + d->creatures.happiness_offset, happinessValue);
+	return true;
 }
 
 uint32_t Creatures::GetDwarfRaceIndex()

@@ -256,9 +256,9 @@ namespace DFHack
 
 	struct t_skill
 	{
-		uint16_t id;
+		uint32_t id;
 		uint32_t experience;
-		uint16_t rating;
+		uint32_t rating;
 	};
 	struct t_job
 	{
@@ -381,7 +381,8 @@ namespace DFHack
 		bool WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
 		bool WriteHappiness(const uint32_t index, const uint32_t happinessValue);
 		bool WriteFlags(const uint32_t index, const uint32_t flags1, const uint32_t flags2);
-		bool WriteSkills(const uint32_t index, t_soul &soul);
+		bool WriteSkills(const uint32_t index, const t_soul &soul);
+		bool WriteAttributes(const uint32_t index, const t_creature &creature);
 
 	private:
 		struct Private;

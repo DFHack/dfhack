@@ -261,10 +261,10 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         for (uint32_t i = 0; i < furball.defaultSoul.numSkills;i++)
         {
             uint32_t temp2 = skills[i];
-            // a byte: this gives us 256 skills maximum.
-            furball.defaultSoul.skills[i].id = p->readByte (temp2);
-            furball.defaultSoul.skills[i].rating = p->readByte (temp2 + 4);
-            furball.defaultSoul.skills[i].experience = p->readWord (temp2 + 8);
+            // a byte: this gives us 256 skills maximum. ???
+            furball.defaultSoul.skills[i].id = p->readDWord (temp2);
+            furball.defaultSoul.skills[i].rating = p->readDWord (temp2 + 4);
+            furball.defaultSoul.skills[i].experience = p->readDWord (temp2 + 8);
         }
         // mental attributes are part of the soul
         p->read(soul + offs.soul_mental_offset, sizeof(t_attrib) * 13, (uint8_t *)&furball.defaultSoul.analytical_ability);
@@ -385,7 +385,7 @@ bool Creatures::WriteFlags(const uint32_t index,
 	return true;
 }
 
-bool Creatures::WriteSkills(const uint32_t index, t_soul &soul)
+bool Creatures::WriteSkills(const uint32_t index, const t_soul &soul)
 {
 	if(!d->Started) 
 		return false;
@@ -402,9 +402,34 @@ bool Creatures::WriteSkills(const uint32_t index, t_soul &soul)
 	for (uint32_t i=0; i<soul.numSkills; i++)
     {
         uint32_t temp2 = skills[i];
-		p->writeByte(temp2 + 4, soul.skills[i].rating);
-		p->writeWord(temp2 + 8, soul.skills[i].experience);
+		p->writeDWord(temp2 + 4, soul.skills[i].rating);
+		p->writeDWord(temp2 + 8, soul.skills[i].experience);
     }
+
+	return true;
+}
+
+bool Creatures::WriteAttributes(const uint32_t index, const t_creature &creature)
+{
+	if(!d->Started) 
+		return false;
+
+	uint32_t temp = d->p_cre->at (index);
+	Process * p = d->owner;
+	uint32_t souloff = p->readDWord(temp + d->creatures.default_soul_offset);
+
+	if(!souloff)
+		return false;
+
+	// physical attributes
+	p->write(temp + d->creatures.physical_offset,
+		sizeof(t_attrib) * 6,
+		(uint8_t *)&creature.strength);
+
+	// mental attributes are part of the soul
+	p->write(souloff + d->creatures.soul_mental_offset,
+		sizeof(t_attrib) * 13,
+		(uint8_t *)&creature.defaultSoul.analytical_ability);
 
 	return true;
 }

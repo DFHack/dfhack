@@ -379,7 +379,8 @@ namespace DFHack
 		/* Write Functions */
 		// write labors of a creature (for Dwarf Therapist)
 		bool WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
-		bool WriteHappiness(const uint32_t index, const uint32_t happinessValue);	
+		bool WriteHappiness(const uint32_t index, const uint32_t happinessValue);
+		bool WriteFlags(const uint32_t index, const uint32_t flags1, const uint32_t flags2);
 
 	private:
 		struct Private;

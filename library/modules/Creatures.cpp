@@ -195,7 +195,9 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     p->readDWord (temp + offs.flags2_offset, furball.flags2.whole);
     
     // physical attributes
-    p->read(temp + offs.physical_offset, sizeof(t_attrib) * 6, (uint8_t *)&furball.strength);
+    p->read(temp + offs.physical_offset,
+		sizeof(t_attrib) * NUM_CREATURE_PHYSICAL_ATTRIBUTES,
+		(uint8_t *)&furball.strength);
         
     // mood stuff
     furball.mood = (int16_t) p->readWord (temp + offs.mood_offset);
@@ -252,25 +254,34 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     */
     uint32_t soul = p->readDWord(temp + offs.default_soul_offset);
     furball.has_default_soul = false;
+
     if(soul)
     {
         furball.has_default_soul = true;
         // get first soul's skills
         DfVector <uint32_t> skills(p, soul + offs.soul_skills_vector_offset);
         furball.defaultSoul.numSkills = skills.size();
+
         for (uint32_t i = 0; i < furball.defaultSoul.numSkills;i++)
         {
             uint32_t temp2 = skills[i];
             // a byte: this gives us 256 skills maximum. ???
             furball.defaultSoul.skills[i].id = p->readDWord (temp2);
-            furball.defaultSoul.skills[i].rating = p->readDWord (temp2 + 4);
-            furball.defaultSoul.skills[i].experience = p->readDWord (temp2 + 8);
+            furball.defaultSoul.skills[i].rating = 
+				p->readDWord (temp2 + offsetof(t_skill, rating));
+            furball.defaultSoul.skills[i].experience = 
+				p->readDWord (temp2 + offsetof(t_skill, experience));
         }
+
         // mental attributes are part of the soul
-        p->read(soul + offs.soul_mental_offset, sizeof(t_attrib) * 13, (uint8_t *)&furball.defaultSoul.analytical_ability);
+        p->read(soul + offs.soul_mental_offset,
+			sizeof(t_attrib) * NUM_CREATURE_MENTAL_ATTRIBUTES,
+			(uint8_t *)&furball.defaultSoul.analytical_ability);
         
         // traits as well
-        p->read(soul + offs.soul_traits_offset, sizeof (uint16_t) * NUM_CREATURE_TRAITS, (uint8_t *) &furball.defaultSoul.traits);
+        p->read(soul + offs.soul_traits_offset,
+			sizeof (uint16_t) * NUM_CREATURE_TRAITS,
+			(uint8_t *) &furball.defaultSoul.traits);
     }
 
     DfVector <uint32_t> app(p, temp + offs.appearance_vector_offset);
@@ -402,8 +413,8 @@ bool Creatures::WriteSkills(const uint32_t index, const t_soul &soul)
 	for (uint32_t i=0; i<soul.numSkills; i++)
     {
         uint32_t temp2 = skills[i];
-		p->writeDWord(temp2 + 4, soul.skills[i].rating);
-		p->writeDWord(temp2 + 8, soul.skills[i].experience);
+		p->writeDWord(temp2 + offsetof(t_skill, rating), soul.skills[i].rating);
+		p->writeDWord(temp2 + offsetof(t_skill, experiance), soul.skills[i].experience);
     }
 
 	return true;
@@ -423,12 +434,12 @@ bool Creatures::WriteAttributes(const uint32_t index, const t_creature &creature
 
 	// physical attributes
 	p->write(temp + d->creatures.physical_offset,
-		sizeof(t_attrib) * 6,
+		sizeof(t_attrib) * NUM_CREATURE_PHYSICAL_ATTRIBUTES,
 		(uint8_t *)&creature.strength);
 
 	// mental attributes are part of the soul
 	p->write(souloff + d->creatures.soul_mental_offset,
-		sizeof(t_attrib) * 13,
+		sizeof(t_attrib) * NUM_CREATURE_MENTAL_ATTRIBUTES,
 		(uint8_t *)&creature.defaultSoul.analytical_ability);
 
 	return true;

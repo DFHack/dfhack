@@ -280,6 +280,8 @@ namespace DFHack
 	// FIXME: define in Memory.xml instead?
 #define NUM_CREATURE_TRAITS 30
 #define NUM_CREATURE_LABORS 102
+#define NUM_CREATURE_MENTAL_ATTRIBUTES 13
+#define NUM_CREATURE_PHYSICAL_ATTRIBUTES 6
 
 	struct t_soul
 	{

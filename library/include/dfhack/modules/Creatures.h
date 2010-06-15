@@ -381,6 +381,7 @@ namespace DFHack
 		bool WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
 		bool WriteHappiness(const uint32_t index, const uint32_t happinessValue);
 		bool WriteFlags(const uint32_t index, const uint32_t flags1, const uint32_t flags2);
+		bool WriteSkills(const uint32_t index, t_soul &soul);
 
 	private:
 		struct Private;

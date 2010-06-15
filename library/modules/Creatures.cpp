@@ -371,6 +371,20 @@ bool Creatures::WriteHappiness(const uint32_t index, const uint32_t happinessVal
 	return true;
 }
 
+bool Creatures::WriteFlags(const uint32_t index,
+						   const uint32_t flags1,
+						   const uint32_t flags2)
+{
+	if(!d->Started) 
+		return false;
+
+	uint32_t temp = d->p_cre->at (index);
+	Process * p = d->owner;
+	p->writeDWord (temp + d->creatures.flags1_offset, flags1);
+	p->writeDWord (temp + d->creatures.flags2_offset, flags1);
+	return true;
+}
+
 uint32_t Creatures::GetDwarfRaceIndex()
 {
     if(!d->Inited) return 0;

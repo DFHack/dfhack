@@ -385,6 +385,30 @@ bool Creatures::WriteFlags(const uint32_t index,
 	return true;
 }
 
+bool Creatures::WriteSkills(const uint32_t index, t_soul &soul)
+{
+	if(!d->Started) 
+		return false;
+
+	uint32_t temp = d->p_cre->at (index);
+	Process * p = d->owner;
+	uint32_t souloff = p->readDWord(temp + d->creatures.default_soul_offset);
+    
+	if(!souloff)
+		return false;
+  
+    DfVector<uint32_t> skills(p, souloff + d->creatures.soul_skills_vector_offset);
+
+	for (uint32_t i=0; i<soul.numSkills; i++)
+    {
+        uint32_t temp2 = skills[i];
+		p->writeByte(temp2 + 4, soul.skills[i].rating);
+		p->writeWord(temp2 + 8, soul.skills[i].experience);
+    }
+
+	return true;
+}
+
 uint32_t Creatures::GetDwarfRaceIndex()
 {
     if(!d->Inited) return 0;

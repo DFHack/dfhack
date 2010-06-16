@@ -414,7 +414,7 @@ bool Creatures::WriteSkills(const uint32_t index, const t_soul &soul)
     {
         uint32_t temp2 = skills[i];
 		p->writeDWord(temp2 + offsetof(t_skill, rating), soul.skills[i].rating);
-		p->writeDWord(temp2 + offsetof(t_skill, experiance), soul.skills[i].experience);
+		p->writeDWord(temp2 + offsetof(t_skill, experience), soul.skills[i].experience);
     }
 
 	return true;

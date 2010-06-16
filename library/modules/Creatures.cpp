@@ -445,6 +445,35 @@ bool Creatures::WriteAttributes(const uint32_t index, const t_creature &creature
 	return true;
 }
 
+bool Creatures::WriteSex(const uint32_t index, const uint8_t sex)
+{
+	if(!d->Started) 
+		return false;
+
+	uint32_t temp = d->p_cre->at (index);
+	Process * p = d->owner;
+	p->writeByte (temp + d->creatures.sex_offset, sex);
+}
+
+bool Creatures::WriteTraits(const uint32_t index, const t_soul &soul)
+{
+	if(!d->Started) 
+		return false;
+
+	uint32_t temp = d->p_cre->at (index);
+	Process * p = d->owner;
+	uint32_t souloff = p->readDWord(temp + d->creatures.default_soul_offset);
+
+	if(!souloff)
+		return false;
+
+	p->write(souloff + d->creatures.soul_traits_offset,
+			sizeof (uint16_t) * NUM_CREATURE_TRAITS,
+			(uint8_t *) &soul.traits);
+	
+	return true;
+}
+
 uint32_t Creatures::GetDwarfRaceIndex()
 {
     if(!d->Inited) return 0;

@@ -20,6 +20,87 @@ using namespace std;
 
 #include <DFHack.h>
 #include "SegmentedFinder.h"
+template <class T>
+class holder
+{
+    public:
+        vector <T> values;
+        SegmentedFinder & sf;
+        holder(SegmentedFinder& sff):sf(sff){};
+        bool isValid(size_t idx)
+        {
+            
+        };
+};
+
+class address
+{
+    public:
+        uint64_t addr_;
+        unsigned int valid : 1;
+        virtual void print(SegmentedFinder& sff)
+        {
+            cout << hex << "0x" << addr_ << endl;
+        };
+        address(const uint64_t addr)
+        {
+            addr_ = addr;
+            valid = false;
+        }
+        address & operator=(const uint64_t in)
+        {
+            addr_ = in;
+            valid = false;
+            return *this;
+        }
+        bool isValid(SegmentedFinder& sff)
+        {
+            if(valid) return true;
+            if(sff.getSegmentForAddress(addr_))
+            {
+                valid = 1;
+            }
+        }
+};
+
+class Cstr: public address
+{
+    void print(SegmentedFinder & sf)
+    {
+        cout << hex << "0x" << addr_ << ": \"" << sf.Translate<char>(addr_) << "\"" << endl;
+    }
+};
+// STL STRING
+#ifdef LINUX_BUILD
+class STLstr: public address
+{
+    
+};
+#endif
+#ifndef LINUX_BUILD
+class STLstr: public address
+{
+    
+};
+#endif
+
+// STL VECTOR
+#ifdef LINUX_BUILD
+class Vector: public address
+{
+    
+};
+#endif
+#ifndef LINUX_BUILD
+class Vector: public address
+{
+    
+};
+#endif
+class Int64: public address{};
+class Int32: public address{};
+class Int16: public address{};
+class Int8: public address{};
 
 inline void printRange(DFHack::t_memrange * tpr)
 {

@@ -265,12 +265,12 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         for (uint32_t i = 0; i < furball.defaultSoul.numSkills;i++)
         {
             uint32_t temp2 = skills[i];
-            // a byte: this gives us 256 skills maximum. ???
-            furball.defaultSoul.skills[i].id = p->readDWord (temp2);
-            furball.defaultSoul.skills[i].rating = 
-				p->readDWord (temp2 + offsetof(t_skill, rating));
+            // a byte: this gives us 256 skills maximum.
+            furball.defaultSoul.skills[i].id = p->readByte (temp2);
+            furball.defaultSoul.skills[i].rating =
+				p->readByte (temp2 + offsetof(t_skill, rating));
             furball.defaultSoul.skills[i].experience = 
-				p->readDWord (temp2 + offsetof(t_skill, experience));
+				p->readWord (temp2 + offsetof(t_skill, experience));
         }
 
         // mental attributes are part of the soul
@@ -413,8 +413,8 @@ bool Creatures::WriteSkills(const uint32_t index, const t_soul &soul)
 	for (uint32_t i=0; i<soul.numSkills; i++)
     {
         uint32_t temp2 = skills[i];
-		p->writeDWord(temp2 + offsetof(t_skill, rating), soul.skills[i].rating);
-		p->writeDWord(temp2 + offsetof(t_skill, experience), soul.skills[i].experience);
+		p->writeByte(temp2 + offsetof(t_skill, rating), soul.skills[i].rating);
+		p->writeWord(temp2 + offsetof(t_skill, experience), soul.skills[i].experience);
     }
 
 	return true;

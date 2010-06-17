@@ -297,6 +297,16 @@ namespace DFHack
                 return "SHM ATTACH FAILURE";
             }
         };
+        class DFHACK_EXPORT ModuleNotInitialized : public std::exception
+        {
+        public:
+            ModuleNotInitialized() {}
+            virtual ~ModuleNotInitialized() throw(){};
+            virtual const char* what() const throw()
+            {
+                return "Programmer error: module not initialized!";
+            }
+        };
         
     }
 }

@@ -26,6 +26,8 @@ int main (void)
         DF=DFMgr.getSingleContext();
         DF->Attach();
         Maps = DF->getMaps();
+        Maps->Start();
+        Maps->getSize(x_max,y_max,z_max);
         Position = DF->getPosition();
     }
     catch (exception& e)
@@ -44,7 +46,6 @@ int main (void)
     int amount = 7;
     while(!end)
     {
-        Maps->getSize(x_max,y_max,z_max);
         DF->Resume();
         string command = "";
         cout <<"[" << mode << ":" << amount << ":" << flowmode << "]# ";
@@ -71,7 +72,6 @@ int main (void)
                  << endl
                  << "Usage: point the DF cursor at a tile you want to modify" << endl
                  << "and use the commands available :)" << endl;
-                 
         }
         else if(command == "m")
         {

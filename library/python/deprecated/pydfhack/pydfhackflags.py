@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 from ctypes import Structure, Union, c_uint
-from enum import *
 
 class DesignationStruct(Structure):
     _fields_ = [("flow_size", c_uint, 3),
                 ("pile", c_uint, 1),
-                ("dig", DesignationType, 3),
+                ("dig", c_uint, 3),
                 ("smooth", c_uint, 2),
                 ("hidden", c_uint, 1),
                 ("geolayer_index", c_uint, 4),
@@ -182,16 +181,30 @@ class ItemFlags(Union):
     def __int__(self):
         return self.whole
 
+dig_types = { "no" : 0,
+              "default" : 1,
+              "ud_stair" : 2,
+              "channel" : 3,
+              "ramp" : 4,
+              "d_stair" : 5,
+              "u_stair" : 6,
+              "whatever" : 7 }
+
+traffic_types = { "normal" : 0,
+                  "low" : 1,
+                  "high" : 2,
+                  "restricted" : 3 }
+
 class BlockFlagStruct(Structure):
     _fields_ = [("designated", c_uint, 1),
-                ("unk_1", c_uint, 1),
-                ("liquid_1", c_uint, 1),
-                ("liquid_2", c_uint, 1),
-                ("unk_2", c_uint, 28)]
+                    ("unk_1", c_uint, 1),
+                    ("liquid_1", c_uint, 1),
+                    ("liquid_2", c_uint, 1),
+                    ("unk_2", c_uint, 28)]
 
 class BlockFlags(Union):
     _fields_ = [("whole", c_uint, 32),
-                ("bits", BlockFlagStruct)]
+                    ("bits", BlockFlagStruct)]
     
     def __init__(self, inital = 0):
         self.whole = initial

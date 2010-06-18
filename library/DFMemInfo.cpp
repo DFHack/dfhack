@@ -712,7 +712,7 @@ string memory_info::getTraitName(const uint32_t traitIdx) const
     throw Error::MissingMemoryDefinition("traitname", traitIdx);
 }
 
-std::vector< std::vector<std::string>> const& memory_info::getAllTraits()
+std::vector< std::vector<std::string> > const& memory_info::getAllTraits()
 {
 	return d->traits;
 }

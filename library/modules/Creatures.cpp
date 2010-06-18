@@ -92,19 +92,19 @@ Creatures::Creatures(DFContextShared* _d)
         creatures.mood_offset = minfo->getOffset("creature_mood");
         creatures.mood_skill_offset = minfo->getOffset("creature_mood_skill");
         creatures.pickup_equipment_bit = minfo->getOffset("creature_pickup_equipment_bit");
-	creatures.current_job_offset = minfo->getOffset("creature_current_job");
+        creatures.current_job_offset = minfo->getOffset("creature_current_job");
         // soul offsets
         creatures.soul_skills_vector_offset = minfo->getOffset("soul_skills_vector");
         creatures.soul_mental_offset = minfo->getOffset("soul_mental");
         creatures.soul_traits_offset = minfo->getOffset("soul_traits");
-        
+
         // appearance
         creatures.appearance_vector_offset = minfo->getOffset("creature_appearance_vector");
 
         //birth
         creatures.birth_year_offset = minfo->getOffset("creature_birth_year");
         creatures.birth_time_offset = minfo->getOffset("creature_birth_time");
-        
+
         // name offsets for the creature module
         creatures.name_firstname_offset = minfo->getOffset("name_firstname");
         creatures.name_nickname_offset = minfo->getOffset("name_nickname");
@@ -172,17 +172,17 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     */
     // non-SHM slow path
     memory_info * minfo = d->d->offset_descriptor;
-    
+
     // read pointer from vector at position
     uint32_t temp = d->p_cre->at (index);
     furball.origin = temp;
     Creatures2010::creature_offsets &offs = d->creatures;
-    
+
     //read creature from memory
-    
+
     // name
     d->d->readName(furball.name,temp + offs.name_offset);
-    
+
     // basic stuff
     p->readDWord (temp + offs.happiness_offset, furball.happiness);
     p->readDWord (temp + offs.id_offset, furball.id);
@@ -193,24 +193,24 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     p->readWord (temp + offs.caste_offset, furball.caste);
     p->readDWord (temp + offs.flags1_offset, furball.flags1.whole);
     p->readDWord (temp + offs.flags2_offset, furball.flags2.whole);
-    
+
     // physical attributes
     p->read(temp + offs.physical_offset,
-		sizeof(t_attrib) * NUM_CREATURE_PHYSICAL_ATTRIBUTES,
-		(uint8_t *)&furball.strength);
-        
+        sizeof(t_attrib) * NUM_CREATURE_PHYSICAL_ATTRIBUTES,
+        (uint8_t *)&furball.strength);
+
     // mood stuff
     furball.mood = (int16_t) p->readWord (temp + offs.mood_offset);
     furball.mood_skill = p->readWord (temp + offs.mood_skill_offset);
     d->d->readName(furball.artifact_name, temp + offs.artifact_name_offset);
-    
+
     // custom profession
     p->readSTLString(temp + offs.custom_profession_offset, furball.custom_profession, sizeof(furball.custom_profession));
     //fill_char_buf (furball.custom_profession, p->readSTLString (temp + offs.custom_profession_offset));
 
     // labors
     p->read (temp + offs.labors_offset, NUM_CREATURE_LABORS, furball.labors);
-    
+
     // profession
     furball.profession = p->readByte (temp + offs.profession_offset);
 
@@ -268,20 +268,20 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
             // a byte: this gives us 256 skills maximum.
             furball.defaultSoul.skills[i].id = p->readByte (temp2);
             furball.defaultSoul.skills[i].rating =
-				p->readByte (temp2 + offsetof(t_skill, rating));
+                p->readByte (temp2 + offsetof(t_skill, rating));
             furball.defaultSoul.skills[i].experience = 
-				p->readWord (temp2 + offsetof(t_skill, experience));
+                p->readWord (temp2 + offsetof(t_skill, experience));
         }
 
         // mental attributes are part of the soul
         p->read(soul + offs.soul_mental_offset,
-			sizeof(t_attrib) * NUM_CREATURE_MENTAL_ATTRIBUTES,
-			(uint8_t *)&furball.defaultSoul.analytical_ability);
-        
+            sizeof(t_attrib) * NUM_CREATURE_MENTAL_ATTRIBUTES,
+            (uint8_t *)&furball.defaultSoul.analytical_ability);
+
         // traits as well
         p->read(soul + offs.soul_traits_offset,
-			sizeof (uint16_t) * NUM_CREATURE_TRAITS,
-			(uint8_t *) &furball.defaultSoul.traits);
+            sizeof (uint16_t) * NUM_CREATURE_TRAITS,
+            (uint8_t *) &furball.defaultSoul.traits);
     }
 
     DfVector <uint32_t> app(p, temp + offs.appearance_vector_offset);
@@ -312,7 +312,7 @@ int32_t Creatures::ReadCreatureInBox (int32_t index, t_creature & furball,
 {
     if (!d->Started)
         return -1;
-    
+
     Process *p = d->owner;
     /*
     if(d->creature_module)
@@ -359,130 +359,151 @@ int32_t Creatures::ReadCreatureInBox (int32_t index, t_creature & furball,
 
 bool Creatures::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
 {
-	if(!d->Started) return false;
-	uint32_t temp = d->p_cre->at (index);
-	Process * p = d->owner;
+    if(!d->Started)
+    {
+        return false;
+    }
+    uint32_t temp = d->p_cre->at (index);
+    Process * p = d->owner;
 
-	p->write(temp + d->creatures.labors_offset, NUM_CREATURE_LABORS, labors);
-	uint32_t pickup_equip;
-	p->readDWord(temp + d->creatures.pickup_equipment_bit, pickup_equip);
-	pickup_equip |= 1u;
-	p->writeDWord(temp + d->creatures.pickup_equipment_bit, pickup_equip);
-	return true;
+    p->write(temp + d->creatures.labors_offset, NUM_CREATURE_LABORS, labors);
+    uint32_t pickup_equip;
+    p->readDWord(temp + d->creatures.pickup_equipment_bit, pickup_equip);
+    pickup_equip |= 1u;
+    p->writeDWord(temp + d->creatures.pickup_equipment_bit, pickup_equip);
+    return true;
 }
 
 bool Creatures::WriteHappiness(const uint32_t index, const uint32_t happinessValue)
 {
-	if(!d->Started) 
-		return false;
-
-	uint32_t temp = d->p_cre->at (index);
-	Process * p = d->owner;
-	p->writeDWord (temp + d->creatures.happiness_offset, happinessValue);
-	return true;
+    if(!d->Started)
+    {
+        return false;
+    }
+    uint32_t temp = d->p_cre->at (index);
+    Process * p = d->owner;
+    p->writeDWord (temp + d->creatures.happiness_offset, happinessValue);
+    return true;
 }
 
 bool Creatures::WriteFlags(const uint32_t index,
-						   const uint32_t flags1,
-						   const uint32_t flags2)
+                           const uint32_t flags1,
+                           const uint32_t flags2)
 {
-	if(!d->Started) 
-		return false;
-
-	uint32_t temp = d->p_cre->at (index);
-	Process * p = d->owner;
-	p->writeDWord (temp + d->creatures.flags1_offset, flags1);
-	p->writeDWord (temp + d->creatures.flags2_offset, flags1);
-	return true;
+    if(!d->Started)
+    {
+        return false;
+    }
+    uint32_t temp = d->p_cre->at (index);
+    Process * p = d->owner;
+    p->writeDWord (temp + d->creatures.flags1_offset, flags1);
+    p->writeDWord (temp + d->creatures.flags2_offset, flags1);
+    return true;
 }
 
 bool Creatures::WriteSkills(const uint32_t index, const t_soul &soul)
 {
-	if(!d->Started) 
-		return false;
-
-	uint32_t temp = d->p_cre->at (index);
-	Process * p = d->owner;
-	uint32_t souloff = p->readDWord(temp + d->creatures.default_soul_offset);
-    
-	if(!souloff)
-		return false;
-  
-    DfVector<uint32_t> skills(p, souloff + d->creatures.soul_skills_vector_offset);
-
-	for (uint32_t i=0; i<soul.numSkills; i++)
+    if(!d->Started)
     {
-        uint32_t temp2 = skills[i];
-		p->writeByte(temp2 + offsetof(t_skill, rating), soul.skills[i].rating);
-		p->writeWord(temp2 + offsetof(t_skill, experience), soul.skills[i].experience);
+        return false;
     }
 
-	return true;
+    uint32_t temp = d->p_cre->at (index);
+    Process * p = d->owner;
+    uint32_t souloff = p->readDWord(temp + d->creatures.default_soul_offset);
+
+    if(!souloff)
+    {
+        return false;
+    }
+
+    DfVector<uint32_t> skills(p, souloff + d->creatures.soul_skills_vector_offset);
+
+    for (uint32_t i=0; i<soul.numSkills; i++)
+    {
+        uint32_t temp2 = skills[i];
+        p->writeByte(temp2 + offsetof(t_skill, rating), soul.skills[i].rating);
+        p->writeWord(temp2 + offsetof(t_skill, experience), soul.skills[i].experience);
+    }
+
+    return true;
 }
 
 bool Creatures::WriteAttributes(const uint32_t index, const t_creature &creature)
 {
-	if(!d->Started) 
-		return false;
+    if(!d->Started)
+    {
+        return false;
+    }
 
-	uint32_t temp = d->p_cre->at (index);
-	Process * p = d->owner;
-	uint32_t souloff = p->readDWord(temp + d->creatures.default_soul_offset);
+    uint32_t temp = d->p_cre->at (index);
+    Process * p = d->owner;
+    uint32_t souloff = p->readDWord(temp + d->creatures.default_soul_offset);
 
-	if(!souloff)
-		return false;
+    if(!souloff)
+    {
+        return false;
+    }
 
-	// physical attributes
-	p->write(temp + d->creatures.physical_offset,
-		sizeof(t_attrib) * NUM_CREATURE_PHYSICAL_ATTRIBUTES,
-		(uint8_t *)&creature.strength);
+    // physical attributes
+    p->write(temp + d->creatures.physical_offset,
+        sizeof(t_attrib) * NUM_CREATURE_PHYSICAL_ATTRIBUTES,
+        (uint8_t *)&creature.strength);
 
-	// mental attributes are part of the soul
-	p->write(souloff + d->creatures.soul_mental_offset,
-		sizeof(t_attrib) * NUM_CREATURE_MENTAL_ATTRIBUTES,
-		(uint8_t *)&creature.defaultSoul.analytical_ability);
+    // mental attributes are part of the soul
+    p->write(souloff + d->creatures.soul_mental_offset,
+        sizeof(t_attrib) * NUM_CREATURE_MENTAL_ATTRIBUTES,
+        (uint8_t *)&creature.defaultSoul.analytical_ability);
 
-	return true;
+    return true;
 }
 
 bool Creatures::WriteSex(const uint32_t index, const uint8_t sex)
 {
-	if(!d->Started) 
-		return false;
+    if(!d->Started)
+    {
+        return false;
+    }
 
-	uint32_t temp = d->p_cre->at (index);
-	Process * p = d->owner;
-	p->writeByte (temp + d->creatures.sex_offset, sex);
+    uint32_t temp = d->p_cre->at (index);
+    Process * p = d->owner;
+    p->writeByte (temp + d->creatures.sex_offset, sex);
 }
 
 bool Creatures::WriteTraits(const uint32_t index, const t_soul &soul)
 {
-	if(!d->Started) 
-		return false;
+    if(!d->Started)
+    {
+        return false;
+    }
 
-	uint32_t temp = d->p_cre->at (index);
-	Process * p = d->owner;
-	uint32_t souloff = p->readDWord(temp + d->creatures.default_soul_offset);
+    uint32_t temp = d->p_cre->at (index);
+    Process * p = d->owner;
+    uint32_t souloff = p->readDWord(temp + d->creatures.default_soul_offset);
 
-	if(!souloff)
-		return false;
+    if(!souloff)
+    {
+        return false;
+    }
 
-	p->write(souloff + d->creatures.soul_traits_offset,
-			sizeof (uint16_t) * NUM_CREATURE_TRAITS,
-			(uint8_t *) &soul.traits);
-	
-	return true;
+    p->write(souloff + d->creatures.soul_traits_offset,
+            sizeof (uint16_t) * NUM_CREATURE_TRAITS,
+            (uint8_t *) &soul.traits);
+
+    return true;
 }
 
 bool Creatures::WriteMood(const uint32_t index, const uint16_t mood)
 {
-	if(!d->Started) 
-		return false;
+    if(!d->Started)
+    {
+        return false;
+    }
 
-	uint32_t temp = d->p_cre->at (index);
-	Process * p = d->owner;
-	p->writeWord(temp + d->creatures.mood_offset, mood);
-	return true;
+    uint32_t temp = d->p_cre->at (index);
+    Process * p = d->owner;
+    p->writeWord(temp + d->creatures.mood_offset, mood);
+    return true;
 }
 
 uint32_t Creatures::GetDwarfRaceIndex()

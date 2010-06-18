@@ -36,40 +36,68 @@ class holder
 class address
 {
     public:
-        uint64_t addr_;
-        unsigned int valid : 1;
-        virtual void print(SegmentedFinder& sff)
+    uint64_t addr_;
+    unsigned int valid : 1;
+    virtual void print(SegmentedFinder& sff)
+    {
+        cout << hex << "0x" << addr_ << endl;
+    };
+    address(const uint64_t addr)
+    {
+        addr_ = addr;
+        valid = false;
+    }
+    virtual address & operator=(const uint64_t in)
+    {
+        addr_ = in;
+        valid = false;
+        return *this;
+    }
+    virtual bool isValid(SegmentedFinder& sff)
+    {
+        if(valid) return true;
+        if(sff.getSegmentForAddress(addr_))
         {
-            cout << hex << "0x" << addr_ << endl;
-        };
-        address(const uint64_t addr)
-        {
-            addr_ = addr;
-            valid = false;
+            valid = 1;
         }
-        address & operator=(const uint64_t in)
-        {
-            addr_ = in;
-            valid = false;
-            return *this;
-        }
-        bool isValid(SegmentedFinder& sff)
-        {
-            if(valid) return true;
-            if(sff.getSegmentForAddress(addr_))
-            {
-                valid = 1;
-            }
-        }
+    }
+    virtual bool equals (SegmentedFinder & sf, address & rhs)
+    {
+        return rhs.addr_ == addr_;
+    }
 };
 
+// pointer to a null-terminated byte string
 class Cstr: public address
 {
     void print(SegmentedFinder & sf)
     {
         cout << hex << "0x" << addr_ << ": \"" << sf.Translate<char>(addr_) << "\"" << endl;
     }
+    bool equals(SegmentedFinder & sf,const char * rhs)
+    {
+        uint32_t addr2 = *(sf.Translate<uint32_t>(addr_));
+        return strcmp(sf.Translate<const char>(addr2), rhs) == 0;
+    }
+    template <class Predicate, class inType>
+    bool equalsP(SegmentedFinder & sf,inType rhs)
+    {
+        return Predicate(addr_, sf, rhs);
+    }
+    bool isValid(SegmentedFinder& sf)
+    {
+        if (address::isValid(sf))
+        {
+            // read the pointer
+            uint32_t addr2 = *(sf.Translate<uint32_t>(addr_));
+            // is it a real pointer? a pretty weak test, but whatever.
+            if(sf.getSegmentForAddress(addr2))
+                return true;
+        }
+        return false;
+    }
 };
+
 // STL STRING
 #ifdef LINUX_BUILD
 class STLstr: public address

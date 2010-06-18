@@ -1455,6 +1455,8 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_mood">0x288</Offset>
         <Offset name="creature_birth_year">0x298</Offset>
         <Offset name="creature_birth_time">0x29C</Offset>
+        <Offset name="creature_current_job">0x390</Offset> <!-- from chmod -->
+        <Offset name="creature_mood_skill">0x394</Offset> the skill that will be increased at the end of the mood (or not)
         <Offset name="creature_physical">0x464</Offset>
         <!--
         <Offset name="creature_strength">0x464</Offset>
@@ -1464,8 +1466,6 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_recuperation">0x4D4</Offset>
         <Offset name="creature_disease_resistance">0x4F0</Offset>
         -->
-        <Offset name="creature_current_job">0x390</Offset> <!-- from chmod -->
-        <Offset name="creature_mood_skill">0x394</Offset> the skill that will be increased at the end of the mood (or not)
         <Offset name="creature_appearance_vector">0x604</Offset>
         <Offset name="creature_artifact_name">0x6D4</Offset>
         <Offset name="creature_labors">0x774</Offset>
@@ -2153,10 +2153,31 @@ dwarf_race_index        = 0x014abef4
         <Address name="language_vector">0x931aff4</Address>
         WORLD + 0x54E80
         <Address name="translation_vector">0x931b00c</Address>
+        
+        Creatures
+        =========
+        <Address name="creature_vector">0x92D9AC0</Address>
+        <Address name="dwarf_race_index">0x92C1628</Address>0x092CB608
+        <Address name="dwarf_civ_id">0x92C161C</Address>0x092CB5FC
+        
+        Time
+        ====
+        <Address name="current_year">0x92BF6A0</Address>
+        <Address name="current_tick">0x92BF6A8</Address>
+        YEAR 0x92BF6A0, WORLD - 0x6A40
+        TICKS 0x92BF6A8, WORLD - 0x6A40 + 0x08
+        
     </Entry>
     <Entry version="v0.31.06" os="linux" id="30_06lin" base="30_05lin" rebase="-0x20E0">
         <String name="md5">13a1c19e8f59b74e307e094e2a0f28c3</String>
         <Address name="cursor_xyz">0x8b0b328</Address> VERIFIED
+        WORLD = 0x92C4000
+        Creatures
+        =========
+        WORLD + 0x139E0
+        0x92d79d4
+        0x92d79e0 = real one? seems like it
+        0x92d7a10
     </Entry>
     </MemoryDescriptors>
 </DFExtractor>

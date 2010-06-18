@@ -29,6 +29,7 @@ distribution.
 
 //Inital amount of space in levels vector (since we usually know the number, efficent!)
 #define NUM_RESERVE_LVLS 20
+#define NUM_RESERVE_MOODS 6
 using namespace DFHack;
 
 /*
@@ -96,6 +97,7 @@ class memory_info::Private
     vector<string> skills;
 	vector<DFHack::t_level> levels;
     vector< vector<string> > traits;
+	vector<string> moods;
     map <uint32_t, string> labors;
     
     // storage for class and multiclass
@@ -124,6 +126,7 @@ memory_info::memory_info()
     d->p = 0;
     d->classindex = 0;
 	d->levels.reserve(NUM_RESERVE_LVLS);
+	d->moods.reserve(NUM_RESERVE_MOODS);
 }
 
 // copy constructor
@@ -151,6 +154,7 @@ memory_info::memory_info(const memory_info &old)
     d->traits = old.d->traits;
     d->labors = old.d->labors;
 	d->levels = old.d->levels;
+	d->moods = old.d->moods;
 }
 void memory_info::setParentProcess(Process * _p)
 {
@@ -317,6 +321,16 @@ void memory_info::setLevel(const std::string &nLevel,
 	d->levels[keyInt].level = keyInt;
 	d->levels[keyInt].name = nName;
 	d->levels[keyInt].xpNxtLvl = strtol(nXp.c_str(), NULL, 10);
+}
+
+void memory_info::setMood(const std::string &id, const std::string &mood)
+{
+	uint32_t keyInt = strtol(id.c_str(), NULL, 10);
+    
+	if(d->moods.size() <= keyInt)
+		d->moods.resize(keyInt+1);
+
+	d->moods[keyInt] = mood;
 }
 
 void memory_info::setTrait(const string & key,
@@ -712,3 +726,11 @@ string memory_info::getLabor (const uint32_t laborIdx)
     throw Error::MissingMemoryDefinition("labor", laborIdx);
 }
 
+std::string memory_info::getMood(const uint32_t moodID)
+{
+	if(d->moods.size() > moodID)
+	{
+		return d->moods[moodID];
+	}
+	throw Error::MissingMemoryDefinition("Mood", moodID);
+}

@@ -66,6 +66,7 @@ namespace DFHack
         uint32_t getAddress (const char *);
         uint32_t getHexValue (const char *);
 
+		std::string getMood(const uint32_t moodID);
         std::string getString (const std::string&);
         std::string getProfession(const uint32_t) const;
         std::string getJob(const uint32_t) const;
@@ -109,6 +110,7 @@ namespace DFHack
         void setLabor(const std::string &, const std::string &);
 		void setLevel(const std::string &nLevel, const std::string &nName,
 			const std::string &nXp);
+		void setMood(const std::string &id, const std::string &mood);
 
         void RebaseVTable(const int32_t offset);
         void setParentProcess(Process * _p);

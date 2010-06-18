@@ -212,6 +212,10 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
         {
 			mem->setLevel(value, name, pMemEntry->Attribute("xpNxtLvl"));
         }
+		else if (type == "Mood")
+		{
+			mem->setMood(value, name);
+		}
         else
         {
             throw Error::MemoryXmlUnknownType(type.c_str());

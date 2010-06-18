@@ -218,7 +218,17 @@
             level_2="Often does the first thing that comes to mind"
             level_1="Acts impulsively"
             level_0="Always acts without considering alternatives or thinking through possibilities">29</Trait>
-            
+          
+            ====================================================================
+                                         M O O D S
+            ====================================================================
+            <Mood id="0" name="Fey"/>
+            <Mood id="1" name="Secretive"/>
+            <Mood id="2" name="Possesed"/>
+            <Mood id="3" name="Macabre"/>
+            <Mood id="4" name="Fell"/>
+            <Mood id="5" name="Melancholy"/>
+          
             ====================================================================
                                    P R O F E S S I O N S
             ====================================================================

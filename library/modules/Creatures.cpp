@@ -397,7 +397,7 @@ bool Creatures::WriteFlags(const uint32_t index,
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
     p->writeDWord (temp + d->creatures.flags1_offset, flags1);
-    p->writeDWord (temp + d->creatures.flags2_offset, flags1);
+    p->writeDWord (temp + d->creatures.flags2_offset, flags2);
     return true;
 }
 

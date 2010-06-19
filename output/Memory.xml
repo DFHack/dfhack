@@ -1657,7 +1657,7 @@ map_data_1b60_offset          0x1B9c
     </Entry>
     <Entry version="v0.31.07" os="windows" id="0.31.07" base="0.31.06" rebase="0x2000">
         <String name="md5">1c0b5254af1b8ff9a34b51c3f6609da3</String>
-        <HexValue name="pe_timestamp">0x4c0f83d5</HexValue>
+        <HexValue name="pe_timestamp">0x4c1cbe4b</HexValue>
         <Address name="cursor_xyz">0xaf32d8</Address>0xaf12d0
         <Address name="window_dims">0x180d11c</Address> 0x180b10c
         <Address name="window_x">0xe6e0ec</Address>

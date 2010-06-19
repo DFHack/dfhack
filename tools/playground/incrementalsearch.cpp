@@ -690,6 +690,36 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
     printFoundStrVec(toad_first,"toad-first creature types",sf);
     printFound(elephant_first,"elephant-first creature types");
     printFound(to_filter,"all creature types");
+    
+    uint64_t to_use = 0;
+    if(!elephant_first.empty())
+    {
+        to_use = elephant_first[0];
+        vecTriplet *vtCretypes = sf.Translate<vecTriplet>(to_use);
+        uint32_t elephant = sf.Read<uint32_t>(vtCretypes->start);
+        uint64_t Eoffset;
+        cout << "Elephant: rawname = 0x0" << endl;
+        Eoffset = sf.FindInRange<uint8_t,uint8_t> ('E',equalityP<uint8_t>, elephant, 0x300 );
+        if(Eoffset)
+        {
+            cout << "Elephant: big E = 0x" << hex << Eoffset - elephant << endl;
+        }
+        Eoffset = sf.FindInRange<const char *,vecTriplet> ("FEMALE",vectorStringFirst, elephant, 0x300 );
+        if(Eoffset)
+        {
+            cout << "Elephant: caste vector = 0x" << hex << Eoffset - elephant << endl;
+        }
+        //cout << "Amber color:" << hex << "0x" << colorObj << endl;
+        // TODO: find string 'amber', the floats
+    }
+    if(!toad_first.empty())
+    {
+        to_use = toad_first[0];
+    }
+    if(to_use)
+    {
+        
+    }
 }
 
 int main (void)

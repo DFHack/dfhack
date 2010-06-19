@@ -33,8 +33,7 @@ class SegmentFinder
     template < class needleType, class hayType, typename comparator >
     uint64_t FindInRange (needleType needle, comparator oper, uint64_t start, uint64_t length)
     {
-        mr_.buffer + start - mr_.start;
-        uint64_t stopper = min((mr_.end - mr_.start) - sizeof(hayType), (start - mr_.start) - sizeof(hayType));
+        uint64_t stopper = min((mr_.end - mr_.start) - sizeof(hayType), (start - mr_.start) - sizeof(hayType) + length);
         //loop
         for(uint64_t offset = start - mr_.start; offset < stopper; offset +=1)
         {
@@ -284,6 +283,19 @@ bool vectorAll (SegmentedFinder* s, vecTriplet *x, int )
             && s->getSegmentForAddress(x->finish) == s->getSegmentForAddress(x->alloc_finish))
             return true;
     }
+    return false;
+}
+
+struct Bytestream
+{
+    uint32_t length;
+    void * object;
+};
+
+bool findBytestream (SegmentedFinder* s, uint32_t *addr, Bytestream * compare )
+{
+    if(memcmp(addr, compare->object, compare->length) == 0)
+        return true;
     return false;
 }
 

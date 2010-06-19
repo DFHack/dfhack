@@ -1844,6 +1844,13 @@ dwarf_race_index        = 0x014abef4
         <Offset name="creature_type_extract_vector">0x1A14</Offset>
         <Offset name="creature_tile">0xE0</Offset>
         <Offset name="creature_tile_color">0xF6</Offset>
+        
+        <!--
+        <Offset name="creature_type_caste_vector">0x138</Offset>
+        <Offset name="creature_type_extract_vector">0x1A14</Offset>
+        <Offset name="creature_tile">0xE0</Offset>
+        <Offset name="creature_tile_color">0xF6</Offset>
+        -->
         <!--
         struct CreatureType
         {

@@ -41,7 +41,7 @@ namespace DFHack
     {
     private:
         class Private;
-        Private * d;    
+        Private * d;
     public:
         enum OSType
         {
@@ -66,7 +66,7 @@ namespace DFHack
         uint32_t getAddress (const char *);
         uint32_t getHexValue (const char *);
 
-		std::string getMood(const uint32_t moodID);
+        std::string getMood(const uint32_t moodID);
         std::string getString (const std::string&);
         std::string getProfession(const uint32_t) const;
         std::string getJob(const uint32_t) const;
@@ -74,9 +74,9 @@ namespace DFHack
         std::string getTrait (const uint32_t, const uint32_t) const;
         std::string getTraitName(const uint32_t) const;
         std::string getLabor (const uint32_t);
-		std::vector< std::vector<std::string> > const& getAllTraits();
+        std::vector< std::vector<std::string> > const& getAllTraits();
 
-		DFHack::t_level getLevelInfo(const uint32_t level) const;
+        DFHack::t_level getLevelInfo(const uint32_t level) const;
 
         void setVersion(const char *);
         void setVersion(const std::string&);
@@ -105,12 +105,12 @@ namespace DFHack
         void setJob(const std::string &, const std::string &);
         void setSkill(const std::string &, const std::string &);
         void setTrait(const std::string &, const std::string &, const std::string &,
-			const std::string &, const std::string &,
-			const std::string &, const std::string &, const std::string &);
+            const std::string &, const std::string &,
+            const std::string &, const std::string &, const std::string &);
         void setLabor(const std::string &, const std::string &);
-		void setLevel(const std::string &nLevel, const std::string &nName,
-			const std::string &nXp);
-		void setMood(const std::string &id, const std::string &mood);
+        void setLevel(const std::string &nLevel, const std::string &nName,
+            const std::string &nXp);
+        void setMood(const std::string &id, const std::string &mood);
 
         void RebaseVTable(const int32_t offset);
         void setParentProcess(Process * _p);

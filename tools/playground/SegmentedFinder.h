@@ -17,31 +17,46 @@ class SegmentFinder
     {
         delete mr_.buffer;
     }
+
     template <class needleType, class hayType, typename comparator >
-    bool Find (needleType needle,  const uint8_t increment ,vector <uint64_t> &found, vector <uint64_t> &newfound, comparator oper)
+    bool Find (needleType needle, const uint8_t increment , vector <uint64_t> &newfound, comparator oper)
     {
-        if(found.empty())
+        //loop
+        for(uint64_t offset = 0; offset < (mr_.end - mr_.start) - sizeof(hayType); offset += increment)
         {
-            //loop
-            for(uint64_t offset = 0; offset < (mr_.end - mr_.start) - sizeof(hayType); offset += increment)
+            if( oper(_SF,(hayType *)(mr_.buffer + offset), needle) )
+                newfound.push_back(mr_.start + offset);
+        }
+        return !newfound.empty();
+    }
+
+    template < class needleType, class hayType, typename comparator >
+    uint64_t FindInRange (needleType needle, comparator oper, uint64_t start, uint64_t length)
+    {
+        mr_.buffer + start - mr_.start;
+        uint64_t stopper = min((mr_.end - mr_.start) - sizeof(hayType), (start - mr_.start) - sizeof(hayType));
+        //loop
+        for(uint64_t offset = start - mr_.start; offset < stopper; offset +=1)
+        {
+            if( oper(_SF,(hayType *)(mr_.buffer + offset), needle) )
+                return mr_.start + offset;
+        }
+        return 0;
+    }
+
+    template <class needleType, class hayType, typename comparator >
+    bool Filter (needleType needle, vector <uint64_t> &found, vector <uint64_t> &newfound, comparator oper)
+    {
+        for( uint64_t i = 0; i < found.size(); i++)
+        {
+            if(mr_.isInRange(found[i]))
             {
-                if( oper(_SF,(hayType *)(mr_.buffer + offset), needle) )
-                    newfound.push_back(mr_.start + offset);
+                uint64_t corrected = found[i] - mr_.start;
+                if( oper(_SF,(hayType *)(mr_.buffer + corrected), needle) )
+                    newfound.push_back(found[i]);
             }
         }
-        else
-        {
-            for( uint64_t i = 0; i < found.size(); i++)
-            {
-                if(mr_.isInRange(found[i]))
-                {
-                    uint64_t corrected = found[i] - mr_.start;
-                    if( oper(_SF,(hayType *)(mr_.buffer + corrected), needle) )
-                        newfound.push_back(found[i]);
-                }
-            }
-        }
-        return true;
+        return !newfound.empty();
     }
     private:
     friend class SegmentedFinder;
@@ -82,15 +97,51 @@ class SegmentedFinder
     template <class needleType, class hayType, typename comparator >
     bool Find (const needleType needle, const uint8_t increment, vector <uint64_t> &found, comparator oper)
     {
+        found.clear();
+        for(int i = 0; i < segments.size(); i++)
+        {
+            segments[i]->Find<needleType,hayType,comparator>(needle, increment, found, oper);
+        }
+        return !(found.empty());
+    }
+
+    template < class needleType, class hayType, typename comparator >
+    uint64_t FindInRange (needleType needle, comparator oper, uint64_t start, uint64_t length)
+    {
+        SegmentFinder * sf = getSegmentForAddress(start);
+        if(sf)
+        {
+            return sf->FindInRange<needleType,hayType,comparator>(needle, oper, start, length);
+        }
+        return 0;
+    }
+
+    template <class needleType, class hayType, typename comparator >
+    bool Filter (const needleType needle, vector <uint64_t> &found, comparator oper)
+    {
         vector <uint64_t> newfound;
         for(int i = 0; i < segments.size(); i++)
         {
-            segments[i]->Find<needleType,hayType,comparator>(needle, increment, found, newfound, oper);
+            segments[i]->Filter<needleType,hayType,comparator>(needle, found, newfound, oper);
         }
         found.clear();
         found = newfound;
         return !(found.empty());
     }
+
+    template <class needleType, class hayType, typename comparator >
+    bool Incremental (needleType needle,  const uint8_t increment ,vector <uint64_t> &found, comparator oper)
+    {
+        if(found.empty())
+        {
+            return Find <needleType, hayType, comparator>(needle,increment,found,oper);
+        }
+        else
+        {
+            return Filter <needleType, hayType, comparator>(needle,found,oper);
+        }
+    }
+
     template <typename T>
     T * Translate(uint64_t address)
     {
@@ -103,11 +154,13 @@ class SegmentedFinder
         }
         return 0;
     }
+
     template <typename T>
     T Read(uint64_t address)
     {
         return *Translate<T>(address);
     }
+
     template <typename T>
     bool Read(uint64_t address, T& target)
     {

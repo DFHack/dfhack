@@ -188,8 +188,8 @@ bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges
             }
             else if(p->getDescriptor()->getOS() == DFHack::memory_info::OS_LINUX)
             {
-                start = min(11, (int)ranges.size());
-                end = min(14, (int)ranges.size());
+                start = min(2, (int)ranges.size());
+                end = min(4, (int)ranges.size());
             }
             else
             {
@@ -367,13 +367,13 @@ void FindIntegers(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& r
         switch(size)
         {
             case 1:
-                sf.Find<uint8_t,uint8_t>(test1,alignment,found, equalityP<uint8_t>);
+                sf.Incremental<uint8_t,uint8_t>(test1,alignment,found, equalityP<uint8_t>);
                 break;
             case 2:
-                sf.Find<uint16_t,uint16_t>(test1,alignment,found, equalityP<uint16_t>);
+                sf.Incremental<uint16_t,uint16_t>(test1,alignment,found, equalityP<uint16_t>);
                 break;
             case 4:
-                sf.Find<uint32_t,uint32_t>(test1,alignment,found, equalityP<uint32_t>);
+                sf.Incremental<uint32_t,uint32_t>(test1,alignment,found, equalityP<uint32_t>);
                 break;
         }
         DF->Detach();
@@ -397,8 +397,8 @@ void FindVectorByLength(DFHack::ContextManager & DFMgr, vector <DFHack::t_memran
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
         SegmentedFinder sf(ranges,DF);
-        sf.Find<int ,vecTriplet>(0,4,found,vectorAll);
-        sf.Find<uint32_t,vecTriplet>(length * element_size,4,found,vectorLength<uint32_t>);
+        sf.Incremental<int ,vecTriplet>(0,4,found,vectorAll);
+        sf.Filter<uint32_t,vecTriplet>(length * element_size,found,vectorLength<uint32_t>);
         DF->Detach();
     }
 }
@@ -409,14 +409,12 @@ void FindVectorByObjectRawname(DFHack::ContextManager & DFMgr, vector <DFHack::t
     string select;
     while (Incremental(found, "raw name",select,"vector","vectors"))
     {
-        // clear the list of found addresses -- this is a one-shot
-        found.clear();
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
         SegmentedFinder sf(ranges,DF);
         sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
-        sf.Find<const char * ,vecTriplet>(select.c_str(),4,found, vectorString);
+        sf.Filter<const char * ,vecTriplet>(select.c_str(),found, vectorString);
         DF->Detach();
     }
 }
@@ -427,14 +425,12 @@ void FindVectorByFirstObjectRawname(DFHack::ContextManager & DFMgr, vector <DFHa
     string select;
     while (Incremental(found, "raw name",select,"vector","vectors"))
     {
-        // clear the list of found addresses -- this is a one-shot
-        found.clear();
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
         SegmentedFinder sf(ranges,DF);
         sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
-        sf.Find<const char * ,vecTriplet>(select.c_str(),4,found, vectorStringFirst);
+        sf.Filter<const char * ,vecTriplet>(select.c_str(),found, vectorStringFirst);
         DF->Detach();
     }
 }
@@ -457,14 +453,12 @@ void FindVectorByBounds(DFHack::ContextManager & DFMgr, vector <DFHack::t_memran
     uint32_t select;
     while (Incremental(found, "address between vector.start and vector.end",select,"vector","vectors"))
     {
-        // clear the list of found addresses -- this is a one-shot
-        found.clear();
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
         SegmentedFinder sf(ranges,DF);
         sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
-        sf.Find<uint32_t ,vecTriplet>(select,4,found, vectorAddrWithin);
+        sf.Filter<uint32_t ,vecTriplet>(select,found, vectorAddrWithin);
         // sort by size of vector
         std::sort(found.begin(), found.end(), VectorSizeFunctor(sf));
         DF->Detach();
@@ -477,14 +471,12 @@ void FindPtrVectorsByObjectAddress(DFHack::ContextManager & DFMgr, vector <DFHac
     uint32_t select;
     while (Incremental(found, "object address",select,"vector","vectors"))
     {
-        // clear the list of found addresses -- this is a one-shot
-        found.clear();
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
         SegmentedFinder sf(ranges,DF);
         sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
-        sf.Find<uint32_t ,vecTriplet>(select,4,found, vectorOfPtrWithin);
+        sf.Filter<uint32_t ,vecTriplet>(select,found, vectorOfPtrWithin);
         DF->Detach();
     }
 }
@@ -500,7 +492,7 @@ void FindStrings(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ra
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
         SegmentedFinder sf(ranges,DF);
-        sf.Find< const char * ,uint32_t>(select.c_str(),1,found, findString);
+        sf.Incremental< const char * ,uint32_t>(select.c_str(),1,found, findString);
         DF->Detach();
     }
 }
@@ -599,17 +591,17 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
 
     // find lang vector (neutral word table)
     to_filter = filtVectors;
-    sf.Find<const char * ,vecTriplet>("ABBEY",4,to_filter, vectorStringFirst);
+    sf.Filter<const char * ,vecTriplet>("ABBEY",to_filter, vectorStringFirst);
     uint64_t lang_addr = to_filter[0];
 
     // find dwarven language word table
     to_filter = filtVectors;
-    sf.Find<const char * ,vecTriplet>("kulet",4,to_filter, vectorStringFirst);
+    sf.Filter<const char * ,vecTriplet>("kulet",to_filter, vectorStringFirst);
     kulet_vector = to_filter[0];
 
     // find vector of languages
     to_filter = filtVectors;
-    sf.Find<const char * ,vecTriplet>("DWARF",4,to_filter, vectorStringFirst);
+    sf.Filter<const char * ,vecTriplet>("DWARF",to_filter, vectorStringFirst);
 
     // verify
     for(int i = 0; i < to_filter.size(); i++)
@@ -634,35 +626,35 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
     // inorganics vector
     to_filter = filtVectors;
     //sf.Find<uint32_t,vecTriplet>(257 * 4,4,to_filter,vectorLength<uint32_t>);
-    sf.Find<const char * ,vecTriplet>("IRON",4,to_filter, vectorString);
-    sf.Find<const char * ,vecTriplet>("ONYX",4,to_filter, vectorString);
-    sf.Find<const char * ,vecTriplet>("RAW_ADAMANTINE",4,to_filter, vectorString);
-    sf.Find<const char * ,vecTriplet>("BLOODSTONE",4,to_filter, vectorString);
+    sf.Filter<const char * ,vecTriplet>("IRON",to_filter, vectorString);
+    sf.Filter<const char * ,vecTriplet>("ONYX",to_filter, vectorString);
+    sf.Filter<const char * ,vecTriplet>("RAW_ADAMANTINE",to_filter, vectorString);
+    sf.Filter<const char * ,vecTriplet>("BLOODSTONE",to_filter, vectorString);
     printFound(to_filter,"inorganics");
 
     // organics vector
     to_filter = filtVectors;
-    sf.Find<uint32_t,vecTriplet>(52 * 4,4,to_filter,vectorLength<uint32_t>);
-    sf.Find<const char * ,vecTriplet>("MUSHROOM_HELMET_PLUMP",4,to_filter, vectorStringFirst);
+    sf.Filter<uint32_t,vecTriplet>(52 * 4,to_filter,vectorLength<uint32_t>);
+    sf.Filter<const char * ,vecTriplet>("MUSHROOM_HELMET_PLUMP",to_filter, vectorStringFirst);
     printFound(to_filter,"organics");
 
     // tree vector
     to_filter = filtVectors;
-    sf.Find<uint32_t,vecTriplet>(31 * 4,4,to_filter,vectorLength<uint32_t>);
-    sf.Find<const char * ,vecTriplet>("MANGROVE",4,to_filter, vectorStringFirst);
+    sf.Filter<uint32_t,vecTriplet>(31 * 4,to_filter,vectorLength<uint32_t>);
+    sf.Filter<const char * ,vecTriplet>("MANGROVE",to_filter, vectorStringFirst);
     printFound(to_filter,"trees");
 
     // plant vector
     to_filter = filtVectors;
-    sf.Find<uint32_t,vecTriplet>(21 * 4,4,to_filter,vectorLength<uint32_t>);
-    sf.Find<const char * ,vecTriplet>("MUSHROOM_HELMET_PLUMP",4,to_filter, vectorStringFirst);
+    sf.Filter<uint32_t,vecTriplet>(21 * 4,to_filter,vectorLength<uint32_t>);
+    sf.Filter<const char * ,vecTriplet>("MUSHROOM_HELMET_PLUMP",to_filter, vectorStringFirst);
     printFound(to_filter,"plants");
 
     // color descriptors
     //AMBER, 112
     to_filter = filtVectors;
-    sf.Find<uint32_t,vecTriplet>(112 * 4,4,to_filter,vectorLength<uint32_t>);
-    sf.Find<const char * ,vecTriplet>("AMBER",4,to_filter, vectorStringFirst);
+    sf.Filter<uint32_t,vecTriplet>(112 * 4,to_filter,vectorLength<uint32_t>);
+    sf.Filter<const char * ,vecTriplet>("AMBER",to_filter, vectorStringFirst);
     printFound(to_filter,"color descriptors");
     if(!to_filter.empty())
     {
@@ -676,25 +668,25 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
     // all descriptors
     //AMBER, 338
     to_filter = filtVectors;
-    sf.Find<uint32_t,vecTriplet>(338 * 4,4,to_filter,vectorLength<uint32_t>);
-    sf.Find<const char * ,vecTriplet>("AMBER",4,to_filter, vectorStringFirst);
+    sf.Filter<uint32_t,vecTriplet>(338 * 4,to_filter,vectorLength<uint32_t>);
+    sf.Filter<const char * ,vecTriplet>("AMBER",to_filter, vectorStringFirst);
     printFound(to_filter,"all descriptors");
 
     // creature type
     //ELEPHANT, ?? (demons abound)
     to_filter = filtVectors;
     //sf.Find<uint32_t,vecTriplet>(338 * 4,4,to_filter,vectorLength<uint32_t>);
-    sf.Find<const char * ,vecTriplet>("ELEPHANT",4,to_filter, vectorString);
-    sf.Find<const char * ,vecTriplet>("CAT",4,to_filter, vectorString);
-    sf.Find<const char * ,vecTriplet>("DWARF",4,to_filter, vectorString);
-    sf.Find<const char * ,vecTriplet>("WAMBLER_FLUFFY",4,to_filter, vectorString);
-    sf.Find<const char * ,vecTriplet>("TOAD",4,to_filter, vectorString);
-    sf.Find<const char * ,vecTriplet>("DEMON_1",4,to_filter, vectorString);
+    sf.Filter<const char * ,vecTriplet>("ELEPHANT",to_filter, vectorString);
+    sf.Filter<const char * ,vecTriplet>("CAT",to_filter, vectorString);
+    sf.Filter<const char * ,vecTriplet>("DWARF",to_filter, vectorString);
+    sf.Filter<const char * ,vecTriplet>("WAMBLER_FLUFFY",to_filter, vectorString);
+    sf.Filter<const char * ,vecTriplet>("TOAD",to_filter, vectorString);
+    sf.Filter<const char * ,vecTriplet>("DEMON_1",to_filter, vectorString);
 
     vector <uint64_t> toad_first = to_filter;
     vector <uint64_t> elephant_first = to_filter;
-    sf.Find<const char * ,vecTriplet>("TOAD",4,toad_first, vectorStringFirst);
-    sf.Find<const char * ,vecTriplet>("ELEPHANT",4,elephant_first, vectorStringFirst);
+    sf.Filter<const char * ,vecTriplet>("TOAD",toad_first, vectorStringFirst);
+    sf.Filter<const char * ,vecTriplet>("ELEPHANT",elephant_first, vectorStringFirst);
     printFoundStrVec(toad_first,"toad-first creature types",sf);
     printFound(elephant_first,"elephant-first creature types");
     printFound(to_filter,"all creature types");

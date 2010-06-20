@@ -145,6 +145,11 @@ namespace DFHack
         * Get the internal classID->classname mapping (for speed). DO NOT MANIPULATE THE VECTOR!
         */
         const std::vector<std::string> * getClassIDMapping();
+        
+        /**
+        * Get a string with all addresses and offsets
+        */
+        std::string PrintOffsets();
     };
 }
 #endif // MEMINFO_H_INCLUDED

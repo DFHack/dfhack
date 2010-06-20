@@ -734,3 +734,19 @@ std::string memory_info::getMood(const uint32_t moodID)
 	}
 	throw Error::MissingMemoryDefinition("Mood", moodID);
 }
+
+std::string memory_info::PrintOffsets()
+{
+    ostringstream ss;
+    map<string,uint32_t>::const_iterator iter;
+    for(iter = d->addresses.begin(); iter != d->addresses.end(); iter++)
+    {
+        ss << "address " << (*iter).first << " : " << hex << "0x" << (*iter).second << endl;
+    }
+    map<string,int32_t>::const_iterator iter2;
+    for(iter2 = d->offsets.begin(); iter2 != d->offsets.end(); iter2++)
+    {
+        ss << "offset  " << (*iter2).first << " : " << hex << "0x" << (*iter2).second << endl;
+    }
+    return ss.str();
+}

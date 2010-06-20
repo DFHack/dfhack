@@ -2172,6 +2172,12 @@ map_data_1b60_offset          0x1B9c
         0x92d79e0 = real one? seems like it
         0x92d7a10
     </Entry>
+    <Entry version="v0.31.07" os="linux" id="30_07lin" base="30_06lin" rebase="0x2000">
+        <String name="md5">b31979551782e89c049b11db8d2d86d7</String>
+    </Entry>
+    <Entry version="v0.31.08" os="linux" id="30_08lin" base="30_07lin">
+        <String name="md5">e37750890350d7b9d8203879aff8fa5c</String>
+    </Entry>
     </MemoryDescriptors>
 </DFExtractor>
 

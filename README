@@ -33,11 +33,12 @@ OSX is also not supported due to lack of developers with a Mac.
 Currently supported Dwarf Fortress versions:
 * Windows
   0.31.01 - 0.31.03 legacy
-  0.31.04 - 0.31.06 SDL
+  0.31.04 - 0.31.08 SDL
 
 * Linux
-  0.31.04 - 0.31.06 native. There are missing offsets but Map tools should be OK.
-  All Windows versions through wine.
+  0.31.04 - 0.31.08 native.
+  There are missing offsets but Map tools should be OK. Linux support is a bit lacking, I'm working on it.
+  All supported Windows versions running in wine can be used with DFHack.
 
 Using the library as a developer
 --------------------------------

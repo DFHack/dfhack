@@ -1666,7 +1666,19 @@ map_data_1b60_offset          0x1B9c
         map size X: 0x16c4b10
         map size Y: 0x16c4b14
     </Entry>
-
+    <Entry version="v0.31.08" os="windows" id="0.31.08" base="0.31.07" rebase="-0x1000">
+        <String name="md5">a83e6b21307cf41fb54c315fa40dec86</String>
+        <HexValue name="pe_timestamp">0x4c1d69fe</HexValue>
+        <!--
+        <Address name="cursor_xyz">0xaf32d8</Address>0xaf12d0
+        <Address name="window_dims">0x180d11c</Address> 0x180b10c
+        <Address name="window_x">0xe6e0ec</Address>
+        <Address name="window_y">0xe9c1c0</Address>
+        <Address name="window_z">0xe9c19c</Address>
+        map size X: 0x16c4b10
+        map size Y: 0x16c4b14
+        -->
+    </Entry>
 
                             .-"""-.
                            '       \

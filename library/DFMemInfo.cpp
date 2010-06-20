@@ -738,6 +738,22 @@ std::string memory_info::getMood(const uint32_t moodID)
 std::string memory_info::PrintOffsets()
 {
     ostringstream ss;
+    ss << "version:  " << getVersion();
+    switch (getOS())
+    {
+        case OS_LINUX:
+            ss << " LINUX" << endl;
+            ss << "md5 hash:     " << getString("md5") << endl;
+            break;
+        case OS_WINDOWS:
+            ss << " WINDOWS" << endl;
+            ss << "PE timestamp: " << hex << "0x" << getHexValue("pe_timestamp") << endl;
+            ss << "md5 hash:     " << getString("md5") << endl;
+            break;
+        default:
+            ss << " UNKNOWN" << endl;
+    }
+    
     map<string,uint32_t>::const_iterator iter;
     for(iter = d->addresses.begin(); iter != d->addresses.end(); iter++)
     {

@@ -719,7 +719,7 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
         {
             cout << "Elephant: caste vector = 0x" << hex << Eoffset - elephant << endl;
         }
-        Eoffset = sf.FindInRange<const char *,vecTriplet> ("SKIN",vectorStringFirst, elephant, 0x1500 );
+        Eoffset = sf.FindInRange<const char *,vecTriplet> ("SKIN",vectorStringFirst, elephant, 0x2000 );
         if(Eoffset)
         {
             cout << "Elephant: extract? vector = 0x" << hex << Eoffset - elephant << endl;

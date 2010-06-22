@@ -6,6 +6,7 @@ Dependencies
 
 You'll need cmake and 'a' compiler for building the main lib and the various tools.
 (Linux only) Veinlook requires the wide-character ncurses library (libncursesw)
+(Linux only) You'll need X11 dev libraries.
 
 Building on Linux:
 --------------------

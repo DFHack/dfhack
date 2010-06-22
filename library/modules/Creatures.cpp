@@ -506,6 +506,19 @@ bool Creatures::WriteMood(const uint32_t index, const uint16_t mood)
     return true;
 }
 
+bool Creatures::WriteMoodSkill(const uint32_t index, const uint16_t moodSkill)
+{
+	if(!d->Started)
+    {
+        return false;
+    }
+
+    uint32_t temp = d->p_cre->at (index);
+    Process * p = d->owner;
+    p->writeWord(temp + d->creatures.mood_skill_offset, moodSkill);
+    return true;
+}
+
 uint32_t Creatures::GetDwarfRaceIndex()
 {
     if(!d->Inited) return 0;

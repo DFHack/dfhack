@@ -532,6 +532,19 @@ bool Creatures::WritePos(const uint32_t index, const t_creature &creature)
 	return true;
 }
 
+bool Creatures::WriteCiv(const uint32_t index, const int32_t civ)
+{
+	if(!d->Started)
+    {
+        return false;
+    }
+
+    uint32_t temp = d->p_cre->at (index);
+    Process * p = d->owner;
+    p->writeDWord(temp + d->creatures.civ_offset, civ);
+    return true;
+}
+
 uint32_t Creatures::GetDwarfRaceIndex()
 {
     if(!d->Inited) return 0;

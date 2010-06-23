@@ -390,6 +390,7 @@ namespace DFHack
 		bool WriteMood(const uint32_t index, const uint16_t mood);
 		bool WriteMoodSkill(const uint32_t index, const uint16_t moodSkill);
 		bool WritePos(const uint32_t index, const t_creature &creature);
+		bool WriteCiv(const uint32_t index, const int32_t civ);
 
 	private:
 		struct Private;

@@ -646,6 +646,7 @@ string memory_info::getProfession (const uint32_t key) const
 string memory_info::getJob (const uint32_t key) const
 {
     if(d->jobs.size() > key)
+
     {
         return d->jobs[key];
     }

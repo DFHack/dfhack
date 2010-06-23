@@ -3,6 +3,7 @@ INCLUDE(CPack)
 PROJECT (dfhack)
 cmake_minimum_required(VERSION 2.6)
 SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
+SET ( DFHACK_VERSION "0.4.0.2" )
 
 # disable warning, autosearch
 if(COMMAND cmake_policy)
@@ -20,6 +21,8 @@ ENDIF(NOT DEFINED CMAKE_BUILD_TYPE)
 SET( LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output CACHE PATH "Output directory for the dfhack library" )
 SET( EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output CACHE PATH "Output directory for the dfhack tools" )
 
+OPTION(BUILD_DFHACK_DOCUMENTATION "Create doxygen documentation for developers" OFF)
+
 include_directories (${CMAKE_SOURCE_DIR}/library/include/)
 include_directories (${CMAKE_SOURCE_DIR}/library/shm/)
 include_directories (${CMAKE_SOURCE_DIR}/library/depends/md5/)
@@ -31,3 +34,4 @@ add_subdirectory (library)
 add_subdirectory (tools/examples)
 add_subdirectory (tools/playground)
 add_subdirectory (tools/supported)
+add_subdirectory (doc)

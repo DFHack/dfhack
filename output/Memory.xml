@@ -1669,6 +1669,7 @@ map_data_1b60_offset          0x1B9c
     <Entry version="v0.31.08" os="windows" id="0.31.08" base="0.31.07" rebase="-0x1000">
         <String name="md5">a83e6b21307cf41fb54c315fa40dec86</String>
         <HexValue name="pe_timestamp">0x4c1d69fe</HexValue>
+        <Address name="dwarf_civ_id">0x14acee8</Address>
         <!--
         <Address name="cursor_xyz">0xaf32d8</Address>0xaf12d0
         <Address name="window_dims">0x180d11c</Address> 0x180b10c

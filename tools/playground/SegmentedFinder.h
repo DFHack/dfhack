@@ -292,9 +292,9 @@ struct Bytestream
     void * object;
 };
 
-bool findBytestream (SegmentedFinder* s, uint32_t *addr, Bytestream * compare )
+bool findBytestream (SegmentedFinder* s, void *addr, Bytestream compare )
 {
-    if(memcmp(addr, compare->object, compare->length) == 0)
+    if(memcmp(addr, compare.object, compare.length) == 0)
         return true;
     return false;
 }

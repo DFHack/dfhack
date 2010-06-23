@@ -553,6 +553,15 @@ void printFoundStrVec(vector <uint64_t> &found, const char * what, SegmentedFind
     }
 }
 
+// meh
+#pragma pack(1)
+struct tilecolors
+{
+    uint16_t fore;
+    uint16_t back;
+    uint16_t bright;
+};
+#pragma pack()
 
 void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& ranges)
 {
@@ -698,6 +707,7 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
         vecTriplet *vtCretypes = sf.Translate<vecTriplet>(to_use);
         uint32_t elephant = sf.Read<uint32_t>(vtCretypes->start);
         uint64_t Eoffset;
+        cout << "Elephant: 0x" << hex << elephant << endl;
         cout << "Elephant: rawname = 0x0" << endl;
         Eoffset = sf.FindInRange<uint8_t,uint8_t> ('E',equalityP<uint8_t>, elephant, 0x300 );
         if(Eoffset)
@@ -709,12 +719,51 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
         {
             cout << "Elephant: caste vector = 0x" << hex << Eoffset - elephant << endl;
         }
+        Eoffset = sf.FindInRange<const char *,vecTriplet> ("SKIN",vectorStringFirst, elephant, 0x2000 );
+        if(Eoffset)
+        {
+            cout << "Elephant: extract? vector = 0x" << hex << Eoffset - elephant << endl;
+        }
+        tilecolors eletc = {7,0,0};
+        Bytestream bs_eletc = {sizeof(tilecolors), &eletc};
+        Eoffset = sf.FindInRange<Bytestream,tilecolors> (bs_eletc, findBytestream, elephant, 0x300 );
+        if(Eoffset)
+        {
+            cout << "Elephant: colors = 0x" << hex << Eoffset - elephant << endl;
+        }
         //cout << "Amber color:" << hex << "0x" << colorObj << endl;
         // TODO: find string 'amber', the floats
     }
     if(!toad_first.empty())
     {
         to_use = toad_first[0];
+        vecTriplet *vtCretypes = sf.Translate<vecTriplet>(to_use);
+        uint32_t toad = sf.Read<uint32_t>(vtCretypes->start);
+        uint64_t Eoffset;
+        cout << "Toad: 0x" << hex << toad << endl;
+        cout << "Toad: rawname = 0x0" << endl;
+        Eoffset = sf.FindInRange<uint8_t,uint8_t> (0xF9,equalityP<uint8_t>, toad, 0x300 );
+        if(Eoffset)
+        {
+            cout << "Toad: character (not reliable) = 0x" << hex << Eoffset - toad << endl;
+        }
+        Eoffset = sf.FindInRange<const char *,vecTriplet> ("FEMALE",vectorStringFirst, toad, 0x300 );
+        if(Eoffset)
+        {
+            cout << "Toad: caste vector = 0x" << hex << Eoffset - toad << endl;
+        }
+        Eoffset = sf.FindInRange<const char *,vecTriplet> ("SKIN",vectorStringFirst, toad, 0x2000 );
+        if(Eoffset)
+        {
+            cout << "Toad: extract? vector = 0x" << hex << Eoffset - toad << endl;
+        }
+        tilecolors toadtc = {2,0,0};
+        Bytestream bs_toadc = {sizeof(tilecolors), &toadtc};
+        Eoffset = sf.FindInRange<Bytestream,tilecolors> (bs_toadc, findBytestream, toad, 0x300 );
+        if(Eoffset)
+        {
+            cout << "Toad: colors = 0x" << hex << Eoffset - toad << endl;
+        }
     }
     if(to_use)
     {

@@ -1818,10 +1818,17 @@ map_data_1b60_offset          0x1B9c
         Creature type offsets
         =====================
         <Offset name="creature_type_caste_vector">0x60</Offset> VERIFIED
-        <Offset name="creature_type_extract_vector">0x1A14</Offset>
-        <Offset name="creature_tile">0xE0</Offset>
-        <Offset name="creature_tile_color">0xF6</Offset>
-        
+        from 0.31.08
+        Toad: 0xaf75b68
+        Toad: rawname = 0x0
+        Toad: character (not reliable) = 0x20
+        Toad: caste vector = 0x60
+        Toad: extract? vector = 0x18f4
+        Toad: colors = 0x36
+        <Offset name="creature_type_extract_vector">0x18f4</Offset> VERIFIED
+        <Offset name="creature_tile">0x20</Offset> VERIFIED
+        <Offset name="creature_tile_color">0x36</Offset> LOOKS OK
+
         <!--
         <Offset name="creature_type_caste_vector">0x138</Offset>
         <Offset name="creature_type_extract_vector">0x1A14</Offset>
@@ -2172,6 +2179,12 @@ map_data_1b60_offset          0x1B9c
         0x92d79d4
         0x92d79e0 = real one? seems like it
         0x92d7a10
+    </Entry>
+    <Entry version="v0.31.07" os="linux" id="30_07lin" base="30_06lin" rebase="0x2000">
+        <String name="md5">b31979551782e89c049b11db8d2d86d7</String>
+    </Entry>
+    <Entry version="v0.31.08" os="linux" id="30_08lin" base="30_07lin">
+        <String name="md5">e37750890350d7b9d8203879aff8fa5c</String>
     </Entry>
     </MemoryDescriptors>
 </DFExtractor>

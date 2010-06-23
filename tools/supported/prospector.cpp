@@ -13,10 +13,31 @@
 #include <vector>
 #include <map>
 #include <stdio.h>
+#include <algorithm>
 using namespace std;
 
 #include <DFHack.h>
 #include <dfhack/DFTileTypes.h>
+
+template<template <typename> class P = std::less >
+struct compare_pair_first
+{
+    template<class T1, class T2>
+    bool operator()(const std::pair<T1, T2>& left, const std::pair<T1, T2>& right)
+    {
+        return P<T1>()(left.first, right.first);
+    }
+};
+
+template<template <typename> class P = std::less >
+struct compare_pair_second
+{
+    template<class T1, class T2>
+    bool operator()(const std::pair<T1, T2>& left, const std::pair<T1, T2>& right)
+    {
+        return P<T2>()(left.second, right.second);
+    }
+};
 
 int main (int argc, const char* argv[])
 {
@@ -276,7 +297,7 @@ int main (int argc, const char* argv[])
         cout << "Number of overflows: " << num_overflows;
     }
     cout << endl;
-    
+    vector <pair <int16_t, uint32_t> > matss;
     map<int16_t, uint32_t>::iterator p;
     for(p = materials.begin(); p != materials.end(); p++)
     {
@@ -286,8 +307,13 @@ int main (int argc, const char* argv[])
         }
         else
         {
-            cout << Mats->inorganic[p->first].id << " : " << p->second << endl;
+            matss.push_back( pair<int16_t,uint32_t>(p->first, p->second) );
         }
+    }
+    std::sort(matss.begin(), matss.end(), compare_pair_second<>());
+    for(int i = 0; i < matss.size();i++)
+    {
+        cout << Mats->inorganic[matss[i].first].id << " : " << matss[i].second << endl;
     }
     DF->Detach();
     #ifndef LINUX_BUILD

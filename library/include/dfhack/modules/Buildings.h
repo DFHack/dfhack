@@ -4,6 +4,7 @@
 * Buildings - also includes zones and stockpiles
 */
 #include "dfhack/DFExport.h"
+#include "dfhack/DFModule.h"
 namespace DFHack
 {
     struct t_building
@@ -26,7 +27,7 @@ namespace DFHack
     };
     
     class DFContextShared;
-    class DFHACK_EXPORT Buildings
+    class DFHACK_EXPORT Buildings : public Module
     {
         public:
         Buildings(DFContextShared * d);

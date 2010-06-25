@@ -27,7 +27,6 @@ distribution.
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFProcessEnumerator.h"
 #include "dfhack/DFContext.h"
-#include "dfhack/DFContext.h"
 #include "dfhack/DFError.h"
 
 #include <shms.h>
@@ -93,6 +92,13 @@ bool Context::Detach()
     }
     d->shm_start = 0;
     // invalidate all modules
+    for(int i = 0 ; i < d->allModules.size(); i++)
+    {
+        delete d->allModules[i];
+    }
+    d->allModules.clear();
+    memset(&(d->s_mods), 0, sizeof(d->s_mods));
+    /*
     if(d->creatures)
     {
         delete d->creatures;
@@ -147,7 +153,7 @@ bool Context::Detach()
     {
         delete d->translation;
         d->translation = 0;
-    }
+    }*/
     return true;
 }
 
@@ -201,13 +207,39 @@ Process * Context::getProcess()
 /*******************************************************************************
                                 M O D U L E S
 *******************************************************************************/
+
+#define MODULE_GETTER(TYPE) \
+TYPE * Context::get##TYPE() \
+{ \
+    if(!d->s_mods.p##TYPE)\
+    {\
+        d->s_mods.p##TYPE = new TYPE(d);\
+        d->allModules.push_back(d->s_mods.p##TYPE);\
+    }\
+    return d->s_mods.p##TYPE;\
+}
+
+MODULE_GETTER(Creatures);
+MODULE_GETTER(Maps);
+MODULE_GETTER(Gui);
+MODULE_GETTER(WindowIO);
+MODULE_GETTER(World);
+MODULE_GETTER(Position);
+MODULE_GETTER(Materials);
+MODULE_GETTER(Items);
+MODULE_GETTER(Translation);
+MODULE_GETTER(Vegetation);
+MODULE_GETTER(Buildings);
+MODULE_GETTER(Constructions);
+/*
 Creatures * Context::getCreatures()
 {
     if(!d->creatures)
         d->creatures = new Creatures(d);
     return d->creatures;
 }
-
+*/
+/*
 Maps * Context::getMaps()
 {
     if(!d->maps)
@@ -284,7 +316,7 @@ Constructions * Context::getConstructions()
         d->constructions = new Constructions(d);
     return d->constructions;
 }
-
+*/
 /*
 // returns number of buildings, expects v_buildingtypes that will later map t_building.type to its name
 

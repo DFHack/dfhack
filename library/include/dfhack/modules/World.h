@@ -5,11 +5,12 @@
 * World: all kind of stuff related to the current world state
 */
 #include "dfhack/DFExport.h"
+#include "dfhack/DFModule.h"
 
 namespace DFHack
 {
     class DFContextShared;
-    class DFHACK_EXPORT World
+    class DFHACK_EXPORT World : public Module
     {
         public:
         

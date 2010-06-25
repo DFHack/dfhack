@@ -3,7 +3,7 @@ INCLUDE(CPack)
 PROJECT (dfhack)
 cmake_minimum_required(VERSION 2.6)
 SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
-SET ( DFHACK_VERSION "0.4.0.2" )
+SET ( DFHACK_VERSION "0.4.0.3-dev" )
 
 # disable warning, autosearch
 if(COMMAND cmake_policy)
@@ -30,6 +30,7 @@ include_directories (${CMAKE_SOURCE_DIR}/library/depends/tinyxml/)
 include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
 
 add_subdirectory (library)
+add_subdirectory (library/shm)
 #add_subdirectory (dfhack/python)
 add_subdirectory (tools/examples)
 add_subdirectory (tools/playground)

@@ -53,6 +53,21 @@ Materials::~Materials()
 {
     delete d;
 }
+
+bool Materials::Finish()
+{
+    inorganic.clear();
+    organic.clear();
+    tree.clear();
+    plant.clear();
+    race.clear();
+    raceEx.clear();
+    color.clear();
+    other.clear();
+    alldesc.clear();
+    return true;
+}
+
 /*
     {
 LABEL_53:
@@ -401,10 +416,10 @@ void Materials::ReadAllMaterials(void)
 
 std::string Materials::getDescription(t_material & mat)
 {
-	std::string out;
-	int32_t typeC;
+    std::string out;
+    int32_t typeC;
 
-	if ( (mat.subIndex<419) || (mat.subIndex>618) )
+    if ( (mat.subIndex<419) || (mat.subIndex>618) )
     {
         if ( (mat.subIndex<19) || (mat.subIndex>218) )
         {
@@ -414,13 +429,13 @@ std::string Materials::getDescription(t_material & mat)
                 else
                 {
                     if (mat.subIndex>=this->other.size())
-					{
-						if(mat.subIndex<0)
-							return "any";
-						if(mat.subIndex>=this->raceEx.size())
-							return "stuff";
-						return this->raceEx[mat.subIndex].rawname;
-					}
+                    {
+                        if(mat.subIndex<0)
+                            return "any";
+                        if(mat.subIndex>=this->raceEx.size())
+                            return "stuff";
+                        return this->raceEx[mat.subIndex].rawname;
+                    }
                     else
                     {
                         if (mat.index==-1)
@@ -430,17 +445,17 @@ std::string Materials::getDescription(t_material & mat)
                     }
                 }
             else
-				if(mat.index<0)
-					return "any inorganic";
-				else
-					return this->inorganic[mat.index].id;
+                if(mat.index<0)
+                    return "any inorganic";
+                else
+                    return this->inorganic[mat.index].id;
         }
         else
         {
             if (mat.index>=this->raceEx.size())
                 return "unknown race";
             typeC = mat.subIndex;
-			typeC -=19;
+            typeC -=19;
             if ((typeC<0) || (typeC>=this->raceEx[mat.index].extract.size()))
             {
                 return string(this->raceEx[mat.index].rawname).append(" extract");
@@ -452,6 +467,6 @@ std::string Materials::getDescription(t_material & mat)
     {
         return this->organic[mat.index].id;
     }
-	return out;
+    return out;
 }
 

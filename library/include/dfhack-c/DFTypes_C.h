@@ -105,6 +105,13 @@ DFHACK_EXPORT extern int (*alloc_vein_buffer_callback)(t_vein*, uint32_t);
 DFHACK_EXPORT extern int (*alloc_frozenliquidvein_buffer_callback)(t_frozenliquidvein*, uint32_t);
 DFHACK_EXPORT extern int (*alloc_spattervein_buffer_callback)(t_spattervein*, uint32_t);
 
+DFHACK_EXPORT extern int DFHack_isWallTerrain(int in);
+DFHACK_EXPORT extern int DFHack_isFloorTerrain(int in);
+DFHACK_EXPORT extern int DFHack_isRampTerrain(int in);
+DFHACK_EXPORT extern int DFHack_isStairTerrain(int in);
+DFHACK_EXPORT extern int DFHack_isOpenTerrain(int in);
+DFHACK_EXPORT extern int DFHack_getVegetationType(int in);
+
 #ifdef __cplusplus
 }
 #endif

@@ -67,6 +67,40 @@ int (*alloc_empty_creaturetype_callback)(c_creaturetype*) = NULL;
 int (*alloc_creaturetype_callback)(c_creaturetype*, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t) = NULL;
 int (*alloc_creaturetype_buffer_callback)(c_creaturetype*, uint32_t) = NULL;
 
+int (*alloc_vein_buffer_callback)(t_vein*, uint32_t) = NULL;
+int (*alloc_frozenliquidvein_buffer_callback)(t_frozenliquidvein*, uint32_t) = NULL;
+int (*alloc_spattervein_buffer_callback)(t_spattervein*, uint32_t) = NULL;
+
+int DFHack_isWallTerrain(int in)
+{
+	return DFHack::isWallTerrain(in);
+}
+
+int DFHack_isFloorTerrain(int in)
+{
+	return DFHack::isFloorTerrain(in);
+}
+
+int DFHack_isRampTerrain(int in)
+{
+	return DFHack::isRampTerrain(in);
+}
+
+int DFHack_isStairTerrain(int in)
+{
+	return DFHack::isStairTerrain(in);
+}
+
+int DFHack_isOpenTerrain(int in)
+{
+	return DFHack::isOpenTerrain(in);
+}
+
+int DFHack_getVegetationType(int in)
+{
+	return DFHack::getVegetationType(in);
+}
+
 #ifdef __cplusplus
 }
 #endif

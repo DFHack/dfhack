@@ -36,9 +36,18 @@ namespace DFHack
         ~Module(){};
         virtual bool Start(){return true;};// default start...
         virtual bool Finish() = 0;// everything should have a Finish()
-        virtual bool doFinishOnResume(){return true;}; // should Context call Finish when Resume is called?
-        virtual bool doFinishOnMapChange(){return false;}; // Finish when map change is detected?
-        virtual bool doFinishOnDetach(){return false;}; // Finish in Context::Detach?
+        // should Context call Finish when Resume is called?
+        virtual bool OnResume()
+        {
+            Finish();
+            return true;
+        };
+        // Finish when map change is detected?
+        // TODO: implement
+        virtual bool OnMapChange()
+        {
+            return false;
+        };
     };
 }
 #endif //MODULE_H_INCLUDED

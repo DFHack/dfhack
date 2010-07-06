@@ -66,7 +66,10 @@ Position::Position(DFContextShared * d_)
         d->cursor_xyz_offset = mem->getAddress ("cursor_xyz");
         d->window_dims_offset = mem->getAddress ("window_dims");
         d->Started = true;
-
+    }
+    catch(exception &){};
+    try
+    {
         d->hotkey_start = mem->getAddress("hotkey_start");
         d->hotkey_mode_offset = mem->getOffset ("hotkey_mode");
         d->hotkey_xyz_offset = mem->getOffset("hotkey_xyz");

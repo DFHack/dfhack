@@ -22,6 +22,12 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+#include "dfhack-c/DFTypes_C.h"
 #include "dfhack-c/modules/Maps_C.h"
 
 #ifdef __cplusplus
@@ -263,6 +269,162 @@ int Maps_ReadRegionOffsets(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t 
 	if(maps != NULL)
 	{
 		return ((DFHack::Maps*)maps)->ReadRegionOffsets(x, y, z, buffer);
+	}
+	
+	return -1;
+}
+
+int Maps_ReadAllVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, t_vein* vein_buffer, t_frozenliquidvein* frozenvein_buffer, t_spattervein* spattervein_buffer)
+{
+	if(maps != NULL)
+	{
+		if(alloc_vein_buffer_callback == NULL || alloc_frozenliquidvein_callback == NULL || alloc_spattervein_callback == NULL)
+			return 0;
+		
+		vector<t_vein> veins;
+		vector<t_frozenliquidvein> frozen_veins;
+		vector<t_spattervein> spatter_veins;
+		bool result = ((DFHack::Maps*)maps)->ReadVeins(x, y, z, &veins, &frozen_veins, &spatter_veins);
+		
+		if(result)
+		{
+			t_vein* v_buf = NULL;
+			t_frozenliquidvein* fv_buf = NULL;
+			t_spattervein* sv_buf = NULL;
+			
+			if(veins.size() > 0)
+			{
+				((*alloc_vein_buffer_callback)(v_buf, veins.size()));
+				
+				copy(veins.begin(), veins.end(), v_buf);
+			}
+			
+			if(frozen_veins.size() > 0)
+			{
+				((*alloc_frozenliquidvein_callback)(fv_buf, frozen_veins.size()));
+				
+				copy(frozen_veins.begin(), frozen_veins.end(), fv_buf);
+			}
+			
+			if(spatter_veins.size() > 0)
+			{
+				((*alloc_spattervein_callback)(sv_buf, spatter_veins.size()));
+				
+				copy(spatter_veins.begin(), spatter_veins.end(), sv_buf);
+			}
+			
+			return 1;
+		}
+		else
+			return 0;
+	}
+	
+	return -1;
+}
+
+int Maps_ReadStandardVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, t_vein* vein_buffer)
+{
+	if(maps != NULL)
+	{
+		if(alloc_vein_buffer_callback == NULL)
+			return 0;
+		
+		vector<t_vein> veins;
+		bool result = ((DFHack::Maps*)maps)->ReadVeins(x, y, z, &veins);
+		
+		if(result)
+		{
+			t_vein* v_buf = NULL;
+			
+			if(veins.size() > 0)
+			{
+				((*alloc_vein_buffer_callback)(v_buf, veins.size()));
+				
+				copy(veins.begin(), veins.end(), v_buf);
+			}
+			
+			return 1;
+		}
+		else
+			return 0;
+	}
+	
+	return -1;
+}
+
+int Maps_ReadFrozenVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, t_frozenliquidvein* frozenvein_buffer)
+{
+	if(maps != NULL)
+	{
+		if(alloc_vein_buffer_callback == NULL || alloc_frozenliquidvein_callback == NULL)
+			return 0;
+		
+		vector<t_vein> veins;
+		vector<t_frozenliquidvein> frozen_veins;
+		bool result = ((DFHack::Maps*)maps)->ReadVeins(x, y, z, &veins, &frozen_veins);
+		
+		if(result)
+		{
+			t_vein* v_buf = NULL;
+			t_frozenliquidvein* fv_buf = NULL;
+			
+			if(veins.size() > 0)
+			{
+				((*alloc_vein_buffer_callback)(v_buf, veins.size()));
+				
+				copy(veins.begin(), veins.end(), v_buf);
+			}
+			
+			if(frozen_veins.size() > 0)
+			{
+				((*alloc_frozenliquidvein_callback)(fv_buf, frozen_veins.size()));
+				
+				copy(frozen_veins.begin(), frozen_veins.end(), fv_buf);
+			}
+			
+			return 1;
+		}
+		else
+			return 0;
+	}
+	
+	return -1;
+}
+
+int Maps_ReadSpatterVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, t_spattervein* spattervein_buffer)
+{
+	if(maps != NULL)
+	{
+		if(alloc_vein_buffer_callback == NULL || alloc_spattervein_callback == NULL)
+			return 0;
+		
+		vector<t_vein> veins;
+		vector<t_spattervein> spatter_veins;
+		bool result = ((DFHack::Maps*)maps)->ReadVeins(x, y, z, &veins, 0, &spatter_veins);
+		
+		if(result)
+		{
+			t_vein* v_buf = NULL;
+			t_spattervein* sv_buf = NULL;
+			
+			if(veins.size() > 0)
+			{
+				((*alloc_vein_buffer_callback)(v_buf, veins.size()));
+				
+				copy(veins.begin(), veins.end(), v_buf);
+			}
+			
+			if(spatter_veins.size() > 0)
+			{
+				((*alloc_spattervein_callback)(sv_buf, spatter_veins.size()));
+				
+				copy(spatter_veins.begin(), spatter_veins.end(), sv_buf);
+			}
+			
+			return 1;
+		}
+		else
+			return 0;
 	}
 	
 	return -1;

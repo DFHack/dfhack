@@ -170,6 +170,11 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
             addendl=true;
         }
 
+        if(creature.civ)
+        {
+            cout << "civilization: " << creature.civ;
+            addendl = true;
+        }
 
         /*
         cout << ", likes: ";

@@ -1,0 +1,56 @@
+################################################################################
+# DFCONNECT
+###
+SET(DFCONNECT_HDRS
+shms.h
+mod-core.h
+mod-maps.h
+)
+
+SET(PROJECT_SRCS
+mod-core.cpp
+mod-maps.cpp
+#mod-creature40d.cpp
+)
+
+SET(PROJECT_HDRS_LINUX
+)
+
+SET(PROJECT_HDRS_WINDOWS
+)
+
+SET(PROJECT_SRCS_LINUX
+shms-linux.cpp
+)
+
+SET(PROJECT_SRCS_WINDOWS
+shms-windows.cpp
+)
+
+IF(UNIX)
+    LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_LINUX})
+    LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_LINUX})
+ELSE(UNIX)
+    LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_WINDOWS})
+    LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_WINDOWS})
+ENDIF(UNIX)
+
+
+SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
+
+LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
+
+#IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    add_definitions(-DBUILD_SHM)
+    IF(UNIX)
+        add_definitions(-DLINUX_BUILD)
+        SET(PROJECT_LIBS rt)
+        SET(CMAKE_CXX_FLAGS "-fvisibility=hidden")
+        ADD_LIBRARY(dfconnect SHARED ${PROJECT_SRCS})
+        TARGET_LINK_LIBRARIES(dfconnect ${PROJECT_LIBS})
+    ELSE(UNIX)
+        #  SET(PROJECT_LIBS psapi)
+        ADD_LIBRARY(SDL SHARED ${PROJECT_SRCS})
+        TARGET_LINK_LIBRARIES(SDL ${PROJECT_LIBS})
+    ENDIF(UNIX)
+#ENDIF(CMAKE_SIZEOF_VOID_P EQUAL 4)

@@ -31,20 +31,23 @@ distribution.
 
 namespace DFHack
 {
-    class Materials;
+    class Module;
+
+    class Creatures;
+    class Maps;
+    class Position;
     class Gui;
     class World;
-    class Position;
-    class Maps;
-    class Creatures;
+    class Materials;
     class Items;
     class Translation;
+    class Vegetation;
     class Buildings;
+    class Constructions;
+    class WindowIO;
+
     class ProcessEnumerator;
     class Process;
-    class WindowIO;
-    class Vegetation;
-    class Constructions;
     class memory_info;
     struct t_name;
     class DFContextShared
@@ -52,7 +55,7 @@ namespace DFHack
     public:
         DFContextShared();
         ~DFContextShared();
-        
+
         // names, used by a few other modules.
         void readName(t_name & name, uint32_t address);
         // get the name offsets
@@ -61,27 +64,30 @@ namespace DFHack
         uint32_t name_nickname_offset;
         uint32_t name_words_offset;
         bool namesInited;
-        
+
         ProcessEnumerator* pm;
         Process* p;
         char * shm_start;
         memory_info* offset_descriptor;
         string xml;
-        
-        // Modules
-        Creatures * creatures;
-        Maps * maps;
-        Position * position;
-        Gui * gui;
-        World * world;
-        Materials * materials;
-        Items * items;
-        Translation * translation;
-        Vegetation * vegetation;
-        Buildings * buildings;
-        Constructions * constructions;
-        WindowIO * windowio;
 
+        // Modules
+        struct
+        {
+            Creatures * pCreatures;
+            Maps * pMaps;
+            Position * pPosition;
+            Gui * pGui;
+            World * pWorld;
+            Materials * pMaterials;
+            Items * pItems;
+            Translation * pTranslation;
+            Vegetation * pVegetation;
+            Buildings * pBuildings;
+            Constructions * pConstructions;
+            WindowIO * pWindowIO;
+        } s_mods;
+        std::vector <Module *> allModules;
         /*
         uint32_t item_material_offset;
 
@@ -93,7 +99,7 @@ namespace DFHack
         uint32_t settlement_name_offset;
         uint32_t settlement_world_xy_offset;
         uint32_t settlement_local_xy_offset;
-        
+
         uint32_t dwarf_lang_table_offset;
 
         DfVector *p_effect;

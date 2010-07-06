@@ -29,6 +29,7 @@ distribution.
 
 //Inital amount of space in levels vector (since we usually know the number, efficent!)
 #define NUM_RESERVE_LVLS 20
+#define NUM_RESERVE_MOODS 6
 using namespace DFHack;
 
 /*
@@ -96,6 +97,7 @@ class memory_info::Private
     vector<string> skills;
 	vector<DFHack::t_level> levels;
     vector< vector<string> > traits;
+	vector<string> moods;
     map <uint32_t, string> labors;
     
     // storage for class and multiclass
@@ -124,6 +126,7 @@ memory_info::memory_info()
     d->p = 0;
     d->classindex = 0;
 	d->levels.reserve(NUM_RESERVE_LVLS);
+	d->moods.reserve(NUM_RESERVE_MOODS);
 }
 
 // copy constructor
@@ -151,6 +154,7 @@ memory_info::memory_info(const memory_info &old)
     d->traits = old.d->traits;
     d->labors = old.d->labors;
 	d->levels = old.d->levels;
+	d->moods = old.d->moods;
 }
 void memory_info::setParentProcess(Process * _p)
 {
@@ -317,6 +321,16 @@ void memory_info::setLevel(const std::string &nLevel,
 	d->levels[keyInt].level = keyInt;
 	d->levels[keyInt].name = nName;
 	d->levels[keyInt].xpNxtLvl = strtol(nXp.c_str(), NULL, 10);
+}
+
+void memory_info::setMood(const std::string &id, const std::string &mood)
+{
+	uint32_t keyInt = strtol(id.c_str(), NULL, 10);
+    
+	if(d->moods.size() <= keyInt)
+		d->moods.resize(keyInt+1);
+
+	d->moods[keyInt] = mood;
 }
 
 void memory_info::setTrait(const string & key,
@@ -632,6 +646,7 @@ string memory_info::getProfession (const uint32_t key) const
 string memory_info::getJob (const uint32_t key) const
 {
     if(d->jobs.size() > key)
+
     {
         return d->jobs[key];
     }
@@ -698,6 +713,11 @@ string memory_info::getTraitName(const uint32_t traitIdx) const
     throw Error::MissingMemoryDefinition("traitname", traitIdx);
 }
 
+std::vector< std::vector<std::string> > const& memory_info::getAllTraits()
+{
+	return d->traits;
+}
+
 string memory_info::getLabor (const uint32_t laborIdx)
 {
     if(d->labors.count(laborIdx))
@@ -707,3 +727,43 @@ string memory_info::getLabor (const uint32_t laborIdx)
     throw Error::MissingMemoryDefinition("labor", laborIdx);
 }
 
+std::string memory_info::getMood(const uint32_t moodID)
+{
+	if(d->moods.size() > moodID)
+	{
+		return d->moods[moodID];
+	}
+	throw Error::MissingMemoryDefinition("Mood", moodID);
+}
+
+std::string memory_info::PrintOffsets()
+{
+    ostringstream ss;
+    ss << "version:  " << getVersion();
+    switch (getOS())
+    {
+        case OS_LINUX:
+            ss << " LINUX" << endl;
+            ss << "md5 hash:     " << getString("md5") << endl;
+            break;
+        case OS_WINDOWS:
+            ss << " WINDOWS" << endl;
+            ss << "PE timestamp: " << hex << "0x" << getHexValue("pe_timestamp") << endl;
+            ss << "md5 hash:     " << getString("md5") << endl;
+            break;
+        default:
+            ss << " UNKNOWN" << endl;
+    }
+    
+    map<string,uint32_t>::const_iterator iter;
+    for(iter = d->addresses.begin(); iter != d->addresses.end(); iter++)
+    {
+        ss << "address " << (*iter).first << " : " << hex << "0x" << (*iter).second << endl;
+    }
+    map<string,int32_t>::const_iterator iter2;
+    for(iter2 = d->offsets.begin(); iter2 != d->offsets.end(); iter2++)
+    {
+        ss << "offset  " << (*iter2).first << " : " << hex << "0x" << (*iter2).second << endl;
+    }
+    return ss.str();
+}

@@ -53,6 +53,21 @@ Materials::~Materials()
 {
     delete d;
 }
+
+bool Materials::Finish()
+{
+    inorganic.clear();
+    organic.clear();
+    tree.clear();
+    plant.clear();
+    race.clear();
+    raceEx.clear();
+    color.clear();
+    other.clear();
+    alldesc.clear();
+    return true;
+}
+
 /*
     {
 LABEL_53:
@@ -301,8 +316,8 @@ bool Materials::ReadCreatureTypesEx (void)
     uint32_t bodypart_id_offset = mem->getOffset ("bodypart_id");
     uint32_t bodypart_category_offset = mem->getOffset ("bodypart_category");
     uint32_t bodypart_layers_offset = mem->getOffset ("bodypart_layers_vector");
-    uint32_t bodypart_singular_offset = mem->getOffset ("bodypart_singular_vector");
-    uint32_t bodypart_plural_offset = mem->getOffset ("bodypart_plural_vector");
+    uint32_t bodypart_singular_offset = mem->getOffset ("bodypart_singular_vector"); // unused
+    uint32_t bodypart_plural_offset = mem->getOffset ("bodypart_plural_vector"); // unused
     uint32_t color_modifier_part_offset = mem->getOffset ("color_modifier_part");
     uint32_t color_modifier_startdate_offset = mem->getOffset ("color_modifier_startdate");
     uint32_t color_modifier_enddate_offset = mem->getOffset ("color_modifier_enddate");
@@ -318,7 +333,18 @@ bool Materials::ReadCreatureTypesEx (void)
     for (uint32_t i = 0; i < size;i++)
     {
         t_creaturetype mat;
+        // FROM race READ
+        // std::string rawname AT 0,
+        // char tile_character AT tile_offset,
+        // word tilecolor.fore : tile_color_offset,
+        // word tilecolor.back : tile_color_offset + 2,
+        // word tilecolor.bright : tile_color_offset + 4 
         p->readSTLString (p_races[i], mat.rawname, sizeof(mat.rawname));
+        mat.tile_character = p->readByte( p_races[i] + tile_offset );
+        mat.tilecolor.fore = p->readWord( p_races[i] + tile_color_offset );
+        mat.tilecolor.back = p->readWord( p_races[i] + tile_color_offset + 2 );
+        mat.tilecolor.bright = p->readWord( p_races[i] + tile_color_offset + 4 );
+        
         DfVector <uint32_t> p_castes(p, p_races[i] + castes_vector_offset);
         sizecas = p_castes.size();
         for (uint32_t j = 0; j < sizecas;j++)
@@ -364,11 +390,6 @@ bool Materials::ReadCreatureTypesEx (void)
 
             mat.castes.push_back(caste);
         }
-        mat.tile_character = p->readByte( p_races[i] + tile_offset );
-        mat.tilecolor.fore = p->readWord( p_races[i] + tile_color_offset );
-        mat.tilecolor.back = p->readWord( p_races[i] + tile_color_offset + 2 );
-        mat.tilecolor.bright = p->readWord( p_races[i] + tile_color_offset + 4 );
-
         DfVector <uint32_t> p_extract(p, p_races[i] + extract_vector_offset);
         for(uint32_t j = 0; j < p_extract.size(); j++)
         {
@@ -395,10 +416,10 @@ void Materials::ReadAllMaterials(void)
 
 std::string Materials::getDescription(t_material & mat)
 {
-	std::string out;
-	int32_t typeC;
+    std::string out;
+    int32_t typeC;
 
-	if ( (mat.subIndex<419) || (mat.subIndex>618) )
+    if ( (mat.subIndex<419) || (mat.subIndex>618) )
     {
         if ( (mat.subIndex<19) || (mat.subIndex>218) )
         {
@@ -408,13 +429,13 @@ std::string Materials::getDescription(t_material & mat)
                 else
                 {
                     if (mat.subIndex>=this->other.size())
-					{
-						if(mat.subIndex<0)
-							return "any";
-						if(mat.subIndex>=this->raceEx.size())
-							return "stuff";
-						return this->raceEx[mat.subIndex].rawname;
-					}
+                    {
+                        if(mat.subIndex<0)
+                            return "any";
+                        if(mat.subIndex>=this->raceEx.size())
+                            return "stuff";
+                        return this->raceEx[mat.subIndex].rawname;
+                    }
                     else
                     {
                         if (mat.index==-1)
@@ -424,17 +445,17 @@ std::string Materials::getDescription(t_material & mat)
                     }
                 }
             else
-				if(mat.index<0)
-					return "any inorganic";
-				else
-					return this->inorganic[mat.index].id;
+                if(mat.index<0)
+                    return "any inorganic";
+                else
+                    return this->inorganic[mat.index].id;
         }
         else
         {
             if (mat.index>=this->raceEx.size())
                 return "unknown race";
             typeC = mat.subIndex;
-			typeC -=19;
+            typeC -=19;
             if ((typeC<0) || (typeC>=this->raceEx[mat.index].extract.size()))
             {
                 return string(this->raceEx[mat.index].rawname).append(" extract");
@@ -446,6 +467,6 @@ std::string Materials::getDescription(t_material & mat)
     {
         return this->organic[mat.index].id;
     }
-	return out;
+    return out;
 }
 

@@ -218,7 +218,17 @@
             level_2="Often does the first thing that comes to mind"
             level_1="Acts impulsively"
             level_0="Always acts without considering alternatives or thinking through possibilities">29</Trait>
-            
+          
+            ====================================================================
+                                         M O O D S
+            ====================================================================
+            <Mood id="0" name="Fey"/>
+            <Mood id="1" name="Secretive"/>
+            <Mood id="2" name="Possesed"/>
+            <Mood id="3" name="Macabre"/>
+            <Mood id="4" name="Fell"/>
+            <Mood id="5" name="Melancholy"/>
+          
             ====================================================================
                                    P R O F E S S I O N S
             ====================================================================
@@ -1455,6 +1465,8 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_mood">0x288</Offset>
         <Offset name="creature_birth_year">0x298</Offset>
         <Offset name="creature_birth_time">0x29C</Offset>
+        <Offset name="creature_current_job">0x390</Offset> <!-- from chmod -->
+        <Offset name="creature_mood_skill">0x394</Offset> the skill that will be increased at the end of the mood (or not)
         <Offset name="creature_physical">0x464</Offset>
         <!--
         <Offset name="creature_strength">0x464</Offset>
@@ -1464,8 +1476,6 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_recuperation">0x4D4</Offset>
         <Offset name="creature_disease_resistance">0x4F0</Offset>
         -->
-        <Offset name="creature_current_job">0x390</Offset> <!-- from chmod -->
-        <Offset name="creature_mood_skill">0x394</Offset> the skill that will be increased at the end of the mood (or not)
         <Offset name="creature_appearance_vector">0x604</Offset>
         <Offset name="creature_artifact_name">0x6D4</Offset>
         <Offset name="creature_labors">0x774</Offset>
@@ -1628,7 +1638,6 @@ map_data_1b60_offset          0x1B9c
     <Entry version="v0.31.05" os="windows" id="0.31.05" base="0.31.04" rebase="0x8010">
         <String name="md5">394ff63fc00fedd5df0b36e4beb589bc</String>
         <HexValue name="pe_timestamp">0x4c091569</HexValue>
-        <!--<Address name="creature_vector">0x1678704</Address> CHMOD-->
         <Address name="dwarf_race_index">0x014abee4</Address> CHMOD
         <Address name="dwarf_civ_id">0x1471FB0</Address> BOGUS!
         <Address name="window_dims">0x180b10c</Address> LOOKS O.K.
@@ -1638,48 +1647,6 @@ map_data_1b60_offset          0x1B9c
         <Address name="cursor_xyz">0xaf12cc</Address> VERIFIED
         <Address name="current_tick">0xE80780</Address> LOOKS O.K.
         <Address name="current_year">0xEB2878</Address> LOOKS O.K.
-<!--
-        <Address name="mat_inorganics">0x16BD0B0</Address> 
-        <Address name="mat_organics_all">0x16BD0C8</Address> 
-        <Address name="mat_organics_plants">0x16bd0e0</Address> 
-        <Address name="mat_organics_trees">0x16bd110</Address> 
-        <Address name="creature_type_vector">0x16BD204</Address> 
-        <Address name="descriptor_colors_vector">0x16C5ACC</Address> 
-        <Address name="descriptor_all_colors">0x16C5AFC</Address> 
-        -->
-        <!--<Address name="mat_other">0x16C6478</Address>-->
-        <!--<Address name="mat_stuff">0x16C6478</Address> -->
-        <!--<Address name="descriptor_vectors_start">0x16C5AE4</Address> -->
-        <!--
-        <Address name="language_vector">0x16BD384</Address> OLD
-        <Address name="translation_vector">0x16BD3B4</Address> OLD
-        
-        <Address name="language_vector">0x016c539c</Address> CHMOD
-        <Address name="translation_vector">0x016c53cc</Address> CHMOD
-        -->
-<!--
-        <Address name="map_data">0x16c2ad4</Address> old 0x016BAAC4
-        <Address name="x_count_block">0x16c2af4</Address> old 0x016BAAE4
-        <Address name="y_count_block">0x16c2af8</Address> old 0x016BAAE8
-        <Address name="z_count_block">0x16c2afc</Address> old 0x016BAAEC
-        <Address name="x_count">0x16c2b00</Address> old 0x016BAAF0
-        <Address name="y_count">0x16c2b04</Address> old 0x016BAAF4
-        <Address name="z_count">0x16c2b08</Address> old 0x016BAAF8
-        <Address name="region_x">0x16c2b0C</Address> old 0x016BAAFC
-        <Address name="region_y">0x16c2b10</Address> old 0x016BAB00
-        <Address name="region_z">0x16c2b14</Address> old 0x016BAB04
-        <Address name="world_size_x">0x16C4190</Address> VERIFIED
-        <Address name="world_size_y">0x16C4192</Address> VERIFIED
-        <Address name="geoblock_vector">0x16C48E8</Address> LOOKS O.K.
-        <Address name="ptr2_region_array">0x16C4930</Address> LOOKS O.K.
-        <Address name="global_feature_vector">0x16C48B8</Address> LOOKS O.K.
-        <Address name="local_feature_start_ptr">0x16BC974</Address> 
-
-        <Address name="construction_vector">0x1664CD8</Address> 
-        <Address name="vegetation_vector">0x1679D54</Address>
-        <Address name="buildings_vector">0x16793e8</Address> 
-        <Address name="items_vector">0x1678800</Address> 
--->
         <Offset name="item_type_accessor">0x0</Offset> Why do i have to redefine this ???
         ... what?
     </Entry>
@@ -1687,11 +1654,31 @@ map_data_1b60_offset          0x1B9c
         <String name="md5">c4b7e37dafa2716e31d29110968ac64e</String>
         <HexValue name="pe_timestamp">0x4c0f83d5</HexValue>
         <Address name="cursor_xyz">0xaf12d0</Address>
-[addresses]
-translation_vector      = 0x016c53dc
-language_vector         = 0x016c53ac
-creature_vector         = 0x0168071c
-dwarf_race_index        = 0x014abef4
+    </Entry>
+    <Entry version="v0.31.07" os="windows" id="0.31.07" base="0.31.06" rebase="0x2000">
+        <String name="md5">1c0b5254af1b8ff9a34b51c3f6609da3</String>
+        <HexValue name="pe_timestamp">0x4c1cbe4b</HexValue>
+        <Address name="cursor_xyz">0xaf32d8</Address>0xaf12d0
+        <Address name="window_dims">0x180d11c</Address> 0x180b10c
+        <Address name="window_x">0xe6e0ec</Address>
+        <Address name="window_y">0xe9c1c0</Address>
+        <Address name="window_z">0xe9c19c</Address>
+        map size X: 0x16c4b10
+        map size Y: 0x16c4b14
+    </Entry>
+    <Entry version="v0.31.08" os="windows" id="0.31.08" base="0.31.07" rebase="-0x1000">
+        <String name="md5">a83e6b21307cf41fb54c315fa40dec86</String>
+        <HexValue name="pe_timestamp">0x4c1d69fe</HexValue>
+        <Address name="dwarf_civ_id">0x14acee8</Address>
+        <!--
+        <Address name="cursor_xyz">0xaf32d8</Address>0xaf12d0
+        <Address name="window_dims">0x180d11c</Address> 0x180b10c
+        <Address name="window_x">0xe6e0ec</Address>
+        <Address name="window_y">0xe9c1c0</Address>
+        <Address name="window_z">0xe9c19c</Address>
+        map size X: 0x16c4b10
+        map size Y: 0x16c4b14
+        -->
     </Entry>
 
                             .-"""-.
@@ -1831,9 +1818,23 @@ dwarf_race_index        = 0x014abef4
         Creature type offsets
         =====================
         <Offset name="creature_type_caste_vector">0x60</Offset> VERIFIED
+        from 0.31.08
+        Toad: 0xaf75b68
+        Toad: rawname = 0x0
+        Toad: character (not reliable) = 0x20
+        Toad: caste vector = 0x60
+        Toad: extract? vector = 0x18f4
+        Toad: colors = 0x36
+        <Offset name="creature_type_extract_vector">0x18f4</Offset> VERIFIED
+        <Offset name="creature_tile">0x20</Offset> VERIFIED
+        <Offset name="creature_tile_color">0x36</Offset> LOOKS OK
+
+        <!--
+        <Offset name="creature_type_caste_vector">0x138</Offset>
         <Offset name="creature_type_extract_vector">0x1A14</Offset>
         <Offset name="creature_tile">0xE0</Offset>
         <Offset name="creature_tile_color">0xF6</Offset>
+        -->
         <!--
         struct CreatureType
         {
@@ -2153,10 +2154,37 @@ dwarf_race_index        = 0x014abef4
         <Address name="language_vector">0x931aff4</Address>
         WORLD + 0x54E80
         <Address name="translation_vector">0x931b00c</Address>
+        
+        Creatures
+        =========
+        <Address name="creature_vector">0x92D9AC0</Address>
+        <Address name="dwarf_race_index">0x92C1628</Address>0x092CB608
+        <Address name="dwarf_civ_id">0x92C161C</Address>0x092CB5FC
+        
+        Time
+        ====
+        <Address name="current_year">0x92BF6A0</Address>
+        <Address name="current_tick">0x92BF6A8</Address>
+        YEAR 0x92BF6A0, WORLD - 0x6A40
+        TICKS 0x92BF6A8, WORLD - 0x6A40 + 0x08
+        
     </Entry>
     <Entry version="v0.31.06" os="linux" id="30_06lin" base="30_05lin" rebase="-0x20E0">
         <String name="md5">13a1c19e8f59b74e307e094e2a0f28c3</String>
         <Address name="cursor_xyz">0x8b0b328</Address> VERIFIED
+        WORLD = 0x92C4000
+        Creatures
+        =========
+        WORLD + 0x139E0
+        0x92d79d4
+        0x92d79e0 = real one? seems like it
+        0x92d7a10
+    </Entry>
+    <Entry version="v0.31.07" os="linux" id="30_07lin" base="30_06lin" rebase="0x2000">
+        <String name="md5">b31979551782e89c049b11db8d2d86d7</String>
+    </Entry>
+    <Entry version="v0.31.08" os="linux" id="30_08lin" base="30_07lin">
+        <String name="md5">e37750890350d7b9d8203879aff8fa5c</String>
     </Entry>
     </MemoryDescriptors>
 </DFExtractor>

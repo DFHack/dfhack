@@ -4,6 +4,7 @@
 * DF vegetation - stuff that grows and gets cut down or trampled by dwarves
 */
 #include "dfhack/DFExport.h"
+#include "dfhack/DFModule.h"
 namespace DFHack
 {
     /*
@@ -28,7 +29,7 @@ namespace DFHack
     };
     
     class DFContextShared;
-    class DFHACK_EXPORT Vegetation
+    class DFHACK_EXPORT Vegetation : public Module
     {
         public:
         Vegetation(DFContextShared * d);

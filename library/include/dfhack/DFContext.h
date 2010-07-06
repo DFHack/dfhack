@@ -113,7 +113,7 @@ namespace DFHack
         Constructions * getConstructions();
 
         /// get the Window management and I/O module
-        WindowIO * getWindow();
+        WindowIO * getWindowIO();
 
         // DEAD CODE, WAITING TO BE UPDATED TO DF2010
         /*

@@ -37,7 +37,7 @@ distribution.
 #define SHMCMD(num) ((shm_cmd *)d->d->shm_start)[num]->pingpong
 #define SHMHDR ((shm_core_hdr *)d->d->shm_start)
 #define SHMDATA(type) ((type *)(d->d->shm_start + SHM_HEADER))
-
+#define MAPS_GUARD if(!d->Started) throw DFHack::Error::ModuleNotInitialized();
 using namespace DFHack;
 
 struct Maps::Private
@@ -49,15 +49,15 @@ struct Maps::Private
 
     uint32_t maps_module;
     Server::Maps::maps_offsets offsets;
-    
+
     DFContextShared *d;
     Process * owner;
     bool Inited;
     bool Started;
-    
+
     // map between feature address and the read object
     map <uint32_t, t_feature> local_feature_store;
-    
+
     vector<uint16_t> v_geology[eBiomeCount];
 };
 
@@ -67,10 +67,10 @@ Maps::Maps(DFContextShared* _d)
     d->d = _d;
     Process *p = d->owner = _d->p;
     d->Inited = d->Started = false;
-    
+
     DFHack::memory_info * mem = p->getDescriptor();
     Server::Maps::maps_offsets &off = d->offsets;
-    
+
     // get the offsets once here
     off.map_offset = mem->getAddress ("map_data");
     off.x_count_offset = mem->getAddress ("x_count_block");
@@ -83,27 +83,23 @@ Maps::Maps(DFContextShared* _d)
     off.veinvector = mem->getOffset ("map_data_vein_vector");
     off.local_feature_offset = mem->getOffset ("map_data_feature_local");
     off.global_feature_offset = mem->getOffset ("map_data_feature_global");
-            
+
     off.temperature1_offset = mem->getOffset ("map_data_temperature1_offset");
     off.temperature2_offset = mem->getOffset ("map_data_temperature2_offset");
     off.region_x_offset = mem->getAddress ("region_x");
     off.region_y_offset = mem->getAddress ("region_y");
     off.region_z_offset =  mem->getAddress ("region_z");
-    
-    
+
     off.world_regions =  mem->getAddress ("ptr2_region_array");
     off.region_size =  mem->getHexValue ("region_size");
     off.region_geo_index_offset =  mem->getOffset ("region_geo_index_off");
     off.geolayer_geoblock_offset = mem->getOffset ("geolayer_geoblock_offset");
     off.world_geoblocks_vector =  mem->getAddress ("geoblock_vector");
     off.type_inside_geolayer = mem->getOffset ("type_inside_geolayer");
-    
+
     off.world_size_x = mem->getAddress ("world_size_x");
     off.world_size_y = mem->getAddress ("world_size_y");
-    
-    
-    
-    
+
     // these can fail and will be found when looking at the actual veins later
     // basically a cache
     off.vein_ice_vptr = 0;
@@ -140,15 +136,17 @@ bool Maps::Start()
         return false;
     if(d->Started)
         Finish();
+
     Process *p = d->owner;
     Server::Maps::maps_offsets &off = d->offsets;
+
     // get the map pointer
     uint32_t x_array_loc = p->readDWord (off.map_offset);
     if (!x_array_loc)
     {
         return false;
     }
-    
+
     // get the size
     uint32_t mx, my, mz;
     mx = d->x_block_count = p->readDWord (off.x_count_offset);
@@ -193,6 +191,7 @@ bool Maps::Start()
 // getter for map size
 void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z)
 {
+    MAPS_GUARD
     x = d->x_block_count;
     y = d->y_block_count;
     z = d->z_block_count;
@@ -216,6 +215,7 @@ bool Maps::Finish()
 
 bool Maps::isValidBlock (uint32_t x, uint32_t y, uint32_t z)
 {
+    MAPS_GUARD
     if ( x >= d->x_block_count || y >= d->y_block_count || z >= d->z_block_count)
         return false;
     return d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z] != 0;
@@ -223,6 +223,7 @@ bool Maps::isValidBlock (uint32_t x, uint32_t y, uint32_t z)
 
 uint32_t Maps::getBlockPtr (uint32_t x, uint32_t y, uint32_t z)
 {
+    MAPS_GUARD
     if ( x >= d->x_block_count || y >= d->y_block_count || z >= d->z_block_count)
         return 0;
     return d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
@@ -230,6 +231,7 @@ uint32_t Maps::getBlockPtr (uint32_t x, uint32_t y, uint32_t z)
 
 bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer)
 {
+    MAPS_GUARD
     Process *p = d->owner;
     if(d->d->shm_start && d->maps_module) // ACCELERATE!
     {
@@ -264,10 +266,11 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
 
 /*
  * Tiletypes
- */ 
+ */
 
 bool Maps::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
@@ -279,6 +282,7 @@ bool Maps::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buff
 
 bool Maps::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
@@ -289,11 +293,12 @@ bool Maps::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buf
 }
 
 /*
- * Dirty flags
- */ 
+ * Dirty bit
+ */
 
 bool Maps::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if(addr)
     {
@@ -307,6 +312,7 @@ bool Maps::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
 
 bool Maps::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
@@ -321,9 +327,12 @@ bool Maps::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
     return false;
 }
 
-/// read/write the block flags
+/*
+ * Block flags
+ */
 bool Maps::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags &blockflags)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if(addr)
     {
@@ -336,6 +345,7 @@ bool Maps::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags &bloc
 }
 bool Maps::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags blockflags)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
@@ -349,10 +359,10 @@ bool Maps::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags bloc
 
 /*
  * Designations
- */ 
-
+ */
 bool Maps::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
@@ -364,6 +374,7 @@ bool Maps::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d
 
 bool Maps::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
@@ -375,10 +386,10 @@ bool Maps::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, designations40
 
 /*
  * Occupancies
- */ 
-
+ */
 bool Maps::ReadOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buffer)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
@@ -390,6 +401,7 @@ bool Maps::ReadOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *bu
 
 bool Maps::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buffer)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
@@ -401,9 +413,10 @@ bool Maps::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *b
 
 /*
  * Temperatures
- */ 
+ */
 bool Maps::ReadTemperatures(uint32_t x, uint32_t y, uint32_t z, t_temperatures *temp1, t_temperatures *temp2)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
@@ -417,6 +430,7 @@ bool Maps::ReadTemperatures(uint32_t x, uint32_t y, uint32_t z, t_temperatures *
 }
 bool Maps::WriteTemperatures (uint32_t x, uint32_t y, uint32_t z, t_temperatures *temp1, t_temperatures *temp2)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
@@ -434,6 +448,7 @@ bool Maps::WriteTemperatures (uint32_t x, uint32_t y, uint32_t z, t_temperatures
  */ 
 bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices40d *buffer)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
@@ -445,6 +460,7 @@ bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices4
 
 bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, int16_t & local, int16_t & global)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
@@ -458,6 +474,7 @@ bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, int16_t & local, int
 
 bool Maps::WriteLocalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t local)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
@@ -470,6 +487,7 @@ bool Maps::WriteLocalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t local)
 
 bool Maps::WriteGlobalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t global)
 {
+    MAPS_GUARD
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
@@ -485,6 +503,7 @@ bool Maps::WriteGlobalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t global
  */ 
 bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins, vector <t_frozenliquidvein>* ices, vector <t_spattervein> *splatter)
 {
+    MAPS_GUARD
     t_vein v;
     t_frozenliquidvein fv;
     t_spattervein sv;
@@ -625,6 +644,7 @@ __int16 __userpurge GetGeologicalRegion<ax>(__int16 block_X<cx>, int X<ebx>, __i
  */
 bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 {
+    MAPS_GUARD
     memory_info * minfo = d->d->offset_descriptor;
     Process *p = d->owner;
     // get needed addresses and offsets. Now this is what I call crazy.
@@ -694,10 +714,11 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 
 bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > & local_features )
 {
+    MAPS_GUARD
     // can't be used without a map!
     if(!d->block)
         return false;
-    
+
     Process * p = d->owner;
     memory_info * mem = p->getDescriptor();
     // deref pointer to the humongo-structure
@@ -709,32 +730,26 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
     const uint32_t offset_elem = 4;
     const uint32_t main_mat_offset = mem->getOffset("local_feature_mat"); // 0x30
     const uint32_t sub_mat_offset = mem->getOffset("local_feature_submat"); // 0x34
-    
+
     local_features.clear();
-    
+
     for(uint32_t blockX = 0; blockX < d->x_block_count; blockX ++)
         for(uint32_t blockY = 0; blockY < d->x_block_count; blockY ++)
     {
-        //uint64_t block48_x = blockX / 3 + d->regionX;
-        //uint16_t region_x_plus8 = ( block48_x + 8 ) / 16;
-        
-        // region X coord offset by 8 big blocks (48x48 tiles)
-        uint16_t region_x_plus8 = ( (blockX / 3 ) + d->regionX /*+ 8*/ ) / 16;
-        //((BYTE4(region_x_local) & 0xF) + (_DWORD)region_x_local) >> 4;
-        //int16_t region_x_local = (blockX / 3) + d->regionX;
-        //int16_t region_x_plus8 = ((region_x_local & 0xF) + region_x_local) >> 4;
-        // plain region Y coord
+        // region X coord (48x48 tiles)
+        uint16_t region_x_local = ( (blockX / 3) + d->regionX ) / 16;
+        // region Y coord (48x48 tiles)
         uint64_t region_y_local = ( (blockY / 3) + d->regionY ) / 16;
-        
+
         // this is just a few pointers to arrays of 16B (4 DWORD) structs
-        uint32_t array_elem = p->readDWord(base + (region_x_plus8 / 16) * 4);
-        
+        uint32_t array_elem = p->readDWord(base + (region_x_local / 16) * 4);
+
         // 16B structs, second DWORD of the struct is a pointer
         uint32_t wtf = p->readDWord(array_elem + ( sizeof_elem * ( (uint32_t)region_y_local/16)) + offset_elem); 
         if(wtf)
         {
             // wtf + sizeof(vector<ptr>) * crap;
-            uint32_t feat_vector = wtf + sizeof_vec * (16 * (region_x_plus8 % 16) + (region_y_local % 16));
+            uint32_t feat_vector = wtf + sizeof_vec * (16 * (region_x_local % 16) + (region_y_local % 16));
             DfVector<uint32_t> p_features(p, feat_vector);
             uint32_t size = p_features.size();
             planecoord pc;
@@ -744,7 +759,7 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
             for(uint32_t i = 0; i < size; i++)
             {
                 uint32_t cur_ptr = p_features[i];
-                
+
                 map <uint32_t, t_feature>::iterator it;
                 it = d->local_feature_store.find(cur_ptr);
                 // do we already have the feature?
@@ -792,19 +807,20 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
 
 bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
 {
+    MAPS_GUARD
     // can't be used without a map!
     if(!d->block)
         return false;
-    
+
     Process * p = d->owner;
     memory_info * mem = p->getDescriptor();
-    
+
     uint32_t global_feature_vector = mem->getAddress("global_feature_vector");
     uint32_t global_feature_funcptr = mem->getOffset("global_feature_funcptr_");
     const uint32_t main_mat_offset = mem->getOffset("global_feature_mat"); // 0x34
     const uint32_t sub_mat_offset = mem->getOffset("global_feature_submat"); // 0x38
     DfVector<uint32_t> p_features (p,global_feature_vector);
-    
+
     features.clear();
     uint32_t size = p_features.size();
     features.reserve(size);
@@ -815,7 +831,7 @@ bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
         temp.origin = feat_ptr;
         //temp.discovered = p->readDWord( feat_ptr + 4 ); // maybe, placeholder
         temp.discovered = false;
-        
+
         // FIXME: use the memory_info cache mechanisms
         string name = p->readClassName(p->readDWord( feat_ptr));
         if(name == "feature_init_underworld_from_layerst")

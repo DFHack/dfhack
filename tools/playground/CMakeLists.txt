@@ -13,6 +13,10 @@ TARGET_LINK_LIBRARIES(dfmoodump dfhack)
 ADD_EXECUTABLE(dftest test.cpp)
 TARGET_LINK_LIBRARIES(dftest dfhack)
 
+# just dump offsets of the current version
+ADD_EXECUTABLE(dfdoffsets dumpoffsets.cpp)
+TARGET_LINK_LIBRARIES(dfdoffsets dfhack)
+
 # bauxite - turn all mechanisms into bauxite mechanisms
 # Author: Alex Legg
 #ADD_EXECUTABLE(dfbauxite dfbauxite.cpp)

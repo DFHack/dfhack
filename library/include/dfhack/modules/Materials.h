@@ -1,13 +1,14 @@
 #ifndef CL_MOD_MATERIALS
 #define CL_MOD_MATERIALS
 /*
-* Creatures
-*/
+ * Materials
+ */
 #include "dfhack/DFExport.h"
+#include "dfhack/DFModule.h"
 namespace DFHack
 {
     class DFContextShared;
-    
+
     struct t_matgloss
     {
         char id[128]; //the id in the raws
@@ -53,7 +54,7 @@ namespace DFHack
         uint32_t startdate; /* in days */
         uint32_t enddate; /* in days */
     };
-    
+
     struct t_creaturecaste
     {
         char rawname[128];
@@ -115,12 +116,13 @@ namespace DFHack
         int32_t index;
         uint32_t flags;
     };
-    
-    class DFHACK_EXPORT Materials
+
+    class DFHACK_EXPORT Materials : public Module
     {
     public:
         Materials(DFHack::DFContextShared * _d);
         ~Materials();
+        bool Finish();
 
         std::vector<t_matgloss> inorganic;
         std::vector<t_matgloss> organic;

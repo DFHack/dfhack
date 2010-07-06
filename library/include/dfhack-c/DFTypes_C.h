@@ -102,8 +102,8 @@ DFHACK_EXPORT extern int (*alloc_creaturetype_callback)(c_creaturetype*, const c
 DFHACK_EXPORT extern int (*alloc_creaturetype_buffer_callback)(c_creaturetype*, uint32_t);
 
 DFHACK_EXPORT extern int (*alloc_vein_buffer_callback)(t_vein*, uint32_t);
-DFHACK_EXPORT extern int (*alloc_frozenliquidvein_callback)(t_frozenliquidvein*, uint32_t);
-DFHACK_EXPORT extern int (*alloc_spattervein_callback)(t_spattervein*, uint32_t);
+DFHACK_EXPORT extern int (*alloc_frozenliquidvein_buffer_callback)(t_frozenliquidvein*, uint32_t);
+DFHACK_EXPORT extern int (*alloc_spattervein_buffer_callback)(t_spattervein*, uint32_t);
 
 #ifdef __cplusplus
 }

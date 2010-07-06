@@ -2,6 +2,9 @@ from ctypes import *
 from pydftypes import *
 from util import _uintify, uint_ptr
 
+_MAX_DIM = 0x300
+_MAX_DIM_SQR = _MAX_DIM * _MAX_DIM
+
 libdfhack.Maps_getSize.argtypes = [ c_void_p, uint_ptr, uint_ptr, uint_ptr ]
 libdfhack.Maps_ReadTileTypes.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(TileTypes40d) ]
 libdfhack.Maps_WriteTileTypes.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(TileTypes40d) ]
@@ -161,3 +164,63 @@ class Maps(object):
             return (int(x.value), int(y.value), int(z.value))
         else:
             return (-1, -1, -1)
+
+class MapPoint(object):
+    __slots__ = ["_x", "_y", "_z", "_cmp_val"]
+    
+    def __init__(self, x = 0, y = 0, z = 0):
+        self._x, self._y, self._z = x, y, z
+        
+        self._cmp_val = self._get_cmp_value()
+    
+    def _val_set(self, which, val):
+        if which == 0:
+            self._x = val
+        elif which == 1:
+            self._y = val
+        elif which == 2:
+            self._z = val
+        
+        self._cmp_val = self._get_cmp_value()
+    
+    x = property(fget = lambda self:  self._x, fset = lambda self, v:  self._val_set(0, v))
+    y = property(fget = lambda self:  self._y, fset = lambda self, v:  self._val_set(1, v))
+    z = property(fget = lambda self:  self._z, fset = lambda self, v:  self._val_set(2, v))
+    
+    def _get_cmp_value(self):
+        return (self.z * _MAX_DIM_SQR) + (self.y * _MAX_DIM) + self.x
+    
+    #comparison operators
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y and self.z == other.z
+    
+    def __ne__(self, other):
+        return not self == other
+    
+    def __lt__(self, other):
+        return self._cmp_val < other._cmp_val
+    
+    def __le__(self, other):
+        return self < other or self == other
+    
+    def __gt__(self, other):
+        return self._cmp_val > other._cmp_val
+    
+    def __ge__(self, other):
+        return self > other or self == other
+    
+    #arithmetic operators    
+    def __add__(self, num):
+        return MapPoint(self.x, self.y, self.z + num)
+    
+    def __sub__(self, num):
+        return MapPoint(self.x, self.y, self.z - num)
+    
+    def __div__(self, num):
+        return MapPoint(self.x / num, self.y / num, self.z)
+    
+    def __mul__(self, num):
+        return MapPoint(self.x * num, self.y * num, self.z)
+    
+    def __mod__(self, num):
+        return MapPoint(self.x % num, self.y % num, self.z)

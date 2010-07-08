@@ -22,6 +22,8 @@ SET( LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output CACHE PATH "Output directory
 SET( EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output CACHE PATH "Output directory for the dfhack tools" )
 
 OPTION(BUILD_DFHACK_DOCUMENTATION "Create doxygen documentation for developers" OFF)
+OPTION(BUILD_DFHACK_EXAMPLES "Build example tools" OFF)
+OPTION(BUILD_DFHACK_PLAYGROUND "Build tools from the playground folder" OFF)
 
 include_directories (${CMAKE_SOURCE_DIR}/library/include/)
 include_directories (${CMAKE_SOURCE_DIR}/library/shm/)

@@ -1,5 +1,8 @@
 # don't use this file directly. use the one in the root folder of the project
 
+# only build this stuff when BUILD_DFHACK_EXAMPLES is set to ON
+IF (BUILD_DFHACK_EXAMPLES)
+
 # this is required to ensure we use the right configuration for the system.
 IF(UNIX)
 add_definitions(-DLINUX_BUILD)
@@ -86,3 +89,5 @@ IF(UNIX)
         MESSAGE(STATUS "Wide-character ncurses library not found - veinlook can't be built")
     ENDIF(CURSES_FOUND)
 ENDIF(UNIX)
+
+ENDIF (BUILD_DFHACK_EXAMPLES)

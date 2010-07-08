@@ -1,5 +1,8 @@
 # don't use this file directly. use the one in the root folder of the project
 
+# only build this stuff when BUILD_DFHACK_PLAYGROUND is set to ON
+IF (BUILD_DFHACK_PLAYGROUND)
+
 # this is required to ensure we use the right configuration for the system.
 IF(UNIX)
 add_definitions(-DLINUX_BUILD)
@@ -60,3 +63,5 @@ TARGET_LINK_LIBRARIES(dfcatsplosion dfhack)
 # Author: belal
 #ADD_EXECUTABLE(dfrenamer renamer.cpp)
 #TARGET_LINK_LIBRARIES(dfrenamer dfhack)
+
+ENDIF (BUILD_DFHACK_PLAYGROUND)

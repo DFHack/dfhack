@@ -719,6 +719,10 @@ main(int argc, char *argv[])
         
         // Supend, read/write data
         DF->Suspend();
+        // restart cleared modules
+        Maps->Start();
+        Mats->Start();
+        Mats->ReadInorganicMaterials();
         uint32_t effectnum;
         /*
         if(DF.InitReadEffects(effectnum))

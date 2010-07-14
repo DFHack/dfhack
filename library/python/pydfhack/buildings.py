@@ -4,7 +4,7 @@ import util
 
 libdfhack.Buildings_GetCustomWorkshopType.argtypes = [ c_void_p, POINTER(CustomWorkshop) ]
 
-def Buildings(object):
+class Buildings(object):
     def __init__(self, ptr):
         self._b_ptr = ptr
 

@@ -69,6 +69,10 @@ DFHACK_EXPORT int Maps_WriteBlockFlags(DFHackObject* maps, uint32_t x, uint32_t 
 
 DFHACK_EXPORT int Maps_ReadRegionOffsets(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, biome_indices40d* buffer);
 
+DFHACK_EXPORT t_vein* Maps_ReadStandardVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
+DFHACK_EXPORT t_frozenliquidvein* Maps_ReadFrozenVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
+DFHACK_EXPORT t_spattervein* Maps_ReadSpatterVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
+
 #ifdef __cplusplus
 }
 #endif

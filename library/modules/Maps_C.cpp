@@ -22,6 +22,12 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+#include "dfhack-c/DFTypes_C.h"
 #include "dfhack-c/modules/Maps_C.h"
 
 #ifdef __cplusplus
@@ -266,6 +272,98 @@ int Maps_ReadRegionOffsets(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t 
 	}
 	
 	return -1;
+}
+
+t_vein* Maps_ReadStandardVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z)
+{
+	if(maps != NULL)
+	{
+		if(alloc_vein_buffer_callback == NULL)
+			return NULL;
+		
+		vector<t_vein> veins;
+		bool result = ((DFHack::Maps*)maps)->ReadVeins(x, y, z, &veins);
+		
+		if(result)
+		{
+			t_vein* v_buf = NULL;
+			
+			if(veins.size() > 0)
+			{
+				((*alloc_vein_buffer_callback)(v_buf, veins.size()));
+				
+				copy(veins.begin(), veins.end(), v_buf);
+			}
+			
+			return v_buf;
+		}
+		else
+			return NULL;
+	}
+	
+	return NULL;
+}
+
+t_frozenliquidvein* Maps_ReadFrozenVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z)
+{
+	if(maps != NULL)
+	{
+		if(alloc_frozenliquidvein_callback == NULL)
+			return NULL;
+		
+		vector<t_vein> veins;
+		vector<t_frozenliquidvein> frozen_veins;
+		bool result = ((DFHack::Maps*)maps)->ReadVeins(x, y, z, &veins, &frozen_veins);
+		
+		if(result)
+		{
+			t_frozenliquidvein* fv_buf = NULL;
+			
+			if(frozen_veins.size() > 0)
+			{
+				((*alloc_frozenliquidvein_buffer_callback)(fv_buf, frozen_veins.size()));
+				
+				copy(frozen_veins.begin(), frozen_veins.end(), fv_buf);
+			}
+			
+			return fv_buf;
+		}
+		else
+			return NULL;
+	}
+	
+	return NULL;
+}
+
+t_spattervein* Maps_ReadSpatterVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z)
+{
+	if(maps != NULL)
+	{
+		if(alloc_spattervein_callback == NULL)
+			return NULL;
+		
+		vector<t_vein> veins;
+		vector<t_spattervein> spatter_veins;
+		bool result = ((DFHack::Maps*)maps)->ReadVeins(x, y, z, &veins, 0, &spatter_veins);
+		
+		if(result)
+		{
+			t_spattervein* sv_buf = NULL;
+			
+			if(spatter_veins.size() > 0)
+			{
+				((*alloc_spattervein_buffer_callback)(sv_buf, spatter_veins.size()));
+				
+				copy(spatter_veins.begin(), spatter_veins.end(), sv_buf);
+			}
+			
+			return sv_buf;
+		}
+		else
+			return NULL;
+	}
+	
+	return NULL;
 }
 
 #ifdef __cplusplus

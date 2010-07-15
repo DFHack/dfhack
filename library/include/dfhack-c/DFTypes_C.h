@@ -27,6 +27,7 @@ distribution.
 
 #include "DFHack_C.h"
 #include "dfhack/DFTypes.h"
+#include "dfhack/modules/Maps.h"
 #include "dfhack/modules/Materials.h"
 
 #ifdef __cplusplus
@@ -99,6 +100,17 @@ struct c_creaturetype
 DFHACK_EXPORT extern int (*alloc_empty_creaturetype_callback)(c_creaturetype*);
 DFHACK_EXPORT extern int (*alloc_creaturetype_callback)(c_creaturetype*, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t);
 DFHACK_EXPORT extern int (*alloc_creaturetype_buffer_callback)(c_creaturetype*, uint32_t);
+
+DFHACK_EXPORT extern int (*alloc_vein_buffer_callback)(t_vein*, uint32_t);
+DFHACK_EXPORT extern int (*alloc_frozenliquidvein_buffer_callback)(t_frozenliquidvein*, uint32_t);
+DFHACK_EXPORT extern int (*alloc_spattervein_buffer_callback)(t_spattervein*, uint32_t);
+
+DFHACK_EXPORT extern int DFHack_isWallTerrain(int in);
+DFHACK_EXPORT extern int DFHack_isFloorTerrain(int in);
+DFHACK_EXPORT extern int DFHack_isRampTerrain(int in);
+DFHACK_EXPORT extern int DFHack_isStairTerrain(int in);
+DFHACK_EXPORT extern int DFHack_isOpenTerrain(int in);
+DFHACK_EXPORT extern int DFHack_getVegetationType(int in);
 
 #ifdef __cplusplus
 }

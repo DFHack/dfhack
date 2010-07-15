@@ -1685,7 +1685,23 @@ map_data_1b60_offset          0x1B9c
         <!-- TODO: small offsets added all over the place, investigate -->
         <String name="md5">1a85839ab03df082974dc5629d3fbc26</String>
         <HexValue name="pe_timestamp">0x4C3897C0</HexValue>
-        <Address name="cursor_xyz">0xaff2d8</Address>0xaf12d0
+        <Address name="cursor_xyz">0xaff2d8</Address>       
+        <Address name="language_vector">0x16D33CC</Address>
+        <Address name="translation_vector">0x16D33FC</Address>
+        <Offset name="word_table">0x4c</Offset>
+
+        Creatures
+        =========
+        <Address name="creature_vector">0x168E73C</Address>
+        <Address name="dwarf_race_index">0x014b9f1c</Address>      
+        <Offset name="creature_soulskill_vector">0X1F4</Offset>
+        <Offset name="creature_physical">0x4AC</Offset>        
+        <Offset name="creature_appearance_vector">0x64c</Offset> <!-- Maybe slightly wrong -->
+        <Offset name="creature_artifact_name">0x71c</Offset>
+        <Offset name="creature_labors">0x7Bc</Offset>
+        <Offset name="creature_soul_vector">0x0788</Offset>
+        <Offset name="creature_default_soul">0x07A0</Offset>
+        <Offset name="creature_happiness">0x87c</Offset>
     </Entry>
     <Entry version="v0.31.10" os="windows" id="0.31.10" base="0.31.09">
         <String name="md5">349d1ad6eda7b6c5e87f8e4726a0999a</String>

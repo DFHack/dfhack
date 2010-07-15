@@ -145,6 +145,7 @@ namespace DFHack
 
         void ReadAllMaterials(void);
 
+		std::string getType(t_material & mat);
         std::string getDescription(t_material & mat);
     private:
         class Private;

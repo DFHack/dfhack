@@ -202,7 +202,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     // mood stuff
     furball.mood = (int16_t) p->readWord (temp + offs.mood_offset);
     furball.mood_skill = p->readWord (temp + offs.mood_skill_offset);
-    d->d->readName(furball.artifact_name, temp + offs.artifact_name_offset);
+	d->d->readName(furball.artifact_name, temp + offs.artifact_name_offset);
 
     // custom profession
     p->readSTLString(temp + offs.custom_profession_offset, furball.custom_profession, sizeof(furball.custom_profession));

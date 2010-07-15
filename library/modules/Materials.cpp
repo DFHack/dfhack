@@ -470,3 +470,53 @@ std::string Materials::getDescription(t_material & mat)
     return out;
 }
 
+//type of material only so we know which vector to retrieve
+std::string Materials::getType(t_material & mat)
+{
+	if((mat.subIndex<419) || (mat.subIndex>618))
+	{
+		if((mat.subIndex<19) || (mat.subIndex>218))
+		{
+			if(mat.subIndex)
+			{
+				if(mat.subIndex>0x292)
+				{
+					return "unknown";
+				}
+				else
+				{
+					if(mat.subIndex>=this->other.size())
+					{
+						if(mat.subIndex<0)
+							return "any";
+
+						if(mat.subIndex>=this->raceEx.size())
+							return "unknown";
+
+						return "racex";
+					}
+					else
+					{
+						if (mat.index==-1)
+							return "other";
+						else
+							return "other derivate";
+					}
+				}
+			}
+			else               
+				return "inorganic";
+		}
+		else
+		{
+			if (mat.index>=this->raceEx.size())
+				return "unknown";
+
+			return "racex extract";
+		}
+	}
+	else
+	{
+		return "organic";
+	}
+}

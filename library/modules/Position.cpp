@@ -41,12 +41,15 @@ struct Position::Private
     uint32_t hotkey_mode_offset;
     uint32_t hotkey_xyz_offset;
     uint32_t hotkey_size;
+    
+    uint32_t screen_tiles_ptr_offset;
 
     DFContextShared *d;
     Process * owner;
     bool Inited;
     bool Started;
     bool StartedHotkeys;
+    bool StartedScreen;
 };
 
 Position::Position(DFContextShared * d_)
@@ -55,7 +58,7 @@ Position::Position(DFContextShared * d_)
     d->d = d_;
     d->owner = d_->p;
     d->Inited = true;
-    d->StartedHotkeys = d->Started = false;
+    d->StartedHotkeys = d->Started = d->StartedScreen = false;
     memory_info * mem;
     try
     {
@@ -75,6 +78,12 @@ Position::Position(DFContextShared * d_)
         d->hotkey_xyz_offset = mem->getOffset("hotkey_xyz");
         d->hotkey_size = mem->getHexValue("hotkey_size");
         d->StartedHotkeys = true;
+    }
+    catch(exception &){};
+    try
+    {
+        d->screen_tiles_ptr_offset = mem->getAddress ("screen_tiles_pointer");
+        d->StartedScreen = true;
     }
     catch(exception &){};
 }
@@ -161,3 +170,32 @@ bool Position::getWindowSize (int32_t &width, int32_t &height)
     return true;
 }
 
+/*
+bool Position::getScreenTiles (int32_t width, int32_t height, t_screen screen[])
+{
+    if(!d->Inited) return false;
+    uint32_t screen_addr;
+    d->owner->read (d->screen_tiles_ptr_offset, sizeof(uint32_t), (uint8_t *) screen_addr);
+
+    uint8_t* tiles = new uint8_t[width*height*4 + 80 + width*height*4];
+
+    d->owner->read (screen_addr, (width*height*4 + 80 + width*height*4), (uint8_t *) tiles);
+
+    for(int32_t iy=0; iy<height; iy++)
+    {
+        for(int32_t ix=0; ix<width; ix++)
+        {
+            screen[ix + iy*width].symbol = tiles[iy + ix*height +0];
+            screen[ix + iy*width].foreground = tiles[iy + ix*height +1];
+            screen[ix + iy*width].background = tiles[iy + ix*height +2];
+            screen[ix + iy*width].bright = tiles[iy + ix*height +3];
+            screen[ix + iy*width].gtile = tiles[width*height*4 + 80 + iy + ix*height +0];
+            screen[ix + iy*width].grayscale = tiles[width*height*4 + 80 + iy + ix*height +1];
+        }
+    }
+
+    delete [] tiles;
+
+    return true;
+}
+*/

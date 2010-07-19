@@ -1485,20 +1485,23 @@ map_data_1b60_offset          0x1B9c
 
         Castes
         ======
-        <Offset name="color_modifier_part">0x70</Offset>
-        <Offset name="color_modifier_startdate">0x64</Offset>
-        <Offset name="color_modifier_enddate">0x68</Offset>
         <Offset name="caste_bodypart_vector">0x51C</Offset>
-        <Offset name="caste_color_modifiers">0xACC</Offset>
         <Offset name="caste_attributes">0x654</Offset>
+        <Offset name="caste_color_modifiers">0xACC</Offset>
 
-        Body Parts
-        ==========
-        <Offset name="bodypart_id">0x0</Offset>
-        <Offset name="bodypart_category">0x1C</Offset>
-        <Offset name="bodypart_layers_vector">0x44</Offset>
-        <Offset name="bodypart_singular_vector">0x78</Offset>
-        <Offset name="bodypart_plural_vector">0x90</Offset>
+            Color Mods
+            ==========
+            <Offset name="color_modifier_part">0x70</Offset>
+            <Offset name="color_modifier_startdate">0x64</Offset>
+            <Offset name="color_modifier_enddate">0x68</Offset>
+
+            Body Parts
+            ==========
+            <Offset name="bodypart_id">0x0</Offset>
+            <Offset name="bodypart_category">0x1C</Offset>
+            <Offset name="bodypart_layers_vector">0x44</Offset>
+            <Offset name="bodypart_singular_vector">0x78</Offset>
+            <Offset name="bodypart_plural_vector">0x90</Offset>
 
         Materials
         =========
@@ -1777,48 +1780,38 @@ map_data_1b60_offset          0x1B9c
 
         Creature offsets
         ================
-        <Offset name="creature_name">0x0</Offset>
-        <Offset name="creature_custom_profession">0x6c</Offset>
-        <Offset name="creature_profession">0x3c</Offset> *
-        <Offset name="creature_race">0x44</Offset> *
-        <Offset name="creature_position">0x90</Offset>
-        <Offset name="creature_flags1">0x8C</Offset> *
-        <Offset name="creature_flags2">0x90</Offset> *
-        <Offset name="creature_caste">0x110</Offset>
-        <Offset name="creature_sex">0xA6</Offset> *
-        <Offset name="creature_id">0x114</Offset>
-        <Offset name="creature_civ">0XB4</Offset> *
-        <Offset name="creature_soulskill_vector">0X1F4</Offset>
-        <Offset name="creature_pickup_equipment_bit">0X21C</Offset>
-        
-        <Offset name="creature_mood">0x18C</Offset> *
-        <Offset name="creature_birth_year">0x19C</Offset> *
-        <Offset name="creature_birth_time">0x1A0</Offset> *
-        <Offset name="creature_physical">0x464</Offset>
-        <Offset name="creature_current_job">0x390</Offset> from chmod
-        <Offset name="creature_mood_skill">0x394</Offset> the skill that will be increased at the end of the mood (or not)
-        <Offset name="creature_appearance_vector">0x604</Offset>
-        <Offset name="creature_artifact_name">0x6D4</Offset>
-        <Offset name="creature_labors">0x774</Offset>
-        <Offset name="creature_soul_vector">0x0740</Offset>
-        <Offset name="creature_default_soul">0x0758</Offset>
-        <Offset name="creature_happiness">0x834</Offset>
+        <Offset name="creature_name">0x0</Offset> VERIFIED
+        <Offset name="creature_custom_profession">0x3c</Offset> CHMOD
+        <Offset name="creature_profession">0x40</Offset> CHMOD
+        <Offset name="creature_race">0x44</Offset> CHMOD
+        <Offset name="creature_position">0x90</Offset> BAD!!
+        <Offset name="creature_flags1">0x8C</Offset> CHMOD
+        <Offset name="creature_flags2">0x90</Offset> CHMOD
+        <Offset name="creature_caste">0xA4</Offset> VERIFY
+        <Offset name="creature_sex">0xA6</Offset> CHMOD
+        <Offset name="creature_id">0xA8</Offset> CHMOD
+        <Offset name="creature_civ">0xB4</Offset> VERIFY!
+        <Offset name="creature_pickup_equipment_bit">0X144</Offset> CHMOD
+        <Offset name="creature_mood">0x18C</Offset> VERIFY!
+        <Offset name="creature_birth_year">0x19C</Offset> VERIFY!
+        <Offset name="creature_birth_time">0x1A0</Offset> VERIFY!
+        <Offset name="creature_physical">0x464</Offset> BAD!
+        <Offset name="creature_current_job">0x258</Offset> CHMOD
+        <Offset name="creature_mood_skill">0x394</Offset> VERIFY!
+            the skill that will be increased at the end of the mood (or not)
+        <Offset name="creature_appearance_vector">0x604</Offset> BAD!
+        <Offset name="creature_artifact_name">0x6D4</Offset> BAD!
+        <Offset name="creature_labors">0x51C</Offset> CHMOD
+        <Offset name="creature_soul_vector">0x0500</Offset> CHMOD
+        <Offset name="creature_default_soul">0x0758</Offset> BAD!
+        <Offset name="creature_happiness">0x5AC</Offset> CHMOD
 
         Souls
         =====
         <Offset name="soul_name">0x0</Offset>
-        <Offset name="soul_skills_vector">0x1F4</Offset>
-        <Offset name="soul_traits">0x224</Offset>
-        <Offset name="soul_mental">0x88</Offset>
-
-        Castes
-        ======
-        <Offset name="color_modifier_part">0x70</Offset>
-        <Offset name="color_modifier_startdate">0x64</Offset>
-        <Offset name="color_modifier_enddate">0x68</Offset>
-        <Offset name="caste_bodypart_vector">0x51C</Offset>
-        <Offset name="caste_color_modifiers">0xACC</Offset>
-        <Offset name="caste_attributes">0x654</Offset>
+        <Offset name="soul_skills_vector">0x1C4</Offset> CHMOD
+        <Offset name="soul_traits">0x1DC</Offset> CHMOD
+        <Offset name="soul_mental">0x88</Offset> BAD!
 
         Body Parts
         ==========
@@ -1856,6 +1849,14 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_tile">0x20</Offset> VERIFIED
         <Offset name="creature_tile_color">0x36</Offset> LOOKS OK
 
+        Castes
+        ======
+        <Offset name="color_modifier_part">0x70</Offset>
+        <Offset name="color_modifier_startdate">0x64</Offset>
+        <Offset name="color_modifier_enddate">0x68</Offset>
+        <Offset name="caste_bodypart_vector">0x51C</Offset>
+        <Offset name="caste_color_modifiers">0xACC</Offset>
+        <Offset name="caste_attributes">0x654</Offset>
         <!--
         <Offset name="creature_type_caste_vector">0x138</Offset>
         <Offset name="creature_type_extract_vector">0x1A14</Offset>

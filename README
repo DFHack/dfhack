@@ -33,10 +33,10 @@ OSX is also not supported due to lack of developers with a Mac.
 Currently supported Dwarf Fortress versions:
 * Windows
   0.31.01 - 0.31.03 legacy
-  0.31.04 - 0.31.08 SDL
+  0.31.04 - 0.31.10 SDL
 
 * Linux
-  0.31.04 - 0.31.08 native.
+  0.31.04 - 0.31.10 native.
   There are missing offsets but Map tools should be OK. Linux support is a bit lacking, I'm working on it.
   All supported Windows versions running in wine can be used with DFHack.
 
@@ -119,7 +119,7 @@ External : linked as dynamic loaded libraries (.dll, .so, etc.)
 
 If you want to add dependencies, think twice about it. All internal dependencies
 for core dfhack should be either public domain or require attribution at most.
-Internal dependencies for tools can be either that, or any Free Software
+External dependencies for tools can be either that, or any Free Software
 licenses.
 
 ** Current internal dependencies **
@@ -132,7 +132,7 @@ argstream: Allows reading terminal application arguments. GPL!
 ** Current external dependencies **
 
 wide-character ncurses : used for the veinlook tool on Linux.
-python 2.6             : required for building and using the python bindings.
+x11 libraries          : used for sending key events on linux
 
 ** Build-time dependencies **
 cmake: you need cmake to generate the build system and some configuration

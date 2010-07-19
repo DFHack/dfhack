@@ -99,10 +99,6 @@ There are others, but they aren't really that useful.
 
 Have fun.
 
---------------------------------------------------------------------------------
-**Deprecated*Deprecated*Deprecated*Deprecated*Deprecated*Deprecated*Deprecated**
---------------------------------------------------------------------------------
-
 Building the shared memory hook library (SHM) 
 ---------------------------------------------
 
@@ -110,7 +106,7 @@ Unlike the rest of DFHack, The SHM needs special treatment when it comes to
 compilation. Because it shares the memory space with DF itself, it has to be
 built with the same tools as DF and use the same C and C++/STL libraries.
 
-For DF 40d15 - 40d19_2 on Windows, use MSVC 2008. You can get the Express
+For DF 31.01 - 31.10 on Windows, use MSVC 2008. You can get the Express
 edition for free from Microsoft.
 
 Windows dependencies can be determined by a tool like depends.exe (google it).
@@ -124,24 +120,24 @@ $export LD_DEBUG=versions
 $./df
 
 Example of (a part of a) relevant output from a working SHM installation:
-     24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libpthread.so.0 [0] required by file ./dwarfort.exe [0]                                                                                              
-     24472:     checking for version `GCC_3.0' in file ./libs/libgcc_s.so.1 [0] required by file ./dwarfort.exe [0]                                                                                                          
-     24472:     checking for version `GLIBC_2.0' in file ./libs/libgcc_s.so.1 [0] required by file ./dwarfort.exe [0]                                                                                                        
-     24472:     checking for version `GLIBC_2.1' in file /opt/lib32/lib/libm.so.6 [0] required by file ./dwarfort.exe [0]                                                                                                    
-     24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libm.so.6 [0] required by file ./dwarfort.exe [0]                                                                                                    
-     24472:     checking for version `GLIBC_2.1.3' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]                                                                                                  
-     24472:     checking for version `GLIBC_2.3.4' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]                                                                                                  
-     24472:     checking for version `GLIBC_2.4' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]                                                                                                    
-     24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]                                                                                                    
-     24472:     checking for version `GLIBCXX_3.4.9' in file ./libs/libstdc++.so.6 [0] required by file ./dwarfort.exe [0]                                                                                                   
-     24472:     checking for version `CXXABI_1.3' in file ./libs/libstdc++.so.6 [0] required by file ./dwarfort.exe [0]                                                                                                      
-     24472:     checking for version `GLIBCXX_3.4' in file ./libs/libstdc++.so.6 [0] required by file ./dwarfort.exe [0]                                                                                                     
-     24472:     checking for version `CXXABI_1.3' in file ./libs/libstdc++.so.6 [0] required by file ./libs/libdfconnect.so [0]                                                                                              
-     24472:     checking for version `GLIBCXX_3.4' in file ./libs/libstdc++.so.6 [0] required by file ./libs/libdfconnect.so [0]                                                                                             
-     24472:     checking for version `GLIBC_2.1.3' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]                                                                                          
-     24472:     checking for version `GLIBC_2.2' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]                                                                                            
-     24472:     checking for version `GLIBC_2.3.4' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]                                                                                          
-     24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]    
+     24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libpthread.so.0 [0] required by file ./dwarfort.exe [0]
+     24472:     checking for version `GCC_3.0' in file ./libs/libgcc_s.so.1 [0] required by file ./dwarfort.exe [0]
+     24472:     checking for version `GLIBC_2.0' in file ./libs/libgcc_s.so.1 [0] required by file ./dwarfort.exe [0]
+     24472:     checking for version `GLIBC_2.1' in file /opt/lib32/lib/libm.so.6 [0] required by file ./dwarfort.exe [0]
+     24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libm.so.6 [0] required by file ./dwarfort.exe [0]
+     24472:     checking for version `GLIBC_2.1.3' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]
+     24472:     checking for version `GLIBC_2.3.4' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]
+     24472:     checking for version `GLIBC_2.4' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]
+     24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]
+     24472:     checking for version `GLIBCXX_3.4.9' in file ./libs/libstdc++.so.6 [0] required by file ./dwarfort.exe [0]
+     24472:     checking for version `CXXABI_1.3' in file ./libs/libstdc++.so.6 [0] required by file ./dwarfort.exe [0]
+     24472:     checking for version `GLIBCXX_3.4' in file ./libs/libstdc++.so.6 [0] required by file ./dwarfort.exe [0]
+     24472:     checking for version `CXXABI_1.3' in file ./libs/libstdc++.so.6 [0] required by file ./libs/libdfconnect.so [0]
+     24472:     checking for version `GLIBCXX_3.4' in file ./libs/libstdc++.so.6 [0] required by file ./libs/libdfconnect.so [0]
+     24472:     checking for version `GLIBC_2.1.3' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]
+     24472:     checking for version `GLIBC_2.2' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]
+     24472:     checking for version `GLIBC_2.3.4' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]
+     24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]
 
 libdfconnect is the SHM. Both are compiled against the same C++ library and
 share the same CXXABI version.

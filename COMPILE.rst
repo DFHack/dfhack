@@ -73,6 +73,7 @@ and the mingw version of make::
     cmake .. -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE:string=Release
     mingw32-make
 
+----------
 Using MSVC
 ----------
 open up ``cmd`` and navigate to the ``dfhack\build`` folder, run
@@ -94,6 +95,7 @@ Also, you'll have to copy the ``Memory.xml`` file to the build output
 folders MSVC generates. For example from ``output/`` to
 ``output/Release/``
 
+-------------------------
 Using some other compiler
 -------------------------
 I'm afraid you are on your own. dfhack wasn't tested with any other

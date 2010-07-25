@@ -1710,7 +1710,14 @@ map_data_1b60_offset          0x1B9c
         <String name="md5">349d1ad6eda7b6c5e87f8e4726a0999a</String>
         <HexValue name="pe_timestamp">0x4C398089</HexValue>
     </Entry>
-    
+    <Entry version="v0.31.11" os="windows" id="0.31.11" base="0.31.10" rebase="0x7018">
+        <String name="md5">552cfa417fd131204ebfee66aefc4adb</String>
+        <HexValue name="pe_timestamp">0x4C496D93</HexValue>
+        <Address name="cursor_xyz">0xB062D8</Address>
+        <Address name="window_x">0xe81114</Address> VERIFIED
+        <Address name="window_y">0xeAF1E8</Address> VERIFIED
+        <Address name="window_z">0xeAF1C4</Address> VERIFIED
+    </Entry>
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________
@@ -1728,9 +1735,8 @@ map_data_1b60_offset          0x1B9c
                 |       `.`,        |      `.
                 |         `.    __.j         )
                 |__        |--""___|      ,-'
-                   `"--...,+""""   `._,.-' 
-    
-    
+                   `"--...,+""""   `._,.-'
+
     <!-- Windows logo by Microsoft -->
     <!-- Tux logo by the Linux guys :) -->
 
@@ -2256,8 +2262,6 @@ map_data_1b60_offset          0x1B9c
     </Entry>
     <Entry version="v0.31.10" os="linux" id="30_10lin" base="30_09lin">
         <String name="md5">3e7bea269018a6fb88ef53715685aa64</String>
-        stealing memory...
-        looking for vectors...
         -------------------
         !!LANGUAGE TABLES!!
         -------------------
@@ -2287,6 +2291,47 @@ map_data_1b60_offset          0x1B9c
         0x932be2c
         0x932be54
         Toad: 0xc77d798
+        Toad: rawname = 0x0
+        Toad: character (not reliable) = 0x20
+        Toad: caste vector = 0x60
+        Toad: extract? vector = 0x18f4
+        Toad: colors = 0x36
+    </Entry>
+    <Entry version="v0.31.11" os="linux" id="30_11lin" base="30_10lin" rebase="0x1D020">
+        <!-- BIG rebase, possible broken stuff -->
+        <String name="md5">7b04ad536b8b657588ac209a7f95e1d1</String>
+        <Address name="window_x">0x8cf7a58</Address> VERIFIED
+        <Address name="window_y">0x8cf7a5C</Address> VERIFIED
+        <Address name="window_z">0x8cf7a60</Address> VERIFIED
+        <Address name="cursor_xyz">0x8b3b328</Address> VERIFIED
+        -------------------
+        !!LANGUAGE TABLES!!
+        -------------------
+        translation vector: 0x9348f4c
+        lang vector: 0x9348f34
+        word table offset: 0x1c
+        -------------
+        !!MATERIALS!!
+        -------------
+        inorganics:
+        0x9348dc8
+        organics:
+        0x9348dd4
+        trees:
+        0x9348df8
+        plants:
+        0x9348de0
+        color descriptors:
+        0x934d2d8
+        Amber color:0xac014c0
+        all descriptors:
+        0x934d2f0
+        toad-first creature types:
+        0x9348e74
+        all creature types:
+        0x9348e4c
+        0x9348e74
+        Toad: 0xadae390
         Toad: rawname = 0x0
         Toad: character (not reliable) = 0x20
         Toad: caste vector = 0x60

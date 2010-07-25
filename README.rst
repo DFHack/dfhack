@@ -45,11 +45,11 @@ Windows
     fix it :)
 
 0.31.01 - 0.31.03 legacy
-0.31.04 - 0.31.11 SDL
+0.31.04 - 0.31.12 SDL
 
 Linux
 =====
-0.31.04 - 0.31.11 native.
+0.31.04 - 0.31.12 native.
 There are missing offsets but Map tools should be OK. Linux support is
 a bit lacking, I'm working on it. All supported Windows versions
 running in wine can be used with DFHack.

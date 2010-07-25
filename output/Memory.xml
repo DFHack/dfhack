@@ -1718,6 +1718,10 @@ map_data_1b60_offset          0x1B9c
         <Address name="window_y">0xeAF1E8</Address> VERIFIED
         <Address name="window_z">0xeAF1C4</Address> VERIFIED
     </Entry>
+    <Entry version="v0.31.12" os="windows" id="0.31.12" base="0.31.11">
+        <String name="md5">f0459165a426a9f2dd8d957e9fa7f01d</String>
+        <HexValue name="pe_timestamp">0x4C4C32E7</HexValue>
+    </Entry>
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________
@@ -2337,6 +2341,9 @@ map_data_1b60_offset          0x1B9c
         Toad: caste vector = 0x60
         Toad: extract? vector = 0x18f4
         Toad: colors = 0x36
+    </Entry>
+    <Entry version="v0.31.12" os="linux" id="30_12lin" base="30_11lin" rebase="-0x1000">
+        <String name="md5">e79cead03187ecb692961b316b7cdcd4</String>
     </Entry>
     </MemoryDescriptors>
 </DFExtractor>

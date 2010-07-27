@@ -79,9 +79,8 @@ int main (int argc,const char* argv[])
                     {
                         //cout << buildingtypes[temp.type] << " 0x" << hex << temp.origin << endl;
                         //hexdump(DF, temp.origin, 16);
-                        //addresses.push_back(temp.origin);
+                        addresses.push_back(temp.origin);
                     }
-                                        addresses.push_back(temp.origin);
                 }
                 else
                 {

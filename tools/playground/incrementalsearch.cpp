@@ -399,7 +399,7 @@ void FindVectorByLength(DFHack::ContextManager & DFMgr, vector <DFHack::t_memran
         SegmentedFinder sf(ranges,DF);
         //sf.Incremental<int ,vecTriplet>(0,4,found,vectorAll);
         //sf.Filter<uint32_t,vecTriplet>(length * element_size,found,vectorLength<uint32_t>);
-        sf.Incremental<uint32_t,vecTriplet>(length * element_size, 4 , found, vectorLength<uint32_t>);
+        sf.Incremental<uint32_t,vecTriplet>(length * element_size, found, vectorLength<uint32_t>);
         DF->Detach();
     }
 }

@@ -397,8 +397,9 @@ void FindVectorByLength(DFHack::ContextManager & DFMgr, vector <DFHack::t_memran
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
         SegmentedFinder sf(ranges,DF);
-        sf.Incremental<int ,vecTriplet>(0,4,found,vectorAll);
-        sf.Filter<uint32_t,vecTriplet>(length * element_size,found,vectorLength<uint32_t>);
+        //sf.Incremental<int ,vecTriplet>(0,4,found,vectorAll);
+        //sf.Filter<uint32_t,vecTriplet>(length * element_size,found,vectorLength<uint32_t>);
+        sf.Incremental<uint32_t,vecTriplet>(length * element_size, found, vectorLength<uint32_t>);
         DF->Detach();
     }
 }

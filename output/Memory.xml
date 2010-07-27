@@ -2304,7 +2304,7 @@ map_data_1b60_offset          0x1B9c
         Buildings
         =========
         <Address name="buildings_vector">0x92eb068</Address>
-        <Offset name="building_custom_workshop_type">0xE0</Offset>
+        <Offset name="building_custom_workshop_type">0x164</Offset> WRONG
 
         <Address name="custom_workshop_vector">0x93302e8</Address>
         <Offset name="custom_workshop_name">0x4</Offset>

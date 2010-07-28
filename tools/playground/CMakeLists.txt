@@ -64,4 +64,19 @@ TARGET_LINK_LIBRARIES(dfcatsplosion dfhack)
 #ADD_EXECUTABLE(dfrenamer renamer.cpp)
 #TARGET_LINK_LIBRARIES(dfrenamer dfhack)
 
+install(TARGETS
+dfmoodump
+dftest
+dfdoffsets
+dfdigger
+dfdigger2
+dfcatsplosion
+RUNTIME DESTINATION bin
+)
+IF(UNIX)
+    install(TARGETS
+    dfincremental
+    RUNTIME DESTINATION bin
+    )
+ENDIF(UNIX)
 ENDIF (BUILD_DFHACK_PLAYGROUND)

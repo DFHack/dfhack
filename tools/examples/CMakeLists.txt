@@ -54,4 +54,17 @@ TARGET_LINK_LIBRARIES(dfspatterdump dfhack)
 ADD_EXECUTABLE(dfprocessenum processenum.cpp)
 TARGET_LINK_LIBRARIES(dfprocessenum dfhack)
 
+install(TARGETS
+dfbuildingsdump
+dfconstructiondump
+dfcreaturedump
+dfmaterialtest
+dfposition
+dfitemdump
+dfhotkeynotedump
+dftreedump
+dfspatterdump
+dfprocessenum
+RUNTIME DESTINATION bin
+)
 ENDIF (BUILD_DFHACK_EXAMPLES)

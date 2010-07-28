@@ -1485,20 +1485,23 @@ map_data_1b60_offset          0x1B9c
 
         Castes
         ======
-        <Offset name="color_modifier_part">0x70</Offset>
-        <Offset name="color_modifier_startdate">0x64</Offset>
-        <Offset name="color_modifier_enddate">0x68</Offset>
         <Offset name="caste_bodypart_vector">0x51C</Offset>
-        <Offset name="caste_color_modifiers">0xACC</Offset>
         <Offset name="caste_attributes">0x654</Offset>
+        <Offset name="caste_color_modifiers">0xACC</Offset>
 
-        Body Parts
-        ==========
-        <Offset name="bodypart_id">0x0</Offset>
-        <Offset name="bodypart_category">0x1C</Offset>
-        <Offset name="bodypart_layers_vector">0x44</Offset>
-        <Offset name="bodypart_singular_vector">0x78</Offset>
-        <Offset name="bodypart_plural_vector">0x90</Offset>
+            Color Mods
+            ==========
+            <Offset name="color_modifier_part">0x70</Offset>
+            <Offset name="color_modifier_startdate">0x64</Offset>
+            <Offset name="color_modifier_enddate">0x68</Offset>
+
+            Body Parts
+            ==========
+            <Offset name="bodypart_id">0x0</Offset>
+            <Offset name="bodypart_category">0x1C</Offset>
+            <Offset name="bodypart_layers_vector">0x44</Offset>
+            <Offset name="bodypart_singular_vector">0x78</Offset>
+            <Offset name="bodypart_plural_vector">0x90</Offset>
 
         Materials
         =========
@@ -1681,6 +1684,8 @@ map_data_1b60_offset          0x1B9c
         -->
     </Entry>
     <Entry version="v0.31.09" os="windows" id="0.31.09" base="0.31.08" rebase="0xD028" > rebase="0xD030"
+        <!-- TODO: fix creature offsets -->
+        <!-- TODO: small offsets added all over the place, investigate -->
         <String name="md5">1a85839ab03df082974dc5629d3fbc26</String>
         <HexValue name="pe_timestamp">0x4C3897C0</HexValue>
         <Address name="cursor_xyz">0xaff2d8</Address>       
@@ -1702,18 +1707,21 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_happiness">0x87c</Offset>
     </Entry>
     <Entry version="v0.31.10" os="windows" id="0.31.10" base="0.31.09">
-        <String name="md5">552cfa417fd131204ebfee66aefc4adb</String>
+        <String name="md5">349d1ad6eda7b6c5e87f8e4726a0999a</String>
         <HexValue name="pe_timestamp">0x4C398089</HexValue>
     </Entry>
     <Entry version="v0.31.11" os="windows" id="0.31.11" base="0.31.10" rebase="0x7018">
-      <String name="md5">552cfa417fd131204ebfee66aefc4adb</String>
-      <HexValue name="pe_timestamp">0x4C496D93</HexValue>
-      <Address name="cursor_xyz">0xB062D8</Address>
-      <Address name="window_x">0xe81114</Address> VERIFIED
-      <Address name="window_y">0xeAF1E8</Address> VERIFIED
-      <Address name="window_z">0xeAF1C4</Address> VERIFIED
+        <String name="md5">552cfa417fd131204ebfee66aefc4adb</String>
+        <HexValue name="pe_timestamp">0x4C496D93</HexValue>
+        <Address name="cursor_xyz">0xB062D8</Address>
+        <Address name="window_x">0xe81114</Address> VERIFIED
+        <Address name="window_y">0xeAF1E8</Address> VERIFIED
+        <Address name="window_z">0xeAF1C4</Address> VERIFIED
     </Entry>
-    
+    <Entry version="v0.31.12" os="windows" id="0.31.12" base="0.31.11">
+        <String name="md5">f0459165a426a9f2dd8d957e9fa7f01d</String>
+        <HexValue name="pe_timestamp">0x4C4C32E7</HexValue>
+    </Entry>
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________
@@ -1731,9 +1739,8 @@ map_data_1b60_offset          0x1B9c
                 |       `.`,        |      `.
                 |         `.    __.j         )
                 |__        |--""___|      ,-'
-                   `"--...,+""""   `._,.-' 
-    
-    
+                   `"--...,+""""   `._,.-'
+
     <!-- Windows logo by Microsoft -->
     <!-- Tux logo by the Linux guys :) -->
 
@@ -1783,48 +1790,38 @@ map_data_1b60_offset          0x1B9c
 
         Creature offsets
         ================
-        <Offset name="creature_name">0x0</Offset>
-        <Offset name="creature_custom_profession">0x6c</Offset>
-        <Offset name="creature_profession">0x3c</Offset> *
-        <Offset name="creature_race">0x44</Offset> *
-        <Offset name="creature_position">0x90</Offset>
-        <Offset name="creature_flags1">0x8C</Offset> *
-        <Offset name="creature_flags2">0x90</Offset> *
-        <Offset name="creature_caste">0x110</Offset>
-        <Offset name="creature_sex">0xA6</Offset> *
-        <Offset name="creature_id">0x114</Offset>
-        <Offset name="creature_civ">0XB4</Offset> *
-        <Offset name="creature_soulskill_vector">0X1F4</Offset>
-        <Offset name="creature_pickup_equipment_bit">0X21C</Offset>
-        
-        <Offset name="creature_mood">0x18C</Offset> *
-        <Offset name="creature_birth_year">0x19C</Offset> *
-        <Offset name="creature_birth_time">0x1A0</Offset> *
-        <Offset name="creature_physical">0x464</Offset>
-        <Offset name="creature_current_job">0x390</Offset> from chmod
-        <Offset name="creature_mood_skill">0x394</Offset> the skill that will be increased at the end of the mood (or not)
-        <Offset name="creature_appearance_vector">0x604</Offset>
-        <Offset name="creature_artifact_name">0x6D4</Offset>
-        <Offset name="creature_labors">0x774</Offset>
-        <Offset name="creature_soul_vector">0x0740</Offset>
-        <Offset name="creature_default_soul">0x0758</Offset>
-        <Offset name="creature_happiness">0x834</Offset>
+        <Offset name="creature_name">0x0</Offset> VERIFIED
+        <Offset name="creature_custom_profession">0x3c</Offset> CHMOD
+        <Offset name="creature_profession">0x40</Offset> CHMOD
+        <Offset name="creature_race">0x44</Offset> CHMOD
+        <Offset name="creature_position">0x90</Offset> BAD!!
+        <Offset name="creature_flags1">0x8C</Offset> CHMOD
+        <Offset name="creature_flags2">0x90</Offset> CHMOD
+        <Offset name="creature_caste">0xA4</Offset> VERIFY
+        <Offset name="creature_sex">0xA6</Offset> CHMOD
+        <Offset name="creature_id">0xA8</Offset> CHMOD
+        <Offset name="creature_civ">0xB4</Offset> VERIFY!
+        <Offset name="creature_pickup_equipment_bit">0X144</Offset> CHMOD
+        <Offset name="creature_mood">0x18C</Offset> VERIFY!
+        <Offset name="creature_birth_year">0x19C</Offset> VERIFY!
+        <Offset name="creature_birth_time">0x1A0</Offset> VERIFY!
+        <Offset name="creature_physical">0x464</Offset> BAD!
+        <Offset name="creature_current_job">0x258</Offset> CHMOD
+        <Offset name="creature_mood_skill">0x394</Offset> VERIFY!
+            the skill that will be increased at the end of the mood (or not)
+        <Offset name="creature_appearance_vector">0x604</Offset> BAD!
+        <Offset name="creature_artifact_name">0x6D4</Offset> BAD!
+        <Offset name="creature_labors">0x51C</Offset> CHMOD
+        <Offset name="creature_soul_vector">0x0500</Offset> CHMOD
+        <Offset name="creature_default_soul">0x0758</Offset> BAD!
+        <Offset name="creature_happiness">0x5AC</Offset> CHMOD
 
         Souls
         =====
         <Offset name="soul_name">0x0</Offset>
-        <Offset name="soul_skills_vector">0x1F4</Offset>
-        <Offset name="soul_traits">0x224</Offset>
-        <Offset name="soul_mental">0x88</Offset>
-
-        Castes
-        ======
-        <Offset name="color_modifier_part">0x70</Offset>
-        <Offset name="color_modifier_startdate">0x64</Offset>
-        <Offset name="color_modifier_enddate">0x68</Offset>
-        <Offset name="caste_bodypart_vector">0x51C</Offset>
-        <Offset name="caste_color_modifiers">0xACC</Offset>
-        <Offset name="caste_attributes">0x654</Offset>
+        <Offset name="soul_skills_vector">0x1C4</Offset> CHMOD
+        <Offset name="soul_traits">0x1DC</Offset> CHMOD
+        <Offset name="soul_mental">0x88</Offset> BAD!
 
         Body Parts
         ==========
@@ -1862,6 +1859,14 @@ map_data_1b60_offset          0x1B9c
         <Offset name="creature_tile">0x20</Offset> VERIFIED
         <Offset name="creature_tile_color">0x36</Offset> LOOKS OK
 
+        Castes
+        ======
+        <Offset name="color_modifier_part">0x70</Offset>
+        <Offset name="color_modifier_startdate">0x64</Offset>
+        <Offset name="color_modifier_enddate">0x68</Offset>
+        <Offset name="caste_bodypart_vector">0x51C</Offset>
+        <Offset name="caste_color_modifiers">0xACC</Offset>
+        <Offset name="caste_attributes">0x654</Offset>
         <!--
         <Offset name="creature_type_caste_vector">0x138</Offset>
         <Offset name="creature_type_extract_vector">0x1A14</Offset>
@@ -2261,8 +2266,6 @@ map_data_1b60_offset          0x1B9c
     </Entry>
     <Entry version="v0.31.10" os="linux" id="30_10lin" base="30_09lin">
         <String name="md5">3e7bea269018a6fb88ef53715685aa64</String>
-        stealing memory...
-        looking for vectors...
         -------------------
         !!LANGUAGE TABLES!!
         -------------------
@@ -2297,6 +2300,65 @@ map_data_1b60_offset          0x1B9c
         Toad: caste vector = 0x60
         Toad: extract? vector = 0x18f4
         Toad: colors = 0x36
+
+        Buildings
+        =========
+        <Address name="buildings_vector">0x92eb068</Address>
+        <Offset name="building_custom_workshop_type">0xE0</Offset>
+
+        <Address name="custom_workshop_vector">0x93302e8</Address>
+        <Offset name="custom_workshop_name">0x4</Offset>
+        <Offset name="custom_workshop_type">0x8</Offset>
+        <VTable name="building_vtable">
+            <multiclass name="building_trapst" typeoffset="0xC0" />
+            <multiclass name="building_workshopst" typeoffset="0xC0" />
+            <multiclass name="building_furnacest" typeoffset="0xCE" />
+            <multiclass name="building_siegeenginest" typeoffset="0xC0" />
+        </VTable>
+    </Entry>
+    <Entry version="v0.31.11" os="linux" id="30_11lin" base="30_10lin" rebase="0x1D020">
+        <!-- BIG rebase, possible broken stuff -->
+        <String name="md5">7b04ad536b8b657588ac209a7f95e1d1</String>
+        <Address name="window_x">0x8cf7a58</Address> VERIFIED
+        <Address name="window_y">0x8cf7a5C</Address> VERIFIED
+        <Address name="window_z">0x8cf7a60</Address> VERIFIED
+        <Address name="cursor_xyz">0x8b3b328</Address> VERIFIED
+        -------------------
+        !!LANGUAGE TABLES!!
+        -------------------
+        translation vector: 0x9348f4c
+        lang vector: 0x9348f34
+        word table offset: 0x1c
+        -------------
+        !!MATERIALS!!
+        -------------
+        inorganics:
+        0x9348dc8
+        organics:
+        0x9348dd4
+        trees:
+        0x9348df8
+        plants:
+        0x9348de0
+        color descriptors:
+        0x934d2d8
+        Amber color:0xac014c0
+        all descriptors:
+        0x934d2f0
+        toad-first creature types:
+        0x9348e74
+        all creature types:
+        0x9348e4c
+        0x9348e74
+        Toad: 0xadae390
+        Toad: rawname = 0x0
+        Toad: character (not reliable) = 0x20
+        Toad: caste vector = 0x60
+        Toad: extract? vector = 0x18f4
+        Toad: colors = 0x36
+    </Entry>
+    <Entry version="v0.31.12" os="linux" id="30_12lin" base="30_11lin" rebase="-0x1000">
+        <String name="md5">e79cead03187ecb692961b316b7cdcd4</String>
     </Entry>
     </MemoryDescriptors>
 </DFExtractor>

@@ -425,11 +425,27 @@ compiler.</p>
 <div class="section" id="build-targets">
 <h1><a class="toc-backref" href="#id8">Build targets</a></h1>
 <p>dfhack has a few build targets:</p>
-<ul class="simple">
-<li>If you're only after the library run <tt class="docutils literal">make dfhack</tt>.</li>
-<li><tt class="docutils literal">make</tt> will build everything.</li>
-<li><tt class="docutils literal">make expbench</tt> will build the expbench testing program and the
-library.</li>
+<ul>
+<li><p class="first">If you're only after the library run <tt class="docutils literal">make dfhack</tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">make</tt> will build everything.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">make expbench</tt> will build the expbench testing program and the
+library.</p>
+</li>
+<li><p class="first">Some of the utilities and the doxygen documentation won't be
+normally built. You can enable them by specifying some extra
+CMake variables:</p>
+<pre class="literal-block">
+BUILD_DFHACK_DOCUMENTATION - generate the documentation (really bad)
+BUILD_DFHACK_EXAMPLES      - build tools from tools/examples
+BUILD_DFHACK_PLAYGROUND    - build tools from tools/playground
+</pre>
+<p>Example:</p>
+<pre class="literal-block">
+cmake .. -DBUILD_DFHACK_EXAMPLES=ON
+</pre>
+</li>
 </ul>
 </div>
 <div class="section" id="build-types">

@@ -51,6 +51,14 @@ TARGET_LINK_LIBRARIES(dfflows dfhack)
 ADD_EXECUTABLE(dfliquids liquids.cpp)
 TARGET_LINK_LIBRARIES(dfliquids dfhack)
 
+# position - check the DF window and cursor parameters
+ADD_EXECUTABLE(dfposition position.cpp)
+TARGET_LINK_LIBRARIES(dfposition dfhack)
+
+# just dump offsets of the current version
+ADD_EXECUTABLE(dfdoffsets dumpoffsets.cpp)
+TARGET_LINK_LIBRARIES(dfdoffsets dfhack)
+
 IF(UNIX)
     SET(CURSES_NEED_WIDE "YES")
     SET(CURSES_NEED_NCURSES "NO")
@@ -89,10 +97,12 @@ ENDIF(UNIX)
 install(TARGETS
 dfreveal
 dfprospector
+dfposition
 dfvdig
 dfcleanmap
 dfunstuck
 dfprobe
+dfdoffsets
 dfattachtest
 dfexpbench
 dfsuspend

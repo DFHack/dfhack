@@ -718,6 +718,11 @@ std::vector< std::vector<std::string> > const& memory_info::getAllTraits()
 	return d->traits;
 }
 
+std:: map<uint32_t, std::string> const& memory_info::getAllLabours()
+{
+	return d->labors;
+}
+
 string memory_info::getLabor (const uint32_t laborIdx)
 {
     if(d->labors.count(laborIdx))

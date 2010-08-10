@@ -52,7 +52,7 @@ Linux
 0.31.04 - 0.31.12 native.
 There are missing offsets but Map tools should be OK. Linux support is
 a bit lacking, I'm working on it. All supported Windows versions
-running in wine can be used with DFHack.
+running in wine can be used with native DFHack binaries.
 
 =====
 Tools
@@ -65,10 +65,6 @@ dfcleanmap
 ==========
 Cleans all the splatter that get scattered all over the map.
 Only exception is mud. It leaves mud alone.
-
-dfexpbench
-==========
-Just a simple benchmark of the data export speed.
 
 dfliquids
 =========
@@ -93,10 +89,6 @@ dfreveal
 Reveals the whole map, waits for input and hides it again. If you close
 the tool while it waits, the map remains revealed.
 
-dfsuspend
-=========
-Test of the process suspend/resume mechanism.
-
 dfunstuck
 =========
 Use if you prematurely close any of the tools and DF appears to be
@@ -111,6 +103,22 @@ dfflows
 =======
 A tool for checking how many liquid tiles are actively checked for
 flows.
+
+dfattachtest
+============
+Test of the process attach/detach mechanism.
+
+dfsuspend
+=========
+Test of the process suspend/resume mechanism.
+
+dfexpbench
+==========
+Just a simple benchmark of the data export speed.
+
+dfdoffsets
+==========
+Dumps the offsets for the currently running DF version into the terminal.
 
 Your tool here
 ==============

@@ -111,6 +111,17 @@ dfhack has a few build targets:
 * ``make`` will build everything.
 * ``make expbench`` will build the expbench testing program and the
   library.
+* Some of the utilities and the doxygen documentation won't be
+  normally built. You can enable them by specifying some extra
+  CMake variables::
+
+    BUILD_DFHACK_DOCUMENTATION - generate the documentation (really bad)
+    BUILD_DFHACK_EXAMPLES      - build tools from tools/examples
+    BUILD_DFHACK_PLAYGROUND    - build tools from tools/playground
+    
+  Example::
+
+    cmake .. -DBUILD_DFHACK_EXAMPLES=ON
 
 Build types
 ===========

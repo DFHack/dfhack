@@ -3,6 +3,7 @@
 
 #include <QtGui/QMainWindow>
 #include "ui_main.h"
+#include "memxmlModel.h"
 
 class dfedit : public QMainWindow
 {
@@ -13,6 +14,7 @@ public:
 
 private:
     Ui::MainWindow ui;
+    MemXMLModel * mod;
 public slots:
     void slotOpen(bool);
     void slotQuit(bool);

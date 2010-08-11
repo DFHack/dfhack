@@ -1,6 +1,7 @@
 #include "dfedit.h"
 #include <QFileDialog>
 #include <QDebug>
+#include "memxmlModel.h"
 
 dfedit::dfedit(QWidget *parent): QMainWindow(parent)
 {
@@ -12,15 +13,15 @@ dfedit::dfedit(QWidget *parent): QMainWindow(parent)
     connect(ui.actionSave_As,SIGNAL(triggered(bool)),this,SLOT(slotSaveAs(bool)));
     connect(ui.actionSetup_DF_executables,SIGNAL(triggered(bool)),this,SLOT(slotSetupDFs(bool)));
     ui.actionOpen->setIcon(QIcon::fromTheme("document-open"));
-    ui.actionOpen->setIconText("Open");
+    ui.actionOpen->setIconText(tr("Open"));
     ui.actionSave->setIcon(QIcon::fromTheme("document-save"));
-    ui.actionSave->setIconText("Save");
+    ui.actionSave->setIconText(tr("Save"));
     ui.actionSave_As->setIcon(QIcon::fromTheme("document-save-as"));
-    ui.actionSave_As->setIconText("Save As");
+    ui.actionSave_As->setIconText(tr("Save As"));
     ui.actionRun_DF->setIcon(QIcon::fromTheme("system-run"));
-    ui.actionRun_DF->setIconText("Run DF");
+    ui.actionRun_DF->setIconText(tr("Run DF"));
     ui.actionQuit->setIcon(QIcon::fromTheme("application-exit"));
-    ui.actionQuit->setIconText("Run DF");
+    ui.actionQuit->setIconText(tr("Run DF"));
 }
 
 dfedit::~dfedit()
@@ -28,16 +29,29 @@ dfedit::~dfedit()
 
 void dfedit::slotOpen(bool )
 {
-    QFileDialog fd(this,"Locate the Memoxy.xml file");
-    fd.setNameFilter("Memory definition (Memory.xml)");
+    QFileDialog fd(this,tr("Locate the Memoxy.xml file"));
+    fd.setNameFilter(tr("Memory definition (Memory.xml)"));
     fd.setFileMode(QFileDialog::ExistingFile);
     fd.setAcceptMode(QFileDialog::AcceptOpen);
     int result = fd.exec();
     if(result == QDialog::Accepted)
     {
         QStringList files = fd.selectedFiles();
-        QString file = files[0];
-        qDebug() << "File:" << file;
+        QString fileName = files[0];
+        QDomDocument doc("memxml");
+        QFile file(fileName);
+        if(!file.open(QIODevice::ReadOnly))
+        {
+            return;
+        }
+        if(!doc.setContent(&file))
+        {
+            file.close();
+            return;
+        }
+        mod = new MemXMLModel(doc,this);
+        ui.entryView->setModel(mod);
+        file.close();
     }
 }
 
@@ -58,8 +72,8 @@ void dfedit::slotRunDF(bool )
 
 void dfedit::slotSaveAs(bool )
 {
-    QFileDialog fd(this,"Choose file to save as...");
-    fd.setNameFilter("Memory definition (*.xml)");
+    QFileDialog fd(this,tr("Choose file to save as..."));
+    fd.setNameFilter(tr("Memory definition (*.xml)"));
     fd.setFileMode(QFileDialog::AnyFile);
     fd.selectFile("Memory.xml");
     fd.setAcceptMode(QFileDialog::AcceptSave);

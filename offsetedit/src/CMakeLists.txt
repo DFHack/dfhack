@@ -2,6 +2,7 @@ include_directories(${QT_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
 
 set ( dfoffsetedit_SRCS
     dfedit.cpp
+    memxmlModel.cpp
     main.cpp
 )
 
@@ -23,4 +24,4 @@ qt4_automoc(${dfoffsetedit_SRCS})
 #ADD_EXECUTABLE( sample ${SAMPLE_SRCS} ${SAMPLE_MOC_SRCS} ${SAMPLE_RC_SRCS} ${SAMPLE_UI_HDRS})
 
 add_executable(dfoffsetedit ${dfoffsetedit_SRCS} ${dfoffsetedit_RC_SRCS})
-target_link_libraries(dfoffsetedit ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
+target_link_libraries(dfoffsetedit ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} ${QT_QTXML_LIBRARY} )

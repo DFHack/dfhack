@@ -100,8 +100,9 @@ MemXMLModel::~MemXMLModel()
     delete rootItem;
 }
 
-int MemXMLModel::columnCount(const QModelIndex &/*parent*/) const
+int MemXMLModel::columnCount(const QModelIndex & parent) const
 {
+    Q_UNUSED(parent);
     return 3;
 }
 
@@ -123,10 +124,10 @@ QVariant MemXMLModel::data(const QModelIndex &index, int role) const
     case 0:
         return node.nodeName();
     case 1:
-        for (int i = 0; (unsigned int)(i) < attributeMap.count(); ++i) {
+        for (int i = 0; (unsigned int)(i) < attributeMap.count(); ++i)
+        {
             QDomNode attribute = attributeMap.item(i);
-            attributes << attribute.nodeName() + "=\""
-            +attribute.nodeValue() + "\"";
+            attributes << attribute.nodeName() + "=\"" +attribute.nodeValue() + "\"";
         }
         return attributes.join(" ");
     case 2:
@@ -139,13 +140,14 @@ QVariant MemXMLModel::data(const QModelIndex &index, int role) const
 Qt::ItemFlags MemXMLModel::flags(const QModelIndex &index) const
 {
     if (!index.isValid())
+    {
         return Qt::ItemIsEnabled;
+    }
 
     return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 }
 
-QVariant MemXMLModel::headerData(int section, Qt::Orientation orientation,
-                                 int role) const
+QVariant MemXMLModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         switch (section) {
@@ -163,8 +165,7 @@ QVariant MemXMLModel::headerData(int section, Qt::Orientation orientation,
     return QVariant();
 }
 
-QModelIndex MemXMLModel::index(int row, int column, const QModelIndex &parent)
-const
+QModelIndex MemXMLModel::index(int row, int column, const QModelIndex &parent) const
 {
     DomItem *parentItem;
 

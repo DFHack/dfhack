@@ -1,0 +1,2094 @@
+<?xml version="1.0"?>
+<DFHack>
+    <Base name="meta-2010">
+        <Traits>
+            <Trait name="Nervousness" id="0" level_5="Is a nervous wreck" level_4="Is always tense and jittery" level_3="Is often nervous" level_2="Has a calm demeanor" level_1="Has a very calm demeanor" level_0="Has an incredibly calm demeanor" />
+            <Trait name="Rage" id="1" level_5="In a constant state of internal rage" level_4="Very quick to anger" level_3="Quick to anger" level_2="Slow to anger" level_1="Very slow to anger" level_0="Never becomes angry" />
+            <Trait name="Depression" id="2" level_5="Frequently depressed" level_4="Often sad and dejected" level_3="Often feels discouraged" level_2="Rarely feels discouraged" level_1="Almost never feels discouraged" level_0="Never feels discouraged" />
+            <Trait name="Neurosis" id="3" level_5="Socially crippled by thoughts that everyone is watching and judging" level_4="Concerned about rejection and ridicule" level_3="Self-conscious" level_2="Comfortable in social situations" level_1="Very comfortable in social situations" level_0="Absolutely unfazed by the opinions of others" />
+            <Trait name="Urge" id="4" level_5="Is ruled by irresistible cravings and urges" level_4="Feels strong urges and seeks short-term rewards" level_3="Occassionally overindulges" level_2="Doesn't often experience strong cravings or urges" level_1="Only rarely feels strong cravings or urges" level_0="Never feels tempted to overindulge in anything" />
+            <Trait name="Stress" id="5" level_5="Becomes completely helpless in stressful situations" level_4="Cracks easily under pressure" level_3="Doesn't handle stress well" level_2="Can handle stress" level_1="Confident under pressure" level_0="Impervious to the effects of stress" />
+            <Trait name="Friendly" id="6" level_5="Genuinely likes others, openly expresses positive feelings" level_4="Makes friends quickly" level_3="Very friendly" level_2="Somewhat reserved" level_1="Very distant and reserved" level_0="Does not actively seek friendships, incredibly distant and reserved" />
+            <Trait name="Company" id="7" level_5="Truly treasures the company of others" level_4="Enjoys being in crowds" level_3="Enjoys the company of others" level_2="Tends to avoid crowds" level_1="Prefers to be alone" level_0="Considers time alone much more important than associating with others" />
+            <Trait name="Leadership" id="8" level_5="Loves to take charge and direct activities" level_4="Very assertive" level_3="Assertive" level_2="Unassertive" level_1="Prefers that others handle the leadership roles" level_0="Never speaks out or attempts to direct activities" />
+            <Trait name="Activeness" id="9" level_5="Constantly active and energetic" level_4="Very energetic and active" level_3="Very active" level_2="Relaxed" level_1="Lives life at a leisurely pace" level_0="Can't be bothered with frantic, fast-paced living" />
+            <Trait name="Thrillseeking" id="10" level_5="Lives for risk and excitement" level_4="A risk-taker and a thrill-seeker" level_3="Loves a good thrill" level_2="Is not a risk-taker" level_1="Doesn't need thrills or risks in life" level_0="Entirely adverse to risk and excitement" />
+            <Trait name="Optimism" id="11" level_5="Often feels filled with joy" level_4="Can be very happy and optimistic" level_3="Often cheerful" level_2="Rarely happy or enthusiastic" level_1="A pessimist" level_0="Never optimistic or enthusiastic about anything" />
+            <Trait name="Imagination" id="12" level_5="Bored by reality and has a wonderful imagination" level_4="Incredibly creative" level_3="Has a fertile imagination" level_2="Isn't given to flights of fancy" level_1="Grounded in reality" level_0="Interested only in facts and the real world" />
+            <Trait name="Artistic" id="13" level_5="Can easily become absorbed in art and the beauty of the natural world" level_4="Greatly appreciates art and natural beauty" level_3="Appreciates art and natural beauty" level_2="Does not have a great aesthetic sensitivity" level_1="Not interested in art" level_0="Completely uninterested in art" />
+            <Trait name="Emotion" id="14" level_5="Has a profound understanding of own emotions" level_4="Has a great awareness of own emotions" level_3="Has a good awareness of own emotions" level_2="Tends not to openly express emotions" level_1="Mostly unaware of own emotions and rarely expresses them" level_0="Does not display own emotions and has no awareness of them" />
+            <Trait name="Adventure" id="15" level_5="Highly adventurous and loves fresh experiences" level_4="Eager for new experiences" level_3="Likes to try new things" level_2="Prefers familiar routines" level_1="Uncomfortable with change" level_0="Resistant to change" />
+            <Trait name="Thinking" id="16" level_5="Entranced by riddles and puzzles; loves to debate issues and ideas" level_4="Loves new and fresh ideas" level_3="Open-minded to new ideas" level_2="Dislikes intellectual discussions" level_1="Regards intellectual exercises as a waste of energy" level_0="Completely uninterested in ideas and debates over intellectual issues" />
+            <Trait name="Rebelliousness" id="17" level_5="Revels in chaos and disorder" level_4="Loves to defy convention" level_3="Put off by authority and tradition" level_2="Admires tradition" level_1="Prefers stability and security to ambiguity and disorder" level_0="An ardent believer in convention and traditional society" />
+            <Trait name="Trusting" id="18" level_5="Naturally trustful of everybody" level_4="Very trusting" level_3="Trusting" level_2="Slow to trust others" level_1="Does not trust others" level_0="Sees others as selfish and conniving" />
+            <Trait name="Honesty" id="19" level_5="Incredibly frank and candid in dealings with others" level_4="Very straightforward with others" level_3="Candid and sincere in dealings with others" level_2="Guarded in relationships with others" level_1="Not straightforward when dealing with others" level_0="Believes that some deception is necessary in relationships with others" />
+            <Trait name="Helpfulness" id="20" level_5="Truly fulfilled by assisting those in need" level_4="Finds helping others very rewarding" level_3="Finds helping others rewarding" level_2="Does not go out of own way to help others" level_1="Dislikes helping others" level_0="Views helping others as an imposition on own needs" />
+            <Trait name="Compromising" id="21" level_5="Sacrifices own needs to get along with others" level_4="Dislikes confrontations" level_3="Willing to compromise with others" level_2="Doesn't like to compromise with others" level_1="Would rather intimidate others than compromise with them" level_0="Would never deny own needs just to compromise with somebody else" />
+            <Trait name="Modesty" id="22" level_5="Would never claim to be better than somebody else" level_4="Finds immodesty distasteful" level_3="Modest" level_2="Immodest" level_1="Very willing to compare self favorably with others" level_0="Would never shy away from an opportunity to say they are better than somebody else" />
+            <Trait name="Compassion" id="23" level_5="Incredibly compassionate and feels the pain of others" level_4="Easily moved to pity" level_3="Compassionate" level_2="Not easily moved to pity" level_1="Not affected by the suffering of others" level_0="Would never let an objective judgement be tempered by mercy or pity" />
+            <Trait name="Confidence" id="24" level_5="Incredibly confident" level_4="Very confident" level_3="Confident" level_2="Lacks confidence" level_1="Does not feel effective in life" level_0="Always feels as if they are not in control of own life" />
+            <Trait name="Organization" id="25" level_5="Loves to make lists and keep schedules" level_4="Tries to live a well-organized life" level_3="Organized" level_2="Disorganized" level_1="Very disorganized" level_0="Completely disorganized" />
+            <Trait name="Lawfulness" id="26" level_5="Has a profound sense of duty and obligation" level_4="Has a strong sense of duty" level_3="Has a sense of duty" level_2="Finds rules confining" level_1="Dislikes contracts and regulations" level_0="Hates rules, contracts and other confining elements in own life" />
+            <Trait name="Excellence" id="27" level_5="Constantly strives for perfection" level_4="Thinks it is incredibly important to strive for excellence" level_3="Strives for excellence" level_2="Doesn't go out of own way to do more work than necessary" level_1="Very rarely does more work than necessary" level_0="Does the bare minimum necessary to accomplish the task at hand" />
+            <Trait name="Perseverance" id="28" level_5="Will persist in the face of any difficulty until the task is complete" level_4="Possesses great willpower" level_3="Is self-disciplined" level_2="Is occasionally given to procrastination" level_1="Has very little self-discipline" level_0="Rarely completes tasks and is often overcome by distractions" />
+            <Trait name="Cautiousness" id="29" level_5="Thinks through every alternative and their consequences before acting" level_4="Extremely cautious" level_3="Takes time when making decisions" level_2="Often does the first thing that comes to mind" level_1="Acts impulsively" level_0="Always acts without considering alternatives or thinking through possibilities" />
+        </Traits>
+
+        <Moods>
+            <Mood id="0" name="Fey"/>
+            <Mood id="1" name="Secretive"/>
+            <Mood id="2" name="Possesed"/>
+            <Mood id="3" name="Macabre"/>
+            <Mood id="4" name="Fell"/>
+            <Mood id="5" name="Melancholy"/>
+        </Moods>
+
+        <Professions>
+            <Profession name="MINER" id="0" military="false" can_assign_labors="true" />
+            <Profession name="WOODWORKER" id="1" military="false" can_assign_labors="true" />
+            <Profession name="CARPENTER" id="2" military="false" can_assign_labors="true" />
+            <Profession name="BOWYER" id="3" military="false" can_assign_labors="true" />
+            <Profession name="WOODCUTTER" id="4" military="false" can_assign_labors="true" />
+            <Profession name="STONEWORKER" id="5" military="false" can_assign_labors="true" />
+            <Profession name="ENGRAVER" id="6" military="false" can_assign_labors="true" />
+            <Profession name="MASON" id="7" military="false" can_assign_labors="true" />
+            <Profession name="RANGER" id="8" military="false" can_assign_labors="true" />
+            <Profession name="ANIMAL_CARETAKER" id="9" military="false" can_assign_labors="true" />
+            <Profession name="ANIMAL_TRAINER" id="10" military="false" can_assign_labors="true" />
+            <Profession name="HUNTER" id="11" military="false" can_assign_labors="true" />
+            <Profession name="TRAPPER" id="12" military="false" can_assign_labors="true" />
+            <Profession name="ANIMAL_DISSECTOR" id="13" military="false" can_assign_labors="true" />
+            <Profession name="METALSMITH" id="14" military="false" can_assign_labors="true" />
+            <Profession name="FURNACE_OPERATOR" id="15" military="false" can_assign_labors="true" />
+            <Profession name="WEAPONSMITH" id="16" military="false" can_assign_labors="true" />
+            <Profession name="ARMORER" id="17" military="false" can_assign_labors="true" />
+            <Profession name="BLACKSMITH" id="18" military="false" can_assign_labors="true" />
+            <Profession name="METALCRAFTER" id="19" military="false" can_assign_labors="true" />
+            <Profession name="JEWELER" id="20" military="false" can_assign_labors="true" />
+            <Profession name="GEM_CUTTER" id="21" military="false" can_assign_labors="true" />
+            <Profession name="GEM_SETTER" id="22" military="false" can_assign_labors="true" />
+            <Profession name="CRAFTSMAN" id="23" military="false" can_assign_labors="true" />
+            <Profession name="WOODCRAFTER" id="24" military="false" can_assign_labors="true" />
+            <Profession name="STONECRAFTER" id="25" military="false" can_assign_labors="true" />
+            <Profession name="LEATHERWORKER" id="26" military="false" can_assign_labors="true" />
+            <Profession name="BONE_CARVER" id="27" military="false" can_assign_labors="true" />
+            <Profession name="WEAVER" id="28" military="false" can_assign_labors="true" />
+            <Profession name="CLOTHIER" id="29" military="false" can_assign_labors="true" />
+            <Profession name="GLASSMAKER" id="30" military="false" can_assign_labors="true" />
+            <Profession name="STRAND_EXTRACTOR" id="31" military="false" can_assign_labors="true" />
+            <Profession name="FISHERY_WORKER" id="32" military="false" can_assign_labors="true" />
+            <Profession name="FISHERMAN" id="33" military="false" can_assign_labors="true" />
+            <Profession name="FISH_DISSECTOR" id="34" military="false" can_assign_labors="true" />
+            <Profession name="FISH_CLEANER" id="35" military="false" can_assign_labors="true" />
+            <Profession name="FARMER" id="36" military="false" can_assign_labors="true" />
+            <Profession name="CHEESE_MAKER" id="37" military="false" can_assign_labors="true" />
+            <Profession name="MILKER" id="38" military="false" can_assign_labors="true" />
+            <Profession name="COOK" id="39" military="false" can_assign_labors="true" />
+            <Profession name="THRESHER" id="40" military="false" can_assign_labors="true" />
+            <Profession name="MILLER" id="41" military="false" can_assign_labors="true" />
+            <Profession name="BUTCHER" id="42" military="false" can_assign_labors="true" />
+            <Profession name="TANNER" id="43" military="false" can_assign_labors="true" />
+            <Profession name="DYER" id="44" military="false" can_assign_labors="true" />
+            <Profession name="PLANTER" id="45" military="false" can_assign_labors="true" />
+            <Profession name="HERBALIST" id="46" military="false" can_assign_labors="true" />
+            <Profession name="BREWER" id="47" military="false" can_assign_labors="true" />
+            <Profession name="SOAP_MAKER" id="48" military="false" can_assign_labors="true" />
+            <Profession name="POTASH_MAKER" id="49" military="false" can_assign_labors="true" />
+            <Profession name="LYE_MAKER" id="50" military="false" can_assign_labors="true" />
+            <Profession name="WOOD_BURNER" id="51" military="false" can_assign_labors="true" />
+            <Profession name="ENGINEER" id="52" military="false" can_assign_labors="true" />
+            <Profession name="MECHANIC" id="53" military="false" can_assign_labors="true" />
+            <Profession name="SIEGE_ENGINEER" id="54" military="false" can_assign_labors="true" />
+            <Profession name="SIEGE_OPERATOR" id="55" military="false" can_assign_labors="true" />
+            <Profession name="PUMP_OPERATOR" id="56" military="false" can_assign_labors="true" />
+            <Profession name="CLERK" id="57" military="false" can_assign_labors="true" />
+            <Profession name="ADMINISTRATOR" id="58" military="false" can_assign_labors="true" />
+            <Profession name="TRADER" id="59" military="false" can_assign_labors="true" />
+            <Profession name="ARCHITECT" id="60" military="false" can_assign_labors="true" />
+            <Profession name="ALCHEMIST" id="61" military="false" can_assign_labors="true" />
+            <Profession name="DOCTOR" id="62" military="false" can_assign_labors="true" />
+            <Profession name="DIAGNOSER" id="63" military="false" can_assign_labors="true" />
+            <Profession name="BONE_SETTER" id="64" military="false" can_assign_labors="true" />
+            <Profession name="SUTURER" id="65" military="false" can_assign_labors="true" />
+            <Profession name="SURGEON" id="66" military="false" can_assign_labors="true" />
+            <Profession name="MERCHANT" id="67" military="false" can_assign_labors="true" />
+            <Profession name="HAMMERMAN" id="68" military="true" can_assign_labors="true" />
+            <Profession name="MASTER_HAMMERMAN" id="69" military="true" can_assign_labors="true" />
+            <Profession name="SPEARMAN" id="70" military="true" can_assign_labors="true" />
+            <Profession name="MASTER_SPEARMAN" id="71" military="true" can_assign_labors="true" />
+            <Profession name="CROSSBOWMAN" id="72" military="true" can_assign_labors="true" />
+            <Profession name="MASTER_CROSSBOWMAN" id="73" military="true" can_assign_labors="true" />
+            <Profession name="WRESTLER" id="74" military="true" can_assign_labors="true" />
+            <Profession name="MASTER_WRESTLER" id="75" military="true" can_assign_labors="true" />
+            <Profession name="AXEMAN" id="76" military="true" can_assign_labors="true" />
+            <Profession name="MASTER_AXEMAN" id="77" military="true" can_assign_labors="true" />
+            <Profession name="SWORDSMAN" id="78" military="true" can_assign_labors="true" />
+            <Profession name="MASTER_SWORDSMAN" id="79" military="true" can_assign_labors="true" />
+            <Profession name="MACEMAN" id="80" military="true" can_assign_labors="true" />
+            <Profession name="MASTER_MACEMAN" id="81" military="true" can_assign_labors="true" />
+            <Profession name="PIKEMAN" id="82" military="true" can_assign_labors="true" />
+            <Profession name="MASTER_PIKEMAN" id="83" military="true" can_assign_labors="true" />
+            <Profession name="BOWMAN" id="84" military="true" can_assign_labors="true" />
+            <Profession name="MASTER_BOWMAN" id="85" military="true" can_assign_labors="true" />
+            <Profession name="BLOWGUNMAN" id="86" military="true" can_assign_labors="true" />
+            <Profession name="MASTER_BLOWGUNMAN" id="87" military="true" can_assign_labors="true" />
+            <Profession name="RECRUIT" id="90" military="true" can_assign_labors="true" />
+            <Profession name="TRAINED_HUNTER" id="91" military="false" can_assign_labors="true" />
+            <Profession name="TRAINED_WAR" id="92" military="false" can_assign_labors="true" />
+            <Profession name="MASTER_THIEF" id="93" military="false" can_assign_labors="true" />
+            <Profession name="THIEF" id="94" military="false" can_assign_labors="true" />
+            <Profession name="STANDARD" id="95" military="false" can_assign_labors="true" />
+            <Profession name="CHILD" id="96" military="false" can_assign_labors="false" />
+            <Profession name="BABY" id="97" military="false" can_assign_labors="false" />
+            <Profession name="DRUNK" id="98" military="false" can_assign_labors="false" />
+            <Profession name="LASHER" id="88" military="true" can_assign_labors="true" />
+            <Profession name="MASTER_LASHER" id="89" military="true" can_assign_labors="true" />
+            <Profession name="None" id="90" military="false" can_assign_labors="true" />
+        </Professions>
+
+        <Jobs>
+            TODO: Parse this and turn it into Job tags
+            <!--
+            [dwarf_jobs]
+            size=212
+            0/name = "Carve Fortification"
+            0/type = DIG
+            1/name = "Detail Wall"
+            1/type = TROWEL
+            2/name = "Detail Floor"
+            2/type = TROWEL
+            3/name = "Dig"
+            3/type = DIG
+            4/name = "Carve Upward Staircase"
+            4/type = DIG
+            5/name = "Carve Downward Staircase"
+            5/type = DIG
+            6/name = "Carve Up/Down Staircase"
+            6/type = DIG
+            7/name = "Carve Ramp"
+            7/type = DIG
+            8/name = "Dig Channel"
+            8/type = DIG
+            9/name = "Fell Tree"
+            9/type = CUT
+            10/name = "Gather Plants"
+            11/name = "Remove Construction"
+            11/type = BUILD
+            12/name = "Collect Webs"
+            12/type = HAUL
+            13/name = "Bring Item to Depot"
+            13/type = HAUL
+            14/name = "Bring Item to Shop"
+            14/type = HAUL
+            15/name = "Eat"
+            15/type = FOOD
+            16/name = "Get Provisions"
+            16/type = FOOD
+            17/name = "Drink"
+            17/type = DRINK
+            18/name = "Drink"
+            18/type = DRINK
+            19/name = "Fill Waterskin"
+            19/type = DRINK
+            20/name = "Fill Waterskin"
+            20/type = DRINK
+            21/name = "Sleep"
+            21/type = REST
+            22/name = "Collect Sand"
+            22/type = HAUL
+            23/name = "Fish"
+            24/name = "Hunt"
+            25/name = "Hunt for Small Creature"
+            26/name = "Kidnap"
+            26/type = FIGHT
+            27/name = "Beat Criminal"
+            27/type = FIGHT
+            28/name = "Starting Fist Fight"
+            28/type = FIGHT
+            29/name = "Collect Taxes"
+            30/name = "Guard Tax Collector"
+            30/type = FIGHT
+            31/name = "Catch Live Land Animal"
+            32/name = "Catch Live Fish"
+            33/name = "Return Kill"
+            33/type = HAUL
+            34/name = "Check Chesk"
+            34/type = SEEK
+            35/name = "Store Owned Item"
+            35/type = HAUL
+            36/name = "Place Item in Tomb"
+            36/type = HAUL
+            37/name = "Store Item in Stockpile"
+            37/type = HAUL
+            38/name = "Store Item in Bag"
+            38/type = HAUL
+            39/name = "Store Item in Hospital"
+            39/type = HAUL
+            40/name = "Store Item in Chest"
+            40/type = HAUL
+            41/name = "Store Item in Cabinet"
+            41/type = HAUL
+            42/name = "Store Weapon"
+            42/type = HAUL
+            43/name = "Store Armor"
+            43/type = HAUL
+            44/name = "Store Item in Barrel"
+            44/type = HAUL
+            45/name = "Store Item in Bin"
+            45/type = HAUL
+            46/name = "Seek Artifact"
+            46/type = SEEK
+            47/name = "Seek Infant"
+            47/type = SEEK
+            48/name = "Attend Party"
+            48/type = DRINK
+            49/name = "Go Shopping"
+            50/name = "Go Shopping"
+            51/name = "Clean"
+            52/name = "Rest"
+            52/type = REST
+            53/name = "Pickup Equipment"
+            53/type = SEEK
+            54/name = "Dump Item"
+            54/type = HAUL
+            55/name = "Strange Mood Crafter"
+            55/type = MOOD
+            56/name = "Strange Mood Jeweller"
+            56/type = MOOD
+            57/name = "Strange Mood Forge"
+            57/type = MOOD
+            58/name = "Strange Mood Magma Forge"
+            58/type = MOOD
+            59/name = "Strange Mood Brooding"
+            59/type = MOOD
+            60/name = "Strange Mood Fell"
+            60/type = MOOD
+            61/name = "Strange Mood Carpenter"
+            61/type = MOOD
+            62/name = "Strange Mood Mason"
+            62/type = MOOD
+            63/name = "Strange Mood Bowyer"
+            63/type = MOOD
+            64/name = "Strange Mood Tanner"
+            64/type = MOOD
+            65/name = "Strange Mood Weaver"
+            65/type = MOOD
+            66/name = "Strange Mood Glassmaker"
+            66/type = MOOD
+            67/name = "Strange Mood Mechanics"
+            67/type = MOOD
+            68/name = "Construct Building"
+            68/type = BUILD
+            69/name = "Construct Door"
+            68/type = BUILD
+            70/name = "Construct Floodgate"
+            70/type = BUILD
+            71/name = "Construct ?? Bed"
+            71/type = BUILD
+            72/name = "Construct ?? Chair/Throne"
+            72/type = BUILD
+            73/name = "Construct ?? Casket/Sarcophagus/Coffin"
+            73/type = BUILD
+            74/name = "Construct ?? Table"
+            74/type = BUILD
+            75/name = "Construct ?? Box/Chest/Bag/Coffer"
+            75/type = BUILD
+            76/name = "Construct ?? Bin"
+            76/type = BUILD
+            77/name = "Construct ?? Armor Stand"
+            77/type = BUILD
+            78/name = "Construct ?? Weapon Rack"
+            78/type = BUILD
+            79/name = "Construct ?? Cabinet"
+            79/type = BUILD
+            80/name = "Construct ?? Statue"
+            80/type = BUILD
+            81/name = "Construct ?? Blocks"
+            81/type = BUILD
+            82/name = "Make Raw ??"
+            83/name = "Make ?? Crafts"
+            84/name = "Mint ?? Coins"
+            85/name = "Cut ?A?"
+            86/name = "Cut ?B?"
+            87/name = "Encrust ?something? with ?somethings?"
+            88/name = "Encrust ?something? with ?somethings?"
+            89/name = "Destroy Building"
+            89/type = BUILD
+            90/name = "Smelt Ore"
+            90/type = FURNACE
+            91/name = "Melt a Metal Object"
+            91/type = FORGE
+            92/name = "Extract Metal Strands"
+            92/type = FORGE
+            93/name = "Plant Seeds"
+            94/name = "Harvest Plants"
+            95/name = "Train Hunting Animal"
+            95/type = ANIMAL
+            96/name = "Train War Animal"
+            96/type = ANIMAL
+            99/name = "Construct Catapult Parts"
+            100/name = "Forge ?? Anvil"
+            100/type = FORGE
+            101/name = "Construct Catapult Parts"
+            102/name = "Construct Ballista Parts"
+            103/name = "Forge/Make A"
+            103/type = FORGE
+            104/name = "Stud with ?something?"
+            105/name = "Butcher an Animal"
+            106/name = "Prepare a Raw Fish"
+            107/name = "Mill Plants"
+            108/name = "Bait Trap with Meat/Gem/Fish"
+            109/name = "Milk Creature"
+            110/name = "Make Cheese"
+            111/name = "Process Plants"
+            112/name = "Process Plants (Bag)"
+            113/name = "Process Plants (Vial)"
+            114/name = "Process Plants (Barrel)"
+            115/name = "Prepare ?? Meal"
+            116/name = "Weave ?? into ??"
+            117/name = "Forge/Make ?? something"
+            117/type = BUILD
+            118/name = "Weave Thread"
+            119/name = "Forge/Make D"
+            119/type = FORGE
+            120/name = "Forge/Make E"
+            120/type = FORGE
+            121/name = "Forge/Make F"
+            121/type = FORGE
+            122/name = "Forge/Make Waterskin/Vial/Flask"
+            122/type = FORGE
+            123/name = "Forge Rope"
+            123/type = FORGE
+            124/name = "Forge  Flask"
+            124/type = FORGE
+            125/name = "Forge  Goblet"
+            125/type = FORGE
+            126/name = "Forge  Instrument"
+            126/type = FORGE
+            127/name = "Forge  Toy"
+            127/type = FORGE
+            128/name = "Forge  Animal Trap"
+            128/type = FORGE
+            129/name = "Forge  Barrel"
+            129/type = FORGE
+            130/name = "Make Totel"
+            130/type = FORGE
+            131/name = "Forge Bolts"
+            131/type = FORGE
+            132/name = "Decorate With ?something?"
+            133/name = "Forge/Make G"
+            133/type = FORGE
+            134/name = "Decorate With Bone"
+            135/name = "Make Backpack"
+            136/name = "Make Quiver"
+            137/name = "Load Catapult"
+            138/name = "Load Ballista"
+            139/name = "Fire Catapult"
+            140/name = "Fire Ballista"
+            141/name = "Construct Mechanisms"
+            141/type = BUILD
+            142/name = "Fire Ballista"
+            143/name = "Load Cage Trap"
+            144/name = "Load Stone Trap"
+            145/name = "Load Weapon Trap"
+            146/name = "Clean Trap"
+            147/name = "Cast Spell"
+            148/name = "Link a Building to Trigger"
+            149/name = "Pull the Lever"
+            150/name = "Brew Drink"
+            150/type = DRINK
+            151/name = "Extract from Plants"
+            152/name = "Extract from Raw Fish"
+            153/name = "Extract from Land Animal"
+            154/name = "Tame Small Animal"
+            154/type = ANIMAL
+            155/name = "Tame ?something?"
+            155/type = ANIMAL
+            156/name = "Chain Animal"
+            156/type = ANIMAL
+            157/name = "Unchain Animal"
+            157/type = ANIMAL
+            158/name = "Unchain Pet"
+            158/type = ANIMAL
+            159/name = "Release Large Creature"
+            159/type = ANIMAL
+            160/name = "Release Pet"
+            160/type = ANIMAL
+            161/name = "Release Small Creature"
+            161/type = ANIMAL
+            162/name = "Handle Small Creature"
+            162/type = ANIMAL
+            163/name = "Handle Large Creature"
+            163/type = ANIMAL
+            164/name = "Cage Large Creature"
+            164/type = ANIMAL
+            165/name = "Cage Small Creature"
+            165/type = ANIMAL
+            166/name = "Recover Wounded"
+            166/type = MEDICAL
+            167/name = "Diagnose Patient"
+            167/type = MEDICAL
+            168/name = "Immobilize Break"
+            168/type = MEDICAL
+            169/name = "Dress Wound"
+            169/type = MEDICAL
+            170/name = "Clean Patient"
+            170/type = MEDICAL
+            171/name = "Surgery"
+            171/type = MEDICAL
+            172/name = "Suture"
+            172/type = MEDICAL
+            173/name = "Set Bone"
+            173/type = MEDICAL
+            174/name = "Place In Traction"
+            174/type = MEDICAL
+            175/name = "Drain Aquarium"
+            176/name = "Fill Aquarium"
+            177/name = "Fill Pond"
+            178/name = "Give Water"
+            178/type = MEDICAL
+            179/name = "Give Food"
+            179/type = MEDICAL
+            180/name = "Give Water"
+            180/type = MEDICAL
+            181/name = "Give Food"
+            181/type = MEDICAL
+            182/name = "Recover Pet"
+            183/name = "Pit/Pond Large Animal"
+            183/type = ANIMAL
+            184/name = "Pit/Pond Small Animal"
+            184/type = ANIMAL
+            185/name = "Slaughter Animal"
+            185/type = ANIMAL
+            186/name = "Make Charcoal"
+            186/type = FURNACE
+            187/name = "Make Ash"
+            187/type = FURNACE
+            188/name = "Make Lye"
+            189/name = "Make Potash From Lye"
+            190/name = "Fertilize Field"
+            191/name = "Make Potash From Ash"
+            192/name = "Dye Thread"
+            193/name = "Dye Cloth"
+            194/name = "Sew ?? Image"
+            195/name = "Manage Work Orders"
+            195/type = ADMIN
+            196/name = "Operate Pump"
+            197/name = "Manage Work Orders"
+            197/type = ADMIN
+            198/name = "Update Stockpile Records"
+            198/type = ADMIN
+            199/name = "Trade at Depot"
+            199/type = ADMIN
+            200/name = "Construct ?? Hatch Cover"
+            200/type = BUILD
+            201/name = "Construct ?? Grate"
+            201/type = BUILD
+            202/name = "Remove Stairs/Ramps"
+            202/type = DIG
+            203/name = "Construct ?? Quern"
+            203/type = BUILD
+            205/name = "Upgrade Squad Equipment"
+            205/type = HAUL
+            206/name = "Prepare Equipment Manifests"
+            206/type = ADMIN
+            207/name = "Construct ?? Splint"
+            207/type = BUILD
+            208/name = "Construct ?? Crutch"
+            208/type = BUILD
+            209/name = "Construct Traction Bench"
+            209/type = BUILD
+            210/name = "Clean Self"
+            211/name = "Bring Crutch"
+            211/type = MEDICAL
+            212/name = "Apply Cast"
+            212/type = MEDICAL
+            -->
+        </Jobs>
+
+        <Skills>
+            <Skill name="Mining" id="0" />
+            <Skill name="Wood Cutting" id="1" />
+            <Skill name="Carpentry" id="2" />
+            <Skill name="Bowmaking" id="49" />
+            <Skill name="Engraving" id="3" />
+            <Skill name="Masonry" id="4" />
+            <Skill name="Animal Training" id="5" />
+            <Skill name="Animal Caretaking" id="6" />
+            <Skill name="Fish Dissection" id="7" />
+            <Skill name="Animal Dissection" id="8" />
+            <Skill name="Fish Cleaning" id="9" />
+            <Skill name="Butchery" id="10" />
+            <Skill name="Trapping" id="11" />
+            <Skill name="Growing" id="22" />
+            <Skill name="Herbalism" id="23" />
+            <Skill name="Ambush" id="57" />
+            <Skill name="Swimming" id="71" />
+            <Skill name="Persuasion" id="72" />
+            <Skill name="Negotiation" id="73" />
+            <Skill name="Judging Intent" id="74" />
+            <Skill name="Appraisal" id="75" />
+            <Skill name="Organization" id="76" />
+            <Skill name="Record Keeping" id="77" />
+            <Skill name="Lying" id="78" />
+            <Skill name="Intimidation" id="79" />
+            <Skill name="Conversation" id="80" />
+            <Skill name="Comedy" id="81" />
+            <Skill name="Flattery" id="82" />
+            <Skill name="Consoling" id="83" />
+            <Skill name="Pacification" id="84" />
+            <Skill name="Tracking" id="85" />
+            <Skill name="Fishing" id="24" />
+            <Skill name="Furnace Operation" id="25" />
+            <Skill name="Strand Extraction" id="26" />
+            <Skill name="Soap Making" id="67" />
+            <Skill name="Potash Making" id="68" />
+            <Skill name="Lye Making" id="66" />
+            <Skill name="Wood Burning" id="65" />
+            <Skill name="Weaponsmithing" id="27" />
+            <Skill name="Armorsmithing" id="28" />
+            <Skill name="Metalsmithing" id="29" />
+            <Skill name="Gem Cutting" id="30" />
+            <Skill name="Gem Setting" id="31" />
+            <Skill name="Wood Crafting" id="32" />
+            <Skill name="Stone Crafting" id="33" />
+            <Skill name="Metal Crafting" id="34" />
+            <Skill name="Glassmaking" id="35" />
+            <Skill name="Studying" id="86" />
+            <Skill name="Concentration" id="87" />
+            <Skill name="Discipline" id="88" />
+            <Skill name="Observation" id="89" />
+            <Skill name="Writing" id="90" />
+            <Skill name="Prose" id="91" />
+            <Skill name="Poetry" id="92" />
+            <Skill name="Reading" id="93" />
+            <Skill name="Speaking" id="94" />
+            <Skill name="Coordination" id="95" />
+            <Skill name="Balance" id="96" />
+            <Skill name="Leadership" id="97" />
+            <Skill name="Teaching" id="98" />
+            <Skill name="Fighting" id="99" />
+            <Skill name="Archery" id="100" />
+            <Skill name="Wrestling" id="101" />
+            <Skill name="Biting" id="102" />
+            <Skill name="Striking" id="103" />
+            <Skill name="Kicking" id="104" />
+            <Skill name="Dodging" id="105" />
+            <Skill name="Axe" id="38" />
+            <Skill name="Sword" id="39" />
+            <Skill name="Mace" id="41" />
+            <Skill name="Hammer" id="42" />
+            <Skill name="Spear" id="43" />
+            <Skill name="Crossbow" id="44" />
+            <Skill name="Pike" id="50" />
+            <Skill name="Bow" id="52" />
+            <Skill name="Shield" id="45" />
+            <Skill name="Armor" id="46" />
+            <Skill name="Siege Engineering" id="47" />
+            <Skill name="Siege Operation" id="48" />
+            <Skill name="Pump Operation" id="70" />
+            <Skill name="Leatherworkering" id="36" />
+            <Skill name="Tanning" id="12" />
+            <Skill name="Dyeing" id="69" />
+            <Skill name="Bone Carving" id="37" />
+            <Skill name="Weaving" id="13" />
+            <Skill name="Brewing" id="14" />
+            <Skill name="Clothes Making" id="16" />
+            <Skill name="Milling" id="17" />
+            <Skill name="Threshing" id="18" />
+            <Skill name="Blowgun" id="53" />
+            <Skill name="Throwing" id="54" />
+            <Skill name="Machinery" id="55" />
+            <Skill name="Nature" id="56" />
+            <Skill name="Knife" id="40" />
+            <Skill name="Lash" id="51" />
+            <Skill name="Cooking" id="21" />
+            <Skill name="Alchemy" id="15" />
+            <Skill name="Building Design" id="58" />
+            <Skill name="Cheese Making" id="19" />
+            <Skill name="Milking" id="20" />
+            <Skill name="Misc. Object" id="106" />
+            <Skill name="Wound Dressing" id="59" />
+            <Skill name="Diagnostics" id="60" />
+            <Skill name="Surgery" id="61" />
+            <Skill name="Bone Setting" id="62" />
+            <Skill name="Suturing" id="63" />
+            <Skill name="Crutch-walking" id="64" />
+        </Skills>
+
+        <Levels>
+            <Level id="0" name="Dabbling" xpNxtLvl="500"/>
+            <Level id="1" name="Novice" xpNxtLvl="600"/>
+            <Level id="2" name="Adequate" xpNxtLvl="700"/>
+            <Level id="3" name="Competent" xpNxtLvl="800"/>
+            <Level id="4" name="Skilled" xpNxtLvl="900"/>
+            <Level id="5" name="Proficient" xpNxtLvl="1000"/>
+            <Level id="6" name="Talented" xpNxtLvl="1100"/>
+            <Level id="7" name="Adept" xpNxtLvl="1200"/>
+            <Level id="8" name="Expert" xpNxtLvl="1300"/>
+            <Level id="9" name="Professional" xpNxtLvl="1400"/>
+            <Level id="10" name="Accomplished" xpNxtLvl="1500"/>
+            <Level id="11" name="Great" xpNxtLvl="1600"/>
+            <Level id="12" name="Master" xpNxtLvl="1700"/>
+            <Level id="13" name="High Master" xpNxtLvl="1800"/>
+            <Level id="14" name="Grand Master" xpNxtLvl="1900"/>
+            <Level id="15" name="Legendary" xpNxtLvl="2000"/>
+            <Level id="16" name="Legendary+1" xpNxtLvl="2100"/>
+            <Level id="17" name="Legendary+2" xpNxtLvl="2200"/>
+            <Level id="18" name="Legendary+3" xpNxtLvl="2300"/>
+            <Level id="19" name="Legendary+4" xpNxtLvl="2400"/>
+            <Level id="20" name="Legendary+5" xpNxtLvl="-1"/><!-- -1 for no cap -->
+        </Levels>
+
+        <Labors>
+            <Labor name="Mining" id="0" />
+            <Labor name="Stone Hauling" id="1" />
+            <Labor name="Wood Hauling" id="2" />
+            <Labor name="Burial" id="3" />
+            <Labor name="Food Hauling" id="4" />
+            <Labor name="Refuse Hauling" id="5" />
+            <Labor name="Item Hauling" id="6" />
+            <Labor name="Furniture Hauling" id="7" />
+            <Labor name="Animal Hauling" id="8" />
+            <Labor name="Cleaning" id="9" />
+            <Labor name="Wood Cutting" id="10" />
+            <Labor name="Carpentry" id="11" />
+            <Labor name="Stone Detailing" id="12" />
+            <Labor name="Masonry" id="13" />
+            <Labor name="Architecture" id="14" />
+            <Labor name="Animal Training" id="15" />
+            <Labor name="Animal Care" id="16" />
+            <Labor name="Diagnosis" id="17" />
+            <Labor name="Surgery" id="18" />
+            <Labor name="Setting Bones" id="19" />
+            <Labor name="Suturing" id="20" />
+            <Labor name="Dressing Wounds" id="21" />
+            <Labor name="Feed Patients/Prisoners" id="22" />
+            <Labor name="Recovering Wounded" id="23" />
+            <Labor name="Butchery" id="24" />
+            <Labor name="Trapping" id="25" />
+            <Labor name="Small Animal Dissection" id="26" />
+            <Labor name="Leatherworking" id="27" />
+            <Labor name="Tanning" id="28" />
+            <Labor name="Brewing" id="29" />
+            <Labor name="Alchemy" id="30" />
+            <Labor name="Soap Maker" id="31" />
+            <Labor name="Weaving" id="32" />
+            <Labor name="Clothesmaking" id="33" />
+            <Labor name="Milling" id="34" />
+            <Labor name="Plant Processing" id="35" />
+            <Labor name="Cheese Making" id="36" />
+            <Labor name="Milking" id="37" />
+            <Labor name="Cooking" id="38" />
+            <Labor name="Farming (Fields)" id="39" />
+            <Labor name="Plant Gathering" id="40" />
+            <Labor name="Fishing" id="41" />
+            <Labor name="Fish Cleaning" id="42" />
+            <Labor name="Fish Dissection" id="43" />
+            <Labor name="Hunting" id="44" />
+            <Labor name="Furnace Operating" id="45" />
+            <Labor name="Weaponsmithing" id="46" />
+            <Labor name="Armoring" id="47" />
+            <Labor name="Blacksmithing" id="48" />
+            <Labor name="Metalcrafting" id="49" />
+            <Labor name="Gem Cutting" id="50" />
+            <Labor name="Gem Setting" id="51" />
+            <Labor name="Woodcrafting" id="52" />
+            <Labor name="Stonecrafting" id="53" />
+            <Labor name="Bone Carving" id="54" />
+            <Labor name="Glassmaking" id="55" />
+            <Labor name="Strand Extraction" id="56" />
+            <Labor name="Siege Engineering" id="57" />
+            <Labor name="Siege Operating" id="58" />
+            <Labor name="Crossbow-making" id="59" />
+            <Labor name="Mechanics" id="60" />
+            <Labor name="Potash Making" id="61" />
+            <Labor name="Lye Making" id="62" />
+            <Labor name="Dyeing" id="63" />
+            <Labor name="Wood Burning" id="64" />
+            <Labor name="Pump Operating" id="65" />
+            <!--
+            * Labor groups *
+            <Labor name="Woodworking" id="4294967294" />
+            <Labor name="Stoneworking" id="4294967293" />
+            <Labor name="Hunting/Related" id="4294967292" />
+            <Labor name="Healthcare" id="4294967291" />
+            <Labor name="Farming/Related" id="4294967290" />
+            <Labor name="Fishing/Related" id="4294967289" />
+            <Labor name="Metalsmithing" id="4294967288" />
+            <Labor name="Jewelry" id="4294967287" />
+            <Labor name="Crafts" id="4294967286" />
+            <Labor name="Engineering" id="4294967285" />
+            <Labor name="Hauling" id="4294967284" />
+            <Labor name="Other Jobs" id="4294967283" />
+            -->
+        </Labors>
+
+        <VTable name="building_vtable">
+            <multiclass name="building_trapst" typeoffset="0x138">
+                <class name="building_leverst" type="0x0"/>
+                <class name="building_pressure_platest" type="0x1"/>
+                <class name="building_cage_trapst" type="0x2"/>
+                <class name="building_stonefall_trapst" type="0x3"/>
+                <class name="building_weapon_trapst" type="0x4"/>
+            </multiclass>
+            <class name="building_constructionst"/>
+            <class name="building_road_pavedst"/>
+            <class name="building_road_dirtst"/>
+            <class name="building_roadst"/>
+            <class name="building_wagonst"/>
+            <class name="building_tradedepotst"/>
+            <multiclass name="building_workshopst" typeoffset="0x138">
+                <class name="building_carpenters_workshopst" type="0x0"/>
+                <class name="building_farmers_workshopst" type="0x1"/>
+                <class name="building_masons_workshopst" type="0x2"/>
+                <class name="building_craftdwarfs_workshopst" type="0x3"/>
+                <class name="building_jewelers_workshopst" type="0x4"/>
+                <class name="building_metalsmiths_workshopst" type="0x5"/>
+                <class name="building_magma_forgest" type="0x6"/>
+                <class name="building_bowyers_workshopst" type="0x7"/>
+                <class name="building_mechanics_workshopst" type="0x8"/>
+                <class name="building_siege_workshopst" type="0x9"/>
+                <class name="building_butchers_shopst" type="0xA"/>
+                <class name="building_leather_worksst" type="0xB"/>
+                <class name="building_tanners_shopst" type="0xC"/>
+                <class name="building_clothiers_shopst" type="0xD"/>
+                <class name="building_fisheryst" type="0xE"/>
+                <class name="building_stillst" type="0xF"/>
+                <class name="building_loomst" type="0x10"/>
+                <class name="building_quernst" type="0x11"/>
+                <class name="building_kennelsst" type="0x12"/>
+                <class name="building_kitchenst" type="0x13"/>
+                <class name="building_asheryst" type="0x14"/>
+                <class name="building_dyers_shopst" type="0x15"/>
+                <class name="building_millstonest" type="0x16"/>
+                <class name="building_custom_workshop" type="0x17" />
+            </multiclass>
+            <multiclass name="building_furnacest" typeoffset="0x152">
+                <class name="building_wood_furnacest" type="0x0"/>
+                <class name="building_smelterst" type="0x1"/>
+                <class name="building_glass_furnacest" type="0x2"/>
+                <class name="building_kilnst" type="0x3"/>
+                <class name="building_magma_smelterst" type="0x4"/>
+                <class name="building_magma_glass_furnacest" type="0x5"/>
+                <class name="building_magma_kilnst" type="0x6"/>
+            </multiclass>
+            <class name="building_animaltrapst"/>
+            <class name="building_farmplotst"/>
+            <class name="building_window_glassst"/>
+            <class name="building_window_gemst"/>
+            <class name="building_windowst"/>
+            <class name="building_statuest"/>
+            <class name="building_coffinst"/>
+            <class name="building_shopst"/>
+            <class name="building_chairst"/>
+            <class name="building_tablest"/>
+            <class name="building_bedst"/>
+            <class name="building_traction_benchst"/>
+            <multiclass name="building_siegeenginest" typeoffset="0x138">
+                <class name="building_catapultst" type="0x0"/>
+                <class name="building_ballistast" type="0x1"/>
+            </multiclass>
+            <class name="building_cagest"/>
+            <class name="building_chainst"/>
+            <class name="building_windmillst"/>
+            <class name="building_water_wheelst"/>
+            <class name="building_screw_pumpst"/>
+            <class name="building_archerytargetst"/>
+            <class name="building_weaponst"/><!-- retractable spikes -->
+            <class name="building_supportst"/>
+            <class name="building_axle_verticalst"/>
+            <class name="building_axle_horizontalst"/>
+            <class name="building_gear_assemblyst"/>
+            <class name="building_trapst"/>
+            <class name="building_bars_floorst"/>
+            <class name="building_bars_verticalst"/>
+            <class name="building_grate_floorst"/>
+            <class name="building_grate_wallst"/>
+            <class name="building_floodgatest"/>
+            <class name="building_bridgest"/>
+            <class name="building_hatchst"/>
+            <class name="building_doorst"/>
+            <class name="building_armorstandst"/>
+            <class name="building_weaponrackst"/>
+            <class name="building_cabinetst"/>
+            <class name="building_boxst"/>
+            <class name="building_stockpilest"/>
+            <class name="building_wellst"/>
+            <class name="building_civzonest"/><!-- zone -->
+            <class name="building_actualst"/>
+            <class name="buildingst"/>
+        </VTable>
+
+        <Offsets>
+            <!-- Descriptions go here. -->
+        </Offsets>
+    </Base>
+
+
+                    .,:rsr,
+                  :2;,;r2A@@5
+                  @2::s5A#@@@ @r.       .
+                 sd;:riXA#@@ :@@@Gir;;AS9
+                 Bs::sS3A#@2 @@#AhXirsS#;
+                iHrLr5d#@@@ .@#95sr;;rie
+                i*'    `*@3 @@A2sr;:;r#5
+                :..:rll:    @@A5sr::r3@
+               @Hr;iZ#@@@@   `:rr;;;;:
+              S@r.;i2#@@@  @s.      ..
+              @2::ri2A@@# B@G2ir:...5i
+             :@r,r3X##@@  @G5sr:..,:A
+            .@Ar;;rSB@@# H#2sr;,..,is
+            .'       `* ,@ASs;:..,:B
+                         ;rr;:,..,:.
+                             `''' 
+                  W I N D O W S
+                       and
+                     W I N E
+
+
+        <Version name="v0.31.01 legacy" os="windows" base="meta-2010">
+            <MD5 value="851c1190b6a7b42f2463967623d18575" />
+            <PETimeStamp value="0x4BB45F99" />
+            <Offsets>
+                Basic things
+                ============
+                <HexValue name="sizeof_vector" value="0x18" />
+                <Offset name="vector_triplet" value="0xC" />
+                Vector layout in MSVC 9:
+                DWORD Allocator?
+                DWORD ?
+                DWORD ?
+                DWORD Start
+                DWORD End
+                DWORD AllocationEnd
+                
+                <HexValue name="sizeof_string" value="0x1C" />
+                <!-- most probably a static object, because its parts are often
+                    referenced as offset to this address *and* as addresses    -->
+                <Address name="WORLD" value="0x0165B188" />
+
+                Position and window dimensions
+                ==============================
+                <Address name="window_x" value="0xe32798" />
+                <Address name="window_y" value="0xe60838" />
+                <Address name="window_z" value="0xe60814" />
+                <Address name="cursor_xyz" value="0xae82cc" />
+
+                <Address name="window_dims" value="0x17f5ab8" />
+                Found addresses: (next to each other!)
+                0x17f5ab8
+                0x17f5ac0
+                0x17f5ac8
+                0x17f5ad0
+
+                GUI State
+                =========
+                <Address name="pause_state" value="0x146e45f" />
+                Found addresses:
+                0x146e45f <!-- looks like a dword -->
+                0x185b677 <!-- looks like a word -->
+
+                Bogus: <Address name="current_cursor_creature" value="0xae82cc" />
+
+                <Address name="current_menu_state" value="0x017f6f38" />
+
+                Bogus: <Address name="view_screen" value="0xae82cc" />
+
+                Map stuff
+                =========
+                <Address name="map_data" value="0x016AD718" />
+                <Offset name="map_data_vein_vector" value="0x08" />
+                <Offset name="map_data_type" value="0x009A" />
+                <Offset name="map_data_designation" value="0x029C" />
+                <Offset name="map_data_occupancy" value="0x069c" />
+                <Offset name="map_data_temperature1_offset" value="0x159c" />
+                <Offset name="map_data_temperature2_offset" value="0x179c" />
+                <Offset name="map_data_biome_stuffs" value="0x1D9C" />
+                <Offset name="map_data_pathfinding_offset" value="0x0D9c" />
+                <Offset name="map_data_feature_local" value="0x2C" /> local features
+                <Offset name="map_data_feature_global" value="0x30" /> global features
+
+                Map Features
+                ============
+                WORLD + 0x54374
+                <Address name="global_feature_vector" value="0x16AF4FC" />
+                <Offset name="global_feature_funcptr_" value="0x100" />
+                <Offset name="global_feature_mat" value="0x34" />
+                <Offset name="global_feature_submat" value="0x38" />
+                WORLD + 0x54440
+                <Address name="local_feature_start_ptr" value="0x16AF5C8" />
+                <Offset name="local_feature_mat" value="0x30" />
+                <Offset name="local_feature_submat" value="0x34" />
+                <!--
+        map_data_map_x_offset         0x0058
+        map_data_map_y_offset         0x005A
+        map_data_type_offset          0x009a
+        map_data_designation_offset   0x029c
+        map_data_occupancy_offset     0x069c
+        map_data_0a60_offset          0x0A9c
+        map_data_pathfinding_offset   0x0D9c
+        map_data_1160_offset          0x119c
+        map_data_1360_offset          0x139c
+        map_data_temperature1_offset  0x159c
+        map_data_temperature2_offset  0x179c
+        map_data_1960_offset          0x199c
+        map_data_1b60_offset          0x1B9c
+        -->
+                
+                * map size in blocks *
+                <Address name="x_count_block" value="0x016ad738" />
+                <Address name="y_count_block" value="0x016ad73C" />
+                <Address name="z_count_block" value="0x016ad740" />
+                
+                * map size in tiles *
+                <Address name="x_count" value="0x016ad744" />
+                <Address name="y_count" value="0x016ad748" />
+                <Address name="z_count" value="0x016ad74C" />
+                
+                * Suspected region coords *
+                WORLD + 0x525C8
+                <Address name="region_x" value="0x016ad750" />
+                WORLD + 0x525CC
+                <Address name="region_y" value="0x016ad754" />
+                WORLD + 0x525D0
+                <Address name="region_z" value="0x016ad758" />
+                
+                * World size * (WORDs)
+                <Address name="world_size_x" value="0x016AEDD4" />
+                <Address name="world_size_y" value="0x016AEDD6" />
+                
+                <Address name="geoblock_vector" value="0x16AF52C" />
+                <Address name="ptr2_region_array" value="0x16AF574" />
+                
+                <!--
+                <Offset name="world_size_x" value="0x84" />
+                <Offset name="world_size_y" value="0x86" />
+                <Offset name="w_geoblocks" value="0x75C" /> vector
+                <Offset name="w_regions_arr" value="0x79C" />
+                -->
+                <!-- values for the region structure -->
+                <HexValue name="region_size" value="0x64" />
+                <Offset name="region_geo_index_off" value="0x60" />
+                <!-- geoblock offset(s?) -->
+                <Offset name="geolayer_geoblock_offset" value="0x4" /> vector
+                <Offset name="type_inside_geolayer" value="0x4" /> vector
+                
+                Name struct
+                ===========
+                <Offset name="name_firstname" value="0x0" />
+                <Offset name="name_nickname" value="0x1C" />
+                <Offset name="name_words" value="0x38" />
+
+                Creatures
+                =========
+                <Address name="creature_vector" value="0x0166ecc4" />
+                <Address name="dwarf_race_index" value="0x01470fbc" />
+                <Address name="dwarf_civ_id" value="0x01470fb0" />
+                
+                <Offset name="creature_name" value="0x0" />
+                <Offset name="creature_custom_profession" value="0x6c" />
+                <Offset name="creature_profession" value="0x88" />
+                <Offset name="creature_race" value="0x8C" />
+                <Offset name="creature_position" value="0x90" />
+                <Offset name="creature_flags1" value="0xF8" />
+                <Offset name="creature_flags2" value="0xFC" />
+                <Offset name="creature_sex" value="0x110" />
+                <Offset name="creature_id" value="0x114" />
+                <Offset name="creature_civ" value="0X120" />
+                <Offset name="creature_soulskill_vector" value="0X1F4" />
+                <Offset name="creature_pickup_equipment_bit" value="0X21C" />
+                <Offset name="creature_mood" value="0x288" />
+                
+                <Offset name="creature_pregnancy" value="0x28C" />
+                <Offset name="creature_pregnancy_ptr" value="0x290" />
+                <Offset name="creature_birth_year" value="0x298" />
+                <Offset name="creature_birth_time" value="0x29C" />
+                
+                <Offset name="creature_physical" value="0x464" />
+                <!--
+                <Offset name="creature_strength" value="0x464" />
+                <Offset name="creature_agility" value="0x480" />
+                <Offset name="creature_toughness" value="0x49C" />
+                <Offset name="creature_endurance" value="0x4B8" />
+                <Offset name="creature_recuperation" value="0x4D4" />
+                <Offset name="creature_disease_resistance" value="0x4F0" />
+                -->
+                <Offset name="creature_current_job" value="0x390" /> <!-- from chmod -->
+                
+                <Offset name="creature_mood_skill" value="0x394" /> the skill that will be increased at the end of the mood (or not)
+                <Offset name="creature_appearance_vector" value="0x604" /> seems to be indexes in the list of possible colors defined in the raws for each group
+                
+                <Offset name="creature_artifact_name" value="0x6D0" />
+                <Offset name="creature_labors" value="0x770" />
+                <Offset name="creature_soul_vector" value="0x073C" />
+                <Offset name="creature_default_soul" value="0x0754" />
+                <Offset name="creature_happiness" value="0x830" />
+
+                Souls
+                =====
+                <Offset name="soul_name" value="0x0" />
+                <Offset name="soul_skills_vector" value="0x1F4" />
+                <Offset name="soul_traits" value="0x224" />
+                <Offset name="soul_mental" value="0x88" />
+
+                Job structure
+                =============
+                <Offset name="job_id" value="0x0" /> Incrementaly assigned
+                <Offset name="job_type" value="0x8" /> seems to be just like the old occupations
+                <Offset name="job_materials_vector" value="0xa4" />
+
+                Job materials
+                =============
+                <Offset name="job_material_maintype" value="0x0" /> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
+                <Offset name="job_material_sectype1" value="0x2" /> subsubtype ?
+                <Offset name="job_material_sectype2" value="0x4" /> subtype ?
+                <Offset name="job_material_sectype3" value="0x8" /> index of material (for example, 2 is for silver)
+                <Offset name="job_material_flags" value="0x18" /> set only for shell / bone mood requirements ?
+
+                <!--
+                mid = AddStrucMember(id,"analytical_ability",   0X88,   0x60000400, GetStrucIdByName("s_attrib"),   28);
+                mid = AddStrucMember(id,"focus",    0XA4,   0x60000400, GetStrucIdByName("s_attrib"),   28);
+                mid = AddStrucMember(id,"willpower",    0XC0,   0x60000400, GetStrucIdByName("s_attrib"),   28);
+                mid = AddStrucMember(id,"creativity",   0XDC,   0x60000400, GetStrucIdByName("s_attrib"),   28);
+                mid = AddStrucMember(id,"intuition",    0XF8,   0x60000400, GetStrucIdByName("s_attrib"),   28);
+                mid = AddStrucMember(id,"patience", 0X114,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+                mid = AddStrucMember(id,"memory",   0X130,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+                mid = AddStrucMember(id,"linguistic_ability",   0X14C,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+                mid = AddStrucMember(id,"spatial_sense",    0X168,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+                mid = AddStrucMember(id,"musicality",   0X184,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+                mid = AddStrucMember(id,"kinesthetic_sense",    0X1A0,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+                mid = AddStrucMember(id,"empathy",  0X1BC,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+                mid = AddStrucMember(id,"social_awareness", 0X1D8,  0x60000400, GetStrucIdByName("s_attrib"),   28);
+                -->
+                
+                Materials
+                =========
+                soil, stone, metal
+                inorganics vector = WORLD + 0x54B7C = 0x16AFD04
+                <Address name="mat_inorganics" value="0x16afd04" />
+                
+                wood and plant matter, WORLD + 0x54B94
+                <Address name="mat_organics_all" value="0x16afd1C" />
+                
+                plant matter, WORLD + 0x54BAC
+                <Address name="mat_organics_plants" value="0x16afd34" />
+                
+                just wood, WORLD + 0x54BDC
+                <Address name="mat_organics_trees" value="0x16afd64" />
+                
+                creature types actually used for creatures,
+                WORLD + 0x54CD0
+                <Address name="creature_type_vector" value="0x016AFE58" />
+                <Offset name="creature_type_caste_vector" value="0x138" />
+                <Offset name="creature_type_extract_vector" value="0x1A14" />
+                <Offset name="creature_tile" value="0xE0" />
+                <Offset name="creature_tile_color" value="0xF6" />
+        
+                <!--
+                NOT used yet
+                
+                Number vectors are vector <uint32_t>
+                Others are vector<object *>
+                first member of 'object' is a STL string with the name of said object
+
+                <Offset name="inorganic_material_template_instantiation" value="0x178" />
+                
+                this is an array of 4B pointers to material templates and length 0x292
+                base_type_array = WORLD + 0x5DF44
+                <Address name="base_type_array" value="0x016b90cc" />
+                <Address name="mat_templates" value="0x16afcec" />        
+                
+                
+                
+                maybe maps beween organics_all and organics_plants
+                <Address name="mat_unk1_numbers" value="0x16afd4C" /> 
+                
+                
+                
+                maybe maps beween organics_all and organics_trees
+                <Address name="mat_unk2_numbers" value="0x16afd7C" /> 
+                
+                body material stuff
+                <Address name="mat_body_material_templates" value="0x16AFD94" />
+                <Address name="mat_body_detail_plans" value="0x16AFDAC" />
+                <Address name="mat_bodies" value="0x16AFDC4" />
+                <Address name="mat_bodygloss" value="0x16AFDDC" />
+                <Address name="mat_creature_variations" value="0x16AFDF4" />
+                
+                *raw* creature types
+                <Address name="mat_creature_types" value="0x16AFE0C" />
+                -->
+                
+                Constructions
+                =============
+                WORLD + 0x108
+                <Address name="construction_vector" value="0x165b290" />
+                <Offset name="sizeof_construction" value="0x14" />
+                
+                Translations
+                ============
+                WORLD + 0x54E50
+                <Address name="language_vector" value="0x016AFFD8" />
+                WORLD + 0x54E80
+                <Address name="translation_vector" value="0x016B0008" />
+                <Offset name="word_table" value="0x4C" />
+                
+                Vegetation
+                ==========
+                WORLD + 0x15184
+                <Address name="vegetation_vector" value="0x0167030C" /> belal: 0x017f6d98 ... what?
+                <Offset name="tree_desc_offset" value="0x6C" />
+                
+                Buildings
+                =========
+                WORLD + 0x14818
+                <Address name="buildings_vector" value="0x0166f9a0" />
+                <Offset name="building_custom_workshop_type" value="0x164" />
+                WORLD + 0x5D610
+                <Address name="custom_workshop_vector" value="0x016B8798" />
+                <Offset name="custom_workshop_name" value="0x4" />
+                <Offset name="custom_workshop_type" value="0x20" />
+                
+                Effects
+                =======
+                
+                :(
+                
+                Settlements
+                ===========
+                
+                :(
+                
+                Hotkeys
+                =======
+                <Address name="hotkey_start" value="0x01476ecc" />
+                <Offset name="hotkey_mode" value="0x1C" />
+                <Offset name="hotkey_xyz" value="0x20" />
+                <HexValue name="hotkey_size" value="0x2C" />
+                
+                <!-- 
+                addresses from belal: vectors might need 8 subtracted from them
+                buildings 0x0166f9a8
+                constructions 0xffffffff
+                creatures 0x0166eccc
+                current_cursor_creature 0x00ae82cc
+                current_menu_state 0x017f6f38
+                cursor_xyz 0x0166ecd4
+                effects_vector 0x017f6da0
+                hotkey_start 0x01476ecc
+                items 0x0166eda8
+                language_vector 0x016affe0
+                map_data 0x016ad718
+                matgloss 0xffffffff
+                notes 0x01474de8
+                pause_state 0x0146e45f
+                region_x 0x016ad750
+                region_y 0x016ad754
+                region_z 0x016ad758
+                settlement_current 0xffffffff
+                settlements 0x016af4a4
+                translation_vector 0x016b0010
+                view_screen 0xffffffff
+                window_dims 0x017f5abc
+                window_x 0x00e32798
+                window_y 0x00e60838
+                window_z 0x00e60814
+                world 0x016aed50
+                x_count 0x016ad738
+                y_count 0x016ad73c
+                z_count 0x016ad740
+                -->
+            </Offsets>
+        </Version>
+        <Version name="v0.31.02 legacy" os="windows" base="v0.31.01 legacy">
+            <MD5 value="23dfe141c7ea4e63ebb3c618a12b48ec" />
+            <PETimeStamp value="0x4BBDF378" />
+        </Version>
+        <Version name="v0.31.03 legacy" os="windows" base="v0.31.01 legacy" rebase="0x1000">
+            <MD5 value="94641d97a0ecff6f2194e3d0b310d946" />
+            <PETimeStamp value="0x4BC3C470" />
+            <Offsets>
+                WORLD: 0x0165c1d0 ?
+                
+                Position
+                ========
+                <Address name="window_dims" value="0x17f6b00" /> Was 0x17f5ab8
+                0x17f6b00
+                0x17f6b08
+                0x17f6b10
+                
+                Map
+                ===
+                <Address name="map_data" value="0x016AE760" />
+                
+                * map size in blocks *
+                <Address name="x_count_block" value="0x016AE780" />
+                <Address name="y_count_block" value="0x016AE784" />
+                <Address name="z_count_block" value="0x016AE788" />
+                
+                * map size in tiles *
+                <Address name="x_count" value="0x016AE78C" />
+                <Address name="y_count" value="0x016AE790" />
+                <Address name="z_count" value="0x016AE794" />
+                
+                * Suspected region coords *
+                <Address name="region_x" value="0x016AE798" />
+                <Address name="region_y" value="0x016AE79C" />
+                <Address name="region_z" value="0x016AE7A0" />
+                
+                * World size * (WORDs)
+                <Address name="world_size_x" value="0x016AFE1C" />
+                <Address name="world_size_y" value="0x016AFE1E" />
+                
+                * geology *
+                <Address name="geoblock_vector" value="0x16B0574" />
+                <Address name="ptr2_region_array" value="0x16B05BC" />
+                
+                * features *
+                WORLD + 0x54374
+                <Address name="global_feature_vector" value="0x16B0544" />
+                WORLD + 0x54440
+                <Address name="local_feature_start_ptr" value="0x16B0610" />
+                
+                Creatures
+                =========
+                <Address name="creature_vector" value="0x166FD0C" />
+                <Address name="dwarf_race_index" value="0x01471fbc" />
+                <Offset name="creature_name" value="0x0" />
+                <Offset name="creature_custom_profession" value="0x6c" />
+                <Offset name="creature_profession" value="0x88" />
+                <Offset name="creature_race" value="0x8C" />
+                <Offset name="creature_position" value="0x90" />
+                <Offset name="creature_flags1" value="0xF8" />
+                <Offset name="creature_flags2" value="0xFC" />
+                <Offset name="creature_caste" value="0x110" />
+                <Offset name="creature_sex" value="0x112" />
+                <Offset name="creature_id" value="0x114" />
+                <Offset name="creature_civ" value="0X120" />
+                <Offset name="creature_soulskill_vector" value="0X1F4" />
+                <Offset name="creature_pickup_equipment_bit" value="0X21C" />
+                <!--<Offset name="creature_mood" value="0x238" />-->
+                
+                <Offset name="creature_mood" value="0x288" />
+                <Offset name="creature_birth_year" value="0x298" />
+                <Offset name="creature_birth_time" value="0x29C" />
+                <Offset name="creature_current_job" value="0x390" /> <!-- from chmod -->
+                <Offset name="creature_mood_skill" value="0x394" /> the skill that will be increased at the end of the mood (or not)
+                <Offset name="creature_physical" value="0x464" />
+                <!--
+                <Offset name="creature_strength" value="0x464" />
+                <Offset name="creature_agility" value="0x480" />
+                <Offset name="creature_toughness" value="0x49C" />
+                <Offset name="creature_endurance" value="0x4B8" />
+                <Offset name="creature_recuperation" value="0x4D4" />
+                <Offset name="creature_disease_resistance" value="0x4F0" />
+                -->
+                <Offset name="creature_appearance_vector" value="0x604" />
+                <Offset name="creature_artifact_name" value="0x6D4" />
+                <Offset name="creature_labors" value="0x774" />
+                <Offset name="creature_soul_vector" value="0x0740" />
+                <Offset name="creature_default_soul" value="0x0758" />
+                <Offset name="creature_happiness" value="0x834" />
+
+                Castes
+                ======
+                <Offset name="caste_bodypart_vector" value="0x51C" />
+                <Offset name="caste_attributes" value="0x654" />
+                <Offset name="caste_color_modifiers" value="0xACC" />
+
+                Color Mods
+                ==========
+                <Offset name="color_modifier_part" value="0x70" />
+                <Offset name="color_modifier_startdate" value="0x64" />
+                <Offset name="color_modifier_enddate" value="0x68" />
+
+                Body Parts
+                ==========
+                <Offset name="bodypart_id" value="0x0" />
+                <Offset name="bodypart_category" value="0x1C" />
+                <Offset name="bodypart_layers_vector" value="0x44" />
+                <Offset name="bodypart_singular_vector" value="0x78" />
+                <Offset name="bodypart_plural_vector" value="0x90" />
+
+                Materials
+                =========
+                soil, stone, metal
+                inorganics vector = WORLD + 0x54B7C = 0x16B0D4C
+                <Address name="mat_inorganics" value="0x16B0D4C" />
+
+                stuff like glass, coke, ...
+                <Address name="mat_other" value="0x16BA114" />
+                
+                wood and plant matter, WORLD + 0x54B94
+                <Address name="mat_organics_all" value="0x16B0D64" />
+                
+                plant matter, WORLD + 0x54BAC
+                <Address name="mat_organics_plants" value="0x16B0D7C" />
+                
+                just wood, WORLD + 0x54BDC
+                <Address name="mat_organics_trees" value="0x16B0DAC" />
+                
+                creature types actually used for creatures, WORLD + 0x54CD0
+                <Address name="creature_type_vector" value="0x16B0EA0" />
+
+                stuff that is used somehow
+                <Address name="mat_stuff" value="0x16BA114" />
+                
+                Constructions
+                =============
+                WORLD + 0x108
+                <Address name="construction_vector" value="0x165C2D8" />
+                
+                Translations
+                ============
+                WORLD + 0x54E50
+                <Address name="language_vector" value="0x016B1020" />
+                WORLD + 0x54E80
+                <Address name="translation_vector" value="0x16B1050" />
+                
+                Vegetation
+                ==========
+                WORLD + 0x15184
+                <Address name="vegetation_vector" value="0x1671354" />
+                
+                Buildings
+                =========
+                WORLD + 0x14818
+                <Address name="buildings_vector" value="0x16709E8" />
+                WORLD + 0x5D610
+                <Address name="custom_workshop_vector" value="0x16B97E0" />
+                <Offset name="custom_workshop_name" value="0x4" />
+                <Offset name="custom_workshop_type" value="0x20" />
+
+                Descriptor colors
+                =================
+                <Address name="descriptor_vectors_start" value="0x16B9780" />
+                <Offset name="descriptor_rawname" value="0x0" />
+                <Offset name="descriptor_name" value="0x4C" />
+                <Address name="descriptor_colors_vector" value="0x16B9768" /> this includes RVB
+                <Offset name="descriptor_color_r" value="0x6C" /> floats !
+                <Offset name="descriptor_color_v" value="0x70" />
+                <Offset name="descriptor_color_b" value="0x74" />
+                <Address name="descriptor_all_colors" value="0x16B9798" /> A list of all colors, including eyes and stuff
+
+                Items
+                =====
+                <Address name="items_vector" value="0x166FE00" />
+                List of offsets in the VTable :
+                <Offset name="item_type_accessor" value="0x0" />
+                <Offset name="item_subtype_accessor" value="0x4" />
+                <Offset name="item_subindex_accessor" value="0x8" />
+                <Offset name="item_index_accessor" value="0xC" />
+                <Offset name="item_quality_accessor" value="0x238" />
+
+                <Offset name="item_improvement_vector" value="0xA0" />
+                <Offset name="item_improvement_subindex" value="0x4" /> 
+                <Offset name="item_improvement_index" value="0x8" /> 
+                <Offset name="item_improvement_quality" value="0x14" /> 
+                <Offset name="item_type_accessor" value="0x14" />  (in the vtable)
+                    
+                Time
+                ====
+                <Address name="current_tick" value="0x0e47e08" />
+                <Address name="current_year" value="0x0e79f00" />
+            </Offsets>
+        </Version>
+        <Version name="v0.31.04 SDL" os="windows" base="v0.31.03 legacy">
+            <MD5 value="655a895c5b90d15eb9bb71e28c6c62e5" />
+            <PETimeStamp value="0x4bf014fa" />
+            <Offsets>
+                <Address name="creature_vector" value="0x167870C" /> 
+                <Address name="dwarf_race_index" value="0x1471FBC" /> 
+                <Address name="dwarf_civ_id" value="0x1471FB0" />
+
+                <Address name="mat_inorganics" value="0x16BD0B0" /> 
+                <Address name="mat_other" value="0x16C6478" /> 
+                <Address name="mat_organics_all" value="0x16BD0C8" /> 
+                <Address name="mat_organics_plants" value="0x16bd0e0" /> 
+                <Address name="mat_organics_trees" value="0x16bd110" /> 
+                <Address name="creature_type_vector" value="0x16BD204" /> 
+                <Address name="mat_stuff" value="0x16C6478" /> 
+
+                <Address name="language_vector" value="0x16BD384" /> 
+                <Address name="translation_vector" value="0x16BD3B4" /> 
+                <Address name="descriptor_colors_vector" value="0x16C5ACC" /> 
+                <Address name="descriptor_vectors_start" value="0x16C5AE4" /> 
+                <Address name="descriptor_all_colors" value="0x16C5AFC" /> 
+                <Address name="current_tick" value="0xE78780" /> 
+                <Address name="current_year" value="0xEAA878" /> 
+
+                <Address name="map_data" value="0x016BAAC4" /> 
+                <Address name="x_count_block" value="0x016BAAE4" /> 
+                <Address name="y_count_block" value="0x016BAAE8" /> 
+                <Address name="z_count_block" value="0x016BAAEC" /> 
+                <Address name="x_count" value="0x016BAAF0" /> 
+                <Address name="y_count" value="0x016BAAF4" /> 
+                <Address name="z_count" value="0x016BAAF8" /> 
+                <Address name="region_x" value="0x016BAAFC" /> 
+                <Address name="region_y" value="0x016BAB00" /> 
+                <Address name="region_z" value="0x016BAB04" /> 
+                <Address name="world_size_x" value="0x16BC180" /> 
+                <Address name="world_size_y" value="0x16BC182" /> 
+                <Address name="geoblock_vector" value="0x16BC8D8" /> 
+                <Address name="ptr2_region_array" value="0x16BC920" /> 
+                <Address name="global_feature_vector" value="0x16BC8A8" /> 
+                <Address name="local_feature_start_ptr" value="0x16BC974" /> 
+
+                <Address name="construction_vector" value="0x1664CD8" /> 
+                <Address name="vegetation_vector" value="0x1679D54" />
+                <Address name="buildings_vector" value="0x16793e8" /> 
+                <Address name="items_vector" value="0x1678800" />
+
+                <Address name="window_dims" value="0x18030fc" /> 0x17f6b00
+                <Address name="window_x" value="0xe640dc" />0xe32798 01
+                <Address name="window_y" value="0xe921b0" />0xe60838 01
+                <Address name="window_z" value="0xe9218c" />0xe60814 01
+                <Address name="cursor_xyz" value="0xae92c8" />0xae82cc 01
+
+                <Offset name="item_type_accessor" value="0x0" /> Why do i have to redefine this ???
+            </Offsets>
+        </Version>
+        <Version name="v0.31.05 SDL" os="windows" base="v0.31.04 SDL" rebase="0x8010">
+            <MD5 value="394ff63fc00fedd5df0b36e4beb589bc" />
+            <PETimeStamp value="0x4c091569" />
+            <Offsets>
+                <Address name="dwarf_race_index" value="0x014abee4" /> CHMOD
+                <Address name="dwarf_civ_id" value="0x1471FB0" /> BOGUS!
+                <Address name="window_dims" value="0x180b10c" /> LOOKS O.K.
+                <Address name="window_x" value="0xe6c0dc" /> VERIFIED
+                <Address name="window_y" value="0xe9a1b0" /> VERIFIED
+                <Address name="window_z" value="0xe9a18c" /> VERIFIED
+                <Address name="cursor_xyz" value="0xaf12cc" /> VERIFIED
+                <Address name="current_tick" value="0xE80780" /> LOOKS O.K.
+                <Address name="current_year" value="0xEB2878" /> LOOKS O.K.
+                <Offset name="item_type_accessor" value="0x0" /> Why do i have to redefine this ???
+                ... what?
+            </Offsets>
+        </Version>
+        <Version name="v0.31.06 SDL" os="windows" base="v0.31.05 SDL" rebase="0x10">
+            <MD5 value="c4b7e37dafa2716e31d29110968ac64e" />
+            <PETimeStamp value="0x4c0f83d5" />
+            <Address name="cursor_xyz" value="0xaf12d0" />
+        </Version>
+        <Version name="v0.31.07 SDL" os="windows" base="v0.31.06 SDL" rebase="0x2000">
+            <MD5 value="1c0b5254af1b8ff9a34b51c3f6609da3" />
+            <PETimeStamp value="0x4c1cbe4b" />
+            <Offsets>
+                <Address name="cursor_xyz" value="0xaf32d8" />0xaf12d0
+                <Address name="window_dims" value="0x180d11c" /> 0x180b10c
+                <Address name="window_x" value="0xe6e0ec" />
+                <Address name="window_y" value="0xe9c1c0" />
+                <Address name="window_z" value="0xe9c19c" />
+                map size X: 0x16c4b10
+                map size Y: 0x16c4b14
+            </Offsets>
+        </Version>
+        <Version name="v0.31.08 SDL" os="windows" base="v0.31.07 SDL" rebase="-0x1000">
+            <MD5 value="a83e6b21307cf41fb54c315fa40dec86" />
+            <PETimeStamp value="0x4c1d69fe" />
+            <Offsets>
+                <Address name="dwarf_civ_id" value="0x14acee8" />
+                <!--
+                <Address name="cursor_xyz" value="0xaf32d8" />0xaf12d0
+                <Address name="window_dims" value="0x180d11c" /> 0x180b10c
+                <Address name="window_x" value="0xe6e0ec" />
+                <Address name="window_y" value="0xe9c1c0" />
+                <Address name="window_z" value="0xe9c19c" />
+                map size X: 0x16c4b10
+                map size Y: 0x16c4b14
+                -->
+            </Offsets>
+        </Version>
+        <Version name="v0.31.09 SDL" os="windows" base="v0.31.08 SDL" rebase="0xD028" >
+            <!-- TODO: fix creature offsets -->
+            <!-- TODO: small offsets added all over the place, investigate -->
+            <MD5 value="1a85839ab03df082974dc5629d3fbc26" />
+            <PETimeStamp value="0x4C3897C0" />
+            <Offsets>
+                <Address name="cursor_xyz" value="0xaff2d8" />
+                <Address name="language_vector" value="0x16D33CC" />
+                <Address name="translation_vector" value="0x16D33FC" />
+                <Offset name="word_table" value="0x4c" />
+
+                Creatures
+                =========
+                <Address name="creature_vector" value="0x168E73C" />
+                <Address name="dwarf_race_index" value="0x014b9f1c" />
+                <Offset name="creature_soulskill_vector" value="0X1F4" />
+                <Offset name="creature_physical" value="0x4AC" />
+                <Offset name="creature_appearance_vector" value="0x64c" /> <!-- Maybe slightly wrong -->
+                <Offset name="creature_artifact_name" value="0x71c" />
+                <Offset name="creature_labors" value="0x7Bc" />
+                <Offset name="creature_soul_vector" value="0x0788" />
+                <Offset name="creature_default_soul" value="0x07A0" />
+                <Offset name="creature_happiness" value="0x87c" />
+            </Offsets>
+        </Version>
+        <Version name="v0.31.10 SDL" os="windows" base="v0.31.09 SDL">
+            <MD5 value="349d1ad6eda7b6c5e87f8e4726a0999a" />
+            <PETimeStamp value="0x4C398089" />
+        </Version>
+        <Version name="v0.31.11 SDL" os="windows" base="v0.31.10 SDL" rebase="0x7018">
+            <MD5 value="552cfa417fd131204ebfee66aefc4adb" />
+            <PETimeStamp value="0x4C496D93" />
+            <Offsets>
+                <Address name="cursor_xyz" value="0xB062D8" />
+                <Address name="window_x" value="0xe81114" /> VERIFIED
+                <Address name="window_y" value="0xeAF1E8" /> VERIFIED
+                <Address name="window_z" value="0xeAF1C4" /> VERIFIED
+            </Offsets>
+        </Version>
+        <Version name="v0.31.12 SDL" os="windows" base="v0.31.11 SDL">
+            <MD5 value="f0459165a426a9f2dd8d957e9fa7f01d" />
+            <PETimeStamp value="0x4C4C32E7" />
+        </Version>
+
+                            .-"""-.
+                           '       \
+                          |,.  ,-.  |   _________________________
+                          |()L( ()| |   \                        \
+                          |,'  `".| |   /_  Argh !!!              \
+                          |.___.',| `     \________________________\
+                         .j `--"' `  `.
+                        / '        '   \
+                       / /          `   `.
+                      / /            `    .
+                     / /              l   |
+                    . ,   L I N U X   |   |
+                    ,"`.             .|   |
+                 _.'   ``.          | `..-'l
+                |       `.`,        |      `.
+                |         `.    __.j         )
+                |__        |--""___|      ,-'
+                   `"--...,+""""   `._,.-'
+
+    <!-- Windows logo by Microsoft -->
+    <!-- Tux logo by the Linux guys :) -->
+
+    <Version version="linux-offsets-2010" os="meta" base="meta-2010">
+        <Offsets>
+            Basic things
+            ============
+            <HexValue name="sizeof_vector" value="0xC" /> VERIFIED
+            <Offset name="vector_triplet" value="0x0" /> VERIFIED
+            <HexValue name="sizeof_string" value="0x4" /> VERIFIED
+
+            MAP BLOCK OFFSETS
+            =================
+            <Offset name="map_data_vein_vector" value="0x08" /> VERIFIED
+            <Offset name="map_data_feature_local" value="0x20" /> VERIFIED
+            <Offset name="map_data_feature_global" value="0x24" /> VERIFIED
+            <Offset name="map_data_type" value="0x006A" /> VERIFIED
+            <Offset name="map_data_designation" value="0x026C" /> VERIFIED
+            <Offset name="map_data_occupancy" value="0x066c" /> VERIFIED
+            <Offset name="map_data_temperature1_offset" value="0x156c" /> VERIFIED
+            <Offset name="map_data_temperature2_offset" value="0x176c" /> VERIFIED
+            <Offset name="map_data_biome_stuffs" value="0x1D6C" /> VERIFIED
+            <Offset name="map_data_pathfinding_offset" value="0x0D6c" /> VERIFIED
+            
+            MAP FEATURE OFFSETS
+            ===================
+            <Offset name="global_feature_funcptr_" value="0x94" /> VERIFIED
+            <Offset name="global_feature_mat" value="0x28" /> VERIFIED
+            <Offset name="global_feature_submat" value="0x2C" /> VERIFIED
+            
+            <Offset name="local_feature_mat" value="0x24" /> VERIFIED
+            <Offset name="local_feature_submat" value="0x28" /> VERIFIED
+
+            values for the region structure
+            ===============================
+            <HexValue name="region_size" value="0x58" /> VERIFIED
+            <Offset name="region_geo_index_off" value="0x54" /> VERIFIED
+            geoblock offsets
+            ================
+            <Offset name="geolayer_geoblock_offset" value="0x4" /> VERIFIED
+            <Offset name="type_inside_geolayer" value="0x4" /> VERIFIED
+            
+            Name struct
+            ===========
+            <Offset name="name_firstname" value="0x0" /> VERIFIED
+            <Offset name="name_nickname" value="0x4" /> VERIFIED
+            <Offset name="name_words" value="0x8" /> VERIFIED
+
+            Creature offsets
+            ================
+            <Offset name="creature_name" value="0x0" /> VERIFIED
+            <Offset name="creature_custom_profession" value="0x3c" /> CHMOD
+            <Offset name="creature_profession" value="0x40" /> CHMOD
+            <Offset name="creature_race" value="0x44" /> CHMOD
+            <Offset name="creature_position" value="0x90" /> BAD!!
+            <Offset name="creature_flags1" value="0x8C" /> CHMOD
+            <Offset name="creature_flags2" value="0x90" /> CHMOD
+            <Offset name="creature_caste" value="0xA4" /> VERIFY
+            <Offset name="creature_sex" value="0xA6" /> CHMOD
+            <Offset name="creature_id" value="0xA8" /> CHMOD
+            <Offset name="creature_civ" value="0xB4" /> VERIFY!
+            <Offset name="creature_pickup_equipment_bit" value="0X144" /> CHMOD
+            <Offset name="creature_mood" value="0x18C" /> VERIFY!
+            <Offset name="creature_birth_year" value="0x19C" /> VERIFY!
+            <Offset name="creature_birth_time" value="0x1A0" /> VERIFY!
+            <Offset name="creature_physical" value="0x464" /> BAD!
+            <Offset name="creature_current_job" value="0x258" /> CHMOD
+            <Offset name="creature_mood_skill" value="0x394" /> VERIFY!
+                the skill that will be increased at the end of the mood (or not)
+            <Offset name="creature_appearance_vector" value="0x604" /> BAD!
+            <Offset name="creature_artifact_name" value="0x6D4" /> BAD!
+            <Offset name="creature_labors" value="0x51C" /> CHMOD
+            <Offset name="creature_soul_vector" value="0x0500" /> CHMOD
+            <Offset name="creature_default_soul" value="0x0758" /> BAD!
+            <Offset name="creature_happiness" value="0x5AC" /> CHMOD
+
+            Souls
+            =====
+            <Offset name="soul_name" value="0x0" />
+            <Offset name="soul_skills_vector" value="0x1C4" /> CHMOD
+            <Offset name="soul_traits" value="0x1DC" /> CHMOD
+            <Offset name="soul_mental" value="0x88" /> BAD!
+
+            Body Parts
+            ==========
+            <Offset name="bodypart_id" value="0x0" />
+            <Offset name="bodypart_category" value="0x1C" />
+            <Offset name="bodypart_layers_vector" value="0x44" />
+            <Offset name="bodypart_singular_vector" value="0x78" />
+            <Offset name="bodypart_plural_vector" value="0x90" />
+
+            Job structure
+            =============
+            <Offset name="job_id" value="0x0" /> Incrementaly assigned
+            <Offset name="job_type" value="0x8" /> seems to be just like the old occupations
+            <Offset name="job_materials_vector" value="0xa4" />
+
+            Job materials
+            =============
+            <Offset name="job_material_maintype" value="0x0" /> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
+            <Offset name="job_material_sectype1" value="0x2" /> subsubtype ?
+            <Offset name="job_material_sectype2" value="0x4" /> subtype ?
+            <Offset name="job_material_sectype3" value="0x8" /> index of material (for example, 2 is for silver)
+            <Offset name="job_material_flags" value="0x18" /> set only for shell / bone mood requirements ?
+
+            Creature type offsets
+            =====================
+            <Offset name="creature_type_caste_vector" value="0x60" /> VERIFIED
+            from 0.31.08
+            Toad: 0xaf75b68
+            Toad: rawname = 0x0
+            Toad: character (not reliable) = 0x20
+            Toad: caste vector = 0x60
+            Toad: extract? vector = 0x18f4
+            Toad: colors = 0x36
+            <Offset name="creature_type_extract_vector" value="0x18f4" /> VERIFIED
+            <Offset name="creature_tile" value="0x20" /> VERIFIED
+            <Offset name="creature_tile_color" value="0x36" /> LOOKS OK
+
+            Castes
+            ======
+            <Offset name="color_modifier_part" value="0x70" />
+            <Offset name="color_modifier_startdate" value="0x64" />
+            <Offset name="color_modifier_enddate" value="0x68" />
+            <Offset name="caste_bodypart_vector" value="0x51C" />
+            <Offset name="caste_color_modifiers" value="0xACC" />
+            <Offset name="caste_attributes" value="0x654" />
+            <!--
+            <Offset name="creature_type_caste_vector" value="0x138" />
+            <Offset name="creature_type_extract_vector" value="0x1A14" />
+            <Offset name="creature_tile" value="0xE0" />
+            <Offset name="creature_tile_color" value="0xF6" />
+            -->
+            <!--
+            struct CreatureType
+            {
+                Vector<CreatureCasteType*> creature_type_caste_vector (0x138);
+                Vector<CreatureExtractType*> creature_type_extract_vector (0x1A14);
+                Offset creature_tile (0xE0);
+                Offset creature_tile_color (0xF6);
+            }
+            -->
+
+            Color descriptors
+            =================
+            <Offset name="descriptor_rawname" value="0x0" /> VERIFIED
+            <Offset name="descriptor_name" value="0x1C" /> VERIFIED
+            <Offset name="descriptor_color_r" value="0x24" /> VERIFIED
+            <Offset name="descriptor_color_v" value="0x28" /> VERIFIED
+            <Offset name="descriptor_color_b" value="0x2C" /> VERIFIED
+
+            Language tables
+            ===============
+            <Offset name="word_table" value="0x1C" /> VERIFIED
+
+            Constructions
+            =============
+            <Offset name="sizeof_construction" value="0x14" />
+        </Offsets>
+    </Version>
+    <Version version="v0.30_04 linux" os="linux" base="linux-offsets-2010">
+        <MD5 value="1d759a11af258263ef5c139d6d9a3e15" />
+        <Offsets>
+            <!-- most probably a static object, because its parts are often
+                referenced as offset to this address *and* as addresses    -->
+            <Address name="WORLD" value="0x92D00C0" />
+
+            Position and window dimensions
+            ==============================
+            <Address name="window_x" value="0x8cd3b18" />
+            <Address name="window_y" value="0x8cd3b1c" />
+            <Address name="window_z" value="0x8cd3b20" />
+            <Address name="cursor_xyz" value="0x8b17370" />
+            <Address name="window_dims" value="0x9464d6c" />
+
+            GUI State
+            =========
+            <Address name="pause_state" value="0x92c971c" />
+
+            Map data
+            =========
+            <Address name="map_data" value="0x9322d20" /> WORLD + 0x52C60
+
+            Map Features
+            ============
+            WORLD + 0x5487C
+            <Address name="global_feature_vector" value="0x932493C" />
+            WORLD + 0x548F4
+            <Address name="local_feature_start_ptr" value="0x93249B4" />
+
+            * map size in blocks *
+            <Address name="x_count_block" value="0x9322d34" />
+            <Address name="y_count_block" value="0x9322d38" />
+            <Address name="z_count_block" value="0x9322d3C" />
+            
+            * map size in tiles *
+            <Address name="x_count" value="0x9322d40" />
+            <Address name="y_count" value="0x9322d44" />
+            <Address name="z_count" value="0x9322d48" />
+            
+            * region coords *
+            WORLD + 0x525C8
+            <Address name="region_x" value="0x9322d4C" />
+            WORLD + 0x525CC
+            <Address name="region_y" value="0x9322d50" />
+            WORLD + 0x525D0
+            <Address name="region_z" value="0x9322d54" />
+            
+            * World size * (WORDs)
+            WORLD + 0x542E0
+            <Address name="world_size_x" value="0x93243A0" />
+            WORLD + 0x542E2
+            <Address name="world_size_y" value="0x93243A2" />
+            WORLD + 0x54894
+            <Address name="geoblock_vector" value="0x9324954" />
+            WORLD + 0x548B8
+            <Address name="ptr2_region_array" value="0x9324978" />
+            
+            Creatures
+            =========
+            <Address name="creature_vector" value="0x092E3AA0" />
+            <Address name="dwarf_race_index" value="0x092CB608" />
+            <Address name="dwarf_civ_id" value="0x092CB5FC" />
+            
+            Materials
+            =========
+            soil, stone, metal
+            inorganics vector
+            <Address name="mat_inorganics" value="0x9324e68" />0x16afd04
+            
+            wood and plant matter
+            <Address name="mat_organics_all" value="0x9324E74" />
+            
+            plant matter
+            <Address name="mat_organics_plants" value="0x9324E80" />
+            
+            just wood
+            <Address name="mat_organics_trees" value="0x9324E98" />
+
+            creature types actually used for creatures,
+            <Address name="creature_type_vector" value="0x09324F14" />
+
+            Color descriptors
+            =================
+            <Address name="descriptor_colors_vector" value="0x9329378" /> VERIFIED
+            <Address name="descriptor_all_colors" value="0x9329390" /> VERIFIED
+
+            Translations
+            ============
+            WORLD + 0x54E50
+            <Address name="language_vector" value="0x9324fd4" />
+            WORLD + 0x54E80
+            <Address name="translation_vector" value="0x9324fec" />
+
+            Constructions
+            =============
+            WORLD + 0x84
+            <Address name="construction_vector" value="0x92D0144" /> 0x165b290
+
+            Time
+            ====
+            <Address name="current_year" value="0x92C9680" />
+            <Address name="current_tick" value="0x92C9688" />
+    <!--
+            
+            Vegetation
+            ==========
+            WORLD + 0x15184
+            <Address name="vegetation_vector" value="0x0167030C" /> belal: 0x017f6d98 ... what?
+            <Offset name="tree_desc_offset" value="0x6C" />
+            
+            Buildings
+            =========
+            WORLD + 0x14818
+            <Address name="buildings_vector" value="0x0166f9a0" />
+            <Offset name="building_custom_workshop_type" value="0x164" />
+            WORLD + 0x5D610
+            <Address name="custom_workshop_vector" value="0x016B8798" />
+            <Offset name="custom_workshop_name" value="0x4" />
+            <Offset name="custom_workshop_type" value="0x20" />
+            
+            Effects
+            =======
+            
+            :(
+            
+            Settlements
+            ===========
+            
+            :(
+            
+            Hotkeys
+            =======
+            <Address name="hotkey_start" value="0x01476ecc" />
+            <Offset name="hotkey_mode" value="0x1C" />
+            <Offset name="hotkey_xyz" value="0x20" />
+            <HexValue name="hotkey_size" value="0x2C" />
+    -->        
+    <!--
+            Materials
+            =========
+            <Address name="mat_inorganics" value="0x9324E64" />
+
+            stuff like glass, coke, ...
+            <Address name="mat_other" value="17" />
+            
+            wood and plant matter, WORLD + 0x54B94
+            <Address name="mat_organics_all" value="18" />
+            
+            plant matter, WORLD + 0x54BAC
+            <Address name="mat_organics_plants" value="19" />
+            
+            just wood, WORLD + 0x54BDC
+            <Address name="mat_organics_trees" value="20" />
+            
+            creature types actually used for creatures, WORLD + 0x54CD0
+            <Address name="creature_type_vector" value="0x09324F10" />
+
+            stuff that is used somehow
+            <Address name="mat_stuff" value="21" />
+            
+            Constructions
+            =============
+            WORLD + 0x108
+            <Address name="construction_vector" value="22" />
+            
+            Vegetation
+            ==========
+            WORLD + 0x15184
+            <Address name="vegetation_vector" value="25" />
+            
+            Buildings
+            =========
+            WORLD + 0x14818
+            <Address name="buildings_vector" value="26" />
+            WORLD + 0x5D610
+            <Address name="custom_workshop_vector" value="0" />
+            <Offset name="custom_workshop_name" value="0x4" />
+            <Offset name="custom_workshop_type" value="0x20" />
+
+            Descriptor colors
+            =================
+            <Address name="descriptor_vectors_start" value="27" />
+            <Offset name="descriptor_rawname" value="0x0" />
+            <Offset name="descriptor_name" value="0x4C" />
+            <Address name="descriptor_colors_vector" value="28" /> this includes RVB
+            <Offset name="descriptor_color_r" value="0x6C" /> floats !
+            <Offset name="descriptor_color_v" value="0x70" />
+            <Offset name="descriptor_color_b" value="0x74" />
+            <Address name="descriptor_all_colors" value="29" /> A list of all colors, including eyes and stuff
+
+            Items
+            =====
+            <Address name="items_vector" value="30" />
+            List of offsets in the VTable :
+            <Offset name="item_type_accessor" value="0x0" />
+            <Offset name="item_subtype_accessor" value="0x4" />
+            <Offset name="item_subindex_accessor" value="0x8" />
+            <Offset name="item_index_accessor" value="0xC" />
+            <Offset name="item_quality_accessor" value="0x238" />
+            <Offset name="item_improvement_vector" value="0xA0" />
+            <Offset name="item_improvement_subindex" value="0x4" />
+            <Offset name="item_improvement_index" value="0x8" />
+            <Offset name="item_improvement_quality" value="0x14" />
+            <Offset name="item_type_accessor" value="0x14" />  (in the vtable)
+            -->
+        </Offsets>
+    </Version>
+    <Version version="v0.31.05 linux" os="linux" base="linux-offsets-2010">
+        <MD5 value="fea3801a26538b1741f3cc9294139fca" />
+        <Offsets>
+            <!-- most probably a static object, because its parts are often
+                referenced as offset to this address *and* as addresses    -->
+            <Address name="WORLD" value="0x92C60E0" /> MOST PROBABLY BOGUS!
+
+            Position and window dimensions
+            ==============================
+            <Address name="window_x" value="0x8cc9b38" /> VERIFIED
+            <Address name="window_y" value="0x8cc9b3c" /> VERIFIED
+            <Address name="window_z" value="0x8cc9b40" /> VERIFIED
+            <Address name="cursor_xyz" value="0x8b0d36c" /> VERIFIED
+            <Address name="window_dims" value="0x945ad8c" /> VERIFIED
+            GUI State
+            =========
+            <Address name="pause_state" value="0x92bf73c" /> VERIFIED
+
+            Map data
+            ========
+            WORLD + 0x52C60?
+            <Address name="map_data" value="0x9318D40" /> VERIFIED
+
+            Map Features
+            ============
+            WORLD + 0x5487C?
+            <Address name="global_feature_vector" value="0x931A95C" /> VERIFIED
+            WORLD + 0x548F4?
+            <Address name="local_feature_start_ptr" value="0x931A9D4" /> VERIFIED
+
+            * map size in blocks *
+            <Address name="x_count_block" value="0x9318D54" /> VERIFIED
+            <Address name="y_count_block" value="0x9318D58" /> VERIFIED
+            <Address name="z_count_block" value="0x9318D5C" /> VERIFIED
+            
+            * map size in tiles *
+            <Address name="x_count" value="0x9318D60" /> VERIFIED
+            <Address name="y_count" value="0x9318D64" /> VERIFIED
+            <Address name="z_count" value="0x9318D68" /> VERIFIED
+            
+            * region coords *
+            WORLD + 0x525C8
+            <Address name="region_x" value="0x9318D6C" /> VERIFIED
+            WORLD + 0x525CC
+            <Address name="region_y" value="0x9318D70" /> VERIFIED
+            WORLD + 0x525D0
+            <Address name="region_z" value="0x9318D74" /> VERIFIED (old = 0x9322d54)
+            
+            * World size * (WORDs)
+            WORLD + 0x542E0
+            <Address name="world_size_x" value="0x931A3C0" /> VERIFIED
+            WORLD + 0x542E2
+            <Address name="world_size_y" value="0x931A3C2" /> VERIFIED
+            WORLD + 0x54894
+            <Address name="geoblock_vector" value="0x931A974" /> VERIFIED
+            WORLD + 0x548B8
+            <Address name="ptr2_region_array" value="0x931A998" /> VERIFIED
+
+            Materials
+            =========
+            soil, stone, metal
+            inorganics vector
+            <Address name="mat_inorganics" value="0x931ae88" /> VERIFIED
+            
+            wood and plant matter
+            <Address name="mat_organics_all" value="0x931ae94" /> VERIFIED
+            
+            plant matter
+            <Address name="mat_organics_plants" value="0x931aea0" /> VERIFIED
+            
+            just wood
+            <Address name="mat_organics_trees" value="0x931aeb8" /> VERIFIED
+
+            creature types actually used for creatures,
+            <Address name="creature_type_vector" value="0x931af34" /> VERIFIED
+
+            Color descriptors
+            =================
+            <Address name="descriptor_colors_vector" value="0x931f398" /> VERIFIED
+            <Address name="descriptor_all_colors" value="0x931f3b0" /> VERIFIED
+
+            Translations
+            ============
+            WORLD + 0x54E50
+            <Address name="language_vector" value="0x931aff4" />
+            WORLD + 0x54E80
+            <Address name="translation_vector" value="0x931b00c" />
+            
+            Creatures
+            =========
+            <Address name="creature_vector" value="0x92D9AC0" />
+            <Address name="dwarf_race_index" value="0x92C1628" />0x092CB608
+            <Address name="dwarf_civ_id" value="0x92C161C" />0x092CB5FC
+            
+            Time
+            ====
+            <Address name="current_year" value="0x92BF6A0" />
+            <Address name="current_tick" value="0x92BF6A8" />
+            YEAR 0x92BF6A0, WORLD - 0x6A40
+            TICKS 0x92BF6A8, WORLD - 0x6A40 + 0x08
+        </Offsets>
+    </Version>
+    <Version version="v0.31.06 linux" os="linux" base="v0.31.05 linux" rebase="-0x20E0">
+        <MD5 value="13a1c19e8f59b74e307e094e2a0f28c3" />
+        <Offsets>
+            <Address name="cursor_xyz" value="0x8b0b328" /> VERIFIED
+            WORLD = 0x92C4000
+            Creatures
+            =========
+            WORLD + 0x139E0
+            0x92d79d4
+            0x92d79e0 = real one? seems like it
+            0x92d7a10
+        </Offsets>
+    </Version>
+    <Version version="v0.31.07 linux" os="linux" base="v0.31.06 linux" rebase="0x2000">
+        <MD5 value="b31979551782e89c049b11db8d2d86d7" />
+    </Version>
+    <Version version="v0.31.08 linux" os="linux" base="v0.31.07 linux">
+        <MD5 value="e37750890350d7b9d8203879aff8fa5c" />
+    </Version>
+    <Version version="v0.31.09 linux" os="linux" base="v0.31.08 linux" rebase="0x11000">
+        <!-- TODO: fix creature offsets -->
+        <!-- TODO: small offsets added all over the place, investigate -->
+        <MD5 value="4f1f988bc1b425d4193d3d8b7b0579a5" />
+    </Version>
+    <Version version="v0.31.10 linux" os="linux" base="v0.31.09 linux">
+        <MD5 value="3e7bea269018a6fb88ef53715685aa64" />
+        <Offsets>
+            Buildings
+            =========
+            <Address name="buildings_vector" value="0x92eb068" />
+            <Offset name="building_custom_workshop_type" value="0xE0" />
+
+            <Address name="custom_workshop_vector" value="0x93302e8" />
+            <Offset name="custom_workshop_name" value="0x4" />
+            <Offset name="custom_workshop_type" value="0x8" />
+        </Offsets>
+        <VTable>
+            <multiclass name="building_trapst" typeoffset="0xC0" />
+            <multiclass name="building_workshopst" typeoffset="0xC0" />
+            <multiclass name="building_furnacest" typeoffset="0xCE" />
+            <multiclass name="building_siegeenginest" typeoffset="0xC0" />
+        </VTable>
+    </Version>
+    <Version version="v0.31.11 linux" os="linux" base="v0.31.10 linux" rebase="0x1D020">
+        <!-- BIG rebase, possible broken stuff -->
+        <MD5 value="7b04ad536b8b657588ac209a7f95e1d1" />
+        <Offsets>
+            <Address name="window_x" value="0x8cf7a58" /> VERIFIED
+            <Address name="window_y" value="0x8cf7a5C" /> VERIFIED
+            <Address name="window_z" value="0x8cf7a60" /> VERIFIED
+            <Address name="cursor_xyz" value="0x8b3b328" /> VERIFIED
+        </Offsets>
+    </Version>
+    <Version version="v0.31.12 linux" os="linux" base="v0.31.11 linux" rebase="-0x1000">
+        <MD5 value="e79cead03187ecb692961b316b7cdcd4" />
+    </Version>
+</DFHack>
+
+

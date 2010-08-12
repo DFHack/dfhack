@@ -30,7 +30,7 @@ dfedit::~dfedit()
 void dfedit::slotOpen(bool )
 {
     QFileDialog fd(this,tr("Locate the Memoxy.xml file"));
-    fd.setNameFilter(tr("Memory definition (Memory.xml)"));
+    fd.setNameFilter(tr("Memory definition (*.xml)"));
     fd.setFileMode(QFileDialog::ExistingFile);
     fd.setAcceptMode(QFileDialog::AcceptOpen);
     int result = fd.exec();

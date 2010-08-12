@@ -18,10 +18,8 @@ SET( dfoffsetedit_RCS
 # in result dfoffsetedit_RC_SRCS variable will contain paths to files produced by rcc
 QT4_ADD_RESOURCES( dfoffsetedit_RC_SRCS ${dfoffsetedit_RCS} )
 
-QT4_WRAP_UI(dfoffsetedit_SRCS ${dfedit_UI})
+QT4_WRAP_UI(dfoffsetedit_UI_h ${dfedit_UI})
 qt4_automoc(${dfoffsetedit_SRCS})
 
-#ADD_EXECUTABLE( sample ${SAMPLE_SRCS} ${SAMPLE_MOC_SRCS} ${SAMPLE_RC_SRCS} ${SAMPLE_UI_HDRS})
-
-add_executable(dfoffsetedit ${dfoffsetedit_SRCS} ${dfoffsetedit_RC_SRCS})
+add_executable(dfoffsetedit ${dfoffsetedit_SRCS} ${dfoffsetedit_RC_SRCS} ${dfoffsetedit_UI_h})
 target_link_libraries(dfoffsetedit ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} ${QT_QTXML_LIBRARY} )

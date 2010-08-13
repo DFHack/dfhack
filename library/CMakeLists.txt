@@ -164,6 +164,20 @@ SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 
 TARGET_LINK_LIBRARIES(dfhack ${PROJECT_LIBS})
 
+if(MSVC)
+    # This is a MSVC hack used for copying files into the target directory
+    # of build target set in MSVC.
+    # It exploits the fact that MSVC has some variables in .vcproj files, much like cmake does here.
+    #
+    # So, $(TargetDir) is ignored by cmake, and replaced with the actual output directory by MSVC
+    ADD_CUSTOM_COMMAND(TARGET dfhack POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/data/Memory.xml $(TargetDir)/Memory.xml
+    )
+else(MSVC)
+    # Just put the file in the output directory on Linux and Mac
+    configure_file(${CMAKE_SOURCE_DIR}/data/Memory-ng.xml  ${DATA_OUTPUT_PATH}/Memory.xml COPYONLY)
+endif(MSVC)
+
 IF(UNIX)
   install(TARGETS dfhack LIBRARY DESTINATION lib)
   install(FILES ${CMAKE_SOURCE_DIR}/output/Memory.xml DESTINATION share/dfhack)

@@ -51,6 +51,11 @@ TARGET_LINK_LIBRARIES(dfflows dfhack)
 ADD_EXECUTABLE(dfliquids liquids.cpp)
 TARGET_LINK_LIBRARIES(dfliquids dfhack)
 
+# Solves the problem of unusable items after reclaim by clearing the 'in_job' bit of all items.
+# Original author: Quietust
+ADD_EXECUTABLE(dfcleartask cleartask.cpp)
+TARGET_LINK_LIBRARIES(dfcleartask dfhack)
+
 # position - check the DF window and cursor parameters
 ADD_EXECUTABLE(dfposition position.cpp)
 TARGET_LINK_LIBRARIES(dfposition dfhack)
@@ -104,6 +109,7 @@ dfunstuck
 dfprobe
 dfdoffsets
 dfattachtest
+dfcleartask
 dfexpbench
 dfsuspend
 dfflows

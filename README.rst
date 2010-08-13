@@ -120,6 +120,10 @@ dfdoffsets
 ==========
 Dumps the offsets for the currently running DF version into the terminal.
 
+dfcleartask
+===========
+Solves the problem of unusable items after reclaim by clearing the 'in_job' bit of all items.
+
 Your tool here
 ==============
 Write one ;)

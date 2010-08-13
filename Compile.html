@@ -331,7 +331,6 @@ ul.auto-toc {
 <li><a class="reference internal" href="#build-targets" id="id8">Build targets</a></li>
 <li><a class="reference internal" href="#build-types" id="id9">Build types</a></li>
 <li><a class="reference internal" href="#building-the-shared-memory-hook-library-shm" id="id10">Building the shared memory hook library (SHM)</a></li>
-<li><a class="reference internal" href="#checking-strings-support" id="id11">Checking strings support</a></li>
 </ul>
 </div>
 <div class="section" id="dependencies">
@@ -407,13 +406,10 @@ cmake ..
 <div class="note">
 <p class="first admonition-title">Note</p>
 <p class="last">You are working in the <tt class="docutils literal">/build</tt> folder. Files added to
-projects will end up there! (and that's wrong). Any changes to the
-build system should be done by changing cmake configs and running
-<tt class="docutils literal">cmake</tt> on them!</p>
+projects from within MSVC will end up there! (and that's
+wrong). Any changes to the build system should be done
+by changing cmake configs and running <tt class="docutils literal">cmake</tt> on them!</p>
 </div>
-<p>Also, you'll have to copy the <tt class="docutils literal">Memory.xml</tt> file to the build output
-folders MSVC generates. For example from <tt class="docutils literal">output/</tt> to
-<tt class="docutils literal">output/Release/</tt></p>
 </div>
 <div class="section" id="using-some-other-compiler">
 <h2><a class="toc-backref" href="#id7">Using some other compiler</a></h2>
@@ -467,55 +463,8 @@ cmake .. -DCMAKE_BUILD_TYPE:string=BUILD_TYPE
 comes to compilation. Because it shares the memory space with DF
 itself, it has to be built with the same tools as DF and use the same C
 and C++/STL libraries.</p>
-<p>For DF 31.01 - 31.10 on Windows, use MSVC 2008. You can get the Express
+<p>For DF 31.01 - 31.12 on Windows, use MSVC 2008. You can get the Express
 edition for free from Microsoft.</p>
-<p>Windows dependencies can be determined by a tool like <tt class="docutils literal">depends.exe</tt>
-(<a class="reference external" href="http://www.google.com/search?q=depends.exe">google it</a>). Both the fake <tt class="docutils literal">SDL.dll</tt> and DF have to use the same
-version of the C runtime (MSVCRT). The SHM can only be debugged using a
-RelWithDebInfo build!</p>
-<p>Linux dependencies can be determined by setting the LD_DEBUG variable
-and running ./df:</p>
-<pre class="literal-block">
-export LD_DEBUG=versions
-./df
-</pre>
-<p>Example of (a part of a) relevant output from a working SHM
-installation:</p>
-<pre class="literal-block">
-24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libpthread.so.0 [0] required by file ./dwarfort.exe [0]
-24472:     checking for version `GCC_3.0' in file ./libs/libgcc_s.so.1 [0] required by file ./dwarfort.exe [0]
-24472:     checking for version `GLIBC_2.0' in file ./libs/libgcc_s.so.1 [0] required by file ./dwarfort.exe [0]
-24472:     checking for version `GLIBC_2.1' in file /opt/lib32/lib/libm.so.6 [0] required by file ./dwarfort.exe [0]
-24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libm.so.6 [0] required by file ./dwarfort.exe [0]
-24472:     checking for version `GLIBC_2.1.3' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]
-24472:     checking for version `GLIBC_2.3.4' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]
-24472:     checking for version `GLIBC_2.4' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]
-24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]
-24472:     checking for version `GLIBCXX_3.4.9' in file ./libs/libstdc++.so.6 [0] required by file ./dwarfort.exe [0]
-24472:     checking for version `CXXABI_1.3' in file ./libs/libstdc++.so.6 [0] required by file ./dwarfort.exe [0]
-24472:     checking for version `GLIBCXX_3.4' in file ./libs/libstdc++.so.6 [0] required by file ./dwarfort.exe [0]
-24472:     checking for version `CXXABI_1.3' in file ./libs/libstdc++.so.6 [0] required by file ./libs/libdfconnect.so [0]
-24472:     checking for version `GLIBCXX_3.4' in file ./libs/libstdc++.so.6 [0] required by file ./libs/libdfconnect.so [0]
-24472:     checking for version `GLIBC_2.1.3' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]
-24472:     checking for version `GLIBC_2.2' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]
-24472:     checking for version `GLIBC_2.3.4' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]
-24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]
-</pre>
-<p>libdfconnect is the SHM. Both are compiled against the same C++ library
-and share the same CXXABI version.</p>
-<p>Precompiled SHM libraries are provided in binary releases.</p>
-</div>
-<div class="section" id="checking-strings-support">
-<h1><a class="toc-backref" href="#id11">Checking strings support</a></h1>
-<p>Strings are one of the important C++ types and a great indicator that
-the SHM works. Tools like Dwarf Therapist depend on string support.
-Reading of strings can be checked by running any of the tools that deal
-with materials.</p>
-<p>String writing is best tested with a fresh throw-away fort and
-<tt class="docutils literal">dfrenamer</tt>.</p>
-<p>Embark, give one dwarf a very long name using dfrenamer and save/exit.
-If DF crashes during the save sequence, your SHM is not compatible with
-DF and the throw-away fort is most probably lost.</p>
 </div>
 </div>
 </body>

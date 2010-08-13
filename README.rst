@@ -49,7 +49,7 @@ Windows
 
 Linux
 =====
-0.31.04 - 0.31.12 native.
+0.31.05 - 0.31.12 native.
 There are missing offsets but Map tools should be OK. Linux support is
 a bit lacking, I'm working on it. All supported Windows versions
 running in wine can be used with native DFHack binaries.
@@ -247,6 +247,6 @@ cmake
 =========================
 Memory offset definitions
 =========================
-The file with memory offset definitions used by dfhack can be found in the
-output folder.
+The files with memory offset definitions used by dfhack can be found in the
+data folder.
 

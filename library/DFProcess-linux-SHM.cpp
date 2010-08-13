@@ -569,10 +569,7 @@ bool SHMProcess::attach()
 
 bool SHMProcess::detach()
 {
-    if(!d->attached)
-    {
-        return false;
-    }
+    if(!d->attached) return true;
     if(d->locked)
     {
         resume();

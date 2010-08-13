@@ -123,8 +123,10 @@ Maps::Maps(DFContextShared* _d)
 
 Maps::~Maps()
 {
+    cerr << "called Maps destructor" << endl;
     if(d->Started)
         Finish();
+    delete d;
 }
 
 /*-----------------------------------*

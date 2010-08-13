@@ -84,6 +84,10 @@ dfprospector
 ============
 Lists all available minerals on the map and how much of them there is.
 
+dfprobe
+============
+Can be used to determine tile properties.
+
 dfreveal
 ========
 Reveals the whole map, waits for input and hides it again. If you close

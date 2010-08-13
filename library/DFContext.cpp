@@ -59,6 +59,7 @@ Context::Context (Process* p) : d (new DFContextShared())
 
 Context::~Context()
 {
+    cerr << "called Context destructor" << endl;
     Detach();
     delete d;
 }
@@ -88,6 +89,7 @@ bool Context::Detach()
 {
     if (!d->p->detach())
     {
+        cerr << "Context::Detach failed!" << endl;
         return false;
     }
     d->shm_start = 0;

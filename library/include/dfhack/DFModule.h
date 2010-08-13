@@ -33,7 +33,7 @@ namespace DFHack
     class DFHACK_EXPORT Module
     {
         public:
-        ~Module(){};
+        virtual ~Module(){};
         virtual bool Start(){return true;};// default start...
         virtual bool Finish() = 0;// everything should have a Finish()
         // should Context call Finish when Resume is called?

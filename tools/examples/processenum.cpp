@@ -102,6 +102,17 @@ int main (void)
             Cman.Refresh(&inval);
             int nCont = Cman.size();
             int nInval = inval.size();
+            DFHack::Context * cont = Cman.getSingleContext();
+            if(cont)
+            {
+                if(cont->Attach())
+                    cont->getMaps();
+                bool result = cont->Detach();
+                if(!result)
+                {
+                    cerr << "Something went horribly wrong during detach" << endl;
+                }
+            }
 
             cout << "Contexts:" << endl;
             for(int i = 0; i < nCont; i++)

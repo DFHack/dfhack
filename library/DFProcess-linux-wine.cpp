@@ -331,7 +331,7 @@ bool WineProcess::attach()
 
 bool WineProcess::detach()
 {
-    if(!d->attached) return false;
+    if(!d->attached) return true;
     if(!d->suspended) suspend();
     int result = 0;
     // close /proc/PID/mem

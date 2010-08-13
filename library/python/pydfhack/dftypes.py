@@ -24,6 +24,24 @@ Temperatures = ((c_ushort * 16) * 16)
 Designations40d = ((DesignationFlags * 16) * 16)
 Occupancies40d = ((OccupancyFlags * 16) * 16)
 
+def wall_terrain_check(terrain):
+    return libdfhack.DFHack_isWallTerrain(terrain) > 0
+
+def floor_terrain_check(terrain):
+    return libdfhack.DFHack_isFloorTerrain(terrain) > 0
+
+def ramp_terrain_check(terrain):
+    return libdfhack.DFHack_isRampTerrain(terrain) > 0
+
+def stair_terrain_check(terrain):
+    return libdfhack.DFHack_isStairTerrain(terrain) > 0
+
+def open_terrain_check(terrain):
+    return libdfhack.DFHack_isOpenTerrain(terrain) > 0
+
+def get_vegetation_type(terrain):
+    return libdfhack.DFHack_getVegetationType(terrain)
+
 class Position2D(Structure):
     _fields_ = [("x", c_ushort),
                 ("y", c_ushort)]
@@ -52,10 +70,30 @@ class Vein(Structure):
                 ("flags", c_uint),
                 ("address_of", c_uint)]
 
+def _alloc_vein_buffer_callback(ptr, count):
+    allocated = _allocate_array(Vein, count)
+
+    ptr = addressof(allocated[0])
+
+    return 1
+
+_vein_functype = CFUNCTYPE(c_int, POINTER(Vein), c_uint)
+libdfhack.alloc_vein_buffer_callback = _vein_functype(_alloc_vein_buffer_callback)
+
 class FrozenLiquidVein(Structure):
     _fields_ = [("vtable", c_uint),
                 ("tiles", TileTypes40d),
                 ("address_of", c_uint)]
+
+def _alloc_frozenliquidvein_buffer_callback(ptr, count):
+    allocated = _allocate_array(FrozenLiquidVein, count)
+
+    ptr = addressof(allocated[0])
+
+    return 1
+
+_frozenliquidvein_functype = CFUNCTYPE(c_int, POINTER(FrozenLiquidVein), c_uint)
+libdfhack.alloc_frozenliquidvein_buffer_callback = _frozenliquidvein_functype(_alloc_frozenliquidvein_buffer_callback)
 
 class SpatterVein(Structure):
     _fields_ = [("vtable", c_uint),
@@ -65,6 +103,16 @@ class SpatterVein(Structure):
                 ("mat3", c_ushort),
                 ("intensity", ((c_ubyte * 16) * 16)),
                 ("address_of", c_uint)]
+
+def _alloc_spattervein_buffer_callback(ptr, count):
+    allocated = _allocate_array(SpatterVein, count)
+
+    ptr = addressof(allocated[0])
+
+    return 1
+
+_spattervein_functype = CFUNCTYPE(c_int, POINTER(SpatterVein), c_uint)
+libdfhack.alloc_spatter_buffer_callback = _spattervein_functype(_alloc_spattervein_buffer_callback)
 
 class MapBlock40d(Structure):
     _fields_ = [("tiletypes", TileTypes40d),

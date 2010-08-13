@@ -188,7 +188,7 @@ if(MSVC)
     )
 else(MSVC)
     # Just put the file in the output directory on Linux and Mac
-    configure_file(${CMAKE_SOURCE_DIR}/data/Memory-ng.xml  ${DATA_OUTPUT_PATH}/Memory.xml COPYONLY)
+    configure_file(${CMAKE_SOURCE_DIR}/data/Memory.xml  ${DATA_OUTPUT_PATH}/Memory.xml COPYONLY)
 endif(MSVC)
 
 IF(UNIX)

@@ -8,7 +8,7 @@ PROJECT_NUMBER         = @DFHACK_VERSION@
 OUTPUT_DIRECTORY       = .
 CREATE_SUBDIRS         = NO
 OUTPUT_LANGUAGE        = English
-USE_WINDOWS_ENCODING   = YES
+USE_WINDOWS_ENCODING   = NO
 BRIEF_MEMBER_DESC      = YES
 REPEAT_BRIEF           = YES
 ABBREVIATE_BRIEF       = 
@@ -31,7 +31,7 @@ SUBGROUPING            = YES
 #---------------------------------------------------------------------------
 # Build related configuration options
 #---------------------------------------------------------------------------
-EXTRACT_ALL            = YES
+EXTRACT_ALL            = NO
 EXTRACT_PRIVATE        = NO
 EXTRACT_STATIC         = NO
 EXTRACT_LOCAL_CLASSES  = NO
@@ -69,7 +69,7 @@ WARN_LOGFILE           =
 # configuration options related to the input files
 #---------------------------------------------------------------------------
 INPUT                  = @CMAKE_DOXYGEN_INPUT_LIST@
-FILE_PATTERNS          = *.cpp *.h
+FILE_PATTERNS          = *.cpp *.h *.dxgen
 RECURSIVE              = NO
 EXCLUDE                = 
 EXCLUDE_SYMLINKS       = NO
@@ -102,10 +102,6 @@ IGNORE_PREFIX          =
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
-# this code is needed if you want to build this doxygen docu for a static wep page as http://libnoise.sourceforge.net/
-#HTML_HEADER            = htmldata/templateheader.html
-#HTML_FOOTER            = htmldata/templatefooter.html
-#HTML_STYLESHEET        = htmldata/doxygen.css
 
 HTML_ALIGN_MEMBERS     = YES
 GENERATE_HTMLHELP      = NO

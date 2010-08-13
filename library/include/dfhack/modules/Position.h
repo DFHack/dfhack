@@ -17,6 +17,16 @@ namespace DFHack
         int32_t z;
     };
 
+    struct t_screen
+    {
+        uint8_t symbol;
+        uint8_t foreground;
+        uint8_t background;
+        uint8_t bright;
+        uint8_t gtile;
+        uint8_t grayscale;
+    };
+
     class DFContextShared;
     class DFHACK_EXPORT Position : public Module
     {
@@ -43,6 +53,11 @@ namespace DFHack
         * Window size in tiles
         */
         bool getWindowSize(int32_t & width, int32_t & height);
+
+        /*
+        * Screen tiles
+        */
+        bool getScreenTiles(int32_t width, int32_t height, t_screen screen[]);
 
         private:
         struct Private;

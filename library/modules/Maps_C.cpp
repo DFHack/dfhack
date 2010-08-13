@@ -308,7 +308,7 @@ t_frozenliquidvein* Maps_ReadFrozenVeins(DFHackObject* maps, uint32_t x, uint32_
 {
 	if(maps != NULL)
 	{
-		if(alloc_frozenliquidvein_callback == NULL)
+        if(alloc_frozenliquidvein_buffer_callback == NULL)
 			return NULL;
 		
 		vector<t_vein> veins;
@@ -339,7 +339,7 @@ t_spattervein* Maps_ReadSpatterVeins(DFHackObject* maps, uint32_t x, uint32_t y,
 {
 	if(maps != NULL)
 	{
-		if(alloc_spattervein_callback == NULL)
+        if(alloc_spattervein_buffer_callback == NULL)
 			return NULL;
 		
 		vector<t_vein> veins;

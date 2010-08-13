@@ -202,7 +202,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     // mood stuff
     furball.mood = (int16_t) p->readWord (temp + offs.mood_offset);
     furball.mood_skill = p->readWord (temp + offs.mood_skill_offset);
-    d->d->readName(furball.artifact_name, temp + offs.artifact_name_offset);
+	d->d->readName(furball.artifact_name, temp + offs.artifact_name_offset);
 
     // custom profession
     p->readSTLString(temp + offs.custom_profession_offset, furball.custom_profession, sizeof(furball.custom_profession));
@@ -516,6 +516,27 @@ bool Creatures::WriteMoodSkill(const uint32_t index, const uint16_t moodSkill)
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
     p->writeWord(temp + d->creatures.mood_skill_offset, moodSkill);
+    return true;
+}
+
+bool Creatures::WriteJob(const t_creature * furball, std::vector<t_material> const& mat)
+{
+	unsigned int i;
+    if(!d->Inited) return false;
+    if(!furball->current_job.active) return false;
+    Process * p = d->owner;
+    memory_info * minfo = d->d->offset_descriptor;
+
+    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + minfo->getOffset("job_materials_vector"));
+
+    for(i=0;i<cmats.size();i++)
+    {
+        p->writeWord(cmats[i] + minfo->getOffset("job_material_maintype"), mat[i].itemType);
+        p->writeWord(cmats[i] + minfo->getOffset("job_material_sectype1"), mat[i].subType);
+        p->writeWord(cmats[i] + minfo->getOffset("job_material_sectype2"), mat[i].subIndex);
+        p->writeDWord(cmats[i] + minfo->getOffset("job_material_sectype3"), mat[i].index);
+        p->writeDWord(cmats[i] + minfo->getOffset("job_material_flags"), mat[i].flags);
+    }
     return true;
 }
 

@@ -510,6 +510,21 @@ DFhackCExport void * SDL_DisplayFormat(void *surface)
     return _SDL_DisplayFormat(surface);
 }
 
+// SDL_Surface *SDL_DisplayFormatAlpha(SDL_Surface *surface);
+static void * (*_SDL_DisplayFormatAlpha)( void * surface ) = 0;
+DFhackCExport void * SDL_DisplayFormatAlpha(void *surface)
+{
+    return _SDL_DisplayFormatAlpha(surface);
+}
+
+//void SDL_GetRGBA(Uint32 pixel, SDL_PixelFormat *fmt, Uint8 *r, Uint8 *g, Uint8 *b, Uint8 *a);
+
+static void (*_SDL_GetRGBA)(uint32_t pixel, void * fmt, uint8_t * r, uint8_t * g, uint8_t * b, uint8_t *a) = 0;
+DFhackCExport void SDL_GetRGBA(uint32_t pixel, void * fmt, uint8_t * r, uint8_t * g, uint8_t * b, uint8_t *a)
+{
+    return _SDL_GetRGBA(pixel, fmt, r, g, b, a);
+}
+
 static int (*_SDL_GL_GetAttribute)(int attr, int * value) = 0;
 DFhackCExport int SDL_GL_GetAttribute(int attr, int * value)
 {
@@ -889,6 +904,8 @@ bool FirstCall()
     _SDL_EnableUNICODE = (int (*)(int))GetProcAddress(realSDLlib,"SDL_EnableUNICODE");
     _SDL_GetVideoSurface = (void*(*)())GetProcAddress(realSDLlib,"SDL_GetVideoSurface");
     _SDL_DisplayFormat = (void * (*) (void *))GetProcAddress(realSDLlib,"SDL_DisplayFormat");
+    _SDL_DisplayFormatAlpha = (void * (*) (void *))GetProcAddress(realSDLlib,"SDL_DisplayFormatAlpha");
+    _SDL_GetRGBA = (void (*) (uint32_t, void *, uint8_t *, uint8_t *, uint8_t *, uint8_t *))GetProcAddress(realSDLlib,"SDL_GetRGBA");
     _SDL_FreeSurface = (void (*)(void*))GetProcAddress(realSDLlib,"SDL_FreeSurface");
     _SDL_GL_GetAttribute = (int (*)(int, int*))GetProcAddress(realSDLlib,"SDL_GL_GetAttribute");
     _SDL_GL_SetAttribute = (int (*)(int, int))GetProcAddress(realSDLlib,"SDL_GL_SetAttribute");

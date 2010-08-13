@@ -1,9 +1,8 @@
-INCLUDE(CPack)
 # main project file. use it from a build sub-folder, see COMPILE for details
 PROJECT (dfhack)
 cmake_minimum_required(VERSION 2.6)
 SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
-SET ( DFHACK_VERSION "0.4.0.3-dev" )
+SET ( DFHACK_VERSION "0.4.1.0-dev" )
 
 # disable warning, autosearch
 if(COMMAND cmake_policy)
@@ -20,8 +19,12 @@ ENDIF(NOT DEFINED CMAKE_BUILD_TYPE)
 
 SET( LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output CACHE PATH "Output directory for the dfhack library" )
 SET( EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output CACHE PATH "Output directory for the dfhack tools" )
+SET( DATA_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output CACHE PATH "Output directory for the dfhack data (offset files)" )
 
 OPTION(BUILD_DFHACK_DOCUMENTATION "Create doxygen documentation for developers" OFF)
+OPTION(BUILD_DFHACK_EXAMPLES "Build example tools" OFF)
+OPTION(BUILD_DFHACK_PLAYGROUND "Build tools from the playground folder" OFF)
+OPTION(BUILD_DFHACK_C_BINDIGS "Build the C portion of the library" ON)
 
 include_directories (${CMAKE_SOURCE_DIR}/library/include/)
 include_directories (${CMAKE_SOURCE_DIR}/library/shm/)
@@ -30,8 +33,8 @@ include_directories (${CMAKE_SOURCE_DIR}/library/depends/tinyxml/)
 include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
 
 add_subdirectory (library)
+add_subdirectory (offsetedit)
 add_subdirectory (library/shm)
-#add_subdirectory (dfhack/python)
 add_subdirectory (tools/examples)
 add_subdirectory (tools/playground)
 add_subdirectory (tools/supported)

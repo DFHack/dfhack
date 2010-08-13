@@ -173,6 +173,10 @@ bool Context::AsyncSuspend()
 
 bool Context::Resume()
 {
+    for(int i = 0 ; i < d->allModules.size(); i++)
+    {
+        d->allModules[i]->OnResume();
+    }
     return d->p->resume();
 }
 bool Context::ForceResume()

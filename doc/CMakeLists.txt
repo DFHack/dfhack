@@ -38,6 +38,7 @@ IF(DOXYGEN_FOUND)
   # the Doxyfile with a REGEX REPLACE (see below)
   SET( DOXYGEN_SOURCE_DIR
  #   "${CMAKE_SOURCE_DIR}/library"
+    "${CMAKE_SOURCE_DIR}/doc/index.dxgen"
     "${CMAKE_SOURCE_DIR}/library/include"
     "${CMAKE_SOURCE_DIR}/library/include/dfhack"
     "${CMAKE_SOURCE_DIR}/library/include/dfhack/modules"

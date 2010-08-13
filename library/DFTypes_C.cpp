@@ -23,6 +23,7 @@ distribution.
 */
 
 #include "dfhack/DFIntegers.h"
+#include "dfhack/DFTileTypes.h"
 #include <stdlib.h>
 #include "string.h"
 #include <vector>

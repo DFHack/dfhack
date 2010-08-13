@@ -1,5 +1,5 @@
 from ctypes import *
-from pydftypes import *
+from dftypes import *
 from util import _uintify, uint_ptr
 
 _MAX_DIM = 0x300
@@ -15,6 +15,9 @@ libdfhack.Maps_WriteTemperatures.argtypes = [ c_void_p, c_uint, c_uint, c_uint, 
 libdfhack.Maps_ReadOccupancy.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Occupancies40d) ]
 libdfhack.Maps_WriteOccupancy.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Occupancies40d) ]
 libdfhack.Maps_ReadRegionOffsets.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(BiomeIndices40d) ]
+libdfhack.Maps_ReadStandardVeins.argtypes = [ c_void_p, c_uint, c_uint, c_uint ]
+libdfhack.Maps_ReadFrozenVeins.argtypes = [ c_void_p, c_uint, c_uint, c_uint ]
+libdfhack.Maps_ReadSpatterVeins.argtypes = [ c_void_p, c_uint, c_uint, c_uint ]
 
 class Maps(object):
     def __init__(self, ptr):
@@ -151,6 +154,21 @@ class Maps(object):
             return bi
         else:
             return None
+    
+    def read_veins(self, x, y, z):
+        ux, uy, uz = _uintify(x, y, z)
+        
+        return libdfhack.Maps_ReadStandardVeins(self._map_ptr, ux, uy, uz)
+    
+    def read_frozen_veins(self, x, y, z):
+        ux, uy, uz = _uintify(x, y, z)
+        
+        return libdfhack.Maps_ReadFrozenVeins(self._map_ptr, ux, uy, uz)
+    
+    def read_spatter_veins(self, x, y, z):
+        ux, uy, uz = _uintify(x, y, z)
+        
+        return libdfhack.Maps_ReadSpatterVeins(self._map_ptr, ux, uy, uz)
 
     @property
     def size(self):

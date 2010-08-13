@@ -32,6 +32,7 @@ using namespace std;
 
 #include "Internal.h"
 #include "dfhack/DFTypes.h"
+#include "dfhack/DFTileTypes.h"
 #include "dfhack-c/DFTypes_C.h"
 #include "dfhack/modules/Materials.h"
 
@@ -99,6 +100,16 @@ int DFHack_isOpenTerrain(int in)
 int DFHack_getVegetationType(int in)
 {
 	return DFHack::getVegetationType(in);
+}
+
+int DFHack_getTileType(int index, TileRow* tPtr)
+{
+	if(index >= TILE_TYPE_ARRAY_LENGTH)
+		return 0;
+	
+	*tPtr = tileTypeTable[index];
+	
+	return 1;
 }
 
 #ifdef __cplusplus

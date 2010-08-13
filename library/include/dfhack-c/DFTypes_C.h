@@ -112,6 +112,8 @@ DFHACK_EXPORT extern int DFHack_isStairTerrain(int in);
 DFHACK_EXPORT extern int DFHack_isOpenTerrain(int in);
 DFHACK_EXPORT extern int DFHack_getVegetationType(int in);
 
+DFHACK_EXPORT extern int DFHack_getTileType(int index, TileRow* tPtr);
+
 #ifdef __cplusplus
 }
 #endif

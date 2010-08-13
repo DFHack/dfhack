@@ -12,10 +12,6 @@ ENDIF(UNIX)
 ADD_EXECUTABLE(dfmoodump moodump.cpp)
 TARGET_LINK_LIBRARIES(dfmoodump dfhack)
 
-# for trying out some 'stuff'
-ADD_EXECUTABLE(dftest test.cpp)
-TARGET_LINK_LIBRARIES(dftest dfhack)
-
 # bauxite - turn all mechanisms into bauxite mechanisms
 # Author: Alex Legg
 #ADD_EXECUTABLE(dfbauxite dfbauxite.cpp)
@@ -60,9 +56,19 @@ TARGET_LINK_LIBRARIES(dfcatsplosion dfhack)
 #ADD_EXECUTABLE(dfrenamer renamer.cpp)
 #TARGET_LINK_LIBRARIES(dfrenamer dfhack)
 
+# this needs the C bindings
+IF(BUILD_DFHACK_C_BINDIGS)
+    # for trying out some 'stuff'
+    ADD_EXECUTABLE(dftest test.cpp)
+    TARGET_LINK_LIBRARIES(dftest dfhack)
+    install(TARGETS
+    dftest
+    RUNTIME DESTINATION bin
+    )
+ENDIF(BUILD_DFHACK_C_BINDIGS)
+
 install(TARGETS
 dfmoodump
-dftest
 dfdigger
 dfdigger2
 dfcatsplosion

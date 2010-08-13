@@ -54,6 +54,11 @@ include/dfhack/modules/WindowIO.h
 include/dfhack/modules/World.h
 )
 
+SET(PROJECT_C_HDRS
+include/dfhack-c/DFTypes_C.h
+include/dfhack-c/DFContext_C.h
+)
+
 SET(PROJECT_SRCS
 DFMemInfo.cpp
 DFMemInfoManager.cpp
@@ -61,8 +66,6 @@ DFContextManager.cpp
 DFContext.cpp
 DFProcessEnumerator.cpp
 ContextShared.cpp
-DFContext_C.cpp
-DFTypes_C.cpp
 
 depends/md5/md5.cpp
 depends/md5/md5wrapper.cpp
@@ -83,6 +86,11 @@ modules/Position.cpp
 modules/Translation.cpp
 modules/Vegetation.cpp
 modules/World.cpp
+)
+
+SET(PROJECT_C_SRCS
+DFContext_C.cpp
+DFTypes_C.cpp
 
 modules/Buildings_C.cpp
 modules/Constructions_C.cpp
@@ -125,6 +133,11 @@ ELSE(UNIX)
     LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_WINDOWS})
     LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_WINDOWS})
 ENDIF(UNIX)
+
+IF(BUILD_DFHACK_C_BINDIGS)
+    LIST(APPEND PROJECT_HDRS ${PROJECT_C_HDRS})
+    LIST(APPEND PROJECT_SRCS ${PROJECT_C_SRCS})
+ENDIF(BUILD_DFHACK_C_BINDIGS)
 
 SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
 

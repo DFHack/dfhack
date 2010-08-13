@@ -95,8 +95,10 @@ namespace DFHack
         TileMaterial m;
         TileVariant v;
     };
+	
+	#define TILE_TYPE_ARRAY_LENGTH 520
 
-    const TileRow tileTypeTable[520] =
+    const TileRow tileTypeTable[TILE_TYPE_ARRAY_LENGTH] =
     {
         // 0
         {"void",EMPTY, AIR, VAR_1},

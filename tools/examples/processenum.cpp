@@ -106,7 +106,13 @@ int main (void)
             if(cont)
             {
                 if(cont->Attach())
-                    cont->getMaps();
+                {
+                    DFHack::Maps * mapz = cont->getMaps();
+                    cont->Suspend();
+                    mapz->Start();
+                    cont->Resume();
+                }
+
                 bool result = cont->Detach();
                 if(!result)
                 {

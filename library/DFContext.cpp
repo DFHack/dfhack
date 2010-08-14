@@ -59,7 +59,6 @@ Context::Context (Process* p) : d (new DFContextShared())
 
 Context::~Context()
 {
-    cerr << "called Context destructor" << endl;
     Detach();
     delete d;
 }

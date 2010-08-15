@@ -26,6 +26,8 @@ OPTION(BUILD_DFHACK_EXAMPLES "Build example tools" OFF)
 OPTION(BUILD_DFHACK_PLAYGROUND "Build tools from the playground folder" OFF)
 OPTION(BUILD_DFHACK_C_BINDIGS "Build the C portion of the library" ON)
 OPTION(BUILD_OFFSET_EDITOR "Build the Offset GUI editor (not ready for use)." OFF)
+OPTION(BUILD_DFHACK_SUPPORTED "Build the supported toold." ON)
+OPTION(BUILD_DFHACK_SHM "Build the SHM." OFF)
 
 include_directories (${CMAKE_SOURCE_DIR}/library/include/)
 include_directories (${CMAKE_SOURCE_DIR}/library/shm/)
@@ -35,12 +37,26 @@ include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
 
 add_subdirectory (library)
 
+IF(BUILD_DFHACK_SUPPORTED)
+    add_subdirectory (tools/supported)
+ENDIF(BUILD_DFHACK_SUPPORTED)
+
 IF(BUILD_OFFSET_EDITOR)
     add_subdirectory (offsetedit)
 ENDIF(BUILD_OFFSET_EDITOR)
 
-add_subdirectory (library/shm)
-add_subdirectory (tools/examples)
-add_subdirectory (tools/playground)
-add_subdirectory (tools/supported)
-add_subdirectory (doc)
+IF(BUILD_DFHACK_SHM)
+    add_subdirectory (library/shm)
+ENDIF(BUILD_DFHACK_SHM)
+
+IF(BUILD_DFHACK_EXAMPLES)
+    add_subdirectory (tools/examples)
+ENDIF(BUILD_DFHACK_EXAMPLES)
+
+IF(BUILD_DFHACK_PLAYGROUND)
+    add_subdirectory (tools/playground)
+ENDIF(BUILD_DFHACK_PLAYGROUND)
+
+IF(BUILD_DFHACK_DOCUMENTATION)
+    add_subdirectory (doc)
+ENDIF(BUILD_DFHACK_DOCUMENTATION)

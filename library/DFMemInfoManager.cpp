@@ -254,10 +254,10 @@ bool MemInfoManager::loadFile(string path_to_xml)
             throw Error::MemoryXmlNoRoot();
         }
         string m_name=pElem->Value();
-        if(m_name != "DFExtractor")
+        if(m_name != "DFHack")
         {
             error = true;
-            throw Error::MemoryXmlNoDFExtractor(m_name.c_str());
+            throw Error::MemoryXmlNoRoot();
         }
         // save this for later
         hRoot=TiXmlHandle(pElem);

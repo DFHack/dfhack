@@ -1,5 +1,5 @@
 =======================================
-Introduction and reasons for existence
+Introduction And Reasons For Existence
 =======================================
 
 C++ is not an easy language to access from other languages.  There are several "features" that make interoperability considerably more painful when trying to write bindings for Python, Ruby, Lua, or whatever.  To that end, dfhack has a C translation layer to ease the process of making bindings for other languages.  A shadow API, if you will.
@@ -26,6 +26,14 @@ Layout
 ========
 The structure of the C shim mimics, as far as possible, the normal dfhack structure.  Of course, since C lacks things like classes, templates, and function overloading, there are a few places where deviations are unavoidable.
 
+Return Values
+=============
+Unless otherwise specified, functions that return an int return one of the following values:
+
+- 0:  The operation failed.
+- 1:  The operation succeeded.
+- -1:  An invalid module pointer was supplied.
+
 Types
 =======
 Module objects are passed around as void pointers with the typedef name 'DFHackObject'.  Wherever possible, the structures and enumerations defined by dfhack are used without redefinition.
@@ -34,7 +42,7 @@ Allocator Callbacks
 ====================
 Wherever possible, the C shim eschews the native allocation of memory, as this would require language bindings to remember to free the memory later, and would, in my opinion, make the shim less flexible.  So a number of function pointers are exposed to allow memory to be allocated in the language being used to wrap dfhack.  In general, the allocations relate to arrays of dfhack structures, but there are a couple of corner cases.
 
-The buffer callback functions should take a pointer to the type, and a 32-bit unsigned integer (uint32_t) defining the length of the array needed.  If the buffer was successfully created, the callback function should return 1.  In case of failure, set the buffer pointer to NULL (or 0) and return 0.
+The buffer callback functions should take a pointer to an array of the particular type, and a 32-bit unsigned integer (uint32_t) defining the length of the array needed.  If the buffer was successfully created, the callback function should return 1.  In case of failure, set the buffer pointer to NULL (or 0) and return 0.
 
 All of the allocators are defined in dfhack/library/include/dfhack-c/DFTypes_C.h.
 
@@ -53,11 +61,11 @@ Buffer Callback List
 - alloc_frozenliquidvein_buffer_callback(t_frozenliquidvein*, uint32_t)
 - alloc_spattervein_buffer_callback(t_spattervein*, uint32_t)
 
-Templates make my life harder
+Templates Make My Life Harder
 -------------------------------
 Three dfhack structures (t_colormodifier, t_creaturecaste, and t_creaturetype) contain vectors, which (obviously) don't work in C.  Therefore, these structures have C versions that replace the vector with a buffer and length, but are otherwise identical to their C++ counterparts.  For each structure, there are three associated callbacks.  One initializes an empty instance of the structure, one initializes an instance with values passed in, and one allocates a buffer in the same manner as the other allocators.
 
-A small callback example in Python
+A Small Callback Example In Python
 -------------------------------------
 The Python bindings for dfhack implement the unsigned integer allocator callback like this:
 
@@ -86,12 +94,12 @@ The Python bindings for dfhack implement the unsigned integer allocator callback
 
 .. admonition:: dftypes.py
 
-    |from ctypes import \*
-    |from util import \*
+    |   from ctypes import \*
+    |   from util import \*
     |
-    |libdfhack = cdll.libdfhack
+    |   libdfhack = cdll.libdfhack
     |
-    |libdfhack.alloc_uint_buffer_callback = alloc_uint_buffer
+    |   libdfhack.alloc_uint_buffer_callback = alloc_uint_buffer
 
 Modules
 ========

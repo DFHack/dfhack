@@ -9,11 +9,6 @@ SET ( DFHACK_VERSION "0.4.1.0-dev" )
 # the root where this particular CMakeLists.txt file sits.
 SET(CMAKE_SOURCE_DIR ${PROJECT_SOURCE_DIR})
 
-# Reset compiler flags.
-# (Dfterm2 uses -D_UNICODE but dfhack doesn't compile with it,
-#  breaking dfhack when used as a submodule)
-SET(COMPILE_DEFINITIONS "")
-
 # disable warning, autosearch
 if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)

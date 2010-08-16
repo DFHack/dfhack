@@ -84,6 +84,10 @@ dfprospector
 ============
 Lists all available minerals on the map and how much of them there is.
 
+dfprobe
+============
+Can be used to determine tile properties.
+
 dfreveal
 ========
 Reveals the whole map, waits for input and hides it again. If you close
@@ -119,6 +123,10 @@ Just a simple benchmark of the data export speed.
 dfdoffsets
 ==========
 Dumps the offsets for the currently running DF version into the terminal.
+
+dfcleartask
+===========
+Solves the problem of unusable items after reclaim by clearing the 'in_job' bit of all items.
 
 Your tool here
 ==============

@@ -632,10 +632,7 @@ bool SHMProcess::attach()
 
 bool SHMProcess::detach()
 {
-    if(!d->attached)
-    {
-        return false;
-    }
+    if(!d->attached) return true;
     //cerr << "detach" << endl;// FIXME: throw
     if(d->locked)
     {

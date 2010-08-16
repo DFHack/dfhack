@@ -125,6 +125,7 @@ Maps::~Maps()
 {
     if(d->Started)
         Finish();
+    delete d;
 }
 
 /*-----------------------------------*

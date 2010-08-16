@@ -186,9 +186,17 @@ if(MSVC)
     ADD_CUSTOM_COMMAND(TARGET dfhack POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/data/Memory.xml $(TargetDir)/Memory.xml
     )
+    ADD_CUSTOM_COMMAND(TARGET dfhack POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Compile.html $(TargetDir)/Compile.html
+    )
+    ADD_CUSTOM_COMMAND(TARGET dfhack POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Readme.html $(TargetDir)/Readme.html
+    )
 else(MSVC)
     # Just put the file in the output directory on Linux and Mac
-    configure_file(${CMAKE_SOURCE_DIR}/data/Memory-ng.xml  ${DATA_OUTPUT_PATH}/Memory.xml COPYONLY)
+    configure_file(${CMAKE_SOURCE_DIR}/data/Memory.xml  ${DATA_OUTPUT_PATH}/Memory.xml COPYONLY)
+    configure_file(${CMAKE_SOURCE_DIR}/Compile.html  ${DATA_OUTPUT_PATH}/Compile.html COPYONLY)
+    configure_file(${CMAKE_SOURCE_DIR}/Readme.html  ${DATA_OUTPUT_PATH}/Readme.html COPYONLY)
 endif(MSVC)
 
 IF(UNIX)

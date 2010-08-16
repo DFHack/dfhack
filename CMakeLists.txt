@@ -25,6 +25,7 @@ OPTION(BUILD_DFHACK_DOCUMENTATION "Create doxygen documentation for developers" 
 OPTION(BUILD_DFHACK_EXAMPLES "Build example tools" OFF)
 OPTION(BUILD_DFHACK_PLAYGROUND "Build tools from the playground folder" OFF)
 OPTION(BUILD_DFHACK_C_BINDIGS "Build the C portion of the library" ON)
+OPTION(BUILD_OFFSET_EDITOR "Build the Offset GUI editor (not ready for use)." OFF)
 
 include_directories (${CMAKE_SOURCE_DIR}/library/include/)
 include_directories (${CMAKE_SOURCE_DIR}/library/shm/)
@@ -33,7 +34,11 @@ include_directories (${CMAKE_SOURCE_DIR}/library/depends/tinyxml/)
 include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
 
 add_subdirectory (library)
-add_subdirectory (offsetedit)
+
+IF(BUILD_OFFSET_EDITOR)
+    add_subdirectory (offsetedit)
+ENDIF(BUILD_OFFSET_EDITOR)
+
 add_subdirectory (library/shm)
 add_subdirectory (tools/examples)
 add_subdirectory (tools/playground)

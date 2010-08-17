@@ -24,33 +24,18 @@ using namespace DFHack;
 DFContextShared::DFContextShared()
 {
     // init modules
-    creatures = 0;
-    maps = 0;
-    position = 0;
-    gui = 0;
-    world = 0;
-    materials = 0;
-    translation = 0;
-    vegetation = 0;
-    buildings = 0;
-    constructions = 0;
-    items = 0;
-    windowio = 0;
+    allModules.clear();
+    memset(&(s_mods), 0, sizeof(s_mods));
 }
 
 DFContextShared::~DFContextShared()
 {
-    if(creatures) delete creatures;
-    if(maps) delete maps;
-    if(position) delete position;
-    if(gui) delete gui;
-    if(materials) delete materials;
-    if(translation) delete translation;
-    if(vegetation) delete vegetation;
-    if(buildings) delete buildings;
-    if(constructions) delete constructions;
-    if(world) delete world;
-    if(windowio) delete windowio;
+    // invalidate all modules
+    for(int i = 0 ; i < allModules.size(); i++)
+    {
+        delete allModules[i];
+    }
+    allModules.clear();
 }
 
 bool DFContextShared::InitReadNames()

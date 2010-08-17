@@ -25,19 +25,9 @@ distribution.
 #ifndef MAPS_C_API
 #define MAPS_C_API
 
-#include "dfhack/DFExport.h"
-#include "dfhack/DFIntegers.h"
-#include <vector>
-#include <map>
-#include <string>
-
-using namespace std;
-
+#include "DFHack_C.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Maps.h"
-#include "DFHack_C.h"
-
-using namespace DFHack;
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,6 +68,10 @@ DFHACK_EXPORT int Maps_ReadBlockFlags(DFHackObject* maps, uint32_t x, uint32_t y
 DFHACK_EXPORT int Maps_WriteBlockFlags(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, t_blockflags blockflags);
 
 DFHACK_EXPORT int Maps_ReadRegionOffsets(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, biome_indices40d* buffer);
+
+DFHACK_EXPORT t_vein* Maps_ReadStandardVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
+DFHACK_EXPORT t_frozenliquidvein* Maps_ReadFrozenVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
+DFHACK_EXPORT t_spattervein* Maps_ReadSpatterVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
 
 #ifdef __cplusplus
 }

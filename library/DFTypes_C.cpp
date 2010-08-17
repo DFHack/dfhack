@@ -23,6 +23,7 @@ distribution.
 */
 
 #include "dfhack/DFIntegers.h"
+#include "dfhack/DFTileTypes.h"
 #include <stdlib.h>
 #include "string.h"
 #include <vector>
@@ -41,31 +42,65 @@ using namespace DFHack;
 extern "C" {
 #endif
 
-int8_t* (*alloc_byte_buffer_callback)(uint32_t) = NULL;
-int16_t* (*alloc_short_buffer_callback)(uint32_t) = NULL;
-int32_t* (*alloc_int_buffer_callback)(uint32_t) = NULL;
+int (*alloc_byte_buffer_callback)(int8_t*, uint32_t) = NULL;
+int (*alloc_short_buffer_callback)(int16_t*, uint32_t) = NULL;
+int (*alloc_int_buffer_callback)(int32_t*, uint32_t) = NULL;
 
-uint8_t* (*alloc_ubyte_buffer_callback)(uint32_t) = NULL;
-uint16_t* (*alloc_ushort_buffer_callback)(uint32_t) = NULL;
-uint32_t* (*alloc_uint_buffer_callback)(uint32_t) = NULL;
+int (*alloc_ubyte_buffer_callback)(uint8_t*, uint32_t) = NULL;
+int (*alloc_ushort_buffer_callback)(uint16_t*, uint32_t) = NULL;
+int (*alloc_uint_buffer_callback)(uint32_t*, uint32_t) = NULL;
 
-char* (*alloc_char_buffer_callback)(uint32_t) = NULL;
+int (*alloc_char_buffer_callback)(char*, uint32_t) = NULL;
 
-t_matgloss* (*alloc_matgloss_buffer_callback)(int) = NULL;
-t_descriptor_color* (*alloc_descriptor_buffer_callback)(int) = NULL;
-t_matglossOther* (*alloc_matgloss_other_buffer_callback)(int) = NULL;
+int (*alloc_matgloss_buffer_callback)(t_matgloss*, uint32_t) = NULL;
+int (*alloc_descriptor_buffer_callback)(t_descriptor_color*, uint32_t) = NULL;
+int (*alloc_matgloss_other_buffer_callback)(t_matglossOther*, uint32_t) = NULL;
 
-c_colormodifier* (*alloc_empty_colormodifier_callback)(void) = NULL;
-c_colormodifier* (*alloc_colormodifier_callback)(const char*, uint32_t) = NULL;
-c_colormodifier* (*alloc_colormodifier_buffer_callback)(uint32_t) = NULL;
+int (*alloc_empty_colormodifier_callback)(c_colormodifier*) = NULL;
+int (*alloc_colormodifier_callback)(c_colormodifier*, const char*, uint32_t) = NULL;
+int (*alloc_colormodifier_buffer_callback)(c_colormodifier*, uint32_t) = NULL;
 
-c_creaturecaste* (*alloc_empty_creaturecaste_callback)(void) = NULL;
-c_creaturecaste* (*alloc_creaturecaste_callback)(const char*, const char*, const char*, const char*, uint32_t, uint32_t) = NULL;
-c_creaturecaste* (*alloc_creaturecaste_buffer_callback)(uint32_t) = NULL;
+int (*alloc_empty_creaturecaste_callback)(c_creaturecaste*)= NULL;
+int (*alloc_creaturecaste_callback)(c_creaturecaste*, const char*, const char*, const char*, const char*, uint32_t, uint32_t) = NULL;
+int (*alloc_creaturecaste_buffer_callback)(c_creaturecaste*, uint32_t) = NULL;
 
-c_creaturetype* (*alloc_empty_creaturetype_callback)(void) = NULL;
-c_creaturetype* (*alloc_creaturetype_callback)(const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t) = NULL;
-c_creaturetype* (*alloc_creaturetype_buffer_callback)(uint32_t) = NULL;
+int (*alloc_empty_creaturetype_callback)(c_creaturetype*) = NULL;
+int (*alloc_creaturetype_callback)(c_creaturetype*, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t) = NULL;
+int (*alloc_creaturetype_buffer_callback)(c_creaturetype*, uint32_t) = NULL;
+
+int (*alloc_vein_buffer_callback)(t_vein*, uint32_t) = NULL;
+int (*alloc_frozenliquidvein_buffer_callback)(t_frozenliquidvein*, uint32_t) = NULL;
+int (*alloc_spattervein_buffer_callback)(t_spattervein*, uint32_t) = NULL;
+
+int DFHack_isWallTerrain(int in)
+{
+	return DFHack::isWallTerrain(in);
+}
+
+int DFHack_isFloorTerrain(int in)
+{
+	return DFHack::isFloorTerrain(in);
+}
+
+int DFHack_isRampTerrain(int in)
+{
+	return DFHack::isRampTerrain(in);
+}
+
+int DFHack_isStairTerrain(int in)
+{
+	return DFHack::isStairTerrain(in);
+}
+
+int DFHack_isOpenTerrain(int in)
+{
+	return DFHack::isOpenTerrain(in);
+}
+
+int DFHack_getVegetationType(int in)
+{
+	return DFHack::getVegetationType(in);
+}
 
 #ifdef __cplusplus
 }
@@ -76,7 +111,7 @@ int ColorListConvert(t_colormodifier* src, c_colormodifier* dest)
 	if(src == NULL)
 		return -1;
 	
-	dest = ((*alloc_colormodifier_callback)(src->part, src->colorlist.size()));
+	((*alloc_colormodifier_callback)(dest, src->part, src->colorlist.size()));
 	
 	copy(src->colorlist.begin(), src->colorlist.end(), dest->colorlist);
 	
@@ -88,7 +123,7 @@ int CreatureCasteConvert(t_creaturecaste* src, c_creaturecaste* dest)
 	if(src == NULL)
 		return -1;
 	
-	dest = ((*alloc_creaturecaste_callback)(src->rawname, src->singular, src->plural, src->adjective, src->ColorModifier.size(), src->bodypart.size()));
+	((*alloc_creaturecaste_callback)(dest, src->rawname, src->singular, src->plural, src->adjective, src->ColorModifier.size(), src->bodypart.size()));
 	
 	for(int i = 0; i < dest->colorModifierLength; i++)
 		ColorListConvert(&src->ColorModifier[i], &dest->ColorModifier[i]);
@@ -103,7 +138,7 @@ int CreatureTypeConvert(t_creaturetype* src, c_creaturetype* dest)
 	if(src == NULL)
 		return -1;
 	
-	dest = ((*alloc_creaturetype_callback)(src->rawname, src->castes.size(), src->extract.size(), src->tile_character, src->tilecolor.fore, src->tilecolor.back, src->tilecolor.bright));
+	((*alloc_creaturetype_callback)(dest, src->rawname, src->castes.size(), src->extract.size(), src->tile_character, src->tilecolor.fore, src->tilecolor.back, src->tilecolor.bright));
 	
 	for(int i = 0; i < dest->castesCount; i++)
 		CreatureCasteConvert(&src->castes[i], &dest->castes[i]);

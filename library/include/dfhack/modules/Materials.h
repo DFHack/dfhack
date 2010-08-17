@@ -1,13 +1,14 @@
 #ifndef CL_MOD_MATERIALS
 #define CL_MOD_MATERIALS
 /*
-* Creatures
-*/
+ * Materials
+ */
 #include "dfhack/DFExport.h"
+#include "dfhack/DFModule.h"
 namespace DFHack
 {
     class DFContextShared;
-    
+
     struct t_matgloss
     {
         char id[128]; //the id in the raws
@@ -53,7 +54,7 @@ namespace DFHack
         uint32_t startdate; /* in days */
         uint32_t enddate; /* in days */
     };
-    
+
     struct t_creaturecaste
     {
         char rawname[128];
@@ -84,81 +85,72 @@ namespace DFHack
 
     struct t_matglossOther
     {
-	    char rawname[128];
+        char rawname[128];
     };
 
     struct t_creatureextract
     {
-	    char rawname[128];
+        char rawname[128];
     };
     // this doesn't transfer well across the shm gap...
     struct t_creaturetype
     {
         char rawname[128];
-	std::vector <t_creaturecaste> castes;
-	std::vector <t_creatureextract> extract;
-	uint8_t tile_character;
-	struct
-	{
-		uint16_t fore;
-		uint16_t back;
-		uint16_t bright;
-	} tilecolor;
+        std::vector <t_creaturecaste> castes;
+        std::vector <t_creatureextract> extract;
+        uint8_t tile_character;
+        struct
+        {
+            uint16_t fore;
+            uint16_t back;
+            uint16_t bright;
+        } tilecolor;
     };
 
     // this structure describes what are things made of in the DF world
     struct t_material
     {
-	    int16_t itemType;
-	    int16_t subType;
-	    int16_t subIndex;
-	    int32_t index;
-	    uint32_t flags;
+        int16_t itemType;
+        int16_t subType;
+        int16_t subIndex;
+        int32_t index;
+        uint32_t flags;
     };
-    
-    class DFHACK_EXPORT Materials
+
+    class DFHACK_EXPORT Materials : public Module
     {
-	public:
-		Materials(DFHack::DFContextShared * _d);
-		~Materials();
+    public:
+        Materials(DFHack::DFContextShared * _d);
+        ~Materials();
+        bool Finish();
 
-		std::vector<t_matgloss> inorganic;
-		std::vector<t_matgloss> organic;
-		std::vector<t_matgloss> tree;
-		std::vector<t_matgloss> plant;
-		std::vector<t_matgloss> race;
-		std::vector<t_creaturetype> raceEx;
-		std::vector<t_descriptor_color> color;
-		std::vector<t_matglossOther> other;
-		std::vector<t_matgloss> alldesc;
+        std::vector<t_matgloss> inorganic;
+        std::vector<t_matgloss> organic;
+        std::vector<t_matgloss> tree;
+        std::vector<t_matgloss> plant;
+        std::vector<t_matgloss> race;
+        std::vector<t_creaturetype> raceEx;
+        std::vector<t_descriptor_color> color;
+        std::vector<t_matglossOther> other;
+        std::vector<t_matgloss> alldesc;
 
-		bool ReadInorganicMaterials (void);
-		bool ReadOrganicMaterials (void);
-		bool ReadWoodMaterials (void);
-		bool ReadPlantMaterials (void);
-		bool ReadCreatureTypes (void);
-		bool ReadCreatureTypesEx (void);
-		bool ReadDescriptorColors(void);
-		bool ReadOthers (void);
+        bool ReadInorganicMaterials (void);
+        bool ReadOrganicMaterials (void);
+        bool ReadWoodMaterials (void);
+        bool ReadPlantMaterials (void);
+        bool ReadCreatureTypes (void);
+        bool ReadCreatureTypesEx (void);
+        bool ReadDescriptorColors(void);
+        bool ReadOthers (void);
 
-		void ReadAllMaterials(void);
+        void ReadAllMaterials(void);
 
-		std::string getDescription(t_material & mat);
-		/*
-		bool ReadInorganicMaterials (std::vector<t_matgloss> & output);
-		bool ReadOrganicMaterials (std::vector<t_matgloss> & output);
-		bool ReadWoodMaterials (std::vector<t_matgloss> & output);
-		bool ReadPlantMaterials (std::vector<t_matgloss> & output);
-
-		// TODO: maybe move to creatures?
-		bool ReadCreatureTypes (std::vector<t_matgloss> & output);
-		bool ReadCreatureTypesEx (vector<t_creaturetype> & creatures);
-		bool ReadDescriptorColors(std::vector<t_descriptor_color> & output);
-		*/
-	private:
-		class Private;
-		Private* d;
-	};
+		std::string getType(t_material & mat);
+        std::string getDescription(t_material & mat);
+    private:
+        class Private;
+        Private* d;
+    };
 }
 #endif
 

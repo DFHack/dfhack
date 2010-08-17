@@ -569,10 +569,7 @@ bool SHMProcess::attach()
 
 bool SHMProcess::detach()
 {
-    if(!d->attached)
-    {
-        return false;
-    }
+    if(!d->attached) return true;
     if(d->locked)
     {
         resume();
@@ -714,7 +711,7 @@ float SHMProcess::readFloat (const uint32_t offset)
     D_SHMHDR->address = offset;
     gcc_barrier
     d->SetAndWait(CORE_READ_DWORD);
-    return D_SHMHDR->value;
+    return reinterpret_cast<float&> (D_SHMHDR->value);
 }
 void SHMProcess::readFloat (const uint32_t offset, float &val)
 {
@@ -723,7 +720,7 @@ void SHMProcess::readFloat (const uint32_t offset, float &val)
     D_SHMHDR->address = offset;
     gcc_barrier
     d->SetAndWait(CORE_READ_DWORD);
-    val = D_SHMHDR->value;
+    val = reinterpret_cast<float&> (D_SHMHDR->value);
 }
 
 /*

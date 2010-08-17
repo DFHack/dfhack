@@ -23,8 +23,9 @@ distribution.
 */
 
 #include "Internal.h"
+#include "DFMemInfoManager.h"
+
 #include "dfhack/DFMemInfo.h"
-#include "dfhack/DFMemInfoManager.h"
 #include "dfhack/DFError.h"
 
 using namespace DFHack;
@@ -151,8 +152,12 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
     {
         // only elements get processed
         const char *cstr_type = pMemEntry->Value();
-        const char *cstr_name = pMemEntry->Attribute("name");
+        const char *cstr_name = pMemEntry->Attribute("name");		
         const char *cstr_value = pMemEntry->GetText();
+
+        if(!cstr_value)
+            cstr_value = pMemEntry->Attribute("id");
+
         // check for missing parts
         string type, name, value;
         type = cstr_type;
@@ -203,6 +208,14 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
         {
             mem->setLabor(value,name);
         }
+		else if (type == "Level")
+        {
+			mem->setLevel(value, name, pMemEntry->Attribute("xpNxtLvl"));
+        }
+		else if (type == "Mood")
+		{
+			mem->setMood(value, name);
+		}
         else
         {
             throw Error::MemoryXmlUnknownType(type.c_str());

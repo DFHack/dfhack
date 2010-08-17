@@ -4,6 +4,7 @@
 * Buildings - also includes zones and stockpiles
 */
 #include "dfhack/DFExport.h"
+#include "dfhack/DFModule.h"
 namespace DFHack
 {
     struct t_building
@@ -26,7 +27,7 @@ namespace DFHack
     };
     
     class DFContextShared;
-    class DFHACK_EXPORT Buildings
+    class DFHACK_EXPORT Buildings : public Module
     {
         public:
         Buildings(DFContextShared * d);
@@ -37,7 +38,7 @@ namespace DFHack
         bool Finish();
         
         // read a vector of names
-        bool ReadCustomWorkshopTypes(map <uint32_t, string> & btypes);
+        bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
         // returns -1 on error, >= 0 for real value
         int32_t GetCustomWorkshopType(t_building & building);
         

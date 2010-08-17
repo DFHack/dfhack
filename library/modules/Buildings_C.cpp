@@ -22,20 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFIntegers.h"
-#include <string>
-#include <map>
-#include "stdio.h"
-
-using namespace std;
-
-#include "Internal.h"
-#include "dfhack/DFTypes.h"
-#include "dfhack/modules/Buildings.h"
 #include "dfhack-c/modules/Buildings_C.h"
-
-using namespace DFHack;
-
+using namespace std;
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -82,33 +70,27 @@ int Buildings_GetCustomWorkshopType(DFHackObject* b_Ptr, t_building* building)
 
 int Buildings_ReadCustomWorkshopTypes(DFHackObject* b_Ptr, void* (*t_customWorkshop_buffer_create)(uint32_t))
 {
-	if(b_Ptr != NULL)
-	{
-		int i;
-		t_customWorkshop* cw_Ptr;
-		map<uint32_t, string> bTypes;
-		map<uint32_t, string>::iterator bIter;
-		
-		bool result = ((DFHack::Buildings*)b_Ptr)->ReadCustomWorkshopTypes(bTypes);
-		
-		if(!result)
-			return 0;
-		
-		cw_Ptr = (t_customWorkshop*)((*t_customWorkshop_buffer_create)(bTypes.size()));
-		
-		for(i = 0, bIter = bTypes.begin(); bIter != bTypes.end(); bIter++, i++)
-		{
-			cw_Ptr[i].index = (*bIter).first;
-			
-			size_t length = (*bIter).second.copy(cw_Ptr[i].name, 256);
-			
-			cw_Ptr[i].name[length] = '\0';
-		}
-		
-		return 1;
-	}
-	
-	return -1;
+    if(b_Ptr != NULL)
+    {
+        int i;
+        t_customWorkshop* cw_Ptr;
+        std::map<uint32_t, string> bTypes;
+        map<uint32_t, string>::iterator bIter;
+
+        if(!((DFHack::Buildings*)b_Ptr)->ReadCustomWorkshopTypes(bTypes))
+            return 0;
+
+        cw_Ptr = (t_customWorkshop*)((*t_customWorkshop_buffer_create)(bTypes.size()));
+        for(i = 0, bIter = bTypes.begin(); bIter != bTypes.end(); bIter++, i++)
+        {
+            cw_Ptr[i].index = (*bIter).first;
+            size_t length = (*bIter).second.copy(cw_Ptr[i].name, 256);
+            cw_Ptr[i].name[length] = '\0';
+        }
+        return 1;
+    }
+
+    return -1;
 }
 
 #ifdef __cplusplus

@@ -29,9 +29,10 @@ distribution.
 
 namespace DFHack
 {
+    // tile class -- determines the general shape of the tile
     enum TileClass
     {
-        EMPTY,
+        EMPTY,// empty
         
         WALL,
         PILLAR,
@@ -41,10 +42,10 @@ namespace DFHack
         STAIR_DOWN,
         STAIR_UPDOWN,
         
-        RAMP,
-        RAMP_TOP,
+        RAMP,// ramps have no direction
+        RAMP_TOP,// the top of a ramp. I assume it's used for path finding.
         
-        FLOOR,
+        FLOOR,// generic floor
         TREE_DEAD,
         TREE_OK,
         SAPLING_DEAD,
@@ -54,29 +55,31 @@ namespace DFHack
         BOULDER,
         PEBBLES
     };
+    // material -- what material the tile is made of
     enum TileMaterial
     {
-        AIR,
-        SOIL,
-        STONE,
-        FEATSTONE, // whatever it is
-        OBSIDIAN,
+        AIR,// empty
+        SOIL,// ordinary soil. material depends on geology
+        STONE,// ordinary layer stone. material depends on geology
+        FEATSTONE,// map feature stone. used for things like hell, the hell temple or adamantine tubes. material depends on local/global feature
+        OBSIDIAN,// cast obsidian
         
-        VEIN,
-        ICE,
-        GRASS,
-        GRASS2,
-        GRASS_DEAD,
-        GRASS_DRY,
-        DRIFTWOOD,
-        HFS,
-        MAGMA,
-        CAMPFIRE,
-        FIRE,
-        ASHES,
-        CONSTRUCTED,
-        CYAN_GLOW
+        VEIN,// vein stone. material depends on mineral veins present
+        ICE,// frozen water... not much to say. you can determine what was on the tile before it froze by looking into the 'ice vein' objects
+        GRASS,// grass (has 4 variants)
+        GRASS2,// grass (has 4 variants)
+        GRASS_DEAD,// dead grass (has 4 variants)
+        GRASS_DRY,// dry grass (has 4 variants)
+        DRIFTWOOD,// non-specified wood - normally on top of the local layer stone/soil.
+        HFS,// the stuff demon pits are made of - this makes them different from ordinary pits.
+        MAGMA,// material for semi-molten rock and 'magma flow' tiles
+        CAMPFIRE,// human armies make them when they siege. The original tile may be lost?
+        FIRE,// burning grass
+        ASHES,// what remains from a FIRE
+        CONSTRUCTED,// tile material depends on the construction present
+        CYAN_GLOW// the glowy stuff that disappears from the demon temple when you take the sword.
     };
+    // variants are used for tiles, where there are multiple variants of the same - like grass floors
     enum TileVariant
     {
         VAR_1,

@@ -8,16 +8,12 @@
 #include <sstream>
 #include <ctime>
 #include <cstdio>
+
 using namespace std;
 
 #include <dfhack/DFProcess.h>
 #include <dfhack/DFMemInfo.h>
 #include <dfhack/DFVector.h>
-
-/*
- * This is a header full of ugly, volatile things.
- * Only for use of official DFHack tools!
- */
 
 void DumpObjStr0Vector (const char * name, DFHack::Process *p, uint32_t addr)
 {

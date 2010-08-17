@@ -95,12 +95,22 @@ uint32_t World::ReadCurrentTick()
     return 0;
 }
 
+// FIX'D according to this: 
+/*
+World::ReadCurrentMonth and World::ReadCurrentDay
+« Sent to: peterix on: June 04, 2010, 04:44:30 »
+« You have forwarded or responded to this message. »
+ReplyQuoteRemove
+Shouldn't these be /28 and %28 instead of 24?  There're 28 days in a DF month.
+Using 28 and doing the calculation on the value stored at the memory location
+specified by memory.xml gets me the current month/date.
+*/
 uint32_t World::ReadCurrentMonth()
 {
-    return this->ReadCurrentTick() / 1200 / 24;
+    return this->ReadCurrentTick() / 1200 / 28;
 }
 
 uint32_t World::ReadCurrentDay()
 {
-    return ((this->ReadCurrentTick() / 1200) % 24) + 1;
+    return ((this->ReadCurrentTick() / 1200) % 28) + 1;
 }

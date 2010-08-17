@@ -9,6 +9,7 @@
 #include <cstdio>
 using namespace std;
 
+#define DFHACK_WANT_MISCUTILS
 #include <DFHack.h>
 
 int main (int numargs, const char ** args)
@@ -34,18 +35,17 @@ int main (int numargs, const char ** args)
         #endif
         return 1;
     }
-    
+
     DFHack::Process* p = DF->getProcess();
     DFHack::memory_info* mem = DF->getMemoryInfo();
     DFHack::Position * pos = DF->getPosition();
     DFHack::Vegetation * v = DF->getVegetation();
     DFHack::Materials * mat = DF->getMaterials();
     mat->ReadOrganicMaterials();
-    
+
     int32_t x,y,z;
     pos->getCursorCoords(x,y,z);
-    
-    
+
     uint32_t numVegs = 0;
     v->Start(numVegs);
     if(x == -30000)
@@ -89,7 +89,7 @@ int main (int numargs, const char ** args)
         }
     }
     v->Finish();
-    
+
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

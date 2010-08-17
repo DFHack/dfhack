@@ -21,16 +21,8 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
-#include <vector>
-#include <string>
-#include "DFHack_C.h"
+
 #include "dfhack-c/modules/Gui_C.h"
-#include "dfhack/DFIntegers.h"
-
-#include "Internal.h"
-#include "dfhack/modules/Gui.h"
-
-using namespace DFHack;
 
 #ifdef __cplusplus
 extern "C" {

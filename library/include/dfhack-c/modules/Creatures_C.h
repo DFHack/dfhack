@@ -25,14 +25,10 @@ distribution.
 #ifndef CREATURES_C_API
 #define CREATURES_C_API
 
-#include "dfhack/DFExport.h"
-#include "dfhack/DFIntegers.h"
 #include "DFHack_C.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Creatures.h"
-
-using namespace DFHack;
 
 #ifdef __cplusplus
 extern "C" {

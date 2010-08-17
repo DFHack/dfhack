@@ -6,12 +6,13 @@
 #define CL_MOD_MAPS
 
 #include "dfhack/DFExport.h"
+#include "dfhack/DFModule.h"
 namespace DFHack
 {
     /***************************************************************************
                                     T Y P E S
     ***************************************************************************/
-    
+
     enum e_feature
     {
         feature_Other,
@@ -19,6 +20,7 @@ namespace DFHack
         feature_Underworld,
         feature_Hell_Temple
     };
+
     static const char * sa_feature[]=
     {
         (char*)"Other",
@@ -26,6 +28,8 @@ namespace DFHack
         (char*)"Underworld",
         (char*)"Hell Temple"
     };
+
+    /// used as a key for the local feature map. combines X an Y coords.
     union planecoord
     {
         uint32_t xy;
@@ -40,40 +44,60 @@ namespace DFHack
             return false;
         }
     };
+
     struct t_feature
     {
         e_feature type;
+        /// main material type - decides between stuff like bodily fluids, inorganics, vomit, amber, etc.
         int16_t main_material;
+        /// generally some index to a vector of material types.
         int32_t sub_material;
-        bool discovered; // placeholder.
+        /// placeholder
+        bool discovered;
+        /// this is NOT part of the DF feature, but an address of the feature as seen by DFhack.
         uint32_t origin;
     };
-    
+
+    /// mineral vein object
     struct t_vein
     {
         uint32_t vtable;
+        /// index into the inorganic material vector
         int32_t type;
-        int16_t assignment[16];
+        /// bit mask describing how the vein maps to the map block
+        /// assignment[y] & (1 << x) describes the tile (x, y) of the block
+        int16_t assignment[16]; 
         uint32_t flags;
-        uint32_t address_of; // this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
+        /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
+        uint32_t address_of; 
     };
-    // stores what tiles should appear when the ice melts
+
+    /// stores what tiles should appear when the ice melts
     struct t_frozenliquidvein
     {
         uint32_t vtable;
+        /// a 16x16 array of the original tile types
         int16_t tiles[16][16];
-        uint32_t address_of; // this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
+        /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
+        uint32_t address_of;
     };
-    
+
+    /// a 'spattervein' defines what coverings the individual map tiles have (snow, blood, etc)
+    /// @see PrintSplatterType in DFMiscUtils.h -- incomplete, but illustrative
     struct t_spattervein
     {
         uint32_t vtable;
+        /// generic material.
         uint16_t mat1;
         uint16_t unk1;
+        /// material vector index
         uint32_t mat2;
+        /// something even more specific?
         uint16_t mat3;
+        /// 16x16 array of covering 'intensity'
         uint8_t intensity[16][16];
-        uint32_t address_of; // this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
+        /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
+        uint32_t address_of;
     };
     
     enum BiomeOffset
@@ -98,16 +122,25 @@ namespace DFHack
         traffic_restricted
     };
 
+    /// type of a designation for a tile
     enum e_designation
     {
+        /// no designation
         designation_no,
-        designation_default, // dig walls, remove stairs and ramps, gather plants, fell trees
-        designation_ud_stair, // dig up/down stairs
-        designation_channel, // dig a channel
-        designation_ramp, // dig ramp out of a wall
-        designation_d_stair, // dig a stair down
-        designation_u_stair, // dig a stair up
-        designation_7 // whatever
+        /// dig walls, remove stairs and ramps, gather plants, fell trees. depends on tile type
+        designation_default,
+        /// dig up/down stairs
+        designation_ud_stair,
+        /// dig a channel
+        designation_channel,
+        /// dig ramp out of a wall
+        designation_ramp,
+        /// dig a stair down
+        designation_d_stair,
+        /// dig a stair up
+        designation_u_stair,
+        /// whatever. for completenes I guess
+        designation_7
     };
 
     enum e_liquidtype
@@ -120,41 +153,43 @@ namespace DFHack
     {
         unsigned int flow_size : 3; // how much liquid is here?
         unsigned int pile : 1; // stockpile?
-        /*
-         * All the different dig designations... needs more info, probably an enum
-         */
+        /// All the different dig designations
         e_designation dig : 3;
         unsigned int smooth : 2;
         unsigned int hidden : 1;
 
-        /*
+        /**
          * This one is rather involved, but necessary to retrieve the base layer matgloss index
-         * see http://www.bay12games.com/forum/index.php?topic=608.msg253284#msg253284 for details
+         * @see http://www.bay12games.com/forum/index.php?topic=608.msg253284#msg253284
          */
         unsigned int geolayer_index :4;
         unsigned int light : 1;
         unsigned int subterranean : 1; // never seen the light of day?
         unsigned int skyview : 1; // sky is visible now, it rains in here when it rains
 
-        /*
+        /**
          * Probably similar to the geolayer_index. Only with a different set of offsets and different data.
          * we don't use this yet
          */
         unsigned int biome : 4;
-        /*
+        /**
          * 0 = water
          * 1 = magma
          */
         e_liquidtype liquid_type : 1;
         unsigned int water_table : 1; // srsly. wtf?
         unsigned int rained : 1; // does this mean actual rain (as in the blue blocks) or a wet tile?
-        e_traffic traffic : 2; // needs enum
-        unsigned int flow_forbid : 1; // what?
+        e_traffic traffic : 2;
+        /// the tile is not evaluated when calculating flows?
+        unsigned int flow_forbid : 1;
+        /// no liquid spreading
         unsigned int liquid_static : 1;
-        unsigned int feature_local : 1; // this tile is a part of a feature
-        unsigned int feature_global : 1; // this tile is a part of a feature
-        unsigned int liquid_character : 2; // those ripples on streams?
-        
+        /// this tile is a part of a local feature. can be combined with 'featstone' tiles
+        unsigned int feature_local : 1; 
+        /// this tile is a part of a global feature. can be combined with 'featstone' tiles
+        unsigned int feature_global : 1;
+        /// those ripples on streams?
+        unsigned int liquid_character : 2;
     };
 
     union t_designation
@@ -166,12 +201,16 @@ namespace DFHack
     // occupancy flags (rat,dwarf,horse,built wall,not build wall,etc)
     struct naked_occupancy
     {
-        unsigned int building : 3;// building type... should be an enum?
+        // building type... should be an enum?
         // 7 = door
+        unsigned int building : 3;
+        /// the tile contains a standing? creature
         unsigned int unit : 1;
+        /// the tile contains a prone creature
         unsigned int unit_grounded : 1;
+        /// the tile contains an item
         unsigned int item : 1;
-        // splatter. everyone loves splatter.
+        /// splatter. everyone loves splatter. this doesn't seem to be used anymore
         unsigned int mud : 1;
         unsigned int vomit :1;
         unsigned int broken_arrows_color :4;
@@ -199,12 +238,14 @@ namespace DFHack
 
     struct naked_occupancy_grouped
     {
-        unsigned int building : 3;// building type... should be an enum?
-        // 7 = door
+        unsigned int building : 3;
+        /// the tile contains a standing? creature
         unsigned int unit : 1;
+        /// the tile contains a prone creature
         unsigned int unit_grounded : 1;
+        /// the tile contains an item
         unsigned int item : 1;
-        // splatter. everyone loves splatter.
+        /// splatter. everyone loves splatter. this doesn't seem to be used anymore
         unsigned int splatter : 26;
     };
 
@@ -218,12 +259,15 @@ namespace DFHack
     // map block flags
     struct naked_blockflags
     {
-        unsigned int designated : 1;// designated for jobs (digging and stuff like that)
-        unsigned int unk_1 : 1; // possibly related to the designated flag
-        // two flags required for liquid flow. no idea why
+        /// designated for jobs (digging and stuff like that)
+        unsigned int designated : 1;
+        /// possibly related to the designated flag
+        unsigned int unk_1 : 1;
+        /// two flags required for liquid flow.
         unsigned int liquid_1 : 1;
         unsigned int liquid_2 : 1;
-        unsigned int unk_2: 28; // rest of the flags is completely unknown
+        /// rest of the flags is completely unknown
+        unsigned int unk_2: 28;
         // there's a possibility that this flags field is shorter than 32 bits
     };
 
@@ -241,23 +285,30 @@ namespace DFHack
 
     typedef struct
     {
+        /// type of the tiles
         tiletypes40d tiletypes;
+        /// flags determining the state of the tiles
         designations40d designation;
+        /// flags determining what's on the tiles
         occupancies40d occupancy;
+        /// values used for geology/biome assignment
         biome_indices40d biome_indices;
-        uint32_t origin; // the address where it came from
+        /// the address where the block came from
+        uint32_t origin;
         t_blockflags blockflags;
+        /// index into the global feature vector
         int16_t global_feature;
+        /// index into the local feature vector... complicated
         int16_t local_feature;
     } mapblock40d;
 
     /***************************************************************************
                              C L I E N T   M O D U L E
     ***************************************************************************/
-    
+    #ifndef BUILD_SHM
     class DFContextShared;
     struct t_viewscreen;
-    class DFHACK_EXPORT Maps
+    class DFHACK_EXPORT Maps : public Module
     {
         public:
         
@@ -321,6 +372,7 @@ namespace DFHack
          * Return false/0 on failure, buffer allocated by client app, 256 items long
          */
         bool isValidBlock(uint32_t blockx, uint32_t blocky, uint32_t blockz);
+
         /**
          * Get the address of a block or 0 if block is not valid
          */
@@ -340,7 +392,7 @@ namespace DFHack
         /// read/write temperatures
         bool ReadTemperatures(uint32_t blockx, uint32_t blocky, uint32_t blockz, t_temperatures *temp1, t_temperatures *temp2);
         bool WriteTemperatures (uint32_t blockx, uint32_t blocky, uint32_t blockz, t_temperatures *temp1, t_temperatures *temp2);
-        
+
         /// read/write block occupancies
         bool ReadOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, occupancies40d *buffer);
         bool WriteOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, occupancies40d *buffer);
@@ -350,10 +402,8 @@ namespace DFHack
         bool WriteDirtyBit(uint32_t blockx, uint32_t blocky, uint32_t blockz, bool dirtybit);
 
         /// read/write the block flags
-        bool ReadBlockFlags(uint32_t blockx, uint32_t blocky, uint32_t blockz,
-                            t_blockflags &blockflags);
-        bool WriteBlockFlags(uint32_t blockx, uint32_t blocky, uint32_t blockz,
-                             t_blockflags blockflags);
+        bool ReadBlockFlags(uint32_t blockx, uint32_t blocky, uint32_t blockz, t_blockflags &blockflags);
+        bool WriteBlockFlags(uint32_t blockx, uint32_t blocky, uint32_t blockz, t_blockflags blockflags);
         /// read/write features
         bool ReadFeatures(uint32_t blockx, uint32_t blocky, uint32_t blockz, int16_t & local, int16_t & global);
         bool WriteLocalFeature(uint32_t blockx, uint32_t blocky, uint32_t blockz, int16_t local = -1);
@@ -368,10 +418,11 @@ namespace DFHack
                        std::vector<t_vein>* veins,
                        std::vector<t_frozenliquidvein>* ices = 0,
                        std::vector<t_spattervein>* splatter = 0);
-       
+
         private:
         struct Private;
         Private *d;
     };
+    #endif
 }
 #endif

@@ -1,5 +1,8 @@
 # don't use this file directly. use the one in the root folder of the project
 
+# only build this stuff when BUILD_DFHACK_PLAYGROUND is set to ON
+IF (BUILD_DFHACK_PLAYGROUND)
+
 # this is required to ensure we use the right configuration for the system.
 IF(UNIX)
 add_definitions(-DLINUX_BUILD)
@@ -8,10 +11,6 @@ ENDIF(UNIX)
 # a creature mood dump hack. has hardcoded offsets
 ADD_EXECUTABLE(dfmoodump moodump.cpp)
 TARGET_LINK_LIBRARIES(dfmoodump dfhack)
-
-# for trying out some 'stuff'
-ADD_EXECUTABLE(dftest test.cpp)
-TARGET_LINK_LIBRARIES(dftest dfhack)
 
 # bauxite - turn all mechanisms into bauxite mechanisms
 # Author: Alex Legg
@@ -56,3 +55,29 @@ TARGET_LINK_LIBRARIES(dfcatsplosion dfhack)
 # Author: belal
 #ADD_EXECUTABLE(dfrenamer renamer.cpp)
 #TARGET_LINK_LIBRARIES(dfrenamer dfhack)
+
+# this needs the C bindings
+IF(BUILD_DFHACK_C_BINDIGS)
+    # for trying out some 'stuff'
+    ADD_EXECUTABLE(dftest test.cpp)
+    TARGET_LINK_LIBRARIES(dftest dfhack)
+    install(TARGETS
+    dftest
+    RUNTIME DESTINATION bin
+    )
+ENDIF(BUILD_DFHACK_C_BINDIGS)
+
+install(TARGETS
+dfmoodump
+dfdigger
+dfdigger2
+dfcatsplosion
+RUNTIME DESTINATION bin
+)
+IF(UNIX)
+    install(TARGETS
+    dfincremental
+    RUNTIME DESTINATION bin
+    )
+ENDIF(UNIX)
+ENDIF (BUILD_DFHACK_PLAYGROUND)

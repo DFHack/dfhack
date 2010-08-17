@@ -7,10 +7,10 @@
 #include <sstream>
 #include <ctime>
 #include <cstdio>
-using namespace std;
 
+#define DFHACK_WANT_MISCUTILS
+#define DFHACK_WANT_TILETYPES
 #include <DFHack.h>
-#include <dfhack/DFTileTypes.h>
 
 using namespace DFHack;
 int main (int numargs, const char ** args)
@@ -22,9 +22,9 @@ int main (int numargs, const char ** args)
     {
         DF->Attach();
     }
-    catch (exception& e)
+    catch (std::exception& e)
     {
-        cerr << e.what() << endl;
+        std::cerr << e.what() << std::endl;
         #ifndef LINUX_BUILD
             cin.ignore();
         #endif
@@ -68,59 +68,59 @@ int main (int numargs, const char ** args)
             int16_t tiletype = block.tiletypes[tileX][tileY];
             naked_designation &des = block.designation[tileX][tileY].bits;
             uint32_t &desw = block.designation[tileX][tileY].whole;
-            print_bits<uint32_t>(block.designation[tileX][tileY].whole,cout);
-            cout << endl;
-            print_bits<uint32_t>(block.occupancy[tileX][tileY].whole,cout);
-            cout << endl;
+            print_bits<uint32_t>(block.designation[tileX][tileY].whole,std::cout);
+            std::cout << endl;
+            print_bits<uint32_t>(block.occupancy[tileX][tileY].whole,std::cout);
+            std::cout << endl;
             
             // tiletype
-            cout <<"tiletype: " << tiletype;
+            std::cout <<"tiletype: " << tiletype;
             if(tileTypeTable[tiletype].name)
-                cout << " = " << tileTypeTable[tiletype].name;
-            cout << endl;
+                std::cout << " = " << tileTypeTable[tiletype].name;
+            std::cout << std::endl;
             
             
-            cout <<"temperature1: " << tmpb1[tileX][tileY] << " U" << endl;
-            cout <<"temperature2: " << tmpb2[tileX][tileY] << " U" << endl;
+            std::cout <<"temperature1: " << tmpb1[tileX][tileY] << " U" << std::endl;
+            std::cout <<"temperature2: " << tmpb2[tileX][tileY] << " U" << std::endl;
             
             // biome, geolayer
-            cout << "biome: " << des.biome << endl;
-            cout << "geolayer: " << des.geolayer_index << endl;
+            std::cout << "biome: " << des.biome << std::endl;
+            std::cout << "geolayer: " << des.geolayer_index << std::endl;
             // liquids
             if(des.flow_size)
             {
                 if(des.liquid_type == DFHack::liquid_magma)
-                    cout <<"magma: ";
-                else cout <<"water: ";
-                cout << des.flow_size << endl;
+                    std::cout <<"magma: ";
+                else std::cout <<"water: ";
+                std::cout << des.flow_size << std::endl;
             }
             if(des.flow_forbid)
-                cout << "flow forbid" << endl;
+                std::cout << "flow forbid" << std::endl;
             if(des.pile)
-                cout << "stockpile?" << endl;
+                std::cout << "stockpile?" << std::endl;
             if(des.rained)
-                cout << "rained?" << endl;
+                std::cout << "rained?" << std::endl;
             if(des.smooth)
-                cout << "smooth?" << endl;
+                std::cout << "smooth?" << std::endl;
             uint32_t designato = block.origin + designatus + (tileX * 16 + tileY) * sizeof(t_designation);
             printf("designation offset: 0x%x\n", designato);
             if(des.light)
-                cout << "Light ";
+                std::cout << "Light ";
             else
-                cout << "      ";
+                std::cout << "      ";
             if(des.skyview)
-                cout << "SkyView ";
+                std::cout << "SkyView ";
             else
-                cout << "        ";
+                std::cout << "        ";
             if(des.subterranean)
-                cout << "Underground ";
+                std::cout << "Underground ";
             else
-                cout << "            ";
-            cout << endl;
+                std::cout << "            ";
+            std::cout << std::endl;
         }
     }
     #ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
+    std::cout << "Done. Press any key to continue" << std::endl;
     cin.ignore();
     #endif
     return 0;

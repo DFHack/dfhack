@@ -203,12 +203,19 @@ struct t_settlement
 struct t_attrib
 {
     uint32_t level;
-    uint32_t field_4;
+    uint32_t field_4; // offset from beginning, purpose unknown
     uint32_t field_8;
     uint32_t field_C;
     uint32_t leveldiff;
     uint32_t field_14;
     uint32_t field_18;
+};
+
+struct t_level
+{
+	uint32_t level;
+	std::string name;
+	uint32_t xpNxtLvl;
 };
 
 }// namespace DFHack

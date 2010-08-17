@@ -331,7 +331,7 @@ bool WineProcess::attach()
 
 bool WineProcess::detach()
 {
-    if(!d->attached) return false;
+    if(!d->attached) return true;
     if(!d->suspended) suspend();
     int result = 0;
     // close /proc/PID/mem
@@ -367,9 +367,11 @@ void WineProcess::read (const uint32_t offset, const uint32_t size, uint8_t *tar
     if(size == 0) return;
     
     ssize_t result;
-    result = pread(d->memFileHandle, target,size,offset);
-    if(result != size)
+    ssize_t total = 0;
+    ssize_t remaining = size;
+    while (total != size)
     {
+        result = pread(d->memFileHandle, target + total ,remaining,offset + total);
         if(result == -1)
         {
             cerr << "pread failed: can't read " << size << " bytes at addres " << offset << endl;
@@ -379,7 +381,8 @@ void WineProcess::read (const uint32_t offset, const uint32_t size, uint8_t *tar
         }
         else
         {
-            read(offset + result, size - result, target + result);
+            total += result;
+            remaining -= result;
         }
     }
 }

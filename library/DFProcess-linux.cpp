@@ -86,7 +86,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector< memory_info* >& known_version
     target_name[target_result] = 0;
     
     // is this the regular linux DF?
-    if (strstr(target_name, "dwarfort.exe") != NULL)
+    if (strstr(target_name, "dwarfort.exe") != 0 || strstr(target_name,"Dwarf_Fortress") != 0)
     {
         // create linux process, add it to the vector
         d->identified = d->validate(target_name,pid,mem_name,known_versions );
@@ -318,7 +318,7 @@ bool NormalProcess::attach()
 
 bool NormalProcess::detach()
 {
-    if(!d->attached) return false;
+    if(!d->attached) return true;
     if(!d->suspended) suspend();
     int result = 0;
     // close /proc/PID/mem

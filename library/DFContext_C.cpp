@@ -240,7 +240,7 @@ DFHackObject* Context_getWindow(DFHackObject* context)
 {
 	if(context != NULL)
 	{
-		return (DFHackObject*)((DFHack::Context*)context)->getWindow();
+		return (DFHackObject*)((DFHack::Context*)context)->getWindowIO();
 	}
 	
 	return NULL;

@@ -25,8 +25,8 @@ distribution.
 #ifndef POSITION_C_API
 #define POSITION_C_API
 
-#include "dfhack/DFExport.h"
 #include "DFHack_C.h"
+#include "dfhack/modules/Position.h"
 
 #ifdef __cplusplus
 extern "C" {

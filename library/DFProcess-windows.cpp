@@ -249,10 +249,7 @@ bool NormalProcess::attach()
 
 bool NormalProcess::detach()
 {
-    if(!d->attached)
-    {
-        return false;
-    }
+    if(!d->attached) return true;
     resume();
     d->attached = false;
     return true;

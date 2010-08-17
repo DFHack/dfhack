@@ -27,8 +27,60 @@ distribution.
 #include "dfhack/DFError.h"
 #include "dfhack/DFProcess.h"
 
+//Inital amount of space in levels vector (since we usually know the number, efficent!)
+#define NUM_RESERVE_LVLS 20
+#define NUM_RESERVE_MOODS 6
 using namespace DFHack;
 
+/*
+* Common data types
+*/
+namespace DFHack
+{
+    struct t_type
+    {
+        t_type(uint32_t assign, uint32_t type, std::string classname)
+        :classname(classname),assign(assign),type(type){};
+        std::string classname;
+        uint32_t assign;
+        uint32_t type;
+    };
+
+    struct t_class
+    {
+        t_class(const t_class &old)
+        {
+            classname = old.classname;
+            vtable = old.vtable;
+            assign = old.assign;
+            type_offset = old.type_offset;
+            for(uint32_t i = 0; i < old.subs.size();i++)
+            {
+                t_type * t = new t_type (*old.subs[i]);
+                subs.push_back(t);
+            }
+        }
+        t_class ()
+        {
+            vtable = 0;
+            assign = 0;
+            type_offset = 0;
+        }
+        ~t_class()
+        {
+            for(uint32_t i = 0; i < subs.size();i++)
+            {
+                delete subs[i];
+            }
+            subs.clear();
+        }
+        std::string classname;
+        uint32_t vtable;
+        uint32_t assign;// index to typeclass array if multiclass. return value if not.
+        uint32_t type_offset; // offset of type data for multiclass
+        std::vector<t_type *> subs;
+    };
+}
 /*
  * Private data
  */
@@ -43,7 +95,9 @@ class memory_info::Private
     vector<string> professions;
     vector<string> jobs;
     vector<string> skills;
+	vector<DFHack::t_level> levels;
     vector< vector<string> > traits;
+	vector<string> moods;
     map <uint32_t, string> labors;
     
     // storage for class and multiclass
@@ -71,6 +125,8 @@ memory_info::memory_info()
     d->base = 0;
     d->p = 0;
     d->classindex = 0;
+	d->levels.reserve(NUM_RESERVE_LVLS);
+	d->moods.reserve(NUM_RESERVE_MOODS);
 }
 
 // copy constructor
@@ -97,6 +153,8 @@ memory_info::memory_info(const memory_info &old)
     d->skills = old.d->skills;
     d->traits = old.d->traits;
     d->labors = old.d->labors;
+	d->levels = old.d->levels;
+	d->moods = old.d->moods;
 }
 void memory_info::setParentProcess(Process * _p)
 {
@@ -249,6 +307,30 @@ void memory_info::setSkill (const string & key, const string & value)
         d->skills.resize(keyInt+1);
     }
     d->skills[keyInt] = value;
+}
+
+void memory_info::setLevel(const std::string &nLevel,
+						   const std::string &nName,
+						   const std::string &nXp)
+{
+	uint32_t keyInt = strtol(nLevel.c_str(), NULL, 10);
+    
+	if(d->levels.size() <= keyInt)
+		d->levels.resize(keyInt+1);
+	
+	d->levels[keyInt].level = keyInt;
+	d->levels[keyInt].name = nName;
+	d->levels[keyInt].xpNxtLvl = strtol(nXp.c_str(), NULL, 10);
+}
+
+void memory_info::setMood(const std::string &id, const std::string &mood)
+{
+	uint32_t keyInt = strtol(id.c_str(), NULL, 10);
+    
+	if(d->moods.size() <= keyInt)
+		d->moods.resize(keyInt+1);
+
+	d->moods[keyInt] = mood;
 }
 
 void memory_info::setTrait(const string & key,
@@ -564,6 +646,7 @@ string memory_info::getProfession (const uint32_t key) const
 string memory_info::getJob (const uint32_t key) const
 {
     if(d->jobs.size() > key)
+
     {
         return d->jobs[key];
     }
@@ -577,6 +660,15 @@ string memory_info::getSkill (const uint32_t key) const
         return d->skills[key];
     }
     throw Error::MissingMemoryDefinition("skill", key);
+}
+
+DFHack::t_level memory_info::getLevelInfo(const uint32_t level) const
+{
+	if(d->levels.size() > level)
+    {
+        return d->levels[level];
+    }
+    throw Error::MissingMemoryDefinition("Level", level);
 }
 
 // FIXME: ugly hack that needs to die
@@ -621,6 +713,11 @@ string memory_info::getTraitName(const uint32_t traitIdx) const
     throw Error::MissingMemoryDefinition("traitname", traitIdx);
 }
 
+std::vector< std::vector<std::string> > const& memory_info::getAllTraits()
+{
+	return d->traits;
+}
+
 string memory_info::getLabor (const uint32_t laborIdx)
 {
     if(d->labors.count(laborIdx))
@@ -630,3 +727,52 @@ string memory_info::getLabor (const uint32_t laborIdx)
     throw Error::MissingMemoryDefinition("labor", laborIdx);
 }
 
+std::string memory_info::getMood(const uint32_t moodID)
+{
+	if(d->moods.size() > moodID)
+	{
+		return d->moods[moodID];
+	}
+	throw Error::MissingMemoryDefinition("Mood", moodID);
+}
+
+std::string memory_info::PrintOffsets()
+{
+    ostringstream ss;
+    ss << "<Version name=\"" << getVersion() << "\">" << endl;
+    switch (getOS())
+    {
+        case OS_LINUX:
+            ss << "<MD5 value=\"" << getString("md5") << "\" />" << endl;
+            break;
+        case OS_WINDOWS:
+            ss << "<PETimeStamp value=\"" << hex << "0x" << getHexValue("pe_timestamp") << "\" />" << endl;
+            ss << "<MD5 value=\"" << getString("md5") << "\" />" << endl;
+            break;
+        default:
+            ss << " UNKNOWN" << endl;
+    }
+    ss << "<Offsets>" << endl;
+    map<string,uint32_t>::const_iterator iter;
+    for(iter = d->addresses.begin(); iter != d->addresses.end(); iter++)
+    {
+        ss << "    <Address name=\"" << (*iter).first << "\" value=\"" << hex << "0x" << (*iter).second << "\" />" << endl;
+    }
+    map<string,int32_t>::const_iterator iter2;
+    for(iter2 = d->offsets.begin(); iter2 != d->offsets.end(); iter2++)
+    {
+        ss << "    <Offset name=\"" << (*iter2).first << "\" value=\"" << hex << "0x" << (*iter2).second <<"\" />" << endl;
+    }
+    for(iter = d->hexvals.begin(); iter != d->hexvals.end(); iter++)
+    {
+        ss << "    <HexValue name=\"" << (*iter).first << "\" value=\"" << hex << "0x" << (*iter).second <<"\" />" << endl;
+    }
+    map<string,string>::const_iterator iter3;
+    for(iter3 = d->strings.begin(); iter3 != d->strings.end(); iter3++)
+    {
+        ss << "    <String name=\"" << (*iter3).first << "\" value=\"" << (*iter3).second <<"\" />" << endl;
+    }
+    ss << "</Offsets>" << endl;
+    ss << "</Version>" << endl;
+    return ss.str();
+}

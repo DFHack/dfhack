@@ -22,20 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFIntegers.h"
-#include <string>
-#include <vector>
-#include <algorithm>
-
-using namespace std;
-
-#include "Internal.h"
-#include "dfhack/DFTypes.h"
-#include "dfhack/modules/Materials.h"
-#include "dfhack-c/DFTypes_C.h"
 #include "dfhack-c/modules/Materials_C.h"
-
-using namespace DFHack;
 
 #ifdef __cplusplus
 extern "C" {
@@ -233,7 +220,9 @@ t_matgloss* Materials_getInorganic(DFHackObject* mat)
 		
 		if(materials->inorganic.size() > 0)
 		{
-			t_matgloss* buf = ((*alloc_matgloss_buffer_callback)(materials->inorganic.size()));
+			t_matgloss* buf;
+
+			((*alloc_matgloss_buffer_callback)(buf, materials->inorganic.size()));
 			
 			if(buf != NULL)
 			{
@@ -255,7 +244,9 @@ t_matgloss* Materials_getOrganic(DFHackObject* mat)
 		
 		if(materials->organic.size() > 0)
 		{
-			t_matgloss* buf = ((*alloc_matgloss_buffer_callback)(materials->organic.size()));
+			t_matgloss* buf;
+			
+			((*alloc_matgloss_buffer_callback)(buf, materials->organic.size()));
 			
 			if(buf != NULL)
 			{
@@ -277,7 +268,9 @@ t_matgloss* Materials_getTree(DFHackObject* mat)
 		
 		if(materials->tree.size() > 0)
 		{
-			t_matgloss* buf = ((*alloc_matgloss_buffer_callback)(materials->tree.size()));
+			t_matgloss* buf;
+			
+			((*alloc_matgloss_buffer_callback)(buf, materials->tree.size()));
 			
 			if(buf != NULL)
 			{
@@ -299,7 +292,9 @@ t_matgloss* Materials_getPlant(DFHackObject* mat)
 		
 		if(materials->plant.size() > 0)
 		{
-			t_matgloss* buf = ((*alloc_matgloss_buffer_callback)(materials->plant.size()));
+			t_matgloss* buf;
+			
+			((*alloc_matgloss_buffer_callback)(buf, materials->plant.size()));
 			
 			if(buf != NULL)
 			{
@@ -321,7 +316,9 @@ t_matgloss* Materials_getRace(DFHackObject* mat)
 		
 		if(materials->race.size() > 0)
 		{
-			t_matgloss* buf = ((*alloc_matgloss_buffer_callback)(materials->race.size()));
+			t_matgloss* buf;
+			
+			((*alloc_matgloss_buffer_callback)(buf, materials->race.size()));
 			
 			if(buf != NULL)
 			{
@@ -345,7 +342,9 @@ c_creaturetype* Materials_getRaceEx(DFHackObject* mat)
 		
 		if(matSize > 0)
 		{
-			c_creaturetype* buf = ((*alloc_creaturetype_buffer_callback)(matSize));
+			c_creaturetype* buf;
+			
+			((*alloc_creaturetype_buffer_callback)(buf, matSize));
 			
 			if(buf != NULL)
 			{
@@ -368,7 +367,9 @@ t_descriptor_color* Materials_getColor(DFHackObject* mat)
 		
 		if(materials->color.size() > 0)
 		{
-			t_descriptor_color* buf = ((*alloc_descriptor_buffer_callback)(materials->color.size()));
+			t_descriptor_color* buf;
+			
+			((*alloc_descriptor_buffer_callback)(buf, materials->color.size()));
 			
 			if(buf != NULL)
 			{
@@ -390,7 +391,9 @@ t_matglossOther* Materials_getOther(DFHackObject* mat)
 		
 		if(materials->other.size() > 0)
 		{
-			t_matglossOther* buf = ((*alloc_matgloss_other_buffer_callback)(materials->other.size()));
+			t_matglossOther* buf;
+			
+			((*alloc_matgloss_other_buffer_callback)(buf, materials->other.size()));
 			
 			if(buf != NULL)
 			{

@@ -25,12 +25,20 @@ distribution.
 #ifndef DFHACK_C_API
 #define DFHACK_C_API
 
-typedef void DFHackObject;
+#include <cstdio>
+#include <string>
+#include <vector>
+#include <map>
+#include <algorithm>
 
+#include "dfhack/DFGlobal.h"
 #include "dfhack/DFExport.h"
 #include "dfhack/DFIntegers.h"
-#include "dfhack-c/DFContext_C.h"
-#include "dfhack-c/DFTypes_C.h"
+
+
+using namespace DFHack;
+
+typedef void DFHackObject;
 
 #ifdef __cplusplus
 extern "C" {

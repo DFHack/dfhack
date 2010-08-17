@@ -22,28 +22,13 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include <map>
-#include <vector>
-#include <string>
-#include "dfhack/DFExport.h"
-#include "dfhack/DFIntegers.h"
-#include "DFHack_C.h"
-
-#include "dfhack/DFTypes.h"
-
-using namespace std;
-using namespace DFHack;
-
-#include "dfhack/DFProcess.h"
-#include "dfhack/modules/Materials.h"
-#include "dfhack/modules/Items.h"
-#include "dfhack-c/DFTypes_C.h"
 #include "dfhack-c/modules/Items_C.h"
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+//FIXME: beware of bad null-termination! I haven't tested anything here, but it seems that it could be corrupting or truncating strings.
 
 char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObject* mats)
 {
@@ -53,7 +38,8 @@ char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObje
 		
 		if(desc.size() > 0)
 		{
-			char* buf = (*alloc_char_buffer_callback)(desc.size());
+			char* buf;
+            (*alloc_char_buffer_callback)(buf,desc.size());
 			
 			if(buf != NULL)
 			{
@@ -80,8 +66,8 @@ char* Items_getItemClass(DFHackObject* items, int32_t index)
 		
 		if(iclass.size() > 0)
 		{
-			char* buf = (*alloc_char_buffer_callback)(iclass.size());
-			
+            char* buf;
+            (*alloc_char_buffer_callback)(buf, iclass.size());
 			if(buf != NULL)
 			{
 				size_t len = iclass.copy(buf, iclass.size());

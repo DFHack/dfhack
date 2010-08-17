@@ -27,9 +27,11 @@ include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
 include_directories (${CMAKE_SOURCE_DIR}/library/private/)
 
 SET(PROJECT_HDRS
+private/DFMemInfoManager.h
+private/ContextShared.h
+private/Internal.h
 include/dfhack/DFError.h
 include/dfhack/DFMemInfo.h
-include/dfhack/DFMemInfoManager.h
 include/dfhack/DFProcessEnumerator.h
 include/dfhack/DFProcess.h
 include/dfhack/DFTileTypes.h
@@ -52,14 +54,18 @@ include/dfhack/modules/WindowIO.h
 include/dfhack/modules/World.h
 )
 
+SET(PROJECT_C_HDRS
+include/dfhack-c/DFTypes_C.h
+include/dfhack-c/DFContext_C.h
+)
+
 SET(PROJECT_SRCS
 DFMemInfo.cpp
 DFMemInfoManager.cpp
 DFContextManager.cpp
 DFContext.cpp
+DFProcessEnumerator.cpp
 ContextShared.cpp
-DFContext_C.cpp
-DFTypes_C.cpp
 
 depends/md5/md5.cpp
 depends/md5/md5wrapper.cpp
@@ -80,6 +86,11 @@ modules/Position.cpp
 modules/Translation.cpp
 modules/Vegetation.cpp
 modules/World.cpp
+)
+
+SET(PROJECT_C_SRCS
+DFContext_C.cpp
+DFTypes_C.cpp
 
 modules/Buildings_C.cpp
 modules/Constructions_C.cpp
@@ -91,6 +102,8 @@ modules/Position_C.cpp
 modules/Materials_C.cpp
 modules/Translation_C.cpp
 modules/Vegetation_C.cpp
+modules/WindowIO_C.cpp
+modules/World_C.cpp
 )
 
 SET(PROJECT_HDRS_LINUX
@@ -105,14 +118,12 @@ DFProcess-linux.cpp
 DFProcess-linux-SHM.cpp
 DFProcess-linux-wine.cpp
 modules/WindowIO-linux.cpp
-DFProcessEnumerator-linux.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
 DFProcess-windows.cpp
 DFProcess-windows-SHM.cpp
 modules/WindowIO-windows.cpp
-DFProcessEnumerator-windows.cpp
 )
 
 IF(UNIX)
@@ -122,6 +133,11 @@ ELSE(UNIX)
     LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_WINDOWS})
     LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_WINDOWS})
 ENDIF(UNIX)
+
+IF(BUILD_DFHACK_C_BINDIGS)
+    LIST(APPEND PROJECT_HDRS ${PROJECT_C_HDRS})
+    LIST(APPEND PROJECT_SRCS ${PROJECT_C_SRCS})
+ENDIF(BUILD_DFHACK_C_BINDIGS)
 
 SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
 
@@ -161,65 +177,29 @@ SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 
 TARGET_LINK_LIBRARIES(dfhack ${PROJECT_LIBS})
 
+if(MSVC)
+    # This is a MSVC hack used for copying files into the target directory
+    # of build target set in MSVC.
+    # It exploits the fact that MSVC has some variables in .vcproj files, much like cmake does here.
+    #
+    # So, $(TargetDir) is ignored by cmake, and replaced with the actual output directory by MSVC
+    ADD_CUSTOM_COMMAND(TARGET dfhack POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/data/Memory.xml $(TargetDir)/Memory.xml
+    )
+    ADD_CUSTOM_COMMAND(TARGET dfhack POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Compile.html $(TargetDir)/Compile.html
+    )
+    ADD_CUSTOM_COMMAND(TARGET dfhack POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Readme.html $(TargetDir)/Readme.html
+    )
+else(MSVC)
+    # Just put the file in the output directory on Linux and Mac
+    configure_file(${CMAKE_SOURCE_DIR}/data/Memory.xml  ${DATA_OUTPUT_PATH}/Memory.xml COPYONLY)
+    configure_file(${CMAKE_SOURCE_DIR}/Compile.html  ${DATA_OUTPUT_PATH}/Compile.html COPYONLY)
+    configure_file(${CMAKE_SOURCE_DIR}/Readme.html  ${DATA_OUTPUT_PATH}/Readme.html COPYONLY)
+endif(MSVC)
+
 IF(UNIX)
   install(TARGETS dfhack LIBRARY DESTINATION lib)
   install(FILES ${CMAKE_SOURCE_DIR}/output/Memory.xml DESTINATION share/dfhack)
 ENDIF(UNIX)
-
-################################################################################
-# DFCONNECT
-###
-
-SET(DFCONNECT_HDRS
-shm/shms.h
-shm/mod-core.h
-shm/mod-maps.h
-)
-
-SET(PROJECT_SRCS
-shm/mod-core.cpp
-shm/mod-maps.cpp
-#mod-creature40d.cpp
-)
-
-SET(PROJECT_HDRS_LINUX
-)
-
-SET(PROJECT_HDRS_WINDOWS
-)
-
-SET(PROJECT_SRCS_LINUX
-shm/shms-linux.cpp
-)
-
-SET(PROJECT_SRCS_WINDOWS
-shm/shms-windows.cpp
-)
-
-IF(UNIX)
-    LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_LINUX})
-    LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_LINUX})
-ELSE(UNIX)
-    LIST(APPEND PROJECT_HDRS ${PROJECT_HDRS_WINDOWS})
-    LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_WINDOWS})
-ENDIF(UNIX)
-
-
-SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
-
-LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
-
-#IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    IF(UNIX)
-        add_definitions(-DLINUX_BUILD)
-        SET(PROJECT_LIBS rt)
-        SET(CMAKE_CXX_FLAGS "-fvisibility=hidden")
-        ADD_LIBRARY(dfconnect SHARED ${PROJECT_SRCS})
-        TARGET_LINK_LIBRARIES(dfconnect ${PROJECT_LIBS})
-    ELSE(UNIX)
-        #  SET(PROJECT_LIBS psapi)
-        ADD_LIBRARY(SDL SHARED ${PROJECT_SRCS})
-        TARGET_LINK_LIBRARIES(SDL ${PROJECT_LIBS})
-    ENDIF(UNIX)
-#ENDIF(CMAKE_SIZEOF_VOID_P EQUAL 4)
-

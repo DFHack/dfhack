@@ -4,8 +4,10 @@
 #include <climits>
 #include <string.h>
 #include <vector>
+#include <stdio.h>
 using namespace std;
 
+#define DFHACK_WANT_MISCUTILS
 #include <DFHack.h>
 
 enum likeType
@@ -168,6 +170,11 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
             addendl=true;
         }
 
+        if(creature.civ)
+        {
+            cout << "civilization: " << creature.civ;
+            addendl = true;
+        }
 
         /*
         cout << ", likes: ";

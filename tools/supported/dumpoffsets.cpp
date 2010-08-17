@@ -12,11 +12,12 @@ using namespace DFHack;
 
 int main (int numargs, const char ** args)
 {
-    DFHack::ContextManager DFMgr("Memory.xml");
+    DFHack::ContextManager * DFMgr;
     DFHack::Context * DF;
     try
     {
-        DF = DFMgr.getSingleContext();
+		DFMgr = new DFHack::ContextManager("Memory.xml");
+        DF = DFMgr->getSingleContext();
         DF->Attach();
     }
     catch (exception& e)

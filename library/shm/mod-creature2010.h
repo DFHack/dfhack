@@ -67,6 +67,7 @@ typedef struct
     uint32_t appearance_vector_offset;
     uint32_t birth_year_offset;
     uint32_t birth_time_offset;
+	uint32_t inventory_offset;
 } creature_offsets;
 
 typedef struct

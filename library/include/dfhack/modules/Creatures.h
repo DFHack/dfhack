@@ -5,6 +5,7 @@
 */
 #include "dfhack/DFExport.h"
 #include "dfhack/DFModule.h"
+#include "dfhack/modules/Items.h"
 namespace DFHack
 {
     /*
@@ -374,6 +375,8 @@ namespace DFHack
             const uint16_t x2, const uint16_t y2,const uint16_t z2);
         bool ReadCreature(const int32_t index, t_creature & furball);
         bool ReadJob(const t_creature * furball, std::vector<t_material> & mat);
+		bool ReadInventoryIdx(const uint32_t index, std::vector<uint32_t> & item);
+		bool ReadInventoryPtr(const uint32_t index, std::vector<uint32_t> & item);
 
         /* Getters */
         uint32_t GetDwarfRaceIndex ( void );

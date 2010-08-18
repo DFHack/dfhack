@@ -57,6 +57,9 @@ int (*alloc_matgloss_buffer_callback)(t_matgloss*, uint32_t) = NULL;
 int (*alloc_descriptor_buffer_callback)(t_descriptor_color*, uint32_t) = NULL;
 int (*alloc_matgloss_other_buffer_callback)(t_matglossOther*, uint32_t) = NULL;
 
+int (*alloc_t_customWorkshop_buffer_callback)(t_customWorkshop*, uint32_t) = NULL;
+int (*alloc_t_material_buffer_callback)(t_material*, uint32_t) = NULL;
+
 int (*alloc_empty_colormodifier_callback)(c_colormodifier*) = NULL;
 int (*alloc_colormodifier_callback)(c_colormodifier*, const char*, uint32_t) = NULL;
 int (*alloc_colormodifier_buffer_callback)(c_colormodifier*, uint32_t) = NULL;

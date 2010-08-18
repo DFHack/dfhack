@@ -49,6 +49,16 @@ DFHACK_EXPORT extern int (*alloc_matgloss_buffer_callback)(t_matgloss*, uint32_t
 DFHACK_EXPORT extern int (*alloc_descriptor_buffer_callback)(t_descriptor_color*, uint32_t);
 DFHACK_EXPORT extern int (*alloc_matgloss_other_buffer_callback)(t_matglossOther*, uint32_t);
 
+struct t_customWorkshop
+{
+	uint32_t index;
+	char name[256];
+};
+
+DFHACK_EXPORT extern int (*alloc_t_customWorkshop_buffer_callback)(t_customWorkshop*, uint32_t);
+
+DFHACK_EXPORT extern int (*alloc_t_material_buffer_callback)(t_material*, uint32_t);
+
 struct c_colormodifier
 {
 	char part[128];

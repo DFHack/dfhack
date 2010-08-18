@@ -98,7 +98,33 @@ int32_t Creatures_GetDwarfCivId(DFHackObject* cPtr)
 	return -1;
 }
 
-int Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball, t_material* (*t_material_buffer_create)(int))
+// int Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball, t_material* (*t_material_buffer_create)(int))
+// {
+	// if(cPtr != NULL)
+	// {
+		// std::vector<t_material> mat;
+		
+		// if(((DFHack::Creatures*)cPtr)->ReadJob(furball, mat))
+		// {
+			// t_material* buf = (*t_material_buffer_create)(mat.size());
+			
+			// if(buf != NULL)
+			// {
+				// copy(mat.begin(), mat.end(), buf);
+				
+				// return 1;
+			// }
+			// else
+				// return -1;
+		// }
+		// else
+			// return 0;
+	// }
+	
+	// return -1;
+// }
+
+t_material* Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball)
 {
 	if(cPtr != NULL)
 	{
@@ -106,22 +132,24 @@ int Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball, t_material*
 		
 		if(((DFHack::Creatures*)cPtr)->ReadJob(furball, mat))
 		{
-			t_material* buf = (*t_material_buffer_create)(mat.size());
+			t_material* buf;
+			
+			(*alloc_t_material_buffer_callback)(buf, mat.size());
 			
 			if(buf != NULL)
 			{
 				copy(mat.begin(), mat.end(), buf);
 				
-				return 1;
+				return buf;
 			}
 			else
-				return -1;
+				return NULL;
 		}
 		else
-			return 0;
+			return NULL;
 	}
 	
-	return -1;
+	return NULL;
 }
 
 #ifdef __cplusplus

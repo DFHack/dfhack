@@ -27,6 +27,7 @@ distribution.
 
 #include "DFHack_C.h"
 #include "dfhack/DFTypes.h"
+#include "dfhack-c/DFTypes_C.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Creatures.h"
 
@@ -47,7 +48,7 @@ DFHACK_EXPORT int Creatures_WriteLabors(DFHackObject* cPtr, const uint32_t index
 DFHACK_EXPORT uint32_t Creatures_GetDwarfRaceIndex(DFHackObject* cPtr);
 DFHACK_EXPORT int32_t Creatures_GetDwarfCivId(DFHackObject* cPtr);
 
-DFHACK_EXPORT int Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball, t_material* (*t_material_buffer_create)(int));
+DFHACK_EXPORT t_material* Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball);
 
 #ifdef __cplusplus
 }

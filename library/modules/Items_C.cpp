@@ -28,6 +28,26 @@ distribution.
 extern "C" {
 #endif
 
+int Items_Start(DFHackObject* items)
+{
+	if(items != NULL)
+	{
+		return ((DFHack::Items*)items)->Start();
+	}
+	
+	return -1;
+}
+
+int Items_Finish(DFHackObject* items)
+{
+	if(items != NULL)
+	{
+		return ((DFHack::Items*)items)->Finish();
+	}
+	
+	return -1;
+}
+
 //FIXME: beware of bad null-termination! I haven't tested anything here, but it seems that it could be corrupting or truncating strings.
 
 char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObject* mats)

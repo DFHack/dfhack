@@ -24,6 +24,11 @@ distribution.
 
 #include "dfhack-c/modules/Creatures_C.h"
 
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -68,62 +73,6 @@ int Creatures_ReadCreature(DFHackObject* cPtr, const int32_t index, t_creature* 
 	return -1;
 }
 
-int Creatures_WriteLabors(DFHackObject* cPtr, const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
-{
-	if(cPtr != NULL)
-	{
-		return ((DFHack::Creatures*)cPtr)->WriteLabors(index, labors);
-	}
-	
-	return -1;
-}
-
-uint32_t Creatures_GetDwarfRaceIndex(DFHackObject* cPtr)
-{
-	if(cPtr != NULL)
-	{
-		return ((DFHack::Creatures*)cPtr)->GetDwarfRaceIndex();
-	}
-	
-	return 0;
-}
-
-int32_t Creatures_GetDwarfCivId(DFHackObject* cPtr)
-{
-	if(cPtr != NULL)
-	{
-		return ((DFHack::Creatures*)cPtr)->GetDwarfCivId();
-	}
-	
-	return -1;
-}
-
-// int Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball, t_material* (*t_material_buffer_create)(int))
-// {
-	// if(cPtr != NULL)
-	// {
-		// std::vector<t_material> mat;
-		
-		// if(((DFHack::Creatures*)cPtr)->ReadJob(furball, mat))
-		// {
-			// t_material* buf = (*t_material_buffer_create)(mat.size());
-			
-			// if(buf != NULL)
-			// {
-				// copy(mat.begin(), mat.end(), buf);
-				
-				// return 1;
-			// }
-			// else
-				// return -1;
-		// }
-		// else
-			// return 0;
-	// }
-	
-	// return -1;
-// }
-
 t_material* Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball)
 {
 	if(cPtr != NULL)
@@ -150,6 +99,153 @@ t_material* Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball)
 	}
 	
 	return NULL;
+}
+
+uint32_t Creatures_GetDwarfRaceIndex(DFHackObject* cPtr)
+{
+	if(cPtr != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->GetDwarfRaceIndex();
+	}
+	
+	return 0;
+}
+
+int32_t Creatures_GetDwarfCivId(DFHackObject* cPtr)
+{
+	if(cPtr != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->GetDwarfCivId();
+	}
+	
+	return -1;
+}
+
+int Creatures_WriteLabors(DFHackObject* cPtr, const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
+{
+	if(cPtr != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->WriteLabors(index, labors);
+	}
+	
+	return -1;
+}
+
+int Creatures_WriteHappiness(DFHackObject* cPtr, const uint32_t index, const uint32_t happiness_value)
+{
+	if(cPtr != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->WriteHappiness(index, happiness_value);
+	}
+	
+	return -1;
+}
+
+int Creatures_WriteFlags(DFHackObject* cPtr, const uint32_t index, const uint32_t flags1, const uint32_t flags2)
+{
+	if(cPtr != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->WriteFlags(index, flags1, flags2);
+	}
+	
+	return -1;
+}
+
+int Creatures_WriteSkills(DFHackObject* cPtr, const uint32_t index, const t_soul* soul)
+{
+	if(cPtr != NULL && soul != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->WriteSkills(index, *soul);
+	}
+	
+	return -1;
+}
+
+int Creatures_WriteAttributes(DFHackObject* cPtr, const uint32_t index, const t_creature* creature)
+{
+	if(cPtr != NULL && creature != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->WriteAttributes(index, *creature);
+	}
+	
+	return -1;
+}
+
+int Creatures_WriteSex(DFHackObject* cPtr, const uint32_t index, const uint8_t sex)
+{
+	if(cPtr != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->WriteSex(index, sex);
+	}
+	
+	return -1;
+}
+
+int Creatures_WriteTraits(DFHackObject* cPtr, const uint32_t index, const t_soul* soul)
+{
+	if(cPtr != NULL && soul != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->WriteTraits(index, *soul);
+	}
+	
+	return -1;
+}
+
+int Creatures_WriteMood(DFHackObject* cPtr, const uint32_t index, const uint16_t mood)
+{
+	if(cPtr != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->WriteMood(index, mood);
+	}
+	
+	return -1;
+}
+
+int Creatures_WriteMoodSkill(DFHackObject* cPtr, const uint32_t index, const uint16_t moodSkill)
+{
+	if(cPtr != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->WriteMoodSkill(index, moodSkill);
+	}
+	
+	return -1;
+}
+
+int Creatures_WriteJob(DFHackObject* cPtr, const t_creature* furball, const t_material* mat, const uint32_t mat_count)
+{
+	if(cPtr != NULL && furball != NULL && mat != NULL)
+	{
+		if(mat_count == 0)
+			return 0;
+		
+		std::vector<t_material> mat_vec;
+		
+		copy(mat, mat + mat_count, mat_vec.begin());
+		
+		return ((DFHack::Creatures*)cPtr)->WriteJob(furball, mat_vec);
+	}
+	
+	return -1;
+}
+
+int Creatures_WritePos(DFHackObject* cPtr, const uint32_t index, const t_creature* creature)
+{
+	if(cPtr != NULL && creature != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->WritePos(index, *creature);
+	}
+	
+	return -1;
+}
+
+int Creatures_WriteCiv(DFHackObject* cPtr, const uint32_t index, const int32_t civ)
+{
+	if(cPtr != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->WriteCiv(index, civ);
+	}
+	
+	return -1;
 }
 
 #ifdef __cplusplus

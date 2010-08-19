@@ -81,6 +81,9 @@ t_material* Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball)
 		
 		if(((DFHack::Creatures*)cPtr)->ReadJob(furball, mat))
 		{
+			if(mat.size() <= 0)
+				return NULL;
+			
 			t_material* buf;
 			
 			(*alloc_t_material_buffer_callback)(buf, mat.size());

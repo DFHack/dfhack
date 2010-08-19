@@ -1,5 +1,5 @@
 from ctypes import *
-from pydfhackflags import *
+from flags import *
 from enum import *
 from util import *
 
@@ -194,6 +194,16 @@ class CustomWorkshop(Structure):
     _fields_ = [("index", c_uint),
                 ("name", c_char * 256)]
 
+def _alloc_custom_workshop_buffer_callback(count):
+    allocated = _allocate_array(CustomWorkshop, count)
+    
+    ptr = addressof(allocated[0])
+    
+    return 1
+
+_custom_workshop_functype = CFUNCTYPE(c_int, POINTER(CustomWorkshop), c_uint)
+libdfhack.alloc_t_customWorkshop_buffer_callback = _custom_workshop_functype(_alloc_custom_workshop_buffer_callback)
+
 class Construction(Structure):
     _fields_ = [("x", c_ushort),
                 ("y", c_ushort),
@@ -223,10 +233,20 @@ class Material(Structure):
                 ("index", c_int),
                 ("flags", c_uint)]
 
+def _alloc_material_buffer_callback(count):
+    allocated = _allocate_array(Material, count)
+    
+    ptr = addressof(allocated[0])
+    
+    return 1
+
+_material_functype = CFUNCTYPE(c_int, POINTER(Material), c_uint)
+libdfhack.alloc_t_material_buffer_callback = _material_functype(_alloc_material_buffer_callback)
+
 class Skill(Structure):
-    _fields_ = [("id", c_ushort),
+    _fields_ = [("id", c_uint),
                 ("experience", c_uint),
-                ("rating", c_ushort)]
+                ("rating", c_uint)]
 
 class Job(Structure):
     _fields_ = [("active", c_byte),
@@ -332,7 +352,9 @@ class Creature(Structure):
                 ("has_default_soul", c_byte),
                 ("defaultSoul", Soul),
                 ("nbcolors", c_uint),
-                ("color", (c_uint * _MAX_COLORS))]
+                ("color", (c_uint * _MAX_COLORS)),
+                ("birth_year", c_uint),
+                ("birth_time", c_uint)]
 
 class CreatureExtract(Structure):
     _fields_ = [("rawname", (c_char * 128))]

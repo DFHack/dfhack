@@ -1,5 +1,5 @@
 from ctypes import *
-from pydftypes import *
+from dftypes import *
 
 libdfhack.ContextManager_Alloc.restype = c_void_p
 libdfhack.ContextManager_Free.argtypes = [ c_void_p ]

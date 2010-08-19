@@ -1,5 +1,5 @@
 from ctypes import *
-from pydftypes import libdfhack, Tree
+from dftypes import libdfhack, Tree
 
 class Vegetation(object):
     def __init__(self, ptr):

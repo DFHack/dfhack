@@ -23,11 +23,11 @@ distribution.
 */
 
 #include "Internal.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include "dfhack/DFProcess.h"
 
-//Inital amount of space in levels vector (since we usually know the number, efficent!)
+//Inital amount of space in levels vector (since we usually know the number, efficient!)
 #define NUM_RESERVE_LVLS 20
 #define NUM_RESERVE_MOODS 6
 using namespace DFHack;
@@ -81,56 +81,60 @@ namespace DFHack
         std::vector<t_type *> subs;
     };
 }
+
+
 /*
  * Private data
  */
-class memory_info::Private
+class VersionInfo::Private
 {
     public:
     map <string, uint32_t> addresses;
     map <string, int32_t> offsets;
     map <string, uint32_t> hexvals;
     map <string, string> strings;
-    
+
     vector<string> professions;
     vector<string> jobs;
     vector<string> skills;
-	vector<DFHack::t_level> levels;
+    vector<DFHack::t_level> levels;
     vector< vector<string> > traits;
-	vector<string> moods;
+    vector<string> moods;
     map <uint32_t, string> labors;
-    
+
     // storage for class and multiclass
     vector<t_class *> classes;
-    
+
     // cache for faster name lookup, indexed by classID
     vector<string> classnames;
     // map between vptr and class id, needs further type id lookup for multi-classes, not inherited
     map<uint32_t, t_class *> classIDs;
-    
+
     // index for the next added class
     uint32_t classindex;
-    
+
     int32_t base;
     Process * p; // the process this belongs to
-    
+
     string version;
     OSType OS;
 };
 
+
 // normal constructor
-memory_info::memory_info()
+VersionInfo::VersionInfo()
 :d(new Private)
 {
     d->base = 0;
     d->p = 0;
     d->classindex = 0;
-	d->levels.reserve(NUM_RESERVE_LVLS);
-	d->moods.reserve(NUM_RESERVE_MOODS);
+    d->levels.reserve(NUM_RESERVE_LVLS);
+    d->moods.reserve(NUM_RESERVE_MOODS);
 }
 
+
 // copy constructor
-memory_info::memory_info(const memory_info &old)
+VersionInfo::VersionInfo(const VersionInfo &old)
 :d(new Private)
 {
     d->version = old.d->version;
@@ -153,16 +157,19 @@ memory_info::memory_info(const memory_info &old)
     d->skills = old.d->skills;
     d->traits = old.d->traits;
     d->labors = old.d->labors;
-	d->levels = old.d->levels;
-	d->moods = old.d->moods;
+    d->levels = old.d->levels;
+    d->moods = old.d->moods;
 }
-void memory_info::setParentProcess(Process * _p)
+
+
+void VersionInfo::setParentProcess(Process * _p)
 {
     d->p = _p;
 }
 
+
 // destructor
-memory_info::~memory_info()
+VersionInfo::~VersionInfo()
 {
     // delete the vtables
     for(uint32_t i = 0; i < d->classes.size();i++)
@@ -173,25 +180,26 @@ memory_info::~memory_info()
     delete d;
 }
 
-void memory_info::setVersion(const char * v)
+
+void VersionInfo::setVersion(const char * v)
 {
     d->version = v;
 }
 
 
-void memory_info::setVersion(const string &v)
+void VersionInfo::setVersion(const string &v)
 {
     d->version = v;
 }
 
 
-string memory_info::getVersion()
+string VersionInfo::getVersion()
 {
     return d->version;
 }
 
 
-void memory_info::setOS(const char *os)
+void VersionInfo::setOS(const char *os)
 {
     string oss = os;
     if(oss == "windows")
@@ -203,7 +211,7 @@ void memory_info::setOS(const char *os)
 }
 
 
-void memory_info::setOS(const string &os)
+void VersionInfo::setOS(const string &os)
 {
     if(os == "windows")
         d->OS = OS_WINDOWS;
@@ -214,7 +222,7 @@ void memory_info::setOS(const string &os)
 }
 
 
-void memory_info::setOS(OSType os)
+void VersionInfo::setOS(OSType os)
 {
     if(os >= OS_WINDOWS && os < OS_BAD)
     {
@@ -225,62 +233,64 @@ void memory_info::setOS(OSType os)
 }
 
 
-memory_info::OSType memory_info::getOS() const
+VersionInfo::OSType VersionInfo::getOS() const
 {
     return d->OS;
 }
 
-uint32_t memory_info::getBase () const
+uint32_t VersionInfo::getBase () const
 {
     return d->base;
 }
 
 
-void memory_info::setBase (const string &s)
+void VersionInfo::setBase (const string &s)
 {
     d->base = strtol(s.c_str(), NULL, 16);
 }
 
 
-void memory_info::setBase (const uint32_t b)
+void VersionInfo::setBase (const uint32_t b)
 {
     d->base = b;
 }
 
 
-void memory_info::setOffset (const string & key, const string & value)
+void VersionInfo::setOffset (const string & key, const string & value)
 {
     int32_t offset = strtol(value.c_str(), NULL, 16);
     d->offsets[key] = offset;
 }
 
 
-void memory_info::setAddress (const string & key, const string & value)
+void VersionInfo::setAddress (const string & key, const string & value)
 {
     uint32_t address = strtol(value.c_str(), NULL, 16);
     d->addresses[key] = address;
 }
 
 
-void memory_info::setHexValue (const string & key, const string & value)
+void VersionInfo::setHexValue (const string & key, const string & value)
 {
     uint32_t hexval = strtol(value.c_str(), NULL, 16);
     d->hexvals[key] = hexval;
 }
 
 
-void memory_info::setString (const string & key, const string & value)
+void VersionInfo::setString (const string & key, const string & value)
 {
     d->strings[key] = value;
 }
 
-void memory_info::setLabor(const string & key, const string & value)
+
+void VersionInfo::setLabor(const string & key, const string & value)
 {
     uint32_t keyInt = strtol(key.c_str(), NULL, 10);
     d->labors[keyInt] = value;
 }
 
-void memory_info::setProfession (const string & key, const string & value)
+
+void VersionInfo::setProfession (const string & key, const string & value)
 {
     uint32_t keyInt = strtol(key.c_str(), NULL, 10);
     if(d->professions.size() <= keyInt)
@@ -290,7 +300,8 @@ void memory_info::setProfession (const string & key, const string & value)
     d->professions[keyInt] = value;
 }
 
-void memory_info::setJob (const string & key, const string & value)
+
+void VersionInfo::setJob (const string & key, const string & value)
 {
     uint32_t keyInt = strtol(key.c_str(), NULL, 10);
     if(d->jobs.size() <= keyInt)
@@ -300,7 +311,8 @@ void memory_info::setJob (const string & key, const string & value)
     d->jobs[keyInt] = value;
 }
 
-void memory_info::setSkill (const string & key, const string & value)
+
+void VersionInfo::setSkill (const string & key, const string & value)
 {
     uint32_t keyInt = strtol(key.c_str(), NULL, 10);
     if(d->skills.size() <= keyInt){
@@ -309,31 +321,34 @@ void memory_info::setSkill (const string & key, const string & value)
     d->skills[keyInt] = value;
 }
 
-void memory_info::setLevel(const std::string &nLevel,
-						   const std::string &nName,
-						   const std::string &nXp)
+
+void VersionInfo::setLevel(const std::string &nLevel,
+                           const std::string &nName,
+                           const std::string &nXp)
 {
-	uint32_t keyInt = strtol(nLevel.c_str(), NULL, 10);
-    
-	if(d->levels.size() <= keyInt)
-		d->levels.resize(keyInt+1);
-	
-	d->levels[keyInt].level = keyInt;
-	d->levels[keyInt].name = nName;
-	d->levels[keyInt].xpNxtLvl = strtol(nXp.c_str(), NULL, 10);
+    uint32_t keyInt = strtol(nLevel.c_str(), NULL, 10);
+
+    if(d->levels.size() <= keyInt)
+        d->levels.resize(keyInt+1);
+
+    d->levels[keyInt].level = keyInt;
+    d->levels[keyInt].name = nName;
+    d->levels[keyInt].xpNxtLvl = strtol(nXp.c_str(), NULL, 10);
 }
 
-void memory_info::setMood(const std::string &id, const std::string &mood)
-{
-	uint32_t keyInt = strtol(id.c_str(), NULL, 10);
-    
-	if(d->moods.size() <= keyInt)
-		d->moods.resize(keyInt+1);
 
-	d->moods[keyInt] = mood;
+void VersionInfo::setMood(const std::string &id, const std::string &mood)
+{
+    uint32_t keyInt = strtol(id.c_str(), NULL, 10);
+
+    if(d->moods.size() <= keyInt)
+        d->moods.resize(keyInt+1);
+
+    d->moods[keyInt] = mood;
 }
 
-void memory_info::setTrait(const string & key,
+
+void VersionInfo::setTrait(const string & key,
                            const string & value,
                            const string & zero,
                            const string & one,
@@ -356,8 +371,9 @@ void memory_info::setTrait(const string & key,
     d->traits[keyInt].push_back(value);
 }
 
+
 // FIXME: next three methods should use some kind of custom container so it doesn't have to search so much.
-t_class * memory_info::setClass (const char * name, uint32_t vtable, uint32_t typeoffset)
+t_class * VersionInfo::setClass (const char * name, uint32_t vtable, uint32_t typeoffset)
 {
     if(name == 0)
         return 0;
@@ -372,27 +388,27 @@ t_class * memory_info::setClass (const char * name, uint32_t vtable, uint32_t ty
             return d->classes[i];
         }
     }
-    
+
     t_class *cls = new t_class();
     // get an unique ID and add ourselves to the index
     cls->assign = d->classindex;
     cls->classname = name;
     d->classnames.push_back(name);
-        
+
     // vtables no longer a requirement
     cls->vtable = vtable;
-        
+
     // multi class yes/no
     cls->type_offset = typeoffset;
-    
+
     d->classes.push_back(cls);
     d->classindex++;
     return cls;
-    
+
 }
 
 
-void memory_info::setClassChild (t_class * parent, const char * name, const char * type)
+void VersionInfo::setClassChild (t_class * parent, const char * name, const char * type)
 {
     vector <t_type *>& vec = parent->subs;
     for (uint32_t i=0; i<vec.size(); i++)
@@ -408,19 +424,20 @@ void memory_info::setClassChild (t_class * parent, const char * name, const char
     d->classnames.push_back(name);
     vec.push_back(mcc);
     d->classindex++;
-    
+
     //cout << "    classtype " << name << ", assign " << mcc->assign << ", vtable  " << mcc->type << endl;
 }
 
+
 // FIXME: stupid. we need a better container
-bool memory_info::resolveObjectToClassID(const uint32_t address, int32_t & classid)
+bool VersionInfo::resolveObjectToClassID(const uint32_t address, int32_t & classid)
 {
     uint32_t vtable = d->p->readDWord(address);
     // try to find the vtable in our cache
     map<uint32_t, t_class *>::iterator it;
     it = d->classIDs.find(vtable);
     t_class * cl;
-    
+
     // class found in cache?
     if(it != d->classIDs.end())
     {
@@ -464,8 +481,9 @@ bool memory_info::resolveObjectToClassID(const uint32_t address, int32_t & class
     }
 }
 
+
 //ALERT: doesn't care about multiclasses
-bool memory_info::resolveClassnameToVPtr(const string classname, uint32_t & vptr)
+bool VersionInfo::resolveClassnameToVPtr(const string classname, uint32_t & vptr)
 {
     // FIXME: another stupid search.
     for(uint32_t i = 0;i< d->classes.size();i++)
@@ -481,7 +499,8 @@ bool memory_info::resolveClassnameToVPtr(const string classname, uint32_t & vptr
     return false;
 }
 
-bool memory_info::resolveClassnameToClassID (const string classname, int32_t & classID)
+
+bool VersionInfo::resolveClassnameToClassID (const string classname, int32_t & classID)
 {
     // FIXME: another stupid search.
     classID = -1;
@@ -497,7 +516,8 @@ bool memory_info::resolveClassnameToClassID (const string classname, int32_t & c
     return false;
 }
 
-bool memory_info::resolveClassIDToClassname (const int32_t classID, string & classname)
+
+bool VersionInfo::resolveClassIDToClassname (const int32_t classID, string & classname)
 {
     if (classID >=0 && (uint32_t)classID < d->classnames.size())
     {
@@ -509,14 +529,14 @@ bool memory_info::resolveClassIDToClassname (const int32_t classID, string & cla
 
 
 // return pointer to our internal classID -> className mapping
-const vector<string> * memory_info::getClassIDMapping()
+const vector<string> * VersionInfo::getClassIDMapping()
 {
     return &d->classnames;
 }
 
 
 // change base of all addresses
-void memory_info::RebaseAddresses(const int32_t new_base)
+void VersionInfo::RebaseAddresses(const int32_t new_base)
 {
     map<string, uint32_t>::iterator iter;
     int32_t rebase = - (int32_t)d->base + new_base;
@@ -528,7 +548,7 @@ void memory_info::RebaseAddresses(const int32_t new_base)
 
 
 // change base of all addresses *and* vtable entries
-void memory_info::RebaseAll(int32_t new_base)
+void VersionInfo::RebaseAll(int32_t new_base)
 {
     map<string, uint32_t>::iterator iter;
     int32_t rebase = - (int32_t)d->base + new_base;
@@ -541,7 +561,7 @@ void memory_info::RebaseAll(int32_t new_base)
 
 
 // change all vtable entries by offset
-void memory_info::RebaseVTable(int32_t offset)
+void VersionInfo::RebaseVTable(int32_t offset)
 {
     vector<t_class *>::iterator iter;
     for(iter = d->classes.begin(); iter != d->classes.end(); iter++)
@@ -550,11 +570,12 @@ void memory_info::RebaseVTable(int32_t offset)
     }
 }
 
+
 // Get named address
-uint32_t memory_info::getAddress (const char *key)
+uint32_t VersionInfo::getAddress (const char *key)
 {
     map <string, uint32_t>::iterator iter = d->addresses.find(key);
-    
+
     if(iter != d->addresses.end())
     {
         return (*iter).second;
@@ -564,7 +585,7 @@ uint32_t memory_info::getAddress (const char *key)
 
 
 // Get named offset
-int32_t memory_info::getOffset (const char *key)
+int32_t VersionInfo::getOffset (const char *key)
 {
     map <string, int32_t>::iterator iter = d->offsets.find(key);
     if(iter != d->offsets.end())
@@ -574,8 +595,9 @@ int32_t memory_info::getOffset (const char *key)
     throw Error::MissingMemoryDefinition("offset", key);
 }
 
+
 // Get named numerical value
-uint32_t memory_info::getHexValue (const char *key)
+uint32_t VersionInfo::getHexValue (const char *key)
 {
     map <string, uint32_t>::iterator iter = d->hexvals.find(key);
     if(iter != d->hexvals.end())
@@ -587,10 +609,10 @@ uint32_t memory_info::getHexValue (const char *key)
 
 
 // Get named address
-uint32_t memory_info::getAddress (const string &key)
+uint32_t VersionInfo::getAddress (const string &key)
 {
     map <string, uint32_t>::iterator iter = d->addresses.find(key);
-    
+
     if(iter != d->addresses.end())
     {
         return (*iter).second;
@@ -600,7 +622,7 @@ uint32_t memory_info::getAddress (const string &key)
 
 
 // Get named offset
-int32_t memory_info::getOffset (const string &key)
+int32_t VersionInfo::getOffset (const string &key)
 {
     map <string, int32_t>::iterator iter = d->offsets.find(key);
     if(iter != d->offsets.end())
@@ -610,8 +632,9 @@ int32_t memory_info::getOffset (const string &key)
     throw Error::MissingMemoryDefinition("offset", key.c_str());
 }
 
+
 // Get named numerical value
-uint32_t memory_info::getHexValue (const string &key)
+uint32_t VersionInfo::getHexValue (const string &key)
 {
     map <string, uint32_t>::iterator iter = d->hexvals.find(key);
     if(iter != d->hexvals.end())
@@ -621,8 +644,9 @@ uint32_t memory_info::getHexValue (const string &key)
     throw Error::MissingMemoryDefinition("hexvalue", key.c_str());
 }
 
+
 // Get named string
-std::string memory_info::getString (const string &key)
+std::string VersionInfo::getString (const string &key)
 {
     map <string, string>::iterator iter = d->strings.find(key);
     if(iter != d->strings.end())
@@ -632,8 +656,9 @@ std::string memory_info::getString (const string &key)
     throw Error::MissingMemoryDefinition("string", key.c_str());
 }
 
+
 // Get Profession
-string memory_info::getProfession (const uint32_t key) const
+string VersionInfo::getProfession (const uint32_t key) const
 {
     if(d->professions.size() > key)
     {
@@ -642,8 +667,9 @@ string memory_info::getProfession (const uint32_t key) const
     throw Error::MissingMemoryDefinition("profession", key);
 }
 
+
 // Get Job
-string memory_info::getJob (const uint32_t key) const
+string VersionInfo::getJob (const uint32_t key) const
 {
     if(d->jobs.size() > key)
 
@@ -653,7 +679,8 @@ string memory_info::getJob (const uint32_t key) const
     throw Error::MissingMemoryDefinition("job", key);
 }
 
-string memory_info::getSkill (const uint32_t key) const
+
+string VersionInfo::getSkill (const uint32_t key) const
 {
     if(d->skills.size() > key)
     {
@@ -662,14 +689,16 @@ string memory_info::getSkill (const uint32_t key) const
     throw Error::MissingMemoryDefinition("skill", key);
 }
 
-DFHack::t_level memory_info::getLevelInfo(const uint32_t level) const
+
+DFHack::t_level VersionInfo::getLevelInfo(const uint32_t level) const
 {
-	if(d->levels.size() > level)
+    if(d->levels.size() > level)
     {
         return d->levels[level];
     }
     throw Error::MissingMemoryDefinition("Level", level);
 }
+
 
 // FIXME: ugly hack that needs to die
 int absolute (int number)
@@ -679,7 +708,8 @@ int absolute (int number)
     return number;
 }
 
-string memory_info::getTrait (const uint32_t traitIdx, const uint32_t traitValue) const
+
+string VersionInfo::getTrait (const uint32_t traitIdx, const uint32_t traitValue) const
 {
     if(d->traits.size() > traitIdx)
     {
@@ -704,7 +734,8 @@ string memory_info::getTrait (const uint32_t traitIdx, const uint32_t traitValue
     throw Error::MissingMemoryDefinition("trait", traitIdx);
 }
 
-string memory_info::getTraitName(const uint32_t traitIdx) const
+
+string VersionInfo::getTraitName(const uint32_t traitIdx) const
 {
     if(d->traits.size() > traitIdx)
     {
@@ -713,12 +744,14 @@ string memory_info::getTraitName(const uint32_t traitIdx) const
     throw Error::MissingMemoryDefinition("traitname", traitIdx);
 }
 
-std::vector< std::vector<std::string> > const& memory_info::getAllTraits()
+
+std::vector< std::vector<std::string> > const& VersionInfo::getAllTraits()
 {
-	return d->traits;
+    return d->traits;
 }
 
-string memory_info::getLabor (const uint32_t laborIdx)
+
+string VersionInfo::getLabor (const uint32_t laborIdx)
 {
     if(d->labors.count(laborIdx))
     {
@@ -727,16 +760,18 @@ string memory_info::getLabor (const uint32_t laborIdx)
     throw Error::MissingMemoryDefinition("labor", laborIdx);
 }
 
-std::string memory_info::getMood(const uint32_t moodID)
+
+std::string VersionInfo::getMood(const uint32_t moodID)
 {
-	if(d->moods.size() > moodID)
-	{
-		return d->moods[moodID];
-	}
-	throw Error::MissingMemoryDefinition("Mood", moodID);
+    if(d->moods.size() > moodID)
+    {
+        return d->moods[moodID];
+    }
+    throw Error::MissingMemoryDefinition("Mood", moodID);
 }
 
-std::string memory_info::PrintOffsets()
+
+std::string VersionInfo::PrintOffsets()
 {
     ostringstream ss;
     ss << "<Version name=\"" << getVersion() << "\">" << endl;

@@ -26,7 +26,7 @@ distribution.
 #include "ContextShared.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Materials.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
 
@@ -183,12 +183,12 @@ bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
         //cout << temp << endl;
         //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
         p->readSTLString (temp, mat.id, 128);
-        
+
         p->readSTLString (temp+matgloss_stone_name_offset, mat.name, 128);
         mat.fore = (uint8_t) p->readWord (temp + matgloss_colors);
         mat.back = (uint8_t) p->readWord (temp + matgloss_colors + 2);
         mat.bright = (uint8_t) p->readWord (temp + matgloss_colors + 4);
-        
+
         inorganic.push_back (mat);
     }
     return true;
@@ -223,7 +223,7 @@ bool Materials::ReadInorganicMaterials (void)
     for (uint32_t i = 0; i < size;i++)
     {
         t_matgloss mat;
-        
+
         p->readSTLString (p_matgloss[i], mat.id, 128);
         //p->readSTLString (p_matgloss[i] + mat_name, mat.name, 128);
         mat.name[0] = 0;
@@ -305,7 +305,7 @@ bool Materials::ReadDescriptorColors (void)
 bool Materials::ReadCreatureTypesEx (void)
 {
     Process *p = d->owner;
-    memory_info *mem = d->owner->getDescriptor();
+    VersionInfo *mem = d->owner->getDescriptor();
     DfVector <uint32_t> p_races (p, mem->getAddress ("creature_type_vector"));
     uint32_t castes_vector_offset = mem->getOffset ("creature_type_caste_vector");
     uint32_t extract_vector_offset = mem->getOffset ("creature_type_extract_vector");
@@ -338,13 +338,13 @@ bool Materials::ReadCreatureTypesEx (void)
         // char tile_character AT tile_offset,
         // word tilecolor.fore : tile_color_offset,
         // word tilecolor.back : tile_color_offset + 2,
-        // word tilecolor.bright : tile_color_offset + 4 
+        // word tilecolor.bright : tile_color_offset + 4
         p->readSTLString (p_races[i], mat.rawname, sizeof(mat.rawname));
         mat.tile_character = p->readByte( p_races[i] + tile_offset );
         mat.tilecolor.fore = p->readWord( p_races[i] + tile_color_offset );
         mat.tilecolor.back = p->readWord( p_races[i] + tile_color_offset + 2 );
         mat.tilecolor.bright = p->readWord( p_races[i] + tile_color_offset + 4 );
-        
+
         DfVector <uint32_t> p_castes(p, p_races[i] + castes_vector_offset);
         sizecas = p_castes.size();
         for (uint32_t j = 0; j < sizecas;j++)
@@ -504,7 +504,7 @@ std::string Materials::getType(t_material & mat)
 					}
 				}
 			}
-			else               
+			else
 				return "inorganic";
 		}
 		else

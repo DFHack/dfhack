@@ -181,12 +181,12 @@ bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges
         {
             // empty input, assume default. observe the length of the memory range vector
             // these are hardcoded values, intended for my convenience only
-            if(p->getDescriptor()->getOS() == DFHack::memory_info::OS_WINDOWS)
+            if(p->getDescriptor()->getOS() == DFHack::VersionInfo::OS_WINDOWS)
             {
                 start = min(11, (int)ranges.size());
                 end = min(14, (int)ranges.size());
             }
-            else if(p->getDescriptor()->getOS() == DFHack::memory_info::OS_LINUX)
+            else if(p->getDescriptor()->getOS() == DFHack::VersionInfo::OS_LINUX)
             {
                 start = min(2, (int)ranges.size());
                 end = min(4, (int)ranges.size());
@@ -793,8 +793,8 @@ int main (void)
     vector <DFHack::t_memrange> selected_ranges;
     getRanges(p,selected_ranges);
 
-    DFHack::memory_info *minfo = DF->getMemoryInfo();
-    DFHack::memory_info::OSType os = minfo->getOS();
+    DFHack::VersionInfo *minfo = DF->getMemoryInfo();
+    DFHack::VersionInfo::OSType os = minfo->getOS();
 
     string prompt =
     "Select search type: 1=number(default), 2=vector by length, 3=vector>object>string,\n"

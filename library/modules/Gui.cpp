@@ -26,7 +26,7 @@ distribution.
 #include "ContextShared.h"
 #include "dfhack/modules/Gui.h"
 #include "dfhack/DFProcess.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFTypes.h"
 
 using namespace DFHack;
@@ -45,13 +45,13 @@ struct Gui::Private
 
 Gui::Gui(DFContextShared * _d)
 {
-    
+
     d = new Private;
     d->d = _d;
     d->owner = _d->p;
     d->Inited = d->Started = true;
-    
-    memory_info * mem = d->d->offset_descriptor;
+
+    VersionInfo * mem = d->d->offset_descriptor;
     d->current_menu_state_offset = mem->getAddress("current_menu_state");
     d->pause_state_offset = mem->getAddress ("pause_state");
     d->view_screen_offset = mem->getAddress ("view_screen");
@@ -93,7 +93,7 @@ bool Gui::ReadViewScreen (t_viewscreen &screen)
 {
     if (!d->Inited) return false;
     Process * p = d->owner;
-    
+
     uint32_t last = p->readDWord (d->view_screen_offset);
     uint32_t screenAddr = p->readDWord (last);
     uint32_t nextScreenPtr = p->readDWord (last + 4);

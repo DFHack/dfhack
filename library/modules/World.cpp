@@ -38,7 +38,7 @@ FIXME: Japa said that he had to do this with the time stuff he got from here
 #include "ContextShared.h"
 #include "dfhack/modules/World.h"
 #include "dfhack/DFProcess.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFTypes.h"
 
 using namespace DFHack;
@@ -55,12 +55,12 @@ struct World::Private
 
 World::World(DFContextShared * _d)
 {
-    
+
     d = new Private;
     d->d = _d;
     d->owner = _d->p;
-    
-    memory_info * mem = d->d->offset_descriptor;
+
+    VersionInfo * mem = d->d->offset_descriptor;
     d->year_offset = mem->getAddress( "current_year" );
     d->tick_offset = mem->getAddress( "current_tick" );
     d->Inited = d->Started = true;
@@ -95,7 +95,7 @@ uint32_t World::ReadCurrentTick()
     return 0;
 }
 
-// FIX'D according to this: 
+// FIX'D according to this:
 /*
 World::ReadCurrentMonth and World::ReadCurrentDay
 « Sent to: peterix on: June 04, 2010, 04:44:30 »

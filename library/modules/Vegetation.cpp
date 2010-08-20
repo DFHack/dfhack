@@ -25,7 +25,7 @@ distribution.
 #include "Internal.h"
 #include "ContextShared.h"
 
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
 #include "dfhack/DFTypes.h"
@@ -40,7 +40,7 @@ struct Vegetation::Private
     uint32_t tree_desc_offset;
     // translation
     DfVector <uint32_t> * p_veg;
-    
+
     DFContextShared *d;
     Process * owner;
     bool Inited;
@@ -53,7 +53,7 @@ Vegetation::Vegetation(DFContextShared * d_)
     d->owner = d_->p;
     d->d = d_;
     d->Inited = d->Started = false;
-    memory_info * mem = d->d->offset_descriptor;
+    VersionInfo * mem = d->d->offset_descriptor;
     d->vegetation_vector = mem->getAddress ("vegetation_vector");
     d->tree_desc_offset = mem->getOffset ("tree_desc_offset");
     d->Inited = true;

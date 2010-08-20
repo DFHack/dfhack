@@ -37,7 +37,7 @@ namespace DFHack
     class Process;
     struct t_class;
 
-    class DFHACK_EXPORT memory_info
+    class DFHACK_EXPORT VersionInfo
     {
     private:
         class Private;
@@ -49,9 +49,9 @@ namespace DFHack
             OS_LINUX,
             OS_BAD
         };
-        memory_info();
-        memory_info(const memory_info&);
-        ~memory_info();
+        VersionInfo();
+        VersionInfo(const VersionInfo&);
+        ~VersionInfo();
 
         void RebaseAddresses(const int32_t new_base);
         void RebaseAll(const int32_t new_base);
@@ -145,7 +145,7 @@ namespace DFHack
         * Get the internal classID->classname mapping (for speed). DO NOT MANIPULATE THE VECTOR!
         */
         const std::vector<std::string> * getClassIDMapping();
-        
+
         /**
         * Get a string with all addresses and offsets
         */

@@ -32,7 +32,7 @@ int main (int numargs, const char ** args)
     }
     
     DFHack::Position *Pos = DF->getPosition();
-    DFHack::memory_info* mem = DF->getMemoryInfo();
+    DFHack::VersionInfo* mem = DF->getMemoryInfo();
     DFHack::Maps *Maps = DF->getMaps();
     DFHack::Process * p = DF->getProcess();
     uint32_t designatus = mem->getOffset("map_data_designation");

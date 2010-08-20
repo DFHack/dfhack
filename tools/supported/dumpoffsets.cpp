@@ -27,7 +27,7 @@ int main (int numargs, const char ** args)
         #endif
         return 1;
     }
-    memory_info * minfo = DF->getMemoryInfo();
+    VersionInfo * minfo = DF->getMemoryInfo();
     if(minfo)
         cout << minfo->PrintOffsets();
     #ifndef LINUX_BUILD

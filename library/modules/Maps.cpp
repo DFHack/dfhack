@@ -29,7 +29,7 @@ distribution.
 #include "ContextShared.h"
 #include "dfhack/modules/Maps.h"
 #include "dfhack/DFError.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
 
@@ -68,7 +68,7 @@ Maps::Maps(DFContextShared* _d)
     Process *p = d->owner = _d->p;
     d->Inited = d->Started = false;
 
-    DFHack::memory_info * mem = p->getDescriptor();
+    DFHack::VersionInfo * mem = p->getDescriptor();
     Server::Maps::maps_offsets &off = d->offsets;
 
     // get the offsets once here
@@ -446,7 +446,7 @@ bool Maps::WriteTemperatures (uint32_t x, uint32_t y, uint32_t z, t_temperatures
 
 /*
  * Region Offsets - used for layer geology
- */ 
+ */
 bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices40d *buffer)
 {
     MAPS_GUARD
@@ -501,7 +501,7 @@ bool Maps::WriteGlobalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t global
 
 /*
  * Block events
- */ 
+ */
 bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins, vector <t_frozenliquidvein>* ices, vector <t_spattervein> *splatter)
 {
     MAPS_GUARD
@@ -509,12 +509,12 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins,
     t_frozenliquidvein fv;
     t_spattervein sv;
     Process* p = d->owner;
-    
+
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if(veins) veins->clear();
     if(ices) ices->clear();
     if(splatter) splatter->clear();
-    
+
     Server::Maps::maps_offsets &off = d->offsets;
     if (addr)
     {
@@ -646,7 +646,7 @@ __int16 __userpurge GetGeologicalRegion<ax>(__int16 block_X<cx>, int X<ebx>, __i
 bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 {
     MAPS_GUARD
-    memory_info * minfo = d->d->offset_descriptor;
+    VersionInfo * minfo = d->d->offset_descriptor;
     Process *p = d->owner;
     // get needed addresses and offsets. Now this is what I call crazy.
     uint16_t worldSizeX, worldSizeY;
@@ -721,7 +721,7 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
         return false;
 
     Process * p = d->owner;
-    memory_info * mem = p->getDescriptor();
+    VersionInfo * mem = p->getDescriptor();
     // deref pointer to the humongo-structure
     uint32_t base = p->readDWord(mem->getAddress("local_feature_start_ptr"));
     if(!base)
@@ -746,7 +746,7 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
         uint32_t array_elem = p->readDWord(base + (region_x_local / 16) * 4);
 
         // 16B structs, second DWORD of the struct is a pointer
-        uint32_t wtf = p->readDWord(array_elem + ( sizeof_elem * ( (uint32_t)region_y_local/16)) + offset_elem); 
+        uint32_t wtf = p->readDWord(array_elem + ( sizeof_elem * ( (uint32_t)region_y_local/16)) + offset_elem);
         if(wtf)
         {
             // wtf + sizeof(vector<ptr>) * crap;
@@ -814,7 +814,7 @@ bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
         return false;
 
     Process * p = d->owner;
-    memory_info * mem = p->getDescriptor();
+    VersionInfo * mem = p->getDescriptor();
 
     uint32_t global_feature_vector = mem->getAddress("global_feature_vector");
     uint32_t global_feature_funcptr = mem->getOffset("global_feature_funcptr_");

@@ -23,14 +23,14 @@ distribution.
 */
 
 #include "Internal.h"
-#include "DFMemInfoManager.h"
+#include "VersionInfoFactory.h"
 
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 
 using namespace DFHack;
 
-MemInfoManager::~MemInfoManager()
+VersionInfoFactory::~VersionInfoFactory()
 {
     // for each in std::vector<memory_info*> meminfo;, delete
     for(uint32_t i = 0; i < meminfo.size();i++)
@@ -40,7 +40,7 @@ MemInfoManager::~MemInfoManager()
     meminfo.clear();
 }
 
-void MemInfoManager::ParseVTable(TiXmlElement* vtable, memory_info* mem)
+void VersionInfoFactory::ParseVTable(TiXmlElement* vtable, VersionInfo* mem)
 {
     TiXmlElement* pClassEntry;
     TiXmlElement* pClassSubEntry;
@@ -92,9 +92,7 @@ void MemInfoManager::ParseVTable(TiXmlElement* vtable, memory_info* mem)
     }
 }
 
-
-
-void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <string ,TiXmlElement *>& knownEntries)
+void VersionInfoFactory::ParseEntry (TiXmlElement* entry, VersionInfo* mem, map <string ,TiXmlElement *>& knownEntries)
 {
     TiXmlElement* pMemEntry;
     const char *cstr_version = entry->Attribute("version");
@@ -111,11 +109,11 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
         throw Error::MemoryXmlBadAttribute("version");
     if (!cstr_os)
         throw Error::MemoryXmlBadAttribute("os");
-    
+
     string os = cstr_os;
     mem->setVersion(cstr_version);
     mem->setOS(cstr_os);
-    
+
     // offset inherited addresses by 'rebase'.
     int32_t rebase = 0;
     if(cstr_rebase)
@@ -123,7 +121,7 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
         rebase = mem->getBase() + strtol(cstr_rebase, NULL, 16);
         mem->RebaseAddresses(rebase);
     }
-    
+
     //set base to default, we're overwriting this because the previous rebase could cause havoc on Vista/7
     if(os == "windows")
     {
@@ -144,7 +142,7 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
     {
         throw Error::MemoryXmlBadAttribute("os");
     }
-    
+
     // process additional entries
     //cout << "Entry " << cstr_version << " " <<  cstr_os << endl;
     pMemEntry = entry->FirstChildElement()->ToElement();
@@ -152,7 +150,7 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
     {
         // only elements get processed
         const char *cstr_type = pMemEntry->Value();
-        const char *cstr_name = pMemEntry->Attribute("name");		
+        const char *cstr_name = pMemEntry->Attribute("name");
         const char *cstr_value = pMemEntry->GetText();
 
         if(!cstr_value)
@@ -208,14 +206,14 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
         {
             mem->setLabor(value,name);
         }
-		else if (type == "Level")
+        else if (type == "Level")
         {
-			mem->setLevel(value, name, pMemEntry->Attribute("xpNxtLvl"));
+            mem->setLevel(value, name, pMemEntry->Attribute("xpNxtLvl"));
         }
-		else if (type == "Mood")
-		{
-			mem->setMood(value, name);
-		}
+        else if (type == "Mood")
+        {
+            mem->setMood(value, name);
+        }
         else
         {
             throw Error::MemoryXmlUnknownType(type.c_str());
@@ -223,14 +221,14 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
     } // for
 } // method
 
-MemInfoManager::MemInfoManager(string path_to_xml)
+VersionInfoFactory::VersionInfoFactory(string path_to_xml)
 {
     error = false;
     loadFile(path_to_xml);
 }
 
 // load the XML file with offsets
-bool MemInfoManager::loadFile(string path_to_xml)
+bool VersionInfoFactory::loadFile(string path_to_xml)
 {
     TiXmlDocument doc( path_to_xml.c_str() );
     //bool loadOkay = doc.LoadFile();
@@ -242,7 +240,7 @@ bool MemInfoManager::loadFile(string path_to_xml)
     TiXmlHandle hDoc(&doc);
     TiXmlElement* pElem;
     TiXmlHandle hRoot(0);
-    memory_info mem;
+    VersionInfo mem;
 
     // block: name
     {
@@ -285,7 +283,7 @@ bool MemInfoManager::loadFile(string path_to_xml)
         }
         for(uint32_t i = 0; i< v_pEntries.size();i++)
         {
-            memory_info *mem = new memory_info();
+            VersionInfo *mem = new VersionInfo();
             //FIXME: add a set of entries processed in a step of this cycle, use it to check for infinite loops
             /* recursive */ParseEntry( v_pEntries[i] , mem , map_pNamedEntries);
             meminfo.push_back(mem);

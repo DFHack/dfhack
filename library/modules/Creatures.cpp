@@ -25,7 +25,7 @@ distribution.
 #include "Internal.h"
 #include "ContextShared.h"
 
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
 #include "dfhack/DFError.h"
@@ -69,7 +69,7 @@ Creatures::Creatures(DFContextShared* _d)
     d->d->InitReadNames(); // throws on error
     try
     {
-        memory_info * minfo = d->d->offset_descriptor;
+        VersionInfo * minfo = d->d->offset_descriptor;
         Creatures2010::creature_offsets &creatures = d->creatures;
         creatures.vector = minfo->getAddress ("creature_vector");
         creatures.pos_offset = minfo->getOffset ("creature_position");
@@ -171,7 +171,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     }
     */
     // non-SHM slow path
-    memory_info * minfo = d->d->offset_descriptor;
+    VersionInfo * minfo = d->d->offset_descriptor;
 
     // read pointer from vector at position
     uint32_t temp = d->p_cre->at (index);
@@ -269,7 +269,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
             furball.defaultSoul.skills[i].id = p->readByte (temp2);
             furball.defaultSoul.skills[i].rating =
                 p->readByte (temp2 + offsetof(t_skill, rating));
-            furball.defaultSoul.skills[i].experience = 
+            furball.defaultSoul.skills[i].experience =
                 p->readWord (temp2 + offsetof(t_skill, experience));
         }
 
@@ -525,7 +525,7 @@ bool Creatures::WriteJob(const t_creature * furball, std::vector<t_material> con
     if(!d->Inited) return false;
     if(!furball->current_job.active) return false;
     Process * p = d->owner;
-    memory_info * minfo = d->d->offset_descriptor;
+    VersionInfo * minfo = d->d->offset_descriptor;
 
     DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + minfo->getOffset("job_materials_vector"));
 
@@ -595,7 +595,7 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
     if(!d->Inited) return false;
     if(!furball->current_job.active) return false;
     Process * p = d->owner;
-    memory_info * minfo = d->d->offset_descriptor;
+    VersionInfo * minfo = d->d->offset_descriptor;
 
     DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + minfo->getOffset("job_materials_vector"));
     mat.resize(cmats.size());

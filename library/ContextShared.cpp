@@ -4,7 +4,7 @@
 #include <mod-maps.h>
 #include <mod-creature40d.h>
 #include "private/ContextShared.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 
 #include "dfhack/modules/Materials.h"

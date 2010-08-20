@@ -17,7 +17,7 @@
 #include "dfhack/DFError.h"
 #include "dfhack/DFContextManager.h"
 #include "dfhack/DFContext.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFTypes.h"
 

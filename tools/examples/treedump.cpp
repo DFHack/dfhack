@@ -37,7 +37,7 @@ int main (int numargs, const char ** args)
     }
 
     DFHack::Process* p = DF->getProcess();
-    DFHack::memory_info* mem = DF->getMemoryInfo();
+    DFHack::VersionInfo* mem = DF->getMemoryInfo();
     DFHack::Position * pos = DF->getPosition();
     DFHack::Vegetation * v = DF->getVegetation();
     DFHack::Materials * mat = DF->getMaterials();

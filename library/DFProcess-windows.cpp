@@ -23,7 +23,7 @@ distribution.
 */
 #include "Internal.h"
 #include "dfhack/DFProcess.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 using namespace DFHack;
 
@@ -40,7 +40,7 @@ class NormalProcess::Private
             suspended = false;
         };
         ~Private(){};
-        memory_info * my_descriptor;
+        VersionInfo * my_descriptor;
         HANDLE my_handle;
         HANDLE my_main_thread;
         uint32_t my_pid;
@@ -50,14 +50,14 @@ class NormalProcess::Private
         bool identified;
 };
 
-NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versions)
+NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versions)
 : d(new Private())
 {
     HMODULE hmod = NULL;
     DWORD junk;
     HANDLE hProcess;
     bool found = false;
-    
+
     IMAGE_NT_HEADERS32 pe_header;
     IMAGE_SECTION_HEADER sections[16];
     d->identified = false;
@@ -65,7 +65,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versio
     hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, pid );
     if (NULL == hProcess)
         return;
-    
+
     // try getting the first module of the process
     if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk) == 0)
     {
@@ -73,10 +73,10 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versio
         // cout << "EnumProcessModules fail'd" << endl;
         return; //if enumprocessModules fails, give up
     }
-    
+
     // got base ;)
     uint32_t base = (uint32_t)hmod;
-    
+
     // temporarily assign this to allow some checks
     d->my_handle = hProcess;
     d->my_main_thread = 0;
@@ -94,13 +94,13 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versio
         d->my_handle = 0;
         return;
     }
-    
+
     // see if there's a version entry that matches this process
-    vector<memory_info*>::iterator it;
+    vector<VersionInfo*>::iterator it;
     for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
     {
         // filter by OS
-        if(memory_info::OS_WINDOWS != (*it)->getOS())
+        if(VersionInfo::OS_WINDOWS != (*it)->getOS())
             continue;
         uint32_t pe_timestamp;
         // filter by timestamp, skip entries without a timestamp
@@ -114,13 +114,13 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versio
         }
         if (pe_timestamp != pe_header.FileHeader.TimeDateStamp)
             continue;
-        
+
         // all went well
         {
             printf("Match found! Using version %s.\n", (*it)->getVersion().c_str());
             d->identified = true;
             // give the process a data model and memory layout fixed for the base of first module
-            memory_info *m = new memory_info(**it);
+            VersionInfo *m = new VersionInfo(**it);
             m->RebaseAll(base);
             // keep track of created memory_info object so we can destroy it later
             d->my_descriptor = m;
@@ -129,12 +129,12 @@ NormalProcess::NormalProcess(uint32_t pid, vector <memory_info *> & known_versio
             d->my_pid = pid;
             d->my_handle = hProcess;
             d->identified = true;
-            
+
             // TODO: detect errors in thread enumeration
             vector<uint32_t> threads;
             getThreadIDs( threads );
             d->my_main_thread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads[0]);
-            
+
             found = true;
             break; // break the iterator loop
         }
@@ -167,7 +167,7 @@ NormalProcess::~NormalProcess()
     delete d;
 }
 
-memory_info * NormalProcess::getDescriptor()
+VersionInfo * NormalProcess::getDescriptor()
 {
     return d->my_descriptor;
 }
@@ -257,30 +257,30 @@ bool NormalProcess::detach()
 
 bool NormalProcess::getThreadIDs(vector<uint32_t> & threads )
 {
-    HANDLE AllThreads = INVALID_HANDLE_VALUE; 
+    HANDLE AllThreads = INVALID_HANDLE_VALUE;
     THREADENTRY32 te32;
-    
-    AllThreads = CreateToolhelp32Snapshot( TH32CS_SNAPTHREAD, 0 ); 
-    if( AllThreads == INVALID_HANDLE_VALUE ) 
+
+    AllThreads = CreateToolhelp32Snapshot( TH32CS_SNAPTHREAD, 0 );
+    if( AllThreads == INVALID_HANDLE_VALUE )
     {
-        return false; 
+        return false;
     }
-    te32.dwSize = sizeof(THREADENTRY32 ); 
-    
-    if( !Thread32First( AllThreads, &te32 ) ) 
+    te32.dwSize = sizeof(THREADENTRY32 );
+
+    if( !Thread32First( AllThreads, &te32 ) )
     {
         CloseHandle( AllThreads );
         return false;
     }
-    
-    do 
-    { 
+
+    do
+    {
         if( te32.th32OwnerProcessID == d->my_pid )
         {
             threads.push_back(te32.th32ThreadID);
         }
-    } while( Thread32Next(AllThreads, &te32 ) ); 
-    
+    } while( Thread32Next(AllThreads, &te32 ) );
+
     CloseHandle( AllThreads );
     return true;
 }
@@ -290,9 +290,9 @@ void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
 {
     // code here is taken from hexsearch by Silas Dunmore.
     // As this IMHO isn't a 'sunstantial portion' of anything, I'm not including the MIT license here
-    
+
     // I'm faking this, because there's no way I'm using VirtualQuery
-    
+
     t_memrange temp;
     uint32_t base = d->my_descriptor->getBase();
     temp.start = base + 0x1000; // more fakery.
@@ -443,10 +443,10 @@ Uint32 capacity
 */
     uint32_t start_offset = offset + 4;
     size_t length = readDWord(offset + 20);
-    
+
     size_t capacity = readDWord(offset + 24);
     size_t read_real = min(length, bufcapacity-1);// keep space for null termination
-    
+
     // read data from inside the string structure
     if(capacity < 16)
     {
@@ -457,7 +457,7 @@ Uint32 capacity
         start_offset = readDWord(start_offset);// dereference the start offset
         read(start_offset, read_real, (uint8_t *)buffer);
     }
-    
+
     buffer[read_real] = 0;
     return read_real;
 }
@@ -479,7 +479,7 @@ const string NormalProcess::readSTLString (uint32_t offset)
     uint32_t length = readDWord(offset + 20);
     uint32_t capacity = readDWord(offset + 24);
     char * temp = new char[capacity+1];
-    
+
     // read data from inside the string structure
     if(capacity < 16)
     {
@@ -490,7 +490,7 @@ const string NormalProcess::readSTLString (uint32_t offset)
         start_offset = readDWord(start_offset);// dereference the start offset
         read(start_offset, capacity, (uint8_t *)temp);
     }
-    
+
     temp[length] = 0;
     string ret = temp;
     delete temp;

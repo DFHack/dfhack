@@ -21,7 +21,7 @@ using namespace DFHack;
 
 int main ( int argc, char** argv )
 {
-    DFHack::memory_info *mem;
+    DFHack::VersionInfo *mem;
     DFHack::Process *proc;
     uint32_t creature_pregnancy_offset;
     

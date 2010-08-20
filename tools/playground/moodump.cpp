@@ -6,7 +6,7 @@ using namespace std;
 #include <DFHack.h>
 
 DFHack::Materials * Materials;
-DFHack::memory_info *mem;
+DFHack::VersionInfo *mem;
 vector< vector<string> > englishWords;
 vector< vector<string> > foreignWords;
 

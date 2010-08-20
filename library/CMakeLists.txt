@@ -27,11 +27,11 @@ include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
 include_directories (${CMAKE_SOURCE_DIR}/library/private/)
 
 SET(PROJECT_HDRS
-private/DFMemInfoManager.h
+private/VersionInfoFactory.h
 private/ContextShared.h
 private/Internal.h
 include/dfhack/DFError.h
-include/dfhack/DFMemInfo.h
+include/dfhack/VersionInfo.h
 include/dfhack/DFProcessEnumerator.h
 include/dfhack/DFProcess.h
 include/dfhack/DFTileTypes.h
@@ -60,8 +60,8 @@ include/dfhack-c/DFContext_C.h
 )
 
 SET(PROJECT_SRCS
-DFMemInfo.cpp
-DFMemInfoManager.cpp
+VersionInfo.cpp
+VersionInfoFactory.cpp
 DFContextManager.cpp
 DFContext.cpp
 DFProcessEnumerator.cpp
@@ -147,7 +147,7 @@ SET( MEMXML_DATA_PATH . CACHE PATH "search path for Memory.xml")
 # OPTION( VARIABLE "Description" Initial state)
 #OPTION( WITH_FOO "Enable FOO support" ON )
 #OPTION( WITH_BAR "Enable BAR component" OFF )
-    
+
 # Are we 64bit? (Damn you, ptrace()!)
 IF( CMAKE_SIZEOF_VOID_P MATCHES 4 )
     SET( HAVE_64_BIT 0 )
@@ -165,7 +165,7 @@ IF(UNIX)
   find_library(X11_LIBRARY X11)
   SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
   SET(CMAKE_CXX_FLAGS "-fvisibility=hidden")
-    
+
   SET(PROJECT_LIBS ${X11_LIBRARY} rt ) #dfhack-md5 dfhack-tixml
 ELSE(UNIX)
   SET(PROJECT_LIBS psapi)

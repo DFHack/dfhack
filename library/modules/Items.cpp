@@ -25,7 +25,7 @@ distribution.
 #include "Internal.h"
 #include "ContextShared.h"
 #include "dfhack/DFTypes.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
 #include "dfhack/modules/Materials.h"

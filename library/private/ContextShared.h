@@ -48,7 +48,7 @@ namespace DFHack
 
     class ProcessEnumerator;
     class Process;
-    class memory_info;
+    class VersionInfo;
     struct t_name;
     class DFContextShared
     {
@@ -68,7 +68,7 @@ namespace DFHack
         ProcessEnumerator* pm;
         Process* p;
         char * shm_start;
-        memory_info* offset_descriptor;
+        VersionInfo* offset_descriptor;
         string xml;
 
         // Modules

@@ -54,7 +54,7 @@ int main (int argc,const char* argv[])
         return 1;
     }
     
-    DFHack::memory_info * mem = DF->getMemoryInfo();
+    DFHack::VersionInfo * mem = DF->getMemoryInfo();
     DFHack::Buildings * Bld = DF->getBuildings();
     DFHack::Position * Pos = DF->getPosition();
     

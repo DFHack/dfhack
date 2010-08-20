@@ -19,7 +19,7 @@ enum likeType
 };
 
 DFHack::Materials * Materials;
-DFHack::memory_info *mem;
+DFHack::VersionInfo *mem;
 vector< vector<string> > englishWords;
 vector< vector<string> > foreignWords;
 DFHack::Creatures * Creatures = NULL;
@@ -154,7 +154,7 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
         }
         
         DFHack::Translation *Tran = DF->getTranslation();
-        DFHack::memory_info *mem = DF->getMemoryInfo();
+        DFHack::VersionInfo *mem = DF->getMemoryInfo();
         
         string transName = Tran->TranslateName(creature.name,false);
         if(!transName.empty())

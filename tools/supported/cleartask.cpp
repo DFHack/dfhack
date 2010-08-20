@@ -32,7 +32,7 @@ int main ()
         return 1;
     }
 
-    DFHack::memory_info * mem = DF->getMemoryInfo();
+    DFHack::VersionInfo * mem = DF->getMemoryInfo();
     p = DF->getProcess();
     uint32_t item_vec_offset = 0;
     try

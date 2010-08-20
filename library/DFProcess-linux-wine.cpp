@@ -23,7 +23,7 @@ distribution.
 */
 #include "Internal.h"
 #include "dfhack/DFProcess.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include <errno.h>
 #include <sys/ptrace.h>
@@ -44,7 +44,7 @@ class WineProcess::Private
         self = self_;
     };
     ~Private(){};
-    memory_info * my_descriptor;
+    VersionInfo * my_descriptor;
     Process * self;
     pid_t my_handle;
     uint32_t my_pid;
@@ -53,10 +53,10 @@ class WineProcess::Private
     bool attached;
     bool suspended;
     bool identified;
-    bool validate(char * exe_file, uint32_t pid, char * mem_file, vector <memory_info *> & known_versions);
+    bool validate(char * exe_file, uint32_t pid, char * mem_file, vector <VersionInfo *> & known_versions);
 };
 
-WineProcess::WineProcess(uint32_t pid, vector <memory_info *> & known_versions)
+WineProcess::WineProcess(uint32_t pid, vector <VersionInfo *> & known_versions)
 : d(new Private(this))
 {
     char dir_name [256];
@@ -66,16 +66,16 @@ WineProcess::WineProcess(uint32_t pid, vector <memory_info *> & known_versions)
     char cmdline_name [256];
     char target_name[1024];
     int target_result;
-    
+
     d->identified = false;
     d->my_descriptor = 0;
-    
+
     sprintf(dir_name,"/proc/%d/", pid);
     sprintf(exe_link_name,"/proc/%d/exe", pid);
     sprintf(mem_name,"/proc/%d/mem", pid);
     sprintf(cwd_name,"/proc/%d/cwd", pid);
     sprintf(cmdline_name,"/proc/%d/cmdline", pid);
-    
+
     // resolve /proc/PID/exe link
     target_result = readlink(exe_link_name, target_name, sizeof(target_name)-1);
     if (target_result == -1)
@@ -84,7 +84,7 @@ WineProcess::WineProcess(uint32_t pid, vector <memory_info *> & known_versions)
     }
     // make sure we have a null terminated string...
     target_name[target_result] = 0;
-    
+
     // FIXME: this fails when the wine process isn't started from the 'current working directory'. strip path data from cmdline
     // is this windows version of Df running in wine?
     if(strstr(target_name, "wine-preloader")!= NULL)
@@ -92,7 +92,7 @@ WineProcess::WineProcess(uint32_t pid, vector <memory_info *> & known_versions)
         // get working directory
         target_result = readlink(cwd_name, target_name, sizeof(target_name)-1);
         target_name[target_result] = 0;
-        
+
         // got path to executable, do the same for its name
         ifstream ifs ( cmdline_name , ifstream::in );
         string cmdline;
@@ -102,7 +102,7 @@ WineProcess::WineProcess(uint32_t pid, vector <memory_info *> & known_versions)
             char exe_link[1024];
             // put executable name and path together
             sprintf(exe_link,"%s/%s",target_name,cmdline.c_str());
-            
+
             // create wine process, add it to the vector
             d->identified = d->validate(exe_link,pid,mem_name,known_versions);
             return;
@@ -124,13 +124,13 @@ bool WineProcess::isIdentified()
     return d->identified;
 }
 
-bool WineProcess::Private::validate(char* exe_file, uint32_t pid, char* mem_file, std::vector< memory_info* >& known_versions)
+bool WineProcess::Private::validate(char* exe_file, uint32_t pid, char* mem_file, std::vector< VersionInfo* >& known_versions)
 {
     md5wrapper md5;
     // get hash of the running DF process
     string hash = md5.getHashFromFile(exe_file);
-    vector<memory_info *>::iterator it;
-    
+    vector<VersionInfo *>::iterator it;
+
     // iterate over the list of memory locations
     for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
     {
@@ -144,11 +144,11 @@ bool WineProcess::Private::validate(char* exe_file, uint32_t pid, char* mem_file
             continue;
         }
         // are the md5 hashes the same?
-        if(memory_info::OS_WINDOWS == (*it)->getOS() && hash == thishash)
+        if(VersionInfo::OS_WINDOWS == (*it)->getOS() && hash == thishash)
         {
-            
+
             // keep track of created memory_info object so we can destroy it later
-            memory_info *m = new memory_info(**it);
+            VersionInfo *m = new VersionInfo(**it);
             my_descriptor = m;
             m->setParentProcess(dynamic_cast<Process *>( self ));
             my_handle = my_pid = pid;
@@ -173,7 +173,7 @@ WineProcess::~WineProcess()
     delete d;
 }
 
-memory_info * WineProcess::getDescriptor()
+VersionInfo * WineProcess::getDescriptor()
 {
     return d->my_descriptor;
 }
@@ -194,11 +194,11 @@ void WineProcess::getMemRanges( vector<t_memrange> & ranges )
 {
     char buffer[1024];
     char permissions[5]; // r/-, w/-, x/-, p/s, 0
-    
+
     sprintf(buffer, "/proc/%lu/maps", d->my_pid);
     FILE *mapFile = ::fopen(buffer, "r");
     uint64_t offset, device1, device2, node;
-    
+
     while (fgets(buffer, 1024, mapFile))
     {
         t_memrange temp;
@@ -310,7 +310,7 @@ bool WineProcess::attach()
         }
     }
     d->suspended = true;
-    
+
     int proc_pid_mem = open(d->memFile.c_str(),O_RDONLY);
     if(proc_pid_mem == -1)
     {
@@ -323,7 +323,7 @@ bool WineProcess::attach()
     else
     {
         d->attached = true;
-        
+
         d->memFileHandle = proc_pid_mem;
         return true; // we are attached
     }
@@ -365,7 +365,7 @@ bool WineProcess::detach()
 void WineProcess::read (const uint32_t offset, const uint32_t size, uint8_t *target)
 {
     if(size == 0) return;
-    
+
     ssize_t result;
     ssize_t total = 0;
     ssize_t remaining = size;
@@ -576,10 +576,10 @@ size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcap
     */
     uint32_t start_offset = offset + 4;
     size_t length = readDWord(offset + 20);
-    
+
     size_t capacity = readDWord(offset + 24);
     size_t read_real = min(length, bufcapacity-1);// keep space for null termination
-    
+
     // read data from inside the string structure
     if(capacity < 16)
     {
@@ -590,7 +590,7 @@ size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcap
         start_offset = readDWord(start_offset);// dereference the start offset
         read(start_offset, read_real, (uint8_t *)buffer);
     }
-    
+
     buffer[read_real] = 0;
     return read_real;
 }
@@ -612,7 +612,7 @@ const string WineProcess::readSTLString (uint32_t offset)
     uint32_t length = readDWord(offset + 20);
     uint32_t capacity = readDWord(offset + 24);
     char * temp = new char[capacity+1];
-    
+
     // read data from inside the string structure
     if(capacity < 16)
     {
@@ -623,7 +623,7 @@ const string WineProcess::readSTLString (uint32_t offset)
         start_offset = readDWord(start_offset);// dereference the start offset
         read(start_offset, capacity, (uint8_t *)temp);
     }
-    
+
     temp[length] = 0;
     string ret = temp;
     delete temp;

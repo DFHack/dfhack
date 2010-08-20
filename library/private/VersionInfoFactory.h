@@ -30,20 +30,20 @@ distribution.
 class TiXmlElement;
 namespace DFHack
 {
-    class memory_info;
-    class MemInfoManager
+    class VersionInfo;
+    class VersionInfoFactory
     {
         friend class ProcessEnumerator;
         public:
-            MemInfoManager(string path_to_xml);
-            ~MemInfoManager();
+            VersionInfoFactory(string path_to_xml);
+            ~VersionInfoFactory();
             // memory info entries loaded from a file
             bool loadFile( string path_to_xml);
             bool isInErrorState() const {return error;};
-            std::vector<memory_info*> meminfo;
+            std::vector<VersionInfo*> meminfo;
         private:
-            void ParseVTable(TiXmlElement* vtable, memory_info* mem);
-            void ParseEntry (TiXmlElement* entry, memory_info* mem, map <string ,TiXmlElement *>& knownEntries);
+            void ParseVTable(TiXmlElement* vtable, VersionInfo* mem);
+            void ParseEntry (TiXmlElement* entry, VersionInfo* mem, map <string ,TiXmlElement *>& knownEntries);
             bool error;
     };
 }

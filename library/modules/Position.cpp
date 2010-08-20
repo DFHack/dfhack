@@ -25,7 +25,7 @@ distribution.
 #include "Internal.h"
 #include "ContextShared.h"
 #include "dfhack/modules/Position.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 using namespace DFHack;
 
@@ -41,7 +41,7 @@ struct Position::Private
     uint32_t hotkey_mode_offset;
     uint32_t hotkey_xyz_offset;
     uint32_t hotkey_size;
-    
+
     uint32_t screen_tiles_ptr_offset;
 
     DFContextShared *d;
@@ -59,7 +59,7 @@ Position::Position(DFContextShared * d_)
     d->owner = d_->p;
     d->Inited = true;
     d->StartedHotkeys = d->Started = d->StartedScreen = false;
-    memory_info * mem;
+    VersionInfo * mem;
     try
     {
         mem = d->d->offset_descriptor;

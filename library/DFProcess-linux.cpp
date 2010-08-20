@@ -23,7 +23,7 @@ distribution.
 */
 #include "Internal.h"
 #include "dfhack/DFProcess.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include <errno.h>
 #include <sys/ptrace.h>
@@ -44,7 +44,7 @@ class NormalProcess::Private
     };
     ~Private(){};
     Window* my_window;
-    memory_info * my_descriptor;
+    VersionInfo * my_descriptor;
     pid_t my_handle;
     uint32_t my_pid;
     string memFile;
@@ -53,10 +53,10 @@ class NormalProcess::Private
     bool suspended;
     bool identified;
     Process * self;
-    bool validate(char * exe_file, uint32_t pid, char * mem_file, vector <memory_info *> & known_versions);
+    bool validate(char * exe_file, uint32_t pid, char * mem_file, vector <VersionInfo *> & known_versions);
 };
 
-NormalProcess::NormalProcess(uint32_t pid, vector< memory_info* >& known_versions)
+NormalProcess::NormalProcess(uint32_t pid, vector< VersionInfo* >& known_versions)
 : d(new Private(this))
 {
     char dir_name [256];
@@ -66,16 +66,16 @@ NormalProcess::NormalProcess(uint32_t pid, vector< memory_info* >& known_version
     char cmdline_name [256];
     char target_name[1024];
     int target_result;
-    
+
     d->identified = false;
     d->my_descriptor = 0;
-    
+
     sprintf(dir_name,"/proc/%d/", pid);
     sprintf(exe_link_name,"/proc/%d/exe", pid);
     sprintf(mem_name,"/proc/%d/mem", pid);
     sprintf(cwd_name,"/proc/%d/cwd", pid);
     sprintf(cmdline_name,"/proc/%d/cmdline", pid);
-    
+
     // resolve /proc/PID/exe link
     target_result = readlink(exe_link_name, target_name, sizeof(target_name)-1);
     if (target_result == -1)
@@ -84,7 +84,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector< memory_info* >& known_version
     }
     // make sure we have a null terminated string...
     target_name[target_result] = 0;
-    
+
     // is this the regular linux DF?
     if (strstr(target_name, "dwarfort.exe") != 0 || strstr(target_name,"Dwarf_Fortress") != 0)
     {
@@ -108,13 +108,13 @@ bool NormalProcess::isIdentified()
     return d->identified;
 }
 
-bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFile, vector <memory_info *> & known_versions)
+bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFile, vector <VersionInfo *> & known_versions)
 {
     md5wrapper md5;
     // get hash of the running DF process
     string hash = md5.getHashFromFile(exe_file);
-    vector<memory_info *>::iterator it;
-    
+    vector<VersionInfo *>::iterator it;
+
     // iterate over the list of memory locations
     for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
     {
@@ -122,10 +122,10 @@ bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFi
         {
             if(hash == (*it)->getString("md5")) // are the md5 hashes the same?
             {
-                memory_info * m = *it;
-                if (memory_info::OS_LINUX == m->getOS())
+                VersionInfo * m = *it;
+                if (VersionInfo::OS_LINUX == m->getOS())
                 {
-                    memory_info *m2 = new memory_info(*m);
+                    VersionInfo *m2 = new VersionInfo(*m);
                     my_descriptor = m2;
                     m2->setParentProcess(dynamic_cast<Process *>( self ));
                     my_handle = my_pid = pid;
@@ -161,7 +161,7 @@ NormalProcess::~NormalProcess()
     delete d;
 }
 
-memory_info * NormalProcess::getDescriptor()
+VersionInfo * NormalProcess::getDescriptor()
 {
     return d->my_descriptor;
 }
@@ -182,11 +182,11 @@ void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
 {
     char buffer[1024];
     char permissions[5]; // r/-, w/-, x/-, p/s, 0
-    
+
     sprintf(buffer, "/proc/%lu/maps", d->my_pid);
     FILE *mapFile = ::fopen(buffer, "r");
     uint64_t offset, device1, device2, node;
-    
+
     while (fgets(buffer, 1024, mapFile))
     {
         t_memrange temp;
@@ -298,7 +298,7 @@ bool NormalProcess::attach()
         }
     }
     d->suspended = true;
-    
+
     int proc_pid_mem = open(d->memFile.c_str(),O_RDONLY);
     if(proc_pid_mem == -1)
     {
@@ -310,7 +310,7 @@ bool NormalProcess::attach()
     else
     {
         d->attached = true;
-        
+
         d->memFileHandle = proc_pid_mem;
         return true; // we are attached
     }
@@ -352,7 +352,7 @@ bool NormalProcess::detach()
 void NormalProcess::read (const uint32_t offset, const uint32_t size, uint8_t *target)
 {
     if(size == 0) return;
-    
+
     ssize_t result;
     result = pread(d->memFileHandle, target,size,offset);
     if(result != size)
@@ -564,10 +564,10 @@ size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufc
 const string NormalProcess::readSTLString (uint32_t offset)
 {
     _Rep_base header;
-    
+
     offset = readDWord(offset);
     read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
-    
+
     // FIXME: use char* everywhere, avoid string
     char * temp = new char[header._M_length+1];
     read(offset,header._M_length+1,(uint8_t * )temp);

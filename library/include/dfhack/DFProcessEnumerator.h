@@ -30,7 +30,7 @@ distribution.
 
 namespace DFHack
 {
-    class memory_info;
+    class VersionInfo;
     class Process;
     class BadProcesses;
     /**

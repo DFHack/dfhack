@@ -28,6 +28,7 @@ distribution.
 #include "DFPragma.h"
 #include "DFExport.h"
 #include "dfhack/DFTypes.h"
+#include <sys/types.h>
 
 namespace DFHack
 {
@@ -36,21 +37,31 @@ namespace DFHack
     */
     class Process;
     struct t_class;
+    class VersionInfoPrivate;
+    class OffsetGroupPrivate;
+    class DFHACK_EXPORT OffsetGroup
+    {
+    private:
+        OffsetGroupPrivate * d;
+    public:
+        
+    };
 
     class DFHACK_EXPORT VersionInfo
     {
     private:
-        class Private;
-        Private * d;
+        VersionInfoPrivate * d;
     public:
         enum OSType
         {
             OS_WINDOWS,
             OS_LINUX,
+            OS_APPLE,
             OS_BAD
         };
         VersionInfo();
         VersionInfo(const VersionInfo&);
+        void copy(const DFHack::VersionInfo* old);
         ~VersionInfo();
 
         void RebaseAddresses(const int32_t new_base);
@@ -58,6 +69,12 @@ namespace DFHack
         uint32_t getBase () const;
         void setBase (const std::string&);
         void setBase (const uint32_t);
+
+        void setMD5 (const std::string & _md5);
+        std::string getMD5();
+
+        void setPE (uint32_t PE_);
+        uint getPE();
 
         int32_t getOffset (const std::string&);
         uint32_t getAddress (const std::string&);
@@ -101,7 +118,7 @@ namespace DFHack
         void setHexValue (const std::string &, const std::string &);
         void setString (const std::string &, const std::string &);
 
-        void setProfession(const std::string &, const std::string &);
+        void setProfession(const std::string & id, const std::string & name);
         void setJob(const std::string &, const std::string &);
         void setSkill(const std::string &, const std::string &);
         void setTrait(const std::string &, const std::string &, const std::string &,

@@ -32,18 +32,19 @@ using namespace DFHack;
 
 VersionInfoFactory::~VersionInfoFactory()
 {
-    // for each in std::vector<memory_info*> meminfo;, delete
-    for(uint32_t i = 0; i < meminfo.size();i++)
+    // for each stored version, delete
+    for(uint32_t i = 0; i < versions.size();i++)
     {
-        delete meminfo[i];
+        delete versions[i];
     }
-    meminfo.clear();
+    versions.clear();
 }
 
 void VersionInfoFactory::ParseVTable(TiXmlElement* vtable, VersionInfo* mem)
 {
     TiXmlElement* pClassEntry;
     TiXmlElement* pClassSubEntry;
+    /*
     // check for rebase, do rebase if check positive
     const char * rebase = vtable->Attribute("rebase");
     if(rebase)
@@ -51,6 +52,7 @@ void VersionInfoFactory::ParseVTable(TiXmlElement* vtable, VersionInfo* mem)
         int32_t rebase_offset = strtol(rebase, NULL, 16);
         mem->RebaseVTable(rebase_offset);
     }
+    */
     // parse vtable entries
     pClassEntry = vtable->FirstChildElement();
     for(;pClassEntry;pClassEntry=pClassEntry->NextSiblingElement())
@@ -92,26 +94,214 @@ void VersionInfoFactory::ParseVTable(TiXmlElement* vtable, VersionInfo* mem)
     }
 }
 
-void VersionInfoFactory::ParseEntry (TiXmlElement* entry, VersionInfo* mem, map <string ,TiXmlElement *>& knownEntries)
+void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
+{
+    TiXmlElement* pElement;
+    TiXmlElement* pElement2nd;
+    const char *cstr_version = entry->Attribute("name");
+
+    if (!cstr_version)
+        throw Error::MemoryXmlBadAttribute("name");
+
+    mem->setVersion(cstr_version);
+    mem->setOS(VersionInfo::OS_BAD);
+
+    // process additional entries
+    pElement = entry->FirstChildElement()->ToElement();
+    for(;pElement;pElement=pElement->NextSiblingElement())
+    {
+        // only elements get processed
+        const char *cstr_type = pElement->Value();
+        std::string type = cstr_type;
+        if(type == "VTable")
+        {
+            ParseVTable(pElement, mem);
+            continue;
+        }
+        else if(type == "Offsets")
+        {
+            // we don't care about the descriptions here, do nothing
+            //ParseBaseOffsets(pMemEntry, mem);
+            continue;
+        }
+        else if (type == "Professions")
+        {
+            pElement2nd = entry->FirstChildElement("Profession")->ToElement();
+            for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Profession"))
+            {
+                const char * id = pElement2nd->Attribute("id");
+                const char * name = pElement2nd->Attribute("name");
+                // FIXME: missing some attributes here
+                if(id && name)
+                {
+                    mem->setProfession(id,name);
+                }
+                else
+                {
+                    // FIXME: this is crap, doesn't tell anything about the error
+                    throw Error::MemoryXmlUnderspecifiedEntry(name);
+                }
+            }
+        }
+        else if (type == "Jobs")
+        {
+            pElement2nd = entry->FirstChildElement("Job")->ToElement();
+            for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Job"))
+            {
+                const char * id = pElement2nd->Attribute("id");
+                const char * name = pElement2nd->Attribute("name");
+                if(id && name)
+                {
+                    mem->setJob(id,name);
+                }
+                else
+                {
+                    // FIXME: this is crap, doesn't tell anything about the error
+                    throw Error::MemoryXmlUnderspecifiedEntry(name);
+                }
+            }
+        }
+        else if (type == "Skills")
+        {
+            pElement2nd = entry->FirstChildElement("Skill")->ToElement();
+            for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Skill"))
+            {
+                const char * id = pElement2nd->Attribute("id");
+                const char * name = pElement2nd->Attribute("name");
+                if(id && name)
+                {
+                    mem->setSkill(id,name);
+                }
+                else
+                {
+                    // FIXME: this is crap, doesn't tell anything about the error
+                    throw Error::MemoryXmlUnderspecifiedEntry(name);
+                }
+            }
+        }
+        else if (type == "Traits")
+        {
+            pElement2nd = entry->FirstChildElement("Trait")->ToElement();
+            for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Trait"))
+            {
+                const char * id = pElement2nd->Attribute("id");
+                const char * name = pElement2nd->Attribute("name");
+                const char * lvl0 = pElement->Attribute("level_0");
+                const char * lvl1 = pElement->Attribute("level_1");
+                const char * lvl2 = pElement->Attribute("level_2");
+                const char * lvl3 = pElement->Attribute("level_3");
+                const char * lvl4 = pElement->Attribute("level_4");
+                const char * lvl5 = pElement->Attribute("level_5");
+                if(id && name && lvl0 && lvl1 && lvl2 && lvl3 && lvl4 && lvl5)
+                {
+                    mem->setTrait(id, name, lvl0, lvl1, lvl2, lvl3, lvl4, lvl5);
+                }
+                else
+                {
+                    // FIXME: this is crap, doesn't tell anything about the error
+                    throw Error::MemoryXmlUnderspecifiedEntry(name);
+                }
+            }
+        }
+        else if (type == "Labors")
+        {
+            pElement2nd = entry->FirstChildElement("Labor")->ToElement();
+            for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Labor"))
+            {
+                const char * id = pElement2nd->Attribute("id");
+                const char * name = pElement2nd->Attribute("name");
+                if(id && name)
+                {
+                    mem->setLabor(id,name);
+                }
+                else
+                {
+                    // FIXME: this is crap, doesn't tell anything about the error
+                    throw Error::MemoryXmlUnderspecifiedEntry(name);
+                }
+            }
+        }
+        else if (type == "Levels")
+        {
+            pElement2nd = entry->FirstChildElement("Level")->ToElement();
+            for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Level"))
+            {
+                const char * id = pElement2nd->Attribute("id");
+                const char * name = pElement2nd->Attribute("name");
+                const char * nextlvl = pElement2nd->Attribute("xpNxtLvl");
+                if(id && name && nextlvl)
+                {
+                    mem->setLevel(id, name, nextlvl);
+                }
+                else
+                {
+                    // FIXME: this is crap, doesn't tell anything about the error
+                    throw Error::MemoryXmlUnderspecifiedEntry(name);
+                }
+            }
+        }
+        else if (type == "Moods")
+        {
+            pElement2nd = entry->FirstChildElement("Mood")->ToElement();
+            for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Mood"))
+            {
+                const char * id = pElement2nd->Attribute("id");
+                const char * name = pElement2nd->Attribute("name");
+                if(id && name)
+                {
+                    mem->setMood(id, name);
+                }
+                else
+                {
+                    // FIXME: this is crap, doesn't tell anything about the error
+                    throw Error::MemoryXmlUnderspecifiedEntry(name);
+                }
+            }
+        }
+        else
+        {
+            //FIXME: only log, not hard error
+            //throw Error::MemoryXmlUnknownType(type.c_str());
+        }
+    } // for
+} // method
+
+void VersionInfoFactory::EvalVersion(string base, VersionInfo * mem)
+{
+    if(knownVersions.find(base) != knownVersions.end())
+    {
+        v_descr & desc = knownVersions[base];
+        if (!desc.second)
+        {
+            VersionInfo * newmem = new VersionInfo();
+            ParseVersion(desc.first, newmem);
+            desc.second = newmem;
+            versions.push_back(newmem);
+        }
+        mem->copy(desc.second);
+    }
+}
+
+void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
 {
     TiXmlElement* pMemEntry;
-    const char *cstr_version = entry->Attribute("version");
+    const char *cstr_name = entry->Attribute("name");
     const char *cstr_os = entry->Attribute("os");
     const char *cstr_base = entry->Attribute("base");
     const char *cstr_rebase = entry->Attribute("rebase");
     if(cstr_base)
     {
         string base = cstr_base;
-        ParseEntry(knownEntries[base], mem, knownEntries);
+        EvalVersion(base, mem);
     }
 
-    if (!cstr_version)
-        throw Error::MemoryXmlBadAttribute("version");
+    if (!cstr_name)
+        throw Error::MemoryXmlBadAttribute("name");
     if (!cstr_os)
         throw Error::MemoryXmlBadAttribute("os");
 
     string os = cstr_os;
-    mem->setVersion(cstr_version);
+    mem->setVersion(cstr_name);
     mem->setOS(cstr_os);
 
     // offset inherited addresses by 'rebase'.
@@ -134,10 +324,6 @@ void VersionInfoFactory::ParseEntry (TiXmlElement* entry, VersionInfo* mem, map 
         // users are free to use a sane kernel that doesn't do this kind of **** by default
         mem->setBase(0x0);
     }
-    else if ( os == "all")
-    {
-        // yay
-    }
     else
     {
         throw Error::MemoryXmlBadAttribute("os");
@@ -148,75 +334,55 @@ void VersionInfoFactory::ParseEntry (TiXmlElement* entry, VersionInfo* mem, map 
     pMemEntry = entry->FirstChildElement()->ToElement();
     for(;pMemEntry;pMemEntry=pMemEntry->NextSiblingElement())
     {
-        // only elements get processed
-        const char *cstr_type = pMemEntry->Value();
-        const char *cstr_name = pMemEntry->Attribute("name");
-        const char *cstr_value = pMemEntry->GetText();
-
-        if(!cstr_value)
-            cstr_value = pMemEntry->Attribute("id");
-
-        // check for missing parts
         string type, name, value;
+        const char *cstr_type = pMemEntry->Value();
         type = cstr_type;
+        // check for missing parts
         if(type == "VTable")
         {
             ParseVTable(pMemEntry, mem);
             continue;
         }
-        if(!(cstr_name && cstr_value))
+        else if(type == "Offsets")
         {
-            throw Error::MemoryXmlUnderspecifiedEntry(cstr_version);
+            /*
+            if (type == "HexValue")
+            {
+                mem->setHexValue(name, value);
+            }
+            else if (type == "Address")
+            {
+                mem->setAddress(name, value);
+            }
+            else if (type == "Offset")
+            {
+                mem->setOffset(name, value);
+            }
+            else if (type == "String")
+            {
+                mem->setString(name, value);
+            }
+            else
+            {
+                throw Error::MemoryXmlUnknownType(type.c_str());
+            }
+            */
+            //ParseOffsets(pMemEntry, mem);
+            continue;
         }
-        name = cstr_name;
-        value = cstr_value;
-        if (type == "HexValue")
+        else if (type == "MD5")
         {
-            mem->setHexValue(name, value);
+            const char *cstr_value = pMemEntry->Attribute("value");
+            if(!cstr_value)
+                throw Error::MemoryXmlUnderspecifiedEntry(cstr_name);
+            mem->setMD5(cstr_value);
         }
-        else if (type == "Address")
+        else if (type == "PETimeStamp")
         {
-            mem->setAddress(name, value);
-        }
-        else if (type == "Offset")
-        {
-            mem->setOffset(name, value);
-        }
-        else if (type == "String")
-        {
-            mem->setString(name, value);
-        }
-        else if (type == "Profession")
-        {
-            mem->setProfession(value,name);
-        }
-        else if (type == "Job")
-        {
-            mem->setJob(value,name);
-        }
-        else if (type == "Skill")
-        {
-            mem->setSkill(value,name);
-        }
-        else if (type == "Trait")
-        {
-            mem->setTrait(value, name,pMemEntry->Attribute("level_0"),pMemEntry->Attribute("level_1"),pMemEntry->Attribute("level_2"),pMemEntry->Attribute("level_3"),pMemEntry->Attribute("level_4"),pMemEntry->Attribute("level_5"));
-        }
-        else if (type == "Labor")
-        {
-            mem->setLabor(value,name);
-        }
-        else if (type == "Level")
-        {
-            mem->setLevel(value, name, pMemEntry->Attribute("xpNxtLvl"));
-        }
-        else if (type == "Mood")
-        {
-            mem->setMood(value, name);
-        }
-        else
-        {
-            throw Error::MemoryXmlUnknownType(type.c_str());
+            const char *cstr_value = pMemEntry->Attribute("value");
+            if(!cstr_value)
+                throw Error::MemoryXmlUnderspecifiedEntry(cstr_name);
+            mem->setPE(atol(cstr_value));
         }
     } // for
 } // method
@@ -240,7 +406,7 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
     TiXmlHandle hDoc(&doc);
     TiXmlElement* pElem;
     TiXmlHandle hRoot(0);
-    VersionInfo mem;
+    VersionInfo *mem;
 
     // block: name
     {
@@ -263,31 +429,54 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
     // transform elements
     {
         // trash existing list
-        for(uint32_t i = 0; i < meminfo.size(); i++)
+        for(uint32_t i = 0; i < versions.size(); i++)
         {
-            delete meminfo[i];
+            delete versions[i];
         }
-        meminfo.clear();
-        TiXmlElement* pMemInfo=hRoot.FirstChild( "MemoryDescriptors" ).FirstChild( "Entry" ).Element();
+        versions.clear();
+
+        // For each base version
+        TiXmlElement* pMemInfo=hRoot.FirstChild( "Base" ).Element();
         map <string ,TiXmlElement *> map_pNamedEntries;
-        vector <TiXmlElement *> v_pEntries;
-        for( ; pMemInfo; pMemInfo=pMemInfo->NextSiblingElement("Entry"))
+        vector <string> v_sEntries;
+        for( ; pMemInfo; pMemInfo=pMemInfo->NextSiblingElement("Base"))
         {
-            v_pEntries.push_back(pMemInfo);
-            const char *id = pMemInfo->Attribute("id");
-            if(id)
+            const char *name = pMemInfo->Attribute("name");
+            if(name)
             {
-                string str_id = id;
-                map_pNamedEntries[str_id] = pMemInfo;
+                string str_name = name;
+                VersionInfo *base = new VersionInfo();
+                ParseBase( pMemInfo , mem );
+                knownVersions[str_name] = v_descr (pMemInfo, mem);
             }
         }
-        for(uint32_t i = 0; i< v_pEntries.size();i++)
+
+        // For each derivative version
+        pMemInfo=hRoot.FirstChild( "Version" ).Element();
+        for( ; pMemInfo; pMemInfo=pMemInfo->NextSiblingElement("Version"))
         {
-            VersionInfo *mem = new VersionInfo();
-            //FIXME: add a set of entries processed in a step of this cycle, use it to check for infinite loops
-            /* recursive */ParseEntry( v_pEntries[i] , mem , map_pNamedEntries);
-            meminfo.push_back(mem);
+            const char *name = pMemInfo->Attribute("name");
+            if(name)
+            {
+                string str_name = name;
+                knownVersions[str_name] = v_descr (pMemInfo, NULL);
+                v_sEntries.push_back(str_name);
+            }
         }
+        // Parse the versions
+        for(uint32_t i = 0; i< v_sEntries.size();i++)
+        {
+            //FIXME: add a set of entries processed in a step of this cycle, use it to check for infinite loops
+            string & name = v_sEntries[i];
+            v_descr & desc = knownVersions[name];
+            if(!desc.second)
+            {
+                VersionInfo *version = new VersionInfo();
+                ParseVersion( desc.first , version );
+                versions.push_back(version);
+            }
+        }
+
         // process found things here
     }
     error = false;

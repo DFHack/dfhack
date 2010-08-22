@@ -35,16 +35,21 @@ namespace DFHack
     {
         friend class ProcessEnumerator;
         public:
-            VersionInfoFactory(string path_to_xml);
+            VersionInfoFactory(std::string path_to_xml);
             ~VersionInfoFactory();
             // memory info entries loaded from a file
-            bool loadFile( string path_to_xml);
+            bool loadFile( std::string path_to_xml);
             bool isInErrorState() const {return error;};
-            std::vector<VersionInfo*> meminfo;
+            std::vector<VersionInfo*> versions;
         private:
             void ParseVTable(TiXmlElement* vtable, VersionInfo* mem);
-            void ParseEntry (TiXmlElement* entry, VersionInfo* mem, map <string ,TiXmlElement *>& knownEntries);
+            void ParseBase (TiXmlElement* base, VersionInfo* mem);
+            void ParseVersion (TiXmlElement* version, VersionInfo* mem);
+            // copy version 'base' to 'target' or throw
+            void EvalVersion(std::string base, VersionInfo* target);
             bool error;
+            typedef std::pair < TiXmlElement *, VersionInfo *> v_descr;
+            std::map <std::string , v_descr  > knownVersions;
     };
 }
 

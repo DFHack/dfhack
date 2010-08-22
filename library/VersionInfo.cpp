@@ -118,6 +118,8 @@ class VersionInfo::Private
 
     string version;
     OSType OS;
+    std::string md5;
+    uint32_t PE_timestamp;
 };
 
 
@@ -130,6 +132,8 @@ VersionInfo::VersionInfo()
     d->classindex = 0;
     d->levels.reserve(NUM_RESERVE_LVLS);
     d->moods.reserve(NUM_RESERVE_MOODS);
+    d->md5 = "invalid";
+    d->PE_timestamp = 0;
 }
 
 
@@ -137,30 +141,36 @@ VersionInfo::VersionInfo()
 VersionInfo::VersionInfo(const VersionInfo &old)
 :d(new Private)
 {
-    d->version = old.d->version;
-    d->OS = old.d->OS;
-    d->addresses = old.d->addresses;
-    d->offsets = old.d->offsets;
-    d->hexvals = old.d->hexvals;
-    d->strings = old.d->strings;
-    d->base = old.d->base;
-    //d->classes = old.d->classes;
-    for(uint32_t i = 0; i < old.d->classes.size(); i++)
-    {
-        t_class * copy = new t_class(*old.d->classes[i]);
-        d->classes.push_back(copy);
-    }
-    d->classnames = old.d->classnames;
-    d->classindex = old.d->classindex;
-    d->professions = old.d->professions;
-    d->jobs = old.d->jobs;
-    d->skills = old.d->skills;
-    d->traits = old.d->traits;
-    d->labors = old.d->labors;
-    d->levels = old.d->levels;
-    d->moods = old.d->moods;
+    copy(&old);
 }
 
+void VersionInfo::copy(const VersionInfo * old)
+{
+    d->version = old->d->version;
+    d->OS = old->d->OS;
+    d->md5 = old->d->md5;
+    d->PE_timestamp = old->d->PE_timestamp;
+    d->addresses = old->d->addresses;
+    d->offsets = old->d->offsets;
+    d->hexvals = old->d->hexvals;
+    d->strings = old->d->strings;
+    d->base = old->d->base;
+    //d->classes = old.d->classes;
+    for(uint32_t i = 0; i < old->d->classes.size(); i++)
+    {
+        t_class * copy = new t_class(*old->d->classes[i]);
+        d->classes.push_back(copy);
+    }
+    d->classnames = old->d->classnames;
+    d->classindex = old->d->classindex;
+    d->professions = old->d->professions;
+    d->jobs = old->d->jobs;
+    d->skills = old->d->skills;
+    d->traits = old->d->traits;
+    d->labors = old->d->labors;
+    d->levels = old->d->levels;
+    d->moods = old->d->moods;
+}
 
 void VersionInfo::setParentProcess(Process * _p)
 {
@@ -198,6 +208,25 @@ string VersionInfo::getVersion()
     return d->version;
 }
 
+void VersionInfo::setMD5(const string &v)
+{
+    d->md5 = v;
+}
+
+string VersionInfo::getMD5()
+{
+    return d->md5;
+}
+
+void VersionInfo::setPE(uint32_t v)
+{
+    d->PE_timestamp = v;
+}
+
+uint32_t VersionInfo::getPE()
+{
+    return d->PE_timestamp;
+}
 
 void VersionInfo::setOS(const char *os)
 {
@@ -206,6 +235,8 @@ void VersionInfo::setOS(const char *os)
         d->OS = OS_WINDOWS;
     else if(oss == "linux")
         d->OS = OS_LINUX;
+    else if(oss == "apple")
+        d->OS = OS_APPLE;
     else
         d->OS = OS_BAD;
 }
@@ -217,6 +248,8 @@ void VersionInfo::setOS(const string &os)
         d->OS = OS_WINDOWS;
     else if(os == "linux")
         d->OS = OS_LINUX;
+    else if(os == "apple")
+        d->OS = OS_APPLE;
     else
         d->OS = OS_BAD;
 }
@@ -550,12 +583,8 @@ void VersionInfo::RebaseAddresses(const int32_t new_base)
 // change base of all addresses *and* vtable entries
 void VersionInfo::RebaseAll(int32_t new_base)
 {
-    map<string, uint32_t>::iterator iter;
+    RebaseAddresses(new_base);
     int32_t rebase = - (int32_t)d->base + new_base;
-    for(iter = d->addresses.begin(); iter != d->addresses.end(); iter++)
-    {
-        d->addresses[iter->first] = iter->second + rebase;
-    }
     RebaseVTable(rebase);
 }
 

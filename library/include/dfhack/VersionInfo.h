@@ -92,6 +92,7 @@ namespace DFHack
         std::string getTraitName(const uint32_t) const;
         std::string getLabor (const uint32_t);
         std::vector< std::vector<std::string> > const& getAllTraits();
+        std::map<uint32_t, std::string> const& getAllLabours();
 
         DFHack::t_level getLevelInfo(const uint32_t level) const;
 

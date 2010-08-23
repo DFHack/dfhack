@@ -106,7 +106,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
         // filter by timestamp, skip entries without a timestamp
         try
         {
-            pe_timestamp = (*it)->getHexValue("pe_timestamp");
+            pe_timestamp = (*it)->getPE();
         }
         catch(Error::MissingMemoryDefinition&)
         {

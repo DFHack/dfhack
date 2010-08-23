@@ -329,7 +329,7 @@ bool SHMProcess::Private::validate(vector <VersionInfo *> & known_versions)
     for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
     {
         try{
-            if(hash == (*it)->getString("md5")) // are the md5 hashes the same?
+            if(hash == (*it)->getMD5()) // are the md5 hashes the same?
             {
                 VersionInfo *m = new VersionInfo(**it);
                 memdescriptor = m;

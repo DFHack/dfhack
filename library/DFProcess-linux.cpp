@@ -120,7 +120,7 @@ bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFi
     {
         try
         {
-            if(hash == (*it)->getString("md5")) // are the md5 hashes the same?
+            if(hash == (*it)->getMD5()) // are the md5 hashes the same?
             {
                 VersionInfo * m = *it;
                 if (VersionInfo::OS_LINUX == m->getOS())

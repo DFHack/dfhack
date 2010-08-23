@@ -184,7 +184,7 @@ if(MSVC)
     #
     # So, $(TargetDir) is ignored by cmake, and replaced with the actual output directory by MSVC
     ADD_CUSTOM_COMMAND(TARGET dfhack POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/data/Memory.xml $(TargetDir)/Memory.xml
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/data/Memory-ng.xml $(TargetDir)/Memory.xml
     )
     ADD_CUSTOM_COMMAND(TARGET dfhack POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Compile.html $(TargetDir)/Compile.html

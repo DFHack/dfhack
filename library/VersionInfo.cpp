@@ -779,6 +779,10 @@ std::vector< std::vector<std::string> > const& VersionInfo::getAllTraits()
     return d->traits;
 }
 
+std:: map<uint32_t, std::string> const& VersionInfo::getAllLabours()
+{
+    return d->labors;
+}
 
 string VersionInfo::getLabor (const uint32_t laborIdx)
 {

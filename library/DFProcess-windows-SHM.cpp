@@ -351,7 +351,7 @@ bool SHMProcess::Private::validate(vector <VersionInfo *> & known_versions)
         uint32_t pe_timestamp;
         try
         {
-            pe_timestamp = (*it)->getHexValue("pe_timestamp");
+            pe_timestamp = (*it)->getPE();
         }
         catch(Error::MissingMemoryDefinition&)
         {

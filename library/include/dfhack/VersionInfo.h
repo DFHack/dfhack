@@ -41,13 +41,37 @@ namespace DFHack
     class OffsetGroupPrivate;
     class DFHACK_EXPORT OffsetGroup
     {
-    private:
+    protected:
         OffsetGroupPrivate * d;
     public:
-        
+        int32_t getOffset (const std::string&);
+        uint32_t getAddress (const std::string&);
+        uint32_t getHexValue (const std::string&);
+        std::string getString (const std::string&);
+
+        int32_t getOffset (const char *);
+        uint32_t getAddress (const char *);
+        uint32_t getHexValue (const char *);
+        std::string getString (const char *);
+
+        void setOffset (const std::string &, const int32_t);
+        void setAddress (const std::string &, const uint32_t);
+        void setHexValue (const std::string &, const uint32_t);
+
+        void setOffset (const std::string &, const char *);
+        void setAddress (const std::string &, const char *);
+        void setHexValue (const std::string &, const char *);
+        void setString (const std::string &, const char *);
+
+        void setOffset (const std::string &, const std::string &);
+        void setAddress (const std::string &, const std::string &);
+        void setHexValue (const std::string &, const std::string &);
+        void setString (const std::string &, const std::string &);
+
+        OffsetGroup & getGroup (const std::string name);
     };
 
-    class DFHACK_EXPORT VersionInfo
+    class DFHACK_EXPORT VersionInfo : public OffsetGroup
     {
     private:
         VersionInfoPrivate * d;
@@ -76,13 +100,6 @@ namespace DFHack
         void setPE (uint32_t PE_);
         uint getPE();
 
-        int32_t getOffset (const std::string&);
-        uint32_t getAddress (const std::string&);
-        uint32_t getHexValue (const std::string&);
-        int32_t getOffset (const char *);
-        uint32_t getAddress (const char *);
-        uint32_t getHexValue (const char *);
-
         std::string getMood(const uint32_t moodID);
         std::string getString (const std::string&);
         std::string getProfession(const uint32_t) const;
@@ -104,20 +121,6 @@ namespace DFHack
         void setOS(const std::string&);
         void setOS(const OSType);
         OSType getOS() const;
-
-        void setOffset (const std::string &, const int32_t);
-        void setAddress (const std::string &, const uint32_t);
-        void setHexValue (const std::string &, const uint32_t);
-
-        void setOffset (const std::string &, const char *);
-        void setAddress (const std::string &, const char *);
-        void setHexValue (const std::string &, const char *);
-        void setString (const std::string &, const char *);
-
-        void setOffset (const std::string &, const std::string &);
-        void setAddress (const std::string &, const std::string &);
-        void setHexValue (const std::string &, const std::string &);
-        void setString (const std::string &, const std::string &);
 
         void setProfession(const std::string & id, const std::string & name);
         void setJob(const std::string &, const std::string &);

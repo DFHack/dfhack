@@ -82,50 +82,183 @@ namespace DFHack
     };
 }
 
+/*
+ * Private data
+ */
+namespace DFHack
+{
+    class OffsetGroupPrivate
+    {
+        public:
+        map <string, uint32_t> addresses;
+        map <string, int32_t> offsets;
+        map <string, uint32_t> hexvals;
+        map <string, string> strings;
+        map <string, OffsetGroup> groups;
+    };
+}
+
+
+void OffsetGroup::setOffset (const string & key, const string & value)
+{
+    int32_t offset = strtol(value.c_str(), NULL, 16);
+    d->offsets[key] = offset;
+}
+
+
+void OffsetGroup::setAddress (const string & key, const string & value)
+{
+    uint32_t address = strtol(value.c_str(), NULL, 16);
+    d->addresses[key] = address;
+}
+
+
+void OffsetGroup::setHexValue (const string & key, const string & value)
+{
+    uint32_t hexval = strtol(value.c_str(), NULL, 16);
+    d->hexvals[key] = hexval;
+}
+
+
+void OffsetGroup::setString (const string & key, const string & value)
+{
+    d->strings[key] = value;
+}
+
+
+// Get named address
+uint32_t OffsetGroup::getAddress (const char *key)
+{
+    map <string, uint32_t>::iterator iter = d->addresses.find(key);
+
+    if(iter != d->addresses.end())
+    {
+        return (*iter).second;
+    }
+    throw Error::MissingMemoryDefinition("address", key);
+}
+
+
+// Get named offset
+int32_t OffsetGroup::getOffset (const char *key)
+{
+    map <string, int32_t>::iterator iter = d->offsets.find(key);
+    if(iter != d->offsets.end())
+    {
+        return (*iter).second;
+    }
+    throw Error::MissingMemoryDefinition("offset", key);
+}
+
+
+// Get named numerical value
+uint32_t OffsetGroup::getHexValue (const char *key)
+{
+    map <string, uint32_t>::iterator iter = d->hexvals.find(key);
+    if(iter != d->hexvals.end())
+    {
+        return (*iter).second;
+    }
+    throw Error::MissingMemoryDefinition("hexvalue", key);
+}
+
+
+// Get named address
+uint32_t OffsetGroup::getAddress (const string &key)
+{
+    map <string, uint32_t>::iterator iter = d->addresses.find(key);
+
+    if(iter != d->addresses.end())
+    {
+        return (*iter).second;
+    }
+    throw Error::MissingMemoryDefinition("address", key.c_str());
+}
+
+
+// Get named offset
+int32_t OffsetGroup::getOffset (const string &key)
+{
+    map <string, int32_t>::iterator iter = d->offsets.find(key);
+    if(iter != d->offsets.end())
+    {
+        return (*iter).second;
+    }
+    throw Error::MissingMemoryDefinition("offset", key.c_str());
+}
+
+
+// Get named numerical value
+uint32_t OffsetGroup::getHexValue (const string &key)
+{
+    map <string, uint32_t>::iterator iter = d->hexvals.find(key);
+    if(iter != d->hexvals.end())
+    {
+        return (*iter).second;
+    }
+    throw Error::MissingMemoryDefinition("hexvalue", key.c_str());
+}
+
+
+// Get named string
+std::string OffsetGroup::getString (const string &key)
+{
+    map <string, string>::iterator iter = d->strings.find(key);
+    if(iter != d->strings.end())
+    {
+        return (*iter).second;
+    }
+    throw Error::MissingMemoryDefinition("string", key.c_str());
+}
+
+
 
 /*
  * Private data
  */
-class VersionInfo::Private
+namespace DFHack
 {
-    public:
-    map <string, uint32_t> addresses;
-    map <string, int32_t> offsets;
-    map <string, uint32_t> hexvals;
-    map <string, string> strings;
+    class VersionInfoPrivate
+    {
+        public:
+        map <string, uint32_t> addresses;
+        map <string, int32_t> offsets;
+        map <string, uint32_t> hexvals;
+        map <string, string> strings;
 
-    vector<string> professions;
-    vector<string> jobs;
-    vector<string> skills;
-    vector<DFHack::t_level> levels;
-    vector< vector<string> > traits;
-    vector<string> moods;
-    map <uint32_t, string> labors;
+        vector<string> professions;
+        vector<string> jobs;
+        vector<string> skills;
+        vector<DFHack::t_level> levels;
+        vector< vector<string> > traits;
+        vector<string> moods;
+        map <uint32_t, string> labors;
 
-    // storage for class and multiclass
-    vector<t_class *> classes;
+        // storage for class and multiclass
+        vector<t_class *> classes;
 
-    // cache for faster name lookup, indexed by classID
-    vector<string> classnames;
-    // map between vptr and class id, needs further type id lookup for multi-classes, not inherited
-    map<uint32_t, t_class *> classIDs;
+        // cache for faster name lookup, indexed by classID
+        vector<string> classnames;
+        // map between vptr and class id, needs further type id lookup for multi-classes, not inherited
+        map<uint32_t, t_class *> classIDs;
 
-    // index for the next added class
-    uint32_t classindex;
+        // index for the next added class
+        uint32_t classindex;
 
-    int32_t base;
-    Process * p; // the process this belongs to
+        int32_t base;
+        Process * p; // the process this belongs to
 
-    string version;
-    OSType OS;
-    std::string md5;
-    uint32_t PE_timestamp;
-};
+        string version;
+        VersionInfo::OSType OS;
+        std::string md5;
+        uint32_t PE_timestamp;
+    };
+}
 
 
 // normal constructor
 VersionInfo::VersionInfo()
-:d(new Private)
+:d(new VersionInfoPrivate)
 {
     d->base = 0;
     d->p = 0;
@@ -139,7 +272,7 @@ VersionInfo::VersionInfo()
 
 // copy constructor
 VersionInfo::VersionInfo(const VersionInfo &old)
-:d(new Private)
+:d(new VersionInfoPrivate)
 {
     copy(&old);
 }
@@ -286,33 +419,6 @@ void VersionInfo::setBase (const string &s)
 void VersionInfo::setBase (const uint32_t b)
 {
     d->base = b;
-}
-
-
-void VersionInfo::setOffset (const string & key, const string & value)
-{
-    int32_t offset = strtol(value.c_str(), NULL, 16);
-    d->offsets[key] = offset;
-}
-
-
-void VersionInfo::setAddress (const string & key, const string & value)
-{
-    uint32_t address = strtol(value.c_str(), NULL, 16);
-    d->addresses[key] = address;
-}
-
-
-void VersionInfo::setHexValue (const string & key, const string & value)
-{
-    uint32_t hexval = strtol(value.c_str(), NULL, 16);
-    d->hexvals[key] = hexval;
-}
-
-
-void VersionInfo::setString (const string & key, const string & value)
-{
-    d->strings[key] = value;
 }
 
 
@@ -600,92 +706,6 @@ void VersionInfo::RebaseVTable(int32_t offset)
 }
 
 
-// Get named address
-uint32_t VersionInfo::getAddress (const char *key)
-{
-    map <string, uint32_t>::iterator iter = d->addresses.find(key);
-
-    if(iter != d->addresses.end())
-    {
-        return (*iter).second;
-    }
-    throw Error::MissingMemoryDefinition("address", key);
-}
-
-
-// Get named offset
-int32_t VersionInfo::getOffset (const char *key)
-{
-    map <string, int32_t>::iterator iter = d->offsets.find(key);
-    if(iter != d->offsets.end())
-    {
-        return (*iter).second;
-    }
-    throw Error::MissingMemoryDefinition("offset", key);
-}
-
-
-// Get named numerical value
-uint32_t VersionInfo::getHexValue (const char *key)
-{
-    map <string, uint32_t>::iterator iter = d->hexvals.find(key);
-    if(iter != d->hexvals.end())
-    {
-        return (*iter).second;
-    }
-    throw Error::MissingMemoryDefinition("hexvalue", key);
-}
-
-
-// Get named address
-uint32_t VersionInfo::getAddress (const string &key)
-{
-    map <string, uint32_t>::iterator iter = d->addresses.find(key);
-
-    if(iter != d->addresses.end())
-    {
-        return (*iter).second;
-    }
-    throw Error::MissingMemoryDefinition("address", key.c_str());
-}
-
-
-// Get named offset
-int32_t VersionInfo::getOffset (const string &key)
-{
-    map <string, int32_t>::iterator iter = d->offsets.find(key);
-    if(iter != d->offsets.end())
-    {
-        return (*iter).second;
-    }
-    throw Error::MissingMemoryDefinition("offset", key.c_str());
-}
-
-
-// Get named numerical value
-uint32_t VersionInfo::getHexValue (const string &key)
-{
-    map <string, uint32_t>::iterator iter = d->hexvals.find(key);
-    if(iter != d->hexvals.end())
-    {
-        return (*iter).second;
-    }
-    throw Error::MissingMemoryDefinition("hexvalue", key.c_str());
-}
-
-
-// Get named string
-std::string VersionInfo::getString (const string &key)
-{
-    map <string, string>::iterator iter = d->strings.find(key);
-    if(iter != d->strings.end())
-    {
-        return (*iter).second;
-    }
-    throw Error::MissingMemoryDefinition("string", key.c_str());
-}
-
-
 // Get Profession
 string VersionInfo::getProfession (const uint32_t key) const
 {
@@ -811,11 +831,11 @@ std::string VersionInfo::PrintOffsets()
     switch (getOS())
     {
         case OS_LINUX:
-            ss << "<MD5 value=\"" << getString("md5") << "\" />" << endl;
+            ss << "<MD5 value=\"" << getMD5() << "\" />" << endl;
             break;
         case OS_WINDOWS:
-            ss << "<PETimeStamp value=\"" << hex << "0x" << getHexValue("pe_timestamp") << "\" />" << endl;
-            ss << "<MD5 value=\"" << getString("md5") << "\" />" << endl;
+            ss << "<PETimeStamp value=\"" << hex << "0x" << getPE() << "\" />" << endl;
+            ss << "<MD5 value=\"" << getMD5() << "\" />" << endl;
             break;
         default:
             ss << " UNKNOWN" << endl;

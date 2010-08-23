@@ -1,5 +1,5 @@
 from ctypes import *
-from pydftypes import *
+from dftypes import *
 
 class Constructions(object):
     def __init__(self, ptr):

@@ -1,5 +1,5 @@
 from ctypes import *
-from pydftypes import *
+from dftypes import *
 
 libdfhack.Items_getItemDescription.argtypes = [ c_void_p, c_uint, c_void_ptr, _arr_create_func ]
 libdfhack.Items_getItemDescription.restype = c_char_p

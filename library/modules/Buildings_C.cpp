@@ -24,6 +24,7 @@ distribution.
 
 #include "dfhack-c/modules/Buildings_C.h"
 using namespace std;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -68,7 +69,7 @@ int Buildings_GetCustomWorkshopType(DFHackObject* b_Ptr, t_building* building)
 	return -1;
 }
 
-int Buildings_ReadCustomWorkshopTypes(DFHackObject* b_Ptr, void* (*t_customWorkshop_buffer_create)(uint32_t))
+t_customWorkshop* Buildings_ReadCustomWorkshopTypes(DFHackObject* b_Ptr)
 {
     if(b_Ptr != NULL)
     {
@@ -78,19 +79,24 @@ int Buildings_ReadCustomWorkshopTypes(DFHackObject* b_Ptr, void* (*t_customWorks
         map<uint32_t, string>::iterator bIter;
 
         if(!((DFHack::Buildings*)b_Ptr)->ReadCustomWorkshopTypes(bTypes))
-            return 0;
-
-        cw_Ptr = (t_customWorkshop*)((*t_customWorkshop_buffer_create)(bTypes.size()));
+            return NULL;
+		
+		(*alloc_t_customWorkshop_buffer_callback)(cw_Ptr, bTypes.size());
+		
+		if(cw_Ptr == NULL)
+			return NULL;
+		
         for(i = 0, bIter = bTypes.begin(); bIter != bTypes.end(); bIter++, i++)
         {
             cw_Ptr[i].index = (*bIter).first;
             size_t length = (*bIter).second.copy(cw_Ptr[i].name, 256);
             cw_Ptr[i].name[length] = '\0';
         }
-        return 1;
+		
+        return cw_Ptr;
     }
 
-    return -1;
+    return NULL;
 }
 
 #ifdef __cplusplus

@@ -1,5 +1,5 @@
 from ctypes import *
-from pydftypes import *
+from dftypes import *
 import util
 
 libdfhack.Buildings_GetCustomWorkshopType.argtypes = [ c_void_p, POINTER(CustomWorkshop) ]
@@ -28,20 +28,7 @@ class Buildings(object):
             return None
 
     def read_custom_workshop_types(self):
-        def read_callback(count):
-            allocated = util._allocate_array(CustomWorkshop, count)
-            
-            workshop_types = allocated[0]
-
-            return allocated[1]
-
-        workshop_types = None
-        callback = _arr_create_func(read_callback)
-
-        if libdfhack.Buildings_ReadCustomWorkshopTypes(self._b_ptr, callback) > 0:
-            return workshop_types
-        else:
-            return None
+        return libdfhack.Buildings_ReadCustomWorkshopTypes(self._b_ptr)
 
     def get_custom_workshop_type(self, custom_workshop):
         return libdfhack.Buildings_GetCustomWorkshopType(self._b_ptr, byref(custom_workshop))

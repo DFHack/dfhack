@@ -33,6 +33,7 @@ using namespace std;
 
 #include "Internal.h"
 #include "dfhack/DFTypes.h"
+#include "dfhack/DFTileTypes.h"
 #include "dfhack-c/DFTypes_C.h"
 #include "dfhack/modules/Materials.h"
 
@@ -55,6 +56,9 @@ int (*alloc_char_buffer_callback)(char*, uint32_t) = NULL;
 int (*alloc_matgloss_buffer_callback)(t_matgloss*, uint32_t) = NULL;
 int (*alloc_descriptor_buffer_callback)(t_descriptor_color*, uint32_t) = NULL;
 int (*alloc_matgloss_other_buffer_callback)(t_matglossOther*, uint32_t) = NULL;
+
+int (*alloc_t_customWorkshop_buffer_callback)(t_customWorkshop*, uint32_t) = NULL;
+int (*alloc_t_material_buffer_callback)(t_material*, uint32_t) = NULL;
 
 int (*alloc_empty_colormodifier_callback)(c_colormodifier*) = NULL;
 int (*alloc_colormodifier_callback)(c_colormodifier*, const char*, uint32_t) = NULL;
@@ -100,6 +104,16 @@ int DFHack_isOpenTerrain(int in)
 int DFHack_getVegetationType(int in)
 {
 	return DFHack::getVegetationType(in);
+}
+
+int DFHack_getTileType(int index, TileRow* tPtr)
+{
+	if(index >= TILE_TYPE_ARRAY_LENGTH)
+		return 0;
+	
+	*tPtr = tileTypeTable[index];
+	
+	return 1;
 }
 
 #ifdef __cplusplus

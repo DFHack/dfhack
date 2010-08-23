@@ -407,6 +407,30 @@ t_matglossOther* Materials_getOther(DFHackObject* mat)
 	return NULL;
 }
 
+t_matgloss* Materials_getAllDesc(DFHackObject* mat)
+{
+	if(mat != NULL)
+	{
+		DFHack::Materials* materials = (DFHack::Materials*)mat;
+		
+		if(materials->alldesc.size() > 0)
+		{
+			t_matgloss* buf;
+			
+			((*alloc_matgloss_buffer_callback)(buf, materials->alldesc.size()));
+			
+			if(buf != NULL)
+			{
+				copy(materials->race.begin(), materials->alldesc.end(), buf);
+				
+				return buf;
+			}
+		}
+	}
+	
+	return NULL;
+}
+
 #ifdef __cplusplus
 }
 #endif

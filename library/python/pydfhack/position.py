@@ -1,5 +1,5 @@
 from ctypes import *
-from pydftypes import libdfhack
+from dftypes import libdfhack
 
 class Position(object):
     def __init__(self, ptr):

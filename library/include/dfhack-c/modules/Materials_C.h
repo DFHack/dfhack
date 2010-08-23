@@ -62,9 +62,9 @@ DFHACK_EXPORT t_matgloss* Materials_getPlant(DFHackObject* mat);
 DFHACK_EXPORT t_matgloss* Materials_getRace(DFHackObject* mat);
 
 DFHACK_EXPORT c_creaturetype* Materials_getRaceEx(DFHackObject* mat);
-
 DFHACK_EXPORT t_descriptor_color* Materials_getColor(DFHackObject* mat);
 DFHACK_EXPORT t_matglossOther* Materials_getOther(DFHackObject* mat);
+DFHACK_EXPORT t_matgloss* Materials_getAllDesc(DFHackObject* mat);
 
 #ifdef __cplusplus
 }

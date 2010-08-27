@@ -43,11 +43,6 @@ struct Position::Private
     uint32_t hotkey_size;
     
     uint32_t screen_tiles_ptr_offset;
-    uint32_t last_screen_offset;
-
-    uint8_t* tiles;
-    uint32_t tiles_size;
-    bool first_read; // used in getScreenTiles
 
     DFContextShared *d;
     Process * owner;
@@ -62,11 +57,6 @@ Position::Position(DFContextShared * d_)
     d = new Private;
     d->d = d_;
     d->owner = d_->p;
-    d->last_screen_offset = (uint32_t) 0;
-    d->tiles = (uint8_t*) 0;
-    d->first_read = true;
-    d->tiles_size = 0;
-
     d->Inited = true;
     d->StartedHotkeys = d->Started = d->StartedScreen = false;
     memory_info * mem;
@@ -100,7 +90,6 @@ Position::Position(DFContextShared * d_)
 
 Position::~Position()
 {
-    if (d->tiles) delete[] d->tiles;
     delete d;
 }
 
@@ -187,42 +176,13 @@ bool Position::getScreenTiles (int32_t width, int32_t height, t_screen screen[])
     if(!d->Inited) return false;
     if(!d->StartedScreen) return false;
 
-    /*
-      To work around flickering without synchronization,
-      we take advantage of double buffering in DF.
-
-      We don't return the buffer currently in use,
-      but the buffer that was last used. This has much less
-      chance of being empty or flicker.
-    */
-
     uint32_t screen_addr;
-    
     d->owner->read (d->screen_tiles_ptr_offset, sizeof(uint32_t), (uint8_t *) &screen_addr);
-    if (d->first_read)
-        d->last_screen_offset = screen_addr;
-    
-    if (d->tiles && width * height * 4 != d->tiles_size)
-    {
-        delete[] d->tiles;
-        d->tiles = (uint8_t*) 0;
-    }
 
-    if (!d->tiles)
-    {
-        d->tiles = new uint8_t[width * height * 4];
-        d->tiles_size = width * height * 4;
-    }
-    
-    if (d->last_screen_offset != screen_addr || d->first_read)
-    {
-        d->owner->read (d->last_screen_offset, width*height*4, (uint8_t*) d->tiles);
-        d->last_screen_offset = screen_addr;
-    }
+    uint8_t* tiles = new uint8_t[width*height*4/* + 80 + width*height*4*/];
 
-    d->first_read = false;
-    const uint8_t* tiles = d->tiles;
-    
+    d->owner->read (screen_addr, (width*height*4/* + 80 + width*height*4*/), (uint8_t *) tiles);
+
     for(int32_t iy=0; iy<height; iy++)
     {
         for(int32_t ix=0; ix<width; ix++)
@@ -235,6 +195,8 @@ bool Position::getScreenTiles (int32_t width, int32_t height, t_screen screen[])
             //screen[ix + iy*width].grayscale = tiles[width*height*4 + 80 + iy + ix*height +1];
         }
     }
+
+    delete [] tiles;
 
     return true;
 }

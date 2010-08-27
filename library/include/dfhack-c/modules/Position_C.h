@@ -38,7 +38,11 @@ DFHACK_EXPORT int Position_setViewCoords(DFHackObject* pos, const int32_t x, con
 DFHACK_EXPORT int Position_getCursorCoords(DFHackObject* pos, int32_t* x, int32_t* y, int32_t* z);
 DFHACK_EXPORT int Position_setCursorCoords(DFHackObject* pos, const int32_t x, const int32_t y, const int32_t z);
 
+DFHACK_EXPORT t_hotkey* Position_ReadHotkeys(DFHackObject* pos);
+
 DFHACK_EXPORT int Position_getWindowSize(DFHackObject* pos, int32_t* width, int32_t* height);
+
+DFHACK_EXPORT t_screen* Position_getScreenTiles(DFHackObject* pos, int32_t width, int32_t height);
 
 #ifdef __cplusplus
 }

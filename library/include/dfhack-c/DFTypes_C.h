@@ -29,6 +29,7 @@ distribution.
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Maps.h"
 #include "dfhack/modules/Materials.h"
+#include "dfhack/modules/Position.h"
 #include "dfhack/DFTileTypes.h"
 
 #ifdef __cplusplus

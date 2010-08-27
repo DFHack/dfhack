@@ -2360,6 +2360,7 @@ map_data_1b60_offset          0x1B9c
     </Entry>
     <Entry version="v0.31.12" os="linux" id="30_12lin" base="30_11lin" rebase="-0x1000">
         <String name="md5">e79cead03187ecb692961b316b7cdcd4</String>
+        <Address name="screen_tiles_pointer">0xb291a2c</Address>
     </Entry>
     </MemoryDescriptors>
 </DFExtractor>

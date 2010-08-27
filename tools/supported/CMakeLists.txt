@@ -116,9 +116,3 @@ dfflows
 dfliquids
 RUNTIME DESTINATION bin
 )
-IF(UNIX)
-    install(TARGETS
-    dfveinlook
-    RUNTIME DESTINATION bin
-    )
-ENDIF(UNIX)

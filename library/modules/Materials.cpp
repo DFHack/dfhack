@@ -258,24 +258,24 @@ bool Materials::ReadCreatureTypes (void)
 
 bool Materials::ReadOthers(void)
 {
-	Process * p = d->owner;
-	uint32_t matBase = p->getDescriptor()->getAddress ("mat_other");
-	uint32_t i = 0;
-	uint32_t ptr;
+    Process * p = d->owner;
+    uint32_t matBase = p->getDescriptor()->getAddress ("mat_other");
+    uint32_t i = 0;
+    uint32_t ptr;
 
-	other.clear();
+    other.clear();
 
-	while(1)
-	{
-		t_matglossOther mat;
-		ptr = p->readDWord(matBase + i*4);
-		if(ptr==0)
-			break;
-		p->readSTLString(ptr, mat.rawname, sizeof(mat.rawname));
-		other.push_back(mat);
-		i++;
-	}
-	return true;
+    while(1)
+    {
+        t_matglossOther mat;
+        ptr = p->readDWord(matBase + i*4);
+        if(ptr==0)
+            break;
+        p->readSTLString(ptr, mat.rawname, sizeof(mat.rawname));
+        other.push_back(mat);
+        i++;
+    }
+    return true;
 }
 
 bool Materials::ReadDescriptorColors (void)

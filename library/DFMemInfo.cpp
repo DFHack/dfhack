@@ -739,31 +739,40 @@ std::string memory_info::getMood(const uint32_t moodID)
 std::string memory_info::PrintOffsets()
 {
     ostringstream ss;
-    ss << "version:  " << getVersion();
+    ss << "<Version name=\"" << getVersion() << "\">" << endl;
     switch (getOS())
     {
         case OS_LINUX:
-            ss << " LINUX" << endl;
-            ss << "md5 hash:     " << getString("md5") << endl;
+            ss << "<MD5 value=\"" << getString("md5") << "\" />" << endl;
             break;
         case OS_WINDOWS:
-            ss << " WINDOWS" << endl;
-            ss << "PE timestamp: " << hex << "0x" << getHexValue("pe_timestamp") << endl;
-            ss << "md5 hash:     " << getString("md5") << endl;
+            ss << "<PETimeStamp value=\"" << hex << "0x" << getHexValue("pe_timestamp") << "\" />" << endl;
+            ss << "<MD5 value=\"" << getString("md5") << "\" />" << endl;
             break;
         default:
             ss << " UNKNOWN" << endl;
     }
-    
+    ss << "<Offsets>" << endl;
     map<string,uint32_t>::const_iterator iter;
     for(iter = d->addresses.begin(); iter != d->addresses.end(); iter++)
     {
-        ss << "address " << (*iter).first << " : " << hex << "0x" << (*iter).second << endl;
+        ss << "    <Address name=\"" << (*iter).first << "\" value=\"" << hex << "0x" << (*iter).second << "\" />" << endl;
     }
     map<string,int32_t>::const_iterator iter2;
     for(iter2 = d->offsets.begin(); iter2 != d->offsets.end(); iter2++)
     {
-        ss << "offset  " << (*iter2).first << " : " << hex << "0x" << (*iter2).second << endl;
+        ss << "    <Offset name=\"" << (*iter2).first << "\" value=\"" << hex << "0x" << (*iter2).second <<"\" />" << endl;
     }
+    for(iter = d->hexvals.begin(); iter != d->hexvals.end(); iter++)
+    {
+        ss << "    <HexValue name=\"" << (*iter).first << "\" value=\"" << hex << "0x" << (*iter).second <<"\" />" << endl;
+    }
+    map<string,string>::const_iterator iter3;
+    for(iter3 = d->strings.begin(); iter3 != d->strings.end(); iter3++)
+    {
+        ss << "    <String name=\"" << (*iter3).first << "\" value=\"" << (*iter3).second <<"\" />" << endl;
+    }
+    ss << "</Offsets>" << endl;
+    ss << "</Version>" << endl;
     return ss.str();
 }

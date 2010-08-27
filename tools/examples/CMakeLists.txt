@@ -24,10 +24,6 @@ TARGET_LINK_LIBRARIES(dfcreaturedump dfhack)
 ADD_EXECUTABLE(dfmaterialtest materialtest.cpp)
 TARGET_LINK_LIBRARIES(dfmaterialtest dfhack)
 
-# position - check the DF window and cursor parameters
-ADD_EXECUTABLE(dfposition position.cpp)
-TARGET_LINK_LIBRARIES(dfposition dfhack)
-
 # itemdump - dump the item under the cursor
 ADD_EXECUTABLE(dfitemdump dfitemdump.cpp)
 TARGET_LINK_LIBRARIES(dfitemdump dfhack)
@@ -59,7 +55,6 @@ dfbuildingsdump
 dfconstructiondump
 dfcreaturedump
 dfmaterialtest
-dfposition
 dfitemdump
 dfhotkeynotedump
 dftreedump

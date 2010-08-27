@@ -380,7 +380,6 @@ namespace DFHack
         int32_t GetDwarfCivId ( void );
 
         /* Write Functions */
-        // write labors of a creature (for Dwarf Therapist)
         bool WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
         bool WriteHappiness(const uint32_t index, const uint32_t happinessValue);
         bool WriteFlags(const uint32_t index, const uint32_t flags1, const uint32_t flags2);
@@ -390,6 +389,7 @@ namespace DFHack
         bool WriteTraits(const uint32_t index, const t_soul &soul);
         bool WriteMood(const uint32_t index, const uint16_t mood);
         bool WriteMoodSkill(const uint32_t index, const uint16_t moodSkill);
+		bool WriteJob(const t_creature * furball, std::vector<t_material> const& mat);
         bool WritePos(const uint32_t index, const t_creature &creature);
         bool WriteCiv(const uint32_t index, const int32_t civ);
 

@@ -1,0 +1,73 @@
+/*******************************************************************************
+www.sourceforge.net/projects/dfhack
+Copyright (c) 2009 Petr Mrázek (peterix)
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any
+damages arising from the use of this software.
+
+Permission is granted to anyone to use this software for any
+purpose, including commercial applications, and to alter it and
+redistribute it freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must
+not claim that you wrote the original software. If you use this
+software in a product, an acknowledgment in the product documentation
+would be appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and
+must not be misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source
+distribution.
+*/
+
+/*! \page index
+<center>
+\htmlonly
+<h1>DFHack</h1>
+<!--<img src="logo.png" alt="DFHack"/><br/>-->
+\endhtmlonly
+</center>
+
+<h2>Introduction</h2>
+DFHack is a Dwarf Fortress memory access library and a set of basic tools using 
+this library. The library is a work in progress, so things might change as more
+tools are written for it.
+
+It is an attempt to unite the various ways tools access DF memory and allow for
+easier development of new tools. In general, you can use it to move memory
+objects in and out of Dwarf Fortress really fast, regardless of DF version or OS.
+
+First part of the manual deals with the basic of using DFHack as a library:
+<ul>
+PLACEHOLDER TERRITORY!
+
+<li>Section \ref blah discusses some weird stuff 
+      <a href="target">this is a link</a>
+<li>Section \ref starting tells you how to cromulate at a distance!
+</ul>
+
+Second part has some details on DFHack development:
+
+<ul>
+<li>Section \ref starting tells you how to cromulate at a distance!
+</ul>
+
+The third part describes how to use the supported DFHack utilities
+
+<ul>
+<li>Section \ref dfattachtest shows how to use the \c dfattachtest program
+<li>Section \ref dfcleanmap shows how to use the \c dfcleanmap program
+<li>Section \ref dfexpbench shows how to use the \c dfexpbench program
+<li>Section \ref dfflows shows how to use the \c dfflows program
+<li>Section \ref dfliquids shows how to use the \c dfliquids program
+<li>Section \ref dfprobe shows how to use the \c dfprobe program
+<li>Section \ref dfprospector shows how to use the \c dfprospector program
+<li>Section \ref dfreveal shows how to use the \c dfreveal program
+<li>Section \ref dfsuspend shows how to use the \c dfsuspend program
+<li>Section \ref dfunstuck shows how to use the \c dfunstuck program
+<li>Section \ref dfvdig shows how to use the \c dfvdig program
+</ul>
+*/
+

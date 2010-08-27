@@ -87,13 +87,9 @@ This will generate MSVC solution and project files.
 .. note::
     
     You are working in the ``/build`` folder. Files added to
-    projects will end up there! (and that's wrong). Any changes to the
-    build system should be done by changing cmake configs and running
-    ``cmake`` on them!
-
-Also, you'll have to copy the ``Memory.xml`` file to the build output
-folders MSVC generates. For example from ``output/`` to
-``output/Release/``
+    projects from within MSVC will end up there! (and that's
+    wrong). Any changes to the build system should be done
+    by changing cmake configs and running ``cmake`` on them!
 
 -------------------------
 Using some other compiler
@@ -111,6 +107,17 @@ dfhack has a few build targets:
 * ``make`` will build everything.
 * ``make expbench`` will build the expbench testing program and the
   library.
+* Some of the utilities and the doxygen documentation won't be
+  normally built. You can enable them by specifying some extra
+  CMake variables::
+
+    BUILD_DFHACK_DOCUMENTATION - generate the documentation (really bad)
+    BUILD_DFHACK_EXAMPLES      - build tools from tools/examples
+    BUILD_DFHACK_PLAYGROUND    - build tools from tools/playground
+    
+  Example::
+
+    cmake .. -DBUILD_DFHACK_EXAMPLES=ON
 
 Build types
 ===========
@@ -136,59 +143,5 @@ comes to compilation. Because it shares the memory space with DF
 itself, it has to be built with the same tools as DF and use the same C
 and C++/STL libraries.
 
-For DF 31.01 - 31.10 on Windows, use MSVC 2008. You can get the Express
+For DF 31.01 - 31.12 on Windows, use MSVC 2008. You can get the Express
 edition for free from Microsoft.
-
-Windows dependencies can be determined by a tool like ``depends.exe``
-(`google it`_). Both the fake ``SDL.dll`` and DF have to use the same
-version of the C runtime (MSVCRT). The SHM can only be debugged using a
-RelWithDebInfo build!
-
-Linux dependencies can be determined by setting the LD_DEBUG variable
-and running ./df::
-    
-    export LD_DEBUG=versions
-    ./df
-
-Example of (a part of a) relevant output from a working SHM
-installation::
-    
-    24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libpthread.so.0 [0] required by file ./dwarfort.exe [0]
-    24472:     checking for version `GCC_3.0' in file ./libs/libgcc_s.so.1 [0] required by file ./dwarfort.exe [0]
-    24472:     checking for version `GLIBC_2.0' in file ./libs/libgcc_s.so.1 [0] required by file ./dwarfort.exe [0]
-    24472:     checking for version `GLIBC_2.1' in file /opt/lib32/lib/libm.so.6 [0] required by file ./dwarfort.exe [0]
-    24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libm.so.6 [0] required by file ./dwarfort.exe [0]
-    24472:     checking for version `GLIBC_2.1.3' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]
-    24472:     checking for version `GLIBC_2.3.4' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]
-    24472:     checking for version `GLIBC_2.4' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]
-    24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libc.so.6 [0] required by file ./dwarfort.exe [0]
-    24472:     checking for version `GLIBCXX_3.4.9' in file ./libs/libstdc++.so.6 [0] required by file ./dwarfort.exe [0]
-    24472:     checking for version `CXXABI_1.3' in file ./libs/libstdc++.so.6 [0] required by file ./dwarfort.exe [0]
-    24472:     checking for version `GLIBCXX_3.4' in file ./libs/libstdc++.so.6 [0] required by file ./dwarfort.exe [0]
-    24472:     checking for version `CXXABI_1.3' in file ./libs/libstdc++.so.6 [0] required by file ./libs/libdfconnect.so [0]
-    24472:     checking for version `GLIBCXX_3.4' in file ./libs/libstdc++.so.6 [0] required by file ./libs/libdfconnect.so [0]
-    24472:     checking for version `GLIBC_2.1.3' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]
-    24472:     checking for version `GLIBC_2.2' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]
-    24472:     checking for version `GLIBC_2.3.4' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]
-    24472:     checking for version `GLIBC_2.0' in file /opt/lib32/lib/libc.so.6 [0] required by file ./libs/libdfconnect.so [0]
-
-libdfconnect is the SHM. Both are compiled against the same C++ library
-and share the same CXXABI version.
-
-Precompiled SHM libraries are provided in binary releases.
-
-.. _google it: http://www.google.com/search?q=depends.exe
-
-Checking strings support
-========================
-Strings are one of the important C++ types and a great indicator that
-the SHM works. Tools like Dwarf Therapist depend on string support.
-Reading of strings can be checked by running any of the tools that deal
-with materials.
-
-String writing is best tested with a fresh throw-away fort and
-``dfrenamer``.
-
-Embark, give one dwarf a very long name using dfrenamer and save/exit.
-If DF crashes during the save sequence, your SHM is not compatible with
-DF and the throw-away fort is most probably lost.

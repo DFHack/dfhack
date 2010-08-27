@@ -154,9 +154,9 @@ void MemInfoManager::ParseEntry (TiXmlElement* entry, memory_info* mem, map <str
         const char *cstr_type = pMemEntry->Value();
         const char *cstr_name = pMemEntry->Attribute("name");		
         const char *cstr_value = pMemEntry->GetText();
-		
-		if(!cstr_value)
-			cstr_value = pMemEntry->Attribute("id");
+
+        if(!cstr_value)
+            cstr_value = pMemEntry->Attribute("id");
 
         // check for missing parts
         string type, name, value;

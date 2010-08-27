@@ -519,6 +519,27 @@ bool Creatures::WriteMoodSkill(const uint32_t index, const uint16_t moodSkill)
     return true;
 }
 
+bool Creatures::WriteJob(const t_creature * furball, std::vector<t_material> const& mat)
+{
+	unsigned int i;
+    if(!d->Inited) return false;
+    if(!furball->current_job.active) return false;
+    Process * p = d->owner;
+    memory_info * minfo = d->d->offset_descriptor;
+
+    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + minfo->getOffset("job_materials_vector"));
+
+    for(i=0;i<cmats.size();i++)
+    {
+        p->writeWord(cmats[i] + minfo->getOffset("job_material_maintype"), mat[i].itemType);
+        p->writeWord(cmats[i] + minfo->getOffset("job_material_sectype1"), mat[i].subType);
+        p->writeWord(cmats[i] + minfo->getOffset("job_material_sectype2"), mat[i].subIndex);
+        p->writeDWord(cmats[i] + minfo->getOffset("job_material_sectype3"), mat[i].index);
+        p->writeDWord(cmats[i] + minfo->getOffset("job_material_flags"), mat[i].flags);
+    }
+    return true;
+}
+
 bool Creatures::WritePos(const uint32_t index, const t_creature &creature)
 {
 	if(!d->Started)

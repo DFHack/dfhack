@@ -1,5 +1,5 @@
 from ctypes import *
-from pydftypes import libdfhack, Creature, Material
+from dftypes import libdfhack, Creature, Material
 import util
 
 libdfhack.Creatures_WriteLabors.argtypes = [ c_void_p, c_uint, POINTER(c_ubyte) ]
@@ -45,31 +45,18 @@ class Creatures(object):
         return libdfhack.Creatures_WriteLabors(self._c_ptr, c_uint(index), labors) > 0
 
     def read_job(self, creature):
-        def read_callback(count):
-            allocated = util._allocate_array(Material, count)
-
-            jobs = allocated[0]
-
-            return allocated[1]
-
-        jobs = None
-        callback = _arr_create_func(read_callback)
-
-        if libdfhack.Creatures_ReadJob(self._c_ptr, byref(creature), callback) > 0:
-            return jobs
-        else:
-            return None
+        return libdfhack.Creatures_ReadJob(self._c_ptr, byref(creature))
 
     @property
     def dwarf_race_index(self):
         if self._d_race_index is None:
-            self._d_race_index = int(libdfhack.Creatures_GetDwarfRaceIndex(self._c_ptr).value)
+            self._d_race_index =libdfhack.Creatures_GetDwarfRaceIndex(self._c_ptr)
 
         return self._d_race_index
 
     @property
     def dwarf_civ_id(self):
         if self._d_civ_id is None:
-            self._d_civ_id = int(libdfhack.Creatures_GetDwarfCivId(self._c_ptr).value)
+            self._d_civ_id = libdfhack.Creatures_GetDwarfCivId(self._c_ptr)
 
         return self._d_civ_id

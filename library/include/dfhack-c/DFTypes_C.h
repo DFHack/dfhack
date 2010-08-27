@@ -29,6 +29,7 @@ distribution.
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Maps.h"
 #include "dfhack/modules/Materials.h"
+#include "dfhack/DFTileTypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,6 +48,16 @@ DFHACK_EXPORT extern int (*alloc_char_buffer_callback)(char*, uint32_t);
 DFHACK_EXPORT extern int (*alloc_matgloss_buffer_callback)(t_matgloss*, uint32_t);
 DFHACK_EXPORT extern int (*alloc_descriptor_buffer_callback)(t_descriptor_color*, uint32_t);
 DFHACK_EXPORT extern int (*alloc_matgloss_other_buffer_callback)(t_matglossOther*, uint32_t);
+
+struct t_customWorkshop
+{
+	uint32_t index;
+	char name[256];
+};
+
+DFHACK_EXPORT extern int (*alloc_t_customWorkshop_buffer_callback)(t_customWorkshop*, uint32_t);
+
+DFHACK_EXPORT extern int (*alloc_t_material_buffer_callback)(t_material*, uint32_t);
 
 struct c_colormodifier
 {
@@ -111,6 +122,8 @@ DFHACK_EXPORT extern int DFHack_isRampTerrain(int in);
 DFHACK_EXPORT extern int DFHack_isStairTerrain(int in);
 DFHACK_EXPORT extern int DFHack_isOpenTerrain(int in);
 DFHACK_EXPORT extern int DFHack_getVegetationType(int in);
+
+DFHACK_EXPORT extern int DFHack_getTileType(int index, TileRow* tPtr);
 
 #ifdef __cplusplus
 }

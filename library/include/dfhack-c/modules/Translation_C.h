@@ -27,6 +27,7 @@ distribution.
 
 #include "DFHack_C.h"
 #include "dfhack/DFTypes.h"
+#include "dfhack-c/DFTypes_C.h"
 #include "dfhack/modules/Translation.h"
 
 #ifdef __cplusplus
@@ -36,8 +37,8 @@ extern "C" {
 DFHACK_EXPORT int Translation_Start(DFHackObject* trans);
 DFHACK_EXPORT int Translation_Finish(DFHackObject* trans);
 
-DFHACK_EXPORT char* Translation_TranslateNameEnglish(DFHackObject* trans, const DFHack::t_name* name, char* (*char_buffer_create)(int));
-DFHACK_EXPORT char* Translation_TranslateNameNonEnglish(DFHackObject* trans, const DFHack::t_name* name, char* (*char_buffer_create)(int));
+DFHACK_EXPORT char* Translation_TranslateNameEnglish(DFHackObject* trans, const DFHack::t_name* name);
+DFHACK_EXPORT char* Translation_TranslateNameNonEnglish(DFHackObject* trans, const DFHack::t_name* name);
 
 #ifdef __cplusplus
 }

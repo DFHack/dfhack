@@ -1,5 +1,5 @@
 from ctypes import *
-from pydftypes import libdfhack
+from dftypes import libdfhack
 from util import *
 
 _get_arg_types = [ c_void_p, _arr_create_func ]

@@ -28,23 +28,18 @@ distribution.
 #include "DFHack_C.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Buildings.h"
+#include "dfhack-c/DFTypes_C.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct t_customWorkshop
-{
-	uint32_t index;
-	char name[256];
-};
 
 DFHACK_EXPORT int Buildings_Start(DFHackObject* b_Ptr, uint32_t* numBuildings);
 DFHACK_EXPORT int Buildings_Finish(DFHackObject* b_Ptr);
 
 DFHACK_EXPORT int Buildings_Read(DFHackObject* b_Ptr, const uint32_t index, t_building* building);
 
-DFHACK_EXPORT int Buildings_ReadCustomWorkshopTypes(DFHackObject* b_Ptr, void* (*t_customWorkshop_buffer_create)(uint32_t));
+DFHACK_EXPORT t_customWorkshop* Buildings_ReadCustomWorkshopTypes(DFHackObject* b_Ptr);
 DFHACK_EXPORT int Buildings_GetCustomWorkshopType(DFHackObject* b_Ptr, t_building* building);
 
 #ifdef __cplusplus

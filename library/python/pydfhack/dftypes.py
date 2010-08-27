@@ -1,5 +1,5 @@
 from ctypes import *
-from pydfhackflags import *
+from flags import *
 from enum import *
 from util import *
 
@@ -23,6 +23,24 @@ BiomeIndices40d = c_ubyte * 16
 Temperatures = ((c_ushort * 16) * 16)
 Designations40d = ((DesignationFlags * 16) * 16)
 Occupancies40d = ((OccupancyFlags * 16) * 16)
+
+def wall_terrain_check(terrain):
+    return libdfhack.DFHack_isWallTerrain(terrain) > 0
+
+def floor_terrain_check(terrain):
+    return libdfhack.DFHack_isFloorTerrain(terrain) > 0
+
+def ramp_terrain_check(terrain):
+    return libdfhack.DFHack_isRampTerrain(terrain) > 0
+
+def stair_terrain_check(terrain):
+    return libdfhack.DFHack_isStairTerrain(terrain) > 0
+
+def open_terrain_check(terrain):
+    return libdfhack.DFHack_isOpenTerrain(terrain) > 0
+
+def get_vegetation_type(terrain):
+    return libdfhack.DFHack_getVegetationType(terrain)
 
 class Position2D(Structure):
     _fields_ = [("x", c_ushort),
@@ -52,10 +70,30 @@ class Vein(Structure):
                 ("flags", c_uint),
                 ("address_of", c_uint)]
 
+def _alloc_vein_buffer_callback(ptr, count):
+    allocated = _allocate_array(Vein, count)
+
+    ptr = addressof(allocated[0])
+
+    return 1
+
+_vein_functype = CFUNCTYPE(c_int, POINTER(Vein), c_uint)
+libdfhack.alloc_vein_buffer_callback = _vein_functype(_alloc_vein_buffer_callback)
+
 class FrozenLiquidVein(Structure):
     _fields_ = [("vtable", c_uint),
                 ("tiles", TileTypes40d),
                 ("address_of", c_uint)]
+
+def _alloc_frozenliquidvein_buffer_callback(ptr, count):
+    allocated = _allocate_array(FrozenLiquidVein, count)
+
+    ptr = addressof(allocated[0])
+
+    return 1
+
+_frozenliquidvein_functype = CFUNCTYPE(c_int, POINTER(FrozenLiquidVein), c_uint)
+libdfhack.alloc_frozenliquidvein_buffer_callback = _frozenliquidvein_functype(_alloc_frozenliquidvein_buffer_callback)
 
 class SpatterVein(Structure):
     _fields_ = [("vtable", c_uint),
@@ -65,6 +103,16 @@ class SpatterVein(Structure):
                 ("mat3", c_ushort),
                 ("intensity", ((c_ubyte * 16) * 16)),
                 ("address_of", c_uint)]
+
+def _alloc_spattervein_buffer_callback(ptr, count):
+    allocated = _allocate_array(SpatterVein, count)
+
+    ptr = addressof(allocated[0])
+
+    return 1
+
+_spattervein_functype = CFUNCTYPE(c_int, POINTER(SpatterVein), c_uint)
+libdfhack.alloc_spatter_buffer_callback = _spattervein_functype(_alloc_spattervein_buffer_callback)
 
 class MapBlock40d(Structure):
     _fields_ = [("tiletypes", TileTypes40d),
@@ -146,6 +194,16 @@ class CustomWorkshop(Structure):
     _fields_ = [("index", c_uint),
                 ("name", c_char * 256)]
 
+def _alloc_custom_workshop_buffer_callback(count):
+    allocated = _allocate_array(CustomWorkshop, count)
+    
+    ptr = addressof(allocated[0])
+    
+    return 1
+
+_custom_workshop_functype = CFUNCTYPE(c_int, POINTER(CustomWorkshop), c_uint)
+libdfhack.alloc_t_customWorkshop_buffer_callback = _custom_workshop_functype(_alloc_custom_workshop_buffer_callback)
+
 class Construction(Structure):
     _fields_ = [("x", c_ushort),
                 ("y", c_ushort),
@@ -175,10 +233,20 @@ class Material(Structure):
                 ("index", c_int),
                 ("flags", c_uint)]
 
+def _alloc_material_buffer_callback(count):
+    allocated = _allocate_array(Material, count)
+    
+    ptr = addressof(allocated[0])
+    
+    return 1
+
+_material_functype = CFUNCTYPE(c_int, POINTER(Material), c_uint)
+libdfhack.alloc_t_material_buffer_callback = _material_functype(_alloc_material_buffer_callback)
+
 class Skill(Structure):
-    _fields_ = [("id", c_ushort),
+    _fields_ = [("id", c_uint),
                 ("experience", c_uint),
-                ("rating", c_ushort)]
+                ("rating", c_uint)]
 
 class Job(Structure):
     _fields_ = [("active", c_byte),
@@ -284,7 +352,9 @@ class Creature(Structure):
                 ("has_default_soul", c_byte),
                 ("defaultSoul", Soul),
                 ("nbcolors", c_uint),
-                ("color", (c_uint * _MAX_COLORS))]
+                ("color", (c_uint * _MAX_COLORS)),
+                ("birth_year", c_uint),
+                ("birth_time", c_uint)]
 
 class CreatureExtract(Structure):
     _fields_ = [("rawname", (c_char * 128))]

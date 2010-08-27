@@ -31,24 +31,102 @@ distribution.
 extern "C" {
 #endif
 
+/** 
+Allocates a new ContextManager.
+@param path_to_xml A const string pointer containing the path to the Memory.xml file.
+@return A DFHackObject pointer that points to the allocated ContextManager.
+*/
 DFHACK_EXPORT DFHackObject* ContextManager_Alloc(const char* path_to_xml);
+
+/** 
+Frees a previously allocated ContextManager.
+@param contextMgr A DFHackObject pointer that points to a previously allocated ContextManager.
+@return None.
+*/
 DFHACK_EXPORT void ContextManager_Free(DFHackObject* contextMgr);
 
 DFHACK_EXPORT int ContextManager_Refresh(DFHackObject* contextMgr);
-DFHACK_EXPORT int ContextManager_size(DFHackObject* contextMgr, uint32_t* size);
-DFHACK_EXPORT int ContextManager_purge(DFHackObject* contextMgr);
 
+/**
+Gets the number of active DF processes.
+@param contextMgr A pointer to an active ContextManager.
+@param size A pointer to an unsigned 32-bit integer that will contain the count of active DF processes.
+@return 
+	- 0:  Failure.
+	- 1:  Success.
+	- -1:  An invalid pointer was supplied.
+*/
+DFHACK_EXPORT int ContextManager_size(DFHackObject* contextMgr, uint32_t* size);
+
+DFHACK_EXPORT int ContextManager_purge(DFHackObject* contextMgr);
 DFHACK_EXPORT DFHackObject* ContextManager_getContext(DFHackObject* contextMgr, uint32_t index);
 DFHACK_EXPORT DFHackObject* ContextManager_getSingleContext(DFHackObject* contextMgr);
 
+/** 
+Frees a previously allocated Context.
+@param context A DFHackObject pointer that points to a previously allocated Context.
+@return None.
+*/
 DFHACK_EXPORT void Context_Free(DFHackObject* context);
 
+/**
+Attaches to a running DF process.
+@param context A pointer to an unattached Context.
+@return 
+	- 0:  Failure.
+	- 1:  Success.
+	- -1:  An invalid pointer was supplied.
+*/
 DFHACK_EXPORT int Context_Attach(DFHackObject* context);
+
+/**
+Detaches from a tracked DF process.
+@param context A pointer to an attached Context.
+@return 
+	- 0:  Failure.
+	- 1:  Success.
+	- -1:  An invalid pointer was supplied.
+*/
 DFHACK_EXPORT int Context_Detach(DFHackObject* context);
+
+/**
+Determines whether or not the given Context is attached to a running DF process.
+@param context A pointer to an attached Context.
+@return 
+	- 0:  The supplied Context is not attached.
+	- 1:  The supplied Context is attached.
+	- -1:  An invalid pointer was supplied.
+*/
 DFHACK_EXPORT int Context_isAttached(DFHackObject* context);
 
+/**
+Suspends a running DF process.
+@param context A pointer to an attached Context.
+@return 
+	- 0:  The tracked process was not suspended.
+	- 1:  The tracked process was suspended.
+	- -1:  An invalid pointer was supplied.
+*/
 DFHACK_EXPORT int Context_Suspend(DFHackObject* context);
+
+/**
+Resume a running DF process.
+@param context A pointer to an attached Context.
+@return 
+	- 0:  The tracked process was not resumed.
+	- 1:  The tracked process was resumed.
+	- -1:  An invalid pointer was supplied.
+*/
 DFHACK_EXPORT int Context_Resume(DFHackObject* context);
+
+/**
+Determines whether or not the given Context's tracked process is suspended.
+@param context A pointer to an attached Context.
+@return 
+	- 0:  The tracked process is not suspended.
+	- 1:  The tracked process is suspended.
+	- -1:  An invalid pointer was supplied.
+*/
 DFHACK_EXPORT int Context_isSuspended(DFHackObject* context);
 DFHACK_EXPORT int Context_ForceResume(DFHackObject* context);
 DFHACK_EXPORT int Context_AsyncSuspend(DFHackObject* context);

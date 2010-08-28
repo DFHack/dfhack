@@ -81,7 +81,47 @@ namespace DFHack
         uint32_t type_offset; // offset of type data for multiclass
         std::vector<t_type *> subs;
     };
-}
+    class indentr
+    {
+    public:
+        friend std::basic_ostream<char>& operator <<(std::basic_ostream<char>&, const indentr &);
+        indentr(int ns = 0, int size = 4)
+        {
+            numspaces = ns;
+            step = size;
+        }
+        void indent ()
+        {
+            numspaces += step;
+            if (numspaces < 0) numspaces = 0;
+        }
+        void unindent ()
+        {
+            numspaces -= step;
+            if (numspaces < 0) numspaces = 0;
+        }
+        int get ()
+        {
+            return numspaces;
+        }
+        void set (int ns)
+        {
+            numspaces = ns;
+            if (numspaces < 0) numspaces = 0;
+        }
+        private:
+        int step;
+        int numspaces;
+    };
+    std::basic_ostream<char>& operator<< (std::basic_ostream<char>& os, const indentr & idtr)
+    {
+        for(int i = 0; i < idtr.numspaces ;i++)
+        {
+            os << ' ';
+        }
+        return os;
+    }
+};
 
 /*
  * Private data
@@ -311,38 +351,41 @@ std::string OffsetGroup::getFullName()
     return accum;
 }
 
-std::string OffsetGroup::PrintOffsets()
+std::string OffsetGroup::PrintOffsets(int indentation)
 {
     uint32_Iter iter;
     ostringstream ss;
+    indentr i(indentation);
     for(iter = OGd->addresses.begin(); iter != OGd->addresses.end(); iter++)
     {
         if((*iter).second.first)
-            ss << "<Address name=\"" << (*iter).first << "\" value=\"" << hex << "0x" << (*iter).second.second << "\" />" << endl;
+            ss << i << "<Address name=\"" << (*iter).first << "\" value=\"" << hex << "0x" << (*iter).second.second << "\" />" << endl;
     }
     int32_Iter iter2;
     for(iter2 = OGd->offsets.begin(); iter2 != OGd->offsets.end(); iter2++)
     {
-        if((*iter).second.first)
-            ss << "<Offset name=\"" << (*iter2).first << "\" value=\"" << hex << "0x" << (*iter2).second.second <<"\" />" << endl;
+        if((*iter2).second.first)
+            ss << i << "<Offset name=\"" << (*iter2).first << "\" value=\"" << hex << "0x" << (*iter2).second.second <<"\" />" << endl;
     }
     for(iter = OGd->hexvals.begin(); iter != OGd->hexvals.end(); iter++)
     {
         if((*iter).second.first)
-            ss << "<HexValue name=\"" << (*iter).first << "\" value=\"" << hex << "0x" << (*iter).second.second <<"\" />" << endl;
+            ss << i << "<HexValue name=\"" << (*iter).first << "\" value=\"" << hex << "0x" << (*iter).second.second <<"\" />" << endl;
     }
     strings_Iter iter3;
     for(iter3 = OGd->strings.begin(); iter3 != OGd->strings.end(); iter3++)
     {
         if((*iter3).second.first)
-            ss << "<String name=\"" << (*iter3).first << "\" value=\"" << (*iter3).second.second <<"\" />" << endl;
+            ss << i << "<String name=\"" << (*iter3).first << "\" value=\"" << (*iter3).second.second <<"\" />" << endl;
     }
     groups_Iter iter4;
     for(iter4 = OGd->groups.begin(); iter4 != OGd->groups.end(); iter4++)
     {
-        ss << "<Group name=\"" << (*iter4).first << "\">" << endl;
-        ss <<(*iter4).second->PrintOffsets();
-        ss << "</Group>" << endl;
+        ss << i << "<Group name=\"" << (*iter4).first << "\">" << endl;
+        i.indent();
+        ss <<(*iter4).second->PrintOffsets(i.get());
+        i.unindent();
+        ss << i << "</Group>" << endl;
     }
     return ss.str();
 }
@@ -959,26 +1002,31 @@ std::string VersionInfo::getMood(const uint32_t moodID)
     throw Error::MissingMemoryDefinition("Mood", moodID);
 }
 
-
 std::string VersionInfo::PrintOffsets()
 {
     ostringstream ss;
-    ss << "<Version name=\"" << getVersion() << "\">" << endl;
+    indentr i;
+    ss << i << "<Version name=\"" << getVersion() << "\">" << endl;
+    i.indent();
     switch (getOS())
     {
         case OS_LINUX:
-            ss << "<MD5 value=\"" << getMD5() << "\" />" << endl;
+            ss << i << "<MD5 value=\"" << getMD5() << "\" />" << endl;
             break;
         case OS_WINDOWS:
-            ss << "<PETimeStamp value=\"" << hex << "0x" << getPE() << "\" />" << endl;
-            ss << "<MD5 value=\"" << getMD5() << "\" />" << endl;
+            ss << i << "<PETimeStamp value=\"" << hex << "0x" << getPE() << "\" />" << endl;
+            ss << i << "<MD5 value=\"" << getMD5() << "\" />" << endl;
             break;
         default:
-            ss << " UNKNOWN" << endl;
+            ss << i << " UNKNOWN" << endl;
     }
-    ss << "<Offsets>" << endl;
-    ss << OffsetGroup::PrintOffsets();
-    ss << "</Offsets>" << endl;
-    ss << "</Version>" << endl;
+    ss << i << "<Offsets>" << endl;
+    i.indent();
+    ss << OffsetGroup::PrintOffsets(i.get());
+    i.unindent();
+    ss << i << "</Offsets>" << endl;
+    i.unindent();
+    ss << i << "</Version>" << endl;
+    ss << endl;
     return ss.str();
 }

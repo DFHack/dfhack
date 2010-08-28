@@ -36,6 +36,7 @@ namespace DFHack
     * Stubs
     */
     class Process;
+    class XMLPP;
     struct t_class;
     class VersionInfoPrivate;
     class OffsetGroupPrivate;
@@ -71,7 +72,7 @@ namespace DFHack
         void setAddress (const std::string & key, const std::string & value);
         void setHexValue (const std::string & key, const std::string & value);
         void setString (const std::string & key, const std::string & value);
-        std::string PrintOffsets();
+        std::string PrintOffsets(int indentation);
         std::string getName();
         std::string getFullName();
         OffsetGroup * getParent();

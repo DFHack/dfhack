@@ -37,6 +37,7 @@ class Materials::Private
     public:
     DFContextShared *d;
     Process * owner;
+    OffsetGroup * OG_Materials;
     /*
     bool Inited;
     bool Started;
@@ -48,6 +49,7 @@ Materials::Materials(DFContextShared * d_)
     d = new Private;
     d->d = d_;
     d->owner = d_->p;
+    d->OG_Materials = d->owner->getDescriptor()->getGroup("Materials");
 }
 Materials::~Materials()
 {
@@ -216,7 +218,7 @@ inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & nam
 bool Materials::ReadInorganicMaterials (void)
 {
     Process * p = d->owner;
-    DfVector <uint32_t> p_matgloss (p, d->owner->getDescriptor()->getAddress ("mat_inorganics"));
+    DfVector <uint32_t> p_matgloss (p, d->OG_Materials->getAddress("inorganics"));
     uint32_t size = p_matgloss.size();
     inorganic.clear();
     inorganic.reserve (size);
@@ -237,29 +239,29 @@ bool Materials::ReadInorganicMaterials (void)
 
 bool Materials::ReadOrganicMaterials (void)
 {
-    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("mat_organics_all"), organic );
+    return ReadNamesOnly(d->owner, d->OG_Materials->getAddress ("organics_all"), organic );
 }
 
 bool Materials::ReadWoodMaterials (void)
 {
-    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("mat_organics_trees"), tree );
+    return ReadNamesOnly(d->owner, d->OG_Materials->getAddress ("organics_trees"), tree );
 }
 
 bool Materials::ReadPlantMaterials (void)
 {
-    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("mat_organics_plants"), plant );
+    return ReadNamesOnly(d->owner, d->OG_Materials->getAddress ("organics_plants"), plant );
 }
 
 bool Materials::ReadCreatureTypes (void)
 {
-    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("creature_type_vector"), race );
+    return ReadNamesOnly(d->owner, d->OG_Materials->getAddress ("creature_type_vector"), race );
     return true;
 }
 
 bool Materials::ReadOthers(void)
 {
     Process * p = d->owner;
-    uint32_t matBase = p->getDescriptor()->getAddress ("mat_other");
+    uint32_t matBase = d->OG_Materials->getAddress ("other");
     uint32_t i = 0;
     uint32_t ptr;
 

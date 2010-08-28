@@ -43,7 +43,7 @@ namespace DFHack
             {
                 uint32_t triplet[3];
                 VersionInfo * mem = p->getDescriptor();
-                uint32_t offs =  mem->getOffset("vector_triplet");
+                uint32_t offs =  mem->getGroup("vector")->getOffset("start");
 
                 p->read(address + offs, sizeof(triplet), (uint8_t *) &triplet);
                 _start = triplet[0];

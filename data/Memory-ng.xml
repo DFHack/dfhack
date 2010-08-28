@@ -822,17 +822,17 @@
             <Group name="string" description="An STL string.">
                 <HexValue name="sizeof" description="The total size in bytes." />
             </Group>
-            <Group name="name">
-                <Offset name="first"/>
-                <Offset name="nick"/>
-                <Offset name="second_words"/>
+            <Group name="name" description="A structure used for names all over the place.">
+                <Offset name="first" description="Lowercase stl string with the first name. For ex. 'urist'" />
+                <Offset name="nick"  description="Stl string with the nickname. Set by the player." />
+                <Offset name="second_words" description="Array of 7 indexes into the language vectors."/>
             </Group>
             <Group name="Position" description="Offsets used by the Position module.">
                 <Address name="window_x" description="X coordinate of the current view (DWORD)" />
                 <Address name="window_y" description="Y coordinate of the current view (DWORD)" />
                 <Address name="window_z" description="Z coordinate of the current view (DWORD)" />
                 <Address name="cursor_xyz" description="Coordinates of the cursor (3xDWORD)." />
-                <!--<Address name="mouse_pos" description="Position of the mouse." />-->
+                <Address name="mouse_pos" description="Position of the mouse (3xDWORD?)" />
                 <Address name="window_dims" description="Size of the view in tiles (2xWORD)" />
                 <Address name="screen_tiles_pointer" description="Pointer to the screen tile array." />
             </Group>
@@ -864,8 +864,8 @@
                     <Offset name="temperature2" />
                     <Offset name="biome_stuffs" />
                     <Offset name="pathfinding" />
-                    <Offset name="feature_local" />
-                    <Offset name="feature_global" />
+                    <Offset name="feature_local" description="Index into a local feature vector (adamantine, etc. Complicated, see source)" />
+                    <Offset name="feature_global" description="Index into the global feature vector (hell, etc.)." />
                 </Group>
                 <Group name="features">
                     <Group name="global">

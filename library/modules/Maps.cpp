@@ -52,6 +52,9 @@ struct Maps::Private
 
     DFContextShared *d;
     Process * owner;
+    OffsetGroup *OG_local_features;
+    OffsetGroup *OG_global_features;
+    OffsetGroup *OG_vector;
     bool Inited;
     bool Started;
 
@@ -72,35 +75,41 @@ Maps::Maps(DFContextShared* _d)
     Server::Maps::maps_offsets &off = d->offsets;
 
     // get the offsets once here
-    off.map_offset = mem->getAddress ("map_data");
-    off.x_count_offset = mem->getAddress ("x_count_block");
-    off.y_count_offset = mem->getAddress ("y_count_block");
-    off.z_count_offset = mem->getAddress ("z_count_block");
-    off.tile_type_offset = mem->getOffset ("map_data_type");
-    off.designation_offset = mem->getOffset ("map_data_designation");
-    off.occupancy_offset = mem->getOffset("map_data_occupancy");
-    off.biome_stuffs = mem->getOffset ("map_data_biome_stuffs");
-    off.veinvector = mem->getOffset ("map_data_vein_vector");
-    off.local_feature_offset = mem->getOffset ("map_data_feature_local");
-    off.global_feature_offset = mem->getOffset ("map_data_feature_global");
+    OffsetGroup *OG_Maps = mem->getGroup("Maps");
+    off.map_offset = OG_Maps->getAddress ("map_data");
+    off.x_count_offset = OG_Maps->getAddress ("x_count_block");
+    off.y_count_offset = OG_Maps->getAddress ("y_count_block");
+    off.z_count_offset = OG_Maps->getAddress ("z_count_block");
+    off.region_x_offset = OG_Maps->getAddress ("region_x");
+    off.region_y_offset = OG_Maps->getAddress ("region_y");
+    off.region_z_offset =  OG_Maps->getAddress ("region_z");
+    off.world_size_x = OG_Maps->getAddress ("world_size_x");
+    off.world_size_y = OG_Maps->getAddress ("world_size_y");
 
-    off.temperature1_offset = mem->getOffset ("map_data_temperature1_offset");
-    off.temperature2_offset = mem->getOffset ("map_data_temperature2_offset");
-    off.region_x_offset = mem->getAddress ("region_x");
-    off.region_y_offset = mem->getAddress ("region_y");
-    off.region_z_offset =  mem->getAddress ("region_z");
+    OffsetGroup *OG_MapBlock = OG_Maps->getGroup("block");
+    off.tile_type_offset = OG_MapBlock->getOffset ("type");
+    off.designation_offset = OG_MapBlock->getOffset ("designation");
+    off.occupancy_offset = OG_MapBlock->getOffset("occupancy");
+    off.biome_stuffs = OG_MapBlock->getOffset ("biome_stuffs");
+    off.veinvector = OG_MapBlock->getOffset ("vein_vector");
+    off.local_feature_offset = OG_MapBlock->getOffset ("feature_local");
+    off.global_feature_offset = OG_MapBlock->getOffset ("feature_global");
+    off.temperature1_offset = OG_MapBlock->getOffset ("temperature1");
+    off.temperature2_offset = OG_MapBlock->getOffset ("temperature2");
 
-    off.world_regions =  mem->getAddress ("ptr2_region_array");
-    off.region_size =  mem->getHexValue ("region_size");
-    off.region_geo_index_offset =  mem->getOffset ("region_geo_index_off");
-    off.geolayer_geoblock_offset = mem->getOffset ("geolayer_geoblock_offset");
-    off.world_geoblocks_vector =  mem->getAddress ("geoblock_vector");
-    off.type_inside_geolayer = mem->getOffset ("type_inside_geolayer");
+    OffsetGroup *OG_Geology = OG_Maps->getGroup("geology");
+    off.world_regions =  OG_Geology->getAddress ("ptr2_region_array");
+    off.region_size =  OG_Geology->getHexValue ("region_size");
+    off.region_geo_index_offset =  OG_Geology->getOffset ("region_geo_index_off");
+    off.geolayer_geoblock_offset = OG_Geology->getOffset ("geolayer_geoblock_offset");
+    off.world_geoblocks_vector =  OG_Geology->getAddress ("geoblock_vector");
+    off.type_inside_geolayer = OG_Geology->getOffset ("type_inside_geolayer");
 
-    off.world_size_x = mem->getAddress ("world_size_x");
-    off.world_size_y = mem->getAddress ("world_size_y");
+    d->OG_global_features = OG_Maps->getGroup("features")->getGroup("global");
+    d->OG_local_features = OG_Maps->getGroup("features")->getGroup("local");
+    d->OG_vector = mem->getGroup("vector");
 
-    // these can fail and will be found when looking at the actual veins later
+    // these can (will) fail and will be found when looking at the actual veins later
     // basically a cache
     off.vein_ice_vptr = 0;
     mem->resolveClassnameToVPtr("block_square_event_frozen_liquid", off.vein_ice_vptr);
@@ -723,14 +732,14 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
     Process * p = d->owner;
     VersionInfo * mem = p->getDescriptor();
     // deref pointer to the humongo-structure
-    uint32_t base = p->readDWord(mem->getAddress("local_feature_start_ptr"));
+    uint32_t base = p->readDWord(d->OG_local_features->getAddress("start_ptr"));
     if(!base)
         return false;
-    uint32_t sizeof_vec = mem->getHexValue("sizeof_vector");
+    const uint32_t sizeof_vec = d->OG_vector->getHexValue("sizeof");
     const uint32_t sizeof_elem = 16;
     const uint32_t offset_elem = 4;
-    const uint32_t main_mat_offset = mem->getOffset("local_feature_mat"); // 0x30
-    const uint32_t sub_mat_offset = mem->getOffset("local_feature_submat"); // 0x34
+    const uint32_t main_mat_offset = d->OG_local_features->getOffset("material"); // 0x30
+    const uint32_t sub_mat_offset = d->OG_local_features->getOffset("submaterial"); // 0x34
 
     local_features.clear();
 
@@ -814,12 +823,11 @@ bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
         return false;
 
     Process * p = d->owner;
-    VersionInfo * mem = p->getDescriptor();
 
-    uint32_t global_feature_vector = mem->getAddress("global_feature_vector");
-    uint32_t global_feature_funcptr = mem->getOffset("global_feature_funcptr_");
-    const uint32_t main_mat_offset = mem->getOffset("global_feature_mat"); // 0x34
-    const uint32_t sub_mat_offset = mem->getOffset("global_feature_submat"); // 0x38
+    const uint32_t global_feature_vector = d->OG_global_features->getAddress("vector");
+    const uint32_t global_feature_funcptr = d->OG_global_features->getOffset("funcptr");
+    const uint32_t main_mat_offset = d->OG_global_features->getOffset("material"); // 0x34
+    const uint32_t sub_mat_offset = d->OG_global_features->getOffset("submaterial"); // 0x38
     DfVector<uint32_t> p_features (p,global_feature_vector);
 
     features.clear();

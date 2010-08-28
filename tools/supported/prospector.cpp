@@ -313,6 +313,11 @@ int main (int argc, const char* argv[])
     std::sort(matss.begin(), matss.end(), compare_pair_second<>());
     for(int i = 0; i < matss.size();i++)
     {
+        if(matss[i].first >= Mats->inorganic.size())
+        {
+            cerr << "Error, material out of bounds: " << matss[i].first << endl;
+            continue;
+        }
         cout << Mats->inorganic[matss[i].first].id << " : " << matss[i].second << endl;
     }
     DF->Detach();

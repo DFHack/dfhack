@@ -834,6 +834,7 @@
                 <Address name="cursor_xyz" description="Coordinates of the cursor (3xDWORD)." />
                 <!--<Address name="mouse_pos" description="Position of the mouse." />-->
                 <Address name="window_dims" description="Size of the view in tiles (2xWORD)" />
+                <Address name="screen_tiles_pointer" description="Pointer to the screen tile array." />
             </Group>
             <Group name="GUI" description="Offsets used by the GUI module.">
                 <Address name="pause_state" description="a flag that determines if the game is paused."/>
@@ -1012,18 +1013,18 @@
                 <HexValue name="sizeof"/>
             </Group>
             <Group name="Items">
-                <Address name="items_vector" value="0x166FE00" />
+                <Address name="items_vector" />
                 List of offsets in the VTable :
-                <Offset name="item_type_accessor" value="0x0" />
-                <Offset name="item_subtype_accessor" value="0x4" />
-                <Offset name="item_subindex_accessor" value="0x8" />
-                <Offset name="item_index_accessor" value="0xC" />
-                <Offset name="item_quality_accessor" value="0x238" />
-                <Offset name="item_improvement_vector" value="0xA0" />
-                <Offset name="item_improvement_subindex" value="0x4" />
-                <Offset name="item_improvement_index" value="0x8" />
-                <Offset name="item_improvement_quality" value="0x14" />
-                <Offset name="item_type_accessor" value="0x14" />  (in the vtable)
+                <Offset name="item_type_accessor" />
+                <Offset name="item_subtype_accessor" />
+                <Offset name="item_subindex_accessor" />
+                <Offset name="item_index_accessor" />
+                <Offset name="item_quality_accessor" />
+                <Offset name="item_improvement_vector" />
+                <Offset name="item_improvement_subindex" />
+                <Offset name="item_improvement_index" />
+                <Offset name="item_improvement_quality" />
+                <Offset name="item_type_accessor" />  (in the vtable)
             </Group>
             <Group name="World">
                 <Address name="current_tick" description="Current time of the year" />
@@ -1639,9 +1640,6 @@
             </Group>
             <Group name="GUI">
                 <Address name="pause_state" value="0x92bf73c" />
-                <Address name="current_cursor_creature" value=""/>
-                <Address name="current_menu_state" value="" />
-                <Address name="view_screen" value=""/>
             </Group>
             <Group name="Maps">
                 <Address name="map_data" value="0x9318D40" />
@@ -1709,8 +1707,8 @@
                     <Offset name="id" value="0xA8" />
                     <Offset name="civ" value="0xB4" />
                     <Group name="advanced">
-                        <Offset name="pickup_equipment_bit" value="0X144" /> CHMOD
-                        <Offset name="mood" value="0x18C" /> VERIFY!
+                        <Offset name="pickup_equipment_bit" value="0x144" /> CHMOD
+                        <Offset name="mood" value="0x18C" valid="false" /> VERIFY!
                         <Offset name="birth_year" value="0x19C" />
                         <Offset name="birth_time" value="0x1A0" />
                         <Offset name="current_job" value="0x258" /> chmod
@@ -1731,7 +1729,7 @@
                     <Offset name="skills_vector" value="0x1C4" /> CHMOD
                     <Offset name="traits" value="0x1DC" />
                 </Group>
-
+                <!--
                 <Group name="job">
                     <Offset name="id" value="0x0" /> Incrementaly assigned
                     <Offset name="type" value="0x8" /> seems to be just like the old occupations
@@ -1744,6 +1742,7 @@
                         <Offset name="material_flags" value="0x18" /> set only for shell / bone mood requirements ?
                     </Group>
                 </Group>
+                -->
             </Group>
             <Group name="Materials">
                 <Address name="inorganics" value="0x931ae88" /><!-- WORLD + 0x54B7C -->
@@ -1785,18 +1784,10 @@
                     <Address name="all_colors_vector" value="0x931f3b0" /><!--A list of all colors, including eyes and stuff-->
                 </Group>
             </Group>
-            <Group name="Constructions">
-                <Address name="vector" value="" />
-                <Offset name="sizeof" value="0x14" />
-            </Group>
             <Group name="Translations">
                 <Address name="language_vector" value="0x931aff4" />
                 <Address name="translation_vector" value="0x931b00c" />
                 <Offset name="word_table" value="0x1C" />
-            </Group>
-            <Group name="Vegetation">
-                <Address name="vector" value="" />
-                <Offset name="tree_desc_offset" value="" />
             </Group>
             <Group name="World">
                 <Address name="current_year" value="0x92BF6A0" />

@@ -26,7 +26,6 @@ distribution.
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include "dfhack/DFProcess.h"
-#include <list>
 
 //Inital amount of space in levels vector (since we usually know the number, efficient!)
 #define NUM_RESERVE_LVLS 20
@@ -307,7 +306,7 @@ void OffsetGroup::RebaseAddresses(int32_t offset)
 OffsetGroup::OffsetGroup()
 {
     OGd = new OffsetGroupPrivate();
-    OGd->name = "Version";
+    OGd->name = "";
     OGd->parent = 0;
 }
 
@@ -358,25 +357,45 @@ std::string OffsetGroup::PrintOffsets(int indentation)
     indentr i(indentation);
     for(iter = OGd->addresses.begin(); iter != OGd->addresses.end(); iter++)
     {
+        ss << i << "<Address name=\"" << (*iter).first << "\"";
         if((*iter).second.first)
-            ss << i << "<Address name=\"" << (*iter).first << "\" value=\"" << hex << "0x" << (*iter).second.second << "\" />" << endl;
+            ss << " value=\"" << hex << "0x" << (*iter).second.second << "\"";
+        ss << " />";
+        if(!(*iter).second.first)
+            ss << " MISSING!";
+        ss << endl;
     }
     int32_Iter iter2;
     for(iter2 = OGd->offsets.begin(); iter2 != OGd->offsets.end(); iter2++)
     {
+        ss << i << "<Offset name=\"" << (*iter2).first << "\"";
         if((*iter2).second.first)
-            ss << i << "<Offset name=\"" << (*iter2).first << "\" value=\"" << hex << "0x" << (*iter2).second.second <<"\" />" << endl;
+            ss << " value=\"" << hex << "0x" << (*iter2).second.second << "\"";
+        ss << " />";
+        if(!(*iter2).second.first)
+            ss << " MISSING!";
+        ss << endl;
     }
     for(iter = OGd->hexvals.begin(); iter != OGd->hexvals.end(); iter++)
     {
+        ss << i << "<HexValue name=\"" << (*iter).first << "\"";
         if((*iter).second.first)
-            ss << i << "<HexValue name=\"" << (*iter).first << "\" value=\"" << hex << "0x" << (*iter).second.second <<"\" />" << endl;
+            ss << " value=\"" << hex << "0x" << (*iter).second.second << "\"";
+        ss << " />";
+        if(!(*iter).second.first)
+            ss << " MISSING!";
+        ss << endl;
     }
     strings_Iter iter3;
     for(iter3 = OGd->strings.begin(); iter3 != OGd->strings.end(); iter3++)
     {
+        ss << i << "<HexValue name=\"" << (*iter3).first << "\"";
         if((*iter3).second.first)
-            ss << i << "<String name=\"" << (*iter3).first << "\" value=\"" << (*iter3).second.second <<"\" />" << endl;
+            ss << " value=\"" << (*iter3).second.second << "\"";
+        ss << " />";
+        if(!(*iter3).second.first)
+            ss << " MISSING!";
+        ss << endl;
     }
     groups_Iter iter4;
     for(iter4 = OGd->groups.begin(); iter4 != OGd->groups.end(); iter4++)

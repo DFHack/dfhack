@@ -127,8 +127,8 @@ void OffsetGroup::createString(const string & key)
 
 void OffsetGroup::setOffset (const string & key, const string & value)
 {
-    int32_Iter it;
-    if((it = OGd->offsets.find(key)) != OGd->offsets.end())
+    int32_Iter it = OGd->offsets.find(key);
+    if(it != OGd->offsets.end())
     {
         int32_t offset = strtol(value.c_str(), NULL, 16);
         (*it).second.second = offset;
@@ -140,8 +140,8 @@ void OffsetGroup::setOffset (const string & key, const string & value)
 
 void OffsetGroup::setAddress (const string & key, const string & value)
 {
-    uint32_Iter it;
-    if((it = OGd->addresses.find(key)) != OGd->addresses.end())
+    uint32_Iter it = OGd->addresses.find(key);
+    if(it != OGd->addresses.end())
     {
         int32_t address = strtol(value.c_str(), NULL, 16);
         (*it).second.second = address;
@@ -153,8 +153,8 @@ void OffsetGroup::setAddress (const string & key, const string & value)
 
 void OffsetGroup::setHexValue (const string & key, const string & value)
 {
-    uint32_Iter it;
-    if((it = OGd->hexvals.find(key)) != OGd->hexvals.end())
+    uint32_Iter it = OGd->hexvals.find(key);
+    if(it != OGd->hexvals.end())
     {
         (*it).second.second = strtol(value.c_str(), NULL, 16);
         (*it).second.first = true;
@@ -165,8 +165,8 @@ void OffsetGroup::setHexValue (const string & key, const string & value)
 
 void OffsetGroup::setString (const string & key, const string & value)
 {
-    strings_Iter it;
-    if((it = OGd->strings.find(key)) != OGd->strings.end())
+    strings_Iter it = OGd->strings.find(key);
+    if(it != OGd->strings.end())
     {
         (*it).second.second = value;
         (*it).second.first = true;

@@ -13,7 +13,6 @@ using namespace DFHack;
 
 int main (int numargs, const char ** args)
 {
-
     DFHack::VersionInfoFactory * VIF = new DFHack::VersionInfoFactory("Memory.xml");
     for(int i = 0; i < VIF->versions.size(); i++)
     {

@@ -271,6 +271,17 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
             }
         }
 
+		std::vector<uint32_t> inventory;
+
+		if( Creatures->ReadInventoryPtr(creature.origin, inventory) )
+		{
+			printf("\tInventory:\n");
+			for(unsigned int i = 0; i < inventory.size(); i++)
+			{
+				printf("\t\t%s\n", Items->getItemDescription(inventory[i], Materials).c_str());
+			}
+		}
+
         /*
         if(creature.pregnancy_timer > 0)
             cout << "gives birth in " << creature.pregnancy_timer/1200 << " days. ";
@@ -415,6 +426,7 @@ int main (int numargs, char ** args)
     
     Creatures = DF->getCreatures();
     Materials = DF->getMaterials();
+	Items = DF->getItems();
     World = DF->getWorld();
     current_year = World->ReadCurrentYear();
     current_tick = World->ReadCurrentTick();
@@ -450,6 +462,7 @@ int main (int numargs, char ** args)
     //DF.InitViewAndCursor();
     for(uint32_t i = 0; i < numCreatures; i++)
     {
+		printf("%d/%d\n", i, numCreatures);
         DFHack::t_creature temp;
         Creatures->ReadCreature(i,temp);
         if(check.empty() || string(Materials->raceEx[temp.race].rawname) == check)
@@ -459,6 +472,7 @@ int main (int numargs, char ** args)
             printCreature(DF,temp);
             addrs.push_back(temp.origin);
         }
+		printf("!\n");
     }
     if(addrs.size() <= 10)
     {
@@ -473,6 +487,7 @@ int main (int numargs, char ** args)
     DF.ReadCreature(currentIdx, currentCreature);
     printCreature(DF,currentCreature);
     */
+	
     Creatures->Finish();
     DF->Detach();
     #ifndef LINUX_BUILD

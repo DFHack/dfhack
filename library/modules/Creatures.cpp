@@ -109,6 +109,9 @@ Creatures::Creatures(DFContextShared* _d)
         creatures.name_firstname_offset = minfo->getOffset("name_firstname");
         creatures.name_nickname_offset = minfo->getOffset("name_nickname");
         creatures.name_words_offset = minfo->getOffset("name_words");
+
+        creatures.inventory_offset = minfo->getOffset("creature_inventory_vector");
+
         d->dwarf_race_index_addr = minfo->getAddress("dwarf_race_index");
         d->dwarf_civ_id_addr = minfo->getAddress("dwarf_civ_id");
         /*
@@ -607,5 +610,28 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
         mat[i].index = p->readDWord(cmats[i] + minfo->getOffset("job_material_sectype3"));
         mat[i].flags = p->readDWord(cmats[i] + minfo->getOffset("job_material_flags"));
     }
+    return true;
+}
+
+bool Creatures::ReadInventoryIdx(const uint32_t index, std::vector<uint32_t> & item)
+{
+    if(!d->Started) return false;
+    Process * p = d->owner;
+    uint32_t temp = d->p_cre->at (index);
+    return this->ReadInventoryPtr(temp, item);
+}
+
+bool Creatures::ReadInventoryPtr(const uint32_t temp, std::vector<uint32_t> & item)
+{
+    unsigned int i;
+    if(!d->Started) return false;
+    Process * p = d->owner;
+
+    DfVector <uint32_t> citem(p, temp + d->creatures.inventory_offset);
+    if(citem.size() == 0)
+        return false;
+    item.resize(citem.size());
+    for(i=0;i<citem.size();i++)
+        item[i] = p->readDWord(citem[i]);
     return true;
 }

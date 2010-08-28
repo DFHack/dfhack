@@ -1698,6 +1698,7 @@ map_data_1b60_offset          0x1B9c
         <Address name="creature_vector">0x168E73C</Address>
         <Address name="dwarf_race_index">0x014b9f1c</Address>      
         <Offset name="creature_soulskill_vector">0X1F4</Offset>
+        <Offset name="creature_inventory_vector">0x2FC</Offset>
         <Offset name="creature_physical">0x4AC</Offset>        
         <Offset name="creature_appearance_vector">0x64c</Offset> <!-- Maybe slightly wrong -->
         <Offset name="creature_artifact_name">0x71c</Offset>

@@ -118,7 +118,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
     // work variables
     OffsetGroup * currentGroup = 0;
     TiXmlElement * currentElem = 0;
-    cerr << "<Offsets>"<< endl;
+    //cerr << "<Offsets>"<< endl;
     while(1)
     {
         // get current work variables
@@ -137,7 +137,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
             }
             else
             {
-                cerr << "</group>" << endl;
+                //cerr << "</group>" << endl;
                 continue;
             }
         }
@@ -178,10 +178,10 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
                 og = currentGroup->createGroup(cstr_name);
             else
                 og = currentGroup->getGroup(cstr_name);
-            cerr << "<group name=\"" << cstr_name << "\">" << endl;
+            //cerr << "<group name=\"" << cstr_name << "\">" << endl;
             // advance this level to the next element
             groupPair & gp = breadcrumbs.back();
-            gp.first = gp.first->NextSiblingElement();
+            gp.first = currentElem->NextSiblingElement();
 
             // add a new level that will be processed next
             breadcrumbs.push_back(groupPair(currentElem->FirstChildElement(), og));
@@ -250,10 +250,10 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
 
         // advance to next element
         groupPair & gp = breadcrumbs.back();
-        gp.first = gp.first->NextSiblingElement();
+        gp.first = currentElem->NextSiblingElement();
         continue;
     }
-    cerr << "</Offsets>"<< endl;
+    //cerr << "</Offsets>"<< endl;
 }
 
 void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)

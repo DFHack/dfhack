@@ -815,7 +815,6 @@
         <Offsets>
             <Address name="WORLD" description="A huge object that many things in DF are part of. Contains the whole game and can be used as a base
             for many of the addresses." />
-            <HexValue name="sdasdasdizeof" description="The total size in bytes." />
             <Group name="vector" description="An STL vector.">
                 <HexValue name="sizeof" description="The total size in bytes." />
                 <Offset name="start" description="The offset where the actual start/end/alloc_end triplet is." />

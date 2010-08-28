@@ -177,7 +177,8 @@ bool Position::getScreenTiles (int32_t width, int32_t height, t_screen screen[])
     if(!d->StartedScreen) return false;
 
     uint32_t screen_addr;
-    d->owner->read (d->screen_tiles_ptr_offset, sizeof(uint32_t), (uint8_t *) screen_addr);
+    d->owner->readDWord(d->screen_tiles_ptr_offset,(uint32_t &) screen_addr);
+    //d->owner->read (d->screen_tiles_ptr_offset, sizeof(uint32_t), (uint8_t *) screen_addr);
 
     uint8_t* tiles = new uint8_t[width*height*4/* + 80 + width*height*4*/];
 
@@ -187,12 +188,12 @@ bool Position::getScreenTiles (int32_t width, int32_t height, t_screen screen[])
     {
         for(int32_t ix=0; ix<width; ix++)
         {
-            screen[ix + iy*width].symbol = tiles[iy + ix*height*4 +0];
-            screen[ix + iy*width].foreground = tiles[iy + ix*height*4 +1];
-            screen[ix + iy*width].background = tiles[iy + ix*height*4 +2];
-            screen[ix + iy*width].bright = tiles[iy + ix*height*4 +3];
-            //screen[ix + iy*width].gtile = tiles[width*height*4 + 80 + iy + ix*height +0];
-            //screen[ix + iy*width].grayscale = tiles[width*height*4 + 80 + iy + ix*height +1];
+            screen[ix + iy*width].symbol = tiles[iy*4 + ix*height*4 +0];
+            screen[ix + iy*width].foreground = tiles[iy*4 + ix*height*4 +1];
+            screen[ix + iy*width].background = tiles[iy*4 + ix*height*4 +2];
+            screen[ix + iy*width].bright = tiles[iy*4 + ix*height*4 +3];
+            screen[ix + iy*width].gtile = tiles[iy*4 + ix*height*4 +4];
+            screen[ix + iy*width].grayscale = tiles[iy*4 + ix*height*4 +5];
         }
     }
 

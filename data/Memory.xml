@@ -1722,6 +1722,7 @@ map_data_1b60_offset          0x1B9c
     <Entry version="v0.31.12" os="windows" id="0.31.12" base="0.31.11">
         <String name="md5">f0459165a426a9f2dd8d957e9fa7f01d</String>
         <HexValue name="pe_timestamp">0x4C4C32E7</HexValue>
+        <Address name="screen_tiles_pointer">0x18313D0</Address>
     </Entry>
                             .-"""-.
                            '       \

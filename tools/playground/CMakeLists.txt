@@ -53,6 +53,13 @@ TARGET_LINK_LIBRARIES(dfcatsplosion dfhack)
 #ADD_EXECUTABLE(dfrenamer renamer.cpp)
 #TARGET_LINK_LIBRARIES(dfrenamer dfhack)
 
+# copypaste
+# Author: belal
+# copies the current buildings in a df map, and then designates the area to be dug
+# mainly a proof of concept for my gui application dfCopyPaste
+ADD_EXECUTABLE(dfcopypaste copypaste.cpp)
+TARGET_LINK_LIBRARIES(dfcopypaste dfhack)
+
 # this needs the C bindings
 IF(BUILD_DFHACK_C_BINDIGS)
     # for trying out some 'stuff'

@@ -1687,7 +1687,7 @@
                     <Offset name="region_geo_index_off" value="0x54" />
                     <!-- geoblock offset(s?) -->
                     <Offset name="geolayer_geoblock_offset" value="0x4" /> vector
-                    <Offset name="type_inside_geolayer" value="0x8" /> vector
+                    <Offset name="type_inside_geolayer" value="0x4" /> vector
                 </Group>
             </Group>
             <Group name="Creatures">

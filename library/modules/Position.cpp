@@ -59,31 +59,33 @@ Position::Position(DFContextShared * d_)
     d->owner = d_->p;
     d->Inited = true;
     d->StartedHotkeys = d->Started = d->StartedScreen = false;
-    VersionInfo * mem;
+    OffsetGroup * OG_Position;
+    VersionInfo * mem = d->d->offset_descriptor;
     try
     {
-        mem = d->d->offset_descriptor;
-        d->window_x_offset = mem->getAddress ("window_x");
-        d->window_y_offset = mem->getAddress ("window_y");
-        d->window_z_offset = mem->getAddress ("window_z");
-        d->cursor_xyz_offset = mem->getAddress ("cursor_xyz");
-        d->window_dims_offset = mem->getAddress ("window_dims");
+        OG_Position = mem->getGroup("Position");
+        d->window_x_offset = OG_Position->getAddress ("window_x");
+        d->window_y_offset = OG_Position->getAddress ("window_y");
+        d->window_z_offset = OG_Position->getAddress ("window_z");
+        d->cursor_xyz_offset = OG_Position->getAddress ("cursor_xyz");
+        d->window_dims_offset = OG_Position->getAddress ("window_dims");
         d->Started = true;
-    }
-    catch(exception &){};
-    try
-    {
-        d->hotkey_start = mem->getAddress("hotkey_start");
-        d->hotkey_mode_offset = mem->getOffset ("hotkey_mode");
-        d->hotkey_xyz_offset = mem->getOffset("hotkey_xyz");
-        d->hotkey_size = mem->getHexValue("hotkey_size");
-        d->StartedHotkeys = true;
-    }
-    catch(exception &){};
-    try
-    {
-        d->screen_tiles_ptr_offset = mem->getAddress ("screen_tiles_pointer");
-        d->StartedScreen = true;
+        try
+        {
+            OffsetGroup * OG_Hotkeys = mem->getGroup("Hotkeys");
+            d->hotkey_start = OG_Hotkeys->getAddress("start");
+            d->hotkey_mode_offset = OG_Hotkeys->getOffset ("mode");
+            d->hotkey_xyz_offset = OG_Hotkeys->getOffset("coords");
+            d->hotkey_size = OG_Hotkeys->getHexValue("size");
+            d->StartedHotkeys = true;
+        }
+        catch(exception &){};
+        try
+        {
+            d->screen_tiles_ptr_offset = OG_Position->getAddress ("screen_tiles_pointer");
+            d->StartedScreen = true;
+        }
+        catch(exception &){};
     }
     catch(exception &){};
 }

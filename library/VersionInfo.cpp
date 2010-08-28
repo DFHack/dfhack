@@ -26,6 +26,7 @@ distribution.
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include "dfhack/DFProcess.h"
+#include <list>
 
 //Inital amount of space in levels vector (since we usually know the number, efficient!)
 #define NUM_RESERVE_LVLS 20
@@ -102,6 +103,8 @@ namespace DFHack
         map <string, nullableInt32 > offsets;
         map <string, nullableString > strings;
         map <string, OffsetGroup *> groups;
+        std::string name;
+        OffsetGroup * parent;
     };
 }
 
@@ -134,7 +137,7 @@ void OffsetGroup::setOffset (const string & key, const string & value)
         (*it).second.second = offset;
         (*it).second.first = true;
     }
-    else throw Error::MissingMemoryDefinition("offset", key);
+    else throw Error::MissingMemoryDefinition("offset", getFullName() + key);
 }
 
 
@@ -147,7 +150,7 @@ void OffsetGroup::setAddress (const string & key, const string & value)
         (*it).second.second = address;
         (*it).second.first = true;
     }
-    else throw Error::MissingMemoryDefinition("address", key);
+    else throw Error::MissingMemoryDefinition("address", getFullName() + key);
 }
 
 
@@ -159,7 +162,7 @@ void OffsetGroup::setHexValue (const string & key, const string & value)
         (*it).second.second = strtol(value.c_str(), NULL, 16);
         (*it).second.first = true;
     }
-    else throw Error::MissingMemoryDefinition("hexvalue", key);
+    else throw Error::MissingMemoryDefinition("hexvalue", getFullName() + key);
 }
 
 
@@ -171,7 +174,7 @@ void OffsetGroup::setString (const string & key, const string & value)
         (*it).second.second = value;
         (*it).second.first = true;
     }
-    else throw Error::MissingMemoryDefinition("string", key);
+    else throw Error::MissingMemoryDefinition("string", getFullName() + key);
 }
 
 
@@ -184,9 +187,9 @@ uint32_t OffsetGroup::getAddress (const string & key)
     {
         if((*iter).second.first)
             return (*iter).second.second;
-        throw Error::UnsetMemoryDefinition("address", key);
+        throw Error::UnsetMemoryDefinition("address", getFullName() + key);
     }
-    throw Error::MissingMemoryDefinition("address", key);
+    throw Error::MissingMemoryDefinition("address", getFullName() + key);
 }
 
 
@@ -198,9 +201,9 @@ int32_t OffsetGroup::getOffset (const string & key)
     {
         if((*iter).second.first)
             return (*iter).second.second;
-        throw Error::UnsetMemoryDefinition("offset", key);
+        throw Error::UnsetMemoryDefinition("offset", getFullName() + key);
     }
-    throw Error::MissingMemoryDefinition("offset", key);
+    throw Error::MissingMemoryDefinition("offset",  getFullName() + key);
 }
 
 
@@ -212,9 +215,9 @@ uint32_t OffsetGroup::getHexValue (const string & key)
     {
         if((*iter).second.first)
             return (*iter).second.second;
-        throw Error::UnsetMemoryDefinition("hexvalue", key);
+        throw Error::UnsetMemoryDefinition("hexvalue", getFullName() + key);
     }
-    throw Error::MissingMemoryDefinition("hexvalue", key);
+    throw Error::MissingMemoryDefinition("hexvalue", getFullName() + key);
 }
 
 // Get named string
@@ -225,9 +228,9 @@ std::string OffsetGroup::getString (const string &key)
     {
         if((*iter).second.first)
             return (*iter).second.second;
-        throw Error::UnsetMemoryDefinition("string", key);
+        throw Error::UnsetMemoryDefinition("string", getFullName() + key);
     }
-    throw Error::MissingMemoryDefinition("string", key);
+    throw Error::MissingMemoryDefinition("string", getFullName() + key);
 }
 
 OffsetGroup * OffsetGroup::getGroup(const std::string &name)
@@ -243,7 +246,7 @@ OffsetGroup * OffsetGroup::createGroup(const std::string &name)
     OffsetGroup * ret = getGroup(name);
     if(ret)
         return ret;
-    ret = new OffsetGroup();
+    ret = new OffsetGroup(name, this);
     OGd->groups[name] = ret;
     return ret;
 }
@@ -264,6 +267,15 @@ void OffsetGroup::RebaseAddresses(int32_t offset)
 OffsetGroup::OffsetGroup()
 {
     OGd = new OffsetGroupPrivate();
+    OGd->name = "Version";
+    OGd->parent = 0;
+}
+
+OffsetGroup::OffsetGroup(const std::string & name, OffsetGroup * parent)
+{
+    OGd = new OffsetGroupPrivate();
+    OGd->name = name;
+    OGd->parent = parent;
 }
 
 OffsetGroup::~OffsetGroup()
@@ -274,6 +286,65 @@ OffsetGroup::~OffsetGroup()
     }
     OGd->groups.clear();
     delete OGd;
+}
+
+std::string OffsetGroup::getName()
+{
+    return OGd->name;
+}
+
+OffsetGroup * OffsetGroup::getParent()
+{
+    return OGd->parent;
+}
+
+std::string OffsetGroup::getFullName()
+{
+    string temp, accum;
+    OffsetGroup * curr = this;
+    while(curr)
+    {
+        temp = curr->getName() + string("/") + accum;
+        accum = temp;
+        curr = curr->getParent();
+    }
+    return accum;
+}
+
+std::string OffsetGroup::PrintOffsets()
+{
+    uint32_Iter iter;
+    ostringstream ss;
+    for(iter = OGd->addresses.begin(); iter != OGd->addresses.end(); iter++)
+    {
+        if((*iter).second.first)
+            ss << "<Address name=\"" << (*iter).first << "\" value=\"" << hex << "0x" << (*iter).second.second << "\" />" << endl;
+    }
+    int32_Iter iter2;
+    for(iter2 = OGd->offsets.begin(); iter2 != OGd->offsets.end(); iter2++)
+    {
+        if((*iter).second.first)
+            ss << "<Offset name=\"" << (*iter2).first << "\" value=\"" << hex << "0x" << (*iter2).second.second <<"\" />" << endl;
+    }
+    for(iter = OGd->hexvals.begin(); iter != OGd->hexvals.end(); iter++)
+    {
+        if((*iter).second.first)
+            ss << "<HexValue name=\"" << (*iter).first << "\" value=\"" << hex << "0x" << (*iter).second.second <<"\" />" << endl;
+    }
+    strings_Iter iter3;
+    for(iter3 = OGd->strings.begin(); iter3 != OGd->strings.end(); iter3++)
+    {
+        if((*iter3).second.first)
+            ss << "<String name=\"" << (*iter3).first << "\" value=\"" << (*iter3).second.second <<"\" />" << endl;
+    }
+    groups_Iter iter4;
+    for(iter4 = OGd->groups.begin(); iter4 != OGd->groups.end(); iter4++)
+    {
+        ss << "<Group name=\"" << (*iter4).first << "\">" << endl;
+        ss <<(*iter4).second->PrintOffsets();
+        ss << "</Group>" << endl;
+    }
+    return ss.str();
 }
 
 /*
@@ -325,6 +396,7 @@ VersionInfo::VersionInfo()
     d->moods.reserve(NUM_RESERVE_MOODS);
     d->md5 = "invalid";
     d->PE_timestamp = 0;
+    OffsetGroup();
 }
 
 
@@ -343,7 +415,7 @@ void OffsetGroup::copy(const OffsetGroup * old)
     OGd->strings = old->OGd->strings;
     for(groups_Iter it = old->OGd->groups.begin(); it != old->OGd->groups.end(); it++)
     {
-        OffsetGroup * ogn = new OffsetGroup();
+        OffsetGroup * ogn = new OffsetGroup((*it).first, this);
         ogn->copy((*it).second);
         OGd->groups[(*it).first] = ogn;
     }
@@ -905,27 +977,7 @@ std::string VersionInfo::PrintOffsets()
             ss << " UNKNOWN" << endl;
     }
     ss << "<Offsets>" << endl;
-    /*
-    map<string,uint32_t>::const_iterator iter;
-    for(iter = OGd->addresses.begin(); iter != OGd->addresses.end(); iter++)
-    {
-        ss << "    <Address name=\"" << (*iter).first << "\" value=\"" << hex << "0x" << (*iter).second << "\" />" << endl;
-    }
-    map<string,int32_t>::const_iterator iter2;
-    for(iter2 = OGd->offsets.begin(); iter2 != OGd->offsets.end(); iter2++)
-    {
-        ss << "    <Offset name=\"" << (*iter2).first << "\" value=\"" << hex << "0x" << (*iter2).second <<"\" />" << endl;
-    }
-    for(iter = OGd->hexvals.begin(); iter != OGd->hexvals.end(); iter++)
-    {
-        ss << "    <HexValue name=\"" << (*iter).first << "\" value=\"" << hex << "0x" << (*iter).second <<"\" />" << endl;
-    }
-    map<string,string>::const_iterator iter3;
-    for(iter3 = OGd->strings.begin(); iter3 != OGd->strings.end(); iter3++)
-    {
-        ss << "    <String name=\"" << (*iter3).first << "\" value=\"" << (*iter3).second <<"\" />" << endl;
-    }
-    */
+    ss << OffsetGroup::PrintOffsets();
     ss << "</Offsets>" << endl;
     ss << "</Version>" << endl;
     return ss.str();

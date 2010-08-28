@@ -183,6 +183,12 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
             groupPair & gp = breadcrumbs.back();
             gp.first = currentElem->NextSiblingElement();
 
+            if(!og)
+            {
+                string fullname = currentGroup->getFullName() + cstr_name;
+                throw Error::MissingMemoryDefinition("group", fullname);
+            }
+
             // add a new level that will be processed next
             breadcrumbs.push_back(groupPair(currentElem->FirstChildElement(), og));
             continue;

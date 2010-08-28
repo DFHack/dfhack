@@ -823,6 +823,11 @@
             <Group name="string" description="An STL string.">
                 <HexValue name="sizeof" description="The total size in bytes." />
             </Group>
+            <Group name="name">
+                <Offset name="first"/>
+                <Offset name="nick"/>
+                <Offset name="second_words"/>
+            </Group>
             <Group name="Position" description="Offsets used by the Position module.">
                 <Address name="window_x" description="X coordinate of the current view (DWORD)" />
                 <Address name="window_y" description="Y coordinate of the current view (DWORD)" />
@@ -830,6 +835,200 @@
                 <Address name="cursor_xyz" description="Coordinates of the cursor (3xDWORD)." />
                 <!--<Address name="mouse_pos" description="Position of the mouse." />-->
                 <Address name="window_dims" description="Size of the view in tiles (2xWORD)" />
+            </Group>
+            <Group name="GUI" description="Offsets used by the GUI module.">
+                <Address name="pause_state" description="a flag that determines if the game is paused."/>
+                <Address name="current_cursor_creature" description="A vector? of creatures currently under the cursor."/>
+                <Address name="current_menu_state" description="A numeric value that describes the state of the current GUI element (switching between menus will change this)."/>
+                <Address name="view_screen" description="Pointer to the current view screen object (GUI screen)."/>
+            </Group>
+            <Group name="Maps" description="Offsets used by the Maps module.">
+                <Address name="map_data" description="Pointer to the start of the map structure."/>
+                <Address name="x_count_block" description="X Size of the local map (in 16x16x1 blocks)."/>
+                <Address name="y_count_block" description="Y Size of the local map (in 16x16x1 blocks)."/>
+                <Address name="z_count_block" description="Z Size of the local map (in 16x16x1 blocks)."/>
+                <Address name="x_count" description="X Size of the local map (in tiles)."/>
+                <Address name="y_count" description="Y Size of the local map (in tiles)."/>
+                <Address name="z_count" description="Z Size of the local map (in tiles)."/>
+                <Address name="region_x"/>
+                <Address name="region_y"/>
+                <Address name="region_z"/>
+                <Address name="world_size_x"/>
+                <Address name="world_size_y"/>
+                <Group name="block" description="The map block structure.">
+                    <Offset name="vein_vector" description="Mineral veins, objects holding tile types under ice, etc..."/>
+                    <Offset name="type" description="16x16 x 2B tile type values"/>
+                    <Offset name="designation" description="16x16 * 4B designation fields"/>
+                    <Offset name="occupancy" description="16x16 * 4B occupancy fields" />
+                    <Offset name="temperature1" />
+                    <Offset name="temperature2" />
+                    <Offset name="biome_stuffs" />
+                    <Offset name="pathfinding" />
+                    <Offset name="feature_local" />
+                    <Offset name="feature_global" />
+                </Group>
+                <Group name="features">
+                    <Group name="global">
+                        <Address name="vector" />
+                        <Offset name="funcptr" />
+                        <Offset name="material" />
+                        <Offset name="submaterial" />
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" />
+                        <Offset name="material" />
+                        <Offset name="submaterial" />
+                    </Group>
+                </Group>
+                <Group name="geology">
+                    <Address name="geoblock_vector" />
+                    <Address name="ptr2_region_array" />
+                    <!-- values for the region structure -->
+                    <HexValue name="region_size" />
+                    <Offset name="region_geo_index_off" />
+                    <!-- geoblock offset(s?) -->
+                    <Offset name="geolayer_geoblock_offset" /> vector
+                    <Offset name="type_inside_geolayer" /> vector
+                </Group>
+            </Group>
+            <Group name="Creatures" description="Offsets used by the Creatures module.">
+                <Address name="creature_vector"/>
+                <Address name="current_race" description="Index of the current player race." />
+                <Address name="current_civ" description="Index of the current player civilization." />
+                <Group name="creature">
+                    <Offset name="name" description="Creature name, see the name group." />
+                    <Offset name="custom_profession"  description="String object with custom profession." />
+                    <Offset name="profession"  description="Profession index." />
+                    <Offset name="race"  description="Race of the creature." />
+                    <Offset name="position"  description="X,Y,Z." />
+                    <Offset name="flags1"  description="First set of flags" />
+                    <Offset name="flags2"  description="Second set of flags" />
+                    <Offset name="caste"  description="Caste of the creature. Same as sex most of the time." />
+                    <Offset name="sex"  description="Sex of the creature." />
+                    <Offset name="id"  description="Unique ID of the creature, probably index into some global vector.." />
+                    <Offset name="civ" description="What civ the creature belongs to." />
+                    <Group name="advanced">
+                        <Offset name="pickup_equipment_bit" description="Setting this makes creatures re-check the status of their equip." />
+                        <Offset name="mood" />
+                        <Offset name="pregnancy"  description="Pregnancy timer.." />
+                        <Offset name="pregnancy_ptr"  description="Pregnancy object." />
+                        <Offset name="birth_year" description="The year the creature has been born." />
+                        <Offset name="birth_time"  description="Time of year the creature has been born." />
+                        <Offset name="current_job" />
+                        <Offset name="current_job_skill"  description="the skill that will be increased at the end of the mood (or not)" />
+                        <Offset name="physical" value="0x464" description="An array of physical attributes." />
+                        <Offset name="appearance_vector" description="seems to be indexes in the list of possible colors defined in the raws for each group" />
+                        <Offset name="artifact_name" description="Name of the artifact created by this creature." />
+                        <Offset name="soul_vector" description="A vector of souls attached to the creature." />
+                        <Offset name="current_soul" description="Currently active soul?" />
+                        <Offset name="labors" description="Array of labors. Used by DT to enable/disable them." />
+                        <Offset name="happiness" description="Number that says how happy the creature is." />
+                    </Group>
+                </Group>
+
+                <Group name="soul">
+                    <Offset name="name" description="Name of the soul." />
+                    <Offset name="mental" description="An array of mental attributes." />
+                    <Offset name="skills_vector" description="Vector of non-zero skills the creature has." />
+                    <Offset name="traits" />
+                </Group>
+
+                <Group name="job">
+                    <Offset name="id" description="Incrementaly assigned." />
+                    <Offset name="type" description="seems to be just like the old occupations" />
+                    <Offset name="materials_vector" />
+                    <Group name="material">
+                        <Offset name="material_maintype" description="like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ..." />
+                        <Offset name="material_sectype1" description="subsubtype ?" />
+                        <Offset name="material_sectype2" description="subtype ?" />
+                        <Offset name="material_sectype3" description="index of material (for example, 2 is for silver)" />
+                        <Offset name="material_flags" description="set only for shell / bone mood requirements ?" />
+                    </Group>
+                </Group>
+            </Group>
+            <Group name="Materials" description="Offsets used by the Materials module.">
+                <Address name="inorganics" description="Soil, stone, gems and metal."/>
+                <Address name="organics_all" description="Wood and plant matter, mixed" />
+                <Address name="organics_plants" description="plant matter" />
+                <Address name="organics_trees" description="just wood" />
+                <Address name="creature_type_vector" description="A vector of creature races" />
+                <Group name="creature" description="Creature race objects">
+                    <Offset name="caste_vector" description="A race is divided into castes. Normally male and female."/>
+                    <Offset name="extract_vector"/>
+                    <Offset name="tile" description="ASCII tile used for the creature"/>
+                    <Offset name="tile_color" description="color of the ASCII tile"/>
+                    <Group name="caste">
+                        <Offset name="bodypart_vector"/>
+                        <Offset name="attributes"/>
+                        <Offset name="color_modifiers"/>
+                    </Group>
+                    <Group name="caste_color_mods">
+                        <Offset name="part"/>
+                        <Offset name="startdate"/>
+                        <Offset name="enddate"/>
+                    </Group>
+                    <Group name="caste_bodyparts">
+                        <Offset name="id"/>
+                        <Offset name="category"/>
+                        <Offset name="layers_vector"/>
+                        <Offset name="singular_vector"/>
+                        <Offset name="plural_vector"/>
+                    </Group>
+                </Group>
+                <Group name="descriptors">
+                    <Address name="vectors_start" />
+                    <Offset name="rawname" />
+                    <Offset name="name" />
+                    <Address name="colors_vector" />
+                    <Offset name="color_r" /><!--floats !-->
+                    <Offset name="color_v" />
+                    <Offset name="color_b" />
+                    <Address name="all_colors_vector" description="A list of all colors, including eyes and stuff" />
+                </Group>
+            </Group>
+            <Group name="Constructions">
+                <Address name="vector"/>
+                <Offset name="sizeof"/>
+            </Group>
+            <Group name="Translations">
+                <Address name="language_vector"/>
+                <Address name="translation_vector"/>
+                <Offset name="word_table"/>
+            </Group>
+            <Group name="Vegetation">
+                <Address name="vector"/>
+                <Offset name="tree_desc_offset"/>
+            </Group>
+            <Group name="Buildings">
+                <Address name="buildings_vector"/>
+                <Offset name="building_custom_workshop_type"/>
+                <Address name="custom_workshop_vector"/>
+                <Offset name="custom_workshop_name"/>
+                <Offset name="custom_workshop_type"/>
+            </Group>
+            <Group name="Hotkeys">
+                <Address name="start"/>
+                <Offset name="mode"/>
+                <Offset name="coords"/>
+                <HexValue name="sizeof"/>
+            </Group>
+            <Group name="Items">
+                <Address name="items_vector" value="0x166FE00" />
+                List of offsets in the VTable :
+                <Offset name="item_type_accessor" value="0x0" />
+                <Offset name="item_subtype_accessor" value="0x4" />
+                <Offset name="item_subindex_accessor" value="0x8" />
+                <Offset name="item_index_accessor" value="0xC" />
+                <Offset name="item_quality_accessor" value="0x238" />
+                <Offset name="item_improvement_vector" value="0xA0" />
+                <Offset name="item_improvement_subindex" value="0x4" />
+                <Offset name="item_improvement_index" value="0x8" />
+                <Offset name="item_improvement_quality" value="0x14" />
+                <Offset name="item_type_accessor" value="0x14" />  (in the vtable)
+            </Group>
+            <Group name="World">
+                <Address name="current_tick" description="Current time of the year" />
+                <Address name="current_year" description="Current year" />
             </Group>
         </Offsets>
     </Base>
@@ -1060,7 +1259,7 @@
                 <Offset name="word_table" value="0x4C" />
             </Group>
             <Group name="Vegetation">
-                <Address name="vegetation_vector" value="0x0167030C" /> <!-- WORLD + 0x15184 -->
+                <Address name="vector" value="0x0167030C" /> <!-- WORLD + 0x15184 -->
                 <Offset name="tree_desc_offset" value="0x6C" />
             </Group>
             <Group name="Buildings">
@@ -1160,11 +1359,11 @@
                 </Group>
             </Group>
             <Group name="Materials">
-                <Address name="mat_inorganics" value="0x16B0D4C" /><!--inorganics vector = WORLD + 0x54B7C = 0x16B0D4C-->
-                <Address name="mat_other" value="0x16BA114" /> <!-- stuff like glass, coke, ... -->
-                <Address name="mat_organics_all" value="0x16B0D64" /><!--WORLD + 0x54B94-->
-                <Address name="mat_organics_plants" value="0x16B0D7C" /><!--plant matter, WORLD + 0x54BAC-->
-                <Address name="mat_organics_trees" value="0x16B0DAC" /><!--just wood, WORLD + 0x54BDC-->
+                <Address name="inorganics" value="0x16B0D4C" /><!--inorganics vector = WORLD + 0x54B7C = 0x16B0D4C-->
+                <!--<Address name="other" value="0x16BA114" /> -->  <!-- stuff like glass, coke, ... -->
+                <Address name="organics_all" value="0x16B0D64" /><!--WORLD + 0x54B94-->
+                <Address name="organics_plants" value="0x16B0D7C" /><!--plant matter, WORLD + 0x54BAC-->
+                <Address name="organics_trees" value="0x16B0DAC" /><!--just wood, WORLD + 0x54BDC-->
                 <Address name="creature_type_vector" value="0x16B0EA0" /><!--WORLD + 0x54CD0-->
                 <Group name="descriptors">
                     <Address name="vectors_start" value="0x16B9780" />
@@ -1222,16 +1421,16 @@
                 <Address name="current_civ" value="0x1471FB0" />
             </Group>
             <Group name="Materials">
-                <Address name="mat_inorganics" value="0x16BD0B0" />
-                <Address name="mat_other" value="0x16C6478" />
-                <Address name="mat_organics_all" value="0x16BD0C8" />
-                <Address name="mat_organics_plants" value="0x16bd0e0" />
-                <Address name="mat_organics_trees" value="0x16bd110" />
+                <Address name="inorganics" value="0x16BD0B0" />
+                <!--<Address name="other" value="0x16C6478" />-->
+                <Address name="organics_all" value="0x16BD0C8" />
+                <Address name="organics_plants" value="0x16bd0e0" />
+                <Address name="organics_trees" value="0x16bd110" />
                 <Address name="creature_type_vector" value="0x16BD204" />
                 <Group name="descriptors">
-                    <Address name="descriptor_colors_vector" value="0x16C5ACC" />
-                    <Address name="descriptor_vectors_start" value="0x16C5AE4" />
-                    <Address name="descriptor_all_colors" value="0x16C5AFC" />
+                    <Address name="colors_vector" value="0x16C5ACC" />
+                    <Address name="vectors_start" value="0x16C5AE4" />
+                    <Address name="all_colors_vector" value="0x16C5AFC" />
                 </Group>
             </Group>
             <Group name="Translations">
@@ -1260,7 +1459,7 @@
                         <Address name="vector" value="0x16BC8A8" />
                     </Group>
                     <Group name="local">
-                        <Address name="local_feature_start_ptr" value="0x16BC974" />
+                        <Address name="start_ptr" value="0x16BC974" />
                     </Group>
                 </Group>
                 <Group name="geology">
@@ -1269,10 +1468,10 @@
                 </Group>
             </Group>
             <Group name="Constructions">
-                <Address name="construction_vector" value="0x1664CD8" />
+                <Address name="vector" value="0x1664CD8" />
             </Group>
             <Group name="Vegetation">
-                <Address name="vegetation_vector" value="0x1679D54" />
+                <Address name="vector" value="0x1679D54" />
             </Group>
             <Group name="Buildings">
                 <Address name="buildings_vector" value="0x16793e8" />
@@ -1465,8 +1664,8 @@
                     <Offset name="type" value="0x006A" />
                     <Offset name="designation" value="0x026C" />
                     <Offset name="occupancy" value="0x066c" />
-                    <Offset name="temperature1_offset" value="0x156c" />
-                    <Offset name="temperature2_offset" value="0x176c" />
+                    <Offset name="temperature1" value="0x156c" />
+                    <Offset name="temperature2" value="0x176c" />
                     <Offset name="biome_stuffs" value="0x1D6C" />
                     <Offset name="pathfinding" value="0x0D6c" />
                 </Group>
@@ -1597,7 +1796,7 @@
                 <Offset name="word_table" value="0x1C" />
             </Group>
             <Group name="Vegetation">
-                <Address name="vegetation_vector" value="" />
+                <Address name="vector" value="" />
                 <Offset name="tree_desc_offset" value="" />
             </Group>
             <Group name="World">

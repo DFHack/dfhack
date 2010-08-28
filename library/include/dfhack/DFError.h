@@ -81,7 +81,7 @@ namespace DFHack
             MissingMemoryDefinition(const char* _type, const std::string _key) : type(_type), key(_key)
             {
                 std::stringstream s;
-                s << "memory object not declared: type " << type << " key " << key;
+                s << "memory object not declared: type=" << type << " key=" << key;
                 full = s.str();
             }
             // Used by functios using integer keys, such as getTrait
@@ -92,7 +92,7 @@ namespace DFHack
                 key = s1.str();
                 
                 std::stringstream s;
-                s << "memory object not declared: type " << type << " key " << key;
+                s << "memory object not declared: type=" << type << " key=" << key;
                 full = s.str();
             }
             virtual ~MissingMemoryDefinition() throw(){};

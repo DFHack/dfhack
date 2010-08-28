@@ -49,6 +49,7 @@ namespace DFHack
         OffsetGroupPrivate * OGd;
     public:
         OffsetGroup();
+        OffsetGroup(const std::string & _name, OffsetGroup * parent = 0);
         ~OffsetGroup();
 
         void copy(const OffsetGroup * old); // recursive
@@ -70,6 +71,10 @@ namespace DFHack
         void setAddress (const std::string & key, const std::string & value);
         void setHexValue (const std::string & key, const std::string & value);
         void setString (const std::string & key, const std::string & value);
+        std::string PrintOffsets();
+        std::string getName();
+        std::string getFullName();
+        OffsetGroup * getParent();
     };
 
     /*

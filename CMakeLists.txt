@@ -4,6 +4,11 @@ cmake_minimum_required(VERSION 2.6)
 SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
 SET ( DFHACK_VERSION "0.4.1.0-dev" )
 
+# Set this to project source dir. When dfhack is used
+# as a submodule, CMAKE_SOURCE_DIR is not pointing to
+# the root where this particular CMakeLists.txt file sits.
+SET(CMAKE_SOURCE_DIR ${PROJECT_SOURCE_DIR})
+
 # disable warning, autosearch
 if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)

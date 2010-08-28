@@ -159,15 +159,18 @@ int main (int numargs, const char ** args)
     }
     
     DFHack::Position *Pos = DF->getPosition();
-    DFHack::memory_info* mem = DF->getMemoryInfo();
+    DFHack::VersionInfo* mem = DF->getMemoryInfo();
     DFHack::Process * p = DF->getProcess();
-    uint32_t designations = mem->getOffset("map_data_designation");
-    uint32_t block_feature1 = mem->getOffset("map_data_feature_local");
-    uint32_t block_feature2 = mem->getOffset("map_data_feature_global");
-    uint32_t region_x_offset = mem->getAddress("region_x");
-    uint32_t region_y_offset = mem->getAddress("region_y");
-    uint32_t region_z_offset = mem->getAddress("region_z");
-    uint32_t feature1_start_ptr = mem->getAddress("local_feature_start_ptr");
+    OffsetGroup * OG_Maps = mem->getGroup("Maps");
+    OffsetGroup * OG_MapBlock = OG_Maps->getGroup("block");
+    OffsetGroup * OG_LocalFt = OG_Maps->getGroup("features")->getGroup("local");
+    uint32_t designations = OG_MapBlock->getOffset("designation");
+    uint32_t block_feature1 = OG_MapBlock->getOffset("feature_local");
+    uint32_t block_feature2 = OG_MapBlock->getOffset("feature_global");
+    uint32_t region_x_offset = OG_Maps->getAddress("region_x");
+    uint32_t region_y_offset = OG_Maps->getAddress("region_y");
+    uint32_t region_z_offset = OG_Maps->getAddress("region_z");
+    uint32_t feature1_start_ptr = OG_LocalFt->getAddress("start_ptr");
     int32_t regionX, regionY, regionZ;
     
     // read position of the region inside DF world

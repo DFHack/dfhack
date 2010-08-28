@@ -271,16 +271,17 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
             }
         }
 
-		std::vector<uint32_t> inventory;
+        std::vector<uint32_t> inventory;
 
-		if( Creatures->ReadInventoryPtr(creature.origin, inventory) )
-		{
-			printf("\tInventory:\n");
-			for(unsigned int i = 0; i < inventory.size(); i++)
-			{
-				printf("\t\t%s\n", Items->getItemDescription(inventory[i], Materials).c_str());
-			}
-		}
+        if( Creatures->ReadInventoryPtr(creature.origin, inventory) )
+        {
+            DFHack::Items * Items = DF->getItems();
+            printf("\tInventory:\n");
+            for(unsigned int i = 0; i < inventory.size(); i++)
+            {
+                printf("\t\t%s\n", Items->getItemDescription(inventory[i], Materials).c_str());
+            }
+        }
 
         /*
         if(creature.pregnancy_timer > 0)
@@ -426,7 +427,6 @@ int main (int numargs, char ** args)
     
     Creatures = DF->getCreatures();
     Materials = DF->getMaterials();
-	Items = DF->getItems();
     World = DF->getWorld();
     current_year = World->ReadCurrentYear();
     current_tick = World->ReadCurrentTick();

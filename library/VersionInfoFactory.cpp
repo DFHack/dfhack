@@ -23,10 +23,11 @@ distribution.
 */
 
 #include "Internal.h"
-#include "VersionInfoFactory.h"
 
+#include "dfhack/VersionInfoFactory.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
+#include <algorithm>
 
 using namespace DFHack;
 
@@ -94,6 +95,167 @@ void VersionInfoFactory::ParseVTable(TiXmlElement* vtable, VersionInfo* mem)
     }
 }
 
+// FIXME: this is ripe for replacement with a more generic approach
+void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target, bool initial)
+{
+    // we parse the groups iteratively instead of recursively
+    // breadcrubs acts like a makeshift stack
+    // first pair entry stores the current element of that level
+    // second pair entry the group object from OffsetGroup
+    typedef pair < TiXmlElement *, OffsetGroup * > groupPair;
+    vector< groupPair > breadcrumbs;
+    {
+        TiXmlElement* pEntry;
+        // we get the <Offsets>, look at the children
+        pEntry = parent->FirstChildElement();
+        if(!pEntry)
+            return;
+
+        OffsetGroup * currentGroup = reinterpret_cast<OffsetGroup *> (target);
+        breadcrumbs.push_back(groupPair(pEntry,currentGroup));
+    }
+
+    // work variables
+    OffsetGroup * currentGroup = 0;
+    TiXmlElement * currentElem = 0;
+    cerr << "<Offsets>"<< endl;
+    while(1)
+    {
+        // get current work variables
+        currentElem = breadcrumbs.back().first;
+        currentGroup = breadcrumbs.back().second;
+
+        // we reached the end of the current group?
+        if(!currentElem)
+        {
+            // go one level up
+            breadcrumbs.pop_back();
+            // exit if no more work
+            if(breadcrumbs.empty())
+            {
+                break;
+            }
+            else
+            {
+                cerr << "</group>" << endl;
+                continue;
+            }
+        }
+
+        if(!currentGroup)
+        {
+            groupPair & gp = breadcrumbs.back();
+            gp.first = gp.first->NextSiblingElement();
+            continue;
+        }
+
+        // skip non-elements
+        if (currentElem->Type() != TiXmlNode::ELEMENT)
+        {
+            groupPair & gp = breadcrumbs.back();
+            gp.first = gp.first->NextSiblingElement();
+            continue;
+        }
+
+        // we have a valid current element and current group
+        // get properties
+        string type = currentElem->Value();
+        std::transform(type.begin(), type.end(), type.begin(), ::tolower);
+        const char *cstr_name = currentElem->Attribute("name");
+        if(!cstr_name)
+        {
+            // ERROR, missing attribute
+        }
+
+        // evaluate elements
+        const char *cstr_value = currentElem->Attribute("value");
+        if(type == "group")
+        {
+            // FIXME: possibly use setGroup always, with the initial flag as parameter?
+            // create or get group
+            OffsetGroup * og;
+            if(initial)
+                og = currentGroup->createGroup(cstr_name);
+            else
+                og = currentGroup->getGroup(cstr_name);
+            cerr << "<group name=\"" << cstr_name << "\">" << endl;
+            // advance this level to the next element
+            groupPair & gp = breadcrumbs.back();
+            gp.first = gp.first->NextSiblingElement();
+
+            // add a new level that will be processed next
+            breadcrumbs.push_back(groupPair(currentElem->FirstChildElement(), og));
+            continue;
+        }
+        else if(type == "address")
+        {
+            if(initial)
+            {
+                currentGroup->createAddress(cstr_name);
+            }
+            else if(cstr_value)
+            {
+                currentGroup->setAddress(cstr_name, cstr_value);
+            }
+            else
+            {
+                // ERROR, missing attribute
+            }
+        }
+        else if(type == "offset")
+        {
+            if(initial)
+            {
+                currentGroup->createOffset(cstr_name);
+            }
+            else if(cstr_value)
+            {
+                currentGroup->setOffset(cstr_name, cstr_value);
+            }
+            else
+            {
+                // ERROR, missing attribute
+            }
+        }
+        else if(type == "string")
+        {
+            if(initial)
+            {
+                currentGroup->createString(cstr_name);
+            }
+            else if(cstr_value)
+            {
+                currentGroup->setString(cstr_name, cstr_value);
+            }
+            else
+            {
+                // ERROR, missing attribute
+            }
+        }
+        else if(type == "hexvalue")
+        {
+            if(initial)
+            {
+                currentGroup->createHexValue(cstr_name);
+            }
+            else if(cstr_value)
+            {
+                currentGroup->setHexValue(cstr_name, cstr_value);
+            }
+            else
+            {
+                // ERROR, missing attribute
+            }
+        }
+
+        // advance to next element
+        groupPair & gp = breadcrumbs.back();
+        gp.first = gp.first->NextSiblingElement();
+        continue;
+    }
+    cerr << "</Offsets>"<< endl;
+}
+
 void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
 {
     TiXmlElement* pElement;
@@ -121,12 +283,12 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         else if(type == "Offsets")
         {
             // we don't care about the descriptions here, do nothing
-            //ParseBaseOffsets(pMemEntry, mem);
+            ParseOffsets(pElement, mem, true);
             continue;
         }
         else if (type == "Professions")
         {
-            pElement2nd = entry->FirstChildElement("Profession")->ToElement();
+            pElement2nd = entry->FirstChildElement("Profession");
             for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Profession"))
             {
                 const char * id = pElement2nd->Attribute("id");
@@ -145,7 +307,7 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         }
         else if (type == "Jobs")
         {
-            pElement2nd = entry->FirstChildElement("Job")->ToElement();
+            pElement2nd = entry->FirstChildElement("Job");
             for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Job"))
             {
                 const char * id = pElement2nd->Attribute("id");
@@ -163,7 +325,7 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         }
         else if (type == "Skills")
         {
-            pElement2nd = entry->FirstChildElement("Skill")->ToElement();
+            pElement2nd = entry->FirstChildElement("Skill");
             for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Skill"))
             {
                 const char * id = pElement2nd->Attribute("id");
@@ -181,7 +343,7 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         }
         else if (type == "Traits")
         {
-            pElement2nd = entry->FirstChildElement("Trait")->ToElement();
+            pElement2nd = entry->FirstChildElement("Trait");
             for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Trait"))
             {
                 const char * id = pElement2nd->Attribute("id");
@@ -205,7 +367,7 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         }
         else if (type == "Labors")
         {
-            pElement2nd = entry->FirstChildElement("Labor")->ToElement();
+            pElement2nd = entry->FirstChildElement("Labor");
             for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Labor"))
             {
                 const char * id = pElement2nd->Attribute("id");
@@ -223,7 +385,7 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         }
         else if (type == "Levels")
         {
-            pElement2nd = entry->FirstChildElement("Level")->ToElement();
+            pElement2nd = entry->FirstChildElement("Level");
             for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Level"))
             {
                 const char * id = pElement2nd->Attribute("id");
@@ -242,7 +404,7 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         }
         else if (type == "Moods")
         {
-            pElement2nd = entry->FirstChildElement("Mood")->ToElement();
+            pElement2nd = entry->FirstChildElement("Mood");
             for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Mood"))
             {
                 const char * id = pElement2nd->Attribute("id");
@@ -276,7 +438,6 @@ void VersionInfoFactory::EvalVersion(string base, VersionInfo * mem)
             VersionInfo * newmem = new VersionInfo();
             ParseVersion(desc.first, newmem);
             desc.second = newmem;
-            versions.push_back(newmem);
         }
         mem->copy(desc.second);
     }
@@ -345,29 +506,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         }
         else if(type == "Offsets")
         {
-            /*
-            if (type == "HexValue")
-            {
-                mem->setHexValue(name, value);
-            }
-            else if (type == "Address")
-            {
-                mem->setAddress(name, value);
-            }
-            else if (type == "Offset")
-            {
-                mem->setOffset(name, value);
-            }
-            else if (type == "String")
-            {
-                mem->setString(name, value);
-            }
-            else
-            {
-                throw Error::MemoryXmlUnknownType(type.c_str());
-            }
-            */
-            //ParseOffsets(pMemEntry, mem);
+            ParseOffsets(pMemEntry, mem);
             continue;
         }
         else if (type == "MD5")
@@ -382,7 +521,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
             const char *cstr_value = pMemEntry->Attribute("value");
             if(!cstr_value)
                 throw Error::MemoryXmlUnderspecifiedEntry(cstr_name);
-            mem->setPE(atol(cstr_value));
+            mem->setPE(strtol(cstr_value, 0, 16));
         }
     } // for
 } // method
@@ -446,6 +585,7 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
             {
                 string str_name = name;
                 VersionInfo *base = new VersionInfo();
+                mem = new VersionInfo();
                 ParseBase( pMemInfo , mem );
                 knownVersions[str_name] = v_descr (pMemInfo, mem);
             }

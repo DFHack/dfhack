@@ -813,6 +813,9 @@
             <class name="buildingst"/>
         </VTable>
         <Offsets>
+            <Address name="WORLD" description="A huge object that many things in DF are part of. Contains the whole game and can be used as a base
+            for many of the addresses." />
+            <HexValue name="sdasdasdizeof" description="The total size in bytes." />
             <Group name="vector" description="An STL vector.">
                 <HexValue name="sizeof" description="The total size in bytes." />
                 <Offset name="start" description="The offset where the actual start/end/alloc_end triplet is." />
@@ -1407,7 +1410,7 @@
     <!-- Windows logo by Microsoft -->
     <!-- Tux logo by the Linux guys :) -->
 
-    <Version version="v0.31.05 linux" os="linux" base="DF2010">
+    <Version name="v0.31.05 linux" os="linux" base="DF2010">
         <MD5 value="fea3801a26538b1741f3cc9294139fca" />
         <Offsets>
             <Address name="WORLD" value="0x92C60E0" valid="false" />
@@ -1603,7 +1606,7 @@
             </Group>
         </Offsets>
     </Version>
-    <Version version="v0.31.06 linux" os="linux" base="v0.31.05 linux" rebase="-0x20E0">
+    <Version name="v0.31.06 linux" os="linux" base="v0.31.05 linux" rebase="-0x20E0">
         <MD5 value="13a1c19e8f59b74e307e094e2a0f28c3" />
         <Offsets>
             <Address name="WORLD" value="0x92C4000" />
@@ -1618,18 +1621,18 @@
             0x92d7a10
         </Offsets>
     </Version>
-    <Version version="v0.31.07 linux" os="linux" base="v0.31.06 linux" rebase="0x2000">
+    <Version name="v0.31.07 linux" os="linux" base="v0.31.06 linux" rebase="0x2000">
         <MD5 value="b31979551782e89c049b11db8d2d86d7" />
     </Version>
-    <Version version="v0.31.08 linux" os="linux" base="v0.31.07 linux">
+    <Version name="v0.31.08 linux" os="linux" base="v0.31.07 linux">
         <MD5 value="e37750890350d7b9d8203879aff8fa5c" />
     </Version>
-    <Version version="v0.31.09 linux" os="linux" base="v0.31.08 linux" rebase="0x11000">
+    <Version name="v0.31.09 linux" os="linux" base="v0.31.08 linux" rebase="0x11000">
         <!-- TODO: fix creature offsets -->
         <!-- TODO: small offsets added all over the place, investigate -->
         <MD5 value="4f1f988bc1b425d4193d3d8b7b0579a5" />
     </Version>
-    <Version version="v0.31.10 linux" os="linux" base="v0.31.09 linux">
+    <Version name="v0.31.10 linux" os="linux" base="v0.31.09 linux">
         <MD5 value="3e7bea269018a6fb88ef53715685aa64" />
         <Offsets>
             <Group name="Buildings">
@@ -1647,17 +1650,19 @@
             <multiclass name="building_siegeenginest" typeoffset="0xC0" />
         </VTable>
     </Version>
-    <Version version="v0.31.11 linux" os="linux" base="v0.31.10 linux" rebase="0x1D020">
+    <Version name="v0.31.11 linux" os="linux" base="v0.31.10 linux" rebase="0x1D020">
         <!-- BIG rebase, possible broken stuff -->
         <MD5 value="7b04ad536b8b657588ac209a7f95e1d1" />
         <Offsets>
-            <Address name="window_x" value="0x8cf7a58" /> VERIFIED
-            <Address name="window_y" value="0x8cf7a5C" /> VERIFIED
-            <Address name="window_z" value="0x8cf7a60" /> VERIFIED
-            <Address name="cursor_xyz" value="0x8b3b328" /> VERIFIED
+            <Group name="Position">
+                <Address name="window_x" value="0x8cf7a58" /> VERIFIED
+                <Address name="window_y" value="0x8cf7a5C" /> VERIFIED
+                <Address name="window_z" value="0x8cf7a60" /> VERIFIED
+                <Address name="cursor_xyz" value="0x8b3b328" /> VERIFIED
+            </Group>
         </Offsets>
     </Version>
-    <Version version="v0.31.12 linux" os="linux" base="v0.31.11 linux" rebase="-0x1000">
+    <Version name="v0.31.12 linux" os="linux" base="v0.31.11 linux" rebase="-0x1000">
         <MD5 value="e79cead03187ecb692961b316b7cdcd4" />
     </Version>
 </DFHack>

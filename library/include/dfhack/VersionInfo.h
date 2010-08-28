@@ -39,38 +39,42 @@ namespace DFHack
     struct t_class;
     class VersionInfoPrivate;
     class OffsetGroupPrivate;
+
+    /*
+     * Offset Group
+     */
     class DFHACK_EXPORT OffsetGroup
     {
     protected:
-        OffsetGroupPrivate * d;
+        OffsetGroupPrivate * OGd;
     public:
-        int32_t getOffset (const std::string&);
-        uint32_t getAddress (const std::string&);
-        uint32_t getHexValue (const std::string&);
-        std::string getString (const std::string&);
+        OffsetGroup();
+        ~OffsetGroup();
 
-        int32_t getOffset (const char *);
-        uint32_t getAddress (const char *);
-        uint32_t getHexValue (const char *);
-        std::string getString (const char *);
+        void copy(const OffsetGroup * old); // recursive
+        void RebaseAddresses( int32_t offset ); // recursive
 
-        void setOffset (const std::string &, const int32_t);
-        void setAddress (const std::string &, const uint32_t);
-        void setHexValue (const std::string &, const uint32_t);
+        void createOffset (const std::string & key);
+        void createAddress (const std::string & key);
+        void createHexValue (const std::string & key);
+        void createString (const std::string & key);
+        OffsetGroup * createGroup ( const std::string & name );
 
-        void setOffset (const std::string &, const char *);
-        void setAddress (const std::string &, const char *);
-        void setHexValue (const std::string &, const char *);
-        void setString (const std::string &, const char *);
+        int32_t getOffset (const std::string & key);
+        uint32_t getAddress (const std::string & key);
+        uint32_t getHexValue (const std::string & key);
+        std::string getString (const std::string & key);
+        OffsetGroup * getGroup ( const std::string & name );
 
-        void setOffset (const std::string &, const std::string &);
-        void setAddress (const std::string &, const std::string &);
-        void setHexValue (const std::string &, const std::string &);
-        void setString (const std::string &, const std::string &);
-
-        OffsetGroup & getGroup (const std::string name);
+        void setOffset (const std::string & key, const std::string & value);
+        void setAddress (const std::string & key, const std::string & value);
+        void setHexValue (const std::string & key, const std::string & value);
+        void setString (const std::string & key, const std::string & value);
     };
 
+    /*
+     * Version Info
+     */
     class DFHACK_EXPORT VersionInfo : public OffsetGroup
     {
     private:

@@ -78,10 +78,10 @@ namespace DFHack
         class DFHACK_EXPORT MissingMemoryDefinition : public std::exception
         {
         public:
-            MissingMemoryDefinition(const char* _type, const char* _key) : type(_type), key(_key)
+            MissingMemoryDefinition(const char* _type, const std::string _key) : type(_type), key(_key)
             {
                 std::stringstream s;
-                s << "memory definition missing: type " << type << " key " << key;
+                s << "memory object not declared: type " << type << " key " << key;
                 full = s.str();
             }
             // Used by functios using integer keys, such as getTrait
@@ -92,24 +92,44 @@ namespace DFHack
                 key = s1.str();
                 
                 std::stringstream s;
-                s << "memory definition missing: type " << type << " key " << key;
+                s << "memory object not declared: type " << type << " key " << key;
                 full = s.str();
             }
             virtual ~MissingMemoryDefinition() throw(){};
 
-            // (perhaps it should be an enum, but this is intended for easy printing/logging)
-            // type can be any of the following:
-            //
-            // address
-            // offset
-            // hexvalue
-            // string
-            // profession
-            // job
-            // skill
-            // trait
-            // traitname
-            // labor
+            std::string full;
+            const std::string type;
+            std::string key;
+
+            virtual const char* what() const throw()
+            {
+                return full.c_str();
+            }
+        };
+
+        // a call to DFHack::mem_info::get* failed
+        class DFHACK_EXPORT UnsetMemoryDefinition : public std::exception
+        {
+        public:
+            UnsetMemoryDefinition(const char* _type, const std::string _key) : type(_type), key(_key)
+            {
+                std::stringstream s;
+                s << "memory object not set: type " << type << " key " << key;
+                full = s.str();
+            }
+            // Used by functios using integer keys, such as getTrait
+            UnsetMemoryDefinition(const char* _type, uint32_t _key) : type(_type)
+            {
+                std::stringstream s1;
+                s1 << _key;
+                key = s1.str();
+
+                std::stringstream s;
+                s << "memory object not set: type " << type << " key " << key;
+                full = s.str();
+            }
+            virtual ~UnsetMemoryDefinition() throw(){};
+
             std::string full;
             const std::string type;
             std::string key;

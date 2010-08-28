@@ -54,6 +54,37 @@ int Maps_Finish(DFHackObject* maps)
 	return -1;
 }
 
+t_feature* Maps_ReadGlobalFeatures(DFHackObject* maps)
+{
+	if(maps != NULL)
+	{
+		std::vector<t_feature> featureVec;
+		
+		if(((DFHack::Maps*)maps)->ReadGlobalFeatures(featureVec))
+		{
+			if(featureVec.size() <= 0)
+				return NULL;
+			
+			t_feature* buf;
+			
+			(*alloc_t_feature_buffer_callback)(buf, featureVec.size());
+			
+			if(buf != NULL)
+			{
+				copy(featureVec.begin(), featureVec.end(), buf);
+				
+				return buf;
+			}
+			else
+				return NULL;
+		}
+		else
+			return NULL;
+	}
+	
+	return NULL;
+}
+
 void Maps_getSize(DFHackObject* maps, uint32_t* x, uint32_t* y, uint32_t* z)
 {
 	if(maps != NULL)

@@ -44,6 +44,7 @@ DFHACK_EXPORT int Materials_ReadOthers(DFHackObject* mat);
 
 DFHACK_EXPORT void Materials_ReadAllMaterials(DFHackObject* mat);
 
+DFHACK_EXPORT const char* Materials_getType(DFHackObject* mat, t_material* material);
 DFHACK_EXPORT const char* Materials_getDescription(DFHackObject* mat, t_material* material);
 
 DFHACK_EXPORT int Materials_getInorganicSize(DFHackObject* mat);

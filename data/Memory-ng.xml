@@ -1585,9 +1585,11 @@
     <Version name="v0.31.12 SDL" os="windows" base="v0.31.11 SDL">
         <MD5 value="f0459165a426a9f2dd8d957e9fa7f01d" />
         <PETimeStamp value="0x4C4C32E7" />
-        <Group name="Position">
-            <Address name="screen_tiles_pointer">0x18313D0</Address>
-        </Group>
+        <Offsets>
+            <Group name="Position">
+                <Address name="screen_tiles_pointer">0x18313D0</Address>
+            </Group>
+        </Offsets>
     </Version>
 
                             .-"""-.
@@ -1856,9 +1858,11 @@
     </Version>
     <Version name="v0.31.12 linux" os="linux" base="v0.31.11 linux" rebase="-0x1000">
         <MD5 value="e79cead03187ecb692961b316b7cdcd4" />
-        <Group name="Position">
-            <Address name="screen_tiles_pointer">0x09487970</Address>
-        </Group>
+        <Offsets>
+            <Group name="Position">
+                <Address name="screen_tiles_pointer">0x09487970</Address>
+            </Group>
+        </Offsets>
     </Version>
 </DFHack>
 

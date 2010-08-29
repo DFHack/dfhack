@@ -43,12 +43,13 @@ int main (void)
     string mode="magma";
     string brush="point";
     string flowmode="f+";
+    string setmode ="s.";
     int amount = 7;
     while(!end)
     {
         DF->Resume();
         string command = "";
-        cout <<"[" << mode << ":" << amount << ":" << flowmode << "]# ";
+        cout <<"[" << mode << ":" << amount << ":" << flowmode << ":" << setmode << "]# ";
         getline(cin, command);
         if(command=="help")
         {
@@ -57,6 +58,10 @@ int main (void)
                  << "w             - switch to water" << endl
                  << "o             - make obsidian wall instead" << endl
                  << "f             - flow bits only" << endl
+                 << "Set-Modes:" << endl
+                 << "s+            - only add" << endl
+                 << "s.            - set" << endl
+                 << "s-            - only remove" << endl
                  << "Properties:" << endl
                  << "f+            - make the spawned liquid flow" << endl
                  << "f.            - don't change flow state (read state in flow mode)" << endl
@@ -125,6 +130,18 @@ int main (void)
         {
             flowmode = "f.";
         }
+        else if(command == "s+")
+        {
+            setmode = "s+";
+        }
+        else if(command == "s-")
+        {
+            setmode = "s-";
+        }
+        else if(command == "s.")
+        {
+            setmode = "s.";
+        }
         // blah blah, bad code, bite me.
         else if(command == "0")
             amount = 0;
@@ -185,7 +202,7 @@ int main (void)
                     } 
                 }
                 // quick hack, do not use for serious stuff
-                
+                /*
                 else if(mode == "starruby")
                 {
                     if(Maps->isValidBlock((x/16),(y/16),z))
@@ -236,6 +253,7 @@ int main (void)
                         zzz --;
                     }
                 }
+                */
                 else
                 {
                     // place the magma
@@ -248,7 +266,21 @@ int main (void)
                             // fix temperatures so we don't produce lethal heat traps
                             if(amount == 0 || designations[x%16][y%16].bits.liquid_type == DFHack::liquid_magma && mode == "water")
                                 temp1[x%16][y%16] = temp2[x%16][y%16] = 10015;
-                            designations[x%16][y%16].bits.flow_size = amount;
+                            DFHack::naked_designation & flow = designations[x%16][y%16].bits;
+                            if(setmode == "s.")
+                            {
+                                flow.flow_size = amount;
+                            }
+                            else if(setmode == "s+")
+                            {
+                                if(flow.flow_size < amount)
+                                    flow.flow_size = amount;
+                            }
+                            else if(setmode == "s-")
+                            {
+                                if (flow.flow_size > amount)
+                                    flow.flow_size = amount;
+                            }
                         }
                         if(mode == "magma")
                             designations[x%16][y%16].bits.liquid_type = DFHack::liquid_magma;
@@ -264,7 +296,21 @@ int main (void)
                                 // fix temperatures so we don't produce lethal heat traps
                                 if(amount == 0 || designations[xx][yy].bits.liquid_type == DFHack::liquid_magma && mode == "water")
                                     temp1[xx%16][yy%16] = temp2[xx%16][yy%16] = 10015;
-                                designations[xx][yy].bits.flow_size = amount;
+                                DFHack::naked_designation & flow= designations[xx][yy].bits;
+                                if(setmode == "s.")
+                                {
+                                    flow.flow_size = amount;
+                                }
+                                else if(setmode == "s+")
+                                {
+                                    if(flow.flow_size < amount)
+                                        flow.flow_size = amount;
+                                }
+                                else if(setmode == "s-")
+                                {
+                                    if (flow.flow_size > amount)
+                                        flow.flow_size = amount;
+                                }
                             }
                             if(mode == "magma")
                                 designations[xx][yy].bits.liquid_type = DFHack::liquid_magma;

@@ -189,11 +189,12 @@ int32_t Accessor::getValue(uint32_t objectPtr)
 
 ItemDesc::ItemDesc(uint32_t VTable, Process *p)
 {
-    uint32_t funcOffsetA = p->getDescriptor()->getOffset("item_type_accessor");
-    uint32_t funcOffsetB = p->getDescriptor()->getOffset("item_subtype_accessor");
-    uint32_t funcOffsetC = p->getDescriptor()->getOffset("item_subindex_accessor");
-    uint32_t funcOffsetD = p->getDescriptor()->getOffset("item_index_accessor");
-    uint32_t funcOffsetQuality = p->getDescriptor()->getOffset("item_quality_accessor");
+    OffsetGroup * Items = p->getDescriptor()->getGroup("Items");
+    uint32_t funcOffsetA = Items->getOffset("item_type_accessor");
+    uint32_t funcOffsetB = Items->getOffset("item_subtype_accessor");
+    uint32_t funcOffsetC = Items->getOffset("item_subindex_accessor");
+    uint32_t funcOffsetD = Items->getOffset("item_index_accessor");
+    uint32_t funcOffsetQuality = Items->getOffset("item_quality_accessor");
     this->vtable = VTable;
     this->p = p;
     this->className = p->readClassName(VTable).substr(5);

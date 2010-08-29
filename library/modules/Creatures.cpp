@@ -71,49 +71,59 @@ Creatures::Creatures(DFContextShared* _d)
     {
         VersionInfo * minfo = d->d->offset_descriptor;
         Creatures2010::creature_offsets &creatures = d->creatures;
-        creatures.vector = minfo->getAddress ("creature_vector");
-        creatures.pos_offset = minfo->getOffset ("creature_position");
-        creatures.profession_offset = minfo->getOffset ("creature_profession");
-        creatures.custom_profession_offset = minfo->getOffset ("creature_custom_profession");
-        creatures.race_offset = minfo->getOffset ("creature_race");
-        creatures.civ_offset = minfo->getOffset ("creature_civ");
-        creatures.flags1_offset = minfo->getOffset ("creature_flags1");
-        creatures.flags2_offset = minfo->getOffset ("creature_flags2");
-        creatures.name_offset = minfo->getOffset ("creature_name");
-        creatures.sex_offset = minfo->getOffset ("creature_sex");
-        creatures.caste_offset = minfo->getOffset ("creature_caste");
-        creatures.id_offset = minfo->getOffset ("creature_id");
-        creatures.labors_offset = minfo->getOffset ("creature_labors");
-        creatures.happiness_offset = minfo->getOffset ("creature_happiness");
-        creatures.artifact_name_offset = minfo->getOffset("creature_artifact_name");
-        creatures.soul_vector_offset = minfo->getOffset("creature_soul_vector");
-        creatures.default_soul_offset = minfo->getOffset("creature_default_soul");
-        creatures.physical_offset = minfo->getOffset("creature_physical");
-        creatures.mood_offset = minfo->getOffset("creature_mood");
-        creatures.mood_skill_offset = minfo->getOffset("creature_mood_skill");
-        creatures.pickup_equipment_bit = minfo->getOffset("creature_pickup_equipment_bit");
-        creatures.current_job_offset = minfo->getOffset("creature_current_job");
-        // soul offsets
-        creatures.soul_skills_vector_offset = minfo->getOffset("soul_skills_vector");
-        creatures.soul_mental_offset = minfo->getOffset("soul_mental");
-        creatures.soul_traits_offset = minfo->getOffset("soul_traits");
-
-        // appearance
-        creatures.appearance_vector_offset = minfo->getOffset("creature_appearance_vector");
-
-        //birth
-        creatures.birth_year_offset = minfo->getOffset("creature_birth_year");
-        creatures.birth_time_offset = minfo->getOffset("creature_birth_time");
-
+        OffsetGroup *OG_Creatures = minfo->getGroup("Creatures");
+        {
+            creatures.vector = OG_Creatures->getAddress ("vector");
+            d->dwarf_race_index_addr = OG_Creatures->getAddress("current_race");
+            d->dwarf_civ_id_addr = OG_Creatures->getAddress("current_civ");
+            OffsetGroup *OG_creature = OG_Creatures->getGroup("creature");
+            {
+                creatures.name_offset = OG_creature->getOffset ("name");
+                creatures.custom_profession_offset = OG_creature->getOffset ("custom_profession");
+                creatures.profession_offset = OG_creature->getOffset ("profession");
+                creatures.race_offset = OG_creature->getOffset ("race");
+                creatures.pos_offset = OG_creature->getOffset ("position");
+                creatures.flags1_offset = OG_creature->getOffset ("creature_flags1");
+                creatures.flags2_offset = OG_creature->getOffset ("creature_flags2");
+                creatures.sex_offset = OG_creature->getOffset ("sex");
+                creatures.caste_offset = OG_creature->getOffset ("caste");
+                creatures.id_offset = OG_creature->getOffset ("id");
+                creatures.civ_offset = OG_creature->getOffset ("civ");
+                OffsetGroup *OG_creature_ex = OG_creature->getGroup("advanced");
+                {
+                    creatures.inventory_offset = OG_creature_ex->getOffset("inventory_vector");
+                    creatures.pickup_equipment_bit = OG_creature_ex->getOffset("pickup_equipment_bit");
+                    creatures.mood_offset = OG_creature_ex->getOffset("mood");
+                    // pregnancy
+                    // pregnancy_ptr
+                    creatures.birth_year_offset = OG_creature_ex->getOffset("birth_year");
+                    creatures.birth_time_offset = OG_creature_ex->getOffset("birth_time");
+                    creatures.current_job_offset = OG_creature_ex->getOffset("current_job");
+                    creatures.mood_skill_offset = OG_creature_ex->getOffset("current_job_skill");
+                    creatures.physical_offset = OG_creature_ex->getOffset("physical");
+                    creatures.appearance_vector_offset = OG_creature_ex->getOffset("appearance_vector");
+                    creatures.artifact_name_offset = OG_creature_ex->getOffset("artifact_name");
+                    creatures.soul_vector_offset = OG_creature_ex->getOffset("soul_vector");
+                    creatures.default_soul_offset = OG_creature_ex->getOffset("current_soul");
+                    creatures.labors_offset = OG_creature_ex->getOffset ("labors");
+                    creatures.happiness_offset = OG_creature_ex->getOffset ("happiness");
+                }
+            }
+            OffsetGroup *OG_soul = OG_Creatures->getGroup("soul");
+            {
+                creatures.soul_mental_offset = OG_soul->getOffset("mental");
+                creatures.soul_skills_vector_offset = OG_soul->getOffset("skills_vector");
+                creatures.soul_traits_offset = OG_soul->getOffset("traits");
+            }
+        }
         // name offsets for the creature module
-        creatures.name_firstname_offset = minfo->getOffset("name_firstname");
-        creatures.name_nickname_offset = minfo->getOffset("name_nickname");
-        creatures.name_words_offset = minfo->getOffset("name_words");
+        OffsetGroup * OG_name = minfo->getGroup("name");
+        {
+            creatures.name_firstname_offset = OG_name->getOffset("first");
+            creatures.name_nickname_offset = OG_name->getOffset("nick");
+            creatures.name_words_offset = OG_name->getOffset("second_words");
+        }
 
-        creatures.inventory_offset = minfo->getOffset("creature_inventory_vector");
-
-        d->dwarf_race_index_addr = minfo->getAddress("dwarf_race_index");
-        d->dwarf_civ_id_addr = minfo->getAddress("dwarf_civ_id");
         /*
         // upload offsets to the SHM
         if(p->getModuleIndex("Creatures2010",1,d->creature_module))

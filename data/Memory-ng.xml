@@ -918,6 +918,7 @@
                         <Offset name="current_job_skill"  description="the skill that will be increased at the end of the mood (or not)" />
                         <Offset name="physical" value="0x464" description="An array of physical attributes." />
                         <Offset name="appearance_vector" description="seems to be indexes in the list of possible colors defined in the raws for each group" />
+                        <Offset name="inventory_vector" />
                         <Offset name="artifact_name" description="Name of the artifact created by this creature." />
                         <Offset name="soul_vector" description="A vector of souls attached to the creature." />
                         <Offset name="current_soul" description="Currently active soul?" />
@@ -952,6 +953,7 @@
                 <Address name="organics_plants" description="plant matter" />
                 <Address name="organics_trees" description="just wood" />
                 <Address name="creature_type_vector" description="A vector of creature races" />
+                <Address name="other" description="Base material types? Code suggests it's a null-terminated string of string pointers?" />
                 <Group name="creature" description="Creature race objects">
                     <Offset name="caste_vector" description="A race is divided into castes. Normally male and female."/>
                     <Offset name="extract_vector"/>
@@ -1013,6 +1015,7 @@
                 <HexValue name="sizeof"/>
             </Group>
             <Group name="Items">
+                <!-- most of those seem completely unused! -->
                 <Address name="items_vector" />
                 List of offsets in the VTable :
                 <Offset name="item_type_accessor" />
@@ -1554,6 +1557,7 @@
                 <Address name="current_race" value="0x014b9f1c" />
                 <Group name="creature">
                     <Group name="advanced">
+                        <Offset name="inventory_vector" value="0x2FC" />
                         <Offset name="physical" value="0x4AC" />
                         <Offset name="appearance_vector" value="0x64c" /> <!-- Maybe slightly wrong -->
                         <Offset name="artifact_name" value="0x71c" />

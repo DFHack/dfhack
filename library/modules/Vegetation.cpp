@@ -53,9 +53,9 @@ Vegetation::Vegetation(DFContextShared * d_)
     d->owner = d_->p;
     d->d = d_;
     d->Inited = d->Started = false;
-    VersionInfo * mem = d->d->offset_descriptor;
-    d->vegetation_vector = mem->getAddress ("vegetation_vector");
-    d->tree_desc_offset = mem->getOffset ("tree_desc_offset");
+    OffsetGroup * OG_Veg = d->d->offset_descriptor->getGroup("Vegetation");
+    d->vegetation_vector = OG_Veg->getAddress ("vector");
+    d->tree_desc_offset = OG_Veg->getOffset ("tree_desc_offset");
     d->Inited = true;
 }
 
@@ -68,6 +68,8 @@ Vegetation::~Vegetation()
 
 bool Vegetation::Start(uint32_t & numplants)
 {
+    if(!d->Inited)
+        return false;
     d->p_veg = new DfVector <uint32_t> (d->owner, d->vegetation_vector);
     numplants = d->p_veg->size();
     d->Started = true;

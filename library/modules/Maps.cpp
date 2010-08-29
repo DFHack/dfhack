@@ -76,37 +76,42 @@ Maps::Maps(DFContextShared* _d)
 
     // get the offsets once here
     OffsetGroup *OG_Maps = mem->getGroup("Maps");
-    off.map_offset = OG_Maps->getAddress ("map_data");
-    off.x_count_offset = OG_Maps->getAddress ("x_count_block");
-    off.y_count_offset = OG_Maps->getAddress ("y_count_block");
-    off.z_count_offset = OG_Maps->getAddress ("z_count_block");
-    off.region_x_offset = OG_Maps->getAddress ("region_x");
-    off.region_y_offset = OG_Maps->getAddress ("region_y");
-    off.region_z_offset =  OG_Maps->getAddress ("region_z");
-    off.world_size_x = OG_Maps->getAddress ("world_size_x");
-    off.world_size_y = OG_Maps->getAddress ("world_size_y");
+    {
+        off.map_offset = OG_Maps->getAddress ("map_data");
+        off.x_count_offset = OG_Maps->getAddress ("x_count_block");
+        off.y_count_offset = OG_Maps->getAddress ("y_count_block");
+        off.z_count_offset = OG_Maps->getAddress ("z_count_block");
+        off.region_x_offset = OG_Maps->getAddress ("region_x");
+        off.region_y_offset = OG_Maps->getAddress ("region_y");
+        off.region_z_offset =  OG_Maps->getAddress ("region_z");
+        off.world_size_x = OG_Maps->getAddress ("world_size_x");
+        off.world_size_y = OG_Maps->getAddress ("world_size_y");
 
-    OffsetGroup *OG_MapBlock = OG_Maps->getGroup("block");
-    off.tile_type_offset = OG_MapBlock->getOffset ("type");
-    off.designation_offset = OG_MapBlock->getOffset ("designation");
-    off.occupancy_offset = OG_MapBlock->getOffset("occupancy");
-    off.biome_stuffs = OG_MapBlock->getOffset ("biome_stuffs");
-    off.veinvector = OG_MapBlock->getOffset ("vein_vector");
-    off.local_feature_offset = OG_MapBlock->getOffset ("feature_local");
-    off.global_feature_offset = OG_MapBlock->getOffset ("feature_global");
-    off.temperature1_offset = OG_MapBlock->getOffset ("temperature1");
-    off.temperature2_offset = OG_MapBlock->getOffset ("temperature2");
+        OffsetGroup *OG_MapBlock = OG_Maps->getGroup("block");
+        {
+            off.tile_type_offset = OG_MapBlock->getOffset ("type");
+            off.designation_offset = OG_MapBlock->getOffset ("designation");
+            off.occupancy_offset = OG_MapBlock->getOffset("occupancy");
+            off.biome_stuffs = OG_MapBlock->getOffset ("biome_stuffs");
+            off.veinvector = OG_MapBlock->getOffset ("vein_vector");
+            off.local_feature_offset = OG_MapBlock->getOffset ("feature_local");
+            off.global_feature_offset = OG_MapBlock->getOffset ("feature_global");
+            off.temperature1_offset = OG_MapBlock->getOffset ("temperature1");
+            off.temperature2_offset = OG_MapBlock->getOffset ("temperature2");
+        }
 
-    OffsetGroup *OG_Geology = OG_Maps->getGroup("geology");
-    off.world_regions =  OG_Geology->getAddress ("ptr2_region_array");
-    off.region_size =  OG_Geology->getHexValue ("region_size");
-    off.region_geo_index_offset =  OG_Geology->getOffset ("region_geo_index_off");
-    off.geolayer_geoblock_offset = OG_Geology->getOffset ("geolayer_geoblock_offset");
-    off.world_geoblocks_vector =  OG_Geology->getAddress ("geoblock_vector");
-    off.type_inside_geolayer = OG_Geology->getOffset ("type_inside_geolayer");
-
-    d->OG_global_features = OG_Maps->getGroup("features")->getGroup("global");
-    d->OG_local_features = OG_Maps->getGroup("features")->getGroup("local");
+        OffsetGroup *OG_Geology = OG_Maps->getGroup("geology");
+        {
+            off.world_regions =  OG_Geology->getAddress ("ptr2_region_array");
+            off.region_size =  OG_Geology->getHexValue ("region_size");
+            off.region_geo_index_offset =  OG_Geology->getOffset ("region_geo_index_off");
+            off.geolayer_geoblock_offset = OG_Geology->getOffset ("geolayer_geoblock_offset");
+            off.world_geoblocks_vector =  OG_Geology->getAddress ("geoblock_vector");
+            off.type_inside_geolayer = OG_Geology->getOffset ("type_inside_geolayer");
+        }
+        d->OG_global_features = OG_Maps->getGroup("features")->getGroup("global");
+        d->OG_local_features = OG_Maps->getGroup("features")->getGroup("local");
+    }
     d->OG_vector = mem->getGroup("vector");
 
     // these can (will) fail and will be found when looking at the actual veins later

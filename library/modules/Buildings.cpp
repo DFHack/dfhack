@@ -72,11 +72,12 @@ Buildings::Buildings(DFContextShared * d_)
     d->owner = d_->p;
     d->Inited = d->Started = false;
     VersionInfo * mem = d->d->offset_descriptor;
-    d->custom_workshop_vector = mem->getAddress("custom_workshop_vector");
-    d->building_custom_workshop_type = mem->getOffset("building_custom_workshop_type");
-    d->custom_workshop_type = mem->getOffset("custom_workshop_type");
-    d->custom_workshop_name = mem->getOffset("custom_workshop_name");
-    d->buildings_vector = mem->getAddress ("buildings_vector");
+    OffsetGroup * OG_build = mem->getGroup("Buildings");
+    d->custom_workshop_vector = OG_build->getAddress("custom_workshop_vector");
+    d->building_custom_workshop_type = OG_build->getOffset("building_custom_workshop_type");
+    d->custom_workshop_type = OG_build->getOffset("custom_workshop_type");
+    d->custom_workshop_name = OG_build->getOffset("custom_workshop_name");
+    d->buildings_vector = OG_build->getAddress ("buildings_vector");
     mem->resolveClassnameToClassID("building_custom_workshop", d->custom_workshop_id);
     d->Inited = true;
 }

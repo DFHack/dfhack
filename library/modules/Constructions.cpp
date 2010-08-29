@@ -53,7 +53,7 @@ Constructions::Constructions(DFContextShared * d_)
     d->p_cons = 0;
     d->Inited = d->Started = false;
     VersionInfo * mem = d->d->offset_descriptor;
-    d->construction_vector = mem->getAddress ("construction_vector");
+    d->construction_vector = mem->getGroup("Constructions")->getAddress ("vector");
     d->Inited = true;
 }
 

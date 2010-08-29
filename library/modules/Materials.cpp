@@ -38,6 +38,12 @@ class Materials::Private
     DFContextShared *d;
     Process * owner;
     OffsetGroup * OG_Materials;
+    uint32_t vector_inorganic;
+    uint32_t vector_organic_all;
+    uint32_t vector_organic_plants;
+    uint32_t vector_organic_trees;
+    uint32_t vector_races;
+    uint32_t vector_other;
     /*
     bool Inited;
     bool Started;
@@ -49,7 +55,14 @@ Materials::Materials(DFContextShared * d_)
     d = new Private;
     d->d = d_;
     d->owner = d_->p;
-    d->OG_Materials = d->owner->getDescriptor()->getGroup("Materials");
+    OffsetGroup *OG_Materials = d->OG_Materials = d->owner->getDescriptor()->getGroup("Materials");
+    {
+        d->vector_inorganic = OG_Materials->getAddress("inorganics");
+        d->vector_organic_all = OG_Materials->getAddress ("organics_all");
+        d->vector_organic_plants = OG_Materials->getAddress ("organics_plants");
+        d->vector_organic_trees = OG_Materials->getAddress ("organics_trees");
+        d->vector_races = OG_Materials->getAddress("creature_type_vector");
+    }
 }
 Materials::~Materials()
 {
@@ -218,7 +231,7 @@ inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & nam
 bool Materials::ReadInorganicMaterials (void)
 {
     Process * p = d->owner;
-    DfVector <uint32_t> p_matgloss (p, d->OG_Materials->getAddress("inorganics"));
+    DfVector <uint32_t> p_matgloss (p, d->vector_inorganic);
     uint32_t size = p_matgloss.size();
     inorganic.clear();
     inorganic.reserve (size);
@@ -239,22 +252,22 @@ bool Materials::ReadInorganicMaterials (void)
 
 bool Materials::ReadOrganicMaterials (void)
 {
-    return ReadNamesOnly(d->owner, d->OG_Materials->getAddress ("organics_all"), organic );
+    return ReadNamesOnly(d->owner, d->vector_organic_all, organic );
 }
 
 bool Materials::ReadWoodMaterials (void)
 {
-    return ReadNamesOnly(d->owner, d->OG_Materials->getAddress ("organics_trees"), tree );
+    return ReadNamesOnly(d->owner, d->vector_organic_trees, tree );
 }
 
 bool Materials::ReadPlantMaterials (void)
 {
-    return ReadNamesOnly(d->owner, d->OG_Materials->getAddress ("organics_plants"), plant );
+    return ReadNamesOnly(d->owner, d->vector_organic_plants, plant );
 }
 
 bool Materials::ReadCreatureTypes (void)
 {
-    return ReadNamesOnly(d->owner, d->OG_Materials->getAddress ("creature_type_vector"), race );
+    return ReadNamesOnly(d->owner, d->vector_races, race );
     return true;
 }
 
@@ -283,7 +296,8 @@ bool Materials::ReadOthers(void)
 bool Materials::ReadDescriptorColors (void)
 {
     Process * p = d->owner;
-    DfVector <uint32_t> p_colors (p, p->getDescriptor()->getAddress ("descriptor_colors_vector"));
+    OffsetGroup * OG_Descriptors = p->getDescriptor()->getGroup("Materials")->getGroup("descriptors");
+    DfVector <uint32_t> p_colors (p, OG_Descriptors->getAddress ("colors_vector"));
     uint32_t size = p_colors.size();
 
     color.clear();
@@ -293,43 +307,52 @@ bool Materials::ReadDescriptorColors (void)
     for (uint32_t i = 0; i < size;i++)
     {
         t_descriptor_color col;
-        p->readSTLString (p_colors[i] + p->getDescriptor()->getOffset ("descriptor_rawname"), col.id, 128);
-        p->readSTLString (p_colors[i] + p->getDescriptor()->getOffset ("descriptor_name"), col.name, 128);
-        col.r = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_r") );
-        col.v = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_v") );
-        col.b = p->readFloat( p_colors[i] + p->getDescriptor()->getOffset ("descriptor_color_b") );
+        p->readSTLString (p_colors[i] + OG_Descriptors->getOffset ("rawname"), col.id, 128);
+        p->readSTLString (p_colors[i] + OG_Descriptors->getOffset ("name"), col.name, 128);
+        col.r = p->readFloat( p_colors[i] + OG_Descriptors->getOffset ("color_r") );
+        col.v = p->readFloat( p_colors[i] + OG_Descriptors->getOffset ("color_v") );
+        col.b = p->readFloat( p_colors[i] + OG_Descriptors->getOffset ("color_b") );
         color.push_back(col);
     }
-    return ReadNamesOnly(d->owner, d->owner->getDescriptor()->getAddress ("descriptor_all_colors"), alldesc );
+    return ReadNamesOnly(d->owner, OG_Descriptors->getAddress ("all_colors_vector"), alldesc );
     return true;
 }
 
 bool Materials::ReadCreatureTypesEx (void)
 {
     Process *p = d->owner;
-    VersionInfo *mem = d->owner->getDescriptor();
-    DfVector <uint32_t> p_races (p, mem->getAddress ("creature_type_vector"));
-    uint32_t castes_vector_offset = mem->getOffset ("creature_type_caste_vector");
-    uint32_t extract_vector_offset = mem->getOffset ("creature_type_extract_vector");
-    uint32_t sizeof_string = mem->getHexValue ("sizeof_string");
-    uint32_t caste_colormod_offset = mem->getOffset ("caste_color_modifiers");
-    uint32_t caste_bodypart_offset = mem->getOffset ("caste_bodypart_vector");
-    uint32_t caste_attributes_offset = mem->getOffset ("caste_attributes");
-    uint32_t bodypart_id_offset = mem->getOffset ("bodypart_id");
-    uint32_t bodypart_category_offset = mem->getOffset ("bodypart_category");
-    uint32_t bodypart_layers_offset = mem->getOffset ("bodypart_layers_vector");
-    uint32_t bodypart_singular_offset = mem->getOffset ("bodypart_singular_vector"); // unused
-    uint32_t bodypart_plural_offset = mem->getOffset ("bodypart_plural_vector"); // unused
-    uint32_t color_modifier_part_offset = mem->getOffset ("color_modifier_part");
-    uint32_t color_modifier_startdate_offset = mem->getOffset ("color_modifier_startdate");
-    uint32_t color_modifier_enddate_offset = mem->getOffset ("color_modifier_enddate");
+    VersionInfo *mem = p->getDescriptor();
+    OffsetGroup * OG_string = mem->getGroup("string");
+    uint32_t sizeof_string = OG_string->getHexValue ("sizeof");
+
+    OffsetGroup * OG_Mats = mem->getGroup("Materials");
+    DfVector <uint32_t> p_races (p, OG_Mats->getAddress ("creature_type_vector"));
+
+    OffsetGroup * OG_Creature = OG_Mats->getGroup("creature");
+        uint32_t castes_vector_offset = OG_Creature->getOffset ("caste_vector");
+        uint32_t extract_vector_offset = OG_Creature->getOffset ("extract_vector");
+        uint32_t tile_offset = OG_Creature->getOffset ("creature_tile");
+        uint32_t tile_color_offset = OG_Creature->getOffset ("creature_tile_color");
+        OffsetGroup * OG_Caste = OG_Creature->getGroup("caste");
+            uint32_t caste_colormod_offset = OG_Caste->getOffset ("color_modifiers");
+            uint32_t caste_attributes_offset = OG_Caste->getOffset ("attributes");
+            uint32_t caste_bodypart_offset = OG_Caste->getOffset ("bodypart_vector");
+        OffsetGroup * OG_CasteBodyparts = OG_Creature->getGroup("caste_bodyparts");
+            uint32_t bodypart_id_offset = OG_CasteBodyparts->getOffset ("id");
+            uint32_t bodypart_category_offset = OG_CasteBodyparts->getOffset ("category");
+            uint32_t bodypart_layers_offset = OG_CasteBodyparts->getOffset ("layers_vector"); // unused
+            uint32_t bodypart_singular_offset = OG_CasteBodyparts->getOffset ("singular_vector"); // unused
+            uint32_t bodypart_plural_offset = OG_CasteBodyparts->getOffset ("plural_vector"); // unused
+        OffsetGroup * OG_CasteColorMods = OG_Creature->getGroup("caste_color_mods");
+            uint32_t color_modifier_part_offset = OG_CasteColorMods->getOffset ("part");
+            uint32_t color_modifier_startdate_offset = OG_CasteColorMods->getOffset ("startdate");
+            uint32_t color_modifier_enddate_offset = OG_CasteColorMods->getOffset ("enddate");
+
     uint32_t size = p_races.size();
     uint32_t sizecas = 0;
     uint32_t sizecolormod;
     uint32_t sizecolorlist;
     uint32_t sizebp;
-    uint32_t tile_offset = mem->getOffset ("creature_tile");
-    uint32_t tile_color_offset = mem->getOffset ("creature_tile_color");
     raceEx.clear();
     raceEx.reserve (size);
     for (uint32_t i = 0; i < size;i++)

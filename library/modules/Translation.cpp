@@ -52,11 +52,12 @@ Translation::Translation(DFContextShared * d_)
     d = new Private;
     d->d = d_;
     d->Inited = d->Started = false;
-    VersionInfo * mem = d->d->offset_descriptor;
-    d->genericAddress = mem->getAddress ("language_vector");
-    d->transAddress = mem->getAddress ("translation_vector");
-    d->word_table_offset = mem->getOffset ("word_table");
-    d->sizeof_string = mem->getHexValue ("sizeof_string");
+    OffsetGroup * OG_Translation = d->d->offset_descriptor->getGroup("Translations");
+    OffsetGroup * OG_String = d->d->offset_descriptor->getGroup("string");
+    d->genericAddress = OG_Translation->getAddress ("language_vector");
+    d->transAddress = OG_Translation->getAddress ("translation_vector");
+    d->word_table_offset = OG_Translation->getOffset ("word_table");
+    d->sizeof_string = OG_String->getHexValue ("sizeof");
     d->Inited = true;
 }
 

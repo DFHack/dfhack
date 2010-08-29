@@ -60,9 +60,9 @@ World::World(DFContextShared * _d)
     d->d = _d;
     d->owner = _d->p;
 
-    VersionInfo * mem = d->d->offset_descriptor;
-    d->year_offset = mem->getAddress( "current_year" );
-    d->tick_offset = mem->getAddress( "current_tick" );
+    OffsetGroup * OG_World = d->d->offset_descriptor->getGroup("World");
+    d->year_offset = OG_World->getAddress( "current_year" );
+    d->tick_offset = OG_World->getAddress( "current_tick" );
     d->Inited = d->Started = true;
 }
 

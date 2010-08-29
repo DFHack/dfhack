@@ -51,10 +51,10 @@ Gui::Gui(DFContextShared * _d)
     d->owner = _d->p;
     d->Inited = d->Started = true;
 
-    VersionInfo * mem = d->d->offset_descriptor;
-    d->current_menu_state_offset = mem->getAddress("current_menu_state");
-    d->pause_state_offset = mem->getAddress ("pause_state");
-    d->view_screen_offset = mem->getAddress ("view_screen");
+    OffsetGroup * OG_Gui = d->d->offset_descriptor->getGroup("Gui");
+    d->current_menu_state_offset = OG_Gui->getAddress("current_menu_state");
+    d->pause_state_offset = OG_Gui->getAddress ("pause_state");
+    d->view_screen_offset = OG_Gui->getAddress ("view_screen");
     d->Inited = d->Started = true;
 }
 

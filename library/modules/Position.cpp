@@ -61,6 +61,7 @@ Position::Position(DFContextShared * d_)
     d->StartedHotkeys = d->Started = d->StartedScreen = false;
     OffsetGroup * OG_Position;
     VersionInfo * mem = d->d->offset_descriptor;
+    // this is how to do feature detection properly
     try
     {
         OG_Position = mem->getGroup("Position");

@@ -892,7 +892,7 @@
                 </Group>
             </Group>
             <Group name="Creatures" description="Offsets used by the Creatures module.">
-                <Address name="creature_vector"/>
+                <Address name="vector"/>
                 <Address name="current_race" description="Index of the current player race." />
                 <Address name="current_civ" description="Index of the current player civilization." />
                 <Group name="creature">
@@ -953,7 +953,7 @@
                 <Address name="organics_plants" description="plant matter" />
                 <Address name="organics_trees" description="just wood" />
                 <Address name="creature_type_vector" description="A vector of creature races" />
-                <Address name="other" description="Base material types? Code suggests it's a null-terminated string of string pointers?" />
+                <Address name="other" description="Base material types? Code suggests it's a null-terminated string of string pointers? Is this used at all?" />
                 <Group name="creature" description="Creature race objects">
                     <Offset name="caste_vector" description="A race is divided into castes. Normally male and female."/>
                     <Offset name="extract_vector"/>
@@ -1168,7 +1168,7 @@
                 </Group>
             </Group>
             <Group name="Creatures">
-                <Address name="creature_vector" value="0x0166ecc4" />
+                <Address name="vector" value="0x0166ecc4" />
                 <Address name="current_race" value="0x01470fbc" />
                 <Address name="current_civ" value="0x01470fb0" />
                 <Group name="creature">
@@ -1350,7 +1350,7 @@
                 </Group>
             </Group>
             <Group name="Creatures">
-                <Address name="creature_vector" value="0x166FD0C" />
+                <Address name="vector" value="0x166FD0C" />
                 <Group name="creature">
                     <Group name="advanced">
                         <Offset name="artifact_name" value="0x6D4" />
@@ -1368,6 +1368,7 @@
                 <Address name="organics_plants" value="0x16B0D7C" /><!--plant matter, WORLD + 0x54BAC-->
                 <Address name="organics_trees" value="0x16B0DAC" /><!--just wood, WORLD + 0x54BDC-->
                 <Address name="creature_type_vector" value="0x16B0EA0" /><!--WORLD + 0x54CD0-->
+                <Address name="other" value="0x16BA114" />
                 <Group name="descriptors">
                     <Address name="vectors_start" value="0x16B9780" />
                     <Offset name="rawname" value="0x0" />
@@ -1419,7 +1420,7 @@
         <PETimeStamp value="0x4bf014fa" />
         <Offsets>
             <Group name="Creatures">
-                <Address name="creature_vector" value="0x167870C" />
+                <Address name="vector" value="0x167870C" />
                 <Address name="current_race" value="0x1471FBC" />
                 <Address name="current_civ" value="0x1471FB0" />
             </Group>
@@ -1430,6 +1431,7 @@
                 <Address name="organics_plants" value="0x16bd0e0" />
                 <Address name="organics_trees" value="0x16bd110" />
                 <Address name="creature_type_vector" value="0x16BD204" />
+                <Address name="other" value="0x16C6478"/>
                 <Group name="descriptors">
                     <Address name="colors_vector" value="0x16C5ACC" />
                     <Address name="vectors_start" value="0x16C5AE4" />
@@ -1553,7 +1555,7 @@
                 <Address name="translation_vector" value="0x16D33FC" />
             </Group>
             <Group name="Creatures">
-                <Address name="creature_vector" value="0x168E73C" />
+                <Address name="vector" value="0x168E73C" />
                 <Address name="current_race" value="0x014b9f1c" />
                 <Group name="creature">
                     <Group name="advanced">
@@ -1700,7 +1702,7 @@
                 </Group>
             </Group>
             <Group name="Creatures">
-                <Address name="creature_vector" value="0x92D9AC0" />
+                <Address name="vector" value="0x92D9AC0" />
                 <Address name="current_race" value="0x92C1628" />
                 <Address name="current_civ" value="0x92C161C" />
                 <Group name="creature" valid="verify" >

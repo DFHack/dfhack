@@ -83,8 +83,8 @@ Creatures::Creatures(DFContextShared* _d)
                 creatures.profession_offset = OG_creature->getOffset ("profession");
                 creatures.race_offset = OG_creature->getOffset ("race");
                 creatures.pos_offset = OG_creature->getOffset ("position");
-                creatures.flags1_offset = OG_creature->getOffset ("creature_flags1");
-                creatures.flags2_offset = OG_creature->getOffset ("creature_flags2");
+                creatures.flags1_offset = OG_creature->getOffset ("flags1");
+                creatures.flags2_offset = OG_creature->getOffset ("flags2");
                 creatures.sex_offset = OG_creature->getOffset ("sex");
                 creatures.caste_offset = OG_creature->getOffset ("caste");
                 creatures.id_offset = OG_creature->getOffset ("id");

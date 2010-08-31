@@ -294,7 +294,7 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         }
         else if (type == "Professions")
         {
-            pElement2nd = entry->FirstChildElement("Profession");
+            pElement2nd = pElement->FirstChildElement("Profession");
             for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Profession"))
             {
                 const char * id = pElement2nd->Attribute("id");
@@ -313,7 +313,7 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         }
         else if (type == "Jobs")
         {
-            pElement2nd = entry->FirstChildElement("Job");
+            pElement2nd = pElement->FirstChildElement("Job");
             for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Job"))
             {
                 const char * id = pElement2nd->Attribute("id");
@@ -331,7 +331,7 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         }
         else if (type == "Skills")
         {
-            pElement2nd = entry->FirstChildElement("Skill");
+            pElement2nd = pElement->FirstChildElement("Skill");
             for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Skill"))
             {
                 const char * id = pElement2nd->Attribute("id");
@@ -349,17 +349,17 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         }
         else if (type == "Traits")
         {
-            pElement2nd = entry->FirstChildElement("Trait");
+            pElement2nd = pElement->FirstChildElement("Trait");
             for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Trait"))
             {
                 const char * id = pElement2nd->Attribute("id");
                 const char * name = pElement2nd->Attribute("name");
-                const char * lvl0 = pElement->Attribute("level_0");
-                const char * lvl1 = pElement->Attribute("level_1");
-                const char * lvl2 = pElement->Attribute("level_2");
-                const char * lvl3 = pElement->Attribute("level_3");
-                const char * lvl4 = pElement->Attribute("level_4");
-                const char * lvl5 = pElement->Attribute("level_5");
+                const char * lvl0 = pElement2nd->Attribute("level_0");
+                const char * lvl1 = pElement2nd->Attribute("level_1");
+                const char * lvl2 = pElement2nd->Attribute("level_2");
+                const char * lvl3 = pElement2nd->Attribute("level_3");
+                const char * lvl4 = pElement2nd->Attribute("level_4");
+                const char * lvl5 = pElement2nd->Attribute("level_5");
                 if(id && name && lvl0 && lvl1 && lvl2 && lvl3 && lvl4 && lvl5)
                 {
                     mem->setTrait(id, name, lvl0, lvl1, lvl2, lvl3, lvl4, lvl5);
@@ -373,7 +373,7 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         }
         else if (type == "Labors")
         {
-            pElement2nd = entry->FirstChildElement("Labor");
+            pElement2nd = pElement->FirstChildElement("Labor");
             for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Labor"))
             {
                 const char * id = pElement2nd->Attribute("id");
@@ -391,7 +391,7 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         }
         else if (type == "Levels")
         {
-            pElement2nd = entry->FirstChildElement("Level");
+            pElement2nd = pElement->FirstChildElement("Level");
             for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Level"))
             {
                 const char * id = pElement2nd->Attribute("id");
@@ -410,7 +410,7 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         }
         else if (type == "Moods")
         {
-            pElement2nd = entry->FirstChildElement("Mood");
+            pElement2nd = pElement->FirstChildElement("Mood");
             for(;pElement2nd;pElement2nd=pElement2nd->NextSiblingElement("Mood"))
             {
                 const char * id = pElement2nd->Attribute("id");

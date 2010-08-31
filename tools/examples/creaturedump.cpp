@@ -271,8 +271,9 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
             }
         }
 
-        std::vector<uint32_t> inventory;
-
+        //std::vector<uint32_t> inventory;
+        // FIXME: TOO BAD...
+        /*
         if( Creatures->ReadInventoryPtr(creature.origin, inventory) )
         {
             DFHack::Items * Items = DF->getItems();
@@ -282,6 +283,7 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
                 printf("\t\t%s\n", Items->getItemDescription(inventory[i], Materials).c_str());
             }
         }
+        */
 
         /*
         if(creature.pregnancy_timer > 0)

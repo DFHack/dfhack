@@ -71,6 +71,7 @@ Materials::~Materials()
 
 bool Materials::Finish()
 {
+    /*
     inorganic.clear();
     organic.clear();
     tree.clear();
@@ -80,6 +81,7 @@ bool Materials::Finish()
     color.clear();
     other.clear();
     alldesc.clear();
+    */
     return true;
 }
 
@@ -331,8 +333,8 @@ bool Materials::ReadCreatureTypesEx (void)
     OffsetGroup * OG_Creature = OG_Mats->getGroup("creature");
         uint32_t castes_vector_offset = OG_Creature->getOffset ("caste_vector");
         uint32_t extract_vector_offset = OG_Creature->getOffset ("extract_vector");
-        uint32_t tile_offset = OG_Creature->getOffset ("creature_tile");
-        uint32_t tile_color_offset = OG_Creature->getOffset ("creature_tile_color");
+        uint32_t tile_offset = OG_Creature->getOffset ("tile");
+        uint32_t tile_color_offset = OG_Creature->getOffset ("tile_color");
         OffsetGroup * OG_Caste = OG_Creature->getGroup("caste");
             uint32_t caste_colormod_offset = OG_Caste->getOffset ("color_modifiers");
             uint32_t caste_attributes_offset = OG_Caste->getOffset ("attributes");

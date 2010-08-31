@@ -108,7 +108,7 @@ namespace DFHack
         std::string getMD5();
 
         void setPE (uint32_t PE_);
-        uint getPE();
+        uint32_t getPE();
 
         std::string getMood(const uint32_t moodID);
         std::string getString (const std::string&);

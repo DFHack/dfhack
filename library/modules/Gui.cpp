@@ -33,12 +33,17 @@ using namespace DFHack;
 
 struct Gui::Private
 {
-    bool Inited;
+    Private()
+    {
+        Started = PauseInited = ViewScreeInited = MenuStateInited = false;
+    }
     bool Started;
     uint32_t pause_state_offset;
+    bool PauseInited;
     uint32_t view_screen_offset;
-    uint32_t current_cursor_creature_offset;
+    bool ViewScreeInited;
     uint32_t current_menu_state_offset;
+    bool MenuStateInited;
     DFContextShared *d;
     Process * owner;
 };
@@ -49,13 +54,26 @@ Gui::Gui(DFContextShared * _d)
     d = new Private;
     d->d = _d;
     d->owner = _d->p;
-    d->Inited = d->Started = true;
-
     OffsetGroup * OG_Gui = d->d->offset_descriptor->getGroup("GUI");
-    d->current_menu_state_offset = OG_Gui->getAddress("current_menu_state");
-    d->pause_state_offset = OG_Gui->getAddress ("pause_state");
-    d->view_screen_offset = OG_Gui->getAddress ("view_screen");
-    d->Inited = d->Started = true;
+    try
+    {
+        d->current_menu_state_offset = OG_Gui->getAddress("current_menu_state");
+        d->MenuStateInited = true;
+    }
+    catch(exception &){};
+    try
+    {
+        d->pause_state_offset = OG_Gui->getAddress ("pause_state");
+        d->PauseInited = true;
+    }
+    catch(exception &){};
+    try
+    {
+        d->view_screen_offset = OG_Gui->getAddress ("view_screen");
+        d->ViewScreeInited = true;
+    }
+    catch(exception &){};
+    d->Started = true;
 }
 
 Gui::~Gui()
@@ -76,7 +94,7 @@ bool Gui::Finish()
 bool Gui::ReadPauseState()
 {
     // replace with an exception
-    if(!d->Inited) return false;
+    if(!d->PauseInited) return false;
 
     uint32_t pauseState = d->owner->readDWord (d->pause_state_offset);
     return pauseState & 1;
@@ -84,14 +102,14 @@ bool Gui::ReadPauseState()
 
 uint32_t Gui::ReadMenuState()
 {
-    if(d->Inited)
+    if(d->MenuStateInited)
         return(d->owner->readDWord(d->current_menu_state_offset));
     return false;
 }
 
 bool Gui::ReadViewScreen (t_viewscreen &screen)
 {
-    if (!d->Inited) return false;
+    if (!d->ViewScreeInited) return false;
     Process * p = d->owner;
 
     uint32_t last = p->readDWord (d->view_screen_offset);

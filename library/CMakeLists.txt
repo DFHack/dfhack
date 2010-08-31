@@ -26,20 +26,29 @@ include_directories (${CMAKE_SOURCE_DIR}/library/depends/tinyxml/)
 include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
 include_directories (${CMAKE_SOURCE_DIR}/library/private/)
 
+SET(PROJECT_HDRS_INTERNAL
+    private/ContextShared.h
+    private/Internal.h
+)
+
 SET(PROJECT_HDRS
-private/ContextShared.h
-private/Internal.h
+include/DFHack.h
+include/dfhack/DFContext.h
+include/dfhack/DFContextManager.h
 include/dfhack/DFError.h
-include/dfhack/VersionInfoFactory.h
-include/dfhack/VersionInfo.h
-include/dfhack/DFProcessEnumerator.h
+include/dfhack/DFExport.h
+include/dfhack/DFGlobal.h
+include/dfhack/DFIntegers.h
+include/dfhack/DFMiscUtils.h
+include/dfhack/DFModule.h
+include/dfhack/DFPragma.h
 include/dfhack/DFProcess.h
+include/dfhack/DFProcessEnumerator.h
 include/dfhack/DFTileTypes.h
 include/dfhack/DFTypes.h
 include/dfhack/DFVector.h
-include/dfhack-c/DFTypes_C.h
-include/dfhack-c/DFContext_C.h
-include/dfhack/DFIntegers.h
+include/dfhack/VersionInfoFactory.h
+include/dfhack/VersionInfo.h
 include/dfhack/modules/Buildings.h
 include/dfhack/modules/Constructions.h
 include/dfhack/modules/Creatures.h
@@ -55,8 +64,21 @@ include/dfhack/modules/World.h
 )
 
 SET(PROJECT_C_HDRS
+include/DFHack_C.h
 include/dfhack-c/DFTypes_C.h
 include/dfhack-c/DFContext_C.h
+include/dfhack-c/modules/Buildings_C.h
+include/dfhack-c/modules/Constructions_C.h
+include/dfhack-c/modules/Creatures_C.h
+include/dfhack-c/modules/Gui_C.h
+include/dfhack-c/modules/Items_C.h
+include/dfhack-c/modules/Maps_C.h
+include/dfhack-c/modules/Materials_C.h
+include/dfhack-c/modules/Position_C.h
+include/dfhack-c/modules/Translation_C.h
+include/dfhack-c/modules/Vegetation_C.h
+include/dfhack-c/modules/WindowIO_C.h
+include/dfhack-c/modules/World_C.h
 )
 
 SET(PROJECT_SRCS
@@ -206,4 +228,5 @@ endif(MSVC)
 IF(UNIX)
   install(TARGETS dfhack LIBRARY DESTINATION lib)
   install(FILES ${CMAKE_SOURCE_DIR}/output/Memory.xml DESTINATION share/dfhack)
+  install(DIRECTORY ${CMAKE_SOURCE_DIR}/library/include/ DESTINATION include FILES_MATCHING PATTERN "*.h")
 ENDIF(UNIX)

@@ -51,7 +51,7 @@ Gui::Gui(DFContextShared * _d)
     d->owner = _d->p;
     d->Inited = d->Started = true;
 
-    OffsetGroup * OG_Gui = d->d->offset_descriptor->getGroup("Gui");
+    OffsetGroup * OG_Gui = d->d->offset_descriptor->getGroup("GUI");
     d->current_menu_state_offset = OG_Gui->getAddress("current_menu_state");
     d->pause_state_offset = OG_Gui->getAddress ("pause_state");
     d->view_screen_offset = OG_Gui->getAddress ("view_screen");

@@ -71,22 +71,22 @@ Position::Position(DFContextShared * d_)
         d->cursor_xyz_offset = OG_Position->getAddress ("cursor_xyz");
         d->window_dims_offset = OG_Position->getAddress ("window_dims");
         d->Started = true;
-        try
-        {
-            OffsetGroup * OG_Hotkeys = mem->getGroup("Hotkeys");
-            d->hotkey_start = OG_Hotkeys->getAddress("start");
-            d->hotkey_mode_offset = OG_Hotkeys->getOffset ("mode");
-            d->hotkey_xyz_offset = OG_Hotkeys->getOffset("coords");
-            d->hotkey_size = OG_Hotkeys->getHexValue("size");
-            d->StartedHotkeys = true;
-        }
-        catch(exception &){};
-        try
-        {
-            d->screen_tiles_ptr_offset = OG_Position->getAddress ("screen_tiles_pointer");
-            d->StartedScreen = true;
-        }
-        catch(exception &){};
+    }
+    catch(exception &){};
+    try
+    {
+        OffsetGroup * OG_Hotkeys = mem->getGroup("Hotkeys");
+        d->hotkey_start = OG_Hotkeys->getAddress("start");
+        d->hotkey_mode_offset = OG_Hotkeys->getOffset ("mode");
+        d->hotkey_xyz_offset = OG_Hotkeys->getOffset("coords");
+        d->hotkey_size = OG_Hotkeys->getHexValue("size");
+        d->StartedHotkeys = true;
+    }
+    catch(exception &){};
+    try
+    {
+        d->screen_tiles_ptr_offset = OG_Position->getAddress ("screen_tiles_pointer");
+        d->StartedScreen = true;
     }
     catch(exception &){};
 }

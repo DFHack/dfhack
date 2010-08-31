@@ -54,6 +54,8 @@ struct Creatures::Private
     uint32_t creature_module;
     uint32_t dwarf_race_index_addr;
     uint32_t dwarf_civ_id_addr;
+    OffsetGroup * OG_jobs;
+    OffsetGroup * OG_job_mats;
     DfVector <uint32_t> *p_cre;
     DFContextShared *d;
     Process *owner;
@@ -123,6 +125,8 @@ Creatures::Creatures(DFContextShared* _d)
             creatures.name_nickname_offset = OG_name->getOffset("nick");
             creatures.name_words_offset = OG_name->getOffset("second_words");
         }
+        d->OG_jobs = OG_Creatures->getGroup("job");
+        d->OG_job_mats = d->OG_jobs->getGroup("material");
 
         /*
         // upload offsets to the SHM
@@ -231,8 +235,8 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     if(furball.current_job.occupationPtr)
     {
         furball.current_job.active = true;
-        furball.current_job.jobType = p->readByte (furball.current_job.occupationPtr + minfo->getOffset("job_type") );
-        furball.current_job.jobId = p->readDWord (furball.current_job.occupationPtr + minfo->getOffset("job_id") );
+        furball.current_job.jobType = p->readByte (furball.current_job.occupationPtr + d->OG_jobs->getOffset("type") );
+        furball.current_job.jobId = p->readDWord (furball.current_job.occupationPtr + d->OG_jobs->getOffset("id") );
     }
     else
     {
@@ -534,21 +538,19 @@ bool Creatures::WriteMoodSkill(const uint32_t index, const uint16_t moodSkill)
 
 bool Creatures::WriteJob(const t_creature * furball, std::vector<t_material> const& mat)
 {
-	unsigned int i;
+    unsigned int i;
     if(!d->Inited) return false;
     if(!furball->current_job.active) return false;
     Process * p = d->owner;
-    VersionInfo * minfo = d->d->offset_descriptor;
-
-    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + minfo->getOffset("job_materials_vector"));
+    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + d->OG_jobs->getOffset("materials_vector"));
 
     for(i=0;i<cmats.size();i++)
     {
-        p->writeWord(cmats[i] + minfo->getOffset("job_material_maintype"), mat[i].itemType);
-        p->writeWord(cmats[i] + minfo->getOffset("job_material_sectype1"), mat[i].subType);
-        p->writeWord(cmats[i] + minfo->getOffset("job_material_sectype2"), mat[i].subIndex);
-        p->writeDWord(cmats[i] + minfo->getOffset("job_material_sectype3"), mat[i].index);
-        p->writeDWord(cmats[i] + minfo->getOffset("job_material_flags"), mat[i].flags);
+        p->writeWord(cmats[i] + d->OG_job_mats->getOffset("maintype"), mat[i].itemType);
+        p->writeWord(cmats[i] + d->OG_job_mats->getOffset("sectype1"), mat[i].subType);
+        p->writeWord(cmats[i] + d->OG_job_mats->getOffset("sectype2"), mat[i].subIndex);
+        p->writeDWord(cmats[i] + d->OG_job_mats->getOffset("sectype3"), mat[i].index);
+        p->writeDWord(cmats[i] + d->OG_job_mats->getOffset("flags"), mat[i].flags);
     }
     return true;
 }
@@ -610,15 +612,15 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
     Process * p = d->owner;
     VersionInfo * minfo = d->d->offset_descriptor;
 
-    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + minfo->getOffset("job_materials_vector"));
+    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + d->OG_jobs->getOffset("materials_vector"));
     mat.resize(cmats.size());
     for(i=0;i<cmats.size();i++)
     {
-        mat[i].itemType = p->readWord(cmats[i] + minfo->getOffset("job_material_maintype"));
-        mat[i].subType = p->readWord(cmats[i] + minfo->getOffset("job_material_sectype1"));
-        mat[i].subIndex = p->readWord(cmats[i] + minfo->getOffset("job_material_sectype2"));
-        mat[i].index = p->readDWord(cmats[i] + minfo->getOffset("job_material_sectype3"));
-        mat[i].flags = p->readDWord(cmats[i] + minfo->getOffset("job_material_flags"));
+        mat[i].itemType = p->readWord(cmats[i] + d->OG_job_mats->getOffset("maintype"));
+        mat[i].subType = p->readWord(cmats[i] + d->OG_job_mats->getOffset("sectype1"));
+        mat[i].subIndex = p->readWord(cmats[i] + d->OG_job_mats->getOffset("sectype2"));
+        mat[i].index = p->readDWord(cmats[i] + d->OG_job_mats->getOffset("sectype3"));
+        mat[i].flags = p->readDWord(cmats[i] + d->OG_job_mats->getOffset("flags"));
     }
     return true;
 }

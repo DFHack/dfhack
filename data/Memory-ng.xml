@@ -939,11 +939,11 @@
                     <Offset name="type" description="seems to be just like the old occupations" />
                     <Offset name="materials_vector" />
                     <Group name="material">
-                        <Offset name="material_maintype" description="like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ..." />
-                        <Offset name="material_sectype1" description="subsubtype ?" />
-                        <Offset name="material_sectype2" description="subtype ?" />
-                        <Offset name="material_sectype3" description="index of material (for example, 2 is for silver)" />
-                        <Offset name="material_flags" description="set only for shell / bone mood requirements ?" />
+                        <Offset name="maintype" description="like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ..." />
+                        <Offset name="sectype1" description="subsubtype ?" />
+                        <Offset name="sectype2" description="subtype ?" />
+                        <Offset name="sectype3" description="index of material (for example, 2 is for silver)" />
+                        <Offset name="flags" description="set only for shell / bone mood requirements ?" />
                     </Group>
                 </Group>
             </Group>
@@ -1214,11 +1214,11 @@
                     <Offset name="type" value="0x8" /> seems to be just like the old occupations
                     <Offset name="materials_vector" value="0xa4" />
                     <Group name="material">
-                        <Offset name="material_maintype" value="0x0" /> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
-                        <Offset name="material_sectype1" value="0x2" /> subsubtype ?
-                        <Offset name="material_sectype2" value="0x4" /> subtype ?
-                        <Offset name="material_sectype3" value="0x8" /> index of material (for example, 2 is for silver)
-                        <Offset name="material_flags" value="0x18" /> set only for shell / bone mood requirements ?
+                        <Offset name="maintype" value="0x0" /> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
+                        <Offset name="sectype1" value="0x2" /> subsubtype ?
+                        <Offset name="sectype2" value="0x4" /> subtype ?
+                        <Offset name="sectype3" value="0x8" /> index of material (for example, 2 is for silver)
+                        <Offset name="flags" value="0x18" /> set only for shell / bone mood requirements ?
                     </Group>
                 </Group>
             </Group>
@@ -1746,11 +1746,11 @@
                     <Offset name="type" value="0x8" /> seems to be just like the old occupations
                     <Offset name="materials_vector" value="0xa4" />
                     <Group name="material">
-                        <Offset name="material_maintype" value="0x0" /> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
-                        <Offset name="material_sectype1" value="0x2" /> subsubtype ?
-                        <Offset name="material_sectype2" value="0x4" /> subtype ?
-                        <Offset name="material_sectype3" value="0x8" /> index of material (for example, 2 is for silver)
-                        <Offset name="material_flags" value="0x18" /> set only for shell / bone mood requirements ?
+                        <Offset name="maintype" value="0x0" /> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
+                        <Offset name="sectype1" value="0x2" /> subsubtype ?
+                        <Offset name="sectype2" value="0x4" /> subtype ?
+                        <Offset name="sectype3" value="0x8" /> index of material (for example, 2 is for silver)
+                        <Offset name="flags" value="0x18" /> set only for shell / bone mood requirements ?
                     </Group>
                 </Group>
                 -->
@@ -1865,6 +1865,10 @@
     <Version name="v0.31.12 linux" os="linux" base="v0.31.11 linux" rebase="-0x1000">
         <MD5 value="e79cead03187ecb692961b316b7cdcd4" />
         <Offsets>
+            <Group name="Constructions">
+                <Address name="vector" value="0x92f30a4"/>
+                <Offset name="sizeof" value="0x14"/>
+            </Group>
             <Group name="Position">
                 <Address name="screen_tiles_pointer" value="0x09487970" />
             </Group>

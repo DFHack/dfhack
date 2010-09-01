@@ -119,6 +119,7 @@ dfexpbench
 dfsuspend
 dfflows
 dfliquids
+dfweather
 RUNTIME DESTINATION bin
 )
 IF(UNIX)

@@ -27,6 +27,7 @@ distribution.
 #include "dfhack/modules/Position.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
+#include "dfhack/DFError.h"
 using namespace DFHack;
 
 struct Position::Private
@@ -72,7 +73,7 @@ Position::Position(DFContextShared * d_)
         d->window_dims_offset = OG_Position->getAddress ("window_dims");
         d->Started = true;
     }
-    catch(exception &){};
+    catch(Error::All &){};
     try
     {
         OffsetGroup * OG_Hotkeys = mem->getGroup("Hotkeys");
@@ -82,13 +83,13 @@ Position::Position(DFContextShared * d_)
         d->hotkey_size = OG_Hotkeys->getHexValue("size");
         d->StartedHotkeys = true;
     }
-    catch(exception &){};
+    catch(Error::All &){};
     try
     {
         d->screen_tiles_ptr_offset = OG_Position->getAddress ("screen_tiles_pointer");
         d->StartedScreen = true;
     }
-    catch(exception &){};
+    catch(Error::All &){};
 }
 
 Position::~Position()

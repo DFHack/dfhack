@@ -1880,6 +1880,9 @@
                 <Address name="vector" value="0x9307568" />
                 <Offset name="tree_desc_offset" value="0x3C" />
             </Group>
+            <Group name="World">
+                <Address name="current_weather" value="0x92ec5aa" />
+            </Group>
         </Offsets>
     </Version>
 </DFHack>

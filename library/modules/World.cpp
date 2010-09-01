@@ -49,6 +49,7 @@ struct World::Private
     bool Started;
     uint32_t year_offset;
     uint32_t tick_offset;
+    uint32_t weather_offset;
     DFContextShared *d;
     Process * owner;
 };
@@ -63,6 +64,7 @@ World::World(DFContextShared * _d)
     OffsetGroup * OG_World = d->d->offset_descriptor->getGroup("World");
     d->year_offset = OG_World->getAddress( "current_year" );
     d->tick_offset = OG_World->getAddress( "current_tick" );
+    d->weather_offset = OG_World->getAddress( "current_weather" );
     d->Inited = d->Started = true;
 }
 
@@ -113,4 +115,17 @@ uint32_t World::ReadCurrentMonth()
 uint32_t World::ReadCurrentDay()
 {
     return ((this->ReadCurrentTick() / 1200) % 28) + 1;
+}
+
+uint8_t World::ReadCurrentWeather()
+{
+    if (d->Inited)
+        return(d->owner->readByte(d->weather_offset));
+    return 0;
+}
+
+void World::SetCurrentWeather(uint8_t weather)
+{
+    if (d->Inited)
+        d->owner->writeByte(d->weather_offset,weather);
 }

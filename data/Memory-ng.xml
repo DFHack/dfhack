@@ -1872,6 +1872,10 @@
             <Group name="Position">
                 <Address name="screen_tiles_pointer" value="0x09487970" />
             </Group>
+            <Group name="Vegetation">
+                <Address name="vector" value="0x9307568" />
+                <Offset name="tree_desc_offset" value="0x3C" />
+            </Group>
         </Offsets>
     </Version>
 </DFHack>

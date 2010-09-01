@@ -64,6 +64,11 @@ TARGET_LINK_LIBRARIES(dfposition dfhack)
 ADD_EXECUTABLE(dfdoffsets dumpoffsets.cpp)
 TARGET_LINK_LIBRARIES(dfdoffsets dfhack)
 
+# change the weather
+ADD_EXECUTABLE(dfweather weather.cpp)
+TARGET_LINK_LIBRARIES(dfweather dfhack)
+
+
 IF(UNIX)
     SET(CURSES_NEED_WIDE "YES")
     SET(CURSES_NEED_NCURSES "NO")

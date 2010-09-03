@@ -54,6 +54,24 @@ DFHACK_EXPORT extern int (*alloc_t_feature_buffer_callback)(t_feature*, uint32_t
 DFHACK_EXPORT extern int (*alloc_t_hotkey_buffer_callback)(t_hotkey*, uint32_t);
 DFHACK_EXPORT extern int (*alloc_t_screen_buffer_callback)(t_screen*, uint32_t);
 
+DFHACK_EXPORT void RegisterByteBufferCallback(int (*funcptr)(int8_t*, uint32_t));
+DFHACK_EXPORT void RegisterShortBufferCallback(int (*funcptr)(int16_t*, uint32_t));
+DFHACK_EXPORT void RegisterIntBufferCallback(int (*funcptr)(int32_t*, uint32_t));
+
+DFHACK_EXPORT void RegisterUByteBufferCallback(int (*funcptr)(uint8_t*, uint32_t));
+DFHACK_EXPORT void RegisterUShortBufferCallback(int (*funcptr)(uint16_t*, uint32_t));
+DFHACK_EXPORT void RegisterUIntBufferCallback(int (*funcptr)(uint32_t*, uint32_t));
+
+DFHACK_EXPORT void RegisterCharBufferCallback(int (*funcptr)(char*, uint32_t));
+
+DFHACK_EXPORT void RegisterMatglossBufferCallback(int (*funcptr)(t_matgloss*, uint32_t));
+DFHACK_EXPORT void RegisterDescriptorColorBufferCallback(int (*funcptr)(t_descriptor_color*, uint32_t));
+DFHACK_EXPORT void RegisterMatglossOtherBufferCallback(int (*funcptr)(t_matglossOther*, uint32_t));
+
+DFHACK_EXPORT void RegisterFeatureBufferCallback(int (*funcptr)(t_feature*, uint32_t));
+DFHACK_EXPORT void RegisterHotkeyBufferCallback(int (*funcptr)(t_hotkey*, uint32_t));
+DFHACK_EXPORT void RegisterScreenBufferCallback(int (*funcptr)(t_screen*, uint32_t));
+
 struct t_customWorkshop
 {
 	uint32_t index;
@@ -61,8 +79,10 @@ struct t_customWorkshop
 };
 
 DFHACK_EXPORT extern int (*alloc_t_customWorkshop_buffer_callback)(t_customWorkshop*, uint32_t);
-
 DFHACK_EXPORT extern int (*alloc_t_material_buffer_callback)(t_material*, uint32_t);
+
+DFHACK_EXPORT void RegisterCustomWorkshopBufferCallback(int (*funcptr)(t_customWorkshop*, uint32_t));
+DFHACK_EXPORT void RegisterMaterialBufferCallback(int (*funcptr)(t_material*, uint32_t));
 
 struct c_colormodifier
 {
@@ -74,6 +94,10 @@ struct c_colormodifier
 DFHACK_EXPORT extern int (*alloc_empty_colormodifier_callback)(c_colormodifier*);
 DFHACK_EXPORT extern int (*alloc_colormodifier_callback)(c_colormodifier*, const char*, uint32_t);
 DFHACK_EXPORT extern int (*alloc_colormodifier_buffer_callback)(c_colormodifier*, uint32_t);
+
+DFHACK_EXPORT void RegisterEmptyColorModifierCallback(int (*funcptr)(c_colormodifier*));
+DFHACK_EXPORT void RegisterNewColorModifierCallback(int (*funcptr)(c_colormodifier*, const char*, uint32_t));
+DFHACK_EXPORT void RegisterColorModifierBufferCallback(int (*funcptr)(c_colormodifier*, uint32_t));
 
 struct c_creaturecaste
 {
@@ -92,6 +116,10 @@ struct c_creaturecaste
 DFHACK_EXPORT extern int (*alloc_empty_creaturecaste_callback)(c_creaturecaste*);
 DFHACK_EXPORT extern int (*alloc_creaturecaste_callback)(c_creaturecaste*, const char*, const char*, const char*, const char*, uint32_t, uint32_t);
 DFHACK_EXPORT extern int (*alloc_creaturecaste_buffer_callback)(c_creaturecaste*, uint32_t);
+
+DFHACK_EXPORT void RegisterEmptyCreatureCasteCallback(int (*funcptr)(c_creaturecaste*));
+DFHACK_EXPORT void RegisterNewCreatureCasteCallback(int (*funcptr)(c_creaturecaste*, const char*, const char*, const char*, const char*, uint32_t, uint32_t));
+DFHACK_EXPORT void RegisterCreatureCasteBufferCallback(int (*funcptr)(c_creaturecaste*, uint32_t));
 
 struct c_creaturetype
 {
@@ -121,14 +149,22 @@ DFHACK_EXPORT extern int (*alloc_vein_buffer_callback)(t_vein*, uint32_t);
 DFHACK_EXPORT extern int (*alloc_frozenliquidvein_buffer_callback)(t_frozenliquidvein*, uint32_t);
 DFHACK_EXPORT extern int (*alloc_spattervein_buffer_callback)(t_spattervein*, uint32_t);
 
-DFHACK_EXPORT extern int DFHack_isWallTerrain(int in);
-DFHACK_EXPORT extern int DFHack_isFloorTerrain(int in);
-DFHACK_EXPORT extern int DFHack_isRampTerrain(int in);
-DFHACK_EXPORT extern int DFHack_isStairTerrain(int in);
-DFHACK_EXPORT extern int DFHack_isOpenTerrain(int in);
-DFHACK_EXPORT extern int DFHack_getVegetationType(int in);
+DFHACK_EXPORT void RegisterEmptyCreatureTypeCallback(int (*funcptr)(c_creaturetype*));
+DFHACK_EXPORT void RegisterNewCreatureTypeCallback(int (*funcptr)(c_creaturetype*, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t));
+DFHACK_EXPORT void RegisterCreatureTypeBufferCallback(int (*funcptr)(c_creaturetype*, uint32_t));
 
-DFHACK_EXPORT extern int DFHack_getTileType(int index, TileRow* tPtr);
+DFHACK_EXPORT void RegisterVeinBufferCallback(int (*funcptr)(t_vein*, uint32_t));
+DFHACK_EXPORT void RegisterFrozenLiquidVeinBufferCallback(int (*funcptr)(t_frozenliquidvein*, uint32_t));
+DFHACK_EXPORT void RegisterSpatterVeinBufferCallback(int (*funcptr)(t_spattervein*, uint32_t));
+
+DFHACK_EXPORT int DFHack_isWallTerrain(int in);
+DFHACK_EXPORT int DFHack_isFloorTerrain(int in);
+DFHACK_EXPORT int DFHack_isRampTerrain(int in);
+DFHACK_EXPORT int DFHack_isStairTerrain(int in);
+DFHACK_EXPORT int DFHack_isOpenTerrain(int in);
+DFHACK_EXPORT int DFHack_getVegetationType(int in);
+
+DFHACK_EXPORT int DFHack_getTileType(int index, TileRow* tPtr);
 
 #ifdef __cplusplus
 }

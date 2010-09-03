@@ -39,6 +39,9 @@ using namespace std;
 
 using namespace DFHack;
 
+#define BUILD(a) a ## BufferCallback
+#define REG_MACRO(type_name, type, callback) void BUILD(Register ## type_name) (int (*fptr)(type, uint32_t)) { callback = fptr; }
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -79,6 +82,62 @@ int (*alloc_creaturetype_buffer_callback)(c_creaturetype*, uint32_t) = NULL;
 int (*alloc_vein_buffer_callback)(t_vein*, uint32_t) = NULL;
 int (*alloc_frozenliquidvein_buffer_callback)(t_frozenliquidvein*, uint32_t) = NULL;
 int (*alloc_spattervein_buffer_callback)(t_spattervein*, uint32_t) = NULL;
+
+REG_MACRO(Byte, int8_t*, alloc_byte_buffer_callback)
+REG_MACRO(Short, int16_t*, alloc_short_buffer_callback)
+REG_MACRO(Int, int32_t*, alloc_int_buffer_callback)
+REG_MACRO(UByte, uint8_t*, alloc_ubyte_buffer_callback)
+REG_MACRO(UShort, uint16_t*, alloc_ushort_buffer_callback)
+REG_MACRO(UInt, uint32_t*, alloc_uint_buffer_callback)
+REG_MACRO(Char, char*, alloc_char_buffer_callback)
+REG_MACRO(Matgloss, t_matgloss*, alloc_matgloss_buffer_callback)
+REG_MACRO(DescriptorColor, t_descriptor_color*, alloc_descriptor_buffer_callback)
+REG_MACRO(MatglossOther, t_matglossOther*, alloc_matgloss_other_buffer_callback)
+REG_MACRO(Feature, t_feature*, alloc_t_feature_buffer_callback)
+REG_MACRO(Hotkey, t_hotkey*, alloc_t_hotkey_buffer_callback)
+REG_MACRO(Screen, t_screen*, alloc_t_screen_buffer_callback)
+REG_MACRO(CustomWorkshop, t_customWorkshop*, alloc_t_customWorkshop_buffer_callback)
+REG_MACRO(Material, t_material*, alloc_t_material_buffer_callback)
+
+void RegisterEmptyColorModifierCallback(int (*funcptr)(c_colormodifier*))
+{
+	alloc_empty_colormodifier_callback = funcptr;
+}
+
+void RegisterNewColorModifierCallback(int (*funcptr)(c_colormodifier*, const char*, uint32_t))
+{
+	alloc_colormodifier_callback = funcptr;
+}
+
+REG_MACRO(ColorModifier, c_colormodifier*, alloc_colormodifier_buffer_callback)
+
+void RegisterEmptyCreatureCasteCallback(int (*funcptr)(c_creaturecaste*))
+{
+	alloc_empty_creaturecaste_callback = funcptr;
+}
+
+void RegisterNewCreatureCasteCallback(int (*funcptr)(c_creaturecaste*, const char*, const char*, const char*, const char*, uint32_t, uint32_t))
+{
+	alloc_creaturecaste_callback = funcptr;
+}
+
+REG_MACRO(CreatureCaste, c_creaturecaste*, alloc_creaturecaste_buffer_callback)
+
+void RegisterEmptyCreatureTypeCallback(int (*funcptr)(c_creaturetype*))
+{
+	alloc_empty_creaturetype_callback = funcptr;
+}
+
+void RegisterNewCreatureTypeCallback(int (*funcptr)(c_creaturetype*, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t))
+{
+	alloc_creaturetype_callback = funcptr;
+}
+
+REG_MACRO(CreatureType, c_creaturetype*, alloc_creaturetype_buffer_callback)
+
+REG_MACRO(Vein, t_vein*, alloc_vein_buffer_callback)
+REG_MACRO(FrozenLiquidVein, t_frozenliquidvein*, alloc_frozenliquidvein_buffer_callback)
+REG_MACRO(SpatterVein, t_spattervein*, alloc_spattervein_buffer_callback)
 
 int DFHack_isWallTerrain(int in)
 {

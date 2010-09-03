@@ -1714,7 +1714,7 @@
                     <Offset name="custom_profession" value="0x3c" />
                     <Offset name="profession" value="0x40" />
                     <Offset name="race" value="0x44" />
-                    <Offset name="position" value="0x90" />
+                    <Offset name="position" value="0x48" />
                     <Offset name="flags1" value="0x8C" />
                     <Offset name="flags2" value="0x90" />
                     <Offset name="caste" value="0xA4" />

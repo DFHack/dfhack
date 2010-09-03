@@ -29,6 +29,7 @@ distribution.
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
+#include <dfhack/DFError.h>
 
 using namespace DFHack;
 
@@ -335,20 +336,38 @@ bool Materials::ReadCreatureTypesEx (void)
         uint32_t extract_vector_offset = OG_Creature->getOffset ("extract_vector");
         uint32_t tile_offset = OG_Creature->getOffset ("tile");
         uint32_t tile_color_offset = OG_Creature->getOffset ("tile_color");
+
+    bool have_advanced = false;
+    uint32_t caste_colormod_offset;
+    uint32_t caste_attributes_offset;
+    uint32_t caste_bodypart_offset;
+    uint32_t bodypart_id_offset;
+    uint32_t bodypart_category_offset;
+    uint32_t bodypart_layers_offset;
+    uint32_t bodypart_singular_offset;
+    uint32_t bodypart_plural_offset;
+    uint32_t color_modifier_part_offset;
+    uint32_t color_modifier_startdate_offset;
+    uint32_t color_modifier_enddate_offset;
+    try
+    {
         OffsetGroup * OG_Caste = OG_Creature->getGroup("caste");
-            uint32_t caste_colormod_offset = OG_Caste->getOffset ("color_modifiers");
-            uint32_t caste_attributes_offset = OG_Caste->getOffset ("attributes");
-            uint32_t caste_bodypart_offset = OG_Caste->getOffset ("bodypart_vector");
+            caste_colormod_offset = OG_Caste->getOffset ("color_modifiers");
+            caste_attributes_offset = OG_Caste->getOffset ("attributes");
+            caste_bodypart_offset = OG_Caste->getOffset ("bodypart_vector");
         OffsetGroup * OG_CasteBodyparts = OG_Creature->getGroup("caste_bodyparts");
-            uint32_t bodypart_id_offset = OG_CasteBodyparts->getOffset ("id");
-            uint32_t bodypart_category_offset = OG_CasteBodyparts->getOffset ("category");
-            uint32_t bodypart_layers_offset = OG_CasteBodyparts->getOffset ("layers_vector"); // unused
-            uint32_t bodypart_singular_offset = OG_CasteBodyparts->getOffset ("singular_vector"); // unused
-            uint32_t bodypart_plural_offset = OG_CasteBodyparts->getOffset ("plural_vector"); // unused
+            bodypart_id_offset = OG_CasteBodyparts->getOffset ("id");
+            bodypart_category_offset = OG_CasteBodyparts->getOffset ("category");
+            bodypart_layers_offset = OG_CasteBodyparts->getOffset ("layers_vector"); // unused
+            bodypart_singular_offset = OG_CasteBodyparts->getOffset ("singular_vector"); // unused
+            bodypart_plural_offset = OG_CasteBodyparts->getOffset ("plural_vector"); // unused
         OffsetGroup * OG_CasteColorMods = OG_Creature->getGroup("caste_color_mods");
-            uint32_t color_modifier_part_offset = OG_CasteColorMods->getOffset ("part");
-            uint32_t color_modifier_startdate_offset = OG_CasteColorMods->getOffset ("startdate");
-            uint32_t color_modifier_enddate_offset = OG_CasteColorMods->getOffset ("enddate");
+            color_modifier_part_offset = OG_CasteColorMods->getOffset ("part");
+            color_modifier_startdate_offset = OG_CasteColorMods->getOffset ("startdate");
+            color_modifier_enddate_offset = OG_CasteColorMods->getOffset ("enddate");
+        have_advanced = true;
+    }
+    catch (Error::All &){};
 
     uint32_t size = p_races.size();
     uint32_t sizecas = 0;
@@ -383,38 +402,36 @@ bool Materials::ReadCreatureTypesEx (void)
             p->readSTLString (caste_start + sizeof_string, caste.singular, sizeof(caste.singular));
             p->readSTLString (caste_start + 2 * sizeof_string, caste.plural, sizeof(caste.plural));
             p->readSTLString (caste_start + 3 * sizeof_string, caste.adjective, sizeof(caste.adjective));
-
-            /* color mod reading */
-            DfVector <uint32_t> p_colormod(p, caste_start + caste_colormod_offset);
-            sizecolormod = p_colormod.size();
-            caste.ColorModifier.resize(sizecolormod);
-            for(uint32_t k = 0; k < sizecolormod;k++)
+            if(have_advanced)
             {
-                DfVector <uint32_t> p_colorlist(p, p_colormod[k]);
-                sizecolorlist = p_colorlist.size();
-                caste.ColorModifier[k].colorlist.resize(sizecolorlist);
-                for(uint32_t l = 0; l < sizecolorlist; l++)
-                    caste.ColorModifier[k].colorlist[l] = p_colorlist[l];
-                p->readSTLString( p_colormod[k] + color_modifier_part_offset, caste.ColorModifier[k].part, sizeof(caste.ColorModifier[k].part));
-                caste.ColorModifier[k].startdate = p->readDWord( p_colormod[k] + color_modifier_startdate_offset );
-                caste.ColorModifier[k].enddate = p->readDWord( p_colormod[k] + color_modifier_enddate_offset );
+                /* color mod reading */
+                DfVector <uint32_t> p_colormod(p, caste_start + caste_colormod_offset);
+                sizecolormod = p_colormod.size();
+                caste.ColorModifier.resize(sizecolormod);
+                for(uint32_t k = 0; k < sizecolormod;k++)
+                {
+                    DfVector <uint32_t> p_colorlist(p, p_colormod[k]);
+                    sizecolorlist = p_colorlist.size();
+                    caste.ColorModifier[k].colorlist.resize(sizecolorlist);
+                    for(uint32_t l = 0; l < sizecolorlist; l++)
+                        caste.ColorModifier[k].colorlist[l] = p_colorlist[l];
+                    p->readSTLString( p_colormod[k] + color_modifier_part_offset, caste.ColorModifier[k].part, sizeof(caste.ColorModifier[k].part));
+                    caste.ColorModifier[k].startdate = p->readDWord( p_colormod[k] + color_modifier_startdate_offset );
+                    caste.ColorModifier[k].enddate = p->readDWord( p_colormod[k] + color_modifier_enddate_offset );
+                }
+                /* body parts */
+                DfVector <uint32_t> p_bodypart(p, caste_start + caste_bodypart_offset);
+                caste.bodypart.empty();
+                sizebp = p_bodypart.size();
+                for(uint32_t k = 0; k < sizebp; k++)
+                {
+                    t_bodypart part;
+                    p->readSTLString (p_bodypart[k] + bodypart_id_offset, part.id, sizeof(part.id));
+                    p->readSTLString (p_bodypart[k] + bodypart_category_offset, part.category, sizeof(part.category));
+                    caste.bodypart.push_back(part);
+                }
+                p->read(caste_start + caste_attributes_offset, sizeof(t_attrib) * (6+11), (uint8_t *)&caste.strength);
             }
-
-            /* body parts */
-            DfVector <uint32_t> p_bodypart(p, caste_start + caste_bodypart_offset);
-            caste.bodypart.empty();
-            sizebp = p_bodypart.size();
-            for(uint32_t k = 0; k < sizebp; k++)
-            {
-                t_bodypart part;
-                p->readSTLString (p_bodypart[k] + bodypart_id_offset, part.id, sizeof(part.id));
-                p->readSTLString (p_bodypart[k] + bodypart_category_offset, part.category, sizeof(part.category));
-                caste.bodypart.push_back(part);
-            }
-
-
-            p->read(caste_start + caste_attributes_offset, sizeof(t_attrib) * (6+11), (uint8_t *)&caste.strength);
-
             mat.castes.push_back(caste);
         }
         DfVector <uint32_t> p_extract(p, p_races[i] + extract_vector_offset);
@@ -438,7 +455,7 @@ void Materials::ReadAllMaterials(void)
     this->ReadCreatureTypes();
     this->ReadCreatureTypesEx();
     this->ReadDescriptorColors();
-    this->ReadOthers();
+    //this->ReadOthers();
 }
 
 std::string Materials::getDescription(t_material & mat)

@@ -453,8 +453,14 @@ int main (int numargs, char ** args)
     }
 
     mem = DF->getMemoryInfo();
-    Materials->ReadAllMaterials();
-	
+    Materials->ReadInorganicMaterials();
+    Materials->ReadOrganicMaterials();
+    Materials->ReadWoodMaterials();
+    Materials->ReadPlantMaterials();
+    Materials->ReadCreatureTypes();
+    Materials->ReadCreatureTypesEx();
+    Materials->ReadDescriptorColors();
+
     if(!Tran->Start())
     {
         cerr << "Can't get name tables" << endl;

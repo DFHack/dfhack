@@ -1737,13 +1737,15 @@
                         <Offset name="happiness" value="0x5AC" />
                     </Group>
                 </Group>
-
+                <!--
+                The vector is bad.
                 <Group name="soul" valid="verify">
                     <Offset name="name" value="0x0" />
                     <Offset name="mental" value="0x88" />
                     <Offset name="skills_vector" value="0x1C4" /> CHMOD
                     <Offset name="traits" value="0x1DC" />
                 </Group>
+                -->
                 <!--
                 <Group name="job">
                     <Offset name="id" value="0x0" /> Incrementaly assigned
@@ -1770,6 +1772,8 @@
                     <Offset name="extract_vector" value="0x18f4" />
                     <Offset name="tile" value="0x20" />
                     <Offset name="tile_color" value="0x36" />
+                    <!--
+                    !!!! BOGUS !!!!
                     <Group name="caste">
                         <Offset name="bodypart_vector" value="0x51C" />
                         <Offset name="attributes" value="0x654" />
@@ -1787,6 +1791,7 @@
                         <Offset name="singular_vector" value="0x78" />
                         <Offset name="plural_vector" value="0x90" />
                     </Group>
+                    -->
                 </Group>
                 <Group name="descriptors">
                     <!--<Address name="vectors_start" value="" />--><!-- search: vector of object with first object having string "STAR" as first member -->

@@ -124,16 +124,16 @@ Creatures::Creatures(DFContextShared* _d)
             creatures.labors_offset = OG_creature_ex->getOffset ("labors");
             creatures.happiness_offset = OG_creature_ex->getOffset ("happiness");
             d->Ft_advanced = true;
-            try
-            {
-                creatures.soul_vector_offset = OG_creature_ex->getOffset("soul_vector");
-                creatures.default_soul_offset = OG_creature_ex->getOffset("current_soul");
-                creatures.soul_mental_offset = OG_soul->getOffset("mental");
-                creatures.soul_skills_vector_offset = OG_soul->getOffset("skills_vector");
-                creatures.soul_traits_offset = OG_soul->getOffset("traits");
-                d->Ft_soul = true;
-            }
-            catch(Error::All&){};
+        }
+        catch(Error::All&){};
+        try
+        {
+            creatures.soul_vector_offset = OG_creature_ex->getOffset("soul_vector");
+            creatures.default_soul_offset = OG_creature_ex->getOffset("current_soul");
+            creatures.soul_mental_offset = OG_soul->getOffset("mental");
+            creatures.soul_skills_vector_offset = OG_soul->getOffset("skills_vector");
+            creatures.soul_traits_offset = OG_soul->getOffset("traits");
+            d->Ft_soul = true;
         }
         catch(Error::All&){};
     }
@@ -169,6 +169,7 @@ bool Creatures::Finish()
 bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
 {
     if(!d->Started) return false;
+    memset(&furball, 0, sizeof(t_creature));
     // SHM fast path
     Process * p = d->owner;
     /*
@@ -190,129 +191,120 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     Creatures2010::creature_offsets &offs = d->creatures;
 
     //read creature from memory
-
-    // name
-    d->d->readName(furball.name,temp + offs.name_offset);
-
-    // basic stuff
-    p->readDWord (temp + offs.happiness_offset, furball.happiness);
-    p->readDWord (temp + offs.id_offset, furball.id);
-    p->read (temp + offs.pos_offset, 3 * sizeof (uint16_t), (uint8_t *) & (furball.x)); // xyz really
-    p->readDWord (temp + offs.race_offset, furball.race);
-    furball.civ = p->readDWord (temp + offs.civ_offset);
-    p->readByte (temp + offs.sex_offset, furball.sex);
-    p->readWord (temp + offs.caste_offset, furball.caste);
-    p->readDWord (temp + offs.flags1_offset, furball.flags1.whole);
-    p->readDWord (temp + offs.flags2_offset, furball.flags2.whole);
-
-    // physical attributes
-    p->read(temp + offs.physical_offset,
-        sizeof(t_attrib) * NUM_CREATURE_PHYSICAL_ATTRIBUTES,
-        (uint8_t *)&furball.strength);
-
-    // mood stuff
-    furball.mood = (int16_t) p->readWord (temp + offs.mood_offset);
-    furball.mood_skill = p->readWord (temp + offs.mood_skill_offset);
-	d->d->readName(furball.artifact_name, temp + offs.artifact_name_offset);
-
-    // custom profession
-    p->readSTLString(temp + offs.custom_profession_offset, furball.custom_profession, sizeof(furball.custom_profession));
-    //fill_char_buf (furball.custom_profession, p->readSTLString (temp + offs.custom_profession_offset));
-
-    // labors
-    p->read (temp + offs.labors_offset, NUM_CREATURE_LABORS, furball.labors);
-
-    // profession
-    furball.profession = p->readByte (temp + offs.profession_offset);
-
-    furball.current_job.occupationPtr = p->readDWord (temp + offs.current_job_offset);
-    if(furball.current_job.occupationPtr)
+    if(d->Ft_basic)
     {
-        furball.current_job.active = true;
-        furball.current_job.jobType = p->readByte (furball.current_job.occupationPtr + d->OG_jobs->getOffset("type") );
-        furball.current_job.jobId = p->readDWord (furball.current_job.occupationPtr + d->OG_jobs->getOffset("id") );
+        // name
+        d->d->readName(furball.name,temp + offs.name_offset);
+
+        // basic stuff
+        p->readDWord (temp + offs.id_offset, furball.id);
+        p->read (temp + offs.pos_offset, 3 * sizeof (uint16_t), (uint8_t *) & (furball.x)); // xyz really
+        p->readDWord (temp + offs.race_offset, furball.race);
+        furball.civ = p->readDWord (temp + offs.civ_offset);
+        p->readByte (temp + offs.sex_offset, furball.sex);
+        p->readWord (temp + offs.caste_offset, furball.caste);
+        p->readDWord (temp + offs.flags1_offset, furball.flags1.whole);
+        p->readDWord (temp + offs.flags2_offset, furball.flags2.whole);
+        // custom profession
+        p->readSTLString(temp + offs.custom_profession_offset, furball.custom_profession, sizeof(furball.custom_profession));
+        // profession
+        furball.profession = p->readByte (temp + offs.profession_offset);
     }
-    else
+    if(d->Ft_advanced)
     {
-        furball.current_job.active = false;;
-    }
+        // happiness
+        p->readDWord (temp + offs.happiness_offset, furball.happiness);
 
-    furball.birth_year = p->readDWord (temp + offs.birth_year_offset );
-    furball.birth_time = p->readDWord (temp + offs.birth_time_offset );
+        // physical attributes
+        p->read(temp + offs.physical_offset,
+            sizeof(t_attrib) * NUM_CREATURE_PHYSICAL_ATTRIBUTES,
+            (uint8_t *)&furball.strength);
 
-    // current job HACK: the job object isn't cleanly represented here
-    /*
-    uint32_t jobIdAddr = p->readDWord (temp + offs.creature_current_job_offset);
+        // mood stuff
+        furball.mood = (int16_t) p->readWord (temp + offs.mood_offset);
+        furball.mood_skill = p->readWord (temp + offs.mood_skill_offset);
+        d->d->readName(furball.artifact_name, temp + offs.artifact_name_offset);
 
-    if (jobIdAddr)
-    {
-        furball.current_job.active = true;
-        furball.current_job.jobId = p->readByte (jobIdAddr + offs.creature_current_job_id_offset);
-    }
-    else
-    {
-        furball.current_job.active = false;
-    }
-    */
+        // labors
+        p->read (temp + offs.labors_offset, NUM_CREATURE_LABORS, furball.labors);
+        furball.birth_year = p->readDWord (temp + offs.birth_year_offset );
+        furball.birth_time = p->readDWord (temp + offs.birth_time_offset );
+        /*
+         * p->readDWord(temp + offs.creature_pregnancy_offset, furball.pregnancy_timer);
+         */
 
-    /*
-        p->readDWord(temp + offs.creature_pregnancy_offset, furball.pregnancy_timer);
-    */
-
-    /*
-    // enum soul pointer vector
-    DfVector <uint32_t> souls(p,temp + offs.creature_soul_vector_offset);
-    */
-    uint32_t soul = p->readDWord(temp + offs.default_soul_offset);
-    furball.has_default_soul = false;
-
-    if(soul)
-    {
-        furball.has_default_soul = true;
-        // get first soul's skills
-        DfVector <uint32_t> skills(p, soul + offs.soul_skills_vector_offset);
-        furball.defaultSoul.numSkills = skills.size();
-
-        for (uint32_t i = 0; i < furball.defaultSoul.numSkills;i++)
+        // appearance
+        DfVector <uint32_t> app(p, temp + offs.appearance_vector_offset);
+        furball.nbcolors = app.size();
+        if(furball.nbcolors>MAX_COLORS)
+            furball.nbcolors = MAX_COLORS;
+        for(uint32_t i = 0; i < furball.nbcolors; i++)
         {
-            uint32_t temp2 = skills[i];
-            // a byte: this gives us 256 skills maximum.
-            furball.defaultSoul.skills[i].id = p->readByte (temp2);
-            furball.defaultSoul.skills[i].rating =
-                p->readByte (temp2 + offsetof(t_skill, rating));
-            furball.defaultSoul.skills[i].experience =
-                p->readWord (temp2 + offsetof(t_skill, experience));
+            furball.color[i] = app[i];
         }
 
-        // mental attributes are part of the soul
-        p->read(soul + offs.soul_mental_offset,
-            sizeof(t_attrib) * NUM_CREATURE_MENTAL_ATTRIBUTES,
-            (uint8_t *)&furball.defaultSoul.analytical_ability);
-
-        // traits as well
-        p->read(soul + offs.soul_traits_offset,
-            sizeof (uint16_t) * NUM_CREATURE_TRAITS,
-            (uint8_t *) &furball.defaultSoul.traits);
+        //likes
+        /*
+        DfVector <uint32_t> likes(d->p, temp + offs.creature_likes_offset);
+        furball.numLikes = likes.getSize();
+        for(uint32_t i = 0;i<furball.numLikes;i++)
+        {
+            uint32_t temp2 = *(uint32_t *) likes[i];
+            p->read(temp2,sizeof(t_like),(uint8_t *) &furball.likes[i]);
+        }*/
     }
-
-    DfVector <uint32_t> app(p, temp + offs.appearance_vector_offset);
-    furball.nbcolors = app.size();
-    if(furball.nbcolors>MAX_COLORS)
-        furball.nbcolors = MAX_COLORS;
-    for(uint32_t i = 0; i < furball.nbcolors; i++)
+    if(d->Ft_soul)
     {
-        furball.color[i] = app[i];
+        /*
+        // enum soul pointer vector
+        DfVector <uint32_t> souls(p,temp + offs.creature_soul_vector_offset);
+        */
+        uint32_t soul = p->readDWord(temp + offs.default_soul_offset);
+        furball.has_default_soul = false;
+
+        if(soul)
+        {
+            furball.has_default_soul = true;
+            // get first soul's skills
+            DfVector <uint32_t> skills(p, soul + offs.soul_skills_vector_offset);
+            furball.defaultSoul.numSkills = skills.size();
+
+            for (uint32_t i = 0; i < furball.defaultSoul.numSkills;i++)
+            {
+                uint32_t temp2 = skills[i];
+                // a byte: this gives us 256 skills maximum.
+                furball.defaultSoul.skills[i].id = p->readByte (temp2);
+                furball.defaultSoul.skills[i].rating =
+                    p->readByte (temp2 + offsetof(t_skill, rating));
+                furball.defaultSoul.skills[i].experience =
+                    p->readWord (temp2 + offsetof(t_skill, experience));
+            }
+
+            // mental attributes are part of the soul
+            p->read(soul + offs.soul_mental_offset,
+                sizeof(t_attrib) * NUM_CREATURE_MENTAL_ATTRIBUTES,
+                (uint8_t *)&furball.defaultSoul.analytical_ability);
+
+            // traits as well
+            p->read(soul + offs.soul_traits_offset,
+                sizeof (uint16_t) * NUM_CREATURE_TRAITS,
+                (uint8_t *) &furball.defaultSoul.traits);
+        }
     }
-    //likes
-    /*
-    DfVector <uint32_t> likes(d->p, temp + offs.creature_likes_offset);
-    furball.numLikes = likes.getSize();
-    for(uint32_t i = 0;i<furball.numLikes;i++)
+    if(d->Ft_jobs)
     {
-        uint32_t temp2 = *(uint32_t *) likes[i];
-        p->read(temp2,sizeof(t_like),(uint8_t *) &furball.likes[i]);
-    }*/
-
+        furball.current_job.occupationPtr = p->readDWord (temp + offs.current_job_offset);
+        if(furball.current_job.occupationPtr)
+        {
+            furball.current_job.active = true;
+            furball.current_job.jobType = p->readByte (furball.current_job.occupationPtr + d->OG_jobs->getOffset("type") );
+            furball.current_job.jobId = p->readDWord (furball.current_job.occupationPtr + d->OG_jobs->getOffset("id") );
+        }
+        else
+        {
+            furball.current_job.active = false;;
+        }
+    }
     return true;
 }
 

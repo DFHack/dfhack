@@ -1032,7 +1032,7 @@
             <Group name="World">
                 <Address name="current_tick" description="Current time of the year" />
                 <Address name="current_year" description="Current year" />
-				<Address name="current_weather" description="Single byte, 0=clear, 1=raining, 2=snowing" />
+                <Address name="current_weather" description="Single byte, 0=clear, 1=raining, 2=snowing" />
             </Group>
         </Offsets>
     </Base>

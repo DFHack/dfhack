@@ -26,11 +26,13 @@ void printWeather(DFHack::WeatherType current)
             break;
         case RAINING:
             cout << "It is raining." << endl;
+            cout << "Options:" << endl;
             cout << "'c' to clear the sky." << endl;
             cout << "'s' to make it snow." << endl;
             break;
         case SNOWING:
             cout << "It is snowing." << endl;
+            cout << "Options:" << endl;
             cout << "'c' to clear the sky." << endl;
             cout << "'r' to make it rain." << endl;
             break;

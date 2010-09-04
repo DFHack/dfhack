@@ -1874,6 +1874,10 @@
     <Version name="v0.31.12 linux" os="linux" base="v0.31.11 linux" rebase="-0x1000">
         <MD5 value="e79cead03187ecb692961b316b7cdcd4" />
         <Offsets>
+            <Group name="GUI">
+                <!-- FIXME: this could be wrong for many other versions. Investigate. -->
+                <Address name="pause_state" value="0x92ec65c"/>
+            </Group>
             <Group name="Constructions">
                 <Address name="vector" value="0x92f30a4"/>
                 <Offset name="sizeof" value="0x14"/>

@@ -93,11 +93,17 @@ bool Gui::Finish()
 
 bool Gui::ReadPauseState()
 {
-    // replace with an exception
     if(!d->PauseInited) return false;
 
     uint32_t pauseState = d->owner->readDWord (d->pause_state_offset);
     return pauseState & 1;
+}
+
+void Gui::SetPauseState(bool paused)
+{
+    if(!d->PauseInited) return;
+    cout << "pause set" << endl;
+    d->owner->writeDWord (d->pause_state_offset, paused);
 }
 
 uint32_t Gui::ReadMenuState()

@@ -70,6 +70,7 @@ Maps::Maps(DFContextShared* _d)
     d->d = _d;
     Process *p = d->owner = _d->p;
     d->Inited = d->Started = false;
+    d->block = NULL;
 
     DFHack::VersionInfo * mem = p->getDescriptor();
     Server::Maps::maps_offsets &off = d->offsets;

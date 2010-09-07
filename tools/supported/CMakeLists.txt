@@ -70,6 +70,7 @@ TARGET_LINK_LIBRARIES(dfweather dfhack)
 
 
 IF(UNIX)
+    SET(VEINLOOK_BUILT "NO")
     SET(CURSES_NEED_WIDE "YES")
     SET(CURSES_NEED_NCURSES "NO")
     find_package(Curses QUIET)
@@ -122,9 +123,3 @@ dfliquids
 dfweather
 RUNTIME DESTINATION bin
 )
-IF(UNIX)
-    install(TARGETS
-    dfveinlook
-    RUNTIME DESTINATION bin
-    )
-ENDIF(UNIX)

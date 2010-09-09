@@ -43,9 +43,12 @@ int main (void)
     cout << "Pausing..." << endl;
 
     // horrible hack to make sure the pause is really set
+    // preblem here is that we could be 'arriving' at the wrong time and DF could be in the middle of a frame.
+    // that could mean that revealing, even with suspending DF's thread, would mean unleashing hell *in the same frame* 
+    // this here hack sets the pause state, resumes DF, waits a second for it to enter the pause (I know, BS value.) and suspends.
     Gui->SetPauseState(true);
     DF->Resume();
-    usleep(100);
+    sleep(1);
     DF->Suspend();
 
     // init the map

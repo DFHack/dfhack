@@ -44,6 +44,10 @@ struct Gui::Private
     bool ViewScreeInited;
     uint32_t current_menu_state_offset;
     bool MenuStateInited;
+    uint32_t tileset_filename_offset;
+    bool TilesetFilenameInited;
+    uint32_t colors_filename_offset;
+    bool ColorsFilenameInited;
     DFContextShared *d;
     Process * owner;
 };
@@ -71,6 +75,18 @@ Gui::Gui(DFContextShared * _d)
     {
         d->view_screen_offset = OG_Gui->getAddress ("view_screen");
         d->ViewScreeInited = true;
+    }
+    catch(exception &){};
+    try
+    {
+        d->tileset_filename_offset = OG_Gui->getAddress ("tileset_filename");
+        d->TilesetFilenameInited = true;
+    }
+    catch(exception &){};
+    try
+    {
+        d->colors_filename_offset = OG_Gui->getAddress ("colors_filename");
+        d->ColorsFilenameInited = true;
     }
     catch(exception &){};
     d->Started = true;
@@ -128,4 +144,16 @@ bool Gui::ReadViewScreen (t_viewscreen &screen)
         nextScreenPtr = p->readDWord (nextScreenPtr + 4);
     }
     return d->d->offset_descriptor->resolveObjectToClassID (last, screen.type);
+}
+string Gui::ReadCurrentTileSetFilename()
+{
+    if(d->TilesetFilenameInited)
+        return(d->owner->readCString(d->tileset_filename_offset));
+    return "";
+}
+string Gui::ReadCurrentColorsFilename()
+{
+    if(d->ColorsFilenameInited)
+        return(d->owner->readCString(d->colors_filename_offset));
+    return "";
 }

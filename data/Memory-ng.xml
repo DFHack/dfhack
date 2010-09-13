@@ -694,6 +694,8 @@
                 <Address name="current_cursor_creature" description="A vector? of creatures currently under the cursor."/>
                 <Address name="current_menu_state" description="A numeric value that describes the state of the current GUI element (switching between menus will change this)."/>
                 <Address name="view_screen" description="Pointer to the current view screen object (GUI screen)."/>
+                <Address name="tileset_filename" description="String holding the path to the current tileset file"/>
+                <Address name="colors_filename" description="String holding the path to the current color file"/>
             </Group>
             <Group name="Maps" description="Offsets used by the Maps module.">
                 <Address name="map_data" description="Pointer to the start of the map structure."/>
@@ -1451,6 +1453,10 @@
             </Group>
             <Group name="World">
                 <Address name="current_weather" value="0x14BCDEE" />
+            </Group>
+            <Group name="GUI">
+                <Address name="tileset_filename" value="0xA95BB0" />
+                <Address name="colors_filename" value="0xA95F8C" />
             </Group>
         </Offsets>
     </Version>

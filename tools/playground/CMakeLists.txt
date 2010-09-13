@@ -60,6 +60,13 @@ TARGET_LINK_LIBRARIES(dfcatsplosion dfhack)
 ADD_EXECUTABLE(dfcopypaste copypaste.cpp)
 TARGET_LINK_LIBRARIES(dfcopypaste dfhack)
 
+# paths
+# Author: belal
+# dumps the current path to the DF exe, as well as the relative paths to the 
+# current tileset and color files
+ADD_EXECUTABLE(dfpaths paths.cpp)
+TARGET_LINK_LIBRARIES(dfpaths dfhack)
+
 # this needs the C bindings
 IF(BUILD_DFHACK_C_BINDINGS)
     # for trying out some 'stuff'

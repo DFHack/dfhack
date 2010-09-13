@@ -929,6 +929,16 @@ string SHMProcess::readClassName (uint32_t vptr)
     return raw;
 }
 
+string SHMProcess::getPath()
+{
+    HMODULE hmod;
+    DWORD junk;
+    char String[255];
+    HANDLE hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, d->process_ID ); //get the handle from the process ID
+    EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk); //get the module from the handle
+    GetModuleFileNameEx(hProcess,hmod,String,sizeof(String)); //get the filename from the module
+    return(string(String));
+}
 // get module index by name and version. bool 0 = error
 bool SHMProcess::getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT)
 {

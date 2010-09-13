@@ -23,7 +23,6 @@ int main ()
     DFHack::Process * Process = DF->getProcess();
     DFHack::Gui * gui = DF->getGui();
     cout << Process->getPath() << endl;
-    cout << gui->ReadCurrentTileSetFilename() << "\n" << gui->ReadCurrentColorsFilename() << endl;
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();

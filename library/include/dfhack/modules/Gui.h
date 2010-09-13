@@ -28,10 +28,6 @@ namespace DFHack
         bool ReadViewScreen(t_viewscreen &);
         /// read the DF menu state (designation menu ect)
         uint32_t ReadMenuState();
-        /// read the current tileset file used in DF
-        string ReadCurrentTileSetFilename();
-        /// read the current color file used in DF
-        string ReadCurrentColorsFilename();
         
         private:
         struct Private;

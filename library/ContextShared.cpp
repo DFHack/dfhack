@@ -40,9 +40,10 @@ DFContextShared::~DFContextShared()
 
 bool DFContextShared::InitReadNames()
 {
-    name_firstname_offset = offset_descriptor->getOffset("name_firstname");
-    name_nickname_offset = offset_descriptor->getOffset("name_nickname");
-    name_words_offset = offset_descriptor->getOffset("name_words");
+    OffsetGroup * OG = offset_descriptor->getGroup("name");
+    name_firstname_offset = OG->getOffset("first");
+    name_nickname_offset = OG->getOffset("nick");
+    name_words_offset = OG->getOffset("second_words");
     return true;
 }
 

@@ -40,15 +40,18 @@ FIXME: Japa said that he had to do this with the time stuff he got from here
 #include "dfhack/DFProcess.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFTypes.h"
+#include "dfhack/DFError.h"
 
 using namespace DFHack;
 
 struct World::Private
 {
     bool Inited;
-    bool Started;
+    bool StartedTime;
+    bool StartedWeather;
     uint32_t year_offset;
     uint32_t tick_offset;
+    uint32_t weather_offset;
     DFContextShared *d;
     Process * owner;
 };
@@ -59,11 +62,23 @@ World::World(DFContextShared * _d)
     d = new Private;
     d->d = _d;
     d->owner = _d->p;
+    d->Inited = d->StartedTime = d->StartedWeather = false;
 
     OffsetGroup * OG_World = d->d->offset_descriptor->getGroup("World");
-    d->year_offset = OG_World->getAddress( "current_year" );
-    d->tick_offset = OG_World->getAddress( "current_tick" );
-    d->Inited = d->Started = true;
+    try
+    {
+        d->year_offset = OG_World->getAddress( "current_year" );
+        d->tick_offset = OG_World->getAddress( "current_tick" );
+        d->StartedTime = true;
+    }
+    catch(Error::All &){};
+    try
+    {
+        d->weather_offset = OG_World->getAddress( "current_weather" );
+        d->StartedWeather = true;
+    }
+    catch(Error::All &){};
+    d->Inited = true;
 }
 
 World::~World()
@@ -83,14 +98,14 @@ bool World::Finish()
 
 uint32_t World::ReadCurrentYear()
 {
-    if(d->Inited)
+    if(d->Inited && d->StartedTime)
         return(d->owner->readDWord(d->year_offset));
     return 0;
 }
 
 uint32_t World::ReadCurrentTick()
 {
-    if(d->Inited)
+    if(d->Inited && d->StartedTime)
         return(d->owner->readDWord(d->tick_offset));
     return 0;
 }
@@ -113,4 +128,17 @@ uint32_t World::ReadCurrentMonth()
 uint32_t World::ReadCurrentDay()
 {
     return ((this->ReadCurrentTick() / 1200) % 28) + 1;
+}
+
+uint8_t World::ReadCurrentWeather()
+{
+    if (d->Inited && d->StartedWeather)
+        return(d->owner->readByte(d->weather_offset));
+    return 0;
+}
+
+void World::SetCurrentWeather(uint8_t weather)
+{
+    if (d->Inited && d->StartedWeather)
+        d->owner->writeByte(d->weather_offset,weather);
 }

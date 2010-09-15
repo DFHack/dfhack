@@ -50,10 +50,16 @@ struct Creatures::Private
 {
     bool Inited;
     bool Started;
+    bool Ft_basic;
+    bool Ft_advanced;
+    bool Ft_jobs;
+    bool Ft_soul;
     Creatures2010::creature_offsets creatures;
     uint32_t creature_module;
     uint32_t dwarf_race_index_addr;
     uint32_t dwarf_civ_id_addr;
+    OffsetGroup * OG_jobs;
+    OffsetGroup * OG_job_mats;
     DfVector <uint32_t> *p_cre;
     DFContextShared *d;
     Process *owner;
@@ -67,80 +73,72 @@ Creatures::Creatures(DFContextShared* _d)
     d->Inited = false;
     d->Started = false;
     d->d->InitReadNames(); // throws on error
+    VersionInfo * minfo = d->d->offset_descriptor;
+    OffsetGroup *OG_Creatures = minfo->getGroup("Creatures");
+    OffsetGroup *OG_creature = OG_Creatures->getGroup("creature");
+    OffsetGroup *OG_creature_ex = OG_creature->getGroup("advanced");
+    OffsetGroup *OG_soul = OG_Creatures->getGroup("soul");
+    OffsetGroup * OG_name = minfo->getGroup("name");
+    d->OG_jobs = OG_Creatures->getGroup("job");
+    d->OG_job_mats = d->OG_jobs->getGroup("material");
+    d->Ft_basic = d->Ft_advanced = d->Ft_jobs = d->Ft_soul = false;
+
+    Creatures2010::creature_offsets &creatures = d->creatures;
     try
     {
-        VersionInfo * minfo = d->d->offset_descriptor;
-        Creatures2010::creature_offsets &creatures = d->creatures;
-        OffsetGroup *OG_Creatures = minfo->getGroup("Creatures");
+        // Creatures
+        creatures.vector = OG_Creatures->getAddress ("vector");
+        d->dwarf_race_index_addr = OG_Creatures->getAddress("current_race");
+        d->dwarf_civ_id_addr = OG_Creatures->getAddress("current_civ");
+        // Creatures/creature
+        creatures.name_offset = OG_creature->getOffset ("name");
+        creatures.custom_profession_offset = OG_creature->getOffset ("custom_profession");
+        creatures.profession_offset = OG_creature->getOffset ("profession");
+        creatures.race_offset = OG_creature->getOffset ("race");
+        creatures.pos_offset = OG_creature->getOffset ("position");
+        creatures.flags1_offset = OG_creature->getOffset ("flags1");
+        creatures.flags2_offset = OG_creature->getOffset ("flags2");
+        creatures.sex_offset = OG_creature->getOffset ("sex");
+        creatures.caste_offset = OG_creature->getOffset ("caste");
+        creatures.id_offset = OG_creature->getOffset ("id");
+        creatures.civ_offset = OG_creature->getOffset ("civ");
+        // name struct
+        creatures.name_firstname_offset = OG_name->getOffset("first");
+        creatures.name_nickname_offset = OG_name->getOffset("nick");
+        creatures.name_words_offset = OG_name->getOffset("second_words");
+        d->Ft_basic = true;
+        try
         {
-            creatures.vector = OG_Creatures->getAddress ("vector");
-            d->dwarf_race_index_addr = OG_Creatures->getAddress("current_race");
-            d->dwarf_civ_id_addr = OG_Creatures->getAddress("current_civ");
-            OffsetGroup *OG_creature = OG_Creatures->getGroup("creature");
-            {
-                creatures.name_offset = OG_creature->getOffset ("name");
-                creatures.custom_profession_offset = OG_creature->getOffset ("custom_profession");
-                creatures.profession_offset = OG_creature->getOffset ("profession");
-                creatures.race_offset = OG_creature->getOffset ("race");
-                creatures.pos_offset = OG_creature->getOffset ("position");
-                creatures.flags1_offset = OG_creature->getOffset ("creature_flags1");
-                creatures.flags2_offset = OG_creature->getOffset ("creature_flags2");
-                creatures.sex_offset = OG_creature->getOffset ("sex");
-                creatures.caste_offset = OG_creature->getOffset ("caste");
-                creatures.id_offset = OG_creature->getOffset ("id");
-                creatures.civ_offset = OG_creature->getOffset ("civ");
-                OffsetGroup *OG_creature_ex = OG_creature->getGroup("advanced");
-                {
-                    creatures.inventory_offset = OG_creature_ex->getOffset("inventory_vector");
-                    creatures.pickup_equipment_bit = OG_creature_ex->getOffset("pickup_equipment_bit");
-                    creatures.mood_offset = OG_creature_ex->getOffset("mood");
-                    // pregnancy
-                    // pregnancy_ptr
-                    creatures.birth_year_offset = OG_creature_ex->getOffset("birth_year");
-                    creatures.birth_time_offset = OG_creature_ex->getOffset("birth_time");
-                    creatures.current_job_offset = OG_creature_ex->getOffset("current_job");
-                    creatures.mood_skill_offset = OG_creature_ex->getOffset("current_job_skill");
-                    creatures.physical_offset = OG_creature_ex->getOffset("physical");
-                    creatures.appearance_vector_offset = OG_creature_ex->getOffset("appearance_vector");
-                    creatures.artifact_name_offset = OG_creature_ex->getOffset("artifact_name");
-                    creatures.soul_vector_offset = OG_creature_ex->getOffset("soul_vector");
-                    creatures.default_soul_offset = OG_creature_ex->getOffset("current_soul");
-                    creatures.labors_offset = OG_creature_ex->getOffset ("labors");
-                    creatures.happiness_offset = OG_creature_ex->getOffset ("happiness");
-                }
-            }
-            OffsetGroup *OG_soul = OG_Creatures->getGroup("soul");
-            {
-                creatures.soul_mental_offset = OG_soul->getOffset("mental");
-                creatures.soul_skills_vector_offset = OG_soul->getOffset("skills_vector");
-                creatures.soul_traits_offset = OG_soul->getOffset("traits");
-            }
+            creatures.inventory_offset = OG_creature_ex->getOffset("inventory_vector");
+            creatures.pickup_equipment_bit = OG_creature_ex->getOffset("pickup_equipment_bit");
+            creatures.mood_offset = OG_creature_ex->getOffset("mood");
+            // pregnancy
+            // pregnancy_ptr
+            creatures.birth_year_offset = OG_creature_ex->getOffset("birth_year");
+            creatures.birth_time_offset = OG_creature_ex->getOffset("birth_time");
+            creatures.current_job_offset = OG_creature_ex->getOffset("current_job");
+            creatures.mood_skill_offset = OG_creature_ex->getOffset("current_job_skill");
+            creatures.physical_offset = OG_creature_ex->getOffset("physical");
+            creatures.appearance_vector_offset = OG_creature_ex->getOffset("appearance_vector");
+            creatures.artifact_name_offset = OG_creature_ex->getOffset("artifact_name");
+            creatures.labors_offset = OG_creature_ex->getOffset ("labors");
+            creatures.happiness_offset = OG_creature_ex->getOffset ("happiness");
+            d->Ft_advanced = true;
         }
-        // name offsets for the creature module
-        OffsetGroup * OG_name = minfo->getGroup("name");
+        catch(Error::All&){};
+        try
         {
-            creatures.name_firstname_offset = OG_name->getOffset("first");
-            creatures.name_nickname_offset = OG_name->getOffset("nick");
-            creatures.name_words_offset = OG_name->getOffset("second_words");
+            creatures.soul_vector_offset = OG_creature_ex->getOffset("soul_vector");
+            creatures.default_soul_offset = OG_creature_ex->getOffset("current_soul");
+            creatures.soul_mental_offset = OG_soul->getOffset("mental");
+            creatures.soul_skills_vector_offset = OG_soul->getOffset("skills_vector");
+            creatures.soul_traits_offset = OG_soul->getOffset("traits");
+            d->Ft_soul = true;
         }
-
-        /*
-        // upload offsets to the SHM
-        if(p->getModuleIndex("Creatures2010",1,d->creature_module))
-        {
-            // supply the module with offsets so it can work with them
-            memcpy(SHMDATA(Creatures2010::creature_offsets),&creatures,sizeof(Creatures2010::creature_offsets));
-            const uint32_t cmd = Creatures2010::CREATURE_INIT + (d->creature_module << 16);
-            p->SetAndWait(cmd);
-        }
-        */
-        d->Inited = true;
+        catch(Error::All&){};
     }
-    catch (Error::MissingMemoryDefinition&)
-    {
-        d->Inited = false;
-        throw;
-    }
+    catch(Error::All&){};
+    d->Inited = true;
 }
 
 Creatures::~Creatures()
@@ -171,6 +169,7 @@ bool Creatures::Finish()
 bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
 {
     if(!d->Started) return false;
+    memset(&furball, 0, sizeof(t_creature));
     // SHM fast path
     Process * p = d->owner;
     /*
@@ -192,129 +191,120 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     Creatures2010::creature_offsets &offs = d->creatures;
 
     //read creature from memory
-
-    // name
-    d->d->readName(furball.name,temp + offs.name_offset);
-
-    // basic stuff
-    p->readDWord (temp + offs.happiness_offset, furball.happiness);
-    p->readDWord (temp + offs.id_offset, furball.id);
-    p->read (temp + offs.pos_offset, 3 * sizeof (uint16_t), (uint8_t *) & (furball.x)); // xyz really
-    p->readDWord (temp + offs.race_offset, furball.race);
-    furball.civ = p->readDWord (temp + offs.civ_offset);
-    p->readByte (temp + offs.sex_offset, furball.sex);
-    p->readWord (temp + offs.caste_offset, furball.caste);
-    p->readDWord (temp + offs.flags1_offset, furball.flags1.whole);
-    p->readDWord (temp + offs.flags2_offset, furball.flags2.whole);
-
-    // physical attributes
-    p->read(temp + offs.physical_offset,
-        sizeof(t_attrib) * NUM_CREATURE_PHYSICAL_ATTRIBUTES,
-        (uint8_t *)&furball.strength);
-
-    // mood stuff
-    furball.mood = (int16_t) p->readWord (temp + offs.mood_offset);
-    furball.mood_skill = p->readWord (temp + offs.mood_skill_offset);
-	d->d->readName(furball.artifact_name, temp + offs.artifact_name_offset);
-
-    // custom profession
-    p->readSTLString(temp + offs.custom_profession_offset, furball.custom_profession, sizeof(furball.custom_profession));
-    //fill_char_buf (furball.custom_profession, p->readSTLString (temp + offs.custom_profession_offset));
-
-    // labors
-    p->read (temp + offs.labors_offset, NUM_CREATURE_LABORS, furball.labors);
-
-    // profession
-    furball.profession = p->readByte (temp + offs.profession_offset);
-
-    furball.current_job.occupationPtr = p->readDWord (temp + offs.current_job_offset);
-    if(furball.current_job.occupationPtr)
+    if(d->Ft_basic)
     {
-        furball.current_job.active = true;
-        furball.current_job.jobType = p->readByte (furball.current_job.occupationPtr + minfo->getOffset("job_type") );
-        furball.current_job.jobId = p->readDWord (furball.current_job.occupationPtr + minfo->getOffset("job_id") );
+        // name
+        d->d->readName(furball.name,temp + offs.name_offset);
+
+        // basic stuff
+        p->readDWord (temp + offs.id_offset, furball.id);
+        p->read (temp + offs.pos_offset, 3 * sizeof (uint16_t), (uint8_t *) & (furball.x)); // xyz really
+        p->readDWord (temp + offs.race_offset, furball.race);
+        furball.civ = p->readDWord (temp + offs.civ_offset);
+        p->readByte (temp + offs.sex_offset, furball.sex);
+        p->readWord (temp + offs.caste_offset, furball.caste);
+        p->readDWord (temp + offs.flags1_offset, furball.flags1.whole);
+        p->readDWord (temp + offs.flags2_offset, furball.flags2.whole);
+        // custom profession
+        p->readSTLString(temp + offs.custom_profession_offset, furball.custom_profession, sizeof(furball.custom_profession));
+        // profession
+        furball.profession = p->readByte (temp + offs.profession_offset);
     }
-    else
+    if(d->Ft_advanced)
     {
-        furball.current_job.active = false;;
-    }
+        // happiness
+        p->readDWord (temp + offs.happiness_offset, furball.happiness);
 
-    furball.birth_year = p->readDWord (temp + offs.birth_year_offset );
-    furball.birth_time = p->readDWord (temp + offs.birth_time_offset );
+        // physical attributes
+        p->read(temp + offs.physical_offset,
+            sizeof(t_attrib) * NUM_CREATURE_PHYSICAL_ATTRIBUTES,
+            (uint8_t *)&furball.strength);
 
-    // current job HACK: the job object isn't cleanly represented here
-    /*
-    uint32_t jobIdAddr = p->readDWord (temp + offs.creature_current_job_offset);
+        // mood stuff
+        furball.mood = (int16_t) p->readWord (temp + offs.mood_offset);
+        furball.mood_skill = p->readWord (temp + offs.mood_skill_offset);
+        d->d->readName(furball.artifact_name, temp + offs.artifact_name_offset);
 
-    if (jobIdAddr)
-    {
-        furball.current_job.active = true;
-        furball.current_job.jobId = p->readByte (jobIdAddr + offs.creature_current_job_id_offset);
-    }
-    else
-    {
-        furball.current_job.active = false;
-    }
-    */
+        // labors
+        p->read (temp + offs.labors_offset, NUM_CREATURE_LABORS, furball.labors);
+        furball.birth_year = p->readDWord (temp + offs.birth_year_offset );
+        furball.birth_time = p->readDWord (temp + offs.birth_time_offset );
+        /*
+         * p->readDWord(temp + offs.creature_pregnancy_offset, furball.pregnancy_timer);
+         */
 
-    /*
-        p->readDWord(temp + offs.creature_pregnancy_offset, furball.pregnancy_timer);
-    */
-
-    /*
-    // enum soul pointer vector
-    DfVector <uint32_t> souls(p,temp + offs.creature_soul_vector_offset);
-    */
-    uint32_t soul = p->readDWord(temp + offs.default_soul_offset);
-    furball.has_default_soul = false;
-
-    if(soul)
-    {
-        furball.has_default_soul = true;
-        // get first soul's skills
-        DfVector <uint32_t> skills(p, soul + offs.soul_skills_vector_offset);
-        furball.defaultSoul.numSkills = skills.size();
-
-        for (uint32_t i = 0; i < furball.defaultSoul.numSkills;i++)
+        // appearance
+        DfVector <uint32_t> app(p, temp + offs.appearance_vector_offset);
+        furball.nbcolors = app.size();
+        if(furball.nbcolors>MAX_COLORS)
+            furball.nbcolors = MAX_COLORS;
+        for(uint32_t i = 0; i < furball.nbcolors; i++)
         {
-            uint32_t temp2 = skills[i];
-            // a byte: this gives us 256 skills maximum.
-            furball.defaultSoul.skills[i].id = p->readByte (temp2);
-            furball.defaultSoul.skills[i].rating =
-                p->readByte (temp2 + offsetof(t_skill, rating));
-            furball.defaultSoul.skills[i].experience =
-                p->readWord (temp2 + offsetof(t_skill, experience));
+            furball.color[i] = app[i];
         }
 
-        // mental attributes are part of the soul
-        p->read(soul + offs.soul_mental_offset,
-            sizeof(t_attrib) * NUM_CREATURE_MENTAL_ATTRIBUTES,
-            (uint8_t *)&furball.defaultSoul.analytical_ability);
-
-        // traits as well
-        p->read(soul + offs.soul_traits_offset,
-            sizeof (uint16_t) * NUM_CREATURE_TRAITS,
-            (uint8_t *) &furball.defaultSoul.traits);
+        //likes
+        /*
+        DfVector <uint32_t> likes(d->p, temp + offs.creature_likes_offset);
+        furball.numLikes = likes.getSize();
+        for(uint32_t i = 0;i<furball.numLikes;i++)
+        {
+            uint32_t temp2 = *(uint32_t *) likes[i];
+            p->read(temp2,sizeof(t_like),(uint8_t *) &furball.likes[i]);
+        }*/
     }
-
-    DfVector <uint32_t> app(p, temp + offs.appearance_vector_offset);
-    furball.nbcolors = app.size();
-    if(furball.nbcolors>MAX_COLORS)
-        furball.nbcolors = MAX_COLORS;
-    for(uint32_t i = 0; i < furball.nbcolors; i++)
+    if(d->Ft_soul)
     {
-        furball.color[i] = app[i];
+        /*
+        // enum soul pointer vector
+        DfVector <uint32_t> souls(p,temp + offs.creature_soul_vector_offset);
+        */
+        uint32_t soul = p->readDWord(temp + offs.default_soul_offset);
+        furball.has_default_soul = false;
+
+        if(soul)
+        {
+            furball.has_default_soul = true;
+            // get first soul's skills
+            DfVector <uint32_t> skills(p, soul + offs.soul_skills_vector_offset);
+            furball.defaultSoul.numSkills = skills.size();
+
+            for (uint32_t i = 0; i < furball.defaultSoul.numSkills;i++)
+            {
+                uint32_t temp2 = skills[i];
+                // a byte: this gives us 256 skills maximum.
+                furball.defaultSoul.skills[i].id = p->readByte (temp2);
+                furball.defaultSoul.skills[i].rating =
+                    p->readByte (temp2 + offsetof(t_skill, rating));
+                furball.defaultSoul.skills[i].experience =
+                    p->readWord (temp2 + offsetof(t_skill, experience));
+            }
+
+            // mental attributes are part of the soul
+            p->read(soul + offs.soul_mental_offset,
+                sizeof(t_attrib) * NUM_CREATURE_MENTAL_ATTRIBUTES,
+                (uint8_t *)&furball.defaultSoul.analytical_ability);
+
+            // traits as well
+            p->read(soul + offs.soul_traits_offset,
+                sizeof (uint16_t) * NUM_CREATURE_TRAITS,
+                (uint8_t *) &furball.defaultSoul.traits);
+        }
     }
-    //likes
-    /*
-    DfVector <uint32_t> likes(d->p, temp + offs.creature_likes_offset);
-    furball.numLikes = likes.getSize();
-    for(uint32_t i = 0;i<furball.numLikes;i++)
+    if(d->Ft_jobs)
     {
-        uint32_t temp2 = *(uint32_t *) likes[i];
-        p->read(temp2,sizeof(t_like),(uint8_t *) &furball.likes[i]);
-    }*/
-
+        furball.current_job.occupationPtr = p->readDWord (temp + offs.current_job_offset);
+        if(furball.current_job.occupationPtr)
+        {
+            furball.current_job.active = true;
+            furball.current_job.jobType = p->readByte (furball.current_job.occupationPtr + d->OG_jobs->getOffset("type") );
+            furball.current_job.jobId = p->readDWord (furball.current_job.occupationPtr + d->OG_jobs->getOffset("id") );
+        }
+        else
+        {
+            furball.current_job.active = false;;
+        }
+    }
     return true;
 }
 
@@ -534,21 +524,19 @@ bool Creatures::WriteMoodSkill(const uint32_t index, const uint16_t moodSkill)
 
 bool Creatures::WriteJob(const t_creature * furball, std::vector<t_material> const& mat)
 {
-	unsigned int i;
+    unsigned int i;
     if(!d->Inited) return false;
     if(!furball->current_job.active) return false;
     Process * p = d->owner;
-    VersionInfo * minfo = d->d->offset_descriptor;
-
-    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + minfo->getOffset("job_materials_vector"));
+    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + d->OG_jobs->getOffset("materials_vector"));
 
     for(i=0;i<cmats.size();i++)
     {
-        p->writeWord(cmats[i] + minfo->getOffset("job_material_maintype"), mat[i].itemType);
-        p->writeWord(cmats[i] + minfo->getOffset("job_material_sectype1"), mat[i].subType);
-        p->writeWord(cmats[i] + minfo->getOffset("job_material_sectype2"), mat[i].subIndex);
-        p->writeDWord(cmats[i] + minfo->getOffset("job_material_sectype3"), mat[i].index);
-        p->writeDWord(cmats[i] + minfo->getOffset("job_material_flags"), mat[i].flags);
+        p->writeWord(cmats[i] + d->OG_job_mats->getOffset("maintype"), mat[i].itemType);
+        p->writeWord(cmats[i] + d->OG_job_mats->getOffset("sectype1"), mat[i].subType);
+        p->writeWord(cmats[i] + d->OG_job_mats->getOffset("sectype2"), mat[i].subIndex);
+        p->writeDWord(cmats[i] + d->OG_job_mats->getOffset("sectype3"), mat[i].index);
+        p->writeDWord(cmats[i] + d->OG_job_mats->getOffset("flags"), mat[i].flags);
     }
     return true;
 }
@@ -610,15 +598,15 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
     Process * p = d->owner;
     VersionInfo * minfo = d->d->offset_descriptor;
 
-    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + minfo->getOffset("job_materials_vector"));
+    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + d->OG_jobs->getOffset("materials_vector"));
     mat.resize(cmats.size());
     for(i=0;i<cmats.size();i++)
     {
-        mat[i].itemType = p->readWord(cmats[i] + minfo->getOffset("job_material_maintype"));
-        mat[i].subType = p->readWord(cmats[i] + minfo->getOffset("job_material_sectype1"));
-        mat[i].subIndex = p->readWord(cmats[i] + minfo->getOffset("job_material_sectype2"));
-        mat[i].index = p->readDWord(cmats[i] + minfo->getOffset("job_material_sectype3"));
-        mat[i].flags = p->readDWord(cmats[i] + minfo->getOffset("job_material_flags"));
+        mat[i].itemType = p->readWord(cmats[i] + d->OG_job_mats->getOffset("maintype"));
+        mat[i].subType = p->readWord(cmats[i] + d->OG_job_mats->getOffset("sectype1"));
+        mat[i].subIndex = p->readWord(cmats[i] + d->OG_job_mats->getOffset("sectype2"));
+        mat[i].index = p->readDWord(cmats[i] + d->OG_job_mats->getOffset("sectype3"));
+        mat[i].flags = p->readDWord(cmats[i] + d->OG_job_mats->getOffset("flags"));
     }
     return true;
 }

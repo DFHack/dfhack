@@ -39,7 +39,7 @@ int World_Start(DFHackObject* world)
 		else
 			return 0;
 	}
-	
+
 	return -1;
 }
 
@@ -52,7 +52,7 @@ int World_Finish(DFHackObject* world)
 		else
 			return 0;
 	}
-	
+
 	return -1;
 }
 
@@ -63,7 +63,7 @@ int World_ReadCurrentTick(DFHackObject* world, uint32_t* tick)
 		*tick = ((DFHack::World*)world)->ReadCurrentTick();
 		return 1;
 	}
-	
+
 	return -1;
 }
 
@@ -74,7 +74,7 @@ int World_ReadCurrentYear(DFHackObject* world, uint32_t* year)
 		*year = ((DFHack::World*)world)->ReadCurrentYear();
 		return 1;
 	}
-	
+
 	return -1;
 }
 
@@ -85,7 +85,7 @@ int World_ReadCurrentMonth(DFHackObject* world, uint32_t* month)
 		*month = ((DFHack::World*)world)->ReadCurrentMonth();
 		return 1;
 	}
-	
+
 	return -1;
 }
 
@@ -96,8 +96,30 @@ int World_ReadCurrentDay(DFHackObject* world, uint32_t* day)
 		*day = ((DFHack::World*)world)->ReadCurrentDay();
 		return 1;
 	}
-	
+
 	return -1;
+}
+
+int World_ReadCurrentWeather(DFHackObject* world, uint8_t* weather)
+{
+    if(world != NULL)
+    {
+        *weather = ((DFHack::World*)world)->ReadCurrentWeather();
+        return 1;
+    }
+
+    return -1;
+}
+
+int World_WriteCurrentWeather(DFHackObject* world, uint8_t weather)
+{
+    if (world != NULL)
+    {
+        ((DFHack::World*)world)->SetCurrentWeather(weather);
+        return 1;
+    }
+
+    return -1;
 }
 
 #ifdef __cplusplus

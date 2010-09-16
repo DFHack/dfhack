@@ -32,6 +32,11 @@ distribution.
 #include "dfhack/modules/Position.h"
 #include "dfhack/DFTileTypes.h"
 
+#define HBUILD(a) a ## BufferCallback
+#define HREG_MACRO(type_name, type) DFHACK_EXPORT void HBUILD(Register ## type_name) (int (*funcptr)(type, uint32_t));
+
+#define HUNREG_MACRO(type_name) DFHACK_EXPORT void HBUILD(Unregister ## type_name) ();
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -72,6 +77,23 @@ DFHACK_EXPORT void RegisterFeatureBufferCallback(int (*funcptr)(t_feature*, uint
 DFHACK_EXPORT void RegisterHotkeyBufferCallback(int (*funcptr)(t_hotkey*, uint32_t));
 DFHACK_EXPORT void RegisterScreenBufferCallback(int (*funcptr)(t_screen*, uint32_t));
 
+HUNREG_MACRO(Byte)
+HUNREG_MACRO(Short)
+HUNREG_MACRO(Int)
+HUNREG_MACRO(UByte)
+HUNREG_MACRO(UShort)
+HUNREG_MACRO(UInt)
+
+HUNREG_MACRO(Char)
+
+HUNREG_MACRO(Matgloss)
+HUNREG_MACRO(DescriptorColor)
+HUNREG_MACRO(MatglossOther)
+
+HUNREG_MACRO(Feature)
+HUNREG_MACRO(Hotkey)
+HUNREG_MACRO(Screen)
+
 struct t_customWorkshop
 {
 	uint32_t index;
@@ -83,6 +105,9 @@ DFHACK_EXPORT extern int (*alloc_t_material_buffer_callback)(t_material*, uint32
 
 DFHACK_EXPORT void RegisterCustomWorkshopBufferCallback(int (*funcptr)(t_customWorkshop*, uint32_t));
 DFHACK_EXPORT void RegisterMaterialBufferCallback(int (*funcptr)(t_material*, uint32_t));
+
+HUNREG_MACRO(CustomWorkshop)
+HUNREG_MACRO(Material)
 
 struct c_colormodifier
 {
@@ -98,6 +123,10 @@ DFHACK_EXPORT extern int (*alloc_colormodifier_buffer_callback)(c_colormodifier*
 DFHACK_EXPORT void RegisterEmptyColorModifierCallback(int (*funcptr)(c_colormodifier*));
 DFHACK_EXPORT void RegisterNewColorModifierCallback(int (*funcptr)(c_colormodifier*, const char*, uint32_t));
 DFHACK_EXPORT void RegisterColorModifierBufferCallback(int (*funcptr)(c_colormodifier*, uint32_t));
+
+DFHACK_EXPORT void UnregisterEmptyColorModifierCallback();
+DFHACK_EXPORT void UnregisterNewColorModifierCallback();
+HUNREG_MACRO(ColorModifier)
 
 struct c_creaturecaste
 {
@@ -120,6 +149,10 @@ DFHACK_EXPORT extern int (*alloc_creaturecaste_buffer_callback)(c_creaturecaste*
 DFHACK_EXPORT void RegisterEmptyCreatureCasteCallback(int (*funcptr)(c_creaturecaste*));
 DFHACK_EXPORT void RegisterNewCreatureCasteCallback(int (*funcptr)(c_creaturecaste*, const char*, const char*, const char*, const char*, uint32_t, uint32_t));
 DFHACK_EXPORT void RegisterCreatureCasteBufferCallback(int (*funcptr)(c_creaturecaste*, uint32_t));
+
+DFHACK_EXPORT void UnregisterEmptyCreatureCasteCallback();
+DFHACK_EXPORT void UnregisterNewCreatureCasteCallback();
+HUNREG_MACRO(CreatureCaste)
 
 struct c_creaturetype
 {
@@ -156,6 +189,14 @@ DFHACK_EXPORT void RegisterCreatureTypeBufferCallback(int (*funcptr)(c_creaturet
 DFHACK_EXPORT void RegisterVeinBufferCallback(int (*funcptr)(t_vein*, uint32_t));
 DFHACK_EXPORT void RegisterFrozenLiquidVeinBufferCallback(int (*funcptr)(t_frozenliquidvein*, uint32_t));
 DFHACK_EXPORT void RegisterSpatterVeinBufferCallback(int (*funcptr)(t_spattervein*, uint32_t));
+
+DFHACK_EXPORT void UnregisterEmptyCreatureTypeCallback();
+DFHACK_EXPORT void UnregisterNewCreatureTypeCallback();
+HUNREG_MACRO(CreatureType)
+
+HUNREG_MACRO(Vein)
+HUNREG_MACRO(FrozenLiquidVein)
+HUNREG_MACRO(SpatterVein)
 
 DFHACK_EXPORT int DFHack_isWallTerrain(int in);
 DFHACK_EXPORT int DFHack_isFloorTerrain(int in);

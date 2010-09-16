@@ -58,6 +58,23 @@ int Gui_ReadPauseState(DFHackObject* gui)
 	return -1;
 }
 
+int Gui_SetPauseState(DFHackObject* gui, int8_t paused)
+{
+	if(gui != NULL)
+	{
+		bool pauseState = false;
+		
+		if(paused > 0)
+			pauseState = true;
+		
+		((DFHack::Gui*)gui)->SetPauseState(pauseState);
+		
+		return 1;
+	}
+	
+	return -1;
+}
+
 int Gui_ReadViewScreen(DFHackObject* gui, t_viewscreen* viewscreen)
 {
 	if(gui != NULL)

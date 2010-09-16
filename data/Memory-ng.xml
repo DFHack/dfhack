@@ -885,7 +885,7 @@
             <Group name="World">
                 <Address name="current_tick" description="Current time of the year" />
                 <Address name="current_year" description="Current year" />
-                <Address name="current_weather" description="Single byte, 0=clear, 1=raining, 2=snowing" />
+                <Address name="current_weather" description="5x5 array of bytes for surrounding biomes. For each: 0=clear, 1=raining, 2=snowing." />
             </Group>
         </Offsets>
     </Base>
@@ -1454,7 +1454,32 @@
             </Group>
         </Offsets>
     </Version>
-
+    <Version name="v0.31.13 SDL" os="windows" base="v0.31.12 SDL">
+        <MD5 value="59f194b0b2103ca5df7601a01ce21280" />
+        <PETimeStamp value="0x4C90ADA8" />
+        <Offsets>
+            <Address name="WORLD" value="0x016425A0" />
+            0x01482874 - current race
+            <Group name="Position">
+                <Address name="cursor_xyz" value="0xac77f0" />
+                <Address name="window_x" value="0xe42c74" />
+                <Address name="window_y" value="0xe70d48" />
+                <Address name="window_z" value="0xe70d24" />
+                <Address name="screen_tiles_pointer" value="0x01480684" /><!-- BAD, not a pointer! -->
+                <Address name="window_dims" value="0xac807c" />
+            </Group>
+            <Group name="GUI">
+                <Address name="pause_state" value="0x147E971" />
+            </Group>
+            <Group name="World">
+                <Address name="current_weather" value="0x147F94E 0x14BCDEE" /><!-- bad, not 25 byte array! -->
+            </Group>
+            <Group name="Vegetation">
+                <Address name="vector" value="0x1656EF0" />
+            </Group>
+        </Offsets>
+    </Version>
+    31.13 WEATHER_START 0147E94E
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________
@@ -1804,7 +1829,7 @@
             <Group name="World">
                 <Address name="current_year" value="0x92e0da0" />
                 <Address name="current_tick" value="0x92e0dc0" />
-                <Address name="current_weather" value="0x92e0e02" invalid="true" />
+                <Address name="current_weather" value="0x092E0D84" />
             </Group>
         </Offsets>
     </Version>

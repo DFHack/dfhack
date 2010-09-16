@@ -40,6 +40,9 @@ DFHACK_EXPORT int World_ReadCurrentYear(DFHackObject* world, uint32_t* year);
 DFHACK_EXPORT int World_ReadCurrentMonth(DFHackObject* world, uint32_t* month);
 DFHACK_EXPORT int World_ReadCurrentDay(DFHackObject* world, uint32_t* day);
 
+DFHACK_EXPORT int World_ReadCurrentWeather(DFHackObject* world, uint8_t* weather);
+DFHACK_EXPORT int World_WriteCurrentWeather(DFHackObject* world, uint8_t weather);
+
 #ifdef __cplusplus
 }
 #endif

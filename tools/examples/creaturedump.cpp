@@ -134,7 +134,7 @@ likeType printLike40d(DFHack::t_like like, const matGlosses & mat,const vector< 
 void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
 {
     uint32_t dayoflife;
-	cout << "address: " << hex <<  creature.origin << dec << " creature type: " << Materials->raceEx[creature.race].rawname 
+    cout << "address: " << hex <<  creature.origin << dec << ", creature race: " << creature.race << "/" << Materials->raceEx[creature.race].rawname 
                 << "[" << Materials->raceEx[creature.race].tile_character
                 << "," << Materials->raceEx[creature.race].tilecolor.fore
                 << "," << Materials->raceEx[creature.race].tilecolor.back
@@ -172,7 +172,7 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
 
         if(creature.civ)
         {
-            cout << "civilization: " << creature.civ;
+            cout << ", civilization: " << creature.civ;
             addendl = true;
         }
 
@@ -191,7 +191,7 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
             cout << endl;
             addendl = false;
         }
-        cout << "profession: " << mem->getProfession(creature.profession) << "(" << (int) creature.profession << ")";
+        cout << ", profession: " << mem->getProfession(creature.profession) << "(" << (int) creature.profession << ")";
         
         if(creature.custom_profession[0])
         {
@@ -271,8 +271,9 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
             }
         }
 
-        std::vector<uint32_t> inventory;
-
+        //std::vector<uint32_t> inventory;
+        // FIXME: TOO BAD...
+        /*
         if( Creatures->ReadInventoryPtr(creature.origin, inventory) )
         {
             DFHack::Items * Items = DF->getItems();
@@ -282,6 +283,7 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
                 printf("\t\t%s\n", Items->getItemDescription(inventory[i], Materials).c_str());
             }
         }
+        */
 
         /*
         if(creature.pregnancy_timer > 0)
@@ -451,8 +453,14 @@ int main (int numargs, char ** args)
     }
 
     mem = DF->getMemoryInfo();
-    Materials->ReadAllMaterials();
-	
+    Materials->ReadInorganicMaterials();
+    Materials->ReadOrganicMaterials();
+    Materials->ReadWoodMaterials();
+    Materials->ReadPlantMaterials();
+    Materials->ReadCreatureTypes();
+    Materials->ReadCreatureTypesEx();
+    Materials->ReadDescriptorColors();
+
     if(!Tran->Start())
     {
         cerr << "Can't get name tables" << endl;

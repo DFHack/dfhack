@@ -32,6 +32,7 @@
 #include "dfhack/modules/Items.h"
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack/modules/Maps.h"
+#include "dfhack/modules/Gui.h"
 
 /*
  * This is a header full of ugly, volatile things.

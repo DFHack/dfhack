@@ -61,7 +61,7 @@ ADD_EXECUTABLE(dfcopypaste copypaste.cpp)
 TARGET_LINK_LIBRARIES(dfcopypaste dfhack)
 
 # this needs the C bindings
-IF(BUILD_DFHACK_C_BINDIGS)
+IF(BUILD_DFHACK_C_BINDINGS)
     # for trying out some 'stuff'
     ADD_EXECUTABLE(dftest test.cpp)
     TARGET_LINK_LIBRARIES(dftest dfhack)
@@ -69,7 +69,7 @@ IF(BUILD_DFHACK_C_BINDIGS)
     dftest
     RUNTIME DESTINATION bin
     )
-ENDIF(BUILD_DFHACK_C_BINDIGS)
+ENDIF(BUILD_DFHACK_C_BINDINGS)
 
 install(TARGETS
 dfmoodump

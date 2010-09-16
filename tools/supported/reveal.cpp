@@ -6,6 +6,7 @@
 using namespace std;
 
 #include <DFHack.h>
+#include <dfhack/modules/Gui.h>
 
 struct hideblock
 {
@@ -37,6 +38,19 @@ int main (void)
     }
     
     DFHack::Maps *Maps =DF->getMaps();
+    DFHack::Gui *Gui =DF->getGui();
+    // walk the map, save the hide bits, reveal.
+    cout << "Pausing..." << endl;
+
+    // horrible hack to make sure the pause is really set
+    // preblem here is that we could be 'arriving' at the wrong time and DF could be in the middle of a frame.
+    // that could mean that revealing, even with suspending DF's thread, would mean unleashing hell *in the same frame* 
+    // this here hack sets the pause state, resumes DF, waits a second for it to enter the pause (I know, BS value.) and suspends.
+    Gui->SetPauseState(true);
+    DF->Resume();
+    sleep(1);
+    DF->Suspend();
+
     // init the map
     if(!Maps->Start())
     {
@@ -46,11 +60,12 @@ int main (void)
         #endif
         return 1;
     }
-    
+
+    cout << "Revealing, please wait..." << endl;
+
     Maps->getSize(x_max,y_max,z_max);
     vector <hideblock> hidesaved;
-    // walk the map, save the hide bits, reveal.
-    cout << "Revealing... please wait." << endl;
+
     for(uint32_t x = 0; x< x_max;x++)
     {
         for(uint32_t y = 0; y< y_max;y++)
@@ -80,8 +95,10 @@ int main (void)
     }
     // FIXME: force game pause here!
     DF->Detach();
-    cout << "Map revealed. Close window/force exit to keep it that way." << endl;
-    cout << "Press any key to unreveal. Don't close DF or unpause in that case!" << endl;
+    cout << "Map revealed. The game has been paused for you." << endl;
+    cout << "Unpausing can unleash the forces of hell!" << endl << endl;
+    cout << "Press any key to unreveal." << endl;
+    cout << "Close to keep the map revealed." << endl;
     cin.ignore();
     cout << "Unrevealing... please wait." << endl;
     // FIXME: do some consistency checks here!

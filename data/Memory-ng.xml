@@ -885,7 +885,7 @@
             <Group name="World">
                 <Address name="current_tick" description="Current time of the year" />
                 <Address name="current_year" description="Current year" />
-                <Address name="current_weather" description="Single byte, 0=clear, 1=raining, 2=snowing" />
+                <Address name="current_weather" description="5x5 array of bytes for surrounding biomes. For each: 0=clear, 1=raining, 2=snowing." />
             </Group>
         </Offsets>
     </Base>
@@ -1454,7 +1454,32 @@
             </Group>
         </Offsets>
     </Version>
-
+    <Version name="v0.31.13 SDL" os="windows" base="v0.31.12 SDL">
+        <MD5 value="59f194b0b2103ca5df7601a01ce21280" />
+        <PETimeStamp value="0x4C90ADA8" />
+        <Offsets>
+            <Address name="WORLD" value="0x016425A0" />
+            0x01482874 - current race
+            <Group name="Position">
+                <Address name="cursor_xyz" value="0xac77f0" />
+                <Address name="window_x" value="0xe42c74" />
+                <Address name="window_y" value="0xe70d48" />
+                <Address name="window_z" value="0xe70d24" />
+                <Address name="screen_tiles_pointer" value="0x01480684" /><!-- BAD, not a pointer! -->
+                <Address name="window_dims" value="0xac807c" />
+            </Group>
+            <Group name="GUI">
+                <Address name="pause_state" value="0x147E971" />
+            </Group>
+            <Group name="World">
+                <Address name="current_weather" value="0x147F94E 0x14BCDEE" /><!-- bad, not 25 byte array! -->
+            </Group>
+            <Group name="Vegetation">
+                <Address name="vector" value="0x1656EF0" />
+            </Group>
+        </Offsets>
+    </Version>
+    31.13 WEATHER_START 0147E94E
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________
@@ -1744,6 +1769,67 @@
             </Group>
             <Group name="World">
                 <Address name="current_weather" value="0x92ec5aa" />
+            </Group>
+        </Offsets>
+    </Version>
+    <Version name="v0.31.13 linux" os="linux" base="v0.31.12 linux" rebase="-0xB7A8">
+        <MD5 value="d6307bd39b6271ba89bbdd953d27c84d" />
+        <Offsets>
+            <Group name="Buildings">
+                <Address name="buildings_vector" value="0x92fb8e8" />
+            </Group>
+            <Group name="Constructions">
+                <Address name="vector" value="0x92e7904" />
+            </Group>
+            <Group name="Creatures">
+                <Address name="current_civ" value="0x92e2d9c" />
+                <Address name="current_race" value="0x92e2da8" />
+                <Address name="vector" value="0x92fb260" />
+            </Group>
+            <Group name="Maps">
+                <Address name="map_data" value="0x933a4E0" />
+                <Address name="x_count_block" value="0x933a4F4" />
+                <Address name="y_count_block" value="0x933a4F8" />
+                <Address name="z_count_block" value="0x933a4FC" />
+                <Address name="x_count" value="0x933a500" />
+                <Address name="y_count" value="0x933a504" />
+                <Address name="z_count" value="0x933a508" />
+                <Address name="region_x" value="0x933a50C" />
+                <Address name="region_y" value="0x933a510" />
+                <Address name="region_z" value="0x933a514" />
+                <Address name="world_size_x" value="0x933BB60" />
+                <Address name="world_size_y" value="0x933BB62" />
+                <Group name="features">
+                    <Group name="global">
+                        <Address name="vector" value="0x933C0FC" />
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" value="0x933C174" />
+                    </Group>
+                </Group>
+                <Group name="geology">
+                    <Address name="geoblock_vector" value="0x933C114" />
+                    <Address name="ptr2_region_array" value="0x933C138" />
+                </Group>
+            </Group>
+            <Group name="Position">
+                <Address name="window_x" value="0x8ceb238" />
+                <Address name="window_y" value="0x8ceb23C" />
+                <Address name="window_z" value="0x8ceb240" />
+                <Address name="cursor_xyz" value="0x8b2e740" />
+                <Address name="window_dims" value="0x8b2ec48" />
+                <Address name="screen_tiles_pointer" invalid = "true" />
+            </Group>
+            <Group name="GUI">
+                <Address name="pause_state" value="0x92e0e90"/>
+            </Group>
+            <Group name="Vegetation">
+                <Address name="vector" value="0x92fbdc8" />
+            </Group>
+            <Group name="World">
+                <Address name="current_year" value="0x92e0da0" />
+                <Address name="current_tick" value="0x92e0dc0" />
+                <Address name="current_weather" value="0x092E0D84" />
             </Group>
         </Offsets>
     </Version>

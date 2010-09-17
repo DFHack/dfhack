@@ -920,3 +920,14 @@ bool SHMProcess::Private::Aux_Core_Attach(bool & versionOK, pid_t & PID)
     #endif
     return true;
 }
+string SHMProcess::getPath()
+{
+  char cwd_name[256];
+    char target_name[1024];
+    int target_result;
+
+    sprintf(cwd_name,"/proc/%d/cwd", getPID());
+    // resolve /proc/PID/exe link
+    target_result = readlink(cwd_name, target_name, sizeof(target_name));
+    return(string(target_name));
+}

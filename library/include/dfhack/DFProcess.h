@@ -368,7 +368,7 @@ namespace DFHack
             // get the SHM start if available
             char * getSHMStart (void){return 0;};
             bool SetAndWait (uint32_t state){return false;};
-            std::string getPath() {return std::string()}; //FIXME should be pretty trival
+            std::string getPath();
     };
 #endif
 }

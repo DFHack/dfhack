@@ -512,5 +512,6 @@ string NormalProcess::getPath()
     char String[255];
     EnumProcessModules(d->my_handle, &hmod, 1 * sizeof(HMODULE), &junk); //get the module from the handle
     GetModuleFileNameEx(d->my_handle,hmod,String,sizeof(String)); //get the filename from the module
-    return(string(String));
+    string out(String);
+    return(out.substr(0,out.find_last_of("\\")));
 }

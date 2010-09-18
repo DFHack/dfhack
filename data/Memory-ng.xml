@@ -674,6 +674,22 @@
             </Group>
             <Group name="string" description="An STL string.">
                 <HexValue name="sizeof" description="The total size in bytes." />
+                <Group name="MSVC">
+                    <!--
+                    MSVC++ 9 string
+                    void * allocator
+                    union
+                    {
+                        char[16] start;
+                        char * start_ptr
+                    }
+                    Uint32 length
+                    Uint32 capacity
+                    -->
+                    <Offset name="buffer" description="Where the buffer/pointer starts." />
+                    <Offset name="size" description="Where the number of leters is stored (string length without 0-terminator)." />
+                    <Offset name="capacity" description="Capacity of the buffer in letters (default=15)." />
+                </Group>
             </Group>
             <Group name="name" description="A structure used for names all over the place.">
                 <Offset name="first" description="Lowercase stl string with the first name. For ex. 'urist'" />
@@ -938,6 +954,11 @@
             </Group>
             <Group name="string">
                 <HexValue name="sizeof" value="0x1C" />
+                <Group name="MSVC">
+                    <Offset name="buffer" value="0x4" />
+                    <Offset name="size" value="0x14" />
+                    <Offset name="capacity" value="0x18" />
+                </Group>
             </Group>
             <Group name="name">
                 <Offset name="first" value="0x0" />
@@ -1217,7 +1238,6 @@
             </Group>
             <Group name="Materials">
                 <Address name="inorganics" value="0x16B0D4C" /><!--inorganics vector = WORLD + 0x54B7C = 0x16B0D4C-->
-                <!--<Address name="other" value="0x16BA114" /> -->  <!-- stuff like glass, coke, ... -->
                 <Address name="organics_all" value="0x16B0D64" /><!--WORLD + 0x54B94-->
                 <Address name="organics_plants" value="0x16B0D7C" /><!--plant matter, WORLD + 0x54BAC-->
                 <Address name="organics_trees" value="0x16B0DAC" /><!--just wood, WORLD + 0x54BDC-->
@@ -1472,6 +1492,14 @@
                 NOT FINAL, needs research
                 -->
             </Group>
+            <Group name="string">
+                <HexValue name="sizeof" value="0x1C" />
+                <Group name="MSVC">
+                    <Offset name="buffer" value="0x0" />
+                    <Offset name="size" value="0x10" />
+                    <Offset name="capacity" value="0x14" />
+                </Group>
+            </Group>
             0x01482874 - current race
             <Group name="Position">
                 <Address name="cursor_xyz" value="0xac77f0" />
@@ -1552,14 +1580,46 @@
                     -->
                 </Group>
             </Group>
-
             <Group name="Materials">
-                <Address name="inorganics" value="0x1699f18 0x16BD0B0" />
-                <Address name="organics_all" value="0x16BD0C8" />
-                <Address name="organics_plants" value="0x16bd0e0" />
-                <Address name="organics_trees" value="0x16bd110" />
-                <Address name="creature_type_vector" value="0x16BD204" />
-                <Address name="other" value="0x16C6478"/>
+                <Address name="inorganics" value="0x1699f14 0x16BD0B0" />
+                <Address name="organics_all" value="0x1699f24 0x16BD0C8" />
+                <Address name="organics_trees" value="0x1699f54 0x16bd110" />
+                <Address name="organics_plants" value="0x1699f34 0x16bd0e0" />
+                <Address name="creature_type_vector" value="0x1699ff8 0x16BD204" />
+                <Address name="other" value="0x16C6478" invalid="true"/>
+                <Group name="creature">
+                    <Offset name="caste_vector" value="0x138" />
+                    <Offset name="extract_vector" value="0x1A14" />
+                    <Offset name="tile" value="0xE0" />
+                    <Offset name="tile_color" value="0xF6" />
+                    <Group name="caste">
+                        <Offset name="bodypart_vector" value="0x51C" />
+                        <Offset name="attributes" value="0x654" />
+                        <Offset name="color_modifiers" value="0xACC" />
+                    </Group>
+                    <Group name="caste_color_mods">
+                        <Offset name="part" value="0x70" />
+                        <Offset name="startdate" value="0x64" />
+                        <Offset name="enddate" value="0x68" />
+                    </Group>
+                    <Group name="caste_bodyparts">
+                        <Offset name="id" value="0x0" />
+                        <Offset name="category" value="0x1C" />
+                        <Offset name="layers_vector" value="0x44" />
+                        <Offset name="singular_vector" value="0x78" />
+                        <Offset name="plural_vector" value="0x90" />
+                    </Group>
+                </Group>
+                <Group name="descriptors">
+                    <Address name="vectors_start" value="0x16B9780" />
+                    <Offset name="rawname" value="0x0" />
+                    <Offset name="name" value="0x4C" />
+                    <Address name="colors_vector" value="0x16B9768" />
+                    <Offset name="color_r" value="0x6C" />
+                    <Offset name="color_v" value="0x70" />
+                    <Offset name="color_b" value="0x74" />
+                    <Address name="all_colors_vector" value="0x16B9798" />
+                </Group>
                 <Group name="descriptors">
                     <Address name="colors_vector" value="0x16C5ACC" />
                     <Address name="vectors_start" value="0x16C5AE4" />

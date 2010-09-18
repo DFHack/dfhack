@@ -53,6 +53,9 @@ class WineProcess::Private
     bool attached;
     bool suspended;
     bool identified;
+    uint32_t STLSTR_buf_off;
+    uint32_t STLSTR_size_off;
+    uint32_t STLSTR_cap_off;
     bool validate(char * exe_file, uint32_t pid, char * mem_file, vector <VersionInfo *> & known_versions);
 };
 
@@ -155,6 +158,10 @@ bool WineProcess::Private::validate(char* exe_file, uint32_t pid, char* mem_file
             // tell WineProcess about the /proc/PID/mem file
             memFile = mem_file;
             identified = true;
+            OffsetGroup * strGrp = m->getGroup("string")->getGroup("MSVC");
+            STLSTR_buf_off = strGrp->getOffset("buffer");
+            STLSTR_size_off = strGrp->getOffset("size");
+            STLSTR_cap_off = strGrp->getOffset("capacity");
             return true;
         }
     }
@@ -563,21 +570,10 @@ const std::string WineProcess::readCString (uint32_t offset)
 
 size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
-    /*
-    MSVC++ string
-    ptr allocator
-    union
-    {
-        char[16] start;
-        char * start_ptr
-    }
-    Uint32 length
-    Uint32 capacity
-    */
-    uint32_t start_offset = offset + 4;
-    size_t length = readDWord(offset + 20);
+    uint32_t start_offset = offset + d->STLSTR_buf_off;
+    size_t length = readDWord(offset + d->STLSTR_size_off);
+    size_t capacity = readDWord(offset + d->STLSTR_cap_off);
 
-    size_t capacity = readDWord(offset + 24);
     size_t read_real = min(length, bufcapacity-1);// keep space for null termination
 
     // read data from inside the string structure
@@ -597,20 +593,10 @@ size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcap
 
 const string WineProcess::readSTLString (uint32_t offset)
 {
-    /*
-        MSVC++ string
-        ptr allocator
-        union
-        {
-            char[16] start;
-            char * start_ptr
-        }
-        Uint32 length
-        Uint32 capacity
-    */
-    uint32_t start_offset = offset + 4;
-    uint32_t length = readDWord(offset + 20);
-    uint32_t capacity = readDWord(offset + 24);
+    uint32_t start_offset = offset + d->STLSTR_buf_off;
+    size_t length = readDWord(offset + d->STLSTR_size_off);
+    size_t capacity = readDWord(offset + d->STLSTR_cap_off);
+
     char * temp = new char[capacity+1];
 
     // read data from inside the string structure

@@ -1867,6 +1867,24 @@
         <!-- TODO: fix creature offsets -->
         <!-- TODO: small offsets added all over the place, investigate -->
         <MD5 value="4f1f988bc1b425d4193d3d8b7b0579a5" />
+        <Offsets>
+            <Group name="Creatures">
+                <Group name="creature" valid="verify" >
+                    <Group name="advanced">
+                        <Offset name="soul_vector" value="0x0524" />
+                        <Offset name="current_soul" value="0x0530" valid="verify" />
+                        <Offset name="labors" value="0x540" />
+                        <Offset name="happiness" value="0x5d0" />
+                    </Group>
+                </Group>
+                <Group name="soul" valid="verify">
+                    <Offset name="name" value="0x0" />
+                    <Offset name="mental" value="0x88" />
+                    <Offset name="skills_vector" value="0x1C4" /> CHMOD
+                    <Offset name="traits" value="0x1DC" />
+                </Group>
+            </Group>
+        </Offsets>
     </Version>
     <Version name="v0.31.10 linux" os="linux" base="v0.31.09 linux">
         <MD5 value="3e7bea269018a6fb88ef53715685aa64" />
@@ -1904,6 +1922,9 @@
             <Group name="GUI">
                 <!-- FIXME: this could be wrong for many other versions. Investigate. -->
                 <Address name="pause_state" value="0x92ec65c"/>
+            </Group>
+            <Group name="Creatures">
+                <Address name="current_race" value="0x092ee548" />
             </Group>
             <Group name="Constructions">
                 <Address name="vector" value="0x92f30a4"/>

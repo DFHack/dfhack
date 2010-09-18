@@ -199,7 +199,7 @@ void Context::WriteRaw (const uint32_t offset, const uint32_t size, uint8_t *sou
     d->p->write (offset, size, source);
 }
 
-memory_info *Context::getMemoryInfo()
+VersionInfo *Context::getMemoryInfo()
 {
     return d->offset_descriptor;
 }

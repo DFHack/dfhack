@@ -25,7 +25,7 @@ distribution.
 #include "Internal.h"
 #include "ContextShared.h"
 #include "dfhack/modules/Translation.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
 #include "dfhack/DFTypes.h"
@@ -38,10 +38,10 @@ struct Translation::Private
     uint32_t transAddress;
     uint32_t word_table_offset;
     uint32_t sizeof_string;
-    
+
     // translation
     Dicts dicts;
-    
+
     DFContextShared *d;
     bool Inited;
     bool Started;
@@ -52,11 +52,12 @@ Translation::Translation(DFContextShared * d_)
     d = new Private;
     d->d = d_;
     d->Inited = d->Started = false;
-    memory_info * mem = d->d->offset_descriptor;
-    d->genericAddress = mem->getAddress ("language_vector");
-    d->transAddress = mem->getAddress ("translation_vector");
-    d->word_table_offset = mem->getOffset ("word_table");
-    d->sizeof_string = mem->getHexValue ("sizeof_string");
+    OffsetGroup * OG_Translation = d->d->offset_descriptor->getGroup("Translations");
+    OffsetGroup * OG_String = d->d->offset_descriptor->getGroup("string");
+    d->genericAddress = OG_Translation->getAddress ("language_vector");
+    d->transAddress = OG_Translation->getAddress ("translation_vector");
+    d->word_table_offset = OG_Translation->getOffset ("word_table");
+    d->sizeof_string = OG_String->getHexValue ("sizeof");
     d->Inited = true;
 }
 
@@ -116,7 +117,7 @@ bool Translation::Finish()
 Dicts * Translation::getDicts()
 {
     assert(d->Started);
-    
+
     if(d->Started)
         return &d->dicts;
     return 0;
@@ -126,10 +127,10 @@ string Translation::TranslateName(const t_name &name, bool inEnglish)
 {
     string out;
     assert (d->Started);
-    
+
     map<string, vector<string> >::const_iterator it;
 
-    if(!inEnglish) 
+    if(!inEnglish)
     {
         if(name.words[0] >=0 || name.words[1] >=0)
         {
@@ -137,7 +138,7 @@ string Translation::TranslateName(const t_name &name, bool inEnglish)
             if(name.words[1]>=0) out.append(d->dicts.foreign_languages[name.language][name.words[1]]);
             out[0] = toupper(out[0]);
         }
-        if(name.words[5] >=0) 
+        if(name.words[5] >=0)
         {
             string word;
             for(int i=2;i<=5;i++)
@@ -146,7 +147,7 @@ string Translation::TranslateName(const t_name &name, bool inEnglish)
             if(out.length() > 0) out.append(" ");
             out.append(word);
         }
-        if(name.words[6] >=0) 
+        if(name.words[6] >=0)
         {
             string word;
             word.append(d->dicts.foreign_languages[name.language][name.words[6]]);
@@ -154,7 +155,7 @@ string Translation::TranslateName(const t_name &name, bool inEnglish)
             if(out.length() > 0) out.append(" ");
             out.append(word);
         }
-    } 
+    }
     else
     {
         if(name.words[0] >=0 || name.words[1] >=0)
@@ -163,7 +164,7 @@ string Translation::TranslateName(const t_name &name, bool inEnglish)
             if(name.words[1]>=0) out.append(d->dicts.translations[name.parts_of_speech[1]+1][name.words[1]]);
             out[0] = toupper(out[0]);
         }
-        if(name.words[5] >=0) 
+        if(name.words[5] >=0)
         {
             if(out.length() > 0)
                 out.append(" the");
@@ -180,7 +181,7 @@ string Translation::TranslateName(const t_name &name, bool inEnglish)
                 }
             }
         }
-        if(name.words[6] >=0) 
+        if(name.words[6] >=0)
         {
             if(out.length() > 0)
                 out.append(" of");

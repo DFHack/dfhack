@@ -144,363 +144,216 @@
             <Profession name="None" id="90" military="false" can_assign_labors="true" />
         </Professions>
         <Jobs>
-            TODO: Parse this and turn it into Job tags
-            <!--
-            [dwarf_jobs]
-            size=212
-            0/name = "Carve Fortification"
-            0/type = DIG
-            1/name = "Detail Wall"
-            1/type = TROWEL
-            2/name = "Detail Floor"
-            2/type = TROWEL
-            3/name = "Dig"
-            3/type = DIG
-            4/name = "Carve Upward Staircase"
-            4/type = DIG
-            5/name = "Carve Downward Staircase"
-            5/type = DIG
-            6/name = "Carve Up/Down Staircase"
-            6/type = DIG
-            7/name = "Carve Ramp"
-            7/type = DIG
-            8/name = "Dig Channel"
-            8/type = DIG
-            9/name = "Fell Tree"
-            9/type = CUT
-            10/name = "Gather Plants"
-            11/name = "Remove Construction"
-            11/type = BUILD
-            12/name = "Collect Webs"
-            12/type = HAUL
-            13/name = "Bring Item to Depot"
-            13/type = HAUL
-            14/name = "Bring Item to Shop"
-            14/type = HAUL
-            15/name = "Eat"
-            15/type = FOOD
-            16/name = "Get Provisions"
-            16/type = FOOD
-            17/name = "Drink"
-            17/type = DRINK
-            18/name = "Drink"
-            18/type = DRINK
-            19/name = "Fill Waterskin"
-            19/type = DRINK
-            20/name = "Fill Waterskin"
-            20/type = DRINK
-            21/name = "Sleep"
-            21/type = REST
-            22/name = "Collect Sand"
-            22/type = HAUL
-            23/name = "Fish"
-            24/name = "Hunt"
-            25/name = "Hunt for Small Creature"
-            26/name = "Kidnap"
-            26/type = FIGHT
-            27/name = "Beat Criminal"
-            27/type = FIGHT
-            28/name = "Starting Fist Fight"
-            28/type = FIGHT
-            29/name = "Collect Taxes"
-            30/name = "Guard Tax Collector"
-            30/type = FIGHT
-            31/name = "Catch Live Land Animal"
-            32/name = "Catch Live Fish"
-            33/name = "Return Kill"
-            33/type = HAUL
-            34/name = "Check Chesk"
-            34/type = SEEK
-            35/name = "Store Owned Item"
-            35/type = HAUL
-            36/name = "Place Item in Tomb"
-            36/type = HAUL
-            37/name = "Store Item in Stockpile"
-            37/type = HAUL
-            38/name = "Store Item in Bag"
-            38/type = HAUL
-            39/name = "Store Item in Hospital"
-            39/type = HAUL
-            40/name = "Store Item in Chest"
-            40/type = HAUL
-            41/name = "Store Item in Cabinet"
-            41/type = HAUL
-            42/name = "Store Weapon"
-            42/type = HAUL
-            43/name = "Store Armor"
-            43/type = HAUL
-            44/name = "Store Item in Barrel"
-            44/type = HAUL
-            45/name = "Store Item in Bin"
-            45/type = HAUL
-            46/name = "Seek Artifact"
-            46/type = SEEK
-            47/name = "Seek Infant"
-            47/type = SEEK
-            48/name = "Attend Party"
-            48/type = DRINK
-            49/name = "Go Shopping"
-            50/name = "Go Shopping"
-            51/name = "Clean"
-            52/name = "Rest"
-            52/type = REST
-            53/name = "Pickup Equipment"
-            53/type = SEEK
-            54/name = "Dump Item"
-            54/type = HAUL
-            55/name = "Strange Mood Crafter"
-            55/type = MOOD
-            56/name = "Strange Mood Jeweller"
-            56/type = MOOD
-            57/name = "Strange Mood Forge"
-            57/type = MOOD
-            58/name = "Strange Mood Magma Forge"
-            58/type = MOOD
-            59/name = "Strange Mood Brooding"
-            59/type = MOOD
-            60/name = "Strange Mood Fell"
-            60/type = MOOD
-            61/name = "Strange Mood Carpenter"
-            61/type = MOOD
-            62/name = "Strange Mood Mason"
-            62/type = MOOD
-            63/name = "Strange Mood Bowyer"
-            63/type = MOOD
-            64/name = "Strange Mood Tanner"
-            64/type = MOOD
-            65/name = "Strange Mood Weaver"
-            65/type = MOOD
-            66/name = "Strange Mood Glassmaker"
-            66/type = MOOD
-            67/name = "Strange Mood Mechanics"
-            67/type = MOOD
-            68/name = "Construct Building"
-            68/type = BUILD
-            69/name = "Construct Door"
-            68/type = BUILD
-            70/name = "Construct Floodgate"
-            70/type = BUILD
-            71/name = "Construct ?? Bed"
-            71/type = BUILD
-            72/name = "Construct ?? Chair/Throne"
-            72/type = BUILD
-            73/name = "Construct ?? Casket/Sarcophagus/Coffin"
-            73/type = BUILD
-            74/name = "Construct ?? Table"
-            74/type = BUILD
-            75/name = "Construct ?? Box/Chest/Bag/Coffer"
-            75/type = BUILD
-            76/name = "Construct ?? Bin"
-            76/type = BUILD
-            77/name = "Construct ?? Armor Stand"
-            77/type = BUILD
-            78/name = "Construct ?? Weapon Rack"
-            78/type = BUILD
-            79/name = "Construct ?? Cabinet"
-            79/type = BUILD
-            80/name = "Construct ?? Statue"
-            80/type = BUILD
-            81/name = "Construct ?? Blocks"
-            81/type = BUILD
-            82/name = "Make Raw ??"
-            83/name = "Make ?? Crafts"
-            84/name = "Mint ?? Coins"
-            85/name = "Cut ?A?"
-            86/name = "Cut ?B?"
-            87/name = "Encrust ?something? with ?somethings?"
-            88/name = "Encrust ?something? with ?somethings?"
-            89/name = "Destroy Building"
-            89/type = BUILD
-            90/name = "Smelt Ore"
-            90/type = FURNACE
-            91/name = "Melt a Metal Object"
-            91/type = FORGE
-            92/name = "Extract Metal Strands"
-            92/type = FORGE
-            93/name = "Plant Seeds"
-            94/name = "Harvest Plants"
-            95/name = "Train Hunting Animal"
-            95/type = ANIMAL
-            96/name = "Train War Animal"
-            96/type = ANIMAL
-            99/name = "Construct Catapult Parts"
-            100/name = "Forge ?? Anvil"
-            100/type = FORGE
-            101/name = "Construct Catapult Parts"
-            102/name = "Construct Ballista Parts"
-            103/name = "Forge/Make A"
-            103/type = FORGE
-            104/name = "Stud with ?something?"
-            105/name = "Butcher an Animal"
-            106/name = "Prepare a Raw Fish"
-            107/name = "Mill Plants"
-            108/name = "Bait Trap with Meat/Gem/Fish"
-            109/name = "Milk Creature"
-            110/name = "Make Cheese"
-            111/name = "Process Plants"
-            112/name = "Process Plants (Bag)"
-            113/name = "Process Plants (Vial)"
-            114/name = "Process Plants (Barrel)"
-            115/name = "Prepare ?? Meal"
-            116/name = "Weave ?? into ??"
-            117/name = "Forge/Make ?? something"
-            117/type = BUILD
-            118/name = "Weave Thread"
-            119/name = "Forge/Make D"
-            119/type = FORGE
-            120/name = "Forge/Make E"
-            120/type = FORGE
-            121/name = "Forge/Make F"
-            121/type = FORGE
-            122/name = "Forge/Make Waterskin/Vial/Flask"
-            122/type = FORGE
-            123/name = "Forge Rope"
-            123/type = FORGE
-            124/name = "Forge  Flask"
-            124/type = FORGE
-            125/name = "Forge  Goblet"
-            125/type = FORGE
-            126/name = "Forge  Instrument"
-            126/type = FORGE
-            127/name = "Forge  Toy"
-            127/type = FORGE
-            128/name = "Forge  Animal Trap"
-            128/type = FORGE
-            129/name = "Forge  Barrel"
-            129/type = FORGE
-            130/name = "Make Totel"
-            130/type = FORGE
-            131/name = "Forge Bolts"
-            131/type = FORGE
-            132/name = "Decorate With ?something?"
-            133/name = "Forge/Make G"
-            133/type = FORGE
-            134/name = "Decorate With Bone"
-            135/name = "Make Backpack"
-            136/name = "Make Quiver"
-            137/name = "Load Catapult"
-            138/name = "Load Ballista"
-            139/name = "Fire Catapult"
-            140/name = "Fire Ballista"
-            141/name = "Construct Mechanisms"
-            141/type = BUILD
-            142/name = "Fire Ballista"
-            143/name = "Load Cage Trap"
-            144/name = "Load Stone Trap"
-            145/name = "Load Weapon Trap"
-            146/name = "Clean Trap"
-            147/name = "Cast Spell"
-            148/name = "Link a Building to Trigger"
-            149/name = "Pull the Lever"
-            150/name = "Brew Drink"
-            150/type = DRINK
-            151/name = "Extract from Plants"
-            152/name = "Extract from Raw Fish"
-            153/name = "Extract from Land Animal"
-            154/name = "Tame Small Animal"
-            154/type = ANIMAL
-            155/name = "Tame ?something?"
-            155/type = ANIMAL
-            156/name = "Chain Animal"
-            156/type = ANIMAL
-            157/name = "Unchain Animal"
-            157/type = ANIMAL
-            158/name = "Unchain Pet"
-            158/type = ANIMAL
-            159/name = "Release Large Creature"
-            159/type = ANIMAL
-            160/name = "Release Pet"
-            160/type = ANIMAL
-            161/name = "Release Small Creature"
-            161/type = ANIMAL
-            162/name = "Handle Small Creature"
-            162/type = ANIMAL
-            163/name = "Handle Large Creature"
-            163/type = ANIMAL
-            164/name = "Cage Large Creature"
-            164/type = ANIMAL
-            165/name = "Cage Small Creature"
-            165/type = ANIMAL
-            166/name = "Recover Wounded"
-            166/type = MEDICAL
-            167/name = "Diagnose Patient"
-            167/type = MEDICAL
-            168/name = "Immobilize Break"
-            168/type = MEDICAL
-            169/name = "Dress Wound"
-            169/type = MEDICAL
-            170/name = "Clean Patient"
-            170/type = MEDICAL
-            171/name = "Surgery"
-            171/type = MEDICAL
-            172/name = "Suture"
-            172/type = MEDICAL
-            173/name = "Set Bone"
-            173/type = MEDICAL
-            174/name = "Place In Traction"
-            174/type = MEDICAL
-            175/name = "Drain Aquarium"
-            176/name = "Fill Aquarium"
-            177/name = "Fill Pond"
-            178/name = "Give Water"
-            178/type = MEDICAL
-            179/name = "Give Food"
-            179/type = MEDICAL
-            180/name = "Give Water"
-            180/type = MEDICAL
-            181/name = "Give Food"
-            181/type = MEDICAL
-            182/name = "Recover Pet"
-            183/name = "Pit/Pond Large Animal"
-            183/type = ANIMAL
-            184/name = "Pit/Pond Small Animal"
-            184/type = ANIMAL
-            185/name = "Slaughter Animal"
-            185/type = ANIMAL
-            186/name = "Make Charcoal"
-            186/type = FURNACE
-            187/name = "Make Ash"
-            187/type = FURNACE
-            188/name = "Make Lye"
-            189/name = "Make Potash From Lye"
-            190/name = "Fertilize Field"
-            191/name = "Make Potash From Ash"
-            192/name = "Dye Thread"
-            193/name = "Dye Cloth"
-            194/name = "Sew ?? Image"
-            195/name = "Manage Work Orders"
-            195/type = ADMIN
-            196/name = "Operate Pump"
-            197/name = "Manage Work Orders"
-            197/type = ADMIN
-            198/name = "Update Stockpile Records"
-            198/type = ADMIN
-            199/name = "Trade at Depot"
-            199/type = ADMIN
-            200/name = "Construct ?? Hatch Cover"
-            200/type = BUILD
-            201/name = "Construct ?? Grate"
-            201/type = BUILD
-            202/name = "Remove Stairs/Ramps"
-            202/type = DIG
-            203/name = "Construct ?? Quern"
-            203/type = BUILD
-            205/name = "Upgrade Squad Equipment"
-            205/type = HAUL
-            206/name = "Prepare Equipment Manifests"
-            206/type = ADMIN
-            207/name = "Construct ?? Splint"
-            207/type = BUILD
-            208/name = "Construct ?? Crutch"
-            208/type = BUILD
-            209/name = "Construct Traction Bench"
-            209/type = BUILD
-            210/name = "Clean Self"
-            211/name = "Bring Crutch"
-            211/type = MEDICAL
-            212/name = "Apply Cast"
-            212/type = MEDICAL
-            -->
+            <Job id="0" name = "Carve Fortification" />
+            <Job id="1" name = "Detail Wall" />
+            <Job id="2" name = "Detail Floor" />
+            <Job id="3" name = "Dig" />
+            <Job id="4" name = "Carve Upward Staircase" />
+            <Job id="5" name = "Carve Downward Staircase" />
+            <Job id="6" name = "Carve Up/Down Staircase" />
+            <Job id="7" name = "Carve Ramp" />
+            <Job id="8" name = "Dig Channel" />
+            <Job id="9" name = "Fell Tree" />
+            <Job id="10" name = "Gather Plants" />
+            <Job id="11" name = "Remove Construction" />
+            <Job id="12" name = "Collect Webs" />
+            <Job id="13" name = "Bring Item to Depot" />
+            <Job id="14" name = "Bring Item to Shop" />
+            <Job id="15" name = "Eat" />
+            <Job id="16" name = "Get Provisions" />
+            <Job id="17" name = "Drink" />
+            <Job id="18" name = "Drink" />
+            <Job id="19" name = "Fill Waterskin" />
+            <Job id="20" name = "Fill Waterskin" />
+            <Job id="21" name = "Sleep" />
+            <Job id="22" name = "Collect Sand" />
+            <Job id="23" name = "Fish" />
+            <Job id="24" name = "Hunt" />
+            <Job id="25" name = "Hunt for Small Creature" />
+            <Job id="26" name = "Kidnap" />
+            <Job id="27" name = "Beat Criminal" />
+            <Job id="28" name = "Starting Fist Fight" />
+            <Job id="29" name = "Collect Taxes" />
+            <Job id="30" name = "Guard Tax Collector" />
+            <Job id="31" name = "Catch Live Land Animal" />
+            <Job id="32" name = "Catch Live Fish" />
+            <Job id="33" name = "Return Kill" />
+            <Job id="34" name = "Check Chesk" />
+            <Job id="35" name = "Store Owned Item" />
+            <Job id="36" name = "Place Item in Tomb" />
+            <Job id="37" name = "Store Item in Stockpile" />
+            <Job id="38" name = "Store Item in Bag" />
+            <Job id="39" name = "Store Item in Hospital" />
+            <Job id="40" name = "Store Item in Chest" />
+            <Job id="41" name = "Store Item in Cabinet" />
+            <Job id="42" name = "Store Weapon" />
+            <Job id="43" name = "Store Armor" />
+            <Job id="44" name = "Store Item in Barrel" />
+            <Job id="45" name = "Store Item in Bin" />
+            <Job id="46" name = "Seek Artifact" />
+            <Job id="47" name = "Seek Infant" />
+            <Job id="48" name = "Attend Party" />
+            <Job id="49" name = "Go Shopping" />
+            <Job id="50" name = "Go Shopping" />
+            <Job id="51" name = "Clean" />
+            <Job id="52" name = "Rest" />
+            <Job id="53" name = "Pickup Equipment" />
+            <Job id="54" name = "Dump Item" />
+            <Job id="55" name = "Strange Mood Crafter" />
+            <Job id="56" name = "Strange Mood Jeweller" />
+            <Job id="57" name = "Strange Mood Forge" />
+            <Job id="58" name = "Strange Mood Magma Forge" />
+            <Job id="59" name = "Strange Mood Brooding" />
+            <Job id="60" name = "Strange Mood Fell" />
+            <Job id="61" name = "Strange Mood Carpenter" />
+            <Job id="62" name = "Strange Mood Mason" />
+            <Job id="63" name = "Strange Mood Bowyer" />
+            <Job id="64" name = "Strange Mood Tanner" />
+            <Job id="65" name = "Strange Mood Weaver" />
+            <Job id="66" name = "Strange Mood Glassmaker" />
+            <Job id="67" name = "Strange Mood Mechanics" />
+            <Job id="68" name = "Construct Building" />
+            <Job id="69" name = "Construct Door" />
+            <Job id="70" name = "Construct Floodgate" />
+            <Job id="71" name = "Construct ?? Bed" />
+            <Job id="72" name = "Construct ?? Chair/Throne" />
+            <Job id="73" name = "Construct ?? Casket/Sarcophagus/Coffin" />
+            <Job id="74" name = "Construct ?? Table" />
+            <Job id="75" name = "Construct ?? Box/Chest/Bag/Coffer" />
+            <Job id="76" name = "Construct ?? Bin" />
+            <Job id="77" name = "Construct ?? Armor Stand" />
+            <Job id="78" name = "Construct ?? Weapon Rack" />
+            <Job id="79" name = "Construct ?? Cabinet" />
+            <Job id="80" name = "Construct ?? Statue" />
+            <Job id="81" name = "Construct ?? Blocks" />
+            <Job id="82" name = "Make Raw ??" />
+            <Job id="83" name = "Make ?? Crafts" />
+            <Job id="84" name = "Mint ?? Coins" />
+            <Job id="85" name = "Cut ?A?" />
+            <Job id="86" name = "Cut ?B?" />
+            <Job id="87" name = "Encrust ?something? with ?somethings?" />
+            <Job id="88" name = "Encrust ?something? with ?somethings?" />
+            <Job id="89" name = "Destroy Building" />
+            <Job id="90" name = "Smelt Ore" />
+            <Job id="91" name = "Melt a Metal Object" />
+            <Job id="92" name = "Extract Metal Strands" />
+            <Job id="93" name = "Plant Seeds" />
+            <Job id="94" name = "Harvest Plants" />
+            <Job id="95" name = "Train Hunting Animal" />
+            <Job id="96" name = "Train War Animal" />
+            <Job id="99" name = "Construct Catapult Parts" />
+            <Job id="100" name = "Forge ?? Anvil" />
+            <Job id="101" name = "Construct Catapult Parts" />
+            <Job id="102" name = "Construct Ballista Parts" />
+            <Job id="103" name = "Forge/Make A" />
+            <Job id="104" name = "Stud with ?something?" />
+            <Job id="105" name = "Butcher an Animal" />
+            <Job id="106" name = "Prepare a Raw Fish" />
+            <Job id="107" name = "Mill Plants" />
+            <Job id="108" name = "Bait Trap with Meat/Gem/Fish" />
+            <Job id="109" name = "Milk Creature" />
+            <Job id="110" name = "Make Cheese" />
+            <Job id="111" name = "Process Plants" />
+            <Job id="112" name = "Process Plants (Bag)" />
+            <Job id="113" name = "Process Plants (Vial)" />
+            <Job id="114" name = "Process Plants (Barrel)" />
+            <Job id="115" name = "Prepare ?? Meal" />
+            <Job id="116" name = "Weave ?? into ??" />
+            <Job id="117" name = "Forge/Make ?? something" />
+            <Job id="118" name = "Weave Thread" />
+            <Job id="119" name = "Forge/Make D" />
+            <Job id="120" name = "Forge/Make E" />
+            <Job id="121" name = "Forge/Make F" />
+            <Job id="122" name = "Forge/Make Waterskin/Vial/Flask" />
+            <Job id="123" name = "Forge Rope" />
+            <Job id="124" name = "Forge  Flask" />
+            <Job id="125" name = "Forge  Goblet" />
+            <Job id="126" name = "Forge  Instrument" />
+            <Job id="127" name = "Forge  Toy" />
+            <Job id="128" name = "Forge  Animal Trap" />
+            <Job id="129" name = "Forge  Barrel" />
+            <Job id="130" name = "Make Totel" />
+            <Job id="131" name = "Forge Bolts" />
+            <Job id="132" name = "Decorate With ?something?" />
+            <Job id="133" name = "Forge/Make G" />
+            <Job id="134" name = "Decorate With Bone" />
+            <Job id="135" name = "Make Backpack" />
+            <Job id="136" name = "Make Quiver" />
+            <Job id="137" name = "Load Catapult" />
+            <Job id="138" name = "Load Ballista" />
+            <Job id="139" name = "Fire Catapult" />
+            <Job id="140" name = "Fire Ballista" />
+            <Job id="141" name = "Construct Mechanisms" />
+            <Job id="142" name = "Fire Ballista" />
+            <Job id="143" name = "Load Cage Trap" />
+            <Job id="144" name = "Load Stone Trap" />
+            <Job id="145" name = "Load Weapon Trap" />
+            <Job id="146" name = "Clean Trap" />
+            <Job id="147" name = "Cast Spell" />
+            <Job id="148" name = "Link a Building to Trigger" />
+            <Job id="149" name = "Pull the Lever" />
+            <Job id="150" name = "Brew Drink" />
+            <Job id="151" name = "Extract from Plants" />
+            <Job id="152" name = "Extract from Raw Fish" />
+            <Job id="153" name = "Extract from Land Animal" />
+            <Job id="154" name = "Tame Small Animal" />
+            <Job id="155" name = "Tame ?something?" />
+            <Job id="156" name = "Chain Animal" />
+            <Job id="157" name = "Unchain Animal" />
+            <Job id="158" name = "Unchain Pet" />
+            <Job id="159" name = "Release Large Creature" />
+            <Job id="160" name = "Release Pet" />
+            <Job id="161" name = "Release Small Creature" />
+            <Job id="162" name = "Handle Small Creature" />
+            <Job id="163" name = "Handle Large Creature" />
+            <Job id="164" name = "Cage Large Creature" />
+            <Job id="165" name = "Cage Small Creature" />
+            <Job id="166" name = "Recover Wounded" />
+            <Job id="167" name = "Diagnose Patient" />
+            <Job id="168" name = "Immobilize Break" />
+            <Job id="169" name = "Dress Wound" />
+            <Job id="170" name = "Clean Patient" />
+            <Job id="171" name = "Surgery" />
+            <Job id="172" name = "Suture" />
+            <Job id="173" name = "Set Bone" />
+            <Job id="174" name = "Place In Traction" />
+            <Job id="175" name = "Drain Aquarium" />
+            <Job id="176" name = "Fill Aquarium" />
+            <Job id="177" name = "Fill Pond" />
+            <Job id="178" name = "Give Water" />
+            <Job id="179" name = "Give Food" />
+            <Job id="180" name = "Give Water" />
+            <Job id="181" name = "Give Food" />
+            <Job id="182" name = "Recover Pet" />
+            <Job id="183" name = "Pit/Pond Large Animal" />
+            <Job id="184" name = "Pit/Pond Small Animal" />
+            <Job id="185" name = "Slaughter Animal" />
+            <Job id="186" name = "Make Charcoal" />
+            <Job id="187" name = "Make Ash" />
+            <Job id="188" name = "Make Lye" />
+            <Job id="189" name = "Make Potash From Lye" />
+            <Job id="190" name = "Fertilize Field" />
+            <Job id="191" name = "Make Potash From Ash" />
+            <Job id="192" name = "Dye Thread" />
+            <Job id="193" name = "Dye Cloth" />
+            <Job id="194" name = "Sew ?? Image" />
+            <Job id="195" name = "Manage Work Orders" />
+            <Job id="196" name = "Operate Pump" />
+            <Job id="197" name = "Manage Work Orders" />
+            <Job id="198" name = "Update Stockpile Records" />
+            <Job id="199" name = "Trade at Depot" />
+            <Job id="200" name = "Construct ?? Hatch Cover" />
+            <Job id="201" name = "Construct ?? Grate" />
+            <Job id="202" name = "Remove Stairs/Ramps" />
+            <Job id="203" name = "Construct ?? Quern" />
+            <Job id="205" name = "Upgrade Squad Equipment" />
+            <Job id="206" name = "Prepare Equipment Manifests" />
+            <Job id="207" name = "Construct ?? Splint" />
+            <Job id="208" name = "Construct ?? Crutch" />
+            <Job id="209" name = "Construct Traction Bench" />
+            <Job id="210" name = "Clean Self" />
+            <Job id="211" name = "Bring Crutch" />
+            <Job id="212" name = "Apply Cast" />
         </Jobs>
         <Skills>
             <Skill name="Mining" id="0" />
@@ -813,20 +666,242 @@
             <class name="buildingst"/>
         </VTable>
         <Offsets>
+            <Address name="WORLD" description="A huge object that many things in DF are part of. Contains the whole game and can be used as a base
+            for many of the addresses." />
             <Group name="vector" description="An STL vector.">
                 <HexValue name="sizeof" description="The total size in bytes." />
                 <Offset name="start" description="The offset where the actual start/end/alloc_end triplet is." />
             </Group>
             <Group name="string" description="An STL string.">
                 <HexValue name="sizeof" description="The total size in bytes." />
+                <Group name="MSVC">
+                    <!--
+                    MSVC++ 9 string
+                    void * allocator
+                    union
+                    {
+                        char[16] start;
+                        char * start_ptr
+                    }
+                    Uint32 length
+                    Uint32 capacity
+                    -->
+                    <Offset name="buffer" description="Where the buffer/pointer starts." />
+                    <Offset name="size" description="Where the number of leters is stored (string length without 0-terminator)." />
+                    <Offset name="capacity" description="Capacity of the buffer in letters (default=15)." />
+                </Group>
+            </Group>
+            <Group name="name" description="A structure used for names all over the place.">
+                <Offset name="first" description="Lowercase stl string with the first name. For ex. 'urist'" />
+                <Offset name="nick"  description="Stl string with the nickname. Set by the player." />
+                <Offset name="second_words" description="Array of 7 indexes into the language vectors."/>
             </Group>
             <Group name="Position" description="Offsets used by the Position module.">
                 <Address name="window_x" description="X coordinate of the current view (DWORD)" />
                 <Address name="window_y" description="Y coordinate of the current view (DWORD)" />
                 <Address name="window_z" description="Z coordinate of the current view (DWORD)" />
                 <Address name="cursor_xyz" description="Coordinates of the cursor (3xDWORD)." />
-                <!--<Address name="mouse_pos" description="Position of the mouse." />-->
+                <Address name="mouse_pos" description="Position of the mouse (3xDWORD?)" />
                 <Address name="window_dims" description="Size of the view in tiles (2xWORD)" />
+                <Address name="screen_tiles_pointer" description="Pointer to the screen tile array." />
+            </Group>
+            <Group name="GUI" description="Offsets used by the GUI module.">
+                <Address name="pause_state" description="a flag that determines if the game is paused."/>
+                <Address name="current_cursor_creature" description="A vector? of creatures currently under the cursor."/>
+                <Address name="current_menu_state" description="A numeric value that describes the state of the current GUI element (switching between menus will change this)."/>
+                <Address name="view_screen" description="Pointer to the current view screen object (GUI screen)."/>
+            </Group>
+            <Group name="Maps" description="Offsets used by the Maps module.">
+                <Address name="map_data" description="Pointer to the start of the map structure."/>
+                <Address name="x_count_block" description="X Size of the local map (in 16x16x1 blocks)."/>
+                <Address name="y_count_block" description="Y Size of the local map (in 16x16x1 blocks)."/>
+                <Address name="z_count_block" description="Z Size of the local map (in 16x16x1 blocks)."/>
+                <Address name="x_count" description="X Size of the local map (in tiles)."/>
+                <Address name="y_count" description="Y Size of the local map (in tiles)."/>
+                <Address name="z_count" description="Z Size of the local map (in tiles)."/>
+                <Address name="region_x"/>
+                <Address name="region_y"/>
+                <Address name="region_z"/>
+                <Address name="world_size_x"/>
+                <Address name="world_size_y"/>
+                <Group name="block" description="The map block structure.">
+                    <Offset name="vein_vector" description="Mineral veins, objects holding tile types under ice, etc..."/>
+                    <Offset name="type" description="16x16 x 2B tile type values"/>
+                    <Offset name="designation" description="16x16 * 4B designation fields"/>
+                    <Offset name="occupancy" description="16x16 * 4B occupancy fields" />
+                    <Offset name="temperature1" />
+                    <Offset name="temperature2" />
+                    <Offset name="biome_stuffs" />
+                    <Offset name="pathfinding" />
+                    <Offset name="feature_local" description="Index into a local feature vector (adamantine, etc. Complicated, see source)" />
+                    <Offset name="feature_global" description="Index into the global feature vector (hell, etc.)." />
+                </Group>
+                <Group name="features">
+                    <Group name="global">
+                        <Address name="vector" />
+                        <Offset name="funcptr" />
+                        <Offset name="material" />
+                        <Offset name="submaterial" />
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" />
+                        <Offset name="material" />
+                        <Offset name="submaterial" />
+                    </Group>
+                </Group>
+                <Group name="geology">
+                    <Address name="geoblock_vector" />
+                    <Address name="ptr2_region_array" />
+                    <!-- values for the region structure -->
+                    <HexValue name="region_size" />
+                    <Offset name="region_geo_index_off" />
+                    <!-- geoblock offset(s?) -->
+                    <Offset name="geolayer_geoblock_offset" /> vector
+                    <Offset name="type_inside_geolayer" /> vector
+                </Group>
+            </Group>
+            <Group name="Creatures" description="Offsets used by the Creatures module.">
+                <Address name="vector"/>
+                <Address name="current_race" description="Index of the current player race." />
+                <Address name="current_civ" description="Index of the current player civilization." />
+                <Group name="creature">
+                    <Offset name="name" description="Creature name, see the name group." />
+                    <Offset name="custom_profession"  description="String object with custom profession." />
+                    <Offset name="profession"  description="Profession index." />
+                    <Offset name="race"  description="Race of the creature." />
+                    <Offset name="position"  description="X,Y,Z." />
+                    <Offset name="flags1"  description="First set of flags" />
+                    <Offset name="flags2"  description="Second set of flags" />
+                    <Offset name="caste"  description="Caste of the creature. Same as sex most of the time." />
+                    <Offset name="sex"  description="Sex of the creature." />
+                    <Offset name="id"  description="Unique ID of the creature, probably index into some global vector.." />
+                    <Offset name="civ" description="What civ the creature belongs to." />
+                    <Group name="advanced">
+                        <Offset name="pickup_equipment_bit" description="Setting this makes creatures re-check the status of their equip." />
+                        <Offset name="mood" />
+                        <Offset name="pregnancy"  description="Pregnancy timer.." />
+                        <Offset name="pregnancy_ptr"  description="Pregnancy object." />
+                        <Offset name="birth_year" description="The year the creature has been born." />
+                        <Offset name="birth_time"  description="Time of year the creature has been born." />
+                        <Offset name="current_job" />
+                        <Offset name="current_job_skill"  description="the skill that will be increased at the end of the mood (or not)" />
+                        <Offset name="physical" value="0x464" description="An array of physical attributes." />
+                        <Offset name="appearance_vector" description="seems to be indexes in the list of possible colors defined in the raws for each group" />
+                        <Offset name="inventory_vector" />
+                        <Offset name="artifact_name" description="Name of the artifact created by this creature." />
+                        <Offset name="soul_vector" description="A vector of souls attached to the creature." />
+                        <Offset name="current_soul" description="Currently active soul?" />
+                        <Offset name="labors" description="Array of labors. Used by DT to enable/disable them." />
+                        <Offset name="happiness" description="Number that says how happy the creature is." />
+                    </Group>
+                </Group>
+
+                <Group name="soul">
+                    <Offset name="name" description="Name of the soul." />
+                    <Offset name="mental" description="An array of mental attributes." />
+                    <Offset name="skills_vector" description="Vector of non-zero skills the creature has." />
+                    <Offset name="traits" />
+                </Group>
+
+                <Group name="job">
+                    <Offset name="id" description="Incrementaly assigned." />
+                    <Offset name="type" description="seems to be just like the old occupations" />
+                    <Offset name="materials_vector" />
+                    <Group name="material">
+                        <Offset name="maintype" description="like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ..." />
+                        <Offset name="sectype1" description="subsubtype ?" />
+                        <Offset name="sectype2" description="subtype ?" />
+                        <Offset name="sectype3" description="index of material (for example, 2 is for silver)" />
+                        <Offset name="flags" description="set only for shell / bone mood requirements ?" />
+                    </Group>
+                </Group>
+            </Group>
+            <Group name="Materials" description="Offsets used by the Materials module.">
+                <Address name="inorganics" description="Soil, stone, gems and metal."/>
+                <Address name="organics_all" description="Wood and plant matter, mixed" />
+                <Address name="organics_plants" description="plant matter" />
+                <Address name="organics_trees" description="just wood" />
+                <Address name="creature_type_vector" description="A vector of creature races" />
+                <Address name="other" description="Base material types? Code suggests it's a null-terminated string of string pointers? Is this used at all?" />
+                <Group name="creature" description="Creature race objects">
+                    <Offset name="caste_vector" description="A race is divided into castes. Normally male and female."/>
+                    <Offset name="extract_vector"/>
+                    <Offset name="tile" description="ASCII tile used for the creature"/>
+                    <Offset name="tile_color" description="color of the ASCII tile"/>
+                    <Group name="caste">
+                        <Offset name="bodypart_vector"/>
+                        <Offset name="attributes"/>
+                        <Offset name="color_modifiers"/>
+                    </Group>
+                    <Group name="caste_color_mods">
+                        <Offset name="part"/>
+                        <Offset name="startdate"/>
+                        <Offset name="enddate"/>
+                    </Group>
+                    <Group name="caste_bodyparts">
+                        <Offset name="id"/>
+                        <Offset name="category"/>
+                        <Offset name="layers_vector"/>
+                        <Offset name="singular_vector"/>
+                        <Offset name="plural_vector"/>
+                    </Group>
+                </Group>
+                <Group name="descriptors">
+                    <Address name="vectors_start" />
+                    <Offset name="rawname" />
+                    <Offset name="name" />
+                    <Address name="colors_vector" />
+                    <Offset name="color_r" /><!--floats !-->
+                    <Offset name="color_v" />
+                    <Offset name="color_b" />
+                    <Address name="all_colors_vector" description="A list of all colors, including eyes and stuff" />
+                </Group>
+            </Group>
+            <Group name="Constructions">
+                <Address name="vector"/>
+                <Offset name="sizeof"/>
+            </Group>
+            <Group name="Translations">
+                <Address name="language_vector"/>
+                <Address name="translation_vector"/>
+                <Offset name="word_table"/>
+            </Group>
+            <Group name="Vegetation">
+                <Address name="vector"/>
+                <Offset name="tree_desc_offset"/>
+            </Group>
+            <Group name="Buildings">
+                <Address name="buildings_vector"/>
+                <Offset name="building_custom_workshop_type"/>
+                <Address name="custom_workshop_vector"/>
+                <Offset name="custom_workshop_name"/>
+                <Offset name="custom_workshop_type"/>
+            </Group>
+            <Group name="Hotkeys">
+                <Address name="start"/>
+                <Offset name="mode"/>
+                <Offset name="coords"/>
+                <HexValue name="sizeof"/>
+            </Group>
+            <Group name="Items">
+                <!-- most of those seem completely unused! -->
+                <Address name="items_vector" />
+                List of offsets in the VTable :
+                <Offset name="item_type_accessor" />
+                <Offset name="item_subtype_accessor" />
+                <Offset name="item_subindex_accessor" />
+                <Offset name="item_index_accessor" />
+                <Offset name="item_quality_accessor" />
+                <Offset name="item_improvement_vector" />
+                <Offset name="item_improvement_subindex" />
+                <Offset name="item_improvement_index" />
+                <Offset name="item_improvement_quality" />
+                <Offset name="item_type_accessor" />  (in the vtable)
+            </Group>
+            <Group name="World">
+                <Address name="current_tick" description="Current time of the year" />
+                <Address name="current_year" description="Current year" />
+                <Address name="current_weather" description="5x5 array of bytes for surrounding biomes. For each: 0=clear, 1=raining, 2=snowing." />
             </Group>
         </Offsets>
     </Base>
@@ -879,6 +954,11 @@
             </Group>
             <Group name="string">
                 <HexValue name="sizeof" value="0x1C" />
+                <Group name="MSVC">
+                    <Offset name="buffer" value="0x4" />
+                    <Offset name="size" value="0x14" />
+                    <Offset name="capacity" value="0x18" />
+                </Group>
             </Group>
             <Group name="name">
                 <Offset name="first" value="0x0" />
@@ -963,7 +1043,7 @@
                 </Group>
             </Group>
             <Group name="Creatures">
-                <Address name="creature_vector" value="0x0166ecc4" />
+                <Address name="vector" value="0x0166ecc4" />
                 <Address name="current_race" value="0x01470fbc" />
                 <Address name="current_civ" value="0x01470fb0" />
                 <Group name="creature">
@@ -1009,11 +1089,11 @@
                     <Offset name="type" value="0x8" /> seems to be just like the old occupations
                     <Offset name="materials_vector" value="0xa4" />
                     <Group name="material">
-                        <Offset name="material_maintype" value="0x0" /> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
-                        <Offset name="material_sectype1" value="0x2" /> subsubtype ?
-                        <Offset name="material_sectype2" value="0x4" /> subtype ?
-                        <Offset name="material_sectype3" value="0x8" /> index of material (for example, 2 is for silver)
-                        <Offset name="material_flags" value="0x18" /> set only for shell / bone mood requirements ?
+                        <Offset name="maintype" value="0x0" /> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
+                        <Offset name="sectype1" value="0x2" /> subsubtype ?
+                        <Offset name="sectype2" value="0x4" /> subtype ?
+                        <Offset name="sectype3" value="0x8" /> index of material (for example, 2 is for silver)
+                        <Offset name="flags" value="0x18" /> set only for shell / bone mood requirements ?
                     </Group>
                 </Group>
             </Group>
@@ -1057,7 +1137,7 @@
                 <Offset name="word_table" value="0x4C" />
             </Group>
             <Group name="Vegetation">
-                <Address name="vegetation_vector" value="0x0167030C" /> <!-- WORLD + 0x15184 -->
+                <Address name="vector" value="0x0167030C" /> <!-- WORLD + 0x15184 -->
                 <Offset name="tree_desc_offset" value="0x6C" />
             </Group>
             <Group name="Buildings">
@@ -1145,7 +1225,7 @@
                 </Group>
             </Group>
             <Group name="Creatures">
-                <Address name="creature_vector" value="0x166FD0C" />
+                <Address name="vector" value="0x166FD0C" />
                 <Group name="creature">
                     <Group name="advanced">
                         <Offset name="artifact_name" value="0x6D4" />
@@ -1157,12 +1237,12 @@
                 </Group>
             </Group>
             <Group name="Materials">
-                <Address name="mat_inorganics" value="0x16B0D4C" /><!--inorganics vector = WORLD + 0x54B7C = 0x16B0D4C-->
-                <Address name="mat_other" value="0x16BA114" /> <!-- stuff like glass, coke, ... -->
-                <Address name="mat_organics_all" value="0x16B0D64" /><!--WORLD + 0x54B94-->
-                <Address name="mat_organics_plants" value="0x16B0D7C" /><!--plant matter, WORLD + 0x54BAC-->
-                <Address name="mat_organics_trees" value="0x16B0DAC" /><!--just wood, WORLD + 0x54BDC-->
+                <Address name="inorganics" value="0x16B0D4C" /><!--inorganics vector = WORLD + 0x54B7C = 0x16B0D4C-->
+                <Address name="organics_all" value="0x16B0D64" /><!--WORLD + 0x54B94-->
+                <Address name="organics_plants" value="0x16B0D7C" /><!--plant matter, WORLD + 0x54BAC-->
+                <Address name="organics_trees" value="0x16B0DAC" /><!--just wood, WORLD + 0x54BDC-->
                 <Address name="creature_type_vector" value="0x16B0EA0" /><!--WORLD + 0x54CD0-->
+                <Address name="other" value="0x16BA114" />
                 <Group name="descriptors">
                     <Address name="vectors_start" value="0x16B9780" />
                     <Offset name="rawname" value="0x0" />
@@ -1214,21 +1294,22 @@
         <PETimeStamp value="0x4bf014fa" />
         <Offsets>
             <Group name="Creatures">
-                <Address name="creature_vector" value="0x167870C" />
+                <Address name="vector" value="0x167870C" />
                 <Address name="current_race" value="0x1471FBC" />
                 <Address name="current_civ" value="0x1471FB0" />
             </Group>
             <Group name="Materials">
-                <Address name="mat_inorganics" value="0x16BD0B0" />
-                <Address name="mat_other" value="0x16C6478" />
-                <Address name="mat_organics_all" value="0x16BD0C8" />
-                <Address name="mat_organics_plants" value="0x16bd0e0" />
-                <Address name="mat_organics_trees" value="0x16bd110" />
+                <Address name="inorganics" value="0x16BD0B0" />
+                <!--<Address name="other" value="0x16C6478" />-->
+                <Address name="organics_all" value="0x16BD0C8" />
+                <Address name="organics_plants" value="0x16bd0e0" />
+                <Address name="organics_trees" value="0x16bd110" />
                 <Address name="creature_type_vector" value="0x16BD204" />
+                <Address name="other" value="0x16C6478"/>
                 <Group name="descriptors">
-                    <Address name="descriptor_colors_vector" value="0x16C5ACC" />
-                    <Address name="descriptor_vectors_start" value="0x16C5AE4" />
-                    <Address name="descriptor_all_colors" value="0x16C5AFC" />
+                    <Address name="colors_vector" value="0x16C5ACC" />
+                    <Address name="vectors_start" value="0x16C5AE4" />
+                    <Address name="all_colors_vector" value="0x16C5AFC" />
                 </Group>
             </Group>
             <Group name="Translations">
@@ -1257,7 +1338,7 @@
                         <Address name="vector" value="0x16BC8A8" />
                     </Group>
                     <Group name="local">
-                        <Address name="local_feature_start_ptr" value="0x16BC974" />
+                        <Address name="start_ptr" value="0x16BC974" />
                     </Group>
                 </Group>
                 <Group name="geology">
@@ -1266,10 +1347,10 @@
                 </Group>
             </Group>
             <Group name="Constructions">
-                <Address name="construction_vector" value="0x1664CD8" />
+                <Address name="vector" value="0x1664CD8" />
             </Group>
             <Group name="Vegetation">
-                <Address name="vegetation_vector" value="0x1679D54" />
+                <Address name="vector" value="0x1679D54" />
             </Group>
             <Group name="Buildings">
                 <Address name="buildings_vector" value="0x16793e8" />
@@ -1348,10 +1429,11 @@
                 <Address name="translation_vector" value="0x16D33FC" />
             </Group>
             <Group name="Creatures">
-                <Address name="creature_vector" value="0x168E73C" />
+                <Address name="vector" value="0x168E73C" />
                 <Address name="current_race" value="0x014b9f1c" />
                 <Group name="creature">
                     <Group name="advanced">
+                        <Offset name="inventory_vector" value="0x2FC" />
                         <Offset name="physical" value="0x4AC" />
                         <Offset name="appearance_vector" value="0x64c" /> <!-- Maybe slightly wrong -->
                         <Offset name="artifact_name" value="0x71c" />
@@ -1383,8 +1465,170 @@
     <Version name="v0.31.12 SDL" os="windows" base="v0.31.11 SDL">
         <MD5 value="f0459165a426a9f2dd8d957e9fa7f01d" />
         <PETimeStamp value="0x4C4C32E7" />
+        <Offsets>
+            <Group name="Position">
+                <Address name="screen_tiles_pointer" value="0x18313D0" />
+            </Group>
+            <Group name="World">
+                <Address name="current_weather" value="0x14BCDEE" />
+            </Group>
+        </Offsets>
     </Version>
+    <Version name="v0.31.13 SDL" os="windows" base="v0.31.12 SDL">
+        <MD5 value="59f194b0b2103ca5df7601a01ce21280" />
+        <PETimeStamp value="0x4C90ADA8" />
+        <Offsets>
+            <Address name="WORLD" value="0x016425A0" />
+            <Group name="vector">
+                <HexValue name="sizeof" value="0x10" />
+                <Offset name="start" value="0x4" />
+                <!--
+                Vector layout in MSVC 10:
+                DWORD ?
+                DWORD Start
+                DWORD End
+                DWORD AllocationEnd
 
+                NOT FINAL, needs research
+                -->
+            </Group>
+            <Group name="string">
+                <HexValue name="sizeof" value="0x1C" />
+                <Group name="MSVC">
+                    <Offset name="buffer" value="0x0" />
+                    <Offset name="size" value="0x10" />
+                    <Offset name="capacity" value="0x14" />
+                </Group>
+            </Group>
+            0x01482874 - current race
+            <Group name="Position">
+                <Address name="cursor_xyz" value="0xac77f0" />
+                <Address name="window_x" value="0xe42c74" />
+                <Address name="window_y" value="0xe70d48" />
+                <Address name="window_z" value="0xe70d24" />
+                <Address name="screen_tiles_pointer" value="0x01480684" /><!-- BAD, not a pointer! -->
+                <Address name="window_dims" value="0xac807c" />
+            </Group>
+            <Group name="GUI">
+                <Address name="pause_state" value="0x147E971" />
+            </Group>
+            <Group name="World">
+            <Address name="current_weather" value="0x147E948" />
+            </Group>
+            <Group name="Vegetation">
+                <Address name="vector" value="0x1656EF8" />
+            </Group>
+            <Group name="Maps">
+                <Address name="map_data" value="0x1697bd4 0x016AD718" />
+                <Address name="x_count_block" value="0x1697bf4 0x016ad738" />
+                <Address name="y_count_block" value="0x1697bf8 0x016ad73C" />
+                <Address name="z_count_block" value="0x1697bfc 0x016ad740" />
+                <Address name="x_count" value="0x1697c00 0x016ad744" />
+                <Address name="y_count" value="0x1697c04 0x016ad748" />
+                <Address name="z_count" value="0x1697c08 0x016ad74C" />
+                <Address name="region_x" value="0x1697c0C 0x016ad750" />
+                <!--WORLD + 0x525C8-->
+                <Address name="region_y" value="0x1697c10 0x016ad754" />
+                <!--WORLD + 0x525CC-->
+                <Address name="region_z" value="0x1697c14 0x016ad758" />
+                <!--WORLD + 0x525D0-->
+                <Address name="world_size_x" value="0x1699290 0x016AEDD4" />
+                <Address name="world_size_y" value="0x1699292 0x016AEDD6" />
+                <!--
+                These are all bad and need fixing
+                <Group name="block">
+                    <Offset name="vein_vector" value="0x08" />
+                    <Offset name="type" value="0x009A" />
+                    <Offset name="designation" value="0x029C" />
+                    <Offset name="occupancy" value="0x069c" />
+                    <Offset name="temperature1" value="0x159c" />
+                    <Offset name="temperature2" value="0x179c" />
+                    <Offset name="biome_stuffs" value="0x1D9C" />
+                    <Offset name="pathfinding" value="0x0D9c" />
+                    <Offset name="feature_local" value="0x2C" />
+                    <Offset name="feature_global" value="0x30" />
+                </Group>
+                -->
+                <Group name="features">
+                    <Group name="global">
+                        <Address name="vector" value="0x16999B8 0x16AF4FC" />
+                        <!--
+                        BAD!
+                        <Offset name="funcptr" value="0x100" />
+                        <Offset name="material" value="0x34" />
+                        <Offset name="submaterial" value="0x38" />
+                        -->
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" value="0x1699A84 0x16AF5C8" />
+                        <!--
+                        BAD?
+                        <Offset name="material" value="0x30" />
+                        <Offset name="submaterial" value="0x34" />
+                        -->
+                    </Group>
+                </Group>
+                <Group name="geology">
+                    <Address name="geoblock_vector" value="0x16999E8 0x16AF52C" />
+                    <Address name="ptr2_region_array" value="0x1699A30 0x16AF574" />
+                    <!--
+                    BAD!
+                    <HexValue name="region_size" value="0x64" />
+                    <Offset name="region_geo_index_off" value="0x60" />
+                    <Offset name="geolayer_geoblock_offset" value="0x4" /> vector
+                    <Offset name="type_inside_geolayer" value="0x4" /> vector
+                    -->
+                </Group>
+            </Group>
+            <Group name="Materials">
+                <Address name="inorganics" value="0x1699f14 0x16BD0B0" />
+                <Address name="organics_all" value="0x1699f24 0x16BD0C8" />
+                <Address name="organics_trees" value="0x1699f54 0x16bd110" />
+                <Address name="organics_plants" value="0x1699f34 0x16bd0e0" />
+                <Address name="creature_type_vector" value="0x1699ff8 0x16BD204" />
+                <Address name="other" value="0x16C6478" invalid="true"/>
+                <Group name="creature">
+                    <Offset name="caste_vector" value="0x124" />
+                    <Offset name="extract_vector" value="0x1A04" />
+                    <Offset name="tile" value="0xE0" />
+                    <Offset name="tile_color" value="0xF6" />
+                    <Group name="caste">
+                        <Offset name="bodypart_vector" value="0x518" />
+                        <Offset name="attributes" value="0x654" />
+                        <Offset name="color_modifiers" value="0xACC" />
+                    </Group>
+                    <Group name="caste_color_mods">
+                        <Offset name="part" value="0x70" />
+                        <Offset name="startdate" value="0x64" />
+                        <Offset name="enddate" value="0x68" />
+                    </Group>
+                    <Group name="caste_bodyparts">
+                        <Offset name="id" value="0x0" />
+                        <Offset name="category" value="0x1C" />
+                        <Offset name="layers_vector" value="0x44" />
+                        <Offset name="singular_vector" value="0x78" />
+                        <Offset name="plural_vector" value="0x90" />
+                    </Group>
+                </Group>
+                <Group name="descriptors">
+                    <Address name="vectors_start" value="0x16B9780" />
+                    <Offset name="rawname" value="0x0" />
+                    <Offset name="name" value="0x4C" />
+                    <Address name="colors_vector" value="0x16B9768" />
+                    <Offset name="color_r" value="0x6C" />
+                    <Offset name="color_v" value="0x70" />
+                    <Offset name="color_b" value="0x74" />
+                    <Address name="all_colors_vector" value="0x16B9798" />
+                </Group>
+                <Group name="descriptors">
+                    <Address name="colors_vector" value="0x16C5ACC" />
+                    <Address name="vectors_start" value="0x16C5AE4" />
+                    <Address name="all_colors_vector" value="0x16C5AFC" />
+                </Group>
+            </Group>
+        </Offsets>
+    </Version>
+    31.13 WEATHER_START 0147E94E
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________
@@ -1407,7 +1651,7 @@
     <!-- Windows logo by Microsoft -->
     <!-- Tux logo by the Linux guys :) -->
 
-    <Version version="v0.31.05 linux" os="linux" base="DF2010">
+    <Version name="v0.31.05 linux" os="linux" base="DF2010">
         <MD5 value="fea3801a26538b1741f3cc9294139fca" />
         <Offsets>
             <Address name="WORLD" value="0x92C60E0" valid="false" />
@@ -1438,9 +1682,6 @@
             </Group>
             <Group name="GUI">
                 <Address name="pause_state" value="0x92bf73c" />
-                <Address name="current_cursor_creature" value=""/>
-                <Address name="current_menu_state" value="" />
-                <Address name="view_screen" value=""/>
             </Group>
             <Group name="Maps">
                 <Address name="map_data" value="0x9318D40" />
@@ -1462,8 +1703,8 @@
                     <Offset name="type" value="0x006A" />
                     <Offset name="designation" value="0x026C" />
                     <Offset name="occupancy" value="0x066c" />
-                    <Offset name="temperature1_offset" value="0x156c" />
-                    <Offset name="temperature2_offset" value="0x176c" />
+                    <Offset name="temperature1" value="0x156c" />
+                    <Offset name="temperature2" value="0x176c" />
                     <Offset name="biome_stuffs" value="0x1D6C" />
                     <Offset name="pathfinding" value="0x0D6c" />
                 </Group>
@@ -1488,11 +1729,11 @@
                     <Offset name="region_geo_index_off" value="0x54" />
                     <!-- geoblock offset(s?) -->
                     <Offset name="geolayer_geoblock_offset" value="0x4" /> vector
-                    <Offset name="type_inside_geolayer" value="0x8" /> vector
+                    <Offset name="type_inside_geolayer" value="0x4" /> vector
                 </Group>
             </Group>
             <Group name="Creatures">
-                <Address name="creature_vector" value="0x92D9AC0" />
+                <Address name="vector" value="0x92D9AC0" />
                 <Address name="current_race" value="0x92C1628" />
                 <Address name="current_civ" value="0x92C161C" />
                 <Group name="creature" valid="verify" >
@@ -1500,7 +1741,7 @@
                     <Offset name="custom_profession" value="0x3c" />
                     <Offset name="profession" value="0x40" />
                     <Offset name="race" value="0x44" />
-                    <Offset name="position" value="0x90" />
+                    <Offset name="position" value="0x48" />
                     <Offset name="flags1" value="0x8C" />
                     <Offset name="flags2" value="0x90" />
                     <Offset name="caste" value="0xA4" />
@@ -1508,8 +1749,8 @@
                     <Offset name="id" value="0xA8" />
                     <Offset name="civ" value="0xB4" />
                     <Group name="advanced">
-                        <Offset name="pickup_equipment_bit" value="0X144" /> CHMOD
-                        <Offset name="mood" value="0x18C" /> VERIFY!
+                        <Offset name="pickup_equipment_bit" value="0x144" /> CHMOD
+                        <Offset name="mood" value="0x18C" valid="false" /> VERIFY!
                         <Offset name="birth_year" value="0x19C" />
                         <Offset name="birth_time" value="0x1A0" />
                         <Offset name="current_job" value="0x258" /> chmod
@@ -1523,26 +1764,29 @@
                         <Offset name="happiness" value="0x5AC" />
                     </Group>
                 </Group>
-
+                <!--
+                The vector is bad.
                 <Group name="soul" valid="verify">
                     <Offset name="name" value="0x0" />
                     <Offset name="mental" value="0x88" />
                     <Offset name="skills_vector" value="0x1C4" /> CHMOD
                     <Offset name="traits" value="0x1DC" />
                 </Group>
-
+                -->
+                <!--
                 <Group name="job">
                     <Offset name="id" value="0x0" /> Incrementaly assigned
                     <Offset name="type" value="0x8" /> seems to be just like the old occupations
                     <Offset name="materials_vector" value="0xa4" />
                     <Group name="material">
-                        <Offset name="material_maintype" value="0x0" /> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
-                        <Offset name="material_sectype1" value="0x2" /> subsubtype ?
-                        <Offset name="material_sectype2" value="0x4" /> subtype ?
-                        <Offset name="material_sectype3" value="0x8" /> index of material (for example, 2 is for silver)
-                        <Offset name="material_flags" value="0x18" /> set only for shell / bone mood requirements ?
+                        <Offset name="maintype" value="0x0" /> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
+                        <Offset name="sectype1" value="0x2" /> subsubtype ?
+                        <Offset name="sectype2" value="0x4" /> subtype ?
+                        <Offset name="sectype3" value="0x8" /> index of material (for example, 2 is for silver)
+                        <Offset name="flags" value="0x18" /> set only for shell / bone mood requirements ?
                     </Group>
                 </Group>
+                -->
             </Group>
             <Group name="Materials">
                 <Address name="inorganics" value="0x931ae88" /><!-- WORLD + 0x54B7C -->
@@ -1555,6 +1799,8 @@
                     <Offset name="extract_vector" value="0x18f4" />
                     <Offset name="tile" value="0x20" />
                     <Offset name="tile_color" value="0x36" />
+                    <!--
+                    !!!! BOGUS !!!!
                     <Group name="caste">
                         <Offset name="bodypart_vector" value="0x51C" />
                         <Offset name="attributes" value="0x654" />
@@ -1572,6 +1818,7 @@
                         <Offset name="singular_vector" value="0x78" />
                         <Offset name="plural_vector" value="0x90" />
                     </Group>
+                    -->
                 </Group>
                 <Group name="descriptors">
                     <!--<Address name="vectors_start" value="" />--><!-- search: vector of object with first object having string "STAR" as first member -->
@@ -1584,18 +1831,10 @@
                     <Address name="all_colors_vector" value="0x931f3b0" /><!--A list of all colors, including eyes and stuff-->
                 </Group>
             </Group>
-            <Group name="Constructions">
-                <Address name="vector" value="" />
-                <Offset name="sizeof" value="0x14" />
-            </Group>
             <Group name="Translations">
                 <Address name="language_vector" value="0x931aff4" />
                 <Address name="translation_vector" value="0x931b00c" />
                 <Offset name="word_table" value="0x1C" />
-            </Group>
-            <Group name="Vegetation">
-                <Address name="vegetation_vector" value="" />
-                <Offset name="tree_desc_offset" value="" />
             </Group>
             <Group name="World">
                 <Address name="current_year" value="0x92BF6A0" />
@@ -1603,7 +1842,7 @@
             </Group>
         </Offsets>
     </Version>
-    <Version version="v0.31.06 linux" os="linux" base="v0.31.05 linux" rebase="-0x20E0">
+    <Version name="v0.31.06 linux" os="linux" base="v0.31.05 linux" rebase="-0x20E0">
         <MD5 value="13a1c19e8f59b74e307e094e2a0f28c3" />
         <Offsets>
             <Address name="WORLD" value="0x92C4000" />
@@ -1618,18 +1857,36 @@
             0x92d7a10
         </Offsets>
     </Version>
-    <Version version="v0.31.07 linux" os="linux" base="v0.31.06 linux" rebase="0x2000">
+    <Version name="v0.31.07 linux" os="linux" base="v0.31.06 linux" rebase="0x2000">
         <MD5 value="b31979551782e89c049b11db8d2d86d7" />
     </Version>
-    <Version version="v0.31.08 linux" os="linux" base="v0.31.07 linux">
+    <Version name="v0.31.08 linux" os="linux" base="v0.31.07 linux">
         <MD5 value="e37750890350d7b9d8203879aff8fa5c" />
     </Version>
-    <Version version="v0.31.09 linux" os="linux" base="v0.31.08 linux" rebase="0x11000">
+    <Version name="v0.31.09 linux" os="linux" base="v0.31.08 linux" rebase="0x11000">
         <!-- TODO: fix creature offsets -->
         <!-- TODO: small offsets added all over the place, investigate -->
         <MD5 value="4f1f988bc1b425d4193d3d8b7b0579a5" />
+        <Offsets>
+            <Group name="Creatures">
+                <Group name="creature" valid="verify" >
+                    <Group name="advanced">
+                        <Offset name="soul_vector" value="0x0524" />
+                        <Offset name="current_soul" value="0x0530" valid="verify" />
+                        <Offset name="labors" value="0x540" />
+                        <Offset name="happiness" value="0x5d0" />
+                    </Group>
+                </Group>
+                <Group name="soul" valid="verify">
+                    <Offset name="name" value="0x0" />
+                    <Offset name="mental" value="0x88" />
+                    <Offset name="skills_vector" value="0x1C4" /> CHMOD
+                    <Offset name="traits" value="0x1DC" />
+                </Group>
+            </Group>
+        </Offsets>
     </Version>
-    <Version version="v0.31.10 linux" os="linux" base="v0.31.09 linux">
+    <Version name="v0.31.10 linux" os="linux" base="v0.31.09 linux">
         <MD5 value="3e7bea269018a6fb88ef53715685aa64" />
         <Offsets>
             <Group name="Buildings">
@@ -1647,18 +1904,104 @@
             <multiclass name="building_siegeenginest" typeoffset="0xC0" />
         </VTable>
     </Version>
-    <Version version="v0.31.11 linux" os="linux" base="v0.31.10 linux" rebase="0x1D020">
+    <Version name="v0.31.11 linux" os="linux" base="v0.31.10 linux" rebase="0x1D020">
         <!-- BIG rebase, possible broken stuff -->
         <MD5 value="7b04ad536b8b657588ac209a7f95e1d1" />
         <Offsets>
-            <Address name="window_x" value="0x8cf7a58" /> VERIFIED
-            <Address name="window_y" value="0x8cf7a5C" /> VERIFIED
-            <Address name="window_z" value="0x8cf7a60" /> VERIFIED
-            <Address name="cursor_xyz" value="0x8b3b328" /> VERIFIED
+            <Group name="Position">
+                <Address name="window_x" value="0x8cf7a58" /> VERIFIED
+                <Address name="window_y" value="0x8cf7a5C" /> VERIFIED
+                <Address name="window_z" value="0x8cf7a60" /> VERIFIED
+                <Address name="cursor_xyz" value="0x8b3b328" /> VERIFIED
+            </Group>
         </Offsets>
     </Version>
-    <Version version="v0.31.12 linux" os="linux" base="v0.31.11 linux" rebase="-0x1000">
+    <Version name="v0.31.12 linux" os="linux" base="v0.31.11 linux" rebase="-0x1000">
         <MD5 value="e79cead03187ecb692961b316b7cdcd4" />
+        <Offsets>
+            <Group name="GUI">
+                <!-- FIXME: this could be wrong for many other versions. Investigate. -->
+                <Address name="pause_state" value="0x92ec65c"/>
+            </Group>
+            <Group name="Creatures">
+                <Address name="current_race" value="0x092ee548" />
+            </Group>
+            <Group name="Constructions">
+                <Address name="vector" value="0x92f30a4"/>
+                <Offset name="sizeof" value="0x14"/>
+            </Group>
+            <Group name="Position">
+                <Address name="screen_tiles_pointer" value="0x09487970" />
+            </Group>
+            <Group name="Vegetation">
+                <Address name="vector" value="0x9307568" />
+                <Offset name="tree_desc_offset" value="0x3C" />
+            </Group>
+            <Group name="World">
+                <Address name="current_weather" value="0x92ec5aa" />
+            </Group>
+        </Offsets>
+    </Version>
+    <Version name="v0.31.13 linux" os="linux" base="v0.31.12 linux" rebase="-0xB7A8">
+        <MD5 value="d6307bd39b6271ba89bbdd953d27c84d" />
+        <Offsets>
+            <Group name="Buildings">
+                <Address name="buildings_vector" value="0x92fb8e8" />
+            </Group>
+            <Group name="Constructions">
+                <Address name="vector" value="0x92e7904" />
+            </Group>
+            <Group name="Creatures">
+                <Address name="current_civ" value="0x92e2d9c" />
+                <Address name="current_race" value="0x92e2da8" />
+                <Address name="vector" value="0x92fb260" />
+            </Group>
+            <Group name="Maps">
+                <Address name="map_data" value="0x933a4E0" />
+                <Address name="x_count_block" value="0x933a4F4" />
+                <Address name="y_count_block" value="0x933a4F8" />
+                <Address name="z_count_block" value="0x933a4FC" />
+                <Address name="x_count" value="0x933a500" />
+                <Address name="y_count" value="0x933a504" />
+                <Address name="z_count" value="0x933a508" />
+                <Address name="region_x" value="0x933a50C" />
+                <Address name="region_y" value="0x933a510" />
+                <Address name="region_z" value="0x933a514" />
+                <Address name="world_size_x" value="0x933BB60" />
+                <Address name="world_size_y" value="0x933BB62" />
+                <Group name="features">
+                    <Group name="global">
+                        <Address name="vector" value="0x933C0FC" />
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" value="0x933C174" />
+                    </Group>
+                </Group>
+                <Group name="geology">
+                    <Address name="geoblock_vector" value="0x933C114" />
+                    <Address name="ptr2_region_array" value="0x933C138" />
+                </Group>
+            </Group>
+            <Group name="Position">
+                <Address name="window_x" value="0x8ceb238" />
+                <Address name="window_y" value="0x8ceb23C" />
+                <Address name="window_z" value="0x8ceb240" />
+                <Address name="cursor_xyz" value="0x8b2e740" />
+                <Address name="window_dims" value="0x8b2ec48" />
+                <Address name="screen_tiles_pointer" invalid = "true" />
+            </Group>
+            <Group name="GUI">
+                <Address name="pause_state" value="0x92e0e90"/>
+            </Group>
+            <Group name="Vegetation">
+                <Address name="vector" value="0x92fbdc8" />
+            </Group>
+            <Group name="World">
+                <Address name="current_year" value="0x92e0da0" />
+                <Address name="current_tick" value="0x92e0dc0" />
+                <Address name="current_weather" value="0x092E0D84" />
+            </Group>
+        </Offsets>
     </Version>
 </DFHack>
 

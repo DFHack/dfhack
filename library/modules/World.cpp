@@ -38,32 +38,47 @@ FIXME: Japa said that he had to do this with the time stuff he got from here
 #include "ContextShared.h"
 #include "dfhack/modules/World.h"
 #include "dfhack/DFProcess.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFTypes.h"
+#include "dfhack/DFError.h"
 
 using namespace DFHack;
 
 struct World::Private
 {
     bool Inited;
-    bool Started;
+    bool StartedTime;
+    bool StartedWeather;
     uint32_t year_offset;
     uint32_t tick_offset;
+    uint32_t weather_offset;
     DFContextShared *d;
     Process * owner;
 };
 
 World::World(DFContextShared * _d)
 {
-    
+
     d = new Private;
     d->d = _d;
     d->owner = _d->p;
-    
-    memory_info * mem = d->d->offset_descriptor;
-    d->year_offset = mem->getAddress( "current_year" );
-    d->tick_offset = mem->getAddress( "current_tick" );
-    d->Inited = d->Started = true;
+    d->Inited = d->StartedTime = d->StartedWeather = false;
+
+    OffsetGroup * OG_World = d->d->offset_descriptor->getGroup("World");
+    try
+    {
+        d->year_offset = OG_World->getAddress( "current_year" );
+        d->tick_offset = OG_World->getAddress( "current_tick" );
+        d->StartedTime = true;
+    }
+    catch(Error::All &){};
+    try
+    {
+        d->weather_offset = OG_World->getAddress( "current_weather" );
+        d->StartedWeather = true;
+    }
+    catch(Error::All &){};
+    d->Inited = true;
 }
 
 World::~World()
@@ -83,19 +98,19 @@ bool World::Finish()
 
 uint32_t World::ReadCurrentYear()
 {
-    if(d->Inited)
+    if(d->Inited && d->StartedTime)
         return(d->owner->readDWord(d->year_offset));
     return 0;
 }
 
 uint32_t World::ReadCurrentTick()
 {
-    if(d->Inited)
+    if(d->Inited && d->StartedTime)
         return(d->owner->readDWord(d->tick_offset));
     return 0;
 }
 
-// FIX'D according to this: 
+// FIX'D according to this:
 /*
 World::ReadCurrentMonth and World::ReadCurrentDay
 « Sent to: peterix on: June 04, 2010, 04:44:30 »
@@ -113,4 +128,27 @@ uint32_t World::ReadCurrentMonth()
 uint32_t World::ReadCurrentDay()
 {
     return ((this->ReadCurrentTick() / 1200) % 28) + 1;
+}
+
+uint8_t World::ReadCurrentWeather()
+{
+    if (d->Inited && d->StartedWeather)
+        return(d->owner->readByte(d->weather_offset + 12));
+    return 0;
+}
+/*
+void World::SetCurrentWeather(uint8_t weather)
+{
+    if (d->Inited && d->StartedWeather)
+        d->owner->writeByte(d->weather_offset,weather);
+}
+*/
+void World::SetCurrentWeather(uint8_t weather)
+{
+    if (d->Inited && d->StartedWeather)
+    {
+        uint8_t buf[25];
+        memset(&buf,weather, sizeof(buf));
+        d->owner->write(d->weather_offset,sizeof(buf),buf);
+    }
 }

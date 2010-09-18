@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include "dfhack-c/DFTypes_C.h"
 #include "dfhack-c/modules/Position_C.h"
 
 #ifdef __cplusplus
@@ -97,6 +98,28 @@ int Position_setCursorCoords(DFHackObject* pos, int32_t x, int32_t y, int32_t z)
     return -1;
 }
 
+t_hotkey* Position_ReadHotkeys(DFHackObject* pos)
+{
+	if(pos != NULL)
+	{
+		t_hotkey* buf;
+		
+		(*alloc_t_hotkey_buffer_callback)(buf, NUM_HOTKEYS);
+		
+		if(buf != NULL)
+		{
+			if(((DFHack::Position*)pos)->ReadHotkeys(buf))
+				return buf;
+			else
+				return NULL;
+		}
+		else
+			return NULL;
+	}
+	
+	return NULL;
+}
+
 int Position_getWindowSize(DFHackObject* pos, int32_t* width, int32_t* height)
 {
     if(pos != NULL)
@@ -115,6 +138,26 @@ int Position_getWindowSize(DFHackObject* pos, int32_t* width, int32_t* height)
     }
 
     return -1;
+}
+
+t_screen* Position_getScreenTiles(DFHackObject* pos, int32_t width, int32_t height)
+{
+	if(pos != NULL)
+	{
+		t_screen* buf;
+		
+		(*alloc_t_screen_buffer_callback)(buf, width * height);
+		
+		if(buf == NULL)
+			return NULL;
+		
+		if(((DFHack::Position*)pos)->getScreenTiles(width, height, buf))
+			return buf;
+		else
+			return NULL;
+	}
+	
+	return NULL;
 }
 
 #ifdef __cplusplus

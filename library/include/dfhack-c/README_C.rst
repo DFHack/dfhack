@@ -54,17 +54,36 @@ Buffer Callback List
 - alloc_ubyte_buffer_callback(uint8_t*, uint32_t)
 - alloc_ushort_buffer_callback(uint16_t*, uint32_t)
 - alloc_uint_buffer_callback(uint32_t*, uint32_t)
+- alloc_char_buffer_callback(char* uint32_t)
 - alloc_matgloss_buffer_callback(t_matgloss*, uint32_t)
 - alloc_descriptor_buffer_callback(t_descriptor_color*, uint32_t)
 - alloc_matgloss_other_buffer_callback(t_matglossOther*, uint32_t)
 - alloc_vein_buffer_callback(t_vein*, uint32_t)
+- alloc_t_feature_buffer_callback(t_feature*, uint32_t)
+- alloc_t_hotkey_buffer_callback(t_hotkey*, uint32_t)
+- alloc_t_screen_buffer_callback(t_screen*, uint32_t)
 - alloc_frozenliquidvein_buffer_callback(t_frozenliquidvein*, uint32_t)
 - alloc_spattervein_buffer_callback(t_spattervein*, uint32_t)
 
 Templates Make My Life Harder
 -------------------------------
-Three dfhack structures (t_colormodifier, t_creaturecaste, and t_creaturetype) contain vectors, which (obviously) don't work in C.  Therefore, these structures have C versions that replace the vector with a buffer and length, but are otherwise identical to their C++ counterparts.  For each structure, there are three associated callbacks.  One initializes an empty instance of the structure, one initializes an instance with values passed in, and one allocates a buffer in the same manner as the other allocators.
+Several dfhack structures contain vectors, which (obviously) don't work in C.  Therefore, these structures have C versions that replace the vector with a buffer and length, but are otherwise identical to their C++ counterparts.  For each structure, there are three associated callbacks.  One initializes an empty instance of the structure (*alloc_empty_colormodifier_callback*, for instance), one initializes an instance with values passed in (*alloc_colormodifier_callback*), and one allocates a buffer in the same manner as the other allocators (*alloc_colormodifier_buffer_callback*).
 
+The replaced structures and their callbacks are as follows.
+
+- c_colormodifier
+    * alloc_empty_colormodifier_callback(c_colormodifier*)
+    * alloc_colormodifier_callback(c_colormodifier*, const char*, uint32_t)
+    * alloc_colormodifier_buffer_callback(c_colormodifier*, uint32_t)
+- c_creaturecaste
+    * alloc_empty_creaturecaste_callback(c_creaturecaste*)
+    * alloc_creaturecaste_callback(c_creaturecaste*, const char*, const char*, const char*, const char*, uint32_t, uint32_t)
+    * alloc_creaturecaste_buffer_callback(c_creaturecaste*, uint32_t)
+- c_creaturetype
+    * alloc_empty_creaturetype_callback(c_creaturetype*)
+    * alloc_creaturetype_callback(c_creaturetype*, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t)
+    * alloc_creaturetype_buffer_callback(c_creaturetype*, uint32_t)
+    
 A Small Callback Example In Python
 -------------------------------------
 The Python bindings for dfhack implement the unsigned integer allocator callback like this:

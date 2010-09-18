@@ -36,6 +36,8 @@ extern "C" {
 DFHACK_EXPORT int Maps_Start(DFHackObject* maps);
 DFHACK_EXPORT int Maps_Finish(DFHackObject* maps);
 
+DFHACK_EXPORT t_feature* Maps_ReadGlobalFeatures(DFHackObject* maps);
+
 DFHACK_EXPORT void Maps_getSize(DFHackObject* maps, uint32_t* x, uint32_t* y, uint32_t* z);
 DFHACK_EXPORT int Maps_isValidBlock(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
 

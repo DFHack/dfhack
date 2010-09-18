@@ -8,15 +8,22 @@
 using namespace std;
 
 #include <DFHack.h>
+#include <dfhack/VersionInfoFactory.h>
 using namespace DFHack;
 
 int main (int numargs, const char ** args)
 {
+    /*
+    DFHack::VersionInfoFactory * VIF = new DFHack::VersionInfoFactory("Memory.xml");
+    for(int i = 0; i < VIF->versions.size(); i++)
+    {
+        cout << VIF->versions[i]->PrintOffsets();
+    }
+    */
     DFHack::ContextManager DFMgr("Memory.xml");
-    DFHack::Context * DF;
+    DFHack::Context *DF = DFMgr.getSingleContext();
     try
     {
-        DF = DFMgr.getSingleContext();
         DF->Attach();
     }
     catch (exception& e)
@@ -27,12 +34,11 @@ int main (int numargs, const char ** args)
         #endif
         return 1;
     }
-    memory_info * minfo = DF->getMemoryInfo();
-    if(minfo)
-        cout << minfo->PrintOffsets();
+    cout << DF->getMemoryInfo()->PrintOffsets();
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();
     #endif
+    //delete VIF;
     return 0;
 }

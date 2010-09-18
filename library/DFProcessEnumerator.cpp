@@ -23,11 +23,11 @@ distribution.
 */
 
 #include "Internal.h"
-#include "DFMemInfoManager.h"
 
+#include "dfhack/VersionInfoFactory.h"
 #include "dfhack/DFProcessEnumerator.h"
 #include "dfhack/DFProcess.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 
 
 using namespace DFHack;
@@ -39,7 +39,7 @@ class DFHack::ProcessEnumerator::Private
 {
     public:
         Private(){};
-        MemInfoManager *meminfo;
+        VersionInfoFactory *meminfo;
         PROC_V Processes;
         PID2PROC ProcMap;
         Process *GetProcessObject(ProcessID ID);
@@ -119,20 +119,20 @@ Process * BadProcesses::operator[](uint32_t index)
 //FIXME: wasteful
 Process *ProcessEnumerator::Private::GetProcessObject(ProcessID ID)
 {
-    
-    Process *p1 = new SHMProcess(ID.pid,meminfo->meminfo);
+
+    Process *p1 = new SHMProcess(ID.pid,meminfo->versions);
     if(p1->isIdentified())
         return p1;
     else
         delete p1;
-    
-    Process *p2 = new NormalProcess(ID.pid,meminfo->meminfo);
+
+    Process *p2 = new NormalProcess(ID.pid,meminfo->versions);
     if(p2->isIdentified())
         return p2;
     else
         delete p2;
 #ifdef LINUX_BUILD
-    Process *p3 = new WineProcess(ID.pid,meminfo->meminfo);
+    Process *p3 = new WineProcess(ID.pid,meminfo->versions);
     if(p3->isIdentified())
         return p3;
     else
@@ -358,7 +358,7 @@ Process * ProcessEnumerator::operator[](uint32_t index)
 ProcessEnumerator::ProcessEnumerator( string path_to_xml )
 : d(new Private())
 {
-    d->meminfo = new MemInfoManager(path_to_xml);
+    d->meminfo = new VersionInfoFactory(path_to_xml);
 }
 
 void ProcessEnumerator::purge()

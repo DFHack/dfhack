@@ -34,7 +34,12 @@ namespace DFHack
 {
     namespace Error
     {
-        class DFHACK_EXPORT NoProcess : public std::exception
+        /*
+         * our wrapper for the C++ exception. used to differentiate
+         * the whole array of DFHack exceptions from the rest
+         */
+        class DFHACK_EXPORT All : public std::exception{};
+        class DFHACK_EXPORT NoProcess : public All
         {
         public:
             virtual const char* what() const throw()
@@ -43,7 +48,7 @@ namespace DFHack
             }
         };
 
-        class DFHACK_EXPORT CantAttach : public std::exception
+        class DFHACK_EXPORT CantAttach : public All
         {
         public:
             virtual const char* what() const throw()
@@ -52,7 +57,7 @@ namespace DFHack
             }
         };
 
-        class DFHACK_EXPORT NoMapLoaded : public std::exception
+        class DFHACK_EXPORT NoMapLoaded : public All
         {
         public:
             virtual const char* what() const throw()
@@ -61,7 +66,7 @@ namespace DFHack
             }
         };
 
-        class DFHACK_EXPORT BadMapDimensions : public std::exception
+        class DFHACK_EXPORT BadMapDimensions : public All
         {
         public:
             BadMapDimensions(uint32_t& _x, uint32_t& _y) : x(_x), y(_y) {}
@@ -75,13 +80,13 @@ namespace DFHack
         };
 
         // a call to DFHack::mem_info::get* failed
-        class DFHACK_EXPORT MissingMemoryDefinition : public std::exception
+        class DFHACK_EXPORT MissingMemoryDefinition : public All
         {
         public:
-            MissingMemoryDefinition(const char* _type, const char* _key) : type(_type), key(_key)
+            MissingMemoryDefinition(const char* _type, const std::string _key) : type(_type), key(_key)
             {
                 std::stringstream s;
-                s << "memory definition missing: type " << type << " key " << key;
+                s << "memory object not declared: type=" << type << " key=" << key;
                 full = s.str();
             }
             // Used by functios using integer keys, such as getTrait
@@ -92,24 +97,44 @@ namespace DFHack
                 key = s1.str();
                 
                 std::stringstream s;
-                s << "memory definition missing: type " << type << " key " << key;
+                s << "memory object not declared: type=" << type << " key=" << key;
                 full = s.str();
             }
             virtual ~MissingMemoryDefinition() throw(){};
 
-            // (perhaps it should be an enum, but this is intended for easy printing/logging)
-            // type can be any of the following:
-            //
-            // address
-            // offset
-            // hexvalue
-            // string
-            // profession
-            // job
-            // skill
-            // trait
-            // traitname
-            // labor
+            std::string full;
+            const std::string type;
+            std::string key;
+
+            virtual const char* what() const throw()
+            {
+                return full.c_str();
+            }
+        };
+
+        // a call to DFHack::mem_info::get* failed
+        class DFHACK_EXPORT UnsetMemoryDefinition : public All
+        {
+        public:
+            UnsetMemoryDefinition(const char* _type, const std::string _key) : type(_type), key(_key)
+            {
+                std::stringstream s;
+                s << "memory object not set: type " << type << " key " << key;
+                full = s.str();
+            }
+            // Used by functios using integer keys, such as getTrait
+            UnsetMemoryDefinition(const char* _type, uint32_t _key) : type(_type)
+            {
+                std::stringstream s1;
+                s1 << _key;
+                key = s1.str();
+
+                std::stringstream s;
+                s << "memory object not set: type " << type << " key " << key;
+                full = s.str();
+            }
+            virtual ~UnsetMemoryDefinition() throw(){};
+
             std::string full;
             const std::string type;
             std::string key;
@@ -121,7 +146,7 @@ namespace DFHack
         };
 
         // Syntax errors and whatnot, the xml cant be read
-        class DFHACK_EXPORT MemoryXmlParse : public std::exception
+        class DFHACK_EXPORT MemoryXmlParse : public All
         {
         public:
             MemoryXmlParse(const char* _desc, int _id, int _row, int _col)
@@ -147,7 +172,7 @@ namespace DFHack
             }
         };
 
-        class DFHACK_EXPORT MemoryXmlBadAttribute : public std::exception
+        class DFHACK_EXPORT MemoryXmlBadAttribute : public All
         {
         public:
             MemoryXmlBadAttribute(const char* _attr) : attr(_attr)
@@ -167,7 +192,7 @@ namespace DFHack
             }
         };
 
-        class DFHACK_EXPORT MemoryXmlNoRoot : public std::exception
+        class DFHACK_EXPORT MemoryXmlNoRoot : public All
         {
         public:
             MemoryXmlNoRoot() {}
@@ -180,7 +205,7 @@ namespace DFHack
             }
         };
 
-        class DFHACK_EXPORT MemoryXmlNoDFExtractor : public std::exception
+        class DFHACK_EXPORT MemoryXmlNoDFExtractor : public All
         {
         public:
             MemoryXmlNoDFExtractor(const char* _name) : name(_name)
@@ -200,7 +225,7 @@ namespace DFHack
             }
         };
 
-        class DFHACK_EXPORT MemoryXmlUnderspecifiedEntry : public std::exception
+        class DFHACK_EXPORT MemoryXmlUnderspecifiedEntry : public All
         {
         public:
             MemoryXmlUnderspecifiedEntry(const char * _where) : where(_where)
@@ -218,7 +243,7 @@ namespace DFHack
             }
         };
 
-        class DFHACK_EXPORT MemoryXmlUnknownType : public std::exception
+        class DFHACK_EXPORT MemoryXmlUnknownType : public All
         {
         public:
             MemoryXmlUnknownType(const char* _type) : type(_type)
@@ -238,7 +263,7 @@ namespace DFHack
             }
         };
         
-        class DFHACK_EXPORT SHMServerDisappeared : public std::exception
+        class DFHACK_EXPORT SHMServerDisappeared : public All
         {
         public:
             SHMServerDisappeared(){}
@@ -248,7 +273,7 @@ namespace DFHack
                 return "The server process has disappeared";
             }
         };
-        class DFHACK_EXPORT SHMLockingError : public std::exception
+        class DFHACK_EXPORT SHMLockingError : public All
         {
         public:
             SHMLockingError(const char* _type) : type(_type)
@@ -267,7 +292,7 @@ namespace DFHack
                 return full.c_str();
             }
         };
-        class DFHACK_EXPORT MemoryAccessDenied : public std::exception
+        class DFHACK_EXPORT MemoryAccessDenied : public All
         {
         public:
             MemoryAccessDenied() {}
@@ -277,7 +302,7 @@ namespace DFHack
                 return "SHM ACCESS DENIED";
             }
         };
-        class DFHACK_EXPORT SHMVersionMismatch : public std::exception
+        class DFHACK_EXPORT SHMVersionMismatch : public All
         {
         public:
             SHMVersionMismatch() {}
@@ -287,7 +312,7 @@ namespace DFHack
                 return "SHM VERSION MISMATCH";
             }
         };
-        class DFHACK_EXPORT SHMAttachFailure : public std::exception
+        class DFHACK_EXPORT SHMAttachFailure : public All
         {
         public:
             SHMAttachFailure() {}
@@ -297,7 +322,7 @@ namespace DFHack
                 return "SHM ATTACH FAILURE";
             }
         };
-        class DFHACK_EXPORT ModuleNotInitialized : public std::exception
+        class DFHACK_EXPORT ModuleNotInitialized : public All
         {
         public:
             ModuleNotInitialized() {}

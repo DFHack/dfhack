@@ -37,7 +37,7 @@ int main ()
         return 1;
     }
 
-    DFHack::memory_info * mem = DF->getMemoryInfo();
+    DFHack::VersionInfo * mem = DF->getMemoryInfo();
     Materials = DF->getMaterials();
     Materials->ReadAllMaterials();
     p = DF->getProcess();

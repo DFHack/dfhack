@@ -1,5 +1,10 @@
 #ifndef CL_MOD_ITEMS
 #define CL_MOD_ITEMS
+
+/*
+ * DEPRECATED, DO NOT USE UNTIL FURTHER NOTICE!
+ **/
+
 /*
 * Creatures
 */

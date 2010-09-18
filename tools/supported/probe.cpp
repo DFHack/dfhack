@@ -30,27 +30,33 @@ int main (int numargs, const char ** args)
         #endif
         return 1;
     }
-    
+
     DFHack::Position *Pos = DF->getPosition();
-    DFHack::memory_info* mem = DF->getMemoryInfo();
+    DFHack::VersionInfo* mem = DF->getMemoryInfo();
     DFHack::Maps *Maps = DF->getMaps();
     DFHack::Process * p = DF->getProcess();
-    uint32_t designatus = mem->getOffset("map_data_designation");
-    uint32_t block_feature1 = mem->getOffset("map_data_feature_local");
-    uint32_t block_feature2 = mem->getOffset("map_data_feature_global");
-    uint32_t region_x_offset = mem->getAddress("region_x");
-    uint32_t region_y_offset = mem->getAddress("region_y");
-    uint32_t region_z_offset = mem->getAddress("region_z");
-    uint32_t feature1_start_ptr = mem->getAddress("local_feature_start_ptr");
+    OffsetGroup *mapsg = mem->getGroup("Maps");
+    OffsetGroup *mapblockg = mapsg->getGroup("block");
+    OffsetGroup *localfeatg = mapsg->getGroup("features")->getGroup("local");
+
+    uint32_t region_x_offset = mapsg->getAddress("region_x");
+    uint32_t region_y_offset = mapsg->getAddress("region_y");
+    uint32_t region_z_offset = mapsg->getAddress("region_z");
+
+    uint32_t designatus = mapblockg->getOffset("designation");
+    uint32_t block_feature1 = mapblockg->getOffset("feature_local");
+    uint32_t block_feature2 = mapblockg->getOffset("feature_global");
+
+    uint32_t feature1_start_ptr = localfeatg->getAddress("start_ptr");
     int32_t regionX, regionY, regionZ;
-    
+
     // read position of the region inside DF world
     p->readDWord (region_x_offset, (uint32_t &)regionX);
     p->readDWord (region_y_offset, (uint32_t &)regionY);
     p->readDWord (region_z_offset, (uint32_t &)regionZ);
-    
+
     Maps->Start();
-    
+
     int32_t cursorX, cursorY, cursorZ;
     Pos->getCursorCoords(cursorX,cursorY,cursorZ);
     if(cursorX != -30000)
@@ -72,20 +78,19 @@ int main (int numargs, const char ** args)
             std::cout << endl;
             print_bits<uint32_t>(block.occupancy[tileX][tileY].whole,std::cout);
             std::cout << endl;
-            
+
             // tiletype
             std::cout <<"tiletype: " << tiletype;
             if(tileTypeTable[tiletype].name)
                 std::cout << " = " << tileTypeTable[tiletype].name;
             std::cout << std::endl;
-            
-            
             std::cout <<"temperature1: " << tmpb1[tileX][tileY] << " U" << std::endl;
             std::cout <<"temperature2: " << tmpb2[tileX][tileY] << " U" << std::endl;
-            
+
             // biome, geolayer
             std::cout << "biome: " << des.biome << std::endl;
             std::cout << "geolayer: " << des.geolayer_index << std::endl;
+
             // liquids
             if(des.flow_size)
             {

@@ -10,8 +10,6 @@
 #  http://tobias.rautenkranz.ch/cmake/doxygen/
 # but it is hard to understand...
 
-IF (BUILD_DFHACK_DOCUMENTATION)
-
 FIND_PACKAGE(Doxygen)
 
 IF(DOXYGEN_FOUND)
@@ -64,5 +62,3 @@ IF(DOXYGEN_FOUND)
 ELSE(DOXYGEN_FOUND)
   MESSAGE (FATAL_ERROR "doxygen binary couldn't be found")
 ENDIF(DOXYGEN_FOUND)
-
-ENDIF (BUILD_DFHACK_DOCUMENTATION)

@@ -26,25 +26,33 @@ distribution.
 #define MEMINFO_MANAGER_H_INCLUDED
 
 #include "dfhack/DFPragma.h"
+#include "dfhack/DFExport.h"
 
 class TiXmlElement;
 namespace DFHack
 {
-    class memory_info;
-    class MemInfoManager
+    class VersionInfo;
+    class DFHACK_EXPORT VersionInfoFactory
     {
         friend class ProcessEnumerator;
         public:
-            MemInfoManager(string path_to_xml);
-            ~MemInfoManager();
+            VersionInfoFactory(std::string path_to_xml);
+            ~VersionInfoFactory();
             // memory info entries loaded from a file
-            bool loadFile( string path_to_xml);
+            bool loadFile( std::string path_to_xml);
             bool isInErrorState() const {return error;};
-            std::vector<memory_info*> meminfo;
+            std::vector<VersionInfo*> versions;
         private:
-            void ParseVTable(TiXmlElement* vtable, memory_info* mem);
-            void ParseEntry (TiXmlElement* entry, memory_info* mem, map <string ,TiXmlElement *>& knownEntries);
+            void ParseVTable(TiXmlElement* vtable, VersionInfo* mem);
+            void ParseBase (TiXmlElement* base, VersionInfo* mem);
+            void ParseVersion (TiXmlElement* version, VersionInfo* mem);
+            // copy version 'base' to 'target' or throw
+            void EvalVersion(std::string base, VersionInfo* target);
+            void ParseOffsets(TiXmlElement* elem, VersionInfo* target, bool initial = false);
+
             bool error;
+            typedef std::pair < TiXmlElement *, VersionInfo *> v_descr;
+            std::map <std::string , v_descr  > knownVersions;
     };
 }
 

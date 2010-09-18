@@ -64,7 +64,13 @@ TARGET_LINK_LIBRARIES(dfposition dfhack)
 ADD_EXECUTABLE(dfdoffsets dumpoffsets.cpp)
 TARGET_LINK_LIBRARIES(dfdoffsets dfhack)
 
+# change the weather
+ADD_EXECUTABLE(dfweather weather.cpp)
+TARGET_LINK_LIBRARIES(dfweather dfhack)
+
+
 IF(UNIX)
+    SET(VEINLOOK_BUILT "NO")
     SET(CURSES_NEED_WIDE "YES")
     SET(CURSES_NEED_NCURSES "NO")
     find_package(Curses QUIET)
@@ -114,11 +120,6 @@ dfexpbench
 dfsuspend
 dfflows
 dfliquids
+dfweather
 RUNTIME DESTINATION bin
 )
-IF(UNIX)
-    install(TARGETS
-    dfveinlook
-    RUNTIME DESTINATION bin
-    )
-ENDIF(UNIX)

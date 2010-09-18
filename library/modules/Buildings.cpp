@@ -25,7 +25,7 @@ distribution.
 #include "Internal.h"
 #include "ContextShared.h"
 
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
 #include "dfhack/DFTypes.h"
@@ -71,12 +71,13 @@ Buildings::Buildings(DFContextShared * d_)
     d->d = d_;
     d->owner = d_->p;
     d->Inited = d->Started = false;
-    memory_info * mem = d->d->offset_descriptor;
-    d->custom_workshop_vector = mem->getAddress("custom_workshop_vector");
-    d->building_custom_workshop_type = mem->getOffset("building_custom_workshop_type");
-    d->custom_workshop_type = mem->getOffset("custom_workshop_type");
-    d->custom_workshop_name = mem->getOffset("custom_workshop_name");
-    d->buildings_vector = mem->getAddress ("buildings_vector");
+    VersionInfo * mem = d->d->offset_descriptor;
+    OffsetGroup * OG_build = mem->getGroup("Buildings");
+    d->custom_workshop_vector = OG_build->getAddress("custom_workshop_vector");
+    d->building_custom_workshop_type = OG_build->getOffset("building_custom_workshop_type");
+    d->custom_workshop_type = OG_build->getOffset("custom_workshop_type");
+    d->custom_workshop_name = OG_build->getOffset("custom_workshop_name");
+    d->buildings_vector = OG_build->getAddress ("buildings_vector");
     mem->resolveClassnameToClassID("building_custom_workshop", d->custom_workshop_id);
     d->Inited = true;
 }
@@ -139,12 +140,12 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 {
     if(!d->Started)
         return false;
-    
+
     Process * p = d->owner;
     DfVector <uint32_t> p_matgloss (p, d->custom_workshop_vector);
     uint32_t size = p_matgloss.size();
     btypes.clear();
-    
+
     for (uint32_t i = 0; i < size;i++)
     {
         string out = p->readSTLString (p_matgloss[i] + d->custom_workshop_name);

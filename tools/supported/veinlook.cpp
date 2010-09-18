@@ -723,6 +723,7 @@ main(int argc, char *argv[])
         Maps->Start();
         Mats->Start();
         Mats->ReadInorganicMaterials();
+        Mats->ReadCreatureTypes();
         uint32_t effectnum;
         /*
         if(DF.InitReadEffects(effectnum))

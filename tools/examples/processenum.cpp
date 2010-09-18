@@ -56,7 +56,7 @@ int main (void)
     {
         cout << "Testing ProcessEnumerator" << endl;
         ProcessEnumerator Penum("Memory.xml");
-        memory_info * mem;
+        VersionInfo * mem;
         do
         {
             // make the ProcessEnumerator update its list of Processes
@@ -90,7 +90,7 @@ int main (void)
     {
         cout << "Testing ContextManager" << endl;
         ContextManager Cman("Memory.xml");
-        memory_info * mem;
+        VersionInfo * mem;
         do
         {
             // make the ContextManager update its list of Contexts

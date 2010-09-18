@@ -25,7 +25,7 @@ int main (void)
         return 1;
     }
     
-    DFHack::memory_info * mem = DF->getMemoryInfo();
+    DFHack::VersionInfo * mem = DF->getMemoryInfo();
     DFHack::Position * Pos = DF->getPosition();
     // get stone matgloss mapping
     /*

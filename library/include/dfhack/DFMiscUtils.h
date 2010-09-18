@@ -12,7 +12,7 @@
 using namespace std;
 
 #include <dfhack/DFProcess.h>
-#include <dfhack/DFMemInfo.h>
+#include <dfhack/VersionInfo.h>
 #include <dfhack/DFVector.h>
 
 void DumpObjStr0Vector (const char * name, DFHack::Process *p, uint32_t addr)
@@ -81,7 +81,7 @@ void hexdump (DFHack::Context *DF, uint32_t address, uint32_t length)
 void interleave_hex (DFHack::Context* DF, vector < uint32_t > & addresses, uint32_t length)
 {
     vector <char * > bufs;
-    
+
     for(uint32_t counter = 0; counter < addresses.size(); counter ++)
     {
         char * buf = new char[length * 16];
@@ -97,7 +97,7 @@ void interleave_hex (DFHack::Context* DF, vector < uint32_t > & addresses, uint3
         cout << "0x" << hex << setw(9) << addresses[obj] << "  ";
     }
     cout << endl;
-    
+
     for(uint32_t offs = 0 ; offs < length * 16; offs += 4)
     {
         if((!(offs % 16)) && offs != 0)
@@ -130,7 +130,7 @@ template <typename T>
 void print_bits ( T val, std::ostream& out )
 {
     T n_bits = sizeof ( val ) * CHAR_BIT;
-    
+
     for ( unsigned i = 0; i < n_bits; ++i ) {
         out<< !!( val & 1 ) << " ";
         val >>= 1;

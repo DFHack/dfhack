@@ -25,8 +25,9 @@ distribution.
 #include "Internal.h"
 #include "ContextShared.h"
 #include "dfhack/modules/Position.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
+#include "dfhack/DFError.h"
 using namespace DFHack;
 
 struct Position::Private
@@ -41,7 +42,7 @@ struct Position::Private
     uint32_t hotkey_mode_offset;
     uint32_t hotkey_xyz_offset;
     uint32_t hotkey_size;
-    
+
     uint32_t screen_tiles_ptr_offset;
 
     DFContextShared *d;
@@ -59,33 +60,36 @@ Position::Position(DFContextShared * d_)
     d->owner = d_->p;
     d->Inited = true;
     d->StartedHotkeys = d->Started = d->StartedScreen = false;
-    memory_info * mem;
+    OffsetGroup * OG_Position;
+    VersionInfo * mem = d->d->offset_descriptor;
+    // this is how to do feature detection properly
     try
     {
-        mem = d->d->offset_descriptor;
-        d->window_x_offset = mem->getAddress ("window_x");
-        d->window_y_offset = mem->getAddress ("window_y");
-        d->window_z_offset = mem->getAddress ("window_z");
-        d->cursor_xyz_offset = mem->getAddress ("cursor_xyz");
-        d->window_dims_offset = mem->getAddress ("window_dims");
+        OG_Position = mem->getGroup("Position");
+        d->window_x_offset = OG_Position->getAddress ("window_x");
+        d->window_y_offset = OG_Position->getAddress ("window_y");
+        d->window_z_offset = OG_Position->getAddress ("window_z");
+        d->cursor_xyz_offset = OG_Position->getAddress ("cursor_xyz");
+        d->window_dims_offset = OG_Position->getAddress ("window_dims");
         d->Started = true;
     }
-    catch(exception &){};
+    catch(Error::All &){};
     try
     {
-        d->hotkey_start = mem->getAddress("hotkey_start");
-        d->hotkey_mode_offset = mem->getOffset ("hotkey_mode");
-        d->hotkey_xyz_offset = mem->getOffset("hotkey_xyz");
-        d->hotkey_size = mem->getHexValue("hotkey_size");
+        OffsetGroup * OG_Hotkeys = mem->getGroup("Hotkeys");
+        d->hotkey_start = OG_Hotkeys->getAddress("start");
+        d->hotkey_mode_offset = OG_Hotkeys->getOffset ("mode");
+        d->hotkey_xyz_offset = OG_Hotkeys->getOffset("coords");
+        d->hotkey_size = OG_Hotkeys->getHexValue("size");
         d->StartedHotkeys = true;
     }
-    catch(exception &){};
+    catch(Error::All &){};
     try
     {
-        d->screen_tiles_ptr_offset = mem->getAddress ("screen_tiles_pointer");
+        d->screen_tiles_ptr_offset = OG_Position->getAddress ("screen_tiles_pointer");
         d->StartedScreen = true;
     }
-    catch(exception &){};
+    catch(Error::All &){};
 }
 
 Position::~Position()
@@ -176,9 +180,7 @@ bool Position::getScreenTiles (int32_t width, int32_t height, t_screen screen[])
     if(!d->Inited) return false;
     if(!d->StartedScreen) return false;
 
-    uint32_t screen_addr;
-    d->owner->read (d->screen_tiles_ptr_offset, sizeof(uint32_t), (uint8_t *) screen_addr);
-
+    uint32_t screen_addr = d->owner->readDWord(d->screen_tiles_ptr_offset);
     uint8_t* tiles = new uint8_t[width*height*4/* + 80 + width*height*4*/];
 
     d->owner->read (screen_addr, (width*height*4/* + 80 + width*height*4*/), (uint8_t *) tiles);
@@ -187,10 +189,10 @@ bool Position::getScreenTiles (int32_t width, int32_t height, t_screen screen[])
     {
         for(int32_t ix=0; ix<width; ix++)
         {
-            screen[ix + iy*width].symbol = tiles[iy + ix*height*4 +0];
-            screen[ix + iy*width].foreground = tiles[iy + ix*height*4 +1];
-            screen[ix + iy*width].background = tiles[iy + ix*height*4 +2];
-            screen[ix + iy*width].bright = tiles[iy + ix*height*4 +3];
+            screen[ix + iy*width].symbol = tiles[(iy + ix*height)*4 +0];
+            screen[ix + iy*width].foreground = tiles[(iy + ix*height)*4 +1];
+            screen[ix + iy*width].background = tiles[(iy + ix*height)*4 +2];
+            screen[ix + iy*width].bright = tiles[(iy + ix*height)*4 +3];
             //screen[ix + iy*width].gtile = tiles[width*height*4 + 80 + iy + ix*height +0];
             //screen[ix + iy*width].grayscale = tiles[width*height*4 + 80 + iy + ix*height +1];
         }

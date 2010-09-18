@@ -23,8 +23,8 @@ distribution.
 */
 
 #include "Internal.h"
-#include "DFMemInfoManager.h"
 
+#include "dfhack/VersionInfoFactory.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFProcessEnumerator.h"
 #include "dfhack/DFError.h"
@@ -142,7 +142,7 @@ ContextManager::~ContextManager()
 
 uint32_t ContextManager::Refresh( BadContexts* bad_contexts )
 {
-    // handle expired processes, remove stale Contexts 
+    // handle expired processes, remove stale Contexts
     {
         BadProcesses expired;
         // get new list od living and expired Process objects

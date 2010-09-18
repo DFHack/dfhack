@@ -1698,6 +1698,7 @@ map_data_1b60_offset          0x1B9c
         <Address name="creature_vector">0x168E73C</Address>
         <Address name="dwarf_race_index">0x014b9f1c</Address>      
         <Offset name="creature_soulskill_vector">0X1F4</Offset>
+        <Offset name="creature_inventory_vector">0x2FC</Offset>
         <Offset name="creature_physical">0x4AC</Offset>        
         <Offset name="creature_appearance_vector">0x64c</Offset> <!-- Maybe slightly wrong -->
         <Offset name="creature_artifact_name">0x71c</Offset>
@@ -1721,6 +1722,7 @@ map_data_1b60_offset          0x1B9c
     <Entry version="v0.31.12" os="windows" id="0.31.12" base="0.31.11">
         <String name="md5">f0459165a426a9f2dd8d957e9fa7f01d</String>
         <HexValue name="pe_timestamp">0x4C4C32E7</HexValue>
+        <Address name="screen_tiles_pointer">0x18313D0</Address>
     </Entry>
                             .-"""-.
                            '       \
@@ -2359,6 +2361,7 @@ map_data_1b60_offset          0x1B9c
     </Entry>
     <Entry version="v0.31.12" os="linux" id="30_12lin" base="30_11lin" rebase="-0x1000">
         <String name="md5">e79cead03187ecb692961b316b7cdcd4</String>
+        <Address name="screen_tiles_pointer">0x09487970</Address>
     </Entry>
     </MemoryDescriptors>
 </DFExtractor>

@@ -116,6 +116,18 @@ void Materials_ReadAllMaterials(DFHackObject* mat)
 	}
 }
 
+const char* Materials_getType(DFHackObject* mat, t_material* material)
+{
+	if(mat != NULL)
+	{
+		std::string type = ((DFHack::Materials*)mat)->getType(*material);
+		
+		return type.c_str();
+	}
+	
+	return "\0";
+}
+
 const char* Materials_getDescription(DFHackObject* mat, t_material* material)
 {
 	if(mat != NULL)

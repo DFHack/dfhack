@@ -35,7 +35,7 @@ int main (int numargs, const char ** args)
     }
     
     DFHack::Process* p = DF->getProcess();
-    DFHack::memory_info* mem = DF->getMemoryInfo();
+    DFHack::VersionInfo* mem = DF->getMemoryInfo();
     DFHack::Materials *Materials = DF->getMaterials();
     
     cout << "----==== Inorganic ====----" << endl;

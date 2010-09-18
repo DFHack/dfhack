@@ -25,7 +25,7 @@ distribution.
 #include "Internal.h"
 #include "ContextShared.h"
 
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
 #include "dfhack/DFTypes.h"
@@ -38,7 +38,7 @@ struct Constructions::Private
     uint32_t construction_vector;
     // translation
     DfVector <uint32_t> * p_cons;
-    
+
     DFContextShared *d;
     Process * owner;
     bool Inited;
@@ -52,8 +52,8 @@ Constructions::Constructions(DFContextShared * d_)
     d->owner = d_->p;
     d->p_cons = 0;
     d->Inited = d->Started = false;
-    memory_info * mem = d->d->offset_descriptor;
-    d->construction_vector = mem->getAddress ("construction_vector");
+    VersionInfo * mem = d->d->offset_descriptor;
+    d->construction_vector = mem->getGroup("Constructions")->getAddress ("vector");
     d->Inited = true;
 }
 

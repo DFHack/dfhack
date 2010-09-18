@@ -21,7 +21,9 @@ namespace DFHack
         bool Finish();
         
         ///true if paused, false if not
-        bool ReadPauseState(); 
+        bool ReadPauseState();
+        ///true if paused, false if not
+        void SetPauseState(bool paused);
         /// read the DF menu view state (stock screen, unit screen, other screens
         bool ReadViewScreen(t_viewscreen &);
         /// read the DF menu state (designation menu ect)

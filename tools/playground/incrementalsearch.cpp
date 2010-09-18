@@ -181,12 +181,12 @@ bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges
         {
             // empty input, assume default. observe the length of the memory range vector
             // these are hardcoded values, intended for my convenience only
-            if(p->getDescriptor()->getOS() == DFHack::memory_info::OS_WINDOWS)
+            if(p->getDescriptor()->getOS() == DFHack::VersionInfo::OS_WINDOWS)
             {
                 start = min(11, (int)ranges.size());
                 end = min(14, (int)ranges.size());
             }
-            else if(p->getDescriptor()->getOS() == DFHack::memory_info::OS_LINUX)
+            else if(p->getDescriptor()->getOS() == DFHack::VersionInfo::OS_LINUX)
             {
                 start = min(2, (int)ranges.size());
                 end = min(4, (int)ranges.size());
@@ -481,6 +481,22 @@ void FindPtrVectorsByObjectAddress(DFHack::ContextManager & DFMgr, vector <DFHac
         DF->Detach();
     }
 }
+
+void FindStrBufs(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+{
+    vector <uint64_t> found;
+    string select;
+    while (Incremental(found,"buffer",select,"buffer","buffers"))
+    {
+        DFMgr.Refresh();
+        DFHack::Context * DF = DFMgr.getSingleContext();
+        DF->Attach();
+        SegmentedFinder sf(ranges,DF);
+        sf.Find< const char * ,uint32_t>(select.c_str(),1,found, findStrBuffer);
+        DF->Detach();
+    }
+}
+
 
 
 void FindStrings(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
@@ -793,18 +809,19 @@ int main (void)
     vector <DFHack::t_memrange> selected_ranges;
     getRanges(p,selected_ranges);
 
-    DFHack::memory_info *minfo = DF->getMemoryInfo();
-    DFHack::memory_info::OSType os = minfo->getOS();
+    DFHack::VersionInfo *minfo = DF->getMemoryInfo();
+    DFHack::VersionInfo::OSType os = minfo->getOS();
 
     string prompt =
     "Select search type: 1=number(default), 2=vector by length, 3=vector>object>string,\n"
     "                    4=string, 5=automated offset search, 6=vector by address in its array,\n"
-    "                    7=pointer vector by address of an object, 8=vector>first object>string\n";
+    "                    7=pointer vector by address of an object, 8=vector>first object>string\n"
+    "                    9=string buffers\n";
     int mode;
     do
     {
         getNumber(prompt,mode, 1, false);
-    } while (mode < 1 || mode > 8 );
+    } while (mode < 1 || mode > 9 );
     switch (mode)
     {
         case 1:
@@ -837,6 +854,10 @@ int main (void)
         case 8:
             DF->Detach();
             FindVectorByFirstObjectRawname(DFMgr, selected_ranges);
+            break;
+        case 9:
+            DF->Detach();
+            FindStrBufs(DFMgr, selected_ranges);
             break;
         default:
             cout << "not implemented :(" << endl;

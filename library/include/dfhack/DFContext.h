@@ -40,7 +40,7 @@ namespace DFHack
     class Vegetation;
     class Buildings;
     class Constructions;
-    class memory_info;
+    class VersionInfo;
     class DFContextShared;
     class WindowIO;
     class Process;
@@ -71,7 +71,7 @@ namespace DFHack
         /// forces resume on Windows. This can be a bad thing with multiple tools running!
         bool ForceResume();
 
-        memory_info *getMemoryInfo();
+        VersionInfo *getMemoryInfo();
         Process* getProcess();
 
         void ReadRaw (const uint32_t offset, const uint32_t size, uint8_t *target);

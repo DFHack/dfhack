@@ -4,7 +4,7 @@
 #include <mod-maps.h>
 #include <mod-creature40d.h>
 #include "private/ContextShared.h"
-#include "dfhack/DFMemInfo.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 
 #include "dfhack/modules/Materials.h"
@@ -40,9 +40,10 @@ DFContextShared::~DFContextShared()
 
 bool DFContextShared::InitReadNames()
 {
-    name_firstname_offset = offset_descriptor->getOffset("name_firstname");
-    name_nickname_offset = offset_descriptor->getOffset("name_nickname");
-    name_words_offset = offset_descriptor->getOffset("name_words");
+    OffsetGroup * OG = offset_descriptor->getGroup("name");
+    name_firstname_offset = OG->getOffset("first");
+    name_nickname_offset = OG->getOffset("nick");
+    name_words_offset = OG->getOffset("second_words");
     return true;
 }
 

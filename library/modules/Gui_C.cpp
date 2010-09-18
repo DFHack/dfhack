@@ -60,11 +60,21 @@ int Gui_ReadPauseState(DFHackObject* gui)
 
 int Gui_ReadViewScreen(DFHackObject* gui, t_viewscreen* viewscreen)
 {
-	//int result;
-	
 	if(gui != NULL)
 	{
 		return ((DFHack::Gui*)gui)->ReadViewScreen(*viewscreen);
+	}
+	
+	return -1;
+}
+
+int Gui_ReadMenuState(DFHackObject* gui, uint32_t* menuState)
+{
+	if(gui != NULL)
+	{
+		*menuState = ((DFHack::Gui*)gui)->ReadMenuState();
+		
+		return 1;
 	}
 	
 	return -1;

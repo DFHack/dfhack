@@ -1588,12 +1588,12 @@
                 <Address name="creature_type_vector" value="0x1699ff8 0x16BD204" />
                 <Address name="other" value="0x16C6478" invalid="true"/>
                 <Group name="creature">
-                    <Offset name="caste_vector" value="0x138" />
-                    <Offset name="extract_vector" value="0x1A14" />
+                    <Offset name="caste_vector" value="0x124" />
+                    <Offset name="extract_vector" value="0x1A04" />
                     <Offset name="tile" value="0xE0" />
                     <Offset name="tile_color" value="0xF6" />
                     <Group name="caste">
-                        <Offset name="bodypart_vector" value="0x51C" />
+                        <Offset name="bodypart_vector" value="0x518" />
                         <Offset name="attributes" value="0x654" />
                         <Offset name="color_modifiers" value="0xACC" />
                     </Group>

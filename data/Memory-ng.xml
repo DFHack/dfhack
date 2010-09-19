@@ -1481,13 +1481,13 @@
             <Address name="WORLD" value="0x016425A0" />
             <Group name="vector">
                 <HexValue name="sizeof" value="0x10" />
-                <Offset name="start" value="0x4" />
+                <Offset name="start" value="0x0" />
                 <!--
                 Vector layout in MSVC 10:
-                DWORD ?
                 DWORD Start
                 DWORD End
                 DWORD AllocationEnd
+                DWORD ?
 
                 NOT FINAL, needs research
                 -->
@@ -1516,7 +1516,7 @@
             <Address name="current_weather" value="0x147E948" />
             </Group>
             <Group name="Vegetation">
-                <Address name="vector" value="0x1656EF8" />
+                <Address name="vector" value="0x1656EFC" />
             </Group>
             <Group name="Maps">
                 <Address name="map_data" value="0x1697bd4 0x016AD718" />
@@ -1551,7 +1551,7 @@
                 -->
                 <Group name="features">
                     <Group name="global">
-                        <Address name="vector" value="0x16999B8 0x16AF4FC" />
+                        <Address name="vector" value="0x16999BC 0x16AF4FC" />
                         <!--
                         BAD!
                         <Offset name="funcptr" value="0x100" />
@@ -1560,7 +1560,7 @@
                         -->
                     </Group>
                     <Group name="local">
-                        <Address name="start_ptr" value="0x1699A84 0x16AF5C8" />
+                        <Address name="start_ptr" value="0x1699A88 0x16AF5C8" />
                         <!--
                         BAD?
                         <Offset name="material" value="0x30" />
@@ -1569,8 +1569,8 @@
                     </Group>
                 </Group>
                 <Group name="geology">
-                    <Address name="geoblock_vector" value="0x16999E8 0x16AF52C" />
-                    <Address name="ptr2_region_array" value="0x1699A30 0x16AF574" />
+                    <Address name="geoblock_vector" value="0x16999EC 0x16AF52C" />
+                    <Address name="ptr2_region_array" value="0x1699A34 0x16AF574" />
                     <!--
                     BAD!
                     <HexValue name="region_size" value="0x64" />
@@ -1581,49 +1581,44 @@
                 </Group>
             </Group>
             <Group name="Materials">
-                <Address name="inorganics" value="0x1699f14 0x16BD0B0" />
-                <Address name="organics_all" value="0x1699f24 0x16BD0C8" />
-                <Address name="organics_trees" value="0x1699f54 0x16bd110" />
-                <Address name="organics_plants" value="0x1699f34 0x16bd0e0" />
-                <Address name="creature_type_vector" value="0x1699ff8 0x16BD204" />
-                <Address name="other" value="0x16C6478" invalid="true"/>
+                <Address name="inorganics" value="0x1699f18 0x16BD0B0" />
+                <Address name="organics_all" value="0x1699f28 0x16BD0C8" />
+                <Address name="organics_trees" value="0x1699f58 0x16bd110" />
+                <Address name="organics_plants" value="0x1699f38 0x16bd0e0" />
+                <Address name="creature_type_vector" value="0x1699ffC 0x16BD204" />
+                <Address name="other" value="0x16C647C" /> NO!
                 <Group name="creature">
-                    <Offset name="caste_vector" value="0x124" />
-                    <Offset name="extract_vector" value="0x1A04" />
-                    <Offset name="tile" value="0xE0" />
-                    <Offset name="tile_color" value="0xF6" />
+                    <Offset name="caste_vector" value="0x128" /> YES
+                    <Offset name="extract_vector" value="0x1A08" /> YES
+                    <Offset name="tile" value="0xE0" /> YES
+                    <Offset name="tile_color" value="0xF6" /> YES
                     <Group name="caste">
-                        <Offset name="bodypart_vector" value="0x518" />
-                        <Offset name="attributes" value="0x654" />
-                        <Offset name="color_modifiers" value="0xACC" />
+                        <Offset name="bodypart_vector" value="0x51C" /> YES
+                        <Offset name="attributes" value="0x5FC" /> MAYBE
+                        <Offset name="color_modifiers" value="0xA24" /> YES
                     </Group>
-                    <Group name="caste_color_mods">
-                        <Offset name="part" value="0x70" />
-                        <Offset name="startdate" value="0x64" />
-                        <Offset name="enddate" value="0x68" />
+                    <Group name="caste_color_mods"> YES
+                        <Offset name="part" value="0x50" />
+                        <Offset name="startdate" value="0x44" />
+                        <Offset name="enddate" value="0x48" />
                     </Group>
-                    <Group name="caste_bodyparts">
+                    <Group name="caste_bodyparts"> YES
                         <Offset name="id" value="0x0" />
                         <Offset name="category" value="0x1C" />
                         <Offset name="layers_vector" value="0x44" />
-                        <Offset name="singular_vector" value="0x78" />
-                        <Offset name="plural_vector" value="0x90" />
+                        <Offset name="singular_vector" value="0x70" />
+                        <Offset name="plural_vector" value="0x80" />
                     </Group>
                 </Group>
                 <Group name="descriptors">
-                    <Address name="vectors_start" value="0x16B9780" />
+                    <!--<Address name="vectors_start" value="0x16B9780" />--> this is crap it seems
                     <Offset name="rawname" value="0x0" />
-                    <Offset name="name" value="0x4C" />
-                    <Address name="colors_vector" value="0x16B9768" />
-                    <Offset name="color_r" value="0x6C" />
-                    <Offset name="color_v" value="0x70" />
-                    <Offset name="color_b" value="0x74" />
-                    <Address name="all_colors_vector" value="0x16B9798" />
-                </Group>
-                <Group name="descriptors">
-                    <Address name="colors_vector" value="0x16C5ACC" />
-                    <Address name="vectors_start" value="0x16C5AE4" />
-                    <Address name="all_colors_vector" value="0x16C5AFC" />
+                    <Offset name="name" value="0x3C" />
+                    <Address name="colors_vector" value="0x169fb2c" />
+                    <Offset name="color_r" value="0x5C" />
+                    <Offset name="color_v" value="0x60" />
+                    <Offset name="color_b" value="0x64" />
+                    <Address name="all_colors_vector" value="0x169fb4c" />
                 </Group>
             </Group>
         </Offsets>

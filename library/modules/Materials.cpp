@@ -402,19 +402,23 @@ bool Materials::ReadCreatureTypesEx (void)
             p->readSTLString (caste_start + sizeof_string, caste.singular, sizeof(caste.singular));
             p->readSTLString (caste_start + 2 * sizeof_string, caste.plural, sizeof(caste.plural));
             p->readSTLString (caste_start + 3 * sizeof_string, caste.adjective, sizeof(caste.adjective));
+            cout << "Caste " << caste.rawname << " " << caste.singular << ": 0x" << hex << caste_start << endl;
             if(have_advanced)
             {
                 /* color mod reading */
+                // Caste + offset > color mod vector
                 DfVector <uint32_t> p_colormod(p, caste_start + caste_colormod_offset);
                 sizecolormod = p_colormod.size();
                 caste.ColorModifier.resize(sizecolormod);
                 for(uint32_t k = 0; k < sizecolormod;k++)
                 {
+                    // color mod [0] -> color list
                     DfVector <uint32_t> p_colorlist(p, p_colormod[k]);
                     sizecolorlist = p_colorlist.size();
                     caste.ColorModifier[k].colorlist.resize(sizecolorlist);
                     for(uint32_t l = 0; l < sizecolorlist; l++)
                         caste.ColorModifier[k].colorlist[l] = p_colorlist[l];
+                    // color mod [color_modifier_part_offset] = string part
                     p->readSTLString( p_colormod[k] + color_modifier_part_offset, caste.ColorModifier[k].part, sizeof(caste.ColorModifier[k].part));
                     caste.ColorModifier[k].startdate = p->readDWord( p_colormod[k] + color_modifier_startdate_offset );
                     caste.ColorModifier[k].enddate = p->readDWord( p_colormod[k] + color_modifier_enddate_offset );

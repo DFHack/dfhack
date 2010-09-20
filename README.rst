@@ -45,11 +45,12 @@ Windows
     fix it :)
 
 0.31.01 - 0.31.03 legacy
-0.31.04 - 0.31.12 SDL
+0.31.04 - 0.31.13 SDL
+There are missing offsets but Map tools should be OK. Wait for updates...
 
 Linux
 =====
-0.31.05 - 0.31.12 native.
+0.31.05 - 0.31.13 native.
 There are missing offsets but Map tools should be OK. Linux support is
 a bit lacking, I'm working on it. All supported Windows versions
 running in wine can be used with native DFHack binaries.
@@ -127,6 +128,11 @@ Dumps the offsets for the currently running DF version into the terminal.
 dfcleartask
 ===========
 Solves the problem of unusable items after reclaim by clearing the 'in_job' bit of all items.
+
+dfweather
+===========
+Lets you change the current weather to 'clear sky', 'rainy' or 'snowing'. Fill those ponds without mucking around with dfliquids 
+:D Rain can also stop brush fires.
 
 Your tool here
 ==============

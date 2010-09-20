@@ -1538,7 +1538,7 @@
                     <Offset name="vein_vector" value="0x08" />
                     <Offset name="feature_local" value="0x24 0x2C" />
                     <Offset name="feature_global" value="0x28 0x30" />
-                    <Offset name="type" value="0x76 0x009A" />
+                    <Offset name="type" value="0x7A 0x009A" />
                     <Offset name="designation" value="0x27C 0x029C" />
                     <Offset name="occupancy" value="0x67C 0x069c" />
                     <Offset name="temperature1" value="0x157C 0x159c" />

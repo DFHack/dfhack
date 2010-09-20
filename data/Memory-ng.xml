@@ -1519,36 +1519,33 @@
                 <Address name="vector" value="0x1656EFC" />
             </Group>
             <Group name="Maps">
-                <Address name="map_data" value="0x1697bd4 0x016AD718" />
-                <Address name="x_count_block" value="0x1697bf4 0x016ad738" />
-                <Address name="y_count_block" value="0x1697bf8 0x016ad73C" />
-                <Address name="z_count_block" value="0x1697bfc 0x016ad740" />
-                <Address name="x_count" value="0x1697c00 0x016ad744" />
-                <Address name="y_count" value="0x1697c04 0x016ad748" />
-                <Address name="z_count" value="0x1697c08 0x016ad74C" />
-                <Address name="region_x" value="0x1697c0C 0x016ad750" />
+                <Address name="map_data" value="0x1697bdC" />
+                <Address name="x_count_block" value="0x1697bf4" />
+                <Address name="y_count_block" value="0x1697bf8" />
+                <Address name="z_count_block" value="0x1697bfc" />
+                <Address name="x_count" value="0x1697c00" />
+                <Address name="y_count" value="0x1697c04" />
+                <Address name="z_count" value="0x1697c08" />
+                <Address name="region_x" value="0x1697c0C" />
                 <!--WORLD + 0x525C8-->
-                <Address name="region_y" value="0x1697c10 0x016ad754" />
+                <Address name="region_y" value="0x1697c10" />
                 <!--WORLD + 0x525CC-->
-                <Address name="region_z" value="0x1697c14 0x016ad758" />
+                <Address name="region_z" value="0x1697c14" />
                 <!--WORLD + 0x525D0-->
-                <Address name="world_size_x" value="0x1699290 0x016AEDD4" />
-                <Address name="world_size_y" value="0x1699292 0x016AEDD6" />
-                <!--
-                These are all bad and need fixing
+                <Address name="world_size_x" value="0x1699290" />
+                <Address name="world_size_y" value="0x1699292" />
                 <Group name="block">
                     <Offset name="vein_vector" value="0x08" />
-                    <Offset name="type" value="0x009A" />
-                    <Offset name="designation" value="0x029C" />
-                    <Offset name="occupancy" value="0x069c" />
-                    <Offset name="temperature1" value="0x159c" />
-                    <Offset name="temperature2" value="0x179c" />
-                    <Offset name="biome_stuffs" value="0x1D9C" />
-                    <Offset name="pathfinding" value="0x0D9c" />
-                    <Offset name="feature_local" value="0x2C" />
-                    <Offset name="feature_global" value="0x30" />
+                    <Offset name="feature_local" value="0x24 0x2C" />
+                    <Offset name="feature_global" value="0x28 0x30" />
+                    <Offset name="type" value="0x76 0x009A" />
+                    <Offset name="designation" value="0x27C 0x029C" />
+                    <Offset name="occupancy" value="0x67C 0x069c" />
+                    <Offset name="temperature1" value="0x157C 0x159c" />
+                    <Offset name="temperature2" value="0x177C 0x179c" />
+                    <Offset name="biome_stuffs" value="0x1D7C 0x1D9C" />
+                    <Offset name="pathfinding" value="0x0D7c 0x0D9c" />
                 </Group>
-                -->
                 <Group name="features">
                     <Group name="global">
                         <Address name="vector" value="0x16999BC 0x16AF4FC" />
@@ -1580,7 +1577,7 @@
                     -->
                 </Group>
             </Group>
-            <Group name="Materials">
+            <Group name="Materials"> YES
                 <Address name="inorganics" value="0x1699f18 0x16BD0B0" />
                 <Address name="organics_all" value="0x1699f28 0x16BD0C8" />
                 <Address name="organics_trees" value="0x1699f58 0x16bd110" />

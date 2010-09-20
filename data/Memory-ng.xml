@@ -1548,21 +1548,15 @@
                 </Group>
                 <Group name="features">
                     <Group name="global">
-                        <Address name="vector" value="0x16999BC 0x16AF4FC" />
-                        <!--
-                        BAD!
-                        <Offset name="funcptr" value="0x100" />
-                        <Offset name="material" value="0x34" />
-                        <Offset name="submaterial" value="0x38" />
-                        -->
+                        <Address name="vector" value="0x16998e0" />
+                        <Offset name="funcptr" value="0xD8" />
+                        <Offset name="material" value="0x2C" />
+                        <Offset name="submaterial" value="0x30" />
                     </Group>
                     <Group name="local">
-                        <Address name="start_ptr" value="0x1699A88 0x16AF5C8" />
-                        <!--
-                        BAD?
-                        <Offset name="material" value="0x30" />
-                        <Offset name="submaterial" value="0x34" />
-                        -->
+                        <Address name="start_ptr" value="0x1699974" />
+                        <Offset name="material" value="0x28" />
+                        <Offset name="submaterial" value="0x2C" />
                     </Group>
                 </Group>
                 <Group name="geology">

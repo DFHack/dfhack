@@ -8,6 +8,20 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/modules/Gui.h>
 
+#ifdef LINUX_BUILD
+#include <unistd.h>
+void waitmsec (int delay)
+{
+    usleep(delay);
+}
+#else
+#include <windows.h>
+void waitmsec (int delay)
+{
+    Sleep(delay);
+}
+#endif
+
 struct hideblock
 {
     uint32_t x;
@@ -48,7 +62,7 @@ int main (void)
     // this here hack sets the pause state, resumes DF, waits a second for it to enter the pause (I know, BS value.) and suspends.
     Gui->SetPauseState(true);
     DF->Resume();
-    sleep(1);
+    waitmsec(1000);
     DF->Suspend();
 
     // init the map

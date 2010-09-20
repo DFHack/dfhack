@@ -1560,15 +1560,12 @@
                     </Group>
                 </Group>
                 <Group name="geology">
-                    <Address name="geoblock_vector" value="0x16999EC 0x16AF52C" />
-                    <Address name="ptr2_region_array" value="0x1699A34 0x16AF574" />
-                    <!--
-                    BAD!
-                    <HexValue name="region_size" value="0x64" />
-                    <Offset name="region_geo_index_off" value="0x60" />
+                    <Address name="geoblock_vector" value="0x1699900" />
+                    <Address name="ptr2_region_array" value="0x1699930" />
+                    <HexValue name="region_size" value="0x5C" />
+                    <Offset name="region_geo_index_off" value="0x58" />
                     <Offset name="geolayer_geoblock_offset" value="0x4" /> vector
                     <Offset name="type_inside_geolayer" value="0x4" /> vector
-                    -->
                 </Group>
             </Group>
             <Group name="Materials"> YES

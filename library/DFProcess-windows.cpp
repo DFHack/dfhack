@@ -48,6 +48,9 @@ class NormalProcess::Private
         bool attached;
         bool suspended;
         bool identified;
+        uint32_t STLSTR_buf_off;
+        uint32_t STLSTR_size_off;
+        uint32_t STLSTR_cap_off;
 };
 
 NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versions)
@@ -134,7 +137,10 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
             vector<uint32_t> threads;
             getThreadIDs( threads );
             d->my_main_thread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads[0]);
-
+            OffsetGroup * strGrp = m->getGroup("string")->getGroup("MSVC");
+            d->STLSTR_buf_off = strGrp->getOffset("buffer");
+            d->STLSTR_size_off = strGrp->getOffset("size");
+            d->STLSTR_cap_off = strGrp->getOffset("capacity");
             found = true;
             break; // break the iterator loop
         }
@@ -430,21 +436,9 @@ const string NormalProcess::readCString (const uint32_t offset)
 
 size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
-    /*
-    MSVC++ string
-    ptr allocator
-    union
-    {
-        char[16] start;
-        char * start_ptr
-}
-Uint32 length
-Uint32 capacity
-*/
-    uint32_t start_offset = offset + 4;
-    size_t length = readDWord(offset + 20);
-
-    size_t capacity = readDWord(offset + 24);
+    uint32_t start_offset = offset + d->STLSTR_buf_off;
+    size_t length = readDWord(offset + d->STLSTR_size_off);
+    size_t capacity = readDWord(offset + d->STLSTR_cap_off);
     size_t read_real = min(length, bufcapacity-1);// keep space for null termination
 
     // read data from inside the string structure
@@ -464,20 +458,9 @@ Uint32 capacity
 
 const string NormalProcess::readSTLString (uint32_t offset)
 {
-    /*
-        MSVC++ string
-        ptr allocator
-        union
-        {
-            char[16] start;
-            char * start_ptr
-        }
-        Uint32 length
-        Uint32 capacity
-    */
-    uint32_t start_offset = offset + 4;
-    uint32_t length = readDWord(offset + 20);
-    uint32_t capacity = readDWord(offset + 24);
+    uint32_t start_offset = offset + d->STLSTR_buf_off;
+    size_t length = readDWord(offset + d->STLSTR_size_off);
+    size_t capacity = readDWord(offset + d->STLSTR_cap_off);
     char * temp = new char[capacity+1];
 
     // read data from inside the string structure

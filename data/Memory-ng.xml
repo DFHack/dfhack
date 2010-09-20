@@ -674,6 +674,22 @@
             </Group>
             <Group name="string" description="An STL string.">
                 <HexValue name="sizeof" description="The total size in bytes." />
+                <Group name="MSVC">
+                    <!--
+                    MSVC++ 9 string
+                    void * allocator
+                    union
+                    {
+                        char[16] start;
+                        char * start_ptr
+                    }
+                    Uint32 length
+                    Uint32 capacity
+                    -->
+                    <Offset name="buffer" description="Where the buffer/pointer starts." />
+                    <Offset name="size" description="Where the number of leters is stored (string length without 0-terminator)." />
+                    <Offset name="capacity" description="Capacity of the buffer in letters (default=15)." />
+                </Group>
             </Group>
             <Group name="name" description="A structure used for names all over the place.">
                 <Offset name="first" description="Lowercase stl string with the first name. For ex. 'urist'" />
@@ -938,6 +954,11 @@
             </Group>
             <Group name="string">
                 <HexValue name="sizeof" value="0x1C" />
+                <Group name="MSVC">
+                    <Offset name="buffer" value="0x4" />
+                    <Offset name="size" value="0x14" />
+                    <Offset name="capacity" value="0x18" />
+                </Group>
             </Group>
             <Group name="name">
                 <Offset name="first" value="0x0" />
@@ -1217,7 +1238,6 @@
             </Group>
             <Group name="Materials">
                 <Address name="inorganics" value="0x16B0D4C" /><!--inorganics vector = WORLD + 0x54B7C = 0x16B0D4C-->
-                <!--<Address name="other" value="0x16BA114" /> -->  <!-- stuff like glass, coke, ... -->
                 <Address name="organics_all" value="0x16B0D64" /><!--WORLD + 0x54B94-->
                 <Address name="organics_plants" value="0x16B0D7C" /><!--plant matter, WORLD + 0x54BAC-->
                 <Address name="organics_trees" value="0x16B0DAC" /><!--just wood, WORLD + 0x54BDC-->
@@ -1459,6 +1479,27 @@
         <PETimeStamp value="0x4C90ADA8" />
         <Offsets>
             <Address name="WORLD" value="0x016425A0" />
+            <Group name="vector">
+                <HexValue name="sizeof" value="0x10" />
+                <Offset name="start" value="0x0" />
+                <!--
+                Vector layout in MSVC 10:
+                DWORD Start
+                DWORD End
+                DWORD AllocationEnd
+                DWORD ?
+
+                NOT FINAL, needs research
+                -->
+            </Group>
+            <Group name="string">
+                <HexValue name="sizeof" value="0x1C" />
+                <Group name="MSVC">
+                    <Offset name="buffer" value="0x0" />
+                    <Offset name="size" value="0x10" />
+                    <Offset name="capacity" value="0x14" />
+                </Group>
+            </Group>
             0x01482874 - current race
             <Group name="Position">
                 <Address name="cursor_xyz" value="0xac77f0" />
@@ -1472,10 +1513,110 @@
                 <Address name="pause_state" value="0x147E971" />
             </Group>
             <Group name="World">
-                <Address name="current_weather" value="0x147F94E 0x14BCDEE" /><!-- bad, not 25 byte array! -->
+            <Address name="current_weather" value="0x147E948" />
             </Group>
             <Group name="Vegetation">
-                <Address name="vector" value="0x1656EF0" />
+                <Address name="vector" value="0x1656EFC" />
+            </Group>
+            <Group name="Maps">
+                <Address name="map_data" value="0x1697bdC" />
+                <Address name="x_count_block" value="0x1697bf4" />
+                <Address name="y_count_block" value="0x1697bf8" />
+                <Address name="z_count_block" value="0x1697bfc" />
+                <Address name="x_count" value="0x1697c00" />
+                <Address name="y_count" value="0x1697c04" />
+                <Address name="z_count" value="0x1697c08" />
+                <Address name="region_x" value="0x1697c0C" />
+                <!--WORLD + 0x525C8-->
+                <Address name="region_y" value="0x1697c10" />
+                <!--WORLD + 0x525CC-->
+                <Address name="region_z" value="0x1697c14" />
+                <!--WORLD + 0x525D0-->
+                <Address name="world_size_x" value="0x1699290" />
+                <Address name="world_size_y" value="0x1699292" />
+                <Group name="block">
+                    <Offset name="vein_vector" value="0x08" />
+                    <Offset name="feature_local" value="0x24 0x2C" />
+                    <Offset name="feature_global" value="0x28 0x30" />
+                    <Offset name="type" value="0x7A 0x009A" />
+                    <Offset name="designation" value="0x27C 0x029C" />
+                    <Offset name="occupancy" value="0x67C 0x069c" />
+                    <Offset name="temperature1" value="0x157C 0x159c" />
+                    <Offset name="temperature2" value="0x177C 0x179c" />
+                    <Offset name="biome_stuffs" value="0x1D7C 0x1D9C" />
+                    <Offset name="pathfinding" value="0x0D7c 0x0D9c" />
+                </Group>
+                <Group name="features">
+                    <Group name="global">
+                        <Address name="vector" value="0x16999BC 0x16AF4FC" />
+                        <!--
+                        BAD!
+                        <Offset name="funcptr" value="0x100" />
+                        <Offset name="material" value="0x34" />
+                        <Offset name="submaterial" value="0x38" />
+                        -->
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" value="0x1699A88 0x16AF5C8" />
+                        <!--
+                        BAD?
+                        <Offset name="material" value="0x30" />
+                        <Offset name="submaterial" value="0x34" />
+                        -->
+                    </Group>
+                </Group>
+                <Group name="geology">
+                    <Address name="geoblock_vector" value="0x16999EC 0x16AF52C" />
+                    <Address name="ptr2_region_array" value="0x1699A34 0x16AF574" />
+                    <!--
+                    BAD!
+                    <HexValue name="region_size" value="0x64" />
+                    <Offset name="region_geo_index_off" value="0x60" />
+                    <Offset name="geolayer_geoblock_offset" value="0x4" /> vector
+                    <Offset name="type_inside_geolayer" value="0x4" /> vector
+                    -->
+                </Group>
+            </Group>
+            <Group name="Materials"> YES
+                <Address name="inorganics" value="0x1699f18 0x16BD0B0" />
+                <Address name="organics_all" value="0x1699f28 0x16BD0C8" />
+                <Address name="organics_trees" value="0x1699f58 0x16bd110" />
+                <Address name="organics_plants" value="0x1699f38 0x16bd0e0" />
+                <Address name="creature_type_vector" value="0x1699ffC 0x16BD204" />
+                <Address name="other" value="0x16C647C" /> NO!
+                <Group name="creature">
+                    <Offset name="caste_vector" value="0x128" /> YES
+                    <Offset name="extract_vector" value="0x1A08" /> YES
+                    <Offset name="tile" value="0xE0" /> YES
+                    <Offset name="tile_color" value="0xF6" /> YES
+                    <Group name="caste">
+                        <Offset name="bodypart_vector" value="0x51C" /> YES
+                        <Offset name="attributes" value="0x5FC" /> MAYBE
+                        <Offset name="color_modifiers" value="0xA24" /> YES
+                    </Group>
+                    <Group name="caste_color_mods"> YES
+                        <Offset name="part" value="0x50" />
+                        <Offset name="startdate" value="0x44" />
+                        <Offset name="enddate" value="0x48" />
+                    </Group>
+                    <Group name="caste_bodyparts"> YES
+                        <Offset name="id" value="0x0" />
+                        <Offset name="category" value="0x1C" />
+                        <Offset name="layers_vector" value="0x44" />
+                        <Offset name="singular_vector" value="0x70" />
+                        <Offset name="plural_vector" value="0x80" />
+                    </Group>
+                </Group>
+                <Group name="descriptors">
+                    <!--<Address name="vectors_start" value="0x16B9780" />--> this is crap it seems
+                    <Offset name="rawname" value="0x0" />
+                    <Offset name="name" value="0x3C" />
+                    <Address name="colors_vector" value="0x169fb2c" />
+                    <Offset name="color_r" value="0x5C" />
+                    <Offset name="color_v" value="0x60" />
+                    <Offset name="color_b" value="0x64" />
+                    <Address name="all_colors_vector" value="0x169fb4c" />
+                </Group>
             </Group>
         </Offsets>
     </Version>
@@ -1718,6 +1859,24 @@
         <!-- TODO: fix creature offsets -->
         <!-- TODO: small offsets added all over the place, investigate -->
         <MD5 value="4f1f988bc1b425d4193d3d8b7b0579a5" />
+        <Offsets>
+            <Group name="Creatures">
+                <Group name="creature" valid="verify" >
+                    <Group name="advanced">
+                        <Offset name="soul_vector" value="0x0524" />
+                        <Offset name="current_soul" value="0x0530" valid="verify" />
+                        <Offset name="labors" value="0x540" />
+                        <Offset name="happiness" value="0x5d0" />
+                    </Group>
+                </Group>
+                <Group name="soul" valid="verify">
+                    <Offset name="name" value="0x0" />
+                    <Offset name="mental" value="0x88" />
+                    <Offset name="skills_vector" value="0x1C4" /> CHMOD
+                    <Offset name="traits" value="0x1DC" />
+                </Group>
+            </Group>
+        </Offsets>
     </Version>
     <Version name="v0.31.10 linux" os="linux" base="v0.31.09 linux">
         <MD5 value="3e7bea269018a6fb88ef53715685aa64" />
@@ -1755,6 +1914,9 @@
             <Group name="GUI">
                 <!-- FIXME: this could be wrong for many other versions. Investigate. -->
                 <Address name="pause_state" value="0x92ec65c"/>
+            </Group>
+            <Group name="Creatures">
+                <Address name="current_race" value="0x092ee548" />
             </Group>
             <Group name="Constructions">
                 <Address name="vector" value="0x92f30a4"/>

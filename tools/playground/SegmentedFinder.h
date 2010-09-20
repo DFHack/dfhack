@@ -311,4 +311,11 @@ bool findString (SegmentedFinder* s, uint32_t *addr, const char * compare )
     return false;
 }
 
+bool findStrBuffer (SegmentedFinder* s, uint32_t *addr, const char * compare )
+{
+    if(strcmp((const char *)addr, compare) == 0)
+        return true;
+    return false;
+}
+
 #endif // SEGMENTED_FINDER_H

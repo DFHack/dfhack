@@ -605,7 +605,7 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
             if(name)
             {
                 string str_name = name;
-                knownVersions[str_name] = v_descr (pMemInfo, NULL);
+                knownVersions[str_name] = v_descr (pMemInfo, (VersionInfo *) NULL);
                 v_sEntries.push_back(str_name);
             }
         }

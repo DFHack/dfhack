@@ -1609,6 +1609,26 @@
                     <Address name="all_colors_vector" value="0x169fb4c" />
                 </Group>
             </Group>
+            <Group name="Constructions">
+                <Address name="vector"/>
+                <Offset name="sizeof"/>
+            </Group>
+            <Group name="Translations">
+                <Address name="language_vector"/>
+                <Address name="translation_vector"/>
+                <Offset name="word_table"/>
+            </Group>
+            <Group name="Vegetation">
+                <Address name="vector"/>
+                <Offset name="tree_desc_offset"/>
+            </Group>
+            <Group name="Buildings">
+                <Address name="buildings_vector"/>
+                <Offset name="building_custom_workshop_type"/>
+                <Address name="custom_workshop_vector"/>
+                <Offset name="custom_workshop_name"/>
+                <Offset name="custom_workshop_type"/>
+            </Group>
         </Offsets>
     </Version>
     31.13 WEATHER_START 0147E94E

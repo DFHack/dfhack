@@ -133,12 +133,22 @@ uint32_t World::ReadCurrentDay()
 uint8_t World::ReadCurrentWeather()
 {
     if (d->Inited && d->StartedWeather)
-        return(d->owner->readByte(d->weather_offset));
+        return(d->owner->readByte(d->weather_offset + 12));
     return 0;
 }
-
+/*
 void World::SetCurrentWeather(uint8_t weather)
 {
     if (d->Inited && d->StartedWeather)
         d->owner->writeByte(d->weather_offset,weather);
+}
+*/
+void World::SetCurrentWeather(uint8_t weather)
+{
+    if (d->Inited && d->StartedWeather)
+    {
+        uint8_t buf[25];
+        memset(&buf,weather, sizeof(buf));
+        d->owner->write(d->weather_offset,sizeof(buf),buf);
+    }
 }

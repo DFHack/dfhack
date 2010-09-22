@@ -29,6 +29,7 @@ distribution.
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
 #include "dfhack/DFTypes.h"
+#include "dfhack/DFError.h"
 //#include "dfhack/modules/Translation.h"
 #include "dfhack/modules/Buildings.h"
 
@@ -62,6 +63,7 @@ struct Buildings::Private
     DFContextShared *d;
     Process * owner;
     bool Inited;
+    bool hasCustomWorkshops;
     bool Started;
 };
 
@@ -70,15 +72,23 @@ Buildings::Buildings(DFContextShared * d_)
     d = new Private;
     d->d = d_;
     d->owner = d_->p;
-    d->Inited = d->Started = false;
+    d->Inited = d->Started = d->hasCustomWorkshops = false;
     VersionInfo * mem = d->d->offset_descriptor;
     OffsetGroup * OG_build = mem->getGroup("Buildings");
-    d->custom_workshop_vector = OG_build->getAddress("custom_workshop_vector");
-    d->building_custom_workshop_type = OG_build->getOffset("building_custom_workshop_type");
-    d->custom_workshop_type = OG_build->getOffset("custom_workshop_type");
-    d->custom_workshop_name = OG_build->getOffset("custom_workshop_name");
     d->buildings_vector = OG_build->getAddress ("buildings_vector");
-    mem->resolveClassnameToClassID("building_custom_workshop", d->custom_workshop_id);
+    try
+    {
+        d->custom_workshop_vector = OG_build->getAddress("custom_workshop_vector");
+        d->building_custom_workshop_type = OG_build->getOffset("building_custom_workshop_type");
+        d->custom_workshop_type = OG_build->getOffset("custom_workshop_type");
+        d->custom_workshop_name = OG_build->getOffset("custom_workshop_name");
+        mem->resolveClassnameToClassID("building_custom_workshop", d->custom_workshop_id);
+        d->hasCustomWorkshops = true;
+    }
+    catch(DFHack::Error::UnsetMemoryDefinition &e)
+    {
+        cerr << "Custom workshops not available. Unset Memory Definition: " << e.what() << endl;
+    }
     d->Inited = true;
 }
 
@@ -140,6 +150,8 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 {
     if(!d->Started)
         return false;
+    if(!d->hasCustomWorkshops)
+        return false;
 
     Process * p = d->owner;
     DfVector <uint32_t> p_matgloss (p, d->custom_workshop_vector);
@@ -161,6 +173,8 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 int32_t Buildings::GetCustomWorkshopType(t_building & building)
 {
     if(!d->Inited)
+        return false;
+    if(!d->hasCustomWorkshops)
         return false;
     int32_t type = (int32_t)building.type;
     int32_t ret = -1;

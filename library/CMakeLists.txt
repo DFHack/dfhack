@@ -205,17 +205,21 @@ if(MSVC)
     # It exploits the fact that MSVC has some variables in .vcproj files, much like cmake does here.
     #
     # So, $(TargetDir) is ignored by cmake, and replaced with the actual output directory by MSVC
-    ADD_CUSTOM_COMMAND(TARGET dfhack POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/data/Memory-ng.xml $(TargetDir)/Memory.xml
+    ADD_CUSTOM_COMMAND(TARGET dfhack
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/data/Memory-ng.xml "$(TargetDir)/Memory.xml"
+    MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/data/Memory-ng.xml
     )
-    ADD_CUSTOM_COMMAND(TARGET dfhack POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Compile.html $(TargetDir)/Compile.html
+    ADD_CUSTOM_COMMAND(TARGET dfhack
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Compile.html "$(TargetDir)/Compile.html"
+    MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/Compile.html
     )
-    ADD_CUSTOM_COMMAND(TARGET dfhack POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Readme.html $(TargetDir)/Readme.html
+    ADD_CUSTOM_COMMAND(TARGET dfhack
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Readme.html "$(TargetDir)/Readme.html"
+    MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/Readme.html
     )
-    ADD_CUSTOM_COMMAND(TARGET dfhack POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/LICENSE $(TargetDir)/LICENSE.txt
+    ADD_CUSTOM_COMMAND(TARGET dfhack
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/LICENSE "$(TargetDir)/LICENSE.txt"
+    MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/LICENSE
     )
 else(MSVC)
     # Just put the file in the output directory on Linux and Mac

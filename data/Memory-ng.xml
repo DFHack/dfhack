@@ -1474,7 +1474,7 @@
             </Group>
         </Offsets>
     </Version>
-    <Version name="v0.31.13 SDL" os="windows" base="v0.31.12 SDL">
+    <Version name="v0.31.13 SDL" os="windows" base="DF2010">
         <MD5 value="59f194b0b2103ca5df7601a01ce21280" />
         <PETimeStamp value="0x4C90ADA8" />
         <Offsets>
@@ -1610,28 +1610,32 @@
                 </Group>
             </Group>
             <Group name="Constructions">
-                <Address name="vector"/>
-                <Offset name="sizeof"/>
+                <Address name="vector" value="0x1642650"/>
+                <Offset name="sizeof" value="0x14" />
             </Group>
             <Group name="Translations">
-                <Address name="language_vector"/>
-                <Address name="translation_vector"/>
-                <Offset name="word_table"/>
+                <Address name="language_vector" value="0x169a0fC"/>
+                <Address name="translation_vector" value="0x169a11C"/>
+                <Offset name="word_table" value="0x3c"/>
             </Group>
+            
             <Group name="Vegetation">
-                <Address name="vector"/>
-                <Offset name="tree_desc_offset"/>
+                <Address name="vector" value="0x1656efc"/>
+                <Offset name="tree_desc_offset" value="0x6C"/>
             </Group>
             <Group name="Buildings">
-                <Address name="buildings_vector"/>
+                <Address name="buildings_vector" value="0x1656890"/>
+                Second possible:  0x16568a0 (can't decide)
+                <!--
                 <Offset name="building_custom_workshop_type"/>
                 <Address name="custom_workshop_vector"/>
                 <Offset name="custom_workshop_name"/>
                 <Offset name="custom_workshop_type"/>
+                -->
             </Group>
         </Offsets>
     </Version>
-    31.13 WEATHER_START 0147E94E
+
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________

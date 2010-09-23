@@ -633,5 +633,6 @@ string WineProcess::getPath()
     sprintf(cwd_name,"/proc/%d/cwd", getPID());
     // resolve /proc/PID/exe link
     target_result = readlink(cwd_name, target_name, sizeof(target_name));
+    target_name[target_result] = '\0';
     return(string(target_name));
 }

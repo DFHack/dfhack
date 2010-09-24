@@ -54,6 +54,48 @@ int Maps_Finish(DFHackObject* maps)
 	return -1;
 }
 
+uint16_t* Maps_ReadGeology(DFHackObject*  maps)
+{
+	if(maps != NULL)
+	{
+		std::vector < std::vector <uint16_t> > geology;
+		
+		if(((DFHack::Maps*)maps)->ReadGeology(geology))
+		{
+			uint16_t* buf;
+			uint32_t geoLength = 0;
+			
+			for(int i = 0; i < geology.size(); i++)
+			{
+				for(int j = 0; j < geology[i].size(); j++)
+				{
+					geoLength += geology[i].size();
+				}
+			}
+			
+			(*alloc_ushort_buffer_callback)(buf, geoLength);
+			
+			if(buf != NULL)
+			{
+				uint16_t* bufCopyPtr = buf;
+				
+				for(int i = 0; i < geology.size(); i++)
+				{
+					copy(geology[i].begin(), geology[i].end(), bufCopyPtr);
+					
+					bufCopyPtr += geology[i].size();
+				}
+				
+				return buf;
+			}
+			else
+				return NULL;
+		}
+	}
+	
+	return NULL;
+}
+
 t_feature* Maps_ReadGlobalFeatures(DFHackObject* maps)
 {
 	if(maps != NULL)

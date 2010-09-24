@@ -37,6 +37,7 @@ DFHACK_EXPORT int Gui_Start(DFHackObject* gui);
 DFHACK_EXPORT int Gui_Finish(DFHackObject* gui);
 
 DFHACK_EXPORT int Gui_ReadPauseState(DFHackObject* gui);
+DFHACK_EXPORT int Gui_SetPauseState(DFHackObject* gui, int8_t paused);
 DFHACK_EXPORT int Gui_ReadViewScreen(DFHackObject* gui, t_viewscreen* viewscreen);
 DFHACK_EXPORT int Gui_ReadMenuState(DFHackObject* gui, uint32_t* menuState);
 

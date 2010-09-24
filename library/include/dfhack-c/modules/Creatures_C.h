@@ -45,6 +45,9 @@ DFHACK_EXPORT int32_t Creatures_ReadCreatureInBox(DFHackObject* cPtr, const int3
 DFHACK_EXPORT int Creatures_ReadCreature(DFHackObject* cPtr, const int32_t index, t_creature* furball);
 DFHACK_EXPORT t_material* Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball);
 
+DFHACK_EXPORT uint32_t* Creatures_ReadInventoryIdx(DFHackObject* cPtr, const uint32_t index);
+DFHACK_EXPORT uint32_t* Creatures_ReadInventoryPtr(DFHackObject* cPtr, const uint32_t index);
+
 DFHACK_EXPORT uint32_t Creatures_GetDwarfRaceIndex(DFHackObject* cPtr);
 DFHACK_EXPORT int32_t Creatures_GetDwarfCivId(DFHackObject* cPtr);
 

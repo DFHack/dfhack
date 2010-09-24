@@ -29,7 +29,7 @@ SET( DATA_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output CACHE PATH "Output directory fo
 OPTION(BUILD_DFHACK_DOCUMENTATION "Create doxygen documentation for developers" OFF)
 OPTION(BUILD_DFHACK_EXAMPLES "Build example tools" OFF)
 OPTION(BUILD_DFHACK_PLAYGROUND "Build tools from the playground folder" OFF)
-OPTION(BUILD_DFHACK_C_BINDIGS "Build the C portion of the library" ON)
+OPTION(BUILD_DFHACK_C_BINDINGS "Build the C portion of the library" ON)
 OPTION(BUILD_OFFSET_EDITOR "Build the Offset GUI editor (not ready for use)." OFF)
 OPTION(BUILD_DFHACK_SUPPORTED "Build the supported toold." ON)
 OPTION(BUILD_DFHACK_SHM "Build the SHM." OFF)

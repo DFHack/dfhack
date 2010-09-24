@@ -488,3 +488,13 @@ string NormalProcess::readClassName (uint32_t vptr)
     raw.resize(raw.length() - 2);// trim @@ from end
     return raw;
 }
+string NormalProcess::getPath()
+{
+    HMODULE hmod;
+    DWORD junk;
+    char String[255];
+    EnumProcessModules(d->my_handle, &hmod, 1 * sizeof(HMODULE), &junk); //get the module from the handle
+    GetModuleFileNameEx(d->my_handle,hmod,String,sizeof(String)); //get the filename from the module
+    string out(String);
+    return(out.substr(0,out.find_last_of("\\")));
+}

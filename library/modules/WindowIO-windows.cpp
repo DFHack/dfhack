@@ -130,20 +130,19 @@ WindowIO::~WindowIO ()
 void WindowIO::TypeStr (const char *input, int delay, bool useShift)
 {
     //sendmessage needs a window handle HWND, so have to get that from the process HANDLE
-    HWND currentWindow = GetForegroundWindow();
     window myWindow;
     myWindow.pid = d->p->getPID();
     EnumWindows (EnumWindowsProc, (LPARAM) &myWindow);
-
     char cChar;
-    DWORD dfProccess = GetWindowThreadProcessId(myWindow.windowHandle,NULL);
-    DWORD currentProccess = GetWindowThreadProcessId(currentWindow,NULL);
-    AttachThreadInput(currentProccess,dfProccess,TRUE); //The two threads have to have attached input in order to change the keyboard state, which is needed to set the shift state
+    DWORD dfProcess = GetWindowThreadProcessId(myWindow.windowHandle,NULL);
+    DWORD currentProcess = GetCurrentThreadId();
+    AttachThreadInput(currentProcess,dfProcess,TRUE); //The two threads have to have attached input in order to change the keyboard state, which is needed to set the shift state
     while ( (cChar = *input++)) // loops through chars
     {
         short vk = VkKeyScan (cChar); // keycode of char
         if (useShift || (vk >> 8) &1)   // char is capital, so need to hold down shift
         {
+            vk = vk & 0xFF; // remove the shift state from the virtual key code
             BYTE keybstate[256] = {0};
             BYTE keybstateOrig[256] = {0};
             GetKeyboardState((LPBYTE)&keybstateOrig);
@@ -160,7 +159,7 @@ void WindowIO::TypeStr (const char *input, int delay, bool useShift)
             SendMessage(myWindow.windowHandle,WM_KEYUP,vk,0);
         }
     }
-    AttachThreadInput(currentProccess,dfProccess,FALSE); //detach the threads
+    AttachThreadInput(currentProcess,dfProcess,FALSE); //detach the threads
     Sleep (delay);
 }
 

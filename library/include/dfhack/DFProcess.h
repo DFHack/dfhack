@@ -163,6 +163,8 @@ namespace DFHack
             virtual VersionInfo *getDescriptor() = 0;
             /// get the DF Process ID
             virtual int getPID() = 0;
+            /// get the DF Process FilePath
+            virtual std::string getPath() = 0;
             /// get module index by name and version. bool 1 = error
             virtual bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) = 0;
             /// get the SHM start if available
@@ -230,6 +232,7 @@ namespace DFHack
             void getMemRanges(std::vector<t_memrange> & ranges );
             VersionInfo *getDescriptor();
             int getPID();
+            std::string getPath();
             // get module index by name and version. bool 1 = error
             bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) { OUTPUT=0; return false;};
             // get the SHM start if available
@@ -295,6 +298,7 @@ namespace DFHack
             void getMemRanges(std::vector<t_memrange> & ranges );
             VersionInfo *getDescriptor();
             int getPID();
+            std::string getPath();
             // get module index by name and version. bool 1 = error
             bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT);
             // get the SHM start if available
@@ -364,6 +368,7 @@ namespace DFHack
             // get the SHM start if available
             char * getSHMStart (void){return 0;};
             bool SetAndWait (uint32_t state){return false;};
+            std::string getPath();
     };
 #endif
 }

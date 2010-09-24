@@ -586,3 +586,15 @@ string NormalProcess::readClassName (uint32_t vptr)
     size_t end = raw.length();
     return raw.substr(start,end-start);
 }
+string NormalProcess::getPath()
+{
+    char cwd_name[256];
+    char target_name[1024];
+    int target_result;
+
+    sprintf(cwd_name,"/proc/%d/cwd", getPID());
+    // resolve /proc/PID/exe link
+    target_result = readlink(cwd_name, target_name, sizeof(target_name));
+    target_name[target_result] = '\0';
+    return(string(target_name));
+}

@@ -624,3 +624,15 @@ string WineProcess::readClassName (uint32_t vptr)
     raw.resize(raw.length() - 2);// trim @@ from end
     return raw;
 }
+string WineProcess::getPath()
+{
+  char cwd_name[256];
+    char target_name[1024];
+    int target_result;
+
+    sprintf(cwd_name,"/proc/%d/cwd", getPID());
+    // resolve /proc/PID/exe link
+    target_result = readlink(cwd_name, target_name, sizeof(target_name));
+    target_name[target_result] = '\0';
+    return(string(target_name));
+}

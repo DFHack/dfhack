@@ -1635,7 +1635,52 @@
             </Group>
         </Offsets>
     </Version>
-
+    <Version name="v0.31.14 SDL" os="windows" base="v0.31.13 SDL" rebase="0x1000">
+        <PETimeStamp value="0x4C9B6EFB" />
+        <MD5 value="2da156d1fbaf8192ede9ce91abc5f366" />
+        <Offsets>
+            <Group name="Maps">
+                <!--
+                <Address name="map_data" value="0x1697bdC" />
+                <Address name="x_count_block" value="0x1697bf4" />
+                <Address name="y_count_block" value="0x1697bf8" />
+                <Address name="z_count_block" value="0x1697bfc" />
+                <Address name="x_count" value="0x1697c00" />
+                <Address name="y_count" value="0x1697c04" />
+                <Address name="z_count" value="0x1697c08" />
+                <Address name="region_x" value="0x1697c0C" />
+                <Address name="region_y" value="0x1697c10" />
+                <Address name="region_z" value="0x1697c14" />
+                <Address name="world_size_x" value="0x1699290" />
+                <Address name="world_size_y" value="0x1699292" />
+                -->
+                <Group name="features">
+                    <Group name="global">
+                        <Address name="vector" value="0x169a8ec 0x16998e0" />
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" value="0x169a980 0x1699974" />
+                    </Group>
+                </Group>
+                <Group name="geology">
+                    <Address name="geoblock_vector" value="0x169a90C" />
+                    <Address name="ptr2_region_array" value="0x169a93C" />
+                </Group>
+            </Group>
+            <Group name="Materials"> YES
+                <Address name="inorganics" value="0x169af24 0x1699f18 0x16BD0B0" />
+                <Address name="organics_all" value="0x169af34 0x1699f28 0x16BD0C8" />
+                <Address name="organics_trees" value="0x169af64 0x1699f58 0x16bd110" />
+                <Address name="organics_plants" value="0x169af44 0x1699f38 0x16bd0e0" />
+                <Address name="creature_type_vector" value="0x169b008 0x1699ffC 0x16BD204" />
+                <!--<Address name="other" value="0x16C647C" /> NO!-->
+                <Group name="descriptors">
+                    <Address name="colors_vector" value="0x16a0b38 0x169fb2c" />
+                    <Address name="all_colors_vector" value="0x16a0b58 0x169fb4c" />
+                </Group>
+            </Group>
+        </Offsets>
+    </Version>
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________

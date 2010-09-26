@@ -1705,20 +1705,6 @@
         <MD5 value="2da156d1fbaf8192ede9ce91abc5f366" />
         <Offsets>
             <Group name="Maps">
-                <!--
-                <Address name="map_data" value="0x1697bdC" />
-                <Address name="x_count_block" value="0x1697bf4" />
-                <Address name="y_count_block" value="0x1697bf8" />
-                <Address name="z_count_block" value="0x1697bfc" />
-                <Address name="x_count" value="0x1697c00" />
-                <Address name="y_count" value="0x1697c04" />
-                <Address name="z_count" value="0x1697c08" />
-                <Address name="region_x" value="0x1697c0C" />
-                <Address name="region_y" value="0x1697c10" />
-                <Address name="region_z" value="0x1697c14" />
-                <Address name="world_size_x" value="0x1699290" />
-                <Address name="world_size_y" value="0x1699292" />
-                -->
                 <Group name="features">
                     <Group name="global">
                         <Address name="vector" value="0x169a8ec 0x16998e0" />
@@ -1732,6 +1718,17 @@
                     <Address name="ptr2_region_array" value="0x169a93C" />
                 </Group>
             </Group>
+            <Group name="Translations">
+                <Address name="language_vector" value="0x169b108 0x169b0fc"/>
+                <Address name="translation_vector" value="0x169b128 0x169b11c"/>
+            </Group>
+            <!--
+            <Group name="Creatures">
+                <Address name="vector" value="0x01655fe4"/>
+                <Address name="current_race" value="0x1482874" />
+                <Address name="current_civ" value="0x1482868" />
+            </Group>
+            -->
             <Group name="Materials"> YES
                 <Address name="inorganics" value="0x169af24 0x1699f18 0x16BD0B0" />
                 <Address name="organics_all" value="0x169af34 0x1699f28 0x16BD0C8" />

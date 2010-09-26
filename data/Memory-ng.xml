@@ -1500,7 +1500,11 @@
                     <Offset name="capacity" value="0x14" />
                 </Group>
             </Group>
-            0x01482874 - current race
+            <Group name="name">
+                <Offset name="first" value="0x0" />
+                <Offset name="nick" value="0x1C" />
+                <Offset name="second_words" value="0x38" />
+            </Group>
             <Group name="Position">
                 <Address name="cursor_xyz" value="0xac77f0" />
                 <Address name="window_x" value="0xe42c74" />
@@ -1618,7 +1622,68 @@
                 <Address name="translation_vector" value="0x169a11C"/>
                 <Offset name="word_table" value="0x3c"/>
             </Group>
-            
+            <Group name="Creatures">
+                <Address name="vector" value="0x01655fe4"/>
+                <Address name="current_race" value="0x1482874" />
+                <Address name="current_civ" value="0x1482868" />
+                <Group name="creature">
+                    <Offset name="name" value="0x0" />
+                    <Offset name="custom_profession"  value="0x006C" />
+                    <Offset name="profession"  value="0x0088" />
+                    <Offset name="race"  value="0x008C" />
+                    <Offset name="position"  value="0x90" />
+                    <Offset name="flags1"  value="0x00E0" />
+                    <Offset name="flags2"  value="0x00E4" />
+                    <Offset name="caste"  value="0x00F8"/>
+                    <Offset name="sex"  value="0x00FA" /> <!-- ASSUMED -->
+                    <Offset name="id"  value="0x00FC" />
+                    <Offset name="civ" value="0x108" />
+                    <Group name="advanced">
+                        <Offset name="pickup_equipment_bit" value="0x01BC" />
+                        <!--
+                        <Offset name="mood" />
+                        <Offset name="pregnancy"  />
+                        <Offset name="pregnancy_ptr"  />
+                        -->
+                        <Offset name="birth_year" value="0x0298" />
+                        <!--<Offset name="birth_time" />-->
+                        <Offset name="current_job" value="0x02F0" />
+                        <!--<Offset name="current_job_skill"/>-->
+                        <Offset name="physical" value="0x464" />
+                        <!--
+                        <Offset name="appearance_vector" />
+                        <Offset name="inventory_vector" />
+                        <Offset name="artifact_name"  />
+                        -->
+                        <Offset name="soul_vector" value="0x0640" />
+                        <!--<Offset name="current_soul" />-->
+                        <Offset name="labors" value="0x0664" />
+                        <Offset name="happiness" value="0x0704" />
+                    </Group>
+                </Group>
+
+                <Group name="soul">
+                    <Offset name="name" value="0x0" />
+                    <!--<Offset name="mental" description="An array of mental attributes." />-->
+                    <Offset name="skills_vector" value="0x1F4 0x01F0" />
+                    <Offset name="traits" value="0x218 0x0214" /> is it a vector?
+                </Group>
+
+                <Group name="job">
+                    <Offset name="id" value="0x08" />
+                    <!--
+                    <Offset name="type" description="seems to be just like the old occupations" />
+                    <Offset name="materials_vector" />
+                    <Group name="material">
+                        <Offset name="maintype" description="like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ..." />
+                        <Offset name="sectype1" description="subsubtype ?" />
+                        <Offset name="sectype2" description="subtype ?" />
+                        <Offset name="sectype3" description="index of material (for example, 2 is for silver)" />
+                        <Offset name="flags" description="set only for shell / bone mood requirements ?" />
+                    </Group>
+                    -->
+                </Group>
+            </Group>
             <Group name="Vegetation">
                 <Address name="vector" value="0x1656efc"/>
                 <Offset name="tree_desc_offset" value="0x6C"/>

@@ -1479,8 +1479,8 @@
         <PETimeStamp value="0x4C90ADA8" />
         <VTable>
             <multiclass name="building_trapst" typeoffset="0xF8 0x138" />
-            <multiclass name="building_workshopst" typeoffset="0xF8 0x138" /> 0x164 was custom workshop type... extrapolate? + 0x44
-            <multiclass name="building_furnacest" typeoffset="0x152" /> BOGUS
+            <multiclass name="building_workshopst" typeoffset="0xF8 0x138" />
+            <multiclass name="building_furnacest" typeoffset="0x10A 0x152" />
             <multiclass name="building_siegeenginest" typeoffset="0xF8 0x138" />
         </VTable>
         <Offsets>

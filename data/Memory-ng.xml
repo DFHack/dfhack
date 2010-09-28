@@ -1469,9 +1469,11 @@
             <Group name="Position">
                 <Address name="screen_tiles_pointer" value="0x18313D0" />
             </Group>
+            <!--
             <Group name="World">
                 <Address name="current_weather" value="0x14BCDEE" />
             </Group>
+            -->
         </Offsets>
     </Version>
     <Version name="v0.31.13 SDL" os="windows" base="DF2010">

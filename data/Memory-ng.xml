@@ -1480,10 +1480,10 @@
         <MD5 value="59f194b0b2103ca5df7601a01ce21280" />
         <PETimeStamp value="0x4C90ADA8" />
         <VTable>
-            <multiclass name="building_trapst" typeoffset="0xF8 0x138" />
-            <multiclass name="building_workshopst" typeoffset="0xF8 0x138" />
-            <multiclass name="building_furnacest" typeoffset="0x10A 0x152" />
-            <multiclass name="building_siegeenginest" typeoffset="0xF8 0x138" />
+            <multiclass name="building_trapst" typeoffset="0xF8" />
+            <multiclass name="building_workshopst" typeoffset="0xF8" />
+            <multiclass name="building_furnacest" typeoffset="0x10A" />
+            <multiclass name="building_siegeenginest" typeoffset="0xF8" />
         </VTable>
         <Offsets>
             <Address name="WORLD" value="0x016425A0" />
@@ -1548,15 +1548,15 @@
                 <Address name="world_size_y" value="0x1699292" />
                 <Group name="block">
                     <Offset name="vein_vector" value="0x08" />
-                    <Offset name="feature_local" value="0x24 0x2C" />
-                    <Offset name="feature_global" value="0x28 0x30" />
-                    <Offset name="type" value="0x7A 0x009A" />
-                    <Offset name="designation" value="0x27C 0x029C" />
-                    <Offset name="occupancy" value="0x67C 0x069c" />
-                    <Offset name="temperature1" value="0x157C 0x159c" />
-                    <Offset name="temperature2" value="0x177C 0x179c" />
-                    <Offset name="biome_stuffs" value="0x1D7C 0x1D9C" />
-                    <Offset name="pathfinding" value="0x0D7c 0x0D9c" />
+                    <Offset name="feature_local" value="0x24" />
+                    <Offset name="feature_global" value="0x28" />
+                    <Offset name="type" value="0x7A" />
+                    <Offset name="designation" value="0x27C" />
+                    <Offset name="occupancy" value="0x67C" />
+                    <Offset name="temperature1" value="0x157C" />
+                    <Offset name="temperature2" value="0x177C" />
+                    <Offset name="biome_stuffs" value="0x1D7C" />
+                    <Offset name="pathfinding" value="0x0D7c" />
                 </Group>
                 <Group name="features">
                     <Group name="global">
@@ -1646,35 +1646,34 @@
                     <Offset name="sex"  value="0x00FA" /> <!-- ASSUMED -->
                     <Offset name="id"  value="0x00FC" />
                     <Offset name="civ" value="0x108" />
-                    <Group name="advanced">
+                    <Group name="advanced"> Anything here is automatically suspect...
                         <Offset name="pickup_equipment_bit" value="0x01BC" />
-                        <!--
-                        <Offset name="mood" />
-                        <Offset name="pregnancy"  />
-                        <Offset name="pregnancy_ptr"  />
-                        -->
-                        <Offset name="birth_year" value="0x0298" />
-                        <!--<Offset name="birth_time" />-->
+                        <Offset name="mood" value="0x210" />
+                        <Offset name="pregnancy" value="0x214" />
+                        <Offset name="pregnancy_ptr" value="0x218" />
+                        <Offset name="birth_year" value="0x220" />
+                        <Offset name="birth_time" value="0x224" />
+                        <Offset name="inventory_vector" value="0x284" />
                         <Offset name="current_job" value="0x02F0" />
-                        <!--<Offset name="current_job_skill"/>-->
-                        <Offset name="physical" value="0x464" />
-                        <!--
-                        <Offset name="appearance_vector" />
-                        <Offset name="inventory_vector" />
-                        <Offset name="artifact_name"  />
-                        -->
-                        <Offset name="soul_vector" value="0x0640" />
-                        <!--<Offset name="current_soul" />-->
+                        <Offset name="current_job_skill" value="0x02F4" />
+                        <Offset name="physical" value="0x464" /> BAD!
+                        
+                        <Offset name="appearance_vector" value="0x524" />
+                        
+                        <Offset name="artifact_name" value="0x5D4"  />
+                        
+                        <Offset name="soul_vector" value="0x640" />
+                        <Offset name="current_soul" value="0x650" />
                         <Offset name="labors" value="0x0664" />
                         <Offset name="happiness" value="0x0704" />
                     </Group>
                 </Group>
 
                 <Group name="soul">
-                    <Offset name="name" value="0x0" />
-                    <!--<Offset name="mental" description="An array of mental attributes." />-->
+                    <Offset name="name" value="0x4" />
+                    <Offset name="mental" value="0x0" /> JUST PLAIN WRONG!
                     <Offset name="skills_vector" value="0x1F4 0x01F0" />
-                    <Offset name="traits" value="0x218 0x0214" /> is it a vector?
+                    <Offset name="traits" value="0x0214" /> is it a vector?
                 </Group>
 
                 <Group name="job">

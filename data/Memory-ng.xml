@@ -2117,9 +2117,37 @@
             </Group>
         </Offsets>
     </Version>
-    <Version name="v0.31.14 linux" os="linux" base="v0.31.13 linux" rebase="0x0">
+    <Version name="v0.31.14 linux" os="linux" base="v0.31.13 linux" rebase="0x330C">
         <MD5 value="128c562c7936aa8f84786f69426f0691" />
         <Offsets>
+            <Group name="Maps">
+                <Address name="map_data" value="0x933d7e0" />
+                <Address name="x_count_block" value="0x933d7F4" />
+                <Address name="y_count_block" value="0x933d7F8" />
+                <Address name="z_count_block" value="0x933d7FC" />
+                <Address name="x_count" value="0x933d800" />
+                <Address name="y_count" value="0x933d804" />
+                <Address name="z_count" value="0x933d808" />
+                <Address name="region_x" value="0x933d80C" />
+                <Address name="region_y" value="0x933d810" />
+                <Address name="region_z" value="0x933d814" />
+                <Address name="world_size_x" value="0x933ee60" />
+                <Address name="world_size_y" value="0x933ee62" />
+                <Group name="features">
+                    <Group name="global">
+                        <Address name="vector" value="0x933f408" />0x933c0fc
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" value="0x933F480" />
+                    </Group>
+                </Group>
+                <Group name="geology">
+                    <Address name="geoblock_vector" value="0x933f420" />
+                    <Address name="ptr2_region_array" value="0x933f444" />
+                </Group>
+            </Group>
+            
+            <!--
             <Group name="Buildings">
                 <Address name="buildings_vector" value="0x92fb8e8" />
             </Group>
@@ -2130,32 +2158,6 @@
                 <Address name="current_civ" value="0x92e2d9c" />
                 <Address name="current_race" value="0x92e2da8" />
                 <Address name="vector" value="0x92fb260" />
-            </Group>
-            <Group name="Maps">
-                <Address name="map_data" value="0x933a4E0" />
-                <Address name="x_count_block" value="0x933a4F4" />
-                <Address name="y_count_block" value="0x933a4F8" />
-                <Address name="z_count_block" value="0x933a4FC" />
-                <Address name="x_count" value="0x933a500" />
-                <Address name="y_count" value="0x933a504" />
-                <Address name="z_count" value="0x933a508" />
-                <Address name="region_x" value="0x933a50C" />
-                <Address name="region_y" value="0x933a510" />
-                <Address name="region_z" value="0x933a514" />
-                <Address name="world_size_x" value="0x933BB60" />
-                <Address name="world_size_y" value="0x933BB62" />
-                <Group name="features">
-                    <Group name="global">
-                        <Address name="vector" value="0x933C0FC" />
-                    </Group>
-                    <Group name="local">
-                        <Address name="start_ptr" value="0x933C174" />
-                    </Group>
-                </Group>
-                <Group name="geology">
-                    <Address name="geoblock_vector" value="0x933C114" />
-                    <Address name="ptr2_region_array" value="0x933C138" />
-                </Group>
             </Group>
             <Group name="Position">
                 <Address name="window_x" value="0x8ceb238" />
@@ -2176,6 +2178,7 @@
                 <Address name="current_tick" value="0x92e0dc0" />
                 <Address name="current_weather" value="0x092E0D84" />
             </Group>
+            -->
         </Offsets>
     </Version>
 </DFHack>

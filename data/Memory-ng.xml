@@ -1743,6 +1743,10 @@
             </Group>
         </Offsets>
     </Version>
+    <Version name="v0.31.15 SDL" os="windows" base="v0.31.14 SDL">
+        <PETimeStamp value="0x4CA869EA" />
+        <MD5 value="b4d188dfb592fc813dad31f45407991d" />
+    </Version>
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________
@@ -2146,30 +2150,32 @@
                     <Address name="ptr2_region_array" value="0x933f444" />
                 </Group>
             </Group>
-            
-            <!--
             <Group name="Buildings">
-                <Address name="buildings_vector" value="0x92fb8e8" />
+                <Address name="buildings_vector" value="0x92febdc 0x92fb8e8" /> Alt:0x92febe8
             </Group>
+            
             <Group name="Constructions">
-                <Address name="vector" value="0x92e7904" />
+                <Address name="vector" value="0x92eac04 0x92e7904" />
             </Group>
+            <!--
             <Group name="Creatures">
                 <Address name="current_civ" value="0x92e2d9c" />
                 <Address name="current_race" value="0x92e2da8" />
                 <Address name="vector" value="0x92fb260" />
             </Group>
+            -->
             <Group name="Position">
-                <Address name="window_x" value="0x8ceb238" />
-                <Address name="window_y" value="0x8ceb23C" />
-                <Address name="window_z" value="0x8ceb240" />
-                <Address name="cursor_xyz" value="0x8b2e740" />
-                <Address name="window_dims" value="0x8b2ec48" />
+                <Address name="window_x" value="0x8cee538 0x8ceb238" />
+                <Address name="window_y" value="0x8cee53C 0x8ceb23C" />
+                <Address name="window_z" value="0x8cee540 0x8ceb240" />
+                <Address name="cursor_xyz" value="0x8b31a30 0x8b2e740" />
+                <Address name="window_dims" value="0x8b31f48 0x8b2ec48" />
                 <Address name="screen_tiles_pointer" invalid = "true" />
             </Group>
             <Group name="GUI">
                 <Address name="pause_state" value="0x92e0e90"/>
             </Group>
+            <!--
             <Group name="Vegetation">
                 <Address name="vector" value="0x92fbdc8" />
             </Group>

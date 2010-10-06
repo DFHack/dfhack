@@ -1747,6 +1747,26 @@
         <PETimeStamp value="0x4CA869EA" />
         <MD5 value="b4d188dfb592fc813dad31f45407991d" />
     </Version>
+    <Version name="v0.31.16 SDL" os="windows" base="v0.31.15 SDL" rebase="0x1050">
+        <PETimeStamp value="0x4CA9D544" />
+        <MD5 value="702b3ebaae468f73eb1411af54863013" />
+        <Offsets>
+            <Group name="Position">
+                <Address name="cursor_xyz" value="0xac97f0 0xac9840" />
+                <!--<Address name="screen_tiles_pointer" value="0x14826d4" />--> AS BOGUS AS IT GETS
+                <Address name="window_dims" value="0xaca07c 0xaca0cc" />
+                <Address name="window_x" value="0xE44C74 0xe44cc4" />
+                <Address name="window_y" value="0xE72D48 0xe72d98" />
+                <Address name="window_z" value="0xe72d24 0xe72d74" />
+            </Group>
+            <Group name="GUI">
+                <Address name="pause_state" value="0x1480971" />
+            </Group>
+            <Group name="World">
+                <Address name="current_weather" value="0x1480948" />
+            </Group>
+        </Offsets>
+    </Version>
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________

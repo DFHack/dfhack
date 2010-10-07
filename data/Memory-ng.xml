@@ -1469,11 +1469,11 @@
             <Group name="Position">
                 <Address name="screen_tiles_pointer" value="0x18313D0" />
             </Group>
-            <!--
             <Group name="World">
-                <Address name="current_weather" value="0x14BCDEE" />
+                <Address name="current_tick" value="0xde8910" /> MAYBE
+                <Address name="current_year" value="0xec78b0" />
+                <!--<Address name="current_weather" value="0x14BCDEE" />-->
             </Group>
-            -->
         </Offsets>
     </Version>
     <Version name="v0.31.13 SDL" os="windows" base="DF2010">
@@ -1525,7 +1525,7 @@
                 <Address name="pause_state" value="0x147E971" />
             </Group>
             <Group name="World">
-            <Address name="current_weather" value="0x147E948" />
+                <Address name="current_weather" value="0x147E948" />
             </Group>
             <Group name="Vegetation">
                 <Address name="vector" value="0x1656EFC" />
@@ -1751,6 +1751,10 @@
         <PETimeStamp value="0x4CA9D544" />
         <MD5 value="702b3ebaae468f73eb1411af54863013" />
         <Offsets>
+            <Group name="Creatures">
+                <Address name="current_civ" value="0x1484868 0x14848b8" />
+                <Address name="current_race" value="0x1484874 0x14848c4" />
+            </Group>
             <Group name="Position">
                 <Address name="cursor_xyz" value="0xac97f0 0xac9840" />
                 <!--<Address name="screen_tiles_pointer" value="0x14826d4" />--> AS BOGUS AS IT GETS
@@ -1763,6 +1767,8 @@
                 <Address name="pause_state" value="0x1480971" />
             </Group>
             <Group name="World">
+                <Address name="current_tick" value="0xdac470" /> MAYBE
+                <Address name="current_year" value="0xe8b410" />
                 <Address name="current_weather" value="0x1480948" />
             </Group>
         </Offsets>

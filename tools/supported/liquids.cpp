@@ -1,6 +1,3 @@
-// This will create 7 deep magama on the square the cursor is on. It does not
-// enable magma buildings at this time.
-
 // TO BE DEPRECATED SOON.
 
 #include <iostream>

@@ -58,7 +58,8 @@ int main (void)
                     for(uint32_t i = 0; i < splatter.size(); i++)
                     {
                         DFHack::t_spattervein & vein = splatter[i];
-                        if(vein.mat1 != 0xC)
+                        // filter away snow and mud
+                        if(vein.mat1 != 0xC && vein.mat1 != 0x6)
                         {
                             uint32_t addr = vein.address_of;
                             uint32_t offset = offsetof(DFHack::t_spattervein, intensity);

@@ -1646,7 +1646,7 @@
                     <Offset name="sex"  value="0x00FA" /> <!-- ASSUMED -->
                     <Offset name="id"  value="0x00FC" />
                     <Offset name="civ" value="0x108" />
-                    <Group name="advanced"> Anything here is automatically suspect...
+                    <Group name="advanced">
                         <Offset name="pickup_equipment_bit" value="0x01BC" />
                         <Offset name="mood" value="0x210" />
                         <Offset name="pregnancy" value="0x214" />
@@ -1656,7 +1656,7 @@
                         <Offset name="inventory_vector" value="0x284" />
                         <Offset name="current_job" value="0x02F0" />
                         <Offset name="current_job_skill" value="0x02F4" />
-                        <Offset name="physical" value="0x464" /> BAD!
+                        <Offset name="physical" value="0x3C4" />
                         
                         <Offset name="appearance_vector" value="0x524" />
                         
@@ -1671,7 +1671,7 @@
 
                 <Group name="soul">
                     <Offset name="name" value="0x4" />
-                    <Offset name="mental" value="0x0" /> JUST PLAIN WRONG!
+                    <Offset name="mental" value="0x88" />
                     <Offset name="skills_vector" value="0x1F4 0x01F0" />
                     <Offset name="traits" value="0x0214" /> is it a vector?
                 </Group>

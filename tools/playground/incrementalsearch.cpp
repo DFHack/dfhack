@@ -4,6 +4,7 @@
 #include <climits>
 #include <vector>
 #include <map>
+#include <set>
 #include <ctime>
 #include <string.h>
 #include <stdio.h>
@@ -273,7 +274,7 @@ bool getString (string prompt, string & output)
 
 template <class T>
 bool Incremental ( vector <uint64_t> &found, const char * what, T& output,
-                   const char *singular = "address", const char *plural = "addresses" )
+                   const char *singular = "address", const char *plural = "addresses", bool numberz = false )
 {
     string select;
     if(found.empty())
@@ -317,20 +318,23 @@ bool Incremental ( vector <uint64_t> &found, const char * what, T& output,
     }
     else
     {
-        if( sscanf(select.c_str(),"0x%x", &output) == 1 )
+        if(numberz)
         {
-            //cout << dec << output << endl;
-            return true;
+            if( sscanf(select.c_str(),"0x%x", &output) == 1 )
+            {
+                //cout << dec << output << endl;
+                return true;
+            }
+            if( sscanf(select.c_str(),"%d", &output) == 1 )
+            {
+                //cout << dec << output << endl;
+                return true;
+            }
         }
-        if( sscanf(select.c_str(),"%d", &output) == 1 )
-        {
-            //cout << dec << output << endl;
-            return true;
-        }
-
         stringstream ss (stringstream::in | stringstream::out);
         ss << select;
         ss >> output;
+        cout << output;
         if(!ss.fail())
         {
             return true;
@@ -358,7 +362,7 @@ void FindIntegers(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& r
     uint32_t test1;
     vector <uint64_t> found;
     found.reserve(100);
-    while(Incremental(found, "integer",test1))
+    while(Incremental(found, "integer",test1,"address", "addresses",true))
     {
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
@@ -512,6 +516,156 @@ void FindStrings(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ra
         sf.Incremental< const char * ,uint32_t>(select.c_str(),1,found, findString);
         DF->Detach();
     }
+}
+
+void FindData(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+{
+    vector <uint64_t> found;
+    Bytestream select;
+    while (Incremental(found,"byte stream",select,"byte stream","byte streams"))
+    {
+        DFMgr.Refresh();
+        DFHack::Context * DF = DFMgr.getSingleContext();
+        DF->Attach();
+        SegmentedFinder sf(ranges,DF);
+        sf.Incremental< Bytestream ,uint32_t>(select,1,found, findBytestream);
+        DF->Detach();
+    }
+}
+/*
+    while(Incremental(found, "integer",test1))
+    {
+        DFMgr.Refresh();
+        DFHack::Context * DF = DFMgr.getSingleContext();
+        DF->Attach();
+        SegmentedFinder sf(ranges,DF);
+        switch(size)
+        {
+            case 1:
+                sf.Incremental<uint8_t,uint8_t>(test1,alignment,found, equalityP<uint8_t>);
+                break;
+            case 2:
+                sf.Incremental<uint16_t,uint16_t>(test1,alignment,found, equalityP<uint16_t>);
+                break;
+            case 4:
+                sf.Incremental<uint32_t,uint32_t>(test1,alignment,found, equalityP<uint32_t>);
+                break;
+        }
+        DF->Detach();
+    }
+}
+*/
+void PtrTrace(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+{
+    int element_size;
+    do
+    {
+        getNumber("Set search granularity",element_size, 4);
+    } while (element_size < 1);
+
+    vector <uint64_t> found;
+    set <uint64_t> check; // to detect circles
+    uint32_t select;
+    while (Incremental(found,"address",select,"addresses","addresses",true))
+    {
+        DFMgr.Refresh();
+        found.clear();
+        DFHack::Context * DF = DFMgr.getSingleContext();
+        DF->Attach();
+        SegmentedFinder sf(ranges,DF);
+        cout <<"Starting: 0x" << hex << select << endl;
+        while(sf.getSegmentForAddress(select))
+        {
+            sf.Incremental<uint32_t,uint32_t>(select,element_size,found, equalityP<uint32_t>);
+            if(found.empty())
+            {
+                cout << ".";
+                cout.flush();
+                select -=element_size;
+                continue;
+            }
+            cout << endl;
+            cout <<"Object start: 0x" << hex << select << endl;
+            cout <<"Pointer:      0x" << hex << found[0] << endl;
+            // make sure we don't go in circles'
+            if(check.count(select))
+            {
+                break;
+            }
+            check.insert(select);
+            // ascend
+            select = found[0];
+        }
+        DF->Detach();
+    }
+}
+/*
+{
+    vector <uint64_t> found;
+    Bytestream select;
+    while (Incremental(found,"byte stream",select,"byte stream","byte streams"))
+    {
+        DFMgr.Refresh();
+        DFHack::Context * DF = DFMgr.getSingleContext();
+        DF->Attach();
+        SegmentedFinder sf(ranges,DF);
+        sf.Incremental< Bytestream ,uint32_t>(select,1,found, findBytestream);
+        DF->Detach();
+    }
+}
+*/
+void DataPtrTrace(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+{
+    int element_size;
+    do
+    {
+        getNumber("Set search granularity",element_size, 4);
+    } while (element_size < 1);
+
+    vector <uint64_t> found;
+    set <uint64_t> check; // to detect circles
+    uint32_t select;
+    Bytestream bs_select;
+    DFHack::Context * DF = DFMgr.getSingleContext();
+    DF->Attach();
+    DFMgr.Refresh();
+    found.clear();
+    SegmentedFinder sf(ranges,DF);
+    while(found.empty())
+    {
+        Incremental(found,"byte stream",bs_select,"byte stream","byte streams");
+        
+        sf.Incremental< Bytestream ,uint32_t>(bs_select,1,found, findBytestream);
+    }
+    select = found[0];
+    
+    
+    
+    
+    cout <<"Starting: 0x" << hex << select << endl;
+    while(sf.getSegmentForAddress(select))
+    {
+        sf.Incremental<uint32_t,uint32_t>(select,element_size,found, equalityP<uint32_t>);
+        if(found.empty())
+        {
+            cout << ".";
+            cout.flush();
+            select -=element_size;
+            continue;
+        }
+        cout << endl;
+        cout <<"Object start: 0x" << hex << select << endl;
+        cout <<"Pointer:      0x" << hex << found[0] << endl;
+        // make sure we don't go in circles'
+        if(check.count(select))
+        {
+            break;
+        }
+        check.insert(select);
+        // ascend
+        select = found[0];
+    }
+    DF->Detach();
 }
 
 void printFound(vector <uint64_t> &found, const char * what)
@@ -726,7 +880,8 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
         uint64_t Eoffset;
         cout << "Elephant: 0x" << hex << elephant << endl;
         cout << "Elephant: rawname = 0x0" << endl;
-        Eoffset = sf.FindInRange<uint8_t,uint8_t> ('E',equalityP<uint8_t>, elephant, 0x300 );
+        uint8_t letter_E = 'E';
+        Eoffset = sf.FindInRange<uint8_t,uint8_t> (letter_E,equalityP<uint8_t>, elephant, 0x300 );
         if(Eoffset)
         {
             cout << "Elephant: big E = 0x" << hex << Eoffset - elephant << endl;
@@ -742,7 +897,8 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
             cout << "Elephant: extract? vector = 0x" << hex << Eoffset - elephant << endl;
         }
         tilecolors eletc = {7,0,0};
-        Bytestream bs_eletc = {sizeof(tilecolors), &eletc};
+        Bytestream bs_eletc(&eletc, sizeof(tilecolors));
+        cout << bs_eletc;
         Eoffset = sf.FindInRange<Bytestream,tilecolors> (bs_eletc, findBytestream, elephant, 0x300 );
         if(Eoffset)
         {
@@ -775,7 +931,7 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
             cout << "Toad: extract? vector = 0x" << hex << Eoffset - toad << endl;
         }
         tilecolors toadtc = {2,0,0};
-        Bytestream bs_toadc = {sizeof(tilecolors), &toadtc};
+        Bytestream bs_toadc(&toadtc, sizeof(tilecolors));
         Eoffset = sf.FindInRange<Bytestream,tilecolors> (bs_toadc, findBytestream, toad, 0x300 );
         if(Eoffset)
         {
@@ -816,12 +972,12 @@ int main (void)
     "Select search type: 1=number(default), 2=vector by length, 3=vector>object>string,\n"
     "                    4=string, 5=automated offset search, 6=vector by address in its array,\n"
     "                    7=pointer vector by address of an object, 8=vector>first object>string\n"
-    "                    9=string buffers\n";
+    "                    9=string buffers, 10=known data, 11=backpointers, 12=data+backpointers\n";
     int mode;
     do
     {
         getNumber(prompt,mode, 1, false);
-    } while (mode < 1 || mode > 9 );
+    } while (mode < 1 || mode > 12 );
     switch (mode)
     {
         case 1:
@@ -858,6 +1014,18 @@ int main (void)
         case 9:
             DF->Detach();
             FindStrBufs(DFMgr, selected_ranges);
+            break;
+        case 10:
+            DF->Detach();
+            FindData(DFMgr, selected_ranges);
+            break;
+        case 11:
+            DF->Detach();
+            PtrTrace(DFMgr, selected_ranges);
+            break;
+        case 12:
+            DF->Detach();
+            DataPtrTrace(DFMgr, selected_ranges);
             break;
         default:
             cout << "not implemented :(" << endl;

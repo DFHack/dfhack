@@ -1,5 +1,8 @@
 #ifndef SEGMENTED_FINDER_H
 #define SEGMENTED_FINDER_H
+#include <malloc.h>
+#include <iosfwd>
+#include <iterator>
 
 class SegmentedFinder;
 class SegmentFinder
@@ -286,15 +289,205 @@ bool vectorAll (SegmentedFinder* s, vecTriplet *x, int )
     return false;
 }
 
-struct Bytestream
+class Bytestreamdata
 {
-    uint32_t length;
-    void * object;
+    public:
+        void * object;
+        uint32_t length;
+        uint32_t allocated;
+        uint32_t n_used;
 };
+
+class Bytestream
+{
+public:
+    Bytestream(void * obj, uint32_t len, bool alloc = false)
+    {
+        d = new Bytestreamdata();
+        d->allocated = alloc;
+        d->object = obj;
+        d->length = len;
+        d->n_used = 1;
+        constant = false;
+    }
+    Bytestream()
+    {
+        d = new Bytestreamdata();
+        d->allocated = false;
+        d->object = 0;
+        d->length = 0;
+        d->n_used = 1;
+        constant = false;
+    }
+    Bytestream( Bytestream & bs)
+    {
+        d =bs.d;
+        d->n_used++;
+        constant = false;
+    }
+    Bytestream( const Bytestream & bs)
+    {
+        d =bs.d;
+        d->n_used++;
+        constant = true;
+    }
+    ~Bytestream()
+    {
+        d->n_used --;
+        if(d->allocated && d->object && d->n_used == 0)
+        {
+            free (d->object);
+            free (d);
+        }
+    }
+    bool Allocate(size_t bytes)
+    {
+        if(constant)
+            return false;
+        if(d->allocated)
+        {
+            d->object = realloc(d->object, bytes);
+        }
+        else
+        {
+            d->object = malloc( bytes );
+        }
+
+        if(d->object)
+        {
+            d->allocated = bytes;
+            return true;
+        }
+        else
+        {
+            d->allocated = 0;
+            return false;
+        }
+    }
+    bool insert( char what )
+    {
+        if(constant)
+            return false;
+        if(d->length+1 == d->allocated)
+            Allocate(d->allocated * 2);
+        ((char *) d->object)[d->length] = what;
+        d->length ++;
+    }
+    Bytestreamdata * d;
+    bool constant;
+};
+std::ostream& operator<< ( std::ostream& out, Bytestream& bs )
+{
+    if(bs.d->object)
+    {
+        out << "bytestream " << dec << bs.d->length << "/" << bs.d->allocated << " bytes" << endl;
+        for(int i = 0; i < bs.d->length; i++)
+        {
+            out << hex << (int) ((uint8_t *) bs.d->object)[i] << " ";
+        }
+        out << endl;
+    }
+    else
+    {
+        out << "empty bytestresm" << endl;
+    }
+    return out;
+}
+
+std::istream& operator>> ( std::istream& out, Bytestream& bs )
+{
+    string read;
+    while(!out.eof())
+    {
+        string tmp;
+        out >> tmp;
+        read.append(tmp);
+    }
+    cout << read << endl;
+    bs.d->length = 0;
+    size_t first = read.find_first_of("\"");
+    size_t last = read.find_last_of("\"");
+    size_t start = first + 1;
+    if(first == read.npos)
+    {
+        std::transform(read.begin(), read.end(), read.begin(), (int(*)(int)) tolower);
+        bs.Allocate(read.size()); // overkill. size / 2 should be good, but this is safe
+        int state = 0;
+        char big = 0;
+        char small = 0;
+        string::iterator it = read.begin();
+        // iterate through string, construct a bytestream out of 00-FF bytes
+        while(it != read.end())
+        {
+            char reads = *it;
+            if((reads >='0' && reads <= '9'))
+            {
+                if(state == 0)
+                {
+                    big = reads - '0';
+                    state = 1;
+                }
+                else if(state == 1)
+                {
+                    small = reads - '0';
+                    state = 0;
+                    bs.insert(big*16 + small);
+                }
+            }
+            if((reads >= 'a' && reads <= 'f'))
+            {
+                if(state == 0)
+                {
+                    big = reads - 'a' + 10;
+                    state = 1;
+                }
+                else if(state == 1)
+                {
+                    small = reads - 'a' + 10;
+                    state = 0;
+                    bs.insert(big*16 + small);
+                }
+            }
+            it++;
+        }
+        // we end in state= 1. should we add or should we trim... or throw errors?
+        // I decided on adding
+        if (state == 1)
+        {
+            small = 0;
+            bs.insert(big*16 + small);
+        }
+    }
+    else
+    {
+        if(last == first)
+        {
+            // only one "
+            last = read.size();
+        }
+        size_t length = last - start;
+        // construct bytestream out of stuff between ""
+        bs.d->length = length;
+        if(length)
+        {
+            // todo: Bytestream should be able to handle this without external code
+            bs.Allocate(length);
+            bs.d->length = length;
+            const char* strstart = read.c_str();
+            memcpy(bs.d->object, strstart + start, length);
+        }
+        else
+        {
+            bs.d->object = 0;
+        }
+    }
+    cout << bs;
+    return out;
+}
 
 bool findBytestream (SegmentedFinder* s, void *addr, Bytestream compare )
 {
-    if(memcmp(addr, compare.object, compare.length) == 0)
+    if(memcmp(addr, compare.d->object, compare.d->length) == 0)
         return true;
     return false;
 }

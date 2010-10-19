@@ -1771,6 +1771,15 @@
                 <Address name="current_year" value="0xe8b410" />
                 <Address name="current_weather" value="0x1480948" />
             </Group>
+            <Group name="Items">
+                <Address name="items_vector" value="0x16580d8" />
+                <Offset name="item_type_accessor" value="0x0" />
+                <Offset name="item_subtype_accessor" value="0x4" />
+                <Offset name="item_subindex_accessor" value="0x8" />
+                <Offset name="item_index_accessor" value="0xC" />
+                <Offset name="item_quality_accessor" value="0x238" />
+                <Offset name="item_improvement_vector" value="0x90" />
+            </Group>
         </Offsets>
     </Version>
                             .-"""-.

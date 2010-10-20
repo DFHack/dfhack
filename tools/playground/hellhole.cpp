@@ -39,6 +39,7 @@ void waitmsec (int delay)
 #define PITTYPEMACRO \
 	X(pitTypeChasm,"Bottomless Chasm" ) \
 	X(pitTypeEerie,"Bottomless Eerie Pit" ) \
+	X(pitTypeFloor,"Pit with a floor" ) \
 	X(pitTypeMagma,"Magma Pit (similar to volcanoe, no hell access)" ) 
 //end PITTYPEMACRO
 
@@ -208,13 +209,13 @@ int main (void)
 
 	//Hole Diameter
 	int holeradius=6;
-	if( pitTypeInvalid != pittype && pitTypeMagma != pittype ){
+	if( pitTypeInvalid != pittype  ){
 		holeradius = getint( "Enter hole radius, 0 to 8", 0, 8, holeradius );
 	}
 
 	//Wall thickness
 	int wallthickness=1;
-	if( pitTypeInvalid != pittype && pitTypeMagma != pittype ){
+	if( pitTypeInvalid != pittype  ){
 		wallthickness = getint( "Enter wall thickness, 0 to 8", 0, 8, wallthickness );
 	}
 
@@ -271,12 +272,19 @@ int main (void)
 	//263 is semi-molten rock, 331 is obsidian
 	uint32_t whell=263, wmolten=263, wmagma=331, wcave=331;
 	//The Tile Type to use for the hole's floor at bottom of the map
-	//35 is chasm, 42 is eerie pit , 340 is obsidian floor
+	//35 is chasm, 42 is eerie pit , 340 is obsidian floor, 344 is featstone floor, 264 is 'magma flow' floor
 	uint32_t floor=35, cap=340;
-	if( pitTypeEerie == pittype ) floor=42;
+	switch( pittype ){
+		case pitTypeEerie: floor=42;  break;
+		case pitTypeFloor: floor=344; break;
+		case pitTypeMagma: floor=264; break;
+		default:
+			floor=35;
+	}
+
 
 	//Should tiles be revealed?
-	int reveal=1;
+	int reveal=0;
 
 
 	//Pattern to dig
@@ -314,14 +322,14 @@ int main (void)
 						}
 					}else if( 0==pattern[x][y] ){
 						//check neighbors
-						if( x>0 && y>0 && 1==pattern[x-1][y-1] ){ pattern[x][y]=2; continue; }
-						if( x>0        && 1==pattern[x-1][y  ] ){ pattern[x][y]=2; continue; }
-						if(        y>0 && 1==pattern[x  ][y-1] ){ pattern[x][y]=2; continue; }
-						if( x<15       && 1==pattern[x+1][y  ] ){ pattern[x][y]=2; continue; }
-						if( x<15&& y>0 && 1==pattern[x+1][y-1] ){ pattern[x][y]=2; continue; }
-						if( x<15&& y<15&& 1==pattern[x+1][y+1] ){ pattern[x][y]=2; continue; }
-						if(        y<15&& 1==pattern[x  ][y+1] ){ pattern[x][y]=2; continue; }
-						if( x>0 && y<15&& 1==pattern[x-1][y+1] ){ pattern[x][y]=2; continue; }
+						if( x>0  && y>0  && 1==pattern[x-1][y-1] ){ pattern[x][y]=2; continue; }
+						if( x>0          && 1==pattern[x-1][y  ] ){ pattern[x][y]=2; continue; }
+						if(         y>0  && 1==pattern[x  ][y-1] ){ pattern[x][y]=2; continue; }
+						if( x<15         && 1==pattern[x+1][y  ] ){ pattern[x][y]=2; continue; }
+						if( x<15 && y>0  && 1==pattern[x+1][y-1] ){ pattern[x][y]=2; continue; }
+						if( x<15 && y<15 && 1==pattern[x+1][y+1] ){ pattern[x][y]=2; continue; }
+						if(         y<15 && 1==pattern[x  ][y+1] ){ pattern[x][y]=2; continue; }
+						if( x>0  && y<15 && 1==pattern[x-1][y+1] ){ pattern[x][y]=2; continue; }
 					}
 				}
 			}
@@ -465,39 +473,46 @@ int main (void)
 	const TileRow * tp;
 	t_designation * d;
 
+	//////////////////////////////////////
 	//From top to bottom, dig this dude.
+	//////////////////////////////////////
 
 	//Top level, cap.
-	Mapz->ReadBlock40d( bx, by, bz , &block );
-	for(uint32_t x=0;x<16;++x){
-		for(uint32_t y=0;y<16;++y){
-			if(pattern[x][y]){
-				tp = getTileTypeP(block.tiletypes[x][y]);
-				d = &block.designation[x][y];
-				//Only modify this level if it's 'empty'
-				if( EMPTY != tp->c && RAMP_TOP != tp->c && STAIR_DOWN != tp->c && DFHack::TILE_STREAM_TOP != tp->s) continue;
+	//Might make this an option in the future
+	if(-1){
+		Mapz->ReadBlock40d( bx, by, bz , &block );
+		for(uint32_t x=0;x<16;++x){
+			for(uint32_t y=0;y<16;++y){
+				if(pattern[x][y]){
+					tp = getTileTypeP(block.tiletypes[x][y]);
+					d = &block.designation[x][y];
+					//Only modify this level if it's 'empty'
+					if( EMPTY != tp->c && RAMP_TOP != tp->c && STAIR_DOWN != tp->c && DFHack::TILE_STREAM_TOP != tp->s) continue;
 
-				//Need a floor for empty space.
-				if(reveal) d->bits.hidden = 0; //topblock.designation[x][y].bits.hidden;
-				//Always clear the dig designation.
-				d->bits.dig=designation_no;
-				//unlock fluids, so they fall down the pit.
-				d->bits.flow_forbid = d->bits.liquid_static=0;
-				block.blockflags.bits.liquid_1 = block.blockflags.bits.liquid_2 = 1;
-				//Remove aquifer, to prevent bugginess
-				d->bits.water_table=0;
-				//Set the tile.
-				block.tiletypes[x][y] = cap + rand()%4;
+					//Need a floor for empty space.
+					if(reveal) d->bits.hidden = 0; //topblock.designation[x][y].bits.hidden;
+					//Always clear the dig designation.
+					d->bits.dig=designation_no;
+					//unlock fluids, so they fall down the pit.
+					d->bits.flow_forbid = d->bits.liquid_static=0;
+					block.blockflags.bits.liquid_1 = block.blockflags.bits.liquid_2 = 1;
+					//Remove aquifer, to prevent bugginess
+					d->bits.water_table=0;
+					//Set the tile.
+					block.tiletypes[x][y] = cap + rand()%4;
+				}
 			}
 		}
+		//Write the block.
+		Mapz->WriteBlockFlags(bx,by,bz, block.blockflags ); 
+		Mapz->WriteDesignations(bx,by,bz, &block.designation ); 
+		Mapz->WriteTileTypes(bx,by,bz, &block.tiletypes ); 
+		Mapz->WriteDirtyBit(bx,by,bz,1); 
 	}
-	//Write the block.
-	Mapz->WriteBlockFlags(bx,by,bz, block.blockflags ); 
-	Mapz->WriteDesignations(bx,by,bz, &block.designation ); 
-	Mapz->WriteTileTypes(bx,by,bz, &block.tiletypes ); 
-	Mapz->WriteDirtyBit(bx,by,bz,1); 
 
+	///////////////////////////////////////////////////////////////////////////////////////////////
 	//Various behaviour flags.
+	int magmacount=0;
 	int moltencount=0;
 	int solidcount=0;
 	int emptycount=0;
@@ -508,6 +523,7 @@ int main (void)
 	uint32_t t;
 	for(int32_t z = bz-1; z>0 ; --z){
 		moltencount=0;
+		magmacount=0;
 		solidcount=0;
 		emptycount=0;
 		hellcount=0;
@@ -527,18 +543,16 @@ int main (void)
 				switch( tp->m ){
 					case MAGMA:
 						++moltencount;
+					case FEATSTONE:
+					case HFS:
 						//Making a fake volcanoe/magma pipe?
 						if( pitTypeMagma == pittype ){
 							//Leave tile unchanged.
 							tpat=0;
 						}
 						break;
-					case OBSIDIAN:
-					case FEATSTONE:
-					case HFS:
-						//ignore, even though it is technically solid
-						break;
 					case VEIN:
+					case OBSIDIAN:
 					default:
 						if( EMPTY != tp->c ){
 							++emptycount;
@@ -546,6 +560,15 @@ int main (void)
 							++solidcount;
 						}
 				}
+
+				//No walls if magma found anywhere for a magma pipe
+				if( d->bits.flow_size && liquid_magma==d->bits.liquid_type ){
+					++magmacount;
+					if(pitTypeMagma == pittype){
+						tpat=0;
+					}
+				}
+
 
 				//Check hell status
 				if( 
@@ -560,6 +583,15 @@ int main (void)
 						//Leave tile unchanged.
 						tpat=0;
 					}
+
+					//Never should have gotten here
+					if(pitTypeMagma == pittype){
+						x=y=255;
+						z=0;
+						tpat=0;
+						continue;
+					}
+
 				}
 
 
@@ -587,6 +619,11 @@ int main (void)
 						}else{
 							d->bits.liquid_type=liquid_water;
 						}
+					}else{
+						//Otherwise, remove all liquids.
+						d->bits.flow_size=0;
+						d->bits.liquid_character = liquid_fresh;
+						d->bits.liquid_type=liquid_water;
 					}
 
 					break;
@@ -615,9 +652,10 @@ int main (void)
 
 					//If the tile already is a feature, or if it is a vein, we're done.
 					//Otherwise, adopt block features.
-					if( VEIN!=tp->m && !d->bits.feature_global && !d->bits.feature_local ){
+					//Adamantine (a local feature) trumps veins.
+					{
 						//Local Feature?
-						if( block.local_feature > -1 ){
+						if( block.local_feature > -1 && !d->bits.feature_global ){
 							switch( n=local_features[pc][block.local_feature]->type ){
 								case feature_Adamantine_Tube:
 								case feature_Underworld:
@@ -632,7 +670,7 @@ int main (void)
 							}
 						}
 						//Global Feature?
-						else if(block.global_feature > -1 ){
+						else if(block.global_feature > -1 && !d->bits.feature_local ){
 							switch( n=global_features[block.global_feature].type ){
 								case feature_Adamantine_Tube:
 								case feature_Underworld:
@@ -668,13 +706,17 @@ int main (void)
 					d->bits.liquid_type=liquid_water;
 					break;
 				default:
-					cout << ".err,bad pattern.";
+					cout << ".error,bad pattern.";
 				}
 
 				//For all tiles.
 				if(reveal) d->bits.hidden = 0; //topblock.designation[x][y].bits.hidden;
 				//Always clear the dig designation.
 				d->bits.dig=designation_no;
+				//Make it underground, because it is capped
+				d->bits.subterranean=1;
+				d->bits.light=0;
+				d->bits.skyview=0;
 				//unlock fluids, so they fall down the pit.
 				d->bits.flow_forbid = d->bits.liquid_static=0;
 				block.blockflags.bits.liquid_1 = block.blockflags.bits.liquid_2 = 1;
@@ -693,7 +735,7 @@ int main (void)
 		Mapz->WriteDirtyBit(bx,by,z,1); 
 
 		//Making a fake volcanoe/magma pipe?
-		if( pitTypeMagma == pittype && !solidcount){
+		if( pitTypeMagma == pittype && !solidcount && (moltencount || magmacount) ){
 			//Nothing «solid», we're making a magma pipe, we're done.
 			z=0;
 		}
@@ -702,24 +744,31 @@ int main (void)
 
 
 	//The bottom level is special.
-	if( pitTypeMagma != pittype  ) {
+	if(-1){
 		Mapz->ReadBlock40d( bx, by, 0 , &block );
 		for(uint32_t x=0;x<16;++x){
 			for(uint32_t y=0;y<16;++y){
 				//Only the portion below the empty space is handled.
-				if(pattern[x][y]){
-					if( 1==pattern[x][y] ) t=floor;
-					else if( 3==pattern[x][y] ) t=331;
-					else continue;
+				if(1==pattern[x][y]){
+					//if( 1==pattern[x][y] ) t=floor;
+					//else if( 3==pattern[x][y] ) t=331;
+					//else continue;
 
 					tp = getTileTypeP(block.tiletypes[x][y]);
 					d = &block.designation[x][y];
+
+					//Special handling for magma pipe.
+					//Need to be sure that solid blocks have a floor above them.
+					//Only solid blocks will have a floor drawn; empty blocks will be ignored.
+					if( pitTypeMagma == pittype  ) {
+						if( EMPTY == tp->c || RAMP_TOP == tp->c || STAIR_DOWN == tp->c ) continue;
+					}
 
 					//For all tiles.
 					if(reveal) d->bits.hidden = 0; //topblock.designation[x][y].bits.hidden;
 					//Always clear the dig designation.
 					d->bits.dig=designation_no;
-					//unlock fluids, so they fall down the pit.
+					//unlock fluids
 					d->bits.flow_forbid = d->bits.liquid_static=0;
 					block.blockflags.bits.liquid_1 = block.blockflags.bits.liquid_2 = 1;
 					//Set the tile.

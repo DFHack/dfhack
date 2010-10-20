@@ -997,6 +997,7 @@ namespace DFHack
 			if( tclass == tileTypeTable[tt].c ){
 				//shortcut null entries
 				if(!tileTypeTable[tt].name) continue;
+
 				//Special flag match is absolutely mandatory!
 				if( source->s != tileTypeTable[tt].s ) continue;
 

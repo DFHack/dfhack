@@ -41,8 +41,8 @@ void waitmsec (int delay)
 	X(pitTypeEerie,"Bottomless Eerie Pit" ) \
 	X(pitTypeFloor,"Pit with floor" ) \
 	X(pitTypeSolid,"Solid Pillar" ) \
-	X(pitTypeOasis,"Oasis, with partial aquifer (no hell access)" ) \
-	X(pitTypeOPool,"Oasis Pool, with partial aquifer (default 5 deep)" ) \
+	X(pitTypeOasis,"Oasis Pit (ends at magma, no hell access)" ) \
+	X(pitTypeOPool,"Oasis Pool, with partial aquifer (default 5 z-levels)" ) \
 	X(pitTypeMagma,"Magma Pit (similar to volcano, no hell access)" ) \
 	X(pitTypeMPool,"Magma Pool (default 5 z-levels)" ) 
 //end PITTYPEMACRO
@@ -305,34 +305,43 @@ int main (void)
 			floor=344;
 			floorvar=3;
 			break;
+		case pitTypeSolid:
+			holeradius=0;
+			wallthickness=7;
+			wallpillar=4;
+			break;
 		case pitTypeOasis:
 			stopatmagma=-1;
-			//fillwater=-1;
+			fillwater=-1;
+			holeradius=5;
 			wallthickness=2;
-			aquify=-1;
+			//aquify=-1;
 			floor=340; 
 			floorvar=3;
 			break;
 		case pitTypeOPool:
-			//fillwater=-1;
+			pitdepth=5;
+			fillwater=-1;
+			holeradius=5;
 			wallthickness=2;
-			aquify=-1;
+			//aquify=-1;
 			floor=340; 
 			floorvar=3;
 			break;
 		case pitTypeMagma: 
 			stopatmagma=-1;
 			exposemagma=-1;
+			wallthickness=2;
 			fillmagma=-1;
 			floor=264; 
 			break;
 		case pitTypeMPool:
+			pitdepth=5;
+			wallthickness=2;
 			fillmagma=-1;
 			floor=340;
 			floorvar=3;
 			break;
-		default:
-			floor=35;
 	}
 
 
@@ -362,12 +371,13 @@ int main (void)
 
 		//Stop when magma sea is hit?
 		stopatmagma=getyesno("Stop at magma sea?",stopatmagma);
+		exposemagma=getyesno("Expose magma sea (no walls)?",exposemagma);
 
 		//Fill?
 		fillmagma=getyesno("Fill with magma?",fillmagma);
 		if(fillmagma) aquify=fillwater=0;
 		fillwater=getyesno("Fill with water?",fillwater);
-		aquify=getyesno("Aquifer?",aquify);
+		//aquify=getyesno("Aquifer?",aquify);
 
 
 		///////////////////////////////////////////////////////////////////////////////////////////////
@@ -375,12 +385,14 @@ int main (void)
 		//If a settings struct existed, this could be in a routine
 		printf("Using Settings:\n");
 		printf("Pit Type......: %d = %s\n", pittype, pitTypeDesc[pittype]);
+		printf("Depth.........: %d\n",  pitdepth);
 		printf("Hole Radius...: %d\n",  holeradius);
 		printf("Wall Thickness: %d\n",  wallthickness);
 		printf("Pillars, Hole.: %d\n",  holepillar);
 		printf("Pillars, Wall.: %d\n",  wallpillar);
 		printf("Expose Hell...: %c\n", (exposehell?'Y':'N') );
 		printf("Stop at Magma.: %c\n", (stopatmagma?'Y':'N') );
+		printf("Expose Magma..: %c\n", (exposemagma?'Y':'N') );
 		printf("Magma Fill....: %c\n", (fillmagma?'Y':'N') );
 		printf("Water Fill....: %c\n", (fillwater?'Y':'N') );
 		printf("Aquifer.......: %c\n", (aquify?'Y':'N') );
@@ -582,7 +594,7 @@ int main (void)
 	t_designation * d;
 
 	//////////////////////////////////////
-	//From top to bottom, dig this dude.
+	//From top to bottom, dig this thing.
 	//////////////////////////////////////
 
 	//Top level, cap.
@@ -646,8 +658,10 @@ int main (void)
 		}
 
 		//Pre-process this z-level, to get some tile statistics.
-		for(int32_t x=0;x<16;++x){
-			for(int32_t y=0;y<16;++y){
+		for(int32_t x=0;x<16;++x)
+		{
+			for(int32_t y=0;y<16;++y)
+			{
 				t=0;
 				tp = getTileTypeP(block.tiletypes[x][y]);
 				d = &block.designation[x][y];
@@ -753,7 +767,7 @@ int main (void)
 			cout << "error: illegal breach of hell!";
 		}
 
-						
+
 		/////////////////////////////////////////////////////////////////////////////////////////////////
 		//Actually process the current z-level.
 		//These loops do the work.
@@ -763,6 +777,11 @@ int main (void)
 				tp = getTileTypeP(block.tiletypes[x][y]);
 				d = &block.designation[x][y];
 				tpat=pattern[x][y];
+
+				//Up front, remove aquifer, to prevent bugginess
+				//It may be added back if aquify is set.
+				d->bits.water_table=0;
+
 
 				//Change behaviour based on settings and stats from this z-level
 
@@ -778,7 +797,6 @@ int main (void)
 					//Leave certain tiles unchanged.
 					switch( tp->m ){
 						case MAGMA:
-						case VEIN:
 						case FEATSTONE:
 						case HFS:
 							tpat=0;
@@ -807,8 +825,8 @@ int main (void)
 					//d->bits.skyview = topblock.designation[x][y].bits.skyview;
 					//d->bits.subterranean = topblock.designation[x][y].bits.subterranean;
 
-					//Erase special markers
-					d->bits.feature_global = d->bits.feature_local = 0;
+					//Erase special markers?
+					//d->bits.feature_global = d->bits.feature_local = 0;
 
 					//Water? Magma?
 					if(fillmagma || fillwater){
@@ -838,7 +856,7 @@ int main (void)
 							t=wmolten;
 							break;
 						case HFS:
-							t=whell;
+							//t=whell;
 							break;
 						case VEIN:
 							t=440; //Solid vein block
@@ -861,6 +879,7 @@ int main (void)
 								case feature_Underworld:
 								case feature_Hell_Temple:
 									//Whatever the feature is made of. "featstone wall"
+									d->bits.feature_global = 0;
 									d->bits.feature_local = 1;
 									t=335;
 									break;
@@ -902,7 +921,9 @@ int main (void)
 				
 				case 3:
 					//No obsidian walls on bottom of map!
-					if(z<1) continue;
+					if(z<1 && (d->bits.feature_global || d->bits.feature_local) ) {
+						t=335;
+					}
 
 					//Special wall, always sets to obsidian, to give a stairway
 					t=331;
@@ -930,8 +951,6 @@ int main (void)
 				//unlock fluids, so they fall down the pit.
 				d->bits.flow_forbid = d->bits.liquid_static=0;
 				block.blockflags.bits.liquid_1 = block.blockflags.bits.liquid_2 = 1;
-				//Remove aquifer, to prevent bugginess
-				d->bits.water_table=0;
 				//Set the tile.
 				block.tiletypes[x][y] = t;
 
@@ -961,7 +980,9 @@ int main (void)
 	///////////////////////////////////////////////////////////////////////////////////////////////
 	//The bottom level is special.
 	if(-1){
-		Mapz->ReadBlock40d( bx, by, z , &block );
+		if(!Mapz->ReadBlock40d( bx, by, z , &block )){
+				cout << "Bad block! " << bx << "," << by << "," << z << endl;
+		}
 		for(uint32_t x=0;x<16;++x){
 			for(uint32_t y=0;y<16;++y){
 				t=floor;
@@ -1048,10 +1069,10 @@ int main (void)
 			}
 		}
 		//Write the block.
-		Mapz->WriteBlockFlags(bx,by,0, block.blockflags ); 
-		Mapz->WriteDesignations(bx,by,0, &block.designation ); 
-		Mapz->WriteTileTypes(bx,by,0, &block.tiletypes ); 
-		Mapz->WriteDirtyBit(bx,by,0,1); 
+		Mapz->WriteBlockFlags(bx,by,z, block.blockflags ); 
+		Mapz->WriteDesignations(bx,by,z, &block.designation ); 
+		Mapz->WriteTileTypes(bx,by,z, &block.tiletypes ); 
+		Mapz->WriteDirtyBit(bx,by,z,1); 
 	}
 
 

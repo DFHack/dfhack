@@ -39,8 +39,12 @@ void waitmsec (int delay)
 #define PITTYPEMACRO \
 	X(pitTypeChasm,"Bottomless Chasm" ) \
 	X(pitTypeEerie,"Bottomless Eerie Pit" ) \
-	X(pitTypeFloor,"Pit with a floor" ) \
-	X(pitTypeMagma,"Magma Pit (similar to volcanoe, no hell access)" ) 
+	X(pitTypeFloor,"Pit with floor" ) \
+	X(pitTypeSolid,"Solid Pillar" ) \
+	X(pitTypeOasis,"Oasis, with partial aquifer (no hell access)" ) \
+	X(pitTypeOPool,"Oasis Pool, with partial aquifer (default 5 deep)" ) \
+	X(pitTypeMagma,"Magma Pit (similar to volcano, no hell access)" ) \
+	X(pitTypeMPool,"Magma Pool (default 5 z-levels)" ) 
 //end PITTYPEMACRO
 
 #define X(name,desc) name,
@@ -99,21 +103,35 @@ int getint( const char * msg , int min, int max, int default_value ){
 	}
 }
 
+int getint( const char * msg , int min, int max ){
+	const int bufferlen=16;
+	static char buf[bufferlen];
+	int n=0;	
+	memset(buf,0,bufferlen);
+	while(-1){
+		if(msg) printf("\n%s \n:" , msg );
+		fflush(stdin);		
+		fgets(buf,bufferlen,stdin);
+		if( !buf[0] || 0x0a==buf[0] || 0x0d==buf[0] ) continue;
+		if( sscanf(buf,"%d", &n) ){
+			if(n>=min && n<=max ) return n;
+		}
+	}
+}
+
 
 
 //Interactive, get pit type from user
-#define X( e , desc ) printf("%2d) %s\n", (e), (desc) );
-e_pitType selectPitType(e_pitType default_value ){
-	e_pitType r=pitTypeInvalid;
-	int c=-1;
+e_pitType selectPitType(){
 	while( -1 ){
-		printf("Enter the type of hole to dig (if no entry, default everything):\n" );
-		PITTYPEMACRO
+		printf("Enter the type of hole to dig:\n" );
+		for(int n=0;n<pitTypeCount;++n){
+			printf("%2d) %s\n", n, pitTypeDesc[n] );
+		}
 		printf(":");
-		return (e_pitType)getint(NULL, 0, pitTypeCount-1, default_value );
+		return (e_pitType)getint(NULL, 0, pitTypeCount-1 );
 	}
 }
-#undef X
 
 
 void drawcircle(const int radius, unsigned char pattern[16][16], unsigned char v ){
@@ -166,6 +184,28 @@ void drawcircle(const int radius, unsigned char pattern[16][16], unsigned char v
 	}
 }
 
+//Check all neighbors for a given value n.
+//If found, and v>=0, replace with v.
+//Returns number of neighbors found.
+int checkneighbors(unsigned char pattern[16][16], int x, int y, unsigned char n , char v )
+{
+	int r=0;
+	if( x>0  && y>0  && n==pattern[x-1][y-1] ){ ++r; if(v>-1) pattern[x][y]=v;  }
+	if( x>0          && n==pattern[x-1][y  ] ){ ++r; if(v>-1) pattern[x][y]=v;  }
+	if(         y>0  && n==pattern[x  ][y-1] ){ ++r; if(v>-1) pattern[x][y]=v;  }
+	if( x<15         && n==pattern[x+1][y  ] ){ ++r; if(v>-1) pattern[x][y]=v;  }
+	if( x<15 && y>0  && n==pattern[x+1][y-1] ){ ++r; if(v>-1) pattern[x][y]=v;  }
+	if( x<15 && y<15 && n==pattern[x+1][y+1] ){ ++r; if(v>-1) pattern[x][y]=v;  }
+	if(         y<15 && n==pattern[x  ][y+1] ){ ++r; if(v>-1) pattern[x][y]=v;  }
+	if( x>0  && y<15 && n==pattern[x-1][y+1] ){ ++r; if(v>-1) pattern[x][y]=v;  }
+	return r;
+}
+//convenience
+int checkneighbors(unsigned char pattern[16][16], int x, int y, unsigned char n )
+{
+	return checkneighbors(pattern,x,y,n,-1);
+}
+
 void settileat(unsigned char pattern[16][16], const unsigned char needle, const unsigned char v, const int index )
 {
 	int ok=0;
@@ -189,14 +229,37 @@ void settileat(unsigned char pattern[16][16], const unsigned char needle, const 
 }
 
 
+//Is a given feature present at the given tile?
+int isfeature(
+	vector<DFHack::t_feature> global_features, 
+	std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> > local_features, 
+	const mapblock40d &block, const planecoord &pc, const int x, const int y, const e_feature Feat 
+)
+{
+	//const TileRow * tp;
+	//tp = getTileTypeP(block.tiletypes[x][y]);
+	const t_designation * d;
+	d = &block.designation[x][y];
+
+	if( block.local_feature > -1 && d->bits.feature_local ){
+		if( Feat==local_features[pc][block.local_feature]->type ) return Feat;
+	}
+	if( block.global_feature > -1 && d->bits.feature_global ){
+		if( Feat==global_features[block.global_feature].type ) return Feat;
+	}
+
+	return 0;
+}
+
+
 int main (void)
 {
 	srand ( (unsigned int)time(NULL) );
 
 	//Message of intent
 	cout << 
-		"DF Hell Hole" << endl << 
-		"This program will instantly dig a bottomless hole through hell, wherever your cursor is." << endl <<
+		"DF Hole" << endl << 
+		"This tool will instantly dig a chasm, pit, pipe, etc through hell, wherever your cursor is." << endl <<
 		"This can not be undone!  End program now if you don't want hellish fun." << endl
 		;
 	
@@ -204,69 +267,22 @@ int main (void)
 	//sloppy mess, but this is just a demo utility.
 
 	//Pit Types.
-	e_pitType pittype = selectPitType(pitTypeInvalid);
+	e_pitType pittype = selectPitType();
 
-
-	//Hole Diameter
+	//Here are all the settings.
+	//Default values are set here.
+	int pitdepth=0;
+	int roof=-1;
 	int holeradius=6;
-	if( pitTypeInvalid != pittype  ){
-		holeradius = getint( "Enter hole radius, 0 to 8", 0, 8, holeradius );
-	}
-
-	//Wall thickness
 	int wallthickness=1;
-	if( pitTypeInvalid != pittype  ){
-		wallthickness = getint( "Enter wall thickness, 0 to 8", 0, 8, wallthickness );
-	}
-
-	//Obsidian Pillars
-	int pillarwall=1;
-	if( pitTypeInvalid != pittype  ){
-		pillarwall = getint( "Number of Obsidian Pillars in wall, 0 to 255", 0, 255, pillarwall );
-	}
-	int pillarchasm=1;
-	if( pitTypeInvalid != pittype  ){
-		pillarchasm = getint( "Number of Obsidian Pillars in hole, 0 to 255", 0, 255, pillarchasm );
-	}
-
-	//Open Hell?
+	int wallpillar=1;
+	int holepillar=1;
 	int exposehell = 0;
-	if( pitTypeInvalid != pittype && pitTypeMagma != pittype && wallthickness ){
-		exposehell=getyesno("Expose the pit to hell (no walls in hell)?",0);
-	}
-
-	//Fill?
 	int fillmagma=0;
-	if( pitTypeInvalid != pittype ){
-		fillmagma=getyesno("Fill with magma?",0);
-	}
 	int fillwater=0;
-	if( pitTypeInvalid != pittype && !fillmagma){
-		fillwater=getyesno("Fill with water?",0);
-	}
-
-
-	//If skipped all settings, fix the pit type
-	if( pitTypeInvalid == pittype ) pittype = pitTypeChasm;
-
-
-	///////////////////////////////////////////////////////////////////////////////////////////////
-	//Print settings.
-	//If a settings struct existed, this could be in a routine
-	printf("Using Settings:\n");
-	printf("Pit Type......: %d = %s\n", pittype, pitTypeDesc[pittype]);
-	printf("Hole Radius...: %d\n",  holeradius);
-	printf("Wall Thickness: %d\n",  wallthickness);
-	printf("Pillars, Wall.: %d\n",  pillarwall);
-	printf("Pillars, Hole.: %d\n",  pillarchasm);
-	printf("Expose Hell...: %c\n", (exposehell?'Y':'N') );
-	printf("Magma Fill....: %c\n", (fillmagma?'Y':'N') );
-	printf("Water Fill....: %c\n", (fillwater?'Y':'N') );
-
-
-
-	int64_t n;
-    uint32_t x_max,y_max,z_max;
+	int stopatmagma=0;
+	int exposemagma=0;
+	int aquify=0;
 
 	//The Tile Type to use for the walls lining the hole
 	//263 is semi-molten rock, 331 is obsidian
@@ -274,10 +290,47 @@ int main (void)
 	//The Tile Type to use for the hole's floor at bottom of the map
 	//35 is chasm, 42 is eerie pit , 340 is obsidian floor, 344 is featstone floor, 264 is 'magma flow' floor
 	uint32_t floor=35, cap=340;
+	int floorvar=0;
+
+
+	//Modify default settings based on pit type.
 	switch( pittype ){
-		case pitTypeEerie: floor=42;  break;
-		case pitTypeFloor: floor=344; break;
-		case pitTypeMagma: floor=264; break;
+		case pitTypeChasm:
+			floor=35;
+			break;
+		case pitTypeEerie: 
+			floor=42;  
+			break;
+		case pitTypeFloor: 
+			floor=344;
+			floorvar=3;
+			break;
+		case pitTypeOasis:
+			stopatmagma=-1;
+			//fillwater=-1;
+			wallthickness=2;
+			aquify=-1;
+			floor=340; 
+			floorvar=3;
+			break;
+		case pitTypeOPool:
+			//fillwater=-1;
+			wallthickness=2;
+			aquify=-1;
+			floor=340; 
+			floorvar=3;
+			break;
+		case pitTypeMagma: 
+			stopatmagma=-1;
+			exposemagma=-1;
+			fillmagma=-1;
+			floor=264; 
+			break;
+		case pitTypeMPool:
+			fillmagma=-1;
+			floor=340;
+			floorvar=3;
+			break;
 		default:
 			floor=35;
 	}
@@ -285,6 +338,59 @@ int main (void)
 
 	//Should tiles be revealed?
 	int reveal=0;
+
+
+	int accept = getyesno("Use default settings?",1);
+
+	while( !accept ){
+
+		//Pit Depth
+		pitdepth = getint( "Enter pit depth (0 for bottom of map)", 0, INT_MAX, pitdepth );
+
+		//Hole Size
+		holeradius = getint( "Enter hole radius, 0 to 16", 0, 8, holeradius );
+
+		//Wall thickness
+		wallthickness = getint( "Enter wall thickness, 0 to 16", 0, 8, wallthickness );
+
+		//Obsidian Pillars
+		holepillar = getint( "Number of Obsidian Pillars in hole, 0 to 255", 0, 255, holepillar );
+		wallpillar = getint( "Number of Obsidian Pillars in wall, 0 to 255", 0, 255, wallpillar );
+
+		//Open Hell?
+		exposehell=getyesno("Expose the pit to hell (no walls in hell)?",exposehell);
+
+		//Stop when magma sea is hit?
+		stopatmagma=getyesno("Stop at magma sea?",stopatmagma);
+
+		//Fill?
+		fillmagma=getyesno("Fill with magma?",fillmagma);
+		if(fillmagma) aquify=fillwater=0;
+		fillwater=getyesno("Fill with water?",fillwater);
+		aquify=getyesno("Aquifer?",aquify);
+
+
+		///////////////////////////////////////////////////////////////////////////////////////////////
+		//Print settings.
+		//If a settings struct existed, this could be in a routine
+		printf("Using Settings:\n");
+		printf("Pit Type......: %d = %s\n", pittype, pitTypeDesc[pittype]);
+		printf("Hole Radius...: %d\n",  holeradius);
+		printf("Wall Thickness: %d\n",  wallthickness);
+		printf("Pillars, Hole.: %d\n",  holepillar);
+		printf("Pillars, Wall.: %d\n",  wallpillar);
+		printf("Expose Hell...: %c\n", (exposehell?'Y':'N') );
+		printf("Stop at Magma.: %c\n", (stopatmagma?'Y':'N') );
+		printf("Magma Fill....: %c\n", (fillmagma?'Y':'N') );
+		printf("Water Fill....: %c\n", (fillwater?'Y':'N') );
+		printf("Aquifer.......: %c\n", (aquify?'Y':'N') );
+
+		accept = getyesno("Accept these settings?",1);
+	}
+
+
+	int64_t n;
+    uint32_t x_max,y_max,z_max;
 
 
 	//Pattern to dig
@@ -322,27 +428,21 @@ int main (void)
 						}
 					}else if( 0==pattern[x][y] ){
 						//check neighbors
-						if( x>0  && y>0  && 1==pattern[x-1][y-1] ){ pattern[x][y]=2; continue; }
-						if( x>0          && 1==pattern[x-1][y  ] ){ pattern[x][y]=2; continue; }
-						if(         y>0  && 1==pattern[x  ][y-1] ){ pattern[x][y]=2; continue; }
-						if( x<15         && 1==pattern[x+1][y  ] ){ pattern[x][y]=2; continue; }
-						if( x<15 && y>0  && 1==pattern[x+1][y-1] ){ pattern[x][y]=2; continue; }
-						if( x<15 && y<15 && 1==pattern[x+1][y+1] ){ pattern[x][y]=2; continue; }
-						if(         y<15 && 1==pattern[x  ][y+1] ){ pattern[x][y]=2; continue; }
-						if( x>0  && y<15 && 1==pattern[x-1][y+1] ){ pattern[x][y]=2; continue; }
+						checkneighbors( pattern , x,y, 1, 2);
 					}
 				}
 			}
 		}
 
-		//Final pass, makes sure that somewhere random gets a vertical pillar of rock which is safe
+		//Makes sure that somewhere random gets a vertical pillar of rock which is safe
 		//to dig stairs down, to permit access to anywhere within the pit from the top.
-		for(n=pillarchasm; n ; --n){
+		for(n=holepillar; n ; --n){
 			settileat( pattern , 1 , 3 , rand()&255 );
 		}
-		for(n=pillarwall; n ; --n){
+		for(n=wallpillar; n ; --n){
 			settileat( pattern , 2 , 3 , rand()&255 );
 		}
+
 
 
 		//Note:
@@ -351,9 +451,10 @@ int main (void)
 		//1 for all tiles set to empty pit space.
 		//2 for all normal walls.
 		//3 for the straight obsidian top-to-bottom wall.
+		//4 is randomized between wall or floor (!not implemented!)
 
 		printf("\nPattern:\n");
-		const char patternkey[] = ".cW!4567890123";
+		const char patternkey[] = ".cW!?567890123";
 
 		//Print the pattern
 		for(y=0;y<16;++y){
@@ -367,8 +468,14 @@ int main (void)
 		regen = !getyesno("Acceptable Pattern?",1);
 	}
 
+	//Post-process settings to fix problems here
+	if(pitdepth<1) pitdepth=INT_MAX;
+
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    cerr << "Loading memory map..." << endl;
 
 	//Connect to DF!    
     DFHack::ContextManager DFMgr("Memory.xml");
@@ -377,6 +484,7 @@ int main (void)
 
 
 	//Init
+    cerr << "Attaching to DF..." << endl;
 	try
     {
         DF->Attach();
@@ -435,9 +543,9 @@ int main (void)
 
 
 	//Verify that every z-level at this location exists.
-	for(int32_t z = 0; z<= bz ;z++){
-		if( ! Mapz->isValidBlock(bx,by,z) ){
-			cout << "This block does't exist yet!" << endl << "Designate the lowest level for digging to make DF allocate the block, then try again." << endl;
+	for(int32_t Z = 0; Z<= bz ;Z++){
+		if( ! Mapz->isValidBlock(bx,by,Z) ){
+			cout << "This block does't exist!  Exiting." << endl;
 			#ifndef LINUX_BUILD
 				cin.ignore();
 			#endif
@@ -479,11 +587,12 @@ int main (void)
 
 	//Top level, cap.
 	//Might make this an option in the future
-	if(-1){
+	//For now, no wall means no cap.
+	if(wallthickness){
 		Mapz->ReadBlock40d( bx, by, bz , &block );
 		for(uint32_t x=0;x<16;++x){
 			for(uint32_t y=0;y<16;++y){
-				if(pattern[x][y]){
+				if( (pattern[x][y]>1) || (roof && pattern[x][y])  ){
 					tp = getTileTypeP(block.tiletypes[x][y]);
 					d = &block.designation[x][y];
 					//Only modify this level if it's 'empty'
@@ -511,27 +620,32 @@ int main (void)
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
-	//Various behaviour flags.
-	int magmacount=0;
-	int moltencount=0;
-	int solidcount=0;
-	int emptycount=0;
-	int hellcount=0;
-	int tpat;
-
 	//All levels in between.
-	uint32_t t;
-	for(int32_t z = bz-1; z>0 ; --z){
-		moltencount=0;
-		magmacount=0;
-		solidcount=0;
-		emptycount=0;
-		hellcount=0;
+	int done=0;
+	uint32_t t,v;
+	int32_t z = bz-1;
+	int32_t bottom = max(0,bz-pitdepth-1);
+	assert( bottom>=0 && bottom<=bz );
+	for( ; !done && z>=bottom ; --z){
+		int watercount=0;
+		int magmacount=0;
+		int moltencount=0;
+		int solidcount=0;
+		int veincount=0;
+		int emptycount=0;
+		int hellcount=0;
+		int templecount=0;
+		int adamcount=0;
+		int featcount=0;
+		int tpat;
+
 		cout << z << endl;
 		assert( Mapz->isValidBlock(bx,by,z) );
 		if(!Mapz->ReadBlock40d( bx, by, z , &block )){
-				cout << "Bad block! " << bx << "," << by << "," << z;
+				cout << "Bad block! " << bx << "," << by << "," << z << endl;
 		}
+
+		//Pre-process this z-level, to get some tile statistics.
 		for(int32_t x=0;x<16;++x){
 			for(int32_t y=0;y<16;++y){
 				t=0;
@@ -539,59 +653,145 @@ int main (void)
 				d = &block.designation[x][y];
 				tpat=pattern[x][y];
 
-				//Manipulate behaviour based on settings and location
+				//Tile type material categories
 				switch( tp->m ){
 					case MAGMA:
 						++moltencount;
-					case FEATSTONE:
-					case HFS:
-						//Making a fake volcanoe/magma pipe?
-						if( pitTypeMagma == pittype ){
-							//Leave tile unchanged.
-							tpat=0;
-						}
 						break;
 					case VEIN:
+						++veincount;
+						break;
+					case FEATSTONE:
+					case HFS:
 					case OBSIDIAN:
 					default:
-						if( EMPTY != tp->c ){
+						if( EMPTY == tp->c || RAMP_TOP == tp->c || STAIR_DOWN == tp->c ){
 							++emptycount;
 						}else{
 							++solidcount;
 						}
 				}
 
-				//No walls if magma found anywhere for a magma pipe
-				if( d->bits.flow_size && liquid_magma==d->bits.liquid_type ){
-					++magmacount;
-					if(pitTypeMagma == pittype){
-						tpat=0;
+				//Magma and water
+				if( d->bits.flow_size ){
+					if(d->bits.liquid_type){
+						++magmacount;
+					}else{
+						++watercount;
 					}
 				}
 
 
-				//Check hell status
-				if( 
-					(block.local_feature > -1 && feature_Underworld==local_features[pc][block.local_feature]->type )
-					||
-					(block.global_feature > -1 && feature_Underworld==global_features[block.global_feature].type )
-				){
-					++hellcount;
+				//Check for Features
+				if( block.local_feature > -1 || block.global_feature > -1 ){
+					//Count tiles which actually are in the feature.
+					//It is possible for a block to have a feature, but no tiles to be feature.
+					if( d->bits.feature_global || d->bits.feature_local ){
+						//All features
+						++featcount;
 
-					//Are we leaving hell open?
+						if( d->bits.feature_global && d->bits.feature_local ){
+							cout << "warn:tile is global and local at same time!" << endl;
+						}
+
+						n=0;
+						if( block.global_feature > -1 && d->bits.feature_global ){
+							n=global_features[block.global_feature].type;
+							switch( n ){
+								case feature_Other:
+									//no count
+									break;
+								case feature_Adamantine_Tube:
+									++adamcount;
+									break;
+								case feature_Underworld:
+									++hellcount;
+									break;
+								case feature_Hell_Temple:
+									++templecount;
+									break;
+								default:
+									//something here. for debugging, it may be interesting to know.
+									if(n) cout << '(' << n << ')';
+							}
+						}
+
+						n=0;
+						if( block.local_feature > -1 && d->bits.feature_local ){
+							n=local_features[pc][block.local_feature]->type;
+							switch( n ){
+								case feature_Other:
+									//no count
+									break;
+								case feature_Adamantine_Tube:
+									++adamcount;
+									break;
+								case feature_Underworld:
+									++hellcount;
+									break;
+								case feature_Hell_Temple:
+									++templecount;
+									break;
+								default:
+									//something here. for debugging, it may be interesting to know.
+									if(n) cout << '[' << n << ']';
+							}
+						}
+					}
+				}
+			}
+		}
+
+
+		/////////////////////////////////////////////////////////////////////////////////////////////////
+		//Some checks, based on settings and stats collected
+		//First check, are we at illegal depth?
+		if( hellcount && stopatmagma ){
+			//Panic!
+			done=-1;
+			tpat=0;
+			cout << "error: illegal breach of hell!";
+		}
+
+						
+		/////////////////////////////////////////////////////////////////////////////////////////////////
+		//Actually process the current z-level.
+		//These loops do the work.
+		for(int32_t x=0;!done && x<16;++x){
+			for(int32_t y=0;!done && y<16;++y){
+				t=0;
+				tp = getTileTypeP(block.tiletypes[x][y]);
+				d = &block.designation[x][y];
+				tpat=pattern[x][y];
+
+				//Change behaviour based on settings and stats from this z-level
+
+				//In hell?
+				if( tpat && isfeature(global_features, local_features,block,pc,x,y,feature_Underworld ) ){
 					if( exposehell ){
-						//Leave tile unchanged.
 						tpat=0;
 					}
+				}
 
-					//Never should have gotten here
-					if(pitTypeMagma == pittype){
-						x=y=255;
-						z=0;
-						tpat=0;
-						continue;
+				//Expose magma?
+				if( tpat && exposemagma ){
+					//Leave certain tiles unchanged.
+					switch( tp->m ){
+						case MAGMA:
+						case VEIN:
+						case FEATSTONE:
+						case HFS:
+							tpat=0;
 					}
+					//Leave magma sea unchanged.
+					if( d->bits.flow_size && d->bits.liquid_type){
+						tpat=0;
+					}
+				}
 
+				//Stop at magma?
+				if( tpat && stopatmagma ){
+					//Processed normally, but tricky at end.
 				}
 
 
@@ -623,12 +823,12 @@ int main (void)
 						//Otherwise, remove all liquids.
 						d->bits.flow_size=0;
 						d->bits.liquid_character = liquid_fresh;
-						d->bits.liquid_type=liquid_water;
+						d->bits.liquid_type = liquid_water;
 					}
 
 					break;
 				case 2:
-					//Border.
+					//Wall.
 					//First guess based on current material
 					switch( tp->m ){
 						case OBSIDIAN:
@@ -664,9 +864,6 @@ int main (void)
 									d->bits.feature_local = 1;
 									t=335;
 									break;
-								default:
-									//something here. for debugging, it may be interesting to know.
-									if(n) cout << '(' << n << ')';
 							}
 						}
 						//Global Feature?
@@ -679,9 +876,6 @@ int main (void)
 									d->bits.feature_global = 1;
 									t=335;
 									break;
-								default:
-									//something here. for debugging, it may be interesting to know.
-									if(n) cout << '[' << n << ']';
 							}
 						}
 					}
@@ -691,9 +885,25 @@ int main (void)
 					d->bits.liquid_character = liquid_fresh;
 					d->bits.liquid_type=liquid_water;
 
+					//Placing an aquifer?
+					if( aquify ){
+						//Only normal stone types can be aquified
+						if( tp->m!=MAGMA && tp->m!=FEATSTONE && tp->m!=HFS  ){
+							//Only place next to the hole.
+							//If no hole, place in middle.
+							if( checkneighbors(pattern,x,y,1) || (7==x && 7==y) ){
+								d->bits.water_table = 1;
+								t=265; //soil wall
+							}
+						}
+					}
+
 					break;
 				
 				case 3:
+					//No obsidian walls on bottom of map!
+					if(z<1) continue;
+
 					//Special wall, always sets to obsidian, to give a stairway
 					t=331;
 
@@ -735,45 +945,106 @@ int main (void)
 		Mapz->WriteDirtyBit(bx,by,z,1); 
 
 		//Making a fake volcanoe/magma pipe?
-		if( pitTypeMagma == pittype && !solidcount && (moltencount || magmacount) ){
-			//Nothing «solid», we're making a magma pipe, we're done.
-			z=0;
+		if( stopatmagma && (moltencount || magmacount) && (!exposemagma || !solidcount) ){
+			//If not exposing magma, quit at the first sign of magma.
+			//If exposing magma, quite once magma is exposed.
+			done=-1;
 		}
 
 	}
 
+	//Re-process the last z-level handled above.
+	z++;
+	assert( z>=0 );
 
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
 	//The bottom level is special.
 	if(-1){
-		Mapz->ReadBlock40d( bx, by, 0 , &block );
+		Mapz->ReadBlock40d( bx, by, z , &block );
 		for(uint32_t x=0;x<16;++x){
 			for(uint32_t y=0;y<16;++y){
-				//Only the portion below the empty space is handled.
-				if(1==pattern[x][y]){
-					//if( 1==pattern[x][y] ) t=floor;
-					//else if( 3==pattern[x][y] ) t=331;
-					//else continue;
+				t=floor;
+				v=floorvar;
+				tp = getTileTypeP(block.tiletypes[x][y]);
+				d = &block.designation[x][y];
 
-					tp = getTileTypeP(block.tiletypes[x][y]);
-					d = &block.designation[x][y];
-
-					//Special handling for magma pipe.
-					//Need to be sure that solid blocks have a floor above them.
-					//Only solid blocks will have a floor drawn; empty blocks will be ignored.
-					if( pitTypeMagma == pittype  ) {
-						if( EMPTY == tp->c || RAMP_TOP == tp->c || STAIR_DOWN == tp->c ) continue;
+				if( exposehell ){
+					//Leave hell tiles unchanged when exposing hell.
+					if( isfeature(global_features,local_features,block,pc,x,y,feature_Underworld) ){
+						continue;
 					}
-
-					//For all tiles.
-					if(reveal) d->bits.hidden = 0; //topblock.designation[x][y].bits.hidden;
-					//Always clear the dig designation.
-					d->bits.dig=designation_no;
-					//unlock fluids
-					d->bits.flow_forbid = d->bits.liquid_static=0;
-					block.blockflags.bits.liquid_1 = block.blockflags.bits.liquid_2 = 1;
-					//Set the tile.
-					block.tiletypes[x][y] = floor;
 				}
+
+				switch(pattern[x][y]){
+					case 0:
+						continue;
+						break;
+					case 1:
+						//Empty becomes floor.
+
+						//Base floor type on the z-level first, features, then tile type.
+						if(!z){
+							//Bottom of map, use the floor specified, always.
+							break;
+						}
+
+						if(exposemagma){
+							//Only place floor where ground is already solid when exposing
+							if( EMPTY == tp->c || RAMP_TOP == tp->c || STAIR_DOWN == tp->c ){
+								continue;
+							}
+						}
+
+						if( d->bits.feature_global || d->bits.feature_global ){
+							//Feature Floor!
+							t=344;
+							break;
+						}
+
+						//Tile material check.
+						switch( tp->m ){
+							case OBSIDIAN:
+								t=340;
+								v=3;
+								break;
+							case MAGMA:
+								v=0;
+								t=264; //magma flow
+								break;
+							case HFS:
+								//should only happen at bottom of map
+								break;
+							case VEIN:
+								t=441;  //vein floor
+								v=3;
+								break;
+							case FEATSTONE:
+								t=344;
+								v=3;
+								break;
+						}
+
+						break;
+					case 2:
+					case 3:
+						//Walls already drawn.
+						//Ignore.
+						continue;
+						break;
+				}
+
+				//For all tiles.
+				if(reveal) d->bits.hidden = 0; //topblock.designation[x][y].bits.hidden;
+				//Always clear the dig designation.
+				d->bits.dig=designation_no;
+				//unlock fluids
+				d->bits.flow_forbid = d->bits.liquid_static=0;
+				block.blockflags.bits.liquid_1 = block.blockflags.bits.liquid_2 = 1;
+
+				//Set the tile.
+				block.tiletypes[x][y] = t + ( v ? rand()&v : 0 ) ;
+
 			}
 		}
 		//Write the block.

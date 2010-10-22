@@ -354,13 +354,13 @@ int main (void)
 	while( !accept ){
 
 		//Pit Depth
-		pitdepth = getint( "Enter pit depth (0 for bottom of map)", 0, INT_MAX, pitdepth );
+		pitdepth = getint( "Enter max depth (0 for bottom of map)", 0, INT_MAX, pitdepth );
 
 		//Hole Size
-		holeradius = getint( "Enter hole radius, 0 to 16", 0, 8, holeradius );
+		holeradius = getint( "Enter hole radius, 0 to 16", 0, 16, holeradius );
 
 		//Wall thickness
-		wallthickness = getint( "Enter wall thickness, 0 to 16", 0, 8, wallthickness );
+		wallthickness = getint( "Enter wall thickness, 0 to 16", 0, 16, wallthickness );
 
 		//Obsidian Pillars
 		holepillar = getint( "Number of Obsidian Pillars in hole, 0 to 255", 0, 255, holepillar );
@@ -371,7 +371,7 @@ int main (void)
 
 		//Stop when magma sea is hit?
 		stopatmagma=getyesno("Stop at magma sea?",stopatmagma);
-		exposemagma=getyesno("Expose magma sea (no walls)?",exposemagma);
+		exposemagma=getyesno("Expose magma sea (no walls in magma)?",exposemagma);
 
 		//Fill?
 		fillmagma=getyesno("Fill with magma?",fillmagma);
@@ -642,7 +642,7 @@ int main (void)
 		int watercount=0;
 		int magmacount=0;
 		int moltencount=0;
-		int solidcount=0;
+		int rockcount=0;
 		int veincount=0;
 		int emptycount=0;
 		int hellcount=0;
@@ -669,6 +669,9 @@ int main (void)
 
 				//Tile type material categories
 				switch( tp->m ){
+					case AIR:
+						++emptycount;
+						break;
 					case MAGMA:
 						++moltencount;
 						break;
@@ -678,12 +681,15 @@ int main (void)
 					case FEATSTONE:
 					case HFS:
 					case OBSIDIAN:
+						//basicly, ignored.
+						break;
 					default:
 						if( EMPTY == tp->c || RAMP_TOP == tp->c || STAIR_DOWN == tp->c ){
 							++emptycount;
 						}else{
-							++solidcount;
+							++rockcount;
 						}
+						break;
 				}
 
 				//Magma and water
@@ -757,14 +763,23 @@ int main (void)
 		}
 
 
+		//If stopping at magma, and no no non-feature stone in this layer, and magma found, then we're either at
+		//or below the magma sea / molten rock.
+		if( stopatmagma && (moltencount || magmacount) && (!exposemagma || !rockcount) ){
+			//If not exposing magma, quit at the first sign of magma.
+			//If exposing magma, quite once magma is exposed.
+			done=-1;
+		}
+
+
 		/////////////////////////////////////////////////////////////////////////////////////////////////
 		//Some checks, based on settings and stats collected
 		//First check, are we at illegal depth?
-		if( hellcount && stopatmagma ){
+		if( !done && hellcount && stopatmagma ){
 			//Panic!
 			done=-1;
 			tpat=0;
-			cout << "error: illegal breach of hell!";
+			cout << "error: illegal breach of hell!" << endl;
 		}
 
 
@@ -786,20 +801,26 @@ int main (void)
 				//Change behaviour based on settings and stats from this z-level
 
 				//In hell?
-				if( tpat && isfeature(global_features, local_features,block,pc,x,y,feature_Underworld ) ){
+				if( tpat && tpat!=3 && isfeature(global_features, local_features,block,pc,x,y,feature_Underworld ) ){
 					if( exposehell ){
 						tpat=0;
 					}
 				}
 
 				//Expose magma?
-				if( tpat && exposemagma ){
+				if( tpat && tpat!=3 && exposemagma ){
 					//Leave certain tiles unchanged.
 					switch( tp->m ){
-						case MAGMA:
-						case FEATSTONE:
 						case HFS:
+						case FEATSTONE:
+						case MAGMA:
 							tpat=0;
+						default:
+							break;
+					}
+					//Adamantine may be left unchanged...
+					if( isfeature(global_features, local_features,block,pc,x,y,feature_Adamantine_Tube ) ){
+						tpat=0;
 					}
 					//Leave magma sea unchanged.
 					if( d->bits.flow_size && d->bits.liquid_type){
@@ -807,9 +828,13 @@ int main (void)
 					}
 				}
 
-				//Stop at magma?
-				if( tpat && stopatmagma ){
-					//Processed normally, but tricky at end.
+
+				//For all situations...
+				//Special modification for walls, always for adamantine.
+				if( isfeature(global_features, local_features,block,pc,x,y,feature_Adamantine_Tube ) ){
+					if( 2==pattern[x][y] || 3==pattern[x][y] ){
+						tpat=2;
+					}
 				}
 
 
@@ -868,16 +893,20 @@ int main (void)
 							t=wcave;
 					}
 
-					//If the tile already is a feature, or if it is a vein, we're done.
-					//Otherwise, adopt block features.
+
 					//Adamantine (a local feature) trumps veins.
 					{
 						//Local Feature?
-						if( block.local_feature > -1 && !d->bits.feature_global ){
+						if( block.local_feature > -1  ){
 							switch( n=local_features[pc][block.local_feature]->type ){
-								case feature_Adamantine_Tube:
 								case feature_Underworld:
 								case feature_Hell_Temple:
+									//Only adopt these if there is no global feature present
+									if( block.global_feature >-1 ){
+										break;
+									}
+								case feature_Adamantine_Tube:
+									//Always for adamantine, sometimes for others
 									//Whatever the feature is made of. "featstone wall"
 									d->bits.feature_global = 0;
 									d->bits.feature_local = 1;
@@ -905,6 +934,7 @@ int main (void)
 					d->bits.liquid_type=liquid_water;
 
 					//Placing an aquifer?
+					//(bugged, these aquifers don't generate water!)
 					if( aquify ){
 						//Only normal stone types can be aquified
 						if( tp->m!=MAGMA && tp->m!=FEATSTONE && tp->m!=HFS  ){
@@ -912,7 +942,7 @@ int main (void)
 							//If no hole, place in middle.
 							if( checkneighbors(pattern,x,y,1) || (7==x && 7==y) ){
 								d->bits.water_table = 1;
-								t=265; //soil wall
+								//t=265; //soil wall
 							}
 						}
 					}
@@ -920,10 +950,10 @@ int main (void)
 					break;
 				
 				case 3:
-					//No obsidian walls on bottom of map!
-					if(z<1 && (d->bits.feature_global || d->bits.feature_local) ) {
-						t=335;
-					}
+					////No obsidian walls on bottom of map!
+					//if(z<1 && (d->bits.feature_global || d->bits.feature_local) ) {
+					//	t=335;
+					//}
 
 					//Special wall, always sets to obsidian, to give a stairway
 					t=331;
@@ -963,13 +993,6 @@ int main (void)
 		Mapz->WriteTileTypes(bx,by,z, &block.tiletypes ); 
 		Mapz->WriteDirtyBit(bx,by,z,1); 
 
-		//Making a fake volcanoe/magma pipe?
-		if( stopatmagma && (moltencount || magmacount) && (!exposemagma || !solidcount) ){
-			//If not exposing magma, quit at the first sign of magma.
-			//If exposing magma, quite once magma is exposed.
-			done=-1;
-		}
-
 	}
 
 	//Re-process the last z-level handled above.
@@ -997,6 +1020,11 @@ int main (void)
 					}
 				}
 
+				//Does expose magma need anything at this level?
+				if( exposemagma && stopatmagma ){
+					continue;
+				}
+
 				switch(pattern[x][y]){
 					case 0:
 						continue;
@@ -1010,12 +1038,10 @@ int main (void)
 							break;
 						}
 
-						if(exposemagma){
-							//Only place floor where ground is already solid when exposing
-							if( EMPTY == tp->c || RAMP_TOP == tp->c || STAIR_DOWN == tp->c ){
-								continue;
-							}
-						}
+						////Only place floor where ground is already solid when exposing
+						//if( EMPTY == tp->c || RAMP_TOP == tp->c || STAIR_DOWN == tp->c ){
+						//	continue;
+						//}
 
 						if( d->bits.feature_global || d->bits.feature_global ){
 							//Feature Floor!

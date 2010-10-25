@@ -17,8 +17,8 @@ int main (int numargs, const char ** args)
 {
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF = DFMgr.getSingleContext();
-    
-BEGIN_PROBE:
+
+    BEGIN_PROBE:
     try
     {
         DF->Attach();
@@ -91,11 +91,11 @@ BEGIN_PROBE:
             if(tileTypeTable[tiletype].name)
                 std::cout << " = " << tileTypeTable[tiletype].name << std::endl;
 
-			printf("%-10s: %4d %s\n","Class",tileTypeTable[tiletype].c,TileClassString[ tileTypeTable[tiletype].c ] , 0);
-			printf("%-10s: %4d %s\n","Material",tileTypeTable[tiletype].c,TileMaterialString[ tileTypeTable[tiletype].m ] , 0);
-			printf("%-10s: %4d %s\n","Special",tileTypeTable[tiletype].c,TileSpecialString[ tileTypeTable[tiletype].s ] , 0);
-			printf("%-10s: %4d\n","Variant",tileTypeTable[tiletype].v , 0);
-			printf("%-10s: %s\n","Direction",tileTypeTable[tiletype].d.getStr() , 0);
+            printf("%-10s: %4d %s\n","Class",tileTypeTable[tiletype].c,TileClassString[ tileTypeTable[tiletype].c ] , 0);
+            printf("%-10s: %4d %s\n","Material",tileTypeTable[tiletype].c,TileMaterialString[ tileTypeTable[tiletype].m ] , 0);
+            printf("%-10s: %4d %s\n","Special",tileTypeTable[tiletype].c,TileSpecialString[ tileTypeTable[tiletype].s ] , 0);
+            printf("%-10s: %4d\n","Variant",tileTypeTable[tiletype].v , 0);
+            printf("%-10s: %s\n","Direction",tileTypeTable[tiletype].d.getStr() , 0);
 
 
             std::cout << std::endl;
@@ -125,46 +125,44 @@ BEGIN_PROBE:
             uint32_t designato = block.origin + designatus + (tileX * 16 + tileY) * sizeof(t_designation);
             printf("designation offset: 0x%x\n", designato);
 
-#define PRINT_FLAG( X )  printf("%-16s= %c\n", #X , ( des.X ? 'Y' : ' ' ) )
-			PRINT_FLAG( hidden );
-			PRINT_FLAG( light );
-			PRINT_FLAG( skyview );
-			PRINT_FLAG( subterranean );
-			PRINT_FLAG( water_table );
-			//PRINT_FLAG( rained );
+            #define PRINT_FLAG( X )  printf("%-16s= %c\n", #X , ( des.X ? 'Y' : ' ' ) )
+            PRINT_FLAG( hidden );
+            PRINT_FLAG( light );
+            PRINT_FLAG( skyview );
+            PRINT_FLAG( subterranean );
+            PRINT_FLAG( water_table );
+            //PRINT_FLAG( rained );
 
-			planecoord pc;
-			pc.dim.x=blockX; pc.dim.y=blockY;
+            planecoord pc;
+            pc.dim.x=blockX; pc.dim.y=blockY;
 
-			PRINT_FLAG( feature_local );
-			if( des.feature_local ){
-				printf("%-16s  %4d (%2d) %s\n", "", 
-					block.local_feature, 
-					local_features[pc][block.local_feature]->type, 
-					sa_feature[local_features[pc][block.local_feature]->type]
-					);
-			}
+            PRINT_FLAG( feature_local );
+            if( des.feature_local )
+            {
+                printf("%-16s  %4d (%2d) %s\n", "",
+                    block.local_feature,
+                    local_features[pc][block.local_feature]->type,
+                    sa_feature[local_features[pc][block.local_feature]->type]
+                    );
+            }
 
-			PRINT_FLAG( feature_global );
-			if( des.feature_global ){
-				printf("%-16s  %4d (%2d) %s\n", "", 
-					block.global_feature, 
-					global_features[block.global_feature].type, 
-					sa_feature[global_features[block.global_feature].type]
-					);
-			}
-
-#undef PRINT_FLAG
-
+            PRINT_FLAG( feature_global );
+            if( des.feature_global ){
+                printf("%-16s  %4d (%2d) %s\n", "",
+                    block.global_feature,
+                    global_features[block.global_feature].type,
+                    sa_feature[global_features[block.global_feature].type]
+                    );
+            }
+            #undef PRINT_FLAG
             std::cout << std::endl;
         }
     }
-	DF->Detach();
+    DF->Detach();
     #ifndef LINUX_BUILD
-    //std::cout << "Done. Press any key to continue" << std::endl;
-	std::cout << "Press any key to refresh..." << std::endl;
-    cin.ignore();
-	goto BEGIN_PROBE;
+        std::cout << "Press any key to refresh..." << std::endl;
+        cin.ignore();
+        goto BEGIN_PROBE;
     #endif
     return 0;
 }

@@ -30,9 +30,9 @@ distribution.
 namespace DFHack
 {
 
-	// tile class -- determines the general shape of the tile
-	// enum and lookup table for string names created using X macros
-#define TILECLASS_MACRO \
+    // tile class -- determines the general shape of the tile
+    // enum and lookup table for string names created using X macros
+    #define TILECLASS_MACRO \
         X(EMPTY,			"") \
         X(WALL,				"") \
         X(PILLAR,			"") \
@@ -51,32 +51,32 @@ namespace DFHack
         X(SHRUB_OK,			"") \
         X(BOULDER,			"") \
         X(PEBBLES,			"") 
-//end TILECLASS_MACRO
+    //end TILECLASS_MACRO
 
-	//define tile class enum
-	#define X(name,comment) name,
-	enum TileClass {
-		tileclass_invalid=-1,
-		TILECLASS_MACRO
-		tileclass_count,
-	};
-	#undef X
+    //define tile class enum
+    #define X(name,comment) name,
+    enum TileClass {
+        tileclass_invalid=-1,
+        TILECLASS_MACRO
+        tileclass_count,
+    };
+    #undef X
 
-	//Visual Studio screams if you don't do this for the const char* arrays
-	#ifndef char_p
-	typedef char * char_p;
-	#endif
+    //Visual Studio screams if you don't do this for the const char* arrays
+    #ifndef char_p
+    typedef char * char_p;
+    #endif
 
-	//set tile class string lookup table (e.g. for printing to user)
-	#define X(name,comment) #name,
-	const char_p TileClassString[tileclass_count+1] = {
-		TILECLASS_MACRO
-		NULL
-	};
-	#undef X
+    //set tile class string lookup table (e.g. for printing to user)
+    #define X(name,comment) #name,
+    const char_p TileClassString[tileclass_count+1] = {
+        TILECLASS_MACRO
+        0
+    };
+    #undef X
 
 
-#define TILEMATERIAL_MACRO \
+    #define TILEMATERIAL_MACRO \
         X(AIR,        "empty" ) \
         X(SOIL,       "ordinary soil. material depends on geology" ) \
         X(STONE,      "ordinary layer stone. material depends on geology" ) \
@@ -96,30 +96,30 @@ namespace DFHack
         X(ASHES,      "what remains from a FIRE" ) \
         X(CONSTRUCTED,"tile material depends on the construction present" ) \
         X(CYAN_GLOW,  "the glowy stuff that disappears from the demon temple when you take the sword." ) 
-//end TILEMATERIAL_MACRO
+    //end TILEMATERIAL_MACRO
 
     // material enum
-	#define X(name,comment) name,
-	enum TileMaterial {
-		tilematerial_invalid=-1,
-		TILEMATERIAL_MACRO
-		tilematerial_count,
-	};
-	#undef X
+    #define X(name,comment) name,
+    enum TileMaterial {
+        tilematerial_invalid=-1,
+        TILEMATERIAL_MACRO
+        tilematerial_count,
+    };
+    #undef X
 
-	//string lookup table (e.g. for printing to user)
-	#define X(name,comment) #name,
-	const char_p TileMaterialString[tilematerial_count+1] = {
-		TILEMATERIAL_MACRO
-		NULL
-	};
-	#undef X
+    //string lookup table (e.g. for printing to user)
+    #define X(name,comment) #name,
+    const char_p TileMaterialString[tilematerial_count+1] = {
+        TILEMATERIAL_MACRO
+        0
+    };
+    #undef X
 
 
-	// Special specials of the tile.
-	// Not the best way to do this, but compatible with existing code.
-	// When the TileType class gets created, everything should be re-thought.
-#define TILESPECIAL_MACRO \
+    // Special specials of the tile.
+    // Not the best way to do this, but compatible with existing code.
+    // When the TileType class gets created, everything should be re-thought.
+    #define TILESPECIAL_MACRO \
         X(NORMAL,            "Default for all type, nothing present" ) \
         X(SPECIAL,           "General purpose, for any unique tile which can not otherwise be differenciated" ) \
         X(POOL,              "Murky Pool, will gather water from rain" ) \
@@ -133,141 +133,146 @@ namespace DFHack
         X(DAMAGED,           "Walls being dug" ) \
         X(WORN,              "Walls being dug ??" ) \
         X(SMOOTH,            "Walls and floors." ) 
-//end TILESPECIAL_MACRO
+    //end TILESPECIAL_MACRO
 
-	//special enum
-	#define X(name,comment) TILE_##name,
-	enum TileSpecial {
-		tilespecial_invalid=-1,
-		TILESPECIAL_MACRO
-		tilespecial_count,
-	};
-	#undef X
+    //special enum
+    #define X(name,comment) TILE_##name,
+    enum TileSpecial {
+        tilespecial_invalid=-1,
+        TILESPECIAL_MACRO
+        tilespecial_count,
+    };
+    #undef X
 
-	//string lookup table (e.g. for printing to user)
-	#define X(name,comment) #name,
-	const char_p TileSpecialString[tilespecial_count+1] = {
-		TILESPECIAL_MACRO
-		NULL
-	};
-	#undef X
+    //string lookup table (e.g. for printing to user)
+    #define X(name,comment) #name,
+    const char_p TileSpecialString[tilespecial_count+1] = {
+        TILESPECIAL_MACRO
+        0
+    };
+    #undef X
 
 
     // variants are used for tiles, where there are multiple variants of the same - like grass floors
     enum TileVariant
     {
-		tilevariant_invalid=-1,
-        VAR_1,	//Yes, the value of VAR_1 is 0.  It's legacy.  Deal with it.
+        tilevariant_invalid=-1,
+        VAR_1, //Yes, the value of VAR_1 is 0.  It's legacy.  Deal with it.
         VAR_2,
         VAR_3,
         VAR_4,
     };
 
 
-	//Mainly walls and rivers
-	//Byte values are used because walls can have either 1 or 2 in any given direction.
-	const int TileDirectionCount = 4;
-	union TileDirection
-	{
-		uint32_t	whole;
-		unsigned char b[TileDirectionCount];
-		struct {
-			//Maybe should add 'up' and 'down' for Z-levels?
-			unsigned char	north,south,west,east;
-		};
+    //Mainly walls and rivers
+    //Byte values are used because walls can have either 1 or 2 in any given direction.
+    const int TileDirectionCount = 4;
+    union TileDirection
+    {
+        uint32_t whole;
+        unsigned char b[TileDirectionCount];
+        struct
+        {
+            //Maybe should add 'up' and 'down' for Z-levels?
+            unsigned char	north,south,west,east;
+        };
 
-		inline TileDirection()
-		{
-			whole = 0;
-		}
-		TileDirection( uint32_t whole_bits)
-		{
-			whole = whole_bits;
-		}
-		TileDirection( unsigned char North, unsigned char South, unsigned char West, unsigned char East )
-		{
-			north=North; south=South; east=East; west=West;
-		}
-		TileDirection( const char *dir )
-		{
-			//This one just made for fun.
-			//Supports N S E W
-			const char *p = dir;
-			unsigned char *l=NULL;
-			north=south=east=west=0;
-			if(!dir) return;
+        inline TileDirection()
+        {
+            whole = 0;
+        }
+        TileDirection( uint32_t whole_bits)
+        {
+            whole = whole_bits;
+        }
+        TileDirection( unsigned char North, unsigned char South, unsigned char West, unsigned char East )
+        {
+            north=North; south=South; east=East; west=West;
+        }
+        TileDirection( const char *dir )
+        {
+            //This one just made for fun.
+            //Supports N S E W
+            const char *p = dir;
+            unsigned char *l=0;
+            north=south=east=west=0;
+            if(!dir) return;
 
-			for( ;*p;++p){
-				switch(*p){
-					case 'N':	//North / Up
-					case 'n':
-						++north; l=&north; break;
-					case 'S':	//South / Down
-					case 's':
-						++south; l=&south; break;
-					case 'E':	//East / Right
-					case 'e':
-						++east; l=&east; break;
-					case 'W':	//West / Left
-					case 'w':
-						++west; l=&west; break;
-					case '-':
-					case ' ':
-						//Explicitly ensure dash and space are ignored.
-						//Other characters/symbols may be assigned in the future.
-						break;	
-					default:
-						if( l && '0' <= *p && '9' >= *p )
-							*l += *p - '0';
-						break;
-				}
-			}
-		}
+            for( ;*p;++p)
+            {
+                switch(*p)
+                {
+                    case 'N': //North / Up
+                    case 'n':
+                        ++north; l=&north; break;
+                    case 'S': //South / Down
+                    case 's':
+                        ++south; l=&south; break;
+                    case 'E': //East / Right
+                    case 'e':
+                        ++east; l=&east; break;
+                    case 'W': //West / Left
+                    case 'w':
+                        ++west; l=&west; break;
+                    case '-':
+                    case ' ':
+                        //Explicitly ensure dash and space are ignored.
+                        //Other characters/symbols may be assigned in the future.
+                        break;
+                    default:
+                        if( l && '0' <= *p && '9' >= *p )
+                            *l += *p - '0';
+                        break;
+                }
+            }
+        }
 
-		//may be useful for some situations
-		inline uint32_t sum() const {
-			return 0L + north + south + east + west;
-		}
+        //may be useful for some situations
+        inline uint32_t sum() const
+        {
+            return 0L + north + south + east + west;
+        }
 
-		//Gives a string that represents the direction.
-		//This is a static string, overwritten with every call!
-		//Support values > 2 even though they should never happen.
-		//Copy string if it will be used.
-		inline char * getStr() const {
-			static char str[16];
-			//type punning trick
-			*( (uint64_t *)str ) = *( (uint64_t *)"--------" );
-			str[8]=0;
-#define DIRECTION(x,i,c) \
-			if(x){ \
-				str[i]=c; \
-				if(1==x) ; \
-				else if(2==x) str[i+1]=c; \
-				else str[i+1]='0'+x; \
-			}
+        //Gives a string that represents the direction.
+        //This is a static string, overwritten with every call!
+        //Support values > 2 even though they should never happen.
+        //Copy string if it will be used.
+        inline char * getStr() const
+        {
+            static char str[16];
+            //type punning trick
+            *( (uint64_t *)str ) = *( (uint64_t *)"--------" );
+            str[8]=0;
+    #define DIRECTION(x,i,c) \
+            if(x){ \
+                str[i]=c; \
+                if(1==x) ; \
+                else if(2==x) str[i+1]=c; \
+                else str[i+1]='0'+x; \
+            }
 
-			DIRECTION(north,0,'N')
-			DIRECTION(south,2,'S')
-			DIRECTION(west,4,'W')
-			DIRECTION(east,6,'E')
-#undef DIRECTION
-			return str;
-		}
+            DIRECTION(north,0,'N')
+            DIRECTION(south,2,'S')
+            DIRECTION(west,4,'W')
+            DIRECTION(east,6,'E')
+    #undef DIRECTION
+            return str;
+        }
 
 
-	};
-    
+    };
+
     struct TileRow
     {
         const char * name;
         TileClass c;
         TileMaterial m;
         TileVariant v;
-		TileSpecial s;
-		TileDirection d;
+        TileSpecial s;
+        TileDirection d;
     };
-	
-	#define TILE_TYPE_ARRAY_LENGTH 520
+
+    #define TILE_TYPE_ARRAY_LENGTH 520
 
     const TileRow tileTypeTable[TILE_TYPE_ARRAY_LENGTH] =
     {
@@ -282,7 +287,7 @@ namespace DFHack
         {0, EMPTY, AIR, VAR_1},
         {0, EMPTY, AIR, VAR_1},
         {0, EMPTY, AIR, VAR_1},
-        
+
         // 10
         {0, EMPTY, AIR, VAR_1},
         {0, EMPTY, AIR, VAR_1},
@@ -294,7 +299,7 @@ namespace DFHack
         {0, EMPTY, AIR, VAR_1},
         {0, EMPTY, AIR, VAR_1},
         {"driftwood stack",FLOOR, DRIFTWOOD, VAR_1},
-        
+
         // 20
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -306,7 +311,7 @@ namespace DFHack
         {"ice stair up",STAIR_UP, ICE, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 30
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -318,7 +323,7 @@ namespace DFHack
         {"obsidian stair down",STAIR_DOWN, OBSIDIAN, VAR_1},
         {"obsidian stair up",STAIR_UP, OBSIDIAN, VAR_1},
         {"soil stair up/down",STAIR_UPDOWN, SOIL, VAR_1},
-        
+
         // 40
         {"soil stair down",STAIR_DOWN, SOIL, VAR_1},
         {"soil stair up",STAIR_UP, SOIL, VAR_1},
@@ -330,7 +335,7 @@ namespace DFHack
         {"smooth ice floor",FLOOR, ICE, VAR_1 , TILE_SMOOTH },
         {0 ,EMPTY, AIR, VAR_1},
         {"grass stair up/down",STAIR_UPDOWN, GRASS, VAR_1},
-        
+
         // 50
         {"grass stair down",STAIR_DOWN, GRASS, VAR_1},
         {"grass stair up",STAIR_UP, GRASS, VAR_1},
@@ -342,7 +347,7 @@ namespace DFHack
         {"stone stair up",STAIR_UP, STONE, VAR_1},
         {"vein stair up/down",STAIR_UPDOWN, VEIN, VAR_1},
         {"vein stair down",STAIR_DOWN, VEIN, VAR_1},
-        
+
         // 60
         {"vein stair up",STAIR_UP, VEIN, VAR_1},
         {"featstone? stair up/down",STAIR_UPDOWN, FEATSTONE, VAR_1},
@@ -354,7 +359,7 @@ namespace DFHack
         {"campfire",FLOOR, CAMPFIRE, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 70
         {"fire",FLOOR, FIRE, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -366,7 +371,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {"stone pillar",PILLAR, STONE, VAR_1},
-        
+
         //80
         {"obsidian pillar",PILLAR, OBSIDIAN, VAR_1},
         {"featstone? pillar",PILLAR, FEATSTONE, VAR_1},
@@ -378,7 +383,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {"waterfall landing",FLOOR, SOIL, VAR_1,  TILE_WATERFALL }, // verify material
-        
+
         // 90
         {"river source",FLOOR, SOIL, VAR_1,  TILE_RIVER_SOURCE }, // verify material
         {0 ,EMPTY, AIR, VAR_1},
@@ -390,7 +395,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 100
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -402,7 +407,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 110
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -414,7 +419,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 120
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -426,7 +431,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 130
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -438,7 +443,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 140
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -450,7 +455,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 150
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -462,7 +467,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 160
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -474,7 +479,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 170
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -486,7 +491,7 @@ namespace DFHack
         {"damaged stone wall" ,WALL, STONE, VAR_1, TILE_DAMAGED },
         {"worn stone wall" ,WALL, STONE, VAR_1,    TILE_WORN },
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 180
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -498,7 +503,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 190
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -510,7 +515,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 200
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -522,7 +527,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 210
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -534,7 +539,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {"stone wall" ,WALL, STONE, VAR_1},
-        
+
         // 220
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -546,7 +551,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 230
         {0 ,EMPTY, AIR, VAR_1},
         {"sapling" ,SAPLING_OK, SOIL, VAR_1},
@@ -558,7 +563,7 @@ namespace DFHack
         {"stone ramp" ,RAMP, STONE, VAR_1},
         {"obsidian ramp" ,RAMP, OBSIDIAN, VAR_1},
         {"featstone? ramp" ,RAMP, FEATSTONE, VAR_1},
-        
+
         // 240
         {"vein ramp" ,RAMP, VEIN, VAR_1},
         {"soil ramp" ,RAMP, SOIL, VAR_1},
@@ -570,7 +575,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 250
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -582,7 +587,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {"ice floor" ,FLOOR, ICE, VAR_2},
         {"ice floor" ,FLOOR, ICE, VAR_3},
-        
+
         // 260
         {"ice floor" ,FLOOR, ICE, VAR_4},
         {"furrowed soil" ,FLOOR, SOIL, VAR_1},
@@ -594,7 +599,7 @@ namespace DFHack
         {"glowing floor" ,FLOOR, CYAN_GLOW, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {"smooth obsidian wall RD2",WALL,OBSIDIAN,VAR_1 , TILE_SMOOTH ,  "--SS--E-" },
-        
+
         // 270
         {"smooth obsidian wall R2D",WALL,OBSIDIAN,VAR_1 , TILE_SMOOTH ,  "--S---EE" },
         {"smooth obsidian wall R2U",WALL,OBSIDIAN,VAR_1 , TILE_SMOOTH ,  "N-----EE" },
@@ -606,7 +611,7 @@ namespace DFHack
         {"smooth obsidian wall LRUD",WALL,OBSIDIAN,VAR_1 , TILE_SMOOTH  ,"N-S-W-E-" },
         {"smooth obsidian wall RUD",WALL,OBSIDIAN,VAR_1 , TILE_SMOOTH  , "N-S---E-" },
         {"smooth obsidian wall LRD",WALL,OBSIDIAN,VAR_1 , TILE_SMOOTH  , "--S-W-E-" },
-        
+
         // 280
         {"smooth obsidian wall LRU",WALL,OBSIDIAN,VAR_1 , TILE_SMOOTH  , "N---W-E-" },
         {"smooth obsidian wall LUD",WALL,OBSIDIAN,VAR_1 , TILE_SMOOTH  , "N-S-W---" },
@@ -618,7 +623,7 @@ namespace DFHack
         {"smooth obsidian wall LR",WALL,OBSIDIAN,VAR_1  , TILE_SMOOTH  , "----W-E-" },
         {"smooth featstone wall RD2",WALL,FEATSTONE,VAR_1 , TILE_SMOOTH  , "--SS--E-" },
         {"smooth featstone wall R2D",WALL,FEATSTONE,VAR_1 , TILE_SMOOTH  , "--S---EE" },
-        
+
         // 290
         {"smooth featstone wall R2U",WALL,FEATSTONE,VAR_1 , TILE_SMOOTH  , "N-----EE" },
         {"smooth featstone wall RU2",WALL,FEATSTONE,VAR_1 , TILE_SMOOTH  , "NN----E-" },
@@ -630,7 +635,7 @@ namespace DFHack
         {"smooth featstone wall RUD",WALL,FEATSTONE,VAR_1 , TILE_SMOOTH  , "N-S---E-" },
         {"smooth featstone wall LRD",WALL,FEATSTONE,VAR_1 , TILE_SMOOTH  , "--S-W-E-" },
         {"smooth featstone wall LRU",WALL,FEATSTONE,VAR_1 , TILE_SMOOTH  , "N---W-E-" },
-        
+
         //300
         {"smooth featstone wall LUD",WALL,FEATSTONE,VAR_1, TILE_SMOOTH  , "N-S-W---" },
         {"smooth featstone wall RD",WALL,FEATSTONE,VAR_1 , TILE_SMOOTH  , "--S---E-" },
@@ -642,7 +647,7 @@ namespace DFHack
         {"smooth stone wall RD2",WALL,STONE,VAR_1 , TILE_SMOOTH  , "--SS--E-" },
         {"smooth stone wall R2D",WALL,STONE,VAR_1 , TILE_SMOOTH  , "--S---EE" },
         {"smooth stone wall R2U",WALL,STONE,VAR_1 , TILE_SMOOTH  , "N-----EE" },
-        
+
         //310
         {"smooth stone wall RU2",WALL,STONE,VAR_1 , TILE_SMOOTH  , "NN----E-" },
         {"smooth stone wall L2U",WALL,STONE,VAR_1 , TILE_SMOOTH  , "N---WW--" },
@@ -654,7 +659,7 @@ namespace DFHack
         {"smooth stone wall LRD",WALL,STONE,VAR_1 , TILE_SMOOTH  , "--S-W-E-"  },
         {"smooth stone wall LRU",WALL,STONE,VAR_1 , TILE_SMOOTH  , "N---W-E-" },
         {"smooth stone wall LUD",WALL,STONE,VAR_1 , TILE_SMOOTH  , "N-S-W---" },
-        
+
         //320
         {"smooth stone wall RD",WALL,STONE,VAR_1 , TILE_SMOOTH  , "--S---E-" },
         {"smooth stone wall RU",WALL,STONE,VAR_1 , TILE_SMOOTH  , "N-----E-" },
@@ -666,7 +671,7 @@ namespace DFHack
         {"featstone? fortification",FORTIFICATION,FEATSTONE,VAR_1},
         {"cracked obsidian wall",WALL,OBSIDIAN,VAR_1, TILE_CRACKED },
         {"damaged obsidian wall",WALL,OBSIDIAN,VAR_1, TILE_DAMAGED },
-        
+
         // 330
         {"worn obsidian wall",WALL,OBSIDIAN,VAR_1},
         {"obsidian wall",WALL,OBSIDIAN,VAR_1},
@@ -682,7 +687,7 @@ namespace DFHack
         {"stone floor",FLOOR,STONE,VAR_2},
         {"stone floor",FLOOR,STONE,VAR_3},
         {"stone floor",FLOOR,STONE,VAR_4},
-        
+
         // 340
         {"obsidian floor",FLOOR,OBSIDIAN,VAR_1},
         {"obsidian floor",FLOOR,OBSIDIAN,VAR_2},
@@ -694,7 +699,7 @@ namespace DFHack
         {"featstone floor 4",FLOOR,FEATSTONE,VAR_4},
         {"grass 1",FLOOR,GRASS,VAR_1},
         {"grass 2",FLOOR,GRASS,VAR_2},
-        
+
         // 350
         {"grass 3",FLOOR,GRASS,VAR_3},
         {"grass 4",FLOOR,GRASS,VAR_4},
@@ -706,7 +711,7 @@ namespace DFHack
         {"wet soil floor",FLOOR,SOIL,VAR_2},
         {"wet soil floor",FLOOR,SOIL,VAR_3},
         {"wet soil floor",FLOOR,SOIL,VAR_4},
-        
+
         // 360
         {"ice fortification",FORTIFICATION,ICE,VAR_1},
         {"cracked ice wall",WALL,ICE,VAR_1, TILE_CRACKED},
@@ -718,7 +723,7 @@ namespace DFHack
         {"river E",FLOOR,SOIL,VAR_1, TILE_RIVER , "E" },
         {"river W",FLOOR,SOIL,VAR_1, TILE_RIVER , "W" },
         {"river NW",FLOOR,SOIL,VAR_1, TILE_RIVER, "NW"},
-        
+
         //370
         {"river NE",FLOOR,SOIL,VAR_1, TILE_RIVER , "NE" },
         {"river SW",FLOOR,SOIL,VAR_1, TILE_RIVER , "SW" },
@@ -730,7 +735,7 @@ namespace DFHack
         {"stream bed NW",FLOOR,SOIL,VAR_1, TILE_STREAM, "NW" },
         {"stream bed NE",FLOOR,SOIL,VAR_1, TILE_STREAM, "NE" },
         {"stream bed SW",FLOOR,SOIL,VAR_1, TILE_STREAM, "SW" },
-        
+
         // 380
         {"stream bed SE",FLOOR,SOIL,VAR_1, TILE_STREAM, "SE" },
         {"stream top",FLOOR,SOIL,VAR_1, TILE_STREAM_TOP },
@@ -742,7 +747,7 @@ namespace DFHack
         {"dry grass 1",FLOOR,GRASS_DRY,VAR_1},
         {"dry grass 2",FLOOR,GRASS_DRY,VAR_2},
         {"dry grass 3",FLOOR,GRASS_DRY,VAR_3},
-        
+
         // 390
         {"dry grass 4",FLOOR,GRASS_DRY,VAR_4},
         {"dead tree",TREE_DEAD,SOIL,VAR_1},
@@ -754,7 +759,7 @@ namespace DFHack
         {"dead grass 4",FLOOR,GRASS_DEAD,VAR_4},
         {"grass B1",FLOOR,GRASS2,VAR_1},
         {"grass B2",FLOOR,GRASS2,VAR_2},
-        
+
         // 400
         {"grass B3",FLOOR,GRASS2,VAR_3},
         {"grass B4",FLOOR,GRASS2,VAR_4},
@@ -766,7 +771,7 @@ namespace DFHack
         {"pebbles 3",PEBBLES,STONE,VAR_3},
         {"pebbles 4",PEBBLES,STONE,VAR_4},
         {"obsidian shards",PEBBLES,OBSIDIAN,VAR_1},
-        
+
         // 410
         {"obsidian shards",PEBBLES,OBSIDIAN,VAR_2},
         {"obsidian shards",PEBBLES,OBSIDIAN,VAR_3},
@@ -778,7 +783,7 @@ namespace DFHack
         {"smooth vein wall",WALL,VEIN,VAR_1 , TILE_SMOOTH , "--SS--E-"},
         {"smooth vein wall",WALL,VEIN,VAR_1 , TILE_SMOOTH , "--S---EE"},
         {"smooth vein wall",WALL,VEIN,VAR_1 , TILE_SMOOTH , "N-----EE" },
-        
+
         // 420
         {"smooth vein wall",WALL,VEIN,VAR_1 , TILE_SMOOTH , "NN----E-"},
         {"smooth vein wall",WALL,VEIN,VAR_1 , TILE_SMOOTH , "N---WW--"},
@@ -790,7 +795,7 @@ namespace DFHack
         {"smooth vein wall",WALL,VEIN,VAR_1 , TILE_SMOOTH , "--S-W-E-"},
         {"smooth vein wall",WALL,VEIN,VAR_1 , TILE_SMOOTH , "N---W-E-"},
         {"smooth vein wall",WALL,VEIN,VAR_1 , TILE_SMOOTH , "N-S-W---"},
-        
+
         // 430
         {"smooth vein wall",WALL,VEIN,VAR_1 , TILE_SMOOTH , "--S---E-"},
         {"smooth vein wall",WALL,VEIN,VAR_1 , TILE_SMOOTH , "N-----E-"},
@@ -802,7 +807,7 @@ namespace DFHack
         {"cracked vein wall",WALL,VEIN,VAR_1, TILE_CRACKED },
         {"damaged vein wall",WALL,VEIN,VAR_1, TILE_DAMAGED },
         {"worn vein wall",WALL,VEIN,VAR_1   , TILE_WORN },
-        
+
         // 440
         {"vein wall",WALL,VEIN,VAR_1},
         {"vein floor",FLOOR,VEIN,VAR_1},
@@ -814,7 +819,7 @@ namespace DFHack
         {"vein pebbles",PEBBLES,VEIN,VAR_2},
         {"vein pebbles",PEBBLES,VEIN,VAR_3},
         {"vein pebbles",PEBBLES,VEIN,VAR_4},
-        
+
         // 450
         {"smooth ice wall",WALL,ICE,VAR_1 , TILE_SMOOTH , "--SS--E-"},
         {"smooth ice wall",WALL,ICE,VAR_1 , TILE_SMOOTH , "--S---EE" },
@@ -826,7 +831,7 @@ namespace DFHack
         {"smooth ice wall",WALL,ICE,VAR_1 , TILE_SMOOTH , "--SSW---" },
         {"smooth ice wall",WALL,ICE,VAR_1 , TILE_SMOOTH , "N-S-W-E-"},
         {"smooth ice wall",WALL,ICE,VAR_1 , TILE_SMOOTH , "N-S---E-" },
-        
+
         // 460
         {"smooth ice wall",WALL,ICE,VAR_1 , TILE_SMOOTH , "--S-W-E-" },
         {"smooth ice wall",WALL,ICE,VAR_1 , TILE_SMOOTH , "N---W-E-" },
@@ -838,7 +843,7 @@ namespace DFHack
         {"smooth ice wall",WALL,ICE,VAR_1 , TILE_SMOOTH , "N-S-----" },
         {"smooth ice wall",WALL,ICE,VAR_1 , TILE_SMOOTH , "----W-E-"},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 470
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -850,7 +855,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 480
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -862,7 +867,7 @@ namespace DFHack
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
-        
+
         // 490
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -874,7 +879,7 @@ namespace DFHack
         {"constructed wall",WALL,CONSTRUCTED, VAR_1 ,TILE_NORMAL, "--S---EE" },
         {"constructed wall",WALL,CONSTRUCTED, VAR_1 ,TILE_NORMAL, "N-----EE" },
         {"constructed wall",WALL,CONSTRUCTED, VAR_1 ,TILE_NORMAL, "NN----E-" },
-        
+
         // 500
         {"constructed wall",WALL,CONSTRUCTED, VAR_1 ,TILE_NORMAL, "N---WW--" },
         {"constructed wall",WALL,CONSTRUCTED, VAR_1 ,TILE_NORMAL, "NN--W---" },
@@ -886,11 +891,11 @@ namespace DFHack
         {"constructed wall",WALL,CONSTRUCTED, VAR_1 ,TILE_NORMAL, "N---W-E-" },
         {"constructed wall",WALL,CONSTRUCTED, VAR_1 ,TILE_NORMAL, "N-S-W---" },
         {"constructed wall",WALL,CONSTRUCTED, VAR_1 ,TILE_NORMAL, "--S---E-" },
-        
+
         // 510
         {"constructed wall",WALL,CONSTRUCTED, VAR_1 ,TILE_NORMAL, "N-----E-" },
         {"constructed wall",WALL,CONSTRUCTED, VAR_1 ,TILE_NORMAL, "N---W---" },
-		{"constructed wall",WALL,CONSTRUCTED, VAR_1 ,TILE_NORMAL, "--S-W---" },
+        {"constructed wall",WALL,CONSTRUCTED, VAR_1 ,TILE_NORMAL, "--S-W---" },
         {"constructed wall",WALL,CONSTRUCTED, VAR_1 ,TILE_NORMAL, "N-S-----" },
         {"constructed wall",WALL,CONSTRUCTED, VAR_1 ,TILE_NORMAL, "----W-E-" },
         {"constructed stair up/down",STAIR_UPDOWN,CONSTRUCTED, VAR_1},
@@ -899,7 +904,7 @@ namespace DFHack
         {"constructed ramp",RAMP,CONSTRUCTED, VAR_1},
         {0 ,EMPTY, AIR, VAR_1} // end
     };
-    
+
     inline
     bool isWallTerrain(int in)
     {
@@ -911,116 +916,114 @@ namespace DFHack
     {
         return tileTypeTable[in].c >= FLOOR && tileTypeTable[in].c <= PEBBLES;
     }
-    
+
     inline
     bool isRampTerrain(int in)
     {
         return tileTypeTable[in].c == RAMP;
     }
-    
+
     inline
     bool isStairTerrain(int in)
     {
         return tileTypeTable[in].c >= STAIR_UP && tileTypeTable[in].c <= STAIR_UPDOWN;
     }
-    
+
     inline
     bool isOpenTerrain(int in)
     {
         return tileTypeTable[in].c == EMPTY;
     }
-    
+
     inline
     int getVegetationType(int in)
     {
         return tileTypeTable[in].c;
     }
 
-	//zilpin: for convenience, when you'll be using the tile information a lot.
+    //zilpin: for convenience, when you'll be using the tile information a lot.
     inline const
     TileRow * getTileTypeP(int in)
     {
-		if( in<0 || in>=TILE_TYPE_ARRAY_LENGTH ) return NULL;
+        if( in<0 || in>=TILE_TYPE_ARRAY_LENGTH ) return 0;
         return ( const TileRow * ) &tileTypeTable[in];
     }
 
-	//zilpin: Find the first tile entry which matches the given search criteria.
-	//All parameters are optional.
-	//To omit, use the 'invalid' enum for that type (e.g. tileclass_invalid, tilematerial_invalid, etc)
-	//For tile directions, pass NULL to omit.
-	//Returns matching index in tileTypeTable, or -1 if none found.
-	inline
-	int32_t findTileType( const TileClass tclass, const TileMaterial tmat, const TileVariant tvar, const TileSpecial tspecial, const TileDirection tdir )
-	{
-		int32_t tt;
-		for(tt=0;tt<TILE_TYPE_ARRAY_LENGTH; ++tt){
-			if( tclass>-1	) if( tclass != tileTypeTable[tt].c ) continue;
-			if( tmat>-1		) if( tmat != tileTypeTable[tt].m ) continue;
-			if( tvar>-1		) if( tvar != tileTypeTable[tt].v ) continue;
-			if( tspecial>-1 ) if( tspecial != tileTypeTable[tt].s ) continue;
-			if( tdir.whole  ) if( tdir.whole != tileTypeTable[tt].d.whole ) continue;
-			//Match!
-			return tt;
-		}
-		return -1;
-	}
-	//Convenience version of the above, to pass strings as the direction
-	inline
-	int32_t findTileType( const TileClass tclass, const TileMaterial tmat, const TileVariant tvar, const TileSpecial tspecial, const char *tdirStr )
-	{
-		if(tdirStr){
-			TileDirection tdir(tdirStr);
-			return findTileType(tclass,tmat,tvar,tspecial, tdir );
-		}else{
-			return findTileType(tclass,tmat,tvar,tspecial, NULL );
-		}
-	}
+    //zilpin: Find the first tile entry which matches the given search criteria.
+    //All parameters are optional.
+    //To omit, use the 'invalid' enum for that type (e.g. tileclass_invalid, tilematerial_invalid, etc)
+    //For tile directions, pass NULL to omit.
+    //Returns matching index in tileTypeTable, or -1 if none found.
+    inline
+    int32_t findTileType( const TileClass tclass, const TileMaterial tmat, const TileVariant tvar, const TileSpecial tspecial, const TileDirection tdir )
+    {
+        int32_t tt;
+        for(tt=0;tt<TILE_TYPE_ARRAY_LENGTH; ++tt){
+            if( tclass>-1	) if( tclass != tileTypeTable[tt].c ) continue;
+            if( tmat>-1		) if( tmat != tileTypeTable[tt].m ) continue;
+            if( tvar>-1		) if( tvar != tileTypeTable[tt].v ) continue;
+            if( tspecial>-1 ) if( tspecial != tileTypeTable[tt].s ) continue;
+            if( tdir.whole  ) if( tdir.whole != tileTypeTable[tt].d.whole ) continue;
+            //Match!
+            return tt;
+        }
+        return -1;
+    }
+    //Convenience version of the above, to pass strings as the direction
+    inline
+    int32_t findTileType( const TileClass tclass, const TileMaterial tmat, const TileVariant tvar, const TileSpecial tspecial, const char *tdirStr )
+    {
+        if(tdirStr){
+            TileDirection tdir(tdirStr);
+            return findTileType(tclass,tmat,tvar,tspecial, tdir );
+        }else{
+            return findTileType(tclass,tmat,tvar,tspecial, 0 );
+        }
+    }
 
 
-	//zilpin: Find a tile type similar to the one given, but with a different class.
-	//Useful for tile-editing operations.
-	//If no match found, returns the sourceType
-	//Definitely needs improvement for wall directions, etc.
-	inline
-	int32_t findSimilarTileType( const int32_t sourceTileType, const TileClass tclass ){
-		int32_t tt, maybe=0, match=0;
-		int value=0, matchv=0;
-		const TileRow *source = &tileTypeTable[sourceTileType];
-		const char * sourcename = source->name;
-		const uint32_t sourcenameint = *((const uint32_t *)sourcename);
+    //zilpin: Find a tile type similar to the one given, but with a different class.
+    //Useful for tile-editing operations.
+    //If no match found, returns the sourceType
+    //Definitely needs improvement for wall directions, etc.
+    inline
+    int32_t findSimilarTileType( const int32_t sourceTileType, const TileClass tclass ){
+        int32_t tt, maybe=0, match=0;
+        int value=0, matchv=0;
+        const TileRow *source = &tileTypeTable[sourceTileType];
+        const char * sourcename = source->name;
+        const uint32_t sourcenameint = *((const uint32_t *)sourcename);
 
-#ifdef assert
-		assert( sourceTileType >=0 && sourceTileType < TILE_TYPE_ARRAY_LENGTH );
-#endif
+        #ifdef assert
+        assert( sourceTileType >=0 && sourceTileType < TILE_TYPE_ARRAY_LENGTH );
+        #endif
 
-		for(tt=0;tt<TILE_TYPE_ARRAY_LENGTH; ++tt){
-			if( tclass == tileTypeTable[tt].c ){
-				//shortcut null entries
-				if(!tileTypeTable[tt].name) continue;
+        for(tt=0;tt<TILE_TYPE_ARRAY_LENGTH; ++tt){
+            if( tclass == tileTypeTable[tt].c ){
+                //shortcut null entries
+                if(!tileTypeTable[tt].name) continue;
 
-				//Special flag match is absolutely mandatory!
-				if( source->s != tileTypeTable[tt].s ) continue;
+                //Special flag match is absolutely mandatory!
+                if( source->s != tileTypeTable[tt].s ) continue;
 
-				maybe=tt;  value=0;
-				//Material is high-value match
-				if( tileTypeTable[tt].m == source->m ) value|=8;
-				//Direction is medium value match
-				if( tileTypeTable[tt].d.whole == source->d.whole ) value|=4;
-				//Variant is low-value match
-				if( tileTypeTable[tt].v == source->v ) value|=1;
+                maybe=tt;  value=0;
+                //Material is high-value match
+                if( tileTypeTable[tt].m == source->m ) value|=8;
+                //Direction is medium value match
+                if( tileTypeTable[tt].d.whole == source->d.whole ) value|=4;
+                //Variant is low-value match
+                if( tileTypeTable[tt].v == source->v ) value|=1;
 
-				//Check value against last match
-				if( value>matchv ){
-					match=tt;
-					matchv=value;
-				}
-			}
-		}
-		if( match ) return match;
-		return sourceTileType;
-	}
-
-
+                //Check value against last match
+                if( value>matchv ){
+                    match=tt;
+                    matchv=value;
+                }
+            }
+        }
+        if( match ) return match;
+        return sourceTileType;
+    }
 }
 
 

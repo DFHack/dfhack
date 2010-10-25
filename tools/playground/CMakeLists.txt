@@ -67,6 +67,31 @@ TARGET_LINK_LIBRARIES(dfcopypaste dfhack)
 ADD_EXECUTABLE(dfpaths paths.cpp)
 TARGET_LINK_LIBRARIES(dfpaths dfhack)
 
+# deramp
+# Author: zilpin
+# seeks entire map for 'remove ramp' designation, makes a floor, removes designation.
+# intended use is to simulate old 'channel' functionality.
+ADD_EXECUTABLE(dfderamp deramp.cpp)
+TARGET_LINK_LIBRARIES(dfderamp dfhack)
+
+
+# printtiletypes
+# Author: zilpin
+# Prints CSV dump of all tile type information.
+# No DF process needed.  Intended only for debugging and information purposes.
+ADD_EXECUTABLE(dfprinttiletypes printtiletypes.cpp)
+TARGET_LINK_LIBRARIES(dfprinttiletypes dfhack)
+
+# hellhole
+# Author: zilpin
+# Creates a bottomless hole to hell.
+# Experimental version hard-codes values.
+# Will have many options in the future.
+ADD_EXECUTABLE(dfhellhole hellhole.cpp)
+TARGET_LINK_LIBRARIES(dfhellhole dfhack)
+
+
+
 # this needs the C bindings
 IF(BUILD_DFHACK_C_BINDINGS)
     # for trying out some 'stuff'
@@ -83,6 +108,9 @@ dfmoodump
 dfdigger
 dfdigger2
 dfcatsplosion
+dfderamp
+dfprinttiletypes
+dfhellhole
 RUNTIME DESTINATION bin
 )
 IF(UNIX)

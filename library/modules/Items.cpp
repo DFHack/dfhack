@@ -272,6 +272,7 @@ Items::~Items()
     while (it != d->descVTable.end())
     {
         delete (*it).second;
+        ++it;
     }
     d->descType.clear();
     d->descVTable.clear();

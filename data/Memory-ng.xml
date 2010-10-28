@@ -1751,6 +1751,9 @@
         <PETimeStamp value="0x4CA9D544" />
         <MD5 value="702b3ebaae468f73eb1411af54863013" />
         <Offsets>
+            <Group name="Materials">
+                <Address name="other" value="0x16A21FC"/> 0x16445F0 + 0x5DC0C see code at 0x9CFB01
+            </Group>
             <Group name="Creatures">
                 <Address name="current_civ" value="0x1484868 0x14848b8" />
                 <Address name="current_race" value="0x1484874 0x14848c4" />

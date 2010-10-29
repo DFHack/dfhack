@@ -1004,7 +1004,8 @@ int main (void)
                         if (fillmagma || fillwater)
                         {
                             d->bits.flow_size=7;
-                            d->bits.liquid_character = liquid_fresh;
+                            d->bits.water_stagnant = false;
+                            d->bits.water_salt = false;
                             if (fillmagma)
                             {
                                 d->bits.liquid_type=liquid_magma;
@@ -1018,7 +1019,8 @@ int main (void)
                         {
                             //Otherwise, remove all liquids.
                             d->bits.flow_size=0;
-                            d->bits.liquid_character = liquid_fresh;
+                            d->bits.water_stagnant = false;
+                            d->bits.water_salt = false;
                             d->bits.liquid_type = liquid_water;
                         }
 
@@ -1087,7 +1089,8 @@ int main (void)
 
                         //Erase any liquids, as they cause problems.
                         d->bits.flow_size=0;
-                        d->bits.liquid_character = liquid_fresh;
+                        d->bits.water_stagnant = false;
+                        d->bits.water_salt = false;
                         d->bits.liquid_type=liquid_water;
 
                         //Placing an aquifer?
@@ -1121,7 +1124,8 @@ int main (void)
 
                         //Erase any liquids, as they cause problems.
                         d->bits.flow_size=0;
-                        d->bits.liquid_character = liquid_fresh;
+                        d->bits.water_stagnant = false;
+                        d->bits.water_salt = false;
                         d->bits.liquid_type=liquid_water;
                         break;
                     default:

@@ -148,7 +148,7 @@ namespace DFHack
         liquid_water,
         liquid_magma
     };
-
+    /*
     enum e_liquidcharacter
     {
         liquid_fresh,
@@ -156,7 +156,7 @@ namespace DFHack
         liquid_salt,
         liquid_unk2,
     };
-
+    */
     struct naked_designation
     {
         unsigned int flow_size : 3; // how much liquid is here?
@@ -196,14 +196,9 @@ namespace DFHack
         unsigned int feature_local : 1; 
         /// this tile is a part of a global feature. can be combined with 'featstone' tiles
         unsigned int feature_global : 1;
-        /** 
-         * water characteristics
-         * fresh=0
-         * ?=1
-         * salt=2
-         * ?=3
-         */
-        e_liquidcharacter liquid_character : 2;
+        unsigned int water_stagnant : 1;
+        unsigned int water_salt : 1;
+        // e_liquidcharacter liquid_character : 2;
     };
 
     union t_designation

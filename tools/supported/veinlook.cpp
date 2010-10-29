@@ -620,7 +620,9 @@ main(int argc, char *argv[])
     {
         TEMP_NO,
         TEMP_1,
-        TEMP_2
+        TEMP_2,
+        WATER_SALT,
+        WATER_STAGNANT
     };
     e_tempmode temperature = TEMP_NO;
     
@@ -690,6 +692,12 @@ main(int argc, char *argv[])
                 break;
             case 'm':
                 temperature = TEMP_2;
+                break;
+            case 'c':
+                temperature = WATER_SALT;
+                break;
+            case 'v':
+                temperature = WATER_STAGNANT;
                 break;
             case 27: // escape key
                 DF->Detach();
@@ -939,6 +947,30 @@ main(int argc, char *argv[])
                     putch(x + 16,y + 16,'@',COLOR_WHITE);
                 }
             }
+        }
+        else if(temperature == WATER_SALT)
+        {
+            for(int x = 0; x < 16; x++) for(int y = 0; y < 16; y++)
+            {
+                if(Block->designation[x][y].bits.water_salt)
+                {
+                    putch(x + 16,y + 16,'@',COLOR_WHITE);
+                }
+            }
+            gotoxy (50,8);
+            cprintf ("Salt water");
+        }
+        else if(temperature == WATER_STAGNANT)
+        {
+            for(int x = 0; x < 16; x++) for(int y = 0; y < 16; y++)
+            {
+                if(Block->designation[x][y].bits.water_stagnant)
+                {
+                    putch(x + 16,y + 16,'@',COLOR_WHITE);
+                }
+            }
+            gotoxy (50,8);
+            cprintf ("Stagnant water");
         }
         else
         {

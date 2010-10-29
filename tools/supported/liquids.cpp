@@ -70,8 +70,8 @@ int main (void)
                  << "f-            - make the spawned liquid static" << endl
                  << "0-7           - set liquid amount" << endl
                  << "Brush:" << endl
-                 << "point         - single tile" << endl
-                 << "range         - rectangle with cursor at top left" << endl
+                 << "point         - single tile [p]" << endl
+                 << "range         - rectangle with cursor at top left [r]" << endl
                  << "block         - block with cursor in it" << endl
                  << "Other:" << endl
                  << "q             - quit" << endl
@@ -109,19 +109,19 @@ int main (void)
         {
             mode = "flowbits";
         }
-        else if(command == "point")
+        else if(command == "point" || command == "p")
         {
             brush = "point";
         }
-        else if(command == "range")
+        else if(command == "range" || command == "r")
         {
             cout << " :set range width<" << width << "># ";
             getline(cin, command);
-            width = atoi (command.c_str());
+            width = command == "" ? width : atoi (command.c_str());
             if(width < 1) width = 1;
             cout << " :set range height<" << height << "># ";
             getline(cin, command);
-            height = atoi (command.c_str());
+            height = command == "" ? height : atoi (command.c_str());
             if(height < 1) height = 1;
             brush = "range";
         }

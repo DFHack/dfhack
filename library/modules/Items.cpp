@@ -116,6 +116,21 @@ Accessor::Accessor(uint32_t function, Process *p)
         this->offset1 = (funcText>>24) & 0xffff;
         return;
     }
+    if( (funcText&0x000000FF00FFFFFFLL) == 0x000000C300418B66LL )
+    {
+        /* mov ax, [ecx+xx]; ret; (shorter instruction)*/
+        this->type = ACCESSOR_INDIRECT;
+        this->offset1 = (funcText>>24) & 0xff;
+        return;
+    }
+    if( (funcText&0x00000000FF00FFFFLL) == 0x00000000C300418BLL )
+    {
+        /* mov eax, [ecx+xx]; ret; */
+        this->type = ACCESSOR_INDIRECT;
+        this->offset1 = (funcText>>16) & 0xff;
+        this->dataWidth = 4;
+        return;
+    }
     if( (funcText&0xFFFFFFFF0000FFFFLL) == 0x8B6600000000818BLL )
     {
         uint64_t funcText2 = p->readQuad(function+8);
@@ -132,6 +147,13 @@ Accessor::Accessor(uint32_t function, Process *p)
         /* movsx   eax, word ptr [ecx+xx]; ret */
         this->type = ACCESSOR_INDIRECT;
         this->offset1 = (funcText>>24) & 0xffff;
+        return;
+    }
+    if( (funcText&0x000000FF00FFFFFFLL) == 0x000000C30041BF0FLL )
+    {
+        /* movsx   eax, word ptr [ecx+xx]; ret (shorter opcode)*/
+        this->type = ACCESSOR_INDIRECT;
+        this->offset1 = (funcText>>24) & 0xff;
         return;
     }
     if( (funcText&0xFFFFFFFF0000FFFFLL) == 0xCCC300000000818BLL )
@@ -250,6 +272,7 @@ Items::~Items()
     while (it != d->descVTable.end())
     {
         delete (*it).second;
+        ++it;
     }
     d->descType.clear();
     d->descVTable.clear();

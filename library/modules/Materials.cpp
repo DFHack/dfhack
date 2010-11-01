@@ -459,7 +459,7 @@ void Materials::ReadAllMaterials(void)
     this->ReadCreatureTypes();
     this->ReadCreatureTypesEx();
     this->ReadDescriptorColors();
-    //this->ReadOthers();
+    this->ReadOthers();
 }
 
 std::string Materials::getDescription(t_material & mat)
@@ -478,6 +478,12 @@ std::string Materials::getDescription(t_material & mat)
                 {
                     if (mat.subIndex>=this->other.size())
                     {
+                        if (mat.itemType == 0) {
+                            if(mat.subIndex<0)
+                                return "any inorganic";
+                            else
+                                return this->inorganic[mat.subIndex].id;
+                        }
                         if(mat.subIndex<0)
                             return "any";
                         if(mat.subIndex>=this->raceEx.size())

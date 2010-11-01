@@ -1751,6 +1751,9 @@
         <PETimeStamp value="0x4CA9D544" />
         <MD5 value="702b3ebaae468f73eb1411af54863013" />
         <Offsets>
+            <Group name="Materials">
+                <Address name="other" value="0x16A21FC"/> 0x16445F0 + 0x5DC0C see code at 0x9CFB01
+            </Group>
             <Group name="Creatures">
                 <Address name="current_civ" value="0x1484868 0x14848b8" />
                 <Address name="current_race" value="0x1484874 0x14848c4" />
@@ -1770,6 +1773,15 @@
                 <Address name="current_tick" value="0xdac470" /> MAYBE
                 <Address name="current_year" value="0xe8b410" />
                 <Address name="current_weather" value="0x1480948" />
+            </Group>
+            <Group name="Items">
+                <Address name="items_vector" value="0x16580d8" />
+                <Offset name="item_type_accessor" value="0x0" />
+                <Offset name="item_subtype_accessor" value="0x4" />
+                <Offset name="item_subindex_accessor" value="0x8" />
+                <Offset name="item_index_accessor" value="0xC" />
+                <Offset name="item_quality_accessor" value="0x238" />
+                <Offset name="item_improvement_vector" value="0x90" />
             </Group>
         </Offsets>
     </Version>

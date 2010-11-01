@@ -41,7 +41,8 @@ int main ()
     Materials = DF->getMaterials();
     Materials->ReadAllMaterials();
     p = DF->getProcess();
-    DFHack::DfVector <uint32_t> p_items (p, p->getDescriptor()->getAddress ("items_vector"));
+    DFHack::OffsetGroup* itemGroup = mem->getGroup("Items");
+    DFHack::DfVector <uint32_t> p_items (p, itemGroup->getAddress("items_vector"));
     uint32_t size = p_items.size();
 	Items = DF->getItems();
 
@@ -49,6 +50,7 @@ int main ()
     printf("type\tvtable\tname\tquality\tdecorate\n");
     for (i=0;i<size;i++)
     {
+        uint32_t curItem = p_items[i];
         uint32_t vtable = p->readDWord(p_items[i]);
         uint32_t func0 = p->readDWord(vtable);
         uint64_t funct0 = p->readQuad(func0);
@@ -84,6 +86,8 @@ int main ()
 
         if (funct1 == 0xC300000092818B66LL)
             quality = p->readWord(p_items[i]+0x92);
+        if (funct1 == 0xC300000082818B66LL)
+            quality = p->readWord(p_items[i]+0x82);
         else if (funct1 == 0xCCCCCCCCCCC3C033LL)
             quality = 0;
         else
@@ -115,6 +119,11 @@ int main ()
                 uint32_t off1 = (funcBt>>24) & 0xffff;
                 typeB = p->readWord(p_items[i] + off1);
             }
+            else if ( (funcBt&0x000000FF00FFFFFFLL) == 0x000000C300418B66LL )
+            {
+                uint32_t off1 = (funcBt>>24) & 0xff;
+                typeB = p->readWord(p_items[i] + off1);
+            }
             else
                 printf("bad typeB func @%p\n", (void*) funcB);
         }
@@ -126,6 +135,16 @@ int main ()
             uint32_t off1 = (funcCt>>24)&0xffff;
             typeC = p->readWord(p_items[i] + off1);
         }
+        else if ( (funcCt&0x000000FF00FFFFFFLL) == 0x000000C300418B66LL )
+        {
+            uint32_t off1 = (funcCt>>24) & 0xff;
+            typeC = p->readWord(p_items[i] + off1);
+        }
+        else if ( (funcCt&0x00000000FF00FFFFLL) == 0x00000000C300418BLL )
+        {
+            uint32_t off1 = (funcCt>>16) & 0xff;
+            typeC = p->readWord(p_items[i] + off1);
+        }
         else
             printf("bad typeC func @%p\n", (void*) funcC);
 
@@ -134,12 +153,27 @@ int main ()
         else if ( (funcDt&0xFFFFFFFF0000FFFFLL) == 0xCCC300000000818BLL )
         {
             uint32_t off1 = (funcDt>>16) & 0xffff;
-            typeD = p->readDWord(p_items[i] + off1);
+            typeD = p->readWord(p_items[i] + off1);
         }
         else if ( (funcDt&0xFFFFFF0000FFFFFFLL) == 0xC30000000081BF0FLL )
         {
             uint32_t off1 = (funcDt>>24) & 0xffff;
-            typeD = (int16_t) p->readWord(p_items[i] + off1);
+            typeD = p->readWord(p_items[i] + off1);
+        }
+        else if ( (funcDt&0x000000FF00FFFFFFLL) == 0x000000C30041BF0FLL )
+        {
+            uint32_t off1 = (funcDt>>24) & 0xff;
+            typeD = p->readWord(p_items[i] + off1);
+        }
+        else if ( (funcDt&0x000000FF00FFFFFFLL) == 0x000000C300418B66LL )
+        {
+            uint32_t off1 = (funcDt>>24) & 0xff;
+            typeD = p->readWord(p_items[i] + off1);
+        }
+        else if ( (funcDt&0x00000000FF00FFFFLL) == 0x00000000C300418BLL )
+        {
+            uint32_t off1 = (funcDt>>16) & 0xff;
+            typeD = p->readDWord(p_items[i] + off1);
         }
         else
             printf("bad typeD func @%p\n", (void*) funcD);
@@ -155,8 +189,8 @@ int main ()
         {
             bool sep = false;
             printf("\tdeco=[");
-            uint32_t decStart = p->readDWord(p_items[i] + 0xAC);
-            uint32_t decEnd = p->readDWord(p_items[i] + 0xB0);
+            uint32_t decStart = p->readDWord(p_items[i] + 0x90); // 0xAC pre .13
+            uint32_t decEnd = p->readDWord(p_items[i] + 0x94);   // 0xB0 pre .13
             if (decStart != decEnd)
             {
                 for (j=decStart;j<decEnd;j+=4)

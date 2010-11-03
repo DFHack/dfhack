@@ -2,10 +2,6 @@
 #define CL_MOD_ITEMS
 
 /*
- * DEPRECATED, DO NOT USE UNTIL FURTHER NOTICE!
- **/
-
-/*
 * Creatures
 */
 #include "dfhack/DFExport.h"

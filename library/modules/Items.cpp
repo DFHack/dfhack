@@ -262,8 +262,17 @@ Items::Items(DFContextShared * d_)
     d->d = d_;
     d->owner = d_->p;
 }
-bool Items::Start(){return true;}
-bool Items::Finish(){return true;}
+
+bool Items::Start()
+{
+    return true;
+}
+
+bool Items::Finish()
+{
+    return true;
+}
+
 Items::~Items()
 {
     Finish();
@@ -285,10 +294,10 @@ bool Items::getItemData(uint32_t itemptr, DFHack::t_item &item)
     Process * p = d->owner;
     ItemDesc * desc;
 
-    it = d->descVTable.find(itemptr);
-    if(it==d->descVTable.end())
+    uint32_t vtable = p->readDWord(itemptr);
+    it = d->descVTable.find(vtable);
+    if(it == d->descVTable.end())
     {
-        uint32_t vtable = p->readDWord(itemptr);
         desc = new ItemDesc(vtable, p);
         d->descVTable[vtable] = desc;
         d->descType[desc->mainType] = desc;
@@ -305,7 +314,7 @@ std::string Items::getItemClass(int32_t index)
     std::string out;
 
     it = d->descType.find(index);
-    if(it==d->descType.end())
+    if(it == d->descType.end())
     {
         /* these are dummy values for mood decoding */
         switch(index)

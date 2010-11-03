@@ -2,6 +2,12 @@
  * dumps vtables, items types and class name for all items in game
  * best used this way : ./dfitemdump | sort -ug
  */
+
+// THIS IS NOT A GOOD EXAMPLE!
+// ... just look at all the magic numbers.
+// I'm not fixing it though.
+// ~px
+
 #include <stdio.h>
 #include <iostream>
 #include <iomanip>

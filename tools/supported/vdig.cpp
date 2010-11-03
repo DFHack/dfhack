@@ -16,12 +16,7 @@ using namespace std;
 class Point
 {
     public:
-    Point(uint32_t x, uint32_t y, uint32_t z)
-    {
-        this->x = x;
-        this->y = y;
-        this->z = z;
-    }
+    Point(uint32_t _x, uint32_t _y, uint32_t _z):x(_x),y(_y),z(_z) {}
     Point()
     {
         x = y = z = 0;

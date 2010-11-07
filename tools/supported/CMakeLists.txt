@@ -9,6 +9,10 @@ ENDIF(UNIX)
 ADD_EXECUTABLE(dfreveal reveal.cpp)
 TARGET_LINK_LIBRARIES(dfreveal dfhack)
 
+# force pause!
+ADD_EXECUTABLE(dfpause forcepause.cpp)
+TARGET_LINK_LIBRARIES(dfpause dfhack)
+
 # prospector - produces a list of available materials and their quantities
 ADD_EXECUTABLE(dfprospector prospector.cpp)
 TARGET_LINK_LIBRARIES(dfprospector dfhack)
@@ -113,6 +117,7 @@ dfvdig
 dfcleanmap
 dfunstuck
 dfprobe
+dfpause
 dfdoffsets
 dfattachtest
 dfcleartask

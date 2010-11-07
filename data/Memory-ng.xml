@@ -2226,8 +2226,17 @@
         </Offsets>
         
     </Version>
-    <Version name="v0.31.16 linux" os="linux" base="DF2010">
+    <Version name="v0.31.16 linux" os="linux" base="v0.31.14 linux" rebase="0x1b40">
         <MD5 value="9cca2fa5da509e2f9a1042ddd1f9669c" />
+        <Offsets>
+            <Group name="Position">
+                <Address name="cursor_xyz" value="0x8b33550 0x8b311f8" />
+                <Address name="screen_tiles_pointer" invalid = "true" />
+            </Group>
+            <Group name="GUI">
+                <Address name="pause_state" value="0x92e5cb0"/>
+            </Group>
+        </Offsets>
     </Version>
 </DFHack>
 

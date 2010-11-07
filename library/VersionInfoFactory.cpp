@@ -280,6 +280,8 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
         }
         else if(type == "address")
         {
+            if(child_inval == NOT_SET)
+                child_inval = IS_VALID;
             if(initial)
             {
                 currentGroup->createAddress(cstr_name);
@@ -295,6 +297,8 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
         }
         else if(type == "offset")
         {
+            if(child_inval == NOT_SET)
+                child_inval = IS_VALID;
             if(initial)
             {
                 currentGroup->createOffset(cstr_name);
@@ -310,6 +314,8 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
         }
         else if(type == "string")
         {
+            if(child_inval == NOT_SET)
+                child_inval = IS_VALID;
             if(initial)
             {
                 currentGroup->createString(cstr_name);
@@ -325,6 +331,8 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
         }
         else if(type == "hexvalue")
         {
+            if(child_inval == NOT_SET)
+                child_inval = IS_VALID;
             if(initial)
             {
                 currentGroup->createHexValue(cstr_name);

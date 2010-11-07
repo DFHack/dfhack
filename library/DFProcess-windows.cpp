@@ -111,7 +111,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
         {
             pe_timestamp = (*it)->getPE();
         }
-        catch(Error::MissingMemoryDefinition&)
+        catch(Error::AllMemdef&)
         {
             continue;
         }

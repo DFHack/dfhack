@@ -142,7 +142,7 @@ bool WineProcess::Private::validate(char* exe_file, uint32_t pid, char* mem_file
         {
             thishash = (*it)->getMD5();
         }
-        catch (Error::MissingMemoryDefinition& e)
+        catch (Error::AllMemdef& e)
         {
             continue;
         }

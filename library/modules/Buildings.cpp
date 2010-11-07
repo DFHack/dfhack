@@ -85,9 +85,9 @@ Buildings::Buildings(DFContextShared * d_)
         mem->resolveClassnameToClassID("building_custom_workshop", d->custom_workshop_id);
         d->hasCustomWorkshops = true;
     }
-    catch(DFHack::Error::UnsetMemoryDefinition &e)
+    catch(DFHack::Error::AllMemdef &e)
     {
-        cerr << "Custom workshops not available. Unset Memory Definition: " << e.what() << endl;
+        cerr << "Custom workshops not available. Memory Definition: " << e.what() << endl;
     }
     d->Inited = true;
 }

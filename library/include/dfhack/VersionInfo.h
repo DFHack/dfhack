@@ -41,6 +41,13 @@ namespace DFHack
     class VersionInfoPrivate;
     class OffsetGroupPrivate;
 
+    enum INVAL_TYPE
+    {
+        NOT_SET,
+        IS_INVALID,
+        IS_VALID
+    };
+
     /*
      * Offset Group
      */
@@ -68,14 +75,15 @@ namespace DFHack
         std::string getString (const std::string & key);
         OffsetGroup * getGroup ( const std::string & name );
 
-        void setOffset (const std::string & key, const std::string & value);
-        void setAddress (const std::string & key, const std::string & value);
-        void setHexValue (const std::string & key, const std::string & value);
-        void setString (const std::string & key, const std::string & value);
+        void setOffset (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);
+        void setAddress (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);
+        void setHexValue (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);
+        void setString (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);
         std::string PrintOffsets(int indentation);
         std::string getName();
         std::string getFullName();
         OffsetGroup * getParent();
+        void setInvalid(INVAL_TYPE arg1);
     };
 
     /*

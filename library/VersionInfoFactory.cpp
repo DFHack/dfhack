@@ -31,6 +31,65 @@ distribution.
 
 using namespace DFHack;
 
+template<class _T1, class _T2, class _T3>
+struct triple
+{
+    typedef _T1 first_type;
+    typedef _T2 second_type;
+    typedef _T3 third_type;
+
+    _T1 first;
+    _T2 second;
+    _T3 third;
+
+    triple() : first(), second(), third() { }
+
+    triple(const _T1& __a, const _T2& __b, const _T3& __c) : first(__a), second(__b), third(__c) { }
+
+    template<class _U1, class _U2, class _U3>
+    triple(const triple<_U1, _U2, _U3>& __p) : first(__p.first), second(__p.second), third(__p.third) { }
+
+};
+
+template<class _T1, class _T2, class _T3>
+inline bool operator==(const triple<_T1, _T2, _T3>& __x, const triple<_T1, _T2, _T3>& __y)
+{
+    return __x.first == __y.first && __x.second == __y.second && __x.third == __y.third;
+}
+
+template<class _T1, class _T2, class _T3>
+inline bool operator<(const triple<_T1, _T2, _T3>& __x, const triple<_T1, _T2, _T3>& __y)
+{
+    return
+    __x.first < __y.first ||
+    (!(__y.first < __x.first) && __x.second < __y.second) ||
+    (!(__y.first < __x.first) && !(__x.second < __y.second) && (__x.third < __y.third));
+}
+
+template<class _T1, class _T2, class _T3>
+inline bool operator!=(const triple<_T1, _T2, _T3>& __x, const triple<_T1, _T2, _T3>& __y)
+{
+    return !(__x == __y);
+}
+
+template<class _T1, class _T2, class _T3>
+inline bool operator>(const triple<_T1, _T2, _T3>& __x, const triple<_T1, _T2, _T3>& __y)
+{
+    return __y < __x;
+}
+
+template<class _T1, class _T2, class _T3>
+inline bool operator<=(const triple<_T1, _T2, _T3>& __x, const triple<_T1, _T2, _T3>& __y)
+{
+    return !(__y < __x);
+}
+
+template<class _T1, class _T2, class _T3>
+inline bool operator>=(const triple<_T1, _T2, _T3>& __x, const triple<_T1, _T2, _T3>& __y)
+{
+    return !(__x < __y);
+}
+
 VersionInfoFactory::~VersionInfoFactory()
 {
     // for each stored version, delete
@@ -95,35 +154,51 @@ void VersionInfoFactory::ParseVTable(TiXmlElement* vtable, VersionInfo* mem)
     }
 }
 
-// FIXME: this is ripe for replacement with a more generic approach
+struct breadcrumb
+{
+    TiXmlElement * first;
+    OffsetGroup * second;
+};
+
 void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target, bool initial)
 {
     // we parse the groups iteratively instead of recursively
     // breadcrubs acts like a makeshift stack
     // first pair entry stores the current element of that level
     // second pair entry the group object from OffsetGroup
-    typedef pair < TiXmlElement *, OffsetGroup * > groupPair;
-    vector< groupPair > breadcrumbs;
+    typedef triple< TiXmlElement *, OffsetGroup *, INVAL_TYPE> groupTriple;
+    vector< groupTriple > breadcrumbs;
     {
         TiXmlElement* pEntry;
         // we get the <Offsets>, look at the children
         pEntry = parent->FirstChildElement();
         if(!pEntry)
             return;
-
+        const char *cstr_invalid = parent->Attribute("valid");
+        INVAL_TYPE parent_inval = NOT_SET;
+        if(cstr_invalid)
+        {
+            if(strcmp(cstr_invalid,"false") == 0)
+                parent_inval = IS_INVALID;
+            else if(strcmp(cstr_invalid,"true") == 0)
+                parent_inval = IS_VALID;
+        }
         OffsetGroup * currentGroup = reinterpret_cast<OffsetGroup *> (target);
-        breadcrumbs.push_back(groupPair(pEntry,currentGroup));
+        currentGroup->setInvalid(parent_inval);
+        breadcrumbs.push_back(groupTriple(pEntry,currentGroup, parent_inval));
     }
 
     // work variables
     OffsetGroup * currentGroup = 0;
     TiXmlElement * currentElem = 0;
+    INVAL_TYPE parent_inval = NOT_SET;
     //cerr << "<Offsets>"<< endl;
     while(1)
     {
         // get current work variables
         currentElem = breadcrumbs.back().first;
         currentGroup = breadcrumbs.back().second;
+        parent_inval = breadcrumbs.back().third;
 
         // we reached the end of the current group?
         if(!currentElem)
@@ -144,7 +219,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
 
         if(!currentGroup)
         {
-            groupPair & gp = breadcrumbs.back();
+            groupTriple & gp = breadcrumbs.back();
             gp.first = gp.first->NextSiblingElement();
             continue;
         }
@@ -152,7 +227,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
         // skip non-elements
         if (currentElem->Type() != TiXmlNode::ELEMENT)
         {
-            groupPair & gp = breadcrumbs.back();
+            groupTriple & gp = breadcrumbs.back();
             gp.first = gp.first->NextSiblingElement();
             continue;
         }
@@ -169,18 +244,27 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
 
         // evaluate elements
         const char *cstr_value = currentElem->Attribute("value");
+        const char *cstr_invalid = currentElem->Attribute("valid");
+
+        INVAL_TYPE child_inval = parent_inval;
+        if(cstr_invalid)
+        {
+            if(strcmp(cstr_invalid,"false") == 0)
+                child_inval = IS_INVALID;
+            else if(strcmp(cstr_invalid,"true") == 0)
+                child_inval = IS_VALID;
+        }
         if(type == "group")
         {
-            // FIXME: possibly use setGroup always, with the initial flag as parameter?
             // create or get group
             OffsetGroup * og;
             if(initial)
                 og = currentGroup->createGroup(cstr_name);
             else
                 og = currentGroup->getGroup(cstr_name);
-            //cerr << "<group name=\"" << cstr_name << "\">" << endl;
+
             // advance this level to the next element
-            groupPair & gp = breadcrumbs.back();
+            groupTriple & gp = breadcrumbs.back();
             gp.first = currentElem->NextSiblingElement();
 
             if(!og)
@@ -189,8 +273,9 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
                 throw Error::MissingMemoryDefinition("group", fullname);
             }
 
-            // add a new level that will be processed next
-            breadcrumbs.push_back(groupPair(currentElem->FirstChildElement(), og));
+            // add a new level that will be processed in the next step
+            breadcrumbs.push_back(groupTriple(currentElem->FirstChildElement(), og, child_inval));
+            og->setInvalid(child_inval);
             continue;
         }
         else if(type == "address")
@@ -201,7 +286,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
             }
             else if(cstr_value)
             {
-                currentGroup->setAddress(cstr_name, cstr_value);
+                currentGroup->setAddress(cstr_name, cstr_value, child_inval);
             }
             else
             {
@@ -216,7 +301,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
             }
             else if(cstr_value)
             {
-                currentGroup->setOffset(cstr_name, cstr_value);
+                currentGroup->setOffset(cstr_name, cstr_value, child_inval);
             }
             else
             {
@@ -231,7 +316,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
             }
             else if(cstr_value)
             {
-                currentGroup->setString(cstr_name, cstr_value);
+                currentGroup->setString(cstr_name, cstr_value, child_inval);
             }
             else
             {
@@ -246,7 +331,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
             }
             else if(cstr_value)
             {
-                currentGroup->setHexValue(cstr_name, cstr_value);
+                currentGroup->setHexValue(cstr_name, cstr_value, child_inval);
             }
             else
             {
@@ -255,7 +340,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
         }
 
         // advance to next element
-        groupPair & gp = breadcrumbs.back();
+        groupTriple & gp = breadcrumbs.back();
         gp.first = currentElem->NextSiblingElement();
         continue;
     }

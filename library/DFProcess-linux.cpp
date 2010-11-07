@@ -142,7 +142,7 @@ bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFi
                 return true;
             }
         }
-        catch (Error::MissingMemoryDefinition&)
+        catch (Error::AllMemdef&)
         {
             continue;
         }

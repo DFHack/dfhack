@@ -339,7 +339,7 @@ bool SHMProcess::Private::validate(vector <VersionInfo *> & known_versions)
                 return true;
             }
         }
-        catch (Error::MissingMemoryDefinition&)
+        catch (Error::AllMemdef&)
         {
             continue;
         }

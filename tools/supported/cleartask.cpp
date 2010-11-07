@@ -39,7 +39,7 @@ int main ()
     {
         item_vec_offset = p->getDescriptor()->getAddress ("items_vector");
     }
-    catch(DFHack::Error::MissingMemoryDefinition & e)
+    catch(DFHack::Error::AllMemdef & e)
     {
         cerr << "missing offset for the item vector, exiting :(" << endl;
         #ifndef LINUX_BUILD

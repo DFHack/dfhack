@@ -306,7 +306,7 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
                 {
                     cout << mem->getSkill(creature.defaultSoul.skills[i].id) << ": " << creature.defaultSoul.skills[i].rating;
                 }
-                catch(DFHack::Error::MissingMemoryDefinition &e)
+                catch(DFHack::Error::AllMemdef &e)
                 {
                     cout << "Unknown skill! : " << creature.defaultSoul.skills[i].id <<", rating: "  << creature.defaultSoul.skills[i].rating << endl;
                     cout << e.what() << endl;

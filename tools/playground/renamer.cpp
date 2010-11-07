@@ -449,7 +449,7 @@ start:
                     uint32_t nickname = mem->getOffset("creature_name") + mem->getOffset("name_nickname");
                     p->writeSTLString(toChange.origin+nickname,changeString);
                 }
-                catch (DFHack::Error::MissingMemoryDefinition&)
+                catch (DFHack::Error::AllMemdef&)
                 {
                     cerr << "Writing creature nicknames unsupported in this version!" << endl;
                 }
@@ -461,7 +461,7 @@ start:
                     uint32_t custom_prof = mem->getOffset("creature_custom_profession");
                     p->writeSTLString(toChange.origin+custom_prof,changeString);
                 }
-                catch (DFHack::Error::MissingMemoryDefinition&)
+                catch (DFHack::Error::AllMemdef&)
                 {
                     cerr << "Writing creature custom profession unsupported in this version!" << endl;
                 }

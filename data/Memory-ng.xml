@@ -1892,7 +1892,7 @@
                 <Address name="vector" value="0x92D9AC0" />
                 <Address name="current_race" value="0x92C1628" />
                 <Address name="current_civ" value="0x92C161C" />
-                <Group name="creature" valid="verify" >
+                <Group name="creature" valid="true" >
                     <Offset name="name" value="0x0" />
                     <Offset name="custom_profession" value="0x3c" />
                     <Offset name="profession" value="0x40" />
@@ -2028,12 +2028,12 @@
                 <Group name="creature" valid="verify" >
                     <Group name="advanced">
                         <Offset name="soul_vector" value="0x0524" />
-                        <Offset name="current_soul" value="0x0530" valid="verify" />
+                        <Offset name="current_soul" value="0x0530" />
                         <Offset name="labors" value="0x540" />
                         <Offset name="happiness" value="0x5d0" />
                     </Group>
                 </Group>
-                <Group name="soul" valid="verify">
+                <Group name="soul">
                     <Offset name="name" value="0x0" />
                     <Offset name="mental" value="0x88" />
                     <Offset name="skills_vector" value="0x1C4" /> CHMOD
@@ -2144,7 +2144,7 @@
                 <Address name="window_z" value="0x8ceb240" />
                 <Address name="cursor_xyz" value="0x8b2e740" />
                 <Address name="window_dims" value="0x8b2ec48" />
-                <Address name="screen_tiles_pointer" invalid = "true" />
+                <Address name="screen_tiles_pointer" valid = "false" />
             </Group>
             <Group name="GUI">
                 <Address name="pause_state" value="0x92e0e90"/>
@@ -2208,7 +2208,7 @@
                 <Address name="window_z" value="0x8cee540 0x8ceb240" />
                 <Address name="cursor_xyz" value="0x8b31a30 0x8b2e740" />
                 <Address name="window_dims" value="0x8b31f48 0x8b2ec48" />
-                <Address name="screen_tiles_pointer" invalid = "true" />
+                <Address name="screen_tiles_pointer" valid = "false" />
             </Group>
             <Group name="GUI">
                 <Address name="pause_state" value="0x92e0e90"/>
@@ -2231,7 +2231,7 @@
         <Offsets>
             <Group name="Position">
                 <Address name="cursor_xyz" value="0x8b33550 0x8b311f8" />
-                <Address name="screen_tiles_pointer" invalid = "true" />
+                <Address name="screen_tiles_pointer" valid = "false" />
             </Group>
             <Group name="GUI">
                 <Address name="pause_state" value="0x92e5cb0"/>

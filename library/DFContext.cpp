@@ -334,7 +334,7 @@ bool API::InitReadEffects ( uint32_t & numeffects )
     {
         effects = d->offset_descriptor->getAddress ("effects_vector");
     }
-    catch(Error::MissingMemoryDefinition)
+    catch(Error::AllMemdef)
     {
         return false;
     }
@@ -400,7 +400,7 @@ bool API::InitReadNotes( uint32_t &numnotes )
         numnotes =  d->p_notes->getSize();
         return true;
     }
-    catch (Error::MissingMemoryDefinition&)
+    catch (Error::AllMemdef&)
     {
         d->notesInited = false;
         numnotes = 0;
@@ -438,7 +438,7 @@ bool API::InitReadSettlements( uint32_t & numsettlements )
         numsettlements =  d->p_settlements->getSize();
         return true;
     }
-    catch (Error::MissingMemoryDefinition&)
+    catch (Error::AllMemdef&)
     {
         d->settlementsInited = false;
         numsettlements = 0;
@@ -543,7 +543,7 @@ bool API::InitReadItems(uint32_t & numitems)
         numitems = d->p_itm->getSize();
         return true;
     }
-    catch (Error::MissingMemoryDefinition&)
+    catch (Error::AllMemdef&)
     {
         d->itemsInited = false;
         numitems = 0;

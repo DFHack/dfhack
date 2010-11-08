@@ -1811,7 +1811,7 @@
         <MD5 value="fea3801a26538b1741f3cc9294139fca" />
         <Offsets>
             <Address name="WORLD" value="0x92C60E0" valid="false" />
-            <Group name="vector" valid="true">
+            <Group name="vector">
                 <HexValue name="sizeof" value="0xC" />
                 <Offset name="start" value="0x0" />
                 <!--
@@ -1821,10 +1821,10 @@
                 DWORD AllocationEnd
                 -->
             </Group>
-            <Group name="string" valid="true">
+            <Group name="string">
                 <HexValue name="sizeof" value="0x4" />
             </Group>
-            <Group name="name" valid="true">
+            <Group name="name">
                 <Offset name="first" value="0x0" />
                 <Offset name="nick" value="0x4" />
                 <Offset name="second_words" value="0x8" />
@@ -1852,7 +1852,7 @@
                 <Address name="region_z" value="0x9318D74" />
                 <Address name="world_size_x" value="0x931A3C0" />
                 <Address name="world_size_y" value="0x931A3C2" />
-                <Group name="block" valid="true">
+                <Group name="block">
                     <Offset name="vein_vector" value="0x08" />
                     <Offset name="feature_local" value="0x20" />
                     <Offset name="feature_global" value="0x24" />
@@ -1892,7 +1892,7 @@
                 <Address name="vector" value="0x92D9AC0" />
                 <Address name="current_race" value="0x92C1628" />
                 <Address name="current_civ" value="0x92C161C" />
-                <Group name="creature" valid="true" >
+                <Group name="creature">
                     <Offset name="name" value="0x0" />
                     <Offset name="custom_profession" value="0x3c" />
                     <Offset name="profession" value="0x40" />
@@ -1950,7 +1950,7 @@
                 <Address name="organics_plants" value="0x931aea0" /><!-- plant matter, WORLD + 0x54BAC -->
                 <Address name="organics_trees" value="0x931aeb8" /><!-- just wood, WORLD + 0x54BDC -->
                 <Address name="creature_type_vector" value="0x931af34" /><!-- creature types, WORLD + 0x54CD0 -->
-                <Group name="creature" valid="verify">
+                <Group name="creature"> VERIFY
                     <Offset name="caste_vector" value="0x60" />
                     <Offset name="extract_vector" value="0x18f4" />
                     <Offset name="tile" value="0x20" />
@@ -2025,7 +2025,7 @@
         <MD5 value="4f1f988bc1b425d4193d3d8b7b0579a5" />
         <Offsets>
             <Group name="Creatures">
-                <Group name="creature" valid="verify" >
+                <Group name="creature"> VERIFY
                     <Group name="advanced">
                         <Offset name="soul_vector" value="0x0524" />
                         <Offset name="current_soul" value="0x0530" />

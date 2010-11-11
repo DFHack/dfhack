@@ -8,8 +8,18 @@ using namespace std;
 
 #include <DFHack.h>
 
-int main (void)
+int main (int argc, char** argv)
 {
+    bool quiet = false;
+    for(int i = 1; i < argc; i++)
+    {
+        string test = argv[i];
+        if(test == "-q")
+        {
+            quiet = true;
+        }
+	}
+	
     DFHack::Position * Position = 0;
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context * DF;
@@ -50,8 +60,11 @@ int main (void)
     }
     
     #ifndef LINUX_BUILD
+	if(!quiet)
+	{
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();
+	}
     #endif
     return 0;
 }

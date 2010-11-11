@@ -9,9 +9,18 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/DFTileTypes.h>
 
-int main (void)
+int main (int argc, char** argv)
 {
-    int32_t x,y,z;
+    bool quiet = false;
+    for(int i = 1; i < argc; i++)
+    {
+        string test = argv[i];
+        if(test == "-q")
+        {
+            quiet = true;
+        }
+	}
+	int32_t x,y,z;
     DFHack::designations40d designations;
     DFHack::tiletypes40d tiles;
     DFHack::t_temperatures temp1,temp2;
@@ -460,8 +469,11 @@ int main (void)
     }
     DF->Detach();
     #ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
+	if(!quiet)
+	{
+	    cout << "Done. Press any key to continue" << endl;
+	    cin.ignore();
+	}
     #endif
     return 0;
 }

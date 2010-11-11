@@ -8,9 +8,20 @@ using namespace std;
 
 #include <DFHack.h>
 
-int main (void)
+int main (int argc, char** argv)
 {
-    uint32_t x_max,y_max,z_max;
+
+    bool quiet = false;
+    for(int i = 1; i < argc; i++)
+    {
+        string test = argv[i];
+        if(test == "-q")
+        {
+            quiet = true;
+        }
+	}
+	
+	uint32_t x_max,y_max,z_max;
     uint32_t num_blocks = 0;
     uint32_t bytes_read = 0;
     vector<DFHack::t_spattervein> splatter;
@@ -72,8 +83,11 @@ int main (void)
     }
     DF->Detach();
     #ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
+	if (!quiet) 
+	{
+	    cout << "Done. Press any key to continue" << endl;
+	    cin.ignore();
+	}
     #endif
     return 0;
 }

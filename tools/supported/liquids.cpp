@@ -19,13 +19,13 @@ int main (int argc, char** argv)
         {
             quiet = true;
         }
-	}
-	int32_t x,y,z;
+    }
+    int32_t x,y,z;
     DFHack::designations40d designations;
     DFHack::tiletypes40d tiles;
     DFHack::t_temperatures temp1,temp2;
     uint32_t x_max,y_max,z_max;
-    
+
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF;
     DFHack::Maps * Maps;
@@ -469,11 +469,11 @@ int main (int argc, char** argv)
     }
     DF->Detach();
     #ifndef LINUX_BUILD
-	if(!quiet)
-	{
-	    cout << "Done. Press any key to continue" << endl;
-	    cin.ignore();
-	}
+        if(!quiet)
+        {
+            cout << "Done. Press any key to continue" << endl;
+            cin.ignore();
+        }
     #endif
     return 0;
 }

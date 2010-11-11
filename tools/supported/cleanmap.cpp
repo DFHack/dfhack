@@ -19,13 +19,13 @@ int main (int argc, char** argv)
         {
             quiet = true;
         }
-	}
-	
-	uint32_t x_max,y_max,z_max;
+    }
+
+    uint32_t x_max,y_max,z_max;
     uint32_t num_blocks = 0;
     uint32_t bytes_read = 0;
     vector<DFHack::t_spattervein> splatter;
-    
+
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF = DFMgr.getSingleContext();
     try
@@ -41,7 +41,7 @@ int main (int argc, char** argv)
         return 1;
     }
     DFHack::Maps *Mapz = DF->getMaps();
-    
+
     // init the map
     if(!Mapz->Start())
     {
@@ -51,11 +51,11 @@ int main (int argc, char** argv)
         #endif
         return 1;
     }
-    
+
     Mapz->getSize(x_max,y_max,z_max);
-        
+
     uint8_t zeroes [16][16] = {0};
-    
+
     // walk the map
     for(uint32_t x = 0; x< x_max;x++)
     {

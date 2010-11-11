@@ -18,8 +18,8 @@ int main (int argc, char** argv)
         {
             quiet = true;
         }
-	}
-	
+    }
+
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF;
     try
@@ -42,8 +42,8 @@ int main (int argc, char** argv)
     Gui->SetPauseState(true);
     DF->Resume();
     #ifndef LINUX_BUILD
-    cout << "Done. The current game frame will have to finish first. This can take some time on bugged maps." << endl;
-	if (!quiet) cin.ignore();
+        cout << "Done. The current game frame will have to finish first. This can take some time on bugged maps." << endl;
+        if (!quiet) cin.ignore();
     #endif
     return 0;
 }

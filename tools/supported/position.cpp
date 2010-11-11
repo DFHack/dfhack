@@ -18,8 +18,8 @@ int main (int argc, char** argv)
         {
             quiet = true;
         }
-	}
-	
+    }
+
     DFHack::Position * Position = 0;
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context * DF;
@@ -41,7 +41,7 @@ int main (int argc, char** argv)
     {
        int32_t x,y,z;
        int32_t width,height;
-       
+
        if(Position->getViewCoords(x,y,z))
             cout << "view coords: " << x << "/" << y << "/" << z << endl;
        if(Position->getCursorCoords(x,y,z))
@@ -53,18 +53,18 @@ int main (int argc, char** argv)
     {
         cerr << "cursor and window parameters are unsupported on your version of DF" << endl;
     }
-    
+
     if(!DF->Detach())
     {
         cerr << "Can't detach from DF" << endl;
     }
-    
+
     #ifndef LINUX_BUILD
-	if(!quiet)
-	{
-        cout << "Done. Press any key to continue" << endl;
-        cin.ignore();
-	}
+        if(!quiet)
+        {
+            cout << "Done. Press any key to continue" << endl;
+            cin.ignore();
+        }
     #endif
     return 0;
 }

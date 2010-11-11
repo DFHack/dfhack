@@ -45,9 +45,9 @@ void printWeather(DFHack::WeatherType current)
 using namespace DFHack;
 int main (int argc, char** argv)
 {
-	string command = "";
+    string command = "";
     bool quiet = false;
-	bool cmdarg = false;
+    bool cmdarg = false;
     for(int i = 1; i < argc; i++)
     {
         string test = argv[i];
@@ -55,14 +55,14 @@ int main (int argc, char** argv)
         {
             quiet = true;
         }
-		else
-		{
-			command = test;
-			cmdarg = true;
-		}
-	}
-	
-	DFHack::ContextManager DFMgr("Memory.xml");
+        else
+        {
+            command = test;
+            cmdarg = true;
+        }
+    }
+
+    DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF = DFMgr.getSingleContext();
 
     try
@@ -104,15 +104,15 @@ int main (int argc, char** argv)
         {
             end = true;
         }
-        command = "";	
-		if(cmdarg) end = true; // exit the loop when a cmd line arg has been passed.
+        command = "";
+        if(cmdarg) end = true; // exit the loop when a cmd line arg has been passed.
     }
     #ifndef LINUX_BUILD
-	if (!quiet)
-	{
-        std::cout << "Done. Press any key to continue" << std::endl;
-        cin.ignore();
-	}
+        if (!quiet)
+        {
+            std::cout << "Done. Press any key to continue" << std::endl;
+            cin.ignore();
+        }
     #endif
     DF->Detach();
     return 0;

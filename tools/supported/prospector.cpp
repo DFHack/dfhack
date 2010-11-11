@@ -41,7 +41,6 @@ struct compare_pair_second
 
 int main (int argc, const char* argv[])
 {
-    
     bool showhidden = false;
     bool showbaselayers = false;
     for(int i = 1; i < argc; i++)
@@ -76,9 +75,9 @@ int main (int argc, const char* argv[])
     materials.clear();
     vector<DFHack::t_feature> global_features;
     std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> > local_features;
-    
+
     vector< vector <uint16_t> > layerassign;
-    
+
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF;
     try
@@ -94,11 +93,10 @@ int main (int argc, const char* argv[])
         #endif
         return 1;
     }
-    
 
     DFHack::Maps * Maps = DF->getMaps();
     DFHack::Materials * Mats = DF->getMaterials();
-    
+
     // init the map
     if(!Maps->Start())
     {
@@ -109,7 +107,7 @@ int main (int argc, const char* argv[])
         return 1;
     }
     Maps->getSize(x_max,y_max,z_max);
-    
+
     if(!Maps->ReadGlobalFeatures(global_features))
     {
         cerr << "Can't get global features." << endl;
@@ -137,7 +135,7 @@ int main (int argc, const char* argv[])
         #endif
         return 1; 
     }
-    
+
     // get region geology
     if(!Maps->ReadGeology( layerassign ))
     {
@@ -147,7 +145,7 @@ int main (int argc, const char* argv[])
         #endif
         return 1; 
     }
-    
+
     int16_t tempvein [16][16];
     vector <DFHack::t_vein> veins;
     uint32_t maximum_regionoffset = 0;
@@ -161,16 +159,16 @@ int main (int argc, const char* argv[])
             {
                 if(!Maps->isValidBlock(x,y,z))
                     continue;
-                
+
                 // read data
                 Maps->ReadBlock40d(x,y,z, &Block);
                 //Maps->ReadTileTypes(x,y,z, &tiletypes);
                 //Maps->ReadDesignations(x,y,z, &designations);
-                
+
                 memset(tempvein, -1, sizeof(tempvein));
                 veins.clear();
                 Maps->ReadVeins(x,y,z,&veins);
-                
+
                 if(showbaselayers)
                 {
                     //Maps->ReadRegionOffsets(x,y,z, &regionoffsets);
@@ -194,7 +192,7 @@ int main (int argc, const char* argv[])
                         }
                     }
                 }
-                
+
                 // for each vein
                 for(int i = 0; i < (int)veins.size();i++)
                 {
@@ -214,7 +212,7 @@ int main (int argc, const char* argv[])
                         }
                     }
                 }
-                
+
                 // global feature overrides
                 int16_t idx = Block.global_feature;
                 if( idx != -1 && uint16_t(idx) < global_features.size() && global_features[idx].type == DFHack::feature_Underworld)
@@ -234,7 +232,7 @@ int main (int argc, const char* argv[])
                         }
                     }
                 }
-                
+
                 idx = Block.local_feature;
                 if( idx != -1 )
                 {
@@ -263,7 +261,7 @@ int main (int argc, const char* argv[])
                             }
                     }
                 }
-                
+
                 // count the material types
                 for(uint32_t xi = 0 ; xi< 16 ; xi++)
                 {
@@ -275,7 +273,7 @@ int main (int argc, const char* argv[])
                             continue;
                         if(tempvein[xi][yi] < 0)
                             continue;
-                        
+
                         if(materials.count(tempvein[xi][yi]))
                         {
                             materials[tempvein[xi][yi]] += 1;

@@ -8,8 +8,18 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/modules/Gui.h>
 
-int main (void)
+int main (int argc, char** argv)
 {
+    bool quiet = false;
+    for(int i = 1; i < argc; i++)
+    {
+        string test = argv[i];
+        if(test == "-q")
+        {
+            quiet = true;
+        }
+	}
+	
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF;
     try
@@ -21,7 +31,7 @@ int main (void)
     {
         cerr << e.what() << endl;
         #ifndef LINUX_BUILD
-            cin.ignore();
+        if(!quiet) cin.ignore();
         #endif
         return 1;
     }
@@ -33,7 +43,7 @@ int main (void)
     DF->Resume();
     #ifndef LINUX_BUILD
     cout << "Done. The current game frame will have to finish first. This can take some time on bugged maps." << endl;
-    cin.ignore();
+	if (!quiet) cin.ignore();
     #endif
     return 0;
 }

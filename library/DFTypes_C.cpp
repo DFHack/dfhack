@@ -276,7 +276,7 @@ int CreatureCasteConvert(t_creaturecaste* src, c_creaturecaste* dest)
 	
 	((*alloc_creaturecaste_callback)(dest, src->rawname, src->singular, src->plural, src->adjective, src->ColorModifier.size(), src->bodypart.size()));
 	
-	for(int i = 0; i < dest->colorModifierLength; i++)
+	for(unsigned int i = 0; i < dest->colorModifierLength; i++)
 		ColorListConvert(&src->ColorModifier[i], &dest->ColorModifier[i]);
 	
 	copy(src->bodypart.begin(), src->bodypart.end(), dest->bodypart);
@@ -291,7 +291,7 @@ int CreatureTypeConvert(t_creaturetype* src, c_creaturetype* dest)
 	
 	((*alloc_creaturetype_callback)(dest, src->rawname, src->castes.size(), src->extract.size(), src->tile_character, src->tilecolor.fore, src->tilecolor.back, src->tilecolor.bright));
 	
-	for(int i = 0; i < dest->castesCount; i++)
+	for(unsigned int i = 0; i < dest->castesCount; i++)
 		CreatureCasteConvert(&src->castes[i], &dest->castes[i]);
 	
 	copy(src->extract.begin(), src->extract.end(), dest->extract);

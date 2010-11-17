@@ -102,7 +102,7 @@ t_hotkey* Position_ReadHotkeys(DFHackObject* pos)
 {
 	if(pos != NULL)
 	{
-		t_hotkey* buf;
+		t_hotkey* buf = NULL;
 		
 		(*alloc_t_hotkey_buffer_callback)(buf, NUM_HOTKEYS);
 		
@@ -144,7 +144,7 @@ t_screen* Position_getScreenTiles(DFHackObject* pos, int32_t width, int32_t heig
 {
 	if(pos != NULL)
 	{
-		t_screen* buf;
+		t_screen* buf = NULL;
 		
 		(*alloc_t_screen_buffer_callback)(buf, width * height);
 		

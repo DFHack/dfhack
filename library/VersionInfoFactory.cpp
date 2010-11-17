@@ -683,7 +683,6 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
             if(name)
             {
                 string str_name = name;
-                VersionInfo *base = new VersionInfo();
                 mem = new VersionInfo();
                 ParseBase( pMemInfo , mem );
                 knownVersions[str_name] = v_descr (pMemInfo, mem);

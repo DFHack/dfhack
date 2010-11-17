@@ -93,7 +93,7 @@ bool Context::Detach()
     }
     d->shm_start = 0;
     // invalidate all modules
-    for(int i = 0 ; i < d->allModules.size(); i++)
+    for(unsigned int i = 0 ; i < d->allModules.size(); i++)
     {
         delete d->allModules[i];
     }
@@ -174,7 +174,7 @@ bool Context::AsyncSuspend()
 
 bool Context::Resume()
 {
-    for(int i = 0 ; i < d->allModules.size(); i++)
+    for(unsigned int i = 0 ; i < d->allModules.size(); i++)
     {
         d->allModules[i]->OnResume();
     }

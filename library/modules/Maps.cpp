@@ -661,7 +661,6 @@ __int16 __userpurge GetGeologicalRegion<ax>(__int16 block_X<cx>, int X<ebx>, __i
 bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 {
     MAPS_GUARD
-    VersionInfo * minfo = d->d->offset_descriptor;
     Process *p = d->owner;
     // get needed addresses and offsets. Now this is what I call crazy.
     uint16_t worldSizeX, worldSizeY;
@@ -736,7 +735,6 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
         return false;
 
     Process * p = d->owner;
-    VersionInfo * mem = p->getDescriptor();
     // deref pointer to the humongo-structure
     uint32_t base = p->readDWord(d->OG_local_features->getAddress("start_ptr"));
     if(!base)

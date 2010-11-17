@@ -31,7 +31,7 @@ DFContextShared::DFContextShared()
 DFContextShared::~DFContextShared()
 {
     // invalidate all modules
-    for(int i = 0 ; i < allModules.size(); i++)
+    for(unsigned int i = 0 ; i < allModules.size(); i++)
     {
         delete allModules[i];
     }

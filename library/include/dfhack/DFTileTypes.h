@@ -62,19 +62,7 @@ namespace DFHack
     };
     #undef X
 
-    //Visual Studio screams if you don't do this for the const char* arrays
-    #ifndef char_p
-    typedef char * char_p;
-    #endif
-
-    //set tile class string lookup table (e.g. for printing to user)
-    #define X(name,comment) #name,
-    const char_p TileClassString[tileclass_count+1] = {
-        TILECLASS_MACRO
-        0
-    };
-    #undef X
-
+    extern const char *TileClassString[];
 
     #define TILEMATERIAL_MACRO \
         X(AIR,        "empty" ) \
@@ -107,14 +95,8 @@ namespace DFHack
     };
     #undef X
 
-    //string lookup table (e.g. for printing to user)
-    #define X(name,comment) #name,
-    const char_p TileMaterialString[tilematerial_count+1] = {
-        TILEMATERIAL_MACRO
-        0
-    };
-    #undef X
 
+    extern const char *TileMaterialString[];
 
     // Special specials of the tile.
     // Not the best way to do this, but compatible with existing code.
@@ -144,14 +126,7 @@ namespace DFHack
     };
     #undef X
 
-    //string lookup table (e.g. for printing to user)
-    #define X(name,comment) #name,
-    const char_p TileSpecialString[tilespecial_count+1] = {
-        TILESPECIAL_MACRO
-        0
-    };
-    #undef X
-
+    extern const char *TileSpecialString[];
 
     // variants are used for tiles, where there are multiple variants of the same - like grass floors
     enum TileVariant
@@ -991,8 +966,6 @@ namespace DFHack
         int32_t tt, maybe=0, match=0;
         int value=0, matchv=0;
         const TileRow *source = &tileTypeTable[sourceTileType];
-        const char * sourcename = source->name;
-        const uint32_t sourcenameint = *((const uint32_t *)sourcename);
 
         #ifdef assert
         assert( sourceTileType >=0 && sourceTileType < TILE_TYPE_ARRAY_LENGTH );

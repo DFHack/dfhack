@@ -69,7 +69,7 @@ Creatures::Creatures(DFContextShared* _d)
 {
     d = new Private;
     d->d = _d;
-    Process * p = d->owner = _d->p;
+    d->owner = _d->p;
     d->Inited = false;
     d->Started = false;
     d->d->InitReadNames(); // throws on error
@@ -183,7 +183,6 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     }
     */
     // non-SHM slow path
-    VersionInfo * minfo = d->d->offset_descriptor;
 
     // read pointer from vector at position
     uint32_t temp = d->p_cre->at (index);
@@ -471,6 +470,8 @@ bool Creatures::WriteSex(const uint32_t index, const uint8_t sex)
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
     p->writeByte (temp + d->creatures.sex_offset, sex);
+
+    return true;
 }
 
 bool Creatures::WriteTraits(const uint32_t index, const t_soul &soul)
@@ -596,7 +597,6 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
     if(!d->Inited) return false;
     if(!furball->current_job.active) return false;
     Process * p = d->owner;
-    VersionInfo * minfo = d->d->offset_descriptor;
 
     DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + d->OG_jobs->getOffset("materials_vector"));
     mat.resize(cmats.size());
@@ -614,7 +614,6 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
 bool Creatures::ReadInventoryIdx(const uint32_t index, std::vector<uint32_t> & item)
 {
     if(!d->Started) return false;
-    Process * p = d->owner;
     uint32_t temp = d->p_cre->at (index);
     return this->ReadInventoryPtr(temp, item);
 }

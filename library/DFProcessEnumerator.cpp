@@ -63,7 +63,7 @@ BadProcesses::~BadProcesses()
 
 bool BadProcesses::Contains(Process* p)
 {
-    for(int i = 0; i < d->bad.size(); i++)
+    for(unsigned int i = 0; i < d->bad.size(); i++)
     {
         if(d->bad[i] == p)
             return true;
@@ -96,7 +96,7 @@ uint32_t BadProcesses::size()
 
 void BadProcesses::clear()
 {
-    for(int i = 0; i < d->bad.size(); i++)
+    for(unsigned int i = 0; i < d->bad.size(); i++)
     {
         delete d->bad[i];
     }

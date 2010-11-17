@@ -62,12 +62,12 @@ uint16_t* Maps_ReadGeology(DFHackObject*  maps)
 		
 		if(((DFHack::Maps*)maps)->ReadGeology(geology))
 		{
-			uint16_t* buf;
+			uint16_t* buf = NULL;
 			uint32_t geoLength = 0;
 			
-			for(int i = 0; i < geology.size(); i++)
+			for(unsigned int i = 0; i < geology.size(); i++)
 			{
-				for(int j = 0; j < geology[i].size(); j++)
+				for(unsigned int j = 0; j < geology[i].size(); j++)
 				{
 					geoLength += geology[i].size();
 				}
@@ -79,7 +79,7 @@ uint16_t* Maps_ReadGeology(DFHackObject*  maps)
 			{
 				uint16_t* bufCopyPtr = buf;
 				
-				for(int i = 0; i < geology.size(); i++)
+				for(unsigned int i = 0; i < geology.size(); i++)
 				{
 					copy(geology[i].begin(), geology[i].end(), bufCopyPtr);
 					
@@ -107,7 +107,7 @@ t_feature* Maps_ReadGlobalFeatures(DFHackObject* maps)
 			if(featureVec.size() <= 0)
 				return NULL;
 			
-			t_feature* buf;
+			t_feature* buf = NULL;
 			
 			(*alloc_t_feature_buffer_callback)(buf, featureVec.size());
 			
@@ -297,6 +297,8 @@ int Maps_WriteEmptyLocalFeature(DFHackObject* maps, uint32_t x, uint32_t y, uint
 	{
 		return ((DFHack::Maps*)maps)->WriteLocalFeature(x, y, z, -1);
 	}
+
+  return -1;
 }
 
 int Maps_WriteGlobalFeature(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, int16_t local)
@@ -315,6 +317,8 @@ int Maps_WriteEmptyGlobalFeature(DFHackObject* maps, uint32_t x, uint32_t y, uin
 	{
 		return ((DFHack::Maps*)maps)->WriteGlobalFeature(x, y, z, -1);
 	}
+
+  return -1;
 }
 
 int Maps_ReadBlockFlags(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, t_blockflags* blockflags)

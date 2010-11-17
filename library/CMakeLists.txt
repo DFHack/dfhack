@@ -86,6 +86,7 @@ VersionInfo.cpp
 VersionInfoFactory.cpp
 DFContextManager.cpp
 DFContext.cpp
+DFTileTypes.cpp
 DFProcessEnumerator.cpp
 ContextShared.cpp
 

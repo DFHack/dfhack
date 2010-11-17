@@ -664,6 +664,7 @@
             <class name="building_civzonest"/><!-- zone -->
             <class name="building_actualst"/>
             <class name="buildingst"/>
+            <class name="building_slabst" />
         </VTable>
         <Offsets>
             <Address name="WORLD" description="A huge object that many things in DF are part of. Contains the whole game and can be used as a base

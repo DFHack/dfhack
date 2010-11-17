@@ -180,6 +180,18 @@ void OffsetGroup::setOffset (const string & key, const string & value, const INV
     else throw Error::MissingMemoryDefinition("offset", getFullName() + key);
 }
 
+void OffsetGroup::setOffsetValidity (const string & key, const INVAL_TYPE inval)
+{
+    if(inval != NOT_SET)
+    {
+        int32_Iter it = OGd->offsets.find(key);
+        if(it != OGd->offsets.end())
+        {
+            (*it).second.first = inval;
+        }
+        else throw Error::MissingMemoryDefinition("offset", getFullName() + key);
+    }
+}
 
 void OffsetGroup::setAddress (const string & key, const string & value, const INVAL_TYPE inval)
 {
@@ -192,6 +204,19 @@ void OffsetGroup::setAddress (const string & key, const string & value, const IN
             (*it).second.first = inval;
     }
     else throw Error::MissingMemoryDefinition("address", getFullName() + key);
+}
+
+void OffsetGroup::setAddressValidity (const string & key, const INVAL_TYPE inval)
+{
+    if(inval != NOT_SET)
+    {
+        uint32_Iter it = OGd->addresses.find(key);
+        if(it != OGd->addresses.end())
+        {
+            (*it).second.first = inval;
+        }
+        else throw Error::MissingMemoryDefinition("address", getFullName() + key);
+    }
 }
 
 
@@ -207,6 +232,18 @@ void OffsetGroup::setHexValue (const string & key, const string & value, const I
     else throw Error::MissingMemoryDefinition("hexvalue", getFullName() + key);
 }
 
+void OffsetGroup::setHexValueValidity (const string & key, const INVAL_TYPE inval)
+{
+    if(inval != NOT_SET)
+    {
+        uint32_Iter it = OGd->hexvals.find(key);
+        if(it != OGd->hexvals.end())
+        {
+            (*it).second.first = inval;
+        }
+        else throw Error::MissingMemoryDefinition("hexvalue", getFullName() + key);
+    }
+}
 
 void OffsetGroup::setString (const string & key, const string & value, const INVAL_TYPE inval)
 {
@@ -220,6 +257,18 @@ void OffsetGroup::setString (const string & key, const string & value, const INV
     else throw Error::MissingMemoryDefinition("string", getFullName() + key);
 }
 
+void OffsetGroup::setStringValidity (const string & key, const INVAL_TYPE inval)
+{
+    if(inval != NOT_SET)
+    {
+        strings_Iter it = OGd->strings.find(key);
+        if(it != OGd->strings.end())
+        {
+            (*it).second.first = inval;
+        }
+        else throw Error::MissingMemoryDefinition("string", getFullName() + key);
+    }
+}
 
 // Get named address
 uint32_t OffsetGroup::getAddress (const string & key)

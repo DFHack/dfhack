@@ -292,7 +292,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
             }
             else
             {
-                // ERROR, missing attribute
+                currentGroup->setAddressValidity(cstr_name, child_inval);
             }
         }
         else if(type == "offset")
@@ -309,7 +309,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
             }
             else
             {
-                // ERROR, missing attribute
+                currentGroup->setOffsetValidity(cstr_name, child_inval);
             }
         }
         else if(type == "string")
@@ -326,7 +326,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
             }
             else
             {
-                // ERROR, missing attribute
+                currentGroup->setStringValidity(cstr_name, child_inval);
             }
         }
         else if(type == "hexvalue")
@@ -343,7 +343,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
             }
             else
             {
-                // ERROR, missing attribute
+                currentGroup->setHexValueValidity(cstr_name, child_inval);
             }
         }
 

@@ -76,9 +76,13 @@ namespace DFHack
         OffsetGroup * getGroup ( const std::string & name );
 
         void setOffset (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);
+        void setOffsetValidity(const std::string& key, const DFHack::INVAL_TYPE inval = IS_VALID);
         void setAddress (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);
+        void setAddressValidity(const std::string& key, const DFHack::INVAL_TYPE inval = IS_VALID);
         void setHexValue (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);
+        void setHexValueValidity(const std::string& key, const DFHack::INVAL_TYPE inval = IS_VALID);
         void setString (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);
+        void setStringValidity(const std::string& key, const DFHack::INVAL_TYPE inval = IS_VALID);
         std::string PrintOffsets(int indentation);
         std::string getName();
         std::string getFullName();

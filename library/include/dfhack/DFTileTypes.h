@@ -26,6 +26,7 @@ distribution.
 #define TILETYPES_H_INCLUDED
 
 #include "DFPragma.h"
+#include "DFExport.h"
 
 namespace DFHack
 {
@@ -62,7 +63,7 @@ namespace DFHack
     };
     #undef X
 
-    extern const char *TileClassString[];
+    DFHACK_EXPORT extern const char *TileClassString[];
 
     #define TILEMATERIAL_MACRO \
         X(AIR,        "empty" ) \
@@ -96,7 +97,7 @@ namespace DFHack
     #undef X
 
 
-    extern const char *TileMaterialString[];
+    DFHACK_EXPORT extern const char *TileMaterialString[];
 
     // Special specials of the tile.
     // Not the best way to do this, but compatible with existing code.
@@ -126,7 +127,7 @@ namespace DFHack
     };
     #undef X
 
-    extern const char *TileSpecialString[];
+    DFHACK_EXPORT extern const char *TileSpecialString[];
 
     // variants are used for tiles, where there are multiple variants of the same - like grass floors
     enum TileVariant

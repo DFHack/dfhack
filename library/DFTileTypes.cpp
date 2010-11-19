@@ -6,7 +6,7 @@
 namespace DFHack {
     //set tile class string lookup table (e.g. for printing to user)
 #define X(name,comment) #name,
-    DFHACK_EXPORT const char * TileClassString[tileclass_count+1] = {
+    const char * TileClassString[tileclass_count+1] = {
         TILECLASS_MACRO
             0
     };
@@ -14,7 +14,7 @@ namespace DFHack {
 
     //string lookup table (e.g. for printing to user)
 #define X(name,comment) #name,
-    DFHACK_EXPORT const char * TileMaterialString[tilematerial_count+1] = {
+    const char * TileMaterialString[tilematerial_count+1] = {
         TILEMATERIAL_MACRO
             0
     };
@@ -22,7 +22,7 @@ namespace DFHack {
 
     //string lookup table (e.g. for printing to user)
 #define X(name,comment) #name,
-    DFHACK_EXPORT const char * TileSpecialString[tilespecial_count+1] = {
+    const char * TileSpecialString[tilespecial_count+1] = {
         TILESPECIAL_MACRO
             0
     };

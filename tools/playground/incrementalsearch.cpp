@@ -595,6 +595,7 @@ void PtrTrace(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& range
             check.insert(select);
             // ascend
             select = found[0];
+            found.clear();
         }
         DF->Detach();
     }
@@ -664,6 +665,7 @@ void DataPtrTrace(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& r
         check.insert(select);
         // ascend
         select = found[0];
+        found.clear();
     }
     DF->Detach();
 }

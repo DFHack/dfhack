@@ -1867,7 +1867,7 @@
             <Group name="World" valid="false">
                 <Address name="current_tick" description="Current time of the year" />
                 <Address name="current_year" description="Current year" />
-                <Address name="current_weather" description="5x5 array of bytes for surrounding biomes. For each: 0=clear, 1=raining, 2=snowing." />
+                <Address name="current_weather" value="0x14c9bb8" valid="true" />
             </Group>
 
         </Offsets>

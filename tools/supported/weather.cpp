@@ -114,6 +114,7 @@ int main (int argc, char** argv)
             cin.ignore();
         }
     #endif
+    DF->Resume();
     DF->Detach();
     return 0;
 }

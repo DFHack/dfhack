@@ -291,27 +291,42 @@ bool NormalProcess::getThreadIDs(vector<uint32_t> & threads )
     return true;
 }
 
-//FIXME: use VirtualQuery to probe for memory ranges, cross-reference with base-corrected PE segment entries
+typedef struct _MEMORY_BASIC_INFORMATION
+{
+  void *  BaseAddress;
+  void *  AllocationBase;
+  uint32_t  AllocationProtect;
+  size_t RegionSize;
+  uint32_t  State;
+  uint32_t  Protect;
+  uint32_t  Type;
+} MEMORY_BASIC_INFORMATION, *PMEMORY_BASIC_INFORMATION;
+
+
+// FIXME: NEEDS TESTING!
 void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
 {
-    // code here is taken from hexsearch by Silas Dunmore.
-    // As this IMHO isn't a 'sunstantial portion' of anything, I'm not including the MIT license here
-
-    //FIXME: USE THIS!
-    /*
-    while VirtualQuery(process, info, sizeOf(info)) == sizeOf(info)
+    MEMORY_BASIC_INFORMATION MBI;
+    const uint64_t PageSize = 4096;
+    uint64_t page = 0;
+    while (VirtualQuery(this->d->my_handle, page * PageSize, sizeof(MBI)) == sizeof(MBI))
     {
+        page = MBI.RegionSize / PageSize;
+        if(MBI.RegionSize - MBI.RegionSize / PageSize != 0)
+            page ++; // skip over non-whole page
+        if( !(MBI.Protect & MEM_COMMIT) ) // skip empty regions
+            continue;
+
+        t_memrange temp;
+        temp.start = MBI.BaseAddress;
+        temp.end = MBI.BaseAddress  + MBI.RegionSize;
+        temp.read = MBI.Protect & PAGE_EXECUTE_READ | MBI.Protect & PAGE_EXECUTE_READWRITE | MBI.Protect & PAGE_READONLY | MBI.Protect & PAGE_READWRITE;
+        temp.write = MBI.Protect & PAGE_EXECUTE_READWRITE | MBI.Protect & PAGE_READWRITE;
+        temp.execute = MBI.Protect & PAGE_EXECUTE_READ | MBI.Protect & PAGE_EXECUTE_READWRITE | MBI.Protect & PAGE_EXECUTE;
+        temp.name = "N/A"; // FIXME: pull some relevant names from somewhere...
+        ranges.push_back(temp);
     }
-    */
-    t_memrange temp;
-    uint32_t base = d->my_descriptor->getBase();
-    temp.start = base + 0x1000; // more fakery.
-    temp.end = base + readDWord(base+readDWord(base+0x3C)+0x50)-1; // yay for magic.
-    temp.read = 1;
-    temp.write = 1;
-    temp.execute = 0; // fake
-    strcpy(temp.name,"pants");// that's right. I'm calling it pants. Windows can go to HELL
-    ranges.push_back(temp);
+    
 }
 
 uint8_t NormalProcess::readByte (const uint32_t offset)

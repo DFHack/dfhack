@@ -124,7 +124,7 @@ bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFi
             if(hash == (*it)->getMD5()) // are the md5 hashes the same?
             {
                 VersionInfo * m = *it;
-                if (VersionInfo::OS_LINUX == m->getOS())
+                if (OS_LINUX == m->getOS())
                 {
                     VersionInfo *m2 = new VersionInfo(*m);
                     my_descriptor = m2;

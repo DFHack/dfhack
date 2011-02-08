@@ -365,7 +365,7 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         throw Error::MemoryXmlBadAttribute("name");
 
     mem->setVersion(cstr_version);
-    mem->setOS(VersionInfo::OS_BAD);
+    mem->setOS(OS_BAD);
 
     // process additional entries
     pElement = entry->FirstChildElement()->ToElement();

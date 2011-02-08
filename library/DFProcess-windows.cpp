@@ -103,7 +103,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
     for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
     {
         // filter by OS
-        if(VersionInfo::OS_WINDOWS != (*it)->getOS())
+        if(OS_WINDOWS != (*it)->getOS())
             continue;
         uint32_t pe_timestamp;
         // filter by timestamp, skip entries without a timestamp

@@ -147,7 +147,7 @@ bool WineProcess::Private::validate(char* exe_file, uint32_t pid, char* mem_file
             continue;
         }
         // are the md5 hashes the same?
-        if(VersionInfo::OS_WINDOWS == (*it)->getOS() && hash == thishash)
+        if(OS_WINDOWS == (*it)->getOS() && hash == thishash)
         {
 
             // keep track of created memory_info object so we can destroy it later

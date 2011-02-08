@@ -21,144 +21,10 @@ using namespace std;
 
 #include <DFHack.h>
 #include "SegmentedFinder.h"
-template <class T>
-class holder
-{
-    public:
-        vector <T> values;
-        SegmentedFinder & sf;
-        holder(SegmentedFinder& sff):sf(sff){};
-        bool isValid(size_t idx)
-        {
-            
-        };
-};
-
-class address
-{
-    public:
-    uint64_t addr_;
-    unsigned int valid : 1;
-    virtual void print(SegmentedFinder& sff)
-    {
-        cout << hex << "0x" << addr_ << endl;
-    };
-    address(const uint64_t addr)
-    {
-        addr_ = addr;
-        valid = false;
-    }
-    virtual address & operator=(const uint64_t in)
-    {
-        addr_ = in;
-        valid = false;
-        return *this;
-    }
-    virtual bool isValid(SegmentedFinder& sff)
-    {
-        if(valid) return true;
-        if(sff.getSegmentForAddress(addr_))
-        {
-            valid = 1;
-        }
-    }
-    virtual bool equals (SegmentedFinder & sf, address & rhs)
-    {
-        return rhs.addr_ == addr_;
-    }
-};
-
-// pointer to a null-terminated byte string
-class Cstr: public address
-{
-    void print(SegmentedFinder & sf)
-    {
-        cout << hex << "0x" << addr_ << ": \"" << sf.Translate<char>(addr_) << "\"" << endl;
-    }
-    bool equals(SegmentedFinder & sf,const char * rhs)
-    {
-        uint32_t addr2 = *(sf.Translate<uint32_t>(addr_));
-        return strcmp(sf.Translate<const char>(addr2), rhs) == 0;
-    }
-    template <class Predicate, class inType>
-    bool equalsP(SegmentedFinder & sf,inType rhs)
-    {
-        return Predicate(addr_, sf, rhs);
-    }
-    bool isValid(SegmentedFinder& sf)
-    {
-        if (address::isValid(sf))
-        {
-            // read the pointer
-            uint32_t addr2 = *(sf.Translate<uint32_t>(addr_));
-            // is it a real pointer? a pretty weak test, but whatever.
-            if(sf.getSegmentForAddress(addr2))
-                return true;
-        }
-        return false;
-    }
-};
-
-// STL STRING
-#ifdef LINUX_BUILD
-class STLstr: public address
-{
-    
-};
-#endif
-#ifndef LINUX_BUILD
-class STLstr: public address
-{
-    
-};
-#endif
-
-// STL VECTOR
-#ifdef LINUX_BUILD
-class Vector: public address
-{
-    
-};
-#endif
-#ifndef LINUX_BUILD
-class Vector: public address
-{
-    
-};
-#endif
-class Int64: public address{};
-class Int32: public address{};
-class Int16: public address{};
-class Int8: public address{};
 
 inline void printRange(DFHack::t_memrange * tpr)
 {
     std::cout << std::hex << tpr->start << " - " << tpr->end << "|" << (tpr->read ? "r" : "-") << (tpr->write ? "w" : "-") << (tpr->execute ? "x" : "-") << "|" << tpr->name << std::endl;
-}
-
-string rdWinString( char * offset, SegmentedFinder & sf )
-{
-    char * start_offset = offset + 4;
-    uint32_t length = *(uint32_t *)(offset + 20);
-    uint32_t capacity = *(uint32_t *)(offset + 24);
-    char * temp = new char[capacity+1];
-
-    // read data from inside the string structure
-    if(capacity < 16)
-    {
-        memcpy(temp, start_offset,capacity);
-        //read(start_offset, capacity, (uint8_t *)temp);
-    }
-    else // read data from what the offset + 4 dword points to
-    {
-        start_offset = sf.Translate<char>(*(uint32_t*)start_offset);
-        memcpy(temp, start_offset,capacity);
-    }
-
-    temp[length] = 0;
-    string ret = temp;
-    delete temp;
-    return ret;
 }
 
 bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges)
@@ -182,12 +48,12 @@ bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges
         {
             // empty input, assume default. observe the length of the memory range vector
             // these are hardcoded values, intended for my convenience only
-            if(p->getDescriptor()->getOS() == DFHack::VersionInfo::OS_WINDOWS)
+            if(p->getDescriptor()->getOS() == DFHack::OS_WINDOWS)
             {
                 start = min(11, (int)ranges.size());
                 end = min(14, (int)ranges.size());
             }
-            else if(p->getDescriptor()->getOS() == DFHack::VersionInfo::OS_LINUX)
+            else if(p->getDescriptor()->getOS() == DFHack::OS_LINUX)
             {
                 start = min(2, (int)ranges.size());
                 end = min(4, (int)ranges.size());
@@ -736,7 +602,7 @@ struct tilecolors
 };
 #pragma pack()
 
-void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& ranges)
+void autoSearch(DFHack::Context * DF, vector <DFHack::t_memrange>& ranges)
 {
     vector <uint64_t> allVectors;
     vector <uint64_t> filtVectors;
@@ -968,7 +834,7 @@ int main (void)
     getRanges(p,selected_ranges);
 
     DFHack::VersionInfo *minfo = DF->getMemoryInfo();
-    DFHack::VersionInfo::OSType os = minfo->getOS();
+    DFHack::OSType os = minfo->getOS();
 
     string prompt =
     "Select search type: 1=number(default), 2=vector by length, 3=vector>object>string,\n"
@@ -999,7 +865,7 @@ int main (void)
             FindStrings(DFMgr, selected_ranges);
             break;
         case 5:
-            automatedLangtables(DF,selected_ranges);
+            autoSearch(DF,selected_ranges);
             break;
         case 6:
             DF->Detach();

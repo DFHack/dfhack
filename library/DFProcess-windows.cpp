@@ -297,8 +297,12 @@ void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
     // code here is taken from hexsearch by Silas Dunmore.
     // As this IMHO isn't a 'sunstantial portion' of anything, I'm not including the MIT license here
 
-    // I'm faking this, because there's no way I'm using VirtualQuery
-
+    //FIXME: USE THIS!
+    /*
+    while VirtualQuery(process, info, sizeOf(info)) == sizeOf(info)
+    {
+    }
+    */
     t_memrange temp;
     uint32_t base = d->my_descriptor->getBase();
     temp.start = base + 0x1000; // more fakery.

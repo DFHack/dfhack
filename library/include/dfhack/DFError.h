@@ -26,6 +26,7 @@ distribution.
 #define ERROR_H_INCLUDED
 
 #include "DFExport.h"
+#include "DFPragma.h"
 #include <string>
 #include <sstream>
 #include <exception>

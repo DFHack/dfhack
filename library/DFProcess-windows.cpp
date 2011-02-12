@@ -57,7 +57,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
 : d(new Private())
 {
     HMODULE hmod = NULL;
-    DWORD junk;
+    DWORD needed;
     HANDLE hProcess;
     bool found = false;
 
@@ -70,7 +70,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
         return;
 
     // try getting the first module of the process
-    if(EnumProcessModules(hProcess, &hmod, 1 * sizeof(HMODULE), &junk) == 0)
+    if(EnumProcessModules(hProcess, &hmod, sizeof(hmod), &needed) == 0)
     {
         CloseHandle(hProcess);
         // cout << "EnumProcessModules fail'd" << endl;
@@ -290,7 +290,7 @@ bool NormalProcess::getThreadIDs(vector<uint32_t> & threads )
     CloseHandle( AllThreads );
     return true;
 }
-
+/*
 typedef struct _MEMORY_BASIC_INFORMATION
 {
   void *  BaseAddress;
@@ -301,32 +301,54 @@ typedef struct _MEMORY_BASIC_INFORMATION
   uint32_t  Protect;
   uint32_t  Type;
 } MEMORY_BASIC_INFORMATION, *PMEMORY_BASIC_INFORMATION;
-
+*/
 
 // FIXME: NEEDS TESTING!
 void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
 {
     MEMORY_BASIC_INFORMATION MBI;
-    const uint64_t PageSize = 4096;
+    DWORD needed;
+    HMODULE hmod;
+    HMODULE * allModules = 0;
+    bool hasModules = false;
+    // get page size
+    SYSTEM_INFO si;
+    GetSystemInfo(&si);
+    uint64_t PageSize = si.dwPageSize;
+
     uint64_t page = 0;
-    while (VirtualQuery(this->d->my_handle, page * PageSize, sizeof(MBI)) == sizeof(MBI))
+
+    // get all the modules
+    if(EnumProcessModules(this->d->my_handle, &hmod, sizeof(hmod), &needed))
+    {
+        allModules = (HMODULE *) malloc(needed);
+        hasModules = EnumProcessModules(this->d->my_handle, allModules, needed, &needed);
+    }
+
+    // go through all the VM regions, convert them to our internal format
+    while (VirtualQueryEx(this->d->my_handle, (const void*) (page * PageSize), &MBI, sizeof(MBI)) == sizeof(MBI))
     {
         page = MBI.RegionSize / PageSize;
         if(MBI.RegionSize - MBI.RegionSize / PageSize != 0)
             page ++; // skip over non-whole page
-        if( !(MBI.Protect & MEM_COMMIT) ) // skip empty regions
+        if( !(MBI.State & MEM_COMMIT) ) // skip empty regions
             continue;
 
+        // TODO: we could possibly discard regions shared with other processes (DLLs)?
+        // MBI.Type & MEM_PRIVATE
+
         t_memrange temp;
-        temp.start = MBI.BaseAddress;
-        temp.end = MBI.BaseAddress  + MBI.RegionSize;
-        temp.read = MBI.Protect & PAGE_EXECUTE_READ | MBI.Protect & PAGE_EXECUTE_READWRITE | MBI.Protect & PAGE_READONLY | MBI.Protect & PAGE_READWRITE;
-        temp.write = MBI.Protect & PAGE_EXECUTE_READWRITE | MBI.Protect & PAGE_READWRITE;
-        temp.execute = MBI.Protect & PAGE_EXECUTE_READ | MBI.Protect & PAGE_EXECUTE_READWRITE | MBI.Protect & PAGE_EXECUTE;
-        temp.name = "N/A"; // FIXME: pull some relevant names from somewhere...
+        temp.start = (uint64_t) MBI.BaseAddress;
+        temp.end =  ((uint64_t)MBI.BaseAddress + (uint64_t)MBI.RegionSize);
+        temp.read = MBI.Protect & PAGE_EXECUTE_READ || MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_READONLY || MBI.Protect & PAGE_READWRITE;
+        temp.write = MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_READWRITE;
+        temp.execute = MBI.Protect & PAGE_EXECUTE_READ || MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_EXECUTE;
+        // FIXME: some relevant description text would be helpful
+        strcpy(temp.name,"N/A");
         ranges.push_back(temp);
     }
-    
+    if(allModules)
+        free(allModules);
 }
 
 uint8_t NormalProcess::readByte (const uint32_t offset)

@@ -25,6 +25,8 @@ distribution.
 #ifndef DFHACK_C_API
 #define DFHACK_C_API
 
+#include "dfhack/DFPragma.h"
+
 #include <cstdio>
 #include <string>
 #include <vector>

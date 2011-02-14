@@ -574,21 +574,18 @@ main(int argc, char *argv[])
     y_max = y_max_a;
     z_max = z_max_a;
     
+    bool hasimats = 1;
+    bool hascmats = 1;
+    
     // get stone matgloss mapping
     if(!Mats->ReadInorganicMaterials())
     {
-        error = "Can't read stone types.";
-        pDF = 0;
-        finish(0);
+        hasimats = 0;
     }
-    /*
     if(!Mats->ReadCreatureTypes())
     {
-        error = "Can't read stone types.";
-        pDF = 0;
-        finish(0);
+        hascmats = 0;
     }
-    */
 /*
     // get region geology
     if(!DF.ReadGeology( layerassign ))
@@ -730,8 +727,14 @@ main(int argc, char *argv[])
         // restart cleared modules
         Maps->Start();
         Mats->Start();
-        Mats->ReadInorganicMaterials();
-        Mats->ReadCreatureTypes();
+        if(hasimats)
+        {
+            Mats->ReadInorganicMaterials();
+        }
+        if(hascmats)
+        {
+            Mats->ReadCreatureTypes();
+        }
         uint32_t effectnum;
         /*
         if(DF.InitReadEffects(effectnum))
@@ -755,7 +758,8 @@ main(int argc, char *argv[])
                 // extra processing of the block in the middle
                 if(i == 0 && j == 0)
                 {
-                    do_features(DF, Block, cursorX, cursorY, 50,10, Mats->inorganic);
+                    if(hasimats)
+                        do_features(DF, Block, cursorX, cursorY, 50,10, Mats->inorganic);
                     // read veins
                     Maps->ReadVeins(cursorX+i,cursorY+j,cursorZ,&veinVector,&IceVeinVector,&splatter);
                     
@@ -891,8 +895,11 @@ main(int argc, char *argv[])
                             }
                         }
                     }
-                    gotoxy(50,3);
-                    cprintf("Mineral: %s",Mats->inorganic[veinVector[vein].type].id);
+                    if(hasimats)
+                    {
+                        gotoxy(50,3);
+                        cprintf("Mineral: %s",Mats->inorganic[veinVector[vein].type].id);
+                    }
                 }
                 else if (vein < mineralsize + icesize)
                 {
@@ -931,8 +938,11 @@ main(int argc, char *argv[])
                             }
                         }
                     }
-                    gotoxy(50,3);
-                    cprintf("Spatter: %s",PrintSplatterType(splatter[realvein].mat1,splatter[realvein].mat2,Mats->race).c_str());
+                    if(hascmats)
+                    {
+                        gotoxy(50,3);
+                        cprintf("Spatter: %s",PrintSplatterType(splatter[realvein].mat1,splatter[realvein].mat2,Mats->race).c_str());
+                    }
                 }
             }
         }

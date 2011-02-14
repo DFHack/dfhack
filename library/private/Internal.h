@@ -82,28 +82,28 @@ using namespace std;
     #include <psapi.h>
     #include <tlhelp32.h>
     #include <Dbghelp.h>
-    #pragma comment(lib,"ntdll.lib")
-    #pragma comment(lib,"psapi.lib")
     typedef LONG NTSTATUS;
     #define STATUS_SUCCESS ((NTSTATUS)0x00000000L)
 
-    typedef struct _DEBUG_BUFFER {
-    HANDLE SectionHandle;
-    PVOID  SectionBase;
-    PVOID  RemoteSectionBase;
-    ULONG  SectionBaseDelta;
-    HANDLE  EventPairHandle;
-    ULONG  Unknown[2];
-    HANDLE  RemoteThreadHandle;
-    ULONG  InfoClassMask;
-    ULONG  SizeOfInfo;
-    ULONG  AllocatedSize;
-    ULONG  SectionSize;
-    PVOID  ModuleInformation;
-    PVOID  BackTraceInformation;
-    PVOID  HeapInformation;
-    PVOID  LockInformation;
-    PVOID  Reserved[8];
+    // FIXME: it is uncertain how these map to 64bit
+    typedef struct _DEBUG_BUFFER
+    {
+        HANDLE SectionHandle;
+        PVOID  SectionBase;
+        PVOID  RemoteSectionBase;
+        ULONG  SectionBaseDelta;
+        HANDLE  EventPairHandle;
+        ULONG  Unknown[2];
+        HANDLE  RemoteThreadHandle;
+        ULONG  InfoClassMask;
+        ULONG  SizeOfInfo;
+        ULONG  AllocatedSize;
+        ULONG  SectionSize;
+        PVOID  ModuleInformation;
+        PVOID  BackTraceInformation;
+        PVOID  HeapInformation;
+        PVOID  LockInformation;
+        PVOID  Reserved[8];
     } DEBUG_BUFFER, *PDEBUG_BUFFER;
 
     typedef struct _DEBUG_HEAP_INFORMATION

@@ -2329,6 +2329,12 @@
             </Group>
         </Offsets>
     </Version>
+    <Version name="v0.31.18 linux" os="linux" base="faek">
+        <MD5 value="884f794d8e89e7d764057c15617c20b1" />
+        <Offsets valid="false">
+        </Offsets>
+    </Version>
+    
 </DFHack>
 
 

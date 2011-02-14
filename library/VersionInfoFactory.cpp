@@ -172,8 +172,6 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
         TiXmlElement* pEntry;
         // we get the <Offsets>, look at the children
         pEntry = parent->FirstChildElement();
-        if(!pEntry)
-            return;
         const char *cstr_invalid = parent->Attribute("valid");
         INVAL_TYPE parent_inval = NOT_SET;
         if(cstr_invalid)
@@ -185,6 +183,11 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
         }
         OffsetGroup * currentGroup = reinterpret_cast<OffsetGroup *> (target);
         currentGroup->setInvalid(parent_inval);
+
+        // we end here if there are no child tags.
+        if(!pEntry)
+            return;
+
         breadcrumbs.push_back(groupTriple(pEntry,currentGroup, parent_inval));
     }
 

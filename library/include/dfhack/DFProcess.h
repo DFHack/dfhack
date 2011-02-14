@@ -72,6 +72,7 @@ namespace DFHack
             if (address >= start && address <= end) return true;
             return false;
         }
+        bool valid;
         uint8_t * buffer;
     };
 

@@ -32,15 +32,6 @@ ADD_EXECUTABLE(primitives primitives.cpp)
 #ADD_EXECUTABLE(dfitemdesignator itemdesignator.cpp)
 #TARGET_LINK_LIBRARIES(dfitemdesignator dfhack)
 
-# incrementalsearch - a bit like cheat engine, only DF-specific, very basic
-# and Linux-only
-IF(UNIX)
-    ADD_EXECUTABLE(dfautosearch autosearch.cpp)
-    TARGET_LINK_LIBRARIES(dfautosearch dfhack)
-    ADD_EXECUTABLE(dfincremental incrementalsearch.cpp)
-    TARGET_LINK_LIBRARIES(dfincremental dfhack)
-ENDIF(UNIX)
-
 # catsplosion - Accelerates pregnancy
 # Author: Zhentar
 ADD_EXECUTABLE(dfcatsplosion catsplosion.cpp)
@@ -117,10 +108,3 @@ dfprinttiletypes
 dfhellhole
 RUNTIME DESTINATION bin
 )
-IF(UNIX)
-    install(TARGETS
-    dfautosearch
-    dfincremental
-    RUNTIME DESTINATION bin
-    )
-ENDIF(UNIX)

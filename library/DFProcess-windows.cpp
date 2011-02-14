@@ -25,6 +25,7 @@ distribution.
 #include "dfhack/DFProcess.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
+#include <string.h>
 using namespace DFHack;
 
 class NormalProcess::Private
@@ -38,6 +39,8 @@ class NormalProcess::Private
             my_pid = 0;
             attached = false;
             suspended = false;
+            base = 0;
+            sections = 0;
         };
         ~Private(){};
         VersionInfo * my_descriptor;
@@ -51,6 +54,9 @@ class NormalProcess::Private
         uint32_t STLSTR_buf_off;
         uint32_t STLSTR_size_off;
         uint32_t STLSTR_cap_off;
+        IMAGE_NT_HEADERS32 pe_header;
+        IMAGE_SECTION_HEADER * sections;
+        uint32_t base;
 };
 
 NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versions)
@@ -61,8 +67,6 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
     HANDLE hProcess;
     bool found = false;
 
-    IMAGE_NT_HEADERS32 pe_header;
-    IMAGE_SECTION_HEADER sections[16];
     d->identified = false;
     // open process
     hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, pid );
@@ -78,7 +82,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
     }
 
     // got base ;)
-    uint32_t base = (uint32_t)hmod;
+    d->base = (uint32_t)hmod;
 
     // temporarily assign this to allow some checks
     d->my_handle = hProcess;
@@ -86,9 +90,11 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
     // read from this process
     try
     {
-        uint32_t pe_offset = readDWord(base+0x3C);
-        read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
-        read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
+        uint32_t pe_offset = readDWord(d->base+0x3C);
+        read(d->base + pe_offset                       , sizeof(d->pe_header), (uint8_t *)&d->pe_header);
+        const size_t sectionsSize = sizeof(IMAGE_SECTION_HEADER) * d->pe_header.FileHeader.NumberOfSections;
+        d->sections = (IMAGE_SECTION_HEADER *) malloc(sectionsSize); 
+        read(d->base + pe_offset + sizeof(d->pe_header), sectionsSize, (uint8_t *)d->sections);
         d->my_handle = 0;
     }
     catch (exception &)
@@ -115,7 +121,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
         {
             continue;
         }
-        if (pe_timestamp != pe_header.FileHeader.TimeDateStamp)
+        if (pe_timestamp != d->pe_header.FileHeader.TimeDateStamp)
             continue;
 
         // all went well
@@ -124,7 +130,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
             d->identified = true;
             // give the process a data model and memory layout fixed for the base of first module
             VersionInfo *m = new VersionInfo(**it);
-            m->RebaseAll(base);
+            m->RebaseAll(d->base);
             // keep track of created memory_info object so we can destroy it later
             d->my_descriptor = m;
             m->setParentProcess(this);
@@ -170,6 +176,8 @@ NormalProcess::~NormalProcess()
     {
         CloseHandle(d->my_main_thread);
     }
+    if(d->sections != NULL)
+        free(d->sections);
     delete d;
 }
 
@@ -302,53 +310,111 @@ typedef struct _MEMORY_BASIC_INFORMATION
   uint32_t  Type;
 } MEMORY_BASIC_INFORMATION, *PMEMORY_BASIC_INFORMATION;
 */
+/*
+//Internal structure used to store heap block information.
+struct HeapBlock
+{
+      PVOID dwAddress;
+      DWORD dwSize;
+      DWORD dwFlags;
+      ULONG reserved;
+};
+*/
+void HeapNodes(DWORD pid, map<uint64_t, unsigned int> & heaps)
+{
+    // Create debug buffer
+    PDEBUG_BUFFER db = RtlCreateQueryDebugBuffer(0, FALSE); 
+    // Get process heap data
+    RtlQueryProcessDebugInformation( pid, PDI_HEAPS/* | PDI_HEAP_BLOCKS*/, db);
+    ULONG heapNodeCount = db->HeapInformation ? *PULONG(db->HeapInformation):0;
+    PDEBUG_HEAP_INFORMATION heapInfo = PDEBUG_HEAP_INFORMATION(PULONG(db-> HeapInformation) + 1);
+    // Go through each of the heap nodes and dispaly the information
+    for (unsigned int i = 0; i < heapNodeCount; i++) 
+    {
+        heaps[heapInfo[i].Base] = i;
+    }
+    // Clean up the buffer
+    RtlDestroyQueryDebugBuffer( db );
+}
 
 // FIXME: NEEDS TESTING!
 void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
 {
     MEMORY_BASIC_INFORMATION MBI;
-    DWORD needed;
-    HMODULE hmod;
-    HMODULE * allModules = 0;
-    bool hasModules = false;
+    map<uint64_t, unsigned int> heaps;
+    uint64_t movingStart = 0;
+    map <uint64_t, string> nameMap;
+
     // get page size
     SYSTEM_INFO si;
     GetSystemInfo(&si);
     uint64_t PageSize = si.dwPageSize;
-
-    uint64_t page = 0;
-
-    // get all the modules
-    if(EnumProcessModules(this->d->my_handle, &hmod, sizeof(hmod), &needed))
-    {
-        allModules = (HMODULE *) malloc(needed);
-        hasModules = EnumProcessModules(this->d->my_handle, allModules, needed, &needed);
-    }
-
+    // enumerate heaps
+    HeapNodes(d->my_pid, heaps);
     // go through all the VM regions, convert them to our internal format
-    while (VirtualQueryEx(this->d->my_handle, (const void*) (page * PageSize), &MBI, sizeof(MBI)) == sizeof(MBI))
+    while (VirtualQueryEx(this->d->my_handle, (const void*) (movingStart), &MBI, sizeof(MBI)) == sizeof(MBI))
     {
-        page = MBI.RegionSize / PageSize;
-        if(MBI.RegionSize - MBI.RegionSize / PageSize != 0)
-            page ++; // skip over non-whole page
-        if( !(MBI.State & MEM_COMMIT) ) // skip empty regions
+        movingStart = ((uint64_t)MBI.BaseAddress + MBI.RegionSize);
+        if(movingStart % PageSize != 0)
+            movingStart = (movingStart / PageSize + 1) * PageSize;
+        // skip empty regions and regions we share with other processes (DLLs)
+        if( !(MBI.State & MEM_COMMIT) /*|| !(MBI.Type & MEM_PRIVATE)*/ )
             continue;
-
-        // TODO: we could possibly discard regions shared with other processes (DLLs)?
-        // MBI.Type & MEM_PRIVATE
-
         t_memrange temp;
-        temp.start = (uint64_t) MBI.BaseAddress;
-        temp.end =  ((uint64_t)MBI.BaseAddress + (uint64_t)MBI.RegionSize);
-        temp.read = MBI.Protect & PAGE_EXECUTE_READ || MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_READONLY || MBI.Protect & PAGE_READWRITE;
-        temp.write = MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_READWRITE;
+        temp.start   = (uint64_t) MBI.BaseAddress;
+        temp.end     =  ((uint64_t)MBI.BaseAddress + (uint64_t)MBI.RegionSize);
+        temp.read    = MBI.Protect & PAGE_EXECUTE_READ || MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_READONLY || MBI.Protect & PAGE_READWRITE;
+        temp.write   = MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_READWRITE;
         temp.execute = MBI.Protect & PAGE_EXECUTE_READ || MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_EXECUTE;
-        // FIXME: some relevant description text would be helpful
-        strcpy(temp.name,"N/A");
+        temp.valid = true;
+        if(!GetModuleBaseName(this->d->my_handle, (HMODULE) temp.start, temp.name, 1024))
+        {
+            if(nameMap.count(temp.start))
+            {
+                // potential buffer overflow...
+                strcpy(temp.name, nameMap[temp.start].c_str());
+            }
+            else
+            {
+                // filter away shared segments without a name.
+                if( !(MBI.Type & MEM_PRIVATE) )
+                    continue;
+                else
+                {
+                    // could be a heap?
+                    if(heaps.count(temp.start))
+                    {
+                        sprintf(temp.name,"HEAP %d",heaps[temp.start]);
+                    }
+                    else temp.name[0]=0;
+                }
+                
+
+                
+            }
+        }
+        else
+        {
+            // this is our executable! (could be generalized to pull segments from libs, but whatever)
+            if(d->base == temp.start)
+            {
+                for(int i = 0; i < d->pe_header.FileHeader.NumberOfSections; i++)
+                {
+                    char sectionName[9];
+                    memcpy(sectionName,d->sections[i].Name,8);
+                    sectionName[8] = 0;
+                    string nm;
+                    nm.append(temp.name);
+                    nm.append(" : ");
+                    nm.append(sectionName);
+                    nameMap[temp.start + d->sections[i].VirtualAddress] = nm;
+                }
+            }
+            else
+                continue;
+        }
         ranges.push_back(temp);
     }
-    if(allModules)
-        free(allModules);
 }
 
 uint8_t NormalProcess::readByte (const uint32_t offset)

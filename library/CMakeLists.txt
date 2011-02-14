@@ -191,7 +191,7 @@ IF(UNIX)
 
   SET(PROJECT_LIBS ${X11_LIBRARY} rt ) #dfhack-md5 dfhack-tixml
 ELSE(UNIX)
-  SET(PROJECT_LIBS psapi)
+  SET(PROJECT_LIBS psapi ${CMAKE_SOURCE_DIR}/library/depends/ntdll/ntdll.lib)
 ENDIF(UNIX)
 
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SRCS})

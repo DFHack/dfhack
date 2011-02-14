@@ -12,18 +12,37 @@ class SegmentFinder
     {
         _DF = DF;
         mr_ = mr;
-        mr_.buffer = (uint8_t *)malloc (mr_.end - mr_.start);
-        DF->ReadRaw(mr_.start,(mr_.end - mr_.start),mr_.buffer);
-        _SF = SF;
+        if(mr.valid)
+        {
+            mr_.buffer = (uint8_t *)malloc (mr_.end - mr_.start);
+            _SF = SF;
+            try
+            {
+                DF->ReadRaw(mr_.start,(mr_.end - mr_.start),mr_.buffer);
+                valid = true;
+            }
+            catch (DFHack::Error::MemoryAccessDenied &)
+            {
+                free(mr_.buffer);
+                valid = false;
+                mr.valid = false; // mark the range passed in as bad
+                cout << "Range 0x" << hex << mr_.start << " - 0x" <<  mr_.end << dec << " not readable." << endl;
+            }
+        }
     }
     ~SegmentFinder()
     {
-        delete mr_.buffer;
+        if(valid)
+            free(mr_.buffer);
     }
-
+    bool isValid()
+    {
+        return valid;
+    }
     template <class needleType, class hayType, typename comparator >
     bool Find (needleType needle, const uint8_t increment , vector <uint64_t> &newfound, comparator oper)
     {
+        if(!valid) return !newfound.empty();
         //loop
         for(uint64_t offset = 0; offset < (mr_.end - mr_.start) - sizeof(hayType); offset += increment)
         {
@@ -36,6 +55,7 @@ class SegmentFinder
     template < class needleType, class hayType, typename comparator >
     uint64_t FindInRange (needleType needle, comparator oper, uint64_t start, uint64_t length)
     {
+        if(!valid) return 0;
         uint64_t stopper = min((mr_.end - mr_.start) - sizeof(hayType), (start - mr_.start) - sizeof(hayType) + length);
         //loop
         for(uint64_t offset = start - mr_.start; offset < stopper; offset +=1)
@@ -49,6 +69,7 @@ class SegmentFinder
     template <class needleType, class hayType, typename comparator >
     bool Filter (needleType needle, vector <uint64_t> &found, vector <uint64_t> &newfound, comparator oper)
     {
+        if(!valid) return !newfound.empty();
         for( uint64_t i = 0; i < found.size(); i++)
         {
             if(mr_.isInRange(found[i]))
@@ -65,6 +86,7 @@ class SegmentFinder
     SegmentedFinder * _SF;
     DFHack::Context * _DF;
     DFHack::t_memrange mr_;
+    bool valid;
 };
 
 class SegmentedFinder

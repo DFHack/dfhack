@@ -440,6 +440,7 @@ void SHMProcess::getMemRanges( vector<t_memrange> & ranges )
     temp.read = 1;
     temp.write = 1;
     temp.execute = 0; // fake
+    temp.valid = true;
     strcpy(temp.name,"pants");
     ranges.push_back(temp);
 }

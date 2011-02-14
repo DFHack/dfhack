@@ -201,6 +201,7 @@ void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
         temp.read = permissions[0] == 'r';
         temp.write = permissions[1] == 'w';
         temp.execute = permissions[2] == 'x';
+        temp.valid = true;
         ranges.push_back(temp);
     }
 }

@@ -391,6 +391,7 @@ bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges
         }
         it++;
     }
+    return true;
 }
 
 bool getNumber (string prompt, int & output, int def, bool pdef = true)

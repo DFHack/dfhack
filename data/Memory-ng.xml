@@ -2332,7 +2332,7 @@
     <Version name="v0.31.18 linux" os="linux" base="faek">
         <MD5 value="884f794d8e89e7d764057c15617c20b1" />
         <Offsets valid="false">
-            <Group name="Maps">
+            <Group name="Maps" valid="true">
                 <Address name="map_data" value="0x93c0430" />
                 <Address name="region_x" value="0x93c045c" />
                 <Address name="region_y" value="0x93c0460" />
@@ -2345,10 +2345,16 @@
                 <Address name="y_count_block" value="0x93c0448" />
                 <Address name="z_count" value="0x93c0458" />
                 <Address name="z_count_block" value="0x93c044c" />
+                <Group name="block" valid="true" />
+                <Group name="features" valid="false" />
+                <Group name="geology" valid="false" />
             </Group>
             <Group name="GUI">
                 <Address name="pause_state" value="0x9366cb0"/>
             </Group>
+            <Group name="string" valid="true" />
+            <Group name="vector" valid="true" />
+            <Group name="name" valid="true" />
         </Offsets>
     </Version>
     

@@ -2332,6 +2332,23 @@
     <Version name="v0.31.18 linux" os="linux" base="faek">
         <MD5 value="884f794d8e89e7d764057c15617c20b1" />
         <Offsets valid="false">
+            <Group name="Maps">
+                <Address name="map_data" value="0x93c0430" />
+                <Address name="region_x" value="0x93c045c" />
+                <Address name="region_y" value="0x93c0460" />
+                <Address name="region_z" value="0x93c0464" />
+                <Address name="world_size_x" value="0x93c1ab0" />
+                <Address name="world_size_y" value="0x93c1ab2" />
+                <Address name="x_count" value="0x93c0450" />
+                <Address name="x_count_block" value="0x93c0444" />
+                <Address name="y_count" value="0x93c0454" />
+                <Address name="y_count_block" value="0x93c0448" />
+                <Address name="z_count" value="0x93c0458" />
+                <Address name="z_count_block" value="0x93c044c" />
+            </Group>
+            <Group name="GUI">
+                <Address name="pause_state" value="0x9366cb0"/>
+            </Group>
         </Offsets>
     </Version>
     

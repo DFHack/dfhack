@@ -549,7 +549,6 @@ main(int argc, char *argv[])
     {
         pDF = DF = DFMgr.getSingleContext();
         DF->Attach();
-        Mats = DF->getMaterials();
         Maps = DF->getMaps();
     }
     catch (exception& e)
@@ -560,6 +559,15 @@ main(int argc, char *argv[])
         #endif
         finish(0);
     }
+    bool hasmats = true;
+    try
+    {
+        Mats = DF->getMaterials();
+    }
+    catch (exception& e)
+    {
+        hasmats = false;
+    }
     
     Process* p = DF->getProcess();
     // init the map
@@ -568,23 +576,28 @@ main(int argc, char *argv[])
         error = "Can't find a map to look at.";
         finish(0);
     }
-    
+
     Maps->getSize(x_max_a,y_max_a,z_max_a);
     x_max = x_max_a;
     y_max = y_max_a;
     z_max = z_max_a;
     
-    bool hasimats = 1;
-    bool hascmats = 1;
-    
-    // get stone matgloss mapping
-    if(!Mats->ReadInorganicMaterials())
+    bool hasimats = false;
+    bool hascmats = false;
+
+    if(hasmats)
     {
-        hasimats = 0;
-    }
-    if(!Mats->ReadCreatureTypes())
-    {
-        hascmats = 0;
+        
+        hascmats = true;
+        // get stone matgloss mapping
+        if(Mats->ReadInorganicMaterials())
+        {
+            hasimats = true;
+        }
+        if(Mats->ReadCreatureTypes())
+        {
+            hascmats = true;
+        }
     }
 /*
     // get region geology
@@ -726,14 +739,17 @@ main(int argc, char *argv[])
         DF->Suspend();
         // restart cleared modules
         Maps->Start();
-        Mats->Start();
-        if(hasimats)
+        if(hasmats)
         {
-            Mats->ReadInorganicMaterials();
-        }
-        if(hascmats)
-        {
-            Mats->ReadCreatureTypes();
+            Mats->Start();
+            if(hasimats)
+            {
+                Mats->ReadInorganicMaterials();
+            }
+            if(hascmats)
+            {
+                Mats->ReadCreatureTypes();
+            }
         }
         uint32_t effectnum;
         /*

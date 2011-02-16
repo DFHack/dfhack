@@ -1872,6 +1872,89 @@
 
         </Offsets>
     </Version>
+    <Version name="v0.31.19 SDL" os="windows" base="v0.31.18 SDL">
+        <PETimeStamp value="0x4D5BC345" />
+        <MD5 value="b7d1ff74835e5e8220a7e81e31f5a28d" />
+        <Offsets valid="false">
+            <Group name="string" valid="true" />
+            <Group name="vector" valid="true" />
+            <Group name="name" valid="true" />
+            <Group name="Position" valid="false">
+                <Address name="cursor_xyz" value="0xb4a7f0" valid="true" /> 0xb127f0
+                <Address name="window_dims" value="0xb4b07c" valid="true" /> 0xb1307c
+                <Address name="window_x" value="0xec6984" valid="true" /> 0xe8dee4
+                <Address name="window_y" value="0xef4ba0" valid="true" /> 0xebbfb8
+                <Address name="window_z" value="0xef4b7c" valid="true" /> 0xebbf94
+            </Group>
+            <!--
+            <Address name="WORLD" valid="false" />
+            <Group name="Buildings">
+                <Address name="buildings_vector" value="0x16a1be0" />
+                <Address name="custom_workshop_vector" value="0x16eaca0" />
+                <Offset name="building_custom_workshop_type" value="0x11c" /> INVALID!
+                <Offset name="custom_workshop_name" value="0x4" /> INVALID!
+                <Offset name="custom_workshop_type" value="0x20" /> INVALID!
+            </Group>
+            <Group name="GUI" valid="false">
+                <Address name="pause_state" value="0x14c9be1" valid="true" />
+            </Group>
+            <Group name="Maps">
+                <Group name="features">
+                    <Group name="global">
+                        <Address name="vector" value="0x16e4c30" />
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" value="0x16e4cc4" />
+                    </Group>
+                </Group>
+                <Group name="geology">
+                    <Address name="geoblock_vector" value="0x16E4C50" />
+                    <Address name="ptr2_region_array" value="0x16E4C80" />
+                </Group>
+            </Group>
+            <Group name="Creatures" valid="false" >
+                0x016a12c0 vector
+            </Group>
+            <Group name="Materials" valid="false" >
+                <Address name="creature_type_vector" value="0x16E533C" valid="true" /> MAYBE... THE DETAILS WILL BE DIFFERENT
+                <Address name="inorganics" value="0x16e527C" valid="true" />
+                <Address name="organics_all" value="0x16e529C" valid="true" />
+                <Address name="organics_plants" value="0x16e52AC" valid="true" />
+                <Address name="organics_trees" value="0x16e52CC" valid="true" />
+            </Group>
+            <Group name="Constructions">
+                <Address name="vector" value="0x168d930"/>
+            </Group>
+            <Group name="Translations">
+                <Address name="language_vector" value="0x016e553c"/>
+                <Address name="translation_vector" value="0x016e551c"/>
+            </Group>
+            <Group name="Vegetation" valid="false">
+                <Address name="vector"/>
+                <Offset name="tree_desc_offset" valid="true"/>
+            </Group>
+            <Group name="Items" valid="false">
+                <Address name="items_vector" />
+                List of offsets in the VTable :
+                <Offset name="item_type_accessor" />
+                <Offset name="item_subtype_accessor" />
+                <Offset name="item_subindex_accessor" />
+                <Offset name="item_index_accessor" />
+                <Offset name="item_quality_accessor" />
+                <Offset name="item_improvement_vector" />
+                <Offset name="item_improvement_subindex" />
+                <Offset name="item_improvement_index" />
+                <Offset name="item_improvement_quality" />
+                <Offset name="item_type_accessor" />  (in the vtable)
+            </Group>
+            <Group name="World" valid="false">
+                <Address name="current_tick" description="Current time of the year" />
+                <Address name="current_year" description="Current year" />
+                <Address name="current_weather" value="0x14c9bb8" valid="true" />
+            </Group>
+            -->
+        </Offsets>
+    </Version>
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________
@@ -2357,7 +2440,10 @@
             <Group name="name" valid="true" />
         </Offsets>
     </Version>
-    
+    <Version name="v0.31.19 linux" os="linux" base="v0.31.18 linux">
+        <MD5 value="8fcb1f10af9cc2bda47d2acf42e1db54" />
+        <Offsets valid="false" />
+    </Version>
 </DFHack>
 
 

@@ -357,3 +357,126 @@ std::string Items::getItemDescription(uint32_t itemptr, Materials * Materials)
     out.append(this->getItemClass(item.matdesc.itemType));
     return out;
 }
+
+// The OLD items code follows (40d era)
+// TODO: merge with the current Items module
+/*
+bool API::InitReadItems(uint32_t & numitems)
+{
+    try
+    {
+        int items = d->offset_descriptor->getAddress ("items");
+        d->item_material_offset = d->offset_descriptor->getOffset ("item_materials");
+
+        d->p_itm = new DfVector (d->p, items);
+        d->itemsInited = true;
+        numitems = d->p_itm->getSize();
+        return true;
+    }
+    catch (Error::AllMemdef&)
+    {
+        d->itemsInited = false;
+        numitems = 0;
+        throw;
+    }
+}
+
+bool API::getItemIndexesInBox(vector<uint32_t> &indexes,
+                                const uint16_t x1, const uint16_t y1, const uint16_t z1,
+                                const uint16_t x2, const uint16_t y2, const uint16_t z2)
+{
+    if(!d->itemsInited) return false;
+    indexes.clear();
+    uint32_t size = d->p_itm->getSize();
+    struct temp2{
+        uint16_t coords[3];
+        uint32_t flags;
+    };
+    temp2 temp2;
+    for(uint32_t i =0;i<size;i++){
+        uint32_t temp = d->p_itm->at(i);
+        d->p->read(temp+sizeof(uint32_t),5 * sizeof(uint16_t), (uint8_t *) &temp2);
+        if(temp2.flags & (1 << 0)){
+            if (temp2.coords[0] >= x1 && temp2.coords[0] < x2)
+            {
+                if (temp2.coords[1] >= y1 && temp2.coords[1] < y2)
+                {
+                    if (temp2.coords[2] >= z1 && temp2.coords[2] < z2)
+                    {
+                        indexes.push_back(i);
+                    }
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool API::ReadItem (const uint32_t index, t_item & item)
+{
+    if (!d->itemsInited) return false;
+    
+    t_item_df40d item_40d;
+
+    // read pointer from vector at position
+    uint32_t temp = d->p_itm->at (index);
+
+    //read building from memory
+    d->p->read (temp, sizeof (t_item_df40d), (uint8_t *) &item_40d);
+
+    // transform
+    int32_t type = -1;
+    d->offset_descriptor->resolveObjectToClassID (temp, type);
+    item.origin = temp;
+    item.vtable = item_40d.vtable;
+    item.x = item_40d.x;
+    item.y = item_40d.y;
+    item.z = item_40d.z;
+    item.type = type;
+    item.ID = item_40d.ID;
+    item.flags.whole = item_40d.flags;
+
+    //TODO  certain item types (creature based, threads, seeds, bags do not have the first matType byte, instead they have the material index only located at 0x68
+    d->p->read (temp + d->item_material_offset, sizeof (t_matglossPair), (uint8_t *) &item.material);
+    //for(int i = 0; i < 0xCC; i++){  // used for item research
+    //    uint8_t byte = MreadByte(temp+i);
+    //    item.bytes.push_back(byte);
+    //}
+    return true;
+}
+void API::FinishReadItems()
+{
+    if(d->p_itm)
+    {
+        delete d->p_itm;
+        d->p_itm = NULL;
+    }
+    d->itemsInited = false;
+}
+*/
+/*
+bool API::ReadItemTypes(vector< vector< t_itemType > > & itemTypes)
+{
+    memory_info * minfo = d->offset_descriptor;
+    int matgloss_address = minfo->getAddress("matgloss");
+    int matgloss_skip = minfo->getHexValue("matgloss_skip");
+    int item_type_name_offset = minfo->getOffset("item_type_name");
+    for(int i = 8;i<20;i++)
+    {
+        DfVector p_temp (d->p, matgloss_address + i*matgloss_skip);
+        vector< t_itemType > typesForVec;
+        for(uint32_t j =0; j<p_temp.getSize();j++)
+        {
+            t_itemType currType;
+            uint32_t temp = *(uint32_t *) p_temp[j];
+           // Mread(temp+40,sizeof(name),(uint8_t *) name);
+            d->p->readSTLString(temp+4,currType.id,128);
+            d->p->readSTLString(temp+item_type_name_offset,currType.name,128);
+            //stringsForVec.push_back(string(name));
+            typesForVec.push_back(currType);
+        }
+        itemTypes.push_back(typesForVec);
+    }
+    return true;
+}
+*/

@@ -839,7 +839,7 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
 bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
 {
     MAPS_GUARD
-    if(!d->hasGeology) return false;
+    if(!d->hasFeatures) return false;
     // can't be used without a map!
     if(!d->block)
         return false;

@@ -1880,11 +1880,66 @@
             <Group name="vector" valid="true" />
             <Group name="name" valid="true" />
             <Group name="Position" valid="false">
-                <Address name="cursor_xyz" value="0xb4a7f0" valid="true" /> 0xb127f0
-                <Address name="window_dims" value="0xb4b07c" valid="true" /> 0xb1307c
-                <Address name="window_x" value="0xec6984" valid="true" /> 0xe8dee4
-                <Address name="window_y" value="0xef4ba0" valid="true" /> 0xebbfb8
-                <Address name="window_z" value="0xef4b7c" valid="true" /> 0xebbf94
+                <Address name="cursor_xyz" value="0xb4a7f0" valid="true" />
+                <Address name="window_dims" value="0xb4b07c" valid="true" />
+                <Address name="window_x" value="0xec6984" valid="true" />
+                <Address name="window_y" value="0xef4ba0" valid="true" />
+                <Address name="window_z" value="0xef4b7c" valid="true" />
+            </Group>
+            
+            <Group name="Maps" valid="true">
+                <Address name="map_data" value="0x171C128" />
+                <Address name="x_count_block" value="0x171c140" />
+                <Address name="y_count_block" value="0x171c144" />
+                <Address name="z_count_block" value="0x171c148" />
+                <Address name="x_count" value="0x171c14C" />
+                <Address name="y_count" value="0x171c150" />
+                <Address name="z_count" value="0x171c154" />
+                <Address name="region_x" value="0x171c158" />
+                <Address name="region_y" value="0x171c15C" />
+                <Address name="region_z" value="0x171c160" /> TODO: it's signed!
+                <Address name="world_size_x" value="0x171d7e4" />
+                <Address name="world_size_y" value="0x171d7e6" />
+                <Group name="block">
+                    <Offset name="vein_vector" value="0x8" />
+                    <Offset name="feature_global" value="0x28" />
+                    <Offset name="feature_local" value="0x24" />
+                    <Offset name="type" value="0x7a" />
+                    <Offset name="designation" value="0x27c" />
+                    <Offset name="occupancy" value="0x67c" />
+                    <Offset name="pathfinding" value="0xd7c" />
+                    <Offset name="temperature1" value="0x157c" />
+                    <Offset name="temperature2" value="0x177c" /><!-- looks strange, possibly invalid -->
+                    <Offset name="biome_stuffs" value="0x1d7c" /><!-- possibly invalid -->
+                </Group>
+                <Group name="features">
+                    <Group name="global">
+                        <Address name="vector" value="0x171de84" />
+                        <Offset name="funcptr" value="0xd8" />
+                        <Offset name="material" value="0x2c" />
+                        <Offset name="submaterial" value="0x30" />
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" value="0x171df18" />
+                        <Offset name="material" value="0x28" />
+                        <Offset name="submaterial" value="0x2c" />
+                    </Group>
+                </Group>
+                <Group name="geology"> LOOKS FINE?
+                    <Address name="geoblock_vector" value="0x171dea4" />
+                    <Address name="ptr2_region_array" value="0x171ded4" /> VERIFIED
+                    <Offset name="geolayer_geoblock_offset" value="0x4" />
+                    <Offset name="region_geo_index_off" value="0x58" /> VERIFIED
+                    <Offset name="type_inside_geolayer" value="0x4" />
+                    <HexValue name="region_size" value="0x5c" /> VERIFIED
+                </Group>
+            </Group>
+            <Group name="Materials" valid="false" >
+                <Address name="creature_type_vector" value="0x171e880" valid="true" />
+                <Address name="inorganics" value="0x171e790 0x16e527C" valid="true" />
+                <Address name="organics_all" value="0x171e7B0 0x16e529C" valid="true" />
+                <Address name="organics_plants" value="0x171e7C0 0x16e52AC" valid="true" />
+                <Address name="organics_trees" value="0x171e7E0 0x16e52CC" valid="true" />
             </Group>
             <!--
             <Address name="WORLD" valid="false" />

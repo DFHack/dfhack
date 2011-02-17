@@ -57,6 +57,7 @@ typedef struct
     uint32_t vein_mineral_vptr;
     uint32_t vein_ice_vptr;
     uint32_t vein_spatter_vptr;
+    uint32_t vein_grass_vptr;
     /*
     GEOLOGY
     */

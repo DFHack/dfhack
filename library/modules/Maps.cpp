@@ -136,6 +136,10 @@ Maps::Maps(DFContextShared* _d)
     mem->resolveClassnameToVPtr("block_square_event_frozen_liquid", off.vein_ice_vptr);
     off.vein_mineral_vptr = 0;
     mem->resolveClassnameToVPtr("block_square_event_mineral",off.vein_mineral_vptr);
+    off.vein_spatter_vptr = 0;
+    mem->resolveClassnameToVPtr("block_square_event_material_spatterst",off.vein_spatter_vptr);
+    off.vein_grass_vptr = 0;
+    mem->resolveClassnameToVPtr("block_square_event_grassst",off.vein_grass_vptr);
 
     // upload offsets to SHM server if possible
     d->maps_module = 0;
@@ -532,18 +536,20 @@ bool Maps::WriteGlobalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t global
 /*
  * Block events
  */
-bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins, vector <t_frozenliquidvein>* ices, vector <t_spattervein> *splatter)
+bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins, vector <t_frozenliquidvein>* ices, vector <t_spattervein> *splatter, vector <t_grassvein> *grass)
 {
     MAPS_GUARD
     t_vein v;
     t_frozenliquidvein fv;
     t_spattervein sv;
+    t_grassvein gv;
     Process* p = d->owner;
 
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if(veins) veins->clear();
     if(ices) ices->clear();
     if(splatter) splatter->clear();
+    if(grass) splatter->clear();
 
     Server::Maps::maps_offsets &off = d->offsets;
     if (addr)
@@ -583,6 +589,14 @@ try_again:
                 // store it in the vector
                 splatter->push_back (sv);
             }
+            else if(grass && type == off.vein_grass_vptr)
+            {
+                // read the splatter vein data (dereference pointer)
+                p->read (temp, sizeof(t_grassvein), (uint8_t *) &gv);
+                gv.address_of = temp;
+                // store it in the vector
+                grass->push_back (gv);
+            }
             else
             {
                 string cname = p->readClassName(type);
@@ -599,6 +613,11 @@ try_again:
                 else if(splatter && cname == "block_square_event_material_spatterst")
                 {
                     off.vein_spatter_vptr = type;
+                    goto try_again;
+                }
+                else if(grass && cname=="block_square_event_grassst")
+                {
+                    off.vein_grass_vptr = type;
                     goto try_again;
                 }
                 #ifdef DEBUG

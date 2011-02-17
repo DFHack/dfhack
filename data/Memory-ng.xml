@@ -1970,13 +1970,6 @@
             <Group name="Creatures" valid="false" >
                 0x016a12c0 vector
             </Group>
-            <Group name="Materials" valid="false" >
-                <Address name="creature_type_vector" value="0x16E533C" valid="true" /> MAYBE... THE DETAILS WILL BE DIFFERENT
-                <Address name="inorganics" value="0x16e527C" valid="true" />
-                <Address name="organics_all" value="0x16e529C" valid="true" />
-                <Address name="organics_plants" value="0x16e52AC" valid="true" />
-                <Address name="organics_trees" value="0x16e52CC" valid="true" />
-            </Group>
             <Group name="Constructions">
                 <Address name="vector" value="0x168d930"/>
             </Group>

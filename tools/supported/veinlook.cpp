@@ -536,6 +536,7 @@ main(int argc, char *argv[])
     vector<t_vein> veinVector;
     vector<t_frozenliquidvein> IceVeinVector;
     vector<t_spattervein> splatter;
+    vector<t_grassvein> grass;
     t_temperatures b_temp1;
     t_temperatures b_temp2;
 
@@ -582,21 +583,24 @@ main(int argc, char *argv[])
     y_max = y_max_a;
     z_max = z_max_a;
     
-    bool hasimats = false;
-    bool hascmats = false;
+    bool hasInorgMats = false;
+    bool hasPlantMats = false;
+    bool hasCreatureMats = false;
 
     if(hasmats)
     {
-        
-        hascmats = true;
         // get stone matgloss mapping
         if(Mats->ReadInorganicMaterials())
         {
-            hasimats = true;
+            hasInorgMats = true;
         }
         if(Mats->ReadCreatureTypes())
         {
-            hascmats = true;
+            hasCreatureMats = true;
+        }
+        if(Mats->ReadOrganicMaterials())
+        {
+            hasPlantMats = true;
         }
     }
 /*
@@ -733,6 +737,7 @@ main(int argc, char *argv[])
         IceVeinVector.clear();
         effects.clear();
         splatter.clear();
+        grass.clear();
         dirtybit = 0;
         
         // Supend, read/write data
@@ -742,11 +747,15 @@ main(int argc, char *argv[])
         if(hasmats)
         {
             Mats->Start();
-            if(hasimats)
+            if(hasInorgMats)
             {
                 Mats->ReadInorganicMaterials();
             }
-            if(hascmats)
+            if(hasPlantMats)
+            {
+                Mats->ReadOrganicMaterials();
+            }
+            if(hasCreatureMats)
             {
                 Mats->ReadCreatureTypes();
             }
@@ -766,23 +775,21 @@ main(int argc, char *argv[])
         for(int i = -1; i <= 1; i++) for(int j = -1; j <= 1; j++)
         {
             mapblock40d * Block = &blocks[i+1][j+1];
-            
-            
             if(Maps->isValidBlock(cursorX+i,cursorY+j,cursorZ))
             {
                 Maps->ReadBlock40d(cursorX+i,cursorY+j,cursorZ, Block);
                 // extra processing of the block in the middle
                 if(i == 0 && j == 0)
                 {
-                    if(hasimats)
+                    if(hasInorgMats)
                         do_features(DF, Block, cursorX, cursorY, 50,10, Mats->inorganic);
                     // read veins
-                    Maps->ReadVeins(cursorX+i,cursorY+j,cursorZ,&veinVector,&IceVeinVector,&splatter);
-                    
+                    Maps->ReadVeins(cursorX+i,cursorY+j,cursorZ,&veinVector,&IceVeinVector,&splatter,&grass);
+
                     // get pointer to block
                     blockaddr = Maps->getBlockPtr(cursorX+i,cursorY+j,cursorZ);
                     blockaddr2 = Block->origin;
-                    
+
                     // dig all veins and trees
                     if(dig)
                     {
@@ -877,11 +884,12 @@ main(int argc, char *argv[])
         uint32_t mineralsize = veinVector.size();
         uint32_t icesize = IceVeinVector.size();
         uint32_t splattersize = splatter.size();
-        uint32_t totalVeinSize =  mineralsize+ icesize + splattersize;
+        uint32_t grasssize = grass.size();
+        uint32_t totalVeinSize =  mineralsize+ icesize + splattersize + grasssize;
         if(vein == totalVeinSize) vein = totalVeinSize - 1;
         if(vein < -1) vein = -1;
         cprintf("X %d/%d, Y %d/%d, Z %d/%d. Vein %d of %d",cursorX+1,x_max,cursorY+1,y_max,cursorZ,z_max,vein+1,totalVeinSize);
-        if(!veinVector.empty() || !IceVeinVector.empty() || !splatter.empty())
+        if(!veinVector.empty() || !IceVeinVector.empty() || !splatter.empty() || !grass.empty())
         {
             if(vein != -1 && vein < totalVeinSize)
             {
@@ -911,7 +919,7 @@ main(int argc, char *argv[])
                             }
                         }
                     }
-                    if(hasimats)
+                    if(hasInorgMats)
                     {
                         gotoxy(50,3);
                         cprintf("Mineral: %s",Mats->inorganic[veinVector[vein].type].id);
@@ -937,7 +945,7 @@ main(int argc, char *argv[])
                     gotoxy(50,3);
                     cprintf("ICE");
                 }
-                else
+                else if(vein < mineralsize + icesize + splattersize)
                 {
                     realvein = vein - mineralsize - icesize;
                     t_spattervein &bloodmud = splatter[realvein];
@@ -954,11 +962,31 @@ main(int argc, char *argv[])
                             }
                         }
                     }
-                    if(hascmats)
+                    if(hasCreatureMats)
                     {
                         gotoxy(50,3);
                         cprintf("Spatter: %s",PrintSplatterType(splatter[realvein].mat1,splatter[realvein].mat2,Mats->race).c_str());
                     }
+                }
+                else
+                {
+                    realvein = vein - mineralsize - icesize - splattersize;
+                    t_grassvein & grassy =grass[realvein];
+                    for(uint32_t yyy = 0; yyy < 16; yyy++)
+                    {
+                        for(uint32_t xxx = 0; xxx < 16; xxx++) 
+                        {
+                            uint8_t intensity = grassy.intensity[xxx][yyy];
+                            if(intensity)
+                            {
+                                attron(A_STANDOUT);
+                                putch(xxx+16,yyy+16,'X', COLOR_RED);
+                                attroff(A_STANDOUT);
+                            }
+                        }
+                    }
+                    gotoxy(50,3);
+                    cprintf("Grass: 0x%x, %s",grassy.address_of, Mats->organic[grassy.material].id);
                 }
             }
         }

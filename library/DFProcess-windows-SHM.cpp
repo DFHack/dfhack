@@ -317,7 +317,7 @@ bool SHMProcess::isIdentified()
 bool SHMProcess::Private::validate(vector <VersionInfo *> & known_versions)
 {
     // try to identify the DF version
-    IMAGE_NT_HEADERS32 pe_header;
+    IMAGE_NT_HEADERS pe_header;
     IMAGE_SECTION_HEADER sections[16];
     HMODULE hmod = NULL;
     DWORD junk;

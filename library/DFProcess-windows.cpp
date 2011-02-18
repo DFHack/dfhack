@@ -54,7 +54,7 @@ class NormalProcess::Private
         uint32_t STLSTR_buf_off;
         uint32_t STLSTR_size_off;
         uint32_t STLSTR_cap_off;
-        IMAGE_NT_HEADERS32 pe_header;
+        IMAGE_NT_HEADERS pe_header;
         IMAGE_SECTION_HEADER * sections;
         uint32_t base;
 };

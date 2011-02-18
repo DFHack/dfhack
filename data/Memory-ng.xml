@@ -1941,6 +1941,9 @@
                 <Address name="organics_plants" value="0x171e7C0 0x16e52AC" valid="true" />
                 <Address name="organics_trees" value="0x171e7E0 0x16e52CC" valid="true" />
             </Group>
+            <Group name="GUI" valid="false">
+                <Address name="pause_state" value="0x14c9be1" valid="true" />
+            </Group>
             <!--
             <Address name="WORLD" valid="false" />
             <Group name="Buildings">
@@ -1949,9 +1952,6 @@
                 <Offset name="building_custom_workshop_type" value="0x11c" /> INVALID!
                 <Offset name="custom_workshop_name" value="0x4" /> INVALID!
                 <Offset name="custom_workshop_type" value="0x20" /> INVALID!
-            </Group>
-            <Group name="GUI" valid="false">
-                <Address name="pause_state" value="0x14c9be1" valid="true" />
             </Group>
             <Group name="Maps">
                 <Group name="features">

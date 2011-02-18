@@ -72,6 +72,7 @@ Creatures::Creatures(DFContextShared* _d)
     d->owner = _d->p;
     d->Inited = false;
     d->Started = false;
+    d->p_cre = NULL;
     d->d->InitReadNames(); // throws on error
     VersionInfo * minfo = d->d->offset_descriptor;
     OffsetGroup *OG_Creatures = minfo->getGroup("Creatures");
@@ -149,10 +150,14 @@ Creatures::~Creatures()
 
 bool Creatures::Start( uint32_t &numcreatures )
 {
-    d->p_cre = new DfVector <uint32_t> (d->owner, d->creatures.vector);
-    d->Started = true;
-    numcreatures =  d->p_cre->size();
-    return true;
+    if(d->Ft_basic)
+    {
+        d->p_cre = new DfVector <uint32_t> (d->owner, d->creatures.vector);
+        d->Started = true;
+        numcreatures =  d->p_cre->size();
+        return true;
+    }
+    return false;
 }
 
 bool Creatures::Finish()

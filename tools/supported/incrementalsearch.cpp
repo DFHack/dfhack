@@ -908,13 +908,18 @@ int main (void)
     "                    4=string, 5=automated offset search, 6=vector by address in its array,\n"
     "                    7=pointer vector by address of an object, 8=vector>first object>string\n"
     "                    9=string buffers, 10=known data, 11=backpointers, 12=data+backpointers\n"
-    "                    13=coord lookup\n";
+    "                    13=coord lookup\n"
+    "                    0= exit\n";
     int mode;
+    bool finish = 0;
     do
     {
         getNumber(prompt,mode, 1, false);
         switch (mode)
         {
+            case 0:
+                finish = 1;
+                break;
             case 1:
                 DF->Detach();
                 FindIntegers(DFMgr, selected_ranges);
@@ -967,9 +972,9 @@ int main (void)
                 FindCoords(DFMgr, selected_ranges);
                 break;
             default:
-                cout << "not implemented :(" << endl;
+                cout << "Unknown function, try again." << endl;
         }
-    } while (mode < 1 || mode > 12 );
+    } while ( !finish );
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();

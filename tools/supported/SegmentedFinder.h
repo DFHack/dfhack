@@ -393,7 +393,7 @@ public:
             return false;
         if(d->length+sizeof(T) >= d->allocated)
             Allocate((d->length+sizeof(T)) * 2);
-        (*(T *)(d->object + d->length)) = what;
+        (*(T *)( (uint64_t)d->object + d->length)) = what;
         d->length += sizeof(T);
     }
     Bytestreamdata * d;

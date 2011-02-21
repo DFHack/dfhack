@@ -59,6 +59,7 @@ public:
     virtual bool AcquireOffset(DFHack::VersionInfo * vinfo)
     {
         vinfo->getOffset(full_offset_name);
+        return true;
     }
     virtual uint32_t Length() = 0;
     virtual uint64_t getAbsolute(){if(parent) return parent->getAbsolute() + offset; else return offset;};

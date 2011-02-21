@@ -1966,6 +1966,11 @@
                 <Offset name="custom_workshop_type" value="0x20" /> INVALID?
                 -->
             </Group>
+            <Group name="World" valid="false">
+                <Address name="current_tick" description="Current time of the year" />
+                <Address name="current_year" description="Current year" />
+                <Address name="current_weather" value="0x15027A0" valid="true" />
+            </Group>
             <!--
             <Address name="WORLD" valid="false" />
             <Group name="Maps">
@@ -2002,11 +2007,6 @@
                 <Offset name="item_improvement_index" />
                 <Offset name="item_improvement_quality" />
                 <Offset name="item_type_accessor" />  (in the vtable)
-            </Group>
-            <Group name="World" valid="false">
-                <Address name="current_tick" description="Current time of the year" />
-                <Address name="current_year" description="Current year" />
-                <Address name="current_weather" value="0x14c9bb8" valid="true" />
             </Group>
             -->
         </Offsets>

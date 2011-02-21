@@ -454,7 +454,7 @@ std::istream& operator>> ( std::istream& out, Bytestream& bs )
                 {
                     small = reads - '0';
                     state = 0;
-                    bs.insert(big*16 + small);
+                    bs.insert<char>(big*16 + small);
                 }
             }
             if((reads >= 'a' && reads <= 'f'))
@@ -468,7 +468,7 @@ std::istream& operator>> ( std::istream& out, Bytestream& bs )
                 {
                     small = reads - 'a' + 10;
                     state = 0;
-                    bs.insert(big*16 + small);
+                    bs.insert<char>(big*16 + small);
                 }
             }
             it++;
@@ -478,7 +478,7 @@ std::istream& operator>> ( std::istream& out, Bytestream& bs )
         if (state == 1)
         {
             small = 0;
-            bs.insert(big*16 + small);
+            bs.insert<char>(big*16 + small);
         }
     }
     else

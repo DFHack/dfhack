@@ -1944,6 +1944,9 @@
             <Group name="GUI" valid="false">
                 <Address name="pause_state" value="0x14c9be1" valid="true" />
             </Group>
+            <Group name="Vegetation" valid="true">
+                <Address name="vector" value="0x16db478" />
+            </Group>
             <!--
             <Address name="WORLD" valid="false" />
             <Group name="Buildings">
@@ -1976,10 +1979,6 @@
             <Group name="Translations">
                 <Address name="language_vector" value="0x016e553c"/>
                 <Address name="translation_vector" value="0x016e551c"/>
-            </Group>
-            <Group name="Vegetation" valid="false">
-                <Address name="vector"/>
-                <Offset name="tree_desc_offset" valid="true"/>
             </Group>
             <Group name="Items" valid="false">
                 <Address name="items_vector" />

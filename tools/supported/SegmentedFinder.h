@@ -386,14 +386,15 @@ public:
             return false;
         }
     }
-    bool insert( char what )
+    template < class T >
+    bool insert( T what )
     {
         if(constant)
             return false;
-        if(d->length+1 == d->allocated)
-            Allocate(d->allocated * 2);
-        ((char *) d->object)[d->length] = what;
-        d->length ++;
+        if(d->length+sizeof(T) >= d->allocated)
+            Allocate((d->length+sizeof(T)) * 2);
+        (*(T *)(d->object + d->length)) = what;
+        d->length += sizeof(T);
     }
     Bytestreamdata * d;
     bool constant;

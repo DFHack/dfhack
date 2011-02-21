@@ -13,6 +13,8 @@ using namespace std;
 #include <argstream.h>
 
 #define MAX_DIM 0x300
+
+//TODO: turn into the official coord class for DFHack/DF
 class Vertex
 {
     public:
@@ -25,8 +27,10 @@ class Vertex
     {
         return (other.x == x && other.y == y && other.z == z);
     }
+    // FIXME: <tomprince> peterix_: you could probably get away with not defining operator< if you defined a std::less specialization for Vertex.
     bool operator<(const Vertex &other) const
     {
+        // FIXME: could be changed to eliminate MAX_DIM and make std::map lookups faster?
         return ( (z*MAX_DIM*MAX_DIM + y*MAX_DIM + x) < (other.z*MAX_DIM*MAX_DIM + other.y*MAX_DIM + other.x));
     }
     Vertex operator/(int number) const

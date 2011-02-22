@@ -1939,10 +1939,10 @@
             </Group>
             <Group name="Materials" valid="false" >
                 <Address name="creature_type_vector" value="0x171e880" valid="true" />
-                <Address name="inorganics" value="0x171e790 0x16e527C" valid="true" />
-                <Address name="organics_all" value="0x171e7B0 0x16e529C" valid="true" />
-                <Address name="organics_plants" value="0x171e7C0 0x16e52AC" valid="true" />
-                <Address name="organics_trees" value="0x171e7E0 0x16e52CC" valid="true" />
+                <Address name="inorganics" value="0x171e790" valid="true" />
+                <Address name="organics_all" value="0x171e7B0" valid="true" />
+                <Address name="organics_plants" value="0x171e7C0" valid="true" />
+                <Address name="organics_trees" value="0x171e7E0" valid="true" />
             </Group>
             <Group name="GUI" valid="false">
                 <Address name="pause_state" value="0x14c9be1" valid="true" />
@@ -2476,14 +2476,14 @@
                 <Address name="region_x" value="0x93c045c" />
                 <Address name="region_y" value="0x93c0460" />
                 <Address name="region_z" value="0x93c0464" />
+                <Address name="x_count_block" value="0x93c0444" />
+                <Address name="y_count_block" value="0x93c0448" />
+                <Address name="z_count_block" value="0x93c044c" />
+                <Address name="x_count" value="0x93c0450" />
+                <Address name="y_count" value="0x93c0454" />
+                <Address name="z_count" value="0x93c0458" />
                 <Address name="world_size_x" value="0x93c1ab0" />
                 <Address name="world_size_y" value="0x93c1ab2" />
-                <Address name="x_count" value="0x93c0450" />
-                <Address name="x_count_block" value="0x93c0444" />
-                <Address name="y_count" value="0x93c0454" />
-                <Address name="y_count_block" value="0x93c0448" />
-                <Address name="z_count" value="0x93c0458" />
-                <Address name="z_count_block" value="0x93c044c" />
                 <Group name="block" valid="true" />
                 <Group name="features" valid="false" />
                 <Group name="geology" valid="false" />
@@ -2496,9 +2496,13 @@
             <Group name="name" valid="true" />
         </Offsets>
     </Version>
-    <Version name="v0.31.19 linux" os="linux" base="v0.31.18 linux">
+    <Version name="v0.31.19 linux" os="linux" base="v0.31.18 linux" rebase="-0x77738">
         <MD5 value="8fcb1f10af9cc2bda47d2acf42e1db54" />
-        <Offsets valid="false" />
+        <Offsets>
+            <Group name="Position">
+                ... stuff
+            </Group>
+        </Offsets>
     </Version>
 </DFHack>
 

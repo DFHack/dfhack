@@ -395,6 +395,7 @@ public:
             Allocate((d->length+sizeof(T)) * 2);
         (*(T *)( (uint64_t)d->object + d->length)) = what;
         d->length += sizeof(T);
+        return true;
     }
     Bytestreamdata * d;
     bool constant;

@@ -10,7 +10,7 @@ using namespace std;
 
 #include <DFHack.h>
 #include <dfhack/DFTileTypes.h>
-#include <argstream.h>
+//#include <argstream.h>
 
 #define MAX_DIM 0x300
 
@@ -271,10 +271,12 @@ int main (int argc, char* argv[])
 {
     // Command line options
     bool updown = false;
+    /*
     argstream as(argc,argv);
 
     as  >>option('x',"updown",updown,"Dig up and down stairs to reach other z-levels.")
         >>help();
+        
 
     // sane check
     if (!as.isOk())
@@ -282,6 +284,9 @@ int main (int argc, char* argv[])
         cout << as.errorLog();
         return 1;
     }
+        */
+    if(argc > 1 && strcmp(argv[1],"-x") == 0)
+        updown = true;
 
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context * DF;
@@ -298,12 +303,12 @@ int main (int argc, char* argv[])
         #endif
         return 1;
     }
-    
+
     uint32_t x_max,y_max,z_max;
     DFHack::Maps * Maps = DF->getMaps();
     DFHack::Materials * Mats = DF->getMaterials();
     DFHack::Position * Pos = DF->getPosition();
-    
+
     // init the map
     if(!Maps->Start())
     {
@@ -314,12 +319,12 @@ int main (int argc, char* argv[])
         #endif
         return 1;
     }
-    
+
     int32_t cx, cy, cz;
     Maps->getSize(x_max,y_max,z_max);
     uint32_t tx_max = x_max * 16;
     uint32_t ty_max = y_max * 16;
-    
+
     Pos->getCursorCoords(cx,cy,cz);
     while(cx == -30000)
     {

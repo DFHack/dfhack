@@ -2496,11 +2496,75 @@
             <Group name="name" valid="true" />
         </Offsets>
     </Version>
-    <Version name="v0.31.19 linux" os="linux" base="v0.31.18 linux" rebase="-0x77738">
+    <Version name="v0.31.19 linux" os="linux" base="v0.31.18 linux" rebase="0x77738">
         <MD5 value="8fcb1f10af9cc2bda47d2acf42e1db54" />
         <Offsets>
             <Group name="Position">
-                ... stuff
+                <Address name="cursor_xyz" value="0x8c2b560" />
+                <Address name="window_dims" value="0x8ba9680" />
+                <Address name="window_x" value="0x8d65c70" />
+                <Address name="window_y" value="0x8d65c74" />
+                <Address name="window_z" value="0x8d65c78" />
+            </Group>
+            <Group name="Maps">
+                <Group name="features" valid="true">
+                    <Group name="global">
+                        <Address name="vector" value="0x94397cc" />
+                        <!--
+                        <Offset name="funcptr" value="0x94" />
+                        <Offset name="material" value="0x28" />
+                        <Offset name="submaterial" value="0x2c" />
+                        -->
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" value="0x9439844" />
+                        <!--
+                        <Offset name="material" value="0x24" />
+                        <Offset name="submaterial" value="0x28" />
+                        -->
+                    </Group>
+                </Group>
+            </Group>
+            <Group name="Materials">
+                <Address name="creature_type_vector" value="0x943a074" />
+                <Address name="inorganics" value="0x9439fc0" />
+                <Address name="organics_all" value="0x9439fd8" />
+                <Address name="organics_plants" value="0x9439fe4" />
+                <Address name="organics_trees" value="0x9439ffc" />
+                -------------------
+                !!LANGUAGE TABLES!!
+                -------------------
+                translation vector: 0x943a21c
+                lang vector: 0x943a204
+                word table offset: 0x1c
+                -------------
+                !!MATERIALS!!
+                -------------
+                inorganics:
+                0x9439fc0
+                organics:
+                0x9439fd8
+                organics 31.19:
+                trees:
+                0x9439ffc
+                plants:
+                0x9439fe4
+                color descriptors:
+                0x943e368
+                Amber color:0xa380190
+                all descriptors:
+                0x943e380
+                toad-first creature types:
+                0x943a074
+                all creature types:
+                0x943a068
+                0x943a074
+                Toad: 0xa441f10
+                Toad: rawname = 0x0
+                Toad: character (not reliable) = 0x20
+                Toad: caste vector = 0x60
+                Toad: extract? vector = 0x1f74
+                Toad: colors = 0x38
             </Group>
         </Offsets>
     </Version>

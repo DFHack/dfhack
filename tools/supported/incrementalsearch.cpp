@@ -749,12 +749,18 @@ void autoSearch(DFHack::Context * DF, vector <DFHack::t_memrange>& ranges)
 
     // organics vector
     to_filter = filtVectors;
+    sf.Filter<uint32_t,vecTriplet>(52 * 4,to_filter,vectorLength<uint32_t>);
+    sf.Filter<const char * ,vecTriplet>("MUSHROOM_HELMET_PLUMP",to_filter, vectorStringFirst);
+    printFound(to_filter,"organics");
+
+    // new organics vector
+    to_filter = filtVectors;
     sf.Filter<const char * ,vecTriplet>("MUSHROOM_HELMET_PLUMP",to_filter, vectorString);
     sf.Filter<const char * ,vecTriplet>("MEADOW-GRASS",to_filter, vectorString);
     sf.Filter<const char * ,vecTriplet>("TUNNEL_TUBE",to_filter, vectorString);
     sf.Filter<const char * ,vecTriplet>("WEED_BLADE",to_filter, vectorString);
     sf.Filter<const char * ,vecTriplet>("EYEBALL",to_filter, vectorString);
-    printFound(to_filter,"organics");
+    printFound(to_filter,"organics 31.19");
 
     // tree vector
     to_filter = filtVectors;

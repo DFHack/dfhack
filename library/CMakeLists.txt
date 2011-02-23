@@ -31,8 +31,8 @@ SET(PROJECT_HDRS_INTERNAL
     private/Internal.h
     private/SHMProcess.h
     private/LinuxProcess.h
-    private/WindowsProcess.h
     private/ProcessFactory.h
+    private/MicrosoftSTL.h
 )
 
 SET(PROJECT_HDRS
@@ -94,6 +94,7 @@ DFTileTypes.cpp
 DFProcessEnumerator.cpp
 ContextShared.cpp
 DFProcess-SHM.cpp
+MicrosoftSTL.cpp
 
 depends/md5/md5.cpp
 depends/md5/md5wrapper.cpp

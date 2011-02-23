@@ -39,9 +39,6 @@ distribution.
 
 using namespace DFHack;
 
-// a full memory barrier! better be safe than sorry.
-#define gcc_barrier asm volatile("" ::: "memory"); __sync_synchronize();
-
 class SHMProcess::Private
 {
     public:
@@ -81,14 +78,14 @@ class SHMProcess::Private
 
     bool validate(std::vector< VersionInfo* >& known_versions);
 
-    bool Aux_Core_Attach(bool & versionOK, pid_t & PID);
-    //bool waitWhile (uint32_t state);
+    bool Aux_Core_Attach(bool & versionOK, pid_t& PID);
     bool SetAndWait (uint32_t state);
     bool GetLocks();
     bool AreLocksOk();
     void FreeLocks();
 };
 
+// some helpful macros to keep the code bloat in check
 #define SHMCMD ( (uint32_t *) shm_addr)[attachmentIdx]
 #define D_SHMCMD ( (uint32_t *) (d->shm_addr))[d->attachmentIdx]
 
@@ -103,12 +100,17 @@ bool SHMProcess::Private::SetAndWait (uint32_t state)
     uint32_t cnt = 0;
     if(!attached) return false;
     SHMCMD = state;
+
     while (SHMCMD == state)
     {
-        // check if the other process is still there
+        // yield the CPU, only on single-core CPUs
+        if(useYield)
+        {
+            SCHED_YIELD
+        }
         if(cnt == 10000)
         {
-            if(!AreLocksOk())
+            if(!AreLocksOk())// DF not there anymore?
             {
                 //detach the shared memory
                 shmdt(shm_addr);
@@ -121,10 +123,6 @@ bool SHMProcess::Private::SetAndWait (uint32_t state)
             {
                 cnt = 0;
             }
-        }
-        if(useYield)
-        {
-            SCHED_YIELD
         }
         cnt++;
     }
@@ -153,21 +151,6 @@ uint32_t OS_getAffinity()
     // FIXME: truncation
     uint32_t affinity = *(uint32_t *) &mask;
     return affinity;
-}
-
-// test if we have client and server locks and the server is present
-bool SHMProcess::Private::AreLocksOk()
-{
-    // both locks are inited (we hold our lock)
-    if(client_lock != -1 && server_lock != -1)
-    {
-        if(lockf(server_lock,F_TEST,0) == -1) // and server holds its lock
-        {
-            return true; // OK, locks are good
-        }
-    }
-    // locks are bad
-    return false;
 }
 
 void SHMProcess::Private::FreeLocks()
@@ -255,6 +238,21 @@ bool SHMProcess::Private::GetLocks()
     close(server_lock);
     server_lock = -1;
     cerr << "can't get any client locks" << endl;
+    return false;
+}
+
+// test if we have client and server locks and the server is present
+bool SHMProcess::Private::AreLocksOk()
+{
+    // both locks are inited (we hold our lock)
+    if(client_lock != -1 && server_lock != -1)
+    {
+        if(lockf(server_lock,F_TEST,0) == -1) // and server holds its lock
+        {
+            return true; // OK, locks are good
+        }
+    }
+    // locks are bad
     return false;
 }
 
@@ -425,8 +423,8 @@ bool SHMProcess::suspend()
     if(D_SHMCMD == CORE_RUN)
     {
         //fprintf(stderr,"%d invokes step\n",d->attachmentIdx);
-        /*
         // wait for the next window
+	/*
         if(!d->SetAndWait(CORE_STEP))
         {
             throw Error::SHMLockingError("if(!d->SetAndWait(CORE_STEP))");
@@ -599,7 +597,7 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
     {
         D_SHMHDR->address = src_address;
         D_SHMHDR->length = size;
-        gcc_barrier
+        full_barrier
         d->SetAndWait(CORE_READ);
         memcpy (target_buffer, D_SHMDATA(void),size);
     }
@@ -613,7 +611,7 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
             // read to_read bytes from src_cursor
             D_SHMHDR->address = src_address;
             D_SHMHDR->length = to_read;
-            gcc_barrier
+            full_barrier
             d->SetAndWait(CORE_READ);
             memcpy (target_buffer, D_SHMDATA(void) ,to_read);
             // decrease size by bytes read
@@ -632,7 +630,7 @@ void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
     if(!d->locked) throw Error::MemoryAccessDenied();
 
     D_SHMHDR->address = offset;
-    gcc_barrier
+    full_barrier
     d->SetAndWait(CORE_READ_BYTE);
     val = D_SHMHDR->value;
 }
@@ -642,7 +640,7 @@ void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
     if(!d->locked) throw Error::MemoryAccessDenied();
 
     D_SHMHDR->address = offset;
-    gcc_barrier
+    full_barrier
     d->SetAndWait(CORE_READ_WORD);
     val = D_SHMHDR->value;
 }
@@ -652,7 +650,7 @@ void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
     if(!d->locked) throw Error::MemoryAccessDenied();
 
     D_SHMHDR->address = offset;
-    gcc_barrier
+    full_barrier
     d->SetAndWait(CORE_READ_DWORD);
     val = D_SHMHDR->value;
 }
@@ -662,7 +660,7 @@ void SHMProcess::readQuad (const uint32_t offset, uint64_t &val)
     if(!d->locked) throw Error::MemoryAccessDenied();
 
     D_SHMHDR->address = offset;
-    gcc_barrier
+    full_barrier
     d->SetAndWait(CORE_READ_QUAD);
     val = D_SHMHDR->Qvalue;
 }
@@ -672,7 +670,7 @@ void SHMProcess::readFloat (const uint32_t offset, float &val)
     if(!d->locked) throw Error::MemoryAccessDenied();
 
     D_SHMHDR->address = offset;
-    gcc_barrier
+    full_barrier
     d->SetAndWait(CORE_READ_DWORD);
     val = reinterpret_cast<float&> (D_SHMHDR->value);
 }
@@ -681,13 +679,13 @@ void SHMProcess::readFloat (const uint32_t offset, float &val)
  * WRITING
  */
 
-void SHMProcess::writeQuad (const uint32_t offset, const uint64_t data)
+void SHMProcess::writeQuad (uint32_t offset, uint64_t data)
 {
     if(!d->locked) throw Error::MemoryAccessDenied();
 
     D_SHMHDR->address = offset;
     D_SHMHDR->Qvalue = data;
-    gcc_barrier
+    full_barrier
     d->SetAndWait(CORE_WRITE_QUAD);
 }
 
@@ -697,7 +695,7 @@ void SHMProcess::writeDWord (uint32_t offset, uint32_t data)
 
     D_SHMHDR->address = offset;
     D_SHMHDR->value = data;
-    gcc_barrier
+    full_barrier
     d->SetAndWait(CORE_WRITE_DWORD);
 }
 
@@ -708,7 +706,7 @@ void SHMProcess::writeWord (uint32_t offset, uint16_t data)
 
     D_SHMHDR->address = offset;
     D_SHMHDR->value = data;
-    gcc_barrier
+    full_barrier
     d->SetAndWait(CORE_WRITE_WORD);
 }
 
@@ -718,7 +716,7 @@ void SHMProcess::writeByte (uint32_t offset, uint8_t data)
 
     D_SHMHDR->address = offset;
     D_SHMHDR->value = data;
-    gcc_barrier
+    full_barrier
     d->SetAndWait(CORE_WRITE_BYTE);
 }
 
@@ -732,7 +730,7 @@ void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buf
         D_SHMHDR->address = dst_address;
         D_SHMHDR->length = size;
         memcpy(D_SHMDATA(void),source_buffer, size);
-        gcc_barrier
+        full_barrier
         d->SetAndWait(CORE_WRITE);
     }
     // a big write, we push this over the shm in iterations
@@ -746,7 +744,7 @@ void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buf
             D_SHMHDR->address = dst_address;
             D_SHMHDR->length = to_write;
             memcpy(D_SHMDATA(void),source_buffer, to_write);
-            gcc_barrier
+            full_barrier
             d->SetAndWait(CORE_WRITE);
             // decrease size by bytes written
             size -= to_write;
@@ -825,6 +823,19 @@ string SHMProcess::readClassName (uint32_t vptr)
     return raw.substr(start,end-start);
 }
 
+string SHMProcess::getPath()
+{
+  char cwd_name[256];
+    char target_name[1024];
+    int target_result;
+
+    sprintf(cwd_name,"/proc/%d/cwd", getPID());
+    // resolve /proc/PID/exe link
+    target_result = readlink(cwd_name, target_name, sizeof(target_name));
+    target_name[target_result] = '\0';
+    return(string(target_name));
+}
+
 // get module index by name and version. bool 0 = error
 bool SHMProcess::getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT)
 {
@@ -873,16 +884,4 @@ bool SHMProcess::Private::Aux_Core_Attach(bool & versionOK, pid_t & PID)
         if(useYield) cerr << "Using Yield!" << endl;
     #endif
     return true;
-}
-string SHMProcess::getPath()
-{
-  char cwd_name[256];
-    char target_name[1024];
-    int target_result;
-
-    sprintf(cwd_name,"/proc/%d/cwd", getPID());
-    // resolve /proc/PID/exe link
-    target_result = readlink(cwd_name, target_name, sizeof(target_name));
-    target_name[target_result] = '\0';
-    return(string(target_name));
 }

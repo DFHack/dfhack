@@ -29,7 +29,6 @@ distribution.
 #include "mod-core.h"
 using namespace DFHack;
 
-// a full memory barrier! better be safe than sorry.
 class SHMProcess::Private
 {
     public:
@@ -81,11 +80,6 @@ class SHMProcess::Private
 #define SHMDATA(type) ((type *)(shm_addr + SHM_HEADER))
 #define D_SHMDATA(type) ((type *)(d->shm_addr + SHM_HEADER))
 
-bool SHMProcess::SetAndWait (uint32_t state)
-{
-    return d->SetAndWait(state);
-}
-
 bool SHMProcess::Private::SetAndWait (uint32_t state)
 {
     uint32_t cnt = 0;
@@ -116,11 +110,17 @@ bool SHMProcess::Private::SetAndWait (uint32_t state)
         }
         cnt++;
     }
+    // server returned a generic error
     if(SHMCMD == CORE_ERROR)
     {
         return false;
     }
     return true;
+}
+
+bool SHMProcess::SetAndWait (uint32_t state)
+{
+    return d->SetAndWait(state);
 }
 
 uint32_t OS_getAffinity()
@@ -252,27 +252,6 @@ bool SHMProcess::Private::AreLocksOk()
     }
     return false;
 }
-
-
-
-    /*
-    char svmutexname [256];
-
-    char clmutexname [256];
-    sprintf(clmutexname,"DFCLMutex-%d",PID);
-
-    // get server and client mutex
-    d->DFSVMutex = OpenMutex(SYNCHRONIZE,false, svmutexname);
-    if(d->DFSVMutex == 0)
-    {
-        return;
-    }
-    d->DFCLMutex = OpenMutex(SYNCHRONIZE,false, clmutexname);
-    if(d->DFCLMutex == 0)
-    {
-        return;
-    }
-    */
 
 SHMProcess::SHMProcess(uint32_t PID, vector <VersionInfo *> & known_versions)
 : d(new Private())
@@ -463,7 +442,7 @@ bool SHMProcess::suspend()
     {
         //fprintf(stderr,"%d invokes step\n",d->attachmentIdx);
         // wait for the next window
-        /*
+	/*
         if(!d->SetAndWait(CORE_STEP))
         {
             throw Error::SHMLockingError("if(!d->SetAndWait(CORE_STEP))");
@@ -577,21 +556,6 @@ bool SHMProcess::attach()
         //cerr << "server is full or not really there!" << endl;
         return false;
     }
-    /*
-    // check if DF is there
-    if(!d->isValidSV())
-    {
-        return false; // NOT
-    }
-    */
-    /*
-    // try locking client mutex
-    uint32_t result = WaitForSingleObject(d->DFCLMutex,0);
-    if( result != WAIT_OBJECT_0 && result != WAIT_ABANDONED)
-    {
-        return false; // we couldn't lock it
-    }
-    */
 
     /*
     * Locate the segment.
@@ -634,12 +598,10 @@ bool SHMProcess::attach()
 bool SHMProcess::detach()
 {
     if(!d->attached) return true;
-    //cerr << "detach" << endl;// FIXME: throw
     if(d->locked)
     {
         resume();
     }
-    //cerr << "detach after resume" << endl;// FIXME: throw
     // detach segment
     UnmapViewOfFile(d->shm_addr);
     // release it for some other client
@@ -718,16 +680,6 @@ void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
     val = D_SHMHDR->value;
 }
 
-void SHMProcess::readFloat (const uint32_t offset, float &val)
-{
-    if(!d->locked) throw Error::MemoryAccessDenied();
-
-    D_SHMHDR->address = offset;
-    full_barrier
-    d->SetAndWait(CORE_READ_DWORD);
-    val = reinterpret_cast<float&> (D_SHMHDR->value);
-}
-
 void SHMProcess::readQuad (const uint32_t offset, uint64_t &val)
 {
     if(!d->locked) throw Error::MemoryAccessDenied();
@@ -736,6 +688,16 @@ void SHMProcess::readQuad (const uint32_t offset, uint64_t &val)
     full_barrier
     d->SetAndWait(CORE_READ_QUAD);
     val = D_SHMHDR->Qvalue;
+}
+
+void SHMProcess::readFloat (const uint32_t offset, float &val)
+{
+    if(!d->locked) throw Error::MemoryAccessDenied();
+
+    D_SHMHDR->address = offset;
+    full_barrier
+    d->SetAndWait(CORE_READ_DWORD);
+    val = reinterpret_cast<float&> (D_SHMHDR->value);
 }
 
 /*
@@ -751,7 +713,6 @@ void SHMProcess::writeQuad (uint32_t offset, uint64_t data)
     full_barrier
     d->SetAndWait(CORE_WRITE_QUAD);
 }
-
 
 void SHMProcess::writeDWord (uint32_t offset, uint32_t data)
 {
@@ -895,6 +856,7 @@ string SHMProcess::getPath()
     string out(String);
     return(out.substr(0,out.find_last_of("\\")));
 }
+
 // get module index by name and version. bool 0 = error
 bool SHMProcess::getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT)
 {

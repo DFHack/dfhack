@@ -22,11 +22,17 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "Internal.h"
-#include "ProcessInternal.h"
+#include "WindowsProcess.h"
+#include "ProcessFactory.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include <string.h>
 using namespace DFHack;
+
+Process* DFHack::createNormalProcess(uint32_t pid, vector <VersionInfo *> & known_versions)
+{
+    return new NormalProcess(pid, known_versions);
+}
 
 class NormalProcess::Private
 {

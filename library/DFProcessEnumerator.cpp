@@ -24,6 +24,7 @@ distribution.
 
 #include "Internal.h"
 #include "ProcessInternal.h"
+#include "SHMProcess.h"
 
 #include "dfhack/VersionInfoFactory.h"
 #include "dfhack/DFProcessEnumerator.h"

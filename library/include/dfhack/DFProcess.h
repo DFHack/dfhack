@@ -99,33 +99,33 @@ namespace DFHack
             virtual bool forceresume() = 0;
 
             /// read a 8-byte integer
-            virtual uint64_t readQuad(const uint32_t address) = 0;
+            uint64_t readQuad(const uint32_t address) { uint64_t result; readQuad(address, result); return result; }
             /// read a 8-byte integer
             virtual void readQuad(const uint32_t address, uint64_t & value) = 0;
             /// write a 8-byte integer
             virtual void writeQuad(const uint32_t address, const uint64_t value) = 0;
 
             /// read a 4-byte integer
-            virtual uint32_t readDWord(const uint32_t address) = 0;
+            uint32_t readDWord(const uint32_t address) { uint32_t result; readDWord(address, result); return result; }
             /// read a 4-byte integer
             virtual void readDWord(const uint32_t address, uint32_t & value) = 0;
             /// write a 4-byte integer
             virtual void writeDWord(const uint32_t address, const uint32_t value) = 0;
 
             /// read a float
-            virtual float readFloat(const uint32_t address) = 0;
+            float readFloat(const uint32_t address) { float result; readFloat(address, result); return result; }
             /// write a float
             virtual void readFloat(const uint32_t address, float & value) = 0;
 
             /// read a 2-byte integer
-            virtual uint16_t readWord(const uint32_t address) = 0;
+            uint16_t readWord(const uint32_t address) { uint16_t result; readWord(address, result); return result; }
             /// read a 2-byte integer
             virtual void readWord(const uint32_t address, uint16_t & value) = 0;
             /// write a 2-byte integer
             virtual void writeWord(const uint32_t address, const uint16_t value) = 0;
 
             /// read a byte
-            virtual uint8_t readByte(const uint32_t address) = 0;
+            uint8_t readByte(const uint32_t address) { uint8_t result; readByte(address, result); return result; }
             /// read a byte
             virtual void readByte(const uint32_t address, uint8_t & value) = 0;
             /// write a byte

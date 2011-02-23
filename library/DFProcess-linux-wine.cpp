@@ -395,23 +395,9 @@ void WineProcess::read (const uint32_t offset, const uint32_t size, uint8_t *tar
     }
 }
 
-uint8_t WineProcess::readByte (const uint32_t offset)
-{
-    uint8_t val;
-    read(offset, 1, &val);
-    return val;
-}
-
 void WineProcess::readByte (const uint32_t offset, uint8_t &val )
 {
     read(offset, 1, &val);
-}
-
-uint16_t WineProcess::readWord (const uint32_t offset)
-{
-    uint16_t val;
-    read(offset, 2, (uint8_t *) &val);
-    return val;
 }
 
 void WineProcess::readWord (const uint32_t offset, uint16_t &val)
@@ -419,23 +405,11 @@ void WineProcess::readWord (const uint32_t offset, uint16_t &val)
     read(offset, 2, (uint8_t *) &val);
 }
 
-uint32_t WineProcess::readDWord (const uint32_t offset)
-{
-    uint32_t val;
-    read(offset, 4, (uint8_t *) &val);
-    return val;
-}
 void WineProcess::readDWord (const uint32_t offset, uint32_t &val)
 {
     read(offset, 4, (uint8_t *) &val);
 }
 
-float WineProcess::readFloat (const uint32_t offset)
-{
-    float val;
-    read(offset, 4, (uint8_t *) &val);
-    return val;
-}
 void WineProcess::readFloat (const uint32_t offset, float &val)
 {
     read(offset, 4, (uint8_t *) &val);
@@ -444,13 +418,6 @@ void WineProcess::readFloat (const uint32_t offset, float &val)
 void WineProcess::readQuad (const uint32_t offset, uint64_t &val)
 {
     read(offset, 8, (uint8_t *) &val);
-}
-
-uint64_t WineProcess::readQuad (const uint32_t offset)
-{
-    uint64_t val;
-    read(offset, 8, (uint8_t *) &val);
-    return val;
 }
 
 /*
@@ -470,7 +437,7 @@ void WineProcess::writeQuad (uint32_t offset, const uint64_t data)
 void WineProcess::writeDWord (uint32_t offset, uint32_t data)
 {
     #ifdef HAVE_64_BIT
-        uint64_t orig = readQuad(offset);
+        uint64_t orig = Process::readQuad(offset);
         orig &= 0xFFFFFFFF00000000;
         orig |= data;
         ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
@@ -483,7 +450,7 @@ void WineProcess::writeDWord (uint32_t offset, uint32_t data)
 void WineProcess::writeWord (uint32_t offset, uint16_t data)
 {
     #ifdef HAVE_64_BIT
-        uint64_t orig = readQuad(offset);
+        uint64_t orig = Process::readQuad(offset);
         orig &= 0xFFFFFFFFFFFF0000;
         orig |= data;
         ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
@@ -498,7 +465,7 @@ void WineProcess::writeWord (uint32_t offset, uint16_t data)
 void WineProcess::writeByte (uint32_t offset, uint8_t data)
 {
     #ifdef HAVE_64_BIT
-        uint64_t orig = readQuad(offset);
+        uint64_t orig = Process::readQuad(offset);
         orig &= 0xFFFFFFFFFFFFFF00;
         orig |= data;
         ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
@@ -560,7 +527,7 @@ const std::string WineProcess::readCString (uint32_t offset)
     char r;
     do
     {
-        r = readByte(offset+counter);
+        r = Process::readByte(offset+counter);
         temp_c[counter] = r;
         counter++;
     } while (r && counter < 255);
@@ -572,8 +539,8 @@ const std::string WineProcess::readCString (uint32_t offset)
 size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
     uint32_t start_offset = offset + d->STLSTR_buf_off;
-    size_t length = readDWord(offset + d->STLSTR_size_off);
-    size_t capacity = readDWord(offset + d->STLSTR_cap_off);
+    size_t length = Process::readDWord(offset + d->STLSTR_size_off);
+    size_t capacity = Process::readDWord(offset + d->STLSTR_cap_off);
 
     size_t read_real = min(length, bufcapacity-1);// keep space for null termination
 
@@ -584,7 +551,7 @@ size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcap
     }
     else // read data from what the offset + 4 dword points to
     {
-        start_offset = readDWord(start_offset);// dereference the start offset
+        start_offset = Process::readDWord(start_offset);// dereference the start offset
         read(start_offset, read_real, (uint8_t *)buffer);
     }
 
@@ -595,8 +562,8 @@ size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcap
 const string WineProcess::readSTLString (uint32_t offset)
 {
     uint32_t start_offset = offset + d->STLSTR_buf_off;
-    size_t length = readDWord(offset + d->STLSTR_size_off);
-    size_t capacity = readDWord(offset + d->STLSTR_cap_off);
+    size_t length = Process::readDWord(offset + d->STLSTR_size_off);
+    size_t capacity = Process::readDWord(offset + d->STLSTR_cap_off);
 
     char * temp = new char[capacity+1];
 
@@ -607,7 +574,7 @@ const string WineProcess::readSTLString (uint32_t offset)
     }
     else // read data from what the offset + 4 dword points to
     {
-        start_offset = readDWord(start_offset);// dereference the start offset
+        start_offset = Process::readDWord(start_offset);// dereference the start offset
         read(start_offset, capacity, (uint8_t *)temp);
     }
 
@@ -619,8 +586,8 @@ const string WineProcess::readSTLString (uint32_t offset)
 
 string WineProcess::readClassName (uint32_t vptr)
 {
-    int rtti = readDWord(vptr - 0x4);
-    int typeinfo = readDWord(rtti + 0xC);
+    int rtti = Process::readDWord(vptr - 0x4);
+    int typeinfo = Process::readDWord(rtti + 0xC);
     string raw = readCString(typeinfo + 0xC); // skips the .?AV
     raw.resize(raw.length() - 2);// trim @@ from end
     return raw;

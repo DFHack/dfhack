@@ -627,16 +627,6 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
     }
 }
 
-uint8_t SHMProcess::readByte (const uint32_t offset)
-{
-    if(!d->locked) throw Error::MemoryAccessDenied();
-
-    D_SHMHDR->address = offset;
-    gcc_barrier
-    d->SetAndWait(CORE_READ_BYTE);
-    return D_SHMHDR->value;
-}
-
 void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
 {
     if(!d->locked) throw Error::MemoryAccessDenied();
@@ -645,16 +635,6 @@ void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
     gcc_barrier
     d->SetAndWait(CORE_READ_BYTE);
     val = D_SHMHDR->value;
-}
-
-uint16_t SHMProcess::readWord (const uint32_t offset)
-{
-    if(!d->locked) throw Error::MemoryAccessDenied();
-
-    D_SHMHDR->address = offset;
-    gcc_barrier
-    d->SetAndWait(CORE_READ_WORD);
-    return D_SHMHDR->value;
 }
 
 void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
@@ -667,15 +647,6 @@ void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
     val = D_SHMHDR->value;
 }
 
-uint32_t SHMProcess::readDWord (const uint32_t offset)
-{
-    if(!d->locked) throw Error::MemoryAccessDenied();
-
-    D_SHMHDR->address = offset;
-    gcc_barrier
-    d->SetAndWait(CORE_READ_DWORD);
-    return D_SHMHDR->value;
-}
 void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
 {
     if(!d->locked) throw Error::MemoryAccessDenied();
@@ -686,15 +657,6 @@ void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
     val = D_SHMHDR->value;
 }
 
-uint64_t SHMProcess::readQuad (const uint32_t offset)
-{
-    if(!d->locked) throw Error::MemoryAccessDenied();
-
-    D_SHMHDR->address = offset;
-    gcc_barrier
-    d->SetAndWait(CORE_READ_QUAD);
-    return D_SHMHDR->Qvalue;
-}
 void SHMProcess::readQuad (const uint32_t offset, uint64_t &val)
 {
     if(!d->locked) throw Error::MemoryAccessDenied();
@@ -705,15 +667,6 @@ void SHMProcess::readQuad (const uint32_t offset, uint64_t &val)
     val = D_SHMHDR->Qvalue;
 }
 
-float SHMProcess::readFloat (const uint32_t offset)
-{
-    if(!d->locked) throw Error::MemoryAccessDenied();
-
-    D_SHMHDR->address = offset;
-    gcc_barrier
-    d->SetAndWait(CORE_READ_DWORD);
-    return reinterpret_cast<float&> (D_SHMHDR->value);
-}
 void SHMProcess::readFloat (const uint32_t offset, float &val)
 {
     if(!d->locked) throw Error::MemoryAccessDenied();
@@ -817,7 +770,7 @@ const std::string SHMProcess::readCString (uint32_t offset)
     char r;
     do
     {
-        r = readByte(offset+counter);
+        r = Process::readByte(offset+counter);
         temp_c[counter] = r;
         counter++;
     } while (r && counter < 255);
@@ -864,8 +817,8 @@ string SHMProcess::readClassName (uint32_t vptr)
 {
     if(!d->locked) throw Error::MemoryAccessDenied();
 
-    int typeinfo = readDWord(vptr - 0x4);
-    int typestring = readDWord(typeinfo + 0x4);
+    int typeinfo = Process::readDWord(vptr - 0x4);
+    int typestring = Process::readDWord(typeinfo + 0x4);
     string raw = readCString(typestring);
     size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
     size_t end = raw.length();

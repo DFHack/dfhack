@@ -50,22 +50,17 @@ namespace DFHack
             bool resume();
             bool forceresume();
 
-            uint64_t readQuad(const uint32_t address);
             void readQuad(const uint32_t address, uint64_t & value);
             void writeQuad(const uint32_t address, const uint64_t value);
 
-            uint32_t readDWord(const uint32_t address);
             void readDWord(const uint32_t address, uint32_t & value);
             void writeDWord(const uint32_t address, const uint32_t value);
 
-            float readFloat(const uint32_t address);
             void readFloat(const uint32_t address, float & value);
 
-            uint16_t readWord(const uint32_t address);
             void readWord(const uint32_t address, uint16_t & value);
             void writeWord(const uint32_t address, const uint16_t value);
 
-            uint8_t readByte(const uint32_t address);
             void readByte(const uint32_t address, uint8_t & value);
             void writeByte(const uint32_t address, const uint8_t value);
 
@@ -116,22 +111,17 @@ namespace DFHack
             bool resume();
             bool forceresume();
 
-            uint64_t readQuad(const uint32_t address);
             void readQuad(const uint32_t address, uint64_t & value);
             void writeQuad(const uint32_t address, const uint64_t value);
 
-            uint32_t readDWord(const uint32_t address);
             void readDWord(const uint32_t address, uint32_t & value);
             void writeDWord(const uint32_t address, const uint32_t value);
 
-            float readFloat(const uint32_t address);
             void readFloat(const uint32_t address, float & value);
 
-            uint16_t readWord(const uint32_t address);
             void readWord(const uint32_t address, uint16_t & value);
             void writeWord(const uint32_t address, const uint16_t value);
 
-            uint8_t readByte(const uint32_t address);
             void readByte(const uint32_t address, uint8_t & value);
             void writeByte(const uint32_t address, const uint8_t value);
 
@@ -181,22 +171,17 @@ namespace DFHack
             bool resume();
             bool forceresume();
 
-            uint64_t readQuad(const uint32_t address);
             void readQuad(const uint32_t address, uint64_t & value);
             void writeQuad(const uint32_t address, const uint64_t value);
 
-            uint32_t readDWord(const uint32_t address);
             void readDWord(const uint32_t address, uint32_t & value);
             void writeDWord(const uint32_t address, const uint32_t value);
 
-            float readFloat(const uint32_t address);
             void readFloat(const uint32_t address, float & value);
 
-            uint16_t readWord(const uint32_t address);
             void readWord(const uint32_t address, uint16_t & value);
             void writeWord(const uint32_t address, const uint16_t value);
 
-            uint8_t readByte(const uint32_t address);
             void readByte(const uint32_t address, uint8_t & value);
             void writeByte(const uint32_t address, const uint8_t value);
 

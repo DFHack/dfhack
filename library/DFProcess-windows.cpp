@@ -90,7 +90,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
     // read from this process
     try
     {
-        uint32_t pe_offset = readDWord(d->base+0x3C);
+        uint32_t pe_offset = Process::readDWord(d->base+0x3C);
         read(d->base + pe_offset                       , sizeof(d->pe_header), (uint8_t *)&d->pe_header);
         const size_t sectionsSize = sizeof(IMAGE_SECTION_HEADER) * d->pe_header.FileHeader.NumberOfSections;
         d->sections = (IMAGE_SECTION_HEADER *) malloc(sectionsSize); 
@@ -417,26 +417,10 @@ void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
     }
 }
 
-uint8_t NormalProcess::readByte (const uint32_t offset)
-{
-    uint8_t result;
-    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint8_t), NULL))
-        throw Error::MemoryAccessDenied();
-    return result;
-}
-
 void NormalProcess::readByte (const uint32_t offset,uint8_t &result)
 {
     if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint8_t), NULL))
         throw Error::MemoryAccessDenied();
-}
-
-uint16_t NormalProcess::readWord (const uint32_t offset)
-{
-    uint16_t result;
-    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint16_t), NULL))
-        throw Error::MemoryAccessDenied();
-    return result;
 }
 
 void NormalProcess::readWord (const uint32_t offset, uint16_t &result)
@@ -445,40 +429,16 @@ void NormalProcess::readWord (const uint32_t offset, uint16_t &result)
         throw Error::MemoryAccessDenied();
 }
 
-uint32_t NormalProcess::readDWord (const uint32_t offset)
-{
-    uint32_t result;
-    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint32_t), NULL))
-        throw Error::MemoryAccessDenied();
-    return result;
-}
-
 void NormalProcess::readDWord (const uint32_t offset, uint32_t &result)
 {
     if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint32_t), NULL))
         throw Error::MemoryAccessDenied();
 }
 
-uint64_t NormalProcess::readQuad (const uint32_t offset)
-{
-    uint64_t result;
-    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint64_t), NULL))
-        throw Error::MemoryAccessDenied();
-    return result;
-}
-
 void NormalProcess::readQuad (const uint32_t offset, uint64_t &result)
 {
     if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint64_t), NULL))
         throw Error::MemoryAccessDenied();
-}
-
-float NormalProcess::readFloat (const uint32_t offset)
-{
-    float result;
-    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(float), NULL))
-        throw Error::MemoryAccessDenied();
-    return result;
 }
 
 void NormalProcess::readFloat (const uint32_t offset, float &result)
@@ -544,8 +504,8 @@ const string NormalProcess::readCString (const uint32_t offset)
 size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
     uint32_t start_offset = offset + d->STLSTR_buf_off;
-    size_t length = readDWord(offset + d->STLSTR_size_off);
-    size_t capacity = readDWord(offset + d->STLSTR_cap_off);
+    size_t length = Process::readDWord(offset + d->STLSTR_size_off);
+    size_t capacity = Process::readDWord(offset + d->STLSTR_cap_off);
     size_t read_real = min(length, bufcapacity-1);// keep space for null termination
 
     // read data from inside the string structure
@@ -555,7 +515,7 @@ size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufc
     }
     else // read data from what the offset + 4 dword points to
     {
-        start_offset = readDWord(start_offset);// dereference the start offset
+        start_offset = Process::readDWord(start_offset);// dereference the start offset
         read(start_offset, read_real, (uint8_t *)buffer);
     }
 
@@ -566,8 +526,8 @@ size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufc
 const string NormalProcess::readSTLString (uint32_t offset)
 {
     uint32_t start_offset = offset + d->STLSTR_buf_off;
-    size_t length = readDWord(offset + d->STLSTR_size_off);
-    size_t capacity = readDWord(offset + d->STLSTR_cap_off);
+    size_t length = Process::readDWord(offset + d->STLSTR_size_off);
+    size_t capacity = Process::readDWord(offset + d->STLSTR_cap_off);
     char * temp = new char[capacity+1];
 
     // read data from inside the string structure
@@ -577,7 +537,7 @@ const string NormalProcess::readSTLString (uint32_t offset)
     }
     else // read data from what the offset + 4 dword points to
     {
-        start_offset = readDWord(start_offset);// dereference the start offset
+        start_offset = Process::readDWord(start_offset);// dereference the start offset
         read(start_offset, capacity, (uint8_t *)temp);
     }
 
@@ -589,8 +549,8 @@ const string NormalProcess::readSTLString (uint32_t offset)
 
 string NormalProcess::readClassName (uint32_t vptr)
 {
-    int rtti = readDWord(vptr - 0x4);
-    int typeinfo = readDWord(rtti + 0xC);
+    int rtti = Process::readDWord(vptr - 0x4);
+    int typeinfo = Process::readDWord(rtti + 0xC);
     string raw = readCString(typeinfo + 0xC); // skips the .?AV
     raw.resize(raw.length() - 2);// trim @@ from end
     return raw;

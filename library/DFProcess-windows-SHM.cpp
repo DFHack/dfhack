@@ -340,7 +340,7 @@ bool SHMProcess::Private::validate(vector <VersionInfo *> & known_versions)
     uint32_t base = (uint32_t)hmod;
 
     // read from this process
-    uint32_t pe_offset = self->readDWord(base+0x3C);
+    uint32_t pe_offset = self->Process::readDWord(base+0x3C);
     self->read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
     self->read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
 
@@ -436,7 +436,7 @@ void SHMProcess::getMemRanges( vector<t_memrange> & ranges )
     t_memrange temp;
     uint32_t base = d->memdescriptor->getBase();
     temp.start = base + 0x1000; // more fakery.
-    temp.end = base + readDWord(base+readDWord(base+0x3C)+0x50)-1; // yay for magic.
+    temp.end = base + Process::readDWord(base+readDWord(base+0x3C)+0x50)-1; // yay for magic.
     temp.read = 1;
     temp.write = 1;
     temp.execute = 0; // fake
@@ -688,16 +688,6 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
     }
 }
 
-uint8_t SHMProcess::readByte (const uint32_t offset)
-{
-    if(!d->locked) throw Error::MemoryAccessDenied();
-
-    D_SHMHDR->address = offset;
-    full_barrier
-    d->SetAndWait(CORE_READ_BYTE);
-    return D_SHMHDR->value;
-}
-
 void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
 {
     if(!d->locked) throw Error::MemoryAccessDenied();
@@ -706,16 +696,6 @@ void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
     full_barrier
     d->SetAndWait(CORE_READ_BYTE);
     val = D_SHMHDR->value;
-}
-
-uint16_t SHMProcess::readWord (const uint32_t offset)
-{
-    if(!d->locked) throw Error::MemoryAccessDenied();
-
-    D_SHMHDR->address = offset;
-    full_barrier
-    d->SetAndWait(CORE_READ_WORD);
-    return D_SHMHDR->value;
 }
 
 void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
@@ -728,15 +708,6 @@ void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
     val = D_SHMHDR->value;
 }
 
-uint32_t SHMProcess::readDWord (const uint32_t offset)
-{
-    if(!d->locked) throw Error::MemoryAccessDenied();
-
-    D_SHMHDR->address = offset;
-    full_barrier
-    d->SetAndWait(CORE_READ_DWORD);
-    return D_SHMHDR->value;
-}
 void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
 {
     if(!d->locked) throw Error::MemoryAccessDenied();
@@ -747,15 +718,6 @@ void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
     val = D_SHMHDR->value;
 }
 
-float SHMProcess::readFloat (const uint32_t offset)
-{
-    if(!d->locked) throw Error::MemoryAccessDenied();
-
-    D_SHMHDR->address = offset;
-    full_barrier
-    d->SetAndWait(CORE_READ_DWORD);
-    return reinterpret_cast<float&> (D_SHMHDR->value);
-}
 void SHMProcess::readFloat (const uint32_t offset, float &val)
 {
     if(!d->locked) throw Error::MemoryAccessDenied();
@@ -765,15 +727,7 @@ void SHMProcess::readFloat (const uint32_t offset, float &val)
     d->SetAndWait(CORE_READ_DWORD);
     val = reinterpret_cast<float&> (D_SHMHDR->value);
 }
-uint64_t SHMProcess::readQuad (const uint32_t offset)
-{
-    if(!d->locked) throw Error::MemoryAccessDenied();
 
-    D_SHMHDR->address = offset;
-    full_barrier
-    d->SetAndWait(CORE_READ_QUAD);
-    return D_SHMHDR->Qvalue;
-}
 void SHMProcess::readQuad (const uint32_t offset, uint64_t &val)
 {
     if(!d->locked) throw Error::MemoryAccessDenied();
@@ -878,7 +832,7 @@ const std::string SHMProcess::readCString (uint32_t offset)
     char r;
     do
     {
-        r = readByte(offset+counter);
+        r = Process::readByte(offset+counter);
         temp_c[counter] = r;
         counter++;
     } while (r && counter < 255);
@@ -923,8 +877,8 @@ void SHMProcess::writeSTLString(const uint32_t address, const std::string writeS
 
 string SHMProcess::readClassName (uint32_t vptr)
 {
-    int rtti = readDWord(vptr - 0x4);
-    int typeinfo = readDWord(rtti + 0xC);
+    int rtti = Process::readDWord(vptr - 0x4);
+    int typeinfo = Process::readDWord(rtti + 0xC);
     string raw = readCString(typeinfo + 0xC); // skips the .?AV
     raw.resize(raw.length() - 2);// trim @@ from end
     return raw;

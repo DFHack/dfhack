@@ -373,23 +373,9 @@ void NormalProcess::read (const uint32_t offset, const uint32_t size, uint8_t *t
     }
 }
 
-uint8_t NormalProcess::readByte (const uint32_t offset)
-{
-    uint8_t val;
-    read(offset, 1, &val);
-    return val;
-}
-
 void NormalProcess::readByte (const uint32_t offset, uint8_t &val )
 {
     read(offset, 1, &val);
-}
-
-uint16_t NormalProcess::readWord (const uint32_t offset)
-{
-    uint16_t val;
-    read(offset, 2, (uint8_t *) &val);
-    return val;
 }
 
 void NormalProcess::readWord (const uint32_t offset, uint16_t &val)
@@ -397,34 +383,16 @@ void NormalProcess::readWord (const uint32_t offset, uint16_t &val)
     read(offset, 2, (uint8_t *) &val);
 }
 
-uint32_t NormalProcess::readDWord (const uint32_t offset)
-{
-    uint32_t val;
-    read(offset, 4, (uint8_t *) &val);
-    return val;
-}
 void NormalProcess::readDWord (const uint32_t offset, uint32_t &val)
 {
     read(offset, 4, (uint8_t *) &val);
 }
 
-float NormalProcess::readFloat (const uint32_t offset)
-{
-    float val;
-    read(offset, 4, (uint8_t *) &val);
-    return val;
-}
 void NormalProcess::readFloat (const uint32_t offset, float &val)
 {
     read(offset, 4, (uint8_t *) &val);
 }
 
-uint64_t NormalProcess::readQuad (const uint32_t offset)
-{
-    uint64_t val;
-    read(offset, 8, (uint8_t *) &val);
-    return val;
-}
 void NormalProcess::readQuad (const uint32_t offset, uint64_t &val)
 {
     read(offset, 8, (uint8_t *) &val);
@@ -446,7 +414,7 @@ void NormalProcess::writeQuad (uint32_t offset, const uint64_t data)
 void NormalProcess::writeDWord (uint32_t offset, uint32_t data)
 {
     #ifdef HAVE_64_BIT
-        uint64_t orig = readQuad(offset);
+        uint64_t orig = Process::readQuad(offset);
         orig &= 0xFFFFFFFF00000000;
         orig |= data;
         ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
@@ -459,7 +427,7 @@ void NormalProcess::writeDWord (uint32_t offset, uint32_t data)
 void NormalProcess::writeWord (uint32_t offset, uint16_t data)
 {
     #ifdef HAVE_64_BIT
-        uint64_t orig = readQuad(offset);
+        uint64_t orig = Process::readQuad(offset);
         orig &= 0xFFFFFFFFFFFF0000;
         orig |= data;
         ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
@@ -474,7 +442,7 @@ void NormalProcess::writeWord (uint32_t offset, uint16_t data)
 void NormalProcess::writeByte (uint32_t offset, uint8_t data)
 {
     #ifdef HAVE_64_BIT
-        uint64_t orig = readQuad(offset);
+        uint64_t orig = Process::readQuad(offset);
         orig &= 0xFFFFFFFFFFFFFF00;
         orig |= data;
         ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
@@ -536,7 +504,7 @@ const std::string NormalProcess::readCString (uint32_t offset)
     char r;
     do
     {
-        r = readByte(offset+counter);
+        r = Process::readByte(offset+counter);
         temp_c[counter] = r;
         counter++;
     } while (r && counter < 255);
@@ -555,7 +523,7 @@ struct _Rep_base
 size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
     _Rep_base header;
-    offset = readDWord(offset);
+    offset = Process::readDWord(offset);
     read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
     size_t read_real = min((size_t)header._M_length, bufcapacity-1);// keep space for null termination
     read(offset,read_real,(uint8_t * )buffer);
@@ -567,7 +535,7 @@ const string NormalProcess::readSTLString (uint32_t offset)
 {
     _Rep_base header;
 
-    offset = readDWord(offset);
+    offset = Process::readDWord(offset);
     read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
 
     // FIXME: use char* everywhere, avoid string
@@ -580,8 +548,8 @@ const string NormalProcess::readSTLString (uint32_t offset)
 
 string NormalProcess::readClassName (uint32_t vptr)
 {
-    int typeinfo = readDWord(vptr - 0x4);
-    int typestring = readDWord(typeinfo + 0x4);
+    int typeinfo = Process::readDWord(vptr - 0x4);
+    int typestring = Process::readDWord(typeinfo + 0x4);
     string raw = readCString(typestring);
     size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
     size_t end = raw.length();

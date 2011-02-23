@@ -29,84 +29,131 @@ distribution.
 #include <string.h>
 using namespace DFHack;
 
+namespace
+{
+    class NormalProcess : public Process
+    {
+        private:
+            VersionInfo * my_descriptor;
+            HANDLE my_handle;
+            HANDLE my_main_thread;
+            uint32_t my_pid;
+            string memFile;
+            bool attached;
+            bool suspended;
+            bool identified;
+            uint32_t STLSTR_buf_off;
+            uint32_t STLSTR_size_off;
+            uint32_t STLSTR_cap_off;
+            IMAGE_NT_HEADERS pe_header;
+            IMAGE_SECTION_HEADER * sections;
+            uint32_t base;
+        public:
+            NormalProcess(uint32_t pid, std::vector <VersionInfo *> & known_versions);
+            ~NormalProcess();
+            bool attach();
+            bool detach();
+
+            bool suspend();
+            bool asyncSuspend();
+            bool resume();
+            bool forceresume();
+
+            void readQuad(const uint32_t address, uint64_t & value);
+            void writeQuad(const uint32_t address, const uint64_t value);
+
+            void readDWord(const uint32_t address, uint32_t & value);
+            void writeDWord(const uint32_t address, const uint32_t value);
+
+            void readFloat(const uint32_t address, float & value);
+
+            void readWord(const uint32_t address, uint16_t & value);
+            void writeWord(const uint32_t address, const uint16_t value);
+
+            void readByte(const uint32_t address, uint8_t & value);
+            void writeByte(const uint32_t address, const uint8_t value);
+
+            void read( uint32_t address, uint32_t length, uint8_t* buffer);
+            void write(uint32_t address, uint32_t length, uint8_t* buffer);
+
+            const std::string readSTLString (uint32_t offset);
+            size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
+            void writeSTLString(const uint32_t address, const std::string writeString){};
+            // get class name of an object with rtti/type info
+            std::string readClassName(uint32_t vptr);
+
+            const std::string readCString (uint32_t offset);
+
+            bool isSuspended();
+            bool isAttached();
+            bool isIdentified();
+
+            bool getThreadIDs(std::vector<uint32_t> & threads );
+            void getMemRanges(std::vector<t_memrange> & ranges );
+            VersionInfo *getDescriptor();
+            int getPID();
+            std::string getPath();
+            // get module index by name and version. bool 1 = error
+            bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) { OUTPUT=0; return false;};
+            // get the SHM start if available
+            char * getSHMStart (void){return 0;};
+            // set a SHM command and wait for a response
+            bool SetAndWait (uint32_t state){return false;};
+    };
+
+}
+
 Process* DFHack::createNormalProcess(uint32_t pid, vector <VersionInfo *> & known_versions)
 {
     return new NormalProcess(pid, known_versions);
 }
 
-class NormalProcess::Private
-{
-    public:
-        Private()
-        {
-            my_descriptor = NULL;
-            my_handle = NULL;
-            my_main_thread = NULL;
-            my_pid = 0;
-            attached = false;
-            suspended = false;
-            base = 0;
-            sections = 0;
-        };
-        ~Private(){};
-        VersionInfo * my_descriptor;
-        HANDLE my_handle;
-        HANDLE my_main_thread;
-        uint32_t my_pid;
-        string memFile;
-        bool attached;
-        bool suspended;
-        bool identified;
-        uint32_t STLSTR_buf_off;
-        uint32_t STLSTR_size_off;
-        uint32_t STLSTR_cap_off;
-        IMAGE_NT_HEADERS pe_header;
-        IMAGE_SECTION_HEADER * sections;
-        uint32_t base;
-};
-
 NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versions)
-: d(new Private())
+: my_pid(pid)
 {
+    my_descriptor = NULL;
+    my_main_thread = NULL;
+    attached = false;
+    suspended = false;
+    base = 0;
+    sections = 0;
+
     HMODULE hmod = NULL;
     DWORD needed;
-    HANDLE hProcess;
     bool found = false;
 
-    d->identified = false;
+    identified = false;
     // open process
-    hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, pid );
-    if (NULL == hProcess)
+    my_handle = OpenProcess( PROCESS_ALL_ACCESS, FALSE, my_pid );
+    if (NULL == my_handle)
         return;
 
     // try getting the first module of the process
-    if(EnumProcessModules(hProcess, &hmod, sizeof(hmod), &needed) == 0)
+    if(EnumProcessModules(my_handle, &hmod, sizeof(hmod), &needed) == 0)
     {
-        CloseHandle(hProcess);
+        CloseHandle(my_handle);
         // cout << "EnumProcessModules fail'd" << endl;
         return; //if enumprocessModules fails, give up
     }
 
     // got base ;)
-    d->base = (uint32_t)hmod;
+    base = (uint32_t)hmod;
 
-    // temporarily assign this to allow some checks
-    d->my_handle = hProcess;
-    d->my_main_thread = 0;
+    my_main_thread = 0;
     // read from this process
     try
     {
-        uint32_t pe_offset = Process::readDWord(d->base+0x3C);
-        read(d->base + pe_offset                       , sizeof(d->pe_header), (uint8_t *)&d->pe_header);
-        const size_t sectionsSize = sizeof(IMAGE_SECTION_HEADER) * d->pe_header.FileHeader.NumberOfSections;
-        d->sections = (IMAGE_SECTION_HEADER *) malloc(sectionsSize); 
-        read(d->base + pe_offset + sizeof(d->pe_header), sectionsSize, (uint8_t *)d->sections);
-        d->my_handle = 0;
+        uint32_t pe_offset = Process::readDWord(base+0x3C);
+        read(base + pe_offset                       , sizeof(pe_header), (uint8_t *)&pe_header);
+        const size_t sectionsSize = sizeof(IMAGE_SECTION_HEADER) * pe_header.FileHeader.NumberOfSections;
+        sections = (IMAGE_SECTION_HEADER *) malloc(sectionsSize);
+        read(base + pe_offset + sizeof(pe_header), sectionsSize, (uint8_t *)sections);
+        my_handle = 0;
     }
     catch (exception &)
     {
-        CloseHandle(hProcess);
-        d->my_handle = 0;
+        CloseHandle(my_handle);
+        my_handle = 0;
         return;
     }
 
@@ -127,32 +174,30 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
         {
             continue;
         }
-        if (pe_timestamp != d->pe_header.FileHeader.TimeDateStamp)
+        if (pe_timestamp != pe_header.FileHeader.TimeDateStamp)
             continue;
 
         // all went well
         {
             printf("Match found! Using version %s.\n", (*it)->getVersion().c_str());
-            d->identified = true;
+            identified = true;
             // give the process a data model and memory layout fixed for the base of first module
-            VersionInfo *m = new VersionInfo(**it);
-            m->RebaseAll(d->base);
+            my_descriptor  = new VersionInfo(**it);
+            my_descriptor->RebaseAll(base);
             // keep track of created memory_info object so we can destroy it later
-            d->my_descriptor = m;
-            m->setParentProcess(this);
+            my_descriptor->setParentProcess(this);
             // process is responsible for destroying its data model
-            d->my_pid = pid;
-            d->my_handle = hProcess;
-            d->identified = true;
+            my_handle = my_handle;
+            identified = true;
 
             // TODO: detect errors in thread enumeration
             vector<uint32_t> threads;
             getThreadIDs( threads );
-            d->my_main_thread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads[0]);
-            OffsetGroup * strGrp = m->getGroup("string")->getGroup("MSVC");
-            d->STLSTR_buf_off = strGrp->getOffset("buffer");
-            d->STLSTR_size_off = strGrp->getOffset("size");
-            d->STLSTR_cap_off = strGrp->getOffset("capacity");
+            my_main_thread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads[0]);
+            OffsetGroup * strGrp = my_descriptor->getGroup("string")->getGroup("MSVC");
+            STLSTR_buf_off = strGrp->getOffset("buffer");
+            STLSTR_size_off = strGrp->getOffset("size");
+            STLSTR_cap_off = strGrp->getOffset("capacity");
             found = true;
             break; // break the iterator loop
         }
@@ -160,7 +205,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
     // close handle of processes that aren't DF
     if(!found)
     {
-        CloseHandle(hProcess);
+        CloseHandle(my_handle);
     }
 }
 /*
@@ -168,47 +213,47 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
 
 NormalProcess::~NormalProcess()
 {
-    if(d->attached)
+    if(attached)
     {
         detach();
     }
     // destroy our rebased copy of the memory descriptor
-    delete d->my_descriptor;
-    if(d->my_handle != NULL)
+    delete my_descriptor;
+    if(my_handle != NULL)
     {
-        CloseHandle(d->my_handle);
+        CloseHandle(my_handle);
     }
-    if(d->my_main_thread != NULL)
+    if(my_main_thread != NULL)
     {
-        CloseHandle(d->my_main_thread);
+        CloseHandle(my_main_thread);
     }
-    if(d->sections != NULL)
-        free(d->sections);
+    if(sections != NULL)
+        free(sections);
     delete d;
 }
 
 VersionInfo * NormalProcess::getDescriptor()
 {
-    return d->my_descriptor;
+    return my_descriptor;
 }
 
 int NormalProcess::getPID()
 {
-    return d->my_pid;
+    return my_pid;
 }
 
 bool NormalProcess::isSuspended()
 {
-    return d->suspended;
+    return suspended;
 }
 bool NormalProcess::isAttached()
 {
-    return d->attached;
+    return attached;
 }
 
 bool NormalProcess::isIdentified()
 {
-    return d->identified;
+    return identified;
 }
 
 bool NormalProcess::asyncSuspend()
@@ -218,49 +263,49 @@ bool NormalProcess::asyncSuspend()
 
 bool NormalProcess::suspend()
 {
-    if(!d->attached)
+    if(!attached)
         return false;
-    if(d->suspended)
+    if(suspended)
     {
         return true;
     }
-    SuspendThread(d->my_main_thread);
-    d->suspended = true;
+    SuspendThread(my_main_thread);
+    suspended = true;
     return true;
 }
 
 bool NormalProcess::forceresume()
 {
-    if(!d->attached)
+    if(!attached)
         return false;
-    while (ResumeThread(d->my_main_thread) > 1);
-    d->suspended = false;
+    while (ResumeThread(my_main_thread) > 1);
+    suspended = false;
     return true;
 }
 
 
 bool NormalProcess::resume()
 {
-    if(!d->attached)
+    if(!attached)
         return false;
-    if(!d->suspended)
+    if(!suspended)
     {
         return true;
     }
-    ResumeThread(d->my_main_thread);
-    d->suspended = false;
+    ResumeThread(my_main_thread);
+    suspended = false;
     return true;
 }
 
 bool NormalProcess::attach()
 {
-    if(d->attached)
+    if(attached)
     {
-        if(!d->suspended)
+        if(!suspended)
             return suspend();
         return true;
     }
-    d->attached = true;
+    attached = true;
     suspend();
 
     return true;
@@ -269,9 +314,9 @@ bool NormalProcess::attach()
 
 bool NormalProcess::detach()
 {
-    if(!d->attached) return true;
+    if(!attached) return true;
     resume();
-    d->attached = false;
+    attached = false;
     return true;
 }
 
@@ -295,7 +340,7 @@ bool NormalProcess::getThreadIDs(vector<uint32_t> & threads )
 
     do
     {
-        if( te32.th32OwnerProcessID == d->my_pid )
+        if( te32.th32OwnerProcessID == my_pid )
         {
             threads.push_back(te32.th32ThreadID);
         }
@@ -356,9 +401,9 @@ void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
     GetSystemInfo(&si);
     uint64_t PageSize = si.dwPageSize;
     // enumerate heaps
-    HeapNodes(d->my_pid, heaps);
+    HeapNodes(my_pid, heaps);
     // go through all the VM regions, convert them to our internal format
-    while (VirtualQueryEx(this->d->my_handle, (const void*) (movingStart), &MBI, sizeof(MBI)) == sizeof(MBI))
+    while (VirtualQueryEx(this->my_handle, (const void*) (movingStart), &MBI, sizeof(MBI)) == sizeof(MBI))
     {
         movingStart = ((uint64_t)MBI.BaseAddress + MBI.RegionSize);
         if(movingStart % PageSize != 0)
@@ -373,7 +418,7 @@ void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
         temp.write   = MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_READWRITE;
         temp.execute = MBI.Protect & PAGE_EXECUTE_READ || MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_EXECUTE;
         temp.valid = true;
-        if(!GetModuleBaseName(this->d->my_handle, (HMODULE) temp.start, temp.name, 1024))
+        if(!GetModuleBaseName(this->my_handle, (HMODULE) temp.start, temp.name, 1024))
         {
             if(nameMap.count(temp.start))
             {
@@ -402,18 +447,18 @@ void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
         else
         {
             // this is our executable! (could be generalized to pull segments from libs, but whatever)
-            if(d->base == temp.start)
+            if(base == temp.start)
             {
-                for(int i = 0; i < d->pe_header.FileHeader.NumberOfSections; i++)
+                for(int i = 0; i < pe_header.FileHeader.NumberOfSections; i++)
                 {
                     char sectionName[9];
-                    memcpy(sectionName,d->sections[i].Name,8);
+                    memcpy(sectionName,sections[i].Name,8);
                     sectionName[8] = 0;
                     string nm;
                     nm.append(temp.name);
                     nm.append(" : ");
                     nm.append(sectionName);
-                    nameMap[temp.start + d->sections[i].VirtualAddress] = nm;
+                    nameMap[temp.start + sections[i].VirtualAddress] = nm;
                 }
             }
             else
@@ -425,73 +470,71 @@ void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
 
 void NormalProcess::readByte (const uint32_t offset,uint8_t &result)
 {
-    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint8_t), NULL))
+    if(!ReadProcessMemory(my_handle, (int*) offset, &result, sizeof(uint8_t), NULL))
         throw Error::MemoryAccessDenied();
 }
 
 void NormalProcess::readWord (const uint32_t offset, uint16_t &result)
 {
-    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint16_t), NULL))
+    if(!ReadProcessMemory(my_handle, (int*) offset, &result, sizeof(uint16_t), NULL))
         throw Error::MemoryAccessDenied();
 }
 
 void NormalProcess::readDWord (const uint32_t offset, uint32_t &result)
 {
-    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint32_t), NULL))
+    if(!ReadProcessMemory(my_handle, (int*) offset, &result, sizeof(uint32_t), NULL))
         throw Error::MemoryAccessDenied();
 }
 
 void NormalProcess::readQuad (const uint32_t offset, uint64_t &result)
 {
-    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(uint64_t), NULL))
+    if(!ReadProcessMemory(my_handle, (int*) offset, &result, sizeof(uint64_t), NULL))
         throw Error::MemoryAccessDenied();
 }
 
 void NormalProcess::readFloat (const uint32_t offset, float &result)
 {
-    if(!ReadProcessMemory(d->my_handle, (int*) offset, &result, sizeof(float), NULL))
+    if(!ReadProcessMemory(my_handle, (int*) offset, &result, sizeof(float), NULL))
         throw Error::MemoryAccessDenied();
 }
 
 void NormalProcess::read (const uint32_t offset, uint32_t size, uint8_t *target)
 {
-    if(!ReadProcessMemory(d->my_handle, (int*) offset, target, size, NULL))
+    if(!ReadProcessMemory(my_handle, (int*) offset, target, size, NULL))
         throw Error::MemoryAccessDenied();
 }
 
 // WRITING
 void NormalProcess::writeQuad (const uint32_t offset, uint64_t data)
 {
-    if(!WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(data), NULL))
+    if(!WriteProcessMemory(my_handle, (int*) offset, &data, sizeof(data), NULL))
         throw Error::MemoryAccessDenied();
 }
 
 void NormalProcess::writeDWord (const uint32_t offset, uint32_t data)
 {
-    if(!WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(data), NULL))
+    if(!WriteProcessMemory(my_handle, (int*) offset, &data, sizeof(data), NULL))
         throw Error::MemoryAccessDenied();
 }
 
 // using these is expensive.
 void NormalProcess::writeWord (uint32_t offset, uint16_t data)
 {
-    if(!WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(data), NULL))
+    if(!WriteProcessMemory(my_handle, (int*) offset, &data, sizeof(data), NULL))
         throw Error::MemoryAccessDenied();
 }
 
 void NormalProcess::writeByte (uint32_t offset, uint8_t data)
 {
-    if(!WriteProcessMemory(d->my_handle, (int*) offset, &data, sizeof(data), NULL))
+    if(!WriteProcessMemory(my_handle, (int*) offset, &data, sizeof(data), NULL))
         throw Error::MemoryAccessDenied();
 }
 
 void NormalProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
 {
-    if(!WriteProcessMemory(d->my_handle, (int*) offset, source, size, NULL))
+    if(!WriteProcessMemory(my_handle, (int*) offset, source, size, NULL))
         throw Error::MemoryAccessDenied();
 }
-
-
 
 ///FIXME: reduce use of temporary objects
 const string NormalProcess::readCString (const uint32_t offset)
@@ -499,7 +542,7 @@ const string NormalProcess::readCString (const uint32_t offset)
     string temp;
     char temp_c[256];
     SIZE_T read;
-    if(!ReadProcessMemory(d->my_handle, (int *) offset, temp_c, 254, &read))
+    if(!ReadProcessMemory(my_handle, (int *) offset, temp_c, 254, &read))
         throw Error::MemoryAccessDenied();
     // needs to be 254+1 byte for the null term
     temp_c[read+1] = 0;
@@ -509,9 +552,10 @@ const string NormalProcess::readCString (const uint32_t offset)
 
 size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
-    uint32_t start_offset = offset + d->STLSTR_buf_off;
-    size_t length = Process::readDWord(offset + d->STLSTR_size_off);
-    size_t capacity = Process::readDWord(offset + d->STLSTR_cap_off);
+    uint32_t start_offset = offset + STLSTR_buf_off;
+    size_t length = Process::readDWord(offset + STLSTR_size_off);
+    size_t capacity = Process::readDWord(offset + STLSTR_cap_off);
+
     size_t read_real = min(length, bufcapacity-1);// keep space for null termination
 
     // read data from inside the string structure
@@ -531,9 +575,10 @@ size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufc
 
 const string NormalProcess::readSTLString (uint32_t offset)
 {
-    uint32_t start_offset = offset + d->STLSTR_buf_off;
-    size_t length = Process::readDWord(offset + d->STLSTR_size_off);
-    size_t capacity = Process::readDWord(offset + d->STLSTR_cap_off);
+    uint32_t start_offset = offset + STLSTR_buf_off;
+    size_t length = Process::readDWord(offset + STLSTR_size_off);
+    size_t capacity = Process::readDWord(offset + STLSTR_cap_off);
+
     char * temp = new char[capacity+1];
 
     // read data from inside the string structure
@@ -561,13 +606,14 @@ string NormalProcess::readClassName (uint32_t vptr)
     raw.resize(raw.length() - 2);// trim @@ from end
     return raw;
 }
+
 string NormalProcess::getPath()
 {
     HMODULE hmod;
     DWORD junk;
     char String[255];
-    EnumProcessModules(d->my_handle, &hmod, 1 * sizeof(HMODULE), &junk); //get the module from the handle
-    GetModuleFileNameEx(d->my_handle,hmod,String,sizeof(String)); //get the filename from the module
+    EnumProcessModules(my_handle, &hmod, 1 * sizeof(HMODULE), &junk); //get the module from the handle
+    GetModuleFileNameEx(my_handle,hmod,String,sizeof(String)); //get the filename from the module
     string out(String);
     return(out.substr(0,out.find_last_of("\\")));
 }

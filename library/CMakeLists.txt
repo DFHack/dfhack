@@ -29,8 +29,9 @@ include_directories (${CMAKE_SOURCE_DIR}/library/private/)
 SET(PROJECT_HDRS_INTERNAL
     private/ContextShared.h
     private/Internal.h
-    private/ProcessInternal.h
     private/SHMProcess.h
+    private/LinuxProcess.h
+    private/WindowsProcess.h
 )
 
 SET(PROJECT_HDRS
@@ -141,6 +142,7 @@ include/dfhack/DFstdint_win.h
 
 SET(PROJECT_SRCS_LINUX
 DFProcess-linux.cpp
+DFProcess-linux-base.cpp
 DFProcess-linux-SHM.cpp
 DFProcess-linux-wine.cpp
 modules/WindowIO-linux.cpp

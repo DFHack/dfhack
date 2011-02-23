@@ -22,42 +22,14 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "Internal.h"
-#include "ProcessInternal.h"
+#include "LinuxProcess.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include <errno.h>
 #include <sys/ptrace.h>
 using namespace DFHack;
 
-class NormalProcess::Private
-{
-    public:
-    Private(Process * self_)
-    {
-        my_descriptor = NULL;
-        my_handle = NULL;
-        my_pid = 0;
-        attached = false;
-        suspended = false;
-        memFileHandle = 0;
-        self = self_;
-    };
-    ~Private(){};
-    Window* my_window;
-    VersionInfo * my_descriptor;
-    pid_t my_handle;
-    uint32_t my_pid;
-    string memFile;
-    int memFileHandle;
-    bool attached;
-    bool suspended;
-    bool identified;
-    Process * self;
-    bool validate(char * exe_file, uint32_t pid, char * mem_file, vector <VersionInfo *> & known_versions);
-};
-
-NormalProcess::NormalProcess(uint32_t pid, vector< VersionInfo* >& known_versions)
-: d(new Private(this))
+NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versions) : LinuxProcessBase(pid)
 {
     char dir_name [256];
     char exe_link_name [256];
@@ -89,26 +61,12 @@ NormalProcess::NormalProcess(uint32_t pid, vector< VersionInfo* >& known_version
     if (strstr(target_name, "dwarfort.exe") != 0 || strstr(target_name,"Dwarf_Fortress") != 0)
     {
         // create linux process, add it to the vector
-        d->identified = d->validate(target_name,pid,mem_name,known_versions );
+        d->identified = validate(target_name,pid,mem_name,known_versions);
         return;
     }
 }
 
-bool NormalProcess::isSuspended()
-{
-    return d->suspended;
-}
-bool NormalProcess::isAttached()
-{
-    return d->attached;
-}
-
-bool NormalProcess::isIdentified()
-{
-    return d->identified;
-}
-
-bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFile, vector <VersionInfo *> & known_versions)
+bool NormalProcess::validate(char * exe_file,uint32_t pid, char * memFile, vector <VersionInfo *> & known_versions)
 {
     md5wrapper md5;
     // get hash of the running DF process
@@ -120,26 +78,19 @@ bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFi
     {
         try
         {
-            //cout << hash << " ?= " << (*it)->getMD5() << endl;
-            if(hash == (*it)->getMD5()) // are the md5 hashes the same?
+            if (hash == (*it)->getMD5()) // are the md5 hashes the same?
             {
-                VersionInfo * m = *it;
-                if (OS_LINUX == m->getOS())
+                if (OS_LINUX == (*it)->getOS())
                 {
-                    VersionInfo *m2 = new VersionInfo(*m);
-                    my_descriptor = m2;
-                    m2->setParentProcess(dynamic_cast<Process *>( self ));
-                    my_handle = my_pid = pid;
+                    VersionInfo *m = new VersionInfo(**it);
+                    // keep track of created memory_info object so we can destroy it later
+                    d->my_descriptor = m;
+                    m->setParentProcess(this);
+                    // tell Process about the /proc/PID/mem file
+                    d->memFile = memFile;
+                    d->identified = true;
+                    return true;
                 }
-                else
-                {
-                    // some error happened, continue with next process
-                    continue;
-                }
-                // tell NormalProcess about the /proc/PID/mem file
-                this->memFile = memFile;
-                identified = true;
-                return true;
             }
         }
         catch (Error::AllMemdef&)
@@ -150,368 +101,6 @@ bool NormalProcess::Private::validate(char * exe_file,uint32_t pid, char * memFi
     return false;
 }
 
-NormalProcess::~NormalProcess()
-{
-    if(d->attached)
-    {
-        detach();
-    }
-    // destroy our copy of the memory descriptor
-    if(d->my_descriptor)
-        delete d->my_descriptor;
-    delete d;
-}
-
-VersionInfo * NormalProcess::getDescriptor()
-{
-    return d->my_descriptor;
-}
-
-int NormalProcess::getPID()
-{
-    return d->my_pid;
-}
-
-//FIXME: implement
-bool NormalProcess::getThreadIDs(vector<uint32_t> & threads )
-{
-    return false;
-}
-
-//FIXME: cross-reference with ELF segment entries?
-void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
-{
-    char buffer[1024];
-    char permissions[5]; // r/-, w/-, x/-, p/s, 0
-
-    sprintf(buffer, "/proc/%lu/maps", d->my_pid);
-    FILE *mapFile = ::fopen(buffer, "r");
-    uint64_t offset, device1, device2, node;
-
-    while (fgets(buffer, 1024, mapFile))
-    {
-        t_memrange temp;
-        temp.name[0] = 0;
-        sscanf(buffer, "%llx-%llx %s %llx %2llu:%2llu %llu %s",
-               &temp.start,
-               &temp.end,
-               (char*)&permissions,
-               &offset, &device1, &device2, &node,
-               (char*)&temp.name);
-        temp.read = permissions[0] == 'r';
-        temp.write = permissions[1] == 'w';
-        temp.execute = permissions[2] == 'x';
-        temp.valid = true;
-        ranges.push_back(temp);
-    }
-}
-
-bool NormalProcess::asyncSuspend()
-{
-    return suspend();
-}
-
-bool NormalProcess::suspend()
-{
-    int status;
-    if(!d->attached)
-        return false;
-    if(d->suspended)
-        return true;
-    if (kill(d->my_handle, SIGSTOP) == -1)
-    {
-        // no, we got an error
-        perror("kill SIGSTOP error");
-        return false;
-    }
-    while(true)
-    {
-        // we wait on the pid
-        pid_t w = waitpid(d->my_handle, &status, 0);
-        if (w == -1)
-        {
-            // child died
-            perror("DF exited during suspend call");
-            return false;
-        }
-        // stopped -> let's continue
-        if (WIFSTOPPED(status))
-        {
-            break;
-        }
-    }
-    d->suspended = true;
-    return true;
-}
-
-bool NormalProcess::forceresume()
-{
-    return resume();
-}
-
-bool NormalProcess::resume()
-{
-    if(!d->attached)
-        return false;
-    if(!d->suspended)
-        return true;
-    if (ptrace(PTRACE_CONT, d->my_handle, NULL, NULL) == -1)
-    {
-        // no, we got an error
-        perror("ptrace resume error");
-        return false;
-    }
-    d->suspended = false;
-    return true;
-}
-
-
-bool NormalProcess::attach()
-{
-    int status;
-    if(d->attached)
-    {
-        if(!d->suspended)
-            return suspend();
-        return true;
-    }
-    // can we attach?
-    if (ptrace(PTRACE_ATTACH , d->my_handle, NULL, NULL) == -1)
-    {
-        // no, we got an error
-        perror("ptrace attach error");
-        cerr << "attach failed on pid " << d->my_handle << endl;
-        return false;
-    }
-    while(true)
-    {
-        // we wait on the pid
-        pid_t w = waitpid(d->my_handle, &status, 0);
-        if (w == -1)
-        {
-            // child died
-            perror("wait inside attach()");
-            return false;
-        }
-        // stopped -> let's continue
-        if (WIFSTOPPED(status))
-        {
-            break;
-        }
-    }
-    d->suspended = true;
-
-    int proc_pid_mem = open(d->memFile.c_str(),O_RDONLY);
-    if(proc_pid_mem == -1)
-    {
-        ptrace(PTRACE_DETACH, d->my_handle, NULL, NULL);
-        cerr << "couldn't open /proc/" << d->my_handle << "/mem" << endl;
-        perror("open(memFile.c_str(),O_RDONLY)");
-        return false;
-    }
-    else
-    {
-        d->attached = true;
-
-        d->memFileHandle = proc_pid_mem;
-        return true; // we are attached
-    }
-}
-
-bool NormalProcess::detach()
-{
-    if(!d->attached) return true;
-    if(!d->suspended) suspend();
-    int result = 0;
-    // close /proc/PID/mem
-    result = close(d->memFileHandle);
-    if(result == -1)
-    {
-        cerr << "couldn't close /proc/"<< d->my_handle <<"/mem" << endl;
-        perror("mem file close");
-        return false;
-    }
-    else
-    {
-        // detach
-        result = ptrace(PTRACE_DETACH, d->my_handle, NULL, NULL);
-        if(result == -1)
-        {
-            cerr << "couldn't detach from process pid" << d->my_handle << endl;
-            perror("ptrace detach");
-            return false;
-        }
-        else
-        {
-            d->attached = false;
-            return true;
-        }
-    }
-}
-
-
-// danger: uses recursion!
-void NormalProcess::read (const uint32_t offset, const uint32_t size, uint8_t *target)
-{
-    if(size == 0) return;
-
-    ssize_t result;
-    result = pread(d->memFileHandle, target,size,offset);
-    if(result != size)
-    {
-        if(result == -1)
-        {
-            cerr << "pread failed: can't read 0x" << hex << size << " bytes at address 0x" << offset << endl;
-            cerr << "errno: " << errno << endl;
-            errno = 0;
-            throw Error::MemoryAccessDenied();
-        }
-        else
-        {
-            this->read(offset + result, size - result, target + result);
-        }
-    }
-}
-
-void NormalProcess::readByte (const uint32_t offset, uint8_t &val )
-{
-    read(offset, 1, &val);
-}
-
-void NormalProcess::readWord (const uint32_t offset, uint16_t &val)
-{
-    read(offset, 2, (uint8_t *) &val);
-}
-
-void NormalProcess::readDWord (const uint32_t offset, uint32_t &val)
-{
-    read(offset, 4, (uint8_t *) &val);
-}
-
-void NormalProcess::readFloat (const uint32_t offset, float &val)
-{
-    read(offset, 4, (uint8_t *) &val);
-}
-
-void NormalProcess::readQuad (const uint32_t offset, uint64_t &val)
-{
-    read(offset, 8, (uint8_t *) &val);
-}
-/*
- * WRITING
- */
-
-void NormalProcess::writeQuad (uint32_t offset, const uint64_t data)
-{
-    #ifdef HAVE_64_BIT
-        ptrace(PTRACE_POKEDATA,d->my_handle, offset, data);
-    #else
-        ptrace(PTRACE_POKEDATA,d->my_handle, offset, (uint32_t) data);
-        ptrace(PTRACE_POKEDATA,d->my_handle, offset+4, (uint32_t) (data >> 32));
-    #endif
-}
-
-void NormalProcess::writeDWord (uint32_t offset, uint32_t data)
-{
-    #ifdef HAVE_64_BIT
-        uint64_t orig = Process::readQuad(offset);
-        orig &= 0xFFFFFFFF00000000;
-        orig |= data;
-        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
-    #else
-        ptrace(PTRACE_POKEDATA,d->my_handle, offset, data);
-    #endif
-}
-
-// using these is expensive.
-void NormalProcess::writeWord (uint32_t offset, uint16_t data)
-{
-    #ifdef HAVE_64_BIT
-        uint64_t orig = Process::readQuad(offset);
-        orig &= 0xFFFFFFFFFFFF0000;
-        orig |= data;
-        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
-    #else
-        uint32_t orig = readDWord(offset);
-        orig &= 0xFFFF0000;
-        orig |= data;
-        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
-    #endif
-}
-
-void NormalProcess::writeByte (uint32_t offset, uint8_t data)
-{
-    #ifdef HAVE_64_BIT
-        uint64_t orig = Process::readQuad(offset);
-        orig &= 0xFFFFFFFFFFFFFF00;
-        orig |= data;
-        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
-    #else
-        uint32_t orig = readDWord(offset);
-        orig &= 0xFFFFFF00;
-        orig |= data;
-        ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
-    #endif
-}
-
-// blah. I hate the kernel devs for crippling /proc/PID/mem. THIS IS RIDICULOUS
-void NormalProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
-{
-    uint32_t indexptr = 0;
-    while (size > 0)
-    {
-        #ifdef HAVE_64_BIT
-            // quad!
-            if(size >= 8)
-            {
-                writeQuad(offset, *(uint64_t *) (source + indexptr));
-                offset +=8;
-                indexptr +=8;
-                size -=8;
-            }
-            else
-        #endif
-        // default: we push 4 bytes
-        if(size >= 4)
-        {
-            writeDWord(offset, *(uint32_t *) (source + indexptr));
-            offset +=4;
-            indexptr +=4;
-            size -=4;
-        }
-        // last is either three or 2 bytes
-        else if(size >= 2)
-        {
-            writeWord(offset, *(uint16_t *) (source + indexptr));
-            offset +=2;
-            indexptr +=2;
-            size -=2;
-        }
-        // finishing move
-        else if(size == 1)
-        {
-            writeByte(offset, *(uint8_t *) (source + indexptr));
-            return;
-        }
-    }
-}
-
-const std::string NormalProcess::readCString (uint32_t offset)
-{
-    std::string temp;
-    char temp_c[256];
-    int counter = 0;
-    char r;
-    do
-    {
-        r = Process::readByte(offset+counter);
-        temp_c[counter] = r;
-        counter++;
-    } while (r && counter < 255);
-    temp_c[counter] = 0;
-    temp = temp_c;
-    return temp;
-}
 
 struct _Rep_base
 {
@@ -554,16 +143,4 @@ string NormalProcess::readClassName (uint32_t vptr)
     size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
     size_t end = raw.length();
     return raw.substr(start,end-start);
-}
-string NormalProcess::getPath()
-{
-    char cwd_name[256];
-    char target_name[1024];
-    int target_result;
-
-    sprintf(cwd_name,"/proc/%d/cwd", getPID());
-    // resolve /proc/PID/exe link
-    target_result = readlink(cwd_name, target_name, sizeof(target_name));
-    target_name[target_result] = '\0';
-    return(string(target_name));
 }

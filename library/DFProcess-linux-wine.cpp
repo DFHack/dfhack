@@ -30,7 +30,6 @@ distribution.
 #include <stdio.h>
 using namespace DFHack;
 
-
 WineProcess::WineProcess(uint32_t pid, vector <VersionInfo *> & known_versions) : LinuxProcessBase(pid)
 {
     char dir_name [256];
@@ -41,8 +40,8 @@ WineProcess::WineProcess(uint32_t pid, vector <VersionInfo *> & known_versions) 
     char target_name[1024];
     int target_result;
 
-    d->identified = false;
-    d->my_descriptor = 0;
+    identified = false;
+    my_descriptor = 0;
 
     sprintf(dir_name,"/proc/%d/", pid);
     sprintf(exe_link_name,"/proc/%d/exe", pid);
@@ -78,7 +77,7 @@ WineProcess::WineProcess(uint32_t pid, vector <VersionInfo *> & known_versions) 
             sprintf(exe_link,"%s/%s",target_name,cmdline.c_str());
 
             // create wine process, add it to the vector
-            d->identified = validate(exe_link,pid,mem_name,known_versions);
+            identified = validate(exe_link,pid,mem_name,known_versions);
             return;
         }
     }
@@ -101,15 +100,14 @@ bool WineProcess::validate(char * exe_file,uint32_t pid, char * memFile, vector 
             {
                 if (OS_WINDOWS == (*it)->getOS())
                 {
-                    VersionInfo *m = new VersionInfo(**it);
                     // keep track of created memory_info object so we can destroy it later
-                    d->my_descriptor = m;
-                    m->setParentProcess(this);
+                    my_descriptor = new VersionInfo(**it);
+                    my_descriptor->setParentProcess(this);
                     // tell Process about the /proc/PID/mem file
-                    d->memFile = memFile;
-                    d->identified = true;
+                    memFile = memFile;
+                    identified = true;
 
-                    OffsetGroup * strGrp = m->getGroup("string")->getGroup("MSVC");
+                    OffsetGroup * strGrp = my_descriptor->getGroup("string")->getGroup("MSVC");
                     STLSTR_buf_off = strGrp->getOffset("buffer");
                     STLSTR_size_off = strGrp->getOffset("size");
                     STLSTR_cap_off = strGrp->getOffset("capacity");

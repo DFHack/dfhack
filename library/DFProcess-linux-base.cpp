@@ -29,55 +29,48 @@ distribution.
 #include <sys/ptrace.h>
 using namespace DFHack;
 
-LinuxProcessBase::Private::Private(LinuxProcessBase * self_, pid_t pid)
+LinuxProcessBase::LinuxProcessBase(uint32_t pid)
+: my_pid(pid)
 {
     my_descriptor = NULL;
-    my_pid = pid;
     attached = false;
     suspended = false;
     memFileHandle = 0;
-    self = self_;
-}
-
-LinuxProcessBase::LinuxProcessBase(uint32_t pid)
-: d(new Private(this, pid))
-{
 }
 
 bool LinuxProcessBase::isSuspended()
 {
-    return d->suspended;
+    return suspended;
 }
 bool LinuxProcessBase::isAttached()
 {
-    return d->attached;
+    return attached;
 }
 
 bool LinuxProcessBase::isIdentified()
 {
-    return d->identified;
+    return identified;
 }
 
 LinuxProcessBase::~LinuxProcessBase()
 {
-    if(d->attached)
+    if(attached)
     {
         detach();
     }
     // destroy our copy of the memory descriptor
-    if(d->my_descriptor)
-        delete d->my_descriptor;
-    delete d;
+    if(my_descriptor)
+        delete my_descriptor;
 }
 
 VersionInfo * LinuxProcessBase::getDescriptor()
 {
-    return d->my_descriptor;
+    return my_descriptor;
 }
 
 int LinuxProcessBase::getPID()
 {
-    return d->my_pid;
+    return my_pid;
 }
 
 //FIXME: implement
@@ -92,7 +85,7 @@ void LinuxProcessBase::getMemRanges( vector<t_memrange> & ranges )
     char buffer[1024];
     char permissions[5]; // r/-, w/-, x/-, p/s, 0
 
-    sprintf(buffer, "/proc/%lu/maps", d->my_pid);
+    sprintf(buffer, "/proc/%lu/maps", my_pid);
     FILE *mapFile = ::fopen(buffer, "r");
     uint64_t offset, device1, device2, node;
 
@@ -122,11 +115,11 @@ bool LinuxProcessBase::asyncSuspend()
 bool LinuxProcessBase::suspend()
 {
     int status;
-    if(!d->attached)
+    if(!attached)
         return false;
-    if(d->suspended)
+    if(suspended)
         return true;
-    if (kill(d->my_pid, SIGSTOP) == -1)
+    if (kill(my_pid, SIGSTOP) == -1)
     {
         // no, we got an error
         perror("kill SIGSTOP error");
@@ -135,7 +128,7 @@ bool LinuxProcessBase::suspend()
     while(true)
     {
         // we wait on the pid
-        pid_t w = waitpid(d->my_pid, &status, 0);
+        pid_t w = waitpid(my_pid, &status, 0);
         if (w == -1)
         {
             // child died
@@ -148,7 +141,7 @@ bool LinuxProcessBase::suspend()
             break;
         }
     }
-    d->suspended = true;
+    suspended = true;
     return true;
 }
 
@@ -159,17 +152,17 @@ bool LinuxProcessBase::forceresume()
 
 bool LinuxProcessBase::resume()
 {
-    if(!d->attached)
+    if(!attached)
         return false;
-    if(!d->suspended)
+    if(!suspended)
         return true;
-    if (ptrace(PTRACE_CONT, d->my_pid, NULL, NULL) == -1)
+    if (ptrace(PTRACE_CONT, my_pid, NULL, NULL) == -1)
     {
         // no, we got an error
         perror("ptrace resume error");
         return false;
     }
-    d->suspended = false;
+    suspended = false;
     return true;
 }
 
@@ -177,24 +170,24 @@ bool LinuxProcessBase::resume()
 bool LinuxProcessBase::attach()
 {
     int status;
-    if(d->attached)
+    if(attached)
     {
-        if(!d->suspended)
+        if(!suspended)
             return suspend();
         return true;
     }
     // can we attach?
-    if (ptrace(PTRACE_ATTACH , d->my_pid, NULL, NULL) == -1)
+    if (ptrace(PTRACE_ATTACH , my_pid, NULL, NULL) == -1)
     {
         // no, we got an error
         perror("ptrace attach error");
-        cerr << "attach failed on pid " << d->my_pid << endl;
+        cerr << "attach failed on pid " << my_pid << endl;
         return false;
     }
     while(true)
     {
         // we wait on the pid
-        pid_t w = waitpid(d->my_pid, &status, 0);
+        pid_t w = waitpid(my_pid, &status, 0);
         if (w == -1)
         {
             // child died
@@ -207,52 +200,52 @@ bool LinuxProcessBase::attach()
             break;
         }
     }
-    d->suspended = true;
+    suspended = true;
 
-    int proc_pid_mem = open(d->memFile.c_str(),O_RDONLY);
+    int proc_pid_mem = open(memFile.c_str(),O_RDONLY);
     if(proc_pid_mem == -1)
     {
-        ptrace(PTRACE_DETACH, d->my_pid, NULL, NULL);
-        cerr << d->memFile << endl;
-        cerr << "couldn't open /proc/" << d->my_pid << "/mem" << endl;
+        ptrace(PTRACE_DETACH, my_pid, NULL, NULL);
+        cerr << memFile << endl;
+        cerr << "couldn't open /proc/" << my_pid << "/mem" << endl;
         perror("open(memFile.c_str(),O_RDONLY)");
         return false;
     }
     else
     {
-        d->attached = true;
+        attached = true;
 
-        d->memFileHandle = proc_pid_mem;
+        memFileHandle = proc_pid_mem;
         return true; // we are attached
     }
 }
 
 bool LinuxProcessBase::detach()
 {
-    if(!d->attached) return true;
-    if(!d->suspended) suspend();
+    if(!attached) return true;
+    if(!suspended) suspend();
     int result = 0;
     // close /proc/PID/mem
-    result = close(d->memFileHandle);
+    result = close(memFileHandle);
     if(result == -1)
     {
-        cerr << "couldn't close /proc/"<< d->my_pid <<"/mem" << endl;
+        cerr << "couldn't close /proc/"<< my_pid <<"/mem" << endl;
         perror("mem file close");
         return false;
     }
     else
     {
         // detach
-        result = ptrace(PTRACE_DETACH, d->my_pid, NULL, NULL);
+        result = ptrace(PTRACE_DETACH, my_pid, NULL, NULL);
         if(result == -1)
         {
-            cerr << "couldn't detach from process pid" << d->my_pid << endl;
+            cerr << "couldn't detach from process pid" << my_pid << endl;
             perror("ptrace detach");
             return false;
         }
         else
         {
-            d->attached = false;
+            attached = false;
             return true;
         }
     }
@@ -268,7 +261,7 @@ void LinuxProcessBase::read (const uint32_t offset, const uint32_t size, uint8_t
     ssize_t remaining = size;
     while (total != size)
     {
-        result = pread(d->memFileHandle, target + total ,remaining,offset + total);
+        result = pread(memFileHandle, target + total ,remaining,offset + total);
         if(result == -1)
         {
             cerr << "pread failed: can't read " << size << " bytes at addres " << offset << endl;
@@ -316,10 +309,10 @@ void LinuxProcessBase::readQuad (const uint32_t offset, uint64_t &val)
 void LinuxProcessBase::writeQuad (uint32_t offset, const uint64_t data)
 {
     #ifdef HAVE_64_BIT
-        ptrace(PTRACE_POKEDATA,d->my_pid, offset, data);
+        ptrace(PTRACE_POKEDATA,my_pid, offset, data);
     #else
-        ptrace(PTRACE_POKEDATA,d->my_pid, offset, (uint32_t) data);
-        ptrace(PTRACE_POKEDATA,d->my_pid, offset+4, (uint32_t) (data >> 32));
+        ptrace(PTRACE_POKEDATA,my_pid, offset, (uint32_t) data);
+        ptrace(PTRACE_POKEDATA,my_pid, offset+4, (uint32_t) (data >> 32));
     #endif
 }
 
@@ -329,9 +322,9 @@ void LinuxProcessBase::writeDWord (uint32_t offset, uint32_t data)
         uint64_t orig = Process::readQuad(offset);
         orig &= 0xFFFFFFFF00000000;
         orig |= data;
-        ptrace(PTRACE_POKEDATA,d->my_pid, offset, orig);
+        ptrace(PTRACE_POKEDATA,my_pid, offset, orig);
     #else
-        ptrace(PTRACE_POKEDATA,d->my_pid, offset, data);
+        ptrace(PTRACE_POKEDATA,my_pid, offset, data);
     #endif
 }
 
@@ -342,12 +335,12 @@ void LinuxProcessBase::writeWord (uint32_t offset, uint16_t data)
         uint64_t orig = Process::readQuad(offset);
         orig &= 0xFFFFFFFFFFFF0000;
         orig |= data;
-        ptrace(PTRACE_POKEDATA,d->my_pid, offset, orig);
+        ptrace(PTRACE_POKEDATA,my_pid, offset, orig);
     #else
         uint32_t orig = readDWord(offset);
         orig &= 0xFFFF0000;
         orig |= data;
-        ptrace(PTRACE_POKEDATA,d->my_pid, offset, orig);
+        ptrace(PTRACE_POKEDATA,my_pid, offset, orig);
     #endif
 }
 
@@ -357,12 +350,12 @@ void LinuxProcessBase::writeByte (uint32_t offset, uint8_t data)
         uint64_t orig = Process::readQuad(offset);
         orig &= 0xFFFFFFFFFFFFFF00;
         orig |= data;
-        ptrace(PTRACE_POKEDATA,d->my_pid, offset, orig);
+        ptrace(PTRACE_POKEDATA,my_pid, offset, orig);
     #else
         uint32_t orig = readDWord(offset);
         orig &= 0xFFFFFF00;
         orig |= data;
-        ptrace(PTRACE_POKEDATA,d->my_pid, offset, orig);
+        ptrace(PTRACE_POKEDATA,my_pid, offset, orig);
     #endif
 }
 

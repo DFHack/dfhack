@@ -39,8 +39,8 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
     char target_name[1024];
     int target_result;
 
-    d->identified = false;
-    d->my_descriptor = 0;
+    identified = false;
+    my_descriptor = 0;
 
     sprintf(dir_name,"/proc/%d/", pid);
     sprintf(exe_link_name,"/proc/%d/exe", pid);
@@ -61,7 +61,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
     if (strstr(target_name, "dwarfort.exe") != 0 || strstr(target_name,"Dwarf_Fortress") != 0)
     {
         // create linux process, add it to the vector
-        d->identified = validate(target_name,pid,mem_name,known_versions);
+        identified = validate(target_name,pid,mem_name,known_versions);
         return;
     }
 }
@@ -82,13 +82,12 @@ bool NormalProcess::validate(char * exe_file,uint32_t pid, char * memFile, vecto
             {
                 if (OS_LINUX == (*it)->getOS())
                 {
-                    VersionInfo *m = new VersionInfo(**it);
                     // keep track of created memory_info object so we can destroy it later
-                    d->my_descriptor = m;
-                    m->setParentProcess(this);
+                    my_descriptor = new VersionInfo(**it);
+                    my_descriptor->setParentProcess(this);
                     // tell Process about the /proc/PID/mem file
-                    d->memFile = memFile;
-                    d->identified = true;
+                    memFile = memFile;
+                    identified = true;
                     return true;
                 }
             }

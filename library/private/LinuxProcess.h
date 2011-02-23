@@ -33,11 +33,14 @@ namespace DFHack
 {
     class LinuxProcessBase : public Process 
     {
-    public:
-        class Private;
         protected:
-            Private * const d;
-	    bool readProgramName(char *target_name, char *mem_name, char *cmdline_name);
+            VersionInfo * my_descriptor;
+            pid_t my_pid;
+            string memFile;
+            int memFileHandle;
+            bool attached;
+            bool suspended;
+            bool identified;
         public:
             LinuxProcessBase(uint32_t pid);
             ~LinuxProcessBase();
@@ -98,8 +101,8 @@ namespace DFHack
             void writeSTLString(const uint32_t address, const std::string writeString){};
             // get class name of an object with rtti/type info
             std::string readClassName(uint32_t vptr);
-	private:
-	    bool validate(char * exe_file,uint32_t pid, char * memFile, vector <VersionInfo *> & known_versions);
+        private:
+            bool validate(char * exe_file,uint32_t pid, char * memFile, vector <VersionInfo *> & known_versions);
     };
 
     class DFHACK_EXPORT WineProcess : public LinuxProcessBase
@@ -117,23 +120,8 @@ namespace DFHack
             void writeSTLString(const uint32_t address, const std::string writeString){};
             // get class name of an object with rtti/type info
             std::string readClassName(uint32_t vptr);
-	private:
-	    bool validate(char * exe_file,uint32_t pid, char * memFile, vector <VersionInfo *> & known_versions);
-    };
-
-    class LinuxProcessBase::Private
-    {
-    public:
-        Private(LinuxProcessBase * self_, pid_t);
-        ~Private(){};
-        VersionInfo * my_descriptor;
-        LinuxProcessBase * self;
-        pid_t my_pid;
-        string memFile;
-        int memFileHandle;
-        bool attached;
-        bool suspended;
-        bool identified;
+        private:
+            bool validate(char * exe_file,uint32_t pid, char * memFile, vector <VersionInfo *> & known_versions);
     };
 }
 

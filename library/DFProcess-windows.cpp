@@ -24,6 +24,7 @@ distribution.
 #include "Internal.h"
 #include "WindowsProcess.h"
 #include "ProcessFactory.h"
+#include "MicrosoftSTL.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include <string.h>
@@ -42,12 +43,10 @@ namespace
             bool attached;
             bool suspended;
             bool identified;
-            uint32_t STLSTR_buf_off;
-            uint32_t STLSTR_size_off;
-            uint32_t STLSTR_cap_off;
             IMAGE_NT_HEADERS pe_header;
             IMAGE_SECTION_HEADER * sections;
             uint32_t base;
+            MicrosoftSTL stl;
         public:
             NormalProcess(uint32_t pid, std::vector <VersionInfo *> & known_versions);
             ~NormalProcess();
@@ -194,10 +193,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
             vector<uint32_t> threads;
             getThreadIDs( threads );
             my_main_thread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads[0]);
-            OffsetGroup * strGrp = my_descriptor->getGroup("string")->getGroup("MSVC");
-            STLSTR_buf_off = strGrp->getOffset("buffer");
-            STLSTR_size_off = strGrp->getOffset("size");
-            STLSTR_cap_off = strGrp->getOffset("capacity");
+            stl.init(this);
             found = true;
             break; // break the iterator loop
         }
@@ -552,59 +548,17 @@ const string NormalProcess::readCString (const uint32_t offset)
 
 size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
-    uint32_t start_offset = offset + STLSTR_buf_off;
-    size_t length = Process::readDWord(offset + STLSTR_size_off);
-    size_t capacity = Process::readDWord(offset + STLSTR_cap_off);
-
-    size_t read_real = min(length, bufcapacity-1);// keep space for null termination
-
-    // read data from inside the string structure
-    if(capacity < 16)
-    {
-        read(start_offset, read_real , (uint8_t *)buffer);
-    }
-    else // read data from what the offset + 4 dword points to
-    {
-        start_offset = Process::readDWord(start_offset);// dereference the start offset
-        read(start_offset, read_real, (uint8_t *)buffer);
-    }
-
-    buffer[read_real] = 0;
-    return read_real;
+    return stl.readSTLString(offset, buffer, bufcapacity);
 }
 
 const string NormalProcess::readSTLString (uint32_t offset)
 {
-    uint32_t start_offset = offset + STLSTR_buf_off;
-    size_t length = Process::readDWord(offset + STLSTR_size_off);
-    size_t capacity = Process::readDWord(offset + STLSTR_cap_off);
-
-    char * temp = new char[capacity+1];
-
-    // read data from inside the string structure
-    if(capacity < 16)
-    {
-        read(start_offset, capacity, (uint8_t *)temp);
-    }
-    else // read data from what the offset + 4 dword points to
-    {
-        start_offset = Process::readDWord(start_offset);// dereference the start offset
-        read(start_offset, capacity, (uint8_t *)temp);
-    }
-
-    temp[length] = 0;
-    string ret = temp;
-    delete temp;
-    return ret;
+    return stl.readSTLString(offset);
 }
 
 string NormalProcess::readClassName (uint32_t vptr)
 {
-    int rtti = Process::readDWord(vptr - 0x4);
-    int typeinfo = Process::readDWord(rtti + 0xC);
-    string raw = readCString(typeinfo + 0xC); // skips the .?AV
-    raw.resize(raw.length() - 2);// trim @@ from end
-    return raw;
+    stl.readClassName(vptr);
 }
 
 string NormalProcess::getPath()

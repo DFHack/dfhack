@@ -24,6 +24,7 @@ distribution.
 #include "Internal.h"
 #include "LinuxProcess.h"
 #include "ProcessFactory.h"
+#include "MicrosoftSTL.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include <errno.h>
@@ -35,9 +36,7 @@ namespace {
     class WineProcess : public LinuxProcessBase
     {
         private:
-            uint32_t STLSTR_buf_off;
-            uint32_t STLSTR_size_off;
-            uint32_t STLSTR_cap_off;
+            MicrosoftSTL stl;
         public:
             WineProcess(uint32_t pid, std::vector <VersionInfo *> & known_versions);
 
@@ -133,10 +132,7 @@ bool WineProcess::validate(char * exe_file,uint32_t pid, char * memFile, vector 
                     memFile = memFile;
                     identified = true;
 
-                    OffsetGroup * strGrp = my_descriptor->getGroup("string")->getGroup("MSVC");
-                    STLSTR_buf_off = strGrp->getOffset("buffer");
-                    STLSTR_size_off = strGrp->getOffset("size");
-                    STLSTR_cap_off = strGrp->getOffset("capacity");
+                    stl.init(this);
                     return true;
                 }
             }
@@ -152,57 +148,15 @@ bool WineProcess::validate(char * exe_file,uint32_t pid, char * memFile, vector 
 
 size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
-    uint32_t start_offset = offset + STLSTR_buf_off;
-    size_t length = Process::readDWord(offset + STLSTR_size_off);
-    size_t capacity = Process::readDWord(offset + STLSTR_cap_off);
-
-    size_t read_real = min(length, bufcapacity-1);// keep space for null termination
-
-    // read data from inside the string structure
-    if(capacity < 16)
-    {
-        read(start_offset, read_real , (uint8_t *)buffer);
-    }
-    else // read data from what the offset + 4 dword points to
-    {
-        start_offset = Process::readDWord(start_offset);// dereference the start offset
-        read(start_offset, read_real, (uint8_t *)buffer);
-    }
-
-    buffer[read_real] = 0;
-    return read_real;
+    return stl.readSTLString(offset, buffer, bufcapacity);
 }
 
 const string WineProcess::readSTLString (uint32_t offset)
 {
-    uint32_t start_offset = offset + STLSTR_buf_off;
-    size_t length = Process::readDWord(offset + STLSTR_size_off);
-    size_t capacity = Process::readDWord(offset + STLSTR_cap_off);
-
-    char * temp = new char[capacity+1];
-
-    // read data from inside the string structure
-    if(capacity < 16)
-    {
-        read(start_offset, capacity, (uint8_t *)temp);
-    }
-    else // read data from what the offset + 4 dword points to
-    {
-        start_offset = Process::readDWord(start_offset);// dereference the start offset
-        read(start_offset, capacity, (uint8_t *)temp);
-    }
-
-    temp[length] = 0;
-    string ret = temp;
-    delete temp;
-    return ret;
+    return stl.readSTLString(offset);
 }
 
 string WineProcess::readClassName (uint32_t vptr)
 {
-    int rtti = Process::readDWord(vptr - 0x4);
-    int typeinfo = Process::readDWord(rtti + 0xC);
-    string raw = readCString(typeinfo + 0xC); // skips the .?AV
-    raw.resize(raw.length() - 2);// trim @@ from end
-    return raw;
+    stl.readClassName(vptr);
 }

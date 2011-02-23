@@ -23,10 +23,10 @@ distribution.
 */
 
 #include "Internal.h"
+#include "ProcessInternal.h"
 
 #include "dfhack/VersionInfoFactory.h"
 #include "dfhack/DFProcessEnumerator.h"
-#include "dfhack/DFProcess.h"
 #include "dfhack/VersionInfo.h"
 
 

@@ -22,7 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "Internal.h"
-#include "dfhack/DFProcess.h"
+#include "ProcessInternal.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include <string.h>

@@ -32,6 +32,7 @@ SET(PROJECT_HDRS_INTERNAL
     private/SHMProcess.h
     private/LinuxProcess.h
     private/WindowsProcess.h
+    private/ProcessFactory.h
 )
 
 SET(PROJECT_HDRS

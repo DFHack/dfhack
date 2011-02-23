@@ -30,9 +30,8 @@ distribution.
 
 namespace DFHack
 {
-    class DFHACK_EXPORT NormalProcess : public Process
+    class NormalProcess : public Process
     {
-        friend class ProcessEnumerator;
         class Private;
         private:
             Private * const d;

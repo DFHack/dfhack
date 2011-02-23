@@ -23,11 +23,33 @@ distribution.
 */
 #include "Internal.h"
 #include "LinuxProcess.h"
+#include "ProcessFactory.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include <errno.h>
 #include <sys/ptrace.h>
 using namespace DFHack;
+
+namespace {
+    class NormalProcess : public LinuxProcessBase
+    {
+        public:
+            NormalProcess(uint32_t pid, std::vector <VersionInfo *> & known_versions);
+
+            const std::string readSTLString (uint32_t offset);
+            size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
+            void writeSTLString(const uint32_t address, const std::string writeString){};
+            // get class name of an object with rtti/type info
+            std::string readClassName(uint32_t vptr);
+        private:
+            bool validate(char * exe_file,uint32_t pid, char * memFile, vector <VersionInfo *> & known_versions);
+    };
+}
+
+Process* DFHack::createNormalProcess(uint32_t pid, vector <VersionInfo *> & known_versions)
+{
+    return new NormalProcess(pid, known_versions);
+}
 
 NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versions) : LinuxProcessBase(pid)
 {

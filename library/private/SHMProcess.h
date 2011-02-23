@@ -31,9 +31,8 @@ namespace DFHack
 {
     class DFHACK_EXPORT SHMProcess : public Process
     {
-        friend class ProcessEnumerator;
-        class Private;
     private:
+        class Private;
         Private * const d;
 
     public:

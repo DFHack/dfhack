@@ -90,39 +90,6 @@ namespace DFHack
             bool SetAndWait (uint32_t state){return false;};
     };
 
-    class DFHACK_EXPORT NormalProcess : public LinuxProcessBase
-    {
-        friend class ProcessEnumerator;
-        public:
-            NormalProcess(uint32_t pid, std::vector <VersionInfo *> & known_versions);
-
-            const std::string readSTLString (uint32_t offset);
-            size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
-            void writeSTLString(const uint32_t address, const std::string writeString){};
-            // get class name of an object with rtti/type info
-            std::string readClassName(uint32_t vptr);
-        private:
-            bool validate(char * exe_file,uint32_t pid, char * memFile, vector <VersionInfo *> & known_versions);
-    };
-
-    class DFHACK_EXPORT WineProcess : public LinuxProcessBase
-    {
-        friend class ProcessEnumerator;
-        private:
-            uint32_t STLSTR_buf_off;
-            uint32_t STLSTR_size_off;
-            uint32_t STLSTR_cap_off;
-        public:
-            WineProcess(uint32_t pid, std::vector <VersionInfo *> & known_versions);
-
-            const std::string readSTLString (uint32_t offset);
-            size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
-            void writeSTLString(const uint32_t address, const std::string writeString){};
-            // get class name of an object with rtti/type info
-            std::string readClassName(uint32_t vptr);
-        private:
-            bool validate(char * exe_file,uint32_t pid, char * memFile, vector <VersionInfo *> & known_versions);
-    };
 }
 
 #endif

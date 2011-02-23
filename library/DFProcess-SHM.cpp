@@ -23,12 +23,18 @@ distribution.
 */
 #include "Internal.h"
 #include "SHMProcess.h"
+#include "ProcessFactory.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include "shms.h"
 #include "mod-core.h"
 
 using namespace DFHack;
+
+Process* DFHack::createSHMProcess(uint32_t pid, vector <VersionInfo *> & known_versions)
+{
+    return new SHMProcess(pid, known_versions);
+}
 
 SHMProcess::SHMProcess(uint32_t PID, vector <VersionInfo *> & known_versions)
 : d(new Private(this))

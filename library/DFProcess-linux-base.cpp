@@ -337,7 +337,7 @@ void LinuxProcessBase::writeWord (uint32_t offset, uint16_t data)
         orig |= data;
         ptrace(PTRACE_POKEDATA,my_pid, offset, orig);
     #else
-        uint32_t orig = readDWord(offset);
+        uint32_t orig = Process::readDWord(offset);
         orig &= 0xFFFF0000;
         orig |= data;
         ptrace(PTRACE_POKEDATA,my_pid, offset, orig);
@@ -352,7 +352,7 @@ void LinuxProcessBase::writeByte (uint32_t offset, uint8_t data)
         orig |= data;
         ptrace(PTRACE_POKEDATA,my_pid, offset, orig);
     #else
-        uint32_t orig = readDWord(offset);
+        uint32_t orig = Process::readDWord(offset);
         orig &= 0xFFFFFF00;
         orig |= data;
         ptrace(PTRACE_POKEDATA,my_pid, offset, orig);

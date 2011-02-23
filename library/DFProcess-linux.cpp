@@ -432,7 +432,7 @@ void NormalProcess::writeWord (uint32_t offset, uint16_t data)
         orig |= data;
         ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
     #else
-        uint32_t orig = readDWord(offset);
+        uint32_t orig = Process::readDWord(offset);
         orig &= 0xFFFF0000;
         orig |= data;
         ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
@@ -447,7 +447,7 @@ void NormalProcess::writeByte (uint32_t offset, uint8_t data)
         orig |= data;
         ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);
     #else
-        uint32_t orig = readDWord(offset);
+        uint32_t orig = Process::readDWord(offset);
         orig &= 0xFFFFFF00;
         orig |= data;
         ptrace(PTRACE_POKEDATA,d->my_handle, offset, orig);

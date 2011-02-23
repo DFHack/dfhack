@@ -2531,6 +2531,9 @@
                     <Address name="ptr2_region_array" value="0x9439808" />
                 </Group>
             </Group>
+            <Group name="GUI">
+                <Address name="pause_state" value="0x93dddf0" />
+            </Group>
             <Group name="Materials">
                 <Address name="creature_type_vector" value="0x943a074" />
                 <Address name="inorganics" value="0x9439fc0" />

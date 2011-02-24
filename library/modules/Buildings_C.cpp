@@ -74,7 +74,7 @@ t_customWorkshop* Buildings_ReadCustomWorkshopTypes(DFHackObject* b_Ptr)
     if(b_Ptr != NULL)
     {
         int i;
-        t_customWorkshop* cw_Ptr;
+        t_customWorkshop* cw_Ptr = NULL;
         std::map<uint32_t, string> bTypes;
         map<uint32_t, string>::iterator bIter;
 

@@ -8,8 +8,8 @@
 #include <ctime>
 #include <cstdio>
 
-#define DFHACK_WANT_MISCUTILS
-#define DFHACK_WANT_TILETYPES
+#define DFHACK_WANT_MISCUTILS 1
+#define DFHACK_WANT_TILETYPES 1
 #include <DFHack.h>
 
 using namespace DFHack;
@@ -17,7 +17,8 @@ int main (int numargs, const char ** args)
 {
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF = DFMgr.getSingleContext();
-    
+
+    BEGIN_PROBE:
     try
     {
         DF->Attach();
@@ -30,6 +31,7 @@ int main (int numargs, const char ** args)
         #endif
         return 1;
     }
+
 
     DFHack::Position *Pos = DF->getPosition();
     DFHack::VersionInfo* mem = DF->getMemoryInfo();
@@ -57,6 +59,11 @@ int main (int numargs, const char ** args)
 
     Maps->Start();
 
+    vector<DFHack::t_feature> global_features;
+    std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> > local_features;
+	Maps->ReadLocalFeatures(local_features);
+	Maps->ReadGlobalFeatures(global_features);
+
     int32_t cursorX, cursorY, cursorZ;
     Pos->getCursorCoords(cursorX,cursorY,cursorZ);
     if(cursorX != -30000)
@@ -82,7 +89,15 @@ int main (int numargs, const char ** args)
             // tiletype
             std::cout <<"tiletype: " << tiletype;
             if(tileTypeTable[tiletype].name)
-                std::cout << " = " << tileTypeTable[tiletype].name;
+                std::cout << " = " << tileTypeTable[tiletype].name << std::endl;
+
+            printf("%-10s: %4d %s\n","Class",tileTypeTable[tiletype].c,TileClassString[ tileTypeTable[tiletype].c ] , 0);
+            printf("%-10s: %4d %s\n","Material",tileTypeTable[tiletype].c,TileMaterialString[ tileTypeTable[tiletype].m ] , 0);
+            printf("%-10s: %4d %s\n","Special",tileTypeTable[tiletype].c,TileSpecialString[ tileTypeTable[tiletype].s ] , 0);
+            printf("%-10s: %4d\n","Variant",tileTypeTable[tiletype].v , 0);
+            printf("%-10s: %s\n","Direction",tileTypeTable[tiletype].d.getStr() , 0);
+
+
             std::cout << std::endl;
             std::cout <<"temperature1: " << tmpb1[tileX][tileY] << " U" << std::endl;
             std::cout <<"temperature2: " << tmpb2[tileX][tileY] << " U" << std::endl;
@@ -109,24 +124,45 @@ int main (int numargs, const char ** args)
                 std::cout << "smooth?" << std::endl;
             uint32_t designato = block.origin + designatus + (tileX * 16 + tileY) * sizeof(t_designation);
             printf("designation offset: 0x%x\n", designato);
-            if(des.light)
-                std::cout << "Light ";
-            else
-                std::cout << "      ";
-            if(des.skyview)
-                std::cout << "SkyView ";
-            else
-                std::cout << "        ";
-            if(des.subterranean)
-                std::cout << "Underground ";
-            else
-                std::cout << "            ";
+
+            #define PRINT_FLAG( X )  printf("%-16s= %c\n", #X , ( des.X ? 'Y' : ' ' ) )
+            PRINT_FLAG( hidden );
+            PRINT_FLAG( light );
+            PRINT_FLAG( skyview );
+            PRINT_FLAG( subterranean );
+            PRINT_FLAG( water_table );
+            //PRINT_FLAG( rained );
+
+            planecoord pc;
+            pc.dim.x=blockX; pc.dim.y=blockY;
+
+            PRINT_FLAG( feature_local );
+            if( des.feature_local )
+            {
+                printf("%-16s  %4d (%2d) %s\n", "",
+                    block.local_feature,
+                    local_features[pc][block.local_feature]->type,
+                    sa_feature[local_features[pc][block.local_feature]->type]
+                    );
+            }
+
+            PRINT_FLAG( feature_global );
+            if( des.feature_global ){
+                printf("%-16s  %4d (%2d) %s\n", "",
+                    block.global_feature,
+                    global_features[block.global_feature].type,
+                    sa_feature[global_features[block.global_feature].type]
+                    );
+            }
+            #undef PRINT_FLAG
             std::cout << std::endl;
         }
     }
+    DF->Detach();
     #ifndef LINUX_BUILD
-    std::cout << "Done. Press any key to continue" << std::endl;
-    cin.ignore();
+        std::cout << "Press any key to refresh..." << std::endl;
+        cin.ignore();
+        goto BEGIN_PROBE;
     #endif
     return 0;
 }

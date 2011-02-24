@@ -8,8 +8,18 @@ using namespace std;
 
 #include <DFHack.h>
 
-int main (void)
+int main (int argc, char** argv)
 {
+    bool quiet = false;
+    for(int i = 1; i < argc; i++)
+    {
+        string test = argv[i];
+        if(test == "-q")
+        {
+            quiet = true;
+        }
+    }
+
     DFHack::Position * Position = 0;
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context * DF;
@@ -31,7 +41,7 @@ int main (void)
     {
        int32_t x,y,z;
        int32_t width,height;
-       
+
        if(Position->getViewCoords(x,y,z))
             cout << "view coords: " << x << "/" << y << "/" << z << endl;
        if(Position->getCursorCoords(x,y,z))
@@ -43,15 +53,18 @@ int main (void)
     {
         cerr << "cursor and window parameters are unsupported on your version of DF" << endl;
     }
-    
+
     if(!DF->Detach())
     {
         cerr << "Can't detach from DF" << endl;
     }
-    
+
     #ifndef LINUX_BUILD
-        cout << "Done. Press any key to continue" << endl;
-        cin.ignore();
+        if(!quiet)
+        {
+            cout << "Done. Press any key to continue" << endl;
+            cin.ignore();
+        }
     #endif
     return 0;
 }

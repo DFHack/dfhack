@@ -127,11 +127,11 @@ namespace DFHack
  */
 namespace DFHack
 {
-    typedef pair <bool, uint32_t> nullableUint32;
+    typedef pair <INVAL_TYPE, uint32_t> nullableUint32;
     typedef map <string, nullableUint32 >::iterator uint32_Iter;
-    typedef pair <bool, int32_t> nullableInt32;
+    typedef pair <INVAL_TYPE, int32_t> nullableInt32;
     typedef map <string, nullableInt32 >::iterator int32_Iter;
-    typedef pair <bool, string> nullableString;
+    typedef pair <INVAL_TYPE, string> nullableString;
     typedef map <string, nullableString >::iterator strings_Iter;
     typedef map <string, OffsetGroup *>::iterator groups_Iter;
     class OffsetGroupPrivate
@@ -149,73 +149,126 @@ namespace DFHack
 
 void OffsetGroup::createOffset(const string & key)
 {
-    OGd->offsets[key] = nullableInt32(false, 0);
+    OGd->offsets[key] = nullableInt32(NOT_SET, 0);
 }
 
 void OffsetGroup::createAddress(const string & key)
 {
-    OGd->addresses[key] = nullableUint32(false, 0);
+    OGd->addresses[key] = nullableUint32(NOT_SET, 0);
 }
 
 void OffsetGroup::createHexValue(const string & key)
 {
-    OGd->hexvals[key] = nullableUint32(false, 0);
+    OGd->hexvals[key] = nullableUint32(NOT_SET, 0);
 }
 
 void OffsetGroup::createString(const string & key)
 {
-    OGd->strings[key] = nullableString(false, std::string());
+    OGd->strings[key] = nullableString(NOT_SET, std::string());
 }
 
-void OffsetGroup::setOffset (const string & key, const string & value)
+void OffsetGroup::setOffset (const string & key, const string & value, const INVAL_TYPE inval)
 {
     int32_Iter it = OGd->offsets.find(key);
     if(it != OGd->offsets.end())
     {
         int32_t offset = strtol(value.c_str(), NULL, 16);
         (*it).second.second = offset;
-        (*it).second.first = true;
+        if(inval != NOT_SET)
+            (*it).second.first = inval;
     }
     else throw Error::MissingMemoryDefinition("offset", getFullName() + key);
 }
 
+void OffsetGroup::setOffsetValidity (const string & key, const INVAL_TYPE inval)
+{
+    if(inval != NOT_SET)
+    {
+        int32_Iter it = OGd->offsets.find(key);
+        if(it != OGd->offsets.end())
+        {
+            (*it).second.first = inval;
+        }
+        else throw Error::MissingMemoryDefinition("offset", getFullName() + key);
+    }
+}
 
-void OffsetGroup::setAddress (const string & key, const string & value)
+void OffsetGroup::setAddress (const string & key, const string & value, const INVAL_TYPE inval)
 {
     uint32_Iter it = OGd->addresses.find(key);
     if(it != OGd->addresses.end())
     {
         int32_t address = strtol(value.c_str(), NULL, 16);
         (*it).second.second = address;
-        (*it).second.first = true;
+        if(inval != NOT_SET)
+            (*it).second.first = inval;
     }
     else throw Error::MissingMemoryDefinition("address", getFullName() + key);
 }
 
+void OffsetGroup::setAddressValidity (const string & key, const INVAL_TYPE inval)
+{
+    if(inval != NOT_SET)
+    {
+        uint32_Iter it = OGd->addresses.find(key);
+        if(it != OGd->addresses.end())
+        {
+            (*it).second.first = inval;
+        }
+        else throw Error::MissingMemoryDefinition("address", getFullName() + key);
+    }
+}
 
-void OffsetGroup::setHexValue (const string & key, const string & value)
+
+void OffsetGroup::setHexValue (const string & key, const string & value, const INVAL_TYPE inval)
 {
     uint32_Iter it = OGd->hexvals.find(key);
     if(it != OGd->hexvals.end())
     {
         (*it).second.second = strtol(value.c_str(), NULL, 16);
-        (*it).second.first = true;
+        if(inval != NOT_SET)
+            (*it).second.first = inval;
     }
     else throw Error::MissingMemoryDefinition("hexvalue", getFullName() + key);
 }
 
+void OffsetGroup::setHexValueValidity (const string & key, const INVAL_TYPE inval)
+{
+    if(inval != NOT_SET)
+    {
+        uint32_Iter it = OGd->hexvals.find(key);
+        if(it != OGd->hexvals.end())
+        {
+            (*it).second.first = inval;
+        }
+        else throw Error::MissingMemoryDefinition("hexvalue", getFullName() + key);
+    }
+}
 
-void OffsetGroup::setString (const string & key, const string & value)
+void OffsetGroup::setString (const string & key, const string & value, const INVAL_TYPE inval)
 {
     strings_Iter it = OGd->strings.find(key);
     if(it != OGd->strings.end())
     {
         (*it).second.second = value;
-        (*it).second.first = true;
+        if(inval != NOT_SET)
+            (*it).second.first = inval;
     }
     else throw Error::MissingMemoryDefinition("string", getFullName() + key);
 }
 
+void OffsetGroup::setStringValidity (const string & key, const INVAL_TYPE inval)
+{
+    if(inval != NOT_SET)
+    {
+        strings_Iter it = OGd->strings.find(key);
+        if(it != OGd->strings.end())
+        {
+            (*it).second.first = inval;
+        }
+        else throw Error::MissingMemoryDefinition("string", getFullName() + key);
+    }
+}
 
 // Get named address
 uint32_t OffsetGroup::getAddress (const string & key)
@@ -224,8 +277,10 @@ uint32_t OffsetGroup::getAddress (const string & key)
 
     if(iter != OGd->addresses.end())
     {
-        if((*iter).second.first)
+        if((*iter).second.first == IS_VALID)
             return (*iter).second.second;
+        if((*iter).second.first == IS_INVALID)
+            throw Error::InvalidMemoryDefinition("address", getFullName() + key);
         throw Error::UnsetMemoryDefinition("address", getFullName() + key);
     }
     throw Error::MissingMemoryDefinition("address", getFullName() + key);
@@ -238,8 +293,10 @@ int32_t OffsetGroup::getOffset (const string & key)
     int32_Iter iter = OGd->offsets.find(key);
     if(iter != OGd->offsets.end())
     {
-        if((*iter).second.first)
+        if((*iter).second.first == IS_VALID)
             return (*iter).second.second;
+        if((*iter).second.first == IS_INVALID)
+            throw Error::InvalidMemoryDefinition("offset", getFullName() + key);
         throw Error::UnsetMemoryDefinition("offset", getFullName() + key);
     }
     throw Error::MissingMemoryDefinition("offset",  getFullName() + key);
@@ -252,8 +309,10 @@ uint32_t OffsetGroup::getHexValue (const string & key)
     uint32_Iter iter = OGd->hexvals.find(key);
     if(iter != OGd->hexvals.end())
     {
-        if((*iter).second.first)
+        if((*iter).second.first == IS_VALID)
             return (*iter).second.second;
+        if((*iter).second.first == IS_INVALID)
+            throw Error::InvalidMemoryDefinition("hexvalue", getFullName() + key);
         throw Error::UnsetMemoryDefinition("hexvalue", getFullName() + key);
     }
     throw Error::MissingMemoryDefinition("hexvalue", getFullName() + key);
@@ -265,8 +324,10 @@ std::string OffsetGroup::getString (const string &key)
     strings_Iter iter = OGd->strings.find(key);
     if(iter != OGd->strings.end())
     {
-        if((*iter).second.first)
+        if((*iter).second.first == IS_VALID)
             return (*iter).second.second;
+        if((*iter).second.first == IS_INVALID)
+            throw Error::InvalidMemoryDefinition("string", getFullName() + key);
         throw Error::UnsetMemoryDefinition("string", getFullName() + key);
     }
     throw Error::MissingMemoryDefinition("string", getFullName() + key);
@@ -361,6 +422,8 @@ std::string OffsetGroup::PrintOffsets(int indentation)
         if((*iter).second.first)
             ss << " value=\"" << hex << "0x" << (*iter).second.second << "\"";
         ss << " />";
+        if((*iter).second.first == IS_INVALID)
+            ss << " INVALID!";
         if(!(*iter).second.first)
             ss << " MISSING!";
         ss << endl;
@@ -372,6 +435,8 @@ std::string OffsetGroup::PrintOffsets(int indentation)
         if((*iter2).second.first)
             ss << " value=\"" << hex << "0x" << (*iter2).second.second << "\"";
         ss << " />";
+        if((*iter2).second.first == IS_INVALID)
+            ss << " INVALID!";
         if(!(*iter2).second.first)
             ss << " MISSING!";
         ss << endl;
@@ -382,6 +447,8 @@ std::string OffsetGroup::PrintOffsets(int indentation)
         if((*iter).second.first)
             ss << " value=\"" << hex << "0x" << (*iter).second.second << "\"";
         ss << " />";
+        if((*iter).second.first == IS_INVALID)
+            ss << " INVALID!";
         if(!(*iter).second.first)
             ss << " MISSING!";
         ss << endl;
@@ -393,6 +460,8 @@ std::string OffsetGroup::PrintOffsets(int indentation)
         if((*iter3).second.first)
             ss << " value=\"" << (*iter3).second.second << "\"";
         ss << " />";
+        if((*iter3).second.first == IS_INVALID)
+            ss << " INVALID!";
         if(!(*iter3).second.first)
             ss << " MISSING!";
         ss << endl;
@@ -407,6 +476,42 @@ std::string OffsetGroup::PrintOffsets(int indentation)
         ss << i << "</Group>" << endl;
     }
     return ss.str();
+}
+
+// the big ugly method behind the curtain...
+void OffsetGroup::setInvalid(INVAL_TYPE invalidity)
+{
+    if(invalidity == NOT_SET)
+        return;
+
+    uint32_Iter iter;
+    for(iter = OGd->addresses.begin(); iter != OGd->addresses.end(); iter++)
+    {
+        if((*iter).second.first)
+            (*iter).second.first = invalidity;
+    }
+    int32_Iter iter2;
+    for(iter2 = OGd->offsets.begin(); iter2 != OGd->offsets.end(); iter2++)
+    {
+        if((*iter2).second.first)
+            (*iter2).second.first = invalidity;
+    }
+    for(iter = OGd->hexvals.begin(); iter != OGd->hexvals.end(); iter++)
+    {
+        if((*iter).second.first)
+            (*iter).second.first = invalidity;
+    }
+    strings_Iter iter3;
+    for(iter3 = OGd->strings.begin(); iter3 != OGd->strings.end(); iter3++)
+    {
+        if((*iter3).second.first)
+            (*iter3).second.first = invalidity;
+    }
+    groups_Iter iter4;
+    for(iter4 = OGd->groups.begin(); iter4 != OGd->groups.end(); iter4++)
+    {
+        (*iter4).second->setInvalid(invalidity);
+    }
 }
 
 /*
@@ -440,7 +545,7 @@ namespace DFHack
         Process * p; // the process this belongs to
 
         string version;
-        VersionInfo::OSType OS;
+        OSType OS;
         std::string md5;
         uint32_t PE_timestamp;
     };
@@ -602,7 +707,7 @@ void VersionInfo::setOS(OSType os)
 }
 
 
-VersionInfo::OSType VersionInfo::getOS() const
+OSType VersionInfo::getOS() const
 {
     return d->OS;
 }

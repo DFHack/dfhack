@@ -84,7 +84,7 @@ t_material* Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball)
 			if(mat.size() <= 0)
 				return NULL;
 			
-			t_material* buf;
+			t_material* buf = NULL;
 			
 			(*alloc_t_material_buffer_callback)(buf, mat.size());
 			
@@ -99,6 +99,64 @@ t_material* Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball)
 		}
 		else
 			return NULL;
+	}
+	
+	return NULL;
+}
+
+uint32_t* Creatures_ReadInventoryIdx(DFHackObject* cPtr, const uint32_t index)
+{
+	if(cPtr != NULL)
+	{
+		std::vector<uint32_t> item;
+		
+		if(((DFHack::Creatures*)cPtr)->ReadInventoryIdx(index, item))
+		{
+			if(item.size() <= 0)
+				return NULL;
+			
+			uint32_t* buf = NULL;
+			
+			(*alloc_uint_buffer_callback)(buf, item.size());
+			
+			if(buf != NULL)
+			{
+				copy(item.begin(), item.end(), buf);
+				
+				return buf;
+			}
+			else
+				return NULL;
+		}
+	}
+	
+	return NULL;
+}
+
+uint32_t* Creatures_ReadInventoryPtr(DFHackObject* cPtr, const uint32_t index)
+{
+	if(cPtr != NULL)
+	{
+		std::vector<uint32_t> item;
+		
+		if(((DFHack::Creatures*)cPtr)->ReadInventoryPtr(index, item))
+		{
+			if(item.size() <= 0)
+				return NULL;
+			
+			uint32_t* buf = NULL;
+			
+			(*alloc_uint_buffer_callback)(buf, item.size());
+			
+			if(buf != NULL)
+			{
+				copy(item.begin(), item.end(), buf);
+				
+				return buf;
+			}
+			else
+				return NULL;
+		}
 	}
 	
 	return NULL;

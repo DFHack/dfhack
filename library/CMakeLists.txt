@@ -29,6 +29,10 @@ include_directories (${CMAKE_SOURCE_DIR}/library/private/)
 SET(PROJECT_HDRS_INTERNAL
     private/ContextShared.h
     private/Internal.h
+    private/SHMProcess.h
+    private/LinuxProcess.h
+    private/ProcessFactory.h
+    private/MicrosoftSTL.h
 )
 
 SET(PROJECT_HDRS
@@ -86,8 +90,11 @@ VersionInfo.cpp
 VersionInfoFactory.cpp
 DFContextManager.cpp
 DFContext.cpp
+DFTileTypes.cpp
 DFProcessEnumerator.cpp
 ContextShared.cpp
+DFProcess-SHM.cpp
+MicrosoftSTL.cpp
 
 depends/md5/md5.cpp
 depends/md5/md5wrapper.cpp
@@ -137,6 +144,7 @@ include/dfhack/DFstdint_win.h
 
 SET(PROJECT_SRCS_LINUX
 DFProcess-linux.cpp
+DFProcess-linux-base.cpp
 DFProcess-linux-SHM.cpp
 DFProcess-linux-wine.cpp
 modules/WindowIO-linux.cpp
@@ -190,7 +198,12 @@ IF(UNIX)
 
   SET(PROJECT_LIBS ${X11_LIBRARY} rt ) #dfhack-md5 dfhack-tixml
 ELSE(UNIX)
-  SET(PROJECT_LIBS psapi)
+  IF(MSVC)
+    SET(PROJECT_LIBS psapi ${CMAKE_SOURCE_DIR}/library/depends/ntdll/ntdll.lib)
+  ELSE(MSVC)
+    SET(PROJECT_LIBS psapi ntdll)
+  ENDIF(MSVC)
+
 ENDIF(UNIX)
 
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SRCS})

@@ -124,7 +124,7 @@ char* Translation_TranslateNameEnglish(DFHackObject* trans, const DFHack::t_name
 		
 		if(nameTrans.size() > 0)
 		{
-			char* buf;
+			char* buf = NULL;
 			
 			(*alloc_char_buffer_callback)(buf, nameTrans.size());
 			
@@ -155,7 +155,7 @@ char* Translation_TranslateNameNonEnglish(DFHackObject* trans, const DFHack::t_n
 		
 		if(nameTrans.size() > 0)
 		{
-			char* buf;
+			char* buf = NULL;
 			
 			(*alloc_char_buffer_callback)(buf, nameTrans.size());
 			

@@ -1,5 +1,8 @@
 #ifndef SEGMENTED_FINDER_H
 #define SEGMENTED_FINDER_H
+#include <malloc.h>
+#include <iosfwd>
+#include <iterator>
 
 class SegmentedFinder;
 class SegmentFinder
@@ -9,18 +12,37 @@ class SegmentFinder
     {
         _DF = DF;
         mr_ = mr;
-        mr_.buffer = (uint8_t *)malloc (mr_.end - mr_.start);
-        DF->ReadRaw(mr_.start,(mr_.end - mr_.start),mr_.buffer);
-        _SF = SF;
+        if(mr.valid)
+        {
+            mr_.buffer = (uint8_t *)malloc (mr_.end - mr_.start);
+            _SF = SF;
+            try
+            {
+                DF->ReadRaw(mr_.start,(mr_.end - mr_.start),mr_.buffer);
+                valid = true;
+            }
+            catch (DFHack::Error::MemoryAccessDenied &)
+            {
+                free(mr_.buffer);
+                valid = false;
+                mr.valid = false; // mark the range passed in as bad
+                cout << "Range 0x" << hex << mr_.start << " - 0x" <<  mr_.end << dec << " not readable." << endl;
+            }
+        }
     }
     ~SegmentFinder()
     {
-        delete mr_.buffer;
+        if(valid)
+            free(mr_.buffer);
     }
-
+    bool isValid()
+    {
+        return valid;
+    }
     template <class needleType, class hayType, typename comparator >
     bool Find (needleType needle, const uint8_t increment , vector <uint64_t> &newfound, comparator oper)
     {
+        if(!valid) return !newfound.empty();
         //loop
         for(uint64_t offset = 0; offset < (mr_.end - mr_.start) - sizeof(hayType); offset += increment)
         {
@@ -33,6 +55,7 @@ class SegmentFinder
     template < class needleType, class hayType, typename comparator >
     uint64_t FindInRange (needleType needle, comparator oper, uint64_t start, uint64_t length)
     {
+        if(!valid) return 0;
         uint64_t stopper = min((mr_.end - mr_.start) - sizeof(hayType), (start - mr_.start) - sizeof(hayType) + length);
         //loop
         for(uint64_t offset = start - mr_.start; offset < stopper; offset +=1)
@@ -46,6 +69,7 @@ class SegmentFinder
     template <class needleType, class hayType, typename comparator >
     bool Filter (needleType needle, vector <uint64_t> &found, vector <uint64_t> &newfound, comparator oper)
     {
+        if(!valid) return !newfound.empty();
         for( uint64_t i = 0; i < found.size(); i++)
         {
             if(mr_.isInRange(found[i]))
@@ -62,6 +86,7 @@ class SegmentFinder
     SegmentedFinder * _SF;
     DFHack::Context * _DF;
     DFHack::t_memrange mr_;
+    bool valid;
 };
 
 class SegmentedFinder
@@ -286,15 +311,207 @@ bool vectorAll (SegmentedFinder* s, vecTriplet *x, int )
     return false;
 }
 
-struct Bytestream
+class Bytestreamdata
 {
-    uint32_t length;
-    void * object;
+    public:
+        void * object;
+        uint32_t length;
+        uint32_t allocated;
+        uint32_t n_used;
 };
+
+class Bytestream
+{
+public:
+    Bytestream(void * obj, uint32_t len, bool alloc = false)
+    {
+        d = new Bytestreamdata();
+        d->allocated = alloc;
+        d->object = obj;
+        d->length = len;
+        d->n_used = 1;
+        constant = false;
+    }
+    Bytestream()
+    {
+        d = new Bytestreamdata();
+        d->allocated = false;
+        d->object = 0;
+        d->length = 0;
+        d->n_used = 1;
+        constant = false;
+    }
+    Bytestream( Bytestream & bs)
+    {
+        d =bs.d;
+        d->n_used++;
+        constant = false;
+    }
+    Bytestream( const Bytestream & bs)
+    {
+        d =bs.d;
+        d->n_used++;
+        constant = true;
+    }
+    ~Bytestream()
+    {
+        d->n_used --;
+        if(d->allocated && d->object && d->n_used == 0)
+        {
+            free (d->object);
+            free (d);
+        }
+    }
+    bool Allocate(size_t bytes)
+    {
+        if(constant)
+            return false;
+        if(d->allocated)
+        {
+            d->object = realloc(d->object, bytes);
+        }
+        else
+        {
+            d->object = malloc( bytes );
+        }
+
+        if(d->object)
+        {
+            d->allocated = bytes;
+            return true;
+        }
+        else
+        {
+            d->allocated = 0;
+            return false;
+        }
+    }
+    template < class T >
+    bool insert( T what )
+    {
+        if(constant)
+            return false;
+        if(d->length+sizeof(T) >= d->allocated)
+            Allocate((d->length+sizeof(T)) * 2);
+        (*(T *)( (uint64_t)d->object + d->length)) = what;
+        d->length += sizeof(T);
+        return true;
+    }
+    Bytestreamdata * d;
+    bool constant;
+};
+std::ostream& operator<< ( std::ostream& out, Bytestream& bs )
+{
+    if(bs.d->object)
+    {
+        out << "bytestream " << dec << bs.d->length << "/" << bs.d->allocated << " bytes" << endl;
+        for(int i = 0; i < bs.d->length; i++)
+        {
+            out << hex << (int) ((uint8_t *) bs.d->object)[i] << " ";
+        }
+        out << endl;
+    }
+    else
+    {
+        out << "empty bytestresm" << endl;
+    }
+    return out;
+}
+
+std::istream& operator>> ( std::istream& out, Bytestream& bs )
+{
+    string read;
+    while(!out.eof())
+    {
+        string tmp;
+        out >> tmp;
+        read.append(tmp);
+    }
+    cout << read << endl;
+    bs.d->length = 0;
+    size_t first = read.find_first_of("\"");
+    size_t last = read.find_last_of("\"");
+    size_t start = first + 1;
+    if(first == read.npos)
+    {
+        std::transform(read.begin(), read.end(), read.begin(), (int(*)(int)) tolower);
+        bs.Allocate(read.size()); // overkill. size / 2 should be good, but this is safe
+        int state = 0;
+        char big = 0;
+        char small = 0;
+        string::iterator it = read.begin();
+        // iterate through string, construct a bytestream out of 00-FF bytes
+        while(it != read.end())
+        {
+            char reads = *it;
+            if((reads >='0' && reads <= '9'))
+            {
+                if(state == 0)
+                {
+                    big = reads - '0';
+                    state = 1;
+                }
+                else if(state == 1)
+                {
+                    small = reads - '0';
+                    state = 0;
+                    bs.insert<char>(big*16 + small);
+                }
+            }
+            if((reads >= 'a' && reads <= 'f'))
+            {
+                if(state == 0)
+                {
+                    big = reads - 'a' + 10;
+                    state = 1;
+                }
+                else if(state == 1)
+                {
+                    small = reads - 'a' + 10;
+                    state = 0;
+                    bs.insert<char>(big*16 + small);
+                }
+            }
+            it++;
+        }
+        // we end in state= 1. should we add or should we trim... or throw errors?
+        // I decided on adding
+        if (state == 1)
+        {
+            small = 0;
+            bs.insert<char>(big*16 + small);
+        }
+    }
+    else
+    {
+        if(last == first)
+        {
+            // only one "
+            last = read.size();
+        }
+        size_t length = last - start;
+        // construct bytestream out of stuff between ""
+        bs.d->length = length;
+        if(length)
+        {
+            // todo: Bytestream should be able to handle this without external code
+            bs.Allocate(length);
+            bs.d->length = length;
+            const char* strstart = read.c_str();
+            memcpy(bs.d->object, strstart + start, length);
+        }
+        else
+        {
+            bs.d->object = 0;
+        }
+    }
+    cout << bs;
+    return out;
+}
 
 bool findBytestream (SegmentedFinder* s, void *addr, Bytestream compare )
 {
-    if(memcmp(addr, compare.object, compare.length) == 0)
+    if(memcmp(addr, compare.d->object, compare.d->length) == 0)
         return true;
     return false;
 }

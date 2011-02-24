@@ -9,6 +9,10 @@ ENDIF(UNIX)
 ADD_EXECUTABLE(dfreveal reveal.cpp)
 TARGET_LINK_LIBRARIES(dfreveal dfhack)
 
+# force pause!
+ADD_EXECUTABLE(dfpause forcepause.cpp)
+TARGET_LINK_LIBRARIES(dfpause dfhack)
+
 # prospector - produces a list of available materials and their quantities
 ADD_EXECUTABLE(dfprospector prospector.cpp)
 TARGET_LINK_LIBRARIES(dfprospector dfhack)
@@ -68,6 +72,12 @@ TARGET_LINK_LIBRARIES(dfdoffsets dfhack)
 ADD_EXECUTABLE(dfweather weather.cpp)
 TARGET_LINK_LIBRARIES(dfweather dfhack)
 
+# incrementalsearch - a bit like cheat engine, only DF-specific, very basic
+ADD_EXECUTABLE(dfautosearch autosearch.cpp)
+TARGET_LINK_LIBRARIES(dfautosearch dfhack)
+ADD_EXECUTABLE(dfincremental incrementalsearch.cpp)
+TARGET_LINK_LIBRARIES(dfincremental dfhack)
+
 
 IF(UNIX)
     SET(VEINLOOK_BUILT "NO")
@@ -113,6 +123,7 @@ dfvdig
 dfcleanmap
 dfunstuck
 dfprobe
+dfpause
 dfdoffsets
 dfattachtest
 dfcleartask
@@ -121,5 +132,7 @@ dfsuspend
 dfflows
 dfliquids
 dfweather
+dfautosearch
+dfincremental
 RUNTIME DESTINATION bin
 )

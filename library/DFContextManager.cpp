@@ -69,7 +69,7 @@ BadContexts::~BadContexts()
 
 bool BadContexts::Contains(Process* p)
 {
-    for(int i = 0; i < d->bad.size(); i++)
+    for(unsigned int i = 0; i < d->bad.size(); i++)
     {
         if((d->bad[i])->getProcess() == p)
             return true;
@@ -79,7 +79,7 @@ bool BadContexts::Contains(Process* p)
 
 bool BadContexts::Contains(Context* c)
 {
-    for(int i = 0; i < d->bad.size(); i++)
+    for(unsigned int i = 0; i < d->bad.size(); i++)
     {
         if(d->bad[i] == c)
             return true;
@@ -94,7 +94,7 @@ uint32_t BadContexts::size()
 
 void BadContexts::clear()
 {
-    for(int i = 0; i < d->bad.size(); i++)
+    for(unsigned int i = 0; i < d->bad.size(); i++)
     {
         // delete both Process and Context!
         // process has to be deleted after context, because Context does some
@@ -227,7 +227,7 @@ Context * ContextManager::getSingleContext()
     {
         Refresh();
     }
-    for(int i = 0; i < d->contexts.size();i++)
+    for(unsigned int i = 0; i < d->contexts.size();i++)
     {
         if(d->contexts[i]->isValid())
         {
@@ -239,7 +239,7 @@ Context * ContextManager::getSingleContext()
 
 void ContextManager::purge(void)
 {
-    for(int i = 0; i < d->contexts.size();i++)
+    for(unsigned int i = 0; i < d->contexts.size();i++)
         delete d->contexts[i];
     d->contexts.clear();
     d->pEnum->purge();

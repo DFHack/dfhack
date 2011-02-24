@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include "dfhack/DFPragma.h"
 #include <vector>
 #include <algorithm>
 
@@ -54,6 +55,48 @@ int Maps_Finish(DFHackObject* maps)
 	return -1;
 }
 
+uint16_t* Maps_ReadGeology(DFHackObject*  maps)
+{
+	if(maps != NULL)
+	{
+		std::vector < std::vector <uint16_t> > geology;
+		
+		if(((DFHack::Maps*)maps)->ReadGeology(geology))
+		{
+			uint16_t* buf = NULL;
+			uint32_t geoLength = 0;
+			
+			for(unsigned int i = 0; i < geology.size(); i++)
+			{
+				for(unsigned int j = 0; j < geology[i].size(); j++)
+				{
+					geoLength += geology[i].size();
+				}
+			}
+			
+			(*alloc_ushort_buffer_callback)(buf, geoLength);
+			
+			if(buf != NULL)
+			{
+				uint16_t* bufCopyPtr = buf;
+				
+				for(unsigned int i = 0; i < geology.size(); i++)
+				{
+					copy(geology[i].begin(), geology[i].end(), bufCopyPtr);
+					
+					bufCopyPtr += geology[i].size();
+				}
+				
+				return buf;
+			}
+			else
+				return NULL;
+		}
+	}
+	
+	return NULL;
+}
+
 t_feature* Maps_ReadGlobalFeatures(DFHackObject* maps)
 {
 	if(maps != NULL)
@@ -65,7 +108,7 @@ t_feature* Maps_ReadGlobalFeatures(DFHackObject* maps)
 			if(featureVec.size() <= 0)
 				return NULL;
 			
-			t_feature* buf;
+			t_feature* buf = NULL;
 			
 			(*alloc_t_feature_buffer_callback)(buf, featureVec.size());
 			
@@ -255,6 +298,8 @@ int Maps_WriteEmptyLocalFeature(DFHackObject* maps, uint32_t x, uint32_t y, uint
 	{
 		return ((DFHack::Maps*)maps)->WriteLocalFeature(x, y, z, -1);
 	}
+
+  return -1;
 }
 
 int Maps_WriteGlobalFeature(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, int16_t local)
@@ -273,6 +318,8 @@ int Maps_WriteEmptyGlobalFeature(DFHackObject* maps, uint32_t x, uint32_t y, uin
 	{
 		return ((DFHack::Maps*)maps)->WriteGlobalFeature(x, y, z, -1);
 	}
+
+  return -1;
 }
 
 int Maps_ReadBlockFlags(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, t_blockflags* blockflags)

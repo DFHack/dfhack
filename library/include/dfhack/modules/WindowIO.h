@@ -25,9 +25,9 @@ distribution.
 #ifndef KEYS_H_INCLUDED
 #define KEYS_H_INCLUDED
 
-#include "dfhack/DFPragma.h"
-#include "dfhack/DFExport.h"
-#include "dfhack/DFModule.h"
+#include "../DFPragma.h"
+#include "../DFExport.h"
+#include "../DFModule.h"
 
 namespace DFHack
 {

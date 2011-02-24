@@ -23,10 +23,10 @@ distribution.
 */
 
 #include "Internal.h"
+#include "ProcessFactory.h"
 
 #include "dfhack/VersionInfoFactory.h"
 #include "dfhack/DFProcessEnumerator.h"
-#include "dfhack/DFProcess.h"
 #include "dfhack/VersionInfo.h"
 
 
@@ -63,7 +63,7 @@ BadProcesses::~BadProcesses()
 
 bool BadProcesses::Contains(Process* p)
 {
-    for(int i = 0; i < d->bad.size(); i++)
+    for(unsigned int i = 0; i < d->bad.size(); i++)
     {
         if(d->bad[i] == p)
             return true;
@@ -96,7 +96,7 @@ uint32_t BadProcesses::size()
 
 void BadProcesses::clear()
 {
-    for(int i = 0; i < d->bad.size(); i++)
+    for(unsigned int i = 0; i < d->bad.size(); i++)
     {
         delete d->bad[i];
     }
@@ -120,19 +120,19 @@ Process * BadProcesses::operator[](uint32_t index)
 Process *ProcessEnumerator::Private::GetProcessObject(ProcessID ID)
 {
 
-    Process *p1 = new SHMProcess(ID.pid,meminfo->versions);
+    Process *p1 = createSHMProcess(ID.pid,meminfo->versions);
     if(p1->isIdentified())
         return p1;
     else
         delete p1;
 
-    Process *p2 = new NormalProcess(ID.pid,meminfo->versions);
+    Process *p2 = createNormalProcess(ID.pid,meminfo->versions);
     if(p2->isIdentified())
         return p2;
     else
         delete p2;
 #ifdef LINUX_BUILD
-    Process *p3 = new WineProcess(ID.pid,meminfo->versions);
+    Process *p3 = createWineProcess(ID.pid,meminfo->versions);
     if(p3->isIdentified())
         return p3;
     else

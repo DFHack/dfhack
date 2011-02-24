@@ -29,3 +29,5 @@ dfhack/python/pydfhack/_pydfhack.so
 dfhack/python/PyDFHack.egg-info
 dfhack/python/build
 dfhack/python/dist
+
+/cmakeall.bat

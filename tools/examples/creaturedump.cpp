@@ -302,7 +302,15 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
                 {
                     cout << ", ";
                 }
-                cout << mem->getSkill(creature.defaultSoul.skills[i].id) << ": " << creature.defaultSoul.skills[i].rating;
+                try
+                {
+                    cout << mem->getSkill(creature.defaultSoul.skills[i].id) << ": " << creature.defaultSoul.skills[i].rating;
+                }
+                catch(DFHack::Error::AllMemdef &e)
+                {
+                    cout << "Unknown skill! : " << creature.defaultSoul.skills[i].id <<", rating: "  << creature.defaultSoul.skills[i].rating << endl;
+                    cout << e.what() << endl;
+                }
             }
             cout << endl;
             cout << "Traits" << endl;

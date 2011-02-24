@@ -232,7 +232,7 @@ t_matgloss* Materials_getInorganic(DFHackObject* mat)
 		
 		if(materials->inorganic.size() > 0)
 		{
-			t_matgloss* buf;
+			t_matgloss* buf = NULL;
 
 			((*alloc_matgloss_buffer_callback)(buf, materials->inorganic.size()));
 			
@@ -256,7 +256,7 @@ t_matgloss* Materials_getOrganic(DFHackObject* mat)
 		
 		if(materials->organic.size() > 0)
 		{
-			t_matgloss* buf;
+			t_matgloss* buf = NULL;
 			
 			((*alloc_matgloss_buffer_callback)(buf, materials->organic.size()));
 			
@@ -280,7 +280,7 @@ t_matgloss* Materials_getTree(DFHackObject* mat)
 		
 		if(materials->tree.size() > 0)
 		{
-			t_matgloss* buf;
+			t_matgloss* buf = NULL;
 			
 			((*alloc_matgloss_buffer_callback)(buf, materials->tree.size()));
 			
@@ -304,7 +304,7 @@ t_matgloss* Materials_getPlant(DFHackObject* mat)
 		
 		if(materials->plant.size() > 0)
 		{
-			t_matgloss* buf;
+			t_matgloss* buf = NULL;
 			
 			((*alloc_matgloss_buffer_callback)(buf, materials->plant.size()));
 			
@@ -328,7 +328,7 @@ t_matgloss* Materials_getRace(DFHackObject* mat)
 		
 		if(materials->race.size() > 0)
 		{
-			t_matgloss* buf;
+			t_matgloss* buf = NULL;
 			
 			((*alloc_matgloss_buffer_callback)(buf, materials->race.size()));
 			
@@ -354,7 +354,7 @@ c_creaturetype* Materials_getRaceEx(DFHackObject* mat)
 		
 		if(matSize > 0)
 		{
-			c_creaturetype* buf;
+			c_creaturetype* buf = NULL;
 			
 			((*alloc_creaturetype_buffer_callback)(buf, matSize));
 			
@@ -379,7 +379,7 @@ t_descriptor_color* Materials_getColor(DFHackObject* mat)
 		
 		if(materials->color.size() > 0)
 		{
-			t_descriptor_color* buf;
+			t_descriptor_color* buf = NULL;
 			
 			((*alloc_descriptor_buffer_callback)(buf, materials->color.size()));
 			
@@ -403,7 +403,7 @@ t_matglossOther* Materials_getOther(DFHackObject* mat)
 		
 		if(materials->other.size() > 0)
 		{
-			t_matglossOther* buf;
+			t_matglossOther* buf = NULL;
 			
 			((*alloc_matgloss_other_buffer_callback)(buf, materials->other.size()));
 			
@@ -427,7 +427,7 @@ t_matgloss* Materials_getAllDesc(DFHackObject* mat)
 		
 		if(materials->alldesc.size() > 0)
 		{
-			t_matgloss* buf;
+			t_matgloss* buf = NULL;
 			
 			((*alloc_matgloss_buffer_callback)(buf, materials->alldesc.size()));
 			

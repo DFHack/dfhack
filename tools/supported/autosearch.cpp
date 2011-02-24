@@ -4,6 +4,8 @@
 #include <climits>
 #include <vector>
 #include <map>
+#include <set>
+#include <list>
 #include <ctime>
 #include <string.h>
 #include <stdio.h>
@@ -20,144 +22,309 @@ using namespace std;
 
 #include <DFHack.h>
 #include "SegmentedFinder.h"
-template <class T>
-class holder
+class Token
 {
-    public:
-        vector <T> values;
-        SegmentedFinder & sf;
-        holder(SegmentedFinder& sff):sf(sff){};
-        bool isValid(size_t idx)
-        {
-            
-        };
-};
-
-class address
-{
-    public:
-    uint64_t addr_;
-    unsigned int valid : 1;
-    virtual void print(SegmentedFinder& sff)
+public:
+    Token(uint64_t _offset)
     {
-        cout << hex << "0x" << addr_ << endl;
+        offset = _offset;
+        offset_valid = 1;
+        value_valid = 0;
+        parent = 0;
+    }
+    Token(const std::string & offsetn)
+    {
+        full_offset_name = offsetn;
+        offset_valid = 0;
+        value_valid = 0;
+        parent = 0;
+    }
+    Token()
+    {
+        offset_valid = 0;
+        value_valid = 0;
+        parent = 0;
+    }
+    virtual ~Token(){};
+    virtual bool LoadData(SegmentedFinder * s) = 0;
+    virtual void EmptyData()
+    {
+        value_valid = false;
     };
-    address(const uint64_t addr)
+    virtual bool Match(SegmentedFinder * s, uint64_t offset) = 0;
+    virtual void EmptyOffset()
     {
-        addr_ = addr;
-        valid = false;
-    }
-    virtual address & operator=(const uint64_t in)
+        offset_valid = false;
+    };
+    virtual bool AcquireOffset(DFHack::VersionInfo * vinfo)
     {
-        addr_ = in;
-        valid = false;
-        return *this;
+        vinfo->getOffset(full_offset_name);
+        return true;
     }
-    virtual bool isValid(SegmentedFinder& sff)
+    virtual uint32_t Length() = 0;
+    virtual uint64_t getAbsolute(){if(parent) return parent->getAbsolute() + offset; else return offset;};
+    void setParent( Token *par )
     {
-        if(valid) return true;
-        if(sff.getSegmentForAddress(addr_))
-        {
-            valid = 1;
-        }
+        par = parent;
     }
-    virtual bool equals (SegmentedFinder & sf, address & rhs)
-    {
-        return rhs.addr_ == addr_;
-    }
+protected:
+    uint64_t offset;// offset from the start of the parent token
+    std::string full_offset_name;
+    Token * parent;
+    bool offset_valid :1;
+    bool value_valid :1;
 };
 
-// pointer to a null-terminated byte string
-class Cstr: public address
+class Byte: virtual public Token
 {
-    void print(SegmentedFinder & sf)
+public:
+    Byte(uint64_t _offset):Token(_offset){};
+    Byte():Token(){};
+    ~Byte();
+    virtual bool LoadData(SegmentedFinder * s)
     {
-        cout << hex << "0x" << addr_ << ": \"" << sf.Translate<char>(addr_) << "\"" << endl;
-    }
-    bool equals(SegmentedFinder & sf,const char * rhs)
-    {
-        uint32_t addr2 = *(sf.Translate<uint32_t>(addr_));
-        return strcmp(sf.Translate<const char>(addr2), rhs) == 0;
-    }
-    template <class Predicate, class inType>
-    bool equalsP(SegmentedFinder & sf,inType rhs)
-    {
-        return Predicate(addr_, sf, rhs);
-    }
-    bool isValid(SegmentedFinder& sf)
-    {
-        if (address::isValid(sf))
+        if(offset_valid)
         {
-            // read the pointer
-            uint32_t addr2 = *(sf.Translate<uint32_t>(addr_));
-            // is it a real pointer? a pretty weak test, but whatever.
-            if(sf.getSegmentForAddress(addr2))
+            char * ptr = s->Translate<char>(getAbsolute());
+            if(ptr)
+            {
+                value = *ptr;
+                value_valid = true;
                 return true;
+            }
         }
         return false;
+    };
+    // is the loaded data same as data at offset? yes -> set our offset to that.
+    virtual bool Match(SegmentedFinder * s, uint64_t offs)
+    {
+        if(value_valid && (*s->Translate<char>(parent->getAbsolute() + offset)) == value )
+        {
+            if(parent)
+                offset = offs - parent->getAbsolute();
+            else
+                offset = offs;
+            return true;
+        }
+        return false;
+    };
+    virtual uint32_t Length()
+    {
+        return 1;
+    };
+private:
+    char value;
+};
+
+class Short: virtual public Token
+{
+public:
+    Short(uint64_t _offset):Token(_offset){};
+    Short():Token(){};
+    ~Short();
+    virtual bool LoadData(SegmentedFinder * s)
+    {
+        if(offset_valid)
+        {
+            uint16_t * ptr = s->Translate<uint16_t>(getAbsolute());
+            if(ptr)
+            {
+                value = *ptr;
+                value_valid = true;
+                return true;
+            }
+        }
+        return false;
+    };
+    // is the loaded data same as data at offset? yes -> set our offset to that.
+    virtual bool Match(SegmentedFinder * s, uint64_t offs)
+    {
+        if(value_valid && (*s->Translate<uint16_t>(parent->getAbsolute() + offset)) == value )
+        {
+            if(parent)
+                offset = offs - parent->getAbsolute();
+            else
+                offset = offs;
+            return true;
+        }
+        return false;
+    };
+    virtual uint32_t Length()
+    {
+        return 2;
+    };
+private:
+    uint16_t value;
+};
+
+class Long: virtual public Token
+{
+public:
+    Long(uint64_t _offset):Token(_offset){};
+    Long():Token(){};
+    ~Long();
+    virtual bool LoadData(SegmentedFinder * s)
+    {
+        if(offset_valid)
+        {
+            uint32_t * ptr = s->Translate<uint32_t>(getAbsolute());
+            if(ptr)
+            {
+                value = *ptr;
+                value_valid = true;
+                return true;
+            }
+        }
+        return false;
+    };
+    // is the loaded data same as data at offset? yes -> set our offset to that.
+    virtual bool Match(SegmentedFinder * s, uint64_t offs)
+    {
+        if(value_valid && (*s->Translate<uint32_t>(offs)) == value )
+        {
+            if(parent)
+                offset = offs - parent->getAbsolute();
+            else
+                offset = offs;
+            return true;
+        }
+        return false;
+            
+    };
+    virtual uint32_t Length(){return 4;};
+private:
+    uint32_t value;
+};
+
+class PtrVector : virtual public Token
+{
+public:
+    PtrVector(uint64_t _offset):Token(_offset){};
+    PtrVector():Token(){};
+    ~PtrVector();
+    virtual uint32_t Length(){return 12;};
+private:
+    vector <uint64_t> value;
+};
+
+class Pointer: virtual public Token
+{
+public:
+    Pointer(uint64_t _offset):Token(_offset){};
+    Pointer():Token(){};
+    ~Pointer();
+    virtual uint32_t Length(){return 4;};
+private:
+    uint64_t value;
+};
+
+class String: virtual public Token
+{
+protected:
+    string value;
+};
+
+class Struct: virtual public Token
+{
+public:
+    Struct(uint64_t _offset):Token(_offset){};
+    Struct():Token(){};
+    ~Struct(){};
+    void Add( Token * t ){members.push_back(t);};
+    virtual uint32_t Length(){return 0;}; // FIXME: temporary solution, should be the minimal length of all the contents combined
+    virtual bool LoadData(SegmentedFinder* s)
+    {
+        bool OK = true;
+        for(int i = 0; i < members.size() && OK; i++)
+            OK &= members[i]->LoadData(s);
+        return OK;
+    };
+    // TODO: IMPLEMENT!
+    virtual bool Match(SegmentedFinder* s, uint64_t offset)
+    {
+        return false;
+    }
+private:
+    vector<Token*> members;
+};
+
+class LinuxString: virtual public String
+{
+public:
+    LinuxString(uint64_t _offset):Token(_offset){};
+    LinuxString():Token(){};
+    ~LinuxString(){};
+    virtual uint32_t Length(){return 4;};
+    virtual bool LoadData(SegmentedFinder* s)
+    {
+        return false;
+    }
+    virtual bool Match(SegmentedFinder* s, uint64_t offset)
+    {
+        return false;
+    }
+    /*
+        // read string pointer, translate to local scheme
+        char *str = sf->Translate<char>(*offset);
+        // verify
+        if(!str)
+            return false;
+        uint32_t length = *(uint32_t *)(offset - 12);
+        uint32_t capacity = *(uint32_t *)(offset - 8);
+        if(length > capacity)
+            return false;
+        //char * temp = new char[length+1];
+        // read data from inside the string structure
+        //memcpy(temp, str,length + 1);
+        output = str;
+        return true;
+ */
+};
+
+class WindowsString: virtual public String
+{
+public:
+    WindowsString(uint64_t _offset):Token(_offset){};
+    WindowsString():Token(){};
+    ~WindowsString(){};
+    virtual uint32_t Length(){return 0x1C;}; // FIXME: pouzivat Memory.xml?
+    virtual bool LoadData(SegmentedFinder* s)
+    {
+        return false;
+    }
+    virtual bool Match(SegmentedFinder* s, uint64_t offset)
+    {
+        return false;
+    }
+    string rdWinString( char * offset, SegmentedFinder & sf )
+    {
+        char * start_offset = offset + 4; // FIXME: pouzivat Memory.xml?
+        uint32_t length = *(uint32_t *)(offset + 20); // FIXME: pouzivat Memory.xml?
+        uint32_t capacity = *(uint32_t *)(offset + 24); // FIXME: pouzivat Memory.xml?
+        char * temp = new char[capacity+1];
+
+        // read data from inside the string structure
+        if(capacity < 16)
+        {
+            memcpy(temp, start_offset,capacity);
+            //read(start_offset, capacity, (uint8_t *)temp);
+        }
+        else // read data from what the offset + 4 dword points to
+        {
+            start_offset = sf.Translate<char>(*(uint32_t*)start_offset);
+            memcpy(temp, start_offset,capacity);
+        }
+
+        temp[length] = 0;
+        string ret = temp;
+        delete temp;
+        return ret;
     }
 };
-
-// STL STRING
-#ifdef LINUX_BUILD
-class STLstr: public address
-{
-    
-};
-#endif
-#ifndef LINUX_BUILD
-class STLstr: public address
-{
-    
-};
-#endif
-
-// STL VECTOR
-#ifdef LINUX_BUILD
-class Vector: public address
-{
-    
-};
-#endif
-#ifndef LINUX_BUILD
-class Vector: public address
-{
-    
-};
-#endif
-class Int64: public address{};
-class Int32: public address{};
-class Int16: public address{};
-class Int8: public address{};
 
 inline void printRange(DFHack::t_memrange * tpr)
 {
     std::cout << std::hex << tpr->start << " - " << tpr->end << "|" << (tpr->read ? "r" : "-") << (tpr->write ? "w" : "-") << (tpr->execute ? "x" : "-") << "|" << tpr->name << std::endl;
-}
-
-string rdWinString( char * offset, SegmentedFinder & sf )
-{
-    char * start_offset = offset + 4;
-    uint32_t length = *(uint32_t *)(offset + 20);
-    uint32_t capacity = *(uint32_t *)(offset + 24);
-    char * temp = new char[capacity+1];
-
-    // read data from inside the string structure
-    if(capacity < 16)
-    {
-        memcpy(temp, start_offset,capacity);
-        //read(start_offset, capacity, (uint8_t *)temp);
-    }
-    else // read data from what the offset + 4 dword points to
-    {
-        start_offset = sf.Translate<char>(*(uint32_t*)start_offset);
-        memcpy(temp, start_offset,capacity);
-    }
-
-    temp[length] = 0;
-    string ret = temp;
-    delete temp;
-    return ret;
 }
 
 bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges)
@@ -181,12 +348,12 @@ bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges
         {
             // empty input, assume default. observe the length of the memory range vector
             // these are hardcoded values, intended for my convenience only
-            if(p->getDescriptor()->getOS() == DFHack::VersionInfo::OS_WINDOWS)
+            if(p->getDescriptor()->getOS() == DFHack::OS_WINDOWS)
             {
                 start = min(11, (int)ranges.size());
                 end = min(14, (int)ranges.size());
             }
-            else if(p->getDescriptor()->getOS() == DFHack::VersionInfo::OS_LINUX)
+            else if(p->getDescriptor()->getOS() == DFHack::OS_LINUX)
             {
                 start = min(2, (int)ranges.size());
                 end = min(4, (int)ranges.size());
@@ -225,6 +392,7 @@ bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges
         }
         it++;
     }
+    return true;
 }
 
 bool getNumber (string prompt, int & output, int def, bool pdef = true)
@@ -271,248 +439,15 @@ bool getString (string prompt, string & output)
     }
 }
 
-template <class T>
-bool Incremental ( vector <uint64_t> &found, const char * what, T& output,
-                   const char *singular = "address", const char *plural = "addresses" )
+// meh
+#pragma pack(1)
+struct tilecolors
 {
-    string select;
-    if(found.empty())
-    {
-        cout << "search ready - insert " << what << ", 'p' for results, 'p #' to limit number of results" << endl;
-    }
-    else if( found.size() == 1)
-    {
-        cout << "Found single "<< singular <<"!" << endl;
-        cout << hex << "0x" << found[0] << endl;
-    }
-    else
-    {
-        cout << "Found " << dec << found.size() << " " << plural <<"." << endl;
-    }
-    incremental_more:
-    cout << ">>";
-    std::getline(cin, select);
-    size_t num = 0;
-    if( sscanf(select.c_str(),"p %d", &num) && num > 0)
-    {
-        cout << "Found "<< plural <<":" << endl;
-        for(int i = 0; i < min(found.size(), num);i++)
-        {
-            cout << hex << "0x" << found[i] << endl;
-        }
-        goto incremental_more;
-    }
-    else if(select == "p")
-    {
-        cout << "Found "<< plural <<":" << endl;
-        for(int i = 0; i < found.size();i++)
-        {
-            cout << hex << "0x" << found[i] << endl;
-        }
-        goto incremental_more;
-    }
-    else if(select.empty())
-    {
-        return false;
-    }
-    else
-    {
-        if( sscanf(select.c_str(),"0x%x", &output) == 1 )
-        {
-            //cout << dec << output << endl;
-            return true;
-        }
-        if( sscanf(select.c_str(),"%d", &output) == 1 )
-        {
-            //cout << dec << output << endl;
-            return true;
-        }
-
-        stringstream ss (stringstream::in | stringstream::out);
-        ss << select;
-        ss >> output;
-        if(!ss.fail())
-        {
-            return true;
-        }
-        cout << "not a valid value for type: " << what << endl;
-        goto incremental_more;
-    }
-}
-
-void FindIntegers(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
-{
-    // input / validation of variable size
-    int size;
-    do
-    {
-        getNumber("Select variable size (1,2,4 bytes)",size, 4);
-    } while (size != 1 && size != 2 && size != 4);
-    // input / validation of variable alignment (default is to use the same alignment as size)
-    int alignment;
-    do
-    {
-        getNumber("Select variable alignment (1,2,4 bytes)",alignment, size);
-    } while (alignment != 1 && alignment != 2 && alignment != 4);
-
-    uint32_t test1;
-    vector <uint64_t> found;
-    found.reserve(100);
-    while(Incremental(found, "integer",test1))
-    {
-        DFMgr.Refresh();
-        DFHack::Context * DF = DFMgr.getSingleContext();
-        DF->Attach();
-        SegmentedFinder sf(ranges,DF);
-        switch(size)
-        {
-            case 1:
-                sf.Incremental<uint8_t,uint8_t>(test1,alignment,found, equalityP<uint8_t>);
-                break;
-            case 2:
-                sf.Incremental<uint16_t,uint16_t>(test1,alignment,found, equalityP<uint16_t>);
-                break;
-            case 4:
-                sf.Incremental<uint32_t,uint32_t>(test1,alignment,found, equalityP<uint32_t>);
-                break;
-        }
-        DF->Detach();
-    }
-}
-
-void FindVectorByLength(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges )
-{
-    int element_size;
-    do
-    {
-        getNumber("Select searched vector item size in bytes",element_size, 4);
-    } while (element_size < 1);
-
-    uint32_t length;
-    vector <uint64_t> found;
-    found.reserve(100);
-    while (Incremental(found, "vector length",length,"vector","vectors"))
-    {
-        DFMgr.Refresh();
-        DFHack::Context * DF = DFMgr.getSingleContext();
-        DF->Attach();
-        SegmentedFinder sf(ranges,DF);
-        //sf.Incremental<int ,vecTriplet>(0,4,found,vectorAll);
-        //sf.Filter<uint32_t,vecTriplet>(length * element_size,found,vectorLength<uint32_t>);
-        sf.Incremental<uint32_t,vecTriplet>(length * element_size, 4 , found, vectorLength<uint32_t>);
-        DF->Detach();
-    }
-}
-
-void FindVectorByObjectRawname(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
-{
-    vector <uint64_t> found;
-    string select;
-    while (Incremental(found, "raw name",select,"vector","vectors"))
-    {
-        DFMgr.Refresh();
-        DFHack::Context * DF = DFMgr.getSingleContext();
-        DF->Attach();
-        SegmentedFinder sf(ranges,DF);
-        sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
-        sf.Filter<const char * ,vecTriplet>(select.c_str(),found, vectorString);
-        DF->Detach();
-    }
-}
-
-void FindVectorByFirstObjectRawname(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
-{
-    vector <uint64_t> found;
-    string select;
-    while (Incremental(found, "raw name",select,"vector","vectors"))
-    {
-        DFMgr.Refresh();
-        DFHack::Context * DF = DFMgr.getSingleContext();
-        DF->Attach();
-        SegmentedFinder sf(ranges,DF);
-        sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
-        sf.Filter<const char * ,vecTriplet>(select.c_str(),found, vectorStringFirst);
-        DF->Detach();
-    }
-}
-
-struct VectorSizeFunctor : public binary_function<uint64_t, uint64_t, bool>
-{
-    VectorSizeFunctor(SegmentedFinder & sf):sf_(sf){}
-    bool operator()( uint64_t lhs, uint64_t rhs)
-    {
-        vecTriplet* left = sf_.Translate<vecTriplet>(lhs);
-        vecTriplet* right = sf_.Translate<vecTriplet>(rhs);
-        return ((left->finish - left->start) < (right->finish - right->start));
-    }
-    SegmentedFinder & sf_;
+    uint16_t fore;
+    uint16_t back;
+    uint16_t bright;
 };
-
-void FindVectorByBounds(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
-{
-    vector <uint64_t> found;
-    uint32_t select;
-    while (Incremental(found, "address between vector.start and vector.end",select,"vector","vectors"))
-    {
-        DFMgr.Refresh();
-        DFHack::Context * DF = DFMgr.getSingleContext();
-        DF->Attach();
-        SegmentedFinder sf(ranges,DF);
-        sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
-        sf.Filter<uint32_t ,vecTriplet>(select,found, vectorAddrWithin);
-        // sort by size of vector
-        std::sort(found.begin(), found.end(), VectorSizeFunctor(sf));
-        DF->Detach();
-    }
-}
-
-void FindPtrVectorsByObjectAddress(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
-{
-    vector <uint64_t> found;
-    uint32_t select;
-    while (Incremental(found, "object address",select,"vector","vectors"))
-    {
-        DFMgr.Refresh();
-        DFHack::Context * DF = DFMgr.getSingleContext();
-        DF->Attach();
-        SegmentedFinder sf(ranges,DF);
-        sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
-        sf.Filter<uint32_t ,vecTriplet>(select,found, vectorOfPtrWithin);
-        DF->Detach();
-    }
-}
-
-void FindStrBufs(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
-{
-    vector <uint64_t> found;
-    string select;
-    while (Incremental(found,"buffer",select,"buffer","buffers"))
-    {
-        DFMgr.Refresh();
-        DFHack::Context * DF = DFMgr.getSingleContext();
-        DF->Attach();
-        SegmentedFinder sf(ranges,DF);
-        sf.Find< const char * ,uint32_t>(select.c_str(),1,found, findStrBuffer);
-        DF->Detach();
-    }
-}
-
-
-
-void FindStrings(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
-{
-    vector <uint64_t> found;
-    string select;
-    while (Incremental(found,"string",select,"string","strings"))
-    {
-        DFMgr.Refresh();
-        DFHack::Context * DF = DFMgr.getSingleContext();
-        DF->Attach();
-        SegmentedFinder sf(ranges,DF);
-        sf.Incremental< const char * ,uint32_t>(select.c_str(),1,found, findString);
-        DF->Detach();
-    }
-}
+#pragma pack()
 
 void printFound(vector <uint64_t> &found, const char * what)
 {
@@ -570,18 +505,62 @@ void printFoundStrVec(vector <uint64_t> &found, const char * what, SegmentedFind
     }
 }
 
-// meh
-#pragma pack(1)
-struct tilecolors
+class TokenFactory
 {
-    uint16_t fore;
-    uint16_t back;
-    uint16_t bright;
+    DFHack::OSType platform;
+public:
+    TokenFactory(DFHack::OSType platform_in)
+    {
+        platform = platform_in;
+    }
+    template <class T>
+    T * Build()
+    {
+        return new T;
+    }
+    template <class T>
+    T * Build(uint64_t offset)
+    {
+        return new T(offset);
+    }
 };
-#pragma pack()
-
-void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& ranges)
+template <>
+String * TokenFactory::Build()
 {
+    switch(platform)
+    {
+        case DFHack::OS_WINDOWS:
+            return new WindowsString();
+        case DFHack::OS_LINUX:
+        case DFHack::OS_APPLE:
+            return new LinuxString();
+    }
+    return 0;
+};
+template <>
+String * TokenFactory::Build(uint64_t offset)
+{
+    switch(platform)
+    {
+        case DFHack::OS_WINDOWS:
+            return new WindowsString(offset);
+        case DFHack::OS_LINUX:
+        case DFHack::OS_APPLE:
+            return new LinuxString(offset);
+    }
+    return 0;
+};
+
+void autoSearch(DFHack::Context * DF, vector <DFHack::t_memrange>& ranges, DFHack::OSType platform)
+{
+    cout << "stealing memory..." << endl;
+    SegmentedFinder sf(ranges, DF);
+    TokenFactory tf(platform);
+    cout << "done!" << endl;
+    Struct maps;
+    maps.Add(tf.Build<String>());
+    maps.Add(tf.Build<String>());
+    /*
     vector <uint64_t> allVectors;
     vector <uint64_t> filtVectors;
     vector <uint64_t> to_filter;
@@ -590,21 +569,7 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
     SegmentedFinder sf(ranges, DF);
     cout << "looking for vectors..." << endl;
     sf.Find<int ,vecTriplet>(0,4,allVectors, vectorAll);
-/*
-    // trim vectors. anything with > 10000 entries is not interesting
-    for(uint64_t i = 0; i < allVectors.size();i++)
-    {
-        vecTriplet* vtrip = sf.Translate<vecTriplet>(allVectors[i]);
-        if(vtrip)
-        {
-            uint64_t length = (vtrip->finish - vtrip->start) / 4;
-            if(length < 10000 )
-            {
-                filtVectors.push_back(allVectors[i]);
-            }
-        }
-    }
-*/
+
     filtVectors = allVectors;
     cout << "-------------------" << endl;
     cout << "!!LANGUAGE TABLES!!" << endl;
@@ -726,7 +691,8 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
         uint64_t Eoffset;
         cout << "Elephant: 0x" << hex << elephant << endl;
         cout << "Elephant: rawname = 0x0" << endl;
-        Eoffset = sf.FindInRange<uint8_t,uint8_t> ('E',equalityP<uint8_t>, elephant, 0x300 );
+        uint8_t letter_E = 'E';
+        Eoffset = sf.FindInRange<uint8_t,uint8_t> (letter_E,equalityP<uint8_t>, elephant, 0x300 );
         if(Eoffset)
         {
             cout << "Elephant: big E = 0x" << hex << Eoffset - elephant << endl;
@@ -742,7 +708,8 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
             cout << "Elephant: extract? vector = 0x" << hex << Eoffset - elephant << endl;
         }
         tilecolors eletc = {7,0,0};
-        Bytestream bs_eletc = {sizeof(tilecolors), &eletc};
+        Bytestream bs_eletc(&eletc, sizeof(tilecolors));
+        cout << bs_eletc;
         Eoffset = sf.FindInRange<Bytestream,tilecolors> (bs_eletc, findBytestream, elephant, 0x300 );
         if(Eoffset)
         {
@@ -775,17 +742,13 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
             cout << "Toad: extract? vector = 0x" << hex << Eoffset - toad << endl;
         }
         tilecolors toadtc = {2,0,0};
-        Bytestream bs_toadc = {sizeof(tilecolors), &toadtc};
+        Bytestream bs_toadc(&toadtc, sizeof(tilecolors));
         Eoffset = sf.FindInRange<Bytestream,tilecolors> (bs_toadc, findBytestream, toad, 0x300 );
         if(Eoffset)
         {
             cout << "Toad: colors = 0x" << hex << Eoffset - toad << endl;
         }
-    }
-    if(to_use)
-    {
-        
-    }
+    }*/
 }
 
 int main (void)
@@ -810,58 +773,7 @@ int main (void)
     getRanges(p,selected_ranges);
 
     DFHack::VersionInfo *minfo = DF->getMemoryInfo();
-    DFHack::VersionInfo::OSType os = minfo->getOS();
-
-    string prompt =
-    "Select search type: 1=number(default), 2=vector by length, 3=vector>object>string,\n"
-    "                    4=string, 5=automated offset search, 6=vector by address in its array,\n"
-    "                    7=pointer vector by address of an object, 8=vector>first object>string\n"
-    "                    9=string buffers\n";
-    int mode;
-    do
-    {
-        getNumber(prompt,mode, 1, false);
-    } while (mode < 1 || mode > 9 );
-    switch (mode)
-    {
-        case 1:
-            DF->Detach();
-            FindIntegers(DFMgr, selected_ranges);
-            break;
-        case 2:
-            DF->Detach();
-            FindVectorByLength(DFMgr, selected_ranges);
-            break;
-        case 3:
-            DF->Detach();
-            FindVectorByObjectRawname(DFMgr, selected_ranges);
-            break;
-        case 4:
-            DF->Detach();
-            FindStrings(DFMgr, selected_ranges);
-            break;
-        case 5:
-            automatedLangtables(DF,selected_ranges);
-            break;
-        case 6:
-            DF->Detach();
-            FindVectorByBounds(DFMgr,selected_ranges);
-            break;
-        case 7:
-            DF->Detach();
-            FindPtrVectorsByObjectAddress(DFMgr,selected_ranges);
-            break;
-        case 8:
-            DF->Detach();
-            FindVectorByFirstObjectRawname(DFMgr, selected_ranges);
-            break;
-        case 9:
-            DF->Detach();
-            FindStrBufs(DFMgr, selected_ranges);
-            break;
-        default:
-            cout << "not implemented :(" << endl;
-    }
+    autoSearch(DF,selected_ranges, minfo->getOS());
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();

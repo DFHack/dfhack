@@ -58,7 +58,7 @@ char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObje
 		
 		if(desc.size() > 0)
 		{
-			char* buf;
+			char* buf = NULL;
             (*alloc_char_buffer_callback)(buf,desc.size());
 			
 			if(buf != NULL)
@@ -86,7 +86,7 @@ char* Items_getItemClass(DFHackObject* items, int32_t index)
 		
 		if(iclass.size() > 0)
 		{
-            char* buf;
+            char* buf = NULL;
             (*alloc_char_buffer_callback)(buf, iclass.size());
 			if(buf != NULL)
 			{

@@ -402,7 +402,7 @@ bool Materials::ReadCreatureTypesEx (void)
             p->readSTLString (caste_start + sizeof_string, caste.singular, sizeof(caste.singular));
             p->readSTLString (caste_start + 2 * sizeof_string, caste.plural, sizeof(caste.plural));
             p->readSTLString (caste_start + 3 * sizeof_string, caste.adjective, sizeof(caste.adjective));
-            cout << "Caste " << caste.rawname << " " << caste.singular << ": 0x" << hex << caste_start << endl;
+            //cout << "Caste " << caste.rawname << " " << caste.singular << ": 0x" << hex << caste_start << endl;
             if(have_advanced)
             {
                 /* color mod reading */
@@ -459,7 +459,7 @@ void Materials::ReadAllMaterials(void)
     this->ReadCreatureTypes();
     this->ReadCreatureTypesEx();
     this->ReadDescriptorColors();
-    //this->ReadOthers();
+    this->ReadOthers();
 }
 
 std::string Materials::getDescription(t_material & mat)
@@ -478,6 +478,12 @@ std::string Materials::getDescription(t_material & mat)
                 {
                     if (mat.subIndex>=this->other.size())
                     {
+                        if (mat.itemType == 0) {
+                            if(mat.subIndex<0)
+                                return "any inorganic";
+                            else
+                                return this->inorganic[mat.subIndex].id;
+                        }
                         if(mat.subIndex<0)
                             return "any";
                         if(mat.subIndex>=this->raceEx.size())

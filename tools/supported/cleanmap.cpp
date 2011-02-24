@@ -8,13 +8,24 @@ using namespace std;
 
 #include <DFHack.h>
 
-int main (void)
+int main (int argc, char** argv)
 {
+
+    bool quiet = false;
+    for(int i = 1; i < argc; i++)
+    {
+        string test = argv[i];
+        if(test == "-q")
+        {
+            quiet = true;
+        }
+    }
+
     uint32_t x_max,y_max,z_max;
     uint32_t num_blocks = 0;
     uint32_t bytes_read = 0;
     vector<DFHack::t_spattervein> splatter;
-    
+
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF = DFMgr.getSingleContext();
     try
@@ -30,7 +41,7 @@ int main (void)
         return 1;
     }
     DFHack::Maps *Mapz = DF->getMaps();
-    
+
     // init the map
     if(!Mapz->Start())
     {
@@ -40,11 +51,12 @@ int main (void)
         #endif
         return 1;
     }
-    
+
     Mapz->getSize(x_max,y_max,z_max);
-        
+
     uint8_t zeroes [16][16] = {0};
-    
+    DFHack::occupancies40d occ;
+
     // walk the map
     for(uint32_t x = 0; x< x_max;x++)
     {
@@ -55,10 +67,18 @@ int main (void)
                 if(Mapz->isValidBlock(x,y,z))
                 {
                     Mapz->ReadVeins(x,y,z,0,0,&splatter);
+                    Mapz->ReadOccupancy(x,y,z,&occ);
+                    for(int i = 0; i < 16; i++)
+                        for(int j = 0; j < 16; j++)
+                        {
+                            occ[i][j].unibits.splatter = 0;
+                        }
+                    Mapz->WriteOccupancy(x,y,z,&occ);
                     for(uint32_t i = 0; i < splatter.size(); i++)
                     {
                         DFHack::t_spattervein & vein = splatter[i];
-                        if(vein.mat1 != 0xC)
+                        // filter away snow and mud
+                        if(vein.mat1 != 0xC && vein.mat1 != 0x6)
                         {
                             uint32_t addr = vein.address_of;
                             uint32_t offset = offsetof(DFHack::t_spattervein, intensity);
@@ -71,8 +91,11 @@ int main (void)
     }
     DF->Detach();
     #ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
+	if (!quiet) 
+	{
+	    cout << "Done. Press any key to continue" << endl;
+	    cin.ignore();
+	}
     #endif
     return 0;
 }

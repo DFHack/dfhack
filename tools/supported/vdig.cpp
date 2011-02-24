@@ -10,45 +10,44 @@ using namespace std;
 
 #include <DFHack.h>
 #include <dfhack/DFTileTypes.h>
-#include <argstream.h>
+//#include <argstream.h>
 
 #define MAX_DIM 0x300
-class Point
+
+//TODO: turn into the official coord class for DFHack/DF
+class Vertex
 {
     public:
-    Point(uint32_t x, uint32_t y, uint32_t z)
-    {
-        this->x = x;
-        this->y = y;
-        this->z = z;
-    }
-    Point()
+    Vertex(uint32_t _x, uint32_t _y, uint32_t _z):x(_x),y(_y),z(_z) {}
+    Vertex()
     {
         x = y = z = 0;
     }
-    bool operator==(const Point &other) const
+    bool operator==(const Vertex &other) const
     {
         return (other.x == x && other.y == y && other.z == z);
     }
-    bool operator<(const Point &other) const
+    // FIXME: <tomprince> peterix_: you could probably get away with not defining operator< if you defined a std::less specialization for Vertex.
+    bool operator<(const Vertex &other) const
     {
+        // FIXME: could be changed to eliminate MAX_DIM and make std::map lookups faster?
         return ( (z*MAX_DIM*MAX_DIM + y*MAX_DIM + x) < (other.z*MAX_DIM*MAX_DIM + other.y*MAX_DIM + other.x));
     }
-    Point operator/(int number) const
+    Vertex operator/(int number) const
     {
-        return Point(x/number, y/number, z);
+        return Vertex(x/number, y/number, z);
     }
-    Point operator%(int number) const
+    Vertex operator%(int number) const
     {
-        return Point(x%number, y%number, z);
+        return Vertex(x%number, y%number, z);
     }
-    Point operator-(int number) const
+    Vertex operator-(int number) const
     {
-        return Point(x,y,z-number);
+        return Vertex(x,y,z-number);
     }
-    Point operator+(int number) const
+    Vertex operator+(int number) const
     {
-        return Point(x,y,z+number);
+        return Vertex(x,y,z+number);
     }
     uint32_t x;
     uint32_t y;
@@ -58,7 +57,7 @@ class Point
 class Block
 {
     public:
-    Block(DFHack::Maps *_m, Point _bcoord)
+    Block(DFHack::Maps *_m, Vertex _bcoord)
     {
         vector <DFHack::t_vein> veins;
         m = _m;
@@ -97,23 +96,23 @@ class Block
             valid = true;
         }
     }
-    int16_t MaterialAt(Point p)
+    int16_t MaterialAt(Vertex p)
     {
         return materials[p.x][p.y];
     }
-    void ClearMaterialAt(Point p)
+    void ClearMaterialAt(Vertex p)
     {
         materials[p.x][p.y] = -1;
     }
-    int16_t TileTypeAt(Point p)
+    int16_t TileTypeAt(Vertex p)
     {
         return raw.tiletypes[p.x][p.y];
     }
-    DFHack::t_designation DesignationAt(Point p)
+    DFHack::t_designation DesignationAt(Vertex p)
     {
         return raw.designation[p.x][p.y];
     }
-    bool setDesignationAt(Point p, DFHack::t_designation des)
+    bool setDesignationAt(Vertex p, DFHack::t_designation des)
     {
         if(!valid) return false;
         dirty = true;
@@ -136,7 +135,7 @@ class Block
     volatile bool dirty;
     DFHack::Maps * m;
     DFHack::mapblock40d raw;
-    Point bcoord;
+    Vertex bcoord;
     int16_t materials[16][16];
     int8_t bitmap[16][16];
 };
@@ -153,7 +152,7 @@ class MapCache
     };
     ~MapCache()
     {
-        map<Point, Block *>::iterator p;
+        map<Vertex, Block *>::iterator p;
         for(p = blocks.begin(); p != blocks.end(); p++)
         {
             delete p->second;
@@ -165,11 +164,11 @@ class MapCache
         return valid;
     }
     
-    Block * BlockAt (Point blockcoord)
+    Block * BlockAt (Vertex blockcoord)
     {
         if(!valid) return 0;
         
-        map <Point, Block*>::iterator iter = blocks.find(blockcoord);
+        map <Vertex, Block*>::iterator iter = blocks.find(blockcoord);
         if(iter != blocks.end())
         {
             return (*iter).second;
@@ -186,7 +185,7 @@ class MapCache
         }
     }
     
-    uint16_t tiletypeAt (Point tilecoord)
+    uint16_t tiletypeAt (Vertex tilecoord)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
@@ -196,7 +195,7 @@ class MapCache
         return 0;
     }
     
-    int16_t materialAt (Point tilecoord)
+    int16_t materialAt (Vertex tilecoord)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
@@ -205,7 +204,7 @@ class MapCache
         }
         return 0;
     }
-    bool clearMaterialAt (Point tilecoord)
+    bool clearMaterialAt (Vertex tilecoord)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
@@ -216,7 +215,7 @@ class MapCache
     }
 
 
-    DFHack::t_designation designationAt (Point tilecoord)
+    DFHack::t_designation designationAt (Vertex tilecoord)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
@@ -227,7 +226,7 @@ class MapCache
         temp.whole = 0;
         return temp;
     }
-    bool setDesignationAt (Point tilecoord, DFHack::t_designation des)
+    bool setDesignationAt (Vertex tilecoord, DFHack::t_designation des)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
@@ -237,7 +236,7 @@ class MapCache
         }
         return false;
     }
-    bool testCoord (Point tilecoord)
+    bool testCoord (Vertex tilecoord)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
@@ -249,7 +248,7 @@ class MapCache
     
     bool WriteAll()
     {
-        map<Point, Block *>::iterator p;
+        map<Vertex, Block *>::iterator p;
         for(p = blocks.begin(); p != blocks.end(); p++)
         {
             p->second->WriteDesignations();
@@ -265,17 +264,19 @@ class MapCache
     uint32_t y_tmax;
     uint32_t z_max;
     DFHack::Maps * Maps;
-    map<Point, Block *> blocks;
+    map<Vertex, Block *> blocks;
 };
 
 int main (int argc, char* argv[])
 {
     // Command line options
     bool updown = false;
+    /*
     argstream as(argc,argv);
 
     as  >>option('x',"updown",updown,"Dig up and down stairs to reach other z-levels.")
         >>help();
+        
 
     // sane check
     if (!as.isOk())
@@ -283,6 +284,9 @@ int main (int argc, char* argv[])
         cout << as.errorLog();
         return 1;
     }
+        */
+    if(argc > 1 && strcmp(argv[1],"-x") == 0)
+        updown = true;
 
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context * DF;
@@ -299,12 +303,12 @@ int main (int argc, char* argv[])
         #endif
         return 1;
     }
-    
+
     uint32_t x_max,y_max,z_max;
     DFHack::Maps * Maps = DF->getMaps();
     DFHack::Materials * Mats = DF->getMaterials();
     DFHack::Position * Pos = DF->getPosition();
-    
+
     // init the map
     if(!Maps->Start())
     {
@@ -315,12 +319,12 @@ int main (int argc, char* argv[])
         #endif
         return 1;
     }
-    
+
     int32_t cx, cy, cz;
     Maps->getSize(x_max,y_max,z_max);
     uint32_t tx_max = x_max * 16;
     uint32_t ty_max = y_max * 16;
-    
+
     Pos->getCursorCoords(cx,cy,cz);
     while(cx == -30000)
     {
@@ -330,7 +334,7 @@ int main (int argc, char* argv[])
         DF->Suspend();
         Pos->getCursorCoords(cx,cy,cz);
     }
-    Point xy ((uint32_t)cx,(uint32_t)cy,cz);
+    Vertex xy ((uint32_t)cx,(uint32_t)cy,cz);
     if(xy.x == 0 || xy.x == tx_max - 1 || xy.y == 0 || xy.y == ty_max - 1)
     {
         cerr << "I won't dig the borders. That would be cheating!" << endl;
@@ -358,13 +362,13 @@ int main (int argc, char* argv[])
         return 1;
     }
     printf("%d/%d/%d tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, des.whole);
-    stack <Point> flood;
+    stack <Vertex> flood;
     flood.push(xy);
 
 
     while( !flood.empty() )  
     {  
-        Point current = flood.top();
+        Vertex current = flood.top();
         flood.pop();
         int16_t vmat2 = MCache->materialAt(current);
         
@@ -402,30 +406,30 @@ int main (int argc, char* argv[])
             MCache->clearMaterialAt(current);
             if(current.x < tx_max - 2)
             {
-                flood.push(Point(current.x + 1, current.y, current.z));
+                flood.push(Vertex(current.x + 1, current.y, current.z));
                 if(current.y < ty_max - 2)
                 {
-                    flood.push(Point(current.x + 1, current.y + 1,current.z));
-                    flood.push(Point(current.x, current.y + 1,current.z));
+                    flood.push(Vertex(current.x + 1, current.y + 1,current.z));
+                    flood.push(Vertex(current.x, current.y + 1,current.z));
                 }
                 if(current.y > 1)
                 {
-                    flood.push(Point(current.x + 1, current.y - 1,current.z));
-                    flood.push(Point(current.x, current.y - 1,current.z));
+                    flood.push(Vertex(current.x + 1, current.y - 1,current.z));
+                    flood.push(Vertex(current.x, current.y - 1,current.z));
                 }
             }
             if(current.x > 1)
             {
-                flood.push(Point(current.x - 1, current.y,current.z));
+                flood.push(Vertex(current.x - 1, current.y,current.z));
                 if(current.y < ty_max - 2)
                 {
-                    flood.push(Point(current.x - 1, current.y + 1,current.z));
-                    flood.push(Point(current.x, current.y + 1,current.z));
+                    flood.push(Vertex(current.x - 1, current.y + 1,current.z));
+                    flood.push(Vertex(current.x, current.y + 1,current.z));
                 }
                 if(current.y > 1)
                 {
-                    flood.push(Point(current.x - 1, current.y - 1,current.z));
-                    flood.push(Point(current.x, current.y - 1,current.z));
+                    flood.push(Vertex(current.x - 1, current.y - 1,current.z));
+                    flood.push(Vertex(current.x, current.y - 1,current.z));
                 }
             }
             if(updown)

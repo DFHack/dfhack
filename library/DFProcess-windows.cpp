@@ -47,7 +47,7 @@ namespace
             uint32_t base;
             MicrosoftSTL stl;
         public:
-            NormalProcess(uint32_t pid, std::vector <VersionInfo *> & known_versions);
+            NormalProcess(uint32_t pid, VersionInfoFactory * factory);
             ~NormalProcess();
             bool attach();
             bool detach();
@@ -101,12 +101,12 @@ namespace
 
 }
 
-Process* DFHack::createNormalProcess(uint32_t pid, vector <VersionInfo *> & known_versions)
+Process* DFHack::createNormalProcess(uint32_t pid, VersionInfoFactory * factory)
 {
-    return new NormalProcess(pid, known_versions);
+    return new NormalProcess(pid, factory);
 }
 
-NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versions)
+NormalProcess::NormalProcess(uint32_t pid, VersionInfoFactory * factory)
 : my_pid(pid)
 {
     my_descriptor = NULL;
@@ -155,56 +155,30 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
         return;
     }
 
-    // see if there's a version entry that matches this process
-    vector<VersionInfo*>::iterator it;
-    for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
+    VersionInfo* vinfo = factory->getVersionInfoByPETimestamp(pe_header.FileHeader.TimeDateStamp);
+    if(vinfo)
     {
-        // filter by OS
-        if(OS_WINDOWS != (*it)->getOS())
-            continue;
-        uint32_t pe_timestamp;
-        // filter by timestamp, skip entries without a timestamp
-        try
-        {
-            pe_timestamp = (*it)->getPE();
-        }
-        catch(Error::AllMemdef&)
-        {
-            continue;
-        }
-        if (pe_timestamp != pe_header.FileHeader.TimeDateStamp)
-            continue;
+        identified = true;
+        // give the process a data model and memory layout fixed for the base of first module
+        my_descriptor  = new VersionInfo(*vinfo);
+        my_descriptor->RebaseAll(base);
+        // keep track of created memory_info object so we can destroy it later
+        my_descriptor->setParentProcess(this);
+        // process is responsible for destroying its data model
+        my_handle = my_handle;
 
-        // all went well
-        {
-            printf("Match found! Using version %s.\n", (*it)->getVersion().c_str());
-            identified = true;
-            // give the process a data model and memory layout fixed for the base of first module
-            my_descriptor  = new VersionInfo(**it);
-            my_descriptor->RebaseAll(base);
-            // keep track of created memory_info object so we can destroy it later
-            my_descriptor->setParentProcess(this);
-            // process is responsible for destroying its data model
-            my_handle = my_handle;
-            identified = true;
-
-            // TODO: detect errors in thread enumeration
-            vector<uint32_t> threads;
-            getThreadIDs( threads );
-            my_main_thread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads[0]);
-            stl.init(this);
-            found = true;
-            break; // break the iterator loop
-        }
+        // TODO: detect errors in thread enumeration
+        vector<uint32_t> threads;
+        getThreadIDs( threads );
+        my_main_thread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads[0]);
+        stl.init(this);
     }
-    // close handle of processes that aren't DF
-    if(!found)
+    else
     {
+        // close handles of processes that aren't DF
         CloseHandle(my_handle);
     }
 }
-/*
-*/
 
 NormalProcess::~NormalProcess()
 {

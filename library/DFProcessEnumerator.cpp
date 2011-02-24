@@ -120,19 +120,19 @@ Process * BadProcesses::operator[](uint32_t index)
 Process *ProcessEnumerator::Private::GetProcessObject(ProcessID ID)
 {
 
-    Process *p1 = createSHMProcess(ID.pid,meminfo->versions);
+    Process *p1 = createSHMProcess(ID.pid, meminfo);
     if(p1->isIdentified())
         return p1;
     else
         delete p1;
 
-    Process *p2 = createNormalProcess(ID.pid,meminfo->versions);
+    Process *p2 = createNormalProcess(ID.pid, meminfo);
     if(p2->isIdentified())
         return p2;
     else
         delete p2;
 #ifdef LINUX_BUILD
-    Process *p3 = createWineProcess(ID.pid,meminfo->versions);
+    Process *p3 = createWineProcess(ID.pid, meminfo);
     if(p3->isIdentified())
         return p3;
     else

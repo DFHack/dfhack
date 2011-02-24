@@ -90,6 +90,12 @@ inline bool operator>=(const triple<_T1, _T2, _T3>& __x, const triple<_T1, _T2, 
     return !(__x < __y);
 }
 
+VersionInfoFactory::VersionInfoFactory(string path_to_xml)
+{
+    error = false;
+    loadFile(path_to_xml);
+}
+
 VersionInfoFactory::~VersionInfoFactory()
 {
     // for each stored version, delete
@@ -99,6 +105,35 @@ VersionInfoFactory::~VersionInfoFactory()
     }
     versions.clear();
 }
+
+VersionInfo * VersionInfoFactory::getVersionInfoByMD5(string hash)
+{
+    VersionInfo * vinfo;
+    for(uint32_t i = 0; i < versions.size();i++)
+    {
+        vinfo = versions[i];
+        if(vinfo->getMD5() == hash)
+        {
+            return vinfo;
+        }
+    }
+    return NULL;
+}
+
+VersionInfo * VersionInfoFactory::getVersionInfoByPETimestamp(uint32_t timestamp)
+{
+    VersionInfo * vinfo;
+    for(uint32_t i = 0; i < versions.size();i++)
+    {
+        vinfo = versions[i];
+        if(vinfo->getPE() == timestamp)
+        {
+            return vinfo;
+        }
+    }
+    return NULL;
+}
+
 
 void VersionInfoFactory::ParseVTable(TiXmlElement* vtable, VersionInfo* mem)
 {
@@ -627,12 +662,6 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         }
     } // for
 } // method
-
-VersionInfoFactory::VersionInfoFactory(string path_to_xml)
-{
-    error = false;
-    loadFile(path_to_xml);
-}
 
 // load the XML file with offsets
 bool VersionInfoFactory::loadFile(string path_to_xml)

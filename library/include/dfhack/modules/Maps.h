@@ -158,15 +158,7 @@ namespace DFHack
         liquid_water,
         liquid_magma
     };
-    /*
-    enum e_liquidcharacter
-    {
-        liquid_fresh,
-        liquid_unk1,
-        liquid_salt,
-        liquid_unk2,
-    };
-    */
+
     struct naked_designation
     {
         unsigned int flow_size : 3; // how much liquid is here?

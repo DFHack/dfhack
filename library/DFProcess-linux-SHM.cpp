@@ -216,7 +216,7 @@ bool SHMProcess::Private::AreLocksOk()
 }
 
 
-bool SHMProcess::Private::validate(vector <VersionInfo *> & known_versions)
+bool SHMProcess::Private::validate(VersionInfoFactory * factory)
 {
     char exe_link_name [256];
     char target_name[1024];
@@ -233,29 +233,19 @@ bool SHMProcess::Private::validate(vector <VersionInfo *> & known_versions)
     // see http://www.opengroup.org/onlinepubs/000095399/functions/readlink.html
     target_name[target_result] = 0;
 
-    md5wrapper md5;
     // get hash of the running DF process
+    md5wrapper md5;
     string hash = md5.getHashFromFile(target_name);
-    vector<VersionInfo *>::iterator it;
-    // cerr << exe_file << " " << hash <<  endl;
-    // iterate over the list of memory locations
-    for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
+
+    // create linux process, add it to the vector
+    VersionInfo * vinfo = factory->getVersionInfoByMD5(hash);
+    if(vinfo)
     {
-        try{
-            if(hash == (*it)->getMD5()) // are the md5 hashes the same?
-            {
-                VersionInfo *m = new VersionInfo(**it);
-                memdescriptor = m;
-                m->setParentProcess(self);
-                identified = true;
-                // cerr << "identified " << m->getVersion() << endl;
-                return true;
-            }
-        }
-        catch (Error::AllMemdef&)
-        {
-            continue;
-        }
+        memdescriptor = vinfo;
+        // FIXME: BIG BAD BUG RIGHT HERE!!!!
+        memdescriptor->setParentProcess(self);
+        identified = true;
+        return true;
     }
     return false;
 }

@@ -31,12 +31,12 @@ distribution.
 
 using namespace DFHack;
 
-Process* DFHack::createSHMProcess(uint32_t pid, vector <VersionInfo *> & known_versions)
+Process* DFHack::createSHMProcess(uint32_t pid,  VersionInfoFactory * factory)
 {
-    return new SHMProcess(pid, known_versions);
+    return new SHMProcess(pid, factory);
 }
 
-SHMProcess::SHMProcess(uint32_t PID, vector <VersionInfo *> & known_versions)
+SHMProcess::SHMProcess(uint32_t PID,  VersionInfoFactory * factory)
 : d(new Private(this))
 {
     d->process_ID = PID;
@@ -59,7 +59,7 @@ SHMProcess::SHMProcess(uint32_t PID, vector <VersionInfo *> & known_versions)
     }
 
     // try to identify the DF version (md5 the binary, compare with known versions)
-    d->validate(known_versions);
+    d->validate(factory);
     // at this point, DF is attached and suspended, make it run
     detach();
 }

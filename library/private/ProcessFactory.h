@@ -26,13 +26,14 @@ distribution.
 #define PROCESS_FACTORY_H_INCLUDED
 
 #include "dfhack/DFProcess.h"
+#include "dfhack/VersionInfoFactory.h"
 
 namespace DFHack
 {
-    Process* createNormalProcess(uint32_t pid, std::vector <VersionInfo *> & known_versions);
-    Process* createSHMProcess(uint32_t pid, std::vector <VersionInfo *> & known_versions);
+    Process* createNormalProcess(uint32_t pid, VersionInfoFactory * factory);
+    Process* createSHMProcess(uint32_t pid, VersionInfoFactory * factory);
 #ifdef LINUX_BUILD
-    Process* createWineProcess(uint32_t pid, std::vector <VersionInfo *> & known_versions);
+    Process* createWineProcess(uint32_t pid, VersionInfoFactory * factory);
 #endif
 }
 #endif

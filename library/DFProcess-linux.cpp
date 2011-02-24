@@ -34,24 +34,22 @@ namespace {
     class NormalProcess : public LinuxProcessBase
     {
         public:
-            NormalProcess(uint32_t pid, std::vector <VersionInfo *> & known_versions);
+            NormalProcess(uint32_t pid, VersionInfoFactory * known_versions);
 
             const std::string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             void writeSTLString(const uint32_t address, const std::string writeString){};
             // get class name of an object with rtti/type info
             std::string readClassName(uint32_t vptr);
-        private:
-            bool validate(char * exe_file,uint32_t pid, char * memFile, vector <VersionInfo *> & known_versions);
     };
 }
 
-Process* DFHack::createNormalProcess(uint32_t pid, vector <VersionInfo *> & known_versions)
+Process* DFHack::createNormalProcess(uint32_t pid, VersionInfoFactory * known_versions)
 {
     return new NormalProcess(pid, known_versions);
 }
 
-NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versions) : LinuxProcessBase(pid)
+NormalProcess::NormalProcess(uint32_t pid, VersionInfoFactory * known_versions) : LinuxProcessBase(pid)
 {
     char dir_name [256];
     char exe_link_name [256];
@@ -67,6 +65,7 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
     sprintf(dir_name,"/proc/%d/", pid);
     sprintf(exe_link_name,"/proc/%d/exe", pid);
     sprintf(mem_name,"/proc/%d/mem", pid);
+    memFile = mem_name;
     sprintf(cwd_name,"/proc/%d/cwd", pid);
     sprintf(cmdline_name,"/proc/%d/cmdline", pid);
 
@@ -82,44 +81,18 @@ NormalProcess::NormalProcess(uint32_t pid, vector <VersionInfo *> & known_versio
     // is this the regular linux DF?
     if (strstr(target_name, "dwarfort.exe") != 0 || strstr(target_name,"Dwarf_Fortress") != 0)
     {
+        md5wrapper md5;
+        // get hash of the running DF process
+        string hash = md5.getHashFromFile(target_name);
         // create linux process, add it to the vector
-        identified = validate(target_name,pid,mem_name,known_versions);
-        return;
-    }
-}
-
-bool NormalProcess::validate(char * exe_file,uint32_t pid, char * memFile, vector <VersionInfo *> & known_versions)
-{
-    md5wrapper md5;
-    // get hash of the running DF process
-    string hash = md5.getHashFromFile(exe_file);
-    vector<VersionInfo *>::iterator it;
-
-    // iterate over the list of memory locations
-    for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
-    {
-        try
+        VersionInfo * vinfo = known_versions->getVersionInfoByMD5(hash);
+        if(vinfo)
         {
-            if (hash == (*it)->getMD5()) // are the md5 hashes the same?
-            {
-                if (OS_LINUX == (*it)->getOS())
-                {
-                    // keep track of created memory_info object so we can destroy it later
-                    my_descriptor = new VersionInfo(**it);
-                    my_descriptor->setParentProcess(this);
-                    // tell Process about the /proc/PID/mem file
-                    memFile = memFile;
-                    identified = true;
-                    return true;
-                }
-            }
-        }
-        catch (Error::AllMemdef&)
-        {
-            continue;
+            my_descriptor = new VersionInfo(*vinfo);
+            my_descriptor->setParentProcess(this);
+            identified = true;
         }
     }
-    return false;
 }
 
 struct _Rep_base

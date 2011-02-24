@@ -27,6 +27,7 @@ distribution.
 
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFIntegers.h"
+#include "dfhack/VersionInfoFactory.h"
 
 namespace DFHack
 {
@@ -37,7 +38,7 @@ namespace DFHack
         Private * const d;
 
     public:
-        SHMProcess(uint32_t PID, std::vector <VersionInfo *> & known_versions);
+        SHMProcess(uint32_t PID, VersionInfoFactory * factory);
         ~SHMProcess();
         // Set up stuff so we can read memory
         bool attach();
@@ -121,7 +122,7 @@ namespace DFHack
         HANDLE DFCLSuspendMutex;
 #endif
 
-        bool validate(std::vector< VersionInfo* >& known_versions);
+        bool validate(VersionInfoFactory * factory);
 
         bool Aux_Core_Attach(bool & versionOK, pid_t& PID);
         bool SetAndWait (uint32_t state);

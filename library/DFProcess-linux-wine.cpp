@@ -38,24 +38,22 @@ namespace {
         private:
             MicrosoftSTL stl;
         public:
-            WineProcess(uint32_t pid, std::vector <VersionInfo *> & known_versions);
+            WineProcess(uint32_t pid, VersionInfoFactory * factory);
 
             const std::string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             void writeSTLString(const uint32_t address, const std::string writeString){};
             // get class name of an object with rtti/type info
             std::string readClassName(uint32_t vptr);
-        private:
-            bool validate(char * exe_file,uint32_t pid, char * memFile, vector <VersionInfo *> & known_versions);
     };
 }
 
-Process* DFHack::createWineProcess(uint32_t pid, vector <VersionInfo *> & known_versions)
+Process* DFHack::createWineProcess(uint32_t pid, VersionInfoFactory * factory)
 {
-    return new WineProcess(pid, known_versions);
+    return new WineProcess(pid, factory);
 }
 
-WineProcess::WineProcess(uint32_t pid, vector <VersionInfo *> & known_versions) : LinuxProcessBase(pid)
+WineProcess::WineProcess(uint32_t pid, VersionInfoFactory * factory) : LinuxProcessBase(pid)
 {
     char dir_name [256];
     char exe_link_name [256];
@@ -71,6 +69,7 @@ WineProcess::WineProcess(uint32_t pid, vector <VersionInfo *> & known_versions) 
     sprintf(dir_name,"/proc/%d/", pid);
     sprintf(exe_link_name,"/proc/%d/exe", pid);
     sprintf(mem_name,"/proc/%d/mem", pid);
+    memFile = mem_name;
     sprintf(cwd_name,"/proc/%d/cwd", pid);
     sprintf(cmdline_name,"/proc/%d/cmdline", pid);
 
@@ -101,50 +100,22 @@ WineProcess::WineProcess(uint32_t pid, vector <VersionInfo *> & known_versions) 
             // put executable name and path together
             sprintf(exe_link,"%s/%s",target_name,cmdline.c_str());
 
-            // create wine process, add it to the vector
-            identified = validate(exe_link,pid,mem_name,known_versions);
+            md5wrapper md5;
+            // get hash of the running DF process
+            string hash = md5.getHashFromFile(exe_link);
+            // create linux process, add it to the vector
+            VersionInfo * vinfo = factory->getVersionInfoByMD5(hash);
+            if(vinfo)
+            {
+                my_descriptor = new VersionInfo(*vinfo);
+                my_descriptor->setParentProcess(this);
+                stl.init(this);
+                identified = true;
+            }
             return;
         }
     }
 }
-
-
-bool WineProcess::validate(char * exe_file,uint32_t pid, char * memFile, vector <VersionInfo *> & known_versions)
-{
-    md5wrapper md5;
-    // get hash of the running DF process
-    string hash = md5.getHashFromFile(exe_file);
-    vector<VersionInfo *>::iterator it;
-
-    // iterate over the list of memory locations
-    for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
-    {
-        try
-        {
-            if (hash == (*it)->getMD5()) // are the md5 hashes the same?
-            {
-                if (OS_WINDOWS == (*it)->getOS())
-                {
-                    // keep track of created memory_info object so we can destroy it later
-                    my_descriptor = new VersionInfo(**it);
-                    my_descriptor->setParentProcess(this);
-                    // tell Process about the /proc/PID/mem file
-                    memFile = memFile;
-                    identified = true;
-
-                    stl.init(this);
-                    return true;
-                }
-            }
-        }
-        catch (Error::AllMemdef&)
-        {
-            continue;
-        }
-    }
-    return false;
-}
-
 
 size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
@@ -158,5 +129,5 @@ const string WineProcess::readSTLString (uint32_t offset)
 
 string WineProcess::readClassName (uint32_t vptr)
 {
-    stl.readClassName(vptr);
+    return stl.readClassName(vptr);
 }

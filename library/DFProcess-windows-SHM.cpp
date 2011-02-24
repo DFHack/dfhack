@@ -216,7 +216,7 @@ bool SHMProcess::Private::AreLocksOk()
     return false;
 }
 
-bool SHMProcess::Private::validate(vector <VersionInfo *> & known_versions)
+bool SHMProcess::Private::validate(VersionInfoFactory * factory)
 {
     // try to identify the DF version
     IMAGE_NT_HEADERS pe_header;
@@ -246,30 +246,16 @@ bool SHMProcess::Private::validate(vector <VersionInfo *> & known_versions)
     self->read(base + pe_offset                   , sizeof(pe_header), (uint8_t *)&pe_header);
     self->read(base + pe_offset+ sizeof(pe_header), sizeof(sections) , (uint8_t *)&sections );
 
-    // iterate over the list of memory locations
-    vector<VersionInfo *>::iterator it;
-    for ( it=known_versions.begin() ; it < known_versions.end(); it++ )
+    VersionInfo* vinfo = factory->getVersionInfoByPETimestamp(pe_header.FileHeader.TimeDateStamp);
+    if(vinfo)
     {
-        uint32_t pe_timestamp;
-        try
-        {
-            pe_timestamp = (*it)->getPE();
-        }
-        catch(Error::AllMemdef&)
-        {
-            continue;
-        }
-        if (pe_timestamp == pe_header.FileHeader.TimeDateStamp)
-        {
-            VersionInfo *m = new VersionInfo(**it);
-            m->RebaseAll(base);
-            memdescriptor = m;
-            m->setParentProcess(self);
-            identified = true;
-            cerr << "identified " << m->getVersion() << endl;
-            CloseHandle(hProcess);
-            return true;
-        }
+        VersionInfo *m = new VersionInfo(*vinfo);
+        m->RebaseAll(base);
+        memdescriptor = m;
+        m->setParentProcess(self);
+        identified = true;
+        CloseHandle(hProcess);
+        return true;
     }
     return false;
 }

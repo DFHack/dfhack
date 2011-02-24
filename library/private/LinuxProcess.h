@@ -25,8 +25,6 @@ distribution.
 #ifndef LINUX_PROCESS_H_INCLUDED
 #define LINUX_PROCESS_H_INCLUDED
 
-#ifdef LINUX_BUILD
-
 #include "dfhack/DFProcess.h"
 
 namespace DFHack
@@ -89,8 +87,5 @@ namespace DFHack
             // set a SHM command and wait for a response
             bool SetAndWait (uint32_t state){return false;};
     };
-
 }
-
-#endif
 #endif

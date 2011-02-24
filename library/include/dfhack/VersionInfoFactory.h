@@ -41,6 +41,8 @@ namespace DFHack
             // memory info entries loaded from a file
             bool loadFile( std::string path_to_xml);
             bool isInErrorState() const {return error;};
+            VersionInfo * getVersionInfoByMD5(std::string md5string);
+            VersionInfo * getVersionInfoByPETimestamp(uint32_t timestamp);
             std::vector<VersionInfo*> versions;
         private:
             void ParseVTable(TiXmlElement* vtable, VersionInfo* mem);

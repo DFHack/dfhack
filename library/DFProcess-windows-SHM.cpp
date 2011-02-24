@@ -307,21 +307,8 @@ bool SHMProcess::getThreadIDs(vector<uint32_t> & threads )
 //FIXME: use VirtualQuery to probe for memory ranges, cross-reference with base-corrected PE segment entries
 void SHMProcess::getMemRanges( vector<t_memrange> & ranges )
 {
-    // code here is taken from hexsearch by Silas Dunmore.
-    // As this IMHO isn't a 'sunstantial portion' of anything, I'm not including the MIT license here
-
-    // I'm faking this, because there's no way I'm using VirtualQuery
-
-    t_memrange temp;
-    uint32_t base = d->memdescriptor->getBase();
-    temp.start = base + 0x1000; // more fakery.
-    temp.end = base + Process::readDWord(base+readDWord(base+0x3C)+0x50)-1; // yay for magic.
-    temp.read = 1;
-    temp.write = 1;
-    temp.execute = 0; // fake
-    temp.valid = true;
-    strcpy(temp.name,"pants");
-    ranges.push_back(temp);
+    // BLAH
+    ranges.clear();
 }
 
 bool SHMProcess::acquireSuspendLock()

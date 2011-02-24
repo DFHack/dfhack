@@ -26,6 +26,7 @@ distribution.
 #define SHM_PROCESS_H_INCLUDED
 
 #include "dfhack/DFProcess.h"
+#include "dfhack/DFIntegers.h"
 
 namespace DFHack
 {
@@ -113,7 +114,7 @@ namespace DFHack
         int client_lock;
         int suspend_lock;
 #else
-        typedef unit32_t pid_t;
+        typedef uint32_t pid_t;
         uint32_t process_ID;
         HANDLE DFSVMutex;
         HANDLE DFCLMutex;

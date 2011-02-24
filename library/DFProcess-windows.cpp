@@ -22,7 +22,6 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "Internal.h"
-#include "WindowsProcess.h"
 #include "ProcessFactory.h"
 #include "MicrosoftSTL.h"
 #include "dfhack/VersionInfo.h"
@@ -225,7 +224,6 @@ NormalProcess::~NormalProcess()
     }
     if(sections != NULL)
         free(sections);
-    delete d;
 }
 
 VersionInfo * NormalProcess::getDescriptor()
@@ -558,7 +556,7 @@ const string NormalProcess::readSTLString (uint32_t offset)
 
 string NormalProcess::readClassName (uint32_t vptr)
 {
-    stl.readClassName(vptr);
+    return stl.readClassName(vptr);
 }
 
 string NormalProcess::getPath()

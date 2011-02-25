@@ -162,7 +162,7 @@ bool Buildings::Finish()
 
 bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 {
-    if(!d->Started)
+    if(!d->Inited)
         return false;
     if(!d->hasCustomWorkshops)
         return false;

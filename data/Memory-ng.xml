@@ -998,6 +998,7 @@
                 <Address name="world_size_y" value="0x016AEDD6" />
                 <Group name="block">
                     <Offset name="vein_vector" value="0x08" />
+                    <Offset name="vegetation_vector" value="0x0078" />
                     <Offset name="type" value="0x009A" />
                     <Offset name="designation" value="0x029C" />
                     <Offset name="occupancy" value="0x069c" />
@@ -1555,6 +1556,7 @@
                     <Offset name="vein_vector" value="0x08" />
                     <Offset name="feature_local" value="0x24" />
                     <Offset name="feature_global" value="0x28" />
+                    <Offset name="vegetation_vector" value="0x60" />
                     <Offset name="type" value="0x7A" />
                     <Offset name="designation" value="0x27C" />
                     <Offset name="occupancy" value="0x67C" />
@@ -1962,7 +1964,6 @@
                     <Offset name="vein_vector" value="0x8" />
                     <Offset name="feature_global" value="0x28" />
                     <Offset name="feature_local" value="0x24" />
-                    <Offset name="vegetation_vector" value="0x60" />
                     <Offset name="type" value="0x7a" />
                     <Offset name="designation" value="0x27c" />
                     <Offset name="occupancy" value="0x67c" />

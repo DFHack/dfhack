@@ -730,6 +730,7 @@
                 <Address name="world_size_y"/>
                 <Group name="block" description="The map block structure.">
                     <Offset name="vein_vector" description="Mineral veins, objects holding tile types under ice, etc..."/>
+                    <Offset name="vegetation_vector" description="All the plants in this block, including farm plats."/>
                     <Offset name="type" description="16x16 x 2B tile type values"/>
                     <Offset name="designation" description="16x16 * 4B designation fields"/>
                     <Offset name="occupancy" description="16x16 * 4B occupancy fields" />
@@ -1961,6 +1962,7 @@
                     <Offset name="vein_vector" value="0x8" />
                     <Offset name="feature_global" value="0x28" />
                     <Offset name="feature_local" value="0x24" />
+                    <Offset name="vegetation_vector" value="0x60" />
                     <Offset name="type" value="0x7a" />
                     <Offset name="designation" value="0x27c" />
                     <Offset name="occupancy" value="0x67c" />

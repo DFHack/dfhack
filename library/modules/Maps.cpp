@@ -59,6 +59,7 @@ struct Maps::Private
     bool Started;
     bool hasGeology;
     bool hasFeatures;
+    bool hasVeggies;
 
     // map between feature address and the read object
     map <uint32_t, t_feature> local_feature_store;
@@ -76,7 +77,7 @@ Maps::Maps(DFContextShared* _d)
 
     DFHack::VersionInfo * mem = p->getDescriptor();
     Server::Maps::maps_offsets &off = d->offsets;
-    d->hasFeatures = d->hasGeology = true;
+    d->hasFeatures = d->hasGeology = d->hasVeggies = true;
 
     // get the offsets once here
     OffsetGroup *OG_Maps = mem->getGroup("Maps");
@@ -126,6 +127,16 @@ Maps::Maps(DFContextShared* _d)
         catch(Error::AllMemdef &)
         {
             d->hasFeatures = false;
+        }
+        try
+        {
+            OffsetGroup * OG_Veg = d->d->offset_descriptor->getGroup("Vegetation");
+            off.vegvector = OG_MapBlock->getOffset ("vegetation_vector");
+            off.tree_desc_offset = OG_Veg->getOffset ("tree_desc_offset");
+        }
+        catch(Error::AllMemdef &)
+        {
+            d->hasVeggies = false;
         }
     }
     d->OG_vector = mem->getGroup("vector");
@@ -901,3 +912,25 @@ bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
     return true;
 }
 
+bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<t_tree>* plants)
+{
+    if(!d->hasVeggies || !d->Started)
+        return false;
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if(!addr)
+        return false;
+
+    t_tree shrubbery;
+    plants->clear();
+
+    Server::Maps::maps_offsets & off = d->offsets;
+    DfVector<uint32_t> vegptrs(d->owner, addr + off.vegvector);
+    for(int i = 0; i < vegptrs.size(); i++)
+    {
+        d->owner->read (vegptrs[i] + off.tree_desc_offset, sizeof (t_tree), (uint8_t *) &shrubbery);
+        shrubbery.address = vegptrs[i];
+        plants->push_back(shrubbery);
+    }
+    if(plants->empty()) return false;
+    return true;
+}

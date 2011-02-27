@@ -2127,6 +2127,7 @@
                     <Offset name="vein_vector" value="0x08" />
                     <Offset name="feature_local" value="0x20" />
                     <Offset name="feature_global" value="0x24" />
+                    <Offset name="vegetation_vector" value="0x54" />
                     <Offset name="type" value="0x006A" />
                     <Offset name="designation" value="0x026C" />
                     <Offset name="occupancy" value="0x066c" />

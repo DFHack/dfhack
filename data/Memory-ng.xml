@@ -1998,42 +1998,16 @@
                 <Address name="organics_plants" value="0x171e7C0" valid="true" />
                 <Address name="organics_trees" value="0x171e7E0" valid="true" />
                 <Group name="creature" valid="true">
-                    <!--
-                    <Offset name="tile" value="0xe0" /> C
-                    <Offset name="tile_color" value="0xf6" /> C
-                    <Offset name="caste_vector" value="0x128" /> C
-                        -->
                     <Offset name="extract_vector" value="0x2054" /> maybe: 0x2064  before:0x1a08
                     <Group name="caste" valid="true">
                         <Offset name="attributes" value="0xd40 0x5fc" /> looks kinda funny, same as in .16
                         <Offset name="bodypart_vector" value="0x530 0x51c" />OK
                         <Offset name="color_modifiers" value="0x1168 0xa24" /> OK
                     </Group>
-                    <!--
-                    <Group name="caste_bodyparts">
-                        <Offset name="category" value="0x1c" /> INVALID!
-                        <Offset name="id" value="0x0" /> INVALID!
-                        <Offset name="layers_vector" value="0x44" /> INVALID!
-                        <Offset name="plural_vector" value="0x80" /> INVALID!
-                        <Offset name="singular_vector" value="0x70" /> INVALID!
-                    </Group>
-                    <Group name="caste_color_mods" valid="true"> C
-                        <Offset name="enddate" value="0x48" />
-                        <Offset name="part" value="0x50" />
-                        <Offset name="startdate" value="0x44" />
-                    </Group>
-                    -->
                 </Group>
                 <Group name="descriptors" valid="true">
                     <Address name="all_colors_vector" value="0x17241e4" />
                     <Address name="colors_vector" value="0x17241c4" />
-                    <!--
-                    <Offset name="color_b" value="0x64" />
-                    <Offset name="color_r" value="0x5c" />
-                    <Offset name="color_v" value="0x60" />
-                    <Offset name="name" value="0x3c" />
-                    <Offset name="rawname" value="0x0" />
-                    -->
                 </Group>
             </Group>
             <Group name="GUI" valid="false">
@@ -2051,42 +2025,17 @@
                 0x16dad78
                 0x16dad88
                 <Address name="custom_workshop_vector" value="0x1724204" valid="true" />
-                Let's assume those didn't change...
-                <!--
-                <Offset name="building_custom_workshop_type" value="0x11c" /> INVALID?
-                <Offset name="custom_workshop_name" value="0x4" /> INVALID?
-                <Offset name="custom_workshop_type" value="0x20" /> INVALID?
-                -->
             </Group>
-            <Group name="World" valid="false">
-                <Address name="current_tick" description="Current time of the year" />
-                <Address name="current_year" description="Current year" />
-                <Address name="current_weather" value="0x15027A0" valid="true" />
+            <Group name="World">
+                <Address name="current_tick" value="0xe2e180" /> maybe
+                <Address name="current_year" value="0xf0d268" />
+                <Address name="current_weather" value="0x15027A0" />
             </Group>
             <Group name="Translations" valid="true">
                 <Address name="language_vector" value="0x0171ea94 0x016e553c"/>
                 <Address name="translation_vector" value="0x0171eab4 0x016e551c"/>
             </Group>
             <!--
-            <Address name="WORLD" valid="false" />
-            <Group name="Maps">
-                <Group name="features">
-                    <Group name="global">
-                        <Address name="vector" value="0x16e4c30" />
-                    </Group>
-                    <Group name="local">
-                        <Address name="start_ptr" value="0x16e4cc4" />
-                    </Group>
-                </Group>
-                <Group name="geology">
-                    <Address name="geoblock_vector" value="0x16E4C50" />
-                    <Address name="ptr2_region_array" value="0x16E4C80" />
-                </Group>
-            </Group>
-            <Group name="Creatures" valid="false" >
-                0x016a12c0 vector
-            </Group>
-            
             <Group name="Items" valid="false">
                 <Address name="items_vector" />
                 List of offsets in the VTable :

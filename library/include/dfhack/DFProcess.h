@@ -62,14 +62,14 @@ namespace DFHack
         // memory range name (if any)
         char name[1024];
         // permission to read
-        bool read;
+        bool read : 1;
         // permission to write
-        bool write;
+        bool write : 1;
         // permission to execute
-        bool execute;
+        bool execute : 1;
         inline bool isInRange( uint64_t address)
         {
-            if (address >= start && address <= end) return true;
+            if (address >= start && address < end) return true;
             return false;
         }
         bool valid;
@@ -154,6 +154,8 @@ namespace DFHack
             virtual bool isAttached() = 0;
             /// @return true if the process is identified -- has a Memory.xml entry
             virtual bool isIdentified() = 0;
+            /// @return true if this is a Process snapshot
+            virtual bool isSnapshot() { return false; };
 
             /// find the thread IDs of the process
             virtual bool getThreadIDs(std::vector<uint32_t> & threads ) = 0;

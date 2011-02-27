@@ -2033,6 +2033,10 @@
                 <Address name="current_tick" value="0xe2e180" /> maybe
                 <Address name="current_year" value="0xf0d268" />
                 <Address name="current_weather" value="0x15027A0" />
+                fortress = 0, adventure = 1, arena = 0 0xb4a814
+                Game mode: 0xb4a818 . fortress = 0, adventure = 1, arena = 4
+                0xe2e2a2 seems to be a copy of the first one
+                
             </Group>
             <Group name="Translations" valid="true">
                 <Address name="language_vector" value="0x0171ea94 0x016e553c"/>

@@ -151,6 +151,8 @@ Maps::Maps(DFContextShared* _d)
     mem->resolveClassnameToVPtr("block_square_event_material_spatterst",off.vein_spatter_vptr);
     off.vein_grass_vptr = 0;
     mem->resolveClassnameToVPtr("block_square_event_grassst",off.vein_grass_vptr);
+    off.vein_worldconstruction_vptr = 0;
+    mem->resolveClassnameToVPtr("block_square_event_world_constructionst",off.vein_worldconstruction_vptr);
 
     // upload offsets to SHM server if possible
     d->maps_module = 0;
@@ -547,13 +549,14 @@ bool Maps::WriteGlobalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t global
 /*
  * Block events
  */
-bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins, vector <t_frozenliquidvein>* ices, vector <t_spattervein> *splatter, vector <t_grassvein> *grass)
+bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins, vector <t_frozenliquidvein>* ices, vector <t_spattervein> *splatter, vector <t_grassvein> *grass, vector <t_worldconstruction> *constructions)
 {
     MAPS_GUARD
     t_vein v;
     t_frozenliquidvein fv;
     t_spattervein sv;
     t_grassvein gv;
+    t_worldconstruction wcv;
     Process* p = d->owner;
 
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
@@ -561,6 +564,7 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins,
     if(ices) ices->clear();
     if(splatter) splatter->clear();
     if(grass) splatter->clear();
+    if(constructions) constructions->clear();
 
     Server::Maps::maps_offsets &off = d->offsets;
     if (addr)
@@ -608,6 +612,14 @@ try_again:
                 // store it in the vector
                 grass->push_back (gv);
             }
+            else if(constructions && type == off.vein_worldconstruction_vptr)
+            {
+                // read the splatter vein data (dereference pointer)
+                p->read (temp, sizeof(t_worldconstruction), (uint8_t *) &wcv);
+                wcv.address_of = temp;
+                // store it in the vector
+                constructions->push_back (wcv);
+            }
             else
             {
                 string cname = p->readClassName(type);
@@ -631,12 +643,15 @@ try_again:
                     off.vein_grass_vptr = type;
                     goto try_again;
                 }
-                #ifdef DEBUG
+                else if(constructions && cname=="block_square_event_world_constructionst")
+                {
+                    off.vein_worldconstruction_vptr = type;
+                    goto try_again;
+                }
                 else
                 {
-                    cerr << "unknown vein " << cname << endl;
+                    cerr << "unknown vein " << cname << hex << " 0x" << temp << " block: 0x" << addr << dec << endl;
                 }
-                #endif
                 // or it was something we don't care about
             }
         }

@@ -68,7 +68,7 @@ namespace DFHack
         int32_t type;
         /// bit mask describing how the vein maps to the map block
         /// assignment[y] & (1 << x) describes the tile (x, y) of the block
-        int16_t assignment[16]; 
+        int16_t assignment[16];
         uint32_t flags;
         /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
         uint32_t address_of; 
@@ -112,6 +112,18 @@ namespace DFHack
         /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
         uint32_t address_of;
     };
+
+    struct t_worldconstruction
+    {
+        uint32_t vtable;
+        /// material vector index
+        uint32_t material;
+        /// 16x16 array of bits
+        uint16_t assignment[16];
+        /// this is NOT part of the structure, but an address of it as seen by DFhack.
+        uint32_t address_of;
+    };
+
     enum BiomeOffset
     {
         eNorthWest,
@@ -431,7 +443,8 @@ namespace DFHack
                        std::vector<t_vein>* veins,
                        std::vector<t_frozenliquidvein>* ices = 0,
                        std::vector<t_spattervein>* splatter = 0,
-                       std::vector<t_grassvein>* grass = 0
+                       std::vector<t_grassvein>* grass = 0,
+                       std::vector<t_worldconstruction>* constructions = 0
                       );
         /// read all plants in this block
         bool ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<t_tree>* plants);

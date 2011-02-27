@@ -537,6 +537,7 @@ main(int argc, char *argv[])
     vector<t_frozenliquidvein> IceVeinVector;
     vector<t_spattervein> splatter;
     vector<t_grassvein> grass;
+    vector<t_worldconstruction> wconstructs;
     t_temperatures b_temp1;
     t_temperatures b_temp2;
 
@@ -784,7 +785,7 @@ main(int argc, char *argv[])
                     if(hasInorgMats)
                         do_features(DF, Block, cursorX, cursorY, 50,10, Mats->inorganic);
                     // read veins
-                    Maps->ReadVeins(cursorX+i,cursorY+j,cursorZ,&veinVector,&IceVeinVector,&splatter,&grass);
+                    Maps->ReadVeins(cursorX+i,cursorY+j,cursorZ,&veinVector,&IceVeinVector,&splatter,&grass, &wconstructs);
 
                     // get pointer to block
                     blockaddr = Maps->getBlockPtr(cursorX+i,cursorY+j,cursorZ);
@@ -885,11 +886,12 @@ main(int argc, char *argv[])
         uint32_t icesize = IceVeinVector.size();
         uint32_t splattersize = splatter.size();
         uint32_t grasssize = grass.size();
-        uint32_t totalVeinSize =  mineralsize+ icesize + splattersize + grasssize;
+        uint32_t wconstrsize = wconstructs.size();
+        uint32_t totalVeinSize =  mineralsize+ icesize + splattersize + grasssize + wconstrsize;
         if(vein == totalVeinSize) vein = totalVeinSize - 1;
         if(vein < -1) vein = -1;
         cprintf("X %d/%d, Y %d/%d, Z %d/%d. Vein %d of %d",cursorX+1,x_max,cursorY+1,y_max,cursorZ,z_max,vein+1,totalVeinSize);
-        if(!veinVector.empty() || !IceVeinVector.empty() || !splatter.empty() || !grass.empty())
+        if(!veinVector.empty() || !IceVeinVector.empty() || !splatter.empty() || !grass.empty() || !wconstructs.empty())
         {
             if(vein != -1 && vein < totalVeinSize)
             {
@@ -968,7 +970,7 @@ main(int argc, char *argv[])
                         cprintf("Spatter: %s",PrintSplatterType(splatter[realvein].mat1,splatter[realvein].mat2,Mats->race).c_str());
                     }
                 }
-                else
+                else if(vein < mineralsize + icesize + splattersize + grasssize)
                 {
                     realvein = vein - mineralsize - icesize - splattersize;
                     t_grassvein & grassy =grass[realvein];
@@ -985,8 +987,32 @@ main(int argc, char *argv[])
                             }
                         }
                     }
-                    gotoxy(50,3);
-                    cprintf("Grass: 0x%x, %s",grassy.address_of, Mats->organic[grassy.material].id);
+                    if(hasPlantMats)
+                    {
+                        gotoxy(50,3);
+                        cprintf("Grass: 0x%x, %s",grassy.address_of, Mats->organic[grassy.material].id);
+                    }
+                }
+                else
+                {
+                    realvein = vein - mineralsize - icesize - splattersize - grasssize;
+                    t_worldconstruction & wconstr=wconstructs[realvein];
+                    for(uint32_t j = 0; j < 16; j++)
+                    {
+                        for(uint32_t k = 0; k < 16; k++) 
+                        {
+                            bool set = !!(((1 << k) & wconstr.assignment[j]) >> k);
+                            if(set)
+                            {
+                                putch(k+16,j+16,'$',COLOR_RED);
+                            }
+                        }
+                    }
+                    if(hasInorgMats)
+                    {
+                        gotoxy(50,3);
+                        cprintf("Road: 0x%x, %d - %s", wconstr.address_of, wconstr.material,Mats->inorganic[wconstr.material].id);
+                    }
                 }
             }
         }

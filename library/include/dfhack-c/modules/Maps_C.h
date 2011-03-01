@@ -76,6 +76,8 @@ DFHACK_EXPORT int Maps_ReadRegionOffsets(DFHackObject* maps, uint32_t x, uint32_
 DFHACK_EXPORT t_vein* Maps_ReadStandardVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
 DFHACK_EXPORT t_frozenliquidvein* Maps_ReadFrozenVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
 DFHACK_EXPORT t_spattervein* Maps_ReadSpatterVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
+DFHACK_EXPORT t_grassvein* Maps_ReadGrassVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
+DFHACK_EXPORT t_worldconstruction* Maps_ReadWorldConstructions(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
 
 #ifdef __cplusplus
 }

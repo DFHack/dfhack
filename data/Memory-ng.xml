@@ -908,6 +908,8 @@
                 <Address name="current_year" description="Current year" />
                 <Address name="current_weather" description="5x5 array of bytes for surrounding biomes. For each: 0=clear, 1=raining, 2=snowing." />
                 <Address name="game_mode" description="Current game mode" />
+                <Address name="control_mode" description="Current control mode" />
+                <Address name="control_mode_copy" description="Copy of the control mode in DF memory" />
             </Group>
         </Offsets>
     </Base>
@@ -2034,7 +2036,9 @@
                 <Address name="current_tick" value="0xe2e180" /> maybe
                 <Address name="current_year" value="0xf0d268" />
                 <Address name="current_weather" value="0x15027A0" />
-                <Address name="game_mode" value="0xb4a814" />
+                <Address name="control_mode" value="0xb4a814" />
+                <Address name="game_mode" value="0xb4a818" />
+                <Address name="control_mode_copy" value="0xe2e2a2" />
                 fortress = 0, adventure = 1, arena = 0, menu and legends = 3 0xb4a814
                 Game mode: 0xb4a818 . fortress = 0, adventure = 1, arena = 4
                 0xe2e2a2 seems to be a copy of the first one

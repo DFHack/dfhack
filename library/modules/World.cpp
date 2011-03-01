@@ -54,6 +54,8 @@ struct World::Private
     uint32_t tick_offset;
     uint32_t weather_offset;
     uint32_t gamemode_offset;
+    uint32_t controlmode_offset;
+    uint32_t controlmodecopy_offset;
     DFContextShared *d;
     Process * owner;
 };
@@ -83,6 +85,8 @@ World::World(DFContextShared * _d)
     try
     {
         d->gamemode_offset = OG_World->getAddress( "game_mode" );
+        d->controlmode_offset = OG_World->getAddress( "control_mode" );
+        d->controlmodecopy_offset = OG_World->getAddress( "control_mode" );
         d->StartedMode = true;
     }
     catch(Error::All &){};
@@ -118,13 +122,27 @@ uint32_t World::ReadCurrentTick()
     return 0;
 }
 
-int32_t World::ReadGameMode()
+bool World::ReadGameMode(t_gamemodes& rd)
 {
     if(d->Inited && d->StartedMode)
-        return d->owner->readDWord(d->gamemode_offset);
-    return -1;
+    {
+        rd.control_mode = (ControlMode) d->owner->readDWord( d->controlmode_offset);
+        rd.game_mode = (GameMode) d->owner->readDWord(d->gamemode_offset);
+        return true;
+    }
+    return false;
 }
-
+bool World::WriteGameMode(const t_gamemodes & wr)
+{
+    if(d->Inited && d->StartedMode)
+    {
+        d->owner->writeDWord(d->gamemode_offset,wr.game_mode);
+        d->owner->writeDWord(d->controlmode_offset,wr.control_mode);
+        d->owner->writeDWord(d->controlmodecopy_offset,wr.control_mode);
+        return true;
+    }
+    return false;
+}
 
 // FIX'D according to this:
 /*

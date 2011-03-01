@@ -8,6 +8,30 @@ using namespace std;
 
 #include <DFHack.h>
 
+std::ostream &operator<<(std::ostream &stream, DFHack::t_gamemodes funzies)
+{
+    char * gm[]=
+    {
+        "Fort",
+        "Adventurer",
+        "Kittens!",
+        "Menus",
+        "Arena",
+    };
+    char * cm[]=
+    {
+        "Managing",
+        "Direct Control",
+        "Kittens!",
+        "Menus"
+    };
+    if(funzies.game_mode <= DFHack::GM_MAX && funzies.control_mode <= DFHack::CM_MAX)
+        stream << "Game mode: " << gm[funzies.game_mode] << ", Control mode: " << cm[funzies.control_mode];
+    else
+        stream << "Game mode is too funky: (" << funzies.game_mode << "," << funzies.control_mode << ")";
+    return stream;
+}
+
 int main (int argc, char** argv)
 {
     bool quiet = false;
@@ -39,9 +63,10 @@ int main (int argc, char** argv)
         #endif
         return 1;
     }
-    if(World)
+    DFHack::t_gamemodes gmm;
+    if(World->ReadGameMode(gmm))
     {
-        cout << "Game mode " << World->ReadGameMode() << endl;
+        cout << gmm << endl;
     }
     if (Position)
     {

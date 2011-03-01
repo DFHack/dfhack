@@ -21,6 +21,8 @@ SET( EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output CACHE PATH "Output direct
 
 include_directories (${CMAKE_SOURCE_DIR}/library/include/)
 include_directories (${CMAKE_SOURCE_DIR}/library/shm/)
+include_directories (${CMAKE_SOURCE_DIR}/library/depends/md5/)
+include_directories (${CMAKE_SOURCE_DIR}/library/depends/tinyxml/)
 include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
 include_directories (${CMAKE_SOURCE_DIR}/library/private/)
 
@@ -185,7 +187,7 @@ ENDIF( CMAKE_SIZEOF_VOID_P MATCHES 4 )
 
 CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/library/config.h.cmake ${CMAKE_SOURCE_DIR}/library/private/config.h )
 
-ADD_DEFINITIONS(-DBUILD_DFHACK_LIB)
+ADD_DEFINITIONS(-DBUILD_DFHACK_LIB -DTIXML_USE_STL)
 
 IF(UNIX)
   add_definitions(-DLINUX_BUILD)

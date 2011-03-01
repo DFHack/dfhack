@@ -21,6 +21,7 @@ int main (int argc, char** argv)
     }
 
     DFHack::Position * Position = 0;
+    DFHack::World * World = 0;
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context * DF;
     try
@@ -28,6 +29,7 @@ int main (int argc, char** argv)
         DF = DFMgr.getSingleContext();
         DF->Attach();
         Position = DF->getPosition();
+        World = DF->getWorld();
     }
     catch (exception& e)
     {
@@ -37,17 +39,21 @@ int main (int argc, char** argv)
         #endif
         return 1;
     }
+    if(World)
+    {
+        cout << "Game mode " << World->ReadGameMode() << endl;
+    }
     if (Position)
     {
-       int32_t x,y,z;
-       int32_t width,height;
+        int32_t x,y,z;
+        int32_t width,height;
 
-       if(Position->getViewCoords(x,y,z))
+        if(Position->getViewCoords(x,y,z))
             cout << "view coords: " << x << "/" << y << "/" << z << endl;
-       if(Position->getCursorCoords(x,y,z))
+        if(Position->getCursorCoords(x,y,z))
             cout << "cursor coords: " << x << "/" << y << "/" << z << endl;
-       if(Position->getWindowSize(width,height))
-           cout << "window size : " << width << " " << height << endl;
+        if(Position->getWindowSize(width,height))
+            cout << "window size : " << width << " " << height << endl;
     }
     else
     {

@@ -21,8 +21,6 @@ SET( EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output CACHE PATH "Output direct
 
 include_directories (${CMAKE_SOURCE_DIR}/library/include/)
 include_directories (${CMAKE_SOURCE_DIR}/library/shm/)
-include_directories (${CMAKE_SOURCE_DIR}/library/depends/md5/)
-include_directories (${CMAKE_SOURCE_DIR}/library/depends/tinyxml/)
 include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
 include_directories (${CMAKE_SOURCE_DIR}/library/private/)
 

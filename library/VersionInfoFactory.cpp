@@ -90,6 +90,12 @@ inline bool operator>=(const triple<_T1, _T2, _T3>& __x, const triple<_T1, _T2, 
     return !(__x < __y);
 }
 
+VersionInfoFactory::VersionInfoFactory(string path_to_xml)
+{
+    error = false;
+    loadFile(path_to_xml);
+}
+
 VersionInfoFactory::~VersionInfoFactory()
 {
     // for each stored version, delete
@@ -99,6 +105,35 @@ VersionInfoFactory::~VersionInfoFactory()
     }
     versions.clear();
 }
+
+VersionInfo * VersionInfoFactory::getVersionInfoByMD5(string hash)
+{
+    VersionInfo * vinfo;
+    for(uint32_t i = 0; i < versions.size();i++)
+    {
+        vinfo = versions[i];
+        if(vinfo->getMD5() == hash)
+        {
+            return vinfo;
+        }
+    }
+    return NULL;
+}
+
+VersionInfo * VersionInfoFactory::getVersionInfoByPETimestamp(uint32_t timestamp)
+{
+    VersionInfo * vinfo;
+    for(uint32_t i = 0; i < versions.size();i++)
+    {
+        vinfo = versions[i];
+        if(vinfo->getPE() == timestamp)
+        {
+            return vinfo;
+        }
+    }
+    return NULL;
+}
+
 
 void VersionInfoFactory::ParseVTable(TiXmlElement* vtable, VersionInfo* mem)
 {
@@ -172,8 +207,6 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
         TiXmlElement* pEntry;
         // we get the <Offsets>, look at the children
         pEntry = parent->FirstChildElement();
-        if(!pEntry)
-            return;
         const char *cstr_invalid = parent->Attribute("valid");
         INVAL_TYPE parent_inval = NOT_SET;
         if(cstr_invalid)
@@ -185,6 +218,11 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
         }
         OffsetGroup * currentGroup = reinterpret_cast<OffsetGroup *> (target);
         currentGroup->setInvalid(parent_inval);
+
+        // we end here if there are no child tags.
+        if(!pEntry)
+            return;
+
         breadcrumbs.push_back(groupTriple(pEntry,currentGroup, parent_inval));
     }
 
@@ -225,7 +263,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
         }
 
         // skip non-elements
-        if (currentElem->Type() != TiXmlNode::ELEMENT)
+        if (currentElem->Type() != TiXmlNode::TINYXML_ELEMENT)
         {
             groupTriple & gp = breadcrumbs.back();
             gp.first = gp.first->NextSiblingElement();
@@ -365,7 +403,7 @@ void VersionInfoFactory::ParseBase (TiXmlElement* entry, VersionInfo* mem)
         throw Error::MemoryXmlBadAttribute("name");
 
     mem->setVersion(cstr_version);
-    mem->setOS(VersionInfo::OS_BAD);
+    mem->setOS(OS_BAD);
 
     // process additional entries
     pElement = entry->FirstChildElement()->ToElement();
@@ -624,12 +662,6 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         }
     } // for
 } // method
-
-VersionInfoFactory::VersionInfoFactory(string path_to_xml)
-{
-    error = false;
-    loadFile(path_to_xml);
-}
 
 // load the XML file with offsets
 bool VersionInfoFactory::loadFile(string path_to_xml)

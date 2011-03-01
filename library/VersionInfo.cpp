@@ -545,7 +545,7 @@ namespace DFHack
         Process * p; // the process this belongs to
 
         string version;
-        VersionInfo::OSType OS;
+        OSType OS;
         std::string md5;
         uint32_t PE_timestamp;
     };
@@ -707,7 +707,7 @@ void VersionInfo::setOS(OSType os)
 }
 
 
-VersionInfo::OSType VersionInfo::getOS() const
+OSType VersionInfo::getOS() const
 {
     return d->OS;
 }

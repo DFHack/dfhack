@@ -21,144 +21,10 @@ using namespace std;
 
 #include <DFHack.h>
 #include "SegmentedFinder.h"
-template <class T>
-class holder
-{
-    public:
-        vector <T> values;
-        SegmentedFinder & sf;
-        holder(SegmentedFinder& sff):sf(sff){};
-        bool isValid(size_t idx)
-        {
-            
-        };
-};
-
-class address
-{
-    public:
-    uint64_t addr_;
-    unsigned int valid : 1;
-    virtual void print(SegmentedFinder& sff)
-    {
-        cout << hex << "0x" << addr_ << endl;
-    };
-    address(const uint64_t addr)
-    {
-        addr_ = addr;
-        valid = false;
-    }
-    virtual address & operator=(const uint64_t in)
-    {
-        addr_ = in;
-        valid = false;
-        return *this;
-    }
-    virtual bool isValid(SegmentedFinder& sff)
-    {
-        if(valid) return true;
-        if(sff.getSegmentForAddress(addr_))
-        {
-            valid = 1;
-        }
-    }
-    virtual bool equals (SegmentedFinder & sf, address & rhs)
-    {
-        return rhs.addr_ == addr_;
-    }
-};
-
-// pointer to a null-terminated byte string
-class Cstr: public address
-{
-    void print(SegmentedFinder & sf)
-    {
-        cout << hex << "0x" << addr_ << ": \"" << sf.Translate<char>(addr_) << "\"" << endl;
-    }
-    bool equals(SegmentedFinder & sf,const char * rhs)
-    {
-        uint32_t addr2 = *(sf.Translate<uint32_t>(addr_));
-        return strcmp(sf.Translate<const char>(addr2), rhs) == 0;
-    }
-    template <class Predicate, class inType>
-    bool equalsP(SegmentedFinder & sf,inType rhs)
-    {
-        return Predicate(addr_, sf, rhs);
-    }
-    bool isValid(SegmentedFinder& sf)
-    {
-        if (address::isValid(sf))
-        {
-            // read the pointer
-            uint32_t addr2 = *(sf.Translate<uint32_t>(addr_));
-            // is it a real pointer? a pretty weak test, but whatever.
-            if(sf.getSegmentForAddress(addr2))
-                return true;
-        }
-        return false;
-    }
-};
-
-// STL STRING
-#ifdef LINUX_BUILD
-class STLstr: public address
-{
-    
-};
-#endif
-#ifndef LINUX_BUILD
-class STLstr: public address
-{
-    
-};
-#endif
-
-// STL VECTOR
-#ifdef LINUX_BUILD
-class Vector: public address
-{
-    
-};
-#endif
-#ifndef LINUX_BUILD
-class Vector: public address
-{
-    
-};
-#endif
-class Int64: public address{};
-class Int32: public address{};
-class Int16: public address{};
-class Int8: public address{};
 
 inline void printRange(DFHack::t_memrange * tpr)
 {
     std::cout << std::hex << tpr->start << " - " << tpr->end << "|" << (tpr->read ? "r" : "-") << (tpr->write ? "w" : "-") << (tpr->execute ? "x" : "-") << "|" << tpr->name << std::endl;
-}
-
-string rdWinString( char * offset, SegmentedFinder & sf )
-{
-    char * start_offset = offset + 4;
-    uint32_t length = *(uint32_t *)(offset + 20);
-    uint32_t capacity = *(uint32_t *)(offset + 24);
-    char * temp = new char[capacity+1];
-
-    // read data from inside the string structure
-    if(capacity < 16)
-    {
-        memcpy(temp, start_offset,capacity);
-        //read(start_offset, capacity, (uint8_t *)temp);
-    }
-    else // read data from what the offset + 4 dword points to
-    {
-        start_offset = sf.Translate<char>(*(uint32_t*)start_offset);
-        memcpy(temp, start_offset,capacity);
-    }
-
-    temp[length] = 0;
-    string ret = temp;
-    delete temp;
-    return ret;
 }
 
 bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges)
@@ -182,12 +48,12 @@ bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges
         {
             // empty input, assume default. observe the length of the memory range vector
             // these are hardcoded values, intended for my convenience only
-            if(p->getDescriptor()->getOS() == DFHack::VersionInfo::OS_WINDOWS)
+            if(p->getDescriptor()->getOS() == DFHack::OS_WINDOWS)
             {
                 start = min(11, (int)ranges.size());
                 end = min(14, (int)ranges.size());
             }
-            else if(p->getDescriptor()->getOS() == DFHack::VersionInfo::OS_LINUX)
+            else if(p->getDescriptor()->getOS() == DFHack::OS_LINUX)
             {
                 start = min(2, (int)ranges.size());
                 end = min(4, (int)ranges.size());
@@ -226,6 +92,7 @@ bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges
         }
         it++;
     }
+    return true;
 }
 
 bool getNumber (string prompt, int & output, int def, bool pdef = true)
@@ -312,9 +179,13 @@ bool Incremental ( vector <uint64_t> &found, const char * what, T& output,
         }
         goto incremental_more;
     }
-    else if(select.empty())
+    else if(select == "q")
     {
         return false;
+    }
+    else if(select.empty())
+    {
+        goto incremental_more;
     }
     else
     {
@@ -532,29 +403,91 @@ void FindData(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& range
         DF->Detach();
     }
 }
-/*
-    while(Incremental(found, "integer",test1))
+
+bool TriggerIncremental ( vector <uint64_t> &found )
+{
+    string select;
+    if(found.empty())
+    {
+        cout << "search ready - position the DF cursor and hit enter when ready" << endl;
+    }
+    else if( found.size() == 1 )
+    {
+        cout << "Found single coord!" << endl;
+        cout << hex << "0x" << found[0] << endl;
+    }
+    else
+    {
+        cout << "Found " << dec << found.size() << " coords." << endl;
+    }
+    incremental_more:
+    cout << ">>";
+    std::getline(cin, select);
+    size_t num = 0;
+    if( sscanf(select.c_str(),"p %d", &num) && num > 0)
+    {
+        cout << "Found coords:" << endl;
+        for(int i = 0; i < min(found.size(), num);i++)
+        {
+            cout << hex << "0x" << found[i] << endl;
+        }
+        goto incremental_more;
+    }
+    else if(select == "p")
+    {
+        cout << "Found coords:" << endl;
+        for(int i = 0; i < found.size();i++)
+        {
+            cout << hex << "0x" << found[i] << endl;
+        }
+        goto incremental_more;
+    }
+    else if(select == "q")
+    {
+        return false;
+    }
+    else return true;
+}
+
+
+void FindCoords(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+{
+    vector <uint64_t> found;
+    int size = 4;
+    do
+    {
+        getNumber("Select coord size (2,4 bytes)",size, 4);
+    } while (size != 2 && size != 4);
+    while (TriggerIncremental(found))
     {
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
-        SegmentedFinder sf(ranges,DF);
-        switch(size)
+        DFHack::Position * pos = DF->getPosition();
+        pos->Start();
+        int32_t x, y, z;
+        pos->getCursorCoords(x,y,z);
+        cout << "Searching for: " << dec << x << ":" << y << ":" << z << endl;
+        Bytestream select;
+        if(size == 2)
         {
-            case 1:
-                sf.Incremental<uint8_t,uint8_t>(test1,alignment,found, equalityP<uint8_t>);
-                break;
-            case 2:
-                sf.Incremental<uint16_t,uint16_t>(test1,alignment,found, equalityP<uint16_t>);
-                break;
-            case 4:
-                sf.Incremental<uint32_t,uint32_t>(test1,alignment,found, equalityP<uint32_t>);
-                break;
+            select.insert<uint16_t>(x);
+            select.insert<uint16_t>(y);
+            select.insert<uint16_t>(z);
         }
+        else
+        {
+            select.insert<uint32_t>(x);
+            select.insert<uint32_t>(y);
+            select.insert<uint32_t>(z);
+        }
+        cout << select << endl;
+        SegmentedFinder sf(ranges,DF);
+        sf.Incremental< Bytestream ,uint32_t>(select,1,found, findBytestream);
         DF->Detach();
     }
 }
-*/
+
 void PtrTrace(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
 {
     int element_size;
@@ -736,7 +669,7 @@ struct tilecolors
 };
 #pragma pack()
 
-void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& ranges)
+void autoSearch(DFHack::Context * DF, vector <DFHack::t_memrange>& ranges)
 {
     vector <uint64_t> allVectors;
     vector <uint64_t> filtVectors;
@@ -819,6 +752,15 @@ void automatedLangtables(DFHack::Context * DF, vector <DFHack::t_memrange>& rang
     sf.Filter<uint32_t,vecTriplet>(52 * 4,to_filter,vectorLength<uint32_t>);
     sf.Filter<const char * ,vecTriplet>("MUSHROOM_HELMET_PLUMP",to_filter, vectorStringFirst);
     printFound(to_filter,"organics");
+
+    // new organics vector
+    to_filter = filtVectors;
+    sf.Filter<const char * ,vecTriplet>("MUSHROOM_HELMET_PLUMP",to_filter, vectorString);
+    sf.Filter<const char * ,vecTriplet>("MEADOW-GRASS",to_filter, vectorString);
+    sf.Filter<const char * ,vecTriplet>("TUNNEL_TUBE",to_filter, vectorString);
+    sf.Filter<const char * ,vecTriplet>("WEED_BLADE",to_filter, vectorString);
+    sf.Filter<const char * ,vecTriplet>("EYEBALL",to_filter, vectorString);
+    printFound(to_filter,"organics 31.19");
 
     // tree vector
     to_filter = filtVectors;
@@ -968,70 +910,80 @@ int main (void)
     getRanges(p,selected_ranges);
 
     DFHack::VersionInfo *minfo = DF->getMemoryInfo();
-    DFHack::VersionInfo::OSType os = minfo->getOS();
+    DFHack::OSType os = minfo->getOS();
 
     string prompt =
     "Select search type: 1=number(default), 2=vector by length, 3=vector>object>string,\n"
     "                    4=string, 5=automated offset search, 6=vector by address in its array,\n"
     "                    7=pointer vector by address of an object, 8=vector>first object>string\n"
-    "                    9=string buffers, 10=known data, 11=backpointers, 12=data+backpointers\n";
+    "                    9=string buffers, 10=known data, 11=backpointers, 12=data+backpointers\n"
+    "                    13=coord lookup\n"
+    "                    0= exit\n";
     int mode;
+    bool finish = 0;
     do
     {
         getNumber(prompt,mode, 1, false);
-    } while (mode < 1 || mode > 12 );
-    switch (mode)
-    {
-        case 1:
-            DF->Detach();
-            FindIntegers(DFMgr, selected_ranges);
-            break;
-        case 2:
-            DF->Detach();
-            FindVectorByLength(DFMgr, selected_ranges);
-            break;
-        case 3:
-            DF->Detach();
-            FindVectorByObjectRawname(DFMgr, selected_ranges);
-            break;
-        case 4:
-            DF->Detach();
-            FindStrings(DFMgr, selected_ranges);
-            break;
-        case 5:
-            automatedLangtables(DF,selected_ranges);
-            break;
-        case 6:
-            DF->Detach();
-            FindVectorByBounds(DFMgr,selected_ranges);
-            break;
-        case 7:
-            DF->Detach();
-            FindPtrVectorsByObjectAddress(DFMgr,selected_ranges);
-            break;
-        case 8:
-            DF->Detach();
-            FindVectorByFirstObjectRawname(DFMgr, selected_ranges);
-            break;
-        case 9:
-            DF->Detach();
-            FindStrBufs(DFMgr, selected_ranges);
-            break;
-        case 10:
-            DF->Detach();
-            FindData(DFMgr, selected_ranges);
-            break;
-        case 11:
-            DF->Detach();
-            PtrTrace(DFMgr, selected_ranges);
-            break;
-        case 12:
-            DF->Detach();
-            DataPtrTrace(DFMgr, selected_ranges);
-            break;
-        default:
-            cout << "not implemented :(" << endl;
-    }
+        switch (mode)
+        {
+            case 0:
+                finish = 1;
+                break;
+            case 1:
+                DF->Detach();
+                FindIntegers(DFMgr, selected_ranges);
+                break;
+            case 2:
+                DF->Detach();
+                FindVectorByLength(DFMgr, selected_ranges);
+                break;
+            case 3:
+                DF->Detach();
+                FindVectorByObjectRawname(DFMgr, selected_ranges);
+                break;
+            case 4:
+                DF->Detach();
+                FindStrings(DFMgr, selected_ranges);
+                break;
+            case 5:
+                autoSearch(DF,selected_ranges);
+                break;
+            case 6:
+                DF->Detach();
+                FindVectorByBounds(DFMgr,selected_ranges);
+                break;
+            case 7:
+                DF->Detach();
+                FindPtrVectorsByObjectAddress(DFMgr,selected_ranges);
+                break;
+            case 8:
+                DF->Detach();
+                FindVectorByFirstObjectRawname(DFMgr, selected_ranges);
+                break;
+            case 9:
+                DF->Detach();
+                FindStrBufs(DFMgr, selected_ranges);
+                break;
+            case 10:
+                DF->Detach();
+                FindData(DFMgr, selected_ranges);
+                break;
+            case 11:
+                DF->Detach();
+                PtrTrace(DFMgr, selected_ranges);
+                break;
+            case 12:
+                DF->Detach();
+                DataPtrTrace(DFMgr, selected_ranges);
+                break;
+            case 13:
+                DF->Detach();
+                FindCoords(DFMgr, selected_ranges);
+                break;
+            default:
+                cout << "Unknown function, try again." << endl;
+        }
+    } while ( !finish );
     #ifndef LINUX_BUILD
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();

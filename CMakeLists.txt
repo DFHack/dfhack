@@ -2,7 +2,7 @@
 PROJECT (dfhack)
 cmake_minimum_required(VERSION 2.6)
 SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
-SET ( DFHACK_VERSION "0.4.1.0-dev" )
+SET ( DFHACK_VERSION "0.5.2" )
 
 # Set this to project source dir. When dfhack is used
 # as a submodule, CMAKE_SOURCE_DIR is not pointing to
@@ -36,9 +36,6 @@ OPTION(BUILD_DFHACK_SHM "Build the SHM." OFF)
 
 include_directories (${CMAKE_SOURCE_DIR}/library/include/)
 include_directories (${CMAKE_SOURCE_DIR}/library/shm/)
-include_directories (${CMAKE_SOURCE_DIR}/library/depends/md5/)
-include_directories (${CMAKE_SOURCE_DIR}/library/depends/tinyxml/)
-include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
 
 add_subdirectory (library)
 

@@ -34,7 +34,7 @@ namespace DFHack
         namespace Maps
         {
 // increment on every change
-#define MAPS_VERSION 4
+#define MAPS_VERSION 5
 typedef struct
 {
     uint32_t map_offset;// = d->offset_descriptor->getAddress ("map_data");
@@ -49,6 +49,7 @@ typedef struct
     uint32_t occupancy_offset;// = d->offset_descriptor->getOffset ("occupancy");
     uint32_t biome_stuffs;// = d->offset_descriptor->getOffset ("biome_stuffs");
     uint32_t veinvector;// = d->offset_descriptor->getOffset ("v_vein");
+    uint32_t vegvector;
     uint32_t temperature1_offset;
     uint32_t temperature2_offset;
     uint32_t global_feature_offset;
@@ -57,6 +58,8 @@ typedef struct
     uint32_t vein_mineral_vptr;
     uint32_t vein_ice_vptr;
     uint32_t vein_spatter_vptr;
+    uint32_t vein_grass_vptr;
+    uint32_t vein_worldconstruction_vptr;
     /*
     GEOLOGY
     */
@@ -72,6 +75,11 @@ typedef struct
     uint32_t world_size_y;// = minfo->getOffset ("world_size_y");
     uint32_t geolayer_geoblock_offset;// = minfo->getOffset ("geolayer_geoblock_offset");
     uint32_t type_inside_geolayer;// = mem->getOffset ("type_inside_geolayer");
+    
+    /*
+     * Vegetation
+     */
+    uint32_t tree_desc_offset;
 } maps_offsets;
 
 typedef struct

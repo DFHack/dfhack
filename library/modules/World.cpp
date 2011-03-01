@@ -49,9 +49,11 @@ struct World::Private
     bool Inited;
     bool StartedTime;
     bool StartedWeather;
+    bool StartedMode;
     uint32_t year_offset;
     uint32_t tick_offset;
     uint32_t weather_offset;
+    uint32_t gamemode_offset;
     DFContextShared *d;
     Process * owner;
 };
@@ -62,7 +64,7 @@ World::World(DFContextShared * _d)
     d = new Private;
     d->d = _d;
     d->owner = _d->p;
-    d->Inited = d->StartedTime = d->StartedWeather = false;
+    d->Inited = d->StartedTime = d->StartedWeather = d->StartedMode = false;
 
     OffsetGroup * OG_World = d->d->offset_descriptor->getGroup("World");
     try
@@ -76,6 +78,12 @@ World::World(DFContextShared * _d)
     {
         d->weather_offset = OG_World->getAddress( "current_weather" );
         d->StartedWeather = true;
+    }
+    catch(Error::All &){};
+    try
+    {
+        d->gamemode_offset = OG_World->getAddress( "game_mode" );
+        d->StartedMode = true;
     }
     catch(Error::All &){};
     d->Inited = true;
@@ -109,6 +117,14 @@ uint32_t World::ReadCurrentTick()
         return(d->owner->readDWord(d->tick_offset));
     return 0;
 }
+
+int32_t World::ReadGameMode()
+{
+    if(d->Inited && d->StartedMode)
+        return d->owner->readDWord(d->gamemode_offset);
+    return -1;
+}
+
 
 // FIX'D according to this:
 /*

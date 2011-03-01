@@ -57,6 +57,9 @@ struct Maps::Private
     OffsetGroup *OG_vector;
     bool Inited;
     bool Started;
+    bool hasGeology;
+    bool hasFeatures;
+    bool hasVeggies;
 
     // map between feature address and the read object
     map <uint32_t, t_feature> local_feature_store;
@@ -74,6 +77,7 @@ Maps::Maps(DFContextShared* _d)
 
     DFHack::VersionInfo * mem = p->getDescriptor();
     Server::Maps::maps_offsets &off = d->offsets;
+    d->hasFeatures = d->hasGeology = d->hasVeggies = true;
 
     // get the offsets once here
     OffsetGroup *OG_Maps = mem->getGroup("Maps");
@@ -87,7 +91,6 @@ Maps::Maps(DFContextShared* _d)
         off.region_z_offset =  OG_Maps->getAddress ("region_z");
         off.world_size_x = OG_Maps->getAddress ("world_size_x");
         off.world_size_y = OG_Maps->getAddress ("world_size_y");
-
         OffsetGroup *OG_MapBlock = OG_Maps->getGroup("block");
         {
             off.tile_type_offset = OG_MapBlock->getOffset ("type");
@@ -100,18 +103,41 @@ Maps::Maps(DFContextShared* _d)
             off.temperature1_offset = OG_MapBlock->getOffset ("temperature1");
             off.temperature2_offset = OG_MapBlock->getOffset ("temperature2");
         }
-
-        OffsetGroup *OG_Geology = OG_Maps->getGroup("geology");
+        try
         {
-            off.world_regions =  OG_Geology->getAddress ("ptr2_region_array");
-            off.region_size =  OG_Geology->getHexValue ("region_size");
-            off.region_geo_index_offset =  OG_Geology->getOffset ("region_geo_index_off");
-            off.geolayer_geoblock_offset = OG_Geology->getOffset ("geolayer_geoblock_offset");
-            off.world_geoblocks_vector =  OG_Geology->getAddress ("geoblock_vector");
-            off.type_inside_geolayer = OG_Geology->getOffset ("type_inside_geolayer");
+            OffsetGroup *OG_Geology = OG_Maps->getGroup("geology");
+            {
+                off.world_regions =  OG_Geology->getAddress ("ptr2_region_array");
+                off.region_size =  OG_Geology->getHexValue ("region_size");
+                off.region_geo_index_offset =  OG_Geology->getOffset ("region_geo_index_off");
+                off.geolayer_geoblock_offset = OG_Geology->getOffset ("geolayer_geoblock_offset");
+                off.world_geoblocks_vector =  OG_Geology->getAddress ("geoblock_vector");
+                off.type_inside_geolayer = OG_Geology->getOffset ("type_inside_geolayer");
+            }
         }
-        d->OG_global_features = OG_Maps->getGroup("features")->getGroup("global");
-        d->OG_local_features = OG_Maps->getGroup("features")->getGroup("local");
+        catch(Error::AllMemdef &)
+        {
+            d->hasGeology = false;
+        }
+        try
+        {
+            d->OG_global_features = OG_Maps->getGroup("features")->getGroup("global");
+            d->OG_local_features = OG_Maps->getGroup("features")->getGroup("local");
+        }
+        catch(Error::AllMemdef &)
+        {
+            d->hasFeatures = false;
+        }
+        try
+        {
+            OffsetGroup * OG_Veg = d->d->offset_descriptor->getGroup("Vegetation");
+            off.vegvector = OG_MapBlock->getOffset ("vegetation_vector");
+            off.tree_desc_offset = OG_Veg->getOffset ("tree_desc_offset");
+        }
+        catch(Error::AllMemdef &)
+        {
+            d->hasVeggies = false;
+        }
     }
     d->OG_vector = mem->getGroup("vector");
 
@@ -121,6 +147,12 @@ Maps::Maps(DFContextShared* _d)
     mem->resolveClassnameToVPtr("block_square_event_frozen_liquid", off.vein_ice_vptr);
     off.vein_mineral_vptr = 0;
     mem->resolveClassnameToVPtr("block_square_event_mineral",off.vein_mineral_vptr);
+    off.vein_spatter_vptr = 0;
+    mem->resolveClassnameToVPtr("block_square_event_material_spatterst",off.vein_spatter_vptr);
+    off.vein_grass_vptr = 0;
+    mem->resolveClassnameToVPtr("block_square_event_grassst",off.vein_grass_vptr);
+    off.vein_worldconstruction_vptr = 0;
+    mem->resolveClassnameToVPtr("block_square_event_world_constructionst",off.vein_worldconstruction_vptr);
 
     // upload offsets to SHM server if possible
     d->maps_module = 0;
@@ -517,18 +549,22 @@ bool Maps::WriteGlobalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t global
 /*
  * Block events
  */
-bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins, vector <t_frozenliquidvein>* ices, vector <t_spattervein> *splatter)
+bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins, vector <t_frozenliquidvein>* ices, vector <t_spattervein> *splatter, vector <t_grassvein> *grass, vector <t_worldconstruction> *constructions)
 {
     MAPS_GUARD
     t_vein v;
     t_frozenliquidvein fv;
     t_spattervein sv;
+    t_grassvein gv;
+    t_worldconstruction wcv;
     Process* p = d->owner;
 
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if(veins) veins->clear();
     if(ices) ices->clear();
     if(splatter) splatter->clear();
+    if(grass) splatter->clear();
+    if(constructions) constructions->clear();
 
     Server::Maps::maps_offsets &off = d->offsets;
     if (addr)
@@ -568,6 +604,22 @@ try_again:
                 // store it in the vector
                 splatter->push_back (sv);
             }
+            else if(grass && type == off.vein_grass_vptr)
+            {
+                // read the splatter vein data (dereference pointer)
+                p->read (temp, sizeof(t_grassvein), (uint8_t *) &gv);
+                gv.address_of = temp;
+                // store it in the vector
+                grass->push_back (gv);
+            }
+            else if(constructions && type == off.vein_worldconstruction_vptr)
+            {
+                // read the splatter vein data (dereference pointer)
+                p->read (temp, sizeof(t_worldconstruction), (uint8_t *) &wcv);
+                wcv.address_of = temp;
+                // store it in the vector
+                constructions->push_back (wcv);
+            }
             else
             {
                 string cname = p->readClassName(type);
@@ -586,12 +638,20 @@ try_again:
                     off.vein_spatter_vptr = type;
                     goto try_again;
                 }
-                #ifdef DEBUG
+                else if(grass && cname=="block_square_event_grassst")
+                {
+                    off.vein_grass_vptr = type;
+                    goto try_again;
+                }
+                else if(constructions && cname=="block_square_event_world_constructionst")
+                {
+                    off.vein_worldconstruction_vptr = type;
+                    goto try_again;
+                }
                 else
                 {
-                    cerr << "unknown vein " << cname << endl;
+                    cerr << "unknown vein " << cname << hex << " 0x" << temp << " block: 0x" << addr << dec << endl;
                 }
-                #endif
                 // or it was something we don't care about
             }
         }
@@ -661,6 +721,7 @@ __int16 __userpurge GetGeologicalRegion<ax>(__int16 block_X<cx>, int X<ebx>, __i
 bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 {
     MAPS_GUARD
+    if(!d->hasGeology) return false;
     Process *p = d->owner;
     // get needed addresses and offsets. Now this is what I call crazy.
     uint16_t worldSizeX, worldSizeY;
@@ -730,6 +791,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > & local_features )
 {
     MAPS_GUARD
+    if(!d->hasFeatures) return false;
     // can't be used without a map!
     if(!d->block)
         return false;
@@ -822,6 +884,7 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
 bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
 {
     MAPS_GUARD
+    if(!d->hasFeatures) return false;
     // can't be used without a map!
     if(!d->block)
         return false;
@@ -864,3 +927,25 @@ bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
     return true;
 }
 
+bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<t_tree>* plants)
+{
+    if(!d->hasVeggies || !d->Started)
+        return false;
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if(!addr)
+        return false;
+
+    t_tree shrubbery;
+    plants->clear();
+
+    Server::Maps::maps_offsets & off = d->offsets;
+    DfVector<uint32_t> vegptrs(d->owner, addr + off.vegvector);
+    for(int i = 0; i < vegptrs.size(); i++)
+    {
+        d->owner->read (vegptrs[i] + off.tree_desc_offset, sizeof (t_tree), (uint8_t *) &shrubbery);
+        shrubbery.address = vegptrs[i];
+        plants->push_back(shrubbery);
+    }
+    if(plants->empty()) return false;
+    return true;
+}

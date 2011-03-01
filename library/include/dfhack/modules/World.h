@@ -15,6 +15,12 @@ namespace DFHack
         RAINING,
         SNOWING
     };
+    enum GameMode
+    {
+        GM_Fort = 0,
+        GM_Adventurer = 1,
+        GM_Menu = 3,
+    };
     class DFContextShared;
     class DFHACK_EXPORT World : public Module
     {
@@ -31,7 +37,7 @@ namespace DFHack
         uint32_t ReadCurrentDay();
         uint8_t ReadCurrentWeather();
         void SetCurrentWeather(uint8_t weather);
-
+        int32_t ReadGameMode();
         private:
         struct Private;
         Private *d;

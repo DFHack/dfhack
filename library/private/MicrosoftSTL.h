@@ -1,6 +1,6 @@
 /*
 www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
+Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -22,32 +22,25 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef DFHACK_C_API
-#define DFHACK_C_API
-
-#include "dfhack/DFPragma.h"
-
-#include <cstdio>
 #include <string>
-#include <vector>
-#include <map>
-#include <algorithm>
 
-#include "dfhack/DFGlobal.h"
-#include "dfhack/DFExport.h"
-#include "dfhack/DFIntegers.h"
+namespace DFHack {
+    class Process;
+    class MicrosoftSTL
+    {
+        private:
+            uint32_t STLSTR_buf_off;
+            uint32_t STLSTR_size_off;
+            uint32_t STLSTR_cap_off;
 
+            Process* p;
+        public:
+            void init(Process* p);
 
-using namespace DFHack;
-
-typedef void DFHackObject;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-// some global stuff here
-#ifdef __cplusplus
+            const std::string readSTLString (uint32_t offset);
+            size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
+            void writeSTLString(const uint32_t address, const std::string writeString){};
+            // get class name of an object with rtti/type info
+            std::string readClassName(uint32_t vptr);
+    };
 }
-#endif
-
-#endif

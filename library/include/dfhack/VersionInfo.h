@@ -93,18 +93,18 @@ namespace DFHack
     /*
      * Version Info
      */
+    enum OSType
+    {
+        OS_WINDOWS,
+        OS_LINUX,
+        OS_APPLE,
+        OS_BAD
+    };
     class DFHACK_EXPORT VersionInfo : public OffsetGroup
     {
     private:
         VersionInfoPrivate * d;
     public:
-        enum OSType
-        {
-            OS_WINDOWS,
-            OS_LINUX,
-            OS_APPLE,
-            OS_BAD
-        };
         VersionInfo();
         VersionInfo(const VersionInfo&);
         void copy(const DFHack::VersionInfo* old);

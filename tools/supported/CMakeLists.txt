@@ -72,6 +72,12 @@ TARGET_LINK_LIBRARIES(dfdoffsets dfhack)
 ADD_EXECUTABLE(dfweather weather.cpp)
 TARGET_LINK_LIBRARIES(dfweather dfhack)
 
+# incrementalsearch - a bit like cheat engine, only DF-specific, very basic
+ADD_EXECUTABLE(dfautosearch autosearch.cpp)
+TARGET_LINK_LIBRARIES(dfautosearch dfhack)
+ADD_EXECUTABLE(dfincremental incrementalsearch.cpp)
+TARGET_LINK_LIBRARIES(dfincremental dfhack)
+
 
 IF(UNIX)
     SET(VEINLOOK_BUILT "NO")
@@ -126,5 +132,7 @@ dfsuspend
 dfflows
 dfliquids
 dfweather
+dfautosearch
+dfincremental
 RUNTIME DESTINATION bin
 )

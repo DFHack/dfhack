@@ -72,24 +72,36 @@ Buildings::Buildings(DFContextShared * d_)
     d = new Private;
     d->d = d_;
     d->owner = d_->p;
+    d->p_bld = NULL;
     d->Inited = d->Started = d->hasCustomWorkshops = false;
     VersionInfo * mem = d->d->offset_descriptor;
     OffsetGroup * OG_build = mem->getGroup("Buildings");
-    d->buildings_vector = OG_build->getAddress ("buildings_vector");
+    d->Inited = true;
     try
     {
-        d->custom_workshop_vector = OG_build->getAddress("custom_workshop_vector");
-        d->building_custom_workshop_type = OG_build->getOffset("building_custom_workshop_type");
-        d->custom_workshop_type = OG_build->getOffset("custom_workshop_type");
-        d->custom_workshop_name = OG_build->getOffset("custom_workshop_name");
-        mem->resolveClassnameToClassID("building_custom_workshop", d->custom_workshop_id);
-        d->hasCustomWorkshops = true;
+        d->buildings_vector = OG_build->getAddress ("buildings_vector");
     }
     catch(DFHack::Error::AllMemdef &e)
     {
-        cerr << "Custom workshops not available. Memory Definition: " << e.what() << endl;
+        cerr << "Buildings not available... " << e.what() << endl;
+        d->Inited = false;
     }
-    d->Inited = true;
+    if(d->Inited)
+    {
+        try
+        {
+            d->custom_workshop_vector = OG_build->getAddress("custom_workshop_vector");
+            d->building_custom_workshop_type = OG_build->getOffset("building_custom_workshop_type");
+            d->custom_workshop_type = OG_build->getOffset("custom_workshop_type");
+            d->custom_workshop_name = OG_build->getOffset("custom_workshop_name");
+            mem->resolveClassnameToClassID("building_custom_workshop", d->custom_workshop_id);
+            d->hasCustomWorkshops = true;
+        }
+        catch(DFHack::Error::AllMemdef &e)
+        {
+            cerr << "Custom workshops not available. Memory Definition: " << e.what() << endl;
+        }
+    }
 }
 
 Buildings::~Buildings()
@@ -101,6 +113,8 @@ Buildings::~Buildings()
 
 bool Buildings::Start(uint32_t & numbuildings)
 {
+    if(!d->Inited)
+        return false;
     d->p_bld = new DfVector <uint32_t> (d->owner, d->buildings_vector);
     numbuildings = d->p_bld->size();
     d->Started = true;
@@ -148,7 +162,7 @@ bool Buildings::Finish()
 
 bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 {
-    if(!d->Started)
+    if(!d->Inited)
         return false;
     if(!d->hasCustomWorkshops)
         return false;

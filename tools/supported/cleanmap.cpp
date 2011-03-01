@@ -55,6 +55,7 @@ int main (int argc, char** argv)
     Mapz->getSize(x_max,y_max,z_max);
 
     uint8_t zeroes [16][16] = {0};
+    DFHack::occupancies40d occ;
 
     // walk the map
     for(uint32_t x = 0; x< x_max;x++)
@@ -66,6 +67,13 @@ int main (int argc, char** argv)
                 if(Mapz->isValidBlock(x,y,z))
                 {
                     Mapz->ReadVeins(x,y,z,0,0,&splatter);
+                    Mapz->ReadOccupancy(x,y,z,&occ);
+                    for(int i = 0; i < 16; i++)
+                        for(int j = 0; j < 16; j++)
+                        {
+                            occ[i][j].unibits.splatter = 0;
+                        }
+                    Mapz->WriteOccupancy(x,y,z,&occ);
                     for(uint32_t i = 0; i < splatter.size(); i++)
                     {
                         DFHack::t_spattervein & vein = splatter[i];

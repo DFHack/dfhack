@@ -1,6 +1,6 @@
 /*
 www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf, doomchild
+Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -22,32 +22,18 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef DFHACK_C_API
-#define DFHACK_C_API
+#ifndef PROCESS_FACTORY_H_INCLUDED
+#define PROCESS_FACTORY_H_INCLUDED
 
-#include "dfhack/DFPragma.h"
+#include "dfhack/DFProcess.h"
+#include "dfhack/VersionInfoFactory.h"
 
-#include <cstdio>
-#include <string>
-#include <vector>
-#include <map>
-#include <algorithm>
-
-#include "dfhack/DFGlobal.h"
-#include "dfhack/DFExport.h"
-#include "dfhack/DFIntegers.h"
-
-
-using namespace DFHack;
-
-typedef void DFHackObject;
-
-#ifdef __cplusplus
-extern "C" {
+namespace DFHack
+{
+    Process* createNormalProcess(uint32_t pid, VersionInfoFactory * factory);
+    Process* createSHMProcess(uint32_t pid, VersionInfoFactory * factory);
+#ifdef LINUX_BUILD
+    Process* createWineProcess(uint32_t pid, VersionInfoFactory * factory);
 #endif
-// some global stuff here
-#ifdef __cplusplus
 }
-#endif
-
 #endif

@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include "dfhack/DFPragma.h"
 #include <vector>
 #include <algorithm>
 

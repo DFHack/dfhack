@@ -24,18 +24,13 @@ TARGET_LINK_LIBRARIES(dfdigger dfhack)
 ADD_EXECUTABLE(dfdigger2 digger2.cpp)
 TARGET_LINK_LIBRARIES(dfdigger2 dfhack)
 
+ADD_EXECUTABLE(primitives primitives.cpp)
+
 # itemdesignator - change some item designations (dump, forbid, on-fire) for all
 #                  items of a given type and material
 # Author: belal
 #ADD_EXECUTABLE(dfitemdesignator itemdesignator.cpp)
 #TARGET_LINK_LIBRARIES(dfitemdesignator dfhack)
-
-# incrementalsearch - a bit like cheat engine, only DF-specific, very basic
-# and Linux-only
-IF(UNIX)
-    ADD_EXECUTABLE(dfincremental incrementalsearch.cpp)
-    TARGET_LINK_LIBRARIES(dfincremental dfhack)
-ENDIF(UNIX)
 
 # catsplosion - Accelerates pregnancy
 # Author: Zhentar
@@ -113,9 +108,3 @@ dfprinttiletypes
 dfhellhole
 RUNTIME DESTINATION bin
 )
-IF(UNIX)
-    install(TARGETS
-    dfincremental
-    RUNTIME DESTINATION bin
-    )
-ENDIF(UNIX)

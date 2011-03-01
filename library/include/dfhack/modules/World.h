@@ -17,12 +17,9 @@ namespace DFHack
     };
     enum GameMode
     {
-        Unknown = -1,
-        Fort = 0,
-        Adventurer,
-        Blarg,
-        Flarg,
-        Arena
+        GM_Fort = 0,
+        GM_Adventurer = 1,
+        GM_Menu = 3,
     };
     class DFContextShared;
     class DFHACK_EXPORT World : public Module

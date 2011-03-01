@@ -114,6 +114,38 @@ def _alloc_spattervein_buffer_callback(ptr, count):
 _spattervein_functype = CFUNCTYPE(c_int, POINTER(SpatterVein), c_uint)
 libdfhack.alloc_spatter_buffer_callback = _spattervein_functype(_alloc_spattervein_buffer_callback)
 
+class GrassVein(Structure):
+    _fields_ = [("vtable", c_uint),
+                ("material", c_uint),
+                ("intensity", ((c_ubyte * 16) * 16)),
+                ("address_of", c_uint)]
+
+def _alloc_grassvein_buffer_callback(ptr, count):
+    allocated = _allocate_array(GrassVein, count)
+    
+    ptr = addressof(allocated[0])
+    
+    return 1
+
+_grassvein_functype = CFUNCTYPE(c_int, POINTER(GrassVein), c_uint)
+libdfhack.alloc_grassvein_buffer_callback = _grassvein_functype(_alloc_grassvein_buffer_callback)
+
+class WorldConstruction(Structure):
+    _fields_ = [("vtable", c_uint),
+                ("material", c_uint),
+                ("assignment", c_ushort * 16),
+                ("address_of", c_uint)]
+
+def _alloc_worldconstruction_buffer_callback(ptr, count):
+    allocated = _allocate_array(WorldConstruction, count)
+    
+    ptr = addressof(allocated[0])
+    
+    return 1
+
+_worldconstruction_functype = CFUNCTYPE(c_int, POINTER(WorldConstruction), c_uint)
+libdfhack.alloc_worldconstruction_buffer_callback = _worldconstruction_functype(_alloc_worldconstructrion_buffer_callback)
+
 class MapBlock40d(Structure):
     _fields_ = [("tiletypes", TileTypes40d),
                 ("designation", Designations40d),

@@ -306,7 +306,6 @@ int main (int argc, char* argv[])
 
     uint32_t x_max,y_max,z_max;
     DFHack::Maps * Maps = DF->getMaps();
-    DFHack::Materials * Mats = DF->getMaterials();
     DFHack::Position * Pos = DF->getPosition();
 
     // init the map

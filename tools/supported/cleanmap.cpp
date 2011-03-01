@@ -22,8 +22,6 @@ int main (int argc, char** argv)
     }
 
     uint32_t x_max,y_max,z_max;
-    uint32_t num_blocks = 0;
-    uint32_t bytes_read = 0;
     vector<DFHack::t_spattervein> splatter;
 
     DFHack::ContextManager DFMgr("Memory.xml");
@@ -54,7 +52,7 @@ int main (int argc, char** argv)
 
     Mapz->getSize(x_max,y_max,z_max);
 
-    uint8_t zeroes [16][16] = {0};
+    uint8_t zeroes [16][16] = {{0}};
     DFHack::occupancies40d occ;
 
     // walk the map

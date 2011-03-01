@@ -33,7 +33,7 @@ bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges
     selected_ranges.clear();
     p->getMemRanges(ranges);
     cout << "Which range to search? (default is 1-4)" << endl;
-    for(int i = 0; i< ranges.size();i++)
+    for(size_t i = 0; i< ranges.size();i++)
     {
         cout << dec << "(" << i << ") ";
         printRange(&(ranges[i]));
@@ -161,10 +161,10 @@ bool Incremental ( vector <uint64_t> &found, const char * what, T& output,
     cout << ">>";
     std::getline(cin, select);
     size_t num = 0;
-    if( sscanf(select.c_str(),"p %d", &num) && num > 0)
+    if( sscanf(select.c_str(),"p %zd", &num) && num > 0)
     {
         cout << "Found "<< plural <<":" << endl;
-        for(int i = 0; i < min(found.size(), num);i++)
+        for(size_t i = 0; i < min(found.size(), num);i++)
         {
             cout << hex << "0x" << found[i] << endl;
         }
@@ -173,7 +173,7 @@ bool Incremental ( vector <uint64_t> &found, const char * what, T& output,
     else if(select == "p")
     {
         cout << "Found "<< plural <<":" << endl;
-        for(int i = 0; i < found.size();i++)
+        for(size_t i = 0; i < found.size();i++)
         {
             cout << hex << "0x" << found[i] << endl;
         }
@@ -424,10 +424,10 @@ bool TriggerIncremental ( vector <uint64_t> &found )
     cout << ">>";
     std::getline(cin, select);
     size_t num = 0;
-    if( sscanf(select.c_str(),"p %d", &num) && num > 0)
+    if( sscanf(select.c_str(),"p %zd", &num) && num > 0)
     {
         cout << "Found coords:" << endl;
-        for(int i = 0; i < min(found.size(), num);i++)
+        for(size_t i = 0; i < min(found.size(), num);i++)
         {
             cout << hex << "0x" << found[i] << endl;
         }
@@ -436,7 +436,7 @@ bool TriggerIncremental ( vector <uint64_t> &found )
     else if(select == "p")
     {
         cout << "Found coords:" << endl;
-        for(int i = 0; i < found.size();i++)
+        for(size_t i = 0; i < found.size();i++)
         {
             cout << hex << "0x" << found[i] << endl;
         }
@@ -606,7 +606,7 @@ void DataPtrTrace(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& r
 void printFound(vector <uint64_t> &found, const char * what)
 {
     cout << what << ":" << endl;
-    for(int i = 0; i < found.size();i++)
+    for(size_t i = 0; i < found.size();i++)
     {
         cout << hex << "0x" << found[i] << endl;
     }
@@ -615,7 +615,7 @@ void printFound(vector <uint64_t> &found, const char * what)
 void printFoundStrVec(vector <uint64_t> &found, const char * what, SegmentedFinder & s)
 {
     cout << what << ":" << endl;
-    for(int i = 0; i < found.size();i++)
+    for(size_t i = 0; i < found.size();i++)
     {
         cout << hex << "0x" << found[i] << endl;
         cout << "--------------------------" << endl;
@@ -719,7 +719,7 @@ void autoSearch(DFHack::Context * DF, vector <DFHack::t_memrange>& ranges)
     sf.Filter<const char * ,vecTriplet>("DWARF",to_filter, vectorStringFirst);
 
     // verify
-    for(int i = 0; i < to_filter.size(); i++)
+    for(size_t i = 0; i < to_filter.size(); i++)
     {
         vecTriplet * vec = sf.Translate<vecTriplet>(to_filter[i]);
         if(((vec->finish - vec->start) / 4) == 4) // verified
@@ -908,9 +908,6 @@ int main (void)
     DFHack::Process * p = DF->getProcess();
     vector <DFHack::t_memrange> selected_ranges;
     getRanges(p,selected_ranges);
-
-    DFHack::VersionInfo *minfo = DF->getMemoryInfo();
-    DFHack::OSType os = minfo->getOS();
 
     string prompt =
     "Select search type: 1=number(default), 2=vector by length, 3=vector>object>string,\n"

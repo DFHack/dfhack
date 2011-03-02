@@ -648,10 +648,12 @@ try_again:
                     off.vein_worldconstruction_vptr = type;
                     goto try_again;
                 }
+                #ifdef DEBUG
                 else
                 {
                     cerr << "unknown vein " << cname << hex << " 0x" << temp << " block: 0x" << addr << dec << endl;
                 }
+                #endif
                 // or it was something we don't care about
             }
         }

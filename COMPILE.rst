@@ -44,8 +44,6 @@ With this dfhack installs:
 * executables to ``$CMAKE_INSTALL_PREFIX/bin``
 * The ``Memory.xml`` file to ``/usr/share/dfhack``
 
-See the section on the shared memory hook library (SHM).
-
 Building on Windows
 ===================
 You need ``cmake``. Get the win32 installer version from the official
@@ -135,13 +133,3 @@ Valid an useful build types include 'Release', 'Debug' and
 'RelWithDebInfo'. There are others, but they aren't really that useful.
 
 Have fun.
-
-Building the shared memory hook library (SHM)
-=============================================
-Unlike the rest of DFHack, The SHM needs special treatment when it
-comes to compilation. Because it shares the memory space with DF
-itself, it has to be built with the same tools as DF and use the same C
-and C++/STL libraries.
-
-For DF 31.01 - 31.12 on Windows, use MSVC 2008. You can get the Express
-edition for free from Microsoft.

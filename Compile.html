@@ -330,7 +330,6 @@ ul.auto-toc {
 </li>
 <li><a class="reference internal" href="#build-targets" id="id8">Build targets</a></li>
 <li><a class="reference internal" href="#build-types" id="id9">Build types</a></li>
-<li><a class="reference internal" href="#building-the-shared-memory-hook-library-shm" id="id10">Building the shared memory hook library (SHM)</a></li>
 </ul>
 </div>
 <div class="section" id="dependencies">
@@ -369,7 +368,6 @@ make install
 <li>executables to <tt class="docutils literal">$CMAKE_INSTALL_PREFIX/bin</tt></li>
 <li>The <tt class="docutils literal">Memory.xml</tt> file to <tt class="docutils literal">/usr/share/dfhack</tt></li>
 </ul>
-<p>See the section on the shared memory hook library (SHM).</p>
 </div>
 <div class="section" id="building-on-windows">
 <h1><a class="toc-backref" href="#id3">Building on Windows</a></h1>
@@ -456,15 +454,6 @@ cmake .. -DCMAKE_BUILD_TYPE:string=BUILD_TYPE
 <p>Valid an useful build types include 'Release', 'Debug' and
 'RelWithDebInfo'. There are others, but they aren't really that useful.</p>
 <p>Have fun.</p>
-</div>
-<div class="section" id="building-the-shared-memory-hook-library-shm">
-<h1><a class="toc-backref" href="#id10">Building the shared memory hook library (SHM)</a></h1>
-<p>Unlike the rest of DFHack, The SHM needs special treatment when it
-comes to compilation. Because it shares the memory space with DF
-itself, it has to be built with the same tools as DF and use the same C
-and C++/STL libraries.</p>
-<p>For DF 31.01 - 31.12 on Windows, use MSVC 2008. You can get the Express
-edition for free from Microsoft.</p>
 </div>
 </div>
 </body>

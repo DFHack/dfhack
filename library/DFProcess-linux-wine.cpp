@@ -39,6 +39,20 @@ namespace {
             MicrosoftSTL stl;
         public:
             WineProcess(uint32_t pid, VersionInfoFactory * factory);
+            ~WineProcess()
+            {
+                if(attached)
+                {
+                    detach();
+                }
+            }
+            bool attach();
+            bool detach();
+
+            bool suspend();
+            bool asyncSuspend();
+            bool resume();
+            bool forceresume();
 
             const std::string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
@@ -130,4 +144,104 @@ const string WineProcess::readSTLString (uint32_t offset)
 string WineProcess::readClassName (uint32_t vptr)
 {
     return stl.readClassName(vptr);
+}
+
+bool WineProcess::asyncSuspend()
+{
+    return suspend();
+}
+
+bool WineProcess::suspend()
+{
+    int status;
+    if(suspended)
+        return true;
+    // can we attach?
+    if (ptrace(PTRACE_ATTACH , my_pid, NULL, NULL) == -1)
+    {
+        // no, we got an error
+        perror("ptrace attach error");
+        cerr << "attach failed on pid " << my_pid << endl;
+        return false;
+    }
+    while(true)
+    {
+        // we wait on the pid
+        pid_t w = waitpid(my_pid, &status, 0);
+        if (w == -1)
+        {
+            // child died
+            perror("wait inside attach()");
+            return false;
+        }
+        // stopped -> let's continue
+        if (WIFSTOPPED(status))
+        {
+            break;
+        }
+    }
+    int proc_pid_mem = open(memFile.c_str(),O_RDONLY);
+    if(proc_pid_mem == -1)
+    {
+        ptrace(PTRACE_DETACH, my_pid, NULL, NULL);
+        cerr << memFile << endl;
+        cerr << "couldn't open /proc/" << my_pid << "/mem" << endl;
+        perror("open(memFile.c_str(),O_RDONLY)");
+        return false;
+    }
+    else
+    {
+        attached = suspended = true;
+        memFileHandle = proc_pid_mem;
+        return true; // we are attached
+    }
+}
+
+bool WineProcess::forceresume()
+{
+    return resume();
+}
+
+bool WineProcess::resume()
+{
+    if(!suspended)
+        return true;
+    int result = 0;
+    // close /proc/PID/mem
+    result = close(memFileHandle);
+    if(result == -1)
+    {
+        cerr << "couldn't close /proc/"<< my_pid <<"/mem" << endl;
+        perror("mem file close");
+        return false;
+    }
+    else
+    {
+        // detach
+        result = ptrace(PTRACE_DETACH, my_pid, NULL, NULL);
+        if(result == -1)
+        {
+            cerr << "couldn't detach from process pid" << my_pid << endl;
+            perror("ptrace detach");
+            return false;
+        }
+        else
+        {
+            attached = suspended = false;
+            return true;
+        }
+    }
+}
+
+
+bool WineProcess::attach()
+{
+    if(suspended) return true;
+    return suspend();
+}
+
+bool WineProcess::detach()
+{
+    if(!suspended) return true;
+    return resume();
 }

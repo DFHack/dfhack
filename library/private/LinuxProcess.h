@@ -43,14 +43,6 @@ namespace DFHack
             LinuxProcessBase(uint32_t pid);
             ~LinuxProcessBase();
 
-            bool attach();
-            bool detach();
-
-            bool suspend();
-            bool asyncSuspend();
-            bool resume();
-            bool forceresume();
-
             void readQuad(const uint32_t address, uint64_t & value);
             void writeQuad(const uint32_t address, const uint64_t value);
 

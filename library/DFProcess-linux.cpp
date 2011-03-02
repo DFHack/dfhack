@@ -35,6 +35,20 @@ namespace {
     {
         public:
             NormalProcess(uint32_t pid, VersionInfoFactory * known_versions);
+            ~NormalProcess()
+            {
+                if(attached)
+                {
+                    detach();
+                }
+            }
+            bool attach();
+            bool detach();
+
+            bool suspend();
+            bool asyncSuspend();
+            bool resume();
+            bool forceresume();
 
             const std::string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
@@ -136,4 +150,149 @@ string NormalProcess::readClassName (uint32_t vptr)
     size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
     size_t end = raw.length();
     return raw.substr(start,end-start);
+}
+
+bool NormalProcess::asyncSuspend()
+{
+    return suspend();
+}
+
+bool NormalProcess::suspend()
+{
+    int status;
+    if(!attached)
+        return false;
+    if(suspended)
+        return true;
+    if (kill(my_pid, SIGSTOP) == -1)
+    {
+        // no, we got an error
+        perror("kill SIGSTOP error");
+        return false;
+    }
+    while(true)
+    {
+        // we wait on the pid
+        pid_t w = waitpid(my_pid, &status, 0);
+        if (w == -1)
+        {
+            // child died
+            perror("DF exited during suspend call");
+            return false;
+        }
+        // stopped -> let's continue
+        if (WIFSTOPPED(status))
+        {
+            break;
+        }
+    }
+    suspended = true;
+    return true;
+}
+
+bool NormalProcess::forceresume()
+{
+    return resume();
+}
+
+bool NormalProcess::resume()
+{
+    if(!attached)
+        return false;
+    if(!suspended)
+        return true;
+    if (ptrace(PTRACE_CONT, my_pid, NULL, NULL) == -1)
+    {
+        // no, we got an error
+        perror("ptrace resume error");
+        return false;
+    }
+    int status;
+    suspended = false;
+    return true;
+}
+
+
+bool NormalProcess::attach()
+{
+    int status;
+    if(attached)
+    {
+        if(!suspended)
+            return suspend();
+        return true;
+    }
+    // can we attach?
+    if (ptrace(PTRACE_ATTACH , my_pid, NULL, NULL) == -1)
+    {
+        // no, we got an error
+        perror("ptrace attach error");
+        cerr << "attach failed on pid " << my_pid << endl;
+        return false;
+    }
+    while(true)
+    {
+        // we wait on the pid
+        pid_t w = waitpid(my_pid, &status, 0);
+        if (w == -1)
+        {
+            // child died
+            perror("wait inside attach()");
+            return false;
+        }
+        // stopped -> let's continue
+        if (WIFSTOPPED(status))
+        {
+            break;
+        }
+    }
+    suspended = true;
+
+    int proc_pid_mem = open(memFile.c_str(),O_RDONLY);
+    if(proc_pid_mem == -1)
+    {
+        ptrace(PTRACE_DETACH, my_pid, NULL, NULL);
+        cerr << memFile << endl;
+        cerr << "couldn't open /proc/" << my_pid << "/mem" << endl;
+        perror("open(memFile.c_str(),O_RDONLY)");
+        return false;
+    }
+    else
+    {
+        attached = true;
+
+        memFileHandle = proc_pid_mem;
+        return true; // we are attached
+    }
+}
+
+bool NormalProcess::detach()
+{
+    if(!attached) return true;
+    if(!suspended) suspend();
+    int result = 0;
+    // close /proc/PID/mem
+    result = close(memFileHandle);
+    if(result == -1)
+    {
+        cerr << "couldn't close /proc/"<< my_pid <<"/mem" << endl;
+        perror("mem file close");
+        return false;
+    }
+    else
+    {
+        // detach
+        result = ptrace(PTRACE_DETACH, my_pid, NULL, NULL);
+        if(result == -1)
+        {
+            cerr << "couldn't detach from process pid" << my_pid << endl;
+            perror("ptrace detach");
+            return false;
+        }
+        else
+        {
+            attached = false;
+            return true;
+        }
+    }
 }

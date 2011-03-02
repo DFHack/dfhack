@@ -32,6 +32,7 @@ distribution.
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
+#include <set>
 
 #define SHMMAPSHDR ((Server::Maps::shm_maps_hdr *)d->d->shm_start)
 #define SHMCMD(num) ((shm_cmd *)d->d->shm_start)[num]->pingpong
@@ -60,6 +61,8 @@ struct Maps::Private
     bool hasGeology;
     bool hasFeatures;
     bool hasVeggies;
+
+    set <uint32_t> unknown_veins;
 
     // map between feature address and the read object
     map <uint32_t, t_feature> local_feature_store;
@@ -567,93 +570,91 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins,
     if(constructions) constructions->clear();
 
     Server::Maps::maps_offsets &off = d->offsets;
-    if (addr)
+    if (!addr) return false;
+    // veins are stored as a vector of pointers to veins
+    /*pointer is 4 bytes! we work with a 32bit program here, no matter what architecture we compile khazad for*/
+    DfVector <uint32_t> p_veins (p, addr + off.veinvector);
+    uint32_t size = p_veins.size();
+    // read all veins
+    for (uint32_t i = 0; i < size;i++)
     {
-        // veins are stored as a vector of pointers to veins
-        /*pointer is 4 bytes! we work with a 32bit program here, no matter what architecture we compile khazad for*/
-        DfVector <uint32_t> p_veins (p, addr + off.veinvector);
-        uint32_t size = p_veins.size();
-        // read all veins
-        for (uint32_t i = 0; i < size;i++)
+        // read the vein pointer from the vector
+        uint32_t temp = p_veins[i];
+        uint32_t type = p->readDWord(temp);
+        if(veins && type == off.vein_mineral_vptr)
         {
-            // read the vein pointer from the vector
-            uint32_t temp = p_veins[i];
-            uint32_t type = p->readDWord(temp);
-try_again:
-            if(veins && type == off.vein_mineral_vptr)
+            // read the vein data (dereference pointer)
+            p->read (temp, sizeof(t_vein), (uint8_t *) &v);
+            v.address_of = temp;
+            // store it in the vector
+            veins->push_back (v);
+        }
+        else if(ices && type == off.vein_ice_vptr)
+        {
+            // read the ice vein data (dereference pointer)
+            p->read (temp, sizeof(t_frozenliquidvein), (uint8_t *) &fv);
+            fv.address_of = temp;
+            // store it in the vector
+            ices->push_back (fv);
+        }
+        else if(splatter && type == off.vein_spatter_vptr)
+        {
+            // read the splatter vein data (dereference pointer)
+            p->read (temp, sizeof(t_spattervein), (uint8_t *) &sv);
+            sv.address_of = temp;
+            // store it in the vector
+            splatter->push_back (sv);
+        }
+        else if(grass && type == off.vein_grass_vptr)
+        {
+            // read the splatter vein data (dereference pointer)
+            p->read (temp, sizeof(t_grassvein), (uint8_t *) &gv);
+            gv.address_of = temp;
+            // store it in the vector
+            grass->push_back (gv);
+        }
+        else if(constructions && type == off.vein_worldconstruction_vptr)
+        {
+            // read the splatter vein data (dereference pointer)
+            p->read (temp, sizeof(t_worldconstruction), (uint8_t *) &wcv);
+            wcv.address_of = temp;
+            // store it in the vector
+            constructions->push_back (wcv);
+        }
+        else
+        {
+            string cname = p->readClassName(type);
+            if(cname == "block_square_event_frozen_liquidst")
             {
-                // read the vein data (dereference pointer)
-                p->read (temp, sizeof(t_vein), (uint8_t *) &v);
-                v.address_of = temp;
-                // store it in the vector
-                veins->push_back (v);
+                off.vein_ice_vptr = type;
             }
-            else if(ices && type == off.vein_ice_vptr)
+            else if(cname == "block_square_event_mineralst")
             {
-                // read the ice vein data (dereference pointer)
-                p->read (temp, sizeof(t_frozenliquidvein), (uint8_t *) &fv);
-                fv.address_of = temp;
-                // store it in the vector
-                ices->push_back (fv);
+                off.vein_mineral_vptr = type;
             }
-            else if(splatter && type == off.vein_spatter_vptr)
+            else if(cname == "block_square_event_material_spatterst")
             {
-                // read the splatter vein data (dereference pointer)
-                p->read (temp, sizeof(t_spattervein), (uint8_t *) &sv);
-                sv.address_of = temp;
-                // store it in the vector
-                splatter->push_back (sv);
+                off.vein_spatter_vptr = type;
             }
-            else if(grass && type == off.vein_grass_vptr)
+            else if(cname=="block_square_event_grassst")
             {
-                // read the splatter vein data (dereference pointer)
-                p->read (temp, sizeof(t_grassvein), (uint8_t *) &gv);
-                gv.address_of = temp;
-                // store it in the vector
-                grass->push_back (gv);
+                off.vein_grass_vptr = type;
             }
-            else if(constructions && type == off.vein_worldconstruction_vptr)
+            else if(cname=="block_square_event_world_constructionst")
             {
-                // read the splatter vein data (dereference pointer)
-                p->read (temp, sizeof(t_worldconstruction), (uint8_t *) &wcv);
-                wcv.address_of = temp;
-                // store it in the vector
-                constructions->push_back (wcv);
+                off.vein_worldconstruction_vptr = type;
             }
-            else
+            else // this is something we've never seen before
             {
-                string cname = p->readClassName(type);
-                if(cname == "block_square_event_frozen_liquidst")
-                {
-                    off.vein_ice_vptr = type;
-                }
-                else if(cname == "block_square_event_mineralst")
-                {
-                    off.vein_mineral_vptr = type;
-                }
-                else if(cname == "block_square_event_material_spatterst")
-                {
-                    off.vein_spatter_vptr = type;
-                }
-                else if(cname=="block_square_event_grassst")
-                {
-                    off.vein_grass_vptr = type;
-                }
-                else if(cname=="block_square_event_world_constructionst")
-                {
-                    off.vein_worldconstruction_vptr = type;
-                }
-                else // this is something we've never seen before
+                if(!d->unknown_veins.count(type))
                 {
                     cerr << "unknown vein " << cname << hex << " 0x" << temp << " block: 0x" << addr << dec << endl;
+                    d->unknown_veins.insert(type);
                 }
-                goto try_again;
-                // or it was something we don't care about
             }
         }
-        return true;
     }
-    return false;
+    return true;
 }
 
 /*

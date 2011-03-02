@@ -623,37 +623,31 @@ try_again:
             else
             {
                 string cname = p->readClassName(type);
-                if(ices && cname == "block_square_event_frozen_liquidst")
+                if(cname == "block_square_event_frozen_liquidst")
                 {
                     off.vein_ice_vptr = type;
-                    goto try_again;
                 }
-                else if(veins && cname == "block_square_event_mineralst")
+                else if(cname == "block_square_event_mineralst")
                 {
                     off.vein_mineral_vptr = type;
-                    goto try_again;
                 }
-                else if(splatter && cname == "block_square_event_material_spatterst")
+                else if(cname == "block_square_event_material_spatterst")
                 {
                     off.vein_spatter_vptr = type;
-                    goto try_again;
                 }
-                else if(grass && cname=="block_square_event_grassst")
+                else if(cname=="block_square_event_grassst")
                 {
                     off.vein_grass_vptr = type;
-                    goto try_again;
                 }
-                else if(constructions && cname=="block_square_event_world_constructionst")
+                else if(cname=="block_square_event_world_constructionst")
                 {
                     off.vein_worldconstruction_vptr = type;
-                    goto try_again;
                 }
-                #ifdef DEBUG
-                else
+                else // this is something we've never seen before
                 {
                     cerr << "unknown vein " << cname << hex << " 0x" << temp << " block: 0x" << addr << dec << endl;
                 }
-                #endif
+                goto try_again;
                 // or it was something we don't care about
             }
         }

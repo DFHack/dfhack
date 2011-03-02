@@ -31,7 +31,7 @@ namespace DFHack
         GM_Kittens = 2, // not sure yet, but I think it will involve kittens
         GM_Menu = 3,
         GM_Arena = 4,
-        GM_MAX
+        GM_MAX = 4,
     };
     struct t_gamemodes
     {

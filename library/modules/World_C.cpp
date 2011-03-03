@@ -122,11 +122,27 @@ int World_WriteCurrentWeather(DFHackObject* world, uint8_t weather)
     return -1;
 }
 
-int World_ReadGameMode(DFHackObject* world)
+int World_ReadGameMode(DFHackObject* world, t_gamemodes* modes)
 {
 	if(world != NULL)
 	{
-		return ((DFHack::World*)world)->ReadGameMode();
+		if(((DFHack::World*)world)->ReadGameMode(*modes))
+			return 1;
+		else
+			return 0;
+	}
+	
+	return -1;
+}
+
+int World_WriteGameMode(DFHackObject* world, t_gamemodes modes)
+{
+	if(world != NULL)
+	{
+		if(((DFHack::World*)world)->WriteGameMode(modes))
+			return 1;
+		else
+			return 0;
 	}
 	
 	return -1;

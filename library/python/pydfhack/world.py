@@ -1,5 +1,8 @@
 from ctypes import *
+from dftypes import GameModes
 from util import _uintify, uint_ptr
+
+libdfhack.World_ReadGameMode.argtypes = [ c_void_p, POINTER(GameModes) ]
 
 class World(object):
     def __init__(self, ptr):
@@ -55,4 +58,12 @@ class World(object):
         return libdfhack.World_WriteCurrentWeather(self._world_ptr, c_ubyte(weather))
     
     def read_game_mode(self):
-        return int(libdfhack.World_ReadGameMode(self._world_ptr))
+        game_modes = GameModes()
+        
+        if libdfhack.World_ReadGameMode(self._world_ptr, byref(game_modes)) > 0:
+             return game_modes
+        else:
+            return None
+    
+    def write_game_mode(self, game_mode):
+        return libdfhack.World_WriteGameMode(self._world_ptr, game_modes) > 0

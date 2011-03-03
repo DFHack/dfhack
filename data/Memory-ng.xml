@@ -130,6 +130,8 @@
             <Profession name="MASTER_BOWMAN" id="85" military="true" can_assign_labors="true" />
             <Profession name="BLOWGUNMAN" id="86" military="true" can_assign_labors="true" />
             <Profession name="MASTER_BLOWGUNMAN" id="87" military="true" can_assign_labors="true" />
+            <Profession name="LASHER" id="88" military="true" can_assign_labors="true" />
+            <Profession name="MASTER_LASHER" id="89" military="true" can_assign_labors="true" />
             <Profession name="RECRUIT" id="90" military="true" can_assign_labors="true" />
             <Profession name="TRAINED_HUNTER" id="91" military="false" can_assign_labors="true" />
             <Profession name="TRAINED_WAR" id="92" military="false" can_assign_labors="true" />
@@ -139,9 +141,11 @@
             <Profession name="CHILD" id="96" military="false" can_assign_labors="false" />
             <Profession name="BABY" id="97" military="false" can_assign_labors="false" />
             <Profession name="DRUNK" id="98" military="false" can_assign_labors="false" />
-            <Profession name="LASHER" id="88" military="true" can_assign_labors="true" />
-            <Profession name="MASTER_LASHER" id="89" military="true" can_assign_labors="true" />
-            <Profession name="None" id="90" military="false" can_assign_labors="true" />
+            <Profession name="Shearer" id="99" military="false" can_assign_labors="true" />
+            <Profession name="Spinner" id="100" military="false" can_assign_labors="true" />
+            <Profession name="Potter" id="101" military="false" can_assign_labors="true" />
+            <Profession name="Glazer" id="102" military="false" can_assign_labors="true" />
+            <Profession name="Presser" id="103" military="false" can_assign_labors="true" />
         </Professions>
         <Jobs>
             <Job id="0" name = "Carve Fortification" />
@@ -354,12 +358,23 @@
             <Job id="210" name = "Clean Self" />
             <Job id="211" name = "Bring Crutch" />
             <Job id="212" name = "Apply Cast" />
+            <Job id="213" name = "Reaction (other)" />
+            <Job id="214" name = "Unknown Job" />
+            <Job id="215" name = "Unknown Job" />
+            <Job id="216" name = "Shear Creature" />
+            <Job id="217" name = "Spin Thread" />
+            <Job id="218" name = "Pen/Pasture Large Animal" />
+            <Job id="219" name = "Pen/Pasture Small Animal" />
+            <Job id="220" name = "Unknown Job" />
+            <Job id="221" name = "Forge Tool" />
+            <Job id="222" name = "Collect Clay" />
+            <Job id="223" name = "Install Colony In Hive" />
+            <Job id="224" name = "Collect Hive Products" />
         </Jobs>
         <Skills>
             <Skill name="Mining" id="0" />
             <Skill name="Wood Cutting" id="1" />
             <Skill name="Carpentry" id="2" />
-            <Skill name="Bowmaking" id="49" />
             <Skill name="Engraving" id="3" />
             <Skill name="Masonry" id="4" />
             <Skill name="Animal Training" id="5" />
@@ -369,9 +384,65 @@
             <Skill name="Fish Cleaning" id="9" />
             <Skill name="Butchery" id="10" />
             <Skill name="Trapping" id="11" />
+            <Skill name="Tanning" id="12" />
+            <Skill name="Weaving" id="13" />
+            <Skill name="Brewing" id="14" />
+            <Skill name="Alchemy" id="15" />
+            <Skill name="Clothes Making" id="16" />
+            <Skill name="Milling" id="17" />
+            <Skill name="Threshing" id="18" />
+            <Skill name="Cheese Making" id="19" />
+            <Skill name="Milking" id="20" />
+            <Skill name="Cooking" id="21" />
             <Skill name="Growing" id="22" />
             <Skill name="Herbalism" id="23" />
+            <Skill name="Fishing" id="24" />
+            <Skill name="Furnace Operation" id="25" />
+            <Skill name="Strand Extraction" id="26" />
+            <Skill name="Weaponsmithing" id="27" />
+            <Skill name="Armorsmithing" id="28" />
+            <Skill name="Metalsmithing" id="29" />
+            <Skill name="Gem Cutting" id="30" />
+            <Skill name="Gem Setting" id="31" />
+            <Skill name="Wood Crafting" id="32" />
+            <Skill name="Stone Crafting" id="33" />
+            <Skill name="Metal Crafting" id="34" />
+            <Skill name="Glassmaking" id="35" />
+            <Skill name="Leatherworkering" id="36" />
+            <Skill name="Bone Carving" id="37" />
+            <Skill name="Axe" id="38" />
+            <Skill name="Sword" id="39" />
+            <Skill name="Knife" id="40" />
+            <Skill name="Mace" id="41" />
+            <Skill name="Hammer" id="42" />
+            <Skill name="Spear" id="43" />
+            <Skill name="Crossbow" id="44" />
+            <Skill name="Shield" id="45" />
+            <Skill name="Armor" id="46" />
+            <Skill name="Siege Engineering" id="47" />
+            <Skill name="Siege Operation" id="48" />
+            <Skill name="Bowmaking" id="49" />
+            <Skill name="Pike" id="50" />
+            <Skill name="Lash" id="51" />
+            <Skill name="Bow" id="52" />
+            <Skill name="Blowgun" id="53" />
+            <Skill name="Throwing" id="54" />
+            <Skill name="Machinery" id="55" />
+            <Skill name="Nature" id="56" />
             <Skill name="Ambush" id="57" />
+            <Skill name="Building Design" id="58" />
+            <Skill name="Wound Dressing" id="59" />
+            <Skill name="Diagnostics" id="60" />
+            <Skill name="Surgery" id="61" />
+            <Skill name="Bone Setting" id="62" />
+            <Skill name="Suturing" id="63" />
+            <Skill name="Crutch-walking" id="64" />
+            <Skill name="Wood Burning" id="65" />
+            <Skill name="Lye Making" id="66" />
+            <Skill name="Soap Making" id="67" />
+            <Skill name="Potash Making" id="68" />
+            <Skill name="Dyeing" id="69" />
+            <Skill name="Pump Operation" id="70" />
             <Skill name="Swimming" id="71" />
             <Skill name="Persuasion" id="72" />
             <Skill name="Negotiation" id="73" />
@@ -387,22 +458,6 @@
             <Skill name="Consoling" id="83" />
             <Skill name="Pacification" id="84" />
             <Skill name="Tracking" id="85" />
-            <Skill name="Fishing" id="24" />
-            <Skill name="Furnace Operation" id="25" />
-            <Skill name="Strand Extraction" id="26" />
-            <Skill name="Soap Making" id="67" />
-            <Skill name="Potash Making" id="68" />
-            <Skill name="Lye Making" id="66" />
-            <Skill name="Wood Burning" id="65" />
-            <Skill name="Weaponsmithing" id="27" />
-            <Skill name="Armorsmithing" id="28" />
-            <Skill name="Metalsmithing" id="29" />
-            <Skill name="Gem Cutting" id="30" />
-            <Skill name="Gem Setting" id="31" />
-            <Skill name="Wood Crafting" id="32" />
-            <Skill name="Stone Crafting" id="33" />
-            <Skill name="Metal Crafting" id="34" />
-            <Skill name="Glassmaking" id="35" />
             <Skill name="Studying" id="86" />
             <Skill name="Concentration" id="87" />
             <Skill name="Discipline" id="88" />
@@ -423,46 +478,15 @@
             <Skill name="Striking" id="103" />
             <Skill name="Kicking" id="104" />
             <Skill name="Dodging" id="105" />
-            <Skill name="Axe" id="38" />
-            <Skill name="Sword" id="39" />
-            <Skill name="Mace" id="41" />
-            <Skill name="Hammer" id="42" />
-            <Skill name="Spear" id="43" />
-            <Skill name="Crossbow" id="44" />
-            <Skill name="Pike" id="50" />
-            <Skill name="Bow" id="52" />
-            <Skill name="Shield" id="45" />
-            <Skill name="Armor" id="46" />
-            <Skill name="Siege Engineering" id="47" />
-            <Skill name="Siege Operation" id="48" />
-            <Skill name="Pump Operation" id="70" />
-            <Skill name="Leatherworkering" id="36" />
-            <Skill name="Tanning" id="12" />
-            <Skill name="Dyeing" id="69" />
-            <Skill name="Bone Carving" id="37" />
-            <Skill name="Weaving" id="13" />
-            <Skill name="Brewing" id="14" />
-            <Skill name="Clothes Making" id="16" />
-            <Skill name="Milling" id="17" />
-            <Skill name="Threshing" id="18" />
-            <Skill name="Blowgun" id="53" />
-            <Skill name="Throwing" id="54" />
-            <Skill name="Machinery" id="55" />
-            <Skill name="Nature" id="56" />
-            <Skill name="Knife" id="40" />
-            <Skill name="Lash" id="51" />
-            <Skill name="Cooking" id="21" />
-            <Skill name="Alchemy" id="15" />
-            <Skill name="Building Design" id="58" />
-            <Skill name="Cheese Making" id="19" />
-            <Skill name="Milking" id="20" />
             <Skill name="Misc. Object" id="106" />
-            <Skill name="Wound Dressing" id="59" />
-            <Skill name="Diagnostics" id="60" />
-            <Skill name="Surgery" id="61" />
-            <Skill name="Bone Setting" id="62" />
-            <Skill name="Suturing" id="63" />
-            <Skill name="Crutch-walking" id="64" />
+            <Skill name="Knapping" id="107" />
+            <Skill name="Something Weird" id="108" />
+            <Skill name="Shearing" id="109" />
+            <Skill name="Wool Spinning" id="110" />
+            <Skill name="Pottery" id="111" />
+            <Skill name="Glazing" id="112" />
+            <Skill name="Press Operation" id="113" />
+            <Skill name="Bee Keeping" id="114" />
         </Skills>
         <Levels>
             <Level id="0" name="Dabbling" xpNxtLvl="500"/>
@@ -554,22 +578,15 @@
             <Labor name="Dyeing" id="63" />
             <Labor name="Wood Burning" id="64" />
             <Labor name="Pump Operating" id="65" />
-            <!--
-            * Labor groups *
-            <Labor name="Woodworking" id="4294967294" />
-            <Labor name="Stoneworking" id="4294967293" />
-            <Labor name="Hunting/Related" id="4294967292" />
-            <Labor name="Healthcare" id="4294967291" />
-            <Labor name="Farming/Related" id="4294967290" />
-            <Labor name="Fishing/Related" id="4294967289" />
-            <Labor name="Metalsmithing" id="4294967288" />
-            <Labor name="Jewelry" id="4294967287" />
-            <Labor name="Crafts" id="4294967286" />
-            <Labor name="Engineering" id="4294967285" />
-            <Labor name="Hauling" id="4294967284" />
-            <Labor name="Other Jobs" id="4294967283" />
-            -->
+            <Labor name="Shearing" id="66" />
+            <Labor name="Spinning" id="67" />
+            <Labor name="Pottery" id="68" />
+            <Labor name="Glazing" id="69" />
+            <Labor name="Pressing" id="70" />
+            <Labor name="Bee Keeping" id="71" />
+            <Labor name="Wax Working" id="72" />
         </Labors>
+        <!-- I want to remove this section ~px -->
         <VTable>
             <multiclass name="building_trapst">
                 <class name="building_leverst" type="0x0"/>

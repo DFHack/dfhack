@@ -8,7 +8,6 @@
 #include "dfhack/DFExport.h"
 #include "dfhack/DFModule.h"
 #include "Vegetation.h"
-
 namespace DFHack
 {
     /***************************************************************************
@@ -23,7 +22,7 @@ namespace DFHack
         feature_Hell_Temple
     };
 
-    extern const char * sa_feature[];
+    extern DFHACK_EXPORT const char * sa_feature(int index);
 
     /// used as a key for the local feature map. combines X an Y coords.
     union planecoord

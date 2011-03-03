@@ -173,6 +173,9 @@ void OffsetGroup::setOffset (const string & key, const string & value, const INV
     if(it != OGd->offsets.end())
     {
         int32_t offset = strtol(value.c_str(), NULL, 16);
+        // REPORT pointless rewrites
+        if((*it).second.second == offset)
+            std::cout << "Pointless offset setting: " << this->getFullName() + key << endl;
         (*it).second.second = offset;
         if(inval != NOT_SET)
             (*it).second.first = inval;

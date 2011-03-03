@@ -139,7 +139,7 @@ int main (int numargs, const char ** args)
                 printf("%-16s  %4d (%2d) %s\n", "",
                     block.local_feature,
                     local_features[pc][block.local_feature]->type,
-                    sa_feature[local_features[pc][block.local_feature]->type]
+                    sa_feature(local_features[pc][block.local_feature]->type)
                     );
             }
 
@@ -148,7 +148,7 @@ int main (int numargs, const char ** args)
                 printf("%-16s  %4d (%2d) %s\n", "",
                     block.global_feature,
                     global_features[block.global_feature].type,
-                    sa_feature[global_features[block.global_feature].type]
+                    sa_feature(global_features[block.global_feature].type)
                     );
             }
             #undef PRINT_FLAG

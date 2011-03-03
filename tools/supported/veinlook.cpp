@@ -441,7 +441,7 @@ void do_features(Context* DF, mapblock40d * block, uint32_t blockX, uint32_t blo
             matname = stonetypes[ftr.sub_material].id;
         }
         gotoxy(printX,printY+2);
-        cprintf("%d:%s, material %d/%d : %s", ftr.type, sa_feature[ftr.type], ftr.main_material, ftr.sub_material, matname);
+        cprintf("%d:%s, material %d/%d : %s", ftr.type, sa_feature(ftr.type), ftr.main_material, ftr.sub_material, matname);
         {
             gotoxy(printX,printY+3);
             string name = p->readClassName(p->readDWord( ftr.origin ));
@@ -469,7 +469,7 @@ void do_features(Context* DF, mapblock40d * block, uint32_t blockX, uint32_t blo
                 matname = stonetypes[ftr.sub_material].id;
             }
             gotoxy(printX,printY+6);
-            cprintf("%d:%s, material %d/%d : %s", ftr.type, sa_feature[ftr.type], ftr.main_material, ftr.sub_material, matname);
+            cprintf("%d:%s, material %d/%d : %s", ftr.type, sa_feature(ftr.type), ftr.main_material, ftr.sub_material, matname);
             
             gotoxy(printX,printY+7);
             string name = p->readClassName(p->readDWord( ftr.origin ));

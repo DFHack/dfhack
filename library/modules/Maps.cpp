@@ -41,12 +41,21 @@ distribution.
 #define MAPS_GUARD if(!d->Started) throw DFHack::Error::ModuleNotInitialized();
 using namespace DFHack;
 
-const char * sa_feature[]=
+const char * DFHack::sa_feature(int index)
 {
-    "Other",
-    "Adamantine Tube",
-    "Underworld",
-    "Hell Temple"
+    switch(index)
+    {
+        case 0:
+            return "Other";
+        case 1:
+            return "Adamantine Tube";
+        case 2:
+            return "Underworld";
+        case 3:
+            return "Hell Temple";
+        default:
+            return "Unknown/Error";
+    }
 };
 
 struct Maps::Private

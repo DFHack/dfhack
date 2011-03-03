@@ -415,3 +415,7 @@ def _alloc_empty_colormodifier_callback(ptr):
 
 _empty_colormodifier_functype = CFUNCTYPE(c_int, ColorModifierPtr)
 libdfhack.alloc_empty_colormodifier_callback = _empty_colormodifier_functype(_alloc_empty_colormodifier_callback)
+
+class GameModes(Structure):
+    _fields_ = [("control_mode", c_ubyte),
+                ("game_mode", c_ubyte)]

@@ -309,7 +309,7 @@ int main (int argc, const char* argv[])
         }
     }
     std::sort(matss.begin(), matss.end(), compare_pair_second<>());
-    for(int i = 0; i < matss.size();i++)
+    for(size_t i = 0; i < matss.size();i++)
     {
         if(matss[i].first >= Mats->inorganic.size())
         {

@@ -235,7 +235,7 @@ public:
     virtual bool LoadData(SegmentedFinder* s)
     {
         bool OK = true;
-        for(int i = 0; i < members.size() && OK; i++)
+        for(size_t i = 0; i < members.size() && OK; i++)
             OK &= members[i]->LoadData(s);
         return OK;
     };
@@ -333,7 +333,7 @@ bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges
     selected_ranges.clear();
     p->getMemRanges(ranges);
     cout << "Which range to search? (default is 1-4)" << endl;
-    for(int i = 0; i< ranges.size();i++)
+    for(size_t i = 0; i< ranges.size();i++)
     {
         cout << dec << "(" << i << ") ";
         printRange(&(ranges[i]));
@@ -452,7 +452,7 @@ struct tilecolors
 void printFound(vector <uint64_t> &found, const char * what)
 {
     cout << what << ":" << endl;
-    for(int i = 0; i < found.size();i++)
+    for(size_t i = 0; i < found.size();i++)
     {
         cout << hex << "0x" << found[i] << endl;
     }
@@ -461,7 +461,7 @@ void printFound(vector <uint64_t> &found, const char * what)
 void printFoundStrVec(vector <uint64_t> &found, const char * what, SegmentedFinder & s)
 {
     cout << what << ":" << endl;
-    for(int i = 0; i < found.size();i++)
+    for(size_t i = 0; i < found.size();i++)
     {
         cout << hex << "0x" << found[i] << endl;
         cout << "--------------------------" << endl;
@@ -534,8 +534,9 @@ String * TokenFactory::Build()
         case DFHack::OS_LINUX:
         case DFHack::OS_APPLE:
             return new LinuxString();
+        case DFHack::OS_BAD:
+            return 0;
     }
-    return 0;
 };
 template <>
 String * TokenFactory::Build(uint64_t offset)
@@ -547,8 +548,9 @@ String * TokenFactory::Build(uint64_t offset)
         case DFHack::OS_LINUX:
         case DFHack::OS_APPLE:
             return new LinuxString(offset);
+        case DFHack::OS_BAD:
+            return 0;
     }
-    return 0;
 };
 
 void autoSearch(DFHack::Context * DF, vector <DFHack::t_memrange>& ranges, DFHack::OSType platform)

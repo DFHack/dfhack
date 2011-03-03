@@ -50,13 +50,13 @@ int gotoxy(int x, int y)
     return 0;
 }
 
-int putch(int x, int y, int znak, int color)
+void putch(int x, int y, int znak, int color)
 {
     attron(COLOR_PAIR(color));
     mvwaddch(stdscr, y, x, znak);
     attroff(COLOR_PAIR(color));
 }
-int putwch(int x, int y, int znak, int color)
+void putwch(int x, int y, int znak, int color)
 {
     attron(COLOR_PAIR(color));
     mvwaddch(stdscr, y, x, znak);
@@ -88,7 +88,7 @@ int putwch(int x, int y, int znak, int color)
         PEBBLES
     };*/
 
-int puttile(int x, int y, int tiletype, int color)
+void puttile(int x, int y, int tiletype, int color)
 {
     unsigned int znak;
     switch(tileTypeTable[tiletype].c)
@@ -102,7 +102,7 @@ int puttile(int x, int y, int tiletype, int color)
             mvwaddwstr(stdscr, y, x, L"\u2593");
             attroff(COLOR_PAIR(color));
             //znak = ;
-            return 0;
+            return;
         case FORTIFICATION:
             znak = '#';
             break;
@@ -119,12 +119,12 @@ int puttile(int x, int y, int tiletype, int color)
             attron(COLOR_PAIR(color));
             mvwaddwstr(stdscr, y, x, L"\u25B2");
             attroff(COLOR_PAIR(color));
-            return 0;
+            return;
         case RAMP_TOP:
             attron(COLOR_PAIR(color));
             mvwaddwstr(stdscr, y, x, L"\u25BC");
             attroff(COLOR_PAIR(color));
-            return 0;
+            return;
         case FLOOR:
             znak = '.';
             break;
@@ -133,19 +133,19 @@ int puttile(int x, int y, int tiletype, int color)
             attron(COLOR_PAIR(color));
             mvwaddwstr(stdscr, y, x, L"\u2663");
             attroff(COLOR_PAIR(color));
-            return 0;
+            return;
         case SAPLING_DEAD:
         case SAPLING_OK:
             attron(COLOR_PAIR(color));
             mvwaddwstr(stdscr, y, x, L"\u03C4");
             attroff(COLOR_PAIR(color));
-            return 0;
+            return;
         case SHRUB_DEAD:
         case SHRUB_OK:
             attron(COLOR_PAIR(color));
             mvwaddwstr(stdscr, y, x, L"\u2666");
             attroff(COLOR_PAIR(color));
-            return 0;
+            return;
         case BOULDER:
         case PEBBLES:
             znak= '*';
@@ -249,7 +249,7 @@ void hexdump (DFHack::Context* DF, uint32_t address, uint32_t length, int filenu
     myfile.open (name.c_str());
     
     DF->ReadRaw(address, reallength, (uint8_t *) buf);
-    for (int i = 0; i < lines; i++)
+    for (size_t i = 0; i < lines; i++)
     {
         // leading offset
         myfile << "0x" << hex << setw(4) << i*16 << " ";
@@ -483,7 +483,7 @@ void do_features(Context* DF, mapblock40d * block, uint32_t blockX, uint32_t blo
     }
 }
 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     /* initialize your non-curses data structures here */
 
@@ -495,8 +495,6 @@ main(int argc, char *argv[])
     cbreak();       /* take input chars one at a time, no wait for \n */
     noecho();       /* don't echo input */
     //nodelay(stdscr, true); 
-    int wxMax = getmaxx(stdscr);
-    int wyMax = getmaxy(stdscr);
 
     keypad(stdscr, TRUE);
     scrollok(stdscr, TRUE);
@@ -571,7 +569,6 @@ main(int argc, char *argv[])
         hasmats = false;
     }
     
-    Process* p = DF->getProcess();
     // init the map
     if(!Maps->Start())
     {
@@ -761,7 +758,6 @@ main(int argc, char *argv[])
                 Mats->ReadCreatureTypes();
             }
         }
-        uint32_t effectnum;
         /*
         if(DF.InitReadEffects(effectnum))
         {
@@ -950,7 +946,6 @@ main(int argc, char *argv[])
                 else if(vein < mineralsize + icesize + splattersize)
                 {
                     realvein = vein - mineralsize - icesize;
-                    t_spattervein &bloodmud = splatter[realvein];
                     for(uint32_t yyy = 0; yyy < 16; yyy++)
                     {
                         for(uint32_t xxx = 0; xxx < 16; xxx++) 

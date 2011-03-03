@@ -119,7 +119,7 @@ int main (void)
     DF->Attach();
     Maps = DF->getMaps();
     Maps->Start();
-    for(int i = 0; i < hidesaved.size();i++)
+    for(size_t i = 0; i < hidesaved.size();i++)
     {
         hideblock & hb = hidesaved[i];
         Maps->ReadDesignations(hb.x,hb.y,hb.z, &designations);

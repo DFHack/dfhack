@@ -23,13 +23,7 @@ namespace DFHack
         feature_Hell_Temple
     };
 
-    static const char * sa_feature[]=
-    {
-        (char*)"Other",
-        (char*)"Adamantine Tube",
-        (char*)"Underworld",
-        (char*)"Hell Temple"
-    };
+    extern const char * sa_feature[];
 
     /// used as a key for the local feature map. combines X an Y coords.
     union planecoord

@@ -95,21 +95,21 @@ class SegmentedFinder
     SegmentedFinder(vector <DFHack::t_memrange>& ranges, DFHack::Context * DF)
     {
         _DF = DF;
-        for(int i = 0; i < ranges.size(); i++)
+        for(size_t i = 0; i < ranges.size(); i++)
         {
             segments.push_back(new SegmentFinder(ranges[i], DF, this));
         }
     }
     ~SegmentedFinder()
     {
-        for(int i = 0; i < segments.size(); i++)
+        for(size_t i = 0; i < segments.size(); i++)
         {
             delete segments[i];
         }
     }
     SegmentFinder * getSegmentForAddress (uint64_t addr)
     {
-        for(int i = 0; i < segments.size(); i++)
+        for(size_t i = 0; i < segments.size(); i++)
         {
             if(segments[i]->mr_.isInRange(addr))
             {
@@ -122,7 +122,7 @@ class SegmentedFinder
     bool Find (const needleType needle, const uint8_t increment, vector <uint64_t> &found, comparator oper)
     {
         found.clear();
-        for(int i = 0; i < segments.size(); i++)
+        for(size_t i = 0; i < segments.size(); i++)
         {
             segments[i]->Find<needleType,hayType,comparator>(needle, increment, found, oper);
         }
@@ -144,7 +144,7 @@ class SegmentedFinder
     bool Filter (const needleType needle, vector <uint64_t> &found, comparator oper)
     {
         vector <uint64_t> newfound;
-        for(int i = 0; i < segments.size(); i++)
+        for(size_t i = 0; i < segments.size(); i++)
         {
             segments[i]->Filter<needleType,hayType,comparator>(needle, found, newfound, oper);
         }
@@ -169,7 +169,7 @@ class SegmentedFinder
     template <typename T>
     T * Translate(uint64_t address)
     {
-        for(int i = 0; i < segments.size(); i++)
+        for(size_t i = 0; i < segments.size(); i++)
         {
             if(segments[i]->mr_.isInRange(address))
             {
@@ -227,7 +227,6 @@ bool vectorLength (SegmentedFinder* s, vecTriplet *x, Needle &y)
 bool vectorString (SegmentedFinder* s, vecTriplet *x, const char *y)
 {
     uint32_t object_ptr;
-    uint32_t idx = x->start;
     // iterate over vector of pointers
     for(uint32_t idx = x->start; idx < x->finish; idx += sizeof(uint32_t))
     {
@@ -287,7 +286,6 @@ bool vectorAddrWithin (SegmentedFinder* s, vecTriplet *x, uint32_t address)
 bool vectorOfPtrWithin (SegmentedFinder* s, vecTriplet *x, uint32_t address)
 {
     uint32_t object_ptr;
-    uint32_t idx = x->start;
     for(uint32_t idx = x->start; idx < x->finish; idx += sizeof(uint32_t))
     {
         if(!s->Read(idx,object_ptr))
@@ -405,7 +403,7 @@ std::ostream& operator<< ( std::ostream& out, Bytestream& bs )
     if(bs.d->object)
     {
         out << "bytestream " << dec << bs.d->length << "/" << bs.d->allocated << " bytes" << endl;
-        for(int i = 0; i < bs.d->length; i++)
+        for(size_t i = 0; i < bs.d->length; i++)
         {
             out << hex << (int) ((uint8_t *) bs.d->object)[i] << " ";
         }

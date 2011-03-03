@@ -268,7 +268,7 @@ void SHMProcess::getMemRanges( vector<t_memrange> & ranges )
     char buffer[1024];
     char permissions[5]; // r/-, w/-, x/-, p/s, 0
 
-    sprintf(buffer, "/proc/%lu/maps", d->process_ID);
+    sprintf(buffer, "/proc/%lu/maps", (long unsigned)d->process_ID);
     FILE *mapFile = ::fopen(buffer, "r");
     uint64_t offset, device1, device2, node;
 
@@ -276,7 +276,7 @@ void SHMProcess::getMemRanges( vector<t_memrange> & ranges )
     {
         t_memrange temp;
         temp.name[0] = 0;
-        sscanf(buffer, "%llx-%llx %s %llx %2llu:%2llu %llu %s",
+        sscanf(buffer, "%zx-%zx %s %zx %2zu:%2zu %zu %s",
                &temp.start,
                &temp.end,
                (char*)&permissions,

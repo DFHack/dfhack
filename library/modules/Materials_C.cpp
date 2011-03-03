@@ -233,6 +233,9 @@ t_matgloss* Materials_getInorganic(DFHackObject* mat)
 		if(materials->inorganic.size() > 0)
 		{
 			t_matgloss* buf = NULL;
+			
+			if(alloc_matgloss_buffer_callback == NULL)
+				return NULL;
 
 			((*alloc_matgloss_buffer_callback)(buf, materials->inorganic.size()));
 			
@@ -258,6 +261,9 @@ t_matgloss* Materials_getOrganic(DFHackObject* mat)
 		{
 			t_matgloss* buf = NULL;
 			
+			if(alloc_matgloss_buffer_callback == NULL)
+				return NULL;
+			
 			((*alloc_matgloss_buffer_callback)(buf, materials->organic.size()));
 			
 			if(buf != NULL)
@@ -281,6 +287,9 @@ t_matgloss* Materials_getTree(DFHackObject* mat)
 		if(materials->tree.size() > 0)
 		{
 			t_matgloss* buf = NULL;
+			
+			if(alloc_matgloss_buffer_callback == NULL)
+				return NULL;
 			
 			((*alloc_matgloss_buffer_callback)(buf, materials->tree.size()));
 			
@@ -306,6 +315,9 @@ t_matgloss* Materials_getPlant(DFHackObject* mat)
 		{
 			t_matgloss* buf = NULL;
 			
+			if(alloc_matgloss_buffer_callback == NULL)
+				return NULL;
+			
 			((*alloc_matgloss_buffer_callback)(buf, materials->plant.size()));
 			
 			if(buf != NULL)
@@ -329,6 +341,9 @@ t_matgloss* Materials_getRace(DFHackObject* mat)
 		if(materials->race.size() > 0)
 		{
 			t_matgloss* buf = NULL;
+			
+			if(alloc_matgloss_buffer_callback == NULL)
+				return NULL;
 			
 			((*alloc_matgloss_buffer_callback)(buf, materials->race.size()));
 			
@@ -355,6 +370,9 @@ c_creaturetype* Materials_getRaceEx(DFHackObject* mat)
 		if(matSize > 0)
 		{
 			c_creaturetype* buf = NULL;
+			
+			if(alloc_creaturetype_buffer_callback == NULL)
+				return NULL;
 			
 			((*alloc_creaturetype_buffer_callback)(buf, matSize));
 			

@@ -444,6 +444,68 @@ t_spattervein* Maps_ReadSpatterVeins(DFHackObject* maps, uint32_t x, uint32_t y,
 	return NULL;
 }
 
+t_grassvein* Maps_ReadGrassVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z)
+{
+	if(maps != NULL)
+	{
+        if(alloc_grassvein_buffer_callback == NULL)
+			return NULL;
+		
+		vector<t_vein> veins;
+		vector<t_grassvein> grass_veins;
+		bool result = ((DFHack::Maps*)maps)->ReadVeins(x, y, z, &veins, 0, 0, &grass_veins);
+		
+		if(result)
+		{
+			t_grassvein* gs_buf = NULL;
+			
+			if(grass_veins.size() > 0)
+			{
+				((*alloc_grassvein_buffer_callback)(gs_buf, grass_veins.size()));
+				
+				copy(grass_veins.begin(), grass_veins.end(), gs_buf);
+			}
+			
+			return gs_buf;
+		}
+		else
+			return NULL;
+	}
+	
+	return NULL;
+}
+
+t_worldconstruction* Maps_ReadWorldConstructions(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z)
+{
+	if(maps != NULL)
+	{
+		if(alloc_worldconstruction_buffer_callback == NULL)
+			return NULL;
+		
+		vector<t_vein> veins;
+		vector<t_worldconstruction> constructions;
+		bool result = ((DFHack::Maps*)maps)->ReadVeins(x, y, z, &veins, 0, 0, 0, &constructions);
+		
+		if(result)
+		{
+			t_worldconstruction* ct_buf = NULL;
+			
+			if(constructions.size() > 0)
+			{
+				((*alloc_worldconstruction_buffer_callback)(ct_buf, constructions.size()));
+				
+				copy(constructions.begin(), constructions.end(), ct_buf);
+			}
+			
+			return ct_buf;
+		}
+		else
+			return NULL;
+	}
+	
+	return NULL;
+}
+
 #ifdef __cplusplus
 }
 #endif

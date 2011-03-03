@@ -181,6 +181,8 @@ DFHACK_EXPORT extern int (*alloc_creaturetype_buffer_callback)(c_creaturetype*, 
 DFHACK_EXPORT extern int (*alloc_vein_buffer_callback)(t_vein*, uint32_t);
 DFHACK_EXPORT extern int (*alloc_frozenliquidvein_buffer_callback)(t_frozenliquidvein*, uint32_t);
 DFHACK_EXPORT extern int (*alloc_spattervein_buffer_callback)(t_spattervein*, uint32_t);
+DFHACK_EXPORT extern int (*alloc_grassvein_buffer_callback)(t_grassvein*, uint32_t);
+DFHACK_EXPORT extern int (*alloc_worldconstruction_buffer_callback)(t_worldconstruction*, uint32_t);
 
 DFHACK_EXPORT void RegisterEmptyCreatureTypeCallback(int (*funcptr)(c_creaturetype*));
 DFHACK_EXPORT void RegisterNewCreatureTypeCallback(int (*funcptr)(c_creaturetype*, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t));
@@ -189,6 +191,8 @@ DFHACK_EXPORT void RegisterCreatureTypeBufferCallback(int (*funcptr)(c_creaturet
 DFHACK_EXPORT void RegisterVeinBufferCallback(int (*funcptr)(t_vein*, uint32_t));
 DFHACK_EXPORT void RegisterFrozenLiquidVeinBufferCallback(int (*funcptr)(t_frozenliquidvein*, uint32_t));
 DFHACK_EXPORT void RegisterSpatterVeinBufferCallback(int (*funcptr)(t_spattervein*, uint32_t));
+DFHACK_EXPORT void RegisterGrassVeinBufferCallback(int (*funcptr)(t_grassvein*, uint32_t));
+DFHACK_EXPORT void RegisterWorldConstructionBufferCallback(int (*funcptr)(t_worldconstruction*, uint32_t));
 
 DFHACK_EXPORT void UnregisterEmptyCreatureTypeCallback();
 DFHACK_EXPORT void UnregisterNewCreatureTypeCallback();
@@ -197,6 +201,8 @@ HUNREG_MACRO(CreatureType)
 HUNREG_MACRO(Vein)
 HUNREG_MACRO(FrozenLiquidVein)
 HUNREG_MACRO(SpatterVein)
+HUNREG_MACRO(GrassVein)
+HUNREG_MACRO(WorldConstruction)
 
 DFHACK_EXPORT int DFHack_isWallTerrain(int in);
 DFHACK_EXPORT int DFHack_isFloorTerrain(int in);

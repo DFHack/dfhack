@@ -5,7 +5,9 @@ from util import _uintify, uint_ptr
 _MAX_DIM = 0x300
 _MAX_DIM_SQR = _MAX_DIM * _MAX_DIM
 
-libdfhack.Maps_getSize.argtypes = [ c_void_p, uint_ptr, uint_ptr, uint_ptr ]
+_default_argtypes = [ c_void_p, uint_ptr, uint_ptr, uint_ptr ]
+
+libdfhack.Maps_getSize.argtypes = _default_argtypes
 libdfhack.Maps_ReadTileTypes.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(TileTypes40d) ]
 libdfhack.Maps_WriteTileTypes.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(TileTypes40d) ]
 libdfhack.Maps_ReadDesignations.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Designations40d) ]
@@ -15,9 +17,11 @@ libdfhack.Maps_WriteTemperatures.argtypes = [ c_void_p, c_uint, c_uint, c_uint, 
 libdfhack.Maps_ReadOccupancy.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Occupancies40d) ]
 libdfhack.Maps_WriteOccupancy.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Occupancies40d) ]
 libdfhack.Maps_ReadRegionOffsets.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(BiomeIndices40d) ]
-libdfhack.Maps_ReadStandardVeins.argtypes = [ c_void_p, c_uint, c_uint, c_uint ]
-libdfhack.Maps_ReadFrozenVeins.argtypes = [ c_void_p, c_uint, c_uint, c_uint ]
-libdfhack.Maps_ReadSpatterVeins.argtypes = [ c_void_p, c_uint, c_uint, c_uint ]
+libdfhack.Maps_ReadStandardVeins.argtypes = _default_argtypes
+libdfhack.Maps_ReadFrozenVeins.argtypes = _default_argtypes
+libdfhack.Maps_ReadSpatterVeins.argtypes = _default_argtypes
+libdfhack.Maps_ReadGrassVeins.argtypes = _default_argtypes
+libdfhack.Maps_ReadWorldConstructions.argtypes = _default_argtypes
 
 class Maps(object):
     def __init__(self, ptr):
@@ -169,6 +173,16 @@ class Maps(object):
         ux, uy, uz = _uintify(x, y, z)
         
         return libdfhack.Maps_ReadSpatterVeins(self._map_ptr, ux, uy, uz)
+    
+    def read_grass_veins(self, x, y, z):
+        ux, uy, uz = _uintify(x, y, z)
+        
+        return libdfhack.Maps_ReadGrassVeins(self._map_ptr, ux, uy, uz)
+    
+    def read_world_constructions(self, x, y, z):
+        ux, uy, uz = _uintify(x, y, z)
+        
+        return libdfhack.Maps_ReadWorldConstructions(self._map_ptr, ux, uy, uz)
 
     @property
     def size(self):

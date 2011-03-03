@@ -113,13 +113,23 @@ int World_ReadCurrentWeather(DFHackObject* world, uint8_t* weather)
 
 int World_WriteCurrentWeather(DFHackObject* world, uint8_t weather)
 {
-    if (world != NULL)
+    if(world != NULL)
     {
         ((DFHack::World*)world)->SetCurrentWeather(weather);
         return 1;
     }
 
     return -1;
+}
+
+int World_ReadGameMode(DFHackObject* world)
+{
+	if(world != NULL)
+	{
+		return ((DFHack::World*)world)->ReadGameMode();
+	}
+	
+	return -1;
 }
 
 #ifdef __cplusplus

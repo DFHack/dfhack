@@ -174,7 +174,7 @@ void OffsetGroup::setOffset (const string & key, const string & value, const INV
     {
         int32_t offset = strtol(value.c_str(), NULL, 16);
         // REPORT pointless rewrites
-        if((*it).second.second == offset)
+        if((*it).second.second == offset && (*it).second.first != NOT_SET )
             std::cout << "Pointless offset setting: " << this->getFullName() + key << endl;
         (*it).second.second = offset;
         if(inval != NOT_SET)
@@ -202,6 +202,8 @@ void OffsetGroup::setAddress (const string & key, const string & value, const IN
     if(it != OGd->addresses.end())
     {
         int32_t address = strtol(value.c_str(), NULL, 16);
+        if((*it).second.second == address)
+            std::cout << "Pointless address setting: " << this->getFullName() + key << endl;
         (*it).second.second = address;
         if(inval != NOT_SET)
             (*it).second.first = inval;
@@ -638,12 +640,14 @@ VersionInfo::~VersionInfo()
 void VersionInfo::setVersion(const char * v)
 {
     d->version = v;
+    OGd->name = v;
 }
 
 
 void VersionInfo::setVersion(const string &v)
 {
     d->version = v;
+    OGd->name = v;
 }
 
 

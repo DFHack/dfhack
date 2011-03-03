@@ -1304,8 +1304,6 @@
         <Offsets>
             <Group name="Creatures">
                 <Address name="vector" value="0x167870C" />
-                <Address name="current_race" value="0x1471FBC" />
-                <Address name="current_civ" value="0x1471FB0" />
             </Group>
             <Group name="Materials">
                 <Address name="inorganics" value="0x16BD0B0" />
@@ -1385,7 +1383,6 @@
                 <Address name="current_civ" value="0x01471FB0" /> BOGUS!
             </Group>
             <Group name="Position">
-                <Address name="window_dims" value="0x180b10c" />
                 <Address name="window_x" value="0xe6c0dc" />
                 <Address name="window_y" value="0xe9a1b0" />
                 <Address name="window_z" value="0xe9a18c" />
@@ -1410,10 +1407,6 @@
         <Offsets>
             <Group name="Position">
                 <Address name="cursor_xyz" value="0xaf32d8" />
-                <Address name="window_dims" value="0x180d11c" />
-                <Address name="window_x" value="0xe6e0ec" />
-                <Address name="window_y" value="0xe9c1c0" />
-                <Address name="window_z" value="0xe9c19c" />
             </Group>
         </Offsets>
     </Version>
@@ -1433,13 +1426,8 @@
             <Group name="Position">
                 <Address name="cursor_xyz" value="0xaff2d8" />
             </Group>
-            <Group name="Translations">
-                <Address name="language_vector" value="0x16D33CC" />
-                <Address name="translation_vector" value="0x16D33FC" />
-            </Group>
             <Group name="Creatures">
                 <Address name="vector" value="0x168E73C" />
-                <Address name="current_race" value="0x014b9f1c" />
                 <Group name="creature">
                     <Group name="advanced">
                         <Offset name="inventory_vector" value="0x2FC" />
@@ -1667,11 +1655,8 @@
                         <Offset name="current_job" value="0x02F0" />
                         <Offset name="current_job_skill" value="0x02F4" />
                         <Offset name="physical" value="0x3C4" />
-                        
                         <Offset name="appearance_vector" value="0x524" />
-                        
                         <Offset name="artifact_name" value="0x5D4"  />
-                        
                         <Offset name="soul_vector" value="0x640" />
                         <Offset name="current_soul" value="0x650" />
                         <Offset name="labors" value="0x0664" />
@@ -1702,7 +1687,6 @@
                 </Group>
             </Group>
             <Group name="Vegetation">
-                <Address name="vector" value="0x1656efc"/>
                 <Offset name="tree_desc_offset" value="0x6C"/>
             </Group>
             <Group name="Buildings">
@@ -1901,22 +1885,11 @@
                 <Address name="vector" value="0x016da47C" />
 
                 <Group name="creature">
-                    <Offset name="name" value="0x0" />
-                    <Offset name="custom_profession" value="0x6c" /> OK
-                    <Offset name="profession" value="0x88" />
-                    <Offset name="race" value="0x8c" />
-                    <Offset name="position" value="0x90" />
-                    <Offset name="flags1" value="0xe0" />
-                    <Offset name="flags2" value="0xe4" />
-                    <Offset name="caste" value="0xf8" /> maybe
-                    <Offset name="sex" value="0xfa" /> maybe
-                    <Offset name="id" value="0xfc" />
-                    <Offset name="civ" value="0x108" />
                     <Group name="advanced">
-                        <Offset name="pickup_equipment_bit" value="0x1bc" />
-                        <Offset name="mood" value="0x210" />OK
+                        <!--
                         <Offset name="pregnancy" value="0x214" /> maybe?
                         <Offset name="pregnancy_ptr" value="0x218" /> maybe?
+                        -->
                         <Offset name="birth_year" value="0x224" />
                         <Offset name="birth_time" value="0x228" />
                         <Offset name="inventory_vector" value="0x288" />
@@ -1932,7 +1905,7 @@
                     </Group>
                 </Group>
                 <Group name="job" valid="false">
-                    <Offset name="id" value="0x8" valid="true" />
+                    <Offset name="id" valid="true" />
                     <Offset name="materials_vector" /> MISSING!
                     <Offset name="type" /> MISSING!
                     <Group name="material">
@@ -1942,12 +1915,6 @@
                         <Offset name="sectype2" /> MISSING!
                         <Offset name="sectype3" /> MISSING!
                     </Group>
-                </Group>
-                <Group name="soul" valid="true">
-                    <Offset name="mental" value="0x88" />
-                    <Offset name="name" value="0x4" />
-                    <Offset name="skills_vector" value="0x1f4" /> DT: 0x1F0
-                    <Offset name="traits" value="0x214" /> DT: 0x214
                 </Group>
             </Group>
             <Group name="Maps" valid="true">
@@ -1963,38 +1930,18 @@
                 <Address name="region_z" value="0x171c160" /> TODO: it's signed!
                 <Address name="world_size_x" value="0x171d7e4" />
                 <Address name="world_size_y" value="0x171d7e6" />
-                <Group name="block">
-                    <Offset name="vein_vector" value="0x8" />
-                    <Offset name="feature_global" value="0x28" />
-                    <Offset name="feature_local" value="0x24" />
-                    <Offset name="type" value="0x7a" />
-                    <Offset name="designation" value="0x27c" />
-                    <Offset name="occupancy" value="0x67c" />
-                    <Offset name="pathfinding" value="0xd7c" />
-                    <Offset name="temperature1" value="0x157c" />
-                    <Offset name="temperature2" value="0x177c" /><!-- looks strange, possibly invalid -->
-                    <Offset name="biome_stuffs" value="0x1d7c" /><!-- possibly invalid -->
-                </Group>
                 <Group name="features">
                     <Group name="global">
                         <Address name="vector" value="0x171de84" />
-                        <Offset name="funcptr" value="0xd8" />
-                        <Offset name="material" value="0x2c" />
-                        <Offset name="submaterial" value="0x30" />
                     </Group>
                     <Group name="local">
                         <Address name="start_ptr" value="0x171df18" />
-                        <Offset name="material" value="0x28" />
-                        <Offset name="submaterial" value="0x2c" />
                     </Group>
                 </Group>
                 <Group name="geology"> LOOKS FINE?
                     <Address name="geoblock_vector" value="0x171dea4" />
-                    <Address name="ptr2_region_array" value="0x171ded4" /> VERIFIED
-                    <Offset name="geolayer_geoblock_offset" value="0x4" />
-                    <Offset name="region_geo_index_off" value="0x58" /> VERIFIED
-                    <Offset name="type_inside_geolayer" value="0x4" />
-                    <HexValue name="region_size" value="0x5c" /> VERIFIED
+                    <Address name="ptr2_region_array" value="0x171ded4" />
+                    <HexValue name="region_size" value="0x5c" />
                 </Group>
             </Group>
             <Group name="Materials" valid="false" >
@@ -2017,7 +1964,7 @@
                 </Group>
             </Group>
             <Group name="GUI" valid="false">
-                <Address name="pause_state" value="0x14c9be1" valid="true" />
+                <Address name="pause_state" valid="true" />
             </Group>
             <Group name="Vegetation" valid="true">
                 <Address name="vector" value="0x16db478" />
@@ -2283,7 +2230,7 @@
     <Version name="v0.31.06 linux" os="linux" base="v0.31.05 linux" rebase="-0x20E0">
         <MD5 value="13a1c19e8f59b74e307e094e2a0f28c3" />
         <Offsets>
-            <Address name="WORLD" value="0x92C4000" />
+            <!--<Address name="WORLD" value="0x92C4000" />-->
             <Group name="Position">
                 <Address name="cursor_xyz" value="0x8b0b328" /> VERIFIED
             </Group>
@@ -2457,33 +2404,14 @@
                 <Address name="region_z" value="0x933d814" />
                 <Address name="world_size_x" value="0x933ee60" />
                 <Address name="world_size_y" value="0x933ee62" />
-                <Group name="features">
-                    <Group name="global">
-                        <Address name="vector" value="0x933f408" />0x933c0fc
-                    </Group>
-                    <Group name="local">
-                        <Address name="start_ptr" value="0x933F480" />
-                    </Group>
-                </Group>
-                <Group name="geology">
-                    <Address name="geoblock_vector" value="0x933f420" />
-                    <Address name="ptr2_region_array" value="0x933f444" />
-                </Group>
             </Group>
             <Group name="Buildings">
-                <Address name="buildings_vector" value="0x92febdc 0x92fb8e8" /> Alt:0x92febe8
+                <Address name="buildings_vector" value="0x92febdc" />
             </Group>
-            
+
             <Group name="Constructions">
-                <Address name="vector" value="0x92eac04 0x92e7904" />
+                <Address name="vector" value="0x92eac04" />
             </Group>
-            <!--
-            <Group name="Creatures">
-                <Address name="current_civ" value="0x92e2d9c" />
-                <Address name="current_race" value="0x92e2da8" />
-                <Address name="vector" value="0x92fb260" />
-            </Group>
-            -->
             <Group name="Position">
                 <Address name="window_x" value="0x8cee538 0x8ceb238" />
                 <Address name="window_y" value="0x8cee53C 0x8ceb23C" />
@@ -2495,18 +2423,7 @@
             <Group name="GUI">
                 <Address name="pause_state" value="0x92e0e90"/>
             </Group>
-            <!--
-            <Group name="Vegetation">
-                <Address name="vector" value="0x92fbdc8" />
-            </Group>
-            <Group name="World">
-                <Address name="current_year" value="0x92e0da0" />
-                <Address name="current_tick" value="0x92e0dc0" />
-                <Address name="current_weather" value="0x092E0D84" />
-            </Group>
-            -->
         </Offsets>
-        
     </Version>
     <Version name="faek" os="linux" base="v0.31.14 linux">
         <Offsets>
@@ -2555,12 +2472,9 @@
     <Version name="v0.31.19 linux" os="linux" base="v0.31.18 linux" rebase="0x77738">
         <MD5 value="8fcb1f10af9cc2bda47d2acf42e1db54" />
         <Offsets>
-            <Group name="Position">
+            <Group name="Position" valid="true">
                 <Address name="cursor_xyz" value="0x8c2b560" />
-                <Address name="window_dims" value="0x8ba9680" />
-                <Address name="window_x" value="0x8d65c70" />
-                <Address name="window_y" value="0x8d65c74" />
-                <Address name="window_z" value="0x8d65c78" />
+                <Address name="screen_tiles_pointer" valid="false" />
             </Group>
             <Group name="Maps">
                 <Address name="world_size_x" value="0x94391f0" />
@@ -2568,18 +2482,9 @@
                 <Group name="features" valid="true">
                     <Group name="global">
                         <Address name="vector" value="0x94397cc" />
-                        <!--
-                        <Offset name="funcptr" value="0x94" />
-                        <Offset name="material" value="0x28" />
-                        <Offset name="submaterial" value="0x2c" />
-                        -->
                     </Group>
                     <Group name="local">
                         <Address name="start_ptr" value="0x9439844" />
-                        <!--
-                        <Offset name="material" value="0x24" />
-                        <Offset name="submaterial" value="0x28" />
-                        -->
                     </Group>
                 </Group>
                 <Group name="geology" valid="true">

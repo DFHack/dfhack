@@ -77,6 +77,17 @@ typedef struct
     uint32_t type_inside_geolayer;// = mem->getOffset ("type_inside_geolayer");
     
     /*
+    FEATURES
+     */
+    uint32_t world_data;
+    uint32_t local_f_start; // offset from world_data or absolute address.
+    uint32_t local_material;
+    uint32_t local_submaterial;
+    uint32_t global_vector; // offset from world_data or absolute address.
+    uint32_t global_funcptr;
+    uint32_t global_material;
+    uint32_t global_submaterial;
+    /*
      * Vegetation
      */
     uint32_t tree_desc_offset;

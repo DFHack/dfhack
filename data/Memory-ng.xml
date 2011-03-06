@@ -745,6 +745,9 @@
                 <Address name="region_z"/>
                 <Address name="world_size_x"/>
                 <Address name="world_size_y"/>
+                <Offset name="world_size_x_from_wdata" />
+                <Offset name="world_size_y_from_wdata" />
+                <Address name="world_data" description="Pointer to a structure containing world region data(AFAIK) in DF 31.20 and newer."/>
                 <Group name="block" description="The map block structure.">
                     <Offset name="vein_vector" description="Mineral veins, objects holding tile types under ice, etc..."/>
                     <Offset name="vegetation_vector" description="All the plants in this block, including farm plats."/>
@@ -761,12 +764,14 @@
                 <Group name="features">
                     <Group name="global">
                         <Address name="vector" />
+                        <Offset name="vector_from_wdata" />
                         <Offset name="funcptr" />
                         <Offset name="material" />
                         <Offset name="submaterial" />
                     </Group>
                     <Group name="local">
                         <Address name="start_ptr" />
+                        <Offset name="start_ptr_from_wdata" />
                         <Offset name="material" />
                         <Offset name="submaterial" />
                     </Group>
@@ -774,6 +779,8 @@
                 <Group name="geology">
                     <Address name="geoblock_vector" />
                     <Address name="ptr2_region_array" />
+                    <Offset name="geoblock_vector_from_wdata" />
+                    <Offset name="ptr2_region_array_from_wdata" />
                     <!-- values for the region structure -->
                     <HexValue name="region_size" />
                     <Offset name="region_geo_index_off" />
@@ -2030,6 +2037,65 @@
             -->
         </Offsets>
     </Version>
+    <Version name="v0.31.20 SDL" os="windows" base="v0.31.19 SDL" rebase="0x6000" >
+        <PETimeStamp value="0x4D734FB5" />
+        <MD5 value="5e2725ae9e87ff504ef0b1dcf52f059d" />
+        <Offsets>
+            <Group name="Materials">
+                <Address name="creature_type_vector" value="0x1724020 0x1724880" />
+                <Address name="inorganics" value="0x1723f30 0x1724790" />
+                <Address name="organics_all" value="0x1723f50 0x17247b0" />
+                <Address name="organics_plants" value="0x1723f60 0x17247c0" />
+                <Address name="organics_trees" value="0x1723f80 0x17247e0" />
+                <Group name="descriptors">
+                    <Address name="all_colors_vector" value="0x1729984 0x172a1e4" />
+                    <Address name="colors_vector" value="0x1729964 0x172a1c4" />
+                </Group>
+                <Group name="creature"> I'M NOT SURE ABOUT THESE
+                    <!--
+                    <Offset name="caste_vector" value="0x128" />
+                    <Offset name="extract_vector" value="0x2054" />
+                    <Offset name="tile" value="0xe0" />
+                    <Offset name="tile_color" value="0xf6" />
+                    -->
+                    <Group name="caste">
+                        <Offset name="attributes" value="0xdbc 0xd40" /> LOOKS LIKE CRAP, but seems to work anyway
+                        <Offset name="bodypart_vector" value="0x5ac 0x530" />
+                        <Offset name="color_modifiers" value="0x11e4 0x1168" />
+                    </Group>
+                </Group>
+
+                0x530
+                71389344 + 0x5ac
+            </Group>
+            "region1" = 0x18639d8
+            some features vector = 0x18639f8 ?
+            <Group name="Maps">
+                <Address name="world_data" value="0x1723758" /> 0x16cca38 + 0x56d20
+                <Address name="world_size_x" valid="false" />
+                <Address name="world_size_y" valid="false" />
+                <Offset name="world_size_x_from_wdata" value="0x8C" />
+                <Offset name="world_size_y_from_wdata" value="0x8E" />
+                <Group name="features">
+                    <Group name="global">
+                        <Address name="vector" valid="false"/>
+                        <Offset name="vector_from_wdata" value="0x180" />
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" valid="false" />
+                        <Offset name="start_ptr_from_wdata" value="0x204" />
+                    </Group>
+                </Group>
+                <Group name="geology">
+                    <Offset name="geoblock_vector_from_wdata" value="0x190" /> maybe
+                    <Offset name="ptr2_region_array_from_wdata" value="0x1C0" /> maybe
+                    <Address name="geoblock_vector" valid="false" />
+                    <Address name="ptr2_region_array" valid="false" />
+                </Group>
+            </Group>
+        </Offsets>
+    </Version>
+
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________

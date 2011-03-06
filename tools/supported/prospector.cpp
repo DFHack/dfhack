@@ -137,7 +137,7 @@ int main (int argc, const char* argv[])
     }
 
     // get region geology
-    if(!Maps->ReadGeology( layerassign ))
+    if(showbaselayers && !Maps->ReadGeology( layerassign ))
     {
         cerr << "Can't get region geology." << endl;
         #ifndef LINUX_BUILD

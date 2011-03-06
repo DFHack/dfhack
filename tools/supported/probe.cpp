@@ -47,6 +47,7 @@ int main (int numargs, const char ** args)
     uint32_t region_z_offset = mapsg->getAddress("region_z");
 
     uint32_t designatus = mapblockg->getOffset("designation");
+    uint32_t biomus =  mapblockg->getOffset("biome_stuffs");
 
     int32_t regionX, regionY, regionZ;
 
@@ -56,11 +57,12 @@ int main (int numargs, const char ** args)
     p->readDWord (region_z_offset, (uint32_t &)regionZ);
 
     Maps->Start();
-
+/*
     vector<DFHack::t_feature> global_features;
     std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> > local_features;
-	Maps->ReadLocalFeatures(local_features);
-	Maps->ReadGlobalFeatures(global_features);
+    */
+	//Maps->ReadLocalFeatures(local_features);
+	//Maps->ReadGlobalFeatures(global_features);
 
     int32_t cursorX, cursorY, cursorZ;
     Pos->getCursorCoords(cursorX,cursorY,cursorZ);
@@ -121,6 +123,7 @@ int main (int numargs, const char ** args)
                 std::cout << "smooth?" << std::endl;
             uint32_t designato = block.origin + designatus + (tileX * 16 + tileY) * sizeof(t_designation);
             printf("designation offset: 0x%x\n", designato);
+            printf("biomestuffs: 0x%x\n", block.origin + biomus);
 
             #define PRINT_FLAG( X )  printf("%-16s= %c\n", #X , ( des.X ? 'Y' : ' ' ) )
             PRINT_FLAG( hidden );
@@ -132,8 +135,9 @@ int main (int numargs, const char ** args)
 
             planecoord pc;
             pc.dim.x=blockX; pc.dim.y=blockY;
-
+            
             PRINT_FLAG( feature_local );
+            /*
             if( des.feature_local )
             {
                 printf("%-16s  %4d (%2d) %s\n", "",
@@ -142,8 +146,10 @@ int main (int numargs, const char ** args)
                     sa_feature(local_features[pc][block.local_feature]->type)
                     );
             }
-
+            */
+            
             PRINT_FLAG( feature_global );
+            /*
             if( des.feature_global ){
                 printf("%-16s  %4d (%2d) %s\n", "",
                     block.global_feature,
@@ -151,6 +157,7 @@ int main (int numargs, const char ** args)
                     sa_feature(global_features[block.global_feature].type)
                     );
             }
+            */
             #undef PRINT_FLAG
             std::cout << std::endl;
         }

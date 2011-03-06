@@ -2100,6 +2100,9 @@
             <Group name="Buildings">
                 <Address name="custom_workshop_vector" value="0x17299b4" />
             </Group>
+            <Group name="GUI">
+                <Address name="pause_state" value="0x15087c9" />
+            </Group>
         </Offsets>
     </Version>
 

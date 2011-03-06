@@ -32,9 +32,9 @@ distribution.
 extern "C" {
 #endif
 
-DFHACK_EXPORT int WindowIO_TypeStr(DFHackObject* window, const char* input, int delay, bool useShift);
+DFHACK_EXPORT int WindowIO_TypeStr(DFHackObject* window, const char* input, uint32_t delay, int8_t useShift);
 
-DFHACK_EXPORT int WindowIO_TypeSpecial(DFHackObject* window, t_special command, int count, int delay);
+DFHACK_EXPORT int WindowIO_TypeSpecial(DFHackObject* window, t_special command, uint32_t count, uint32_t delay);
 
 #ifdef __cplusplus
 }

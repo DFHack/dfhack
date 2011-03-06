@@ -236,16 +236,6 @@ DFHackObject* Context_getProcess(DFHackObject* context)
 	return NULL;
 }
 
-DFHackObject* Context_getWindow(DFHackObject* context)
-{
-	if(context != NULL)
-	{
-		return (DFHackObject*)((DFHack::Context*)context)->getWindowIO();
-	}
-	
-	return NULL;
-}
-
 DFHackObject* Context_getCreatures(DFHackObject* context)
 {
 	if(context != NULL)
@@ -341,6 +331,26 @@ DFHackObject* Context_getItems(DFHackObject* context)
 	if(context != NULL)
 	{
 		return (DFHackObject*)((DFHack::Context*)context)->getItems();
+	}
+	
+	return NULL;
+}
+
+DFHackObject* Context_getWorld(DFHackObject* context)
+{
+	if(context != NULL)
+	{
+		return (DFHackObject*)((DFHack::Context*)context)->getWorld();
+	}
+	
+	return NULL;
+}
+
+DFHackObject* Context_getWindowIO(DFHackObject* context)
+{
+	if(context != NULL)
+	{
+		return (DFHackObject*)((DFHack::Context*)context)->getWindowIO();
 	}
 	
 	return NULL;

@@ -40,18 +40,23 @@ using namespace DFHack;
 extern "C" {
 #endif
 
-int WindowIO_TypeStr(DFHackObject* window, const char* input, int delay, bool useShift)
+int WindowIO_TypeStr(DFHackObject* window, const char* input, uint32_t delay, int8_t useShift)
 {
 	if(window != NULL)
 	{
-		((DFHack::WindowIO*)window)->TypeStr(input, delay, useShift);
+		bool shifting = false;
+		
+		if(useShift > 0)
+			shifting = true;
+		
+		((DFHack::WindowIO*)window)->TypeStr(input, delay, shifting);
 		return 1;
 	}
 	
 	return -1;
 }
 
-int WindowIO_TypeSpecial(DFHackObject* window, t_special command, int count, int delay)
+int WindowIO_TypeSpecial(DFHackObject* window, t_special command, uint32_t count, uint32_t delay)
 {
 	if(window != NULL)
 	{

@@ -133,7 +133,6 @@ DFHACK_EXPORT int Context_AsyncSuspend(DFHackObject* context);
 
 DFHACK_EXPORT DFHackObject* Context_getMemoryInfo(DFHackObject* context);
 DFHACK_EXPORT DFHackObject* Context_getProcess(DFHackObject* context);
-DFHACK_EXPORT DFHackObject* Context_getWindow(DFHackObject* context);
 
 DFHACK_EXPORT DFHackObject* Context_getCreatures(DFHackObject* context);
 DFHACK_EXPORT DFHackObject* Context_getMaps(DFHackObject* context);
@@ -145,6 +144,8 @@ DFHACK_EXPORT DFHackObject* Context_getVegetation(DFHackObject* context);
 DFHACK_EXPORT DFHackObject* Context_getBuildings(DFHackObject* context);
 DFHACK_EXPORT DFHackObject* Context_getConstructions(DFHackObject* context);
 DFHACK_EXPORT DFHackObject* Context_getItems(DFHackObject* context);
+DFHACK_EXPORT DFHackObject* Context_getWorld(DFHackObject* context);
+DFHACK_EXPORT DFHackObject* Context_getWindowIO(DFHackObject* context);
 
 //these are DANGEROUS...can crash/segfault DF, turn the seas to blood, call up the Antichrist, etc
 DFHACK_EXPORT void Context_ReadRaw(DFHackObject* context, const uint32_t offset, const uint32_t size, uint8_t* target);

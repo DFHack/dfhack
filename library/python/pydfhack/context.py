@@ -11,7 +11,6 @@ libdfhack.Context_Free.argtypes = [ c_void_p ]
 
 libdfhack.Context_getMemoryInfo.restype = c_void_p
 libdfhack.Context_getProcess.restype = c_void_p
-libdfhack.Context_getWindow.restype = c_void_p
 
 libdfhack.Context_getCreatures.restype = c_void_p
 libdfhack.Context_getMaps.restype = c_void_p
@@ -23,6 +22,8 @@ libdfhack.Context_getVegetation.restype = c_void_p
 libdfhack.Context_getBuildings.restype = c_void_p
 libdfhack.Context_getConstructions.restype = c_void_p
 libdfhack.Context_getItems.restype = c_void_p
+libdfhack.Context_getWorld.restype = c_void_p
+libdfhack.Context_getWindowIO.restype = c_void_p
 
 class ContextManager(object):
     def __init__(self, memory_path):
@@ -67,6 +68,8 @@ class Context(object):
         self._tran_obj = None
         self._item_obj = None
         self._creature_obj = None
+        self._world_obj = None
+        self._window_io_obj = None
 
     def __del__(self):
         libdfhack.Context_Free(self._c_ptr)
@@ -168,3 +171,19 @@ class Context(object):
             self._tran_obj = translation.Translation(libdfhack.Context_getTranslation(self._c_ptr))
 
         return self._tran_obj
+    
+    @property
+    def world(self):
+        import world
+        if self._world_obj is None:
+            self._world_obj = world.World(libdfhack.Context_getWorld(self._c_ptr))
+        
+        return self._world_obj
+    
+    @property
+    def window_io(self):
+        import window_io
+        if self._window_io_obj is None:
+            self._window_io_obj = window_io.WindowIO(libdfhack.Context_getWindowIO(self._c_ptr))
+        
+        return self._window_io_obj

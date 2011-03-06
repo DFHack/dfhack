@@ -353,7 +353,7 @@ namespace DFHack
         uint32_t nbcolors;
         uint32_t color[MAX_COLORS];
 
-        uint32_t birth_year;
+        int32_t birth_year;
         uint32_t birth_time;
     };
 

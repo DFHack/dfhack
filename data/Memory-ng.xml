@@ -1603,11 +1603,11 @@
                 </Group>
             </Group>
             <Group name="Materials"> YES
-                <Address name="inorganics" value="0x1699f18 0x16BD0B0" />
-                <Address name="organics_all" value="0x1699f28 0x16BD0C8" />
-                <Address name="organics_trees" value="0x1699f58 0x16bd110" />
-                <Address name="organics_plants" value="0x1699f38 0x16bd0e0" />
-                <Address name="creature_type_vector" value="0x1699ffC 0x16BD204" />
+                <Address name="inorganics" value="0x1699f18" />
+                <Address name="organics_all" value="0x1699f28" />
+                <Address name="organics_trees" value="0x1699f58" />
+                <Address name="organics_plants" value="0x1699f38" />
+                <Address name="creature_type_vector" value="0x1699ffC" />
                 <Address name="other" value="0x16C647C" /> NO!
                 <Group name="creature">
                     <Offset name="caste_vector" value="0x128" /> YES
@@ -1697,17 +1697,6 @@
 
                 <Group name="job">
                     <Offset name="id" value="0x08" />
-                    <!--
-                    <Offset name="type" description="seems to be just like the old occupations" />
-                    <Offset name="materials_vector" />
-                    <Group name="material">
-                        <Offset name="maintype" description="like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ..." />
-                        <Offset name="sectype1" description="subsubtype ?" />
-                        <Offset name="sectype2" description="subtype ?" />
-                        <Offset name="sectype3" description="index of material (for example, 2 is for silver)" />
-                        <Offset name="flags" description="set only for shell / bone mood requirements ?" />
-                    </Group>
-                    -->
                 </Group>
             </Group>
             <Group name="Vegetation">
@@ -1729,10 +1718,10 @@
             <Group name="Maps">
                 <Group name="features">
                     <Group name="global">
-                        <Address name="vector" value="0x169a8ec 0x16998e0" />
+                        <Address name="vector" value="0x169a8ec" />
                     </Group>
                     <Group name="local">
-                        <Address name="start_ptr" value="0x169a980 0x1699974" />
+                        <Address name="start_ptr" value="0x169a980" />
                     </Group>
                 </Group>
                 <Group name="geology">
@@ -1741,19 +1730,19 @@
                 </Group>
             </Group>
             <Group name="Translations">
-                <Address name="language_vector" value="0x169b108 0x169b0fc"/>
-                <Address name="translation_vector" value="0x169b128 0x169b11c"/>
+                <Address name="language_vector" value="0x169b108"/>
+                <Address name="translation_vector" value="0x169b128"/>
             </Group>
             <Group name="Materials">
-                <Address name="inorganics" value="0x169af24 0x1699f18 0x16BD0B0" />
-                <Address name="organics_all" value="0x169af34 0x1699f28 0x16BD0C8" />
-                <Address name="organics_trees" value="0x169af64 0x1699f58 0x16bd110" />
-                <Address name="organics_plants" value="0x169af44 0x1699f38 0x16bd0e0" />
-                <Address name="creature_type_vector" value="0x169b008 0x1699ffC 0x16BD204" />
+                <Address name="inorganics" value="0x169af24" />
+                <Address name="organics_all" value="0x169af34" />
+                <Address name="organics_trees" value="0x169af64" />
+                <Address name="organics_plants" value="0x169af44" />
+                <Address name="creature_type_vector" value="0x169b008" />
                 <!--<Address name="other" value="0x16C647C" /> NO!-->
                 <Group name="descriptors">
-                    <Address name="colors_vector" value="0x16a0b38 0x169fb2c" />
-                    <Address name="all_colors_vector" value="0x16a0b58 0x169fb4c" />
+                    <Address name="colors_vector" value="0x16a0b38" />
+                    <Address name="all_colors_vector" value="0x16a0b58" />
                 </Group>
             </Group>
             <Group name="Buildings">
@@ -1773,16 +1762,16 @@
                 <Address name="other" value="0x16A21FC"/> 0x16445F0 + 0x5DC0C see code at 0x9CFB01
             </Group>
             <Group name="Creatures">
-                <Address name="current_civ" value="0x1484868 0x14848b8" />
-                <Address name="current_race" value="0x1484874 0x14848c4" />
+                <Address name="current_civ" value="0x1484868" />
+                <Address name="current_race" value="0x1484874" />
             </Group>
             <Group name="Position">
-                <Address name="cursor_xyz" value="0xac97f0 0xac9840" />
+                <Address name="cursor_xyz" value="0xac97f0" />
                 <!--<Address name="screen_tiles_pointer" value="0x14826d4" />--> AS BOGUS AS IT GETS
-                <Address name="window_dims" value="0xaca07c 0xaca0cc" />
-                <Address name="window_x" value="0xE44C74 0xe44cc4" />
-                <Address name="window_y" value="0xE72D48 0xe72d98" />
-                <Address name="window_z" value="0xe72d24 0xe72d74" />
+                <Address name="window_dims" value="0xaca07c" />
+                <Address name="window_x" value="0xE44C74" />
+                <Address name="window_y" value="0xE72D48" />
+                <Address name="window_z" value="0xe72d24" />
             </Group>
             <Group name="GUI">
                 <Address name="pause_state" value="0x1480971" />
@@ -1811,11 +1800,6 @@
             <Group name="Buildings">
                 <Address name="buildings_vector" value="0x16a1be0" />
                 <Address name="custom_workshop_vector" value="0x16eaca0" />
-                <!--
-                <Offset name="building_custom_workshop_type" value="0x11c" /> INVALID!
-                <Offset name="custom_workshop_name" value="0x4" /> INVALID!
-                <Offset name="custom_workshop_type" value="0x20" /> INVALID!
-                -->
             </Group>
 
             <Group name="Position" valid="false">
@@ -1974,6 +1958,7 @@
                 <Address name="organics_all" value="0x171e7B0" valid="true" />
                 <Address name="organics_plants" value="0x171e7C0" valid="true" />
                 <Address name="organics_trees" value="0x171e7E0" valid="true" />
+                <Address name="other" value="0x17248F8" valid="true" />
                 <Group name="creature" valid="true">
                     <Offset name="extract_vector" value="0x2054" /> maybe: 0x2064  before:0x1a08
                     <Group name="caste" valid="true">
@@ -2016,8 +2001,8 @@
                 
             </Group>
             <Group name="Translations" valid="true">
-                <Address name="language_vector" value="0x0171ea94 0x016e553c"/>
-                <Address name="translation_vector" value="0x0171eab4 0x016e551c"/>
+                <Address name="language_vector" value="0x0171ea94"/>
+                <Address name="translation_vector" value="0x0171eab4"/>
             </Group>
             <!--
             <Group name="Items" valid="false">
@@ -2042,14 +2027,15 @@
         <MD5 value="5e2725ae9e87ff504ef0b1dcf52f059d" />
         <Offsets>
             <Group name="Materials">
-                <Address name="creature_type_vector" value="0x1724020 0x1724880" />
-                <Address name="inorganics" value="0x1723f30 0x1724790" />
-                <Address name="organics_all" value="0x1723f50 0x17247b0" />
-                <Address name="organics_plants" value="0x1723f60 0x17247c0" />
-                <Address name="organics_trees" value="0x1723f80 0x17247e0" />
+                <Address name="creature_type_vector" value="0x1724020" />
+                <Address name="inorganics" value="0x1723f30" />
+                <Address name="organics_all" value="0x1723f50" />
+                <Address name="organics_plants" value="0x1723f60" />
+                <Address name="organics_trees" value="0x1723f80" />
+                <Address name="other" value="0x172A098" />
                 <Group name="descriptors">
-                    <Address name="all_colors_vector" value="0x1729984 0x172a1e4" />
-                    <Address name="colors_vector" value="0x1729964 0x172a1c4" />
+                    <Address name="all_colors_vector" value="0x1729984" />
+                    <Address name="colors_vector" value="0x1729964" />
                 </Group>
                 <Group name="creature"> I'M NOT SURE ABOUT THESE
                     <!--
@@ -2059,9 +2045,9 @@
                     <Offset name="tile_color" value="0xf6" />
                     -->
                     <Group name="caste">
-                        <Offset name="attributes" value="0xdbc 0xd40" /> LOOKS LIKE CRAP, but seems to work anyway
-                        <Offset name="bodypart_vector" value="0x5ac 0x530" />
-                        <Offset name="color_modifiers" value="0x11e4 0x1168" />
+                        <Offset name="attributes" value="0xdbc" /> LOOKS LIKE CRAP, but seems to work anyway
+                        <Offset name="bodypart_vector" value="0x5ac" />
+                        <Offset name="color_modifiers" value="0x11e4" />
                     </Group>
                 </Group>
 
@@ -2094,8 +2080,8 @@
                 </Group>
             </Group>
             <Group name="Translations">
-                <Address name="language_vector" value="0x01724234 0x1724a94" />
-                <Address name="translation_vector" value="0x01724254 0x1724ab4" />
+                <Address name="language_vector" value="0x01724234" />
+                <Address name="translation_vector" value="0x01724254" />
             </Group>
             <Group name="Buildings">
                 <Address name="custom_workshop_vector" value="0x17299b4" />

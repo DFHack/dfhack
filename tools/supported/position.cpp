@@ -68,6 +68,10 @@ int main (int argc, char** argv)
     {
         cout << gmm << endl;
     }
+        cout << "Year: " << World->ReadCurrentYear()
+             << " Month: " << World->ReadCurrentMonth()
+             << " Day: " << World->ReadCurrentDay()
+             << " Tick: " << World->ReadCurrentTick() << endl;
     if (Position)
     {
         int32_t x,y,z;

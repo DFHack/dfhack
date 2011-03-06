@@ -2093,6 +2093,13 @@
                     <Address name="ptr2_region_array" valid="false" />
                 </Group>
             </Group>
+            <Group name="Translations">
+                <Address name="language_vector" value="0x01724234 0x1724a94" />
+                <Address name="translation_vector" value="0x01724254 0x1724ab4" />
+            </Group>
+            <Group name="Buildings">
+                <Address name="custom_workshop_vector" value="0x17299b4" />
+            </Group>
         </Offsets>
     </Version>
 

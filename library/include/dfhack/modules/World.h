@@ -28,10 +28,13 @@ namespace DFHack
     {
         GM_Fort = 0,
         GM_Adventurer = 1,
-        GM_Kittens = 2, // not sure yet, but I think it will involve kittens
+        GM_Legends = 2, 
         GM_Menu = 3,
         GM_Arena = 4,
-        GM_MAX = 4,
+		GM_Arena_Assumed = 5,
+		GM_Kittens = 6,
+		GM_Worldgen = 7,
+        GM_MAX = 7,
     };
     struct t_gamemodes
     {

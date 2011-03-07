@@ -14,9 +14,12 @@ std::ostream &operator<<(std::ostream &stream, DFHack::t_gamemodes funzies)
     {
         "Fort",
         "Adventurer",
-        "Kittens!",
+        "Legends",
         "Menus",
         "Arena",
+		"Arena - Assumed",
+		"Kittens!",
+		"Worldgen"
     };
     char * cm[]=
     {

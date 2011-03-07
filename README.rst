@@ -45,14 +45,14 @@ Windows
     fix it :)
 
 0.31.01 - 0.31.03 legacy
-0.31.04 - 0.31.13 SDL
+0.31.04 - 0.31.21 SDL
 There are missing offsets but Map tools should be OK. Wait for updates...
 
 Linux
 =====
-0.31.05 - 0.31.13 native.
+0.31.05 - 0.31.19 native.
 There are missing offsets but Map tools should be OK. Linux support is
-a bit lacking, I'm working on it. All supported Windows versions
+a bit lacking, I'm working on it. Slowly. All supported Windows versions
 running in wine can be used with native DFHack binaries.
 
 =====

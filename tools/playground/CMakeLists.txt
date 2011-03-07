@@ -5,10 +5,6 @@ IF(UNIX)
 add_definitions(-DLINUX_BUILD)
 ENDIF(UNIX)
 
-# mode - a utility to change the current game and control modes
-ADD_EXECUTABLE(dfmode mode.cpp)
-TARGET_LINK_LIBRARIES(dfmode dfhack)
-
 # a creature mood dump hack. has hardcoded offsets
 ADD_EXECUTABLE(dfmoodump moodump.cpp)
 TARGET_LINK_LIBRARIES(dfmoodump dfhack)
@@ -90,7 +86,6 @@ ADD_EXECUTABLE(dfhellhole hellhole.cpp)
 TARGET_LINK_LIBRARIES(dfhellhole dfhack)
 
 
-
 # this needs the C bindings
 IF(BUILD_DFHACK_C_BINDINGS)
     # for trying out some 'stuff'
@@ -103,7 +98,6 @@ IF(BUILD_DFHACK_C_BINDINGS)
 ENDIF(BUILD_DFHACK_C_BINDINGS)
 
 install(TARGETS
-dfmode
 dfmoodump
 dfdigger
 dfdigger2

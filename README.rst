@@ -134,6 +134,19 @@ dfweather
 Lets you change the current weather to 'clear sky', 'rainy' or 'snowing'. Fill those ponds without mucking around with dfliquids 
 :D Rain can also stop brush fires.
 
+dfmode
+===========
+This tool lets you change the game mode directly. Not all combinations are good for every situation and most of them will produce undesirable results.
+There are a few good ones though.
+
+.. admonition:: Example
+
+     You are in fort game mode (0 game mode), managing your fortress (0 control mode) and paused.
+     You switch to the arena game mode, *assume control of a creature* and the switch to adventure game mode(1).
+     You just lost a fortress and gained an adventurer.
+
+I take no responsibility of anything that happens as a result of using this tool :P
+
 Your tool here
 ==============
 Write one ;)

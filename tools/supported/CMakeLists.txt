@@ -64,6 +64,10 @@ TARGET_LINK_LIBRARIES(dfcleartask dfhack)
 ADD_EXECUTABLE(dfposition position.cpp)
 TARGET_LINK_LIBRARIES(dfposition dfhack)
 
+# mode - a utility to change the current game and control modes
+ADD_EXECUTABLE(dfmode mode.cpp)
+TARGET_LINK_LIBRARIES(dfmode dfhack)
+
 # just dump offsets of the current version
 ADD_EXECUTABLE(dfdoffsets dumpoffsets.cpp)
 TARGET_LINK_LIBRARIES(dfdoffsets dfhack)
@@ -116,6 +120,7 @@ ENDIF(UNIX)
 
 
 install(TARGETS
+dfmode
 dfreveal
 dfprospector
 dfposition

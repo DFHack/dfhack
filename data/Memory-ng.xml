@@ -2091,7 +2091,11 @@
             </Group>
         </Offsets>
     </Version>
-
+    <Version name="v0.31.21 SDL" os="windows" base="v0.31.20 SDL" >
+        <PETimeStamp value="0x4D743DA7" />
+        <MD5 value="3aadcbd781f7d70d5ee552b92c03bc6b" />
+    </Version>
+    
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________

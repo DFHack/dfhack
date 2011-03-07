@@ -57,12 +57,12 @@ int main (int numargs, const char ** args)
     p->readDWord (region_z_offset, (uint32_t &)regionZ);
 
     Maps->Start();
-/*
+
     vector<DFHack::t_feature> global_features;
     std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> > local_features;
-    */
-	//Maps->ReadLocalFeatures(local_features);
-	//Maps->ReadGlobalFeatures(global_features);
+
+    bool have_local = Maps->ReadLocalFeatures(local_features);
+    bool have_global = Maps->ReadGlobalFeatures(global_features);
 
     int32_t cursorX, cursorY, cursorZ;
     Pos->getCursorCoords(cursorX,cursorY,cursorZ);
@@ -131,14 +131,14 @@ int main (int numargs, const char ** args)
             PRINT_FLAG( skyview );
             PRINT_FLAG( subterranean );
             PRINT_FLAG( water_table );
-            //PRINT_FLAG( rained );
+            PRINT_FLAG( rained );
 
             planecoord pc;
             pc.dim.x=blockX; pc.dim.y=blockY;
             
             PRINT_FLAG( feature_local );
-            /*
-            if( des.feature_local )
+
+            if( des.feature_local && have_local )
             {
                 printf("%-16s  %4d (%2d) %s\n", "",
                     block.local_feature,
@@ -146,18 +146,19 @@ int main (int numargs, const char ** args)
                     sa_feature(local_features[pc][block.local_feature]->type)
                     );
             }
-            */
+
             
             PRINT_FLAG( feature_global );
-            /*
-            if( des.feature_global ){
+
+            if( des.feature_global && have_global )
+            {
                 printf("%-16s  %4d (%2d) %s\n", "",
                     block.global_feature,
                     global_features[block.global_feature].type,
                     sa_feature(global_features[block.global_feature].type)
                     );
             }
-            */
+
             #undef PRINT_FLAG
             std::cout << std::endl;
         }

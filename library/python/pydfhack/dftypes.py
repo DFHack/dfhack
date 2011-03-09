@@ -1,20 +1,22 @@
 from ctypes import *
 from flags import *
 from enum import *
+import util
 from util import *
 
 libdfhack = cdll.libdfhack
 
-libdfhack.alloc_byte_buffer_callback = alloc_byte_buffer
-libdfhack.alloc_ubyte_buffer_callback = alloc_ubyte_buffer
-libdfhack.alloc_short_buffer_callback = alloc_short_buffer
-libdfhack.alloc_ushort_buffer_callback = alloc_ushort_buffer
-libdfhack.alloc_int_buffer_callback = alloc_int_buffer
-libdfhack.alloc_uint_buffer_callback = alloc_uint_buffer
-libdfhack.alloc_char_buffer_callback = alloc_char_buffer
+def _register_callback(name, func):
+    ptr = c_void_p.in_dll(libdfhack, name)
+    ptr.value = cast(func, c_void_p).value
 
-int_ptr = POINTER(c_int)
-uint_ptr = POINTER(c_uint)
+_register_callback("alloc_byte_buffer_callback", alloc_byte_buffer)
+_register_callback("alloc_ubyte_buffer_callback", alloc_ubyte_buffer)
+_register_callback("alloc_short_buffer_callback", alloc_short_buffer)
+_register_callback("alloc_ushort_buffer_callback", alloc_ushort_buffer)
+_register_callback("alloc_int_buffer_callback", alloc_int_buffer)
+_register_callback("alloc_uint_buffer_callback", alloc_uint_buffer)
+_register_callback("alloc_char_buffer_callback", alloc_char_buffer)
 
 _arr_create_func = CFUNCTYPE(c_void_p, c_int)
 
@@ -70,30 +72,40 @@ class Vein(Structure):
                 ("flags", c_uint),
                 ("address_of", c_uint)]
 
-def _alloc_vein_buffer_callback(ptr, count):
-    allocated = _allocate_array(Vein, count)
+_vein_ptr = POINTER(Vein)
 
-    ptr = addressof(allocated[0])
+def _alloc_vein_buffer_callback(ptr, count):
+    allocated = util._allocate_array(Vein, count)
+
+    ptr.contents = cast(addressof(allocated), _vein_ptr)
+    
+    pointer_dict[id(ptr)] = allocated
 
     return 1
 
-_vein_functype = CFUNCTYPE(c_int, POINTER(Vein), c_uint)
-libdfhack.alloc_vein_buffer_callback = _vein_functype(_alloc_vein_buffer_callback)
+_vein_functype = CFUNCTYPE(c_int, POINTER(_vein_ptr), c_uint)
+_vein_func = _vein_functype(_alloc_vein_buffer_callback)
+_register_callback("alloc_vein_buffer_callback", _vein_func)
 
 class FrozenLiquidVein(Structure):
     _fields_ = [("vtable", c_uint),
                 ("tiles", TileTypes40d),
                 ("address_of", c_uint)]
 
-def _alloc_frozenliquidvein_buffer_callback(ptr, count):
-    allocated = _allocate_array(FrozenLiquidVein, count)
+_frozenvein_ptr = POINTER(FrozenLiquidVein)
 
-    ptr = addressof(allocated[0])
+def _alloc_frozenliquidvein_buffer_callback(ptr, count):
+    allocated = util._allocate_array(FrozenLiquidVein, count)
+
+    ptr.contents = cast(addressofallocated, _frozenvein_ptr)
+    
+    pointer_dict[id(ptr)] = allocated
 
     return 1
 
-_frozenliquidvein_functype = CFUNCTYPE(c_int, POINTER(FrozenLiquidVein), c_uint)
-libdfhack.alloc_frozenliquidvein_buffer_callback = _frozenliquidvein_functype(_alloc_frozenliquidvein_buffer_callback)
+_frozenliquidvein_functype = CFUNCTYPE(c_int, POINTER(_frozenvein_ptr), c_uint)
+_frozenliquidvein_func = _frozenliquidvein_functype(_alloc_frozenliquidvein_buffer_callback)
+_register_callback("alloc_frozenliquidvein_buffer_callback", _frozenliquidvein_func)
 
 class SpatterVein(Structure):
     _fields_ = [("vtable", c_uint),
@@ -104,15 +116,20 @@ class SpatterVein(Structure):
                 ("intensity", ((c_ubyte * 16) * 16)),
                 ("address_of", c_uint)]
 
-def _alloc_spattervein_buffer_callback(ptr, count):
-    allocated = _allocate_array(SpatterVein, count)
+_spattervein_ptr = POINTER(SpatterVein)
 
-    ptr = addressof(allocated[0])
+def _alloc_spattervein_buffer_callback(ptr, count):
+    allocated = util._allocate_array(SpatterVein, count)
+
+    ptr.contents = cast(addressof(allocated), _spattervein_ptr)
+    
+    pointer_dict[id(ptr)] = allocated
 
     return 1
 
-_spattervein_functype = CFUNCTYPE(c_int, POINTER(SpatterVein), c_uint)
-libdfhack.alloc_spatter_buffer_callback = _spattervein_functype(_alloc_spattervein_buffer_callback)
+_spattervein_functype = CFUNCTYPE(c_int, POINTER(_spattervein_ptr), c_uint)
+_spattervein_func = _spattervein_functype(_alloc_spattervein_buffer_callback)
+_register_callback("alloc_spattervein_buffer_callback", _spattervein_func)
 
 class GrassVein(Structure):
     _fields_ = [("vtable", c_uint),
@@ -120,15 +137,20 @@ class GrassVein(Structure):
                 ("intensity", ((c_ubyte * 16) * 16)),
                 ("address_of", c_uint)]
 
+_grassvein_ptr = POINTER(GrassVein)
+
 def _alloc_grassvein_buffer_callback(ptr, count):
-    allocated = _allocate_array(GrassVein, count)
+    allocated = util._allocate_array(GrassVein, count)
     
-    ptr = addressof(allocated[0])
+    ptr.contents = cast(addressof(allocated), _grassvein_ptr)
+    
+    pointer_dict[id(ptr)] = allocated
     
     return 1
 
-_grassvein_functype = CFUNCTYPE(c_int, POINTER(GrassVein), c_uint)
-libdfhack.alloc_grassvein_buffer_callback = _grassvein_functype(_alloc_grassvein_buffer_callback)
+_grassvein_functype = CFUNCTYPE(c_int, POINTER(_grassvein_ptr), c_uint)
+_grassvein_func = _grassvein_functype(_alloc_grassvein_buffer_callback)
+_register_callback("alloc_grassvein_buffer_callback", _grassvein_func)
 
 class WorldConstruction(Structure):
     _fields_ = [("vtable", c_uint),
@@ -136,15 +158,20 @@ class WorldConstruction(Structure):
                 ("assignment", c_ushort * 16),
                 ("address_of", c_uint)]
 
+_worldconstruction_ptr = POINTER(WorldConstruction)
+
 def _alloc_worldconstruction_buffer_callback(ptr, count):
-    allocated = _allocate_array(WorldConstruction, count)
+    allocated = util._allocate_array(WorldConstruction, count)
     
-    ptr = addressof(allocated[0])
+    ptr.contents = cast(addressof(allocated), _worldconstruction_ptr)
+    
+    pointer_dict[id(ptr)] = allocated
     
     return 1
 
-_worldconstruction_functype = CFUNCTYPE(c_int, POINTER(WorldConstruction), c_uint)
-libdfhack.alloc_worldconstruction_buffer_callback = _worldconstruction_functype(_alloc_worldconstructrion_buffer_callback)
+_worldconstruction_functype = CFUNCTYPE(c_int, POINTER(_worldconstruction_ptr), c_uint)
+_worldconstruction_func = _worldconstruction_functype(_alloc_worldconstruction_buffer_callback)
+_register_callback("alloc_worldconstruction_buffer_callback", _worldconstruction_func)
 
 class MapBlock40d(Structure):
     _fields_ = [("tiletypes", TileTypes40d),
@@ -167,15 +194,22 @@ class Matgloss(Structure):
                 ("bright", c_byte),
                 ("name", c_char * 128)]
 
+_matgloss_ptr = POINTER(Matgloss)
+
 def _alloc_matgloss_buffer_callback(ptr, count):
-    allocated = _allocate_array(Matgloss, count)
-
-    ptr = addressof(allocated[0])
-
+    allocated = util._allocate_array(Matgloss, count)
+    
+    p = cast(allocated, _matgloss_ptr)
+    
+    ptr[0] = p
+    
+    pointer_dict[id(ptr[0])] = (ptr, allocated, p)
+    
     return 1
 
-_matgloss_functype = CFUNCTYPE(c_int, POINTER(Matgloss), c_uint)
-libdfhack.alloc_matgloss_buffer_callback = _matgloss_functype(_alloc_matgloss_buffer_callback)
+_matgloss_functype = CFUNCTYPE(c_int, POINTER(_matgloss_ptr), c_uint)
+_matgloss_func = _matgloss_functype(_alloc_matgloss_buffer_callback)
+_register_callback("alloc_matgloss_buffer_callback", _matgloss_func)
 
 class MatglossPair(Structure):
     _fields_ = [("type", c_short),
@@ -189,27 +223,37 @@ class DescriptorColor(Structure):
                 ("name", c_char * 128)]
 
 def _alloc_descriptor_buffer_callback(ptr, count):
-    allocated = _allocate_array(DescriptorColor, count)
+    allocated = util._allocate_array(DescriptorColor, count)
+    
+    p = cast(allocated, POINTER(DescriptorColor))
 
-    ptr = addressof(allocated[0])
+    ptr[0] = p
+    
+    pointer_dict[id(ptr[0])] = (ptr, allocated, p)
 
     return 1
 
 _descriptor_functype = CFUNCTYPE(c_int, POINTER(DescriptorColor), c_uint)
-libdfhack.alloc_descriptor_buffer_callback = _descriptor_functype(_alloc_descriptor_buffer_callback)
+_descriptor_func = _descriptor_functype(_alloc_descriptor_buffer_callback)
+_register_callback("alloc_descriptor_buffer_callback", _descriptor_func)
 
 class MatglossOther(Structure):
     _fields_ = [("rawname", c_char * 128)]
 
 def _alloc_matgloss_other_buffer_callback(count):
-    allocated = _allocate_array(MatglossOther, count)
+    allocated = util._allocate_array(MatglossOther, count)
+    
+    p = cast(allocated, POINTER(MatglossOther))
 
-    ptr = addressof(allocated[0])
+    ptr[0] = p
+    
+    pointer_dict[id(ptr[0])] = (ptr, allocated, p)
 
     return 1
 
 _matgloss_other_functype = CFUNCTYPE(c_int, POINTER(MatglossOther), c_uint)
-libdfhack.alloc_matgloss_other_buffer_callback = _matgloss_other_functype(_alloc_matgloss_other_buffer_callback)
+_matgloss_other_func = _matgloss_other_functype(_alloc_matgloss_other_buffer_callback)
+_register_callback("alloc_matgloss_other_buffer_callback", _matgloss_other_func)
 
 class Building(Structure):
     _fields_ = [("origin", c_uint),
@@ -227,14 +271,19 @@ class CustomWorkshop(Structure):
                 ("name", c_char * 256)]
 
 def _alloc_custom_workshop_buffer_callback(count):
-    allocated = _allocate_array(CustomWorkshop, count)
+    allocated = util._allocate_array(CustomWorkshop, count)
     
-    ptr = addressof(allocated[0])
+    p = cast(allocated, POINTER(CustomWorkshop))
+    
+    ptr[0] = p
+    
+    pointer_dict[id(ptr[0])] = (ptr, allocated, p)
     
     return 1
 
 _custom_workshop_functype = CFUNCTYPE(c_int, POINTER(CustomWorkshop), c_uint)
-libdfhack.alloc_t_customWorkshop_buffer_callback = _custom_workshop_functype(_alloc_custom_workshop_buffer_callback)
+_custom_workshop_func = _custom_workshop_functype(_alloc_custom_workshop_buffer_callback)
+_register_callback("alloc_t_customWorkshop_buffer_callback", _custom_workshop_func)
 
 class Construction(Structure):
     _fields_ = [("x", c_ushort),
@@ -266,14 +315,19 @@ class Material(Structure):
                 ("flags", c_uint)]
 
 def _alloc_material_buffer_callback(count):
-    allocated = _allocate_array(Material, count)
+    allocated = util._allocate_array(Material, count)
     
-    ptr = addressof(allocated[0])
+    p = cast(allocated, POINTER(Material))
+    
+    ptr[0] = p
+    
+    pointer_dict[id(ptr[0])] = (ptr, allocated, p)
     
     return 1
 
 _material_functype = CFUNCTYPE(c_int, POINTER(Material), c_uint)
-libdfhack.alloc_t_material_buffer_callback = _material_functype(_alloc_material_buffer_callback)
+_material_func = _material_functype(_alloc_material_buffer_callback)
+_register_callback("alloc_t_material_buffer_callback", _material_func)
 
 class Skill(Structure):
     _fields_ = [("id", c_uint),
@@ -385,7 +439,7 @@ class Creature(Structure):
                 ("defaultSoul", Soul),
                 ("nbcolors", c_uint),
                 ("color", (c_uint * _MAX_COLORS)),
-                ("birth_year", c_uint),
+                ("birth_year", c_int),
                 ("birth_time", c_uint)]
 
 class CreatureExtract(Structure):
@@ -406,15 +460,42 @@ class ColorModifier(Structure):
         self.part[0] = '\0'
         self.colorlistLength = 0
 
-ColorModifierPtr = POINTER(ColorModifier)
-
 def _alloc_empty_colormodifier_callback(ptr):
-    ptr = ColorModifierPtr(ColorModifier())
+    allocated = ColorModifier()
+    
+    p = cast(allocated, POINTER(ColorModifier))
+    
+    ptr[0] = p
+    
+    pointer_dict[id(ptr[0])] = (ptr, allocated, p)
 
     return 1
 
-_empty_colormodifier_functype = CFUNCTYPE(c_int, ColorModifierPtr)
-libdfhack.alloc_empty_colormodifier_callback = _empty_colormodifier_functype(_alloc_empty_colormodifier_callback)
+_empty_colormodifier_functype = CFUNCTYPE(c_int, POINTER(ColorModifier))
+_empty_colormodifier_func = _empty_colormodifier_functype(_alloc_empty_colormodifier_callback)
+_register_callback("alloc_empty_colormodifier_callback", _empty_colormodifier_func)
+
+class CreatureCaste(Structure):
+    _fields_ = [("rawname", (c_char * 128)),
+                ("singular", (c_char * 128)),
+                ("plural", (c_char * 128)),
+                ("adjective", (c_char * 128)),
+                ("color_modifier", POINTER(ColorModifier)),
+                ("color_modifier_length", c_uint),
+                ("bodypart", POINTER(BodyPart)),
+                ("bodypart_length", c_uint)]
+
+class TileColor(Structure):
+    _fields_ = [("fore", c_ushort),
+                ("back", c_ushort),
+                ("bright", c_ushort)]
+
+class CreatureType(Structure):
+    _fields_ = [("rawname", (c_char * 128)),
+                ("castes", POINTER(CreatureCaste)),
+                ("castes_count", c_uint),
+                ("tile_character", c_ubyte),
+                ("tilecolor", TileColor)]
 
 class GameModes(Structure):
     _fields_ = [("control_mode", c_ubyte),

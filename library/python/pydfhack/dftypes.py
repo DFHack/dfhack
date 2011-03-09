@@ -75,13 +75,7 @@ class Vein(Structure):
 _vein_ptr = POINTER(Vein)
 
 def _alloc_vein_buffer_callback(ptr, count):
-    allocated = util._allocate_array(Vein, count)
-
-    ptr.contents = cast(addressof(allocated), _vein_ptr)
-    
-    pointer_dict[id(ptr)] = allocated
-
-    return 1
+    return util._allocate_array(ptr, Vein, count)
 
 _vein_functype = CFUNCTYPE(c_int, POINTER(_vein_ptr), c_uint)
 _vein_func = _vein_functype(_alloc_vein_buffer_callback)
@@ -95,13 +89,7 @@ class FrozenLiquidVein(Structure):
 _frozenvein_ptr = POINTER(FrozenLiquidVein)
 
 def _alloc_frozenliquidvein_buffer_callback(ptr, count):
-    allocated = util._allocate_array(FrozenLiquidVein, count)
-
-    ptr.contents = cast(addressofallocated, _frozenvein_ptr)
-    
-    pointer_dict[id(ptr)] = allocated
-
-    return 1
+    return util._allocate_array(ptr, FrozenLiquidVein, count)
 
 _frozenliquidvein_functype = CFUNCTYPE(c_int, POINTER(_frozenvein_ptr), c_uint)
 _frozenliquidvein_func = _frozenliquidvein_functype(_alloc_frozenliquidvein_buffer_callback)
@@ -119,13 +107,7 @@ class SpatterVein(Structure):
 _spattervein_ptr = POINTER(SpatterVein)
 
 def _alloc_spattervein_buffer_callback(ptr, count):
-    allocated = util._allocate_array(SpatterVein, count)
-
-    ptr.contents = cast(addressof(allocated), _spattervein_ptr)
-    
-    pointer_dict[id(ptr)] = allocated
-
-    return 1
+    return util._allocate_array(ptr, SpatterVein, count)
 
 _spattervein_functype = CFUNCTYPE(c_int, POINTER(_spattervein_ptr), c_uint)
 _spattervein_func = _spattervein_functype(_alloc_spattervein_buffer_callback)
@@ -140,13 +122,7 @@ class GrassVein(Structure):
 _grassvein_ptr = POINTER(GrassVein)
 
 def _alloc_grassvein_buffer_callback(ptr, count):
-    allocated = util._allocate_array(GrassVein, count)
-    
-    ptr.contents = cast(addressof(allocated), _grassvein_ptr)
-    
-    pointer_dict[id(ptr)] = allocated
-    
-    return 1
+    return util._allocate_array(ptr, GrassVein, count)
 
 _grassvein_functype = CFUNCTYPE(c_int, POINTER(_grassvein_ptr), c_uint)
 _grassvein_func = _grassvein_functype(_alloc_grassvein_buffer_callback)
@@ -161,13 +137,7 @@ class WorldConstruction(Structure):
 _worldconstruction_ptr = POINTER(WorldConstruction)
 
 def _alloc_worldconstruction_buffer_callback(ptr, count):
-    allocated = util._allocate_array(WorldConstruction, count)
-    
-    ptr.contents = cast(addressof(allocated), _worldconstruction_ptr)
-    
-    pointer_dict[id(ptr)] = allocated
-    
-    return 1
+    return util._allocate_array(ptr, WorldConstruction, count)
 
 _worldconstruction_functype = CFUNCTYPE(c_int, POINTER(_worldconstruction_ptr), c_uint)
 _worldconstruction_func = _worldconstruction_functype(_alloc_worldconstruction_buffer_callback)
@@ -197,15 +167,7 @@ class Matgloss(Structure):
 _matgloss_ptr = POINTER(Matgloss)
 
 def _alloc_matgloss_buffer_callback(ptr, count):
-    allocated = util._allocate_array(Matgloss, count)
-    
-    p = cast(allocated, _matgloss_ptr)
-    
-    ptr[0] = p
-    
-    pointer_dict[id(ptr[0])] = (ptr, allocated, p)
-    
-    return 1
+    return util._allocate_array(ptr, Matgloss, count)
 
 _matgloss_functype = CFUNCTYPE(c_int, POINTER(_matgloss_ptr), c_uint)
 _matgloss_func = _matgloss_functype(_alloc_matgloss_buffer_callback)
@@ -223,15 +185,7 @@ class DescriptorColor(Structure):
                 ("name", c_char * 128)]
 
 def _alloc_descriptor_buffer_callback(ptr, count):
-    allocated = util._allocate_array(DescriptorColor, count)
-    
-    p = cast(allocated, POINTER(DescriptorColor))
-
-    ptr[0] = p
-    
-    pointer_dict[id(ptr[0])] = (ptr, allocated, p)
-
-    return 1
+    return util._allocate_array(ptr, DescriptorColor, count)
 
 _descriptor_functype = CFUNCTYPE(c_int, POINTER(DescriptorColor), c_uint)
 _descriptor_func = _descriptor_functype(_alloc_descriptor_buffer_callback)
@@ -241,15 +195,7 @@ class MatglossOther(Structure):
     _fields_ = [("rawname", c_char * 128)]
 
 def _alloc_matgloss_other_buffer_callback(count):
-    allocated = util._allocate_array(MatglossOther, count)
-    
-    p = cast(allocated, POINTER(MatglossOther))
-
-    ptr[0] = p
-    
-    pointer_dict[id(ptr[0])] = (ptr, allocated, p)
-
-    return 1
+    return util._allocate_array(ptr, MatglossOther, count)
 
 _matgloss_other_functype = CFUNCTYPE(c_int, POINTER(MatglossOther), c_uint)
 _matgloss_other_func = _matgloss_other_functype(_alloc_matgloss_other_buffer_callback)
@@ -271,15 +217,7 @@ class CustomWorkshop(Structure):
                 ("name", c_char * 256)]
 
 def _alloc_custom_workshop_buffer_callback(count):
-    allocated = util._allocate_array(CustomWorkshop, count)
-    
-    p = cast(allocated, POINTER(CustomWorkshop))
-    
-    ptr[0] = p
-    
-    pointer_dict[id(ptr[0])] = (ptr, allocated, p)
-    
-    return 1
+    return util._allocate_array(ptr, CustomWorkshop, count)
 
 _custom_workshop_functype = CFUNCTYPE(c_int, POINTER(CustomWorkshop), c_uint)
 _custom_workshop_func = _custom_workshop_functype(_alloc_custom_workshop_buffer_callback)
@@ -315,15 +253,7 @@ class Material(Structure):
                 ("flags", c_uint)]
 
 def _alloc_material_buffer_callback(count):
-    allocated = util._allocate_array(Material, count)
-    
-    p = cast(allocated, POINTER(Material))
-    
-    ptr[0] = p
-    
-    pointer_dict[id(ptr[0])] = (ptr, allocated, p)
-    
-    return 1
+    return util._allocate_array(ptr, Material, count)
 
 _material_functype = CFUNCTYPE(c_int, POINTER(Material), c_uint)
 _material_func = _material_functype(_alloc_material_buffer_callback)

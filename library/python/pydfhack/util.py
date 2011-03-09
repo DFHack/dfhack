@@ -14,83 +14,49 @@ pointer_dict = {}
 def _uintify(x, y, z):
     return (c_uint(x), c_uint(y), c_uint(z))
 
-def _allocate_array(t_type, count):
-    arr_type = t_type * count
-
-    arr = arr_type()
-
-    return arr
-
-def _alloc_int_buffer(ptr, count):
-    a = _allocate_array(c_int, count)
+def _allocate_array(ptr, t_type, count):
+    arr = (t_type * count)()
     
-    p = cast(a, int_ptr)
-
+    p = cast(arr, POINTER(t_type))
+    
     ptr[0] = p
     
-    pointer_dict[id(ptr[0])] = (ptr, a, p)
+    pointer_dict[id(ptr[0])] = (ptr, arr, p)
 
     return 1
+
+def _alloc_int_buffer(ptr, count):
+    return _allocate_array(ptr, c_int, count)
 
 _int_functype = CFUNCTYPE(c_int, POINTER(POINTER(c_int)), c_uint)
 alloc_int_buffer = _int_functype(_alloc_int_buffer)
 
 def _alloc_uint_buffer(ptr, count):
-    a = _allocate_array(c_uint, count)
-
-    ptr[0] = cast(a, uint_ptr)
-    
-    pointer_dict[id(ptr[0])] = (ptr, a, p)
-
-    return 1
+    return _allocate_array(ptr, c_uint, count)
 
 _uint_functype = CFUNCTYPE(c_int, POINTER(POINTER(c_uint)), c_uint)
 alloc_uint_buffer = _uint_functype(_alloc_uint_buffer)
 
 def _alloc_short_buffer(ptr, count):
-    a = _allocate_array(c_short, count)
-
-    ptr[0] = cast(a, short_ptr)
-    
-    pointer_dict[id(ptr[0])] = (ptr, a, p)
-
-    return 1
+    return _allocate_array(ptr, c_short, count)
 
 _short_functype = CFUNCTYPE(c_int, POINTER(POINTER(c_short)), c_uint)
 alloc_short_buffer = _short_functype(_alloc_short_buffer)
 
 def _alloc_ushort_buffer(ptr, count):
-    a = _allocate_array(c_ushort, count)
-
-    ptr[0] = cast(a, ushort_ptr)
-    
-    pointer_dict[id(ptr[0])] = (ptr, a, p)
-
-    return 1
+    return _allocate_array(ptr, c_ushort, count)
 
 _ushort_functype = CFUNCTYPE(c_int, POINTER(POINTER(c_ushort)), c_uint)
 alloc_ushort_buffer = _ushort_functype(_alloc_ushort_buffer)
 
 def _alloc_byte_buffer(ptr, count):
-    a = _allocate_array(c_byte, count)
-
-    ptr[0] = cast(a, byte_ptr)
-    
-    pointer_dict[id(ptr[0])] = (ptr, a, p)
-
-    return 1
+    return _allocate_array(ptr, c_byte, count)
 
 _byte_functype = CFUNCTYPE(c_int, POINTER(POINTER(c_byte)), c_uint)
 alloc_byte_buffer = _byte_functype(_alloc_byte_buffer)
 
 def _alloc_ubyte_buffer(ptr, count):
-    a = _allocate_array(c_ubyte, count)
-
-    ptr[0] = cast(a, ubyte_ptr)
-    
-    pointer_dict[id(ptr[0])] = (ptr, a, p)
-
-    return 1
+    return _allocate_array(ptr, c_ubyte, count)
 
 _ubyte_functype = CFUNCTYPE(c_int, POINTER(POINTER(c_ubyte)), c_uint)
 alloc_ubyte_buffer = _ubyte_functype(_alloc_ubyte_buffer)

@@ -68,60 +68,60 @@ void UnregisterByteBufferCallback()
 extern "C" {
 #endif
 
-int (*alloc_byte_buffer_callback)(int8_t*, uint32_t) = NULL;
-int (*alloc_short_buffer_callback)(int16_t*, uint32_t) = NULL;
-int (*alloc_int_buffer_callback)(int32_t*, uint32_t) = NULL;
+int (*alloc_byte_buffer_callback)(int8_t**, uint32_t) = NULL;
+int (*alloc_short_buffer_callback)(int16_t**, uint32_t) = NULL;
+int (*alloc_int_buffer_callback)(int32_t**, uint32_t) = NULL;
 
-int (*alloc_ubyte_buffer_callback)(uint8_t*, uint32_t) = NULL;
-int (*alloc_ushort_buffer_callback)(uint16_t*, uint32_t) = NULL;
-int (*alloc_uint_buffer_callback)(uint32_t*, uint32_t) = NULL;
+int (*alloc_ubyte_buffer_callback)(uint8_t**, uint32_t) = NULL;
+int (*alloc_ushort_buffer_callback)(uint16_t**, uint32_t) = NULL;
+int (*alloc_uint_buffer_callback)(uint32_t**, uint32_t) = NULL;
 
-int (*alloc_char_buffer_callback)(char*, uint32_t) = NULL;
+int (*alloc_char_buffer_callback)(char**, uint32_t) = NULL;
 
-int (*alloc_matgloss_buffer_callback)(t_matgloss*, uint32_t) = NULL;
-int (*alloc_descriptor_buffer_callback)(t_descriptor_color*, uint32_t) = NULL;
-int (*alloc_matgloss_other_buffer_callback)(t_matglossOther*, uint32_t) = NULL;
+int (*alloc_matgloss_buffer_callback)(t_matgloss**, uint32_t) = NULL;
+int (*alloc_descriptor_buffer_callback)(t_descriptor_color**, uint32_t) = NULL;
+int (*alloc_matgloss_other_buffer_callback)(t_matglossOther**, uint32_t) = NULL;
 
-int (*alloc_t_feature_buffer_callback)(t_feature*, uint32_t) = NULL;
-int (*alloc_t_hotkey_buffer_callback)(t_hotkey*, uint32_t) = NULL;
-int (*alloc_t_screen_buffer_callback)(t_screen*, uint32_t) = NULL;
+int (*alloc_t_feature_buffer_callback)(t_feature**, uint32_t) = NULL;
+int (*alloc_t_hotkey_buffer_callback)(t_hotkey**, uint32_t) = NULL;
+int (*alloc_t_screen_buffer_callback)(t_screen**, uint32_t) = NULL;
 
-int (*alloc_t_customWorkshop_buffer_callback)(t_customWorkshop*, uint32_t) = NULL;
-int (*alloc_t_material_buffer_callback)(t_material*, uint32_t) = NULL;
+int (*alloc_t_customWorkshop_buffer_callback)(t_customWorkshop**, uint32_t) = NULL;
+int (*alloc_t_material_buffer_callback)(t_material**, uint32_t) = NULL;
 
-int (*alloc_empty_colormodifier_callback)(c_colormodifier*) = NULL;
-int (*alloc_colormodifier_callback)(c_colormodifier*, const char*, uint32_t) = NULL;
-int (*alloc_colormodifier_buffer_callback)(c_colormodifier*, uint32_t) = NULL;
+int (*alloc_empty_colormodifier_callback)(c_colormodifier**) = NULL;
+int (*alloc_colormodifier_callback)(c_colormodifier**, const char*, uint32_t) = NULL;
+int (*alloc_colormodifier_buffer_callback)(c_colormodifier**, uint32_t) = NULL;
 
-int (*alloc_empty_creaturecaste_callback)(c_creaturecaste*)= NULL;
-int (*alloc_creaturecaste_callback)(c_creaturecaste*, const char*, const char*, const char*, const char*, uint32_t, uint32_t) = NULL;
-int (*alloc_creaturecaste_buffer_callback)(c_creaturecaste*, uint32_t) = NULL;
+int (*alloc_empty_creaturecaste_callback)(c_creaturecaste**)= NULL;
+int (*alloc_creaturecaste_callback)(c_creaturecaste**, const char*, const char*, const char*, const char*, uint32_t, uint32_t) = NULL;
+int (*alloc_creaturecaste_buffer_callback)(c_creaturecaste**, uint32_t) = NULL;
 
-int (*alloc_empty_creaturetype_callback)(c_creaturetype*) = NULL;
-int (*alloc_creaturetype_callback)(c_creaturetype*, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t) = NULL;
-int (*alloc_creaturetype_buffer_callback)(c_creaturetype*, uint32_t) = NULL;
+int (*alloc_empty_creaturetype_callback)(c_creaturetype**) = NULL;
+int (*alloc_creaturetype_callback)(c_creaturetype**, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t) = NULL;
+int (*alloc_creaturetype_buffer_callback)(c_creaturetype**, uint32_t) = NULL;
 
-int (*alloc_vein_buffer_callback)(t_vein*, uint32_t) = NULL;
-int (*alloc_frozenliquidvein_buffer_callback)(t_frozenliquidvein*, uint32_t) = NULL;
-int (*alloc_spattervein_buffer_callback)(t_spattervein*, uint32_t) = NULL;
-int (*alloc_grassvein_buffer_callback)(t_grassvein*, uint32_t) = NULL;
-int (*alloc_worldconstruction_buffer_callback)(t_worldconstruction*, uint32_t) = NULL;
+int (*alloc_vein_buffer_callback)(t_vein**, uint32_t) = NULL;
+int (*alloc_frozenliquidvein_buffer_callback)(t_frozenliquidvein**, uint32_t) = NULL;
+int (*alloc_spattervein_buffer_callback)(t_spattervein**, uint32_t) = NULL;
+int (*alloc_grassvein_buffer_callback)(t_grassvein**, uint32_t) = NULL;
+int (*alloc_worldconstruction_buffer_callback)(t_worldconstruction**, uint32_t) = NULL;
 
-REG_MACRO(Byte, int8_t*, alloc_byte_buffer_callback)
-REG_MACRO(Short, int16_t*, alloc_short_buffer_callback)
-REG_MACRO(Int, int32_t*, alloc_int_buffer_callback)
-REG_MACRO(UByte, uint8_t*, alloc_ubyte_buffer_callback)
-REG_MACRO(UShort, uint16_t*, alloc_ushort_buffer_callback)
-REG_MACRO(UInt, uint32_t*, alloc_uint_buffer_callback)
-REG_MACRO(Char, char*, alloc_char_buffer_callback)
-REG_MACRO(Matgloss, t_matgloss*, alloc_matgloss_buffer_callback)
-REG_MACRO(DescriptorColor, t_descriptor_color*, alloc_descriptor_buffer_callback)
-REG_MACRO(MatglossOther, t_matglossOther*, alloc_matgloss_other_buffer_callback)
-REG_MACRO(Feature, t_feature*, alloc_t_feature_buffer_callback)
-REG_MACRO(Hotkey, t_hotkey*, alloc_t_hotkey_buffer_callback)
-REG_MACRO(Screen, t_screen*, alloc_t_screen_buffer_callback)
-REG_MACRO(CustomWorkshop, t_customWorkshop*, alloc_t_customWorkshop_buffer_callback)
-REG_MACRO(Material, t_material*, alloc_t_material_buffer_callback)
+REG_MACRO(Byte, int8_t**, alloc_byte_buffer_callback)
+REG_MACRO(Short, int16_t**, alloc_short_buffer_callback)
+REG_MACRO(Int, int32_t**, alloc_int_buffer_callback)
+REG_MACRO(UByte, uint8_t**, alloc_ubyte_buffer_callback)
+REG_MACRO(UShort, uint16_t**, alloc_ushort_buffer_callback)
+REG_MACRO(UInt, uint32_t**, alloc_uint_buffer_callback)
+REG_MACRO(Char, char**, alloc_char_buffer_callback)
+REG_MACRO(Matgloss, t_matgloss**, alloc_matgloss_buffer_callback)
+REG_MACRO(DescriptorColor, t_descriptor_color**, alloc_descriptor_buffer_callback)
+REG_MACRO(MatglossOther, t_matglossOther**, alloc_matgloss_other_buffer_callback)
+REG_MACRO(Feature, t_feature**, alloc_t_feature_buffer_callback)
+REG_MACRO(Hotkey, t_hotkey**, alloc_t_hotkey_buffer_callback)
+REG_MACRO(Screen, t_screen**, alloc_t_screen_buffer_callback)
+REG_MACRO(CustomWorkshop, t_customWorkshop**, alloc_t_customWorkshop_buffer_callback)
+REG_MACRO(Material, t_material**, alloc_t_material_buffer_callback)
 
 UNREG_MACRO(Byte, alloc_byte_buffer_callback)
 UNREG_MACRO(Short, alloc_short_buffer_callback)
@@ -139,19 +139,19 @@ UNREG_MACRO(Screen, alloc_t_screen_buffer_callback)
 UNREG_MACRO(CustomWorkshop, alloc_t_customWorkshop_buffer_callback)
 UNREG_MACRO(Material, alloc_t_material_buffer_callback)
 
-void RegisterEmptyColorModifierCallback(int (*funcptr)(c_colormodifier*))
+void RegisterEmptyColorModifierCallback(int (*funcptr)(c_colormodifier**))
 {
 	alloc_empty_colormodifier_callback = funcptr;
 }
 
-void RegisterNewColorModifierCallback(int (*funcptr)(c_colormodifier*, const char*, uint32_t))
+void RegisterNewColorModifierCallback(int (*funcptr)(c_colormodifier**, const char*, uint32_t))
 {
 	alloc_colormodifier_callback = funcptr;
 }
 
-REG_MACRO(ColorModifier, c_colormodifier*, alloc_colormodifier_buffer_callback)
+REG_MACRO(ColorModifier, c_colormodifier**, alloc_colormodifier_buffer_callback)
 
-void RegisterEmptyCreatureCasteCallback(int (*funcptr)(c_creaturecaste*))
+void RegisterEmptyCreatureCasteCallback(int (*funcptr)(c_creaturecaste**))
 {
 	alloc_empty_creaturecaste_callback = funcptr;
 }
@@ -166,12 +166,12 @@ void UnregisterNewColorModifierCallback()
 	alloc_colormodifier_callback = NULL;
 }
 
-void RegisterNewCreatureCasteCallback(int (*funcptr)(c_creaturecaste*, const char*, const char*, const char*, const char*, uint32_t, uint32_t))
+void RegisterNewCreatureCasteCallback(int (*funcptr)(c_creaturecaste**, const char*, const char*, const char*, const char*, uint32_t, uint32_t))
 {
 	alloc_creaturecaste_callback = funcptr;
 }
 
-REG_MACRO(CreatureCaste, c_creaturecaste*, alloc_creaturecaste_buffer_callback)
+REG_MACRO(CreatureCaste, c_creaturecaste**, alloc_creaturecaste_buffer_callback)
 UNREG_MACRO(CreatureCaste, alloc_creaturecaste_buffer_callback)
 
 void UnregisterEmptyCreatureCasteCallback()
@@ -184,17 +184,17 @@ void UnregisterNewCreatureCasteCallback()
 	alloc_creaturecaste_callback = NULL;
 }
 
-void RegisterEmptyCreatureTypeCallback(int (*funcptr)(c_creaturetype*))
+void RegisterEmptyCreatureTypeCallback(int (*funcptr)(c_creaturetype**))
 {
 	alloc_empty_creaturetype_callback = funcptr;
 }
 
-void RegisterNewCreatureTypeCallback(int (*funcptr)(c_creaturetype*, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t))
+void RegisterNewCreatureTypeCallback(int (*funcptr)(c_creaturetype**, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t))
 {
 	alloc_creaturetype_callback = funcptr;
 }
 
-REG_MACRO(CreatureType, c_creaturetype*, alloc_creaturetype_buffer_callback)
+REG_MACRO(CreatureType, c_creaturetype**, alloc_creaturetype_buffer_callback)
 UNREG_MACRO(CreatureType, alloc_creaturetype_buffer_callback)
 
 void UnregisterEmptyCreatureTypeCallback()
@@ -207,11 +207,11 @@ void UnregisterNewCreatureTypeCallback()
 	alloc_creaturetype_callback = NULL;
 }
 
-REG_MACRO(Vein, t_vein*, alloc_vein_buffer_callback)
-REG_MACRO(FrozenLiquidVein, t_frozenliquidvein*, alloc_frozenliquidvein_buffer_callback)
-REG_MACRO(SpatterVein, t_spattervein*, alloc_spattervein_buffer_callback)
-REG_MACRO(GrassVein, t_grassvein*, alloc_grassvein_buffer_callback)
-REG_MACRO(WorldConstruction, t_worldconstruction*, alloc_worldconstruction_buffer_callback)
+REG_MACRO(Vein, t_vein**, alloc_vein_buffer_callback)
+REG_MACRO(FrozenLiquidVein, t_frozenliquidvein**, alloc_frozenliquidvein_buffer_callback)
+REG_MACRO(SpatterVein, t_spattervein**, alloc_spattervein_buffer_callback)
+REG_MACRO(GrassVein, t_grassvein**, alloc_grassvein_buffer_callback)
+REG_MACRO(WorldConstruction, t_worldconstruction**, alloc_worldconstruction_buffer_callback)
 
 UNREG_MACRO(Vein, alloc_vein_buffer_callback)
 UNREG_MACRO(FrozenLiquidVein, alloc_frozenliquidvein_buffer_callback)
@@ -268,7 +268,7 @@ int ColorListConvert(t_colormodifier* src, c_colormodifier* dest)
 	if(src == NULL)
 		return -1;
 	
-	((*alloc_colormodifier_callback)(dest, src->part, src->colorlist.size()));
+	((*alloc_colormodifier_callback)(&dest, src->part, src->colorlist.size()));
 	
 	copy(src->colorlist.begin(), src->colorlist.end(), dest->colorlist);
 	
@@ -280,10 +280,10 @@ int CreatureCasteConvert(t_creaturecaste* src, c_creaturecaste* dest)
 	if(src == NULL)
 		return -1;
 	
-	((*alloc_creaturecaste_callback)(dest, src->rawname, src->singular, src->plural, src->adjective, src->ColorModifier.size(), src->bodypart.size()));
+	((*alloc_creaturecaste_callback)(&dest, src->rawname, src->singular, src->plural, src->adjective, src->colorModifier.size(), src->bodypart.size()));
 	
 	for(unsigned int i = 0; i < dest->colorModifierLength; i++)
-		ColorListConvert(&src->ColorModifier[i], &dest->ColorModifier[i]);
+		ColorListConvert(&src->colorModifier[i], &(dest->colorModifier[i]));
 	
 	copy(src->bodypart.begin(), src->bodypart.end(), dest->bodypart);
 	
@@ -295,7 +295,7 @@ int CreatureTypeConvert(t_creaturetype* src, c_creaturetype* dest)
 	if(src == NULL)
 		return -1;
 	
-	((*alloc_creaturetype_callback)(dest, src->rawname, src->castes.size(), src->extract.size(), src->tile_character, src->tilecolor.fore, src->tilecolor.back, src->tilecolor.bright));
+	((*alloc_creaturetype_callback)(&dest, src->rawname, src->castes.size(), src->extract.size(), src->tile_character, src->tilecolor.fore, src->tilecolor.back, src->tilecolor.bright));
 	
 	for(unsigned int i = 0; i < dest->castesCount; i++)
 		CreatureCasteConvert(&src->castes[i], &dest->castes[i]);

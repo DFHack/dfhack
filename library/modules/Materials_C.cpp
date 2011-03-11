@@ -395,18 +395,9 @@ c_creaturetype* Materials_getRaceEx(DFHackObject* mat)
 		{
 			c_creaturetype* buf = NULL;
 			
-			if(alloc_creaturetype_buffer_callback == NULL)
-				return NULL;
+			CreatureTypeConvert(((DFHack::Materials*)mat)->raceEx, &buf);
 			
-			((*alloc_creaturetype_buffer_callback)(&buf, matSize));
-			
-			if(buf != NULL)
-			{
-				for(int i = 0; i < matSize; i++)
-					CreatureTypeConvert(&materials->raceEx[i], &(buf[i]));
-				
-				return buf;
-			}
+			return buf;
 		}
 	}
 	

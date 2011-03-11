@@ -9,263 +9,9 @@
 using namespace std;
 
 #include <DFHack.h>
-#include <dfhack/DFTileTypes.h>
+#include <dfhack/extra/MapExtras.h>
+using namespace MapExtras;
 //#include <argstream.h>
-
-#define MAX_DIM 0x300
-
-//TODO: turn into the official coord class for DFHack/DF
-class Vertex
-{
-    public:
-    Vertex(uint32_t _x, uint32_t _y, uint32_t _z):x(_x),y(_y),z(_z) {}
-    Vertex()
-    {
-        x = y = z = 0;
-    }
-    bool operator==(const Vertex &other) const
-    {
-        return (other.x == x && other.y == y && other.z == z);
-    }
-    // FIXME: <tomprince> peterix_: you could probably get away with not defining operator< if you defined a std::less specialization for Vertex.
-    bool operator<(const Vertex &other) const
-    {
-        // FIXME: could be changed to eliminate MAX_DIM and make std::map lookups faster?
-        return ( (z*MAX_DIM*MAX_DIM + y*MAX_DIM + x) < (other.z*MAX_DIM*MAX_DIM + other.y*MAX_DIM + other.x));
-    }
-    Vertex operator/(int number) const
-    {
-        return Vertex(x/number, y/number, z);
-    }
-    Vertex operator%(int number) const
-    {
-        return Vertex(x%number, y%number, z);
-    }
-    Vertex operator-(int number) const
-    {
-        return Vertex(x,y,z-number);
-    }
-    Vertex operator+(int number) const
-    {
-        return Vertex(x,y,z+number);
-    }
-    uint32_t x;
-    uint32_t y;
-    uint32_t z;
-};
-
-class Block
-{
-    public:
-    Block(DFHack::Maps *_m, Vertex _bcoord)
-    {
-        vector <DFHack::t_vein> veins;
-        m = _m;
-        dirty = false;
-        valid = false;
-        bcoord = _bcoord;
-        if(m->ReadBlock40d(bcoord.x,bcoord.y,bcoord.z,&raw))
-        {
-            memset(materials,-1,sizeof(materials));
-            memset(bitmap,0,sizeof(bitmap));
-            m->ReadVeins(bcoord.x,bcoord.y,bcoord.z,&veins);
-            // for each vein
-            for(int i = 0; i < (int)veins.size();i++)
-            {
-                //iterate through vein rows
-                for(uint32_t j = 0;j<16;j++)
-                {
-                    //iterate through the bits
-                    for (uint32_t k = 0; k< 16;k++)
-                    {
-                        // check if it's really a vein (FIXME: doing this too many times)
-                        int16_t tt = raw.tiletypes[k][j];
-                        if(DFHack::isWallTerrain(tt) && DFHack::tileTypeTable[tt].m == DFHack::VEIN)
-                        {
-                            // and the bit array with a one-bit mask, check if the bit is set
-                            bool set = !!(((1 << k) & veins[i].assignment[j]) >> k);
-                            if(set)
-                            {
-                                // store matgloss
-                                materials[k][j] = veins[i].type;
-                            }
-                        }
-                    }
-                }
-            }
-            valid = true;
-        }
-    }
-    int16_t MaterialAt(Vertex p)
-    {
-        return materials[p.x][p.y];
-    }
-    void ClearMaterialAt(Vertex p)
-    {
-        materials[p.x][p.y] = -1;
-    }
-    int16_t TileTypeAt(Vertex p)
-    {
-        return raw.tiletypes[p.x][p.y];
-    }
-    DFHack::t_designation DesignationAt(Vertex p)
-    {
-        return raw.designation[p.x][p.y];
-    }
-    bool setDesignationAt(Vertex p, DFHack::t_designation des)
-    {
-        if(!valid) return false;
-        dirty = true;
-        //printf("setting block %d/%d/%d , %d %d\n",x,y,z, p.x, p.y);
-        raw.designation[p.x][p.y] = des;
-        return true;
-    }
-    bool WriteDesignations ()
-    {
-        if(!valid) return false;
-        if(dirty)
-        {
-            //printf("writing %d/%d/%d\n",x,y,z);
-            m->WriteDesignations(bcoord.x,bcoord.y,bcoord.z, &raw.designation);
-            m->WriteDirtyBit(bcoord.x,bcoord.y,bcoord.z,true);
-        }
-        return true;
-    }
-    volatile bool valid;
-    volatile bool dirty;
-    DFHack::Maps * m;
-    DFHack::mapblock40d raw;
-    Vertex bcoord;
-    int16_t materials[16][16];
-    int8_t bitmap[16][16];
-};
-
-class MapCache
-{
-    public:
-    MapCache(DFHack::Maps * Maps)
-    {
-        valid = 0;
-        this->Maps = Maps;
-        Maps->getSize(x_bmax, y_bmax, z_max);
-        valid = true;
-    };
-    ~MapCache()
-    {
-        map<Vertex, Block *>::iterator p;
-        for(p = blocks.begin(); p != blocks.end(); p++)
-        {
-            delete p->second;
-            //cout << stonetypes[p->first].id << " : " << p->second << endl;
-        }
-    }
-    bool isValid ()
-    {
-        return valid;
-    }
-    
-    Block * BlockAt (Vertex blockcoord)
-    {
-        if(!valid) return 0;
-        
-        map <Vertex, Block*>::iterator iter = blocks.find(blockcoord);
-        if(iter != blocks.end())
-        {
-            return (*iter).second;
-        }
-        else
-        {
-            if(blockcoord.x < x_bmax && blockcoord.y < y_bmax && blockcoord.z < z_max)
-            {
-                Block * nblo = new Block(Maps,blockcoord);
-                blocks[blockcoord] = nblo;
-                return nblo;
-            }
-            return 0;
-        }
-    }
-    
-    uint16_t tiletypeAt (Vertex tilecoord)
-    {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            return b->TileTypeAt(tilecoord % 16);
-        }
-        return 0;
-    }
-    
-    int16_t materialAt (Vertex tilecoord)
-    {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            return b->MaterialAt(tilecoord % 16);
-        }
-        return 0;
-    }
-    bool clearMaterialAt (Vertex tilecoord)
-    {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            b->ClearMaterialAt(tilecoord % 16);
-        }
-        return 0;
-    }
-
-
-    DFHack::t_designation designationAt (Vertex tilecoord)
-    {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            return b->DesignationAt(tilecoord % 16);
-        }
-        DFHack:: t_designation temp;
-        temp.whole = 0;
-        return temp;
-    }
-    bool setDesignationAt (Vertex tilecoord, DFHack::t_designation des)
-    {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            b->setDesignationAt(tilecoord % 16, des);
-            return true;
-        }
-        return false;
-    }
-    bool testCoord (Vertex tilecoord)
-    {
-        Block * b= BlockAt(tilecoord / 16);
-        if(b && b->valid)
-        {
-            return true;
-        }
-        return false;
-    }
-    
-    bool WriteAll()
-    {
-        map<Vertex, Block *>::iterator p;
-        for(p = blocks.begin(); p != blocks.end(); p++)
-        {
-            p->second->WriteDesignations();
-            //cout << stonetypes[p->first].id << " : " << p->second << endl;
-        }
-        return true;
-    }
-    private:
-    volatile bool valid;
-    uint32_t x_bmax;
-    uint32_t y_bmax;
-    uint32_t x_tmax;
-    uint32_t y_tmax;
-    uint32_t z_max;
-    DFHack::Maps * Maps;
-    map<Vertex, Block *> blocks;
-};
 
 int main (int argc, char* argv[])
 {
@@ -333,7 +79,7 @@ int main (int argc, char* argv[])
         DF->Suspend();
         Pos->getCursorCoords(cx,cy,cz);
     }
-    Vertex xy ((uint32_t)cx,(uint32_t)cy,cz);
+    DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
     if(xy.x == 0 || xy.x == tx_max - 1 || xy.y == 0 || xy.y == ty_max - 1)
     {
         cerr << "I won't dig the borders. That would be cheating!" << endl;
@@ -344,12 +90,11 @@ int main (int argc, char* argv[])
         return 1;
     }
     MapCache * MCache = new MapCache(Maps);
-    
-    
+
     DFHack::t_designation des = MCache->designationAt(xy);
     int16_t tt = MCache->tiletypeAt(xy);
     int16_t veinmat = MCache->materialAt(xy);
-    
+
     if( veinmat == -1 )
     {
         cerr << "This tile is non-vein. Bye :)" << endl;
@@ -361,21 +106,22 @@ int main (int argc, char* argv[])
         return 1;
     }
     printf("%d/%d/%d tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, des.whole);
-    stack <Vertex> flood;
+    stack <DFHack::DFCoord> flood;
     flood.push(xy);
 
 
-    while( !flood.empty() )  
-    {  
-        Vertex current = flood.top();
+    while( !flood.empty() )
+    {
+        DFHack::DFCoord current = flood.top();
         flood.pop();
         int16_t vmat2 = MCache->materialAt(current);
-        
+        tt = MCache->tiletypeAt(current);
+        if(!DFHack::isWallTerrain(tt))
+            continue;
         if(vmat2!=veinmat)
             continue;
-        
+
         // found a good tile, dig+unset material
-        
         DFHack::t_designation des = MCache->designationAt(current);
         DFHack::t_designation des_minus;
         DFHack::t_designation des_plus;
@@ -392,7 +138,7 @@ int main (int argc, char* argv[])
                 des_minus = MCache->designationAt(current-1);
                 vmat_minus = MCache->materialAt(current-1);
             }
-            
+
             if(MCache->testCoord(current+1))
             {
                 above = 1;
@@ -405,30 +151,30 @@ int main (int argc, char* argv[])
             MCache->clearMaterialAt(current);
             if(current.x < tx_max - 2)
             {
-                flood.push(Vertex(current.x + 1, current.y, current.z));
+                flood.push(DFHack::DFCoord(current.x + 1, current.y, current.z));
                 if(current.y < ty_max - 2)
                 {
-                    flood.push(Vertex(current.x + 1, current.y + 1,current.z));
-                    flood.push(Vertex(current.x, current.y + 1,current.z));
+                    flood.push(DFHack::DFCoord(current.x + 1, current.y + 1,current.z));
+                    flood.push(DFHack::DFCoord(current.x, current.y + 1,current.z));
                 }
                 if(current.y > 1)
                 {
-                    flood.push(Vertex(current.x + 1, current.y - 1,current.z));
-                    flood.push(Vertex(current.x, current.y - 1,current.z));
+                    flood.push(DFHack::DFCoord(current.x + 1, current.y - 1,current.z));
+                    flood.push(DFHack::DFCoord(current.x, current.y - 1,current.z));
                 }
             }
             if(current.x > 1)
             {
-                flood.push(Vertex(current.x - 1, current.y,current.z));
+                flood.push(DFHack::DFCoord(current.x - 1, current.y,current.z));
                 if(current.y < ty_max - 2)
                 {
-                    flood.push(Vertex(current.x - 1, current.y + 1,current.z));
-                    flood.push(Vertex(current.x, current.y + 1,current.z));
+                    flood.push(DFHack::DFCoord(current.x - 1, current.y + 1,current.z));
+                    flood.push(DFHack::DFCoord(current.x, current.y + 1,current.z));
                 }
                 if(current.y > 1)
                 {
-                    flood.push(Vertex(current.x - 1, current.y - 1,current.z));
-                    flood.push(Vertex(current.x, current.y - 1,current.z));
+                    flood.push(DFHack::DFCoord(current.x - 1, current.y - 1,current.z));
+                    flood.push(DFHack::DFCoord(current.x, current.y - 1,current.z));
                 }
             }
             if(updown)
@@ -436,25 +182,25 @@ int main (int argc, char* argv[])
                 if(current.z > 0 && below && vmat_minus == vmat2)
                 {
                     flood.push(current-1);
-                    
+
                     if(des_minus.bits.dig == DFHack::designation_d_stair)
                         des_minus.bits.dig = DFHack::designation_ud_stair;
                     else
                         des_minus.bits.dig = DFHack::designation_u_stair;
                     MCache->setDesignationAt(current-1,des_minus);
-                    
+
                     des.bits.dig = DFHack::designation_d_stair;
                 }
                 if(current.z < z_max - 1 && above && vmat_plus == vmat2)
                 {
                     flood.push(current+ 1);
-                    
+
                     if(des_plus.bits.dig == DFHack::designation_u_stair)
                         des_plus.bits.dig = DFHack::designation_ud_stair;
                     else
                         des_plus.bits.dig = DFHack::designation_d_stair;
                     MCache->setDesignationAt(current+1,des_plus);
-                    
+
                     if(des.bits.dig == DFHack::designation_d_stair)
                         des.bits.dig = DFHack::designation_ud_stair;
                     else

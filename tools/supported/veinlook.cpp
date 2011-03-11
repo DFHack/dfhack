@@ -413,15 +413,13 @@ void do_features(Context* DF, mapblock40d * block, uint32_t blockX, uint32_t blo
     if(!Maps)
         return;
     vector<DFHack::t_feature> global_features;
-    std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> > local_features;
+    std::map <DFHack::DFCoord, std::vector<DFHack::t_feature *> > local_features;
     if(!Maps->ReadGlobalFeatures(global_features))
         return;
     if(!Maps->ReadLocalFeatures(local_features))
         return;
     
-    planecoord pc;
-    pc.dim.x = blockX;
-    pc.dim.y = blockY;
+    DFCoord pc(blockX, blockY);
     int16_t idx =block->global_feature;
     if(idx != -1)
     {

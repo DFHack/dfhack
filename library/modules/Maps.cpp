@@ -635,6 +635,7 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins,
     // read all veins
     for (uint32_t i = 0; i < size;i++)
     {
+        retry:
         // read the vein pointer from the vector
         uint32_t temp = p_veins[i];
         uint32_t type = p->readDWord(temp);
@@ -681,26 +682,32 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins,
         else
         {
             string cname = p->readClassName(type);
-            if(cname == "block_square_event_frozen_liquidst")
+            if(!off.vein_ice_vptr && cname == "block_square_event_frozen_liquidst")
             {
                 off.vein_ice_vptr = type;
+                goto retry;
             }
-            else if(cname == "block_square_event_mineralst")
+            else if(!off.vein_mineral_vptr &&cname == "block_square_event_mineralst")
             {
                 off.vein_mineral_vptr = type;
+                goto retry;
             }
-            else if(cname == "block_square_event_material_spatterst")
+            else if(!off.vein_spatter_vptr && cname == "block_square_event_material_spatterst")
             {
                 off.vein_spatter_vptr = type;
+                goto retry;
             }
-            else if(cname=="block_square_event_grassst")
+            else if(!off.vein_grass_vptr && cname=="block_square_event_grassst")
             {
                 off.vein_grass_vptr = type;
+                goto retry;
             }
-            else if(cname=="block_square_event_world_constructionst")
+            else if(!off.vein_worldconstruction_vptr && cname=="block_square_event_world_constructionst")
             {
                 off.vein_worldconstruction_vptr = type;
+                goto retry;
             }
+#ifdef DEBUG
             else // this is something we've never seen before
             {
                 if(!d->unknown_veins.count(type))
@@ -709,6 +716,7 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins,
                     d->unknown_veins.insert(type);
                 }
             }
+#endif
         }
     }
     return true;
@@ -854,7 +862,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     return true;
 }
 
-bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > & local_features )
+bool Maps::ReadLocalFeatures( std::map <DFCoord, std::vector<t_feature *> > & local_features )
 {
     MAPS_GUARD
     if(!d->hasFeatures) return false;
@@ -905,9 +913,7 @@ bool Maps::ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > &
             uint32_t feat_vector = wtf + sizeof_vec * (16 * (region_x_local % 16) + (region_y_local % 16));
             DfVector<uint32_t> p_features(p, feat_vector);
             uint32_t size = p_features.size();
-            planecoord pc;
-            pc.dim.x = blockX;
-            pc.dim.y = blockY;
+            DFCoord pc(blockX,blockY);
             std::vector<t_feature *> tempvec;
             for(uint32_t i = 0; i < size; i++)
             {

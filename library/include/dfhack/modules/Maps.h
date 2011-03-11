@@ -23,21 +23,59 @@ namespace DFHack
     };
 
     extern DFHACK_EXPORT const char * sa_feature(int index);
-
-    /// used as a key for the local feature map. combines X an Y coords.
-    union planecoord
+    
+    class DFCoord
     {
-        uint32_t xy;
-        struct 
+        public:
+        DFCoord(uint16_t _x, uint16_t _y, uint16_t _z = 0): x(_x), y(_y), z(_z) {}
+        DFCoord()
         {
-            uint16_t x;
-            uint16_t y;
-        } dim;
-        bool operator<(const planecoord &other) const
-        {
-            if(other.xy < xy) return true;
-            return false;
+            comparate = 0;
         }
+        bool operator==(const DFCoord &other) const
+        {
+            return (other.comparate == comparate);
+        }
+        // FIXME: <tomprince> peterix_: you could probably get away with not defining operator< if you defined a std::less specialization for Vertex.
+        bool operator<(const DFCoord &other) const
+        {
+            return comparate < other.comparate;
+        }
+        DFCoord operator/(int number) const
+        {
+            return DFCoord(x/number, y/number, z);
+        }
+        DFCoord operator*(int number) const
+        {
+            return DFCoord(x*number, y*number, z);
+        }
+        DFCoord operator%(int number) const
+        {
+            return DFCoord(x%number, y%number, z);
+        }
+        DFCoord operator-(int number) const
+        {
+            return DFCoord(x,y,z-number);
+        }
+        DFCoord operator+(int number) const
+        {
+            return DFCoord(x,y,z+number);
+        }
+        // this is a clever hack. beware.
+        // x,y,z share the same space with comparate. comparate can be used for fast comparisons
+        union
+        {
+            #pragma pack(push)  /* push current alignment to stack */
+            #pragma pack(2)     /* set alignment to 2 byte boundary */
+            struct
+            {
+                uint16_t x;
+                uint16_t y;
+                uint32_t z;
+            };
+            #pragma pack (pop)  /* restore alignment */
+            uint64_t comparate;
+        };
     };
 
     struct t_feature
@@ -217,6 +255,7 @@ namespace DFHack
     };
 
     // occupancy flags (rat,dwarf,horse,built wall,not build wall,etc)
+    //FIXME: THIS IS NOT VALID FOR 31.xx versions!!!!
     struct naked_occupancy
     {
         // building type... should be an enum?
@@ -296,6 +335,7 @@ namespace DFHack
     };
 
     typedef int16_t tiletypes40d [16][16];
+    typedef int16_t t_blockmaterials [16][16]; ///< used for squashed block materials
     typedef DFHack::t_designation designations40d [16][16];
     typedef DFHack::t_occupancy occupancies40d [16][16];
     typedef uint8_t biome_indices40d [16];
@@ -373,7 +413,7 @@ namespace DFHack
         // map between mangled coords and pointer to feature
 
         bool ReadGlobalFeatures( std::vector <t_feature> & features);
-        bool ReadLocalFeatures( std::map <planecoord, std::vector<t_feature *> > & local_features );
+        bool ReadLocalFeatures( std::map <DFCoord, std::vector<t_feature *> > & local_features );
         /*
          * BLOCK DATA
          */

@@ -130,7 +130,7 @@ NormalProcess::NormalProcess(uint32_t pid, VersionInfoFactory * factory)
     if(EnumProcessModules(my_handle, &hmod, sizeof(hmod), &needed) == 0)
     {
         CloseHandle(my_handle);
-		my_handle=0;
+        my_handle=0;
         // cout << "EnumProcessModules fail'd" << endl;
         return; //if enumprocessModules fails, give up
     }

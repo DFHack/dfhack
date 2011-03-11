@@ -21,7 +21,7 @@ def _allocate_array(ptr, t_type, count):
     
     ptr[0] = p
     
-    pointer_dict[id(ptr[0])] = (ptr, arr, p)
+    pointer_dict[addressof(arr)] = (ptr, arr, p)
 
     return 1
 

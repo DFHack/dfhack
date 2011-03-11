@@ -587,7 +587,7 @@ int Maps_ReadAllVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, c_
 				((*alloc_grassvein_buffer_callback)(&gs_buf, grass_veins.size()));
 				
 				if(gs_buf == NULL)
-					return NULL;
+					return -1;
 				
 				copy(grass_veins.begin(), grass_veins.end(), gs_buf);
 				
@@ -599,7 +599,7 @@ int Maps_ReadAllVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, c_
 				((*alloc_worldconstruction_buffer_callback)(&ct_buf, constructions.size()));
 				
 				if(ct_buf == NULL)
-					return NULL;
+					return -1;
 				
 				copy(constructions.begin(), constructions.end(), ct_buf);
 				

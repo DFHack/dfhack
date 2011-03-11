@@ -114,19 +114,14 @@ struct c_colormodifier
 	char part[128];
 	uint32_t* colorlist;
 	uint32_t colorlistLength;
+	uint32_t startdate;
+	uint32_t enddate;
 };
 
-DFHACK_EXPORT extern int (*alloc_empty_colormodifier_callback)(c_colormodifier**);
-DFHACK_EXPORT extern int (*alloc_colormodifier_callback)(c_colormodifier**, const char*, uint32_t);
-DFHACK_EXPORT extern int (*alloc_colormodifier_buffer_callback)(c_colormodifier**, uint32_t);
-
-DFHACK_EXPORT void RegisterEmptyColorModifierCallback(int (*funcptr)(c_colormodifier**));
-DFHACK_EXPORT void RegisterNewColorModifierCallback(int (*funcptr)(c_colormodifier**, const char*, uint32_t));
-DFHACK_EXPORT void RegisterColorModifierBufferCallback(int (*funcptr)(c_colormodifier**, uint32_t));
-
-DFHACK_EXPORT void UnregisterEmptyColorModifierCallback();
-DFHACK_EXPORT void UnregisterNewColorModifierCallback();
-HUNREG_MACRO(ColorModifier)
+struct c_colormodifier_descriptor
+{
+	uint32_t colorlistLength;
+};
 
 struct c_creaturecaste
 {
@@ -140,19 +135,32 @@ struct c_creaturecaste
 	
 	t_bodypart* bodypart;
 	uint32_t bodypartLength;
+	
+	t_attrib strength;
+	t_attrib agility;
+	t_attrib toughness;
+	t_attrib endurance;
+	t_attrib recuperation;
+	t_attrib disease_resistance;
+	t_attrib analytical_ability;
+	t_attrib focus;
+	t_attrib willpower;
+	t_attrib creativity;
+	t_attrib intuition;
+	t_attrib patience;
+	t_attrib memory;
+	t_attrib linguistic_ability;
+	t_attrib spatial_sense;
+	t_attrib musicality;
+	t_attrib kinesthetic_sense;
 };
 
-DFHACK_EXPORT extern int (*alloc_empty_creaturecaste_callback)(c_creaturecaste**);
-DFHACK_EXPORT extern int (*alloc_creaturecaste_callback)(c_creaturecaste**, const char*, const char*, const char*, const char*, uint32_t, uint32_t);
-DFHACK_EXPORT extern int (*alloc_creaturecaste_buffer_callback)(c_creaturecaste**, uint32_t);
-
-DFHACK_EXPORT void RegisterEmptyCreatureCasteCallback(int (*funcptr)(c_creaturecaste**));
-DFHACK_EXPORT void RegisterNewCreatureCasteCallback(int (*funcptr)(c_creaturecaste**, const char*, const char*, const char*, const char*, uint32_t, uint32_t));
-DFHACK_EXPORT void RegisterCreatureCasteBufferCallback(int (*funcptr)(c_creaturecaste**, uint32_t));
-
-DFHACK_EXPORT void UnregisterEmptyCreatureCasteCallback();
-DFHACK_EXPORT void UnregisterNewCreatureCasteCallback();
-HUNREG_MACRO(CreatureCaste)
+struct c_creaturecaste_descriptor
+{
+	c_colormodifier_descriptor* color_descriptors;
+	uint32_t colorModifierLength;
+	uint32_t bodypartLength;
+};
 
 struct c_creaturetype
 {
@@ -174,9 +182,14 @@ struct c_creaturetype
 	} tilecolor;
 };
 
-DFHACK_EXPORT extern int (*alloc_empty_creaturetype_callback)(c_creaturetype**);
-DFHACK_EXPORT extern int (*alloc_creaturetype_callback)(c_creaturetype**, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t);
-DFHACK_EXPORT extern int (*alloc_creaturetype_buffer_callback)(c_creaturetype**, uint32_t);
+struct c_creaturetype_descriptor
+{
+	c_creaturecaste_descriptor* caste_descriptors;
+	uint32_t castesCount;
+	uint32_t extractCount;
+};
+
+DFHACK_EXPORT extern int (*alloc_creaturetype_buffer_callback)(c_creaturetype**, c_creaturetype_descriptor*, uint32_t);
 
 DFHACK_EXPORT extern int (*alloc_vein_buffer_callback)(t_vein**, uint32_t);
 DFHACK_EXPORT extern int (*alloc_frozenliquidvein_buffer_callback)(t_frozenliquidvein**, uint32_t);
@@ -184,9 +197,7 @@ DFHACK_EXPORT extern int (*alloc_spattervein_buffer_callback)(t_spattervein**, u
 DFHACK_EXPORT extern int (*alloc_grassvein_buffer_callback)(t_grassvein**, uint32_t);
 DFHACK_EXPORT extern int (*alloc_worldconstruction_buffer_callback)(t_worldconstruction**, uint32_t);
 
-DFHACK_EXPORT void RegisterEmptyCreatureTypeCallback(int (*funcptr)(c_creaturetype**));
-DFHACK_EXPORT void RegisterNewCreatureTypeCallback(int (*funcptr)(c_creaturetype**, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t));
-DFHACK_EXPORT void RegisterCreatureTypeBufferCallback(int (*funcptr)(c_creaturetype**, uint32_t));
+DFHACK_EXPORT void RegisterCreatureTypeBufferCallback(int (*funcptr)(c_creaturetype**, c_creaturetype_descriptor*, uint32_t));
 
 DFHACK_EXPORT void RegisterVeinBufferCallback(int (*funcptr)(t_vein**, uint32_t));
 DFHACK_EXPORT void RegisterFrozenLiquidVeinBufferCallback(int (*funcptr)(t_frozenliquidvein**, uint32_t));
@@ -194,8 +205,6 @@ DFHACK_EXPORT void RegisterSpatterVeinBufferCallback(int (*funcptr)(t_spattervei
 DFHACK_EXPORT void RegisterGrassVeinBufferCallback(int (*funcptr)(t_grassvein**, uint32_t));
 DFHACK_EXPORT void RegisterWorldConstructionBufferCallback(int (*funcptr)(t_worldconstruction**, uint32_t));
 
-DFHACK_EXPORT void UnregisterEmptyCreatureTypeCallback();
-DFHACK_EXPORT void UnregisterNewCreatureTypeCallback();
 HUNREG_MACRO(CreatureType)
 
 HUNREG_MACRO(Vein)
@@ -217,8 +226,9 @@ DFHACK_EXPORT int DFHack_getTileType(int index, TileRow* tPtr);
 }
 #endif
 
-int CreatureTypeConvert(t_creaturetype* src, c_creaturetype* dest);
-int CreatureCasteConvert(t_creaturecaste* src, c_creaturecaste* dest);
-int ColorListConvert(t_colormodifier* src, c_colormodifier* dest);
+void BuildDescriptorList(std::vector<t_creaturetype> & src, c_creaturetype_descriptor** dest);
+void FreeDescriptorList(c_creaturetype_descriptor* d, uint32_t length);
+
+int CreatureTypeConvert(std::vector<t_creaturetype> &, c_creaturetype**);
 
 #endif

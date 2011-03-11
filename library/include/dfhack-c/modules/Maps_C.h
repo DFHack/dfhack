@@ -90,6 +90,8 @@ typedef struct
 
 DFHACK_EXPORT int Maps_ReadAllVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, c_allveins* vein_struct);
 
+DFHACK_EXPORT t_tree* Maps_ReadVegetation(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
+
 #ifdef __cplusplus
 }
 #endif

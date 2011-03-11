@@ -232,7 +232,7 @@ def _alloc_custom_workshop_buffer_callback(ptr, count):
 
 _custom_workshop_functype = CFUNCTYPE(c_int, POINTER(POINTER(CustomWorkshop)), c_uint)
 _custom_workshop_func = _custom_workshop_functype(_alloc_custom_workshop_buffer_callback)
-_register_callback("alloc_t_customWorkshop_buffer_callback", _custom_workshop_func)
+_register_callback("alloc_customWorkshop_buffer_callback", _custom_workshop_func)
 
 class Construction(Structure):
     _fields_ = [("x", c_ushort),
@@ -255,6 +255,26 @@ class Tree(Structure):
                 ("y", c_ushort),
                 ("z", c_ushort),
                 ("address", c_uint)]
+    
+    def __str__(self):
+        water = ""
+        tree_type = "tree"
+        
+        if self.type == 1 or self.type == 3:
+            water = "near-water"
+        if self.type == 2 or self.type == 3:
+            tree_type = "shrub"
+        
+        s = "%d:%d = %s %s\nAddress:  0x%x\n" % (self.type, self.material, water, tree_type, self.address)
+        
+        return s
+
+def _alloc_tree_buffer_callback(ptr, count):
+    return util._allocate_array(ptr, Tree, count)
+
+_alloc_tree_buffer_functype = CFUNCTYPE(c_int, POINTER(POINTER(Tree)), c_uint)
+_alloc_tree_buffer_func = _alloc_tree_buffer_functype(_alloc_tree_buffer_func)
+_register_callback("alloc_tree_buffer_callback", _alloc_tree_buffer_func)
 
 class Material(Structure):
     _fields_ = [("itemType", c_short),
@@ -268,7 +288,7 @@ def _alloc_material_buffer_callback(ptr, count):
 
 _material_functype = CFUNCTYPE(c_int, POINTER(POINTER(Material)), c_uint)
 _material_func = _material_functype(_alloc_material_buffer_callback)
-_register_callback("alloc_t_material_buffer_callback", _material_func)
+_register_callback("alloc_material_buffer_callback", _material_func)
 
 class Skill(Structure):
     _fields_ = [("id", c_uint),

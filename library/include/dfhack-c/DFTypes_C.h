@@ -55,9 +55,11 @@ DFHACK_EXPORT extern int (*alloc_matgloss_buffer_callback)(t_matgloss**, uint32_
 DFHACK_EXPORT extern int (*alloc_descriptor_buffer_callback)(t_descriptor_color**, uint32_t);
 DFHACK_EXPORT extern int (*alloc_matgloss_other_buffer_callback)(t_matglossOther**, uint32_t);
 
-DFHACK_EXPORT extern int (*alloc_t_feature_buffer_callback)(t_feature**, uint32_t);
-DFHACK_EXPORT extern int (*alloc_t_hotkey_buffer_callback)(t_hotkey**, uint32_t);
-DFHACK_EXPORT extern int (*alloc_t_screen_buffer_callback)(t_screen**, uint32_t);
+DFHACK_EXPORT extern int (*alloc_feature_buffer_callback)(t_feature**, uint32_t);
+DFHACK_EXPORT extern int (*alloc_hotkey_buffer_callback)(t_hotkey**, uint32_t);
+DFHACK_EXPORT extern int (*alloc_screen_buffer_callback)(t_screen**, uint32_t);
+
+DFHACK_EXPORT extern int (*alloc_tree_buffer_callback)(t_tree**, uint32_t);
 
 DFHACK_EXPORT void RegisterByteBufferCallback(int (*funcptr)(int8_t**, uint32_t));
 DFHACK_EXPORT void RegisterShortBufferCallback(int (*funcptr)(int16_t**, uint32_t));
@@ -77,6 +79,8 @@ DFHACK_EXPORT void RegisterFeatureBufferCallback(int (*funcptr)(t_feature**, uin
 DFHACK_EXPORT void RegisterHotkeyBufferCallback(int (*funcptr)(t_hotkey**, uint32_t));
 DFHACK_EXPORT void RegisterScreenBufferCallback(int (*funcptr)(t_screen**, uint32_t));
 
+DFHACK_EXPORT void RegisterTreeBufferCallback(int (*funcptr)(t_tree**, uint32_t));
+
 HUNREG_MACRO(Byte)
 HUNREG_MACRO(Short)
 HUNREG_MACRO(Int)
@@ -94,14 +98,16 @@ HUNREG_MACRO(Feature)
 HUNREG_MACRO(Hotkey)
 HUNREG_MACRO(Screen)
 
+HUNREG_MACRO(Tree)
+
 struct t_customWorkshop
 {
 	uint32_t index;
 	char name[256];
 };
 
-DFHACK_EXPORT extern int (*alloc_t_customWorkshop_buffer_callback)(t_customWorkshop**, uint32_t);
-DFHACK_EXPORT extern int (*alloc_t_material_buffer_callback)(t_material**, uint32_t);
+DFHACK_EXPORT extern int (*alloc_customWorkshop_buffer_callback)(t_customWorkshop**, uint32_t);
+DFHACK_EXPORT extern int (*alloc_material_buffer_callback)(t_material**, uint32_t);
 
 DFHACK_EXPORT void RegisterCustomWorkshopBufferCallback(int (*funcptr)(t_customWorkshop**, uint32_t));
 DFHACK_EXPORT void RegisterMaterialBufferCallback(int (*funcptr)(t_material**, uint32_t));

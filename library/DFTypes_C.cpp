@@ -82,12 +82,14 @@ int (*alloc_matgloss_buffer_callback)(t_matgloss**, uint32_t) = NULL;
 int (*alloc_descriptor_buffer_callback)(t_descriptor_color**, uint32_t) = NULL;
 int (*alloc_matgloss_other_buffer_callback)(t_matglossOther**, uint32_t) = NULL;
 
-int (*alloc_t_feature_buffer_callback)(t_feature**, uint32_t) = NULL;
-int (*alloc_t_hotkey_buffer_callback)(t_hotkey**, uint32_t) = NULL;
-int (*alloc_t_screen_buffer_callback)(t_screen**, uint32_t) = NULL;
+int (*alloc_feature_buffer_callback)(t_feature**, uint32_t) = NULL;
+int (*alloc_hotkey_buffer_callback)(t_hotkey**, uint32_t) = NULL;
+int (*alloc_screen_buffer_callback)(t_screen**, uint32_t) = NULL;
 
-int (*alloc_t_customWorkshop_buffer_callback)(t_customWorkshop**, uint32_t) = NULL;
-int (*alloc_t_material_buffer_callback)(t_material**, uint32_t) = NULL;
+int (*alloc_tree_buffer_callback)(t_tree**, uint32_t) = NULL;
+
+int (*alloc_customWorkshop_buffer_callback)(t_customWorkshop**, uint32_t) = NULL;
+int (*alloc_material_buffer_callback)(t_material**, uint32_t) = NULL;
 
 int (*alloc_creaturetype_buffer_callback)(c_creaturetype**, c_creaturetype_descriptor*, uint32_t) = NULL;
 
@@ -108,11 +110,12 @@ REG_MACRO(Char, char**, alloc_char_buffer_callback)
 REG_MACRO(Matgloss, t_matgloss**, alloc_matgloss_buffer_callback)
 REG_MACRO(DescriptorColor, t_descriptor_color**, alloc_descriptor_buffer_callback)
 REG_MACRO(MatglossOther, t_matglossOther**, alloc_matgloss_other_buffer_callback)
-REG_MACRO(Feature, t_feature**, alloc_t_feature_buffer_callback)
-REG_MACRO(Hotkey, t_hotkey**, alloc_t_hotkey_buffer_callback)
-REG_MACRO(Screen, t_screen**, alloc_t_screen_buffer_callback)
-REG_MACRO(CustomWorkshop, t_customWorkshop**, alloc_t_customWorkshop_buffer_callback)
-REG_MACRO(Material, t_material**, alloc_t_material_buffer_callback)
+REG_MACRO(Feature, t_feature**, alloc_feature_buffer_callback)
+REG_MACRO(Hotkey, t_hotkey**, alloc_hotkey_buffer_callback)
+REG_MACRO(Screen, t_screen**, alloc_screen_buffer_callback)
+REG_MACRO(Tree, t_tree**, alloc_tree_buffer_callback)
+REG_MACRO(CustomWorkshop, t_customWorkshop**, alloc_customWorkshop_buffer_callback)
+REG_MACRO(Material, t_material**, alloc_material_buffer_callback)
 
 UNREG_MACRO(Byte, alloc_byte_buffer_callback)
 UNREG_MACRO(Short, alloc_short_buffer_callback)
@@ -124,11 +127,12 @@ UNREG_MACRO(Char, alloc_char_buffer_callback)
 UNREG_MACRO(Matgloss, alloc_matgloss_buffer_callback)
 UNREG_MACRO(DescriptorColor, alloc_descriptor_buffer_callback)
 UNREG_MACRO(MatglossOther, alloc_matgloss_other_buffer_callback)
-UNREG_MACRO(Feature, alloc_t_feature_buffer_callback)
-UNREG_MACRO(Hotkey, alloc_t_hotkey_buffer_callback)
-UNREG_MACRO(Screen, alloc_t_screen_buffer_callback)
-UNREG_MACRO(CustomWorkshop, alloc_t_customWorkshop_buffer_callback)
-UNREG_MACRO(Material, alloc_t_material_buffer_callback)
+UNREG_MACRO(Feature, alloc_feature_buffer_callback)
+UNREG_MACRO(Hotkey, alloc_hotkey_buffer_callback)
+UNREG_MACRO(Screen, alloc_screen_buffer_callback)
+UNREG_MACRO(Tree, alloc_tree_buffer_callback)
+UNREG_MACRO(CustomWorkshop, alloc_customWorkshop_buffer_callback)
+UNREG_MACRO(Material, alloc_material_buffer_callback)
 
 void RegisterCreatureTypeBufferCallback(int (*funcptr)(c_creaturetype**, c_creaturetype_descriptor*, uint32_t))
 {

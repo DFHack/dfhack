@@ -110,7 +110,7 @@ t_feature* Maps_ReadGlobalFeatures(DFHackObject* maps)
 			
 			t_feature** buf = NULL;
 			
-			(*alloc_t_feature_buffer_callback)(buf, featureVec.size());
+			(*alloc_feature_buffer_callback)(buf, featureVec.size());
 			
 			if(buf != NULL)
 			{
@@ -613,6 +613,34 @@ int Maps_ReadAllVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, c_
 	}
 	
 	return -1;
+}
+
+t_tree* Maps_ReadVegetation(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z)
+{
+	if(maps == NULL)
+		return NULL;
+	else
+	{
+		std::vector<t_tree> plants;
+		bool result = ((DFHack::Maps*)maps)->ReadVegetation(x, y, z, &plants);
+		t_tree* buf = NULL;
+		
+		if(!result || plants.size() <= 0)
+			return NULL;
+		else
+		{
+			((*alloc_tree_buffer_callback)(&buf, plants.size()));
+			
+			if(buf == NULL)
+				return NULL;
+			
+			copy(plants.begin(), plants.end(), buf);
+			
+			return buf;
+		}
+	}
+	
+	return NULL;
 }
 
 #ifdef __cplusplus

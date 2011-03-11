@@ -19,6 +19,7 @@ _register_callback("alloc_uint_buffer_callback", alloc_uint_buffer)
 _register_callback("alloc_char_buffer_callback", alloc_char_buffer)
 
 _arr_create_func = CFUNCTYPE(c_void_p, c_int)
+_dfhack_string = (c_char * 128)
 
 TileTypes40d = ((c_int * 16) * 16)
 BiomeIndices40d = c_ubyte * 16
@@ -158,11 +159,11 @@ class ViewScreen(Structure):
     _fields_ = [("type", c_int)]
 
 class Matgloss(Structure):
-    _fields_ = [("id", c_char * 128),
+    _fields_ = [("id", _dfhack_string),
                 ("fore", c_byte),
                 ("back", c_byte),
                 ("bright", c_byte),
-                ("name", c_char * 128)]
+                ("name", _dfhack_string)]
 
 _matgloss_ptr = POINTER(Matgloss)
 
@@ -178,11 +179,11 @@ class MatglossPair(Structure):
                 ("index", c_int)]
 
 class DescriptorColor(Structure):
-    _fields_ = [("id", c_char * 128),
+    _fields_ = [("id", _dfhack_string),
                 ("r", c_float),
                 ("v", c_float),
                 ("b", c_float),
-                ("name", c_char * 128)]
+                ("name", _dfhack_string)]
 
 def _alloc_descriptor_buffer_callback(ptr, count):
     return util._allocate_array(ptr, DescriptorColor, count)
@@ -190,6 +191,16 @@ def _alloc_descriptor_buffer_callback(ptr, count):
 _descriptor_functype = CFUNCTYPE(c_int, POINTER(DescriptorColor), c_uint)
 _descriptor_func = _descriptor_functype(_alloc_descriptor_buffer_callback)
 _register_callback("alloc_descriptor_buffer_callback", _descriptor_func)
+
+class MatglossPlant(Structure):
+    _fields_ = [("id", _dfhack_string),
+                ("fore", c_ubyte),
+                ("back", c_ubyte),
+                ("bright", c_ubyte),
+                ("name", _dfhack_string),
+                ("drink_name", _dfhack_string),
+                ("food_name", _dfhack_string),
+                ("extract_name", _dfhack_string)]
 
 class MatglossOther(Structure):
     _fields_ = [("rawname", c_char * 128)]
@@ -287,8 +298,8 @@ class Attribute(Structure):
                 ("field_18", c_uint)]
 
 class Name(Structure):
-    _fields_ = [("first_name", (c_char * 128)),
-                ("nickname", (c_char * 128)),
+    _fields_ = [("first_name", _dfhack_string),
+                ("nickname", _dfhack_string),
                 ("words", (c_int * 7)),
                 ("parts_of_speech", (c_ushort * 7)),
                 ("language", c_uint),
@@ -298,7 +309,7 @@ class Note(Structure):
     _fields_ = [("symbol", c_char),
                 ("foreground", c_ushort),
                 ("background", c_ushort),
-                ("name", (c_char * 128)),
+                ("name", _dfhack_string),
                 ("x", c_ushort),
                 ("y", c_ushort),
                 ("z", c_ushort)]
@@ -350,7 +361,7 @@ class Creature(Structure):
                 ("mood_skill", c_short),
                 ("artifact_name", Name),
                 ("profession", c_ubyte),
-                ("custom_profession", (c_char * 128)),
+                ("custom_profession", _dfhack_string),
                 ("labors", (c_ubyte * _NUM_CREATURE_LABORS)),
                 ("current_job", Job),
                 ("happiness", c_uint),
@@ -373,59 +384,144 @@ class Creature(Structure):
                 ("birth_time", c_uint)]
 
 class CreatureExtract(Structure):
-    _fields_ = [("rawname", (c_char * 128))]
+    _fields_ = [("rawname", _dfhack_string)]
 
 class BodyPart(Structure):
-    _fields_ = [("id", (c_char * 128)),
-                ("category", (c_char * 128)),
-                ("single", (c_char * 128)),
-                ("plural", (c_char * 128))]
+    _fields_ = [("id", _dfhack_string),
+                ("category", _dfhack_string),
+                ("single", _dfhack_string),
+                ("plural", _dfhack_string)]
 
 class ColorModifier(Structure):
-    _fields_ = [("part", (c_char * 128)),
+    _fields_ = [("part", _dfhack_string),
                 ("colorlist", POINTER(c_uint)),
-                ("colorlistLength", c_uint)]
+                ("colorlistLength", c_uint),
+                ("startdate", c_uint),
+                ("enddate", c_uint)]
 
     def __init__(self):
-        self.part[0] = '\0'
         self.colorlistLength = 0
 
-def _alloc_empty_colormodifier_callback(ptr):
-    allocated = ColorModifier()
-    
-    p = cast(allocated, POINTER(ColorModifier))
-    
-    ptr[0] = p
-    
-    pointer_dict[id(ptr[0])] = (ptr, allocated, p)
-
-    return 1
-
-_empty_colormodifier_functype = CFUNCTYPE(c_int, POINTER(ColorModifier))
-_empty_colormodifier_func = _empty_colormodifier_functype(_alloc_empty_colormodifier_callback)
-_register_callback("alloc_empty_colormodifier_callback", _empty_colormodifier_func)
+_colormodifier_ptr = POINTER(ColorModifier)
 
 class CreatureCaste(Structure):
-    _fields_ = [("rawname", (c_char * 128)),
-                ("singular", (c_char * 128)),
-                ("plural", (c_char * 128)),
-                ("adjective", (c_char * 128)),
-                ("color_modifier", POINTER(ColorModifier)),
+    _fields_ = [("rawname", _dfhack_string),
+                ("singular", _dfhack_string),
+                ("plural", _dfhack_string),
+                ("adjective", _dfhack_string),
+                ("color_modifier", _colormodifier_ptr),
                 ("color_modifier_length", c_uint),
                 ("bodypart", POINTER(BodyPart)),
-                ("bodypart_length", c_uint)]
+                ("bodypart_length", c_uint),
+                ("strength", Attribute),
+                ("agility", Attribute),
+                ("toughness", Attribute),
+                ("endurance", Attribute),
+                ("recuperation", Attribute),
+                ("disease_resistance", Attribute),
+                ("analytical_ability", Attribute),
+                ("focus", Attribute),
+                ("willpower", Attribute),
+                ("creativity", Attribute),
+                ("intuition", Attribute),
+                ("patience", Attribute),
+                ("memory", Attribute),
+                ("linguistic_ability", Attribute),
+                ("spatial_sense", Attribute),
+                ("musicality", Attribute),
+                ("kinesthetic_sense", Attribute)]
+
+_creaturecaste_ptr = POINTER(CreatureCaste)
 
 class TileColor(Structure):
     _fields_ = [("fore", c_ushort),
                 ("back", c_ushort),
                 ("bright", c_ushort)]
 
+class ColorDescriptor(Structure):
+    _fields_ = [("colorlistLength", c_uint)]
+
+class CasteDescriptor(Structure):
+    _fields_ = [("color_descriptors", POINTER(ColorDescriptor)),
+                ("colorModifierLength", c_uint),
+                ("bodypartLength", c_uint)]
+
+class CreatureTypeDescriptor(Structure):
+    _fields_ = [("caste_descriptors", POINTER(CasteDescriptor)),
+                ("castesCount", c_uint),
+                ("extractCount", c_uint)]
+
 class CreatureType(Structure):
-    _fields_ = [("rawname", (c_char * 128)),
-                ("castes", POINTER(CreatureCaste)),
+    _fields_ = [("rawname", _dfhack_string),
+                ("castes", _creaturecaste_ptr),
                 ("castes_count", c_uint),
+                ("extract", POINTER(CreatureExtract)),
+                ("extract_count", c_uint),
                 ("tile_character", c_ubyte),
                 ("tilecolor", TileColor)]
+
+_creaturetype_ptr = POINTER(CreatureType)
+
+def _alloc_creaturetype_buffer(ptr, descriptors, count):
+    arr_list = []
+    c_arr = (CreatureType * count)()
+    
+    for i, v in enumerate(c_arr):
+        v.castesCount = descriptors[i].castesCount
+        v_caste_arr = (CreatureCaste * v.castesCount)()
+        
+        for j, v_c in enumerate(v_caste_arr):
+            caste_descriptor = descriptors[i].caste_descriptors[j]
+            
+            v_c.colorModifierLength = caste_descriptor.colorModifierLength
+            c_color_arr = (ColorModifier * v_c.colorModifierLength)()
+            
+            for k, c_c in enumerate(c_color_arr):
+                color_descriptor = caste_descriptor.color_descriptors[k]
+                
+                c_c.colorlistLength = color_descriptor.colorlistLength
+                
+                c_color_list_arr = (c_uint * c_c.colorlistLength)()
+                
+                p = cast(c_color_list_arr, POINTER(c_uint))
+                
+                c_c.colorlist = p
+                
+                arr_list.extend((c_color_list_arr, p))
+            
+            c_p = cast(c_color_arr, POINTER(ColorModifier))
+            v_c.colorModifier = c_p
+            
+            v_c.bodypartLength = caste_descriptor.bodypartLength
+            c_bodypart_arr = (BodyPart * v_c.bodypartLength)()
+            
+            b_p = cast(c_bodypart_arr, POINTER(BodyPart))
+            v_c.bodypart = b_p
+            
+            arr_list.extend((c_color_arr, c_p, c_bodypart_arr, b_p))
+        
+        v.extractCount = descriptors[i].extractCount
+        v_extract_arr = (CreatureExtract * v.extractCount)()
+        
+        caste_p = cast(v_caste_arr, POINTER(CreatureCaste))        
+        v.castes = caste_p
+        
+        extract_p = cast(v_extract_arr, POINTER(CreatureExtract))
+        v.extract = extract_p
+        
+        arr_list.extend((v_caste_arr, caste_p, v_extract_arr, extract_p))
+    
+    p = cast(c_arr, _creaturetype_ptr)
+    ptr[0] = p
+    print ""
+    
+    pointer_dict[addressof(c_arr)] = (ptr, c_arr, p, arr_list)
+    
+    return 1
+
+_alloc_creaturetype_buffer_functype = CFUNCTYPE(c_int, POINTER(_creaturetype_ptr), POINTER(CreatureTypeDescriptor), c_uint)
+_alloc_creaturetype_buffer_func = _alloc_creaturetype_buffer_functype(_alloc_creaturetype_buffer)
+_register_callback("alloc_creaturetype_buffer_callback", _alloc_creaturetype_buffer_func)
 
 class GameModes(Structure):
     _fields_ = [("control_mode", c_ubyte),

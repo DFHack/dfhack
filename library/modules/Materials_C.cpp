@@ -32,7 +32,10 @@ int Materials_ReadInorganicMaterials(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
-		return ((DFHack::Materials*)mat)->ReadInorganicMaterials();
+		if(((DFHack::Materials*)mat)->ReadInorganicMaterials() == true)
+			return 1;
+		else
+			return 0;
 	}
 	
 	return -1;
@@ -42,7 +45,10 @@ int Materials_ReadOrganicMaterials(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
-		return ((DFHack::Materials*)mat)->ReadOrganicMaterials();
+		if(((DFHack::Materials*)mat)->ReadOrganicMaterials() == true)
+			return 1;
+		else
+			return 0;
 	}
 	
 	return -1;
@@ -52,7 +58,10 @@ int Materials_ReadWoodMaterials(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
-		return ((DFHack::Materials*)mat)->ReadWoodMaterials();
+		if(((DFHack::Materials*)mat)->ReadWoodMaterials() == true)
+			return 1;
+		else
+			return 0;
 	}
 	
 	return -1;
@@ -62,7 +71,10 @@ int Materials_ReadPlantMaterials(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
-		return ((DFHack::Materials*)mat)->ReadPlantMaterials();
+		if(((DFHack::Materials*)mat)->ReadPlantMaterials() == true)
+			return 1;
+		else
+			return 0;
 	}
 	
 	return -1;
@@ -72,7 +84,10 @@ int Materials_ReadCreatureTypes(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
-		return ((DFHack::Materials*)mat)->ReadCreatureTypes();
+		if(((DFHack::Materials*)mat)->ReadCreatureTypes() == true)
+			return 1;
+		else
+			return 0;
 	}
 	
 	return -1;
@@ -82,7 +97,10 @@ int Materials_ReadCreatureTypesEx(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
-		return ((DFHack::Materials*)mat)->ReadCreatureTypesEx();
+		if(((DFHack::Materials*)mat)->ReadCreatureTypesEx() == true)
+			return 1;
+		else
+			return 0;
 	}
 	
 	return -1;
@@ -92,7 +110,10 @@ int Materials_ReadDescriptorColors(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
-		return ((DFHack::Materials*)mat)->ReadDescriptorColors();
+		if(((DFHack::Materials*)mat)->ReadDescriptorColors() == true)
+			return 1;
+		else
+			return 0;
 	}
 	
 	return -1;
@@ -102,7 +123,10 @@ int Materials_ReadOthers(DFHackObject* mat)
 {
 	if(mat != NULL)
 	{
-		return ((DFHack::Materials*)mat)->ReadOthers();
+		if(((DFHack::Materials*)mat)->ReadOthers() == true)
+			return 1;
+		else
+			return 0;
 	}
 	
 	return -1;
@@ -237,7 +261,7 @@ t_matgloss* Materials_getInorganic(DFHackObject* mat)
 			if(alloc_matgloss_buffer_callback == NULL)
 				return NULL;
 
-			((*alloc_matgloss_buffer_callback)(buf, materials->inorganic.size()));
+			((*alloc_matgloss_buffer_callback)(&buf, materials->inorganic.size()));
 			
 			if(buf != NULL)
 			{
@@ -264,7 +288,7 @@ t_matgloss* Materials_getOrganic(DFHackObject* mat)
 			if(alloc_matgloss_buffer_callback == NULL)
 				return NULL;
 			
-			((*alloc_matgloss_buffer_callback)(buf, materials->organic.size()));
+			((*alloc_matgloss_buffer_callback)(&buf, materials->organic.size()));
 			
 			if(buf != NULL)
 			{
@@ -291,7 +315,7 @@ t_matgloss* Materials_getTree(DFHackObject* mat)
 			if(alloc_matgloss_buffer_callback == NULL)
 				return NULL;
 			
-			((*alloc_matgloss_buffer_callback)(buf, materials->tree.size()));
+			((*alloc_matgloss_buffer_callback)(&buf, materials->tree.size()));
 			
 			if(buf != NULL)
 			{
@@ -318,7 +342,7 @@ t_matgloss* Materials_getPlant(DFHackObject* mat)
 			if(alloc_matgloss_buffer_callback == NULL)
 				return NULL;
 			
-			((*alloc_matgloss_buffer_callback)(buf, materials->plant.size()));
+			((*alloc_matgloss_buffer_callback)(&buf, materials->plant.size()));
 			
 			if(buf != NULL)
 			{
@@ -345,7 +369,7 @@ t_matgloss* Materials_getRace(DFHackObject* mat)
 			if(alloc_matgloss_buffer_callback == NULL)
 				return NULL;
 			
-			((*alloc_matgloss_buffer_callback)(buf, materials->race.size()));
+			((*alloc_matgloss_buffer_callback)(&buf, materials->race.size()));
 			
 			if(buf != NULL)
 			{
@@ -371,18 +395,9 @@ c_creaturetype* Materials_getRaceEx(DFHackObject* mat)
 		{
 			c_creaturetype* buf = NULL;
 			
-			if(alloc_creaturetype_buffer_callback == NULL)
-				return NULL;
+			CreatureTypeConvert(((DFHack::Materials*)mat)->raceEx, &buf);
 			
-			((*alloc_creaturetype_buffer_callback)(buf, matSize));
-			
-			if(buf != NULL)
-			{
-				for(int i = 0; i < matSize; i++)
-					CreatureTypeConvert(&materials->raceEx[i], &buf[i]);
-				
-				return buf;
-			}
+			return buf;
 		}
 	}
 	
@@ -399,7 +414,7 @@ t_descriptor_color* Materials_getColor(DFHackObject* mat)
 		{
 			t_descriptor_color* buf = NULL;
 			
-			((*alloc_descriptor_buffer_callback)(buf, materials->color.size()));
+			((*alloc_descriptor_buffer_callback)(&buf, materials->color.size()));
 			
 			if(buf != NULL)
 			{
@@ -423,7 +438,7 @@ t_matglossOther* Materials_getOther(DFHackObject* mat)
 		{
 			t_matglossOther* buf = NULL;
 			
-			((*alloc_matgloss_other_buffer_callback)(buf, materials->other.size()));
+			((*alloc_matgloss_other_buffer_callback)(&buf, materials->other.size()));
 			
 			if(buf != NULL)
 			{
@@ -447,7 +462,7 @@ t_matgloss* Materials_getAllDesc(DFHackObject* mat)
 		{
 			t_matgloss* buf = NULL;
 			
-			((*alloc_matgloss_buffer_callback)(buf, materials->alldesc.size()));
+			((*alloc_matgloss_buffer_callback)(&buf, materials->alldesc.size()));
 			
 			if(buf != NULL)
 			{

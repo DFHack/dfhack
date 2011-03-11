@@ -48,22 +48,27 @@ All of the allocators are defined in dfhack/library/include/dfhack-c/DFTypes_C.h
 
 Buffer Callback List
 ---------------------
-- alloc_byte_buffer_callback(int8_t*, uint32_t)
-- alloc_short_buffer_callback(int16_t*, uint32_t)
-- alloc_int_buffer_callback(int32_t*, uint32_t)
-- alloc_ubyte_buffer_callback(uint8_t*, uint32_t)
-- alloc_ushort_buffer_callback(uint16_t*, uint32_t)
-- alloc_uint_buffer_callback(uint32_t*, uint32_t)
-- alloc_char_buffer_callback(char* uint32_t)
-- alloc_matgloss_buffer_callback(t_matgloss*, uint32_t)
-- alloc_descriptor_buffer_callback(t_descriptor_color*, uint32_t)
-- alloc_matgloss_other_buffer_callback(t_matglossOther*, uint32_t)
-- alloc_vein_buffer_callback(t_vein*, uint32_t)
-- alloc_t_feature_buffer_callback(t_feature*, uint32_t)
-- alloc_t_hotkey_buffer_callback(t_hotkey*, uint32_t)
-- alloc_t_screen_buffer_callback(t_screen*, uint32_t)
-- alloc_frozenliquidvein_buffer_callback(t_frozenliquidvein*, uint32_t)
-- alloc_spattervein_buffer_callback(t_spattervein*, uint32_t)
+- alloc_byte_buffer_callback(int8_t**, uint32_t)
+- alloc_short_buffer_callback(int16_t**, uint32_t)
+- alloc_int_buffer_callback(int32_t**, uint32_t)
+- alloc_ubyte_buffer_callback(uint8_t**, uint32_t)
+- alloc_ushort_buffer_callback(uint16_t**, uint32_t)
+- alloc_uint_buffer_callback(uint32_t**, uint32_t)
+- alloc_char_buffer_callback(char** uint32_t)
+- alloc_matgloss_buffer_callback(t_matgloss**, uint32_t)
+- alloc_descriptor_buffer_callback(t_descriptor_color**, uint32_t)
+- alloc_matgloss_other_buffer_callback(t_matglossOther**, uint32_t)
+- alloc_t_feature_buffer_callback(t_feature**, uint32_t)
+- alloc_t_hotkey_buffer_callback(t_hotkey**, uint32_t)
+- alloc_t_screen_buffer_callback(t_screen**, uint32_t)
+- alloc_t_customWorkshop_buffer_callback(t_customWorkshop**, uint32_t)
+- alloc_t_material_buffer_callback(t_material**, uint32_t)
+- alloc_vein_buffer_callback(t_vein**, uint32_t)
+- alloc_frozenliquidvein_buffer_callback(t_frozenliquidvein**, uint32_t)
+- alloc_spattervein_buffer_callback(t_spattervein**, uint32_t)
+- alloc_grassvein_buffer_callback(t_grassvein**, uint32_t)
+- alloc_worldconstruction_buffer_callback(t_worldconstruction**, uint32_t)
+
 
 Templates Make My Life Harder
 -------------------------------
@@ -96,15 +101,14 @@ The Python bindings for dfhack implement the unsigned integer allocator callback
     |        arr_type = t_type * count
     |        arr = arr_type()
     |        
-    |        ptr = c_void_p()
-    |        ptr = addressof(arr)
-    |        
-    |        return (arr, ptr)
+    |        return arr
     |
     |    def _alloc_uint_buffer(ptr, count):
     |        a = _allocate_array(c_uint, count)
+    |
+    |        p = cast(a, POINTER(c_uint))
     |        
-    |        ptr = addressof(a[0])
+    |        ptr[0] = p
     |        
     |        return 1
     |
@@ -118,7 +122,11 @@ The Python bindings for dfhack implement the unsigned integer allocator callback
     |
     |   libdfhack = cdll.libdfhack
     |
-    |   libdfhack.alloc_uint_buffer_callback = alloc_uint_buffer
+    |   def _register_callback(name, func):
+    |       ptr = c_void_p.in_dll(libdfhack, name)
+    |       ptr.value = cast(func, c_void_p).value
+    |
+    |   _register_callback("alloc_uint_buffer_callback", alloc_uint_buffer)
 
 Modules
 ========

@@ -23,6 +23,12 @@ libdfhack.Maps_ReadSpatterVeins.argtypes = _default_argtypes
 libdfhack.Maps_ReadGrassVeins.argtypes = _default_argtypes
 libdfhack.Maps_ReadWorldConstructions.argtypes = _default_argtypes
 
+libdfhack.Maps_ReadStandardVeins.restype = POINTER(Vein)
+libdfhack.Maps_ReadFrozenVeins.restype = POINTER(FrozenLiquidVein)
+libdfhack.Maps_ReadSpatterVeins.restype = POINTER(SpatterVein)
+libdfhack.Maps_ReadGrassVeins.restype = POINTER(GrassVein)
+libdfhack.Maps_ReadWorldConstructions.restype = POINTER(WorldConstruction)
+
 class Maps(object):
     def __init__(self, ptr):
         self._map_ptr = ptr
@@ -162,27 +168,62 @@ class Maps(object):
     def read_veins(self, x, y, z):
         ux, uy, uz = _uintify(x, y, z)
         
-        return libdfhack.Maps_ReadStandardVeins(self._map_ptr, ux, uy, uz)
+        veins_ptr = libdfhack.Maps_ReadStandardVeins(self._map_ptr, ux, uy, uz)
+        veins = None
+        
+        if id(veins_ptr) in dftypes.pointer_dict:
+            veins = dftypes.pointer_dict[id(veins_ptr)][1]
+            del dftypes.pointer_dict[id(veins_ptr)]
+        
+        return veins
     
     def read_frozen_veins(self, x, y, z):
         ux, uy, uz = _uintify(x, y, z)
         
-        return libdfhack.Maps_ReadFrozenVeins(self._map_ptr, ux, uy, uz)
+        veins_ptr = libdfhack.Maps_ReadFrozenVeins(self._map_ptr, ux, uy, uz)
+        veins = None
+        
+        if id(veins_ptr) in dftypes.pointer_dict:
+            veins = dftypes.pointer_dict[id(veins_ptr)][1]
+            del dftypes.pointer_dict[id(veins_ptr)]
+        
+        return veins
     
     def read_spatter_veins(self, x, y, z):
         ux, uy, uz = _uintify(x, y, z)
         
-        return libdfhack.Maps_ReadSpatterVeins(self._map_ptr, ux, uy, uz)
+        veins_ptr = libdfhack.Maps_ReadSpatterVeins(self._map_ptr, ux, uy, uz)
+        veins = None
+        
+        if id(veins_ptr) in dftypes.pointer_dict:
+            veins = dftypes.pointer_dict[id(veins_ptr)][1]
+            del dftypes.pointer_dict[id(veins_ptr)]
+        
+        return veins
     
     def read_grass_veins(self, x, y, z):
         ux, uy, uz = _uintify(x, y, z)
         
-        return libdfhack.Maps_ReadGrassVeins(self._map_ptr, ux, uy, uz)
+        veins_ptr = libdfhack.Maps_ReadGrassVeins(self._map_ptr, ux, uy, uz)
+        veins = None
+        
+        if id(veins_ptr) in dftypes.pointer_dict:
+            veins = dftypes.pointer_dict[id(veins_ptr)][1]
+            del dftypes.pointer_dict[id(veins_ptr)]
+        
+        return veins
     
     def read_world_constructions(self, x, y, z):
         ux, uy, uz = _uintify(x, y, z)
         
-        return libdfhack.Maps_ReadWorldConstructions(self._map_ptr, ux, uy, uz)
+        veins_ptr = libdfhack.Maps_ReadWorldConstructions(self._map_ptr, ux, uy, uz)
+        veins = None
+        
+        if id(veins_ptr) in dftypes.pointer_dict:
+            veins = dftypes.pointer_dict[id(veins_ptr)][1]
+            del dftypes.pointer_dict[id(veins_ptr)]
+        
+        return veins
 
     @property
     def size(self):

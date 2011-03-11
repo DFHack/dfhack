@@ -4,6 +4,10 @@ import util
 
 libdfhack.Creatures_WriteLabors.argtypes = [ c_void_p, c_uint, POINTER(c_ubyte) ]
 
+libdfhack.Creatures_ReadJob.restype = POINTER(Material)
+libdfhack.Creatures_ReadInventoryIdx.restype = POINTER(c_uint)
+libdfhack.Creatures_ReadInventoryPtr.restype = POINTER(c_uint)
+
 class Creatures(object):
     def __init__(self, ptr):
         print ptr
@@ -45,7 +49,14 @@ class Creatures(object):
         return libdfhack.Creatures_WriteLabors(self._c_ptr, c_uint(index), labors) > 0
 
     def read_job(self, creature):
-        return libdfhack.Creatures_ReadJob(self._c_ptr, byref(creature))
+        job_ptr = libdfhack.Creatures_ReadJob(self._c_ptr, byref(creature))
+        jobs = None
+        
+        if id(job_ptr) in dftypes.pointer_dict:
+            jobs = dftypes.pointer_dict[id(job_ptr)][1]
+            del dftypes.pointer_dict[id(job_ptr)]
+        
+        return jobs
 
     @property
     def dwarf_race_index(self):

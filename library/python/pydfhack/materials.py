@@ -1,6 +1,16 @@
 from ctypes import *
-from dftypes import libdfhack
-from util import *
+import dftypes
+from dftypes import libdfhack, Matgloss, CreatureType, DescriptorColor, MatglossOther
+
+libdfhack.Materials_getInorganic.restype = c_void_p
+libdfhack.Materials_getOrganic.restype = c_void_p
+libdfhack.Materials_getTree.restype = c_void_p
+libdfhack.Materials_getPlant.restype = c_void_p
+libdfhack.Materials_getRace.restype = c_void_p
+libdfhack.Materials_getRaceEx.restype = c_void_p
+libdfhack.Materials_getColor.restype = c_void_p
+libdfhack.Materials_getOther.restype = c_void_p
+libdfhack.Materials_getAllDesc.restype = c_void_p
 
 class Materials(object):
     def __init__(self, ptr):
@@ -16,21 +26,60 @@ class Materials(object):
         self.other = None
     
     def _get_inorganic(self):
-        self.inorganic = libdfhack.Materials_getInorganic(self._mat_ptr)
+        inorganic = libdfhack.Materials_getInorganic(self._mat_ptr)
+        
+        if inorganic in dftypes.pointer_dict:
+            self.inorganic = [i for i in dftypes.pointer_dict[inorganic][1]]
+            del dftypes.pointer_dict[inorganic]
+
     def _get_organic(self):
-        self.organic = libdfhack.Materials_getOrganic(self._mat_ptr)
+        organic = libdfhack.Materials_getOrganic(self._mat_ptr)
+        
+        if organic in dftypes.pointer_dict:
+            self.organic = [i for i in dftypes.pointer_dict[organic][1]]
+            del dftypes.pointer_dict[organic]
+
     def _get_tree(self):
-        self.tree = libdfhack.Materials_getTree(self._mat_ptr)
+        tree = libdfhack.Materials_getTree(self._mat_ptr)
+        
+        if tree in dftypes.pointer_dict:
+            self.tree = [i for i in dftypes.pointer_dict[tree][1]]
+            del dftypes.pointer_dict[tree]
+
     def _get_plant(self):
-        self.plant = libdfhack.Materials_getPlant(self._mat_ptr)
+        plant = libdfhack.Materials_getPlant(self._mat_ptr)
+        
+        if plant in dftypes.pointer_dict:
+            self.plant = [i for i in dftypes.pointer_dict[plant][1]]
+            del dftypes.pointer_dict[plant]
+
     def _get_race(self):
-        self.race = libdfhack.Materials_getRace(self._mat_ptr)
+        race = libdfhack.Materials_getRace(self._mat_ptr)
+        
+        if race in dftypes.pointer_dict:
+            self.race = [i for i in dftypes.pointer_dict[race][1]]
+            del dftypes.pointer_dict[race]
+
     def _get_race_ex(self):
-        self.race_ex = libdfhack.Materials_getRaceEx(self._mat_ptr)
+        race_ex = libdfhack.Materials_getRaceEx(self._mat_ptr)
+        
+        if race_ex in dftypes.pointer_dict:
+            self.race_ex = [i for i in dftypes.pointer_dict[race_ex][1]]
+            del dftypes.pointer_dict[race_ex]
+
     def _get_color(self):
-        self.color = libdfhack.Materials_getColor(self._mat_ptr)
+        color = libdfhack.Materials_getColor(self._mat_ptr)
+        
+        if color in dftypes.pointer_dict:
+            self.color = [i for i in dftypes.pointer_dict[color][1]]
+            del dftypes.pointer_dict[color]
+
     def _get_other(self):
-        self.other = libdfhack.Materials_getOther(self._mat_ptr)
+        other = libdfhack.Materials_getOther(self._mat_ptr)
+        
+        if other in dftypes.pointer_dict:
+            self.other = [i for i in dftypes.pointer_dict[other][1]]
+            del dftypes.pointer_dict[other]
     
     def _get_all(self):
         self._get_inorganic()

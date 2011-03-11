@@ -68,60 +68,51 @@ void UnregisterByteBufferCallback()
 extern "C" {
 #endif
 
-int (*alloc_byte_buffer_callback)(int8_t*, uint32_t) = NULL;
-int (*alloc_short_buffer_callback)(int16_t*, uint32_t) = NULL;
-int (*alloc_int_buffer_callback)(int32_t*, uint32_t) = NULL;
+int (*alloc_byte_buffer_callback)(int8_t**, uint32_t) = NULL;
+int (*alloc_short_buffer_callback)(int16_t**, uint32_t) = NULL;
+int (*alloc_int_buffer_callback)(int32_t**, uint32_t) = NULL;
 
-int (*alloc_ubyte_buffer_callback)(uint8_t*, uint32_t) = NULL;
-int (*alloc_ushort_buffer_callback)(uint16_t*, uint32_t) = NULL;
-int (*alloc_uint_buffer_callback)(uint32_t*, uint32_t) = NULL;
+int (*alloc_ubyte_buffer_callback)(uint8_t**, uint32_t) = NULL;
+int (*alloc_ushort_buffer_callback)(uint16_t**, uint32_t) = NULL;
+int (*alloc_uint_buffer_callback)(uint32_t**, uint32_t) = NULL;
 
-int (*alloc_char_buffer_callback)(char*, uint32_t) = NULL;
+int (*alloc_char_buffer_callback)(char**, uint32_t) = NULL;
 
-int (*alloc_matgloss_buffer_callback)(t_matgloss*, uint32_t) = NULL;
-int (*alloc_descriptor_buffer_callback)(t_descriptor_color*, uint32_t) = NULL;
-int (*alloc_matgloss_other_buffer_callback)(t_matglossOther*, uint32_t) = NULL;
+int (*alloc_matgloss_buffer_callback)(t_matgloss**, uint32_t) = NULL;
+int (*alloc_descriptor_buffer_callback)(t_descriptor_color**, uint32_t) = NULL;
+int (*alloc_matgloss_other_buffer_callback)(t_matglossOther**, uint32_t) = NULL;
 
-int (*alloc_t_feature_buffer_callback)(t_feature*, uint32_t) = NULL;
-int (*alloc_t_hotkey_buffer_callback)(t_hotkey*, uint32_t) = NULL;
-int (*alloc_t_screen_buffer_callback)(t_screen*, uint32_t) = NULL;
+int (*alloc_t_feature_buffer_callback)(t_feature**, uint32_t) = NULL;
+int (*alloc_t_hotkey_buffer_callback)(t_hotkey**, uint32_t) = NULL;
+int (*alloc_t_screen_buffer_callback)(t_screen**, uint32_t) = NULL;
 
-int (*alloc_t_customWorkshop_buffer_callback)(t_customWorkshop*, uint32_t) = NULL;
-int (*alloc_t_material_buffer_callback)(t_material*, uint32_t) = NULL;
+int (*alloc_t_customWorkshop_buffer_callback)(t_customWorkshop**, uint32_t) = NULL;
+int (*alloc_t_material_buffer_callback)(t_material**, uint32_t) = NULL;
 
-int (*alloc_empty_colormodifier_callback)(c_colormodifier*) = NULL;
-int (*alloc_colormodifier_callback)(c_colormodifier*, const char*, uint32_t) = NULL;
-int (*alloc_colormodifier_buffer_callback)(c_colormodifier*, uint32_t) = NULL;
+int (*alloc_creaturetype_buffer_callback)(c_creaturetype**, c_creaturetype_descriptor*, uint32_t) = NULL;
 
-int (*alloc_empty_creaturecaste_callback)(c_creaturecaste*)= NULL;
-int (*alloc_creaturecaste_callback)(c_creaturecaste*, const char*, const char*, const char*, const char*, uint32_t, uint32_t) = NULL;
-int (*alloc_creaturecaste_buffer_callback)(c_creaturecaste*, uint32_t) = NULL;
+int (*alloc_vein_buffer_callback)(t_vein**, uint32_t) = NULL;
+int (*alloc_frozenliquidvein_buffer_callback)(t_frozenliquidvein**, uint32_t) = NULL;
+int (*alloc_spattervein_buffer_callback)(t_spattervein**, uint32_t) = NULL;
+int (*alloc_grassvein_buffer_callback)(t_grassvein**, uint32_t) = NULL;
+int (*alloc_worldconstruction_buffer_callback)(t_worldconstruction**, uint32_t) = NULL;
 
-int (*alloc_empty_creaturetype_callback)(c_creaturetype*) = NULL;
-int (*alloc_creaturetype_callback)(c_creaturetype*, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t) = NULL;
-int (*alloc_creaturetype_buffer_callback)(c_creaturetype*, uint32_t) = NULL;
-
-int (*alloc_vein_buffer_callback)(t_vein*, uint32_t) = NULL;
-int (*alloc_frozenliquidvein_buffer_callback)(t_frozenliquidvein*, uint32_t) = NULL;
-int (*alloc_spattervein_buffer_callback)(t_spattervein*, uint32_t) = NULL;
-int (*alloc_grassvein_buffer_callback)(t_grassvein*, uint32_t) = NULL;
-int (*alloc_worldconstruction_buffer_callback)(t_worldconstruction*, uint32_t) = NULL;
-
-REG_MACRO(Byte, int8_t*, alloc_byte_buffer_callback)
-REG_MACRO(Short, int16_t*, alloc_short_buffer_callback)
-REG_MACRO(Int, int32_t*, alloc_int_buffer_callback)
-REG_MACRO(UByte, uint8_t*, alloc_ubyte_buffer_callback)
-REG_MACRO(UShort, uint16_t*, alloc_ushort_buffer_callback)
-REG_MACRO(UInt, uint32_t*, alloc_uint_buffer_callback)
-REG_MACRO(Char, char*, alloc_char_buffer_callback)
-REG_MACRO(Matgloss, t_matgloss*, alloc_matgloss_buffer_callback)
-REG_MACRO(DescriptorColor, t_descriptor_color*, alloc_descriptor_buffer_callback)
-REG_MACRO(MatglossOther, t_matglossOther*, alloc_matgloss_other_buffer_callback)
-REG_MACRO(Feature, t_feature*, alloc_t_feature_buffer_callback)
-REG_MACRO(Hotkey, t_hotkey*, alloc_t_hotkey_buffer_callback)
-REG_MACRO(Screen, t_screen*, alloc_t_screen_buffer_callback)
-REG_MACRO(CustomWorkshop, t_customWorkshop*, alloc_t_customWorkshop_buffer_callback)
-REG_MACRO(Material, t_material*, alloc_t_material_buffer_callback)
+//int (*alloc_bodypart_buffer_callback)(t_bodypart**, uint32_t) = NULL;
+REG_MACRO(Byte, int8_t**, alloc_byte_buffer_callback)
+REG_MACRO(Short, int16_t**, alloc_short_buffer_callback)
+REG_MACRO(Int, int32_t**, alloc_int_buffer_callback)
+REG_MACRO(UByte, uint8_t**, alloc_ubyte_buffer_callback)
+REG_MACRO(UShort, uint16_t**, alloc_ushort_buffer_callback)
+REG_MACRO(UInt, uint32_t**, alloc_uint_buffer_callback)
+REG_MACRO(Char, char**, alloc_char_buffer_callback)
+REG_MACRO(Matgloss, t_matgloss**, alloc_matgloss_buffer_callback)
+REG_MACRO(DescriptorColor, t_descriptor_color**, alloc_descriptor_buffer_callback)
+REG_MACRO(MatglossOther, t_matglossOther**, alloc_matgloss_other_buffer_callback)
+REG_MACRO(Feature, t_feature**, alloc_t_feature_buffer_callback)
+REG_MACRO(Hotkey, t_hotkey**, alloc_t_hotkey_buffer_callback)
+REG_MACRO(Screen, t_screen**, alloc_t_screen_buffer_callback)
+REG_MACRO(CustomWorkshop, t_customWorkshop**, alloc_t_customWorkshop_buffer_callback)
+REG_MACRO(Material, t_material**, alloc_t_material_buffer_callback)
 
 UNREG_MACRO(Byte, alloc_byte_buffer_callback)
 UNREG_MACRO(Short, alloc_short_buffer_callback)
@@ -139,79 +130,18 @@ UNREG_MACRO(Screen, alloc_t_screen_buffer_callback)
 UNREG_MACRO(CustomWorkshop, alloc_t_customWorkshop_buffer_callback)
 UNREG_MACRO(Material, alloc_t_material_buffer_callback)
 
-void RegisterEmptyColorModifierCallback(int (*funcptr)(c_colormodifier*))
+void RegisterCreatureTypeBufferCallback(int (*funcptr)(c_creaturetype**, c_creaturetype_descriptor*, uint32_t))
 {
-	alloc_empty_colormodifier_callback = funcptr;
+	alloc_creaturetype_buffer_callback = funcptr;
 }
 
-void RegisterNewColorModifierCallback(int (*funcptr)(c_colormodifier*, const char*, uint32_t))
-{
-	alloc_colormodifier_callback = funcptr;
-}
-
-REG_MACRO(ColorModifier, c_colormodifier*, alloc_colormodifier_buffer_callback)
-
-void RegisterEmptyCreatureCasteCallback(int (*funcptr)(c_creaturecaste*))
-{
-	alloc_empty_creaturecaste_callback = funcptr;
-}
-
-void UnregisterEmptyColorModifierCallback()
-{
-	alloc_empty_colormodifier_callback = NULL;
-}
-
-void UnregisterNewColorModifierCallback()
-{
-	alloc_colormodifier_callback = NULL;
-}
-
-void RegisterNewCreatureCasteCallback(int (*funcptr)(c_creaturecaste*, const char*, const char*, const char*, const char*, uint32_t, uint32_t))
-{
-	alloc_creaturecaste_callback = funcptr;
-}
-
-REG_MACRO(CreatureCaste, c_creaturecaste*, alloc_creaturecaste_buffer_callback)
-UNREG_MACRO(CreatureCaste, alloc_creaturecaste_buffer_callback)
-
-void UnregisterEmptyCreatureCasteCallback()
-{
-	alloc_empty_creaturecaste_callback = NULL;
-}
-
-void UnregisterNewCreatureCasteCallback()
-{
-	alloc_creaturecaste_callback = NULL;
-}
-
-void RegisterEmptyCreatureTypeCallback(int (*funcptr)(c_creaturetype*))
-{
-	alloc_empty_creaturetype_callback = funcptr;
-}
-
-void RegisterNewCreatureTypeCallback(int (*funcptr)(c_creaturetype*, const char*, uint32_t, uint32_t, uint8_t, uint16_t, uint16_t, uint16_t))
-{
-	alloc_creaturetype_callback = funcptr;
-}
-
-REG_MACRO(CreatureType, c_creaturetype*, alloc_creaturetype_buffer_callback)
 UNREG_MACRO(CreatureType, alloc_creaturetype_buffer_callback)
 
-void UnregisterEmptyCreatureTypeCallback()
-{
-	alloc_empty_creaturetype_callback = NULL;
-}
-
-void UnregisterNewCreatureTypeCallback()
-{
-	alloc_creaturetype_callback = NULL;
-}
-
-REG_MACRO(Vein, t_vein*, alloc_vein_buffer_callback)
-REG_MACRO(FrozenLiquidVein, t_frozenliquidvein*, alloc_frozenliquidvein_buffer_callback)
-REG_MACRO(SpatterVein, t_spattervein*, alloc_spattervein_buffer_callback)
-REG_MACRO(GrassVein, t_grassvein*, alloc_grassvein_buffer_callback)
-REG_MACRO(WorldConstruction, t_worldconstruction*, alloc_worldconstruction_buffer_callback)
+REG_MACRO(Vein, t_vein**, alloc_vein_buffer_callback)
+REG_MACRO(FrozenLiquidVein, t_frozenliquidvein**, alloc_frozenliquidvein_buffer_callback)
+REG_MACRO(SpatterVein, t_spattervein**, alloc_spattervein_buffer_callback)
+REG_MACRO(GrassVein, t_grassvein**, alloc_grassvein_buffer_callback)
+REG_MACRO(WorldConstruction, t_worldconstruction**, alloc_worldconstruction_buffer_callback)
 
 UNREG_MACRO(Vein, alloc_vein_buffer_callback)
 UNREG_MACRO(FrozenLiquidVein, alloc_frozenliquidvein_buffer_callback)
@@ -263,44 +193,151 @@ int DFHack_getTileType(int index, TileRow* tPtr)
 }
 #endif
 
-int ColorListConvert(t_colormodifier* src, c_colormodifier* dest)
+void BuildDescriptorList(std::vector<t_creaturetype> & src, c_creaturetype_descriptor** dest)
 {
-	if(src == NULL)
-		return -1;
+	c_creaturetype_descriptor* descriptor = NULL;
+		
+	descriptor = (c_creaturetype_descriptor*)calloc(src.size(), sizeof(c_creaturetype_descriptor));
 	
-	((*alloc_colormodifier_callback)(dest, src->part, src->colorlist.size()));
+	for(uint32_t i = 0; i < src.size(); i++)
+	{
+		uint32_t castes_size = src[i].castes.size();
+		c_creaturetype_descriptor* current = &descriptor[i];
+		
+		current->castesCount = castes_size;
+		current->caste_descriptors = (c_creaturecaste_descriptor*)calloc(castes_size, sizeof(c_creaturecaste_descriptor));
+		
+		for(uint32_t j = 0; j < castes_size; j++)
+		{
+			uint32_t color_size = src[i].castes[j].ColorModifier.size();
+			c_creaturecaste_descriptor* current_caste = &current->caste_descriptors[j];
+			
+			current_caste->colorModifierLength = color_size;
+			current_caste->color_descriptors = (c_colormodifier_descriptor*)calloc(color_size, sizeof(c_colormodifier_descriptor));
+			
+			for(uint32_t k = 0; k < color_size; k++)
+			{
+				c_colormodifier_descriptor* current_color = &current_caste->color_descriptors[k];
+				
+				current_color->colorlistLength = src[i].castes[j].ColorModifier[k].colorlist.size();
+			}
+			
+			current_caste->bodypartLength = src[i].castes[j].bodypart.size();
+		}
+		
+		current->extractCount = src[i].extract.size();
+	}
 	
-	copy(src->colorlist.begin(), src->colorlist.end(), dest->colorlist);
-	
-	return 1;
+	*dest = descriptor;
 }
 
-int CreatureCasteConvert(t_creaturecaste* src, c_creaturecaste* dest)
+void FreeDescriptorList(c_creaturetype_descriptor* d, uint32_t length)
 {
-	if(src == NULL)
-		return -1;
+	for(uint32_t i = 0; i < length; i++)
+	{
+		c_creaturetype_descriptor* desc = &d[i];
+		
+		for(uint32_t j = 0; j < desc->castesCount; j++)
+			free(desc->caste_descriptors[j].color_descriptors);
+		
+		free(desc->caste_descriptors);
+	}
 	
-	((*alloc_creaturecaste_callback)(dest, src->rawname, src->singular, src->plural, src->adjective, src->ColorModifier.size(), src->bodypart.size()));
-	
-	for(unsigned int i = 0; i < dest->colorModifierLength; i++)
-		ColorListConvert(&src->ColorModifier[i], &dest->ColorModifier[i]);
-	
-	copy(src->bodypart.begin(), src->bodypart.end(), dest->bodypart);
-	
-	return 1;
+	free(d);
 }
 
-int CreatureTypeConvert(t_creaturetype* src, c_creaturetype* dest)
+int CreatureTypeConvert(std::vector<t_creaturetype> & src, c_creaturetype** out_buf)
 {
-	if(src == NULL)
+	if(src.size() <= 0)
+		return 0;
+	else if(alloc_creaturetype_buffer_callback == NULL)
 		return -1;
-	
-	((*alloc_creaturetype_callback)(dest, src->rawname, src->castes.size(), src->extract.size(), src->tile_character, src->tilecolor.fore, src->tilecolor.back, src->tilecolor.bright));
-	
-	for(unsigned int i = 0; i < dest->castesCount; i++)
-		CreatureCasteConvert(&src->castes[i], &dest->castes[i]);
-	
-	copy(src->extract.begin(), src->extract.end(), dest->extract);
-	
-	return 1;
+	else
+	{
+		c_creaturetype_descriptor* descriptor;
+		c_creaturetype* buf;
+		
+		BuildDescriptorList(src, &descriptor);
+		
+		((*alloc_creaturetype_buffer_callback)(out_buf, descriptor, src.size()));
+		
+		FreeDescriptorList(descriptor, src.size());
+		
+		if(out_buf == NULL)
+			return -1;
+		
+		buf = out_buf[0];
+		
+		for(uint32_t i = 0; i < src.size(); i++)
+		{
+			c_creaturetype* current = &(buf[i]);
+			
+			memset(current->rawname, '\0', 128);
+			strncpy(current->rawname, src[i].rawname, 128);
+			
+			for(uint32_t j = 0; j < current->castesCount; j++)
+			{
+				c_creaturecaste* current_caste = &current->castes[j];
+				t_creaturecaste* src_caste = &src[i].castes[j];
+				
+				memset(current_caste->rawname, '\0', 128);
+				memset(current_caste->singular, '\0', 128);
+				memset(current_caste->plural, '\0', 128);
+				memset(current_caste->adjective, '\0', 128);
+				
+				strncpy(current_caste->rawname, src_caste->rawname, 128);
+				strncpy(current_caste->singular, src_caste->singular, 128);
+				strncpy(current_caste->plural, src_caste->plural, 128);
+				strncpy(current_caste->adjective, src_caste->adjective, 128);
+				
+				for(uint32_t k = 0; k < src[i].castes[j].ColorModifier.size(); k++)
+				{
+					c_colormodifier* current_color = &current_caste->colorModifier[k];
+					
+					memset(current_color->part, '\0', 128);
+					strncpy(current_color->part, src_caste->ColorModifier[k].part, 128);
+					
+					copy(src_caste->ColorModifier[k].colorlist.begin(), src_caste->ColorModifier[k].colorlist.end(), current_color->colorlist);
+					current_color->colorlistLength = src_caste->ColorModifier[k].colorlist.size();
+					
+					current_color->startdate = src_caste->ColorModifier[k].startdate;
+					current_color->enddate = src_caste->ColorModifier[k].enddate;
+				}
+				
+				current_caste->colorModifierLength = src_caste->ColorModifier.size();
+				
+				copy(src_caste->bodypart.begin(), src_caste->bodypart.end(), current_caste->bodypart);
+				current_caste->bodypartLength = src_caste->bodypart.size();
+				
+				current_caste->strength = src_caste->strength;
+				current_caste->agility = src_caste->agility;
+				current_caste->toughness = src_caste->toughness;
+				current_caste->endurance = src_caste->endurance;
+				current_caste->recuperation = src_caste->recuperation;
+				current_caste->disease_resistance = src_caste->disease_resistance;
+				current_caste->analytical_ability = src_caste->analytical_ability;
+				current_caste->focus = src_caste->focus;
+				current_caste->willpower = src_caste->willpower;
+				current_caste->creativity = src_caste->creativity;
+				current_caste->intuition = src_caste->intuition;
+				current_caste->patience = src_caste->patience;
+				current_caste->memory = src_caste->memory;
+				current_caste->linguistic_ability = src_caste->linguistic_ability;
+				current_caste->spatial_sense = src_caste->spatial_sense;
+				current_caste->musicality = src_caste->musicality;
+				current_caste->kinesthetic_sense = src_caste->kinesthetic_sense;
+			}
+			
+			copy(src[i].extract.begin(), src[i].extract.end(), current->extract);
+			current->extractCount = src[i].extract.size();
+			
+			current->tile_character = src[i].tile_character;
+			
+			current->tilecolor.fore = src[i].tilecolor.fore;
+			current->tilecolor.back = src[i].tilecolor.back;
+			current->tilecolor.bright = src[i].tilecolor.bright;
+		}
+		
+		return 1;
+	}
 }

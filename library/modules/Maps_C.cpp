@@ -63,7 +63,7 @@ uint16_t* Maps_ReadGeology(DFHackObject*  maps)
 		
 		if(((DFHack::Maps*)maps)->ReadGeology(geology))
 		{
-			uint16_t* buf = NULL;
+			uint16_t** buf = NULL;
 			uint32_t geoLength = 0;
 			
 			for(unsigned int i = 0; i < geology.size(); i++)
@@ -78,7 +78,7 @@ uint16_t* Maps_ReadGeology(DFHackObject*  maps)
 			
 			if(buf != NULL)
 			{
-				uint16_t* bufCopyPtr = buf;
+				uint16_t* bufCopyPtr = *buf;
 				
 				for(unsigned int i = 0; i < geology.size(); i++)
 				{
@@ -87,7 +87,7 @@ uint16_t* Maps_ReadGeology(DFHackObject*  maps)
 					bufCopyPtr += geology[i].size();
 				}
 				
-				return buf;
+				return *buf;
 			}
 			else
 				return NULL;
@@ -108,15 +108,15 @@ t_feature* Maps_ReadGlobalFeatures(DFHackObject* maps)
 			if(featureVec.size() <= 0)
 				return NULL;
 			
-			t_feature* buf = NULL;
+			t_feature** buf = NULL;
 			
 			(*alloc_t_feature_buffer_callback)(buf, featureVec.size());
 			
 			if(buf != NULL)
 			{
-				copy(featureVec.begin(), featureVec.end(), buf);
+				copy(featureVec.begin(), featureVec.end(), *buf);
 				
-				return buf;
+				return *buf;
 			}
 			else
 				return NULL;
@@ -368,7 +368,10 @@ t_vein* Maps_ReadStandardVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint3
 			
 			if(veins.size() > 0)
 			{
-				((*alloc_vein_buffer_callback)(v_buf, veins.size()));
+				((*alloc_vein_buffer_callback)(&v_buf, veins.size()));
+				
+				if(v_buf == NULL)
+					return NULL;
 				
 				copy(veins.begin(), veins.end(), v_buf);
 			}
@@ -399,7 +402,10 @@ t_frozenliquidvein* Maps_ReadFrozenVeins(DFHackObject* maps, uint32_t x, uint32_
 			
 			if(frozen_veins.size() > 0)
 			{
-				((*alloc_frozenliquidvein_buffer_callback)(fv_buf, frozen_veins.size()));
+				((*alloc_frozenliquidvein_buffer_callback)(&fv_buf, frozen_veins.size()));
+				
+				if(fv_buf == NULL)
+					return NULL;
 				
 				copy(frozen_veins.begin(), frozen_veins.end(), fv_buf);
 			}
@@ -430,7 +436,10 @@ t_spattervein* Maps_ReadSpatterVeins(DFHackObject* maps, uint32_t x, uint32_t y,
 			
 			if(spatter_veins.size() > 0)
 			{
-				((*alloc_spattervein_buffer_callback)(sv_buf, spatter_veins.size()));
+				((*alloc_spattervein_buffer_callback)(&sv_buf, spatter_veins.size()));
+				
+				if(sv_buf == NULL)
+					return NULL;
 				
 				copy(spatter_veins.begin(), spatter_veins.end(), sv_buf);
 			}
@@ -461,7 +470,10 @@ t_grassvein* Maps_ReadGrassVeins(DFHackObject* maps, uint32_t x, uint32_t y, uin
 			
 			if(grass_veins.size() > 0)
 			{
-				((*alloc_grassvein_buffer_callback)(gs_buf, grass_veins.size()));
+				((*alloc_grassvein_buffer_callback)(&gs_buf, grass_veins.size()));
+				
+				if(gs_buf == NULL)
+					return NULL;
 				
 				copy(grass_veins.begin(), grass_veins.end(), gs_buf);
 			}
@@ -492,7 +504,10 @@ t_worldconstruction* Maps_ReadWorldConstructions(DFHackObject* maps, uint32_t x,
 			
 			if(constructions.size() > 0)
 			{
-				((*alloc_worldconstruction_buffer_callback)(ct_buf, constructions.size()));
+				((*alloc_worldconstruction_buffer_callback)(&ct_buf, constructions.size()));
+				
+				if(ct_buf == NULL)
+					return NULL;
 				
 				copy(constructions.begin(), constructions.end(), ct_buf);
 			}
@@ -504,6 +519,100 @@ t_worldconstruction* Maps_ReadWorldConstructions(DFHackObject* maps, uint32_t x,
 	}
 	
 	return NULL;
+}
+
+int Maps_ReadAllVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, c_allveins* vein_struct)
+{
+	if(maps != NULL)
+	{
+		if(alloc_vein_buffer_callback == NULL || alloc_frozenliquidvein_buffer_callback == NULL ||
+			alloc_spattervein_buffer_callback == NULL || alloc_grassvein_buffer_callback == NULL ||
+			alloc_worldconstruction_buffer_callback == NULL)
+			return -1;
+		
+		vector<t_vein> veins;
+		vector<t_frozenliquidvein> frozen_veins;
+		vector<t_spattervein> spatter_veins;
+		vector<t_grassvein> grass_veins;
+		vector<t_worldconstruction> constructions;
+		
+		bool result = ((DFHack::Maps*)maps)->ReadVeins(x, y, z, &veins, &frozen_veins, &spatter_veins, &grass_veins, &constructions);
+		
+		if(result)
+		{
+			t_vein* v_buf = NULL;
+			t_frozenliquidvein* fv_buf = NULL;
+			t_spattervein* sv_buf = NULL;
+			t_grassvein* gs_buf = NULL;
+			t_worldconstruction* ct_buf = NULL;
+			
+			if(veins.size() > 0)
+			{
+				((*alloc_vein_buffer_callback)(&v_buf, veins.size()));
+				
+				if(v_buf == NULL)
+					return -1;
+				
+				copy(veins.begin(), veins.end(), v_buf);
+				
+				vein_struct->veins = v_buf;
+			}
+			
+			if(frozen_veins.size() > 0)
+			{
+				((*alloc_frozenliquidvein_buffer_callback)(&fv_buf, frozen_veins.size()));
+				
+				if(fv_buf == NULL)
+					return -1;
+				
+				copy(frozen_veins.begin(), frozen_veins.end(), fv_buf);
+				
+				vein_struct->frozen_veins = fv_buf;
+			}
+			
+			if(spatter_veins.size() > 0)
+			{
+				((*alloc_spattervein_buffer_callback)(&sv_buf, spatter_veins.size()));
+				
+				if(sv_buf == NULL)
+					return -1;
+				
+				copy(spatter_veins.begin(), spatter_veins.end(), sv_buf);
+				
+				vein_struct->spatter_veins = sv_buf;
+			}
+			
+			if(grass_veins.size() > 0)
+			{
+				((*alloc_grassvein_buffer_callback)(&gs_buf, grass_veins.size()));
+				
+				if(gs_buf == NULL)
+					return -1;
+				
+				copy(grass_veins.begin(), grass_veins.end(), gs_buf);
+				
+				vein_struct->grass_veins = gs_buf;
+			}
+			
+			if(constructions.size() > 0)
+			{
+				((*alloc_worldconstruction_buffer_callback)(&ct_buf, constructions.size()));
+				
+				if(ct_buf == NULL)
+					return -1;
+				
+				copy(constructions.begin(), constructions.end(), ct_buf);
+				
+				vein_struct->world_constructions = ct_buf;
+			}
+			
+			return 1;
+		}
+		else
+			return 0;
+	}
+	
+	return -1;
 }
 
 #ifdef __cplusplus

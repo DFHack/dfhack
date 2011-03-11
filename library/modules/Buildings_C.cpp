@@ -81,7 +81,7 @@ t_customWorkshop* Buildings_ReadCustomWorkshopTypes(DFHackObject* b_Ptr)
         if(!((DFHack::Buildings*)b_Ptr)->ReadCustomWorkshopTypes(bTypes))
             return NULL;
 		
-		(*alloc_t_customWorkshop_buffer_callback)(cw_Ptr, bTypes.size());
+		(*alloc_t_customWorkshop_buffer_callback)(&cw_Ptr, bTypes.size());
 		
 		if(cw_Ptr == NULL)
 			return NULL;

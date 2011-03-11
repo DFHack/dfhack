@@ -86,7 +86,7 @@ t_material* Creatures_ReadJob(DFHackObject* cPtr, const t_creature* furball)
 			
 			t_material* buf = NULL;
 			
-			(*alloc_t_material_buffer_callback)(buf, mat.size());
+			(*alloc_t_material_buffer_callback)(&buf, mat.size());
 			
 			if(buf != NULL)
 			{
@@ -117,7 +117,7 @@ uint32_t* Creatures_ReadInventoryIdx(DFHackObject* cPtr, const uint32_t index)
 			
 			uint32_t* buf = NULL;
 			
-			(*alloc_uint_buffer_callback)(buf, item.size());
+			(*alloc_uint_buffer_callback)(&buf, item.size());
 			
 			if(buf != NULL)
 			{
@@ -146,7 +146,7 @@ uint32_t* Creatures_ReadInventoryPtr(DFHackObject* cPtr, const uint32_t index)
 			
 			uint32_t* buf = NULL;
 			
-			(*alloc_uint_buffer_callback)(buf, item.size());
+			(*alloc_uint_buffer_callback)(&buf, item.size());
 			
 			if(buf != NULL)
 			{

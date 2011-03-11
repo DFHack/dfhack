@@ -188,7 +188,7 @@ class DescriptorColor(Structure):
 def _alloc_descriptor_buffer_callback(ptr, count):
     return util._allocate_array(ptr, DescriptorColor, count)
 
-_descriptor_functype = CFUNCTYPE(c_int, POINTER(DescriptorColor), c_uint)
+_descriptor_functype = CFUNCTYPE(c_int, POINTER(POINTER(DescriptorColor)), c_uint)
 _descriptor_func = _descriptor_functype(_alloc_descriptor_buffer_callback)
 _register_callback("alloc_descriptor_buffer_callback", _descriptor_func)
 
@@ -205,10 +205,10 @@ class MatglossPlant(Structure):
 class MatglossOther(Structure):
     _fields_ = [("rawname", c_char * 128)]
 
-def _alloc_matgloss_other_buffer_callback(count):
+def _alloc_matgloss_other_buffer_callback(ptr, count):
     return util._allocate_array(ptr, MatglossOther, count)
 
-_matgloss_other_functype = CFUNCTYPE(c_int, POINTER(MatglossOther), c_uint)
+_matgloss_other_functype = CFUNCTYPE(c_int, POINTER(POINTER(MatglossOther)), c_uint)
 _matgloss_other_func = _matgloss_other_functype(_alloc_matgloss_other_buffer_callback)
 _register_callback("alloc_matgloss_other_buffer_callback", _matgloss_other_func)
 
@@ -227,10 +227,10 @@ class CustomWorkshop(Structure):
     _fields_ = [("index", c_uint),
                 ("name", c_char * 256)]
 
-def _alloc_custom_workshop_buffer_callback(count):
+def _alloc_custom_workshop_buffer_callback(ptr, count):
     return util._allocate_array(ptr, CustomWorkshop, count)
 
-_custom_workshop_functype = CFUNCTYPE(c_int, POINTER(CustomWorkshop), c_uint)
+_custom_workshop_functype = CFUNCTYPE(c_int, POINTER(POINTER(CustomWorkshop)), c_uint)
 _custom_workshop_func = _custom_workshop_functype(_alloc_custom_workshop_buffer_callback)
 _register_callback("alloc_t_customWorkshop_buffer_callback", _custom_workshop_func)
 
@@ -263,10 +263,10 @@ class Material(Structure):
                 ("index", c_int),
                 ("flags", c_uint)]
 
-def _alloc_material_buffer_callback(count):
+def _alloc_material_buffer_callback(ptr, count):
     return util._allocate_array(ptr, Material, count)
 
-_material_functype = CFUNCTYPE(c_int, POINTER(Material), c_uint)
+_material_functype = CFUNCTYPE(c_int, POINTER(POINTER(Material)), c_uint)
 _material_func = _material_functype(_alloc_material_buffer_callback)
 _register_callback("alloc_t_material_buffer_callback", _material_func)
 

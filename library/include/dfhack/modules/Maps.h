@@ -61,19 +61,16 @@ namespace DFHack
         {
             return DFCoord(x,y,z+number);
         }
-        // this is a clever hack. beware.
+        // this is a hack. beware.
         // x,y,z share the same space with comparate. comparate can be used for fast comparisons
         union
         {
-            #pragma pack(push)  /* push current alignment to stack */
-            #pragma pack(2)     /* set alignment to 2 byte boundary */
             struct
             {
                 uint16_t x;
                 uint16_t y;
                 uint32_t z;
             };
-            #pragma pack (pop)  /* restore alignment */
             uint64_t comparate;
         };
     };

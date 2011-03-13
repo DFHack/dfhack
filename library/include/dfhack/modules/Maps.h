@@ -65,15 +65,25 @@ namespace DFHack
         // x,y,z share the same space with comparate. comparate can be used for fast comparisons
         union
         {
+            // new shiny DFCoord struct. notice the ludicrous space for Z-levels
             struct
             {
                 uint16_t x;
                 uint16_t y;
                 uint32_t z;
             };
+            // old planeccord struct for compatibility
+            struct
+            {
+                uint16_t x;
+                uint16_t y;
+            } dim;
+            // comparing thing
             uint64_t comparate;
         };
     };
+
+    typedef DFCoord planecoord;
 
     struct t_feature
     {

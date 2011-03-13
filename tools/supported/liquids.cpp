@@ -1,5 +1,3 @@
-// TO BE DEPRECATED SOON.
-
 #include <iostream>
 #include <vector>
 #include <map>
@@ -20,7 +18,7 @@ public:
     virtual coord_vec points(MapCache & mc,DFHack::DFCoord start) = 0;
 };
 /**
- * generic 2D rectangle brush. you can specify the dimensions of
+ * generic 3D rectangle brush. you can specify the dimensions of
  * the rectangle and optionally which tile is its 'center'
  */
 class RectangleBrush : public Brush
@@ -37,7 +35,7 @@ public:
         else
             cy_ = centery;
         if(centerz == -1)
-            cz_ = y/2;
+            cz_ = z/2;
         else
             cz_ = centerz;
         x_ = x;

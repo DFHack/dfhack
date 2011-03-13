@@ -47,7 +47,6 @@ IF(DOXYGEN_FOUND)
 #    "${CMAKE_SOURCE_DIR}/library/private"
   )
 
-  SET(DOXYGEN_OUTPUT_DIR html)
   STRING(REGEX REPLACE ";" " " CMAKE_DOXYGEN_INPUT_LIST "${DOXYGEN_SOURCE_DIR}")
 
   CONFIGURE_FILE(Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
@@ -57,7 +56,7 @@ IF(DOXYGEN_FOUND)
         /usr/bin/doxygen ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
 
-  INSTALL( DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/html/" DESTINATION "/usr/share/doc/dfhack-${DFHACK_VERSION}" )
+  # INSTALL( DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/html/" DESTINATION "/usr/share/doc/dfhack-${DFHACK_VERSION}" )
 
 ELSE(DOXYGEN_FOUND)
   MESSAGE (FATAL_ERROR "doxygen binary couldn't be found")

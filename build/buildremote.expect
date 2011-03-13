@@ -1,0 +1,39 @@
+#!/usr/bin/expect
+# procedure to attempt connecting; result 0 if OK, 1 otherwise
+proc connect {} {
+  expect "login:"
+  send "kitteh\r"
+  expect "password:"
+  send "a\r"
+expect {
+    kitteh               {return 0}
+    failed             return 1
+    "invalid password" return 1
+    timeout            return 1
+    connected
+}
+  # timed out
+  return 1
+}
+
+spawn telnet win7
+
+set rez [connect]
+if { $rez == 0 } {
+   send "net use X: \\\\vboxsvr\\projects\r\n"
+   expect "The command completed successfully."
+   send "X:\r\n"
+   expect "X:"
+   send "cd X:\\dfhack\\build\r\n"
+   expect "build"
+   send "\"C:\\Program Files (x86)\\MSVC10\\VC\\vcvarsall.bat\" x86\r\n"
+   expect "build"
+   set timeout -1
+   send "auto.bat\r\n"
+   expect "FINISHED_BUILD"
+   send "exit\r"
+   expect eof
+   exit 0
+}
+puts "\nError connecting to server!\n"
+exit 1

@@ -39,6 +39,7 @@ DFHACK_EXPORT int Maps_Finish(DFHackObject* maps);
 DFHACK_EXPORT uint16_t* Maps_ReadGeology(DFHackObject* maps);
 
 DFHACK_EXPORT t_feature* Maps_ReadGlobalFeatures(DFHackObject* maps);
+DFHACK_EXPORT c_featuremap_node* Maps_ReadLocalFeatures(DFHackObject* maps);
 
 DFHACK_EXPORT void Maps_getSize(DFHackObject* maps, uint32_t* x, uint32_t* y, uint32_t* z);
 DFHACK_EXPORT int Maps_isValidBlock(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
@@ -89,6 +90,8 @@ typedef struct
 } c_allveins;
 
 DFHACK_EXPORT int Maps_ReadAllVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, c_allveins* vein_struct);
+
+DFHACK_EXPORT t_tree* Maps_ReadVegetation(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z);
 
 #ifdef __cplusplus
 }

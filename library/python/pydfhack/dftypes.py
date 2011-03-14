@@ -49,13 +49,19 @@ class Position2D(Structure):
     _fields_ = [("x", c_ushort),
                 ("y", c_ushort)]
 
+class Position3d(Structure):
+    _fields_ = [("x", c_ushort),
+                ("y", c_ushort),
+                ("z", c_uint)]
+
 class PlaneCoord(Union):
-    _fields_ = [("xy", c_uint),
-                ("dim", Position2D)]
+    _fields_ = [("xyz", Position3D),
+                ("dim", Position2D),
+                ("comparate", c_ulong)]
 
     def __cmp__(self, other):
         if isinstance(other, PlaneCoord):
-            return self.xy - other.xy
+            return self.comparate - other.comparate
         else:
             raise TypeError("argument must be of type %s" % type(self))
 
@@ -65,6 +71,35 @@ class Feature(Structure):
                 ("sub_material", c_short),
                 ("discovered", c_byte),
                 ("origin", c_uint)]
+
+class FeatureMapNode(Structure):
+    _fields_ = [("coordinate", PlaneCoord),
+                ("features", POINTER(Feature)),
+                ("feature_length", c_uint)]
+
+def _alloc_featuremap_buffer_callback(ptr, fmap_list, count):
+    arr_list = []
+    arr = (FeatureMapNode * count)()
+    
+    for i, v in enumerate(arr):
+        f_count = int(fmap_list[i])
+        f_arr = (Feature * f_count)()
+        
+        f_p = cast(f_arr, POINTER(Feature))
+        v.features = f_p
+        
+        arr_list.extend((f_arr, f_p))
+    
+    p = cast(arr, POINTER(FeatureMapNode))
+    ptr[0] = p
+    
+    pointer_dict[addressof(arr)] = (ptr, arr, p, arr_list)
+    
+    return 1
+
+_alloc_featuremap_buffer_functype = CFUNCTYPE(c_int, POINTER(POINTER(FeatureMapNode)), uint_ptr, c_uint)
+_alloc_featuremap_buffer_func = _alloc_featuremap_buffer_functype(_alloc_featuremap_buffer_callback)
+_register_callback("alloc_featuremap_buffer_callback", _alloc_featuremap_buffer_func)
 
 class Vein(Structure):
     _fields_ = [("vtable", c_uint),
@@ -188,7 +223,7 @@ class DescriptorColor(Structure):
 def _alloc_descriptor_buffer_callback(ptr, count):
     return util._allocate_array(ptr, DescriptorColor, count)
 
-_descriptor_functype = CFUNCTYPE(c_int, POINTER(DescriptorColor), c_uint)
+_descriptor_functype = CFUNCTYPE(c_int, POINTER(POINTER(DescriptorColor)), c_uint)
 _descriptor_func = _descriptor_functype(_alloc_descriptor_buffer_callback)
 _register_callback("alloc_descriptor_buffer_callback", _descriptor_func)
 
@@ -205,10 +240,10 @@ class MatglossPlant(Structure):
 class MatglossOther(Structure):
     _fields_ = [("rawname", c_char * 128)]
 
-def _alloc_matgloss_other_buffer_callback(count):
+def _alloc_matgloss_other_buffer_callback(ptr, count):
     return util._allocate_array(ptr, MatglossOther, count)
 
-_matgloss_other_functype = CFUNCTYPE(c_int, POINTER(MatglossOther), c_uint)
+_matgloss_other_functype = CFUNCTYPE(c_int, POINTER(POINTER(MatglossOther)), c_uint)
 _matgloss_other_func = _matgloss_other_functype(_alloc_matgloss_other_buffer_callback)
 _register_callback("alloc_matgloss_other_buffer_callback", _matgloss_other_func)
 
@@ -227,12 +262,12 @@ class CustomWorkshop(Structure):
     _fields_ = [("index", c_uint),
                 ("name", c_char * 256)]
 
-def _alloc_custom_workshop_buffer_callback(count):
+def _alloc_custom_workshop_buffer_callback(ptr, count):
     return util._allocate_array(ptr, CustomWorkshop, count)
 
-_custom_workshop_functype = CFUNCTYPE(c_int, POINTER(CustomWorkshop), c_uint)
+_custom_workshop_functype = CFUNCTYPE(c_int, POINTER(POINTER(CustomWorkshop)), c_uint)
 _custom_workshop_func = _custom_workshop_functype(_alloc_custom_workshop_buffer_callback)
-_register_callback("alloc_t_customWorkshop_buffer_callback", _custom_workshop_func)
+_register_callback("alloc_customWorkshop_buffer_callback", _custom_workshop_func)
 
 class Construction(Structure):
     _fields_ = [("x", c_ushort),
@@ -255,6 +290,26 @@ class Tree(Structure):
                 ("y", c_ushort),
                 ("z", c_ushort),
                 ("address", c_uint)]
+    
+    def __str__(self):
+        water = ""
+        tree_type = "tree"
+        
+        if self.type == 1 or self.type == 3:
+            water = "near-water"
+        if self.type == 2 or self.type == 3:
+            tree_type = "shrub"
+        
+        s = "%d:%d = %s %s\nAddress:  0x%x\n" % (self.type, self.material, water, tree_type, self.address)
+        
+        return s
+
+def _alloc_tree_buffer_callback(ptr, count):
+    return util._allocate_array(ptr, Tree, count)
+
+_alloc_tree_buffer_functype = CFUNCTYPE(c_int, POINTER(POINTER(Tree)), c_uint)
+_alloc_tree_buffer_func = _alloc_tree_buffer_functype(_alloc_tree_buffer_callback)
+_register_callback("alloc_tree_buffer_callback", _alloc_tree_buffer_func)
 
 class Material(Structure):
     _fields_ = [("itemType", c_short),
@@ -263,12 +318,12 @@ class Material(Structure):
                 ("index", c_int),
                 ("flags", c_uint)]
 
-def _alloc_material_buffer_callback(count):
+def _alloc_material_buffer_callback(ptr, count):
     return util._allocate_array(ptr, Material, count)
 
-_material_functype = CFUNCTYPE(c_int, POINTER(Material), c_uint)
+_material_functype = CFUNCTYPE(c_int, POINTER(POINTER(Material)), c_uint)
 _material_func = _material_functype(_alloc_material_buffer_callback)
-_register_callback("alloc_t_material_buffer_callback", _material_func)
+_register_callback("alloc_material_buffer_callback", _material_func)
 
 class Skill(Structure):
     _fields_ = [("id", c_uint),
@@ -513,7 +568,6 @@ def _alloc_creaturetype_buffer(ptr, descriptors, count):
     
     p = cast(c_arr, _creaturetype_ptr)
     ptr[0] = p
-    print ""
     
     pointer_dict[addressof(c_arr)] = (ptr, c_arr, p, arr_list)
     

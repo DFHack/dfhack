@@ -17,17 +17,21 @@ libdfhack.Maps_WriteTemperatures.argtypes = [ c_void_p, c_uint, c_uint, c_uint, 
 libdfhack.Maps_ReadOccupancy.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Occupancies40d) ]
 libdfhack.Maps_WriteOccupancy.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Occupancies40d) ]
 libdfhack.Maps_ReadRegionOffsets.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(BiomeIndices40d) ]
+
+libdfhack.Maps_ReadVegetation.argtypes = _default_argtypes
+libdfhack.Maps_ReadVegetation.restype = c_void_p
+
 libdfhack.Maps_ReadStandardVeins.argtypes = _default_argtypes
 libdfhack.Maps_ReadFrozenVeins.argtypes = _default_argtypes
 libdfhack.Maps_ReadSpatterVeins.argtypes = _default_argtypes
 libdfhack.Maps_ReadGrassVeins.argtypes = _default_argtypes
 libdfhack.Maps_ReadWorldConstructions.argtypes = _default_argtypes
 
-libdfhack.Maps_ReadStandardVeins.restype = POINTER(Vein)
-libdfhack.Maps_ReadFrozenVeins.restype = POINTER(FrozenLiquidVein)
-libdfhack.Maps_ReadSpatterVeins.restype = POINTER(SpatterVein)
-libdfhack.Maps_ReadGrassVeins.restype = POINTER(GrassVein)
-libdfhack.Maps_ReadWorldConstructions.restype = POINTER(WorldConstruction)
+libdfhack.Maps_ReadStandardVeins.restype = c_void_p
+libdfhack.Maps_ReadFrozenVeins.restype = c_void_p
+libdfhack.Maps_ReadSpatterVeins.restype = c_void_p
+libdfhack.Maps_ReadGrassVeins.restype = c_void_p
+libdfhack.Maps_ReadWorldConstructions.restype = c_void_p
 
 class Maps(object):
     def __init__(self, ptr):
@@ -171,9 +175,9 @@ class Maps(object):
         veins_ptr = libdfhack.Maps_ReadStandardVeins(self._map_ptr, ux, uy, uz)
         veins = None
         
-        if id(veins_ptr) in dftypes.pointer_dict:
-            veins = dftypes.pointer_dict[id(veins_ptr)][1]
-            del dftypes.pointer_dict[id(veins_ptr)]
+        if veins_ptr in dftypes.pointer_dict:
+            veins = [i for i in dftypes.pointer_dict[veins_ptr][1]]
+            del dftypes.pointer_dict[veins_ptr]
         
         return veins
     
@@ -183,9 +187,9 @@ class Maps(object):
         veins_ptr = libdfhack.Maps_ReadFrozenVeins(self._map_ptr, ux, uy, uz)
         veins = None
         
-        if id(veins_ptr) in dftypes.pointer_dict:
-            veins = dftypes.pointer_dict[id(veins_ptr)][1]
-            del dftypes.pointer_dict[id(veins_ptr)]
+        if veins_ptr in dftypes.pointer_dict:
+            veins = [i for i in dftypes.pointer_dict[veins_ptr][1]]
+            del dftypes.pointer_dict[veins_ptr]
         
         return veins
     
@@ -195,9 +199,9 @@ class Maps(object):
         veins_ptr = libdfhack.Maps_ReadSpatterVeins(self._map_ptr, ux, uy, uz)
         veins = None
         
-        if id(veins_ptr) in dftypes.pointer_dict:
-            veins = dftypes.pointer_dict[id(veins_ptr)][1]
-            del dftypes.pointer_dict[id(veins_ptr)]
+        if veins_ptr in dftypes.pointer_dict:
+            veins = [i for i in dftypes.pointer_dict[veins_ptr][1]]
+            del dftypes.pointer_dict[veins_ptr]
         
         return veins
     
@@ -207,9 +211,9 @@ class Maps(object):
         veins_ptr = libdfhack.Maps_ReadGrassVeins(self._map_ptr, ux, uy, uz)
         veins = None
         
-        if id(veins_ptr) in dftypes.pointer_dict:
-            veins = dftypes.pointer_dict[id(veins_ptr)][1]
-            del dftypes.pointer_dict[id(veins_ptr)]
+        if veins_ptr in dftypes.pointer_dict:
+            veins = [i for i in dftypes.pointer_dict[veins_ptr][1]]
+            del dftypes.pointer_dict[veins_ptr]
         
         return veins
     
@@ -219,11 +223,39 @@ class Maps(object):
         veins_ptr = libdfhack.Maps_ReadWorldConstructions(self._map_ptr, ux, uy, uz)
         veins = None
         
-        if id(veins_ptr) in dftypes.pointer_dict:
-            veins = dftypes.pointer_dict[id(veins_ptr)][1]
-            del dftypes.pointer_dict[id(veins_ptr)]
+        if veins_ptr in dftypes.pointer_dict:
+            veins = [i for i in dftypes.pointer_dict[veins_ptr][1]]
+            del dftypes.pointer_dict[veins_ptr]
         
         return veins
+    
+    def read_vegetation(self, x, y, z):
+        ux, uy, uz = _uintify(x, y, z)
+        
+        veg_ptr = libdfhack.Maps_ReadVegetation(self._map_ptr, ux, uy, uz)
+        veg = None
+        
+        if veg_ptr in dftypes.pointer_dict:
+            veg = [i for i in dftypes.pointer_dict[veg_ptr][1]]
+            del dftypes.pointer_dict[veg_ptr]
+    
+    def read_local_features(self):
+        f = libdfhack.Maps_ReadLocalFeatures(self._map_ptr)
+        feature_dict = {}
+        f_arr = None
+        
+        if f in dftypes.pointer_dict:
+            f_arr = dftypes.pointer_dict[f][1]
+            del dftypes.pointer_dict[f]
+        
+        if f_arr is not None:
+            for node in f_arr:
+                c = node.coordinate.xyz
+                coord = MapPoint(c.x, c.y, c.z)
+                f_list = [node.features[i] for i in xrange(node.feature_length)]
+                feature_dict[coord] = f_list
+        
+        return feature_dict
 
     @property
     def size(self):

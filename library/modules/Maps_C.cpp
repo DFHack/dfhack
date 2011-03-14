@@ -24,6 +24,7 @@ distribution.
 
 #include "dfhack/DFPragma.h"
 #include <vector>
+#include <map>
 #include <algorithm>
 
 using namespace std;
@@ -74,7 +75,7 @@ uint16_t* Maps_ReadGeology(DFHackObject*  maps)
 				}
 			}
 			
-			(*alloc_ushort_buffer_callback)(buf, geoLength);
+			((*alloc_ushort_buffer_callback)(buf, geoLength));
 			
 			if(buf != NULL)
 			{
@@ -110,7 +111,7 @@ t_feature* Maps_ReadGlobalFeatures(DFHackObject* maps)
 			
 			t_feature** buf = NULL;
 			
-			(*alloc_t_feature_buffer_callback)(buf, featureVec.size());
+			((*alloc_feature_buffer_callback)(buf, featureVec.size()));
 			
 			if(buf != NULL)
 			{
@@ -120,6 +121,54 @@ t_feature* Maps_ReadGlobalFeatures(DFHackObject* maps)
 			}
 			else
 				return NULL;
+		}
+		else
+			return NULL;
+	}
+	
+	return NULL;
+}
+
+c_featuremap_node* Maps_ReadLocalFeatures(DFHackObject* maps)
+{
+	if(maps != NULL)
+	{
+		std::map <DFCoord, std::vector<t_feature *> > local_features;
+		std::map <DFCoord, std::vector<t_feature *> >::iterator iterate;
+		uint32_t i;
+		
+		if(((DFHack::Maps*)maps)->ReadLocalFeatures(local_features))
+		{
+			if(local_features.empty() == true)
+				return NULL;
+			
+			c_featuremap_node* featuremap;	
+			uint32_t* featuremap_size = (uint32_t*)calloc(local_features.size(), sizeof(uint32_t));
+			
+			for(i = 0, iterate = local_features.begin(); iterate != local_features.end(); i++, iterate++)
+				featuremap_size[i] = (*iterate).second.size();
+			
+			((*alloc_featuremap_buffer_callback)(&featuremap, featuremap_size, local_features.size()));
+			
+			free(featuremap_size);
+			
+			if(featuremap == NULL)
+				return NULL;
+			
+			for(i = 0, iterate = local_features.begin(); iterate != local_features.end(); i++, iterate++)
+			{
+				uint32_t j;
+				
+				featuremap[i].coordinate.comparate = (*iterate).first.comparate;
+				
+				for(j = 0; j < (*iterate).second.size(); j++)
+					featuremap[i].features[j] = *((*iterate).second[j]);
+					
+				//copy((*iterate).second.begin(), (*iterate).second.end(), featuremap[i].features);
+				featuremap[i].feature_length = (*iterate).second.size();
+			}
+			
+			return featuremap;
 		}
 		else
 			return NULL;
@@ -613,6 +662,34 @@ int Maps_ReadAllVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, c_
 	}
 	
 	return -1;
+}
+
+t_tree* Maps_ReadVegetation(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z)
+{
+	if(maps == NULL)
+		return NULL;
+	else
+	{
+		std::vector<t_tree> plants;
+		bool result = ((DFHack::Maps*)maps)->ReadVegetation(x, y, z, &plants);
+		t_tree* buf = NULL;
+		
+		if(!result || plants.size() <= 0)
+			return NULL;
+		else
+		{
+			((*alloc_tree_buffer_callback)(&buf, plants.size()));
+			
+			if(buf == NULL)
+				return NULL;
+			
+			copy(plants.begin(), plants.end(), buf);
+			
+			return buf;
+		}
+	}
+	
+	return NULL;
 }
 
 #ifdef __cplusplus

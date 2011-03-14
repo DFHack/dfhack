@@ -1,7 +1,7 @@
 #/bin/sh
 
 # VARS
-export DFHACK_VER=0.5.6
+export DFHACK_VER=0.5.7
 export PKG=dfhack-bin-$DFHACK_VER
 export TARGET=Release
 

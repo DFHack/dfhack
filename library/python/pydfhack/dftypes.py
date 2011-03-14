@@ -49,13 +49,19 @@ class Position2D(Structure):
     _fields_ = [("x", c_ushort),
                 ("y", c_ushort)]
 
+class Position3d(Structure):
+    _fields_ = [("x", c_ushort),
+                ("y", c_ushort),
+                ("z", c_uint)]
+
 class PlaneCoord(Union):
-    _fields_ = [("xy", c_uint),
-                ("dim", Position2D)]
+    _fields_ = [("xyz", Position3D),
+                ("dim", Position2D),
+                ("comparate", c_ulong)]
 
     def __cmp__(self, other):
         if isinstance(other, PlaneCoord):
-            return self.xy - other.xy
+            return self.comparate - other.comparate
         else:
             raise TypeError("argument must be of type %s" % type(self))
 
@@ -65,6 +71,35 @@ class Feature(Structure):
                 ("sub_material", c_short),
                 ("discovered", c_byte),
                 ("origin", c_uint)]
+
+class FeatureMapNode(Structure):
+    _fields_ = [("coordinate", PlaneCoord),
+                ("features", POINTER(Feature)),
+                ("feature_length", c_uint)]
+
+def _alloc_featuremap_buffer_callback(ptr, fmap_list, count):
+    arr_list = []
+    arr = (FeatureMapNode * count)()
+    
+    for i, v in enumerate(arr):
+        f_count = int(fmap_list[i])
+        f_arr = (Feature * f_count)()
+        
+        f_p = cast(f_arr, POINTER(Feature))
+        v.features = f_p
+        
+        arr_list.extend((f_arr, f_p))
+    
+    p = cast(arr, POINTER(FeatureMapNode))
+    ptr[0] = p
+    
+    pointer_dict[addressof(arr)] = (ptr, arr, p, arr_list)
+    
+    return 1
+
+_alloc_featuremap_buffer_functype = CFUNCTYPE(c_int, POINTER(POINTER(FeatureMapNode)), uint_ptr, c_uint)
+_alloc_featuremap_buffer_func = _alloc_featuremap_buffer_functype(_alloc_featuremap_buffer_callback)
+_register_callback("alloc_featuremap_buffer_callback", _alloc_featuremap_buffer_func)
 
 class Vein(Structure):
     _fields_ = [("vtable", c_uint),
@@ -273,7 +308,7 @@ def _alloc_tree_buffer_callback(ptr, count):
     return util._allocate_array(ptr, Tree, count)
 
 _alloc_tree_buffer_functype = CFUNCTYPE(c_int, POINTER(POINTER(Tree)), c_uint)
-_alloc_tree_buffer_func = _alloc_tree_buffer_functype(_alloc_tree_buffer_func)
+_alloc_tree_buffer_func = _alloc_tree_buffer_functype(_alloc_tree_buffer_callback)
 _register_callback("alloc_tree_buffer_callback", _alloc_tree_buffer_func)
 
 class Material(Structure):
@@ -533,7 +568,6 @@ def _alloc_creaturetype_buffer(ptr, descriptors, count):
     
     p = cast(c_arr, _creaturetype_ptr)
     ptr[0] = p
-    print ""
     
     pointer_dict[addressof(c_arr)] = (ptr, c_arr, p, arr_list)
     

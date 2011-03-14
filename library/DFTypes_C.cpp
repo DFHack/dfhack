@@ -99,6 +99,8 @@ int (*alloc_spattervein_buffer_callback)(t_spattervein**, uint32_t) = NULL;
 int (*alloc_grassvein_buffer_callback)(t_grassvein**, uint32_t) = NULL;
 int (*alloc_worldconstruction_buffer_callback)(t_worldconstruction**, uint32_t) = NULL;
 
+int (*alloc_featuremap_buffer_callback)(c_featuremap_node**, uint32_t*, uint32_t) = NULL;
+
 //int (*alloc_bodypart_buffer_callback)(t_bodypart**, uint32_t) = NULL;
 REG_MACRO(Byte, int8_t**, alloc_byte_buffer_callback)
 REG_MACRO(Short, int16_t**, alloc_short_buffer_callback)
@@ -152,6 +154,13 @@ UNREG_MACRO(FrozenLiquidVein, alloc_frozenliquidvein_buffer_callback)
 UNREG_MACRO(SpatterVein, alloc_spattervein_buffer_callback)
 UNREG_MACRO(GrassVein, alloc_grassvein_buffer_callback)
 UNREG_MACRO(WorldConstruction, alloc_worldconstruction_buffer_callback)
+
+void RegisterFeatureMapBufferCallback(int (*funcptr)(c_featuremap_node**, uint32_t*, uint32_t))
+{
+	alloc_featuremap_buffer_callback = funcptr;
+}
+
+UNREG_MACRO(FeatureMap, alloc_featuremap_buffer_callback)
 
 int DFHack_isWallTerrain(int in)
 {

@@ -219,6 +219,37 @@ HUNREG_MACRO(SpatterVein)
 HUNREG_MACRO(GrassVein)
 HUNREG_MACRO(WorldConstruction)
 
+struct c_mapcoord
+{
+	union
+	{
+		struct
+		{
+			uint16_t x;
+			uint16_t y;
+			uint32_t z;
+		};
+		struct
+		{
+			uint16_t x;
+			uint16_t y;
+		} dim;
+		
+		uint64_t comparate;
+	};
+};
+
+struct c_featuremap_node
+{
+	c_mapcoord coordinate;
+	t_feature* features;
+	uint32_t feature_length;
+};
+
+DFHACK_EXPORT extern int (*alloc_featuremap_buffer_callback)(c_featuremap_node**, uint32_t*, uint32_t);
+
+DFHACK_EXPORT void RegisterFeatureMapBufferCallback(int (*funcptr)(c_featuremap_node**, uint32_t*, uint32_t));
+
 DFHACK_EXPORT int DFHack_isWallTerrain(int in);
 DFHACK_EXPORT int DFHack_isFloorTerrain(int in);
 DFHACK_EXPORT int DFHack_isRampTerrain(int in);

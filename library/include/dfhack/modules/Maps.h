@@ -274,6 +274,9 @@ namespace DFHack
         unsigned int unit_grounded : 1;
         /// the tile contains an item
         unsigned int item : 1;
+        /// changed
+        unsigned int unknown : 26;
+        /*
         /// splatter. everyone loves splatter. this doesn't seem to be used anymore
         unsigned int mud : 1;
         unsigned int vomit :1;
@@ -298,6 +301,7 @@ namespace DFHack
         unsigned int blood2 : 1;
         unsigned int broken_arrows_variant : 1;
         unsigned int snow : 1;
+        */
     };
 
     struct naked_occupancy_grouped
@@ -309,8 +313,8 @@ namespace DFHack
         unsigned int unit_grounded : 1;
         /// the tile contains an item
         unsigned int item : 1;
-        /// splatter. everyone loves splatter. this doesn't seem to be used anymore
-        unsigned int splatter : 26;
+        /// changed
+        unsigned int unknown : 26;
     };
 
     union t_occupancy

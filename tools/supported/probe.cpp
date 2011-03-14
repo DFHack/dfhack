@@ -59,7 +59,7 @@ int main (int numargs, const char ** args)
     Maps->Start();
 
     vector<DFHack::t_feature> global_features;
-    std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> > local_features;
+    std::map <DFHack::DFCoord, std::vector<DFHack::t_feature *> > local_features;
 
     bool have_local = Maps->ReadLocalFeatures(local_features);
     bool have_global = Maps->ReadGlobalFeatures(global_features);
@@ -133,9 +133,7 @@ int main (int numargs, const char ** args)
             PRINT_FLAG( water_table );
             PRINT_FLAG( rained );
 
-            planecoord pc;
-            pc.dim.x=blockX; pc.dim.y=blockY;
-            
+            DFCoord pc(blockX, blockY);
             PRINT_FLAG( feature_local );
 
             if( des.feature_local && have_local )

@@ -81,7 +81,7 @@ using namespace std;
     #include <winnt.h>
     #include <psapi.h>
     #include <tlhelp32.h>
-    #include <Dbghelp.h>
+    //#include <Dbghelp.h> // NOT present in mingw32
     typedef LONG NTSTATUS;
     #define STATUS_SUCCESS ((NTSTATUS)0x00000000L)
 

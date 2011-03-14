@@ -2,7 +2,7 @@
 PROJECT (dfhack)
 cmake_minimum_required(VERSION 2.6)
 SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
-SET ( DFHACK_VERSION "0.5.2" )
+SET ( DFHACK_VERSION "0.5.5" )
 
 # Set this to project source dir. When dfhack is used
 # as a submodule, CMAKE_SOURCE_DIR is not pointing to
@@ -25,6 +25,7 @@ ENDIF(NOT DEFINED CMAKE_BUILD_TYPE)
 SET( LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output CACHE PATH "Output directory for the dfhack library" )
 SET( EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output CACHE PATH "Output directory for the dfhack tools" )
 SET( DATA_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output CACHE PATH "Output directory for the dfhack data (offset files)" )
+SET( DOXYGEN_OUTPUT_DIR ${CMAKE_SOURCE_DIR}/output/doxygen CACHE PATH "Output directory for doxygen")
 
 OPTION(BUILD_DFHACK_DOCUMENTATION "Create doxygen documentation for developers" OFF)
 OPTION(BUILD_DFHACK_EXAMPLES "Build example tools" OFF)

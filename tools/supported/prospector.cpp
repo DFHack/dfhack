@@ -74,7 +74,7 @@ int main (int argc, const char* argv[])
     map <int16_t, uint32_t> materials;
     materials.clear();
     vector<DFHack::t_feature> global_features;
-    std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> > local_features;
+    std::map <DFHack::DFCoord, std::vector<DFHack::t_feature *> > local_features;
 
     vector< vector <uint16_t> > layerassign;
 
@@ -236,15 +236,14 @@ int main (int argc, const char* argv[])
                 idx = Block.local_feature;
                 if( idx != -1 )
                 {
-                    DFHack::planecoord pc;
-                    pc.dim.x = x;
-                    pc.dim.y = y;
-                    std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> >::iterator it;
+                    DFHack::DFCoord pc(x,y);
+                    std::map <DFHack::DFCoord, std::vector<DFHack::t_feature *> >::iterator it;
                     it = local_features.find(pc);
                     if(it != local_features.end())
                     {
                         std::vector<DFHack::t_feature *>& vectr = (*it).second;
                         if(uint16_t(idx) < vectr.size() && vectr[idx]->type == DFHack::feature_Adamantine_Tube)
+                        {
                             for(uint32_t xi = 0 ; xi< 16 ; xi++) for(uint32_t yi = 0 ; yi< 16 ; yi++)
                             {
                                 if(Block.designation[xi][yi].bits.feature_local && DFHack::isWallTerrain(Block.tiletypes[xi][yi]))
@@ -259,6 +258,7 @@ int main (int argc, const char* argv[])
                                     }
                                 }
                             }
+                        }
                     }
                 }
 

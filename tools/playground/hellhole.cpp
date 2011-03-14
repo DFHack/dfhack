@@ -320,8 +320,8 @@ void settileat(unsigned char pattern[16][16], const unsigned char needle, const 
 //Is a given feature present at the given tile?
 int isfeature(
     vector<DFHack::t_feature> global_features,
-    std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> > local_features,
-    const mapblock40d &block, const planecoord &pc, const int x, const int y, const e_feature Feat
+    std::map <DFHack::DFCoord, std::vector<DFHack::t_feature *> > local_features,
+    const mapblock40d &block, const DFCoord &pc, const int x, const int y, const e_feature Feat
 )
 {
     //const TileRow * tp;
@@ -681,7 +681,7 @@ int main (void)
         return 1;
     }
 
-    std::map <DFHack::planecoord, std::vector<DFHack::t_feature *> > local_features;
+    std::map <DFHack::DFCoord, std::vector<DFHack::t_feature *> > local_features;
     if (!Mapz->ReadLocalFeatures(local_features))
     {
         cout << "Couldn't load local features! Probably a version problem." << endl;
@@ -695,9 +695,7 @@ int main (void)
     mapblock40d topblock;
     Mapz->ReadBlock40d( bx, by, bz , &topblock );
     //Related block info
-    planecoord pc;
-    pc.dim.x=bx;
-    pc.dim.y=by;
+    DFCoord pc(bx,by);
     mapblock40d block;
     const TileRow * tp;
     t_designation * d;

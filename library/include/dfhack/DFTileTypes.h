@@ -880,6 +880,53 @@ namespace DFHack
         {"constructed ramp",RAMP,CONSTRUCTED, VAR_1},
         {0 ,EMPTY, AIR, VAR_1} // end
     };
+    // tile is missing a floor
+    inline
+    bool LowPassable(uint16_t tiletype)
+    {
+        switch(DFHack::tileTypeTable[tiletype].c)
+        {
+            case DFHack::EMPTY:
+            case DFHack::STAIR_DOWN:
+            case DFHack::STAIR_UPDOWN:
+            case DFHack::RAMP_TOP:
+                return true;
+            default:
+                return false;
+        }
+    };
+
+    // tile is missing a roof
+    inline
+    bool HighPassable(uint16_t tiletype)
+    {
+        switch(DFHack::tileTypeTable[tiletype].c)
+        {
+            case DFHack::EMPTY:
+            case DFHack::STAIR_DOWN:
+            case DFHack::STAIR_UPDOWN:
+            case DFHack::STAIR_UP:
+            case DFHack::RAMP:
+            case DFHack::RAMP_TOP:
+            case DFHack::FLOOR:
+            case DFHack::SAPLING_DEAD:
+            case DFHack::SAPLING_OK:
+            case DFHack::SHRUB_DEAD:
+            case DFHack::SHRUB_OK:
+            case DFHack::BOULDER:
+            case DFHack::PEBBLES:
+                return true;
+            default:
+                return false;
+        }
+    };
+
+    inline
+    bool FlowPassable(uint16_t tiletype)
+    {
+        TileClass tc = tileTypeTable[tiletype].c;
+        return tc != WALL && tc != PILLAR && tc != TREE_DEAD && tc != TREE_OK;
+    };
 
     inline
     bool isWallTerrain(int in)

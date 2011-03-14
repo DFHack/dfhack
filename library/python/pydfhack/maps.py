@@ -237,7 +237,25 @@ class Maps(object):
         
         if veg_ptr in dftypes.pointer_dict:
             veg = [i for i in dftypes.pointer_dict[veg_ptr][1]]
-                del dftypes.pointer_dict[veg_ptr]
+            del dftypes.pointer_dict[veg_ptr]
+    
+    def read_local_features(self):
+        f = libdfhack.Maps_ReadLocalFeatures(self._map_ptr)
+        feature_dict = {}
+        f_arr = None
+        
+        if f in dftypes.pointer_dict:
+            f_arr = dftypes.pointer_dict[f][1]
+            del dftypes.pointer_dict[f]
+        
+        if f_arr is not None:
+            for node in f_arr:
+                c = node.coordinate.xyz
+                coord = MapPoint(c.x, c.y, c.z)
+                f_list = [node.features[i] for i in xrange(node.feature_length)]
+                feature_dict[coord] = f_list
+        
+        return feature_dict
 
     @property
     def size(self):

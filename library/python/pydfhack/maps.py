@@ -1,6 +1,6 @@
 from ctypes import *
 from dftypes import *
-from util import _uintify, uint_ptr
+from util import _uintify, uint_ptr, check_pointer_cache
 
 _MAX_DIM = 0x300
 _MAX_DIM_SQR = _MAX_DIM * _MAX_DIM
@@ -18,7 +18,7 @@ libdfhack.Maps_ReadOccupancy.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POIN
 libdfhack.Maps_WriteOccupancy.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Occupancies40d) ]
 libdfhack.Maps_ReadRegionOffsets.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(BiomeIndices40d) ]
 
-libdfhack.Maps_ReadVegetation.argtypes = _default_argtypes
+#libdfhack.Maps_ReadVegetation.argtypes = [ c_void_p, c_uint, c_uint, c_uint ]
 libdfhack.Maps_ReadVegetation.restype = c_void_p
 
 libdfhack.Maps_ReadStandardVeins.argtypes = _default_argtypes
@@ -32,6 +32,8 @@ libdfhack.Maps_ReadFrozenVeins.restype = c_void_p
 libdfhack.Maps_ReadSpatterVeins.restype = c_void_p
 libdfhack.Maps_ReadGrassVeins.restype = c_void_p
 libdfhack.Maps_ReadWorldConstructions.restype = c_void_p
+
+libdfhack.Maps_ReadLocalFeatures.restype = c_void_p
 
 class Maps(object):
     def __init__(self, ptr):
@@ -172,81 +174,37 @@ class Maps(object):
     def read_veins(self, x, y, z):
         ux, uy, uz = _uintify(x, y, z)
         
-        veins_ptr = libdfhack.Maps_ReadStandardVeins(self._map_ptr, ux, uy, uz)
-        veins = None
-        
-        if veins_ptr in dftypes.pointer_dict:
-            veins = [i for i in dftypes.pointer_dict[veins_ptr][1]]
-            del dftypes.pointer_dict[veins_ptr]
-        
-        return veins
+        return check_pointer_cache(libdfhack.Maps_ReadStandardVeins(self._map_ptr, ux, uy, uz))
     
     def read_frozen_veins(self, x, y, z):
         ux, uy, uz = _uintify(x, y, z)
         
-        veins_ptr = libdfhack.Maps_ReadFrozenVeins(self._map_ptr, ux, uy, uz)
-        veins = None
-        
-        if veins_ptr in dftypes.pointer_dict:
-            veins = [i for i in dftypes.pointer_dict[veins_ptr][1]]
-            del dftypes.pointer_dict[veins_ptr]
-        
-        return veins
+        return check_pointer_cache(libdfhack.Maps_ReadFrozenVeins(self._map_ptr, ux, uy, uz))
     
     def read_spatter_veins(self, x, y, z):
         ux, uy, uz = _uintify(x, y, z)
         
-        veins_ptr = libdfhack.Maps_ReadSpatterVeins(self._map_ptr, ux, uy, uz)
-        veins = None
-        
-        if veins_ptr in dftypes.pointer_dict:
-            veins = [i for i in dftypes.pointer_dict[veins_ptr][1]]
-            del dftypes.pointer_dict[veins_ptr]
-        
-        return veins
+        return check_pointer_cache(libdfhack.Maps_ReadSpatterVeins(self._map_ptr, ux, uy, uz))
     
     def read_grass_veins(self, x, y, z):
         ux, uy, uz = _uintify(x, y, z)
         
-        veins_ptr = libdfhack.Maps_ReadGrassVeins(self._map_ptr, ux, uy, uz)
-        veins = None
-        
-        if veins_ptr in dftypes.pointer_dict:
-            veins = [i for i in dftypes.pointer_dict[veins_ptr][1]]
-            del dftypes.pointer_dict[veins_ptr]
-        
-        return veins
+        return check_pointer_cache(libdfhack.Maps_ReadGrassVeins(self._map_ptr, ux, uy, uz))
     
     def read_world_constructions(self, x, y, z):
         ux, uy, uz = _uintify(x, y, z)
         
-        veins_ptr = libdfhack.Maps_ReadWorldConstructions(self._map_ptr, ux, uy, uz)
-        veins = None
-        
-        if veins_ptr in dftypes.pointer_dict:
-            veins = [i for i in dftypes.pointer_dict[veins_ptr][1]]
-            del dftypes.pointer_dict[veins_ptr]
-        
-        return veins
+        return check_pointer_cache(libdfhack.Maps_ReadWorldConstructions(self._map_ptr, ux, uy, uz))
     
     def read_vegetation(self, x, y, z):
         ux, uy, uz = _uintify(x, y, z)
         
-        veg_ptr = libdfhack.Maps_ReadVegetation(self._map_ptr, ux, uy, uz)
-        veg = None
-        
-        if veg_ptr in dftypes.pointer_dict:
-            veg = [i for i in dftypes.pointer_dict[veg_ptr][1]]
-            del dftypes.pointer_dict[veg_ptr]
+        return check_pointer_cache(libdfhack.Maps_ReadVegetation(self._map_ptr, ux, uy, uz))
     
     def read_local_features(self):
         f = libdfhack.Maps_ReadLocalFeatures(self._map_ptr)
-        feature_dict = {}
-        f_arr = None
-        
-        if f in dftypes.pointer_dict:
-            f_arr = dftypes.pointer_dict[f][1]
-            del dftypes.pointer_dict[f]
+        feature_dict = {}        
+        f_arr = check_pointer_cache(f, False)
         
         if f_arr is not None:
             for node in f_arr:

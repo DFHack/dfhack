@@ -57,8 +57,8 @@ TARGET_LINK_LIBRARIES(dfliquids dfhack)
 
 # Solves the problem of unusable items after reclaim by clearing the 'in_job' bit of all items.
 # Original author: Quietust
-ADD_EXECUTABLE(dfcleartask cleartask.cpp)
-TARGET_LINK_LIBRARIES(dfcleartask dfhack)
+#ADD_EXECUTABLE(dfcleartask cleartask.cpp)
+#TARGET_LINK_LIBRARIES(dfcleartask dfhack)
 
 # position - check the DF window and cursor parameters
 ADD_EXECUTABLE(dfposition position.cpp)
@@ -77,8 +77,8 @@ ADD_EXECUTABLE(dfweather weather.cpp)
 TARGET_LINK_LIBRARIES(dfweather dfhack)
 
 # incrementalsearch - a bit like cheat engine, only DF-specific, very basic
-ADD_EXECUTABLE(dfautosearch autosearch.cpp)
-TARGET_LINK_LIBRARIES(dfautosearch dfhack)
+#ADD_EXECUTABLE(dfautosearch autosearch.cpp)
+#TARGET_LINK_LIBRARIES(dfautosearch dfhack)
 ADD_EXECUTABLE(dfincremental incrementalsearch.cpp)
 TARGET_LINK_LIBRARIES(dfincremental dfhack)
 
@@ -131,13 +131,13 @@ dfprobe
 dfpause
 dfdoffsets
 dfattachtest
-dfcleartask
+#dfcleartask
 dfexpbench
 dfsuspend
 dfflows
 dfliquids
 dfweather
-dfautosearch
+#dfautosearch
 dfincremental
 RUNTIME DESTINATION bin
 )

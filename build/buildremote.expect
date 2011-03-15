@@ -30,6 +30,7 @@ if { $rez == 0 } {
    expect "build"
    set timeout -1
    send "auto.bat\r\n"
+   # can detect build errors here, pass them out using 'exit'
    expect "FINISHED_BUILD"
    send "exit\r"
    expect eof

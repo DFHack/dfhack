@@ -1,5 +1,7 @@
 #/bin/sh
 
+#build with MSVC2008 under wine. VERY EXPERIMENTAL.
+
 # VARS
 export WINEARCH=win32
 export WINEPREFIX=$HOME/.wine-mscv/

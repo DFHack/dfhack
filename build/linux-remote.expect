@@ -29,7 +29,7 @@ if { $rez == 0 } {
    send "\"C:\\Program Files (x86)\\MSVC10\\VC\\vcvarsall.bat\" x86\r\n"
    expect "build"
    set timeout -1
-   send "auto.bat\r\n"
+   send "linux-remote.bat\r\n"
    # can detect build errors here, pass them out using 'exit'
    expect "FINISHED_BUILD"
    send "exit\r"

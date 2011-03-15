@@ -10,7 +10,7 @@ export TARGET=Release
 # let's build it all
 VBoxManage startvm "7 Prof"
 sleep 20
-expect buildremote.expect $TARGET
+expect linux-remote.expect $TARGET
 
 echo "Creating package..."
 cd ../output/$TARGET

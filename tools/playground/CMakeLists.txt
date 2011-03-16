@@ -5,105 +5,81 @@ IF(UNIX)
 add_definitions(-DLINUX_BUILD)
 ENDIF(UNIX)
 
+# deep magic. make sure it runs to be able to do debug runs for MSVC projects out of the box
+IF(MSVC)
+    ADD_CUSTOM_TARGET( memxml-for-playground
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Memory.xml ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Copying Memory.xml to ${CMAKE_CURRENT_BINARY_DIR}"
+    )
+    set(LOCAL_DEPNAME memxml-for-playground)
+ENDIF()
+
 # a creature mood dump hack. has hardcoded offsets
-ADD_EXECUTABLE(dfmoodump moodump.cpp)
-TARGET_LINK_LIBRARIES(dfmoodump dfhack)
+DFHACK_TOOL(dfmoodump moodump.cpp)
 
 # bauxite - turn all mechanisms into bauxite mechanisms
 # Author: Alex Legg
-#ADD_EXECUTABLE(dfbauxite dfbauxite.cpp)
-#TARGET_LINK_LIBRARIES(dfbauxite dfhack)
+#DFHACK_TOOL(dfbauxite dfbauxite.cpp)
 
 # digger - designate for digging by tile class
 # Author: mizipzor
-ADD_EXECUTABLE(dfdigger digger.cpp)
-TARGET_LINK_LIBRARIES(dfdigger dfhack)
+DFHACK_TOOL(dfdigger digger.cpp)
 
 # digger2 - designate for digging from a text file
 # Author: rOut
-ADD_EXECUTABLE(dfdigger2 digger2.cpp)
-TARGET_LINK_LIBRARIES(dfdigger2 dfhack)
-
-ADD_EXECUTABLE(primitives primitives.cpp)
+DFHACK_TOOL(dfdigger2 digger2.cpp)
 
 # itemdesignator - change some item designations (dump, forbid, on-fire) for all
 #                  items of a given type and material
 # Author: belal
-#ADD_EXECUTABLE(dfitemdesignator itemdesignator.cpp)
-#TARGET_LINK_LIBRARIES(dfitemdesignator dfhack)
+#DFHACK_TOOL(dfitemdesignator itemdesignator.cpp)
 
 # catsplosion - Accelerates pregnancy
 # Author: Zhentar
-ADD_EXECUTABLE(dfcatsplosion catsplosion.cpp)
-TARGET_LINK_LIBRARIES(dfcatsplosion dfhack)
+DFHACK_TOOL(dfcatsplosion catsplosion.cpp)
 
 # findnameindexes
 # Author: belal
-#ADD_EXECUTABLE(dffindnameindexes findnameindexes.cpp)
-#TARGET_LINK_LIBRARIES(dffindnameindexes dfhack)
+#DFHACK_TOOL(dffindnameindexes findnameindexes.cpp)
 
 # renamer - change the custom names and professions of creatures, sends keys to
 #           df directly
 # Author: belal
-#ADD_EXECUTABLE(dfrenamer renamer.cpp)
-#TARGET_LINK_LIBRARIES(dfrenamer dfhack)
+#DFHACK_TOOL(dfrenamer renamer.cpp)
 
 # copypaste
 # Author: belal
 # copies the current buildings in a df map, and then designates the area to be dug
 # mainly a proof of concept for my gui application dfCopyPaste
-ADD_EXECUTABLE(dfcopypaste copypaste.cpp)
-TARGET_LINK_LIBRARIES(dfcopypaste dfhack)
+DFHACK_TOOL(dfcopypaste copypaste.cpp)
 
 # paths
 # Author: belal
 # dumps the current path to the DF exe, as well as the relative paths to the 
 # current tileset and color files
-ADD_EXECUTABLE(dfpaths paths.cpp)
-TARGET_LINK_LIBRARIES(dfpaths dfhack)
+DFHACK_TOOL(dfpaths paths.cpp)
 
 # deramp
 # Author: zilpin
 # seeks entire map for 'remove ramp' designation, makes a floor, removes designation.
 # intended use is to simulate old 'channel' functionality.
-ADD_EXECUTABLE(dfderamp deramp.cpp)
-TARGET_LINK_LIBRARIES(dfderamp dfhack)
-
+DFHACK_TOOL(dfderamp deramp.cpp)
 
 # printtiletypes
 # Author: zilpin
 # Prints CSV dump of all tile type information.
 # No DF process needed.  Intended only for debugging and information purposes.
-ADD_EXECUTABLE(dfprinttiletypes printtiletypes.cpp)
-TARGET_LINK_LIBRARIES(dfprinttiletypes dfhack)
+DFHACK_TOOL(dfprinttiletypes printtiletypes.cpp)
 
 # hellhole
 # Author: zilpin
 # Creates a bottomless hole to hell.
 # Experimental version hard-codes values.
 # Will have many options in the future.
-ADD_EXECUTABLE(dfhellhole hellhole.cpp)
-TARGET_LINK_LIBRARIES(dfhellhole dfhack)
-
+DFHACK_TOOL(dfhellhole hellhole.cpp)
 
 # this needs the C bindings
 IF(BUILD_DFHACK_C_BINDINGS)
     # for trying out some 'stuff'
-    ADD_EXECUTABLE(dftest test.cpp)
-    TARGET_LINK_LIBRARIES(dftest dfhack)
-    install(TARGETS
-    dftest
-    RUNTIME DESTINATION bin
-    )
+    DFHACK_TOOL(dftest test.cpp)
 ENDIF(BUILD_DFHACK_C_BINDINGS)
-
-install(TARGETS
-dfmoodump
-dfdigger
-dfdigger2
-dfcatsplosion
-dfderamp
-dfprinttiletypes
-dfhellhole
-RUNTIME DESTINATION bin
-)

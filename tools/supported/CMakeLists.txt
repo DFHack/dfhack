@@ -3,84 +3,72 @@
 # this is required to ensure we use the right configuration for the system.
 IF(UNIX)
 add_definitions(-DLINUX_BUILD)
-ENDIF(UNIX)
+ENDIF()
+
+IF(MSVC)
+    ADD_CUSTOM_TARGET( memxml-for-supported
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Memory.xml ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Copying Memory.xml to ${CMAKE_CURRENT_BINARY_DIR}")
+    set(LOCAL_DEPNAME memxml-for-supported)
+ENDIF()
 
 # a reveal clone
-ADD_EXECUTABLE(dfreveal reveal.cpp)
-TARGET_LINK_LIBRARIES(dfreveal dfhack)
+DFHACK_TOOL(dfreveal reveal.cpp)
 
 # force pause!
-ADD_EXECUTABLE(dfpause forcepause.cpp)
-TARGET_LINK_LIBRARIES(dfpause dfhack)
+DFHACK_TOOL(dfpause forcepause.cpp)
 
 # prospector - produces a list of available materials and their quantities
-ADD_EXECUTABLE(dfprospector prospector.cpp)
-TARGET_LINK_LIBRARIES(dfprospector dfhack)
+DFHACK_TOOL(dfprospector prospector.cpp)
 
 # vdig - dig the vein under the cursor
-ADD_EXECUTABLE(dfvdig vdig.cpp)
-TARGET_LINK_LIBRARIES(dfvdig dfhack)
+DFHACK_TOOL(dfvdig vdig.cpp)
 
 # cleanmap - removes mud, snow, blood and similar stuff from a map. farmers beware
-ADD_EXECUTABLE(dfcleanmap cleanmap.cpp)
-TARGET_LINK_LIBRARIES(dfcleanmap dfhack)
+DFHACK_TOOL(dfcleanmap cleanmap.cpp)
 
 # unstuck - make DF run if something goes wrong with the 'normal' memory access method
-ADD_EXECUTABLE(dfunstuck unstuck.cpp)
-TARGET_LINK_LIBRARIES(dfunstuck dfhack)
+DFHACK_TOOL(dfunstuck unstuck.cpp)
 
 # probe - map tile probe
-ADD_EXECUTABLE(dfprobe probe.cpp)
-TARGET_LINK_LIBRARIES(dfprobe dfhack)
+DFHACK_TOOL(dfprobe probe.cpp)
 
 # attachtest - 100x attach/detach, suspend/resume
-ADD_EXECUTABLE(dfattachtest attachtest.cpp)
-TARGET_LINK_LIBRARIES(dfattachtest dfhack)
+DFHACK_TOOL(dfattachtest attachtest.cpp)
 
 # a benchmark program, reads the map 1000x
-ADD_EXECUTABLE(dfexpbench expbench.cpp)
-TARGET_LINK_LIBRARIES(dfexpbench dfhack)
+DFHACK_TOOL(dfexpbench expbench.cpp)
 
 # suspendtest - test if suspend works. df should stop responding when suspended
 #               by dfhack
-ADD_EXECUTABLE(dfsuspend suspendtest.cpp)
-TARGET_LINK_LIBRARIES(dfsuspend dfhack)
+DFHACK_TOOL(dfsuspend suspendtest.cpp)
 
 # flows - check flows impact on fps
-ADD_EXECUTABLE(dfflows flows.cpp)
-TARGET_LINK_LIBRARIES(dfflows dfhack)
+DFHACK_TOOL(dfflows flows.cpp)
 
 # liquids manipulation tool
 # Original author: Aleric
-ADD_EXECUTABLE(dfliquids liquids.cpp)
-TARGET_LINK_LIBRARIES(dfliquids dfhack)
+DFHACK_TOOL(dfliquids liquids.cpp)
 
 # Solves the problem of unusable items after reclaim by clearing the 'in_job' bit of all items.
 # Original author: Quietust
-#ADD_EXECUTABLE(dfcleartask cleartask.cpp)
-#TARGET_LINK_LIBRARIES(dfcleartask dfhack)
+#DFHACK_TOOL(dfcleartask cleartask.cpp)
 
 # position - check the DF window and cursor parameters
-ADD_EXECUTABLE(dfposition position.cpp)
-TARGET_LINK_LIBRARIES(dfposition dfhack)
+DFHACK_TOOL(dfposition position.cpp)
 
 # mode - a utility to change the current game and control modes
-ADD_EXECUTABLE(dfmode mode.cpp)
-TARGET_LINK_LIBRARIES(dfmode dfhack)
+DFHACK_TOOL(dfmode mode.cpp)
 
 # just dump offsets of the current version
-ADD_EXECUTABLE(dfdoffsets dumpoffsets.cpp)
-TARGET_LINK_LIBRARIES(dfdoffsets dfhack)
+DFHACK_TOOL(dfdoffsets dumpoffsets.cpp)
 
 # change the weather
-ADD_EXECUTABLE(dfweather weather.cpp)
-TARGET_LINK_LIBRARIES(dfweather dfhack)
+DFHACK_TOOL(dfweather weather.cpp)
 
 # incrementalsearch - a bit like cheat engine, only DF-specific, very basic
-#ADD_EXECUTABLE(dfautosearch autosearch.cpp)
-#TARGET_LINK_LIBRARIES(dfautosearch dfhack)
-ADD_EXECUTABLE(dfincremental incrementalsearch.cpp)
-TARGET_LINK_LIBRARIES(dfincremental dfhack)
+#DFHACK_TOOL(dfautosearch autosearch.cpp)
+DFHACK_TOOL(dfincremental incrementalsearch.cpp)
 
 
 IF(UNIX)
@@ -117,27 +105,3 @@ IF(UNIX)
         MESSAGE(STATUS "Wide-character ncurses library not found - veinlook can't be built")
     ENDIF(CURSES_FOUND)
 ENDIF(UNIX)
-
-
-install(TARGETS
-dfmode
-dfreveal
-dfprospector
-dfposition
-dfvdig
-dfcleanmap
-dfunstuck
-dfprobe
-dfpause
-dfdoffsets
-dfattachtest
-#dfcleartask
-dfexpbench
-dfsuspend
-dfflows
-dfliquids
-dfweather
-#dfautosearch
-dfincremental
-RUNTIME DESTINATION bin
-)

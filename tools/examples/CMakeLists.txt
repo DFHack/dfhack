@@ -5,57 +5,42 @@ IF(UNIX)
 add_definitions(-DLINUX_BUILD)
 ENDIF(UNIX)
 
+IF(MSVC)
+    ADD_CUSTOM_TARGET( memxml-for-examples
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Memory.xml ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Copying Memory.xml to ${CMAKE_CURRENT_BINARY_DIR}"
+    )
+    set(LOCAL_DEPNAME memxml-for-examples)
+ENDIF()
+
 # buildingsdump - dump buildings and their raw data filtered by type
-ADD_EXECUTABLE(dfbuildingsdump buildingsdump.cpp)
-TARGET_LINK_LIBRARIES(dfbuildingsdump dfhack)
+DFHACK_TOOL(dfbuildingsdump buildingsdump.cpp)
 
 # constructiondump - dump constructions!
-ADD_EXECUTABLE(dfconstructiondump construction_dump.cpp)
-TARGET_LINK_LIBRARIES(dfconstructiondump dfhack)
+DFHACK_TOOL(dfconstructiondump construction_dump.cpp)
 
 # creaturedump - basic creature dump - a test of the creature related exports
-ADD_EXECUTABLE(dfcreaturedump creaturedump.cpp)
-TARGET_LINK_LIBRARIES(dfcreaturedump dfhack)
+DFHACK_TOOL(dfcreaturedump creaturedump.cpp)
 
 # materialtest - just list the first material of each type
-ADD_EXECUTABLE(dfmaterialtest materialtest.cpp)
-TARGET_LINK_LIBRARIES(dfmaterialtest dfhack)
+DFHACK_TOOL(dfmaterialtest materialtest.cpp)
 
 # itemdump - dump the item under the cursor
-ADD_EXECUTABLE(dfitemdump dfitemdump.cpp)
-TARGET_LINK_LIBRARIES(dfitemdump dfhack)
+DFHACK_TOOL(dfitemdump dfitemdump.cpp)
 
 # hotkeynotedump - dumps the hotkeys and notes for the loaded map
 # Author: belal
-ADD_EXECUTABLE(dfhotkeynotedump hotkeynotedump.cpp)
-TARGET_LINK_LIBRARIES(dfhotkeynotedump dfhack)
+DFHACK_TOOL(dfhotkeynotedump hotkeynotedump.cpp)
 
 # settlementdump - dumps the settlements on the loaded map
 # Author: belal
-# ADD_EXECUTABLE(dfsettlementdump settlementdump.cpp)
-# TARGET_LINK_LIBRARIES(dfsettlementdump dfhack)
+# DFHACK_TOOL(dfsettlementdump settlementdump.cpp)
 
 # treedump - dump them trees!
-ADD_EXECUTABLE(dftreedump treedump.cpp)
-TARGET_LINK_LIBRARIES(dftreedump dfhack)
+DFHACK_TOOL(dftreedump treedump.cpp)
 
 # spatterdump - dump spatter 'veins'
-ADD_EXECUTABLE(dfspatterdump spatterdump.cpp)
-TARGET_LINK_LIBRARIES(dfspatterdump dfhack)
+DFHACK_TOOL(dfspatterdump spatterdump.cpp)
 
 # processenum - demonstrates the use of ProcessEnumerator
-ADD_EXECUTABLE(dfprocessenum processenum.cpp)
-TARGET_LINK_LIBRARIES(dfprocessenum dfhack)
-
-install(TARGETS
-dfbuildingsdump
-dfconstructiondump
-dfcreaturedump
-dfmaterialtest
-dfitemdump
-dfhotkeynotedump
-dftreedump
-dfspatterdump
-dfprocessenum
-RUNTIME DESTINATION bin
-)
+DFHACK_TOOL(dfprocessenum processenum.cpp)

@@ -10,7 +10,7 @@
 #  http://tobias.rautenkranz.ch/cmake/doxygen/
 # but it is hard to understand...
 
-FIND_PACKAGE(Doxygen)
+FIND_PACKAGE(Doxygen QUIET)
 
 IF(DOXYGEN_FOUND)
   SET(DOXYGEN_LANGUAGE "English" CACHE STRING "Language used by doxygen")
@@ -59,5 +59,5 @@ IF(DOXYGEN_FOUND)
   # INSTALL( DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/html/" DESTINATION "/usr/share/doc/dfhack-${DFHACK_VERSION}" )
 
 ELSE(DOXYGEN_FOUND)
-  MESSAGE (FATAL_ERROR "doxygen binary couldn't be found")
+  MESSAGE (WARNING "Doxygen binary couldn't be found. Can't build development documentation.'")
 ENDIF(DOXYGEN_FOUND)

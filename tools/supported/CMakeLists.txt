@@ -98,7 +98,7 @@ IF(UNIX)
             TARGET_LINK_LIBRARIES(dfveinlook dfhack ${CURSES_LIBRARIES})
             install(TARGETS
             dfveinlook
-            RUNTIME DESTINATION bin
+            RUNTIME DESTINATION ${DFHACK_BINARY_DESTINATION}
             )
         ENDIF(NCURSES_H)
     ELSE(CURSES_FOUND)

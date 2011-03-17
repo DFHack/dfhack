@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.8)
 SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
 
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-   message(SEND_ERROR "In-source builds are not allowed.")
+   message(FATAL_ERROR "In-source builds are not allowed.")
 endif()
 
 IF(NOT DEFINED CMAKE_BUILD_TYPE)
@@ -165,8 +165,6 @@ SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
 
 LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
 
-SET( MEMXML_DATA_PATH . CACHE PATH "search path for Memory.xml")
-
 # Are we 64bit? (Damn you, ptrace()!)
 IF( CMAKE_SIZEOF_VOID_P MATCHES 4 )
     SET( HAVE_64_BIT 0 )
@@ -185,7 +183,7 @@ IF(UNIX)
   SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
   SET(CMAKE_CXX_FLAGS "-fvisibility=hidden")
 
-  SET(PROJECT_LIBS ${X11_LIBRARY} rt ) #dfhack-md5 dfhack-tixml
+  SET(PROJECT_LIBS ${X11_LIBRARY} rt )
 ELSE()
   IF(MSVC)
     SET(PROJECT_LIBS psapi ${CMAKE_SOURCE_DIR}/library/depends/ntdll/ntdll.lib)
@@ -203,38 +201,15 @@ TARGET_LINK_LIBRARIES(dfhack ${PROJECT_LIBS})
 ADD_CUSTOM_COMMAND( TARGET dfhack POST_BUILD
 COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Memory.xml ${CMAKE_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/)
 
-#if(MSVC)
-    # This is a MSVC hack used for copying files into the target directory
-    # of build target set in MSVC.
-    # It exploits the fact that MSVC has some variables in .vcproj files, much like cmake does here.
-    #
-    # So, $(TargetDir) is ignored by cmake, and replaced with the actual output directory by MSVC
-    #ADD_CUSTOM_COMMAND(TARGET dfhack
-    #COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/data/Memory-ng.xml "$(TargetDir)/Memory.xml"
-    #MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/data/Memory-ng.xml
-    #)
-    #ADD_CUSTOM_COMMAND(TARGET dfhack
-    #COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Compile.html "$(TargetDir)/Compile.html"
-    #MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/Compile.html
-    #)
-    #ADD_CUSTOM_COMMAND(TARGET dfhack
-    #COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Readme.html "$(TargetDir)/Readme.html"
-    #MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/Readme.html
-    #)
-    #ADD_CUSTOM_COMMAND(TARGET dfhack
-    #COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/LICENSE "$(TargetDir)/LICENSE.txt"
-    #MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/LICENSE
-    #)
-#else(MSVC)
-    # Just put the file in the output directory on Linux and Mac
-    #configure_file(${CMAKE_SOURCE_DIR}/data/Memory-ng.xml  ${DATA_OUTPUT_PATH}/Memory.xml COPYONLY)
-    #configure_file(${CMAKE_SOURCE_DIR}/Compile.html  ${DATA_OUTPUT_PATH}/Compile.html COPYONLY)
-    #configure_file(${CMAKE_SOURCE_DIR}/Readme.html  ${DATA_OUTPUT_PATH}/Readme.html COPYONLY)
-    #configure_file(${CMAKE_SOURCE_DIR}/LICENSE  ${DATA_OUTPUT_PATH}/LICENSE.txt COPYONLY)
-#endif(MSVC)
-
-#IF(UNIX)
-#  install(TARGETS dfhack LIBRARY DESTINATION lib)
-#  install(FILES ${CMAKE_SOURCE_DIR}/output/Memory.xml DESTINATION share/dfhack)
-#  install(DIRECTORY ${CMAKE_SOURCE_DIR}/library/include/ DESTINATION include FILES_MATCHING PATTERN "*.h")
-#ENDIF(UNIX)
+install(TARGETS dfhack
+        LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
+        RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION}) #linux: lib
+install(FILES ${CMAKE_SOURCE_DIR}/Memory.xml
+        DESTINATION ${DFHACK_DATA_DESTINATION}) #linux: share/dfhack
+if(WIN32)
+    install(TARGETS dfhack
+            ARCHIVE DESTINATION ${DFHACK_DEVLIB_DESTINATION})
+endif()
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/library/include/
+        DESTINATION ${DFHACK_INCLUDES_DESTINATION}
+        FILES_MATCHING PATTERN "*.h" ) #linux: include

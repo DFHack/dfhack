@@ -482,13 +482,16 @@ namespace DFHack
 
             I omitted resolving the layer matgloss in this API, because it would
             introduce overhead by calling some method for each tile. You have to do it
-            yourself. First get the stuff from ReadGeology and then for each block get
-            the RegionOffsets. For each tile get the real region from RegionOffsets and
-            cross-reference it with the geology stuff (region -- array of vectors, depth --
-            vector). I'm thinking about turning that Geology stuff into a
-            two-dimensional array with static size.
+            yourself.
+            
+            First get the stuff from ReadGeology and then for each block get the RegionOffsets.
+            For each tile get the real region from RegionOffsets and cross-reference it with
+            the geology stuff (region -- array of vectors, depth -- vector).
+            I'm thinking about turning that Geology stuff into a two-dimensional array
+            with static size.
 
             this is the algorithm for applying matgloss:
+            @code
             void DfMap::applyGeoMatgloss(Block * b)
             {
                 // load layer matgloss
@@ -503,6 +506,7 @@ namespace DFHack
                     }
                 }
             }
+            @endcode
          */
         bool ReadGeology( std::vector < std::vector <uint16_t> >& assign );
         std::vector <t_feature> global_features;
@@ -515,12 +519,7 @@ namespace DFHack
         /*
          * BLOCK DATA
          */
-        /*
-        /// allocate and read pointers to map blocks
-        bool InitMap();
-        /// destroy the mapblock cache
-        bool DestroyMap();
-        */
+
         /// get size of the map in tiles
         void getSize(uint32_t& x, uint32_t& y, uint32_t& z);
 

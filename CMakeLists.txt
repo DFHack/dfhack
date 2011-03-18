@@ -14,8 +14,6 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
    message(FATAL_ERROR "In-source builds are not allowed.")
 endif()
 
-
-set(DEVEL_RELEASE "-dev")
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "5")
 set(CPACK_PACKAGE_VERSION_PATCH "8")
@@ -76,20 +74,23 @@ IF(${DFHACK_INSTALL} STREQUAL "linux")
 ENDIF()
 
 ## some options for the user/developer to play with
-OPTION(BUILD_DFHACK_SUPPORTED "Build the supported tools." ON)
-OPTION(BUILD_DFHACK_C_BINDINGS "Build the C portion of the library" ON)
+OPTION(BUILD_DFHACK_LIBRARY "Build the library. Needed for all the tools." ON)
+OPTION(BUILD_DFHACK_C_BINDINGS "Build the C portion of the library." ON)
+OPTION(BUILD_DFHACK_PYTHON_BINDINGS "Build/install the python wrapper." ON)
+IF(WIN32)
+    OPTION(BUILD_DFHACK_DEVEL "Build the developer stuff." OFF)
+ENDIF()
+IF(UNIX)
+    OPTION(BUILD_DFHACK_DEVEL "Build the developer stuff." ON)
+ENDIF()
 OPTION(BUILD_DFHACK_DOXYGEN "Create doxygen documentation for developers" ON)
+OPTION(BUILD_DFHACK_SUPPORTED "Build the supported tools." ON)
 OPTION(BUILD_DFHACK_EXAMPLES "Build example tools" OFF)
 OPTION(BUILD_DFHACK_PLAYGROUND "Build tools from the playground folder" OFF)
 
 include_directories (${CMAKE_SOURCE_DIR}/library/include/)
 include_directories (${CMAKE_SOURCE_DIR}/library/shm/)
 include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
-
-add_subdirectory (library)
-
-## install the default documentation files
-install(FILES Readme.html Compile.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
 
 # macro to save on typing in the tool subdirs
 # builds a tool, links it to the dfhack lib and makes sure the dependency
@@ -105,19 +106,30 @@ MACRO(DFHACK_TOOL TOOL_NAME TOOL_SOURCES)
             RUNTIME DESTINATION ${DFHACK_BINARY_DESTINATION})
 ENDMACRO()
 
-IF(BUILD_DFHACK_SUPPORTED)
-    add_subdirectory (tools/supported)
-ENDIF()
+IF(BUILD_DFHACK_LIBRARY)
 
-IF(BUILD_DFHACK_EXAMPLES)
-    add_subdirectory (tools/examples)
-ENDIF()
+    add_subdirectory (library)
 
-IF(BUILD_DFHACK_PLAYGROUND)
-    add_subdirectory (tools/playground)
-ENDIF()
+    IF(BUILD_DFHACK_PYTHON_BINDINGS)
+        MESSAGE("TODO: write CMakeLists.txt for the python things.")
+    ENDIF()
+    IF(BUILD_DFHACK_SUPPORTED)
+        add_subdirectory (tools/supported)
+    ENDIF()
 
-IF(BUILD_DFHACK_DOXYGEN)
+    IF(BUILD_DFHACK_EXAMPLES)
+        add_subdirectory (tools/examples)
+    ENDIF()
+
+    IF(BUILD_DFHACK_PLAYGROUND)
+        add_subdirectory (tools/playground)
+    ENDIF()
+
+    ## install the default documentation files
+    install(FILES LICENSE Readme.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
+endif()
+
+IF(BUILD_DFHACK_DOXYGEN AND BUILD_DFHACK_DEVEL)
     add_subdirectory (doc)
 ENDIF()
 

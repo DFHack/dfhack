@@ -11,7 +11,6 @@ allow for easier development of new tools.
 
 .. contents::
     
-
 ==============
 Getting DFHack
 ==============
@@ -47,10 +46,6 @@ Windows
 0.31.01 - 0.31.03 legacy
 
 0.31.04 - 0.31.21 SDL
-
-You need have the MSVC 2010 redistributable_ package installed! The tools will fail to run otherwise.
-
-.. _redistributable: http://www.microsoft.com/downloads/en/details.aspx?FamilyID=a7b7a05e-6de6-4d3a-a423-37bf0912db84
 
 Linux
 =====

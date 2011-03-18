@@ -49,7 +49,7 @@ class Position2D(Structure):
     _fields_ = [("x", c_ushort),
                 ("y", c_ushort)]
 
-class Position3d(Structure):
+class Position3D(Structure):
     _fields_ = [("x", c_ushort),
                 ("y", c_ushort),
                 ("z", c_uint)]
@@ -580,3 +580,18 @@ _register_callback("alloc_creaturetype_buffer_callback", _alloc_creaturetype_buf
 class GameModes(Structure):
     _fields_ = [("control_mode", c_ubyte),
                 ("game_mode", c_ubyte)]
+
+class Hotkey(Structure):
+    _fields_ = [("name", (c_char * 10)),
+                ("mode", c_short),
+                ("x", c_int),
+                ("y", c_int),
+                ("z", c_int)]
+
+def _alloc_hotkey_buffer_callback(ptr, count):
+    print "hotkey alloc:  %d" % count
+    return util._allocate_array(ptr, Hotkey, count)
+
+_hotkey_functype = CFUNCTYPE(c_int, POINTER(POINTER(Hotkey)), c_uint)
+_hotkey_func = _hotkey_functype(_alloc_hotkey_buffer_callback)
+_register_callback("alloc_hotkey_buffer_callback", _hotkey_func)

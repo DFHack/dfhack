@@ -1,5 +1,8 @@
 from ctypes import *
 from dftypes import libdfhack
+from util import check_pointer_cache
+
+libdfhack.Position_ReadHotkeys.restype = c_void_p
 
 class Position(object):
     def __init__(self, ptr):
@@ -34,6 +37,9 @@ class Position(object):
         libdfhack.Position_setCursorCoords(self._pos_ptr, self._cx, self._cy, self._cz)
 
     cursor_coords = property(get_cursor_coords, set_cursor_coords)
+    
+    def read_hotkeys(self):
+        return check_pointer_cache(libdfhack.Position_ReadHotkeys(self._pos_ptr))
 
     @property
     def window_size(self):

@@ -11,6 +11,18 @@ ubyte_ptr = POINTER(c_ubyte)
 
 pointer_dict = {}
 
+def check_pointer_cache(address, return_as_list = True):
+    arr = None
+    
+    if address in pointer_dict:
+        arr = pointer_dict[address][1]
+        del pointer_dict[address]
+    
+        if return_as_list == True:
+            arr = [i for i in arr]
+    
+    return arr
+
 def _uintify(x, y, z):
     return (c_uint(x), c_uint(y), c_uint(z))
 

@@ -28,25 +28,14 @@ distribution.
 #include "dfhack/DFProcessEnumerator.h"
 #include "dfhack/DFContext.h"
 #include "dfhack/DFError.h"
+#include "dfhack/DFModule.h"
 
 #include <shms.h>
 #include <mod-core.h>
 #include <mod-maps.h>
 #include <mod-creature40d.h>
 #include "private/ContextShared.h"
-
-#include "dfhack/modules/Maps.h"
-#include "dfhack/modules/Materials.h"
-#include "dfhack/modules/Items.h"
-#include "dfhack/modules/Position.h"
-#include "dfhack/modules/Gui.h"
-#include "dfhack/modules/World.h"
-#include "dfhack/modules/Creatures.h"
-#include "dfhack/modules/Translation.h"
-#include "dfhack/modules/Vegetation.h"
-#include "dfhack/modules/Buildings.h"
-#include "dfhack/modules/Constructions.h"
-#include "dfhack/modules/WindowIO.h"
+#include "private/ModuleFactory.h"
 
 using namespace DFHack;
 
@@ -162,8 +151,9 @@ TYPE * Context::get##TYPE() \
 { \
     if(!d->s_mods.p##TYPE)\
     {\
-        d->s_mods.p##TYPE = new TYPE(d);\
-        d->allModules.push_back(d->s_mods.p##TYPE);\
+        Module * mod = create##TYPE(d);\
+        d->s_mods.p##TYPE = (TYPE *) mod;\
+        d->allModules.push_back(mod);\
     }\
     return d->s_mods.p##TYPE;\
 }

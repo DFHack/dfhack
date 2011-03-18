@@ -30,9 +30,8 @@ distribution.
 #include "dfhack/DFVector.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/DFError.h"
-//#include "dfhack/modules/Translation.h"
 #include "dfhack/modules/Buildings.h"
-
+#include "ModuleFactory.h"
 using namespace DFHack;
 
 //raw
@@ -66,6 +65,11 @@ struct Buildings::Private
     bool hasCustomWorkshops;
     bool Started;
 };
+
+Module* DFHack::createBuildings(DFContextShared * d)
+{
+    return new Buildings(d);
+}
 
 Buildings::Buildings(DFContextShared * d_)
 {

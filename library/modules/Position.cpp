@@ -28,7 +28,14 @@ distribution.
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFError.h"
+#include "ModuleFactory.h"
+
 using namespace DFHack;
+
+Module* DFHack::createPosition(DFContextShared * d)
+{
+    return new Position(d);
+}
 
 struct Position::Private
 {

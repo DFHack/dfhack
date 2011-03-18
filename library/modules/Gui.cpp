@@ -28,8 +28,14 @@ distribution.
 #include "dfhack/DFProcess.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFTypes.h"
+#include "ModuleFactory.h"
 
 using namespace DFHack;
+
+Module* DFHack::createGui(DFContextShared * d)
+{
+    return new Gui(d);
+}
 
 struct Gui::Private
 {

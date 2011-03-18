@@ -26,9 +26,15 @@ distribution.
 
 #include <X11/Xlib.h>   //need for X11 functions
 #include <X11/keysym.h>
-#include <ContextShared.h>
+#include "ContextShared.h"
+#include "ModuleFactory.h"
 
 using namespace DFHack;
+
+Module* DFHack::createWindowIO(DFContextShared * d)
+{
+    return new WindowIO(d);
+}
 
 // should always reflect the enum in DFkeys.h
 const static KeySym ksTable[NUM_SPECIALS]=

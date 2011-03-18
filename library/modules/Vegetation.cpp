@@ -31,8 +31,14 @@ distribution.
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack/modules/Translation.h"
+#include "ModuleFactory.h"
 
 using namespace DFHack;
+
+Module* DFHack::createVegetation(DFContextShared * d)
+{
+    return new Vegetation(d);
+}
 
 struct Vegetation::Private
 {

@@ -41,8 +41,14 @@ FIXME: Japa said that he had to do this with the time stuff he got from here
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/DFError.h"
+#include "ModuleFactory.h"
 
 using namespace DFHack;
+
+Module* DFHack::createWorld(DFContextShared * d)
+{
+    return new World(d);
+}
 
 struct World::Private
 {

@@ -28,7 +28,6 @@ distribution.
 using namespace std;
 
 #include "dfhack/DFIntegers.h"
-#include "DFHack.h"
 #include "DFHack_C.h"
 #include "dfhack/modules/WindowIO.h"
 #include "dfhack-c/modules/WindowIO_C.h"

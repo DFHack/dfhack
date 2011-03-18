@@ -6,18 +6,7 @@
 #include "private/ContextShared.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
-
-#include "dfhack/modules/Materials.h"
-#include "dfhack/modules/Creatures.h"
-#include "dfhack/modules/Maps.h"
-#include "dfhack/modules/Position.h"
-#include "dfhack/modules/Translation.h"
-#include "dfhack/modules/Vegetation.h"
-#include "dfhack/modules/Gui.h"
-#include "dfhack/modules/World.h"
-#include "dfhack/modules/Buildings.h"
-#include "dfhack/modules/Constructions.h"
-#include "dfhack/modules/WindowIO.h"
+#include "dfhack/DFModule.h"
 
 using namespace DFHack;
 

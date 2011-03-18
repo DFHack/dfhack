@@ -31,11 +31,6 @@ distribution.
 
 #include "dfhack/DFContext.h"
 #include "dfhack/DFContextManager.h"
-
-#include <shms.h>
-#include <mod-core.h>
-#include <mod-maps.h>
-#include <mod-creature40d.h>
 #include "private/ContextShared.h"
 
 using namespace DFHack;

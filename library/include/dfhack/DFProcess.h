@@ -35,6 +35,10 @@ namespace DFHack
     class Process;
     class Window;
     
+    /**
+     * A type for storing an extended OS Process ID (combines PID and the time the process was started for unique identification)
+     * \ingroup grp_context
+     */
     struct ProcessID
     {
         ProcessID(const uint64_t _time, const uint64_t _pid): time(_time), pid(_pid){};
@@ -54,7 +58,10 @@ namespace DFHack
         uint64_t pid;
     };
     
-    // structure describing a memory range
+    /**
+     * Structure describing a section of virtual memory inside a process
+     * \ingroup grp_context
+     */
     struct DFHACK_EXPORT t_memrange
     {
         uint64_t start;
@@ -75,7 +82,10 @@ namespace DFHack
         bool valid;
         uint8_t * buffer;
     };
-
+    /**
+     * Allows low-level access to the memory of an OS process. OS processes can be enumerated by \ref ProcessEnumerator
+     * \ingroup grp_context
+     */
     class DFHACK_EXPORT Process
     {
         public:

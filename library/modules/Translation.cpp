@@ -29,8 +29,14 @@ distribution.
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
 #include "dfhack/DFTypes.h"
+#include "ModuleFactory.h"
 
 using namespace DFHack;
+
+Module* DFHack::createTranslation(DFContextShared * d)
+{
+    return new Translation(d);
+}
 
 struct Translation::Private
 {

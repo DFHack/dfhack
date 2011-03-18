@@ -1,6 +1,12 @@
 #ifndef DFHACK_API_H
 #define DFHACK_API_H
 
+/**
+ * \defgroup grp_context Context and Process management
+ * \defgroup grp_modules DFHack Module classes
+ * \defgroup grp_cwrap C Wrapper
+ */
+
 // Defines
 #ifdef __GNUC__
 #define DEPRECATED(func) func __attribute__ ((deprecated))

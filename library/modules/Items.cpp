@@ -30,8 +30,14 @@ distribution.
 #include "dfhack/DFVector.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Items.h"
+#include "ModuleFactory.h"
 
 using namespace DFHack;
+
+Module* DFHack::createItems(DFContextShared * d)
+{
+    return new Items(d);
+}
 
 enum accessor_type {ACCESSOR_CONSTANT, ACCESSOR_INDIRECT, ACCESSOR_DOUBLE_INDIRECT};
 

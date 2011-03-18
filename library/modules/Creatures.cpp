@@ -37,7 +37,7 @@ distribution.
 #include <mod-creature2010.h>
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Creatures.h"
-
+#include "ModuleFactory.h"
 
 #define SHMCREATURESHDR ((Creatures2010::shm_creature_hdr *)d->d->shm_start)
 #define SHMCMD(num) ((shm_cmd *)d->d->shm_start)[num]->pingpong
@@ -64,6 +64,11 @@ struct Creatures::Private
     DFContextShared *d;
     Process *owner;
 };
+
+Module* DFHack::createCreatures(DFContextShared * d)
+{
+    return new Creatures(d);
+}
 
 Creatures::Creatures(DFContextShared* _d)
 {

@@ -26,7 +26,14 @@ distribution.
 #include "ContextShared.h"
 #include "dfhack/modules/WindowIO.h"
 #include "dfhack/DFProcess.h"
+#include "ModuleFactory.h"
+
 using namespace DFHack;
+
+Module* DFHack::createWindowIO(DFContextShared * d)
+{
+    return new WindowIO(d);
+}
 
 // should always reflect the enum in DFkeys.h
 const static int ksTable[NUM_SPECIALS]=

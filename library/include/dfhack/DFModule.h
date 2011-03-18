@@ -30,6 +30,10 @@ distribution.
 namespace DFHack
 {
     class Context;
+    /**
+     * The parent class for all DFHack modules
+     * \ingroup grp_modules
+     */
     class DFHACK_EXPORT Module
     {
         public:

@@ -30,8 +30,14 @@ distribution.
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
 #include <dfhack/DFError.h>
+#include "ModuleFactory.h"
 
 using namespace DFHack;
+
+Module* DFHack::createMaterials(DFContextShared * d)
+{
+    return new Materials(d);
+}
 
 class Materials::Private
 {

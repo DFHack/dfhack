@@ -30,6 +30,7 @@ distribution.
 #include "dfhack/DFVector.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Constructions.h"
+#include "ModuleFactory.h"
 
 using namespace DFHack;
 
@@ -44,6 +45,11 @@ struct Constructions::Private
     bool Inited;
     bool Started;
 };
+
+Module* DFHack::createConstructions(DFContextShared * d)
+{
+    return new Constructions(d);
+}
 
 Constructions::Constructions(DFContextShared * d_)
 {

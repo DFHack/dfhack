@@ -5,8 +5,17 @@
 */
 #include "dfhack/DFExport.h"
 #include "dfhack/DFModule.h"
+/**
+ * \defgroup grp_buildings Building module parts
+ * @ingroup grp_modules
+ */
+
 namespace DFHack
 {
+    /**
+     * Structure for holding a read DF building object
+     * \ingroup grp_buildings
+     */
     struct t_building
     {
         uint32_t origin;
@@ -27,6 +36,11 @@ namespace DFHack
     };
     
     class DFContextShared;
+    /**
+     * The Buildings module - allows reading DF buildings
+     * \ingroup grp_modules
+     * \ingroup grp_buildings
+     */
     class DFHACK_EXPORT Buildings : public Module
     {
         public:

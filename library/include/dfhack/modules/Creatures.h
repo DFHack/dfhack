@@ -375,8 +375,8 @@ namespace DFHack
             const uint16_t x2, const uint16_t y2,const uint16_t z2);
         bool ReadCreature(const int32_t index, t_creature & furball);
         bool ReadJob(const t_creature * furball, std::vector<t_material> & mat);
-		bool ReadInventoryIdx(const uint32_t index, std::vector<uint32_t> & item);
-		bool ReadInventoryPtr(const uint32_t index, std::vector<uint32_t> & item);
+        bool ReadInventoryIdx(const uint32_t index, std::vector<uint32_t> & item);
+        bool ReadInventoryPtr(const uint32_t index, std::vector<uint32_t> & item);
 
         /* Getters */
         uint32_t GetDwarfRaceIndex ( void );
@@ -392,7 +392,7 @@ namespace DFHack
         bool WriteTraits(const uint32_t index, const t_soul &soul);
         bool WriteMood(const uint32_t index, const uint16_t mood);
         bool WriteMoodSkill(const uint32_t index, const uint16_t moodSkill);
-		bool WriteJob(const t_creature * furball, std::vector<t_material> const& mat);
+        bool WriteJob(const t_creature * furball, std::vector<t_material> const& mat);
         bool WritePos(const uint32_t index, const t_creature &creature);
         bool WriteCiv(const uint32_t index, const int32_t civ);
 

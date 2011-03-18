@@ -39,7 +39,14 @@ distribution.
 #define SHMHDR ((shm_core_hdr *)d->d->shm_start)
 #define SHMDATA(type) ((type *)(d->d->shm_start + SHM_HEADER))
 #define MAPS_GUARD if(!d->Started) throw DFHack::Error::ModuleNotInitialized();
+#include "ModuleFactory.h"
+
 using namespace DFHack;
+
+Module* DFHack::createMaps(DFContextShared * d)
+{
+    return new Maps(d);
+}
 
 const char * DFHack::sa_feature(int index)
 {

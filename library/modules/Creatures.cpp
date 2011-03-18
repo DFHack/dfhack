@@ -32,17 +32,9 @@ distribution.
 #include "dfhack/DFTypes.h"
 
 // we connect to those
-#include <shms.h>
-#include <mod-core.h>
-#include <mod-creature2010.h>
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Creatures.h"
 #include "ModuleFactory.h"
-
-#define SHMCREATURESHDR ((Creatures2010::shm_creature_hdr *)d->d->shm_start)
-#define SHMCMD(num) ((shm_cmd *)d->d->shm_start)[num]->pingpong
-#define SHMHDR ((shm_core_hdr *)d->d->shm_start)
-#define SHMDATA(type) ((type *)(d->d->shm_start + SHM_HEADER))
 
 using namespace DFHack;
 
@@ -54,7 +46,44 @@ struct Creatures::Private
     bool Ft_advanced;
     bool Ft_jobs;
     bool Ft_soul;
-    Creatures2010::creature_offsets creatures;
+    struct t_offsets
+    {
+        // creature offsets
+        uint32_t vector;
+        uint32_t pos_offset;
+        uint32_t profession_offset;
+        uint32_t custom_profession_offset;
+        uint32_t race_offset;
+        int32_t civ_offset;
+        uint32_t flags1_offset;
+        uint32_t flags2_offset;
+        uint32_t name_offset;
+        uint32_t sex_offset;
+        uint32_t caste_offset;
+        uint32_t id_offset;
+        uint32_t labors_offset;
+        uint32_t happiness_offset;
+        uint32_t artifact_name_offset;
+        uint32_t physical_offset;
+        uint32_t mood_offset;
+        uint32_t mood_skill_offset;
+        uint32_t pickup_equipment_bit;
+        uint32_t soul_vector_offset;
+        uint32_t default_soul_offset;
+        uint32_t current_job_offset;
+        // soul offsets
+        uint32_t soul_skills_vector_offset;
+        // name offsets (needed for reading creature names)
+        uint32_t name_firstname_offset;
+        uint32_t name_nickname_offset;
+        uint32_t name_words_offset;
+        uint32_t soul_mental_offset;
+        uint32_t soul_traits_offset;
+        uint32_t appearance_vector_offset;
+        uint32_t birth_year_offset;
+        uint32_t birth_time_offset;
+        uint32_t inventory_offset;
+    } creatures;
     uint32_t creature_module;
     uint32_t dwarf_race_index_addr;
     uint32_t dwarf_civ_id_addr;
@@ -89,7 +118,7 @@ Creatures::Creatures(DFContextShared* _d)
     d->OG_job_mats = d->OG_jobs->getGroup("material");
     d->Ft_basic = d->Ft_advanced = d->Ft_jobs = d->Ft_soul = false;
 
-    Creatures2010::creature_offsets &creatures = d->creatures;
+    Private::t_offsets &creatures = d->creatures;
     try
     {
         // Creatures
@@ -197,7 +226,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     // read pointer from vector at position
     uint32_t temp = d->p_cre->at (index);
     furball.origin = temp;
-    Creatures2010::creature_offsets &offs = d->creatures;
+    Private::t_offsets &offs = d->creatures;
 
     //read creature from memory
     if(d->Ft_basic)

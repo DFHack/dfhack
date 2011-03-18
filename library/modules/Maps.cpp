@@ -23,9 +23,6 @@ distribution.
 */
 
 #include "Internal.h"
-#include <shms.h>
-#include <mod-core.h>
-#include <mod-maps.h>
 #include "ContextShared.h"
 #include "dfhack/modules/Maps.h"
 #include "dfhack/DFError.h"
@@ -33,13 +30,9 @@ distribution.
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFVector.h"
 #include <set>
-
-#define SHMMAPSHDR ((Server::Maps::shm_maps_hdr *)d->d->shm_start)
-#define SHMCMD(num) ((shm_cmd *)d->d->shm_start)[num]->pingpong
-#define SHMHDR ((shm_core_hdr *)d->d->shm_start)
-#define SHMDATA(type) ((type *)(d->d->shm_start + SHM_HEADER))
-#define MAPS_GUARD if(!d->Started) throw DFHack::Error::ModuleNotInitialized();
 #include "ModuleFactory.h"
+
+#define MAPS_GUARD if(!d->Started) throw DFHack::Error::ModuleNotInitialized();
 
 using namespace DFHack;
 
@@ -73,7 +66,63 @@ struct Maps::Private
     uint32_t worldSizeX, worldSizeY;
 
     uint32_t maps_module;
-    Server::Maps::maps_offsets offsets;
+    struct t_offsets
+    {
+        uint32_t map_offset;// = d->offset_descriptor->getAddress ("map_data");
+        uint32_t x_count_offset;// = d->offset_descriptor->getAddress ("x_count");
+        uint32_t y_count_offset;// = d->offset_descriptor->getAddress ("y_count");
+        uint32_t z_count_offset;// = d->offset_descriptor->getAddress ("z_count");
+        /*
+         Block
+        */
+        uint32_t tile_type_offset;// = d->offset_descriptor->getOffset ("type");
+        uint32_t designation_offset;// = d->offset_descriptor->getOffset ("designation");
+        uint32_t occupancy_offset;// = d->offset_descriptor->getOffset ("occupancy");
+        uint32_t biome_stuffs;// = d->offset_descriptor->getOffset ("biome_stuffs");
+        uint32_t veinvector;// = d->offset_descriptor->getOffset ("v_vein");
+        uint32_t vegvector;
+        uint32_t temperature1_offset;
+        uint32_t temperature2_offset;
+        uint32_t global_feature_offset;
+        uint32_t local_feature_offset;
+        
+        uint32_t vein_mineral_vptr;
+        uint32_t vein_ice_vptr;
+        uint32_t vein_spatter_vptr;
+        uint32_t vein_grass_vptr;
+        uint32_t vein_worldconstruction_vptr;
+        /*
+        GEOLOGY
+        */
+        uint32_t region_x_offset;// = minfo->getAddress ("region_x");
+        uint32_t region_y_offset;// = minfo->getAddress ("region_y");
+        uint32_t region_z_offset;// =  minfo->getAddress ("region_z");
+        
+        uint32_t world_regions;// mem->getAddress ("ptr2_region_array");
+        uint32_t region_size;// =  minfo->getHexValue ("region_size");
+        uint32_t region_geo_index_offset;// =  minfo->getOffset ("region_geo_index_off");
+        uint32_t world_geoblocks_vector;// =  minfo->getOffset ("geoblock_vector");
+        uint32_t world_size_x;// = minfo->getOffset ("world_size_x");
+        uint32_t world_size_y;// = minfo->getOffset ("world_size_y");
+        uint32_t geolayer_geoblock_offset;// = minfo->getOffset ("geolayer_geoblock_offset");
+        uint32_t type_inside_geolayer;// = mem->getOffset ("type_inside_geolayer");
+        
+        /*
+        FEATURES
+         */
+        uint32_t world_data;
+        uint32_t local_f_start; // offset from world_data or absolute address.
+        uint32_t local_material;
+        uint32_t local_submaterial;
+        uint32_t global_vector; // offset from world_data or absolute address.
+        uint32_t global_funcptr;
+        uint32_t global_material;
+        uint32_t global_submaterial;
+        /*
+         * Vegetation
+         */
+        uint32_t tree_desc_offset;
+    } offsets;
 
     DFContextShared *d;
     Process * owner;
@@ -104,7 +153,7 @@ Maps::Maps(DFContextShared* _d)
     d->usesWorldDataPtr = false;
 
     DFHack::VersionInfo * mem = p->getDescriptor();
-    Server::Maps::maps_offsets &off = d->offsets;
+    Private::t_offsets &off = d->offsets;
     d->hasFeatures = d->hasGeology = d->hasVeggies = true;
 
     // get the offsets once here
@@ -221,17 +270,6 @@ Maps::Maps(DFContextShared* _d)
     off.vein_worldconstruction_vptr = 0;
     mem->resolveClassnameToVPtr("block_square_event_world_constructionst",off.vein_worldconstruction_vptr);
 
-    // upload offsets to SHM server if possible
-    d->maps_module = 0;
-    if(p->getModuleIndex("Maps2010",1,d->maps_module))
-    {
-        // supply the module with offsets so it can work with them
-        Server::Maps::maps_offsets *off2 = SHMDATA(Server::Maps::maps_offsets);
-        memcpy(off2, &(d->offsets), sizeof(Server::Maps::maps_offsets));
-        full_barrier
-        const uint32_t cmd = Server::Maps::MAP_INIT + (d->maps_module << 16);
-        p->SetAndWait(cmd);
-    }
     d->Inited = true;
 }
 
@@ -253,7 +291,7 @@ bool Maps::Start()
         Finish();
 
     Process *p = d->owner;
-    Server::Maps::maps_offsets &off = d->offsets;
+    Private::t_offsets &off = d->offsets;
 
     // get the map pointer
     uint32_t x_array_loc = p->readDWord (off.map_offset);
@@ -348,35 +386,21 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
 {
     MAPS_GUARD
     Process *p = d->owner;
-    if(d->d->shm_start && d->maps_module) // ACCELERATE!
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
     {
-        SHMMAPSHDR->x = x;
-        SHMMAPSHDR->y = y;
-        SHMMAPSHDR->z = z;
-        volatile uint32_t cmd = Server::Maps::MAP_READ_BLOCK_BY_COORDS + (d->maps_module << 16);
-        if(!p->SetAndWait(cmd))
-            return false;
-        memcpy(buffer,SHMDATA(mapblock40d),sizeof(mapblock40d));
+        p->read (addr + d->offsets.tile_type_offset, sizeof (buffer->tiletypes), (uint8_t *) buffer->tiletypes);
+        p->read (addr + d->offsets.designation_offset, sizeof (buffer->designation), (uint8_t *) buffer->designation);
+        p->read (addr + d->offsets.occupancy_offset, sizeof (buffer->occupancy), (uint8_t *) buffer->occupancy);
+        p->read (addr + d->offsets.biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer->biome_indices);
+        p->readWord(addr + d->offsets.global_feature_offset, (uint16_t&) buffer->global_feature);
+        p->readWord(addr + d->offsets.local_feature_offset, (uint16_t&)buffer->local_feature);
+        buffer->origin = addr;
+        uint32_t addr_of_struct = p->readDWord(addr);
+        buffer->blockflags.whole = p->readDWord(addr_of_struct);
         return true;
     }
-    else // plain old block read
-    {
-        uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
-        if (addr)
-        {
-            p->read (addr + d->offsets.tile_type_offset, sizeof (buffer->tiletypes), (uint8_t *) buffer->tiletypes);
-            p->read (addr + d->offsets.designation_offset, sizeof (buffer->designation), (uint8_t *) buffer->designation);
-            p->read (addr + d->offsets.occupancy_offset, sizeof (buffer->occupancy), (uint8_t *) buffer->occupancy);
-            p->read (addr + d->offsets.biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer->biome_indices);
-            p->readWord(addr + d->offsets.global_feature_offset, (uint16_t&) buffer->global_feature);
-            p->readWord(addr + d->offsets.local_feature_offset, (uint16_t&)buffer->local_feature);
-            buffer->origin = addr;
-            uint32_t addr_of_struct = p->readDWord(addr);
-            buffer->blockflags.whole = p->readDWord(addr_of_struct);
-            return true;
-        }
-        return false;
-    }
+    return false;
 }
 
 /*
@@ -633,7 +657,7 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins,
     if(grass) splatter->clear();
     if(constructions) constructions->clear();
 
-    Server::Maps::maps_offsets &off = d->offsets;
+    Private::t_offsets &off = d->offsets;
     if (!addr) return false;
     // veins are stored as a vector of pointers to veins
     /*pointer is 4 bytes! we work with a 32bit program here, no matter what architecture we compile khazad for*/
@@ -795,7 +819,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     // get needed addresses and offsets. Now this is what I call crazy.
     uint16_t worldSizeX, worldSizeY;
     uint32_t regions, geoblocks_vector_addr;
-    Server::Maps::maps_offsets &off = d->offsets;
+    Private::t_offsets &off = d->offsets;
     // get world size
     if(d->usesWorldDataPtr)
     {
@@ -878,7 +902,7 @@ bool Maps::ReadLocalFeatures( std::map <DFCoord, std::vector<t_feature *> > & lo
         return false;
 
     Process * p = d->owner;
-    Server::Maps::maps_offsets &off = d->offsets;
+    Private::t_offsets &off = d->offsets;
     uint32_t base = 0;
     if(d->usesWorldDataPtr)
     {
@@ -980,7 +1004,7 @@ bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
         return false;
 
     Process * p = d->owner;
-    Server::Maps::maps_offsets &off = d->offsets;
+    Private::t_offsets &off = d->offsets;
     uint32_t global_feature_vector;
     if(d->usesWorldDataPtr)
     {
@@ -1037,7 +1061,7 @@ bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<t_tree
     t_tree shrubbery;
     plants->clear();
 
-    Server::Maps::maps_offsets & off = d->offsets;
+    Private::t_offsets &off = d->offsets;
     DfVector<uint32_t> vegptrs(d->owner, addr + off.vegvector);
     for(size_t i = 0; i < vegptrs.size(); i++)
     {

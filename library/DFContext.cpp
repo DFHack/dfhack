@@ -30,10 +30,6 @@ distribution.
 #include "dfhack/DFError.h"
 #include "dfhack/DFModule.h"
 
-#include <shms.h>
-#include <mod-core.h>
-#include <mod-maps.h>
-#include <mod-creature40d.h>
 #include "private/ContextShared.h"
 #include "private/ModuleFactory.h"
 

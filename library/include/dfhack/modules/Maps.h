@@ -454,10 +454,6 @@ namespace DFHack
         int16_t local_feature;
     } mapblock40d;
 
-    /***************************************************************************
-                             C L I E N T   M O D U L E
-    ***************************************************************************/
-    #ifndef BUILD_SHM
     class DFContextShared;
     /**
      * The Maps module
@@ -582,6 +578,5 @@ namespace DFHack
         struct Private;
         Private *d;
     };
-    #endif
 }
 #endif

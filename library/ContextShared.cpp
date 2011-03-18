@@ -1,8 +1,4 @@
 #include "Internal.h"
-#include <shms.h>
-#include <mod-core.h>
-#include <mod-maps.h>
-#include <mod-creature40d.h>
 #include "private/ContextShared.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"

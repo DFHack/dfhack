@@ -69,7 +69,6 @@ include/dfhack-c/modules/Gui_C.h
 include/dfhack-c/modules/Items_C.h
 include/dfhack-c/modules/Maps_C.h
 include/dfhack-c/modules/Materials_C.h
-include/dfhack-c/modules/Position_C.h
 include/dfhack-c/modules/Translation_C.h
 include/dfhack-c/modules/Vegetation_C.h
 include/dfhack-c/modules/WindowIO_C.h
@@ -102,7 +101,6 @@ modules/Gui.cpp
 modules/Items.cpp
 modules/Maps.cpp
 modules/Materials.cpp
-modules/Position.cpp
 modules/Translation.cpp
 modules/Vegetation.cpp
 modules/World.cpp
@@ -118,7 +116,6 @@ modules/Creatures_C.cpp
 modules/Gui_C.cpp
 modules/Items_C.cpp
 modules/Maps_C.cpp
-modules/Position_C.cpp
 modules/Materials_C.cpp
 modules/Translation_C.cpp
 modules/Vegetation_C.cpp

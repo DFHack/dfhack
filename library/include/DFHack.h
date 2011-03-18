@@ -30,7 +30,6 @@
 // DFHack modules
 #include "dfhack/modules/Buildings.h"
 #include "dfhack/modules/Materials.h"
-#include "dfhack/modules/Position.h"
 #include "dfhack/modules/Constructions.h"
 #include "dfhack/modules/Creatures.h"
 #include "dfhack/modules/Translation.h"

@@ -23,7 +23,7 @@ distribution.
 */
 
 #include "dfhack-c/modules/Gui_C.h"
-
+#include "dfhack-c/DFTypes_C.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,33 +43,6 @@ int Gui_Finish(DFHackObject* gui)
 	if(gui != NULL)
 	{
 		return ((DFHack::Gui*)gui)->Finish();
-	}
-	
-	return -1;
-}
-
-int Gui_ReadPauseState(DFHackObject* gui)
-{
-	if(gui != NULL)
-	{
-		return ((DFHack::Gui*)gui)->ReadPauseState();
-	}
-	
-	return -1;
-}
-
-int Gui_SetPauseState(DFHackObject* gui, int8_t paused)
-{
-	if(gui != NULL)
-	{
-		bool pauseState = false;
-		
-		if(paused > 0)
-			pauseState = true;
-		
-		((DFHack::Gui*)gui)->SetPauseState(pauseState);
-		
-		return 1;
 	}
 	
 	return -1;
@@ -96,6 +69,138 @@ int Gui_ReadMenuState(DFHackObject* gui, uint32_t* menuState)
 	
 	return -1;
 }
+
+int Gui_getViewCoords(DFHackObject* pos, int32_t* x, int32_t* y, int32_t* z)
+{
+    if(pos != NULL)
+    {
+        int32_t tx, ty, tz;
+        
+        if(((DFHack::Gui*)pos)->getViewCoords(tx, ty, tz))
+        {
+            *x = tx;
+            *y = ty;
+            *z = tz;
+            
+            return 1;
+        }
+        else
+            return 0;
+    }
+
+    return -1;
+}
+
+int Gui_setViewCoords(DFHackObject* pos, int32_t x, int32_t y, int32_t z)
+{
+    if(pos != NULL)
+    {
+        if(((DFHack::Gui*)pos)->setViewCoords(x, y, z))
+            return 1;
+        else
+            return 0;
+    }
+
+    return -1;
+}
+
+
+int Gui_getCursorCoords(DFHackObject* pos, int32_t* x, int32_t* y, int32_t* z)
+{
+    if(pos != NULL)
+    {
+        int32_t tx, ty, tz;
+        
+        if(((DFHack::Gui*)pos)->getCursorCoords(tx, ty, tz))
+        {
+            *x = tx;
+            *y = ty;
+            *z = tz;
+            
+            return 1;
+        }
+        else
+            return 0;
+    }
+
+    return -1;
+}
+
+int Gui_setCursorCoords(DFHackObject* pos, int32_t x, int32_t y, int32_t z)
+{
+    if(pos != NULL)
+    {
+        if(((DFHack::Gui*)pos)->setCursorCoords(x, y, z))
+            return 1;
+        else
+            return 0;
+    }
+
+    return -1;
+}
+
+t_hotkey* Gui_ReadHotkeys(DFHackObject* pos)
+{
+    if(pos != NULL)
+    {
+        t_hotkey* buf = NULL;
+        
+        (*alloc_hotkey_buffer_callback)(&buf, NUM_HOTKEYS);
+        
+        if(buf != NULL)
+        {
+            if(((DFHack::Gui*)pos)->ReadHotkeys(buf))
+                return buf;
+            else
+                return NULL;
+        }
+        else
+            return NULL;
+    }
+    
+    return NULL;
+}
+
+int Gui_getWindowSize(DFHackObject* pos, int32_t* width, int32_t* height)
+{
+    if(pos != NULL)
+    {
+        int32_t tw, th;
+        
+        if(((DFHack::Gui*)pos)->getWindowSize(tw, th))
+        {
+            *width = tw;
+            *height = th;
+            
+            return 1;
+        }
+        else
+            return 0;
+    }
+
+    return -1;
+}
+
+t_screen* Gui_getScreenTiles(DFHackObject* pos, int32_t width, int32_t height)
+{
+    if(pos != NULL)
+    {
+        t_screen* buf = NULL;
+        
+        (*alloc_screen_buffer_callback)(&buf, width * height);
+        
+        if(buf == NULL)
+            return NULL;
+        
+        if(((DFHack::Gui*)pos)->getScreenTiles(width, height, buf))
+            return buf;
+        else
+            return NULL;
+    }
+    
+    return NULL;
+}
+
 
 #ifdef __cplusplus
 }

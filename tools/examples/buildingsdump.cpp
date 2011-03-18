@@ -56,7 +56,7 @@ int main (int argc,const char* argv[])
     
     DFHack::VersionInfo * mem = DF->getMemoryInfo();
     DFHack::Buildings * Bld = DF->getBuildings();
-    DFHack::Position * Pos = DF->getPosition();
+    DFHack::Gui * Gui = DF->getGui();
     
     uint32_t numBuildings;
     if(Bld->Start(numBuildings))
@@ -93,7 +93,7 @@ int main (int argc,const char* argv[])
         else // mode
         {
             int32_t x,y,z;
-            Pos->getCursorCoords(x,y,z);
+            Gui->getCursorCoords(x,y,z);
             if(x != -30000)
             {
                 for(uint32_t i = 0; i < numBuildings; i++)

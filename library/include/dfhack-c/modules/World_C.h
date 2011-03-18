@@ -46,6 +46,8 @@ DFHACK_EXPORT int World_WriteCurrentWeather(DFHackObject* world, uint8_t weather
 DFHACK_EXPORT int World_ReadGameMode(DFHackObject* world, t_gamemodes*);
 DFHACK_EXPORT int World_WriteGameMode(DFHackObject* world, t_gamemodes);
 
+DFHACK_EXPORT int World_ReadPauseState(DFHackObject* gui);
+DFHACK_EXPORT int World_SetPauseState(DFHackObject* gui, int8_t paused);
 #ifdef __cplusplus
 }
 #endif

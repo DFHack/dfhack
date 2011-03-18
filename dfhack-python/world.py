@@ -14,6 +14,9 @@ class World(object):
     def finish(self):
         return libdfhack.World_Finish(self._world_ptr) > 0
     
+    def read_pause_state(self):
+        return libdfhack.World_ReadPauseState(self._world_ptr) > 0
+    
     def read_current_tick(self):
         tick = c_uint(0)
         

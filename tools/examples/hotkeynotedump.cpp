@@ -26,7 +26,7 @@ int main (void)
     }
     
     DFHack::VersionInfo * mem = DF->getMemoryInfo();
-    DFHack::Position * Pos = DF->getPosition();
+    DFHack::Gui * Gui = DF->getGui();
     // get stone matgloss mapping
     /*
     uint32_t numNotes;
@@ -49,7 +49,7 @@ int main (void)
     */
     cout << "Hotkeys" << endl;
     DFHack::t_hotkey hotkeys[NUM_HOTKEYS];
-    Pos->ReadHotkeys(hotkeys);
+    Gui->ReadHotkeys(hotkeys);
     for(uint32_t i =0;i< NUM_HOTKEYS;i++)
     {
         cout << "x: " << hotkeys[i].x << "\ty: " << hotkeys[i].y << "\tz: " << hotkeys[i].z <<

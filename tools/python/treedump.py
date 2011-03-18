@@ -5,12 +5,12 @@ df = cm.get_single_context()
 
 df.attach()
 
-pos = df.position
+gui = df.gui
 veg = df.vegetation
 mps = df.maps
 mat = df.materials
 
-x, y, z = pos.get_cursor_coords()
+x, y, z = gui.get_cursor_coords()
 
 num_veg = veg.start()
 

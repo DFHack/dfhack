@@ -26,11 +26,11 @@ using namespace std;
 #define BLOCK_SIZE 16
 
 
-void dig(DFHack::Maps* layers, DFHack::Position* position, ::std::vector< ::std::string >& dig_map, bool verbose = false) {
+void dig(DFHack::Maps* layers, DFHack::Gui* Gui, ::std::vector< ::std::string >& dig_map, bool verbose = false) {
   int32_t x_cent;
   int32_t y_cent;
   int32_t z_cent;
-  position->getCursorCoords(x_cent, y_cent, z_cent);
+  Gui->getCursorCoords(x_cent, y_cent, z_cent);
 
 // ::std::cout << "x_cent: " << x_cent << " y_cent: " << y_cent << " z_cent: " << z_cent << ::std::endl;
 
@@ -154,7 +154,7 @@ int main(int argc, char** argv) {
   DFHack::Maps *layers = DF->getMaps();
   if (layers && layers->Start()) {
 
-    dig(layers, DF->getPosition(), dig_map, true);
+    dig(layers, DF->getGui(), dig_map, true);
 
     ::std::cout << "Finished digging" << ::std::endl;
     layers->Finish();

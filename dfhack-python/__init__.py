@@ -10,5 +10,4 @@ __all__ = [ "buildings",
                 "items", 
                 "maps", 
                 "materials",
-                "position"
                 "vegetation" ]

@@ -463,7 +463,7 @@ void FindCoords(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ran
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
-        DFHack::Position * pos = DF->getPosition();
+        DFHack::Gui * pos = DF->getGui();
         pos->Start();
         int32_t x, y, z;
         pos->getCursorCoords(x,y,z);

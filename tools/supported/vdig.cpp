@@ -52,7 +52,7 @@ int main (int argc, char* argv[])
 
     uint32_t x_max,y_max,z_max;
     DFHack::Maps * Maps = DF->getMaps();
-    DFHack::Position * Pos = DF->getPosition();
+    DFHack::Gui * Gui = DF->getGui();
 
     // init the map
     if(!Maps->Start())
@@ -70,14 +70,14 @@ int main (int argc, char* argv[])
     uint32_t tx_max = x_max * 16;
     uint32_t ty_max = y_max * 16;
 
-    Pos->getCursorCoords(cx,cy,cz);
+    Gui->getCursorCoords(cx,cy,cz);
     while(cx == -30000)
     {
         cerr << "Cursor is not active. Point the cursor at a vein." << endl;
         DF->Resume();
         cin.ignore();
         DF->Suspend();
-        Pos->getCursorCoords(cx,cy,cz);
+        Gui->getCursorCoords(cx,cy,cz);
     }
     DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
     if(xy.x == 0 || xy.x == tx_max - 1 || xy.y == 0 || xy.y == ty_max - 1)

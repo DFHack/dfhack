@@ -47,7 +47,7 @@ int main (int argc, char** argv)
         }
     }
 
-    DFHack::Position * Position = 0;
+    DFHack::Gui * Gui = 0;
     DFHack::World * World = 0;
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context * DF;
@@ -55,7 +55,7 @@ int main (int argc, char** argv)
     {
         DF = DFMgr.getSingleContext();
         DF->Attach();
-        Position = DF->getPosition();
+        Gui = DF->getGui();
         World = DF->getWorld();
     }
     catch (exception& e)
@@ -75,16 +75,16 @@ int main (int argc, char** argv)
              << " Month: " << World->ReadCurrentMonth()
              << " Day: " << World->ReadCurrentDay()
              << " Tick: " << World->ReadCurrentTick() << endl;
-    if (Position)
+    if (Gui)
     {
         int32_t x,y,z;
         int32_t width,height;
 
-        if(Position->getViewCoords(x,y,z))
+        if(Gui->getViewCoords(x,y,z))
             cout << "view coords: " << x << "/" << y << "/" << z << endl;
-        if(Position->getCursorCoords(x,y,z))
+        if(Gui->getCursorCoords(x,y,z))
             cout << "cursor coords: " << x << "/" << y << "/" << z << endl;
-        if(Position->getWindowSize(width,height))
+        if(Gui->getWindowSize(width,height))
             cout << "window size : " << width << " " << height << endl;
     }
     else

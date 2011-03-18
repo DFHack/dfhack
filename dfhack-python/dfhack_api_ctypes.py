@@ -12,7 +12,6 @@ libdfhack.API_getWindow.restype = c_void_p
 libdfhack.API_getCreatures.restype = c_void_p
 libdfhack.API_getMaps.restype = c_void_p
 libdfhack.API_getGui.restype = c_void_p
-libdfhack.API_getPosition.restype = c_void_p
 libdfhack.API_getMaterials.restype = c_void_p
 libdfhack.API_getTranslation.restype = c_void_p
 libdfhack.API_getVegetation.restype = c_void_p
@@ -24,7 +23,6 @@ class API(object):
     def __init__(self, memory_path):
         self._api_ptr = libdfhack.API_Alloc(create_string_buffer(memory_path))
 
-        self._pos_obj = None
         self._mat_obj = None
         self._map_obj = None
         self._veg_obj = None
@@ -63,14 +61,6 @@ class API(object):
     @property
     def is_suspended(self):
         return libdfhack.API_isSuspended(self._api_ptr) > 0
-
-    @property
-    def position(self):
-        import position
-        if self._pos_obj is None:
-            self._pos_obj = position.Position(libdfhack.API_getPosition(self._api_ptr))
-
-        return self._pos_obj
 
     @property
     def materials(self):

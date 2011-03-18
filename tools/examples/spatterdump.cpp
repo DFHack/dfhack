@@ -88,7 +88,7 @@ int main (int numargs, const char ** args)
     }
     
     DFHack::Maps *Maps =DF->getMaps();
-    DFHack::Position *Pos =DF->getPosition();
+    DFHack::Gui *Gui =DF->getGui();
     DFHack::Materials *Mats =DF->getMaterials();
     
     Mats->ReadCreatureTypes();
@@ -105,7 +105,7 @@ int main (int numargs, const char ** args)
     
     int32_t cx, cy, cz;
     Maps->getSize(x_max,y_max,z_max);
-    Pos->getCursorCoords(cx,cy,cz);
+    Gui->getCursorCoords(cx,cy,cz);
     if(cx == -30000)
     {
         // walk the map

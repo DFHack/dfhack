@@ -35,7 +35,7 @@ int main (int numargs, const char ** args)
     }
 
 
-    DFHack::Position *Pos = DF->getPosition();
+    DFHack::Gui *Gui = DF->getGui();
     DFHack::VersionInfo* mem = DF->getMemoryInfo();
     DFHack::Maps *Maps = DF->getMaps();
     DFHack::Process * p = DF->getProcess();
@@ -65,7 +65,7 @@ int main (int numargs, const char ** args)
     bool have_global = Maps->ReadGlobalFeatures(global_features);
 
     int32_t cursorX, cursorY, cursorZ;
-    Pos->getCursorCoords(cursorX,cursorY,cursorZ);
+    Gui->getCursorCoords(cursorX,cursorY,cursorZ);
     if(cursorX != -30000)
     {
         uint32_t blockX = cursorX / 16;

@@ -158,7 +158,7 @@ int main (int numargs, const char ** args)
         return 1;
     }
     
-    DFHack::Position *Pos = DF->getPosition();
+    DFHack::Gui *Gui = DF->getGui();
     DFHack::VersionInfo* mem = DF->getMemoryInfo();
     DFHack::Process * p = DF->getProcess();
     OffsetGroup * OG_Maps = mem->getGroup("Maps");
@@ -185,7 +185,7 @@ int main (int numargs, const char ** args)
         cout << "Set cursor at first position, then press any key";
         cin.ignore();
         DF->Suspend();
-        Pos->getCursorCoords(cx1,cy1,cz1);
+        Gui->getCursorCoords(cx1,cy1,cz1);
     }
         
     uint32_t tx1,ty1,tz1;
@@ -200,7 +200,7 @@ int main (int numargs, const char ** args)
         cout << "Set cursor at second position, then press any key";
         cin.ignore();
         DF->Suspend();
-        Pos->getCursorCoords(cx2,cy2,cz2);
+        Gui->getCursorCoords(cx2,cy2,cz2);
     }
     uint32_t tx2,ty2,tz2;
     tx2 = cx2/16;
@@ -315,7 +315,7 @@ int main (int numargs, const char ** args)
             cout << "Set cursor at new position, then press any key:";
             result = cin.get();
             DF->Suspend();
-            Pos->getCursorCoords(cx3,cy3,cz3);
+            Gui->getCursorCoords(cx3,cy3,cz3);
         }
         if(result == 'q'){
             break;

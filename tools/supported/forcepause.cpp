@@ -36,10 +36,10 @@ int main (int argc, char** argv)
         return 1;
     }
 
-    DFHack::Gui *Gui =DF->getGui();
+    DFHack::World *World =DF->getWorld();
     cout << "Pausing..." << endl;
 
-    Gui->SetPauseState(true);
+    World->SetPauseState(true);
     DF->Resume();
     #ifndef LINUX_BUILD
         cout << "Done. The current game frame will have to finish first. This can take some time on bugged maps." << endl;

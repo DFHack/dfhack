@@ -150,7 +150,7 @@ int main (int argc, char** argv)
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF;
     DFHack::Maps * Maps;
-    DFHack::Position * Position;
+    DFHack::Gui * Position;
     Brush * brush = new RectangleBrush(1,1);
     try
     {
@@ -159,7 +159,7 @@ int main (int argc, char** argv)
         Maps = DF->getMaps();
         Maps->Start();
         Maps->getSize(x_max,y_max,z_max);
-        Position = DF->getPosition();
+        Position = DF->getGui();
     }
     catch (exception& e)
     {

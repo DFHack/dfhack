@@ -61,14 +61,14 @@ int main (int numargs, const char ** args)
 
     DFHack::Process* p = DF->getProcess();
     DFHack::VersionInfo* mem = DF->getMemoryInfo();
-    DFHack::Position * pos = DF->getPosition();
+    DFHack::Gui * Gui = DF->getGui();
     DFHack::Vegetation * v = DF->getVegetation();
     DFHack::Maps * mps = DF->getMaps();
     DFHack::Materials * mat = DF->getMaterials();
     mat->ReadOrganicMaterials();
 
     int32_t x,y,z;
-    pos->getCursorCoords(x,y,z);
+    Gui->getCursorCoords(x,y,z);
 
     uint32_t numVegs = 0;
     v->Start(numVegs);

@@ -25,6 +25,7 @@ distribution.
 #include "DFHack_C.h"
 #include "dfhack/modules/World.h"
 #include "dfhack-c/modules/World_C.h"
+#include "dfhack-c/DFTypes_C.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -146,6 +147,33 @@ int World_WriteGameMode(DFHackObject* world, t_gamemodes modes)
 	}
 	
 	return -1;
+}
+
+int World_ReadPauseState(DFHackObject* gui)
+{
+    if(gui != NULL)
+    {
+        return ((DFHack::World*)gui)->ReadPauseState();
+    }
+    
+    return -1;
+}
+
+int World_SetPauseState(DFHackObject* gui, int8_t paused)
+{
+    if(gui != NULL)
+    {
+        bool pauseState = false;
+        
+        if(paused > 0)
+            pauseState = true;
+        
+        ((DFHack::World*)gui)->SetPauseState(pauseState);
+        
+        return 1;
+    }
+    
+    return -1;
 }
 
 #ifdef __cplusplus

@@ -89,7 +89,6 @@ namespace DFHack
         struct Private;
         Private *d;
     };
-    typedef class Gui Position;
 }
 #endif
 

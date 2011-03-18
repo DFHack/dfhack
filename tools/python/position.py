@@ -11,11 +11,11 @@ if not df.attach():
     raw_input()
     sys.exit(1)
 
-pos = df.position
+gui = df.gui
 
-print "view coords:  %s" % (pos.view_coords,)
-print "cursor coords:  %s" % (pos.cursor_coords,)
-print "window size:  %s" % (pos.window_size,)
+print "view coords:  %s" % (gui.view_coords,)
+print "cursor coords:  %s" % (gui.cursor_coords,)
+print "window size:  %s" % (gui.window_size,)
 
 if not df.detach():
     print "Unable to detach!"

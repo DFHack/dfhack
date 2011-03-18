@@ -32,7 +32,6 @@ namespace DFHack
     class Maps;
     class Gui;
     class World;
-    class Position;
     class Materials;
     class Items;
     class Translation;
@@ -93,9 +92,6 @@ namespace DFHack
 
         /// get the world module
         World * getWorld();
-
-        /// get the position module
-        Position * getPosition();
 
         /// get the materials module
         Materials * getMaterials();

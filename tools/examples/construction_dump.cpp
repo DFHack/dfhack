@@ -31,7 +31,7 @@ int main (int numargs, const char ** args)
         return 1;
     }
     
-    DFHack::Position *Pos = DF->getPosition();
+    DFHack::Gui *Gui = DF->getGui();
     
     DFHack::Constructions *Cons = DF->getConstructions();
     DFHack::Materials *Mats = DF->getMaterials();
@@ -41,7 +41,7 @@ int main (int numargs, const char ** args)
     Cons->Start(numConstr);
     
     int32_t cx, cy, cz;
-    Pos->getCursorCoords(cx,cy,cz);
+    Gui->getCursorCoords(cx,cy,cz);
     if(cx != -30000)
     {
         t_construction con;

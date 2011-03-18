@@ -52,7 +52,7 @@ int main (void)
     }
     
     DFHack::Maps *Maps =DF->getMaps();
-    DFHack::Gui *Gui =DF->getGui();
+    DFHack::World *World =DF->getWorld();
     // walk the map, save the hide bits, reveal.
     cout << "Pausing..." << endl;
 
@@ -60,7 +60,7 @@ int main (void)
     // preblem here is that we could be 'arriving' at the wrong time and DF could be in the middle of a frame.
     // that could mean that revealing, even with suspending DF's thread, would mean unleashing hell *in the same frame* 
     // this here hack sets the pause state, resumes DF, waits a second for it to enter the pause (I know, BS value.) and suspends.
-    Gui->SetPauseState(true);
+    World->SetPauseState(true);
     DF->Resume();
     waitmsec(1000);
     DF->Suspend();

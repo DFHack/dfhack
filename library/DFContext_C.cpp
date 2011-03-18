@@ -266,16 +266,6 @@ DFHackObject* Context_getGui(DFHackObject* context)
 	return NULL;
 }
 
-DFHackObject* Context_getPosition(DFHackObject* context)
-{
-	if(context != NULL)
-	{
-		return (DFHackObject*)((DFHack::Context*)context)->getPosition();
-	}
-	
-	return NULL;
-}
-
 DFHackObject* Context_getMaterials(DFHackObject* context)
 {
 	if(context != NULL)

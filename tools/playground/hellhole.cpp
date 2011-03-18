@@ -630,8 +630,8 @@ int main (void)
 
     //Get cursor
     int32_t cursorX, cursorY, cursorZ;
-    DFHack::Position *Pos = DF->getPosition();
-    Pos->getCursorCoords(cursorX,cursorY,cursorZ);
+    DFHack::Gui *Gui = DF->getGui();
+    Gui->getCursorCoords(cursorX,cursorY,cursorZ);
     if (-30000==cursorX)
     {
         cout << "No cursor position found.  Exiting." << endl;

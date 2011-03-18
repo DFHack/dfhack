@@ -371,7 +371,7 @@ cd build
 cmake .. -DCMAKE_BUILD_TYPE:string=Release
 make
 </pre>
-<p>This will build the library and its tools and place them in <tt class="docutils literal">/output</tt>.</p>
+<p>This will build the library and its tools and place them in a sub-directory <tt class="docutils literal">bin</tt> inside your build directory.</p>
 <p>Alternatively, you can use ccmake instead of cmake:</p>
 <blockquote>
 cd build
@@ -379,7 +379,7 @@ ccmake ..
 make</blockquote>
 <p>This will show a curses-based interface that lets you set all of the
 extra options.</p>
-<p>You can also use a cmake-friendly IDE like KDevelop 4 or the cmake GUI
+<p>You can also use a cmake-friendly IDE like KDevelop 4 or the cmake-gui
 program.</p>
 <p>To be installed into the system or packaged:</p>
 <pre class="literal-block">
@@ -434,7 +434,7 @@ cmake ..
 <p class="last">You are working in the <tt class="docutils literal">/build</tt> folder. Files added to
 projects from within MSVC will end up there! (and that's
 wrong). Any changes to the build system should be done
-by changing cmake configs and running <tt class="docutils literal">cmake</tt> on them!</p>
+by changing the CMakeLists.txt files and running <tt class="docutils literal">cmake</tt>!</p>
 </div>
 </div>
 <div class="section" id="using-some-other-compiler">

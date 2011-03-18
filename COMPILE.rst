@@ -25,7 +25,7 @@ is simple. Enter the build folder, run the tools. Like this::
     cmake .. -DCMAKE_BUILD_TYPE:string=Release
     make
 
-This will build the library and its tools and place them in ``/output``.
+This will build the library and its tools and place them in a sub-directory ``bin`` inside your build directory.
 
 Alternatively, you can use ccmake instead of cmake:
 
@@ -36,7 +36,7 @@ Alternatively, you can use ccmake instead of cmake:
 This will show a curses-based interface that lets you set all of the
 extra options.
 
-You can also use a cmake-friendly IDE like KDevelop 4 or the cmake GUI
+You can also use a cmake-friendly IDE like KDevelop 4 or the cmake-gui
 program.
 
 To be installed into the system or packaged::
@@ -75,7 +75,7 @@ You'll have to add ``C:\MinGW\`` to your PATH variable.
 Building
 --------
 open up cmd and navigate to the ``dfhack\build`` folder, run ``cmake``
-and the mingw version of make::
+and the mingw version of make:: 
     
     cd build
     cmake .. -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE:string=Release
@@ -97,7 +97,7 @@ This will generate MSVC solution and project files.
     You are working in the ``/build`` folder. Files added to
     projects from within MSVC will end up there! (and that's
     wrong). Any changes to the build system should be done
-    by changing cmake configs and running ``cmake`` on them!
+    by changing the CMakeLists.txt files and running ``cmake``!
 
 -------------------------
 Using some other compiler

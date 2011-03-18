@@ -14,11 +14,12 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
    message(FATAL_ERROR "In-source builds are not allowed.")
 endif()
 
+
 set(DEVEL_RELEASE "-dev")
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "5")
 set(CPACK_PACKAGE_VERSION_PATCH "8")
-set(DFHACK_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}${DEVEL_RELEASE}")
+set(DFHACK_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 set(CPACK_PACKAGE_NAME "dfhack")
 
 ## setting the build type
@@ -31,7 +32,12 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-SET(DFHACK_INSTALL "portable" CACHE STRING "Choose the install type: 'portable' for a portable zip or tar.gz package, 'linux' for packaging and system installs on linux, 'none' for no install target (default).")
+IF(WIN32)
+    set (DFHACK_INST_DEFAULT "portable")
+ELSE()
+    set (DFHACK_INST_DEFAULT "linux")
+ENDIF()
+SET( DFHACK_INSTALL ${DFHACK_INST_DEFAULT} CACHE STRING "Choose the install type: 'portable' for a portable zip or tar.gz package (windows default), 'linux' for packaging and system installs on linux (linux default).")
 SET( MEMXML_DATA_PATH . CACHE PATH "Path to a valid Memory.xml file. This is baked into the library, so when you package DFHack for linux, set it to the right path.")
 
 IF(${DFHACK_INSTALL} STREQUAL "portable")
@@ -48,6 +54,10 @@ IF(${DFHACK_INSTALL} STREQUAL "portable")
         SET(DFHACK_DEVLIB_DESTINATION dev)
         SET(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION .)
     ENDIF()
+    # documentation goes here:
+    SET(DFHACK_USERDOC_DESTINATION .)
+    SET(DFHACK_DEVDOC_DESTINATION dev)
+    SET(DFHACK_DOXYGEN_DESTINATION dev/doxygen)
 ENDIF()
 
 IF(${DFHACK_INSTALL} STREQUAL "linux")
@@ -59,6 +69,10 @@ IF(${DFHACK_INSTALL} STREQUAL "linux")
     SET(DFHACK_DATA_DESTINATION share/dfhack)
     # Includes go here:
     SET(DFHACK_INCLUDES_DESTINATION include)
+    # documentation goes here:
+    SET(DFHACK_USERDOC_DESTINATION share/dfhack/doc)
+    SET(DFHACK_DEVDOC_DESTINATION share/dfhack/doc)
+    SET(DFHACK_DOXYGEN_DESTINATION share/dfhack/doc/doxygen)
 ENDIF()
 
 ## some options for the user/developer to play with
@@ -73,6 +87,9 @@ include_directories (${CMAKE_SOURCE_DIR}/library/shm/)
 include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
 
 add_subdirectory (library)
+
+## install the default documentation files
+install(FILES Readme.html Compile.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
 
 # macro to save on typing in the tool subdirs
 # builds a tool, links it to the dfhack lib and makes sure the dependency

@@ -52,6 +52,9 @@ IF(${DFHACK_INSTALL} STREQUAL "portable")
         SET(DFHACK_DEVLIB_DESTINATION dev)
         SET(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION .)
     ENDIF()
+    IF(UNIX)
+        SET(CMAKE_INSTALL_RPATH "$ORIGIN")
+    ENDIF()
     # documentation goes here:
     SET(DFHACK_USERDOC_DESTINATION .)
     SET(DFHACK_DEVDOC_DESTINATION dev)
@@ -59,6 +62,11 @@ IF(${DFHACK_INSTALL} STREQUAL "portable")
 ENDIF()
 
 IF(${DFHACK_INSTALL} STREQUAL "linux")
+    if(WIN32)
+        MESSAGE(FATAL_ERROR "WTF are you doing?")
+    endif()
+    # set RPATH to always point at the dfhack lib using relative path.
+    SET(CMAKE_INSTALL_RPATH "$ORIGIN/../lib/")
     # the dfhack libraries will be installed here:
     SET(DFHACK_LIBRARY_DESTINATION lib)
     # the dfhack tools will be installed here:

@@ -22,18 +22,6 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-/*
-FIXME: Japa said that he had to do this with the time stuff he got from here
-       Investigate.
-
-    currentYear = Wold->ReadCurrentYear();
-    currentTick = Wold->ReadCurrentTick();
-    currentMonth = (currentTick+9)/33600;
-    currentDay = ((currentTick+9)%33600)/1200;
-    currentHour = ((currentTick+9)-(((currentMonth*28)+currentDay)*1200))/50;
-    currentTickRel = (currentTick+9)-(((((currentMonth*28)+currentDay)*24)+currentHour)*50);
-    */
-
 #include "Internal.h"
 #include "ContextShared.h"
 #include "dfhack/modules/World.h"
@@ -52,13 +40,23 @@ Module* DFHack::createWorld(DFContextShared * d)
 
 struct World::Private
 {
+    Private()
+    {
+        Inited = StartedTime = StartedWeather = StartedMode = PauseInited = false;
+    }
     bool Inited;
+
+    bool PauseInited;
+    uint32_t pause_state_offset;
+
     bool StartedTime;
-    bool StartedWeather;
-    bool StartedMode;
     uint32_t year_offset;
     uint32_t tick_offset;
+
+    bool StartedWeather;
     uint32_t weather_offset;
+
+    bool StartedMode;
     uint32_t gamemode_offset;
     uint32_t controlmode_offset;
     uint32_t controlmodecopy_offset;
@@ -72,7 +70,6 @@ World::World(DFContextShared * _d)
     d = new Private;
     d->d = _d;
     d->owner = _d->p;
-    d->Inited = d->StartedTime = d->StartedWeather = d->StartedMode = false;
 
     OffsetGroup * OG_World = d->d->offset_descriptor->getGroup("World");
     try
@@ -82,6 +79,13 @@ World::World(DFContextShared * _d)
         d->StartedTime = true;
     }
     catch(Error::All &){};
+    OffsetGroup * OG_Gui = d->d->offset_descriptor->getGroup("GUI"); // FIXME: legacy
+    try
+    {
+        d->pause_state_offset = OG_Gui->getAddress ("pause_state");
+        d->PauseInited = true;
+    }
+    catch(exception &){};
     try
     {
         d->weather_offset = OG_World->getAddress( "current_weather" );
@@ -112,6 +116,20 @@ bool World::Start()
 bool World::Finish()
 {
     return true;
+}
+
+bool World::ReadPauseState()
+{
+    if(!d->PauseInited) return false;
+    
+    uint32_t pauseState = d->owner->readDWord (d->pause_state_offset);
+    return pauseState & 1;
+}
+
+void World::SetPauseState(bool paused)
+{
+    if(!d->PauseInited) return;
+    d->owner->writeDWord (d->pause_state_offset, paused);
 }
 
 uint32_t World::ReadCurrentYear()
@@ -150,6 +168,18 @@ bool World::WriteGameMode(const t_gamemodes & wr)
     return false;
 }
 
+/*
+FIXME: Japa said that he had to do this with the time stuff he got from here
+       Investigate.
+
+    currentYear = Wold->ReadCurrentYear();
+    currentTick = Wold->ReadCurrentTick();
+    currentMonth = (currentTick+9)/33600;
+    currentDay = ((currentTick+9)%33600)/1200;
+    currentHour = ((currentTick+9)-(((currentMonth*28)+currentDay)*1200))/50;
+    currentTickRel = (currentTick+9)-(((((currentMonth*28)+currentDay)*24)+currentHour)*50);
+    */
+
 // FIX'D according to this:
 /*
 World::ReadCurrentMonth and World::ReadCurrentDay
@@ -176,13 +206,7 @@ uint8_t World::ReadCurrentWeather()
         return(d->owner->readByte(d->weather_offset + 12));
     return 0;
 }
-/*
-void World::SetCurrentWeather(uint8_t weather)
-{
-    if (d->Inited && d->StartedWeather)
-        d->owner->writeByte(d->weather_offset,weather);
-}
-*/
+
 void World::SetCurrentWeather(uint8_t weather)
 {
     if (d->Inited && d->StartedWeather)

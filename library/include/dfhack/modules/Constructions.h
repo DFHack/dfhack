@@ -31,11 +31,11 @@ namespace DFHack
     struct t_construction
     {
         //0
-        uint16_t x;
-        uint16_t y;
+        uint16_t x; /*!< X coordinate */
+        uint16_t y; /*!< Y coordinate */
         // 4
-        uint16_t z;
-        e_construction_base form : 16;
+        uint16_t z; /*!< Z coordinate */
+        e_construction_base form : 16; /*!< type of item the construction is made of */
         // 8
         uint16_t unk_8; // = -1 in many cases
         uint16_t mat_type;

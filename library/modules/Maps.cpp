@@ -48,17 +48,17 @@ Module* DFHack::createMaps(DFContextShared * d)
     return new Maps(d);
 }
 
-const char * DFHack::sa_feature(int index)
+const char * DFHack::sa_feature(e_feature index)
 {
     switch(index)
     {
-        case 0:
+        case feature_Other:
             return "Other";
-        case 1:
+        case feature_Adamantine_Tube:
             return "Adamantine Tube";
-        case 2:
+        case feature_Underworld:
             return "Underworld";
-        case 3:
+        case feature_Hell_Temple:
             return "Hell Temple";
         default:
             return "Unknown/Error";
@@ -1039,7 +1039,7 @@ bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<t_tree
 
     Server::Maps::maps_offsets & off = d->offsets;
     DfVector<uint32_t> vegptrs(d->owner, addr + off.vegvector);
-    for(int i = 0; i < vegptrs.size(); i++)
+    for(size_t i = 0; i < vegptrs.size(); i++)
     {
         d->owner->read (vegptrs[i] + off.tree_desc_offset, sizeof (t_tree), (uint8_t *) &shrubbery);
         shrubbery.address = vegptrs[i];

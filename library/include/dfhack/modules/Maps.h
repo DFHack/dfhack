@@ -8,12 +8,20 @@
 #include "dfhack/DFExport.h"
 #include "dfhack/DFModule.h"
 #include "Vegetation.h"
+
+/**
+ * \defgroup grp_maps Maps module and its types
+ * @ingroup grp_modules
+ */
+
 namespace DFHack
 {
     /***************************************************************************
                                     T Y P E S
     ***************************************************************************/
-
+    /**
+     * \ingroup grp_maps
+     */
     enum e_feature
     {
         feature_Other,
@@ -21,9 +29,16 @@ namespace DFHack
         feature_Underworld,
         feature_Hell_Temple
     };
+    /**
+     * Function for translating feature index to its name
+     * \ingroup grp_maps
+     */
+    extern DFHACK_EXPORT const char * sa_feature(e_feature index);
 
-    extern DFHACK_EXPORT const char * sa_feature(int index);
-    
+    /**
+     * Class for holding a world coordinate. Can do math with coordinates and can be used as an index for std::map
+     * \ingroup grp_maps
+     */
     class DFCoord
     {
         public:
@@ -82,9 +97,15 @@ namespace DFHack
             uint64_t comparate;
         };
     };
-
+    /**
+     * \ingroup grp_maps
+     */
     typedef DFCoord planecoord;
 
+    /**
+     * A local or global map feature
+     * \ingroup grp_maps
+     */
     struct t_feature
     {
         e_feature type;
@@ -98,7 +119,10 @@ namespace DFHack
         uint32_t origin;
     };
 
-    /// mineral vein object
+    /**
+     * mineral vein object - bitmap with a material type
+     * \ingroup grp_maps
+     */
     struct t_vein
     {
         uint32_t vtable;
@@ -112,7 +136,10 @@ namespace DFHack
         uint32_t address_of; 
     };
 
-    /// stores what tiles should appear when the ice melts
+    /**
+     * stores what tiles should appear when the ice melts - bitmap of material types
+     * \ingroup grp_maps
+     */
     struct t_frozenliquidvein
     {
         uint32_t vtable;
@@ -122,8 +149,12 @@ namespace DFHack
         uint32_t address_of;
     };
 
-    /// a 'spattervein' defines what coverings the individual map tiles have (snow, blood, etc)
-    /// @see PrintSplatterType in DFMiscUtils.h -- incomplete, but illustrative
+    /**
+     * a 'spattervein' defines what coverings the individual map tiles have (snow, blood, etc)
+     * bitmap of intensity with matrial type
+     * \ingroup grp_maps
+     * @see PrintSplatterType
+     */
     struct t_spattervein
     {
         uint32_t vtable;
@@ -139,7 +170,11 @@ namespace DFHack
         /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
         uint32_t address_of;
     };
-
+    /**
+     * a 'grass vein' defines the grass coverage of a map block
+     * bitmap of density (max = 100) with plant material type
+     * \ingroup grp_maps
+     */
     struct t_grassvein
     {
         uint32_t vtable;
@@ -150,7 +185,10 @@ namespace DFHack
         /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
         uint32_t address_of;
     };
-
+    /**
+     * defines the world constructions present. The material member is a mystery.
+     * \ingroup grp_maps
+     */
     struct t_worldconstruction
     {
         uint32_t vtable;
@@ -162,6 +200,9 @@ namespace DFHack
         uint32_t address_of;
     };
 
+    /**
+     * \ingroup grp_maps
+     */
     enum BiomeOffset
     {
         eNorthWest,
@@ -176,6 +217,9 @@ namespace DFHack
         eBiomeCount
     };
 
+    /**
+     * \ingroup grp_maps
+     */
     enum e_traffic
     {
         traffic_normal,
@@ -184,7 +228,10 @@ namespace DFHack
         traffic_restricted
     };
 
-    /// type of a designation for a tile
+    /**
+     * type of a designation for a tile
+     * \ingroup grp_maps
+     */
     enum e_designation
     {
         /// no designation
@@ -204,13 +251,21 @@ namespace DFHack
         /// whatever. for completenes I guess
         designation_7
     };
-
+    
+    /**
+     * type of liquid in a tile
+     * \ingroup grp_maps
+     */
     enum e_liquidtype
     {
         liquid_water,
         liquid_magma
     };
 
+    /**
+     * designation bit field
+     * \ingroup grp_maps
+     */
     struct naked_designation
     {
         unsigned int flow_size : 3; // how much liquid is here?
@@ -254,16 +309,21 @@ namespace DFHack
         unsigned int water_salt : 1;
         // e_liquidcharacter liquid_character : 2;
     };
-
+    /**
+     * designation bit field wrapper
+     * \ingroup grp_maps
+     */
     union t_designation
     {
         uint32_t whole;
         naked_designation bits;
     };
 
-    // occupancy flags (rat,dwarf,horse,built wall,not build wall,etc)
-    //FIXME: THIS IS NOT VALID FOR 31.xx versions!!!!
-    struct naked_occupancy
+    /**
+     * occupancy flags (rat,dwarf,horse,built wall,not build wall,etc)
+     * \ingroup grp_maps
+     */
+    struct naked_occupancy //FIXME: THIS IS NOT VALID FOR 31.xx versions!!!!
     {
         // building type... should be an enum?
         // 7 = door
@@ -303,28 +363,20 @@ namespace DFHack
         unsigned int snow : 1;
         */
     };
-
-    struct naked_occupancy_grouped
-    {
-        unsigned int building : 3;
-        /// the tile contains a standing? creature
-        unsigned int unit : 1;
-        /// the tile contains a prone creature
-        unsigned int unit_grounded : 1;
-        /// the tile contains an item
-        unsigned int item : 1;
-        /// changed
-        unsigned int unknown : 26;
-    };
-
+    /**
+     * occupancy flags (rat,dwarf,horse,built wall,not build wall,etc) wrapper
+     * \ingroup grp_maps
+     */
     union t_occupancy
     {
         uint32_t whole;
         naked_occupancy bits;
-        naked_occupancy_grouped unibits;
     };
 
-    // map block flags
+    /**
+     * map block flags
+     * \ingroup grp_maps
+     */
     struct naked_blockflags
     {
         /// designated for jobs (digging and stuff like that)
@@ -339,19 +391,50 @@ namespace DFHack
         // there's a possibility that this flags field is shorter than 32 bits
     };
 
+    /**
+     * map block flags wrapper
+     * \ingroup grp_maps
+     */
     union t_blockflags
     {
         uint32_t whole;
         naked_blockflags bits;
     };
 
+    /**
+     * 16x16 array of tile types
+     * \ingroup grp_maps
+     */
     typedef int16_t tiletypes40d [16][16];
-    typedef int16_t t_blockmaterials [16][16]; ///< used for squashed block materials
+    /**
+     * 16x16 array used for squashed block materials
+     * \ingroup grp_maps
+     */
+    typedef int16_t t_blockmaterials [16][16];
+    /**
+     * 16x16 array of designation flags
+     * \ingroup grp_maps
+     */
     typedef DFHack::t_designation designations40d [16][16];
+    /**
+     * 16x16 array of occupancy flags
+     * \ingroup grp_maps
+     */
     typedef DFHack::t_occupancy occupancies40d [16][16];
+    /**
+     * array of 16 biome indexes valid for the block
+     * \ingroup grp_maps
+     */
     typedef uint8_t biome_indices40d [16];
+    /**
+     * 16x16 array of temperatures
+     * \ingroup grp_maps
+     */
     typedef uint16_t t_temperatures [16][16];
-
+    /**
+     * structure for holding whole blocks
+     * \ingroup grp_maps
+     */
     typedef struct
     {
         /// type of the tiles
@@ -376,7 +459,11 @@ namespace DFHack
     ***************************************************************************/
     #ifndef BUILD_SHM
     class DFContextShared;
-    struct t_viewscreen;
+    /**
+     * The Maps module
+     * \ingroup grp_modules
+     * \ingroup grp_maps
+     */
     class DFHACK_EXPORT Maps : public Module
     {
         public:

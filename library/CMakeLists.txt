@@ -52,7 +52,6 @@ include/dfhack/modules/Gui.h
 include/dfhack/modules/Items.h
 include/dfhack/modules/Maps.h
 include/dfhack/modules/Materials.h
-include/dfhack/modules/Position.h
 include/dfhack/modules/Translation.h
 include/dfhack/modules/Vegetation.h
 include/dfhack/modules/WindowIO.h

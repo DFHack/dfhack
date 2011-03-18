@@ -35,7 +35,6 @@ namespace DFHack
 
     class Creatures;
     class Maps;
-    class Position;
     class Gui;
     class World;
     class Materials;
@@ -76,7 +75,7 @@ namespace DFHack
         {
             Creatures * pCreatures;
             Maps * pMaps;
-            Position * pPosition;
+            Gui * pPosition; // blerp
             Gui * pGui;
             World * pWorld;
             Materials * pMaterials;

@@ -207,11 +207,9 @@ bool NormalProcess::resume()
         perror("ptrace resume error");
         return false;
     }
-    int status;
     suspended = false;
     return true;
 }
-
 
 bool NormalProcess::attach()
 {

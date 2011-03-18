@@ -168,12 +168,6 @@ union t_itemflags
     naked_itemflags bits;
 };
 
-//cooked
-struct t_viewscreen 
-{
-    int32_t type;
-    //There is more info in these objects, but I don't know what it is yet
-};
 
 struct t_note
 {

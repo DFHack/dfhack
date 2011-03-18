@@ -25,15 +25,23 @@ distribution.
 #ifndef KEYS_H_INCLUDED
 #define KEYS_H_INCLUDED
 
+/**
+ * \defgroup grp_windowio WindowIO: Send events to DF's window
+ * @ingroup grp_modules
+ */
+
+
 #include "../DFPragma.h"
 #include "../DFExport.h"
 #include "../DFModule.h"
 
 namespace DFHack
 {
-
 class Process;
-    
+/**
+ * enum of all possible special keys
+ * \ingroup grp_windowio
+ */
 enum t_special
 {
     ENTER,
@@ -89,6 +97,11 @@ enum t_special
     NUM_SPECIALS
 };
 class DFContextShared;
+/**
+ * The WindowIO module
+ * \ingroup grp_windowio
+ * \ingroup grp_modules
+ */
 class DFHACK_EXPORT WindowIO : public Module
 {
     class Private;

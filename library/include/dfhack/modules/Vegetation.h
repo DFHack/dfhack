@@ -1,21 +1,26 @@
 #ifndef CL_MOD_VEGETATION
 #define CL_MOD_VEGETATION
-/*
-* DF vegetation - stuff that grows and gets cut down or trampled by dwarves
-*/
+/**
+ * \defgroup grp_vegetation Vegetation : stuff that grows and gets cut down or trampled by dwarves
+ * @ingroup grp_modules
+ */
+
 #include "dfhack/DFExport.h"
 #include "dfhack/DFModule.h"
 namespace DFHack
 {
-    /*
-    types
-    0: sapling?, dead sapling?, grown maple tree
-    1: willow sapling?
-    2: shrub
-    3: shrub near water!
-    */
+
+    /**
+     * \ingroup grp_vegetation
+     */
     struct t_tree
     {
+        /**
+        0: sapling?, dead sapling?, grown maple tree
+        1: willow sapling?
+        2: shrub
+        3: shrub near water!
+        */
         uint16_t type; // +0x6C
         uint16_t material; // +0x6E
         uint16_t x; // +0x70
@@ -27,8 +32,13 @@ namespace DFHack
         */
         uint32_t address;
     };
-    
+
     class DFContextShared;
+    /**
+     * The Vegetation module
+     * \ingroup grp_vegetation
+     * \ingroup grp_modules
+     */
     class DFHACK_EXPORT Vegetation : public Module
     {
         public:
@@ -37,7 +47,7 @@ namespace DFHack
         bool Start(uint32_t & numTrees);
         bool Read (const uint32_t index, t_tree & shrubbery);
         bool Finish();
-        
+
         private:
         struct Private;
         Private *d;

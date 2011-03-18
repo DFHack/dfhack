@@ -6,187 +6,111 @@
 #include "dfhack/DFExport.h"
 #include "dfhack/DFModule.h"
 #include "dfhack/modules/Items.h"
+/**
+ * \defgroup grp_creatures Creatures module parts
+ * @ingroup grp_modules
+ */
 namespace DFHack
 {
-    /*
-    bits:
-
-    0    Can the dwarf move or are they waiting for their movement timer
-    1   Dead (might also be set for incoming/leaving critters that are alive)
-    2   Currently in mood
-    3   Had a mood
-    4   "marauder" -- wide class of invader/inside creature attackers
-    5   Drowning
-    6   Active merchant
-    7   "forest" (used for units no longer linked to merchant/diplomacy, they just try to leave mostly)
-    8   Left (left the map)
-    9   Rider
-    10  Incoming
-    11  Diplomat
-    12  Zombie
-    13  Skeleton
-    14  Can swap tiles during movement (prevents multiple swaps)
-    15  On the ground (can be conscious)
-    16  Projectile
-    17  Active invader (for organized ones)
-    18  Hidden in ambush
-    19  Invader origin (could be inactive and fleeing)
-    20  Will flee if invasion turns around
-    21  Active marauder/invader moving inward
-    22  Marauder resident/invader moving in all the way
-    23  Check against flows next time you get a chance
-    24  Ridden
-    25  Caged
-    26  Tame
-    27  Chained
-    28  Royal guard
-    29  Fortress guard
-    30  Suppress wield for beatings/etc
-    31  Is an important historical figure 
-    */
-
-    struct naked_creaturflags1
-    {
-        unsigned int move_state : 1; // Can the dwarf move or are they waiting for their movement timer
-        unsigned int dead : 1; // might also be set for incoming/leaving critters that are alive
-        unsigned int has_mood : 1; // Currently in mood
-        unsigned int had_mood : 1; // Had a mood
-
-        unsigned int marauder : 1; // wide class of invader/inside creature attackers
-        unsigned int drowning : 1;
-        unsigned int merchant : 1; // active merchant
-        unsigned int forest : 1; // used for units no longer linked to merchant/diplomacy, they just try to leave mostly
-
-        unsigned int left : 1; // left the map
-        unsigned int rider : 1;
-        unsigned int incoming : 1;
-        unsigned int diplomat : 1;
-
-        unsigned int zombie : 1;
-        unsigned int skeleton : 1;
-        unsigned int can_swap : 1; // Can swap tiles during movement (prevents multiple swaps)
-        unsigned int on_ground : 1; // can be conscious
-
-        unsigned int projectile : 1;
-        unsigned int active_invader : 1; // for organized ones
-        unsigned int hidden_in_ambush : 1;
-        unsigned int invader_origin : 1; // could be inactive and fleeing
-
-        unsigned int coward : 1; // Will flee if invasion turns around
-        unsigned int hidden_ambusher : 1; // maybe
-        unsigned int invades : 1; // Active marauder/invader moving inward
-        unsigned int check_flows : 1; // Check against flows next time you get a chance
-
-        // 0100 0000 - 8000 0000
-        unsigned int ridden : 1;
-        unsigned int caged : 1;
-        unsigned int tame : 1;
-        unsigned int chained : 1;
-
-        unsigned int royal_guard : 1;
-        unsigned int fortress_guard : 1;
-        unsigned int suppress_wield : 1; // Suppress wield for beatings/etc
-        unsigned int important_historical_figure : 1; // Is an important historical figure 
-    };
-
+    /**
+     * easy access to first crature flags block
+     * \ingroup grp_creatures
+     */
     union t_creaturflags1
     {
-        uint32_t whole;
-        naked_creaturflags1 bits;
-    };
+        uint32_t whole;/*!< Access all flags as a single 32bit number. */
+        struct
+        {
+            unsigned int move_state : 1;       /*!< 0 : Can the dwarf move or are they waiting for their movement timer */
+            unsigned int dead : 1;             /*!< 1 : Dead (might also be set for incoming/leaving critters that are alive) */
+            unsigned int has_mood : 1;         /*!< 2 : Currently in mood */
+            unsigned int had_mood : 1;         /*!< 3 : Had a mood already */
 
-    /*
-    bits:
+            unsigned int marauder : 1;         /*!< 4 : wide class of invader/inside creature attackers */
+            unsigned int drowning : 1;         /*!< 5 : Is currently drowning */
+            unsigned int merchant : 1;         /*!< 6 : An active merchant */
+            unsigned int forest : 1;           /*!< 7 : used for units no longer linked to merchant/diplomacy, they just try to leave mostly */
 
-    0    Swimming
-    1   Play combat for sparring
-    2   Do not notify about level gains (for embark etc)
-    3   Unused
+            unsigned int left : 1;             /*!< 8 : left the map */
+            unsigned int rider : 1;            /*!< 9 : Is riding an another creature */
+            unsigned int incoming : 1;         /*!< 10 */
+            unsigned int diplomat : 1;         /*!< 11 */
 
-    4   Nerves calculated
-    5   Body part info calculated
-    6   Is important historical figure (slight variation)
-    7   Has been killed by kill function (slightly different from dead, not necessarily violent death)
+            unsigned int zombie : 1;           /*!< 12 */
+            unsigned int skeleton : 1;         /*!< 13 */
+            unsigned int can_swap : 1;         /*!< 14: Can swap tiles during movement (prevents multiple swaps) */
+            unsigned int on_ground : 1;        /*!< 15: The creature is laying on the floor, can be conscious */
 
-    8   Must be forgotten by forget function (just cleanup)
-    9   Must be deleted (cleanup)
-    10  Recently forgotten (cleanup)
-    11  Offered for trade
+            unsigned int projectile : 1;       /*!< 16: Launched into the air? Funny. */
+            unsigned int active_invader : 1;   /*!< 17: Active invader (for organized ones) */ 
+            unsigned int hidden_in_ambush : 1; /*!< 18 */
+            unsigned int invader_origin : 1;   /*!< 19: Invader origin (could be inactive and fleeing) */ 
 
-    12  Trade resolved
-    13  Has breaks
-    14  Gutted
-    15  Circulatory spray
+            unsigned int coward : 1;           /*!< 20: Will flee if invasion turns around */
+            unsigned int hidden_ambusher : 1;  /*!< 21: Active marauder/invader moving inward? */
+            unsigned int invades : 1;          /*!< 22: Marauder resident/invader moving in all the way */
+            unsigned int check_flows : 1;      /*!< 23: Check against flows next time you get a chance */
 
-    16  Locked in for trading (it's a projectile on the other set of flags, might be what the flying was)
-    17  Marked for slaughter
-    18  Underworld creature
-    19  Current resident
+            unsigned int ridden : 1;           /*!< 24*/
+            unsigned int caged : 1;            /*!< 25*/
+            unsigned int tame : 1;             /*!< 26*/
+            unsigned int chained : 1;          /*!< 27*/
 
-    20  Marked for special cleanup as unused load from unit block on disk
-    21  Insulation from clothing calculated
-    22  Uninvited guest
-    23  Visitor
-
-    24  Inventory order calculated
-    25  Vision -- have good part
-    26  Vision -- have damaged part
-    27  Vision -- have missing part
-
-    28  Breathing -- have good part
-    29  Breathing -- having a problem
-    30  Roaming wilderness population source
-    31  Roaming wilderness population source -- not a map feature 
-    */
-    struct naked_creaturflags2
-    {
-        unsigned int swimming : 1;
-        unsigned int sparring : 1;
-        unsigned int no_notify : 1; // Do not notify about level gains (for embark etc)
-        unsigned int unused : 1;
-
-        unsigned int calculated_nerves : 1;
-        unsigned int calculated_bodyparts : 1;
-        unsigned int important_historical_figure : 1; // slight variation
-        unsigned int killed : 1; // killed by kill() function
-
-        unsigned int cleanup_1 : 1; // Must be forgotten by forget function (just cleanup)
-        unsigned int cleanup_2 : 1; // Must be deleted (cleanup)
-        unsigned int cleanup_3 : 1; // Recently forgotten (cleanup)
-        unsigned int for_trade : 1; // Offered for trade
-
-        unsigned int trade_resolved : 1;
-        unsigned int has_breaks : 1;
-        unsigned int gutted : 1;
-        unsigned int circulatory_spray : 1;
-
-        unsigned int locked_in_for_trading : 1;
-        unsigned int slaughter : 1; // marked for slaughter
-        unsigned int underworld : 1; // Underworld creature
-        unsigned int resident : 1; // Current resident
-
-        unsigned int cleanup_4 : 1; // Marked for special cleanup as unused load from unit block on disk
-        unsigned int calculated_insulation : 1; // Insulation from clothing calculated
-        unsigned int visitor_uninvited : 1; // Uninvited guest
-        unsigned int visitor : 1; // visitor
-
-        unsigned int calculated_inventory : 1; // Inventory order calculated
-        unsigned int vision_good : 1; // Vision -- have good part
-        unsigned int vision_damaged : 1; // Vision -- have damaged part
-        unsigned int vision_missing : 1; // Vision -- have missing part
-
-        unsigned int breathing_good : 1; // Breathing -- have good part
-        unsigned int breathing_problem : 1; // Breathing -- having a problem
-        unsigned int roaming_wilderness_population_source : 1;
-        unsigned int roaming_wilderness_population_source_not_a_map_feature : 1;
+            unsigned int royal_guard : 1;      /*!< 28*/
+            unsigned int fortress_guard : 1;   /*!< 29*/
+            unsigned int suppress_wield : 1;   /*!< 30: Suppress wield for beatings/etc */
+            unsigned int important_historical_figure : 1; /*!< 31: Is an important historical figure */
+        } bits;
     };
 
     union t_creaturflags2
     {
-        uint32_t whole;
-        naked_creaturflags2 bits;
+        uint32_t whole; /*!< Access all flags as a single 32bit number. */
+        struct
+        {
+            unsigned int swimming : 1;
+            unsigned int sparring : 1;
+            unsigned int no_notify : 1; /*!< Do not notify about level gains (for embark etc)*/
+            unsigned int unused : 1;
+
+            unsigned int calculated_nerves : 1;
+            unsigned int calculated_bodyparts : 1;
+            unsigned int important_historical_figure : 1; /*!< Is important historical figure (slight variation)*/
+            unsigned int killed : 1; /*!< Has been killed by kill function (slightly different from dead, not necessarily violent death)*/
+
+            unsigned int cleanup_1 : 1; /*!< Must be forgotten by forget function (just cleanup) */
+            unsigned int cleanup_2 : 1; /*!< Must be deleted (cleanup) */
+            unsigned int cleanup_3 : 1; /*!< Recently forgotten (cleanup) */
+            unsigned int for_trade : 1; /*!< Offered for trade */
+
+            unsigned int trade_resolved : 1;
+            unsigned int has_breaks : 1;
+            unsigned int gutted : 1;
+            unsigned int circulatory_spray : 1;
+
+            unsigned int locked_in_for_trading : 1; /*!< Locked in for trading (it's a projectile on the other set of flags, might be what the flying was) */
+            unsigned int slaughter : 1; /*!< marked for slaughter */
+            unsigned int underworld : 1; /*!< Underworld creature */
+            unsigned int resident : 1; /*!< Current resident */
+
+            unsigned int cleanup_4 : 1; /*!< Marked for special cleanup as unused load from unit block on disk */
+            unsigned int calculated_insulation : 1; /*!< Insulation from clothing calculated */
+            unsigned int visitor_uninvited : 1; /*!< Uninvited guest */
+            unsigned int visitor : 1; /*!< visitor */
+
+            unsigned int calculated_inventory : 1; /*!< Inventory order calculated */
+            unsigned int vision_good : 1; /*!< Vision -- have good part */
+            unsigned int vision_damaged : 1; /*!< Vision -- have damaged part */
+            unsigned int vision_missing : 1; /*!< Vision -- have missing part */
+
+            unsigned int breathing_good : 1; /*!< Breathing -- have good part */
+            unsigned int breathing_problem : 1; /*!< Breathing -- having a problem */
+            unsigned int roaming_wilderness_population_source : 1;
+            unsigned int roaming_wilderness_population_source_not_a_map_feature : 1;
+        } bits;
     };
 
+    // FIXME: WTF IS THIS SHIT?
     /*
     struct t_labor
     {
@@ -255,13 +179,18 @@ namespace DFHack
     }
     };
     */
-
+    /**
+     * \ingroup grp_creatures
+     */
     struct t_skill
     {
         uint32_t id;
         uint32_t rating;
         uint32_t experience;
     };
+    /**
+     * \ingroup grp_creatures
+     */
     struct t_job
     {
         bool active;
@@ -269,6 +198,9 @@ namespace DFHack
         uint8_t jobType;
         uint32_t occupationPtr;
     };
+    /**
+     * \ingroup grp_creatures
+     */
     struct t_like
     {
         int16_t type;
@@ -279,12 +211,15 @@ namespace DFHack
     };
 
 
-    // FIXME: define in Memory.xml instead?
+    // FIXME: THIS IS VERY, VERY BAD.
     #define NUM_CREATURE_TRAITS 30
     #define NUM_CREATURE_LABORS 102
     #define NUM_CREATURE_MENTAL_ATTRIBUTES 13
     #define NUM_CREATURE_PHYSICAL_ATTRIBUTES 6
-
+    /**
+     * structure for holding a DF creature's soul
+     * \ingroup grp_creatures
+     */
     struct t_soul
     {
         uint8_t numSkills;
@@ -310,7 +245,10 @@ namespace DFHack
     };
 
     #define MAX_COLORS  15
-
+    /**
+     * structure for holding a DF creature
+     * \ingroup grp_creatures
+     */
     struct t_creature
     {
         uint32_t origin;
@@ -358,7 +296,11 @@ namespace DFHack
     };
 
     class DFContextShared;
-    struct t_creature;
+    /**
+     * The Creatures module - allows reading all non-vermin creatures and their properties
+     * \ingroup grp_modules
+     * \ingroup grp_creatures
+     */
     class DFHACK_EXPORT Creatures : public Module
     {
     public:

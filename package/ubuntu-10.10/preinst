@@ -1,0 +1,3 @@
+#!/bin/sh
+mkdir -p /usr/share/dfhack/doc
+mkdir -p /usr/share/dfhack

@@ -1,0 +1,3 @@
+#!/bin/sh
+sysctl -w kernel.randomize_va_space=0
+sysctl -w kernel.yama.ptrace_scope=0

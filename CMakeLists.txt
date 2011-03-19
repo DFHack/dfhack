@@ -17,8 +17,23 @@ endif()
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "5")
 set(CPACK_PACKAGE_VERSION_PATCH "8")
+set(DFHACK_REVISION "1")
+
 set(DFHACK_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+set(CPACK_PACKAGE_VERSION ${DFHACK_VERSION})
+
 set(CPACK_PACKAGE_NAME "dfhack")
+SET(CPACK_PACKAGE_VENDOR "dethware.org")
+SET(CPACK_PACKAGE_CONTACT "peterix@dethware.org")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Memory hacks for Dwarf Fortress")
+SET(CPACK_PACKAGE_DESCRIPTION
+"DFHack is a Dwarf Fortress memory access library and a set of basic
+tools using this library. The library is a work in progress, so things
+might change as more tools are written for it.
+.
+It is an attempt to unite the various ways tools access DF memory and
+allow for easier development of new tools.")
+
 
 ## setting the build type
 IF(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
@@ -35,8 +50,14 @@ IF(WIN32)
 ELSE()
     set (DFHACK_INST_DEFAULT "linux")
 ENDIF()
-SET( DFHACK_INSTALL ${DFHACK_INST_DEFAULT} CACHE STRING "Choose the install type: 'portable' for a portable zip or tar.gz package (windows default), 'linux' for packaging and system installs on linux (linux default).")
-SET( MEMXML_DATA_PATH . CACHE PATH "Path to a valid Memory.xml file. This is baked into the library, so when you package DFHack for linux, set it to the right path.")
+SET( DFHACK_INSTALL ${DFHACK_INST_DEFAULT} CACHE STRING
+"Choose the install type:
+'portable' for a portable zip or tar.gz package (windows default)
+'linux' for generic packaging and system installs on linux (linux default)
+'ubuntu-10.10' for ubuntu maverick package.")
+SET( MEMXML_DATA_PATH . CACHE PATH
+"Path to a valid Memory.xml file.
+This is baked into the library, so when you package DFHack for linux, set it to the right path.")
 
 IF(${DFHACK_INSTALL} STREQUAL "portable")
     # the dfhack libraries will be installed here:
@@ -81,6 +102,31 @@ IF(${DFHACK_INSTALL} STREQUAL "linux")
     SET(DFHACK_DEVDOC_DESTINATION share/dfhack/doc)
     SET(DFHACK_DOXYGEN_DESTINATION share/dfhack/doc/doxygen)
 ENDIF()
+
+IF(${DFHACK_INSTALL} STREQUAL "ubuntu-10.10")
+    if(WIN32)
+        MESSAGE(FATAL_ERROR "WTF are you doing?")
+    endif()
+    # set RPATH to always point at the dfhack lib using relative path.
+    SET(CMAKE_INSTALL_RPATH "$ORIGIN/../lib/")
+    # the dfhack libraries will be installed here:
+    SET(DFHACK_LIBRARY_DESTINATION usr/lib)
+    # the dfhack tools will be installed here:
+    SET(DFHACK_BINARY_DESTINATION usr/bin)
+    # Memory.xml goes here:
+    SET(DFHACK_DATA_DESTINATION usr/share/dfhack)
+    # Includes go here:
+    SET(DFHACK_INCLUDES_DESTINATION usr/include)
+    # documentation goes here:
+    SET(DFHACK_USERDOC_DESTINATION usr/share/dfhack/doc)
+    SET(DFHACK_DEVDOC_DESTINATION usr/share/dfhack/doc)
+    SET(DFHACK_DOXYGEN_DESTINATION usr/share/dfhack/doc/doxygen)
+    INSTALL(FILES
+            "${CMAKE_CURRENT_SOURCE_DIR}/package/ubuntu-10.10/99-dfhack.conf"
+            DESTINATION etc/sysctl.d)
+ENDIF()
+
+
 
 ## some options for the user/developer to play with
 OPTION(BUILD_DFHACK_LIBRARY "Build the library. Needed for all the tools." ON)
@@ -152,5 +198,44 @@ IF(${DFHACK_INSTALL} STREQUAL "portable")
         INCLUDE(InstallRequiredSystemLibraries)
     ENDIF()
     set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${DFHACK_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+    INCLUDE(CPack)
+ENDIF()
+
+#-------------------------------------------------------------------------------
+# Figure out debian architecture
+#-------------------------------------------------------------------------------
+
+FUNCTION(GET_DEBIAN_ARCHITECTURE arch)
+    SET(dpkgarch)
+
+    FIND_PROGRAM(DPKG_CMD dpkg)
+    IF(NOT DPKG_CMD)
+        MESSAGE(STATUS "Can not find dpkg in your path, default to i386.")
+        SET(${arch} i386 PARENT_SCOPE)
+    ENDIF()
+    EXECUTE_PROCESS(COMMAND "${DPKG_CMD}" --print-architecture
+                    OUTPUT_VARIABLE dpkgarch
+                    OUTPUT_STRIP_TRAILING_WHITESPACE )
+    SET(${arch} ${dpkgarch} PARENT_SCOPE)
+ENDFUNCTION()
+
+IF(${DFHACK_INSTALL} STREQUAL "ubuntu-10.10")
+    SET(CPACK_GENERATOR "DEB")
+
+    #wtf, wtf, wtf. force them to be empty
+    set(CMAKE_INSTALL_PREFIX "" FORCE)
+    set(CPACK_INSTALL_PREFIX "")
+    SET(CPACK_PACKAGING_INSTALL_PREFIX "")
+    set(CPACK_SET_DESTDIR true)
+
+    SET(CPACK_DEBIAN_PACKAGE_SECTION "Games") # yep. magma.
+    SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional") # very.
+    SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON) # find deps automatically! hopefully... maybe...
+    SET(INSTSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/package/ubuntu-10.10")
+    SET(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${INSTSCRIPT}/postinst;${INSTSCRIPT}/preinst;${INSTSCRIPT}/postrm")
+
+    GET_DEBIAN_ARCHITECTURE(PKG_ARCHITECTURE)
+
+    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}_${DFHACK_VERSION}-${DFHACK_REVISION}_${PKG_ARCHITECTURE}")
     INCLUDE(CPack)
 ENDIF()

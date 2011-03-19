@@ -307,7 +307,6 @@ namespace DFHack
         unsigned int feature_global : 1;
         unsigned int water_stagnant : 1;
         unsigned int water_salt : 1;
-        // e_liquidcharacter liquid_character : 2;
     };
     /**
      * designation bit field wrapper
@@ -319,49 +318,98 @@ namespace DFHack
         naked_designation bits;
     };
 
+    /*
+     *       unsigned int mud : 1;
+             unsigned int vomit :1;*
+             unsigned int broken_arrows_color :4;
+             unsigned int blood_g : 1;
+             unsigned int blood_g2 : 1;
+             unsigned int blood_b : 1;
+             unsigned int blood_b2 : 1;
+             unsigned int blood_y : 1;
+             unsigned int blood_y2 : 1;
+             unsigned int blood_m : 1;
+             unsigned int blood_m2 : 1;
+             unsigned int blood_c : 1;
+             unsigned int blood_c2 : 1;
+             unsigned int blood_w : 1;
+             unsigned int blood_w2 : 1;
+             unsigned int blood_o : 1;
+             unsigned int blood_o2 : 1;
+             unsigned int slime : 1;
+             unsigned int slime2 : 1;
+             unsigned int blood : 1;
+             unsigned int blood2 : 1;
+             unsigned int broken_arrows_variant : 1;
+             unsigned int snow : 1;
+     */
+    
     /**
      * occupancy flags (rat,dwarf,horse,built wall,not build wall,etc)
      * \ingroup grp_maps
      */
-    struct naked_occupancy //FIXME: THIS IS NOT VALID FOR 31.xx versions!!!!
+    struct naked_occupancy
     {
-        // building type... should be an enum?
-        // 7 = door
-        unsigned int building : 3;
-        /// the tile contains a standing? creature
-        unsigned int unit : 1;
-        /// the tile contains a prone creature
+        /// 0-2: building type... should be an enum.
+        unsigned int building : 3;// 0-2
+        /// 3: the tile contains a standing creature
+        unsigned int unit : 1; // 3
+        /// 4: the tile contains a prone creature
         unsigned int unit_grounded : 1;
-        /// the tile contains an item
+        /// 5: the tile contains an item
         unsigned int item : 1;
-        /// changed
-        unsigned int unknown : 26;
-        /*
-        /// splatter. everyone loves splatter. this doesn't seem to be used anymore
-        unsigned int mud : 1;
-        unsigned int vomit :1;
-        unsigned int broken_arrows_color :4;
-        unsigned int blood_g : 1;
-        unsigned int blood_g2 : 1;
-        unsigned int blood_b : 1;
-        unsigned int blood_b2 : 1;
-        unsigned int blood_y : 1;
-        unsigned int blood_y2 : 1;
-        unsigned int blood_m : 1;
-        unsigned int blood_m2 : 1;
-        unsigned int blood_c : 1;
-        unsigned int blood_c2 : 1;
-        unsigned int blood_w : 1;
-        unsigned int blood_w2 : 1;
-        unsigned int blood_o : 1;
-        unsigned int blood_o2 : 1;
-        unsigned int slime : 1;
-        unsigned int slime2 : 1;
-        unsigned int blood : 1;
-        unsigned int blood2 : 1;
+        /// 6
+        unsigned int unk6 : 1;
+        /// 7: mossy!
+        unsigned int moss : 1;
+        /// 8-11: arrow color related
+        unsigned int arrow_color : 4;
+        /// 12: arrow orientaton
         unsigned int broken_arrows_variant : 1;
-        unsigned int snow : 1;
-        */
+        /// 13
+        unsigned int unk13 : 1;
+        /// 14: A monster lair. Items placed won't be moved.
+        unsigned int monster_lair : 1;
+        /**
+         * 15: seems to be set on terrain tiles where grass growth is impossible
+         * pebbles, boulders, rock floors in the middle of grass. also shrubs. but not trees
+         */
+        unsigned int no_grow : 1;
+        /// 16
+        unsigned int unk16 : 1;
+        /// 17
+        unsigned int unk17 : 1;
+        /// 18
+        unsigned int unk18 : 1;
+        /// 19
+        unsigned int unk19 : 1;
+        
+        /// 20
+        unsigned int unk20 : 1;
+        /// 21
+        unsigned int unk21 : 1;
+        /// 22
+        unsigned int unk22 : 1;
+        /// 23
+        unsigned int unk23 : 1;
+        
+        /// 24
+        unsigned int unk24 : 1;
+        /// 25
+        unsigned int unk25 : 1;
+        /// 26
+        unsigned int unk26 : 1;
+        /// 27
+        unsigned int unk27 : 1;
+        
+        /// 28
+        unsigned int unk28 : 1;
+        /// 29
+        unsigned int unk29 : 1;
+        /// 30
+        unsigned int unk30 : 1;
+        /// 31
+        unsigned int unk31 : 1;
     };
     /**
      * occupancy flags (rat,dwarf,horse,built wall,not build wall,etc) wrapper

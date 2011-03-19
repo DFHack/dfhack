@@ -47,6 +47,7 @@ int main (int numargs, const char ** args)
     uint32_t region_z_offset = mapsg->getAddress("region_z");
 
     uint32_t designatus = mapblockg->getOffset("designation");
+    uint32_t occup = mapblockg->getOffset("occupancy");
     uint32_t biomus =  mapblockg->getOffset("biome_stuffs");
 
     int32_t regionX, regionY, regionZ;
@@ -80,8 +81,12 @@ int main (int numargs, const char ** args)
             printf("block addr: 0x%x\n", block.origin);
             int16_t tiletype = block.tiletypes[tileX][tileY];
             naked_designation &des = block.designation[tileX][tileY].bits;
+            uint32_t designato = block.origin + designatus + (tileX * 16 + tileY) * sizeof(t_designation);
+            uint32_t occupr = block.origin + occup + (tileX * 16 + tileY) * sizeof(t_occupancy);
+            printf("designation offset: 0x%x\n", designato);
             print_bits<uint32_t>(block.designation[tileX][tileY].whole,std::cout);
             std::cout << endl;
+            printf("occupancy offset: 0x%x\n", occupr);
             print_bits<uint32_t>(block.occupancy[tileX][tileY].whole,std::cout);
             std::cout << endl;
 
@@ -121,8 +126,6 @@ int main (int numargs, const char ** args)
                 std::cout << "rained?" << std::endl;
             if(des.smooth)
                 std::cout << "smooth?" << std::endl;
-            uint32_t designato = block.origin + designatus + (tileX * 16 + tileY) * sizeof(t_designation);
-            printf("designation offset: 0x%x\n", designato);
             printf("biomestuffs: 0x%x\n", block.origin + biomus);
 
             #define PRINT_FLAG( X )  printf("%-16s= %c\n", #X , ( des.X ? 'Y' : ' ' ) )

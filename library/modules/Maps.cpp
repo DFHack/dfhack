@@ -544,7 +544,7 @@ bool Maps::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *b
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
-        d->owner->write (addr + d->offsets.occupancy_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
+        d->owner->write (addr + d->offsets.occupancy_offset, sizeof (occupancies40d), (uint8_t *) buffer);
         return true;
     }
     return false;

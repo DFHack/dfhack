@@ -130,8 +130,26 @@ template <typename T>
 void print_bits ( T val, std::ostream& out )
 {
     T n_bits = sizeof ( val ) * CHAR_BIT;
-
-    for ( unsigned i = 0; i < n_bits; ++i ) {
+    int cnt;
+    for ( unsigned i = 0; i < n_bits; ++i )
+    {
+        cnt = i/10;
+        cout << cnt << " ";
+    }
+    cout << endl;
+    for ( unsigned i = 0; i < n_bits; ++i )
+    {
+        cnt = i%10;
+        cout << cnt << " ";
+    }
+    cout << endl;
+    for ( unsigned i = 0; i < n_bits; ++i )
+    {
+        cout << "--";
+    }
+    cout << endl;
+    for ( unsigned i = 0; i < n_bits; ++i )
+    {
         out<< !!( val & 1 ) << " ";
         val >>= 1;
     }

@@ -54,6 +54,8 @@ int main (int argc, char** argv)
 
     uint8_t zeroes [16][16] = {{0}};
     DFHack::occupancies40d occ;
+    DFHack::t_temperatures tt1;
+    DFHack::t_temperatures tt2;
 
     // walk the map
     for(uint32_t x = 0; x< x_max;x++)
@@ -65,17 +67,14 @@ int main (int argc, char** argv)
                 if(Mapz->isValidBlock(x,y,z))
                 {
                     Mapz->ReadVeins(x,y,z,0,0,&splatter);
-                    /*
-                     * FIXME: THIS IS BAD
-                     */
-                    /*
                     Mapz->ReadOccupancy(x,y,z,&occ);
                     for(int i = 0; i < 16; i++)
                         for(int j = 0; j < 16; j++)
                         {
-                            occ[i][j].unibits.splatter = 0;
+                            occ[i][j].bits.arrow_color = 0;
+                            occ[i][j].bits.broken_arrows_variant = 0;
                         }
-                    Mapz->WriteOccupancy(x,y,z,&occ);*/
+                    Mapz->WriteOccupancy(x,y,z,&occ);
                     for(uint32_t i = 0; i < splatter.size(); i++)
                     {
                         DFHack::t_spattervein & vein = splatter[i];

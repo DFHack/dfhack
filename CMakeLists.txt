@@ -21,7 +21,7 @@ set(DFHACK_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR
 set(CPACK_PACKAGE_NAME "dfhack")
 
 ## setting the build type
-IF(NOT DEFINED CMAKE_BUILD_TYPE)
+IF(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
   SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel.")
 ENDIF()
 
@@ -61,6 +61,7 @@ IF(${DFHACK_INSTALL} STREQUAL "portable")
     SET(DFHACK_DOXYGEN_DESTINATION dev/doxygen)
 ENDIF()
 
+# generic linux package in a .tar.gz
 IF(${DFHACK_INSTALL} STREQUAL "linux")
     if(WIN32)
         MESSAGE(FATAL_ERROR "WTF are you doing?")

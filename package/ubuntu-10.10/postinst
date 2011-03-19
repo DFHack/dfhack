@@ -1,3 +1,4 @@
 #!/bin/sh
+echo "Setting required kernel parameters."
 sysctl -w kernel.randomize_va_space=0
 sysctl -w kernel.yama.ptrace_scope=0

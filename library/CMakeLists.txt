@@ -198,7 +198,9 @@ if(BUILD_DFHACK_DEVEL)
         install(TARGETS dfhack
                 ARCHIVE DESTINATION ${DFHACK_DEVLIB_DESTINATION})
     endif()
-    install(DIRECTORY include
+    # note the ending '/'. This means *constents* of the directory are installed
+    # without the '/', the directory itself is installed
+    install(DIRECTORY include/
             DESTINATION ${DFHACK_INCLUDES_DESTINATION}
             FILES_MATCHING PATTERN "*.h" ) #linux: include
 endif()

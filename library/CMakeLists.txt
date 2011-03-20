@@ -1,22 +1,15 @@
-# don't use this file directly. use the one in the root folder of the project
-PROJECT (dfhack-library)
-cmake_minimum_required(VERSION 2.8)
-SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
-
-if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-   message(FATAL_ERROR "In-source builds are not allowed.")
-endif()
-
-IF(NOT DEFINED CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
+if(NOT DEFINED DFHACK_CONSISTENCY)
+    MESSAGE(FATAL_ERROR "Please build the whole thing, not parts. You can turn parts on/off using options.")
 ENDIF()
 
-include_directories (${CMAKE_SOURCE_DIR}/library/include/)
-include_directories (${CMAKE_SOURCE_DIR}/library/shm/)
-include_directories (${CMAKE_SOURCE_DIR}/library/depends/md5/)
-include_directories (${CMAKE_SOURCE_DIR}/library/depends/tinyxml/)
-include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
-include_directories (${CMAKE_SOURCE_DIR}/library/private/)
+PROJECT (dfhack-library)
+cmake_minimum_required(VERSION 2.8)
+
+include_directories (include)
+include_directories (depends/md5)
+include_directories (depends/tinyxml)
+include_directories (depends/argstream)
+include_directories (private)
 
 SET(PROJECT_HDRS_INTERNAL
     private/ContextShared.h
@@ -167,7 +160,6 @@ IF( CMAKE_SIZEOF_VOID_P MATCHES 8 )
     ADD_DEFINITIONS(-DHAVE_64_BIT)
 ENDIF()
 
-#CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/library/config.h.cmake ${CMAKE_SOURCE_DIR}/library/private/config.h )
 ADD_DEFINITIONS(-DMEMXML_DATA_PATH="${MEMXML_DATA_PATH}")
 ADD_DEFINITIONS(-DBUILD_DFHACK_LIB -DTIXML_USE_STL)
 
@@ -180,7 +172,7 @@ IF(UNIX)
   SET(PROJECT_LIBS ${X11_LIBRARY} rt )
 ELSE()
   IF(MSVC)
-    SET(PROJECT_LIBS psapi ${CMAKE_SOURCE_DIR}/library/depends/ntdll/ntdll.lib)
+    SET(PROJECT_LIBS psapi ${dfhack_SOURCE_DIR}/library/depends/ntdll/ntdll.lib)
   ELSE()
     SET(PROJECT_LIBS psapi ntdll)
   ENDIF()
@@ -193,12 +185,12 @@ SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 TARGET_LINK_LIBRARIES(dfhack ${PROJECT_LIBS})
 
 ADD_CUSTOM_COMMAND( TARGET dfhack POST_BUILD
-COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Memory.xml ${CMAKE_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/)
+COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/Memory.xml ${dfhack_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/)
 
 install(TARGETS dfhack
         LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
         RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION}) #linux: lib
-install(FILES ${CMAKE_SOURCE_DIR}/Memory.xml
+install(FILES ${dfhack_SOURCE_DIR}/Memory.xml
         DESTINATION ${DFHACK_DATA_DESTINATION}) #linux: share/dfhack
 
 if(BUILD_DFHACK_DEVEL)
@@ -206,7 +198,7 @@ if(BUILD_DFHACK_DEVEL)
         install(TARGETS dfhack
                 ARCHIVE DESTINATION ${DFHACK_DEVLIB_DESTINATION})
     endif()
-    install(DIRECTORY ${CMAKE_SOURCE_DIR}/library/include/
+    install(DIRECTORY include
             DESTINATION ${DFHACK_INCLUDES_DESTINATION}
             FILES_MATCHING PATTERN "*.h" ) #linux: include
 endif()

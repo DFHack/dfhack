@@ -1,14 +1,16 @@
-# don't use this file directly. use the one in the root folder of the project
+if(NOT DEFINED DFHACK_CONSISTENCY)
+    MESSAGE(FATAL_ERROR "Please build the whole thing, not parts. You can turn parts on/off using options.")
+ENDIF()
 
 # this is required to ensure we use the right configuration for the system.
 IF(UNIX)
-add_definitions(-DLINUX_BUILD)
+    add_definitions(-DLINUX_BUILD)
 ENDIF(UNIX)
 
 # deep magic. make sure it runs to be able to do debug runs for MSVC projects out of the box
 IF(MSVC)
     ADD_CUSTOM_TARGET( memxml-for-playground
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Memory.xml ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/Memory.xml ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Copying Memory.xml to ${CMAKE_CURRENT_BINARY_DIR}"
     )
     set(LOCAL_DEPNAME memxml-for-playground)

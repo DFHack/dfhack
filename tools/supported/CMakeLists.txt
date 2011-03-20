@@ -1,13 +1,15 @@
-# don't use this file directly. use the one in the root folder of the project
+if(NOT DEFINED DFHACK_CONSISTENCY)
+    MESSAGE(FATAL_ERROR "Please build the whole thing, not parts. You can turn parts on/off using options.")
+ENDIF()
 
 # this is required to ensure we use the right configuration for the system.
 IF(UNIX)
-add_definitions(-DLINUX_BUILD)
+    add_definitions(-DLINUX_BUILD)
 ENDIF()
 
 IF(MSVC)
     ADD_CUSTOM_TARGET( memxml-for-supported
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/Memory.xml ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/Memory.xml ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Copying Memory.xml to ${CMAKE_CURRENT_BINARY_DIR}")
     set(LOCAL_DEPNAME memxml-for-supported)
 ENDIF()
@@ -23,6 +25,9 @@ DFHACK_TOOL(dfprospector prospector.cpp)
 
 # vdig - dig the vein under the cursor
 DFHACK_TOOL(dfvdig vdig.cpp)
+IF(WIN32)
+    INSTALL(PROGRAMS dfXvdig.bat DESTINATION ${DFHACK_BINARY_DESTINATION})
+ENDIF()
 
 # cleanmap - removes mud, snow, blood and similar stuff from a map. farmers beware
 DFHACK_TOOL(dfcleanmap cleanmap.cpp)

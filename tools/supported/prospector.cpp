@@ -65,11 +65,7 @@ int main (int argc, const char* argv[])
     showhidden = true;
     #endif
     uint32_t x_max,y_max,z_max;
-    /*
-    DFHack::tiletypes40d tiletypes;
-    DFHack::designations40d designations;
-    DFHack::biome_indices40d regionoffsets;
-    */
+
     DFHack::mapblock40d Block;
     map <int16_t, uint32_t> materials;
     materials.clear();

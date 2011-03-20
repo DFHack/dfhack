@@ -4,15 +4,16 @@
 cmake_minimum_required(VERSION 2.8.0 FATAL_ERROR)
 PROJECT (dfhack)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
-# Set this to project source dir. When dfhack is used
-# as a submodule, CMAKE_SOURCE_DIR is not pointing to
-# the root where this particular CMakeLists.txt file sits.
-SET(CMAKE_SOURCE_DIR ${PROJECT_SOURCE_DIR})
+SET(CMAKE_MODULE_PATH
+${dfhack_SOURCE_DIR}/CMake/Modules
+${CMAKE_MODULE_PATH}
+)
 
-if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+if("${dfhack_SOURCE_DIR}" STREQUAL "${dfhack_BINARY_DIR}")
    message(FATAL_ERROR "In-source builds are not allowed.")
 endif()
+
+SET(DFHACK_CONSISTENCY 1)
 
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "5")
@@ -41,9 +42,9 @@ IF(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
 ENDIF()
 
 ## put everything in one big ugly directory to make MSVC and KDevelop debuggers happy
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${dfhack_BINARY_DIR}/bin")
+SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${dfhack_BINARY_DIR}/bin")
+SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${dfhack_BINARY_DIR}/bin")
 
 IF(WIN32)
     set (DFHACK_INST_DEFAULT "portable")
@@ -143,9 +144,9 @@ OPTION(BUILD_DFHACK_SUPPORTED "Build the supported tools." ON)
 OPTION(BUILD_DFHACK_EXAMPLES "Build example tools" OFF)
 OPTION(BUILD_DFHACK_PLAYGROUND "Build tools from the playground folder" OFF)
 
-include_directories (${CMAKE_SOURCE_DIR}/library/include/)
-include_directories (${CMAKE_SOURCE_DIR}/library/shm/)
-include_directories (${CMAKE_SOURCE_DIR}/library/depends/argstream/)
+include_directories (${dfhack_SOURCE_DIR}/library/include/)
+include_directories (${dfhack_SOURCE_DIR}/library/shm/)
+include_directories (${dfhack_SOURCE_DIR}/library/depends/argstream/)
 
 # macro to save on typing in the tool subdirs
 # builds a tool, links it to the dfhack lib and makes sure the dependency

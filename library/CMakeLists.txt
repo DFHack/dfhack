@@ -204,9 +204,11 @@ install(TARGETS dfhack
 install(FILES ${CMAKE_SOURCE_DIR}/Memory.xml
         DESTINATION ${DFHACK_DATA_DESTINATION}) #linux: share/dfhack
 
-if(WIN32 AND BUILD_DFHACK_DEVEL)
-    install(TARGETS dfhack
-            ARCHIVE DESTINATION ${DFHACK_DEVLIB_DESTINATION})
+if(BUILD_DFHACK_DEVEL)
+    if(WIN32)
+        install(TARGETS dfhack
+                ARCHIVE DESTINATION ${DFHACK_DEVLIB_DESTINATION})
+    endif()
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/library/include/
             DESTINATION ${DFHACK_INCLUDES_DESTINATION}
             FILES_MATCHING PATTERN "*.h" ) #linux: include

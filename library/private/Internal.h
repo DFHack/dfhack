@@ -30,15 +30,9 @@ distribution.
     #define BUILD_DFHACK_LIB
 #endif
 
-// wizardry for the cmake-generated config.h
+// wizardry for adding quotes to macros
 #define _QUOTEME(x) #x
 #define QUOT(x) _QUOTEME(x)
-
-#ifdef USE_CONFIG_H // set by cmake for Linux builds
-    #include "config.h"
-#else
-    #define MEMXML_DATA_PATH .
-#endif
 
 // one file for globals
 #include "dfhack/DFGlobal.h"

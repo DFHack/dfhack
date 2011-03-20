@@ -74,6 +74,8 @@ namespace DFHack
         bool write : 1;
         // permission to execute
         bool execute : 1;
+        // is a shared region
+        bool shared : 1;
         inline bool isInRange( uint64_t address)
         {
             if (address >= start && address < end) return true;

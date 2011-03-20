@@ -9,7 +9,9 @@
 using namespace std;
 
 #include <sstream>
-#include "fake-curses.h"
+// the header name comes from the build system.
+#define INCLUDE_NAME() <NCURSES_H>
+#include INCLUDE_NAME()
 #include <stdlib.h>
 #include <signal.h>
 #include <locale.h>

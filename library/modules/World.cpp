@@ -185,7 +185,7 @@ FIXME: Japa said that he had to do this with the time stuff he got from here
 World::ReadCurrentMonth and World::ReadCurrentDay
 « Sent to: peterix on: June 04, 2010, 04:44:30 »
 « You have forwarded or responded to this message. »
-ReplyQuoteRemove
+
 Shouldn't these be /28 and %28 instead of 24?  There're 28 days in a DF month.
 Using 28 and doing the calculation on the value stored at the memory location
 specified by memory.xml gets me the current month/date.

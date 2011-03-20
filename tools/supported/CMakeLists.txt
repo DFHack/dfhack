@@ -70,7 +70,7 @@ DFHACK_TOOL(dfweather weather.cpp)
 #DFHACK_TOOL(dfautosearch autosearch.cpp)
 DFHACK_TOOL(dfincremental incrementalsearch.cpp)
 
-
+# veinlook - look at the map... sort of
 IF(UNIX)
     SET(VEINLOOK_BUILT "NO")
     SET(CURSES_NEED_WIDE "YES")
@@ -87,13 +87,8 @@ IF(UNIX)
             SET(NCURSES_H "cursesw.h")
         endif(CURSES_HAVE_NCURSESW_NCURSES_H)
         IF(NCURSES_H)
-            # OPTION( VARIABLE "Description" Initial state)
-            #OPTION( WITH_FOO "Enable FOO support" ON )
-            #OPTION( WITH_BAR "Enable BAR component" OFF )
-            #SET( BAZ 18 )
-            CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/fake-curses.h.cmake ${CMAKE_CURRENT_SOURCE_DIR}/fake-curses.h )
-            # veinlook - look at the map... sort of
             ADD_EXECUTABLE(dfveinlook veinlook.cpp)
+            set_property( TARGET dfveinlook PROPERTY COMPILE_DEFINITIONS NCURSES_H=${NCURSES_H} )
             INCLUDE_DIRECTORIES(${CURSES_INCLUDE_DIR})
             TARGET_LINK_LIBRARIES(dfveinlook dfhack ${CURSES_LIBRARIES})
             install(TARGETS

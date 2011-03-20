@@ -83,21 +83,24 @@ void LinuxProcessBase::getMemRanges( vector<t_memrange> & ranges )
 
     sprintf(buffer, "/proc/%lu/maps", (long unsigned)my_pid);
     FILE *mapFile = ::fopen(buffer, "r");
-    uint64_t offset, device1, device2, node;
+    size_t start, end, offset, device1, device2, node;
 
     while (fgets(buffer, 1024, mapFile))
     {
         t_memrange temp;
         temp.name[0] = 0;
         sscanf(buffer, "%zx-%zx %s %zx %2zu:%2zu %zu %s",
-               &temp.start,
-               &temp.end,
+               &start,
+               &end,
                (char*)&permissions,
                &offset, &device1, &device2, &node,
                (char*)&temp.name);
+        temp.start = start;
+        temp.end = end;
         temp.read = permissions[0] == 'r';
         temp.write = permissions[1] == 'w';
         temp.execute = permissions[2] == 'x';
+        temp.shared = permissions[3] == 's';
         temp.valid = true;
         ranges.push_back(temp);
     }

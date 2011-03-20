@@ -116,7 +116,7 @@ Context * BadContexts::operator[](uint32_t index)
 
 ContextManager::ContextManager (const string path_to_xml) : d (new Private())
 {
-    d->xml = QUOT (MEMXML_DATA_PATH);
+    d->xml = MEMXML_DATA_PATH;
     d->xml += "/";
     d->xml += path_to_xml;
     d->pEnum = new ProcessEnumerator(d->xml);

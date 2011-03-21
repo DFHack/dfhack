@@ -17,6 +17,9 @@ ENDIF()
 # a reveal clone
 DFHACK_TOOL(dfreveal reveal.cpp)
 
+# designate all visible floor tiles as lair, freezing items in place
+DFHACK_TOOL(dflair lair.cpp)
+
 # force pause!
 DFHACK_TOOL(dfpause forcepause.cpp)
 

@@ -318,32 +318,6 @@ namespace DFHack
         naked_designation bits;
     };
 
-    /*
-     *       unsigned int mud : 1;
-             unsigned int vomit :1;*
-             unsigned int broken_arrows_color :4;
-             unsigned int blood_g : 1;
-             unsigned int blood_g2 : 1;
-             unsigned int blood_b : 1;
-             unsigned int blood_b2 : 1;
-             unsigned int blood_y : 1;
-             unsigned int blood_y2 : 1;
-             unsigned int blood_m : 1;
-             unsigned int blood_m2 : 1;
-             unsigned int blood_c : 1;
-             unsigned int blood_c2 : 1;
-             unsigned int blood_w : 1;
-             unsigned int blood_w2 : 1;
-             unsigned int blood_o : 1;
-             unsigned int blood_o2 : 1;
-             unsigned int slime : 1;
-             unsigned int slime2 : 1;
-             unsigned int blood : 1;
-             unsigned int blood2 : 1;
-             unsigned int broken_arrows_variant : 1;
-             unsigned int snow : 1;
-     */
-    
     /**
      * occupancy flags (rat,dwarf,horse,built wall,not build wall,etc)
      * \ingroup grp_maps

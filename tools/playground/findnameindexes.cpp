@@ -6,14 +6,12 @@
 
 #include <iostream>
 #include <iomanip>
-#include <integers.h>
 #include <vector>
 #include <algorithm>
 #include <sstream>
 using namespace std;
 
-#include <DFTypes.h>
-#include <DFHackAPI.h>
+#include <DFHack.h>
 
 // returns a lower case version of the string 
 string tolower (const string & s)
@@ -49,9 +47,11 @@ uint32_t endian_swap(uint32_t x)
 int main (void)
 {
     DFHack::ContextManager DF("Memory.xml");
+    DFHack::Context * C;
+    DFHack::Translation * Tran;
     try
     {
-        DF.Attach();
+        C = DF.getSingleContext();
     }
     catch (exception& e)
     {
@@ -61,16 +61,21 @@ int main (void)
         #endif
         return 1;
     }
-    
-    vector< vector<string> > englishWords;
-    vector< vector<string> > foreignWords;
-    if(!DF.InitReadNameTables(englishWords,foreignWords))
+
+    Tran = C->getTranslation();
+
+    if(!Tran->Start())
     {
         cerr << "Could not get Names" << endl;
         return 1;
     }
+    DFHack::Dicts dicts = *(Tran->getDicts());
+    DFHack::DFDict & englishWords = dicts.translations;
+    DFHack::DFDict & foreignWords = dicts.foreign_languages;
+
+    C->Detach();
     string input;
-    DF.ForceResume();
+
     cout << "\nSelect Name to search or q to Quit" << endl;
     getline (cin, input);
     while(input != "q"){
@@ -96,14 +101,11 @@ int main (void)
                 }
             }
         }
-        DF.Resume();
         getline(cin,input);
     }
-    DF.Detach();
-    DF.FinishReadNameTables();
     #ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
     #endif
     return 0;
 }

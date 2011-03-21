@@ -81,7 +81,7 @@ namespace DFHack
 
         /**
         * Convenience method to return a single valid Context
-        * @return pointer to a Context
+        * @return pointer to a Context. The Context isn't attached!
         */
         Context * getSingleContext();
 

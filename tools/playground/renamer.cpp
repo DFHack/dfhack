@@ -3,19 +3,14 @@
 #include <iostream>
 #include <sstream>
 #include <climits>
-#include <integers.h>
 #include <vector>
 using namespace std;
 
-#include <DFError.h>
-#include <DFTypes.h>
-#include <DFHackAPI.h>
-#include <DFMemInfo.h>
-#include <DFProcess.h>
-#include <modules/Materials.h>
-#include <modules/Creatures.h>
-#include <modules/Translation.h>
-#include "miscutils.h"
+#define DFHACK_WANT_MISCUTILS
+#include <DFHack.h>
+#include <dfhack/modules/Materials.h>
+#include <dfhack/modules/Creatures.h>
+#include <dfhack/modules/Translation.h>
 
 vector< vector<string> > englishWords;
 vector< vector<string> > foreignWords;

@@ -45,12 +45,12 @@ DFHACK_TOOL(dfdigger2 digger2.cpp)
 
 # findnameindexes
 # Author: belal
-#DFHACK_TOOL(dffindnameindexes findnameindexes.cpp)
+DFHACK_TOOL(dffindnameindexes findnameindexes.cpp)
 
 # renamer - change the custom names and professions of creatures, sends keys to
 #           df directly
 # Author: belal
-#DFHACK_TOOL(dfrenamer renamer.cpp)
+# DFHACK_TOOL(dfrenamer renamer.cpp)
 
 # copypaste
 # Author: belal

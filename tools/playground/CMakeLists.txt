@@ -61,12 +61,6 @@ DFHACK_TOOL(dfcopypaste copypaste.cpp)
 # current tileset and color files
 DFHACK_TOOL(dfpaths paths.cpp)
 
-# deramp
-# Author: zilpin
-# seeks entire map for 'remove ramp' designation, makes a floor, removes designation.
-# intended use is to simulate old 'channel' functionality.
-DFHACK_TOOL(dfderamp deramp.cpp)
-
 # printtiletypes
 # Author: zilpin
 # Prints CSV dump of all tile type information.

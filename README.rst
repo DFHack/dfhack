@@ -77,6 +77,10 @@ effect included!) Also allows painting obsidian walls directly.
     Spawning and deleting liquids can F up pathing data and
     temperatures (creating heat traps). You've been warned.
 
+dfderamp (by zilpin)
+====================
+Removes all ramps designated for removal from the map. This is useful for replicating the old channel digging designation.
+
 dfposition
 ==========
 Prints the current DF window properties and cursor position.

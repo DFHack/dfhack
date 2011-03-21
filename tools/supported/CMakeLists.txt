@@ -71,6 +71,12 @@ DFHACK_TOOL(dfdoffsets dumpoffsets.cpp)
 # change the weather
 DFHACK_TOOL(dfweather weather.cpp)
 
+# deramp
+# Author: zilpin
+# seeks entire map for 'remove ramp' designation, makes a floor, removes designation.
+# intended use is to simulate old 'channel' functionality.
+DFHACK_TOOL(dfderamp deramp.cpp)
+
 # incrementalsearch - a bit like cheat engine, only DF-specific, very basic
 #DFHACK_TOOL(dfautosearch autosearch.cpp)
 DFHACK_TOOL(dfincremental incrementalsearch.cpp)

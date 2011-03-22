@@ -1,4 +1,5 @@
 from ctypes import *
+from dftypes import libdfhack
 
 libdfhack.WindowIO_TypeStr.argtypes = [ c_void_p, c_char_p, c_uint, c_byte ]
 libdfhack.WindowIO_TypeSpecial.argtypes = [ c_void_p, c_uint, c_uint, c_uint, c_uint ]
@@ -9,7 +10,7 @@ class WindowIO(object):
     
     def type_str(self, s, delay = 0, use_shift = False):
         c_shift = c_byte(0)
-        c_delay = c_int(delay)
+        c_delay = c_uint(delay)
         c_s = c_char_p(s)
         
         if use_shift is True:
@@ -22,4 +23,4 @@ class WindowIO(object):
         c_count = c_uint(count)
         c_delay = c_uint(delay)
         
-        return libdfhack.WindwIO_TypeSpecial(self._window_io_ptr, c_command, c_count, c_delay) > 0
+        return libdfhack.WindowIO_TypeSpecial(self._window_io_ptr, c_command, c_count, c_delay) > 0

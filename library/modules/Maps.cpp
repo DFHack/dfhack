@@ -278,6 +278,8 @@ Maps::Maps(DFContextShared* _d)
 
 Maps::~Maps()
 {
+    if(d->FeaturesStarted)
+        StopFeatures();
     if(d->Started)
         Finish();
     delete d;
@@ -357,10 +359,7 @@ bool Maps::Finish()
 {
     if(d->FeaturesStarted)
     {
-        d->local_feature_store.clear();
-        d->v_global_feature.clear();
-        d->m_local_feature.clear();
-        d->FeaturesStarted = false;
+        StopFeatures();
     }
     if (d->block != NULL)
     {
@@ -600,6 +599,18 @@ bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices4
     if (addr)
     {
         d->owner->read (addr + d->offsets.biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer);
+        return true;
+    }
+    return false;
+}
+bool Maps::StopFeatures()
+{
+    if(d->FeaturesStarted)
+    {
+        d->local_feature_store.clear();
+        d->v_global_feature.clear();
+        d->m_local_feature.clear();
+        d->FeaturesStarted = false;
         return true;
     }
     return false;
@@ -1092,8 +1103,8 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 
 bool Maps::ReadLocalFeatures( std::map <DFCoord, std::vector<t_feature *> > & local_features )
 {
-    if(!d->FeaturesStarted)
-        StartFeatures();
+    StopFeatures();
+    StartFeatures();
     if(d->FeaturesStarted)
     {
         local_features = d->m_local_feature;
@@ -1104,8 +1115,8 @@ bool Maps::ReadLocalFeatures( std::map <DFCoord, std::vector<t_feature *> > & lo
 
 bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
 {
-    if(!d->FeaturesStarted)
-        StartFeatures();
+    StopFeatures();
+    StartFeatures();
     if(d->FeaturesStarted)
     {
         features = d->v_global_feature;

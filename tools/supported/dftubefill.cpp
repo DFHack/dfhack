@@ -73,12 +73,11 @@ int main (void)
                 DFHack::t_feature * glof = 0;
                 if (Mapz->ReadFeatures(x,y,z,&locf,&glof))
                 {
-                    cout << "bleep" << endl;
                     // we're looking for addy tubes
                     if(!locf) continue;
                     if(locf->type != DFHack::feature_Adamantine_Tube) continue;
+
                     dirty=0;
-                    cout << "bloop" << endl;
                     Mapz->ReadDesignations(x,y,z, &designations);
                     Mapz->ReadTileTypes(x,y,z, &tiles);
 

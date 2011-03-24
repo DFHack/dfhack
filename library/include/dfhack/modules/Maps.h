@@ -527,10 +527,15 @@ namespace DFHack
             @endcode
          */
         bool ReadGeology( std::vector < std::vector <uint16_t> >& assign );
+
         /**
          * Initialize the map feature caches, if possible
          */
         bool StartFeatures();
+        /**
+         * Free the feature cache
+         */
+        bool StopFeatures();
         /**
          * Get a global feature with the given index.
          */

@@ -527,13 +527,38 @@ namespace DFHack
             @endcode
          */
         bool ReadGeology( std::vector < std::vector <uint16_t> >& assign );
-        std::vector <t_feature> global_features;
-        // map between feature address and the read object
-        std::map <uint32_t, t_feature> local_feature_store;
-        // map between mangled coords and pointer to feature
+        /**
+         * Initialize the map feature caches, if possible
+         */
+        bool StartFeatures();
+        /**
+         * Get a global feature with the given index.
+         */
+        t_feature * GetGlobalFeature(int16_t index);
+        /**
+         * Get all valid local features for a x/y block coord.
+         */
+        std::vector <t_feature *> * GetLocalFeatures(DFCoord coord);
+        /**
+         * Get the feature indexes of a block
+         */
+        bool ReadFeatures(uint32_t x, uint32_t y, uint32_t z, int16_t & local, int16_t & global);
+        /**
+         * Get pointers to features of a block
+         */
+        bool ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature ** local, t_feature ** global);
 
+        /**
+         * @deprecated
+         * @todo: remove
+         */
         bool ReadGlobalFeatures( std::vector <t_feature> & features);
+        /**
+         * @deprecated
+         * @todo: remove
+         */
         bool ReadLocalFeatures( std::map <DFCoord, std::vector<t_feature *> > & local_features );
+
         /*
          * BLOCK DATA
          */
@@ -577,10 +602,10 @@ namespace DFHack
         /// read/write the block flags
         bool ReadBlockFlags(uint32_t blockx, uint32_t blocky, uint32_t blockz, t_blockflags &blockflags);
         bool WriteBlockFlags(uint32_t blockx, uint32_t blocky, uint32_t blockz, t_blockflags blockflags);
+        
         /// read/write features
-        bool ReadFeatures(uint32_t blockx, uint32_t blocky, uint32_t blockz, int16_t & local, int16_t & global);
-        bool WriteLocalFeature(uint32_t blockx, uint32_t blocky, uint32_t blockz, int16_t local = -1);
-        bool WriteGlobalFeature(uint32_t blockx, uint32_t blocky, uint32_t blockz, int16_t local = -1);
+        bool SetBlockLocalFeature(uint32_t blockx, uint32_t blocky, uint32_t blockz, int16_t local = -1);
+        bool SetBlockGlobalFeature(uint32_t blockx, uint32_t blocky, uint32_t blockz, int16_t local = -1);
 
         /// read region offsets of a block - used for determining layer stone matgloss
         bool ReadRegionOffsets(uint32_t blockx, uint32_t blocky, uint32_t blockz,

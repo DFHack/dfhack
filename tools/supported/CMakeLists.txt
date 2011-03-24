@@ -74,6 +74,9 @@ DFHACK_TOOL(dfdoffsets dumpoffsets.cpp)
 # change the weather
 DFHACK_TOOL(dfweather weather.cpp)
 
+# refill adamantine veins
+DFHACK_TOOL(dftubefill dftubefill.cpp)
+
 # deramp
 # Author: zilpin
 # seeks entire map for 'remove ramp' designation, makes a floor, removes designation.

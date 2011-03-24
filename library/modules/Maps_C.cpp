@@ -335,7 +335,7 @@ int Maps_WriteLocalFeature(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t 
 {
 	if(maps != NULL)
 	{
-		return ((DFHack::Maps*)maps)->WriteLocalFeature(x, y, z, local);
+		return ((DFHack::Maps*)maps)->SetBlockLocalFeature(x, y, z, local);
 	}
 	
 	return -1;
@@ -345,7 +345,7 @@ int Maps_WriteEmptyLocalFeature(DFHackObject* maps, uint32_t x, uint32_t y, uint
 {
 	if(maps != NULL)
 	{
-		return ((DFHack::Maps*)maps)->WriteLocalFeature(x, y, z, -1);
+		return ((DFHack::Maps*)maps)->SetBlockLocalFeature(x, y, z, -1);
 	}
 
   return -1;
@@ -355,7 +355,7 @@ int Maps_WriteGlobalFeature(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t
 {
 	if(maps != NULL)
 	{
-		return ((DFHack::Maps*)maps)->WriteGlobalFeature(x, y, z, local);
+		return ((DFHack::Maps*)maps)->SetBlockGlobalFeature(x, y, z, local);
 	}
 	
 	return -1;
@@ -365,7 +365,7 @@ int Maps_WriteEmptyGlobalFeature(DFHackObject* maps, uint32_t x, uint32_t y, uin
 {
 	if(maps != NULL)
 	{
-		return ((DFHack::Maps*)maps)->WriteGlobalFeature(x, y, z, -1);
+		return ((DFHack::Maps*)maps)->SetBlockGlobalFeature(x, y, z, -1);
 	}
 
   return -1;

@@ -655,10 +655,10 @@ namespace DFHack
                     MAPTILE_FEATSTONE_WALL_WORN2,
                       MAPTILE_FEATSTONE_WALL_WORN3,
                         MAPTILE_FEATSTONE_WALL,*/
-        {"cracked featstone wall",WALL,STONE,VAR_1, TILE_CRACKED },
-        {"damaged featstone wall",WALL,STONE,VAR_1, TILE_DAMAGED },
-        {"worn featstone wall",WALL,STONE,VAR_1,    TILE_WORN },
-        {"featstone wall",WALL,STONE,VAR_1},
+        {"cracked featstone wall",WALL,FEATSTONE,VAR_1, TILE_CRACKED },
+        {"damaged featstone wall",WALL,FEATSTONE,VAR_1, TILE_DAMAGED },
+        {"worn featstone wall",WALL,FEATSTONE,VAR_1,    TILE_WORN },
+        {"featstone wall",WALL,FEATSTONE,VAR_1},
         {"stone floor",FLOOR,STONE,VAR_1},
         {"stone floor",FLOOR,STONE,VAR_2},
         {"stone floor",FLOOR,STONE,VAR_3},
@@ -992,6 +992,7 @@ namespace DFHack
         }
         return -1;
     }
+    /*
     //Convenience version of the above, to pass strings as the direction
     inline
     int32_t findTileType( const TileClass tclass, const TileMaterial tmat, const TileVariant tvar, const TileSpecial tspecial, const char *tdirStr )
@@ -1003,7 +1004,7 @@ namespace DFHack
             return findTileType(tclass,tmat,tvar,tspecial, 0 );
         }
     }
-
+*/
 
     //zilpin: Find a tile type similar to the one given, but with a different class.
     //Useful for tile-editing operations.

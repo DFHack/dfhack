@@ -475,6 +475,7 @@ namespace DFHack
         int16_t global_feature;
         /// index into the local feature vector... complicated
         int16_t local_feature;
+        int32_t mystery;
     } mapblock40d;
 
     class DFContextShared;

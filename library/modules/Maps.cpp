@@ -85,6 +85,7 @@ struct Maps::Private
         uint32_t temperature2_offset;
         uint32_t global_feature_offset;
         uint32_t local_feature_offset;
+        uint32_t mystery;
         
         uint32_t vein_mineral_vptr;
         uint32_t vein_ice_vptr;
@@ -198,7 +199,14 @@ Maps::Maps(DFContextShared* _d)
             off.temperature1_offset = OG_MapBlock->getOffset ("temperature1");
             off.temperature2_offset = OG_MapBlock->getOffset ("temperature2");
         }
-
+        try
+        {
+            off.mystery = OG_MapBlock->getOffset ("mystery_offset");
+        }
+        catch(Error::AllMemdef &)
+        {
+            off.mystery = 0;
+        }
         try
         {
             OffsetGroup *OG_Geology = OG_Maps->getGroup("geology");
@@ -314,6 +322,8 @@ bool Maps::Start()
     // test for wrong map dimensions
     if (mx == 0 || mx > 48 || my == 0 || my > 48 || mz == 0)
     {
+        cout << hex << off.x_count_offset << " " << off.y_count_offset << " " << off.z_count_offset << endl;
+        cout << dec << mx << " "<< my << " "<< mz << endl;
         throw Error::BadMapDimensions(mx, my);
         //return false;
     }
@@ -408,6 +418,7 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
         p->read (addr + d->offsets.biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer->biome_indices);
         p->readWord(addr + d->offsets.global_feature_offset, (uint16_t&) buffer->global_feature);
         p->readWord(addr + d->offsets.local_feature_offset, (uint16_t&)buffer->local_feature);
+        p->readDWord(addr + d->offsets.mystery, (uint32_t&)buffer->mystery);
         buffer->origin = addr;
         uint32_t addr_of_struct = p->readDWord(addr);
         buffer->blockflags.whole = p->readDWord(addr_of_struct);

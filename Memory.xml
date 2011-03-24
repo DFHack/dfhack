@@ -760,6 +760,7 @@
                     <Offset name="pathfinding" />
                     <Offset name="feature_local" description="Index into a local feature vector (adamantine, etc. Complicated, see source)" />
                     <Offset name="feature_global" description="Index into the global feature vector (hell, etc.)." />
+                    <Offset name="mystery_offset" description="It's a mystery! I mean Kittens!" />
                 </Group>
                 <Group name="features">
                     <Group name="global">
@@ -2095,7 +2096,38 @@
         <PETimeStamp value="0x4D743DA7" />
         <MD5 value="3aadcbd781f7d70d5ee552b92c03bc6b" />
     </Version>
-    
+    <Version name="v0.31.22 SDL" os="windows" base="v0.31.21 SDL" rebase="-0x1CFE0">
+        <PETimeStamp value="0x4D8B30FC" />
+        <MD5 value="e31538a48efcfa6598b15bb938906c6b" />
+        <Offsets>
+            <Group name="Position">
+                <Address name="cursor_xyz" value="0xb337f0" />
+                <Address name="window_dims" value="0xb3407c" />
+                <Address name="window_x" value="0xeaf984" />
+                <Address name="window_y" value="0xeddba0" />
+                <Address name="window_z" value="0xeddb7c" />
+            </Group>
+            <Group name="Maps">
+                <Group name="block">
+                    <!--
+                    <Offset name="vein_vector" value="0x8" />
+                    <Offset name="feature_local" value="0x24" />
+                    <Offset name="feature_global" value="0x28" />
+                    -->
+                    <Offset name="mystery_offset" value="0x2C" />
+                    <Offset name="vegetation_vector" value="0x64" />
+                    <Offset name="type" value="0x7e" />
+                    <Offset name="designation" value="0x280" />
+                    <Offset name="occupancy" value="0x680" />
+                    <Offset name="pathfinding" value="0xd80" />
+                    <Offset name="temperature1" value="0x1580" />
+                    <Offset name="temperature2" value="0x1780" />
+                    <Offset name="biome_stuffs" value="0x1d80" />
+                    -->
+                </Group>
+            </Group>
+        </Offsets>
+    </Version>
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________

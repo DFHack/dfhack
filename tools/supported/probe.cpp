@@ -159,8 +159,10 @@ int main (int numargs, const char ** args)
                     sa_feature(global_features[block.global_feature].type)
                     );
             }
-
             #undef PRINT_FLAG
+            cout << "local feature idx: " << block.local_feature << endl;
+            cout << "global feature idx: " << block.global_feature << endl;
+            cout << "mystery: " << block.mystery << endl;
             std::cout << std::endl;
         }
     }

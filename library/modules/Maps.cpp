@@ -661,11 +661,11 @@ bool Maps::StartFeatures()
         uint32_t array_elem = p->readDWord(base + (region_x_local / 16) * 4);
 
         // 16B structs, second DWORD of the struct is a pointer
-        uint32_t wtf = p->readDWord(array_elem + ( sizeof_elem * ( (uint32_t)region_y_local/16)) + offset_elem);
-        if(wtf)
+        uint32_t loc_f_array16x16 = p->readDWord(array_elem + ( sizeof_elem * ( (uint32_t)region_y_local/16)) + offset_elem);
+        if(loc_f_array16x16)
         {
             // wtf + sizeof(vector<ptr>) * crap;
-            uint32_t feat_vector = wtf + sizeof_vec * (16 * (region_x_local % 16) + (region_y_local % 16));
+            uint32_t feat_vector = loc_f_array16x16 + sizeof_vec * (16 * (region_x_local % 16) + (region_y_local % 16));
             DfVector<uint32_t> p_features(p, feat_vector);
             uint32_t size = p_features.size();
             DFCoord pc(blockX,blockY);
@@ -1072,10 +1072,13 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     for (int i = eNorthWest; i < eBiomeCount; i++)
     {
         // check against worldmap boundaries, fix if needed
-        int bioRX = d->regionX / 16 + (i % 3) - 1;
+        // regionX is in embark squares
+        // regionX/16 is in 16x16 embark square regions
+        // i provides -1 .. +1 offset from the current region
+        int bioRX = d->regionX / 16 + ((i % 3) - 1);
         if (bioRX < 0) bioRX = 0;
         if (bioRX >= worldSizeX) bioRX = worldSizeX - 1;
-        int bioRY = d->regionY / 16 + (i / 3) - 1;
+        int bioRY = d->regionY / 16 + ((i / 3) - 1);
         if (bioRY < 0) bioRY = 0;
         if (bioRY >= worldSizeY) bioRY = worldSizeY - 1;
 

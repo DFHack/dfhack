@@ -357,10 +357,6 @@ void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z)
 
 bool Maps::Finish()
 {
-    if(d->FeaturesStarted)
-    {
-        StopFeatures();
-    }
     if (d->block != NULL)
     {
         delete [] d->block;
@@ -396,6 +392,7 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if (addr)
     {
+        buffer->position = DFCoord(x,y,z);
         p->read (addr + d->offsets.tile_type_offset, sizeof (buffer->tiletypes), (uint8_t *) buffer->tiletypes);
         p->read (addr + d->offsets.designation_offset, sizeof (buffer->designation), (uint8_t *) buffer->designation);
         p->read (addr + d->offsets.occupancy_offset, sizeof (buffer->occupancy), (uint8_t *) buffer->occupancy);
@@ -794,29 +791,51 @@ bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature ** local, 
 {
     if(!d->FeaturesStarted) return false;
     int16_t loc, glob;
-    if(ReadFeatures(x,y,z,loc,glob))
+    if(!ReadFeatures(x,y,z,loc,glob)) return false;
+
+    if(global && glob != -1)
+        *global = &(d->v_global_feature[glob]);
+    else if (global)
+        *global = 0;
+
+    if(local && loc != -1)
     {
-        if(glob != -1)
-            *global = &(d->v_global_feature[glob]);
-        else
-            *global = 0;
-        if(loc != -1)
+        DFCoord foo(x,y,0);
+        map <DFCoord, std::vector <t_feature* > >::iterator iter = d->m_local_feature.find(foo);
+        if(iter != d->m_local_feature.end())
         {
-            DFCoord foo(x,y,0);
-            map <DFCoord, std::vector <t_feature* > >::iterator iter = d->m_local_feature.find(foo);
-            if(iter != d->m_local_feature.end())
-            {
-                *local = ((*iter).second)[loc];
-            }
-            else *local = 0;
+            *local = ((*iter).second)[loc];
         }
-        else
-            *local = 0;
-        return true;
+        else *local = 0;
     }
-    *local = 0;
-    *global = 0;
-    return false;
+    else if(local)
+        *local = 0;
+    return true;
+}
+
+bool Maps::ReadFeatures(mapblock40d * block, t_feature ** local, t_feature ** global)
+{
+    if(!block) return false;
+    if(!d->FeaturesStarted) return false;
+    DFCoord c = block->position;
+    c.z = 0;
+    if(global && block->global_feature != -1)
+        *global = &(d->v_global_feature[block->global_feature]);
+    else if (global)
+        *global = 0;
+
+    if(local && block->local_feature != -1)
+    {
+        map <DFCoord, std::vector <t_feature* > >::iterator iter = d->m_local_feature.find(c);
+        if(iter != d->m_local_feature.end())
+        {
+            *local = ((*iter).second)[block->local_feature];
+        }
+        else *local = 0;
+    }
+    else if(local)
+        *local = 0;
+    return true;
 }
 
 bool Maps::SetBlockLocalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t local)

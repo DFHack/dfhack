@@ -459,6 +459,7 @@ namespace DFHack
      */
     typedef struct
     {
+        DFCoord position;
         /// type of the tiles
         tiletypes40d tiletypes;
         /// flags determining the state of the tiles
@@ -552,6 +553,10 @@ namespace DFHack
          * Get pointers to features of a block
          */
         bool ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature ** local, t_feature ** global);
+        /**
+         * Get pointers to features of an already read block
+         */
+        bool ReadFeatures(mapblock40d * block, t_feature ** local, t_feature ** global);
 
         /**
          * @deprecated

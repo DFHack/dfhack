@@ -575,6 +575,8 @@ namespace DFHack
 
         /// get size of the map in tiles
         void getSize(uint32_t& x, uint32_t& y, uint32_t& z);
+        /// get the position of the map on world map
+        void getPosition(int32_t& x, int32_t& y, int32_t& z);
 
         /**
          * Return false/0 on failure, buffer allocated by client app, 256 items long

@@ -62,7 +62,7 @@ struct Maps::Private
 {
     uint32_t * block;
     uint32_t x_block_count, y_block_count, z_block_count;
-    uint32_t regionX, regionY, regionZ;
+    int32_t regionX, regionY, regionZ;
     uint32_t worldSizeX, worldSizeY;
 
     uint32_t maps_module;
@@ -319,9 +319,9 @@ bool Maps::Start()
     }
 
     // read position of the region inside DF world
-    p->readDWord (off.region_x_offset, d->regionX);
-    p->readDWord (off.region_y_offset, d->regionY);
-    p->readDWord (off.region_z_offset, d->regionZ);
+    p->readDWord (off.region_x_offset, (uint32_t &) d->regionX);
+    p->readDWord (off.region_y_offset, (uint32_t &) d->regionY);
+    p->readDWord (off.region_z_offset, (uint32_t &) d->regionZ);
 
     // alloc array for pointers to all blocks
     d->block = new uint32_t[mx*my*mz];
@@ -353,6 +353,15 @@ void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z)
     x = d->x_block_count;
     y = d->y_block_count;
     z = d->z_block_count;
+}
+
+// getter for map position
+void Maps::getPosition (int32_t& x, int32_t& y, int32_t& z)
+{
+    MAPS_GUARD
+        x = d->regionX;
+        y = d->regionY;
+        z = d->regionZ;
 }
 
 bool Maps::Finish()

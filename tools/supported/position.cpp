@@ -17,9 +17,9 @@ std::ostream &operator<<(std::ostream &stream, DFHack::t_gamemodes funzies)
         "Legends",
         "Menus",
         "Arena",
-		"Arena - Assumed",
-		"Kittens!",
-		"Worldgen"
+        "Arena - Assumed",
+        "Kittens!",
+        "Worldgen"
     };
     char * cm[]=
     {
@@ -48,15 +48,19 @@ int main (int argc, char** argv)
     }
 
     DFHack::Gui * Gui = 0;
+    DFHack::Maps * Maps = 0;
     DFHack::World * World = 0;
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context * DF;
+    bool have_maps = false;
     try
     {
         DF = DFMgr.getSingleContext();
         DF->Attach();
         Gui = DF->getGui();
+        Maps = DF->getMaps();
         World = DF->getWorld();
+        have_maps = Maps->Start();
     }
     catch (exception& e)
     {
@@ -77,13 +81,29 @@ int main (int argc, char** argv)
              << " Tick: " << World->ReadCurrentTick() << endl;
     if (Gui)
     {
-        int32_t x,y,z;
+        int32_t vx,vy,vz;
+        int32_t cx,cy,cz;
+        int32_t wx,wy,wz;
         int32_t width,height;
-
-        if(Gui->getViewCoords(x,y,z))
-            cout << "view coords: " << x << "/" << y << "/" << z << endl;
-        if(Gui->getCursorCoords(x,y,z))
-            cout << "cursor coords: " << x << "/" << y << "/" << z << endl;
+        if(have_maps)
+        {
+            Maps->getPosition(wx,wy,wz);
+            cout << "Map world offset: " << wx << "/" << wy << "/" << wz << " embark squares." << endl;
+        }
+        bool have_cursor = Gui->getCursorCoords(cx,cy,cz);
+        bool have_view = Gui->getViewCoords(vx,vy,vz);
+        if(have_view)
+        {
+            cout << "view coords: " << vx << "/" << vy << "/" << vz << endl;
+            if(have_maps)
+                cout << "      world: " << vx+wx*48 << "/" << vy+wy*48 << "/" << vz+wz << endl;
+        }
+        if(have_cursor)
+        {
+            cout << "cursor coords: " << cx << "/" << cy << "/" << cz << endl;
+            if(have_maps)
+                cout << "      world: " << cx+wx*48 << "/" << cy+wy*48 << "/" << cz+wz << endl;
+        }
         if(Gui->getWindowSize(width,height))
             cout << "window size : " << width << " " << height << endl;
     }

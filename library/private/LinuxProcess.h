@@ -29,16 +29,16 @@ distribution.
 
 namespace DFHack
 {
-    class LinuxProcessBase : public Process 
+    class LinuxProcessBase : public Process
     {
         protected:
             VersionInfo * my_descriptor;
             pid_t my_pid;
             string memFile;
             int memFileHandle;
-            bool attached;
-            bool suspended;
-            bool identified;
+            bool attached:1;
+            bool suspended:1;
+            bool identified:1;
         public:
             LinuxProcessBase(uint32_t pid);
             ~LinuxProcessBase();

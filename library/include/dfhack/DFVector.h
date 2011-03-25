@@ -27,30 +27,26 @@ distribution.
 
 #include "DFPragma.h"
 #include "DFExport.h"
+#include "VersionInfo.h"
+#include "DFProcess.h"
 namespace DFHack
 {
-    class VersionInfo;
-    class Process;
     template <class T>
     class DFHACK_EXPORT DfVector
     {
         private:
-            uint32_t _start;// starting offset
+            t_vecTriplet t;
             uint32_t _size;// vector size
+            
             T * data; // cached data
         public:
             DfVector(Process * p, uint32_t address)
             {
-                uint32_t triplet[3];
-                VersionInfo * mem = p->getDescriptor();
-                uint32_t offs =  mem->getGroup("vector")->getOffset("start");
-
-                p->read(address + offs, sizeof(triplet), (uint8_t *) &triplet);
-                _start = triplet[0];
-                uint32_t byte_size = triplet[1] - triplet[0];
+                p->readSTLVector(address,t);
+                uint32_t byte_size = t.end - t.start;
                 _size = byte_size / sizeof(T);
                 data = new T[_size];
-                p->read(_start,byte_size, (uint8_t *)data);
+                p->read(t.start,byte_size, (uint8_t *)data);
             };
             DfVector()
             {
@@ -82,7 +78,17 @@ namespace DFHack
             // get vector start
             inline uint32_t start ()
             {
-                return _start;
+                return t.start;
+            };
+            // get vector end
+            inline uint32_t end ()
+            {
+                return t.end;
+            };
+            // get vector start
+            inline const uint32_t alloc_end ()
+            {
+                return t.alloc_end;
             };
     };
 }

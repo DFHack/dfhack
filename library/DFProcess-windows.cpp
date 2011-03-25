@@ -42,6 +42,7 @@ namespace
             bool attached;
             bool suspended;
             bool identified;
+            uint8_t vector_start;
             IMAGE_NT_HEADERS pe_header;
             IMAGE_SECTION_HEADER * sections;
             uint32_t base;
@@ -74,6 +75,7 @@ namespace
             void read( uint32_t address, uint32_t length, uint8_t* buffer);
             void write(uint32_t address, uint32_t length, uint8_t* buffer);
 
+            void readSTLVector(const uint32_t address, t_vecTriplet & triplet);
             const std::string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             void writeSTLString(const uint32_t address, const std::string writeString){};
@@ -164,6 +166,7 @@ NormalProcess::NormalProcess(uint32_t pid, VersionInfoFactory * factory)
         my_descriptor->RebaseAll(base);
         // keep track of created memory_info object so we can destroy it later
         my_descriptor->setParentProcess(this);
+        vector_start = my_descriptor->getGroup("vector")->getOffset("start");
 
         // TODO: detect errors in thread enumeration
         vector<uint32_t> threads;
@@ -515,6 +518,11 @@ const string NormalProcess::readCString (const uint32_t offset)
     temp_c[read+1] = 0;
     temp.assign(temp_c);
     return temp;
+}
+
+void NormalProcess::readSTLVector(const uint32_t address, t_vecTriplet & triplet)
+{
+    read(address + vector_start, sizeof(triplet), (uint8_t *) &triplet);
 }
 
 size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)

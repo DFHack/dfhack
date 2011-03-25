@@ -917,46 +917,52 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins,
         // read the vein pointer from the vector
         uint32_t temp = p_veins[i];
         uint32_t type = p->readDWord(temp);
-        if(veins && type == off.vein_mineral_vptr)
+        if(type == off.vein_mineral_vptr)
         {
+            if(!veins) continue;
             // read the vein data (dereference pointer)
             p->read (temp, sizeof(t_vein), (uint8_t *) &v);
             v.address_of = temp;
             // store it in the vector
             veins->push_back (v);
         }
-        else if(ices && type == off.vein_ice_vptr)
+        else if(type == off.vein_ice_vptr)
         {
+            if(!ices) continue;
             // read the ice vein data (dereference pointer)
             p->read (temp, sizeof(t_frozenliquidvein), (uint8_t *) &fv);
             fv.address_of = temp;
             // store it in the vector
             ices->push_back (fv);
         }
-        else if(splatter && type == off.vein_spatter_vptr)
+        else if(type == off.vein_spatter_vptr)
         {
+            if(!splatter) continue;
             // read the splatter vein data (dereference pointer)
             p->read (temp, sizeof(t_spattervein), (uint8_t *) &sv);
             sv.address_of = temp;
             // store it in the vector
             splatter->push_back (sv);
         }
-        else if(grass && type == off.vein_grass_vptr)
+        else if(type == off.vein_grass_vptr)
         {
+            if(!grass) continue;
             // read the splatter vein data (dereference pointer)
             p->read (temp, sizeof(t_grassvein), (uint8_t *) &gv);
             gv.address_of = temp;
             // store it in the vector
             grass->push_back (gv);
         }
-        else if(constructions && type == off.vein_worldconstruction_vptr)
+        else if(type == off.vein_worldconstruction_vptr)
         {
+            if(!constructions) continue;
             // read the splatter vein data (dereference pointer)
             p->read (temp, sizeof(t_worldconstruction), (uint8_t *) &wcv);
             wcv.address_of = temp;
             // store it in the vector
             constructions->push_back (wcv);
         }
+        // previously unseen type of vein
         else
         {
             string cname = p->readClassName(type);

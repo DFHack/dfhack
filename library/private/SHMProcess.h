@@ -69,6 +69,8 @@ namespace DFHack
         const std::string readSTLString (uint32_t offset);
         size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
         void writeSTLString(const uint32_t address, const std::string writeString);
+
+        void readSTLVector(const uint32_t address, t_vecTriplet & triplet);
         // get class name of an object with rtti/type info
         std::string readClassName(uint32_t vptr);
 
@@ -107,6 +109,8 @@ namespace DFHack
         bool locked;
         bool identified;
         bool useYield;
+        
+        uint8_t vector_start;
 
 #ifdef LINUX_BUILD
         pid_t process_ID;

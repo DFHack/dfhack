@@ -254,6 +254,7 @@ bool SHMProcess::Private::validate(VersionInfoFactory * factory)
         memdescriptor = m;
         m->setParentProcess(self);
         identified = true;
+        vector_start = memdescriptor->getGroup("vector")->getOffset("start");
         CloseHandle(hProcess);
         return true;
     }
@@ -377,6 +378,11 @@ bool SHMProcess::detach()
     d->locked = false;
     d->shm_addr = false;
     return true;
+}
+
+void SHMProcess::readSTLVector(const uint32_t address, t_vecTriplet & triplet)
+{
+    read(address + d->vector_start, sizeof(triplet), (uint8_t *) &triplet);
 }
 
 string SHMProcess::readClassName (uint32_t vptr)

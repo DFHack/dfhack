@@ -33,6 +33,8 @@ using namespace DFHack;
 namespace {
     class NormalProcess : public LinuxProcessBase
     {
+        private:
+            uint8_t vector_start;
         public:
             NormalProcess(uint32_t pid, VersionInfoFactory * known_versions);
             ~NormalProcess()
@@ -50,6 +52,7 @@ namespace {
             bool resume();
             bool forceresume();
 
+            void readSTLVector(const uint32_t address, t_vecTriplet & triplet);
             const std::string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             void writeSTLString(const uint32_t address, const std::string writeString){};
@@ -104,6 +107,7 @@ NormalProcess::NormalProcess(uint32_t pid, VersionInfoFactory * known_versions) 
         {
             my_descriptor = new VersionInfo(*vinfo);
             my_descriptor->setParentProcess(this);
+            vector_start = my_descriptor->getGroup("vector")->getOffset("start");
             identified = true;
         }
     }
@@ -125,6 +129,11 @@ size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufc
     read(offset,read_real,(uint8_t * )buffer);
     buffer[read_real] = 0;
     return read_real;
+}
+
+void NormalProcess::readSTLVector(const uint32_t address, t_vecTriplet & triplet)
+{
+    read(address + vector_start, sizeof(triplet), (uint8_t *) &triplet);
 }
 
 const string NormalProcess::readSTLString (uint32_t offset)

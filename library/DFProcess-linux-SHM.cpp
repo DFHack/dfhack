@@ -245,6 +245,7 @@ bool SHMProcess::Private::validate(VersionInfoFactory * factory)
         // FIXME: BIG BAD BUG RIGHT HERE!!!!
         memdescriptor->setParentProcess(self);
         identified = true;
+        vector_start = memdescriptor->getGroup("vector")->getOffset("start");
         return true;
     }
     return false;
@@ -367,6 +368,12 @@ bool SHMProcess::detach()
     perror("failed to detach shared segment");
     return false;
 }
+
+void SHMProcess::readSTLVector(const uint32_t address, t_vecTriplet & triplet)
+{
+    read(address + d->vector_start, sizeof(triplet), (uint8_t *) &triplet);
+}
+
 
 string SHMProcess::readClassName (uint32_t vptr)
 {

@@ -26,11 +26,33 @@ distribution.
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include "dfhack/DFProcess.h"
+#include <algorithm>
 
 //Inital amount of space in levels vector (since we usually know the number, efficient!)
 #define NUM_RESERVE_LVLS 20
 #define NUM_RESERVE_MOODS 6
 using namespace DFHack;
+
+//FIXME: put those in some shared file
+template<template <typename> class P = std::less >
+struct compare_pair_first
+{
+    template<class T1, class T2>
+    bool operator()(const std::pair<T1, T2>& left, const std::pair<T1, T2>& right)
+    {
+        return P<T1>()(left.first, right.first);
+    }
+};
+
+template<template <typename> class P = std::less >
+struct compare_pair_second
+{
+    template<class T1, class T2>
+    bool operator()(const std::pair<T1, T2>& left, const std::pair<T1, T2>& right)
+    {
+        return P<T2>()(left.second, right.second);
+    }
+};
 
 /*
 * Common data types
@@ -421,31 +443,59 @@ std::string OffsetGroup::PrintOffsets(int indentation)
     uint32_Iter iter;
     ostringstream ss;
     indentr i(indentation);
+    typedef pair <uint32_t, pair< string, nullableUint32 > > horrible;
+    vector < horrible > addrsorter;
     for(iter = OGd->addresses.begin(); iter != OGd->addresses.end(); iter++)
     {
-        ss << i << "<Address name=\"" << (*iter).first << "\"";
-        if((*iter).second.first)
-            ss << " value=\"" << hex << "0x" << (*iter).second.second << "\"";
-        ss << " />";
-        if((*iter).second.first == IS_INVALID)
-            ss << " INVALID!";
         if(!(*iter).second.first)
-            ss << " MISSING!";
+            addrsorter.push_back( make_pair( 0, *iter ) );
+        else
+        {
+            addrsorter.push_back( make_pair( (*iter).second.second, *iter ) );
+        }
+    }
+    std::sort(addrsorter.begin(), addrsorter.end(), compare_pair_first<>());
+    for(int idx = 0; idx < addrsorter.size();idx++)
+    {
+        horrible & h = addrsorter[idx];
+        ss << i << "<Address name=\"" << h.second.first << "\"";
+        if(h.second.second.first)
+            ss << " value=\"" << hex << "0x" << h.first << "\"";
+        if(h.second.second.first == IS_INVALID)
+            ss << " valid=\"false\"";
+        ss << " />";
+        if(h.second.second.first == NOT_SET)
+            ss << " NOT SET!";
         ss << endl;
     }
+
+    typedef pair <int32_t, pair< string, nullableInt32 > > terrible;
+    vector < terrible > offsorter;
     int32_Iter iter2;
     for(iter2 = OGd->offsets.begin(); iter2 != OGd->offsets.end(); iter2++)
     {
-        ss << i << "<Offset name=\"" << (*iter2).first << "\"";
-        if((*iter2).second.first)
-            ss << " value=\"" << hex << "0x" << (*iter2).second.second << "\"";
-        ss << " />";
-        if((*iter2).second.first == IS_INVALID)
-            ss << " INVALID!";
         if(!(*iter2).second.first)
-            ss << " MISSING!";
+            offsorter.push_back( make_pair( 0, *iter2 ) );
+        else
+        {
+            offsorter.push_back( make_pair( (*iter2).second.second, *iter2 ) );
+        }
+    }
+    std::sort(offsorter.begin(), offsorter.end(), compare_pair_first<>());
+    for(int idx = 0; idx < offsorter.size();idx++)
+    {
+        terrible & h = offsorter[idx];
+        ss << i << "<Offset name=\"" << h.second.first << "\"";
+        if(h.second.second.first)
+            ss << " value=\"" << hex << "0x" << h.first << "\"";
+        if(h.second.second.first == IS_INVALID)
+            ss << " valid=\"false\"";
+        ss << " />";
+        if(h.second.second.first == NOT_SET)
+            ss << " NOT SET!";
         ss << endl;
     }
+
     for(iter = OGd->hexvals.begin(); iter != OGd->hexvals.end(); iter++)
     {
         ss << i << "<HexValue name=\"" << (*iter).first << "\"";

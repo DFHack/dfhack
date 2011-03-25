@@ -95,6 +95,8 @@ namespace DFHack
         t_attrib musicality;
         t_attrib kinesthetic_sense;
     };
+    #define NUM_CREAT_ATTRIBS 17
+
     /**
      * \ingroup grp_materials
      */

@@ -2074,8 +2074,8 @@
                     </Group>
                 </Group>
                 <Group name="geology">
-                    <Offset name="geoblock_vector_from_wdata" value="0x190" /> maybe
-                    <Offset name="ptr2_region_array_from_wdata" value="0x1C0" /> maybe
+                    <Offset name="geoblock_vector_from_wdata" value="0x190" />
+                    <Offset name="ptr2_region_array_from_wdata" value="0x1C0" />
                     <Address name="geoblock_vector" valid="false" />
                     <Address name="ptr2_region_array" valid="false" />
                 </Group>
@@ -2123,7 +2123,6 @@
                     <Offset name="temperature1" value="0x1580" />
                     <Offset name="temperature2" value="0x1780" />
                     <Offset name="biome_stuffs" value="0x1d80" />
-                    -->
                 </Group>
             </Group>
         </Offsets>
@@ -2651,6 +2650,97 @@
                 Toad: extract? vector = 0x1f74
                 Toad: colors = 0x38
             </Group>
+        </Offsets>
+    </Version>
+    <Version name="v0.31.22 linux" os="linux" base="v0.31.19 linux" rebase="0x12A80">
+        <MD5 value="c7319be110759209bd736071fb367960" />
+        <Offsets>
+            <Group name="Position">
+                <Address name="cursor_xyz" value="0x8c3dfc0" />
+                <Address name="window_dims" value="0x8c3e4c8" />
+                <Address name="window_x" value="0x8dfabf8" />
+                <Address name="window_y" value="0x8dfabfc" />
+                <Address name="window_z" value="0x8dfac00" />
+            </Group>
+            <Group name="Maps">
+                <Address name="world_data" value="0x944bc14"/>
+                <Address name="world_size_x" valid="false" />
+                <Address name="world_size_y" valid="false" />
+                <Offset name="world_size_x_from_wdata" value="0x5c" />
+                <Offset name="world_size_y_from_wdata" value="0x5e" />
+                <Group name="block">
+                    <Offset name="mystery_offset" value="0x28" />
+                    <Offset name="vegetation_vector" value="0x58" />
+                    <Offset name="type" value="0x6e" />
+                    <Offset name="designation" value="0x270" />
+                    <Offset name="occupancy" value="0x670" />
+                    <Offset name="pathfinding" value="0xd70" />
+                    <Offset name="temperature1" value="0x1570" />
+                    <Offset name="temperature2" value="0x1770" />
+                    <Offset name="biome_stuffs" value="0x1d70" />
+                </Group>
+                <Group name="features">
+                    <Group name="global">
+                        <Address name="vector" valid="false" />
+                        <Offset name="vector_from_wdata" value="0x12C" />
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" valid="false" />
+                        <Offset name="start_ptr_from_wdata" value="0x198" />
+                    </Group>
+                </Group>
+                <Group name="geology">
+                    <Address name="geoblock_vector" valid="false" />
+                    <Address name="ptr2_region_array" valid="false" />
+                    <Offset name="geoblock_vector_from_wdata" value="0x138" />
+                    <Offset name="ptr2_region_array_from_wdata" value="0x15C" />
+                </Group>
+            </Group>
+            <Group name="Materials">
+                <Address name="inorganics" value="0x944c320" />
+                <Address name="organics_all" value="0x944c338" />
+                <Address name="organics_plants" value="0x944c344" />
+                <Address name="organics_trees" value="0x944c35c" />
+                <Address name="creature_type_vector" value="0x944c3d4" />
+                one of those:
+                0x944c3c8
+                0x944c3d4
+                <Group name="creature">
+                    <Offset name="tile_color" value="0x38" />
+                    <Offset name="extract_vector" value="0x1f74" />
+                    <!--
+                    <Group name="caste">
+                        <Offset name="attributes" /> NOT SET!
+                        <Offset name="bodypart_vector" /> NOT SET!
+                        <Offset name="color_modifiers" /> NOT SET!
+                    </Group>
+                    <Group name="caste_bodyparts">
+                        <Offset name="category" /> NOT SET!
+                        <Offset name="id" /> NOT SET!
+                        <Offset name="layers_vector" /> NOT SET!
+                        <Offset name="plural_vector" /> NOT SET!
+                        <Offset name="singular_vector" /> NOT SET!
+                    </Group>
+                    <Group name="caste_color_mods">
+                        <Offset name="enddate" /> NOT SET!
+                        <Offset name="part" /> NOT SET!
+                        <Offset name="startdate" /> NOT SET!
+                    </Group>
+                    -->
+                </Group>
+                
+                <Group name="descriptors">
+                    <Address name="colors_vector" value="0x94506c8 0x93cdff4" />
+                    <Address name="all_colors_vector" value="0x94506E0 0x93ce00c" />
+                </Group>
+            </Group>
+
+            <Group name="Translations" valid="true">
+                <!-- maybe swapped -->
+                <Address name="language_vector" value="0x944c564"/>
+                <Address name="translation_vector" value="0x944c57c"/>
+            </Group>
+
         </Offsets>
     </Version>
 </DFHack>

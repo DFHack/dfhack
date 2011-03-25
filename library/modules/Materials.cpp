@@ -440,7 +440,11 @@ bool Materials::ReadCreatureTypesEx (void)
                     p->readSTLString (p_bodypart[k] + bodypart_category_offset, part.category, sizeof(part.category));
                     caste.bodypart.push_back(part);
                 }
-                p->read(caste_start + caste_attributes_offset, sizeof(t_attrib) * (6+11), (uint8_t *)&caste.strength);
+                p->read(caste_start + caste_attributes_offset, sizeof(t_attrib) * NUM_CREAT_ATTRIBS, (uint8_t *)&caste.strength);
+            }
+            else
+            {
+                memset(&caste.strength, 0,  sizeof(t_attrib) * NUM_CREAT_ATTRIBS);
             }
             mat.castes.push_back(caste);
         }

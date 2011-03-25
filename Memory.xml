@@ -934,7 +934,7 @@
                 <Address name="current_weather" description="5x5 array of bytes for surrounding biomes. For each: 0=clear, 1=raining, 2=snowing." />
                 <Address name="game_mode" description="Current game mode" />
                 <Address name="control_mode" description="Current control mode" />
-                <Address name="control_mode_copy" description="Copy of the control mode in DF memory" />
+                <!--<Address name="control_mode_copy" description="Copy of the control mode in DF memory" />-->
             </Group>
         </Offsets>
     </Base>
@@ -1995,7 +1995,7 @@
                 <Address name="current_weather" value="0x15027A0" />
                 <Address name="control_mode" value="0xb4a814" />
                 <Address name="game_mode" value="0xb4a818" />
-                <Address name="control_mode_copy" value="0xe2e2a2" />
+                <!--<Address name="control_mode_copy" value="0xe2e2a2" />-->
                 fortress = 0, adventure = 1, arena = 0, menu and legends = 3 0xb4a814
                 Game mode: 0xb4a818 . fortress = 0, adventure = 1, arena = 4
                 0xe2e2a2 seems to be a copy of the first one
@@ -2100,6 +2100,7 @@
         <PETimeStamp value="0x4D8B30FC" />
         <MD5 value="e31538a48efcfa6598b15bb938906c6b" />
         <Offsets>
+             mode
             <Group name="Position">
                 <Address name="cursor_xyz" value="0xb337f0" />
                 <Address name="window_dims" value="0xb3407c" />
@@ -2124,6 +2125,13 @@
                     <Offset name="temperature2" value="0x1780" />
                     <Offset name="biome_stuffs" value="0x1d80" />
                 </Group>
+            </Group>
+            <Group name="World">
+                <Address name="control_mode" value="0xb33814" />
+                <Address name="game_mode" value="0xb33818"/>
+                <Address name="current_year" value="0xef6268" />
+                <Address name="current_tick" value="0xe17180" />
+                <Address name="current_weather" value="0x14eb7a0" />
             </Group>
         </Offsets>
     </Version>

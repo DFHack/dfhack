@@ -96,7 +96,6 @@ World::World(DFContextShared * _d)
     {
         d->gamemode_offset = OG_World->getAddress( "game_mode" );
         d->controlmode_offset = OG_World->getAddress( "control_mode" );
-        d->controlmodecopy_offset = OG_World->getAddress( "control_mode" );
         d->StartedMode = true;
     }
     catch(Error::All &){};
@@ -162,7 +161,6 @@ bool World::WriteGameMode(const t_gamemodes & wr)
     {
         d->owner->writeDWord(d->gamemode_offset,wr.game_mode);
         d->owner->writeDWord(d->controlmode_offset,wr.control_mode);
-        d->owner->writeDWord(d->controlmodecopy_offset,wr.control_mode);
         return true;
     }
     return false;

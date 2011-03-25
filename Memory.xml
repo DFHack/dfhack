@@ -2133,6 +2133,9 @@
                 <Address name="current_tick" value="0xe17180" />
                 <Address name="current_weather" value="0x14eb7a0" />
             </Group>
+            <Group name="GUI">
+                <Address name="pause_state" value="0x14eb7c9" />
+            </Group>
         </Offsets>
     </Version>
                             .-"""-.

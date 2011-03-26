@@ -152,6 +152,7 @@ int main (int argc, char** argv)
     DFHack::Maps * Maps;
     DFHack::Gui * Position;
     Brush * brush = new RectangleBrush(1,1);
+    string brushname = "point";
     try
     {
         DF=DFMgr.getSingleContext();
@@ -170,7 +171,7 @@ int main (int argc, char** argv)
         return 1;
     }
     bool end = false;
-    cout << "Welcome to the liquid spawner. type 'help' for a list of available commands, 'q' to quit." << endl;
+    cout << "Welcome to the liquid spawner.\nType 'help' or '?' for a list of available commands, 'q' to quit.\nPress return after a command to confirm." << endl;
     string mode="magma";
 
     string flowmode="f+";
@@ -181,9 +182,9 @@ int main (int argc, char** argv)
     {
         DF->Resume();
         string command = "";
-        cout <<"[" << mode << ":" << amount << ":" << flowmode << ":" << setmode << "]# ";
+        cout <<"[" << mode << ":" << brushname << ":" << amount << ":" << flowmode << ":" << setmode << "]# ";
         getline(cin, command);
-        if(command=="help")
+        if(command=="help" || command == "?")
         {
             cout << "Modes:" << endl
                  << "m             - switch to magma" << endl
@@ -192,11 +193,11 @@ int main (int argc, char** argv)
                  << "of            - make obsidian floors" << endl
                  << "rs            - make a river source" << endl
                  << "f             - flow bits only" << endl
-                 << "Set-Modes:" << endl
+                 << "Set-Modes (only for magma/water):" << endl
                  << "s+            - only add" << endl
                  << "s.            - set" << endl
                  << "s-            - only remove" << endl
-                 << "Properties:" << endl
+                 << "Properties (only for magma/water):" << endl
                  << "f+            - make the spawned liquid flow" << endl
                  << "f.            - don't change flow state (read state in flow mode)" << endl
                  << "f-            - make the spawned liquid static" << endl
@@ -204,11 +205,13 @@ int main (int argc, char** argv)
                  << "Brush:" << endl
                  << "point         - single tile [p]" << endl
                  << "range         - block with cursor at bottom north-west [r]" << endl
+                 << "                (any place, any size)" << endl
                  << "block         - DF map block with cursor in it" << endl
-                 << "column        - Column up through free space" << endl
+                 << "                (regular spaced 16x16x1 blocks)" << endl
+                 << "column        - Column from cursor, up through free space" << endl
                  << "Other:" << endl
                  << "q             - quit" << endl
-                 << "help          - print this list of commands" << endl
+                 << "help or ?     - print this list of commands" << endl
                  << "empty line    - put liquid" << endl
                  << endl
                  << "Usage: point the DF cursor at a tile you want to modify" << endl
@@ -241,6 +244,7 @@ int main (int argc, char** argv)
         else if(command == "point" || command == "p")
         {
             delete brush;
+            brushname = "point";
             brush = new RectangleBrush(1,1);
         }
         else if(command == "range" || command == "r")
@@ -260,16 +264,26 @@ int main (int argc, char** argv)
             z_levels = command == "" ? z_levels : atoi (command.c_str());
             if(z_levels < 1) z_levels = 1;
             delete brush;
+            if(width == height == z_levels == 1)
+            {
+                brushname="point";
+            }
+            else
+            {
+                brushname = "range";
+            }
             brush = new RectangleBrush(width,height,z_levels,0,0,0);
         }
         else if(command == "block")
         {
             delete brush;
+            brushname = "block";
             brush = new BlockBrush();
         }
         else if(command == "column")
         {
             delete brush;
+            brushname = "column";
             brush = new ColumnBrush();
         }
         else if(command == "q")

@@ -332,11 +332,11 @@ namespace DFHack
         unsigned int unit_grounded : 1;
         /// 5: the tile contains an item
         unsigned int item : 1;
-        /// 6
+        /// 6: set on magma sea tiles, cavern lake tiles, rivers. not set on pools. probably something like 'inhibit growth'?
         unsigned int unk6 : 1;
         /// 7: mossy!
         unsigned int moss : 1;
-        /// 8-11: arrow color related
+        /// 8-11: arrow color. 0 = no arrow
         unsigned int arrow_color : 4;
         /// 12: arrow orientaton
         unsigned int broken_arrows_variant : 1;

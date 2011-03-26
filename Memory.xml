@@ -2138,6 +2138,14 @@
             </Group>
         </Offsets>
     </Version>
+    <Version name="v0.31.23 SDL" os="windows" base="v0.31.22 SDL" rebase="0x1000">
+        <PETimeStamp value="0x4D8DE854" />
+        <MD5 value="57ad0d359cc135f5bdf329e517028388" />
+        <Offsets>
+            BLAH!
+        </Offsets>
+    </Version>
+
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________

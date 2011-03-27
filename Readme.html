@@ -334,24 +334,28 @@ allow for easier development of new tools.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#tools" id="id7">Tools</a><ul>
-<li><a class="reference internal" href="#dfcleanmap" id="id8">dfcleanmap</a></li>
-<li><a class="reference internal" href="#dfliquids" id="id9">dfliquids</a></li>
+<li><a class="reference internal" href="#dfattachtest" id="id8">dfattachtest</a></li>
+<li><a class="reference internal" href="#dfcleanmap" id="id9">dfcleanmap</a></li>
 <li><a class="reference internal" href="#dfderamp-by-zilpin" id="id10">dfderamp (by zilpin)</a></li>
-<li><a class="reference internal" href="#dfposition" id="id11">dfposition</a></li>
-<li><a class="reference internal" href="#dfprospector" id="id12">dfprospector</a></li>
-<li><a class="reference internal" href="#dfprobe" id="id13">dfprobe</a></li>
-<li><a class="reference internal" href="#dfreveal" id="id14">dfreveal</a></li>
-<li><a class="reference internal" href="#dfunstuck" id="id15">dfunstuck</a></li>
-<li><a class="reference internal" href="#dfvdig" id="id16">dfvdig</a></li>
-<li><a class="reference internal" href="#dfflows" id="id17">dfflows</a></li>
-<li><a class="reference internal" href="#dfattachtest" id="id18">dfattachtest</a></li>
-<li><a class="reference internal" href="#dfsuspend" id="id19">dfsuspend</a></li>
-<li><a class="reference internal" href="#dfexpbench" id="id20">dfexpbench</a></li>
-<li><a class="reference internal" href="#dfdoffsets" id="id21">dfdoffsets</a></li>
-<li><a class="reference internal" href="#dfcleartask" id="id22">dfcleartask</a></li>
-<li><a class="reference internal" href="#dfweather" id="id23">dfweather</a></li>
-<li><a class="reference internal" href="#dfmode" id="id24">dfmode</a></li>
-<li><a class="reference internal" href="#your-tool-here" id="id25">Your tool here</a></li>
+<li><a class="reference internal" href="#dfdoffsets" id="id11">dfdoffsets</a></li>
+<li><a class="reference internal" href="#dfexpbench" id="id12">dfexpbench</a></li>
+<li><a class="reference internal" href="#dfflows" id="id13">dfflows</a></li>
+<li><a class="reference internal" href="#dfincremental" id="id14">dfincremental</a></li>
+<li><a class="reference internal" href="#dflair" id="id15">dflair</a></li>
+<li><a class="reference internal" href="#dfliquids" id="id16">dfliquids</a></li>
+<li><a class="reference internal" href="#dfmode" id="id17">dfmode</a></li>
+<li><a class="reference internal" href="#dfpause" id="id18">dfpause</a></li>
+<li><a class="reference internal" href="#dfposition" id="id19">dfposition</a></li>
+<li><a class="reference internal" href="#dfprobe" id="id20">dfprobe</a></li>
+<li><a class="reference internal" href="#dfprospector" id="id21">dfprospector</a></li>
+<li><a class="reference internal" href="#dfreveal" id="id22">dfreveal</a></li>
+<li><a class="reference internal" href="#dfsuspend" id="id23">dfsuspend</a></li>
+<li><a class="reference internal" href="#dftubefill" id="id24">dftubefill</a></li>
+<li><a class="reference internal" href="#dfunstuck" id="id25">dfunstuck</a></li>
+<li><a class="reference internal" href="#dfvdig" id="id26">dfvdig</a></li>
+<li><a class="reference internal" href="#dfveinlook" id="id27">dfveinlook</a></li>
+<li><a class="reference internal" href="#dfweather" id="id28">dfweather</a></li>
+<li><a class="reference internal" href="#your-tool-here" id="id29">Your tool here</a></li>
 </ul>
 </li>
 </ul>
@@ -382,13 +386,13 @@ functionality. If you know how to easily suspend processes, you can
 fix it :)</p>
 </div>
 <p>0.31.01 - 0.31.03 legacy</p>
-<p>0.31.04 - 0.31.21 SDL</p>
+<p>0.31.04 - 0.31.24 SDL</p>
 </div>
 <div class="section" id="linux">
 <h2><a class="toc-backref" href="#id6">Linux</a></h2>
 <p>0.31.05 - 0.31.19 native.</p>
 <p>There are missing offsets but Map tools should be OK. Linux support is
-a bit lacking, I'm working on it. Slowly. All supported Windows versions
+a bit lacking, I'm working on it. Very slowly. All supported Windows versions
 running in wine can be used with native DFHack binaries.</p>
 </div>
 </div>
@@ -397,13 +401,41 @@ running in wine can be used with native DFHack binaries.</p>
 <p>All the DFHack tools are terminal programs. This might seem strange to Windows
 users, but these are meant mostly as examples for developers. Still, they can
 be useful and are cross-platform just like the library itself.</p>
+<div class="section" id="dfattachtest">
+<h2><a class="toc-backref" href="#id8">dfattachtest</a></h2>
+<p>Test of the process attach/detach mechanism.</p>
+</div>
 <div class="section" id="dfcleanmap">
-<h2><a class="toc-backref" href="#id8">dfcleanmap</a></h2>
+<h2><a class="toc-backref" href="#id9">dfcleanmap</a></h2>
 <p>Cleans all the splatter that get scattered all over the map.
 Only exception is mud. It leaves mud alone.</p>
 </div>
+<div class="section" id="dfderamp-by-zilpin">
+<h2><a class="toc-backref" href="#id10">dfderamp (by zilpin)</a></h2>
+<p>Removes all ramps designated for removal from the map. This is useful for replicating the old channel digging designation.</p>
+</div>
+<div class="section" id="dfdoffsets">
+<h2><a class="toc-backref" href="#id11">dfdoffsets</a></h2>
+<p>Dumps the offsets for the currently running DF version into the terminal.</p>
+</div>
+<div class="section" id="dfexpbench">
+<h2><a class="toc-backref" href="#id12">dfexpbench</a></h2>
+<p>Just a simple benchmark of the data export speed.</p>
+</div>
+<div class="section" id="dfflows">
+<h2><a class="toc-backref" href="#id13">dfflows</a></h2>
+<p>A tool for checking how many liquid tiles are actively checked for flows.</p>
+</div>
+<div class="section" id="dfincremental">
+<h2><a class="toc-backref" href="#id14">dfincremental</a></h2>
+<p>A simple memory search tool for DF. Requires arcane knowledge ;)</p>
+</div>
+<div class="section" id="dflair">
+<h2><a class="toc-backref" href="#id15">dflair</a></h2>
+<p>Marks all of the map as a lair, preventing item scatter on abandon/reclaim.</p>
+</div>
 <div class="section" id="dfliquids">
-<h2><a class="toc-backref" href="#id9">dfliquids</a></h2>
+<h2><a class="toc-backref" href="#id16">dfliquids</a></h2>
 <p>A command prompt for liquid creation and manipulation (the Moses
 effect included!) Also allows painting obsidian walls directly.</p>
 <div class="note">
@@ -412,69 +444,8 @@ effect included!) Also allows painting obsidian walls directly.</p>
 temperatures (creating heat traps). You've been warned.</p>
 </div>
 </div>
-<div class="section" id="dfderamp-by-zilpin">
-<h2><a class="toc-backref" href="#id10">dfderamp (by zilpin)</a></h2>
-<p>Removes all ramps designated for removal from the map. This is useful for replicating the old channel digging designation.</p>
-</div>
-<div class="section" id="dfposition">
-<h2><a class="toc-backref" href="#id11">dfposition</a></h2>
-<p>Prints the current DF window properties and cursor position.</p>
-</div>
-<div class="section" id="dfprospector">
-<h2><a class="toc-backref" href="#id12">dfprospector</a></h2>
-<p>Lists all available minerals on the map and how much of them there is.</p>
-</div>
-<div class="section" id="dfprobe">
-<h2><a class="toc-backref" href="#id13">dfprobe</a></h2>
-<p>Can be used to determine tile properties.</p>
-</div>
-<div class="section" id="dfreveal">
-<h2><a class="toc-backref" href="#id14">dfreveal</a></h2>
-<p>Reveals the whole map, waits for input and hides it again. If you close
-the tool while it waits, the map remains revealed.</p>
-</div>
-<div class="section" id="dfunstuck">
-<h2><a class="toc-backref" href="#id15">dfunstuck</a></h2>
-<p>Use if you prematurely close any of the tools and DF appears to be
-stuck.</p>
-</div>
-<div class="section" id="dfvdig">
-<h2><a class="toc-backref" href="#id16">dfvdig</a></h2>
-<p>Designates a whole vein for digging. Point the cursor at a vein and run
-this thing :)</p>
-</div>
-<div class="section" id="dfflows">
-<h2><a class="toc-backref" href="#id17">dfflows</a></h2>
-<p>A tool for checking how many liquid tiles are actively checked for
-flows.</p>
-</div>
-<div class="section" id="dfattachtest">
-<h2><a class="toc-backref" href="#id18">dfattachtest</a></h2>
-<p>Test of the process attach/detach mechanism.</p>
-</div>
-<div class="section" id="dfsuspend">
-<h2><a class="toc-backref" href="#id19">dfsuspend</a></h2>
-<p>Test of the process suspend/resume mechanism.</p>
-</div>
-<div class="section" id="dfexpbench">
-<h2><a class="toc-backref" href="#id20">dfexpbench</a></h2>
-<p>Just a simple benchmark of the data export speed.</p>
-</div>
-<div class="section" id="dfdoffsets">
-<h2><a class="toc-backref" href="#id21">dfdoffsets</a></h2>
-<p>Dumps the offsets for the currently running DF version into the terminal.</p>
-</div>
-<div class="section" id="dfcleartask">
-<h2><a class="toc-backref" href="#id22">dfcleartask</a></h2>
-<p>Solves the problem of unusable items after reclaim by clearing the 'in_job' bit of all items.</p>
-</div>
-<div class="section" id="dfweather">
-<h2><a class="toc-backref" href="#id23">dfweather</a></h2>
-<p>Lets you change the current weather to 'clear sky', 'rainy' or 'snowing'. Fill those ponds without mucking around with dfliquids
-:D Rain can also stop brush fires.</p>
-</div>
 <div class="section" id="dfmode">
-<h2><a class="toc-backref" href="#id24">dfmode</a></h2>
+<h2><a class="toc-backref" href="#id17">dfmode</a></h2>
 <p>This tool lets you change the game mode directly. Not all combinations are good for every situation and most of them will produce undesirable results.
 There are a few good ones though.</p>
 <div class="admonition-example admonition">
@@ -485,8 +456,56 @@ You just lost a fortress and gained an adventurer.</p>
 </div>
 <p>I take no responsibility of anything that happens as a result of using this tool :P</p>
 </div>
+<div class="section" id="dfpause">
+<h2><a class="toc-backref" href="#id18">dfpause</a></h2>
+<p>Forces DF to pause. This is useful when your FPS drops below 1 and you lose control of the game.</p>
+</div>
+<div class="section" id="dfposition">
+<h2><a class="toc-backref" href="#id19">dfposition</a></h2>
+<p>Prints the game mode, current DF window properties and cursor position in both local and world coordinates.</p>
+</div>
+<div class="section" id="dfprobe">
+<h2><a class="toc-backref" href="#id20">dfprobe</a></h2>
+<p>Can be used to determine tile properties like temperature.</p>
+</div>
+<div class="section" id="dfprospector">
+<h2><a class="toc-backref" href="#id21">dfprospector</a></h2>
+<p>Lists all available minerals on the map and how much of them there is.</p>
+</div>
+<div class="section" id="dfreveal">
+<h2><a class="toc-backref" href="#id22">dfreveal</a></h2>
+<p>Reveals the whole map, waits for input and hides it again. If you close
+the tool while it waits, the map remains revealed.</p>
+</div>
+<div class="section" id="dfsuspend">
+<h2><a class="toc-backref" href="#id23">dfsuspend</a></h2>
+<p>Test of the process suspend/resume mechanism. If this doesn't work as expected, it's not safe to use DFHack.</p>
+</div>
+<div class="section" id="dftubefill">
+<h2><a class="toc-backref" href="#id24">dftubefill</a></h2>
+<p>Fills all the 'candy stores' with 'delicious candy'. No need to fear the clowns. Don't use if you haven't seen the hidden fun stuff
+yet ;)</p>
+</div>
+<div class="section" id="dfunstuck">
+<h2><a class="toc-backref" href="#id25">dfunstuck</a></h2>
+<p>Use if you prematurely close any of the tools and DF appears to be stuck. Mostly only needed on Windows.</p>
+</div>
+<div class="section" id="dfvdig">
+<h2><a class="toc-backref" href="#id26">dfvdig</a></h2>
+<p>Designates a whole vein for digging. Point the cursor at a vein and run this thing :)
+Running 'dfXvdig' on Windows or using the '-x' parameter will dig stairs between z-levels to follow the veins.</p>
+</div>
+<div class="section" id="dfveinlook">
+<h2><a class="toc-backref" href="#id27">dfveinlook</a></h2>
+<p>Simplistic map viewer for linux. Mostly a debug/development thing.</p>
+</div>
+<div class="section" id="dfweather">
+<h2><a class="toc-backref" href="#id28">dfweather</a></h2>
+<p>Lets you change the current weather to 'clear sky', 'rainy' or 'snowing'. Fill those ponds without mucking around with dfliquids
+:D Rain can also stop brush fires.</p>
+</div>
 <div class="section" id="your-tool-here">
-<h2><a class="toc-backref" href="#id25">Your tool here</a></h2>
+<h2><a class="toc-backref" href="#id29">Your tool here</a></h2>
 <p>Write one ;)</p>
 </div>
 </div>

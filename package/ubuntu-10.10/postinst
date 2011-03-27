@@ -3,5 +3,11 @@ echo "Setting required kernel parameters."
 # I actually do it three times, hoping to hammer this into Ubuntu's dense skull.
 sysctl -w kernel.randomize_va_space=0
 sysctl -w kernel.yama.ptrace_scope=0
-echo "kernel.randomize_va_space=0" >> /etc/sysctl.conf
-echo "kernel.yama.ptrace_scope=0" >> /etc/sysctl.conf
+if grep -q "kernel.yama.ptrace_scope=0" /etc/sysctl.conf
+then
+  echo "Already installed into /etc/sysctl.conf, doing nothing."
+else
+  echo "kernel.randomize_va_space=0" >> /etc/sysctl.conf
+  echo "kernel.yama.ptrace_scope=0" >> /etc/sysctl.conf
+fi
+

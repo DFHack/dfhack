@@ -441,82 +441,87 @@ void NormalProcess::getMemRanges( vector<t_memrange> & ranges )
 void NormalProcess::readByte (const uint32_t offset,uint8_t &result)
 {
     if(!ReadProcessMemory(my_handle, (int*) offset, &result, sizeof(uint8_t), NULL))
-        throw Error::MemoryAccessDenied();
+        throw Error::MemoryAccessDenied(offset);
 }
 
 void NormalProcess::readWord (const uint32_t offset, uint16_t &result)
 {
     if(!ReadProcessMemory(my_handle, (int*) offset, &result, sizeof(uint16_t), NULL))
-        throw Error::MemoryAccessDenied();
+        throw Error::MemoryAccessDenied(offset);
 }
 
 void NormalProcess::readDWord (const uint32_t offset, uint32_t &result)
 {
     if(!ReadProcessMemory(my_handle, (int*) offset, &result, sizeof(uint32_t), NULL))
-        throw Error::MemoryAccessDenied();
+        throw Error::MemoryAccessDenied(offset);
 }
 
 void NormalProcess::readQuad (const uint32_t offset, uint64_t &result)
 {
     if(!ReadProcessMemory(my_handle, (int*) offset, &result, sizeof(uint64_t), NULL))
-        throw Error::MemoryAccessDenied();
+        throw Error::MemoryAccessDenied(offset);
 }
 
 void NormalProcess::readFloat (const uint32_t offset, float &result)
 {
     if(!ReadProcessMemory(my_handle, (int*) offset, &result, sizeof(float), NULL))
-        throw Error::MemoryAccessDenied();
+        throw Error::MemoryAccessDenied(offset);
 }
 
 void NormalProcess::read (const uint32_t offset, uint32_t size, uint8_t *target)
 {
     if(!ReadProcessMemory(my_handle, (int*) offset, target, size, NULL))
-        throw Error::MemoryAccessDenied();
+        throw Error::MemoryAccessDenied(offset);
 }
 
 // WRITING
 void NormalProcess::writeQuad (const uint32_t offset, uint64_t data)
 {
     if(!WriteProcessMemory(my_handle, (int*) offset, &data, sizeof(data), NULL))
-        throw Error::MemoryAccessDenied();
+        throw Error::MemoryAccessDenied(offset);
 }
 
 void NormalProcess::writeDWord (const uint32_t offset, uint32_t data)
 {
     if(!WriteProcessMemory(my_handle, (int*) offset, &data, sizeof(data), NULL))
-        throw Error::MemoryAccessDenied();
+        throw Error::MemoryAccessDenied(offset);
 }
 
 // using these is expensive.
 void NormalProcess::writeWord (uint32_t offset, uint16_t data)
 {
     if(!WriteProcessMemory(my_handle, (int*) offset, &data, sizeof(data), NULL))
-        throw Error::MemoryAccessDenied();
+        throw Error::MemoryAccessDenied(offset);
 }
 
 void NormalProcess::writeByte (uint32_t offset, uint8_t data)
 {
     if(!WriteProcessMemory(my_handle, (int*) offset, &data, sizeof(data), NULL))
-        throw Error::MemoryAccessDenied();
+        throw Error::MemoryAccessDenied(offset);
 }
 
 void NormalProcess::write (uint32_t offset, uint32_t size, uint8_t *source)
 {
     if(!WriteProcessMemory(my_handle, (int*) offset, source, size, NULL))
-        throw Error::MemoryAccessDenied();
+        throw Error::MemoryAccessDenied(offset);
 }
 
-///FIXME: reduce use of temporary objects
-const string NormalProcess::readCString (const uint32_t offset)
+// FIXME: could exploit the fact we can read more than one byte... but still, this is almost unused.
+const std::string NormalProcess::readCString (const uint32_t offset)
 {
-    string temp;
-    char temp_c[256];
-    SIZE_T read;
-    if(!ReadProcessMemory(my_handle, (int *) offset, temp_c, 254, &read))
-        throw Error::MemoryAccessDenied();
-    // needs to be 254+1 byte for the null term
-    temp_c[read+1] = 0;
-    temp.assign(temp_c);
+    std::string temp;
+    int counter = 0;
+    char r;
+    while (1)
+    {
+        if(!ReadProcessMemory(my_handle, (int*) (offset + counter), &r, sizeof(uint8_t), NULL)) break;
+        r = Process::readByte(offset+counter);
+        if(!r) break;
+        counter++;
+        temp.append(1,r);
+    }
+    if(!counter)
+        throw Error::MemoryAccessDenied(offset);
     return temp;
 }
 

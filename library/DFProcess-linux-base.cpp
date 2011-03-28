@@ -121,7 +121,7 @@ void LinuxProcessBase::read (const uint32_t offset, const uint32_t size, uint8_t
             cerr << "pread failed: can't read " << size << " bytes at addres " << offset << endl;
             cerr << "errno: " << errno << endl;
             errno = 0;
-            throw Error::MemoryAccessDenied();
+            throw Error::MemoryAccessDenied(offset);
         }
         else
         {
@@ -258,17 +258,15 @@ void LinuxProcessBase::write (uint32_t offset, uint32_t size, uint8_t *source)
 const std::string LinuxProcessBase::readCString (uint32_t offset)
 {
     std::string temp;
-    char temp_c[256];
     int counter = 0;
     char r;
-    do
+    while (1)
     {
         r = Process::readByte(offset+counter);
-        temp_c[counter] = r;
+        if(!r) break;
         counter++;
-    } while (r && counter < 255);
-    temp_c[counter] = 0;
-    temp = temp_c;
+        temp.append(1,r);
+    }
     return temp;
 }
 

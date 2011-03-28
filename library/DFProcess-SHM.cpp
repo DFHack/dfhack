@@ -221,7 +221,7 @@ bool SHMProcess::resume()
 // get module index by name and version. bool 0 = error
 bool SHMProcess::getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(0xdeadbeef);
 
     modulelookup * payload = D_SHMDATA(modulelookup);
     payload->version = version;
@@ -244,7 +244,7 @@ bool SHMProcess::getModuleIndex (const char * name, const uint32_t version, uint
 
 bool SHMProcess::Private::Aux_Core_Attach(bool & versionOK, pid_t & PID)
 {
-    if(!locked) throw Error::MemoryAccessDenied();
+    if(!locked) throw Error::MemoryAccessDenied(0xdeadbeef);
 
     SHMDATA(coreattach)->cl_affinity = OS_getAffinity();
     if(!SetAndWait(CORE_ATTACH)) return false;
@@ -263,7 +263,7 @@ bool SHMProcess::Private::Aux_Core_Attach(bool & versionOK, pid_t & PID)
 
 void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buffer)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(src_address);
 
     // normal read under 1MB
     if(size <= SHM_BODY)
@@ -300,7 +300,7 @@ void SHMProcess::read (uint32_t src_address, uint32_t size, uint8_t *target_buff
 
 void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(offset);
 
     D_SHMHDR->address = offset;
     full_barrier
@@ -310,7 +310,7 @@ void SHMProcess::readByte (const uint32_t offset, uint8_t &val )
 
 void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(offset);
 
     D_SHMHDR->address = offset;
     full_barrier
@@ -320,7 +320,7 @@ void SHMProcess::readWord (const uint32_t offset, uint16_t &val)
 
 void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(offset);
 
     D_SHMHDR->address = offset;
     full_barrier
@@ -330,7 +330,7 @@ void SHMProcess::readDWord (const uint32_t offset, uint32_t &val)
 
 void SHMProcess::readQuad (const uint32_t offset, uint64_t &val)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(offset);
 
     D_SHMHDR->address = offset;
     full_barrier
@@ -340,7 +340,7 @@ void SHMProcess::readQuad (const uint32_t offset, uint64_t &val)
 
 void SHMProcess::readFloat (const uint32_t offset, float &val)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(offset);
 
     D_SHMHDR->address = offset;
     full_barrier
@@ -354,7 +354,7 @@ void SHMProcess::readFloat (const uint32_t offset, float &val)
 
 void SHMProcess::writeQuad (uint32_t offset, uint64_t data)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(offset);
 
     D_SHMHDR->address = offset;
     D_SHMHDR->Qvalue = data;
@@ -364,7 +364,7 @@ void SHMProcess::writeQuad (uint32_t offset, uint64_t data)
 
 void SHMProcess::writeDWord (uint32_t offset, uint32_t data)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(offset);
 
     D_SHMHDR->address = offset;
     D_SHMHDR->value = data;
@@ -375,7 +375,7 @@ void SHMProcess::writeDWord (uint32_t offset, uint32_t data)
 // using these is expensive.
 void SHMProcess::writeWord (uint32_t offset, uint16_t data)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(offset);
 
     D_SHMHDR->address = offset;
     D_SHMHDR->value = data;
@@ -385,7 +385,7 @@ void SHMProcess::writeWord (uint32_t offset, uint16_t data)
 
 void SHMProcess::writeByte (uint32_t offset, uint8_t data)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(offset);
 
     D_SHMHDR->address = offset;
     D_SHMHDR->value = data;
@@ -395,7 +395,7 @@ void SHMProcess::writeByte (uint32_t offset, uint8_t data)
 
 void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buffer)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(dst_address);
 
     // normal write under 1MB
     if(size <= SHM_BODY)
@@ -430,29 +430,24 @@ void SHMProcess::write (uint32_t dst_address, uint32_t size, uint8_t *source_buf
     }
 }
 
-// FIXME: butt-fugly
 const std::string SHMProcess::readCString (uint32_t offset)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
-
     std::string temp;
-    char temp_c[256];
     int counter = 0;
     char r;
-    do
+    while (1)
     {
         r = Process::readByte(offset+counter);
-        temp_c[counter] = r;
+        if(!r) break;
         counter++;
-    } while (r && counter < 255);
-    temp_c[counter] = 0;
-    temp = temp_c;
+        temp.append(1,r);
+    }
     return temp;
 }
 
 const std::string SHMProcess::readSTLString(uint32_t offset)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(offset);
 
     D_SHMHDR->address = offset;
     full_barrier
@@ -462,7 +457,7 @@ const std::string SHMProcess::readSTLString(uint32_t offset)
 
 size_t SHMProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(offset);
 
     D_SHMHDR->address = offset;
     full_barrier
@@ -476,7 +471,7 @@ size_t SHMProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapa
 
 void SHMProcess::writeSTLString(const uint32_t address, const std::string writeString)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(address);
 
     D_SHMHDR->address = address;
     strncpy(D_SHMDATA(char),writeString.c_str(),writeString.length()+1); // length + 1 for the null terminator

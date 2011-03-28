@@ -329,11 +329,17 @@ namespace DFHack
         class DFHACK_EXPORT MemoryAccessDenied : public All
         {
         public:
-            MemoryAccessDenied() {}
+            std::string descr;
+            MemoryAccessDenied(uint64_t address)
+            {
+                std::stringstream s;
+                s << "Invalid memory access @0x" << std::hex << address;
+                descr = s.str();
+            }
             virtual ~MemoryAccessDenied() throw(){};
             virtual const char* what() const throw()
             {
-                return "SHM ACCESS DENIED";
+                return descr.c_str();
             }
         };
         class DFHACK_EXPORT SHMVersionMismatch : public All

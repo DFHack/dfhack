@@ -408,7 +408,7 @@ string SHMProcess::getPath()
 
 char * SHMProcess::getSHMStart (void)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(0xdeadbeef);
 
     return d->shm_addr;
 }

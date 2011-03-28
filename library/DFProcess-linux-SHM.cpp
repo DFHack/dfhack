@@ -377,7 +377,7 @@ void SHMProcess::readSTLVector(const uint32_t address, t_vecTriplet & triplet)
 
 string SHMProcess::readClassName (uint32_t vptr)
 {
-    if(!d->locked) throw Error::MemoryAccessDenied();
+    if(!d->locked) throw Error::MemoryAccessDenied(vptr);
 
     int typeinfo = Process::readDWord(vptr - 0x4);
     int typestring = Process::readDWord(typeinfo + 0x4);

@@ -516,8 +516,9 @@ const std::string NormalProcess::readCString (const uint32_t offset)
     {
         if(!ReadProcessMemory(my_handle, (int*) (offset + counter), &r, sizeof(uint8_t), NULL)) break;
         r = Process::readByte(offset+counter);
-        if(!r) break;
+        // order is important. even if the first character is \0, we cound that as a success. It's an empty string.
         counter++;
+        if(!r) break;
         temp.append(1,r);
     }
     if(!counter)

@@ -35,7 +35,7 @@ namespace DFHack
         uint16_t y; /*!< Y coordinate */
         // 4
         uint16_t z; /*!< Z coordinate */
-        e_construction_base form : 16; /*!< type of item the construction is made of */
+        uint16_t form; /*!< type of item the construction is made of */
         // 8
         uint16_t unk_8; // = -1 in many cases
         uint16_t mat_type;

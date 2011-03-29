@@ -1,5 +1,5 @@
-from ctypes import *
-from dftypes import *
+from ctypes import c_uint, byref
+from dftypes import libdfhack, Construction
 
 class Constructions(object):
     def __init__(self, ptr):

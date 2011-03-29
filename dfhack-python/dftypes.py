@@ -276,7 +276,7 @@ class Construction(Structure):
                 ("form", c_ushort),
                 ("unk_8", c_ushort),
                 ("mat_type", c_ushort),
-                ("mat_idx", c_ushort),
+                ("mat_idx", c_uint),
                 ("unk3", c_ushort),
                 ("unk4", c_ushort),
                 ("unk5", c_ushort),

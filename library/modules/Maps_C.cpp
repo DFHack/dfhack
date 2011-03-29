@@ -185,6 +185,14 @@ void Maps_getSize(DFHackObject* maps, uint32_t* x, uint32_t* y, uint32_t* z)
 	}
 }
 
+void Maps_getPosition(DFHackObject* maps, uint32_t* x, uint32_t* y, uint32_t* z)
+{
+	if(maps != NULL)
+	{
+		((DFHack::Maps*)maps)->getPosition(*x, *y, *z);
+	}
+}
+
 int Maps_isValidBlock(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z)
 {
 	if(maps != NULL)

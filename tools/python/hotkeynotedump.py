@@ -5,11 +5,11 @@ df = cm.get_single_context()
 
 df.attach()
 
-pos = df.position
+gui = df.gui
 
 print "Hotkeys"
 
-hotkeys = pos.read_hotkeys()
+hotkeys = gui.read_hotkeys()
 
 for key in hotkeys:
     print "x: %d\ny: %d\tz: %d\ttext: %s" % (key.x, key.y, key.z, key.name)

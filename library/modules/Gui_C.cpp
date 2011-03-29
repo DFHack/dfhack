@@ -122,7 +122,7 @@ t_hotkey* Gui_ReadHotkeys(DFHackObject* gui)
 	{
 		t_hotkey* buf;
 		
-		(*alloc_t_hotkey_buffer_callback)(&buf, NUM_HOTKEYS);
+		(*alloc_hotkey_buffer_callback)(&buf, NUM_HOTKEYS);
 		
 		if(buf != NULL)
 		{
@@ -164,7 +164,7 @@ t_screen* Gui_getScreenTiles(DFHackObject* gui, int32_t width, int32_t height)
 	{
 		t_screen* buf;
 		
-		(*alloc_t_screen_buffer_callback)(&buf, width * height);
+		(*alloc_screen_buffer_callback)(&buf, width * height);
 		
 		if(buf == NULL)
 			return NULL;

@@ -177,8 +177,3 @@ class Context(object):
             self._window_io_obj = window_io.WindowIO(libdfhack.Context_getWindowIO(self._c_ptr))
         
         return self._window_io_obj
-
-cm = ContextManager("Memory.xml")
-df = cm.get_single_context()
-df.attach()
-w = df.window_io

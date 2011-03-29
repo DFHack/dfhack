@@ -5,9 +5,9 @@ from util import _uintify, uint_ptr, check_pointer_cache
 _MAX_DIM = 0x300
 _MAX_DIM_SQR = _MAX_DIM * _MAX_DIM
 
-_default_argtypes = [ c_void_p, uint_ptr, uint_ptr, uint_ptr ]
+libdfhack.Maps_getSize.argtypes = [ c_void_p, uint_ptr, uint_ptr, uint_ptr ]
+libdfhack.Maps_getPosition.argtypes = [ c_void_p, uint_ptr, uint_ptr, uint_ptr ]
 
-libdfhack.Maps_getSize.argtypes = _default_argtypes
 libdfhack.Maps_ReadTileTypes.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(TileTypes40d) ]
 libdfhack.Maps_WriteTileTypes.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(TileTypes40d) ]
 libdfhack.Maps_ReadDesignations.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Designations40d) ]
@@ -18,14 +18,13 @@ libdfhack.Maps_ReadOccupancy.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POIN
 libdfhack.Maps_WriteOccupancy.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(Occupancies40d) ]
 libdfhack.Maps_ReadRegionOffsets.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(BiomeIndices40d) ]
 
-#libdfhack.Maps_ReadVegetation.argtypes = [ c_void_p, c_uint, c_uint, c_uint ]
 libdfhack.Maps_ReadVegetation.restype = c_void_p
 
-libdfhack.Maps_ReadStandardVeins.argtypes = _default_argtypes
-libdfhack.Maps_ReadFrozenVeins.argtypes = _default_argtypes
-libdfhack.Maps_ReadSpatterVeins.argtypes = _default_argtypes
-libdfhack.Maps_ReadGrassVeins.argtypes = _default_argtypes
-libdfhack.Maps_ReadWorldConstructions.argtypes = _default_argtypes
+libdfhack.Maps_ReadStandardVeins.argtypes = [ c_void_p, c_uint, c_uint, c_uint ]
+libdfhack.Maps_ReadFrozenVeins.argtypes = [ c_void_p, c_uint, c_uint, c_uint ]
+libdfhack.Maps_ReadSpatterVeins.argtypes = [ c_void_p, c_uint, c_uint, c_uint ]
+libdfhack.Maps_ReadGrassVeins.argtypes = [ c_void_p, c_uint, c_uint, c_uint ]
+libdfhack.Maps_ReadWorldConstructions.argtypes = [ c_void_p, c_uint, c_uint, c_uint ]
 
 libdfhack.Maps_ReadStandardVeins.restype = c_void_p
 libdfhack.Maps_ReadFrozenVeins.restype = c_void_p
@@ -217,16 +216,19 @@ class Maps(object):
 
     @property
     def size(self):
-        x = c_uint()
-        y = c_uint()
-        z = c_uint()
+        x, y, z = (0, 0, 0)
 
         retval = libdfhack.Maps_getSize(self._map_ptr, byref(x), byref(y), byref(z))
 
-        if retval > 0:
-            return (int(x.value), int(y.value), int(z.value))
-        else:
-            return (-1, -1, -1)
+        return (x, y, z)
+    
+    @property
+    def position(self):
+        x, y, z = (0, 0, 0)
+        
+        libdfhack.Maps_getPosition(self._map_ptr, byref(x), byref(y), byref(z))
+        
+        return (x, y, z)
 
 class MapPoint(object):
     __slots__ = ["_x", "_y", "_z", "_cmp_val"]

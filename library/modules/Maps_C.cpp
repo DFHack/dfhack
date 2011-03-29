@@ -185,7 +185,7 @@ void Maps_getSize(DFHackObject* maps, uint32_t* x, uint32_t* y, uint32_t* z)
 	}
 }
 
-void Maps_getPosition(DFHackObject* maps, uint32_t* x, uint32_t* y, uint32_t* z)
+void Maps_getPosition(DFHackObject* maps, int32_t* x, int32_t* y, int32_t* z)
 {
 	if(maps != NULL)
 	{

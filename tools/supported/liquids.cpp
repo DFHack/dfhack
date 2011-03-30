@@ -264,7 +264,7 @@ int main (int argc, char** argv)
             z_levels = command == "" ? z_levels : atoi (command.c_str());
             if(z_levels < 1) z_levels = 1;
             delete brush;
-            if(width == height == z_levels == 1)
+            if(width == 1 && height == 1 && z_levels == 1)
             {
                 brushname="point";
             }
@@ -348,16 +348,18 @@ int main (int argc, char** argv)
                 }
                 cout << "cursor coords: " << x << "/" << y << "/" << z << endl;
                 MapCache mcache(Maps);
-                cout << "getting tiles from brush" << endl;
                 DFHack::DFCoord cursor(x,y,z);
                 coord_vec all_tiles = brush->points(mcache,cursor);
-                cout << "doing things" << endl;
+                cout << "working..." << endl;
                 if(mode == "obsidian")
                 {
                     coord_vec::iterator iter = all_tiles.begin();
                     while (iter != all_tiles.end())
                     {
                         mcache.setTiletypeAt(*iter, 331);
+                        DFHack::t_designation des = mcache.designationAt(*iter);
+                        des.bits.liquid_type = DFHack::liquid_magma;
+                        mcache.setDesignationAt(*iter, des);
                         iter ++;
                     }
                 }
@@ -411,12 +413,6 @@ int main (int argc, char** argv)
                                 continue;
                             }
                             // if we are setting the levels to 0 or changing magma into water
-                            if(amount == 0 || des.bits.liquid_type == DFHack::liquid_magma && mode == "water")
-                            {
-                                // reset temperature to sane default
-                                mcache.setTemp1At(current,10015);
-                                mcache.setTemp2At(current,10015);
-                            }
                             if(setmode == "s.")
                             {
                                 flow.flow_size = amount;
@@ -431,10 +427,24 @@ int main (int argc, char** argv)
                                 if (flow.flow_size > amount)
                                     flow.flow_size = amount;
                             }
-                            if(mode == "magma")
+                            if(amount != 0 && mode == "magma")
+                            {
                                 flow.liquid_type =  DFHack::liquid_magma;
-                            else if(mode == "water")
+                                mcache.setTemp1At(current,12000);
+                                mcache.setTemp2At(current,12000);
+                            }
+                            else if(amount != 0 && mode == "water")
+                            {
                                 flow.liquid_type =  DFHack::liquid_water;
+                                mcache.setTemp1At(current,10015);
+                                mcache.setTemp2At(current,10015);
+                            }
+                            else if(amount == 0 && (mode == "water" || mode == "magma"))
+                            {
+                                // reset temperature to sane default
+                                mcache.setTemp1At(current,10015);
+                                mcache.setTemp2At(current,10015);
+                            }
                             mcache.setDesignationAt(current,des);
                         }
                         seen_blocks.insert(mcache.BlockAt((*iter) / 16));

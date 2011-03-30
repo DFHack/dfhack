@@ -112,7 +112,7 @@ int main (void)
     cout << "Map revealed. The game has been paused for you." << endl;
     cout << "Unpausing can unleash the forces of hell!" << endl << endl;
     cout << "Press any key to unreveal." << endl;
-    cout << "Close to keep the map revealed." << endl;
+    cout << "Close to keep the map revealed !!FOREVER!!" << endl;
     cin.ignore();
     cout << "Unrevealing... please wait." << endl;
     // FIXME: do some consistency checks here!

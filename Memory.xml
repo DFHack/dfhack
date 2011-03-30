@@ -2149,6 +2149,10 @@
         <PETimeStamp value="0x4D8F39F9" />
         <MD5 value="eddc258fa59c89481516ad96eb51b35b" />
     </Version>
+    <Version name="v0.31.25 SDL" os="windows" base="v0.31.24 SDL">
+        <PETimeStamp value="0x4D90764F" />
+        <MD5 value="6ada05fc94785b53efe6aa5728b3756b" />
+    </Version>
                             .-"""-.
                            '       \
                           |,.  ,-.  |   _________________________

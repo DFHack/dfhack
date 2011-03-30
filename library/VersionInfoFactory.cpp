@@ -572,9 +572,9 @@ void VersionInfoFactory::EvalVersion(string base, VersionInfo * mem)
         v_descr & desc = knownVersions[base];
         if (!desc.second)
         {
-            VersionInfo * newmem = new VersionInfo();
-            ParseVersion(desc.first, newmem);
-            desc.second = newmem;
+            VersionInfo * basemem = new VersionInfo();
+            ParseVersion(desc.first, basemem);
+            desc.second = basemem;
         }
         mem->copy(desc.second);
     }

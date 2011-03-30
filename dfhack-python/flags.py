@@ -21,7 +21,8 @@ class DesignationStruct(Structure):
                 ("liquid_static", c_uint, 1),
                 ("feature_local", c_uint, 1),
                 ("feature_global", c_uint, 1),
-                ("liquid_character", c_uint, 2)]
+                ("water_stagnant", c_uint, 1),
+                ("water_salt", c_uint, 1)]
 
 class DesignationFlags(Union):
     _fields_ = [("whole", c_uint, 32),

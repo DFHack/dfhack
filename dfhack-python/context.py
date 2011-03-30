@@ -15,7 +15,6 @@ libdfhack.Context_getProcess.restype = c_void_p
 libdfhack.Context_getCreatures.restype = c_void_p
 libdfhack.Context_getMaps.restype = c_void_p
 libdfhack.Context_getGui.restype = c_void_p
-libdfhack.Context_getPosition.restype = c_void_p
 libdfhack.Context_getMaterials.restype = c_void_p
 libdfhack.Context_getTranslation.restype = c_void_p
 libdfhack.Context_getVegetation.restype = c_void_p
@@ -58,7 +57,6 @@ class Context(object):
     def __init__(self, ptr):
         self._c_ptr = ptr
 
-        self._pos_obj = None
         self._mat_obj = None
         self._map_obj = None
         self._veg_obj = None
@@ -99,14 +97,6 @@ class Context(object):
     @property
     def is_suspended(self):
         return libdfhack.Context_isSuspended(self._c_ptr) > 0
-
-    @property
-    def position(self):
-        import position
-        if self._pos_obj is None:
-            self._pos_obj = position.Position(libdfhack.Context_getPosition(self._c_ptr))
-
-        return self._pos_obj
 
     @property
     def materials(self):

@@ -36,6 +36,18 @@ extern "C" {
 DFHACK_EXPORT int Gui_Start(DFHackObject* gui);
 DFHACK_EXPORT int Gui_Finish(DFHackObject* gui);
 
+DFHACK_EXPORT int Gui_getViewCoords(DFHackObject* gui, int32_t* x, int32_t* y, int32_t* z);
+DFHACK_EXPORT int Gui_setViewCoords(DFHackObject* gui, int32_t x, int32_t y, int32_t z);
+
+DFHACK_EXPORT int Gui_getCursorCoords(DFHackObject* gui, int32_t* x, int32_t* y, int32_t* z);
+DFHACK_EXPORT int Gui_setCursorCoords(DFHackObject* gui, int32_t x, int32_t y, int32_t z);
+
+DFHACK_EXPORT t_hotkey* Gui_ReadHotkeys(DFHackObject* gui);
+
+DFHACK_EXPORT int Gui_getWindowSize(DFHackObject* gui, int32_t* width, int32_t* height);
+
+DFHACK_EXPORT t_screen* Gui_getScreenTiles(DFHackObject* gui, int32_t width, int32_t height);
+
 DFHACK_EXPORT int Gui_ReadViewScreen(DFHackObject* gui, t_viewscreen* viewscreen);
 DFHACK_EXPORT int Gui_ReadMenuState(DFHackObject* gui, uint32_t* menuState);
 

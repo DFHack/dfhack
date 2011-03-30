@@ -1,5 +1,5 @@
 from ctypes import *
-from dftypes import GameModes
+from dftypes import libdfhack, GameModes
 from util import _uintify, uint_ptr
 
 libdfhack.World_ReadGameMode.argtypes = [ c_void_p, POINTER(GameModes) ]

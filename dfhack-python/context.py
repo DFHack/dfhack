@@ -76,6 +76,18 @@ class Context(object):
         return libdfhack.Context_Attach(self._c_ptr) > 0
 
     def detach(self):
+        self._mat_obj = None
+        self._map_obj = None
+        self._veg_obj = None
+        self._build_obj = None
+        self._con_obj = None
+        self._gui_obj = None
+        self._tran_obj = None
+        self._item_obj = None
+        self._creature_obj = None
+        self._world_obj = None
+        self._window_io_obj = None
+        
         return libdfhack.Context_Detach(self._c_ptr) > 0
 
     def suspend(self):

@@ -1,12 +1,12 @@
 from ctypes import *
 from dftypes import *
-from util import _uintify, uint_ptr, check_pointer_cache
+from util import _uintify, int_ptr, uint_ptr, check_pointer_cache
 
 _MAX_DIM = 0x300
 _MAX_DIM_SQR = _MAX_DIM * _MAX_DIM
 
 libdfhack.Maps_getSize.argtypes = [ c_void_p, uint_ptr, uint_ptr, uint_ptr ]
-libdfhack.Maps_getPosition.argtypes = [ c_void_p, uint_ptr, uint_ptr, uint_ptr ]
+libdfhack.Maps_getPosition.argtypes = [ c_void_p, int_ptr, int_ptr, int_ptr ]
 
 libdfhack.Maps_ReadTileTypes.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(TileTypes40d) ]
 libdfhack.Maps_WriteTileTypes.argtypes = [ c_void_p, c_uint, c_uint, c_uint, POINTER(TileTypes40d) ]
@@ -67,7 +67,7 @@ class Maps(object):
 
         ux, uy, uz = _uintify(x, y, z)
 
-        if libdfhack.Maps_ReadDesignations(self._map_ptr, ux, uy, uz, d) > 0:
+        if libdfhack.Maps_ReadDesignations(self._map_ptr, ux, uy, uz, byref(d)) > 0:
             return d
         else:
             return None
@@ -75,7 +75,7 @@ class Maps(object):
     def write_designations(self, x, y, z, d):
         ux, uy, uz = _uintify(x, y, z)
         
-        return libdfhack.Maps_WriteDesignations(self._map_ptr, ux, uy, uz, d) > 0
+        return libdfhack.Maps_WriteDesignations(self._map_ptr, ux, uy, uz, byref(d)) > 0
 
     def read_temperatures(self, x, y, z):
         t = Temperatures()
@@ -102,10 +102,10 @@ class Maps(object):
         else:
             return None
 
-    def write_designations(self, x, y, z, o):
+    def write_occupancy(self, x, y, z, o):
         ux, uy, uz = _uintify(x, y, z)
         
-        return libdfhack.Maps_WriteDesignations(self._map_ptr, ux, uy, uz, o) > 0
+        return libdfhack.Maps_WriteDesignations(self._map_ptr, ux, uy, uz, byref(o)) > 0
 
     def read_dirty_bit(self, x, y, z):
         bit = c_int(0)
@@ -216,19 +216,19 @@ class Maps(object):
 
     @property
     def size(self):
-        x, y, z = (0, 0, 0)
+        x, y, z = (c_uint(0), c_uint(0), c_uint(0))
 
         retval = libdfhack.Maps_getSize(self._map_ptr, byref(x), byref(y), byref(z))
 
-        return (x, y, z)
+        return (int(x.value), int(y.value), int(z.value))
     
     @property
     def position(self):
-        x, y, z = (0, 0, 0)
+        x, y, z = (c_int(0), c_int(0), c_int(0))
         
         libdfhack.Maps_getPosition(self._map_ptr, byref(x), byref(y), byref(z))
         
-        return (x, y, z)
+        return (int(x.value), int(y.value), int(z.value))
 
 class MapPoint(object):
     __slots__ = ["_x", "_y", "_z", "_cmp_val"]

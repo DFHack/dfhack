@@ -8,7 +8,7 @@ class HideBlock(object):
         self.x = 0
         self.y = 0
         self.z = 0
-        self.hiddens = [[0] * 16 for i in xrange(16)]
+        self.hiddens = [[0 for i in xrange(16)] for j in xrange(16)]
 
 df_cm = ContextManager("Memory.xml")
 df = df_cm.get_single_context()
@@ -73,16 +73,17 @@ raw_input()
 print "Unrevealing...please wait"
 
 df.attach()
+m = df.maps
 m.start()
 
 for h in hide_blocks:
-    d = m.read_designations(hb.x, hb.y, hb.z)
+    d = m.read_designations(h.x, h.y, h.z)
     
-    for k_i, i in enumerate(d):
-        for k_j, j in enumerate(i):
-            j.bits.hidden = h.hiddens[k_i][k_j]
+    for k_i, i in enumerate(h.hiddens):
+        for k_j, j in enumerate(i):            
+            d[k_i][k_j].bits.hidden = j
     
-    m.write_designations(hb.x, hb.y, hb.z, d)
+    m.write_designations(h.x, h.y, h.z, d)
 
 m.finish()
 

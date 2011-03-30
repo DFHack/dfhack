@@ -346,7 +346,7 @@ const char* TiXmlBase::SkipWhiteSpace( const char* p, TiXmlEncoding encoding )
 				continue;
 			}
 
-			if ( IsWhiteSpace( *p ) )		// Still using old rules for white space.
+			if ( IsWhiteSpace( *p ) || *p == '\n' || *p =='\r' )		// Still using old rules for white space.
 				++p;
 			else
 				break;
@@ -354,7 +354,7 @@ const char* TiXmlBase::SkipWhiteSpace( const char* p, TiXmlEncoding encoding )
 	}
 	else
 	{
-		while ( *p && IsWhiteSpace( *p ) )
+        while ( (*p && IsWhiteSpace( *p )) || *p == '\n' || *p =='\r' )
 			++p;
 	}
 
@@ -631,7 +631,7 @@ const char* TiXmlBase::ReadText(	const char* p,
 			}
 		}
 	}
-	if ( p && *p ) 
+	if ( p ) 
 		p += strlen( endTag );
 	return p;
 }
@@ -825,6 +825,7 @@ TiXmlNode* TiXmlNode::Identify( const char* p, TiXmlEncoding encoding )
 		return 0;
 	}
 
+	TiXmlDocument* doc = GetDocument();
 	p = SkipWhiteSpace( p, encoding );
 
 	if ( !p || !*p )
@@ -894,6 +895,11 @@ TiXmlNode* TiXmlNode::Identify( const char* p, TiXmlEncoding encoding )
 	{
 		// Set the parent, so it can report errors
 		returnNode->parent = this;
+	}
+	else
+	{
+		if ( doc )
+			doc->SetError( TIXML_ERROR_OUT_OF_MEMORY, 0, 0, TIXML_ENCODING_UNKNOWN );
 	}
 	return returnNode;
 }
@@ -1077,6 +1083,7 @@ const char* TiXmlElement::Parse( const char* p, TiXmlParsingData* data, TiXmlEnc
 
     TIXML_STRING endTag ("</");
 	endTag += value;
+	endTag += ">";
 
 	// Check for and read attributes. Also look for an empty
 	// tag or an end tag.
@@ -1115,20 +1122,10 @@ const char* TiXmlElement::Parse( const char* p, TiXmlParsingData* data, TiXmlEnc
 			}
 
 			// We should find the end tag now
-			// note that:
-			// </foo > and
-			// </foo> 
-			// are both valid end tags.
 			if ( StringEqual( p, endTag.c_str(), false, encoding ) )
 			{
 				p += endTag.length();
-				p = SkipWhiteSpace( p, encoding );
-				if ( p && *p && *p == '>' ) {
-					++p;
-					return p;
-				}
-				if ( document ) document->SetError( TIXML_ERROR_READING_END_TAG, p, data, encoding );
-				return 0;
+				return p;
 			}
 			else
 			{
@@ -1142,6 +1139,7 @@ const char* TiXmlElement::Parse( const char* p, TiXmlParsingData* data, TiXmlEnc
 			TiXmlAttribute* attrib = new TiXmlAttribute();
 			if ( !attrib )
 			{
+				if ( document ) document->SetError( TIXML_ERROR_OUT_OF_MEMORY, pErr, data, encoding );
 				return 0;
 			}
 
@@ -1164,7 +1162,7 @@ const char* TiXmlElement::Parse( const char* p, TiXmlParsingData* data, TiXmlEnc
 			#endif
 			if ( node )
 			{
-				if ( document ) document->SetError( TIXML_ERROR_PARSING_ELEMENT, pErr, data, encoding );
+				node->SetValue( attrib->Value() );
 				delete attrib;
 				return 0;
 			}
@@ -1193,7 +1191,8 @@ const char* TiXmlElement::ReadValue( const char* p, TiXmlParsingData* data, TiXm
 
 			if ( !textNode )
 			{
-			    return 0;
+				if ( document ) document->SetError( TIXML_ERROR_OUT_OF_MEMORY, 0, 0, encoding );
+				    return 0;
 			}
 
 			if ( TiXmlBase::IsWhiteSpaceCondensed() )
@@ -1380,7 +1379,7 @@ const char* TiXmlComment::Parse( const char* p, TiXmlParsingData* data, TiXmlEnc
 		value.append( p, 1 );
 		++p;
 	}
-	if ( p && *p ) 
+	if ( p ) 
 		p += strlen( endTag );
 
 	return p;
@@ -1391,6 +1390,10 @@ const char* TiXmlAttribute::Parse( const char* p, TiXmlParsingData* data, TiXmlE
 {
 	p = SkipWhiteSpace( p, encoding );
 	if ( !p || !*p ) return 0;
+
+//	int tabsize = 4;
+//	if ( document )
+//		tabsize = document->TabSize();
 
 	if ( data )
 	{
@@ -1443,7 +1446,7 @@ const char* TiXmlAttribute::Parse( const char* p, TiXmlParsingData* data, TiXmlE
 		// its best, even without them.
 		value = "";
 		while (    p && *p											// existence
-				&& !IsWhiteSpace( *p )								// whitespace
+				&& !IsWhiteSpace( *p ) && *p != '\n' && *p != '\r'	// whitespace
 				&& *p != '/' && *p != '>' )							// tag end
 		{
 			if ( *p == SINGLE_QUOTE || *p == DOUBLE_QUOTE ) {

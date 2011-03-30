@@ -263,7 +263,7 @@ void VersionInfoFactory::ParseOffsets(TiXmlElement * parent, VersionInfo* target
         }
 
         // skip non-elements
-        if (currentElem->Type() != TiXmlNode::TINYXML_ELEMENT)
+        if (currentElem->Type() != TiXmlNode::ELEMENT)
         {
             groupTriple & gp = breadcrumbs.back();
             gp.first = gp.first->NextSiblingElement();

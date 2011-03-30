@@ -17,6 +17,14 @@ class World(object):
     def read_pause_state(self):
         return libdfhack.World_ReadPauseState(self._world_ptr) > 0
     
+    def set_pause_state(self, pause_state):
+        p = c_byte(0)
+        
+        if pause_state is not None and pause_state is not False:
+            p.value = 1
+        
+        return libdfhack.World_SetPauseState(self._world_ptr, p) > 0
+    
     def read_current_tick(self):
         tick = c_uint(0)
         

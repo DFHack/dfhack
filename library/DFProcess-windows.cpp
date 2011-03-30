@@ -36,7 +36,8 @@ namespace
         private:
             VersionInfo * my_descriptor;
             HANDLE my_handle;
-            HANDLE my_main_thread;
+            vector <HANDLE> threads;
+            vector <HANDLE> stoppedthreads;
             uint32_t my_pid;
             string memFile;
             bool attached;
@@ -112,7 +113,6 @@ NormalProcess::NormalProcess(uint32_t pid, VersionInfoFactory * factory)
 : my_pid(pid)
 {
     my_descriptor = NULL;
-    my_main_thread = NULL;
     attached = false;
     suspended = false;
     base = 0;
@@ -140,7 +140,6 @@ NormalProcess::NormalProcess(uint32_t pid, VersionInfoFactory * factory)
     // got base ;)
     base = (uint32_t)hmod;
 
-    my_main_thread = 0;
     // read from this process
     try
     {
@@ -160,6 +159,15 @@ NormalProcess::NormalProcess(uint32_t pid, VersionInfoFactory * factory)
     VersionInfo* vinfo = factory->getVersionInfoByPETimestamp(pe_header.FileHeader.TimeDateStamp);
     if(vinfo)
     {
+        // only enumerate threads if this is a valid DF process. the enumeration is costly.
+        vector<uint32_t> threads_ids;
+        if(!getThreadIDs( threads_ids ))
+        {
+            // thread enumeration failed.
+            my_handle = 0;
+            CloseHandle(my_handle);
+            return;
+        }
         identified = true;
         // give the process a data model and memory layout fixed for the base of first module
         my_descriptor  = new VersionInfo(*vinfo);
@@ -168,10 +176,14 @@ NormalProcess::NormalProcess(uint32_t pid, VersionInfoFactory * factory)
         my_descriptor->setParentProcess(this);
         vector_start = my_descriptor->getGroup("vector")->getOffset("start");
 
-        // TODO: detect errors in thread enumeration
-        vector<uint32_t> threads;
-        getThreadIDs( threads );
-        my_main_thread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads[0]);
+        for(int i = 0; i < threads_ids.size();i++)
+        {
+            HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads_ids[i]);
+            if(hThread)
+                threads.push_back(hThread);
+            else
+                cerr << "Unable to open thread :" << hex << (DWORD) threads_ids[i] << endl;
+        }
         stl.init(this);
     }
     else
@@ -194,10 +206,8 @@ NormalProcess::~NormalProcess()
     {
         CloseHandle(my_handle);
     }
-    if(my_main_thread != NULL)
-    {
-        CloseHandle(my_main_thread);
-    }
+    for(int i = 0; i < threads.size(); i++)
+        CloseHandle(threads[i]);
     if(sections != NULL)
         free(sections);
 }
@@ -239,7 +249,11 @@ bool NormalProcess::suspend()
     {
         return true;
     }
-    SuspendThread(my_main_thread);
+    for(int i = 0; i < threads.size(); i++)
+    {
+        stoppedthreads.push_back(threads[i]);
+        SuspendThread(threads[i]);
+    }
     suspended = true;
     return true;
 }
@@ -248,7 +262,8 @@ bool NormalProcess::forceresume()
 {
     if(!attached)
         return false;
-    while (ResumeThread(my_main_thread) > 1);
+    for(int i = 0; i < threads.size(); i++)
+        while (ResumeThread(threads[i]) > 1);
     suspended = false;
     return true;
 }
@@ -262,7 +277,9 @@ bool NormalProcess::resume()
     {
         return true;
     }
-    ResumeThread(my_main_thread);
+    for(int i = 0; i < stoppedthreads.size(); i++)
+        ResumeThread(stoppedthreads[i]);
+    stoppedthreads.clear();
     suspended = false;
     return true;
 }

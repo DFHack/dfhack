@@ -166,7 +166,7 @@ Maps::Maps(DFContextShared* _d)
     {
         off.world_data = OG_Maps->getAddress("world_data");
         d->usesWorldDataPtr = true;
-        cout << "uses world ptr" << endl;
+        //cout << "uses world ptr" << endl;
     }catch(Error::AllMemdef &){}
 
     {

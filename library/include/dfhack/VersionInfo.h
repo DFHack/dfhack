@@ -117,10 +117,10 @@ namespace DFHack
         void setBase (const uint32_t);
 
         void setMD5 (const std::string & _md5);
-        std::string getMD5();
+        bool getMD5(std::string & output);
 
         void setPE (uint32_t PE_);
-        uint32_t getPE();
+        bool getPE(uint32_t & output);
 
         std::string getMood(const uint32_t moodID);
         std::string getString (const std::string&);

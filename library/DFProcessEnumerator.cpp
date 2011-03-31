@@ -119,18 +119,25 @@ Process * BadProcesses::operator[](uint32_t index)
 //FIXME: wasteful
 Process *ProcessEnumerator::Private::GetProcessObject(ProcessID ID)
 {
-
+/*
     Process *p1 = createSHMProcess(ID.pid, meminfo);
     if(p1->isIdentified())
         return p1;
     else
         delete p1;
-
+*/
     Process *p2 = createNormalProcess(ID.pid, meminfo);
     if(p2->isIdentified())
+    {
+        //cout << "IS OK" << endl;
         return p2;
+    }
     else
+    {
+        //cout << "ABOUT TO DELETE" << endl;
         delete p2;
+        //cout << "AFTER DELETE" << endl;
+    }
 #ifdef LINUX_BUILD
     Process *p3 = createWineProcess(ID.pid, meminfo);
     if(p3->isIdentified())

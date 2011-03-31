@@ -155,17 +155,23 @@ NormalProcess::NormalProcess(uint32_t pid, VersionInfoFactory * factory)
         my_handle = 0;
         return;
     }
-
+    //cout << "PE Timestamp: " << hex << pe_header.FileHeader.TimeDateStamp << dec << endl;
     VersionInfo* vinfo = factory->getVersionInfoByPETimestamp(pe_header.FileHeader.TimeDateStamp);
     if(vinfo)
     {
+        /*
+        cout << "Using version " << vinfo->getName() << ". Offsets follow:" << endl;
+        cout << "--------------------------------------------------------------" << endl;
+        cout << vinfo->PrintOffsets();
+        cout << "--------------------------------------------------------------" << endl;
+        */
         // only enumerate threads if this is a valid DF process. the enumeration is costly.
         vector<uint32_t> threads_ids;
         if(!getThreadIDs( threads_ids ))
         {
             // thread enumeration failed.
-            my_handle = 0;
             CloseHandle(my_handle);
+            my_handle = 0;
             return;
         }
         identified = true;
@@ -174,8 +180,20 @@ NormalProcess::NormalProcess(uint32_t pid, VersionInfoFactory * factory)
         my_descriptor->RebaseAll(base);
         // keep track of created memory_info object so we can destroy it later
         my_descriptor->setParentProcess(this);
-        vector_start = my_descriptor->getGroup("vector")->getOffset("start");
-
+        try
+        {
+            vector_start = my_descriptor->getGroup("vector")->getOffset("start");
+            stl.init(this);
+        }
+        catch (DFHack::Error::UnsetMemoryDefinition & e)
+        {
+            //cout << "WHAT THE FUCK WINE?" << endl;
+            //cout << "PID:" << pid << endl;
+            CloseHandle(my_handle);
+            my_handle = 0;
+            identified = false;
+            return;
+        }
         for(int i = 0; i < threads_ids.size();i++)
         {
             HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads_ids[i]);
@@ -184,13 +202,14 @@ NormalProcess::NormalProcess(uint32_t pid, VersionInfoFactory * factory)
             else
                 cerr << "Unable to open thread :" << hex << (DWORD) threads_ids[i] << endl;
         }
-        stl.init(this);
     }
     else
     {
         // close handles of processes that aren't DF
-        my_handle = 0;
+        //cout << "ABOUT TO FREE HANDLE" << endl;
         CloseHandle(my_handle);
+        //cout << "FREE'D HANDLE" << endl;
+        my_handle = 0;
     }
 }
 

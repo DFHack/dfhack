@@ -602,7 +602,9 @@ namespace DFHack
         string version;
         OSType OS;
         std::string md5;
+        bool has_md5;
         uint32_t PE_timestamp;
+        bool has_timestamp;
     };
 }
 
@@ -616,8 +618,8 @@ VersionInfo::VersionInfo()
     d->classindex = 0;
     d->levels.reserve(NUM_RESERVE_LVLS);
     d->moods.reserve(NUM_RESERVE_MOODS);
-    d->md5 = "invalid";
-    d->PE_timestamp = 0;
+    d->has_md5 = false;
+    d->has_timestamp = false;
     OffsetGroup();
 }
 
@@ -648,7 +650,9 @@ void VersionInfo::copy(const VersionInfo * old)
     d->version = old->d->version;
     d->OS = old->d->OS;
     d->md5 = old->d->md5;
+    d->has_md5 = old->d->has_md5;
     d->PE_timestamp = old->d->PE_timestamp;
+    d->has_timestamp = old->d->has_timestamp;
     d->base = old->d->base;
     //d->classes = old.d->classes;
     for(uint32_t i = 0; i < old->d->classes.size(); i++)
@@ -709,21 +713,27 @@ string VersionInfo::getVersion()
 void VersionInfo::setMD5(const string &v)
 {
     d->md5 = v;
+    d->has_md5 = true;
 }
 
-string VersionInfo::getMD5()
+bool VersionInfo::getMD5( string & output )
 {
-    return d->md5;
+    if(!d->has_md5) return false;
+    output = d->md5;
+    return true;
 }
 
 void VersionInfo::setPE(uint32_t v)
 {
     d->PE_timestamp = v;
+    d->has_timestamp = true;
 }
 
-uint32_t VersionInfo::getPE()
+bool VersionInfo::getPE(uint32_t & output)
 {
-    return d->PE_timestamp;
+    if(!d->has_timestamp) return false;
+    output = d->PE_timestamp;
+    return true;
 }
 
 void VersionInfo::setOS(const char *os)
@@ -1186,17 +1196,19 @@ std::string VersionInfo::getMood(const uint32_t moodID)
 std::string VersionInfo::PrintOffsets()
 {
     ostringstream ss;
+    string md5;
+    uint32_t PE;
     indentr i;
     ss << i << "<Version name=\"" << getVersion() << "\">" << endl;
     i.indent();
     switch (getOS())
     {
-        case OS_LINUX:
-            ss << i << "<MD5 value=\"" << getMD5() << "\" />" << endl;
-            break;
         case OS_WINDOWS:
-            ss << i << "<PETimeStamp value=\"" << hex << "0x" << getPE() << "\" />" << endl;
-            ss << i << "<MD5 value=\"" << getMD5() << "\" />" << endl;
+            if(getPE(PE))
+                ss << i << "<PETimeStamp value=\"" << hex << "0x" << PE << "\" />" << endl;
+        case OS_LINUX:
+            if(getMD5(md5))
+                ss << i << "<MD5 value=\"" << md5 << "\" />" << endl;
             break;
         default:
             ss << i << " UNKNOWN" << endl;

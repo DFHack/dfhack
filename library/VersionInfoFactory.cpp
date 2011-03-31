@@ -112,26 +112,33 @@ VersionInfo * VersionInfoFactory::getVersionInfoByMD5(string hash)
     for(uint32_t i = 0; i < versions.size();i++)
     {
         vinfo = versions[i];
-        if(vinfo->getMD5() == hash)
+        string test_hash;
+        if(vinfo->getMD5(test_hash) && hash == test_hash)
         {
             return vinfo;
         }
     }
-    return NULL;
+    return 0;
 }
 
 VersionInfo * VersionInfoFactory::getVersionInfoByPETimestamp(uint32_t timestamp)
 {
     VersionInfo * vinfo;
+    //cout << "lookup size:" << versions.size() << endl;
     for(uint32_t i = 0; i < versions.size();i++)
     {
         vinfo = versions[i];
-        if(vinfo->getPE() == timestamp)
+        uint32_t test_PE;
+        //cout << "Testing version: " << hex << vinfo <<" No:" << dec << i << endl;
+        //cout << vinfo->getName() << endl;
+        if(vinfo->getPE(test_PE) && test_PE == timestamp)
         {
             return vinfo;
         }
+        //cout << "LOOP ENDS" << endl;
     }
-    return NULL;
+    //cout << "NOTHING!" << endl;
+    return 0;
 }
 
 
@@ -746,8 +753,6 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
                 versions.push_back(version);
             }
         }
-
-        // process found things here
     }
     error = false;
     return true;

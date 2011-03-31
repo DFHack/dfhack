@@ -409,14 +409,14 @@ int main (int argc, char** argv)
                         DFHack::t_designation des = mcache.designationAt(current);
                         uint16_t tt = mcache.tiletypeAt(current);
                         DFHack::naked_designation & flow = des.bits;
+                        // don't put liquids into places where they don't belong...
+                        if(!DFHack::FlowPassable(tt))
+                        {
+                            iter++;
+                            continue;
+                        }
                         if(mode != "flowbits")
                         {
-                            if(!DFHack::FlowPassable(tt))
-                            {
-                                iter++;
-                                continue;
-                            }
-                            // if we are setting the levels to 0 or changing magma into water
                             if(setmode == "s.")
                             {
                                 flow.flow_size = amount;

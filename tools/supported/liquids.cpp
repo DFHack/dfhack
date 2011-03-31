@@ -357,8 +357,10 @@ int main (int argc, char** argv)
                     while (iter != all_tiles.end())
                     {
                         mcache.setTiletypeAt(*iter, 331);
+                        mcache.setTemp1At(*iter,10015);
+                        mcache.setTemp2At(*iter,10015);
                         DFHack::t_designation des = mcache.designationAt(*iter);
-                        des.bits.liquid_type = DFHack::liquid_magma;
+                        des.bits.flow_size = 0;
                         mcache.setDesignationAt(*iter, des);
                         iter ++;
                     }
@@ -384,6 +386,8 @@ int main (int argc, char** argv)
                         a.bits.liquid_type = DFHack::liquid_water;
                         a.bits.liquid_static = false;
                         a.bits.flow_size = 7;
+                        mcache.setTemp1At(*iter,10015);
+                        mcache.setTemp2At(*iter,10015);
                         mcache.setDesignationAt(*iter,a);
 
                         Block * b = mcache.BlockAt((*iter)/16);

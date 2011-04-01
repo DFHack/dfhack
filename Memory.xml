@@ -2126,6 +2126,9 @@
                     <Offset name="biome_stuffs" value="0x1d80" />
                 </Group>
             </Group>
+            <Group name="Materials">
+                <Address name="other" value="0x170d0e8" />
+            </Group>
             <Group name="World">
                 <Address name="control_mode" value="0xb33814" />
                 <Address name="game_mode" value="0xb33818"/>

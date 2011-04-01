@@ -135,6 +135,12 @@ int main (int numargs, const char ** args)
         }
         cout << endl;
     }
+    cout << endl << "----==== Other ====----" << endl;
+    Materials->ReadOthers ();
+    for(uint32_t i = 0; i < Materials->other.size();i++)
+    {
+        cout << i << ": " << Materials->other[i].rawname << endl;
+    }
     #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

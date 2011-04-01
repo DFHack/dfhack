@@ -137,7 +137,6 @@ DFHACK_EXPORT DFHackObject* Context_getProcess(DFHackObject* context);
 DFHACK_EXPORT DFHackObject* Context_getCreatures(DFHackObject* context);
 DFHACK_EXPORT DFHackObject* Context_getMaps(DFHackObject* context);
 DFHACK_EXPORT DFHackObject* Context_getGui(DFHackObject* context);
-DFHACK_EXPORT DFHackObject* Context_getPosition(DFHackObject* context);
 DFHACK_EXPORT DFHackObject* Context_getMaterials(DFHackObject* context);
 DFHACK_EXPORT DFHackObject* Context_getTranslation(DFHackObject* context);
 DFHACK_EXPORT DFHackObject* Context_getVegetation(DFHackObject* context);

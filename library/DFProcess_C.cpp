@@ -190,6 +190,35 @@ char* Process_getPath(DFHackObject* p_Ptr)
 		return "";
 }
 
+char* Process_readClassName(DFHackObject* p_Ptr, uint32_t vptr)
+{
+	if(p_Ptr == NULL || alloc_char_buffer_callback == NULL)
+		return NULL;
+	
+	std::string cString = ((DFHack::Process*)p_Ptr)->readClassName(vptr);
+	
+	if(cString.length() > 0)
+	{
+		size_t length = cString.length();
+		
+		char* buf;
+		
+		//add 1 for the null terminator
+		((*alloc_char_buffer_callback)(&buf, length + 1));
+		
+		if(buf == NULL)
+			return NULL;
+		
+		memset(buf, '\0', length + 1);
+		
+		cString.copy(buf, length);
+		
+		return buf;
+	}
+	else
+		return "";
+}
+
 uint32_t* Process_getThreadIDs(DFHackObject* p_Ptr)
 {
 	if(p_Ptr == NULL || alloc_uint_buffer_callback == NULL)

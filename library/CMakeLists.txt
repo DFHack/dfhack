@@ -42,6 +42,7 @@ include/dfhack/extra/MapExtras.h
 include/dfhack/modules/Buildings.h
 include/dfhack/modules/Constructions.h
 include/dfhack/modules/Creatures.h
+include/dfhack/modules/Engravings.h
 include/dfhack/modules/Gui.h
 include/dfhack/modules/Items.h
 include/dfhack/modules/Maps.h
@@ -92,6 +93,7 @@ depends/tinyxml/tinyxmlparser.cpp
 modules/Buildings.cpp
 modules/Constructions.cpp
 modules/Creatures.cpp
+modules/Engravings.cpp
 modules/Gui.cpp
 modules/Items.cpp
 modules/Maps.cpp

@@ -30,6 +30,7 @@ namespace DFHack
     class Module;
     class DFContextShared;
     Module* createCreatures(DFContextShared * d);
+    Module* createEngravings(DFContextShared * d);
     Module* createGui(DFContextShared * d);
     Module* createWindowIO(DFContextShared * d);
     Module* createWorld(DFContextShared * d);

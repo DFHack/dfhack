@@ -891,6 +891,9 @@
                 <Address name="vector"/>
                 <Offset name="sizeof"/>
             </Group>
+            <Group name="Engravings">
+                <Address name="vector"/>
+            </Group>
             <Group name="Translations">
                 <Address name="language_vector"/>
                 <Address name="translation_vector"/>
@@ -2155,7 +2158,11 @@
     <Version name="v0.31.25 SDL" os="windows" base="v0.31.24 SDL">
         <PETimeStamp value="0x4D90764F" />
         <MD5 value="6ada05fc94785b53efe6aa5728b3756b" />
-        Engravings: 0x16B0A78
+        <Offsets>
+            <Group name="Engravings">
+                <Address name="vector" value="0x16B0A78"/>
+            </Group>
+        </Offsets>
     </Version>
                             .-"""-.
                            '       \
@@ -2694,7 +2701,6 @@
             </Group>
             <Group name="Constructions" valid="true">
                 <Address name="vector" value="0x93f7984" />
-                <Offset name="sizeof"/>
             </Group>
             <Group name="Position">
                 <Address name="cursor_xyz" value="0x8c3dfc0" />
@@ -2746,6 +2752,7 @@
                 one of those:
                 0x944c3c8
                 0x944c3d4
+                <Address name="other" value="0x9450c54" />
                 <Group name="creature">
                     <Offset name="tile_color" value="0x38" />
                     <Offset name="extract_vector" value="0x1f74" />
@@ -2770,7 +2777,7 @@
                     -->
                 </Group>
                 
-                <Group name="descriptors">
+                <Group name="descriptors" valid="true">
                     <Address name="colors_vector" value="0x94506c8 0x93cdff4" />
                     <Address name="all_colors_vector" value="0x94506E0 0x93ce00c" />
                 </Group>
@@ -2785,7 +2792,6 @@
                 <Address name="vector" value="0x940bed0" />
             </Group>
             <Group name="World">
-                
                 <Address name="control_mode" value="0x8c3dff0" />
                 <Address name="game_mode" value="0x8c3e000" />
                 <Address name="current_weather" value="0x936e248" valid="false" />
@@ -2804,9 +2810,21 @@
     </Version>
     <Version name="v0.31.25 linux" os="linux" base="v0.31.24 linux">
         <MD5 value="fc15065c4d1977ca019c6dad220413d1" />
-        <Offsets valid="false" />
-        Engravings: 0x93f7918
-        there are some possibly related vectors right next to it.
+        <Offsets>
+            <Group name="Engravings">
+                <Address name="vector" value="0x93f77b8"/>
+                there are some possibly related vectors right next to it.
+            </Group>
+            <Group name="string" valid="true" />
+            <Group name="vector" valid="true" />
+            <Group name="Position" valid="true">
+                <Address name="cursor_xyz" value="0x8c3de60"/>
+                <Address name="window_dims" value="0x8c3e4c8" />
+                <Address name="window_x" value="0x8dfaa98" />
+                <Address name="window_y" value="0x8dfaa9c" />
+                <Address name="window_z" value="0x8dfaaa0" />
+            </Group>
+        </Offsets>
     </Version>
 </DFHack>
 

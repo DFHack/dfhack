@@ -34,6 +34,7 @@ namespace DFHack
     class Module;
 
     class Creatures;
+    class Engravings;
     class Maps;
     class Gui;
     class World;
@@ -74,6 +75,7 @@ namespace DFHack
         struct
         {
             Creatures * pCreatures;
+            Engravings * pEngravings;
             Maps * pMaps;
             Gui * pPosition; // blerp
             Gui * pGui;

@@ -18,6 +18,9 @@ ENDIF()
 # buildingsdump - dump buildings and their raw data filtered by type
 DFHACK_TOOL(dfbuildingsdump buildingsdump.cpp)
 
+# constructiondump - dump engravings!
+DFHACK_TOOL(dfengravingdump engravingdump.cpp)
+
 # constructiondump - dump constructions!
 DFHACK_TOOL(dfconstructiondump construction_dump.cpp)
 

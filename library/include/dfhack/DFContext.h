@@ -29,6 +29,7 @@ distribution.
 namespace DFHack
 {
     class Creatures;
+    class Engravings;
     class Maps;
     class Gui;
     class World;
@@ -83,6 +84,9 @@ namespace DFHack
 
         /// get the creatures module
         Creatures * getCreatures();
+
+        /// get the engravings module
+        Engravings * getEngravings();
 
         /// get the maps module
         Maps * getMaps();

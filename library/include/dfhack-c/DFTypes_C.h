@@ -26,6 +26,7 @@ distribution.
 #define TYPES_C_API
 
 #include "DFHack_C.h"
+#include "DFProcess_C.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Maps.h"
 #include "dfhack/modules/Materials.h"
@@ -61,6 +62,8 @@ DFHACK_EXPORT extern int (*alloc_screen_buffer_callback)(t_screen**, uint32_t);
 
 DFHACK_EXPORT extern int (*alloc_tree_buffer_callback)(t_tree**, uint32_t);
 
+DFHACK_EXPORT extern int (*alloc_memrange_buffer_callback)(t_memrange**, uint32_t*, uint32_t);
+
 DFHACK_EXPORT void RegisterByteBufferCallback(int (*funcptr)(int8_t**, uint32_t));
 DFHACK_EXPORT void RegisterShortBufferCallback(int (*funcptr)(int16_t**, uint32_t));
 DFHACK_EXPORT void RegisterIntBufferCallback(int (*funcptr)(int32_t**, uint32_t));
@@ -81,6 +84,8 @@ DFHACK_EXPORT void RegisterScreenBufferCallback(int (*funcptr)(t_screen**, uint3
 
 DFHACK_EXPORT void RegisterTreeBufferCallback(int (*funcptr)(t_tree**, uint32_t));
 
+DFHACK_EXPORT void RegisterMemRangeBufferCallback(int (*funcptr)(t_memrange**, uint32_t*, uint32_t));
+
 HUNREG_MACRO(Byte)
 HUNREG_MACRO(Short)
 HUNREG_MACRO(Int)
@@ -99,6 +104,7 @@ HUNREG_MACRO(Hotkey)
 HUNREG_MACRO(Screen)
 
 HUNREG_MACRO(Tree)
+HUNREG_MACRO(MemRange)
 
 struct t_customWorkshop
 {

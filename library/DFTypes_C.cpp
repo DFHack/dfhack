@@ -88,6 +88,8 @@ int (*alloc_screen_buffer_callback)(t_screen**, uint32_t) = NULL;
 
 int (*alloc_tree_buffer_callback)(t_tree**, uint32_t) = NULL;
 
+int (*alloc_memrange_buffer_callback)(t_memrange**, uint32_t*, uint32_t) = NULL;
+
 int (*alloc_customWorkshop_buffer_callback)(t_customWorkshop**, uint32_t) = NULL;
 int (*alloc_material_buffer_callback)(t_material**, uint32_t) = NULL;
 
@@ -119,6 +121,11 @@ REG_MACRO(Tree, t_tree**, alloc_tree_buffer_callback)
 REG_MACRO(CustomWorkshop, t_customWorkshop**, alloc_customWorkshop_buffer_callback)
 REG_MACRO(Material, t_material**, alloc_material_buffer_callback)
 
+void RegisterMemRangeBufferCallback(int (*funcptr)(t_memrange**, uint32_t*, uint32_t))
+{
+	alloc_memrange_buffer_callback = funcptr;
+}
+
 UNREG_MACRO(Byte, alloc_byte_buffer_callback)
 UNREG_MACRO(Short, alloc_short_buffer_callback)
 UNREG_MACRO(Int, alloc_int_buffer_callback)
@@ -133,6 +140,7 @@ UNREG_MACRO(Feature, alloc_feature_buffer_callback)
 UNREG_MACRO(Hotkey, alloc_hotkey_buffer_callback)
 UNREG_MACRO(Screen, alloc_screen_buffer_callback)
 UNREG_MACRO(Tree, alloc_tree_buffer_callback)
+UNREG_MACRO(MemRange, alloc_memrange_buffer_callback)
 UNREG_MACRO(CustomWorkshop, alloc_customWorkshop_buffer_callback)
 UNREG_MACRO(Material, alloc_material_buffer_callback)
 

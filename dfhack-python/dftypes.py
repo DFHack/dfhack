@@ -447,6 +447,8 @@ class BodyPart(Structure):
                 ("single", _dfhack_string),
                 ("plural", _dfhack_string)]
 
+_bodypart_ptr = POINTER(BodyPart)
+
 class ColorModifier(Structure):
     _fields_ = [("part", _dfhack_string),
                 ("colorlist", POINTER(c_uint)),
@@ -466,7 +468,7 @@ class CreatureCaste(Structure):
                 ("adjective", _dfhack_string),
                 ("color_modifier", _colormodifier_ptr),
                 ("color_modifier_length", c_uint),
-                ("bodypart", POINTER(BodyPart)),
+                ("bodypart", _bodypart_ptr),
                 ("bodypart_length", c_uint),
                 ("strength", Attribute),
                 ("agility", Attribute),
@@ -588,10 +590,48 @@ class Hotkey(Structure):
                 ("y", c_int),
                 ("z", c_int)]
 
+_hotkey_ptr = POINTER(Hotkey)
+
 def _alloc_hotkey_buffer_callback(ptr, count):
     print "hotkey alloc:  %d" % count
     return util._allocate_array(ptr, Hotkey, count)
 
-_hotkey_functype = CFUNCTYPE(c_int, POINTER(POINTER(Hotkey)), c_uint)
+_hotkey_functype = CFUNCTYPE(c_int, POINTER(_hotkey_ptr), c_uint)
 _hotkey_func = _hotkey_functype(_alloc_hotkey_buffer_callback)
 _register_callback("alloc_hotkey_buffer_callback", _hotkey_func)
+
+class MemRange(Structure):
+    _fields_ = [("start", c_ulong),
+                ("end", c_ulong),
+                ("name", (c_char * 1024)),
+                ("read", c_uint, 1),
+                ("write", c_uint, 1),
+                ("execute", c_uint, 1),
+                ("shared", c_uint, 1),
+                ("valid", c_ubyte),
+                ("buffer", POINTER(c_ubyte))]
+
+_memrange_ptr = POINTER(MemRange)
+
+def _alloc_memrange_buffer(ptr, descriptors, count):
+    arr_list = []
+    m_arr = (MemRange * count)()
+    
+    for i, v in enumerate(m_arr):
+        buf_arr = (c_ubyte * int(descriptors[i]))()
+        buf_ptr = cast(buf_arr, POINTER(c_ubyte))
+        
+        v.buffer = buf_ptr
+        
+        arr_list.extend((buf_arr, buf_ptr))
+    
+    p = cast(m_arr, _memrange_ptr)
+    ptr[0] = p
+    
+    pointer_dict[addressof(m_arr)] = (ptr, m_arr, p, arr_list)
+    
+    return 1
+
+_alloc_memrange_buffer_functype = CFUNCTYPE(c_int, POINTER(_memrange_ptr), POINTER(c_uint), c_uint)
+_alloc_memrange_buffer_func = _alloc_memrange_buffer_functype(_alloc_memrange_buffer)
+_register_callback("alloc_memrange_buffer_callback", _alloc_memrange_buffer_func)

@@ -54,6 +54,7 @@ include/dfhack/modules/World.h
 
 SET(PROJECT_C_HDRS
 include/DFHack_C.h
+include/dfhack-c/DFProcess_C.h
 include/dfhack-c/DFTypes_C.h
 include/dfhack-c/DFContext_C.h
 include/dfhack-c/modules/Buildings_C.h
@@ -102,6 +103,7 @@ modules/World.cpp
 
 SET(PROJECT_C_SRCS
 DFContext_C.cpp
+DFProcess_C.cpp
 DFTypes_C.cpp
 
 modules/Buildings_C.cpp

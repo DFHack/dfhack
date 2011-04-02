@@ -12,6 +12,7 @@ class SegmentFinder
     {
         _DF = DF;
         mr_ = mr;
+		valid=false;
         if(mr.valid)
         {
             mr_.buffer = (uint8_t *)malloc (mr_.end - mr_.start);

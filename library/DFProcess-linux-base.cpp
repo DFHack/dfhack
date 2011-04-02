@@ -89,7 +89,7 @@ void LinuxProcessBase::getMemRanges( vector<t_memrange> & ranges )
     {
         t_memrange temp;
         temp.name[0] = 0;
-        sscanf(buffer, "%zx-%zx %s %zx %2zu:%2zu %zu %s",
+        sscanf(buffer, "%zx-%zx %s %zx %2zu:%2zu %zu %[^\n]s",
                &start,
                &end,
                (char*)&permissions,

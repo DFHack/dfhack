@@ -12,11 +12,3 @@ VBoxManage startvm "7 Prof"
 sleep 20
 expect linux-remote.expect $TARGET
 
-echo "Creating package..."
-cd ../output/$TARGET
-rm -r $PKG
-rm $PKG.zip
-mkdir $PKG
-mv *.exe *.dll *.html *.txt *.xml $PKG
-zip -r $PKG.zip $PKG
-echo "DONE"

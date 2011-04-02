@@ -16,25 +16,40 @@ expect {
   return 1
 }
 
+# procedure to do build stuff; result 0 if OK, 1 otherwise
+proc dobuild {} {
+   set timeout -1
+   send "pkg-win32.bat\r\n"
+   puts "\nBuilding...\n"
+expect {
+    "BUILD OK"         {return 0}
+    "MSVC ERROR"         {return 1}
+    "CMAKE ERROR"         {return 1}
+    "ENV ERROR"         {return 1}
+}
+}
+
 spawn telnet win7
 
 set rez [connect]
-if { $rez == 0 } {
-   send "net use X: \\\\vboxsvr\\projects\r\n"
-   expect "The command completed successfully."
-   send "X:\r\n"
-   expect "X:"
-   send "cd X:\\dfhack\\build\r\n"
-   expect "build"
-   send "\"C:\\Program Files (x86)\\MSVC10\\VC\\vcvarsall.bat\" x86\r\n"
-   expect "build"
-   set timeout -1
-   send "linux-remote.bat\r\n"
-   # can detect build errors here, pass them out using 'exit'
-   expect "FINISHED_BUILD"
-   send "exit\r"
-   expect eof
-   exit 0
-}
+if { $rez == 1 } {
 puts "\nError connecting to server!\n"
 exit 1
+}
+
+send "net use X: \\\\vboxsvr\\projects\r\n"
+expect "The command completed successfully."
+send "X:\r\n"
+expect "X:"
+send "cd X:\\dfhack\\build\r\n"
+expect "build"
+
+set buildrez [dobuild]
+if { $buildrez == 1 } {
+  puts "\nThere was an error during build.\n"
+} else {
+  puts "\nAll OK.\n"
+}	
+send "exit\r"
+expect eof
+exit $buildrez

@@ -56,6 +56,7 @@ SET( DFHACK_INSTALL ${DFHACK_INST_DEFAULT} CACHE STRING
 'portable' for a portable zip or tar.gz package (windows default)
 'linux' for generic packaging and system installs on linux (linux default)
 'ubuntu-10.10' for ubuntu maverick package.")
+
 SET( MEMXML_DATA_PATH . CACHE PATH
 "Path to a valid Memory.xml file.
 This is baked into the library, so when you package DFHack for linux, set it to the right path.")
@@ -104,7 +105,7 @@ IF(${DFHACK_INSTALL} STREQUAL "linux")
     SET(DFHACK_DOXYGEN_DESTINATION share/dfhack/doc/doxygen)
 ENDIF()
 
-IF(${DFHACK_INSTALL} STREQUAL "ubuntu-10.10")
+IF(${DFHACK_INSTALL} STREQUAL "ubuntu-10.10" OR ${DFHACK_INSTALL} STREQUAL "debian")
     if(WIN32)
         MESSAGE(FATAL_ERROR "WTF are you doing?")
     endif()
@@ -123,7 +124,7 @@ IF(${DFHACK_INSTALL} STREQUAL "ubuntu-10.10")
     SET(DFHACK_DEVDOC_DESTINATION usr/share/dfhack/doc)
     SET(DFHACK_DOXYGEN_DESTINATION usr/share/dfhack/doc/doxygen)
     INSTALL(FILES
-            "${CMAKE_CURRENT_SOURCE_DIR}/package/ubuntu-10.10/99-dfhack.conf"
+            "${CMAKE_CURRENT_SOURCE_DIR}/package/${DFHACK_INSTALL}/99-dfhack.conf"
             DESTINATION etc/sysctl.d)
 ENDIF()
 
@@ -220,7 +221,7 @@ FUNCTION(GET_DEBIAN_ARCHITECTURE arch)
     SET(${arch} ${dpkgarch} PARENT_SCOPE)
 ENDFUNCTION()
 
-IF(${DFHACK_INSTALL} STREQUAL "ubuntu-10.10")
+IF(${DFHACK_INSTALL} STREQUAL "ubuntu-10.10" OR ${DFHACK_INSTALL} STREQUAL "debian")
     SET(CPACK_GENERATOR "DEB")
 
     #wtf, wtf, wtf. force them to be empty
@@ -232,11 +233,11 @@ IF(${DFHACK_INSTALL} STREQUAL "ubuntu-10.10")
     SET(CPACK_DEBIAN_PACKAGE_SECTION "Games") # yep. magma.
     SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional") # very.
     SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON) # find deps automatically! hopefully... maybe...
-    SET(INSTSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/package/ubuntu-10.10")
+    SET(INSTSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/package/${DFHACK_INSTALL}")
     SET(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${INSTSCRIPT}/postinst;${INSTSCRIPT}/preinst;${INSTSCRIPT}/postrm")
 
     GET_DEBIAN_ARCHITECTURE(PKG_ARCHITECTURE)
 
-    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}_${DFHACK_VERSION}-${DFHACK_REVISION}_${PKG_ARCHITECTURE}")
+    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}_${DFHACK_VERSION}-${DFHACK_REVISION}_${DFHACK_INSTALL}-${PKG_ARCHITECTURE}")
     INCLUDE(CPack)
 ENDIF()

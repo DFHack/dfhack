@@ -51,7 +51,7 @@ int main (int numargs, const char ** args)
                 printf("Engraving %d/%d/%d @ 0x%x\n", data.x, data.y, data.z, engraved.origin);
                 // inorganic stuff - we can recognize that
                 printf("type %d, index %d, character %c\n",data.type, data.subtype_idx, data.display_character);
-                hexdump(DF,engraved.origin,2);
+                hexdump(DF,engraved.origin,3);
             }
         }
     }

@@ -38,6 +38,9 @@ namespace DFHack
         uint32_t type; // possibly an enum, decides what vectors to use for imagery
         // 20
         uint32_t subtype_idx; // index in a vector kind of deal related to previous value
+        // 24
+        uint32_t unknown1;
+        // 28 = length
     };
     /**
      * structure for holding a DF engraving

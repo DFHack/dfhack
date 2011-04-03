@@ -358,7 +358,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         {
             furball.current_job.active = true;
             furball.current_job.jobType = p->readByte (furball.current_job.occupationPtr + offs.job_type_offset );
-            furball.current_job.jobId = p->readDWord (furball.current_job.occupationPtr + offs.job_id_offset);
+            furball.current_job.jobId = p->readWord (furball.current_job.occupationPtr + offs.job_id_offset);
         }
         else
         {

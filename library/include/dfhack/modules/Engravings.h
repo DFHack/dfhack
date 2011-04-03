@@ -48,7 +48,8 @@ namespace DFHack
         // 14
         flg_engraving flags; // 0x20 = hide symbol
         // 18
-        uint32_t display_character; // really? 4 bytes for that?
+        uint8_t display_character; // really? 4 bytes for that?
+        uint8_t padding2[3];
         // 1C
         uint32_t type; // possibly an enum, decides what vectors to use for imagery
         // 20

@@ -78,7 +78,7 @@ int main (int argc,const char* argv[])
                     if(typestr == argv[1])
                     {
                         //cout << buildingtypes[temp.type] << " 0x" << hex << temp.origin << endl;
-                        //hexdump(DF, temp.origin, 16);
+                        //hexdump(DF, temp.origin, 256);
                         addresses.push_back(temp.origin);
                     }
                 }
@@ -116,7 +116,7 @@ int main (int argc,const char* argv[])
                         {
                             printf("Custom workshop type %s (%d)\n",custom_workshop_types[custom].c_str(),custom);
                         }
-                        hexdump(DF,temp.origin,120);
+                        hexdump(DF,temp.origin,120*16);
                     }
                 }
             }

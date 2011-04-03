@@ -135,7 +135,7 @@ int main (int numargs, const char ** args)
                             cout << "|" << endl;
                         }
                             
-                        hexdump(DF, splatter[i].address_of,20);
+                        hexdump(DF, splatter[i].address_of,20*16);
                         cout << endl;
                     }
                 }
@@ -178,7 +178,7 @@ int main (int numargs, const char ** args)
                     cout << "|" << endl;
                 }
                     
-                hexdump(DF, splatter[i].address_of,20);
+                hexdump(DF, splatter[i].address_of,20*16);
                 cout << endl;
             }
         }

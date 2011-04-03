@@ -83,7 +83,7 @@ int main (int numargs, const char ** args)
                     default:
                         printf("It is made of something we don't know yet! The material is %s.\n",matstr.c_str());
                 }
-                hexdump(DF,con.origin,2);
+                hexdump(DF,con.origin,32);
             }
         }
     }

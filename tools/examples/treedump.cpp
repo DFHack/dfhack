@@ -32,7 +32,7 @@ void print_tree( DFHack::Context * DF , DFHack::t_tree & tree)
     }
     cout << endl;
     printf("Address: 0x%x\n", tree.address);
-    hexdump(DF,tree.address,13);
+    hexdump(DF,tree.address,13*16);
 }
 
 int main (int numargs, const char ** args)

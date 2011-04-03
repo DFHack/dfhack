@@ -56,24 +56,29 @@ length = length in lines. 1 line = 16 bytes
 */
 void hexdump (DFHack::Context *DF, uint32_t address, uint32_t length)
 {
-    char *buf = new char[length * 16];
-    DF->ReadRaw(address, length * 16, (uint8_t *) buf);
-    for (uint32_t i = 0; i < length; i++)
+    char *buf = new char[length];
+    DF->ReadRaw(address, length, (uint8_t *) buf);
+    int i = 0;
+    while (i < length)
     {
         // leading offset
-        cout << "0x" << hex << setw(8) << address + i*16 << "| ";
-        // groups
-        for(int j = 0; j < 4; j++)
+        if(i%16 == 0)
+            cout << "0x" << hex << setw(8) << address + i << "| ";
+        // bytes
+        for(int k = 0; k < 4; k++)
         {
-            // bytes
-            for(int k = 0; k < 4; k++)
-            {
-                int idx = i * 16 + j * 4 + k;
-                cout << hex << setw(2) << int(static_cast<unsigned char>(buf[idx])) << " ";
-            }
+            cout << hex << setw(2) << int(static_cast<unsigned char>(buf[i])) << " ";
+            i++;
+            if(i == length) break;
+        }
+        if(i%16 == 0 || i>= length)
+        {
+            cout << endl;
+        }
+        else if(i%4 == 0)
+        {
             cout << " ";
         }
-        cout << endl;
     }
     delete buf;
 }

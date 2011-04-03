@@ -23,7 +23,7 @@ namespace DFHack
         // 4
         int32_t unknownIdx;
         // 8
-        uint32_t quality; // from 0 to 5
+        uint32_t unknown1;
         // C
         uint16_t x; /*!< X coordinate */
         uint16_t y; /*!< Y coordinate */
@@ -37,9 +37,10 @@ namespace DFHack
         // 1C
         uint32_t type; // possibly an enum, decides what vectors to use for imagery
         // 20
-        uint32_t subtype_idx; // index in a vector kind of deal related to previous value
+        int16_t subtype_idx; // index in a vector kind of deal related to previous value
+        uint16_t quality; // from 0 to 5
         // 24
-        uint32_t unknown1;
+        uint32_t unknown2;
         // 28 = length
     };
     /**

@@ -2702,6 +2702,10 @@
             <Group name="Constructions" valid="true">
                 <Address name="vector" value="0x93f7984" />
             </Group>
+            <Group name="GUI">
+                <Address name="pause_state" value="0x93f0850" />
+            </Group>
+
             <Group name="Position">
                 <Address name="cursor_xyz" value="0x8c3dfc0" />
                 <Address name="window_dims" value="0x8c3e4c8" />
@@ -2743,6 +2747,66 @@
                     <Offset name="ptr2_region_array_from_wdata" value="0x15C" />
                 </Group>
             </Group>
+            <Group name="Creatures">
+                <Address name="current_civ" value="0x093f2cb0" /> MAYBE
+                <Address name="current_race" value="0x093f2cbc" />
+                <Address name="vector" value="0x0940b310" />
+                <Group name="creature">
+                    <Offset name="name" value="0x0" />
+                    <Offset name="custom_profession" value="0x3c" />
+                    <Offset name="profession" value="0x40" />
+                    <Offset name="race" value="0x44" />
+                    <Offset name="position" value="0x48" />
+                    <Offset name="flags1" value="0x8c" />
+                    <Offset name="flags2" value="0x90" />
+                    <Offset name="caste" value="0xa4" />
+                    <Offset name="sex" value="0xa6" />
+                    <Offset name="id" value="0xa8" />
+                    <Offset name="civ" value="0xb4" /> MAYBE
+                    0xf312df68
+                    <!--
+                    <Group name="advanced"> THIS IS ONE BIG HAPPY PILE OF FAIL
+                        <Offset name="pickup_equipment_bit" value="0x1bc" />
+                        <Offset name="mood" value="0x210" />
+                        <Offset name="pregnancy" value="0x214" />
+                        <Offset name="pregnancy_ptr" value="0x218" />
+                        <Offset name="birth_year" value="0x224" />
+                        <Offset name="birth_time" value="0x228" />
+                        <Offset name="inventory_vector" value="0x288" />
+                        <Offset name="current_job" value="0x2f4" />
+                        <Offset name="current_job_skill" value="0x2f8" />
+                        <Offset name="physical" value="0x310 0x3cc" />
+                        <Offset name="appearance_vector" value="0x52c" />
+                        <Offset name="artifact_name" value="0x5e0" />
+                        <Offset name="soul_vector" value="0x64c" />
+                        <Offset name="current_soul" value="0x65c" />
+                        <Offset name="labors" value="0x54C 0x670" />
+                        <Offset name="happiness" value="0x05dc 0x710" />
+                    </Group>
+                    -->
+                </Group>
+                <Group name="job">
+                    <Offset name="id" value="0x8" />
+                    <!--<Offset name="materials_vector" />-->
+                    <Offset name="type" value="0x40" /> MAYBE, DT
+                    <!--
+                    <Group name="material">
+                        <Offset name="flags" /> NOT SET!
+                        <Offset name="maintype" /> NOT SET!
+                        <Offset name="sectype1" /> NOT SET!
+                        <Offset name="sectype2" /> NOT SET!
+                        <Offset name="sectype3" /> NOT SET!
+                    </Group>
+                    -->
+                </Group>
+                <Group name="soul">
+                    <Offset name="name" value="0x4" />
+                    <Offset name="mental" value="0x88" />
+                    <Offset name="skills_vector" value="0x1c4" />
+                    <Offset name="traits" value="0x1dc" />
+                </Group>
+                
+            </Group>
             <Group name="Materials">
                 <Address name="inorganics" value="0x944c320" />
                 <Address name="organics_all" value="0x944c338" />
@@ -2753,30 +2817,27 @@
                 0x944c3c8
                 0x944c3d4
                 <Address name="other" value="0x9450c54" />
-                <Group name="creature">
+                <Group name="creature" valid="true">
                     <Offset name="tile_color" value="0x38" />
                     <Offset name="extract_vector" value="0x1f74" />
-                    <!--
                     <Group name="caste">
-                        <Offset name="attributes" /> NOT SET!
-                        <Offset name="bodypart_vector" /> NOT SET!
-                        <Offset name="color_modifiers" /> NOT SET!
+                        <Offset name="attributes" value="0xa48" /> FIXME: this is 0xa40 really, the struct is wrong
+                        <Offset name="bodypart_vector" value="0x264" />
+                        <Offset name="color_modifiers" value="0xe48" />
                     </Group>
                     <Group name="caste_bodyparts">
-                        <Offset name="category" /> NOT SET!
-                        <Offset name="id" /> NOT SET!
-                        <Offset name="layers_vector" /> NOT SET!
-                        <Offset name="plural_vector" /> NOT SET!
-                        <Offset name="singular_vector" /> NOT SET!
+                        <Offset name="category" value="0x4" />
+                        <Offset name="id" value="0x0" />
+                        <Offset name="layers_vector" value="0x14" />
+                        <Offset name="plural_vector" value="0x48" />
+                        <Offset name="singular_vector" value="0x3C" />
                     </Group>
                     <Group name="caste_color_mods">
-                        <Offset name="enddate" /> NOT SET!
-                        <Offset name="part" /> NOT SET!
-                        <Offset name="startdate" /> NOT SET!
+                        <Offset name="enddate" value="0x38" />
+                        <Offset name="part" value="0x40" />
+                        <Offset name="startdate" value="0x34" />
                     </Group>
-                    -->
                 </Group>
-                
                 <Group name="descriptors" valid="true">
                     <Address name="colors_vector" value="0x94506c8 0x93cdff4" />
                     <Address name="all_colors_vector" value="0x94506E0 0x93ce00c" />

@@ -45,7 +45,9 @@ struct Creatures::Private
     bool Ft_basic;
     bool Ft_advanced;
     bool Ft_jobs;
+    bool Ft_job_materials;
     bool Ft_soul;
+    bool Ft_inventory;
     struct t_offsets
     {
         // creature offsets
@@ -83,12 +85,20 @@ struct Creatures::Private
         uint32_t birth_year_offset;
         uint32_t birth_time_offset;
         uint32_t inventory_offset;
+        // creature job stuff
+        int32_t job_type_offset;
+        int32_t job_id_offset;
+        int32_t job_materials_vector;
+        int32_t job_material_itemtype_o;
+        int32_t job_material_subtype_o;
+        int32_t job_material_subindex_o;
+        int32_t job_material_index_o;
+        int32_t job_material_flags_o;
+        // creature job material stuff
     } creatures;
     uint32_t creature_module;
     uint32_t dwarf_race_index_addr;
     uint32_t dwarf_civ_id_addr;
-    OffsetGroup * OG_jobs;
-    OffsetGroup * OG_job_mats;
     DfVector <uint32_t> *p_cre;
     DFContextShared *d;
     Process *owner;
@@ -114,9 +124,9 @@ Creatures::Creatures(DFContextShared* _d)
     OffsetGroup *OG_creature_ex = OG_creature->getGroup("advanced");
     OffsetGroup *OG_soul = OG_Creatures->getGroup("soul");
     OffsetGroup * OG_name = minfo->getGroup("name");
-    d->OG_jobs = OG_Creatures->getGroup("job");
-    d->OG_job_mats = d->OG_jobs->getGroup("material");
-    d->Ft_basic = d->Ft_advanced = d->Ft_jobs = d->Ft_soul = false;
+    OffsetGroup * OG_jobs = OG_Creatures->getGroup("job");
+    OffsetGroup * OG_job_mats = OG_jobs->getGroup("material");
+    d->Ft_basic = d->Ft_advanced = d->Ft_jobs = d->Ft_soul = d->Ft_inventory = d->Ft_job_materials = false;
 
     Private::t_offsets &creatures = d->creatures;
     try
@@ -144,7 +154,6 @@ Creatures::Creatures(DFContextShared* _d)
         d->Ft_basic = true;
         try
         {
-            creatures.inventory_offset = OG_creature_ex->getOffset("inventory_vector");
             creatures.pickup_equipment_bit = OG_creature_ex->getOffset("pickup_equipment_bit");
             creatures.mood_offset = OG_creature_ex->getOffset("mood");
             // pregnancy
@@ -159,6 +168,11 @@ Creatures::Creatures(DFContextShared* _d)
             creatures.labors_offset = OG_creature_ex->getOffset ("labors");
             creatures.happiness_offset = OG_creature_ex->getOffset ("happiness");
             d->Ft_advanced = true;
+        }catch(Error::All&){};
+        try
+        {
+            creatures.inventory_offset = OG_creature_ex->getOffset("inventory_vector");
+            d->Ft_inventory = true;
         }
         catch(Error::All&){};
         try
@@ -169,6 +183,24 @@ Creatures::Creatures(DFContextShared* _d)
             creatures.soul_skills_vector_offset = OG_soul->getOffset("skills_vector");
             creatures.soul_traits_offset = OG_soul->getOffset("traits");
             d->Ft_soul = true;
+        }
+        catch(Error::All&){};
+        try
+        {
+            creatures.job_type_offset = OG_jobs->getOffset("type");
+            creatures.job_id_offset = OG_jobs->getOffset("id");
+            d->Ft_jobs = true;
+            try
+            {
+                creatures.job_materials_vector = OG_jobs->getOffset("materials_vector");
+                creatures.job_material_itemtype_o = OG_job_mats->getOffset("maintype");
+                creatures.job_material_subtype_o = OG_job_mats->getOffset("sectype1");
+                creatures.job_material_subindex_o = OG_job_mats->getOffset("sectype2");
+                creatures.job_material_index_o = OG_job_mats->getOffset("sectype3");
+                creatures.job_material_flags_o = OG_job_mats->getOffset("flags");
+                d->Ft_job_materials = true;
+            }
+            catch(Error::All&){};
         }
         catch(Error::All&){};
     }
@@ -211,17 +243,6 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     memset(&furball, 0, sizeof(t_creature));
     // SHM fast path
     Process * p = d->owner;
-    /*
-    if(d->creature_module)
-    {
-        SHMCREATURESHDR->index = index;
-        const uint32_t cmd = Creatures2010::CREATURE_AT_INDEX + (d->creature_module << 16);
-        p->SetAndWait(cmd);
-        memcpy(&furball,SHMDATA(t_creature),sizeof(t_creature));
-        return true;
-    }
-    */
-    // non-SHM slow path
 
     // read pointer from vector at position
     uint32_t temp = d->p_cre->at (index);
@@ -265,6 +286,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
 
         // labors
         p->read (temp + offs.labors_offset, NUM_CREATURE_LABORS, furball.labors);
+
         furball.birth_year = p->readDWord (temp + offs.birth_year_offset );
         furball.birth_time = p->readDWord (temp + offs.birth_time_offset );
         /*
@@ -335,12 +357,12 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         if(furball.current_job.occupationPtr)
         {
             furball.current_job.active = true;
-            furball.current_job.jobType = p->readByte (furball.current_job.occupationPtr + d->OG_jobs->getOffset("type") );
-            furball.current_job.jobId = p->readDWord (furball.current_job.occupationPtr + d->OG_jobs->getOffset("id") );
+            furball.current_job.jobType = p->readByte (furball.current_job.occupationPtr + offs.job_type_offset );
+            furball.current_job.jobId = p->readDWord (furball.current_job.occupationPtr + offs.job_id_offset);
         }
         else
         {
-            furball.current_job.active = false;;
+            furball.current_job.active = false;
         }
     }
     return true;
@@ -355,55 +377,33 @@ int32_t Creatures::ReadCreatureInBox (int32_t index, t_creature & furball,
         return -1;
 
     Process *p = d->owner;
-    /*
-    if(d->creature_module)
+    uint16_t coords[3];
+    uint32_t size = d->p_cre->size();
+    while (uint32_t(index) < size)
     {
-        // supply the module with offsets so it can work with them
-        SHMCREATURESHDR->index = index;
-        SHMCREATURESHDR->x = x1;
-        SHMCREATURESHDR->y = y1;
-        SHMCREATURESHDR->z = z1;
-        SHMCREATURESHDR->x2 = x2;
-        SHMCREATURESHDR->y2 = y2;
-        SHMCREATURESHDR->z2 = z2;
-        const uint32_t cmd = Creatures2010::CREATURE_FIND_IN_BOX + (d->creature_module << 16);
-        p->SetAndWait(cmd);
-        if(SHMCREATURESHDR->index != -1)
-            memcpy(&furball,SHMDATA(void),sizeof(t_creature));
-        return SHMCREATURESHDR->index;
-    }
-    else*/
-    {
-        uint16_t coords[3];
-        uint32_t size = d->p_cre->size();
-        while (uint32_t(index) < size)
+        // read pointer from vector at position
+        uint32_t temp = d->p_cre->at(index);
+        p->read (temp + d->creatures.pos_offset, 3 * sizeof (uint16_t), (uint8_t *) &coords);
+        if (coords[0] >= x1 && coords[0] < x2)
         {
-            // read pointer from vector at position
-            uint32_t temp = d->p_cre->at(index);
-            p->read (temp + d->creatures.pos_offset, 3 * sizeof (uint16_t), (uint8_t *) &coords);
-            if (coords[0] >= x1 && coords[0] < x2)
+            if (coords[1] >= y1 && coords[1] < y2)
             {
-                if (coords[1] >= y1 && coords[1] < y2)
+                if (coords[2] >= z1 && coords[2] < z2)
                 {
-                    if (coords[2] >= z1 && coords[2] < z2)
-                    {
-                        ReadCreature (index, furball);
-                        return index;
-                    }
+                    ReadCreature (index, furball);
+                    return index;
                 }
             }
-            index++;
         }
-        return -1;
+        index++;
     }
+    return -1;
 }
 
 bool Creatures::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
 {
-    if(!d->Started)
-    {
-        return false;
-    }
+    if(!d->Started || !d->Ft_advanced) return false;
+
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
 
@@ -417,10 +417,8 @@ bool Creatures::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LA
 
 bool Creatures::WriteHappiness(const uint32_t index, const uint32_t happinessValue)
 {
-    if(!d->Started)
-    {
-        return false;
-    }
+    if(!d->Started || !d->Ft_advanced) return false;
+
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
     p->writeDWord (temp + d->creatures.happiness_offset, happinessValue);
@@ -431,10 +429,8 @@ bool Creatures::WriteFlags(const uint32_t index,
                            const uint32_t flags1,
                            const uint32_t flags2)
 {
-    if(!d->Started)
-    {
-        return false;
-    }
+    if(!d->Started || !d->Ft_basic) return false;
+
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
     p->writeDWord (temp + d->creatures.flags1_offset, flags1);
@@ -444,10 +440,7 @@ bool Creatures::WriteFlags(const uint32_t index,
 
 bool Creatures::WriteSkills(const uint32_t index, const t_soul &soul)
 {
-    if(!d->Started)
-    {
-        return false;
-    }
+    if(!d->Started || !d->Ft_soul) return false;
 
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
@@ -472,10 +465,7 @@ bool Creatures::WriteSkills(const uint32_t index, const t_soul &soul)
 
 bool Creatures::WriteAttributes(const uint32_t index, const t_creature &creature)
 {
-    if(!d->Started)
-    {
-        return false;
-    }
+    if(!d->Started || !d->Ft_advanced || !d->Ft_soul) return false;
 
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
@@ -501,10 +491,7 @@ bool Creatures::WriteAttributes(const uint32_t index, const t_creature &creature
 
 bool Creatures::WriteSex(const uint32_t index, const uint8_t sex)
 {
-    if(!d->Started)
-    {
-        return false;
-    }
+    if(!d->Started || !d->Ft_basic ) return false;
 
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
@@ -515,10 +502,7 @@ bool Creatures::WriteSex(const uint32_t index, const uint8_t sex)
 
 bool Creatures::WriteTraits(const uint32_t index, const t_soul &soul)
 {
-    if(!d->Started)
-    {
-        return false;
-    }
+    if(!d->Started || !d->Ft_soul) return false;
 
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
@@ -538,10 +522,7 @@ bool Creatures::WriteTraits(const uint32_t index, const t_soul &soul)
 
 bool Creatures::WriteMood(const uint32_t index, const uint16_t mood)
 {
-    if(!d->Started)
-    {
-        return false;
-    }
+    if(!d->Started || !d->Ft_advanced) return false;
 
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
@@ -551,10 +532,7 @@ bool Creatures::WriteMood(const uint32_t index, const uint16_t mood)
 
 bool Creatures::WriteMoodSkill(const uint32_t index, const uint16_t moodSkill)
 {
-	if(!d->Started)
-    {
-        return false;
-    }
+    if(!d->Started || !d->Ft_advanced) return false;
 
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
@@ -564,42 +542,38 @@ bool Creatures::WriteMoodSkill(const uint32_t index, const uint16_t moodSkill)
 
 bool Creatures::WriteJob(const t_creature * furball, std::vector<t_material> const& mat)
 {
-    unsigned int i;
-    if(!d->Inited) return false;
+    if(!d->Inited || !d->Ft_job_materials) return false;
     if(!furball->current_job.active) return false;
+
+    unsigned int i;
     Process * p = d->owner;
-    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + d->OG_jobs->getOffset("materials_vector"));
+    Private::t_offsets & off = d->creatures;
+    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + off.job_materials_vector);
 
     for(i=0;i<cmats.size();i++)
     {
-        p->writeWord(cmats[i] + d->OG_job_mats->getOffset("maintype"), mat[i].itemType);
-        p->writeWord(cmats[i] + d->OG_job_mats->getOffset("sectype1"), mat[i].subType);
-        p->writeWord(cmats[i] + d->OG_job_mats->getOffset("sectype2"), mat[i].subIndex);
-        p->writeDWord(cmats[i] + d->OG_job_mats->getOffset("sectype3"), mat[i].index);
-        p->writeDWord(cmats[i] + d->OG_job_mats->getOffset("flags"), mat[i].flags);
+        p->writeWord(cmats[i] + off.job_material_itemtype_o, mat[i].itemType);
+        p->writeWord(cmats[i] + off.job_material_subtype_o, mat[i].subType);
+        p->writeWord(cmats[i] + off.job_material_subindex_o, mat[i].subIndex);
+        p->writeDWord(cmats[i] + off.job_material_index_o, mat[i].index);
+        p->writeDWord(cmats[i] + off.job_material_flags_o, mat[i].flags);
     }
     return true;
 }
 
 bool Creatures::WritePos(const uint32_t index, const t_creature &creature)
 {
-	if(!d->Started)
-    {
-        return false;
-    }
+    if(!d->Started) return false;
 
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
-	p->write (temp + d->creatures.pos_offset, 3 * sizeof (uint16_t), (uint8_t *) & (creature.x));
-	return true;
+    p->write (temp + d->creatures.pos_offset, 3 * sizeof (uint16_t), (uint8_t *) & (creature.x));
+    return true;
 }
 
 bool Creatures::WriteCiv(const uint32_t index, const int32_t civ)
 {
-	if(!d->Started)
-    {
-        return false;
-    }
+    if(!d->Started) return false;
 
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
@@ -633,26 +607,27 @@ bool Creatures::getCurrentCursorCreature(uint32_t & creature_index)
 bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
 {
     unsigned int i;
-    if(!d->Inited) return false;
+    if(!d->Inited || !d->Ft_job_materials) return false;
     if(!furball->current_job.active) return false;
-    Process * p = d->owner;
 
-    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + d->OG_jobs->getOffset("materials_vector"));
+    Process * p = d->owner;
+    Private::t_offsets & off = d->creatures;
+    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + off.job_materials_vector);
     mat.resize(cmats.size());
     for(i=0;i<cmats.size();i++)
     {
-        mat[i].itemType = p->readWord(cmats[i] + d->OG_job_mats->getOffset("maintype"));
-        mat[i].subType = p->readWord(cmats[i] + d->OG_job_mats->getOffset("sectype1"));
-        mat[i].subIndex = p->readWord(cmats[i] + d->OG_job_mats->getOffset("sectype2"));
-        mat[i].index = p->readDWord(cmats[i] + d->OG_job_mats->getOffset("sectype3"));
-        mat[i].flags = p->readDWord(cmats[i] + d->OG_job_mats->getOffset("flags"));
+        mat[i].itemType = p->readWord(cmats[i] + off.job_material_itemtype_o);
+        mat[i].subType = p->readWord(cmats[i] + off.job_material_subtype_o);
+        mat[i].subIndex = p->readWord(cmats[i] + off.job_material_subindex_o);
+        mat[i].index = p->readDWord(cmats[i] + off.job_material_index_o);
+        mat[i].flags = p->readDWord(cmats[i] + off.job_material_flags_o);
     }
     return true;
 }
 
 bool Creatures::ReadInventoryIdx(const uint32_t index, std::vector<uint32_t> & item)
 {
-    if(!d->Started) return false;
+    if(!d->Started || !d->Ft_inventory) return false;
     uint32_t temp = d->p_cre->at (index);
     return this->ReadInventoryPtr(temp, item);
 }
@@ -660,7 +635,7 @@ bool Creatures::ReadInventoryIdx(const uint32_t index, std::vector<uint32_t> & i
 bool Creatures::ReadInventoryPtr(const uint32_t temp, std::vector<uint32_t> & item)
 {
     unsigned int i;
-    if(!d->Started) return false;
+    if(!d->Started || !d->Ft_inventory) return false;
     Process * p = d->owner;
 
     DfVector <uint32_t> citem(p, temp + d->creatures.inventory_offset);

@@ -475,35 +475,20 @@ int main (int numargs, char ** args)
         return 1;
     }
     vector<uint32_t> addrs;
-    //DF.InitViewAndCursor();
     for(uint32_t i = 0; i < numCreatures; i++)
     {
-		printf("%d/%d\n", i, numCreatures);
         DFHack::t_creature temp;
         Creatures->ReadCreature(i,temp);
         if(check.empty() || string(Materials->raceEx[temp.race].rawname) == check)
         {
-            cout << "index " << i << " ";
-            
             printCreature(DF,temp);
             addrs.push_back(temp.origin);
         }
-		printf("!\n");
     }
     if(addrs.size() <= 10)
     {
         interleave_hex(DF,addrs,200);
     }
-    /*
-    uint32_t currentIdx;
-    DFHack::t_creature currentCreature;
-    DF.getCurrentCursorCreature(currentIdx);
-    cout << "current creature at index " << currentIdx << endl;
-
-    DF.ReadCreature(currentIdx, currentCreature);
-    printCreature(DF,currentCreature);
-    */
-	
     Creatures->Finish();
     DF->Detach();
     #ifndef LINUX_BUILD

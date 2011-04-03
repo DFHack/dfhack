@@ -13,6 +13,29 @@
 #include <DFHack.h>
 using namespace DFHack;
 
+void describe (dfh_engraving &engraving)
+{
+    t_engraving &data = engraving.s;
+    printf("Engraving %d/%d/%d @ 0x%x\n", data.x, data.y, data.z, engraving.origin);
+    // inorganic stuff - we can recognize that
+    printf("type %d, index %d, character %c\n",data.type, data.subtype_idx, data.display_character);
+    printf("quality %d\n",data.quality);
+    printf("engraved: ");
+    if(data.flags.floor)
+        printf("On the floor.");
+    if(data.flags.north)
+        printf("From north.");
+    if(data.flags.south)
+        printf("From south.");
+    if(data.flags.east)
+        printf("From east.");
+    if(data.flags.west)
+        printf("From west.");
+    printf("\n");
+    if(data.flags.hidden)
+        printf("The symbol is hidden.\n");
+};
+
 int main (int numargs, const char ** args)
 {
     DFHack::ContextManager DFMgr("Memory.xml");
@@ -48,9 +71,7 @@ int main (int numargs, const char ** args)
             Cons->Read(i,engraved);
             if(cx == data.x && cy == data.y && cz == data.z)
             {
-                printf("Engraving %d/%d/%d @ 0x%x\n", data.x, data.y, data.z, engraved.origin);
-                // inorganic stuff - we can recognize that
-                printf("type %d, index %d, character %c\n",data.type, data.subtype_idx, data.display_character);
+                describe(engraved);
                 hexdump(DF,engraved.origin,0x28);
             }
         }
@@ -63,9 +84,7 @@ int main (int numargs, const char ** args)
         {
             Cons->Read(i,engraved);
             {
-                printf("Engraving %d/%d/%d @ 0x%x\n", data.x, data.y, data.z, engraved.origin);
-                // inorganic stuff - we can recognize that
-                printf("type %d, index %d, character %c\n",data.type, data.subtype_idx, data.display_character);
+                describe(engraved);
                 hexdump(DF,engraved.origin,0x28);
             }
         }

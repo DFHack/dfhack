@@ -13,6 +13,21 @@
 namespace DFHack
 {
     /**
+     * engraving flags
+     * \ingroup grp_engraving
+     */
+    struct flg_engraving
+    {
+        unsigned int floor : 1; // engraved on a floor
+        unsigned int west : 1; // engraved from west
+        unsigned int east : 1; // engraved from east
+        unsigned int north : 1; // engraved from north
+        unsigned int south : 1; // engraved from south
+        unsigned int hidden : 1; // hide the engraving
+        unsigned int rest : 26; // probably unused
+    };
+
+    /**
      * type the engraving is made of
      * \ingroup grp_engraving
      */
@@ -21,9 +36,9 @@ namespace DFHack
         //0
         int32_t artistIdx; /*!< Index of the artist in some global vector */
         // 4
-        int32_t unknownIdx;
+        int32_t unknownIdx; // likes to stay -1
         // 8
-        uint32_t unknown1;
+        uint32_t unknown1; // likes to stay 1
         // C
         uint16_t x; /*!< X coordinate */
         uint16_t y; /*!< Y coordinate */
@@ -31,7 +46,7 @@ namespace DFHack
         uint16_t z; /*!< Z coordinate */
         uint16_t padding; /*!< Could be used for hiding values. */
         // 14
-        uint32_t flags; // 0x20 = hide symbol
+        flg_engraving flags; // 0x20 = hide symbol
         // 18
         uint32_t display_character; // really? 4 bytes for that?
         // 1C

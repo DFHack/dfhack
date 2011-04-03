@@ -2794,9 +2794,11 @@
             <Group name="World">
                 <Address name="control_mode" value="0x8c3dff0" />
                 <Address name="game_mode" value="0x8c3e000" />
+                <!--
                 <Address name="current_weather" value="0x936e248" valid="false" />
                 <Address name="current_year" value="0x936e264" valid="false" />
                 <Address name="current_tick" value="0x936e284" valid="false" />
+                -->
             </Group>
         </Offsets>
     </Version>
@@ -2819,7 +2821,7 @@
             <Group name="vector" valid="true" />
             <Group name="Position" valid="true">
                 <Address name="cursor_xyz" value="0x8c3de60"/>
-                <Address name="window_dims" value="0x8c3e4c8" />
+                <!--<Address name="window_dims" value="0x8c3e4c8" />-->
                 <Address name="window_x" value="0x8dfaa98" />
                 <Address name="window_y" value="0x8dfaa9c" />
                 <Address name="window_z" value="0x8dfaaa0" />

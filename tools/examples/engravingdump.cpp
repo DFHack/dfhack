@@ -31,6 +31,14 @@ void describe (dfh_engraving &engraving)
         printf("From east.");
     if(data.flags.west)
         printf("From west.");
+    if(data.flags.northeast)
+        printf("From north-east.");
+    if(data.flags.northwest)
+        printf("From north-west.");
+    if(data.flags.southeast)
+        printf("From south-east.");
+    if(data.flags.southwest)
+        printf("From south-west.");
     printf("\n");
     if(data.flags.hidden)
         printf("The symbol is hidden.\n");

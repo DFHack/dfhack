@@ -18,13 +18,19 @@ namespace DFHack
      */
     struct flg_engraving
     {
-        unsigned int floor : 1; // engraved on a floor
-        unsigned int west : 1; // engraved from west
-        unsigned int east : 1; // engraved from east
-        unsigned int north : 1; // engraved from north
-        unsigned int south : 1; // engraved from south
-        unsigned int hidden : 1; // hide the engraving
-        unsigned int rest : 26; // probably unused
+        // there are 9 directions an engraving can have.
+        // unfortunately, a tile can't be engraved from more than one direction by the game
+        unsigned int floor : 1; // engraved on a floor   0x1
+        unsigned int west : 1; // engraved from west     0x2
+        unsigned int east : 1; // engraved from east     0x4
+        unsigned int north : 1; // engraved from north   0x8
+        unsigned int south : 1; // engraved from south   0x10
+        unsigned int hidden : 1; // hide the engraving   0x20
+        unsigned int northwest : 1; // engraved from...  0x40
+        unsigned int northeast : 1; // engraved from...  0x80
+        unsigned int southwest : 1; // engraved from...  0x100
+        unsigned int southeast : 1; // engraved from...  0x200
+        unsigned int rest : 22; // probably unused
     };
 
     /**

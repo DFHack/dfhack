@@ -2763,27 +2763,24 @@
                     <Offset name="sex" value="0xa6" />
                     <Offset name="id" value="0xa8" />
                     <Offset name="civ" value="0xb4" /> MAYBE
-                    0xf312df68
-                    <!--
-                    <Group name="advanced"> THIS IS ONE BIG HAPPY PILE OF FAIL
-                        <Offset name="pickup_equipment_bit" value="0x1bc" />
-                        <Offset name="mood" value="0x210" />
-                        <Offset name="pregnancy" value="0x214" />
-                        <Offset name="pregnancy_ptr" value="0x218" />
-                        <Offset name="birth_year" value="0x224" />
-                        <Offset name="birth_time" value="0x228" />
-                        <Offset name="inventory_vector" value="0x288" />
-                        <Offset name="current_job" value="0x2f4" />
-                        <Offset name="current_job_skill" value="0x2f8" />
+                    <Group name="advanced">
+                        <Offset name="pickup_equipment_bit" value="0x144 0x1bc" /> DT
+                        <Offset name="mood" value="0x18C 0x210" />
+                        <Offset name="pregnancy" value="0x190 0x214" />
+                        <Offset name="pregnancy_ptr" value="0x194 0x218" />
+                        <Offset name="birth_year" value="0x1A0 0x224" />
+                        <Offset name="birth_time" value="0x1A4 0x228" />
+                        <Offset name="inventory_vector" value="0x204 0x288" />
+                        <Offset name="current_job" value="0x25C 0x2f4" />
+                        <Offset name="current_job_skill" value="0x2f8" /> COMPLETE BULLSHIT.
                         <Offset name="physical" value="0x310 0x3cc" />
-                        <Offset name="appearance_vector" value="0x52c" />
-                        <Offset name="artifact_name" value="0x5e0" />
-                        <Offset name="soul_vector" value="0x64c" />
-                        <Offset name="current_soul" value="0x65c" />
+                        <Offset name="appearance_vector" value="0x450 0x52c" />
+                        <Offset name="artifact_name" value="0x4f4 0x5e0" />
+                        <Offset name="soul_vector" value="0x530 0x64c" />
+                        <Offset name="current_soul" value="0x53C 0x65c" />
                         <Offset name="labors" value="0x54C 0x670" />
                         <Offset name="happiness" value="0x05dc 0x710" />
                     </Group>
-                    -->
                 </Group>
                 <Group name="job">
                     <Offset name="id" value="0x8" />
@@ -2855,11 +2852,9 @@
             <Group name="World">
                 <Address name="control_mode" value="0x8c3dff0" />
                 <Address name="game_mode" value="0x8c3e000" />
-                <!--
-                <Address name="current_weather" value="0x936e248" valid="false" />
-                <Address name="current_year" value="0x936e264" valid="false" />
-                <Address name="current_tick" value="0x936e284" valid="false" />
-                -->
+                <Address name="current_weather" value="0x93f0744" />
+                <Address name="current_year" value="0x93f0760" />
+                <Address name="current_tick" value="0x93f0780" />
             </Group>
         </Offsets>
     </Version>

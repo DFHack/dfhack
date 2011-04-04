@@ -36,5 +36,5 @@ void DFContextShared::readName(t_name & name, uint32_t address)
 {
     p->readSTLString(address + name_firstname_offset , name.first_name, 128);
     p->readSTLString(address + name_nickname_offset , name.nickname, 128);
-    p->read(address + name_words_offset ,48, (uint8_t *) name.words);
+    p->read(address + name_words_offset ,28, (uint8_t *) name.words);
 }

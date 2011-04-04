@@ -2747,45 +2747,32 @@
                     <Offset name="ptr2_region_array_from_wdata" value="0x15C" />
                 </Group>
             </Group>
-            <Group name="Creatures">
+            <Group name="Creatures" valid="true">
                 <Address name="current_civ" value="0x093f2cb0" /> MAYBE
                 <Address name="current_race" value="0x093f2cbc" />
                 <Address name="vector" value="0x0940b310" />
                 <Group name="creature">
-                    <Offset name="name" value="0x0" />
-                    <Offset name="custom_profession" value="0x3c" />
-                    <Offset name="profession" value="0x40" />
-                    <Offset name="race" value="0x44" />
-                    <Offset name="position" value="0x48" />
-                    <Offset name="flags1" value="0x8c" />
-                    <Offset name="flags2" value="0x90" />
-                    <Offset name="caste" value="0xa4" />
-                    <Offset name="sex" value="0xa6" />
-                    <Offset name="id" value="0xa8" />
-                    <Offset name="civ" value="0xb4" /> MAYBE
                     <Group name="advanced">
-                        <Offset name="pickup_equipment_bit" value="0x144 0x1bc" /> DT
-                        <Offset name="mood" value="0x18C 0x210" />
-                        <Offset name="pregnancy" value="0x190 0x214" />
-                        <Offset name="pregnancy_ptr" value="0x194 0x218" />
-                        <Offset name="birth_year" value="0x1A0 0x224" />
-                        <Offset name="birth_time" value="0x1A4 0x228" />
-                        <Offset name="inventory_vector" value="0x204 0x288" />
-                        <Offset name="current_job" value="0x25C 0x2f4" />
-                        <Offset name="current_job_skill" value="0x2f8" /> COMPLETE BULLSHIT.
-                        <Offset name="physical" value="0x310 0x3cc" />
-                        <Offset name="appearance_vector" value="0x450 0x52c" />
-                        <Offset name="artifact_name" value="0x4f4 0x5e0" />
-                        <Offset name="soul_vector" value="0x530 0x64c" />
-                        <Offset name="current_soul" value="0x53C 0x65c" />
-                        <Offset name="labors" value="0x54C 0x670" />
-                        <Offset name="happiness" value="0x05dc 0x710" />
+                        <Offset name="pregnancy" value="0x190" />
+                        <Offset name="pregnancy_ptr" value="0x194" />
+                        <Offset name="birth_year" value="0x1A0" />
+                        <Offset name="birth_time" value="0x1A4" />
+                        <Offset name="inventory_vector" value="0x204" />
+                        <Offset name="current_job" value="0x25C" />
+                        <Offset name="current_job_skill" value="0x260" />
+                        <Offset name="physical" value="0x310" />
+                        <Offset name="appearance_vector" value="0x450" />
+                        <Offset name="artifact_name" value="0x4f4" />
+                        <Offset name="soul_vector" value="0x530" />
+                        <Offset name="current_soul" value="0x53C" />
+                        <Offset name="labors" value="0x54C" />
+                        <Offset name="happiness" value="0x05dc" />
                     </Group>
                 </Group>
                 <Group name="job">
                     <Offset name="id" value="0x8" />
                     <!--<Offset name="materials_vector" />-->
-                    <Offset name="type" value="0x40" /> MAYBE, DT
+                    <Offset name="type" value="0x40" /> MAYBE, DT SAYS SO
                     <!--
                     <Group name="material">
                         <Offset name="flags" /> NOT SET!
@@ -2798,9 +2785,11 @@
                 </Group>
                 <Group name="soul">
                     <Offset name="name" value="0x4" />
+                    <!--
                     <Offset name="mental" value="0x88" />
                     <Offset name="skills_vector" value="0x1c4" />
                     <Offset name="traits" value="0x1dc" />
+                    -->
                 </Group>
                 
             </Group>
@@ -2858,29 +2847,34 @@
             </Group>
         </Offsets>
     </Version>
-    <Version name="v0.31.23 linux" os="linux" base="v0.31.22 linux">
+    <Version name="v0.31.23 linux" os="linux" base="v0.31.22 linux" rebase="-0x760">
         <MD5 value="c8e82e6e7cc606bf4e8d2c91993b9c0d" />
-        <Offsets valid="false" />
     </Version>
-    <Version name="v0.31.24 linux" os="linux" base="v0.31.23 linux">
+    <Version name="v0.31.24 linux" os="linux" base="v0.31.23 linux" rebase="0x300">
         <MD5 value="a47468cec4f4f0ff1fc03ac7d95c17ed" />
-        <Offsets valid="false" />
+        <Offsets>
+            <Group name="Position">
+                <Address name="cursor_xyz" value="0x8c3db50" />
+            </Group>
+            <Group name="World">
+                <Address name="control_mode" value="0x8c3db80" />
+                <Address name="game_mode" value="0x8c3db90" />
+            </Group>
+        </Offsets>
     </Version>
-    <Version name="v0.31.25 linux" os="linux" base="v0.31.24 linux">
+    <Version name="v0.31.25 linux" os="linux" base="v0.31.24 linux" rebase="0x300">
         <MD5 value="fc15065c4d1977ca019c6dad220413d1" />
         <Offsets>
             <Group name="Engravings">
                 <Address name="vector" value="0x93f77b8"/>
                 there are some possibly related vectors right next to it.
             </Group>
-            <Group name="string" valid="true" />
-            <Group name="vector" valid="true" />
             <Group name="Position" valid="true">
                 <Address name="cursor_xyz" value="0x8c3de60"/>
-                <!--<Address name="window_dims" value="0x8c3e4c8" />-->
-                <Address name="window_x" value="0x8dfaa98" />
-                <Address name="window_y" value="0x8dfaa9c" />
-                <Address name="window_z" value="0x8dfaaa0" />
+            </Group>
+            <Group name="World">
+                <Address name="control_mode" value="0x8c3de90" />
+                <Address name="game_mode" value="0x8c3deA0" />
             </Group>
         </Offsets>
     </Version>

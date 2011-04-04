@@ -2142,14 +2142,14 @@
             <Group name="GUI">
                 <Address name="pause_state" value="0x14eb7c9" />
             </Group>
+            <Group name="Engravings">
+                <Address name="vector" value="0x16AFA78"/> 0x16B0A78 in 31.25
+            </Group>
         </Offsets>
     </Version>
     <Version name="v0.31.23 SDL" os="windows" base="v0.31.22 SDL" rebase="0x1000">
         <PETimeStamp value="0x4D8DE854" />
         <MD5 value="57ad0d359cc135f5bdf329e517028388" />
-        <Offsets>
-            BLAH!
-        </Offsets>
     </Version>
     <Version name="v0.31.24 SDL" os="windows" base="v0.31.23 SDL">
         <PETimeStamp value="0x4D8F39F9" />
@@ -2158,11 +2158,6 @@
     <Version name="v0.31.25 SDL" os="windows" base="v0.31.24 SDL">
         <PETimeStamp value="0x4D90764F" />
         <MD5 value="6ada05fc94785b53efe6aa5728b3756b" />
-        <Offsets>
-            <Group name="Engravings">
-                <Address name="vector" value="0x16B0A78"/>
-            </Group>
-        </Offsets>
     </Version>
                             .-"""-.
                            '       \

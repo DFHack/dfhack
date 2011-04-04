@@ -25,7 +25,9 @@ int main (void)
     int32_t oldT, newT;
     int16_t t;
 
-    int dirty=0, count=0;
+    bool dirty= false;
+    int count=0;
+    int countbad=0;
 
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF = DFMgr.getSingleContext();
@@ -71,7 +73,7 @@ int main (void)
             {
                 if (Mapz->isValidBlock(x,y,z))
                 {
-                    dirty=0;
+                    dirty= false;
                     Mapz->ReadDesignations(x,y,z, &designations);
                     Mapz->ReadTileTypes(x,y,z, &tiles);
                     if (Mapz->isValidBlock(x,y,z+1))
@@ -107,9 +109,15 @@ int main (void)
                                 {
                                     tilesAbove[tx][ty] = 32;
                                 }
-
-                                dirty=-1;
+                                dirty= true;
                                 ++count;
+                            }
+                            // ramp fixer
+                            else if(DFHack::RAMP!=DFHack::tileTypeTable[oldT].c && DFHack::RAMP_TOP == DFHack::tileTypeTable[tilesAbove[tx][ty]].c)
+                            {
+                                tilesAbove[tx][ty] = 32;
+                                countbad++;
+                                dirty = true;
                             }
                         }
                     }
@@ -122,6 +130,7 @@ int main (void)
                         {
                             Mapz->WriteTileTypes(x,y,z+1, &tilesAbove);
                         }
+                        dirty = false;
                     }
                 }
             }
@@ -129,6 +138,7 @@ int main (void)
     }
     DF->Detach();
     cout << "Found and changed " << count << " tiles." << endl;
+    cout << "Fixed " << countbad << " bad down ramps." << endl;
 #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

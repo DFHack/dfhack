@@ -19,13 +19,6 @@ binaries at  http://github.com/peterix/dfhack
 
 .. _github: http://www.github.com/
 
-Packages
-========
-The library and tools are packaged for Archlinux and are available both
-in AUR and the arch-games repository.
-
-The package name is dfhack-git :)
-
 =============
 Compatibility
 =============
@@ -45,15 +38,21 @@ Windows
 
 0.31.01 - 0.31.03 legacy
 
-0.31.04 - 0.31.24 SDL
+0.31.04 - 0.31.25 SDL
 
 Linux
 =====
-0.31.05 - 0.31.19 native.
+Native linux DF
+---------------
+0.31.05 - 0.31.19: spotty support (some things might not work)
 
-There are missing offsets but Map tools should be OK. Linux support is
-a bit lacking, I'm working on it. Very slowly. All supported Windows versions
-running in wine can be used with native DFHack binaries.
+0.31.22 - 0.31.25: full support
+
+Windows DF under wine
+---------------------
+0.31.01 - 0.31.03 legacy
+
+0.31.04 - 0.31.25 SDL
 
 =====
 Tools

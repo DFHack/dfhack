@@ -1,5 +1,68 @@
 <?xml version="1.0"?>
 <DFHack>
+	<Base name="DF40d.xx">
+		<Offsets>
+            <Group name="vector" description="An STL vector.">
+                <HexValue name="sizeof" description="The total size in bytes." />
+                <Offset name="start" description="The offset where the actual start/end/alloc_end triplet is." />
+            </Group>
+            <Group name="string" description="An STL string.">
+                <HexValue name="sizeof" description="The total size in bytes." />
+                <Group name="MSVC">
+                    <!--
+                    MSVC++ 9 string
+                    void * allocator
+                    union
+                    {
+                        char[16] start;
+                        char * start_ptr
+                    }
+                    Uint32 length
+                    Uint32 capacity
+                    -->
+                    <Offset name="buffer" description="Where the buffer/pointer starts." />
+                    <Offset name="size" description="Where the number of leters is stored (string length without 0-terminator)." />
+                    <Offset name="capacity" description="Capacity of the buffer in letters (default=15)." />
+                </Group>
+            </Group>
+            <Group name="name" description="A structure used for names all over the place.">
+                <Offset name="first" description="Lowercase stl string with the first name. For ex. 'urist'" />
+                <Offset name="nick"  description="Stl string with the nickname. Set by the player." />
+                <Offset name="second_words" description="Array of 7 indexes into the language vectors."/>
+            </Group>
+        </Offsets>
+	</Base>
+	<Version name="40d" base="DF40d.xx" os="windows">
+		<MD5 value="2c686c26307dcccd7c36cc79737ebe4f" />
+		<PETimeStamp value="0x48C330DF" />
+		<Offsets>
+            <Group name="vector">
+                <HexValue name="sizeof" value="0x10" />
+                <Offset name="start" value="0x4" />
+                <!--
+				Maybe (fits offsets):
+                Vector layout in MSVC 8:
+                DWORD Allocator?
+                DWORD Start
+                DWORD End
+                DWORD AllocationEnd
+                -->
+            </Group>
+            <Group name="string">
+                <HexValue name="sizeof" value="0x1C" />
+                <Group name="MSVC">
+                    <Offset name="buffer" value="0x4" />
+                    <Offset name="size" value="0x14" />
+                    <Offset name="capacity" value="0x18" />
+                </Group>
+            </Group>
+            <Group name="name">
+                <Offset name="first" value="0x0" />
+                <Offset name="nick" value="0x1C" />
+                <Offset name="second_words" value="0x38" />
+            </Group>
+		</Offsets>
+	</Version>
     <Base name="DF2010">
         <Traits>
             <Trait name="Nervousness" id="0" level_5="Is a nervous wreck" level_4="Is always tense and jittery" level_3="Is often nervous" level_2="Has a calm demeanor" level_1="Has a very calm demeanor" level_0="Has an incredibly calm demeanor" />
@@ -146,6 +209,8 @@
             <Profession name="Potter" id="101" military="false" can_assign_labors="true" />
             <Profession name="Glazer" id="102" military="false" can_assign_labors="true" />
             <Profession name="Presser" id="103" military="false" can_assign_labors="true" />
+            <Profession name="BEE_KEEPER" id="104" military="false" can_assign_labors="true" />
+            <Profession name="WAX_WORKER" id="105" military="false" can_assign_labors="true" />
         </Professions>
         <Jobs>
             <Job id="0" name = "Carve Fortification" />
@@ -487,6 +552,7 @@
             <Skill name="Glazing" id="112" />
             <Skill name="Press Operation" id="113" />
             <Skill name="Bee Keeping" id="114" />
+            <Skill name="Wax Working" id="115" />
         </Skills>
         <Levels>
             <Level id="0" name="Dabbling" xpNxtLvl="500"/>

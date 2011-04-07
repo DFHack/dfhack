@@ -47,6 +47,9 @@ DFHACK_TOOL(dfdigger2 digger2.cpp)
 # Author: belal
 DFHACK_TOOL(dffindnameindexes findnameindexes.cpp)
 
+# try things
+DFHACK_TOOL(dftry dftry.cpp)
+
 # renamer - change the custom names and professions of creatures, sends keys to
 #           df directly
 # Author: belal

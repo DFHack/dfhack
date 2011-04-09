@@ -34,6 +34,11 @@ distribution.
 #define _QUOTEME(x) #x
 #define QUOT(x) _QUOTEME(x)
 
+#ifdef LINUX_BUILD
+    #define __USE_FILE_OFFSET64
+    #define _FILE_OFFSET_BITS 64
+#endif
+
 // one file for globals
 #include "dfhack/DFGlobal.h"
 
@@ -60,8 +65,6 @@ using namespace std;
     #include <sys/types.h>
     #include <sys/ptrace.h>
     #include <dirent.h>
-    #define __USE_FILE_OFFSET64
-    #define _FILE_OFFSET_BITS 64
     #include <unistd.h>
     #include <sys/stat.h>
     #include <fcntl.h>

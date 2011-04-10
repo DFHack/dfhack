@@ -167,7 +167,6 @@ int main (int argc, const char* argv[])
 
                 if(showbaselayers)
                 {
-                    //Maps->ReadRegionOffsets(x,y,z, &regionoffsets);
                     // get the layer materials
                     for(uint32_t xx = 0;xx<16;xx++)
                     {

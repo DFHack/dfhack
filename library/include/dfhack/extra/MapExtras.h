@@ -36,10 +36,29 @@ void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d &
     }
 }
 
+void SquashRocks ( vector< vector <uint16_t> > * layerassign, DFHack::mapblock40d & mb, DFHack::t_blockmaterials & materials)
+{
+    // get the layer materials
+    for(uint32_t xx = 0;xx<16;xx++)
+    {
+        for (uint32_t yy = 0; yy< 16;yy++)
+        {
+            uint8_t test = mb.designation[xx][yy].bits.biome;
+            if( test >= sizeof(mb.biome_indices))
+            {
+                materials[xx][yy] = -1;
+                continue;
+            }
+            materials[xx][yy] =
+            layerassign->at(mb.biome_indices[test])[mb.designation[xx][yy].bits.geolayer_index];
+        }
+    }
+}
+
 class Block
 {
     public:
-    Block(DFHack::Maps *_m, DFHack::DFCoord _bcoord)
+    Block(DFHack::Maps *_m, DFHack::DFCoord _bcoord, vector< vector <uint16_t> > * layerassign = 0)
     {
         m = _m;
         dirty_designations = false;
@@ -50,14 +69,22 @@ class Block
         bcoord = _bcoord;
         if(m->ReadBlock40d(bcoord.x,bcoord.y,bcoord.z,&raw))
         {
+            m->ReadTemperatures(bcoord.x,bcoord.y, bcoord.z,&temp1,&temp2);
             SquashVeins(m,bcoord,raw,veinmats);
+            if(layerassign)
+                SquashRocks(layerassign,raw,basemats);
+            else
+                memset(basemats,-1,sizeof(basemats));
             valid = true;
         }
-        m->ReadTemperatures(bcoord.x,bcoord.y, bcoord.z,&temp1,&temp2);
     }
     int16_t veinMaterialAt(DFHack::DFCoord p)
     {
         return veinmats[p.x][p.y];
+    }
+    int16_t baseMaterialAt(DFHack::DFCoord p)
+    {
+        return basemats[p.x][p.y];
     }
     void ClearMaterialAt(DFHack::DFCoord p)
     {
@@ -162,6 +189,7 @@ class Block
     DFHack::mapblock40d raw;
     DFHack::DFCoord bcoord;
     DFHack::t_blockmaterials veinmats;
+    DFHack::t_blockmaterials basemats;
     DFHack::t_temperatures temp1;
     DFHack::t_temperatures temp2;
 };
@@ -174,6 +202,7 @@ class MapCache
         valid = 0;
         this->Maps = Maps;
         Maps->getSize(x_bmax, y_bmax, z_max);
+        validgeo = Maps->ReadGeology( layerassign );
         valid = true;
     };
     ~MapCache()
@@ -203,7 +232,11 @@ class MapCache
         {
             if(blockcoord.x < x_bmax && blockcoord.y < y_bmax && blockcoord.z < z_max)
             {
-                Block * nblo = new Block(Maps,blockcoord);
+                Block * nblo;
+                if(validgeo)
+                    nblo = new Block(Maps,blockcoord, &layerassign);
+                else
+                    nblo = new Block(Maps,blockcoord);
                 blocks[blockcoord] = nblo;
                 return nblo;
             }
@@ -279,6 +312,15 @@ class MapCache
         }
         return 0;
     }
+    int16_t baseMaterialAt (DFHack::DFCoord tilecoord)
+    {
+        Block * b= BlockAt(tilecoord / 16);
+        if(b && b->valid)
+        {
+            return b->baseMaterialAt(tilecoord % 16);
+        }
+        return 0;
+    }
     bool clearMaterialAt (DFHack::DFCoord tilecoord)
     {
         Block * b= BlockAt(tilecoord / 16);
@@ -331,11 +373,13 @@ class MapCache
     }
     private:
     volatile bool valid;
+    volatile bool validgeo;
     uint32_t x_bmax;
     uint32_t y_bmax;
     uint32_t x_tmax;
     uint32_t y_tmax;
     uint32_t z_max;
+    vector< vector <uint16_t> > layerassign;
     DFHack::Maps * Maps;
     map<DFHack::DFCoord, Block *> blocks;
 };

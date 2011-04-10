@@ -7,6 +7,7 @@
 #include <sstream>
 #include <ctime>
 #include <cstdio>
+using namespace std;
 
 #define DFHACK_WANT_MISCUTILS 1
 #define DFHACK_WANT_TILETYPES 1
@@ -37,13 +38,15 @@ int main (int numargs, const char ** args)
 
 
     DFHack::Gui *Gui = DF->getGui();
+    DFHack::Materials *Materials = DF->getMaterials();
     DFHack::VersionInfo* mem = DF->getMemoryInfo();
     DFHack::Maps *Maps = DF->getMaps();
     DFHack::Process * p = DF->getProcess();
+    bool hasmats = Materials->ReadInorganicMaterials();
 
     if(!Maps->Start())
     {
-        cerr << "Unable to access map data!" << endl;
+        std::cerr << "Unable to access map data!" << std::endl;
     }
     else
     {
@@ -122,7 +125,24 @@ int main (int numargs, const char ** args)
                 // biome, geolayer
                 std::cout << "biome: " << des.biome << std::endl;
                 std::cout << "geolayer: " << des.geolayer_index << std::endl;
-
+                int16_t base_rock = mc.baseMaterialAt(cursor);
+                if(base_rock != -1)
+                {
+                    cout << "Layer material: " << dec << base_rock;
+                    if(hasmats)
+                        cout << " / " << Materials->inorganic[base_rock].id << " / " << Materials->inorganic[base_rock].name << endl;
+                    else
+                        cout << endl;
+                }
+                int16_t vein_rock = mc.veinMaterialAt(cursor);
+                if(vein_rock != -1)
+                {
+                    cout << "Vein material (final): " << dec << vein_rock;
+                    if(hasmats)
+                        cout << " / " << Materials->inorganic[vein_rock].id << " / " << Materials->inorganic[vein_rock].name << endl;
+                    else
+                        cout << endl;
+                }
                 // liquids
                 if(des.flow_size)
                 {

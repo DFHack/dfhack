@@ -22,11 +22,17 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "Internal.h"
+#include "PlatformInternal.h"
+#include <cstring>
+#include <vector>
+#include <string>
+#include <map>
+using namespace std;
+
 #include "ProcessFactory.h"
 #include "MicrosoftSTL.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
-#include <string.h>
 using namespace DFHack;
 
 namespace

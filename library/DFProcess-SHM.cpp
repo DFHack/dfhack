@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "Internal.h"
+#include "PlatformInternal.h"
 #include <string>
 #include <vector>
 #include <map>

@@ -23,6 +23,10 @@ distribution.
 */
 
 #include "Internal.h"
+#include "PlatformInternal.h"
+#include <vector>
+
+using namespace std;
 #include "ContextShared.h"
 #include "dfhack/modules/WindowIO.h"
 #include "dfhack/DFProcess.h"

@@ -22,6 +22,12 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "Internal.h"
+#include <string>
+#include <vector>
+#include <cstring>
+#include <iostream>
+using namespace std;
+
 #include "dfhack/modules/WindowIO.h"
 
 #include <X11/Xlib.h>   //need for X11 functions

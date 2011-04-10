@@ -23,6 +23,12 @@ distribution.
 */
 
 #include "Internal.h"
+#include <string>
+#include <vector>
+#include <map>
+#include <cstring>
+using namespace std;
+
 #include "ContextShared.h"
 #include "dfhack/modules/World.h"
 #include "dfhack/DFProcess.h"

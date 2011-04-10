@@ -24,6 +24,11 @@ distribution.
 
 #include "Internal.h"
 
+#include <string>
+#include <vector>
+#include <cstring>
+using namespace std;
+
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFProcessEnumerator.h"
 #include "dfhack/DFContext.h"

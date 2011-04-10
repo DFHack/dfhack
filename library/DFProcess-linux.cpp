@@ -22,12 +22,22 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "Internal.h"
+#include "PlatformInternal.h"
+
+#include <string>
+#include <vector>
+#include <map>
+#include <cstdio>
+#include <cstring>
+using namespace std;
+
 #include "LinuxProcess.h"
 #include "ProcessFactory.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include <errno.h>
 #include <sys/ptrace.h>
+#include <md5wrapper.h>
 using namespace DFHack;
 
 namespace {

@@ -24,12 +24,18 @@ distribution.
 
 #include "Internal.h"
 
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <map>
+using namespace std;
+
 #include "dfhack/VersionInfoFactory.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
-#include <algorithm>
-
 using namespace DFHack;
+
+#include <tinyxml.h>
 
 template<class _T1, class _T2, class _T3>
 struct triple

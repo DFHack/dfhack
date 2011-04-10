@@ -23,15 +23,21 @@ distribution.
 */
 
 #include "Internal.h"
+
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <map>
+using namespace std;
+
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
 #include "dfhack/DFProcess.h"
-#include <algorithm>
+using namespace DFHack;
 
 //Inital amount of space in levels vector (since we usually know the number, efficient!)
 #define NUM_RESERVE_LVLS 20
 #define NUM_RESERVE_MOODS 6
-using namespace DFHack;
 
 //FIXME: put those in some shared file
 template<template <typename> class P = std::less >

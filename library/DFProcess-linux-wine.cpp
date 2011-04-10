@@ -22,15 +22,28 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "Internal.h"
+#include "PlatformInternal.h"
+
+#include <string>
+#include <vector>
+#include <map>
+#include <cstdio>
+#include <cstring>
+#include <fstream>
+using namespace std;
+
 #include "LinuxProcess.h"
 #include "ProcessFactory.h"
 #include "MicrosoftSTL.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
+using namespace DFHack;
+
 #include <errno.h>
 #include <sys/ptrace.h>
-#include <stdio.h>
-using namespace DFHack;
+
+#include <md5wrapper.h>
+
 
 namespace {
     class WineProcess : public LinuxProcessBase

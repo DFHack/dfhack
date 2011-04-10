@@ -23,6 +23,12 @@ distribution.
 */
 
 #include "Internal.h"
+
+#include <string>
+#include <vector>
+#include <map>
+using namespace std;
+
 #include "ContextShared.h"
 #include "dfhack/modules/Gui.h"
 #include "dfhack/DFProcess.h"
@@ -30,7 +36,6 @@ distribution.
 #include "dfhack/DFTypes.h"
 #include "dfhack/DFError.h"
 #include "ModuleFactory.h"
-
 using namespace DFHack;
 
 Module* DFHack::createGui(DFContextShared * d)

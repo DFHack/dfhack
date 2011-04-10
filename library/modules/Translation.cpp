@@ -23,6 +23,13 @@ distribution.
 */
 
 #include "Internal.h"
+
+#include <string>
+#include <vector>
+#include <map>
+#include <cassert>
+using namespace std;
+
 #include "ContextShared.h"
 #include "dfhack/modules/Translation.h"
 #include "dfhack/VersionInfo.h"
@@ -30,7 +37,6 @@ distribution.
 #include "dfhack/DFVector.h"
 #include "dfhack/DFTypes.h"
 #include "ModuleFactory.h"
-
 using namespace DFHack;
 
 Module* DFHack::createTranslation(DFContextShared * d)

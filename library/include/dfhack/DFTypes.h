@@ -207,9 +207,9 @@ struct t_attrib
 
 struct t_level
 {
-	uint32_t level;
-	std::string name;
-	uint32_t xpNxtLvl;
+    uint32_t level;
+    std::string name;
+    uint32_t xpNxtLvl;
 };
 
 }// namespace DFHack

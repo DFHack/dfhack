@@ -22,6 +22,12 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "Internal.h"
+#include <string>
+#include <vector>
+#include <map>
+#include <cstring>
+using namespace std;
+
 #include "SHMProcess.h"
 #include "ProcessFactory.h"
 #include "dfhack/VersionInfo.h"

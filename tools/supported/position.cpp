@@ -10,7 +10,7 @@ using namespace std;
 
 std::ostream &operator<<(std::ostream &stream, DFHack::t_gamemodes funzies)
 {
-    char * gm[]=
+    const char * gm[]=
     {
         "Fort",
         "Adventurer",
@@ -21,7 +21,7 @@ std::ostream &operator<<(std::ostream &stream, DFHack::t_gamemodes funzies)
         "Kittens!",
         "Worldgen"
     };
-    char * cm[]=
+    const char * cm[]=
     {
         "Managing",
         "Direct Control",

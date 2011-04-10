@@ -22,6 +22,13 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "Internal.h"
+
+#include <string>
+#include <vector>
+#include <map>
+#include <cstdio>
+using namespace std;
+
 #include "LinuxProcess.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"

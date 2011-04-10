@@ -22,6 +22,14 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "Internal.h"
+#include "PlatformInternal.h"
+
+#include <string>
+#include <vector>
+#include <map>
+#include <cstdio>
+using namespace std;
+
 #include "SHMProcess.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFError.h"
@@ -36,7 +44,7 @@ distribution.
 #include <sys/time.h>
 #include <time.h>
 #include <sched.h>
-
+#include <md5wrapper.h>
 using namespace DFHack;
 
 SHMProcess::Private::Private(SHMProcess * self_)

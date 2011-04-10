@@ -1,9 +1,15 @@
 #include "Internal.h"
+
+#include <string>
+#include <vector>
+#include <map>
+#include <cstring>
+using namespace std;
+
 #include "private/ContextShared.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/DFModule.h"
-
 using namespace DFHack;
 
 DFContextShared::DFContextShared()

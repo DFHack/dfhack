@@ -23,6 +23,12 @@ distribution.
 */
 
 #include "Internal.h"
+
+#include <string>
+#include <vector>
+#include <map>
+using namespace std;
+
 #include "ContextShared.h"
 
 #include "dfhack/VersionInfo.h"
@@ -32,7 +38,6 @@ distribution.
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack/modules/Translation.h"
 #include "ModuleFactory.h"
-
 using namespace DFHack;
 
 Module* DFHack::createVegetation(DFContextShared * d)

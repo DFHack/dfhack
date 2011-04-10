@@ -23,10 +23,16 @@ distribution.
 */
 
 #include "Internal.h"
+
+#include <string>
+#include <vector>
+#include <map>
+using namespace std;
+
 #include "MicrosoftSTL.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack/VersionInfo.h"
-#include <string>
+
 using namespace DFHack;
 
 void MicrosoftSTL::init(Process* self)

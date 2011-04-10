@@ -49,18 +49,18 @@ class Block
         bcoord = _bcoord;
         if(m->ReadBlock40d(bcoord.x,bcoord.y,bcoord.z,&raw))
         {
-            SquashVeins(m,bcoord,raw,materials);
+            SquashVeins(m,bcoord,raw,veinmats);
             valid = true;
         }
         m->ReadTemperatures(bcoord.x,bcoord.y, bcoord.z,&temp1,&temp2);
     }
-    int16_t MaterialAt(DFHack::DFCoord p)
+    int16_t veinMaterialAt(DFHack::DFCoord p)
     {
-        return materials[p.x][p.y];
+        return veinmats[p.x][p.y];
     }
     void ClearMaterialAt(DFHack::DFCoord p)
     {
-        materials[p.x][p.y] = -1;
+        veinmats[p.x][p.y] = -1;
     }
 
     uint16_t TileTypeAt(DFHack::DFCoord p)
@@ -160,7 +160,7 @@ class Block
     DFHack::Maps * m;
     DFHack::mapblock40d raw;
     DFHack::DFCoord bcoord;
-    DFHack::t_blockmaterials materials;
+    DFHack::t_blockmaterials veinmats;
     DFHack::t_temperatures temp1;
     DFHack::t_temperatures temp2;
 };
@@ -269,12 +269,12 @@ class MapCache
         return false;
     }
 
-    int16_t materialAt (DFHack::DFCoord tilecoord)
+    int16_t veinMaterialAt (DFHack::DFCoord tilecoord)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
         {
-            return b->MaterialAt(tilecoord % 16);
+            return b->veinMaterialAt(tilecoord % 16);
         }
         return 0;
     }

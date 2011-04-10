@@ -93,7 +93,7 @@ int main (int argc, char* argv[])
 
     DFHack::t_designation des = MCache->designationAt(xy);
     int16_t tt = MCache->tiletypeAt(xy);
-    int16_t veinmat = MCache->materialAt(xy);
+    int16_t veinmat = MCache->veinMaterialAt(xy);
 
     if( veinmat == -1 )
     {
@@ -114,7 +114,7 @@ int main (int argc, char* argv[])
     {
         DFHack::DFCoord current = flood.top();
         flood.pop();
-        int16_t vmat2 = MCache->materialAt(current);
+        int16_t vmat2 = MCache->veinMaterialAt(current);
         tt = MCache->tiletypeAt(current);
         if(!DFHack::isWallTerrain(tt))
             continue;
@@ -136,14 +136,14 @@ int main (int argc, char* argv[])
             {
                 below = 1;
                 des_minus = MCache->designationAt(current-1);
-                vmat_minus = MCache->materialAt(current-1);
+                vmat_minus = MCache->veinMaterialAt(current-1);
             }
 
             if(MCache->testCoord(current+1))
             {
                 above = 1;
                 des_plus = MCache->designationAt(current+1);
-                vmat_plus = MCache->materialAt(current+1);
+                vmat_plus = MCache->veinMaterialAt(current+1);
             }
         }
         if(MCache->testCoord(current))

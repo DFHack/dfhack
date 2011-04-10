@@ -31,7 +31,7 @@ distribution.
 #include "dfhack/modules/Maps.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Gui.h"
-#include "dfhack/DFTileTypes.h"
+//#include "dfhack/DFTileTypes.h"
 
 #define HBUILD(a) a ## BufferCallback
 #define HREG_MACRO(type_name, type) DFHACK_EXPORT void HBUILD(Register ## type_name) (int (*funcptr)(type, uint32_t));
@@ -255,15 +255,6 @@ struct c_featuremap_node
 DFHACK_EXPORT extern int (*alloc_featuremap_buffer_callback)(c_featuremap_node**, uint32_t*, uint32_t);
 
 DFHACK_EXPORT void RegisterFeatureMapBufferCallback(int (*funcptr)(c_featuremap_node**, uint32_t*, uint32_t));
-
-DFHACK_EXPORT int DFHack_isWallTerrain(int in);
-DFHACK_EXPORT int DFHack_isFloorTerrain(int in);
-DFHACK_EXPORT int DFHack_isRampTerrain(int in);
-DFHACK_EXPORT int DFHack_isStairTerrain(int in);
-DFHACK_EXPORT int DFHack_isOpenTerrain(int in);
-DFHACK_EXPORT int DFHack_getVegetationType(int in);
-
-DFHACK_EXPORT int DFHack_getTileType(int index, TileRow* tPtr);
 
 #ifdef __cplusplus
 }

@@ -22,8 +22,11 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFIntegers.h"
 #include "Internal.h"
+#include <vector>
+#include <string>
+using namespace std;
+
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack-c/modules/Vegetation_C.h"

@@ -133,7 +133,7 @@ void Process_write(DFHackObject* p_Ptr, uint32_t address, uint32_t length, uint8
 	((DFHack::Process*)p_Ptr)->write(address, length, buffer);
 }
 
-char* Process_readString(DFHackObject* p_Ptr, uint32_t offset)
+const char* Process_readString(DFHackObject* p_Ptr, uint32_t offset)
 {
 	if(p_Ptr == NULL || alloc_char_buffer_callback == NULL)
 		return NULL;
@@ -162,7 +162,7 @@ char* Process_readString(DFHackObject* p_Ptr, uint32_t offset)
 		return "";
 }
 
-char* Process_getPath(DFHackObject* p_Ptr)
+const char* Process_getPath(DFHackObject* p_Ptr)
 {
 	if(p_Ptr == NULL || alloc_char_buffer_callback == NULL)
 		return NULL;
@@ -191,7 +191,7 @@ char* Process_getPath(DFHackObject* p_Ptr)
 		return "";
 }
 
-char* Process_readClassName(DFHackObject* p_Ptr, uint32_t vptr)
+const char* Process_readClassName(DFHackObject* p_Ptr, uint32_t vptr)
 {
 	if(p_Ptr == NULL || alloc_char_buffer_callback == NULL)
 		return NULL;

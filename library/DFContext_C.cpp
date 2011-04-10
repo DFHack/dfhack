@@ -27,14 +27,13 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
+using namespace std;
+
 #include "dfhack/DFIntegers.h"
-#include "dfhack/DFTileTypes.h"
-#include "dfhack/DFTypes.h"
-//#include "dfhack/modules/WindowIO.h"
 #include "dfhack/DFContextManager.h"
 #include "dfhack/DFContext.h"
 
-using namespace std;
+
 using namespace DFHack;
 
 #include "dfhack-c/DFContext_C.h"

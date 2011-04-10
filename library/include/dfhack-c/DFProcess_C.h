@@ -72,9 +72,9 @@ DFHACK_EXPORT void Process_write(DFHackObject* p_Ptr, uint32_t address, uint32_t
 
 DFHACK_EXPORT int Process_readSTLVector(DFHackObject* p_Ptr, uint32_t address, t_vecTriplet* vector);
 
-DFHACK_EXPORT char* Process_readString(DFHackObject* p_Ptr, uint32_t offset);
-DFHACK_EXPORT char* Process_getPath(DFHackObject* p_Ptr);
-DFHACK_EXPORT char* Process_readClassName(DFHackObject* p_Ptr, uint32_t vptr);
+DFHACK_EXPORT const char* Process_readString(DFHackObject* p_Ptr, uint32_t offset);
+DFHACK_EXPORT const char* Process_getPath(DFHackObject* p_Ptr);
+DFHACK_EXPORT const char* Process_readClassName(DFHackObject* p_Ptr, uint32_t vptr);
 
 DFHACK_EXPORT int Process_isSuspended(DFHackObject* p_Ptr);
 DFHACK_EXPORT int Process_isAttached(DFHackObject* p_Ptr);

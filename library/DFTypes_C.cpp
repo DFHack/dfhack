@@ -22,21 +22,18 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFIntegers.h"
-#include "dfhack/DFTileTypes.h"
-#include <stdlib.h>
-#include "string.h"
+#include "Internal.h"
+
+#include <cstdlib>
+#include <cstring>
+#include <string>
 #include <vector>
 #include <algorithm>
-
 using namespace std;
 
-#include "Internal.h"
 #include "dfhack/DFTypes.h"
-#include "dfhack/DFTileTypes.h"
 #include "dfhack-c/DFTypes_C.h"
 #include "dfhack/modules/Materials.h"
-
 using namespace DFHack;
 
 /*
@@ -169,46 +166,6 @@ void RegisterFeatureMapBufferCallback(int (*funcptr)(c_featuremap_node**, uint32
 }
 
 UNREG_MACRO(FeatureMap, alloc_featuremap_buffer_callback)
-
-int DFHack_isWallTerrain(int in)
-{
-	return DFHack::isWallTerrain(in);
-}
-
-int DFHack_isFloorTerrain(int in)
-{
-	return DFHack::isFloorTerrain(in);
-}
-
-int DFHack_isRampTerrain(int in)
-{
-	return DFHack::isRampTerrain(in);
-}
-
-int DFHack_isStairTerrain(int in)
-{
-	return DFHack::isStairTerrain(in);
-}
-
-int DFHack_isOpenTerrain(int in)
-{
-	return DFHack::isOpenTerrain(in);
-}
-
-int DFHack_getVegetationType(int in)
-{
-	return DFHack::getVegetationType(in);
-}
-
-int DFHack_getTileType(int index, TileRow* tPtr)
-{
-	if(index >= TILE_TYPE_ARRAY_LENGTH)
-		return 0;
-	
-	*tPtr = tileTypeTable[index];
-	
-	return 1;
-}
 
 #ifdef __cplusplus
 }

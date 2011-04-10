@@ -19,7 +19,6 @@
 
 // DFHack core classes and types
 #include "dfhack/DFIntegers.h"
-#include "dfhack/DFGlobal.h"
 #include "dfhack/DFError.h"
 #include "dfhack/DFContextManager.h"
 #include "dfhack/DFContext.h"

@@ -22,12 +22,13 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack/DFIntegers.h"
-#include <string>
+#include "Internal.h"
 
+#include <string>
+#include <vector>
 using namespace std;
 
-#include "Internal.h"
+
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Translation.h"
 #include "dfhack-c/modules/Translation_C.h"

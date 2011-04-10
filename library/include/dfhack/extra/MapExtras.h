@@ -207,12 +207,7 @@ class MapCache
     };
     ~MapCache()
     {
-        map<DFHack::DFCoord, Block *>::iterator p;
-        for(p = blocks.begin(); p != blocks.end(); p++)
-        {
-            delete p->second;
-            //cout << stonetypes[p->first].id << " : " << p->second << endl;
-        }
+        trash();
     }
     bool isValid ()
     {
@@ -370,6 +365,15 @@ class MapCache
             p->second->Write();
         }
         return true;
+    }
+    void trash()
+    {
+        map<DFHack::DFCoord, Block *>::iterator p;
+        for(p = blocks.begin(); p != blocks.end(); p++)
+        {
+            delete p->second;
+        }
+        blocks.clear();
     }
     private:
     volatile bool valid;

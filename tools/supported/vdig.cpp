@@ -11,26 +11,11 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/extra/MapExtras.h>
 using namespace MapExtras;
-//#include <argstream.h>
 
 int main (int argc, char* argv[])
 {
     // Command line options
     bool updown = false;
-    /*
-    argstream as(argc,argv);
-
-    as  >>option('x',"updown",updown,"Dig up and down stairs to reach other z-levels.")
-        >>help();
-        
-
-    // sane check
-    if (!as.isOk())
-    {
-        cout << as.errorLog();
-        return 1;
-    }
-        */
     if(argc > 1 && strcmp(argv[1],"-x") == 0)
         updown = true;
 

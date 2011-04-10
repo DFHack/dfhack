@@ -73,6 +73,7 @@ Only exception is mud. It leaves mud alone.
 dfderamp (by zilpin)
 ====================
 Removes all ramps designated for removal from the map. This is useful for replicating the old channel digging designation.
+It also removes any and all 'down ramps' that can remain after a cave-in (you don't have to designate anything for that to happen).
 
 dfdoffsets
 ==========
@@ -140,6 +141,11 @@ dfreveal
 ========
 Reveals the whole map, waits for input and hides it again. If you close
 the tool while it waits, the map remains revealed.
+
+dfunreveal
+==========
+Hides everything and then only reveals the part of the map accessible from the position of DF's cursor. Place the cursor in open space that you want to keep revealed - this should include the surface world.
+Can be used to fix maps stuck revealed or hide parts of the fortress blocked off by walls.
 
 dfsuspend
 =========

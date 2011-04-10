@@ -995,7 +995,7 @@
                 <Offset name="item_improvement_subindex" />
                 <Offset name="item_improvement_index" />
                 <Offset name="item_improvement_quality" />
-                <Offset name="item_type_accessor" />  (in the vtable)
+                <Offset name="item_wear_accessor" />
             </Group>
             <Group name="World">
                 <Address name="current_tick" description="Current time of the year" />
@@ -2950,6 +2950,12 @@
             </Group>
             <Group name="Items">
                 <Address name="items_vector" value="0x940b1fc" />
+                <Offset name="item_type_accessor" value="0x0" />
+                <Offset name="item_subtype_accessor" value="0x4" />
+                <Offset name="item_subindex_accessor" value="0x8" />
+                <Offset name="item_index_accessor" value="0xC" />
+                <Offset name="item_quality_accessor" value="0x25C" />
+                <Offset name="item_wear_accessor" value="0xCC" />
             </Group>
         </Offsets>
     </Version>

@@ -84,6 +84,7 @@ private:
     Accessor * ASubIndex;
     Accessor * AIndex;
     Accessor * AQuality;
+    Accessor * AWear;
     Process * p;
     bool hasDecoration;
 public:
@@ -284,6 +285,7 @@ ItemDesc::ItemDesc(uint32_t VTable, Process *p)
     uint32_t funcOffsetC = Items->getOffset("item_subindex_accessor");
     uint32_t funcOffsetD = Items->getOffset("item_index_accessor");
     uint32_t funcOffsetQuality = Items->getOffset("item_quality_accessor");
+    uint32_t funcOffsetWear = Items->getOffset("item_wear_accessor");
     this->vtable = VTable;
     this->p = p;
     this->className = p->readClassName(VTable).substr(5);
@@ -293,6 +295,7 @@ ItemDesc::ItemDesc(uint32_t VTable, Process *p)
     this->ASubIndex = new Accessor( p->readDWord( VTable + funcOffsetC ), p);
     this->AIndex = new Accessor( p->readDWord( VTable + funcOffsetD ), p);
     this->AQuality = new Accessor( p->readDWord( VTable + funcOffsetQuality ), p);
+    this->AWear = new Accessor( p->readDWord( VTable + funcOffsetWear ), p);
     this->hasDecoration = false;
     if(this->AMainType->isConstant())
         this->mainType = this->AMainType->getValue(0);
@@ -305,12 +308,16 @@ ItemDesc::ItemDesc(uint32_t VTable, Process *p)
 
 bool ItemDesc::getItem(uint32_t itemptr, DFHack::t_item &item)
 {
+    this->p->read(itemptr+4, sizeof(t_item_header), (uint8_t*)&item.header);
     item.matdesc.itemType = this->AMainType->getValue(itemptr);
     item.matdesc.subType = this->ASubType->getValue(itemptr);
     item.matdesc.subIndex = this->ASubIndex->getValue(itemptr);
     item.matdesc.index = this->AIndex->getValue(itemptr);
     item.quality = this->AQuality->getValue(itemptr);
     item.quantity = 1; /* TODO */
+    // Note: this accessor returns a 32-bit value with the higher
+    // half sometimes containing garbage, so the cast is essential:
+    item.wear_level = (int16_t)this->AWear->getValue(itemptr);
     return true;
 }
 
@@ -373,6 +380,11 @@ bool Items::getItemData(uint32_t itemptr, DFHack::t_item &item)
         desc = it->second;
 
     return desc->getItem(itemptr, item);
+}
+
+void Items::setItemFlags(uint32_t itemptr, t_itemflags new_flags)
+{
+    d->owner->writeDWord(itemptr + 0x0C, new_flags.whole);
 }
 
 std::string Items::getItemClass(int32_t index)

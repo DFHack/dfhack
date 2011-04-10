@@ -1,18 +1,11 @@
-#include <iostream>
-#include <iomanip>
-#include <climits>
-#include <vector>
-#include <sstream>
-#include <ctime>
-#include <cstdio>
-using namespace std;
+#include <limits.h>
+#include <time.h>
+#include <stdio.h>
 
-#include <DFHack.h>
 #include <DFHack_C.h>
 #include <dfhack-c/DFTypes_C.h>
 #include <dfhack-c/DFContext_C.h>
 #include <dfhack-c/modules/Maps_C.h>
-using namespace DFHack;
 
 int main (int numargs, const char ** args)
 {

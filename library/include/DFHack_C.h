@@ -28,15 +28,16 @@ distribution.
 
 #include "dfhack/DFPragma.h"
 
-namespace DFHack {};
-using namespace DFHack;
-
 #include "dfhack/DFExport.h"
 #include "dfhack/DFIntegers.h"
 
 typedef void DFHackObject;
 
 #ifdef __cplusplus
+
+namespace DFHack {};
+using namespace DFHack;
+
 extern "C" {
 #endif
 // some global stuff here

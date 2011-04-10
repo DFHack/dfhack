@@ -256,12 +256,7 @@ DFHACK_EXPORT extern int (*alloc_featuremap_buffer_callback)(c_featuremap_node**
 DFHACK_EXPORT void RegisterFeatureMapBufferCallback(int (*funcptr)(c_featuremap_node**, uint32_t*, uint32_t));
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
-/*
-void BuildDescriptorList(std::vector<t_creaturetype> & src, c_creaturetype_descriptor** dest);
-void FreeDescriptorList(c_creaturetype_descriptor* d, uint32_t length);
 
-int CreatureTypeConvert(std::vector<t_creaturetype> &, c_creaturetype**);
-*/
 #endif

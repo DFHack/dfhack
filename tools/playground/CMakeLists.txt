@@ -82,6 +82,6 @@ DFHACK_TOOL(dfhellhole hellhole.cpp)
 
 # this needs the C bindings
 IF(BUILD_DFHACK_C_BINDINGS)
-    # for trying out some 'stuff'
-    DFHACK_TOOL(dftest test.cpp)
+    # The C bindings won't be real C bindings until this compiles.
+    #DFHACK_TOOL(dftest test.c)
 ENDIF(BUILD_DFHACK_C_BINDINGS)

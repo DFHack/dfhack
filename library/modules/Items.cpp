@@ -51,13 +51,19 @@ enum accessor_type {ACCESSOR_CONSTANT, ACCESSOR_INDIRECT, ACCESSOR_DOUBLE_INDIRE
 /* this is used to store data about the way accessors work */
 class DFHACK_EXPORT Accessor
 {
+public:
+    enum DataWidth {
+        Data32 = 0,
+        DataSigned16,
+        DataUnsigned16
+    };
 private:
     accessor_type type;
     int32_t constant;
     int32_t offset1;
     int32_t offset2;
     Process * p;
-    uint32_t dataWidth;
+    DataWidth dataWidth;
 public:
     Accessor(uint32_t function, Process * p);
     Accessor(accessor_type type, int32_t constant, uint32_t offset1, uint32_t offset2, uint32_t dataWidth, Process * p);
@@ -134,10 +140,10 @@ static bool match_MEM_ACCESS(uint32_t &ptr, uint64_t v, int isize, int in_reg, i
     }
 }
 
-static bool match_MOV_MEM(uint32_t &ptr, uint64_t v, int in_reg, int &out_reg, int &offset, bool &size16) 
+static bool match_MOV_MEM(uint32_t &ptr, uint64_t v, int in_reg, int &out_reg, int &offset, Accessor::DataWidth &size) 
 {
     int prefix = 0;
-    size16 = false;
+    size = Accessor::Data32;
     if ((v & 0xFF) == 0x8B) { // MOV
         v >>= 8;
         prefix = 1;
@@ -145,17 +151,17 @@ static bool match_MOV_MEM(uint32_t &ptr, uint64_t v, int in_reg, int &out_reg, i
     else if ((v & 0xFFFF) == 0x8B66) { // MOV 16-bit
         v >>= 16;
         prefix = 2;
-        size16 = true;
+        size = Accessor::DataUnsigned16;
     }
     else if ((v & 0xFFFF) == 0xBF0F) { // MOVSX
         v >>= 16;
         prefix = 2;
-        size16 = true;
+        size = Accessor::DataSigned16;
     }
     else if ((v & 0xFFFF) == 0xB70F) { // MOVZ
         v >>= 16;
         prefix = 2;
-        size16 = true;
+        size = Accessor::DataUnsigned16;
     }
     else
         return false;
@@ -190,7 +196,7 @@ Accessor::Accessor(uint32_t function, Process *p)
     }
     else
     {
-        bool size16;
+        DataWidth xsize;
         int ptr_reg = 1, tmp; // ECX
 
         // MOV REG,[ESP+4]
@@ -200,24 +206,19 @@ Accessor::Accessor(uint32_t function, Process *p)
             v = p->readQuad(ptr);
         }
 
-        this->dataWidth = 4;
-
-        if (match_MOV_MEM(ptr, v, ptr_reg, tmp, this->offset1, size16)) {
+        if (match_MOV_MEM(ptr, v, ptr_reg, tmp, this->offset1, xsize)) {
             data_reg = tmp;
             this->type = ACCESSOR_INDIRECT;
+            this->dataWidth = xsize;
 
-            if (size16)
-                this->dataWidth = 2;
-            else
+            if (xsize == Data32)
             {
                 v = p->readQuad(ptr);
             
-                if (match_MOV_MEM(ptr, v, data_reg, tmp, this->offset2, size16)) {
+                if (match_MOV_MEM(ptr, v, data_reg, tmp, this->offset2, xsize)) {
                     data_reg = tmp;
                     this->type = ACCESSOR_DOUBLE_INDIRECT;
-                    
-                    if (size16)
-                        this->dataWidth = 2;
+                    this->dataWidth = xsize;
                 }
             }
         }
@@ -245,29 +246,26 @@ bool Accessor::isConstant()
 
 int32_t Accessor::getValue(uint32_t objectPtr)
 {
+    int32_t offset = this->offset1;
+
     switch(this->type)
     {
     case ACCESSOR_CONSTANT:
         return this->constant;
         break;
+    case ACCESSOR_DOUBLE_INDIRECT:
+        objectPtr = p->readDWord(objectPtr + this->offset1);
+        offset = this->offset2;
+        // fallthrough
     case ACCESSOR_INDIRECT:
         switch(this->dataWidth)
         {
-        case 2:
-            return (int16_t) p->readWord(objectPtr + this->offset1);
-        case 4:
-            return p->readDWord(objectPtr + this->offset1);
-        default:
-            return -1;
-        }
-        break;
-    case ACCESSOR_DOUBLE_INDIRECT:
-        switch(this->dataWidth)
-        {
-        case 2:
-            return (int16_t) p->readWord(p->readDWord(objectPtr + this->offset1) + this->offset2);
-        case 4:
-            return p->readDWord(p->readDWord(objectPtr + this->offset1) + this->offset2);
+        case Data32:
+            return p->readDWord(objectPtr + offset);
+        case DataSigned16:
+            return (int16_t) p->readWord(objectPtr + offset);
+        case DataUnsigned16:
+            return (uint16_t) p->readWord(objectPtr + offset);
         default:
             return -1;
         }

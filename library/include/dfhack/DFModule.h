@@ -1,4 +1,3 @@
-
 /*
 www.sourceforge.net/projects/dfhack
 Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
@@ -22,6 +21,8 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
+
+#pragma once
 
 #ifndef MODULE_H_INCLUDED
 #define MODULE_H_INCLUDED

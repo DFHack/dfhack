@@ -25,7 +25,7 @@ distribution.
 #ifndef VEGETATION_C_API
 #define VEGETATION_C_API
 
-#include "DFHack_C.h"
+#include "dfhack-c/Common.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Vegetation.h"
 

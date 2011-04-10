@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CL_MOD_MATERIALS
 #define CL_MOD_MATERIALS
 /**

@@ -25,7 +25,7 @@ distribution.
 #ifndef TILETYPES_C_API
 #define TILETYPES_C_API
 
-#include "DFHack_C.h"
+#include "dfhack-c/Common.h"
 #include "dfhack/DFTileTypes.h"
 
 #ifdef __cplusplus

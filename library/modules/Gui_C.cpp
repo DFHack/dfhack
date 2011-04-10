@@ -22,6 +22,11 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include <string>
+#include <map>
+#include <vector>
+using namespace std;
+
 #include "dfhack-c/modules/Gui_C.h"
 #include "dfhack-c/DFTypes_C.h"
 #ifdef __cplusplus

@@ -25,13 +25,12 @@ distribution.
 #ifndef TYPES_C_API
 #define TYPES_C_API
 
-#include "DFHack_C.h"
+#include "dfhack-c/Common.h"
 #include "DFProcess_C.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Maps.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Gui.h"
-//#include "dfhack/DFTileTypes.h"
 
 #define HBUILD(a) a ## BufferCallback
 #define HREG_MACRO(type_name, type) DFHACK_EXPORT void HBUILD(Register ## type_name) (int (*funcptr)(type, uint32_t));
@@ -259,10 +258,10 @@ DFHACK_EXPORT void RegisterFeatureMapBufferCallback(int (*funcptr)(c_featuremap_
 #ifdef __cplusplus
 }
 #endif
-
+/*
 void BuildDescriptorList(std::vector<t_creaturetype> & src, c_creaturetype_descriptor** dest);
 void FreeDescriptorList(c_creaturetype_descriptor* d, uint32_t length);
 
 int CreatureTypeConvert(std::vector<t_creaturetype> &, c_creaturetype**);
-
+*/
 #endif

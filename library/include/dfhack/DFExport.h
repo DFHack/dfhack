@@ -22,6 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#pragma once
+
 #ifdef LINUX_BUILD
     #ifndef DFHACK_EXPORT
         #define DFHACK_EXPORT __attribute__ ((visibility("default")))

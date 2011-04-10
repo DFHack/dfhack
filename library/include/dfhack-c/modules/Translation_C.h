@@ -25,7 +25,7 @@ distribution.
 #ifndef TRANSLATION_C_API
 #define TRANSLATION_C_API
 
-#include "DFHack_C.h"
+#include "dfhack-c/Common.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack-c/DFTypes_C.h"
 #include "dfhack/modules/Translation.h"

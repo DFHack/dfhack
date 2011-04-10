@@ -25,7 +25,7 @@ distribution.
 #ifndef WORLD_C_API
 #define WORLD_C_API
 
-#include "DFHack_C.h"
+#include "dfhack-c/Common.h"
 #include "dfhack/modules/World.h"
 
 #ifdef __cplusplus

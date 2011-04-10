@@ -23,7 +23,6 @@ int main (void)
 
     //DFHack::TileRow *ptile;
     int32_t oldT, newT;
-    int16_t t;
 
     bool dirty= false;
     int count=0;

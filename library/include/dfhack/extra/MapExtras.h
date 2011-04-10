@@ -1,3 +1,4 @@
+#pragma once
 #ifndef MAPEXTRAS_H
 #define MAPEXTRAS_H
 

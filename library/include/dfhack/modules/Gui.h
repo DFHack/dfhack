@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CL_MOD_GUI
 #define CL_MOD_GUI
 

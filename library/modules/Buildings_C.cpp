@@ -22,8 +22,11 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "dfhack-c/modules/Buildings_C.h"
+#include <string>
+#include <map>
+#include <vector>
 using namespace std;
+#include "dfhack-c/modules/Buildings_C.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,42 +34,38 @@ extern "C" {
 
 int Buildings_Start(DFHackObject* b_Ptr, uint32_t* numBuildings)
 {
-	if(b_Ptr != NULL)
-	{
-		return ((DFHack::Buildings*)b_Ptr)->Start(*numBuildings);
-	}
-	
-	return -1;
+    if(b_Ptr != NULL)
+    {
+        return ((DFHack::Buildings*)b_Ptr)->Start(*numBuildings);
+    }
+    return -1;
 }
 
 int Buildings_Finish(DFHackObject* b_Ptr)
 {
-	if(b_Ptr != NULL)
-	{
-		return ((DFHack::Buildings*)b_Ptr)->Finish();
-	}
-	
-	return -1;
+    if(b_Ptr != NULL)
+    {
+        return ((DFHack::Buildings*)b_Ptr)->Finish();
+    }
+    return -1;
 }
 
 int Buildings_Read(DFHackObject* b_Ptr, const uint32_t index, t_building* building)
 {
-	if(b_Ptr != NULL)
-	{
-		return ((DFHack::Buildings*)b_Ptr)->Read(index, *building);
-	}
-	
-	return -1;
+    if(b_Ptr != NULL)
+    {
+        return ((DFHack::Buildings*)b_Ptr)->Read(index, *building);
+    }
+    return -1;
 }
 
 int Buildings_GetCustomWorkshopType(DFHackObject* b_Ptr, t_building* building)
 {
-	if(b_Ptr != NULL)
-	{
-		return ((DFHack::Buildings*)b_Ptr)->GetCustomWorkshopType(*building);
-	}
-	
-	return -1;
+    if(b_Ptr != NULL)
+    {
+        return ((DFHack::Buildings*)b_Ptr)->GetCustomWorkshopType(*building);
+    }
+    return -1;
 }
 
 t_customWorkshop* Buildings_ReadCustomWorkshopTypes(DFHackObject* b_Ptr)
@@ -80,19 +79,18 @@ t_customWorkshop* Buildings_ReadCustomWorkshopTypes(DFHackObject* b_Ptr)
 
         if(!((DFHack::Buildings*)b_Ptr)->ReadCustomWorkshopTypes(bTypes))
             return NULL;
-		
-		(*alloc_customWorkshop_buffer_callback)(&cw_Ptr, bTypes.size());
-		
-		if(cw_Ptr == NULL)
-			return NULL;
-		
+
+        (*alloc_customWorkshop_buffer_callback)(&cw_Ptr, bTypes.size());
+
+        if(cw_Ptr == NULL)
+            return NULL;
+
         for(i = 0, bIter = bTypes.begin(); bIter != bTypes.end(); bIter++, i++)
         {
             cw_Ptr[i].index = (*bIter).first;
             size_t length = (*bIter).second.copy(cw_Ptr[i].name, 256);
             cw_Ptr[i].name[length] = '\0';
         }
-		
         return cw_Ptr;
     }
 

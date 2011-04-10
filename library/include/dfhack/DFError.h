@@ -22,6 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#pragma once
+
 #ifndef ERROR_H_INCLUDED
 #define ERROR_H_INCLUDED
 

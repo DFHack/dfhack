@@ -21,6 +21,10 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
+#include <string>
+#include <map>
+#include <vector>
+using namespace std;
 
 #include "dfhack-c/modules/Items_C.h"
 

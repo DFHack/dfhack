@@ -25,7 +25,7 @@ distribution.
 #ifndef WINDOWIO_C_API
 #define WINDOWIO_C_API
 
-#include "DFHack_C.h"
+#include "dfhack-c/Common.h"
 #include "dfhack/modules/WindowIO.h"
 
 #ifdef __cplusplus

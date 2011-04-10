@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef DFHACK_TRANQUILITY
 #define DFHACK_TRANQUILITY
 

@@ -7,6 +7,8 @@
  * \defgroup grp_cwrap C Wrapper
  */
 
+#pragma once
+
 // Defines
 #ifdef __GNUC__
 #define DEPRECATED(func) func __attribute__ ((deprecated))

@@ -22,23 +22,17 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#pragma once
 #ifndef DFHACK_C_API
 #define DFHACK_C_API
 
 #include "dfhack/DFPragma.h"
 
-#include <cstdio>
-#include <string>
-#include <vector>
-#include <map>
-#include <algorithm>
+namespace DFHack {};
+using namespace DFHack;
 
-#include "dfhack/DFGlobal.h"
 #include "dfhack/DFExport.h"
 #include "dfhack/DFIntegers.h"
-
-
-using namespace DFHack;
 
 typedef void DFHackObject;
 

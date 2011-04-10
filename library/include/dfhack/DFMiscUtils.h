@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef DF_MISCUTILS
 #define DF_MISCUTILS
 #include <iostream>

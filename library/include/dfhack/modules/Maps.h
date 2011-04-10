@@ -2,6 +2,7 @@
                                     M A P S
                             Read and write DF's map
 *******************************************************************************/
+#pragma once
 #ifndef CL_MOD_MAPS
 #define CL_MOD_MAPS
 

@@ -22,6 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#pragma once
+
 #ifndef TILETYPES_H_INCLUDED
 #define TILETYPES_H_INCLUDED
 

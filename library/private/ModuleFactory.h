@@ -22,6 +22,8 @@
  distribution.
  */
 
+#pragma once
+
 #ifndef MODULE_FACTORY_H_INCLUDED
 #define MODULE_FACTORY_H_INCLUDED
 

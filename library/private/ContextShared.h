@@ -22,9 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-/*
-* WARNING: Only include from API modules
-*/
+#pragma once
 
 #ifndef APIPRIVATE_H_INCLUDED
 #define APIPRIVATE_H_INCLUDED

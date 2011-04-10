@@ -22,6 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#pragma once
+
 #ifndef LINUX_PROCESS_H_INCLUDED
 #define LINUX_PROCESS_H_INCLUDED
 

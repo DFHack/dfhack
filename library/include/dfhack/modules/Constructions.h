@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CL_MOD_CONSTRUCTIONS
 #define CL_MOD_CONSTRUCTIONS
 /*

@@ -22,6 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#pragma once
+
 #ifndef DFCOMMONINTERNAL_H_INCLUDED
 #define DFCOMMONINTERNAL_H_INCLUDED
 
@@ -38,9 +40,6 @@ distribution.
 #ifdef LINUX_BUILD
     #define _FILE_OFFSET_BITS 64
 #endif
-
-// one file for globals
-#include "dfhack/DFGlobal.h"
 
 // one file for telling the MSVC compiler where it can shove its pointless warnings
 #include "dfhack/DFPragma.h"

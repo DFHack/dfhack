@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CL_MOD_WORLD
 #define CL_MOD_WORLD
 

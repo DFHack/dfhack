@@ -7,6 +7,9 @@ stdint.h is part of the C99 standard. It's ancient and simply should be there. F
 
 You can turn off the include by defining SKIP_DFHACK_STDINT
 */
+
+#pragma once
+
 #ifndef SKIP_DFHACK_STDINT
     #ifndef _MSC_VER
         #include <stdint.h>

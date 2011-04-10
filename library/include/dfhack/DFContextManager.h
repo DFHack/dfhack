@@ -22,6 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#pragma once
+
 #ifndef CONTEXTMANAGER_H_INCLUDED
 #define CONTEXTMANAGER_H_INCLUDED
 

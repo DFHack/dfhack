@@ -22,6 +22,8 @@
  * distribution.
  */
 
+#pragma once
+
 #ifndef DFPLATFORMINTERNAL_H_INCLUDED
 #define DFPLATFORMINTERNAL_H_INCLUDED
 

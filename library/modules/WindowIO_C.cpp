@@ -27,8 +27,8 @@ distribution.
 #include <string>
 using namespace std;
 
+#include "dfhack-c/Common.h"
 #include "dfhack/DFIntegers.h"
-#include "DFHack_C.h"
 #include "dfhack/modules/WindowIO.h"
 #include "dfhack-c/modules/WindowIO_C.h"
 

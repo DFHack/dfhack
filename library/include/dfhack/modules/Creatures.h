@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CL_MOD_CREATURES
 #define CL_MOD_CREATURES
 /*

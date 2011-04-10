@@ -25,7 +25,7 @@ distribution.
 #ifndef BUILDINGS_C_API
 #define BUILDINGS_C_API
 
-#include "DFHack_C.h"
+#include "dfhack-c/Common.h"
 #include "dfhack/DFTypes.h"
 #include "dfhack/modules/Buildings.h"
 #include "dfhack-c/DFTypes_C.h"

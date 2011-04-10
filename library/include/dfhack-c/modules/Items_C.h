@@ -25,7 +25,7 @@ distribution.
 #ifndef ITEMS_C_API
 #define ITEMS_C_API
 
-#include "DFHack_C.h"
+#include "dfhack-c/Common.h"
 #include "dfhack/DFProcess.h"
 #include "dfhack-c/DFTypes_C.h"
 #include "dfhack/modules/Items.h"

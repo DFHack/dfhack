@@ -22,14 +22,18 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#pragma once
+
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 
 #include "DFPragma.h"
 #include "DFExport.h"
 
+#ifdef __cplusplus
 namespace DFHack
 {
+#endif
 
 struct t_matglossPair
 {
@@ -44,7 +48,7 @@ struct junk_fill
 {
     uint8_t data[SIZE];
 };
-    
+
 enum EFFECT_TYPE
 {
     EFF_MIASMA=0,
@@ -205,6 +209,7 @@ struct t_attrib
     uint32_t field_18;
 };
 
+#ifdef __cplusplus
 struct t_level
 {
     uint32_t level;
@@ -213,4 +218,6 @@ struct t_level
 };
 
 }// namespace DFHack
+#endif
+
 #endif // TYPES_H_INCLUDED

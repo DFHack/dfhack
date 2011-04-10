@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CL_MOD_TRANSLATION
 #define CL_MOD_TRANSLATION
 /**

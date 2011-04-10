@@ -22,7 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include <string>
+#pragma once
 
 namespace DFHack {
     class Process;

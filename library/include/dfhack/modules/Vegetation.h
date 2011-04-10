@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CL_MOD_VEGETATION
 #define CL_MOD_VEGETATION
 /**
@@ -26,10 +27,6 @@ namespace DFHack
         uint16_t x; // +0x70
         uint16_t y; // +0x72
         uint16_t z; // +0x74
-        /*
-        junk_fill<0xA> junk;
-        uint32_t flags; // +0x80 maybe?
-        */
         uint32_t address;
     };
 

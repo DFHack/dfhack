@@ -22,6 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#pragma once
+
 #ifndef PROCESSMANAGER_H_INCLUDED
 #define PROCESSMANAGER_H_INCLUDED
 

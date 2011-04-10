@@ -22,7 +22,10 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "DFHack_C.h"
+#include <vector>
+#include <map>
+using namespace std;
+#include "dfhack-c/Common.h"
 #include "dfhack/modules/World.h"
 #include "dfhack-c/modules/World_C.h"
 #include "dfhack-c/DFTypes_C.h"

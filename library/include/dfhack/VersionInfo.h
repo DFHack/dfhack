@@ -22,6 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#pragma once
+
 #ifndef MEMINFO_H_INCLUDED
 #define MEMINFO_H_INCLUDED
 

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <strstream>
+#include <sstream>
 #include <DFHack.h>
 
 using namespace std;

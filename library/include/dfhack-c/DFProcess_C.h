@@ -25,7 +25,7 @@ distribution.
 #ifndef PROCESS_C_API
 #define PROCESS_C_API
 
-#include "DFHack_C.h"
+#include "dfhack-c/Common.h"
 #include "dfhack/DFProcess.h"
 
 #ifdef __cplusplus

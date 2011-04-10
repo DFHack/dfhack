@@ -34,8 +34,8 @@ distribution.
 #define _QUOTEME(x) #x
 #define QUOT(x) _QUOTEME(x)
 
+// force large file support
 #ifdef LINUX_BUILD
-    #define __USE_FILE_OFFSET64
     #define _FILE_OFFSET_BITS 64
 #endif
 

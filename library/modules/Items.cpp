@@ -54,8 +54,8 @@ class DFHACK_EXPORT Accessor
 private:
     accessor_type type;
     int32_t constant;
-    uint32_t offset1;
-    uint32_t offset2;
+    int32_t offset1;
+    int32_t offset2;
     Process * p;
     uint32_t dataWidth;
 public:
@@ -95,89 +95,143 @@ public:
     std::vector<ItemImprovementDesc> improvement;
 };
 
+inline bool do_match(uint32_t &ptr, uint64_t val, int size, uint64_t mask, uint64_t check)
+{
+    if ((val & mask) == check) {
+        ptr += size;
+        return true;
+    }
+    return false;
+}
+
+static bool match_MEM_ACCESS(uint32_t &ptr, uint64_t v, int isize, int in_reg, int &out_reg, int &offset)
+{
+    // ESP & EBP are hairy
+    if (in_reg == 4 || in_reg == 5)
+        return false;
+
+    if ((v & 7) != in_reg)
+        return false;
+
+    out_reg = (v>>3) & 7;
+
+    switch ((v>>6)&3) {
+        case 0: // MOV REG2, [REG]
+            offset = 0;
+            ptr += isize+1;
+            return true;
+        case 1: // MOV REG2, [REG+offset8]
+            offset = (signed char)(v >> 8);
+            ptr += isize+2;
+            return true;
+        case 2: // MOV REG2, [REG+offset32]
+            offset = (signed int)(v >> 8);
+            ptr += isize+5;
+            return true;
+        default:
+            return false;
+    }
+}
+
+static bool match_MOV_MEM(uint32_t &ptr, uint64_t v, int in_reg, int &out_reg, int &offset, bool &size16) 
+{
+    int prefix = 0;
+    size16 = false;
+    if ((v & 0xFF) == 0x8B) { // MOV
+        v >>= 8;
+        prefix = 1;
+    }
+    else if ((v & 0xFFFF) == 0x8B66) { // MOV 16-bit
+        v >>= 16;
+        prefix = 2;
+        size16 = true;
+    }
+    else if ((v & 0xFFFF) == 0xBF0F) { // MOVSX
+        v >>= 16;
+        prefix = 2;
+        size16 = true;
+    }
+    else if ((v & 0xFFFF) == 0xB70F) { // MOVZ
+        v >>= 16;
+        prefix = 2;
+        size16 = true;
+    }
+    else
+        return false;
+    
+    return match_MEM_ACCESS(ptr, v, prefix, in_reg, out_reg, offset);
+}
 
 // FIXME: this is crazy
 Accessor::Accessor(uint32_t function, Process *p)
 {
     this->p = p;
-    this->constant = 0;
-    this->offset1 = 0;
-    this->offset2 = 0;
     this->type = ACCESSOR_CONSTANT;
-    this->dataWidth = 2;
-    uint64_t funcText = p->readQuad(function);
-    if( funcText == 0xCCCCCCCCCCC3C033LL )
+    uint32_t ptr = function;
+    uint64_t v = p->readQuad(ptr);
+    int data_reg = -1;
+
+    if (do_match(ptr, v, 2, 0xFFFF, 0xC033) ||
+        do_match(ptr, v, 2, 0xFFFF, 0xC031)) // XOR EAX, EAX
     {
-        return;
+        data_reg = 0;
+        this->constant = 0;
     }
-    if( funcText == 0xCCCCCCCCC3FFC883LL )
+    else if (do_match(ptr, v, 3, 0xFFFFFF, 0xFFC883)) // OR EAX, -1
     {
-        /* or eax,-1; ret; */
+        data_reg = 0;
         this->constant = -1;
-        return;
     }
-    if( (funcText&0xFFFFFFFFFF0000FFLL) == 0xCCCCC300000000B8LL )
+    else if (do_match(ptr, v, 5, 0xFF, 0xB8)) // MOV EAX,imm
     {
-        /* mov eax, xx; ret; */
-        this->constant = (funcText>>8) & 0xffff;
-        return;
+        data_reg = 0;
+        this->constant = (v>>8) & 0xFFFFFFFF;
     }
-    if( (funcText&0xFFFFFF0000FFFFFFLL) == 0xC300000000818B66LL )
+    else
     {
-        /* mov ax, [ecx+xx]; ret; */
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>24) & 0xffff;
-        return;
-    }
-    if( (funcText&0x000000FF00FFFFFFLL) == 0x000000C300418B66LL )
-    {
-        /* mov ax, [ecx+xx]; ret; (shorter instruction)*/
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>24) & 0xff;
-        return;
-    }
-    if( (funcText&0x00000000FF00FFFFLL) == 0x00000000C300418BLL )
-    {
-        /* mov eax, [ecx+xx]; ret; */
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>16) & 0xff;
-        this->dataWidth = 4;
-        return;
-    }
-    if( (funcText&0xFFFFFFFF0000FFFFLL) == 0x8B6600000000818BLL )
-    {
-        uint64_t funcText2 = p->readQuad(function+8);
-        if( (funcText2&0xFFFFFFFFFFFF00FFLL) == 0xCCCCCCCCCCC30040LL )
+        bool size16;
+        int ptr_reg = 1, tmp; // ECX
+
+        // MOV REG,[ESP+4]
+        if (do_match(ptr, v, 4, 0xFFFFC7FFU, 0x0424448B))
         {
-            this->type = ACCESSOR_DOUBLE_INDIRECT;
-            this->offset1 = (funcText>>16) & 0xffff;
-            this->offset2 = (funcText2>>8) & 0xff;
-            return;
+            ptr_reg = (v>>11)&7;
+            v = p->readQuad(ptr);
+        }
+
+        this->dataWidth = 4;
+
+        if (match_MOV_MEM(ptr, v, ptr_reg, tmp, this->offset1, size16)) {
+            data_reg = tmp;
+            this->type = ACCESSOR_INDIRECT;
+
+            if (size16)
+                this->dataWidth = 2;
+            else
+            {
+                v = p->readQuad(ptr);
+            
+                if (match_MOV_MEM(ptr, v, data_reg, tmp, this->offset2, size16)) {
+                    data_reg = tmp;
+                    this->type = ACCESSOR_DOUBLE_INDIRECT;
+                    
+                    if (size16)
+                        this->dataWidth = 2;
+                }
+            }
         }
     }
-    if( (funcText&0xFFFFFF0000FFFFFFLL) == 0xC30000000081BF0FLL )
-    {
-        /* movsx   eax, word ptr [ecx+xx]; ret */
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>24) & 0xffff;
+    
+    v = p->readQuad(ptr);
+    
+    if (data_reg == 0 && do_match(ptr, v, 1, 0xFF, 0xC3)) // RET
         return;
-    }
-    if( (funcText&0x000000FF00FFFFFFLL) == 0x000000C30041BF0FLL )
+    else
     {
-        /* movsx   eax, word ptr [ecx+xx]; ret (shorter opcode)*/
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>24) & 0xff;
-        return;
+        this->type = ACCESSOR_CONSTANT;
+        this->constant = 0;
+        printf("bad accessor @0x%x\n", function);
     }
-    if( (funcText&0xFFFFFFFF0000FFFFLL) == 0xCCC300000000818BLL )
-    {
-        /* mov eax, [ecx+xx]; ret; */
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>16) & 0xffff;
-        this->dataWidth = 4;
-        return;
-    }
-    printf("bad accessor @0x%x\n", function);
 }
 
 bool Accessor::isConstant()

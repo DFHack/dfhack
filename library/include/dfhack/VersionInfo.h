@@ -77,6 +77,9 @@ namespace DFHack
         std::string getString (const std::string & key);
         OffsetGroup * getGroup ( const std::string & name );
 
+        bool getSafeOffset (const std::string & key, int32_t & out);
+        bool getSafeAddress (const std::string & key, uint32_t & out);
+
         void setOffset (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);
         void setOffsetValidity(const std::string& key, const DFHack::INVAL_TYPE inval = IS_VALID);
         void setAddress (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);

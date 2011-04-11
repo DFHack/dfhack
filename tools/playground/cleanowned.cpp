@@ -2,7 +2,7 @@
  * Confiscates and dumps garbage owned by dwarfs.
  */
 
-#include <stdio.h>
+#include <cstdio>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -88,16 +88,16 @@ int main (int argc, char *argv[])
     for (i=0;i<size;i++)
     {
         uint32_t curItem = p_items[i];
-        DFHack::t_item itm;
-        Items->getItemData(curItem, itm);
+        DFHack::dfh_item itm;
+        Items->readItem(curItem, itm);
 
-        if (!itm.header.flags.bits.owned)
+        if (!itm.base.flags.owned)
             continue;
 
         bool confiscate = false;
         bool dump = false;
 
-        if (itm.header.flags.bits.rotten)
+        if (itm.base.flags.rotten)
         {
             printf("Confiscating a rotten item: \t");
             confiscate = true;
@@ -108,7 +108,7 @@ int main (int argc, char *argv[])
             confiscate = true;
             dump = true;
         }
-        else if (dump_scattered && itm.header.flags.bits.on_ground)
+        else if (dump_scattered && itm.base.flags.on_ground)
         {
             printf("Confiscating and dumping litter: \t");
             confiscate = true;
@@ -122,20 +122,20 @@ int main (int argc, char *argv[])
 
         if (confiscate)
         {
-            itm.header.flags.bits.owned = 0;
+            itm.base.flags.owned = 0;
             if (dump)
-                itm.header.flags.bits.dump = 1;
+                itm.base.flags.dump = 1;
 
             if (!dry_run)
-                Items->setItemFlags(curItem, itm.header.flags);
+                Items->writeItem(itm);
 
             printf(
                 "%s (wear %d)",
-                Items->getItemDescription(curItem, Materials).c_str(),
+                Items->getItemDescription(itm, Materials).c_str(),
                 itm.wear_level
             );
 
-            int32_t owner = Items->getItemOwnerID(curItem);
+            int32_t owner = Items->getItemOwnerID(itm);
             int32_t owner_index = Creatures->FindIndexById(owner);
             std::string info;
 
@@ -153,17 +153,18 @@ int main (int argc, char *argv[])
             }
 
             printf("\n");
-
-/*            printf(
+/*
+            printf(
                 "%5d: %08x %08x (%d,%d,%d) #%08x [%d] %s - %s %s\n",
-                i, curItem, itm.header.flags.whole,
-                itm.header.x, itm.header.y, itm.header.z,
-                p->readDWord(curItem),
+                i, itm.origin, itm.base.flags.whole,
+                itm.base.x, itm.base.y, itm.base.z,
+                itm.base.vtable,
                 itm.wear_level,
                 Items->getItemClass(itm.matdesc.itemType).c_str(),
-                Items->getItemDescription(curItem, Materials).c_str(),
+                Items->getItemDescription(itm, Materials).c_str(),
                 info.c_str()
-                  );*/
+                  );
+                  */
         }
     }
 

@@ -1,27 +1,18 @@
 /*
- * dumps vtables, items types and class name for all items in game
- * best used this way : ./dfitemdump | sort -ug
+ * Simple, pretty item dump example.
  */
 
-// THIS IS NOT A GOOD EXAMPLE!
-// ... just look at all the magic numbers.
-// I'm not fixing it though.
-// ~px
-
-#include <stdio.h>
+#include <cstdio>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <climits>
 #include <vector>
+#include <cstring>
 using namespace std;
 
 #include <DFHack.h>
 #include <dfhack/DFVector.h>
-
-
-DFHack::Materials * Materials;
-DFHack::Items * Items;
 
 int main ()
 {
@@ -42,17 +33,36 @@ int main ()
 #endif
         return 1;
     }
+    DFHack::Materials * Materials = DF->getMaterials();
+    Materials->ReadAllMaterials();
+
+    DFHack::Items * Items = DF->getItems();
+    Items->Start();
 
     DFHack::VersionInfo * mem = DF->getMemoryInfo();
-    Materials = DF->getMaterials();
-    Materials->ReadAllMaterials();
     p = DF->getProcess();
+
+    // FIXME: tools should never be exposed to DFHack internals!
     DFHack::OffsetGroup* itemGroup = mem->getGroup("Items");
     DFHack::DfVector <uint32_t> p_items (p, itemGroup->getAddress("items_vector"));
     uint32_t size = p_items.size();
-	Items = DF->getItems();
 
-
+    for(int i = 0; i < size; i++)
+    {
+        DFHack::dfh_item itm;
+        memset(&itm, 0, sizeof(DFHack::dfh_item));
+        Items->readItem(p_items[i],itm);
+        printf(
+            "%5d: %08x %08x (%d,%d,%d) #%08x [%d] %s - %s\n",
+               i, itm.origin, itm.base.flags.whole,
+               itm.base.x, itm.base.y, itm.base.z,
+               itm.base.vtable,
+               itm.wear_level,
+               Items->getItemClass(itm.matdesc.itemType).c_str(),
+               Items->getItemDescription(itm, Materials).c_str()
+        );
+    }
+/*
     printf("type\tvtable\tname\tquality\tdecorate\n");
     for (i=0;i<size;i++)
     {
@@ -78,9 +88,9 @@ int main ()
         uint32_t quality = 0;
         bool hasDecorations;
         string desc = p->readClassName(vtable);
-		DFHack::t_item itm;
+        DFHack::dfh_item itm;
 
-		Items->getItemData(p_items[i], itm);
+        Items->readItem(p_items[i], itm);
 
         if ( (funct0&0xFFFFFFFFFF000000LL) != 0xCCCCC30000000000LL )
         {
@@ -226,7 +236,7 @@ int main ()
         }
         printf("\n");
     }
-
+*/
 #ifndef LINUX_BUILD
     cout << "Done. Press any key to continue" << endl;
     cin.ignore();

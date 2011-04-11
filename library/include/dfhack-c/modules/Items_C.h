@@ -37,9 +37,9 @@ extern "C" {
 DFHACK_EXPORT int Items_Start(DFHackObject* items);
 DFHACK_EXPORT int Items_Finish(DFHackObject* items);
 
-DFHACK_EXPORT char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObject* mats);
+DFHACK_EXPORT char* Items_getItemDescription(DFHackObject* items, dfh_item* item, DFHackObject* mats);
 DFHACK_EXPORT char* Items_getItemClass(DFHackObject* items, int32_t index);
-DFHACK_EXPORT int Items_getItemData(DFHackObject* items, uint32_t itemptr, t_item* item);
+DFHACK_EXPORT int Items_getItemData(DFHackObject* items, uint32_t itemptr, dfh_item* item);
 
 #ifdef __cplusplus
 }

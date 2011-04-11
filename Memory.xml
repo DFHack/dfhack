@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <DFHack>
-	<Base name="DF40d.xx">
-		<Offsets>
+    <Base name="DF40d.xx">
+        <Offsets>
             <Group name="vector" description="An STL vector.">
                 <HexValue name="sizeof" description="The total size in bytes." />
                 <Offset name="start" description="The offset where the actual start/end/alloc_end triplet is." />
@@ -31,16 +31,16 @@
                 <Offset name="second_words" description="Array of 7 indexes into the language vectors."/>
             </Group>
         </Offsets>
-	</Base>
-	<Version name="40d" base="DF40d.xx" os="windows">
-		<MD5 value="2c686c26307dcccd7c36cc79737ebe4f" />
-		<PETimeStamp value="0x48C330DF" />
-		<Offsets>
+    </Base>
+    <Version name="40d" base="DF40d.xx" os="windows">
+        <MD5 value="2c686c26307dcccd7c36cc79737ebe4f" />
+        <PETimeStamp value="0x48C330DF" />
+        <Offsets>
             <Group name="vector">
                 <HexValue name="sizeof" value="0x10" />
                 <Offset name="start" value="0x4" />
                 <!--
-				Maybe (fits offsets):
+                Maybe (fits offsets):
                 Vector layout in MSVC 8:
                 DWORD Allocator?
                 DWORD Start
@@ -61,8 +61,8 @@
                 <Offset name="nick" value="0x1C" />
                 <Offset name="second_words" value="0x38" />
             </Group>
-		</Offsets>
-	</Version>
+        </Offsets>
+    </Version>
     <Base name="DF2010">
         <Traits>
             <Trait name="Nervousness" id="0" level_5="Is a nervous wreck" level_4="Is always tense and jittery" level_3="Is often nervous" level_2="Has a calm demeanor" level_1="Has a very calm demeanor" level_0="Has an incredibly calm demeanor" />
@@ -1916,33 +1916,12 @@
                 <Address name="language_vector" value="0x016e553c"/>
                 <Address name="translation_vector" value="0x016e551c"/>
             </Group>
-            <!--
-            <Group name="Vegetation" valid="false">
-                <Address name="vector"/>
-                <Offset name="tree_desc_offset" valid="true"/>
-            </Group>
-            -->
-            <Group name="Items" valid="false">
-                <!-- most of those seem completely unused! -->
-                <Address name="items_vector" />
-                List of offsets in the VTable :
-                <Offset name="item_type_accessor" />
-                <Offset name="item_subtype_accessor" />
-                <Offset name="item_subindex_accessor" />
-                <Offset name="item_index_accessor" />
-                <Offset name="item_quality_accessor" />
-                <Offset name="item_improvement_vector" />
-                <Offset name="item_improvement_subindex" />
-                <Offset name="item_improvement_index" />
-                <Offset name="item_improvement_quality" />
-                <Offset name="item_type_accessor" />  (in the vtable)
-            </Group>
+            <Group name="Items" valid="false" />
             <Group name="World" valid="false">
                 <Address name="current_tick" description="Current time of the year" />
                 <Address name="current_year" description="Current year" />
                 <Address name="current_weather" value="0x14c9bb8" valid="true" />
             </Group>
-
         </Offsets>
     </Version>
     <Version name="v0.31.19 SDL" os="windows" base="v0.31.18 SDL">
@@ -1966,10 +1945,6 @@
 
                 <Group name="creature">
                     <Group name="advanced">
-                        <!--
-                        <Offset name="pregnancy" value="0x214" /> maybe?
-                        <Offset name="pregnancy_ptr" value="0x218" /> maybe?
-                        -->
                         <Offset name="birth_year" value="0x224" />
                         <Offset name="birth_time" value="0x228" />
                         <Offset name="inventory_vector" value="0x288" />
@@ -1986,15 +1961,6 @@
                 </Group>
                 <Group name="job" valid="false">
                     <Offset name="id" valid="true" />
-                    <Offset name="materials_vector" /> MISSING!
-                    <Offset name="type" /> MISSING!
-                    <Group name="material">
-                        <Offset name="flags" /> MISSING!
-                        <Offset name="maintype" /> MISSING!
-                        <Offset name="sectype1" /> MISSING!
-                        <Offset name="sectype2" /> MISSING!
-                        <Offset name="sectype3" /> MISSING!
-                    </Group>
                 </Group>
             </Group>
             <Group name="Maps" valid="true">
@@ -2076,22 +2042,6 @@
                 <Address name="language_vector" value="0x0171ea94"/>
                 <Address name="translation_vector" value="0x0171eab4"/>
             </Group>
-            <!--
-            <Group name="Items" valid="false">
-                <Address name="items_vector" />
-                List of offsets in the VTable :
-                <Offset name="item_type_accessor" />
-                <Offset name="item_subtype_accessor" />
-                <Offset name="item_subindex_accessor" />
-                <Offset name="item_index_accessor" />
-                <Offset name="item_quality_accessor" />
-                <Offset name="item_improvement_vector" />
-                <Offset name="item_improvement_subindex" />
-                <Offset name="item_improvement_index" />
-                <Offset name="item_improvement_quality" />
-                <Offset name="item_type_accessor" />  (in the vtable)
-            </Group>
-            -->
         </Offsets>
     </Version>
     <Version name="v0.31.20 SDL" os="windows" base="v0.31.19 SDL" rebase="0x6000" >
@@ -2181,11 +2131,6 @@
             </Group>
             <Group name="Maps">
                 <Group name="block">
-                    <!--
-                    <Offset name="vein_vector" value="0x8" />
-                    <Offset name="feature_local" value="0x24" />
-                    <Offset name="feature_global" value="0x28" />
-                    -->
                     <Offset name="mystery_offset" value="0x2C" />
                     <Offset name="vegetation_vector" value="0x64" />
                     <Offset name="type" value="0x7e" />

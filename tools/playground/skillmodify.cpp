@@ -42,6 +42,8 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/modules/Creatures.h>
 
+bool quiet;
+
 void usage(int argc, const char * argv[])
 {
     cout
@@ -50,7 +52,8 @@ void usage(int argc, const char * argv[])
         << "-q            : Suppress \"Press any key to continue\" at program termination" << endl
         << "-c creature   : Only show/modify this creature type instead of dwarfes" << endl
         << "-i id         : Only show/modify creature with this id" << endl
-        << "-nn           : Only show/modify creatures with no custom nickname" << endl
+        << "-nn           : Only show/modify creatures with no custom nickname (migrants)" << endl
+        << "--nicks       : Only show/modify creatures with custom nickname" << endl
         << "-ll           : List available labors" << endl
         << "-al <n>       : Add labor <n> to creature" << endl
         << "-rl <n>       : Remove labor <n> from creature" << endl
@@ -65,21 +68,31 @@ void usage(int argc, const char * argv[])
         //<< "--sethappiness <n> : Set happiness to n" << endl
         << "-f            : Force an action" << endl
         << endl
-        << "Example 1: Show all creatures" << endl
-        << argv[0] << endl
+        << "Example 1: Show all dwarfs" << endl
+        << argv[0] << " -c Dwarf" << endl
         << endl
-        << "Example 2: Just show dwarfs" << endl
-        << argv[0] << " -c DWARF" << endl
+        << "Example 2: Show all Yaks" << endl
+        << argv[0] << " -c Yak" << endl
         << endl
-        << "Example 3: Remove skill from dwarf 32" << endl
+        << "Example 3: Remove all skills from dwarf 32" << endl
         << argv[0] << " -i 32 -ras" << endl
         << endl
         << "Example 4: Remove all skills and labors from dwarfs with no custom nickname" << endl
         << argv[0] << " -c DWARF -nn -ras -ral" << endl
         << endl
-        << "Example 5: Additionally assign the hauling labors and engraving" << endl
-        << argv[0] << " -c DWARF -nn -ras -ral -me -ah" << endl
+        << "Example 5: Add hauling labors to all migrants" << endl
+        << argv[0] << " -c DWARF -nn -ah" << endl
+        << endl
+        << "Example 6: Show list of labor ids" << endl
+        << argv[0] << " -c DWARF -ll" << endl
+        << endl
+        << "Example 7: Add engraving labor to all migrants" << endl
+        << argv[0] << " -c DWARF -nn -al 13" << endl
         ;
+	if (quiet == false) {
+		cout << "Press any key to continue" << endl;
+		cin.ignore();
+	}
 }
 
 enum likeType
@@ -265,7 +278,6 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
 
 int main (int argc, const char* argv[])
 {
-    bool quiet = true;
     // let's be more useful when double-clicked on windows
 #ifndef LINUX_BUILD
     quiet = false;
@@ -315,6 +327,10 @@ int main (int argc, const char* argv[])
         if(arg_cur == "-q")
         {
             quiet = true;
+        }
+        else if(arg_cur == "+q")
+        {
+            quiet = false;
         }
         else if(arg_cur == "-ras")
         {

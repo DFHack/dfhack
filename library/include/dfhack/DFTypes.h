@@ -128,10 +128,10 @@ struct naked_itemflags
     unsigned int u_ngrd2 : 1;      // 0000 0010 unknown, lost (artifact)?, unseen
     unsigned int in_building : 1;  // 0000 0020 Part of a building (including mechanisms, bodies in coffins)
     unsigned int u_ngrd3 : 1;      // 0000 0040 unknown, unseen
-    unsigned int dead_body : 1;    // 0000 0080 Dwarf's dead body or body part
+    unsigned int dead_dwarf : 1;   // 0000 0080 Dwarf's dead body or body part
 
     unsigned int rotten : 1;       // 0000 0100 Rotten food
-    unsigned int spider_web : 1;   // 0000 0200 Spider web
+    unsigned int spider_web : 1;   // 0000 0200 Thread in spider web
     unsigned int construction : 1; // 0000 0400 Material used in construction
     unsigned int u_ngrd5 : 1;      // 0000 0800 unknown, unseen
 

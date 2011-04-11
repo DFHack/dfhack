@@ -326,6 +326,9 @@ class Items::Private
         Process * owner;
         std::map<int32_t, ItemDesc *> descType;
         std::map<uint32_t, ItemDesc *> descVTable;
+        uint32_t refVectorOffset;
+        uint32_t refIDOffset;
+        uint32_t ownerRefVTable;
 };
 
 Items::Items(DFContextShared * d_)
@@ -333,6 +336,7 @@ Items::Items(DFContextShared * d_)
     d = new Private;
     d->d = d_;
     d->owner = d_->p;
+    d->ownerRefVTable = d->refVectorOffset = d->refIDOffset = 0;
 }
 
 bool Items::Start()
@@ -383,6 +387,40 @@ bool Items::getItemData(uint32_t itemptr, DFHack::t_item &item)
 void Items::setItemFlags(uint32_t itemptr, t_itemflags new_flags)
 {
     d->owner->writeDWord(itemptr + 0x0C, new_flags.whole);
+}
+
+int32_t Items::getItemOwnerID(uint32_t itemptr)
+{
+    if (!d->refVectorOffset)
+    {
+        OffsetGroup * Items = d->owner->getDescriptor()->getGroup("Items");
+        d->refVectorOffset = Items->getOffset("item_ref_vector");
+        d->refIDOffset = Items->getOffset("owner_ref_id_field");
+    }
+
+    DFHack::DfVector<uint32_t> p_refs(d->owner, itemptr + d->refVectorOffset);
+    uint32_t size = p_refs.size();
+
+    for (uint32_t i=0;i<size;i++)
+    {
+        uint32_t curRef = p_refs[i];
+        uint32_t vtbl = d->owner->readDWord(curRef);
+
+        if (!d->ownerRefVTable)
+        {
+            std::string className = d->owner->readClassName(vtbl);
+            if (className == "general_ref_unit_itemownerst")
+                d->ownerRefVTable = vtbl;
+            else
+                continue;
+        }
+        else if (d->ownerRefVTable != vtbl)
+            continue;
+
+        return d->owner->readDWord(curRef + d->refIDOffset);
+    }
+
+    return -1;
 }
 
 std::string Items::getItemClass(int32_t index)

@@ -106,6 +106,8 @@ struct Creatures::Private
     uint32_t creature_module;
     uint32_t dwarf_race_index_addr;
     uint32_t dwarf_civ_id_addr;
+    bool IdMapReady;
+    std::map<int32_t, int32_t> IdMap;
     DfVector <uint32_t> *p_cre;
     DFContextShared *d;
     Process *owner;
@@ -123,6 +125,7 @@ Creatures::Creatures(DFContextShared* _d)
     d->owner = _d->p;
     d->Inited = false;
     d->Started = false;
+    d->IdMapReady = false;
     d->p_cre = NULL;
     d->d->InitReadNames(); // throws on error
     VersionInfo * minfo = d->d->offset_descriptor;
@@ -228,6 +231,7 @@ bool Creatures::Start( uint32_t &numcreatures )
         d->p_cre = new DfVector <uint32_t> (d->owner, d->creatures.vector);
         d->Started = true;
         numcreatures =  d->p_cre->size();
+        d->IdMapReady = false;
         return true;
     }
     return false;
@@ -405,6 +409,35 @@ int32_t Creatures::ReadCreatureInBox (int32_t index, t_creature & furball,
         index++;
     }
     return -1;
+}
+
+int32_t Creatures::FindIndexById(int32_t creature_id)
+{
+    if (!d->Started || !d->Ft_basic)
+        return -1;
+
+    if (!d->IdMapReady)
+    {
+        d->IdMap.clear();
+
+        Process * p = d->owner;
+        Private::t_offsets &offs = d->creatures;
+
+        uint32_t size = d->p_cre->size();
+        for (uint32_t index = 0; index < size; index++)
+        {
+            uint32_t temp = d->p_cre->at(index);
+            int32_t id = p->readDWord (temp + offs.id_offset);
+            d->IdMap[id] = index;
+        }
+    }
+
+    std::map<int32_t,int32_t>::iterator it;
+    it = d->IdMap.find(creature_id);
+    if(it == d->IdMap.end())
+        return -1;
+    else
+        return it->second;
 }
 
 bool Creatures::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])

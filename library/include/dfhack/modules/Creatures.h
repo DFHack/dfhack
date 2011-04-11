@@ -320,6 +320,8 @@ namespace DFHack
         bool ReadInventoryIdx(const uint32_t index, std::vector<uint32_t> & item);
         bool ReadInventoryPtr(const uint32_t index, std::vector<uint32_t> & item);
 
+        int32_t FindIndexById(int32_t id);
+
         /* Getters */
         uint32_t GetDwarfRaceIndex ( void );
         int32_t GetDwarfCivId ( void );

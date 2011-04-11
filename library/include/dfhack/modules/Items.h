@@ -47,6 +47,7 @@ public:
     std::string getItemDescription(uint32_t itemptr, Materials * Materials);
     std::string getItemClass(int32_t index);
     bool getItemData(uint32_t itemptr, t_item & item);
+    int32_t getItemOwnerID(uint32_t itemptr);
     void setItemFlags(uint32_t itemptr, t_itemflags new_flags);
 private:
     class Private;

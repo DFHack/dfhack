@@ -80,6 +80,8 @@ DFHACK_TOOL(dfprinttiletypes printtiletypes.cpp)
 # Will have many options in the future.
 DFHACK_TOOL(dfhellhole hellhole.cpp)
 
+DFHACK_TOOL(dfcleanowned cleanowned.cpp)
+
 # this needs the C bindings
 IF(BUILD_DFHACK_C_BINDINGS)
     # The C bindings won't be real C bindings until this compiles.

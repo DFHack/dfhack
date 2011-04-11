@@ -124,46 +124,46 @@ struct t_item_df40d
 //They all seem to be valid on 40d as well
 struct naked_itemflags
 {
-    unsigned int on_ground : 1; // Item on ground
-    unsigned int in_job : 1; // item currently being used in a job
-    unsigned int in_inventory : 1; // Item in a creatures inventory
-    unsigned int u_ngrd1 : 1; // only occurs when not on ground, unknown function
-    
-    unsigned int in_workshop : 1; // Item is in a workshops inventory
-    unsigned int u_ngrd2 : 1; // only occurs when not on ground, unknown function
-    unsigned int u_ngrd3 : 1; // only occurs when not on ground, unknown function
-    unsigned int rotten : 1; // Item is rotten
-    
-    unsigned int unk1 : 1; // unknown function
-    unsigned int u_ngrd4 : 1; // only occurs when not on ground, unknown function
-    unsigned int unk2 : 1; // unknown function
-    unsigned int u_ngrd5 : 1; // only occurs when not on ground, unknown function
+    unsigned int on_ground : 1;    // 0000 0001 Item on ground
+    unsigned int in_job : 1;       // 0000 0002 Item currently being used in a job
+    unsigned int u_ngrd1 : 1;      // 0000 0004 unknown, unseen
+    unsigned int in_inventory : 1; // 0000 0008 Item in a creature or workshop inventory
 
-    unsigned int unk3 : 1; // unknown function
-    unsigned int u_ngrd6 : 1; // only occurs when not on ground, unknown function
-    unsigned int narrow : 1; // Item is narrow
-    unsigned int u_ngrd7 : 1; // only occurs when not on ground, unknown function
-            
-    unsigned int worn : 1; // item shows wear
-    unsigned int unk4 : 1; // unknown function
-    unsigned int u_ngrd8 : 1; // only occurs when not on ground, unknown function
-    unsigned int forbid : 1; // designate forbid item
+    unsigned int u_ngrd2 : 1;      // 0000 0010 unknown, lost (artifact)?, unseen
+    unsigned int in_building : 1;  // 0000 0020 Part of a building (including mechanisms, bodies in coffins)
+    unsigned int u_ngrd3 : 1;      // 0000 0040 unknown, unseen
+    unsigned int dead_dwarf : 1;   // 0000 0080 Dwarf's dead body or body part
+
+    unsigned int rotten : 1;       // 0000 0100 Rotten food
+    unsigned int spider_web : 1;   // 0000 0200 Thread in spider web
+    unsigned int construction : 1; // 0000 0400 Material used in construction
+    unsigned int u_ngrd5 : 1;      // 0000 0800 unknown, unseen
+
+    unsigned int unk3 : 1;         // 0000 1000 unknown, unseen
+    unsigned int u_ngrd6 : 1;      // 0000 2000 unknown, unseen
+    unsigned int foreign : 1;      // 0000 4000 Item is imported
+    unsigned int u_ngrd7 : 1;      // 0000 8000 unknown, unseen
+
+    unsigned int owned : 1;        // 0001 0000 Item is owned by a dwarf
+    unsigned int unk4 : 1;         // 0002 0000 unknown, unseen
+    unsigned int artifact1 : 1;    // 0004 0000 Artifact ?
+    unsigned int forbid : 1;       // 0008 0000 Forbidden item
     
-    unsigned int unk5 : 1; // unknown function
-    unsigned int dump : 1; // designate dump item
-    unsigned int on_fire: 1; //indicates if item is on fire, Will Set Item On Fire if Set!
-    unsigned int melt : 1; // designate melt item, if item cannot be melted, does nothing it seems
+    unsigned int unk5 : 1;         // 0010 0000 unknown, unseen
+    unsigned int dump : 1;         // 0020 0000 Designated for dumping
+    unsigned int on_fire: 1;       // 0040 0000 Indicates if item is on fire, Will Set Item On Fire if Set!
+    unsigned int melt : 1;         // 0080 0000 Designated for melting, if applicable
     
     // 0100 0000 - 8000 0000
-    unsigned int hidden : 1; // designate hide item
-    unsigned int u_ngrd9 : 1; // only occurs when not on ground, unknown function
-    unsigned int unk6 : 1; // unknown function
-    unsigned int unk7 : 1; // unknown function
+    unsigned int hidden : 1;       // 0100 0000 Hidden item
+    unsigned int in_chest : 1;     // 0200 0000 Stored in chest/part of well?
+    unsigned int unk6 : 1;         // 0400 0000 unknown, unseen
+    unsigned int artifact2 : 1;    // 0800 0000 Artifact ?
     
-    unsigned int unk8 : 1; // unknown function
-    unsigned int unk9 : 1; // unknown function
-    unsigned int unk10 : 1; // unknown function
-    unsigned int unk11 : 1; // unknown function
+    unsigned int unk8 : 1;         // 1000 0000 unknown, unseen
+    unsigned int unk9 : 1;         // 2000 0000 unknown, set when viewing details
+    unsigned int unk10 : 1;        // 4000 0000 unknown, unseen
+    unsigned int unk11 : 1;        // 8000 0000 unknown, unseen
 };
 
 union t_itemflags

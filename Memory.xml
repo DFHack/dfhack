@@ -870,7 +870,7 @@
                     <Offset name="flags2"  description="Second set of flags" />
                     <Offset name="caste"  description="Caste of the creature. Same as sex most of the time." />
                     <Offset name="sex"  description="Sex of the creature." />
-                    <Offset name="id"  description="Unique ID of the creature, probably index into some global vector.." />
+                    <Offset name="id"  description="Unique ID of the creature, seems to be used for binary search in the creature vector." />
                     <Offset name="civ" description="What civ the creature belongs to." />
                     <Group name="advanced">
                         <Offset name="pickup_equipment_bit" description="Setting this makes creatures re-check the status of their equip." />
@@ -995,7 +995,9 @@
                 <Offset name="item_improvement_subindex" />
                 <Offset name="item_improvement_index" />
                 <Offset name="item_improvement_quality" />
-                <Offset name="item_type_accessor" />  (in the vtable)
+                <Offset name="item_wear_accessor" />
+                <Offset name="item_ref_vector" description="Contains the owner among other things"/>
+                <Offset name="owner_ref_id_field" description="Creature ID offset in general_ref_unit_itemownerst"/>
             </Group>
             <Group name="World">
                 <Address name="current_tick" description="Current time of the year" />
@@ -2947,6 +2949,17 @@
             <Group name="World">
                 <Address name="control_mode" value="0x8c3de90" />
                 <Address name="game_mode" value="0x8c3deA0" />
+            </Group>
+            <Group name="Items">
+                <Address name="items_vector" value="0x940b1fc" />
+                <Offset name="item_type_accessor" value="0x0" />
+                <Offset name="item_subtype_accessor" value="0x4" />
+                <Offset name="item_subindex_accessor" value="0x8" />
+                <Offset name="item_index_accessor" value="0xC" />
+                <Offset name="item_quality_accessor" value="0x25C" />
+                <Offset name="item_wear_accessor" value="0xCC" />
+                <Offset name="item_ref_vector" value="0x24" />
+                <Offset name="owner_ref_id_field" value="0x4" />
             </Group>
         </Offsets>
     </Version>

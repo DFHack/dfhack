@@ -51,13 +51,19 @@ enum accessor_type {ACCESSOR_CONSTANT, ACCESSOR_INDIRECT, ACCESSOR_DOUBLE_INDIRE
 /* this is used to store data about the way accessors work */
 class DFHACK_EXPORT Accessor
 {
+public:
+    enum DataWidth {
+        Data32 = 0,
+        DataSigned16,
+        DataUnsigned16
+    };
 private:
     accessor_type type;
     int32_t constant;
-    uint32_t offset1;
-    uint32_t offset2;
+    int32_t offset1;
+    int32_t offset2;
     Process * p;
-    uint32_t dataWidth;
+    DataWidth dataWidth;
 public:
     Accessor(uint32_t function, Process * p);
     Accessor(accessor_type type, int32_t constant, uint32_t offset1, uint32_t offset2, uint32_t dataWidth, Process * p);
@@ -84,6 +90,7 @@ private:
     Accessor * ASubIndex;
     Accessor * AIndex;
     Accessor * AQuality;
+    Accessor * AWear;
     Process * p;
     bool hasDecoration;
 public:
@@ -95,89 +102,138 @@ public:
     std::vector<ItemImprovementDesc> improvement;
 };
 
+inline bool do_match(uint32_t &ptr, uint64_t val, int size, uint64_t mask, uint64_t check)
+{
+    if ((val & mask) == check) {
+        ptr += size;
+        return true;
+    }
+    return false;
+}
+
+static bool match_MEM_ACCESS(uint32_t &ptr, uint64_t v, int isize, int in_reg, int &out_reg, int &offset)
+{
+    // ESP & EBP are hairy
+    if (in_reg == 4 || in_reg == 5)
+        return false;
+
+    if ((v & 7) != in_reg)
+        return false;
+
+    out_reg = (v>>3) & 7;
+
+    switch ((v>>6)&3) {
+        case 0: // MOV REG2, [REG]
+            offset = 0;
+            ptr += isize+1;
+            return true;
+        case 1: // MOV REG2, [REG+offset8]
+            offset = (signed char)(v >> 8);
+            ptr += isize+2;
+            return true;
+        case 2: // MOV REG2, [REG+offset32]
+            offset = (signed int)(v >> 8);
+            ptr += isize+5;
+            return true;
+        default:
+            return false;
+    }
+}
+
+static bool match_MOV_MEM(uint32_t &ptr, uint64_t v, int in_reg, int &out_reg, int &offset, Accessor::DataWidth &size) 
+{
+    int prefix = 0;
+    size = Accessor::Data32;
+    if ((v & 0xFF) == 0x8B) { // MOV
+        v >>= 8;
+        prefix = 1;
+    }
+    else if ((v & 0xFFFF) == 0x8B66) { // MOV 16-bit
+        v >>= 16;
+        prefix = 2;
+        size = Accessor::DataUnsigned16;
+    }
+    else if ((v & 0xFFFF) == 0xBF0F) { // MOVSX
+        v >>= 16;
+        prefix = 2;
+        size = Accessor::DataSigned16;
+    }
+    else if ((v & 0xFFFF) == 0xB70F) { // MOVZ
+        v >>= 16;
+        prefix = 2;
+        size = Accessor::DataUnsigned16;
+    }
+    else
+        return false;
+    
+    return match_MEM_ACCESS(ptr, v, prefix, in_reg, out_reg, offset);
+}
 
 // FIXME: this is crazy
 Accessor::Accessor(uint32_t function, Process *p)
 {
     this->p = p;
-    this->constant = 0;
-    this->offset1 = 0;
-    this->offset2 = 0;
     this->type = ACCESSOR_CONSTANT;
-    this->dataWidth = 2;
-    uint64_t funcText = p->readQuad(function);
-    if( funcText == 0xCCCCCCCCCCC3C033LL )
+    uint32_t ptr = function;
+    uint64_t v = p->readQuad(ptr);
+    int data_reg = -1;
+
+    if (do_match(ptr, v, 2, 0xFFFF, 0xC033) ||
+        do_match(ptr, v, 2, 0xFFFF, 0xC031)) // XOR EAX, EAX
     {
-        return;
+        data_reg = 0;
+        this->constant = 0;
     }
-    if( funcText == 0xCCCCCCCCC3FFC883LL )
+    else if (do_match(ptr, v, 3, 0xFFFFFF, 0xFFC883)) // OR EAX, -1
     {
-        /* or eax,-1; ret; */
+        data_reg = 0;
         this->constant = -1;
-        return;
     }
-    if( (funcText&0xFFFFFFFFFF0000FFLL) == 0xCCCCC300000000B8LL )
+    else if (do_match(ptr, v, 5, 0xFF, 0xB8)) // MOV EAX,imm
     {
-        /* mov eax, xx; ret; */
-        this->constant = (funcText>>8) & 0xffff;
-        return;
+        data_reg = 0;
+        this->constant = (v>>8) & 0xFFFFFFFF;
     }
-    if( (funcText&0xFFFFFF0000FFFFFFLL) == 0xC300000000818B66LL )
+    else
     {
-        /* mov ax, [ecx+xx]; ret; */
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>24) & 0xffff;
-        return;
-    }
-    if( (funcText&0x000000FF00FFFFFFLL) == 0x000000C300418B66LL )
-    {
-        /* mov ax, [ecx+xx]; ret; (shorter instruction)*/
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>24) & 0xff;
-        return;
-    }
-    if( (funcText&0x00000000FF00FFFFLL) == 0x00000000C300418BLL )
-    {
-        /* mov eax, [ecx+xx]; ret; */
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>16) & 0xff;
-        this->dataWidth = 4;
-        return;
-    }
-    if( (funcText&0xFFFFFFFF0000FFFFLL) == 0x8B6600000000818BLL )
-    {
-        uint64_t funcText2 = p->readQuad(function+8);
-        if( (funcText2&0xFFFFFFFFFFFF00FFLL) == 0xCCCCCCCCCCC30040LL )
+        DataWidth xsize;
+        int ptr_reg = 1, tmp; // ECX
+
+        // MOV REG,[ESP+4]
+        if (do_match(ptr, v, 4, 0xFFFFC7FFU, 0x0424448B))
         {
-            this->type = ACCESSOR_DOUBLE_INDIRECT;
-            this->offset1 = (funcText>>16) & 0xffff;
-            this->offset2 = (funcText2>>8) & 0xff;
-            return;
+            ptr_reg = (v>>11)&7;
+            v = p->readQuad(ptr);
+        }
+
+        if (match_MOV_MEM(ptr, v, ptr_reg, tmp, this->offset1, xsize)) {
+            data_reg = tmp;
+            this->type = ACCESSOR_INDIRECT;
+            this->dataWidth = xsize;
+
+            if (xsize == Data32)
+            {
+                v = p->readQuad(ptr);
+            
+                if (match_MOV_MEM(ptr, v, data_reg, tmp, this->offset2, xsize)) {
+                    data_reg = tmp;
+                    this->type = ACCESSOR_DOUBLE_INDIRECT;
+                    this->dataWidth = xsize;
+                }
+            }
         }
     }
-    if( (funcText&0xFFFFFF0000FFFFFFLL) == 0xC30000000081BF0FLL )
-    {
-        /* movsx   eax, word ptr [ecx+xx]; ret */
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>24) & 0xffff;
+    
+    v = p->readQuad(ptr);
+    
+    if (data_reg == 0 && do_match(ptr, v, 1, 0xFF, 0xC3)) // RET
         return;
-    }
-    if( (funcText&0x000000FF00FFFFFFLL) == 0x000000C30041BF0FLL )
+    else
     {
-        /* movsx   eax, word ptr [ecx+xx]; ret (shorter opcode)*/
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>24) & 0xff;
-        return;
+        this->type = ACCESSOR_CONSTANT;
+        this->constant = 0;
+        printf("bad accessor @0x%x\n", function);
     }
-    if( (funcText&0xFFFFFFFF0000FFFFLL) == 0xCCC300000000818BLL )
-    {
-        /* mov eax, [ecx+xx]; ret; */
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>16) & 0xffff;
-        this->dataWidth = 4;
-        return;
-    }
-    printf("bad accessor @0x%x\n", function);
 }
 
 bool Accessor::isConstant()
@@ -190,29 +246,26 @@ bool Accessor::isConstant()
 
 int32_t Accessor::getValue(uint32_t objectPtr)
 {
+    int32_t offset = this->offset1;
+
     switch(this->type)
     {
     case ACCESSOR_CONSTANT:
         return this->constant;
         break;
+    case ACCESSOR_DOUBLE_INDIRECT:
+        objectPtr = p->readDWord(objectPtr + this->offset1);
+        offset = this->offset2;
+        // fallthrough
     case ACCESSOR_INDIRECT:
         switch(this->dataWidth)
         {
-        case 2:
-            return (int16_t) p->readWord(objectPtr + this->offset1);
-        case 4:
-            return p->readDWord(objectPtr + this->offset1);
-        default:
-            return -1;
-        }
-        break;
-    case ACCESSOR_DOUBLE_INDIRECT:
-        switch(this->dataWidth)
-        {
-        case 2:
-            return (int16_t) p->readWord(p->readDWord(objectPtr + this->offset1) + this->offset2);
-        case 4:
-            return p->readDWord(p->readDWord(objectPtr + this->offset1) + this->offset2);
+        case Data32:
+            return p->readDWord(objectPtr + offset);
+        case DataSigned16:
+            return (int16_t) p->readWord(objectPtr + offset);
+        case DataUnsigned16:
+            return (uint16_t) p->readWord(objectPtr + offset);
         default:
             return -1;
         }
@@ -230,6 +283,7 @@ ItemDesc::ItemDesc(uint32_t VTable, Process *p)
     uint32_t funcOffsetC = Items->getOffset("item_subindex_accessor");
     uint32_t funcOffsetD = Items->getOffset("item_index_accessor");
     uint32_t funcOffsetQuality = Items->getOffset("item_quality_accessor");
+    uint32_t funcOffsetWear = Items->getOffset("item_wear_accessor");
     this->vtable = VTable;
     this->p = p;
     this->className = p->readClassName(VTable).substr(5);
@@ -239,6 +293,7 @@ ItemDesc::ItemDesc(uint32_t VTable, Process *p)
     this->ASubIndex = new Accessor( p->readDWord( VTable + funcOffsetC ), p);
     this->AIndex = new Accessor( p->readDWord( VTable + funcOffsetD ), p);
     this->AQuality = new Accessor( p->readDWord( VTable + funcOffsetQuality ), p);
+    this->AWear = new Accessor( p->readDWord( VTable + funcOffsetWear ), p);
     this->hasDecoration = false;
     if(this->AMainType->isConstant())
         this->mainType = this->AMainType->getValue(0);
@@ -251,12 +306,16 @@ ItemDesc::ItemDesc(uint32_t VTable, Process *p)
 
 bool ItemDesc::getItem(uint32_t itemptr, DFHack::t_item &item)
 {
+    this->p->read(itemptr+4, sizeof(t_item_header), (uint8_t*)&item.header);
     item.matdesc.itemType = this->AMainType->getValue(itemptr);
     item.matdesc.subType = this->ASubType->getValue(itemptr);
     item.matdesc.subIndex = this->ASubIndex->getValue(itemptr);
     item.matdesc.index = this->AIndex->getValue(itemptr);
     item.quality = this->AQuality->getValue(itemptr);
     item.quantity = 1; /* TODO */
+    // Note: this accessor returns a 32-bit value with the higher
+    // half sometimes containing garbage, so the cast is essential:
+    item.wear_level = (int16_t)this->AWear->getValue(itemptr);
     return true;
 }
 
@@ -267,6 +326,9 @@ class Items::Private
         Process * owner;
         std::map<int32_t, ItemDesc *> descType;
         std::map<uint32_t, ItemDesc *> descVTable;
+        uint32_t refVectorOffset;
+        uint32_t refIDOffset;
+        uint32_t ownerRefVTable;
 };
 
 Items::Items(DFContextShared * d_)
@@ -274,6 +336,7 @@ Items::Items(DFContextShared * d_)
     d = new Private;
     d->d = d_;
     d->owner = d_->p;
+    d->ownerRefVTable = d->refVectorOffset = d->refIDOffset = 0;
 }
 
 bool Items::Start()
@@ -319,6 +382,45 @@ bool Items::getItemData(uint32_t itemptr, DFHack::t_item &item)
         desc = it->second;
 
     return desc->getItem(itemptr, item);
+}
+
+void Items::setItemFlags(uint32_t itemptr, t_itemflags new_flags)
+{
+    d->owner->writeDWord(itemptr + 0x0C, new_flags.whole);
+}
+
+int32_t Items::getItemOwnerID(uint32_t itemptr)
+{
+    if (!d->refVectorOffset)
+    {
+        OffsetGroup * Items = d->owner->getDescriptor()->getGroup("Items");
+        d->refVectorOffset = Items->getOffset("item_ref_vector");
+        d->refIDOffset = Items->getOffset("owner_ref_id_field");
+    }
+
+    DFHack::DfVector<uint32_t> p_refs(d->owner, itemptr + d->refVectorOffset);
+    uint32_t size = p_refs.size();
+
+    for (uint32_t i=0;i<size;i++)
+    {
+        uint32_t curRef = p_refs[i];
+        uint32_t vtbl = d->owner->readDWord(curRef);
+
+        if (!d->ownerRefVTable)
+        {
+            std::string className = d->owner->readClassName(vtbl);
+            if (className == "general_ref_unit_itemownerst")
+                d->ownerRefVTable = vtbl;
+            else
+                continue;
+        }
+        else if (d->ownerRefVTable != vtbl)
+            continue;
+
+        return d->owner->readDWord(curRef + d->refIDOffset);
+    }
+
+    return -1;
 }
 
 std::string Items::getItemClass(int32_t index)

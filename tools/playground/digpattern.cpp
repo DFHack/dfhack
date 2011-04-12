@@ -178,7 +178,7 @@ int main (int argc, const char* argv[])
 
     DFHack::t_designation des = MCache->designationAt(xy);
     int16_t tt = MCache->tiletypeAt(xy);
-    int16_t veinmat = MCache->materialAt(xy);
+    int16_t veinmat = MCache->veinMaterialAt(xy);
 
     /*
     if( veinmat == -1 )

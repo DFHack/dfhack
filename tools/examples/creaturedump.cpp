@@ -197,12 +197,12 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
         {
             cout << ", custom profession: " << creature.custom_profession;
         }
-        /*
+        
         if(creature.current_job.active)
         {
             cout << ", current job: " << mem->getJob(creature.current_job.jobId);
         }
-        */
+        
         cout << endl;
         dayoflife = creature.birth_year*12*28 + creature.birth_time/1200;
         cout << "Born on the year " << creature.birth_year << ", month " << (creature.birth_time/1200/28) << ", day " << ((creature.birth_time/1200) % 28 + 1) << ", " << dayoflife << " days lived." << endl;

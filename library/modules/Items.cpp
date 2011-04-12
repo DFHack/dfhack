@@ -485,12 +485,7 @@ std::string Items::getItemClass(int32_t index)
 
 std::string Items::getItemDescription(const dfh_item & item, Materials * Materials)
 {
-    /*
-    DFHack::t_item item;
     std::string out;
-
-    if(!this->getItemData(itemptr, item))
-        return "??";
     switch(item.quality)
     {
         case 0: break;
@@ -504,7 +499,5 @@ std::string Items::getItemDescription(const dfh_item & item, Materials * Materia
     out.append(Materials->getDescription(item.matdesc));
     out.append(" ");
     out.append(this->getItemClass(item.matdesc.itemType));
-    */
-    //return out;
-    return getItemClass(item.matdesc.itemType);
+    return out;
 }

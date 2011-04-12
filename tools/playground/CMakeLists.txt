@@ -80,6 +80,17 @@ DFHACK_TOOL(dfprinttiletypes printtiletypes.cpp)
 # Will have many options in the future.
 DFHACK_TOOL(dfhellhole hellhole.cpp)
 
+# skillmodify
+# Author: raoulxq
+# Lets modify skills and labors of dwarfs and other creatures
+# Allows mass-modify, esp. for all immigrants
+DFHACK_TOOL(dfskillmodify skillmodify.cpp)
+
+# digpattern
+# Author: raoulxq
+# Dig a specific pattern (in this case 3x3 bedrooms, modify as you like)
+DFHACK_TOOL(dfdigpattern digpattern.cpp)
+
 DFHACK_TOOL(dfcleanowned cleanowned.cpp)
 
 # this needs the C bindings

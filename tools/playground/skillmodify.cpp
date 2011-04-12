@@ -670,17 +670,24 @@ int main (int argc, const char* argv[])
                             if (remove_labors) {
                                 cout << "Removing labors..." << endl;
                                 for(unsigned int lab = 0; lab < NUM_CREATURE_LABORS; lab++) {
-                                    creature.labors[lab] = 0;
+                                    if (creature.labors[lab]) 
+                                    {
+                                        cout << "Removing labor " << int(hauler_labors[lab]) << "..." << endl;
+                                        creature.labors[lab] = 0;
+                                    }
                                 }
                             }
 
                             if (remove_hauler) {
-                                cout << "Removing hauler labors..." << endl;
                                 for (int labs=0;
                                         labs < sizeof(hauler_labors)/sizeof(hauler_labors[0]);
                                         labs++)
                                 {
-                                    creature.labors[labs] = 0;
+                                    if (creature.labors[hauler_labors[labs]]) 
+                                    {
+                                        cout << "Removing labor " << int(hauler_labors[labs]) << "..." << endl;
+                                        creature.labors[hauler_labors[labs]] = 0;
+                                    }
                                 }
                             }
 
@@ -690,7 +697,11 @@ int main (int argc, const char* argv[])
                                         labs < sizeof(hauler_labors)/sizeof(hauler_labors[0]);
                                         labs++)
                                 {
-                                    creature.labors[labs] = 1;
+                                    if (creature.labors[hauler_labors[labs]] == 0) 
+                                    {
+                                        cout << "Adding labor " << int(hauler_labors[labs]) << "..." << endl;
+                                        creature.labors[hauler_labors[labs]] = 1;
+                                    }
                                 }
                             }
                             if (Creatures->WriteLabors(creature_idx, creature.labors) == true) {

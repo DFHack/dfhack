@@ -156,10 +156,10 @@ void usage(int argc, const char * argv[])
         << "Example 7: Add engraving labor to all migrants (get the id from the list of labor ids)" << endl
         << argv[0] << " -c DWARF -nn -al 13" << endl
         ;
-	if (quiet == false) {
-		cout << "Press any key to continue" << endl;
-		cin.ignore();
-	}
+        if (quiet == false) {
+            cout << "Press any key to continue" << endl;
+            cin.ignore();
+        }
 }
 
 DFHack::Materials * Materials;
@@ -670,11 +670,7 @@ int main (int argc, const char* argv[])
                             if (remove_labors) {
                                 cout << "Removing labors..." << endl;
                                 for(unsigned int lab = 0; lab < NUM_CREATURE_LABORS; lab++) {
-                                    if (creature.labors[lab]) 
-                                    {
-                                        cout << "Removing labor " << int(hauler_labors[lab]) << "..." << endl;
-                                        creature.labors[lab] = 0;
-                                    }
+                                    creature.labors[lab] = 0;
                                 }
                             }
 
@@ -683,11 +679,7 @@ int main (int argc, const char* argv[])
                                         labs < sizeof(hauler_labors)/sizeof(hauler_labors[0]);
                                         labs++)
                                 {
-                                    if (creature.labors[hauler_labors[labs]]) 
-                                    {
-                                        cout << "Removing labor " << int(hauler_labors[labs]) << "..." << endl;
-                                        creature.labors[hauler_labors[labs]] = 0;
-                                    }
+                                    creature.labors[hauler_labors[labs]] = 0;
                                 }
                             }
 
@@ -697,11 +689,7 @@ int main (int argc, const char* argv[])
                                         labs < sizeof(hauler_labors)/sizeof(hauler_labors[0]);
                                         labs++)
                                 {
-                                    if (creature.labors[hauler_labors[labs]] == 0) 
-                                    {
-                                        cout << "Adding labor " << int(hauler_labors[labs]) << "..." << endl;
-                                        creature.labors[hauler_labors[labs]] = 1;
-                                    }
+                                    creature.labors[hauler_labors[labs]] = 1;
                                 }
                             }
                             if (Creatures->WriteLabors(creature_idx, creature.labors) == true) {

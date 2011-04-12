@@ -319,6 +319,17 @@ uint32_t OffsetGroup::getAddress (const string & key)
     throw Error::MissingMemoryDefinition("address", getFullName() + key);
 }
 
+// Get named offset, return bool instead of throwing exceptions
+bool OffsetGroup::getSafeAddress (const string & key, uint32_t & out)
+{
+    uint32_Iter iter = OGd->addresses.find(key);
+    if(iter != OGd->addresses.end() && (*iter).second.first == IS_VALID)
+    {
+        out = (*iter).second.second;
+        return true;
+    }
+    return false;
+}
 
 // Get named offset
 int32_t OffsetGroup::getOffset (const string & key)
@@ -333,6 +344,18 @@ int32_t OffsetGroup::getOffset (const string & key)
         throw Error::UnsetMemoryDefinition("offset", getFullName() + key);
     }
     throw Error::MissingMemoryDefinition("offset",  getFullName() + key);
+}
+
+// Get named offset, return bool instead of throwing exceptions
+bool OffsetGroup::getSafeOffset (const string & key, int32_t & out)
+{
+    int32_Iter iter = OGd->offsets.find(key);
+    if(iter != OGd->offsets.end() && (*iter).second.first == IS_VALID)
+    {
+        out = (*iter).second.second;
+        return true;
+    }
+    return false;
 }
 
 

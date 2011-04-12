@@ -106,73 +106,6 @@ struct t_name
     bool has_name;
 };
 
-//raw
-struct t_item_df40d
-{
-    uint32_t vtable;
-    uint16_t x;
-    uint16_t y;
-    uint16_t z;
-    uint32_t flags;
-    uint32_t unk1;
-    uint32_t unk2;
-    uint32_t ID;
-    // not complete
-};
-
-//From http://dwarffortresswiki.net/index.php/User:Rick/Memory_research
-//They all seem to be valid on 40d as well
-struct naked_itemflags
-{
-    unsigned int on_ground : 1; // Item on ground
-    unsigned int in_job : 1; // item currently being used in a job
-    unsigned int in_inventory : 1; // Item in a creatures inventory
-    unsigned int u_ngrd1 : 1; // only occurs when not on ground, unknown function
-    
-    unsigned int in_workshop : 1; // Item is in a workshops inventory
-    unsigned int u_ngrd2 : 1; // only occurs when not on ground, unknown function
-    unsigned int u_ngrd3 : 1; // only occurs when not on ground, unknown function
-    unsigned int rotten : 1; // Item is rotten
-    
-    unsigned int unk1 : 1; // unknown function
-    unsigned int u_ngrd4 : 1; // only occurs when not on ground, unknown function
-    unsigned int unk2 : 1; // unknown function
-    unsigned int u_ngrd5 : 1; // only occurs when not on ground, unknown function
-
-    unsigned int unk3 : 1; // unknown function
-    unsigned int u_ngrd6 : 1; // only occurs when not on ground, unknown function
-    unsigned int narrow : 1; // Item is narrow
-    unsigned int u_ngrd7 : 1; // only occurs when not on ground, unknown function
-            
-    unsigned int worn : 1; // item shows wear
-    unsigned int unk4 : 1; // unknown function
-    unsigned int u_ngrd8 : 1; // only occurs when not on ground, unknown function
-    unsigned int forbid : 1; // designate forbid item
-    
-    unsigned int unk5 : 1; // unknown function
-    unsigned int dump : 1; // designate dump item
-    unsigned int on_fire: 1; //indicates if item is on fire, Will Set Item On Fire if Set!
-    unsigned int melt : 1; // designate melt item, if item cannot be melted, does nothing it seems
-    
-    // 0100 0000 - 8000 0000
-    unsigned int hidden : 1; // designate hide item
-    unsigned int u_ngrd9 : 1; // only occurs when not on ground, unknown function
-    unsigned int unk6 : 1; // unknown function
-    unsigned int unk7 : 1; // unknown function
-    
-    unsigned int unk8 : 1; // unknown function
-    unsigned int unk9 : 1; // unknown function
-    unsigned int unk10 : 1; // unknown function
-    unsigned int unk11 : 1; // unknown function
-};
-
-union t_itemflags
-{
-    uint32_t whole;
-    naked_itemflags bits;
-};
-
-
 struct t_note
 {
     char symbol;
@@ -197,7 +130,7 @@ struct t_settlement
     int16_t local_y1;
     int16_t local_y2;
 };
-    
+
 struct t_attrib
 {
     uint32_t level;

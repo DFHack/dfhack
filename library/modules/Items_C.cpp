@@ -54,11 +54,11 @@ int Items_Finish(DFHackObject* items)
 
 //FIXME: beware of bad null-termination! I haven't tested anything here, but it seems that it could be corrupting or truncating strings.
 
-char* Items_getItemDescription(DFHackObject* items, uint32_t itemptr, DFHackObject* mats)
+char* Items_getItemDescription(DFHackObject* items, dfh_item * item, DFHackObject* mats)
 {
 	if(items != NULL && mats != NULL)
 	{
-		std::string desc = ((DFHack::Items*)items)->getItemDescription(itemptr, (DFHack::Materials*)mats);
+		std::string desc = ((DFHack::Items*)items)->getItemDescription(*item, (DFHack::Materials*)mats);
 		
 		if(desc.size() > 0)
 		{
@@ -112,11 +112,11 @@ char* Items_getItemClass(DFHackObject* items, int32_t index)
 	return NULL;
 }
 
-int Items_getItemData(DFHackObject* items, uint32_t itemptr, t_item* item)
+int Items_getItemData(DFHackObject* items, uint32_t itemptr, dfh_item* item)
 {
 	if(items != NULL)
 	{
-		return ((DFHack::Items*)items)->getItemData(itemptr, *item);
+		return ((DFHack::Items*)items)->readItem(itemptr, *item);
 	}
 	
 	return -1;

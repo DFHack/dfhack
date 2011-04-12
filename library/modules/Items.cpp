@@ -51,13 +51,19 @@ enum accessor_type {ACCESSOR_CONSTANT, ACCESSOR_INDIRECT, ACCESSOR_DOUBLE_INDIRE
 /* this is used to store data about the way accessors work */
 class DFHACK_EXPORT Accessor
 {
+public:
+    enum DataWidth {
+        Data32 = 0,
+        DataSigned16,
+        DataUnsigned16
+    };
 private:
     accessor_type type;
     int32_t constant;
-    uint32_t offset1;
-    uint32_t offset2;
+    int32_t offset1;
+    int32_t offset2;
     Process * p;
-    uint32_t dataWidth;
+    DataWidth dataWidth;
 public:
     Accessor(uint32_t function, Process * p);
     Accessor(accessor_type type, int32_t constant, uint32_t offset1, uint32_t offset2, uint32_t dataWidth, Process * p);
@@ -84,100 +90,154 @@ private:
     Accessor * ASubIndex;
     Accessor * AIndex;
     Accessor * AQuality;
+    Accessor * AWear;
     Process * p;
     bool hasDecoration;
 public:
     ItemDesc(uint32_t VTable, Process * p);
-    bool getItem(uint32_t itemptr, t_item & item);
+    bool readItem(uint32_t itemptr, dfh_item & item);
     std::string className;
     uint32_t vtable;
     uint32_t mainType;
     std::vector<ItemImprovementDesc> improvement;
 };
 
+inline bool do_match(uint32_t &ptr, uint64_t val, int size, uint64_t mask, uint64_t check)
+{
+    if ((val & mask) == check) {
+        ptr += size;
+        return true;
+    }
+    return false;
+}
 
-// FIXME: this is crazy
+static bool match_MEM_ACCESS(uint32_t &ptr, uint64_t v, int isize, int in_reg, int &out_reg, int &offset)
+{
+    // ESP & EBP are hairy
+    if (in_reg == 4 || in_reg == 5)
+        return false;
+
+    if ((v & 7) != in_reg)
+        return false;
+
+    out_reg = (v>>3) & 7;
+
+    switch ((v>>6)&3) {
+        case 0: // MOV REG2, [REG]
+            offset = 0;
+            ptr += isize+1;
+            return true;
+        case 1: // MOV REG2, [REG+offset8]
+            offset = (signed char)(v >> 8);
+            ptr += isize+2;
+            return true;
+        case 2: // MOV REG2, [REG+offset32]
+            offset = (signed int)(v >> 8);
+            ptr += isize+5;
+            return true;
+        default:
+            return false;
+    }
+}
+
+static bool match_MOV_MEM(uint32_t &ptr, uint64_t v, int in_reg, int &out_reg, int &offset, Accessor::DataWidth &size) 
+{
+    int prefix = 0;
+    size = Accessor::Data32;
+    if ((v & 0xFF) == 0x8B) { // MOV
+        v >>= 8;
+        prefix = 1;
+    }
+    else if ((v & 0xFFFF) == 0x8B66) { // MOV 16-bit
+        v >>= 16;
+        prefix = 2;
+        size = Accessor::DataUnsigned16;
+    }
+    else if ((v & 0xFFFF) == 0xBF0F) { // MOVSX
+        v >>= 16;
+        prefix = 2;
+        size = Accessor::DataSigned16;
+    }
+    else if ((v & 0xFFFF) == 0xB70F) { // MOVZ
+        v >>= 16;
+        prefix = 2;
+        size = Accessor::DataUnsigned16;
+    }
+    else
+        return false;
+
+    return match_MEM_ACCESS(ptr, v, prefix, in_reg, out_reg, offset);
+}
+
 Accessor::Accessor(uint32_t function, Process *p)
 {
     this->p = p;
-    this->constant = 0;
-    this->offset1 = 0;
-    this->offset2 = 0;
     this->type = ACCESSOR_CONSTANT;
-    this->dataWidth = 2;
-    uint64_t funcText = p->readQuad(function);
-    if( funcText == 0xCCCCCCCCCCC3C033LL )
+    if(!p)
     {
+        this->constant = 0;
         return;
     }
-    if( funcText == 0xCCCCCCCCC3FFC883LL )
+    uint32_t ptr = function;
+    int data_reg = -1;
+    uint64_t v = p->readQuad(ptr);
+
+    if (do_match(ptr, v, 2, 0xFFFF, 0xC033) ||
+        do_match(ptr, v, 2, 0xFFFF, 0xC031)) // XOR EAX, EAX
     {
-        /* or eax,-1; ret; */
+        data_reg = 0;
+        this->constant = 0;
+    }
+    else if (do_match(ptr, v, 3, 0xFFFFFF, 0xFFC883)) // OR EAX, -1
+    {
+        data_reg = 0;
         this->constant = -1;
-        return;
     }
-    if( (funcText&0xFFFFFFFFFF0000FFLL) == 0xCCCCC300000000B8LL )
+    else if (do_match(ptr, v, 5, 0xFF, 0xB8)) // MOV EAX,imm
     {
-        /* mov eax, xx; ret; */
-        this->constant = (funcText>>8) & 0xffff;
-        return;
+        data_reg = 0;
+        this->constant = (v>>8) & 0xFFFFFFFF;
     }
-    if( (funcText&0xFFFFFF0000FFFFFFLL) == 0xC300000000818B66LL )
+    else
     {
-        /* mov ax, [ecx+xx]; ret; */
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>24) & 0xffff;
-        return;
-    }
-    if( (funcText&0x000000FF00FFFFFFLL) == 0x000000C300418B66LL )
-    {
-        /* mov ax, [ecx+xx]; ret; (shorter instruction)*/
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>24) & 0xff;
-        return;
-    }
-    if( (funcText&0x00000000FF00FFFFLL) == 0x00000000C300418BLL )
-    {
-        /* mov eax, [ecx+xx]; ret; */
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>16) & 0xff;
-        this->dataWidth = 4;
-        return;
-    }
-    if( (funcText&0xFFFFFFFF0000FFFFLL) == 0x8B6600000000818BLL )
-    {
-        uint64_t funcText2 = p->readQuad(function+8);
-        if( (funcText2&0xFFFFFFFFFFFF00FFLL) == 0xCCCCCCCCCCC30040LL )
+        DataWidth xsize;
+        int ptr_reg = 1, tmp; // ECX
+
+        // MOV REG,[ESP+4]
+        if (do_match(ptr, v, 4, 0xFFFFC7FFU, 0x0424448B))
         {
-            this->type = ACCESSOR_DOUBLE_INDIRECT;
-            this->offset1 = (funcText>>16) & 0xffff;
-            this->offset2 = (funcText2>>8) & 0xff;
-            return;
+            ptr_reg = (v>>11)&7;
+            v = p->readQuad(ptr);
+        }
+
+        if (match_MOV_MEM(ptr, v, ptr_reg, tmp, this->offset1, xsize)) {
+            data_reg = tmp;
+            this->type = ACCESSOR_INDIRECT;
+            this->dataWidth = xsize;
+
+            if (xsize == Data32)
+            {
+                v = p->readQuad(ptr);
+
+                if (match_MOV_MEM(ptr, v, data_reg, tmp, this->offset2, xsize)) {
+                    data_reg = tmp;
+                    this->type = ACCESSOR_DOUBLE_INDIRECT;
+                    this->dataWidth = xsize;
+                }
+            }
         }
     }
-    if( (funcText&0xFFFFFF0000FFFFFFLL) == 0xC30000000081BF0FLL )
-    {
-        /* movsx   eax, word ptr [ecx+xx]; ret */
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>24) & 0xffff;
+
+    v = p->readQuad(ptr);
+
+    if (data_reg == 0 && do_match(ptr, v, 1, 0xFF, 0xC3)) // RET
         return;
-    }
-    if( (funcText&0x000000FF00FFFFFFLL) == 0x000000C30041BF0FLL )
+    else
     {
-        /* movsx   eax, word ptr [ecx+xx]; ret (shorter opcode)*/
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>24) & 0xff;
-        return;
+        this->type = ACCESSOR_CONSTANT;
+        this->constant = 0;
+        printf("bad accessor @0x%x\n", function);
     }
-    if( (funcText&0xFFFFFFFF0000FFFFLL) == 0xCCC300000000818BLL )
-    {
-        /* mov eax, [ecx+xx]; ret; */
-        this->type = ACCESSOR_INDIRECT;
-        this->offset1 = (funcText>>16) & 0xffff;
-        this->dataWidth = 4;
-        return;
-    }
-    printf("bad accessor @0x%x\n", function);
 }
 
 bool Accessor::isConstant()
@@ -190,29 +250,26 @@ bool Accessor::isConstant()
 
 int32_t Accessor::getValue(uint32_t objectPtr)
 {
+    int32_t offset = this->offset1;
+
     switch(this->type)
     {
     case ACCESSOR_CONSTANT:
         return this->constant;
         break;
+    case ACCESSOR_DOUBLE_INDIRECT:
+        objectPtr = p->readDWord(objectPtr + this->offset1);
+        offset = this->offset2;
+        // fallthrough
     case ACCESSOR_INDIRECT:
         switch(this->dataWidth)
         {
-        case 2:
-            return (int16_t) p->readWord(objectPtr + this->offset1);
-        case 4:
-            return p->readDWord(objectPtr + this->offset1);
-        default:
-            return -1;
-        }
-        break;
-    case ACCESSOR_DOUBLE_INDIRECT:
-        switch(this->dataWidth)
-        {
-        case 2:
-            return (int16_t) p->readWord(p->readDWord(objectPtr + this->offset1) + this->offset2);
-        case 4:
-            return p->readDWord(p->readDWord(objectPtr + this->offset1) + this->offset2);
+        case Data32:
+            return p->readDWord(objectPtr + offset);
+        case DataSigned16:
+            return (int16_t) p->readWord(objectPtr + offset);
+        case DataUnsigned16:
+            return (uint16_t) p->readWord(objectPtr + offset);
         default:
             return -1;
         }
@@ -222,41 +279,65 @@ int32_t Accessor::getValue(uint32_t objectPtr)
     }
 }
 
+// FIXME: turn into a proper factory with caching
+Accessor * buildAccessor (OffsetGroup * I, Process * p, const char * name, uint32_t vtable)
+{
+    int32_t offset;
+    if(I->getSafeOffset("item_type_accessor",offset))
+        return new Accessor( p->readDWord( vtable + offset ), p);
+    else
+    {
+        fprintf(stderr,"Missing offset for item accessor \"%s\"\n", name);
+        return new Accessor(-1,0); // dummy accessor. always returns -1
+    }
+}
+
 ItemDesc::ItemDesc(uint32_t VTable, Process *p)
 {
+    int32_t funcOffsetA, funcOffsetB, funcOffsetC, funcOffsetD, funcOffsetQuality, funcOffsetWear;
     OffsetGroup * Items = p->getDescriptor()->getGroup("Items");
-    uint32_t funcOffsetA = Items->getOffset("item_type_accessor");
-    uint32_t funcOffsetB = Items->getOffset("item_subtype_accessor");
-    uint32_t funcOffsetC = Items->getOffset("item_subindex_accessor");
-    uint32_t funcOffsetD = Items->getOffset("item_index_accessor");
-    uint32_t funcOffsetQuality = Items->getOffset("item_quality_accessor");
+
+    /* 
+     * FIXME: and what about types, different sets of methods depending on class?
+     * what about more complex things than constants and integers?
+     * If this is to be generally useful, it needs much more power.
+     */ 
+    AMainType = buildAccessor(Items, p, "item_type_accessor", VTable);
+    ASubType = buildAccessor(Items, p, "item_subtype_accessor", VTable);
+    ASubIndex = buildAccessor(Items, p, "item_subindex_accessor", VTable);
+    AIndex = buildAccessor(Items, p, "item_index_accessor", VTable);
+    AQuality = buildAccessor(Items, p, "item_quality_accessor", VTable);
+    AWear = buildAccessor(Items, p, "item_wear_accessor", VTable);
+
     this->vtable = VTable;
     this->p = p;
     this->className = p->readClassName(VTable).substr(5);
     this->className.resize(this->className.size()-2);
-    this->AMainType = new Accessor( p->readDWord( VTable + funcOffsetA ), p);
-    this->ASubType = new Accessor( p->readDWord( VTable + funcOffsetB ), p);
-    this->ASubIndex = new Accessor( p->readDWord( VTable + funcOffsetC ), p);
-    this->AIndex = new Accessor( p->readDWord( VTable + funcOffsetD ), p);
-    this->AQuality = new Accessor( p->readDWord( VTable + funcOffsetQuality ), p);
+
     this->hasDecoration = false;
-    if(this->AMainType->isConstant())
-        this->mainType = this->AMainType->getValue(0);
+    if(AMainType->isConstant())
+        mainType = this->AMainType->getValue(0);
     else
     {
         fprintf(stderr, "Bad item main type at function %p\n", (void*) p->readDWord( VTable + funcOffsetA ));
-        this->mainType = 0;
+        mainType = 0;
     }
 }
 
-bool ItemDesc::getItem(uint32_t itemptr, DFHack::t_item &item)
+bool ItemDesc::readItem(uint32_t itemptr, DFHack::dfh_item &item)
 {
-    item.matdesc.itemType = this->AMainType->getValue(itemptr);
-    item.matdesc.subType = this->ASubType->getValue(itemptr);
-    item.matdesc.subIndex = this->ASubIndex->getValue(itemptr);
-    item.matdesc.index = this->AIndex->getValue(itemptr);
-    item.quality = this->AQuality->getValue(itemptr);
+    p->read(itemptr, sizeof(t_item), (uint8_t*)&item.base);
+    item.matdesc.itemType = AMainType->getValue(itemptr);
+    item.matdesc.subType = ASubType->getValue(itemptr);
+    item.matdesc.subIndex = ASubIndex->getValue(itemptr);
+    item.matdesc.index = AIndex->getValue(itemptr);
+    item.quality = AQuality->getValue(itemptr);
     item.quantity = 1; /* TODO */
+    item.origin = itemptr;
+    // FIXME: use templates. seriously.
+    // Note: this accessor returns a 32-bit value with the higher
+    // half sometimes containing garbage, so the cast is essential:
+    item.wear_level = (int16_t)this->AWear->getValue(itemptr);
     return true;
 }
 
@@ -267,6 +348,9 @@ class Items::Private
         Process * owner;
         std::map<int32_t, ItemDesc *> descType;
         std::map<uint32_t, ItemDesc *> descVTable;
+        uint32_t refVectorOffset;
+        uint32_t refIDOffset;
+        uint32_t ownerRefVTable;
 };
 
 Items::Items(DFContextShared * d_)
@@ -274,6 +358,7 @@ Items::Items(DFContextShared * d_)
     d = new Private;
     d->d = d_;
     d->owner = d_->p;
+    d->ownerRefVTable = d->refVectorOffset = d->refIDOffset = 0;
 }
 
 bool Items::Start()
@@ -301,7 +386,7 @@ Items::~Items()
     delete d;
 }
 
-bool Items::getItemData(uint32_t itemptr, DFHack::t_item &item)
+bool Items::readItem(uint32_t itemptr, DFHack::dfh_item &item)
 {
     std::map<uint32_t, ItemDesc *>::iterator it;
     Process * p = d->owner;
@@ -318,7 +403,57 @@ bool Items::getItemData(uint32_t itemptr, DFHack::t_item &item)
     else
         desc = it->second;
 
-    return desc->getItem(itemptr, item);
+    return desc->readItem(itemptr, item);
+}
+
+bool Items::writeItem(const DFHack::dfh_item &item)
+{
+    if(item.origin)
+    {
+        d->owner->write(item.origin, sizeof(t_item),(uint8_t *)&(item.base));
+        return true;
+    }
+    return false;
+}
+
+/*
+void Items::setItemFlags(uint32_t itemptr, t_itemflags new_flags)
+{
+    d->owner->writeDWord(itemptr + 0x0C, new_flags.whole);
+}
+*/
+int32_t Items::getItemOwnerID(const DFHack::dfh_item &item)
+{
+    if (!d->refVectorOffset)
+    {
+        OffsetGroup * Items = d->owner->getDescriptor()->getGroup("Items");
+        d->refVectorOffset = Items->getOffset("item_ref_vector");
+        d->refIDOffset = Items->getOffset("owner_ref_id_field");
+    }
+
+    DFHack::DfVector<uint32_t> p_refs(d->owner, item.origin + d->refVectorOffset);
+    uint32_t size = p_refs.size();
+
+    for (uint32_t i=0;i<size;i++)
+    {
+        uint32_t curRef = p_refs[i];
+        uint32_t vtbl = d->owner->readDWord(curRef);
+
+        if (!d->ownerRefVTable)
+        {
+            std::string className = d->owner->readClassName(vtbl);
+            if (className == "general_ref_unit_itemownerst")
+                d->ownerRefVTable = vtbl;
+            else
+                continue;
+        }
+        else if (d->ownerRefVTable != vtbl)
+            continue;
+
+        return d->owner->readDWord(curRef + d->refIDOffset);
+    }
+
+    return -1;
 }
 
 std::string Items::getItemClass(int32_t index)
@@ -348,8 +483,9 @@ std::string Items::getItemClass(int32_t index)
     return out;
 }
 
-std::string Items::getItemDescription(uint32_t itemptr, Materials * Materials)
+std::string Items::getItemDescription(const dfh_item & item, Materials * Materials)
 {
+    /*
     DFHack::t_item item;
     std::string out;
 
@@ -368,128 +504,7 @@ std::string Items::getItemDescription(uint32_t itemptr, Materials * Materials)
     out.append(Materials->getDescription(item.matdesc));
     out.append(" ");
     out.append(this->getItemClass(item.matdesc.itemType));
-    return out;
+    */
+    //return out;
+    return getItemClass(item.matdesc.itemType);
 }
-
-// The OLD items code follows (40d era)
-// TODO: merge with the current Items module
-/*
-bool API::InitReadItems(uint32_t & numitems)
-{
-    try
-    {
-        int items = d->offset_descriptor->getAddress ("items");
-        d->item_material_offset = d->offset_descriptor->getOffset ("item_materials");
-
-        d->p_itm = new DfVector (d->p, items);
-        d->itemsInited = true;
-        numitems = d->p_itm->getSize();
-        return true;
-    }
-    catch (Error::AllMemdef&)
-    {
-        d->itemsInited = false;
-        numitems = 0;
-        throw;
-    }
-}
-
-bool API::getItemIndexesInBox(vector<uint32_t> &indexes,
-                                const uint16_t x1, const uint16_t y1, const uint16_t z1,
-                                const uint16_t x2, const uint16_t y2, const uint16_t z2)
-{
-    if(!d->itemsInited) return false;
-    indexes.clear();
-    uint32_t size = d->p_itm->getSize();
-    struct temp2{
-        uint16_t coords[3];
-        uint32_t flags;
-    };
-    temp2 temp2;
-    for(uint32_t i =0;i<size;i++){
-        uint32_t temp = d->p_itm->at(i);
-        d->p->read(temp+sizeof(uint32_t),5 * sizeof(uint16_t), (uint8_t *) &temp2);
-        if(temp2.flags & (1 << 0)){
-            if (temp2.coords[0] >= x1 && temp2.coords[0] < x2)
-            {
-                if (temp2.coords[1] >= y1 && temp2.coords[1] < y2)
-                {
-                    if (temp2.coords[2] >= z1 && temp2.coords[2] < z2)
-                    {
-                        indexes.push_back(i);
-                    }
-                }
-            }
-        }
-    }
-    return true;
-}
-
-bool API::ReadItem (const uint32_t index, t_item & item)
-{
-    if (!d->itemsInited) return false;
-    
-    t_item_df40d item_40d;
-
-    // read pointer from vector at position
-    uint32_t temp = d->p_itm->at (index);
-
-    //read building from memory
-    d->p->read (temp, sizeof (t_item_df40d), (uint8_t *) &item_40d);
-
-    // transform
-    int32_t type = -1;
-    d->offset_descriptor->resolveObjectToClassID (temp, type);
-    item.origin = temp;
-    item.vtable = item_40d.vtable;
-    item.x = item_40d.x;
-    item.y = item_40d.y;
-    item.z = item_40d.z;
-    item.type = type;
-    item.ID = item_40d.ID;
-    item.flags.whole = item_40d.flags;
-
-    //TODO  certain item types (creature based, threads, seeds, bags do not have the first matType byte, instead they have the material index only located at 0x68
-    d->p->read (temp + d->item_material_offset, sizeof (t_matglossPair), (uint8_t *) &item.material);
-    //for(int i = 0; i < 0xCC; i++){  // used for item research
-    //    uint8_t byte = MreadByte(temp+i);
-    //    item.bytes.push_back(byte);
-    //}
-    return true;
-}
-void API::FinishReadItems()
-{
-    if(d->p_itm)
-    {
-        delete d->p_itm;
-        d->p_itm = NULL;
-    }
-    d->itemsInited = false;
-}
-*/
-/*
-bool API::ReadItemTypes(vector< vector< t_itemType > > & itemTypes)
-{
-    memory_info * minfo = d->offset_descriptor;
-    int matgloss_address = minfo->getAddress("matgloss");
-    int matgloss_skip = minfo->getHexValue("matgloss_skip");
-    int item_type_name_offset = minfo->getOffset("item_type_name");
-    for(int i = 8;i<20;i++)
-    {
-        DfVector p_temp (d->p, matgloss_address + i*matgloss_skip);
-        vector< t_itemType > typesForVec;
-        for(uint32_t j =0; j<p_temp.getSize();j++)
-        {
-            t_itemType currType;
-            uint32_t temp = *(uint32_t *) p_temp[j];
-           // Mread(temp+40,sizeof(name),(uint8_t *) name);
-            d->p->readSTLString(temp+4,currType.id,128);
-            d->p->readSTLString(temp+item_type_name_offset,currType.name,128);
-            //stringsForVec.push_back(string(name));
-            typesForVec.push_back(currType);
-        }
-        itemTypes.push_back(typesForVec);
-    }
-    return true;
-}
-*/

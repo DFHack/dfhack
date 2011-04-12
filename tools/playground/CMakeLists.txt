@@ -86,6 +86,8 @@ DFHACK_TOOL(dfhellhole hellhole.cpp)
 # Allows mass-modify, esp. for all immigrants
 DFHACK_TOOL(dfskillmodify skillmodify.cpp)
 
+DFHACK_TOOL(dfcleanowned cleanowned.cpp)
+
 # this needs the C bindings
 IF(BUILD_DFHACK_C_BINDINGS)
     # The C bindings won't be real C bindings until this compiles.

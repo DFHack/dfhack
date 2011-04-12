@@ -1,23 +1,33 @@
 /*********************************************
- * tools/supported/skillmodify.cpp
+ * skillmodify.cpp
  *
  * Purpose:
  *
  * - Display creatures
  * - Modify skills and labors of creatures
  *
- * Version: 0.1
+ * Version: 0.1.1
  * Date: 2011-04-07
- *
+
  * Todo:
  * - Option to add/remove single skills
- * - Ghosts should not be displayed
- * - Override forbidden mass-designation with -f
+ * - Ghosts/Merchants/etc. should be tagged as not own creatures
  * - Filter by nickname with -n
  * - Filter by first name with -fn
  * - Filter by last name with -ln
+ * - Add pattern matching (or at least matching) to -n/-fn/-ln
+ * - Set nickname with --setnick (only if -i is given)
  * - Kill/revive creature(s) with --kill/--revive
+ * - Show skills/labors only when -ss/-sl/-v is given or a skill/labor is changed
+ * - Allow multiple -i switches
+ * - Display current job
+
  * Done:
+ * - Remove magic numbers
+ * - Show social skills only when -ss is given
+ * - Hide hauler labors when +sh is given
+ * - Add -v for verbose
+ * - Override forbidden mass-designation with -f
  * - Option to add/remove single labors
  * - Switches -ras and rl should only be possible with -nn or -i
  * - Switch -rh removes hauler jobs
@@ -42,7 +52,65 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/modules/Creatures.h>
 
+/* Note about magic numbers:
+ * If you have an idea how to better solve this, tell me. Currently I'd be
+ * either dependent on Toady One's implementation (#defining numbers) or
+ * Memory.xml (#defining text). I voted for Toady One's numbers to be more
+ * stable, but could be wrong.
+ */
+#define SKILL_PERSUASION     72
+#define SKILL_NEGOTIATION    73
+#define SKILL_JUDGING_INTENT 74
+#define SKILL_INTIMIDATION   79
+#define SKILL_CONVERSATION   80
+#define SKILL_COMEDY         81
+#define SKILL_FLATTERY       82
+#define SKILL_CONSOLING      83
+#define SKILL_PACIFICATION   84
+#define LABOR_STONE_HAULING	1 
+#define LABOR_WOOD_HAULING	2 
+#define LABOR_BURIAL	        3
+#define LABOR_FOOD_HAULING	4 
+#define LABOR_REFUSE_HAULING	5 
+#define LABOR_ITEM_HAULING	6 
+#define LABOR_FURNITURE_HAULING	7 
+#define LABOR_ANIMAL_HAULING	8 
+#define LABOR_CLEANING	        9
+#define LABOR_FEED_PATIENTS_PRISONERS   22
+#define LABOR_RECOVERING_WOUNDED	23
+#define NOT_SET              INT_MIN
+#define MAX_MOOD             4
+#define NO_MOOD             -1
+
 bool quiet;
+bool verbose = false;
+bool showhauler = true;
+bool showsocial = false;
+int hauler_labors[] = {
+    LABOR_STONE_HAULING
+        ,LABOR_WOOD_HAULING
+        ,LABOR_BURIAL
+        ,LABOR_FOOD_HAULING
+        ,LABOR_REFUSE_HAULING
+        ,LABOR_ITEM_HAULING
+        ,LABOR_FURNITURE_HAULING
+        ,LABOR_ANIMAL_HAULING
+        ,LABOR_CLEANING
+        ,LABOR_FEED_PATIENTS_PRISONERS
+        ,LABOR_RECOVERING_WOUNDED
+};
+int social_skills[] = 
+{
+    SKILL_PERSUASION
+        ,SKILL_NEGOTIATION
+        ,SKILL_JUDGING_INTENT
+        ,SKILL_INTIMIDATION
+        ,SKILL_CONVERSATION
+        ,SKILL_COMEDY
+        ,SKILL_FLATTERY
+        ,SKILL_CONSOLING
+        ,SKILL_PACIFICATION
+};
 
 void usage(int argc, const char * argv[])
 {
@@ -50,6 +118,7 @@ void usage(int argc, const char * argv[])
         << "Usage:" << endl
         << argv[0] << " [option 1] [option 2] [...]" << endl
         << "-q            : Suppress \"Press any key to continue\" at program termination" << endl
+        << "-v            : Increase verbosity" << endl
         << "-c creature   : Only show/modify this creature type instead of dwarfes" << endl
         << "-i id         : Only show/modify creature with this id" << endl
         << "-nn           : Only show/modify creatures with no custom nickname (migrants)" << endl
@@ -61,8 +130,6 @@ void usage(int argc, const char * argv[])
         << "-ral          : Remove all labors from creature" << endl
         << "-ah           : Add hauler labors (stone hauling, etc.) to creature" << endl
         << "-rh           : Remove hauler labors (stone hauling, etc.) from creature" << endl
-        << "-me           : Make creature an engraver" << endl
-        << "-mm           : Make creature a mason" << endl
         << "--setmood <n> : Set mood to n (-1 = no mood, max=4)" << endl
         // Doesn't work, because hapiness is recalculated
         //<< "--sethappiness <n> : Set happiness to n" << endl
@@ -74,7 +141,7 @@ void usage(int argc, const char * argv[])
         << "Example 2: Show all Yaks" << endl
         << argv[0] << " -c Yak" << endl
         << endl
-        << "Example 3: Remove all skills from dwarf 32" << endl
+        << "Example 3: Remove all skills from dwarf with id 32" << endl
         << argv[0] << " -i 32 -ras" << endl
         << endl
         << "Example 4: Remove all skills and labors from dwarfs with no custom nickname" << endl
@@ -86,7 +153,7 @@ void usage(int argc, const char * argv[])
         << "Example 6: Show list of labor ids" << endl
         << argv[0] << " -c DWARF -ll" << endl
         << endl
-        << "Example 7: Add engraving labor to all migrants" << endl
+        << "Example 7: Add engraving labor to all migrants (get the id from the list of labor ids)" << endl
         << argv[0] << " -c DWARF -nn -al 13" << endl
         ;
 	if (quiet == false) {
@@ -95,20 +162,9 @@ void usage(int argc, const char * argv[])
 	}
 }
 
-enum likeType
-{
-    FAIL = 0,
-    MATERIAL = 1,
-    ITEM = 2,
-    FOOD = 3
-};
-
 DFHack::Materials * Materials;
 DFHack::VersionInfo *mem;
-vector< vector<string> > englishWords;
-vector< vector<string> > foreignWords;
 DFHack::Creatures * Creatures = NULL;
-
 
 // Note that toCaps() changes the string itself and I'm using it a few times in
 // an unsafe way below. Didn't crash yet however.
@@ -131,6 +187,18 @@ int strtoint(const string &str)
     stringstream ss(str);
     int result;
     return ss >> result ? result : -1;
+}
+
+
+// A C++ standard library function should be used instead
+bool is_in(int m, int set[], int set_size)
+{
+    for (int i=0; i<set_size; i++)
+    {
+        if (m == set[i])
+            return true;
+    }
+    return false;
 }
 
 void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, int index)
@@ -181,7 +249,7 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
     cout << ", Happy = " << creature.happiness;
     cout << endl;
 
-    if((creature.mood != -1) && (creature.mood<5))
+    if((creature.mood != NO_MOOD) && (creature.mood<=MAX_MOOD))
     {
         cout << "Creature is in a strange mood (mood=" << creature.mood << "), skill: " << mem->getSkill(creature.mood_skill) << endl;
         vector<DFHack::t_material> mymat;
@@ -207,17 +275,8 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
         for(unsigned int i = 0; i < creature.defaultSoul.numSkills;i++)
         {
             skillid = creature.defaultSoul.skills[i].id;
-            if ( // leave out some skill that are not interesting and clutter the screen
-                    skillid != 72
-                    && skillid != 73
-                    && skillid != 74
-                    && skillid != 79
-                    && skillid != 80
-                    && skillid != 81
-                    && skillid != 82
-                    && skillid != 83
-                    && skillid != 84
-               )
+            bool is_social = is_in(skillid, social_skills, sizeof(social_skills)/sizeof(social_skills[0]));
+            if (!is_social || (is_social && showsocial))
             {
                 skillrating = creature.defaultSoul.skills[i].rating;
                 skillexperience = creature.defaultSoul.skills[i].experience;
@@ -246,12 +305,11 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
             }
             catch(exception &e)
             {
-                //cout << "Found undefined labor (" << i << ")" << endl;
-                //cout << e.what() << endl;
                 laborname = "(Undefined)";
-                //continue;
             }
-            cout << "(Labor " << i << ") " << setw(16) << laborname << endl;
+            bool is_labor = is_in(i, hauler_labors, sizeof(hauler_labors)/sizeof(hauler_labors[0]));
+            if (!is_labor || (is_labor && showhauler))
+                cout << "(Labor " << i << ") " << setw(16) << laborname << endl;
         }
     }
     /* FLAGS 1 */
@@ -292,16 +350,14 @@ int main (int argc, const char* argv[])
     bool remove_labors = false;
     bool make_hauler = false;
     bool remove_hauler = false;
-    bool make_engraver = false;
-    bool make_mason = false;
     bool add_labor = false;
-    int add_labor_n = -99999;
+    int add_labor_n = NOT_SET;
     bool remove_labor = false;
-    int remove_labor_n = -99999;
+    int remove_labor_n = NOT_SET;
     bool set_happiness = false;
-    int set_happiness_n = -99999;
+    int set_happiness_n = NOT_SET;
     bool set_mood = false;
-    int set_mood_n = -99999;
+    int set_mood_n = NOT_SET;
     bool list_labors = false;
     bool force_massdesignation = false;
 
@@ -314,13 +370,13 @@ int main (int argc, const char* argv[])
     {
         string arg_cur = argv[i];
         string arg_next = "";
-        int arg_next_int = -99999;
+        int arg_next_int = NOT_SET;
         /* Check if argv[i+1] is a number >= 0 */
         if (i < argc-1) {
             arg_next = argv[i+1];
             arg_next_int = strtoint(arg_next);
             if (arg_next != "0" && arg_next_int == 0) {
-                arg_next_int = -99999;
+                arg_next_int = NOT_SET;
             }
         }
 
@@ -331,6 +387,18 @@ int main (int argc, const char* argv[])
         else if(arg_cur == "+q")
         {
             quiet = false;
+        }
+        else if(arg_cur == "-v")
+        {
+            verbose = true;
+        }
+        else if(arg_cur == "-ss" || arg_cur == "--showsocial")
+        {
+            showsocial = true;
+        }
+        else if(arg_cur == "+sh" || arg_cur == "-nosh" || arg_cur == "--noshowhauler")
+        {
+            showhauler = false;
         }
         else if(arg_cur == "-ras")
         {
@@ -348,7 +416,7 @@ int main (int argc, const char* argv[])
         // add single labor
         else if(arg_cur == "-al" && i < argc-1)
         {
-            if (arg_next_int == -99999 || arg_next_int >= NUM_CREATURE_LABORS) {
+            if (arg_next_int == NOT_SET || arg_next_int >= NUM_CREATURE_LABORS) {
                 usage(argc, argv);
                 return 1;
             }
@@ -359,7 +427,7 @@ int main (int argc, const char* argv[])
         // remove single labor
         else if(arg_cur == "-rl" && i < argc-1)
         {
-            if (arg_next_int == -99999 || arg_next_int >= NUM_CREATURE_LABORS) {
+            if (arg_next_int == NOT_SET || arg_next_int >= NUM_CREATURE_LABORS) {
                 usage(argc, argv);
                 return 1;
             }
@@ -369,7 +437,7 @@ int main (int argc, const char* argv[])
         }
         else if(arg_cur == "--setmood" && i < argc-1)
         {
-            if (arg_next_int < -1 || arg_next_int >= 5) {
+            if (arg_next_int < NO_MOOD || arg_next_int > MAX_MOOD) {
                 usage(argc, argv);
                 return 1;
             }
@@ -398,14 +466,6 @@ int main (int argc, const char* argv[])
         else if(arg_cur == "-rh")
         {
             remove_hauler = true;
-        }
-        else if(arg_cur == "-mm")
-        {
-            make_mason = true;
-        }
-        else if(arg_cur == "-me")
-        {
-            make_engraver = true;
         }
         else if(arg_cur == "-nn")
         {
@@ -499,11 +559,15 @@ int main (int argc, const char* argv[])
         for (int i=0; i < NUM_CREATURE_LABORS; i++) {
             try {
                 laborname = mem->getLabor(i);
+                cout << "Labor " << int(i) << ": " << laborname << endl;
             }
             catch (exception& e) {
-                laborname = "Unknown";
+                if (verbose) 
+                {
+                    laborname = "Unknown";
+                    cout << "Labor " << int(i) << ": " << laborname << endl;
+                }
             }
-            cout << "Labor " << int(i) << ": " << laborname << endl;
         }
     }
     else
@@ -536,7 +600,6 @@ int main (int argc, const char* argv[])
                         remove_skills
                         || remove_labors || add_labor || remove_labor
                         || make_hauler || remove_hauler 
-                        || make_engraver || make_mason
                         || set_happiness
                         || set_mood
                         );
@@ -556,19 +619,6 @@ int main (int argc, const char* argv[])
                         << "selected. Add -f to still do mass designation." << endl;
                     dochange = false;
                 }
-
-                // cout << "dochange = " << int(dochange) << endl;
-                // cout << "remove_skills = " << int(remove_skills) << endl;
-                // cout << "remove_labors = " << int(remove_labors) << endl;
-                // cout << "add_labor = " << int(add_labor) << endl;
-                // cout << "remove_labor = " << int(remove_labor) << endl;
-                // cout << "make_hauler = " << int(make_hauler) << endl;
-                // cout << "remove_hauler = " << int(remove_hauler) << endl;
-                // cout << "make_engraver = " << int(make_engraver) << endl;
-                // cout << "make_mason = " << int(make_mason) << endl;
-                // cout << "allow_massdesignation = " << int(allow_massdesignation) << endl;
-                // cout << "force_massdesignation = " << int(force_massdesignation) << endl;
-                // cout << "creature.profession = " << int(creature.profession) << endl;
 
                 if (dochange) 
                 {
@@ -605,7 +655,7 @@ int main (int argc, const char* argv[])
                             }
                         }
 
-                        if (add_labor || remove_labor || remove_labors || make_hauler || remove_hauler || make_engraver || make_mason)
+                        if (add_labor || remove_labor || remove_labors || make_hauler || remove_hauler)
                         {
                             if (add_labor) {
                                 cout << "Adding labor " << add_labor_n << "..." << endl;
@@ -623,41 +673,25 @@ int main (int argc, const char* argv[])
                                     creature.labors[lab] = 0;
                                 }
                             }
+
                             if (remove_hauler) {
                                 cout << "Removing hauler labors..." << endl;
-                                creature.labors[1] = 0;
-                                creature.labors[2] = 0;
-                                creature.labors[3] = 0;
-                                creature.labors[4] = 0;
-                                creature.labors[5] = 0;
-                                creature.labors[6] = 0;
-                                creature.labors[7] = 0;
-                                creature.labors[8] = 0;
-                                creature.labors[9] = 0;
-                                creature.labors[22] = 0;
-                                creature.labors[23] = 0;
+                                for (int labs=0;
+                                        labs < sizeof(hauler_labors)/sizeof(hauler_labors[0]);
+                                        labs++)
+                                {
+                                    creature.labors[labs] = 0;
+                                }
                             }
+
                             if (make_hauler) {
                                 cout << "Setting hauler labors..." << endl;
-                                creature.labors[1] = 1;
-                                creature.labors[2] = 1;
-                                creature.labors[3] = 1;
-                                creature.labors[4] = 1;
-                                creature.labors[5] = 1;
-                                creature.labors[6] = 1;
-                                creature.labors[7] = 1;
-                                creature.labors[8] = 1;
-                                creature.labors[9] = 1;
-                                creature.labors[22] = 1;
-                                creature.labors[23] = 1;
-                            }
-                            if (make_engraver) {
-                                cout << "Setting 'Stone Detailing'..." << endl;
-                                creature.labors[12] = 1;
-                            }
-                            if (make_mason) {
-                                cout << "Setting 'Masonry'..." << endl;
-                                creature.labors[13] = 1;
+                                for (int labs=0;
+                                        labs < sizeof(hauler_labors)/sizeof(hauler_labors[0]);
+                                        labs++)
+                                {
+                                    creature.labors[labs] = 1;
+                                }
                             }
                             if (Creatures->WriteLabors(creature_idx, creature.labors) == true) {
                                 cout << "Success writing labors." << endl;

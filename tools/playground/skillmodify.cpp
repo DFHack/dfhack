@@ -20,9 +20,10 @@
  * - Kill/revive creature(s) with --kill/--revive
  * - Show skills/labors only when -ss/-sl/-v is given or a skill/labor is changed
  * - Allow multiple -i switches
- * - Display current job
 
  * Done:
+ * - Add switch -1 to only display one line for every creature. Good for an overview.
+ * - Display current job (has been there all the time, but not shown in Windows due to missing memory offsets)
  * - Remove magic numbers
  * - Show social skills only when -ss is given
  * - Hide hauler labors when +sh is given
@@ -82,10 +83,12 @@ using namespace std;
 #define MAX_MOOD             4
 #define NO_MOOD             -1
 
-bool quiet;
+bool quiet=true;
 bool verbose = false;
 bool showhauler = true;
 bool showsocial = false;
+bool showfirstlineonly = false;
+
 int hauler_labors[] = {
     LABOR_STONE_HAULING
         ,LABOR_WOOD_HAULING
@@ -120,6 +123,7 @@ void usage(int argc, const char * argv[])
         << "-q            : Suppress \"Press any key to continue\" at program termination" << endl
         << "-v            : Increase verbosity" << endl
         << "-c creature   : Only show/modify this creature type instead of dwarfes" << endl
+	<< "-1            : Only display one line per creature" << endl
         << "-i id         : Only show/modify creature with this id" << endl
         << "-nn           : Only show/modify creatures with no custom nickname (migrants)" << endl
         << "--nicks       : Only show/modify creatures with custom nickname" << endl
@@ -130,7 +134,7 @@ void usage(int argc, const char * argv[])
         << "-ral          : Remove all labors from creature" << endl
         << "-ah           : Add hauler labors (stone hauling, etc.) to creature" << endl
         << "-rh           : Remove hauler labors (stone hauling, etc.) from creature" << endl
-        << "--setmood <n> : Set mood to n (-1 = no mood, max=4)" << endl
+        << "--setmood <n> : Set mood to n (-1 = no mood, max=4, buggy!)" << endl
         // Doesn't work, because hapiness is recalculated
         //<< "--sethappiness <n> : Set happiness to n" << endl
         << "-f            : Force an action" << endl
@@ -203,51 +207,69 @@ bool is_in(int m, int set[], int set_size)
 
 void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, int index)
 {
-    cout << "Creature[" << index << "]: " << toCaps(Materials->raceEx[creature.race].rawname);
+
 
     DFHack::Translation *Tran = DF->getTranslation();
     DFHack::VersionInfo *mem = DF->getMemoryInfo();
 
+    string name="(no name)";
     if(creature.name.nickname[0])
     {
-        cout << ", " << creature.name.nickname;
+        name = creature.name.nickname;
     }
     else
     {
         if(creature.name.first_name[0])
-        {
-            cout << ", " << toCaps(creature.name.first_name);
-        }
+	{
+	    name = toCaps(creature.name.first_name);
 
-        string transName = Tran->TranslateName(creature.name,false);
-        if(!transName.empty())
-        {
-            cout << " " << toCaps(transName);
-        }
+	    string transName = Tran->TranslateName(creature.name,false);
+	    if(!transName.empty())
+	    {
+		name += " " + toCaps(transName);
+	    }
+	}
     }
 
-    string prof_string="";
+    string profession="";
     try {
-        prof_string = mem->getProfession(creature.profession);
+        profession = mem->getProfession(creature.profession);
     }
     catch (exception& e)
     {
         cout << "Error retrieving creature profession: " << e.what() << endl;
     }
-    cout << ", " << toCaps(prof_string) << "(" << int(creature.profession) << ")";
-
     if(creature.custom_profession[0])
     {
-        cout << "/" << creature.custom_profession;
+	profession = creature.custom_profession;
     }
 
+
+    string job="No Job";
     if(creature.current_job.active)
     {
-        cout << ", current job: " << mem->getJob(creature.current_job.jobId);
+	job=mem->getJob(creature.current_job.jobId);
     }
 
-    cout << ", Happy = " << creature.happiness;
-    cout << endl;
+    if (showfirstlineonly)
+    {
+	printf("%3d", index);
+	printf(" %-32s", name.c_str());
+	printf(" %-15s", toCaps(profession).c_str());
+	printf(" %-30s", job.c_str());
+	printf(" %d", creature.happiness);
+
+	return;
+    }
+    else
+    {
+	printf("ID: %d", index);
+	printf(", %s", name.c_str());
+	printf(", %s", toCaps(profession).c_str());
+	printf(", Job: %s", job.c_str());
+	printf(", Happiness: %d", creature.happiness);
+	printf("\n");
+    }
 
     if((creature.mood != NO_MOOD) && (creature.mood<=MAX_MOOD))
     {
@@ -391,6 +413,10 @@ int main (int argc, const char* argv[])
         else if(arg_cur == "-v")
         {
             verbose = true;
+        }
+        else if(arg_cur == "-1")
+        {
+            showfirstlineonly = true;
         }
         else if(arg_cur == "-ss" || arg_cur == "--showsocial")
         {
@@ -572,6 +598,12 @@ int main (int argc, const char* argv[])
     }
     else
     {
+	if (showfirstlineonly)
+	{
+	    printf("ID  Name/nickname                    Job title       Current job                    Happiness\n");
+	    printf("--- -------------------------------- --------------- ------------------------------ ---------\n");
+	}
+
         vector<uint32_t> addrs;
         for(uint32_t creature_idx = 0; creature_idx < numCreatures; creature_idx++)
         {

@@ -1,13 +1,14 @@
 /*********************************************
- * skillmodify.cpp
- *
  * Purpose:
  *
  * - Display creatures
  * - Modify skills and labors of creatures
+ * - Kill creatures
+ * - Etc.
  *
  * Version: 0.1.1
  * Date: 2011-04-07
+ * Author: raoulxq (based on creaturedump.cpp from peterix)
 
  * Todo:
  * - Option to add/remove single skills
@@ -17,12 +18,13 @@
  * - Filter by last name with -ln
  * - Add pattern matching (or at least matching) to -n/-fn/-ln
  * - Set nickname with --setnick (only if -i is given)
- * - Kill/revive creature(s) with --kill/--revive
+ * - Revive creature(s) with --revive
  * - Show skills/labors only when -ss/-sl/-v is given or a skill/labor is changed
  * - Allow multiple -i switches
- * - Hide skills with level 0 and 0 experience points
 
  * Done:
+ * - Kill creature(s) with --kill
+ * - Hide skills with level 0 and 0 experience points
  * - Add --showallflags flag to display all flags (default: display a few important ones)
  * - Add --showdead flag to also display dead creatures
  * - Display more creature flags
@@ -148,6 +150,7 @@ void usage(int argc, const char * argv[])
         << "-ah           : Add hauler labors (stone hauling, etc.) to creature" << endl
         << "-rh           : Remove hauler labors (stone hauling, etc.) from creature" << endl
         << "--setmood <n> : Set mood to n (-1 = no mood, max=4, buggy!)" << endl
+        << "--kill        : Kill creature(s) (may need to be called multiple times)" << endl
         // Doesn't work, because hapiness is recalculated
         //<< "--sethappiness <n> : Set happiness to n" << endl
         << "-f            : Force an action" << endl
@@ -481,6 +484,7 @@ int main (int argc, const char* argv[])
     bool find_nicks = false;
     bool remove_skills = false;
     bool remove_labors = false;
+    bool kill_creature = false;
     bool make_hauler = false;
     bool remove_hauler = false;
     bool add_labor = false;
@@ -599,6 +603,12 @@ int main (int argc, const char* argv[])
             set_happiness = true;
             set_happiness_n = arg_next_int;
             i++;
+        }
+        else if(arg_cur == "--kill")
+        {
+            kill_creature = true;
+            showallflags = true;
+            showdead = true;
         }
         else if(arg_cur == "-ral")
         {
@@ -751,6 +761,7 @@ int main (int argc, const char* argv[])
                         remove_skills
                         || remove_labors || add_labor || remove_labor
                         || make_hauler || remove_hauler 
+                        || kill_creature
                         || set_happiness
                         || set_mood
                         );
@@ -775,6 +786,60 @@ int main (int argc, const char* argv[])
                 {
                     if(creature.has_default_soul)
                     {
+                        if (kill_creature)
+                        {
+                            /*
+                               [quote author=Eldrick Tobin link=topic=58809.msg2178545#msg2178545 date=1302638055]
+
+                               After extensive testing that just ate itself -.-;
+
+                               Runesmith does not unset the following:
+                               - Active Invader (sets if they are just about the invade, as Currently 
+                               Invading removes this one)
+                               - Hidden Ambusher (Just in Case, however it is still set when an Active Invader)
+                               - Hidden in Ambush (Just in Case, however it is still set when an Active Invader,
+                               until discovery)
+                               - Incoming (Sets if something is here yet... wave X of a siege here)
+                               - Invader -Fleeing/Leaving
+                               - Currently Invading
+
+                               When it nukes something it basically just sets them to 'dead'. It does not also 
+                               set them to 'killed'. Show dead will show everything (short of 'vanished'/'deleted'
+                               I'd suspect) so one CAN go through the intensive process to revive a broken siege. These
+                               particular flags are not visible at the same exact time so multiple passes -even through
+                               a narrow segment- are advised.
+
+                               Problem I ran into (last thing before I mention something more DFHack related):
+                               I set the Killed Flag (but not dead), and I got mortally wounded siegers that refused to
+                               just pift in Magma. [color=purple]Likely missing upper torsoes on examination[/color].
+
+                             */
+                            DFHack::t_creaturflags1 f1 = creature.flags1;
+                            DFHack::t_creaturflags2 f2 = creature.flags2;
+
+                            f1.bits.dead = 1;
+                            f2.bits.killed = 1;
+                            f1.bits.active_invader = 0;   /*!< 17: Active invader (for organized ones) */
+                            f1.bits.hidden_ambusher = 0;  /*!< 21: Active marauder/invader moving inward? */
+                            f1.bits.hidden_in_ambush = 0;
+                            f1.bits.invades = 0;          /*!< 22: Marauder resident/invader moving in all the way */
+
+                            cout << "Setting f1.bits.dead = 1" << endl;
+                            cout << "Setting f2.bits.killed = 1" << endl;
+                            cout << "Setting f1.bits.active_invader = 0" << endl; 
+                            cout << "Setting f1.bits.hidden_ambusher = 0" << endl; 
+                            cout << "Setting f1.bits.hidden_in_ambush = 0" << endl;
+                            cout << "Setting f1.bits.invades = 0" << endl;          
+                            cout << "Writing flags..." << endl;
+                            if (!Creatures->WriteFlags(creature_idx, f1.whole, f2.whole))
+                            {
+                                cout << "Error writing creature flags!" << endl;
+                            }
+                            // We want the flags to be shown after our modification, but they are not read back
+                            creature.flags1 = f1;
+                            creature.flags2 = f2;
+                        }
+
                         if (set_mood) 
                         {
                             cout << "Setting mood to " << set_mood_n << "..." << endl;

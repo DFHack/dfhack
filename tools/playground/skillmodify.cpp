@@ -23,6 +23,7 @@
  * - Hide skills with level 0 and 0 experience points
 
  * Done:
+ * - Add --showallflags flag to display all flags (default: display a few important ones)
  * - Add --showdead flag to also display dead creatures
  * - Display more creature flags
  * - Show creature type (again)
@@ -93,6 +94,7 @@ bool showhauler = true;
 bool showsocial = false;
 bool showfirstlineonly = false;
 bool showdead = false;
+bool showallflags = false;
 
 int hauler_labors[] = {
     LABOR_STONE_HAULING
@@ -136,6 +138,7 @@ void usage(int argc, const char * argv[])
         << "--nicks       : Only show/modify creatures with custom nickname" << endl
         << "-ll           : List available labors" << endl
         << "--showdead    : Also show/modify dead creatures" << endl
+        << "--showallflags: Show all flags of a creature" << endl
         << endl
         << "Modifying options:" << endl
         << "-al <n>       : Add labor <n> to creature" << endl
@@ -372,33 +375,95 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
                 cout << "(Labor " << i << ") " << setw(16) << laborname << endl;
         }
     }
-    /* FLAGS 1 */
-    if(creature.flags1.bits.dead)       	{ cout << "Flag: Dead" << endl; }
-    if(creature.flags1.bits.on_ground)  	{ cout << "Flag: On the ground" << endl; }
-    if(creature.flags1.bits.skeleton)   	{ cout << "Flag: Skeletal" << endl; }
-    if(creature.flags1.bits.zombie)     	{ cout << "Flag: Zombie" << endl; }
-    if(creature.flags1.bits.tame)       	{ cout << "Flag: Tame" << endl; }
-    if(creature.flags1.bits.active_invader)	{ cout << toCaps("Flag: active_invader") << endl; }
-    if(creature.flags1.bits.hidden_in_ambush)	{ cout << toCaps("Flag: hidden_in_ambush") << endl; }
-    if(creature.flags1.bits.invader_origin)	{ cout << toCaps("Flag: invader_origin") << endl; }
-    if(creature.flags1.bits.coward)	        { cout << toCaps("Flag: coward") << endl; }
-    if(creature.flags1.bits.hidden_ambusher)	{ cout << toCaps("Flag: hidden_ambusher") << endl; }
-    if(creature.flags1.bits.caged)	        { cout << toCaps("Flag: caged") << endl; }
-    if(creature.flags1.bits.chained)	        { cout << toCaps("Flag: chained") << endl; }
-    if(creature.flags1.bits.royal_guard)	{ cout << "Flag: Royal guard" << endl; }
-    if(creature.flags1.bits.fortress_guard)	{ cout << "Flag: Fortress guard" << endl; }
-
-    /* FLAGS 2 */
-    if(creature.flags2.bits.killed)     { cout << "Flag: Killed by kill function" << endl; }
-    if(creature.flags2.bits.resident)   { cout << "Flag: Resident" << endl; }
-    if(creature.flags2.bits.gutted)     { cout << "Flag: Gutted" << endl; }
-    if(creature.flags2.bits.slaughter)  { cout << "Flag: Marked for slaughter" << endl; }
-    if(creature.flags2.bits.underworld) { cout << "Flag: From the underworld" << endl; }
-
-    if(creature.flags1.bits.had_mood && (creature.mood == -1 || creature.mood == 8 ) )
+    if (showallflags)
     {
-        string artifact_name = Tran->TranslateName(creature.artifact_name,false);
-        cout << "Artifact: " << artifact_name << endl;
+        DFHack::t_creaturflags1 f1 = creature.flags1;
+        DFHack::t_creaturflags2 f2 = creature.flags2;
+
+        if(f1.bits.had_mood){cout<<toCaps("Flag: had_mood") << endl; }
+        if(f1.bits.marauder){cout<<toCaps("Flag: marauder") << endl; }
+        if(f1.bits.drowning){cout<<toCaps("Flag: drowning") << endl; }
+        if(f1.bits.merchant){cout<<toCaps("Flag: merchant") << endl; }
+        if(f1.bits.forest){cout<<toCaps("Flag: forest") << endl; }
+        if(f1.bits.left){cout<<toCaps("Flag: left") << endl; }
+        if(f1.bits.rider){cout<<toCaps("Flag: rider") << endl; }
+        if(f1.bits.incoming){cout<<toCaps("Flag: incoming") << endl; }
+        if(f1.bits.diplomat){cout<<toCaps("Flag: diplomat") << endl; }
+        if(f1.bits.zombie){cout<<toCaps("Flag: zombie") << endl; }
+        if(f1.bits.skeleton){cout<<toCaps("Flag: skeleton") << endl; }
+        if(f1.bits.can_swap){cout<<toCaps("Flag: can_swap") << endl; }
+        if(f1.bits.on_ground){cout<<toCaps("Flag: on_ground") << endl; }
+        if(f1.bits.projectile){cout<<toCaps("Flag: projectile") << endl; }
+        if(f1.bits.active_invader){cout<<toCaps("Flag: active_invader") << endl; }
+        if(f1.bits.hidden_in_ambush){cout<<toCaps("Flag: hidden_in_ambush") << endl; }
+        if(f1.bits.invader_origin){cout<<toCaps("Flag: invader_origin") << endl; }
+        if(f1.bits.coward){cout<<toCaps("Flag: coward") << endl; }
+        if(f1.bits.hidden_ambusher){cout<<toCaps("Flag: hidden_ambusher") << endl; }
+        if(f1.bits.invades){cout<<toCaps("Flag: invades") << endl; }
+        if(f1.bits.check_flows){cout<<toCaps("Flag: check_flows") << endl; }
+        if(f1.bits.ridden){cout<<toCaps("Flag: ridden") << endl; }
+        if(f1.bits.caged){cout<<toCaps("Flag: caged") << endl; }
+        if(f1.bits.tame){cout<<toCaps("Flag: tame") << endl; }
+        if(f1.bits.chained){cout<<toCaps("Flag: chained") << endl; }
+        if(f1.bits.royal_guard){cout<<toCaps("Flag: royal_guard") << endl; }
+        if(f1.bits.fortress_guard){cout<<toCaps("Flag: fortress_guard") << endl; }
+        if(f1.bits.suppress_wield){cout<<toCaps("Flag: suppress_wield") << endl; }
+        if(f1.bits.important_historical_figure){cout<<toCaps("Flag: important_historical_figure") << endl; }
+
+        if(f2.bits.swimming){cout<<toCaps("Flag: swimming") << endl; }
+        if(f2.bits.sparring){cout<<toCaps("Flag: sparring") << endl; }
+        if(f2.bits.no_notify){cout<<toCaps("Flag: no_notify") << endl; }
+        if(f2.bits.unused){cout<<toCaps("Flag: unused") << endl; }
+        if(f2.bits.calculated_nerves){cout<<toCaps("Flag: calculated_nerves") << endl; }
+        if(f2.bits.calculated_bodyparts){cout<<toCaps("Flag: calculated_bodyparts") << endl; }
+        if(f2.bits.important_historical_figure){cout<<toCaps("Flag: important_historical_figure") << endl; }
+        if(f2.bits.killed){cout<<toCaps("Flag: killed") << endl; }
+        if(f2.bits.cleanup_1){cout<<toCaps("Flag: cleanup_1") << endl; }
+        if(f2.bits.cleanup_2){cout<<toCaps("Flag: cleanup_2") << endl; }
+        if(f2.bits.cleanup_3){cout<<toCaps("Flag: cleanup_3") << endl; }
+        if(f2.bits.for_trade){cout<<toCaps("Flag: for_trade") << endl; }
+        if(f2.bits.trade_resolved){cout<<toCaps("Flag: trade_resolved") << endl; }
+        if(f2.bits.has_breaks){cout<<toCaps("Flag: has_breaks") << endl; }
+        if(f2.bits.gutted){cout<<toCaps("Flag: gutted") << endl; }
+        if(f2.bits.circulatory_spray){cout<<toCaps("Flag: circulatory_spray") << endl; }
+        if(f2.bits.locked_in_for_trading){cout<<toCaps("Flag: locked_in_for_trading") << endl; }
+        if(f2.bits.slaughter){cout<<toCaps("Flag: slaughter") << endl; }
+        if(f2.bits.underworld){cout<<toCaps("Flag: underworld") << endl; }
+        if(f2.bits.resident){cout<<toCaps("Flag: resident") << endl; }
+        if(f2.bits.cleanup_4){cout<<toCaps("Flag: cleanup_4") << endl; }
+        if(f2.bits.calculated_insulation){cout<<toCaps("Flag: calculated_insulation") << endl; }
+        if(f2.bits.visitor_uninvited){cout<<toCaps("Flag: visitor_uninvited") << endl; }
+        if(f2.bits.visitor){cout<<toCaps("Flag: visitor") << endl; }
+        if(f2.bits.calculated_inventory){cout<<toCaps("Flag: calculated_inventory") << endl; }
+        if(f2.bits.vision_good){cout<<toCaps("Flag: vision_good") << endl; }
+        if(f2.bits.vision_damaged){cout<<toCaps("Flag: vision_damaged") << endl; }
+        if(f2.bits.vision_missing){cout<<toCaps("Flag: vision_missing") << endl; }
+        if(f2.bits.breathing_good){cout<<toCaps("Flag: breathing_good") << endl; }
+        if(f2.bits.breathing_problem){cout<<toCaps("Flag: breathing_problem") << endl; }
+        if(f2.bits.roaming_wilderness_population_source){cout<<toCaps("Flag: roaming_wilderness_population_source") << endl; }
+        if(f2.bits.roaming_wilderness_population_source_not_a_map_feature){cout<<toCaps("Flag: roaming_wilderness_population_source_not_a_map_feature") << endl; }
+    }
+    else
+    {
+        /* FLAGS 1 */
+        if(creature.flags1.bits.dead)       	{ cout << "Flag: Dead" << endl; }
+        if(creature.flags1.bits.on_ground)  	{ cout << "Flag: On the ground" << endl; }
+        if(creature.flags1.bits.tame)       	{ cout << "Flag: Tame" << endl; }
+        if(creature.flags1.bits.royal_guard)	{ cout << "Flag: Royal guard" << endl; }
+        if(creature.flags1.bits.fortress_guard)	{ cout << "Flag: Fortress guard" << endl; }
+
+        /* FLAGS 2 */
+        if(creature.flags2.bits.killed)     { cout << "Flag: Killed by kill function" << endl; }
+        if(creature.flags2.bits.resident)   { cout << "Flag: Resident" << endl; }
+        if(creature.flags2.bits.gutted)     { cout << "Flag: Gutted" << endl; }
+        if(creature.flags2.bits.slaughter)  { cout << "Flag: Marked for slaughter" << endl; }
+        if(creature.flags2.bits.underworld) { cout << "Flag: From the underworld" << endl; }
+
+        if(creature.flags1.bits.had_mood && (creature.mood == -1 || creature.mood == 8 ) )
+        {
+            string artifact_name = Tran->TranslateName(creature.artifact_name,false);
+            cout << "Artifact: " << artifact_name << endl;
+        }
     }
 }
 
@@ -475,6 +540,10 @@ int main (int argc, const char* argv[])
         else if(arg_cur == "--showdead")
         {
             showdead = true;
+        }
+        else if(arg_cur == "--showallflags")
+        {
+            showallflags = true;
         }
         else if(arg_cur == "-ras")
         {

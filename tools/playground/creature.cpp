@@ -23,6 +23,7 @@
  * - Allow multiple -i switches
 
  * Done:
+ * - Rename from skillmodify.cpp to creature.cpp
  * - Kill creature(s) with --kill
  * - Hide skills with level 0 and 0 experience points
  * - Add --showallflags flag to display all flags (default: display a few important ones)
@@ -75,6 +76,7 @@ using namespace std;
 #define SKILL_FLATTERY       82
 #define SKILL_CONSOLING      83
 #define SKILL_PACIFICATION   84
+
 #define LABOR_STONE_HAULING   1 
 #define LABOR_WOOD_HAULING    2 
 #define LABOR_BURIAL          3
@@ -89,6 +91,9 @@ using namespace std;
 #define NOT_SET              INT_MIN
 #define MAX_MOOD             4
 #define NO_MOOD             -1
+
+#define PROFESSION_CHILD    96
+#define PROFESSION_BABY     97
 
 bool quiet=true;
 bool verbose = false;
@@ -299,6 +304,8 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
             printf(" %-5s", creature.flags1.bits.dead ? "Dead" : "Alive");
         }
 
+        printf("\n");
+
         return;
     }
     else
@@ -468,6 +475,7 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
             cout << "Artifact: " << artifact_name << endl;
         }
     }
+    cout << endl;
 }
 
 int main (int argc, const char* argv[])
@@ -479,7 +487,7 @@ int main (int argc, const char* argv[])
 
     string creature_type = "Dwarf";
     string creature_id = "";
-    int creature_id_int = 0;
+    int creature_id_int = NOT_SET;
     bool find_nonicks = false;
     bool find_nicks = false;
     bool remove_skills = false;
@@ -639,6 +647,7 @@ int main (int argc, const char* argv[])
         {
             creature_id = argv[i+1];
             sscanf(argv[i+1], "%d", &creature_id_int);
+            creature_type = ""; // if -i is given, match all creatures
             i++;
         }
         else
@@ -742,10 +751,9 @@ int main (int argc, const char* argv[])
             bool hasnick = (creature.name.nickname[0] != '\0');
 
             if (
-                    // Check for -i <num>
-                    (creature_id.empty() || creature_idx == creature_id_int) 
-                    // Check for -c <type>
-                    && (creature_type.empty() || toCaps(string(Materials->raceEx[creature.race].rawname)) == toCaps(creature_type))
+                    // Check for -i <num> and -c <type>
+                    (creature_idx == creature_id_int
+                     || toCaps(string(Materials->raceEx[creature.race].rawname)) == toCaps(creature_type))
                     // Check for -nn
                     && ((find_nonicks == true && hasnick == false)
                         || (find_nicks == true && hasnick == true)
@@ -766,8 +774,8 @@ int main (int argc, const char* argv[])
                         || set_mood
                         );
 
-                // 96=Child, 97=Baby
-                if (creature.profession == 96 || creature.profession == 97) 
+                if (toCaps(creature_type) == "Dwarf" 
+                        && (creature.profession == PROFESSION_CHILD || creature.profession == PROFESSION_BABY))
                 {
                     dochange = false;
                 }
@@ -921,7 +929,6 @@ int main (int argc, const char* argv[])
                     }
                     printCreature(DF,creature,creature_idx);
                 } /* End remove skills/labors */
-                cout << endl;
             } /* if (print creature) */
         } /* End for(all creatures) */
     } /* End if (we need to walk creatures) */

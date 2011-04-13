@@ -29,6 +29,9 @@
                 <Offset name="first" description="Lowercase stl string with the first name. For ex. 'urist'" />
                 <Offset name="nick"  description="Stl string with the nickname. Set by the player." />
                 <Offset name="second_words" description="Array of 7 indexes into the language vectors."/>
+                <Offset name="parts_of_speech" description="Array of 7 16-bit indexes into the language vectors."/>
+                <Offset name="language" description="Language of the name."/>
+                <Offset name="has_name" description="Boolean flag."/>
             </Group>
         </Offsets>
     </Base>
@@ -782,6 +785,9 @@
                 <Offset name="first" description="Lowercase stl string with the first name. For ex. 'urist'" />
                 <Offset name="nick"  description="Stl string with the nickname. Set by the player." />
                 <Offset name="second_words" description="Array of 7 indexes into the language vectors."/>
+                <Offset name="parts_of_speech" description="Array of 7 16-bit indexes into the language vectors."/>
+                <Offset name="language" description="Language of the name."/>
+                <Offset name="has_name" description="Boolean flag."/>
             </Group>
             <Group name="Position" description="Offsets used by the Position module.">
                 <Address name="window_x" description="X coordinate of the current view (DWORD)" />
@@ -1068,6 +1074,9 @@
                 <Offset name="first" value="0x0" />
                 <Offset name="nick" value="0x1C" />
                 <Offset name="second_words" value="0x38" />
+                <Offset name="parts_of_speech" value="0x54" />
+                <Offset name="language" value="0x64" />
+                <Offset name="has_name" value="0x68" />
             </Group>
             <Group name="Position">
                 <Address name="window_x" value="0xe32798" />
@@ -1605,6 +1614,9 @@
                 <Offset name="first" value="0x0" />
                 <Offset name="nick" value="0x1C" />
                 <Offset name="second_words" value="0x38" />
+                <Offset name="parts_of_speech" value="0x54" />
+                <Offset name="language" value="0x64" />
+                <Offset name="has_name" value="0x68" />
             </Group>
             <Group name="Position">
                 <Address name="cursor_xyz" value="0xac77f0" />
@@ -2215,6 +2227,9 @@
                 <Offset name="first" value="0x0" />
                 <Offset name="nick" value="0x4" />
                 <Offset name="second_words" value="0x8" />
+                <Offset name="parts_of_speech" value="0x24" />
+                <Offset name="language" value="0x34" />
+                <Offset name="has_name" value="0x3a" />
             </Group>
             <Group name="Position">
                 <Address name="window_x" value="0x8cc9b38" />

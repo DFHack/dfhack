@@ -686,3 +686,12 @@ bool Creatures::ReadInventoryPtr(const uint32_t temp, std::vector<uint32_t> & it
         item[i] = p->readDWord(citem[i]);
     return true;
 }
+
+void Creatures::CopyNameTo(t_creature &creature, uint32_t address)
+{
+    Private::t_offsets &offs = d->creatures;
+
+    if(d->Ft_basic)
+        d->d->copyName(creature.origin + offs.name_offset, address);
+}
+

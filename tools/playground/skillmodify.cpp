@@ -23,6 +23,7 @@
  * - Hide skills with level 0 and 0 experience points
 
  * Done:
+ * - Show creature type (again)
  * - Add switch -1 to only display one line for every creature. Good for an overview.
  * - Display current job (has been there all the time, but not shown in Windows due to missing memory offsets)
  * - Remove magic numbers
@@ -176,13 +177,26 @@ DFHack::Creatures * Creatures = NULL;
 std::string toCaps(std::string s)
 {
     const int length = s.length();
+    bool caps=true;
     if (length == 0) {
         return s;
     }
-    s[0] = std::toupper(s[0]);
-    for(int i=1; i!=length ; ++i)
+    for(int i=0; i!=length ; ++i)
     {
-        s[i] = std::tolower(s[i]);
+        if (caps)
+        {
+            s[i] = std::toupper(s[i]);
+            caps = false;
+        }
+        else if (s[i] == '_' || s[i] == ' ')
+        {
+            s[i] = ' ';
+            caps = true;
+        }
+        else
+        {
+            s[i] = std::tolower(s[i]);
+        }
     }
     return s;
 }
@@ -212,6 +226,12 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
 
     DFHack::Translation *Tran = DF->getTranslation();
     DFHack::VersionInfo *mem = DF->getMemoryInfo();
+
+    string type="(no type)";
+    if (Materials->raceEx[creature.race].rawname[0])
+    {
+        type = toCaps(Materials->raceEx[creature.race].rawname);
+    }
 
     string name="(no name)";
     if(creature.name.nickname[0])
@@ -255,8 +275,9 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
     if (showfirstlineonly)
     {
         printf("%3d", index);
+        printf(" %-17s", type.c_str());
         printf(" %-32s", name.c_str());
-        printf(" %-15s", toCaps(profession).c_str());
+        printf(" %-16s", toCaps(profession).c_str());
         printf(" %-30s", job.c_str());
         printf(" %d", creature.happiness);
 
@@ -265,6 +286,7 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
     else
     {
         printf("ID: %d", index);
+        printf(", %s", type.c_str());
         printf(", %s", name.c_str());
         printf(", %s", toCaps(profession).c_str());
         printf(", Job: %s", job.c_str());
@@ -344,8 +366,8 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
     if(creature.flags1.bits.skeleton)   { cout << "Flag: Skeletal" << endl; }
     if(creature.flags1.bits.zombie)     { cout << "Flag: Zombie" << endl; }
     if(creature.flags1.bits.tame)       { cout << "Flag: Tame" << endl; }
-    if(creature.flags1.bits.royal_guard){ cout << "Flag: Royal_guard" << endl; }
-    if(creature.flags1.bits.fortress_guard){cout<<"Flag: Fortress_guard" << endl; }
+    if(creature.flags1.bits.royal_guard){ cout << "Flag: Royal guard" << endl; }
+    if(creature.flags1.bits.fortress_guard){cout<<"Flag: Fortress guard" << endl; }
     /* FLAGS 2 */
     if(creature.flags2.bits.killed)     { cout << "Flag: Killed by kill function" << endl; }
     if(creature.flags2.bits.resident)   { cout << "Flag: Resident" << endl; }
@@ -604,8 +626,8 @@ int main (int argc, const char* argv[])
     {
         if (showfirstlineonly)
         {
-            printf("ID  Name/nickname                    Job title       Current job                    Happiness\n");
-            printf("--- -------------------------------- --------------- ------------------------------ ---------\n");
+            printf("ID  Type              Name/nickname                    Job title        Current job                    Happiness\n");
+            printf("--- ----------------- -------------------------------- ---------------- ------------------------------ ---------\n");
         }
 
         vector<uint32_t> addrs;

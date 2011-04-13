@@ -529,7 +529,7 @@ bool findString (SegmentedFinder* s, uint32_t *addr, const char * compare )
 
 bool findStrBuffer (SegmentedFinder* s, uint32_t *addr, const char * compare )
 {
-    if(strcmp((const char *)addr, compare) == 0)
+    if(memcmp((const char *)addr, compare, strlen(compare)) == 0)
         return true;
     return false;
 }

@@ -212,12 +212,20 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
             cout << Materials->raceEx[creature.race].castes[creature.caste].ColorModifier[i].part << " ";
             uint32_t color = Materials->raceEx[creature.race].castes[creature.caste].ColorModifier[i].colorlist[creature.color[i]];
             if(color<Materials->color.size())
+            {
                 cout << Materials->color[color].name << "[" 
-                    << (unsigned int) (Materials->color[color].r*255) << ":"
-                    << (unsigned int) (Materials->color[color].v*255) << ":"
-                    << (unsigned int) (Materials->color[color].b*255) << "]";
-            else
+                     << (unsigned int) (Materials->color[color].r*255) << ":"
+                     << (unsigned int) (Materials->color[color].v*255) << ":"
+                     << (unsigned int) (Materials->color[color].b*255) << "]";
+            }
+            else if (color < Materials->alldesc.size())
+            {
                 cout << Materials->alldesc[color].id;
+            }
+            else
+            {
+                cout << "Unknown color " << color << endl;
+            }
             if( Materials->raceEx[creature.race].castes[creature.caste].ColorModifier[i].startdate > 0 )
             {
                 if( (Materials->raceEx[creature.race].castes[creature.caste].ColorModifier[i].startdate <= dayoflife) &&
@@ -467,7 +475,7 @@ int main (int numargs, char ** args)
     Materials->ReadPlantMaterials();
     Materials->ReadCreatureTypes();
     Materials->ReadCreatureTypesEx();
-    Materials->ReadDescriptorColors();
+    //Materials->ReadDescriptorColors();
 
     if(!Tran->Start())
     {

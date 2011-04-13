@@ -23,8 +23,10 @@
  * - Hide skills with level 0 and 0 experience points
 
  * Done:
+ * - Add --showdead flag to also display dead creatures
+ * - Display more creature flags
  * - Show creature type (again)
- * - Add switch -1 to only display one line for every creature. Good for an overview.
+ * - Add switch -1/--summary to only display one line for every creature. Good for an overview.
  * - Display current job (has been there all the time, but not shown in Windows due to missing memory offsets)
  * - Remove magic numbers
  * - Show social skills only when -ss is given
@@ -90,6 +92,7 @@ bool verbose = false;
 bool showhauler = true;
 bool showsocial = false;
 bool showfirstlineonly = false;
+bool showdead = false;
 
 int hauler_labors[] = {
     LABOR_STONE_HAULING
@@ -122,14 +125,19 @@ void usage(int argc, const char * argv[])
     cout
         << "Usage:" << endl
         << argv[0] << " [option 1] [option 2] [...]" << endl
+        << endl
+        << "Display options:" << endl
         << "-q            : Suppress \"Press any key to continue\" at program termination" << endl
         << "-v            : Increase verbosity" << endl
         << "-c creature   : Only show/modify this creature type instead of dwarfes" << endl
-        << "-1            : Only display one line per creature" << endl
+        << "-1/--summary  : Only display one line per creature" << endl
         << "-i id         : Only show/modify creature with this id" << endl
-        << "-nn           : Only show/modify creatures with no custom nickname (migrants)" << endl
+        << "-nn/--nonicks : Only show/modify creatures with no custom nickname (migrants)" << endl
         << "--nicks       : Only show/modify creatures with custom nickname" << endl
         << "-ll           : List available labors" << endl
+        << "--showdead    : Also show/modify dead creatures" << endl
+        << endl
+        << "Modifying options:" << endl
         << "-al <n>       : Add labor <n> to creature" << endl
         << "-rl <n>       : Remove labor <n> from creature" << endl
         << "-ras          : Remove all skills from creature" << endl
@@ -279,7 +287,11 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
         printf(" %-32s", name.c_str());
         printf(" %-16s", toCaps(profession).c_str());
         printf(" %-30s", job.c_str());
-        printf(" %d", creature.happiness);
+        printf(" %5d", creature.happiness);
+        if (showdead)
+        {
+            printf(" %-5s", creature.flags1.bits.dead ? "Dead" : "Alive");
+        }
 
         return;
     }
@@ -361,13 +373,21 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
         }
     }
     /* FLAGS 1 */
-    if(creature.flags1.bits.dead)       { cout << "Flag: Dead" << endl; }
-    if(creature.flags1.bits.on_ground)  { cout << "Flag: On the ground" << endl; }
-    if(creature.flags1.bits.skeleton)   { cout << "Flag: Skeletal" << endl; }
-    if(creature.flags1.bits.zombie)     { cout << "Flag: Zombie" << endl; }
-    if(creature.flags1.bits.tame)       { cout << "Flag: Tame" << endl; }
-    if(creature.flags1.bits.royal_guard){ cout << "Flag: Royal guard" << endl; }
-    if(creature.flags1.bits.fortress_guard){cout<<"Flag: Fortress guard" << endl; }
+    if(creature.flags1.bits.dead)       	{ cout << "Flag: Dead" << endl; }
+    if(creature.flags1.bits.on_ground)  	{ cout << "Flag: On the ground" << endl; }
+    if(creature.flags1.bits.skeleton)   	{ cout << "Flag: Skeletal" << endl; }
+    if(creature.flags1.bits.zombie)     	{ cout << "Flag: Zombie" << endl; }
+    if(creature.flags1.bits.tame)       	{ cout << "Flag: Tame" << endl; }
+    if(creature.flags1.bits.active_invader)	{ cout << toCaps("Flag: active_invader") << endl; }
+    if(creature.flags1.bits.hidden_in_ambush)	{ cout << toCaps("Flag: hidden_in_ambush") << endl; }
+    if(creature.flags1.bits.invader_origin)	{ cout << toCaps("Flag: invader_origin") << endl; }
+    if(creature.flags1.bits.coward)	        { cout << toCaps("Flag: coward") << endl; }
+    if(creature.flags1.bits.hidden_ambusher)	{ cout << toCaps("Flag: hidden_ambusher") << endl; }
+    if(creature.flags1.bits.caged)	        { cout << toCaps("Flag: caged") << endl; }
+    if(creature.flags1.bits.chained)	        { cout << toCaps("Flag: chained") << endl; }
+    if(creature.flags1.bits.royal_guard)	{ cout << "Flag: Royal guard" << endl; }
+    if(creature.flags1.bits.fortress_guard)	{ cout << "Flag: Fortress guard" << endl; }
+
     /* FLAGS 2 */
     if(creature.flags2.bits.killed)     { cout << "Flag: Killed by kill function" << endl; }
     if(creature.flags2.bits.resident)   { cout << "Flag: Resident" << endl; }
@@ -440,7 +460,7 @@ int main (int argc, const char* argv[])
         {
             verbose = true;
         }
-        else if(arg_cur == "-1")
+        else if(arg_cur == "-1" || arg_cur == "--summary")
         {
             showfirstlineonly = true;
         }
@@ -451,6 +471,10 @@ int main (int argc, const char* argv[])
         else if(arg_cur == "+sh" || arg_cur == "-nosh" || arg_cur == "--noshowhauler")
         {
             showhauler = false;
+        }
+        else if(arg_cur == "--showdead")
+        {
+            showdead = true;
         }
         else if(arg_cur == "-ras")
         {
@@ -519,7 +543,7 @@ int main (int argc, const char* argv[])
         {
             remove_hauler = true;
         }
-        else if(arg_cur == "-nn")
+        else if(arg_cur == "-nn" || arg_cur == "--nonicks")
         {
             find_nonicks = true;
         }
@@ -626,8 +650,8 @@ int main (int argc, const char* argv[])
     {
         if (showfirstlineonly)
         {
-            printf("ID  Type              Name/nickname                    Job title        Current job                    Happiness\n");
-            printf("--- ----------------- -------------------------------- ---------------- ------------------------------ ---------\n");
+            printf("ID  Type              Name/nickname                    Job title        Current job                    Happy%s\n", showdead?" Dead ":"");
+            printf("--- ----------------- -------------------------------- ---------------- ------------------------------ -----%s\n", showdead?" -----":"");
         }
 
         vector<uint32_t> addrs;
@@ -648,7 +672,7 @@ int main (int argc, const char* argv[])
                         || (find_nicks == true && hasnick == true)
                         || (find_nicks == false && find_nonicks == false))
                     && (find_nonicks == false || creature.name.nickname[0] == '\0')
-                    && (!creature.flags1.bits.dead)
+                    && (showdead == true || !creature.flags1.bits.dead)
                )
             {
                 printCreature(DF,creature,creature_idx);
@@ -674,7 +698,7 @@ int main (int argc, const char* argv[])
                 {
                     cout
                         << "Not changing creature because none of -c (other than dwarf), -i or -nn was" << endl
-                        << "selected. Add -f to still do mass designation." << endl;
+                        << "selected. Add -f (force) to override this safety measure." << endl;
                     dochange = false;
                 }
 

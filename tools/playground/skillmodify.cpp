@@ -20,6 +20,7 @@
  * - Kill/revive creature(s) with --kill/--revive
  * - Show skills/labors only when -ss/-sl/-v is given or a skill/labor is changed
  * - Allow multiple -i switches
+ * - Hide skills with level 0 and 0 experience points
 
  * Done:
  * - Add switch -1 to only display one line for every creature. Good for an overview.
@@ -68,17 +69,17 @@ using namespace std;
 #define SKILL_FLATTERY       82
 #define SKILL_CONSOLING      83
 #define SKILL_PACIFICATION   84
-#define LABOR_STONE_HAULING	1 
-#define LABOR_WOOD_HAULING	2 
-#define LABOR_BURIAL	        3
-#define LABOR_FOOD_HAULING	4 
-#define LABOR_REFUSE_HAULING	5 
-#define LABOR_ITEM_HAULING	6 
-#define LABOR_FURNITURE_HAULING	7 
-#define LABOR_ANIMAL_HAULING	8 
-#define LABOR_CLEANING	        9
+#define LABOR_STONE_HAULING   1 
+#define LABOR_WOOD_HAULING    2 
+#define LABOR_BURIAL          3
+#define LABOR_FOOD_HAULING    4 
+#define LABOR_REFUSE_HAULING  5 
+#define LABOR_ITEM_HAULING    6 
+#define LABOR_FURNITURE_HAULING 7 
+#define LABOR_ANIMAL_HAULING  8 
+#define LABOR_CLEANING        9
 #define LABOR_FEED_PATIENTS_PRISONERS   22
-#define LABOR_RECOVERING_WOUNDED	23
+#define LABOR_RECOVERING_WOUNDED        23
 #define NOT_SET              INT_MIN
 #define MAX_MOOD             4
 #define NO_MOOD             -1
@@ -123,7 +124,7 @@ void usage(int argc, const char * argv[])
         << "-q            : Suppress \"Press any key to continue\" at program termination" << endl
         << "-v            : Increase verbosity" << endl
         << "-c creature   : Only show/modify this creature type instead of dwarfes" << endl
-	<< "-1            : Only display one line per creature" << endl
+        << "-1            : Only display one line per creature" << endl
         << "-i id         : Only show/modify creature with this id" << endl
         << "-nn           : Only show/modify creatures with no custom nickname (migrants)" << endl
         << "--nicks       : Only show/modify creatures with custom nickname" << endl
@@ -220,15 +221,15 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
     else
     {
         if(creature.name.first_name[0])
-	{
-	    name = toCaps(creature.name.first_name);
+        {
+            name = toCaps(creature.name.first_name);
 
-	    string transName = Tran->TranslateName(creature.name,false);
-	    if(!transName.empty())
-	    {
-		name += " " + toCaps(transName);
-	    }
-	}
+            string transName = Tran->TranslateName(creature.name,false);
+            if(!transName.empty())
+            {
+                name += " " + toCaps(transName);
+            }
+        }
     }
 
     string profession="";
@@ -241,34 +242,34 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
     }
     if(creature.custom_profession[0])
     {
-	profession = creature.custom_profession;
+        profession = creature.custom_profession;
     }
 
 
     string job="No Job";
     if(creature.current_job.active)
     {
-	job=mem->getJob(creature.current_job.jobId);
+        job=mem->getJob(creature.current_job.jobId);
     }
 
     if (showfirstlineonly)
     {
-	printf("%3d", index);
-	printf(" %-32s", name.c_str());
-	printf(" %-15s", toCaps(profession).c_str());
-	printf(" %-30s", job.c_str());
-	printf(" %d", creature.happiness);
+        printf("%3d", index);
+        printf(" %-32s", name.c_str());
+        printf(" %-15s", toCaps(profession).c_str());
+        printf(" %-30s", job.c_str());
+        printf(" %d", creature.happiness);
 
-	return;
+        return;
     }
     else
     {
-	printf("ID: %d", index);
-	printf(", %s", name.c_str());
-	printf(", %s", toCaps(profession).c_str());
-	printf(", Job: %s", job.c_str());
-	printf(", Happiness: %d", creature.happiness);
-	printf("\n");
+        printf("ID: %d", index);
+        printf(", %s", name.c_str());
+        printf(", %s", toCaps(profession).c_str());
+        printf(", Job: %s", job.c_str());
+        printf(", Happiness: %d", creature.happiness);
+        printf("\n");
     }
 
     if((creature.mood != NO_MOOD) && (creature.mood<=MAX_MOOD))
@@ -311,8 +312,11 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
                     skillname = "Unknown skill";
                     cout << e.what() << endl;
                 }
-                cout << "(Skill " << int(skillid) << ") " << setw(16) << skillname << ": " 
-                    << skillrating << "/" << skillexperience << endl;
+                if (skillrating > 0 || skillexperience > 0) 
+                {
+                    cout << "(Skill " << int(skillid) << ") " << setw(16) << skillname << ": " 
+                        << skillrating << "/" << skillexperience << endl;
+                }
             }
         }
 
@@ -598,11 +602,11 @@ int main (int argc, const char* argv[])
     }
     else
     {
-	if (showfirstlineonly)
-	{
-	    printf("ID  Name/nickname                    Job title       Current job                    Happiness\n");
-	    printf("--- -------------------------------- --------------- ------------------------------ ---------\n");
-	}
+        if (showfirstlineonly)
+        {
+            printf("ID  Name/nickname                    Job title       Current job                    Happiness\n");
+            printf("--- -------------------------------- --------------- ------------------------------ ---------\n");
+        }
 
         vector<uint32_t> addrs;
         for(uint32_t creature_idx = 0; creature_idx < numCreatures; creature_idx++)

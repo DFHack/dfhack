@@ -20,7 +20,6 @@
  * - Set nickname with --setnick (only if -i is given)
  * - Revive creature(s) with --revive
  * - Show skills/labors only when -ss/-sl/-v is given or a skill/labor is changed
- * - Allow multiple -i switches
  * - Make -1 the default for everything but -i
  * - Imply -i if first argument is a number
  * - Search for nick/profession if first argument is a string without - (i.e. no switch)
@@ -29,7 +28,8 @@
  * - Switch --listskills, showing first 3 important skills
 
  * Done:
- * - Switch -c all shows all creatures
+ * - Allow comma separated list of IDs for -i
+ * - '-c all' shows all creatures
  * - Rename from skillmodify.cpp to creature.cpp
  * - Kill creature(s) with --kill
  * - Hide skills with level 0 and 0 experience points
@@ -246,6 +246,19 @@ bool is_in(int m, int set[], int set_size)
     }
     return false;
 }
+
+int * find_int(std::vector<int> v, int comp)
+{
+    for (int i=0; i<v.size(); i++)
+    {
+        //fprintf(stderr, "Comparing %d with %d and returning %x...\n", v[i], comp, &v[i]);
+        if (v[i] == comp)
+            return &v[i];
+    }
+    return NULL;
+}
+
+
 
 void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, int index)
 {
@@ -494,8 +507,7 @@ int main (int argc, const char* argv[])
 #endif
 
     string creature_type = "Dwarf";
-    string creature_id = "";
-    int creature_id_int = NOT_SET;
+    std::vector<int> creature_id;
     bool find_nonicks = false;
     bool find_nicks = false;
     bool remove_skills = false;
@@ -653,8 +665,13 @@ int main (int argc, const char* argv[])
         }
         else if(arg_cur == "-i" && i < argc-1)
         {
-            creature_id = argv[i+1];
-            sscanf(argv[i+1], "%d", &creature_id_int);
+            std::stringstream ss(argv[i+1]);
+            int num;
+            while (ss >> num) {
+                creature_id.push_back(num);
+                ss.ignore(1);
+            }
+
             creature_type = ""; // if -i is given, match all creatures
             i++;
         }
@@ -760,7 +777,7 @@ int main (int argc, const char* argv[])
 
             if (
                     // Check for -i <num> and -c <type>
-                    (creature_idx == creature_id_int
+                    (NULL != find_int(creature_id, creature_idx)
                      || toCaps(string(Materials->raceEx[creature.race].rawname)) == toCaps(creature_type)
                      || "All" == toCaps(creature_type))
                     // Check for -nn
@@ -790,7 +807,7 @@ int main (int argc, const char* argv[])
                 }
 
                 bool allow_massdesignation =
-                    !creature_id.empty() || toCaps(creature_type) != "Dwarf" || find_nonicks == true || force_massdesignation;
+                    creature_id.size()==0 || toCaps(creature_type) != "Dwarf" || find_nonicks == true || force_massdesignation;
                 if (dochange == true && allow_massdesignation == false)
                 {
                     cout

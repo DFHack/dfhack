@@ -25,6 +25,7 @@ distribution.
 #include "Internal.h"
 
 #include <string>
+#include <sstream>
 #include <vector>
 #include <cstdio>
 #include <map>
@@ -64,9 +65,11 @@ private:
     int32_t offset2;
     Process * p;
     DataWidth dataWidth;
+    uint32_t method;
 public:
     Accessor(uint32_t function, Process * p);
     Accessor(accessor_type type, int32_t constant, uint32_t offset1, uint32_t offset2, uint32_t dataWidth, Process * p);
+    std::string dump();
     int32_t getValue(uint32_t objectPtr);
     bool isConstant();
 };
@@ -96,6 +99,7 @@ private:
 public:
     ItemDesc(uint32_t VTable, Process * p);
     bool readItem(uint32_t itemptr, dfh_item & item);
+    std::string dumpAccessors();
     std::string className;
     uint32_t vtable;
     uint32_t mainType;
@@ -178,22 +182,23 @@ Accessor::Accessor(uint32_t function, Process *p)
         this->constant = 0;
         return;
     }
-    uint32_t ptr = function;
+    method = function;
+    uint32_t temp = function;
     int data_reg = -1;
-    uint64_t v = p->readQuad(ptr);
+    uint64_t v = p->readQuad(temp);
 
-    if (do_match(ptr, v, 2, 0xFFFF, 0xC033) ||
-        do_match(ptr, v, 2, 0xFFFF, 0xC031)) // XOR EAX, EAX
+    if (do_match(temp, v, 2, 0xFFFF, 0xC033) ||
+        do_match(temp, v, 2, 0xFFFF, 0xC031)) // XOR EAX, EAX
     {
         data_reg = 0;
         this->constant = 0;
     }
-    else if (do_match(ptr, v, 3, 0xFFFFFF, 0xFFC883)) // OR EAX, -1
+    else if (do_match(temp, v, 3, 0xFFFFFF, 0xFFC883)) // OR EAX, -1
     {
         data_reg = 0;
         this->constant = -1;
     }
-    else if (do_match(ptr, v, 5, 0xFF, 0xB8)) // MOV EAX,imm
+    else if (do_match(temp, v, 5, 0xFF, 0xB8)) // MOV EAX,imm
     {
         data_reg = 0;
         this->constant = (v>>8) & 0xFFFFFFFF;
@@ -204,22 +209,22 @@ Accessor::Accessor(uint32_t function, Process *p)
         int ptr_reg = 1, tmp; // ECX
 
         // MOV REG,[ESP+4]
-        if (do_match(ptr, v, 4, 0xFFFFC7FFU, 0x0424448B))
+        if (do_match(temp, v, 4, 0xFFFFC7FFU, 0x0424448B))
         {
             ptr_reg = (v>>11)&7;
-            v = p->readQuad(ptr);
+            v = p->readQuad(temp);
         }
 
-        if (match_MOV_MEM(ptr, v, ptr_reg, tmp, this->offset1, xsize)) {
+        if (match_MOV_MEM(temp, v, ptr_reg, tmp, this->offset1, xsize)) {
             data_reg = tmp;
             this->type = ACCESSOR_INDIRECT;
             this->dataWidth = xsize;
 
             if (xsize == Data32)
             {
-                v = p->readQuad(ptr);
+                v = p->readQuad(temp);
 
-                if (match_MOV_MEM(ptr, v, data_reg, tmp, this->offset2, xsize)) {
+                if (match_MOV_MEM(temp, v, data_reg, tmp, this->offset2, xsize)) {
                     data_reg = tmp;
                     this->type = ACCESSOR_DOUBLE_INDIRECT;
                     this->dataWidth = xsize;
@@ -228,9 +233,9 @@ Accessor::Accessor(uint32_t function, Process *p)
         }
     }
 
-    v = p->readQuad(ptr);
+    v = p->readQuad(temp);
 
-    if (data_reg == 0 && do_match(ptr, v, 1, 0xFF, 0xC3)) // RET
+    if (data_reg == 0 && do_match(temp, v, 1, 0xFF, 0xC3)) // RET
         return;
     else
     {
@@ -246,6 +251,55 @@ bool Accessor::isConstant()
         return true;
     else
         return false;
+}
+
+string Accessor::dump()
+{
+    stringstream sstr;
+    sstr << hex << "method @0x" << method << dec << " ";
+    switch(type)
+    {
+        case ACCESSOR_CONSTANT:
+            sstr << "Constant: " << dec << constant;
+            break;
+        case ACCESSOR_INDIRECT:
+            switch(dataWidth)
+            {
+                case Data32:
+                    sstr << "int32_t ";
+                    break;
+                case DataSigned16:
+                    sstr << "int16_t ";
+                    break;
+                case DataUnsigned16:
+                    sstr << "uint16_t ";
+                    break;
+                default:
+                    sstr << "unknown ";
+                    break;
+            }
+            sstr << hex << "[obj + 0x" << offset1 << " ]";
+            break;
+        case ACCESSOR_DOUBLE_INDIRECT:
+            switch(dataWidth)
+            {
+                case Data32:
+                    sstr << "int32_t ";
+                    break;
+                case DataSigned16:
+                    sstr << "int16_t ";
+                    break;
+                case DataUnsigned16:
+                    sstr << "uint16_t ";
+                    break;
+                default:
+                    sstr << "unknown ";
+                    break;
+            }
+            sstr << hex << "[ [obj + 0x" << offset1 << " ] + 0x" << offset2 << " ]";
+            break;
+    }
+    return sstr.str();
 }
 
 int32_t Accessor::getValue(uint32_t objectPtr)
@@ -283,8 +337,10 @@ int32_t Accessor::getValue(uint32_t objectPtr)
 Accessor * buildAccessor (OffsetGroup * I, Process * p, const char * name, uint32_t vtable)
 {
     int32_t offset;
-    if(I->getSafeOffset("item_type_accessor",offset))
+    if(I->getSafeOffset(name,offset))
+    {
         return new Accessor( p->readDWord( vtable + offset ), p);
+    }
     else
     {
         fprintf(stderr,"Missing offset for item accessor \"%s\"\n", name);
@@ -323,6 +379,19 @@ ItemDesc::ItemDesc(uint32_t VTable, Process *p)
         mainType = 0;
     }
 }
+
+string ItemDesc::dumpAccessors()
+{
+    std::stringstream outss;
+    outss << "MainType  :" << AMainType->dump() << endl;
+    outss << "ASubType  :" << ASubType->dump() << endl;
+    outss << "ASubIndex :" << ASubIndex->dump() << endl;
+    outss << "AIndex    :" << AIndex->dump() << endl;
+    outss << "AQuality  :" << AQuality->dump() << endl;
+    outss << "AWear     :" << AWear->dump() << endl;
+    return outss.str();
+}
+
 
 bool ItemDesc::readItem(uint32_t itemptr, DFHack::dfh_item &item)
 {
@@ -485,26 +554,38 @@ std::string Items::getItemClass(int32_t index)
 
 std::string Items::getItemDescription(const dfh_item & item, Materials * Materials)
 {
-    /*
-    DFHack::t_item item;
-    std::string out;
-
-    if(!this->getItemData(itemptr, item))
-        return "??";
+    std::stringstream outss;
     switch(item.quality)
     {
-        case 0: break;
-        case 1: out.append("Well crafted "); break;
-        case 2: out.append("Finely crafted "); break;
-        case 3: out.append("Superior quality "); break;
-        case 4: out.append("Exceptionnal "); break;
-        case 5: out.append("Masterful "); break;
-        default: out.append("Crazy quality "); break;
+        case 0:
+            outss << "Ordinary ";
+            break;
+        case 1:
+            outss << "Well crafted ";
+            break;
+        case 2:
+            outss << "Finely crafted ";
+            break;
+        case 3:
+            outss << "Superior quality ";
+            break;
+        case 4:
+            outss << "Exceptionnal ";
+            break;
+        case 5:
+            outss << "Masterful ";
+            break;
+        default: outss << "Crazy quality " << item.quality << " "; break;
     }
-    out.append(Materials->getDescription(item.matdesc));
-    out.append(" ");
-    out.append(this->getItemClass(item.matdesc.itemType));
-    */
-    //return out;
-    return getItemClass(item.matdesc.itemType);
+    outss << Materials->getDescription(item.matdesc) << " " << getItemClass(item.matdesc.itemType);
+    return outss.str();
+}
+
+/// dump offsets used by accessors of a valid item to a string
+std::string Items::dumpAccessors(const dfh_item & item)
+{
+    uint32_t vtable = item.base.vtable;
+    std::map< uint32_t, ItemDesc* >::const_iterator it = d->descVTable.find(vtable);
+    ItemDesc * desc = it->second;
+    return desc->dumpAccessors();
 }

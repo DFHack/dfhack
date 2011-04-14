@@ -10,7 +10,7 @@
 #include <vector>
 #include <cstring>
 using namespace std;
-
+#define DFHACK_WANT_MISCUTILS
 #include <DFHack.h>
 #include <dfhack/DFVector.h>
 
@@ -35,13 +35,16 @@ int main ()
     }
     DFHack::Materials * Materials = DF->getMaterials();
     Materials->ReadAllMaterials();
+    
+    DFHack::Gui * Gui = DF->getGui();
 
     DFHack::Items * Items = DF->getItems();
     Items->Start();
 
     DFHack::VersionInfo * mem = DF->getMemoryInfo();
     p = DF->getProcess();
-
+    int32_t x,y,z;
+    Gui->getCursorCoords(x,y,z);
     // FIXME: tools should never be exposed to DFHack internals!
     DFHack::OffsetGroup* itemGroup = mem->getGroup("Items");
     DFHack::DfVector <uint32_t> p_items (p, itemGroup->getAddress("items_vector"));
@@ -52,15 +55,35 @@ int main ()
         DFHack::dfh_item itm;
         memset(&itm, 0, sizeof(DFHack::dfh_item));
         Items->readItem(p_items[i],itm);
-        printf(
-            "%5d: %08x %08x (%d,%d,%d) #%08x [%d] %s - %s\n",
-               i, itm.origin, itm.base.flags.whole,
-               itm.base.x, itm.base.y, itm.base.z,
-               itm.base.vtable,
-               itm.wear_level,
-               Items->getItemClass(itm.matdesc.itemType).c_str(),
-               Items->getItemDescription(itm, Materials).c_str()
-        );
+        if(x != -30000)
+        {
+            if(itm.base.x == x && itm.base.y == y && itm.base.z == z)
+            {
+                printf(
+                    "%5d: %08x %08x (%d,%d,%d) #%08x [%d] %s - %s\n",
+                       i, itm.origin, itm.base.flags.whole,
+                       itm.base.x, itm.base.y, itm.base.z,
+                       itm.base.vtable,
+                       itm.wear_level,
+                       Items->getItemClass(itm.matdesc.itemType).c_str(),
+                       Items->getItemDescription(itm, Materials).c_str()
+                );
+                hexdump(DF,p_items[i],0x100);
+                cout << Items->dumpAccessors(itm) << endl;
+            }
+        }
+        else
+        {
+            printf(
+                "%5d: %08x %08x (%d,%d,%d) #%08x [%d] %s - %s\n",
+                   i, itm.origin, itm.base.flags.whole,
+                   itm.base.x, itm.base.y, itm.base.z,
+                   itm.base.vtable,
+                   itm.wear_level,
+                   Items->getItemClass(itm.matdesc.itemType).c_str(),
+                   Items->getItemDescription(itm, Materials).c_str()
+            );
+        }
     }
 /*
     printf("type\tvtable\tname\tquality\tdecorate\n");

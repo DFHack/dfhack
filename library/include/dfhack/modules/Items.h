@@ -125,6 +125,8 @@ public:
     bool writeItem(const dfh_item & item);
     /// who owns this item we already read?
     int32_t getItemOwnerID(const dfh_item & item);
+    /// dump offsets used by accessors to a string
+    std::string dumpAccessors(const dfh_item & item);
 private:
     class Private;
     Private* d;

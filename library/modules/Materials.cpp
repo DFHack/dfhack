@@ -479,7 +479,8 @@ void Materials::ReadAllMaterials(void)
     this->ReadOthers();
 }
 
-std::string Materials::getDescription(t_material & mat)
+/// miserable pile of magic. The material system is insane.
+std::string Materials::getDescription(const t_material & mat)
 {
     std::string out;
     int32_t typeC;
@@ -542,7 +543,7 @@ std::string Materials::getDescription(t_material & mat)
 }
 
 //type of material only so we know which vector to retrieve
-std::string Materials::getType(t_material & mat)
+std::string Materials::getType(const t_material & mat)
 {
     if((mat.subIndex<419) || (mat.subIndex>618))
     {

@@ -183,21 +183,22 @@ Accessor::Accessor(uint32_t function, Process *p)
         return;
     }
     method = function;
+    uint32_t temp = function;
     int data_reg = -1;
-    uint64_t v = p->readQuad(method);
+    uint64_t v = p->readQuad(temp);
 
-    if (do_match(method, v, 2, 0xFFFF, 0xC033) ||
-        do_match(method, v, 2, 0xFFFF, 0xC031)) // XOR EAX, EAX
+    if (do_match(temp, v, 2, 0xFFFF, 0xC033) ||
+        do_match(temp, v, 2, 0xFFFF, 0xC031)) // XOR EAX, EAX
     {
         data_reg = 0;
         this->constant = 0;
     }
-    else if (do_match(method, v, 3, 0xFFFFFF, 0xFFC883)) // OR EAX, -1
+    else if (do_match(temp, v, 3, 0xFFFFFF, 0xFFC883)) // OR EAX, -1
     {
         data_reg = 0;
         this->constant = -1;
     }
-    else if (do_match(method, v, 5, 0xFF, 0xB8)) // MOV EAX,imm
+    else if (do_match(temp, v, 5, 0xFF, 0xB8)) // MOV EAX,imm
     {
         data_reg = 0;
         this->constant = (v>>8) & 0xFFFFFFFF;
@@ -208,22 +209,22 @@ Accessor::Accessor(uint32_t function, Process *p)
         int ptr_reg = 1, tmp; // ECX
 
         // MOV REG,[ESP+4]
-        if (do_match(method, v, 4, 0xFFFFC7FFU, 0x0424448B))
+        if (do_match(temp, v, 4, 0xFFFFC7FFU, 0x0424448B))
         {
             ptr_reg = (v>>11)&7;
-            v = p->readQuad(method);
+            v = p->readQuad(temp);
         }
 
-        if (match_MOV_MEM(method, v, ptr_reg, tmp, this->offset1, xsize)) {
+        if (match_MOV_MEM(temp, v, ptr_reg, tmp, this->offset1, xsize)) {
             data_reg = tmp;
             this->type = ACCESSOR_INDIRECT;
             this->dataWidth = xsize;
 
             if (xsize == Data32)
             {
-                v = p->readQuad(method);
+                v = p->readQuad(temp);
 
-                if (match_MOV_MEM(method, v, data_reg, tmp, this->offset2, xsize)) {
+                if (match_MOV_MEM(temp, v, data_reg, tmp, this->offset2, xsize)) {
                     data_reg = tmp;
                     this->type = ACCESSOR_DOUBLE_INDIRECT;
                     this->dataWidth = xsize;
@@ -232,9 +233,9 @@ Accessor::Accessor(uint32_t function, Process *p)
         }
     }
 
-    v = p->readQuad(method);
+    v = p->readQuad(temp);
 
-    if (data_reg == 0 && do_match(method, v, 1, 0xFF, 0xC3)) // RET
+    if (data_reg == 0 && do_match(temp, v, 1, 0xFF, 0xC3)) // RET
         return;
     else
     {

@@ -479,6 +479,7 @@ void Materials::ReadAllMaterials(void)
     this->ReadOthers();
 }
 
+/// miserable pile of magic. The material system is insane.
 std::string Materials::getDescription(const t_material & mat)
 {
     std::string out;

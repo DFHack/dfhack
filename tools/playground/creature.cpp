@@ -147,7 +147,7 @@ void usage(int argc, const char * argv[])
         << "-v              : Increase verbosity" << endl
         << "-c creature     : Show/modify this creature type instead of dwarfes ('all' to show all creatures)" << endl
         << "-1/--summary    : Only display one line per creature" << endl
-        << "-i id           : Only show/modify creature with this id" << endl
+        << "-i id1[,id2,...]: Only show/modify creature with this id" << endl
         << "-nn/--nonicks   : Only show/modify creatures with no custom nickname (migrants)" << endl
         << "--nicks         : Only show/modify creatures with custom nickname" << endl
         << "-ll/--listlabors: List available labors" << endl
@@ -174,8 +174,8 @@ void usage(int argc, const char * argv[])
         << "Example 2: Show all Yaks" << endl
         << argv[0] << " -c Yak" << endl
         << endl
-        << "Example 3: Remove all skills from dwarf with id 32" << endl
-        << argv[0] << " -i 32 -ras" << endl
+        << "Example 3: Remove all skills from dwarfs 15 and 32" << endl
+        << argv[0] << " -i 15,32 -ras" << endl
         << endl
         << "Example 4: Remove all skills and labors from dwarfs with no custom nickname" << endl
         << argv[0] << " -c DWARF -nn -ras -ral" << endl
@@ -310,6 +310,15 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
     if(creature.current_job.active)
     {
         job=mem->getJob(creature.current_job.jobId);
+        int p=job.size();
+        while (p>0 && (job[p]==' ' || job[p]=='\t'))
+            p--;
+        if (p <= 1)
+        {
+            stringstream ss;
+            ss << creature.current_job.jobId;
+            job = ss.str();
+        }
     }
 
     if (showfirstlineonly)
@@ -673,6 +682,7 @@ int main (int argc, const char* argv[])
             }
 
             creature_type = ""; // if -i is given, match all creatures
+            showdead = true;
             i++;
         }
         else

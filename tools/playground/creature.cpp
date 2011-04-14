@@ -21,8 +21,15 @@
  * - Revive creature(s) with --revive
  * - Show skills/labors only when -ss/-sl/-v is given or a skill/labor is changed
  * - Allow multiple -i switches
+ * - Make -1 the default for everything but -i
+ * - Imply -i if first argument is a number
+ * - Search for nick/profession if first argument is a string without - (i.e. no switch)
+ * - Switch --showhappy
+ * - Switch --makefriendly
+ * - Switch --listskills, showing first 3 important skills
 
  * Done:
+ * - Switch -c all shows all creatures
  * - Rename from skillmodify.cpp to creature.cpp
  * - Kill creature(s) with --kill
  * - Hide skills with level 0 and 0 experience points
@@ -136,29 +143,30 @@ void usage(int argc, const char * argv[])
         << argv[0] << " [option 1] [option 2] [...]" << endl
         << endl
         << "Display options:" << endl
-        << "-q            : Suppress \"Press any key to continue\" at program termination" << endl
-        << "-v            : Increase verbosity" << endl
-        << "-c creature   : Only show/modify this creature type instead of dwarfes" << endl
-        << "-1/--summary  : Only display one line per creature" << endl
-        << "-i id         : Only show/modify creature with this id" << endl
-        << "-nn/--nonicks : Only show/modify creatures with no custom nickname (migrants)" << endl
-        << "--nicks       : Only show/modify creatures with custom nickname" << endl
-        << "-ll           : List available labors" << endl
-        << "--showdead    : Also show/modify dead creatures" << endl
-        << "--showallflags: Show all flags of a creature" << endl
+        << "-q              : Suppress \"Press any key to continue\" at program termination" << endl
+        << "-v              : Increase verbosity" << endl
+        << "-c creature     : Show/modify this creature type instead of dwarfes ('all' to show all creatures)" << endl
+        << "-1/--summary    : Only display one line per creature" << endl
+        << "-i id           : Only show/modify creature with this id" << endl
+        << "-nn/--nonicks   : Only show/modify creatures with no custom nickname (migrants)" << endl
+        << "--nicks         : Only show/modify creatures with custom nickname" << endl
+        << "-ll/--listlabors: List available labors" << endl
+        << "--showdead      : Also show/modify dead creatures" << endl
+        << "--showallflags  : Show all flags of a creature" << endl
         << endl
         << "Modifying options:" << endl
-        << "-al <n>       : Add labor <n> to creature" << endl
-        << "-rl <n>       : Remove labor <n> from creature" << endl
-        << "-ras          : Remove all skills from creature" << endl
-        << "-ral          : Remove all labors from creature" << endl
-        << "-ah           : Add hauler labors (stone hauling, etc.) to creature" << endl
-        << "-rh           : Remove hauler labors (stone hauling, etc.) from creature" << endl
-        << "--setmood <n> : Set mood to n (-1 = no mood, max=4, buggy!)" << endl
-        << "--kill        : Kill creature(s) (may need to be called multiple times)" << endl
-        // Doesn't work, because hapiness is recalculated
+        << "-al <n>         : Add labor <n> to creature" << endl
+        << "-rl <n>         : Remove labor <n> from creature" << endl
+        << "-ras            : Remove all skills from creature" << endl
+        << "-ral            : Remove all labors from creature" << endl
+        << "-ah             : Add hauler labors (stone hauling, etc.) to creature" << endl
+        << "-rh             : Remove hauler labors (stone hauling, etc.) from creature" << endl
+        // Disabling mood doesn't work as intented
+        << "--setmood <n>   : Set mood to n (-1 = no mood, max=4, buggy!)" << endl
+        << "--kill          : Kill creature(s) (may need to be called multiple times)" << endl
+        // Setting happiness doesn't work, because hapiness is recalculated
         //<< "--sethappiness <n> : Set happiness to n" << endl
-        << "-f            : Force an action" << endl
+        << "-f              : Force an action" << endl
         << endl
         << "Example 1: Show all dwarfs" << endl
         << argv[0] << " -c Dwarf" << endl
@@ -566,7 +574,7 @@ int main (int argc, const char* argv[])
             force_massdesignation = true;
         }
         // list labors
-        else if(arg_cur == "-ll")
+        else if(arg_cur == "-ll" || arg_cur == "--listlabors")
         {
             list_labors = true;
         }
@@ -753,7 +761,8 @@ int main (int argc, const char* argv[])
             if (
                     // Check for -i <num> and -c <type>
                     (creature_idx == creature_id_int
-                     || toCaps(string(Materials->raceEx[creature.race].rawname)) == toCaps(creature_type))
+                     || toCaps(string(Materials->raceEx[creature.race].rawname)) == toCaps(creature_type)
+                     || "All" == toCaps(creature_type))
                     // Check for -nn
                     && ((find_nonicks == true && hasnick == false)
                         || (find_nicks == true && hasnick == true)
@@ -850,8 +859,18 @@ int main (int argc, const char* argv[])
 
                         if (set_mood) 
                         {
+                            /* Doesn't really work to disable a mood */
                             cout << "Setting mood to " << set_mood_n << "..." << endl;
                             Creatures->WriteMood(creature_idx, set_mood_n);
+                            DFHack::t_creaturflags1 f1 = creature.flags1;
+                            DFHack::t_creaturflags2 f2 = creature.flags2;
+                            f1.bits.has_mood = (set_mood_n == NO_MOOD ? 0 : 1);
+                            if (!Creatures->WriteFlags(creature_idx, f1.whole, f2.whole))
+                            {
+                                cout << "Error writing creature flags!" << endl;
+                            }
+                            creature.flags1 = f1;
+                            creature.flags2 = f2;
                         }
 
                         if (set_happiness) 

@@ -310,10 +310,12 @@
             <Job id="94" name = "Harvest Plants" />
             <Job id="95" name = "Train Hunting Animal" />
             <Job id="96" name = "Train War Animal" />
+            <Job id="97" name = "Forge ?? Short Sword" />
+            <Job id="98" name = "(Job-Id 98)" />
             <Job id="99" name = "Construct Catapult Parts" />
             <Job id="100" name = "Forge ?? Anvil" />
             <Job id="101" name = "Construct Catapult Parts" />
-            <Job id="102" name = "Forge ?? helm" />
+            <Job id="102" name = "Forge ?? Helm" />
             <Job id="103" name = "Forge/Make A" />
             <Job id="104" name = "Stud with ?something?" />
             <Job id="105" name = "Butcher an Animal" />
@@ -329,9 +331,9 @@
             <Job id="115" name = "Prepare ?? Meal" />
             <Job id="116" name = "Weave ?? into ??" />
             <Job id="117" name = "Forge/Make ?? something" />
-            <Job id="118" name = "Forge ?? high boot" />
-            <Job id="119" name = "Forge ?? shield" />
-            <Job id="120" name = "Forge ?? cage" />
+            <Job id="118" name = "Forge ?? High Boot" />
+            <Job id="119" name = "Forge ?? Shield" />
+            <Job id="120" name = "Forge ?? Cage" />
             <Job id="121" name = "Forge/Make F" />
             <Job id="122" name = "Forge/Make Waterskin/Vial/Flask" />
             <Job id="123" name = "Forge Rope" />

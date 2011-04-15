@@ -1816,6 +1816,7 @@
 
                 <Group name="job">
                     <Offset name="id" value="0x08" />
+                    <Offset name="type" value="0x40" />
                 </Group>
             </Group>
             <Group name="Vegetation">
@@ -2008,6 +2009,7 @@
                 </Group>
                 <Group name="job" valid="false">
                     <Offset name="id" valid="true" />
+                    <Offset name="type" valid="true" />
                 </Group>
             </Group>
             <Group name="Maps" valid="true">

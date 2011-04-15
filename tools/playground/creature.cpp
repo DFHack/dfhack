@@ -23,7 +23,7 @@
  * - Make -1 the default for everything but -i
  * - Imply -i if first argument is a number
  * - Search for nick/profession if first argument is a string without - (i.e. no switch)
- * - Switch --showhappy
+ * - Switch --showhappy (show dwarf's experiences which make her un-/happy)
  * - Switch --makefriendly
  * - Switch --listskills, showing first 3 important skills
 
@@ -164,30 +164,41 @@ void usage(int argc, const char * argv[])
         // Disabling mood doesn't work as intented
         << "--setmood <n>   : Set mood to n (-1 = no mood, max=4, buggy!)" << endl
         << "--kill          : Kill creature(s) (may need to be called multiple times)" << endl
-        // Setting happiness doesn't work, because hapiness is recalculated
+        // Setting happiness doesn't work really, because hapiness is recalculated
         //<< "--sethappiness <n> : Set happiness to n" << endl
         << "-f              : Force an action" << endl
         << endl
-        << "Example 1: Show all dwarfs" << endl
+        << "Examples:" << endl
+        << endl
+        << "Show all dwarfs:" << endl
         << argv[0] << " -c Dwarf" << endl
         << endl
-        << "Example 2: Show all Yaks" << endl
-        << argv[0] << " -c Yak" << endl
+        << "Show summary of all creatures (spoiler: includes unknown creatures):" << endl
+        << argv[0] << " -1 -c all" << endl
         << endl
-        << "Example 3: Remove all skills from dwarfs 15 and 32" << endl
+        << "Kill that nasty ogre" << endl
+        << argv[0] << " -i 52 --kill" << endl
+        << endl
+        << "Check that the ogre is really dead" << endl
+        << argv[0] << " -c ogre --showdead" << endl
+        << endl
+        << "Remove all skills from dwarfs 15 and 32:" << endl
         << argv[0] << " -i 15,32 -ras" << endl
         << endl
-        << "Example 4: Remove all skills and labors from dwarfs with no custom nickname" << endl
+        << "Remove all skills and labors from dwarfs with no custom nickname:" << endl
         << argv[0] << " -c DWARF -nn -ras -ral" << endl
         << endl
-        << "Example 5: Add hauling labors to all migrants" << endl
+        << "Add hauling labors to all dwarfs without nickname (e.g. migrants):" << endl
         << argv[0] << " -c DWARF -nn -ah" << endl
         << endl
-        << "Example 6: Show list of labor ids" << endl
+        << "Show list of labor ids:" << endl
         << argv[0] << " -c DWARF -ll" << endl
         << endl
-        << "Example 7: Add engraving labor to all migrants (get the id from the list of labor ids)" << endl
+        << "Add engraving labor to all dwarfs without nickname (get the labor id from the list above):" << endl
         << argv[0] << " -c DWARF -nn -al 13" << endl
+        << endl
+        << "Make Urist, Stodir and Ingish miners:" << endl
+        << argv[0] << " -i 31,42,77 -al 0" << endl
         ;
         if (quiet == false) {
             cout << "Press any key to continue" << endl;

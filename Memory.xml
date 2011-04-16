@@ -991,10 +991,12 @@
                 <Offset name="item_subindex_accessor" />
                 <Offset name="item_index_accessor" />
                 <Offset name="item_quality_accessor" />
+                <!--
                 <Offset name="item_improvement_vector" />
                 <Offset name="item_improvement_subindex" />
                 <Offset name="item_improvement_index" />
                 <Offset name="item_improvement_quality" />
+                -->
                 <Offset name="item_wear_accessor" />
                 <Offset name="item_ref_vector" description="Contains the owner among other things"/>
                 <Offset name="owner_ref_id_field" description="Creature ID offset in general_ref_unit_itemownerst"/>
@@ -1381,12 +1383,15 @@
                 <Offset name="item_subtype_accessor" value="0x4" />
                 <Offset name="item_subindex_accessor" value="0x8" />
                 <Offset name="item_index_accessor" value="0xC" />
+                <Offset name="item_type_accessor" value="0x14" /> ... seriously, WHAT?
                 <Offset name="item_quality_accessor" value="0x238" />
+                <!--
                 <Offset name="item_improvement_vector" value="0xA0" />
                 <Offset name="item_improvement_subindex" value="0x4" />
                 <Offset name="item_improvement_index" value="0x8" />
                 <Offset name="item_improvement_quality" value="0x14" />
-                <Offset name="item_type_accessor" value="0x14" />  (in the vtable)
+                -->
+                
             </Group>
             <Group name="World">
                 <Address name="current_tick" value="0x0e47e08" />
@@ -1861,7 +1866,9 @@
                 <Offset name="item_subindex_accessor" value="0x8" />
                 <Offset name="item_index_accessor" value="0xC" />
                 <Offset name="item_quality_accessor" value="0x238" />
+                <!--
                 <Offset name="item_improvement_vector" value="0x90" />
+                -->
             </Group>
         </Offsets>
     </Version>
@@ -2173,6 +2180,25 @@
     <Version name="v0.31.25 SDL" os="windows" base="v0.31.24 SDL">
         <PETimeStamp value="0x4D90764F" />
         <MD5 value="6ada05fc94785b53efe6aa5728b3756b" />
+        <Offsets>
+        <Group name="Items" valid="true">
+            <Address name="items_vector" value="0x16c4540"/>
+            <Offset name="item_ref_vector" value="0x28" />
+            <Offset name="owner_ref_id_field" value="0x4" />
+            <Offset name="item_wear_accessor" value="0xCC" />
+            <Offset name="item_quality_accessor" value="0x25C" />
+        </Group>
+    </Offsets>
+        cmake
+        item vector:
+        
+        -- those two seem to have identical length
+        0x16c4540 -- maybe
+        0x16c4550 -- maybe
+        
+        0x16c4d20 -- too small/bogus?
+        0x16c4660 -- too small again
+        0x185c104 -- no.
     </Version>
                             .-"""-.
                            '       \

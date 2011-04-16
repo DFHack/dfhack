@@ -584,8 +584,8 @@ std::string Items::getItemDescription(const dfh_item & item, Materials * Materia
 /// dump offsets used by accessors of a valid item to a string
 std::string Items::dumpAccessors(const dfh_item & item)
 {
-    uint32_t vtable = item.base.vtable;
-    std::map< uint32_t, ItemDesc* >::const_iterator it = d->descVTable.find(vtable);
-    ItemDesc * desc = it->second;
-    return desc->dumpAccessors();
+    std::map< uint32_t, ItemDesc* >::const_iterator it = d->descVTable.find(item.base.vtable);
+    if(it != d->descVTable.end())
+        return it->second->dumpAccessors();
+    return "crud";
 }

@@ -119,6 +119,7 @@ public:
     std::string getItemDescription(const dfh_item & item, Materials * Materials);
     /// get a short name for an item
     std::string getItemClass(int32_t index);
+    std::string getItemClass(const dfh_item & item);
     /// read an item, including the extra attributes
     bool readItem(uint32_t itemptr, dfh_item & item);
     /// write item base (position and flags only = t_item part of dfh_item)

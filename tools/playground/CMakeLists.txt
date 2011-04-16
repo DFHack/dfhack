@@ -35,8 +35,7 @@ DFHACK_TOOL(dfdigger2 digger2.cpp)
 # itemdesignator - change some item designations (dump, forbid, on-fire) for all
 #                  items of a given type and material
 # Author: belal
-# FIXME: turned off. there is no reliable Items module.
-#DFHACK_TOOL(dfitemdesignator itemdesignator.cpp)
+DFHACK_TOOL(dfitemdesignator itemdesignator.cpp)
 
 # catsplosion - Accelerates pregnancy
 # Author: Zhentar

@@ -819,6 +819,8 @@
                 <Group name="block" description="The map block structure.">
                     <Offset name="vein_vector" description="Mineral veins, objects holding tile types under ice, etc..."/>
                     <Offset name="vegetation_vector" description="All the plants in this block, including farm plats."/>
+                    <Offset name="effect_vector" description="Effect objects present in the block."/>
+                    <Offset name="item_idx_vector" description="Indexes of item objects present in the block."/>
                     <Offset name="type" description="16x16 x 2B tile type values"/>
                     <Offset name="designation" description="16x16 * 4B designation fields"/>
                     <Offset name="occupancy" description="16x16 * 4B occupancy fields" />
@@ -2143,6 +2145,8 @@
             <Group name="Maps">
                 <Group name="block">
                     <Offset name="mystery_offset" value="0x2C" />
+                    <Offset name="item_idx_vector" value="0x3C" />
+                    <Offset name="effect_vector" value="0x4C" />
                     <Offset name="vegetation_vector" value="0x64" />
                     <Offset name="type" value="0x7e" />
                     <Offset name="designation" value="0x280" />

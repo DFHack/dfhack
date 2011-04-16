@@ -63,7 +63,7 @@ DFHACK_TOOL(dfliquids liquids.cpp)
 
 # Solves the problem of unusable items after reclaim by clearing the 'in_job' bit of all items.
 # Original author: Quietust
-#DFHACK_TOOL(dfcleartask cleartask.cpp)
+DFHACK_TOOL(dfcleartask cleartask.cpp)
 
 # position - check the DF window and cursor parameters
 DFHACK_TOOL(dfposition position.cpp)

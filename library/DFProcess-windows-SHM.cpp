@@ -24,6 +24,8 @@ distribution.
 #include "Internal.h"
 #include "PlatformInternal.h"
 #include <cstring>
+#include <cstdio>
+#include <cstdlib>
 #include <vector>
 #include <string>
 #include <map>

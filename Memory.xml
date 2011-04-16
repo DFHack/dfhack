@@ -285,10 +285,10 @@
             <Job id="69" name = "Construct Door" />
             <Job id="70" name = "Construct Floodgate" />
             <Job id="71" name = "Construct ?? Bed" />
-            <Job id="72" name = "Construct ?? Chair/Throne" />
+            <Job id="72" name = "Construct ?? Throne" />
             <Job id="73" name = "Construct ?? Casket/Sarcophagus/Coffin" />
             <Job id="74" name = "Construct ?? Table" />
-            <Job id="75" name = "Construct ?? Box/Chest/Bag/Coffer" />
+            <Job id="75" name = "Construct ?? Container" />
             <Job id="76" name = "Construct ?? Bin" />
             <Job id="77" name = "Construct ?? Armor Stand" />
             <Job id="78" name = "Construct ?? Weapon Rack" />
@@ -299,21 +299,23 @@
             <Job id="83" name = "Make ?? Crafts" />
             <Job id="84" name = "Mint ?? Coins" />
             <Job id="85" name = "Cut ?A?" />
-            <Job id="86" name = "Cut ?B?" />
+            <Job id="86" name = "Cut crystal(?) glass(?)" />
             <Job id="87" name = "Encrust ?something? with ?somethings?" />
             <Job id="88" name = "Encrust ?something? with ?somethings?" />
             <Job id="89" name = "Destroy Building" />
-            <Job id="90" name = "Smelt Ore" />
+            <Job id="90" name = "Smelt ?? Ore" />
             <Job id="91" name = "Melt a Metal Object" />
             <Job id="92" name = "Extract Metal Strands" />
             <Job id="93" name = "Plant Seeds" />
             <Job id="94" name = "Harvest Plants" />
             <Job id="95" name = "Train Hunting Animal" />
             <Job id="96" name = "Train War Animal" />
+            <Job id="97" name = "Forge ?? Short Sword" />
+            <Job id="98" name = "(Job-Id 98)" />
             <Job id="99" name = "Construct Catapult Parts" />
             <Job id="100" name = "Forge ?? Anvil" />
             <Job id="101" name = "Construct Catapult Parts" />
-            <Job id="102" name = "Construct Ballista Parts" />
+            <Job id="102" name = "Forge ?? Helm" />
             <Job id="103" name = "Forge/Make A" />
             <Job id="104" name = "Stud with ?something?" />
             <Job id="105" name = "Butcher an Animal" />
@@ -329,23 +331,23 @@
             <Job id="115" name = "Prepare ?? Meal" />
             <Job id="116" name = "Weave ?? into ??" />
             <Job id="117" name = "Forge/Make ?? something" />
-            <Job id="118" name = "Weave Thread" />
-            <Job id="119" name = "Forge/Make D" />
-            <Job id="120" name = "Forge/Make E" />
+            <Job id="118" name = "Forge ?? High Boot" />
+            <Job id="119" name = "Forge ?? Shield" />
+            <Job id="120" name = "Forge ?? Cage" />
             <Job id="121" name = "Forge/Make F" />
             <Job id="122" name = "Forge/Make Waterskin/Vial/Flask" />
             <Job id="123" name = "Forge Rope" />
-            <Job id="124" name = "Forge  Flask" />
-            <Job id="125" name = "Forge  Goblet" />
-            <Job id="126" name = "Forge  Instrument" />
-            <Job id="127" name = "Forge  Toy" />
-            <Job id="128" name = "Forge  Animal Trap" />
-            <Job id="129" name = "Forge  Barrel" />
+            <Job id="124" name = "Forge Flask" />
+            <Job id="125" name = "Forge Goblet" />
+            <Job id="126" name = "Forge Instrument" />
+            <Job id="127" name = "Forge Toy" />
+            <Job id="128" name = "Forge Animal Trap" />
+            <Job id="129" name = "Forge Barrel" />
             <Job id="130" name = "Make Totel" />
             <Job id="131" name = "Forge Bolts" />
             <Job id="132" name = "Decorate With ?something?" />
             <Job id="133" name = "Forge/Make G" />
-            <Job id="134" name = "Decorate With Bone" />
+            <Job id="134" name = "Make leather quiver" />
             <Job id="135" name = "Make Backpack" />
             <Job id="136" name = "Make Quiver" />
             <Job id="137" name = "Load Catapult" />
@@ -353,7 +355,7 @@
             <Job id="139" name = "Fire Catapult" />
             <Job id="140" name = "Fire Ballista" />
             <Job id="141" name = "Construct Mechanisms" />
-            <Job id="142" name = "Fire Ballista" />
+            <Job id="142" name = "Forge large, serrated ?? disc" /> <!-- spiked ball? serrated disk? maybe trap component? -->
             <Job id="143" name = "Load Cage Trap" />
             <Job id="144" name = "Load Stone Trap" />
             <Job id="145" name = "Load Weapon Trap" />
@@ -423,7 +425,7 @@
             <Job id="210" name = "Clean Self" />
             <Job id="211" name = "Bring Crutch" />
             <Job id="212" name = "Apply Cast" />
-            <Job id="213" name = "Reaction (other)" />
+            <Job id="213" name = "Make ?? Bars" />
             <Job id="214" name = "Unknown Job" />
             <Job id="215" name = "Unknown Job" />
             <Job id="216" name = "Shear Creature" />

@@ -1,13 +1,14 @@
 /*********************************************
- * skillmodify.cpp
- *
  * Purpose:
  *
  * - Display creatures
  * - Modify skills and labors of creatures
+ * - Kill creatures
+ * - Etc.
  *
  * Version: 0.1.1
  * Date: 2011-04-07
+ * Author: raoulxq (based on creaturedump.cpp from peterix)
 
  * Todo:
  * - Option to add/remove single skills
@@ -17,12 +18,27 @@
  * - Filter by last name with -ln
  * - Add pattern matching (or at least matching) to -n/-fn/-ln
  * - Set nickname with --setnick (only if -i is given)
- * - Kill/revive creature(s) with --kill/--revive
+ * - Revive creature(s) with --revive
  * - Show skills/labors only when -ss/-sl/-v is given or a skill/labor is changed
- * - Allow multiple -i switches
- * - Display current job
+ * - Make -1 the default for everything but -i
+ * - Imply -i if first argument is a number
+ * - Search for nick/profession if first argument is a string without - (i.e. no switch)
+ * - Switch --showhappy
+ * - Switch --makefriendly
+ * - Switch --listskills, showing first 3 important skills
 
  * Done:
+ * - Allow comma separated list of IDs for -i
+ * - '-c all' shows all creatures
+ * - Rename from skillmodify.cpp to creature.cpp
+ * - Kill creature(s) with --kill
+ * - Hide skills with level 0 and 0 experience points
+ * - Add --showallflags flag to display all flags (default: display a few important ones)
+ * - Add --showdead flag to also display dead creatures
+ * - Display more creature flags
+ * - Show creature type (again)
+ * - Add switch -1/--summary to only display one line for every creature. Good for an overview.
+ * - Display current job (has been there all the time, but not shown in Windows due to missing memory offsets)
  * - Remove magic numbers
  * - Show social skills only when -ss is given
  * - Hide hauler labors when +sh is given
@@ -67,25 +83,33 @@ using namespace std;
 #define SKILL_FLATTERY       82
 #define SKILL_CONSOLING      83
 #define SKILL_PACIFICATION   84
-#define LABOR_STONE_HAULING	1 
-#define LABOR_WOOD_HAULING	2 
-#define LABOR_BURIAL	        3
-#define LABOR_FOOD_HAULING	4 
-#define LABOR_REFUSE_HAULING	5 
-#define LABOR_ITEM_HAULING	6 
-#define LABOR_FURNITURE_HAULING	7 
-#define LABOR_ANIMAL_HAULING	8 
-#define LABOR_CLEANING	        9
+
+#define LABOR_STONE_HAULING   1 
+#define LABOR_WOOD_HAULING    2 
+#define LABOR_BURIAL          3
+#define LABOR_FOOD_HAULING    4 
+#define LABOR_REFUSE_HAULING  5 
+#define LABOR_ITEM_HAULING    6 
+#define LABOR_FURNITURE_HAULING 7 
+#define LABOR_ANIMAL_HAULING  8 
+#define LABOR_CLEANING        9
 #define LABOR_FEED_PATIENTS_PRISONERS   22
-#define LABOR_RECOVERING_WOUNDED	23
+#define LABOR_RECOVERING_WOUNDED        23
 #define NOT_SET              INT_MIN
 #define MAX_MOOD             4
 #define NO_MOOD             -1
 
-bool quiet;
+#define PROFESSION_CHILD    96
+#define PROFESSION_BABY     97
+
+bool quiet=true;
 bool verbose = false;
 bool showhauler = true;
 bool showsocial = false;
+bool showfirstlineonly = false;
+bool showdead = false;
+bool showallflags = false;
+
 int hauler_labors[] = {
     LABOR_STONE_HAULING
         ,LABOR_WOOD_HAULING
@@ -117,23 +141,32 @@ void usage(int argc, const char * argv[])
     cout
         << "Usage:" << endl
         << argv[0] << " [option 1] [option 2] [...]" << endl
-        << "-q            : Suppress \"Press any key to continue\" at program termination" << endl
-        << "-v            : Increase verbosity" << endl
-        << "-c creature   : Only show/modify this creature type instead of dwarfes" << endl
-        << "-i id         : Only show/modify creature with this id" << endl
-        << "-nn           : Only show/modify creatures with no custom nickname (migrants)" << endl
-        << "--nicks       : Only show/modify creatures with custom nickname" << endl
-        << "-ll           : List available labors" << endl
-        << "-al <n>       : Add labor <n> to creature" << endl
-        << "-rl <n>       : Remove labor <n> from creature" << endl
-        << "-ras          : Remove all skills from creature" << endl
-        << "-ral          : Remove all labors from creature" << endl
-        << "-ah           : Add hauler labors (stone hauling, etc.) to creature" << endl
-        << "-rh           : Remove hauler labors (stone hauling, etc.) from creature" << endl
-        << "--setmood <n> : Set mood to n (-1 = no mood, max=4)" << endl
-        // Doesn't work, because hapiness is recalculated
+        << endl
+        << "Display options:" << endl
+        << "-q              : Suppress \"Press any key to continue\" at program termination" << endl
+        << "-v              : Increase verbosity" << endl
+        << "-c creature     : Show/modify this creature type instead of dwarfes ('all' to show all creatures)" << endl
+        << "-1/--summary    : Only display one line per creature" << endl
+        << "-i id1[,id2,...]: Only show/modify creature with this id" << endl
+        << "-nn/--nonicks   : Only show/modify creatures with no custom nickname (migrants)" << endl
+        << "--nicks         : Only show/modify creatures with custom nickname" << endl
+        << "-ll/--listlabors: List available labors" << endl
+        << "--showdead      : Also show/modify dead creatures" << endl
+        << "--showallflags  : Show all flags of a creature" << endl
+        << endl
+        << "Modifying options:" << endl
+        << "-al <n>         : Add labor <n> to creature" << endl
+        << "-rl <n>         : Remove labor <n> from creature" << endl
+        << "-ras            : Remove all skills from creature" << endl
+        << "-ral            : Remove all labors from creature" << endl
+        << "-ah             : Add hauler labors (stone hauling, etc.) to creature" << endl
+        << "-rh             : Remove hauler labors (stone hauling, etc.) from creature" << endl
+        // Disabling mood doesn't work as intented
+        << "--setmood <n>   : Set mood to n (-1 = no mood, max=4, buggy!)" << endl
+        << "--kill          : Kill creature(s) (may need to be called multiple times)" << endl
+        // Setting happiness doesn't work, because hapiness is recalculated
         //<< "--sethappiness <n> : Set happiness to n" << endl
-        << "-f            : Force an action" << endl
+        << "-f              : Force an action" << endl
         << endl
         << "Example 1: Show all dwarfs" << endl
         << argv[0] << " -c Dwarf" << endl
@@ -141,8 +174,8 @@ void usage(int argc, const char * argv[])
         << "Example 2: Show all Yaks" << endl
         << argv[0] << " -c Yak" << endl
         << endl
-        << "Example 3: Remove all skills from dwarf with id 32" << endl
-        << argv[0] << " -i 32 -ras" << endl
+        << "Example 3: Remove all skills from dwarfs 15 and 32" << endl
+        << argv[0] << " -i 15,32 -ras" << endl
         << endl
         << "Example 4: Remove all skills and labors from dwarfs with no custom nickname" << endl
         << argv[0] << " -c DWARF -nn -ras -ral" << endl
@@ -171,13 +204,26 @@ DFHack::Creatures * Creatures = NULL;
 std::string toCaps(std::string s)
 {
     const int length = s.length();
+    bool caps=true;
     if (length == 0) {
         return s;
     }
-    s[0] = std::toupper(s[0]);
-    for(int i=1; i!=length ; ++i)
+    for(int i=0; i!=length ; ++i)
     {
-        s[i] = std::tolower(s[i]);
+        if (caps)
+        {
+            s[i] = std::toupper(s[i]);
+            caps = false;
+        }
+        else if (s[i] == '_' || s[i] == ' ')
+        {
+            s[i] = ' ';
+            caps = true;
+        }
+        else
+        {
+            s[i] = std::tolower(s[i]);
+        }
     }
     return s;
 }
@@ -201,53 +247,107 @@ bool is_in(int m, int set[], int set_size)
     return false;
 }
 
+int * find_int(std::vector<int> v, int comp)
+{
+    for (int i=0; i<v.size(); i++)
+    {
+        //fprintf(stderr, "Comparing %d with %d and returning %x...\n", v[i], comp, &v[i]);
+        if (v[i] == comp)
+            return &v[i];
+    }
+    return NULL;
+}
+
+
+
 void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, int index)
 {
-    cout << "Creature[" << index << "]: " << toCaps(Materials->raceEx[creature.race].rawname);
+
 
     DFHack::Translation *Tran = DF->getTranslation();
     DFHack::VersionInfo *mem = DF->getMemoryInfo();
 
+    string type="(no type)";
+    if (Materials->raceEx[creature.race].rawname[0])
+    {
+        type = toCaps(Materials->raceEx[creature.race].rawname);
+    }
+
+    string name="(no name)";
     if(creature.name.nickname[0])
     {
-        cout << ", " << creature.name.nickname;
+        name = creature.name.nickname;
     }
     else
     {
         if(creature.name.first_name[0])
         {
-            cout << ", " << toCaps(creature.name.first_name);
-        }
+            name = toCaps(creature.name.first_name);
 
-        string transName = Tran->TranslateName(creature.name,false);
-        if(!transName.empty())
-        {
-            cout << " " << toCaps(transName);
+            string transName = Tran->TranslateName(creature.name,false);
+            if(!transName.empty())
+            {
+                name += " " + toCaps(transName);
+            }
         }
     }
 
-    string prof_string="";
+    string profession="";
     try {
-        prof_string = mem->getProfession(creature.profession);
+        profession = mem->getProfession(creature.profession);
     }
     catch (exception& e)
     {
         cout << "Error retrieving creature profession: " << e.what() << endl;
     }
-    cout << ", " << toCaps(prof_string) << "(" << int(creature.profession) << ")";
-
     if(creature.custom_profession[0])
     {
-        cout << "/" << creature.custom_profession;
+        profession = creature.custom_profession;
     }
 
+
+    string job="No Job";
     if(creature.current_job.active)
     {
-        cout << ", current job: " << mem->getJob(creature.current_job.jobId);
+        job=mem->getJob(creature.current_job.jobId);
+        int p=job.size();
+        while (p>0 && (job[p]==' ' || job[p]=='\t'))
+            p--;
+        if (p <= 1)
+        {
+            stringstream ss;
+            ss << creature.current_job.jobId;
+            job = ss.str();
+        }
     }
 
-    cout << ", Happy = " << creature.happiness;
-    cout << endl;
+    if (showfirstlineonly)
+    {
+        printf("%3d", index);
+        printf(" %-17s", type.c_str());
+        printf(" %-32s", name.c_str());
+        printf(" %-16s", toCaps(profession).c_str());
+        printf(" %-30s", job.c_str());
+        printf(" %5d", creature.happiness);
+        if (showdead)
+        {
+            printf(" %-5s", creature.flags1.bits.dead ? "Dead" : "Alive");
+        }
+
+        printf("\n");
+
+        return;
+    }
+    else
+    {
+        printf("ID: %d", index);
+        printf(", %s", type.c_str());
+        printf(", %s", name.c_str());
+        printf(", %s", toCaps(profession).c_str());
+        printf(", Job: %s", job.c_str());
+        printf(", Happiness: %d", creature.happiness);
+        printf("\n");
+    }
 
     if((creature.mood != NO_MOOD) && (creature.mood<=MAX_MOOD))
     {
@@ -289,8 +389,11 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
                     skillname = "Unknown skill";
                     cout << e.what() << endl;
                 }
-                cout << "(Skill " << int(skillid) << ") " << setw(16) << skillname << ": " 
-                    << skillrating << "/" << skillexperience << endl;
+                if (skillrating > 0 || skillexperience > 0) 
+                {
+                    cout << "(Skill " << int(skillid) << ") " << setw(16) << skillname << ": " 
+                        << skillrating << "/" << skillexperience << endl;
+                }
             }
         }
 
@@ -312,26 +415,97 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
                 cout << "(Labor " << i << ") " << setw(16) << laborname << endl;
         }
     }
-    /* FLAGS 1 */
-    if(creature.flags1.bits.dead)       { cout << "Flag: Dead" << endl; }
-    if(creature.flags1.bits.on_ground)  { cout << "Flag: On the ground" << endl; }
-    if(creature.flags1.bits.skeleton)   { cout << "Flag: Skeletal" << endl; }
-    if(creature.flags1.bits.zombie)     { cout << "Flag: Zombie" << endl; }
-    if(creature.flags1.bits.tame)       { cout << "Flag: Tame" << endl; }
-    if(creature.flags1.bits.royal_guard){ cout << "Flag: Royal_guard" << endl; }
-    if(creature.flags1.bits.fortress_guard){cout<<"Flag: Fortress_guard" << endl; }
-    /* FLAGS 2 */
-    if(creature.flags2.bits.killed)     { cout << "Flag: Killed by kill function" << endl; }
-    if(creature.flags2.bits.resident)   { cout << "Flag: Resident" << endl; }
-    if(creature.flags2.bits.gutted)     { cout << "Flag: Gutted" << endl; }
-    if(creature.flags2.bits.slaughter)  { cout << "Flag: Marked for slaughter" << endl; }
-    if(creature.flags2.bits.underworld) { cout << "Flag: From the underworld" << endl; }
-
-    if(creature.flags1.bits.had_mood && (creature.mood == -1 || creature.mood == 8 ) )
+    if (showallflags)
     {
-        string artifact_name = Tran->TranslateName(creature.artifact_name,false);
-        cout << "Artifact: " << artifact_name << endl;
+        DFHack::t_creaturflags1 f1 = creature.flags1;
+        DFHack::t_creaturflags2 f2 = creature.flags2;
+
+        if(f1.bits.had_mood){cout<<toCaps("Flag: had_mood") << endl; }
+        if(f1.bits.marauder){cout<<toCaps("Flag: marauder") << endl; }
+        if(f1.bits.drowning){cout<<toCaps("Flag: drowning") << endl; }
+        if(f1.bits.merchant){cout<<toCaps("Flag: merchant") << endl; }
+        if(f1.bits.forest){cout<<toCaps("Flag: forest") << endl; }
+        if(f1.bits.left){cout<<toCaps("Flag: left") << endl; }
+        if(f1.bits.rider){cout<<toCaps("Flag: rider") << endl; }
+        if(f1.bits.incoming){cout<<toCaps("Flag: incoming") << endl; }
+        if(f1.bits.diplomat){cout<<toCaps("Flag: diplomat") << endl; }
+        if(f1.bits.zombie){cout<<toCaps("Flag: zombie") << endl; }
+        if(f1.bits.skeleton){cout<<toCaps("Flag: skeleton") << endl; }
+        if(f1.bits.can_swap){cout<<toCaps("Flag: can_swap") << endl; }
+        if(f1.bits.on_ground){cout<<toCaps("Flag: on_ground") << endl; }
+        if(f1.bits.projectile){cout<<toCaps("Flag: projectile") << endl; }
+        if(f1.bits.active_invader){cout<<toCaps("Flag: active_invader") << endl; }
+        if(f1.bits.hidden_in_ambush){cout<<toCaps("Flag: hidden_in_ambush") << endl; }
+        if(f1.bits.invader_origin){cout<<toCaps("Flag: invader_origin") << endl; }
+        if(f1.bits.coward){cout<<toCaps("Flag: coward") << endl; }
+        if(f1.bits.hidden_ambusher){cout<<toCaps("Flag: hidden_ambusher") << endl; }
+        if(f1.bits.invades){cout<<toCaps("Flag: invades") << endl; }
+        if(f1.bits.check_flows){cout<<toCaps("Flag: check_flows") << endl; }
+        if(f1.bits.ridden){cout<<toCaps("Flag: ridden") << endl; }
+        if(f1.bits.caged){cout<<toCaps("Flag: caged") << endl; }
+        if(f1.bits.tame){cout<<toCaps("Flag: tame") << endl; }
+        if(f1.bits.chained){cout<<toCaps("Flag: chained") << endl; }
+        if(f1.bits.royal_guard){cout<<toCaps("Flag: royal_guard") << endl; }
+        if(f1.bits.fortress_guard){cout<<toCaps("Flag: fortress_guard") << endl; }
+        if(f1.bits.suppress_wield){cout<<toCaps("Flag: suppress_wield") << endl; }
+        if(f1.bits.important_historical_figure){cout<<toCaps("Flag: important_historical_figure") << endl; }
+
+        if(f2.bits.swimming){cout<<toCaps("Flag: swimming") << endl; }
+        if(f2.bits.sparring){cout<<toCaps("Flag: sparring") << endl; }
+        if(f2.bits.no_notify){cout<<toCaps("Flag: no_notify") << endl; }
+        if(f2.bits.unused){cout<<toCaps("Flag: unused") << endl; }
+        if(f2.bits.calculated_nerves){cout<<toCaps("Flag: calculated_nerves") << endl; }
+        if(f2.bits.calculated_bodyparts){cout<<toCaps("Flag: calculated_bodyparts") << endl; }
+        if(f2.bits.important_historical_figure){cout<<toCaps("Flag: important_historical_figure") << endl; }
+        if(f2.bits.killed){cout<<toCaps("Flag: killed") << endl; }
+        if(f2.bits.cleanup_1){cout<<toCaps("Flag: cleanup_1") << endl; }
+        if(f2.bits.cleanup_2){cout<<toCaps("Flag: cleanup_2") << endl; }
+        if(f2.bits.cleanup_3){cout<<toCaps("Flag: cleanup_3") << endl; }
+        if(f2.bits.for_trade){cout<<toCaps("Flag: for_trade") << endl; }
+        if(f2.bits.trade_resolved){cout<<toCaps("Flag: trade_resolved") << endl; }
+        if(f2.bits.has_breaks){cout<<toCaps("Flag: has_breaks") << endl; }
+        if(f2.bits.gutted){cout<<toCaps("Flag: gutted") << endl; }
+        if(f2.bits.circulatory_spray){cout<<toCaps("Flag: circulatory_spray") << endl; }
+        if(f2.bits.locked_in_for_trading){cout<<toCaps("Flag: locked_in_for_trading") << endl; }
+        if(f2.bits.slaughter){cout<<toCaps("Flag: slaughter") << endl; }
+        if(f2.bits.underworld){cout<<toCaps("Flag: underworld") << endl; }
+        if(f2.bits.resident){cout<<toCaps("Flag: resident") << endl; }
+        if(f2.bits.cleanup_4){cout<<toCaps("Flag: cleanup_4") << endl; }
+        if(f2.bits.calculated_insulation){cout<<toCaps("Flag: calculated_insulation") << endl; }
+        if(f2.bits.visitor_uninvited){cout<<toCaps("Flag: visitor_uninvited") << endl; }
+        if(f2.bits.visitor){cout<<toCaps("Flag: visitor") << endl; }
+        if(f2.bits.calculated_inventory){cout<<toCaps("Flag: calculated_inventory") << endl; }
+        if(f2.bits.vision_good){cout<<toCaps("Flag: vision_good") << endl; }
+        if(f2.bits.vision_damaged){cout<<toCaps("Flag: vision_damaged") << endl; }
+        if(f2.bits.vision_missing){cout<<toCaps("Flag: vision_missing") << endl; }
+        if(f2.bits.breathing_good){cout<<toCaps("Flag: breathing_good") << endl; }
+        if(f2.bits.breathing_problem){cout<<toCaps("Flag: breathing_problem") << endl; }
+        if(f2.bits.roaming_wilderness_population_source){cout<<toCaps("Flag: roaming_wilderness_population_source") << endl; }
+        if(f2.bits.roaming_wilderness_population_source_not_a_map_feature){cout<<toCaps("Flag: roaming_wilderness_population_source_not_a_map_feature") << endl; }
     }
+    else
+    {
+        /* FLAGS 1 */
+        if(creature.flags1.bits.dead)       	{ cout << "Flag: Dead" << endl; }
+        if(creature.flags1.bits.on_ground)  	{ cout << "Flag: On the ground" << endl; }
+        if(creature.flags1.bits.tame)       	{ cout << "Flag: Tame" << endl; }
+        if(creature.flags1.bits.royal_guard)	{ cout << "Flag: Royal guard" << endl; }
+        if(creature.flags1.bits.fortress_guard)	{ cout << "Flag: Fortress guard" << endl; }
+
+        /* FLAGS 2 */
+        if(creature.flags2.bits.killed)     { cout << "Flag: Killed by kill function" << endl; }
+        if(creature.flags2.bits.resident)   { cout << "Flag: Resident" << endl; }
+        if(creature.flags2.bits.gutted)     { cout << "Flag: Gutted" << endl; }
+        if(creature.flags2.bits.slaughter)  { cout << "Flag: Marked for slaughter" << endl; }
+        if(creature.flags2.bits.underworld) { cout << "Flag: From the underworld" << endl; }
+
+        if(creature.flags1.bits.had_mood && (creature.mood == -1 || creature.mood == 8 ) )
+        {
+            string artifact_name = Tran->TranslateName(creature.artifact_name,false);
+            cout << "Artifact: " << artifact_name << endl;
+        }
+    }
+    cout << endl;
 }
 
 int main (int argc, const char* argv[])
@@ -342,12 +516,12 @@ int main (int argc, const char* argv[])
 #endif
 
     string creature_type = "Dwarf";
-    string creature_id = "";
-    int creature_id_int = 0;
+    std::vector<int> creature_id;
     bool find_nonicks = false;
     bool find_nicks = false;
     bool remove_skills = false;
     bool remove_labors = false;
+    bool kill_creature = false;
     bool make_hauler = false;
     bool remove_hauler = false;
     bool add_labor = false;
@@ -392,6 +566,10 @@ int main (int argc, const char* argv[])
         {
             verbose = true;
         }
+        else if(arg_cur == "-1" || arg_cur == "--summary")
+        {
+            showfirstlineonly = true;
+        }
         else if(arg_cur == "-ss" || arg_cur == "--showsocial")
         {
             showsocial = true;
@@ -399,6 +577,14 @@ int main (int argc, const char* argv[])
         else if(arg_cur == "+sh" || arg_cur == "-nosh" || arg_cur == "--noshowhauler")
         {
             showhauler = false;
+        }
+        else if(arg_cur == "--showdead")
+        {
+            showdead = true;
+        }
+        else if(arg_cur == "--showallflags")
+        {
+            showallflags = true;
         }
         else if(arg_cur == "-ras")
         {
@@ -409,7 +595,7 @@ int main (int argc, const char* argv[])
             force_massdesignation = true;
         }
         // list labors
-        else if(arg_cur == "-ll")
+        else if(arg_cur == "-ll" || arg_cur == "--listlabors")
         {
             list_labors = true;
         }
@@ -455,6 +641,12 @@ int main (int argc, const char* argv[])
             set_happiness_n = arg_next_int;
             i++;
         }
+        else if(arg_cur == "--kill")
+        {
+            kill_creature = true;
+            showallflags = true;
+            showdead = true;
+        }
         else if(arg_cur == "-ral")
         {
             remove_labors = true;
@@ -467,7 +659,7 @@ int main (int argc, const char* argv[])
         {
             remove_hauler = true;
         }
-        else if(arg_cur == "-nn")
+        else if(arg_cur == "-nn" || arg_cur == "--nonicks")
         {
             find_nonicks = true;
         }
@@ -482,8 +674,15 @@ int main (int argc, const char* argv[])
         }
         else if(arg_cur == "-i" && i < argc-1)
         {
-            creature_id = argv[i+1];
-            sscanf(argv[i+1], "%d", &creature_id_int);
+            std::stringstream ss(argv[i+1]);
+            int num;
+            while (ss >> num) {
+                creature_id.push_back(num);
+                ss.ignore(1);
+            }
+
+            creature_type = ""; // if -i is given, match all creatures
+            showdead = true;
             i++;
         }
         else
@@ -572,6 +771,12 @@ int main (int argc, const char* argv[])
     }
     else
     {
+        if (showfirstlineonly)
+        {
+            printf("ID  Type              Name/nickname                    Job title        Current job                    Happy%s\n", showdead?" Dead ":"");
+            printf("--- ----------------- -------------------------------- ---------------- ------------------------------ -----%s\n", showdead?" -----":"");
+        }
+
         vector<uint32_t> addrs;
         for(uint32_t creature_idx = 0; creature_idx < numCreatures; creature_idx++)
         {
@@ -581,16 +786,16 @@ int main (int argc, const char* argv[])
             bool hasnick = (creature.name.nickname[0] != '\0');
 
             if (
-                    // Check for -i <num>
-                    (creature_id.empty() || creature_idx == creature_id_int) 
-                    // Check for -c <type>
-                    && (creature_type.empty() || toCaps(string(Materials->raceEx[creature.race].rawname)) == toCaps(creature_type))
+                    // Check for -i <num> and -c <type>
+                    (NULL != find_int(creature_id, creature_idx)
+                     || toCaps(string(Materials->raceEx[creature.race].rawname)) == toCaps(creature_type)
+                     || "All" == toCaps(creature_type))
                     // Check for -nn
                     && ((find_nonicks == true && hasnick == false)
                         || (find_nicks == true && hasnick == true)
                         || (find_nicks == false && find_nonicks == false))
                     && (find_nonicks == false || creature.name.nickname[0] == '\0')
-                    && (!creature.flags1.bits.dead)
+                    && (showdead == true || !creature.flags1.bits.dead)
                )
             {
                 printCreature(DF,creature,creature_idx);
@@ -600,23 +805,24 @@ int main (int argc, const char* argv[])
                         remove_skills
                         || remove_labors || add_labor || remove_labor
                         || make_hauler || remove_hauler 
+                        || kill_creature
                         || set_happiness
                         || set_mood
                         );
 
-                // 96=Child, 97=Baby
-                if (creature.profession == 96 || creature.profession == 97) 
+                if (toCaps(creature_type) == "Dwarf" 
+                        && (creature.profession == PROFESSION_CHILD || creature.profession == PROFESSION_BABY))
                 {
                     dochange = false;
                 }
 
                 bool allow_massdesignation =
-                    !creature_id.empty() || toCaps(creature_type) != "Dwarf" || find_nonicks == true || force_massdesignation;
+                    creature_id.size()==0 || toCaps(creature_type) != "Dwarf" || find_nonicks == true || force_massdesignation;
                 if (dochange == true && allow_massdesignation == false)
                 {
                     cout
                         << "Not changing creature because none of -c (other than dwarf), -i or -nn was" << endl
-                        << "selected. Add -f to still do mass designation." << endl;
+                        << "selected. Add -f (force) to override this safety measure." << endl;
                     dochange = false;
                 }
 
@@ -624,10 +830,74 @@ int main (int argc, const char* argv[])
                 {
                     if(creature.has_default_soul)
                     {
+                        if (kill_creature)
+                        {
+                            /*
+                               [quote author=Eldrick Tobin link=topic=58809.msg2178545#msg2178545 date=1302638055]
+
+                               After extensive testing that just ate itself -.-;
+
+                               Runesmith does not unset the following:
+                               - Active Invader (sets if they are just about the invade, as Currently 
+                               Invading removes this one)
+                               - Hidden Ambusher (Just in Case, however it is still set when an Active Invader)
+                               - Hidden in Ambush (Just in Case, however it is still set when an Active Invader,
+                               until discovery)
+                               - Incoming (Sets if something is here yet... wave X of a siege here)
+                               - Invader -Fleeing/Leaving
+                               - Currently Invading
+
+                               When it nukes something it basically just sets them to 'dead'. It does not also 
+                               set them to 'killed'. Show dead will show everything (short of 'vanished'/'deleted'
+                               I'd suspect) so one CAN go through the intensive process to revive a broken siege. These
+                               particular flags are not visible at the same exact time so multiple passes -even through
+                               a narrow segment- are advised.
+
+                               Problem I ran into (last thing before I mention something more DFHack related):
+                               I set the Killed Flag (but not dead), and I got mortally wounded siegers that refused to
+                               just pift in Magma. [color=purple]Likely missing upper torsoes on examination[/color].
+
+                             */
+                            DFHack::t_creaturflags1 f1 = creature.flags1;
+                            DFHack::t_creaturflags2 f2 = creature.flags2;
+
+                            f1.bits.dead = 1;
+                            f2.bits.killed = 1;
+                            f1.bits.active_invader = 0;   /*!< 17: Active invader (for organized ones) */
+                            f1.bits.hidden_ambusher = 0;  /*!< 21: Active marauder/invader moving inward? */
+                            f1.bits.hidden_in_ambush = 0;
+                            f1.bits.invades = 0;          /*!< 22: Marauder resident/invader moving in all the way */
+
+                            cout << "Setting f1.bits.dead = 1" << endl;
+                            cout << "Setting f2.bits.killed = 1" << endl;
+                            cout << "Setting f1.bits.active_invader = 0" << endl; 
+                            cout << "Setting f1.bits.hidden_ambusher = 0" << endl; 
+                            cout << "Setting f1.bits.hidden_in_ambush = 0" << endl;
+                            cout << "Setting f1.bits.invades = 0" << endl;          
+                            cout << "Writing flags..." << endl;
+                            if (!Creatures->WriteFlags(creature_idx, f1.whole, f2.whole))
+                            {
+                                cout << "Error writing creature flags!" << endl;
+                            }
+                            // We want the flags to be shown after our modification, but they are not read back
+                            creature.flags1 = f1;
+                            creature.flags2 = f2;
+                        }
+
                         if (set_mood) 
                         {
+                            /* Doesn't really work to disable a mood */
                             cout << "Setting mood to " << set_mood_n << "..." << endl;
                             Creatures->WriteMood(creature_idx, set_mood_n);
+                            DFHack::t_creaturflags1 f1 = creature.flags1;
+                            DFHack::t_creaturflags2 f2 = creature.flags2;
+                            f1.bits.has_mood = (set_mood_n == NO_MOOD ? 0 : 1);
+                            if (!Creatures->WriteFlags(creature_idx, f1.whole, f2.whole))
+                            {
+                                cout << "Error writing creature flags!" << endl;
+                            }
+                            creature.flags1 = f1;
+                            creature.flags2 = f2;
                         }
 
                         if (set_happiness) 
@@ -705,7 +975,6 @@ int main (int argc, const char* argv[])
                     }
                     printCreature(DF,creature,creature_idx);
                 } /* End remove skills/labors */
-                cout << endl;
             } /* if (print creature) */
         } /* End for(all creatures) */
     } /* End if (we need to walk creatures) */

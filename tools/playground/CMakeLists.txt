@@ -80,11 +80,13 @@ DFHACK_TOOL(dfprinttiletypes printtiletypes.cpp)
 # Will have many options in the future.
 DFHACK_TOOL(dfhellhole hellhole.cpp)
 
-# skillmodify
+# dfcreature
 # Author: raoulxq
-# Lets modify skills and labors of dwarfs and other creatures
-# Allows mass-modify, esp. for all immigrants
-DFHACK_TOOL(dfskillmodify skillmodify.cpp)
+# - Display creatures
+# - Modify skills and labors of creatures
+# - Kill creatures
+# - Etc. 
+DFHACK_TOOL(dfcreature creature.cpp)
 
 # digpattern
 # Author: raoulxq

@@ -111,12 +111,11 @@ int main (int numargs, const char ** args)
                 if(tileTypeTable[tiletype].name)
                     std::cout << " = " << tileTypeTable[tiletype].name << std::endl;
 
-                printf("%-10s: %4d %s\n","Class",tileTypeTable[tiletype].c,TileClassString[ tileTypeTable[tiletype].c ]);
-                printf("%-10s: %4d %s\n","Material",tileTypeTable[tiletype].c,TileMaterialString[ tileTypeTable[tiletype].m ]);
-                printf("%-10s: %4d %s\n","Special",tileTypeTable[tiletype].c,TileSpecialString[ tileTypeTable[tiletype].s ]);
-                printf("%-10s: %4d\n","Variant",tileTypeTable[tiletype].v);
-                printf("%-10s: %s\n","Direction",tileTypeTable[tiletype].d.getStr());
-
+                printf("%-10s: %4d %s\n","Class",tileTypeTable[tiletype].shape,TileClassString[ tileTypeTable[tiletype].shape ]);
+                printf("%-10s: %4d %s\n","Material",tileTypeTable[tiletype].material,TileMaterialString[ tileTypeTable[tiletype].material ]);
+                printf("%-10s: %4d %s\n","Special",tileTypeTable[tiletype].special,TileSpecialString[ tileTypeTable[tiletype].special ]);
+                printf("%-10s: %4d\n","Variant",tileTypeTable[tiletype].variant);
+                printf("%-10s: %s\n","Direction",tileTypeTable[tiletype].direction.getStr());
 
                 std::cout << std::endl;
                 std::cout <<"temperature1: " << mc.temperature1At(cursor) << " U" << std::endl;

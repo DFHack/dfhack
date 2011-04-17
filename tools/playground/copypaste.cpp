@@ -38,7 +38,8 @@ void sort(int32_t &a,int32_t &b)
         a = c;
     }
 }
-void printVecOfVec(ostream &out, vector<vector<vector<string> > >vec,char sep){
+void printVecOfVec(ostream &out, vector<vector<vector<string> > >vec,char sep)
+{
     for(int k=0;k<vec.size();k++){
       for(int i =0;i<vec[k].size();i++){
         for(int j=0;j<vec[k][i].size();j++){
@@ -180,22 +181,24 @@ int main (int numargs, const char ** args)
     while(1){
     int32_t cx1,cy1,cz1;
     cx1 = -30000;
-    while(cx1 == -30000){
+    while(cx1 == -30000)
+    {
         DF->ForceResume();
         cout << "Set cursor at first position, then press any key";
         cin.ignore();
         DF->Suspend();
         Gui->getCursorCoords(cx1,cy1,cz1);
     }
-        
+
     uint32_t tx1,ty1,tz1;
     tx1 = cx1/16;
     ty1 = cy1/16;
     tz1 = cz1;
-    
+
     int32_t cx2,cy2,cz2;
     cx2 = -30000;
-    while(cx2 == -30000){
+    while(cx2 == -30000)
+    {
         DF->Resume();
         cout << "Set cursor at second position, then press any key";
         cin.ignore();
@@ -254,12 +257,36 @@ int main (int numargs, const char ** args)
                             for(int xx = xstart; xx <= xend;xx++)
                             {
                                 int xidx = xx+(16*(x-tx1)-(cx1%16));
-                                if(DFHack::isOpenTerrain(block.tiletypes[xx][yy]) || DFHack::isFloorTerrain(block.tiletypes[xx][yy])) {dig[zidx][yidx][xidx] = "d";} 
-                                else if(DFHack::STAIR_DOWN == DFHack::tileTypeTable[block.tiletypes[xx][yy]].c){ dig [zidx][yidx][xidx] = "j"; build [zidx][yidx][xidx] = "Cd";}
-                                else if(DFHack::STAIR_UP == DFHack::tileTypeTable[block.tiletypes[xx][yy]].c){ dig [zidx][yidx][xidx] = "u"; build [zidx][yidx][xidx] = "Cu";}
-                                else if(DFHack::STAIR_UPDOWN == DFHack::tileTypeTable[block.tiletypes[xx][yy]].c){ dig [zidx][yidx][xidx] = "i"; build [zidx][yidx][xidx] = "Cx";}
-                                else if(DFHack::isRampTerrain(block.tiletypes[xx][yy])){dig [zidx][yidx][xidx] = "r";build [zidx][yidx][xidx] = "Cr";}
-                                else if(DFHack::isWallTerrain(block.tiletypes[xx][yy])){build [zidx][yidx][xidx] = "Cw";}
+                                int16_t tt = block.tiletypes[xx][yy];
+                                DFHack::TileClass ts = DFHack::tileTypeTable[tt].shape;
+                                if(DFHack::isOpenTerrain(tt) || DFHack::isFloorTerrain(tt))
+                                {
+                                    dig[zidx][yidx][xidx] = "d";
+                                }
+                                else if(DFHack::STAIR_DOWN == ts)
+                                {
+                                    dig [zidx][yidx][xidx] = "j";
+                                    build [zidx][yidx][xidx] = "Cd";
+                                }
+                                else if(DFHack::STAIR_UP == ts)
+                                {
+                                    dig [zidx][yidx][xidx] = "u";
+                                    build [zidx][yidx][xidx] = "Cu";
+                                }
+                                else if(DFHack::STAIR_UPDOWN == ts)
+                                {
+                                    dig [zidx][yidx][xidx] = "i";
+                                    build [zidx][yidx][xidx] = "Cx";
+                                }
+                                else if(DFHack::isRampTerrain(tt))
+                                {
+                                    dig [zidx][yidx][xidx] = "r";
+                                    build [zidx][yidx][xidx] = "Cr";
+                                }
+                                else if(DFHack::isWallTerrain(tt))
+                                {
+                                    build [zidx][yidx][xidx] = "Cw";
+                                }
                             }
                             yidx++;
                         }

@@ -165,7 +165,7 @@ int dig(DFHack::Maps* Maps,
                         {
                             if (/*designations[lx][ly].bits.hidden == 0 && */
                                 designations[lx][ly].bits.dig == 0 && 
-                                vec_count(targets, DFHack::tileTypeTable[tiles[lx][ly]].c) > 0)
+                                vec_count(targets, DFHack::tileTypeTable[tiles[lx][ly]].shape) > 0)
                             {
                                 DigTarget dt(
                                     x, y, z,

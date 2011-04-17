@@ -78,7 +78,7 @@ void dig(DFHack::Maps* layers, DFHack::Gui* Gui, ::std::vector< ::std::string >&
 
 // ::std::cout << ::std::hex << "designations: " << designations[x_locl][y_locl].bits.dig << ::std::dec << ::std::endl;
 
-        if (designations[x_locl][y_locl].bits.dig == DFHack::designation_no && DFHack::tileTypeTable[tiles[x_locl][y_locl]].c == DFHack::WALL) {
+        if (designations[x_locl][y_locl].bits.dig == DFHack::designation_no && DFHack::tileTypeTable[tiles[x_locl][y_locl]].shape == DFHack::WALL) {
           DFHack::e_designation type = DFHack::designation_no;
           switch ((char) *chr_it) {
             case 'd':

@@ -77,11 +77,11 @@ int main (int argc, char **argv)
     {
         fprintf(f," %*i ; %-*s ; %-*s ; %*c ; %-*s ; %-*s ; %s\n",
             Size[0], i,
-            Size[1], ( tileTypeTable[i].name ? TileClassString[ tileTypeTable[i].c ]    : "" ),
-            Size[2], ( tileTypeTable[i].name ? TileMaterialString[ tileTypeTable[i].m ] : "" ),
-            Size[3], ( tileTypeTable[i].v ? '0'+tileTypeTable[i].v : ' ' ),
-            Size[4], ( tileTypeTable[i].s ? TileSpecialString[ tileTypeTable[i].s ]  : "" ),
-            Size[5], ( tileTypeTable[i].d.whole ? tileTypeTable[i].d.getStr()        : "" ),
+            Size[1], ( tileTypeTable[i].name ? TileClassString[ tileTypeTable[i].shape ]    : "" ),
+            Size[2], ( tileTypeTable[i].name ? TileMaterialString[ tileTypeTable[i].material ] : "" ),
+            Size[3], ( tileTypeTable[i].variant ? '0'+tileTypeTable[i].variant : ' ' ),
+            Size[4], ( tileTypeTable[i].special ? TileSpecialString[ tileTypeTable[i].special ]  : "" ),
+            Size[5], ( tileTypeTable[i].direction.whole ? tileTypeTable[i].direction.getStr()        : "" ),
             ( tileTypeTable[i].name ? tileTypeTable[i].name : "" ),
             0
             );

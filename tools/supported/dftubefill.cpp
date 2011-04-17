@@ -87,7 +87,7 @@ int main (void)
                         {
                             if(!designations[tx][ty].bits.feature_local) continue;
                             oldT = tiles[tx][ty];
-                            DFHack::TileClass ttype = DFHack::tileTypeTable[oldT].c;
+                            DFHack::TileClass ttype = DFHack::tileTypeTable[oldT].shape;
                             if ( ttype != DFHack::WALL )
                             {
                                 //Current tile is not a wall.

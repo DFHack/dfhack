@@ -243,11 +243,11 @@ namespace DFHack
     struct TileRow
     {
         const char * name;
-        TileClass c;
-        TileMaterial m;
-        TileVariant v;
-        TileSpecial s;
-        TileDirection d;
+        TileClass shape;
+        TileMaterial material;
+        TileVariant variant;
+        TileSpecial special;
+        TileDirection direction;
     };
 
     #define TILE_TYPE_ARRAY_LENGTH 520
@@ -886,7 +886,7 @@ namespace DFHack
     inline
     bool LowPassable(uint16_t tiletype)
     {
-        switch(DFHack::tileTypeTable[tiletype].c)
+        switch(DFHack::tileTypeTable[tiletype].shape)
         {
             case DFHack::EMPTY:
             case DFHack::STAIR_DOWN:
@@ -902,7 +902,7 @@ namespace DFHack
     inline
     bool HighPassable(uint16_t tiletype)
     {
-        switch(DFHack::tileTypeTable[tiletype].c)
+        switch(DFHack::tileTypeTable[tiletype].shape)
         {
             case DFHack::EMPTY:
             case DFHack::STAIR_DOWN:
@@ -926,44 +926,44 @@ namespace DFHack
     inline
     bool FlowPassable(uint16_t tiletype)
     {
-        TileClass tc = tileTypeTable[tiletype].c;
+        TileClass tc = tileTypeTable[tiletype].shape;
         return tc != WALL && tc != PILLAR && tc != TREE_DEAD && tc != TREE_OK;
     };
 
     inline
     bool isWallTerrain(int in)
     {
-        return tileTypeTable[in].c >= WALL && tileTypeTable[in].c <= FORTIFICATION ;
+        return tileTypeTable[in].shape >= WALL && tileTypeTable[in].shape <= FORTIFICATION ;
     }
 
     inline
     bool isFloorTerrain(int in)
     {
-        return tileTypeTable[in].c >= FLOOR && tileTypeTable[in].c <= PEBBLES;
+        return tileTypeTable[in].shape >= FLOOR && tileTypeTable[in].shape <= PEBBLES;
     }
 
     inline
     bool isRampTerrain(int in)
     {
-        return tileTypeTable[in].c == RAMP;
+        return tileTypeTable[in].shape == RAMP;
     }
 
     inline
     bool isStairTerrain(int in)
     {
-        return tileTypeTable[in].c >= STAIR_UP && tileTypeTable[in].c <= STAIR_UPDOWN;
+        return tileTypeTable[in].shape >= STAIR_UP && tileTypeTable[in].shape <= STAIR_UPDOWN;
     }
 
     inline
     bool isOpenTerrain(int in)
     {
-        return tileTypeTable[in].c == EMPTY;
+        return tileTypeTable[in].shape == EMPTY;
     }
 
     inline
     int getVegetationType(int in)
     {
-        return tileTypeTable[in].c;
+        return tileTypeTable[in].shape;
     }
 
     //zilpin: for convenience, when you'll be using the tile information a lot.
@@ -984,11 +984,11 @@ namespace DFHack
     {
         int32_t tt;
         for(tt=0;tt<TILE_TYPE_ARRAY_LENGTH; ++tt){
-            if( tclass>-1	) if( tclass != tileTypeTable[tt].c ) continue;
-            if( tmat>-1		) if( tmat != tileTypeTable[tt].m ) continue;
-            if( tvar>-1		) if( tvar != tileTypeTable[tt].v ) continue;
-            if( tspecial>-1 ) if( tspecial != tileTypeTable[tt].s ) continue;
-            if( tdir.whole  ) if( tdir.whole != tileTypeTable[tt].d.whole ) continue;
+            if( tclass>-1	) if( tclass != tileTypeTable[tt].shape ) continue;
+            if( tmat>-1		) if( tmat != tileTypeTable[tt].material ) continue;
+            if( tvar>-1		) if( tvar != tileTypeTable[tt].variant ) continue;
+            if( tspecial>-1 ) if( tspecial != tileTypeTable[tt].special ) continue;
+            if( tdir.whole  ) if( tdir.whole != tileTypeTable[tt].direction.whole ) continue;
             //Match!
             return tt;
         }
@@ -1023,20 +1023,20 @@ namespace DFHack
         #endif
 
         for(tt=0;tt<TILE_TYPE_ARRAY_LENGTH; ++tt){
-            if( tclass == tileTypeTable[tt].c ){
+            if( tclass == tileTypeTable[tt].shape ){
                 //shortcut null entries
                 if(!tileTypeTable[tt].name) continue;
 
                 //Special flag match is absolutely mandatory!
-                if( source->s != tileTypeTable[tt].s ) continue;
+                if( source->special != tileTypeTable[tt].special ) continue;
 
                 maybe=tt;  value=0;
                 //Material is high-value match
-                if( tileTypeTable[tt].m == source->m ) value|=8;
+                if( tileTypeTable[tt].material == source->material ) value|=8;
                 //Direction is medium value match
-                if( tileTypeTable[tt].d.whole == source->d.whole ) value|=4;
+                if( tileTypeTable[tt].direction.whole == source->direction.whole ) value|=4;
                 //Variant is low-value match
-                if( tileTypeTable[tt].v == source->v ) value|=1;
+                if( tileTypeTable[tt].variant == source->variant ) value|=1;
 
                 //Check value against last match
                 if( value>matchv ){

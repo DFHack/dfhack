@@ -158,12 +158,12 @@ int main (int argc, const char* argv[])
 
                 // read data
                 Maps->ReadBlock40d(x,y,z, &Block);
-                //Maps->ReadTileTypes(x,y,z, &tiletypes);
-                //Maps->ReadDesignations(x,y,z, &designations);
+                DFHack::tiletypes40d & tt = Block.tiletypes;
 
                 memset(tempvein, -1, sizeof(tempvein));
                 veins.clear();
                 Maps->ReadVeins(x,y,z,&veins);
+
 
                 if(showbaselayers)
                 {
@@ -172,6 +172,9 @@ int main (int argc, const char* argv[])
                     {
                         for (uint32_t yy = 0; yy< 16;yy++)
                         {
+                            DFHack::TileMaterial mat = DFHack::tileTypeTable[tt[xx][yy]].material;
+                            if(mat != DFHack::SOIL && mat != DFHack::STONE)
+                                continue;
                             uint8_t test = Block.designation[xx][yy].bits.biome;
                             if(test > maximum_regionoffset)
                                 maximum_regionoffset = test;
@@ -197,6 +200,9 @@ int main (int argc, const char* argv[])
                         //iterate through the bits
                         for (uint32_t k = 0; k< 16;k++)
                         {
+                            DFHack::TileMaterial mat = DFHack::tileTypeTable[tt[k][j]].material;
+                            if(mat != DFHack::VEIN)
+                                continue;
                             // and the bit array with a one-bit mask, check if the bit is set
                             bool set = !!(((1 << k) & veins[i].assignment[j]) >> k);
                             if(set)

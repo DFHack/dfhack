@@ -127,8 +127,8 @@ int main (int argc, char* argv[])
         bool above = 0;
         bool sides = 0;
         bool unhide = 1;
-        // by tile class, determine behavior and action
-        switch (r->c)
+        // by tile shape, determine behavior and action
+        switch (r->shape)
         {
             // walls:
             case WALL:

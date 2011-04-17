@@ -716,10 +716,10 @@ int main (void)
             {
                 if ( (pattern[x][y]>1) || (roof && pattern[x][y]) )
                 {
-                    tp = getTileTypeP(block.tiletypes[x][y]);
+                    tp = getTileRow(block.tiletypes[x][y]);
                     d = &block.designation[x][y];
                     //Only modify this level if it's 'empty'
-                    if ( EMPTY != tp->shape && RAMP_TOP != tp->shape && STAIR_DOWN != tp->shape && DFHack::TILE_STREAM_TOP != tp->shape)
+                    if ( EMPTY != tp->shape && RAMP_TOP != tp->shape && STAIR_DOWN != tp->shape && DFHack::TILE_STREAM_TOP != tp->special)
                     {
                         continue;
                     }
@@ -782,7 +782,7 @@ int main (void)
             for (int32_t y=0;y<16;++y)
             {
                 t=0;
-                tp = getTileTypeP(block.tiletypes[x][y]);
+                tp = getTileRow(block.tiletypes[x][y]);
                 d = &block.designation[x][y];
                 tpat=pattern[x][y];
 
@@ -926,7 +926,7 @@ int main (void)
             for (int32_t y=0;!done && y<16;++y)
             {
                 t=0;
-                tp = getTileTypeP(block.tiletypes[x][y]);
+                tp = getTileRow(block.tiletypes[x][y]);
                 d = &block.designation[x][y];
                 tpat=pattern[x][y];
 
@@ -1177,7 +1177,7 @@ int main (void)
             {
                 t=floor;
                 v=floorvar;
-                tp = getTileTypeP(block.tiletypes[x][y]);
+                tp = getTileRow(block.tiletypes[x][y]);
                 d = &block.designation[x][y];
 
                 if ( exposehell )

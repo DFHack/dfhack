@@ -53,7 +53,7 @@ int DFHack_isOpenTerrain(int in)
 
 int DFHack_getVegetationType(int in)
 {
-    return DFHack::getVegetationType(in);
+    return DFHack::tileShape(in);
 }
 
 int DFHack_getTileType(int index, TileRow* tPtr)

@@ -172,7 +172,7 @@ int main (int argc, const char* argv[])
                     {
                         for (uint32_t yy = 0; yy< 16;yy++)
                         {
-                            DFHack::TileMaterial mat = DFHack::tileTypeTable[tt[xx][yy]].material;
+                            DFHack::TileMaterial mat = DFHack::tileMaterial(tt[xx][yy]);
                             if(mat != DFHack::SOIL && mat != DFHack::STONE)
                                 continue;
                             uint8_t test = Block.designation[xx][yy].bits.biome;
@@ -200,7 +200,7 @@ int main (int argc, const char* argv[])
                         //iterate through the bits
                         for (uint32_t k = 0; k< 16;k++)
                         {
-                            DFHack::TileMaterial mat = DFHack::tileTypeTable[tt[k][j]].material;
+                            DFHack::TileMaterial mat = DFHack::tileMaterial(tt[k][j]);
                             if(mat != DFHack::VEIN)
                                 continue;
                             // and the bit array with a one-bit mask, check if the bit is set
@@ -220,7 +220,8 @@ int main (int argc, const char* argv[])
                 {
                     for(uint32_t xi = 0 ; xi< 16 ; xi++) for(uint32_t yi = 0 ; yi< 16 ; yi++)
                     {
-                        if(Block.designation[xi][yi].bits.feature_global)
+                        DFHack::TileMaterial mat = DFHack::tileMaterial(tt[xi][yi]);
+                        if(Block.designation[xi][yi].bits.feature_global && mat == DFHack::FEATSTONE)
                         {
                             if(global_features[idx].main_material == 0) // stone
                             {
@@ -247,7 +248,8 @@ int main (int argc, const char* argv[])
                         {
                             for(uint32_t xi = 0 ; xi< 16 ; xi++) for(uint32_t yi = 0 ; yi< 16 ; yi++)
                             {
-                                if(Block.designation[xi][yi].bits.feature_local && DFHack::isWallTerrain(Block.tiletypes[xi][yi]))
+                                DFHack::TileMaterial mat = DFHack::tileMaterial(tt[xi][yi]);
+                                if(Block.designation[xi][yi].bits.feature_local && mat == DFHack::FEATSTONE)
                                 {
                                     if(vectr[idx]->main_material == 0) // stone
                                     {

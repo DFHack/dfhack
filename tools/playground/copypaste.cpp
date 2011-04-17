@@ -258,7 +258,7 @@ int main (int numargs, const char ** args)
                             {
                                 int xidx = xx+(16*(x-tx1)-(cx1%16));
                                 int16_t tt = block.tiletypes[xx][yy];
-                                DFHack::TileClass ts = DFHack::tileTypeTable[tt].shape;
+                                DFHack::TileShape ts = DFHack::tileShape(tt);
                                 if(DFHack::isOpenTerrain(tt) || DFHack::isFloorTerrain(tt))
                                 {
                                     dig[zidx][yidx][xidx] = "d";

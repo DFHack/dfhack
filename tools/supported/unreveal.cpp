@@ -117,7 +117,7 @@ int main (int argc, char* argv[])
         {
             continue;
         }
-        const TileRow * r = getTileTypeP(tt);
+        const TileRow * r = getTileRow(tt);
         if(!r)
         {
             cerr << "unknown tiletype! " << dec << tt << endl;

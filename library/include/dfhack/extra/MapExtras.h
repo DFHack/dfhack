@@ -20,8 +20,7 @@ void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d &
         for (uint32_t k = 0; k< 16;k++)
         {
             int16_t tt = mb.tiletypes[k][j];
-            DFHack::TileMaterial mat = DFHack::tileTypeTable[tt].material;
-            if(mat == DFHack::VEIN)
+            if(DFHack::tileMaterial(tt) == DFHack::VEIN)
             {
                 for(int i = (int) veins.size() - 1; i >= 0;i--)
                 {

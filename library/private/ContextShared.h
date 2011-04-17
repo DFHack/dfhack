@@ -56,11 +56,15 @@ namespace DFHack
 
         // names, used by a few other modules.
         void readName(t_name & name, uint32_t address);
+        void copyName(uint32_t address, uint32_t target);
         // get the name offsets
         bool InitReadNames();
         uint32_t name_firstname_offset;
         uint32_t name_nickname_offset;
         uint32_t name_words_offset;
+        uint32_t name_parts_offset;
+        uint32_t name_language_offset;
+        uint32_t name_set_offset;
         bool namesInited;
 
         ProcessEnumerator* pm;

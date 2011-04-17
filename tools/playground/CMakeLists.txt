@@ -94,6 +94,8 @@ DFHACK_TOOL(dfdigpattern digpattern.cpp)
 
 DFHACK_TOOL(dfcleanowned cleanowned.cpp)
 
+DFHACK_TOOL(dffixbug-3708 fix-3708.cpp)
+
 # this needs the C bindings
 IF(BUILD_DFHACK_C_BINDINGS)
     # The C bindings won't be real C bindings until this compiles.

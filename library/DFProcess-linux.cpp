@@ -66,6 +66,7 @@ namespace {
             const std::string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             void writeSTLString(const uint32_t address, const std::string writeString){};
+            void copySTLString(const uint32_t address, const uint32_t target);
             // get class name of an object with rtti/type info
             std::string readClassName(uint32_t vptr);
     };
@@ -159,6 +160,29 @@ const string NormalProcess::readSTLString (uint32_t offset)
     string ret(temp);
     delete temp;
     return ret;
+}
+
+void NormalProcess::copySTLString (uint32_t offset, uint32_t target)
+{
+    _Rep_base header;
+
+    offset = Process::readDWord(offset);
+    uint32_t old_target = Process::readDWord(target);
+
+    if (offset == old_target)
+        return;
+
+    read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
+
+    // destroying the leaked state
+    if (header._M_refcount == -1)
+        header._M_refcount = 1;
+    else
+        header._M_refcount++;
+
+    write(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
+
+    writeDWord(target, offset);
 }
 
 string NormalProcess::readClassName (uint32_t vptr)

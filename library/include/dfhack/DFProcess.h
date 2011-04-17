@@ -163,6 +163,10 @@ namespace DFHack
             virtual size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity) = 0;
             /// write an STL string
             virtual void writeSTLString(const uint32_t address, const std::string writeString) = 0;
+            /// share the string at source with target; may leak target
+            virtual void copySTLString(const uint32_t address, const uint32_t target) {
+                writeSTLString(target, readSTLString(address));
+            }
             /// read a STL vector
             virtual void readSTLVector(const uint32_t address, t_vecTriplet & triplet) = 0;
             /// get class name of an object with rtti/type info

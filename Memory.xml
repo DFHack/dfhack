@@ -29,6 +29,9 @@
                 <Offset name="first" description="Lowercase stl string with the first name. For ex. 'urist'" />
                 <Offset name="nick"  description="Stl string with the nickname. Set by the player." />
                 <Offset name="second_words" description="Array of 7 indexes into the language vectors."/>
+                <Offset name="parts_of_speech" description="Array of 7 16-bit indexes into the language vectors."/>
+                <Offset name="language" description="Language of the name."/>
+                <Offset name="has_name" description="Boolean flag."/>
             </Group>
         </Offsets>
     </Base>
@@ -784,6 +787,9 @@
                 <Offset name="first" description="Lowercase stl string with the first name. For ex. 'urist'" />
                 <Offset name="nick"  description="Stl string with the nickname. Set by the player." />
                 <Offset name="second_words" description="Array of 7 indexes into the language vectors."/>
+                <Offset name="parts_of_speech" description="Array of 7 16-bit indexes into the language vectors."/>
+                <Offset name="language" description="Language of the name."/>
+                <Offset name="has_name" description="Boolean flag."/>
             </Group>
             <Group name="Position" description="Offsets used by the Position module.">
                 <Address name="window_x" description="X coordinate of the current view (DWORD)" />
@@ -872,6 +878,7 @@
                     <Offset name="position"  description="X,Y,Z." />
                     <Offset name="flags1"  description="First set of flags" />
                     <Offset name="flags2"  description="Second set of flags" />
+                    <Offset name="flags3"  description="Third set of flags" />
                     <Offset name="caste"  description="Caste of the creature. Same as sex most of the time." />
                     <Offset name="sex"  description="Sex of the creature." />
                     <Offset name="id"  description="Unique ID of the creature, seems to be used for binary search in the creature vector." />
@@ -893,6 +900,7 @@
                         <Offset name="current_soul" description="Currently active soul?" />
                         <Offset name="labors" description="Array of labors. Used by DT to enable/disable them." />
                         <Offset name="happiness" description="Number that says how happy the creature is." />
+                        <Offset name="hist_figure_id" description="For a creature matching a historical figure, it's ID"/>
                     </Group>
                 </Group>
 
@@ -1013,6 +1021,39 @@
                 <Address name="control_mode" description="Current control mode" />
                 <!--<Address name="control_mode_copy" description="Copy of the control mode in DF memory" />-->
             </Group>
+            <Group name="Legends">
+                <Group name="figures">
+                    <Address name="vector"/>
+                    <Offset name="profession" description="Figure's profession"/>
+                    <Offset name="race" description="Figure's race"/>
+                    <Offset name="caste" description="Figure's caste; mostly equal to sex"/>
+                    <Offset name="sex" description="Figure's sex (or maybe the other way round)"/>
+                    <Offset name="appeared_year"/>
+                    <Offset name="born_year"/>
+                    <Offset name="born_seconds"/>
+                    <Offset name="died_year"/>
+                    <Offset name="died_seconds"/>
+                    <Offset name="name" description="A standard name record"/>
+                    <Offset name="unit_id" description="ID of the creature matching the figure, or -1"/>
+                    <Offset name="figure_id" description="ID of the figure, ordered"/>
+                    <Offset name="entity_link_vector"/>
+                    <Offset name="histfig_link_vector"/>
+                </Group>
+                <Group name="events">
+                    <Address name="vector"/>
+                    <Offset name="year"/>
+                    <Offset name="seconds"/>
+                    <Offset name="event_id"/>
+                    <Group name="hist_figure_died">
+                        <Offset name="figure_id"/>
+                        <Offset name="slayer_id"/>
+                        <Offset name="slayer_race"/>
+                        <Offset name="slayer_caste"/>
+                        <Offset name="slayer_item_id"/>
+                        <Offset name="region_id"/>
+                    </Group>
+                </Group>
+            </Group>
         </Offsets>
     </Base>
 
@@ -1074,6 +1115,9 @@
                 <Offset name="first" value="0x0" />
                 <Offset name="nick" value="0x1C" />
                 <Offset name="second_words" value="0x38" />
+                <Offset name="parts_of_speech" value="0x54" />
+                <Offset name="language" value="0x64" />
+                <Offset name="has_name" value="0x68" />
             </Group>
             <Group name="Position">
                 <Address name="window_x" value="0xe32798" />
@@ -1614,6 +1658,9 @@
                 <Offset name="first" value="0x0" />
                 <Offset name="nick" value="0x1C" />
                 <Offset name="second_words" value="0x38" />
+                <Offset name="parts_of_speech" value="0x54" />
+                <Offset name="language" value="0x64" />
+                <Offset name="has_name" value="0x68" />
             </Group>
             <Group name="Position">
                 <Address name="cursor_xyz" value="0xac77f0" />
@@ -2249,6 +2296,9 @@
                 <Offset name="first" value="0x0" />
                 <Offset name="nick" value="0x4" />
                 <Offset name="second_words" value="0x8" />
+                <Offset name="parts_of_speech" value="0x24" />
+                <Offset name="language" value="0x34" />
+                <Offset name="has_name" value="0x3a" />
             </Group>
             <Group name="Position">
                 <Address name="window_x" value="0x8cc9b38" />
@@ -2921,6 +2971,12 @@
         <Offsets>
             <Group name="Creatures">
                 <Address name="vector" value="0x0940b174" /> VERIFY
+                <Group name="creature">
+                    <Offset name="flags3" value="0x94"/>
+                    <Group name="advanced">
+                        <Offset name="hist_figure_id" value="0x640"/>
+                    </Group>
+                </Group>
             </Group>
             <Group name="Position" valid="true">
                 <Address name="cursor_xyz" value="0x8c3de60"/>
@@ -2939,6 +2995,39 @@
                 <Offset name="item_wear_accessor" value="0xCC" />
                 <Offset name="item_ref_vector" value="0x24" />
                 <Offset name="owner_ref_id_field" value="0x4" />
+            </Group>
+            <Group name="Legends">
+                <Group name="figures">
+                    <Address name="vector" value="0x9451a18"/>
+                    <Offset name="profession" value="0x00"/>
+                    <Offset name="race" value="0x02"/>
+                    <Offset name="caste" value="0x04"/>
+                    <Offset name="sex" value="0x06"/>
+                    <Offset name="appeared_year" value="0x08"/>
+                    <Offset name="born_year" value="0x0C"/>
+                    <Offset name="born_seconds" value="0x10"/>
+                    <Offset name="died_year" value="0x1C"/>
+                    <Offset name="died_seconds" value="0x20"/>
+                    <Offset name="name" value="0x24"/>
+                    <Offset name="unit_id" value="0x70"/>
+                    <Offset name="figure_id" value="0x74"/>
+                    <Offset name="entity_link_vector" value="0x7c"/>
+                    <Offset name="histfig_link_vector" value="0x94"/>
+                </Group>
+                <Group name="events">
+                    <Address name="vector" value="0x9451a00"/>
+                    <Offset name="year" value="0x04"/>
+                    <Offset name="seconds" value="0x08"/>
+                    <Offset name="event_id" value="0x14"/>
+                    <Group name="hist_figure_died">
+                        <Offset name="figure_id" value="0x18"/>
+                        <Offset name="slayer_id" value="0x1C"/>
+                        <Offset name="slayer_race" value="0x20"/>
+                        <Offset name="slayer_caste" value="0x24"/>
+                        <Offset name="slayer_item_id" value="0x28"/>
+                        <Offset name="region_id" value="0x48"/>
+                    </Group>
+                </Group>
             </Group>
         </Offsets>
     </Version>

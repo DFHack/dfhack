@@ -94,12 +94,20 @@ int main (int argc, char *argv[])
         if (!itm.base.flags.owned)
             continue;
 
+        std::string name = Items->getItemClass(itm.matdesc.itemType);
+
         bool confiscate = false;
         bool dump = false;
 
         if (itm.base.flags.rotten)
         {
             printf("Confiscating a rotten item: \t");
+            confiscate = true;
+        }
+        else if (itm.base.flags.on_ground &&
+                 (name == "food" || name == "meat" || name == "plant"))
+        {
+            printf("Confiscating a dropped foodstuff: \t");
             confiscate = true;
         }
         else if (itm.wear_level >= wear_dump_level)

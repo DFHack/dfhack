@@ -368,7 +368,7 @@ namespace DFHack
         return tileTypeTable[tiletype].direction;
     }
 
-    /// Safely access the tyle type array.
+    /// Safely access the tile type array.
     inline const
     TileRow * getTileRow(int tiletype)
     {

@@ -2990,9 +2990,6 @@
     <Version name="v0.31.24 linux" os="linux" base="v0.31.23 linux" rebase="0x300">
         <MD5 value="a47468cec4f4f0ff1fc03ac7d95c17ed" />
         <Offsets>
-            <Group name="Creatures">
-                <Address name="vector" value="0x0940aeb0" /> VERIFY
-            </Group>
             <Group name="Position">
                 <Address name="cursor_xyz" value="0x8c3db50" />
             </Group>

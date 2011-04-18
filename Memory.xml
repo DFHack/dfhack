@@ -2844,6 +2844,18 @@
           </Group>
       </Offsets>
   </Version>
+  <Version name="v0.31.21 linux" os="linux" base="v0.31.20 linux" rebase="0x40">
+      <MD5 value="c3d2af104a00a3219fbbe89e671940fb" />
+      <Offsets>
+          <Group name="Position">
+              <Address name="cursor_xyz" value="0x8c38ae0" />
+          </Group>
+          <Group name="Translations">
+              <Address name="language_vector" value="0x9447064" />
+              <Address name="translation_vector" value="0x944707c" />
+          </Group>
+      </Offsets>
+  </Version>
     <Version name="v0.31.22 linux" os="linux" base="v0.31.19 linux" rebase="0x12A80">
         <MD5 value="c7319be110759209bd736071fb367960" />
         <Offsets>

@@ -3003,7 +3003,6 @@
         <MD5 value="fc15065c4d1977ca019c6dad220413d1" />
         <Offsets>
             <Group name="Creatures">
-                <Address name="vector" value="0x0940b174" /> VERIFY
                 <Group name="creature">
                     <Offset name="flags3" value="0x94"/>
                     <Group name="advanced">

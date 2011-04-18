@@ -2799,6 +2799,51 @@
             </Group>
         </Offsets>
     </Version>
+  <Version name="v0.31.20 linux" os="linux" base="v0.31.19 linux" rebase="0xd540">
+      <MD5 value="6d33ec7332e59df9ea4cf7fae1e9836a" />
+      <Offsets>
+<!-- Handling has changed for some offsets in 0.31.20, and they no longer
+     appear to be static - they're probably heap objects now or something.
+     Code no longer does 'mov <offset>, <register>', but now does something
+     more like 'mov <constant>, register; mov <offset>(<register>), <register>'
+     (indirect load).
+
+     Offsets affected in 0.31.20:
+
+        Maps.features.global.vector
+        Maps.features.local.start_ptr
+        Maps.geology.geoblock_vector
+        Maps.geology.ptr2_region_array
+        Maps.world_size_x
+        Maps.world_size_y
+
+    This breaks dfliquids, dfvdig (of the ones I care about anyway - probably more too)
+-->
+          <Group name="Buildings">
+              <Address name="custom_workshop_vector" value="0x944b1b8" />
+          </Group>
+          <Group name="Materials">
+              <Address name="inorganics" value="0x9446de0" />
+              <Address name="organics_all" value="0x9446df8" />
+              <Address name="organics_plants" value="0x9446e04" />
+              <Address name="organics_trees" value="0x9446e1c" />
+              <Address name="creature_type_vector" value="0x9446e94" />
+              <Group name="descriptors">
+                  <Address name="colors_vector" value="0x944b188" />
+                  <Address name="all_colors_vector" value="0x944b1a0" />
+              </Group>
+          </Group>
+          <Group name="Position">
+              <Address name="cursor_xyz" value="0x8c38a90" />
+              <Address name="window_x" value="0x8df56d8" />
+              <Address name="window_y" value="0x8df56dc" />
+          </Group>
+          <Group name="Translations">
+              <Address name="language_vector" value="0x944703c" />
+              <Address name="translation_vector" value="0x9447024" />
+          </Group>
+      </Offsets>
+  </Version>
     <Version name="v0.31.22 linux" os="linux" base="v0.31.19 linux" rebase="0x12A80">
         <MD5 value="c7319be110759209bd736071fb367960" />
         <Offsets>

@@ -2986,11 +2986,6 @@
     </Version>
     <Version name="v0.31.23 linux" os="linux" base="v0.31.22 linux" rebase="-0x760">
         <MD5 value="c8e82e6e7cc606bf4e8d2c91993b9c0d" />
-        <Offsets>
-            <Group name="Creatures">
-                <Address name="vector" value="0x0940ab74" /> VERIFY
-            </Group>
-        </Offsets>
     </Version>
     <Version name="v0.31.24 linux" os="linux" base="v0.31.23 linux" rebase="0x300">
         <MD5 value="a47468cec4f4f0ff1fc03ac7d95c17ed" />

@@ -2679,32 +2679,63 @@
             </Group>
         </Offsets>
     </Version>
-    <Version name="v0.31.18 linux" os="linux" base="faek">
+    <Version name="v0.31.18 linux" os="linux" base="v0.31.16 linux" rebase="0x81110">
         <MD5 value="884f794d8e89e7d764057c15617c20b1" />
-        <Offsets valid="false">
-            <Group name="Maps" valid="true">
-                <Address name="map_data" value="0x93c0430" />
-                <Address name="region_x" value="0x93c045c" />
-                <Address name="region_y" value="0x93c0460" />
-                <Address name="region_z" value="0x93c0464" />
-                <Address name="x_count_block" value="0x93c0444" />
-                <Address name="y_count_block" value="0x93c0448" />
-                <Address name="z_count_block" value="0x93c044c" />
-                <Address name="x_count" value="0x93c0450" />
-                <Address name="y_count" value="0x93c0454" />
-                <Address name="z_count" value="0x93c0458" />
-                <Address name="world_size_x" value="0x93c1ab0" />
-                <Address name="world_size_y" value="0x93c1ab2" />
-                <Group name="block" valid="true" />
-                <Group name="features" valid="false" />
-                <Group name="geology" valid="false" />
+        <Offsets>
+            <Group name="Buildings">
+                <Address name="buildings_vector" value="0x9381814" />
+                <Address name="custom_workshop_vector" value="0x93c6938" />
+            </Group>
+            <Group name="Constructions">
+                <Address name="vector" value="0x936d824" />
+            </Group>
+            <Group name="Creatures">
+                <Address name="current_civ" value="0x9368bec" />
+                <Address name="current_race" value="0x9368bf8" />
+                <Address name="vector" value="0x938118c" />
             </Group>
             <Group name="GUI">
                 <Address name="pause_state" value="0x9366cb0"/>
             </Group>
-            <Group name="string" valid="true" />
-            <Group name="vector" valid="true" />
-            <Group name="name" valid="true" />
+            <Group name="Maps">
+                <Group name="features">
+                    <Group name="global">
+                        <Address name="vector" value="0x93c2074" />
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" value="0x93c20ec" />
+                    </Group>
+                </Group>
+                <Group name="geology">
+                    <Address name="geoblock_vector" value="0x93c208c" />
+                    <Address name="ptr2_region_array" value="0x93c20b0" />
+                </Group>
+            </Group>
+            <Group name="Materials">
+                <Address name="inorganics" value="0x93c25a8" />
+                <Address name="organics_all" value="0x93c25c0" />
+                <Address name="organics_plants" value="0x93c25cc" />
+                <Address name="organics_trees" value="0x93c25e4" />
+                <Address name="creature_type_vector" value="0x93c2660" />
+                <Group name="descriptors">
+                    <Address name="colors_vector" value="0x93c6908" />
+                    <Address name="all_colors_vector" value="0x93c6920" />
+                </Group>
+            </Group>
+            <Group name="Position">
+                <Address name="cursor_xyz" value="0x8bb4560" />
+                <Address name="window_x" value="0x8d7105c" />
+                <Address name="window_y" value="0x8d71058" />
+                <Address name="window_z" value="0x8d71060" />
+            </Group>
+            <Group name="Translations">
+                <Address name="language_vector" value="0x93c27a4" />
+                <Address name="translation_vector" value="0x93c27bc" />
+            </Group>
+            <Group name="World">
+                <Address name="current_weather" value="0x9366bd0" />
+                <Address name="current_tick" value="0x9366c0c" />
+            </Group>
         </Offsets>
     </Version>
     <Version name="v0.31.19 linux" os="linux" base="v0.31.18 linux" rebase="0x77738">

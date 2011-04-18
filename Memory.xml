@@ -2741,14 +2741,25 @@
     <Version name="v0.31.19 linux" os="linux" base="v0.31.18 linux" rebase="0x77738">
         <MD5 value="8fcb1f10af9cc2bda47d2acf42e1db54" />
         <Offsets>
-            <Group name="Position" valid="true">
-                <Address name="cursor_xyz" value="0x8c2b560" />
-                <Address name="screen_tiles_pointer" valid="false" />
+          <Group name="Buildings">
+              <Address name="buildings_vector" value="0x93f8f18" />
+              <Address name="custom_workshop_vector" value="0x943e398" />
+          </Group>
+          <Group name="Constructions">
+              <Address name="vector" value="0x93e4f04" />
+          </Group>
+          <Group name="Creatures">
+              <Address name="current_civ" value="0x93e027c" />
+              <Address name="current_race" value="0x93e0288" />
+              <Address name="vector" value="0x93f886c" />
+          </Group>
+          <Group name="GUI">
+              <Address name="pause_state" value="0x93dddf0" />
             </Group>
             <Group name="Maps">
                 <Address name="world_size_x" value="0x94391f0" />
                 <Address name="world_size_y" value="0x94391f2" />
-                <Group name="features" valid="true">
+              <Group name="features">
                     <Group name="global">
                         <Address name="vector" value="0x94397cc" />
                     </Group>
@@ -2756,54 +2767,35 @@
                         <Address name="start_ptr" value="0x9439844" />
                     </Group>
                 </Group>
-                <Group name="geology" valid="true">
+              <Group name="geology">
                     <Address name="geoblock_vector" value="0x94397e4" />
                     <Address name="ptr2_region_array" value="0x9439808" />
                 </Group>
             </Group>
-            <Group name="GUI">
-                <Address name="pause_state" value="0x93dddf0" />
-            </Group>
             <Group name="Materials">
-                <Address name="creature_type_vector" value="0x943a074" />
                 <Address name="inorganics" value="0x9439fc0" />
                 <Address name="organics_all" value="0x9439fd8" />
                 <Address name="organics_plants" value="0x9439fe4" />
                 <Address name="organics_trees" value="0x9439ffc" />
-                -------------------
-                !!LANGUAGE TABLES!!
-                -------------------
-                translation vector: 0x943a21c
-                lang vector: 0x943a204
-                word table offset: 0x1c
-                -------------
-                !!MATERIALS!!
-                -------------
-                inorganics:
-                0x9439fc0
-                organics:
-                0x9439fd8
-                organics 31.19:
-                trees:
-                0x9439ffc
-                plants:
-                0x9439fe4
-                color descriptors:
-                0x943e368
-                Amber color:0xa380190
-                all descriptors:
-                0x943e380
-                toad-first creature types:
-                0x943a074
-                all creature types:
-                0x943a068
-                0x943a074
-                Toad: 0xa441f10
-                Toad: rawname = 0x0
-                Toad: character (not reliable) = 0x20
-                Toad: caste vector = 0x60
-                Toad: extract? vector = 0x1f74
-                Toad: colors = 0x38
+              <Address name="creature_type_vector" value="0x943a074" />
+              <Group name="descriptors">
+                  <Address name="colors_vector" value="0x943e368" />
+                  <Address name="all_colors_vector" value="0x943e380" />
+              </Group>
+          </Group>
+          <Group name="Position">
+              <Address name="cursor_xyz" value="0x8c2b560" />
+              <Address name="window_x" value="0x8de819c" />
+              <Address name="window_y" value="0x8de8198" />
+              <Address name="window_z" value="0x8de81a0" />
+          </Group>
+          <Group name="Translations">
+              <Address name="language_vector" value="0x943a204" />
+              <Address name="translation_vector" value="0x943a21c" />
+          </Group>
+          <Group name="World">
+              <Address name="current_weather" value="0x93ddd10" />
+              <Address name="current_tick" value="0x93ddd4c" />
             </Group>
         </Offsets>
     </Version>

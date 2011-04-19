@@ -28,6 +28,9 @@ DFHACK_TOOL(dfpause forcepause.cpp)
 
 # prospector - produces a list of available materials and their quantities
 DFHACK_TOOL(dfprospector prospector.cpp)
+IF(WIN32)
+    INSTALL(PROGRAMS dfprospector-all.bat DESTINATION ${DFHACK_BINARY_DESTINATION})
+ENDIF()
 
 # vdig - dig the vein under the cursor
 DFHACK_TOOL(dfvdig vdig.cpp)

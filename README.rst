@@ -133,9 +133,10 @@ Can be used to determine tile properties like temperature.
 dfprospector
 ============
 Lists all available minerals on the map and how much of them there is.
-It has two parameters:
--a processes all tiles, even hidden ones.
--b includes layer rocks into the count.
+It has one parameter:
+* -a processes all tiles, even hidden ones.
+
+On windows, it's possible to run dfprsopector-all.bat to process all the tiles without messing with terminal windows.
 
 dfreveal
 ========

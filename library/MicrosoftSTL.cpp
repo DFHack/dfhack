@@ -100,3 +100,8 @@ string MicrosoftSTL::readClassName (uint32_t vptr)
     raw.resize(raw.length() - 2);// trim @@ from end
     return raw;
 }
+
+size_t MicrosoftSTL::writeSTLString(const uint32_t address, const std::string writeString)
+{
+    return 0;
+}

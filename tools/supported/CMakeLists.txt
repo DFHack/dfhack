@@ -38,6 +38,9 @@ ENDIF()
 # cleanmap - removes mud, snow, blood and similar stuff from a map. farmers beware
 DFHACK_TOOL(dfcleanmap cleanmap.cpp)
 
+# cleanowned - confiscate items owned by dwarves so they can be atomsmashed/reused/etc.
+DFHACK_TOOL(dfcleanowned cleanowned.cpp)
+
 # unstuck - make DF run if something goes wrong with the 'normal' memory access method
 DFHACK_TOOL(dfunstuck unstuck.cpp)
 

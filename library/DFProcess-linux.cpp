@@ -65,8 +65,8 @@ namespace {
             void readSTLVector(const uint32_t address, t_vecTriplet & triplet);
             const std::string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
-            void writeSTLString(const uint32_t address, const std::string writeString){};
-            void copySTLString(const uint32_t address, const uint32_t target);
+            size_t writeSTLString(const uint32_t address, const std::string writeString);
+            size_t copySTLString(const uint32_t address, const uint32_t target);
             // get class name of an object with rtti/type info
             std::string readClassName(uint32_t vptr);
     };
@@ -126,9 +126,9 @@ NormalProcess::NormalProcess(uint32_t pid, VersionInfoFactory * known_versions) 
 
 struct _Rep_base
 {
-    uint32_t       _M_length;
-    uint32_t       _M_capacity;
-    uint32_t        _M_refcount;
+    uint32_t _M_length; // length of text stored, not including zero termination
+    uint32_t _M_capacity; // capacity, not including zero termination
+    uint32_t _M_refcount; // reference count (two STL strings can share a common buffer, copy on write rules apply)
 };
 
 size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
@@ -140,6 +140,27 @@ size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufc
     read(offset,read_real,(uint8_t * )buffer);
     buffer[read_real] = 0;
     return read_real;
+}
+//void LinuxProcessBase::write (uint32_t offset, uint32_t size, uint8_t *source)
+size_t NormalProcess::writeSTLString(const uint32_t address, const std::string writeString)
+{
+    _Rep_base header;
+    // get buffer location
+    uint32_t start = Process::readDWord(address);
+    // read the header
+    read(start - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
+
+    // the buffer has actual size = 1. no space for storing anything more than a zero byte
+    if(header._M_capacity == 0)
+        return 0;
+
+    // get writeable length (lesser of our string length and capacity of the target)
+    uint32_t lstr = writeString.length();
+    uint32_t allowed_copy = min(lstr, header._M_capacity);
+    // write string, add a zero terminator, return bytes written
+    write(start, allowed_copy, (uint8_t *) writeString.c_str());
+    writeByte(start + allowed_copy, 0);
+    return allowed_copy;
 }
 
 void NormalProcess::readSTLVector(const uint32_t address, t_vecTriplet & triplet)
@@ -162,7 +183,7 @@ const string NormalProcess::readSTLString (uint32_t offset)
     return ret;
 }
 
-void NormalProcess::copySTLString (uint32_t offset, uint32_t target)
+size_t NormalProcess::copySTLString (uint32_t offset, uint32_t target)
 {
     _Rep_base header;
 
@@ -170,7 +191,7 @@ void NormalProcess::copySTLString (uint32_t offset, uint32_t target)
     uint32_t old_target = Process::readDWord(target);
 
     if (offset == old_target)
-        return;
+        return 0;
 
     read(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
 
@@ -183,6 +204,7 @@ void NormalProcess::copySTLString (uint32_t offset, uint32_t target)
     write(offset - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
 
     writeDWord(target, offset);
+    return header._M_length;
 }
 
 string NormalProcess::readClassName (uint32_t vptr)

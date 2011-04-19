@@ -19,7 +19,7 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/DFTileTypes.h>
 
-template<template <typename> class P = std::less >
+template<template <typename> class P = std::greater >
 struct compare_pair_first
 {
     template<class T1, class T2>
@@ -29,7 +29,7 @@ struct compare_pair_first
     }
 };
 
-template<template <typename> class P = std::less >
+template<template <typename> class P = std::greater >
 struct compare_pair_second
 {
     template<class T1, class T2>
@@ -42,7 +42,6 @@ struct compare_pair_second
 int main (int argc, const char* argv[])
 {
     bool showhidden = false;
-    bool showbaselayers = false;
     for(int i = 1; i < argc; i++)
     {
         string test = argv[i];
@@ -50,20 +49,14 @@ int main (int argc, const char* argv[])
         {
             showhidden = true;
         }
-        else if(test == "-b")
+        else if(test == "--help")
         {
-            showbaselayers = true;
-        }
-        else if(test == "-ab" || test == "-ba")
-        {
-            showhidden = true;
-            showbaselayers = true;
+            cout << "This is a prospector tool for the game Dwarf Fortress." << endl
+                 << "By default, only visible tiles are counted." << endl
+                 << "Use the parameter '-a' to scan all tiles." << endl;
+            return 0;
         }
     }
-    // let's be more useful when double-clicked on windows
-    #ifndef LINUX_BUILD
-    showhidden = true;
-    #endif
     uint32_t x_max,y_max,z_max;
 
     DFHack::mapblock40d Block;
@@ -135,7 +128,7 @@ int main (int argc, const char* argv[])
     }
 
     // get region geology
-    if(showbaselayers && !Maps->ReadGeology( layerassign ))
+    if(!Maps->ReadGeology( layerassign ))
     {
         cerr << "Can't get region geology." << endl;
         #ifndef LINUX_BUILD
@@ -170,6 +163,8 @@ int main (int argc, const char* argv[])
                         DFHack::TileMaterial mat = DFHack::tileMaterial(tt[xx][yy]);
                         if(!DFHack::isWallTerrain(tt[xx][yy]))
                             continue;
+                        if(Block.designation[xx][yy].bits.hidden && !showhidden)
+                            continue;
                         if(hardcoded_m.count(mat))
                         {
                             hardcoded_m[mat] += 1;
@@ -181,37 +176,35 @@ int main (int argc, const char* argv[])
                     }
                 }
 
-                // layer stone and soil
-                if(showbaselayers)
+                // get the layer materials
+                for(uint32_t xx = 0;xx<16;xx++)
                 {
-                    // get the layer materials
-                    for(uint32_t xx = 0;xx<16;xx++)
+                    for (uint32_t yy = 0; yy< 16;yy++)
                     {
-                        for (uint32_t yy = 0; yy< 16;yy++)
+                        DFHack::TileMaterial mat = DFHack::tileMaterial(tt[xx][yy]);
+                        DFHack::TileShape shape = DFHack::TileShape(tt[xx][yy]);
+                        if(mat != DFHack::SOIL && mat != DFHack::STONE)
+                            continue;
+                        if(!DFHack::isWallTerrain(tt[xx][yy]))
+                            continue;
+                        if(Block.designation[xx][yy].bits.hidden && !showhidden)
+                            continue;
+                        uint8_t test = Block.designation[xx][yy].bits.biome;
+                        if(test > maximum_regionoffset)
+                            maximum_regionoffset = test;
+                        if( test >= sizeof(Block.biome_indices))
                         {
-                            DFHack::TileMaterial mat = DFHack::tileMaterial(tt[xx][yy]);
-                            DFHack::TileShape shape = DFHack::TileShape(tt[xx][yy]);
-                            if(mat != DFHack::SOIL && mat != DFHack::STONE)
-                                continue;
-                            if(!DFHack::isWallTerrain(tt[xx][yy]))
-                                continue;
-                            uint8_t test = Block.designation[xx][yy].bits.biome;
-                            if(test > maximum_regionoffset)
-                                maximum_regionoffset = test;
-                            if( test >= sizeof(Block.biome_indices))
-                            {
-                                num_overflows++;
-                                continue;
-                            }
-                            uint16_t mat2 = layerassign [Block.biome_indices[test]] [Block.designation[xx][yy].bits.geolayer_index];
-                            if(layer_m.count(mat2))
-                            {
-                                layer_m[mat2] += 1;
-                            }
-                            else
-                            {
-                                layer_m[mat2] = 1;
-                            }
+                            num_overflows++;
+                            continue;
+                        }
+                        uint16_t mat2 = layerassign [Block.biome_indices[test]] [Block.designation[xx][yy].bits.geolayer_index];
+                        if(layer_m.count(mat2))
+                        {
+                            layer_m[mat2] += 1;
+                        }
+                        else
+                        {
+                            layer_m[mat2] = 1;
                         }
                     }
                 }
@@ -222,6 +215,8 @@ int main (int argc, const char* argv[])
                     for(uint32_t xi = 0 ; xi< 16 ; xi++) for(uint32_t yi = 0 ; yi< 16 ; yi++)
                     {
                         if(!DFHack::isWallTerrain(tt[xi][yi]))
+                            continue;
+                        if(Block.designation[xi][yi].bits.hidden && !showhidden)
                             continue;
                         DFHack::TileMaterial mat = DFHack::tileMaterial(tt[xi][yi]);
                         if(Block.designation[xi][yi].bits.feature_global && mat == DFHack::FEATSTONE)
@@ -355,6 +350,7 @@ int main (int argc, const char* argv[])
     }
     // LAYERS
     cout << endl << "Layer materials:" << endl;
+    uint32_t layers_total = 0;
     for(p = layer_m.begin(); p != layer_m.end(); p++)
     {
         if(p->first == -1)
@@ -364,6 +360,7 @@ int main (int argc, const char* argv[])
         else
         {
             layers_sort.push_back( pair<int16_t,uint32_t>(p->first, p->second) );
+            layers_total += p->second;
         }
     }
     std::sort(layers_sort.begin(), layers_sort.end(), compare_pair_second<>());
@@ -376,7 +373,9 @@ int main (int argc, const char* argv[])
         }
         cout << Mats->inorganic[layers_sort[i].first].id << " : " << layers_sort[i].second << endl;
     }
+    cout << ">>> TOTAL = " << layers_total << endl;
     // VEINS
+    uint32_t veins_total = 0;
     cout << endl << "Vein materials:" << endl;
     for(p = vein_m.begin(); p != vein_m.end(); p++)
     {
@@ -387,6 +386,7 @@ int main (int argc, const char* argv[])
         else
         {
             veins_sort.push_back( pair<int16_t,uint32_t>(p->first, p->second) );
+            veins_total += p->second;
         }
     }
     std::sort(veins_sort.begin(), veins_sort.end(), compare_pair_second<>());
@@ -399,11 +399,14 @@ int main (int argc, const char* argv[])
         }
         cout << Mats->inorganic[veins_sort[i].first].id << " : " << veins_sort[i].second << endl;
     }
+    cout << ">>> TOTAL = " << veins_total << endl;
 
     DF->Detach();
+    cout << endl << "Happy mining!";
     #ifndef LINUX_BUILD
-        cout << "Done. Press any key to continue" << endl;
+        cout << " Press any key to finish.";
         cin.ignore();
     #endif
+    cout << endl;
     return 0;
 }

@@ -157,13 +157,13 @@ int main (int numargs, char ** args)
 
     if (goblins.size() >= ghosts.size() && ghosts.size() > 0)
     {
-        DFHack::OffsetGroup *ogf = mem->getGroup("Legends")->getGroup("figures");
-        uint32_t f_vector = p->readDWord(ogf->getAddress("vector"));
-        uint32_t f_id = ogf->getOffset("figure_id");
-        uint32_t f_unit = ogf->getOffset("unit_id");
-        uint32_t f_name = ogf->getOffset("name");
-        uint32_t f_race = ogf->getOffset("race");
-        uint32_t f_profession = ogf->getOffset("profession");
+        DFHack::OffsetGroup *grp_figures = mem->getGroup("Legends")->getGroup("figures");
+        uint32_t f_vector = p->readDWord(grp_figures->getAddress("vector"));
+        uint32_t f_id = grp_figures->getOffset("figure_id");
+        uint32_t f_unit = grp_figures->getOffset("unit_id");
+        uint32_t f_name = grp_figures->getOffset("name");
+        uint32_t f_race = grp_figures->getOffset("race");
+        uint32_t f_profession = grp_figures->getOffset("profession");
 
         for (std::list<uint32_t>::iterator it = ghosts.begin(); it != ghosts.end(); ++it)
         {

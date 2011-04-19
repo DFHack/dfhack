@@ -71,7 +71,7 @@ namespace {
             void readSTLVector(const uint32_t address, t_vecTriplet & triplet);
             const std::string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
-            void writeSTLString(const uint32_t address, const std::string writeString){};
+            size_t writeSTLString(const uint32_t address, const std::string writeString);
             // get class name of an object with rtti/type info
             std::string readClassName(uint32_t vptr);
     };
@@ -156,6 +156,12 @@ size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcap
 {
     return stl.readSTLString(offset, buffer, bufcapacity);
 }
+
+size_t WineProcess::writeSTLString(const uint32_t address, const std::string writeString)
+{
+    return stl.writeSTLString(address,writeString);
+}
+
 
 const string WineProcess::readSTLString (uint32_t offset)
 {

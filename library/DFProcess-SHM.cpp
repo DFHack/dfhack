@@ -476,7 +476,7 @@ size_t SHMProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapa
     return fit;
 }
 
-void SHMProcess::writeSTLString(const uint32_t address, const std::string writeString)
+size_t SHMProcess::writeSTLString(const uint32_t address, const std::string writeString)
 {
     if(!d->locked) throw Error::MemoryAccessDenied(address);
 
@@ -484,4 +484,5 @@ void SHMProcess::writeSTLString(const uint32_t address, const std::string writeS
     strncpy(D_SHMDATA(char),writeString.c_str(),writeString.length()+1); // length + 1 for the null terminator
     full_barrier
     d->SetAndWait(CORE_WRITE_STL_STRING);
+    return writeString.length();
 }

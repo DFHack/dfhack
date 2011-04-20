@@ -141,7 +141,7 @@ size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufc
     buffer[read_real] = 0;
     return read_real;
 }
-//void LinuxProcessBase::write (uint32_t offset, uint32_t size, uint8_t *source)
+
 size_t NormalProcess::writeSTLString(const uint32_t address, const std::string writeString)
 {
     _Rep_base header;
@@ -153,10 +153,15 @@ size_t NormalProcess::writeSTLString(const uint32_t address, const std::string w
     // the buffer has actual size = 1. no space for storing anything more than a zero byte
     if(header._M_capacity == 0)
         return 0;
+    if(header._M_refcount != 0 && header._M_refcount != 0xFFFFFFFF ) // one ref or one non-shareable ref
+        return 0;
 
     // get writeable length (lesser of our string length and capacity of the target)
     uint32_t lstr = writeString.length();
     uint32_t allowed_copy = min(lstr, header._M_capacity);
+    // write header with new length.
+    header._M_length = allowed_copy;
+    write(start - sizeof(_Rep_base),sizeof(_Rep_base),(uint8_t *)&header);
     // write string, add a zero terminator, return bytes written
     write(start, allowed_copy, (uint8_t *) writeString.c_str());
     writeByte(start + allowed_copy, 0);

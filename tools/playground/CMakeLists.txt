@@ -80,13 +80,13 @@ DFHACK_TOOL(dfprinttiletypes printtiletypes.cpp)
 # Will have many options in the future.
 DFHACK_TOOL(dfhellhole hellhole.cpp)
 
-# dfcreature
+# dfcreaturemanager
 # Author: raoulxq
-# - Display creatures
+# - Display creatures (overview & detail)
 # - Modify skills and labors of creatures
 # - Kill creatures
 # - Etc. 
-DFHACK_TOOL(dfcreature creature.cpp)
+DFHACK_TOOL(dfcreaturemanager creaturemanager.cpp)
 
 # digpattern
 # Author: raoulxq

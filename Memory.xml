@@ -340,7 +340,7 @@
             <Job id="124" name = "Forge Flask" />
             <Job id="125" name = "Forge Goblet" />
             <Job id="126" name = "Forge Instrument" />
-            <Job id="127" name = "Make (Wooden?) Barrel" /> <!-- Was: Forge Toy -->
+            <Job id="127" name = "Make Barrel" /> <!-- Was: Forge Toy -->
             <Job id="128" name = "Forge Animal Trap" />
             <Job id="129" name = "Forge Barrel" />
             <Job id="130" name = "Make Totel" />

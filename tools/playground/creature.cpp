@@ -18,7 +18,6 @@
  * - Filter by last name with -ln
  * - Add pattern matching (or at least matching) to -n/-fn/-ln
  * - Set nickname with --setnick (only if -i is given)
- * - Revive creature(s) with --revive
  * - Show skills/labors only when -ss/-sl/-v is given or a skill/labor is changed
  * - Make -1 the default for everything but -i
  * - Imply -i if first argument is a number
@@ -28,6 +27,10 @@
  * - Switch --listskills, showing first 3 important skills
 
  * Done:
+ * - More space for "Current Job"
+ * - Attempted to revive creature(s) with --revive, but it doesn't work (flag is there but invisible)
+ * - Switch -rcs, remove civil skills
+ * - Switch -rms, remove military skills (who would want that?)
  * - Allow comma separated list of IDs for -i
  * - '-c all' shows all creatures
  * - Rename from skillmodify.cpp to creature.cpp
@@ -73,7 +76,11 @@ using namespace std;
  * either dependent on Toady One's implementation (#defining numbers) or
  * Memory.xml (#defining text). I voted for Toady One's numbers to be more
  * stable, but could be wrong.
+ *
+ * Ideally there would be a flag "is_military" or "is_social" in Memory.xml.
  */
+
+/* Social skills */
 #define SKILL_PERSUASION     72
 #define SKILL_NEGOTIATION    73
 #define SKILL_JUDGING_INTENT 74
@@ -83,6 +90,25 @@ using namespace std;
 #define SKILL_FLATTERY       82
 #define SKILL_CONSOLING      83
 #define SKILL_PACIFICATION   84
+
+/* Misc skills */
+#define SKILL_WEAPONSMITHING 27
+#define SKILL_ARMORSMITHING 28
+#define SKILL_RECORD_KEEPING 77
+#define SKILL_WAX_WORKING 115
+
+/* Some military skills */
+#define SKILL_COORDINATION 95
+#define SKILL_BALANCE 96
+#define SKILL_LEADERSHIP 97
+#define SKILL_TEACHING 98
+#define SKILL_FIGHTING 99
+#define SKILL_ARCHERY 100
+#define SKILL_WRESTLING 101
+#define SKILL_BITING 102
+#define SKILL_STRIKING 103
+#define SKILL_KICKING 104
+#define SKILL_DODGING 105
 
 #define LABOR_STONE_HAULING   1 
 #define LABOR_WOOD_HAULING    2 
@@ -95,12 +121,13 @@ using namespace std;
 #define LABOR_CLEANING        9
 #define LABOR_FEED_PATIENTS_PRISONERS   22
 #define LABOR_RECOVERING_WOUNDED        23
-#define NOT_SET              INT_MIN
-#define MAX_MOOD             4
-#define NO_MOOD             -1
 
 #define PROFESSION_CHILD    96
 #define PROFESSION_BABY     97
+
+#define NOT_SET              INT_MIN
+#define MAX_MOOD             4
+#define NO_MOOD             -1
 
 bool quiet=true;
 bool verbose = false;
@@ -123,6 +150,7 @@ int hauler_labors[] = {
         ,LABOR_FEED_PATIENTS_PRISONERS
         ,LABOR_RECOVERING_WOUNDED
 };
+
 int social_skills[] = 
 {
     SKILL_PERSUASION
@@ -134,6 +162,21 @@ int social_skills[] =
         ,SKILL_FLATTERY
         ,SKILL_CONSOLING
         ,SKILL_PACIFICATION
+};
+
+int military_skills[] =
+{
+    SKILL_COORDINATION
+        ,SKILL_BALANCE
+        ,SKILL_LEADERSHIP
+        ,SKILL_TEACHING
+        ,SKILL_FIGHTING
+        ,SKILL_ARCHERY
+        ,SKILL_WRESTLING
+        ,SKILL_BITING
+        ,SKILL_STRIKING
+        ,SKILL_KICKING
+        ,SKILL_DODGING
 };
 
 void usage(int argc, const char * argv[])
@@ -153,17 +196,23 @@ void usage(int argc, const char * argv[])
         << "-ll/--listlabors: List available labors" << endl
         << "--showdead      : Also show/modify dead creatures" << endl
         << "--showallflags  : Show all flags of a creature" << endl
+        << "-ss             : Show social skills" << endl
+        << "+sh             : Hide hauler labors" << endl
         << endl
         << "Modifying options:" << endl
         << "-al <n>         : Add labor <n> to creature" << endl
         << "-rl <n>         : Remove labor <n> from creature" << endl
-        << "-ras            : Remove all skills from creature" << endl
+        << "-ras            : Remove all skills from creature (i.e. set them to zero)" << endl
+        << "-rcs            : Remove civil skills from creature (i.e. set them to zero)" << endl
+        << "-rms            : Remove military skills from creature (i.e. set them to zero)" << endl
         << "-ral            : Remove all labors from creature" << endl
         << "-ah             : Add hauler labors (stone hauling, etc.) to creature" << endl
         << "-rh             : Remove hauler labors (stone hauling, etc.) from creature" << endl
         // Disabling mood doesn't work as intented
         << "--setmood <n>   : Set mood to n (-1 = no mood, max=4, buggy!)" << endl
         << "--kill          : Kill creature(s) (may need to be called multiple times)" << endl
+        // Doesn't seem to work
+        //<< "--revive        : Attempt to revive creature(s) (remove dead and killed flag)" << endl
         // Setting happiness doesn't work really, because hapiness is recalculated
         //<< "--sethappiness <n> : Set happiness to n" << endl
         << "-f              : Force an action" << endl
@@ -317,18 +366,22 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
     }
 
 
-    string job="No Job";
+    string jobid;
+    stringstream ss;
+    ss << "(" << creature.current_job.jobId << ")";
+    jobid = ss.str();
+
+    string job="No Job/On Break" + (creature.current_job.jobId == 0 ? "" : jobid);
     if(creature.current_job.active)
     {
         job=mem->getJob(creature.current_job.jobId);
+
         int p=job.size();
         while (p>0 && (job[p]==' ' || job[p]=='\t'))
             p--;
-        if (p <= 1)
+        if (p <= 1) // Display numeric jobID if unknown job
         {
-            stringstream ss;
-            ss << creature.current_job.jobId;
-            job = ss.str();
+            job = jobid;
         }
     }
 
@@ -336,9 +389,9 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
     {
         printf("%3d", index);
         printf(" %-17s", type.c_str());
-        printf(" %-32s", name.c_str());
+        printf(" %-24s", name.c_str());
         printf(" %-16s", toCaps(profession).c_str());
-        printf(" %-30s", job.c_str());
+        printf(" %-38s", job.c_str());
         printf(" %5d", creature.happiness);
         if (showdead)
         {
@@ -531,8 +584,11 @@ int main (int argc, const char* argv[])
     bool find_nonicks = false;
     bool find_nicks = false;
     bool remove_skills = false;
+    bool remove_civil_skills = false;
+    bool remove_military_skills = false;
     bool remove_labors = false;
     bool kill_creature = false;
+    bool revive_creature = false;
     bool make_hauler = false;
     bool remove_hauler = false;
     bool add_labor = false;
@@ -601,6 +657,14 @@ int main (int argc, const char* argv[])
         {
             remove_skills = true;
         }
+        else if(arg_cur == "-rcs")
+        {
+            remove_civil_skills = true;
+        }
+        else if(arg_cur == "-rms")
+        {
+            remove_military_skills = true;
+        }
         else if(arg_cur == "-f")
         {
             force_massdesignation = true;
@@ -657,6 +721,12 @@ int main (int argc, const char* argv[])
             kill_creature = true;
             showallflags = true;
             showdead = true;
+        }
+        else if(arg_cur == "--revive")
+        {
+            revive_creature = true;
+            showdead = true;
+            showallflags = true;
         }
         else if(arg_cur == "-ral")
         {
@@ -784,8 +854,8 @@ int main (int argc, const char* argv[])
     {
         if (showfirstlineonly)
         {
-            printf("ID  Type              Name/nickname                    Job title        Current job                    Happy%s\n", showdead?" Dead ":"");
-            printf("--- ----------------- -------------------------------- ---------------- ------------------------------ -----%s\n", showdead?" -----":"");
+            printf("ID  Type              Name/nickname            Job title        Current job                            Happy%s\n", showdead?" Dead ":"");
+            printf("--- ----------------- ------------------------ ---------------- -------------------------------------- -----%s\n", showdead?" -----":"");
         }
 
         vector<uint32_t> addrs;
@@ -813,10 +883,11 @@ int main (int argc, const char* argv[])
                 addrs.push_back(creature.origin);
 
                 bool dochange = (
-                        remove_skills
+                        remove_skills || remove_civil_skills || remove_military_skills
                         || remove_labors || add_labor || remove_labor
                         || make_hauler || remove_hauler 
                         || kill_creature
+                        || revive_creature
                         || set_happiness
                         || set_mood
                         );
@@ -841,7 +912,7 @@ int main (int argc, const char* argv[])
                 {
                     if(creature.has_default_soul)
                     {
-                        if (kill_creature)
+                        if (kill_creature && !creature.flags1.bits.dead)
                         {
                             /*
                                [quote author=Eldrick Tobin link=topic=58809.msg2178545#msg2178545 date=1302638055]
@@ -869,6 +940,25 @@ int main (int argc, const char* argv[])
                                just pift in Magma. [color=purple]Likely missing upper torsoes on examination[/color].
 
                              */
+                            /* This is from an invading creature's flags:
+
+                                ID: 560, Crocodile Cave, Nako, Standard, Job: No Job, Happiness: 100
+                                Flag: Marauder
+                                Flag: Can Swap
+                                Flag: Active Invader
+                                Flag: Invader Origin
+                                Flag: Coward
+                                Flag: Hidden Ambusher
+                                Flag: Invades
+                                Flag: Ridden
+                                Flag: Calculated Nerves
+                                Flag: Calculated Bodyparts
+                                Flag: Calculated Insulation
+                                Flag: Vision Good
+                                Flag: Breathing Good
+
+                            */
+
                             DFHack::t_creaturflags1 f1 = creature.flags1;
                             DFHack::t_creaturflags2 f2 = creature.flags2;
 
@@ -879,12 +969,28 @@ int main (int argc, const char* argv[])
                             f1.bits.hidden_in_ambush = 0;
                             f1.bits.invades = 0;          /*!< 22: Marauder resident/invader moving in all the way */
 
-                            cout << "Setting f1.bits.dead = 1" << endl;
-                            cout << "Setting f2.bits.killed = 1" << endl;
-                            cout << "Setting f1.bits.active_invader = 0" << endl; 
-                            cout << "Setting f1.bits.hidden_ambusher = 0" << endl; 
-                            cout << "Setting f1.bits.hidden_in_ambush = 0" << endl;
-                            cout << "Setting f1.bits.invades = 0" << endl;          
+                            cout << "Writing flags..." << endl;
+                            if (!Creatures->WriteFlags(creature_idx, f1.whole, f2.whole))
+                            {
+                                cout << "Error writing creature flags!" << endl;
+                            }
+                            // We want the flags to be shown after our modification, but they are not read back
+                            creature.flags1 = f1;
+                            creature.flags2 = f2;
+                        }
+
+                        if (revive_creature && creature.flags1.bits.dead)
+                        {
+                            DFHack::t_creaturflags1 f1 = creature.flags1;
+                            DFHack::t_creaturflags2 f2 = creature.flags2;
+
+                            f1.bits.dead = 0;
+                            f2.bits.killed = 0;
+                            f1.bits.active_invader = 1;   /*!< 17: Active invader (for organized ones) */
+                            f1.bits.hidden_ambusher = 1;  /*!< 21: Active marauder/invader moving inward? */
+                            f1.bits.hidden_in_ambush = 1;
+                            f1.bits.invades = 1;          /*!< 22: Marauder resident/invader moving in all the way */
+
                             cout << "Writing flags..." << endl;
                             if (!Creatures->WriteFlags(creature_idx, f1.whole, f2.whole))
                             {
@@ -917,16 +1023,24 @@ int main (int argc, const char* argv[])
                             Creatures->WriteHappiness(creature_idx, set_happiness_n);
                         }
 
-                        if (remove_skills) 
+                        if (remove_skills || remove_civil_skills || remove_military_skills) 
                         {
                             DFHack::t_soul & soul = creature.defaultSoul;
 
                             cout << "Removing skills..." << endl;
+
                             for(unsigned int sk = 0; sk < soul.numSkills;sk++)
                             {
-                                soul.skills[sk].rating=0;
-                                soul.skills[sk].experience=0;
+                                bool is_military = is_in(soul.skills[sk].id, military_skills, sizeof(military_skills)/sizeof(military_skills[0]));
+                                if (remove_skills 
+                                        || (remove_civil_skills && !is_military)
+                                        || (remove_military_skills && is_military))
+                                {
+                                    soul.skills[sk].rating=0;
+                                    soul.skills[sk].experience=0;
+                                }
                             }
+
                             // Doesn't work anyways, so better leave it alone
                             //soul.numSkills=0;
                             if (Creatures->WriteSkills(creature_idx, soul) == true) {

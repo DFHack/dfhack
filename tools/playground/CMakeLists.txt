@@ -35,8 +35,7 @@ DFHACK_TOOL(dfdigger2 digger2.cpp)
 # itemdesignator - change some item designations (dump, forbid, on-fire) for all
 #                  items of a given type and material
 # Author: belal
-# FIXME: turned off. there is no reliable Items module.
-#DFHACK_TOOL(dfitemdesignator itemdesignator.cpp)
+DFHACK_TOOL(dfitemdesignator itemdesignator.cpp)
 
 # catsplosion - Accelerates pregnancy
 # Author: Zhentar
@@ -93,7 +92,7 @@ DFHACK_TOOL(dfcreaturemanager creaturemanager.cpp)
 # Dig a specific pattern (in this case 3x3 bedrooms, modify as you like)
 DFHACK_TOOL(dfdigpattern digpattern.cpp)
 
-DFHACK_TOOL(dfcleanowned cleanowned.cpp)
+DFHACK_TOOL(dffixbug-3708 fix-3708.cpp)
 
 # this needs the C bindings
 IF(BUILD_DFHACK_C_BINDINGS)

@@ -29,6 +29,9 @@
                 <Offset name="first" description="Lowercase stl string with the first name. For ex. 'urist'" />
                 <Offset name="nick"  description="Stl string with the nickname. Set by the player." />
                 <Offset name="second_words" description="Array of 7 indexes into the language vectors."/>
+                <Offset name="parts_of_speech" description="Array of 7 16-bit indexes into the language vectors."/>
+                <Offset name="language" description="Language of the name."/>
+                <Offset name="has_name" description="Boolean flag."/>
             </Group>
         </Offsets>
     </Base>
@@ -784,6 +787,9 @@
                 <Offset name="first" description="Lowercase stl string with the first name. For ex. 'urist'" />
                 <Offset name="nick"  description="Stl string with the nickname. Set by the player." />
                 <Offset name="second_words" description="Array of 7 indexes into the language vectors."/>
+                <Offset name="parts_of_speech" description="Array of 7 16-bit indexes into the language vectors."/>
+                <Offset name="language" description="Language of the name."/>
+                <Offset name="has_name" description="Boolean flag."/>
             </Group>
             <Group name="Position" description="Offsets used by the Position module.">
                 <Address name="window_x" description="X coordinate of the current view (DWORD)" />
@@ -819,6 +825,8 @@
                 <Group name="block" description="The map block structure.">
                     <Offset name="vein_vector" description="Mineral veins, objects holding tile types under ice, etc..."/>
                     <Offset name="vegetation_vector" description="All the plants in this block, including farm plats."/>
+                    <Offset name="effect_vector" description="Effect objects present in the block."/>
+                    <Offset name="item_idx_vector" description="Indexes of item objects present in the block."/>
                     <Offset name="type" description="16x16 x 2B tile type values"/>
                     <Offset name="designation" description="16x16 * 4B designation fields"/>
                     <Offset name="occupancy" description="16x16 * 4B occupancy fields" />
@@ -870,6 +878,7 @@
                     <Offset name="position"  description="X,Y,Z." />
                     <Offset name="flags1"  description="First set of flags" />
                     <Offset name="flags2"  description="Second set of flags" />
+                    <Offset name="flags3"  description="Third set of flags" />
                     <Offset name="caste"  description="Caste of the creature. Same as sex most of the time." />
                     <Offset name="sex"  description="Sex of the creature." />
                     <Offset name="id"  description="Unique ID of the creature, seems to be used for binary search in the creature vector." />
@@ -891,6 +900,7 @@
                         <Offset name="current_soul" description="Currently active soul?" />
                         <Offset name="labors" description="Array of labors. Used by DT to enable/disable them." />
                         <Offset name="happiness" description="Number that says how happy the creature is." />
+                        <Offset name="hist_figure_id" description="For a creature matching a historical figure, it's ID"/>
                     </Group>
                 </Group>
 
@@ -993,10 +1003,12 @@
                 <Offset name="item_subindex_accessor" />
                 <Offset name="item_index_accessor" />
                 <Offset name="item_quality_accessor" />
+                <!--
                 <Offset name="item_improvement_vector" />
                 <Offset name="item_improvement_subindex" />
                 <Offset name="item_improvement_index" />
                 <Offset name="item_improvement_quality" />
+                -->
                 <Offset name="item_wear_accessor" />
                 <Offset name="item_ref_vector" description="Contains the owner among other things"/>
                 <Offset name="owner_ref_id_field" description="Creature ID offset in general_ref_unit_itemownerst"/>
@@ -1008,6 +1020,39 @@
                 <Address name="game_mode" description="Current game mode" />
                 <Address name="control_mode" description="Current control mode" />
                 <!--<Address name="control_mode_copy" description="Copy of the control mode in DF memory" />-->
+            </Group>
+            <Group name="Legends">
+                <Group name="figures">
+                    <Address name="vector"/>
+                    <Offset name="profession" description="Figure's profession"/>
+                    <Offset name="race" description="Figure's race"/>
+                    <Offset name="caste" description="Figure's caste; mostly equal to sex"/>
+                    <Offset name="sex" description="Figure's sex (or maybe the other way round)"/>
+                    <Offset name="appeared_year"/>
+                    <Offset name="born_year"/>
+                    <Offset name="born_seconds"/>
+                    <Offset name="died_year"/>
+                    <Offset name="died_seconds"/>
+                    <Offset name="name" description="A standard name record"/>
+                    <Offset name="unit_id" description="ID of the creature matching the figure, or -1"/>
+                    <Offset name="figure_id" description="ID of the figure, ordered"/>
+                    <Offset name="entity_link_vector"/>
+                    <Offset name="histfig_link_vector"/>
+                </Group>
+                <Group name="events">
+                    <Address name="vector"/>
+                    <Offset name="year"/>
+                    <Offset name="seconds"/>
+                    <Offset name="event_id"/>
+                    <Group name="hist_figure_died">
+                        <Offset name="figure_id"/>
+                        <Offset name="slayer_id"/>
+                        <Offset name="slayer_race"/>
+                        <Offset name="slayer_caste"/>
+                        <Offset name="slayer_item_id"/>
+                        <Offset name="region_id"/>
+                    </Group>
+                </Group>
             </Group>
         </Offsets>
     </Base>
@@ -1070,6 +1115,9 @@
                 <Offset name="first" value="0x0" />
                 <Offset name="nick" value="0x1C" />
                 <Offset name="second_words" value="0x38" />
+                <Offset name="parts_of_speech" value="0x54" />
+                <Offset name="language" value="0x64" />
+                <Offset name="has_name" value="0x68" />
             </Group>
             <Group name="Position">
                 <Address name="window_x" value="0xe32798" />
@@ -1383,12 +1431,15 @@
                 <Offset name="item_subtype_accessor" value="0x4" />
                 <Offset name="item_subindex_accessor" value="0x8" />
                 <Offset name="item_index_accessor" value="0xC" />
+                <Offset name="item_type_accessor" value="0x14" /> ... seriously, WHAT?
                 <Offset name="item_quality_accessor" value="0x238" />
+                <!--
                 <Offset name="item_improvement_vector" value="0xA0" />
                 <Offset name="item_improvement_subindex" value="0x4" />
                 <Offset name="item_improvement_index" value="0x8" />
                 <Offset name="item_improvement_quality" value="0x14" />
-                <Offset name="item_type_accessor" value="0x14" />  (in the vtable)
+                -->
+                
             </Group>
             <Group name="World">
                 <Address name="current_tick" value="0x0e47e08" />
@@ -1607,6 +1658,9 @@
                 <Offset name="first" value="0x0" />
                 <Offset name="nick" value="0x1C" />
                 <Offset name="second_words" value="0x38" />
+                <Offset name="parts_of_speech" value="0x54" />
+                <Offset name="language" value="0x64" />
+                <Offset name="has_name" value="0x68" />
             </Group>
             <Group name="Position">
                 <Address name="cursor_xyz" value="0xac77f0" />
@@ -1863,7 +1917,9 @@
                 <Offset name="item_subindex_accessor" value="0x8" />
                 <Offset name="item_index_accessor" value="0xC" />
                 <Offset name="item_quality_accessor" value="0x238" />
+                <!--
                 <Offset name="item_improvement_vector" value="0x90" />
+                -->
             </Group>
         </Offsets>
     </Version>
@@ -2136,6 +2192,8 @@
             <Group name="Maps">
                 <Group name="block">
                     <Offset name="mystery_offset" value="0x2C" />
+                    <Offset name="item_idx_vector" value="0x3C" />
+                    <Offset name="effect_vector" value="0x4C" />
                     <Offset name="vegetation_vector" value="0x64" />
                     <Offset name="type" value="0x7e" />
                     <Offset name="designation" value="0x280" />
@@ -2175,6 +2233,25 @@
     <Version name="v0.31.25 SDL" os="windows" base="v0.31.24 SDL">
         <PETimeStamp value="0x4D90764F" />
         <MD5 value="6ada05fc94785b53efe6aa5728b3756b" />
+        <Offsets>
+        <Group name="Items" valid="true">
+            <Address name="items_vector" value="0x16c4540"/>
+            <Offset name="item_ref_vector" value="0x28" />
+            <Offset name="owner_ref_id_field" value="0x4" />
+            <Offset name="item_wear_accessor" value="0xCC" />
+            <Offset name="item_quality_accessor" value="0x25C" />
+        </Group>
+    </Offsets>
+        cmake
+        item vector:
+        
+        -- those two seem to have identical length
+        0x16c4540 -- maybe
+        0x16c4550 -- maybe
+        
+        0x16c4d20 -- too small/bogus?
+        0x16c4660 -- too small again
+        0x185c104 -- no.
     </Version>
                             .-"""-.
                            '       \
@@ -2219,6 +2296,9 @@
                 <Offset name="first" value="0x0" />
                 <Offset name="nick" value="0x4" />
                 <Offset name="second_words" value="0x8" />
+                <Offset name="parts_of_speech" value="0x24" />
+                <Offset name="language" value="0x34" />
+                <Offset name="has_name" value="0x3a" />
             </Group>
             <Group name="Position">
                 <Address name="window_x" value="0x8cc9b38" />
@@ -2588,12 +2668,7 @@
             </Group>
         </Offsets>
     </Version>
-    <Version name="faek" os="linux" base="v0.31.14 linux">
-        <Offsets>
-            <Group name="Position" valid="false" />
-        </Offsets>
-    </Version>
-    <Version name="v0.31.16 linux" os="linux" base="faek" rebase="0x1b40">
+    <Version name="v0.31.16 linux" os="linux" base="v0.31.14 linux" rebase="0x1b40">
         <MD5 value="9cca2fa5da509e2f9a1042ddd1f9669c" />
         <Offsets>
             <Group name="Position">
@@ -2604,45 +2679,87 @@
             </Group>
         </Offsets>
     </Version>
-    <Version name="v0.31.18 linux" os="linux" base="faek">
+    <Version name="v0.31.18 linux" os="linux" base="v0.31.16 linux" rebase="0x81110">
         <MD5 value="884f794d8e89e7d764057c15617c20b1" />
-        <Offsets valid="false">
-            <Group name="Maps" valid="true">
-                <Address name="map_data" value="0x93c0430" />
-                <Address name="region_x" value="0x93c045c" />
-                <Address name="region_y" value="0x93c0460" />
-                <Address name="region_z" value="0x93c0464" />
-                <Address name="x_count_block" value="0x93c0444" />
-                <Address name="y_count_block" value="0x93c0448" />
-                <Address name="z_count_block" value="0x93c044c" />
-                <Address name="x_count" value="0x93c0450" />
-                <Address name="y_count" value="0x93c0454" />
-                <Address name="z_count" value="0x93c0458" />
-                <Address name="world_size_x" value="0x93c1ab0" />
-                <Address name="world_size_y" value="0x93c1ab2" />
-                <Group name="block" valid="true" />
-                <Group name="features" valid="false" />
-                <Group name="geology" valid="false" />
+        <Offsets>
+            <Group name="Buildings">
+                <Address name="buildings_vector" value="0x9381814" />
+                <Address name="custom_workshop_vector" value="0x93c6938" />
+            </Group>
+            <Group name="Constructions">
+                <Address name="vector" value="0x936d824" />
+            </Group>
+            <Group name="Creatures">
+                <Address name="current_civ" value="0x9368bec" />
+                <Address name="current_race" value="0x9368bf8" />
+                <Address name="vector" value="0x938118c" />
             </Group>
             <Group name="GUI">
                 <Address name="pause_state" value="0x9366cb0"/>
             </Group>
-            <Group name="string" valid="true" />
-            <Group name="vector" valid="true" />
-            <Group name="name" valid="true" />
+            <Group name="Maps">
+                <Group name="features">
+                    <Group name="global">
+                        <Address name="vector" value="0x93c2074" />
+                    </Group>
+                    <Group name="local">
+                        <Address name="start_ptr" value="0x93c20ec" />
+                    </Group>
+                </Group>
+                <Group name="geology">
+                    <Address name="geoblock_vector" value="0x93c208c" />
+                    <Address name="ptr2_region_array" value="0x93c20b0" />
+                </Group>
+            </Group>
+            <Group name="Materials">
+                <Address name="inorganics" value="0x93c25a8" />
+                <Address name="organics_all" value="0x93c25c0" />
+                <Address name="organics_plants" value="0x93c25cc" />
+                <Address name="organics_trees" value="0x93c25e4" />
+                <Address name="creature_type_vector" value="0x93c2660" />
+                <Group name="descriptors">
+                    <Address name="colors_vector" value="0x93c6908" />
+                    <Address name="all_colors_vector" value="0x93c6920" />
+                </Group>
+            </Group>
+            <Group name="Position">
+                <Address name="cursor_xyz" value="0x8bb4560" />
+                <Address name="window_x" value="0x8d7105c" />
+                <Address name="window_y" value="0x8d71058" />
+                <Address name="window_z" value="0x8d71060" />
+            </Group>
+            <Group name="Translations">
+                <Address name="language_vector" value="0x93c27a4" />
+                <Address name="translation_vector" value="0x93c27bc" />
+            </Group>
+            <Group name="World">
+                <Address name="current_weather" value="0x9366bd0" />
+                <Address name="current_tick" value="0x9366c0c" />
+            </Group>
         </Offsets>
     </Version>
     <Version name="v0.31.19 linux" os="linux" base="v0.31.18 linux" rebase="0x77738">
         <MD5 value="8fcb1f10af9cc2bda47d2acf42e1db54" />
         <Offsets>
-            <Group name="Position" valid="true">
-                <Address name="cursor_xyz" value="0x8c2b560" />
-                <Address name="screen_tiles_pointer" valid="false" />
+          <Group name="Buildings">
+              <Address name="buildings_vector" value="0x93f8f18" />
+              <Address name="custom_workshop_vector" value="0x943e398" />
+          </Group>
+          <Group name="Constructions">
+              <Address name="vector" value="0x93e4f04" />
+          </Group>
+          <Group name="Creatures">
+              <Address name="current_civ" value="0x93e027c" />
+              <Address name="current_race" value="0x93e0288" />
+              <Address name="vector" value="0x93f886c" />
+          </Group>
+          <Group name="GUI">
+              <Address name="pause_state" value="0x93dddf0" />
             </Group>
             <Group name="Maps">
                 <Address name="world_size_x" value="0x94391f0" />
                 <Address name="world_size_y" value="0x94391f2" />
-                <Group name="features" valid="true">
+              <Group name="features">
                     <Group name="global">
                         <Address name="vector" value="0x94397cc" />
                     </Group>
@@ -2650,84 +2767,162 @@
                         <Address name="start_ptr" value="0x9439844" />
                     </Group>
                 </Group>
-                <Group name="geology" valid="true">
+              <Group name="geology">
                     <Address name="geoblock_vector" value="0x94397e4" />
                     <Address name="ptr2_region_array" value="0x9439808" />
                 </Group>
             </Group>
-            <Group name="GUI">
-                <Address name="pause_state" value="0x93dddf0" />
-            </Group>
             <Group name="Materials">
-                <Address name="creature_type_vector" value="0x943a074" />
                 <Address name="inorganics" value="0x9439fc0" />
                 <Address name="organics_all" value="0x9439fd8" />
                 <Address name="organics_plants" value="0x9439fe4" />
                 <Address name="organics_trees" value="0x9439ffc" />
-                -------------------
-                !!LANGUAGE TABLES!!
-                -------------------
-                translation vector: 0x943a21c
-                lang vector: 0x943a204
-                word table offset: 0x1c
-                -------------
-                !!MATERIALS!!
-                -------------
-                inorganics:
-                0x9439fc0
-                organics:
-                0x9439fd8
-                organics 31.19:
-                trees:
-                0x9439ffc
-                plants:
-                0x9439fe4
-                color descriptors:
-                0x943e368
-                Amber color:0xa380190
-                all descriptors:
-                0x943e380
-                toad-first creature types:
-                0x943a074
-                all creature types:
-                0x943a068
-                0x943a074
-                Toad: 0xa441f10
-                Toad: rawname = 0x0
-                Toad: character (not reliable) = 0x20
-                Toad: caste vector = 0x60
-                Toad: extract? vector = 0x1f74
-                Toad: colors = 0x38
+              <Address name="creature_type_vector" value="0x943a074" />
+              <Group name="descriptors">
+                  <Address name="colors_vector" value="0x943e368" />
+                  <Address name="all_colors_vector" value="0x943e380" />
+              </Group>
+          </Group>
+          <Group name="Position">
+              <Address name="cursor_xyz" value="0x8c2b560" />
+              <Address name="window_x" value="0x8de819c" />
+              <Address name="window_y" value="0x8de8198" />
+              <Address name="window_z" value="0x8de81a0" />
+          </Group>
+          <Group name="Translations">
+              <Address name="language_vector" value="0x943a204" />
+              <Address name="translation_vector" value="0x943a21c" />
+          </Group>
+          <Group name="World">
+              <Address name="current_weather" value="0x93ddd10" />
+              <Address name="current_tick" value="0x93ddd4c" />
             </Group>
         </Offsets>
     </Version>
-    <Version name="v0.31.22 linux" os="linux" base="v0.31.19 linux" rebase="0x12A80">
+  <Version name="v0.31.20 linux" os="linux" base="v0.31.19 linux" rebase="0xd540">
+      <MD5 value="6d33ec7332e59df9ea4cf7fae1e9836a" />
+      <Offsets>
+<!-- Handling has changed for some offsets in 0.31.20, and they no longer
+     appear to be static - they're probably heap objects now or something.
+     Code no longer does 'mov <offset>, <register>', but now does something
+     more like 'mov <constant>, register; mov <offset>(<register>), <register>'
+     (indirect load).
+
+     Offsets affected in 0.31.20:
+
+        Maps.features.global.vector
+        Maps.features.local.start_ptr
+        Maps.geology.geoblock_vector
+        Maps.geology.ptr2_region_array
+        Maps.world_size_x
+        Maps.world_size_y
+
+    This breaks dfliquids, dfvdig (of the ones I care about anyway - probably more too)
+-->
+          <Group name="Buildings">
+              <Address name="custom_workshop_vector" value="0x944b1b8" />
+          </Group>
+          <Group name="Materials">
+              <Address name="inorganics" value="0x9446de0" />
+              <Address name="organics_all" value="0x9446df8" />
+              <Address name="organics_plants" value="0x9446e04" />
+              <Address name="organics_trees" value="0x9446e1c" />
+              <Address name="creature_type_vector" value="0x9446e94" />
+              <Group name="descriptors">
+                  <Address name="colors_vector" value="0x944b188" />
+                  <Address name="all_colors_vector" value="0x944b1a0" />
+              </Group>
+          </Group>
+          <Group name="Position">
+              <Address name="cursor_xyz" value="0x8c38a90" />
+              <Address name="window_x" value="0x8df56d8" />
+              <Address name="window_y" value="0x8df56dc" />
+          </Group>
+          <Group name="Translations">
+              <Address name="language_vector" value="0x944703c" />
+              <Address name="translation_vector" value="0x9447024" />
+          </Group>
+      </Offsets>
+  </Version>
+  <Version name="v0.31.21 linux" os="linux" base="v0.31.20 linux" rebase="0x40">
+      <MD5 value="c3d2af104a00a3219fbbe89e671940fb" />
+      <Offsets>
+          <Group name="Position">
+              <Address name="cursor_xyz" value="0x8c38ae0" />
+          </Group>
+          <Group name="Translations">
+              <Address name="language_vector" value="0x9447064" />
+              <Address name="translation_vector" value="0x944707c" />
+          </Group>
+      </Offsets>
+  </Version>
+    <Version name="v0.31.22 linux" os="linux" base="v0.31.21 linux" rebase="0x5500">
         <MD5 value="c7319be110759209bd736071fb367960" />
         <Offsets>
-            <Group name="Buildings" valid="true">
-                <Address name="buildings_vector" value="0x940b998" />
-                One of the two, really:
-                0x940b998
-                0x940b9a4
-                <Address name="custom_workshop_vector" value="0x94506f8" />
+            <Group name="Creatures">
+                <Address name="current_civ" value="0x93f2cdc" />
+                <Address name="current_race" value="0x93f2ce8" />
+                <Group name="creature">
+                    <Group name="advanced">
+                        <Offset name="pregnancy" value="0x190" />
+                        <Offset name="pregnancy_ptr" value="0x194" />
+                        <Offset name="birth_year" value="0x1A0" />
+                        <Offset name="birth_time" value="0x1A4" />
+                        <Offset name="inventory_vector" value="0x204" />
+                        <Offset name="current_job" value="0x25C" />
+                        <Offset name="current_job_skill" value="0x260" />
+                        <Offset name="physical" value="0x310" />
+                        <Offset name="appearance_vector" value="0x450" />
+                        <Offset name="artifact_name" value="0x4f4" />
+                        <Offset name="soul_vector" value="0x530" />
+                        <Offset name="current_soul" value="0x53C" />
+                        <Offset name="labors" value="0x54C" />
+                        <Offset name="happiness" value="0x05dc" />
             </Group>
-            <Group name="Engravings">
-                <Address name="vector" value="0x93F7918 0x93f77b8"/>
-                there are some possibly related vectors right next to it.
             </Group>
-            <Group name="Constructions" valid="true">
-                <Address name="vector" value="0x93f7984" />
+                <Group name="job">
+                    <Offset name="id" value="0x8" />
+                    <!--<Offset name="materials_vector" />-->
+                    <Offset name="type" value="0x40" /> MAYBE, DT SAYS SO
+                    <!--
+                    <Group name="material">
+                        <Offset name="flags" /> NOT SET!
+                        <Offset name="maintype" /> NOT SET!
+                        <Offset name="sectype1" /> NOT SET!
+                        <Offset name="sectype2" /> NOT SET!
+                        <Offset name="sectype3" /> NOT SET!
+                    </Group>
+                    -->
+                </Group>
+                <Group name="soul">
+                    <Offset name="name" value="0x4" />
+                    <!--
+                    <Offset name="mental" value="0x88" />
+                    <Offset name="skills_vector" value="0x1c4" />
+                    <Offset name="traits" value="0x1dc" />
+                    -->
+                </Group>
             </Group>
             <Group name="GUI">
                 <Address name="pause_state" value="0x93f0850" />
             </Group>
-
             <Group name="Position">
                 <Address name="cursor_xyz" value="0x8c3dfc0" />
-                <Address name="window_dims" value="0x8c3e4c8" />
                 <Address name="window_x" value="0x8dfabf8" />
                 <Address name="window_y" value="0x8dfabfc" />
                 <Address name="window_z" value="0x8dfac00" />
+                <Address name="window_dims" value="0x8c3e4c8" />
+            </Group>
+            <Group name="World">
+                <Address name="current_weather" value="0x93f0770" />
+                <Address name="current_tick" value="0x93f07ac" />
+                <Address name="control_mode" value="0x8c3dff0" />
+                <Address name="game_mode" value="0x8c3e000" />
+                <Address name="current_year" value="0x93f0760" />
+            </Group>
+            <Group name="Engravings">
+                <Address name="vector" value="0x93F7918 0x93f77b8"/>
+                there are some possibly related vectors right next to it.
             </Group>
             <Group name="Maps">
                 <Address name="world_data" value="0x944bc14"/>
@@ -2763,61 +2958,7 @@
                     <Offset name="ptr2_region_array_from_wdata" value="0x15C" />
                 </Group>
             </Group>
-            <Group name="Creatures" valid="true">
-                <Address name="current_civ" value="0x093f2cb0" /> MAYBE
-                <Address name="current_race" value="0x093f2cbc" />
-                <Address name="vector" value="0x0940b310" /> POSSIBLY WRONG!
-                <Group name="creature">
-                    <Group name="advanced">
-                        <Offset name="pregnancy" value="0x190" />
-                        <Offset name="pregnancy_ptr" value="0x194" />
-                        <Offset name="birth_year" value="0x1A0" />
-                        <Offset name="birth_time" value="0x1A4" />
-                        <Offset name="inventory_vector" value="0x204" />
-                        <Offset name="current_job" value="0x25C" />
-                        <Offset name="current_job_skill" value="0x260" />
-                        <Offset name="physical" value="0x310" />
-                        <Offset name="appearance_vector" value="0x450" />
-                        <Offset name="artifact_name" value="0x4f4" />
-                        <Offset name="soul_vector" value="0x530" />
-                        <Offset name="current_soul" value="0x53C" />
-                        <Offset name="labors" value="0x54C" />
-                        <Offset name="happiness" value="0x05dc" />
-                    </Group>
-                </Group>
-                <Group name="job">
-                    <Offset name="id" value="0x8" />
-                    <!--<Offset name="materials_vector" />-->
-                    <Offset name="type" value="0x40" /> MAYBE, DT SAYS SO
-                    <!--
-                    <Group name="material">
-                        <Offset name="flags" /> NOT SET!
-                        <Offset name="maintype" /> NOT SET!
-                        <Offset name="sectype1" /> NOT SET!
-                        <Offset name="sectype2" /> NOT SET!
-                        <Offset name="sectype3" /> NOT SET!
-                    </Group>
-                    -->
-                </Group>
-                <Group name="soul">
-                    <Offset name="name" value="0x4" />
-                    <!--
-                    <Offset name="mental" value="0x88" />
-                    <Offset name="skills_vector" value="0x1c4" />
-                    <Offset name="traits" value="0x1dc" />
-                    -->
-                </Group>
-                
-            </Group>
             <Group name="Materials">
-                <Address name="inorganics" value="0x944c320" />
-                <Address name="organics_all" value="0x944c338" />
-                <Address name="organics_plants" value="0x944c344" />
-                <Address name="organics_trees" value="0x944c35c" />
-                <Address name="creature_type_vector" value="0x944c3d4" />
-                one of those:
-                0x944c3c8
-                0x944c3d4
                 <Address name="other" value="0x9450c54" />
                 <Group name="creature" valid="true">
                     <Offset name="tile_color" value="0x38" />
@@ -2840,43 +2981,15 @@
                         <Offset name="startdate" value="0x34" />
                     </Group>
                 </Group>
-                <Group name="descriptors" valid="true">
-                    <Address name="colors_vector" value="0x94506c8 0x93cdff4" />
-                    <Address name="all_colors_vector" value="0x94506E0 0x93ce00c" />
-                </Group>
-            </Group>
-
-            <Group name="Translations" valid="true">
-                <!-- maybe swapped -->
-                <Address name="language_vector" value="0x944c564"/>
-                <Address name="translation_vector" value="0x944c57c"/>
-            </Group>
-            <Group name="Vegetation" valid="true">
-                <Address name="vector" value="0x940bed0" />
-            </Group>
-            <Group name="World">
-                <Address name="control_mode" value="0x8c3dff0" />
-                <Address name="game_mode" value="0x8c3e000" />
-                <Address name="current_weather" value="0x93f0744" />
-                <Address name="current_year" value="0x93f0760" />
-                <Address name="current_tick" value="0x93f0780" />
             </Group>
         </Offsets>
     </Version>
     <Version name="v0.31.23 linux" os="linux" base="v0.31.22 linux" rebase="-0x760">
         <MD5 value="c8e82e6e7cc606bf4e8d2c91993b9c0d" />
-        <Offsets>
-            <Group name="Creatures">
-                <Address name="vector" value="0x0940ab74" /> VERIFY
-            </Group>
-        </Offsets>
     </Version>
     <Version name="v0.31.24 linux" os="linux" base="v0.31.23 linux" rebase="0x300">
         <MD5 value="a47468cec4f4f0ff1fc03ac7d95c17ed" />
         <Offsets>
-            <Group name="Creatures">
-                <Address name="vector" value="0x0940aeb0" /> VERIFY
-            </Group>
             <Group name="Position">
                 <Address name="cursor_xyz" value="0x8c3db50" />
             </Group>
@@ -2890,7 +3003,12 @@
         <MD5 value="fc15065c4d1977ca019c6dad220413d1" />
         <Offsets>
             <Group name="Creatures">
-                <Address name="vector" value="0x0940b174" /> VERIFY
+                <Group name="creature">
+                    <Offset name="flags3" value="0x94"/>
+                    <Group name="advanced">
+                        <Offset name="hist_figure_id" value="0x640"/>
+                    </Group>
+                </Group>
             </Group>
             <Group name="Position" valid="true">
                 <Address name="cursor_xyz" value="0x8c3de60"/>
@@ -2909,6 +3027,39 @@
                 <Offset name="item_wear_accessor" value="0xCC" />
                 <Offset name="item_ref_vector" value="0x24" />
                 <Offset name="owner_ref_id_field" value="0x4" />
+            </Group>
+            <Group name="Legends">
+                <Group name="figures">
+                    <Address name="vector" value="0x9451a18"/>
+                    <Offset name="profession" value="0x00"/>
+                    <Offset name="race" value="0x02"/>
+                    <Offset name="caste" value="0x04"/>
+                    <Offset name="sex" value="0x06"/>
+                    <Offset name="appeared_year" value="0x08"/>
+                    <Offset name="born_year" value="0x0C"/>
+                    <Offset name="born_seconds" value="0x10"/>
+                    <Offset name="died_year" value="0x1C"/>
+                    <Offset name="died_seconds" value="0x20"/>
+                    <Offset name="name" value="0x24"/>
+                    <Offset name="unit_id" value="0x70"/>
+                    <Offset name="figure_id" value="0x74"/>
+                    <Offset name="entity_link_vector" value="0x7c"/>
+                    <Offset name="histfig_link_vector" value="0x94"/>
+                </Group>
+                <Group name="events">
+                    <Address name="vector" value="0x9451a00"/>
+                    <Offset name="year" value="0x04"/>
+                    <Offset name="seconds" value="0x08"/>
+                    <Offset name="event_id" value="0x14"/>
+                    <Group name="hist_figure_died">
+                        <Offset name="figure_id" value="0x18"/>
+                        <Offset name="slayer_id" value="0x1C"/>
+                        <Offset name="slayer_race" value="0x20"/>
+                        <Offset name="slayer_caste" value="0x24"/>
+                        <Offset name="slayer_item_id" value="0x28"/>
+                        <Offset name="region_id" value="0x48"/>
+                    </Group>
+                </Group>
             </Group>
         </Offsets>
     </Version>

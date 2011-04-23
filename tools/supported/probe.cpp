@@ -108,15 +108,17 @@ int main (int numargs, const char ** args)
 
                 // tiletype
                 std::cout <<"tiletype: " << tiletype;
-                if(tileTypeTable[tiletype].name)
-                    std::cout << " = " << tileTypeTable[tiletype].name << std::endl;
+                if(tileName(tiletype))
+                    std::cout << " = " << tileName(tiletype) << std::endl;
 
-                printf("%-10s: %4d %s\n","Class",tileTypeTable[tiletype].c,TileClassString[ tileTypeTable[tiletype].c ]);
-                printf("%-10s: %4d %s\n","Material",tileTypeTable[tiletype].c,TileMaterialString[ tileTypeTable[tiletype].m ]);
-                printf("%-10s: %4d %s\n","Special",tileTypeTable[tiletype].c,TileSpecialString[ tileTypeTable[tiletype].s ]);
-                printf("%-10s: %4d\n","Variant",tileTypeTable[tiletype].v);
-                printf("%-10s: %s\n","Direction",tileTypeTable[tiletype].d.getStr());
-
+                DFHack::TileShape shape = tileShape(tiletype);
+                DFHack::TileMaterial material = tileMaterial(tiletype);
+                DFHack::TileSpecial special = tileSpecial(tiletype);
+                printf("%-10s: %4d %s\n","Class"    ,shape,   TileShapeString[ shape ]);
+                printf("%-10s: %4d %s\n","Material" ,material,TileMaterialString[ material ]);
+                printf("%-10s: %4d %s\n","Special"  ,special, TileSpecialString[ special ]);
+                printf("%-10s: %4d\n"   ,"Variant"  ,tileVariant(tiletype));
+                printf("%-10s: %s\n"    ,"Direction",tileDirection(tiletype).getStr());
 
                 std::cout << std::endl;
                 std::cout <<"temperature1: " << mc.temperature1At(cursor) << " U" << std::endl;

@@ -220,7 +220,7 @@ void LinuxProcessBase::writeByte (uint32_t offset, uint8_t data)
     #endif
 }
 
-// blah. I hate the kernel devs for crippling /proc/PID/mem. THIS IS RIDICULOUS
+// blah. THIS IS RIDICULOUS
 void LinuxProcessBase::write (uint32_t offset, uint32_t size, uint8_t *source)
 {
     uint32_t indexptr = 0;

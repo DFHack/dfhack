@@ -17,6 +17,16 @@ build*/
 #except for the real one
 !build/
 
+# in-place build
+build/Makefile
+build/CMakeCache.txt
+build/cmake_install.cmake
+build/CMakeFiles
+build/doc
+build/bin
+build/library
+build/tools
+
 #ignore Kdevelop stuff
 .kdev4
 

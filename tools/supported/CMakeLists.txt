@@ -28,6 +28,9 @@ DFHACK_TOOL(dfpause forcepause.cpp)
 
 # prospector - produces a list of available materials and their quantities
 DFHACK_TOOL(dfprospector prospector.cpp)
+IF(WIN32)
+    INSTALL(PROGRAMS dfprospector-all.bat DESTINATION ${DFHACK_BINARY_DESTINATION})
+ENDIF()
 
 # vdig - dig the vein under the cursor
 DFHACK_TOOL(dfvdig vdig.cpp)
@@ -37,6 +40,9 @@ ENDIF()
 
 # cleanmap - removes mud, snow, blood and similar stuff from a map. farmers beware
 DFHACK_TOOL(dfcleanmap cleanmap.cpp)
+
+# cleanowned - confiscate items owned by dwarves so they can be atomsmashed/reused/etc.
+DFHACK_TOOL(dfcleanowned cleanowned.cpp)
 
 # unstuck - make DF run if something goes wrong with the 'normal' memory access method
 DFHACK_TOOL(dfunstuck unstuck.cpp)
@@ -63,7 +69,7 @@ DFHACK_TOOL(dfliquids liquids.cpp)
 
 # Solves the problem of unusable items after reclaim by clearing the 'in_job' bit of all items.
 # Original author: Quietust
-#DFHACK_TOOL(dfcleartask cleartask.cpp)
+DFHACK_TOOL(dfcleartask cleartask.cpp)
 
 # position - check the DF window and cursor parameters
 DFHACK_TOOL(dfposition position.cpp)

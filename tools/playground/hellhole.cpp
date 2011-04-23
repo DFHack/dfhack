@@ -716,10 +716,10 @@ int main (void)
             {
                 if ( (pattern[x][y]>1) || (roof && pattern[x][y]) )
                 {
-                    tp = getTileTypeP(block.tiletypes[x][y]);
+                    tp = getTileRow(block.tiletypes[x][y]);
                     d = &block.designation[x][y];
                     //Only modify this level if it's 'empty'
-                    if ( EMPTY != tp->c && RAMP_TOP != tp->c && STAIR_DOWN != tp->c && DFHack::TILE_STREAM_TOP != tp->s)
+                    if ( EMPTY != tp->shape && RAMP_TOP != tp->shape && STAIR_DOWN != tp->shape && DFHack::TILE_STREAM_TOP != tp->special)
                     {
                         continue;
                     }
@@ -782,12 +782,12 @@ int main (void)
             for (int32_t y=0;y<16;++y)
             {
                 t=0;
-                tp = getTileTypeP(block.tiletypes[x][y]);
+                tp = getTileRow(block.tiletypes[x][y]);
                 d = &block.designation[x][y];
                 tpat=pattern[x][y];
 
                 //Tile type material categories
-                switch ( tp->m )
+                switch ( tp->material )
                 {
                     case AIR:
                         ++emptycount;
@@ -804,7 +804,7 @@ int main (void)
                         //basicly, ignored.
                         break;
                     default:
-                        if ( EMPTY == tp->c || RAMP_TOP == tp->c || STAIR_DOWN == tp->c )
+                        if ( EMPTY == tp->shape || RAMP_TOP == tp->shape || STAIR_DOWN == tp->shape )
                         {
                             ++emptycount;
                         }
@@ -926,7 +926,7 @@ int main (void)
             for (int32_t y=0;!done && y<16;++y)
             {
                 t=0;
-                tp = getTileTypeP(block.tiletypes[x][y]);
+                tp = getTileRow(block.tiletypes[x][y]);
                 d = &block.designation[x][y];
                 tpat=pattern[x][y];
 
@@ -949,7 +949,7 @@ int main (void)
                 if ( tpat && tpat!=3 && exposemagma )
                 {
                     //Leave certain tiles unchanged.
-                    switch ( tp->m )
+                    switch ( tp->material )
                     {
                         case HFS:
                         case FEATSTONE:
@@ -1026,7 +1026,7 @@ int main (void)
                     case 2:
                         //Wall.
                         //First guess based on current material
-                        switch ( tp->m )
+                        switch ( tp->material )
                         {
                             case OBSIDIAN:
                                 t=wmagma;
@@ -1096,7 +1096,7 @@ int main (void)
                         if ( aquify )
                         {
                             //Only normal stone types can be aquified
-                            if ( tp->m!=MAGMA && tp->m!=FEATSTONE && tp->m!=HFS  )
+                            if ( tp->material!=MAGMA && tp->material!=FEATSTONE && tp->material!=HFS  )
                             {
                                 //Only place next to the hole.
                                 //If no hole, place in middle.
@@ -1177,7 +1177,7 @@ int main (void)
             {
                 t=floor;
                 v=floorvar;
-                tp = getTileTypeP(block.tiletypes[x][y]);
+                tp = getTileRow(block.tiletypes[x][y]);
                 d = &block.designation[x][y];
 
                 if ( exposehell )
@@ -1221,7 +1221,7 @@ int main (void)
                         }
 
                         //Tile material check.
-                        switch ( tp->m )
+                        switch ( tp->material )
                         {
                             case OBSIDIAN:
                                 t=340;

@@ -25,7 +25,7 @@ distribution.
 #include "Internal.h"
 #include "PlatformInternal.h"
 #include <vector>
-
+#include <string>
 using namespace std;
 #include "ContextShared.h"
 #include "dfhack/modules/WindowIO.h"

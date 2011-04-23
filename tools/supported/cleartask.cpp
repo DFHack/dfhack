@@ -55,9 +55,9 @@ int main ()
     {
         DFHack::t_itemflags flags;
         flags.whole = p->readDWord(p_items[i] + 0x0C);
-        if (flags.bits.in_job)
+        if (flags.in_job)
         {
-            flags.bits.in_job = 0;
+            flags.in_job = 0;
             p->writeDWord(p_items[i] + 0x0C, flags.whole);
             numtasked++;
         }

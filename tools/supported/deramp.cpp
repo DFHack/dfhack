@@ -91,7 +91,7 @@ int main (void)
                             //Only the remove ramp designation (ignore channel designation, etc)
                             oldT = tiles[tx][ty];
                             if ( DFHack::designation_default == designations[tx][ty].bits.dig
-                                    && DFHack::RAMP==DFHack::tileTypeTable[oldT].c)
+                                    && DFHack::RAMP==DFHack::tileShape(oldT))
                             {
                                 //Current tile is a ramp.
                                 //Set current tile, as accurately as can be expected
@@ -104,7 +104,7 @@ int main (void)
                                 designations[tx][ty].bits.dig = DFHack::designation_no;
 
                                 //Check the tile above this one, in case a downward slope needs to be removed.
-                                if ( DFHack::RAMP_TOP == DFHack::tileTypeTable[tilesAbove[tx][ty]].c )
+                                if ( DFHack::RAMP_TOP == DFHack::tileShape(tilesAbove[tx][ty]) )
                                 {
                                     tilesAbove[tx][ty] = 32;
                                 }
@@ -112,7 +112,7 @@ int main (void)
                                 ++count;
                             }
                             // ramp fixer
-                            else if(DFHack::RAMP!=DFHack::tileTypeTable[oldT].c && DFHack::RAMP_TOP == DFHack::tileTypeTable[tilesAbove[tx][ty]].c)
+                            else if(DFHack::RAMP!=DFHack::tileShape(oldT) && DFHack::RAMP_TOP == DFHack::tileShape(tilesAbove[tx][ty]))
                             {
                                 tilesAbove[tx][ty] = 32;
                                 countbad++;

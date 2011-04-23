@@ -93,7 +93,7 @@ void putwch(int x, int y, int znak, int color)
 void puttile(int x, int y, int tiletype, int color)
 {
     unsigned int znak;
-    switch(tileTypeTable[tiletype].c)
+    switch(tileShape(tiletype))
     {
         case EMPTY:
             znak = ' ';
@@ -199,7 +199,7 @@ void clrscr()
 */
 int pickColor(int tiletype)
 {
-    switch(tileTypeTable[tiletype].m)
+    switch(tileMaterial(tiletype))
     {
         case AIR:
             return COLOR_BLACK;
@@ -792,8 +792,9 @@ int main(int argc, char *argv[])
                     {
                         for(int x = 0; x < 16; x++) for(int y = 0; y < 16; y++)
                         {
-                            TileClass tc = tileTypeTable[Block->tiletypes[x][y]].c;
-                            TileMaterial tm = tileTypeTable[Block->tiletypes[x][y]].m;
+                            int16_t tiletype = Block->tiletypes[x][y];
+                            TileShape tc = tileShape(tiletype);
+                            TileMaterial tm = tileMaterial(tiletype);
                             if( tc == WALL && tm == VEIN || tc == TREE_OK || tc == TREE_DEAD)
                             {
                                 Block->designation[x][y].bits.dig = designation_default;
@@ -901,14 +902,6 @@ int main(int argc, char *argv[])
                         //iterate through the bits
                         for (uint32_t k = 0; k< 16;k++)
                         {
-                            /*
-                            if(tileTypeTable[blocks[1][1].tiletypes[k][j]].m != VEIN)
-                                continue;
-                            */
-                            /*
-                            if(blocks[1][1].designation[k][j].bits.hidden)
-                                continue;
-                            */
                             // and the bit array with a one-bit mask, check if the bit is set
                             bool set = !!(((1 << k) & veinVector[realvein].assignment[j]) >> k);
                             if(set)

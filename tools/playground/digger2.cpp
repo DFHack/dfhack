@@ -26,7 +26,8 @@ using namespace std;
 #define BLOCK_SIZE 16
 
 
-void dig(DFHack::Maps* layers, DFHack::Gui* Gui, ::std::vector< ::std::string >& dig_map, bool verbose = false) {
+void dig(DFHack::Maps* layers, DFHack::Gui* Gui, ::std::vector< ::std::string >& dig_map, bool verbose = false)
+{
   int32_t x_cent;
   int32_t y_cent;
   int32_t z_cent;
@@ -63,7 +64,8 @@ void dig(DFHack::Maps* layers, DFHack::Gui* Gui, ::std::vector< ::std::string >&
 
     int32_t x = 0;
     ::std::string::iterator chr_it;
-    for (chr_it = str_it->begin(); chr_it != str_it ->end(); ++chr_it) {
+    for (chr_it = str_it->begin(); chr_it != str_it ->end(); ++chr_it)
+    {
       int32_t x_grid = (x_from + x) / BLOCK_SIZE;
       int32_t y_grid = (y_from + y) / BLOCK_SIZE;
       int32_t z_grid = z_from + z;
@@ -71,41 +73,44 @@ void dig(DFHack::Maps* layers, DFHack::Gui* Gui, ::std::vector< ::std::string >&
       int32_t y_locl = (y_from + y) - y_grid * BLOCK_SIZE;
       int32_t z_locl = 0;
 
-      if (x_grid >= 0 && y_grid >= 0 && x_grid < x_max && y_grid < y_max) {
+      if (x_grid >= 0 && y_grid >= 0 && x_grid < x_max && y_grid < y_max)
+      {
         // TODO this could probably be made much better, theres a big chance the trees are on the same grid
         layers->ReadDesignations(x_grid, y_grid, z_grid, &designations);
         layers->ReadTileTypes(x_grid, y_grid, z_grid, &tiles);
 
 // ::std::cout << ::std::hex << "designations: " << designations[x_locl][y_locl].bits.dig << ::std::dec << ::std::endl;
-
-        if (designations[x_locl][y_locl].bits.dig == DFHack::designation_no && DFHack::tileTypeTable[tiles[x_locl][y_locl]].c == DFHack::WALL) {
-          DFHack::e_designation type = DFHack::designation_no;
-          switch ((char) *chr_it) {
+        DFHack::naked_designation & des = designations[x_locl][y_locl].bits;
+        if ( DFHack::tileShape(tiles[x_locl][y_locl]) == DFHack::WALL)
+        {
+          switch ((char) *chr_it)
+          {
             case 'd':
-              designations[x_locl][y_locl].bits.dig = DFHack::designation_default;
+              des.dig = DFHack::designation_default;
               break;
             case 'u':
-              designations[x_locl][y_locl].bits.dig = DFHack::designation_u_stair;
+              des.dig = DFHack::designation_u_stair;
               break;
             case 'j':
-              designations[x_locl][y_locl].bits.dig = DFHack::designation_d_stair;
+              des.dig = DFHack::designation_d_stair;
               break;
             case 'i':
-              designations[x_locl][y_locl].bits.dig = DFHack::designation_ud_stair;
+              des.dig = DFHack::designation_ud_stair;
               break;
             case 'h':
-              designations[x_locl][y_locl].bits.dig = DFHack::designation_channel;
+              des.dig = DFHack::designation_channel;
               break;
             case 'r':
-              designations[x_locl][y_locl].bits.dig = DFHack::designation_ramp;
+              des.dig = DFHack::designation_ramp;
               break;
             case 'x':
-              designations[x_locl][y_locl].bits.dig = DFHack::designation_no;
+              des.dig = DFHack::designation_no;
               break;
           }
 
-          if (verbose) {
-            // ::std::cout << "designating " << (char) *chr_it << " at " << x_from + x << " " << y_from + y << " " << z_from + z << ::std::endl;
+          if (verbose)
+          {
+            ::std::cout << "designating " << (char) *chr_it << " at " << x_from + x << " " << y_from + y << " " << z_from + z << ::std::endl;
           }
 
           layers->WriteDesignations(x_grid, y_grid, z_grid, &designations);

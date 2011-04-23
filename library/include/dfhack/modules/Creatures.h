@@ -341,6 +341,8 @@ namespace DFHack
         bool WritePos(const uint32_t index, const t_creature &creature);
         bool WriteCiv(const uint32_t index, const int32_t civ);
 
+        void CopyNameTo(t_creature &creature, uint32_t address);
+
     private:
         struct Private;
         Private *d;

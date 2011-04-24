@@ -2692,7 +2692,7 @@
             <Group name="Creatures">
                 <Address name="current_civ" value="0x9368bec" />
                 <Address name="current_race" value="0x9368bf8" />
-                <Address name="vector" value="0x938118c" />
+                <Address name="vector" value="0x938118c" /> possibly bullshit!
             </Group>
             <Group name="GUI">
                 <Address name="pause_state" value="0x9366cb0"/>
@@ -2751,7 +2751,7 @@
           <Group name="Creatures">
               <Address name="current_civ" value="0x93e027c" />
               <Address name="current_race" value="0x93e0288" />
-              <Address name="vector" value="0x93f886c" />
+              <Address name="vector" value="0x93F8854" /> 0x93f886c = orig, possibly bullshit! VERIFY!!!
           </Group>
           <Group name="GUI">
               <Address name="pause_state" value="0x93dddf0" />
@@ -2878,8 +2878,8 @@
                         <Offset name="current_soul" value="0x53C" />
                         <Offset name="labors" value="0x54C" />
                         <Offset name="happiness" value="0x05dc" />
-            </Group>
-            </Group>
+                    </Group>
+                </Group>
                 <Group name="job">
                     <Offset name="id" value="0x8" />
                     <!--<Offset name="materials_vector" />-->
@@ -3003,6 +3003,7 @@
         <MD5 value="fc15065c4d1977ca019c6dad220413d1" />
         <Offsets>
             <Group name="Creatures">
+                Address name="vector" value="0x0940b174"
                 <Group name="creature">
                     <Offset name="flags3" value="0x94"/>
                     <Group name="advanced">

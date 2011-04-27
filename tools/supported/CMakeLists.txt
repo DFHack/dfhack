@@ -96,6 +96,10 @@ DFHACK_TOOL(dfderamp deramp.cpp)
 #DFHACK_TOOL(dfautosearch autosearch.cpp)
 DFHACK_TOOL(dfincremental incrementalsearch.cpp)
 
+# auto dump. dumps all items marked for dumping at the cursor position without the need for dwarf labor.
+# ... or just kills the items? :P
+DFHACK_TOOL(dfautodump autodump.cpp)
+
 # veinlook - look at the map... sort of
 IF(UNIX)
     SET(VEINLOOK_BUILT "NO")

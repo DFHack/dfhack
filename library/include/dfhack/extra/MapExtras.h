@@ -64,6 +64,7 @@ class Block
         dirty_tiletypes = false;
         dirty_temperatures = false;
         dirty_blockflags = false;
+        dirty_occupancies = false;
         valid = false;
         bcoord = _bcoord;
         if(m->ReadBlock40d(bcoord.x,bcoord.y,bcoord.z,&raw))
@@ -140,6 +141,18 @@ class Block
         return true;
     }
 
+    DFHack::t_occupancy OccupancyAt(DFHack::DFCoord p)
+    {
+        return raw.occupancy[p.x][p.y];
+    }
+    bool setOccupancyAt(DFHack::DFCoord p, DFHack::t_occupancy des)
+    {
+        if(!valid) return false;
+        dirty_occupancies = true;
+        raw.occupancy[p.x][p.y] = des;
+        return true;
+    }
+
     DFHack::t_blockflags BlockFlags()
     {
         return raw.blockflags;
@@ -177,6 +190,11 @@ class Block
             m->WriteBlockFlags(bcoord.x,bcoord.y,bcoord.z,raw.blockflags);
             dirty_blockflags = false;
         }
+        if(dirty_occupancies)
+        {
+            m->WriteOccupancy(bcoord.x,bcoord.y,bcoord.z,&raw.occupancy);
+            dirty_occupancies = false;
+        }
         return true;
     }
     bool valid:1;
@@ -184,6 +202,7 @@ class Block
     bool dirty_tiletypes:1;
     bool dirty_temperatures:1;
     bool dirty_blockflags:1;
+    bool dirty_occupancies:1;
     DFHack::Maps * m;
     DFHack::mapblock40d raw;
     DFHack::DFCoord bcoord;
@@ -342,6 +361,28 @@ class MapCache
         if(b && b->valid)
         {
             b->setDesignationAt(tilecoord % 16, des);
+            return true;
+        }
+        return false;
+    }
+    
+    DFHack::t_occupancy occupancyAt (DFHack::DFCoord tilecoord)
+    {
+        Block * b= BlockAt(tilecoord / 16);
+        if(b && b->valid)
+        {
+            return b->OccupancyAt(tilecoord % 16);
+        }
+        DFHack:: t_occupancy temp;
+        temp.whole = 0;
+        return temp;
+    }
+    bool setOccupancyAt (DFHack::DFCoord tilecoord, DFHack::t_occupancy occ)
+    {
+        Block * b= BlockAt(tilecoord / 16);
+        if(b && b->valid)
+        {
+            b->setOccupancyAt(tilecoord % 16, occ);
             return true;
         }
         return false;

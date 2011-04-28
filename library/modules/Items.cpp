@@ -50,7 +50,7 @@ Module* DFHack::createItems(DFContextShared * d)
 enum accessor_type {ACCESSOR_CONSTANT, ACCESSOR_INDIRECT, ACCESSOR_DOUBLE_INDIRECT};
 
 /* this is used to store data about the way accessors work */
-class DFHACK_EXPORT Accessor
+class Accessor
 {
 public:
     enum DataWidth {
@@ -73,7 +73,7 @@ public:
     int32_t getValue(uint32_t objectPtr);
     bool isConstant();
 };
-class DFHACK_EXPORT ItemImprovementDesc
+class ItemImprovementDesc
 {
 private:
     Accessor * AType;
@@ -85,7 +85,7 @@ public:
     uint32_t maintype;
 };
 
-class DFHACK_EXPORT ItemDesc
+class ItemDesc
 {
 private:
     Accessor * AMainType;

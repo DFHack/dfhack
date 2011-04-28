@@ -719,7 +719,7 @@ int main (void)
                     tp = getTileRow(block.tiletypes[x][y]);
                     d = &block.designation[x][y];
                     //Only modify this level if it's 'empty'
-                    if ( EMPTY != tp->shape && RAMP_TOP != tp->shape && STAIR_DOWN != tp->shape && DFHack::TILE_STREAM_TOP != tp->special)
+                    if ( EMPTY != tp->shape && RAMP_TOP != tp->shape && STAIR_DOWN != tp->shape && DFHack::BROOK_TOP != tp->shape)
                     {
                         continue;
                     }

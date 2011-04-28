@@ -36,24 +36,29 @@ namespace DFHack
     // tile class -- determines the general shape of the tile
     // enum and lookup table for string names created using X macros
     #define TILESHAPE_MACRO \
-        X(EMPTY,			"") \
-        X(WALL,				"") \
-        X(PILLAR,			"") \
-        X(FORTIFICATION,	"") \
-        X(STAIR_UP,			"") \
-        X(STAIR_DOWN,		"") \
-        X(STAIR_UPDOWN,		"") \
-        X(RAMP,				"ramps have no direction" ) \
-        X(RAMP_TOP,			"used for pathing?" ) \
-        X(FLOOR,			"") \
-        X(TREE_DEAD,		"") \
-        X(TREE_OK,			"") \
-        X(SAPLING_DEAD,		"") \
-        X(SAPLING_OK,		"") \
-        X(SHRUB_DEAD,		"") \
-        X(SHRUB_OK,			"") \
-        X(BOULDER,			"") \
-        X(PEBBLES,			"") 
+        X(EMPTY,            "") \
+        X(WALL,             "") \
+        X(PILLAR,           "") \
+        X(BROOK_BED,        "mineable, water-passable rock on the bottom of brook") \
+        X(FORTIFICATION,    "") \
+        X(STAIR_UP,         "") \
+        X(STAIR_DOWN,       "") \
+        X(STAIR_UPDOWN,     "") \
+        X(RAMP,             "ramps have no direction" ) \
+        X(RAMP_TOP,         "used for pathing?" ) \
+        X(FLOOR,            "") \
+        X(BROOK_TOP,        "water-passable floor on top of BROOK_BED tiles") \
+        X(RIVER_BED,        "It's a riverbed. Basically a floor.'") \
+        X(POOL,             "A pool. Gathers water while it's raining.'") \
+        X(TREE_DEAD,        "") \
+        X(TREE_OK,          "") \
+        X(SAPLING_DEAD,     "") \
+        X(SAPLING_OK,       "") \
+        X(SHRUB_DEAD,       "") \
+        X(SHRUB_OK,         "") \
+        X(BOULDER,          "") \
+        X(PEBBLES,          "") \
+        X(ENDLESS_PIT,      "a fake endless pit")
     //end TILESHAPE_MACRO
 
     //define tile class enum
@@ -106,14 +111,8 @@ namespace DFHack
     // When the TileType class gets created, everything should be re-thought.
     #define TILESPECIAL_MACRO \
         X(NORMAL,            "Default for all type, nothing present" ) \
-        X(SPECIAL,           "General purpose, for any unique tile which can not otherwise be differenciated" ) \
-        X(POOL,              "Murky Pool, will gather water from rain" ) \
-        X(STREAM,            "Streams (and brooks too? maybe?)" ) \
-        X(STREAM_TOP,        "The walkable surface of a stream/brook" ) \
         X(RIVER_SOURCE,      "Rivers Source, when it exists on a map" ) \
-        X(RIVER,             "Rivers, and their entering and exiting tiles" ) \
         X(WATERFALL,         "Special case for Waterfall Landing. How's this used?" ) \
-        X(ENDLESS,           "Eerie Pit and Old Chasm/Endless Pit" ) \
         X(CRACKED,           "Walls being dug" ) \
         X(DAMAGED,           "Walls being dug" ) \
         X(WORN,              "Walls being dug ??" ) \
@@ -289,6 +288,10 @@ namespace DFHack
             case DFHack::SHRUB_OK:
             case DFHack::BOULDER:
             case DFHack::PEBBLES:
+            case DFHack::RIVER_BED:
+            case DFHack::POOL:
+            case DFHack::ENDLESS_PIT:
+            case DFHack::BROOK_TOP:
                 return true;
             default:
                 return false;

@@ -141,8 +141,7 @@ int main (int argc, char* argv[])
             case RAMP_TOP:
             case STAIR_UPDOWN:
             case STAIR_DOWN:
-            case STREAM:
-            case STREAM_TOP:
+            case BROOK_TOP:
                 above = below = sides = true;
                 break;
             // has floor
@@ -158,6 +157,10 @@ int main (int argc, char* argv[])
             case SHRUB_OK:
             case BOULDER:
             case PEBBLES:
+            case BROOK_BED:
+            case RIVER_BED:
+            case ENDLESS_PIT:
+            case POOL:
                 if(from_below)
                     unhide = 0;
                 above = sides = true;

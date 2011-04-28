@@ -141,6 +141,8 @@ int main (int argc, char* argv[])
             case RAMP_TOP:
             case STAIR_UPDOWN:
             case STAIR_DOWN:
+            case STREAM:
+            case STREAM_TOP:
                 above = below = sides = true;
                 break;
             // has floor

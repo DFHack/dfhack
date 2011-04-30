@@ -404,7 +404,7 @@ namespace DFHack
         {"damaged obsidian wall",WALL,OBSIDIAN,VAR_1, TILE_DAMAGED },
 
         // 330
-        {"worn obsidian wall",WALL,OBSIDIAN,VAR_1},
+        {"worn obsidian wall",WALL,OBSIDIAN,VAR_1, TILE_WORN},
         {"obsidian wall",WALL,OBSIDIAN,VAR_1},
         {"cracked featstone wall",WALL,FEATSTONE,VAR_1, TILE_CRACKED },
         {"damaged featstone wall",WALL,FEATSTONE,VAR_1, TILE_DAMAGED },

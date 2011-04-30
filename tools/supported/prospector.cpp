@@ -1,412 +1,349 @@
-// produces a list of vein materials available on the map. can be run with '-a' modifier to show even unrevealed minerals deep underground
-// with -b modifier, it will show base layer materials too
+// Produces a list of materials available on the map.
+// Options:
+//  -a : show unrevealed tiles
+//  -p : don't show plants
+//  -s : don't show slade
+//  -t : don't show demon temple
 
-// TODO: use material colors to make the output prettier
-// TODO: needs the tiletype filter!
-// TODO: tile override materials
-// TODO: material types, trees, ice, constructions
-// TODO: GUI
-
+#include <cstdlib>
 #include <iostream>
-#include <string.h> // for memset
-#include <string>
-#include <vector>
 #include <map>
-#include <stdio.h>
-#include <algorithm>
+#include <vector>
+
 using namespace std;
-
 #include <DFHack.h>
-#include <dfhack/DFTileTypes.h>
+#include <dfhack/extra/MapExtras.h>
 
-template<template <typename> class P = std::greater >
-struct compare_pair_first
+typedef std::map<int16_t, unsigned int> MatMap;
+
+typedef std::vector<DFHack::t_feature> FeatureList;
+typedef std::vector<DFHack::t_feature*> FeatureListPointer;
+typedef std::map<DFHack::DFCoord, FeatureListPointer> FeatureMap;
+typedef std::vector<DFHack::t_tree> PlantList;
+
+bool parseOptions(int argc, char **argv, bool &showHidden, bool &showPlants,
+                  bool &showSlade, bool &showTemple)
 {
-    template<class T1, class T2>
-    bool operator()(const std::pair<T1, T2>& left, const std::pair<T1, T2>& right)
-    {
-        return P<T1>()(left.first, right.first);
-    }
-};
+    char c;
+    opterr = 0;
 
-template<template <typename> class P = std::greater >
-struct compare_pair_second
-{
-    template<class T1, class T2>
-    bool operator()(const std::pair<T1, T2>& left, const std::pair<T1, T2>& right)
+    while ((c = getopt(argc, argv, "apst")) != -1)
     {
-        return P<T2>()(left.second, right.second);
-    }
-};
-
-int main (int argc, const char* argv[])
-{
-    bool showhidden = false;
-    for(int i = 1; i < argc; i++)
-    {
-        string test = argv[i];
-        if(test == "-a")
+        switch (c)
         {
-            showhidden = true;
-        }
-        else if(test == "--help")
-        {
-            cout << "This is a prospector tool for the game Dwarf Fortress." << endl
-                 << "By default, only visible tiles are counted." << endl
-                 << "Use the parameter '-a' to scan all tiles." << endl;
-            return 0;
-        }
-    }
-    uint32_t x_max,y_max,z_max;
-
-    DFHack::mapblock40d Block;
-    map <int16_t, uint32_t> hardcoded_m;
-    map <int16_t, uint32_t> layer_m;
-    map <int16_t, uint32_t> vein_m;
-
-    vector<DFHack::t_feature> global_features;
-    std::map <DFHack::DFCoord, std::vector<DFHack::t_feature *> > local_features;
-
-    vector< vector <uint16_t> > layerassign;
-
-    DFHack::ContextManager DFMgr("Memory.xml");
-    DFHack::Context *DF;
-    try
-    {
-        DF = DFMgr.getSingleContext();
-        DF->Attach();
-    }
-    catch (exception& e)
-    {
-        cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
-            cin.ignore();
-        #endif
-        return 1;
-    }
-
-    DFHack::Maps * Maps = DF->getMaps();
-    DFHack::Materials * Mats = DF->getMaterials();
-
-    // init the map
-    if(!Maps->Start())
-    {
-        cerr << "Can't init map." << endl;
-        #ifndef LINUX_BUILD
-            cin.ignore();
-        #endif
-        return 1;
-    }
-    Maps->getSize(x_max,y_max,z_max);
-
-    if(!Maps->ReadGlobalFeatures(global_features))
-    {
-        cerr << "Can't get global features." << endl;
-        #ifndef LINUX_BUILD
-            cin.ignore();
-        #endif
-        return 1; 
-    }
-
-    if(!Maps->ReadLocalFeatures(local_features))
-    {
-        cerr << "Can't get local features." << endl;
-        #ifndef LINUX_BUILD
-            cin.ignore();
-        #endif
-        return 1; 
-    }
-    // get stone matgloss mapping
-    if(!Mats->ReadInorganicMaterials())
-    {
-        //DF.DestroyMap();
-        cerr << "Can't get the materials." << endl;
-        #ifndef LINUX_BUILD
-            cin.ignore();
-        #endif
-        return 1; 
-    }
-
-    // get region geology
-    if(!Maps->ReadGeology( layerassign ))
-    {
-        cerr << "Can't get region geology." << endl;
-        #ifndef LINUX_BUILD
-            cin.ignore();
-        #endif
-        return 1; 
-    }
-
-    int16_t tempvein [16][16];
-    vector <DFHack::t_vein> veins;
-    uint32_t maximum_regionoffset = 0;
-    uint32_t num_overflows = 0;
-    // walk the map!
-    for(uint32_t x = 0; x< x_max;x++)
-    {
-        for(uint32_t y = 0; y< y_max;y++)
-        {
-            for(uint32_t z = 0; z< z_max;z++)
+        case 'a':
+            showHidden = true;
+            break;
+        case 'p':
+            showPlants = false;
+            break;
+        case 's':
+            showSlade = false;
+            break;
+        case 't':
+            showTemple = false;
+            break;
+        case '?':
+            switch (optopt)
             {
-                if(!Maps->isValidBlock(x,y,z))
-                    continue;
-
-                // read data
-                Maps->ReadBlock40d(x,y,z, &Block);
-                DFHack::tiletypes40d & tt = Block.tiletypes;
-
-                // hardcoded materials
-                for(uint32_t xx = 0;xx<16;xx++)
-                {
-                    for (uint32_t yy = 0; yy< 16;yy++)
-                    {
-                        DFHack::TileMaterial mat = DFHack::tileMaterial(tt[xx][yy]);
-                        if(!DFHack::isWallTerrain(tt[xx][yy]))
-                            continue;
-                        if(Block.designation[xx][yy].bits.hidden && !showhidden)
-                            continue;
-                        if(hardcoded_m.count(mat))
-                        {
-                            hardcoded_m[mat] += 1;
-                        }
-                        else
-                        {
-                            hardcoded_m[mat] = 1;
-                        }
-                    }
-                }
-
-                // get the layer materials
-                for(uint32_t xx = 0;xx<16;xx++)
-                {
-                    for (uint32_t yy = 0; yy< 16;yy++)
-                    {
-                        DFHack::TileMaterial mat = DFHack::tileMaterial(tt[xx][yy]);
-                        DFHack::TileShape shape = DFHack::TileShape(tt[xx][yy]);
-                        if(mat != DFHack::SOIL && mat != DFHack::STONE)
-                            continue;
-                        if(!DFHack::isWallTerrain(tt[xx][yy]))
-                            continue;
-                        if(Block.designation[xx][yy].bits.hidden && !showhidden)
-                            continue;
-                        uint8_t test = Block.designation[xx][yy].bits.biome;
-                        if(test > maximum_regionoffset)
-                            maximum_regionoffset = test;
-                        if( test >= sizeof(Block.biome_indices))
-                        {
-                            num_overflows++;
-                            continue;
-                        }
-                        uint16_t mat2 = layerassign [Block.biome_indices[test]] [Block.designation[xx][yy].bits.geolayer_index];
-                        if(layer_m.count(mat2))
-                        {
-                            layer_m[mat2] += 1;
-                        }
-                        else
-                        {
-                            layer_m[mat2] = 1;
-                        }
-                    }
-                }
-                // global feature overrides
-                int16_t idx = Block.global_feature;
-                if( idx != -1 && uint16_t(idx) < global_features.size() && global_features[idx].type == DFHack::feature_Underworld)
-                {
-                    for(uint32_t xi = 0 ; xi< 16 ; xi++) for(uint32_t yi = 0 ; yi< 16 ; yi++)
-                    {
-                        if(!DFHack::isWallTerrain(tt[xi][yi]))
-                            continue;
-                        if(Block.designation[xi][yi].bits.hidden && !showhidden)
-                            continue;
-                        DFHack::TileMaterial mat = DFHack::tileMaterial(tt[xi][yi]);
-                        if(Block.designation[xi][yi].bits.feature_global && mat == DFHack::FEATSTONE)
-                        {
-                            if(global_features[idx].main_material == 0) // stone
-                            {
-                                int32_t mat2 = global_features[idx].sub_material;
-                                if(layer_m.count(mat2))
-                                {
-                                    layer_m[mat2] += 1;
-                                }
-                                else
-                                {
-                                    layer_m[mat2] = 1;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // vein stones
-                memset(tempvein, 0xff, sizeof(tempvein));
-                veins.clear();
-                Maps->ReadVeins(x,y,z,&veins);
-                // for each vein
-                for(int i = 0; i < (int)veins.size();i++)
-                {
-                    //iterate through vein rows
-                    for(uint32_t j = 0;j<16;j++)
-                    {
-                        //iterate through the bits
-                        for (uint32_t k = 0; k< 16;k++)
-                        {
-                            DFHack::TileMaterial mat = DFHack::tileMaterial(tt[k][j]);
-                            if(mat != DFHack::VEIN)
-                                continue;
-                            // and the bit array with a one-bit mask, check if the bit is set
-                            bool set = !!(((1 << k) & veins[i].assignment[j]) >> k);
-                            if(set)
-                            {
-                                // store matgloss
-                                tempvein[k][j] = veins[i].type;
-                            }
-                        }
-                    }
-                }
-
-                idx = Block.local_feature;
-                if( idx != -1 )
-                {
-                    DFHack::DFCoord pc(x,y);
-                    std::map <DFHack::DFCoord, std::vector<DFHack::t_feature *> >::iterator it;
-                    it = local_features.find(pc);
-                    if(it != local_features.end())
-                    {
-                        std::vector<DFHack::t_feature *>& vectr = (*it).second;
-                        if(uint16_t(idx) < vectr.size() && vectr[idx]->type == DFHack::feature_Adamantine_Tube)
-                        {
-                            for(uint32_t xi = 0 ; xi< 16 ; xi++) for(uint32_t yi = 0 ; yi< 16 ; yi++)
-                            {
-                                DFHack::TileMaterial mat = DFHack::tileMaterial(tt[xi][yi]);
-                                if(Block.designation[xi][yi].bits.feature_local && mat == DFHack::FEATSTONE)
-                                {
-                                    if(vectr[idx]->main_material == 0) // stone
-                                    {
-                                        tempvein[xi][yi] = vectr[idx]->sub_material;
-                                    }
-                                    else
-                                    {
-                                        tempvein[xi][yi] = -1;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // count the vein material types
-                for(uint32_t xi = 0 ; xi< 16 ; xi++)
-                {
-                    for(uint32_t yi = 0 ; yi< 16 ; yi++)
-                    {
-                        // hidden tiles are ignored unless '-a' is provided on the command line
-                        // non-wall tiles are ignored
-                        if( (Block.designation[xi][yi].bits.hidden && !showhidden)
-                            || !DFHack::isWallTerrain(Block.tiletypes[xi][yi])
-                          )
-                            continue;
-                        // ignore stuff that isn't a vein
-                        if(tempvein[xi][yi] < 0)
-                            continue;
-
-                        if(vein_m.count(tempvein[xi][yi]))
-                        {
-                            vein_m[tempvein[xi][yi]] += 1;
-                        }
-                        else
-                        {
-                            vein_m[tempvein[xi][yi]] = 1;
-                        }
-                    }
-                }
+            // For when we take arguments
+            default:
+                if (isprint(optopt))
+                    std::cerr << "Unknown option -" << optopt << "!"
+                            << std::endl;
+                else
+                    std::cerr << "Unknown option character " << (int) optopt << "!"
+                            << std::endl;
             }
+        default:
+            // Um.....
+            return false;
         }
     }
-    // print report
+}
 
-    // some layer/geology debug stuff
-    if(maximum_regionoffset >= sizeof(Block.biome_indices) )
+void printMats(MatMap &mat, std::vector<DFHack::t_matgloss> &materials)
+{
+    unsigned int total = 0;
+    for (MatMap::const_iterator it = mat.begin(); it != mat.end(); ++it)
     {
-        cerr << "Maximal regionoffset seen: " << maximum_regionoffset << ".";
-        cerr << " This is above the regionoffsets array size!" << endl;
-        cerr << "Number of overflows: " << num_overflows;
-        cerr << endl;
+        DFHack::t_matgloss mat = materials[it->first];
+        std::cout << mat.id << " : " << it->second << std::endl;
+        total += it->second;
     }
-    
-    vector <pair <int16_t, uint32_t> > veins_sort;
-    vector <pair <int16_t, uint32_t> > layers_sort;
-    vector <pair <int16_t, uint32_t> > hardcoded_sort;
-    map<int16_t, uint32_t>::iterator p;
-    // HARDCODED
-    cout << endl << "Base materials:" << endl;
-    for(p = hardcoded_m.begin(); p != hardcoded_m.end(); p++)
-    {
-        hardcoded_sort.push_back( pair<int16_t,uint32_t>(p->first, p->second) );
-    }
-    std::sort(hardcoded_sort.begin(), hardcoded_sort.end(), compare_pair_second<>());
-    for(size_t i = 0; i < hardcoded_sort.size();i++)
-    {
-        cout << DFHack::TileMaterialString[hardcoded_sort[i].first] << " : " << hardcoded_sort[i].second << endl;
-    }
-    // LAYERS
-    cout << endl << "Layer materials:" << endl;
-    uint32_t layers_total = 0;
-    for(p = layer_m.begin(); p != layer_m.end(); p++)
-    {
-        if(p->first == -1)
-        {
-            cout << "Non-stone" << " : " << p->second << endl;
-        }
-        else
-        {
-            layers_sort.push_back( pair<int16_t,uint32_t>(p->first, p->second) );
-            layers_total += p->second;
-        }
-    }
-    std::sort(layers_sort.begin(), layers_sort.end(), compare_pair_second<>());
-    for(size_t i = 0; i < layers_sort.size();i++)
-    {
-        if(layers_sort[i].first >= Mats->inorganic.size())
-        {
-            cerr << "Error, material out of bounds: " << layers_sort[i].first << endl;
-            continue;
-        }
-        cout << Mats->inorganic[layers_sort[i].first].id << " : " << layers_sort[i].second << endl;
-    }
-    cout << ">>> TOTAL = " << layers_total << endl;
-    // VEINS
-    uint32_t veins_total = 0;
-    cout << endl << "Vein materials:" << endl;
-    for(p = vein_m.begin(); p != vein_m.end(); p++)
-    {
-        if(p->first == -1)
-        {
-            cout << "Non-stone" << " : " << p->second << endl;
-        }
-        else
-        {
-            veins_sort.push_back( pair<int16_t,uint32_t>(p->first, p->second) );
-            veins_total += p->second;
-        }
-    }
-    std::sort(veins_sort.begin(), veins_sort.end(), compare_pair_second<>());
-    for(size_t i = 0; i < veins_sort.size();i++)
-    {
-        if(veins_sort[i].first >= Mats->inorganic.size())
-        {
-            cerr << "Error, material out of bounds: " << veins_sort[i].first << endl;
-            continue;
-        }
-        cout << Mats->inorganic[veins_sort[i].first].id << " : " << veins_sort[i].second << endl;
-    }
-    cout << ">>> TOTAL = " << veins_total << endl;
+    std::cout << ">>> TOTAL = " << total << std::endl << std::endl;
+}
 
-    DF->Detach();
-    cout << endl << "Happy mining!";
-    #ifndef LINUX_BUILD
-        cout << " Press any key to finish.";
-        cin.ignore();
-    #endif
-    cout << endl;
+int main(int argc, char *argv[])
+{
+    bool showHidden = false;
+    bool showPlants = true;
+    bool showSlade = true;
+    bool showTemple = true;
+
+    if (!parseOptions(argc, argv, showHidden, showPlants, showSlade, showTemple))
+    {
+        return -1;
+    }
+
+    uint32_t x_max = 0, y_max = 0, z_max = 0;
+    DFHack::ContextManager manager("Memory.xml");
+
+    DFHack::Context *context = manager.getSingleContext();
+    if (!context->Attach())
+    {
+        std::cerr << "Unable to attach to DF!" << std::endl;
+        return 1;
+    }
+
+    DFHack::Maps *maps = context->getMaps();
+    if (!maps->Start())
+    {
+        std::cerr << "Cannot get map info!" << std::endl;
+        context->Detach();
+        return -1;
+    }
+    maps->getSize(x_max, y_max, z_max);
+    MapExtras::MapCache map(maps);
+
+    DFHack::Materials *mats = context->getMaterials();
+    if (!mats->ReadInorganicMaterials())
+    {
+        std::cerr << "Unable to read inorganic material definitons!" << std::endl;
+        context->Detach();
+        return -1;
+    }
+    if (!mats->ReadOrganicMaterials())
+    {
+        std::cerr << "Unable to read organic material definitons!" << std::endl;
+        context->Detach();
+        return -1;
+    }
+
+    FeatureList globalFeatures;
+    FeatureMap localFeatures;
+    DFHack::t_feature *blockFeatureGlobal = 0;
+    DFHack::t_feature *blockFeatureLocal = 0;
+
+    bool hasAquifer = false;
+    bool hasDemonTemple = false;
+    bool hasLair = false;
+    MatMap baseMats;
+    MatMap layerMats;
+    MatMap veinMats;
+    MatMap plantMats;
+
+    if (!(showSlade && maps->ReadGlobalFeatures(globalFeatures)))
+    {
+        std::cerr << "Unable to read global features; slade won't be listed!" << std::endl;
+    }
+
+    if (!maps->ReadLocalFeatures(localFeatures))
+    {
+        std::cerr << "Unable to read local features; adamantine"
+                  << (showTemple ? "and demon temples" : "")
+                  << "won't be listed!" << std::endl;
+    }
+
+    uint32_t vegCount = 0;
+    DFHack::Vegetation *veg = context->getVegetation();
+    if (showPlants && !veg->Start(vegCount))
+    {
+        std::cerr << "Unable to read vegetation; plants won't be listed!" << std::endl;
+    }
+
+    for(uint32_t z = 0; z < z_max; z++)
+    {
+        for(uint32_t b_y = 0; b_y < y_max; b_y++)
+        {
+            for(uint32_t b_x = 0; b_x < x_max; b_x++)
+            {
+                // Get the map block
+                DFHack::DFCoord blockCoord(b_x, b_y);
+                MapExtras::Block *b = map.BlockAt(DFHack::DFCoord(b_x, b_y, z));
+                if (!b || !b->valid)
+                {
+                    continue;
+                }
+
+                { // Find features
+                    uint16_t index = b->raw.global_feature;
+                    if (index != -1 && index < globalFeatures.size())
+                    {
+                        blockFeatureGlobal = &globalFeatures[index];
+                    }
+
+                    index = b->raw.local_feature;
+                    FeatureMap::const_iterator it = localFeatures.find(blockCoord);
+                    if (it != localFeatures.end())
+                    {
+                        FeatureListPointer features = it->second;
+
+                        if (index != -1 && index < features.size())
+                        {
+                            blockFeatureLocal = features[index];
+                        }
+                    }
+                }
+
+                // Iterate over all the tiles in the block
+                for(uint32_t y = 0; y < 16; y++)
+                {
+                    for(uint32_t x = 0; x < 16; x++)
+                    {
+                        DFHack::DFCoord coord(x, y);
+                        DFHack::t_designation des = b->DesignationAt(coord);
+                        DFHack::t_occupancy occ = b->OccupancyAt(coord);
+
+                        // Skip hidden tiles
+                        if (!showHidden && des.bits.hidden)
+                        {
+                            continue;
+                        }
+
+                        // Check for aquifer
+                        if (des.bits.water_table)
+                        {
+                            hasAquifer = true;
+                        }
+
+                        // Check for lairs
+                        if (occ.bits.monster_lair)
+                        {
+                            hasLair = true;
+                        }
+
+                        uint16_t type = b->TileTypeAt(coord);
+                        const DFHack::TileRow *info = DFHack::getTileRow(type);
+
+                        if (!info)
+                        {
+                            std::cerr << "Bad type: " << type << std::endl;
+                            continue;
+                        }
+
+                        // We only care about these types
+                        switch (info->shape)
+                        {
+                        case DFHack::WALL:
+                        case DFHack::PILLAR:
+                        case DFHack::FORTIFICATION:
+                            break;
+                        default:
+                            continue;
+                        }
+
+                        // Count the material type
+                        baseMats[info->material]++;
+
+                        // Find the type of the tile
+                        switch (info->material)
+                        {
+                        case DFHack::SOIL:
+                        case DFHack::STONE:
+                            layerMats[b->baseMaterialAt(coord)]++;
+                            break;
+                        case DFHack::VEIN:
+                            veinMats[b->veinMaterialAt(coord)]++;
+                            break;
+                        case DFHack::FEATSTONE:
+                            if (blockFeatureLocal)
+                            {
+                                if (blockFeatureLocal->type == DFHack::feature_Adamantine_Tube
+                                        && blockFeatureLocal->main_material == 0) // stone
+                                {
+                                    veinMats[blockFeatureLocal->sub_material]++;
+                                }
+                                else if (showTemple
+                                         && blockFeatureLocal->type == DFHack::feature_Hell_Temple)
+                                {
+                                    hasDemonTemple = true;
+                                }
+                            }
+
+                            if (showSlade && blockFeatureGlobal
+                                    && blockFeatureGlobal->type == DFHack::feature_Underworld
+                                    && blockFeatureGlobal->main_material == 0) // stone
+                            {
+                                layerMats[blockFeatureGlobal->sub_material]++;
+                            }
+                            break;
+                        case DFHack::OBSIDIAN:
+                            // TODO ?
+                            break;
+                        }
+                    }
+                }
+
+                // Check plants this way, as the other way wasn't getting them all
+                // and we can check visibility more easily here
+                if (showPlants)
+                {
+                    PlantList plants;
+                    if (maps->ReadVegetation(b_x, b_y, z, &plants))
+                    {
+                        for (PlantList::const_iterator it = plants.begin(); it != plants.end(); it++)
+                        {
+                            DFHack::t_tree plant = *it;
+                            DFHack::DFCoord loc(plant.x, plant.y);
+                            loc = loc % 16;
+                            if (showHidden || !b->DesignationAt(loc).bits.hidden)
+                            {
+                                plantMats[it->material]++;
+                            }
+                        }
+                    }
+                }
+                // Block end
+            } // block x
+
+            // Clean uneeded memory
+            map.trash();
+        } // block y
+    } // z
+
+    MatMap::const_iterator it;
+
+    std::cout << "Base materials:" << std::endl;
+    for (it = baseMats.begin(); it != baseMats.end(); ++it)
+    {
+        std::cout << DFHack::TileMaterialString[it->first] << " : " << it->second << std::endl;
+    }
+
+    std::cout << std::endl << "Layer materials:" << std::endl;
+    printMats(layerMats, mats->inorganic);
+
+    std::cout << "Vein materials:" << std::endl;
+    printMats(veinMats, mats->inorganic);
+
+    if (showPlants)
+    {
+        std::cout << "Plant materials:" << std::endl;
+        printMats(plantMats, mats->organic);
+    }
+
+    if (hasAquifer)
+    {
+        std::cout << "Has aquifer" << std::endl;
+    }
+
+    if (hasDemonTemple)
+    {
+        std::cout << "Has demon temple" << std::endl;
+    }
+
+    if (hasLair)
+    {
+        std::cout << "Has lair" << std::endl;
+    }
+
+    // Cleanup
+    if (showPlants)
+    {
+        veg->Finish();
+    }
+    mats->Finish();
+    maps->Finish();
+    context->Detach();
     return 0;
 }

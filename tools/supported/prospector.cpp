@@ -93,6 +93,9 @@ int main(int argc, char *argv[])
     if (!context->Attach())
     {
         std::cerr << "Unable to attach to DF!" << std::endl;
+        #ifndef LINUX_BUILD
+        std::cin.ignore();
+        #endif
         return 1;
     }
 
@@ -101,7 +104,10 @@ int main(int argc, char *argv[])
     {
         std::cerr << "Cannot get map info!" << std::endl;
         context->Detach();
-        return -1;
+        #ifndef LINUX_BUILD
+        std::cin.ignore();
+        #endif
+        return 1;
     }
     maps->getSize(x_max, y_max, z_max);
     MapExtras::MapCache map(maps);
@@ -111,13 +117,15 @@ int main(int argc, char *argv[])
     {
         std::cerr << "Unable to read inorganic material definitons!" << std::endl;
         context->Detach();
-        return -1;
+        #ifndef LINUX_BUILD
+        std::cin.ignore();
+        #endif
+        return 1;
     }
-    if (!mats->ReadOrganicMaterials())
+    if (showPlants && !mats->ReadOrganicMaterials())
     {
-        std::cerr << "Unable to read organic material definitons!" << std::endl;
-        context->Detach();
-        return -1;
+        std::cerr << "Unable to read organic material definitons; plants won't be listed!" << std::endl;
+        showPlants = false;
     }
 
     FeatureList globalFeatures;
@@ -140,8 +148,8 @@ int main(int argc, char *argv[])
 
     if (!maps->ReadLocalFeatures(localFeatures))
     {
-        std::cerr << "Unable to read local features; adamantine"
-                  << (showTemple ? "and demon temples" : "")
+        std::cerr << "Unable to read local features; adamantine "
+                  << (showTemple ? "and demon temples " : "")
                   << "won't be listed!" << std::endl;
     }
 
@@ -345,5 +353,10 @@ int main(int argc, char *argv[])
     mats->Finish();
     maps->Finish();
     context->Detach();
+    #ifndef LINUX_BUILD
+    std::cout << " Press any key to finish.";
+    std::cin.ignore();
+    #endif
+    std::cout << std::endl;
     return 0;
 }

@@ -5,7 +5,7 @@
 //  -s : don't show slade
 //  -t : don't show demon temple
 
-#include <cstdlib>
+//#include <cstdlib>
 #include <iostream>
 #include <iomanip>
 #include <map>
@@ -49,15 +49,15 @@ bool parseOptions(int argc, char **argv, bool &showHidden, bool &showPlants,
             showTemple = false;
             break;
         case '?':
-            switch (optopt)
+            switch (opt.optopt)
             {
             // For when we take arguments
             default:
-                if (isprint(optopt))
-                    std::cerr << "Unknown option -" << optopt << "!"
+                if (isprint(opt.optopt))
+                    std::cerr << "Unknown option -" << opt.optopt << "!"
                             << std::endl;
                 else
-                    std::cerr << "Unknown option character " << (int) optopt << "!"
+                    std::cerr << "Unknown option character " << (int) opt.optopt << "!"
                             << std::endl;
             }
         default:

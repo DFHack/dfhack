@@ -16,13 +16,19 @@ namespace DFHack
      */
     struct t_tree
     {
-        /**
-        0: sapling?, dead sapling?, grown maple tree
-        1: willow sapling?
-        2: shrub
-        3: shrub near water!
-        */
-        uint16_t type; // +0x6C
+        // +0x6C
+        #pragma pack(push, 1)
+        union
+        {
+            uint16_t type;
+            struct
+            {
+                unsigned int watery : 1;
+                unsigned int is_shrub : 1;
+                unsigned int unknown : 14;
+            };
+        };
+        #pragma pack(pop)
         uint16_t material; // +0x6E
         uint16_t x; // +0x70
         uint16_t y; // +0x72

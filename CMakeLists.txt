@@ -148,6 +148,7 @@ OPTION(BUILD_DFHACK_PLAYGROUND "Build tools from the playground folder" OFF)
 include_directories (${dfhack_SOURCE_DIR}/library/include/)
 include_directories (${dfhack_SOURCE_DIR}/library/shm/)
 include_directories (${dfhack_SOURCE_DIR}/library/depends/argstream/)
+include_directories (${dfhack_SOURCE_DIR}/library/depends/xgetopt/)
 
 # macro to save on typing in the tool subdirs
 # builds a tool, links it to the dfhack lib and makes sure the dependency

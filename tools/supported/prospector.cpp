@@ -7,14 +7,18 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
 #include <map>
+#include <algorithm>
 #include <vector>
 
 using namespace std;
 #include <DFHack.h>
 #include <dfhack/extra/MapExtras.h>
+#include <xgetopt.h>
 
 typedef std::map<int16_t, unsigned int> MatMap;
+typedef std::vector< pair<int16_t, unsigned int> > MatSorter;
 
 typedef std::vector<DFHack::t_feature> FeatureList;
 typedef std::vector<DFHack::t_feature*> FeatureListPointer;
@@ -26,8 +30,9 @@ bool parseOptions(int argc, char **argv, bool &showHidden, bool &showPlants,
 {
     char c;
     opterr = 0;
-
-    while ((c = getopt(argc, argv, "apst")) != -1)
+    
+    xgetopt opt(argc, argv, "apsr");
+    while ((c = opt()) != -1)
     {
         switch (c)
         {
@@ -62,15 +67,33 @@ bool parseOptions(int argc, char **argv, bool &showHidden, bool &showPlants,
     }
 }
 
+template<template <typename> class P = std::greater >
+struct compare_pair_second
+{
+    template<class T1, class T2>
+        bool operator()(const std::pair<T1, T2>& left, const std::pair<T1, T2>& right)
+        {
+            return P<T2>()(left.second, right.second);
+        }
+};
+
+
 void printMats(MatMap &mat, std::vector<DFHack::t_matgloss> &materials)
 {
     unsigned int total = 0;
+    MatSorter sorting_vector;
     for (MatMap::const_iterator it = mat.begin(); it != mat.end(); ++it)
     {
+        sorting_vector.push_back(*it);
+    }
+    std::sort(sorting_vector.begin(), sorting_vector.end(), compare_pair_second<>());
+    for (MatSorter::const_iterator it = sorting_vector.begin(); it != sorting_vector.end(); ++it)
+    {
         DFHack::t_matgloss mat = materials[it->first];
-        std::cout << mat.id << " : " << it->second << std::endl;
+        std::cout << std::setw(25) << mat.id << " : " << it->second << std::endl;
         total += it->second;
     }
+
     std::cout << ">>> TOTAL = " << total << std::endl << std::endl;
 }
 
@@ -140,6 +163,7 @@ int main(int argc, char *argv[])
     MatMap layerMats;
     MatMap veinMats;
     MatMap plantMats;
+    MatMap treeMats;
 
     if (!(showSlade && maps->ReadGlobalFeatures(globalFeatures)))
     {
@@ -297,7 +321,10 @@ int main(int argc, char *argv[])
                             loc = loc % 16;
                             if (showHidden || !b->DesignationAt(loc).bits.hidden)
                             {
-                                plantMats[it->material]++;
+                                if(plant.is_shrub)
+                                    plantMats[it->material]++;
+                                else
+                                    treeMats[it->material]++;
                             }
                         }
                     }
@@ -326,8 +353,10 @@ int main(int argc, char *argv[])
 
     if (showPlants)
     {
-        std::cout << "Plant materials:" << std::endl;
+        std::cout << "Shrubs:" << std::endl;
         printMats(plantMats, mats->organic);
+        std::cout << "Wood in trees:" << std::endl;
+        printMats(treeMats, mats->organic);
     }
 
     if (hasAquifer)

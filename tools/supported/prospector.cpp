@@ -29,9 +29,8 @@ bool parseOptions(int argc, char **argv, bool &showHidden, bool &showPlants,
                   bool &showSlade, bool &showTemple)
 {
     char c;
-    opterr = 0;
-    
     xgetopt opt(argc, argv, "apst");
+    opt.opterr = 0;
     while ((c = opt()) != -1)
     {
         switch (c)

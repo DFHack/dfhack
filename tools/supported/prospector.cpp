@@ -31,7 +31,7 @@ bool parseOptions(int argc, char **argv, bool &showHidden, bool &showPlants,
     char c;
     opterr = 0;
     
-    xgetopt opt(argc, argv, "apsr");
+    xgetopt opt(argc, argv, "apst");
     while ((c = opt()) != -1)
     {
         switch (c)
@@ -342,7 +342,7 @@ int main(int argc, char *argv[])
     std::cout << "Base materials:" << std::endl;
     for (it = baseMats.begin(); it != baseMats.end(); ++it)
     {
-        std::cout << DFHack::TileMaterialString[it->first] << " : " << it->second << std::endl;
+        std::cout << std::setw(25) << DFHack::TileMaterialString[it->first] << " : " << it->second << std::endl;
     }
 
     std::cout << std::endl << "Layer materials:" << std::endl;

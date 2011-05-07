@@ -27,9 +27,9 @@ namespace DFHack
     struct t_descriptor_color
     {
         char id[128]; // id in the raws
-        float r;
-        float v;
-        float b;
+        float red;
+        float green;
+        float blue;
         char name[128]; //displayed name
     };
     /**

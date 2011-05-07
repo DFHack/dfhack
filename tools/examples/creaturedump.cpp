@@ -214,9 +214,9 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
             if(color<Materials->color.size())
             {
                 cout << Materials->color[color].name << "[" 
-                     << (unsigned int) (Materials->color[color].r*255) << ":"
-                     << (unsigned int) (Materials->color[color].v*255) << ":"
-                     << (unsigned int) (Materials->color[color].b*255) << "]";
+                     << (unsigned int) (Materials->color[color].red*255) << ":"
+                     << (unsigned int) (Materials->color[color].green*255) << ":"
+                     << (unsigned int) (Materials->color[color].blue*255) << "]";
             }
             else if (color < Materials->alldesc.size())
             {

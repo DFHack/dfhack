@@ -325,9 +325,9 @@ bool Materials::ReadDescriptorColors (void)
         t_descriptor_color col;
         p->readSTLString (p_colors[i] + OG_Descriptors->getOffset ("rawname"), col.id, 128);
         p->readSTLString (p_colors[i] + OG_Descriptors->getOffset ("name"), col.name, 128);
-        col.r = p->readFloat( p_colors[i] + OG_Descriptors->getOffset ("color_r") );
-        col.v = p->readFloat( p_colors[i] + OG_Descriptors->getOffset ("color_v") );
-        col.b = p->readFloat( p_colors[i] + OG_Descriptors->getOffset ("color_b") );
+        col.red = p->readFloat( p_colors[i] + OG_Descriptors->getOffset ("color_r") );
+        col.green = p->readFloat( p_colors[i] + OG_Descriptors->getOffset ("color_v") );
+        col.blue = p->readFloat( p_colors[i] + OG_Descriptors->getOffset ("color_b") );
         color.push_back(col);
     }
     return ReadNamesOnly(d->owner, OG_Descriptors->getAddress ("all_colors_vector"), alldesc );

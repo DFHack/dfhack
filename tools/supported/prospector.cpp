@@ -278,7 +278,7 @@ int main(int argc, char *argv[])
                             veinMats[b->veinMaterialAt(coord)]++;
                             break;
                         case DFHack::FEATSTONE:
-                            if (blockFeatureLocal)
+                            if (blockFeatureLocal && des.bits.feature_local)
                             {
                                 if (blockFeatureLocal->type == DFHack::feature_Adamantine_Tube
                                         && blockFeatureLocal->main_material == 0) // stone
@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
                                 }
                             }
 
-                            if (showSlade && blockFeatureGlobal
+                            if (showSlade && blockFeatureGlobal && des.bits.feature_global
                                     && blockFeatureGlobal->type == DFHack::feature_Underworld
                                     && blockFeatureGlobal->main_material == 0) // stone
                             {

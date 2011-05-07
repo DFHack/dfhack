@@ -166,7 +166,7 @@ int main (int argc, char** argv)
     {
         cerr << e.what() << endl;
         #ifndef LINUX_BUILD
-            cin.ignore();
+        cin.ignore();
         #endif
         return 1;
     }
@@ -184,6 +184,11 @@ int main (int argc, char** argv)
         string command = "";
         cout <<"[" << mode << ":" << brushname << ":" << amount << ":" << flowmode << ":" << setmode << "]# ";
         getline(cin, command);
+        if (std::cin.eof())
+        {
+            command = "q";
+            std::cout << std::endl; // No newline from the user here!
+        }
         if(command=="help" || command == "?")
         {
             cout << "Modes:" << endl
@@ -492,11 +497,11 @@ int main (int argc, char** argv)
     }
     DF->Detach();
     #ifndef LINUX_BUILD
-        if(!quiet)
-        {
-            cout << "Done. Press any key to continue" << endl;
-            cin.ignore();
-        }
+    if(!quiet)
+    {
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
+    }
     #endif
     return 0;
 }

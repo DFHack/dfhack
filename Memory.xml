@@ -3004,6 +3004,9 @@
         <Offsets>
             WORLD: 0x93f77a0
             <Group name="Creatures">
+                Maybe, possibly.
+                <Address name="current_civ" value="0x093f2b50 0x93f2cdc" />
+                <Address name="current_race" value="0x093f2b5c 0x93f2ce8" />
                 Address name="vector" value="0x0940b174"
                 <Group name="creature">
                     <Offset name="flags3" value="0x94"/>

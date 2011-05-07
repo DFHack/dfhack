@@ -3021,6 +3021,7 @@
             <Group name="World">
                 <Address name="control_mode" value="0x8c3de90" />
                 <Address name="game_mode" value="0x8c3deA0" />
+                <Address name="current_weather" value="0x93F05E4" />
             </Group>
             <Group name="Items">
                 <Address name="items_vector" value="0x940b1fc" />

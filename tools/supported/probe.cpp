@@ -180,6 +180,7 @@ int main (int numargs, const char ** args)
                         printf("%-16s", "");
                         printf("  %4d", block.local_feature);
                         printf(" (%2d)", local->type);
+                        printf(" addr 0x%X ", local->origin);
                         printf(" %s\n", sa_feature(local->type));
                     }
                     PRINT_FLAG( feature_global );

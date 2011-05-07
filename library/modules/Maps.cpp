@@ -639,6 +639,10 @@ bool Maps::StopFeatures()
     }
     return false;
 }
+typedef uint32_t _DWORD;
+typedef uint8_t _BYTE;
+#define BYTEn(x, n)   (*((_BYTE*)&(x)+n))
+#define BYTE4(x)   BYTEn(x,  4)
 
 bool Maps::StartFeatures()
 {
@@ -679,6 +683,34 @@ bool Maps::StartFeatures()
     for(uint32_t blockX = 0; blockX < d->x_block_count; blockX ++)
         for(uint32_t blockY = 0; blockY < d->x_block_count; blockY ++)
     {
+        int16_t zz; // bx@1
+        signed int xx; // edx@2
+        signed int yy; // edi@4
+        int v7; // eax@7
+        int block; // ebx@8
+        int designation; // eax@9
+        int32_t x_cooked_; // eax@11
+        int16_t y_cooked; // dx@11
+        int loc_f_array16x16; // esi@11
+        int64_t x_esquare; // qax@11
+        int64_t x_cooked; // si@11
+        int64_t y_esquare; // qax@11
+        int v16; // eax@12
+        int local_f_idx; // edx@12
+        int v18; // eax@12
+        int result; // eax@14
+        int v20; // ebx@17
+        int designation_; // [sp+14h] [bp+4h]@9
+        x_esquare = blockX / 3 + d->regionX; // *(_DWORD *)(WORLD + 0x55720);
+        x_cooked = ((BYTE4(x_esquare) & 0xF) + (_DWORD)x_esquare) >> 4;
+        y_esquare = blockY / 3 + d->regionY;
+        y_cooked = ((BYTE4(y_esquare) & 0xF) + (_DWORD)y_esquare) >> 4;
+        x_cooked_ = x_cooked;
+        uint32_t array_elem = p->readDWord(base + 4 * (x_cooked >> 4));
+        loc_f_array16x16 =  p->readDWord((y_cooked & 0xFFFFFFF0) + 4 + array_elem);
+        
+/*
+
         // region X coord (48x48 tiles)
         uint16_t region_x_local = ( (blockX / 3) + d->regionX ) / 16;
         // region Y coord (48x48 tiles)
@@ -688,11 +720,16 @@ bool Maps::StartFeatures()
         uint32_t array_elem = p->readDWord(base + (region_x_local / 16) * 4);
 
         // 16B structs, second DWORD of the struct is a pointer
-        uint32_t loc_f_array16x16 = p->readDWord(array_elem + ( sizeof_elem * ( (uint32_t)region_y_local/16)) + offset_elem);
+        uint32_t loc_f_array16x16 = p->readDWord(array_elem
+                                                + ( sizeof_elem * ( (uint32_t)region_y_local/16))
+                                                + offset_elem);
+                                                */
         if(loc_f_array16x16)
         {
             // wtf + sizeof(vector<ptr>) * crap;
-            uint32_t feat_vector = loc_f_array16x16 + sizeof_vec * (16 * (region_x_local % 16) + (region_y_local % 16));
+            //uint32_t feat_vector = loc_f_array16x16 + sizeof_vec * (16 * (region_x_local % 16) + (region_y_local % 16));
+            uint32_t feat_vector = loc_f_array16x16 + sizeof_vec/*16*/ * (y_cooked % 16 + 16 * x_cooked_ % 16);
+            //loc_f_array16x16 + sizeof_vec * (16 * (x_cooked % 16) + (region_y_local % 16));
             DfVector<uint32_t> p_features(p, feat_vector);
             uint32_t size = p_features.size();
             DFCoord pc(blockX,blockY);

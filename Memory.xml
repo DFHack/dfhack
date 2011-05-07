@@ -3002,6 +3002,7 @@
     <Version name="v0.31.25 linux" os="linux" base="v0.31.24 linux" rebase="0x300">
         <MD5 value="fc15065c4d1977ca019c6dad220413d1" />
         <Offsets>
+            WORLD: 0x93f77a0
             <Group name="Creatures">
                 Address name="vector" value="0x0940b174"
                 <Group name="creature">

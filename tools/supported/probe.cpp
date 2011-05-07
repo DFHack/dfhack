@@ -70,11 +70,7 @@ int main (int numargs, const char ** args)
         p->readDWord (region_y_offset, (uint32_t &)regionY);
         p->readDWord (region_z_offset, (uint32_t &)regionZ);
 
-        vector<DFHack::t_feature> global_features;
-        std::map <DFHack::DFCoord, std::vector<DFHack::t_feature *> > local_features;
-
-        bool have_local = Maps->ReadLocalFeatures(local_features);
-        bool have_global = Maps->ReadGlobalFeatures(global_features);
+        bool have_features = Maps->StartFeatures();
 
         int32_t cursorX, cursorY, cursorZ;
         Gui->getCursorCoords(cursorX,cursorY,cursorZ);
@@ -172,26 +168,33 @@ int main (int numargs, const char ** args)
                 PRINT_FLAG( rained );
 
                 DFCoord pc(blockX, blockY);
-                PRINT_FLAG( feature_local );
-
-                if( des.feature_local && have_local )
+                
+                if(have_features)
                 {
-                    printf("%-16s  %4d (%2d) %s\n", "",
-                        block.local_feature,
-                        local_features[pc][block.local_feature]->type,
-                        sa_feature(local_features[pc][block.local_feature]->type)
-                        );
+                    t_feature * local = 0;
+                    t_feature * global = 0;
+                    Maps->ReadFeatures(&(b->raw),&local,&global);
+                    PRINT_FLAG( feature_local );
+                    if(local)
+                    {
+                        printf("%-16s", "");
+                        printf("  %4d", block.local_feature);
+                        printf(" (%2d)", local->type);
+                        printf(" %s\n", sa_feature(local->type));
+                    }
+                    PRINT_FLAG( feature_global );
+                    if(global)
+                    {
+                        printf("%-16s", "");
+                        printf("  %4d", block.global_feature);
+                        printf(" (%2d)", global->type);
+                        printf(" %s\n", sa_feature(global->type));
+                    }
                 }
-
-                PRINT_FLAG( feature_global );
-
-                if( des.feature_global && have_global )
+                else
                 {
-                    printf("%-16s  %4d (%2d) %s\n", "",
-                        block.global_feature,
-                        global_features[block.global_feature].type,
-                        sa_feature(global_features[block.global_feature].type)
-                        );
+                    PRINT_FLAG( feature_local );
+                    PRINT_FLAG( feature_global );
                 }
                 #undef PRINT_FLAG
                 cout << "local feature idx: " << block.local_feature << endl;

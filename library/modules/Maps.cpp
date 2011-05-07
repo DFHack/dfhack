@@ -730,6 +730,7 @@ bool Maps::StartFeatures()
                 // no?
                 else
                 {
+                    //FIXME: replace with accessors
                     // create, add to store
                     t_feature tftemp;
                     tftemp.discovered = false; //= p->readDWord(cur_ptr + 4);

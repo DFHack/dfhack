@@ -34,6 +34,7 @@
     #include <dirent.h>
     #include <unistd.h>
     #include <sys/stat.h>
+    #include <syscall.h>
     #include <fcntl.h>
     #include <sys/wait.h>
 #else

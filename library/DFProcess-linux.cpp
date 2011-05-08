@@ -45,6 +45,7 @@ namespace {
     {
         private:
             uint8_t vector_start;
+            vector <uint32_t> thread_ids;
         public:
             NormalProcess(uint32_t pid, VersionInfoFactory * known_versions);
             ~NormalProcess()
@@ -128,7 +129,7 @@ struct _Rep_base
 {
     uint32_t _M_length; // length of text stored, not including zero termination
     uint32_t _M_capacity; // capacity, not including zero termination
-    uint32_t _M_refcount; // reference count (two STL strings can share a common buffer, copy on write rules apply)
+    int32_t _M_refcount; // reference count (two STL strings can share a common buffer, copy on write rules apply)
 };
 
 size_t NormalProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
@@ -153,7 +154,7 @@ size_t NormalProcess::writeSTLString(const uint32_t address, const std::string w
     // the buffer has actual size = 1. no space for storing anything more than a zero byte
     if(header._M_capacity == 0)
         return 0;
-    if(header._M_refcount != 0 && header._M_refcount != 0xFFFFFFFF ) // one ref or one non-shareable ref
+    if(header._M_refcount > 0 ) // one ref or one non-shareable (-1) ref
         return 0;
 
     // get writeable length (lesser of our string length and capacity of the target)

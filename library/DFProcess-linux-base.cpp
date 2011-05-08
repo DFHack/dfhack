@@ -22,8 +22,10 @@ must not be misrepresented as being the original software.
 distribution.
 */
 #include "Internal.h"
+#include "PlatformInternal.h"
 
 #include <string>
+#include <cstring>
 #include <vector>
 #include <map>
 #include <cstdio>
@@ -76,10 +78,43 @@ int LinuxProcessBase::getPID()
     return my_pid;
 }
 
-//FIXME: implement
+int getdir (string dir, vector<string> &files)
+{
+    DIR *dp;
+    struct dirent *dirp;
+    if((dp  = opendir(dir.c_str())) == NULL) {
+        cout << "Error(" << errno << ") opening " << dir << endl;
+        return errno;
+    }
+    
+    while ((dirp = readdir(dp)) != NULL) {
+    files.push_back(string(dirp->d_name));
+    }
+    closedir(dp);
+    return 0;
+}
+
 bool LinuxProcessBase::getThreadIDs(vector<uint32_t> & threads )
 {
-    return false;
+    stringstream ss;
+    vector<string> subdirs;
+    ss << "/proc/" << my_pid << "/task/";
+    if(getdir(ss.str(),subdirs) != 0)
+    {
+        //FIXME: needs exceptions. this is a fatal error
+        cerr << "unable to enumerate threads. This is BAD!" << endl;
+        return false;
+    }
+    threads.clear();
+    for(int i = 0; i < subdirs.size();i++)
+    {
+        uint32_t tid;
+        if(sscanf(subdirs[i].c_str(),"%d", &tid))
+        {
+            threads.push_back(tid);
+        }
+    }
+    return true;
 }
 
 //FIXME: cross-reference with ELF segment entries?

@@ -257,56 +257,56 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     Process * p = d->owner;
 
     // read pointer from vector at position
-    uint32_t temp = d->p_cre->at (index);
-    furball.origin = temp;
+    uint32_t addr_cr = d->p_cre->at (index);
+    furball.origin = addr_cr;
     Private::t_offsets &offs = d->creatures;
 
     //read creature from memory
     if(d->Ft_basic)
     {
         // name
-        d->d->readName(furball.name,temp + offs.name_offset);
+        d->d->readName(furball.name,addr_cr + offs.name_offset);
 
         // basic stuff
-        p->readDWord (temp + offs.id_offset, furball.id);
-        p->read (temp + offs.pos_offset, 3 * sizeof (uint16_t), (uint8_t *) & (furball.x)); // xyz really
-        p->readDWord (temp + offs.race_offset, furball.race);
-        furball.civ = p->readDWord (temp + offs.civ_offset);
-        p->readByte (temp + offs.sex_offset, furball.sex);
-        p->readWord (temp + offs.caste_offset, furball.caste);
-        p->readDWord (temp + offs.flags1_offset, furball.flags1.whole);
-        p->readDWord (temp + offs.flags2_offset, furball.flags2.whole);
+        p->readDWord (addr_cr + offs.id_offset, furball.id);
+        p->read (addr_cr + offs.pos_offset, 3 * sizeof (uint16_t), (uint8_t *) & (furball.x)); // xyz really
+        p->readDWord (addr_cr + offs.race_offset, furball.race);
+        furball.civ = p->readDWord (addr_cr + offs.civ_offset);
+        p->readByte (addr_cr + offs.sex_offset, furball.sex);
+        p->readWord (addr_cr + offs.caste_offset, furball.caste);
+        p->readDWord (addr_cr + offs.flags1_offset, furball.flags1.whole);
+        p->readDWord (addr_cr + offs.flags2_offset, furball.flags2.whole);
         // custom profession
-        p->readSTLString(temp + offs.custom_profession_offset, furball.custom_profession, sizeof(furball.custom_profession));
+        p->readSTLString(addr_cr + offs.custom_profession_offset, furball.custom_profession, sizeof(furball.custom_profession));
         // profession
-        furball.profession = p->readByte (temp + offs.profession_offset);
+        furball.profession = p->readByte (addr_cr + offs.profession_offset);
     }
     if(d->Ft_advanced)
     {
         // happiness
-        p->readDWord (temp + offs.happiness_offset, furball.happiness);
+        p->readDWord (addr_cr + offs.happiness_offset, furball.happiness);
 
         // physical attributes
-        p->read(temp + offs.physical_offset,
+        p->read(addr_cr + offs.physical_offset,
             sizeof(t_attrib) * NUM_CREATURE_PHYSICAL_ATTRIBUTES,
             (uint8_t *)&furball.strength);
 
         // mood stuff
-        furball.mood = (int16_t) p->readWord (temp + offs.mood_offset);
-        furball.mood_skill = p->readWord (temp + offs.mood_skill_offset);
-        d->d->readName(furball.artifact_name, temp + offs.artifact_name_offset);
+        furball.mood = (int16_t) p->readWord (addr_cr + offs.mood_offset);
+        furball.mood_skill = p->readWord (addr_cr + offs.mood_skill_offset);
+        d->d->readName(furball.artifact_name, addr_cr + offs.artifact_name_offset);
 
         // labors
-        p->read (temp + offs.labors_offset, NUM_CREATURE_LABORS, furball.labors);
+        p->read (addr_cr + offs.labors_offset, NUM_CREATURE_LABORS, furball.labors);
 
-        furball.birth_year = p->readDWord (temp + offs.birth_year_offset );
-        furball.birth_time = p->readDWord (temp + offs.birth_time_offset );
+        furball.birth_year = p->readDWord (addr_cr + offs.birth_year_offset );
+        furball.birth_time = p->readDWord (addr_cr + offs.birth_time_offset );
         /*
          * p->readDWord(temp + offs.creature_pregnancy_offset, furball.pregnancy_timer);
          */
 
         // appearance
-        DfVector <uint32_t> app(p, temp + offs.appearance_vector_offset);
+        DfVector <uint32_t> app(p, addr_cr + offs.appearance_vector_offset);
         furball.nbcolors = app.size();
         if(furball.nbcolors>MAX_COLORS)
             furball.nbcolors = MAX_COLORS;
@@ -331,7 +331,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         // enum soul pointer vector
         DfVector <uint32_t> souls(p,temp + offs.creature_soul_vector_offset);
         */
-        uint32_t soul = p->readDWord(temp + offs.default_soul_offset);
+        uint32_t soul = p->readDWord(addr_cr + offs.default_soul_offset);
         furball.has_default_soul = false;
 
         if(soul)
@@ -365,7 +365,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     }
     if(d->Ft_jobs)
     {
-        furball.current_job.occupationPtr = p->readDWord (temp + offs.current_job_offset);
+        furball.current_job.occupationPtr = p->readDWord (addr_cr + offs.current_job_offset);
         if(furball.current_job.occupationPtr)
         {
             furball.current_job.active = true;
@@ -376,6 +376,10 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         {
             furball.current_job.active = false;
         }
+    }
+    else
+    {
+        furball.current_job.active = false;
     }
     return true;
 }

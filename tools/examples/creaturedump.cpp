@@ -200,7 +200,13 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
         
         if(creature.current_job.active)
         {
-            cout << ", current job: " << mem->getJob(creature.current_job.jobId);
+            try{
+                cout << ", current job: " << mem->getJob(creature.current_job.jobId);
+            }
+            catch(exception & e)
+            {
+                cout << e.what() << endl;
+            }
         }
         
         cout << endl;

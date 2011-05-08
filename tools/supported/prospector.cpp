@@ -64,6 +64,7 @@ bool parseOptions(int argc, char **argv, bool &showHidden, bool &showPlants,
             return false;
         }
     }
+    return true;
 }
 
 template<template <typename> class P = std::greater >

@@ -2378,7 +2378,7 @@
                     <Offset name="civ" value="0xB4" />
                     <Group name="advanced">
                         <Offset name="pickup_equipment_bit" value="0x144" /> CHMOD
-                        <Offset name="mood" value="0x18C" valid="false" /> VERIFY!
+                        <Offset name="mood" value="0x18C"/> It's good
                         <Offset name="birth_year" value="0x19C" />
                         <Offset name="birth_time" value="0x1A0" />
                         <Offset name="current_job" value="0x258" /> chmod

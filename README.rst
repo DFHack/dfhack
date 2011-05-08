@@ -44,9 +44,9 @@ Linux
 =====
 Native linux DF
 ---------------
-0.31.05 - 0.31.19: spotty support (some things might not work)
+0.31.05 - 0.31.24: spotty support (some things might not work)
 
-0.31.22 - 0.31.25: full support
+0.31.25: full support
 
 Windows DF under wine
 ---------------------
@@ -65,10 +65,46 @@ dfattachtest
 ============
 Test of the process attach/detach mechanism.
 
+dfautodump
+==========
+Automated item dumping tool. All loose items on the floor marked
+for dumping are insta-dumped to the position of the in-game cursor.
+
+Cursor must be placed on a floor tile. Instadumped items may not
+show up in the cursor description list until you save/reload.
+
+Options:
+
+ * -d Destroy instead of dumping. Doesn't require a cursor.
+
 dfcleanmap
 ==========
 Cleans all the splatter that get scattered all over the map.
 Only exception is mud. It leaves mud alone.
+
+dfcleanowned
+============
+Removes the ownership flag from items.
+By default, owned food on the floor and rotten items are confistacted and dumped.
+
+======  ======
+Option  Effect
+======  ======
+-a      confiscate all owned items
+-l      confiscated and dump all items scattered on the floor
+-x      confiscate/dump items with wear level 'x' and more
+-X      confiscate/dump items with wear level 'X' and more
+-d      a dry run. combine with other options to see what will happen without it actually happening.
+======  ======
+
+On Windows:
+ * dfremovelitter.bat runs the tool with -lx
+ * dfconfiscate.bat runs the tool with -a
+
+dfcleartask
+===========
+Items marked for a job can get stuck during a abandon/reclaim. This tool aims to fix that.
+Best used immediately after a reclaim. Not thoroughly tested, use at your own risk.
 
 dfderamp (by zilpin)
 ====================

@@ -43,6 +43,10 @@ DFHACK_TOOL(dfcleanmap cleanmap.cpp)
 
 # cleanowned - confiscate items owned by dwarves so they can be atomsmashed/reused/etc.
 DFHACK_TOOL(dfcleanowned cleanowned.cpp)
+IF(WIN32)
+    INSTALL(PROGRAMS dfremovelitter.bat DESTINATION ${DFHACK_BINARY_DESTINATION})
+    INSTALL(PROGRAMS dfconfiscate.bat DESTINATION ${DFHACK_BINARY_DESTINATION})
+ENDIF()
 
 # unstuck - make DF run if something goes wrong with the 'normal' memory access method
 DFHACK_TOOL(dfunstuck unstuck.cpp)
@@ -99,6 +103,9 @@ DFHACK_TOOL(dfincremental incrementalsearch.cpp)
 # auto dump. dumps all items marked for dumping at the cursor position without the need for dwarf labor.
 # ... or just kills the items? :P
 DFHACK_TOOL(dfautodump autodump.cpp)
+IF(WIN32)
+    INSTALL(PROGRAMS dfautodestroy.bat DESTINATION ${DFHACK_BINARY_DESTINATION})
+ENDIF()
 
 # veinlook - look at the map... sort of
 IF(UNIX)

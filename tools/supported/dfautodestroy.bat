@@ -1,0 +1,1 @@
+dfautodump.exe -d

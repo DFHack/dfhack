@@ -74,8 +74,8 @@ Cursor must be placed on a floor tile. Instadumped items may not
 show up in the cursor description list until you save/reload.
 
 Options:
-
- * -d Destroy instead of dumping. Doesn't require a cursor.
+--------
+-d            Destroy instead of dumping. Doesn't require a cursor.
 
 dfcleanmap
 ==========
@@ -87,15 +87,13 @@ dfcleanowned
 Removes the ownership flag from items.
 By default, owned food on the floor and rotten items are confistacted and dumped.
 
-======  ======
-Option  Effect
-======  ======
--a      confiscate all owned items
--l      confiscated and dump all items scattered on the floor
--x      confiscate/dump items with wear level 'x' and more
--X      confiscate/dump items with wear level 'X' and more
--d      a dry run. combine with other options to see what will happen without it actually happening.
-======  ======
+Options:
+--------
+-a            confiscate all owned items
+-l            confiscated and dump all items scattered on the floor
+-x            confiscate/dump items with wear level 'x' and more
+-X            confiscate/dump items with wear level 'X' and more
+-d            a dry run. combine with other options to see what will happen without it actually happening.
 
 On Windows:
  * dfremovelitter.bat runs the tool with -lx
@@ -169,8 +167,10 @@ Can be used to determine tile properties like temperature.
 dfprospector
 ============
 Lists all available minerals on the map and how much of them there is.
-It has one parameter:
-* -a processes all tiles, even hidden ones.
+
+Options:
+--------
+-a            processes all tiles, even hidden ones.
 
 On windows, it's possible to run dfprsopector-all.bat to process all the tiles without messing with terminal windows.
 

@@ -674,7 +674,7 @@ bool Maps::StartFeatures()
     // deref pointer to the humongo-structure
     if(!base)
         return false;
-    
+
     // regionX and regionY are in embark squares!
     // we convert to full region tiles
     // this also works in adventure mode
@@ -759,7 +759,6 @@ bool Maps::StartFeatures()
                     tempvec.push_back(&(d->local_feature_store[cur_ptr]));
                 }
             }
-            cout << "coord: " << pc.x << ":" << pc.y << " = " << tempvec.size() << endl;
             d->m_local_feature[pc] = tempvec;
         }
     }

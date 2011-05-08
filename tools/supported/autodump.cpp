@@ -36,6 +36,9 @@ int main (int argc, char * argv[])
          << "Items are instantly moved to the cursor position, the dump flag is unset," << endl
          << "and the forbid flag is set, as if it had been dumped normally." << endl 
          << "Be aware that any active dump item tasks still point at the item." << endl << endl;
+
+    uint32_t vector_addr = 0;
+
     try
     {
         DF = CM.getSingleContext();
@@ -44,6 +47,8 @@ int main (int argc, char * argv[])
         Gui = DF->getGui();
         Items = DF->getItems();
         Maps = DF->getMaps();
+        DFHack::OffsetGroup* itemGroup = mem->getGroup("Items");
+        vector_addr = itemGroup->getAddress("items_vector");
     }
     catch (exception& e)
     {
@@ -55,12 +60,7 @@ int main (int argc, char * argv[])
     }
 
     DFHack::Process * p = DF->getProcess();
-
-    // FIXME: these can fail and should be wrapped in a try-catch
-    DFHack::OffsetGroup* itemGroup = mem->getGroup("Items");
-    unsigned vector_addr = itemGroup->getAddress("items_vector");
     DFHack::DfVector <uint32_t> p_items (p, vector_addr);
-
     uint32_t numItems = p_items.size();
 
     // init the map
@@ -100,7 +100,15 @@ int main (int argc, char * argv[])
                 #endif
                 return 1;
             }
-            // TODO: check if the target is floor? maybe?
+            uint16_t ttype = MC.tiletypeAt(pos_cursor);
+            if(!DFHack::isFloorTerrain(ttype))
+            {
+                cerr << "Cursor should be placed over a floor." << endl;
+                #ifndef LINUX_BUILD
+                    cin.ignore();
+                #endif
+                return 1;
+            }
         }
     }
     coordmap counts;

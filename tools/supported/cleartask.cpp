@@ -18,6 +18,7 @@ int main ()
     unsigned int i;
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context * DF;
+    DFHack::Items * Items;
     try
     {
         DF = DFMgr.getSingleContext();
@@ -26,9 +27,9 @@ int main ()
     catch (exception& e)
     {
         cerr << e.what() << endl;
-#ifndef LINUX_BUILD
-        cin.ignore();
-#endif
+        #ifndef LINUX_BUILD
+            cin.ignore();
+        #endif
         return 1;
     }
 
@@ -36,11 +37,13 @@ int main ()
     uint32_t item_vec_offset = 0;
     try
     {
-        item_vec_offset = p->getDescriptor()->getAddress ("items_vector");
+        Items = DF->getItems();
+        DFHack::OffsetGroup* itemGroup = p->getDescriptor()->getGroup("Items");
+        item_vec_offset = itemGroup->getAddress("items_vector");
     }
-    catch(DFHack::Error::AllMemdef & e)
+    catch(DFHack::Error::All & e)
     {
-        cerr << "missing offset for the item vector, exiting :(" << endl;
+        cerr << "Fatal error, exiting :(" << endl << e.what() << endl;
         #ifndef LINUX_BUILD
             cin.ignore();
         #endif
@@ -53,12 +56,13 @@ int main ()
     int numtasked = 0;
     for (i=0;i<size;i++)
     {
-        DFHack::t_itemflags flags;
-        flags.whole = p->readDWord(p_items[i] + 0x0C);
+        DFHack::dfh_item temp;
+        Items->readItem(p_items[i],temp);
+        DFHack::t_itemflags & flags = temp.base.flags;
         if (flags.in_job)
         {
             flags.in_job = 0;
-            p->writeDWord(p_items[i] + 0x0C, flags.whole);
+            Items->writeItem(temp);
             numtasked++;
         }
     }

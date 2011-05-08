@@ -201,7 +201,14 @@ int main (int argc, char * argv[])
         Maps->WriteDirtyBit(cx/16, cy/16, cz, true);
     }
     DF->Detach();
-    cout << "Done.  " << dumped_total << " items quickdumped." << endl;
+    if(!destroy)
+    {
+        cout << "Done.  " << dumped_total << " items quickdumped." << endl;
+    }
+    else
+    {
+        cout << "Done.  " << dumped_total << " items marked for destruction." << endl;
+    }
 #ifndef LINUX_BUILD
     cout << "Press any key to continue" << endl;
     cin.ignore();

@@ -125,7 +125,15 @@ int main (int argc, char * argv[])
         // iterator is valid here, we use it later to decrement the pile counter if the item is moved
 
         // only dump the stuff marked for dumping and laying on the ground
-        if (!temp.base.flags.dump || !temp.base.flags.on_ground)
+        if (   !temp.base.flags.dump
+            || !temp.base.flags.on_ground
+            ||  temp.base.flags.construction
+            ||  temp.base.flags.hidden
+            ||  temp.base.flags.in_building
+            ||  temp.base.flags.in_chest
+            ||  temp.base.flags.in_inventory
+            ||  temp.base.flags.construction
+        )
             continue;
 
         if(!destroy) // move to cursor

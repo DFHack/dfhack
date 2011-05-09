@@ -60,8 +60,8 @@ int main ()
             if(itm.base.x == x && itm.base.y == y && itm.base.z == z)
             {
                 printf(
-                    "%5d: %08x %08x (%d,%d,%d) #%08x [%d] %s - %s\n",
-                       i, itm.origin, itm.base.flags.whole,
+                    "%5d: %08x %6d %08x (%d,%d,%d) #%08x [%d] %s - %s\n",
+                       i, itm.origin, itm.id, itm.base.flags.whole,
                        itm.base.x, itm.base.y, itm.base.z,
                        itm.base.vtable,
                        itm.wear_level,
@@ -75,8 +75,8 @@ int main ()
         else
         {
             printf(
-                "%5d: %08x %08x (%d,%d,%d) #%08x [%d] %s - %s\n",
-                   i, itm.origin, itm.base.flags.whole,
+                "%5d: %08x %6d %08x (%d,%d,%d) #%08x [%d] %s - %s\n",
+                   i, itm.origin, itm.id, itm.base.flags.whole,
                    itm.base.x, itm.base.y, itm.base.z,
                    itm.base.vtable,
                    itm.wear_level,

@@ -78,6 +78,7 @@ struct t_item
 
 struct dfh_item
 {
+    int32_t id;
     t_item base;
     t_material matdesc;
     int32_t quantity;

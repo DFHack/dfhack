@@ -96,6 +96,7 @@ private:
     Accessor * AWear;
     Process * p;
     bool hasDecoration;
+    int idFieldOffset;
 public:
     ItemDesc(uint32_t VTable, Process * p);
     bool readItem(uint32_t itemptr, dfh_item & item);
@@ -365,6 +366,8 @@ ItemDesc::ItemDesc(uint32_t VTable, Process *p)
     AQuality = buildAccessor(Items, p, "item_quality_accessor", VTable);
     AWear = buildAccessor(Items, p, "item_wear_accessor", VTable);
 
+    idFieldOffset = Items->getOffset("id");
+
     this->vtable = VTable;
     this->p = p;
     this->className = p->readClassName(VTable).substr(5);
@@ -395,6 +398,7 @@ string ItemDesc::dumpAccessors()
 
 bool ItemDesc::readItem(uint32_t itemptr, DFHack::dfh_item &item)
 {
+    item.id = p->readDWord(itemptr+idFieldOffset);
     p->read(itemptr, sizeof(t_item), (uint8_t*)&item.base);
     item.matdesc.itemType = AMainType->getValue(itemptr);
     item.matdesc.subType = ASubType->getValue(itemptr);
@@ -419,6 +423,7 @@ class Items::Private
         std::map<uint32_t, ItemDesc *> descVTable;
         uint32_t refVectorOffset;
         uint32_t refIDOffset;
+        uint32_t idFieldOffset;
         ClassNameCheck isOwnerRefClass;
 };
 

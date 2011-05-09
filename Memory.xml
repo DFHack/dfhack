@@ -997,6 +997,7 @@
             <Group name="Items">
                 <!-- most of those seem completely unused! -->
                 <Address name="items_vector" />
+                <Offset name="id" description="Item ID offset"/>
                 List of offsets in the VTable :
                 <Offset name="item_type_accessor" />
                 <Offset name="item_subtype_accessor" />
@@ -2236,6 +2237,7 @@
         <Offsets>
         <Group name="Items" valid="true">
             <Address name="items_vector" value="0x16c4540"/>
+            <Offset name="id" value="0x14"/>
             <Offset name="item_ref_vector" value="0x28" />
             <Offset name="owner_ref_id_field" value="0x4" />
             <Offset name="item_wear_accessor" value="0xCC" />
@@ -3025,6 +3027,7 @@
             </Group>
             <Group name="Items">
                 <Address name="items_vector" value="0x940b1fc" />
+                <Offset name="id" value="0x14"/>
                 <Offset name="item_type_accessor" value="0x0" />
                 <Offset name="item_subtype_accessor" value="0x4" />
                 <Offset name="item_subindex_accessor" value="0x8" />

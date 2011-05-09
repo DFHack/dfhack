@@ -89,7 +89,7 @@ namespace
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             size_t writeSTLString(const uint32_t address, const std::string writeString);
             // get class name of an object with rtti/type info
-            std::string readClassName(uint32_t vptr);
+            std::string doReadClassName(uint32_t vptr);
 
             const std::string readCString (uint32_t offset);
 
@@ -590,7 +590,7 @@ size_t NormalProcess::writeSTLString (uint32_t address, string str)
     return stl.writeSTLString(address, str);
 }
 
-string NormalProcess::readClassName (uint32_t vptr)
+string NormalProcess::doReadClassName (uint32_t vptr)
 {
     return stl.readClassName(vptr);
 }

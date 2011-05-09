@@ -419,7 +419,7 @@ class Items::Private
         std::map<uint32_t, ItemDesc *> descVTable;
         uint32_t refVectorOffset;
         uint32_t refIDOffset;
-        uint32_t ownerRefVTable;
+        ClassNameCheck isOwnerRefClass;
 };
 
 Items::Items(DFContextShared * d_)
@@ -427,7 +427,8 @@ Items::Items(DFContextShared * d_)
     d = new Private;
     d->d = d_;
     d->owner = d_->p;
-    d->ownerRefVTable = d->refVectorOffset = d->refIDOffset = 0;
+    d->refVectorOffset = d->refIDOffset = 0;
+    d->isOwnerRefClass = ClassNameCheck("general_ref_unit_itemownerst");
 }
 
 bool Items::Start()
@@ -508,16 +509,7 @@ int32_t Items::getItemOwnerID(const DFHack::dfh_item &item)
         uint32_t curRef = p_refs[i];
         uint32_t vtbl = d->owner->readDWord(curRef);
 
-        if (!d->ownerRefVTable)
-        {
-            std::string className = d->owner->readClassName(vtbl);
-            if (className == "general_ref_unit_itemownerst")
-                d->ownerRefVTable = vtbl;
-            else
-                continue;
-        }
-        else if (d->ownerRefVTable != vtbl)
-            continue;
+        if (!d->isOwnerRefClass(d->owner, vtbl)) continue;
 
         return d->owner->readDWord(curRef + d->refIDOffset);
     }

@@ -73,7 +73,7 @@ namespace {
             size_t writeSTLString(const uint32_t address, const std::string writeString);
             size_t copySTLString(const uint32_t address, const uint32_t target);
             // get class name of an object with rtti/type info
-            std::string readClassName(uint32_t vptr);
+            std::string doReadClassName(uint32_t vptr);
     };
 }
 
@@ -217,7 +217,7 @@ size_t NormalProcess::copySTLString (uint32_t offset, uint32_t target)
     return header._M_length;
 }
 
-string NormalProcess::readClassName (uint32_t vptr)
+string NormalProcess::doReadClassName (uint32_t vptr)
 {
     int typeinfo = Process::readDWord(vptr - 0x4);
     int typestring = Process::readDWord(typeinfo + 0x4);

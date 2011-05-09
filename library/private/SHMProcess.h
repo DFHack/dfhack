@@ -74,7 +74,7 @@ namespace DFHack
 
         void readSTLVector(const uint32_t address, t_vecTriplet & triplet);
         // get class name of an object with rtti/type info
-        std::string readClassName(uint32_t vptr);
+        std::string doReadClassName(uint32_t vptr);
 
         const std::string readCString (uint32_t offset);
 

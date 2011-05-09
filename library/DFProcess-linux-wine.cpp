@@ -73,7 +73,7 @@ namespace {
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             size_t writeSTLString(const uint32_t address, const std::string writeString);
             // get class name of an object with rtti/type info
-            std::string readClassName(uint32_t vptr);
+            std::string doReadClassName(uint32_t vptr);
     };
 }
 
@@ -168,7 +168,7 @@ const string WineProcess::readSTLString (uint32_t offset)
     return stl.readSTLString(offset);
 }
 
-string WineProcess::readClassName (uint32_t vptr)
+string WineProcess::doReadClassName (uint32_t vptr)
 {
     return stl.readClassName(vptr);
 }

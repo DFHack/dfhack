@@ -383,7 +383,7 @@ void SHMProcess::readSTLVector(const uint32_t address, t_vecTriplet & triplet)
 }
 
 
-string SHMProcess::readClassName (uint32_t vptr)
+string SHMProcess::doReadClassName (uint32_t vptr)
 {
     if(!d->locked) throw Error::MemoryAccessDenied(vptr);
 

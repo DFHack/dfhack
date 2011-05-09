@@ -318,8 +318,12 @@ namespace DFHack
             const uint16_t x2, const uint16_t y2,const uint16_t z2);
         bool ReadCreature(const int32_t index, t_creature & furball);
         bool ReadJob(const t_creature * furball, std::vector<t_material> & mat);
+
         bool ReadInventoryIdx(const uint32_t index, std::vector<uint32_t> & item);
         bool ReadInventoryPtr(const uint32_t index, std::vector<uint32_t> & item);
+
+        bool ReadOwnedItemsIdx(const uint32_t index, std::vector<int32_t> & item);
+        bool ReadOwnedItemsPtr(const uint32_t index, std::vector<int32_t> & item);
 
         int32_t FindIndexById(int32_t id);
 

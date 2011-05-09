@@ -895,6 +895,7 @@
                         <Offset name="physical" value="0x464" description="An array of physical attributes." />
                         <Offset name="appearance_vector" description="seems to be indexes in the list of possible colors defined in the raws for each group" />
                         <Offset name="inventory_vector" />
+                        <Offset name="owned_items_vector" />
                         <Offset name="artifact_name" description="Name of the artifact created by this creature." />
                         <Offset name="soul_vector" description="A vector of souls attached to the creature." />
                         <Offset name="current_soul" description="Currently active soul?" />
@@ -3013,6 +3014,7 @@
                 <Group name="creature">
                     <Offset name="flags3" value="0x94"/>
                     <Group name="advanced">
+                        <Offset name="owned_items_vector" value="0x210"/>
                         <Offset name="hist_figure_id" value="0x640"/>
                     </Group>
                 </Group>

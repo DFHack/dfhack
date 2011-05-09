@@ -116,6 +116,10 @@ public:
     ~Items();
     bool Start();
     bool Finish();
+
+    bool readItemVector(std::vector<uint32_t> &items);
+    uint32_t findItemByID(int32_t id);
+
     /// get a string describing an item
     std::string getItemDescription(const dfh_item & item, Materials * Materials);
     /// get a short name for an item

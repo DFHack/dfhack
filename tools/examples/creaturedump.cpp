@@ -285,19 +285,34 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature)
             }
         }
 
-        //std::vector<uint32_t> inventory;
         // FIXME: TOO BAD...
-        /*
-        if( Creatures->ReadInventoryPtr(creature.origin, inventory) )
+        std::vector<uint32_t> inventory;
+        if( Creatures->ReadInventoryPtr(creature.origin, inventory))
         {
             DFHack::Items * Items = DF->getItems();
             printf("\tInventory:\n");
             for(unsigned int i = 0; i < inventory.size(); i++)
             {
-                printf("\t\t%s\n", Items->getItemDescription(inventory[i], Materials).c_str());
+                DFHack::dfh_item item;
+                if (Items->readItem(inventory[i], item))
+                    printf("\t\t%d: %s\n", item.id, Items->getItemDescription(item, Materials).c_str());
             }
         }
-        */
+
+        std::vector<int32_t> owned;
+        if( Creatures->ReadOwnedItemsPtr(creature.origin, owned))
+        {
+            DFHack::Items * Items = DF->getItems();
+            printf("\tOwns:\n");
+            for (int i = 0; i < owned.size(); i++) {
+                uint32_t pitem = Items->findItemByID(owned[i]);
+                DFHack::dfh_item item;
+                if (!pitem || !Items->readItem(pitem,item))
+                    pitem = 0;
+                printf("\t\t%d: %s\n", owned[i],
+                       pitem ? Items->getItemDescription(item, Materials).c_str() : "?");
+            }
+        }
 
         /*
         if(creature.pregnancy_timer > 0)

@@ -421,9 +421,11 @@ class Items::Private
         Process * owner;
         std::map<int32_t, ItemDesc *> descType;
         std::map<uint32_t, ItemDesc *> descVTable;
+        std::map<int32_t, uint32_t> idLookupTable;
         uint32_t refVectorOffset;
         uint32_t refIDOffset;
         uint32_t idFieldOffset;
+        uint32_t itemVectorAddress;
         ClassNameCheck isOwnerRefClass;
 };
 
@@ -434,16 +436,50 @@ Items::Items(DFContextShared * d_)
     d->owner = d_->p;
     d->refVectorOffset = d->refIDOffset = 0;
     d->isOwnerRefClass = ClassNameCheck("general_ref_unit_itemownerst");
+
+    DFHack::OffsetGroup* itemGroup = d_->offset_descriptor->getGroup("Items");
+    d->itemVectorAddress = itemGroup->getAddress("items_vector");
+    d->idFieldOffset = itemGroup->getOffset("id");
 }
 
 bool Items::Start()
 {
+    d->idLookupTable.clear();
     return true;
 }
 
 bool Items::Finish()
 {
     return true;
+}
+
+bool Items::readItemVector(std::vector<uint32_t> &items)
+{
+    DFHack::DfVector <uint32_t> p_items(d->owner, d->itemVectorAddress);
+
+    d->idLookupTable.clear();
+    items.resize(p_items.size());
+
+    for (unsigned i = 0; i < p_items.size(); i++) {
+        uint32_t ptr = p_items[i];
+        items[i] = ptr;
+        d->idLookupTable[d->owner->readDWord(ptr + d->idFieldOffset)] = ptr;
+    }
+
+    return true;
+}
+
+uint32_t Items::findItemByID(int32_t id)
+{
+    if (id < 0)
+        return 0;
+
+    if (d->idLookupTable.empty()) {
+        std::vector<uint32_t> tmp;
+        readItemVector(tmp);
+    }
+
+    return d->idLookupTable[id];
 }
 
 Items::~Items()

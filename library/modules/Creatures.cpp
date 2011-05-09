@@ -56,6 +56,7 @@ struct Creatures::Private
     bool Ft_job_materials;
     bool Ft_soul;
     bool Ft_inventory;
+    bool Ft_owned_items;
     struct t_offsets
     {
         // creature offsets
@@ -93,6 +94,7 @@ struct Creatures::Private
         uint32_t birth_year_offset;
         uint32_t birth_time_offset;
         uint32_t inventory_offset;
+        uint32_t owned_items_offset;
         // creature job stuff
         int32_t job_type_offset;
         int32_t job_id_offset;
@@ -137,7 +139,7 @@ Creatures::Creatures(DFContextShared* _d)
     OffsetGroup * OG_name = minfo->getGroup("name");
     OffsetGroup * OG_jobs = OG_Creatures->getGroup("job");
     OffsetGroup * OG_job_mats = OG_jobs->getGroup("material");
-    d->Ft_basic = d->Ft_advanced = d->Ft_jobs = d->Ft_soul = d->Ft_inventory = d->Ft_job_materials = false;
+    d->Ft_basic = d->Ft_advanced = d->Ft_jobs = d->Ft_soul = d->Ft_inventory = d->Ft_owned_items = d->Ft_job_materials = false;
 
     Private::t_offsets &creatures = d->creatures;
     try
@@ -184,6 +186,12 @@ Creatures::Creatures(DFContextShared* _d)
         {
             creatures.inventory_offset = OG_creature_ex->getOffset("inventory_vector");
             d->Ft_inventory = true;
+        }
+        catch(Error::All&){};
+        try
+        {
+            creatures.owned_items_offset = OG_creature_ex->getOffset("owned_items_vector");
+            d->Ft_owned_items = true;
         }
         catch(Error::All&){};
         try
@@ -689,6 +697,28 @@ bool Creatures::ReadInventoryPtr(const uint32_t temp, std::vector<uint32_t> & it
     item.resize(citem.size());
     for(i=0;i<citem.size();i++)
         item[i] = p->readDWord(citem[i]);
+    return true;
+}
+
+bool Creatures::ReadOwnedItemsIdx(const uint32_t index, std::vector<int32_t> & item)
+{
+    if(!d->Started || !d->Ft_owned_items) return false;
+    uint32_t temp = d->p_cre->at (index);
+    return this->ReadOwnedItemsPtr(temp, item);
+}
+
+bool Creatures::ReadOwnedItemsPtr(const uint32_t temp, std::vector<int32_t> & item)
+{
+    unsigned int i;
+    if(!d->Started || !d->Ft_owned_items) return false;
+    Process * p = d->owner;
+
+    DfVector <int32_t> citem(p, temp + d->creatures.owned_items_offset);
+    if(citem.size() == 0)
+        return false;
+    item.resize(citem.size());
+    for(i=0;i<citem.size();i++)
+        item[i] = citem[i];
     return true;
 }
 

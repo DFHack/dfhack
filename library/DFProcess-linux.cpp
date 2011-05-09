@@ -27,6 +27,7 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <cstdio>
 #include <cstring>
 using namespace std;
@@ -37,6 +38,7 @@ using namespace std;
 #include "dfhack/DFError.h"
 #include <errno.h>
 #include <sys/ptrace.h>
+#include <sys/syscall.h>
 #include <md5wrapper.h>
 using namespace DFHack;
 
@@ -45,7 +47,9 @@ namespace {
     {
         private:
             uint8_t vector_start;
-            vector <uint32_t> thread_ids;
+            set <uint32_t> thread_ids;
+
+            void waitForSuspend(set<uint32_t> &threads);
         public:
             NormalProcess(uint32_t pid, VersionInfoFactory * known_versions);
             ~NormalProcess()
@@ -230,33 +234,32 @@ bool NormalProcess::asyncSuspend()
 
 bool NormalProcess::suspend()
 {
-    int status;
     if(!attached)
         return false;
     if(suspended)
         return true;
-    if (kill(my_pid, SIGSTOP) == -1)
-    {
-        // no, we got an error
-        perror("kill SIGSTOP error");
+
+    set<uint32_t> threads;
+
+    for (set<uint32_t>::iterator it = thread_ids.begin(); it != thread_ids.end(); ++it) {
+        if (syscall(SYS_tgkill, my_pid, *it, SIGSTOP) == -1) {
+            cerr << "couldn't stop thread " << *it << endl;
+            perror("kill SIGSTOP error");
+        } else {
+            threads.insert(*it);
+        }
+    }
+
+    if (threads.empty()) {
+        cerr << "couldn't suspend any of the threads";
         return false;
     }
-    while(true)
-    {
-        // we wait on the pid
-        pid_t w = waitpid(my_pid, &status, 0);
-        if (w == -1)
-        {
-            // child died
-            perror("DF exited during suspend call");
-            return false;
-        }
-        // stopped -> let's continue
-        if (WIFSTOPPED(status))
-        {
-            break;
-        }
-    }
+
+    waitForSuspend(threads);
+
+    if (!threads.empty())
+        cerr << "couldn't suspend some of the threads";
+
     suspended = true;
     return true;
 }
@@ -272,49 +275,82 @@ bool NormalProcess::resume()
         return false;
     if(!suspended)
         return true;
-    if (ptrace(PTRACE_CONT, my_pid, NULL, NULL) == -1)
-    {
-        // no, we got an error
-        perror("ptrace resume error");
-        return false;
+
+    bool ok = true;
+    for (set<uint32_t>::iterator it = thread_ids.begin(); it != thread_ids.end(); ++it) {
+        int result = ptrace(PTRACE_CONT, *it, NULL, NULL);
+        if(result == -1)
+        {
+            cerr << "couldn't resume thread " << *it << endl;
+            perror("ptrace resume error");
+            ok = false;
+        }
     }
-    suspended = false;
-    return true;
+
+    if (ok)
+        suspended = false;
+    return ok;
+}
+
+void NormalProcess::waitForSuspend(set<uint32_t> &threads)
+{
+    int status;
+    while (!threads.empty()) {
+        pid_t w = waitpid(-1, &status, __WALL);
+        if (w == -1) {
+            perror("waitpid");
+            return;
+        }
+        if (threads.find(w) == threads.end()
+            && thread_ids.find(w)  == thread_ids.end())
+            continue;
+        if (WIFSTOPPED(status)) {
+            threads.erase(w);
+            thread_ids.insert(w);
+        } else if (WIFEXITED(status) || WIFSIGNALED(status)) {
+            threads.erase(w);
+            thread_ids.erase(w);
+        }
+    }
 }
 
 bool NormalProcess::attach()
 {
-    int status;
     if(attached)
     {
         if(!suspended)
             return suspend();
         return true;
     }
-    // can we attach?
-    if (ptrace(PTRACE_ATTACH , my_pid, NULL, NULL) == -1)
-    {
-        // no, we got an error
-        perror("ptrace attach error");
-        cerr << "attach failed on pid " << my_pid << endl;
+
+    set<uint32_t> threads;
+    vector<uint32_t> thread_vec;
+
+    if (!getThreadIDs(thread_vec))
+        return false;
+
+    for (vector<uint32_t>::iterator it = thread_vec.begin(); it != thread_vec.end(); ++it) {
+        if (ptrace(PTRACE_ATTACH, *it, NULL, NULL) == -1)
+        {
+            // no, we got an error
+            perror("ptrace attach error");
+            cerr << "attach failed on pid " << *it << endl;
+            continue;
+        }
+        threads.insert(*it);
+    }
+
+    thread_ids.clear();
+    waitForSuspend(threads);
+
+    if (thread_ids.empty()) {
+        cerr << "couldn't attach to any threads" << endl;
         return false;
     }
-    while(true)
-    {
-        // we wait on the pid
-        pid_t w = waitpid(my_pid, &status, 0);
-        if (w == -1)
-        {
-            // child died
-            perror("wait inside attach()");
-            return false;
-        }
-        // stopped -> let's continue
-        if (WIFSTOPPED(status))
-        {
-            break;
-        }
-    }
+
+    if (!threads.empty())
+        cerr << "couldn't attach to some threads" << endl;
+
     suspended = true;
 
     int proc_pid_mem = open(memFile.c_str(),O_RDONLY);
@@ -350,18 +386,19 @@ bool NormalProcess::detach()
     }
     else
     {
-        // detach
-        result = ptrace(PTRACE_DETACH, my_pid, NULL, NULL);
-        if(result == -1)
-        {
-            cerr << "couldn't detach from process pid" << my_pid << endl;
-            perror("ptrace detach");
-            return false;
+        for (set<uint32_t>::iterator it = thread_ids.begin(); it != thread_ids.end();) {
+            // detach
+            result = ptrace(PTRACE_DETACH, *it, NULL, NULL);
+            if(result == -1)
+            {
+                cerr << "couldn't detach from process pid" << *it << endl;
+                perror("ptrace detach");
+                return false;;
+            }
+            thread_ids.erase(it++);
         }
-        else
-        {
-            attached = false;
-            return true;
-        }
+
+        attached = false;
+        return true;
     }
 }

@@ -57,31 +57,40 @@ int main ()
         Items->readItem(p_items[i],itm);
         if(x != -30000)
         {
-            if(itm.base.x == x && itm.base.y == y && itm.base.z == z)
+            if(itm.base.x == x
+                && itm.base.y == y
+                && itm.base.z == z
+                && itm.base.flags.on_ground
+                && !itm.base.flags.in_chest
+                && !itm.base.flags.in_inventory
+                && !itm.base.flags.in_building
+            )
             {
                 printf(
-                    "%5d: %08x %6d %08x (%d,%d,%d) #%08x [%d] %s - %s\n",
+                    "%5d: %08x %6d %08x (%d,%d,%d) #%08x [%d] %s - %s. Stack: %d\n",
                        i, itm.origin, itm.id, itm.base.flags.whole,
                        itm.base.x, itm.base.y, itm.base.z,
                        itm.base.vtable,
                        itm.wear_level,
                        Items->getItemClass(itm.matdesc.itemType).c_str(),
-                       Items->getItemDescription(itm, Materials).c_str()
+                       Items->getItemDescription(itm, Materials).c_str(),
+                       itm.quantity
                 );
-                hexdump(DF,p_items[i],0x100);
+                hexdump(DF,p_items[i],0x300);
                 cout << Items->dumpAccessors(itm) << endl;
             }
         }
         else
         {
             printf(
-                "%5d: %08x %6d %08x (%d,%d,%d) #%08x [%d] %s - %s\n",
+                "%5d: %08x %6d %08x (%d,%d,%d) #%08x [%d] %s - %s. Stack: %d\n",
                    i, itm.origin, itm.id, itm.base.flags.whole,
                    itm.base.x, itm.base.y, itm.base.z,
                    itm.base.vtable,
                    itm.wear_level,
                    Items->getItemClass(itm.matdesc.itemType).c_str(),
-                   Items->getItemDescription(itm, Materials).c_str()
+                   Items->getItemDescription(itm, Materials).c_str(),
+                   itm.quantity
             );
         }
     }

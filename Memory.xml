@@ -1005,6 +1005,7 @@
                 <Offset name="item_subindex_accessor" />
                 <Offset name="item_index_accessor" />
                 <Offset name="item_quality_accessor" />
+                <Offset name="item_quantity_accessor" />
                 <!--
                 <Offset name="item_improvement_vector" />
                 <Offset name="item_improvement_subindex" />
@@ -2242,6 +2243,7 @@
             <Offset name="item_ref_vector" value="0x28" />
             <Offset name="owner_ref_id_field" value="0x4" />
             <Offset name="item_wear_accessor" value="0xCC" />
+            <Offset name="item_quantity_accessor" value="0x214" /> 0x194  TEST
             <Offset name="item_quality_accessor" value="0x25C" />
         </Group>
     </Offsets>
@@ -3034,6 +3036,7 @@
                 <Offset name="item_subtype_accessor" value="0x4" />
                 <Offset name="item_subindex_accessor" value="0x8" />
                 <Offset name="item_index_accessor" value="0xC" />
+                <Offset name="item_quantity_accessor" value="0x214" /> 0x194  TEST
                 <Offset name="item_quality_accessor" value="0x25C" />
                 <Offset name="item_wear_accessor" value="0xCC" />
                 <Offset name="item_ref_vector" value="0x24" />

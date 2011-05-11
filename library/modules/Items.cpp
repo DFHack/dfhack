@@ -93,6 +93,7 @@ private:
     Accessor * ASubIndex;
     Accessor * AIndex;
     Accessor * AQuality;
+    Accessor * AQuantity;
     Accessor * AWear;
     Process * p;
     bool hasDecoration;
@@ -365,6 +366,7 @@ ItemDesc::ItemDesc(uint32_t VTable, Process *p)
     AIndex = buildAccessor(Items, p, "item_index_accessor", VTable);
     AQuality = buildAccessor(Items, p, "item_quality_accessor", VTable);
     AWear = buildAccessor(Items, p, "item_wear_accessor", VTable);
+    AQuantity = buildAccessor(Items, p, "item_quantity_accessor", VTable);
 
     idFieldOffset = Items->getOffset("id");
 
@@ -391,6 +393,7 @@ string ItemDesc::dumpAccessors()
     outss << "ASubIndex :" << ASubIndex->dump() << endl;
     outss << "AIndex    :" << AIndex->dump() << endl;
     outss << "AQuality  :" << AQuality->dump() << endl;
+    outss << "AQuantity :" << AQuantity->dump() << endl;
     outss << "AWear     :" << AWear->dump() << endl;
     return outss.str();
 }
@@ -405,7 +408,7 @@ bool ItemDesc::readItem(uint32_t itemptr, DFHack::dfh_item &item)
     item.matdesc.subIndex = ASubIndex->getValue(itemptr);
     item.matdesc.index = AIndex->getValue(itemptr);
     item.quality = AQuality->getValue(itemptr);
-    item.quantity = 1; /* TODO */
+    item.quantity = AQuantity->getValue(itemptr);
     item.origin = itemptr;
     // FIXME: use templates. seriously.
     // Note: this accessor returns a 32-bit value with the higher

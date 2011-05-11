@@ -394,6 +394,11 @@ void SHMProcess::readSTLVector(const uint32_t address, t_vecTriplet & triplet)
     read(address + d->vector_start, sizeof(triplet), (uint8_t *) &triplet);
 }
 
+void SHMProcess::writeSTLVector(const uint32_t address, t_vecTriplet & triplet)
+{
+    write(address + d->vector_start, sizeof(triplet), (uint8_t *) &triplet);
+}
+
 string SHMProcess::doReadClassName (uint32_t vptr)
 {
     int rtti = Process::readDWord(vptr - 0x4);

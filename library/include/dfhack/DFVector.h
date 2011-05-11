@@ -31,18 +31,30 @@ distribution.
 #include "DFExport.h"
 #include "VersionInfo.h"
 #include "DFProcess.h"
+
+#include <string.h>
+
 namespace DFHack
 {
     template <class T>
     class DFHACK_EXPORT DfVector
     {
         private:
+            Process *_p;
+            uint32_t _address;
             t_vecTriplet t;
             uint32_t _size;// vector size
             
             T * data; // cached data
+
+            bool isMetadataInSync()
+            {
+                t_vecTriplet t2;
+                _p->readSTLVector(_address,t2);
+                return (t2.start == t.start || t2.end == t.end || t2.alloc_end == t.alloc_end);
+            }
         public:
-            DfVector(Process * p, uint32_t address)
+            DfVector(Process *p, uint32_t address) : _p(p), _address(address)
             {
                 p->readSTLVector(address,t);
                 uint32_t byte_size = t.end - t.start;
@@ -60,18 +72,43 @@ namespace DFHack
                     delete [] data;
             };
             // get offset of the specified index
-            inline T& operator[] (uint32_t index)
+            inline const T& operator[] (uint32_t index)
             {
                 // FIXME: vector out of bounds exception
                 //assert(index < size);
                 return data[index];
             };
             // get offset of the specified index
-            inline T& at (uint32_t index)
+            inline const T& at (uint32_t index)
             {
                 //assert(index < size);
                 return data[index];
             };
+            // update value at index
+            bool set(uint32_t index, T value)
+            {
+                if (index >= _size)
+                    return false;
+                data[index] = value;
+                _p->write(t.start + sizeof(T)*index, sizeof(T), (uint8_t *)&data[index]);
+                return true;
+            }
+            // remove value
+            bool remove(uint32_t index)
+            {
+                if (index >= _size || !isMetadataInSync())
+                    return false;
+                // Remove the item
+                _size--;
+                t.end -= sizeof(T);
+                int tail = (_size-index)*sizeof(T);
+                memmove(&data[index], &data[index+1], tail);
+                // Write back the data
+                if (tail)
+                    _p->write(t.start + sizeof(T)*index, tail, (uint8_t *)&data[index]);
+                _p->writeSTLVector(_address,t);
+                return true;
+            }
             // get vector size
             inline uint32_t size ()
             {

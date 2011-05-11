@@ -182,6 +182,7 @@ namespace DFHack
 
             /// read a STL vector
             virtual void readSTLVector(const uint32_t address, t_vecTriplet & triplet) = 0;
+            virtual void writeSTLVector(const uint32_t address, t_vecTriplet & triplet) = 0;
             /// get class name of an object with rtti/type info
             virtual std::string doReadClassName(uint32_t vptr) = 0;
 

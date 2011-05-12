@@ -38,6 +38,7 @@ using namespace std;
 #include "dfhack/DFVector.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Items.h"
+#include "dfhack/modules/Creatures.h"
 #include "ModuleFactory.h"
 
 using namespace DFHack;
@@ -577,6 +578,30 @@ bool Items::readItemRefs(const dfh_item &item, const ClassNameCheck &classname, 
     }
 
     return !values.empty();
+}
+
+bool Items::removeItemOwner(dfh_item &item, Creatures *creatures)
+{
+    DFHack::DfVector<uint32_t> p_refs(d->owner, item.origin + d->refVectorOffset);
+
+    for (uint32_t i=0; i<p_refs.size(); i++)
+    {
+        uint32_t vtbl = d->owner->readDWord(p_refs[i]);
+        if (!d->isOwnerRefClass(d->owner, vtbl)) continue;
+
+        int32_t oid = d->owner->readDWord(p_refs[i]+4);
+        int32_t ix = creatures->FindIndexById(oid);
+
+        if (ix < 0 || !creatures->RemoveOwnedItemIdx(ix, item.id))
+            return false;
+
+        if (!p_refs.remove(i--))
+            return false;
+    }
+
+    item.base.flags.owned = 0;
+
+    return true;
 }
 
 std::string Items::getItemClass(const dfh_item & item)

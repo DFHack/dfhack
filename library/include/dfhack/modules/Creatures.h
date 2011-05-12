@@ -347,6 +347,11 @@ namespace DFHack
 
         void CopyNameTo(t_creature &creature, uint32_t address);
 
+    protected:
+        friend class Items;
+        bool RemoveOwnedItemIdx(const uint32_t index, int32_t id);
+        bool RemoveOwnedItemPtr(const uint32_t index, int32_t id);
+
     private:
         struct Private;
         Private *d;

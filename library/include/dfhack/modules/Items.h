@@ -14,6 +14,7 @@ namespace DFHack
 
 class Context;
 class DFContextShared;
+class Creatures;
 
 //From http://dwarffortresswiki.net/index.php/User:Rick/Memory_research
 //They all seem to be valid on 40d as well
@@ -138,6 +139,9 @@ public:
     int32_t getItemContainerID(const dfh_item & item);
     /// which items does it contain?
     bool getContainedItems(const dfh_item & item, std::vector<int32_t> &items);
+
+    /// wipe out the owner records
+    bool removeItemOwner(dfh_item &item, Creatures *creatures);
 
     bool readItemRefs(const dfh_item &item, const ClassNameCheck &classname, std::vector<int32_t> &values);
 private:

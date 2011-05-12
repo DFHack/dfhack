@@ -722,6 +722,30 @@ bool Creatures::ReadOwnedItemsPtr(const uint32_t temp, std::vector<int32_t> & it
     return true;
 }
 
+bool Creatures::RemoveOwnedItemIdx(const uint32_t index, int32_t id)
+{
+    if(!d->Started || !d->Ft_owned_items) return false;
+    uint32_t temp = d->p_cre->at (index);
+    return this->RemoveOwnedItemPtr(temp, id);
+}
+
+bool Creatures::RemoveOwnedItemPtr(const uint32_t temp, int32_t id)
+{
+    if(!d->Started || !d->Ft_owned_items) return false;
+    Process * p = d->owner;
+
+    DfVector <int32_t> citem(p, temp + d->creatures.owned_items_offset);
+
+    for (unsigned i = 0; i < citem.size(); i++) {
+        if (citem[i] != id)
+            continue;
+        if (!citem.remove(i--))
+            return false;
+    }
+
+    return true;
+}
+
 void Creatures::CopyNameTo(t_creature &creature, uint32_t address)
 {
     Private::t_offsets &offs = d->creatures;

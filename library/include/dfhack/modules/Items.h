@@ -129,10 +129,17 @@ public:
     bool readItem(uint32_t itemptr, dfh_item & item);
     /// write item base (position and flags only = t_item part of dfh_item)
     bool writeItem(const dfh_item & item);
-    /// who owns this item we already read?
-    int32_t getItemOwnerID(const dfh_item & item);
     /// dump offsets used by accessors to a string
     std::string dumpAccessors(const dfh_item & item);
+
+    /// who owns this item we already read?
+    int32_t getItemOwnerID(const dfh_item & item);
+    /// which item is it contained in?
+    int32_t getItemContainerID(const dfh_item & item);
+    /// which items does it contain?
+    bool getContainedItems(const dfh_item & item, std::vector<int32_t> &items);
+
+    bool readItemRefs(const dfh_item &item, const ClassNameCheck &classname, std::vector<int32_t> &values);
 private:
     class Private;
     Private* d;

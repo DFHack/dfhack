@@ -226,14 +226,14 @@ namespace DFHack
 
     class DFHACK_EXPORT ClassNameCheck {
         std::string name;
-        uint32_t vptr;
+        mutable uint32_t vptr;
     public:
         ClassNameCheck() : vptr(0) {}
         ClassNameCheck(std::string _name) : name(_name), vptr(0) {}
         ClassNameCheck &operator= (const ClassNameCheck &b) {
             name = b.name; vptr = b.vptr; return *this;
         }
-        bool operator() (Process *p, uint32_t ptr) {
+        bool operator() (Process *p, uint32_t ptr) const {
             if (vptr == 0 && p->readClassName(ptr) == name)
                 vptr = ptr;
             return (vptr && vptr == ptr);

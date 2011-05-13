@@ -552,6 +552,10 @@ namespace DFHack
          */
         bool ReadFeatures(uint32_t x, uint32_t y, uint32_t z, int16_t & local, int16_t & global);
         /**
+         * Set the feature indexes of a block
+         */
+        bool WriteFeatures(uint32_t x, uint32_t y, uint32_t z, const int16_t & local, const int16_t & global);
+        /**
          * Get pointers to features of a block
          */
         bool ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature ** local, t_feature ** global);

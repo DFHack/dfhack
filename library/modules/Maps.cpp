@@ -833,6 +833,20 @@ bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, int16_t & local, int
     return false;
 }
 
+bool Maps::WriteFeatures(uint32_t x, uint32_t y, uint32_t z, const int16_t & local, const int16_t & global)
+{
+    MAPS_GUARD
+    uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
+    if (addr)
+    {
+        Process * p = d->owner;
+        p->writeWord(addr + d->offsets.global_feature_offset, (const uint16_t&) global);
+        p->writeWord(addr + d->offsets.local_feature_offset, (const uint16_t&) local);
+        return true;
+    }
+    return false;
+}
+
 bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature ** local, t_feature ** global)
 {
     if(!d->FeaturesStarted) return false;

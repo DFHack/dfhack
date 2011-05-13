@@ -100,6 +100,9 @@ DFHACK_TOOL(dfincremental incrementalsearch.cpp)
 # ... or just kills the items? :P
 DFHACK_TOOL(dfautodump autodump.cpp)
 
+# tile types. tile shape, material, and special information manipulation tool
+DFHACK_TOOL(dftiletypes tiletypes.cpp)
+
 # veinlook - look at the map... sort of
 IF(UNIX)
     SET(VEINLOOK_BUILT "NO")

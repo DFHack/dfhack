@@ -107,6 +107,9 @@ IF(WIN32)
     INSTALL(PROGRAMS dfautodestroy.bat DESTINATION ${DFHACK_BINARY_DESTINATION})
 ENDIF()
 
+# tile types. tile shape, material, and special information manipulation tool
+DFHACK_TOOL(dftiletypes tiletypes.cpp)
+
 # veinlook - look at the map... sort of
 IF(UNIX)
     SET(VEINLOOK_BUILT "NO")

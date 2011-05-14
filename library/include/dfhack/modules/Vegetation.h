@@ -14,6 +14,10 @@ namespace DFHack
     /**
      * \ingroup grp_vegetation
      */
+    const uint32_t sapling_to_tree_threshold = 0x1D880;
+    /**
+     * \ingroup grp_vegetation
+     */
     struct t_plant
     {
         // +0x3C
@@ -34,12 +38,16 @@ namespace DFHack
         uint16_t y; // +0x42
         uint16_t z; // +0x44
         uint16_t padding; // +0x46
-        uint32_t unknown_1; // +0x48
+        uint32_t grow_counter; // +0x48
         uint16_t temperature_1; // +0x4C
         uint16_t temperature_2; // +0x4E - maybe fraction?
         uint32_t is_burning; // 0x50: yes, just one flag
         uint32_t hitpoints; // 0x54
-        uint32_t unknown_3; // 0x58
+        /**
+         * 0x58 - maybe related to the order in which plants are updated
+         * the updates are staggered into 8 groups?
+         */
+        uint32_t unknown_3;
         // a vector is here
     };
     /**

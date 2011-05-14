@@ -45,9 +45,9 @@ void print_tree( DFHack::Context * DF , DFHack::dfh_plant & tree)
         cout << "shrub";
     }
     cout << endl;
-    printf("unknown_1: 0x%08x\n", tdata.unknown_1);
-    printf("temperature_1: %d\n", tdata.temperature_1);
-    printf("temperature_2: %d\n", tdata.temperature_2);
+    printf("Grow counter: 0x%08x\n", tdata.grow_counter);
+    printf("temperature 1: %d\n", tdata.temperature_1);
+    printf("temperature 2: %d\n", tdata.temperature_2);
     printf("On fire: %d\n", tdata.is_burning);
     printf("hitpoints: 0x%08x\n", tdata.hitpoints);
     printf("unknown_3: 0x%08x\n", tdata.unknown_3);

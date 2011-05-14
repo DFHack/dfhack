@@ -638,7 +638,7 @@ namespace DFHack
                        std::vector<t_worldconstruction>* constructions = 0
                       );
         /// read all plants in this block
-        bool ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<t_tree>* plants);
+        bool ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<dfh_plant>* plants);
         private:
         struct Private;
         Private *d;

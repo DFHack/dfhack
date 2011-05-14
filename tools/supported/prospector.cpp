@@ -23,7 +23,7 @@ typedef std::vector< pair<int16_t, unsigned int> > MatSorter;
 typedef std::vector<DFHack::t_feature> FeatureList;
 typedef std::vector<DFHack::t_feature*> FeatureListPointer;
 typedef std::map<DFHack::DFCoord, FeatureListPointer> FeatureMap;
-typedef std::vector<DFHack::t_tree> PlantList;
+typedef std::vector<DFHack::dfh_plant> PlantList;
 
 bool parseOptions(int argc, char **argv, bool &showHidden, bool &showPlants,
                   bool &showSlade, bool &showTemple)
@@ -316,15 +316,15 @@ int main(int argc, char *argv[])
                     {
                         for (PlantList::const_iterator it = plants.begin(); it != plants.end(); it++)
                         {
-                            DFHack::t_tree plant = *it;
+                            const DFHack::t_plant & plant = (*it).sdata;
                             DFHack::DFCoord loc(plant.x, plant.y);
                             loc = loc % 16;
                             if (showHidden || !b->DesignationAt(loc).bits.hidden)
                             {
                                 if(plant.is_shrub)
-                                    plantMats[it->material]++;
+                                    plantMats[plant.material]++;
                                 else
-                                    treeMats[it->material]++;
+                                    treeMats[plant.material]++;
                             }
                         }
                     }

@@ -1210,7 +1210,7 @@ bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
     return false;
 }
 
-bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<t_tree>* plants)
+bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<dfh_plant>* plants)
 {
     if(!d->hasVeggies || !d->Started)
         return false;
@@ -1218,14 +1218,15 @@ bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<t_tree
     if(!addr)
         return false;
 
-    t_tree shrubbery;
+    dfh_plant shrubbery;
     plants->clear();
 
     Private::t_offsets &off = d->offsets;
     DfVector<uint32_t> vegptrs(d->owner, addr + off.vegvector);
     for(size_t i = 0; i < vegptrs.size(); i++)
     {
-        d->owner->read (vegptrs[i] + off.tree_desc_offset, sizeof (t_tree), (uint8_t *) &shrubbery);
+        d->d->readName(shrubbery.name,vegptrs[i]);
+        d->owner->read (vegptrs[i] + off.tree_desc_offset, sizeof (t_plant), (uint8_t *) &shrubbery.sdata);
         shrubbery.address = vegptrs[i];
         plants->push_back(shrubbery);
     }

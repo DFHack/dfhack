@@ -84,7 +84,7 @@ int (*alloc_feature_buffer_callback)(t_feature**, uint32_t) = NULL;
 int (*alloc_hotkey_buffer_callback)(t_hotkey**, uint32_t) = NULL;
 int (*alloc_screen_buffer_callback)(t_screen**, uint32_t) = NULL;
 
-int (*alloc_tree_buffer_callback)(t_tree**, uint32_t) = NULL;
+int (*alloc_tree_buffer_callback)(dfh_plant**, uint32_t) = NULL;
 
 int (*alloc_memrange_buffer_callback)(t_memrange**, uint32_t*, uint32_t) = NULL;
 
@@ -115,7 +115,7 @@ REG_MACRO(MatglossOther, t_matglossOther**, alloc_matgloss_other_buffer_callback
 REG_MACRO(Feature, t_feature**, alloc_feature_buffer_callback)
 REG_MACRO(Hotkey, t_hotkey**, alloc_hotkey_buffer_callback)
 REG_MACRO(Screen, t_screen**, alloc_screen_buffer_callback)
-REG_MACRO(Tree, t_tree**, alloc_tree_buffer_callback)
+REG_MACRO(Tree, dfh_plant**, alloc_tree_buffer_callback)
 REG_MACRO(CustomWorkshop, t_customWorkshop**, alloc_customWorkshop_buffer_callback)
 REG_MACRO(Material, t_material**, alloc_material_buffer_callback)
 

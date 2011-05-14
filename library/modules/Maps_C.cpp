@@ -31,6 +31,7 @@ using namespace std;
 
 #include "dfhack-c/DFTypes_C.h"
 #include "dfhack-c/modules/Maps_C.h"
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -672,32 +673,31 @@ int Maps_ReadAllVeins(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z, c_
 	return -1;
 }
 
-t_tree* Maps_ReadVegetation(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z)
+//FIXME: doesn't copy out the address and name variables!
+dfh_plant* Maps_ReadVegetation(DFHackObject* maps, uint32_t x, uint32_t y, uint32_t z)
 {
-	if(maps == NULL)
-		return NULL;
-	else
-	{
-		std::vector<t_tree> plants;
-		bool result = ((DFHack::Maps*)maps)->ReadVegetation(x, y, z, &plants);
-		t_tree* buf = NULL;
-		
-		if(!result || plants.size() <= 0)
-			return NULL;
-		else
-		{
-			((*alloc_tree_buffer_callback)(&buf, plants.size()));
-			
-			if(buf == NULL)
-				return NULL;
-			
-			copy(plants.begin(), plants.end(), buf);
-			
-			return buf;
-		}
-	}
-	
-	return NULL;
+    if(maps == NULL)
+        return NULL;
+    else
+    {
+        std::vector<dfh_plant> plants;
+        dfh_plant* buf = NULL;
+        bool result = ((DFHack::Maps*)maps)->ReadVegetation(x, y, z, &plants);
+        if(!result || plants.size() <= 0)
+        {
+            return NULL;
+        }
+        else
+        {
+            ((*alloc_tree_buffer_callback)(&buf, plants.size()));
+            if(buf == NULL)
+                return NULL;
+            copy(plants.begin(), plants.end(), buf);
+            return buf;
+        }
+    }
+
+    return NULL;
 }
 
 #ifdef __cplusplus

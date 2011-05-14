@@ -57,14 +57,14 @@ int Vegetation_Finish(DFHackObject* veg)
 	return -1;
 }
 
-int Vegetation_Read(DFHackObject* veg, const uint32_t index, t_tree* shrubbery)
+int Vegetation_Read(DFHackObject* veg, const uint32_t index, dfh_plant* shrubbery)
 {
-	if(veg != NULL)
-	{
-		return ((DFHack::Vegetation*)veg)->Read(index, *shrubbery);
-	}
-	
-	return -1;
+    if(veg != NULL)
+    {
+        return ((DFHack::Vegetation*)veg)->Read(index, *shrubbery);
+    }
+
+    return -1;
 }
 
 #ifdef __cplusplus

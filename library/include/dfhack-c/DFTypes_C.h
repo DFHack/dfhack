@@ -59,7 +59,7 @@ DFHACK_EXPORT extern int (*alloc_feature_buffer_callback)(t_feature**, uint32_t)
 DFHACK_EXPORT extern int (*alloc_hotkey_buffer_callback)(t_hotkey**, uint32_t);
 DFHACK_EXPORT extern int (*alloc_screen_buffer_callback)(t_screen**, uint32_t);
 
-DFHACK_EXPORT extern int (*alloc_tree_buffer_callback)(t_tree**, uint32_t);
+DFHACK_EXPORT extern int (*alloc_tree_buffer_callback)(dfh_plant**, uint32_t);
 
 DFHACK_EXPORT extern int (*alloc_memrange_buffer_callback)(t_memrange**, uint32_t*, uint32_t);
 
@@ -81,7 +81,7 @@ DFHACK_EXPORT void RegisterFeatureBufferCallback(int (*funcptr)(t_feature**, uin
 DFHACK_EXPORT void RegisterHotkeyBufferCallback(int (*funcptr)(t_hotkey**, uint32_t));
 DFHACK_EXPORT void RegisterScreenBufferCallback(int (*funcptr)(t_screen**, uint32_t));
 
-DFHACK_EXPORT void RegisterTreeBufferCallback(int (*funcptr)(t_tree**, uint32_t));
+DFHACK_EXPORT void RegisterTreeBufferCallback(int (*funcptr)(dfh_plant**, uint32_t));
 
 DFHACK_EXPORT void RegisterMemRangeBufferCallback(int (*funcptr)(t_memrange**, uint32_t*, uint32_t));
 

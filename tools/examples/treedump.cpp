@@ -26,31 +26,31 @@ using namespace std;
         // a vector is here
         uint32_t address;
         */
-void print_tree( DFHack::Context * DF , DFHack::t_tree & tree)
+void print_tree( DFHack::Context * DF , DFHack::dfh_plant & tree)
 {
     DFHack::Materials * mat = DF->getMaterials();
-
-    printf("%d:%d = ",tree.type,tree.material);
-    if(tree.type == 1 || tree.type == 3)
+    DFHack::t_plant & tdata = tree.sdata;
+    printf("%d:%d = ",tdata.type,tdata.material);
+    if(tdata.watery)
     {
         cout << "near-water ";
     }
-    cout << mat->organic[tree.material].id << " ";
-    if(tree.type == 0 || tree.type == 1)
+    cout << mat->organic[tdata.material].id << " ";
+    if(!tdata.is_shrub)
     {
         cout << "tree";
     }
-    if(tree.type == 2 || tree.type == 3)
+    else
     {
         cout << "shrub";
     }
     cout << endl;
-    printf("unknown_1: 0x%08x\n", tree.unknown_1);
-    printf("temperature_1: %d\n", tree.temperature_1);
-    printf("temperature_2: %d\n", tree.temperature_2);
-    printf("mystery_flag: %d\n", tree.mystery_flag);
-    printf("unknown_2: 0x%08x\n", tree.unknown_2);
-    printf("unknown_3: 0x%08x\n", tree.unknown_3);
+    printf("unknown_1: 0x%08x\n", tdata.unknown_1);
+    printf("temperature_1: %d\n", tdata.temperature_1);
+    printf("temperature_2: %d\n", tdata.temperature_2);
+    printf("On fire: %d\n", tdata.is_burning);
+    printf("hitpoints: 0x%08x\n", tdata.hitpoints);
+    printf("unknown_3: 0x%08x\n", tdata.unknown_3);
     printf("Address: 0x%x\n", tree.address);
     hexdump(DF,tree.address,13*16);
 }
@@ -97,9 +97,9 @@ int main (int numargs, const char ** args)
         cout << "----==== Trees ====----" << endl;
         for(uint32_t i =0; i < numVegs; i++)
         {
-            DFHack::t_tree tree;
+            DFHack::dfh_plant tree;
             v->Read(i,tree);
-            printf("%d/%d/%d, %d:%d\n",tree.x,tree.y,tree.z,tree.type,tree.material);
+            printf("%d/%d/%d, %d:%d\n",tree.sdata.x,tree.sdata.y,tree.sdata.z,tree.sdata.type,tree.sdata.material);
         }
     }
     else
@@ -107,14 +107,14 @@ int main (int numargs, const char ** args)
         // new method, gets the vector of trees in a block. can show farm plants
         if(mps->Start())
         {
-            vector<DFHack::t_tree> alltrees;
+            vector<DFHack::dfh_plant> alltrees;
             if(mps->ReadVegetation(x/16,y/16,z,&alltrees))
             {
                 for(int i = 0 ; i < alltrees.size(); i++)
                 {
-                    DFHack::t_tree & tree = alltrees[i];
+                    DFHack::dfh_plant & tree = alltrees[i];
                     // you could take the tree coords from the struct and % them with 16 for use in loops over the whole block
-                    if(tree.x == x && tree.y == y && tree.z == z)
+                    if(tree.sdata.x == x && tree.sdata.y == y && tree.sdata.z == z)
                     {
                         cout << "----==== Tree at "<< x << "/" << y << "/" << z << " ====----" << endl;
                         print_tree(DF, tree);
@@ -126,9 +126,9 @@ int main (int numargs, const char ** args)
         // old method, gets the tree from the global vegetation vector. can't show farm plants
         for(uint32_t i =0; i < numVegs; i++)
         {
-            DFHack::t_tree tree;
+            DFHack::dfh_plant tree;
             v->Read(i,tree);
-            if(tree.x == x && tree.y == y && tree.z == z)
+            if(tree.sdata.x == x && tree.sdata.y == y && tree.sdata.z == z)
             {
                 cout << "----==== Tree at "<< dec << x << "/" << y << "/" << z << " ====----" << endl;
                 print_tree(DF, tree);

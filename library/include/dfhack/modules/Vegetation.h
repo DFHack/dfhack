@@ -8,12 +8,13 @@
 
 #include "dfhack/DFExport.h"
 #include "dfhack/DFModule.h"
+#include "dfhack/DFTypes.h"
 namespace DFHack
 {
     /**
      * \ingroup grp_vegetation
      */
-    struct t_tree
+    struct t_plant
     {
         // +0x3C
         #pragma pack(push, 1)
@@ -36,13 +37,24 @@ namespace DFHack
         uint32_t unknown_1; // +0x48
         uint16_t temperature_1; // +0x4C
         uint16_t temperature_2; // +0x4E - maybe fraction?
-        uint32_t mystery_flag; // 0x50: yes, just one
-        uint32_t unknown_2; // 0x54
+        uint32_t is_burning; // 0x50: yes, just one flag
+        uint32_t hitpoints; // 0x54
         uint32_t unknown_3; // 0x58
         // a vector is here
+    };
+    /**
+     * Plant object read from the game
+     * \ingroup grp_vegetation
+     */
+    struct dfh_plant
+    {
+        /// name of the plant
+        t_name name;
+        /// data with static size/address
+        t_plant sdata;
+        /// address where the plant was read from
         uint32_t address;
     };
-
     class DFContextShared;
     /**
      * The Vegetation module
@@ -55,7 +67,8 @@ namespace DFHack
         Vegetation(DFContextShared * d);
         ~Vegetation();
         bool Start(uint32_t & numTrees);
-        bool Read (const uint32_t index, t_tree & shrubbery);
+        bool Read (const uint32_t index, dfh_plant & shrubbery);
+        bool Write (dfh_plant & shrubbery);
         bool Finish();
 
         private:

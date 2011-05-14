@@ -36,7 +36,7 @@ extern "C" {
 DFHACK_EXPORT int Vegetation_Start(DFHackObject* veg, uint32_t* numTrees);
 DFHACK_EXPORT int Vegetation_Finish(DFHackObject* veg);
 
-DFHACK_EXPORT int Vegetation_Read(DFHackObject* veg, const uint32_t index, t_tree* shrubbery);
+DFHACK_EXPORT int Vegetation_Read(DFHackObject* veg, const uint32_t index, dfh_plant* shrubbery);
 
 #ifdef __cplusplus
 }

@@ -88,17 +88,27 @@ bool Vegetation::Start(uint32_t & numplants)
 }
 
 
-bool Vegetation::Read (const uint32_t index, t_tree & shrubbery)
+bool Vegetation::Read (const uint32_t index, dfh_plant & shrubbery)
 {
     if(!d->Started)
         return false;
     // read pointer from vector at position
     uint32_t temp = d->p_veg->at (index);
     // read from memory
-    d->owner->read (temp + d->tree_desc_offset, sizeof (t_tree), (uint8_t *) &shrubbery);
+    d->d->readName(shrubbery.name,temp);
+    d->owner->read (temp + d->tree_desc_offset, sizeof (t_plant), (uint8_t *) &shrubbery.sdata);
     shrubbery.address = temp;
     return true;
 }
+
+bool Vegetation::Write (dfh_plant & shrubbery)
+{
+    if(!d->Started)
+        return false;
+    d->owner->write (shrubbery.address + d->tree_desc_offset, sizeof (t_plant), (uint8_t *) &shrubbery.sdata);
+    return true;
+}
+
 
 bool Vegetation::Finish()
 {

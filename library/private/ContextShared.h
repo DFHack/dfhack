@@ -66,6 +66,7 @@ namespace DFHack
         uint32_t name_language_offset;
         uint32_t name_set_offset;
         bool namesInited;
+        bool namesFailed;
 
         ProcessEnumerator* pm;
         Process* p;

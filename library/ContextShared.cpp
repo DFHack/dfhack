@@ -17,6 +17,8 @@ DFContextShared::DFContextShared()
     // init modules
     allModules.clear();
     memset(&(s_mods), 0, sizeof(s_mods));
+    namesInited = false;
+    namesFailed = false;
 }
 
 DFContextShared::~DFContextShared()
@@ -31,18 +33,35 @@ DFContextShared::~DFContextShared()
 
 bool DFContextShared::InitReadNames()
 {
-    OffsetGroup * OG = offset_descriptor->getGroup("name");
-    name_firstname_offset = OG->getOffset("first");
-    name_nickname_offset = OG->getOffset("nick");
-    name_words_offset = OG->getOffset("second_words");
-    name_parts_offset = OG->getOffset("parts_of_speech");
-    name_language_offset = OG->getOffset("language");
-    name_set_offset = OG->getOffset("has_name");
+    try
+    {
+        OffsetGroup * OG = offset_descriptor->getGroup("name");
+        name_firstname_offset = OG->getOffset("first");
+        name_nickname_offset = OG->getOffset("nick");
+        name_words_offset = OG->getOffset("second_words");
+        name_parts_offset = OG->getOffset("parts_of_speech");
+        name_language_offset = OG->getOffset("language");
+        name_set_offset = OG->getOffset("has_name");
+    }
+    catch(exception & e)
+    {
+        namesFailed = true;
+        return false;
+    }
+    namesInited = true;
     return true;
 }
 
 void DFContextShared::readName(t_name & name, uint32_t address)
 {
+    if(namesFailed)
+    {
+        return;
+    }
+    if(!namesInited)
+    {
+        if(!InitReadNames()) return;
+    }
     p->readSTLString(address + name_firstname_offset , name.first_name, 128);
     p->readSTLString(address + name_nickname_offset , name.nickname, 128);
     p->read(address + name_words_offset, 7*4, (uint8_t *)name.words);

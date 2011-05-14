@@ -10,13 +10,12 @@
 #include "dfhack/DFModule.h"
 namespace DFHack
 {
-
     /**
      * \ingroup grp_vegetation
      */
     struct t_tree
     {
-        // +0x6C
+        // +0x3C
         #pragma pack(push, 1)
         union
         {
@@ -29,10 +28,18 @@ namespace DFHack
             };
         };
         #pragma pack(pop)
-        uint16_t material; // +0x6E
-        uint16_t x; // +0x70
-        uint16_t y; // +0x72
-        uint16_t z; // +0x74
+        uint16_t material; // +0x3E
+        uint16_t x; // +0x40
+        uint16_t y; // +0x42
+        uint16_t z; // +0x44
+        uint16_t padding; // +0x46
+        uint32_t unknown_1; // +0x48
+        uint16_t temperature_1; // +0x4C
+        uint16_t temperature_2; // +0x4E - maybe fraction?
+        uint32_t mystery_flag; // 0x50: yes, just one
+        uint32_t unknown_2; // 0x54
+        uint32_t unknown_3; // 0x58
+        // a vector is here
         uint32_t address;
     };
 

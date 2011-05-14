@@ -3075,6 +3075,9 @@
                     </Group>
                 </Group>
             </Group>
+            <Group name="Vegetation">
+                <Address name="vector" value="0x940bd70" />
+            </Group>
         </Offsets>
     </Version>
 </DFHack>

@@ -11,7 +11,21 @@ using namespace std;
 
 #define DFHACK_WANT_MISCUTILS
 #include <DFHack.h>
-
+/*
+        uint16_t material; // +0x3E
+        uint16_t x; // +0x40
+        uint16_t y; // +0x42
+        uint16_t z; // +0x44
+        uint16_t padding; // +0x46
+        uint32_t unknown_1; // +0x48
+        uint16_t temperature_1; // +0x4C
+        uint16_t temperature_2; // +0x4E - maybe fraction?
+        uint32_t mystery_flag; // 0x50: yes, just one
+        uint32_t unknown_2; // 0x54
+        uint32_t unknown_3; // 0x58
+        // a vector is here
+        uint32_t address;
+        */
 void print_tree( DFHack::Context * DF , DFHack::t_tree & tree)
 {
     DFHack::Materials * mat = DF->getMaterials();
@@ -31,6 +45,12 @@ void print_tree( DFHack::Context * DF , DFHack::t_tree & tree)
         cout << "shrub";
     }
     cout << endl;
+    printf("unknown_1: 0x%08x\n", tree.unknown_1);
+    printf("temperature_1: %d\n", tree.temperature_1);
+    printf("temperature_2: %d\n", tree.temperature_2);
+    printf("mystery_flag: %d\n", tree.mystery_flag);
+    printf("unknown_2: 0x%08x\n", tree.unknown_2);
+    printf("unknown_3: 0x%08x\n", tree.unknown_3);
     printf("Address: 0x%x\n", tree.address);
     hexdump(DF,tree.address,13*16);
 }
@@ -110,7 +130,7 @@ int main (int numargs, const char ** args)
             v->Read(i,tree);
             if(tree.x == x && tree.y == y && tree.z == z)
             {
-                cout << "----==== Tree at "<< x << "/" << y << "/" << z << " ====----" << endl;
+                cout << "----==== Tree at "<< dec << x << "/" << y << "/" << z << " ====----" << endl;
                 print_tree(DF, tree);
                 break;
             }

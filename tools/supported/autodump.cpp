@@ -11,6 +11,7 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/DFVector.h>
 #include <dfhack/extra/MapExtras.h> // map cache for the win.
+#include "termutil.h"
 using namespace DFHack;
 using MapExtras::Block;
 using MapExtras::MapCache;
@@ -19,6 +20,7 @@ typedef std::map <DFCoord, uint32_t> coordmap;
 
 int main (int argc, char * argv[])
 {
+    bool temporary_terminal = TemporaryTerminal();
     // Command line options
     bool destroy = false;
     if(argc > 1 && strcmp(argv[1],"-d") == 0)
@@ -53,9 +55,8 @@ int main (int argc, char * argv[])
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
 
@@ -67,9 +68,8 @@ int main (int argc, char * argv[])
     if(!Maps->Start())
     {
         cerr << "Can't initialize map." << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
     MapCache MC (Maps);
@@ -84,9 +84,8 @@ int main (int argc, char * argv[])
         if (!Gui->getCursorCoords(cx,cy,cz))
         {
             cerr << "Cursor position not found.  Please enabled the cursor." << endl;
-            #ifndef LINUX_BUILD
+            if(temporary_terminal)
                 cin.ignore();
-            #endif
             return 1;
         }
         pos_cursor = DFCoord(cx,cy,cz);
@@ -95,18 +94,16 @@ int main (int argc, char * argv[])
             if(!b)
             {
                 cerr << "Cursor is in an invalid area. Place it over something save first." << endl;
-                #ifndef LINUX_BUILD
+                if(temporary_terminal)
                     cin.ignore();
-                #endif
                 return 1;
             }
             uint16_t ttype = MC.tiletypeAt(pos_cursor);
             if(!DFHack::isFloorTerrain(ttype))
             {
                 cerr << "Cursor should be placed over a floor." << endl;
-                #ifndef LINUX_BUILD
+                if(temporary_terminal)
                     cin.ignore();
-                #endif
                 return 1;
             }
         }
@@ -209,9 +206,10 @@ int main (int argc, char * argv[])
     {
         cout << "Done.  " << dumped_total << " items marked for destruction." << endl;
     }
-#ifndef LINUX_BUILD
-    cout << "Press any key to continue" << endl;
-    cin.ignore();
-#endif
+    if(temporary_terminal)
+    {
+        cout << "Press any key to continue" << endl;
+        cin.ignore();
+    }
     return 0;
 }

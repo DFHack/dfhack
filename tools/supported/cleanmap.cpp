@@ -7,10 +7,11 @@
 using namespace std;
 
 #include <DFHack.h>
+#include "termutil.h"
 
 int main (int argc, char** argv)
 {
-
+    bool temporary_terminal = TemporaryTerminal();
     bool quiet = false;
     for(int i = 1; i < argc; i++)
     {
@@ -33,9 +34,8 @@ int main (int argc, char** argv)
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
     DFHack::Maps *Mapz = DF->getMaps();
@@ -44,9 +44,8 @@ int main (int argc, char** argv)
     if(!Mapz->Start())
     {
         cerr << "Can't init map." << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
 
@@ -91,12 +90,10 @@ int main (int argc, char** argv)
         }
     }
     DF->Detach();
-    #ifndef LINUX_BUILD
-	if (!quiet) 
-	{
-	    cout << "Done. Press any key to continue" << endl;
-	    cin.ignore();
-	}
-    #endif
+    if (!quiet && temporary_terminal) 
+    {
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
+    }
     return 0;
 }

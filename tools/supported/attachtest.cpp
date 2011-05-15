@@ -7,9 +7,11 @@
 #include <ctime>
 using namespace std;
 #include <DFHack.h>
+#include "termutil.h"
 
 int main (void)
 {
+    bool temporary_terminal = TemporaryTerminal();
     time_t start, end;
     double time_diff;
     DFHack::ContextManager DFMgr("Memory.xml");
@@ -23,9 +25,8 @@ int main (void)
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
 /*
@@ -79,10 +80,11 @@ int main (void)
     DF->Detach();
     time_diff = difftime(end, start);
     cout << "suspend tests done in " << time_diff << " seconds." << endl;
-    
-    #ifndef LINUX_BUILD
+
+    if(temporary_terminal)
+    {
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();
-    #endif
+    }
     return 0;
 }

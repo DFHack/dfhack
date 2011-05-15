@@ -7,9 +7,11 @@ using namespace std;
 
 #include <DFHack.h>
 #include <dfhack/modules/Gui.h>
+#include "termutil.h"
 
 int main (int argc, char** argv)
 {
+    bool temporary_terminal = TemporaryTerminal();
     bool quiet = false;
     for(int i = 1; i < argc; i++)
     {
@@ -30,9 +32,8 @@ int main (int argc, char** argv)
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
-        if(!quiet) cin.ignore();
-        #endif
+        if(!quiet && temporary_terminal)
+            cin.ignore();
         return 1;
     }
 
@@ -41,9 +42,8 @@ int main (int argc, char** argv)
 
     World->SetPauseState(true);
     DF->Resume();
-    #ifndef LINUX_BUILD
-        cout << "Done. The current game frame will have to finish first. This can take some time on bugged maps." << endl;
-        if (!quiet) cin.ignore();
-    #endif
+    cout << "Done. The current game frame will have to finish first. This can take some time on bugged maps." << endl;
+    if(!quiet && temporary_terminal)
+        cin.ignore();
     return 0;
 }

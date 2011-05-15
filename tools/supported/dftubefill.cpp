@@ -10,10 +10,11 @@ using namespace std;
 
 #include <DFHack.h>
 #include <dfhack/DFTileTypes.h>
-
+#include "termutil.h"
 
 int main (void)
 {
+    bool temporary_terminal = TemporaryTerminal();
     uint32_t x_max,y_max,z_max;
     DFHack::designations40d designations;
     DFHack::tiletypes40d tiles;
@@ -35,9 +36,8 @@ int main (void)
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
     DFHack::Maps *Mapz = DF->getMaps();
@@ -46,9 +46,8 @@ int main (void)
     if (!Mapz->Start())
     {
         cerr << "Can't init map." << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
 
@@ -56,9 +55,8 @@ int main (void)
     if(!Mapz->StartFeatures())
     {
         cerr << "Can't get features." << endl;
-        #ifndef LINUX_BUILD
-        cin.ignore();
-        #endif
+        if(temporary_terminal)
+            cin.ignore();
         return 1; 
     }
 
@@ -114,9 +112,10 @@ int main (void)
     }
     DF->Detach();
     cout << "Found and changed " << count << " tiles." << endl;
-#ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
-#endif
+    if(temporary_terminal)
+    {
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
+    }
     return 0;
 }

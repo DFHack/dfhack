@@ -21,6 +21,7 @@ void waitmsec (int delay)
     Sleep(delay);
 }
 #endif
+#include "termutil.h"
 
 struct hideblock
 {
@@ -32,9 +33,9 @@ struct hideblock
 
 int main (void)
 {
+    bool temporary_terminal = TemporaryTerminal();
     uint32_t x_max,y_max,z_max;
     DFHack::designations40d designations;
-    
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF;
     try
@@ -45,12 +46,10 @@ int main (void)
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
-    
     DFHack::Maps *Maps =DF->getMaps();
     DFHack::World *World =DF->getWorld();
     // walk the map, save the hide bits, reveal.
@@ -69,9 +68,8 @@ int main (void)
     if(!Maps->Start())
     {
         cerr << "Can't init map." << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
 
@@ -129,9 +127,10 @@ int main (void)
         }
         Maps->WriteDesignations(hb.x,hb.y,hb.z, &designations);
     }
-    #ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
-    #endif
+    if(temporary_terminal)
+    {
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
+    }
     return 0;
 }

@@ -9,7 +9,7 @@
 using namespace std;
 
 #include <DFHack.h>
-
+#include "termutil.h"
 void print_progress (int current, int total)
 {
     if(total < 100)
@@ -29,10 +29,10 @@ void print_progress (int current, int total)
 
 int main (int numargs, char** args)
 {
+    bool temporary_terminal = TemporaryTerminal();
     time_t start, end;
     double time_diff;
-    
-    
+
     unsigned int iterations = 0;
     if (numargs == 2)
     {
@@ -41,7 +41,7 @@ int main (int numargs, char** args)
     }
     if(iterations == 0)
         iterations = 1000;
-    
+
     uint32_t x_max,y_max,z_max;
     uint32_t num_blocks = 0;
     uint64_t bytes_read = 0;
@@ -58,19 +58,17 @@ int main (int numargs, char** args)
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
-    
+
     time(&start);
-    
+
     cout << "doing " << iterations << " iterations" << endl;
     for(uint32_t i = 0; i< iterations;i++)
     {
         print_progress (i, iterations);
-        
         if(!Maps->Start())
             break;
         Maps->getSize(x_max,y_max,z_max);
@@ -97,9 +95,10 @@ int main (int numargs, char** args)
     cout << num_blocks << " blocks read" << endl;
     cout << bytes_read / (1024 * 1024) << " MB" << endl;
     cout << "map export tests done in " << time_diff << " seconds." << endl;
-    #ifndef LINUX_BUILD
+    if(temporary_terminal)
+    {
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();
-    #endif
+    }
     return 0;
 }

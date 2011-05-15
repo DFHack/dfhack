@@ -9,6 +9,7 @@
 using namespace std;
 #include <DFHack.h>
 #include <dfhack/extra/MapExtras.h>
+#include "termutil.h"
 
 void tolower(std::string &str)
 {
@@ -389,6 +390,7 @@ public:
 
 int main(int argc, char *argv[])
 {
+    bool temporary_terminal = TemporaryTerminal();
     uint32_t x_max = 0, y_max = 0, z_max = 0;
     int32_t x = 0, y = 0, z = 0;
     DFHack::ContextManager manager("Memory.xml");
@@ -397,9 +399,8 @@ int main(int argc, char *argv[])
     if (!context->Attach())
     {
         std::cerr << "Unable to attach to DF!" << std::endl;
-        #ifndef LINUX_BUILD
-        std::cin.ignore();
-        #endif
+        if(temporary_terminal)
+            std::cin.ignore();
         return 1;
     }
 
@@ -513,9 +514,8 @@ int main(int argc, char *argv[])
             {
                 std::cerr << "Cannot get map info!" << std::endl;
                 context->Detach();
-                #ifndef LINUX_BUILD
-                std::cin.ignore();
-                #endif
+                if(temporary_terminal)
+                    std::cin.ignore();
                 return 1;
             }
             maps->getSize(x_max, y_max, z_max);
@@ -587,10 +587,11 @@ int main(int argc, char *argv[])
     }
 
     context->Detach();
-    #ifndef LINUX_BUILD
-    std::cout << "Press any key to finish.";
-    std::cin.ignore();
-    #endif
+    if(temporary_terminal)
+    {
+        std::cout << "Press any key to finish.";
+        std::cin.ignore();
+    }
     std::cout << std::endl;
     return 0;
 }

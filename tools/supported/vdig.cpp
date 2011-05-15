@@ -10,10 +10,12 @@ using namespace std;
 
 #include <DFHack.h>
 #include <dfhack/extra/MapExtras.h>
+#include "termutil.h"
 using namespace MapExtras;
 
 int main (int argc, char* argv[])
 {
+    bool temporary_terminal = TemporaryTerminal();
     // Command line options
     bool updown = false;
     if(argc > 1 && strcmp(argv[1],"-x") == 0)
@@ -29,9 +31,8 @@ int main (int argc, char* argv[])
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
 
@@ -44,9 +45,8 @@ int main (int argc, char* argv[])
     {
         cerr << "Can't init map. Make sure you have a map loaded in DF." << endl;
         DF->Detach();
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
 
@@ -69,9 +69,8 @@ int main (int argc, char* argv[])
     {
         cerr << "I won't dig the borders. That would be cheating!" << endl;
         DF->Detach();
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
     MapCache * MCache = new MapCache(Maps);
@@ -85,9 +84,8 @@ int main (int argc, char* argv[])
         cerr << "This tile is non-vein. Bye :)" << endl;
         delete MCache;
         DF->Detach();
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
     printf("%d/%d/%d tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, des.whole);
@@ -200,10 +198,11 @@ int main (int argc, char* argv[])
     MCache->WriteAll();
     delete MCache;
     DF->Detach();
-    #ifndef LINUX_BUILD
+    if(temporary_terminal)
+    {
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();
-    #endif
+    }
     return 0;
 }
 

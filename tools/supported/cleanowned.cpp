@@ -13,9 +13,11 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/DFVector.h>
 #include <dfhack/DFTypes.h>
+#include "termutil.h"
 
 int main (int argc, char *argv[])
 {
+    bool temporary_terminal = TemporaryTerminal();
     bool dump_scattered = false;
     bool confiscate_all = false;
     bool dry_run = false;
@@ -60,9 +62,8 @@ int main (int argc, char *argv[])
     catch (exception& e)
     {
         cerr << e.what() << endl;
-#ifndef LINUX_BUILD
-        cin.ignore();
-#endif
+        if(temporary_terminal)
+            cin.ignore();
         return 1;
     }
 
@@ -175,10 +176,10 @@ int main (int argc, char *argv[])
                   */
         }
     }
-
-#ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
-#endif
+    if(temporary_terminal)
+    {
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
+    }
     return 0;
 }

@@ -13,16 +13,16 @@ using namespace std;
 #define DFHACK_WANT_TILETYPES 1
 #include <DFHack.h>
 #include <dfhack/extra/MapExtras.h>
+#include "termutil.h"
 
 using namespace DFHack;
 int main (int numargs, const char ** args)
 {
+    bool temporary_terminal = TemporaryTerminal();
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF = DFMgr.getSingleContext();
 
-    #ifndef LINUX_BUILD
-        BEGIN_PROBE:
-    #endif
+    BEGIN_PROBE:
     try
     {
         DF->Attach();
@@ -30,9 +30,8 @@ int main (int numargs, const char ** args)
     catch (std::exception& e)
     {
         std::cerr << e.what() << std::endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
 
@@ -206,10 +205,11 @@ int main (int numargs, const char ** args)
         }
     }
     DF->Detach();
-    #ifndef LINUX_BUILD
+    if(temporary_terminal)
+    {
         std::cout << "Press any key to refresh..." << std::endl;
         cin.ignore();
         goto BEGIN_PROBE;
-    #endif
+    }
     return 0;
 }

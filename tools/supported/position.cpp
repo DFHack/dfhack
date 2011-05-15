@@ -7,7 +7,7 @@
 using namespace std;
 
 #include <DFHack.h>
-
+#include "termutil.h"
 std::ostream &operator<<(std::ostream &stream, DFHack::t_gamemodes funzies)
 {
     const char * gm[]=
@@ -37,6 +37,7 @@ std::ostream &operator<<(std::ostream &stream, DFHack::t_gamemodes funzies)
 
 int main (int argc, char** argv)
 {
+    bool temporary_terminal = TemporaryTerminal();
     bool quiet = false;
     for(int i = 1; i < argc; i++)
     {
@@ -65,9 +66,8 @@ int main (int argc, char** argv)
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
     DFHack::t_gamemodes gmm;
@@ -117,12 +117,10 @@ int main (int argc, char** argv)
         cerr << "Can't detach from DF" << endl;
     }
 
-    #ifndef LINUX_BUILD
-        if(!quiet)
-        {
-            cout << "Done. Press any key to continue" << endl;
-            cin.ignore();
-        }
-    #endif
+    if(!quiet && temporary_terminal)
+    {
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
+    }
     return 0;
 }

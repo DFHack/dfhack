@@ -5,14 +5,13 @@
 #include <map>
 using namespace std;
 #include <DFHack.h>
-//#include <dfhack/modules/Gui.h>
-//#include <dfhack/DFTileTypes.h>
+#include "termutil.h"
 
 int main (void)
 {
+    bool temporary_terminal = TemporaryTerminal();
     uint32_t x_max,y_max,z_max;
     DFHack::occupancies40d occupancies;
-    //DFHack::tiletypes40d tiles;
 
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF;
@@ -24,9 +23,8 @@ int main (void)
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
 
@@ -36,9 +34,8 @@ int main (void)
     if(!Maps->Start())
     {
         cerr << "Can't init map." << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
 
@@ -68,9 +65,10 @@ int main (void)
             }
         }
     }
-    #ifndef LINUX_BUILD
-    cout << "The map has been marked as a creature lair. Items shouldn't scatter." << endl;
-    cin.ignore();
-    #endif
+    if(temporary_terminal)
+    {
+        cout << "The map has been marked as a creature lair. Items shouldn't scatter." << endl;
+        cin.ignore();
+    }
     return 0;
 }

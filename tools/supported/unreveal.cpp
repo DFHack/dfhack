@@ -12,9 +12,11 @@ using namespace std;
 #include <dfhack/extra/MapExtras.h>
 using namespace MapExtras;
 using namespace DFHack;
+#include "termutil.h"
 
 int main (int argc, char* argv[])
 {
+    bool temporary_terminal = TemporaryTerminal();
     ContextManager DFMgr("Memory.xml");
     Context * DF;
     try
@@ -25,9 +27,8 @@ int main (int argc, char* argv[])
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
 
@@ -40,9 +41,8 @@ int main (int argc, char* argv[])
     {
         cerr << "Can't init map. Make sure you have a map loaded in DF." << endl;
         DF->Detach();
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
 
@@ -55,9 +55,8 @@ int main (int argc, char* argv[])
     if(cx == -30000)
     {
         cerr << "Cursor is not active. Point the cursor at some empty space you want to be unhidden." << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
     DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
@@ -66,9 +65,8 @@ int main (int argc, char* argv[])
     if(isWallTerrain(tt))
     {
         cerr << "Point the cursor at some empty space you want to be unhidden." << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
     // hide all tiles, flush cache
@@ -194,10 +192,11 @@ int main (int argc, char* argv[])
     MCache->WriteAll();
     delete MCache;
     DF->Detach();
-    #ifndef LINUX_BUILD
+    if(temporary_terminal)
+    {
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();
-    #endif
+    }
     return 0;
 }
 

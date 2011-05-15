@@ -8,8 +8,11 @@
 using namespace std;
 
 #include <DFHack.h>
+#include "termutil.h"
+
 int main (void)
 {
+    bool temporary_terminal = TemporaryTerminal();
     string blah;
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context * DF;
@@ -21,9 +24,8 @@ int main (void)
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
     cout << "Attached, DF should be suspended now" << endl;
@@ -48,10 +50,12 @@ int main (void)
     if(!DF->Detach())
     {
         cerr << "Can't detach from DF" << endl;
+        if(temporary_terminal)
+            cin.ignore();
         return 1;
     }
     cout << "Detached, DF should be running again" << endl;
-    getline(cin, blah);
-    
+    if(temporary_terminal)
+        getline(cin, blah);
     return 0;
 }

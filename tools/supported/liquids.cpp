@@ -9,6 +9,8 @@ using namespace std;
 #include <set>
 using namespace MapExtras;
 
+#include "termutil.h"
+
 typedef vector <DFHack::DFCoord> coord_vec;
 
 class Brush
@@ -130,6 +132,7 @@ public:
 
 int main (int argc, char** argv)
 {
+    bool temporary_terminal = TemporaryTerminal();
     bool quiet = false;
     for(int i = 1; i < argc; i++)
     {
@@ -140,11 +143,7 @@ int main (int argc, char** argv)
         }
     }
     int32_t x,y,z;
-    /*
-    DFHack::designations40d designations;
-    DFHack::tiletypes40d tiles;
-    DFHack::t_temperatures temp1,temp2;
-    */
+
     uint32_t x_max,y_max,z_max;
 
     DFHack::ContextManager DFMgr("Memory.xml");
@@ -165,9 +164,8 @@ int main (int argc, char** argv)
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
-        cin.ignore();
-        #endif
+        if(temporary_terminal)
+            cin.ignore();
         return 1;
     }
     bool end = false;
@@ -496,12 +494,10 @@ int main (int argc, char** argv)
         }
     }
     DF->Detach();
-    #ifndef LINUX_BUILD
-    if(!quiet)
+    if(temporary_terminal && !quiet)
     {
         cout << "Done. Press any key to continue" << endl;
         cin.ignore();
     }
-    #endif
     return 0;
 }

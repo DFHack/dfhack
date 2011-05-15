@@ -11,9 +11,11 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/DFVector.h>
 #include <dfhack/DFTypes.h>
+#include "termutil.h"
 
 int main ()
 {
+    bool temporary_terminal = TemporaryTerminal();
     DFHack::Process * p;
     unsigned int i;
     DFHack::ContextManager DFMgr("Memory.xml");
@@ -27,9 +29,8 @@ int main ()
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
 
@@ -44,9 +45,8 @@ int main ()
     catch(DFHack::Error::All & e)
     {
         cerr << "Fatal error, exiting :(" << endl << e.what() << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
 
@@ -68,9 +68,10 @@ int main ()
     }
     cout << "Found and untasked " << numtasked << " items." << endl;
 
-#ifndef LINUX_BUILD
-    cout << "Done. Press any key to continue" << endl;
-    cin.ignore();
-#endif
+    if(temporary_terminal)
+    {
+        cout << "Done. Press any key to continue" << endl;
+        cin.ignore();
+    }
     return 0;
 }

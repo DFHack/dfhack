@@ -5,12 +5,13 @@
 using namespace std;
 
 #include <DFHack.h>
-
+#include "termutil.h"
 int main (void)
 {
+    bool temporary_terminal = TemporaryTerminal();
     uint32_t x_max,y_max,z_max;
     DFHack::designations40d designations;
-    
+
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context * DF;
     DFHack::Maps *Maps;
@@ -23,18 +24,16 @@ int main (void)
     catch (exception& e)
     {
         cerr << e.what() << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
     // init the map
     if(!Maps->Start())
     {
         cerr << "Can't init map." << endl;
-        #ifndef LINUX_BUILD
+        if(temporary_terminal)
             cin.ignore();
-        #endif
         return 1;
     }
     DFHack::t_blockflags bflags;
@@ -76,8 +75,7 @@ int main (void)
     cout << "Magma tiles: " << magma << endl;
     
     cout << endl << "Done." << endl;
-    #ifndef LINUX_BUILD
+    if(temporary_terminal)
         cin.ignore();
-    #endif
     return 0;
 }

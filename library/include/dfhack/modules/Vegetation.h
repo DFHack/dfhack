@@ -44,11 +44,11 @@ namespace DFHack
         uint32_t is_burning; // 0x50: yes, just one flag
         uint32_t hitpoints; // 0x54
         /**
-         * 0x58 - maybe related to the order in which plants are updated
-         * the updates are staggered into 8 groups?
+         * 0x58 - the updates are staggered into 9? groups. this seems to be what differentiates the plants.
          */
-        uint32_t unknown_3;
+        uint32_t update_order;
         // a vector is here
+        // some more temperature stuff after that
     };
     /**
      * Plant object read from the game

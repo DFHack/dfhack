@@ -50,7 +50,7 @@ void print_tree( DFHack::Context * DF , DFHack::dfh_plant & tree)
     printf("temperature 2: %d\n", tdata.temperature_2);
     printf("On fire: %d\n", tdata.is_burning);
     printf("hitpoints: 0x%08x\n", tdata.hitpoints);
-    printf("unknown_3: 0x%08x\n", tdata.unknown_3);
+    printf("update order: %d\n", tdata.update_order);
     printf("Address: 0x%x\n", tree.address);
     hexdump(DF,tree.address,13*16);
 }

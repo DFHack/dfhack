@@ -16,6 +16,7 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/extra/MapExtras.h>
 #include <xgetopt.h>
+#include "termutil.h"
 
 typedef std::map<int16_t, unsigned int> MatMap;
 typedef std::vector< pair<int16_t, unsigned int> > MatSorter;
@@ -89,6 +90,11 @@ void printMats(MatMap &mat, std::vector<DFHack::t_matgloss> &materials)
     std::sort(sorting_vector.begin(), sorting_vector.end(), compare_pair_second<>());
     for (MatSorter::const_iterator it = sorting_vector.begin(); it != sorting_vector.end(); ++it)
     {
+		if(it->first >= materials.size())
+		{
+			cerr << "Bad index: " << it->first << " out of " <<  materials.size() << endl;
+			continue;
+		}
         DFHack::t_matgloss mat = materials[it->first];
         std::cout << std::setw(25) << mat.id << " : " << it->second << std::endl;
         total += it->second;
@@ -99,6 +105,7 @@ void printMats(MatMap &mat, std::vector<DFHack::t_matgloss> &materials)
 
 int main(int argc, char *argv[])
 {
+    bool temporary_terminal = TemporaryTerminal();
     bool showHidden = false;
     bool showPlants = true;
     bool showSlade = true;
@@ -116,9 +123,8 @@ int main(int argc, char *argv[])
     if (!context->Attach())
     {
         std::cerr << "Unable to attach to DF!" << std::endl;
-        #ifndef LINUX_BUILD
-        std::cin.ignore();
-        #endif
+        if(temporary_terminal)
+            std::cin.ignore();
         return 1;
     }
 
@@ -127,9 +133,8 @@ int main(int argc, char *argv[])
     {
         std::cerr << "Cannot get map info!" << std::endl;
         context->Detach();
-        #ifndef LINUX_BUILD
-        std::cin.ignore();
-        #endif
+        if(temporary_terminal)
+            std::cin.ignore();
         return 1;
     }
     maps->getSize(x_max, y_max, z_max);
@@ -140,9 +145,8 @@ int main(int argc, char *argv[])
     {
         std::cerr << "Unable to read inorganic material definitons!" << std::endl;
         context->Detach();
-        #ifndef LINUX_BUILD
-        std::cin.ignore();
-        #endif
+        if(temporary_terminal)
+            std::cin.ignore();
         return 1;
     }
     if (showPlants && !mats->ReadOrganicMaterials())
@@ -382,10 +386,11 @@ int main(int argc, char *argv[])
     mats->Finish();
     maps->Finish();
     context->Detach();
-    #ifndef LINUX_BUILD
-    std::cout << " Press any key to finish.";
-    std::cin.ignore();
-    #endif
+    if(temporary_terminal)
+    {
+        std::cout << " Press any key to finish.";
+        std::cin.ignore();
+    }
     std::cout << std::endl;
     return 0;
 }

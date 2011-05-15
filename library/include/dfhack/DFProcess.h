@@ -185,7 +185,8 @@ namespace DFHack
             /// get class name of an object with rtti/type info
             virtual std::string doReadClassName(uint32_t vptr) = 0;
 
-            std::string readClassName(uint32_t vptr) {
+            std::string readClassName(uint32_t vptr)
+			{
                 std::map<uint32_t, std::string>::iterator it = classNameCache.find(vptr);
                 if (it != classNameCache.end())
                     return it->second;
@@ -223,20 +224,24 @@ namespace DFHack
             virtual bool SetAndWait (uint32_t state) = 0;
     };
 
-    class DFHACK_EXPORT ClassNameCheck {
+    class DFHACK_EXPORT ClassNameCheck
+	{
         std::string name;
         uint32_t vptr;
     public:
-        ClassNameCheck() : vptr(0) {}
-        ClassNameCheck(std::string _name) : name(_name), vptr(0) {}
-        ClassNameCheck &operator= (const ClassNameCheck &b) {
+        ClassNameCheck() : vptr(0) {};
+        ClassNameCheck(std::string _name) : name(_name), vptr(0) {};
+        ClassNameCheck &operator= (const ClassNameCheck &b)
+		{
             name = b.name; vptr = b.vptr; return *this;
-        }
-        bool operator() (Process *p, uint32_t ptr) {
-            if (vptr == 0 && p->readClassName(ptr) == name)
-                vptr = ptr;
+        };
+        bool operator() (Process *p, uint32_t ptr)
+		{
+			if(vptr == 0)
+				if (p->readClassName(ptr) == name)
+					vptr = ptr;
             return (vptr && vptr == ptr);
-        }
+        };
     };
 }
 #endif

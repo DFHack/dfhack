@@ -24,6 +24,7 @@ distribution.
 
 #include <vector>
 #include <map>
+#include <string>
 using namespace std;
 #include "dfhack-c/Common.h"
 #include "dfhack/modules/World.h"

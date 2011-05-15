@@ -18,21 +18,19 @@ namespace DFHack
     /**
      * \ingroup grp_vegetation
      */
+    #pragma pack(push, 2)
     struct t_plant
     {
         // +0x3C
-        #pragma pack(push, 1)
         union
         {
             uint16_t type;
             struct
             {
-                unsigned int watery : 1;
-                unsigned int is_shrub : 1;
-                unsigned int unknown : 14;
+                bool watery : 1;
+                bool is_shrub : 1;
             };
         };
-        #pragma pack(pop)
         uint16_t material; // +0x3E
         uint16_t x; // +0x40
         uint16_t y; // +0x42
@@ -50,6 +48,7 @@ namespace DFHack
         // a vector is here
         // some more temperature stuff after that
     };
+    #pragma pack(pop)
     /**
      * Plant object read from the game
      * \ingroup grp_vegetation

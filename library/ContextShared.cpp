@@ -43,7 +43,7 @@ bool DFContextShared::InitReadNames()
         name_language_offset = OG->getOffset("language");
         name_set_offset = OG->getOffset("has_name");
     }
-    catch(exception & e)
+    catch(exception &)
     {
         namesFailed = true;
         return false;

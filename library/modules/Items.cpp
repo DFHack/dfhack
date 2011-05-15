@@ -353,7 +353,6 @@ Accessor * buildAccessor (OffsetGroup * I, Process * p, const char * name, uint3
 
 ItemDesc::ItemDesc(uint32_t VTable, Process *p)
 {
-    int32_t funcOffsetA, funcOffsetB, funcOffsetC, funcOffsetD, funcOffsetQuality, funcOffsetWear;
     OffsetGroup * Items = p->getDescriptor()->getGroup("Items");
 
     /* 
@@ -381,7 +380,7 @@ ItemDesc::ItemDesc(uint32_t VTable, Process *p)
         mainType = this->AMainType->getValue(0);
     else
     {
-        fprintf(stderr, "Bad item main type at function %p\n", (void*) p->readDWord( VTable + funcOffsetA ));
+        cerr << "Bad item main type accessor: " << AMainType->dump() << endl;
         mainType = 0;
     }
 }

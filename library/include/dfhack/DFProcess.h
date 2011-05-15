@@ -187,7 +187,7 @@ namespace DFHack
             virtual std::string doReadClassName(uint32_t vptr) = 0;
 
             std::string readClassName(uint32_t vptr)
-			{
+            {
                 std::map<uint32_t, std::string>::iterator it = classNameCache.find(vptr);
                 if (it != classNameCache.end())
                     return it->second;

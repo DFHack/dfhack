@@ -229,7 +229,7 @@ void OffsetGroup::setAddress (const string & key, const string & value, const IN
     uint32_Iter it = OGd->addresses.find(key);
     if(it != OGd->addresses.end())
     {
-        int32_t address = strtol(value.c_str(), NULL, 16);
+        uint32_t address = strtol(value.c_str(), NULL, 16);
         if((*it).second.second == address)
             std::cout << "Pointless address setting: " << this->getFullName() + key << endl;
         (*it).second.second = address;
@@ -484,7 +484,7 @@ std::string OffsetGroup::PrintOffsets(int indentation)
         }
     }
     std::sort(addrsorter.begin(), addrsorter.end(), compare_pair_first<>());
-    for(int idx = 0; idx < addrsorter.size();idx++)
+    for(size_t idx = 0; idx < addrsorter.size();idx++)
     {
         horrible & h = addrsorter[idx];
         ss << i << "<Address name=\"" << h.second.first << "\"";
@@ -511,7 +511,7 @@ std::string OffsetGroup::PrintOffsets(int indentation)
         }
     }
     std::sort(offsorter.begin(), offsorter.end(), compare_pair_first<>());
-    for(int idx = 0; idx < offsorter.size();idx++)
+    for(size_t idx = 0; idx < offsorter.size();idx++)
     {
         terrible & h = offsorter[idx];
         ss << i << "<Offset name=\"" << h.second.first << "\"";

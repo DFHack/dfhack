@@ -106,7 +106,7 @@ bool LinuxProcessBase::getThreadIDs(vector<uint32_t> & threads )
         return false;
     }
     threads.clear();
-    for(int i = 0; i < subdirs.size();i++)
+    for(size_t i = 0; i < subdirs.size();i++)
     {
         uint32_t tid;
         if(sscanf(subdirs[i].c_str(),"%d", &tid))

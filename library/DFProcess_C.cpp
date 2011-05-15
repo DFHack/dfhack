@@ -223,97 +223,82 @@ const char* Process_readClassName(DFHackObject* p_Ptr, uint32_t vptr)
 
 uint32_t* Process_getThreadIDs(DFHackObject* p_Ptr)
 {
-	if(p_Ptr == NULL || alloc_uint_buffer_callback == NULL)
-		return NULL;
-	
-	std::vector<uint32_t> threads;
-	
-	if(((DFHack::Process*)p_Ptr)->getThreadIDs(threads))
-	{
-		uint32_t* buf;
-		
-		if(threads.size() > 0)
-		{
-			((*alloc_uint_buffer_callback)(&buf, threads.size()));
-			
-			if(buf == NULL)
-				return NULL;
-			
-			copy(threads.begin(), threads.end(), buf);
-			
-			return buf;
-		}
-	}
-	else
-		return NULL;
+    if(p_Ptr == NULL || alloc_uint_buffer_callback == NULL)
+        return NULL;
+
+    std::vector<uint32_t> threads;
+
+    if(((DFHack::Process*)p_Ptr)->getThreadIDs(threads))
+    {
+        uint32_t* buf;
+        if(threads.size() > 0)
+        {
+            ((*alloc_uint_buffer_callback)(&buf, threads.size()));
+            if(buf == NULL)
+                return NULL;
+            copy(threads.begin(), threads.end(), buf);
+            return buf;
+        }
+    }
+    return NULL;
 }
 
 t_memrange* Process_getMemRanges(DFHackObject* p_Ptr)
 {
-	if(p_Ptr == NULL || alloc_memrange_buffer_callback == NULL)
-		return NULL;
-	
-	std::vector<t_memrange> ranges;
-	
-	((DFHack::Process*)p_Ptr)->getMemRanges(ranges);
-	
-	if(ranges.size() > 0)
-	{
-		t_memrange* buf;
-		uint32_t* rangeDescriptorBuf = (uint32_t*)calloc(ranges.size(), sizeof(uint32_t));
-		
-		for(uint32_t i = 0; i < ranges.size(); i++)
-		{
-			t_memrange* r = &ranges[i];
-			
-			rangeDescriptorBuf[i] = (uint32_t)(r->end - r->start);
-		}
-		
-		((*alloc_memrange_buffer_callback)(&buf, rangeDescriptorBuf, ranges.size()));
-		
-		free(rangeDescriptorBuf);
-		
-		if(buf == NULL)
-			return NULL;
-		
-		for(uint32_t i = 0; i < ranges.size(); i++)
-		{
-			t_memrange* r = &ranges[i];
-			
-			buf[i].start = r->start;
-			buf[i].end = r->end;
-			
-			memset(buf[i].name, '\0', 1024);
-			strncpy(buf[i].name, r->name, 1024);
-			
-			buf[i].read = r->read;
-			buf[i].write = r->write;
-			buf[i].execute = r->execute;
-			buf[i].shared = r->shared;
-			buf[i].valid = r->valid;
-			
-			memcpy(buf[i].buffer, r->buffer, r->end - r->start);
-		}
-		
-		return buf;
-	}
-	else
-		return NULL;
+    if(p_Ptr == NULL || alloc_memrange_buffer_callback == NULL)
+        return NULL;
+
+    std::vector<t_memrange> ranges;
+
+    ((DFHack::Process*)p_Ptr)->getMemRanges(ranges);
+
+    if(ranges.size() > 0)
+    {
+        t_memrange* buf;
+        uint32_t* rangeDescriptorBuf = (uint32_t*)calloc(ranges.size(), sizeof(uint32_t));
+
+        for(uint32_t i = 0; i < ranges.size(); i++)
+        {
+            t_memrange* r = &ranges[i];
+            rangeDescriptorBuf[i] = (uint32_t)(r->end - r->start);
+        }
+
+        ((*alloc_memrange_buffer_callback)(&buf, rangeDescriptorBuf, ranges.size()));
+        free(rangeDescriptorBuf);
+        if(buf == NULL)
+            return NULL;
+
+        for(uint32_t i = 0; i < ranges.size(); i++)
+        {
+            t_memrange* r = &ranges[i];
+            buf[i].start = r->start;
+            buf[i].end = r->end;
+            memset(buf[i].name, '\0', 1024);
+            strncpy(buf[i].name, r->name, 1024);
+            buf[i].read = r->read;
+            buf[i].write = r->write;
+            buf[i].execute = r->execute;
+            buf[i].shared = r->shared;
+            buf[i].valid = r->valid;
+            memcpy(buf[i].buffer, r->buffer, r->end - r->start);
+        }
+        return buf;
+    }
+    return NULL;
 }
 
 int Process_getPID(DFHackObject* p_Ptr, int32_t* pid)
 {
-	if(p_Ptr == NULL)
-	{
-		*pid = -1;
-		return -1;
-	}
-	else
-	{
-		*pid = ((DFHack::Process*)p_Ptr)->getPID();
-		
-		return 1;
-	}
+    if(p_Ptr == NULL)
+    {
+        *pid = -1;
+        return -1;
+    }
+    else
+    {
+        *pid = ((DFHack::Process*)p_Ptr)->getPID();
+        return 1;
+    }
 }
 
 int Process_getModuleIndex(DFHackObject* p_Ptr, char* name, uint32_t version, uint32_t* output)

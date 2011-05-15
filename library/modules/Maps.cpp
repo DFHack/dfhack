@@ -802,7 +802,7 @@ bool Maps::StartFeatures()
 t_feature * Maps::GetGlobalFeature(int16_t index)
 {
     if(!d->FeaturesStarted) return 0;
-    if(index < 0 || index >= d->v_global_feature.size())
+    if(index < 0 || uint16_t(index) >= d->v_global_feature.size())
         return 0;
     return &(d->v_global_feature[index]);
 }

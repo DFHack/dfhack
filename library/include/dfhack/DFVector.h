@@ -43,6 +43,7 @@ namespace DFHack
             Process *_p;
             uint32_t _address;
             t_vecTriplet t;
+            t_vecTriplet t_read;
             uint32_t _size;// vector size
             
             T * data; // cached data
@@ -57,6 +58,7 @@ namespace DFHack
             DfVector(Process *p, uint32_t address) : _p(p), _address(address)
             {
                 p->readSTLVector(address,t);
+                t_read = t;
                 uint32_t byte_size = t.end - t.start;
                 _size = byte_size / sizeof(T);
                 data = new T[_size];

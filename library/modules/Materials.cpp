@@ -356,9 +356,10 @@ bool Materials::ReadCreatureTypesEx (void)
     uint32_t caste_bodypart_offset;
     uint32_t bodypart_id_offset;
     uint32_t bodypart_category_offset;
-    uint32_t bodypart_layers_offset;
-    uint32_t bodypart_singular_offset;
-    uint32_t bodypart_plural_offset;
+    //FIXME: this is unused. why do we mess with it when it's not even read?
+    //uint32_t bodypart_layers_offset;
+    //uint32_t bodypart_singular_offset;
+    //uint32_t bodypart_plural_offset;
     uint32_t color_modifier_part_offset;
     uint32_t color_modifier_startdate_offset;
     uint32_t color_modifier_enddate_offset;
@@ -371,9 +372,9 @@ bool Materials::ReadCreatureTypesEx (void)
         OffsetGroup * OG_CasteBodyparts = OG_Creature->getGroup("caste_bodyparts");
             bodypart_id_offset = OG_CasteBodyparts->getOffset ("id");
             bodypart_category_offset = OG_CasteBodyparts->getOffset ("category");
-            bodypart_layers_offset = OG_CasteBodyparts->getOffset ("layers_vector"); // unused
-            bodypart_singular_offset = OG_CasteBodyparts->getOffset ("singular_vector"); // unused
-            bodypart_plural_offset = OG_CasteBodyparts->getOffset ("plural_vector"); // unused
+            //bodypart_layers_offset = OG_CasteBodyparts->getOffset ("layers_vector"); // unused
+            //bodypart_singular_offset = OG_CasteBodyparts->getOffset ("singular_vector"); // unused
+            //bodypart_plural_offset = OG_CasteBodyparts->getOffset ("plural_vector"); // unused
         OffsetGroup * OG_CasteColorMods = OG_Creature->getGroup("caste_color_mods");
             color_modifier_part_offset = OG_CasteColorMods->getOffset ("part");
             color_modifier_startdate_offset = OG_CasteColorMods->getOffset ("startdate");
@@ -480,11 +481,11 @@ void Materials::ReadAllMaterials(void)
 }
 
 /// miserable pile of magic. The material system is insane.
+// FIXME: this contains potential errors when the indexes are -1 and compared to unsigned numbers!
 std::string Materials::getDescription(const t_material & mat)
 {
     std::string out;
     int32_t typeC;
-
     if ( (mat.subIndex<419) || (mat.subIndex>618) )
     {
         if ( (mat.subIndex<19) || (mat.subIndex>218) )
@@ -543,6 +544,7 @@ std::string Materials::getDescription(const t_material & mat)
 }
 
 //type of material only so we know which vector to retrieve
+// FIXME: this also contains potential errors when the indexes are -1 and compared to unsigned numbers!
 std::string Materials::getType(const t_material & mat)
 {
     if((mat.subIndex<419) || (mat.subIndex>618))

@@ -148,6 +148,7 @@ uint32_t Gui::ReadMenuState()
     return false;
 }
 
+// FIXME: variable ‘screenAddr’ set but not used [-Wunused-but-set-variable]
 bool Gui::ReadViewScreen (t_viewscreen &screen)
 {
     if (!d->ViewScreeInited) return false;

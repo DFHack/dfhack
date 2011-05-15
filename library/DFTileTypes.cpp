@@ -658,7 +658,7 @@ namespace DFHack
 
     int32_t findSimilarTileType( const int32_t sourceTileType, const TileShape tshape )
     {
-        int32_t tt, maybe=0, match=0;
+        int32_t tt, match=0;
         int value=0, matchv=0;
         const TileRow *source = &tileTypeTable[sourceTileType];
 
@@ -676,7 +676,7 @@ namespace DFHack
                 //Special flag match is absolutely mandatory!
                 if( source->special != tileTypeTable[tt].special ) continue;
 
-                maybe=tt;  value=0;
+                 value=0;
                 //Material is high-value match
                 if( tileTypeTable[tt].material == source->material ) value|=8;
                 //Direction is medium value match
@@ -685,7 +685,8 @@ namespace DFHack
                 if( tileTypeTable[tt].variant == source->variant ) value|=1;
 
                 //Check value against last match
-                if( value>matchv ){
+                if( value>matchv )
+                {
                     match=tt;
                     matchv=value;
                 }

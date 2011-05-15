@@ -13,6 +13,7 @@ using namespace std;
 
 using namespace DFHack;
 
+//FIXME: A pile of magic numbers. looks like decompiled number
 typedef uint32_t _DWORD;
 int get_material_vector(uint32_t vein_8, uint16_t vein_4, int WORLD_)
 {

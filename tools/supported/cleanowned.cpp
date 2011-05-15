@@ -92,13 +92,20 @@ int main (int argc, char *argv[])
         DFHack::dfh_item itm;
         Items->readItem(curItem, itm);
 
-        if (!itm.base.flags.owned)
-            continue;
-
-        std::string name = Items->getItemClass(itm.matdesc.itemType);
-
         bool confiscate = false;
         bool dump = false;
+
+        if (!itm.base.flags.owned) {
+            int32_t owner = Items->getItemOwnerID(itm);
+            if (owner >= 0) {
+                printf("Fixing a misflagged item: ");
+                confiscate = true;
+            }
+            else
+                continue;
+        }
+
+        std::string name = Items->getItemClass(itm.matdesc.itemType);
 
         if (itm.base.flags.rotten)
         {
@@ -131,12 +138,14 @@ int main (int argc, char *argv[])
 
         if (confiscate)
         {
-            itm.base.flags.owned = 0;
-            if (dump)
-                itm.base.flags.dump = 1;
+            if (!dry_run) {
+                if (!Items->removeItemOwner(itm, Creatures))
+                    printf("(unsuccessfully) ");
+                if (dump)
+                    itm.base.flags.dump = 1;
 
-            if (!dry_run)
                 Items->writeItem(itm);
+            }
 
             printf(
                 "%s (wear %d)",

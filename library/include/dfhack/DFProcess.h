@@ -182,6 +182,7 @@ namespace DFHack
 
             /// read a STL vector
             virtual void readSTLVector(const uint32_t address, t_vecTriplet & triplet) = 0;
+            virtual void writeSTLVector(const uint32_t address, t_vecTriplet & triplet) = 0;
             /// get class name of an object with rtti/type info
             virtual std::string doReadClassName(uint32_t vptr) = 0;
 
@@ -225,21 +226,19 @@ namespace DFHack
     };
 
     class DFHACK_EXPORT ClassNameCheck
-	{
+    {
         std::string name;
-        uint32_t vptr;
+        mutable uint32_t vptr;
     public:
         ClassNameCheck() : vptr(0) {};
         ClassNameCheck(std::string _name) : name(_name), vptr(0) {};
         ClassNameCheck &operator= (const ClassNameCheck &b)
-		{
+        {
             name = b.name; vptr = b.vptr; return *this;
-        };
-        bool operator() (Process *p, uint32_t ptr)
-		{
-			if(vptr == 0)
-				if (p->readClassName(ptr) == name)
-					vptr = ptr;
+        }
+        bool operator() (Process *p, uint32_t ptr) const {
+            if (vptr == 0 && p->readClassName(ptr) == name)
+                vptr = ptr;
             return (vptr && vptr == ptr);
         };
     };

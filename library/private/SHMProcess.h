@@ -73,6 +73,7 @@ namespace DFHack
         size_t writeSTLString(const uint32_t address, const std::string writeString);
 
         void readSTLVector(const uint32_t address, t_vecTriplet & triplet);
+        void writeSTLVector(const uint32_t address, t_vecTriplet & triplet);
         // get class name of an object with rtti/type info
         std::string doReadClassName(uint32_t vptr);
 

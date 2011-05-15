@@ -96,6 +96,5 @@ int main(int argc, char *argv[])
         std::cout << " Press any key to finish.";
         std::cin.ignore();
     }
-    std::cout << std::endl;
     return 0;
 }

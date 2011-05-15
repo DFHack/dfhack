@@ -105,8 +105,6 @@ int main(int argc, char *argv[])
             veg->Read(i,p);
             if(all_shrubs && p.sdata.is_shrub || all_trees && !p.sdata.is_shrub)
             {
-                //p.sdata.temperature_1 = 0;
-                //p.sdata.temperature_2 = 0;
                 if (immolate)
                     p.sdata.is_burning = true;
                 p.sdata.hitpoints = 0;

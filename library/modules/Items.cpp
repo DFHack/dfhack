@@ -38,6 +38,7 @@ using namespace std;
 #include "dfhack/DFVector.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Items.h"
+#include "dfhack/modules/Creatures.h"
 #include "ModuleFactory.h"
 
 using namespace DFHack;
@@ -426,10 +427,11 @@ class Items::Private
         std::map<uint32_t, ItemDesc *> descVTable;
         std::map<int32_t, uint32_t> idLookupTable;
         uint32_t refVectorOffset;
-        uint32_t refIDOffset;
         uint32_t idFieldOffset;
         uint32_t itemVectorAddress;
         ClassNameCheck isOwnerRefClass;
+        ClassNameCheck isContainerRefClass;
+        ClassNameCheck isContainsRefClass;
 };
 
 Items::Items(DFContextShared * d_)
@@ -437,12 +439,15 @@ Items::Items(DFContextShared * d_)
     d = new Private;
     d->d = d_;
     d->owner = d_->p;
-    d->refVectorOffset = d->refIDOffset = 0;
+
     d->isOwnerRefClass = ClassNameCheck("general_ref_unit_itemownerst");
+    d->isContainerRefClass = ClassNameCheck("general_ref_contained_in_itemst");
+    d->isContainsRefClass = ClassNameCheck("general_ref_contains_itemst");
 
     DFHack::OffsetGroup* itemGroup = d_->offset_descriptor->getGroup("Items");
     d->itemVectorAddress = itemGroup->getAddress("items_vector");
     d->idFieldOffset = itemGroup->getOffset("id");
+    d->refVectorOffset = itemGroup->getOffset("item_ref_vector");
 }
 
 bool Items::Start()
@@ -538,27 +543,65 @@ void Items::setItemFlags(uint32_t itemptr, t_itemflags new_flags)
 */
 int32_t Items::getItemOwnerID(const DFHack::dfh_item &item)
 {
-    if (!d->refVectorOffset)
+    std::vector<int32_t> vals;
+    if (readItemRefs(item, d->isOwnerRefClass, vals))
+        return vals[0];
+    else
+        return -1;
+}
+
+int32_t Items::getItemContainerID(const DFHack::dfh_item &item)
+{
+    std::vector<int32_t> vals;
+    if (readItemRefs(item, d->isContainerRefClass, vals))
+        return vals[0];
+    else
+        return -1;
+}
+
+bool Items::getContainedItems(const DFHack::dfh_item &item, std::vector<int32_t> &items)
+{
+    return readItemRefs(item, d->isContainsRefClass, items);
+}
+
+bool Items::readItemRefs(const dfh_item &item, const ClassNameCheck &classname, std::vector<int32_t> &values)
+{
+    DFHack::DfVector<uint32_t> p_refs(d->owner, item.origin + d->refVectorOffset);
+
+    values.clear();
+
+    for (uint32_t i=0; i<p_refs.size(); i++)
     {
-        OffsetGroup * Items = d->owner->getDescriptor()->getGroup("Items");
-        d->refVectorOffset = Items->getOffset("item_ref_vector");
-        d->refIDOffset = Items->getOffset("owner_ref_id_field");
+        uint32_t vtbl = d->owner->readDWord(p_refs[i]);
+        if (classname(d->owner, vtbl))
+            values.push_back(int32_t(d->owner->readDWord(p_refs[i] + 4)));
     }
 
+    return !values.empty();
+}
+
+bool Items::removeItemOwner(dfh_item &item, Creatures *creatures)
+{
     DFHack::DfVector<uint32_t> p_refs(d->owner, item.origin + d->refVectorOffset);
-    uint32_t size = p_refs.size();
 
-    for (uint32_t i=0;i<size;i++)
+    for (uint32_t i=0; i<p_refs.size(); i++)
     {
-        uint32_t curRef = p_refs[i];
-        uint32_t vtbl = d->owner->readDWord(curRef);
-
+        uint32_t vtbl = d->owner->readDWord(p_refs[i]);
         if (!d->isOwnerRefClass(d->owner, vtbl)) continue;
 
-        return d->owner->readDWord(curRef + d->refIDOffset);
+        int32_t oid = d->owner->readDWord(p_refs[i]+4);
+        int32_t ix = creatures->FindIndexById(oid);
+
+        if (ix < 0 || !creatures->RemoveOwnedItemIdx(ix, item.id))
+            return false;
+
+        if (!p_refs.remove(i--))
+            return false;
     }
 
-    return -1;
+    item.base.flags.owned = 0;
+
+    return true;
 }
 
 std::string Items::getItemClass(const dfh_item & item)

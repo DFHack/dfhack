@@ -69,6 +69,7 @@ namespace {
             bool forceresume();
 
             void readSTLVector(const uint32_t address, t_vecTriplet & triplet);
+            void writeSTLVector(const uint32_t address, t_vecTriplet & triplet);
             const std::string readSTLString (uint32_t offset);
             size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
             size_t writeSTLString(const uint32_t address, const std::string writeString);
@@ -150,6 +151,11 @@ WineProcess::WineProcess(uint32_t pid, VersionInfoFactory * factory) : LinuxProc
 void WineProcess::readSTLVector(const uint32_t address, t_vecTriplet & triplet)
 {
     read(address + vector_start, sizeof(triplet), (uint8_t *) &triplet);
+}
+
+void WineProcess::writeSTLVector(const uint32_t address, t_vecTriplet & triplet)
+{
+    write(address + vector_start, sizeof(triplet), (uint8_t *) &triplet);
 }
 
 size_t WineProcess::readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)

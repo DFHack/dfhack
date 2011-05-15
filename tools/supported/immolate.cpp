@@ -10,6 +10,7 @@ using namespace std;
 #include <xgetopt.h>
 #include <time.h>
 #include <stdlib.h>
+#include "termutil.h"
 
 bool parseOptions(int argc, char **argv,
                   bool &trees, bool &shrubs, bool &immolate)
@@ -52,6 +53,7 @@ bool parseOptions(int argc, char **argv,
 
 int main(int argc, char *argv[])
 {
+    bool temporary_terminal = TemporaryTerminal();
     bool all_trees = false;
     bool all_shrubs = false;
     bool immolate = false;
@@ -68,9 +70,8 @@ int main(int argc, char *argv[])
     if (!context->Attach())
     {
         std::cerr << "Unable to attach to DF!" << std::endl;
-        #ifndef LINUX_BUILD
-        std::cin.ignore();
-        #endif
+        if(temporary_terminal)
+            std::cin.ignore();
         return 1;
     }
 
@@ -79,9 +80,8 @@ int main(int argc, char *argv[])
     {
         std::cerr << "Cannot get map info!" << std::endl;
         context->Detach();
-        #ifndef LINUX_BUILD
-        std::cin.ignore();
-        #endif
+        if(temporary_terminal)
+            std::cin.ignore();
         return 1;
     }
     DFHack::Gui * Gui = context->getGui();
@@ -92,6 +92,8 @@ int main(int argc, char *argv[])
     if (!veg->Start(vegCount))
     {
         std::cerr << "Unable to read vegetation!" << std::endl;
+        if(temporary_terminal)
+            cin.ignore();
         return 1;
     }
     if(all_shrubs || all_trees)
@@ -158,10 +160,10 @@ int main(int argc, char *argv[])
     veg->Finish();
     maps->Finish();
     context->Detach();
-    #ifndef LINUX_BUILD
-    std::cout << " Press any key to finish.";
-    std::cin.ignore();
-    #endif
-    std::cout << std::endl;
+    if(temporary_terminal)
+    {
+        std::cout << " Press any key to finish.";
+        std::cin.ignore();
+    }
     return 0;
 }

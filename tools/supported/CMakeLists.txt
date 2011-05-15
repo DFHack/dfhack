@@ -14,6 +14,12 @@ IF(MSVC)
     set(LOCAL_DEPNAME memxml-for-supported)
 ENDIF()
 
+# burn trees and shrubs to ashes
+DFHACK_TOOL(dfimmolate immolate.cpp)
+
+# grow saplings into trees instantly
+DFHACK_TOOL(dfgrow grow.cpp)
+
 # a reveal clone
 DFHACK_TOOL(dfreveal reveal.cpp)
 

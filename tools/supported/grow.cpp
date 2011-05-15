@@ -10,9 +10,11 @@ using namespace std;
 #include <xgetopt.h>
 #include <time.h>
 #include <stdlib.h>
+#include "termutil.h"
 
 int main(int argc, char *argv[])
 {
+    bool temporary_terminal = TemporaryTerminal();
     srand(time(0));
 
     uint32_t x_max = 0, y_max = 0, z_max = 0;
@@ -22,9 +24,8 @@ int main(int argc, char *argv[])
     if (!context->Attach())
     {
         std::cerr << "Unable to attach to DF!" << std::endl;
-        #ifndef LINUX_BUILD
-        std::cin.ignore();
-        #endif
+        if(temporary_terminal)
+            std::cin.ignore();
         return 1;
     }
 
@@ -33,9 +34,8 @@ int main(int argc, char *argv[])
     {
         std::cerr << "Cannot get map info!" << std::endl;
         context->Detach();
-        #ifndef LINUX_BUILD
-        std::cin.ignore();
-        #endif
+        if(temporary_terminal)
+            std::cin.ignore();
         return 1;
     }
     DFHack::Gui * Gui = context->getGui();
@@ -46,6 +46,8 @@ int main(int argc, char *argv[])
     if (!veg->Start(vegCount))
     {
         std::cerr << "Unable to read vegetation!" << std::endl;
+        if(temporary_terminal)
+            cin.ignore();
         return 1;
     }
     int32_t x,y,z;
@@ -89,10 +91,11 @@ int main(int argc, char *argv[])
     veg->Finish();
     maps->Finish();
     context->Detach();
-    #ifndef LINUX_BUILD
-    std::cout << " Press any key to finish.";
-    std::cin.ignore();
-    #endif
+    if(temporary_terminal)
+    {
+        std::cout << " Press any key to finish.";
+        std::cin.ignore();
+    }
     std::cout << std::endl;
     return 0;
 }

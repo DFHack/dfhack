@@ -19,12 +19,6 @@ ENDIF()
 # a creature mood dump hack. has hardcoded offsets
 DFHACK_TOOL(dfmoodump moodump.cpp)
 
-# burn trees and shrubs to ashes
-DFHACK_TOOL(dfimmolate immolate.cpp)
-
-# grow saplings into trees instantly
-DFHACK_TOOL(dfgrow grow.cpp)
-
 # bauxite - turn all mechanisms into bauxite mechanisms
 # Author: Alex Legg
 # FIXME: turned off. there is no reliable Items module.

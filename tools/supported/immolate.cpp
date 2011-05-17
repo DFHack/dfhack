@@ -7,10 +7,11 @@
 using namespace std;
 #include <DFHack.h>
 #include <dfhack/extra/MapExtras.h>
+#include <dfhack/extra/termutil.h>
 #include <xgetopt.h>
 #include <time.h>
 #include <stdlib.h>
-#include "termutil.h"
+
 
 bool parseOptions(int argc, char **argv,
                   bool &trees, bool &shrubs, bool &immolate)

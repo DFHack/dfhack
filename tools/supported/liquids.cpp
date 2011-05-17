@@ -1,15 +1,18 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <set>
 #include <cstdlib>
 using namespace std;
 
 #include <DFHack.h>
 #include <dfhack/extra/MapExtras.h>
-#include <set>
 using namespace MapExtras;
+#include <dfhack/extra/termutil.h>
 
-#include "termutil.h"
+
+
+
 
 typedef vector <DFHack::DFCoord> coord_vec;
 

@@ -10,7 +10,7 @@ using namespace std;
 #include <xgetopt.h>
 #include <time.h>
 #include <stdlib.h>
-#include "termutil.h"
+#include <dfhack/extra/termutil.h>
 
 int main(int argc, char *argv[])
 {

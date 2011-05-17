@@ -16,7 +16,7 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/extra/MapExtras.h>
 #include <xgetopt.h>
-#include "termutil.h"
+#include <dfhack/extra/termutil.h>
 
 typedef std::map<int16_t, unsigned int> MatMap;
 typedef std::vector< pair<int16_t, unsigned int> > MatSorter;

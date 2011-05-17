@@ -7,7 +7,7 @@ using namespace std;
 
 #include <DFHack.h>
 #include <dfhack/modules/Gui.h>
-#include "termutil.h"
+#include <dfhack/extra/termutil.h>
 
 int main (int argc, char** argv)
 {

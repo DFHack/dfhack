@@ -13,7 +13,7 @@ using namespace std;
 #define DFHACK_WANT_TILETYPES 1
 #include <DFHack.h>
 #include <dfhack/extra/MapExtras.h>
-#include "termutil.h"
+#include <dfhack/extra/termutil.h>
 
 using namespace DFHack;
 int main (int numargs, const char ** args)

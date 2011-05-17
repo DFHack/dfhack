@@ -21,7 +21,7 @@ void waitmsec (int delay)
     Sleep(delay);
 }
 #endif
-#include "termutil.h"
+#include <dfhack/extra/termutil.h>
 
 struct hideblock
 {

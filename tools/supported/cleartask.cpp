@@ -11,7 +11,7 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/DFVector.h>
 #include <dfhack/DFTypes.h>
-#include "termutil.h"
+#include <dfhack/extra/termutil.h>
 
 int main ()
 {

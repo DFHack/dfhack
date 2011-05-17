@@ -11,7 +11,7 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/DFVector.h>
 #include <dfhack/extra/MapExtras.h> // map cache for the win.
-#include "termutil.h"
+#include <dfhack/extra/termutil.h>
 using namespace DFHack;
 using MapExtras::Block;
 using MapExtras::MapCache;

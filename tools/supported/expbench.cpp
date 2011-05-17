@@ -9,7 +9,7 @@
 using namespace std;
 
 #include <DFHack.h>
-#include "termutil.h"
+#include <dfhack/extra/termutil.h>
 void print_progress (int current, int total)
 {
     if(total < 100)

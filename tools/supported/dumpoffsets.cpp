@@ -10,7 +10,7 @@ using namespace std;
 #include <DFHack.h>
 #include <dfhack/VersionInfoFactory.h>
 using namespace DFHack;
-#include "termutil.h"
+#include <dfhack/extra/termutil.h>
 
 int main (int numargs, const char ** args)
 {

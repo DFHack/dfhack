@@ -10,7 +10,7 @@ using namespace std;
 
 #include <DFHack.h>
 #include <dfhack/extra/MapExtras.h>
-#include "termutil.h"
+#include <dfhack/extra/termutil.h>
 using namespace MapExtras;
 
 int main (int argc, char* argv[])

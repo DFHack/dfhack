@@ -9,7 +9,7 @@
 using namespace std;
 #include <DFHack.h>
 #include <dfhack/extra/MapExtras.h>
-#include "termutil.h"
+#include <dfhack/extra/termutil.h>
 
 void tolower(std::string &str)
 {

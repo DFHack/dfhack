@@ -5,7 +5,7 @@
 using namespace std;
 
 #include <DFHack.h>
-#include "termutil.h"
+#include <dfhack/extra/termutil.h>
 int main (void)
 {
     bool temporary_terminal = TemporaryTerminal();

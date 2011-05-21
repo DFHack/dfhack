@@ -226,8 +226,6 @@ bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
 }
 */
 
-
-
 // good for now
 inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & names)
 {

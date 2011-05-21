@@ -39,6 +39,7 @@ include/dfhack/VersionInfoFactory.h
 include/dfhack/VersionInfo.h
 include/dfhack/extra/MapExtras.h
 include/dfhack/extra/termutil.h
+include/dfhack/extra/stopwatch.h
 include/dfhack/modules/Buildings.h
 include/dfhack/modules/Constructions.h
 include/dfhack/modules/Creatures.h

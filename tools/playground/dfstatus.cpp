@@ -23,9 +23,9 @@
 #include <stdlib.h>
 #include <time.h>
 using namespace std;
-#define DFHACK_WANT_MISCUTILS
 #include <DFHack.h>
 #include <dfhack/DFVector.h>
+#include <dfhack/extra/stopwatch.h>
 
 WINDOW *create_newwin(int height, int width, int starty, int startx);
 
@@ -42,6 +42,9 @@ WINDOW *create_newwin(int height, int width, int starty, int startx);
     int32_t copperBars = 0;
     int32_t steelBars = 0;
     int32_t fuel = 0;
+    uint64_t start_time = 0;
+    uint64_t end_time = 0;
+    uint64_t total_time = 0;
 
 WINDOW *create_newwin(int height, int width, int starty, int startx){
     WINDOW *local_win;
@@ -64,7 +67,8 @@ WINDOW *create_newwin(int height, int width, int starty, int startx){
     mvwprintw(local_win,5,22,"Copper Bars: %d", copperBars);
     mvwprintw(local_win,6,22,"Steel Bars:  %d", steelBars);
     mvwprintw(local_win,8,22,"Fuel:        %d", fuel);
-
+    total_time += end_time - start_time;
+    mvwprintw(local_win,12,2,"Time used:   %d ms, Time total:  %d ms", end_time - start_time, total_time);
 
     wrefresh(local_win); // paint the screen and all components.
 
@@ -79,21 +83,27 @@ int main()
     DFHack::Process * p;
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context * DF;
+    DFHack::Materials * Materials;
     try{ //is DF running?
         DF = DFMgr.getSingleContext();
-        DF->Detach();
+        DF->Attach();
+        Materials = DF->getMaterials();
+        Materials->ReadAllMaterials();
+        DF->Resume();
     }
     catch (exception& e){
         cerr << e.what() << endl;
         return 1;
     }
-   //init and Attach
+    //init and Attach
+    ofstream file("dfstatus_errors.txt");
+    streambuf* strm_buffer = cerr.rdbuf(); // save cerr's output buffer
+    cerr.rdbuf (file.rdbuf()); // redirect output into the file
 
     initscr(); //start curses.
     nonl();
     intrflush(stdscr, FALSE);
     keypad(stdscr, TRUE);
-
     do{
         drinkCount = 0;
         plantCount = 0;
@@ -111,10 +121,11 @@ int main()
 
         //FILE * pFile;
         //pFile = fopen("dump.txt","w");
-
-        DF->Attach();
-        DFHack::Materials * Materials = DF->getMaterials();
-        Materials->ReadAllMaterials();
+        start_time = GetTimeMs64();
+        if(!DF->Suspend())
+        {
+            break;
+        }
 
         //DFHack::Gui * Gui = DF->getGui();
 
@@ -161,7 +172,8 @@ int main()
                 fprintf(pFile,"%5d: %12s - %64s - [%d]\n", idx, Items->getItemClass(itm.matdesc.itemType).c_str(), Items->getItemDescription(itm, Materials).c_str(), itm.quantity);
             }*/
         }
-        DF->Detach();
+        DF->Resume();
+        end_time = GetTimeMs64();
         //printf("%d - %d\n", (clock()/CLOCKS_PER_SEC),(clock()/CLOCKS_PER_SEC)%60);
         height = LINES;
         width  = COLS;
@@ -179,6 +191,8 @@ int main()
     } while(true);
 
     endwin();           /* End curses mode        */
+    cerr.rdbuf (strm_buffer); // restore old output buffer
+    file.close();
 
     return 0;
 }

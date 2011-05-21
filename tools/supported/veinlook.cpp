@@ -10,8 +10,7 @@ using namespace std;
 
 #include <sstream>
 // the header name comes from the build system.
-#define INCLUDE_NAME() <NCURSES_H>
-#include INCLUDE_NAME()
+#include <curses.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <locale.h>
@@ -807,7 +806,7 @@ int main(int argc, char *argv[])
                     Maps->ReadTemperatures(cursorX+i,cursorY+j,cursorZ,&b_temp1, &b_temp2 );
                     if(dotwiddle)
                     {
-                        bitset<32> bs = Block->designation[0][0].whole;
+                        bitset<32> bs ((int)Block->designation[0][0].whole);
                         bs.flip(twiddle);
                         Block->designation[0][0].whole = bs.to_ulong();
                         Maps->WriteDesignations(cursorX+i,cursorY+j,cursorZ, &(Block->designation));

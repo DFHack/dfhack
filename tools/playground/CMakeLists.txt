@@ -28,6 +28,10 @@ DFHACK_TOOL(dfmoodump moodump.cpp)
 # Author: mizipzor
 DFHACK_TOOL(dfdigger digger.cpp)
 
+# dfstatus - watches DF and prints stuff in a window
+DFHACK_CURSES_TOOL(dfstatus dfstatus.cpp)
+find_package(Curses QUIET)
+
 # digger2 - designate for digging from a text file
 # Author: rOut
 DFHACK_TOOL(dfdigger2 digger2.cpp)

@@ -2,7 +2,7 @@
 #define TERMUTIL_H
 
 #ifdef LINUX_BUILD
-// FIXME: is this ever false?
+// FIXME: is this ever true?
 bool TemporaryTerminal ()
 {
     return false;

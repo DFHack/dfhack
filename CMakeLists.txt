@@ -51,6 +51,7 @@ IF(WIN32)
 ELSE()
     set (DFHACK_INST_DEFAULT "linux")
 ENDIF()
+
 SET( DFHACK_INSTALL ${DFHACK_INST_DEFAULT} CACHE STRING
 "Choose the install type:
 'portable' for a portable zip or tar.gz package (windows default)
@@ -150,6 +151,26 @@ include_directories (${dfhack_SOURCE_DIR}/library/shm/)
 include_directories (${dfhack_SOURCE_DIR}/library/depends/argstream/)
 include_directories (${dfhack_SOURCE_DIR}/library/depends/xgetopt/)
 
+# handle curses library bull**** on multiple platforms.
+IF(UNIX)
+    find_package(Curses QUIET)
+    if(Curses_FOUND)
+        add_library(curses SHARED IMPORTED)
+        set_property(TARGET curses PROPERTY IMPORTED_LOCATION ${Curses_LIBRARY})
+        include_directories (${Curses_INCLUDE_PATH})
+    endif()
+ELSE()
+    add_library(curses SHARED IMPORTED)
+    set_property(TARGET curses PROPERTY IMPORTED_LOCATION ${dfhack_SOURCE_DIR}/pdcurses/pdcurses.dll)
+    set_property(TARGET curses PROPERTY IMPORTED_IMPLIB ${dfhack_SOURCE_DIR}/pdcurses/pdcurses.lib)
+    include_directories (${dfhack_SOURCE_DIR}/pdcurses)
+    add_custom_target( curses-copy
+        COMMAND "${CMAKE_COMMAND}" -E copy "${dfhack_SOURCE_DIR}/pdcurses/pdcurses.dll" ${dfhack_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/
+        DEPENDS "${dfhack_SOURCE_DIR}/pdcurses/pdcurses.dll")
+    SET(Curses_FOUND TRUE)
+    INSTALL(FILES "${dfhack_SOURCE_DIR}/pdcurses/pdcurses.dll" DESTINATION ${DFHACK_BINARY_DESTINATION})
+ENDIF()
+
 # macro to save on typing in the tool subdirs
 # builds a tool, links it to the dfhack lib and makes sure the dependency
 # LOCAL_DEPNAME is built first, in case there is one
@@ -163,6 +184,26 @@ MACRO(DFHACK_TOOL TOOL_NAME TOOL_SOURCES)
             ${TOOL_NAME}
             RUNTIME DESTINATION ${DFHACK_BINARY_DESTINATION})
 ENDMACRO()
+
+# same as above builds a curses tool instead of plain terminal one.
+MACRO(DFHACK_CURSES_TOOL TOOL_NAME TOOL_SOURCES)
+    IF(Curses_FOUND)
+        ADD_EXECUTABLE(${TOOL_NAME} ${TOOL_SOURCES})
+        TARGET_LINK_LIBRARIES(${TOOL_NAME} dfhack curses)
+        if(DEFINED LOCAL_DEPNAME)
+            ADD_DEPENDENCIES(${TOOL_NAME} ${LOCAL_DEPNAME})
+        endif()
+        if(WIN32)
+            ADD_DEPENDENCIES(${TOOL_NAME} curses-copy)
+        ENDIF()
+        install(TARGETS
+                ${TOOL_NAME}
+                RUNTIME DESTINATION ${DFHACK_BINARY_DESTINATION})
+    ELSE()
+        MESSAGE(STATUS "Wide-character ncurses library not found - " ${TOOL_NAME} "can't be built")
+    ENDIF()
+ENDMACRO()
+
 
 IF(BUILD_DFHACK_LIBRARY)
 

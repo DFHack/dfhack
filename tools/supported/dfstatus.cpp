@@ -30,6 +30,7 @@ using namespace std;
 WINDOW *create_newwin(int height, int width, int starty, int startx);
 
     int32_t drinkCount = 0;
+    int32_t mealsCount = 0;
     int32_t plantCount = 0;
     int32_t fishCount = 0;
     int32_t meatCount = 0;
@@ -55,20 +56,21 @@ WINDOW *create_newwin(int height, int width, int starty, int startx){
                      * lines            */
     //first row
     mvwprintw(local_win,2,2,"Drinks: %d", drinkCount);
-    mvwprintw(local_win,4,2,"Plants: %d", plantCount);
-    mvwprintw(local_win,5,4,"Fish: %d", fishCount);
-    mvwprintw(local_win,6,4,"Meat: %d", meatCount);
-    mvwprintw(local_win,8,2,"Logs:   %d", logsCount);
-    mvwprintw(local_win,10,2,"Cloth: %d", clothCount);
+    mvwprintw(local_win,4,2,"Meals : %d", mealsCount);
+    mvwprintw(local_win,6,2,"Plants: %d", plantCount);
+    mvwprintw(local_win,7,4,"Fish: %d", fishCount);
+    mvwprintw(local_win,8,4,"Meat: %d", meatCount);
+    mvwprintw(local_win,10,2,"Logs:   %d", logsCount);
+    mvwprintw(local_win,12,2,"Cloth: %d", clothCount);
     //second row
     mvwprintw(local_win,2,22,"Iron Bars:   %d", ironBars);
     mvwprintw(local_win,3,22,"Gold Bars:   %d", goldBars);
     mvwprintw(local_win,4,22,"Silver Bars: %d", silverBars);
     mvwprintw(local_win,5,22,"Copper Bars: %d", copperBars);
     mvwprintw(local_win,6,22,"Steel Bars:  %d", steelBars);
-    mvwprintw(local_win,8,22,"Fuel:        %d", fuel);
+    mvwprintw(local_win,9,22,"Fuel:        %d", fuel);
     total_time += end_time - start_time;
-    mvwprintw(local_win,12,2,"Time used:   %d ms, Time total:  %d ms", end_time - start_time, total_time);
+    mvwprintw(local_win,14,2,"Time used:   %d ms, Time total:  %d ms", end_time - start_time, total_time);
 
     wrefresh(local_win); // paint the screen and all components.
 
@@ -106,6 +108,7 @@ int main()
     keypad(stdscr, TRUE);
     do{
         drinkCount = 0;
+        mealsCount = 0;
         plantCount = 0;
         fishCount = 0;
         meatCount = 0;
@@ -153,6 +156,7 @@ int main()
             string s1 = Items->getItemDescription(itm, Materials).c_str();
 
             if( s0 == "drink" ) {drinkCount += itm.quantity;}
+            else if(s0 == "food"){mealsCount += itm.quantity;}
             else if(s0 == "plant"){plantCount += itm.quantity;}
             else if(s0 == "fish"){fishCount += itm.quantity;}
             else if(s0 == "meat"){meatCount += itm.quantity;}

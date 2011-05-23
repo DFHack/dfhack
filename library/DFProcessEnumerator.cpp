@@ -248,15 +248,18 @@ void ProcessEnumerator::Private::EnumPIDs (vector <ProcessID> &PIDs)
 
     // Get the list of process identifiers.
     DWORD ProcArray[2048], memoryNeeded, numProccesses;
-    //EnableDebugPriv();
+    if(!EnableDebugPriv())
+    {
+        cerr << "Failed to acquire debug privileges." << endl;
+    }
     if ( !EnumProcesses( ProcArray, sizeof(ProcArray), &memoryNeeded ) )
     {
-        cout << "EnumProcesses fail'd" << endl;
+        cerr << "EnumProcesses fail'd" << endl;
         return;
     }
     // Calculate how many process identifiers were returned.
     numProccesses = memoryNeeded / sizeof(DWORD);
-    EnableDebugPriv();
+    //EnableDebugPriv();
     // iterate through processes
     for ( int i = 0; i < (int)numProccesses; i++ )
     {

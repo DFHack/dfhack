@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
         vector<DFHack::dfh_plant> alltrees;
         if(maps->ReadVegetation(x/16,y/16,z,&alltrees))
         {
-            for(int i = 0 ; i < alltrees.size(); i++)
+            for(size_t i = 0 ; i < alltrees.size(); i++)
             {
                 DFHack::dfh_plant & tree = alltrees[i];
                 if(tree.sdata.x == x && tree.sdata.y == y && tree.sdata.z == z)
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     else
     {
         int grown = 0;
-        for(int i = 0 ; i < vegCount; i++)
+        for(size_t i = 0 ; i < vegCount; i++)
         {
             DFHack::dfh_plant p;
             veg->Read(i,p);

@@ -64,6 +64,7 @@
 #include <climits>
 #include <string.h>
 #include <vector>
+#include <locale>
 #include <stdio.h>
 using namespace std;
 
@@ -264,6 +265,7 @@ DFHack::Creatures * Creatures = NULL;
 std::string toCaps(std::string s)
 {
     const int length = s.length();
+    std::locale loc("");
     bool caps=true;
     if (length == 0) {
         return s;
@@ -272,7 +274,7 @@ std::string toCaps(std::string s)
     {
         if (caps)
         {
-            s[i] = std::toupper(s[i]);
+            s[i] = std::toupper(s[i],loc);
             caps = false;
         }
         else if (s[i] == '_' || s[i] == ' ')
@@ -282,7 +284,7 @@ std::string toCaps(std::string s)
         }
         else
         {
-            s[i] = std::tolower(s[i]);
+            s[i] = std::tolower(s[i],loc);
         }
     }
     return s;
@@ -309,7 +311,7 @@ bool is_in(int m, int set[], int set_size)
 
 int * find_int(std::vector<int> v, int comp)
 {
-    for (int i=0; i<v.size(); i++)
+    for (size_t i=0; i<v.size(); i++)
     {
         //fprintf(stderr, "Comparing %d with %d and returning %x...\n", v[i], comp, &v[i]);
         if (v[i] == comp)
@@ -470,7 +472,7 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
             {
                 laborname = mem->getLabor(i);
             }
-            catch(exception &e)
+            catch(exception &)
             {
                 laborname = "(Undefined)";
             }
@@ -841,7 +843,7 @@ int main (int argc, const char* argv[])
                 laborname = mem->getLabor(i);
                 cout << "Labor " << int(i) << ": " << laborname << endl;
             }
-            catch (exception& e) {
+            catch (exception&) {
                 if (verbose) 
                 {
                     laborname = "Unknown";

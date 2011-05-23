@@ -51,7 +51,7 @@ int main (int argc, char *argv[])
     }
 
     DFHack::Process * p;
-    unsigned int i,j;
+    unsigned int i;
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context * DF;
     try

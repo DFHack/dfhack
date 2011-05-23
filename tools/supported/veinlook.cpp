@@ -563,7 +563,7 @@ int main(int argc, char *argv[])
     {
         Mats = DF->getMaterials();
     }
-    catch (exception& e)
+    catch (exception&)
     {
         hasmats = false;
     }

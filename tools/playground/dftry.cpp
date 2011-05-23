@@ -49,7 +49,7 @@ bool splitvector(const vector<uint64_t> & in, vector<uint64_t> & out1, vector<ui
 void printvector (const vector<uint64_t> &in)
 {
     cout << "[" << endl;
-    for(int i = 0; i < in.size(); i++)
+    for(size_t i = 0; i < in.size(); i++)
     {
         cout << hex << in[i] << endl;
     }
@@ -60,7 +60,7 @@ bool tryvals (DFHack::Context * DF, const vector<uint64_t> &in, uint8_t current,
 {
     DF->Suspend();
     DFHack::Process * p = DF->getProcess();
-    for(int i = 0; i < in.size(); i++)
+    for(size_t i = 0; i < in.size(); i++)
     {
         p->writeByte(in[i],testing);
     }
@@ -68,7 +68,7 @@ bool tryvals (DFHack::Context * DF, const vector<uint64_t> &in, uint8_t current,
     int result;
     while (!getNumber("Is the change good? 0 for no, positive for yes.",result,0));
     DF->Suspend();
-    for(int i = 0; i < in.size(); i++)
+    for(size_t i = 0; i < in.size(); i++)
     {
         p->writeByte(in[i],current);
     }

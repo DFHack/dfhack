@@ -5,6 +5,8 @@
 #include <map>
 #include <algorithm>
 #include <vector>
+#include <locale>
+#include <functional>
 
 using namespace std;
 #include <DFHack.h>
@@ -13,14 +15,12 @@ using namespace std;
 
 void tolower(std::string &str)
 {
-    std::transform(str.begin(), str.end(), str.begin(),
-                   (int(*)(int)) std::tolower);
+    std::transform(str.begin(), str.end(), str.begin(), std::bind2nd(std::ptr_fun(&std::tolower<char>), std::locale("")));
 }
 
 void toupper(std::string &str)
 {
-    std::transform(str.begin(), str.end(), str.begin(),
-                   (int(*)(int)) std::toupper);
+    std::transform(str.begin(), str.end(), str.begin(), std::bind2nd(std::ptr_fun(&std::toupper<char>), std::locale("")));
 }
 
 int toint(const std::string &str, int failValue = 0)

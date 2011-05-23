@@ -194,16 +194,14 @@ NormalProcess::NormalProcess(uint32_t pid, VersionInfoFactory * factory)
             vector_start = my_descriptor->getGroup("vector")->getOffset("start");
             stl.init(this);
         }
-        catch (DFHack::Error::UnsetMemoryDefinition & e)
+        catch (DFHack::Error::UnsetMemoryDefinition &)
         {
-            //cout << "WHAT THE FUCK WINE?" << endl;
-            //cout << "PID:" << pid << endl;
             CloseHandle(my_handle);
             my_handle = 0;
             identified = false;
             return;
         }
-        for(int i = 0; i < threads_ids.size();i++)
+        for(size_t i = 0; i < threads_ids.size();i++)
         {
             HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD) threads_ids[i]);
             if(hThread)
@@ -234,7 +232,7 @@ NormalProcess::~NormalProcess()
     {
         CloseHandle(my_handle);
     }
-    for(int i = 0; i < threads.size(); i++)
+    for(size_t i = 0; i < threads.size(); i++)
         CloseHandle(threads[i]);
     if(sections != NULL)
         free(sections);
@@ -277,7 +275,7 @@ bool NormalProcess::suspend()
     {
         return true;
     }
-    for(int i = 0; i < threads.size(); i++)
+    for(size_t i = 0; i < threads.size(); i++)
     {
         stoppedthreads.push_back(threads[i]);
         SuspendThread(threads[i]);
@@ -290,7 +288,7 @@ bool NormalProcess::forceresume()
 {
     if(!attached)
         return false;
-    for(int i = 0; i < threads.size(); i++)
+    for(size_t i = 0; i < threads.size(); i++)
         while (ResumeThread(threads[i]) > 1);
     suspended = false;
     return true;
@@ -305,7 +303,7 @@ bool NormalProcess::resume()
     {
         return true;
     }
-    for(int i = 0; i < stoppedthreads.size(); i++)
+    for(size_t i = 0; i < stoppedthreads.size(); i++)
         ResumeThread(stoppedthreads[i]);
     stoppedthreads.clear();
     suspended = false;

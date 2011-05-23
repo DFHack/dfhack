@@ -60,7 +60,7 @@ void hexdump (DFHack::Context *DF, uint32_t address, uint32_t length)
 {
     char *buf = new char[length];
     DF->ReadRaw(address, length, (uint8_t *) buf);
-    int i = 0;
+    uint32_t i = 0;
     while (i < length)
     {
         // leading offset

@@ -37,7 +37,6 @@ int main (int argc, char *argv[])
 
 
     DFHack::Process * p;
-    unsigned int i,j;
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context * DF;
     try
@@ -74,7 +73,7 @@ int main (int argc, char *argv[])
     DFHack::OffsetGroup* itemGroup = mem->getGroup("Items");
     uint32_t ref_vector = itemGroup->getOffset("item_ref_vector");
 
-    for(int i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         DFHack::dfh_item itm;
         memset(&itm, 0, sizeof(DFHack::dfh_item));
@@ -107,7 +106,7 @@ int main (int argc, char *argv[])
 
         if (print_refs) {
             DFHack::DfVector<uint32_t> p_refs(p, itm.origin + ref_vector);
-            for (int j = 0; j < p_refs.size(); j++) {
+            for (size_t j = 0; j < p_refs.size(); j++) {
                 uint32_t vptr = p->readDWord(p_refs[j]);
                 uint32_t val = p->readDWord(p_refs[j]+4);
                 printf("\t-> %d \t%s\n", int(val), p->readClassName(vptr).c_str());

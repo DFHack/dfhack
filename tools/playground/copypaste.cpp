@@ -40,9 +40,12 @@ void sort(int32_t &a,int32_t &b)
 }
 void printVecOfVec(ostream &out, vector<vector<vector<string> > >vec,char sep)
 {
-    for(int k=0;k<vec.size();k++){
-      for(int i =0;i<vec[k].size();i++){
-        for(int j=0;j<vec[k][i].size();j++){
+    for(size_t k=0;k<vec.size();k++)
+	{
+      for(size_t i =0;i<vec[k].size();i++)
+	  {
+        for(size_t j=0;j<vec[k][i].size();j++)
+		{
             out << vec[k][i][j];
             if(j==vec[k][i].size()-1)
             {

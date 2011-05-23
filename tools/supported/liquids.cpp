@@ -177,7 +177,7 @@ int main (int argc, char** argv)
 
     string flowmode="f+";
     string setmode ="s.";
-    int amount = 7;
+    unsigned int amount = 7;
     int width = 1, height = 1, z_levels = 1;
     while(!end)
     {

@@ -53,9 +53,6 @@ int main (int argc, char** argv)
 
     uint8_t zeroes [16][16] = {{0}};
     DFHack::occupancies40d occ;
-    DFHack::t_temperatures tt1;
-    DFHack::t_temperatures tt2;
-
     // walk the map
     for(uint32_t x = 0; x< x_max;x++)
     {

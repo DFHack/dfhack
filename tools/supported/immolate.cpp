@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     if(all_shrubs || all_trees)
     {
         int destroyed = 0;
-        for(int i = 0 ; i < vegCount; i++)
+        for(size_t i = 0 ; i < vegCount; i++)
         {
             DFHack::dfh_plant p;
             veg->Read(i,p);
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
             if(maps->ReadVegetation(x/16,y/16,z,&alltrees))
             {
                 bool didit = false;
-                for(int i = 0 ; i < alltrees.size(); i++)
+                for(size_t i = 0 ; i < alltrees.size(); i++)
                 {
                     DFHack::dfh_plant & tree = alltrees[i];
                     if(tree.sdata.x == x && tree.sdata.y == y && tree.sdata.z == z)

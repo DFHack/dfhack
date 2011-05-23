@@ -118,3 +118,6 @@ DFHACK_TOOL(dftiletypes tiletypes.cpp)
 
 # veinlook - look at the map... sort of, kind of
 DFHACK_CURSES_TOOL(dfveinlook veinlook.cpp)
+
+# dfstatus - watches DF and prints stuff in a window
+DFHACK_CURSES_TOOL(dfstatus dfstatus.cpp)

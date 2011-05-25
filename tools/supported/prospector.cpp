@@ -90,11 +90,11 @@ void printMats(MatMap &mat, std::vector<DFHack::t_matgloss> &materials)
     std::sort(sorting_vector.begin(), sorting_vector.end(), compare_pair_second<>());
     for (MatSorter::const_iterator it = sorting_vector.begin(); it != sorting_vector.end(); ++it)
     {
-		if(it->first >= materials.size())
-		{
-			cerr << "Bad index: " << it->first << " out of " <<  materials.size() << endl;
-			continue;
-		}
+        if(it->first >= materials.size())
+        {
+            cerr << "Bad index: " << it->first << " out of " <<  materials.size() << endl;
+            continue;
+        }
         DFHack::t_matgloss mat = materials[it->first];
         std::cout << std::setw(25) << mat.id << " : " << it->second << std::endl;
         total += it->second;

@@ -38,6 +38,7 @@ WINDOW *create_newwin(int height, int width, int starty, int startx);
     int32_t barCount = 0;
     int32_t clothCount = 0;
     int32_t ironBars = 0;
+    int32_t pigIronBars = 0;
     int32_t goldBars = 0;
     int32_t silverBars = 0;
     int32_t copperBars = 0;
@@ -63,12 +64,13 @@ WINDOW *create_newwin(int height, int width, int starty, int startx){
     mvwprintw(local_win,10,2,"Logs       : %d", logsCount);
     mvwprintw(local_win,12,2,"Cloth      : %d", clothCount);
     //second row
-    mvwprintw(local_win,2,22,"Iron Bars  : %d", ironBars);
-    mvwprintw(local_win,3,22,"Gold Bars  : %d", goldBars);
-    mvwprintw(local_win,4,22,"Silver Bars: %d", silverBars);
-    mvwprintw(local_win,5,22,"Copper Bars: %d", copperBars);
-    mvwprintw(local_win,6,22,"Steel Bars : %d", steelBars);
-    mvwprintw(local_win,9,22,"Fuel       : %d", fuel);
+    mvwprintw(local_win,2,22,"Iron Bars     : %d", ironBars);
+    mvwprintw(local_win,3,22,"Gold Bars     : %d", goldBars);
+    mvwprintw(local_win,4,22,"Silver Bars   : %d", silverBars);
+    mvwprintw(local_win,5,22,"Copper Bars   : %d", copperBars);
+    mvwprintw(local_win,6,22,"Steel Bars    : %d", steelBars);
+    mvwprintw(local_win,7,22,"Pig iron Bars : %d", pigIronBars);
+    mvwprintw(local_win,9,22,"Fuel          : %d", fuel);
     total_time += end_time - start_time;
     mvwprintw(local_win,14,2,"Time: %d ms last update, %d ms total", end_time - start_time, total_time);
 
@@ -116,6 +118,7 @@ int main()
         barCount = 0;
         clothCount = 0;
         ironBars = 0;
+        pigIronBars = 0;
         goldBars = 0;
         silverBars = 0;
         copperBars = 0;
@@ -165,7 +168,8 @@ int main()
             else if(s0 == "bar") //need to break it down by ItemDescription to get the different types of bars.
             {
                 barCount = barCount + itm.quantity;
-                if(s1.find("IRON")!=string::npos){ironBars++;}
+                if(s1.find("PIG_IRON")!=string::npos){pigIronBars++;}
+                else if(s1.find("IRON")!=string::npos){ironBars++;}
                 else if(s1.find("GOLD")!=string::npos){goldBars++;}
                 else if(s1.find("SILVER")!=string::npos){silverBars++;}
                 else if(s1.find("COPPER")!=string::npos){copperBars++;}

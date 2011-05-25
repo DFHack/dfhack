@@ -62,9 +62,52 @@ int get_material_vector(uint32_t vein_8, uint16_t vein_4, int WORLD_)
   }
   return result;
 }
-
-
 char shades[10] = {'#','$','O','=','+','|','-','^','.',' '};
+
+void printSpatter(DFHack::Context * DF, t_spattervein & spatter)
+{
+    DFHack::Materials *Mats = DF->getMaterials();
+    printf("Splatter\nmat1: %d\nunknown: %d\nmat2: %d\n",spatter.mat1,spatter.unk1,spatter.mat2);
+    printf ("Material : %d - ", spatter.matter_state);
+    // FIXME: stupid
+    switch(spatter.matter_state)
+    {
+        case state_gas:
+            printf("Gas ");
+            break;
+        case state_solid:
+            printf("Solid ");
+            break;
+        case state_liquid:
+            printf("Liquid ");
+            break;
+        case state_paste:
+            printf("Paste ");
+            break;
+        case state_powder:
+            printf("Powder ");
+            break;
+        case state_pressed:
+            printf("Pressed ");
+            break;
+        default:
+            printf("Unknown state ");
+    }
+    cout << PrintSplatterType(spatter.mat1,spatter.mat2,Mats->race) << endl;
+    printf("Address 0x%08x\n",spatter.address_of);
+    for(uint32_t yyy = 0; yyy < 16; yyy++)
+    {
+        cout << "|";
+        for(uint32_t xxx = 0; xxx < 16; xxx++) 
+        {
+            uint8_t intensity = spatter.intensity[xxx][yyy];
+            cout << shades[9 - (intensity / 28)];
+        }
+        cout << "|" << endl;
+    }
+    hexdump(DF, spatter.address_of,20*16);
+}
+
 int main (int numargs, const char ** args)
 {
     uint32_t x_max,y_max,z_max;
@@ -119,25 +162,10 @@ int main (int numargs, const char ** args)
                 if(splatter.size())
                 {
                     printf("Block %d/%d/%d\n",x,y,z);
-                    
                     for(uint32_t i = 0; i < splatter.size(); i++)
                     {
-                        printf("Splatter %d\nmat1: %d\nunknown: %d\nmat2: %d\nmat3: %d\n",i,splatter[i].mat1,splatter[i].unk1,splatter[i].mat2,splatter[i].mat3);
-                        cout << PrintSplatterType(splatter[i].mat1,splatter[i].mat2,Mats->race) << endl;
-                        printf("Address 0x%08x\n",splatter[i].address_of);
-                        for(uint32_t yyy = 0; yyy < 16; yyy++)
-                        {
-                            cout << "|";
-                            for(uint32_t xxx = 0; xxx < 16; xxx++) 
-                            {
-                                uint8_t intensity = splatter[i].intensity[xxx][yyy];
-                                cout << shades[9 - (intensity / 28)];
-                            }
-                            cout << "|" << endl;
-                        }
-                            
-                        hexdump(DF, splatter[i].address_of,20*16);
-                        cout << endl;
+                        cout << i << ":" << endl;
+                        printSpatter(DF,splatter[i]);
                     }
                 }
             }
@@ -154,32 +182,9 @@ int main (int numargs, const char ** args)
         if(splatter.size())
         {
             printf("Block %d/%d/%d\n",bx,by,bz);
-            
             for(uint32_t i = 0; i < splatter.size(); i++)
             {
-                printf("Splatter %d\nmat1: %d\nunknown: %d\nmat2: %d\nmat3: %d\n",i,splatter[i].mat1,splatter[i].unk1,splatter[i].mat2,splatter[i].mat3);
-                PrintSplatterType(splatter[i].mat1,splatter[i].mat2,Mats->race);
-                cout << endl;
-                printf("Address 0x%08x\n",splatter[i].address_of);
-                for(uint32_t y = 0; y < 16; y++)
-                {
-                    cout << "|";
-                    for(uint32_t x = 0; x < 16; x++) 
-                    {
-                        uint8_t intensity = splatter[i].intensity[x][y];
-                        if(intensity)
-                        {
-                            cout << "#";
-                        }
-                        else
-                        {
-                            cout << " ";
-                        }
-                    }
-                    cout << "|" << endl;
-                }
-                    
-                hexdump(DF, splatter[i].address_of,20*16);
+                printSpatter(DF,splatter[i]);
                 cout << endl;
             }
         }

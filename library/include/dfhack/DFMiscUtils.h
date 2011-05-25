@@ -181,7 +181,7 @@ std::string PrintSplatterType (int16_t mat1, int32_t mat2, vector<DFHack::t_matg
         case 5:
             return "Crystal Glass";
         case 6:
-            return "Ice";
+            return "Water";
         case 7:
             return "Coal";
         case 8:

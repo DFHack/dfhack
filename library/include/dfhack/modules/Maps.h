@@ -149,7 +149,18 @@ namespace DFHack
         /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
         uint32_t address_of;
     };
-
+    /**
+     * \ingroup grp_maps
+     */
+    enum e_matter_state
+    {
+        state_solid,
+        state_liquid,
+        state_gas,
+        state_powder,
+        state_paste,
+        state_pressed
+    };
     /**
      * a 'spattervein' defines what coverings the individual map tiles have (snow, blood, etc)
      * bitmap of intensity with matrial type
@@ -164,8 +175,8 @@ namespace DFHack
         uint16_t unk1;
         /// material vector index
         uint32_t mat2;
-        /// something even more specific?
-        uint16_t mat3;
+        /// matter state - liquid/solid/etc.
+        e_matter_state matter_state : 16;
         /// 16x16 array of covering 'intensity'
         uint8_t intensity[16][16];
         /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.

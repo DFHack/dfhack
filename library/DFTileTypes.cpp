@@ -326,7 +326,7 @@ namespace DFHack
         {"semi-molten rock" ,WALL, MAGMA, VAR_1},// unminable magma wall
         {"magma" ,FLOOR, MAGMA, VAR_1},
         {"soil wall" ,WALL, SOIL, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {"glowing barrier" ,WALL, CYAN_GLOW, VAR_1},
         {"glowing floor" ,FLOOR, CYAN_GLOW, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {"smooth obsidian wall RD2",WALL,OBSIDIAN,VAR_1 , TILE_SMOOTH ,  "--SS--E-" },

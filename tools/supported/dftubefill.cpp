@@ -20,7 +20,6 @@ int main (void)
     DFHack::tiletypes40d tiles;
 
     int32_t oldT, newT;
-    int16_t t;
     uint64_t count = 0;
 
     int dirty=0;

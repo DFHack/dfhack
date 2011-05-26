@@ -44,7 +44,8 @@ namespace DFHack
         /**
          * 0x58 - the updates are staggered into 9? groups. this seems to be what differentiates the plants.
          */
-        uint32_t update_order;
+        uint16_t update_order;
+        uint16_t padding2;
         // a vector is here
         // some more temperature stuff after that
     };

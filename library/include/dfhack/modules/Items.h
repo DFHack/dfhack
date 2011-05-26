@@ -9,6 +9,11 @@
 #include "dfhack/DFModule.h"
 #include "dfhack/DFTypes.h"
 
+/**
+ * \defgroup grp_items Items module and its types
+ * @ingroup grp_modules
+ */
+
 namespace DFHack
 {
 
@@ -16,58 +21,62 @@ class Context;
 class DFContextShared;
 class Creatures;
 
-//From http://dwarffortresswiki.net/index.php/User:Rick/Memory_research
-//They all seem to be valid on 40d as well
-
-
+/**
+ * Item flags. A bit fuzzy.
+ * Mostly from http://dwarffortresswiki.net/index.php/User:Rick/Memory_research
+ * \ingroup grp_items
+ */
 union t_itemflags
 {
-    uint32_t whole;
+    uint32_t whole; ///< the whole struct. all 32 bits of it, as an integer
     struct
     {
-        unsigned int on_ground : 1;      // 0000 0001 Item on ground
-        unsigned int in_job : 1;         // 0000 0002 Item currently being used in a job
-        unsigned int u_ngrd1 : 1;        // 0000 0004 unknown, unseen
-        unsigned int in_inventory : 1;   // 0000 0008 Item in a creature or workshop inventory
+        unsigned int on_ground : 1;      ///< 0000 0001 Item on ground
+        unsigned int in_job : 1;         ///< 0000 0002 Item currently being used in a job
+        unsigned int u_ngrd1 : 1;        ///< 0000 0004 unknown, unseen
+        unsigned int in_inventory : 1;   ///< 0000 0008 Item in a creature or workshop inventory
 
-        unsigned int u_ngrd2 : 1;        // 0000 0010 unknown, lost (artifact)?, unseen
-        unsigned int in_building : 1;    // 0000 0020 Part of a building (including mechanisms, bodies in coffins)
-        unsigned int u_ngrd3 : 1;        // 0000 0040 unknown, unseen
-        unsigned int dead_dwarf : 1;     // 0000 0080 Dwarf's dead body or body part
+        unsigned int u_ngrd2 : 1;        ///< 0000 0010 unknown, lost (artifact)?, unseen
+        unsigned int in_building : 1;    ///< 0000 0020 Part of a building (including mechanisms, bodies in coffins)
+        unsigned int u_ngrd3 : 1;        ///< 0000 0040 unknown, unseen
+        unsigned int dead_dwarf : 1;     ///< 0000 0080 Dwarf's dead body or body part
 
-        unsigned int rotten : 1;         // 0000 0100 Rotten food
-        unsigned int spider_web : 1;     // 0000 0200 Thread in spider web
-        unsigned int construction : 1;   // 0000 0400 Material used in construction
-        unsigned int u_ngrd5 : 1;        // 0000 0800 unknown, unseen
+        unsigned int rotten : 1;         ///< 0000 0100 Rotten food
+        unsigned int spider_web : 1;     ///< 0000 0200 Thread in spider web
+        unsigned int construction : 1;   ///< 0000 0400 Material used in construction
+        unsigned int u_ngrd5 : 1;        ///< 0000 0800 unknown, unseen
 
-        unsigned int unk3 : 1;           // 0000 1000 unknown, unseen
-        unsigned int u_ngrd6 : 1;        // 0000 2000 unknown, unseen
-        unsigned int foreign : 1;        // 0000 4000 Item is imported
-        unsigned int u_ngrd7 : 1;        // 0000 8000 unknown, unseen
+        unsigned int unk3 : 1;           ///< 0000 1000 unknown, unseen
+        unsigned int u_ngrd6 : 1;        ///< 0000 2000 unknown, unseen
+        unsigned int foreign : 1;        ///< 0000 4000 Item is imported
+        unsigned int u_ngrd7 : 1;        ///< 0000 8000 unknown, unseen
 
-        unsigned int owned : 1;          // 0001 0000 Item is owned by a dwarf
-        unsigned int garbage_colect : 1; // 0002 0000 Marked for deallocation by DF it seems
-        unsigned int artifact1 : 1;      // 0004 0000 Artifact ?
-        unsigned int forbid : 1;         // 0008 0000 Forbidden item
-        
-        unsigned int unk5 : 1;           // 0010 0000 unknown, unseen
-        unsigned int dump : 1;           // 0020 0000 Designated for dumping
-        unsigned int on_fire: 1;         // 0040 0000 Indicates if item is on fire, Will Set Item On Fire if Set!
-        unsigned int melt : 1;           // 0080 0000 Designated for melting, if applicable
-        
-        // 0100 0000 - 8000 0000
-        unsigned int hidden : 1;       // 0100 0000 Hidden item
-        unsigned int in_chest : 1;     // 0200 0000 Stored in chest/part of well?
-        unsigned int unk6 : 1;         // 0400 0000 unknown, unseen
-        unsigned int artifact2 : 1;    // 0800 0000 Artifact ?
-        
-        unsigned int unk8 : 1;         // 1000 0000 unknown, unseen
-        unsigned int unk9 : 1;         // 2000 0000 unknown, set when viewing details
-        unsigned int unk10 : 1;        // 4000 0000 unknown, unseen
-        unsigned int unk11 : 1;        // 8000 0000 unknown, unseen
+        unsigned int owned : 1;          ///< 0001 0000 Item is owned by a dwarf
+        unsigned int garbage_colect : 1; ///< 0002 0000 Marked for deallocation by DF it seems
+        unsigned int artifact1 : 1;      ///< 0004 0000 Artifact ?
+        unsigned int forbid : 1;         ///< 0008 0000 Forbidden item
+
+        unsigned int unk5 : 1;           ///< 0010 0000 unknown, unseen
+        unsigned int dump : 1;           ///< 0020 0000 Designated for dumping
+        unsigned int on_fire: 1;         ///< 0040 0000 Indicates if item is on fire, Will Set Item On Fire if Set!
+        unsigned int melt : 1;           ///< 0080 0000 Designated for melting, if applicable
+
+        unsigned int hidden : 1;       ///< 0100 0000 Hidden item
+        unsigned int in_chest : 1;     ///< 0200 0000 Stored in chest/part of well?
+        unsigned int unk6 : 1;         ///< 0400 0000 unknown, unseen
+        unsigned int artifact2 : 1;    ///< 0800 0000 Artifact ?
+
+        unsigned int unk8 : 1;         ///< 1000 0000 unknown, unseen
+        unsigned int unk9 : 1;         ///< 2000 0000 unknown, set when viewing details
+        unsigned int unk10 : 1;        ///< 4000 0000 unknown, unseen
+        unsigned int unk11 : 1;        ///< 8000 0000 unknown, unseen
     };
 };
 
+/**
+ * Basic item data, read as a single chunk
+ * \ingroup grp_items
+ */
 struct t_item
 {
     uint32_t vtable;
@@ -77,6 +86,10 @@ struct t_item
     t_itemflags flags;
 };
 
+/**
+ * Type for holding an item read from DF
+ * \ingroup grp_items
+ */
 struct dfh_item
 {
     int32_t id;
@@ -88,28 +101,21 @@ struct dfh_item
     uint32_t origin;
 };
 
-/*
-//raw
-struct t_item_df40d
-{
-    uint32_t vtable;
-    uint16_t x;
-    uint16_t y;
-    uint16_t z;
-    uint32_t flags;
-    uint32_t unk1;
-    uint32_t unk2;
-    uint32_t ID;
-    // not complete
-};
-*/
-
+/**
+ * Type for holding item improvements. broken/unused.
+ * \ingroup grp_items
+ */
 struct t_improvement
 {
     t_material matdesc;
     int32_t quality;
 };
 
+/**
+ * The Items module
+ * \ingroup grp_modules
+ * \ingroup grp_items
+ */
 class DFHACK_EXPORT Items : public Module
 {
 public:

@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <stddef.h>
+#include <cstring>
 using namespace std;
 
 #include <DFHack.h>
@@ -39,6 +40,31 @@ int main (int argc, char** argv)
         return 1;
     }
     DFHack::Maps *Mapz = DF->getMaps();
+    DFHack::Materials *Mats = DF->getMaterials();
+    uint32_t water_idx = (uint32_t) int32_t(-1);
+    uint32_t mud_idx = (uint32_t) int32_t(-1);
+    if(Mats->ReadOthers())
+    {
+        vector <DFHack::t_matglossOther > & main_mats = Mats->other;
+        for(size_t i = 0; i < main_mats.size();i++)
+        {
+            if(strcmp(main_mats[i].rawname, "MUD"))
+            {
+                mud_idx = i;
+            }
+            else if(strcmp(main_mats[i].rawname, "WATER"))
+            {
+                water_idx = i;
+            }
+        }
+    }
+    else
+    {
+        cerr << "Can't init materials." << endl;
+        if(temporary_terminal)
+            cin.ignore();
+        return 1;
+    }
 
     // init the map
     if(!Mapz->Start())
@@ -71,11 +97,12 @@ int main (int argc, char** argv)
                             occ[i][j].bits.broken_arrows_variant = 0;
                         }
                     Mapz->WriteOccupancy(x,y,z,&occ);
+                    // TODO: make this actually destroy the objects/remove them from the vector?
                     for(uint32_t i = 0; i < splatter.size(); i++)
                     {
                         DFHack::t_spattervein & vein = splatter[i];
-                        // filter away snow and mud
-                        if(vein.mat1 != 0xC && vein.mat1 != 0x6)
+                        // filter *solid* away water and mud
+                        if(vein.mat1 != mud_idx && vein.mat2 != water_idx || vein.matter_state != DFHack::state_solid)
                         {
                             uint32_t addr = vein.address_of;
                             uint32_t offset = offsetof(DFHack::t_spattervein, intensity);

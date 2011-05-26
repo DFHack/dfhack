@@ -134,7 +134,7 @@ namespace DFHack
         int16_t assignment[16];
         uint32_t flags;
         /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
-        uint32_t address_of; 
+        uint32_t address_of;
     };
 
     /**
@@ -172,6 +172,7 @@ namespace DFHack
         uint32_t vtable;
         /// generic material.
         uint16_t mat1;
+        /// possibly alignment artifact
         uint16_t unk1;
         /// material vector index
         uint32_t mat2;

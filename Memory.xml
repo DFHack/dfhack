@@ -2182,6 +2182,7 @@
     </Version>
     <Version name="v0.31.22 SDL" os="windows" base="v0.31.21 SDL" rebase="-0x1CFE0">
         <PETimeStamp value="0x4D8B30FC" />
+        Vegetation vector might be bad / not contain willow trees!
         <MD5 value="e31538a48efcfa6598b15bb938906c6b" />
         <Offsets>
              mode
@@ -2223,14 +2224,19 @@
             <Group name="Engravings">
                 <Address name="vector" value="0x16AFA78"/> 0x16B0A78 in 31.25
             </Group>
+            <Group name="Vegetation">
+                <Address name="vector" value="0x16c4468" />
+            </Group>
         </Offsets>
     </Version>
     <Version name="v0.31.23 SDL" os="windows" base="v0.31.22 SDL" rebase="0x1000">
         <PETimeStamp value="0x4D8DE854" />
+        Vegetation vector might be bad / not contain willow trees!
         <MD5 value="57ad0d359cc135f5bdf329e517028388" />
     </Version>
     <Version name="v0.31.24 SDL" os="windows" base="v0.31.23 SDL">
         <PETimeStamp value="0x4D8F39F9" />
+        Vegetation vector might be bad / not contain willow trees!
         <MD5 value="eddc258fa59c89481516ad96eb51b35b" />
     </Version>
     <Version name="v0.31.25 SDL" os="windows" base="v0.31.24 SDL">

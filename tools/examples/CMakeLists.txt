@@ -7,14 +7,6 @@ IF(UNIX)
     add_definitions(-DLINUX_BUILD)
 ENDIF(UNIX)
 
-IF(MSVC)
-    ADD_CUSTOM_TARGET( memxml-for-examples
-    COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/Memory.xml ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Copying Memory.xml to ${CMAKE_CURRENT_BINARY_DIR}"
-    )
-    set(LOCAL_DEPNAME memxml-for-examples)
-ENDIF()
-
 # buildingsdump - dump buildings and their raw data filtered by type
 DFHACK_TOOL(dfbuildingsdump buildingsdump.cpp)
 

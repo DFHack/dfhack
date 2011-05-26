@@ -165,6 +165,7 @@ ELSE()
     set_property(TARGET curses PROPERTY IMPORTED_IMPLIB ${dfhack_SOURCE_DIR}/pdcurses/pdcurses.lib)
     include_directories (${dfhack_SOURCE_DIR}/pdcurses)
     add_custom_target( curses-copy
+        COMMAND "${CMAKE_COMMAND}" -E make_directory ${dfhack_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/
         COMMAND "${CMAKE_COMMAND}" -E copy "${dfhack_SOURCE_DIR}/pdcurses/pdcurses.dll" ${dfhack_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/
         DEPENDS "${dfhack_SOURCE_DIR}/pdcurses/pdcurses.dll")
     SET(Curses_FOUND TRUE)

@@ -7,13 +7,6 @@ IF(UNIX)
     add_definitions(-DLINUX_BUILD)
 ENDIF()
 
-IF(MSVC)
-    ADD_CUSTOM_TARGET( memxml-for-supported
-    COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/Memory.xml ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Copying Memory.xml to ${CMAKE_CURRENT_BINARY_DIR}")
-    set(LOCAL_DEPNAME memxml-for-supported)
-ENDIF()
-
 # burn trees and shrubs to ashes
 DFHACK_TOOL(dfimmolate immolate.cpp)
 

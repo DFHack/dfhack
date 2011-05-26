@@ -7,15 +7,6 @@ IF(UNIX)
     add_definitions(-DLINUX_BUILD)
 ENDIF(UNIX)
 
-# deep magic. make sure it runs to be able to do debug runs for MSVC projects out of the box
-IF(MSVC)
-    ADD_CUSTOM_TARGET( memxml-for-playground
-    COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/Memory.xml ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Copying Memory.xml to ${CMAKE_CURRENT_BINARY_DIR}"
-    )
-    set(LOCAL_DEPNAME memxml-for-playground)
-ENDIF()
-
 # a creature mood dump hack. has hardcoded offsets
 DFHACK_TOOL(dfmoodump moodump.cpp)
 

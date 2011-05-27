@@ -1,5 +1,5 @@
 if(NOT DEFINED DFHACK_CONSISTENCY)
-    MESSAGE(FATAL_ERROR "Please build the whole thing, not parts. You can turn parts on/off using options.")
+    MESSAGE(FATAL_ERROR "Please build the whole thing, not parts. You can turn parts on/off using options/ccmake during build.")
 ENDIF()
 
 # this is required to ensure we use the right configuration for the system.
@@ -9,6 +9,12 @@ ENDIF()
 
 # burn trees and shrubs to ashes
 DFHACK_TOOL(dfimmolate immolate.cpp)
+IF(WIN32)
+    INSTALL(
+    PROGRAMS dfimmolate-all.bat dfimmolate-fire.bat dfimmolate-shrubs.bat dfimmolate-shrubs-fire.bat dfimmolate-trees.bat dfimmolate-trees-fire.bat
+    DESTINATION ${DFHACK_BINARY_DESTINATION}
+    )
+ENDIF()
 
 # grow saplings into trees instantly
 DFHACK_TOOL(dfgrow grow.cpp)
@@ -28,7 +34,7 @@ DFHACK_TOOL(dfpause forcepause.cpp)
 # prospector - produces a list of available materials and their quantities
 DFHACK_TOOL(dfprospector prospector.cpp)
 IF(WIN32)
-    INSTALL(PROGRAMS dfprospector-all.bat DESTINATION ${DFHACK_BINARY_DESTINATION})
+    INSTALL(PROGRAMS dfprospector-text.bat dfprospector-all.bat DESTINATION ${DFHACK_BINARY_DESTINATION})
 ENDIF()
 
 # vdig - dig the vein under the cursor
@@ -43,8 +49,7 @@ DFHACK_TOOL(dfcleanmap cleanmap.cpp)
 # cleanowned - confiscate items owned by dwarves so they can be atomsmashed/reused/etc.
 DFHACK_TOOL(dfcleanowned cleanowned.cpp)
 IF(WIN32)
-    INSTALL(PROGRAMS dfremovelitter.bat DESTINATION ${DFHACK_BINARY_DESTINATION})
-    INSTALL(PROGRAMS dfconfiscate.bat DESTINATION ${DFHACK_BINARY_DESTINATION})
+    INSTALL(PROGRAMS dfconfiscate.bat dfremovelitter.bat DESTINATION ${DFHACK_BINARY_DESTINATION})
 ENDIF()
 
 # unstuck - make DF run if something goes wrong with the 'normal' memory access method

@@ -176,8 +176,11 @@ namespace DFHack
         uint16_t unk1;
         /// material vector index
         uint32_t mat2;
-        /// matter state - liquid/solid/etc.
-        e_matter_state matter_state : 16;
+        /**
+         * matter state - liquid/solid/etc.
+         * @ref e_matter_state
+         */
+        uint16_t matter_state;
         /// 16x16 array of covering 'intensity'
         uint8_t intensity[16][16];
         /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.

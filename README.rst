@@ -23,10 +23,11 @@ binaries at  http://github.com/peterix/dfhack
 Compatibility
 =============
 DFHack works on Windows XP, Vista, 7 or any modern Linux distribution.
-
 OSX is not supported due to lack of developers with a Mac.
 
-Currently supported Dwarf Fortress versions are Windows and Linux.
+In general, the older DF release you use, the less features will work.
+DFHack development is always focused on the latest DF version. Go too
+far into the past, and only the most basic tools will work.
 
 Windows
 =======
@@ -125,6 +126,26 @@ dfincremental
 =============
 A simple memory search tool for DF. Requires arcane knowledge ;)
 
+dfgrow
+======
+Makes all saplings present on the map grow into trees (almost) instantly.
+
+dfimmolate
+==========
+A tool for getting rid of trees and shrubs. By default, it only kills a tree/shrub under the cursor.
+
+Options:
+--------
+-s            affect all shrubs on the map
+-t            affect all trees on the map
+-i            instead of just instaburning plants to ashes, produce fire. WILL KILL FPS!
+
+The windows binary releases contain many .bat files that can run the tool with different parameters.
+
+dfstatus (by enjia2000)
+=======================
+Runs next to DF and shows some vital statistics of the fort, including food and booze.
+
 dflair
 ======
 Marks all of the map as a lair, preventing item scatter on abandon/reclaim.
@@ -172,7 +193,8 @@ Options:
 --------
 -a            processes all tiles, even hidden ones.
 
-On windows, it's possible to run dfprsopector-all.bat to process all the tiles without messing with terminal windows.
+On windows, it's possible to run dfprospector-all.bat to process all the tiles without messing with terminal windows.
+Also on Windos, dfprospector-text.bat will print the output into a file and then show it in a notepad program (whatever opens .txt by default).
 
 dfreveal
 ========
@@ -204,7 +226,7 @@ Running 'dfXvdig' on Windows or using the '-x' parameter will dig stairs between
 
 dfveinlook
 ==========
-Simplistic map viewer for linux. Mostly a debug/development thing.
+Simplistic map viewer. Mostly a debug/development thing. Now supported on Windows too!
 
 dfweather
 ===========

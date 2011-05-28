@@ -2010,6 +2010,7 @@
                         <Offset name="birth_year" value="0x224" />
                         <Offset name="birth_time" value="0x228" />
                         <Offset name="inventory_vector" value="0x288" />
+                        <Offset name="owned_items_vector" value="0x298"/>
                         <Offset name="current_job" value="0x2f4" />
                         <Offset name="current_job_skill" value="0x2f8" /> THIS IS TOTAL BS
                         <Offset name="physical" value="0x3cc" /> DT: 0x3C4, I don't believe that's OK'
@@ -2243,6 +2244,11 @@
         <PETimeStamp value="0x4D90764F" />
         <MD5 value="6ada05fc94785b53efe6aa5728b3756b" />
         <Offsets>
+            <Group name="Creatures">
+                <Group name="creature">
+                    <Offset name="flags3" value="0xE8"/>
+                </Group>
+            </Group>
         <Group name="Items" valid="true">
             <Address name="items_vector" value="0x16c4540"/>
             <Offset name="id" value="0x14"/>
@@ -2880,6 +2886,7 @@
                         <Offset name="birth_year" value="0x1A0" />
                         <Offset name="birth_time" value="0x1A4" />
                         <Offset name="inventory_vector" value="0x204" />
+                        <Offset name="owned_items_vector" value="0x210"/>
                         <Offset name="current_job" value="0x25C" />
                         <Offset name="current_job_skill" value="0x260" />
                         <Offset name="physical" value="0x310" />
@@ -2889,6 +2896,7 @@
                         <Offset name="current_soul" value="0x53C" />
                         <Offset name="labors" value="0x54C" />
                         <Offset name="happiness" value="0x05dc" />
+                        <Offset name="hist_figure_id" value="0x640"/>
                     </Group>
                 </Group>
                 <Group name="job">
@@ -3021,10 +3029,6 @@
                 Address name="vector" value="0x0940b174"
                 <Group name="creature">
                     <Offset name="flags3" value="0x94"/>
-                    <Group name="advanced">
-                        <Offset name="owned_items_vector" value="0x210"/>
-                        <Offset name="hist_figure_id" value="0x640"/>
-                    </Group>
                 </Group>
             </Group>
             <Group name="Position" valid="true">

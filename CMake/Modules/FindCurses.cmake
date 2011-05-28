@@ -5,7 +5,7 @@ ENDIF()
 FIND_PATH(Curses_INCLUDE_PATH
   NAMES ncurses.h curses.h
   PATH_SUFFIXES ncurses
-  PATHS /usr/include /usr/local/include /usr/pkg/include
+  PATHS /usr/include/ncursesw /usr/include /usr/local/include /usr/pkg/include
 )
 
 FIND_LIBRARY(Curses_LIBRARY

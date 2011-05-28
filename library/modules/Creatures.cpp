@@ -724,7 +724,11 @@ bool Creatures::ReadOwnedItemsPtr(const uint32_t temp, std::vector<int32_t> & it
 
 bool Creatures::RemoveOwnedItemIdx(const uint32_t index, int32_t id)
 {
-    if(!d->Started || !d->Ft_owned_items) return false;
+    if(!d->Started || !d->Ft_owned_items)
+    {
+        cerr << "!d->Started || !d->Ft_owned_items FAIL" << endl;
+        return false;
+    }
     uint32_t temp = d->p_cre->at (index);
     return this->RemoveOwnedItemPtr(temp, id);
 }

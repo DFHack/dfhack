@@ -592,10 +592,16 @@ bool Items::removeItemOwner(dfh_item &item, Creatures *creatures)
         int32_t ix = creatures->FindIndexById(oid);
 
         if (ix < 0 || !creatures->RemoveOwnedItemIdx(ix, item.id))
+        {
+            cerr << "RemoveOwnedItemIdx: CREATURE " << ix << " ID " << item.id << " FAILED!" << endl;
             return false;
+        }
 
         if (!p_refs.remove(i--))
+        {
+            cerr << "p_refs.remove FAILED!" << endl;
             return false;
+        }
     }
 
     item.base.flags.owned = 0;

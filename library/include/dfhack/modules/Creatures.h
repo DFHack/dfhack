@@ -4,8 +4,8 @@
 /*
 * Creatures
 */
-#include "dfhack/DFExport.h"
-#include "dfhack/DFModule.h"
+#include "dfhack/Export.h"
+#include "dfhack/Module.h"
 #include "dfhack/modules/Items.h"
 /**
  * \defgroup grp_creatures Creatures module parts

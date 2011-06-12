@@ -33,10 +33,10 @@ using namespace std;
 
 #include "ContextShared.h"
 #include "dfhack/modules/Maps.h"
-#include "dfhack/DFError.h"
+#include "dfhack/Error.h"
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFProcess.h"
-#include "dfhack/DFVector.h"
+#include "dfhack/Process.h"
+#include "dfhack/Vector.h"
 #include "ModuleFactory.h"
 
 #define MAPS_GUARD if(!d->Started) throw DFHack::Error::ModuleNotInitialized();

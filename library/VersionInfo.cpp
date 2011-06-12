@@ -31,8 +31,8 @@ distribution.
 using namespace std;
 
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFError.h"
-#include "dfhack/DFProcess.h"
+#include "dfhack/Error.h"
+#include "dfhack/Process.h"
 using namespace DFHack;
 
 //Inital amount of space in levels vector (since we usually know the number, efficient!)

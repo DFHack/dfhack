@@ -5,7 +5,7 @@
 #include <iostream>
 #include <iomanip>
 #include <climits>
-#include <dfhack/DFIntegers.h>
+#include <dfhack/Integers.h>
 #include <vector>
 #include <sstream>
 #include <ctime>
@@ -13,9 +13,9 @@
 
 using namespace std;
 
-#include <dfhack/DFProcess.h>
+#include <dfhack/Process.h>
 #include <dfhack/VersionInfo.h>
-#include <dfhack/DFVector.h>
+#include <dfhack/Vector.h>
 
 void DumpObjStr0Vector (const char * name, DFHack::Process *p, uint32_t addr)
 {

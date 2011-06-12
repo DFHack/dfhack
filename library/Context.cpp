@@ -29,11 +29,10 @@ distribution.
 #include <cstring>
 using namespace std;
 
-#include "dfhack/DFProcess.h"
-#include "dfhack/DFProcessEnumerator.h"
-#include "dfhack/DFContext.h"
-#include "dfhack/DFError.h"
-#include "dfhack/DFModule.h"
+#include "dfhack/Process.h"
+#include "dfhack/Context.h"
+#include "dfhack/Error.h"
+#include "dfhack/Module.h"
 
 #include "private/ContextShared.h"
 #include "private/ModuleFactory.h"
@@ -60,7 +59,7 @@ bool Context::isValid()
         return true;
     return false;
 }
-
+/*
 bool Context::Attach()
 {
     if (!d->p->attach())
@@ -96,14 +95,14 @@ bool Context::isAttached()
 {
     return d->p->isAttached();
 }
-
+*/
 bool Context::Suspend()
 {
-    return d->p->suspend();
+//    return d->p->suspend();
 }
 bool Context::AsyncSuspend()
 {
-    return d->p->asyncSuspend();
+//    return d->p->asyncSuspend();
 }
 
 bool Context::Resume()
@@ -112,8 +111,9 @@ bool Context::Resume()
     {
         d->allModules[i]->OnResume();
     }
-    return d->p->resume();
+    //return d->p->resume();
 }
+/*
 bool Context::ForceResume()
 {
     for(unsigned int i = 0 ; i < d->allModules.size(); i++)
@@ -122,11 +122,12 @@ bool Context::ForceResume()
     }
     return d->p->forceresume();
 }
+*/
 bool Context::isSuspended()
 {
     return d->p->isSuspended();
 }
-
+/*
 void Context::ReadRaw (const uint32_t offset, const uint32_t size, uint8_t *target)
 {
     d->p->read (offset, size, target);
@@ -136,7 +137,7 @@ void Context::WriteRaw (const uint32_t offset, const uint32_t size, uint8_t *sou
 {
     d->p->write (offset, size, source);
 }
-
+*/
 VersionInfo *Context::getMemoryInfo()
 {
     return d->offset_descriptor;

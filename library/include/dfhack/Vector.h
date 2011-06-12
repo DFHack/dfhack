@@ -27,10 +27,10 @@ distribution.
 #ifndef DFVECTOR_H_INCLUDED
 #define DFVECTOR_H_INCLUDED
 
-#include "DFPragma.h"
-#include "DFExport.h"
-#include "VersionInfo.h"
-#include "DFProcess.h"
+#include "dfhack/Pragma.h"
+#include "dfhack/Export.h"
+#include "dfhack/VersionInfo.h"
+#include "dfhack/Process.h"
 
 #include <string.h>
 

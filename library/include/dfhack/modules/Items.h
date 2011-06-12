@@ -5,9 +5,9 @@
 /*
 * Items!
 */
-#include "dfhack/DFExport.h"
-#include "dfhack/DFModule.h"
-#include "dfhack/DFTypes.h"
+#include "dfhack/Export.h"
+#include "dfhack/Module.h"
+#include "dfhack/Types.h"
 
 /**
  * \defgroup grp_items Items module and its types

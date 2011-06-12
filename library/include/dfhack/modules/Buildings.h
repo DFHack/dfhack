@@ -5,8 +5,8 @@
  * \defgroup grp_buildings Building module parts - also includes zones and stockpiles
  * @ingroup grp_modules
  */
-#include "dfhack/DFExport.h"
-#include "dfhack/DFModule.h"
+#include "dfhack/Export.h"
+#include "dfhack/Module.h"
 
 #ifdef __cplusplus
 namespace DFHack

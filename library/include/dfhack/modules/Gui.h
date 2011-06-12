@@ -2,8 +2,8 @@
 #ifndef CL_MOD_GUI
 #define CL_MOD_GUI
 
-#include "dfhack/DFExport.h"
-#include "dfhack/DFModule.h"
+#include "dfhack/Export.h"
+#include "dfhack/Module.h"
 
 /**
  * \defgroup grp_gui query DF's GUI state

@@ -2,9 +2,9 @@
 #ifndef MAPEXTRAS_H
 #define MAPEXTRAS_H
 
-#include "../modules/Maps.h"
-#include "../DFTileTypes.h"
-#include "../DFIntegers.h"
+#include "dfhack/modules/Maps.h"
+#include "dfhack/TileTypes.h"
+#include "dfhack/Integers.h"
 #include <cstring>
 namespace MapExtras
 {

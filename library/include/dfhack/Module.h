@@ -24,23 +24,36 @@ distribution.
 
 #pragma once
 
-namespace DFHack {
-    class Process;
-    class MicrosoftSTL
+#ifndef MODULE_H_INCLUDED
+#define MODULE_H_INCLUDED
+
+#include "dfhack/Export.h"
+namespace DFHack
+{
+    class Context;
+    /**
+     * The parent class for all DFHack modules
+     * \ingroup grp_modules
+     */
+    class DFHACK_EXPORT Module
     {
-        private:
-            uint32_t STLSTR_buf_off;
-            uint32_t STLSTR_size_off;
-            uint32_t STLSTR_cap_off;
-
-            Process* p;
         public:
-            void init(Process* p);
-
-            const std::string readSTLString (uint32_t offset);
-            size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity);
-            size_t writeSTLString(const uint32_t address, const std::string writeString);
-            // get class name of an object with rtti/type info
-            std::string readClassName(uint32_t vptr);
+        virtual ~Module(){};
+        virtual bool Start(){return true;};// default start...
+        virtual bool Finish() = 0;// everything should have a Finish()
+        // should Context call Finish when Resume is called?
+        virtual bool OnResume()
+        {
+            Finish();
+            return true;
+        };
+        // Finish when map change is detected?
+        // TODO: implement
+        virtual bool OnMapChange()
+        {
+            return false;
+        };
     };
 }
+#endif //MODULE_H_INCLUDED
+

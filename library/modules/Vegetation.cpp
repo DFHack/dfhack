@@ -32,9 +32,9 @@ using namespace std;
 #include "ContextShared.h"
 
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFProcess.h"
-#include "dfhack/DFVector.h"
-#include "dfhack/DFTypes.h"
+#include "dfhack/Process.h"
+#include "dfhack/Vector.h"
+#include "dfhack/Types.h"
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack/modules/Translation.h"
 #include "ModuleFactory.h"

@@ -6,9 +6,9 @@
 #ifndef CL_MOD_MAPS
 #define CL_MOD_MAPS
 
-#include "dfhack/DFExport.h"
-#include "dfhack/DFModule.h"
-#include "Vegetation.h"
+#include "dfhack/Export.h"
+#include "dfhack/Module.h"
+#include "dfhack/modules/Vegetation.h"
 
 /**
  * \defgroup grp_maps Maps module and its types

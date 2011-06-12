@@ -31,9 +31,9 @@ distribution.
  */
 
 
-#include "../DFPragma.h"
-#include "../DFExport.h"
-#include "../DFModule.h"
+#include "dfhack/Pragma.h"
+#include "dfhack/Export.h"
+#include "dfhack/Module.h"
 
 namespace DFHack
 {

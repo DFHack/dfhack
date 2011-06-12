@@ -27,7 +27,7 @@ distribution.
 #ifndef CONTEXT_H_INCLUDED
 #define CONTEXT_H_INCLUDED
 
-#include "DFExport.h"
+#include "dfhack/Export.h"
 namespace DFHack
 {
     class Creatures;

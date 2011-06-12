@@ -1,6 +1,6 @@
 /*
-www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
+https://github.com/peterix/dfhack
+Copyright (c) 2011 Petr Mrázek (peterix)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -27,9 +27,10 @@ distribution.
 #ifndef PROCESS_H_INCLUDED
 #define PROCESS_H_INCLUDED
 
-#include "DFPragma.h"
-#include "DFExport.h"
+#include "dfhack/Pragma.h"
+#include "dfhack/Export.h"
 #include <iostream>
+#include <cstring>
 #include <map>
 
 namespace DFHack
@@ -38,6 +39,7 @@ namespace DFHack
     class Process;
     class Window;
     class DFVector;
+    class VersionInfoFactory;
     
     /**
      * A type for storing an extended OS Process ID (combines PID and the time the process was started for unique identification)
@@ -101,90 +103,137 @@ namespace DFHack
      */
     class DFHACK_EXPORT Process
     {
-        protected:
-            std::map<uint32_t, std::string> classNameCache;
-
         public:
             /// this is the single most important destructor ever. ~px
-            virtual ~Process(){};
-            /// Set up stuff so we can read memory, suspends synchronously
-            virtual bool attach() = 0;
-            /// detach from DF, resume its execution if it's suspended
-            virtual bool detach() = 0;
-            /**
-             * synchronous suspend
-             * waits for DF to be actually suspended,
-             * this might take a while depending on implementation
-             */
-            virtual bool suspend() = 0;
-            /// asynchronous suspend to use together with polling and timers
-            virtual bool asyncSuspend() = 0;
-            /// resume DF execution
-            virtual bool resume() = 0;
-            /// force-resume DF execution
-            virtual bool forceresume() = 0;
-
+            Process(VersionInfoFactory * known_versions);
+            ~Process();
             /// read a 8-byte integer
-            uint64_t readQuad(const uint32_t address) { uint64_t result; readQuad(address, result); return result; }
+            uint64_t readQuad(const uint32_t address)
+            {
+                return *(uint64_t *)address;
+            }
             /// read a 8-byte integer
-            virtual void readQuad(const uint32_t address, uint64_t & value) = 0;
+            void readQuad(const uint32_t address, uint64_t & value)
+            {
+                value = *(uint64_t *)address;
+            };
             /// write a 8-byte integer
-            virtual void writeQuad(const uint32_t address, const uint64_t value) = 0;
+            void writeQuad(const uint32_t address, const uint64_t value)
+            {
+                (*(uint64_t *)address) = value;
+            };
 
             /// read a 4-byte integer
-            uint32_t readDWord(const uint32_t address) { uint32_t result; readDWord(address, result); return result; }
+            uint32_t readDWord(const uint32_t address)
+            {
+                return *(uint32_t *)address;
+            }
             /// read a 4-byte integer
-            virtual void readDWord(const uint32_t address, uint32_t & value) = 0;
+            void readDWord(const uint32_t address, uint32_t & value)
+            {
+                value = *(uint32_t *)address;
+            };
             /// write a 4-byte integer
-            virtual void writeDWord(const uint32_t address, const uint32_t value) = 0;
+            void writeDWord(const uint32_t address, const uint32_t value)
+            {
+                (*(uint32_t *)address) = value;
+            };
 
             /// read a float
-            float readFloat(const uint32_t address) { float result; readFloat(address, result); return result; }
+            float readFloat(const uint32_t address)
+            {
+                return *(float*)address;
+            }
             /// write a float
-            virtual void readFloat(const uint32_t address, float & value) = 0;
+            void readFloat(const uint32_t address, float & value)
+            {
+                value = *(float*)address;
+            };
 
             /// read a 2-byte integer
-            uint16_t readWord(const uint32_t address) { uint16_t result; readWord(address, result); return result; }
+            uint16_t readWord(const uint32_t address)
+            {
+                return *(uint16_t *)address;
+            }
             /// read a 2-byte integer
-            virtual void readWord(const uint32_t address, uint16_t & value) = 0;
+            void readWord(const uint32_t address, uint16_t & value)
+            {
+                value = *(uint16_t *)address;
+            };
             /// write a 2-byte integer
-            virtual void writeWord(const uint32_t address, const uint16_t value) = 0;
+            void writeWord(const uint32_t address, const uint16_t value)
+            {
+                (*(uint16_t *)address) = value;
+            };
 
             /// read a byte
-            uint8_t readByte(const uint32_t address) { uint8_t result; readByte(address, result); return result; }
+            uint16_t readByte(const uint32_t address)
+            {
+                return *(uint8_t *)address;
+            }
             /// read a byte
-            virtual void readByte(const uint32_t address, uint8_t & value) = 0;
+            void readByte(const uint32_t address, uint8_t & value)
+            {
+                value = *(uint8_t *)address;
+            };
             /// write a byte
-            virtual void writeByte(const uint32_t address, const uint8_t value) = 0;
+            void writeByte(const uint32_t address, const uint8_t value)
+            {
+                (*(uint8_t *)address) = value;
+            };
 
             /// read an arbitrary amount of bytes
-            virtual void read( uint32_t address, uint32_t length, uint8_t* buffer) = 0;
+            void read( uint32_t address, uint32_t length, uint8_t* buffer)
+            {
+                memcpy(buffer, (void *) address, length);
+            };
             /// write an arbitrary amount of bytes
-            virtual void write(uint32_t address, uint32_t length, uint8_t* buffer) = 0;
+            void write(uint32_t address, uint32_t length, uint8_t* buffer)
+            {
+                memcpy((void *) address, buffer, length);
+            };
 
             /// read an STL string
-            virtual const std::string readSTLString (uint32_t offset) = 0;
+            const std::string readSTLString (uint32_t offset)
+            {
+                std::string * str = (std::string *) offset;
+                return *str;
+            };
             /// read an STL string
-            virtual size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity) = 0;
+            size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
+            {
+                if(!bufcapacity || bufcapacity == 1)
+                    return 0;
+                std::string * str = (std::string *) offset;
+                
+            };
             /**
              * write an STL string
              * @return length written
              */
-            virtual size_t writeSTLString(const uint32_t address, const std::string writeString) = 0;
+            size_t writeSTLString(const uint32_t address, const std::string writeString)
+            {
+                std::string * str = (std::string *) address;
+                str->assign(writeString);
+                return writeString.size();
+            };
             /**
              * attempt to copy a string from source address to target address. may truncate or leak, depending on platform
              * @return length copied
              */
-            virtual size_t copySTLString(const uint32_t address, const uint32_t target)
+            size_t copySTLString(const uint32_t address, const uint32_t target)
             {
-                return writeSTLString(target, readSTLString(address));
+                std::string * strsrc = (std::string *) address;
+                std::string * str = (std::string *) target;
+                str->assign(*strsrc);
+                return str->size();
             }
 
             /// read a STL vector
-            virtual void readSTLVector(const uint32_t address, t_vecTriplet & triplet) = 0;
-            virtual void writeSTLVector(const uint32_t address, t_vecTriplet & triplet) = 0;
+            void readSTLVector(const uint32_t address, t_vecTriplet & triplet);
+            void writeSTLVector(const uint32_t address, t_vecTriplet & triplet);
             /// get class name of an object with rtti/type info
-            virtual std::string doReadClassName(uint32_t vptr) = 0;
+            std::string doReadClassName(uint32_t vptr);
 
             std::string readClassName(uint32_t vptr)
             {
@@ -195,34 +244,39 @@ namespace DFHack
             }
 
             /// read a null-terminated C string
-            virtual const std::string readCString (uint32_t offset) = 0;
+            const std::string readCString (uint32_t offset)
+            {
+                return std::string((char *) offset);
+            };
 
             /// @return true if the process is suspended
-            virtual bool isSuspended() = 0;
-            /// @return true if the process is attached
-            virtual bool isAttached() = 0;
+            bool isSuspended()
+            {
+                return true;
+            };
             /// @return true if the process is identified -- has a Memory.xml entry
-            virtual bool isIdentified() = 0;
-            /// @return true if this is a Process snapshot
-            virtual bool isSnapshot() { return false; };
-
+            bool isIdentified()
+            {
+                return identified;
+            };
             /// find the thread IDs of the process
-            virtual bool getThreadIDs(std::vector<uint32_t> & threads ) = 0;
+            bool getThreadIDs(std::vector<uint32_t> & threads );
             /// get virtual memory ranges of the process (what is mapped where)
-            virtual void getMemRanges(std::vector<t_memrange> & ranges ) = 0;
+            void getMemRanges(std::vector<t_memrange> & ranges );
 
             /// get the flattened Memory.xml entry of this process
-            virtual VersionInfo *getDescriptor() = 0;
+            VersionInfo *getDescriptor()
+            {
+                return my_descriptor;
+            };
             /// get the DF Process ID
-            virtual int getPID() = 0;
+            int getPID();
             /// get the DF Process FilePath
-            virtual std::string getPath() = 0;
-            /// get module index by name and version. bool 1 = error
-            virtual bool getModuleIndex (const char * name, const uint32_t version, uint32_t & OUTPUT) = 0;
-            /// get the SHM start if available
-            virtual char * getSHMStart (void) = 0;
-            /// set a SHM command and wait for a response, return 0 on error or throw exception
-            virtual bool SetAndWait (uint32_t state) = 0;
+            std::string getPath();
+    private:
+        VersionInfo * my_descriptor;
+        bool identified;
+        std::map<uint32_t, std::string> classNameCache;
     };
 
     class DFHACK_EXPORT ClassNameCheck

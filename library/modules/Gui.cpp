@@ -31,10 +31,10 @@ using namespace std;
 
 #include "ContextShared.h"
 #include "dfhack/modules/Gui.h"
-#include "dfhack/DFProcess.h"
+#include "dfhack/Process.h"
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFTypes.h"
-#include "dfhack/DFError.h"
+#include "dfhack/Types.h"
+#include "dfhack/Error.h"
 #include "ModuleFactory.h"
 using namespace DFHack;
 

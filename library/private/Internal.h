@@ -42,10 +42,10 @@ distribution.
 #endif
 
 // one file for telling the MSVC compiler where it can shove its pointless warnings
-#include "dfhack/DFPragma.h"
+#include "dfhack/Pragma.h"
 
 // C99 integer types
-#include "dfhack/DFIntegers.h"
+#include "dfhack/Integers.h"
 
 #endif // DFCOMMONINTERNAL_H_INCLUDED
 

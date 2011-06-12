@@ -1,7 +1,7 @@
 // vim: sts=4 sta et shiftwidth=4:
-#include "dfhack/DFIntegers.h"
-#include "dfhack/DFTileTypes.h"
-#include "dfhack/DFExport.h"
+#include "dfhack/Integers.h"
+#include "dfhack/TileTypes.h"
+#include "dfhack/Export.h"
 
 namespace DFHack
 {

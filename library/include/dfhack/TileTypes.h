@@ -27,8 +27,8 @@ distribution.
 #ifndef TILETYPES_H_INCLUDED
 #define TILETYPES_H_INCLUDED
 
-#include "DFPragma.h"
-#include "DFExport.h"
+#include "dfhack/Pragma.h"
+#include "dfhack/Export.h"
 
 namespace DFHack
 {

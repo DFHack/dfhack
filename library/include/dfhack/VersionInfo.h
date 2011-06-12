@@ -27,9 +27,9 @@ distribution.
 #ifndef MEMINFO_H_INCLUDED
 #define MEMINFO_H_INCLUDED
 
-#include "DFPragma.h"
-#include "DFExport.h"
-#include "dfhack/DFTypes.h"
+#include "dfhack/Pragma.h"
+#include "dfhack/Export.h"
+#include "dfhack/Types.h"
 #include <sys/types.h>
 
 namespace DFHack

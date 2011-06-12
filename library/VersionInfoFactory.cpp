@@ -32,7 +32,7 @@ using namespace std;
 
 #include "dfhack/VersionInfoFactory.h"
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFError.h"
+#include "dfhack/Error.h"
 using namespace DFHack;
 
 #include <tinyxml.h>

@@ -4,8 +4,8 @@
 /*
 * DF constructions
 */
-#include "dfhack/DFExport.h"
-#include "dfhack/DFModule.h"
+#include "dfhack/Export.h"
+#include "dfhack/Module.h"
 
 /**
  * \defgroup grp_constructions Construction module parts

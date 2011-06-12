@@ -27,8 +27,8 @@ distribution.
 #ifndef MEMINFO_MANAGER_H_INCLUDED
 #define MEMINFO_MANAGER_H_INCLUDED
 
-#include "dfhack/DFPragma.h"
-#include "dfhack/DFExport.h"
+#include "dfhack/Pragma.h"
+#include "dfhack/Export.h"
 
 class TiXmlElement;
 namespace DFHack

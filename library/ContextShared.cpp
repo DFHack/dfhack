@@ -8,8 +8,8 @@ using namespace std;
 
 #include "private/ContextShared.h"
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFProcess.h"
-#include "dfhack/DFModule.h"
+#include "dfhack/Process.h"
+#include "dfhack/Module.h"
 using namespace DFHack;
 
 DFContextShared::DFContextShared()

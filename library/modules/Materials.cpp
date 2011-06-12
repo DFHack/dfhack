@@ -31,12 +31,12 @@ distribution.
 using namespace std;
 
 #include "ContextShared.h"
-#include "dfhack/DFTypes.h"
+#include "dfhack/Types.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFProcess.h"
-#include "dfhack/DFVector.h"
-#include <dfhack/DFError.h>
+#include "dfhack/Process.h"
+#include "dfhack/Vector.h"
+#include <dfhack/Error.h>
 #include "ModuleFactory.h"
 
 using namespace DFHack;

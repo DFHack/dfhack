@@ -8,31 +8,25 @@ cmake_minimum_required(VERSION 2.8)
 include_directories (include)
 include_directories (depends/md5)
 include_directories (depends/tinyxml)
-include_directories (depends/argstream)
 include_directories (private)
 
 SET(PROJECT_HDRS_INTERNAL
     private/ContextShared.h
     private/Internal.h
-    private/SHMProcess.h
-    private/LinuxProcess.h
-    private/ProcessFactory.h
-    private/MicrosoftSTL.h
+    private/core.h
 )
 
 SET(PROJECT_HDRS
 include/DFHack.h
-include/dfhack/DFContext.h
-include/dfhack/DFContextManager.h
+include/dfhack/Context.h
 include/dfhack/DFError.h
 include/dfhack/DFExport.h
 include/dfhack/DFIntegers.h
 include/dfhack/DFMiscUtils.h
 include/dfhack/DFModule.h
 include/dfhack/DFPragma.h
-include/dfhack/DFProcess.h
-include/dfhack/DFProcessEnumerator.h
-include/dfhack/DFTileTypes.h
+include/dfhack/Process.h
+include/dfhack/TileTypes.h
 include/dfhack/DFTypes.h
 include/dfhack/DFVector.h
 include/dfhack/VersionInfoFactory.h
@@ -50,39 +44,15 @@ include/dfhack/modules/Maps.h
 include/dfhack/modules/Materials.h
 include/dfhack/modules/Translation.h
 include/dfhack/modules/Vegetation.h
-include/dfhack/modules/WindowIO.h
 include/dfhack/modules/World.h
-)
-
-SET(PROJECT_C_HDRS
-include/DFHack_C.h
-include/dfhack-c/DFProcess_C.h
-include/dfhack-c/DFTypes_C.h
-include/dfhack-c/DFTileTypes_C.h
-include/dfhack-c/DFContext_C.h
-include/dfhack-c/modules/Buildings_C.h
-include/dfhack-c/modules/Constructions_C.h
-include/dfhack-c/modules/Creatures_C.h
-include/dfhack-c/modules/Gui_C.h
-include/dfhack-c/modules/Items_C.h
-include/dfhack-c/modules/Maps_C.h
-include/dfhack-c/modules/Materials_C.h
-include/dfhack-c/modules/Translation_C.h
-include/dfhack-c/modules/Vegetation_C.h
-include/dfhack-c/modules/WindowIO_C.h
-include/dfhack-c/modules/World_C.h
 )
 
 SET(PROJECT_SRCS
 VersionInfo.cpp
 VersionInfoFactory.cpp
-DFContextManager.cpp
-DFContext.cpp
-DFTileTypes.cpp
-DFProcessEnumerator.cpp
+Context.cpp
+TileTypes.cpp
 ContextShared.cpp
-DFProcess-SHM.cpp
-MicrosoftSTL.cpp
 
 depends/md5/md5.cpp
 depends/md5/md5wrapper.cpp
@@ -105,25 +75,6 @@ modules/Vegetation.cpp
 modules/World.cpp
 )
 
-SET(PROJECT_C_SRCS
-DFContext_C.cpp
-DFProcess_C.cpp
-DFTypes_C.cpp
-DFTileTypes_C.cpp
-
-modules/Buildings_C.cpp
-modules/Constructions_C.cpp
-modules/Creatures_C.cpp
-modules/Gui_C.cpp
-modules/Items_C.cpp
-modules/Maps_C.cpp
-modules/Materials_C.cpp
-modules/Translation_C.cpp
-modules/Vegetation_C.cpp
-modules/WindowIO_C.cpp
-modules/World_C.cpp
-)
-
 SET(PROJECT_HDRS_LINUX
 )
 
@@ -132,17 +83,17 @@ include/dfhack/DFstdint_win.h
 )
 
 SET(PROJECT_SRCS_LINUX
-DFProcess-linux.cpp
-DFProcess-linux-base.cpp
-DFProcess-linux-SHM.cpp
-DFProcess-linux-wine.cpp
-modules/WindowIO-linux.cpp
+Core-linux.cpp
+Process-linux.cpp
+#DFProcess-linux-base.cpp
+#DFProcess-linux-wine.cpp
+#modules/WindowIO-linux.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
-DFProcess-windows.cpp
-DFProcess-windows-SHM.cpp
-modules/WindowIO-windows.cpp
+Core-windows.cpp
+Process-windows.cpp
+#modules/WindowIO-windows.cpp
 )
 
 IF(UNIX)
@@ -174,7 +125,8 @@ IF(UNIX)
   add_definitions(-DLINUX_BUILD)
   find_library(X11_LIBRARY X11)
   SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
-  SET(CMAKE_CXX_FLAGS "-fvisibility=hidden")
+  SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32")
+  SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32")
 
   SET(PROJECT_LIBS ${X11_LIBRARY} rt )
 ELSE()

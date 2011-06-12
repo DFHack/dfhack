@@ -20,13 +20,12 @@
 #endif
 
 // DFHack core classes and types
-#include "dfhack/DFIntegers.h"
-#include "dfhack/DFError.h"
-#include "dfhack/DFContextManager.h"
-#include "dfhack/DFContext.h"
+#include "dfhack/Integers.h"
+#include "dfhack/Error.h"
+#include "dfhack/Context.h"
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFProcess.h"
-#include "dfhack/DFTypes.h"
+#include "dfhack/Process.h"
+#include "dfhack/Types.h"
 
 // DFHack modules
 #include "dfhack/modules/Buildings.h"
@@ -46,11 +45,11 @@
  * Only for use of official DFHack tools!
  */
 #ifdef DFHACK_WANT_MISCUTILS
-    #include "dfhack/DFMiscUtils.h"
+    #include "dfhack/MiscUtils.h"
 #endif
 
 // define this to get the static tiletype->properties mapping
 #ifdef DFHACK_WANT_TILETYPES
-    #include "dfhack/DFTileTypes.h"
+    #include "dfhack/TileTypes.h"
 #endif
 #endif

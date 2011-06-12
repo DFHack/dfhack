@@ -7,8 +7,8 @@
  * @ingroup grp_modules
  */
 
-#include "dfhack/DFExport.h"
-#include "dfhack/DFModule.h"
+#include "dfhack/Export.h"
+#include "dfhack/Module.h"
 #include <ostream>
 
 namespace DFHack

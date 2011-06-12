@@ -462,7 +462,7 @@ bool Items::Finish()
 
 bool Items::readItemVector(std::vector<uint32_t> &items)
 {
-    DFHack::DfVector <uint32_t> p_items(d->owner, d->itemVectorAddress);
+    DFHack::DfVector <uint32_t> p_items(d->itemVectorAddress);
 
     d->idLookupTable.clear();
     items.resize(p_items.size());
@@ -565,7 +565,7 @@ bool Items::getContainedItems(const DFHack::dfh_item &item, std::vector<int32_t>
 
 bool Items::readItemRefs(const dfh_item &item, const ClassNameCheck &classname, std::vector<int32_t> &values)
 {
-    DFHack::DfVector<uint32_t> p_refs(d->owner, item.origin + d->refVectorOffset);
+    DFHack::DfVector<uint32_t> p_refs(item.origin + d->refVectorOffset);
 
     values.clear();
 
@@ -581,7 +581,7 @@ bool Items::readItemRefs(const dfh_item &item, const ClassNameCheck &classname, 
 
 bool Items::removeItemOwner(dfh_item &item, Creatures *creatures)
 {
-    DFHack::DfVector<uint32_t> p_refs(d->owner, item.origin + d->refVectorOffset);
+    DFHack::DfVector<uint32_t> p_refs(item.origin + d->refVectorOffset);
 
     for (uint32_t i=0; i<p_refs.size(); i++)
     {

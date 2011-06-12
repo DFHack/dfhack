@@ -78,7 +78,7 @@ Engravings::~Engravings()
 
 bool Engravings::Start(uint32_t & numengravings)
 {
-    d->p_engr = new DfVector <uint32_t> (d->owner, d->engraving_vector);
+    d->p_engr = new DfVector <uint32_t> (d->engraving_vector);
     numengravings = d->p_engr->size();
     d->Started = true;
     return true;

@@ -237,7 +237,7 @@ bool Creatures::Start( uint32_t &numcreatures )
 {
     if(d->Ft_basic)
     {
-        d->p_cre = new DfVector <uint32_t> (d->owner, d->creatures.vector);
+        d->p_cre = new DfVector <uint32_t> (d->creatures.vector);
         d->Started = true;
         numcreatures =  d->p_cre->size();
         d->IdMapReady = false;
@@ -314,7 +314,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
          */
 
         // appearance
-        DfVector <uint32_t> app(p, addr_cr + offs.appearance_vector_offset);
+        DfVector <uint32_t> app(addr_cr + offs.appearance_vector_offset);
         furball.nbcolors = app.size();
         if(furball.nbcolors>MAX_COLORS)
             furball.nbcolors = MAX_COLORS;
@@ -346,7 +346,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         {
             furball.has_default_soul = true;
             // get first soul's skills
-            DfVector <uint32_t> skills(p, soul + offs.soul_skills_vector_offset);
+            DfVector <uint32_t> skills(soul + offs.soul_skills_vector_offset);
             furball.defaultSoul.numSkills = skills.size();
 
             for (uint32_t i = 0; i < furball.defaultSoul.numSkills;i++)
@@ -504,7 +504,7 @@ bool Creatures::WriteSkills(const uint32_t index, const t_soul &soul)
         return false;
     }
 
-    DfVector<uint32_t> skills(p, souloff + d->creatures.soul_skills_vector_offset);
+    DfVector<uint32_t> skills(souloff + d->creatures.soul_skills_vector_offset);
 
     for (uint32_t i=0; i<soul.numSkills; i++)
     {
@@ -601,7 +601,7 @@ bool Creatures::WriteJob(const t_creature * furball, std::vector<t_material> con
     unsigned int i;
     Process * p = d->owner;
     Private::t_offsets & off = d->creatures;
-    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + off.job_materials_vector);
+    DfVector <uint32_t> cmats(furball->current_job.occupationPtr + off.job_materials_vector);
 
     for(i=0;i<cmats.size();i++)
     {
@@ -665,7 +665,7 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
 
     Process * p = d->owner;
     Private::t_offsets & off = d->creatures;
-    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + off.job_materials_vector);
+    DfVector <uint32_t> cmats(furball->current_job.occupationPtr + off.job_materials_vector);
     mat.resize(cmats.size());
     for(i=0;i<cmats.size();i++)
     {
@@ -691,7 +691,7 @@ bool Creatures::ReadInventoryPtr(const uint32_t temp, std::vector<uint32_t> & it
     if(!d->Started || !d->Ft_inventory) return false;
     Process * p = d->owner;
 
-    DfVector <uint32_t> citem(p, temp + d->creatures.inventory_offset);
+    DfVector <uint32_t> citem(temp + d->creatures.inventory_offset);
     if(citem.size() == 0)
         return false;
     item.resize(citem.size());
@@ -713,7 +713,7 @@ bool Creatures::ReadOwnedItemsPtr(const uint32_t temp, std::vector<int32_t> & it
     if(!d->Started || !d->Ft_owned_items) return false;
     Process * p = d->owner;
 
-    DfVector <int32_t> citem(p, temp + d->creatures.owned_items_offset);
+    DfVector <int32_t> citem(temp + d->creatures.owned_items_offset);
     if(citem.size() == 0)
         return false;
     item.resize(citem.size());
@@ -738,7 +738,7 @@ bool Creatures::RemoveOwnedItemPtr(const uint32_t temp, int32_t id)
     if(!d->Started || !d->Ft_owned_items) return false;
     Process * p = d->owner;
 
-    DfVector <int32_t> citem(p, temp + d->creatures.owned_items_offset);
+    DfVector <int32_t> citem(temp + d->creatures.owned_items_offset);
 
     for (unsigned i = 0; i < citem.size(); i++) {
         if (citem[i] != id)

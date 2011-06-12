@@ -86,8 +86,8 @@ bool Translation::Start()
         return false;
     Process * p = d->d->p;
     Finish();
-    DfVector <uint32_t> genericVec (p, d->genericAddress);
-    DfVector <uint32_t> transVec (p, d->transAddress);
+    DfVector <uint32_t> genericVec (d->genericAddress);
+    DfVector <uint32_t> transVec (d->transAddress);
     DFDict & translations = d->dicts.translations;
     DFDict & foreign_languages = d->dicts.foreign_languages;
 
@@ -106,7 +106,7 @@ bool Translation::Start()
     for (uint32_t i = 0; i < transVec.size();i++)
     {
         uint32_t transPtr = transVec.at(i);
-        DfVector <uint32_t> trans_names_vec (p, transPtr + d->word_table_offset);
+        DfVector <uint32_t> trans_names_vec (transPtr + d->word_table_offset);
         for (uint32_t j = 0;j < trans_names_vec.size();j++)
         {
             uint32_t transNamePtr = trans_names_vec.at(j);

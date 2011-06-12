@@ -80,16 +80,6 @@ Process::Process(VersionInfoFactory * known_versions)
     }
 }
 
-void Process::readSTLVector(const uint32_t address, t_vecTriplet & triplet)
-{
-    read(address, sizeof(triplet), (uint8_t *) &triplet);
-}
-
-void Process::writeSTLVector(const uint32_t address, t_vecTriplet & triplet)
-{
-    write(address, sizeof(triplet), (uint8_t *) &triplet);
-}
-
 string Process::doReadClassName (uint32_t vptr)
 {
     int typeinfo = Process::readDWord(vptr - 0x4);

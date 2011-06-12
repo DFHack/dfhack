@@ -78,7 +78,7 @@ Constructions::~Constructions()
 
 bool Constructions::Start(uint32_t & numconstructions)
 {
-    d->p_cons = new DfVector <uint32_t> (d->owner, d->construction_vector);
+    d->p_cons = new DfVector <uint32_t> (d->construction_vector);
     numconstructions = d->p_cons->size();
     d->Started = true;
     return true;

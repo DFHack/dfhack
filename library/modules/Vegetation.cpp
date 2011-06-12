@@ -81,7 +81,7 @@ bool Vegetation::Start(uint32_t & numplants)
 {
     if(!d->Inited)
         return false;
-    d->p_veg = new DfVector <uint32_t> (d->owner, d->vegetation_vector);
+    d->p_veg = new DfVector <uint32_t> (d->vegetation_vector);
     numplants = d->p_veg->size();
     d->Started = true;
     return true;

@@ -711,7 +711,7 @@ bool Maps::StartFeatures()
         if(loc_f_array16x16)
         {
             uint32_t feat_vector = loc_f_array16x16 + sizeof_16vec * sub_x + sizeof_vec * sub_y;
-            DfVector<uint32_t> p_features(p, feat_vector);
+            DfVector<uint32_t> p_features(feat_vector);
             uint32_t size = p_features.size();
             DFCoord pc(blockX,blockY);
             std::vector<t_feature *> tempvec;
@@ -766,7 +766,7 @@ bool Maps::StartFeatures()
     const uint32_t global_feature_funcptr = off.global_funcptr;
     const uint32_t glob_main_mat_offset = off.global_material;
     const uint32_t glob_sub_mat_offset = off.global_submaterial;
-    DfVector<uint32_t> p_features (p,global_feature_vector);
+    DfVector<uint32_t> p_features (global_feature_vector);
 
     d->v_global_feature.clear();
     uint32_t size = p_features.size();
@@ -945,7 +945,7 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins,
     if (!addr) return false;
     // veins are stored as a vector of pointers to veins
     /*pointer is 4 bytes! we work with a 32bit program here, no matter what architecture we compile khazad for*/
-    DfVector <uint32_t> p_veins (p, addr + off.veinvector);
+    DfVector <uint32_t> p_veins (addr + off.veinvector);
     uint32_t size = p_veins.size();
     // read all veins
     for (uint32_t i = 0; i < size;i++)
@@ -1129,7 +1129,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     }
 
     // read the geoblock vector
-    DfVector <uint32_t> geoblocks (d->d->p, geoblocks_vector_addr);
+    DfVector <uint32_t> geoblocks (geoblocks_vector_addr);
 
     // iterate over 8 surrounding regions + local region
     for (int i = eNorthWest; i < eBiomeCount; i++)
@@ -1162,7 +1162,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 
         /// geology blocks have a vector of layer descriptors
         // get the vector with pointer to layers
-        DfVector <uint32_t> geolayers (p, geoblock_off + off.geolayer_geoblock_offset); // let's hope
+        DfVector <uint32_t> geolayers (geoblock_off + off.geolayer_geoblock_offset); // let's hope
         // make sure we don't load crap
         assert (geolayers.size() > 0 && geolayers.size() <= 16);
 
@@ -1222,7 +1222,7 @@ bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<dfh_pl
     plants->clear();
 
     Private::t_offsets &off = d->offsets;
-    DfVector<uint32_t> vegptrs(d->owner, addr + off.vegvector);
+    DfVector<uint32_t> vegptrs(addr + off.vegvector);
     for(size_t i = 0; i < vegptrs.size(); i++)
     {
         d->d->readName(shrubbery.name,vegptrs[i]);

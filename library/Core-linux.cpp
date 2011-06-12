@@ -199,7 +199,6 @@ DFhackCExport int SDL_Init(uint32_t flags)
 *******************************************************************************/
 
 static int (*_refresh)(void) = 0;
-//extern NCURSES_EXPORT(int) refresh (void);
 DFhackCExport int refresh (void)
 {
     if(_refresh)
@@ -217,7 +216,6 @@ DFhackCExport int refresh (void)
 }
 
 static int (*_endwin)(void) = 0;
-//extern NCURSES_EXPORT(int) endwin (void);
 DFhackCExport int endwin (void)
 {
     if(!errorstate)
@@ -233,7 +231,6 @@ DFhackCExport int endwin (void)
 }
 
 typedef void WINDOW;
-//extern NCURSES_EXPORT(WINDOW *) initscr (void);
 static WINDOW * (*_initscr)(void) = 0;
 DFhackCExport WINDOW * initscr (void)
 {

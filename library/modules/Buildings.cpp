@@ -125,7 +125,7 @@ bool Buildings::Start(uint32_t & numbuildings)
 {
     if(!d->Inited)
         return false;
-    d->p_bld = new DfVector <uint32_t> (d->owner, d->buildings_vector);
+    d->p_bld = new DfVector <uint32_t> (d->buildings_vector);
     numbuildings = d->p_bld->size();
     d->Started = true;
     return true;
@@ -178,7 +178,7 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
         return false;
 
     Process * p = d->owner;
-    DfVector <uint32_t> p_matgloss (p, d->custom_workshop_vector);
+    DfVector <uint32_t> p_matgloss (d->custom_workshop_vector);
     uint32_t size = p_matgloss.size();
     btypes.clear();
 

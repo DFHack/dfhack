@@ -142,8 +142,6 @@ struct Maps::Private
     bool hasFeatures;
     bool hasVeggies;
 
-    bool usesWorldDataPtr;
-
     set <uint32_t> unknown_veins;
 
     // map between feature address and the read object
@@ -161,7 +159,6 @@ Maps::Maps(DFContextShared* _d)
     Process *p = d->owner = _d->p;
     d->Inited = d->FeaturesStarted = d->Started = false;
     d->block = NULL;
-    d->usesWorldDataPtr = false;
 
     DFHack::VersionInfo * mem = p->getDescriptor();
     Private::t_offsets &off = d->offsets;
@@ -169,12 +166,7 @@ Maps::Maps(DFContextShared* _d)
 
     // get the offsets once here
     OffsetGroup *OG_Maps = mem->getGroup("Maps");
-    try
-    {
-        off.world_data = OG_Maps->getAddress("world_data");
-        d->usesWorldDataPtr = true;
-        //cout << "uses world ptr" << endl;
-    }catch(Error::AllMemdef &){}
+    off.world_data = OG_Maps->getAddress("world_data");
 
     {
         off.map_offset = OG_Maps->getAddress ("map_data");
@@ -184,16 +176,8 @@ Maps::Maps(DFContextShared* _d)
         off.region_x_offset = OG_Maps->getAddress ("region_x");
         off.region_y_offset = OG_Maps->getAddress ("region_y");
         off.region_z_offset =  OG_Maps->getAddress ("region_z");
-        if(d->usesWorldDataPtr)
-        {
-            off.world_size_x = OG_Maps->getOffset ("world_size_x_from_wdata");
-            off.world_size_y = OG_Maps->getOffset ("world_size_y_from_wdata");
-        }
-        else
-        {
-            off.world_size_x = OG_Maps->getAddress ("world_size_x");
-            off.world_size_y = OG_Maps->getAddress ("world_size_y");
-        }
+        off.world_size_x = OG_Maps->getOffset ("world_size_x_from_wdata");
+        off.world_size_y = OG_Maps->getOffset ("world_size_y_from_wdata");
         OffsetGroup *OG_MapBlock = OG_Maps->getGroup("block");
         {
             off.tile_type_offset = OG_MapBlock->getOffset ("type");
@@ -217,16 +201,8 @@ Maps::Maps(DFContextShared* _d)
         try
         {
             OffsetGroup *OG_Geology = OG_Maps->getGroup("geology");
-            if(d->usesWorldDataPtr)
-            {
-                off.world_regions =  OG_Geology->getOffset ("ptr2_region_array_from_wdata");
-                off.world_geoblocks_vector =  OG_Geology->getOffset ("geoblock_vector_from_wdata");
-            }
-            else
-            {
-                off.world_regions =  OG_Geology->getAddress ("ptr2_region_array");
-                off.world_geoblocks_vector =  OG_Geology->getAddress ("geoblock_vector");
-            }
+            off.world_regions =  OG_Geology->getOffset ("ptr2_region_array_from_wdata");
+            off.world_geoblocks_vector =  OG_Geology->getOffset ("geoblock_vector_from_wdata");
             off.region_size =  OG_Geology->getHexValue ("region_size");
             off.region_geo_index_offset =  OG_Geology->getOffset ("region_geo_index_off");
             off.geolayer_geoblock_offset = OG_Geology->getOffset ("geolayer_geoblock_offset");
@@ -240,16 +216,8 @@ Maps::Maps(DFContextShared* _d)
         OffsetGroup *OG_local_features = OG_Maps->getGroup("features")->getGroup("local");
         try
         {
-            if(d->usesWorldDataPtr)
-            {
-                off.local_f_start = OG_local_features->getOffset("start_ptr_from_wdata");
-                off.global_vector = OG_global_features->getOffset("vector_from_wdata");
-            }
-            else
-            {
-                off.local_f_start = OG_local_features->getAddress("start_ptr");
-                off.global_vector = OG_global_features->getAddress("vector");
-            }
+            off.local_f_start = OG_local_features->getOffset("start_ptr_from_wdata");
+            off.global_vector = OG_global_features->getOffset("vector_from_wdata");
             off.local_material = OG_local_features->getOffset("material");
             off.local_submaterial = OG_local_features->getOffset("submaterial");
 
@@ -287,7 +255,6 @@ Maps::Maps(DFContextShared* _d)
     mem->resolveClassnameToVPtr("block_square_event_grassst",off.vein_grass_vptr);
     off.vein_worldconstruction_vptr = 0;
     mem->resolveClassnameToVPtr("block_square_event_world_constructionst",off.vein_worldconstruction_vptr);
-
     d->Inited = true;
 }
 
@@ -658,18 +625,10 @@ bool Maps::StartFeatures()
     uint32_t base = 0;
     uint32_t global_feature_vector = 0;
 
-    if(d->usesWorldDataPtr)
-    {
-        uint32_t world = p->readDWord(off.world_data);
-        if(!world) return false;
-        base = p->readDWord(world + off.local_f_start);
-        global_feature_vector = p->readDWord(off.world_data) + off.global_vector;
-    }
-    else
-    {
-        base = p->readDWord(off.local_f_start);
-        global_feature_vector = off.global_vector;
-    }
+    uint32_t world = p->readDWord(off.world_data);
+    if(!world) return false;
+    base = p->readDWord(world + off.local_f_start);
+    global_feature_vector = p->readDWord(off.world_data) + off.global_vector;
 
     // deref pointer to the humongo-structure
     if(!base)
@@ -1111,22 +1070,11 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     uint32_t regions, geoblocks_vector_addr;
     Private::t_offsets &off = d->offsets;
     // get world size
-    if(d->usesWorldDataPtr)
-    {
-        uint32_t world = p->readDWord(off.world_data);
-        p->readWord (world + off.world_size_x, worldSizeX);
-        p->readWord (world + off.world_size_y, worldSizeY);
-        regions = p->readDWord ( world + off.world_regions); // ptr2_region_array
-        geoblocks_vector_addr = world + off.world_geoblocks_vector;
-    }
-    else
-    {
-        p->readWord (off.world_size_x, worldSizeX);
-        p->readWord (off.world_size_y, worldSizeY);
-        // get pointer to first part of 2d array of regions
-        regions = p->readDWord (off.world_regions); // ptr2_region_array
-        geoblocks_vector_addr = off.world_geoblocks_vector;
-    }
+    uint32_t world = p->readDWord(off.world_data);
+    p->readWord (world + off.world_size_x, worldSizeX);
+    p->readWord (world + off.world_size_y, worldSizeY);
+    regions = p->readDWord ( world + off.world_regions); // ptr2_region_array
+    geoblocks_vector_addr = world + off.world_geoblocks_vector;
 
     // read the geoblock vector
     DfVector <uint32_t> geoblocks (geoblocks_vector_addr);
@@ -1198,7 +1146,7 @@ bool Maps::ReadLocalFeatures( std::map <DFCoord, std::vector<t_feature *> > & lo
     return false;
 }
 
-bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
+bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features )
 {
     StopFeatures();
     StartFeatures();
@@ -1210,26 +1158,14 @@ bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features)
     return false;
 }
 
-bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<dfh_plant>* plants)
+bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<df_plant *>*& plants)
 {
     if(!d->hasVeggies || !d->Started)
         return false;
     uint32_t addr = d->block[x*d->y_block_count*d->z_block_count + y*d->z_block_count + z];
     if(!addr)
         return false;
-
-    dfh_plant shrubbery;
-    plants->clear();
-
     Private::t_offsets &off = d->offsets;
-    DfVector<uint32_t> vegptrs(addr + off.vegvector);
-    for(size_t i = 0; i < vegptrs.size(); i++)
-    {
-        d->d->readName(shrubbery.name,vegptrs[i]);
-        d->owner->read (vegptrs[i] + off.tree_desc_offset, sizeof (t_plant), (uint8_t *) &shrubbery.sdata);
-        shrubbery.address = vegptrs[i];
-        plants->push_back(shrubbery);
-    }
-    if(plants->empty()) return false;
+    plants = (std::vector<df_plant *>*) (addr + off.vegvector);
     return true;
 }

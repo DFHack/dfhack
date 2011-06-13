@@ -19,9 +19,9 @@ namespace DFHack
      * \ingroup grp_vegetation
      */
     #pragma pack(push, 2)
-    struct t_plant
+    struct df_plant
     {
-        // +0x3C
+        df_name name;
         union
         {
             uint16_t type;
@@ -50,19 +50,6 @@ namespace DFHack
         // some more temperature stuff after that
     };
     #pragma pack(pop)
-    /**
-     * Plant object read from the game
-     * \ingroup grp_vegetation
-     */
-    struct dfh_plant
-    {
-        /// name of the plant
-        t_name name;
-        /// data with static size/address
-        t_plant sdata;
-        /// address where the plant was read from
-        uint32_t address;
-    };
     class DFContextShared;
     /**
      * The Vegetation module
@@ -74,14 +61,8 @@ namespace DFHack
         public:
         Vegetation(DFContextShared * d);
         ~Vegetation();
-        bool Start(uint32_t & numTrees);
-        bool Read (const uint32_t index, dfh_plant & shrubbery);
-        bool Write (dfh_plant & shrubbery);
-        bool Finish();
-
-        private:
-        struct Private;
-        Private *d;
+        bool Finish(){return true;};
+        std::vector <df_plant *> *all_plants;
     };
 }
 #endif

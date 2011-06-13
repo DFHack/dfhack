@@ -49,6 +49,17 @@ struct junk_fill
     uint8_t data[SIZE];
 };
 
+struct df_name
+{
+    std::string first_name;
+    std::string nick_name;
+    int32_t words[7];
+    int16_t parts_of_speech[7];
+    int32_t language;
+    int16_t unknown;
+    int16_t has_name;
+};
+
 enum EFFECT_TYPE
 {
     EFF_MIASMA=0,

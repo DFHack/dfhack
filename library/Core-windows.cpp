@@ -31,226 +31,83 @@ distribution.
 #include <windows.h>
 #include <stdarg.h>
 
+#include < process.h>
+#include <errno.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <io.h>
+#include <iostream>
+#include <fstream>
+ 
+#define MAX_CONSOLE_LINES 250;
+ 
+HANDLE  g_hConsoleOut;                   // Handle to debug console
+
+void RedirectIOToConsole();
+ 
+// This function dynamically creates a "Console" window and points stdout and stderr to it.
+// It also hooks stdin to the window
+// You must free it later with FreeConsole
+void RedirectIOToConsole()
+{
+    int                        hConHandle;
+    long                       lStdHandle;
+    CONSOLE_SCREEN_BUFFER_INFO coninfo;
+    FILE                       *fp;
+ 
+    // allocate a console for this app
+    AllocConsole();
+ 
+    // set the screen buffer to be big enough to let us scroll text
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), 
+                               &coninfo);
+    coninfo.dwSize.Y = MAX_CONSOLE_LINES;  // How many lines do you want to have in the console buffer
+    SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), 
+                               coninfo.dwSize);
+ 
+    // redirect unbuffered STDOUT to the console
+    g_hConsoleOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    lStdHandle = (long)GetStdHandle(STD_OUTPUT_HANDLE);
+    hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+    fp = _fdopen( hConHandle, "w" );
+    *stdout = *fp;
+    setvbuf( stdout, NULL, _IONBF, 0 );
+ 
+    // redirect unbuffered STDIN to the console
+    lStdHandle = (long)GetStdHandle(STD_INPUT_HANDLE);
+    hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+    fp = _fdopen( hConHandle, "r" );
+    *stdin = *fp;
+    setvbuf( stdin, NULL, _IONBF, 0 );
+ 
+    // redirect unbuffered STDERR to the console
+    lStdHandle = (long)GetStdHandle(STD_ERROR_HANDLE);
+    hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+    fp = _fdopen( hConHandle, "w" );
+    *stderr = *fp;
+    setvbuf( stderr, NULL, _IONBF, 0 ); 
+    SetConsoleTitle("The Console Titlebar Text");   
+    
+    // make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog 
+    // point to console as well  Uncomment the next line if you are using c++ cio or comment if you don't
+    std::ios::sync_with_stdio();
+}
+
 #define DFhackCExport extern "C" __declspec(dllexport)
 
-#include "dfhack/DFIntegers.h"
+#include "dfhack/Integers.h"
 #include <vector>
 #include <string>
-#include "shms.h"
-#include "mod-core.h"
+#include "dfhack/Core.h"
 #include <stdio.h>
-int errorstate = 0;
-char *shm = 0;
-int shmid = 0;
-bool inited = 0;
-HANDLE shmHandle = 0;
-
-HANDLE DFSVMutex = 0;
-HANDLE DFCLMutex[SHM_MAX_CLIENTS];
-HANDLE DFCLSuspendMutex[SHM_MAX_CLIENTS];
-int held_DFCLSuspendMutex[SHM_MAX_CLIENTS];
-int numheld = SHM_MAX_CLIENTS;
-bool FirstCall();
-
-void OS_lockSuspendLock(int which)
-{
-    if(numheld == SHM_MAX_CLIENTS)
-        return;
-    // lock not held by server and can be picked up. OK.
-    if(held_DFCLSuspendMutex[which] == 0)
-    {
-        uint32_t state = WaitForSingleObject(DFCLSuspendMutex[which],INFINITE);
-        if(state == WAIT_ABANDONED || state == WAIT_OBJECT_0)
-        {
-            held_DFCLSuspendMutex[which] = 1;
-            numheld++;
-            return;
-        }
-        // lock couldn't be picked up!
-        errorstate = 1;
-        MessageBox(0,"Suspend lock locking failed. Further communication disabled!","Error", MB_OK);
-        return;
-    }
-    errorstate = 1;
-    MessageBox(0,"Server tried to lock already locked suspend lock?  Further communication disabled!","Error", MB_OK);
-    return;
-}
-
-void OS_releaseSuspendLock(int which)
-{
-    /*
-    if(which >=0 && which < SHM_MAX_CLIENTS)
-        return;
-    */
-    if(numheld != SHM_MAX_CLIENTS)
-    {
-        MessageBox(0,"Locking system failure. Further communication disabled!","Error", MB_OK);
-        errorstate = 1;
-        return;
-    }
-    // lock hel by server and can be released -> OK
-    if(held_DFCLSuspendMutex[which] == 1 && ReleaseMutex(DFCLSuspendMutex[which]))
-    {
-        numheld--;
-        held_DFCLSuspendMutex[which] = 0;
-    }
-    // locked and not can't be released? FAIL!
-    else if (held_DFCLSuspendMutex[which] == 1)
-    {
-        MessageBox(0,"Suspend lock failed to unlock.  Further communication disabled!","Error", MB_OK);
-        return;
-    }
-}
-
-
-void SHM_Init ( void )
-{
-    // check that we do this only once per process
-    if(inited)
-    {
-        MessageBox(0,"SHM_Init was called twice or more!","FUN", MB_OK);
-        return;
-    }
-    inited = true;
-    
-    
-    char clmutexname [256];
-    char clsmutexname [256];
-    char shmname [256];
-    sprintf(shmname,"DFShm-%d",OS_getPID());    
-    
-    // create a locked server mutex
-    char svmutexname [256];
-    sprintf(svmutexname,"DFSVMutex-%d",OS_getPID());
-    DFSVMutex = CreateMutex( 0, 1, svmutexname);
-    if(DFSVMutex == 0)
-    {
-        MessageBox(0,"Server mutex creation failed. Further communication disabled!","Error", MB_OK);
-        errorstate = 1;
-        return;
-    }
-    // the mutex already existed. we don't want to know.
-    if(GetLastError() == ERROR_ALREADY_EXISTS)
-    {
-        MessageBox(0,"Server mutex already existed. Further communication disabled!","Error", MB_OK);
-        errorstate = 1;
-        return;
-    }
-    
-    // create client and suspend mutexes
-    for(int i = 0; i < SHM_MAX_CLIENTS; i++)
-    {
-        sprintf(clmutexname,"DFCLMutex-%d-%d",OS_getPID(),i);
-        sprintf(clsmutexname,"DFCLSuspendMutex-%d-%d",OS_getPID(),i);
-        
-        DFCLMutex[i] = CreateMutex( 0, 0, clmutexname); // client mutex, not held
-        DFCLSuspendMutex[i] = CreateMutex( 0, 1, clsmutexname); // suspend mutexes held on start
-        held_DFCLSuspendMutex[i] = 1;
-        
-        if(DFCLMutex[i] == 0 || DFCLSuspendMutex[i] == 0 || GetLastError() == ERROR_ALREADY_EXISTS)
-        {
-            MessageBox(0,"Client mutex creation failed. Close all tools before starting DF.","Error", MB_OK);
-            errorstate = 1;
-            return;
-        }
-    }
-
-    // create virtual memory mapping
-    shmHandle = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,SHM_SIZE,shmname);
-    // if can't create or already exists -> nothing happens
-    if(GetLastError() == ERROR_ALREADY_EXISTS)
-    {
-        MessageBox(0,"SHM bridge already in use","Error", MB_OK);
-        errorstate = 1;
-        return;
-    }
-    if(!shmHandle)
-    {
-        MessageBox(0,"Couldn't create SHM bridge","Error", MB_OK);
-        errorstate = 1;
-        return;
-    }
-    // attempt to attach the created mapping
-    shm = (char *) MapViewOfFile(shmHandle,FILE_MAP_ALL_ACCESS, 0,0, SHM_SIZE);
-    if(shm)
-    {
-        // make sure we don't stall or do crazy stuff
-        for(int i = 0; i < SHM_MAX_CLIENTS;i++)
-        {
-            ((uint32_t *)shm)[i] = CORE_RUNNING;
-        }
-        // init modules :)
-        InitModules();
-    }
-    else
-    {
-        MessageBox(0,"Couldn't attach SHM bridge","Error", MB_OK);
-        errorstate = 1;
-        return;
-    }
-}
-
-void SHM_Destroy ( void )
-{
-    if(errorstate)
-        return;
-    KillModules();
-    // get rid of all the locks
-    CloseHandle(DFSVMutex);
-    for(int i=0; i < SHM_MAX_CLIENTS; i++)
-    {
-        CloseHandle(DFCLSuspendMutex[i]);
-        CloseHandle(DFCLMutex[i]);
-    }
-}
-
-uint32_t OS_getPID()
-{
-    return GetCurrentProcessId();
-}
-
-// TODO: move to some utils file
-uint32_t OS_getAffinity()
-{
-    HANDLE hProcess = GetCurrentProcess();
-    DWORD dwProcessAffinityMask, dwSystemAffinityMask;
-    GetProcessAffinityMask( hProcess, &dwProcessAffinityMask, &dwSystemAffinityMask );
-    return dwProcessAffinityMask;
-}
-
-
-
-// is the other side still there?
-bool isValidSHM(int which)
-{
-    // try if CL mutex is free (by locking client mutex)
-    uint32_t result = WaitForSingleObject(DFCLMutex[which],0);
-    
-    switch (result)
-    {
-        case WAIT_ABANDONED:
-        case WAIT_OBJECT_0:
-        {
-            OS_lockSuspendLock(which);
-            ReleaseMutex(DFCLMutex[which]);
-            return false;
-        }
-        case WAIT_TIMEOUT:
-        {
-            // mutex is held by a process already
-            return true;
-        }   
-        default:
-        case WAIT_FAILED:
-        {
-            // TODO: now how do I respond to this?
-            return false;
-        }
-    }
-}
 
 /*************************************************************************/
-// boring wrappers beyond this point. Only fix when broken
+// extremely boring wrappers beyond this point. Only fix when broken
+
+// we don't know which of the SDL functions will be called first... so we
+// just catch the first one and init all our function pointers at that time
+bool FirstCall(void);
+bool inited = false;
 
 // function and variable pointer... we don't try to understand what SDL does here
 typedef void * fPtr;
@@ -738,11 +595,8 @@ static void (*_SDL_Quit)(void) = 0;
 DFhackCExport void SDL_Quit(void)
 {
     fprintf(stderr,"Quitting!\n");
-    if(!errorstate)
-    {
-        SHM_Destroy();
-        errorstate = true;
-    }
+    DFHack::Core & c = DFHack::Core::getInstance();
+    c.Shutdown();
     if(_SDL_Quit)
     {
         _SDL_Quit();
@@ -751,15 +605,8 @@ DFhackCExport void SDL_Quit(void)
 // this is supported from 0.31.04 forward
 DFhackCExport int SDL_NumJoysticks(void)
 {
-    if(errorstate)
-        return -1;
-    if(!inited)
-    {
-        SHM_Init();
-        return -2;
-    }
-    SHM_Act();
-    return -3;
+    DFHack::Core & c = DFHack::Core::getInstance();
+    return c.Update();
 }
 
 static void (*_SDL_GL_SwapBuffers)(void) = 0;
@@ -882,6 +729,7 @@ DFhackCExport uint32_t SDL_ThreadID(void)
 // this has to be thread-safe. Let's hope it is.
 bool FirstCall()
 {
+    RedirectIOToConsole();
     HMODULE realSDLlib =  LoadLibrary("SDLreal.dll");
     if(!realSDLlib)
     {
@@ -961,5 +809,6 @@ bool FirstCall()
     _SDL_ThreadID = (uint32_t (*)(void))GetProcAddress(realSDLlib,"SDL_ThreadID");
     
     fprintf(stderr,"Initized HOOKS!\n");
+    inited = true;
     return 1;
 }

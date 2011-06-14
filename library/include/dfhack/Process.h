@@ -40,6 +40,7 @@ namespace DFHack
     class Window;
     class DFVector;
     class VersionInfoFactory;
+    class PlatformSpecific;
     
     /**
      * A type for storing an extended OS Process ID (combines PID and the time the process was started for unique identification)
@@ -205,7 +206,9 @@ namespace DFHack
                 if(!bufcapacity || bufcapacity == 1)
                     return 0;
                 std::string * str = (std::string *) offset;
-                
+                size_t copied = str->copy(buffer,bufcapacity-1);
+                buffer[copied] = 0;
+                return copied;
             };
             /**
              * write an STL string
@@ -272,7 +275,10 @@ namespace DFHack
             std::string getPath();
     private:
         VersionInfo * my_descriptor;
+        PlatformSpecific *d;
         bool identified;
+        uint32_t my_pid;
+        uint32_t base;
         std::map<uint32_t, std::string> classNameCache;
     };
 

@@ -43,7 +43,6 @@ namespace DFHack
     class Constructions;
     class VersionInfo;
     class DFContextShared;
-    class WindowIO;
     class Process;
     /**
      * This class wraps all the different related objects for a particular Process
@@ -116,9 +115,6 @@ namespace DFHack
 
         /// get the constructions module
         Constructions * getConstructions();
-
-        /// get the Window management and I/O module
-        WindowIO * getWindowIO();
 
         // DEAD CODE, WAITING TO BE UPDATED TO DF2010
         /*

@@ -48,7 +48,7 @@ Context::Context (Process* p) : d (new DFContextShared())
 
 Context::~Context()
 {
-    Detach();
+    //Detach();
     delete d;
 }
 
@@ -99,10 +99,12 @@ bool Context::isAttached()
 bool Context::Suspend()
 {
 //    return d->p->suspend();
+	return true;
 }
 bool Context::AsyncSuspend()
 {
 //    return d->p->asyncSuspend();
+	return true;
 }
 
 bool Context::Resume()
@@ -112,6 +114,7 @@ bool Context::Resume()
         d->allModules[i]->OnResume();
     }
     //return d->p->resume();
+	return true;
 }
 /*
 bool Context::ForceResume()
@@ -168,7 +171,6 @@ MODULE_GETTER(Creatures);
 MODULE_GETTER(Engravings);
 MODULE_GETTER(Maps);
 MODULE_GETTER(Gui);
-MODULE_GETTER(WindowIO);
 MODULE_GETTER(World);
 MODULE_GETTER(Materials);
 MODULE_GETTER(Items);

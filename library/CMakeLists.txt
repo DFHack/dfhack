@@ -51,6 +51,7 @@ SET(PROJECT_SRCS
 VersionInfo.cpp
 VersionInfoFactory.cpp
 Context.cpp
+Core.cpp
 TileTypes.cpp
 ContextShared.cpp
 
@@ -79,7 +80,7 @@ SET(PROJECT_HDRS_LINUX
 )
 
 SET(PROJECT_HDRS_WINDOWS
-include/dfhack/DFstdint_win.h
+include/dfhack/stdint_win.h
 )
 
 SET(PROJECT_SRCS_LINUX

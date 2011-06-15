@@ -27,12 +27,13 @@ namespace DFHack
      */
     struct t_hotkey
     {
-        char name[10];
+        std::string name;
         int16_t mode;
         int32_t x;
         int32_t y;
         int32_t z;
     };
+    typedef t_hotkey hotkey_array[16];
     /**
      * \ingroup grp_gui
      */
@@ -69,7 +70,7 @@ namespace DFHack
         /*
          * Hotkeys (DF's zoom locations)
          */
-        bool ReadHotkeys(t_hotkey hotkeys[]);
+        hotkey_array * hotkeys;
         
         /*
          * Window size in tiles

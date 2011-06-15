@@ -805,6 +805,7 @@
                 <Address name="current_cursor_creature" description="A vector? of creatures currently under the cursor."/>
                 <Address name="current_menu_state" description="A numeric value that describes the state of the current GUI element (switching between menus will change this)."/>
                 <Address name="view_screen" description="Pointer to the current view screen object (GUI screen)."/>
+                <Address name="hotkeys" description="Address where the array of hotkeys starts.">
             </Group>
             <Group name="Maps" description="Offsets used by the Maps module.">
                 <Address name="map_data" description="Pointer to the start of the map structure."/>
@@ -989,12 +990,6 @@
                 <Offset name="custom_workshop_name"/>
                 <Offset name="custom_workshop_type"/>
             </Group>
-            <Group name="Hotkeys">
-                <Address name="start"/>
-                <Offset name="mode"/>
-                <Offset name="coords"/>
-                <HexValue name="sizeof"/>
-            </Group>
             <Group name="Items">
                 <!-- most of those seem completely unused! -->
                 <Address name="items_vector" />
@@ -1134,6 +1129,7 @@
                 <Address name="current_cursor_creature" value="0xae82cc" valid="false" />
                 <Address name="current_menu_state" value="0x017f6f38" />
                 <Address name="view_screen" value="0xae82cc" valid="false" />
+                <Address name="hotkeys" value="0x01476ecc">
             </Group>
             <Group name="Maps">
                 <Address name="map_data" value="0x016AD718" />
@@ -1305,12 +1301,7 @@
                 <Offset name="custom_workshop_name" value="0x4" />
                 <Offset name="custom_workshop_type" value="0x20" />
             </Group>
-            <Group name="Hotkeys">
-                <Address name="start" value="0x01476ecc" />
-                <Offset name="mode" value="0x1C" />
-                <Offset name="coords" value="0x20" />
-                <HexValue name="sizeof" value="0x2C" />
-            </Group>
+            
             <!-- addresses from belal: vectors might need 8 subtracted from them
             buildings 0x0166f9a8
             constructions 0xffffffff
@@ -2216,7 +2207,8 @@
                 <Address name="control_mode" value="0xb33814" />
                 <Address name="game_mode" value="0xb33818"/>
                 <Address name="current_year" value="0xef6268" />
-                <Address name="current_tick" value="0xe17180" />
+                <!--<Address name="current_tick" value="0xe17180" />-->
+                <Address name="current_tick" value="0xec3170" />
                 <Address name="current_weather" value="0x14eb7a0" />
             </Group>
             <Group name="GUI">
@@ -2244,21 +2236,24 @@
         <PETimeStamp value="0x4D90764F" />
         <MD5 value="6ada05fc94785b53efe6aa5728b3756b" />
         <Offsets>
+            <Group name="Gui">
+                <Address name="hotkeys" value="0x14f5cc8" />
+            </Group>
             <Group name="Creatures">
                 <Group name="creature">
                     <Offset name="flags3" value="0xE8"/>
                 </Group>
             </Group>
-        <Group name="Items" valid="true">
-            <Address name="items_vector" value="0x16c4540"/>
-            <Offset name="id" value="0x14"/>
-            <Offset name="item_ref_vector" value="0x28" />
-            <Offset name="owner_ref_id_field" value="0x4" />
-            <Offset name="item_wear_accessor" value="0xCC" />
-            <Offset name="item_quantity_accessor" value="0x214" /> 0x194  TEST
-            <Offset name="item_quality_accessor" value="0x25C" />
-        </Group>
-    </Offsets>
+            <Group name="Items" valid="true">
+                <Address name="items_vector" value="0x16c4540"/>
+                <Offset name="id" value="0x14"/>
+                <Offset name="item_ref_vector" value="0x28" />
+                <Offset name="owner_ref_id_field" value="0x4" />
+                <Offset name="item_wear_accessor" value="0xCC" />
+                <Offset name="item_quantity_accessor" value="0x214" /> 0x194  TEST
+                <Offset name="item_quality_accessor" value="0x25C" />
+            </Group>
+        </Offsets>
         cmake
         item vector:
         
@@ -3022,6 +3017,9 @@
         <MD5 value="fc15065c4d1977ca019c6dad220413d1" />
         <Offsets>
             WORLD: 0x93f77a0
+            <Group name="Gui">
+                <Address name="hotkeys" value="0x93f740c" />
+            </Group>
             <Group name="Creatures">
                 Maybe, possibly.
                 <Address name="current_civ" value="0x093f2b50 0x93f2cdc" />

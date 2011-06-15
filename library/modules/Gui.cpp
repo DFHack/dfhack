@@ -48,7 +48,7 @@ struct Gui::Private
     Private()
     {
         Started = ViewScreeInited = MenuStateInited = false;
-        StartedHotkeys = StartedScreen = false;
+        StartedScreen = false;
     }
     bool ViewScreeInited;
     uint32_t view_screen_offset;
@@ -62,12 +62,6 @@ struct Gui::Private
     uint32_t window_z_offset;
     uint32_t cursor_xyz_offset;
     uint32_t window_dims_offset;
-
-    bool StartedHotkeys;
-    uint32_t hotkey_start;
-    uint32_t hotkey_mode_offset;
-    uint32_t hotkey_xyz_offset;
-    uint32_t hotkey_size;
 
     bool StartedScreen;
     uint32_t screen_tiles_ptr_offset;
@@ -84,6 +78,14 @@ Gui::Gui(DFContextShared * _d)
     d->owner = _d->p;
     VersionInfo * mem = d->d->offset_descriptor;
     OffsetGroup * OG_Gui = mem->getGroup("GUI");
+    try
+    {
+        hotkeys = (hotkey_array *) OG_Gui->getAddress("hotkeys");
+    }
+    catch(Error::All &)
+    {
+        hotkeys = 0;
+    };
     try
     {
         d->current_menu_state_offset = OG_Gui->getAddress("current_menu_state");
@@ -106,16 +108,6 @@ Gui::Gui(DFContextShared * _d)
         d->cursor_xyz_offset = OG_Position->getAddress ("cursor_xyz");
         d->window_dims_offset = OG_Position->getAddress ("window_dims");
         d->Started = true;
-    }
-    catch(Error::All &){};
-    try
-    {
-        OffsetGroup * OG_Hotkeys = mem->getGroup("Hotkeys");
-        d->hotkey_start = OG_Hotkeys->getAddress("start");
-        d->hotkey_mode_offset = OG_Hotkeys->getOffset ("mode");
-        d->hotkey_xyz_offset = OG_Hotkeys->getOffset("coords");
-        d->hotkey_size = OG_Hotkeys->getHexValue("size");
-        d->StartedHotkeys = true;
     }
     catch(Error::All &){};
     try
@@ -164,25 +156,6 @@ bool Gui::ReadViewScreen (t_viewscreen &screen)
         nextScreenPtr = p->readDWord (nextScreenPtr + 4);
     }
     return d->d->offset_descriptor->resolveObjectToClassID (last, screen.type);
-}
-
-bool Gui::ReadHotkeys(t_hotkey hotkeys[])
-{
-    if (!d->StartedHotkeys)
-    {
-        return false;
-    }
-    uint32_t currHotkey = d->hotkey_start;
-    Process * p = d->owner;
-
-    for(uint32_t i = 0 ; i < NUM_HOTKEYS ;i++)
-    {
-        p->readSTLString(currHotkey,hotkeys[i].name,10);
-        hotkeys[i].mode = p->readWord(currHotkey+d->hotkey_mode_offset);
-        p->read (currHotkey + d->hotkey_xyz_offset, 3*sizeof (int32_t), (uint8_t *) &hotkeys[i].x);
-        currHotkey+=d->hotkey_size;
-    }
-    return true;
 }
 
 bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)

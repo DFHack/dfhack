@@ -38,6 +38,8 @@ distribution.
 #include <io.h>
 #include <iostream>
 #include <fstream>
+#include <istream>
+#include <string>
  
 #define MAX_CONSOLE_LINES 250;
  
@@ -62,7 +64,7 @@ void RedirectIOToConsole()
     long                       lStdHandle;
     CONSOLE_SCREEN_BUFFER_INFO coninfo;
     FILE                       *fp;
-
+    DWORD  oldMode, newMode;
     // allocate a console for this app
     AllocConsole();
 
@@ -85,6 +87,9 @@ void RedirectIOToConsole()
     fp = _fdopen( hConHandle, "r" );
     *stdin = *fp;
     setvbuf( stdin, NULL, _IONBF, 0 );
+    GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE),&oldMode);
+    newMode = oldMode | ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT;
+    SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE),newMode);
 
     // redirect unbuffered STDERR to the console
     lStdHandle = (long)GetStdHandle(STD_ERROR_HANDLE);
@@ -819,3 +824,4 @@ bool FirstCall()
     inited = true;
     return 1;
 }
+

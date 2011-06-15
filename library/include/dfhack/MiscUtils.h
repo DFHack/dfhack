@@ -5,7 +5,7 @@
 #include <iostream>
 #include <iomanip>
 #include <climits>
-#include <dfhack/Integers.h>
+#include <stdint.h>
 #include <vector>
 #include <sstream>
 #include <ctime>

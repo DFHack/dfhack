@@ -106,7 +106,7 @@ void RedirectIOToConsole()
 
 #define DFhackCExport extern "C" __declspec(dllexport)
 
-#include "dfhack/Integers.h"
+#include <stdint.h>
 #include <vector>
 #include <string>
 #include "dfhack/Core.h"

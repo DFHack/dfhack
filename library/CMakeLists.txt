@@ -21,7 +21,6 @@ include/DFHack.h
 include/dfhack/Context.h
 include/dfhack/Error.h
 include/dfhack/Export.h
-include/dfhack/Integers.h
 include/dfhack/MiscUtils.h
 include/dfhack/Module.h
 include/dfhack/Pragma.h
@@ -80,7 +79,6 @@ SET(PROJECT_HDRS_LINUX
 )
 
 SET(PROJECT_HDRS_WINDOWS
-include/dfhack/stdint_win.h
 )
 
 SET(PROJECT_SRCS_LINUX

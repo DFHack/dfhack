@@ -45,7 +45,7 @@ distribution.
 #include "dfhack/Pragma.h"
 
 // C99 integer types
-#include "dfhack/Integers.h"
+#include <stdint.h>
 
 #endif // DFCOMMONINTERNAL_H_INCLUDED
 

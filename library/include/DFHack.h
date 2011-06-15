@@ -19,8 +19,10 @@
 #define DEPRECATED(func) func
 #endif
 
+// C99 integer types (used everywhere)
+#include <stdint.h>
+
 // DFHack core classes and types
-#include "dfhack/Integers.h"
 #include "dfhack/Error.h"
 #include "dfhack/Context.h"
 #include "dfhack/VersionInfo.h"

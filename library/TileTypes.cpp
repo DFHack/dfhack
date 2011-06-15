@@ -1,5 +1,5 @@
 // vim: sts=4 sta et shiftwidth=4:
-#include "dfhack/Integers.h"
+#include "Internal.h"
 #include "dfhack/TileTypes.h"
 #include "dfhack/Export.h"
 

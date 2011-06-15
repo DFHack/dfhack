@@ -4,7 +4,7 @@
 
 #include "dfhack/modules/Maps.h"
 #include "dfhack/TileTypes.h"
-#include "dfhack/Integers.h"
+#include <stdint.h>
 #include <cstring>
 namespace MapExtras
 {

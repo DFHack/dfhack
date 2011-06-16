@@ -805,7 +805,7 @@
                 <Address name="current_cursor_creature" description="A vector? of creatures currently under the cursor."/>
                 <Address name="current_menu_state" description="A numeric value that describes the state of the current GUI element (switching between menus will change this)."/>
                 <Address name="view_screen" description="Pointer to the current view screen object (GUI screen)."/>
-                <Address name="hotkeys" description="Address where the array of hotkeys starts.">
+                <Address name="hotkeys" description="Address where the array of hotkeys starts." />
             </Group>
             <Group name="Maps" description="Offsets used by the Maps module.">
                 <Address name="map_data" description="Pointer to the start of the map structure."/>
@@ -1129,7 +1129,7 @@
                 <Address name="current_cursor_creature" value="0xae82cc" valid="false" />
                 <Address name="current_menu_state" value="0x017f6f38" />
                 <Address name="view_screen" value="0xae82cc" valid="false" />
-                <Address name="hotkeys" value="0x01476ecc">
+                <Address name="hotkeys" value="0x01476ecc" />
             </Group>
             <Group name="Maps">
                 <Address name="map_data" value="0x016AD718" />
@@ -2236,7 +2236,7 @@
         <PETimeStamp value="0x4D90764F" />
         <MD5 value="6ada05fc94785b53efe6aa5728b3756b" />
         <Offsets>
-            <Group name="Gui">
+            <Group name="GUI">
                 <Address name="hotkeys" value="0x14f5cc8" />
             </Group>
             <Group name="Creatures">
@@ -3017,7 +3017,7 @@
         <MD5 value="fc15065c4d1977ca019c6dad220413d1" />
         <Offsets>
             WORLD: 0x93f77a0
-            <Group name="Gui">
+            <Group name="GUI">
                 <Address name="hotkeys" value="0x93f740c" />
             </Group>
             <Group name="Creatures">

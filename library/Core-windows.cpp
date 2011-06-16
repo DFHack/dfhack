@@ -1,6 +1,6 @@
 /*
-www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix)
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -21,6 +21,7 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
+
 
 /**
  * This is the source for the DF <-> dfhack shm bridge,
@@ -110,6 +111,7 @@ void RedirectIOToConsole()
 #include <vector>
 #include <string>
 #include "dfhack/Core.h"
+#include "dfhack/FakeSDL.h"
 #include <stdio.h>
 
 /*************************************************************************/
@@ -119,10 +121,6 @@ void RedirectIOToConsole()
 // just catch the first one and init all our function pointers at that time
 bool FirstCall(void);
 bool inited = false;
-
-// function and variable pointer... we don't try to understand what SDL does here
-typedef void * fPtr;
-typedef void * vPtr;
 
 /// wrappers for SDL 1.2 functions used in 40d16
 /***** Condition variables
@@ -179,6 +177,12 @@ static int (*_SDL_mutexP)(vPtr mutex) = 0;
 DFhackCExport int SDL_mutexP(vPtr mutex)
 {
     return _SDL_mutexP(mutex);
+}
+
+static int (*_SDL_mutexV)(vPtr mutex) = 0;
+DFhackCExport int SDL_mutexV(vPtr mutex)
+{
+    return _SDL_mutexV(mutex);
 }
 
 static void (*_SDL_DestroyMutex)(vPtr mutex) = 0;
@@ -793,6 +797,7 @@ bool FirstCall()
     _SDL_WM_SetCaption = (void (*)(const char*, const char*))GetProcAddress(realSDLlib,"SDL_WM_SetCaption");
     _SDL_WM_SetIcon = (void (*)(void*, uint8_t*))GetProcAddress(realSDLlib,"SDL_WM_SetIcon");
     _SDL_mutexP = (int (*)(void*))GetProcAddress(realSDLlib,"SDL_mutexP");
+    _SDL_mutexV = (int (*)(void*))GetProcAddress(realSDLlib,"SDL_mutexV");
     _SDL_strlcpy = (size_t (*)(char*, const char*, size_t))GetProcAddress(realSDLlib,"SDL_strlcpy");
     
     // stuff for SDL_Image

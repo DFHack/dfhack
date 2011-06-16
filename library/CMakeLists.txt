@@ -112,12 +112,6 @@ SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
 
 LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
 
-# Are we 64bit? (Damn you, ptrace()!)
-IF( CMAKE_SIZEOF_VOID_P MATCHES 8 )
-    ADD_DEFINITIONS(-DHAVE_64_BIT)
-ENDIF()
-
-ADD_DEFINITIONS(-DMEMXML_DATA_PATH="${MEMXML_DATA_PATH}")
 ADD_DEFINITIONS(-DBUILD_DFHACK_LIB)
 
 IF(UNIX)
@@ -159,7 +153,7 @@ if(BUILD_DFHACK_DEVEL)
         install(TARGETS dfhack
                 ARCHIVE DESTINATION ${DFHACK_DEVLIB_DESTINATION})
     endif()
-    # note the ending '/'. This means *constents* of the directory are installed
+    # note the ending '/'. This means *contents* of the directory are installed
     # without the '/', the directory itself is installed
     install(DIRECTORY include/
             DESTINATION ${DFHACK_INCLUDES_DESTINATION}

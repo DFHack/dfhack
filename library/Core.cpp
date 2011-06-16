@@ -1,3 +1,27 @@
+/*
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any
+damages arising from the use of this software.
+
+Permission is granted to anyone to use this software for any
+purpose, including commercial applications, and to alter it and
+redistribute it freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must
+not claim that you wrote the original software. If you use this
+software in a product, an acknowledgment in the product documentation
+would be appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and
+must not be misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source
+distribution.
+*/
+
 #include "Internal.h"
 #include "PlatformInternal.h"
 
@@ -17,11 +41,122 @@ using namespace std;
 #include "dfhack/modules/Gui.h"
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack/modules/Maps.h"
+#include <dfhack/modules/World.h>
 using namespace DFHack;
 
-DFHack::Gui * gui = 0;
-DFHack::Maps * maps = 0;
-DFHack::Vegetation * veg = 0;
+struct hideblock
+{
+    uint32_t x;
+    uint32_t y;
+    uint32_t z;
+    uint8_t hiddens [16][16];
+};
+
+int reveal (void)
+{
+    Core & c = DFHack::Core::getInstance();
+    Context * DF = c.getContext();
+    c.Suspend();
+    DFHack::Maps *Maps =DF->getMaps();
+    DFHack::World *World =DF->getWorld();
+
+    // init the map
+    if(!Maps->Start())
+    {
+        cerr << "Can't init map." << endl;
+        c.Resume();
+        return 1;
+    }
+
+    cout << "Revealing, please wait..." << endl;
+
+    uint32_t x_max, y_max, z_max;
+    DFHack::designations40d designations;
+    Maps->getSize(x_max,y_max,z_max);
+    vector <hideblock> hidesaved;
+
+    for(uint32_t x = 0; x< x_max;x++)
+    {
+        for(uint32_t y = 0; y< y_max;y++)
+        {
+            for(uint32_t z = 0; z< z_max;z++)
+            {
+                if(Maps->isValidBlock(x,y,z))
+                {
+                    hideblock hb;
+                    hb.x = x;
+                    hb.y = y;
+                    hb.z = z;
+                    // read block designations
+                    Maps->ReadDesignations(x,y,z, &designations);
+                    // change the hidden flag to 0
+                    for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
+                    {
+                        hb.hiddens[i][j] = designations[i][j].bits.hidden;
+                        designations[i][j].bits.hidden = 0;
+                    }
+                    hidesaved.push_back(hb);
+                    // write the designations back
+                    Maps->WriteDesignations(x,y,z, &designations);
+                }
+            }
+        }
+    }
+    World->SetPauseState(true);
+    c.Resume();
+    cout << "Map revealed. The game has been paused for you." << endl;
+    cout << "Unpausing can unleash the forces of hell!" << endl << endl;
+    cout << "Press any key to unreveal." << endl;
+    cout << "Close to keep the map revealed !!FOREVER!!" << endl;
+    cin.ignore();
+    cout << "Unrevealing... please wait." << endl;
+    // FIXME: do some consistency checks here!
+    c.Suspend();
+    Maps = DF->getMaps();
+    Maps->Start();
+    for(size_t i = 0; i < hidesaved.size();i++)
+    {
+        hideblock & hb = hidesaved[i];
+        Maps->ReadDesignations(hb.x,hb.y,hb.z, &designations);
+        for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
+        {
+            designations[i][j].bits.hidden = hb.hiddens[i][j];
+        }
+        Maps->WriteDesignations(hb.x,hb.y,hb.z, &designations);
+    }
+    c.Resume();
+    return 0;
+}
+
+
+int fIOthread(void * _core)
+{
+    Core * core = (Core *) _core;
+    cout << "Hello from the IO thread. Have a nice day!" << endl;
+    while (true)
+    {
+        string command = "";
+        cout <<"[DFHack]# ";
+        getline(cin, command);
+        if (std::cin.eof())
+        {
+            command = "q";
+            std::cout << std::endl; // No newline from the user here!
+        }
+        if(command=="help" || command == "?")
+        {
+            cout << "It's simple really. You can run reveal with 'reveal'." << endl;
+        }
+        else if(command == "reveal")
+        {
+            reveal();
+        }
+        else
+        {
+            cout << "WHAT?" << endl;
+        }
+    }
+}
 
 Core::Core()
 {
@@ -31,80 +166,43 @@ Core::Core()
     {
         std::cerr << "Couldn't identify this version of DF." << std::endl;
         errorstate = true;
+        return;
     }
     c = new DFHack::Context(p);
+    AccessMutex = SDL_CreateMutex();
+    if(!AccessMutex)
+    {
+        std::cerr << "Mutex creation failed." << std::endl;
+        errorstate = true;
+        return;
+    }
     errorstate = false;
-    // bullcrud, push it back to a tool
-    gui = c->getGui();
-    gui->Start();
-    veg = c->getVegetation();
-    veg->Start();
-    maps = c->getMaps();
-    maps->Start();
+    // lock mutex
+    SDL_mutexP(AccessMutex);
+    // create IO thread
+    DFThread * IO = SDL_CreateThread(fIOthread, 0);
+    // and let DF do its thing.
 };
 
-// more bullcrud
-int32_t x = 0,y = 0,z = 0;
-int32_t xo = 0,yo = 0,zo = 0;
-void print_tree( DFHack::df_plant & tree)
+void Core::Suspend()
 {
-    //DFHack::Materials * mat = DF->getMaterials();
-    printf("%d:%d = ",tree.type,tree.material);
-    if(tree.watery)
-    {
-        std::cout << "near-water ";
-    }
-    //std::cout << mat->organic[tree.material].id << " ";
-    if(!tree.is_shrub)
-    {
-        std::cout << "tree";
-    }
-    else
-    {
-        std::cout << "shrub";
-    }
-    std::cout << std::endl;
-    printf("Grow counter: 0x%08x\n", tree.grow_counter);
-    printf("temperature 1: %d\n", tree.temperature_1);
-    printf("temperature 2: %d\n", tree.temperature_2);
-    printf("On fire: %d\n", tree.is_burning);
-    printf("hitpoints: 0x%08x\n", tree.hitpoints);
-    printf("update order: %d\n", tree.update_order);
-    printf("Address: 0x%x\n", &tree);
-    //hexdump(DF,tree.address,13*16);
+    SDL_mutexP(AccessMutex);
+}
+
+void Core::Resume()
+{
+    SDL_mutexV(AccessMutex);
 }
 
 int Core::Update()
 {
     if(errorstate)
         return -1;
-    // And more bullcrud. Predictable!
-    maps->Start();
-    gui->getCursorCoords(x,y,z);
-    if(x != xo || y!= yo || z != zo)
-    {
-        xo = x;
-        yo = y;
-        zo = z;
-        std::cout << "Cursor: " << x << "/" << y << "/" << z << std::endl;
-        if(x != -30000)
-        {
-            std::vector <DFHack::df_plant *> * vec;
-            if(maps->ReadVegetation(x/16,y/16,z,vec))
-            {
-                for(size_t i = 0; i < vec->size();i++)
-                {
-                    DFHack::df_plant * p = vec->at(i);
-                    if(p->x == x && p->y == y && p->z == z)
-                    {
-                        print_tree(*p);
-                    }
-                }
-            }
-            else
-                std::cout << "No veg vector..." << std::endl;
-        }
-    }
+    // do persistent stuff here
+    SDL_mutexV(AccessMutex);
+        // other threads can claim the mutex here and use DFHack.
+        // NO CODE SHOULD EVER BE PLACED HERE
+    SDL_mutexP(AccessMutex);
     return 0;
 };
 

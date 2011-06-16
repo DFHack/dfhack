@@ -1,6 +1,6 @@
 /*
-www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any

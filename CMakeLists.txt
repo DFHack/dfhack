@@ -58,10 +58,6 @@ SET( DFHACK_INSTALL ${DFHACK_INST_DEFAULT} CACHE STRING
 'linux' for generic packaging and system installs on linux (linux default)
 'ubuntu-10.10' for ubuntu maverick package.")
 
-SET( MEMXML_DATA_PATH . CACHE PATH
-"Path to a valid Memory.xml file.
-This is baked into the library, so when you package DFHack for linux, set it to the right path.")
-
 IF(${DFHACK_INSTALL} STREQUAL "portable")
     # the dfhack libraries will be installed here:
     SET(DFHACK_LIBRARY_DESTINATION .)

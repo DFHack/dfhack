@@ -1,6 +1,6 @@
 /*
-www.sourceforge.net/projects/dfhack
-Copyright (c) 2011 Petr Mrázek (peterix)
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+
 #include <stdio.h>
 #include <dlfcn.h>
 #include <stdint.h>
@@ -39,13 +40,15 @@ distribution.
 
 #include "DFHack.h"
 #include "dfhack/Core.h"
+#include "dfhack/FakeSDL.h"
 #include <iostream>
-
-#define DFhackCExport extern "C" __attribute__ ((visibility("default")))
 
 /*******************************************************************************
 *                           SDL part starts here                               *
 *******************************************************************************/
+bool FirstCall(void);
+bool inited = false;
+
 DFhackCExport int SDL_NumJoysticks(void)
 {
     DFHack::Core & c = DFHack::Core::getInstance();
@@ -56,6 +59,7 @@ DFhackCExport int SDL_NumJoysticks(void)
 //static void (*_SDL_GL_SwapBuffers)(void) = 0;
 static void (*_SDL_Quit)(void) = 0;
 static int (*_SDL_Init)(uint32_t flags) = 0;
+static DFThread * (*_SDL_CreateThread)(int (*fn)(void *), void *data) = 0;
 //static int (*_SDL_Flip)(void * some_ptr) = 0;
 /*
 // hook - called every tick in OpenGL mode of DF
@@ -89,6 +93,30 @@ DFhackCExport int SDL_Flip(void * some_ptr)
 }
 */
 
+static DFMutex * (*_SDL_CreateMutex)(void) = 0;
+DFhackCExport DFMutex * SDL_CreateMutex(void)
+{
+    return _SDL_CreateMutex();
+}
+
+static int (*_SDL_mutexP)(DFMutex * mutex) = 0;
+DFhackCExport int SDL_mutexP(DFMutex * mutex)
+{
+    return _SDL_mutexP(mutex);
+}
+
+static int (*_SDL_mutexV)(DFMutex * mutex) = 0;
+DFhackCExport int SDL_mutexV(DFMutex * mutex)
+{
+    return _SDL_mutexV(mutex);
+}
+
+static void (*_SDL_DestroyMutex)(DFMutex * mutex) = 0;
+DFhackCExport void SDL_DestroyMutex(DFMutex * mutex)
+{
+    _SDL_DestroyMutex(mutex);
+}
+
 // hook - called at program exit
 DFhackCExport void SDL_Quit(void)
 {
@@ -108,9 +136,14 @@ DFhackCExport int SDL_Init(uint32_t flags)
     _SDL_Init = (int (*)( uint32_t )) dlsym(RTLD_NEXT, "SDL_Init");
     //_SDL_Flip = (int (*)( void * )) dlsym(RTLD_NEXT, "SDL_Flip");
     _SDL_Quit = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_Quit");
+    _SDL_CreateThread = (DFThread* (*)(int (*fn)(void *), void *data))dlsym(RTLD_NEXT, "SDL_CreateThread");
+    _SDL_CreateMutex = (DFMutex*(*)())dlsym(RTLD_NEXT,"SDL_CreateMutex");
+    _SDL_DestroyMutex = (void (*)(DFMutex*))dlsym(RTLD_NEXT,"SDL_DestroyMutex");
+    _SDL_mutexP = (int (*)(DFMutex*))dlsym(RTLD_NEXT,"SDL_mutexP");
+    _SDL_mutexV = (int (*)(DFMutex*))dlsym(RTLD_NEXT,"SDL_mutexV");
 
     // check if we got them
-    if(/*_SDL_GL_SwapBuffers &&*/ _SDL_Init && _SDL_Quit)
+    if(_SDL_Init && _SDL_Quit && _SDL_CreateThread && _SDL_CreateMutex && _SDL_DestroyMutex && _SDL_mutexP && _SDL_mutexV)
     {
         fprintf(stderr,"dfhack: hooking successful\n");
     }
@@ -122,57 +155,3 @@ DFhackCExport int SDL_Init(uint32_t flags)
     }
     return _SDL_Init(flags);
 }
-
-
-/*******************************************************************************
-*                           NCURSES part starts here                           *
-*******************************************************************************/
-/*
-static int (*_refresh)(void) = 0;
-DFhackCExport int refresh (void)
-{
-    if(_refresh)
-    {
-        return _refresh();
-    }
-    return 0;
-}
-
-static int (*_endwin)(void) = 0;
-DFhackCExport int endwin (void)
-{
-    if(!errorstate)
-    {
-        HOOK_Shutdown();
-        errorstate = true;
-    }
-    if(_endwin)
-    {
-        return _endwin();
-    }
-    return 0;
-}
-
-typedef void WINDOW;
-static WINDOW * (*_initscr)(void) = 0;
-DFhackCExport WINDOW * initscr (void)
-{
-    // find real functions
-    //_refresh = (int (*)( void )) dlsym(RTLD_NEXT, "refresh");
-    _endwin = (int (*)( void )) dlsym(RTLD_NEXT, "endwin");
-    _initscr = (WINDOW * (*)( void )) dlsym(RTLD_NEXT, "initscr");
-    // check if we got them
-    if(_refresh && _endwin && _initscr)
-    {
-        fprintf(stderr,"dfhack: hooking successful\n");
-    }
-    else
-    {
-        // bail, this would be a disaster otherwise
-        fprintf(stderr,"dfhack: something went horribly wrong\n");
-        exit(1);
-    }
-    //SHM_Init();
-    return _initscr();
-}
-*/

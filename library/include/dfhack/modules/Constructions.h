@@ -86,7 +86,7 @@ namespace DFHack
     class DFHACK_EXPORT Constructions : public Module
     {
         public:
-        Constructions(DFContextShared * d);
+        Constructions();
         ~Constructions();
         bool Start(uint32_t & numConstructions);
         bool Read (const uint32_t index, t_construction & constr);

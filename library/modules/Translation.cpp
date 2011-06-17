@@ -30,18 +30,18 @@ distribution.
 #include <cassert>
 using namespace std;
 
-#include "ContextShared.h"
 #include "dfhack/modules/Translation.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/Process.h"
 #include "dfhack/Vector.h"
 #include "dfhack/Types.h"
 #include "ModuleFactory.h"
+#include <dfhack/Core.h>
 using namespace DFHack;
 
-Module* DFHack::createTranslation(DFContextShared * d)
+Module* DFHack::createTranslation()
 {
-    return new Translation(d);
+    return new Translation();
 }
 
 struct Translation::Private
@@ -54,23 +54,33 @@ struct Translation::Private
     // translation
     Dicts dicts;
 
-    DFContextShared *d;
     bool Inited;
     bool Started;
+    // names
+    uint32_t name_firstname_offset;
+    uint32_t name_nickname_offset;
+    uint32_t name_words_offset;
+    uint32_t name_parts_offset;
+    uint32_t name_language_offset;
+    uint32_t name_set_offset;
+    bool namesInited;
+    bool namesFailed;
 };
 
-Translation::Translation(DFContextShared * d_)
+Translation::Translation()
 {
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = d_;
     d->Inited = d->Started = false;
-    OffsetGroup * OG_Translation = d->d->offset_descriptor->getGroup("Translations");
-    OffsetGroup * OG_String = d->d->offset_descriptor->getGroup("string");
+    OffsetGroup * OG_Translation = c.vinfo->getGroup("Translations");
+    OffsetGroup * OG_String = c.vinfo->getGroup("string");
     d->genericAddress = OG_Translation->getAddress ("language_vector");
     d->transAddress = OG_Translation->getAddress ("translation_vector");
     d->word_table_offset = OG_Translation->getOffset ("word_table");
     d->sizeof_string = OG_String->getHexValue ("sizeof");
     d->Inited = true;
+    d->namesInited = false;
+    d->namesFailed = false;
 }
 
 Translation::~Translation()
@@ -82,9 +92,10 @@ Translation::~Translation()
 
 bool Translation::Start()
 {
+    Core & c = Core::getInstance();
     if(!d->Inited)
         return false;
-    Process * p = d->d->p;
+    Process * p = c.p;
     Finish();
     DfVector <uint32_t> genericVec (d->genericAddress);
     DfVector <uint32_t> transVec (d->transAddress);
@@ -133,6 +144,69 @@ Dicts * Translation::getDicts()
     if(d->Started)
         return &d->dicts;
     return 0;
+}
+
+bool Translation::InitReadNames()
+{
+    Core & c = Core::getInstance();
+    try
+    {
+        OffsetGroup * OG = c.vinfo->getGroup("name");
+        d->name_firstname_offset = OG->getOffset("first");
+        d->name_nickname_offset = OG->getOffset("nick");
+        d->name_words_offset = OG->getOffset("second_words");
+        d->name_parts_offset = OG->getOffset("parts_of_speech");
+        d->name_language_offset = OG->getOffset("language");
+        d->name_set_offset = OG->getOffset("has_name");
+    }
+    catch(exception &)
+    {
+        d->namesFailed = true;
+        return false;
+    }
+    d->namesInited = true;
+    return true;
+}
+
+bool Translation::readName(t_name & name, uint32_t address)
+{
+    Core & c = Core::getInstance();
+    Process * p = c.p;
+    if(d->namesFailed)
+    {
+        return false;
+    }
+    if(!d->namesInited)
+    {
+        if(!InitReadNames()) return false;
+    }
+    p->readSTLString(address + d->name_firstname_offset , name.first_name, 128);
+    p->readSTLString(address + d->name_nickname_offset , name.nickname, 128);
+    p->read(address + d->name_words_offset, 7*4, (uint8_t *)name.words);
+    p->read(address + d->name_parts_offset, 7*2, (uint8_t *)name.parts_of_speech);
+    name.language = p->readDWord(address + d->name_language_offset);
+    name.has_name = p->readByte(address + d->name_set_offset);
+    return true;
+}
+
+bool Translation::copyName(uint32_t address, uint32_t target)
+{
+    uint8_t buf[28];
+
+    if (address == target)
+        return true;
+    Core & c = Core::getInstance();
+    Process * p = c.p;
+
+    p->copySTLString(address + d->name_firstname_offset, target + d->name_firstname_offset);
+    p->copySTLString(address + d->name_nickname_offset, target + d->name_nickname_offset);
+    p->read(address + d->name_words_offset, 7*4, buf);
+    p->write(target + d->name_words_offset, 7*4, buf);
+    p->read(address + d->name_parts_offset, 7*2, buf);
+    p->write(target + d->name_parts_offset, 7*2, buf);
+    p->writeDWord(target + d->name_language_offset, p->readDWord(address + d->name_language_offset));
+    p->writeByte(target + d->name_set_offset, p->readByte(address + d->name_set_offset));
+    return true;
 }
 
 string Translation::TranslateName(const t_name &name, bool inEnglish)

@@ -173,7 +173,7 @@ namespace DFHack
     class DFHACK_EXPORT Materials : public Module
     {
     public:
-        Materials(DFHack::DFContextShared * _d);
+        Materials();
         ~Materials();
         bool Finish();
 

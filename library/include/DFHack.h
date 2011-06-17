@@ -48,7 +48,6 @@ distribution.
 
 // DFHack core classes and types
 #include "dfhack/Error.h"
-#include "dfhack/Context.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/Process.h"
 #include "dfhack/Types.h"

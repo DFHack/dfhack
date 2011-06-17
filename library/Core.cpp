@@ -35,9 +35,9 @@ using namespace std;
 
 #include "dfhack/Core.h"
 #include "dfhack/VersionInfoFactory.h"
+#include "ModuleFactory.h"
 #include "dfhack/Error.h"
 #include "dfhack/Process.h"
-#include "dfhack/Context.h"
 #include "dfhack/modules/Gui.h"
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack/modules/Maps.h"
@@ -52,13 +52,13 @@ int kittenz (void)
     {
         "   ____",
         "  (.   \\",
-            "    \\  |  ",
-            "     \\ |___(\\--/)",
-            "   __/    (  . . )",
-            "  \"'._.    '-.O.'",
-            "       '-.  \\ \"|\\",
-            "          '.,,/'.,,mrf",
-            0
+        "    \\  |  ",
+        "     \\ |___(\\--/)",
+        "   __/    (  . . )",
+        "  \"'._.    '-.O.'",
+        "       '-.  \\ \"|\\",
+        "          '.,,/'.,,mrf",
+        0
     };
     rlutil::hidecursor();
     rlutil::cls();
@@ -95,10 +95,9 @@ struct hideblock
 int reveal (void)
 {
     Core & c = DFHack::Core::getInstance();
-    Context * DF = c.getContext();
     c.Suspend();
-    DFHack::Maps *Maps =DF->getMaps();
-    DFHack::World *World =DF->getWorld();
+    DFHack::Maps *Maps =c.getMaps();
+    DFHack::World *World =c.getWorld();
 
     // init the map
     if(!Maps->Start())
@@ -152,7 +151,7 @@ int reveal (void)
     cout << "Unrevealing... please wait." << endl;
     // FIXME: do some consistency checks here!
     c.Suspend();
-    Maps = DF->getMaps();
+    Maps = c.getMaps();
     Maps->Start();
     for(size_t i = 0; i < hidesaved.size();i++)
     {
@@ -208,15 +207,24 @@ int fIOthread(void * _core)
 
 Core::Core()
 {
+    // find out what we are...
     vif = new DFHack::VersionInfoFactory("Memory.xml");
     p = new DFHack::Process(vif);
     if (!p->isIdentified())
     {
         std::cerr << "Couldn't identify this version of DF." << std::endl;
         errorstate = true;
+        delete p;
+        p = NULL;
         return;
     }
-    c = new DFHack::Context(p);
+    vinfo = p->getDescriptor();
+
+    // init module storage
+    allModules.clear();
+    memset(&(s_mods), 0, sizeof(s_mods));
+
+    // create mutex for syncing with interactive tasks
     AccessMutex = SDL_CreateMutex();
     if(!AccessMutex)
     {
@@ -224,6 +232,7 @@ Core::Core()
         errorstate = true;
         return;
     }
+    // all OK
     errorstate = false;
     // lock mutex
     SDL_mutexP(AccessMutex);
@@ -239,6 +248,10 @@ void Core::Suspend()
 
 void Core::Resume()
 {
+    for(unsigned int i = 0 ; i < allModules.size(); i++)
+    {
+        allModules[i]->OnResume();
+    }
     SDL_mutexV(AccessMutex);
 }
 
@@ -256,8 +269,42 @@ int Core::Update()
 
 int Core::Shutdown ( void )
 {
-    if(errorstate)
-        return -1;
-    return 0;
-    // do something here, eventually.
+    errorstate = 1;
+    // invalidate all modules
+    for(unsigned int i = 0 ; i < allModules.size(); i++)
+    {
+        delete allModules[i];
+    }
+    allModules.clear();
+    memset(&(s_mods), 0, sizeof(s_mods));
+    // maybe do more
+    return -1;
 }
+
+/*******************************************************************************
+                                M O D U L E S
+*******************************************************************************/
+
+#define MODULE_GETTER(TYPE) \
+TYPE * Core::get##TYPE() \
+{ \
+    if(!s_mods.p##TYPE)\
+    {\
+        Module * mod = create##TYPE();\
+        s_mods.p##TYPE = (TYPE *) mod;\
+        allModules.push_back(mod);\
+    }\
+    return s_mods.p##TYPE;\
+}
+
+MODULE_GETTER(Creatures);
+MODULE_GETTER(Engravings);
+MODULE_GETTER(Maps);
+MODULE_GETTER(Gui);
+MODULE_GETTER(World);
+MODULE_GETTER(Materials);
+MODULE_GETTER(Items);
+MODULE_GETTER(Translation);
+MODULE_GETTER(Vegetation);
+MODULE_GETTER(Buildings);
+MODULE_GETTER(Constructions);

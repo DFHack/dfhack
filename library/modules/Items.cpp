@@ -32,7 +32,6 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "ContextShared.h"
 #include "dfhack/Types.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/Process.h"
@@ -41,12 +40,13 @@ using namespace std;
 #include "dfhack/modules/Items.h"
 #include "dfhack/modules/Creatures.h"
 #include "ModuleFactory.h"
+#include <dfhack/Core.h>
 
 using namespace DFHack;
 
-Module* DFHack::createItems(DFContextShared * d)
+Module* DFHack::createItems()
 {
-    return new Items(d);
+    return new Items();
 }
 
 enum accessor_type {ACCESSOR_CONSTANT, ACCESSOR_INDIRECT, ACCESSOR_DOUBLE_INDIRECT};
@@ -434,17 +434,17 @@ class Items::Private
         ClassNameCheck isContainsRefClass;
 };
 
-Items::Items(DFContextShared * d_)
+Items::Items()
 {
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = d_;
-    d->owner = d_->p;
+    d->owner = c.p;
 
     d->isOwnerRefClass = ClassNameCheck("general_ref_unit_itemownerst");
     d->isContainerRefClass = ClassNameCheck("general_ref_contained_in_itemst");
     d->isContainsRefClass = ClassNameCheck("general_ref_contains_itemst");
 
-    DFHack::OffsetGroup* itemGroup = d_->offset_descriptor->getGroup("Items");
+    DFHack::OffsetGroup* itemGroup = c.vinfo->getGroup("Items");
     d->itemVectorAddress = itemGroup->getAddress("items_vector");
     d->idFieldOffset = itemGroup->getOffset("id");
     d->refVectorOffset = itemGroup->getOffset("item_ref_vector");

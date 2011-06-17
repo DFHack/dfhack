@@ -42,7 +42,7 @@ namespace DFHack
     class DFVector;
     class VersionInfoFactory;
     class PlatformSpecific;
-    
+
     /**
      * A type for storing an extended OS Process ID (combines PID and the time the process was started for unique identification)
      * \ingroup grp_context
@@ -65,7 +65,7 @@ namespace DFHack
         uint64_t time;
         uint64_t pid;
     };
-    
+
     /**
      * Structure describing a section of virtual memory inside a process
      * \ingroup grp_context
@@ -91,12 +91,6 @@ namespace DFHack
         }
         bool valid;
         uint8_t * buffer;
-    };
-    struct t_vecTriplet
-    {
-        uint32_t start;
-        uint32_t end;
-        uint32_t alloc_end;
     };
 
     /**

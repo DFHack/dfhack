@@ -99,7 +99,6 @@ namespace DFHack
         t_engraving s;
         uint32_t origin;
     };
-    class DFContextShared;
     /**
      * The Engravings module - allows reading engravings :D
      * \ingroup grp_modules
@@ -108,7 +107,7 @@ namespace DFHack
     class DFHACK_EXPORT Engravings : public Module
     {
         public:
-        Engravings(DFContextShared * d);
+        Engravings();
         ~Engravings();
         bool Start(uint32_t & numEngravings);
         bool Read (const uint32_t index, dfh_engraving & engr);

@@ -108,15 +108,6 @@ struct t_effect_df40d //size 40
 */
 
 //#pragma pack(push,4)
-struct t_name
-{
-    char first_name[128];
-    char nickname[128];
-    int32_t words[7];
-    uint16_t parts_of_speech[7];
-    uint32_t language;
-    bool has_name;
-};
 
 struct t_note
 {
@@ -129,18 +120,14 @@ struct t_note
     uint16_t z;
 };
 
-
-// local are numbered with top left as 0,0, name is indexes into the item vector
-struct t_settlement
+struct t_name
 {
-    uint32_t origin;
-    t_name name;
-    int16_t world_x;
-    int16_t world_y;
-    int16_t local_x1;
-    int16_t local_x2;
-    int16_t local_y1;
-    int16_t local_y2;
+    char first_name[128];
+    char nickname[128];
+    int32_t words[7];
+    uint16_t parts_of_speech[7];
+    uint32_t language;
+    bool has_name;
 };
 
 struct t_attrib

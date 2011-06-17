@@ -32,7 +32,6 @@ distribution.
 #include <cstring>
 using namespace std;
 
-#include "ContextShared.h"
 
 #include "dfhack/VersionInfo.h"
 #include "dfhack/Process.h"
@@ -43,7 +42,9 @@ using namespace std;
 // we connect to those
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Creatures.h"
+#include "dfhack/modules/Translation.h"
 #include "ModuleFactory.h"
+#include <dfhack/Core.h>
 
 using namespace DFHack;
 
@@ -113,26 +114,28 @@ struct Creatures::Private
     bool IdMapReady;
     std::map<int32_t, int32_t> IdMap;
     DfVector <uint32_t> *p_cre;
-    DFContextShared *d;
     Process *owner;
+    Translation * trans;
 };
 
-Module* DFHack::createCreatures(DFContextShared * d)
+Module* DFHack::createCreatures()
 {
-    return new Creatures(d);
+    return new Creatures();
 }
 
-Creatures::Creatures(DFContextShared* _d)
+Creatures::Creatures()
 {
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = _d;
-    d->owner = _d->p;
+    d->owner = c.p;
+    VersionInfo * minfo = c.vinfo;
     d->Inited = false;
     d->Started = false;
     d->IdMapReady = false;
     d->p_cre = NULL;
-    d->d->InitReadNames(); // throws on error
-    VersionInfo * minfo = d->d->offset_descriptor;
+    d->trans = c.getTranslation();
+    d->trans->InitReadNames(); // throws on error
+
     OffsetGroup *OG_Creatures = minfo->getGroup("Creatures");
     OffsetGroup *OG_creature = OG_Creatures->getGroup("creature");
     OffsetGroup *OG_creature_ex = OG_creature->getGroup("advanced");
@@ -274,7 +277,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     if(d->Ft_basic)
     {
         // name
-        d->d->readName(furball.name,addr_cr + offs.name_offset);
+        d->trans->readName(furball.name,addr_cr + offs.name_offset);
 
         // basic stuff
         p->readDWord (addr_cr + offs.id_offset, furball.id);
@@ -303,7 +306,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         // mood stuff
         furball.mood = (int16_t) p->readWord (addr_cr + offs.mood_offset);
         furball.mood_skill = p->readWord (addr_cr + offs.mood_skill_offset);
-        d->d->readName(furball.artifact_name, addr_cr + offs.artifact_name_offset);
+        d->trans->readName(furball.artifact_name, addr_cr + offs.artifact_name_offset);
 
         // labors
         p->read (addr_cr + offs.labors_offset, NUM_CREATURE_LABORS, furball.labors);
@@ -756,6 +759,6 @@ void Creatures::CopyNameTo(t_creature &creature, uint32_t address)
     Private::t_offsets &offs = d->creatures;
 
     if(d->Ft_basic)
-        d->d->copyName(creature.origin + offs.name_offset, address);
+        d->trans->copyName(creature.origin + offs.name_offset, address);
 }
 

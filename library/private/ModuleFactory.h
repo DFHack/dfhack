@@ -30,17 +30,16 @@ distribution.
 namespace DFHack
 {
     class Module;
-    class DFContextShared;
-    Module* createCreatures(DFContextShared * d);
-    Module* createEngravings(DFContextShared * d);
-    Module* createGui(DFContextShared * d);
-    Module* createWorld(DFContextShared * d);
-    Module* createMaterials(DFContextShared * d);
-    Module* createItems(DFContextShared * d);
-    Module* createTranslation(DFContextShared * d);
-    Module* createVegetation(DFContextShared * d);
-    Module* createBuildings(DFContextShared * d);
-    Module* createConstructions(DFContextShared * d);
-    Module* createMaps(DFContextShared * d);
+    Module* createCreatures();
+    Module* createEngravings();
+    Module* createGui();
+    Module* createWorld();
+    Module* createMaterials();
+    Module* createItems();
+    Module* createTranslation();
+    Module* createVegetation();
+    Module* createBuildings();
+    Module* createConstructions();
+    Module* createMaps();
 }
 #endif

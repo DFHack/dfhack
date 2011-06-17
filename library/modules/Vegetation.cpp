@@ -30,8 +30,6 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "ContextShared.h"
-
 #include "dfhack/VersionInfo.h"
 #include "dfhack/Process.h"
 #include "dfhack/Vector.h"
@@ -39,18 +37,20 @@ using namespace std;
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack/modules/Translation.h"
 #include "ModuleFactory.h"
+#include <dfhack/Core.h>
 using namespace DFHack;
 
-Module* DFHack::createVegetation(DFContextShared * d)
+Module* DFHack::createVegetation()
 {
-    return new Vegetation(d);
+    return new Vegetation();
 }
 
-Vegetation::Vegetation(DFContextShared * d_)
+Vegetation::Vegetation()
 {
+    Core & c = Core::getInstance();
     try
     {
-        OffsetGroup * OG_Veg = d_->offset_descriptor->getGroup("Vegetation");
+        OffsetGroup * OG_Veg = c.vinfo->getGroup("Vegetation");
         all_plants = (vector<df_plant *> *) OG_Veg->getAddress ("vector");
     }
     catch(exception &)

@@ -30,8 +30,6 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "ContextShared.h"
-
 #include "dfhack/VersionInfo.h"
 #include "dfhack/Process.h"
 #include "dfhack/Vector.h"
@@ -39,6 +37,7 @@ using namespace std;
 #include "dfhack/Error.h"
 #include "dfhack/modules/Buildings.h"
 #include "ModuleFactory.h"
+#include "dfhack/Core.h"
 using namespace DFHack;
 
 //raw
@@ -66,26 +65,25 @@ struct Buildings::Private
     uint32_t custom_workshop_name;
     int32_t custom_workshop_id;
     DfVector <uint32_t> * p_bld;
-    DFContextShared *d;
     Process * owner;
     bool Inited;
     bool hasCustomWorkshops;
     bool Started;
 };
 
-Module* DFHack::createBuildings(DFContextShared * d)
+Module* DFHack::createBuildings()
 {
-    return new Buildings(d);
+    return new Buildings();
 }
 
-Buildings::Buildings(DFContextShared * d_)
+Buildings::Buildings()
 {
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = d_;
-    d->owner = d_->p;
     d->p_bld = NULL;
     d->Inited = d->Started = d->hasCustomWorkshops = false;
-    VersionInfo * mem = d->d->offset_descriptor;
+    VersionInfo * mem = c.vinfo;
+    d->owner = c.p;
     OffsetGroup * OG_build = mem->getGroup("Buildings");
     d->Inited = true;
     try

@@ -518,7 +518,6 @@ namespace DFHack
         int32_t mystery;
     } mapblock40d;
 
-    class DFContextShared;
     /**
      * The Maps module
      * \ingroup grp_modules
@@ -528,7 +527,7 @@ namespace DFHack
     {
         public:
         
-        Maps(DFHack::DFContextShared * d);
+        Maps();
         ~Maps();
         bool Start();
         bool Finish();

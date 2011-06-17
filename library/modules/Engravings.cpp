@@ -30,14 +30,13 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "ContextShared.h"
-
 #include "dfhack/VersionInfo.h"
 #include "dfhack/Process.h"
 #include "dfhack/Vector.h"
 #include "dfhack/Types.h"
 #include "dfhack/modules/Engravings.h"
 #include "ModuleFactory.h"
+#include "dfhack/Core.h"
 
 using namespace DFHack;
 
@@ -47,26 +46,24 @@ struct Engravings::Private
     // translation
     DfVector <uint32_t> * p_engr;
 
-    DFContextShared *d;
     Process * owner;
     bool Inited;
     bool Started;
 };
 
-Module* DFHack::createEngravings(DFContextShared * d)
+Module* DFHack::createEngravings()
 {
-    return new Engravings(d);
+    return new Engravings();
 }
 
-Engravings::Engravings(DFContextShared * d_)
+Engravings::Engravings()
 {
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = d_;
-    d->owner = d_->p;
+    d->owner = c.p;
     d->p_engr = 0;
     d->Inited = d->Started = false;
-    VersionInfo * mem = d->d->offset_descriptor;
-    d->engraving_vector = mem->getGroup("Engravings")->getAddress ("vector");
+    d->engraving_vector = c.vinfo->getGroup("Engravings")->getAddress ("vector");
     d->Inited = true;
 }
 

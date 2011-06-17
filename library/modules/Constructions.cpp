@@ -30,7 +30,6 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "ContextShared.h"
 
 #include "dfhack/VersionInfo.h"
 #include "dfhack/Process.h"
@@ -38,6 +37,7 @@ using namespace std;
 #include "dfhack/Types.h"
 #include "dfhack/modules/Constructions.h"
 #include "ModuleFactory.h"
+#include "dfhack/Core.h"
 
 using namespace DFHack;
 
@@ -47,25 +47,24 @@ struct Constructions::Private
     // translation
     DfVector <uint32_t> * p_cons;
 
-    DFContextShared *d;
     Process * owner;
     bool Inited;
     bool Started;
 };
 
-Module* DFHack::createConstructions(DFContextShared * d)
+Module* DFHack::createConstructions()
 {
-    return new Constructions(d);
+    return new Constructions();
 }
 
-Constructions::Constructions(DFContextShared * d_)
+Constructions::Constructions()
 {
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = d_;
-    d->owner = d_->p;
+    d->owner = c.p;
     d->p_cons = 0;
     d->Inited = d->Started = false;
-    VersionInfo * mem = d->d->offset_descriptor;
+    VersionInfo * mem = c.vinfo;
     d->construction_vector = mem->getGroup("Constructions")->getAddress ("vector");
     d->Inited = true;
 }

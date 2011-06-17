@@ -30,18 +30,18 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "ContextShared.h"
 #include "dfhack/modules/Gui.h"
 #include "dfhack/Process.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/Types.h"
 #include "dfhack/Error.h"
 #include "ModuleFactory.h"
+#include "dfhack/Core.h"
 using namespace DFHack;
 
-Module* DFHack::createGui(DFContextShared * d)
+Module* DFHack::createGui()
 {
-    return new Gui(d);
+    return new Gui();
 }
 
 struct Gui::Private
@@ -67,17 +67,15 @@ struct Gui::Private
     bool StartedScreen;
     uint32_t screen_tiles_ptr_offset;
 
-    DFContextShared *d;
     Process * owner;
 };
 
-Gui::Gui(DFContextShared * _d)
+Gui::Gui()
 {
-
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = _d;
-    d->owner = _d->p;
-    VersionInfo * mem = d->d->offset_descriptor;
+    d->owner = c.p;
+    VersionInfo * mem = c.vinfo;
     OffsetGroup * OG_Gui = mem->getGroup("GUI");
     try
     {
@@ -156,7 +154,8 @@ bool Gui::ReadViewScreen (t_viewscreen &screen)
         screenAddr = p->readDWord (nextScreenPtr);
         nextScreenPtr = p->readDWord (nextScreenPtr + 4);
     }
-    return d->d->offset_descriptor->resolveObjectToClassID (last, screen.type);
+    Core & c = Core::getInstance();
+    return c.vinfo->resolveObjectToClassID (last, screen.type);
 }
 
 bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)

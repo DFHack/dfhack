@@ -31,7 +31,6 @@ distribution.
 #include <cstring>
 using namespace std;
 
-#include "ContextShared.h"
 #include "dfhack/Types.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/VersionInfo.h"
@@ -39,18 +38,18 @@ using namespace std;
 #include "dfhack/Vector.h"
 #include <dfhack/Error.h>
 #include "ModuleFactory.h"
+#include <dfhack/Core.h>
 
 using namespace DFHack;
 
-Module* DFHack::createMaterials(DFContextShared * d)
+Module* DFHack::createMaterials()
 {
-    return new Materials(d);
+    return new Materials();
 }
 
 class Materials::Private
 {
     public:
-    DFContextShared *d;
     Process * owner;
     OffsetGroup * OG_Materials;
     uint32_t vector_inorganic;
@@ -59,18 +58,14 @@ class Materials::Private
     uint32_t vector_organic_trees;
     uint32_t vector_races;
     uint32_t vector_other;
-    /*
-    bool Inited;
-    bool Started;
-    */
 };
 
-Materials::Materials(DFContextShared * d_)
+Materials::Materials()
 {
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = d_;
-    d->owner = d_->p;
-    OffsetGroup *OG_Materials = d->OG_Materials = d->owner->getDescriptor()->getGroup("Materials");
+    d->owner = c.p;
+    OffsetGroup *OG_Materials = d->OG_Materials = c.vinfo->getGroup("Materials");
     {
         d->vector_inorganic = OG_Materials->getAddress("inorganics");
         d->vector_organic_all = OG_Materials->getAddress ("organics_all");
@@ -86,111 +81,8 @@ Materials::~Materials()
 
 bool Materials::Finish()
 {
-    /*
-    inorganic.clear();
-    organic.clear();
-    tree.clear();
-    plant.clear();
-    race.clear();
-    raceEx.clear();
-    color.clear();
-    other.clear();
-    alldesc.clear();
-    */
     return true;
 }
-
-/*
-    {
-LABEL_53:
-      if ( a1
-        || (signed int)a2 < 0
-        || a2 >= (inorg_end - inorg_start) >> 2
-        || (v13 = *(_DWORD *)(inorg_start + 4 * a2), !v13) )
-      {
-        switch ( a1 )
-        {
-          case 1:
-            sub_40FDD0("AMBER");
-            break;
-          case 2:
-            sub_40FDD0("CORAL");
-            break;
-          case 3:
-            sub_40FDD0("GLASS_GREEN");
-            break;
-          case 4:
-            sub_40FDD0("GLASS_CLEAR");
-            break;
-          case 5:
-            sub_40FDD0("GLASS_CRYSTAL");
-            break;
-          case 6:
-            sub_40FDD0("WATER");
-            break;
-          case 7:
-            sub_40FDD0("COAL");
-            break;
-          case 8:
-            sub_40FDD0("POTASH");
-            break;
-          case 9:
-            sub_40FDD0("ASH");
-            break;
-          case 10:
-            sub_40FDD0("PEARLASH");
-            break;
-          case 11:
-            sub_40FDD0("LYE");
-            break;
-          case 12:
-            sub_40FDD0("MUD");
-            break;
-          case 13:
-            sub_40FDD0("VOMIT");
-            break;
-          case 14:
-            sub_40FDD0("SALT");
-            break;
-          case 15:
-            sub_40FDD0("FILTH_B");
-            break;
-          case 16:
-            sub_40FDD0("FILTH_Y");
-            break;
-          case 17:
-            sub_40FDD0("UNKNOWN_SUBSTANCE");
-            break;
-          case 18:
-            sub_40FDD0("GRIME");
-            break;
-          default:
-            sub_40A070("NONE", 4u);
-            break;
-        }
-        result = sub_40A070("NONE", 4u);
-        if ( a1 == 7 )
-        {
-          result = a2;
-          if ( a2 )
-          {
-            if ( a2 == 1 )
-              result = sub_40A070("CHARCOAL", 8u);
-          }
-          else
-          {
-            result = sub_40A070("COKE", 4u);
-          }
-        }
-      }
-      else
-      {
-        sub_40A070("INORGANIC", 9u);
-        result = sub_409CA0(v13, 0, -1);
-      }
-    }
-
-*/
 
 /*
 bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)

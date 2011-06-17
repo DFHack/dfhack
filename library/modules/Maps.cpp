@@ -32,21 +32,21 @@ distribution.
 #include <cassert>
 using namespace std;
 
-#include "ContextShared.h"
 #include "dfhack/modules/Maps.h"
 #include "dfhack/Error.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/Process.h"
 #include "dfhack/Vector.h"
 #include "ModuleFactory.h"
+#include <dfhack/Core.h>
 
 #define MAPS_GUARD if(!d->Started) throw DFHack::Error::ModuleNotInitialized();
 
 using namespace DFHack;
 
-Module* DFHack::createMaps(DFContextShared * d)
+Module* DFHack::createMaps()
 {
-    return new Maps(d);
+    return new Maps();
 }
 
 const char * DFHack::sa_feature(e_feature index)
@@ -133,7 +133,6 @@ struct Maps::Private
         uint32_t tree_desc_offset;
     } offsets;
 
-    DFContextShared *d;
     Process * owner;
     OffsetGroup *OG_vector;
     bool Inited;
@@ -153,15 +152,15 @@ struct Maps::Private
     vector<uint16_t> v_geology[eBiomeCount];
 };
 
-Maps::Maps(DFContextShared* _d)
+Maps::Maps()
 {
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = _d;
-    Process *p = d->owner = _d->p;
+    Process *p = d->owner = c.p;
     d->Inited = d->FeaturesStarted = d->Started = false;
     d->block = NULL;
 
-    DFHack::VersionInfo * mem = p->getDescriptor();
+    DFHack::VersionInfo * mem = c.vinfo;
     Private::t_offsets &off = d->offsets;
     d->hasFeatures = d->hasGeology = d->hasVeggies = true;
 
@@ -233,7 +232,7 @@ Maps::Maps(DFContextShared* _d)
 
         try
         {
-            OffsetGroup * OG_Veg = d->d->offset_descriptor->getGroup("Vegetation");
+            OffsetGroup * OG_Veg = c.vinfo->getGroup("Vegetation");
             off.vegvector = OG_MapBlock->getOffset ("vegetation_vector");
             off.tree_desc_offset = OG_Veg->getOffset ("tree_desc_offset");
         }

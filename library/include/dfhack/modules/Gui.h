@@ -79,7 +79,7 @@ namespace DFHack
     {
         public:
 
-        Gui(DFHack::DFContextShared * d);
+        Gui();
         ~Gui();
         bool Start();
         bool Finish();

@@ -18,7 +18,6 @@ SET(PROJECT_HDRS_INTERNAL
 
 SET(PROJECT_HDRS
 include/DFHack.h
-include/dfhack/Context.h
 include/dfhack/Error.h
 include/dfhack/Export.h
 include/dfhack/MiscUtils.h
@@ -47,12 +46,10 @@ include/dfhack/modules/World.h
 )
 
 SET(PROJECT_SRCS
+Core.cpp
 VersionInfo.cpp
 VersionInfoFactory.cpp
-Context.cpp
-Core.cpp
 TileTypes.cpp
-ContextShared.cpp
 
 depends/md5/md5.cpp
 depends/md5/md5wrapper.cpp
@@ -84,15 +81,11 @@ SET(PROJECT_HDRS_WINDOWS
 SET(PROJECT_SRCS_LINUX
 Core-linux.cpp
 Process-linux.cpp
-#DFProcess-linux-base.cpp
-#DFProcess-linux-wine.cpp
-#modules/WindowIO-linux.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
 Core-windows.cpp
 Process-windows.cpp
-#modules/WindowIO-windows.cpp
 )
 
 IF(UNIX)

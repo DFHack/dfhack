@@ -29,9 +29,23 @@ distribution.
 #include "dfhack/FakeSDL.h"
 namespace DFHack
 {
-    class VersionInfoFactory;
     class Process;
+    class Module;
     class Context;
+    class Creatures;
+    class Engravings;
+    class Maps;
+    class Gui;
+    class World;
+    class Materials;
+    class Items;
+    class Translation;
+    class Vegetation;
+    class Buildings;
+    class Constructions;
+    class VersionInfo;
+    class VersionInfoFactory;
+
     // Core is a singleton. Why? Because it is closely tied to SDL calls. It tracks the global state of DF.
     // There should never be more than one instance
     // Better than tracking some weird variables all over the place.
@@ -40,18 +54,45 @@ namespace DFHack
         friend int  ::SDL_NumJoysticks(void);
         friend void ::SDL_Quit(void);
     public:
+        /// Get the single Core instance or make one.
         static Core& getInstance()
         {
             // FIXME: add critical section for thread safety here.
             static Core instance;
             return instance;
         }
+        /// try to acquire the activity lock
         void Suspend(void);
+        /// return activity lock
         void Resume(void);
-        DFHack::Context *getContext()
-        {
-            return c;
-        }
+        /// Is everything OK?
+        bool isValid(void) { return !errorstate; }
+
+        /// get the creatures module
+        Creatures * getCreatures();
+        /// get the engravings module
+        Engravings * getEngravings();
+        /// get the maps module
+        Maps * getMaps();
+        /// get the gui module
+        Gui * getGui();
+        /// get the world module
+        World * getWorld();
+        /// get the materials module
+        Materials * getMaterials();
+        /// get the items module
+        Items * getItems();
+        /// get the translation module
+        Translation * getTranslation();
+        /// get the vegetation module
+        Vegetation * getVegetation();
+        /// get the buildings module
+        Buildings * getBuildings();
+        /// get the constructions module
+        Constructions * getConstructions();
+        
+        DFHack::Process * p;
+        DFHack::VersionInfo * vinfo;
     private:
         Core();
         int Update   (void);
@@ -60,9 +101,23 @@ namespace DFHack
         void operator=(Core const&);    // Don't implement
         bool errorstate;
         DFMutex * AccessMutex;
-        // legacy mess.
+        // FIXME: shouldn't be kept around like this
         DFHack::VersionInfoFactory * vif;
-        DFHack::Process * p;
-        DFHack::Context * c;
+        // Module storage
+        struct
+        {
+            Creatures * pCreatures;
+            Engravings * pEngravings;
+            Maps * pMaps;
+            Gui * pGui;
+            World * pWorld;
+            Materials * pMaterials;
+            Items * pItems;
+            Translation * pTranslation;
+            Vegetation * pVegetation;
+            Buildings * pBuildings;
+            Constructions * pConstructions;
+        } s_mods;
+        std::vector <Module *> allModules;
     };
 }

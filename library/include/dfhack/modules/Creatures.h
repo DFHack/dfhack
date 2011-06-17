@@ -329,7 +329,7 @@ namespace DFHack
     class DFHACK_EXPORT Creatures : public Module
     {
     public:
-        Creatures(DFHack::DFContextShared * d);
+        Creatures();
         ~Creatures();
         bool Start( uint32_t & numCreatures );
         bool Finish();

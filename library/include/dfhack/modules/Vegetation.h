@@ -74,7 +74,6 @@ namespace DFHack
         // some more temperature stuff after that
     };
     #pragma pack(pop)
-    class DFContextShared;
     /**
      * The Vegetation module
      * \ingroup grp_vegetation
@@ -83,7 +82,7 @@ namespace DFHack
     class DFHACK_EXPORT Vegetation : public Module
     {
         public:
-        Vegetation(DFContextShared * d);
+        Vegetation();
         ~Vegetation();
         bool Finish(){return true;};
         std::vector <df_plant *> *all_plants;

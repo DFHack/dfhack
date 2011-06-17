@@ -32,8 +32,10 @@ distribution.
 
 #include "dfhack/Export.h"
 #include "dfhack/Module.h"
+#include "dfhack/Types.h"
 namespace DFHack
 {
+
     class DFContextShared;
     /**
      * \ingroup grp_translation
@@ -55,13 +57,18 @@ namespace DFHack
     class DFHACK_EXPORT Translation : public Module
     {
         public:
-        Translation(DFContextShared * d);
+        Translation();
         ~Translation();
         bool Start();
         bool Finish();
 
         // Get pointer to the two dictionary structures
         Dicts * getDicts();
+
+        // names, used by a few other modules.
+        bool InitReadNames();
+        bool readName(t_name & name, uint32_t address);
+        bool copyName(uint32_t address, uint32_t target);
         // translate a name using the loaded dictionaries
         std::string TranslateName(const DFHack::t_name& name, bool inEnglish = true);
 

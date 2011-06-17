@@ -29,69 +29,72 @@
 #endif
 
 #ifdef __cplusplus
-	/// Common C++ headers
-	#include <iostream>
-	#include <string>
-	#include <sstream>
-	/// Namespace forward declarations
-	namespace rlutil {
-		void locate(int x, int y);
-	}
+    /// Common C++ headers
+    #include <iostream>
+    #include <string>
+    #include <sstream>
+    /// Namespace forward declarations
+    namespace rlutil
+    {
+        void locate(int x, int y);
+    }
 #endif // __cplusplus
 
 #ifdef WIN32
-	#include <windows.h>  // for WinAPI and Sleep()
-	#include <conio.h>    // for getch() and kbhit()
+    #include <windows.h>  // for WinAPI and Sleep()
+    #include <conio.h>    // for getch() and kbhit()
 #else
-	#ifdef __cplusplus
-		#include <cstdio> // for getch()
-	#else // __cplusplus
-		#include <stdio.h> // for getch()
-	#endif // __cplusplus
-	#include <termios.h> // for getch() and kbhit()
-	#include <unistd.h> // for getch(), kbhit() and (u)sleep()
-	#include <sys/ioctl.h> // for getkey()
-	#include <sys/types.h> // for kbhit()
-	#include <sys/time.h> // for kbhit()
+    #ifdef __cplusplus
+        #include <cstdio> // for getch()
+    #else // __cplusplus
+        #include <stdio.h> // for getch()
+    #endif // __cplusplus
+    #include <termios.h> // for getch() and kbhit()
+    #include <unistd.h> // for getch(), kbhit() and (u)sleep()
+    #include <sys/ioctl.h> // for getkey()
+    #include <sys/types.h> // for kbhit()
+    #include <sys/time.h> // for kbhit()
 
 /// Function: getch
 /// Get character without waiting for Return to be pressed.
 /// Windows has this in conio.h
-int getch() {
-	// Here be magic.
-	struct termios oldt, newt;
-	int ch;
-	tcgetattr(STDIN_FILENO, &oldt);
-	newt = oldt;
-	newt.c_lflag &= ~(ICANON | ECHO);
-	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-	ch = getchar();
-	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-	return ch;
+int getch()
+{
+    // Here be magic.
+    struct termios oldt, newt;
+    int ch;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    ch = getchar();
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    return ch;
 }
 
 /// Function: kbhit
 /// Determines if keyboard has been hit.
 /// Windows has this in conio.h
-int kbhit() {
-	// Here be dragons.
-	static struct termios oldt, newt;
-	int cnt = 0;
-	tcgetattr(STDIN_FILENO, &oldt);
-	newt = oldt;
-	newt.c_lflag    &= ~(ICANON | ECHO);
-	newt.c_iflag     = 0; // input mode
-	newt.c_oflag     = 0; // output mode
-	newt.c_cc[VMIN]  = 1; // minimum time to wait
-	newt.c_cc[VTIME] = 1; // minimum characters to wait for
-	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-	ioctl(0, FIONREAD, &cnt); // Read count
-	struct timeval tv;
-	tv.tv_sec  = 0;
-	tv.tv_usec = 100;
-	select(STDIN_FILENO+1, NULL, NULL, NULL, &tv); // A small time delay
-	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-	return cnt; // Return number of characters
+int kbhit()
+{
+    // Here be dragons.
+    static struct termios oldt, newt;
+    int cnt = 0;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag    &= ~(ICANON | ECHO);
+    newt.c_iflag     = 0; // input mode
+    newt.c_oflag     = 0; // output mode
+    newt.c_cc[VMIN]  = 1; // minimum time to wait
+    newt.c_cc[VTIME] = 1; // minimum characters to wait for
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    ioctl(0, FIONREAD, &cnt); // Read count
+    struct timeval tv;
+    tv.tv_sec  = 0;
+    tv.tv_usec = 100;
+    select(STDIN_FILENO+1, NULL, NULL, NULL, &tv); // A small time delay
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    return cnt; // Return number of characters
 }
 #endif // WIN32
 
@@ -99,10 +102,10 @@ int kbhit() {
 /// Function: gotoxy
 /// Same as <rlutil.locate>.
 void inline gotoxy(int x, int y) {
-	#ifdef __cplusplus
-	rlutil::
-	#endif
-	locate(x,y);
+    #ifdef __cplusplus
+    rlutil::
+    #endif
+    locate(x,y);
 }
 #endif // gotoxy
 
@@ -121,18 +124,18 @@ namespace rlutil {
  */
 
 #ifdef __cplusplus
-	#ifndef RLUTIL_STRING_T
-		typedef std::string RLUTIL_STRING_T;
-	#endif // RLUTIL_STRING_T
+    #ifndef RLUTIL_STRING_T
+        typedef std::string RLUTIL_STRING_T;
+    #endif // RLUTIL_STRING_T
 
-	void inline RLUTIL_PRINT(RLUTIL_STRING_T st) { std::cout << st; }
+    void inline RLUTIL_PRINT(RLUTIL_STRING_T st) { std::cout << st; }
 
 #else // __cplusplus
-	#ifndef RLUTIL_STRING_T
-		typedef char* RLUTIL_STRING_T;
-	#endif // RLUTIL_STRING_T
+    #ifndef RLUTIL_STRING_T
+        typedef char* RLUTIL_STRING_T;
+    #endif // RLUTIL_STRING_T
 
-	#define RLUTIL_PRINT(st) printf("%s", st)
+    #define RLUTIL_PRINT(st) printf("%s", st)
 #endif // __cplusplus
 
 /**
@@ -156,22 +159,22 @@ namespace rlutil {
  * WHITE - White (bright)
  */
 enum {
-	BLACK,
-	RED,
-	GREEN,
-	BROWN,
-	BLUE,
-	MAGENTA,
-	CYAN,
-	GREY,
-	DARKGREY,
-	LIGHTRED,
-	LIGHTGREEN,
-	YELLOW,
-	LIGHTBLUE,
-	LIGHTMAGENTA,
-	LIGHTCYAN,
-	WHITE
+    BLACK,
+    RED,
+    GREEN,
+    BROWN,
+    BLUE,
+    MAGENTA,
+    CYAN,
+    GREY,
+    DARKGREY,
+    LIGHTRED,
+    LIGHTGREEN,
+    YELLOW,
+    LIGHTBLUE,
+    LIGHTMAGENTA,
+    LIGHTCYAN,
+    WHITE
 };
 
 /**
@@ -301,68 +304,79 @@ const int KEY_NUMPAD9 = 135;
 ///
 /// Note:
 /// Only Arrows, Esc, Enter and Space are currently working properly.
-int getkey(void) {
-	#ifndef WIN32
-	int cnt = kbhit(); // for ANSI escapes processing
-	#endif
-	int k = getch();
-	switch(k) {
-		case 0: {
-			int kk;
-			switch (kk = getch()) {
-				case 71: return KEY_NUMPAD7;
-				case 72: return KEY_NUMPAD8;
-				case 73: return KEY_NUMPAD9;
-				case 75: return KEY_NUMPAD4;
-				case 77: return KEY_NUMPAD6;
-				case 79: return KEY_NUMPAD1;
-				case 80: return KEY_NUMPAD4;
-				case 81: return KEY_NUMPAD3;
-				case 82: return KEY_NUMPAD0;
-				case 83: return KEY_NUMDEL;
-				default: return kk-59+KEY_F1; // Function keys
-			}}
-		case 224: {
-			int kk;
-			switch (kk = getch()) {
-				case 71: return KEY_HOME;
-				case 72: return KEY_UP;
-				case 73: return KEY_PGUP;
-				case 75: return KEY_LEFT;
-				case 77: return KEY_RIGHT;
-				case 79: return KEY_END;
-				case 80: return KEY_DOWN;
-				case 81: return KEY_PGDOWN;
-				case 82: return KEY_INSERT;
-				case 83: return KEY_DELETE;
-				default: return kk-123+KEY_F1; // Function keys
-			}}
-		case 13: return KEY_ENTER;
+int getkey(void)
+{
+    #ifndef WIN32
+    int cnt = kbhit(); // for ANSI escapes processing
+    #endif
+    int k = getch();
+    switch(k)
+    {
+        case 0:
+        {
+            int kk;
+            switch (kk = getch())
+            {
+                case 71: return KEY_NUMPAD7;
+                case 72: return KEY_NUMPAD8;
+                case 73: return KEY_NUMPAD9;
+                case 75: return KEY_NUMPAD4;
+                case 77: return KEY_NUMPAD6;
+                case 79: return KEY_NUMPAD1;
+                case 80: return KEY_NUMPAD4;
+                case 81: return KEY_NUMPAD3;
+                case 82: return KEY_NUMPAD0;
+                case 83: return KEY_NUMDEL;
+                default: return kk-59+KEY_F1; // Function keys
+            }
+        }
+        case 224:
+        {
+            int kk;
+            switch (kk = getch())
+            {
+                case 71: return KEY_HOME;
+                case 72: return KEY_UP;
+                case 73: return KEY_PGUP;
+                case 75: return KEY_LEFT;
+                case 77: return KEY_RIGHT;
+                case 79: return KEY_END;
+                case 80: return KEY_DOWN;
+                case 81: return KEY_PGDOWN;
+                case 82: return KEY_INSERT;
+                case 83: return KEY_DELETE;
+                default: return kk-123+KEY_F1; // Function keys
+            }
+        }
+        case 13: return KEY_ENTER;
 #ifdef WIN32
-		case 27: return KEY_ESCAPE;
+        case 27: return KEY_ESCAPE;
 #else // WIN32
-		case 155: // single-character CSI
-		case 27: {
-			// Process ANSI escape sequences
-			if (cnt >= 3 && getch() == '[') {
-				switch (k = getch()) {
-					case 'A': return KEY_UP;
-					case 'B': return KEY_DOWN;
-					case 'C': return KEY_RIGHT;
-					case 'D': return KEY_LEFT;
-				}
-			} else return KEY_ESCAPE;
-		}
+        case 155: // single-character CSI
+        case 27:
+        {
+            // Process ANSI escape sequences
+            if (cnt >= 3 && getch() == '[')
+            {
+                switch (k = getch())
+                {
+                    case 'A': return KEY_UP;
+                    case 'B': return KEY_DOWN;
+                    case 'C': return KEY_RIGHT;
+                    case 'D': return KEY_LEFT;
+                }
+            } else return KEY_ESCAPE;
+        }
 #endif // WIN32
-		default: return k;
-	}
+        default: return k;
+    }
 }
 
 /// Function: nb_getch
 /// Non-blocking getch(). Returns 0 if no key was pressed.
 int inline nb_getch() {
-	if (kbhit()) return getch();
-	else return 0;
+    if (kbhit()) return getch();
+    else return 0;
 }
 
 /// Function: getANSIColor
@@ -370,25 +384,25 @@ int inline nb_getch() {
 ///
 /// See <Color Codes>
 RLUTIL_STRING_T getANSIColor(const int c) {
-	switch (c) {
-		case 0 : return ANSI_BLACK;
-		case 1 : return ANSI_BLUE; // non-ANSI
-		case 2 : return ANSI_GREEN;
-		case 3 : return ANSI_CYAN; // non-ANSI
-		case 4 : return ANSI_RED; // non-ANSI
-		case 5 : return ANSI_MAGENTA;
-		case 6 : return ANSI_BROWN;
-		case 7 : return ANSI_GREY;
-		case 8 : return ANSI_DARKGREY;
-		case 9 : return ANSI_LIGHTBLUE; // non-ANSI
-		case 10: return ANSI_LIGHTGREEN;
-		case 11: return ANSI_LIGHTCYAN; // non-ANSI;
-		case 12: return ANSI_LIGHTRED; // non-ANSI;
-		case 13: return ANSI_LIGHTMAGENTA;
-		case 14: return ANSI_YELLOW; // non-ANSI
-		case 15: return ANSI_WHITE;
-		default: return "";
-	}
+    switch (c) {
+        case 0 : return ANSI_BLACK;
+        case 1 : return ANSI_BLUE; // non-ANSI
+        case 2 : return ANSI_GREEN;
+        case 3 : return ANSI_CYAN; // non-ANSI
+        case 4 : return ANSI_RED; // non-ANSI
+        case 5 : return ANSI_MAGENTA;
+        case 6 : return ANSI_BROWN;
+        case 7 : return ANSI_GREY;
+        case 8 : return ANSI_DARKGREY;
+        case 9 : return ANSI_LIGHTBLUE; // non-ANSI
+        case 10: return ANSI_LIGHTGREEN;
+        case 11: return ANSI_LIGHTCYAN; // non-ANSI;
+        case 12: return ANSI_LIGHTRED; // non-ANSI;
+        case 13: return ANSI_LIGHTMAGENTA;
+        case 14: return ANSI_YELLOW; // non-ANSI
+        case 15: return ANSI_WHITE;
+        default: return "";
+    }
 }
 
 /// Function: setColor
@@ -397,10 +411,10 @@ RLUTIL_STRING_T getANSIColor(const int c) {
 /// See <Color Codes>
 void inline setColor(int c) {
 #if defined(WIN32) && !defined(RLUTIL_USE_ANSI)
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleTextAttribute(hConsole, c);
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole, c);
 #else
-	RLUTIL_PRINT(getANSIColor(c));
+    RLUTIL_PRINT(getANSIColor(c));
 #endif
 }
 
@@ -408,44 +422,46 @@ void inline setColor(int c) {
 /// Clears screen and moves cursor home.
 void inline cls() {
 #if defined(WIN32) && !defined(RLUTIL_USE_ANSI)
-	// TODO: This is cheating...
-	system("cls");
+    // TODO: This is cheating...
+    system("cls");
 #else
-	RLUTIL_PRINT("\033[2J\033[H");
+    RLUTIL_PRINT("\033[2J\033[H");
 #endif
 }
 
 /// Function: locate
 /// Sets the cursor position to 1-based x,y.
-void locate(int x, int y) {
+void locate(int x, int y)
+{
 #if defined(WIN32) && !defined(RLUTIL_USE_ANSI)
-	COORD coord = {x-1, y-1}; // Windows uses 0-based coordinates
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+    COORD coord = {x-1, y-1}; // Windows uses 0-based coordinates
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 #else // WIN32 || USE_ANSI
-	#ifdef __cplusplus
-		std::ostringstream oss;
-		oss << "\033[" << y << ";" << x << "H";
-		RLUTIL_PRINT(oss.str());
-	#else // __cplusplus
-		char buf[32];
-		sprintf(buf, "\033[%d;%df", y, x);
-		RLUTIL_PRINT(buf);
-	#endif // __cplusplus
+    #ifdef __cplusplus
+        std::ostringstream oss;
+        oss << "\033[" << y << ";" << x << "H";
+        RLUTIL_PRINT(oss.str());
+    #else // __cplusplus
+        char buf[32];
+        sprintf(buf, "\033[%d;%df", y, x);
+        RLUTIL_PRINT(buf);
+    #endif // __cplusplus
 #endif // WIN32 || USE_ANSI
 }
 
 /// Function: hidecursor
 /// Hides the cursor.
-void inline hidecursor() {
+void inline hidecursor()
+{
 #if defined(WIN32) && !defined(RLUTIL_USE_ANSI)
-	HANDLE hConsoleOutput;
-	CONSOLE_CURSOR_INFO structCursorInfo;
-	hConsoleOutput = GetStdHandle( STD_OUTPUT_HANDLE );
-	GetConsoleCursorInfo( hConsoleOutput, &structCursorInfo ); // Get current cursor size
-	structCursorInfo.bVisible = FALSE;
-	SetConsoleCursorInfo( hConsoleOutput, &structCursorInfo );
+    HANDLE hConsoleOutput;
+    CONSOLE_CURSOR_INFO structCursorInfo;
+    hConsoleOutput = GetStdHandle( STD_OUTPUT_HANDLE );
+    GetConsoleCursorInfo( hConsoleOutput, &structCursorInfo ); // Get current cursor size
+    structCursorInfo.bVisible = FALSE;
+    SetConsoleCursorInfo( hConsoleOutput, &structCursorInfo );
 #else // WIN32 || USE_ANSI
-	RLUTIL_PRINT("\033[?25l");
+    RLUTIL_PRINT("\033[?25l");
 #endif // WIN32 || USE_ANSI
 }
 
@@ -453,14 +469,14 @@ void inline hidecursor() {
 /// Shows the cursor.
 void inline showcursor() {
 #if defined(WIN32) && !defined(RLUTIL_USE_ANSI)
-	HANDLE hConsoleOutput;
-	CONSOLE_CURSOR_INFO structCursorInfo;
-	hConsoleOutput = GetStdHandle( STD_OUTPUT_HANDLE );
-	GetConsoleCursorInfo( hConsoleOutput, &structCursorInfo ); // Get current cursor size
-	structCursorInfo.bVisible = TRUE;
-	SetConsoleCursorInfo( hConsoleOutput, &structCursorInfo );
+    HANDLE hConsoleOutput;
+    CONSOLE_CURSOR_INFO structCursorInfo;
+    hConsoleOutput = GetStdHandle( STD_OUTPUT_HANDLE );
+    GetConsoleCursorInfo( hConsoleOutput, &structCursorInfo ); // Get current cursor size
+    structCursorInfo.bVisible = TRUE;
+    SetConsoleCursorInfo( hConsoleOutput, &structCursorInfo );
 #else // WIN32 || USE_ANSI
-	RLUTIL_PRINT("\033[?25h");
+    RLUTIL_PRINT("\033[?25h");
 #endif // WIN32 || USE_ANSI
 }
 
@@ -468,11 +484,11 @@ void inline showcursor() {
 /// Waits given number of milliseconds before continuing.
 void inline msleep(unsigned int ms) {
 #ifdef WIN32
-	Sleep(ms);
+    Sleep(ms);
 #else
-	// usleep argument must be under 1 000 000
-	if (ms > 1000) sleep(ms/1000000);
-	usleep((ms % 1000000) * 1000);
+    // usleep argument must be under 1 000 000
+    if (ms > 1000) sleep(ms/1000000);
+    usleep((ms % 1000000) * 1000);
 #endif
 }
 
@@ -481,7 +497,7 @@ void inline msleep(unsigned int ms) {
 /// Function: anykey
 /// Waits until a key is pressed.
 void inline anykey() {
-	getch();
+    getch();
 }
 
 #ifndef min
@@ -512,8 +528,8 @@ template <class T> const T& max ( const T& a, const T& b ) { return (b<a)?a:b; }
 /// Hides the cursor and shows it again
 /// when the object goes out of scope.
 struct CursorHider {
-	CursorHider() { hidecursor(); }
-	~CursorHider() { showcursor(); }
+    CursorHider() { hidecursor(); }
+    ~CursorHider() { showcursor(); }
 };
 
 } // namespace rlutil

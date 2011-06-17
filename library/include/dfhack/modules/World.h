@@ -90,7 +90,7 @@ namespace DFHack
     {
         public:
 
-        World(DFHack::DFContextShared * d);
+        World();
         ~World();
         bool Start();
         bool Finish();

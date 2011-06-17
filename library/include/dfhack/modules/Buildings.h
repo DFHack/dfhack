@@ -55,7 +55,6 @@ namespace DFHack
     };
 
 #ifdef __cplusplus
-    class DFContextShared;
     /**
      * The Buildings module - allows reading DF buildings
      * \ingroup grp_modules
@@ -64,7 +63,7 @@ namespace DFHack
     class DFHACK_EXPORT Buildings : public Module
     {
         public:
-        Buildings(DFContextShared * d);
+        Buildings();
         ~Buildings();
         bool Start(uint32_t & numBuildings);
         // read one building at offset

@@ -30,19 +30,19 @@ distribution.
 #include <cstring>
 using namespace std;
 
-#include "ContextShared.h"
 #include "dfhack/modules/World.h"
 #include "dfhack/Process.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/Types.h"
 #include "dfhack/Error.h"
 #include "ModuleFactory.h"
+#include <dfhack/Core.h>
 
 using namespace DFHack;
 
-Module* DFHack::createWorld(DFContextShared * d)
+Module* DFHack::createWorld()
 {
-    return new World(d);
+    return new World();
 }
 
 struct World::Private
@@ -67,18 +67,16 @@ struct World::Private
     uint32_t gamemode_offset;
     uint32_t controlmode_offset;
     uint32_t controlmodecopy_offset;
-    DFContextShared *d;
     Process * owner;
 };
 
-World::World(DFContextShared * _d)
+World::World()
 {
-
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = _d;
-    d->owner = _d->p;
+    d->owner = c.p;
 
-    OffsetGroup * OG_World = d->d->offset_descriptor->getGroup("World");
+    OffsetGroup * OG_World = c.vinfo->getGroup("World");
     try
     {
         d->year_offset = OG_World->getAddress( "current_year" );
@@ -86,7 +84,7 @@ World::World(DFContextShared * _d)
         d->StartedTime = true;
     }
     catch(Error::All &){};
-    OffsetGroup * OG_Gui = d->d->offset_descriptor->getGroup("GUI"); // FIXME: legacy
+    OffsetGroup * OG_Gui = c.vinfo->getGroup("GUI");
     try
     {
         d->pause_state_offset = OG_Gui->getAddress ("pause_state");
@@ -127,7 +125,6 @@ bool World::Finish()
 bool World::ReadPauseState()
 {
     if(!d->PauseInited) return false;
-    
     uint32_t pauseState = d->owner->readDWord (d->pause_state_offset);
     return pauseState & 1;
 }

@@ -143,7 +143,7 @@ struct t_improvement
 class DFHACK_EXPORT Items : public Module
 {
 public:
-    Items(DFContextShared * _d);
+    Items();
     ~Items();
     bool Start();
     bool Finish();

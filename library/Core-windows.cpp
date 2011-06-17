@@ -167,26 +167,26 @@ SDL_mutexP
 SDL_DestroyMutex
     void SDLCALL SDL_DestroyMutex(SDL_mutex *mutex);
 */
-static vPtr (*_SDL_CreateMutex)(void) = 0;
-DFhackCExport vPtr SDL_CreateMutex(void)
+static DFMutex * (*_SDL_CreateMutex)(void) = 0;
+DFhackCExport DFMutex * SDL_CreateMutex(void)
 {
     return _SDL_CreateMutex();
 }
 
-static int (*_SDL_mutexP)(vPtr mutex) = 0;
-DFhackCExport int SDL_mutexP(vPtr mutex)
+static int (*_SDL_mutexP)(DFMutex * mutex) = 0;
+DFhackCExport int SDL_mutexP(DFMutex * mutex)
 {
     return _SDL_mutexP(mutex);
 }
 
-static int (*_SDL_mutexV)(vPtr mutex) = 0;
-DFhackCExport int SDL_mutexV(vPtr mutex)
+static int (*_SDL_mutexV)(DFMutex * mutex) = 0;
+DFhackCExport int SDL_mutexV(DFMutex * mutex)
 {
     return _SDL_mutexV(mutex);
 }
 
-static void (*_SDL_DestroyMutex)(vPtr mutex) = 0;
-DFhackCExport void SDL_DestroyMutex(vPtr mutex)
+static void (*_SDL_DestroyMutex)(DFMutex * mutex) = 0;
+DFhackCExport void SDL_DestroyMutex(DFMutex * mutex)
 {
     _SDL_DestroyMutex(mutex);
 }
@@ -661,8 +661,8 @@ DFhackCExport void *SDL_CreateSemaphore(uint32_t initial_value)
     return _SDL_CreateSemaphore(initial_value);
 }
 
-static void * (*_SDL_CreateThread)(int (*fn)(void *), void *data) = 0;
-DFhackCExport void *SDL_CreateThread(int (*fn)(void *), void *data)
+static DFThread * (*_SDL_CreateThread)(int (*fn)(void *), void *data) = 0;
+DFhackCExport DFThread *SDL_CreateThread(int (*fn)(void *), void *data)
 {
     if(!inited)
         FirstCall();
@@ -759,11 +759,11 @@ bool FirstCall()
     _SDL_CondWait = (int (*)(void*, void*))GetProcAddress(realSDLlib,"SDL_CondWait");
     _SDL_ConvertSurface = (void*(*)(void*, void*, uint32_t))GetProcAddress(realSDLlib,"SDL_ConvertSurface");
     _SDL_CreateCond = (void*(*)())GetProcAddress(realSDLlib,"SDL_CreateCond");
-    _SDL_CreateMutex = (void*(*)())GetProcAddress(realSDLlib,"SDL_CreateMutex");
+    _SDL_CreateMutex = (DFMutex*(*)())GetProcAddress(realSDLlib,"SDL_CreateMutex");
     _SDL_CreateRGBSurface = (void*(*)(uint32_t, int, int, int, uint32_t, uint32_t, uint32_t, uint32_t))GetProcAddress(realSDLlib,"SDL_CreateRGBSurface");
     _SDL_CreateRGBSurfaceFrom = (void*(*)(void*, int, int, int, int, uint32_t, uint32_t, uint32_t, uint32_t))GetProcAddress(realSDLlib,"SDL_CreateRGBSurfaceFrom");
     _SDL_DestroyCond = (void (*)(void*))GetProcAddress(realSDLlib,"SDL_DestroyCond");
-    _SDL_DestroyMutex = (void (*)(void*))GetProcAddress(realSDLlib,"SDL_DestroyMutex");
+    _SDL_DestroyMutex = (void (*)(DFMutex*))GetProcAddress(realSDLlib,"SDL_DestroyMutex");
     _SDL_EnableKeyRepeat = (int (*)(int, int))GetProcAddress(realSDLlib,"SDL_EnableKeyRepeat");
     _SDL_EnableUNICODE = (int (*)(int))GetProcAddress(realSDLlib,"SDL_EnableUNICODE");
     _SDL_GetVideoSurface = (void*(*)())GetProcAddress(realSDLlib,"SDL_GetVideoSurface");
@@ -796,8 +796,8 @@ bool FirstCall()
     _SDL_UpperBlit = (int (*)(void*, void*, void*, void*))GetProcAddress(realSDLlib,"SDL_UpperBlit");
     _SDL_WM_SetCaption = (void (*)(const char*, const char*))GetProcAddress(realSDLlib,"SDL_WM_SetCaption");
     _SDL_WM_SetIcon = (void (*)(void*, uint8_t*))GetProcAddress(realSDLlib,"SDL_WM_SetIcon");
-    _SDL_mutexP = (int (*)(void*))GetProcAddress(realSDLlib,"SDL_mutexP");
-    _SDL_mutexV = (int (*)(void*))GetProcAddress(realSDLlib,"SDL_mutexV");
+    _SDL_mutexP = (int (*)(DFMutex*))GetProcAddress(realSDLlib,"SDL_mutexP");
+    _SDL_mutexV = (int (*)(DFMutex*))GetProcAddress(realSDLlib,"SDL_mutexV");
     _SDL_strlcpy = (size_t (*)(char*, const char*, size_t))GetProcAddress(realSDLlib,"SDL_strlcpy");
     
     // stuff for SDL_Image
@@ -814,7 +814,7 @@ bool FirstCall()
     
     // new in DF 0.31.04
     _SDL_CreateSemaphore = (void* (*)(uint32_t))GetProcAddress(realSDLlib,"SDL_CreateSemaphore");
-    _SDL_CreateThread = (void* (*)(int (*fn)(void *), void *data))GetProcAddress(realSDLlib,"SDL_CreateThread");
+    _SDL_CreateThread = (DFThread* (*)(int (*fn)(void *), void *data))GetProcAddress(realSDLlib,"SDL_CreateThread");
     _SDL_Delay = (void (*)(uint32_t))GetProcAddress(realSDLlib,"SDL_Delay");
     _SDL_DestroySemaphore = (void (*)(void *))GetProcAddress(realSDLlib,"SDL_DestroySemaphore");
     _SDL_GetAppState = (uint8_t (*)(void))GetProcAddress(realSDLlib,"SDL_GetAppState");

@@ -42,8 +42,49 @@ using namespace std;
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack/modules/Maps.h"
 #include <dfhack/modules/World.h>
+#include "rlutil.h"
+#include <stdio.h>
 using namespace DFHack;
 
+int kittenz (void)
+{
+    const char * kittenz1 []=
+    {
+        "   ____",
+        "  (.   \\",
+            "    \\  |  ",
+            "     \\ |___(\\--/)",
+            "   __/    (  . . )",
+            "  \"'._.    '-.O.'",
+            "       '-.  \\ \"|\\",
+            "          '.,,/'.,,mrf",
+            0
+    };
+    rlutil::hidecursor();
+    rlutil::cls();
+    int color = 1;
+    while(1)
+    {
+        rlutil::setColor(color);
+        int index = 0;
+        const char * kit = kittenz1[index];
+        rlutil::locate(1,1);
+        cout << "Your DF is now full of kittens!" << endl;
+        while (kit != 0)
+        {
+            rlutil::locate(5,5+index);
+            cout << kit;
+            index++;
+            kit = kittenz1[index];
+        }
+        fflush(stdout);
+        rlutil::msleep(60);
+        color ++;
+        if(color > 15)
+            color = 1;
+        rlutil::cls();
+    }
+}
 struct hideblock
 {
     uint32_t x;
@@ -51,7 +92,6 @@ struct hideblock
     uint32_t z;
     uint8_t hiddens [16][16];
 };
-
 int reveal (void)
 {
     Core & c = DFHack::Core::getInstance();
@@ -105,9 +145,9 @@ int reveal (void)
     World->SetPauseState(true);
     c.Resume();
     cout << "Map revealed. The game has been paused for you." << endl;
-    cout << "Unpausing can unleash the forces of hell!" << endl << endl;
+    cout << "Unpausing can unleash the forces of hell!" << endl;
+    cout << "Saving will make this state permanent. Don't do it." << endl << endl;
     cout << "Press any key to unreveal." << endl;
-    cout << "Close to keep the map revealed !!FOREVER!!" << endl;
     cin.ignore();
     cout << "Unrevealing... please wait." << endl;
     // FIXME: do some consistency checks here!
@@ -145,15 +185,23 @@ int fIOthread(void * _core)
         }
         if(command=="help" || command == "?")
         {
-            cout << "It's simple really. You can run reveal with 'reveal'." << endl;
+            cout << "Available commands:" << endl;
+            // TODO: generic list of available commands!
+            cout << "reveal" << endl;
+            cout << "kittens" << endl;
         }
+        // TODO: commands will be registered. We'll scan a map of command -> function pointer and call stuff.
         else if(command == "reveal")
         {
             reveal();
         }
+        else if(command == "kittens")
+        {
+            kittenz();
+        }
         else
         {
-            cout << "WHAT?" << endl;
+            cout << "Do 'help' or '?' for the list of available commands." << endl;
         }
     }
 }

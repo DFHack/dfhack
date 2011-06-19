@@ -42,6 +42,7 @@ typedef void * fPtr;
 typedef void * vPtr;
 struct DFMutex;
 struct DFThread;
+struct DFLibrary;
 
 // mutex and thread functions. We can call these.
 DFhackCExport DFMutex * SDL_CreateMutex(void);
@@ -49,6 +50,11 @@ DFhackCExport int SDL_mutexP(DFMutex *);
 DFhackCExport int SDL_mutexV(DFMutex *);
 DFhackCExport void SDL_DestroyMutex(DFMutex *);
 DFhackCExport DFThread *SDL_CreateThread(int (*fn)(void *), void *data);
+
+// Functions for loading libraries and looking up exported symbols
+DFhackCExport void * SDL_LoadFunction(DFLibrary *handle, const char *name);
+DFhackCExport DFLibrary * SDL_LoadObject(const char *sofile);
+DFhackCExport void SDL_UnloadObject(DFLibrary * handle);
 
 // these functions are here because they call into DFHack::Core and therefore need to
 // be declared as friend functions/known

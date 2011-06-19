@@ -23,7 +23,8 @@ distribution.
 */
 
 #include "Internal.h"
-#include "PlatformInternal.h"
+#include <dirent.h>
+#include <errno.h>
 
 #include <string>
 #include <vector>
@@ -33,14 +34,11 @@ distribution.
 #include <cstring>
 using namespace std;
 
+#include <md5wrapper.h>
 #include "dfhack/Process.h"
 #include "dfhack/VersionInfoFactory.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/Error.h"
-#include <errno.h>
-#include <sys/ptrace.h>
-#include <sys/syscall.h>
-#include <md5wrapper.h>
 using namespace DFHack;
 
 Process::Process(VersionInfoFactory * known_versions)

@@ -23,7 +23,6 @@ distribution.
 */
 
 #include "Internal.h"
-#include "PlatformInternal.h"
 
 #include <string>
 #include <vector>
@@ -41,8 +40,8 @@ using namespace std;
 #include "dfhack/modules/Gui.h"
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack/modules/Maps.h"
-#include <dfhack/modules/World.h>
-#include "rlutil.h"
+#include "dfhack/modules/World.h"
+#include "dfhack/extra/rlutil.h"
 #include <stdio.h>
 using namespace DFHack;
 
@@ -92,6 +91,7 @@ struct hideblock
     uint32_t z;
     uint8_t hiddens [16][16];
 };
+
 int reveal (void)
 {
     Core & c = DFHack::Core::getInstance();
@@ -288,6 +288,7 @@ int Core::Shutdown ( void )
 #define MODULE_GETTER(TYPE) \
 TYPE * Core::get##TYPE() \
 { \
+    if(errorstate) return NULL;\
     if(!s_mods.p##TYPE)\
     {\
         Module * mod = create##TYPE();\

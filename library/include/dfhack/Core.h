@@ -100,7 +100,10 @@ namespace DFHack
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement
         bool errorstate;
+        // mutex for access to DF
         DFMutex * AccessMutex;
+        // mutex for access to the Plugin storage
+        DFMutex * PluginMutex;
         // FIXME: shouldn't be kept around like this
         DFHack::VersionInfoFactory * vif;
         // Module storage

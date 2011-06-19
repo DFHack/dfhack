@@ -35,12 +35,7 @@ IF(DOXYGEN_FOUND)
   # with DOXYGEN_SOURCE_DIR we fill a list of directories and later we write it into
   # the Doxyfile with a REGEX REPLACE (see below)
   SET( DOXYGEN_SOURCE_DIR
-    "${dfhack_SOURCE_DIR}/doc/index.dxgen"
-    "${dfhack_SOURCE_DIR}/library/include"
-    "${dfhack_SOURCE_DIR}/library/include/dfhack"
-    "${dfhack_SOURCE_DIR}/library/include/dfhack/modules"
-    "${dfhack_SOURCE_DIR}/library/include/dfhack-c"
-    "${dfhack_SOURCE_DIR}/library/include/dfhack-c/modules"
+    "${dfhack_SOURCE_DIR}/library"
   )
 
   STRING(REGEX REPLACE ";" " " CMAKE_DOXYGEN_INPUT_LIST "${DOXYGEN_SOURCE_DIR}")

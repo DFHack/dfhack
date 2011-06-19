@@ -1,9 +1,9 @@
-if(NOT DEFINED DFHACK_CONSISTENCY)
-    MESSAGE(FATAL_ERROR "Please build the whole thing, not parts. You can turn parts on/off using options.")
-ENDIF()
-
-PROJECT (dfhack-library)
+PROJECT (dfapi)
 cmake_minimum_required(VERSION 2.8)
+
+## build options
+OPTION(BUILD_DEVEL "Install/package files required for development (For SDK)." OFF)
+OPTION(BUILD_DOXYGEN "Create/install/package doxygen documentation for DFHack (For SDK)." OFF)
 
 include_directories (include)
 include_directories (depends/md5)
@@ -96,11 +96,6 @@ ELSE()
     LIST(APPEND PROJECT_SRCS ${PROJECT_SRCS_WINDOWS})
 ENDIF()
 
-IF(BUILD_DFHACK_C_BINDINGS)
-    LIST(APPEND PROJECT_HDRS ${PROJECT_C_HDRS})
-    LIST(APPEND PROJECT_SRCS ${PROJECT_C_SRCS})
-ENDIF()
-
 SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
 
 LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
@@ -109,12 +104,11 @@ ADD_DEFINITIONS(-DBUILD_DFHACK_LIB)
 
 IF(UNIX)
   add_definitions(-DLINUX_BUILD)
-  find_library(X11_LIBRARY X11)
   SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
   SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32")
   SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32")
 
-  SET(PROJECT_LIBS ${X11_LIBRARY} rt )
+  SET(PROJECT_LIBS rt )
 ELSE()
   IF(MSVC)
     SET(PROJECT_LIBS psapi ${dfhack_SOURCE_DIR}/library/depends/ntdll/ntdll.lib)
@@ -141,7 +135,7 @@ install(TARGETS dfhack
 install(FILES ${dfhack_SOURCE_DIR}/Memory.xml
         DESTINATION ${DFHACK_DATA_DESTINATION}) #linux: share/dfhack
 
-if(BUILD_DFHACK_DEVEL)
+if(BUILD_DEVEL)
     if(WIN32)
         install(TARGETS dfhack
                 ARCHIVE DESTINATION ${DFHACK_DEVLIB_DESTINATION})
@@ -151,4 +145,8 @@ if(BUILD_DFHACK_DEVEL)
     install(DIRECTORY include/
             DESTINATION ${DFHACK_INCLUDES_DESTINATION}
             FILES_MATCHING PATTERN "*.h" ) #linux: include
+    # Building the docs
+    IF(BUILD_DOXYGEN)
+        add_subdirectory (doc)
+    ENDIF()
 endif()

@@ -94,7 +94,7 @@ namespace DFHack
     };
 
     /**
-     * Allows low-level access to the memory of an OS process. OS processes can be enumerated by \ref ProcessEnumerator
+     * Allows low-level access to the memory of an OS process.
      * \ingroup grp_context
      */
     class DFHACK_EXPORT Process
@@ -163,7 +163,7 @@ namespace DFHack
             };
 
             /// read a byte
-            uint16_t readByte(const uint32_t address)
+            uint8_t readByte(const uint32_t address)
             {
                 return *(uint8_t *)address;
             }

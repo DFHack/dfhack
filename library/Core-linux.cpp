@@ -117,6 +117,24 @@ DFhackCExport void SDL_DestroyMutex(DFMutex * mutex)
     _SDL_DestroyMutex(mutex);
 }
 
+static void * (*_SDL_LoadFunction)(DFLibrary *handle, const char *name) = 0;
+DFhackCExport void * SDL_LoadFunction(DFLibrary *handle, const char *name)
+{
+    return _SDL_LoadFunction(handle, name);
+}
+
+static DFLibrary * (*_SDL_LoadObject)(const char *sofile) = 0;
+DFhackCExport DFLibrary * SDL_LoadObject(const char *sofile)
+{
+    return _SDL_LoadObject(sofile);
+}
+
+static void (*_SDL_UnloadObject)(DFLibrary * handle) = 0;
+DFhackCExport void SDL_UnloadObject(DFLibrary * handle)
+{
+    _SDL_UnloadObject(handle);
+}
+
 // hook - called at program exit
 DFhackCExport void SDL_Quit(void)
 {
@@ -141,6 +159,9 @@ DFhackCExport int SDL_Init(uint32_t flags)
     _SDL_DestroyMutex = (void (*)(DFMutex*))dlsym(RTLD_NEXT,"SDL_DestroyMutex");
     _SDL_mutexP = (int (*)(DFMutex*))dlsym(RTLD_NEXT,"SDL_mutexP");
     _SDL_mutexV = (int (*)(DFMutex*))dlsym(RTLD_NEXT,"SDL_mutexV");
+    _SDL_LoadFunction = (void*(*)(DFLibrary*, const char*))dlsym(RTLD_NEXT,"SDL_LoadFunction");
+    _SDL_LoadObject = (DFLibrary*(*)(const char*))dlsym(RTLD_NEXT,"SDL_LoadObject");
+    _SDL_UnloadObject = (void (*)(DFLibrary*))dlsym(RTLD_NEXT,"SDL_UnloadObject");
 
     // check if we got them
     if(_SDL_Init && _SDL_Quit && _SDL_CreateThread && _SDL_CreateMutex && _SDL_DestroyMutex && _SDL_mutexP && _SDL_mutexV)

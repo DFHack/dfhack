@@ -512,20 +512,20 @@ SDL_UnloadObject
     extern DECLSPEC void SDLCALL SDL_UnloadObject(void *handle);
 */
 
-static vPtr (*_SDL_LoadFunction)(void *handle, const char *name) = 0;
-DFhackCExport vPtr SDL_LoadFunction(void *handle, const char *name)
+static void * (*_SDL_LoadFunction)(DFLibrary *handle, const char *name) = 0;
+DFhackCExport void * SDL_LoadFunction(DFLibrary *handle, const char *name)
 {
     return _SDL_LoadFunction(handle, name);
 }
 
-static vPtr (*_SDL_LoadObject)(const char *sofile) = 0;
-DFhackCExport vPtr SDL_LoadObject(const char *sofile)
+static DFLibrary * (*_SDL_LoadObject)(const char *sofile) = 0;
+DFhackCExport DFLibrary * SDL_LoadObject(const char *sofile)
 {
     return _SDL_LoadObject(sofile);
 }
 
-static void (*_SDL_UnloadObject)(vPtr handle) = 0;
-DFhackCExport void SDL_UnloadObject(vPtr handle)
+static void (*_SDL_UnloadObject)(DFLibrary * handle) = 0;
+DFhackCExport void SDL_UnloadObject(DFLibrary * handle)
 {
     _SDL_UnloadObject(handle);
 }
@@ -803,13 +803,13 @@ bool FirstCall()
     // stuff for SDL_Image
     _SDL_ClearError = (void (*)())GetProcAddress(realSDLlib,"SDL_ClearError");
     _SDL_Error = (void (*)(int))GetProcAddress(realSDLlib,"SDL_Error");
-    _SDL_LoadFunction = (void*(*)(void*, const char*))GetProcAddress(realSDLlib,"SDL_LoadFunction");
-    _SDL_LoadObject = (void*(*)(const char*))GetProcAddress(realSDLlib,"SDL_LoadObject");
+    _SDL_LoadFunction = (void*(*)(DFLibrary*, const char*))GetProcAddress(realSDLlib,"SDL_LoadFunction");
+    _SDL_LoadObject = (DFLibrary*(*)(const char*))GetProcAddress(realSDLlib,"SDL_LoadObject");
     _SDL_ReadBE32 = (uint32_t (*)(void*))GetProcAddress(realSDLlib,"SDL_ReadBE32");
     _SDL_ReadLE16 = (uint16_t (*)(void*))GetProcAddress(realSDLlib,"SDL_ReadLE16");
     _SDL_ReadLE32 = (uint32_t (*)(void*))GetProcAddress(realSDLlib,"SDL_ReadLE32");
     _SDL_SetError = (void (*)(const char*, ...))GetProcAddress(realSDLlib,"SDL_SetError");
-    _SDL_UnloadObject = (void (*)(void*))GetProcAddress(realSDLlib,"SDL_UnloadObject");
+    _SDL_UnloadObject = (void (*)(DFLibrary*))GetProcAddress(realSDLlib,"SDL_UnloadObject");
     _SDL_FillRect = (int (*)(void*,void*,uint32_t))GetProcAddress(realSDLlib,"SDL_FillRect");
     
     // new in DF 0.31.04

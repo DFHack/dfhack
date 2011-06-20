@@ -45,9 +45,7 @@ distribution.
 #define MAX_CONSOLE_LINES 250;
  
 HANDLE  g_hConsoleOut;                   // Handle to debug console
-
 void RedirectIOToConsole();
-
 
 /*
  * This function dynamically creates a "Console" window and points stdout and stderr to it.
@@ -113,6 +111,22 @@ void RedirectIOToConsole()
 #include "dfhack/Core.h"
 #include "dfhack/FakeSDL.h"
 #include <stdio.h>
+
+/*
+ * Plugin loading functions
+ */
+DFLibrary * OpenPlugin (const char * filename)
+{
+    return (DFLibrary *) LoadLibrary(filename);
+}
+void * LookupPlugin (DFLibrary * plugin ,const char * function)
+{
+    return (DFLibrary *) GetProcAddress((HMODULE)plugin, function);
+}
+void ClosePlugin (DFLibrary * plugin)
+{
+    FreeLibrary((HMODULE) plugin);
+}
 
 /*************************************************************************/
 // extremely boring wrappers beyond this point. Only fix when broken
@@ -518,7 +532,7 @@ DFhackCExport void * SDL_LoadFunction(DFLibrary *handle, const char *name)
     return _SDL_LoadFunction(handle, name);
 }
 
-static DFLibrary * (*_SDL_LoadObject)(const char *sofile) = 0;
+extern "C" static DFLibrary * (*_SDL_LoadObject)(const char *sofile) = 0;
 DFhackCExport DFLibrary * SDL_LoadObject(const char *sofile)
 {
     return _SDL_LoadObject(sofile);

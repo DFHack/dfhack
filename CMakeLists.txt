@@ -71,6 +71,10 @@ IF(BUILD_LIBRARY)
     install(FILES LICENSE Readme.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()
 
+IF(BUILD_PLUGINS)
+    add_subdirectory (plugins)
+endif()
+
 # Packaging with CPack!
 IF(UNIX)
     SET(CPACK_GENERATOR "TGZ")

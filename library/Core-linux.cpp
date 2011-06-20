@@ -43,6 +43,23 @@ distribution.
 #include "dfhack/FakeSDL.h"
 #include <iostream>
 
+/*
+ * Plugin loading functions
+ */
+DFLibrary * OpenPlugin (const char * filename)
+{
+    return (DFLibrary *) dlopen(filename, RTLD_NOW);
+}
+void * LookupPlugin (DFLibrary * plugin ,const char * function)
+{
+    return (DFLibrary *) dlsym((void *)plugin, function);
+}
+void ClosePlugin (DFLibrary * plugin)
+{
+    dlclose((void *) plugin);
+}
+
+
 /*******************************************************************************
 *                           SDL part starts here                               *
 *******************************************************************************/

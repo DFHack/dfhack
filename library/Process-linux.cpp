@@ -119,8 +119,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     }
 }
 
-
-int getdir (string dir, vector<string> &files)
+static int getdir (string dir, vector<string> &files)
 {
     DIR *dp;
     struct dirent *dirp;

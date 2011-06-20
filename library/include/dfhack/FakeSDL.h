@@ -30,12 +30,7 @@ distribution.
 
 #include "dfhack/Pragma.h"
 #include "dfhack/Export.h"
-
-#ifdef LINUX_BUILD
-    #define DFhackCExport extern "C" __attribute__ ((visibility("default")))
-#else
-    #define DFhackCExport extern "C" __declspec(dllexport)
-#endif
+#include <string>
 
 // function and variable pointer... we don't try to understand what SDL does here
 typedef void * fPtr;
@@ -51,10 +46,14 @@ DFhackCExport int SDL_mutexV(DFMutex *);
 DFhackCExport void SDL_DestroyMutex(DFMutex *);
 DFhackCExport DFThread *SDL_CreateThread(int (*fn)(void *), void *data);
 
-// Functions for loading libraries and looking up exported symbols
+//FIXME: remove, these fail
 DFhackCExport void * SDL_LoadFunction(DFLibrary *handle, const char *name);
 DFhackCExport DFLibrary * SDL_LoadObject(const char *sofile);
 DFhackCExport void SDL_UnloadObject(DFLibrary * handle);
+
+DFLibrary * OpenPlugin (const char * filename);
+void * LookupPlugin (DFLibrary * plugin ,const char * function);
+void ClosePlugin (DFLibrary * plugin);
 
 // these functions are here because they call into DFHack::Core and therefore need to
 // be declared as friend functions/known

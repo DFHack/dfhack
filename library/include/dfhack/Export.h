@@ -40,3 +40,10 @@ distribution.
         #endif
     #endif
 #endif
+
+// C export macros for faking SDL and plugin exports
+#ifdef LINUX_BUILD
+    #define DFhackCExport extern "C" __attribute__ ((visibility("default")))
+#else
+    #define DFhackCExport extern "C" __declspec(dllexport)
+#endif

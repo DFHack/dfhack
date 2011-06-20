@@ -43,127 +43,27 @@ using namespace std;
 #include "dfhack/modules/World.h"
 #include "dfhack/extra/rlutil.h"
 #include <stdio.h>
+#ifdef LINUX_BUILD
+    #include <dirent.h>
+    #include <errno.h>
+#else
+    #include "wdirent.h"
+#endif
 using namespace DFHack;
 
-int kittenz (void)
+static int getdir (string dir, vector<string> &files)
 {
-    const char * kittenz1 []=
+    DIR *dp;
+    struct dirent *dirp;
+    if((dp  = opendir(dir.c_str())) == NULL)
     {
-        "   ____",
-        "  (.   \\",
-        "    \\  |  ",
-        "     \\ |___(\\--/)",
-        "   __/    (  . . )",
-        "  \"'._.    '-.O.'",
-        "       '-.  \\ \"|\\",
-        "          '.,,/'.,,mrf",
-        0
-    };
-    rlutil::hidecursor();
-    rlutil::cls();
-    int color = 1;
-    while(1)
-    {
-        rlutil::setColor(color);
-        int index = 0;
-        const char * kit = kittenz1[index];
-        rlutil::locate(1,1);
-        cout << "Your DF is now full of kittens!" << endl;
-        while (kit != 0)
-        {
-            rlutil::locate(5,5+index);
-            cout << kit;
-            index++;
-            kit = kittenz1[index];
-        }
-        fflush(stdout);
-        rlutil::msleep(60);
-        color ++;
-        if(color > 15)
-            color = 1;
-        rlutil::cls();
+        cout << "Error(" << errno << ") opening " << dir << endl;
+        return errno;
     }
-}
-struct hideblock
-{
-    uint32_t x;
-    uint32_t y;
-    uint32_t z;
-    uint8_t hiddens [16][16];
-};
-
-int reveal (void)
-{
-    Core & c = DFHack::Core::getInstance();
-    c.Suspend();
-    DFHack::Maps *Maps =c.getMaps();
-    DFHack::World *World =c.getWorld();
-
-    // init the map
-    if(!Maps->Start())
-    {
-        cerr << "Can't init map." << endl;
-        c.Resume();
-        return 1;
+    while ((dirp = readdir(dp)) != NULL) {
+    files.push_back(string(dirp->d_name));
     }
-
-    cout << "Revealing, please wait..." << endl;
-
-    uint32_t x_max, y_max, z_max;
-    DFHack::designations40d designations;
-    Maps->getSize(x_max,y_max,z_max);
-    vector <hideblock> hidesaved;
-
-    for(uint32_t x = 0; x< x_max;x++)
-    {
-        for(uint32_t y = 0; y< y_max;y++)
-        {
-            for(uint32_t z = 0; z< z_max;z++)
-            {
-                if(Maps->isValidBlock(x,y,z))
-                {
-                    hideblock hb;
-                    hb.x = x;
-                    hb.y = y;
-                    hb.z = z;
-                    // read block designations
-                    Maps->ReadDesignations(x,y,z, &designations);
-                    // change the hidden flag to 0
-                    for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
-                    {
-                        hb.hiddens[i][j] = designations[i][j].bits.hidden;
-                        designations[i][j].bits.hidden = 0;
-                    }
-                    hidesaved.push_back(hb);
-                    // write the designations back
-                    Maps->WriteDesignations(x,y,z, &designations);
-                }
-            }
-        }
-    }
-    World->SetPauseState(true);
-    c.Resume();
-    cout << "Map revealed. The game has been paused for you." << endl;
-    cout << "Unpausing can unleash the forces of hell!" << endl;
-    cout << "Saving will make this state permanent. Don't do it." << endl << endl;
-    cout << "Press any key to unreveal." << endl;
-    cin.ignore();
-    cout << "Unrevealing... please wait." << endl;
-    // FIXME: do some consistency checks here!
-    c.Suspend();
-    Maps = c.getMaps();
-    Maps->Start();
-    for(size_t i = 0; i < hidesaved.size();i++)
-    {
-        hideblock & hb = hidesaved[i];
-        Maps->ReadDesignations(hb.x,hb.y,hb.z, &designations);
-        for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
-        {
-            designations[i][j].bits.hidden = hb.hiddens[i][j];
-        }
-        Maps->WriteDesignations(hb.x,hb.y,hb.z, &designations);
-    }
-    c.Resume();
+    closedir(dp);
     return 0;
 }
 
@@ -171,6 +71,39 @@ int reveal (void)
 int fIOthread(void * _core)
 {
     Core * core = (Core *) _core;
+    vector <string> filez;
+    map <string, int (*)(Core *)> plugins;
+    getdir(core->p->getPath(), filez);
+    const char * (*_PlugName)(void) = 0;
+    int (*_PlugRun)(Core *) = 0;
+    for(int i = 0; i < filez.size();i++)
+    {
+        if(strstr(filez[i].c_str(),".plug."))
+        {
+            DFLibrary * plug = OpenPlugin(filez[i].c_str());
+            if(!plug)
+            {
+                cerr << "Can't load plugin " << filez[i] << endl;
+                continue;
+            }
+            _PlugName = (const char * (*)()) LookupPlugin(plug, "plugin_name");
+            if(!_PlugName)
+            {
+                cerr << "Plugin " << filez[i] << " has no name." << endl;
+                ClosePlugin(plug);
+                continue;
+            }
+            _PlugRun = (int (*)(Core * c)) LookupPlugin(plug, "plugin_run");
+            if(!_PlugRun)
+            {
+                cerr << "Plugin " << filez[i] << " has no run function." << endl;
+                ClosePlugin(plug);
+                continue;
+            }
+            cout << filez[i] << endl;
+            plugins[string(_PlugName())] = _PlugRun;
+        }
+    }
     cout << "Hello from the IO thread. Have a nice day!" << endl;
     while (true)
     {
@@ -185,22 +118,23 @@ int fIOthread(void * _core)
         if(command=="help" || command == "?")
         {
             cout << "Available commands:" << endl;
-            // TODO: generic list of available commands!
-            cout << "reveal" << endl;
-            cout << "kittens" << endl;
+            for (map <string, int (*)(Core *)>::iterator iter = plugins.begin(); iter != plugins.end(); iter++)
+            {
+                cout << iter->first << endl;
+            }
         }
         // TODO: commands will be registered. We'll scan a map of command -> function pointer and call stuff.
-        else if(command == "reveal")
-        {
-            reveal();
-        }
-        else if(command == "kittens")
-        {
-            kittenz();
-        }
         else
         {
-            cout << "Do 'help' or '?' for the list of available commands." << endl;
+            map <string, int (*)(Core *)>::iterator iter = plugins.find(command);
+            if(iter != plugins.end())
+            {
+                iter->second(core);
+            }
+            else
+            {
+                cout << "Do 'help' or '?' for the list of available commands." << endl;
+            }
         }
     }
 }
@@ -236,8 +170,9 @@ Core::Core()
     errorstate = false;
     // lock mutex
     SDL_mutexP(AccessMutex);
+    // look for all plugins, 
     // create IO thread
-    DFThread * IO = SDL_CreateThread(fIOthread, 0);
+    DFThread * IO = SDL_CreateThread(fIOthread, this);
     // and let DF do its thing.
 };
 

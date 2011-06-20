@@ -27,6 +27,8 @@ distribution.
 #include "dfhack/Pragma.h"
 #include "dfhack/Export.h"
 #include "dfhack/FakeSDL.h"
+#include <vector>
+
 namespace DFHack
 {
     class Process;

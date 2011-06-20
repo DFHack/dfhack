@@ -20,3 +20,4 @@ ENDMACRO()
 
 DFHACK_PLUGIN(reveal reveal.cpp)
 DFHACK_PLUGIN(kittens kittens.cpp)
+DFHACK_PLUGIN(prospector prospector.cpp)

@@ -15,8 +15,8 @@
 using namespace std;
 #include <DFHack.h>
 #include <dfhack/extra/MapExtras.h>
-#include <xgetopt.h>
 #include <dfhack/extra/termutil.h>
+#include <dfhack/Core.h>
 
 typedef std::map<int16_t, unsigned int> MatMap;
 typedef std::vector< pair<int16_t, unsigned int> > MatSorter;
@@ -24,8 +24,8 @@ typedef std::vector< pair<int16_t, unsigned int> > MatSorter;
 typedef std::vector<DFHack::t_feature> FeatureList;
 typedef std::vector<DFHack::t_feature*> FeatureListPointer;
 typedef std::map<DFHack::DFCoord, FeatureListPointer> FeatureMap;
-typedef std::vector<DFHack::dfh_plant> PlantList;
-
+typedef std::vector<DFHack::df_plant *> PlantList;
+/*
 bool parseOptions(int argc, char **argv, bool &showHidden, bool &showPlants,
                   bool &showSlade, bool &showTemple)
 {
@@ -67,7 +67,7 @@ bool parseOptions(int argc, char **argv, bool &showHidden, bool &showPlants,
     }
     return true;
 }
-
+*/
 template<template <typename> class P = std::greater >
 struct compare_pair_second
 {
@@ -103,50 +103,40 @@ void printMats(MatMap &mat, std::vector<DFHack::t_matgloss> &materials)
     std::cout << ">>> TOTAL = " << total << std::endl << std::endl;
 }
 
-int main(int argc, char *argv[])
+DFhackCExport const char * plugin_name ( void )
 {
-    bool temporary_terminal = TemporaryTerminal();
-    bool showHidden = false;
+    return "prospector";
+}
+
+DFhackCExport int plugin_run (DFHack::Core * c)
+{
+    bool showHidden = true;
     bool showPlants = true;
     bool showSlade = true;
     bool showTemple = true;
-
+/*
     if (!parseOptions(argc, argv, showHidden, showPlants, showSlade, showTemple))
     {
         return -1;
     }
-
+*/
     uint32_t x_max = 0, y_max = 0, z_max = 0;
-    DFHack::ContextManager manager("Memory.xml");
-
-    DFHack::Context *context = manager.getSingleContext();
-    if (!context->Attach())
-    {
-        std::cerr << "Unable to attach to DF!" << std::endl;
-        if(temporary_terminal)
-            std::cin.ignore();
-        return 1;
-    }
-
-    DFHack::Maps *maps = context->getMaps();
+    c->Suspend();
+    DFHack::Maps *maps = c->getMaps();
     if (!maps->Start())
     {
         std::cerr << "Cannot get map info!" << std::endl;
-        context->Detach();
-        if(temporary_terminal)
-            std::cin.ignore();
+        c->Resume();
         return 1;
     }
     maps->getSize(x_max, y_max, z_max);
     MapExtras::MapCache map(maps);
 
-    DFHack::Materials *mats = context->getMaterials();
+    DFHack::Materials *mats = c->getMaterials();
     if (!mats->ReadInorganicMaterials())
     {
         std::cerr << "Unable to read inorganic material definitons!" << std::endl;
-        context->Detach();
-        if(temporary_terminal)
-            std::cin.ignore();
+        c->Resume();
         return 1;
     }
     if (showPlants && !mats->ReadOrganicMaterials())
@@ -182,8 +172,8 @@ int main(int argc, char *argv[])
     }
 
     uint32_t vegCount = 0;
-    DFHack::Vegetation *veg = context->getVegetation();
-    if (showPlants && !veg->Start(vegCount))
+    DFHack::Vegetation *veg = c->getVegetation();
+    if (showPlants && !veg->Start())
     {
         std::cerr << "Unable to read vegetation; plants won't be listed!" << std::endl;
     }
@@ -315,12 +305,12 @@ int main(int argc, char *argv[])
                 // and we can check visibility more easily here
                 if (showPlants)
                 {
-                    PlantList plants;
-                    if (maps->ReadVegetation(b_x, b_y, z, &plants))
+                    PlantList * plants;
+                    if (maps->ReadVegetation(b_x, b_y, z, plants))
                     {
-                        for (PlantList::const_iterator it = plants.begin(); it != plants.end(); it++)
+                        for (PlantList::const_iterator it = plants->begin(); it != plants->end(); it++)
                         {
-                            const DFHack::t_plant & plant = (*it).sdata;
+                            const DFHack::df_plant & plant = *(*it);
                             DFHack::DFCoord loc(plant.x, plant.y);
                             loc = loc % 16;
                             if (showHidden || !b->DesignationAt(loc).bits.hidden)
@@ -385,12 +375,7 @@ int main(int argc, char *argv[])
     }
     mats->Finish();
     maps->Finish();
-    context->Detach();
-    if(temporary_terminal)
-    {
-        std::cout << " Press any key to finish.";
-        std::cin.ignore();
-    }
+    c->Resume();
     std::cout << std::endl;
     return 0;
 }

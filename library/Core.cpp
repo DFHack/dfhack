@@ -229,6 +229,8 @@ int Core::Shutdown ( void )
     allModules.clear();
     memset(&(s_mods), 0, sizeof(s_mods));
     dfout << std::endl;
+    delete con;
+    con = 0;
     return -1;
 }
 

@@ -22,89 +22,9 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-
-/**
- * This is the source for the DF <-> dfhack shm bridge,
- * to be used with SDL 1.2 and DF 40d16. Windows sucks
- * using hacks like this sucks even more
- */
-
-#include <windows.h>
-#include <stdarg.h>
-
-#include < process.h>
-#include <errno.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <io.h>
-#include <iostream>
-#include <fstream>
-#include <istream>
-#include <string>
- 
-#define MAX_CONSOLE_LINES 250;
- 
-HANDLE  g_hConsoleOut;                   // Handle to debug console
-void RedirectIOToConsole();
-
-/*
- * This function dynamically creates a "Console" window and points stdout and stderr to it.
- * It also hooks stdin to the window
- * You must free it later with FreeConsole
- * 
- * Windows Developer Journal, December 1997
- * Adding Console I/O to a Win32 GUI App
- * by Andrew Tucker
- * http://www.halcyon.com/~ast/dload/guicon.htm
- */
-void RedirectIOToConsole()
-{
-    int                        hConHandle;
-    long                       lStdHandle;
-    CONSOLE_SCREEN_BUFFER_INFO coninfo;
-    FILE                       *fp;
-    DWORD  oldMode, newMode;
-    // allocate a console for this app
-    AllocConsole();
-
-    // set the screen buffer to be big enough to let us scroll text
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);
-    coninfo.dwSize.Y = MAX_CONSOLE_LINES;  // How many lines do you want to have in the console buffer
-    SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coninfo.dwSize);
-
-    // redirect unbuffered STDOUT to the console
-    g_hConsoleOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    lStdHandle = (long)GetStdHandle(STD_OUTPUT_HANDLE);
-    hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-    fp = _fdopen( hConHandle, "w" );
-    *stdout = *fp;
-    setvbuf( stdout, NULL, _IONBF, 0 );
-
-    // redirect unbuffered STDIN to the console
-    lStdHandle = (long)GetStdHandle(STD_INPUT_HANDLE);
-    hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-    fp = _fdopen( hConHandle, "r" );
-    *stdin = *fp;
-    setvbuf( stdin, NULL, _IONBF, 0 );
-    GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE),&oldMode);
-    newMode = oldMode | ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT;
-    SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE),newMode);
-
-    // redirect unbuffered STDERR to the console
-    lStdHandle = (long)GetStdHandle(STD_ERROR_HANDLE);
-    hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-    fp = _fdopen( hConHandle, "w" );
-    *stderr = *fp;
-    setvbuf( stderr, NULL, _IONBF, 0 );
-    SetConsoleTitle("DFHack");
-
-    // make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog 
-    // point to console as well  Uncomment the next line if you are using c++ cio or comment if you don't
-    std::ios::sync_with_stdio();
-}
-
 #define DFhackCExport extern "C" __declspec(dllexport)
 
+#include <windows.h>
 #include <stdint.h>
 #include <vector>
 #include <string>
@@ -625,14 +545,12 @@ SDL_GL_SwapBuffers
 static void (*_SDL_Quit)(void) = 0;
 DFhackCExport void SDL_Quit(void)
 {
-    fprintf(stderr,"Quitting!\n");
     DFHack::Core & c = DFHack::Core::getInstance();
     c.Shutdown();
     if(_SDL_Quit)
     {
         _SDL_Quit();
     }
-    FreeConsole();
 }
 // this is supported from 0.31.04 forward
 DFhackCExport int SDL_NumJoysticks(void)
@@ -761,7 +679,6 @@ DFhackCExport uint32_t SDL_ThreadID(void)
 // FIXME: this has to be thread-safe.
 bool FirstCall()
 {
-    RedirectIOToConsole();
     HMODULE realSDLlib =  LoadLibrary("SDLreal.dll");
     if(!realSDLlib)
     {

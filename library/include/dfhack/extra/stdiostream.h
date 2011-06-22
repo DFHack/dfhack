@@ -14,6 +14,7 @@
 #include <streambuf>
 #include <string>
 #include <vector>
+#include <ciso646>
 
 namespace duthomhas
 {

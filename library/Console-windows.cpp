@@ -49,6 +49,7 @@ FILE * dfout_C = 0;
 duthomhas::stdiobuf * stream_o = 0;
 
 HANDLE  g_hConsoleOut;                   // Handle to debug console
+HWND ConsoleWindow;
 
 // FIXME: prime candidate for being a singleton... indeed.
 Console::Console()
@@ -61,6 +62,9 @@ Console::Console()
 
     // Allocate a console!
     AllocConsole();
+    ConsoleWindow = GetConsoleWindow();
+    HMENU  hm = GetSystemMenu(ConsoleWindow,false);
+    DeleteMenu(hm, SC_CLOSE, MF_BYCOMMAND);
 
     // set the screen buffer to be big enough to let us scroll text
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);

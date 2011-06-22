@@ -32,12 +32,13 @@ distribution.
 #include <cstring>
 using namespace std;
 
+#include "dfhack/Error.h"
+#include "dfhack/Process.h"
 #include "dfhack/Core.h"
 #include "dfhack/Console.h"
 #include "dfhack/VersionInfoFactory.h"
 #include "ModuleFactory.h"
-#include "dfhack/Error.h"
-#include "dfhack/Process.h"
+
 #include "dfhack/modules/Gui.h"
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack/modules/Maps.h"
@@ -72,16 +73,23 @@ static int getdir (string dir, vector<string> &files)
 int fIOthread(void * _core)
 {
     Core * core = (Core *) _core;
+#ifdef LINUX_BUILD
+    string path = core->p->getPath() + "/plugins/";
+#else
+    string path = core->p->getPath() + "\\plugins\\";
+#endif
+
     vector <string> filez;
     map <string, int (*)(Core *)> plugins;
-    getdir(core->p->getPath(), filez);
+    getdir(path, filez);
     const char * (*_PlugName)(void) = 0;
     int (*_PlugRun)(Core *) = 0;
     for(int i = 0; i < filez.size();i++)
     {
         if(strstr(filez[i].c_str(),".plug."))
         {
-            DFLibrary * plug = OpenPlugin(filez[i].c_str());
+            string fullpath = path + filez[i];
+            DFLibrary * plug = OpenPlugin(fullpath.c_str());
             if(!plug)
             {
                 dfout << "Can't load plugin " << filez[i] << endl;
@@ -101,7 +109,7 @@ int fIOthread(void * _core)
                 ClosePlugin(plug);
                 continue;
             }
-                        dfout << filez[i] << endl;
+            dfout << "Loaded plugin " << filez[i] << endl;
             plugins[string(_PlugName())] = _PlugRun;
         }
     }
@@ -229,6 +237,7 @@ int Core::Shutdown ( void )
     allModules.clear();
     memset(&(s_mods), 0, sizeof(s_mods));
     dfout << std::endl;
+    // kill the console object
     delete con;
     con = 0;
     return -1;

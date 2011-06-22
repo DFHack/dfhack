@@ -26,6 +26,7 @@ IF(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
 ENDIF()
 
 SET(DFHACK_OUTPUT_DIR "${dfhack_BINARY_DIR}/bin" CACHE STRING "Where should be the produced libraries and binaries stored.")
+SET(DFHACK_PLUGIN_OUTPUT_DIR "${DFHACK_OUTPUT_DIR}/plugins")
 
 ## where to put things during the build (force MSVC to behave)
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${DFHACK_OUTPUT_DIR})
@@ -45,6 +46,8 @@ SET(DFHACK_LIBRARY_DESTINATION .)
 SET(DFHACK_BINARY_DESTINATION .)
 # Memory.xml goes here:
 SET(DFHACK_DATA_DESTINATION .)
+# Plugins go here
+SET(DFHACK_PLUGIN_DESTINATION plugins)
 # Includes go here:
 SET(DFHACK_INCLUDES_DESTINATION dev/include)
 # the Windows .lib files go here:

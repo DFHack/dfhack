@@ -1,4 +1,5 @@
 #include <dfhack/Core.h>
+#include <dfhack/Console.h>
 #include <dfhack/Export.h>
 #include <dfhack/extra/rlutil.h>
 
@@ -9,6 +10,7 @@ DFhackCExport const char * plugin_name ( void )
 
 DFhackCExport int plugin_run (DFHack::Core * c)
 {
+    DFHack::Console * con = c->con;
     const char * kittenz1 []=
     {
         "   ____",
@@ -21,25 +23,26 @@ DFhackCExport int plugin_run (DFHack::Core * c)
         "          '.,,/'.,,mrf",
         0
     };
-    rlutil::hidecursor();
-    rlutil::cls();
+    con->cursor(false);
+    con->clear();
     int color = 1;
     while(1)
     {
-        rlutil::setColor(color);
+        con->color(color);
         int index = 0;
         const char * kit = kittenz1[index];
-        rlutil::locate(1,1);
-        std::cout << "Your DF is now full of kittens!" << std::endl;
+        con->gotoxy(1,1);
+        dfout << "Your DF is now full of kittens!" << std::endl;
         while (kit != 0)
         {
-            rlutil::locate(5,5+index);
-            std::cout << kit;
+            con->gotoxy(5,5+index);
+            dfout << kit;
             index++;
             kit = kittenz1[index];
         }
-        std::fflush(stdout);
-        rlutil::msleep(60);
+        dfout.flush();
+        rlutil::msleep(60); // FIXME: replace!
+        con->clear();
         color ++;
         if(color > 15)
             color = 1;

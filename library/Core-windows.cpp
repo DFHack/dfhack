@@ -115,19 +115,21 @@ void RedirectIOToConsole()
 /*
  * Plugin loading functions
  */
-DFLibrary * OpenPlugin (const char * filename)
+namespace DFHack
 {
-    return (DFLibrary *) LoadLibrary(filename);
+    DFLibrary * OpenPlugin (const char * filename)
+    {
+        return (DFLibrary *) LoadLibrary(filename);
+    }
+    void * LookupPlugin (DFLibrary * plugin ,const char * function)
+    {
+        return (DFLibrary *) GetProcAddress((HMODULE)plugin, function);
+    }
+    void ClosePlugin (DFLibrary * plugin)
+    {
+        FreeLibrary((HMODULE) plugin);
+    }
 }
-void * LookupPlugin (DFLibrary * plugin ,const char * function)
-{
-    return (DFLibrary *) GetProcAddress((HMODULE)plugin, function);
-}
-void ClosePlugin (DFLibrary * plugin)
-{
-    FreeLibrary((HMODULE) plugin);
-}
-
 /*************************************************************************/
 // extremely boring wrappers beyond this point. Only fix when broken
 

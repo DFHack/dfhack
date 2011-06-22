@@ -13,7 +13,7 @@ include_directories (private)
 SET(PROJECT_HDRS_INTERNAL
     private/ContextShared.h
     private/Internal.h
-    private/core.h
+    private/wdirent.h
 )
 
 SET(PROJECT_HDRS
@@ -23,6 +23,7 @@ include/dfhack/Export.h
 include/dfhack/MiscUtils.h
 include/dfhack/Module.h
 include/dfhack/Pragma.h
+include/dfhack/Console.h
 include/dfhack/Process.h
 include/dfhack/TileTypes.h
 include/dfhack/Types.h
@@ -32,6 +33,7 @@ include/dfhack/VersionInfo.h
 include/dfhack/extra/MapExtras.h
 include/dfhack/extra/termutil.h
 include/dfhack/extra/stopwatch.h
+include/dfhack/extra/stdiostream.h
 include/dfhack/modules/Buildings.h
 include/dfhack/modules/Constructions.h
 include/dfhack/modules/Creatures.h
@@ -80,11 +82,13 @@ SET(PROJECT_HDRS_WINDOWS
 
 SET(PROJECT_SRCS_LINUX
 Core-linux.cpp
+Console-linux.cpp
 Process-linux.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
 Core-windows.cpp
+Console-windows.cpp
 Process-windows.cpp
 )
 

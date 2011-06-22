@@ -33,6 +33,7 @@ distribution.
 using namespace std;
 
 #include "dfhack/Core.h"
+#include "dfhack/Console.h"
 #include "dfhack/VersionInfoFactory.h"
 #include "ModuleFactory.h"
 #include "dfhack/Error.h"
@@ -57,7 +58,7 @@ static int getdir (string dir, vector<string> &files)
     struct dirent *dirp;
     if((dp  = opendir(dir.c_str())) == NULL)
     {
-        cout << "Error(" << errno << ") opening " << dir << endl;
+        dfout << "Error(" << errno << ") opening " << dir << endl;
         return errno;
     }
     while ((dirp = readdir(dp)) != NULL) {
@@ -83,47 +84,52 @@ int fIOthread(void * _core)
             DFLibrary * plug = OpenPlugin(filez[i].c_str());
             if(!plug)
             {
-                cerr << "Can't load plugin " << filez[i] << endl;
+                dfout << "Can't load plugin " << filez[i] << endl;
                 continue;
             }
             _PlugName = (const char * (*)()) LookupPlugin(plug, "plugin_name");
             if(!_PlugName)
             {
-                cerr << "Plugin " << filez[i] << " has no name." << endl;
+                dfout << "Plugin " << filez[i] << " has no name." << endl;
                 ClosePlugin(plug);
                 continue;
             }
             _PlugRun = (int (*)(Core * c)) LookupPlugin(plug, "plugin_run");
             if(!_PlugRun)
             {
-                cerr << "Plugin " << filez[i] << " has no run function." << endl;
+                dfout << "Plugin " << filez[i] << " has no run function." << endl;
                 ClosePlugin(plug);
                 continue;
             }
-            cout << filez[i] << endl;
+                        dfout << filez[i] << endl;
             plugins[string(_PlugName())] = _PlugRun;
         }
     }
-    cout << "Hello from the IO thread. Have a nice day!" << endl;
+    fprintf(dfout_C,"DFHack is ready. Have a nice day! Type in '?' or 'help' for help.\n");
+    //dfterm <<  << endl;
+    int clueless_counter = 0;
     while (true)
     {
         string command = "";
-        cout <<"[DFHack]# ";
+        dfout <<"[DFHack]# ";
         getline(cin, command);
-        if (std::cin.eof())
+        if (cin.eof())
         {
             command = "q";
-            std::cout << std::endl; // No newline from the user here!
+            dfout << std::endl; // No newline from the user here!
         }
         if(command=="help" || command == "?")
         {
-            cout << "Available commands:" << endl;
+            dfout << "Available commands:" << endl;
             for (map <string, int (*)(Core *)>::iterator iter = plugins.begin(); iter != plugins.end(); iter++)
             {
-                cout << iter->first << endl;
+                dfout << iter->first << endl;
             }
         }
-        // TODO: commands will be registered. We'll scan a map of command -> function pointer and call stuff.
+        else if( command == "" )
+        {
+            clueless_counter++;
+        }
         else
         {
             map <string, int (*)(Core *)>::iterator iter = plugins.find(command);
@@ -133,20 +139,28 @@ int fIOthread(void * _core)
             }
             else
             {
-                cout << "Do 'help' or '?' for the list of available commands." << endl;
+                dfout << "Invalid command." << endl;
+                clueless_counter ++;
             }
+        }
+        if(clueless_counter == 3)
+        {
+            dfout << "Do 'help' or '?' for the list of available commands." << endl;
+            clueless_counter = 0;
         }
     }
 }
 
 Core::Core()
 {
+    // init the console. This must be always the first step!
+    con = new Console();
     // find out what we are...
     vif = new DFHack::VersionInfoFactory("Memory.xml");
     p = new DFHack::Process(vif);
     if (!p->isIdentified())
     {
-        std::cerr << "Couldn't identify this version of DF." << std::endl;
+        dfout << "Couldn't identify this version of DF." << std::endl;
         errorstate = true;
         delete p;
         p = NULL;
@@ -162,7 +176,7 @@ Core::Core()
     AccessMutex = SDL_CreateMutex();
     if(!AccessMutex)
     {
-        std::cerr << "Mutex creation failed." << std::endl;
+        dfout << "Mutex creation failed." << std::endl;
         errorstate = true;
         return;
     }
@@ -205,6 +219,8 @@ int Core::Update()
 int Core::Shutdown ( void )
 {
     errorstate = 1;
+    // TODO:shutdown all plugins
+    
     // invalidate all modules
     for(unsigned int i = 0 ; i < allModules.size(); i++)
     {
@@ -212,7 +228,7 @@ int Core::Shutdown ( void )
     }
     allModules.clear();
     memset(&(s_mods), 0, sizeof(s_mods));
-    // maybe do more
+    dfout << std::endl;
     return -1;
 }
 

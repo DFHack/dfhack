@@ -3,6 +3,7 @@
 #include <map>
 #include <vector>
 #include <dfhack/Core.h>
+#include <dfhack/Console.h>
 #include <dfhack/Export.h>
 #include <dfhack/modules/Maps.h>
 #include <dfhack/modules/World.h>
@@ -29,12 +30,12 @@ DFhackCExport int plugin_run (DFHack::Core * c)
     // init the map
     if(!Maps->Start())
     {
-        std::cerr << "Can't init map." << std::endl;
+        dfout << "Can't init map." << std::endl;
         c->Resume();
         return 1;
     }
 
-    std::cout << "Revealing, please wait..." << std::endl;
+    dfout << "Revealing, please wait..." << std::endl;
 
     uint32_t x_max, y_max, z_max;
     DFHack::designations40d designations;
@@ -70,12 +71,12 @@ DFhackCExport int plugin_run (DFHack::Core * c)
     }
     World->SetPauseState(true);
     c->Resume();
-    std::cout << "Map revealed. The game has been paused for you." << std::endl;
-    std::cout << "Unpausing can unleash the forces of hell!" << std::endl;
-    std::cout << "Saving will make this state permanent. Don't do it." << std::endl << std::endl;
-    std::cout << "Press any key to unreveal." << std::endl;
+    dfout << "Map revealed. The game has been paused for you." << std::endl;
+    dfout << "Unpausing can unleash the forces of hell!" << std::endl;
+    dfout << "Saving will make this state permanent. Don't do it." << std::endl << std::endl;
+    dfout << "Press any key to unreveal." << std::endl;
     std::cin.ignore();
-    std::cout << "Unrevealing... please wait." << std::endl;
+    dfout << "Unrevealing... please wait." << std::endl;
     // FIXME: do some consistency checks here!
     c->Suspend();
     Maps = c->getMaps();

@@ -51,10 +51,6 @@ DFhackCExport void * SDL_LoadFunction(DFLibrary *handle, const char *name);
 DFhackCExport DFLibrary * SDL_LoadObject(const char *sofile);
 DFhackCExport void SDL_UnloadObject(DFLibrary * handle);
 
-DFLibrary * OpenPlugin (const char * filename);
-void * LookupPlugin (DFLibrary * plugin ,const char * function);
-void ClosePlugin (DFLibrary * plugin);
-
 // these functions are here because they call into DFHack::Core and therefore need to
 // be declared as friend functions/known
 DFhackCExport int SDL_NumJoysticks(void);

@@ -47,6 +47,11 @@ namespace DFHack
     class Constructions;
     class VersionInfo;
     class VersionInfoFactory;
+    class Console;
+
+    DFLibrary * OpenPlugin (const char * filename);
+    void * LookupPlugin (DFLibrary * plugin ,const char * function);
+    void ClosePlugin (DFLibrary * plugin);
 
     // Core is a singleton. Why? Because it is closely tied to SDL calls. It tracks the global state of DF.
     // There should never be more than one instance
@@ -95,6 +100,7 @@ namespace DFHack
         
         DFHack::Process * p;
         DFHack::VersionInfo * vinfo;
+        Console * con;
     private:
         Core();
         int Update   (void);

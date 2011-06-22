@@ -46,19 +46,21 @@ distribution.
 /*
  * Plugin loading functions
  */
-DFLibrary * OpenPlugin (const char * filename)
+namespace DFHack
 {
-    return (DFLibrary *) dlopen(filename, RTLD_NOW);
+    DFLibrary * OpenPlugin (const char * filename)
+    {
+        return (DFLibrary *) dlopen(filename, RTLD_NOW);
+    }
+    void * LookupPlugin (DFLibrary * plugin ,const char * function)
+    {
+        return (DFLibrary *) dlsym((void *)plugin, function);
+    }
+    void ClosePlugin (DFLibrary * plugin)
+    {
+        dlclose((void *) plugin);
+    }
 }
-void * LookupPlugin (DFLibrary * plugin ,const char * function)
-{
-    return (DFLibrary *) dlsym((void *)plugin, function);
-}
-void ClosePlugin (DFLibrary * plugin)
-{
-    dlclose((void *) plugin);
-}
-
 
 /*******************************************************************************
 *                           SDL part starts here                               *
@@ -166,6 +168,8 @@ DFhackCExport void SDL_Quit(void)
 // hook - called at program start, initialize some stuffs we'll use later
 DFhackCExport int SDL_Init(uint32_t flags)
 {
+    freopen("stdout.log", "w", stdout);
+    freopen("stderr.log", "w", stderr);
     // find real functions
     //_SDL_GL_SwapBuffers = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_GL_SwapBuffers");
     _SDL_Init = (int (*)( uint32_t )) dlsym(RTLD_NEXT, "SDL_Init");

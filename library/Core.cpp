@@ -73,10 +73,13 @@ static int getdir (string dir, vector<string> &files)
 int fIOthread(void * _core)
 {
     Core * core = (Core *) _core;
+    
 #ifdef LINUX_BUILD
     string path = core->p->getPath() + "/plugins/";
+    const char * searchstr = ".plug.so";
 #else
     string path = core->p->getPath() + "\\plugins\\";
+    const char * searchstr = ".plug.dll";
 #endif
 
     vector <string> filez;
@@ -86,7 +89,7 @@ int fIOthread(void * _core)
     int (*_PlugRun)(Core *) = 0;
     for(int i = 0; i < filez.size();i++)
     {
-        if(strstr(filez[i].c_str(),".plug."))
+        if(strstr(filez[i].c_str(),searchstr))
         {
             string fullpath = path + filez[i];
             DFLibrary * plug = OpenPlugin(fullpath.c_str());

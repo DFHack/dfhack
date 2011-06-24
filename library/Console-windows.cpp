@@ -42,7 +42,7 @@ distribution.
 using namespace DFHack;
 
 // FIXME: maybe make configurable with an ini option?
-#define MAX_CONSOLE_LINES 250;
+#define MAX_CONSOLE_LINES 999;
 
 duthomhas::stdiostream dfout;
 FILE * dfout_C = 0;

@@ -17,6 +17,7 @@ using namespace std;
 #include <dfhack/extra/MapExtras.h>
 #include <dfhack/extra/termutil.h>
 #include <dfhack/Core.h>
+#include <dfhack/Console.h>
 
 typedef std::map<int16_t, unsigned int> MatMap;
 typedef std::vector< pair<int16_t, unsigned int> > MatSorter;
@@ -92,15 +93,15 @@ void printMats(MatMap &mat, std::vector<DFHack::t_matgloss> &materials)
     {
         if(it->first >= materials.size())
         {
-            cerr << "Bad index: " << it->first << " out of " <<  materials.size() << endl;
+            dfout << "Bad index: " << it->first << " out of " <<  materials.size() << endl;
             continue;
         }
         DFHack::t_matgloss mat = materials[it->first];
-        std::cout << std::setw(25) << mat.id << " : " << it->second << std::endl;
+        dfout << std::setw(25) << mat.id << " : " << it->second << std::endl;
         total += it->second;
     }
 
-    std::cout << ">>> TOTAL = " << total << std::endl << std::endl;
+    dfout << ">>> TOTAL = " << total << std::endl << std::endl;
 }
 
 DFhackCExport const char * plugin_name ( void )
@@ -125,7 +126,7 @@ DFhackCExport int plugin_run (DFHack::Core * c)
     DFHack::Maps *maps = c->getMaps();
     if (!maps->Start())
     {
-        std::cerr << "Cannot get map info!" << std::endl;
+        dfout << "Cannot get map info!" << std::endl;
         c->Resume();
         return 1;
     }
@@ -135,13 +136,13 @@ DFhackCExport int plugin_run (DFHack::Core * c)
     DFHack::Materials *mats = c->getMaterials();
     if (!mats->ReadInorganicMaterials())
     {
-        std::cerr << "Unable to read inorganic material definitons!" << std::endl;
+        dfout << "Unable to read inorganic material definitons!" << std::endl;
         c->Resume();
         return 1;
     }
     if (showPlants && !mats->ReadOrganicMaterials())
     {
-        std::cerr << "Unable to read organic material definitons; plants won't be listed!" << std::endl;
+        dfout << "Unable to read organic material definitons; plants won't be listed!" << std::endl;
         showPlants = false;
     }
 
@@ -161,21 +162,21 @@ DFhackCExport int plugin_run (DFHack::Core * c)
 
     if (!(showSlade && maps->ReadGlobalFeatures(globalFeatures)))
     {
-        std::cerr << "Unable to read global features; slade won't be listed!" << std::endl;
+        dfout << "Unable to read global features; slade won't be listed!" << std::endl;
     }
 
     if (!maps->ReadLocalFeatures(localFeatures))
     {
-        std::cerr << "Unable to read local features; adamantine "
-                  << (showTemple ? "and demon temples " : "")
-                  << "won't be listed!" << std::endl;
+        dfout << "Unable to read local features; adamantine "
+              << (showTemple ? "and demon temples " : "")
+              << "won't be listed!" << std::endl;
     }
 
     uint32_t vegCount = 0;
     DFHack::Vegetation *veg = c->getVegetation();
     if (showPlants && !veg->Start())
     {
-        std::cerr << "Unable to read vegetation; plants won't be listed!" << std::endl;
+        dfout << "Unable to read vegetation; plants won't be listed!" << std::endl;
     }
 
     for(uint32_t z = 0; z < z_max; z++)
@@ -244,7 +245,7 @@ DFhackCExport int plugin_run (DFHack::Core * c)
 
                         if (!info)
                         {
-                            std::cerr << "Bad type: " << type << std::endl;
+                            dfout << "Bad type: " << type << std::endl;
                             continue;
                         }
 
@@ -333,39 +334,39 @@ DFhackCExport int plugin_run (DFHack::Core * c)
 
     MatMap::const_iterator it;
 
-    std::cout << "Base materials:" << std::endl;
+    dfout << "Base materials:" << std::endl;
     for (it = baseMats.begin(); it != baseMats.end(); ++it)
     {
-        std::cout << std::setw(25) << DFHack::TileMaterialString[it->first] << " : " << it->second << std::endl;
+        dfout << std::setw(25) << DFHack::TileMaterialString[it->first] << " : " << it->second << std::endl;
     }
 
-    std::cout << std::endl << "Layer materials:" << std::endl;
+    dfout << std::endl << "Layer materials:" << std::endl;
     printMats(layerMats, mats->inorganic);
 
-    std::cout << "Vein materials:" << std::endl;
+    dfout << "Vein materials:" << std::endl;
     printMats(veinMats, mats->inorganic);
 
     if (showPlants)
     {
-        std::cout << "Shrubs:" << std::endl;
+        dfout << "Shrubs:" << std::endl;
         printMats(plantMats, mats->organic);
-        std::cout << "Wood in trees:" << std::endl;
+        dfout << "Wood in trees:" << std::endl;
         printMats(treeMats, mats->organic);
     }
 
     if (hasAquifer)
     {
-        std::cout << "Has aquifer" << std::endl;
+        dfout << "Has aquifer" << std::endl;
     }
 
     if (hasDemonTemple)
     {
-        std::cout << "Has demon temple" << std::endl;
+        dfout << "Has demon temple" << std::endl;
     }
 
     if (hasLair)
     {
-        std::cout << "Has lair" << std::endl;
+        dfout << "Has lair" << std::endl;
     }
 
     // Cleanup
@@ -376,6 +377,6 @@ DFhackCExport int plugin_run (DFHack::Core * c)
     mats->Finish();
     maps->Finish();
     c->Resume();
-    std::cout << std::endl;
+    dfout << std::endl;
     return 0;
 }

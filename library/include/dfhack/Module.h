@@ -30,7 +30,6 @@ distribution.
 #include "dfhack/Export.h"
 namespace DFHack
 {
-    class Context;
     /**
      * The parent class for all DFHack modules
      * \ingroup grp_modules

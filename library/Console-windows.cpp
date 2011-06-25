@@ -96,14 +96,17 @@ Console::Console()
     clear();
     // result is a terminal controlled by the parasitic code!
 }
+
 Console::~Console()
 {
     FreeConsole();
 }
+
 void Console::clear()
 {
     system("cls");
 }
+
 void Console::gotoxy(int x, int y)
 {
     COORD coord = {x-1, y-1}; // Windows uses 0-based coordinates
@@ -136,4 +139,9 @@ void Console::cursor(bool enable)
         structCursorInfo.bVisible = FALSE;
         SetConsoleCursorInfo( hConsoleOutput, &structCursorInfo );
     }
+}
+
+void Console::msleep (unsigned int msec)
+{
+    Sleep(msec);
 }

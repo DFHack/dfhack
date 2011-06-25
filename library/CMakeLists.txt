@@ -49,6 +49,7 @@ include/dfhack/modules/World.h
 
 SET(PROJECT_SRCS
 Core.cpp
+PluginManager.cpp
 VersionInfo.cpp
 VersionInfoFactory.cpp
 TileTypes.cpp

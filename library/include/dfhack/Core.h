@@ -48,6 +48,7 @@ namespace DFHack
     class VersionInfo;
     class VersionInfoFactory;
     class Console;
+    class PluginManager;
 
     DFLibrary * OpenPlugin (const char * filename);
     void * LookupPlugin (DFLibrary * plugin ,const char * function);
@@ -97,10 +98,10 @@ namespace DFHack
         Buildings * getBuildings();
         /// get the constructions module
         Constructions * getConstructions();
-        
+
         DFHack::Process * p;
         DFHack::VersionInfo * vinfo;
-        Console * con;
+        DFHack::Console * con;
     private:
         Core();
         int Update   (void);
@@ -130,5 +131,6 @@ namespace DFHack
             Constructions * pConstructions;
         } s_mods;
         std::vector <Module *> allModules;
+        DFHack::PluginManager * plug_mgr;
     };
 }

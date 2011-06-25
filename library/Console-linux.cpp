@@ -117,3 +117,9 @@ void Console::cursor(bool enable)
         dfout <<"\033[?25l";
     }
 }
+
+void Console::msleep (unsigned int msec)
+{
+    if (msec > 1000) sleep(msec/1000000);
+    usleep((msec % 1000000) * 1000);
+}

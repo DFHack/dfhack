@@ -30,6 +30,8 @@ distribution.
 #include <set>
 #include <cstdio>
 #include <cstring>
+#include <iterator>
+#include <sstream>
 using namespace std;
 
 #include "dfhack/Error.h"
@@ -37,85 +39,33 @@ using namespace std;
 #include "dfhack/Core.h"
 #include "dfhack/Console.h"
 #include "dfhack/VersionInfoFactory.h"
+#include "dfhack/PluginManager.h"
 #include "ModuleFactory.h"
 
 #include "dfhack/modules/Gui.h"
 #include "dfhack/modules/Vegetation.h"
 #include "dfhack/modules/Maps.h"
 #include "dfhack/modules/World.h"
-#include "dfhack/extra/rlutil.h"
 #include <stdio.h>
-#ifdef LINUX_BUILD
-    #include <dirent.h>
-    #include <errno.h>
-#else
-    #include "wdirent.h"
-#endif
 using namespace DFHack;
 
-static int getdir (string dir, vector<string> &files)
+void cheap_tokenise(string const& input, vector<string> &output)
 {
-    DIR *dp;
-    struct dirent *dirp;
-    if((dp  = opendir(dir.c_str())) == NULL)
-    {
-        dfout << "Error(" << errno << ") opening " << dir << endl;
-        return errno;
-    }
-    while ((dirp = readdir(dp)) != NULL) {
-    files.push_back(string(dirp->d_name));
-    }
-    closedir(dp);
-    return 0;
+    istringstream str(input);
+    istream_iterator<string> cur(str), end;
+    output.assign(cur, end);
 }
 
-
-int fIOthread(void * _core)
+struct IODATA
 {
-    Core * core = (Core *) _core;
-    
-#ifdef LINUX_BUILD
-    string path = core->p->getPath() + "/plugins/";
-    const char * searchstr = ".plug.so";
-#else
-    string path = core->p->getPath() + "\\plugins\\";
-    const char * searchstr = ".plug.dll";
-#endif
+    Core * core;
+    PluginManager * plug_mgr;
+};
 
-    vector <string> filez;
-    map <string, int (*)(Core *)> plugins;
-    getdir(path, filez);
-    const char * (*_PlugName)(void) = 0;
-    int (*_PlugRun)(Core *) = 0;
-    for(int i = 0; i < filez.size();i++)
-    {
-        if(strstr(filez[i].c_str(),searchstr))
-        {
-            string fullpath = path + filez[i];
-            DFLibrary * plug = OpenPlugin(fullpath.c_str());
-            if(!plug)
-            {
-                dfout << "Can't load plugin " << filez[i] << endl;
-                continue;
-            }
-            _PlugName = (const char * (*)()) LookupPlugin(plug, "plugin_name");
-            if(!_PlugName)
-            {
-                dfout << "Plugin " << filez[i] << " has no name." << endl;
-                ClosePlugin(plug);
-                continue;
-            }
-            _PlugRun = (int (*)(Core * c)) LookupPlugin(plug, "plugin_run");
-            if(!_PlugRun)
-            {
-                dfout << "Plugin " << filez[i] << " has no run function." << endl;
-                ClosePlugin(plug);
-                continue;
-            }
-            dfout << "Loaded plugin " << filez[i] << endl;
-            plugins[string(_PlugName())] = _PlugRun;
-        }
-    }
+int fIOthread(void * iodata)
+{
+    Core * core = ((IODATA*) iodata)->core;
+    PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
     fprintf(dfout_C,"DFHack is ready. Have a nice day! Type in '?' or 'help' for help.\n");
     //dfterm <<  << endl;
     int clueless_counter = 0;
@@ -132,10 +82,6 @@ int fIOthread(void * _core)
         if(command=="help" || command == "?")
         {
             dfout << "Available commands:" << endl;
-            for (map <string, int (*)(Core *)>::iterator iter = plugins.begin(); iter != plugins.end(); iter++)
-            {
-                dfout << iter->first << endl;
-            }
         }
         else if( command == "" )
         {
@@ -143,15 +89,26 @@ int fIOthread(void * _core)
         }
         else
         {
-            map <string, int (*)(Core *)>::iterator iter = plugins.find(command);
-            if(iter != plugins.end())
+            vector <string> parts;
+            cheap_tokenise(command,parts);
+            if(parts.size() == 0)
             {
-                iter->second(core);
+                clueless_counter++;
             }
             else
             {
-                dfout << "Invalid command." << endl;
-                clueless_counter ++;
+                string first = parts[0];
+                parts.erase(parts.begin());
+                command_result res = plug_mgr->InvokeCommand(first, parts);
+                if(res == CR_NOT_IMPLEMENTED)
+                {
+                    dfout << "Invalid command." << endl;
+                    clueless_counter ++;
+                }
+                else if(res == CR_FAILURE)
+                {
+                    dfout << "ERROR!" << endl;
+                }
             }
         }
         if(clueless_counter == 3)
@@ -166,6 +123,7 @@ Core::Core()
 {
     // init the console. This must be always the first step!
     con = new Console();
+    plug_mgr = 0;
     // find out what we are...
     vif = new DFHack::VersionInfoFactory("Memory.xml");
     p = new DFHack::Process(vif);
@@ -195,9 +153,13 @@ Core::Core()
     errorstate = false;
     // lock mutex
     SDL_mutexP(AccessMutex);
+    plug_mgr = new PluginManager(this);
     // look for all plugins, 
     // create IO thread
-    DFThread * IO = SDL_CreateThread(fIOthread, this);
+    IODATA temp;
+    temp.core = this;
+    temp.plug_mgr = plug_mgr;
+    DFThread * IO = SDL_CreateThread(fIOthread, (void *) &temp);
     // and let DF do its thing.
 };
 
@@ -230,8 +192,11 @@ int Core::Update()
 int Core::Shutdown ( void )
 {
     errorstate = 1;
-    // TODO:shutdown all plugins
-    
+    if(plug_mgr)
+    {
+        delete plug_mgr;
+        plug_mgr = 0;
+    }
     // invalidate all modules
     for(unsigned int i = 0 ; i < allModules.size(); i++)
     {

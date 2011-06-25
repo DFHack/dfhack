@@ -38,9 +38,15 @@ namespace  DFHack
     public:
         Console();
         ~Console();
+        /// Clear the console, along with its scrollback
         void clear();
+        /// Position cursor at x,y. 1,1 = top left corner
         void gotoxy(int x, int y);
+        /// Set color (ANSI color number)
         void color(int index);
+        /// Enable or disable the caret/cursor
         void cursor(bool enable = true);
+        /// Waits given number of milliseconds before continuing.
+        void msleep(unsigned int msec);
     };
 }

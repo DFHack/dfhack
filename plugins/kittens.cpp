@@ -1,16 +1,46 @@
 #include <dfhack/Core.h>
 #include <dfhack/Console.h>
 #include <dfhack/Export.h>
-#include <dfhack/extra/rlutil.h>
+#include <dfhack/PluginManager.h>
+#include <vector>
+#include <string>
+
+using std::vector;
+using std::string;
+using namespace DFHack;
+//FIXME: possible race conditions with calling kittens from the IO thread and shutdown from Core.
+bool shutdown_flag = false;
+bool final_flag = true;
+
+DFhackCExport command_result kittens (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
     return "kittens";
 }
 
-DFhackCExport int plugin_run (DFHack::Core * c)
+DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    DFHack::Console * con = c->con;
+    commands.clear();
+    commands.push_back(PluginCommand("kittens","Rainbow kittens. What else?",kittens));
+    commands.push_back(PluginCommand("kittanz","Guess what. More rainbow kittenz.",kittens));
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown ( Core * c )
+{
+    shutdown_flag = true;
+    while(!final_flag)
+    {
+        c->con->msleep(60);
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result kittens (Core * c, vector <string> & parameters)
+{
+    final_flag = false;
+    Console * con = c->con;
     const char * kittenz1 []=
     {
         "   ____",
@@ -28,6 +58,11 @@ DFhackCExport int plugin_run (DFHack::Core * c)
     int color = 1;
     while(1)
     {
+        if(shutdown_flag)
+        {
+            final_flag = true;
+            return CR_OK;
+        }
         con->color(color);
         int index = 0;
         const char * kit = kittenz1[index];
@@ -41,11 +76,9 @@ DFhackCExport int plugin_run (DFHack::Core * c)
             kit = kittenz1[index];
         }
         dfout.flush();
-        rlutil::msleep(60); // FIXME: replace!
-        con->clear();
+        con->msleep(60);
         color ++;
         if(color > 15)
             color = 1;
     }
-    return 0;
 }

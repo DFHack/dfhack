@@ -50,6 +50,7 @@ duthomhas::stdiobuf * stream_o = 0;
 
 HANDLE  g_hConsoleOut;                   // Handle to debug console
 HWND ConsoleWindow;
+WORD default_attributes;
 
 // FIXME: prime candidate for being a singleton... indeed.
 Console::Console()
@@ -68,6 +69,7 @@ Console::Console()
 
     // set the screen buffer to be big enough to let us scroll text
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);
+    default_attributes = coninfo.wAttributes;
     coninfo.dwSize.Y = MAX_CONSOLE_LINES;  // How many lines do you want to have in the console buffer
     SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coninfo.dwSize);
 
@@ -118,6 +120,13 @@ void Console::color(int index)
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, index);
 }
+
+void Console::reset_color( void )
+{
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole, default_attributes);
+}
+
 
 void Console::cursor(bool enable)
 {

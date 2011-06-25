@@ -66,6 +66,11 @@ int fIOthread(void * iodata)
 {
     Core * core = ((IODATA*) iodata)->core;
     PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
+    if(plug_mgr == 0)
+    {
+        dfout << "Something horrible happened to the plugin manager in Core's constructor..." << std::endl;
+        return 0;
+    }
     fprintf(dfout_C,"DFHack is ready. Have a nice day! Type in '?' or 'help' for help.\n");
     //dfterm <<  << endl;
     int clueless_counter = 0;
@@ -156,10 +161,11 @@ Core::Core()
     plug_mgr = new PluginManager(this);
     // look for all plugins, 
     // create IO thread
-    IODATA temp;
-    temp.core = this;
-    temp.plug_mgr = plug_mgr;
-    DFThread * IO = SDL_CreateThread(fIOthread, (void *) &temp);
+    IODATA *temp = new IODATA;
+    temp->core = this;
+    temp->plug_mgr = plug_mgr;
+    DFThread * IO = SDL_CreateThread(fIOthread, (void *) temp);
+    delete temp;
     // and let DF do its thing.
 };
 

@@ -44,6 +44,8 @@ namespace  DFHack
         void gotoxy(int x, int y);
         /// Set color (ANSI color number)
         void color(int index);
+        /// Reset color to default
+        void reset_color(void);
         /// Enable or disable the caret/cursor
         void cursor(bool enable = true);
         /// Waits given number of milliseconds before continuing.

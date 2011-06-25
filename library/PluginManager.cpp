@@ -119,7 +119,10 @@ Plugin::Plugin(Core * core, const std::string & file)
 Plugin::~Plugin()
 {
     if(loaded)
+    {
+        plugin_shutdown(&Core::getInstance());
         ClosePlugin(plugin_lib);
+    }
 }
 
 bool Plugin::isLoaded()
@@ -143,9 +146,10 @@ PluginManager::PluginManager(Core * core)
         if(hasEnding(filez[i],searchstr))
         {
             Plugin * p = new Plugin(core, path + filez[i]);
-            for(int j = 0; j < p->commands.size();j++)
+            Plugin & pr = *p;
+            for(int j = 0; j < pr.size();j++)
             {
-                commands[p->commands[j].name] = &p->commands[j];
+                commands[p->commands[j].name] = &pr[j];
             }
             all_plugins.push_back(p);
         }
@@ -154,28 +158,32 @@ PluginManager::PluginManager(Core * core)
 
 PluginManager::~PluginManager()
 {
-    
+    commands.clear();
+    for(int i = 0; i < all_plugins.size();i++)
+    {
+        delete all_plugins[i];
+    }
+    all_plugins.clear();
 }
+
 Plugin *PluginManager::getPluginByName (const std::string & name)
 {
-    
+    for(int i = 0; i < all_plugins.size(); i++)
+    {
+        if(name == all_plugins[i]->name)
+            return all_plugins[i];
+    }
+    return 0;
 }
+
+// FIXME: handle name collisions...
 command_result PluginManager::InvokeCommand( std::string & command, std::vector <std::string> & parameters)
 {
     Core * c = &Core::getInstance();
-    map <string, PluginCommand *>::iterator iter = commands.find(command);
+    map <string, const PluginCommand *>::iterator iter = commands.find(command);
     if(iter != commands.end())
     {
         return iter->second->function(c,parameters);
     }
     return CR_NOT_IMPLEMENTED;
 }
-/*
-for (map <string, int (*)(Core *)>::iterator iter = plugins.begin(); iter != plugins.end(); iter++)
-{
-    dfout << iter->first << endl;
-}
-*/
-/*
-
-*/

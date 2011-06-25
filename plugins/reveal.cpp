@@ -27,7 +27,6 @@ bool revealed = false;
 DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params);
 DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string> & params);
 DFhackCExport command_result revealtoggle(DFHack::Core * c, std::vector<std::string> & params);
-//DFhackCExport command_result revealclear(DFHack::Core * c, std::vector<std::string> & params);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -40,7 +39,6 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.push_back(PluginCommand("reveal","Reveal the map.",reveal));
     commands.push_back(PluginCommand("unreveal","Revert the map to its previous state.",unreveal));
     commands.push_back(PluginCommand("revealtoggle","Reveal/unreveal depending on state.",revealtoggle));
-    //commands.push_back(PluginCommand("revealclear","Reset the reveal tool.",revealclear));
     return CR_OK;
 }
 
@@ -68,7 +66,6 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
         return CR_FAILURE;
     }
 
-    dfout << "Revealing, please wait..." << std::endl;
     Maps->getSize(x_max,y_max,z_max);
     hidesaved.reserve(x_max * y_max * z_max);
     for(uint32_t x = 0; x< x_max;x++)
@@ -103,8 +100,7 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
     c->Resume();
     dfout << "Map revealed. The game has been paused for you." << std::endl;
     dfout << "Unpausing can unleash the forces of hell!" << std::endl;
-    dfout << "Saving will make this state permanent. Don't do it." << std::endl << std::endl;
-    dfout << "Run 'reveal' again to revert to previous state." << std::endl;
+    dfout << "Run 'unreveal' to revert to previous state." << std::endl;
     return CR_OK;
 }
 
@@ -139,7 +135,6 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
 
     // FIXME: add more sanity checks / MAP ID
 
-    dfout << "Unrevealing... please wait." << std::endl;
     for(size_t i = 0; i < hidesaved.size();i++)
     {
         hideblock & hb = hidesaved[i];
@@ -153,6 +148,7 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     // give back memory.
     hidesaved.clear();
     revealed = false;
+    dfout << "Map hidden!" << std::endl;
     c->Resume();
     return CR_OK;
 }

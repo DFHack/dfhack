@@ -61,6 +61,8 @@ DFhackCExport command_result kittens (Core * c, vector <string> & parameters)
         if(shutdown_flag)
         {
             final_flag = true;
+            c->con->reset_color();
+            dfout << std::endl << "MEOW!" << std::endl << std::flush;
             return CR_OK;
         }
         con->color(color);

@@ -76,6 +76,7 @@ const char * ANSI_LIGHTBLUE = "\033[01;34m";
 const char * ANSI_LIGHTMAGENTA = "\033[01;35m";
 const char * ANSI_LIGHTCYAN = "\033[01;36m";
 const char * ANSI_WHITE = "\033[01;37m";
+const char * RESETCOLOR = "\033[0m";
 
 const char * getANSIColor(const int c)
 {
@@ -105,6 +106,12 @@ void Console::color(int index)
 {
     dfout << getANSIColor(index);
 }
+
+void Console::reset_color( void )
+{
+    dfout << RESETCOLOR;
+}
+
 
 void Console::cursor(bool enable)
 {

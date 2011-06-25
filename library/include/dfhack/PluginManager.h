@@ -67,11 +67,14 @@ namespace DFHack
         Plugin(DFHack::Core* core, const std::string& file);
         ~Plugin();
         bool isLoaded ();
-        /*
-        bool Load ();
-        bool Unload ();
-        std::string Status ();
-        */
+        const PluginCommand& operator[] (std::size_t index)
+        {
+            return commands[index];
+        };
+        std::size_t size()
+        {
+            return commands.size();
+        }
     private:
         std::vector <PluginCommand> commands;
         std::string filename;
@@ -89,8 +92,19 @@ namespace DFHack
         ~PluginManager();
         Plugin *getPluginByName (const std::string & name);
         command_result InvokeCommand( std::string & command, std::vector <std::string> & parameters);
+        //FIXME: how do we deal with errors inside DF? Unhandled exceptions are deadly.
+        const Plugin* operator[] (std::size_t index)
+        {
+            if(index >= all_plugins.size())
+                return 0;
+            return all_plugins[index];
+        };
+        std::size_t size()
+        {
+            return all_plugins.size();
+        }
     private:
-        std::map <std::string, PluginCommand *> commands;
+        std::map <std::string, const PluginCommand *> commands;
         std::vector <Plugin *> all_plugins;
         std::string plugin_path;
     };

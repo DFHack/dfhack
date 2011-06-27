@@ -104,13 +104,15 @@ Plugin::Plugin(Core * core, const std::string & file)
     name = _PlugName();
     plugin_lib = plug;
     loaded = true;
-    dfout << "Found plugin " << name << endl;
+    //dfout << "Found plugin " << name << endl;
     if(plugin_init(core,commands) == CR_OK)
     {
+        /*
         for(int i = 0; i < commands.size();i++)
         {
             dfout << commands[i].name << " : " << commands[i].description << std::endl;
         }
+        */
     }
     else
     {
@@ -127,7 +129,7 @@ Plugin::~Plugin()
     }
 }
 
-bool Plugin::isLoaded()
+bool Plugin::isLoaded() const
 {
     return loaded;
 }

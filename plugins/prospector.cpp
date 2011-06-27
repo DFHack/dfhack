@@ -18,6 +18,9 @@ using namespace std;
 #include <dfhack/extra/termutil.h>
 #include <dfhack/Core.h>
 #include <dfhack/Console.h>
+#include <dfhack/PluginManager.h>
+
+using namespace DFHack;
 
 typedef std::map<int16_t, unsigned int> MatMap;
 typedef std::vector< pair<int16_t, unsigned int> > MatSorter;
@@ -26,49 +29,7 @@ typedef std::vector<DFHack::t_feature> FeatureList;
 typedef std::vector<DFHack::t_feature*> FeatureListPointer;
 typedef std::map<DFHack::DFCoord, FeatureListPointer> FeatureMap;
 typedef std::vector<DFHack::df_plant *> PlantList;
-/*
-bool parseOptions(int argc, char **argv, bool &showHidden, bool &showPlants,
-                  bool &showSlade, bool &showTemple)
-{
-    char c;
-    xgetopt opt(argc, argv, "apst");
-    opt.opterr = 0;
-    while ((c = opt()) != -1)
-    {
-        switch (c)
-        {
-        case 'a':
-            showHidden = true;
-            break;
-        case 'p':
-            showPlants = false;
-            break;
-        case 's':
-            showSlade = false;
-            break;
-        case 't':
-            showTemple = false;
-            break;
-        case '?':
-            switch (opt.optopt)
-            {
-            // For when we take arguments
-            default:
-                if (isprint(opt.optopt))
-                    std::cerr << "Unknown option -" << opt.optopt << "!"
-                            << std::endl;
-                else
-                    std::cerr << "Unknown option character " << (int) opt.optopt << "!"
-                            << std::endl;
-            }
-        default:
-            // Um.....
-            return false;
-        }
-    }
-    return true;
-}
-*/
+
 template<template <typename> class P = std::greater >
 struct compare_pair_second
 {
@@ -103,24 +64,35 @@ void printMats(MatMap &mat, std::vector<DFHack::t_matgloss> &materials)
 
     dfout << ">>> TOTAL = " << total << std::endl << std::endl;
 }
+DFhackCExport command_result prospector (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
     return "prospector";
 }
 
-DFhackCExport int plugin_run (DFHack::Core * c)
+DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    bool showHidden = true;
+    commands.clear();
+    commands.push_back(PluginCommand("prospector","Show stats of available raw resources. Use parameter 'all' to show hidden resources.",prospector));
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown ( Core * c )
+{
+    return CR_OK;
+}
+
+DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & parameters)
+{
+    bool showHidden = false;
     bool showPlants = true;
     bool showSlade = true;
     bool showTemple = true;
-/*
-    if (!parseOptions(argc, argv, showHidden, showPlants, showSlade, showTemple))
+    if(parameters.size() && parameters[0] == "all")
     {
-        return -1;
+        showHidden = true;
     }
-*/
     uint32_t x_max = 0, y_max = 0, z_max = 0;
     c->Suspend();
     DFHack::Maps *maps = c->getMaps();
@@ -128,7 +100,7 @@ DFhackCExport int plugin_run (DFHack::Core * c)
     {
         dfout << "Cannot get map info!" << std::endl;
         c->Resume();
-        return 1;
+        return CR_FAILURE;
     }
     maps->getSize(x_max, y_max, z_max);
     MapExtras::MapCache map(maps);
@@ -138,7 +110,7 @@ DFhackCExport int plugin_run (DFHack::Core * c)
     {
         dfout << "Unable to read inorganic material definitons!" << std::endl;
         c->Resume();
-        return 1;
+        return CR_FAILURE;
     }
     if (showPlants && !mats->ReadOrganicMaterials())
     {
@@ -378,5 +350,5 @@ DFhackCExport int plugin_run (DFHack::Core * c)
     maps->Finish();
     c->Resume();
     dfout << std::endl;
-    return 0;
+    return CR_OK;
 }

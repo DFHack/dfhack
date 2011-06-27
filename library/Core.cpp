@@ -47,6 +47,7 @@ using namespace std;
 #include "dfhack/modules/Maps.h"
 #include "dfhack/modules/World.h"
 #include <stdio.h>
+#include <iomanip>
 using namespace DFHack;
 
 void cheap_tokenise(string const& input, vector<string> &output)
@@ -86,7 +87,19 @@ int fIOthread(void * iodata)
         }
         if(command=="help" || command == "?")
         {
-            dfout << "Available commands:" << endl;
+            dfout << "Available commands" << endl;
+            dfout << "------------------" << endl;
+            for(int i = 0; i < plug_mgr->size();i++)
+            {
+                const Plugin * plug = (plug_mgr->operator[](i));
+                dfout << "Plugin " << plug->getName() << " :" << std::endl;
+                for (int j = 0; j < plug->size();j++)
+                {
+                    const PluginCommand & pcmd = (plug->operator[](j));
+                    dfout << setw(12) << pcmd.name << "| " << pcmd.description << endl;
+                }
+                dfout << endl;
+            }
         }
         else if( command == "" )
         {

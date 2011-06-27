@@ -66,14 +66,18 @@ namespace DFHack
     public:
         Plugin(DFHack::Core* core, const std::string& file);
         ~Plugin();
-        bool isLoaded ();
-        const PluginCommand& operator[] (std::size_t index)
+        bool isLoaded () const;
+        const PluginCommand& operator[] (std::size_t index) const
         {
             return commands[index];
         };
-        std::size_t size()
+        std::size_t size() const
         {
             return commands.size();
+        }
+        const std::string & getName() const
+        {
+            return name;
         }
     private:
         std::vector <PluginCommand> commands;

@@ -28,6 +28,9 @@ distribution.
 #include "dfhack/Export.h"
 #include "dfhack/FakeSDL.h"
 #include <vector>
+#include <map>
+#include <stdint.h>
+
 
 namespace DFHack
 {
@@ -49,6 +52,7 @@ namespace DFHack
     class VersionInfoFactory;
     class Console;
     class PluginManager;
+    class Core;
 
     DFLibrary * OpenPlugin (const char * filename);
     void * LookupPlugin (DFLibrary * plugin ,const char * function);
@@ -111,8 +115,6 @@ namespace DFHack
         bool errorstate;
         // mutex for access to DF
         DFMutex * AccessMutex;
-        // mutex for access to the Plugin storage
-        DFMutex * PluginMutex;
         // FIXME: shouldn't be kept around like this
         DFHack::VersionInfoFactory * vif;
         // Module storage

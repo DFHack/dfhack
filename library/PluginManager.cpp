@@ -76,6 +76,7 @@ Plugin::Plugin(Core * core, const std::string & file)
     plugin_init = 0;
     plugin_shutdown = 0;
     plugin_status = 0;
+    plugin_onupdate = 0;
     loaded = false;
     DFLibrary * plug = OpenPlugin(file.c_str());
     if(!plug)
@@ -98,6 +99,7 @@ Plugin::Plugin(Core * core, const std::string & file)
         return;
     }
     plugin_status = (command_result (*)(Core *, std::string &)) LookupPlugin(plug, "plugin_status");
+    plugin_onupdate = (command_result (*)(Core *)) LookupPlugin(plug, "plugin_onupdate");
     plugin_shutdown = (command_result (*)(Core *)) LookupPlugin(plug, "plugin_shutdown");
     name = _PlugName();
     plugin_lib = plug;
@@ -186,4 +188,16 @@ command_result PluginManager::InvokeCommand( std::string & command, std::vector 
         return iter->second->function(c,parameters);
     }
     return CR_NOT_IMPLEMENTED;
+}
+
+void PluginManager::OnUpdate( void )
+{
+    Core * c = &Core::getInstance();
+    for(int i = 0; i < all_plugins.size(); i++)
+    {
+        if(all_plugins[i]->plugin_onupdate)
+        {
+            all_plugins[i]->plugin_onupdate(c);
+        }
+    }
 }

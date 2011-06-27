@@ -42,6 +42,22 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     return CR_OK;
 }
 
+DFhackCExport command_result plugin_onupdate ( Core * c )
+{
+    // if the map is revealed and we're in fortress mode, force the game to pause.
+    if(revealed)
+    {
+        DFHack::World *World =c->getWorld();
+        t_gamemodes gm;
+        World->ReadGameMode(gm);
+        if(gm.game_mode == GM_Fort)
+        {
+            World->SetPauseState(true);
+        }
+    }
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
     return CR_OK;
@@ -58,6 +74,14 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
     c->Suspend();
     DFHack::Maps *Maps =c->getMaps();
     DFHack::World *World =c->getWorld();
+    t_gamemodes gm;
+    World->ReadGameMode(gm);
+    if(gm.game_mode != GM_Fort)
+    {
+        dfout << "Only in fortress mode." << std::endl;
+        c->Resume();
+        return CR_FAILURE;
+    }
     // init the map
     if(!Maps->Start())
     {
@@ -98,8 +122,8 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
     World->SetPauseState(true);
     revealed = true;
     c->Resume();
-    dfout << "Map revealed. The game has been paused for you." << std::endl;
-    dfout << "Unpausing can unleash the forces of hell!" << std::endl;
+    dfout << "Map revealed." << std::endl;
+    dfout << "Unpausing can unleash the forces of hell, so it has beed temporarily disabled!" << std::endl;
     dfout << "Run 'unreveal' to revert to previous state." << std::endl;
     return CR_OK;
 }
@@ -115,6 +139,14 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     c->Suspend();
     DFHack::Maps *Maps =c->getMaps();
     DFHack::World *World =c->getWorld();
+    t_gamemodes gm;
+    World->ReadGameMode(gm);
+    if(gm.game_mode != GM_Fort)
+    {
+        dfout << "Only in fortress mode." << std::endl;
+        c->Resume();
+        return CR_FAILURE;
+    }
     Maps = c->getMaps();
     if(!Maps->Start())
     {

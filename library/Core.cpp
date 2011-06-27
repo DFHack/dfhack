@@ -187,7 +187,8 @@ int Core::Update()
 {
     if(errorstate)
         return -1;
-    // do persistent stuff here
+    // notify all the plugins that a game tick is finished
+    plug_mgr->OnUpdate();
     SDL_mutexV(AccessMutex);
         // other threads can claim the mutex here and use DFHack.
         // NO CODE SHOULD EVER BE PLACED HERE

@@ -84,6 +84,7 @@ namespace DFHack
         command_result (*plugin_init)(Core *, std::vector <PluginCommand> &);
         command_result (*plugin_status)(Core *, std::string &);
         command_result (*plugin_shutdown)(Core *);
+        command_result (*plugin_onupdate)(Core *);
     };
     class DFHACK_EXPORT PluginManager
     {
@@ -92,6 +93,7 @@ namespace DFHack
         ~PluginManager();
         Plugin *getPluginByName (const std::string & name);
         command_result InvokeCommand( std::string & command, std::vector <std::string> & parameters);
+        void OnUpdate( void );
         //FIXME: how do we deal with errors inside DF? Unhandled exceptions are deadly.
         const Plugin* operator[] (std::size_t index)
         {

@@ -13,14 +13,100 @@ using namespace std;
 #define DFHACK_WANT_TILETYPES 1
 #include <DFHack.h>
 #include <dfhack/extra/MapExtras.h>
+#include <xgetopt.h>
 #include <dfhack/extra/termutil.h>
 
+bool parseOptions(int argc, char **argv, bool &showBlock, bool &showDesig,
+                  bool &showOccup, bool &showTile, bool &showMisc)
+{
+    // With no options set, show everything.
+    showBlock = true;
+    showDesig = true;
+    showOccup = true;
+    showTile  = true;
+    showMisc  = true;
+
+    bool _showBlock = false;
+    bool _showDesig = false;
+    bool _showOccup = false;
+    bool _showTile  = false;
+    bool _showMisc  = false;
+
+    char c;
+    xgetopt opt(argc, argv, "bdotm");
+    opt.opterr = 0;
+    while ((c = opt()) != -1)
+    {
+        switch (c)
+        {
+        case 'b':
+            _showBlock = true;
+            break;
+        case 'd':
+            _showDesig = true;
+            break;
+        case 'o':
+            _showOccup = true;
+            break;
+        case 't':
+            _showTile = true;
+            break;
+        case 'm':
+            _showMisc = true;
+            break;
+
+        case '?':
+            switch (opt.optopt)
+            {
+            // For when we take arguments
+            default:
+                if (isprint(opt.optopt))
+                    std::cerr << "Unknown option -" << opt.optopt << "!"
+                            << std::endl;
+                else
+                    std::cerr << "Unknown option character " << (int) opt.optopt << "!"
+                            << std::endl;
+            }
+        default:
+            // Um.....
+            return false;
+        }
+    }
+
+    // If any options set, show only those requested via options.
+    if(_showBlock || _showDesig || _showOccup || _showTile || _showMisc)
+    {
+        showBlock = false;
+        showDesig = false;
+        showOccup = false;
+        showTile  = false;
+        showMisc  = false;
+
+        showBlock = _showBlock;
+        showDesig = _showDesig;
+        showOccup = _showOccup;
+        showTile  = _showTile;
+        showMisc  = _showMisc;
+    }
+
+    return true;
+}
+
+
 using namespace DFHack;
-int main (int numargs, const char ** args)
+int main (int numargs, char ** args)
 {
     bool temporary_terminal = TemporaryTerminal();
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context *DF = DFMgr.getSingleContext();
+
+    bool showBlock, showDesig, showOccup, showTile, showMisc;
+
+    if (!parseOptions(numargs, args, showBlock, showDesig, showOccup,
+                      showTile, showMisc))
+    {
+        return -1;
+    }
 
     BEGIN_PROBE:
     try
@@ -73,7 +159,12 @@ int main (int numargs, const char ** args)
 
         int32_t cursorX, cursorY, cursorZ;
         Gui->getCursorCoords(cursorX,cursorY,cursorZ);
-        if(cursorX != -30000)
+        if(cursorX == -30000)
+        {
+            std::cerr << "No cursor; place cursor over tile to probe."
+                << endl;
+        }
+        else
         {
             DFCoord cursor (cursorX,cursorY,cursorZ);
 
@@ -86,121 +177,160 @@ int main (int numargs, const char ** args)
             mapblock40d & block = b->raw;
             if(b)
             {
-                printf("block addr: 0x%x\n", block.origin);
+                printf("block addr: 0x%x\n\n", block.origin);
+
+                if (showBlock)
+                {
+                    printf("block flags:\n");
+                    print_bits<uint32_t>(block.blockflags.whole,std::cout);
+                    std::cout << endl << endl;
+                }
+
                 int16_t tiletype = mc.tiletypeAt(cursor);
                 naked_designation &des = block.designation[tileX][tileY].bits;
 
                 uint32_t designato = block.origin + designatus + (tileX * 16 + tileY) * sizeof(t_designation);
                 uint32_t occupr = block.origin + occup + (tileX * 16 + tileY) * sizeof(t_occupancy);
 
-                printf("designation offset: 0x%x\n", designato);
-                print_bits<uint32_t>(block.designation[tileX][tileY].whole,std::cout);
-                std::cout << endl;
-
-                printf("occupancy offset: 0x%x\n", occupr);
-                print_bits<uint32_t>(block.occupancy[tileX][tileY].whole,std::cout);
-                std::cout << endl;
-
-                // tiletype
-                std::cout <<"tiletype: " << tiletype;
-                if(tileName(tiletype))
-                    std::cout << " = " << tileName(tiletype) << std::endl;
-
-                DFHack::TileShape shape = tileShape(tiletype);
-                DFHack::TileMaterial material = tileMaterial(tiletype);
-                DFHack::TileSpecial special = tileSpecial(tiletype);
-                printf("%-10s: %4d %s\n","Class"    ,shape,   TileShapeString[ shape ]);
-                printf("%-10s: %4d %s\n","Material" ,material,TileMaterialString[ material ]);
-                printf("%-10s: %4d %s\n","Special"  ,special, TileSpecialString[ special ]);
-                printf("%-10s: %4d\n"   ,"Variant"  ,tileVariant(tiletype));
-                printf("%-10s: %s\n"    ,"Direction",tileDirection(tiletype).getStr());
-
-                std::cout << std::endl;
-                std::cout <<"temperature1: " << mc.temperature1At(cursor) << " U" << std::endl;
-                std::cout <<"temperature2: " << mc.temperature2At(cursor) << " U" << std::endl;
-
-                // biome, geolayer
-                std::cout << "biome: " << des.biome << std::endl;
-                std::cout << "geolayer: " << des.geolayer_index << std::endl;
-                int16_t base_rock = mc.baseMaterialAt(cursor);
-                if(base_rock != -1)
+                if(showDesig)
                 {
-                    cout << "Layer material: " << dec << base_rock;
-                    if(hasmats)
-                        cout << " / " << Materials->inorganic[base_rock].id << " / " << Materials->inorganic[base_rock].name << endl;
-                    else
-                        cout << endl;
+                    printf("designation offset: 0x%x\n", designato);
+                    print_bits<uint32_t>(block.designation[tileX][tileY].whole,
+                                         std::cout);
+                    std::cout << endl << endl;
                 }
-                int16_t vein_rock = mc.veinMaterialAt(cursor);
-                if(vein_rock != -1)
-                {
-                    cout << "Vein material (final): " << dec << vein_rock;
-                    if(hasmats)
-                        cout << " / " << Materials->inorganic[vein_rock].id << " / " << Materials->inorganic[vein_rock].name << endl;
-                    else
-                        cout << endl;
-                }
-                // liquids
-                if(des.flow_size)
-                {
-                    if(des.liquid_type == DFHack::liquid_magma)
-                        std::cout <<"magma: ";
-                    else std::cout <<"water: ";
-                    std::cout << des.flow_size << std::endl;
-                }
-                if(des.flow_forbid)
-                    std::cout << "flow forbid" << std::endl;
-                if(des.pile)
-                    std::cout << "stockpile?" << std::endl;
-                if(des.rained)
-                    std::cout << "rained?" << std::endl;
-                if(des.smooth)
-                    std::cout << "smooth?" << std::endl;
-                printf("biomestuffs: 0x%x\n", block.origin + biomus);
 
-                #define PRINT_FLAG( X )  printf("%-16s= %c\n", #X , ( des.X ? 'Y' : ' ' ) )
-                PRINT_FLAG( hidden );
-                PRINT_FLAG( light );
-                PRINT_FLAG( skyview );
-                PRINT_FLAG( subterranean );
-                PRINT_FLAG( water_table );
-                PRINT_FLAG( rained );
-
-                DFCoord pc(blockX, blockY);
-                
-                if(have_features)
+                if(showOccup)
                 {
-                    t_feature * local = 0;
-                    t_feature * global = 0;
-                    Maps->ReadFeatures(&(b->raw),&local,&global);
-                    PRINT_FLAG( feature_local );
-                    if(local)
+                    printf("occupancy offset: 0x%x\n", occupr);
+                    print_bits<uint32_t>(block.occupancy[tileX][tileY].whole,
+                                         std::cout);
+                    std::cout << endl << endl;
+                }
+
+                if(showTile)
+                {
+                    // tiletype
+                    std::cout <<"tiletype: " << tiletype;
+                    if(tileName(tiletype))
+                        std::cout << " = " << tileName(tiletype) << std::endl;
+
+                    DFHack::TileShape shape = tileShape(tiletype);
+                    DFHack::TileMaterial material = tileMaterial(tiletype);
+                    DFHack::TileSpecial special = tileSpecial(tiletype);
+                    printf("%-10s: %4d %s\n","Class"    ,shape,
+                           TileShapeString[ shape ]);
+                    printf("%-10s: %4d %s\n","Material" ,
+                           material,TileMaterialString[ material ]);
+                    printf("%-10s: %4d %s\n","Special"  ,
+                           special, TileSpecialString[ special ]);
+                    printf("%-10s: %4d\n"   ,"Variant"  ,
+                           tileVariant(tiletype));
+                    printf("%-10s: %s\n"    ,"Direction",
+                           tileDirection(tiletype).getStr());
+
+                    std::cout << std::endl;
+                }
+
+                if(showMisc)
+                {
+                    std::cout <<"temperature1: " << mc.temperature1At(cursor)
+                        << " U" << std::endl;
+                    std::cout <<"temperature2: " << mc.temperature2At(cursor)
+                        << " U" << std::endl;
+
+                    // biome, geolayer
+                    std::cout << "biome: " << des.biome << std::endl;
+                    std::cout << "geolayer: " << des.geolayer_index
+                        << std::endl;
+                    int16_t base_rock = mc.baseMaterialAt(cursor);
+                    if(base_rock != -1)
                     {
-                        printf("%-16s", "");
-                        printf("  %4d", block.local_feature);
-                        printf(" (%2d)", local->type);
-                        printf(" addr 0x%X ", local->origin);
-                        printf(" %s\n", sa_feature(local->type));
+                        cout << "Layer material: " << dec << base_rock;
+                        if(hasmats)
+                            cout << " / " << Materials->inorganic[base_rock].id
+                                << " / "
+                                << Materials->inorganic[base_rock].name
+                                << endl;
+                        else
+                            cout << endl;
                     }
-                    PRINT_FLAG( feature_global );
-                    if(global)
+                    int16_t vein_rock = mc.veinMaterialAt(cursor);
+                    if(vein_rock != -1)
                     {
-                        printf("%-16s", "");
-                        printf("  %4d", block.global_feature);
-                        printf(" (%2d)", global->type);
-                        printf(" %s\n", sa_feature(global->type));
+                        cout << "Vein material (final): " << dec << vein_rock;
+                        if(hasmats)
+                            cout << " / " << Materials->inorganic[vein_rock].id
+                                << " / "
+                                << Materials->inorganic[vein_rock].name
+                                << endl;
+                        else
+                            cout << endl;
                     }
+                    // liquids
+                    if(des.flow_size)
+                    {
+                        if(des.liquid_type == DFHack::liquid_magma)
+                            std::cout <<"magma: ";
+                        else std::cout <<"water: ";
+                        std::cout << des.flow_size << std::endl;
+                    }
+                    if(des.flow_forbid)
+                        std::cout << "flow forbid" << std::endl;
+                    if(des.pile)
+                        std::cout << "stockpile?" << std::endl;
+                    if(des.rained)
+                        std::cout << "rained?" << std::endl;
+                    if(des.smooth)
+                        std::cout << "smooth?" << std::endl;
+                    printf("biomestuffs: 0x%x\n", block.origin + biomus);
+
+#define PRINT_FLAG( X )  printf("%-16s= %c\n", #X , ( des.X ? 'Y' : ' ' ) )
+                    PRINT_FLAG( hidden );
+                    PRINT_FLAG( light );
+                    PRINT_FLAG( skyview );
+                    PRINT_FLAG( subterranean );
+                    PRINT_FLAG( water_table );
+                    PRINT_FLAG( rained );
+
+                    DFCoord pc(blockX, blockY);
+
+                    if(have_features)
+                    {
+                        t_feature * local = 0;
+                        t_feature * global = 0;
+                        Maps->ReadFeatures(&(b->raw),&local,&global);
+                        PRINT_FLAG( feature_local );
+                        if(local)
+                        {
+                            printf("%-16s", "");
+                            printf("  %4d", block.local_feature);
+                            printf(" (%2d)", local->type);
+                            printf(" addr 0x%X ", local->origin);
+                            printf(" %s\n", sa_feature(local->type));
+                        }
+                        PRINT_FLAG( feature_global );
+                        if(global)
+                        {
+                            printf("%-16s", "");
+                            printf("  %4d", block.global_feature);
+                            printf(" (%2d)", global->type);
+                            printf(" %s\n", sa_feature(global->type));
+                        }
+                    }
+                    else
+                    {
+                        PRINT_FLAG( feature_local );
+                        PRINT_FLAG( feature_global );
+                    }
+#undef PRINT_FLAG
+                    cout << "local feature idx: " << block.local_feature
+                        << endl;
+                    cout << "global feature idx: " << block.global_feature
+                        << endl;
+                    cout << "mystery: " << block.mystery << endl;
+                    std::cout << std::endl;
                 }
-                else
-                {
-                    PRINT_FLAG( feature_local );
-                    PRINT_FLAG( feature_global );
-                }
-                #undef PRINT_FLAG
-                cout << "local feature idx: " << block.local_feature << endl;
-                cout << "global feature idx: " << block.global_feature << endl;
-                cout << "mystery: " << block.mystery << endl;
-                std::cout << std::endl;
             }
         }
     }

@@ -6,7 +6,12 @@
 using namespace std;
 
 #include <DFHack.h>
+#include <dfhack/extra/MapExtras.h>
+#include <xgetopt.h>
 #include <dfhack/modules/Gui.h>
+
+typedef std::vector<DFHack::t_feature*> FeatureListPointer;
+typedef std::map<DFHack::DFCoord, FeatureListPointer> FeatureMap;
 
 #ifdef LINUX_BUILD
 #include <unistd.h>
@@ -23,6 +28,39 @@ void waitmsec (int delay)
 #endif
 #include <dfhack/extra/termutil.h>
 
+/*
+ * Anything that might reveal Hell is unsafe.
+ */
+bool isSafe(uint32_t x, uint32_t y, uint32_t z, DFHack::Maps *Maps,
+            MapExtras::MapCache &cache, FeatureMap localFeatures)
+{
+    DFHack::t_feature *blockFeatureLocal = NULL;
+
+    DFHack::DFCoord blockCoord(x, y);
+    MapExtras::Block *b = cache.BlockAt(DFHack::DFCoord(x, y, z));
+
+    uint16_t index = b->raw.local_feature;
+    FeatureMap::const_iterator it = localFeatures.find(blockCoord);
+    if (it != localFeatures.end())
+    {
+        FeatureListPointer features = it->second;
+
+        if (index != -1 && index < features.size())
+        {
+            blockFeatureLocal = features[index];
+        }
+    }
+
+    if (blockFeatureLocal == NULL)
+        return true;
+
+    // Adamantine tubes and temples lead to Hell, and Hell *is* Hell.
+    if (blockFeatureLocal->type != DFHack::feature_Other)
+        return false;
+
+    return true;
+}
+
 struct hideblock
 {
     uint32_t x;
@@ -31,8 +69,39 @@ struct hideblock
     uint8_t hiddens [16][16];
 };
 
-int main (void)
+int main (int argc, char *argv[])
 {
+    bool doSafe = false;
+
+    char c;
+    xgetopt opt(argc, argv, "s");
+    opt.opterr = 0;
+
+    while ((c = opt()) != -1)
+    {
+        switch (c)
+        {
+        case 's':
+            doSafe = true;
+            break;
+        case '?':
+            switch (opt.optopt)
+            {
+            // For when we take arguments
+            default:
+                if (isprint(opt.optopt))
+                    std::cerr << "Unknown option -" << opt.optopt << "!"
+                            << std::endl;
+                else
+                    std::cerr << "Unknown option character " << (int) opt.optopt << "!"
+                            << std::endl;
+            }
+        default:
+            // Um.....
+            return 1;
+        }
+    }
+
     bool temporary_terminal = TemporaryTerminal();
     uint32_t x_max,y_max,z_max;
     DFHack::designations40d designations;
@@ -52,6 +121,7 @@ int main (void)
     }
     DFHack::Maps *Maps =DF->getMaps();
     DFHack::World *World =DF->getWorld();
+
     // walk the map, save the hide bits, reveal.
     cout << "Pausing..." << endl;
 
@@ -64,6 +134,8 @@ int main (void)
     waitmsec(1000);
     DF->Suspend();
 
+    cout << "Revealing, please wait..." << endl;
+
     // init the map
     if(!Maps->Start())
     {
@@ -73,19 +145,36 @@ int main (void)
         return 1;
     }
 
-    cout << "Revealing, please wait..." << endl;
+    MapExtras::MapCache cache(Maps);
+    FeatureMap localFeatures;
+
+    if(doSafe && !Maps->ReadLocalFeatures(localFeatures))
+    {
+        std::cerr << "Unable to read local features; can't reveal map "
+                  << "safely" << std::endl;
+        if(temporary_terminal)
+            cin.ignore();
+        return 1;
+    }
 
     Maps->getSize(x_max,y_max,z_max);
     vector <hideblock> hidesaved;
 
-    for(uint32_t x = 0; x< x_max;x++)
+    // We go from the top z-level down, stopping as soon as we encounter
+    // something that might lead to Hell, so the player can unpause without
+    // spawning demons.
+    bool quit = false;
+    for(uint32_t z = z_max - 1; z > 0 && !quit;z--)
     {
-        for(uint32_t y = 0; y< y_max;y++)
+        for(uint32_t y = 0; y < y_max;y++)
         {
-            for(uint32_t z = 0; z< z_max;z++)
+            for(uint32_t x = 0; x < x_max;x++)
             {
                 if(Maps->isValidBlock(x,y,z))
                 {
+                    if (doSafe && !isSafe(x, y, z, Maps, cache, localFeatures))
+                        quit = true;
+
                     hideblock hb;
                     hb.x = x;
                     hb.y = y;
@@ -108,7 +197,10 @@ int main (void)
     // FIXME: force game pause here!
     DF->Detach();
     cout << "Map revealed. The game has been paused for you." << endl;
-    cout << "Unpausing can unleash the forces of hell!" << endl << endl;
+    if (doSafe)
+        cout << "Unpausing *WON'T* reveal hell." << endl << endl;
+    else
+        cout << "Unpausing can unleash the forces of hell!" << endl << endl;
     cout << "Press any key to unreveal." << endl;
     cout << "Close to keep the map revealed !!FOREVER!!" << endl;
     cin.ignore();

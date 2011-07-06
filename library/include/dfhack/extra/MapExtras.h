@@ -35,7 +35,7 @@ namespace MapExtras
 void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d & mb, DFHack::t_blockmaterials & materials)
 {
     memset(materials,-1,sizeof(materials));
-    vector <DFHack::t_vein> veins;
+    std::vector <DFHack::t_vein> veins;
     m->ReadVeins(bcoord.x,bcoord.y,bcoord.z,&veins);
     //iterate through block rows
     for(uint32_t j = 0;j<16;j++)
@@ -59,7 +59,7 @@ void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d &
     }
 }
 
-void SquashRocks ( vector< vector <uint16_t> > * layerassign, DFHack::mapblock40d & mb, DFHack::t_blockmaterials & materials)
+void SquashRocks ( std::vector< std::vector <uint16_t> > * layerassign, DFHack::mapblock40d & mb, DFHack::t_blockmaterials & materials)
 {
     // get the layer materials
     for(uint32_t xx = 0;xx<16;xx++)
@@ -81,7 +81,7 @@ void SquashRocks ( vector< vector <uint16_t> > * layerassign, DFHack::mapblock40
 class Block
 {
     public:
-    Block(DFHack::Maps *_m, DFHack::DFCoord _bcoord, vector< vector <uint16_t> > * layerassign = 0)
+    Block(DFHack::Maps *_m, DFHack::DFCoord _bcoord, std::vector< std::vector <uint16_t> > * layerassign = 0)
     {
         m = _m;
         dirty_designations = false;
@@ -260,7 +260,7 @@ class MapCache
     {
         if(!valid)
             return 0;
-        map <DFHack::DFCoord, Block*>::iterator iter = blocks.find(blockcoord);
+        std::map <DFHack::DFCoord, Block*>::iterator iter = blocks.find(blockcoord);
         if(iter != blocks.end())
         {
             return (*iter).second;
@@ -423,7 +423,7 @@ class MapCache
     }
     bool WriteAll()
     {
-        map<DFHack::DFCoord, Block *>::iterator p;
+        std::map<DFHack::DFCoord, Block *>::iterator p;
         for(p = blocks.begin(); p != blocks.end(); p++)
         {
             p->second->Write();
@@ -432,7 +432,7 @@ class MapCache
     }
     void trash()
     {
-        map<DFHack::DFCoord, Block *>::iterator p;
+        std::map<DFHack::DFCoord, Block *>::iterator p;
         for(p = blocks.begin(); p != blocks.end(); p++)
         {
             delete p->second;
@@ -447,9 +447,9 @@ class MapCache
     uint32_t x_tmax;
     uint32_t y_tmax;
     uint32_t z_max;
-    vector< vector <uint16_t> > layerassign;
+    std::vector< std::vector <uint16_t> > layerassign;
     DFHack::Maps * Maps;
-    map<DFHack::DFCoord, Block *> blocks;
+    std::map<DFHack::DFCoord, Block *> blocks;
 };
 }
 #endif

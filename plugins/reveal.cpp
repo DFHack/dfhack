@@ -177,7 +177,8 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
     }
     c->Resume();
     dfout << "Map revealed." << std::endl;
-    dfout << "Unpausing can unleash the forces of hell, so it has beed temporarily disabled!" << std::endl;
+    if(!no_hell)
+        dfout << "Unpausing can unleash the forces of hell, so it has beed temporarily disabled!" << std::endl;
     dfout << "Run 'unreveal' to revert to previous state." << std::endl;
     return CR_OK;
 }

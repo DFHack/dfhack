@@ -153,8 +153,8 @@ bool World::ReadGameMode(t_gamemodes& rd)
 {
     if(d->Inited && d->StartedMode)
     {
-        rd.control_mode = (ControlMode) d->owner->readDWord( d->controlmode_offset);
-        rd.game_mode = (GameMode) d->owner->readDWord(d->gamemode_offset);
+        rd.g_mode = (GameMode) d->owner->readDWord( d->controlmode_offset);
+        rd.g_type = (GameType) d->owner->readDWord(d->gamemode_offset);
         return true;
     }
     return false;
@@ -163,8 +163,8 @@ bool World::WriteGameMode(const t_gamemodes & wr)
 {
     if(d->Inited && d->StartedMode)
     {
-        d->owner->writeDWord(d->gamemode_offset,wr.game_mode);
-        d->owner->writeDWord(d->controlmode_offset,wr.control_mode);
+        d->owner->writeDWord(d->gamemode_offset,wr.g_mode);
+        d->owner->writeDWord(d->controlmode_offset,wr.g_type);
         return true;
     }
     return false;

@@ -33,6 +33,7 @@ distribution.
 #include "dfhack/Export.h"
 #include "dfhack/Module.h"
 #include "dfhack/modules/Vegetation.h"
+#include <vector>
 
 /**
  * \defgroup grp_maps Maps module and its types
@@ -518,6 +519,99 @@ namespace DFHack
         int32_t mystery;
     } mapblock40d;
 
+    // A raw DF block.
+    // one of the vector is the 'effects' vector. another should be item id/index vector
+    struct df_block
+    {
+        // FIXME: wrap the flag array!
+        unsigned char * flagarray;
+        unsigned long flagarray_slots;
+        // how to handle this virtual mess?
+        std::vector <void *> block_events;
+        // no idea what these are
+        long unk1;
+        long unk2;
+        long unk3;
+        // feature indexes
+        signed long local_feature;  // local feature index, -1 = no local feature
+        signed long global_feature; // global feature index, -1 = no global feature
+        signed long mystery; // no idea. couldn't manage to catch its use in debugger.
+        // more mysterious numbers
+        long unk4;
+        long unk5;
+        long unk6;
+        std::vector <unsigned long> items; // item related - probly item IDs
+        std::vector <void *> effects;
+        signed long unk7; // -1 most of the time, another index?
+        unsigned long unk8; // again, index?
+        std::vector<df_plant *> plants;
+        unsigned short map_x;
+        unsigned short map_y;
+        unsigned short map_z;
+        unsigned short region_x;
+        unsigned short region_y;
+        unsigned short tiletype[16][16]; // weird 2-byte alignment here
+        t_designation designation[16][16];
+        t_occupancy occupancy[16][16];
+        // following is uncertain, but total length should be fixed.
+        unsigned char unk9[16][16];
+        unsigned long pathfinding[16][16];
+        unsigned short unk10[16][16];
+        unsigned short unk11[16][16];
+        unsigned short unk12[16][16];
+        // end uncertain section
+        unsigned short temperature_1[16][16];
+        unsigned short temperature_2[16][16];
+        // no idea again. needs research...
+        unsigned short unk13[16][16];
+        unsigned short unk14[16][16];
+        unsigned char region_offset[9];
+    };
+    template <typename T>
+    struct df_array
+    {
+        inline const T& operator[] (uint32_t index)
+        {
+            return array[index];
+        };
+    private:
+        T array[];
+    };
+    template <typename T>
+    struct df_2darray
+    {
+        inline const df_array<T>& operator[] (uint32_t index)
+        {
+            return array[index];
+        };
+    private:
+        df_array <T> * array;
+    };
+    template <typename T>
+    struct df_3darray
+    {
+        inline const df_2darray<T>& operator[] (uint32_t index)
+        {
+            return array[index];
+        };
+    private:
+        df_2darray <T> * array;
+    };
+    struct map_data
+    {
+        df_3darray<df_block *> map_data;
+        std::vector <void *> unk1;
+        void * unk2;
+        uint32_t x_size_blocks;
+        uint32_t y_size_blocks;
+        uint32_t z_size_blocks;
+        uint32_t x_size;
+        uint32_t y_size;
+        uint32_t z_size;
+        int32_t  x_area_offset;
+        int32_t  y_area_offset;
+        int32_t  z_area_offset;
+    };
     /**
      * The Maps module
      * \ingroup grp_modules

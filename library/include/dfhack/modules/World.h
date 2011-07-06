@@ -46,39 +46,38 @@ namespace DFHack
         RAINING,
         SNOWING
     };
-    /**
-     * \ingroup grp_world
-     */
-    enum ControlMode
-    {
-        CM_Managing = 0,
-        CM_DirectControl = 1,
-        CM_Kittens = 2, // not sure yet, but I think it will involve kittens
-        CM_Menu = 3,
-        CM_MAX = 3
-    };
+
     /**
      * \ingroup grp_world
      */
     enum GameMode
     {
-        GM_Fort = 0,
-        GM_Adventurer = 1,
-        GM_Legends = 2, 
-        GM_Menu = 3,
-        GM_Arena = 4,
-        GM_Arena_Assumed = 5,
-        GM_Kittens = 6,
-        GM_Worldgen = 7,
-        GM_MAX = 7,
+        GAMEMODE_DWARF,
+        GAMEMODE_ADVENTURE,
+        GAMEMODENUM,
+        GAMEMODE_NONE
+    };
+    /**
+     * \ingroup grp_world
+     */
+    enum GameType
+    {
+        GAMETYPE_DWARF_MAIN,
+        GAMETYPE_ADVENTURE_MAIN,
+        GAMETYPE_VIEW_LEGENDS,
+        GAMETYPE_DWARF_RECLAIM,
+        GAMETYPE_DWARF_ARENA,
+        GAMETYPE_ADVENTURE_ARENA,
+        GAMETYPENUM,
+        GAMETYPE_NONE
     };
     /**
      * \ingroup grp_world
      */
     struct t_gamemodes
     {
-        ControlMode control_mode;
-        GameMode game_mode;
+        GameMode g_mode;
+        GameType g_type;
     };
     class DFContextShared;
     /**

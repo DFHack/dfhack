@@ -189,10 +189,12 @@ void Core::Suspend()
 
 void Core::Resume()
 {
+    /*
     for(unsigned int i = 0 ; i < allModules.size(); i++)
     {
         allModules[i]->OnResume();
     }
+    */
     SDL_mutexV(AccessMutex);
 }
 

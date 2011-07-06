@@ -50,7 +50,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
         DFHack::World *World =c->getWorld();
         t_gamemodes gm;
         World->ReadGameMode(gm);
-        if(gm.game_mode == GM_Fort)
+        if(gm.g_mode == GAMEMODE_DWARF)
         {
             World->SetPauseState(true);
         }
@@ -76,7 +76,7 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
     DFHack::World *World =c->getWorld();
     t_gamemodes gm;
     World->ReadGameMode(gm);
-    if(gm.game_mode != GM_Fort)
+    if(gm.g_mode != GAMEMODE_DWARF)
     {
         dfout << "Only in fortress mode." << std::endl;
         c->Resume();
@@ -141,7 +141,7 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     DFHack::World *World =c->getWorld();
     t_gamemodes gm;
     World->ReadGameMode(gm);
-    if(gm.game_mode != GM_Fort)
+    if(gm.g_mode != GAMEMODE_DWARF)
     {
         dfout << "Only in fortress mode." << std::endl;
         c->Resume();

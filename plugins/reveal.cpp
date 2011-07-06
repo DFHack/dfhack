@@ -11,6 +11,29 @@
 
 using namespace DFHack;
 
+/*
+ * Anything that might reveal Hell is unsafe.
+ */
+bool isSafe(uint32_t x, uint32_t y, uint32_t z, DFHack::Maps *Maps)
+{
+    DFHack::t_feature *local_feature = NULL;
+    DFHack::t_feature *global_feature = NULL;
+    // get features of block
+    // error -> obviously not safe to manipulate
+    if(!Maps->ReadFeatures(x,y,z,&local_feature,&global_feature))
+    {
+        return false;
+    }
+    // Adamantine tubes and temples lead to Hell
+    if (local_feature && local_feature->type != DFHack::feature_Other)
+        return false;
+    // And Hell *is* Hell.
+    if (global_feature && global_feature->type == DFHack::feature_Underworld)
+        return false;
+    // otherwise it's safe.
+    return true;
+}
+
 struct hideblock
 {
     uint32_t x;
@@ -22,7 +45,15 @@ struct hideblock
 // the saved data. we keep map size to check if things still match
 uint32_t x_max, y_max, z_max;
 std::vector <hideblock> hidesaved;
-bool revealed = false;
+
+enum revealstate
+{
+    NOT_REVEALED,
+    REVEALED,
+    SAFE_REVEALED
+};
+
+revealstate revealed = NOT_REVEALED;
 
 DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params);
 DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string> & params);
@@ -36,7 +67,7 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("reveal","Reveal the map.",reveal));
+    commands.push_back(PluginCommand("reveal","Reveal the map. 'reveal safe' will keep hell hidden.",reveal));
     commands.push_back(PluginCommand("unreveal","Revert the map to its previous state.",unreveal));
     commands.push_back(PluginCommand("revealtoggle","Reveal/unreveal depending on state.",revealtoggle));
     return CR_OK;
@@ -45,7 +76,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 DFhackCExport command_result plugin_onupdate ( Core * c )
 {
     // if the map is revealed and we're in fortress mode, force the game to pause.
-    if(revealed)
+    if(revealed == REVEALED)
     {
         DFHack::World *World =c->getWorld();
         t_gamemodes gm;
@@ -66,11 +97,18 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params)
 {
     DFHack::designations40d designations;
-    if(revealed)
+    bool no_hell = false;
+    if(params[0] == "safe")
+    {
+        no_hell = true;
+    }
+
+    if(revealed != NOT_REVEALED)
     {
         dfout << "Map is already revealed or this is a different map." << std::endl;
         return CR_FAILURE;
     }
+
     c->Suspend();
     DFHack::Maps *Maps =c->getMaps();
     DFHack::World *World =c->getWorld();
@@ -82,10 +120,16 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
         c->Resume();
         return CR_FAILURE;
     }
-    // init the map
     if(!Maps->Start())
     {
         dfout << "Can't init map." << std::endl;
+        c->Resume();
+        return CR_FAILURE;
+    }
+
+    if(no_hell && !Maps->StartFeatures())
+    {
+        dfout << "Unable to read local features; can't reveal map safely" << std::endl;
         c->Resume();
         return CR_FAILURE;
     }
@@ -100,6 +144,9 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
             {
                 if(Maps->isValidBlock(x,y,z))
                 {
+                    // in 'no-hell'/'safe' mode, don't reveal blocks with hell and adamantine
+                    if (no_hell && !isSafe(x, y, z, Maps))
+                        continue;
                     hideblock hb;
                     hb.x = x;
                     hb.y = y;
@@ -119,8 +166,15 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
             }
         }
     }
-    World->SetPauseState(true);
-    revealed = true;
+    if(no_hell)
+    {
+        revealed = SAFE_REVEALED;
+    }
+    else
+    {
+        revealed = REVEALED;
+        World->SetPauseState(true);
+    }
     c->Resume();
     dfout << "Map revealed." << std::endl;
     dfout << "Unpausing can unleash the forces of hell, so it has beed temporarily disabled!" << std::endl;
@@ -179,7 +233,7 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     }
     // give back memory.
     hidesaved.clear();
-    revealed = false;
+    revealed = NOT_REVEALED;
     dfout << "Map hidden!" << std::endl;
     c->Resume();
     return CR_OK;

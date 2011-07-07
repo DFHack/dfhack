@@ -189,18 +189,45 @@ void usage(int argc, const char * argv[])
         << "Display options:" << endl
         << "-q              : Suppress \"Press any key to continue\" at program termination" << endl
         << "-v              : Increase verbosity" << endl
-        << "-c creature     : Show/modify this creature type instead of dwarfes ('all' to show all creatures)" << endl
-        << "-1/--summary    : Only display one line per creature" << endl
+        << endl
+
+        << "Choosing which creatures to display and/or modify "
+        << "(note that all criteria" << endl << "must match, so adding "
+        << " more narrows things down):" << endl
         << "-i id1[,id2,...]: Only show/modify creature with this id" << endl
+        << "-c creature     : Show/modify this creature type instead of dwarves" << endl
+        << "                  ('all' to show all creatures)" << endl
         << "-nn/--nonicks   : Only show/modify creatures with no custom nickname (migrants)" << endl
         << "--nicks         : Only show/modify creatures with custom nickname" << endl
-        << "-ll/--listlabors: List available labors" << endl
         << "--showdead      : Also show/modify dead creatures" << endl
+        << "--type          : Show/modify all creatures of given type" << endl
+        << "                : Can be used multiple times" << endl
+        << "  types:" << endl
+        << "    * dead: all dead creatures" << endl
+        << "    * demon: all demons" << endl
+        << "    * diplomat: all diplomats" << endl
+        << "    * FB: all forgotten beasts" << endl
+        << "    * female: all female creatures" << endl
+        << "    * male: all male creatures" << endl
+        << "    * merchants: all merchants (including pack animals)" << endl
+        << "    * neuter: all neuter creatuers" << endl
+        << "    * pregnant: all pregnant creatures" << endl
+        << "    * tame: all tame creatues" << endl
+        << "    * wild: all wild creatures" << endl
+
+        << endl
+
+        << "What information to display:" << endl
+        << "-saf            : Show all flags of a creature" << endl
         << "--showallflags  : Show all flags of a creature" << endl
+        << "-ll/--listlabors: List available labors" << endl
         << "-ss             : Show social skills" << endl
         << "+sh             : Hide hauler labors" << endl
+        << "-1/--summary    : Only display one line per creature" << endl
+
         << endl
-        << "Modifying options:" << endl
+
+        << "Options to modify selected creatures:" << endl
         << "-al <n>         : Add labor <n> to creature" << endl
         << "-rl <n>         : Remove labor <n> from creature" << endl
         << "-ras            : Remove all skills from creature (i.e. set them to zero)" << endl
@@ -212,6 +239,9 @@ void usage(int argc, const char * argv[])
         // Disabling mood doesn't work as intented
         << "--setmood <n>   : Set mood to n (-1 = no mood, max=4, buggy!)" << endl
         << "--kill          : Kill creature(s) (may need to be called multiple times)" << endl
+        << "--tame          : Tames animals, recruits intelligent creatures." << endl
+        << "--slaugher      : Mark a creature for slaughter, even sentients" << endl
+        << "--butcher       : Same as --slaugher" << endl
         // Doesn't seem to work
         //<< "--revive        : Attempt to revive creature(s) (remove dead and killed flag)" << endl
         // Setting happiness doesn't work really, because hapiness is recalculated
@@ -249,6 +279,9 @@ void usage(int argc, const char * argv[])
         << endl
         << "Make Urist, Stodir and Ingish miners:" << endl
         << argv[0] << " -i 31,42,77 -al 0" << endl
+        << endl
+        << "Make all demons friendly:" << endl
+        << argv[0] << " --type demon --tame" << endl
         ;
         if (quiet == false) {
             cout << "Press any key to continue" << endl;
@@ -413,6 +446,8 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
         printf(", Job: %s", job.c_str());
         printf(", Happiness: %d", creature.happiness);
         printf("\n");
+        printf("Origin: %p\n", creature.origin);
+        printf("Civ #: %d\n", creature.civ);
     }
 
     if((creature.mood != NO_MOOD) && (creature.mood<=MAX_MOOD))
@@ -486,6 +521,7 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
         DFHack::t_creaturflags1 f1 = creature.flags1;
         DFHack::t_creaturflags2 f2 = creature.flags2;
 
+        if(f1.bits.dead){cout << "Flag: dead" << endl; }
         if(f1.bits.had_mood){cout<<toCaps("Flag: had_mood") << endl; }
         if(f1.bits.marauder){cout<<toCaps("Flag: marauder") << endl; }
         if(f1.bits.drowning){cout<<toCaps("Flag: drowning") << endl; }
@@ -574,17 +610,181 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
     cout << endl;
 }
 
+class creature_filter
+{
+public:
+
+    enum sex_filter
+    {
+        SEX_FEMALE = 0,
+        SEX_MALE   = 1,
+        SEX_ANY    = 254, // Our magin number for ignoring sex.
+        SEX_NEUTER = 255
+    };
+
+    bool dead;
+    bool demon;
+    bool diplomat;
+    bool find_nonicks;
+    bool find_nicks;
+    bool forgotten_beast;
+    bool merchant;
+    bool pregnant;
+    bool tame;
+    bool wild;
+
+    sex_filter sex;
+
+    string creature_type;
+    std::vector<int> creature_id;
+
+    #define DEFAULT_CREATURE_STR "Default"
+
+    creature_filter()
+    {
+        // By default we only select dwarves, except that if we use the
+        // --type option we want to default to everyone.  So we start out
+        // with a special string, and if remains unchanged after all
+        // the options have been processed we turn it to DWARF.
+        creature_type   = DEFAULT_CREATURE_STR;
+
+        dead            = false;
+        demon           = false;
+        diplomat        = false;
+        find_nonicks    = false;
+        find_nicks      = false;
+        forgotten_beast = false;
+        merchant        = false;
+        pregnant        = false;
+        sex             = SEX_ANY;
+        tame            = false;
+        wild            = false;
+    }
+
+    // If the creature type is still the default, then change it to allow
+    // for all creatures.  If the creature type has been explicitly set,
+    // then don't alter it.
+    void defaultTypeToAll()
+    {
+        if (creature_type == DEFAULT_CREATURE_STR)
+            creature_type = "";
+    }
+
+    // If the creature type is still the default, change it to DWARF
+    void defaultTypeToDwarf()
+    {
+        if (creature_type == DEFAULT_CREATURE_STR)
+            creature_type = "Dwarf";
+    }
+
+    void process_type(string type)
+    {
+        type = toCaps(type);
+
+        // If we're going by type, then by default all species are
+        // permitted.
+        defaultTypeToAll();
+
+        if (type == "Dead")
+        {
+            dead     = true;
+            showdead = true;
+        }
+        else if (type == "Demon")
+            demon = true;
+        else if (type == "Diplomat")
+            diplomat = true;
+        else if (type == "Fb" || type == "Beast")
+            forgotten_beast = true;
+        else if (type == "Merchant")
+            merchant = true;
+        else if (type == "Pregnant")
+            pregnant = true;
+        else if (type == "Tame")
+            tame = true;
+        else if (type == "Wild")
+            wild = true;
+        else if (type == "Male")
+            sex = SEX_MALE;
+        else if (type == "Female")
+            sex = SEX_FEMALE;
+        else if (type == "Neuter")
+            sex = SEX_NEUTER;
+        else
+        {
+            cerr << "ERROR: Unknown type '" << type << "'" << endl;
+        }
+    }
+
+    void doneProcessingOptions()
+    {
+        string temp = toCaps(creature_type);
+        creature_type = temp;
+
+        defaultTypeToDwarf();
+    }
+
+    bool creatureMatches(const DFHack::t_creature & creature,
+                         uint32_t creature_idx)
+    {
+        // A list of ids overrides everything else.
+        if(find_int(creature_id, creature_idx))
+            return true;
+
+        // If it's not a list of ids, it has not match all given criteria.
+
+        const DFHack::t_creaturflags1 &f1 = creature.flags1;
+        const DFHack::t_creaturflags2 &f2 = creature.flags2;
+
+        if(f1.bits.dead && !showdead)
+            return false;
+
+        bool hasnick = (creature.name.nickname[0] != '\0');
+        if(hasnick && find_nonicks)
+            return false;
+        if(!hasnick && find_nicks)
+            return false;
+
+        string race_name = string(Materials->raceEx[creature.race].rawname);
+
+        if(!creature_type.empty() && creature_type != toCaps(race_name))
+            return false;
+
+        if(dead && !f1.bits.dead)
+            return false;
+        if(demon && !f2.bits.underworld)
+            return false;
+        if(diplomat && !f1.bits.diplomat)
+            return false;
+        if(forgotten_beast && !f2.bits.visitor_uninvited)
+            return false;
+        if(merchant && !f1.bits.merchant)
+            return false;
+        if(pregnant && creature.pregnancy_timer == 0)
+            return false;
+        if (sex != SEX_ANY && creature.sex != (uint8_t) sex)
+            return false;
+        if(tame && !f1.bits.tame)
+            return false;
+
+        if(wild && !f2.bits.roaming_wilderness_population_source &&
+           !f2.bits.roaming_wilderness_population_source_not_a_map_feature)
+        {
+            return false;
+        }
+
+        return true;
+    }
+};
+
 int main (int argc, const char* argv[])
 {
     // let's be more useful when double-clicked on windows
 #ifndef LINUX_BUILD
     quiet = false;
 #endif
+    creature_filter filter;
 
-    string creature_type = "Dwarf";
-    std::vector<int> creature_id;
-    bool find_nonicks = false;
-    bool find_nicks = false;
     bool remove_skills = false;
     bool remove_civil_skills = false;
     bool remove_military_skills = false;
@@ -603,6 +803,8 @@ int main (int argc, const char* argv[])
     int set_mood_n = NOT_SET;
     bool list_labors = false;
     bool force_massdesignation = false;
+    bool tame_creature = false;
+    bool slaughter_creature = false;
 
     if (argc == 1) {
         usage(argc, argv);
@@ -651,7 +853,7 @@ int main (int argc, const char* argv[])
         {
             showdead = true;
         }
-        else if(arg_cur == "--showallflags")
+        else if(arg_cur == "--showallflags" || arg_cur == "-saf")
         {
             showallflags = true;
         }
@@ -744,15 +946,15 @@ int main (int argc, const char* argv[])
         }
         else if(arg_cur == "-nn" || arg_cur == "--nonicks")
         {
-            find_nonicks = true;
+            filter.find_nonicks = true;
         }
         else if(arg_cur == "--nicks")
         {
-            find_nicks = true;
+            filter.find_nicks = true;
         }
         else if(arg_cur == "-c" && i < argc-1)
         {
-            creature_type = argv[i+1];
+            filter.creature_type = argv[i+1];
             i++;
         }
         else if(arg_cur == "-i" && i < argc-1)
@@ -760,14 +962,23 @@ int main (int argc, const char* argv[])
             std::stringstream ss(argv[i+1]);
             int num;
             while (ss >> num) {
-                creature_id.push_back(num);
+                filter.creature_id.push_back(num);
                 ss.ignore(1);
             }
 
-            creature_type = ""; // if -i is given, match all creatures
+            filter.creature_type = ""; // if -i is given, match all creatures
             showdead = true;
             i++;
         }
+        else if(arg_cur == "--type" && i < argc-1)
+        {
+            filter.process_type(arg_next);
+            i++;
+        }
+        else if (arg_cur == "--tame")
+            tame_creature = true;
+        else if (arg_cur == "--slaugher" || arg_cur == "--butcher")
+            slaughter_creature = true;
         else
         {
             if (arg_cur != "-h") {
@@ -778,6 +989,8 @@ int main (int argc, const char* argv[])
             return 1;
         }
     }
+
+    filter.doneProcessingOptions();
 
     DFHack::ContextManager DFMgr("Memory.xml");
     DFHack::Context* DF;
@@ -866,20 +1079,7 @@ int main (int argc, const char* argv[])
             DFHack::t_creature creature;
             Creatures->ReadCreature(creature_idx,creature);
             /* Check if we want to display/change this creature or skip it */
-            bool hasnick = (creature.name.nickname[0] != '\0');
-
-            if (
-                    // Check for -i <num> and -c <type>
-                    (NULL != find_int(creature_id, creature_idx)
-                     || toCaps(string(Materials->raceEx[creature.race].rawname)) == toCaps(creature_type)
-                     || "All" == toCaps(creature_type))
-                    // Check for -nn
-                    && ((find_nonicks == true && hasnick == false)
-                        || (find_nicks == true && hasnick == true)
-                        || (find_nicks == false && find_nonicks == false))
-                    && (find_nonicks == false || creature.name.nickname[0] == '\0')
-                    && (showdead == true || !creature.flags1.bits.dead)
-               )
+            if(filter.creatureMatches(creature, creature_idx))
             {
                 printCreature(DF,creature,creature_idx);
                 addrs.push_back(creature.origin);
@@ -892,16 +1092,20 @@ int main (int argc, const char* argv[])
                         || revive_creature
                         || set_happiness
                         || set_mood
+                        || tame_creature || slaughter_creature
                         );
 
-                if (toCaps(creature_type) == "Dwarf" 
+                if (toCaps(filter.creature_type) == "Dwarf" 
                         && (creature.profession == PROFESSION_CHILD || creature.profession == PROFESSION_BABY))
                 {
                     dochange = false;
                 }
 
                 bool allow_massdesignation =
-                    creature_id.size()==0 || toCaps(creature_type) != "Dwarf" || find_nonicks == true || force_massdesignation;
+                    filter.creature_id.size()==0 ||
+                    toCaps(filter.creature_type) != "Dwarf" ||
+                    filter.find_nonicks == true ||
+                    force_massdesignation;
                 if (dochange == true && allow_massdesignation == false)
                 {
                     cout
@@ -1094,6 +1298,62 @@ int main (int argc, const char* argv[])
                             } else {
                                 cout << "Error writing labors." << endl;
                             }
+                        }
+
+                        if (tame_creature)
+                        {
+                            bool tame = true;
+
+                            DFHack::t_creaturflags1 f1 = creature.flags1;
+                            DFHack::t_creaturflags2 f2 = creature.flags2;
+
+                            // Site residents are intelligent, so don't
+                            // tame them.
+                            if (f2.bits.resident)
+                                tame = false;
+
+                            f1.bits.diplomat          = false;
+                            f1.bits.merchant          = false;
+                            f2.bits.resident          = false;
+                            f2.bits.underworld        = false;
+                            f2.bits.visitor_uninvited = false;
+                            f2.bits.roaming_wilderness_population_source = false;
+                            f2.bits.roaming_wilderness_population_source_not_a_map_feature = false;
+
+                            // Creatures which already belong to a civ might
+                            // be intelligent, so don't tame them.
+                            if (creature.civ == -1)
+                                f1.bits.tame = tame;
+
+                            if (!Creatures->WriteFlags(creature_idx,
+                                                       f1.whole, f2.whole))
+                            {
+                                cout << "Error writing creature flags!" << endl;
+                            }
+
+                            int32_t civ = Creatures->GetDwarfCivId();
+                            if (!Creatures->WriteCiv(creature_idx, civ))
+                            {
+                                cout << "Error writing creature civ!" << endl;
+                            }
+                            creature.flags1 = f1;
+                            creature.flags2 = f2;
+                        }
+
+                        if (slaughter_creature)
+                        {
+                            DFHack::t_creaturflags1 f1 = creature.flags1;
+                            DFHack::t_creaturflags2 f2 = creature.flags2;
+
+                            f2.bits.slaughter = true;
+
+                            if (!Creatures->WriteFlags(creature_idx,
+                                                       f1.whole, f2.whole))
+                            {
+                                cout << "Error writing creature flags!" << endl;
+                            }
+                            creature.flags1 = f1;
+                            creature.flags2 = f2;
                         }
                     }
                     else

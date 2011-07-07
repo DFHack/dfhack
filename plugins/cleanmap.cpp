@@ -11,9 +11,6 @@ using std::vector;
 using std::string;
 using namespace DFHack;
 
-const uint32_t water_idx = 6;
-const uint32_t mud_idx = 12;
-
 DFhackCExport command_result cleanmap (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
@@ -35,6 +32,9 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 DFhackCExport command_result cleanmap (Core * c, vector <string> & parameters)
 {
+    const uint32_t water_idx = 6;
+    const uint32_t mud_idx = 12;
+
     bool snow = false;
     bool mud = false;
     for(int i = 0; i < parameters.size();i++)
@@ -57,8 +57,6 @@ DFhackCExport command_result cleanmap (Core * c, vector <string> & parameters)
     uint32_t x_max,y_max,z_max;
     Mapz->getSize(x_max,y_max,z_max);
 
-    uint8_t zeroes [16][16] = {{0}};
-    DFHack::occupancies40d occ;
     // walk the map
     for(uint32_t x = 0; x< x_max;x++)
     {

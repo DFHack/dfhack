@@ -46,7 +46,7 @@ namespace DFHack
         RAINING,
         SNOWING
     };
-
+    typedef unsigned char weather_map [5][5];
     /**
      * \ingroup grp_world
      */
@@ -88,7 +88,7 @@ namespace DFHack
     class DFHACK_EXPORT World : public Module
     {
         public:
-
+        weather_map * wmap;
         World();
         ~World();
         bool Start();

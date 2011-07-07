@@ -75,6 +75,7 @@ World::World()
     Core & c = Core::getInstance();
     d = new Private;
     d->owner = c.p;
+    wmap = 0;
 
     OffsetGroup * OG_World = c.vinfo->getGroup("World");
     try
@@ -94,6 +95,7 @@ World::World()
     try
     {
         d->weather_offset = OG_World->getAddress( "current_weather" );
+        wmap = (weather_map *) d->weather_offset;
         d->StartedWeather = true;
     }
     catch(Error::All &){};

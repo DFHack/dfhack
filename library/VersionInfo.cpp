@@ -973,7 +973,7 @@ void VersionInfo::setClassChild (t_class * parent, const char * name, const char
 }
 
 
-// FIXME: stupid. we need a better container
+// FIXME: This in now DEPRECATED!
 bool VersionInfo::resolveObjectToClassID(const uint32_t address, int32_t & classid)
 {
     uint32_t vtable = d->p->readDWord(address);
@@ -990,7 +990,8 @@ bool VersionInfo::resolveObjectToClassID(const uint32_t address, int32_t & class
     else// couldn't find?
     {
         // we set up the class for the first time
-        string classname = d->p->readClassName(vtable);
+        //FIXME: use actual pointers everywhere.
+        string classname = d->p->readClassName((void*)vtable);
         d->classIDs[vtable] = cl = setClass(classname.c_str(),vtable);
     }
     // and isn't a multi-class
@@ -1027,7 +1028,7 @@ bool VersionInfo::resolveObjectToClassID(const uint32_t address, int32_t & class
 
 
 //ALERT: doesn't care about multiclasses
-bool VersionInfo::resolveClassnameToVPtr(const string classname, uint32_t & vptr)
+bool VersionInfo::resolveClassnameToVPtr(const string classname, void * & vptr)
 {
     // FIXME: another stupid search.
     for(uint32_t i = 0;i< d->classes.size();i++)
@@ -1035,7 +1036,7 @@ bool VersionInfo::resolveClassnameToVPtr(const string classname, uint32_t & vptr
         //if(classes[i].)
         if(d->classes[i]->classname == classname) // got class
         {
-            vptr = d->classes[i]->vtable;
+            vptr = (void *) d->classes[i]->vtable;
             return true;
         }
     }

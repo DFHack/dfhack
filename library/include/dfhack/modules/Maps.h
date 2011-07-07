@@ -145,34 +145,32 @@ namespace DFHack
         uint32_t origin;
     };
 
+    struct t_virtual
+    {
+        void * vptr;
+    };
     /**
      * mineral vein object - bitmap with a material type
      * \ingroup grp_maps
      */
-    struct t_vein
+    struct t_vein : public t_virtual
     {
-        uint32_t vtable;
         /// index into the inorganic material vector
         int32_t type;
         /// bit mask describing how the vein maps to the map block
         /// assignment[y] & (1 << x) describes the tile (x, y) of the block
         int16_t assignment[16];
         uint32_t flags;
-        /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
-        uint32_t address_of;
     };
 
     /**
      * stores what tiles should appear when the ice melts - bitmap of material types
      * \ingroup grp_maps
      */
-    struct t_frozenliquidvein
+    struct t_frozenliquidvein : public t_virtual
     {
-        uint32_t vtable;
         /// a 16x16 array of the original tile types
         int16_t tiles[16][16];
-        /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
-        uint32_t address_of;
     };
     /**
      * \ingroup grp_maps
@@ -192,9 +190,8 @@ namespace DFHack
      * \ingroup grp_maps
      * @see PrintSplatterType
      */
-    struct t_spattervein
+    struct t_spattervein : public t_virtual
     {
-        uint32_t vtable;
         /// generic material.
         uint16_t mat1;
         /// possibly alignment artifact
@@ -208,37 +205,29 @@ namespace DFHack
         uint16_t matter_state;
         /// 16x16 array of covering 'intensity'
         uint8_t intensity[16][16];
-        /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
-        uint32_t address_of;
     };
     /**
      * a 'grass vein' defines the grass coverage of a map block
      * bitmap of density (max = 100) with plant material type
      * \ingroup grp_maps
      */
-    struct t_grassvein
+    struct t_grassvein : public t_virtual
     {
-        uint32_t vtable;
         /// material vector index
         uint32_t material;
         /// 16x16 array of covering 'intensity'
         uint8_t intensity[16][16];
-        /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
-        uint32_t address_of;
     };
     /**
      * defines the world constructions present. The material member is a mystery.
      * \ingroup grp_maps
      */
-    struct t_worldconstruction
+    struct t_worldconstruction : public t_virtual
     {
-        uint32_t vtable;
         /// material vector index
         uint32_t material;
         /// 16x16 array of bits
         uint16_t assignment[16];
-        /// this is NOT part of the structure, but an address of it as seen by DFhack.
-        uint32_t address_of;
     };
 
     /**
@@ -452,6 +441,7 @@ namespace DFHack
         /// rest of the flags is completely unknown
         unsigned int unk_2: 28;
         // there's a possibility that this flags field is shorter than 32 bits
+        // FIXME: yes, it's a crazy dynamically sized array of flags. DERP.
     };
 
     /**
@@ -488,7 +478,7 @@ namespace DFHack
      * array of 16 biome indexes valid for the block
      * \ingroup grp_maps
      */
-    typedef uint8_t biome_indices40d [16];
+    typedef uint8_t biome_indices40d [9];
     /**
      * 16x16 array of temperatures
      * \ingroup grp_maps
@@ -527,7 +517,7 @@ namespace DFHack
         unsigned char * flagarray;
         unsigned long flagarray_slots;
         // how to handle this virtual mess?
-        std::vector <void *> block_events;
+        std::vector <t_virtual *> block_events;
         // no idea what these are
         long unk1;
         long unk2;
@@ -570,36 +560,37 @@ namespace DFHack
     template <typename T>
     struct df_array
     {
-        inline const T& operator[] (uint32_t index)
+        inline T& operator[] (uint32_t index)
         {
             return array[index];
         };
-    private:
-        T array[];
+        T * array;
     };
     template <typename T>
     struct df_2darray
     {
-        inline const df_array<T>& operator[] (uint32_t index)
+        inline df_array<T>& operator[] (uint32_t index)
         {
             return array[index];
         };
-    private:
         df_array <T> * array;
     };
     template <typename T>
     struct df_3darray
     {
-        inline const df_2darray<T>& operator[] (uint32_t index)
+        inline df_2darray<T>& operator[] (uint32_t index)
         {
             return array[index];
         };
-    private:
+        inline bool operator! ()
+        {
+            return !array;
+        }
         df_2darray <T> * array;
     };
     struct map_data
     {
-        df_3darray<df_block *> map_data;
+        df_3darray<df_block *> map;
         std::vector <void *> unk1;
         void * unk2;
         uint32_t x_size_blocks;
@@ -620,6 +611,8 @@ namespace DFHack
     class DFHACK_EXPORT Maps : public Module
     {
         public:
+        // the map data of DF, as we know it.
+        map_data * mdata;
         
         Maps();
         ~Maps();
@@ -724,7 +717,7 @@ namespace DFHack
         /**
          * Get the address of a block or 0 if block is not valid
          */
-        uint32_t getBlockPtr (uint32_t blockx, uint32_t blocky, uint32_t blockz);
+        df_block * getBlockPtr (uint32_t blockx, uint32_t blocky, uint32_t blockz);
 
         /// read the whole map block at block coords (see DFTypes.h for the block structure)
         bool ReadBlock40d(uint32_t blockx, uint32_t blocky, uint32_t blockz, mapblock40d * buffer);
@@ -763,11 +756,11 @@ namespace DFHack
 
         /// block event reading - mineral veins, what's under ice, blood smears and mud
         bool ReadVeins(uint32_t x, uint32_t y, uint32_t z,
-                       std::vector<t_vein>* veins,
-                       std::vector<t_frozenliquidvein>* ices = 0,
-                       std::vector<t_spattervein>* splatter = 0,
-                       std::vector<t_grassvein>* grass = 0,
-                       std::vector<t_worldconstruction>* constructions = 0
+                       std::vector<t_vein *>* veins,
+                       std::vector<t_frozenliquidvein *>* ices = 0,
+                       std::vector<t_spattervein *>* splatter = 0,
+                       std::vector<t_grassvein *>* grass = 0,
+                       std::vector<t_worldconstruction *>* constructions = 0
                       );
         /// read all plants in this block
         bool ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<df_plant *>*& plants);

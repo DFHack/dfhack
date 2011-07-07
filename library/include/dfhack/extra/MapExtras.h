@@ -35,7 +35,7 @@ namespace MapExtras
 void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d & mb, DFHack::t_blockmaterials & materials)
 {
     memset(materials,-1,sizeof(materials));
-    std::vector <DFHack::t_vein> veins;
+    std::vector <DFHack::t_vein *> veins;
     m->ReadVeins(bcoord.x,bcoord.y,bcoord.z,&veins);
     //iterate through block rows
     for(uint32_t j = 0;j<16;j++)
@@ -48,9 +48,9 @@ void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d &
             {
                 for(int i = (int) veins.size() - 1; i >= 0;i--)
                 {
-                    if(!!(((1 << k) & veins[i].assignment[j]) >> k))
+                    if(!!(((1 << k) & veins[i]->assignment[j]) >> k))
                     {
-                        materials[k][j] = veins[i].type;
+                        materials[k][j] = veins[i]->type;
                         i = -1;
                     }
                 }

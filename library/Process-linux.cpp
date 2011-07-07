@@ -79,9 +79,10 @@ Process::Process(VersionInfoFactory * known_versions)
     }
 }
 
-string Process::doReadClassName (uint32_t vptr)
+string Process::doReadClassName (void * vptr)
 {
-    int typeinfo = Process::readDWord(vptr - 0x4);
+    //FIXME: BAD!!!!!
+    int typeinfo = Process::readDWord((uint32_t)vptr - 0x4);
     int typestring = Process::readDWord(typeinfo + 0x4);
     string raw = readCString(typestring);
     size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers

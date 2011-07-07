@@ -373,7 +373,7 @@ ItemDesc::ItemDesc(uint32_t VTable, Process *p)
 
     this->vtable = VTable;
     this->p = p;
-    this->className = p->readClassName(VTable).substr(5);
+    this->className = p->readClassName((void *) VTable).substr(5);
     this->className.resize(this->className.size()-2);
 
     this->hasDecoration = false;
@@ -573,7 +573,7 @@ bool Items::readItemRefs(const dfh_item &item, const ClassNameCheck &classname, 
     for (uint32_t i=0; i<p_refs.size(); i++)
     {
         uint32_t vtbl = d->owner->readDWord(p_refs[i]);
-        if (classname(d->owner, vtbl))
+        if (classname(d->owner, (void *) vtbl))
             values.push_back(int32_t(d->owner->readDWord(p_refs[i] + 4)));
     }
 
@@ -587,7 +587,7 @@ bool Items::removeItemOwner(dfh_item &item, Creatures *creatures)
     for (uint32_t i=0; i<p_refs.size(); i++)
     {
         uint32_t vtbl = d->owner->readDWord(p_refs[i]);
-        if (!d->isOwnerRefClass(d->owner, vtbl)) continue;
+        if (!d->isOwnerRefClass(d->owner, (void *) vtbl)) continue;
 
         int32_t oid = d->owner->readDWord(p_refs[i]+4);
         int32_t ix = creatures->FindIndexById(oid);

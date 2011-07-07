@@ -228,11 +228,11 @@ namespace DFHack
             }
 
             /// get class name of an object with rtti/type info
-            std::string doReadClassName(uint32_t vptr);
+            std::string doReadClassName(void * vptr);
 
-            std::string readClassName(uint32_t vptr)
+            std::string readClassName(void * vptr)
             {
-                std::map<uint32_t, std::string>::iterator it = classNameCache.find(vptr);
+                std::map<void *, std::string>::iterator it = classNameCache.find(vptr);
                 if (it != classNameCache.end())
                     return it->second;
                 return classNameCache[vptr] = doReadClassName(vptr);
@@ -274,13 +274,13 @@ namespace DFHack
         bool identified;
         uint32_t my_pid;
         uint32_t base;
-        std::map<uint32_t, std::string> classNameCache;
+        std::map<void *, std::string> classNameCache;
     };
 
     class DFHACK_EXPORT ClassNameCheck
     {
         std::string name;
-        mutable uint32_t vptr;
+        mutable void * vptr;
     public:
         ClassNameCheck() : vptr(0) {};
         ClassNameCheck(std::string _name) : name(_name), vptr(0) {};
@@ -288,7 +288,7 @@ namespace DFHack
         {
             name = b.name; vptr = b.vptr; return *this;
         }
-        bool operator() (Process *p, uint32_t ptr) const {
+        bool operator() (Process *p, void * ptr) const {
             if (vptr == 0 && p->readClassName(ptr) == name)
                 vptr = ptr;
             return (vptr && vptr == ptr);

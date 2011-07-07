@@ -183,7 +183,7 @@ namespace DFHack
         * Get a vptr from a classname. Can fail if the type is not in the cache
         * limited to normal classes, variable-dependent types will resolve to the base class
         */
-        bool resolveClassnameToVPtr ( const std::string classname, uint32_t & vptr );
+        bool resolveClassnameToVPtr ( const std::string classname, void * & vptr );
 
         /**
         * Get a classname from a previous classID. Can fail if the type is not in the cache (you use bogus classID)

@@ -145,6 +145,7 @@ OPTION(BUILD_DFHACK_DOXYGEN "Create doxygen documentation for developers" ON)
 OPTION(BUILD_DFHACK_SUPPORTED "Build the supported tools." ON)
 OPTION(BUILD_DFHACK_EXAMPLES "Build example tools" OFF)
 OPTION(BUILD_DFHACK_PLAYGROUND "Build tools from the playground folder" OFF)
+OPTION(BUILD_NO_CURSES "Don't build tools requiring curses" OFF)
 
 include_directories (${dfhack_SOURCE_DIR}/library/include/)
 include_directories (${dfhack_SOURCE_DIR}/library/shm/)
@@ -188,7 +189,7 @@ ENDMACRO()
 
 # same as above builds a curses tool instead of plain terminal one.
 MACRO(DFHACK_CURSES_TOOL TOOL_NAME TOOL_SOURCES)
-    IF(Curses_FOUND)
+    IF(Curses_FOUND AND NOT BUILD_NO_CURSES)
         ADD_EXECUTABLE(${TOOL_NAME} ${TOOL_SOURCES})
         TARGET_LINK_LIBRARIES(${TOOL_NAME} dfhack curses)
         if(DEFINED LOCAL_DEPNAME)

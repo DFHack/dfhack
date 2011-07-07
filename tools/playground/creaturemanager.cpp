@@ -728,8 +728,8 @@ public:
                          uint32_t creature_idx)
     {
         // A list of ids overrides everything else.
-        if(find_int(creature_id, creature_idx))
-            return true;
+        if (creature_id.size() > 0)
+            return (find_int(creature_id, creature_idx));
 
         // If it's not a list of ids, it has not match all given criteria.
 

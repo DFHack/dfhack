@@ -44,6 +44,7 @@ DFhackCExport command_result cleanmap (Core * c, vector <string> & parameters)
         else if(parameters[i] == "mud")
             mud = true;
     }
+    c->Suspend();
     vector<DFHack::t_spattervein *> splatter;
     DFHack::Maps *Mapz = c->getMaps();
 
@@ -51,6 +52,7 @@ DFhackCExport command_result cleanmap (Core * c, vector <string> & parameters)
     if(!Mapz->Start())
     {
         dfout << "Can't init map." << std::endl;
+        c->Resume();
         return CR_FAILURE;
     }
 
@@ -89,5 +91,6 @@ DFhackCExport command_result cleanmap (Core * c, vector <string> & parameters)
             }
         }
     }
+    c->Resume();
     return CR_OK;
 }

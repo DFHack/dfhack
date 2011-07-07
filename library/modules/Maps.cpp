@@ -30,6 +30,7 @@ distribution.
 #include <map>
 #include <set>
 #include <cassert>
+#include <cstdlib>
 using namespace std;
 
 #include "dfhack/modules/Maps.h"
@@ -269,35 +270,11 @@ bool Maps::Finish()
  * Block reading
  */
 
-bool Maps::isValidBlock (uint32_t x, uint32_t y, uint32_t z)
-{
-    MAPS_GUARD
-    if(x >= mdata->x_size_blocks || y >= mdata->y_size_blocks || z >= mdata->z_size_blocks)
-        return false;
-    return mdata->map[x][y][z] != 0;
-}
-
-df_block* Maps::getBlockPtr (uint32_t x, uint32_t y, uint32_t z)
+df_block* Maps::getBlock (uint32_t x, uint32_t y, uint32_t z)
 {
     MAPS_GUARD
     if(x >= mdata->x_size_blocks || y >= mdata->y_size_blocks || z >= mdata->z_size_blocks)
         return 0;
-    /*
-    cerr << hex;
-    cerr << "Map data address = " << mdata << endl;
-    cerr << "3D = " << &mdata->map << endl;
-    cerr << "3D array start = " << mdata->map.array << endl;
-    */
-    df_2darray<DFHack::df_block*> & arr2d = mdata->map[x];//[y][z];
-    df_array<DFHack::df_block*> & arr = arr2d[y];
-    /*df_block * b= arr[z];
-    cerr << "2D address = " << &arr2d << endl;
-    cerr << "2D array start = " << arr2d.array << endl;
-    cerr << "1D address = " << &arr << endl;
-    cerr << "1D array start = " << arr.array << endl;
-    cerr << "block address = " << b << endl;
-    cerr << "-----------------------------" << endl;
-    cerr << dec << flush;*/
     return mdata->map[x][y][z];
 }
 
@@ -305,31 +282,17 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
 {
     MAPS_GUARD
     Process *p = d->owner;
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         buffer->position = DFCoord(x,y,z);
-
-        //p->read (addr + d->offsets.tile_type_offset, sizeof (buffer->tiletypes), (uint8_t *) buffer->tiletypes);
         memcpy(buffer->tiletypes,block->tiletype, sizeof(tiletypes40d));
-
-        //p->read (addr + d->offsets.designation_offset, sizeof (buffer->designation), (uint8_t *) buffer->designation);
         memcpy(buffer->designation,block->designation, sizeof(designations40d));
-
-        //p->read (addr + d->offsets.occupancy_offset, sizeof (buffer->occupancy), (uint8_t *) buffer->occupancy);
         memcpy(buffer->occupancy,block->occupancy, sizeof(occupancies40d));
-        
-        //p->read (addr + d->offsets.biome_stuffs, sizeof (biome_indices40d), (uint8_t *) buffer->biome_indices);
         memcpy(buffer->biome_indices,block->region_offset, sizeof(block->region_offset));
-        
         buffer->global_feature = block->global_feature;
         buffer->local_feature = block->local_feature;
         buffer->mystery = block->mystery;
-        /*
-        p->readWord(addr + d->offsets.global_feature_offset, (uint16_t&) buffer->global_feature);
-        p->readWord(addr + d->offsets.local_feature_offset, (uint16_t&)buffer->local_feature);
-        p->readDWord(addr + d->offsets.mystery, (uint32_t&)buffer->mystery);
-        */
         // FIXME: not 64-bit safe
         buffer->origin = (uint32_t) &block;
         //uint32_t addr_of_struct = p->readDWord(addr);
@@ -346,7 +309,7 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
 bool Maps::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         memcpy(buffer, block->tiletype, sizeof(tiletypes40d));
@@ -358,7 +321,7 @@ bool Maps::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buff
 bool Maps::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         memcpy(block->tiletype, buffer, sizeof(tiletypes40d));
@@ -375,7 +338,7 @@ bool Maps::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buf
 bool Maps::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         if(!block->flagarray)
@@ -389,7 +352,7 @@ bool Maps::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
 bool Maps::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         if(!block->flagarray)
@@ -408,7 +371,7 @@ bool Maps::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
 bool Maps::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags &blockflags)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         if(!block->flagarray)
@@ -422,7 +385,7 @@ bool Maps::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags &bloc
 bool Maps::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags blockflags)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         if(!block->flagarray)
@@ -440,7 +403,7 @@ bool Maps::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags bloc
 bool Maps::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         memcpy(buffer, block->designation, sizeof(designations40d));
@@ -452,7 +415,7 @@ bool Maps::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d
 bool Maps::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         memcpy(block->designation, buffer, sizeof(designations40d));
@@ -467,7 +430,7 @@ bool Maps::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, designations40
 bool Maps::ReadOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buffer)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         memcpy(buffer, block->occupancy, sizeof(occupancies40d));
@@ -479,7 +442,7 @@ bool Maps::ReadOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *bu
 bool Maps::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buffer)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         memcpy(block->occupancy, buffer, sizeof(occupancies40d));
@@ -494,7 +457,7 @@ bool Maps::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *b
 bool Maps::ReadTemperatures(uint32_t x, uint32_t y, uint32_t z, t_temperatures *temp1, t_temperatures *temp2)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         if(temp1)
@@ -508,7 +471,7 @@ bool Maps::ReadTemperatures(uint32_t x, uint32_t y, uint32_t z, t_temperatures *
 bool Maps::WriteTemperatures (uint32_t x, uint32_t y, uint32_t z, t_temperatures *temp1, t_temperatures *temp2)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         if(temp1)
@@ -526,7 +489,7 @@ bool Maps::WriteTemperatures (uint32_t x, uint32_t y, uint32_t z, t_temperatures
 bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices40d *buffer)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         memcpy(buffer, block->region_offset,sizeof(biome_indices40d));
@@ -717,7 +680,7 @@ std::vector <t_feature *> * Maps::GetLocalFeatures(DFCoord coord)
 bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, int16_t & local, int16_t & global)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         local = block->local_feature;
@@ -730,7 +693,7 @@ bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, int16_t & local, int
 bool Maps::WriteFeatures(uint32_t x, uint32_t y, uint32_t z, const int16_t & local, const int16_t & global)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         block->local_feature = local;
@@ -791,7 +754,7 @@ bool Maps::ReadFeatures(mapblock40d * block, t_feature ** local, t_feature ** gl
 bool Maps::SetBlockLocalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t local)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         block->local_feature = local;
@@ -803,7 +766,7 @@ bool Maps::SetBlockLocalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t loca
 bool Maps::SetBlockGlobalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t global)
 {
     MAPS_GUARD
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if (block)
     {
         block->global_feature = global;
@@ -815,12 +778,12 @@ bool Maps::SetBlockGlobalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t glo
 /*
  * Block events
  */
-bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein *>* veins, vector <t_frozenliquidvein *>* ices, vector <t_spattervein *> *splatter, vector <t_grassvein *> *grass, vector <t_worldconstruction *> *constructions)
+bool Maps::SortBlockEvents(uint32_t x, uint32_t y, uint32_t z, vector <t_vein *>* veins, vector <t_frozenliquidvein *>* ices, vector <t_spattervein *> *splatter, vector <t_grassvein *> *grass, vector <t_worldconstruction *> *constructions)
 {
     MAPS_GUARD
     Process* p = d->owner;
 
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if(veins) veins->clear();
     if(ices) ices->clear();
     if(splatter) splatter->clear();
@@ -908,6 +871,26 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein *>* vein
     return true;
 }
 
+bool Maps::RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, t_virtual * which)
+{
+    MAPS_GUARD
+    Process* p = d->owner;
+
+    df_block * block = getBlock(x,y,z);
+    if(block)
+    {
+        for(int i = 0; i < block->block_events.size();i++)
+        {
+            if (block->block_events[i] == which)
+            {
+                free(which);
+                block->block_events.erase(block->block_events.begin() + i);
+                return true;
+            }
+        }
+    }
+    return false;
+}
 /*
 __int16 __userpurge GetGeologicalRegion<ax>(__int16 block_X<cx>, int X<ebx>, __int16 block_Y<di>, int block_addr<esi>, int Y)
 {
@@ -1068,7 +1051,7 @@ bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<df_pla
 {
     if(!d->hasVeggies || !d->Started)
         return false;
-    df_block * block = getBlockPtr(x,y,z);
+    df_block * block = getBlock(x,y,z);
     if(!block)
         return false;
     Private::t_offsets &off = d->offsets;

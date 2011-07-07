@@ -710,58 +710,56 @@ namespace DFHack
         void getPosition(int32_t& x, int32_t& y, int32_t& z);
 
         /**
-         * Return false/0 on failure, buffer allocated by client app, 256 items long
+         * Get the map block or NULL if block is not valid
          */
-        bool isValidBlock(uint32_t blockx, uint32_t blocky, uint32_t blockz);
+        df_block * getBlock (uint32_t blockx, uint32_t blocky, uint32_t blockz);
 
-        /**
-         * Get the address of a block or 0 if block is not valid
-         */
-        df_block * getBlockPtr (uint32_t blockx, uint32_t blocky, uint32_t blockz);
-
-        /// read the whole map block at block coords (see DFTypes.h for the block structure)
+        /// copy the whole map block at block coords (see DFTypes.h for the block structure)
         bool ReadBlock40d(uint32_t blockx, uint32_t blocky, uint32_t blockz, mapblock40d * buffer);
 
-        /// read/write block tile types
+        /// copy/write block tile types
         bool ReadTileTypes(uint32_t blockx, uint32_t blocky, uint32_t blockz, tiletypes40d *buffer);
         bool WriteTileTypes(uint32_t blockx, uint32_t blocky, uint32_t blockz, tiletypes40d *buffer);
 
-        /// read/write block designations
+        /// copy/write block designations
         bool ReadDesignations(uint32_t blockx, uint32_t blocky, uint32_t blockz, designations40d *buffer);
         bool WriteDesignations (uint32_t blockx, uint32_t blocky, uint32_t blockz, designations40d *buffer);
 
-        /// read/write temperatures
+        /// copy/write temperatures
         bool ReadTemperatures(uint32_t blockx, uint32_t blocky, uint32_t blockz, t_temperatures *temp1, t_temperatures *temp2);
         bool WriteTemperatures (uint32_t blockx, uint32_t blocky, uint32_t blockz, t_temperatures *temp1, t_temperatures *temp2);
 
-        /// read/write block occupancies
+        /// copy/write block occupancies
         bool ReadOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, occupancies40d *buffer);
         bool WriteOccupancy(uint32_t blockx, uint32_t blocky, uint32_t blockz, occupancies40d *buffer);
 
-        /// read/write the block dirty bit - this is used to mark a map block so that DF scans it for designated jobs like digging
+        /// copy/write the block dirty bit - this is used to mark a map block so that DF scans it for designated jobs like digging
         bool ReadDirtyBit(uint32_t blockx, uint32_t blocky, uint32_t blockz, bool &dirtybit);
         bool WriteDirtyBit(uint32_t blockx, uint32_t blocky, uint32_t blockz, bool dirtybit);
 
-        /// read/write the block flags
+        /// copy/write the block flags
         bool ReadBlockFlags(uint32_t blockx, uint32_t blocky, uint32_t blockz, t_blockflags &blockflags);
         bool WriteBlockFlags(uint32_t blockx, uint32_t blocky, uint32_t blockz, t_blockflags blockflags);
         
-        /// read/write features
+        /// copy/write features
         bool SetBlockLocalFeature(uint32_t blockx, uint32_t blocky, uint32_t blockz, int16_t local = -1);
         bool SetBlockGlobalFeature(uint32_t blockx, uint32_t blocky, uint32_t blockz, int16_t local = -1);
 
-        /// read region offsets of a block - used for determining layer stone matgloss
+        /// copy region offsets of a block - used for determining layer stone matgloss
         bool ReadRegionOffsets(uint32_t blockx, uint32_t blocky, uint32_t blockz,
                                biome_indices40d *buffer);
 
-        /// block event reading - mineral veins, what's under ice, blood smears and mud
-        bool ReadVeins(uint32_t x, uint32_t y, uint32_t z,
+        /// sorts the block event vector into multiple vectors by type
+        /// mineral veins, what's under ice, blood smears and mud
+        bool SortBlockEvents(uint32_t x, uint32_t y, uint32_t z,
                        std::vector<t_vein *>* veins,
                        std::vector<t_frozenliquidvein *>* ices = 0,
                        std::vector<t_spattervein *>* splatter = 0,
                        std::vector<t_grassvein *>* grass = 0,
                        std::vector<t_worldconstruction *>* constructions = 0
                       );
+        /// remove a block event from the block by address
+        bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, t_virtual * which );
         /// read all plants in this block
         bool ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<df_plant *>*& plants);
         private:

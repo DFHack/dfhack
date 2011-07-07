@@ -36,7 +36,7 @@ void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d &
 {
     memset(materials,-1,sizeof(materials));
     std::vector <DFHack::t_vein *> veins;
-    m->ReadVeins(bcoord.x,bcoord.y,bcoord.z,&veins);
+    m->SortBlockEvents(bcoord.x,bcoord.y,bcoord.z,&veins);
     //iterate through block rows
     for(uint32_t j = 0;j<16;j++)
     {

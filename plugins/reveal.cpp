@@ -96,7 +96,6 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params)
 {
-    DFHack::designations40d designations;
     bool no_hell = false;
     if(params[0] == "safe")
     {
@@ -142,7 +141,8 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
         {
             for(uint32_t z = 0; z< z_max;z++)
             {
-                if(Maps->isValidBlock(x,y,z))
+                df_block *block = Maps->getBlock(x,y,z);
+                if(block)
                 {
                     // in 'no-hell'/'safe' mode, don't reveal blocks with hell and adamantine
                     if (no_hell && !isSafe(x, y, z, Maps))
@@ -151,17 +151,16 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
                     hb.x = x;
                     hb.y = y;
                     hb.z = z;
-                    // read block designations
-                    Maps->ReadDesignations(x,y,z, &designations);
-                    // change the hidden flag to 0
+                    DFHack::designations40d & designations = block->designation;
+                    // for each tile in block
                     for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
                     {
+                        // save hidden state of tile
                         hb.hiddens[i][j] = designations[i][j].bits.hidden;
+                        // set to revealed
                         designations[i][j].bits.hidden = 0;
                     }
                     hidesaved.push_back(hb);
-                    // write the designations back
-                    Maps->WriteDesignations(x,y,z, &designations);
                 }
             }
         }
@@ -178,7 +177,7 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
     c->Resume();
     dfout << "Map revealed." << std::endl;
     if(!no_hell)
-        dfout << "Unpausing can unleash the forces of hell, so it has beed temporarily disabled!" << std::endl;
+        dfout << "Unpausing can unleash the forces of hell, so it has been temporarily disabled!" << std::endl;
     dfout << "Run 'unreveal' to revert to previous state." << std::endl;
     return CR_OK;
 }
@@ -225,12 +224,11 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     for(size_t i = 0; i < hidesaved.size();i++)
     {
         hideblock & hb = hidesaved[i];
-        Maps->ReadDesignations(hb.x,hb.y,hb.z, &designations);
+        df_block * b = Maps->getBlock(hb.x,hb.y,hb.z);
         for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
         {
-            designations[i][j].bits.hidden = hb.hiddens[i][j];
+            b->designation[i][j].bits.hidden = hb.hiddens[i][j];
         }
-        Maps->WriteDesignations(hb.x,hb.y,hb.z, &designations);
     }
     // give back memory.
     hidesaved.clear();

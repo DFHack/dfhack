@@ -31,6 +31,10 @@ distribution.
 #include "dfhack/Pragma.h"
 #include "dfhack/Export.h"
 #include <string>
+#include <stdint.h>
+#include "dfhack/SDL_fakes/events.h"
+#include "dfhack/SDL_fakes/keyboard.h"
+#include "dfhack/SDL_fakes/keysym.h"
 
 // function and variable pointer... we don't try to understand what SDL does here
 typedef void * fPtr;
@@ -46,19 +50,14 @@ DFhackCExport int SDL_mutexV(DFMutex *);
 DFhackCExport void SDL_DestroyMutex(DFMutex *);
 DFhackCExport DFThread *SDL_CreateThread(int (*fn)(void *), void *data);
 
-//FIXME: remove, these fail
-DFhackCExport void * SDL_LoadFunction(DFLibrary *handle, const char *name);
-DFhackCExport DFLibrary * SDL_LoadObject(const char *sofile);
-DFhackCExport void SDL_UnloadObject(DFLibrary * handle);
-
 // these functions are here because they call into DFHack::Core and therefore need to
 // be declared as friend functions/known
 DFhackCExport int SDL_NumJoysticks(void);
 DFhackCExport void SDL_Quit(void);
+DFhackCExport int SDL_PollEvent(FakeSDL::Event* event);
 /*
 // not yet.
 DFhackCExport int SDL_Init(uint32_t flags);
-DFhackCExport int SDL_PollEvent(vPtr event);
 */
 
 // Other crud is in the OS-specific core files.

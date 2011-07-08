@@ -65,6 +65,7 @@ namespace DFHack
     {
         friend int  ::SDL_NumJoysticks(void);
         friend void ::SDL_Quit(void);
+        friend int  ::SDL_PollEvent(FakeSDL::Event *);
     public:
         /// Get the single Core instance or make one.
         static Core& getInstance()
@@ -110,6 +111,7 @@ namespace DFHack
         Core();
         int Update   (void);
         int Shutdown (void);
+        void SDL_Event(FakeSDL::Event* event);
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement
         bool errorstate;

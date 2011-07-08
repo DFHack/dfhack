@@ -76,6 +76,7 @@ bool inited = false;
 
 DFhackCExport int SDL_NumJoysticks(void)
 {
+    inited = true;
     DFHack::Core & c = DFHack::Core::getInstance();
     return c.Update();
 }
@@ -142,24 +143,6 @@ DFhackCExport void SDL_DestroyMutex(DFMutex * mutex)
     _SDL_DestroyMutex(mutex);
 }
 
-static void * (*_SDL_LoadFunction)(DFLibrary *handle, const char *name) = 0;
-DFhackCExport void * SDL_LoadFunction(DFLibrary *handle, const char *name)
-{
-    return _SDL_LoadFunction(handle, name);
-}
-
-static DFLibrary * (*_SDL_LoadObject)(const char *sofile) = 0;
-DFhackCExport DFLibrary * SDL_LoadObject(const char *sofile)
-{
-    return _SDL_LoadObject(sofile);
-}
-
-static void (*_SDL_UnloadObject)(DFLibrary * handle) = 0;
-DFhackCExport void SDL_UnloadObject(DFLibrary * handle)
-{
-    _SDL_UnloadObject(handle);
-}
-
 // hook - called at program exit
 DFhackCExport void SDL_Quit(void)
 {
@@ -170,6 +153,23 @@ DFhackCExport void SDL_Quit(void)
         _SDL_Quit();
     }
 }
+
+// called by DF to check input events
+static int (*_SDL_PollEvent)(FakeSDL::Event* event) = 0;
+DFhackCExport int SDL_PollEvent(FakeSDL::Event* event)
+{
+    int ret = _SDL_PollEvent(event);
+    // only send events to Core after we get first SDL_NumJoysticks call
+    // DF event loop is possibly polling for SDL events before things get inited properly
+    // SDL handles it. We don't, because we use some other parts of SDL too.
+    if(inited && event != 0)
+    {
+        DFHack::Core & c = DFHack::Core::getInstance();
+        c.SDL_Event(event);
+    }
+    return ret;
+}
+
 
 // hook - called at program start, initialize some stuffs we'll use later
 DFhackCExport int SDL_Init(uint32_t flags)
@@ -186,9 +186,7 @@ DFhackCExport int SDL_Init(uint32_t flags)
     _SDL_DestroyMutex = (void (*)(DFMutex*))dlsym(RTLD_NEXT,"SDL_DestroyMutex");
     _SDL_mutexP = (int (*)(DFMutex*))dlsym(RTLD_NEXT,"SDL_mutexP");
     _SDL_mutexV = (int (*)(DFMutex*))dlsym(RTLD_NEXT,"SDL_mutexV");
-    _SDL_LoadFunction = (void*(*)(DFLibrary*, const char*))dlsym(RTLD_NEXT,"SDL_LoadFunction");
-    _SDL_LoadObject = (DFLibrary*(*)(const char*))dlsym(RTLD_NEXT,"SDL_LoadObject");
-    _SDL_UnloadObject = (void (*)(DFLibrary*))dlsym(RTLD_NEXT,"SDL_UnloadObject");
+    _SDL_PollEvent = (int (*)(FakeSDL::Event*))dlsym(RTLD_NEXT,"SDL_PollEvent");
 
     // check if we got them
     if(_SDL_Init && _SDL_Quit && _SDL_CreateThread && _SDL_CreateMutex && _SDL_DestroyMutex && _SDL_mutexP && _SDL_mutexV)
@@ -201,5 +199,6 @@ DFhackCExport int SDL_Init(uint32_t flags)
         fprintf(stderr,"dfhack: something went horribly wrong\n");
         exit(1);
     }
-    return _SDL_Init(flags);
+    int ret = _SDL_Init(flags);
+    return ret;
 }

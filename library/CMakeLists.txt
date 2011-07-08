@@ -82,13 +82,13 @@ SET(PROJECT_HDRS_WINDOWS
 )
 
 SET(PROJECT_SRCS_LINUX
-Core-linux.cpp
+FakeSDL-linux.cpp
 Console-linux.cpp
 Process-linux.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
-Core-windows.cpp
+FakeSDL-windows.cpp
 Console-windows.cpp
 Process-windows.cpp
 )

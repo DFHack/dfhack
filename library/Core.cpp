@@ -233,6 +233,17 @@ int Core::Shutdown ( void )
     return -1;
 }
 
+void Core::SDL_Event(FakeSDL::Event* event)
+{
+    if(!event)
+        return;
+    if(event->type == FakeSDL::ET_KEYDOWN)
+    {
+        FakeSDL::KeyboardEvent * kev = (FakeSDL::KeyboardEvent *) event;
+        cerr << "Key " << kev->ksym.sym << std::endl;
+    }
+}
+
 /*******************************************************************************
                                 M O D U L E S
 *******************************************************************************/

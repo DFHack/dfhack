@@ -38,14 +38,14 @@ using namespace std;
 #include "dfhack/Process.h"
 #include "dfhack/Core.h"
 #include "dfhack/Console.h"
+#include "dfhack/Module.h"
 #include "dfhack/VersionInfoFactory.h"
 #include "dfhack/PluginManager.h"
 #include "ModuleFactory.h"
-
 #include "dfhack/modules/Gui.h"
-#include "dfhack/modules/Vegetation.h"
-#include "dfhack/modules/Maps.h"
-#include "dfhack/modules/World.h"
+
+#include "dfhack/SDL_fakes/events.h"
+
 #include <stdio.h>
 #include <iomanip>
 using namespace DFHack;
@@ -63,11 +63,41 @@ struct IODATA
     PluginManager * plug_mgr;
 };
 
-int fIOthread(void * iodata)
+// A thread function... for handling hotkeys. This is needed because
+// all the plugin commands are expected to be run from foreign threads.
+// Running them from one of the main DF threads will result in deadlock!
+int fHKthread(void * iodata)
 {
     Core * core = ((IODATA*) iodata)->core;
     PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
-    if(plug_mgr == 0)
+    if(plug_mgr == 0 || core == 0)
+    {
+        cerr << "Hotkey thread has croaked." << endl;
+        return 0;
+    }
+    while(1)
+    {
+        std::string stuff = core->getHotkeyCmd(); // waits on mutex!
+        if(!stuff.empty())
+        {
+            vector <string> crap;
+            plug_mgr->InvokeCommand(stuff, crap);
+        }
+    }
+}
+
+// A thread function... for the interactive console.
+static bool flip0 = false;
+int fIOthread(void * iodata)
+{
+    if(!flip0)
+    {
+        std::cerr << "Console from Thread " << SDL_ThreadID() << std::endl;
+        flip0 = true;
+    }
+    Core * core = ((IODATA*) iodata)->core;
+    PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
+    if(plug_mgr == 0 || core == 0)
     {
         dfout << "Something horrible happened to the plugin manager in Core's constructor..." << std::endl;
         return 0;
@@ -140,8 +170,34 @@ int fIOthread(void * iodata)
 Core::Core()
 {
     // init the console. This must be always the first step!
-    con = new Console();
+    con = 0;
     plug_mgr = 0;
+    vif = 0;
+    p = 0;
+    errorstate = false;
+    vinfo = 0;
+    started = false;
+    memset(&(s_mods), 0, sizeof(s_mods));
+
+    // create mutex for syncing with interactive tasks
+    AccessMutex = 0;
+    // set up hotkey capture
+    memset(hotkey_states,0,sizeof(hotkey_states));
+    hotkey_set = false;
+    HotkeyMutex = 0;
+    HotkeyCond = 0;
+};
+
+static bool flip1 = 0;
+bool Core::Init()
+{
+    // init the console. This must be always the first step!
+    con = new Console();
+    if(!flip1)
+    {
+        std::cerr << "Construct from Thread " << SDL_ThreadID() << std::endl;
+        flip1 = true;
+    }
     // find out what we are...
     vif = new DFHack::VersionInfoFactory("Memory.xml");
     p = new DFHack::Process(vif);
@@ -151,13 +207,9 @@ Core::Core()
         errorstate = true;
         delete p;
         p = NULL;
-        return;
+        return false;
     }
     vinfo = p->getDescriptor();
-
-    // init module storage
-    allModules.clear();
-    memset(&(s_mods), 0, sizeof(s_mods));
 
     // create mutex for syncing with interactive tasks
     AccessMutex = SDL_CreateMutex();
@@ -165,22 +217,61 @@ Core::Core()
     {
         dfout << "Mutex creation failed." << std::endl;
         errorstate = true;
-        return;
+        return false;
     }
-    // all OK
-    errorstate = false;
     // lock mutex
     SDL_mutexP(AccessMutex);
+
+    // create plugin manager
     plug_mgr = new PluginManager(this);
+    if(!plug_mgr)
+    {
+        dfout << "Failed to create the Plugin Manager." << std::endl;
+        errorstate = true;
+        return false;
+    }
     // look for all plugins, 
     // create IO thread
     IODATA *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
-    DFThread * IO = SDL_CreateThread(fIOthread, (void *) temp);
-    delete temp;
-    // and let DF do its thing.
-};
+    SDL::Thread * IO = SDL_CreateThread(fIOthread, (void *) temp);
+    // set up hotkey capture
+    HotkeyMutex = SDL_CreateMutex();
+    HotkeyCond = SDL_CreateCond();
+    SDL::Thread * HK = SDL_CreateThread(fHKthread, (void *) temp);
+    started = true;
+    return true;
+}
+/// sets the current hotkey command
+bool Core::setHotkeyCmd( std::string cmd )
+{
+    // access command
+    SDL_mutexP(HotkeyMutex);
+    {
+        hotkey_set = true;
+        hotkey_cmd = cmd;
+        SDL_CondSignal(HotkeyCond);
+    }
+    SDL_mutexV(HotkeyMutex);
+    return true;
+}
+/// removes the hotkey command and gives it to the caller thread
+std::string Core::getHotkeyCmd( void )
+{
+    string returner;
+    SDL_mutexP(HotkeyMutex);
+    while ( ! hotkey_set )
+    {
+        SDL_CondWait(HotkeyCond, HotkeyMutex);
+    }
+    hotkey_set = false;
+    returner = hotkey_cmd;
+    hotkey_cmd.clear();
+    SDL_mutexV(HotkeyMutex);
+    return returner;
+}
+
 
 void Core::Suspend()
 {
@@ -198,10 +289,18 @@ void Core::Resume()
     SDL_mutexV(AccessMutex);
 }
 
+// should always be from simulation thread!
+static bool flip2 = false;
 int Core::Update()
 {
+    if(!started) Init();
     if(errorstate)
         return -1;
+    if(!flip2)
+    {
+        std::cerr << "Update from Thread " << SDL_ThreadID() << std::endl;
+        flip2 = true;
+    }
     // notify all the plugins that a game tick is finished
     plug_mgr->OnUpdate();
     SDL_mutexV(AccessMutex);
@@ -228,20 +327,58 @@ int Core::Shutdown ( void )
     memset(&(s_mods), 0, sizeof(s_mods));
     dfout << std::endl;
     // kill the console object
-    delete con;
+    if(con)
+        delete con;
     con = 0;
     return -1;
 }
 
-void Core::SDL_Event(FakeSDL::Event* event)
+static bool flip3 = 0;
+int Core::SDL_Event(SDL::Event* ev, int orig_return)
 {
-    if(!event)
-        return;
-    if(event->type == FakeSDL::ET_KEYDOWN)
+    // do NOT process events before we are ready.
+    if(!started) return orig_return;
+    if(!flip3)
     {
-        FakeSDL::KeyboardEvent * kev = (FakeSDL::KeyboardEvent *) event;
-        cerr << "Key " << kev->ksym.sym << std::endl;
+        std::cerr << "Event from Thread " << SDL_ThreadID() << std::endl;
+        flip3 = true;
     }
+    if(!ev)
+        return orig_return;
+    if(ev && ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP)
+    {
+        SDL::KeyboardEvent * ke = (SDL::KeyboardEvent *)ev;
+        bool shift = ke->ksym.mod & SDL::KMOD_SHIFT;
+        // consuming F1 .. F8
+        int idx = ke->ksym.sym - SDL::K_F1;
+        if(idx < 0 || idx > 7)
+            return orig_return;
+        idx += 8*shift;
+        // now we have the real index...
+        if(ke->state == SDL::BTN_PRESSED && !hotkey_states[idx])
+        {
+            hotkey_states[idx] = 1;
+            Gui * g = getGui();
+            if(g->hotkeys && g->interface && g->menu_state)
+            {
+                t_viewscreen * ws = g->GetCurrentScreen();
+                if(ws->getClassName() == "viewscreen_dwarfmodest" && *g->menu_state == 0x23)
+                    return orig_return;
+                else
+                {
+                    std::cerr << "Hotkey " << idx << " triggered. Thread " << SDL_ThreadID() << std::endl;
+                    t_hotkey & hotkey = (*g->hotkeys)[idx];
+                    setHotkeyCmd(hotkey.name);
+                }
+            }
+        }
+        else if(ke->state == SDL::BTN_RELEASED)
+        {
+            hotkey_states[idx] = 0;
+        }
+    }
+    return orig_return;
+    // do stuff with the events...
 }
 
 /*******************************************************************************

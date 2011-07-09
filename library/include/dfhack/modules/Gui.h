@@ -28,6 +28,8 @@ distribution.
 
 #include "dfhack/Export.h"
 #include "dfhack/Module.h"
+#include "dfhack/Virtual.h"
+#include <string>
 
 /**
  * \defgroup grp_gui query DF's GUI state
@@ -40,13 +42,27 @@ namespace DFHack
     /**
      * \ingroup grp_gui
      */
-    struct t_viewscreen 
+    struct t_viewscreen : public t_virtual
     {
-        int32_t type;
-        //There is more info in these objects, but I don't know what it is yet
+        t_viewscreen * child;
+        t_viewscreen * parent;
+        char unk1; // varies
+        char unk2; // state?
     };
+    /**
+     * \ingroup grp_gui
+     */
+    struct t_interface
+    {
+        int fps;
+        t_viewscreen view;
+        unsigned int flags; // ?
+        // more crud this way ...
+    };
+
     #define NUM_HOTKEYS 16
     /**
+     * The hotkey structure
      * \ingroup grp_gui
      */
     struct t_hotkey
@@ -57,8 +73,10 @@ namespace DFHack
         int32_t y;
         int32_t z;
     };
-    typedef t_hotkey hotkey_array[16];
+    typedef t_hotkey hotkey_array[NUM_HOTKEYS];
+
     /**
+     * One tile of the screen. Possibly outdated.
      * \ingroup grp_gui
      */
     struct t_screen
@@ -70,6 +88,7 @@ namespace DFHack
         uint8_t gtile;
         uint8_t grayscale;
     };
+
     /**
      * The Gui module
      * \ingroup grp_modules
@@ -92,6 +111,16 @@ namespace DFHack
         bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
         bool setCursorCoords (const int32_t x, const int32_t y, const int32_t z);
         /*
+         * Gui screens
+         */
+        /// handle to the interface object
+        t_interface * interface;
+        /// Get the current top-level view-screen
+        t_viewscreen * GetCurrentScreen();
+        /// The DF menu state (designation menu ect)
+        uint32_t * menu_state;
+
+        /*
          * Hotkeys (DF's zoom locations)
          */
         hotkey_array * hotkeys;
@@ -105,11 +134,6 @@ namespace DFHack
          * Screen tiles
          */
         bool getScreenTiles(int32_t width, int32_t height, t_screen screen[]);
-        
-        /// read the DF menu view state (stock screen, unit screen, other screens
-        bool ReadViewScreen(t_viewscreen &);
-        /// read the DF menu state (designation menu ect)
-        uint32_t ReadMenuState();
 
         private:
         struct Private;

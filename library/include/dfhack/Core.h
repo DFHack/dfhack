@@ -53,6 +53,9 @@ namespace DFHack
     class Console;
     class PluginManager;
     class Core;
+    class Hotkey;
+    // anon type, pretty much
+    struct DFLibrary;
 
     DFLibrary * OpenPlugin (const char * filename);
     void * LookupPlugin (DFLibrary * plugin ,const char * function);
@@ -65,7 +68,7 @@ namespace DFHack
     {
         friend int  ::SDL_NumJoysticks(void);
         friend void ::SDL_Quit(void);
-        friend int  ::SDL_PollEvent(FakeSDL::Event *);
+        friend int  ::SDL_PollEvent(SDL::Event *);
     public:
         /// Get the single Core instance or make one.
         static Core& getInstance()
@@ -103,20 +106,25 @@ namespace DFHack
         Buildings * getBuildings();
         /// get the constructions module
         Constructions * getConstructions();
+        /// sets the current hotkey command
+        bool setHotkeyCmd( std::string cmd );
+        /// removes the hotkey command and gives it to the caller thread
+        std::string getHotkeyCmd( void );
 
         DFHack::Process * p;
         DFHack::VersionInfo * vinfo;
         DFHack::Console * con;
     private:
         Core();
+        bool Init();
         int Update   (void);
         int Shutdown (void);
-        void SDL_Event(FakeSDL::Event* event);
+        int SDL_Event(SDL::Event* event, int orig_return);
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement
         bool errorstate;
         // mutex for access to DF
-        DFMutex * AccessMutex;
+        SDL::Mutex * AccessMutex;
         // FIXME: shouldn't be kept around like this
         DFHack::VersionInfoFactory * vif;
         // Module storage
@@ -136,5 +144,13 @@ namespace DFHack
         } s_mods;
         std::vector <Module *> allModules;
         DFHack::PluginManager * plug_mgr;
+        // hotkey-related stuff
+        int hotkey_states[16];
+        std::string hotkey_cmd;
+        bool hotkey_set;
+        SDL::Mutex * HotkeyMutex;
+        SDL::Cond * HotkeyCond;
+        // Very important!
+        bool started;
     };
 }

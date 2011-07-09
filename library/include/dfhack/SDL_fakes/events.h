@@ -20,10 +20,13 @@
     slouken@libsdl.org
 */
 
+// Fake - only structs. Shamelessly pilfered from the SDL library.
+// Needed for processing its event types without polluting our namespaces with C garbage
+
 #pragma once
 #include "keyboard.h"
 
-namespace FakeSDL
+namespace SDL
 {
     enum ButtonState
     {

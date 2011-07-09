@@ -803,8 +803,8 @@
             <Group name="GUI" description="Offsets used by the GUI module.">
                 <Address name="pause_state" description="a flag that determines if the game is paused."/>
                 <Address name="current_cursor_creature" description="A vector? of creatures currently under the cursor."/>
+                <Address name="interface" description="Pointer to the global interfacest object (gview symbol on Linux)."/>
                 <Address name="current_menu_state" description="A numeric value that describes the state of the current GUI element (switching between menus will change this)."/>
-                <Address name="view_screen" description="Pointer to the current view screen object (GUI screen)."/>
                 <Address name="hotkeys" description="Address where the array of hotkeys starts." />
             </Group>
             <Group name="Maps" description="Offsets used by the Maps module.">
@@ -1127,8 +1127,6 @@
             <Group name="GUI">
                 <Address name="pause_state" value="0x146e45f" />
                 <Address name="current_cursor_creature" value="0xae82cc" valid="false" />
-                <Address name="current_menu_state" value="0x017f6f38" />
-                <Address name="view_screen" value="0xae82cc" valid="false" />
                 <Address name="hotkeys" value="0x01476ecc" />
             </Group>
             <Group name="Maps">
@@ -1307,7 +1305,6 @@
             constructions 0xffffffff
             creatures 0x0166eccc
             current_cursor_creature 0x00ae82cc
-            current_menu_state 0x017f6f38
             cursor_xyz 0x0166ecd4
             effects_vector 0x017f6da0
             hotkey_start 0x01476ecc
@@ -1323,7 +1320,6 @@
             settlement_current 0xffffffff
             settlements 0x016af4a4
             translation_vector 0x016b0010
-            view_screen 0xffffffff
             window_dims 0x017f5abc
             window_x 0x00e32798
             window_y 0x00e60838
@@ -3019,6 +3015,8 @@
             WORLD: 0x93f77a0
             <Group name="GUI">
                 <Address name="hotkeys" value="0x93f740c" />
+                <Address name="interface" value="0x8C3E900" />
+                <Address name="current_menu_state" value="0x93F756C" />
             </Group>
             <Group name="Creatures">
                 Maybe, possibly.

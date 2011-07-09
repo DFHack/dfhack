@@ -97,7 +97,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params)
 {
     bool no_hell = false;
-    if(params[0] == "safe")
+    if(params.size() && params[0] == "safe")
     {
         no_hell = true;
     }
@@ -177,7 +177,7 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
     c->Resume();
     dfout << "Map revealed." << std::endl;
     if(!no_hell)
-        dfout << "Unpausing can unleash the forces of hell, so it has been temporarily disabled!" << std::endl;
+        dfout << "Unpausing can unleash the forces of hell, so it has been temporarily disabled." << std::endl;
     dfout << "Run 'unreveal' to revert to previous state." << std::endl;
     return CR_OK;
 }

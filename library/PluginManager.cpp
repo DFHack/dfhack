@@ -170,7 +170,7 @@ PluginManager::~PluginManager()
     all_plugins.clear();
 }
 
-Plugin *PluginManager::getPluginByName (const std::string & name)
+const Plugin *PluginManager::getPluginByName (const std::string & name)
 {
     for(int i = 0; i < all_plugins.size(); i++)
     {

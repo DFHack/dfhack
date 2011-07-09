@@ -48,14 +48,9 @@ struct Gui::Private
 {
     Private()
     {
-        Started = ViewScreeInited = MenuStateInited = false;
+        Started = false;
         StartedScreen = false;
     }
-    bool ViewScreeInited;
-    uint32_t view_screen_offset;
-
-    bool MenuStateInited;
-    uint32_t current_menu_state_offset;
 
     bool Started;
     uint32_t window_x_offset;
@@ -77,6 +72,8 @@ Gui::Gui()
     d->owner = c.p;
     VersionInfo * mem = c.vinfo;
     OffsetGroup * OG_Gui = mem->getGroup("GUI");
+
+    // Setting up hotkeys
     try
     {
         hotkeys = (hotkey_array *) OG_Gui->getAddress("hotkeys");
@@ -85,18 +82,27 @@ Gui::Gui()
     {
         hotkeys = 0;
     };
+
+    // Setting up menu state
     try
     {
-        d->current_menu_state_offset = OG_Gui->getAddress("current_menu_state");
-        d->MenuStateInited = true;
+        menu_state = (uint32_t *) OG_Gui->getAddress("current_menu_state");
     }
-    catch(exception &){};
+    catch(Error::All &)
+    {
+        menu_state = 0;
+    };
+
+    // Setting up the view screen stuff
     try
     {
-        d->view_screen_offset = OG_Gui->getAddress ("view_screen");
-        d->ViewScreeInited = true;
+        interface = (t_interface *) OG_Gui->getAddress ("interface");
     }
-    catch(exception &){};
+    catch(exception &)
+    {
+        interface = 0;
+    };
+
     OffsetGroup * OG_Position;
     try
     {
@@ -132,30 +138,19 @@ bool Gui::Finish()
     return true;
 }
 
-uint32_t Gui::ReadMenuState()
+t_viewscreen * Gui::GetCurrentScreen()
 {
-    if(d->MenuStateInited)
-        return(d->owner->readDWord(d->current_menu_state_offset));
-    return false;
-}
-
-// FIXME: variable ‘screenAddr’ set but not used [-Wunused-but-set-variable]
-bool Gui::ReadViewScreen (t_viewscreen &screen)
-{
-    if (!d->ViewScreeInited) return false;
-    Process * p = d->owner;
-
-    uint32_t last = p->readDWord (d->view_screen_offset);
-    uint32_t screenAddr = p->readDWord (last);
-    uint32_t nextScreenPtr = p->readDWord (last + 4);
-    while (nextScreenPtr != 0)
+    if(!interface)
+        return 0;
+    t_viewscreen * ws = &interface->view;
+    while(ws)
     {
-        last = nextScreenPtr;
-        screenAddr = p->readDWord (nextScreenPtr);
-        nextScreenPtr = p->readDWord (nextScreenPtr + 4);
+        if(ws->child)
+            ws = ws->child;
+        else
+            return ws;
     }
-    Core & c = Core::getInstance();
-    return c.vinfo->resolveObjectToClassID (last, screen.type);
+    return 0;
 }
 
 bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)

@@ -85,7 +85,7 @@ DFhackCExport int SDL_NumJoysticks(void)
 //static void (*_SDL_GL_SwapBuffers)(void) = 0;
 static void (*_SDL_Quit)(void) = 0;
 static int (*_SDL_Init)(uint32_t flags) = 0;
-static DFThread * (*_SDL_CreateThread)(int (*fn)(void *), void *data) = 0;
+static SDL::Thread * (*_SDL_CreateThread)(int (*fn)(void *), void *data) = 0;
 //static int (*_SDL_Flip)(void * some_ptr) = 0;
 /*
 // hook - called every tick in OpenGL mode of DF
@@ -119,26 +119,26 @@ DFhackCExport int SDL_Flip(void * some_ptr)
 }
 */
 
-static DFMutex * (*_SDL_CreateMutex)(void) = 0;
-DFhackCExport DFMutex * SDL_CreateMutex(void)
+static SDL::Mutex * (*_SDL_CreateMutex)(void) = 0;
+DFhackCExport SDL::Mutex * SDL_CreateMutex(void)
 {
     return _SDL_CreateMutex();
 }
 
-static int (*_SDL_mutexP)(DFMutex * mutex) = 0;
-DFhackCExport int SDL_mutexP(DFMutex * mutex)
+static int (*_SDL_mutexP)(SDL::Mutex * mutex) = 0;
+DFhackCExport int SDL_mutexP(SDL::Mutex * mutex)
 {
     return _SDL_mutexP(mutex);
 }
 
-static int (*_SDL_mutexV)(DFMutex * mutex) = 0;
-DFhackCExport int SDL_mutexV(DFMutex * mutex)
+static int (*_SDL_mutexV)(SDL::Mutex * mutex) = 0;
+DFhackCExport int SDL_mutexV(SDL::Mutex * mutex)
 {
     return _SDL_mutexV(mutex);
 }
 
-static void (*_SDL_DestroyMutex)(DFMutex * mutex) = 0;
-DFhackCExport void SDL_DestroyMutex(DFMutex * mutex)
+static void (*_SDL_DestroyMutex)(SDL::Mutex * mutex) = 0;
+DFhackCExport void SDL_DestroyMutex(SDL::Mutex * mutex)
 {
     _SDL_DestroyMutex(mutex);
 }
@@ -155,41 +155,77 @@ DFhackCExport void SDL_Quit(void)
 }
 
 // called by DF to check input events
-static int (*_SDL_PollEvent)(FakeSDL::Event* event) = 0;
-DFhackCExport int SDL_PollEvent(FakeSDL::Event* event)
+static int (*_SDL_PollEvent)(SDL::Event* event) = 0;
+DFhackCExport int SDL_PollEvent(SDL::Event* event)
 {
-    int ret = _SDL_PollEvent(event);
+    int orig_return = _SDL_PollEvent(event);
     // only send events to Core after we get first SDL_NumJoysticks call
     // DF event loop is possibly polling for SDL events before things get inited properly
     // SDL handles it. We don't, because we use some other parts of SDL too.
     if(inited && event != 0)
     {
         DFHack::Core & c = DFHack::Core::getInstance();
-        c.SDL_Event(event);
+        return c.SDL_Event(event, orig_return);
     }
-    return ret;
+    return orig_return;
 }
 
+static uint32_t (*_SDL_ThreadID)(void) = 0;
+DFhackCExport uint32_t SDL_ThreadID()
+{
+    return _SDL_ThreadID();
+}
+
+static SDL::Cond * (*_SDL_CreateCond)(void) = 0;
+DFhackCExport SDL::Cond *SDL_CreateCond(void)
+{
+    return _SDL_CreateCond();
+}
+static void (*_SDL_DestroyCond)(SDL::Cond *) = 0;
+DFhackCExport void SDL_DestroyCond(SDL::Cond *cond)
+{
+    _SDL_DestroyCond(cond);
+}
+static int (*_SDL_CondSignal)(SDL::Cond *) = 0;
+DFhackCExport int SDL_CondSignal(SDL::Cond *cond)
+{
+    return _SDL_CondSignal(cond);
+}
+static int (*_SDL_CondWait)(SDL::Cond *, SDL::Mutex *) = 0;
+DFhackCExport int SDL_CondWait(SDL::Cond *cond, SDL::Mutex * mut)
+{
+    return _SDL_CondWait(cond, mut);
+}
 
 // hook - called at program start, initialize some stuffs we'll use later
 DFhackCExport int SDL_Init(uint32_t flags)
 {
     freopen("stdout.log", "w", stdout);
     freopen("stderr.log", "w", stderr);
+    // horrible casts not supported by the C or C++ standards. Only POSIX. Damn you, POSIX.
     // find real functions
     //_SDL_GL_SwapBuffers = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_GL_SwapBuffers");
     _SDL_Init = (int (*)( uint32_t )) dlsym(RTLD_NEXT, "SDL_Init");
     //_SDL_Flip = (int (*)( void * )) dlsym(RTLD_NEXT, "SDL_Flip");
     _SDL_Quit = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_Quit");
-    _SDL_CreateThread = (DFThread* (*)(int (*fn)(void *), void *data))dlsym(RTLD_NEXT, "SDL_CreateThread");
-    _SDL_CreateMutex = (DFMutex*(*)())dlsym(RTLD_NEXT,"SDL_CreateMutex");
-    _SDL_DestroyMutex = (void (*)(DFMutex*))dlsym(RTLD_NEXT,"SDL_DestroyMutex");
-    _SDL_mutexP = (int (*)(DFMutex*))dlsym(RTLD_NEXT,"SDL_mutexP");
-    _SDL_mutexV = (int (*)(DFMutex*))dlsym(RTLD_NEXT,"SDL_mutexV");
-    _SDL_PollEvent = (int (*)(FakeSDL::Event*))dlsym(RTLD_NEXT,"SDL_PollEvent");
+    _SDL_CreateThread = (SDL::Thread* (*)(int (*fn)(void *), void *data))dlsym(RTLD_NEXT, "SDL_CreateThread");
+    _SDL_CreateMutex = (SDL::Mutex*(*)())dlsym(RTLD_NEXT,"SDL_CreateMutex");
+    _SDL_DestroyMutex = (void (*)(SDL::Mutex*))dlsym(RTLD_NEXT,"SDL_DestroyMutex");
+    _SDL_mutexP = (int (*)(SDL::Mutex*))dlsym(RTLD_NEXT,"SDL_mutexP");
+    _SDL_mutexV = (int (*)(SDL::Mutex*))dlsym(RTLD_NEXT,"SDL_mutexV");
+    _SDL_PollEvent = (int (*)(SDL::Event*))dlsym(RTLD_NEXT,"SDL_PollEvent");
+    _SDL_ThreadID = (uint32_t (*)())dlsym(RTLD_NEXT,"SDL_ThreadID");
+    
+    _SDL_CreateCond = (SDL::Cond * (*)())dlsym(RTLD_NEXT,"SDL_CreateCond");
+    _SDL_DestroyCond = (void(*)(SDL::Cond *))dlsym(RTLD_NEXT,"SDL_DestroyCond");
+    _SDL_CondSignal = (int (*)(SDL::Cond *))dlsym(RTLD_NEXT,"SDL_CondSignal");
+    _SDL_CondWait = (int (*)(SDL::Cond *, SDL::Mutex *))dlsym(RTLD_NEXT,"SDL_CondWait");
 
     // check if we got them
-    if(_SDL_Init && _SDL_Quit && _SDL_CreateThread && _SDL_CreateMutex && _SDL_DestroyMutex && _SDL_mutexP && _SDL_mutexV)
+    if(_SDL_Init && _SDL_Quit && _SDL_CreateThread
+        && _SDL_CreateMutex && _SDL_DestroyMutex && _SDL_mutexP
+         && _SDL_mutexV && _SDL_PollEvent && _SDL_ThreadID
+      && _SDL_CondSignal && _SDL_CondWait && _SDL_CreateCond && _SDL_DestroyCond)
     {
         fprintf(stderr,"dfhack: hooking successful\n");
     }

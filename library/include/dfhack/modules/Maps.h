@@ -34,6 +34,7 @@ distribution.
 #include "dfhack/Module.h"
 #include "dfhack/modules/Vegetation.h"
 #include <vector>
+#include "dfhack/Virtual.h"
 
 /**
  * \defgroup grp_maps Maps module and its types
@@ -145,10 +146,6 @@ namespace DFHack
         uint32_t origin;
     };
 
-    struct t_virtual
-    {
-        void * vptr;
-    };
     /**
      * mineral vein object - bitmap with a material type
      * \ingroup grp_maps

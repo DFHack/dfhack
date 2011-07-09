@@ -20,6 +20,7 @@ SET(PROJECT_HDRS
 include/DFHack.h
 include/dfhack/Error.h
 include/dfhack/Export.h
+include/dfhack/Virtual.h
 include/dfhack/MiscUtils.h
 include/dfhack/Module.h
 include/dfhack/Pragma.h
@@ -53,6 +54,7 @@ PluginManager.cpp
 VersionInfo.cpp
 VersionInfoFactory.cpp
 TileTypes.cpp
+Virtual.cpp
 
 depends/md5/md5.cpp
 depends/md5/md5wrapper.cpp

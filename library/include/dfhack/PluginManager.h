@@ -92,13 +92,15 @@ namespace DFHack
     };
     class DFHACK_EXPORT PluginManager
     {
-    public:
+    // PRIVATE METHODS
+        friend class Core;
         PluginManager(Core * core);
         ~PluginManager();
-        Plugin *getPluginByName (const std::string & name);
-        command_result InvokeCommand( std::string & command, std::vector <std::string> & parameters);
         void OnUpdate( void );
-        //FIXME: how do we deal with errors inside DF? Unhandled exceptions are deadly.
+    // PUBLIC METHODS
+    public:
+        const Plugin *getPluginByName (const std::string & name);
+        command_result InvokeCommand( std::string & command, std::vector <std::string> & parameters );
         const Plugin* operator[] (std::size_t index)
         {
             if(index >= all_plugins.size())
@@ -109,6 +111,7 @@ namespace DFHack
         {
             return all_plugins.size();
         }
+    // DATA
     private:
         std::map <std::string, const PluginCommand *> commands;
         std::vector <Plugin *> all_plugins;

@@ -27,7 +27,7 @@
 #include "keysym.h"
 #include <stdint.h>
 
-namespace FakeSDL
+namespace SDL
 {
     /** Keysym structure
      *

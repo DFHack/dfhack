@@ -20,9 +20,12 @@
     slouken@libsdl.org
 */
 
+// Fake - only structs. Shamelessly pilfered from the SDL library.
+// Needed for processing its event types without polluting our namespaces with C garbage
+
 #pragma once
 
-namespace FakeSDL
+namespace SDL
 {
     /** What we really want is a mapping of every raw key on the keyboard.
      *  To support international keyboards, we use the range 0xA1 - 0xFF

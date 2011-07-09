@@ -57,7 +57,7 @@ revealstate revealed = NOT_REVEALED;
 
 DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params);
 DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string> & params);
-DFhackCExport command_result revealtoggle(DFHack::Core * c, std::vector<std::string> & params);
+DFhackCExport command_result revtoggle(DFHack::Core * c, std::vector<std::string> & params);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -67,9 +67,9 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("reveal","Reveal the map. 'reveal safe' will keep hell hidden.",reveal));
+    commands.push_back(PluginCommand("reveal","Reveal the map. 'reveal hell' will also reveal hell.",reveal));
     commands.push_back(PluginCommand("unreveal","Revert the map to its previous state.",unreveal));
-    commands.push_back(PluginCommand("revealtoggle","Reveal/unreveal depending on state.",revealtoggle));
+    commands.push_back(PluginCommand("revtoggle","Reveal/unreveal depending on state.",revtoggle));
     return CR_OK;
 }
 
@@ -96,10 +96,10 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params)
 {
-    bool no_hell = false;
-    if(params.size() && params[0] == "safe")
+    bool no_hell = true;
+    if(params.size() && params[0] == "hell")
     {
-        no_hell = true;
+        no_hell = false;
     }
 
     if(revealed != NOT_REVEALED)
@@ -238,7 +238,7 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     return CR_OK;
 }
 
-DFhackCExport command_result revealtoggle (DFHack::Core * c, std::vector<std::string> & params)
+DFhackCExport command_result revtoggle (DFHack::Core * c, std::vector<std::string> & params)
 {
     if(revealed)
     {

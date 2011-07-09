@@ -42,6 +42,7 @@ namespace SDL
     struct Thread;
     struct Mutex;
     struct Cond;
+    struct Library;
 }
 
 // mutex stuff

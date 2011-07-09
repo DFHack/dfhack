@@ -57,6 +57,7 @@ namespace DFHack
 // just catch the first one and init all our function pointers at that time
 bool FirstCall(void);
 bool inited = false;
+bool started_joysticks = false;
 
 /// wrappers for SDL 1.2 functions used in 40d16
 /***** Condition variables
@@ -70,26 +71,26 @@ SDL_CondWait
 SDL_DestroyCond
     void SDLCALL SDL_DestroyCond(SDL_cond *cond);
 */
-static vPtr (*_SDL_CreateCond)() = 0;
-DFhackCExport vPtr SDL_CreateCond()
+static SDL::Cond * (*_SDL_CreateCond)() = 0;
+DFhackCExport SDL::Cond * SDL_CreateCond()
 {
     return _SDL_CreateCond();
 }
 
-static int (*_SDL_CondSignal)(vPtr cond) = 0;
-DFhackCExport int SDL_CondSignal(vPtr cond)
+static int (*_SDL_CondSignal)(SDL::Cond *) = 0;
+DFhackCExport int SDL_CondSignal(SDL::Cond * cond)
 {
     return _SDL_CondSignal(cond);
 }
 
-static int (*_SDL_CondWait)(vPtr cond, vPtr mutex) = 0;
-DFhackCExport int SDL_CondWait(vPtr cond, vPtr mutex)
+static int (*_SDL_CondWait)(SDL::Cond *,SDL::Mutex *) = 0;
+DFhackCExport int SDL_CondWait(SDL::Cond * cond, SDL::Mutex * mutex)
 {
     return _SDL_CondWait(cond, mutex);
 }
 
-static void (*_SDL_DestroyCond)(vPtr cond) = 0;
-DFhackCExport void SDL_DestroyCond(vPtr cond)
+static void (*_SDL_DestroyCond)(SDL::Cond * ) = 0;
+DFhackCExport void SDL_DestroyCond(SDL::Cond * cond)
 {
     _SDL_DestroyCond(cond);
 }
@@ -103,26 +104,26 @@ SDL_mutexP
 SDL_DestroyMutex
     void SDLCALL SDL_DestroyMutex(SDL_mutex *mutex);
 */
-static DFMutex * (*_SDL_CreateMutex)(void) = 0;
-DFhackCExport DFMutex * SDL_CreateMutex(void)
+static SDL::Mutex * (*_SDL_CreateMutex)(void) = 0;
+DFhackCExport SDL::Mutex * SDL_CreateMutex(void)
 {
     return _SDL_CreateMutex();
 }
 
-static int (*_SDL_mutexP)(DFMutex * mutex) = 0;
-DFhackCExport int SDL_mutexP(DFMutex * mutex)
+static int (*_SDL_mutexP)(SDL::Mutex * mutex) = 0;
+DFhackCExport int SDL_mutexP(SDL::Mutex * mutex)
 {
     return _SDL_mutexP(mutex);
 }
 
-static int (*_SDL_mutexV)(DFMutex * mutex) = 0;
-DFhackCExport int SDL_mutexV(DFMutex * mutex)
+static int (*_SDL_mutexV)(SDL::Mutex * mutex) = 0;
+DFhackCExport int SDL_mutexV(SDL::Mutex * mutex)
 {
     return _SDL_mutexV(mutex);
 }
 
-static void (*_SDL_DestroyMutex)(DFMutex * mutex) = 0;
-DFhackCExport void SDL_DestroyMutex(DFMutex * mutex)
+static void (*_SDL_DestroyMutex)(SDL::Mutex * mutex) = 0;
+DFhackCExport void SDL_DestroyMutex(SDL::Mutex * mutex)
 {
     _SDL_DestroyMutex(mutex);
 }
@@ -393,10 +394,19 @@ DFhackCExport uint8_t * SDL_GetKeyState(int* numkeys)
     return _SDL_GetKeyState(numkeys);
 }
 
-static int (*_SDL_PollEvent)(vPtr event) = 0;
-DFhackCExport int SDL_PollEvent(vPtr event)
+static int (*_SDL_PollEvent)(SDL::Event *) = 0;
+DFhackCExport int SDL_PollEvent(SDL::Event * event)
 {
-    return _SDL_PollEvent(event);
+    int orig_return = _SDL_PollEvent(event);
+    // only send events to Core after we get first SDL_NumJoysticks call
+    // DF event loop is possibly polling for SDL events before things get inited properly
+    // SDL handles it. We don't, because we use some other parts of SDL too.
+    if(started_joysticks && event != 0)
+    {
+        DFHack::Core & c = DFHack::Core::getInstance();
+        return c.SDL_Event(event, orig_return);
+    }
+    return orig_return;
 }
 
 /***** error handling
@@ -448,20 +458,20 @@ SDL_UnloadObject
     extern DECLSPEC void SDLCALL SDL_UnloadObject(void *handle);
 */
 
-static void * (*_SDL_LoadFunction)(DFLibrary *handle, const char *name) = 0;
-DFhackCExport void * SDL_LoadFunction(DFLibrary *handle, const char *name)
+static void * (*_SDL_LoadFunction)(SDL::Library *handle, const char *name) = 0;
+DFhackCExport void * SDL_LoadFunction(SDL::Library *handle, const char *name)
 {
     return _SDL_LoadFunction(handle, name);
 }
 
-extern "C" static DFLibrary * (*_SDL_LoadObject)(const char *sofile) = 0;
-DFhackCExport DFLibrary * SDL_LoadObject(const char *sofile)
+extern "C" static SDL::Library * (*_SDL_LoadObject)(const char *sofile) = 0;
+DFhackCExport SDL::Library * SDL_LoadObject(const char *sofile)
 {
     return _SDL_LoadObject(sofile);
 }
 
-static void (*_SDL_UnloadObject)(DFLibrary * handle) = 0;
-DFhackCExport void SDL_UnloadObject(DFLibrary * handle)
+static void (*_SDL_UnloadObject)(SDL::Library * handle) = 0;
+DFhackCExport void SDL_UnloadObject(SDL::Library * handle)
 {
     _SDL_UnloadObject(handle);
 }
@@ -556,7 +566,9 @@ DFhackCExport void SDL_Quit(void)
 DFhackCExport int SDL_NumJoysticks(void)
 {
     DFHack::Core & c = DFHack::Core::getInstance();
-    return c.Update();
+    int ret = c.Update();
+    started_joysticks = true;
+    return ret;
 }
 
 static void (*_SDL_GL_SwapBuffers)(void) = 0;
@@ -595,8 +607,8 @@ DFhackCExport void *SDL_CreateSemaphore(uint32_t initial_value)
     return _SDL_CreateSemaphore(initial_value);
 }
 
-static DFThread * (*_SDL_CreateThread)(int (*fn)(void *), void *data) = 0;
-DFhackCExport DFThread *SDL_CreateThread(int (*fn)(void *), void *data)
+static SDL::Thread * (*_SDL_CreateThread)(int (*fn)(void *), void *data) = 0;
+DFhackCExport  SDL::Thread *SDL_CreateThread(int (*fn)(void *), void *data)
 {
     if(!inited)
         FirstCall();
@@ -688,15 +700,15 @@ bool FirstCall()
     }
     // stuff for DF
     _SDL_AddTimer = (void*(*)(uint32_t, void*, void*)) GetProcAddress(realSDLlib,"SDL_AddTimer");
-    _SDL_CondSignal = (int (*)(void*))GetProcAddress(realSDLlib,"SDL_CondSignal");
-    _SDL_CondWait = (int (*)(void*, void*))GetProcAddress(realSDLlib,"SDL_CondWait");
+    _SDL_CondSignal = (int (*)(SDL::Cond*))GetProcAddress(realSDLlib,"SDL_CondSignal");
+    _SDL_CondWait = (int (*)(SDL::Cond*, SDL::Mutex*))GetProcAddress(realSDLlib,"SDL_CondWait");
     _SDL_ConvertSurface = (void*(*)(void*, void*, uint32_t))GetProcAddress(realSDLlib,"SDL_ConvertSurface");
-    _SDL_CreateCond = (void*(*)())GetProcAddress(realSDLlib,"SDL_CreateCond");
-    _SDL_CreateMutex = (DFMutex*(*)())GetProcAddress(realSDLlib,"SDL_CreateMutex");
+    _SDL_CreateCond = (SDL::Cond*(*)())GetProcAddress(realSDLlib,"SDL_CreateCond");
+    _SDL_CreateMutex = (SDL::Mutex*(*)())GetProcAddress(realSDLlib,"SDL_CreateMutex");
     _SDL_CreateRGBSurface = (void*(*)(uint32_t, int, int, int, uint32_t, uint32_t, uint32_t, uint32_t))GetProcAddress(realSDLlib,"SDL_CreateRGBSurface");
     _SDL_CreateRGBSurfaceFrom = (void*(*)(void*, int, int, int, int, uint32_t, uint32_t, uint32_t, uint32_t))GetProcAddress(realSDLlib,"SDL_CreateRGBSurfaceFrom");
-    _SDL_DestroyCond = (void (*)(void*))GetProcAddress(realSDLlib,"SDL_DestroyCond");
-    _SDL_DestroyMutex = (void (*)(DFMutex*))GetProcAddress(realSDLlib,"SDL_DestroyMutex");
+    _SDL_DestroyCond = (void (*)(SDL::Cond*))GetProcAddress(realSDLlib,"SDL_DestroyCond");
+    _SDL_DestroyMutex = (void (*)(SDL::Mutex*))GetProcAddress(realSDLlib,"SDL_DestroyMutex");
     _SDL_EnableKeyRepeat = (int (*)(int, int))GetProcAddress(realSDLlib,"SDL_EnableKeyRepeat");
     _SDL_EnableUNICODE = (int (*)(int))GetProcAddress(realSDLlib,"SDL_EnableUNICODE");
     _SDL_GetVideoSurface = (void*(*)())GetProcAddress(realSDLlib,"SDL_GetVideoSurface");
@@ -715,7 +727,7 @@ bool FirstCall()
     _SDL_Flip = (int (*)( void * )) GetProcAddress(realSDLlib, "SDL_Flip");
     _SDL_LockSurface = (int (*)(void*))GetProcAddress(realSDLlib,"SDL_LockSurface");
     _SDL_MapRGB = (uint32_t (*)(void*, uint8_t, uint8_t, uint8_t))GetProcAddress(realSDLlib,"SDL_MapRGB");
-    _SDL_PollEvent = (int (*)(void*))GetProcAddress(realSDLlib,"SDL_PollEvent");
+    _SDL_PollEvent = (int (*)(SDL::Event*))GetProcAddress(realSDLlib,"SDL_PollEvent");
     _SDL_Quit = (void (*)())GetProcAddress(realSDLlib,"SDL_Quit");
     _SDL_RWFromFile = (void*(*)(const char*, const char*))GetProcAddress(realSDLlib,"SDL_RWFromFile");
     _SDL_RemoveTimer = (bool (*)(void*))GetProcAddress(realSDLlib,"SDL_RemoveTimer");
@@ -729,25 +741,25 @@ bool FirstCall()
     _SDL_UpperBlit = (int (*)(void*, void*, void*, void*))GetProcAddress(realSDLlib,"SDL_UpperBlit");
     _SDL_WM_SetCaption = (void (*)(const char*, const char*))GetProcAddress(realSDLlib,"SDL_WM_SetCaption");
     _SDL_WM_SetIcon = (void (*)(void*, uint8_t*))GetProcAddress(realSDLlib,"SDL_WM_SetIcon");
-    _SDL_mutexP = (int (*)(DFMutex*))GetProcAddress(realSDLlib,"SDL_mutexP");
-    _SDL_mutexV = (int (*)(DFMutex*))GetProcAddress(realSDLlib,"SDL_mutexV");
+    _SDL_mutexP = (int (*)(SDL::Mutex*))GetProcAddress(realSDLlib,"SDL_mutexP");
+    _SDL_mutexV = (int (*)(SDL::Mutex*))GetProcAddress(realSDLlib,"SDL_mutexV");
     _SDL_strlcpy = (size_t (*)(char*, const char*, size_t))GetProcAddress(realSDLlib,"SDL_strlcpy");
     
     // stuff for SDL_Image
     _SDL_ClearError = (void (*)())GetProcAddress(realSDLlib,"SDL_ClearError");
     _SDL_Error = (void (*)(int))GetProcAddress(realSDLlib,"SDL_Error");
-    _SDL_LoadFunction = (void*(*)(DFLibrary*, const char*))GetProcAddress(realSDLlib,"SDL_LoadFunction");
-    _SDL_LoadObject = (DFLibrary*(*)(const char*))GetProcAddress(realSDLlib,"SDL_LoadObject");
+    _SDL_LoadFunction = (void*(*)(SDL::Library*, const char*))GetProcAddress(realSDLlib,"SDL_LoadFunction");
+    _SDL_LoadObject = (SDL::Library*(*)(const char*))GetProcAddress(realSDLlib,"SDL_LoadObject");
     _SDL_ReadBE32 = (uint32_t (*)(void*))GetProcAddress(realSDLlib,"SDL_ReadBE32");
     _SDL_ReadLE16 = (uint16_t (*)(void*))GetProcAddress(realSDLlib,"SDL_ReadLE16");
     _SDL_ReadLE32 = (uint32_t (*)(void*))GetProcAddress(realSDLlib,"SDL_ReadLE32");
     _SDL_SetError = (void (*)(const char*, ...))GetProcAddress(realSDLlib,"SDL_SetError");
-    _SDL_UnloadObject = (void (*)(DFLibrary*))GetProcAddress(realSDLlib,"SDL_UnloadObject");
+    _SDL_UnloadObject = (void (*)(SDL::Library*))GetProcAddress(realSDLlib,"SDL_UnloadObject");
     _SDL_FillRect = (int (*)(void*,void*,uint32_t))GetProcAddress(realSDLlib,"SDL_FillRect");
     
     // new in DF 0.31.04
     _SDL_CreateSemaphore = (void* (*)(uint32_t))GetProcAddress(realSDLlib,"SDL_CreateSemaphore");
-    _SDL_CreateThread = (DFThread* (*)(int (*fn)(void *), void *data))GetProcAddress(realSDLlib,"SDL_CreateThread");
+    _SDL_CreateThread = (SDL::Thread* (*)(int (*fn)(void *), void *data))GetProcAddress(realSDLlib,"SDL_CreateThread");
     _SDL_Delay = (void (*)(uint32_t))GetProcAddress(realSDLlib,"SDL_Delay");
     _SDL_DestroySemaphore = (void (*)(void *))GetProcAddress(realSDLlib,"SDL_DestroySemaphore");
     _SDL_GetAppState = (uint8_t (*)(void))GetProcAddress(realSDLlib,"SDL_GetAppState");

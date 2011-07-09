@@ -330,9 +330,9 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     }
 }
 
-string Process::doReadClassName (uint32_t vptr)
+string Process::doReadClassName (void * vptr)
 {
-    int rtti = readDWord(vptr - 0x4);
+    int rtti = readDWord((uint32_t)vptr - 0x4);
     int typeinfo = readDWord(rtti + 0xC);
     string raw = readCString(typeinfo + 0xC); // skips the .?AV
     raw.resize(raw.length() - 2);// trim @@ from end

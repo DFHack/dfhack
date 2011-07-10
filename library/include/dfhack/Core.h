@@ -36,7 +36,6 @@ namespace DFHack
 {
     class Process;
     class Module;
-    class Context;
     class Creatures;
     class Engravings;
     class Maps;
@@ -53,7 +52,6 @@ namespace DFHack
     class Console;
     class PluginManager;
     class Core;
-    class Hotkey;
     // anon type, pretty much
     struct DFLibrary;
 

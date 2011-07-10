@@ -2234,6 +2234,8 @@
         <Offsets>
             <Group name="GUI">
                 <Address name="hotkeys" value="0x14f5cc8" />
+                <Address name="interface" value="0x14f6070" />
+                <Address name="current_menu_state" value="0x14f5fac" />
             </Group>
             <Group name="Creatures">
                 <Group name="creature">

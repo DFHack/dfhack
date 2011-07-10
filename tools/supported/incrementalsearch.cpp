@@ -27,9 +27,17 @@ inline void printRange(DFHack::t_memrange * tpr)
     std::cout << std::hex << tpr->start << " - " << tpr->end << "|" << (tpr->read ? "r" : "-") << (tpr->write ? "w" : "-") << (tpr->execute ? "x" : "-") << "|" << tpr->name << std::endl;
 }
 
-bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges)
+/*
+ * Since the start and/or end of a memory range can change each time we
+ * detach and re-attach to the DF process, we save the indexes of the
+ * memory ranges we want to look at, and re-read the ranges each time
+ * we re-attach.  Hopefully we won't encounter any circumstances where
+ * entire new ranges are added or removed...
+ */
+bool getRanges(DFHack::Process * p, vector <int>& selected_ranges)
 {
     vector <DFHack::t_memrange> ranges;
+    ranges.clear();
     selected_ranges.clear();
     p->getMemRanges(ranges);
     cout << "Which range to search? (default is 1-4)" << endl;
@@ -46,8 +54,9 @@ bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges
         std::getline(cin, select);
         if(select.empty())
         {
-            // empty input, assume default. observe the length of the memory range vector
-            // these are hardcoded values, intended for my convenience only
+            // empty input, assume default. observe the length of the memory
+            // range vector these are hardcoded values, intended for my
+            // convenience only
             if(p->getDescriptor()->getOS() == DFHack::OS_WINDOWS)
             {
                 start = min(11, (int)ranges.size());
@@ -78,20 +87,18 @@ bool getRanges(DFHack::Process * p, vector <DFHack::t_memrange>& selected_ranges
         }
         break;
     }
-    end++;
     cout << "selected ranges:" <<endl;
-    vector <DFHack::t_memrange>::iterator it;
-    it = ranges.begin() + start;
-    while (it != ranges.begin() + end)
+
+    for (int i = start; i <= end; i++)
     {
         // check if readable
-        if((*it).read)
+        if (ranges[i].read)
         {
-            selected_ranges.push_back(*it);
-            printRange(&*it);
+            selected_ranges.push_back(i);
+            printRange(&(ranges[i]));
         }
-        it++;
     }
+
     return true;
 }
 
@@ -138,6 +145,32 @@ bool getString (string prompt, string & output)
         return true;
     }
 }
+
+bool readRanges(DFHack::Context * DF, vector <int>& selected_ranges,
+               vector <DFHack::t_memrange>& ranges)
+{
+    DFHack::Process * p = DF->getProcess();
+
+    vector <DFHack::t_memrange> new_ranges;
+    new_ranges.clear();
+    p->getMemRanges(new_ranges);
+
+    for (size_t i = 0; i < selected_ranges.size(); i++)
+    {
+        int idx = selected_ranges[i];
+
+        if (ranges.size() == i)
+            // First time ranges vector has been filled in.
+            ranges.push_back(new_ranges[idx]);
+        // If something was wrong with the range on one memory read,
+        // don't read it again.
+        else if(ranges[i].valid)
+            ranges[i] = new_ranges[idx];
+    }
+
+    return true;
+}
+
 
 template <class T>
 bool Incremental ( vector <uint64_t> &found, const char * what, T& output,
@@ -215,8 +248,11 @@ bool Incremental ( vector <uint64_t> &found, const char * what, T& output,
     }
 }
 
-void FindIntegers(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+void FindIntegers(DFHack::ContextManager & DFMgr,
+                  vector <int>& selected_ranges)
 {
+    vector <DFHack::t_memrange> ranges;
+
     // input / validation of variable size
     int size;
     do
@@ -238,6 +274,7 @@ void FindIntegers(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& r
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
+        readRanges(DF, selected_ranges, ranges);
         SegmentedFinder sf(ranges,DF);
         switch(size)
         {
@@ -255,8 +292,11 @@ void FindIntegers(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& r
     }
 }
 
-void FindVectorByLength(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges )
+void FindVectorByLength(DFHack::ContextManager & DFMgr,
+                        vector <int>& selected_ranges )
 {
+    vector <DFHack::t_memrange> ranges;
+
     int element_size;
     do
     {
@@ -271,6 +311,7 @@ void FindVectorByLength(DFHack::ContextManager & DFMgr, vector <DFHack::t_memran
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
+        readRanges(DF, selected_ranges, ranges);
         SegmentedFinder sf(ranges,DF);
         //sf.Incremental<int ,vecTriplet>(0,4,found,vectorAll);
         //sf.Filter<uint32_t,vecTriplet>(length * element_size,found,vectorLength<uint32_t>);
@@ -279,15 +320,19 @@ void FindVectorByLength(DFHack::ContextManager & DFMgr, vector <DFHack::t_memran
     }
 }
 
-void FindVectorByObjectRawname(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+void FindVectorByObjectRawname(DFHack::ContextManager & DFMgr,
+                               vector <int>& selected_ranges)
 {
+    vector <DFHack::t_memrange> ranges;
     vector <uint64_t> found;
     string select;
+
     while (Incremental(found, "raw name",select,"vector","vectors"))
     {
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
+        readRanges(DF, selected_ranges, ranges);
         SegmentedFinder sf(ranges,DF);
         sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
         sf.Filter<const char * ,vecTriplet>(select.c_str(),found, vectorString);
@@ -295,8 +340,10 @@ void FindVectorByObjectRawname(DFHack::ContextManager & DFMgr, vector <DFHack::t
     }
 }
 
-void FindVectorByFirstObjectRawname(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+void FindVectorByFirstObjectRawname(DFHack::ContextManager & DFMgr,
+                                    vector <int>& selected_ranges)
 {
+    vector <DFHack::t_memrange> ranges;
     vector <uint64_t> found;
     string select;
     while (Incremental(found, "raw name",select,"vector","vectors"))
@@ -304,6 +351,7 @@ void FindVectorByFirstObjectRawname(DFHack::ContextManager & DFMgr, vector <DFHa
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
+        readRanges(DF, selected_ranges, ranges);
         SegmentedFinder sf(ranges,DF);
         sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
         sf.Filter<const char * ,vecTriplet>(select.c_str(),found, vectorStringFirst);
@@ -323,8 +371,10 @@ struct VectorSizeFunctor : public binary_function<uint64_t, uint64_t, bool>
     SegmentedFinder & sf_;
 };
 
-void FindVectorByBounds(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+void FindVectorByBounds(DFHack::ContextManager & DFMgr,
+                        vector <int>& selected_ranges)
 {
+    vector <DFHack::t_memrange> ranges;
     vector <uint64_t> found;
     uint32_t select;
     while (Incremental(found, "address between vector.start and vector.end",select,"vector","vectors"))
@@ -332,6 +382,7 @@ void FindVectorByBounds(DFHack::ContextManager & DFMgr, vector <DFHack::t_memran
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
+        readRanges(DF, selected_ranges, ranges);
         SegmentedFinder sf(ranges,DF);
         sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
         sf.Filter<uint32_t ,vecTriplet>(select,found, vectorAddrWithin);
@@ -341,8 +392,10 @@ void FindVectorByBounds(DFHack::ContextManager & DFMgr, vector <DFHack::t_memran
     }
 }
 
-void FindPtrVectorsByObjectAddress(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+void FindPtrVectorsByObjectAddress(DFHack::ContextManager & DFMgr,
+                                   vector <int>& selected_ranges)
 {
+    vector <DFHack::t_memrange> ranges;
     vector <uint64_t> found;
     uint32_t select;
     while (Incremental(found, "object address",select,"vector","vectors"))
@@ -350,6 +403,7 @@ void FindPtrVectorsByObjectAddress(DFHack::ContextManager & DFMgr, vector <DFHac
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
+        readRanges(DF, selected_ranges, ranges);
         SegmentedFinder sf(ranges,DF);
         sf.Find<int ,vecTriplet>(0,4,found, vectorAll);
         sf.Filter<uint32_t ,vecTriplet>(select,found, vectorOfPtrWithin);
@@ -357,8 +411,10 @@ void FindPtrVectorsByObjectAddress(DFHack::ContextManager & DFMgr, vector <DFHac
     }
 }
 
-void FindStrBufs(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+void FindStrBufs(DFHack::ContextManager & DFMgr,
+                 vector <int>& selected_ranges)
 {
+    vector <DFHack::t_memrange> ranges;
     vector <uint64_t> found;
     string select;
     while (Incremental(found,"buffer",select,"buffer","buffers"))
@@ -366,6 +422,7 @@ void FindStrBufs(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ra
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
+        readRanges(DF, selected_ranges, ranges);
         SegmentedFinder sf(ranges,DF);
         sf.Find< const char * ,uint32_t>(select.c_str(),1,found, findStrBuffer);
         DF->Detach();
@@ -374,8 +431,10 @@ void FindStrBufs(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ra
 
 
 
-void FindStrings(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+void FindStrings(DFHack::ContextManager & DFMgr,
+                 vector <int>& selected_ranges)
 {
+    vector <DFHack::t_memrange> ranges;
     vector <uint64_t> found;
     string select;
     while (Incremental(found,"string",select,"string","strings"))
@@ -383,14 +442,17 @@ void FindStrings(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ra
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
+        readRanges(DF, selected_ranges, ranges);
         SegmentedFinder sf(ranges,DF);
         sf.Incremental< const char * ,uint32_t>(select.c_str(),1,found, findString);
         DF->Detach();
     }
 }
 
-void FindData(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+void FindData(DFHack::ContextManager & DFMgr,
+              vector <int>& selected_ranges)
 {
+    vector <DFHack::t_memrange> ranges;
     vector <uint64_t> found;
     Bytestream select;
     while (Incremental(found,"byte stream",select,"byte stream","byte streams"))
@@ -398,6 +460,7 @@ void FindData(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& range
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
+        readRanges(DF, selected_ranges, ranges);
         SegmentedFinder sf(ranges,DF);
         sf.Incremental< Bytestream ,uint32_t>(select,1,found, findBytestream);
         DF->Detach();
@@ -449,10 +512,11 @@ bool TriggerIncremental ( vector <uint64_t> &found )
     else return true;
 }
 
-
-void FindCoords(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+void FindCoords(DFHack::ContextManager & DFMgr, vector <int>& selected_ranges)
 {
     vector <uint64_t> found;
+    vector <DFHack::t_memrange> ranges;
+
     int size = 4;
     do
     {
@@ -463,6 +527,7 @@ void FindCoords(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ran
         DFMgr.Refresh();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
+        readRanges(DF, selected_ranges, ranges);
         DFHack::Gui * pos = DF->getGui();
         pos->Start();
         int32_t x, y, z;
@@ -488,8 +553,11 @@ void FindCoords(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ran
     }
 }
 
-void PtrTrace(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+void PtrTrace(DFHack::ContextManager & DFMgr,
+              vector <int>& selected_ranges)
 {
+    vector <DFHack::t_memrange> ranges;
+
     int element_size;
     do
     {
@@ -505,6 +573,7 @@ void PtrTrace(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& range
         found.clear();
         DFHack::Context * DF = DFMgr.getSingleContext();
         DF->Attach();
+        readRanges(DF, selected_ranges, ranges);
         SegmentedFinder sf(ranges,DF);
         cout <<"Starting: 0x" << hex << select << endl;
         while(sf.getSegmentForAddress(select))
@@ -548,8 +617,10 @@ void PtrTrace(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& range
     }
 }
 */
-void DataPtrTrace(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& ranges)
+void DataPtrTrace(DFHack::ContextManager & DFMgr,
+                  vector <int>& selected_ranges)
 {
+    vector <DFHack::t_memrange> ranges;
     int element_size;
     do
     {
@@ -563,6 +634,7 @@ void DataPtrTrace(DFHack::ContextManager & DFMgr, vector <DFHack::t_memrange>& r
     DFHack::Context * DF = DFMgr.getSingleContext();
     DF->Attach();
     DFMgr.Refresh();
+    readRanges(DF, selected_ranges, ranges);
     found.clear();
     SegmentedFinder sf(ranges,DF);
     while(found.empty())
@@ -669,11 +741,14 @@ struct tilecolors
 };
 #pragma pack()
 
-void autoSearch(DFHack::Context * DF, vector <DFHack::t_memrange>& ranges)
+void autoSearch(DFHack::Context * DF, vector <int>& selected_ranges)
 {
+    vector <DFHack::t_memrange> ranges;
     vector <uint64_t> allVectors;
     vector <uint64_t> filtVectors;
     vector <uint64_t> to_filter;
+
+    readRanges(DF, selected_ranges, ranges);
 
     cout << "stealing memory..." << endl;
     SegmentedFinder sf(ranges, DF);
@@ -906,8 +981,8 @@ int main (void)
         return 1;
     }
     DFHack::Process * p = DF->getProcess();
-    vector <DFHack::t_memrange> selected_ranges;
-    getRanges(p,selected_ranges);
+    vector <int> selected_ranges;
+    getRanges(p, selected_ranges);
 
     string prompt =
     "Select search type: 1=number(default), 2=vector by length, 3=vector>object>string,\n"

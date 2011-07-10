@@ -27,7 +27,13 @@ class SegmentFinder
                 free(mr_.buffer);
                 valid = false;
                 mr.valid = false; // mark the range passed in as bad
-                cout << "Range 0x" << hex << mr_.start << " - 0x" <<  mr_.end << dec << " not readable." << endl;
+                cout << "Range 0x" << hex << mr_.start << " - 0x" <<  mr_.end;
+
+                if (strlen(mr_.name) != 0)
+                    cout << " (" << mr_.name << ")";
+
+                cout << dec << " not readable." << endl;
+                cout << "Skipping this range on future scans." << endl;
             }
         }
     }

@@ -208,6 +208,7 @@ void usage(int argc, const char * argv[])
         << "    * diplomat: all diplomats" << endl
         << "    * FB: all forgotten beasts" << endl
         << "    * female: all female creatures" << endl
+        << "    * ghost: all ghosts" << endl
         << "    * male: all male creatures" << endl
         << "    * merchants: all merchants (including pack animals)" << endl
         << "    * neuter: all neuter creatuers" << endl
@@ -238,7 +239,8 @@ void usage(int argc, const char * argv[])
         << "-rh             : Remove hauler labors (stone hauling, etc.) from creature" << endl
         // Disabling mood doesn't work as intented
         << "--setmood <n>   : Set mood to n (-1 = no mood, max=4, buggy!)" << endl
-        << "--kill          : Kill creature(s) (may need to be called multiple times)" << endl
+        << "--kill          : Kill creature(s) (leaves behind corpses)" << endl
+        << "--erase         : Remove creature(s) from game without killing" << endl
         << "--tame          : Tames animals, recruits intelligent creatures." << endl
         << "--slaugher      : Mark a creature for slaughter, even sentients" << endl
         << "--butcher       : Same as --slaugher" << endl
@@ -520,6 +522,7 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
     {
         DFHack::t_creaturflags1 f1 = creature.flags1;
         DFHack::t_creaturflags2 f2 = creature.flags2;
+        DFHack::t_creaturflags3 f3 = creature.flags3;
 
         if(f1.bits.dead){cout << "Flag: dead" << endl; }
         if(f1.bits.had_mood){cout<<toCaps("Flag: had_mood") << endl; }
@@ -584,6 +587,10 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
         if(f2.bits.breathing_problem){cout<<toCaps("Flag: breathing_problem") << endl; }
         if(f2.bits.roaming_wilderness_population_source){cout<<toCaps("Flag: roaming_wilderness_population_source") << endl; }
         if(f2.bits.roaming_wilderness_population_source_not_a_map_feature){cout<<toCaps("Flag: roaming_wilderness_population_source_not_a_map_feature") << endl; }
+
+        if(f3.bits.announce_titan){cout<<toCaps("Flag: announce_titan") << endl; }
+        if(f3.bits.scuttle){cout<<toCaps("Flag: scuttle") << endl; }
+        if(f3.bits.ghostly){cout<<toCaps("Flag: ghostly") << endl; }
     }
     else
     {
@@ -600,6 +607,9 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
         if(creature.flags2.bits.gutted)     { cout << "Flag: Gutted" << endl; }
         if(creature.flags2.bits.slaughter)  { cout << "Flag: Marked for slaughter" << endl; }
         if(creature.flags2.bits.underworld) { cout << "Flag: From the underworld" << endl; }
+
+        /* FLAGS 3 */
+        if(creature.flags3.bits.ghostly)    { cout << "Flag: Ghost" << endl; }
 
         if(creature.flags1.bits.had_mood && (creature.mood == -1 || creature.mood == 8 ) )
         {
@@ -628,6 +638,7 @@ public:
     bool find_nonicks;
     bool find_nicks;
     bool forgotten_beast;
+    bool ghost;
     bool merchant;
     bool pregnant;
     bool tame;
@@ -654,6 +665,7 @@ public:
         find_nonicks    = false;
         find_nicks      = false;
         forgotten_beast = false;
+        ghost           = false;
         merchant        = false;
         pregnant        = false;
         sex             = SEX_ANY;
@@ -696,6 +708,8 @@ public:
             diplomat = true;
         else if (type == "Fb" || type == "Beast")
             forgotten_beast = true;
+        else if (type == "Ghost")
+            ghost = true;
         else if (type == "Merchant")
             merchant = true;
         else if (type == "Pregnant")
@@ -735,6 +749,7 @@ public:
 
         const DFHack::t_creaturflags1 &f1 = creature.flags1;
         const DFHack::t_creaturflags2 &f2 = creature.flags2;
+        const DFHack::t_creaturflags3 &f3 = creature.flags3;
 
         if(f1.bits.dead && !showdead)
             return false;
@@ -757,6 +772,8 @@ public:
         if(diplomat && !f1.bits.diplomat)
             return false;
         if(forgotten_beast && !f2.bits.visitor_uninvited)
+            return false;
+        if(ghost && !f3.bits.ghostly)
             return false;
         if(merchant && !f1.bits.merchant)
             return false;
@@ -790,6 +807,7 @@ int main (int argc, const char* argv[])
     bool remove_military_skills = false;
     bool remove_labors = false;
     bool kill_creature = false;
+    bool erase_creature = false;
     bool revive_creature = false;
     bool make_hauler = false;
     bool remove_hauler = false;
@@ -923,6 +941,12 @@ int main (int argc, const char* argv[])
         else if(arg_cur == "--kill")
         {
             kill_creature = true;
+            showallflags = true;
+            showdead = true;
+        }
+        else if(arg_cur == "--erase")
+        {
+            erase_creature = true;
             showallflags = true;
             showdead = true;
         }
@@ -1088,7 +1112,7 @@ int main (int argc, const char* argv[])
                         remove_skills || remove_civil_skills || remove_military_skills
                         || remove_labors || add_labor || remove_labor
                         || make_hauler || remove_hauler 
-                        || kill_creature
+                        || kill_creature || erase_creature
                         || revive_creature
                         || set_happiness
                         || set_mood
@@ -1119,6 +1143,27 @@ int main (int argc, const char* argv[])
                     if(creature.has_default_soul)
                     {
                         if (kill_creature && !creature.flags1.bits.dead)
+                        {
+                            DFHack::t_creaturflags1 f1 = creature.flags1;
+                            DFHack::t_creaturflags2 f2 = creature.flags2;
+                            DFHack::t_creaturflags3 f3 = creature.flags3;
+
+                            f3.bits.scuttle = true;
+
+                            cout << "Writing flags..." << endl;
+                            if (!Creatures->WriteFlags(creature_idx, f1.whole,
+                                                       f2.whole, f3.whole))
+                            {
+                                cout << "Error writing creature flags!" << endl;
+                            }
+                            // We want the flags to be shown after our
+                            // modification, but they are not read back
+                            creature.flags1 = f1;
+                            creature.flags2 = f2;
+                            creature.flags3 = f3;
+                        }
+
+                        if (erase_creature && !creature.flags1.bits.dead)
                         {
                             /*
                                [quote author=Eldrick Tobin link=topic=58809.msg2178545#msg2178545 date=1302638055]
@@ -1184,6 +1229,7 @@ int main (int argc, const char* argv[])
                             creature.flags1 = f1;
                             creature.flags2 = f2;
                         }
+
 
                         if (revive_creature && creature.flags1.bits.dead)
                         {

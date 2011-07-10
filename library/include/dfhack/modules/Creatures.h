@@ -111,6 +111,40 @@ namespace DFHack
         } bits;
     };
 
+    union t_creaturflags3
+    {
+        uint32_t whole; /*!< Access all flags as a single 32bit number. */
+        struct
+        {
+            unsigned int unk0 : 1; /*!< Is 1 for new and dead creatures,
+                                     periodicaly set to 0 for non-dead creatures.
+                                     */
+            unsigned int unk1 : 1; /*!< Is 1 for new creatures, periodically set
+                                     to 0 for non-dead creatures. */
+            unsigned int unk2 : 1; /*!< Is set to 1 every tick for non-dead
+                                     creatures. */
+            unsigned int unk3 : 1; /*!< Is periodically set to 0 for non-dead
+                                     creatures. */
+            unsigned int announce_titan : 1; /*!< Announces creature like an
+                                               FB or titan. */
+            unsigned int unk5 : 1; 
+            unsigned int unk6 : 1; 
+            unsigned int unk7 : 1; 
+            unsigned int unk8 : 1; /*!< Is set to 1 every tick for non-dead
+                                     creatures. */
+            unsigned int unk9 : 1; /*!< Is set to 0 every tick for non-dead
+                                     creatures. */
+            unsigned int scuttle : 1; /*!< Scuttle creature: causes creature
+                                        to be killed, leaving a behind corpse
+                                        and generating negative thoughts like
+                                        a real kill. */
+            unsigned int unk11 : 1;
+            unsigned int ghostly : 1; /*!< Creature is a ghost. */
+
+            unsigned int unk13_31 : 19;
+        } bits;
+    };
+
     // FIXME: WTF IS THIS SHIT?
     /*
     struct t_labor
@@ -261,6 +295,7 @@ namespace DFHack
 
         t_creaturflags1 flags1;
         t_creaturflags2 flags2;
+        t_creaturflags3 flags3;
 
         t_name name;
 
@@ -335,6 +370,7 @@ namespace DFHack
         bool WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
         bool WriteHappiness(const uint32_t index, const uint32_t happinessValue);
         bool WriteFlags(const uint32_t index, const uint32_t flags1, const uint32_t flags2);
+        bool WriteFlags(const uint32_t index, const uint32_t flags1, const uint32_t flags2, uint32_t flags3);
         bool WriteSkills(const uint32_t index, const t_soul &soul);
         bool WriteAttributes(const uint32_t index, const t_creature &creature);
         bool WriteSex(const uint32_t index, const uint8_t sex);

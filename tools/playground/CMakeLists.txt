@@ -85,6 +85,11 @@ DFHACK_TOOL(dfdigpattern digpattern.cpp)
 
 DFHACK_TOOL(dffixbug-3708 fix-3708.cpp)
 
+# blockflags
+# Author: matthew cline
+# Invert/toggle all block flags, to see what they do.
+DFHACK_TOOL(dfblockflags blockflags.cpp)
+
 # this needs the C bindings
 IF(BUILD_DFHACK_C_BINDINGS)
     # The C bindings won't be real C bindings until this compiles.

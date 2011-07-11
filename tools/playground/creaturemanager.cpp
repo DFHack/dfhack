@@ -518,6 +518,11 @@ void printCreature(DFHack::Context * DF, const DFHack::t_creature & creature, in
                 cout << "(Labor " << i << ") " << setw(16) << laborname << endl;
         }
     }
+
+    if (creature.pregnancy_timer > 0)
+        cout << "Pregnant: " << creature.pregnancy_timer << " ticks to "
+             << "birth." << endl;
+
     if (showallflags)
     {
         DFHack::t_creaturflags1 f1 = creature.flags1;

@@ -380,6 +380,7 @@ namespace DFHack
         bool WriteJob(const t_creature * furball, std::vector<t_material> const& mat);
         bool WritePos(const uint32_t index, const t_creature &creature);
         bool WriteCiv(const uint32_t index, const int32_t civ);
+        bool WritePregnancy(const uint32_t index, const uint32_t pregTimer);
 
         void CopyNameTo(t_creature &creature, uint32_t address);
 

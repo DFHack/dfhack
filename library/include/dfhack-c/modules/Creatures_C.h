@@ -54,6 +54,7 @@ DFHACK_EXPORT int32_t Creatures_GetDwarfCivId(DFHackObject* cPtr);
 DFHACK_EXPORT int Creatures_WriteLabors(DFHackObject* cPtr, const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS]);
 DFHACK_EXPORT int Creatures_WriteHappiness(DFHackObject* cPtr, const uint32_t index, const uint32_t happiness_value);
 DFHACK_EXPORT int Creatures_WriteFlags(DFHackObject* cPtr, const uint32_t index, const uint32_t flags1, const uint32_t flags2);
+DFHACK_EXPORT int Creatures_WriteFlags3(DFHackObject* cPtr, const uint32_t index, const uint32_t flags1, const uint32_t flags2, const uint32_t flags3);
 DFHACK_EXPORT int Creatures_WriteSkills(DFHackObject* cPtr, const uint32_t index, const t_soul* soul);
 DFHACK_EXPORT int Creatures_WriteAttributes(DFHackObject* cPtr, const uint32_t index, const t_creature* creature);
 DFHACK_EXPORT int Creatures_WriteSex(DFHackObject* cPtr, const uint32_t index, const uint8_t sex);

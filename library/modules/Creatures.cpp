@@ -68,6 +68,7 @@ struct Creatures::Private
         int32_t civ_offset;
         uint32_t flags1_offset;
         uint32_t flags2_offset;
+        uint32_t flags3_offset;
         uint32_t name_offset;
         uint32_t sex_offset;
         uint32_t caste_offset;
@@ -156,6 +157,7 @@ Creatures::Creatures(DFContextShared* _d)
         creatures.pos_offset = OG_creature->getOffset ("position");
         creatures.flags1_offset = OG_creature->getOffset ("flags1");
         creatures.flags2_offset = OG_creature->getOffset ("flags2");
+        creatures.flags3_offset = OG_creature->getOffset ("flags3");
         creatures.sex_offset = OG_creature->getOffset ("sex");
         creatures.caste_offset = OG_creature->getOffset ("caste");
         creatures.id_offset = OG_creature->getOffset ("id");
@@ -284,6 +286,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         p->readWord (addr_cr + offs.caste_offset, furball.caste);
         p->readDWord (addr_cr + offs.flags1_offset, furball.flags1.whole);
         p->readDWord (addr_cr + offs.flags2_offset, furball.flags2.whole);
+        p->readDWord (addr_cr + offs.flags3_offset, furball.flags3.whole);
         // custom profession
         p->readSTLString(addr_cr + offs.custom_profession_offset, furball.custom_profession, sizeof(furball.custom_profession));
         // profession
@@ -488,6 +491,21 @@ bool Creatures::WriteFlags(const uint32_t index,
     Process * p = d->owner;
     p->writeDWord (temp + d->creatures.flags1_offset, flags1);
     p->writeDWord (temp + d->creatures.flags2_offset, flags2);
+    return true;
+}
+
+bool Creatures::WriteFlags(const uint32_t index,
+                           const uint32_t flags1,
+                           const uint32_t flags2,
+                           const uint32_t flags3)
+{
+    if(!d->Started || !d->Ft_basic) return false;
+
+    uint32_t temp = d->p_cre->at (index);
+    Process * p = d->owner;
+    p->writeDWord (temp + d->creatures.flags1_offset, flags1);
+    p->writeDWord (temp + d->creatures.flags2_offset, flags2);
+    p->writeDWord (temp + d->creatures.flags3_offset, flags3);
     return true;
 }
 

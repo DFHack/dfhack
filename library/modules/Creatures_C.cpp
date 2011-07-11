@@ -212,6 +212,17 @@ int Creatures_WriteFlags(DFHackObject* cPtr, const uint32_t index, const uint32_
 	return -1;
 }
 
+int Creatures_WriteFlags3(DFHackObject* cPtr, const uint32_t index, const uint32_t flags1, const uint32_t flags2, const uint32_t flags3)
+{
+	if(cPtr != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->WriteFlags(index, flags1, flags2,
+                                                      flags3);
+	}
+	
+	return -1;
+}
+
 int Creatures_WriteSkills(DFHackObject* cPtr, const uint32_t index, const t_soul* soul)
 {
 	if(cPtr != NULL && soul != NULL)

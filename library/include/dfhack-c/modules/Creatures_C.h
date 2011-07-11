@@ -64,6 +64,7 @@ DFHACK_EXPORT int Creatures_WriteMoodSkill(DFHackObject* cPtr, const uint32_t in
 DFHACK_EXPORT int Creatures_WriteJob(DFHackObject* cPtr, const t_creature* furball, const t_material* mat, const uint32_t mat_count);
 DFHACK_EXPORT int Creatures_WritePos(DFHackObject* cPtr, const uint32_t index, const t_creature* creature);
 DFHACK_EXPORT int Creatures_WriteCiv(DFHackObject* cPtr, const uint32_t index, const int32_t civ);
+DFHACK_EXPORT int Creatures_WritePregnancy(DFHackObject* cPtr, const uint32_t index, const uint32_t pregTimer);
 
 #ifdef __cplusplus
 }

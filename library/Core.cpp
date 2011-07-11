@@ -323,17 +323,11 @@ void Core::Resume()
 }
 
 // should always be from simulation thread!
-static bool flip2 = false;
 int Core::Update()
 {
     if(!started) Init();
     if(errorstate)
         return -1;
-    if(!flip2)
-    {
-        std::cerr << "Update from Thread " << SDL_ThreadID() << std::endl;
-        flip2 = true;
-    }
 
     // notify all the plugins that a game tick is finished
     plug_mgr->OnUpdate();
@@ -380,16 +374,10 @@ int Core::Shutdown ( void )
     return -1;
 }
 
-static bool flip3 = 0;
 int Core::SDL_Event(SDL::Event* ev, int orig_return)
 {
     // do NOT process events before we are ready.
     if(!started) return orig_return;
-    if(!flip3)
-    {
-        std::cerr << "Event from Thread " << SDL_ThreadID() << std::endl;
-        flip3 = true;
-    }
     if(!ev)
         return orig_return;
     if(ev && ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP)
@@ -413,7 +401,6 @@ int Core::SDL_Event(SDL::Event* ev, int orig_return)
                     return orig_return;
                 else
                 {
-                    std::cerr << "Hotkey " << idx << " triggered. Thread " << SDL_ThreadID() << std::endl;
                     t_hotkey & hotkey = (*g->hotkeys)[idx];
                     setHotkeyCmd(hotkey.name);
                 }

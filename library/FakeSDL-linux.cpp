@@ -76,9 +76,12 @@ bool inited = false;
 
 DFhackCExport int SDL_NumJoysticks(void)
 {
-    inited = true;
     DFHack::Core & c = DFHack::Core::getInstance();
-    return c.Update();
+    // the 'inited' variable should be normally protected by a lock. It isn't
+    int ret = c.Update();
+    if(ret == 0)
+        inited = true;
+    return ret;
 }
 
 // ptr to the real functions
@@ -162,6 +165,8 @@ DFhackCExport int SDL_PollEvent(SDL::Event* event)
     // only send events to Core after we get first SDL_NumJoysticks call
     // DF event loop is possibly polling for SDL events before things get inited properly
     // SDL handles it. We don't, because we use some other parts of SDL too.
+
+    // possible data race. whatever. it's a flag, we don't mind all that much
     if(inited && event != 0)
     {
         DFHack::Core & c = DFHack::Core::getInstance();

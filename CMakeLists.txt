@@ -1,7 +1,7 @@
 # main project file. use it from a build sub-folder, see COMPILE for details
 
 ## some generic CMake magic
-cmake_minimum_required(VERSION 2.8.4 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 project(dfhack)
 
 SET(CMAKE_MODULE_PATH

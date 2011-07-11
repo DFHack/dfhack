@@ -195,7 +195,7 @@ const string NormalProcess::readSTLString (uint32_t offset)
     char * temp = new char[header._M_length+1];
     read(offset,header._M_length+1,(uint8_t * )temp);
     string ret(temp);
-    delete temp;
+    delete[] temp;
     return ret;
 }
 

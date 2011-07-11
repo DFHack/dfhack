@@ -28,6 +28,7 @@ distribution.
 #include "dfhack/Export.h"
 #include "dfhack/FakeSDL.h"
 #include <vector>
+#include <stack>
 #include <map>
 #include <stdint.h>
 
@@ -121,8 +122,12 @@ namespace DFHack
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement
         bool errorstate;
-        // mutex for access to DF
+        // regulate access to DF
+        struct Cond;
         SDL::Mutex * AccessMutex;
+        SDL::Mutex * StackMutex;
+        std::stack < Core::Cond * > suspended_tools;
+        Core::Cond * core_cond;
         // FIXME: shouldn't be kept around like this
         DFHack::VersionInfoFactory * vif;
         // Module storage

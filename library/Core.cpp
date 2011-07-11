@@ -50,6 +50,36 @@ using namespace std;
 #include <iomanip>
 using namespace DFHack;
 
+    struct Core::Cond
+    {
+        Cond()
+        {
+            predicate = false;
+            wakeup = SDL_CreateCond();
+        }
+        ~Cond()
+        {
+            SDL_DestroyCond(wakeup);
+        }
+        bool Lock(SDL::Mutex * m)
+        {
+            while(!predicate)
+            {
+                SDL_CondWait(wakeup,m);
+            }
+            predicate = false;
+            return true;
+        }
+        bool Unlock()
+        {
+            predicate = true;
+            SDL_CondSignal(wakeup);
+            return true;
+        }
+        SDL::Cond * wakeup;
+        bool predicate;
+    };
+
 void cheap_tokenise(string const& input, vector<string> &output)
 {
     istringstream str(input);
@@ -181,6 +211,7 @@ Core::Core()
 
     // create mutex for syncing with interactive tasks
     AccessMutex = 0;
+    core_cond = 0;
     // set up hotkey capture
     memset(hotkey_states,0,sizeof(hotkey_states));
     hotkey_set = false;
@@ -219,9 +250,7 @@ bool Core::Init()
         errorstate = true;
         return false;
     }
-    // lock mutex
-    SDL_mutexP(AccessMutex);
-
+    core_cond = new Core::Cond();
     // create plugin manager
     plug_mgr = new PluginManager(this);
     if(!plug_mgr)
@@ -275,17 +304,21 @@ std::string Core::getHotkeyCmd( void )
 
 void Core::Suspend()
 {
+    Core::Cond * nc = new Core::Cond();
+    // put the condition on a stack
+    SDL_mutexP(StackMutex);
+        suspended_tools.push(nc);
+    SDL_mutexV(StackMutex);
+    // wait until Core::Update() wakes up the tool
     SDL_mutexP(AccessMutex);
+        nc->Lock(AccessMutex);
+    SDL_mutexV(AccessMutex);
 }
 
 void Core::Resume()
 {
-    /*
-    for(unsigned int i = 0 ; i < allModules.size(); i++)
-    {
-        allModules[i]->OnResume();
-    }
-    */
+    SDL_mutexP(AccessMutex);
+        core_cond->Unlock();
     SDL_mutexV(AccessMutex);
 }
 
@@ -301,12 +334,26 @@ int Core::Update()
         std::cerr << "Update from Thread " << SDL_ThreadID() << std::endl;
         flip2 = true;
     }
+
     // notify all the plugins that a game tick is finished
     plug_mgr->OnUpdate();
-    SDL_mutexV(AccessMutex);
-        // other threads can claim the mutex here and use DFHack.
-        // NO CODE SHOULD EVER BE PLACED HERE
-    SDL_mutexP(AccessMutex);
+    // wake waiting tools
+    // do not allow more tools to join in while we process stuff here
+    SDL_mutexP(StackMutex);
+    while (!suspended_tools.empty())
+    {
+        Core::Cond * nc = suspended_tools.top();
+        suspended_tools.pop();
+        SDL_mutexP(AccessMutex);
+            // wake tool
+            nc->Unlock();
+            // wait for tool to wake us
+            core_cond->Lock(AccessMutex);
+        SDL_mutexV(AccessMutex);
+        // destroy condition
+        delete nc;
+    }
+    SDL_mutexV(StackMutex);
     return 0;
 };
 

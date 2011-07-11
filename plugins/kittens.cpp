@@ -4,6 +4,7 @@
 #include <dfhack/PluginManager.h>
 #include <vector>
 #include <string>
+#include "dfhack/extra/stopwatch.h"
 
 using std::vector;
 using std::string;
@@ -11,8 +12,11 @@ using namespace DFHack;
 //FIXME: possible race conditions with calling kittens from the IO thread and shutdown from Core.
 bool shutdown_flag = false;
 bool final_flag = true;
+bool timering = false;
+uint64_t timeLast = 0;
 
 DFhackCExport command_result kittens (Core * c, vector <string> & parameters);
+DFhackCExport command_result ktimer (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -23,7 +27,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.clear();
     commands.push_back(PluginCommand("kittens","Rainbow kittens. What else?",kittens));
-    commands.push_back(PluginCommand("kittanz","Guess what. More rainbow kittenz.",kittens));
+    commands.push_back(PluginCommand("ktimer","Time events...",ktimer));
     return CR_OK;
 }
 
@@ -34,6 +38,37 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     {
         c->con->msleep(60);
     }
+    return CR_OK;
+}
+
+
+
+DFhackCExport command_result plugin_onupdate ( Core * c )
+{
+    if(timering == true)
+    {
+        uint64_t time2 = GetTimeMs64();
+        uint64_t delta = time2-timeLast;
+        timeLast = time2;
+        dfout << "Time delta = " << delta << " ms" << std::endl;
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result ktimer (Core * c, vector <string> & parameters)
+{
+    if(timering)
+    {
+        timering = false;
+        return CR_OK;
+    }
+    uint64_t timestart = GetTimeMs64();
+    c->Suspend();
+    c->Resume();
+    uint64_t timeend = GetTimeMs64();
+    dfout << "Time to suspend = " << timeend - timestart << " ms" << std::endl;
+    timeLast = timeend;
+    timering = true;
     return CR_OK;
 }
 

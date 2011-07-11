@@ -117,14 +117,8 @@ int fHKthread(void * iodata)
 }
 
 // A thread function... for the interactive console.
-static bool flip0 = false;
 int fIOthread(void * iodata)
 {
-    if(!flip0)
-    {
-        std::cerr << "Console from Thread " << SDL_ThreadID() << std::endl;
-        flip0 = true;
-    }
     Core * core = ((IODATA*) iodata)->core;
     PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
     if(plug_mgr == 0 || core == 0)
@@ -219,16 +213,10 @@ Core::Core()
     HotkeyCond = 0;
 };
 
-static bool flip1 = 0;
 bool Core::Init()
 {
     // init the console. This must be always the first step!
     con = new Console();
-    if(!flip1)
-    {
-        std::cerr << "Construct from Thread " << SDL_ThreadID() << std::endl;
-        flip1 = true;
-    }
     // find out what we are...
     vif = new DFHack::VersionInfoFactory("Memory.xml");
     p = new DFHack::Process(vif);

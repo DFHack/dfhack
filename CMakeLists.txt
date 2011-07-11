@@ -66,7 +66,7 @@ SET(DFHACK_DOXYGEN_DESTINATION dev/doxygen)
 
 ## some options for the user/developer to play with
 OPTION(BUILD_LIBRARY "Build the library that goes into DF." ON)
-OPTION(BUILD_PLUGINS "Build the library that goes into DF." ON)
+OPTION(BUILD_PLUGINS "Build the plugins." ON)
 
 IF(BUILD_LIBRARY)
     add_subdirectory (library)

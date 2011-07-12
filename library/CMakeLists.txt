@@ -7,6 +7,7 @@ OPTION(BUILD_DOXYGEN "Create/install/package doxygen documentation for DFHack (F
 
 include_directories (include)
 include_directories (depends/md5)
+include_directories (depends/libnoise)
 include_directories (depends/tinyxml)
 include_directories (private)
 
@@ -87,12 +88,14 @@ SET(PROJECT_SRCS_LINUX
 FakeSDL-linux.cpp
 Console-linux.cpp
 Process-linux.cpp
+depends/libnoise/linenoise.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
 FakeSDL-windows.cpp
 Console-windows.cpp
 Process-windows.cpp
+depends/libnoise/linenoise_win32.cpp
 )
 
 IF(UNIX)

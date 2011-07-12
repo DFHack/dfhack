@@ -26,6 +26,7 @@ distribution.
 #include <cstdio>
 #include <cstdlib>
 #include <sstream>
+#include <termios.h>
 using namespace DFHack;
 
 duthomhas::stdiostream dfout;

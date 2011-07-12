@@ -196,5 +196,5 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
 
 DFhackCExport command_result autodig (Core * c, vector <string> & parameters)
 {
-    return CR_OK;
+    return CR_NOT_IMPLEMENTED;
 }

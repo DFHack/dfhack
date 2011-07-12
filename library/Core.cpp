@@ -45,9 +45,11 @@ using namespace std;
 #include "dfhack/modules/Gui.h"
 
 #include "dfhack/SDL_fakes/events.h"
+#include "linenoise.h"
 
 #include <stdio.h>
 #include <iomanip>
+#include <stdlib.h>
 using namespace DFHack;
 
     struct Core::Cond
@@ -132,8 +134,16 @@ int fIOthread(void * iodata)
     while (true)
     {
         string command = "";
-        dfout <<"[DFHack]# ";
-        getline(cin, command);
+        //dfout <<"[DFHack]# ";
+        char * line = linenoise("[DFHack]# ", dfout_C);
+        //        dfout <<"[DFHack]# ";
+        if(line)
+        {
+            command=line;
+            linenoiseHistoryAdd(line);
+            free(line);
+        }
+        //getline(cin, command);
         if (cin.eof())
         {
             command = "q";
@@ -146,6 +156,8 @@ int fIOthread(void * iodata)
             for(int i = 0; i < plug_mgr->size();i++)
             {
                 const Plugin * plug = (plug_mgr->operator[](i));
+                if(!plug->size())
+                    continue;
                 dfout << "Plugin " << plug->getName() << " :" << std::endl;
                 for (int j = 0; j < plug->size();j++)
                 {
@@ -339,6 +351,7 @@ int Core::Update()
     return 0;
 };
 
+// FIXME: needs to terminate the IO threads and properly dismantle all the machinery involved.
 int Core::Shutdown ( void )
 {
     errorstate = 1;

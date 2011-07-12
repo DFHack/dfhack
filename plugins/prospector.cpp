@@ -74,7 +74,7 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("prospector","Show stats of available raw resources. Use parameter 'all' to show hidden resources.",prospector));
+    commands.push_back(PluginCommand("prospect","Show stats of available raw resources. Use parameter 'all' to show hidden resources.",prospector));
     return CR_OK;
 }
 

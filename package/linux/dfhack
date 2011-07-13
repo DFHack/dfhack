@@ -2,6 +2,8 @@
 
 # NOTE: This is dfhack's modification of the normal invocation script,
 # changed to properly set LD_PRELOAD so as to run DFHACK.
+#
+# You can run DF under gdb by passing -g or --gdb as the first argument.
 
 DF_DIR=$(dirname "$0")
 cd "${DF_DIR}"
@@ -10,4 +12,19 @@ export SDL_DISABLE_LOCK_KEYS=1 # Work around for bug in Debian/Ubuntu SDL patch.
 
 export LD_PRELOAD=./libdfhack.so
 
-./libs/Dwarf_Fortress $* # Go, go, go! :)
+case "$1" in
+  -g | --gdb)
+    shift
+    gdb ./libs/Dwarf_Fortress $*
+    ret=$?
+    ;;
+  *)
+    ./libs/Dwarf_Fortress $*
+    ret=$?
+    ;;
+esac
+
+# Reset terminal to sane state in case of a crash
+reset -I
+
+exit $ret

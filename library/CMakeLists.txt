@@ -75,6 +75,7 @@ modules/Maps.cpp
 modules/Materials.cpp
 modules/Translation.cpp
 modules/Vegetation.cpp
+modules/Vermin.cpp
 modules/World.cpp
 )
 

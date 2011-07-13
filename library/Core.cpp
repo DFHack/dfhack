@@ -125,46 +125,44 @@ int fIOthread(void * iodata)
     PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
     if(plug_mgr == 0 || core == 0)
     {
-        dfout << "Something horrible happened to the plugin manager in Core's constructor..." << std::endl;
+        core->con << "Something horrible happened to the plugin manager in Core's constructor..." << std::endl;
         return 0;
     }
-    fprintf(dfout_C,"DFHack is ready. Have a nice day! Type in '?' or 'help' for help.\n");
+    core->con.print("DFHack is ready. Have a nice day! Type in '?' or 'help' for help.\n");
     //dfterm <<  << endl;
     int clueless_counter = 0;
     while (true)
     {
         string command = "";
-        //dfout <<"[DFHack]# ";
-        char * line = linenoise("[DFHack]# ", dfout_C);
+        core->con.lineedit("[DFHack]# ",command);
+        core->con.history_add(command);
+        //core->con <<"[DFHack]# ";
+        //char * line = linenoise("[DFHack]# ", core->con.dfout_C);
         //        dfout <<"[DFHack]# ";
-        if(line)
+        /*
+        if (line)
         {
             command=line;
             linenoiseHistoryAdd(line);
             free(line);
-        }
+        }*/
         //getline(cin, command);
-        if (cin.eof())
-        {
-            command = "q";
-            dfout << std::endl; // No newline from the user here!
-        }
         if(command=="help" || command == "?")
         {
-            dfout << "Available commands" << endl;
-            dfout << "------------------" << endl;
+            core->con << "Available commands" << endl;
+            core->con << "------------------" << endl;
             for(int i = 0; i < plug_mgr->size();i++)
             {
                 const Plugin * plug = (plug_mgr->operator[](i));
                 if(!plug->size())
                     continue;
-                dfout << "Plugin " << plug->getName() << " :" << std::endl;
+                core->con << "Plugin " << plug->getName() << " :" << std::endl;
                 for (int j = 0; j < plug->size();j++)
                 {
                     const PluginCommand & pcmd = (plug->operator[](j));
-                    dfout << setw(12) << pcmd.name << "| " << pcmd.description << endl;
+                    core->con << setw(12) << pcmd.name << "| " << pcmd.description << endl;
                 }
-                dfout << endl;
+                core->con << endl;
             }
         }
         else if( command == "" )
@@ -186,18 +184,18 @@ int fIOthread(void * iodata)
                 command_result res = plug_mgr->InvokeCommand(first, parts);
                 if(res == CR_NOT_IMPLEMENTED)
                 {
-                    dfout << "Invalid command." << endl;
+                    core->con << "Invalid command." << endl;
                     clueless_counter ++;
                 }
                 else if(res == CR_FAILURE)
                 {
-                    dfout << "ERROR!" << endl;
+                    core->con << "ERROR!" << endl;
                 }
             }
         }
         if(clueless_counter == 3)
         {
-            dfout << "Do 'help' or '?' for the list of available commands." << endl;
+            core->con << "Do 'help' or '?' for the list of available commands." << endl;
             clueless_counter = 0;
         }
     }
@@ -206,7 +204,6 @@ int fIOthread(void * iodata)
 Core::Core()
 {
     // init the console. This must be always the first step!
-    con = 0;
     plug_mgr = 0;
     vif = 0;
     p = 0;
@@ -228,13 +225,13 @@ Core::Core()
 bool Core::Init()
 {
     // init the console. This must be always the first step!
-    con = new Console();
+    con.init();
     // find out what we are...
     vif = new DFHack::VersionInfoFactory("Memory.xml");
     p = new DFHack::Process(vif);
     if (!p->isIdentified())
     {
-        dfout << "Couldn't identify this version of DF." << std::endl;
+        con << "Couldn't identify this version of DF." << std::endl;
         errorstate = true;
         delete p;
         p = NULL;
@@ -246,7 +243,7 @@ bool Core::Init()
     AccessMutex = SDL_CreateMutex();
     if(!AccessMutex)
     {
-        dfout << "Mutex creation failed." << std::endl;
+        con << "Mutex creation failed." << std::endl;
         errorstate = true;
         return false;
     }
@@ -255,7 +252,7 @@ bool Core::Init()
     plug_mgr = new PluginManager(this);
     if(!plug_mgr)
     {
-        dfout << "Failed to create the Plugin Manager." << std::endl;
+        con << "Failed to create the Plugin Manager." << std::endl;
         errorstate = true;
         return false;
     }
@@ -367,11 +364,7 @@ int Core::Shutdown ( void )
     }
     allModules.clear();
     memset(&(s_mods), 0, sizeof(s_mods));
-    dfout << std::endl;
-    // kill the console object
-    if(con)
-        delete con;
-    con = 0;
+    con.shutdown();
     return -1;
 }
 

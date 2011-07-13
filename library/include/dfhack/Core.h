@@ -31,7 +31,7 @@ distribution.
 #include <stack>
 #include <map>
 #include <stdint.h>
-
+#include "dfhack/Console.h"
 
 namespace DFHack
 {
@@ -112,7 +112,7 @@ namespace DFHack
 
         DFHack::Process * p;
         DFHack::VersionInfo * vinfo;
-        DFHack::Console * con;
+        DFHack::Console con;
     private:
         Core();
         bool Init();

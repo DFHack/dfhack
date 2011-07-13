@@ -151,6 +151,9 @@ IF(UNIX)
     COMMAND ${CMAKE_COMMAND} -E make_directory ${DFHACK_OUTPUT_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/package/linux/dfhack ${DFHACK_OUTPUT_DIR})
     ADD_DEPENDENCIES(dfhack prepare_UNIX)
+    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack
+            DESTINATION ${DFHACK_LIBRARY_DESTINATION}) #linux: share/dfhack
+
 ENDIF()
  
 install(TARGETS dfhack

@@ -47,7 +47,6 @@ static int getdir (string dir, vector<string> &files)
     struct dirent *dirp;
     if((dp  = opendir(dir.c_str())) == NULL)
     {
-        dfout << "Error(" << errno << ") opening " << dir << endl;
         return errno;
     }
     while ((dirp = readdir(dp)) != NULL) {
@@ -81,20 +80,20 @@ Plugin::Plugin(Core * core, const std::string & file)
     DFLibrary * plug = OpenPlugin(file.c_str());
     if(!plug)
     {
-        dfout << "Can't load plugin " << filename << endl;
+        core->con << "Can't load plugin " << filename << endl;
         return;
     }
     const char * (*_PlugName)() =(const char * (*)()) LookupPlugin(plug, "plugin_name");
     if(!_PlugName)
     {
-        dfout << "Plugin " << filename << " has no name." << endl;
+        core->con << "Plugin " << filename << " has no name." << endl;
         ClosePlugin(plug);
         return;
     }
     plugin_init = (command_result (*)(Core *, std::vector <PluginCommand> &)) LookupPlugin(plug, "plugin_init");
     if(!plugin_init)
     {
-        dfout << "Plugin " << filename << " has no init function." << endl;
+        core->con << "Plugin " << filename << " has no init function." << endl;
         ClosePlugin(plug);
         return;
     }

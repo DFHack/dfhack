@@ -41,7 +41,7 @@ struct compare_pair_second
 };
 
 
-void printMats(MatMap &mat, std::vector<DFHack::t_matgloss> &materials)
+void printMats(DFHack::Console & con, MatMap &mat, std::vector<DFHack::t_matgloss> &materials)
 {
     unsigned int total = 0;
     MatSorter sorting_vector;
@@ -54,15 +54,15 @@ void printMats(MatMap &mat, std::vector<DFHack::t_matgloss> &materials)
     {
         if(it->first >= materials.size())
         {
-            dfout << "Bad index: " << it->first << " out of " <<  materials.size() << endl;
+            con << "Bad index: " << it->first << " out of " <<  materials.size() << endl;
             continue;
         }
         DFHack::t_matgloss mat = materials[it->first];
-        dfout << std::setw(25) << mat.id << " : " << it->second << std::endl;
+        con << std::setw(25) << mat.id << " : " << it->second << std::endl;
         total += it->second;
     }
 
-    dfout << ">>> TOTAL = " << total << std::endl << std::endl;
+    con << ">>> TOTAL = " << total << std::endl << std::endl;
 }
 DFhackCExport command_result prospector (Core * c, vector <string> & parameters);
 
@@ -98,7 +98,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     DFHack::Maps *maps = c->getMaps();
     if (!maps->Start())
     {
-        dfout << "Cannot get map info!" << std::endl;
+        c->con << "Cannot get map info!" << std::endl;
         c->Resume();
         return CR_FAILURE;
     }
@@ -108,13 +108,13 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     DFHack::Materials *mats = c->getMaterials();
     if (!mats->ReadInorganicMaterials())
     {
-        dfout << "Unable to read inorganic material definitons!" << std::endl;
+        c->con << "Unable to read inorganic material definitons!" << std::endl;
         c->Resume();
         return CR_FAILURE;
     }
     if (showPlants && !mats->ReadOrganicMaterials())
     {
-        dfout << "Unable to read organic material definitons; plants won't be listed!" << std::endl;
+        c->con << "Unable to read organic material definitons; plants won't be listed!" << std::endl;
         showPlants = false;
     }
 
@@ -134,21 +134,21 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
 
     if (!(showSlade && maps->ReadGlobalFeatures(globalFeatures)))
     {
-        dfout << "Unable to read global features; slade won't be listed!" << std::endl;
+        c->con << "Unable to read global features; slade won't be listed!" << std::endl;
     }
 
     if (!maps->ReadLocalFeatures(localFeatures))
     {
-        dfout << "Unable to read local features; adamantine "
-              << (showTemple ? "and demon temples " : "")
-              << "won't be listed!" << std::endl;
+        c->con << "Unable to read local features; adamantine "
+               << (showTemple ? "and demon temples " : "")
+               << "won't be listed!" << std::endl;
     }
 
     uint32_t vegCount = 0;
     DFHack::Vegetation *veg = c->getVegetation();
     if (showPlants && !veg->Start())
     {
-        dfout << "Unable to read vegetation; plants won't be listed!" << std::endl;
+        c->con << "Unable to read vegetation; plants won't be listed!" << std::endl;
     }
 
     for(uint32_t z = 0; z < z_max; z++)
@@ -217,7 +217,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
 
                         if (!info)
                         {
-                            dfout << "Bad type: " << type << std::endl;
+                            c->con << "Bad type: " << type << std::endl;
                             continue;
                         }
 
@@ -306,39 +306,39 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
 
     MatMap::const_iterator it;
 
-    dfout << "Base materials:" << std::endl;
+    c->con << "Base materials:" << std::endl;
     for (it = baseMats.begin(); it != baseMats.end(); ++it)
     {
-        dfout << std::setw(25) << DFHack::TileMaterialString[it->first] << " : " << it->second << std::endl;
+        c->con << std::setw(25) << DFHack::TileMaterialString[it->first] << " : " << it->second << std::endl;
     }
 
-    dfout << std::endl << "Layer materials:" << std::endl;
-    printMats(layerMats, mats->inorganic);
+    c->con << std::endl << "Layer materials:" << std::endl;
+    printMats(c->con, layerMats, mats->inorganic);
 
-    dfout << "Vein materials:" << std::endl;
-    printMats(veinMats, mats->inorganic);
+    c->con << "Vein materials:" << std::endl;
+    printMats(c->con, veinMats, mats->inorganic);
 
     if (showPlants)
     {
-        dfout << "Shrubs:" << std::endl;
-        printMats(plantMats, mats->organic);
-        dfout << "Wood in trees:" << std::endl;
-        printMats(treeMats, mats->organic);
+        c->con << "Shrubs:" << std::endl;
+        printMats(c->con, plantMats, mats->organic);
+        c->con << "Wood in trees:" << std::endl;
+        printMats(c->con, treeMats, mats->organic);
     }
 
     if (hasAquifer)
     {
-        dfout << "Has aquifer" << std::endl;
+        c->con << "Has aquifer" << std::endl;
     }
 
     if (hasDemonTemple)
     {
-        dfout << "Has demon temple" << std::endl;
+        c->con << "Has demon temple" << std::endl;
     }
 
     if (hasLair)
     {
-        dfout << "Has lair" << std::endl;
+        c->con << "Has lair" << std::endl;
     }
 
     // Cleanup
@@ -349,6 +349,6 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     mats->Finish();
     maps->Finish();
     c->Resume();
-    dfout << std::endl;
+    c->con << std::endl;
     return CR_OK;
 }

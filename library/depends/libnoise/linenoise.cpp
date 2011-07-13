@@ -112,7 +112,8 @@ char **history = NULL;
 static void linenoiseAtExit(void);
 int linenoiseHistoryAdd(const char *line);
 
-static int isUnsupportedTerm(void) {
+static int isUnsupportedTerm(void)
+{
     char *term = getenv("TERM");
     int j;
 
@@ -286,7 +287,47 @@ void linenoiseClearScreen(void) {
         /* nothing to do, just to avoid warning. */
     }
 }
+/*
+static int selread(int fd, char *buf, size_t buflen)
+{
+    int            n;
+    int start = 0;
+    fd_set         input;
+    struct timeval timeout;
+    // Initialize the input set
+    FD_ZERO(&input);
+    FD_SET(fd, &input);
 
+    repeat_select:
+    timeout.tv_sec  = 1;
+    timeout.tv_usec = 0;
+    n = select(fd+1, &input, NULL, NULL, &timeout);
+    if(n == 0 || n == -1 && errno == EINTR)
+    {
+        // lock mutex
+        // copy end variable
+        // unlock mutex
+        // if end, return -2
+        // else
+        goto repeat_select;
+    }
+    else if (n > 0)
+    {
+        int nread = read(fd,buf + start,buflen);
+        if (nread == -1)
+            return -1; // it's an ugly error
+        else if(nread < buflen)
+        {
+            start += nread;
+            buflen -= nread;
+            goto repeat_select;
+        }
+        else return nread + start;
+    }
+    else
+        return -1;
+}
+*/
 static int linenoisePrompt(int fd, char *buf, size_t buflen, const char *prompt) {
     size_t plen = strlen(prompt);
     size_t pos = 0;
@@ -538,7 +579,8 @@ static int linenoiseRaw(char *buf, size_t buflen, const char *prompt, FILE * out
     return count;
 }
 
-char *linenoise(const char *prompt, FILE * out) {
+char *linenoise(const char *prompt, FILE * out)
+{
     char buf[LINENOISE_MAX_LINE];
     int count;
 
@@ -575,11 +617,13 @@ void linenoiseAddCompletion(linenoiseCompletions *lc, const char *str) {
 }
 
 /* Using a circular buffer is smarter, but a bit more complex to handle. */
-int linenoiseHistoryAdd(const char *line) {
+int linenoiseHistoryAdd(const char *line)
+{
     char *linecopy;
 
     if (history_max_len == 0) return 0;
-    if (history == NULL) {
+    if (history == NULL)
+    {
         history = (char**)malloc(sizeof(char*)*history_max_len);
         if (history == NULL) return 0;
         memset(history,0,(sizeof(char*)*history_max_len));
@@ -596,7 +640,8 @@ int linenoiseHistoryAdd(const char *line) {
     return 1;
 }
 
-int linenoiseHistorySetMaxLen(int len) {
+int linenoiseHistorySetMaxLen(int len)
+{
     char **newHistory;
 
     if (len < 1) return 0;

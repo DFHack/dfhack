@@ -51,7 +51,7 @@ DFhackCExport command_result cleanmap (Core * c, vector <string> & parameters)
     // init the map
     if(!Mapz->Start())
     {
-        dfout << "Can't init map." << std::endl;
+        c->con << "Can't init map." << std::endl;
         c->Resume();
         return CR_FAILURE;
     }

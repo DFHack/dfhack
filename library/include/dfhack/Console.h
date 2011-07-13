@@ -25,19 +25,23 @@ distribution.
 #pragma once
 #include "dfhack/Pragma.h"
 #include "dfhack/Export.h"
-#include "dfhack/Core.h"
 #include "dfhack/extra/stdiostream.h"
-
-extern DFHACK_EXPORT duthomhas::stdiostream dfout;
-extern DFHACK_EXPORT FILE * dfout_C;
+#include <deque>
 
 namespace  DFHack
 {
-    class DFHACK_EXPORT Console
+    class Private;
+    class DFHACK_EXPORT Console : public duthomhas::stdiostream
     {
     public:
         Console();
         ~Console();
+        /// initialize the console
+        bool init( void );
+        /// shutdown the console
+        bool shutdown( void );
+        /// Print a formatted string, like printf
+        int  print(const char * format, ...);
         /// Clear the console, along with its scrollback
         void clear();
         /// Position cursor at x,y. 1,1 = top left corner
@@ -50,5 +54,23 @@ namespace  DFHack
         void cursor(bool enable = true);
         /// Waits given number of milliseconds before continuing.
         void msleep(unsigned int msec);
+        /// get the current number of columns
+        int  get_columns(void);
+        /// get the current number of rows
+        int  get_rows(void);
+        /// beep. maybe?
+        //void beep (void);
+        /// A simple line edit (raw mode)
+        int lineedit(const std::string& prompt, std::string& output);
+        /// add a command to the history
+        void history_add(const std::string& command);
+    private:
+        int prompt_loop(const std::string & prompt, std::string & buffer);
+        void prompt_refresh( const std::string & prompt, const std::string & buffer, size_t pos);
+        int enable_raw();
+        void disable_raw();
+        std::deque <std::string> history;
+        void history_clear();
+        Private * d;
     };
 }

@@ -28,6 +28,14 @@ ENDIF()
 SET(DFHACK_OUTPUT_DIR "${dfhack_BINARY_DIR}/bin" CACHE STRING "Where should be the produced libraries and binaries stored.")
 SET(DFHACK_PLUGIN_OUTPUT_DIR "${DFHACK_OUTPUT_DIR}/plugins")
 
+IF(UNIX)
+    # Make sure output directory is properly set
+    IF (NOT EXISTS "${DFHACK_OUTPUT_DIR}/df" OR
+            NOT EXISTS "${DFHACK_OUTPUT_DIR}/libs/Dwarf_Fortress")
+       message(FATAL_ERROR "DFHACK_OUTPUT_DIR must be directory containg game")
+    ENDIF()
+ENDIF()
+
 ## where to put things during the build (force MSVC to behave)
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${DFHACK_OUTPUT_DIR})
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${DFHACK_OUTPUT_DIR})

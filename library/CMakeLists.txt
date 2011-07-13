@@ -144,6 +144,15 @@ COMMAND ${CMAKE_COMMAND} -E make_directory ${DFHACK_PLUGIN_OUTPUT_DIR}
 COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/Memory.xml ${DFHACK_OUTPUT_DIR})
 ADD_DEPENDENCIES(dfhack prepare)
 
+# Copy our version of the df launch script which sets LD_PRELOAD
+IF(UNIX)
+    ADD_CUSTOM_TARGET( prepare_UNIX
+    DEPENDS ${dfhack_SOURCE_DIR}/package/linux/dfhack
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${DFHACK_OUTPUT_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/package/linux/dfhack ${DFHACK_OUTPUT_DIR})
+    ADD_DEPENDENCIES(dfhack prepare_UNIX)
+ENDIF()
+ 
 install(TARGETS dfhack
         LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
         RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION}) #linux: lib

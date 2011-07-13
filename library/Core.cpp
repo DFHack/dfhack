@@ -437,3 +437,4 @@ MODULE_GETTER(Translation);
 MODULE_GETTER(Vegetation);
 MODULE_GETTER(Buildings);
 MODULE_GETTER(Constructions);
+MODULE_GETTER(Vermin);

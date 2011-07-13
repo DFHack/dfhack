@@ -26,6 +26,7 @@ build/doc
 build/bin
 build/library
 build/tools
+build/plugins
 
 #ignore Kdevelop stuff
 .kdev4
@@ -39,5 +40,8 @@ dfhack/python/pydfhack/_pydfhack.so
 dfhack/python/PyDFHack.egg-info
 dfhack/python/build
 dfhack/python/dist
+
+# CPack stuff
+build/CPack*Config.cmake
 
 /cmakeall.bat

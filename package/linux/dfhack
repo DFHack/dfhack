@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# NOTE: This is dfhack's modification of the normal invocation script,
+# changed to properly set LD_PRELOAD so as to run DFHACK.
+
+DF_DIR=$(dirname "$0")
+cd "${DF_DIR}"
+export SDL_DISABLE_LOCK_KEYS=1 # Work around for bug in Debian/Ubuntu SDL patch.
+#export SDL_VIDEO_CENTERED=1 # Centre the screen.  Messes up resizing.
+
+export LD_PRELOAD=./libdfhack.so
+
+./libs/Dwarf_Fortress $* # Go, go, go! :)

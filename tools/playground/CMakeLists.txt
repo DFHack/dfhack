@@ -70,6 +70,23 @@ DFHACK_TOOL(dfprinttiletypes printtiletypes.cpp)
 # Will have many options in the future.
 DFHACK_TOOL(dfhellhole hellhole.cpp)
 
+# drawtile
+# Author: zilpin
+# Arbitrary tile drawing at the cursor.
+# Does not fix tiles above/below for consistency (e.g. ramps).
+DFHACK_TOOL(dfdrawtile drawtile.cpp)
+
+# veinswap
+# Author: zilpin
+# Randomly swap a percentage of the specified vein material with another material.
+# Or, set the material of a vein under the cursor.
+DFHACK_TOOL(dfveinswap veinswap.cpp)
+
+# lumberjack
+# Author: zilpin
+# Designate all trees of the given type which can be reached from the cursor.
+DFHACK_TOOL(dflumberjack lumberjack.cpp)
+
 # dfcreaturemanager
 # Author: raoulxq
 # - Display creatures (overview & detail)

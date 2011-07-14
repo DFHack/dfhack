@@ -40,6 +40,8 @@ namespace  DFHack
         bool shutdown( void );
         /// Print a formatted string, like printf
         int  print(const char * format, ...);
+        /// Print a formatted string, like printf, in red
+        int  printerr(const char * format, ...);
         /// Clear the console, along with its scrollback
         void clear();
         /// Position cursor at x,y. 1,1 = top left corner

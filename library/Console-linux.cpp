@@ -153,6 +153,18 @@ int Console::print( const char* format, ... )
     return ret;
 }
 
+
+int Console::printerr( const char* format, ... )
+{
+    color(12);
+    va_list args;
+    va_start( args, format );
+    int ret = vfprintf( d->dfout_C, format, args );
+    va_end( args );
+    reset_color();
+    return ret;
+}
+
 int Console::get_columns(void)
 {
     winsize ws;
@@ -236,6 +248,7 @@ void Console::color(int index)
 void Console::reset_color( void )
 {
     print(RESETCOLOR);
+    fflush(d->dfout_C);
 }
 
 void Console::cursor(bool enable)

@@ -127,7 +127,7 @@ int fIOthread(void * iodata)
     Console & con = core->con;
     if(plug_mgr == 0 || core == 0)
     {
-        con.print("Something horrible happened in Core's constructor...\n");
+        con.printerr("Something horrible happened in Core's constructor...\n");
         return 0;
     }
     con.print("DFHack is ready. Have a nice day! Type in '?' or 'help' for help.\n");
@@ -187,12 +187,12 @@ int fIOthread(void * iodata)
                 command_result res = plug_mgr->InvokeCommand(first, parts);
                 if(res == CR_NOT_IMPLEMENTED)
                 {
-                    con.print("Invalid command.\n");
+                    con.printerr("Invalid command.\n");
                     clueless_counter ++;
                 }
                 else if(res == CR_FAILURE)
                 {
-                    con.print("ERROR!\n");
+                    con.printerr("ERROR!\n");
                 }
             }
         }
@@ -234,7 +234,7 @@ bool Core::Init()
     p = new DFHack::Process(vif);
     if (!p->isIdentified())
     {
-        con.print("Couldn't identify this version of DF.\n");
+        con.printerr("Couldn't identify this version of DF.\n");
         errorstate = true;
         delete p;
         p = NULL;
@@ -246,7 +246,7 @@ bool Core::Init()
     AccessMutex = SDL_CreateMutex();
     if(!AccessMutex)
     {
-        con.print("Mutex creation failed\n");
+        con.printerr("Mutex creation failed\n");
         errorstate = true;
         return false;
     }
@@ -255,7 +255,7 @@ bool Core::Init()
     plug_mgr = new PluginManager(this);
     if(!plug_mgr)
     {
-        con.print("Failed to create the Plugin Manager.\n");
+        con.printerr("Failed to create the Plugin Manager.\n");
         errorstate = true;
         return false;
     }

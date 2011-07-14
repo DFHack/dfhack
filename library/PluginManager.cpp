@@ -81,20 +81,20 @@ Plugin::Plugin(Core * core, const std::string & file)
     DFLibrary * plug = OpenPlugin(file.c_str());
     if(!plug)
     {
-        con << "Can't load plugin " << filename << endl;
+        con.print("Can't load plugin %s\n", filename.c_str());
         return;
     }
     const char * (*_PlugName)() =(const char * (*)()) LookupPlugin(plug, "plugin_name");
     if(!_PlugName)
     {
-        con << "Plugin " << filename << " has no name." << endl;
+        con.print("Plugin %s has no name.\n", filename.c_str());
         ClosePlugin(plug);
         return;
     }
     plugin_init = (command_result (*)(Core *, std::vector <PluginCommand> &)) LookupPlugin(plug, "plugin_init");
     if(!plugin_init)
     {
-        con << "Plugin " << filename << " has no init function." << endl;
+        con.print("Plugin %s has no init function.\n", filename.c_str());
         ClosePlugin(plug);
         return;
     }

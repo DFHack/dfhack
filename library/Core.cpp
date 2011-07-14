@@ -127,7 +127,7 @@ int fIOthread(void * iodata)
     Console & con = core->con;
     if(plug_mgr == 0 || core == 0)
     {
-        con.print("Something horrible happened to the plugin manager in Core's constructor...\n");
+        con.print("Something horrible happened in Core's constructor...\n");
         return 0;
     }
     con.print("DFHack is ready. Have a nice day! Type in '?' or 'help' for help.\n");
@@ -162,9 +162,10 @@ int fIOthread(void * iodata)
                 for (int j = 0; j < plug->size();j++)
                 {
                     const PluginCommand & pcmd = (plug->operator[](j));
-                    con << setw(12) << pcmd.name << "| " << pcmd.description << endl;
+                    con.print("%12s| %s\n",pcmd.name.c_str(), pcmd.description.c_str());
+                    //con << setw(12) << pcmd.name << "| " << pcmd.description << endl;
                 }
-                con << endl;
+                con.print("\n");
             }
         }
         else if( command == "" )
@@ -186,18 +187,18 @@ int fIOthread(void * iodata)
                 command_result res = plug_mgr->InvokeCommand(first, parts);
                 if(res == CR_NOT_IMPLEMENTED)
                 {
-                    con << "Invalid command." << endl;
+                    con.print("Invalid command.\n");
                     clueless_counter ++;
                 }
                 else if(res == CR_FAILURE)
                 {
-                    con << "ERROR!" << endl;
+                    con.print("ERROR!\n");
                 }
             }
         }
         if(clueless_counter == 3)
         {
-            con << "Do 'help' or '?' for the list of available commands." << endl;
+            con.print("Do 'help' or '?' for the list of available commands.\n");
             clueless_counter = 0;
         }
     }
@@ -233,7 +234,7 @@ bool Core::Init()
     p = new DFHack::Process(vif);
     if (!p->isIdentified())
     {
-        con << "Couldn't identify this version of DF." << std::endl;
+        con.print("Couldn't identify this version of DF.\n");
         errorstate = true;
         delete p;
         p = NULL;
@@ -245,7 +246,7 @@ bool Core::Init()
     AccessMutex = SDL_CreateMutex();
     if(!AccessMutex)
     {
-        con << "Mutex creation failed." << std::endl;
+        con.print("Mutex creation failed\n");
         errorstate = true;
         return false;
     }
@@ -254,7 +255,7 @@ bool Core::Init()
     plug_mgr = new PluginManager(this);
     if(!plug_mgr)
     {
-        con << "Failed to create the Plugin Manager." << std::endl;
+        con.print("Failed to create the Plugin Manager.\n");
         errorstate = true;
         return false;
     }

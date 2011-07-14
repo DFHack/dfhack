@@ -118,15 +118,17 @@ namespace DFHack
 }
 Console::Console():std::ostream(0), std::ios(0)
 {
-    d = new Private();
+    d = 0;
 }
 Console::~Console()
 {
-    delete d;
+    if(d)
+        delete d;
 }
 
 bool Console::init(void)
 {
+    d = new Private();
     // make our own weird streams so our IO isn't redirected
     d->dfout_C = fopen("/dev/tty", "w");
     d->stream_o = new duthomhas::stdiobuf(d->dfout_C);
@@ -139,7 +141,7 @@ bool Console::shutdown(void)
 {
     if(d->rawmode)
         disable_raw();
-    *this << std::endl;
+    print("\n");
 }
 
 int Console::print( const char* format, ... )
@@ -174,16 +176,13 @@ void Console::clear()
     }
     else
     {
-        *this << "\033c";
-        *this << "\033[3J\033[H";
+        print("\033c\033[3J\033[H");
     }
 }
 
 void Console::gotoxy(int x, int y)
 {
-    std::ostringstream oss;
-    oss << "\033[" << y << ";" << x << "H";
-    *this << oss.str();
+    print("\033[%d;%dH", y,x);
 }
 
 const char * ANSI_CLS = "\033[2J";
@@ -231,25 +230,20 @@ const char * getANSIColor(const int c)
 
 void Console::color(int index)
 {
-    *this << getANSIColor(index);
+    print(getANSIColor(index));
 }
 
 void Console::reset_color( void )
 {
-    *this << RESETCOLOR;
+    print(RESETCOLOR);
 }
-
 
 void Console::cursor(bool enable)
 {
     if(enable)
-    {
-        *this <<"\033[?25h";
-    }
+        print("\033[?25h");
     else
-    {
-        *this <<"\033[?25l";
-    }
+        print("\033[?25l");
 }
 
 void Console::msleep (unsigned int msec)
@@ -339,8 +333,8 @@ int Console::prompt_loop(const std::string & prompt, std::string & buffer)
 
     /* The latest history entry is always our current buffer, that
      * initially is just an empty string. */
-    history_add("");
-
+    const std::string empty;
+    history_add(empty);
     if (::write(fd,prompt.c_str(),plen) == -1) return -1;
     while(1)
     {
@@ -374,7 +368,8 @@ int Console::prompt_loop(const std::string & prompt, std::string & buffer)
             continue;
         }
 
-        switch(c) {
+        switch(c)
+        {
         case 13:    /* enter */
             d->history.pop_front();
             return buffer.size();
@@ -516,7 +511,7 @@ int Console::prompt_loop(const std::string & prompt, std::string & buffer)
 // push to front, remove from back if we are above maximum. ignore immediate duplicates
 void Console::history_add(const std::string & command)
 {
-    if(d->history.front() == command)
+    if(!d->history.empty() && d->history.front() == command)
         return;
     d->history.push_front(command);
     if(d->history.size() > 100)
@@ -527,11 +522,10 @@ int Console::lineedit(const std::string & prompt, std::string & output)
 {
     output.clear();
     int count;
-
     if (d->isUnsupportedTerm() || !isatty(STDIN_FILENO))
     {
-        *this << prompt;
-        flush();
+        print(prompt.c_str());
+        fflush(d->dfout_C);
         std::getline(std::cin, output);
         return output.size();
     }
@@ -540,7 +534,7 @@ int Console::lineedit(const std::string & prompt, std::string & output)
         if (enable_raw() == -1) return 0;
         count = prompt_loop(prompt, output);
         disable_raw();
-        *this << std::endl;
+        print("\n");
         return output.size();
     }
 }

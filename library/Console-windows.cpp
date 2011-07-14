@@ -83,7 +83,7 @@ namespace DFHack
 
 Console::Console():std::ostream(0), std::ios(0)
 {
-    d = new Private();
+    d = 0;
 }
 
 Console::~Console()
@@ -92,6 +92,7 @@ Console::~Console()
 
 bool Console::init(void)
 {
+    d = new Private();
     int                        hConHandle;
     long                       lStdHandle;
     CONSOLE_SCREEN_BUFFER_INFO coninfo;
@@ -267,10 +268,10 @@ int Console::prompt_loop(const std::string & prompt, std::string & buffer)
     size_t plen = prompt.size();
     size_t pos = 0;
     int history_index = 0;
-
     /* The latest history entry is always our current buffer, that
      * initially is just an empty string. */
-    history_add("");
+    const std::string empty;
+    history_add(empty);
 
     CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
     GetConsoleScreenBufferInfo(d->console_out, &inf);

@@ -18,6 +18,16 @@ case "$1" in
     gdb ./libs/Dwarf_Fortress $*
     ret=$?
     ;;
+  -h | --helgrind)
+    shift
+    valgrind --tool=helgrind --log-file=helgrind.log ./libs/Dwarf_Fortress $*
+    ret=$?
+    ;;
+  -v | --valgrind)
+    shift
+    valgrind --log-file=valgrind.log ./libs/Dwarf_Fortress $*
+    ret=$?
+    ;;
   *)
     ./libs/Dwarf_Fortress $*
     ret=$?

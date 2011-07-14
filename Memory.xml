@@ -990,6 +990,17 @@
                 <Offset name="custom_workshop_name"/>
                 <Offset name="custom_workshop_type"/>
             </Group>
+            <Group name="Vermin">
+                <Group name="Spawn Points" description="vermin spawn points, including colonies">
+                    <Address name="vector"/>
+                    <Offset name="race"/>
+                    <Offset name="type"/>
+                    <Offset name="position"/>
+                    <Offset name="in_use"/>
+                    <Offset name="unknown"/>
+                    <Offset name="countdown"/> to what???
+                </Group>
+            </Group>
             <Group name="Items">
                 <!-- most of those seem completely unused! -->
                 <Address name="items_vector" />
@@ -3027,6 +3038,17 @@
                 Address name="vector" value="0x0940b174"
                 <Group name="creature">
                     <Offset name="flags3" value="0x94"/>
+                </Group>
+            </Group>
+            <Group name="Vermin" valid="true">
+                <Group name="Spawn Points">
+                    <Address name="vector"   value="0x93f77c4"/>
+                    <Offset name="race"      value="0x0"/>
+                    <Offset name="type"      value="0x2"/>
+                    <Offset name="position"  value="0x4"/>
+                    <Offset name="in_use"    value="0xa"/>
+                    <Offset name="unknown"   value="0xb"/>
+                    <Offset name="countdown" value="0xc"/>
                 </Group>
             </Group>
             <Group name="Position" valid="true">

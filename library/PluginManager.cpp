@@ -71,6 +71,7 @@ bool hasEnding (std::string const &fullString, std::string const &ending)
 Plugin::Plugin(Core * core, const std::string & file)
 {
     filename = file;
+    Console & con = core->con;
     plugin_lib = 0;
     plugin_init = 0;
     plugin_shutdown = 0;
@@ -80,20 +81,20 @@ Plugin::Plugin(Core * core, const std::string & file)
     DFLibrary * plug = OpenPlugin(file.c_str());
     if(!plug)
     {
-        core->con << "Can't load plugin " << filename << endl;
+        con << "Can't load plugin " << filename << endl;
         return;
     }
     const char * (*_PlugName)() =(const char * (*)()) LookupPlugin(plug, "plugin_name");
     if(!_PlugName)
     {
-        core->con << "Plugin " << filename << " has no name." << endl;
+        con << "Plugin " << filename << " has no name." << endl;
         ClosePlugin(plug);
         return;
     }
     plugin_init = (command_result (*)(Core *, std::vector <PluginCommand> &)) LookupPlugin(plug, "plugin_init");
     if(!plugin_init)
     {
-        core->con << "Plugin " << filename << " has no init function." << endl;
+        con << "Plugin " << filename << " has no init function." << endl;
         ClosePlugin(plug);
         return;
     }

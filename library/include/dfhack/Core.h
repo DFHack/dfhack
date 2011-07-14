@@ -50,7 +50,6 @@ namespace DFHack
     class Constructions;
     class VersionInfo;
     class VersionInfoFactory;
-    class Console;
     class PluginManager;
     class Core;
     // anon type, pretty much

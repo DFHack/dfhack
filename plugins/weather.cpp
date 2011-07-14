@@ -38,6 +38,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 DFhackCExport command_result weather (Core * c, vector <string> & parameters)
 {
+    Console & con = c->con;
     bool lock = false;
     bool unlock = false;
     bool snow = false;
@@ -58,7 +59,7 @@ DFhackCExport command_result weather (Core * c, vector <string> & parameters)
     }
     if(lock && unlock)
     {
-        c->con << "Lock or unlock? DECIDE!" << std::endl;
+        con << "Lock or unlock? DECIDE!" << std::endl;
         return CR_FAILURE;
     }
     int cnt = 0;
@@ -67,7 +68,7 @@ DFhackCExport command_result weather (Core * c, vector <string> & parameters)
     cnt += clear;
     if(cnt > 1)
     {
-        c->con << "Rain, snow or clear sky? DECIDE!" << std::endl;
+        con << "Rain, snow or clear sky? DECIDE!" << std::endl;
         return CR_FAILURE;
     }
     bool something = lock || unlock || rain || snow || clear;
@@ -75,14 +76,14 @@ DFhackCExport command_result weather (Core * c, vector <string> & parameters)
     DFHack::World * w = c->getWorld();
     if(!w->wmap)
     {
-        c->con << "Weather support seems broken :(" << std::endl;
+        con << "Weather support seems broken :(" << std::endl;
         c->Resume();
         return CR_FAILURE;
     }
     if(!something)
     {
         // paint weather map
-        c->con << "Weather map (C = clear, R = rain, S = snow):" << std::endl;
+        con << "Weather map (C = clear, R = rain, S = snow):" << std::endl;
         for(int y = 0; y<5;y++)
         {
             for(int x = 0; x<5;x++)
@@ -90,20 +91,20 @@ DFhackCExport command_result weather (Core * c, vector <string> & parameters)
                 switch((*w->wmap)[x][y])
                 {
                     case DFHack::CLEAR:
-                        c->con << "C ";
+                        con << "C ";
                         break;
                     case DFHack::RAINING:
-                        c->con << "R ";
+                        con << "R ";
                         break;
                     case DFHack::SNOWING:
-                        c->con << "S ";
+                        con << "S ";
                         break;
                     default:
-                        c->con << (int) (*w->wmap)[x][y] << " ";
+                        con << (int) (*w->wmap)[x][y] << " ";
                         break;
                 }
             }
-            c->con << std::endl;
+            con << std::endl;
         }
     }
     else
@@ -111,17 +112,17 @@ DFhackCExport command_result weather (Core * c, vector <string> & parameters)
         // weather changing action!
         if(rain)
         {
-            c->con << "Here comes the rain." << std::endl;
+            con << "Here comes the rain." << std::endl;
             w->SetCurrentWeather(RAINING);
         }
         if(snow)
         {
-            c->con << "Snow everywhere!" << std::endl;
+            con << "Snow everywhere!" << std::endl;
             w->SetCurrentWeather(SNOWING);
         }
         if(clear)
         {
-            c->con << "Suddenly, sunny weather!" << std::endl;
+            con << "Suddenly, sunny weather!" << std::endl;
             w->SetCurrentWeather(CLEAR);
         }
         // FIXME: weather lock needs map ID to work reliably... needs to be implemented.

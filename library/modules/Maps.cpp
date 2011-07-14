@@ -787,7 +787,7 @@ bool Maps::SortBlockEvents(uint32_t x, uint32_t y, uint32_t z, vector <t_vein *>
     if(veins) veins->clear();
     if(ices) ices->clear();
     if(splatter) splatter->clear();
-    if(grass) splatter->clear();
+    if(grass) grass->clear();
     if(constructions) constructions->clear();
 
     Private::t_offsets &off = d->offsets;

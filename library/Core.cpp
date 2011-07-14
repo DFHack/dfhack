@@ -121,22 +121,24 @@ int fHKthread(void * iodata)
 // A thread function... for the interactive console.
 int fIOthread(void * iodata)
 {
-    Core * core = ((IODATA*) iodata)->core;
+    IODATA * iod = ((IODATA*) iodata);
+    Core * core = iod->core;
     PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
+    Console & con = core->con;
     if(plug_mgr == 0 || core == 0)
     {
-        core->con << "Something horrible happened to the plugin manager in Core's constructor..." << std::endl;
+        con.print("Something horrible happened to the plugin manager in Core's constructor...\n");
         return 0;
     }
-    core->con.print("DFHack is ready. Have a nice day! Type in '?' or 'help' for help.\n");
+    con.print("DFHack is ready. Have a nice day! Type in '?' or 'help' for help.\n");
     //dfterm <<  << endl;
     int clueless_counter = 0;
     while (true)
     {
         string command = "";
-        core->con.lineedit("[DFHack]# ",command);
-        core->con.history_add(command);
-        //core->con <<"[DFHack]# ";
+        con.lineedit("[DFHack]# ",command);
+        con.history_add(command);
+        //con <<"[DFHack]# ";
         //char * line = linenoise("[DFHack]# ", core->con.dfout_C);
         //        dfout <<"[DFHack]# ";
         /*
@@ -149,20 +151,20 @@ int fIOthread(void * iodata)
         //getline(cin, command);
         if(command=="help" || command == "?")
         {
-            core->con << "Available commands" << endl;
-            core->con << "------------------" << endl;
+            con.print("Available commands\n");
+            con.print("------------------\n");
             for(int i = 0; i < plug_mgr->size();i++)
             {
                 const Plugin * plug = (plug_mgr->operator[](i));
                 if(!plug->size())
                     continue;
-                core->con << "Plugin " << plug->getName() << " :" << std::endl;
+                con.print("Plugin %s :\n", plug->getName().c_str());
                 for (int j = 0; j < plug->size();j++)
                 {
                     const PluginCommand & pcmd = (plug->operator[](j));
-                    core->con << setw(12) << pcmd.name << "| " << pcmd.description << endl;
+                    con << setw(12) << pcmd.name << "| " << pcmd.description << endl;
                 }
-                core->con << endl;
+                con << endl;
             }
         }
         else if( command == "" )
@@ -184,18 +186,18 @@ int fIOthread(void * iodata)
                 command_result res = plug_mgr->InvokeCommand(first, parts);
                 if(res == CR_NOT_IMPLEMENTED)
                 {
-                    core->con << "Invalid command." << endl;
+                    con << "Invalid command." << endl;
                     clueless_counter ++;
                 }
                 else if(res == CR_FAILURE)
                 {
-                    core->con << "ERROR!" << endl;
+                    con << "ERROR!" << endl;
                 }
             }
         }
         if(clueless_counter == 3)
         {
-            core->con << "Do 'help' or '?' for the list of available commands." << endl;
+            con << "Do 'help' or '?' for the list of available commands." << endl;
             clueless_counter = 0;
         }
     }

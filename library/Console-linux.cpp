@@ -66,6 +66,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "dfhack/Console.h"
+#include "dfhack/extra/stdiostream.h"
 #include <cstdio>
 #include <cstdlib>
 #include <sstream>
@@ -78,6 +79,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <errno.h>
+#include <deque>
 using namespace DFHack;
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
@@ -94,28 +96,7 @@ namespace DFHack
             dfout_C = 0;
             stream_o = 0;
             rawmode = 0;
-            history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
-            history_len = 0;
-            history = NULL;
         };
-        int get_columns(void)
-        {
-            winsize ws;
-            if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) return 80;
-            return ws.ws_col;
-        }
-
-        int get_rows(void)
-        {
-            winsize ws;
-            if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) return 25;
-            return ws.ws_row;
-        }
-        void clear()
-        {
-            const char * clr = "\033c\033[3J\033[H";
-            write(STDIN_FILENO,clr,strlen(clr));
-        }
 
         int isUnsupportedTerm(void)
         {
@@ -132,13 +113,10 @@ namespace DFHack
         duthomhas::stdiobuf * stream_o;
         termios orig_termios; /* in order to restore at exit */
         int rawmode; /* for atexit() function to check if restore is needed*/
-        int history_max_len;
-        int history_len;
-        char **history;
+        std::deque <std::string> history;
     };
 }
-// FIXME: prime candidate for being a singleton...
-Console::Console()
+Console::Console():std::ostream(0), std::ios(0)
 {
     d = new Private();
 }
@@ -175,18 +153,30 @@ int Console::print( const char* format, ... )
 
 int Console::get_columns(void)
 {
-    return d->get_columns();
+    winsize ws;
+    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) return 80;
+    return ws.ws_col;
 }
 
 int Console::get_rows(void)
 {
-    return d->get_rows();
+    winsize ws;
+    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) return 25;
+    return ws.ws_row;
 }
 
 void Console::clear()
 {
-    *this << "\033c";
-    *this << "\033[3J\033[H";
+    if(d->rawmode)
+    {
+        const char * clr = "\033c\033[3J\033[H";
+        ::write(STDIN_FILENO,clr,strlen(clr));
+    }
+    else
+    {
+        *this << "\033c";
+        *this << "\033[3J\033[H";
+    }
 }
 
 void Console::gotoxy(int x, int y)
@@ -344,7 +334,7 @@ int Console::prompt_loop(const std::string & prompt, std::string & buffer)
     int fd = STDIN_FILENO;
     size_t plen = prompt.size();
     size_t pos = 0;
-    size_t cols = d->get_columns();
+    size_t cols = get_columns();
     int history_index = 0;
 
     /* The latest history entry is always our current buffer, that
@@ -386,7 +376,7 @@ int Console::prompt_loop(const std::string & prompt, std::string & buffer)
 
         switch(c) {
         case 13:    /* enter */
-            history.pop_front();
+            d->history.pop_front();
             return buffer.size();
         case 3:     /* ctrl-c */
             errno = EAGAIN;
@@ -400,41 +390,6 @@ int Console::prompt_loop(const std::string & prompt, std::string & buffer)
                 prompt_refresh(prompt,buffer,pos);
             }
             break;
-            // I fail to see how is this useful to anyone but hardcore emacs users
-            /*
-        case 4:     // ctrl-d, remove char at right of cursor
-            if (len > 1 && pos < (len-1)) {
-                memmove(buf+pos,buf+pos+1,len-pos);
-                len--;
-                buf[len] = '\0';
-                prompt_refresh(prompt,buffer,pos);
-            } else if (len == 0) {
-                history_len--;
-                free(history[history_len]);
-                return -1;
-            }
-            break;
-        case 20:    // ctrl-t
-            if (pos > 0 && pos < len) {
-                int aux = buf[pos-1];
-                buf[pos-1] = buf[pos];
-                buf[pos] = aux;
-                if (pos != len-1) pos++;
-                prompt_refresh(prompt,buffer,pos);
-            }
-            break;
-        case 2:     // ctrl-b
-            goto left_arrow;
-        case 6:     // ctrl-f
-            goto right_arrow;
-        case 16:    // ctrl-p
-            seq[1] = 65;
-            goto up_down_arrow;
-        case 14:    // ctrl-n
-            seq[1] = 66;
-            goto up_down_arrow;
-            break;
-            */
         case 27:    /* escape sequence */
             if (::read(fd,seq,2) == -1) break;
             if(seq[0] == '[')
@@ -460,13 +415,12 @@ int Console::prompt_loop(const std::string & prompt, std::string & buffer)
                 }
                 else if (seq[1] == 'A' || seq[1] == 'B')
                 {
-                    up_down_arrow:
                     /* up and down arrow: history */
-                    if (history.size() > 1)
+                    if (d->history.size() > 1)
                     {
                         /* Update the current history entry before to
                          * overwrite it with tne next one. */
-                        history[history_index] = buffer;
+                        d->history[history_index] = buffer;
                         /* Show the new entry */
                         history_index += (seq[1] == 'A') ? 1 : -1;
                         if (history_index < 0)
@@ -474,12 +428,12 @@ int Console::prompt_loop(const std::string & prompt, std::string & buffer)
                             history_index = 0;
                             break;
                         }
-                        else if (history_index >= history.size())
+                        else if (history_index >= d->history.size())
                         {
-                            history_index = history.size()-1;
+                            history_index = d->history.size()-1;
                             break;
                         }
-                        buffer = history[history_index];
+                        buffer = d->history[history_index];
                         pos = buffer.size();
                         prompt_refresh(prompt,buffer,pos);
                     }
@@ -562,11 +516,11 @@ int Console::prompt_loop(const std::string & prompt, std::string & buffer)
 // push to front, remove from back if we are above maximum. ignore immediate duplicates
 void Console::history_add(const std::string & command)
 {
-    if(history.front() == command)
+    if(d->history.front() == command)
         return;
-    history.push_front(command);
-    if(history.size() > 100)
-        history.pop_back();
+    d->history.push_front(command);
+    if(d->history.size() > 100)
+        d->history.pop_back();
 }
 
 int Console::lineedit(const std::string & prompt, std::string & output)

@@ -89,6 +89,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     bool showPlants = true;
     bool showSlade = true;
     bool showTemple = true;
+    Console & con = c->con;
     if(parameters.size() && parameters[0] == "all")
     {
         showHidden = true;
@@ -98,7 +99,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     DFHack::Maps *maps = c->getMaps();
     if (!maps->Start())
     {
-        c->con << "Cannot get map info!" << std::endl;
+        con << "Cannot get map info!" << std::endl;
         c->Resume();
         return CR_FAILURE;
     }
@@ -108,13 +109,13 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     DFHack::Materials *mats = c->getMaterials();
     if (!mats->ReadInorganicMaterials())
     {
-        c->con << "Unable to read inorganic material definitons!" << std::endl;
+        con << "Unable to read inorganic material definitons!" << std::endl;
         c->Resume();
         return CR_FAILURE;
     }
     if (showPlants && !mats->ReadOrganicMaterials())
     {
-        c->con << "Unable to read organic material definitons; plants won't be listed!" << std::endl;
+        con << "Unable to read organic material definitons; plants won't be listed!" << std::endl;
         showPlants = false;
     }
 
@@ -134,21 +135,21 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
 
     if (!(showSlade && maps->ReadGlobalFeatures(globalFeatures)))
     {
-        c->con << "Unable to read global features; slade won't be listed!" << std::endl;
+        con << "Unable to read global features; slade won't be listed!" << std::endl;
     }
 
     if (!maps->ReadLocalFeatures(localFeatures))
     {
-        c->con << "Unable to read local features; adamantine "
-               << (showTemple ? "and demon temples " : "")
-               << "won't be listed!" << std::endl;
+        con << "Unable to read local features; adamantine "
+            << (showTemple ? "and demon temples " : "")
+            << "won't be listed!" << std::endl;
     }
 
     uint32_t vegCount = 0;
     DFHack::Vegetation *veg = c->getVegetation();
     if (showPlants && !veg->Start())
     {
-        c->con << "Unable to read vegetation; plants won't be listed!" << std::endl;
+        con << "Unable to read vegetation; plants won't be listed!" << std::endl;
     }
 
     for(uint32_t z = 0; z < z_max; z++)
@@ -217,7 +218,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
 
                         if (!info)
                         {
-                            c->con << "Bad type: " << type << std::endl;
+                            con << "Bad type: " << type << std::endl;
                             continue;
                         }
 
@@ -306,39 +307,39 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
 
     MatMap::const_iterator it;
 
-    c->con << "Base materials:" << std::endl;
+    con << "Base materials:" << std::endl;
     for (it = baseMats.begin(); it != baseMats.end(); ++it)
     {
-        c->con << std::setw(25) << DFHack::TileMaterialString[it->first] << " : " << it->second << std::endl;
+        con << std::setw(25) << DFHack::TileMaterialString[it->first] << " : " << it->second << std::endl;
     }
 
-    c->con << std::endl << "Layer materials:" << std::endl;
-    printMats(c->con, layerMats, mats->inorganic);
+    con << std::endl << "Layer materials:" << std::endl;
+    printMats(con, layerMats, mats->inorganic);
 
-    c->con << "Vein materials:" << std::endl;
-    printMats(c->con, veinMats, mats->inorganic);
+    con << "Vein materials:" << std::endl;
+    printMats(con, veinMats, mats->inorganic);
 
     if (showPlants)
     {
-        c->con << "Shrubs:" << std::endl;
-        printMats(c->con, plantMats, mats->organic);
-        c->con << "Wood in trees:" << std::endl;
-        printMats(c->con, treeMats, mats->organic);
+        con << "Shrubs:" << std::endl;
+        printMats(con, plantMats, mats->organic);
+        con << "Wood in trees:" << std::endl;
+        printMats(con, treeMats, mats->organic);
     }
 
     if (hasAquifer)
     {
-        c->con << "Has aquifer" << std::endl;
+        con << "Has aquifer" << std::endl;
     }
 
     if (hasDemonTemple)
     {
-        c->con << "Has demon temple" << std::endl;
+        con << "Has demon temple" << std::endl;
     }
 
     if (hasLair)
     {
-        c->con << "Has lair" << std::endl;
+        con << "Has lair" << std::endl;
     }
 
     // Cleanup
@@ -349,6 +350,6 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     mats->Finish();
     maps->Finish();
     c->Resume();
-    c->con << std::endl;
+    con << std::endl;
     return CR_OK;
 }

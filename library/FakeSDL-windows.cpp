@@ -538,6 +538,10 @@ DFhackCExport size_t SDL_strlcpy(char *dst, const char *src, size_t maxlen)
     if(!_SDL_strlcpy)
     {
         HMODULE realSDLlib =  LoadLibrary("SDLreal.dll");
+		if(!realSDLlib)
+		{
+			exit(-111);
+		}
         _SDL_strlcpy = (size_t (*)(char*, const char*, size_t))GetProcAddress(realSDLlib,"SDL_strlcpy");
     }
     return _SDL_strlcpy(dst,src,maxlen);
@@ -698,6 +702,7 @@ bool FirstCall()
         fprintf(stderr, "Can't load SDLreal.dll\n");
         return 0;
     }
+	fprintf(stderr, "FirstCall()\n");
     // stuff for DF
     _SDL_AddTimer = (void*(*)(uint32_t, void*, void*)) GetProcAddress(realSDLlib,"SDL_AddTimer");
     _SDL_CondSignal = (int (*)(SDL::Cond*))GetProcAddress(realSDLlib,"SDL_CondSignal");

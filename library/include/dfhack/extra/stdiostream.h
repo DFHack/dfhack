@@ -213,7 +213,7 @@ protected:
         std::ios_base::openmode which = std::ios_base::in | std::ios_base::out
     ) {
         pushbacks.clear();
-        return std::fseek( fp, position, SEEK_SET )
+        return std::fseek( fp, (long) position, SEEK_SET )
                ? (-1)
                : std::ftell( fp );
     }

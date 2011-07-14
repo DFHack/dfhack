@@ -25,13 +25,11 @@ distribution.
 #pragma once
 #include "dfhack/Pragma.h"
 #include "dfhack/Export.h"
-#include "dfhack/extra/stdiostream.h"
-#include <deque>
-
+#include <ostream>
 namespace  DFHack
 {
     class Private;
-    class DFHACK_EXPORT Console : public duthomhas::stdiostream
+    class DFHACK_EXPORT Console : public std::ostream
     {
     public:
         Console();
@@ -69,7 +67,6 @@ namespace  DFHack
         void prompt_refresh( const std::string & prompt, const std::string & buffer, size_t pos);
         int enable_raw();
         void disable_raw();
-        std::deque <std::string> history;
         void history_clear();
         Private * d;
     };

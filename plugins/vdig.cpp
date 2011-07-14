@@ -43,13 +43,15 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
     if(parameters.size() && parameters[0]=="x")
         updown = true;
 
+    Console & con = c->con;
+
     c->Suspend();
     DFHack::Maps * Maps = c->getMaps();
     DFHack::Gui * Gui = c->getGui();
     // init the map
     if(!Maps->Start())
     {
-        c->con << "Can't init map. Make sure you have a map loaded in DF.\n";
+        con << "Can't init map. Make sure you have a map loaded in DF.\n";
         c->Resume();
         return CR_FAILURE;
     }
@@ -61,14 +63,14 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
     Gui->getCursorCoords(cx,cy,cz);
     while(cx == -30000)
     {
-        c->con << "Cursor is not active. Point the cursor at a vein.\n";
+        con << "Cursor is not active. Point the cursor at a vein.\n";
         c->Resume();
         return CR_FAILURE;
     }
     DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
     if(xy.x == 0 || xy.x == tx_max - 1 || xy.y == 0 || xy.y == ty_max - 1)
     {
-        c->con << "I won't dig the borders. That would be cheating!\n";
+        con << "I won't dig the borders. That would be cheating!\n";
         c->Resume();
         return CR_FAILURE;
     }
@@ -78,12 +80,12 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
     int16_t veinmat = MCache->veinMaterialAt(xy);
     if( veinmat == -1 )
     {
-        c->con << "This tile is not a vein.\n";
+        con << "This tile is not a vein.\n";
         delete MCache;
         c->Resume();
         return CR_FAILURE;
     }
-    c->con.print("%d/%d/%d tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, des.whole);
+    con.print("%d/%d/%d tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, des.whole);
     stack <DFHack::DFCoord> flood;
     flood.push(xy);
 

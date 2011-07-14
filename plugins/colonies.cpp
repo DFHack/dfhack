@@ -36,7 +36,8 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 void destroyColonies(DFHack::SpawnPoints *points);
 void convertColonies(DFHack::SpawnPoints *points, DFHack::Materials *Materials);
-void showColonies(DFHack::SpawnPoints *points, DFHack::Materials *Materials);
+void showColonies(Core *c, DFHack::SpawnPoints *points,
+                  DFHack::Materials *Materials);
 
 DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
 {
@@ -54,7 +55,7 @@ DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
     if (destroy && convert)
     {
 
-        dfout << "Kill or make bees? DECIDE!" << std::endl;
+        c->con << "Kill or make bees? DECIDE!" << std::endl;
         return CR_FAILURE;
     }
  
@@ -67,7 +68,7 @@ DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
 
     if(!points->isValid())
     {
-        std::cerr << "vermin not supported for this DF version" << std::endl;
+        c->con << "vermin not supported for this DF version" << std::endl;
         return CR_FAILURE;
     }
 
@@ -78,7 +79,7 @@ DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
     else if (convert)
         convertColonies(points, materials);
     else
-        showColonies(points, materials);
+        showColonies(c, points, materials);
 
     delete points;
 
@@ -136,7 +137,8 @@ void convertColonies(DFHack::SpawnPoints *points, DFHack::Materials *Materials)
     }
 }
 
-void showColonies(DFHack::SpawnPoints *points, DFHack::Materials *Materials)
+void showColonies(Core *c, DFHack::SpawnPoints *points,
+                  DFHack::Materials *Materials)
 {
     uint32_t numSpawnPoints = points->size();
     int      numColonies    = 0;
@@ -153,11 +155,11 @@ void showColonies(DFHack::SpawnPoints *points, DFHack::Materials *Materials)
             if (Materials->raceEx[sp.race].rawname[0])
                 race = Materials->raceEx[sp.race].rawname;
 
-             fprintf(dfout_C, "Spawn point %u: %s at %d:%d:%d\n",
-                   i, race.c_str(), sp.x, sp.y, sp.z);
+             c->con.print("Spawn point %u: %s at %d:%d:%d\n", i,
+                          race.c_str(), sp.x, sp.y, sp.z);
         }
     }
 
     if (numColonies == 0)
-        dfout << "No colonies present." << std::endl;
+        c->con << "No colonies present." << std::endl;
 }

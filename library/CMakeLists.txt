@@ -89,14 +89,12 @@ SET(PROJECT_SRCS_LINUX
 FakeSDL-linux.cpp
 Console-linux.cpp
 Process-linux.cpp
-depends/libnoise/linenoise.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
 FakeSDL-windows.cpp
 Console-windows.cpp
 Process-windows.cpp
-depends/libnoise/linenoise_win32.cpp
 )
 
 IF(UNIX)

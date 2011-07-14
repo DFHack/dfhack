@@ -45,7 +45,6 @@ using namespace std;
 #include "dfhack/modules/Gui.h"
 
 #include "dfhack/SDL_fakes/events.h"
-#include "linenoise.h"
 
 #include <stdio.h>
 #include <iomanip>

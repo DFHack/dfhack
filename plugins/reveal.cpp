@@ -104,7 +104,7 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
     Console & con = c->con;
     if(revealed != NOT_REVEALED)
     {
-        con << "Map is already revealed or this is a different map." << std::endl;
+        con.printerr("Map is already revealed or this is a different map.\n");
         return CR_FAILURE;
     }
 
@@ -115,20 +115,20 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
     World->ReadGameMode(gm);
     if(gm.g_mode != GAMEMODE_DWARF)
     {
-        con << "Only in fortress mode." << std::endl;
+        con.printerr("Only in fortress mode.\n");
         c->Resume();
         return CR_FAILURE;
     }
     if(!Maps->Start())
     {
-        con << "Can't init map." << std::endl;
+        con.printerr("Can't init map.\n");
         c->Resume();
         return CR_FAILURE;
     }
 
     if(no_hell && !Maps->StartFeatures())
     {
-        con << "Unable to read local features; can't reveal map safely" << std::endl;
+        con.printerr("Unable to read local features; can't reveal map safely.\n");
         c->Resume();
         return CR_FAILURE;
     }
@@ -175,10 +175,10 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
         World->SetPauseState(true);
     }
     c->Resume();
-    con << "Map revealed." << std::endl;
+    con.print("Map revealed.\n");
     if(!no_hell)
-        con << "Unpausing can unleash the forces of hell, so it has been temporarily disabled." << std::endl;
-    con << "Run 'unreveal' to revert to previous state." << std::endl;
+        con.print("Unpausing can unleash the forces of hell, so it has been temporarily disabled.\n");
+    con.print("Run 'unreveal' to revert to previous state.\n");
     return CR_OK;
 }
 
@@ -187,7 +187,7 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     Console & con = c->con;
     if(!revealed)
     {
-        con << "There's nothing to revert!" << std::endl;
+        con.printerr("There's nothing to revert!\n");
         return CR_FAILURE;
     }
     c->Suspend();
@@ -197,14 +197,14 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     World->ReadGameMode(gm);
     if(gm.g_mode != GAMEMODE_DWARF)
     {
-        con << "Only in fortress mode." << std::endl;
+        con.printerr("Only in fortress mode.\n");
         c->Resume();
         return CR_FAILURE;
     }
     Maps = c->getMaps();
     if(!Maps->Start())
     {
-        con << "Can't init map." << std::endl;
+        con.printerr("Can't init map.\n");
         c->Resume();
         return CR_FAILURE;
     }
@@ -214,7 +214,7 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     Maps->getSize(x_max_b,y_max_b,z_max_b);
     if(x_max != x_max_b || y_max != y_max_b || z_max != z_max_b)
     {
-        con << "The map is not of the same size..." << std::endl;
+        con.printerr("The map is not of the same size...\n");
         c->Resume();
         return CR_FAILURE;
     }
@@ -233,7 +233,7 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     // give back memory.
     hidesaved.clear();
     revealed = NOT_REVEALED;
-    con << "Map hidden!" << std::endl;
+    con.print("Map hidden!\n");
     c->Resume();
     return CR_OK;
 }

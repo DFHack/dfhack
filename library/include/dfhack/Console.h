@@ -32,12 +32,36 @@ namespace  DFHack
     class DFHACK_EXPORT Console : public std::ostream
     {
     public:
+        enum color_value
+        {
+            COLOR_RESET = -1,
+            COLOR_BLACK = 0,
+            COLOR_BLUE,
+            COLOR_GREEN,
+            COLOR_CYAN,
+            COLOR_RED,
+            COLOR_MAGENTA,
+            COLOR_BROWN,
+            COLOR_GREY,
+            COLOR_DARKGREY,
+            COLOR_LIGHTBLUE,
+            COLOR_LIGHTGREEN,
+            COLOR_LIGHTCYAN,
+            COLOR_LIGHTRED,
+            COLOR_LIGHTMAGENTA,
+            COLOR_YELLOW,
+            COLOR_WHITE,
+            COLOR_MAX = COLOR_WHITE
+        };
+        ///ctor, NOT thread-safe
         Console();
+        ///dtor, NOT thread-safe
         ~Console();
-        /// initialize the console
+        /// initialize the console. NOT thread-safe
         bool init( void );
-        /// shutdown the console
+        /// shutdown the console. NOT thread-safe
         bool shutdown( void );
+
         /// Print a formatted string, like printf
         int  print(const char * format, ...);
         /// Print a formatted string, like printf, in red
@@ -47,7 +71,7 @@ namespace  DFHack
         /// Position cursor at x,y. 1,1 = top left corner
         void gotoxy(int x, int y);
         /// Set color (ANSI color number)
-        void color(int index);
+        void color(color_value c);
         /// Reset color to default
         void reset_color(void);
         /// Enable or disable the caret/cursor
@@ -64,12 +88,9 @@ namespace  DFHack
         int lineedit(const std::string& prompt, std::string& output);
         /// add a command to the history
         void history_add(const std::string& command);
-    private:
-        int prompt_loop(const std::string & prompt, std::string & buffer);
-        void prompt_refresh( const std::string & prompt, const std::string & buffer, size_t pos);
-        int enable_raw();
-        void disable_raw();
+        /// clear the command history
         void history_clear();
+    private:
         Private * d;
     };
 }

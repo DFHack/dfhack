@@ -50,7 +50,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
         uint64_t time2 = GetTimeMs64();
         uint64_t delta = time2-timeLast;
         timeLast = time2;
-        c->con << "Time delta = " << delta << " ms" << std::endl;
+        c->con.print("Time delta = %d ms\n", delta);
     }
     return CR_OK;
 }
@@ -66,7 +66,7 @@ DFhackCExport command_result ktimer (Core * c, vector <string> & parameters)
     c->Suspend();
     c->Resume();
     uint64_t timeend = GetTimeMs64();
-    c->con << "Time to suspend = " << timeend - timestart << " ms" << std::endl;
+    c->con.print("Time to suspend = %d ms\n",timeend - timestart);
     timeLast = timeend;
     timering = true;
     return CR_OK;
@@ -111,7 +111,7 @@ DFhackCExport command_result kittens (Core * c, vector <string> & parameters)
     };
     con.cursor(false);
     con.clear();
-    int color = 1;
+    Console::color_value color = Console::COLOR_BLUE;
     while(1)
     {
         if(shutdown_flag)
@@ -135,8 +135,8 @@ DFhackCExport command_result kittens (Core * c, vector <string> & parameters)
         }
         con.flush();
         con.msleep(60);
-        color ++;
-        if(color > 15)
-            color = 1;
+        ((int&)color) ++;
+        if(color > Console::COLOR_MAX)
+            color = Console::COLOR_BLUE;
     }
 }

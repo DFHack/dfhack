@@ -10,31 +10,31 @@ cd "${DF_DIR}"
 export SDL_DISABLE_LOCK_KEYS=1 # Work around for bug in Debian/Ubuntu SDL patch.
 #export SDL_VIDEO_CENTERED=1 # Centre the screen.  Messes up resizing.
 
-export LD_PRELOAD=./libdfhack.so
-
 case "$1" in
   -g | --gdb)
     shift
-    gdb ./libs/Dwarf_Fortress $*
+    echo "set environment LD_PRELOAD=./libdfhack.so" > gdbcmd.tmp
+    gdb -x gdbcmd.tmp ./libs/Dwarf_Fortress $*
+    rm gdbcmd.tmp
     ret=$?
     ;;
   -h | --helgrind)
     shift
-    valgrind --tool=helgrind --log-file=helgrind.log ./libs/Dwarf_Fortress $*
+    LD_PRELOAD=./libdfhack.so valgrind --tool=helgrind --log-file=helgrind.log ./libs/Dwarf_Fortress $*
     ret=$?
     ;;
   -v | --valgrind)
     shift
-    valgrind --log-file=valgrind.log ./libs/Dwarf_Fortress $*
+    LD_PRELOAD=./libdfhack.so valgrind --log-file=valgrind.log ./libs/Dwarf_Fortress $*
     ret=$?
     ;;
   *)
-    ./libs/Dwarf_Fortress $*
+    LD_PRELOAD=./libdfhack.so ./libs/Dwarf_Fortress $*
     ret=$?
     ;;
 esac
 
 # Reset terminal to sane state in case of a crash
-reset -I
+reset
 
 exit $ret

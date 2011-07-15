@@ -51,7 +51,7 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
     // init the map
     if(!Maps->Start())
     {
-        con << "Can't init map. Make sure you have a map loaded in DF.\n";
+        con.printerr("Can't init map. Make sure you have a map loaded in DF.\n");
         c->Resume();
         return CR_FAILURE;
     }
@@ -63,14 +63,14 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
     Gui->getCursorCoords(cx,cy,cz);
     while(cx == -30000)
     {
-        con << "Cursor is not active. Point the cursor at a vein.\n";
+        con.printerr("Cursor is not active. Point the cursor at a vein.\n");
         c->Resume();
         return CR_FAILURE;
     }
     DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
     if(xy.x == 0 || xy.x == tx_max - 1 || xy.y == 0 || xy.y == ty_max - 1)
     {
-        con << "I won't dig the borders. That would be cheating!\n";
+        con.printerr("I won't dig the borders. That would be cheating!\n");
         c->Resume();
         return CR_FAILURE;
     }
@@ -80,7 +80,7 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
     int16_t veinmat = MCache->veinMaterialAt(xy);
     if( veinmat == -1 )
     {
-        con << "This tile is not a vein.\n";
+        con.printerr("This tile is not a vein.\n");
         delete MCache;
         c->Resume();
         return CR_FAILURE;

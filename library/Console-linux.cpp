@@ -80,121 +80,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <termios.h>
 #include <errno.h>
 #include <deque>
+#include <dfhack/FakeSDL.h>
 using namespace DFHack;
 
-#define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
-#define LINENOISE_MAX_LINE 4096
-
-static const char *unsupported_term[] = {"dumb","cons25",NULL};
-namespace DFHack
+static int isUnsupportedTerm(void)
 {
-    class Private
-    {
-    public:
-        Private()
-        {
-            dfout_C = 0;
-            stream_o = 0;
-            rawmode = 0;
-        };
+    static const char *unsupported_term[] = {"dumb","cons25",NULL};
+    char *term = getenv("TERM");
+    int j;
 
-        int isUnsupportedTerm(void)
-        {
-            char *term = getenv("TERM");
-            int j;
-
-            if (term == NULL) return 0;
-            for (j = 0; unsupported_term[j]; j++)
-                if (!strcasecmp(term,unsupported_term[j])) return 1;
-                return 0;
-        }
-
-        FILE * dfout_C;
-        duthomhas::stdiobuf * stream_o;
-        termios orig_termios; /* in order to restore at exit */
-        int rawmode; /* for atexit() function to check if restore is needed*/
-        std::deque <std::string> history;
-    };
-}
-Console::Console():std::ostream(0), std::ios(0)
-{
-    d = 0;
-}
-Console::~Console()
-{
-    if(d)
-        delete d;
-}
-
-bool Console::init(void)
-{
-    d = new Private();
-    // make our own weird streams so our IO isn't redirected
-    d->dfout_C = fopen("/dev/tty", "w");
-    d->stream_o = new duthomhas::stdiobuf(d->dfout_C);
-    rdbuf(d->stream_o);
-    std::cin.tie(this);
-    clear();
-}
-
-bool Console::shutdown(void)
-{
-    if(d->rawmode)
-        disable_raw();
-    print("\n");
-}
-
-int Console::print( const char* format, ... )
-{
-    va_list args;
-    va_start( args, format );
-    int ret = vfprintf( d->dfout_C, format, args );
-    va_end( args );
-    return ret;
-}
-
-
-int Console::printerr( const char* format, ... )
-{
-    color(12);
-    va_list args;
-    va_start( args, format );
-    int ret = vfprintf( d->dfout_C, format, args );
-    va_end( args );
-    reset_color();
-    return ret;
-}
-
-int Console::get_columns(void)
-{
-    winsize ws;
-    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) return 80;
-    return ws.ws_col;
-}
-
-int Console::get_rows(void)
-{
-    winsize ws;
-    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) return 25;
-    return ws.ws_row;
-}
-
-void Console::clear()
-{
-    if(d->rawmode)
-    {
-        const char * clr = "\033c\033[3J\033[H";
-        ::write(STDIN_FILENO,clr,strlen(clr));
-    }
-    else
-    {
-        print("\033c\033[3J\033[H");
-    }
-}
-
-void Console::gotoxy(int x, int y)
-{
-    print("\033[%d;%dH", y,x);
+    if (term == NULL) return 0;
+    for (j = 0; unsupported_term[j]; j++)
+        if (!strcasecmp(term,unsupported_term[j])) return 1;
+        return 0;
 }
 
 const char * ANSI_CLS = "\033[2J";
@@ -220,6 +118,7 @@ const char * getANSIColor(const int c)
 {
     switch (c)
     {
+        case -1: return RESETCOLOR; // HACK! :P
         case 0 : return ANSI_BLACK;
         case 1 : return ANSI_BLUE; // non-ANSI
         case 2 : return ANSI_GREEN;
@@ -240,23 +139,563 @@ const char * getANSIColor(const int c)
     }
 }
 
-void Console::color(int index)
+namespace DFHack
 {
-    print(getANSIColor(index));
+    class Private
+    {
+    public:
+        enum console_state
+        {
+            con_unclaimed,
+            con_lineedit
+        };
+        Private()
+        {
+            dfout_C = NULL;
+            stream_o = NULL;
+            rawmode = false;
+            supported_terminal = false;
+            state = con_unclaimed;
+        };
+        /// Print a formatted string, like printf
+        int  print(const char * format, ...)
+        {
+            va_list args;
+            va_start( args, format );
+            int ret = vprint( format, args );
+            va_end( args );
+            return ret;
+        }
+        int  vprint(const char * format, va_list vl)
+        {
+            if(state == con_lineedit)
+            {
+                disable_raw();
+                fprintf(dfout_C,"\x1b[1G");
+                fprintf(dfout_C,"\x1b[0K");
+                int ret = vfprintf( dfout_C, format, vl );
+                enable_raw();
+                prompt_refresh();
+                return ret;
+            }
+            else return vfprintf( dfout_C, format, vl );
+        }
+        int  vprinterr(const char * format, va_list vl)
+        {
+            if(state == con_lineedit)
+            {
+                disable_raw();
+                color(Console::COLOR_LIGHTRED);
+                fprintf(dfout_C,"\x1b[1G");
+                fprintf(dfout_C,"\x1b[0K");
+                int ret = vfprintf( dfout_C, format, vl );
+                reset_color();
+                enable_raw();
+                prompt_refresh();
+                return ret;
+            }
+            else
+            {
+                color(Console::COLOR_LIGHTRED);
+                int ret = vfprintf( dfout_C, format, vl );
+                reset_color();
+            }
+        }
+        /// Print a formatted string, like printf, in red
+        int  printerr(const char * format, ...)
+        {
+            va_list args;
+            va_start( args, format );
+            int ret = vprinterr( format, args );
+            va_end( args );
+            return ret;
+        }
+        /// Clear the console, along with its scrollback
+        void clear()
+        {
+            if(rawmode)
+            {
+                const char * clr = "\033c\033[3J\033[H";
+                ::write(STDIN_FILENO,clr,strlen(clr));
+            }
+            else
+            {
+                print("\033c\033[3J\033[H");
+            }
+        }
+        /// Position cursor at x,y. 1,1 = top left corner
+        void gotoxy(int x, int y)
+        {
+            print("\033[%d;%dH", y,x);
+        }
+        /// Set color (ANSI color number)
+        void color(Console::color_value index)
+        {
+            if(!rawmode)
+                fprintf(dfout_C,getANSIColor(index));
+            else
+            {
+                const char * colstr = getANSIColor(index);
+                int lstr = strlen(colstr);
+                ::write(STDIN_FILENO,colstr,lstr);
+            }
+        }
+        /// Reset color to default
+        void reset_color(void)
+        {
+            color(Console::COLOR_RESET);
+            if(!rawmode)
+                fflush(dfout_C);
+        }
+        /// Enable or disable the caret/cursor
+        void cursor(bool enable = true)
+        {
+            if(enable)
+                print("\033[?25h");
+            else
+                print("\033[?25l");
+        }
+        /// Waits given number of milliseconds before continuing.
+        void msleep(unsigned int msec);
+        /// get the current number of columns
+        int  get_columns(void)
+        {
+            winsize ws;
+            if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) return 80;
+            return ws.ws_col;
+        }
+        /// get the current number of rows
+        int  get_rows(void)
+        {
+            winsize ws;
+            if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) return 25;
+            return ws.ws_row;
+        }
+        /// beep. maybe?
+        //void beep (void);
+        /// A simple line edit (raw mode)
+        int lineedit(const std::string& prompt, std::string& output)
+        {
+            output.clear();
+            this->prompt = prompt;
+            if (!supported_terminal)
+            {
+                print(prompt.c_str());
+                fflush(dfout_C);
+                // FIXME: what do we do here???
+                //SDL_mutexV(wlock);
+                std::getline(std::cin, output);
+                //SDL_mutexP(wlock);
+                return output.size();
+            }
+            else
+            {
+                int count;
+                if (enable_raw() == -1) return 0;
+                if(state == con_lineedit)
+                    return -1;
+                state = con_lineedit;
+                count = prompt_loop();
+                state = con_unclaimed;
+                disable_raw();
+                print("\n");
+                if(count != -1)
+                {
+                    output = raw_buffer;
+                }
+                return count;
+            }
+        }
+        /// add a command to the history
+        void history_add(const std::string& command)
+        {
+            // if current command = last in history -> do not add. Always add if history is empty.
+            if(!history.empty() && history.front() == command)
+                return;
+            history.push_front(command);
+            if(history.size() > 100)
+                history.pop_back();
+        }
+        /// clear the command history
+        void history_clear();
+
+        int enable_raw()
+        {
+            struct termios raw;
+
+            if (!supported_terminal)
+                return -1;
+            if (tcgetattr(STDIN_FILENO,&orig_termios) == -1)
+                return -1;
+
+            raw = orig_termios; //modify the original mode
+            // input modes: no break, no CR to NL, no parity check, no strip char,
+            // no start/stop output control.
+            raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+            // output modes - disable post processing
+            raw.c_oflag &= ~(OPOST);
+            // control modes - set 8 bit chars
+            raw.c_cflag |= (CS8);
+            // local modes - choing off, canonical off, no extended functions,
+            // no signal chars (^Z,^C)
+            raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+            // control chars - set return condition: min number of bytes and timer.
+            // We want read to return every single byte, without timeout.
+            raw.c_cc[VMIN] = 1; raw.c_cc[VTIME] = 0;// 1 byte, no timer
+            // put terminal in raw mode after flushing
+            if (tcsetattr(STDIN_FILENO,TCSAFLUSH,&raw) < 0)
+                return -1;
+            rawmode = 1;
+            return 0;
+        }
+
+        void disable_raw()
+        {
+            /* Don't even check the return value as it's too late. */
+            if (rawmode && tcsetattr(STDIN_FILENO,TCSAFLUSH,&orig_termios) != -1)
+                rawmode = 0;
+        }
+        void prompt_refresh()
+        {
+            char seq[64];
+            int cols = get_columns();
+            int plen = prompt.size();
+            const char * buf = raw_buffer.c_str();
+            int len = raw_buffer.size();
+            int cooked_cursor = raw_cursor;
+            // Use math! This is silly.
+            while((plen+cooked_cursor) >= cols)
+            {
+                buf++;
+                len--;
+                cooked_cursor--;
+            }
+            while (plen+len > cols)
+            {
+                len--;
+            }
+            /* Cursor to left edge */
+            snprintf(seq,64,"\x1b[1G");
+            if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;
+            /* Write the prompt and the current buffer content */
+            if (::write(STDIN_FILENO,prompt.c_str(),plen) == -1) return;
+            if (::write(STDIN_FILENO,buf,len) == -1) return;
+            /* Erase to right */
+            snprintf(seq,64,"\x1b[0K");
+            if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;
+            /* Move cursor to original position. */
+            snprintf(seq,64,"\x1b[1G\x1b[%dC", (int)(cooked_cursor+plen));
+            if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;
+        }
+
+        int prompt_loop()
+        {
+            int fd = STDIN_FILENO;
+            size_t plen = prompt.size();
+            int history_index = 0;
+            raw_buffer.clear();
+            raw_cursor = 0;
+            /* The latest history entry is always our current buffer, that
+             * initially is just an empty string. */
+            const std::string empty;
+            history_add(empty);
+            if (::write(fd,prompt.c_str(),prompt.size()) == -1) return -1;
+            while(1)
+            {
+                char c;
+                int nread;
+                char seq[2], seq2[2];
+                SDL_mutexV(wlock);
+                nread = ::read(fd,&c,1);
+                SDL_mutexP(wlock);
+                if (nread <= 0) return raw_buffer.size();
+
+                /* Only autocomplete when the callback is set. It returns < 0 when
+                 * there was an error reading from fd. Otherwise it will return the
+                 * character that should be handled next. */
+                if (c == 9)
+                {
+                    /*
+                    if( completionCallback != NULL) {
+                        c = completeLine(fd,prompt,buf,buflen,&len,&pos,cols);
+                        // Return on errors
+                        if (c < 0) return len;
+                        // Read next character when 0
+                        if (c == 0) continue;
+                    }
+                    else
+                    {
+                        // ignore tab
+                        continue;
+                    }
+                    */
+                    // just ignore tabs
+                    continue;
+                }
+
+                switch(c)
+                {
+                case 13:    // enter
+                    history.pop_front();
+                    return raw_buffer.size();
+                case 3:     // ctrl-c
+                    errno = EAGAIN;
+                    return -1;
+                case 127:   // backspace
+                case 8:     // ctrl-h
+                    if (raw_cursor > 0 && raw_buffer.size() > 0)
+                    {
+                        raw_buffer.erase(raw_cursor-1,1);
+                        raw_cursor--;
+                        prompt_refresh();
+                    }
+                    break;
+                case 27:    // escape sequence
+                    SDL_mutexV(wlock);
+                    if (::read(fd,seq,2) == -1)
+                    {
+                        SDL_mutexP(wlock);
+                        break;
+                    }
+                    SDL_mutexP(wlock);
+                    if(seq[0] == '[')
+                    {
+                        if (seq[1] == 'D')
+                        {
+                            left_arrow:
+                            if (raw_cursor > 0)
+                            {
+                                raw_cursor--;
+                                prompt_refresh();
+                            }
+                        }
+                        else if ( seq[1] == 'C')
+                        {
+                            right_arrow:
+                            /* right arrow */
+                            if (raw_cursor != raw_buffer.size())
+                            {
+                                raw_cursor++;
+                                prompt_refresh();
+                            }
+                        }
+                        else if (seq[1] == 'A' || seq[1] == 'B')
+                        {
+                            /* up and down arrow: history */
+                            if (history.size() > 1)
+                            {
+                                /* Update the current history entry before to
+                                 * overwrite it with tne next one. */
+                                history[history_index] = raw_buffer;
+                                /* Show the new entry */
+                                history_index += (seq[1] == 'A') ? 1 : -1;
+                                if (history_index < 0)
+                                {
+                                    history_index = 0;
+                                    break;
+                                }
+                                else if (history_index >= history.size())
+                                {
+                                    history_index = history.size()-1;
+                                    break;
+                                }
+                                raw_buffer = history[history_index];
+                                raw_cursor = raw_buffer.size();
+                                prompt_refresh();
+                            }
+                        }
+                        else if(seq[1] == 'H')
+                        {
+                            // home
+                            raw_cursor = 0;
+                            prompt_refresh();
+                        }
+                        else if(seq[1] == 'F')
+                        {
+                            // end
+                            raw_cursor = raw_buffer.size();
+                            prompt_refresh();
+                        }
+                        else if (seq[1] > '0' && seq[1] < '7')
+                        {
+                            // extended escape
+                            SDL_mutexV(wlock);
+                            if (::read(fd,seq2,2) == -1)
+                            {
+                                SDL_mutexP(wlock);
+                                break;
+                            }
+                            SDL_mutexP(wlock);
+                            if (seq2[0] == '~' && seq[1] == '3')
+                            {
+                                // delete
+                                if (raw_buffer.size() > 0 && raw_cursor < raw_buffer.size())
+                                {
+                                    raw_buffer.erase(raw_cursor,1);
+                                    prompt_refresh();
+                                }
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    if (raw_buffer.size() == raw_cursor)
+                    {
+                        raw_buffer.append(1,c);
+                        raw_cursor++;
+                        if (plen+raw_buffer.size() < get_columns())
+                        {
+                            /* Avoid a full update of the line in the
+                             * trivial case. */
+                            if (::write(fd,&c,1) == -1) return -1;
+                        }
+                        else
+                        {
+                            prompt_refresh();
+                        }
+                    }
+                    else
+                    {
+                        raw_buffer.insert(raw_cursor,1,c);
+                        raw_cursor++;
+                        prompt_refresh();
+                    }
+                    break;
+                case 21: // Ctrl+u, delete the whole line.
+                    raw_buffer.clear();
+                    raw_cursor = 0;
+                    prompt_refresh();
+                    break;
+                case 11: // Ctrl+k, delete from current to end of line.
+                    raw_buffer.erase(raw_cursor);
+                    prompt_refresh();
+                    break;
+                case 1: // Ctrl+a, go to the start of the line
+                    raw_cursor = 0;
+                    prompt_refresh();
+                    break;
+                case 5: // ctrl+e, go to the end of the line
+                    raw_cursor = raw_buffer.size();
+                    prompt_refresh();
+                    break;
+                case 12: // ctrl+l, clear screen
+                    clear();
+                    prompt_refresh();
+                }
+            }
+            return raw_buffer.size();
+        }
+        FILE * dfout_C;
+        duthomhas::stdiobuf * stream_o;
+        std::deque <std::string> history;
+        bool supported_terminal;
+        // state variables
+        bool rawmode;           // is raw mode active?
+        termios orig_termios;   // saved/restored by raw mode
+        int state;              // current state
+        std::string prompt;     // current prompt string
+        std::string raw_buffer; // current raw mode buffer
+        int raw_cursor;         // cursor position in the buffer
+        // locks
+        SDL::Mutex *wlock;
+    };
+}
+
+Console::Console():std::ostream(0), std::ios(0)
+{
+    d = 0;
+}
+Console::~Console()
+{
+    if(d)
+        delete d;
+}
+
+bool Console::init(void)
+{
+    d = new Private();
+    // make our own weird streams so our IO isn't redirected
+    d->dfout_C = fopen("/dev/tty", "w");
+    d->stream_o = new duthomhas::stdiobuf(d->dfout_C);
+    d->wlock = SDL_CreateMutex();
+    rdbuf(d->stream_o);
+    std::cin.tie(this);
+    clear();
+    d->supported_terminal = !isUnsupportedTerm() &&  isatty(STDIN_FILENO);
+}
+
+bool Console::shutdown(void)
+{
+    if(d->rawmode)
+        d->disable_raw();
+    print("\n");
+}
+
+int Console::print( const char* format, ... )
+{
+    va_list args;
+    SDL_mutexP(d->wlock);
+    va_start( args, format );
+    int ret = d->vprint(format, args);
+    va_end(args);
+    SDL_mutexV(d->wlock);
+    return ret;
+}
+
+int Console::printerr( const char* format, ... )
+{
+    va_list args;
+    SDL_mutexP(d->wlock);
+    va_start( args, format );
+    int ret = d->vprinterr(format, args);
+    va_end(args);
+    SDL_mutexV(d->wlock);
+    return ret;
+}
+
+int Console::get_columns(void)
+{
+    return d->get_columns();
+}
+
+int Console::get_rows(void)
+{
+    return d->get_rows();
+}
+
+void Console::clear()
+{
+    SDL_mutexP(d->wlock);
+    d->clear();
+    SDL_mutexV(d->wlock);
+}
+
+void Console::gotoxy(int x, int y)
+{
+    SDL_mutexP(d->wlock);
+    d->gotoxy(x,y);
+    SDL_mutexV(d->wlock);
+}
+
+void Console::color(color_value index)
+{
+    SDL_mutexP(d->wlock);
+    d->color(index);
+    SDL_mutexV(d->wlock);
 }
 
 void Console::reset_color( void )
 {
-    print(RESETCOLOR);
-    fflush(d->dfout_C);
+    SDL_mutexP(d->wlock);
+    d->reset_color();
+    SDL_mutexV(d->wlock);
 }
 
 void Console::cursor(bool enable)
 {
-    if(enable)
-        print("\033[?25h");
-    else
-        print("\033[?25l");
+    SDL_mutexP(d->wlock);
+    d->cursor(enable);
+    SDL_mutexV(d->wlock);
 }
 
 void Console::msleep (unsigned int msec)
@@ -265,289 +704,18 @@ void Console::msleep (unsigned int msec)
     usleep((msec % 1000000) * 1000);
 }
 
-int Console::enable_raw()
-{
-    struct termios raw;
-
-    if (!isatty(STDIN_FILENO)) goto fatal;
-    if (tcgetattr(STDIN_FILENO,&d->orig_termios) == -1) goto fatal;
-
-    raw = d->orig_termios;  /* modify the original mode */
-    /* input modes: no break, no CR to NL, no parity check, no strip char,
-     * no start/stop output control. */
-    raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-    /* output modes - disable post processing */
-    raw.c_oflag &= ~(OPOST);
-    /* control modes - set 8 bit chars */
-    raw.c_cflag |= (CS8);
-    /* local modes - choing off, canonical off, no extended functions,
-     * no signal chars (^Z,^C) */
-    raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-    /* control chars - set return condition: min number of bytes and timer.
-     * We want read to return every single byte, without timeout. */
-    raw.c_cc[VMIN] = 1; raw.c_cc[VTIME] = 0; /* 1 byte, no timer */
-
-    /* put terminal in raw mode after flushing */
-    if (tcsetattr(STDIN_FILENO,TCSAFLUSH,&raw) < 0) goto fatal;
-    d->rawmode = 1;
-    return 0;
-
-fatal:
-    errno = ENOTTY;
-    return -1;
-}
-
-void Console::disable_raw()
-{
-    /* Don't even check the return value as it's too late. */
-    if (d->rawmode && tcsetattr(STDIN_FILENO,TCSAFLUSH,&d->orig_termios) != -1)
-        d->rawmode = 0;
-}
-
-void Console::prompt_refresh( const std::string& prompt, const std::string& buffer, size_t pos)
-{
-    char seq[64];
-    int cols = get_columns();
-    int plen = prompt.size();
-    const char * buf = buffer.c_str();
-    int len = buffer.size();
-    // Use math! This is silly.
-    while((plen+pos) >= cols)
-    {
-        buf++;
-        len--;
-        pos--;
-    }
-    while (plen+len > cols)
-    {
-        len--;
-    }
-    /* Cursor to left edge */
-    snprintf(seq,64,"\x1b[1G");
-    if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;
-    /* Write the prompt and the current buffer content */
-    if (::write(STDIN_FILENO,prompt.c_str(),plen) == -1) return;
-    if (::write(STDIN_FILENO,buf,len) == -1) return;
-    /* Erase to right */
-    snprintf(seq,64,"\x1b[0K");
-    if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;
-    /* Move cursor to original position. */
-    snprintf(seq,64,"\x1b[1G\x1b[%dC", (int)(pos+plen));
-    if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;
-}
-
-int Console::prompt_loop(const std::string & prompt, std::string & buffer)
-{
-    int fd = STDIN_FILENO;
-    size_t plen = prompt.size();
-    size_t pos = 0;
-    size_t cols = get_columns();
-    int history_index = 0;
-
-    /* The latest history entry is always our current buffer, that
-     * initially is just an empty string. */
-    const std::string empty;
-    history_add(empty);
-    if (::write(fd,prompt.c_str(),plen) == -1) return -1;
-    while(1)
-    {
-        char c;
-        int nread;
-        char seq[2], seq2[2];
-
-        nread = ::read(fd,&c,1);
-        if (nread <= 0) return buffer.size();
-
-        /* Only autocomplete when the callback is set. It returns < 0 when
-         * there was an error reading from fd. Otherwise it will return the
-         * character that should be handled next. */
-        if (c == 9)
-        {
-            /*
-            if( completionCallback != NULL) {
-                c = completeLine(fd,prompt,buf,buflen,&len,&pos,cols);
-                // Return on errors
-                if (c < 0) return len;
-                // Read next character when 0
-                if (c == 0) continue;
-            }
-            else
-            {
-                // ignore tab
-                continue;
-            }
-            */
-            // just ignore tabs
-            continue;
-        }
-
-        switch(c)
-        {
-        case 13:    /* enter */
-            d->history.pop_front();
-            return buffer.size();
-        case 3:     /* ctrl-c */
-            errno = EAGAIN;
-            return -1;
-        case 127:   /* backspace */
-        case 8:     /* ctrl-h */
-            if (pos > 0 && buffer.size() > 0)
-            {
-                buffer.erase(pos-1,1);
-                pos--;
-                prompt_refresh(prompt,buffer,pos);
-            }
-            break;
-        case 27:    /* escape sequence */
-            if (::read(fd,seq,2) == -1) break;
-            if(seq[0] == '[')
-            {
-                if (seq[1] == 'D')
-                {
-                    left_arrow:
-                    if (pos > 0)
-                    {
-                        pos--;
-                        prompt_refresh(prompt,buffer,pos);
-                    }
-                }
-                else if ( seq[1] == 'C')
-                {
-                    right_arrow:
-                    /* right arrow */
-                    if (pos != buffer.size())
-                    {
-                        pos++;
-                        prompt_refresh(prompt,buffer,pos);
-                    }
-                }
-                else if (seq[1] == 'A' || seq[1] == 'B')
-                {
-                    /* up and down arrow: history */
-                    if (d->history.size() > 1)
-                    {
-                        /* Update the current history entry before to
-                         * overwrite it with tne next one. */
-                        d->history[history_index] = buffer;
-                        /* Show the new entry */
-                        history_index += (seq[1] == 'A') ? 1 : -1;
-                        if (history_index < 0)
-                        {
-                            history_index = 0;
-                            break;
-                        }
-                        else if (history_index >= d->history.size())
-                        {
-                            history_index = d->history.size()-1;
-                            break;
-                        }
-                        buffer = d->history[history_index];
-                        pos = buffer.size();
-                        prompt_refresh(prompt,buffer,pos);
-                    }
-                }
-                else if(seq[1] == 'H')
-                {
-                    // home
-                    pos = 0;
-                    prompt_refresh(prompt,buffer,pos);
-                }
-                else if(seq[1] == 'F')
-                {
-                    // end
-                    pos = buffer.size();
-                    prompt_refresh(prompt,buffer,pos);
-                }
-                else if (seq[1] > '0' && seq[1] < '7')
-                {
-                    // extended escape
-                    if (::read(fd,seq2,2) == -1) break;
-                    if (seq2[0] == '~' && seq[1] == '3')
-                    {
-                        // delete
-                        if (buffer.size() > 0 && pos < buffer.size())
-                        {
-                            buffer.erase(pos,1);
-                            prompt_refresh(prompt,buffer,pos);
-                        }
-                    }
-                }
-            }
-            break;
-        default:
-            if (buffer.size() == pos)
-            {
-                buffer.append(1,c);
-                pos++;
-                if (plen+buffer.size() < cols)
-                {
-                    /* Avoid a full update of the line in the
-                     * trivial case. */
-                    if (::write(fd,&c,1) == -1) return -1;
-                }
-                else
-                {
-                    prompt_refresh(prompt,buffer,pos);
-                }
-            }
-            else
-            {
-                buffer.insert(pos,1,c);
-                pos++;
-                prompt_refresh(prompt,buffer,pos);
-            }
-            break;
-        case 21: // Ctrl+u, delete the whole line.
-            buffer.clear();
-            pos = 0;
-            prompt_refresh(prompt,buffer,pos);
-            break;
-        case 11: // Ctrl+k, delete from current to end of line.
-            buffer.erase(pos);
-            prompt_refresh(prompt,buffer,pos);
-            break;
-        case 1: // Ctrl+a, go to the start of the line
-            pos = 0;
-            prompt_refresh(prompt,buffer,pos);
-            break;
-        case 5: // ctrl+e, go to the end of the line
-            pos = buffer.size();
-            prompt_refresh(prompt,buffer,pos);
-            break;
-        case 12: // ctrl+l, clear screen
-            clear();
-            prompt_refresh(prompt,buffer,pos);
-        }
-    }
-    return buffer.size();
-}
 // push to front, remove from back if we are above maximum. ignore immediate duplicates
 void Console::history_add(const std::string & command)
 {
-    if(!d->history.empty() && d->history.front() == command)
-        return;
-    d->history.push_front(command);
-    if(d->history.size() > 100)
-        d->history.pop_back();
+    SDL_mutexP(d->wlock);
+    d->history_add(command);
+    SDL_mutexV(d->wlock);
 }
 
 int Console::lineedit(const std::string & prompt, std::string & output)
 {
-    output.clear();
-    int count;
-    if (d->isUnsupportedTerm() || !isatty(STDIN_FILENO))
-    {
-        print(prompt.c_str());
-        fflush(d->dfout_C);
-        std::getline(std::cin, output);
-        return output.size();
-    }
-    else
-    {
-        if (enable_raw() == -1) return 0;
-        count = prompt_loop(prompt, output);
-        disable_raw();
-        print("\n");
-        return output.size();
-    }
+    SDL_mutexP(d->wlock);
+    int ret = d->lineedit(prompt,output);
+    SDL_mutexV(d->wlock);
+    return ret;
 }

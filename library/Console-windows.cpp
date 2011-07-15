@@ -1,33 +1,11 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2011 Petr Mrázek <peterix@gmail.com>
 
-This software is provided 'as-is', without any express or implied
-warranty. In no event will the authors be held liable for any
-damages arising from the use of this software.
+A thread-safe logging console with a line editor for windows.
 
-Permission is granted to anyone to use this software for any
-purpose, including commercial applications, and to alter it and
-redistribute it freely, subject to the following restrictions:
-
-1. The origin of this software must not be misrepresented; you must
-not claim that you wrote the original software. If you use this
-software in a product, an acknowledgment in the product documentation
-would be appreciated but is not required.
-
-2. Altered source versions must be plainly marked as such, and
-must not be misrepresented as being the original software.
-
-3. This notice may not be removed or altered from any source
-distribution.
-*/
-
-/*
-Some functions are based on the linenoise win32 port:
-
-linenoise_win32.c -- Linenoise win32 port.
-
-Modifications copyright 2010, Jon Griffiths <jon_p_griffiths at yahoo dot com>.
+Based on linenoise win32 port,
+copyright 2010, Jon Griffiths <jon_p_griffiths at yahoo dot com>.
 All rights reserved.
 Based on linenoise, copyright 2010, Salvatore Sanfilippo <antirez at gmail dot com>.
 The original linenoise can be found at: http://github.com/antirez/linenoise
@@ -74,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 
 #include "dfhack/Console.h"
+#include "dfhack/FakeSDL.h"
 #include <cstdio>
 #include <cstdlib>
 #include <sstream>
@@ -97,12 +76,298 @@ namespace DFHack
             console_out = 0;
             ConsoleWindow = 0;
             default_attributes = 0;
+            state = con_unclaimed;
+            raw_cursor = 0;
         };
+                /// Print a formatted string, like printf
+        int  print(const char * format, ...)
+        {
+            va_list args;
+            va_start( args, format );
+            int ret = vprint( format, args );
+            va_end( args );
+            return ret;
+        }
+        int  vprint(const char * format, va_list vl)
+        {
+            if(state == con_lineedit)
+            {
+                clearline();
+                int ret = vfprintf( dfout_C, format, vl );
+                prompt_refresh();
+                return ret;
+            }
+            else return vfprintf( dfout_C, format, vl );
+        }
+        int  vprinterr(const char * format, va_list vl)
+        {
+            if(state == con_lineedit)
+            {
+                color(Console::COLOR_LIGHTRED);
+                clearline();
+                int ret = vfprintf( dfout_C, format, vl );
+                reset_color();
+                prompt_refresh();
+                return ret;
+            }
+            else
+            {
+                color(Console::COLOR_LIGHTRED);
+                int ret = vfprintf( dfout_C, format, vl );
+                reset_color();
+                return ret;
+            }
+        }
+        /// Print a formatted string, like printf, in red
+        int  printerr(const char * format, ...)
+        {
+            va_list args;
+            va_start( args, format );
+            int ret = vprinterr( format, args );
+            va_end( args );
+            return ret;
+        }
+        int get_columns(void)
+        {
+            CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
+            GetConsoleScreenBufferInfo(console_out, &inf);
+            return (size_t)inf.dwSize.X;
+        }
+        int get_rows(void)
+        {
+            CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
+            GetConsoleScreenBufferInfo(console_out, &inf);
+            return (size_t)inf.dwSize.Y;
+        }
+        void clear()
+        {
+            system("cls");
+        }
+        void clearline()
+        {
+            CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
+            GetConsoleScreenBufferInfo(console_out, &inf);
+            // Blank to EOL
+            char* tmp = (char*)malloc(inf.dwSize.X);
+            memset(tmp, ' ', inf.dwSize.X);
+            output(tmp, inf.dwSize.X, 0, inf.dwCursorPosition.Y);
+            free(tmp);
+            COORD coord = {0, inf.dwCursorPosition.Y}; // Windows uses 0-based coordinates
+            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+        }
+        void gotoxy(int x, int y)
+        {
+            COORD coord = {x-1, y-1}; // Windows uses 0-based coordinates
+            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+        }
+
+        void color(int index)
+        {
+            HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+            SetConsoleTextAttribute(hConsole, index);
+        }
+
+        void reset_color( void )
+        {
+            HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+            SetConsoleTextAttribute(hConsole, default_attributes);
+        }
+
+        void cursor(bool enable)
+        {
+            if(enable)
+            {
+                HANDLE hConsoleOutput;
+                CONSOLE_CURSOR_INFO structCursorInfo;
+                hConsoleOutput = GetStdHandle( STD_OUTPUT_HANDLE );
+                GetConsoleCursorInfo( hConsoleOutput, &structCursorInfo ); // Get current cursor size
+                structCursorInfo.bVisible = TRUE;
+                SetConsoleCursorInfo( hConsoleOutput, &structCursorInfo );
+            }
+            else
+            {
+                HANDLE hConsoleOutput;
+                CONSOLE_CURSOR_INFO structCursorInfo;
+                hConsoleOutput = GetStdHandle( STD_OUTPUT_HANDLE );
+                GetConsoleCursorInfo( hConsoleOutput, &structCursorInfo ); // Get current cursor size
+                structCursorInfo.bVisible = FALSE;
+                SetConsoleCursorInfo( hConsoleOutput, &structCursorInfo );
+            }
+        }
+
         void output(const char* str, size_t len, int x, int y)
         {
             COORD pos = { (SHORT)x, (SHORT)y };
             DWORD count = 0;
             WriteConsoleOutputCharacterA(console_out, str, len, pos, &count);
+        }
+
+        void prompt_refresh()
+        {
+            size_t cols = get_columns();
+            size_t plen = prompt.size();
+            const char * buf = raw_buffer.c_str();
+            size_t len = raw_buffer.size();
+
+            while ((plen + raw_cursor) >= cols)
+            {
+                buf++;
+                len--;
+                raw_cursor--;
+            }
+            while (plen + len > cols)
+            {
+                len--;
+            }
+
+            CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
+            GetConsoleScreenBufferInfo(console_out, &inf);
+            output(prompt.c_str(), plen, 0, inf.dwCursorPosition.Y);
+            output(buf, len, plen, inf.dwCursorPosition.Y);
+            if (plen + len < (size_t)inf.dwSize.X)
+            {
+                // Blank to EOL
+                char* tmp = (char*)malloc(inf.dwSize.X - (plen + len));
+                memset(tmp, ' ', inf.dwSize.X - (plen + len));
+                output(tmp, inf.dwSize.X - (plen + len), len + plen, inf.dwCursorPosition.Y);
+                free(tmp);
+            }
+            inf.dwCursorPosition.X = (SHORT)(raw_cursor + plen);
+            SetConsoleCursorPosition(console_out, inf.dwCursorPosition);
+        }
+
+        int prompt_loop()
+        {
+            raw_buffer.clear(); // make sure the buffer is empty!
+            size_t plen = prompt.size();
+            raw_cursor = 0;
+            int history_index = 0;
+            // The latest history entry is always our current buffer, that
+            // initially is just an empty string.
+            const std::string empty;
+            history_add(empty);
+
+            CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
+            GetConsoleScreenBufferInfo(console_out, &inf);
+            size_t cols = inf.dwSize.X;
+            output(prompt.c_str(), plen, 0, inf.dwCursorPosition.Y);
+            inf.dwCursorPosition.X = (SHORT)plen;
+            SetConsoleCursorPosition(console_out, inf.dwCursorPosition);
+
+            while (1)
+            {
+                INPUT_RECORD rec;
+                DWORD count;
+                SDL_mutexV(wlock);
+                ReadConsoleInputA(console_in, &rec, 1, &count);
+                SDL_mutexP(wlock);
+                if (rec.EventType != KEY_EVENT || !rec.Event.KeyEvent.bKeyDown)
+                    continue;
+                switch (rec.Event.KeyEvent.wVirtualKeyCode)
+                {
+                case VK_RETURN: // enter
+                    history.pop_front();
+                    return raw_buffer.size();
+                case VK_BACK:   // backspace
+                    if (raw_cursor > 0 && raw_buffer.size() > 0)
+                    {
+                        raw_buffer.erase(raw_cursor-1,1);
+                        raw_cursor--;
+                        prompt_refresh();
+                    }
+                    break;
+                case VK_LEFT: // left arrow
+                    if (raw_cursor > 0)
+                    {
+                        raw_cursor--;
+                        prompt_refresh();
+                    }
+                    break;
+                case VK_RIGHT: // right arrow
+                    if (raw_cursor != raw_buffer.size())
+                    {
+                        raw_cursor++;
+                        prompt_refresh();
+                    }
+                    break;
+                case VK_UP:
+                case VK_DOWN:
+                    // up and down arrow: history
+                    if (history.size() > 1)
+                    {
+                        // Update the current history entry before to
+                        // overwrite it with tne next one.
+                        history[history_index] = raw_buffer;
+                        // Show the new entry
+                        history_index += (rec.Event.KeyEvent.wVirtualKeyCode == VK_UP) ? 1 : -1;
+                        if (history_index < 0)
+                        {
+                            history_index = 0;
+                            break;
+                        }
+                        else if (history_index >= history.size())
+                        {
+                            history_index = history.size()-1;
+                            break;
+                        }
+                        raw_buffer = history[history_index];
+                        raw_cursor = raw_buffer.size();
+                        prompt_refresh();
+                    }
+                    break;
+                case VK_DELETE:
+                    // delete
+                    if (raw_buffer.size() > 0 && raw_cursor < raw_buffer.size())
+                    {
+                        raw_buffer.erase(raw_cursor,1);
+                        prompt_refresh();
+                    }
+                    break;
+                case VK_HOME:
+                    raw_cursor = 0;
+                    prompt_refresh();
+                    break;
+                case VK_END:
+                    raw_cursor = raw_buffer.size();
+                    prompt_refresh();
+                    break;
+                default:
+                    if (rec.Event.KeyEvent.uChar.AsciiChar < ' ' ||
+                        rec.Event.KeyEvent.uChar.AsciiChar > '~')
+                        continue;
+                    if (raw_buffer.size() == raw_cursor)
+                        raw_buffer.append(1,rec.Event.KeyEvent.uChar.AsciiChar);
+                    else
+                        raw_buffer.insert(raw_cursor,1,rec.Event.KeyEvent.uChar.AsciiChar);
+                    raw_cursor++;
+                    prompt_refresh();
+                    break;
+                }
+            }
+        }
+        int lineedit(const std::string & prompt, std::string & output)
+        {
+            output.clear();
+            int count;
+            state = con_lineedit;
+            this->prompt = prompt;
+            count = prompt_loop();
+            if(count != -1)
+                output = raw_buffer;
+            state = con_unclaimed;
+            print("\n");
+            return count;
+        }
+
+        // push to front, remove from back if we are above maximum. ignore immediate duplicates
+        void history_add(const std::string & command)
+        {
+            // if current command = last in history -> do not add. Always add if history is empty.
+            if(!history.empty() && history.front() == command)
+                return;
+            history.push_front(command);
+            if(history.size() > 100)
+                history.pop_back();
         }
 
         FILE * dfout_C;
@@ -114,6 +379,17 @@ namespace DFHack
         HANDLE console_out;
         HWND ConsoleWindow;
         WORD default_attributes;
+        // current state
+        enum console_state
+        {
+            con_unclaimed,
+            con_lineedit
+        } state;
+        std::string prompt;     // current prompt string
+        std::string raw_buffer; // current raw mode buffer
+        int raw_cursor;         // cursor position in the buffer
+        // locks
+        SDL::Mutex *wlock;
     };
 }
 
@@ -171,10 +447,11 @@ bool Console::init(void)
     d->stream_o = new duthomhas::stdiobuf(d->dfout_C);
     rdbuf(d->stream_o);
     std::cin.tie(this);
+    d->wlock = SDL_CreateMutex();
     clear();
     return true;
 }
-
+// FIXME: looks awfully empty, doesn't it?
 bool Console::shutdown(void)
 {
     FreeConsole();
@@ -184,247 +461,87 @@ bool Console::shutdown(void)
 int Console::print( const char* format, ... )
 {
     va_list args;
+    SDL_mutexP(d->wlock);
     va_start( args, format );
-    int ret = vfprintf( d->dfout_C, format, args );
-    va_end( args );
+    int ret = d->vprint(format, args);
+    va_end(args);
+    SDL_mutexV(d->wlock);
+    return ret;
+}
+
+int Console::printerr( const char* format, ... )
+{
+    va_list args;
+    SDL_mutexP(d->wlock);
+    va_start( args, format );
+    int ret = d->vprinterr(format, args);
+    va_end(args);
+    SDL_mutexV(d->wlock);
     return ret;
 }
 
 int Console::get_columns(void)
 {
-    CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
-    GetConsoleScreenBufferInfo(d->console_out, &inf);
-    return (size_t)inf.dwSize.X;
+    return d->get_columns();
 }
 
 int Console::get_rows(void)
 {
-    CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
-    GetConsoleScreenBufferInfo(d->console_out, &inf);
-    return (size_t)inf.dwSize.Y;
+    return d->get_rows();
 }
 
 void Console::clear()
 {
-    system("cls");
+    SDL_mutexP(d->wlock);
+    d->clear();
+    SDL_mutexV(d->wlock);
 }
 
 void Console::gotoxy(int x, int y)
 {
-    COORD coord = {x-1, y-1}; // Windows uses 0-based coordinates
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+    SDL_mutexP(d->wlock);
+    d->gotoxy(x,y);
+    SDL_mutexV(d->wlock);
 }
 
-void Console::color(int index)
+void Console::color(color_value index)
 {
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(hConsole, index);
+    SDL_mutexP(d->wlock);
+    d->color(index);
+    SDL_mutexV(d->wlock);
 }
 
 void Console::reset_color( void )
 {
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(hConsole, d->default_attributes);
+    SDL_mutexP(d->wlock);
+    d->reset_color();
+    SDL_mutexV(d->wlock);
 }
-
 
 void Console::cursor(bool enable)
 {
-    if(enable)
-    {
-        HANDLE hConsoleOutput;
-        CONSOLE_CURSOR_INFO structCursorInfo;
-        hConsoleOutput = GetStdHandle( STD_OUTPUT_HANDLE );
-        GetConsoleCursorInfo( hConsoleOutput, &structCursorInfo ); // Get current cursor size
-        structCursorInfo.bVisible = TRUE;
-        SetConsoleCursorInfo( hConsoleOutput, &structCursorInfo );
-    }
-    else
-    {
-        HANDLE hConsoleOutput;
-        CONSOLE_CURSOR_INFO structCursorInfo;
-        hConsoleOutput = GetStdHandle( STD_OUTPUT_HANDLE );
-        GetConsoleCursorInfo( hConsoleOutput, &structCursorInfo ); // Get current cursor size
-        structCursorInfo.bVisible = FALSE;
-        SetConsoleCursorInfo( hConsoleOutput, &structCursorInfo );
-    }
-}
-
-void Console::msleep (unsigned int msec)
-{
-    Sleep(msec);
-}
-
-int Console::enable_raw()
-{
-    return 0;
-}
-
-void Console::disable_raw()
-{
-    /* Nothing to do yet */
-}
-
-void Console::prompt_refresh( const std::string& prompt, const std::string& buffer, size_t pos)
-{
-    size_t cols = get_columns();
-    size_t plen = prompt.size();
-    const char * buf = buffer.c_str();
-    size_t len = buffer.size();
-
-    while ((plen + pos) >= cols)
-    {
-        buf++;
-        len--;
-        pos--;
-    }
-    while (plen + len > cols)
-    {
-        len--;
-    }
-
-    CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
-    GetConsoleScreenBufferInfo(d->console_out, &inf);
-    d->output(prompt.c_str(), plen, 0, inf.dwCursorPosition.Y);
-    d->output(buf, len, plen, inf.dwCursorPosition.Y);
-    if (plen + len < (size_t)inf.dwSize.X)
-    {
-        /* Blank to EOL */
-        char* tmp = (char*)malloc(inf.dwSize.X - (plen + len));
-        memset(tmp, ' ', inf.dwSize.X - (plen + len));
-        d->output(tmp, inf.dwSize.X - (plen + len), len + plen, inf.dwCursorPosition.Y);
-        free(tmp);
-    }
-    inf.dwCursorPosition.X = (SHORT)(pos + plen);
-    SetConsoleCursorPosition(d->console_out, inf.dwCursorPosition);
-}
-
-int Console::prompt_loop(const std::string & prompt, std::string & buffer)
-{
-    buffer.clear(); // make sure the buffer is empty!
-    size_t plen = prompt.size();
-    size_t pos = 0;
-    int history_index = 0;
-    /* The latest history entry is always our current buffer, that
-     * initially is just an empty string. */
-    const std::string empty;
-    history_add(empty);
-
-    CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
-    GetConsoleScreenBufferInfo(d->console_out, &inf);
-    size_t cols = inf.dwSize.X;
-    d->output(prompt.c_str(), plen, 0, inf.dwCursorPosition.Y);
-    inf.dwCursorPosition.X = (SHORT)plen;
-    SetConsoleCursorPosition(d->console_out, inf.dwCursorPosition);
-
-    while (1)
-    {
-        INPUT_RECORD rec;
-        DWORD count;
-        ReadConsoleInputA(d->console_in, &rec, 1, &count);
-        if (rec.EventType != KEY_EVENT || !rec.Event.KeyEvent.bKeyDown)
-            continue;
-        switch (rec.Event.KeyEvent.wVirtualKeyCode)
-        {
-        case VK_RETURN: // enter
-            d->history.pop_front();
-            return buffer.size();
-        case VK_BACK:   // backspace
-            if (pos > 0 && buffer.size() > 0)
-            {
-                buffer.erase(pos-1,1);
-                pos--;
-                prompt_refresh(prompt,buffer,pos);
-            }
-            break;
-        case VK_LEFT: // left arrow
-            if (pos > 0)
-            {
-                pos--;
-                prompt_refresh(prompt,buffer,pos);
-            }
-            break;
-        case VK_RIGHT: // right arrow
-            if (pos != buffer.size())
-            {
-                pos++;
-                prompt_refresh(prompt,buffer,pos);
-            }
-            break;
-        case VK_UP:
-        case VK_DOWN:
-            /* up and down arrow: history */
-            if (d->history.size() > 1)
-            {
-                /* Update the current history entry before to
-                 * overwrite it with tne next one. */
-                d->history[history_index] = buffer;
-                /* Show the new entry */
-                history_index += (rec.Event.KeyEvent.wVirtualKeyCode == VK_UP) ? 1 : -1;
-                if (history_index < 0)
-                {
-                    history_index = 0;
-                    break;
-                }
-                else if (history_index >= d->history.size())
-                {
-                    history_index = d->history.size()-1;
-                    break;
-                }
-                buffer = d->history[history_index];
-                pos = buffer.size();
-                prompt_refresh(prompt,buffer,pos);
-            }
-            break;
-        case VK_DELETE:
-            // delete
-            if (buffer.size() > 0 && pos < buffer.size())
-            {
-                buffer.erase(pos,1);
-                prompt_refresh(prompt,buffer,pos);
-            }
-            break;
-        case VK_HOME:
-            pos = 0;
-            prompt_refresh(prompt,buffer,pos);
-            break;
-        case VK_END:
-            pos = buffer.size();
-            prompt_refresh(prompt,buffer,pos);
-            break;
-        default:
-            if (rec.Event.KeyEvent.uChar.AsciiChar < ' ' ||
-                rec.Event.KeyEvent.uChar.AsciiChar > '~')
-                continue;
-            if (buffer.size() == pos)
-                buffer.append(1,rec.Event.KeyEvent.uChar.AsciiChar);
-            else
-                buffer.insert(pos,1,rec.Event.KeyEvent.uChar.AsciiChar);
-            pos++;
-            prompt_refresh(prompt,buffer,pos);
-            break;
-        }
-    }
+    SDL_mutexP(d->wlock);
+    d->cursor(enable);
+    SDL_mutexV(d->wlock);
 }
 
 // push to front, remove from back if we are above maximum. ignore immediate duplicates
 void Console::history_add(const std::string & command)
 {
-    if(d->history.front() == command)
-        return;
-    d->history.push_front(command);
-    if(d->history.size() > 100)
-        d->history.pop_back();
+    SDL_mutexP(d->wlock);
+    d->history_add(command);
+    SDL_mutexV(d->wlock);
 }
 
 int Console::lineedit(const std::string & prompt, std::string & output)
 {
-    output.clear();
-    int count;
-    if (enable_raw() == -1)
-        return -1;
-    count = prompt_loop(prompt,output);
-    disable_raw();
-    *this << std::endl;
-    return count;
+    SDL_mutexP(d->wlock);
+    int ret = d->lineedit(prompt,output);
+    SDL_mutexV(d->wlock);
+    return ret;
+}
+
+void Console::msleep (unsigned int msec)
+{
+    Sleep(msec);
 }

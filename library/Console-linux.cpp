@@ -1,30 +1,11 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2011 Petr Mrázek <peterix@gmail.com>
 
-This software is provided 'as-is', without any express or implied
-warranty. In no event will the authors be held liable for any
-damages arising from the use of this software.
+A thread-safe logging console with a line editor.
 
-Permission is granted to anyone to use this software for any
-purpose, including commercial applications, and to alter it and
-redistribute it freely, subject to the following restrictions:
-
-1. The origin of this software must not be misrepresented; you must
-not claim that you wrote the original software. If you use this
-software in a product, an acknowledgment in the product documentation
-would be appreciated but is not required.
-
-2. Altered source versions must be plainly marked as such, and
-must not be misrepresented as being the original software.
-
-3. This notice may not be removed or altered from any source
-distribution.
-*/
-
-/* 
-Parts of this code are based on linenoise:
-linenoise.c -- guerrilla line editing library against the idea that a
+Based on linenoise:
+linenoise -- guerrilla line editing library against the idea that a
 line editing lib needs to be 20,000 lines of C code.
 
 You can find the latest source code at:
@@ -144,11 +125,6 @@ namespace DFHack
     class Private
     {
     public:
-        enum console_state
-        {
-            con_unclaimed,
-            con_lineedit
-        };
         Private()
         {
             dfout_C = NULL;
@@ -199,6 +175,7 @@ namespace DFHack
                 color(Console::COLOR_LIGHTRED);
                 int ret = vfprintf( dfout_C, format, vl );
                 reset_color();
+                return ret;
             }
         }
         /// Print a formatted string, like printf, in red
@@ -592,7 +569,12 @@ namespace DFHack
         // state variables
         bool rawmode;           // is raw mode active?
         termios orig_termios;   // saved/restored by raw mode
-        int state;              // current state
+        // current state
+        enum console_state
+        {
+            con_unclaimed,
+            con_lineedit
+        } state;
         std::string prompt;     // current prompt string
         std::string raw_buffer; // current raw mode buffer
         int raw_cursor;         // cursor position in the buffer
@@ -698,12 +680,6 @@ void Console::cursor(bool enable)
     SDL_mutexV(d->wlock);
 }
 
-void Console::msleep (unsigned int msec)
-{
-    if (msec > 1000) sleep(msec/1000000);
-    usleep((msec % 1000000) * 1000);
-}
-
 // push to front, remove from back if we are above maximum. ignore immediate duplicates
 void Console::history_add(const std::string & command)
 {
@@ -718,4 +694,10 @@ int Console::lineedit(const std::string & prompt, std::string & output)
     int ret = d->lineedit(prompt,output);
     SDL_mutexV(d->wlock);
     return ret;
+}
+
+void Console::msleep (unsigned int msec)
+{
+    if (msec > 1000) sleep(msec/1000000);
+    usleep((msec % 1000000) * 1000);
 }

@@ -122,17 +122,28 @@ const char * getANSIColor(const int c)
 
 namespace DFHack
 {
-    class Private
+    class Private : public std::stringbuf
     {
     public:
         Private()
         {
             dfout_C = NULL;
-            stream_o = NULL;
             rawmode = false;
             supported_terminal = false;
             state = con_unclaimed;
         };
+        virtual ~Private()
+        {
+            //sync();
+        }
+    protected:
+        int sync()
+        {
+            print(str().c_str());
+            str(std::string());    // Clear the string buffer
+            return 0;
+        }
+    public:
         /// Print a formatted string, like printf
         int  print(const char * format, ...)
         {
@@ -563,7 +574,6 @@ namespace DFHack
             return raw_buffer.size();
         }
         FILE * dfout_C;
-        duthomhas::stdiobuf * stream_o;
         std::deque <std::string> history;
         bool supported_terminal;
         // state variables
@@ -598,9 +608,8 @@ bool Console::init(void)
     d = new Private();
     // make our own weird streams so our IO isn't redirected
     d->dfout_C = fopen("/dev/tty", "w");
-    d->stream_o = new duthomhas::stdiobuf(d->dfout_C);
     d->wlock = SDL_CreateMutex();
-    rdbuf(d->stream_o);
+    rdbuf(d);
     std::cin.tie(this);
     clear();
     d->supported_terminal = !isUnsupportedTerm() &&  isatty(STDIN_FILENO);

@@ -129,7 +129,7 @@ DFhackCExport command_result kittens (Core * c, vector <string> & parameters)
         while (kit != 0)
         {
             con.gotoxy(1,1+index);
-            con << kit;
+            con << kit << std::endl;
             index++;
             kit = nyan[index];
         }

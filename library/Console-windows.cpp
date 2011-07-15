@@ -64,13 +64,12 @@ using namespace DFHack;
 
 namespace DFHack
 {
-    class Private
+    class Private : public std::stringbuf
     {
     public:
-        Private()
+        Private() : basic_stringbuf<char>::basic_stringbuf()
         {
             dfout_C = 0;
-            stream_o = 0;
             rawmode = 0;
             console_in = 0;
             console_out = 0;
@@ -79,7 +78,20 @@ namespace DFHack
             state = con_unclaimed;
             raw_cursor = 0;
         };
-                /// Print a formatted string, like printf
+        virtual ~Private()
+        {
+            //sync();
+        }
+    protected:
+        int sync()
+        {
+            print (str().c_str());
+            // Clear the string buffer
+            str(std::string());
+            return 0;
+        }
+    public:
+        /// Print a formatted string, like printf
         int  print(const char * format, ...)
         {
             va_list args;
@@ -371,7 +383,6 @@ namespace DFHack
         }
 
         FILE * dfout_C;
-        duthomhas::stdiobuf * stream_o;
         int rawmode; /* for atexit() function to check if restore is needed*/
         std::deque <std::string> history;
 
@@ -415,6 +426,7 @@ bool Console::init(void)
     // Allocate a console!
     AllocConsole();
     d->ConsoleWindow = GetConsoleWindow();
+    d->wlock = SDL_CreateMutex();
     HMENU  hm = GetSystemMenu(d->ConsoleWindow,false);
     DeleteMenu(hm, SC_CLOSE, MF_BYCOMMAND);
 
@@ -444,10 +456,8 @@ bool Console::init(void)
     std::ios::sync_with_stdio();
 
     // make our own weird streams so our IO isn't redirected
-    d->stream_o = new duthomhas::stdiobuf(d->dfout_C);
-    rdbuf(d->stream_o);
+    rdbuf(d);
     std::cin.tie(this);
-    d->wlock = SDL_CreateMutex();
     clear();
     return true;
 }

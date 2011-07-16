@@ -19,23 +19,24 @@ SET(PROJECT_HDRS_INTERNAL
 
 SET(PROJECT_HDRS
 include/DFHack.h
+include/dfhack/Console.h
+include/dfhack/Core.h
 include/dfhack/Error.h
 include/dfhack/Export.h
-include/dfhack/Virtual.h
+include/dfhack/FakeSDL.h
 include/dfhack/MiscUtils.h
 include/dfhack/Module.h
 include/dfhack/Pragma.h
-include/dfhack/Console.h
 include/dfhack/Process.h
 include/dfhack/TileTypes.h
 include/dfhack/Types.h
 include/dfhack/Vector.h
-include/dfhack/VersionInfoFactory.h
 include/dfhack/VersionInfo.h
+include/dfhack/VersionInfoFactory.h
+include/dfhack/Virtual.h
 include/dfhack/extra/MapExtras.h
-include/dfhack/extra/termutil.h
 include/dfhack/extra/stopwatch.h
-include/dfhack/extra/stdiostream.h
+include/dfhack/extra/termutil.h
 include/dfhack/modules/Buildings.h
 include/dfhack/modules/Constructions.h
 include/dfhack/modules/Creatures.h
@@ -46,15 +47,16 @@ include/dfhack/modules/Maps.h
 include/dfhack/modules/Materials.h
 include/dfhack/modules/Translation.h
 include/dfhack/modules/Vegetation.h
+include/dfhack/modules/Vermin.h
 include/dfhack/modules/World.h
 )
 
 SET(PROJECT_SRCS
 Core.cpp
 PluginManager.cpp
+TileTypes.cpp
 VersionInfo.cpp
 VersionInfoFactory.cpp
-TileTypes.cpp
 Virtual.cpp
 
 depends/md5/md5.cpp
@@ -86,14 +88,14 @@ SET(PROJECT_HDRS_WINDOWS
 )
 
 SET(PROJECT_SRCS_LINUX
-FakeSDL-linux.cpp
 Console-linux.cpp
+FakeSDL-linux.cpp
 Process-linux.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
-FakeSDL-windows.cpp
 Console-windows.cpp
+FakeSDL-windows.cpp
 Process-windows.cpp
 )
 

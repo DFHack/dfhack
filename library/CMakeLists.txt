@@ -145,7 +145,7 @@ COMMAND ${CMAKE_COMMAND} -E make_directory ${DFHACK_PLUGIN_OUTPUT_DIR}
 COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/Memory.xml ${DFHACK_OUTPUT_DIR})
 ADD_DEPENDENCIES(dfhack prepare)
 
-# Copy our version of the df launch script which sets LD_PRELOAD
+# On linux, copy our version of the df launch script which sets LD_PRELOAD
 IF(UNIX)
     ADD_CUSTOM_TARGET( prepare_UNIX
     DEPENDS ${dfhack_SOURCE_DIR}/package/linux/dfhack
@@ -153,8 +153,16 @@ IF(UNIX)
     COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/package/linux/dfhack ${DFHACK_OUTPUT_DIR})
     ADD_DEPENDENCIES(dfhack prepare_UNIX)
     install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack
-            DESTINATION ${DFHACK_LIBRARY_DESTINATION}) #linux: share/dfhack
-
+            DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+ELSE()
+# On windows, copy the renamed SDL so DF can still run.
+    ADD_CUSTOM_TARGET( prepare_WINDOWS
+    DEPENDS ${dfhack_SOURCE_DIR}/package/windows/SDLreal.dll
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${DFHACK_OUTPUT_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/package/windows/SDLreal.dll ${DFHACK_OUTPUT_DIR})
+    ADD_DEPENDENCIES(dfhack prepare_WINDOWS)
+    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/SDLreal.dll
+            DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 ENDIF()
  
 install(TARGETS dfhack

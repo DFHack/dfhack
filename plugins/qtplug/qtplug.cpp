@@ -20,6 +20,7 @@ using namespace DFHack;
 static int runnable(void *);
 static SDL::Mutex * instance_mutex = 0;
 static bool running = false;
+static SDL::Thread * QTThread;
 
 DFhackCExport command_result runqt (Core * c, vector <string> & parameters);
 
@@ -47,7 +48,7 @@ DFhackCExport command_result runqt (Core * c, vector <string> & parameters)
     if(!running)
     {
         running = true;
-        SDL::Thread * IO = SDL_CreateThread(runnable, 0);
+        QTThread = SDL_CreateThread(runnable, 0);
     }
     else
     {
@@ -59,7 +60,8 @@ DFhackCExport command_result runqt (Core * c, vector <string> & parameters)
 
 static int runnable(void *)
 {
-    QApplication app(0, 0);
+	int zero = 0;
+    QApplication app(zero, 0);
     blankslade appGui;
     appGui.show();
     int ret = app.exec();

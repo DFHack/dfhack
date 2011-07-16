@@ -114,11 +114,11 @@ namespace DFHack
          * Gui screens
          */
         /// handle to the interface object
-        t_interface * interface;
+        t_interface * df_interface;
         /// Get the current top-level view-screen
         t_viewscreen * GetCurrentScreen();
         /// The DF menu state (designation menu ect)
-        uint32_t * menu_state;
+        uint32_t * df_menu_state;
 
         /*
          * Hotkeys (DF's zoom locations)

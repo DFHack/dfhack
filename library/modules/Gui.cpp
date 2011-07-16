@@ -86,21 +86,21 @@ Gui::Gui()
     // Setting up menu state
     try
     {
-        menu_state = (uint32_t *) OG_Gui->getAddress("current_menu_state");
+        df_menu_state = (uint32_t *) OG_Gui->getAddress("current_menu_state");
     }
     catch(Error::All &)
     {
-        menu_state = 0;
+        df_menu_state = 0;
     };
 
     // Setting up the view screen stuff
     try
     {
-        interface = (t_interface *) OG_Gui->getAddress ("interface");
+        df_interface = (t_interface *) OG_Gui->getAddress ("interface");
     }
     catch(exception &)
     {
-        interface = 0;
+        df_interface = 0;
     };
 
     OffsetGroup * OG_Position;
@@ -140,9 +140,9 @@ bool Gui::Finish()
 
 t_viewscreen * Gui::GetCurrentScreen()
 {
-    if(!interface)
+    if(!df_interface)
         return 0;
-    t_viewscreen * ws = &interface->view;
+    t_viewscreen * ws = &df_interface->view;
     while(ws)
     {
         if(ws->child)

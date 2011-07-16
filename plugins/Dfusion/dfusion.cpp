@@ -2,8 +2,10 @@
 #include <dfhack/Console.h>
 #include <dfhack/Export.h>
 #include <dfhack/PluginManager.h>
+#include <dfhack/VersionInfo.h>
 #include <vector>
 #include <string>
+#include <sstream>
 
 
 #include "luamain.h"
@@ -16,7 +18,10 @@ using namespace DFHack;
 static SDL::Mutex* mymutex=0;
 
 DFhackCExport command_result dfusion (Core * c, vector <string> & parameters);
+DFhackCExport command_result lua_run (Core * c, vector <string> & parameters);
 
+typedef 
+int __stdcall (*dfprint)(const char*, char, char,void *ptr) ; 
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -30,6 +35,9 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 	lua::RegisterConsole(lua::glua::Get(),&c->con);
 
     commands.push_back(PluginCommand("dfusion","Init dfusion system.",dfusion));
+	commands.push_back(PluginCommand("lua", "Run interactive interpreter.\
+\n              Options: <filename> = run <filename> instead",lua_run));
+	
 	mymutex=SDL_CreateMutex();
     return CR_OK;
 }
@@ -71,10 +79,44 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 }
 
 
+DFhackCExport command_result lua_run (Core * c, vector <string> & parameters)
+{
+	c->Suspend();
+	std::stringstream ss;
+	ss<<parameters[0];
+	long i;
+	ss>>i;
+	dfprint mprint=(dfprint)(0x27F030+i);
+	mprint("Hello world",1,4,0);
+	c->Resume();
+	return CR_OK;
+	Console &con=c->con;
+	SDL_mutexP(mymutex);
+	lua::state s=lua::glua::Get();
+	if(parameters.size()>0)
+	{
+		try{
+			s.loadfile(parameters[0]); //load file
+			s.pcall(0,0);// run it
+		}
+		catch(lua::exception &e)
+		{
+			con.printerr("Error:%s\n",e.what());
+		}
+	}
+	else
+	{
+		//TODO interpreter...
+	}
+	s.settop(0);// clean up
+	SDL_mutexV(mymutex);
+	return CR_OK;
+}
 DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
 {
-   // do stuff
+
 	Console &con=c->con;
+	con.print("%x\n",c->vinfo->getBase());
 	SDL_mutexP(mymutex);
 	lua::state s=lua::glua::Get();
 	

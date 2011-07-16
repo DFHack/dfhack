@@ -392,7 +392,7 @@ namespace DFHack
             {
                 char c;
                 int nread;
-                char seq[2], seq2[2];
+                char seq[2], seq2;
                 SDL_mutexV(wlock);
                 nread = ::read(fd,&c,1);
                 SDL_mutexP(wlock);
@@ -508,13 +508,13 @@ namespace DFHack
                         {
                             // extended escape
                             SDL_mutexV(wlock);
-                            if (::read(fd,seq2,2) == -1)
+                            if (::read(fd,&seq2,1) == -1)
                             {
                                 SDL_mutexP(wlock);
                                 break;
                             }
                             SDL_mutexP(wlock);
-                            if (seq2[0] == '~' && seq[1] == '3')
+                            if (seq[1] == '3' && seq2 == '~' )
                             {
                                 // delete
                                 if (raw_buffer.size() > 0 && raw_cursor < raw_buffer.size())

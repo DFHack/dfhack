@@ -120,6 +120,11 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     }
 }
 
+uint32_t Process::getBase()
+{
+    return 0;
+}
+
 static int getdir (string dir, vector<string> &files)
 {
     DIR *dp;

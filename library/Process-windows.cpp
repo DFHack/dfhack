@@ -330,6 +330,13 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     }
 }
 
+uint32_t Process::getBase()
+{
+    if(d)
+        return d->base;
+    return 0x400000;
+}
+
 string Process::doReadClassName (void * vptr)
 {
     int rtti = readDWord((uint32_t)vptr - 0x4);

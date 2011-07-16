@@ -264,6 +264,7 @@ namespace DFHack
             {
                 return my_descriptor;
             };
+            uint32_t getBase();
             /// get the DF Process ID
             int getPID();
             /// get the DF Process FilePath

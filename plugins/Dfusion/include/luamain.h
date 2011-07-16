@@ -1,5 +1,5 @@
-#ifndef LUASTUFF_H
-#define LUASTUFF_H
+#ifndef LUAMAIN_H
+#define LUAMAIN_H
 #include <string>
 using std::string;
 
@@ -37,4 +37,4 @@ namespace lua
 
 
 
-#endif // LUASTUFF_H
+#endif // LUAMAIN_H

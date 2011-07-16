@@ -6,15 +6,14 @@
 #include <string>
 
 
-
-
-#include <luamain.h>
+#include "luamain.h"
+#include "lua_Console.h"
 
 using std::vector;
 using std::string;
 using namespace DFHack;
 
-static SDL::Mutex *mymutex=0;
+static SDL::Mutex* mymutex=0;
 
 DFhackCExport command_result dfusion (Core * c, vector <string> & parameters);
 
@@ -27,7 +26,10 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("DFusion","Init dfusion system.",dfusion));
+	//maybe remake it to run automaticaly
+	lua::RegisterConsole(lua::glua::Get(),&c->con);
+
+    commands.push_back(PluginCommand("dfusion","Init dfusion system.",dfusion));
 	mymutex=SDL_CreateMutex();
     return CR_OK;
 }
@@ -41,7 +43,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 DFhackCExport command_result plugin_onupdate ( Core * c )
 {
-    /*if(timering == true)
+    /*if(timering == true) //TODO maybe reuse this to make it run less often.
     {
         uint64_t time2 = GetTimeMs64();
         uint64_t delta = time2-timeLast;
@@ -49,7 +51,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
         c->con.print("Time delta = %d ms\n", delta);
     }
     return CR_OK;*/
-	SDL_mutexP(mymutex); //TODO: make lua thread safe (somehow)...
+	SDL_mutexP(mymutex); 
 	lua::state s=lua::glua::Get();
 	s.getglobal("OnTick");
 	if(s.is<lua::function>())
@@ -67,16 +69,18 @@ DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
    // do stuff
 	Console &con=c->con;
 	SDL_mutexP(mymutex);
+	lua::state s=lua::glua::Get();
+	
 	try{
-		lua::glua::Get().loadfile("dfusion/init.lua"); //load script
-		lua::glua::Get().pcall(0,0);// run it
+		s.loadfile("dfusion/init.lua"); //load script
+		s.pcall(0,0);// run it
 		
 	}
 	catch(lua::exception &e)
 	{
 		con.printerr("Error:%s\n",e.what());
 	}
-	lua::glua::Get().settop(0);// clean up
+	s.settop(0);// clean up
 	SDL_mutexV(mymutex);
 	return CR_OK;
 }

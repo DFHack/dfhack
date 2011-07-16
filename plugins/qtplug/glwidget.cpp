@@ -9,6 +9,7 @@
 #include <QGLShaderProgram>
 #include <QGLPixelBuffer>
 #include <iostream>
+#include <GL/gl.h>
 
 struct Vertex
 {
@@ -193,7 +194,7 @@ void GLWidget::paintGL()
     mvp.rotate(d->rx,0,1,0);
     d->prog.setUniformValue(d->mvpUniform,mvp);
 
-    glActiveTexture(GL_TEXTURE0);
+    //glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, d->terrain);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

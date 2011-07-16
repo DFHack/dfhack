@@ -6,13 +6,13 @@
 #include "blankslade.h"
 #include <QFileDialog>
 #include <QDebug>
-//#include "glwidget.h"
+#include "glwidget.h"
 
 blankslade::blankslade(QWidget *parent): QMainWindow(parent)
 {
     ui.setupUi(this);
-    //GLWidget * glw = new GLWidget();
-    //ui.gridding->addWidget(glw);
+    GLWidget * glw = new GLWidget();
+    ui.gridding->addWidget(glw);
     connect(ui.actionOpen,SIGNAL(triggered(bool)),this,SLOT(slotOpen(bool)));
     connect(ui.actionQuit,SIGNAL(triggered(bool)),this,SLOT(slotQuit(bool)));
     connect(ui.actionSave,SIGNAL(triggered(bool)),this,SLOT(slotSave(bool)));

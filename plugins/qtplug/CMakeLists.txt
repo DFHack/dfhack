@@ -12,7 +12,7 @@ if(QT4_FOUND AND OPENGL_FOUND AND OPENGL_GLU_FOUND)
         set ( qtplug_SRCS
             qtplug.cpp
             blankslade.cpp
-            #glwidget.cpp
+            glwidget.cpp
         )
 
         SET ( qtplug_UI
@@ -30,6 +30,8 @@ if(QT4_FOUND AND OPENGL_FOUND AND OPENGL_GLU_FOUND)
         QT4_WRAP_UI(qtplug_UI_h ${qtplug_UI})
         qt4_automoc(${qtplug_SRCS})
         DFHACK_PLUGIN(qtplug ${qtplug_SRCS} ${qtplug_RC_SRCS} ${qtplug_UI_h})
+        # a small texture file
+        install(FILES terrain.png DESTINATION ${DFHACK_LIBRARY_DESTINATION})
         target_link_libraries(qtplug ${OPENGL_LIBRARIES} ${QT_LIBRARIES} )
     ELSE(QT_VERSION_MAJOR MATCHES 4 AND QT_VERSION_MINOR GREATER 6)
         MESSAGE(STATUS "Can't build the Qt plugin. Your Qt is too old.")

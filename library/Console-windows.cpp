@@ -40,8 +40,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <conio.h>
 #include <stdarg.h>
 
-#include "dfhack/extra/stdiostream.h"
-#include < process.h>
+#include <process.h>
 #include <errno.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -453,6 +452,7 @@ bool Console::init(void)
     GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE),&oldMode);
     newMode = oldMode | ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT;
     SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE),newMode);
+    SetConsoleCtrlHandler(NULL,true);
     std::ios::sync_with_stdio();
 
     // make our own weird streams so our IO isn't redirected

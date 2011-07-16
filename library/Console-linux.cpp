@@ -1,6 +1,5 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2011 Petr Mrázek <peterix@gmail.com>
 
 A thread-safe logging console with a line editor.
 
@@ -19,6 +18,7 @@ the 2010 UNIX computers around.
 
 Copyright (c) 2010, Salvatore Sanfilippo <antirez at gmail dot com>
 Copyright (c) 2010, Pieter Noordhuis <pcnoordhuis at gmail dot com>
+Copyright (c) 2011, Petr Mrázek <peterix@gmail.com>
 
 All rights reserved.
 
@@ -47,9 +47,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "dfhack/Console.h"
-#include "dfhack/extra/stdiostream.h"
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
 #include <sstream>
 #include <stdio.h>
 #include <string.h>

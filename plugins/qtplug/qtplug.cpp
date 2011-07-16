@@ -60,7 +60,8 @@ DFhackCExport command_result runqt (Core * c, vector <string> & parameters)
 
 static int runnable(void *)
 {
-    QApplication app(0, 0);
+	int zero = 0;
+    QApplication app(zero, 0);
     blankslade appGui;
     appGui.show();
     int ret = app.exec();

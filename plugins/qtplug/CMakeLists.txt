@@ -12,7 +12,7 @@ if(QT4_FOUND AND OPENGL_FOUND AND OPENGL_GLU_FOUND)
         set ( qtplug_SRCS
             qtplug.cpp
             blankslade.cpp
-            glwidget.cpp
+            #glwidget.cpp
         )
 
         SET ( qtplug_UI

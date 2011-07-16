@@ -390,10 +390,10 @@ int Core::SDL_Event(SDL::Event* ev, int orig_return)
         {
             hotkey_states[idx] = 1;
             Gui * g = getGui();
-            if(g->hotkeys && g->interface && g->menu_state)
+            if(g->hotkeys && g->df_interface && g->df_menu_state)
             {
                 t_viewscreen * ws = g->GetCurrentScreen();
-                if(ws->getClassName() == "viewscreen_dwarfmodest" && *g->menu_state == 0x23)
+                if(ws->getClassName() == "viewscreen_dwarfmodest" && *g->df_menu_state == 0x23)
                     return orig_return;
                 else
                 {

@@ -56,7 +56,14 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 	s.getglobal("OnTick");
 	if(s.is<lua::function>())
 	{
-		s.pcall();
+		try{
+			s.pcall();
+		}
+		catch(lua::exception &e)
+		{
+			c->con.printerr("Error OnTick:%s\n",e.what());
+			c->con.msleep(1000);
+		}
 	}
 	s.settop(0);
 	SDL_mutexV(mymutex);
@@ -74,7 +81,6 @@ DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
 	try{
 		s.loadfile("dfusion/init.lua"); //load script
 		s.pcall(0,0);// run it
-		
 	}
 	catch(lua::exception &e)
 	{

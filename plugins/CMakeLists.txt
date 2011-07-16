@@ -96,7 +96,9 @@ ENDMACRO(DFHACK_PLUGIN)
 #endmacro()
 
 #RECURSE_DIRS()
-add_subdirectory (qtplug)
+IF(UNIX)
+    add_subdirectory (qtplug)
+ENDIF()
 
 DFHACK_PLUGIN(reveal reveal.cpp)
 OPTION(BUILD_KITTENS "Build the kittens plugin." OFF)

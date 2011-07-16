@@ -7,11 +7,14 @@
 
 #include <lua.hpp>
 
+#include <luamain.h>
+
 using std::vector;
 using std::string;
 using namespace DFHack;
 
-lua_State *st;
+
+
 DFhackCExport command_result dfusion (Core * c, vector <string> & parameters);
 
 
@@ -24,12 +27,13 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.clear();
     commands.push_back(PluginCommand("DFusion","Init dfusion system.",dfusion));
-	st=luaL_newstate();
+	
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
+	
 // shutdown stuff
 	return CR_OK;
 }
@@ -51,12 +55,16 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
 {
    // do stuff
-	
 	Console &con=c->con;
 
-	con.print("Hello world!");
-	luaL_dostring(st,parameters[0].c_str());
-	const char* p=luaL_checkstring(st,1);
-	con.print("ret=%s",p);
+	try{
+		lua::glua::Get().loadfile("dfusion/init.lua");
+		lua::glua::Get().pcall(0,0);
+	}
+	catch(lua::exception &e)
+	{
+		con.printerr("Error:%s",e.what());
+	}
+
 	return CR_OK;
 }

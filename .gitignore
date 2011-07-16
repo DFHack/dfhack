@@ -1,6 +1,9 @@
 # linux backup files
 *~
 
+#Kdevelop project file
+*.kdev4
+
 # compiled binaries
 output/*
 
@@ -13,6 +16,9 @@ library/private/config.h
 
 # any build folders
 build*/
+nix
+buntu
+build/VC2010
 
 #except for the real one
 !build/

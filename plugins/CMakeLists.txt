@@ -108,9 +108,14 @@ if(BUILD_KITTENS)
 endif()
 
 IF(UNIX)
-    OPTION(BUILD_KILL_GAME "Build the kill gmae plugin." OFF)
+    OPTION(BUILD_KILL_GAME "Build the kill game plugin." OFF)
     if(BUILD_KILL_GAME)
         DFHACK_PLUGIN(die die.cpp)
+    endif()
+
+    OPTION(BUILD_VECTORS "Build the vectors search plugin." OFF)
+    if(BUILD_VECTORS)
+        DFHACK_PLUGIN(vectors vectors.cpp)
     endif()
 endif()
 

@@ -2,14 +2,13 @@
 #include <dfhack/Console.h>
 #include <dfhack/Export.h>
 #include <dfhack/PluginManager.h>
-#include <dfhack/VersionInfo.h>
+#include <dfhack/Process.h>
 #include <vector>
 #include <string>
-#include <sstream>
-
 
 #include "luamain.h"
 #include "lua_Console.h"
+#include "functioncall.h"
 
 using std::vector;
 using std::string;
@@ -20,8 +19,8 @@ static SDL::Mutex* mymutex=0;
 DFhackCExport command_result dfusion (Core * c, vector <string> & parameters);
 DFhackCExport command_result lua_run (Core * c, vector <string> & parameters);
 
-typedef 
-int __stdcall (*dfprint)(const char*, char, char,void *ptr) ; 
+ typedef
+ int  (__thiscall *dfprint)(const char*, char, char,void *) ; 
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -81,15 +80,20 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 
 DFhackCExport command_result lua_run (Core * c, vector <string> & parameters)
 {
+	//testing part{
 	c->Suspend();
-	std::stringstream ss;
-	ss<<parameters[0];
-	long i;
-	ss>>i;
-	dfprint mprint=(dfprint)(0x27F030+i);
-	mprint("Hello world",1,4,0);
+	FunctionCaller caller(c->p->getBase()); 
+	std::vector <int> args;
+	args.push_back((size_t)"Hello world");
+	args.push_back(4);
+	args.push_back(4);
+	args.push_back(0);
+	dfprint  mprint=(dfprint)(0x27F030+c->p->getBase());
+	mprint("Hello world",4,4,0);
+	caller.CallFunction((0x27F030),FunctionCaller::THIS_CALL,args);
 	c->Resume();
 	return CR_OK;
+	//}end testing
 	Console &con=c->con;
 	SDL_mutexP(mymutex);
 	lua::state s=lua::glua::Get();
@@ -116,7 +120,7 @@ DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
 {
 
 	Console &con=c->con;
-	con.print("%x\n",c->vinfo->getBase());
+	con.print("%x\n",c->p->getBase());
 	SDL_mutexP(mymutex);
 	lua::state s=lua::glua::Get();
 	

@@ -78,6 +78,8 @@ DFhackCExport int SDL_NumJoysticks(void)
 {
     DFHack::Core & c = DFHack::Core::getInstance();
     // the 'inited' variable should be normally protected by a lock. It isn't
+    // this is harmless enough. only thing this can cause is a slight delay before
+    // DF input events start to be processed by Core
     int ret = c.Update();
     if(ret == 0)
         inited = true;

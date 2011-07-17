@@ -48,7 +48,9 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
     if(timering == true)
     {
         uint64_t time2 = GetTimeMs64();
+        // harmless potential data race here...
         uint64_t delta = time2-timeLast;
+        // harmless potential data race here...
         timeLast = time2;
         c->con.print("Time delta = %d ms\n", delta);
     }
@@ -67,6 +69,7 @@ DFhackCExport command_result ktimer (Core * c, vector <string> & parameters)
     c->Resume();
     uint64_t timeend = GetTimeMs64();
     c->con.print("Time to suspend = %d ms\n",timeend - timestart);
+    // harmless potential data race here...
     timeLast = timeend;
     timering = true;
     return CR_OK;

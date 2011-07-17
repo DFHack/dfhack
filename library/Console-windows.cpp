@@ -247,7 +247,7 @@ namespace DFHack
             SetConsoleCursorPosition(console_out, inf.dwCursorPosition);
         }
 
-        int prompt_loop()
+        int prompt_loop(SDL::Mutex * lock)
         {
             raw_buffer.clear(); // make sure the buffer is empty!
             size_t plen = prompt.size();
@@ -269,9 +269,9 @@ namespace DFHack
             {
                 INPUT_RECORD rec;
                 DWORD count;
-                SDL_mutexV(wlock);
+                SDL_mutexV(lock);
                 ReadConsoleInputA(console_in, &rec, 1, &count);
-                SDL_mutexP(wlock);
+                SDL_mutexP(lock);
                 if (rec.EventType != KEY_EVENT || !rec.Event.KeyEvent.bKeyDown)
                     continue;
                 switch (rec.Event.KeyEvent.wVirtualKeyCode)
@@ -356,13 +356,13 @@ namespace DFHack
                 }
             }
         }
-        int lineedit(const std::string & prompt, std::string & output)
+        int lineedit(const std::string & prompt, std::string & output, SDL::Mutex*lock)
         {
             output.clear();
             int count;
             state = con_lineedit;
             this->prompt = prompt;
-            count = prompt_loop();
+            count = prompt_loop(lock);
             if(count != -1)
                 output = raw_buffer;
             state = con_unclaimed;
@@ -398,8 +398,6 @@ namespace DFHack
         std::string prompt;     // current prompt string
         std::string raw_buffer; // current raw mode buffer
         int raw_cursor;         // cursor position in the buffer
-        // locks
-        SDL::Mutex *wlock;
     };
 }
 
@@ -407,6 +405,8 @@ namespace DFHack
 Console::Console():std::ostream(0), std::ios(0)
 {
     d = 0;
+    wlock = 0;
+    inited = false;
 }
 
 Console::~Console()
@@ -425,7 +425,7 @@ bool Console::init(void)
     // Allocate a console!
     AllocConsole();
     d->ConsoleWindow = GetConsoleWindow();
-    d->wlock = SDL_CreateMutex();
+    wlock = SDL_CreateMutex();
     HMENU  hm = GetSystemMenu(d->ConsoleWindow,false);
     DeleteMenu(hm, SC_CLOSE, MF_BYCOMMAND);
 
@@ -459,95 +459,126 @@ bool Console::init(void)
     rdbuf(d);
     std::cin.tie(this);
     clear();
+    inited = true;
     return true;
 }
 // FIXME: looks awfully empty, doesn't it?
 bool Console::shutdown(void)
 {
+    SDL_mutexP(wlock);
     FreeConsole();
+    inited = false;
+    SDL_mutexV(wlock);
     return true;
 }
-
 int Console::print( const char* format, ... )
 {
     va_list args;
-    SDL_mutexP(d->wlock);
-    va_start( args, format );
-    int ret = d->vprint(format, args);
-    va_end(args);
-    SDL_mutexV(d->wlock);
+    SDL_mutexP(wlock);
+    int ret;
+    if(!inited) ret = -1;
+    else
+    {
+        va_start( args, format );
+        ret = d->vprint(format, args);
+        va_end(args);
+    }
+    SDL_mutexV(wlock);
     return ret;
 }
 
 int Console::printerr( const char* format, ... )
 {
     va_list args;
-    SDL_mutexP(d->wlock);
-    va_start( args, format );
-    int ret = d->vprinterr(format, args);
-    va_end(args);
-    SDL_mutexV(d->wlock);
+    SDL_mutexP(wlock);
+    int ret;
+    if(!inited) ret = -1;
+    else
+    {
+        va_start( args, format );
+        ret = d->vprinterr(format, args);
+        va_end(args);
+    }
+    SDL_mutexV(wlock);
     return ret;
 }
 
 int Console::get_columns(void)
 {
-    return d->get_columns();
+    SDL_mutexP(wlock);
+    int ret = -1;
+    if(inited)
+        ret = d->get_columns();
+    SDL_mutexV(wlock);
+    return ret;
 }
 
 int Console::get_rows(void)
 {
-    return d->get_rows();
+    SDL_mutexP(wlock);
+    int ret = -1;
+    if(inited)
+        ret = d->get_rows();
+    SDL_mutexV(wlock);
+    return ret;
 }
 
 void Console::clear()
 {
-    SDL_mutexP(d->wlock);
-    d->clear();
-    SDL_mutexV(d->wlock);
+    SDL_mutexP(wlock);
+    if(inited)
+        d->clear();
+    SDL_mutexV(wlock);
 }
 
 void Console::gotoxy(int x, int y)
 {
-    SDL_mutexP(d->wlock);
-    d->gotoxy(x,y);
-    SDL_mutexV(d->wlock);
+    SDL_mutexP(wlock);
+    if(inited)
+        d->gotoxy(x,y);
+    SDL_mutexV(wlock);
 }
 
 void Console::color(color_value index)
 {
-    SDL_mutexP(d->wlock);
-    d->color(index);
-    SDL_mutexV(d->wlock);
+    SDL_mutexP(wlock);
+    if(inited)
+        d->color(index);
+    SDL_mutexV(wlock);
 }
 
 void Console::reset_color( void )
 {
-    SDL_mutexP(d->wlock);
-    d->reset_color();
-    SDL_mutexV(d->wlock);
+    SDL_mutexP(wlock);
+    if(inited)
+        d->reset_color();
+    SDL_mutexV(wlock);
 }
 
 void Console::cursor(bool enable)
 {
-    SDL_mutexP(d->wlock);
-    d->cursor(enable);
-    SDL_mutexV(d->wlock);
+    SDL_mutexP(wlock);
+    if(inited)
+        d->cursor(enable);
+    SDL_mutexV(wlock);
 }
 
 // push to front, remove from back if we are above maximum. ignore immediate duplicates
 void Console::history_add(const std::string & command)
 {
-    SDL_mutexP(d->wlock);
-    d->history_add(command);
-    SDL_mutexV(d->wlock);
+    SDL_mutexP(wlock);
+    if(inited)
+        d->history_add(command);
+    SDL_mutexV(wlock);
 }
 
 int Console::lineedit(const std::string & prompt, std::string & output)
 {
-    SDL_mutexP(d->wlock);
-    int ret = d->lineedit(prompt,output);
-    SDL_mutexV(d->wlock);
+    SDL_mutexP(wlock);
+    int ret = -2;
+    if(inited)
+        ret = d->lineedit(prompt,output,wlock);
+    SDL_mutexV(wlock);
     return ret;
 }
 

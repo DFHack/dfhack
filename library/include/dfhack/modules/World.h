@@ -107,6 +107,7 @@ namespace DFHack
         void SetCurrentWeather(uint8_t weather);
         bool ReadGameMode(t_gamemodes& rd);
         bool WriteGameMode(const t_gamemodes & wr); // this is very dangerous
+        std::string ReadWorldFolder();
         private:
         struct Private;
         Private *d;

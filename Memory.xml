@@ -1028,6 +1028,7 @@
                 <Address name="current_weather" description="5x5 array of bytes for surrounding biomes. For each: 0=clear, 1=raining, 2=snowing." />
                 <Address name="game_mode" description="Current game mode" />
                 <Address name="control_mode" description="Current control mode" />
+                <Address name="save_folder" descript="Name of save folder of current game"/>
                 <!--<Address name="control_mode_copy" description="Copy of the control mode in DF memory" />-->
             </Group>
             <Group name="Legends">
@@ -3058,6 +3059,7 @@
                 <Address name="control_mode" value="0x8c3de90" />
                 <Address name="game_mode" value="0x8c3deA0" />
                 <Address name="current_weather" value="0x93F05E4" />
+                <Address name="save_folder" value="0x958a378" />
             </Group>
             <Group name="Items">
                 <Address name="items_vector" value="0x940b1fc" />

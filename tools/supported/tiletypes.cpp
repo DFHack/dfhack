@@ -13,14 +13,23 @@ using namespace std;
 #include <dfhack/extra/MapExtras.h>
 #include <dfhack/extra/termutil.h>
 
+//zilpin: These two functions were giving me compile errors in VS2008, so I cheated with the C style loop below, just to get it to build.
+//Original code is commented out.
 void tolower(std::string &str)
 {
-    std::transform(str.begin(), str.end(), str.begin(), std::bind2nd(std::ptr_fun(&std::tolower<char>), std::locale("")));
+	//The C++ way...
+    //std::transform(str.begin(), str.end(), str.begin(), std::bind2nd(std::ptr_fun(&std::tolower<char> ), std::locale("")));
+
+	//The C way...
+	for(char *c=(char *)str.c_str(); *c; ++c)
+		*c = tolower(*c);
 }
 
 void toupper(std::string &str)
 {
-    std::transform(str.begin(), str.end(), str.begin(), std::bind2nd(std::ptr_fun(&std::toupper<char>), std::locale("")));
+    //std::transform(str.begin(), str.end(), str.begin(), std::bind2nd(std::ptr_fun(&std::toupper<char>), std::locale("")));
+	for(char *c=(char *)str.c_str(); *c; ++c)
+		*c = toupper(*c);
 }
 
 int toint(const std::string &str, int failValue = 0)

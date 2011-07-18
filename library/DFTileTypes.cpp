@@ -3,8 +3,6 @@
 #include "dfhack/DFTileTypes.h"
 #include "dfhack/DFExport.h"
 
-#include <stdio.h>
-
 namespace DFHack
 {
     const TileRow tileTypeTable[TILE_TYPE_ARRAY_LENGTH] =
@@ -692,8 +690,7 @@ namespace DFHack
 				case OBSIDIAN:         match= 80;  break;
 				case STONE:            match= 79;  break;
 			}
-			//Prevent the loop.
-			matchv=value=(8|4|1);
+			if( match ) return match;
 		}
 
 
@@ -739,7 +736,10 @@ namespace DFHack
 			//Very picky, only handle known safe tile types.
 			//Some floors have 4 variants, some have 3, so the order of these matters.
 			switch( match ){
-				case 261:	match=352+(3&entropy); break; //furrowed soil got chosen by accident.
+				case 261:
+					//Furrowed soil got chosen by accident.  Fix that.
+					match=352+(3&entropy); 
+					break; 
 				case 336:	//STONE
 				case 340:	//OBSIDIAN
 				case 344:	//featstone

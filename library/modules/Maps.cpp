@@ -1059,9 +1059,6 @@ bool Maps::WriteVein(t_vein *vein)
 	return true;
 }
 
-#include<stdio.h>
-
-
 
 /*
 __int16 __userpurge GetGeologicalRegion<ax>(__int16 block_X<cx>, int X<ebx>, __int16 block_Y<di>, int block_addr<esi>, int Y)

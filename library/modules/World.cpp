@@ -67,6 +67,10 @@ struct World::Private
     uint32_t gamemode_offset;
     uint32_t controlmode_offset;
     uint32_t controlmodecopy_offset;
+
+    bool StartedFolder;
+    uint32_t folder_name_offset;
+
     Process * owner;
 };
 
@@ -106,6 +110,14 @@ World::World()
         d->StartedMode = true;
     }
     catch(Error::All &){};
+    try
+    {
+        d->folder_name_offset = OG_World->getAddress( "save_folder" );
+        d->StartedFolder = true;
+    }
+    catch(Error::All &){};
+
+
     d->Inited = true;
 }
 
@@ -219,4 +231,13 @@ void World::SetCurrentWeather(uint8_t weather)
         memset(&buf,weather, sizeof(buf));
         d->owner->write(d->weather_offset,sizeof(buf),buf);
     }
+}
+
+string World::ReadWorldFolder()
+{
+    if (d->Inited && d->StartedFolder)
+    {
+        return string( * ( (string*) d->folder_name_offset ) );
+    }
+    return string("");
 }

@@ -67,71 +67,241 @@ bool hasEnding (std::string const &fullString, std::string const &ending)
         return false;
     }
 }
-
-Plugin::Plugin(Core * core, const std::string & file)
+struct Plugin::RefLock
 {
-    filename = file;
+    RefLock()
+    {
+        refcount = 0;
+        wakeup = SDL_CreateCond();
+        mut = SDL_CreateMutex();
+    }
+    ~RefLock()
+    {
+        SDL_DestroyCond(wakeup);
+        SDL_DestroyMutex(mut);
+    }
+    void lock()
+    {
+        SDL_mutexP(mut);
+    }
+    void unlock()
+    {
+        SDL_mutexV(mut);
+    }
+    void lock_add()
+    {
+        SDL_mutexP(mut);
+        refcount ++;
+        SDL_mutexV(mut);
+    }
+    void lock_sub()
+    {
+        SDL_mutexP(mut);
+        refcount --;
+        SDL_CondSignal(wakeup);
+        SDL_mutexV(mut);
+    }
+    void operator++()
+    {
+        refcount ++;
+    }
+    void operator--()
+    {
+        refcount --;
+        SDL_CondSignal(wakeup);
+    }
+    void wait()
+    {
+        while(refcount)
+        {
+            SDL_CondWait(wakeup, mut);
+        }
+    }
+    SDL::Cond * wakeup;
+    SDL::Mutex * mut;
+    int refcount;
+};
+Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _filename, PluginManager * pm)
+{
+    filename = filepath;
+    parent = pm;
+    name.reserve(_filename.size());
+    for(int i = 0; i < _filename.size();i++)
+    {
+        char ch = _filename[i];
+        if(ch == '.')
+            break;
+        name.append(1,ch);
+    }
     Console & con = core->con;
     plugin_lib = 0;
     plugin_init = 0;
     plugin_shutdown = 0;
     plugin_status = 0;
     plugin_onupdate = 0;
-    loaded = false;
-    DFLibrary * plug = OpenPlugin(file.c_str());
+    state = PS_UNLOADED;
+    access = new RefLock();
+}
+
+Plugin::~Plugin()
+{
+    if(state == PS_LOADED)
+    {
+        unload();
+    }
+    delete access;
+}
+
+bool Plugin::load()
+{
+    access->lock();
+    if(state == PS_BROKEN)
+    {
+        access->unlock();
+        return false;
+    }
+    else if(state == PS_LOADED)
+    {
+        access->unlock();
+        return true;
+    }
+    Core & c = Core::getInstance();
+    Console & con = c.con;
+    DFLibrary * plug = OpenPlugin(filename.c_str());
     if(!plug)
     {
-        con.print("Can't load plugin %s\n", filename.c_str());
-        return;
+        con.printerr("Can't load plugin %s\n", filename.c_str());
+        state = PS_BROKEN;
+        access->unlock();
+        return false;
     }
     const char * (*_PlugName)() =(const char * (*)()) LookupPlugin(plug, "plugin_name");
     if(!_PlugName)
     {
-        con.print("Plugin %s has no name.\n", filename.c_str());
+        con.printerr("Plugin %s has no name.\n", filename.c_str());
         ClosePlugin(plug);
-        return;
+        state = PS_BROKEN;
+        access->unlock();
+        return false;
     }
     plugin_init = (command_result (*)(Core *, std::vector <PluginCommand> &)) LookupPlugin(plug, "plugin_init");
     if(!plugin_init)
     {
-        con.print("Plugin %s has no init function.\n", filename.c_str());
+        con.printerr("Plugin %s has no init function.\n", filename.c_str());
         ClosePlugin(plug);
-        return;
+        state = PS_BROKEN;
+        access->unlock();
+        return false;
     }
     plugin_status = (command_result (*)(Core *, std::string &)) LookupPlugin(plug, "plugin_status");
     plugin_onupdate = (command_result (*)(Core *)) LookupPlugin(plug, "plugin_onupdate");
     plugin_shutdown = (command_result (*)(Core *)) LookupPlugin(plug, "plugin_shutdown");
     name = _PlugName();
     plugin_lib = plug;
-    loaded = true;
-    //dfout << "Found plugin " << name << endl;
-    if(plugin_init(core,commands) == CR_OK)
+    if(plugin_init(&c,commands) == CR_OK)
     {
-        /*
-        for(int i = 0; i < commands.size();i++)
-        {
-            dfout << commands[i].name << " : " << commands[i].description << std::endl;
-        }
-        */
+        state = PS_LOADED;
+        parent->registerCommands(this);
+        access->unlock();
+        return true;
     }
     else
     {
-        // horrible!
-    }
-}
-
-Plugin::~Plugin()
-{
-    if(loaded)
-    {
-        plugin_shutdown(&Core::getInstance());
+        con.printerr("Plugin %s has failed to initialize properly.\n", filename.c_str());
         ClosePlugin(plugin_lib);
+        state = PS_BROKEN;
+        access->unlock();
+        return false;
     }
+    // not reachable
 }
 
-bool Plugin::isLoaded() const
+bool Plugin::unload()
 {
-    return loaded;
+    Core & c = Core::getInstance();
+    Console & con = c.con;
+    // get the mutex
+    access->lock();
+    // if we are actually loaded
+    if(state == PS_LOADED)
+    {
+        // notify plugin about shutdown
+        command_result cr = plugin_shutdown(&Core::getInstance());
+        // wait for all calls to finish
+        access->wait();
+        // cleanup...
+        parent->unregisterCommands(this);
+        if(cr == CR_OK)
+        {
+            ClosePlugin(plugin_lib);
+            state = PS_UNLOADED;
+            access->unlock();
+            return false;
+        }
+        else
+        {
+            con.printerr("Plugin %s has failed to shutdown!\n",name.c_str());
+            state = PS_BROKEN;
+            access->unlock();
+            return false;
+        }
+    }
+    else if(state == PS_UNLOADED)
+    {
+        access->unlock();
+        return true;
+    }
+    access->unlock();
+    return false;
+}
+
+bool Plugin::reload()
+{
+    if(state != PS_LOADED)
+        return false;
+    if(!unload())
+        return false;
+    if(!load())
+        return false;
+    return true;
+}
+
+command_result Plugin::invoke( std::string & command, std::vector <std::string> & parameters)
+{
+    Core & c = Core::getInstance();
+    command_result cr = CR_NOT_IMPLEMENTED;
+    access->lock_add();
+    if(state == PS_LOADED)
+    {
+        for (int i = 0; i < commands.size();i++)
+        {
+            if(commands[i].name == command)
+            {
+                cr = commands[i].function(&c, parameters);
+                break;
+            }
+        }
+    }
+    access->lock_sub();
+    return cr;
+}
+
+command_result Plugin::on_update()
+{
+    Core & c = Core::getInstance();
+    command_result cr = CR_NOT_IMPLEMENTED;
+    access->lock_add();
+    if(state == PS_LOADED && plugin_onupdate)
+    {
+        cr = plugin_onupdate(&c);
+    }
+    access->lock_sub();
+    return cr;
+}
+
+Plugin::plugin_state Plugin::getState() const
+{
+    return state;
 }
 
 PluginManager::PluginManager(Core * core)
@@ -143,18 +313,14 @@ PluginManager::PluginManager(Core * core)
     string path = core->p->getPath() + "\\plugins\\";
     const string searchstr = ".plug.dll";
 #endif
+    cmdlist_mutex = SDL_CreateMutex();
     vector <string> filez;
     getdir(path, filez);
     for(int i = 0; i < filez.size();i++)
     {
         if(hasEnding(filez[i],searchstr))
         {
-            Plugin * p = new Plugin(core, path + filez[i]);
-            Plugin & pr = *p;
-            for(int j = 0; j < pr.size();j++)
-            {
-                commands[p->commands[j].name] = &pr[j];
-            }
+            Plugin * p = new Plugin(core, path + filez[i], filez[i], this);
             all_plugins.push_back(p);
         }
     }
@@ -162,15 +328,15 @@ PluginManager::PluginManager(Core * core)
 
 PluginManager::~PluginManager()
 {
-    commands.clear();
     for(int i = 0; i < all_plugins.size();i++)
     {
         delete all_plugins[i];
     }
     all_plugins.clear();
+    SDL_DestroyMutex(cmdlist_mutex);
 }
 
-const Plugin *PluginManager::getPluginByName (const std::string & name)
+Plugin *PluginManager::getPluginByName (const std::string & name)
 {
     for(int i = 0; i < all_plugins.size(); i++)
     {
@@ -183,23 +349,45 @@ const Plugin *PluginManager::getPluginByName (const std::string & name)
 // FIXME: handle name collisions...
 command_result PluginManager::InvokeCommand( std::string & command, std::vector <std::string> & parameters)
 {
+    command_result cr = CR_NOT_IMPLEMENTED;
     Core * c = &Core::getInstance();
-    map <string, const PluginCommand *>::iterator iter = commands.find(command);
-    if(iter != commands.end())
+    SDL_mutexP(cmdlist_mutex);
+    map <string, Plugin *>::iterator iter = belongs.find(command);
+    if(iter != belongs.end())
     {
-        return iter->second->function(c,parameters);
+        cr = iter->second->invoke(command, parameters);
     }
-    return CR_NOT_IMPLEMENTED;
+    SDL_mutexV(cmdlist_mutex);
+    return cr;
 }
 
 void PluginManager::OnUpdate( void )
 {
-    Core * c = &Core::getInstance();
     for(int i = 0; i < all_plugins.size(); i++)
     {
-        if(all_plugins[i]->plugin_onupdate)
-        {
-            all_plugins[i]->plugin_onupdate(c);
-        }
+        all_plugins[i]->on_update();
     }
+}
+// FIXME: doesn't check name collisions!
+void PluginManager::registerCommands( Plugin * p )
+{
+    SDL_mutexP(cmdlist_mutex);
+    vector <PluginCommand> & cmds = p->commands;
+    for(int i = 0; i < cmds.size();i++)
+    {
+        belongs[cmds[i].name] = p;
+    }
+    SDL_mutexV(cmdlist_mutex);
+}
+
+// FIXME: doesn't check name collisions!
+void PluginManager::unregisterCommands( Plugin * p )
+{
+    SDL_mutexP(cmdlist_mutex);
+    vector <PluginCommand> & cmds = p->commands;
+    for(int i = 0; i < cmds.size();i++)
+    {
+        belongs.erase(cmds[i].name);
+    }
+    SDL_mutexV(cmdlist_mutex);
 }

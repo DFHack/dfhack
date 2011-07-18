@@ -28,6 +28,7 @@ distribution.
 #include <map>
 #include <string>
 #include <vector>
+#include "FakeSDL.h"
 struct DFLibrary;
 namespace DFHack
 {
@@ -62,11 +63,23 @@ namespace DFHack
     };
     class Plugin
     {
+        struct RefLock;
+        enum plugin_state
+        {
+            PS_UNLOADED,
+            PS_LOADED,
+            PS_BROKEN
+        };
         friend class PluginManager;
-    public:
-        Plugin(DFHack::Core* core, const std::string& file);
+        Plugin(DFHack::Core* core, const std::string& filepath, const std::string& filename, PluginManager * pm);
         ~Plugin();
-        bool isLoaded () const;
+        command_result on_update();
+    public:
+        bool load();
+        bool unload();
+        bool reload();
+        command_result invoke( std::string & command, std::vector <std::string> & parameters );
+        plugin_state getState () const;
         const PluginCommand& operator[] (std::size_t index) const
         {
             return commands[index];
@@ -80,11 +93,13 @@ namespace DFHack
             return name;
         }
     private:
+        RefLock * access;
         std::vector <PluginCommand> commands;
         std::string filename;
         std::string name;
         DFLibrary * plugin_lib;
-        bool loaded;
+        PluginManager * parent;
+        plugin_state state;
         command_result (*plugin_init)(Core *, std::vector <PluginCommand> &);
         command_result (*plugin_status)(Core *, std::string &);
         command_result (*plugin_shutdown)(Core *);
@@ -94,14 +109,17 @@ namespace DFHack
     {
     // PRIVATE METHODS
         friend class Core;
+        friend class Plugin;
         PluginManager(Core * core);
         ~PluginManager();
         void OnUpdate( void );
+        void registerCommands( Plugin * p );
+        void unregisterCommands( Plugin * p );
     // PUBLIC METHODS
     public:
-        const Plugin *getPluginByName (const std::string & name);
+        Plugin *getPluginByName (const std::string & name);
         command_result InvokeCommand( std::string & command, std::vector <std::string> & parameters );
-        const Plugin* operator[] (std::size_t index)
+        Plugin* operator[] (std::size_t index)
         {
             if(index >= all_plugins.size())
                 return 0;
@@ -113,7 +131,8 @@ namespace DFHack
         }
     // DATA
     private:
-        std::map <std::string, const PluginCommand *> commands;
+        SDL::Mutex * cmdlist_mutex;
+        std::map <std::string, Plugin *> belongs;
         std::vector <Plugin *> all_plugins;
         std::string plugin_path;
     };

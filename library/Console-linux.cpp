@@ -209,6 +209,7 @@ namespace DFHack
             else
             {
                 print("\033c\033[3J\033[H");
+                fflush(dfout_C);
             }
         }
         /// Position cursor at x,y. 1,1 = top left corner

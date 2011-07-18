@@ -43,6 +43,7 @@ using namespace std;
 #include "dfhack/PluginManager.h"
 #include "ModuleFactory.h"
 #include "dfhack/modules/Gui.h"
+#include "dfhack/modules/World.h"
 
 #include "dfhack/SDL_fakes/events.h"
 
@@ -130,46 +131,189 @@ int fIOthread(void * iodata)
         return 0;
     }
     con.print("DFHack is ready. Have a nice day! Type in '?' or 'help' for help.\n");
-    //dfterm <<  << endl;
     int clueless_counter = 0;
     while (true)
     {
         string command = "";
-        con.lineedit("[DFHack]# ",command);
-        con.history_add(command);
-        //con <<"[DFHack]# ";
-        //char * line = linenoise("[DFHack]# ", core->con.dfout_C);
-        //        dfout <<"[DFHack]# ";
-        /*
-        if (line)
+        int ret = con.lineedit("[DFHack]# ",command);
+        if(ret == -2)
         {
-            command=line;
-            linenoiseHistoryAdd(line);
-            free(line);
-        }*/
-        //getline(cin, command);
-        if(command=="help" || command == "?")
+            cerr << "Console is shutting down properly." << endl;
+            return 0;
+        }
+        else if(ret == -1)
         {
-            con.print("Available commands\n");
-            con.print("------------------\n");
+            cerr << "Console caught an unspecified error." << endl;
+            continue;
+        }
+        else if(ret)
+        {
+            // a proper, non-empty command was entered
+            con.history_add(command);
+        }
+        // cut the input into parts
+        vector <string> parts;
+        cheap_tokenise(command,parts);
+        if(parts.size() == 0)
+        {
+            clueless_counter ++;
+            continue;
+        }
+        string first = parts[0];
+        parts.erase(parts.begin());
+        // let's see what we actually got
+        if(first=="help" || first == "?")
+        {
+            if(!parts.size())
+            {
+                con.print("This is the DFHack console. You can type commands in and manage DFHack plugins from it.\n"
+                          "Some basic editing capabilities are included (single-line text editing).\n"
+                          "The console also has a command history - you can navigate it with Up and Down keys.\n"
+                          "On Windows, you may have to resize your console window. The appropriate menu is accessible\n"
+                          "by clicking on the program icon in the top bar of the window.\n\n"
+                          "Available basic commands:\n"
+                          "  help|? [plugin]       - This text or help specific to a plugin.\n"
+                          "  load plugin|all       - Load a plugin by name or load all possible plugins.\n"
+                          "  unload plugin|all     - Unload a plugin or all loaded plugins.\n"
+                          "  reload plugin|all     - Reload a plugin or all loaded plugins.\n"
+                          "  listp                 - List plugins with their status.\n"
+                          "  listc [plugin]        - List commands. Optionally of a single plugin.\n"
+                          "  lista                 - List all commands, sorted by plugin (verbose).\n"
+                          "  fpause                - Force DF to pause without syncing.\n"
+                          "  die                   - Force DF to close immediately\n"
+                          "  cls                   - Clear the console scrollback.\n"
+                         );
+            }
+            else
+            {
+                con.printerr("not implemented yet\n");
+            }
+        }
+        else if( first == "load" )
+        {
+            if(parts.size())
+            {
+                string & plugname = parts[0];
+                if(plugname == "all")
+                {
+                    for(int i = 0; i < plug_mgr->size();i++)
+                    {
+                        Plugin * plug = (plug_mgr->operator[](i));
+                        plug->load();
+                    }
+                }
+                else
+                {
+                    Plugin * plug = plug_mgr->getPluginByName(plugname);
+                    if(!plug) con.printerr("No such plugin\n");
+                    plug->load();
+                }
+            }
+        }
+        else if( first == "reload" )
+        {
+            if(parts.size())
+            {
+                string & plugname = parts[0];
+                if(plugname == "all")
+                {
+                    for(int i = 0; i < plug_mgr->size();i++)
+                    {
+                        Plugin * plug = (plug_mgr->operator[](i));
+                        plug->reload();
+                    }
+                }
+                else
+                {
+                    Plugin * plug = plug_mgr->getPluginByName(plugname);
+                    if(!plug) con.printerr("No such plugin\n");
+                    plug->reload();
+                }
+            }
+        }
+        else if( first == "unload" )
+        {
+            if(parts.size())
+            {
+                string & plugname = parts[0];
+                if(plugname == "all")
+                {
+                    for(int i = 0; i < plug_mgr->size();i++)
+                    {
+                        Plugin * plug = (plug_mgr->operator[](i));
+                        plug->unload();
+                    }
+                }
+                else
+                {
+                    Plugin * plug = plug_mgr->getPluginByName(plugname);
+                    if(!plug) con.printerr("No such plugin\n");
+                    plug->unload();
+                }
+            }
+        }
+        else if(first == "listp")
+        {
+            for(int i = 0; i < plug_mgr->size();i++)
+            {
+                const Plugin * plug = (plug_mgr->operator[](i));
+                con.print("%s\n", plug->getName().c_str());
+            }
+        }
+        else if(first == "listc")
+        {
+            if(parts.size())
+            {
+                string & plugname = parts[0];
+                const Plugin * plug = plug_mgr->getPluginByName(plugname);
+                if(!plug)
+                {
+                    con.printerr("There's no plugin called %s!\n",plugname.c_str());
+                }
+                else for (int j = 0; j < plug->size();j++)
+                {
+                    const PluginCommand & pcmd = (plug->operator[](j));
+                    con.print("%12s| %s\n",pcmd.name.c_str(), pcmd.description.c_str());
+                }
+            }
+            else for(int i = 0; i < plug_mgr->size();i++)
+            {
+                const Plugin * plug = (plug_mgr->operator[](i));
+                if(!plug->size())
+                    continue;
+                for (int j = 0; j < plug->size();j++)
+                {
+                    const PluginCommand & pcmd = (plug->operator[](j));
+                    con.print("%12s| %s\n",pcmd.name.c_str(), pcmd.description.c_str());
+                }
+            }
+        }
+        else if(first == "lista")
+        {
             for(int i = 0; i < plug_mgr->size();i++)
             {
                 const Plugin * plug = (plug_mgr->operator[](i));
                 if(!plug->size())
                     continue;
-                con.print("Plugin %s :\n", plug->getName().c_str());
+                con.print("%s :\n", plug->getName().c_str());
                 for (int j = 0; j < plug->size();j++)
                 {
                     const PluginCommand & pcmd = (plug->operator[](j));
                     con.print("%12s| %s\n",pcmd.name.c_str(), pcmd.description.c_str());
                     //con << setw(12) << pcmd.name << "| " << pcmd.description << endl;
                 }
-                con.print("\n");
+                //con.print("\n");
             }
         }
-        else if( command == "" )
+        else if(first == "fpause")
         {
-            clueless_counter++;
+            World * w = core->getWorld();
+            w->SetPauseState(true);
+            con.print("The game was forced to pause!");
+        }
+        else if(first == "cls")
+        {
+            con.clear();
         }
         else
         {
@@ -189,10 +333,12 @@ int fIOthread(void * iodata)
                     con.printerr("Invalid command.\n");
                     clueless_counter ++;
                 }
+                /*
                 else if(res == CR_FAILURE)
                 {
                     con.printerr("ERROR!\n");
                 }
+                */
             }
         }
         if(clueless_counter == 3)
@@ -393,6 +539,7 @@ int Core::SDL_Event(SDL::Event* ev, int orig_return)
             if(g->hotkeys && g->df_interface && g->df_menu_state)
             {
                 t_viewscreen * ws = g->GetCurrentScreen();
+                // FIXME: put hardcoded values into memory.xml
                 if(ws->getClassName() == "viewscreen_dwarfmodest" && *g->df_menu_state == 0x23)
                     return orig_return;
                 else

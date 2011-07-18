@@ -39,7 +39,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
-    return CR_OK;
+    return CR_FAILURE;
 }
 
 DFhackCExport command_result runqt (Core * c, vector <string> & parameters)

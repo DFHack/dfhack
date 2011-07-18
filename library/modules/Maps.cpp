@@ -1044,6 +1044,26 @@ bool Maps::ReadVeins(uint32_t x, uint32_t y, uint32_t z, vector <t_vein>* veins,
 }
 
 /*
+Write the vein retreived using ReadVeins back to the address it was taken from.
+*/
+bool Maps::WriteVein(t_vein *vein)
+{
+	if(!vein) return false;
+    Process* p = d->owner;
+
+	//Write each part individually.
+	p->writeDWord(vein->address_of +  4 , vein->type );
+	p->write(     vein->address_of +  8 , 32 , (uint8_t *)vein->assignment );
+	p->writeDWord(vein->address_of + 40 , vein->flags );
+
+	return true;
+}
+
+#include<stdio.h>
+
+
+
+/*
 __int16 __userpurge GetGeologicalRegion<ax>(__int16 block_X<cx>, int X<ebx>, __int16 block_Y<di>, int block_addr<esi>, int Y)
 {
   char bio_off; // al@1

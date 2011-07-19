@@ -57,25 +57,56 @@
 			       (arguments[0],arguments[1],arguments[2],arguments[3],arguments[4],arguments[5],arguments[6],arguments[7],arguments[8],arguments[9]);}*/
 	
 
+int FunctionCaller::CallF(size_t count,callconv conv,void* f,const vector<int> &arguments)//more complex but not more error safe
+{
+	__F_TYPEDEFS(STD_CALL,__stdcall);
+	__F_TYPEDEFS(FAST_CALL,__fastcall);
+	__F_TYPEDEFS(THIS_CALL,__thiscall);
+	__F_TYPEDEFS(CDECL_CALL,__cdecl);
+	{
+	__FCALLEX(STD_CALL,__stdcall);
+	__FCALLEX(FAST_CALL,__fastcall);
+	__FCALLEX(THIS_CALL,__thiscall);
+	__FCALLEX(CDECL_CALL,__cdecl);
+	}
+}
 int FunctionCaller::CallFunction(size_t func_ptr,callconv conv,const vector<int> &arguments)
 {
 	//nasty nasty code...
-	int ret=0;
 	
 	void* f= reinterpret_cast<void*>(func_ptr+base_);
 	size_t count=arguments.size();
 	if(count==0)
 		return (reinterpret_cast<int (*)()>(f))(); //does not matter how we call it...
+	int ret=0;
+	//typedefs
 	__F_TYPEDEFS(STD_CALL,__stdcall);
 	__F_TYPEDEFS(FAST_CALL,__fastcall);
 	__F_TYPEDEFS(THIS_CALL,__thiscall);
 	__F_TYPEDEFS(CDECL_CALL,__cdecl);
-
-	__FCALLEX(STD_CALL,__stdcall);
-	__FCALLEX(FAST_CALL,__fastcall);
-	__FCALLEX(THIS_CALL,__thiscall);
-	__FCALLEX(CDECL_CALL,__cdecl);
-	return ret;
+	//calls
+	__FCALL(STD_CALL,__stdcall);
+	__FCALL(FAST_CALL,__fastcall);
+	__FCALL(THIS_CALL,__thiscall);
+	__FCALL(CDECL_CALL,__cdecl);
+	return -1; //incorect type. Should probably throw...
+	//return CallF(count,conv,f,arguments);
+	/*//testing part{  worked some time ago..., put where DFHack::Core is accesible
+	c->Suspend();
+	FunctionCaller caller(c->p->getBase()); 
+	std::vector <int> args;
+	args.push_back((size_t)"Hello world");
+	args.push_back(4);
+	args.push_back(4);
+	args.push_back(0);
+	dfprint  mprint=(dfprint)(0x27F030+c->p->getBase());
+	mprint("Hello world",4,4,0);
+	//caller.CallFunction((0x27F030),FunctionCaller::THIS_CALL,args);
+	c->Resume();
+	return CR_OK;
+	//}end testing*/
 }
 #undef __FCALL
 #undef __FCALLEX
+#undef __F_TYPEDEFS
+#undef __F_T

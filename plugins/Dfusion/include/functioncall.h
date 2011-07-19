@@ -16,7 +16,9 @@ public:
 	FunctionCaller(size_t base):base_(base){};
 
 	int CallFunction(size_t func_ptr,callconv conv,const vector<int> &arguments);
+	
 private:
+	int CallF(size_t count,callconv conv,void* f,const vector<int> &arguments);
 	size_t base_;
 };
 

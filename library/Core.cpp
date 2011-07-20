@@ -130,7 +130,8 @@ int fIOthread(void * iodata)
         con.printerr("Something horrible happened in Core's constructor...\n");
         return 0;
     }
-    con.print("DFHack is ready. Have a nice day! Type in '?' or 'help' for help.\n");
+    con.print("DFHack is ready. Have a nice day!\n"
+              "Type in '?' or 'help' for general help, 'ls' to see all commands.\n");
     int clueless_counter = 0;
     while (true)
     {
@@ -171,17 +172,18 @@ int fIOthread(void * iodata)
                           "The console also has a command history - you can navigate it with Up and Down keys.\n"
                           "On Windows, you may have to resize your console window. The appropriate menu is accessible\n"
                           "by clicking on the program icon in the top bar of the window.\n\n"
-                          "Available basic commands:\n"
-                          "  help|? [plugin]       - This text or help specific to a plugin.\n"
-                          "  load plugin|all       - Load a plugin by name or load all possible plugins.\n"
-                          "  unload plugin|all     - Unload a plugin or all loaded plugins.\n"
-                          "  reload plugin|all     - Reload a plugin or all loaded plugins.\n"
-                          "  listp                 - List plugins with their status.\n"
-                          "  listc [plugin]        - List commands. Optionally of a single plugin.\n"
-                          "  lista                 - List all commands, sorted by plugin (verbose).\n"
-                          "  fpause                - Force DF to pause without syncing.\n"
+                          "Basic commands:\n"
+                          "  help|?                - This text.\n"
+                          "  ls|dir [PLUGIN]           - List available commands. Optionally for single plugin.\n"
+                          "  cls                   - Clear the console.\n"
+                          "  fpause                - Force DF to pause.\n"
                           "  die                   - Force DF to close immediately\n"
-                          "  cls                   - Clear the console scrollback.\n"
+                          "Plugin management (useful for developers):\n"
+                          //"  belongs COMMAND       - Tell which plugin a command belongs to.\n"
+                          "  plug [PLUGIN|v]       - List plugin state and description.\n"
+                          "  load PLUGIN|all       - Load a plugin by name or load all possible plugins.\n"
+                          "  unload PLUGIN|all     - Unload a plugin or all loaded plugins.\n"
+                          "  reload PLUGIN|all     - Reload a plugin or all loaded plugins.\n"
                          );
             }
             else
@@ -252,15 +254,7 @@ int fIOthread(void * iodata)
                 }
             }
         }
-        else if(first == "listp")
-        {
-            for(int i = 0; i < plug_mgr->size();i++)
-            {
-                const Plugin * plug = (plug_mgr->operator[](i));
-                con.print("%s\n", plug->getName().c_str());
-            }
-        }
-        else if(first == "listc")
+        else if(first == "ls" || first == "dir")
         {
             if(parts.size())
             {
@@ -273,36 +267,47 @@ int fIOthread(void * iodata)
                 else for (int j = 0; j < plug->size();j++)
                 {
                     const PluginCommand & pcmd = (plug->operator[](j));
-                    con.print("%12s| %s\n",pcmd.name.c_str(), pcmd.description.c_str());
+                    con.print("  %-22s - %s\n",pcmd.name.c_str(), pcmd.description.c_str());
                 }
             }
-            else for(int i = 0; i < plug_mgr->size();i++)
+            else
             {
-                const Plugin * plug = (plug_mgr->operator[](i));
-                if(!plug->size())
-                    continue;
-                for (int j = 0; j < plug->size();j++)
+                con.print(
+                "builtin:\n"
+                "  help|?                - This text or help specific to a plugin.\n"
+                "  ls [PLUGIN]           - List available commands. Optionally for single plugin.\n"
+                "  cls                   - Clear the console.\n"
+                "  fpause                - Force DF to pause.\n"
+                "  die                   - Force DF to close immediately\n"
+                "  belongs COMMAND       - Tell which plugin a command belongs to.\n"
+                "  plug [PLUGIN|v]       - List plugin state and detailed description.\n"
+                "  load PLUGIN|all       - Load a plugin by name or load all possible plugins.\n"
+                "  unload PLUGIN|all     - Unload a plugin or all loaded plugins.\n"
+                "  reload PLUGIN|all     - Reload a plugin or all loaded plugins.\n"
+                "\n"
+                "plugins:\n"
+                );
+                for(int i = 0; i < plug_mgr->size();i++)
                 {
-                    const PluginCommand & pcmd = (plug->operator[](j));
-                    con.print("%12s| %s\n",pcmd.name.c_str(), pcmd.description.c_str());
+                    const Plugin * plug = (plug_mgr->operator[](i));
+                    if(!plug->size())
+                        continue;
+                    for (int j = 0; j < plug->size();j++)
+                    {
+                        const PluginCommand & pcmd = (plug->operator[](j));
+                        con.print("  %-22s- %s\n",pcmd.name.c_str(), pcmd.description.c_str());
+                    }
                 }
             }
         }
-        else if(first == "lista")
+        else if(first == "plug")
         {
             for(int i = 0; i < plug_mgr->size();i++)
             {
                 const Plugin * plug = (plug_mgr->operator[](i));
                 if(!plug->size())
                     continue;
-                con.print("%s :\n", plug->getName().c_str());
-                for (int j = 0; j < plug->size();j++)
-                {
-                    const PluginCommand & pcmd = (plug->operator[](j));
-                    con.print("%12s| %s\n",pcmd.name.c_str(), pcmd.description.c_str());
-                    //con << setw(12) << pcmd.name << "| " << pcmd.description << endl;
-                }
-                //con.print("\n");
+                con.print("%s\n", plug->getName().c_str());
             }
         }
         else if(first == "fpause")
@@ -314,6 +319,10 @@ int fIOthread(void * iodata)
         else if(first == "cls")
         {
             con.clear();
+        }
+        else if(first == "die")
+        {
+            _exit(666);
         }
         else
         {

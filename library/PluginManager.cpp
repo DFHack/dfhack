@@ -196,7 +196,7 @@ bool Plugin::load()
     plugin_status = (command_result (*)(Core *, std::string &)) LookupPlugin(plug, "plugin_status");
     plugin_onupdate = (command_result (*)(Core *)) LookupPlugin(plug, "plugin_onupdate");
     plugin_shutdown = (command_result (*)(Core *)) LookupPlugin(plug, "plugin_shutdown");
-    name = _PlugName();
+    //name = _PlugName();
     plugin_lib = plug;
     if(plugin_init(&c,commands) == CR_OK)
     {
@@ -322,6 +322,8 @@ PluginManager::PluginManager(Core * core)
         {
             Plugin * p = new Plugin(core, path + filez[i], filez[i], this);
             all_plugins.push_back(p);
+            // make all plugins load by default (until a proper design emerges).
+            p->load();
         }
     }
 }

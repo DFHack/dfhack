@@ -234,9 +234,8 @@ bool Maps::Start()
     if (mx == 0 || mx > 48 || my == 0 || my > 48 || mz == 0)
     {
         cerr << hex << &mx << " " << &my << " " << &mz << endl;
-        cout << dec << mx << " "<< my << " "<< mz << endl;
-        // FIXME: this should be avoided!
-        throw Error::BadMapDimensions(mx, my);
+        cerr << dec << mx << " "<< my << " "<< mz << endl;
+        return false;
     }
 
     d->Started = true;

@@ -928,6 +928,15 @@
             </Group>
             <Group name="Materials" description="Offsets used by the Materials module.">
                 <Address name="inorganics" description="Soil, stone, gems and metal."/>
+                <Group name="inorganic_extras">
+                    <Offset name="ore_types" description="Vector of indexes of metals produced when ore is smelted"/>
+                    <Offset name="ore_chances" description="Vector of percent chance of each type of metal being produced on smelting"/>
+                    <Offset name="strand_types" description="Vector of indexes of metals produced when ore undergoes strand extraction"/>
+                    <Offset name="strand_chances" description="Vector of percent chance of each type of metal being produced on strand extraction"/>
+                    <Offset name="value" description="Meterial value"/>
+                    <Offset name="wall_tile" description="Tile when material is a natural wall"/>
+                    <Offset name="boulder_tile" description="Tile when material is a dug out stone"/>
+                </Group>
                 <Address name="organics_all" description="Wood and plant matter, mixed" />
                 <Address name="organics_plants" description="plant matter" />
                 <Address name="organics_trees" description="just wood" />
@@ -2254,6 +2263,17 @@
                     <Offset name="flags3" value="0xE8"/>
                 </Group>
             </Group>
+            <Group name="Materials">
+                <Group name="inorganic_extras">
+                    <Offset name="ore_types" value="0x18"/>
+                    <Offset name="ore_chances" value="0x24"/>
+                    <Offset name="strand_types" value="0x3c"/>
+                    <Offset name="strand_chances" value="0x48"/>
+                    <Offset name="value" value="0x17c"/>
+                    <Offset name="wall_tile" value="0x20c"/>
+                    <Offset name="boulder_tile" value="0x21e"/>
+                </Group>
+            </Group>
             <Group name="Items" valid="true">
                 <Address name="items_vector" value="0x16c4540"/>
                 <Offset name="id" value="0x14"/>
@@ -3027,6 +3047,7 @@
         <MD5 value="fc15065c4d1977ca019c6dad220413d1" />
         <Offsets>
             WORLD: 0x93f77a0
+
             <Group name="GUI">
                 <Address name="hotkeys" value="0x93f740c" />
                 <Address name="interface" value="0x8C3E900" />
@@ -3039,6 +3060,17 @@
                 Address name="vector" value="0x0940b174"
                 <Group name="creature">
                     <Offset name="flags3" value="0x94"/>
+                </Group>
+            </Group>
+            <Group name="Materials">
+                <Group name="inorganic_extras">
+                    <Offset name="ore_types" value="0x18"/>
+                    <Offset name="ore_chances" value="0x24"/>
+                    <Offset name="strand_types" value="0x3c"/>
+                    <Offset name="strand_chances" value="0x48"/>
+                    <Offset name="value" value="0x17c"/>
+                    <Offset name="wall_tile" value="0x20c"/>
+                    <Offset name="boulder_tile" value="0x21e"/>
                 </Group>
             </Group>
             <Group name="Vermin" valid="true">

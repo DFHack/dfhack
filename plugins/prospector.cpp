@@ -30,6 +30,11 @@ typedef std::vector<DFHack::t_feature*> FeatureListPointer;
 typedef std::map<DFHack::DFCoord, FeatureListPointer> FeatureMap;
 typedef std::vector<DFHack::df_plant *> PlantList;
 
+#define TO_PTR_VEC(obj_vec, ptr_vec) \
+    ptr_vec.clear(); \
+    for (size_t i = 0; i < obj_vec.size(); i++) \
+        ptr_vec.push_back(&obj_vec[i])
+
 template<template <typename> class P = std::greater >
 struct compare_pair_second
 {
@@ -40,8 +45,10 @@ struct compare_pair_second
         }
 };
 
-
-void printMats(DFHack::Console & con, MatMap &mat, std::vector<DFHack::t_matgloss> &materials)
+// printMats() accepts a vector of pointers to t_matgloss so that it can
+// deal t_matgloss and all subclasses.
+void printMats(DFHack::Console & con, MatMap &mat,
+               std::vector<DFHack::t_matgloss*> &materials)
 {
     unsigned int total = 0;
     MatSorter sorting_vector;
@@ -49,21 +56,65 @@ void printMats(DFHack::Console & con, MatMap &mat, std::vector<DFHack::t_matglos
     {
         sorting_vector.push_back(*it);
     }
-    std::sort(sorting_vector.begin(), sorting_vector.end(), compare_pair_second<>());
-    for (MatSorter::const_iterator it = sorting_vector.begin(); it != sorting_vector.end(); ++it)
+    std::sort(sorting_vector.begin(), sorting_vector.end(),
+              compare_pair_second<>());
+    for (MatSorter::const_iterator it = sorting_vector.begin();
+         it != sorting_vector.end(); ++it)
     {
         if(it->first >= materials.size())
         {
-            con << "Bad index: " << it->first << " out of " <<  materials.size() << endl;
+            con << "Bad index: " << it->first << " out of " 
+                <<  materials.size() << endl;
             continue;
         }
-        DFHack::t_matgloss mat = materials[it->first];
-        con << std::setw(25) << mat.id << " : " << it->second << std::endl;
+        DFHack::t_matgloss* mat = materials[it->first];
+        con << std::setw(25) << mat->id << " : " << it->second << std::endl;
         total += it->second;
     }
 
     con << ">>> TOTAL = " << total << std::endl << std::endl;
 }
+
+void printMats(DFHack::Console & con, MatMap &mat,
+               std::vector<DFHack::t_matgloss> &materials)
+{
+    std::vector<DFHack::t_matgloss*> ptr_vec;
+    TO_PTR_VEC(materials, ptr_vec);
+    printMats(con, mat, ptr_vec);
+}
+
+void printVeins(DFHack::Console & con, MatMap &mat_map,
+                DFHack::Materials* mats)
+{
+    MatMap ores;
+    MatMap gems;
+    MatMap rest;
+
+    for (MatMap::const_iterator it = mat_map.begin(); it != mat_map.end(); ++it)
+    {
+        DFHack::t_matglossInorganic &gloss = mats->inorganic[it->first];
+
+        if (gloss.isOre())
+            ores[it->first] = it->second;
+        else if (gloss.isGem())
+            gems[it->first] = it->second;
+        else
+            rest[it->first] = it->second;
+    }
+
+    std::vector<DFHack::t_matgloss*> ptr_vec;
+    TO_PTR_VEC(mats->inorganic, ptr_vec);
+
+    con << "Ores:" << std::endl;
+    printMats(con, ores, ptr_vec);
+
+    con << "Gems:" << std::endl;
+    printMats(con, gems, ptr_vec);
+
+    con << "Other vein stone:" << std::endl;
+    printMats(con, rest, ptr_vec);
+}
+
 DFhackCExport command_result prospector (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
@@ -313,11 +364,13 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
         con << std::setw(25) << DFHack::TileMaterialString[it->first] << " : " << it->second << std::endl;
     }
 
-    con << std::endl << "Layer materials:" << std::endl;
-    printMats(con, layerMats, mats->inorganic);
+    std::vector<t_matgloss*> ptr_vec;
+    TO_PTR_VEC(mats->inorganic, ptr_vec);
 
-    con << "Vein materials:" << std::endl;
-    printMats(con, veinMats, mats->inorganic);
+    con << std::endl << "Layer materials:" << std::endl;
+    printMats(con, layerMats, ptr_vec);
+
+    printVeins(con, veinMats, mats);
 
     if (showPlants)
     {

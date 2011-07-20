@@ -32,20 +32,58 @@ distribution.
 #include "dfhack/Export.h"
 #include "dfhack/Module.h"
 #include "dfhack/Types.h"
+
+#include <vector>
+
 namespace DFHack
 {
     class DFContextShared;
     /**
      * \ingroup grp_materials
      */
-    struct t_matgloss
+    class DFHACK_EXPORT t_matgloss
     {
+    public:
         char id[128]; //the id in the raws
         uint8_t fore; // Annoyingly the offset for this differs between types
         uint8_t back;
         uint8_t bright;
         char name[128]; //this is the name displayed ingame
+
+        int32_t  value;        // Material value
+        uint16_t wall_tile;    // Tile when a natural wall
+        uint16_t boulder_tile; // Tile when a dug-out stone;
+
+    public:
+        t_matgloss();
     };
+
+    class DFHACK_EXPORT t_matglossInorganic : public t_matgloss
+    {
+    public:
+        // Types of metals the ore will produce when smelted.  Each number
+        // is an index into the inorganic matglass vector.
+        std::vector<uint16_t>* ore_types;
+
+        // Percent chance that the ore will produce each type of metal
+        // when smelted.
+        std::vector<uint16_t>* ore_chances;
+
+        // Types of metals the ore will produce from strand extraction.
+        // Each number is an index into the inorganic matglass vector.
+        std::vector<uint16_t>* strand_types;
+
+        // Percent chance that the ore will produce each type of metal
+        // fram strand extraction.
+        std::vector<uint16_t>* strand_chances;
+
+    public:
+        t_matglossInorganic();
+
+        bool isOre();
+        bool isGem();
+    };
+
     /**
      * \ingroup grp_materials
      */
@@ -178,7 +216,7 @@ namespace DFHack
         ~Materials();
         bool Finish();
 
-        std::vector<t_matgloss> inorganic;
+        std::vector<t_matglossInorganic> inorganic;
         std::vector<t_matgloss> organic;
         std::vector<t_matgloss> tree;
         std::vector<t_matgloss> plant;

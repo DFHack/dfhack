@@ -24,7 +24,10 @@ struct t_vecTriplet
     uint32_t alloc_end;
 };
 
-DFhackCExport command_result df_vectors (Core * c, vector <string> & parameters);
+DFhackCExport command_result df_vectors  (Core * c,
+                                          vector <string> & parameters);
+DFhackCExport command_result df_clearvec (Core * c,
+                                          vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -34,12 +37,17 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
+
     commands.push_back(PluginCommand("vectors",
                "Scan memory for vectors.\
 \n                1st param: start of scan\
 \n                2nd param: number of bytes to scan",
                       df_vectors));
-    return CR_OK;
+
+    commands.push_back(PluginCommand("clearvec",
+               "Set list of vectors to zero length",
+                      df_clearvec));
+     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
@@ -55,12 +63,6 @@ static bool hexOrDec(string &str, uint32_t &value)
         return true;
 
     return false;
-}
-
-static void usage(Console &con)
-{
-    con << "Usage: vectors <start of scan address> <# bytes to scan>"
-        << std::endl;
 }
 
 static bool mightBeVec(vector<t_memrange> &heap_ranges,
@@ -94,6 +96,45 @@ static bool inAnyRange(vector<t_memrange> &ranges, uint32_t ptr)
     return false;
 }
 
+static bool getHeapRanges(Core * c, std::vector<t_memrange> &heap_ranges)
+{
+    std::vector<t_memrange> ranges;
+
+    c->p->getMemRanges(ranges);
+
+    for (size_t i = 0; i < ranges.size(); i++)
+    {
+        t_memrange &range = ranges[i];
+
+        // Some kernels don't report [heap], and the heap can consist of
+        // more segments than just the one labeled with [heap], so include
+        // all segments which *might* be part of the heap.
+        if (range.read && range.write && !range.shared)
+        {
+            if (strlen(range.name) == 0 || strcmp(range.name, "[heap]") == 0)
+                heap_ranges.push_back(range);
+        }
+    }
+
+    if (heap_ranges.empty())
+    {
+        c->con << "No possible heap segments." << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+////////////////////////////////////////
+// COMMAND: vectors
+////////////////////////////////////////
+
+static void vectorsUsage(Console &con)
+{
+    con << "Usage: vectors <start of scan address> <# bytes to scan>"
+        << std::endl;
+}
+
 static void printVec(Console &con, const char* msg, t_vecTriplet *vec,
                      uint32_t start, uint32_t pos)
 {
@@ -110,7 +151,7 @@ DFhackCExport command_result df_vectors (Core * c, vector <string> & parameters)
 
     if (parameters.size() != 2)
     {
-        usage(con);
+        vectorsUsage(con);
         return CR_FAILURE;
     }
 
@@ -118,13 +159,13 @@ DFhackCExport command_result df_vectors (Core * c, vector <string> & parameters)
 
     if (!hexOrDec(parameters[0], start))
     {
-        usage(con);
+        vectorsUsage(con);
         return CR_FAILURE;
     }
     
     if (!hexOrDec(parameters[1], bytes))
     {
-        usage(con);
+        vectorsUsage(con);
         return CR_FAILURE;
     }
 
@@ -136,24 +177,18 @@ DFhackCExport command_result df_vectors (Core * c, vector <string> & parameters)
 
     c->Suspend();
 
-    std::vector<t_memrange> ranges;
     std::vector<t_memrange> heap_ranges;
-    c->p->getMemRanges(ranges);
+
+    if (!getHeapRanges(c, heap_ranges))
+    {
+        return CR_FAILURE;
+        c->Resume();
+    }
 
     bool startInRange = false;
-
-    for (size_t i = 0; i < ranges.size(); i++)
+    for (size_t i = 0; i < heap_ranges.size(); i++)
     {
-        t_memrange &range = ranges[i];
-
-        // Some kernels don't report [heap], and the heap can consist of
-        // more segments than just the one labeled with [heap], so include
-        // all segments which *might* be part of the heap.
-        if (range.read && range.write && !range.shared)
-        {
-            if (strlen(range.name) == 0 || strcmp(range.name, "[heap]") == 0)
-                heap_ranges.push_back(range);
-        }
+        t_memrange &range = heap_ranges[i];
 
         if (!range.isInRange(start))
             continue;
@@ -169,18 +204,12 @@ DFhackCExport command_result df_vectors (Core * c, vector <string> & parameters)
             end = (uint32_t) range.end;
         }
         startInRange = true;
+        break;
     } // for (size_t i = 0; i < ranges.size(); i++)
 
     if (!startInRange)
     {
         con << "Address not in any memory range." << std::endl;
-        c->Resume();
-        return CR_FAILURE;
-    }
-
-    if (heap_ranges.empty())
-    {
-        con << "No possible heap segments." << std::endl;
         c->Resume();
         return CR_FAILURE;
     }
@@ -222,6 +251,112 @@ DFhackCExport command_result df_vectors (Core * c, vector <string> & parameters)
             }
         }
     } // for (uint32_t pos = start; pos < end; pos += ptr_size)
+
+    c->Resume();
+    return CR_OK;
+}
+
+////////////////////////////////////////
+// COMMAND: clearvec
+////////////////////////////////////////
+
+static void clearUsage(Console &con)
+{
+    con << "Usage: clearvec <vector1 addr> [vector2 addr] ..." << std::endl;
+    con << "Address can be either for vector or pointer to vector."
+        << std::endl;
+}
+
+DFhackCExport command_result df_clearvec (Core * c, vector <string> & parameters)
+{
+    Console & con = c->con;
+
+    if (parameters.size() == 0)
+    {
+        clearUsage(con);
+        return CR_FAILURE;
+    }
+
+    uint32_t start = 0, bytes = 0;
+
+    if (!hexOrDec(parameters[0], start))
+    {
+        vectorsUsage(con);
+        return CR_FAILURE;
+    }
+    
+    if (!hexOrDec(parameters[1], bytes))
+    {
+        vectorsUsage(con);
+        return CR_FAILURE;
+    }
+
+    c->Suspend();
+
+    std::vector<t_memrange> heap_ranges;
+
+    if (!getHeapRanges(c, heap_ranges))
+    {
+        c->Resume();
+        return CR_FAILURE;
+    }
+
+    for (size_t i = 0; i < parameters.size(); i++)
+    {
+        std::string addr_str = parameters[i];
+        uint32_t addr;
+        if (!hexOrDec(addr_str, addr))
+        {
+            con << "'" << addr_str << "' not a number." << std::endl;
+            continue;
+        }
+
+        if (addr % 4 != 0)
+        {
+            con << addr_str << " not 4 byte aligned." << std::endl;
+            continue;
+        }
+
+        if (!inAnyRange(heap_ranges, addr))
+        {
+            con << addr_str << " not in any valid address range." << std::endl;
+            continue;
+        }
+
+        bool          valid = false;
+        bool          ptr   = false;
+        t_vecTriplet* vec   = (t_vecTriplet*) addr;
+
+        if (mightBeVec(heap_ranges, vec))
+            valid = true;
+        else
+        {
+            // Is it a pointer to a vector?
+            addr = * ( (uint32_t*) addr);
+            vec  = (t_vecTriplet*) addr;
+
+            if (inAnyRange(heap_ranges, addr) && mightBeVec(heap_ranges, vec))
+            {
+                valid = true;
+                ptr   = true;
+            }
+        }
+
+        if (!valid)
+        {
+            con << addr_str << " is not a vector." << std::endl;
+            continue;
+        }
+
+        vec->end = vec->start;
+
+        if (ptr)
+            con << "Vector pointer ";
+        else
+            con << "Vector         ";
+
+        con << addr_str << " set to zero length." << std::endl;
+    } // for (size_t i = 0; i < parameters.size(); i++)
 
     c->Resume();
     return CR_OK;

@@ -32,7 +32,9 @@ distribution.
 #include "dfhack/Export.h"
 #include "dfhack/Module.h"
 #include "dfhack/Types.h"
-
+#include "dfhack/Virtual.h"
+#include "dfhack/modules/Materials.h"
+#include "dfhack/Process.h"
 /**
  * \defgroup grp_items Items module and its types
  * @ingroup grp_modules
@@ -98,16 +100,30 @@ union t_itemflags
 };
 
 /**
+ * Describes relationship of an item with other objects
+ * \ingroup grp_items
+ */
+struct t_itemref : public t_virtual
+{
+    int32_t value;
+};
+
+/**
  * Basic item data, read as a single chunk
  * \ingroup grp_items
  */
-struct t_item
+struct t_item : public t_virtual
 {
-    uint32_t vtable;
-    int16_t x;
-    int16_t y;
-    int16_t z;
-    t_itemflags flags;
+    // vptr                0x0 + 4
+    int16_t x;          // 0x4 + 2
+    int16_t y;          // 0x6 + 2
+    int16_t z;          // 0x8 + 2
+    // 2B padding          0xA + 2
+    t_itemflags flags;  // 0xC + 4
+    uint32_t unk1;      // 0x10 + 4
+    uint32_t id;        // 0x14 + 4
+    std::vector<void *> unk2;// usage is pretty rare
+    std::vector<t_itemref *> itemrefs;
 };
 
 /**
@@ -116,13 +132,11 @@ struct t_item
  */
 struct dfh_item
 {
-    int32_t id;
-    t_item base;
+    t_item * base;
     t_material matdesc;
     int32_t quantity;
     int32_t quality;
     int16_t wear_level;
-    uint32_t origin;
 };
 
 /**
@@ -148,8 +162,8 @@ public:
     bool Start();
     bool Finish();
 
-    bool readItemVector(std::vector<uint32_t> &items);
-    uint32_t findItemByID(int32_t id);
+    bool readItemVector(std::vector<t_item *> &items);
+    t_item * findItemByID(int32_t id);
 
     /// get a string describing an item
     std::string getItemDescription(const dfh_item & item, Materials * Materials);
@@ -157,7 +171,7 @@ public:
     std::string getItemClass(int32_t index);
     std::string getItemClass(const dfh_item & item);
     /// read an item, including the extra attributes
-    bool readItem(uint32_t itemptr, dfh_item & item);
+    bool readItem(t_item * itembase, dfh_item & item);
     /// write item base (position and flags only = t_item part of dfh_item)
     bool writeItem(const dfh_item & item);
     /// dump offsets used by accessors to a string

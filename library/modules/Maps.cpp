@@ -831,29 +831,36 @@ bool Maps::SortBlockEvents(uint32_t x, uint32_t y, uint32_t z, vector <t_vein *>
         else
         {
             string cname = p->readClassName(type);
+            //string cname = typeid(*(blockevent *)temp).name();
+            //Core::getInstance().con.printerr("%s\n",cname.c_str());
             if(!off.vein_ice_vptr && cname == "block_square_event_frozen_liquidst")
             {
                 off.vein_ice_vptr = type;
+                Core::getInstance().con.printerr("%s %x\n",cname.c_str(), type);
                 goto retry;
             }
             else if(!off.vein_mineral_vptr &&cname == "block_square_event_mineralst")
             {
                 off.vein_mineral_vptr = type;
+                Core::getInstance().con.printerr("%s %x\n",cname.c_str(), type);
                 goto retry;
             }
             else if(!off.vein_spatter_vptr && cname == "block_square_event_material_spatterst")
             {
                 off.vein_spatter_vptr = type;
+                Core::getInstance().con.printerr("%s %x\n",cname.c_str(), type);
                 goto retry;
             }
             else if(!off.vein_grass_vptr && cname=="block_square_event_grassst")
             {
                 off.vein_grass_vptr = type;
+                Core::getInstance().con.printerr("%s %x\n",cname.c_str(), type);
                 goto retry;
             }
             else if(!off.vein_worldconstruction_vptr && cname=="block_square_event_world_constructionst")
             {
                 off.vein_worldconstruction_vptr = type;
+                Core::getInstance().con.printerr("%s %x\n",cname.c_str(), type);
                 goto retry;
             }
 #ifdef DEBUG

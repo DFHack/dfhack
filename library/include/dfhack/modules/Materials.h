@@ -31,6 +31,7 @@ distribution.
  */
 #include "dfhack/Export.h"
 #include "dfhack/Module.h"
+#include "dfhack/Types.h"
 namespace DFHack
 {
     class DFContextShared;

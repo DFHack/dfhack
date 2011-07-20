@@ -27,6 +27,7 @@ distribution.
 namespace DFHack
 {
     /// very generic representation of a virtual class... just the pointer to the vtable.
+    /// this is intended for instances where wrapping the classes properly hasn't been done yet.
     struct t_virtual
     {
         void * vptr;

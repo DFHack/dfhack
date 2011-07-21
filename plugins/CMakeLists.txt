@@ -102,6 +102,12 @@ if(BUILD_QTPLUG)
     add_subdirectory (qtplug)
 endif()
 
+OPTION(BUILD_STONESENSE "Build stonesense (needs a checkout first)." OFF)
+if(BUILD_STONESENSE)
+    add_subdirectory (stonesense)
+endif()
+
+
 OPTION(BUILD_KITTENS "Build the kittens plugin." OFF)
 if(BUILD_KITTENS)
     DFHACK_PLUGIN(kittens kittens.cpp)
@@ -113,6 +119,7 @@ IF(UNIX)
         DFHACK_PLUGIN(vectors vectors.cpp)
     endif()
 endif()
+
 
 DFHACK_PLUGIN(reveal reveal.cpp)
 DFHACK_PLUGIN(prospector prospector.cpp)

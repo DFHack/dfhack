@@ -53,6 +53,11 @@ case "$1" in
     LD_PRELOAD=./libdfhack.so valgrind $DF_VALGRIND_OPTS --log-file=valgrind.log ./libs/Dwarf_Fortress $*
     ret=$?
     ;;
+  -c | --callgrind)
+    shift
+    LD_PRELOAD=./libdfhack.so valgrind $DF_CALLGRIND_OPTS --tool=callgrind --separate-threads=yes --dump-instr=yes --instr-atstart=no --log-file=callgrind.log ./libs/Dwarf_Fortress $*
+    ret=$?
+    ;;
   *)
     LD_PRELOAD=./libdfhack.so ./libs/Dwarf_Fortress $*
     ret=$?

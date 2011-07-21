@@ -1073,6 +1073,9 @@
                     </Group>
                 </Group>
             </Group>
+            <Group name="Notes" description="In-game notes">
+                <Address name="vector"/>
+            </Group>
         </Offsets>
     </Base>
 
@@ -3141,6 +3144,9 @@
             </Group>
             <Group name="Vegetation">
                 <Address name="vector" value="0x940bd70" />
+            </Group>
+            <Group name="Notes">
+                <Address name="vector" value="0x93f635c"/>
             </Group>
         </Offsets>
     </Version>

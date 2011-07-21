@@ -109,17 +109,6 @@ struct t_effect_df40d //size 40
 
 //#pragma pack(push,4)
 
-struct t_note
-{
-    char symbol;
-    uint16_t foreground;
-    uint16_t background;
-    char name[128];
-    uint16_t x;
-    uint16_t y;
-    uint16_t z;
-};
-
 struct t_name
 {
     char first_name[128];

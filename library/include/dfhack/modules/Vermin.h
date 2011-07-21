@@ -19,7 +19,7 @@ namespace DFHack
     struct t_spawnPoint
     {
         uint32_t origin;
-        uint16_t race;
+        int16_t race;
         uint16_t type;
         uint16_t x;
         uint16_t y;

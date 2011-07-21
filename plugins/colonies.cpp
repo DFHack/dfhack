@@ -111,7 +111,7 @@ void convertColonies(DFHack::SpawnPoints *points, DFHack::Materials *Materials)
 {
     int bee_idx = -1;
     for (size_t i = 0; i < Materials->raceEx.size(); i++)
-        if (strcmp(Materials->raceEx[i].rawname, "HONEY_BEE") == 0)
+        if (Materials->raceEx[i].id == "HONEY_BEE")
         {
             bee_idx = i;
             break;
@@ -152,8 +152,8 @@ void showColonies(Core *c, DFHack::SpawnPoints *points,
         {
             numColonies++;
             string race="(no race)";
-            if (Materials->raceEx[sp.race].rawname[0])
-                race = Materials->raceEx[sp.race].rawname;
+            if(sp.race != -1)
+                race = Materials->raceEx[sp.race].id;
 
              c->con.print("Spawn point %u: %s at %d:%d:%d\n", i,
                           race.c_str(), sp.x, sp.y, sp.z);

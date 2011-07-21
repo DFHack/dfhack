@@ -52,13 +52,12 @@ class Materials::Private
     public:
     Process * owner;
     OffsetGroup * OG_Materials;
-    uint32_t vector_inorganic;
     uint32_t vector_organic_all;
     uint32_t vector_organic_plants;
     uint32_t vector_organic_trees;
     uint32_t vector_races;
     uint32_t vector_other;
-
+/*
     class t_inorganic_extras
     {
     public:
@@ -72,6 +71,7 @@ class Materials::Private
     };
 
     t_inorganic_extras i_ex;
+    */
 };
 
 Materials::Materials()
@@ -81,12 +81,13 @@ Materials::Materials()
     d->owner = c.p;
     OffsetGroup *OG_Materials = d->OG_Materials = c.vinfo->getGroup("Materials");
     {
-        d->vector_inorganic = OG_Materials->getAddress("inorganics");
+        df_inorganic = (vector <df_inorganic_material *> *) OG_Materials->getAddress("inorganics");
         d->vector_organic_all = OG_Materials->getAddress ("organics_all");
         d->vector_organic_plants = OG_Materials->getAddress ("organics_plants");
         d->vector_organic_trees = OG_Materials->getAddress ("organics_trees");
         d->vector_races = OG_Materials->getAddress("creature_type_vector");
     }
+    /*
     OffsetGroup *OG_Offsets = OG_Materials->getGroup("inorganic_extras");
     {
         d->i_ex.offset_ore_types      = OG_Offsets->getOffset("ore_types");
@@ -97,6 +98,7 @@ Materials::Materials()
         d->i_ex.offset_wall_tile      = OG_Offsets->getOffset("wall_tile");
         d->i_ex.offset_boulder_tile   = OG_Offsets->getOffset("boulder_tile");
     }
+    */
 }
 
 Materials::~Materials()
@@ -146,7 +148,6 @@ bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
 
 t_matgloss::t_matgloss()
 {
-    name[0] = 0;
     fore    = 0;
     back    = 0;
     bright  = 0;
@@ -155,17 +156,10 @@ t_matgloss::t_matgloss()
     wall_tile    = 0;
     boulder_tile = 0;
 }
-
-t_matglossInorganic::t_matglossInorganic()
-{
-    ore_types      = NULL;
-    ore_chances    = NULL;
-    strand_types   = NULL;
-    strand_chances = NULL;
-}
-
+// FIXME: implement properly
 bool t_matglossInorganic::isOre()
 {
+    /*
     if (ore_chances != NULL && !ore_chances->empty())
     {
         if ( (*ore_chances)[0] > 0)
@@ -177,13 +171,13 @@ bool t_matglossInorganic::isOre()
         if ( (*strand_chances)[0] > 0)
             return true;
     }
-
+*/
     return false;
 }
-
+// FIXME: implement properly
 bool t_matglossInorganic::isGem()
 {
-    return (wall_tile == 15 && boulder_tile == 7);
+    //return (wall_tile == 15 && boulder_tile == 7);
 }
 
 // good for now
@@ -196,7 +190,8 @@ inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & nam
     for (uint32_t i = 0; i < size;i++)
     {
         t_matgloss mat;
-        p->readSTLString (p_matgloss[i], mat.id, 128);
+        mat.id = *(std::string *)p_matgloss[i];
+        //p->readSTLString (p_matgloss[i], mat.id, 128);
         names.push_back(mat);
     }
     return true;
@@ -205,42 +200,26 @@ inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & nam
 bool Materials::ReadInorganicMaterials (void)
 {
     Process * p = d->owner;
-    DfVector <uint32_t> p_matgloss (d->vector_inorganic);
-    uint32_t size = p_matgloss.size();
+    uint32_t size = df_inorganic->size();
     inorganic.clear();
     inorganic.reserve (size);
     for (uint32_t i = 0; i < size;i++)
     {
+        df_inorganic_material * orig = df_inorganic->at(i);
         t_matglossInorganic mat;
-
-        p->readSTLString (p_matgloss[i], mat.id, 128);
+        mat.id = orig->Inorganic_ID;
+        mat.name = orig->STONE_NAME;
         //p->readSTLString (p_matgloss[i] + mat_name, mat.name, 128);
 
-        uint32_t ptr = p_matgloss[i] + d->i_ex.offset_ore_types;
-        if ( *( (uint32_t*) ptr) != 0)
-            mat.ore_types = (std::vector<uint16_t>*) ptr;
-
-        ptr = p_matgloss[i] + d->i_ex.offset_ore_chances;
-        if ( *( (uint32_t*) ptr) != 0)
-            mat.ore_chances = (std::vector<uint16_t>*) ptr;
-
-        ptr = p_matgloss[i] + d->i_ex.offset_strand_types;
-        if ( *( (uint32_t*) ptr) != 0)
-            mat.strand_types = (std::vector<uint16_t>*) ptr;
-
-        ptr = p_matgloss[i] + d->i_ex.offset_strand_chances;
-        if ( *( (uint32_t*) ptr) != 0)
-            mat.strand_chances = (std::vector<uint16_t>*) ptr;
-
-        ptr = p_matgloss[i] + d->i_ex.offset_value;
-        mat.value = *( (int32_t*) ptr);
-
-        ptr = p_matgloss[i] + d->i_ex.offset_wall_tile;
-        mat.wall_tile = *( (uint8_t*) ptr);
-
-        ptr = p_matgloss[i] + d->i_ex.offset_boulder_tile;
-        mat.boulder_tile = *( (uint8_t*) ptr);
-
+        mat.ore_types = orig->METAL_ORE_matID;
+        mat.ore_chances = orig->METAL_ORE_prob;
+        mat.strand_types = orig->THREAD_METAL_matID;
+        mat.strand_chances = orig->THREAD_METAL_prob;
+        mat.value = orig->MATERIAL_VALUE;
+        mat.wall_tile = orig->TILE;
+        mat.boulder_tile = orig->ITEM_SYMBOL;
+        mat.bright = orig->BASIC_COLOR_bright;
+        mat.fore = orig->BASIC_COLOR_foreground;
         inorganic.push_back(mat);
     }
     return true;
@@ -272,17 +251,17 @@ bool Materials::ReadOthers(void)
     Process * p = d->owner;
     uint32_t matBase = d->OG_Materials->getAddress ("other");
     uint32_t i = 0;
-    uint32_t ptr;
+    std::string * ptr;
 
     other.clear();
 
     while(1)
     {
         t_matglossOther mat;
-        ptr = p->readDWord(matBase + i*4);
+        ptr = (std::string *) p->readDWord(matBase + i*4);
         if(ptr==0)
             break;
-        p->readSTLString(ptr, mat.rawname, sizeof(mat.rawname));
+        mat.id = *ptr;
         other.push_back(mat);
         i++;
     }
@@ -303,8 +282,8 @@ bool Materials::ReadDescriptorColors (void)
     for (uint32_t i = 0; i < size;i++)
     {
         t_descriptor_color col;
-        p->readSTLString (p_colors[i] + OG_Descriptors->getOffset ("rawname"), col.id, 128);
-        p->readSTLString (p_colors[i] + OG_Descriptors->getOffset ("name"), col.name, 128);
+        col.id = p->readSTLString (p_colors[i] + OG_Descriptors->getOffset ("rawname") );
+        col.name = p->readSTLString (p_colors[i] + OG_Descriptors->getOffset ("name") );
         col.red = p->readFloat( p_colors[i] + OG_Descriptors->getOffset ("color_r") );
         col.green = p->readFloat( p_colors[i] + OG_Descriptors->getOffset ("color_v") );
         col.blue = p->readFloat( p_colors[i] + OG_Descriptors->getOffset ("color_b") );
@@ -379,7 +358,7 @@ bool Materials::ReadCreatureTypesEx (void)
         // word tilecolor.fore : tile_color_offset,
         // word tilecolor.back : tile_color_offset + 2,
         // word tilecolor.bright : tile_color_offset + 4
-        p->readSTLString (p_races[i], mat.rawname, sizeof(mat.rawname));
+        mat.id = p->readSTLString (p_races[i]);
         mat.tile_character = p->readByte( p_races[i] + tile_offset );
         mat.tilecolor.fore = p->readWord( p_races[i] + tile_color_offset );
         mat.tilecolor.back = p->readWord( p_races[i] + tile_color_offset + 2 );
@@ -392,10 +371,10 @@ bool Materials::ReadCreatureTypesEx (void)
             /* caste name */
             t_creaturecaste caste;
             uint32_t caste_start = p_castes[j];
-            p->readSTLString (caste_start, caste.rawname, sizeof(caste.rawname));
-            p->readSTLString (caste_start + sizeof_string, caste.singular, sizeof(caste.singular));
-            p->readSTLString (caste_start + 2 * sizeof_string, caste.plural, sizeof(caste.plural));
-            p->readSTLString (caste_start + 3 * sizeof_string, caste.adjective, sizeof(caste.adjective));
+            caste.id = p->readSTLString (caste_start);
+            caste.singular = p->readSTLString (caste_start + sizeof_string);
+            caste.plural = p->readSTLString (caste_start + 2 * sizeof_string);
+            caste.adjective = p->readSTLString (caste_start + 3 * sizeof_string);
             //cout << "Caste " << caste.rawname << " " << caste.singular << ": 0x" << hex << caste_start << endl;
             if(have_advanced)
             {
@@ -413,7 +392,7 @@ bool Materials::ReadCreatureTypesEx (void)
                     for(uint32_t l = 0; l < sizecolorlist; l++)
                         caste.ColorModifier[k].colorlist[l] = p_colorlist[l];
                     // color mod [color_modifier_part_offset] = string part
-                    p->readSTLString( p_colormod[k] + color_modifier_part_offset, caste.ColorModifier[k].part, sizeof(caste.ColorModifier[k].part));
+                    caste.ColorModifier[k].part = p->readSTLString( p_colormod[k] + color_modifier_part_offset);
                     caste.ColorModifier[k].startdate = p->readDWord( p_colormod[k] + color_modifier_startdate_offset );
                     caste.ColorModifier[k].enddate = p->readDWord( p_colormod[k] + color_modifier_enddate_offset );
                 }
@@ -424,8 +403,8 @@ bool Materials::ReadCreatureTypesEx (void)
                 for(uint32_t k = 0; k < sizebp; k++)
                 {
                     t_bodypart part;
-                    p->readSTLString (p_bodypart[k] + bodypart_id_offset, part.id, sizeof(part.id));
-                    p->readSTLString (p_bodypart[k] + bodypart_category_offset, part.category, sizeof(part.category));
+                    part.id = p->readSTLString (p_bodypart[k] + bodypart_id_offset);
+                    part.category = p->readSTLString (p_bodypart[k] + bodypart_category_offset);
                     caste.bodypart.push_back(part);
                 }
                 p->read(caste_start + caste_attributes_offset, sizeof(t_attrib) * NUM_CREAT_ATTRIBS, (uint8_t *)&caste.strength);
@@ -440,7 +419,7 @@ bool Materials::ReadCreatureTypesEx (void)
         for(uint32_t j = 0; j < p_extract.size(); j++)
         {
             t_creatureextract extract;
-            p->readSTLString( p_extract[j], extract.rawname, sizeof(extract.rawname));
+            extract.id = p->readSTLString( p_extract[j] );
             mat.extract.push_back(extract);
         }
         raceEx.push_back(mat);
@@ -487,14 +466,14 @@ std::string Materials::getDescription(const t_material & mat)
                             return "any";
                         if(mat.subIndex>=this->raceEx.size())
                             return "stuff";
-                        return this->raceEx[mat.subIndex].rawname;
+                        return this->raceEx[mat.subIndex].id;
                     }
                     else
                     {
                         if (mat.index==-1)
-                            return std::string(this->other[mat.subIndex].rawname);
+                            return std::string(this->other[mat.subIndex].id);
                         else
-                            return std::string(this->other[mat.subIndex].rawname) + " derivate";
+                            return std::string(this->other[mat.subIndex].id) + " derivate";
                     }
                 }
             else
@@ -511,9 +490,9 @@ std::string Materials::getDescription(const t_material & mat)
             typeC -=19;
             if ((typeC<0) || (typeC>=this->raceEx[mat.index].extract.size()))
             {
-                return string(this->raceEx[mat.index].rawname).append(" extract");
+                return string(this->raceEx[mat.index].id).append(" extract");
             }
-            return std::string(this->raceEx[mat.index].rawname).append(" ").append(this->raceEx[mat.index].extract[typeC].rawname);
+            return std::string(this->raceEx[mat.index].id).append(" ").append(this->raceEx[mat.index].extract[typeC].id);
         }
     }
     else

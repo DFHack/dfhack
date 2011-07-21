@@ -123,6 +123,7 @@ endif()
 
 DFHACK_PLUGIN(reveal reveal.cpp)
 DFHACK_PLUGIN(prospector prospector.cpp)
+DFHACK_PLUGIN(rawdump rawdump.cpp)
 DFHACK_PLUGIN(cleanmap cleanmap.cpp)
 DFHACK_PLUGIN(weather weather.cpp)
 DFHACK_PLUGIN(vdig vdig.cpp)

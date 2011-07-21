@@ -71,7 +71,10 @@ static bool mightBeVec(vector<t_memrange> &heap_ranges,
     if ((vec->start > vec->end) || (vec->end > vec->alloc_end))
         return false;
 
-    if ((vec->end - vec->start) % 4 != 0)
+    // Vector length might not be a multiple of 4 if, for example,
+    // it's a vector of uint8_t or uint16_t.  However, the actual memory
+    // allocated to the vector should be 4 byte aligned.
+    if ((vec->start % 4 != 0) || (vec->alloc_end % 4 != 0))
         return false;
 
     for (size_t i = 0; i < heap_ranges.size(); i++)

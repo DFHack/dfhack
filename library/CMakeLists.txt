@@ -45,6 +45,7 @@ include/dfhack/modules/Gui.h
 include/dfhack/modules/Items.h
 include/dfhack/modules/Maps.h
 include/dfhack/modules/Materials.h
+include/dfhack/modules/Notes.h
 include/dfhack/modules/Translation.h
 include/dfhack/modules/Vegetation.h
 include/dfhack/modules/Vermin.h
@@ -75,6 +76,7 @@ modules/Gui.cpp
 modules/Items.cpp
 modules/Maps.cpp
 modules/Materials.cpp
+modules/Notes.cpp
 modules/Translation.cpp
 modules/Vegetation.cpp
 modules/Vermin.cpp

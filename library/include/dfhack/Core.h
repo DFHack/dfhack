@@ -49,6 +49,7 @@ namespace DFHack
     class Buildings;
     class Constructions;
     class Vermin;
+    class Notes;
     class VersionInfo;
     class VersionInfoFactory;
     class PluginManager;
@@ -107,6 +108,8 @@ namespace DFHack
         Constructions * getConstructions();
         /// get the vermin module
         Vermin * getVermin();
+        /// get the notes module
+        Notes * getNotes();
         /// sets the current hotkey command
         bool setHotkeyCmd( std::string cmd );
         /// removes the hotkey command and gives it to the caller thread
@@ -147,6 +150,7 @@ namespace DFHack
             Buildings * pBuildings;
             Constructions * pConstructions;
             Vermin * pVermin;
+            Notes * pNotes;
         } s_mods;
         std::vector <Module *> allModules;
         DFHack::PluginManager * plug_mgr;

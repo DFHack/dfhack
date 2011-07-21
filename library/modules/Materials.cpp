@@ -58,6 +58,20 @@ class Materials::Private
     uint32_t vector_organic_trees;
     uint32_t vector_races;
     uint32_t vector_other;
+
+    class t_inorganic_extras
+    {
+    public:
+        uint32_t offset_ore_types;
+        uint32_t offset_ore_chances;
+        uint32_t offset_strand_types;
+        uint32_t offset_strand_chances;
+        uint32_t offset_value;
+        uint32_t offset_wall_tile;
+        uint32_t offset_boulder_tile;
+    };
+
+    t_inorganic_extras i_ex;
 };
 
 Materials::Materials()
@@ -73,7 +87,18 @@ Materials::Materials()
         d->vector_organic_trees = OG_Materials->getAddress ("organics_trees");
         d->vector_races = OG_Materials->getAddress("creature_type_vector");
     }
+    OffsetGroup *OG_Offsets = OG_Materials->getGroup("inorganic_extras");
+    {
+        d->i_ex.offset_ore_types      = OG_Offsets->getOffset("ore_types");
+        d->i_ex.offset_ore_chances    = OG_Offsets->getOffset("ore_chances");
+        d->i_ex.offset_strand_types   = OG_Offsets->getOffset("strand_types");
+        d->i_ex.offset_strand_chances = OG_Offsets->getOffset("strand_chances");
+        d->i_ex.offset_value          = OG_Offsets->getOffset("value");
+        d->i_ex.offset_wall_tile      = OG_Offsets->getOffset("wall_tile");
+        d->i_ex.offset_boulder_tile   = OG_Offsets->getOffset("boulder_tile");
+    }
 }
+
 Materials::~Materials()
 {
     delete d;
@@ -119,6 +144,48 @@ bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
 }
 */
 
+t_matgloss::t_matgloss()
+{
+    name[0] = 0;
+    fore    = 0;
+    back    = 0;
+    bright  = 0;
+
+    value        = 0;
+    wall_tile    = 0;
+    boulder_tile = 0;
+}
+
+t_matglossInorganic::t_matglossInorganic()
+{
+    ore_types      = NULL;
+    ore_chances    = NULL;
+    strand_types   = NULL;
+    strand_chances = NULL;
+}
+
+bool t_matglossInorganic::isOre()
+{
+    if (ore_chances != NULL && !ore_chances->empty())
+    {
+        if ( (*ore_chances)[0] > 0)
+            return true;
+    }
+
+    if (strand_chances != NULL && !strand_chances->empty())
+    {
+        if ( (*strand_chances)[0] > 0)
+            return true;
+    }
+
+    return false;
+}
+
+bool t_matglossInorganic::isGem()
+{
+    return (wall_tile == 15 && boulder_tile == 7);
+}
+
 // good for now
 inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & names)
 {
@@ -144,14 +211,36 @@ bool Materials::ReadInorganicMaterials (void)
     inorganic.reserve (size);
     for (uint32_t i = 0; i < size;i++)
     {
-        t_matgloss mat;
+        t_matglossInorganic mat;
 
         p->readSTLString (p_matgloss[i], mat.id, 128);
         //p->readSTLString (p_matgloss[i] + mat_name, mat.name, 128);
-        mat.name[0] = 0;
-        mat.fore = 0;
-        mat.back = 0;
-        mat.bright = 0;
+
+        uint32_t ptr = p_matgloss[i] + d->i_ex.offset_ore_types;
+        if ( *( (uint32_t*) ptr) != 0)
+            mat.ore_types = (std::vector<uint16_t>*) ptr;
+
+        ptr = p_matgloss[i] + d->i_ex.offset_ore_chances;
+        if ( *( (uint32_t*) ptr) != 0)
+            mat.ore_chances = (std::vector<uint16_t>*) ptr;
+
+        ptr = p_matgloss[i] + d->i_ex.offset_strand_types;
+        if ( *( (uint32_t*) ptr) != 0)
+            mat.strand_types = (std::vector<uint16_t>*) ptr;
+
+        ptr = p_matgloss[i] + d->i_ex.offset_strand_chances;
+        if ( *( (uint32_t*) ptr) != 0)
+            mat.strand_chances = (std::vector<uint16_t>*) ptr;
+
+        ptr = p_matgloss[i] + d->i_ex.offset_value;
+        mat.value = *( (int32_t*) ptr);
+
+        ptr = p_matgloss[i] + d->i_ex.offset_wall_tile;
+        mat.wall_tile = *( (uint8_t*) ptr);
+
+        ptr = p_matgloss[i] + d->i_ex.offset_boulder_tile;
+        mat.boulder_tile = *( (uint8_t*) ptr);
+
         inorganic.push_back(mat);
     }
     return true;

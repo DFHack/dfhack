@@ -596,3 +596,4 @@ MODULE_GETTER(Vegetation);
 MODULE_GETTER(Buildings);
 MODULE_GETTER(Constructions);
 MODULE_GETTER(Vermin);
+MODULE_GETTER(Notes);

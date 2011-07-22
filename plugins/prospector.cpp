@@ -94,10 +94,10 @@ void printVeins(DFHack::Console & con, MatMap &mat_map,
     {
         DFHack::t_matglossInorganic &gloss = mats->inorganic[it->first];
 
-        if (gloss.isOre())
-            ores[it->first] = it->second;
-        else if (gloss.isGem())
+        if (gloss.isGem())
             gems[it->first] = it->second;
+        else if (gloss.isOre())
+            ores[it->first] = it->second;
         else
             rest[it->first] = it->second;
     }

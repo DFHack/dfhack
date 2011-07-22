@@ -156,28 +156,19 @@ t_matgloss::t_matgloss()
     wall_tile    = 0;
     boulder_tile = 0;
 }
-// FIXME: implement properly
+
 bool t_matglossInorganic::isOre()
 {
-    /*
-    if (ore_chances != NULL && !ore_chances->empty())
-    {
-        if ( (*ore_chances)[0] > 0)
-            return true;
-    }
-
-    if (strand_chances != NULL && !strand_chances->empty())
-    {
-        if ( (*strand_chances)[0] > 0)
-            return true;
-    }
-*/
+    if (!ore_chances.empty())
+        return true;
+    if (!strand_chances.empty())
+        return true;
     return false;
 }
 // FIXME: implement properly
 bool t_matglossInorganic::isGem()
 {
-    //return (wall_tile == 15 && boulder_tile == 7);
+    return (wall_tile == 15 && boulder_tile == 7);
 }
 
 // good for now

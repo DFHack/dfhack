@@ -123,7 +123,7 @@ namespace DFHack
         std::string HARDENS_WITH_WATER_2nd_parm;// (e.g. GYPSUM)
         std::string HARDENS_WITH_WATER_3rd_parm;// (if you used CREATURE_MAT or PLANT_MAT)
         std::vector <std::string> REACTION_CLASS;
-        int16_t TILE;
+        int8_t TILE;
         int16_t BASIC_COLOR_foreground;
         int16_t BASIC_COLOR_bright;
         // what exactly ARE those colors?
@@ -134,7 +134,7 @@ namespace DFHack
         int16_t TILE_COLOR1;
         int16_t TILE_COLOR2;
         int16_t TILE_COLOR3;
-        int16_t ITEM_SYMBOL;
+        int8_t ITEM_SYMBOL;
         int16_t POWDER_DYE; // (color token index)
         int16_t TEMP_DIET_INFO;// (whatever it means)
         std::vector <t_syndrome *> SYNDROME;
@@ -179,8 +179,8 @@ namespace DFHack
         uint8_t bright;
 
         int32_t  value;        // Material value
-        uint16_t wall_tile;    // Tile when a natural wall
-        uint16_t boulder_tile; // Tile when a dug-out stone;
+        uint8_t wall_tile;    // Tile when a natural wall
+        uint8_t boulder_tile; // Tile when a dug-out stone;
 
     public:
         t_matgloss();

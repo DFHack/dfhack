@@ -209,7 +209,7 @@ namespace DFHack
         std::vector<int16_t> strand_chances;
 
     public:
-        t_matglossInorganic();
+        //t_matglossInorganic();
 
         bool isOre();
         bool isGem();

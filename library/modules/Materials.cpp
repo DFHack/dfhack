@@ -42,6 +42,43 @@ using namespace std;
 
 using namespace DFHack;
 
+////////////////////////////
+// START materials flag code
+////////////////////////////
+
+struct t_matFlagInfo
+{
+    uint32_t offset;
+    uint32_t mask;
+};
+
+enum t_matFlagType
+{
+    MAT_FLAG_GEM,
+    NUM_MAT_FLAGS
+};
+
+static bool hasFlag(t_matFlagType flag_type, vector<uint32_t> flags)
+{
+    // More flags can be found at
+    // http://www.qmtpro.com/~quietust/df/material_flags.txt
+    static t_matFlagInfo mat_flag_info[NUM_MAT_FLAGS] =
+    {
+        {1, 0x10000} // MAT_FLAG_GEM
+    };
+
+    t_matFlagInfo &info = mat_flag_info[flag_type];
+
+    if ( info.offset > flags.size() )
+        return false;
+
+    return ( (flags[info.offset] & info.mask) == info.mask );
+}
+
+//////////////////////////
+// END materials flag code
+//////////////////////////
+
 Module* DFHack::createMaterials()
 {
     return new Materials();
@@ -57,21 +94,6 @@ class Materials::Private
     uint32_t vector_organic_trees;
     uint32_t vector_races;
     uint32_t vector_other;
-/*
-    class t_inorganic_extras
-    {
-    public:
-        uint32_t offset_ore_types;
-        uint32_t offset_ore_chances;
-        uint32_t offset_strand_types;
-        uint32_t offset_strand_chances;
-        uint32_t offset_value;
-        uint32_t offset_wall_tile;
-        uint32_t offset_boulder_tile;
-    };
-
-    t_inorganic_extras i_ex;
-    */
 };
 
 Materials::Materials()
@@ -87,18 +109,6 @@ Materials::Materials()
         d->vector_organic_trees = OG_Materials->getAddress ("organics_trees");
         d->vector_races = OG_Materials->getAddress("creature_type_vector");
     }
-    /*
-    OffsetGroup *OG_Offsets = OG_Materials->getGroup("inorganic_extras");
-    {
-        d->i_ex.offset_ore_types      = OG_Offsets->getOffset("ore_types");
-        d->i_ex.offset_ore_chances    = OG_Offsets->getOffset("ore_chances");
-        d->i_ex.offset_strand_types   = OG_Offsets->getOffset("strand_types");
-        d->i_ex.offset_strand_chances = OG_Offsets->getOffset("strand_chances");
-        d->i_ex.offset_value          = OG_Offsets->getOffset("value");
-        d->i_ex.offset_wall_tile      = OG_Offsets->getOffset("wall_tile");
-        d->i_ex.offset_boulder_tile   = OG_Offsets->getOffset("boulder_tile");
-    }
-    */
 }
 
 Materials::~Materials()
@@ -156,28 +166,33 @@ t_matgloss::t_matgloss()
     wall_tile    = 0;
     boulder_tile = 0;
 }
-// FIXME: implement properly
+
+t_matglossInorganic::t_matglossInorganic()
+{
+}
+
+// NOTE: There doesn't appear to be an IS_ORE materials flag, so we have to
+// do it this way.
 bool t_matglossInorganic::isOre()
 {
-    /*
-    if (ore_chances != NULL && !ore_chances->empty())
+    if (!ore_chances.empty())
     {
-        if ( (*ore_chances)[0] > 0)
+        if (ore_chances[0] > 0)
             return true;
     }
 
-    if (strand_chances != NULL && !strand_chances->empty())
+    if (!strand_chances.empty())
     {
-        if ( (*strand_chances)[0] > 0)
+        if (strand_chances[0] > 0)
             return true;
     }
-*/
+
     return false;
 }
-// FIXME: implement properly
+
 bool t_matglossInorganic::isGem()
 {
-    //return (wall_tile == 15 && boulder_tile == 7);
+    return hasFlag(MAT_FLAG_GEM, flags);
 }
 
 // good for now
@@ -220,6 +235,16 @@ bool Materials::ReadInorganicMaterials (void)
         mat.boulder_tile = orig->ITEM_SYMBOL;
         mat.bright = orig->BASIC_COLOR_bright;
         mat.fore = orig->BASIC_COLOR_foreground;
+
+        if (orig->flagarray_properties != NULL)
+        {
+            for (uint32_t j = 0; j < orig->flagarray_properties_length; j++)
+            {
+                uint32_t *ptr = orig->flagarray_properties + j;
+                mat.flags.push_back( *ptr );
+            }
+        }
+
         inorganic.push_back(mat);
     }
     return true;

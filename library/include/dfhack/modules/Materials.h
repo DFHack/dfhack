@@ -182,6 +182,8 @@ namespace DFHack
         uint16_t wall_tile;    // Tile when a natural wall
         uint16_t boulder_tile; // Tile when a dug-out stone;
 
+        std::vector<uint32_t> flags;
+
     public:
         t_matgloss();
     };

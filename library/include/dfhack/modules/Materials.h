@@ -99,7 +99,8 @@ namespace DFHack
         int32_t COMPRESSIVE_STRAIN_AT_YIELD;
         int32_t MAX_EDGE;
         int32_t MATERIAL_VALUE;
-        uint32_t * flagarray_properties;
+        // FIXME: needs flagarray implementation!
+        uint8_t * flagarray_properties;
         uint32_t flagarray_properties_length;
         int16_t EXTRACT_STORAGE;// (item type)
         int16_t BUTCHER_SPECIAL_type;// (item type)
@@ -127,13 +128,13 @@ namespace DFHack
         int16_t BASIC_COLOR_foreground;
         int16_t BASIC_COLOR_bright;
         // what exactly ARE those colors?
-        int16_t BUILD_COLOR1;
-        int16_t BUILD_COLOR2;
-        int16_t BUILD_COLOR3;
+        int16_t BUILD_COLOR_foreground;
+        int16_t BUILD_COLOR_background;
+        int16_t BUILD_COLOR_bright;
         // same...
-        int16_t TILE_COLOR1;
-        int16_t TILE_COLOR2;
-        int16_t TILE_COLOR3;
+        int16_t TILE_COLOR_foreground;
+        int16_t TILE_COLOR_background;
+        int16_t TILE_COLOR_bright;
         int8_t ITEM_SYMBOL;
         int16_t POWDER_DYE; // (color token index)
         int16_t TEMP_DIET_INFO;// (whatever it means)
@@ -146,8 +147,9 @@ namespace DFHack
     struct df_inorganic_base
     {
         std::string Inorganic_ID;
-        void * inorganic_flags;
-        uint32_t inorganic_flags_length;
+        // FIXME: needs flagarray implementation!
+        uint8_t * flagarray_inorganic;
+        uint32_t flagarray_inorganic_length;
         std::vector <uint32_t> empty1;
         std::vector <int16_t> METAL_ORE_matID;
         std::vector <int16_t> METAL_ORE_prob;

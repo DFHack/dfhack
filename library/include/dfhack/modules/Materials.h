@@ -1,3 +1,27 @@
+/*
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any
+damages arising from the use of this software.
+
+Permission is granted to anyone to use this software for any
+purpose, including commercial applications, and to alter it and
+redistribute it freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must
+not claim that you wrote the original software. If you use this
+software in a product, an acknowledgment in the product documentation
+would be appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and
+must not be misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source
+distribution.
+*/
+
 #pragma once
 #ifndef CL_MOD_MATERIALS
 #define CL_MOD_MATERIALS
@@ -5,63 +29,235 @@
  * \defgroup grp_materials Materials module - used for reading raws mostly
  * @ingroup grp_modules
  */
-#include "dfhack/DFExport.h"
-#include "dfhack/DFModule.h"
+#include "dfhack/Export.h"
+#include "dfhack/Module.h"
+#include "dfhack/Types.h"
+
+#include <vector>
+#include <string>
+
 namespace DFHack
 {
-    class DFContextShared;
+    struct t_syndrome
+    {
+        // it's lonely here...
+    };
+    /// Research by Quietust
+    struct df_material
+    {
+        std::string Material_ID;
+        std::string IS_GEM_singular;
+        std::string IS_GEM_plural;
+        std::string STONE_NAME;
+        int16_t SPEC_HEAT;
+        int16_t HEATDAM_POINT;
+        int16_t COLDDAM_POINT;
+        int16_t IGNITE_POINT;
+        int16_t MELTING_POINT;
+        int16_t BOILING_POINT;
+        int16_t MAT_FIXED_TEMP;
+        //int16_t padding; // added by compiler automatically
+        int32_t SOLID_DENSITY;
+        int32_t LIQUID_DENSITY;
+        int32_t MOLAR_MASS;
+        int32_t STATE_COLOR_SOLID;  // (color token index)
+        int32_t STATE_COLOR_LIQUID; // (color token index)
+        int32_t STATE_COLOR_GAS;    // (color token index)
+        int32_t STATE_COLOR_POWDER; // (color token index)
+        int32_t STATE_COLOR_PASTE;  // (color token index)
+        int32_t STATE_COLOR_PRESSED;// (color token index)
+        std::string STATE_NAME_SOLID;
+        std::string STATE_NAME_LIQUID;
+        std::string STATE_NAME_GAS;
+        std::string STATE_NAME_POWDER;
+        std::string STATE_NAME_PASTE;
+        std::string STATE_NAME_PRESSED;
+        std::string STATE_ADJ_SOLID;
+        std::string STATE_ADJ_LIQUID;
+        std::string STATE_ADJ_GAS;
+        std::string STATE_ADJ_POWDER;
+        std::string STATE_ADJ_PASTE;
+        std::string STATE_ADJ_PRESSED;
+        int32_t ABSORPTION;
+        int32_t BENDING_YIELD;
+        int32_t SHEAR_YIELD;
+        int32_t TORSION_YIELD;
+        int32_t IMPACT_YIELD;
+        int32_t TENSILE_YIELD;
+        int32_t COMPRESSIVE_YIELD;
+        int32_t BENDING_FRACTURE;
+        int32_t SHEAR_FRACTURE;
+        int32_t TORSION_FRACTURE;
+        int32_t IMPACT_FRACTURE;
+        int32_t TENSILE_FRACTURE;
+        int32_t COMPRESSIVE_FRACTURE;
+        int32_t BENDING_STRAIN_AT_YIELD;
+        int32_t SHEAR_STRAIN_AT_YIELD;
+        int32_t TORSION_STRAIN_AT_YIELD;
+        int32_t IMPACT_STRAIN_AT_YIELD;
+        int32_t TENSILE_STRAIN_AT_YIELD;
+        int32_t COMPRESSIVE_STRAIN_AT_YIELD;
+        int32_t MAX_EDGE;
+        int32_t MATERIAL_VALUE;
+        // FIXME: needs flagarray implementation!
+        uint8_t * flagarray_properties;
+        uint32_t flagarray_properties_length;
+        int16_t EXTRACT_STORAGE;// (item type)
+        int16_t BUTCHER_SPECIAL_type;// (item type)
+        int16_t BUTCHER_SPECIAL_subtype;// (item subtype)
+        //int16_t padding; // added by compiler
+        std::string MEAT_NAME_1st_parm; // (adj)
+        std::string MEAT_NAME_2nd_parm;
+        std::string MEAT_NAME_3rd_parm;
+        std::string BLOCK_NAME_1st_parm;
+        std::string BLOCK_NAME_2nd_parm;
+        std::vector <std::string> MATERIAL_REACTION_PRODUCT_1st_parm;// (e.g. TAN_MAT)
+        std::vector <void *>  unknown1;
+        std::vector <void *>  unknown2;
+        std::vector <std::string> MATERIAL_REACTION_PRODUCT_2nd_parm;// (e.g. LOCAL_CREATURE_MAT)
+        std::vector <std::string> MATERIAL_REACTION_PRODUCT_3rd_parm;// (e.g. LEATHER)
+        std::vector <std::string> MATERIAL_REACTION_PRODUCT_4th_parm;// (if you used CREATURE_MAT or PLANT_MAT)
+        int16_t unknown3;
+        //int16_t padding; // added by compiler
+        int32_t unknown4;
+        std::string HARDENS_WITH_WATER_1st_parm;// (e.g. INORGANIC)
+        std::string HARDENS_WITH_WATER_2nd_parm;// (e.g. GYPSUM)
+        std::string HARDENS_WITH_WATER_3rd_parm;// (if you used CREATURE_MAT or PLANT_MAT)
+        std::vector <std::string> REACTION_CLASS;
+        int8_t TILE;
+        int16_t BASIC_COLOR_foreground;
+        int16_t BASIC_COLOR_bright;
+        // what exactly ARE those colors?
+        int16_t BUILD_COLOR_foreground;
+        int16_t BUILD_COLOR_background;
+        int16_t BUILD_COLOR_bright;
+        // same...
+        int16_t TILE_COLOR_foreground;
+        int16_t TILE_COLOR_background;
+        int16_t TILE_COLOR_bright;
+        int8_t ITEM_SYMBOL;
+        int16_t POWDER_DYE; // (color token index)
+        int16_t TEMP_DIET_INFO;// (whatever it means)
+        std::vector <t_syndrome *> SYNDROME;
+        int32_t SOAP_LEVEL;
+        std::string PREFIX;
+        // etc...
+    };
+    /// Research by Quietust
+    struct df_inorganic_base
+    {
+        std::string Inorganic_ID;
+        // FIXME: needs flagarray implementation!
+        uint8_t * flagarray_inorganic;
+        uint32_t flagarray_inorganic_length;
+        std::vector <uint32_t> empty1;
+        std::vector <int16_t> METAL_ORE_matID;
+        std::vector <int16_t> METAL_ORE_prob;
+        std::vector <uint32_t> empty2;
+        std::vector <int16_t> THREAD_METAL_matID;
+        std::vector <int16_t> THREAD_METAL_prob;
+        std::vector <uint32_t> unknown_in_1;
+        std::vector <uint32_t> empty3;
+        std::vector <int16_t> ENVIRONMENT_SPEC_matID;
+        std::vector <int16_t> ENVIRONMENT_SPEC_inclusion_type;
+        std::vector <int8_t> ENVIRONMENT_SPEC_prob;
+        std::vector <int16_t> ENVIRONMENT_location;
+        std::vector <int16_t> ENVIRONMENT_inclusion_type;
+        std::vector <int8_t> ENVIRONMENT_prob;
+        int32_t unknown_in_2;
+    };
+    struct df_inorganic_material:public df_inorganic_base, public df_material {};
     /**
+     * A copy of the game's material data.
      * \ingroup grp_materials
      */
-    struct t_matgloss
+    class DFHACK_EXPORT t_matgloss
     {
-        char id[128]; //the id in the raws
-        uint8_t fore; // Annoyingly the offset for this differs between types
+    public:
+        std::string id; // raw name
+        std::string name; // a sensible human-readable name
+        uint8_t fore;
         uint8_t back;
         uint8_t bright;
-        char name[128]; //this is the name displayed ingame
+
+        int32_t  value;        // Material value
+        uint8_t wall_tile;    // Tile when a natural wall
+        uint8_t boulder_tile; // Tile when a dug-out stone;
+
+    public:
+        t_matgloss();
     };
+    /**
+     * A copy of the game's inorganic material data.
+     * \ingroup grp_materials
+     */
+    class DFHACK_EXPORT t_matglossInorganic : public t_matgloss
+    {
+    public:
+        // Types of metals the ore will produce when smelted.  Each number
+        // is an index into the inorganic matglass vector.
+        std::vector<int16_t> ore_types;
+
+        // Percent chance that the ore will produce each type of metal
+        // when smelted.
+        std::vector<int16_t> ore_chances;
+
+        // Types of metals the ore will produce from strand extraction.
+        // Each number is an index into the inorganic matglass vector.
+        std::vector<int16_t> strand_types;
+
+        // Percent chance that the ore will produce each type of metal
+        // fram strand extraction.
+        std::vector<int16_t> strand_chances;
+
+    public:
+        //t_matglossInorganic();
+
+        bool isOre();
+        bool isGem();
+    };
+
     /**
      * \ingroup grp_materials
      */
     struct t_descriptor_color
     {
-        char id[128]; // id in the raws
+        std::string id;
+        std::string name;
         float red;
         float green;
         float blue;
-        char name[128]; //displayed name
     };
     /**
      * \ingroup grp_materials
      */
     struct t_matglossPlant
     {
-        char id[128]; //the id in the raws
-        uint8_t fore; // Annoyingly the offset for this differs between types
+        std::string id;
+        std::string name;
+        uint8_t fore;
         uint8_t back;
         uint8_t bright;
-        char name[128]; //this is the name displayed ingame
-        char drink_name[128];  //the name this item becomes a drink
-        char food_name[128];
-        char extract_name[128];
+        std::string drink_name;
+        std::string food_name;
+        std::string extract_name;
     };
     /**
      * \ingroup grp_materials
      */
     struct t_bodypart
     {
-        char id[128];
-        char category[128];
-        char single[128];
-        char plural[128];
+        std::string id;
+        std::string category;
+        std::string singular;
+        std::string plural;
     };
     /**
      * \ingroup grp_materials
      */
     struct t_colormodifier
     {
-        char part[128];
+        std::string part;
         std::vector<uint32_t> colorlist;
         uint32_t startdate; /* in days */
         uint32_t enddate; /* in days */
@@ -71,10 +267,10 @@ namespace DFHack
      */
     struct t_creaturecaste
     {
-        char rawname[128];
-        char singular[128];
-        char plural[128];
-        char adjective[128];
+        std::string id;
+        std::string singular;
+        std::string plural;
+        std::string adjective;
         std::vector<t_colormodifier> ColorModifier;
         std::vector<t_bodypart> bodypart;
 
@@ -103,21 +299,21 @@ namespace DFHack
      */
     struct t_matglossOther
     {
-        char rawname[128];
+        std::string id;
     };
     /**
      * \ingroup grp_materials
      */
     struct t_creatureextract
     {
-        char rawname[128];
+        std::string id;
     };
     /**
      * \ingroup grp_materials
      */
     struct t_creaturetype
     {
-        char rawname[128];
+        std::string id;
         std::vector <t_creaturecaste> castes;
         std::vector <t_creatureextract> extract;
         uint8_t tile_character;
@@ -149,11 +345,12 @@ namespace DFHack
     class DFHACK_EXPORT Materials : public Module
     {
     public:
-        Materials(DFHack::DFContextShared * _d);
+        Materials();
         ~Materials();
         bool Finish();
 
-        std::vector<t_matgloss> inorganic;
+        std::vector<df_inorganic_material*>* df_inorganic;
+        std::vector<t_matglossInorganic> inorganic;
         std::vector<t_matgloss> organic;
         std::vector<t_matgloss> tree;
         std::vector<t_matgloss> plant;

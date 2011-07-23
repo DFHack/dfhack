@@ -1,18 +1,42 @@
+/*
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any
+damages arising from the use of this software.
+
+Permission is granted to anyone to use this software for any
+purpose, including commercial applications, and to alter it and
+redistribute it freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must
+not claim that you wrote the original software. If you use this
+software in a product, an acknowledgment in the product documentation
+would be appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and
+must not be misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source
+distribution.
+*/
+
 #pragma once
 #ifndef MAPEXTRAS_H
 #define MAPEXTRAS_H
 
-#include "../modules/Maps.h"
-#include "../DFTileTypes.h"
-#include "../DFIntegers.h"
+#include "dfhack/modules/Maps.h"
+#include "dfhack/TileTypes.h"
+#include <stdint.h>
 #include <cstring>
 namespace MapExtras
 {
 void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d & mb, DFHack::t_blockmaterials & materials)
 {
     memset(materials,-1,sizeof(materials));
-    vector <DFHack::t_vein> veins;
-    m->ReadVeins(bcoord.x,bcoord.y,bcoord.z,&veins);
+    std::vector <DFHack::t_vein *> veins;
+    m->SortBlockEvents(bcoord.x,bcoord.y,bcoord.z,&veins);
     //iterate through block rows
     for(uint32_t j = 0;j<16;j++)
     {
@@ -24,9 +48,9 @@ void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d &
             {
                 for(int i = (int) veins.size() - 1; i >= 0;i--)
                 {
-                    if(!!(((1 << k) & veins[i].assignment[j]) >> k))
+                    if(!!(((1 << k) & veins[i]->assignment[j]) >> k))
                     {
-                        materials[k][j] = veins[i].type;
+                        materials[k][j] = veins[i]->type;
                         i = -1;
                     }
                 }
@@ -35,7 +59,7 @@ void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d &
     }
 }
 
-void SquashRocks ( vector< vector <uint16_t> > * layerassign, DFHack::mapblock40d & mb, DFHack::t_blockmaterials & materials)
+void SquashRocks ( std::vector< std::vector <uint16_t> > * layerassign, DFHack::mapblock40d & mb, DFHack::t_blockmaterials & materials)
 {
     // get the layer materials
     for(uint32_t xx = 0;xx<16;xx++)
@@ -57,7 +81,7 @@ void SquashRocks ( vector< vector <uint16_t> > * layerassign, DFHack::mapblock40
 class Block
 {
     public:
-    Block(DFHack::Maps *_m, DFHack::DFCoord _bcoord, vector< vector <uint16_t> > * layerassign = 0)
+    Block(DFHack::Maps *_m, DFHack::DFCoord _bcoord, std::vector< std::vector <uint16_t> > * layerassign = 0)
     {
         m = _m;
         dirty_designations = false;
@@ -236,7 +260,7 @@ class MapCache
     {
         if(!valid)
             return 0;
-        map <DFHack::DFCoord, Block*>::iterator iter = blocks.find(blockcoord);
+        std::map <DFHack::DFCoord, Block*>::iterator iter = blocks.find(blockcoord);
         if(iter != blocks.end())
         {
             return (*iter).second;
@@ -399,7 +423,7 @@ class MapCache
     }
     bool WriteAll()
     {
-        map<DFHack::DFCoord, Block *>::iterator p;
+        std::map<DFHack::DFCoord, Block *>::iterator p;
         for(p = blocks.begin(); p != blocks.end(); p++)
         {
             p->second->Write();
@@ -408,7 +432,7 @@ class MapCache
     }
     void trash()
     {
-        map<DFHack::DFCoord, Block *>::iterator p;
+        std::map<DFHack::DFCoord, Block *>::iterator p;
         for(p = blocks.begin(); p != blocks.end(); p++)
         {
             delete p->second;
@@ -423,9 +447,9 @@ class MapCache
     uint32_t x_tmax;
     uint32_t y_tmax;
     uint32_t z_max;
-    vector< vector <uint16_t> > layerassign;
+    std::vector< std::vector <uint16_t> > layerassign;
     DFHack::Maps * Maps;
-    map<DFHack::DFCoord, Block *> blocks;
+    std::map<DFHack::DFCoord, Block *> blocks;
 };
 }
 #endif

@@ -1,9 +1,35 @@
+/*
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any
+damages arising from the use of this software.
+
+Permission is granted to anyone to use this software for any
+purpose, including commercial applications, and to alter it and
+redistribute it freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must
+not claim that you wrote the original software. If you use this
+software in a product, an acknowledgment in the product documentation
+would be appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and
+must not be misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source
+distribution.
+*/
+
 #pragma once
 #ifndef CL_MOD_GUI
 #define CL_MOD_GUI
 
-#include "dfhack/DFExport.h"
-#include "dfhack/DFModule.h"
+#include "dfhack/Export.h"
+#include "dfhack/Module.h"
+#include "dfhack/Virtual.h"
+#include <string>
 
 /**
  * \defgroup grp_gui query DF's GUI state
@@ -16,24 +42,41 @@ namespace DFHack
     /**
      * \ingroup grp_gui
      */
-    struct t_viewscreen 
+    struct t_viewscreen : public t_virtual
     {
-        int32_t type;
-        //There is more info in these objects, but I don't know what it is yet
+        t_viewscreen * child;
+        t_viewscreen * parent;
+        char unk1; // varies
+        char unk2; // state?
     };
+    /**
+     * \ingroup grp_gui
+     */
+    struct t_interface
+    {
+        int fps;
+        t_viewscreen view;
+        unsigned int flags; // ?
+        // more crud this way ...
+    };
+
     #define NUM_HOTKEYS 16
     /**
+     * The hotkey structure
      * \ingroup grp_gui
      */
     struct t_hotkey
     {
-        char name[10];
+        std::string name;
         int16_t mode;
         int32_t x;
         int32_t y;
         int32_t z;
     };
+    typedef t_hotkey hotkey_array[NUM_HOTKEYS];
+
     /**
+     * One tile of the screen. Possibly outdated.
      * \ingroup grp_gui
      */
     struct t_screen
@@ -45,6 +88,7 @@ namespace DFHack
         uint8_t gtile;
         uint8_t grayscale;
     };
+
     /**
      * The Gui module
      * \ingroup grp_modules
@@ -54,7 +98,7 @@ namespace DFHack
     {
         public:
 
-        Gui(DFHack::DFContextShared * d);
+        Gui();
         ~Gui();
         bool Start();
         bool Finish();
@@ -67,9 +111,19 @@ namespace DFHack
         bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
         bool setCursorCoords (const int32_t x, const int32_t y, const int32_t z);
         /*
+         * Gui screens
+         */
+        /// handle to the interface object
+        t_interface * df_interface;
+        /// Get the current top-level view-screen
+        t_viewscreen * GetCurrentScreen();
+        /// The DF menu state (designation menu ect)
+        uint32_t * df_menu_state;
+
+        /*
          * Hotkeys (DF's zoom locations)
          */
-        bool ReadHotkeys(t_hotkey hotkeys[]);
+        hotkey_array * hotkeys;
         
         /*
          * Window size in tiles
@@ -80,11 +134,6 @@ namespace DFHack
          * Screen tiles
          */
         bool getScreenTiles(int32_t width, int32_t height, t_screen screen[]);
-        
-        /// read the DF menu view state (stock screen, unit screen, other screens
-        bool ReadViewScreen(t_viewscreen &);
-        /// read the DF menu state (designation menu ect)
-        uint32_t ReadMenuState();
 
         private:
         struct Private;

@@ -1,6 +1,6 @@
 /*
-www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+
 #include "Internal.h"
 
 #include <string>
@@ -29,32 +30,27 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "ContextShared.h"
 #include "dfhack/modules/Gui.h"
-#include "dfhack/DFProcess.h"
+#include "dfhack/Process.h"
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFTypes.h"
-#include "dfhack/DFError.h"
+#include "dfhack/Types.h"
+#include "dfhack/Error.h"
 #include "ModuleFactory.h"
+#include "dfhack/Core.h"
 using namespace DFHack;
 
-Module* DFHack::createGui(DFContextShared * d)
+Module* DFHack::createGui()
 {
-    return new Gui(d);
+    return new Gui();
 }
 
 struct Gui::Private
 {
     Private()
     {
-        Started = ViewScreeInited = MenuStateInited = false;
-        StartedHotkeys = StartedScreen = false;
+        Started = false;
+        StartedScreen = false;
     }
-    bool ViewScreeInited;
-    uint32_t view_screen_offset;
-
-    bool MenuStateInited;
-    uint32_t current_menu_state_offset;
 
     bool Started;
     uint32_t window_x_offset;
@@ -63,39 +59,50 @@ struct Gui::Private
     uint32_t cursor_xyz_offset;
     uint32_t window_dims_offset;
 
-    bool StartedHotkeys;
-    uint32_t hotkey_start;
-    uint32_t hotkey_mode_offset;
-    uint32_t hotkey_xyz_offset;
-    uint32_t hotkey_size;
-
     bool StartedScreen;
     uint32_t screen_tiles_ptr_offset;
 
-    DFContextShared *d;
     Process * owner;
 };
 
-Gui::Gui(DFContextShared * _d)
+Gui::Gui()
 {
-
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = _d;
-    d->owner = _d->p;
-    VersionInfo * mem = d->d->offset_descriptor;
+    d->owner = c.p;
+    VersionInfo * mem = c.vinfo;
     OffsetGroup * OG_Gui = mem->getGroup("GUI");
+
+    // Setting up hotkeys
     try
     {
-        d->current_menu_state_offset = OG_Gui->getAddress("current_menu_state");
-        d->MenuStateInited = true;
+        hotkeys = (hotkey_array *) OG_Gui->getAddress("hotkeys");
     }
-    catch(exception &){};
+    catch(Error::All &)
+    {
+        hotkeys = 0;
+    };
+
+    // Setting up menu state
     try
     {
-        d->view_screen_offset = OG_Gui->getAddress ("view_screen");
-        d->ViewScreeInited = true;
+        df_menu_state = (uint32_t *) OG_Gui->getAddress("current_menu_state");
     }
-    catch(exception &){};
+    catch(Error::All &)
+    {
+        df_menu_state = 0;
+    };
+
+    // Setting up the view screen stuff
+    try
+    {
+        df_interface = (t_interface *) OG_Gui->getAddress ("interface");
+    }
+    catch(exception &)
+    {
+        df_interface = 0;
+    };
+
     OffsetGroup * OG_Position;
     try
     {
@@ -106,16 +113,6 @@ Gui::Gui(DFContextShared * _d)
         d->cursor_xyz_offset = OG_Position->getAddress ("cursor_xyz");
         d->window_dims_offset = OG_Position->getAddress ("window_dims");
         d->Started = true;
-    }
-    catch(Error::All &){};
-    try
-    {
-        OffsetGroup * OG_Hotkeys = mem->getGroup("Hotkeys");
-        d->hotkey_start = OG_Hotkeys->getAddress("start");
-        d->hotkey_mode_offset = OG_Hotkeys->getOffset ("mode");
-        d->hotkey_xyz_offset = OG_Hotkeys->getOffset("coords");
-        d->hotkey_size = OG_Hotkeys->getHexValue("size");
-        d->StartedHotkeys = true;
     }
     catch(Error::All &){};
     try
@@ -141,48 +138,19 @@ bool Gui::Finish()
     return true;
 }
 
-uint32_t Gui::ReadMenuState()
+t_viewscreen * Gui::GetCurrentScreen()
 {
-    if(d->MenuStateInited)
-        return(d->owner->readDWord(d->current_menu_state_offset));
-    return false;
-}
-
-// FIXME: variable ‘screenAddr’ set but not used [-Wunused-but-set-variable]
-bool Gui::ReadViewScreen (t_viewscreen &screen)
-{
-    if (!d->ViewScreeInited) return false;
-    Process * p = d->owner;
-
-    uint32_t last = p->readDWord (d->view_screen_offset);
-    uint32_t screenAddr = p->readDWord (last);
-    uint32_t nextScreenPtr = p->readDWord (last + 4);
-    while (nextScreenPtr != 0)
+    if(!df_interface)
+        return 0;
+    t_viewscreen * ws = &df_interface->view;
+    while(ws)
     {
-        last = nextScreenPtr;
-        screenAddr = p->readDWord (nextScreenPtr);
-        nextScreenPtr = p->readDWord (nextScreenPtr + 4);
+        if(ws->child)
+            ws = ws->child;
+        else
+            return ws;
     }
-    return d->d->offset_descriptor->resolveObjectToClassID (last, screen.type);
-}
-
-bool Gui::ReadHotkeys(t_hotkey hotkeys[])
-{
-    if (!d->StartedHotkeys)
-    {
-        return false;
-    }
-    uint32_t currHotkey = d->hotkey_start;
-    Process * p = d->owner;
-
-    for(uint32_t i = 0 ; i < NUM_HOTKEYS ;i++)
-    {
-        p->readSTLString(currHotkey,hotkeys[i].name,10);
-        hotkeys[i].mode = p->readWord(currHotkey+d->hotkey_mode_offset);
-        p->read (currHotkey + d->hotkey_xyz_offset, 3*sizeof (int32_t), (uint8_t *) &hotkeys[i].x);
-        currHotkey+=d->hotkey_size;
-    }
-    return true;
+    return 0;
 }
 
 bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)

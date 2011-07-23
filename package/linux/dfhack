@@ -1,0 +1,74 @@
+#!/bin/sh
+
+# NOTE: This is dfhack's modification of the normal invocation script,
+# changed to properly set LD_PRELOAD so as to run DFHACK.
+#
+# You can run DF under gdb by passing -g or --gdb as the first argument.
+#
+# If the file ".dfhackrc" exists in the DF directory or your home directory
+# it will be sourced by this script, to let you set environmental variables.
+# If it exists in both places it will first source the one in your home
+# directory, then the on in the game directory.
+#
+# Shell variables .dfhackrc can set to affect this script:
+#     DF_GDB_OPTS: Options to pass to gdb, if it's being run
+#     DF_VALGRIND_OPTS: Options to pass to valgrind, if it's being run
+#     DF_HELGRIND_OPTS: Options to pass to helgrind, if it's being run
+#     DF_RESET_OPTS: Options to pass the reset command at the end of
+#       this script
+#     DF_POST_CMD: Shell command to be run at very end of script
+
+DF_DIR=$(dirname "$0")
+cd "${DF_DIR}"
+export SDL_DISABLE_LOCK_KEYS=1 # Work around for bug in Debian/Ubuntu SDL patch.
+#export SDL_VIDEO_CENTERED=1 # Centre the screen.  Messes up resizing.
+
+# User config files
+RC=".dfhackrc"
+
+if [ -r "$HOME/$RC" ]; then
+    . $HOME/$RC
+fi
+if [ -r "./$RC" ]; then
+    . "./$RC"
+fi
+
+# Now run
+
+case "$1" in
+  -g | --gdb)
+    shift
+    echo "set environment LD_PRELOAD=./libdfhack.so" > gdbcmd.tmp
+    gdb $DF_GDB_OPTS -x gdbcmd.tmp ./libs/Dwarf_Fortress $*
+    rm gdbcmd.tmp
+    ret=$?
+    ;;
+  -h | --helgrind)
+    shift
+    LD_PRELOAD=./libdfhack.so valgrind $DF_HELGRIND_OPTS --tool=helgrind --log-file=helgrind.log ./libs/Dwarf_Fortress $*
+    ret=$?
+    ;;
+  -v | --valgrind)
+    shift
+    LD_PRELOAD=./libdfhack.so valgrind $DF_VALGRIND_OPTS --log-file=valgrind.log ./libs/Dwarf_Fortress $*
+    ret=$?
+    ;;
+  -c | --callgrind)
+    shift
+    LD_PRELOAD=./libdfhack.so valgrind $DF_CALLGRIND_OPTS --tool=callgrind --separate-threads=yes --dump-instr=yes --instr-atstart=no --log-file=callgrind.log ./libs/Dwarf_Fortress $*
+    ret=$?
+    ;;
+  *)
+    LD_PRELOAD=./libdfhack.so ./libs/Dwarf_Fortress $*
+    ret=$?
+    ;;
+esac
+
+# Reset terminal to sane state in case of a crash
+reset $DF_RESET_OPTS
+
+if [ -n "$DF_POST_CMD" ]; then
+    eval $DF_POST_CMD
+fi
+
+exit $ret

@@ -1,6 +1,6 @@
 /*
-www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+
 #include "Internal.h"
 
 #include <string>
@@ -29,14 +30,14 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "ContextShared.h"
 
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFProcess.h"
-#include "dfhack/DFVector.h"
-#include "dfhack/DFTypes.h"
+#include "dfhack/Process.h"
+#include "dfhack/Vector.h"
+#include "dfhack/Types.h"
 #include "dfhack/modules/Constructions.h"
 #include "ModuleFactory.h"
+#include "dfhack/Core.h"
 
 using namespace DFHack;
 
@@ -46,25 +47,24 @@ struct Constructions::Private
     // translation
     DfVector <uint32_t> * p_cons;
 
-    DFContextShared *d;
     Process * owner;
     bool Inited;
     bool Started;
 };
 
-Module* DFHack::createConstructions(DFContextShared * d)
+Module* DFHack::createConstructions()
 {
-    return new Constructions(d);
+    return new Constructions();
 }
 
-Constructions::Constructions(DFContextShared * d_)
+Constructions::Constructions()
 {
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = d_;
-    d->owner = d_->p;
+    d->owner = c.p;
     d->p_cons = 0;
     d->Inited = d->Started = false;
-    VersionInfo * mem = d->d->offset_descriptor;
+    VersionInfo * mem = c.vinfo;
     d->construction_vector = mem->getGroup("Constructions")->getAddress ("vector");
     d->Inited = true;
 }
@@ -78,7 +78,7 @@ Constructions::~Constructions()
 
 bool Constructions::Start(uint32_t & numconstructions)
 {
-    d->p_cons = new DfVector <uint32_t> (d->owner, d->construction_vector);
+    d->p_cons = new DfVector <uint32_t> (d->construction_vector);
     numconstructions = d->p_cons->size();
     d->Started = true;
     return true;

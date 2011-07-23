@@ -1,6 +1,6 @@
 /*
-www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -22,14 +22,15 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+
 #pragma once
 
 #ifndef MEMINFO_H_INCLUDED
 #define MEMINFO_H_INCLUDED
 
-#include "DFPragma.h"
-#include "DFExport.h"
-#include "dfhack/DFTypes.h"
+#include "dfhack/Pragma.h"
+#include "dfhack/Export.h"
+#include "dfhack/Types.h"
 #include <sys/types.h>
 
 namespace DFHack
@@ -182,7 +183,7 @@ namespace DFHack
         * Get a vptr from a classname. Can fail if the type is not in the cache
         * limited to normal classes, variable-dependent types will resolve to the base class
         */
-        bool resolveClassnameToVPtr ( const std::string classname, uint32_t & vptr );
+        bool resolveClassnameToVPtr ( const std::string classname, void * & vptr );
 
         /**
         * Get a classname from a previous classID. Can fail if the type is not in the cache (you use bogus classID)

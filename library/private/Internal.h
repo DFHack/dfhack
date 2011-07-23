@@ -1,6 +1,6 @@
 /*
-www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -32,20 +32,16 @@ distribution.
     #define BUILD_DFHACK_LIB
 #endif
 
-// wizardry for adding quotes to macros
-#define _QUOTEME(x) #x
-#define QUOT(x) _QUOTEME(x)
-
 // force large file support
 #ifdef LINUX_BUILD
     #define _FILE_OFFSET_BITS 64
 #endif
 
 // one file for telling the MSVC compiler where it can shove its pointless warnings
-#include "dfhack/DFPragma.h"
+#include "dfhack/Pragma.h"
 
 // C99 integer types
-#include "dfhack/DFIntegers.h"
+#include <stdint.h>
 
 #endif // DFCOMMONINTERNAL_H_INCLUDED
 

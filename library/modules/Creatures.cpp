@@ -1,6 +1,6 @@
 /*
-www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+
 #include "Internal.h"
 
 #include <stddef.h>
@@ -31,18 +32,19 @@ distribution.
 #include <cstring>
 using namespace std;
 
-#include "ContextShared.h"
 
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFProcess.h"
-#include "dfhack/DFVector.h"
-#include "dfhack/DFError.h"
-#include "dfhack/DFTypes.h"
+#include "dfhack/Process.h"
+#include "dfhack/Vector.h"
+#include "dfhack/Error.h"
+#include "dfhack/Types.h"
 
 // we connect to those
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Creatures.h"
+#include "dfhack/modules/Translation.h"
 #include "ModuleFactory.h"
+#include <dfhack/Core.h>
 
 using namespace DFHack;
 
@@ -115,26 +117,28 @@ struct Creatures::Private
     bool IdMapReady;
     std::map<int32_t, int32_t> IdMap;
     DfVector <uint32_t> *p_cre;
-    DFContextShared *d;
     Process *owner;
+    Translation * trans;
 };
 
-Module* DFHack::createCreatures(DFContextShared * d)
+Module* DFHack::createCreatures()
 {
-    return new Creatures(d);
+    return new Creatures();
 }
 
-Creatures::Creatures(DFContextShared* _d)
+Creatures::Creatures()
 {
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = _d;
-    d->owner = _d->p;
+    d->owner = c.p;
+    VersionInfo * minfo = c.vinfo;
     d->Inited = false;
     d->Started = false;
     d->IdMapReady = false;
     d->p_cre = NULL;
-    d->d->InitReadNames(); // throws on error
-    VersionInfo * minfo = d->d->offset_descriptor;
+    d->trans = c.getTranslation();
+    d->trans->InitReadNames(); // throws on error
+
     OffsetGroup *OG_Creatures = minfo->getGroup("Creatures");
     OffsetGroup *OG_creature = OG_Creatures->getGroup("creature");
     OffsetGroup *OG_creature_ex = OG_creature->getGroup("advanced");
@@ -241,7 +245,7 @@ bool Creatures::Start( uint32_t &numcreatures )
 {
     if(d->Ft_basic)
     {
-        d->p_cre = new DfVector <uint32_t> (d->owner, d->creatures.vector);
+        d->p_cre = new DfVector <uint32_t> (d->creatures.vector);
         d->Started = true;
         numcreatures =  d->p_cre->size();
         d->IdMapReady = false;
@@ -277,7 +281,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
     if(d->Ft_basic)
     {
         // name
-        d->d->readName(furball.name,addr_cr + offs.name_offset);
+        d->trans->readName(furball.name,addr_cr + offs.name_offset);
 
         // basic stuff
         p->readDWord (addr_cr + offs.id_offset, furball.id);
@@ -307,7 +311,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         // mood stuff
         furball.mood = (int16_t) p->readWord (addr_cr + offs.mood_offset);
         furball.mood_skill = p->readWord (addr_cr + offs.mood_skill_offset);
-        d->d->readName(furball.artifact_name, addr_cr + offs.artifact_name_offset);
+        d->trans->readName(furball.artifact_name, addr_cr + offs.artifact_name_offset);
 
         // labors
         p->read (addr_cr + offs.labors_offset, NUM_CREATURE_LABORS, furball.labors);
@@ -317,7 +321,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
 
         furball.pregnancy_timer = p->readDWord (addr_cr + offs.pregnancy_offset );
         // appearance
-        DfVector <uint32_t> app(p, addr_cr + offs.appearance_vector_offset);
+        DfVector <uint32_t> app(addr_cr + offs.appearance_vector_offset);
         furball.nbcolors = app.size();
         if(furball.nbcolors>MAX_COLORS)
             furball.nbcolors = MAX_COLORS;
@@ -349,7 +353,7 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
         {
             furball.has_default_soul = true;
             // get first soul's skills
-            DfVector <uint32_t> skills(p, soul + offs.soul_skills_vector_offset);
+            DfVector <uint32_t> skills(soul + offs.soul_skills_vector_offset);
             furball.defaultSoul.numSkills = skills.size();
 
             for (uint32_t i = 0; i < furball.defaultSoul.numSkills;i++)
@@ -522,7 +526,7 @@ bool Creatures::WriteSkills(const uint32_t index, const t_soul &soul)
         return false;
     }
 
-    DfVector<uint32_t> skills(p, souloff + d->creatures.soul_skills_vector_offset);
+    DfVector<uint32_t> skills(souloff + d->creatures.soul_skills_vector_offset);
 
     for (uint32_t i=0; i<soul.numSkills; i++)
     {
@@ -619,7 +623,7 @@ bool Creatures::WriteJob(const t_creature * furball, std::vector<t_material> con
     unsigned int i;
     Process * p = d->owner;
     Private::t_offsets & off = d->creatures;
-    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + off.job_materials_vector);
+    DfVector <uint32_t> cmats(furball->current_job.occupationPtr + off.job_materials_vector);
 
     for(i=0;i<cmats.size();i++)
     {
@@ -693,7 +697,7 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
 
     Process * p = d->owner;
     Private::t_offsets & off = d->creatures;
-    DfVector <uint32_t> cmats(p, furball->current_job.occupationPtr + off.job_materials_vector);
+    DfVector <uint32_t> cmats(furball->current_job.occupationPtr + off.job_materials_vector);
     mat.resize(cmats.size());
     for(i=0;i<cmats.size();i++)
     {
@@ -719,7 +723,7 @@ bool Creatures::ReadInventoryPtr(const uint32_t temp, std::vector<uint32_t> & it
     if(!d->Started || !d->Ft_inventory) return false;
     Process * p = d->owner;
 
-    DfVector <uint32_t> citem(p, temp + d->creatures.inventory_offset);
+    DfVector <uint32_t> citem(temp + d->creatures.inventory_offset);
     if(citem.size() == 0)
         return false;
     item.resize(citem.size());
@@ -741,7 +745,7 @@ bool Creatures::ReadOwnedItemsPtr(const uint32_t temp, std::vector<int32_t> & it
     if(!d->Started || !d->Ft_owned_items) return false;
     Process * p = d->owner;
 
-    DfVector <int32_t> citem(p, temp + d->creatures.owned_items_offset);
+    DfVector <int32_t> citem(temp + d->creatures.owned_items_offset);
     if(citem.size() == 0)
         return false;
     item.resize(citem.size());
@@ -766,7 +770,7 @@ bool Creatures::RemoveOwnedItemPtr(const uint32_t temp, int32_t id)
     if(!d->Started || !d->Ft_owned_items) return false;
     Process * p = d->owner;
 
-    DfVector <int32_t> citem(p, temp + d->creatures.owned_items_offset);
+    DfVector <int32_t> citem(temp + d->creatures.owned_items_offset);
 
     for (unsigned i = 0; i < citem.size(); i++) {
         if (citem[i] != id)
@@ -783,6 +787,6 @@ void Creatures::CopyNameTo(t_creature &creature, uint32_t address)
     Private::t_offsets &offs = d->creatures;
 
     if(d->Ft_basic)
-        d->d->copyName(creature.origin + offs.name_offset, address);
+        d->trans->copyName(creature.origin + offs.name_offset, address);
 }
 

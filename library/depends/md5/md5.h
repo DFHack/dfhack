@@ -45,7 +45,7 @@
 //----------------------------------------------------------------------
 //STL includes
 #include <string>
-#include <dfhack/DFIntegers.h>
+#include <stdint.h>
 //----------------------------------------------------------------------
 //typedefs
 typedef unsigned char *POINTER;

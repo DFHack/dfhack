@@ -1,6 +1,9 @@
 # linux backup files
 *~
 
+#Kdevelop project file
+*.kdev4
+
 # compiled binaries
 output/*
 
@@ -13,6 +16,9 @@ library/private/config.h
 
 # any build folders
 build*/
+nix
+buntu
+build/VC2010
 
 #except for the real one
 !build/
@@ -26,6 +32,7 @@ build/doc
 build/bin
 build/library
 build/tools
+build/plugins
 
 #ignore Kdevelop stuff
 .kdev4
@@ -39,5 +46,8 @@ dfhack/python/pydfhack/_pydfhack.so
 dfhack/python/PyDFHack.egg-info
 dfhack/python/build
 dfhack/python/dist
+
+# CPack stuff
+build/CPack*Config.cmake
 
 /cmakeall.bat

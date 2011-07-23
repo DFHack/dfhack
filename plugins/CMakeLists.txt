@@ -1,0 +1,132 @@
+#FIXME: inherit all macros and stuff from the dfhack SDK
+IF(UNIX)
+    add_definitions(-DLINUX_BUILD)
+    SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
+    SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32")
+    SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32")
+ENDIF()
+
+include_directories("${dfhack_SOURCE_DIR}/library/include")
+MACRO(CAR var)
+  SET(${var} ${ARGV1})
+ENDMACRO(CAR)
+
+MACRO(CDR var junk)
+  SET(${var} ${ARGN})
+ENDMACRO(CDR)
+
+MACRO(LIST_CONTAINS var value)
+  SET(${var})
+  FOREACH (value2 ${ARGN})
+    IF (${value} STREQUAL ${value2})
+      SET(${var} TRUE)
+    ENDIF (${value} STREQUAL ${value2})
+  ENDFOREACH (value2)
+ENDMACRO(LIST_CONTAINS)
+
+MACRO(PARSE_ARGUMENTS prefix arg_names option_names)
+  SET(DEFAULT_ARGS)
+  FOREACH(arg_name ${arg_names})
+    SET(${prefix}_${arg_name})
+  ENDFOREACH(arg_name)
+  FOREACH(option ${option_names})
+    SET(${prefix}_${option} FALSE)
+  ENDFOREACH(option)
+
+  SET(current_arg_name DEFAULT_ARGS)
+  SET(current_arg_list)
+  FOREACH(arg ${ARGN})
+    LIST_CONTAINS(is_arg_name ${arg} ${arg_names})
+    IF (is_arg_name)
+      SET(${prefix}_${current_arg_name} ${current_arg_list})
+      SET(current_arg_name ${arg})
+      SET(current_arg_list)
+    ELSE (is_arg_name)
+      LIST_CONTAINS(is_option ${arg} ${option_names})
+      IF (is_option)
+    SET(${prefix}_${arg} TRUE)
+      ELSE (is_option)
+    SET(current_arg_list ${current_arg_list} ${arg})
+      ENDIF (is_option)
+    ENDIF (is_arg_name)
+  ENDFOREACH(arg)
+  SET(${prefix}_${current_arg_name} ${current_arg_list})
+ENDMACRO(PARSE_ARGUMENTS)
+
+MACRO(DFHACK_PLUGIN)
+  PARSE_ARGUMENTS(PLUGIN
+    "LINK_LIBRARIES;DEPENDS"
+    "SOME_OPT"
+    ${ARGN}
+    )
+  CAR(PLUGIN_NAME ${PLUGIN_DEFAULT_ARGS})
+  CDR(PLUGIN_SOURCES ${PLUGIN_DEFAULT_ARGS})
+
+  ADD_LIBRARY(${PLUGIN_NAME} MODULE ${PLUGIN_SOURCES})
+  TARGET_LINK_LIBRARIES(${PLUGIN_NAME} dfhack ${PLUGIN_LINK_LIBRARIES})
+  IF(UNIX)
+    SET_TARGET_PROPERTIES(${PLUGIN_NAME} PROPERTIES SUFFIX .plug.so PREFIX "")
+  ELSE()
+    SET_TARGET_PROPERTIES(${PLUGIN_NAME} PROPERTIES SUFFIX .plug.dll)
+  ENDIF()
+  SET_TARGET_PROPERTIES(${PLUGIN_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELEASE ${DFHACK_PLUGIN_OUTPUT_DIR})
+  SET_TARGET_PROPERTIES(${PLUGIN_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL ${DFHACK_PLUGIN_OUTPUT_DIR})
+  SET_TARGET_PROPERTIES(${PLUGIN_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO ${DFHACK_PLUGIN_OUTPUT_DIR})
+  install(TARGETS ${PLUGIN_NAME}
+          LIBRARY DESTINATION ${DFHACK_PLUGIN_DESTINATION}
+          RUNTIME DESTINATION ${DFHACK_PLUGIN_DESTINATION})
+  #MESSAGE("Depends: ${PLUGIN_DEPENDS}")
+  #IF (PLUGIN_AUTO_INSTALL)
+  #  MESSAGE("Auto install")
+  #ENDIF (PLUGIN_AUTO_INSTALL)
+  #IF (PLUGIN_NO_MODULE)
+  #  MESSAGE("No module")
+  #ENDIF (PLUGIN_NO_MODULE)
+ENDMACRO(DFHACK_PLUGIN)
+
+# add all subdirectories. can be used in those subdirectories, etc...
+# needs a re-run of cmake to pick up the changes
+#macro(RECURSE_DIRS)
+#  file(GLOB sub-dir RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *)
+#  foreach(dir ${sub-dir})
+#    if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
+#      add_subdirectory (${dir})
+#    endif()
+#  endforeach()
+#endmacro()
+
+#RECURSE_DIRS()
+
+OPTION(BUILD_QTPLUG "Build the experimental Qt plugin." OFF)
+if(BUILD_QTPLUG)
+    add_subdirectory (qtplug)
+endif()
+
+OPTION(BUILD_STONESENSE "Build stonesense (needs a checkout first)." OFF)
+if(BUILD_STONESENSE)
+    add_subdirectory (stonesense)
+endif()
+
+
+OPTION(BUILD_KITTENS "Build the kittens plugin." OFF)
+if(BUILD_KITTENS)
+    DFHACK_PLUGIN(kittens kittens.cpp)
+endif()
+
+IF(UNIX)
+    OPTION(BUILD_VECTORS "Build the vectors search plugin." OFF)
+    if(BUILD_VECTORS)
+        DFHACK_PLUGIN(vectors vectors.cpp)
+    endif()
+endif()
+
+
+DFHACK_PLUGIN(reveal reveal.cpp)
+DFHACK_PLUGIN(prospector prospector.cpp)
+DFHACK_PLUGIN(rawdump rawdump.cpp)
+DFHACK_PLUGIN(cleanmap cleanmap.cpp)
+DFHACK_PLUGIN(weather weather.cpp)
+DFHACK_PLUGIN(vdig vdig.cpp)
+DFHACK_PLUGIN(colonies colonies.cpp)
+DFHACK_PLUGIN(itemhacks itemhacks.cpp)
+DFHACK_PLUGIN(notes notes.cpp)

@@ -803,8 +803,9 @@
             <Group name="GUI" description="Offsets used by the GUI module.">
                 <Address name="pause_state" description="a flag that determines if the game is paused."/>
                 <Address name="current_cursor_creature" description="A vector? of creatures currently under the cursor."/>
+                <Address name="interface" description="Pointer to the global interfacest object (gview symbol on Linux)."/>
                 <Address name="current_menu_state" description="A numeric value that describes the state of the current GUI element (switching between menus will change this)."/>
-                <Address name="view_screen" description="Pointer to the current view screen object (GUI screen)."/>
+                <Address name="hotkeys" description="Address where the array of hotkeys starts." />
             </Group>
             <Group name="Maps" description="Offsets used by the Maps module.">
                 <Address name="map_data" description="Pointer to the start of the map structure."/>
@@ -927,6 +928,15 @@
             </Group>
             <Group name="Materials" description="Offsets used by the Materials module.">
                 <Address name="inorganics" description="Soil, stone, gems and metal."/>
+                <Group name="inorganic_extras">
+                    <Offset name="ore_types" description="Vector of indexes of metals produced when ore is smelted"/>
+                    <Offset name="ore_chances" description="Vector of percent chance of each type of metal being produced on smelting"/>
+                    <Offset name="strand_types" description="Vector of indexes of metals produced when ore undergoes strand extraction"/>
+                    <Offset name="strand_chances" description="Vector of percent chance of each type of metal being produced on strand extraction"/>
+                    <Offset name="value" description="Meterial value"/>
+                    <Offset name="wall_tile" description="Tile when material is a natural wall"/>
+                    <Offset name="boulder_tile" description="Tile when material is a dug out stone"/>
+                </Group>
                 <Address name="organics_all" description="Wood and plant matter, mixed" />
                 <Address name="organics_plants" description="plant matter" />
                 <Address name="organics_trees" description="just wood" />
@@ -989,11 +999,16 @@
                 <Offset name="custom_workshop_name"/>
                 <Offset name="custom_workshop_type"/>
             </Group>
-            <Group name="Hotkeys">
-                <Address name="start"/>
-                <Offset name="mode"/>
-                <Offset name="coords"/>
-                <HexValue name="sizeof"/>
+            <Group name="Vermin">
+                <Group name="Spawn Points" description="vermin spawn points, including colonies">
+                    <Address name="vector"/>
+                    <Offset name="race"/>
+                    <Offset name="type"/>
+                    <Offset name="position"/>
+                    <Offset name="in_use"/>
+                    <Offset name="unknown"/>
+                    <Offset name="countdown"/> to what???
+                </Group>
             </Group>
             <Group name="Items">
                 <!-- most of those seem completely unused! -->
@@ -1022,6 +1037,7 @@
                 <Address name="current_weather" description="5x5 array of bytes for surrounding biomes. For each: 0=clear, 1=raining, 2=snowing." />
                 <Address name="game_mode" description="Current game mode" />
                 <Address name="control_mode" description="Current control mode" />
+                <Address name="save_folder" descript="Name of save folder of current game"/>
                 <!--<Address name="control_mode_copy" description="Copy of the control mode in DF memory" />-->
             </Group>
             <Group name="Legends">
@@ -1056,6 +1072,9 @@
                         <Offset name="region_id"/>
                     </Group>
                 </Group>
+            </Group>
+            <Group name="Notes" description="In-game notes">
+                <Address name="vector"/>
             </Group>
         </Offsets>
     </Base>
@@ -1132,8 +1151,7 @@
             <Group name="GUI">
                 <Address name="pause_state" value="0x146e45f" />
                 <Address name="current_cursor_creature" value="0xae82cc" valid="false" />
-                <Address name="current_menu_state" value="0x017f6f38" />
-                <Address name="view_screen" value="0xae82cc" valid="false" />
+                <Address name="hotkeys" value="0x01476ecc" />
             </Group>
             <Group name="Maps">
                 <Address name="map_data" value="0x016AD718" />
@@ -1305,18 +1323,12 @@
                 <Offset name="custom_workshop_name" value="0x4" />
                 <Offset name="custom_workshop_type" value="0x20" />
             </Group>
-            <Group name="Hotkeys">
-                <Address name="start" value="0x01476ecc" />
-                <Offset name="mode" value="0x1C" />
-                <Offset name="coords" value="0x20" />
-                <HexValue name="sizeof" value="0x2C" />
-            </Group>
+            
             <!-- addresses from belal: vectors might need 8 subtracted from them
             buildings 0x0166f9a8
             constructions 0xffffffff
             creatures 0x0166eccc
             current_cursor_creature 0x00ae82cc
-            current_menu_state 0x017f6f38
             cursor_xyz 0x0166ecd4
             effects_vector 0x017f6da0
             hotkey_start 0x01476ecc
@@ -1332,7 +1344,6 @@
             settlement_current 0xffffffff
             settlements 0x016af4a4
             translation_vector 0x016b0010
-            view_screen 0xffffffff
             window_dims 0x017f5abc
             window_x 0x00e32798
             window_y 0x00e60838
@@ -2216,7 +2227,8 @@
                 <Address name="control_mode" value="0xb33814" />
                 <Address name="game_mode" value="0xb33818"/>
                 <Address name="current_year" value="0xef6268" />
-                <Address name="current_tick" value="0xe17180" />
+                <!--<Address name="current_tick" value="0xe17180" />-->
+                <Address name="current_tick" value="0xec3170" />
                 <Address name="current_weather" value="0x14eb7a0" />
             </Group>
             <Group name="GUI">
@@ -2244,21 +2256,37 @@
         <PETimeStamp value="0x4D90764F" />
         <MD5 value="6ada05fc94785b53efe6aa5728b3756b" />
         <Offsets>
+            <Group name="GUI">
+                <Address name="hotkeys" value="0x14f5cc8" />
+                <Address name="interface" value="0x14f6070" />
+                <Address name="current_menu_state" value="0x14f5fac" />
+            </Group>
             <Group name="Creatures">
                 <Group name="creature">
                     <Offset name="flags3" value="0xE8"/>
                 </Group>
             </Group>
-        <Group name="Items" valid="true">
-            <Address name="items_vector" value="0x16c4540"/>
-            <Offset name="id" value="0x14"/>
-            <Offset name="item_ref_vector" value="0x28" />
-            <Offset name="owner_ref_id_field" value="0x4" />
-            <Offset name="item_wear_accessor" value="0xCC" />
-            <Offset name="item_quantity_accessor" value="0x214" /> 0x194  TEST
-            <Offset name="item_quality_accessor" value="0x25C" />
-        </Group>
-    </Offsets>
+            <Group name="Materials">
+                <Group name="inorganic_extras">
+                    <Offset name="ore_types" value="0x18"/>
+                    <Offset name="ore_chances" value="0x24"/>
+                    <Offset name="strand_types" value="0x3c"/>
+                    <Offset name="strand_chances" value="0x48"/>
+                    <Offset name="value" value="0x17c"/>
+                    <Offset name="wall_tile" value="0x20c"/>
+                    <Offset name="boulder_tile" value="0x21e"/>
+                </Group>
+            </Group>
+            <Group name="Items" valid="true">
+                <Address name="items_vector" value="0x16c4540"/>
+                <Offset name="id" value="0x14"/>
+                <Offset name="item_ref_vector" value="0x28" />
+                <Offset name="owner_ref_id_field" value="0x4" />
+                <Offset name="item_wear_accessor" value="0xCC" />
+                <Offset name="item_quantity_accessor" value="0x214" /> 0x194  TEST
+                <Offset name="item_quality_accessor" value="0x25C" />
+            </Group>
+        </Offsets>
         cmake
         item vector:
         
@@ -3022,6 +3050,12 @@
         <MD5 value="fc15065c4d1977ca019c6dad220413d1" />
         <Offsets>
             WORLD: 0x93f77a0
+
+            <Group name="GUI">
+                <Address name="hotkeys" value="0x93f740c" />
+                <Address name="interface" value="0x8C3E900" />
+                <Address name="current_menu_state" value="0x93F756C" />
+            </Group>
             <Group name="Creatures">
                 Maybe, possibly.
                 <Address name="current_civ" value="0x093f2b50 0x93f2cdc" />
@@ -3031,6 +3065,28 @@
                     <Offset name="flags3" value="0x94"/>
                 </Group>
             </Group>
+            <Group name="Materials">
+                <Group name="inorganic_extras">
+                    <Offset name="ore_types" value="0x18"/>
+                    <Offset name="ore_chances" value="0x24"/>
+                    <Offset name="strand_types" value="0x3c"/>
+                    <Offset name="strand_chances" value="0x48"/>
+                    <Offset name="value" value="0x17c"/>
+                    <Offset name="wall_tile" value="0x20c"/>
+                    <Offset name="boulder_tile" value="0x21e"/>
+                </Group>
+            </Group>
+            <Group name="Vermin" valid="true">
+                <Group name="Spawn Points">
+                    <Address name="vector"   value="0x93f77c4"/>
+                    <Offset name="race"      value="0x0"/>
+                    <Offset name="type"      value="0x2"/>
+                    <Offset name="position"  value="0x4"/>
+                    <Offset name="in_use"    value="0xa"/>
+                    <Offset name="unknown"   value="0xb"/>
+                    <Offset name="countdown" value="0xc"/>
+                </Group>
+            </Group>
             <Group name="Position" valid="true">
                 <Address name="cursor_xyz" value="0x8c3de60"/>
             </Group>
@@ -3038,6 +3094,7 @@
                 <Address name="control_mode" value="0x8c3de90" />
                 <Address name="game_mode" value="0x8c3deA0" />
                 <Address name="current_weather" value="0x93F05E4" />
+                <Address name="save_folder" value="0x958a378" />
             </Group>
             <Group name="Items">
                 <Address name="items_vector" value="0x940b1fc" />
@@ -3087,6 +3144,9 @@
             </Group>
             <Group name="Vegetation">
                 <Address name="vector" value="0x940bd70" />
+            </Group>
+            <Group name="Notes">
+                <Address name="vector" value="0x93f635c"/>
             </Group>
         </Offsets>
     </Version>

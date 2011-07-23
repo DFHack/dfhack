@@ -1,6 +1,6 @@
 /*
-www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+
 #include "Internal.h"
 #include <string>
 #include <vector>
@@ -29,19 +30,19 @@ distribution.
 #include <cstring>
 using namespace std;
 
-#include "ContextShared.h"
 #include "dfhack/modules/World.h"
-#include "dfhack/DFProcess.h"
+#include "dfhack/Process.h"
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFTypes.h"
-#include "dfhack/DFError.h"
+#include "dfhack/Types.h"
+#include "dfhack/Error.h"
 #include "ModuleFactory.h"
+#include <dfhack/Core.h>
 
 using namespace DFHack;
 
-Module* DFHack::createWorld(DFContextShared * d)
+Module* DFHack::createWorld()
 {
-    return new World(d);
+    return new World();
 }
 
 struct World::Private
@@ -66,18 +67,21 @@ struct World::Private
     uint32_t gamemode_offset;
     uint32_t controlmode_offset;
     uint32_t controlmodecopy_offset;
-    DFContextShared *d;
+
+    bool StartedFolder;
+    uint32_t folder_name_offset;
+
     Process * owner;
 };
 
-World::World(DFContextShared * _d)
+World::World()
 {
-
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = _d;
-    d->owner = _d->p;
+    d->owner = c.p;
+    wmap = 0;
 
-    OffsetGroup * OG_World = d->d->offset_descriptor->getGroup("World");
+    OffsetGroup * OG_World = c.vinfo->getGroup("World");
     try
     {
         d->year_offset = OG_World->getAddress( "current_year" );
@@ -85,7 +89,7 @@ World::World(DFContextShared * _d)
         d->StartedTime = true;
     }
     catch(Error::All &){};
-    OffsetGroup * OG_Gui = d->d->offset_descriptor->getGroup("GUI"); // FIXME: legacy
+    OffsetGroup * OG_Gui = c.vinfo->getGroup("GUI");
     try
     {
         d->pause_state_offset = OG_Gui->getAddress ("pause_state");
@@ -95,6 +99,7 @@ World::World(DFContextShared * _d)
     try
     {
         d->weather_offset = OG_World->getAddress( "current_weather" );
+        wmap = (weather_map *) d->weather_offset;
         d->StartedWeather = true;
     }
     catch(Error::All &){};
@@ -105,6 +110,14 @@ World::World(DFContextShared * _d)
         d->StartedMode = true;
     }
     catch(Error::All &){};
+    try
+    {
+        d->folder_name_offset = OG_World->getAddress( "save_folder" );
+        d->StartedFolder = true;
+    }
+    catch(Error::All &){};
+
+
     d->Inited = true;
 }
 
@@ -126,7 +139,6 @@ bool World::Finish()
 bool World::ReadPauseState()
 {
     if(!d->PauseInited) return false;
-    
     uint32_t pauseState = d->owner->readDWord (d->pause_state_offset);
     return pauseState & 1;
 }
@@ -155,8 +167,8 @@ bool World::ReadGameMode(t_gamemodes& rd)
 {
     if(d->Inited && d->StartedMode)
     {
-        rd.control_mode = (ControlMode) d->owner->readDWord( d->controlmode_offset);
-        rd.game_mode = (GameMode) d->owner->readDWord(d->gamemode_offset);
+        rd.g_mode = (GameMode) d->owner->readDWord( d->controlmode_offset);
+        rd.g_type = (GameType) d->owner->readDWord(d->gamemode_offset);
         return true;
     }
     return false;
@@ -165,8 +177,8 @@ bool World::WriteGameMode(const t_gamemodes & wr)
 {
     if(d->Inited && d->StartedMode)
     {
-        d->owner->writeDWord(d->gamemode_offset,wr.game_mode);
-        d->owner->writeDWord(d->controlmode_offset,wr.control_mode);
+        d->owner->writeDWord(d->gamemode_offset,wr.g_mode);
+        d->owner->writeDWord(d->controlmode_offset,wr.g_type);
         return true;
     }
     return false;
@@ -219,4 +231,13 @@ void World::SetCurrentWeather(uint8_t weather)
         memset(&buf,weather, sizeof(buf));
         d->owner->write(d->weather_offset,sizeof(buf),buf);
     }
+}
+
+string World::ReadWorldFolder()
+{
+    if (d->Inited && d->StartedFolder)
+    {
+        return string( * ( (string*) d->folder_name_offset ) );
+    }
+    return string("");
 }

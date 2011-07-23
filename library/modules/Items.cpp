@@ -1,6 +1,6 @@
 /*
-www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+
 #include "Internal.h"
 
 #include <string>
@@ -31,21 +32,21 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "ContextShared.h"
-#include "dfhack/DFTypes.h"
+#include "dfhack/Types.h"
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFProcess.h"
-#include "dfhack/DFVector.h"
+#include "dfhack/Process.h"
+#include "dfhack/Vector.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Items.h"
 #include "dfhack/modules/Creatures.h"
 #include "ModuleFactory.h"
+#include <dfhack/Core.h>
 
 using namespace DFHack;
 
-Module* DFHack::createItems(DFContextShared * d)
+Module* DFHack::createItems()
 {
-    return new Items(d);
+    return new Items();
 }
 
 enum accessor_type {ACCESSOR_CONSTANT, ACCESSOR_INDIRECT, ACCESSOR_DOUBLE_INDIRECT};
@@ -71,7 +72,7 @@ public:
     Accessor(uint32_t function, Process * p);
     Accessor(accessor_type type, int32_t constant, uint32_t offset1, uint32_t offset2, uint32_t dataWidth, Process * p);
     std::string dump();
-    int32_t getValue(uint32_t objectPtr);
+    int32_t getValue(t_item * objectPtr);
     bool isConstant();
 };
 class ItemImprovementDesc
@@ -100,11 +101,11 @@ private:
     bool hasDecoration;
     int idFieldOffset;
 public:
-    ItemDesc(uint32_t VTable, Process * p);
-    bool readItem(uint32_t itemptr, dfh_item & item);
+    ItemDesc(void * VTable, Process * p);
+    bool readItem(t_item * itemptr, dfh_item & item);
     std::string dumpAccessors();
     std::string className;
-    uint32_t vtable;
+    void * vtable;
     uint32_t mainType;
     std::vector<ItemImprovementDesc> improvement;
 };
@@ -305,7 +306,7 @@ string Accessor::dump()
     return sstr.str();
 }
 
-int32_t Accessor::getValue(uint32_t objectPtr)
+int32_t Accessor::getValue(t_item * objectPtr)
 {
     int32_t offset = this->offset1;
 
@@ -315,18 +316,18 @@ int32_t Accessor::getValue(uint32_t objectPtr)
         return this->constant;
         break;
     case ACCESSOR_DOUBLE_INDIRECT:
-        objectPtr = p->readDWord(objectPtr + this->offset1);
+        objectPtr = (t_item *) p->readDWord((uint32_t)objectPtr + this->offset1);
         offset = this->offset2;
         // fallthrough
     case ACCESSOR_INDIRECT:
         switch(this->dataWidth)
         {
         case Data32:
-            return p->readDWord(objectPtr + offset);
+            return p->readDWord((uint32_t)objectPtr + offset);
         case DataSigned16:
-            return (int16_t) p->readWord(objectPtr + offset);
+            return (int16_t) p->readWord((uint32_t)objectPtr + offset);
         case DataUnsigned16:
-            return (uint16_t) p->readWord(objectPtr + offset);
+            return (uint16_t) p->readWord((uint32_t)objectPtr + offset);
         default:
             return -1;
         }
@@ -337,12 +338,12 @@ int32_t Accessor::getValue(uint32_t objectPtr)
 }
 
 // FIXME: turn into a proper factory with caching
-Accessor * buildAccessor (OffsetGroup * I, Process * p, const char * name, uint32_t vtable)
+Accessor * buildAccessor (OffsetGroup * I, Process * p, const char * name, void * vtable)
 {
     int32_t offset;
     if(I->getSafeOffset(name,offset))
     {
-        return new Accessor( p->readDWord( vtable + offset ), p);
+        return new Accessor( p->readDWord( (uint32_t)vtable + offset ), p);
     }
     else
     {
@@ -351,7 +352,7 @@ Accessor * buildAccessor (OffsetGroup * I, Process * p, const char * name, uint3
     }
 }
 
-ItemDesc::ItemDesc(uint32_t VTable, Process *p)
+ItemDesc::ItemDesc(void * VTable, Process *p)
 {
     OffsetGroup * Items = p->getDescriptor()->getGroup("Items");
 
@@ -372,7 +373,7 @@ ItemDesc::ItemDesc(uint32_t VTable, Process *p)
 
     this->vtable = VTable;
     this->p = p;
-    this->className = p->readClassName(VTable).substr(5);
+    this->className = p->readClassName((void *) VTable).substr(5);
     this->className.resize(this->className.size()-2);
 
     this->hasDecoration = false;
@@ -399,17 +400,15 @@ string ItemDesc::dumpAccessors()
 }
 
 
-bool ItemDesc::readItem(uint32_t itemptr, DFHack::dfh_item &item)
+bool ItemDesc::readItem(t_item * itemptr, DFHack::dfh_item &item)
 {
-    item.id = p->readDWord(itemptr+idFieldOffset);
-    p->read(itemptr, sizeof(t_item), (uint8_t*)&item.base);
+    item.base = itemptr;
     item.matdesc.itemType = AMainType->getValue(itemptr);
     item.matdesc.subType = ASubType->getValue(itemptr);
     item.matdesc.subIndex = ASubIndex->getValue(itemptr);
     item.matdesc.index = AIndex->getValue(itemptr);
     item.quality = AQuality->getValue(itemptr);
     item.quantity = AQuantity->getValue(itemptr);
-    item.origin = itemptr;
     // FIXME: use templates. seriously.
     // Note: this accessor returns a 32-bit value with the higher
     // half sometimes containing garbage, so the cast is essential:
@@ -423,8 +422,8 @@ class Items::Private
         DFContextShared *d;
         Process * owner;
         std::map<int32_t, ItemDesc *> descType;
-        std::map<uint32_t, ItemDesc *> descVTable;
-        std::map<int32_t, uint32_t> idLookupTable;
+        std::map<void *, ItemDesc *> descVTable;
+        std::map<int32_t, t_item *> idLookupTable;
         uint32_t refVectorOffset;
         uint32_t idFieldOffset;
         uint32_t itemVectorAddress;
@@ -433,17 +432,17 @@ class Items::Private
         ClassNameCheck isContainsRefClass;
 };
 
-Items::Items(DFContextShared * d_)
+Items::Items()
 {
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = d_;
-    d->owner = d_->p;
+    d->owner = c.p;
 
     d->isOwnerRefClass = ClassNameCheck("general_ref_unit_itemownerst");
     d->isContainerRefClass = ClassNameCheck("general_ref_contained_in_itemst");
     d->isContainsRefClass = ClassNameCheck("general_ref_contains_itemst");
 
-    DFHack::OffsetGroup* itemGroup = d_->offset_descriptor->getGroup("Items");
+    DFHack::OffsetGroup* itemGroup = c.vinfo->getGroup("Items");
     d->itemVectorAddress = itemGroup->getAddress("items_vector");
     d->idFieldOffset = itemGroup->getOffset("id");
     d->refVectorOffset = itemGroup->getOffset("item_ref_vector");
@@ -460,29 +459,31 @@ bool Items::Finish()
     return true;
 }
 
-bool Items::readItemVector(std::vector<uint32_t> &items)
+bool Items::readItemVector(std::vector<t_item *> &items)
 {
-    DFHack::DfVector <uint32_t> p_items(d->owner, d->itemVectorAddress);
+    std::vector <t_item *> *p_items = (std::vector <t_item *> *) d->itemVectorAddress;
 
     d->idLookupTable.clear();
-    items.resize(p_items.size());
+    items.resize(p_items->size());
 
-    for (unsigned i = 0; i < p_items.size(); i++) {
-        uint32_t ptr = p_items[i];
+    for (unsigned i = 0; i < p_items->size(); i++)
+    {
+        t_item * ptr = p_items->at(i);
         items[i] = ptr;
-        d->idLookupTable[d->owner->readDWord(ptr + d->idFieldOffset)] = ptr;
+        d->idLookupTable[ptr->id] = ptr;
     }
 
     return true;
 }
 
-uint32_t Items::findItemByID(int32_t id)
+t_item * Items::findItemByID(int32_t id)
 {
     if (id < 0)
         return 0;
 
-    if (d->idLookupTable.empty()) {
-        std::vector<uint32_t> tmp;
+    if (d->idLookupTable.empty())
+    {
+        std::vector<t_item *> tmp;
         readItemVector(tmp);
     }
 
@@ -492,7 +493,7 @@ uint32_t Items::findItemByID(int32_t id)
 Items::~Items()
 {
     Finish();
-    std::map<uint32_t, ItemDesc *>::iterator it;
+    std::map<void *, ItemDesc *>::iterator it;
     it = d->descVTable.begin();
     while (it != d->descVTable.end())
     {
@@ -504,13 +505,13 @@ Items::~Items()
     delete d;
 }
 
-bool Items::readItem(uint32_t itemptr, DFHack::dfh_item &item)
+bool Items::readItem(t_item * itembase, DFHack::dfh_item &item)
 {
-    std::map<uint32_t, ItemDesc *>::iterator it;
+    std::map<void *, ItemDesc *>::iterator it;
     Process * p = d->owner;
     ItemDesc * desc;
 
-    uint32_t vtable = p->readDWord(itemptr);
+    void * vtable = itembase->vptr;
     it = d->descVTable.find(vtable);
     if(it == d->descVTable.end())
     {
@@ -521,25 +522,9 @@ bool Items::readItem(uint32_t itemptr, DFHack::dfh_item &item)
     else
         desc = it->second;
 
-    return desc->readItem(itemptr, item);
+    return desc->readItem(itembase, item);
 }
 
-bool Items::writeItem(const DFHack::dfh_item &item)
-{
-    if(item.origin)
-    {
-        d->owner->write(item.origin, sizeof(t_item),(uint8_t *)&(item.base));
-        return true;
-    }
-    return false;
-}
-
-/*
-void Items::setItemFlags(uint32_t itemptr, t_itemflags new_flags)
-{
-    d->owner->writeDWord(itemptr + 0x0C, new_flags.whole);
-}
-*/
 int32_t Items::getItemOwnerID(const DFHack::dfh_item &item)
 {
     std::vector<int32_t> vals;
@@ -565,15 +550,13 @@ bool Items::getContainedItems(const DFHack::dfh_item &item, std::vector<int32_t>
 
 bool Items::readItemRefs(const dfh_item &item, const ClassNameCheck &classname, std::vector<int32_t> &values)
 {
-    DFHack::DfVector<uint32_t> p_refs(d->owner, item.origin + d->refVectorOffset);
-
+    std::vector <t_itemref *> &p_refs = item.base->itemrefs;
     values.clear();
 
     for (uint32_t i=0; i<p_refs.size(); i++)
     {
-        uint32_t vtbl = d->owner->readDWord(p_refs[i]);
-        if (classname(d->owner, vtbl))
-            values.push_back(int32_t(d->owner->readDWord(p_refs[i] + 4)));
+        if (classname(d->owner, p_refs[i]->vptr))
+            values.push_back(int32_t(p_refs[i]->value));
     }
 
     return !values.empty();
@@ -581,30 +564,24 @@ bool Items::readItemRefs(const dfh_item &item, const ClassNameCheck &classname, 
 
 bool Items::removeItemOwner(dfh_item &item, Creatures *creatures)
 {
-    DFHack::DfVector<uint32_t> p_refs(d->owner, item.origin + d->refVectorOffset);
-
+    std::vector <t_itemref *> &p_refs = item.base->itemrefs;
     for (uint32_t i=0; i<p_refs.size(); i++)
     {
-        uint32_t vtbl = d->owner->readDWord(p_refs[i]);
-        if (!d->isOwnerRefClass(d->owner, vtbl)) continue;
+        if (!d->isOwnerRefClass(d->owner, p_refs[i]->vptr))
+            continue;
 
-        int32_t oid = d->owner->readDWord(p_refs[i]+4);
+        int32_t & oid = p_refs[i]->value;
         int32_t ix = creatures->FindIndexById(oid);
 
-        if (ix < 0 || !creatures->RemoveOwnedItemIdx(ix, item.id))
+        if (ix < 0 || !creatures->RemoveOwnedItemIdx(ix, item.base->id))
         {
-            cerr << "RemoveOwnedItemIdx: CREATURE " << ix << " ID " << item.id << " FAILED!" << endl;
+            cerr << "RemoveOwnedItemIdx: CREATURE " << ix << " ID " << item.base->id << " FAILED!" << endl;
             return false;
         }
-
-        if (!p_refs.remove(i--))
-        {
-            cerr << "p_refs.remove FAILED!" << endl;
-            return false;
-        }
+        p_refs.erase(p_refs.begin() + i--);
     }
 
-    item.base.flags.owned = 0;
+    item.base->flags.owned = 0;
 
     return true;
 }
@@ -673,7 +650,7 @@ std::string Items::getItemDescription(const dfh_item & item, Materials * Materia
 /// dump offsets used by accessors of a valid item to a string
 std::string Items::dumpAccessors(const dfh_item & item)
 {
-    std::map< uint32_t, ItemDesc* >::const_iterator it = d->descVTable.find(item.base.vtable);
+    std::map< void *, ItemDesc* >::const_iterator it = d->descVTable.find(item.base->vptr);
     if(it != d->descVTable.end())
         return it->second->dumpAccessors();
     return "crud";

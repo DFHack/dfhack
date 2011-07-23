@@ -1,6 +1,6 @@
 /*
-www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -22,13 +22,14 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+
 #pragma once
 
 #ifndef MEMINFO_MANAGER_H_INCLUDED
 #define MEMINFO_MANAGER_H_INCLUDED
 
-#include "dfhack/DFPragma.h"
-#include "dfhack/DFExport.h"
+#include "dfhack/Pragma.h"
+#include "dfhack/Export.h"
 
 class TiXmlElement;
 namespace DFHack

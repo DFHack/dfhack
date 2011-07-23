@@ -1,6 +1,6 @@
 /*
-www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -32,7 +32,7 @@ using namespace std;
 
 #include "dfhack/VersionInfoFactory.h"
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFError.h"
+#include "dfhack/Error.h"
 using namespace DFHack;
 
 #include <tinyxml.h>
@@ -168,13 +168,13 @@ void VersionInfoFactory::ParseVTable(TiXmlElement* vtable, VersionInfo* mem)
         string type = pClassEntry->Value();
         const char *cstr_name = pClassEntry->Attribute("name");
         const char *cstr_vtable = pClassEntry->Attribute("vtable");
-        uint32_t vtable = 0;
+        uint32_t vtable_num = 0;
         if(cstr_vtable)
-            vtable = strtol(cstr_vtable, NULL, 16);
+            vtable_num = strtol(cstr_vtable, NULL, 16);
         // it's a simple class
         if(type== "class")
         {
-            mem->setClass(cstr_name, vtable);
+            mem->setClass(cstr_name, vtable_num);
         }
         // it's a multi-type class
         else if (type == "multiclass")
@@ -184,7 +184,7 @@ void VersionInfoFactory::ParseVTable(TiXmlElement* vtable, VersionInfo* mem)
             uint32_t typeoffset = 0;
             if(cstr_typeoffset)
                 typeoffset = strtol(cstr_typeoffset, NULL, 16);
-            t_class * mclass = mem->setClass(cstr_name, vtable, typeoffset);
+            t_class * mclass = mem->setClass(cstr_name, vtable_num, typeoffset);
             // parse class sub-entries
             pClassSubEntry = pClassEntry->FirstChildElement();
             for(;pClassSubEntry;pClassSubEntry=pClassSubEntry->NextSiblingElement())

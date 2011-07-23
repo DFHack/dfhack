@@ -1,6 +1,6 @@
 /*
-www.sourceforge.net/projects/dfhack
-Copyright (c) 2009 Petr Mrázek (peterix), Kenneth Ferland (Impaler[WrG]), dorf
+https://github.com/peterix/dfhack
+Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+
 #include "Internal.h"
 
 #include <string>
@@ -29,15 +30,14 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "ContextShared.h"
-
 #include "dfhack/VersionInfo.h"
-#include "dfhack/DFProcess.h"
-#include "dfhack/DFVector.h"
-#include "dfhack/DFTypes.h"
-#include "dfhack/DFError.h"
+#include "dfhack/Process.h"
+#include "dfhack/Vector.h"
+#include "dfhack/Types.h"
+#include "dfhack/Error.h"
 #include "dfhack/modules/Buildings.h"
 #include "ModuleFactory.h"
+#include "dfhack/Core.h"
 using namespace DFHack;
 
 //raw
@@ -65,26 +65,25 @@ struct Buildings::Private
     uint32_t custom_workshop_name;
     int32_t custom_workshop_id;
     DfVector <uint32_t> * p_bld;
-    DFContextShared *d;
     Process * owner;
     bool Inited;
     bool hasCustomWorkshops;
     bool Started;
 };
 
-Module* DFHack::createBuildings(DFContextShared * d)
+Module* DFHack::createBuildings()
 {
-    return new Buildings(d);
+    return new Buildings();
 }
 
-Buildings::Buildings(DFContextShared * d_)
+Buildings::Buildings()
 {
+    Core & c = Core::getInstance();
     d = new Private;
-    d->d = d_;
-    d->owner = d_->p;
     d->p_bld = NULL;
     d->Inited = d->Started = d->hasCustomWorkshops = false;
-    VersionInfo * mem = d->d->offset_descriptor;
+    VersionInfo * mem = c.vinfo;
+    d->owner = c.p;
     OffsetGroup * OG_build = mem->getGroup("Buildings");
     d->Inited = true;
     try
@@ -125,7 +124,7 @@ bool Buildings::Start(uint32_t & numbuildings)
 {
     if(!d->Inited)
         return false;
-    d->p_bld = new DfVector <uint32_t> (d->owner, d->buildings_vector);
+    d->p_bld = new DfVector <uint32_t> (d->buildings_vector);
     numbuildings = d->p_bld->size();
     d->Started = true;
     return true;
@@ -178,7 +177,7 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
         return false;
 
     Process * p = d->owner;
-    DfVector <uint32_t> p_matgloss (p, d->custom_workshop_vector);
+    DfVector <uint32_t> p_matgloss (d->custom_workshop_vector);
     uint32_t size = p_matgloss.size();
     btypes.clear();
 

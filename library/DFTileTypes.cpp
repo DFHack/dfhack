@@ -104,10 +104,10 @@ namespace DFHack
         {"stone pillar",PILLAR, STONE, VAR_1},
 
         //80
-        {"obsidian pillar",PILLAR, OBSIDIAN, VAR_1},
-        {"featstone? pillar",PILLAR, FEATSTONE, VAR_1},
-        {"vein pillar",PILLAR, VEIN, VAR_1},
-        {"ice pillar",PILLAR, ICE, VAR_1},
+        {"obsidian pillar",PILLAR, OBSIDIAN, VAR_1,TILE_SMOOTH},
+        {"featstone? pillar",PILLAR, FEATSTONE, VAR_1,TILE_SMOOTH},
+        {"vein pillar",PILLAR, VEIN, VAR_1,TILE_SMOOTH},
+        {"ice pillar",PILLAR, ICE, VAR_1,TILE_SMOOTH},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
         {0 ,EMPTY, AIR, VAR_1},
@@ -658,15 +658,44 @@ namespace DFHack
 
     int32_t findSimilarTileType( const int32_t sourceTileType, const TileShape tshape )
     {
-        int32_t tt, match=0;
+        int32_t match=0;
         int value=0, matchv=0;
         const TileRow *source = &tileTypeTable[sourceTileType];
+
+		//Shortcut.
+		//If the current tile is already a shape match, leave.
+		if( tshape == source->shape ) return sourceTileType;
+
+
+		//Cheap pseudo-entropy, by using address of the variable on the stack.
+		//No need for real random numbers.
+		static int entropy;
+		entropy += (int)( (void *)(&match) );
+		entropy ^= ((entropy & 0xFF000000)>>24) ^ ((entropy & 0x00FF0000)>>16);
+
 
         #ifdef assert
         assert( sourceTileType >=0 && sourceTileType < TILE_TYPE_ARRAY_LENGTH );
         #endif
 
-        for(tt=0;tt<TILE_TYPE_ARRAY_LENGTH; ++tt)
+		//Special case for smooth pillars.
+		//When you want a smooth wall, no need to search for best match.  Just use a pillar instead.
+		//Choosing the right direction would require knowing neighbors.
+		if( WALL==tshape && (TILE_SMOOTH==source->special || CONSTRUCTED==source->material) ){
+			switch( source->material ){
+				case CONSTRUCTED:      match=495;  break;
+				case ICE:              match= 83;  break;
+				case VEIN:             match= 82;  break;
+				case FEATSTONE:        match= 81;  break;
+				case OBSIDIAN:         match= 80;  break;
+				case STONE:            match= 79;  break;
+			}
+			if( match ) return match;
+		}
+
+
+		//Run through until perfect match found or hit end.
+        for(int32_t tt=0;tt<TILE_TYPE_ARRAY_LENGTH && value<(8|4|1); ++tt)
         {
             if( tshape == tileTypeTable[tt].shape )
             {
@@ -676,7 +705,11 @@ namespace DFHack
                 //Special flag match is absolutely mandatory!
                 if( source->special != tileTypeTable[tt].special ) continue;
 
-                 value=0;
+				//Special case for constructions.
+				//Never turn a construction into a non-contruction.
+				if( CONSTRUCTED == source->material && CONSTRUCTED != tileTypeTable[tt].material ) continue;
+
+                value=0;
                 //Material is high-value match
                 if( tileTypeTable[tt].material == source->material ) value|=8;
                 //Direction is medium value match
@@ -684,7 +717,7 @@ namespace DFHack
                 //Variant is low-value match
                 if( tileTypeTable[tt].variant == source->variant ) value|=1;
 
-                //Check value against last match
+                //Check value against last match.
                 if( value>matchv )
                 {
                     match=tt;
@@ -692,6 +725,40 @@ namespace DFHack
                 }
             }
         }
+
+		//Post-processing for floors.
+		//Give raw floors variation.
+		//Variant matters, but does not matter for source.
+		//Error on the side of caution.
+		if( FLOOR==tshape && CONSTRUCTED!=source->material && !source->special )
+		{
+			//Trying to make a floor type with variants, so randomize the variant.
+			//Very picky, only handle known safe tile types.
+			//Some floors have 4 variants, some have 3, so the order of these matters.
+			switch( match ){
+				case 261:
+					//Furrowed soil got chosen by accident.  Fix that.
+					match=352+(3&entropy); 
+					break; 
+				case 336:	//STONE
+				case 340:	//OBSIDIAN
+				case 344:	//featstone
+				case 349:	//grass
+				case 352:	//soil
+				case 356:	//wet soil
+				case 387:	//dry grass
+				case 394:	//dead grass
+				case 398:	//grass B
+				case 441:	//vein
+					match +=  3&entropy;
+					break;
+				case 242:	//ASHES
+				case 258:	//ICE
+					match += (1&entropy) + (2&entropy);
+					break;
+			}
+		}
+
         if( match ) return match;
         return sourceTileType;
     }

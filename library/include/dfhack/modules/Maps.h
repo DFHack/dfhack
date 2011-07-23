@@ -120,6 +120,7 @@ namespace DFHack
         uint32_t origin;
     };
 
+
     /**
      * mineral vein object - bitmap with a material type
      * \ingroup grp_maps
@@ -135,6 +136,26 @@ namespace DFHack
         uint32_t flags;
         /// this is NOT part of the DF vein, but an address of the vein as seen by DFhack.
         uint32_t address_of;
+
+
+		//zilpin: Functions to more conveniently check the assignment flags of the vein.
+		//Coordinates are given in tile within the block.
+		//Important to make these inline.
+		inline int getassignment( DFCoord xy ){
+			return getassignment(xy.x,xy.y);
+		}
+		inline int getassignment( int x, int y ){
+			return (assignment[y] & (1 << x));
+		}
+		inline void setassignment( DFCoord xy, int bit ){
+			return setassignment(xy.x,xy.y, bit);
+		}
+		inline void setassignment( int x, int y, int bit ){
+			if(bit)
+				assignment[y] |= (1 << x);
+			else
+				assignment[y] &= 0xFFFF ^ (1 << x);
+		}
     };
 
     /**
@@ -652,7 +673,10 @@ namespace DFHack
                        std::vector<t_grassvein>* grass = 0,
                        std::vector<t_worldconstruction>* constructions = 0
                       );
-        /// read all plants in this block
+		/// write a single vein back to the address it was retreived from
+		bool Maps::WriteVein(t_vein *vein);
+
+		/// read all plants in this block
         bool ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<dfh_plant>* plants);
         private:
         struct Private;

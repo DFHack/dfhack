@@ -78,6 +78,8 @@ struct Creatures::Private
         uint32_t artifact_name_offset;
         uint32_t physical_offset;
         uint32_t mood_offset;
+        uint32_t pregnancy_offset;
+        uint32_t pregnancy_ptr_offset;
         uint32_t mood_skill_offset;
         uint32_t pickup_equipment_bit;
         uint32_t soul_vector_offset;
@@ -171,8 +173,8 @@ Creatures::Creatures(DFContextShared* _d)
         {
             creatures.pickup_equipment_bit = OG_creature_ex->getOffset("pickup_equipment_bit");
             creatures.mood_offset = OG_creature_ex->getOffset("mood");
-            // pregnancy
-            // pregnancy_ptr
+            creatures.pregnancy_offset = OG_creature_ex->getOffset("pregnancy");
+            creatures.pregnancy_ptr_offset = OG_creature_ex->getOffset("pregnancy_ptr");
             creatures.birth_year_offset = OG_creature_ex->getOffset("birth_year");
             creatures.birth_time_offset = OG_creature_ex->getOffset("birth_time");
             creatures.current_job_offset = OG_creature_ex->getOffset("current_job");
@@ -312,10 +314,8 @@ bool Creatures::ReadCreature (const int32_t index, t_creature & furball)
 
         furball.birth_year = p->readDWord (addr_cr + offs.birth_year_offset );
         furball.birth_time = p->readDWord (addr_cr + offs.birth_time_offset );
-        /*
-         * p->readDWord(temp + offs.creature_pregnancy_offset, furball.pregnancy_timer);
-         */
 
+        furball.pregnancy_timer = p->readDWord (addr_cr + offs.pregnancy_offset );
         // appearance
         DfVector <uint32_t> app(p, addr_cr + offs.appearance_vector_offset);
         furball.nbcolors = app.size();
@@ -649,6 +649,16 @@ bool Creatures::WriteCiv(const uint32_t index, const int32_t civ)
     uint32_t temp = d->p_cre->at (index);
     Process * p = d->owner;
     p->writeDWord(temp + d->creatures.civ_offset, civ);
+    return true;
+}
+
+bool Creatures::WritePregnancy(const uint32_t index, const uint32_t pregTimer)
+{
+    if(!d->Started) return false;
+
+    uint32_t temp = d->p_cre->at (index);
+    Process * p = d->owner;
+    p->writeDWord(temp + d->creatures.pregnancy_offset, pregTimer);
     return true;
 }
 

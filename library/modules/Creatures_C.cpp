@@ -320,6 +320,16 @@ int Creatures_WriteCiv(DFHackObject* cPtr, const uint32_t index, const int32_t c
 	return -1;
 }
 
+int Creatures_WritePregnancy(DFHackObject* cPtr, const uint32_t index, const uint32_t pregTimer)
+{
+	if(cPtr != NULL)
+	{
+		return ((DFHack::Creatures*)cPtr)->WritePregnancy(index, pregTimer);
+	}
+
+	return -1;
+}
+
 #ifdef __cplusplus
 }
 #endif

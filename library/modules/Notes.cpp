@@ -38,14 +38,6 @@ using namespace std;
 #include "dfhack/modules/Notes.h"
 using namespace DFHack;
 
-struct Notes::Private
-{
-    uint32_t notes_vector;
-    Process * owner;
-    bool Inited;
-    bool Started;
-};
-
 Module* DFHack::createNotes()
 {
     return new Notes();
@@ -55,48 +47,17 @@ Notes::Notes()
 {
     Core & c = Core::getInstance();
 
-    d = new Private;
-    d->owner = c.p;
-    d->Inited = d->Started = false;
+    notes = NULL;
     VersionInfo * mem = c.vinfo;
-    d->Inited = true;
     try
     {
         OffsetGroup * OG_Notes = mem->getGroup("Notes");
 
-        d->notes_vector = OG_Notes->getAddress("vector");
+        notes = (std::vector<t_note*>*) OG_Notes->getAddress("vector");
     }
     catch(DFHack::Error::AllMemdef &e)
     {
-        c.con << "Notes not available... " << e.what() << endl;
-        d->Inited = false;
+        notes = NULL;
+        cerr << "Notes not available... " << e.what() << endl;
     }
-}
-
-Notes::~Notes()
-{
-    delete d;
-}
-
-std::vector<t_note*>* Notes::getNotes()
-{
-    if (!d->Inited)
-    {
-        Core & c = Core::getInstance();
-        c.con << "Notes not available... " << endl;
-        return NULL;
-    }
-
-    uint32_t ptr = d->notes_vector;
-
-    if ( *( (uint32_t*) ptr) == 0)
-        // Notes vector not set up yet.
-        return NULL;
-
-    return (std::vector<t_note*>*) ptr;
-}
-
-bool Notes::Finish()
-{
-    return true;
 }

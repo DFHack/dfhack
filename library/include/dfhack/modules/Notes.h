@@ -23,20 +23,19 @@ namespace DFHack
     {
         // First note created has id 0, second has id 1, etc.  Not affected
         // by lower id notes being deleted.
-        uint32_t id;
+        uint32_t id; // 0
+        uint8_t  symbol; // 4
+        uint8_t  unk1; // alignment padding?
+        uint16_t foreground; // 6
+        uint16_t background; // 8
+        uint16_t unk2; // alignment padding?
 
-        uint8_t  symbol;
-        uint8_t  unk1;
-        uint16_t foreground;
-        uint16_t background;
-        uint16_t unk2;
+        std::string name; // C
+        std::string text; // 10
 
-        std::string name;
-        std::string text;
-
-        uint16_t x;
-        uint16_t y;
-        uint16_t z;
+        uint16_t x; // 14
+        uint16_t y; // 16
+        uint16_t z; // 18
 
         // Is there more?
     };
@@ -52,17 +51,12 @@ namespace DFHack
     {
         public:
         Notes();
-        ~Notes();
-
-        bool Finish();
-
-        // Returns NULL if there's no notes yet.
-        std::vector<t_note*>* getNotes();
-
-        private:
-        struct Private;
-        Private *d;
-
+        ~Notes(){};
+        bool Finish()
+        {
+            return true;
+        }
+        std::vector<t_note*>* notes;
     };
 
 }

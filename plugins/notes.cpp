@@ -37,18 +37,18 @@ DFhackCExport command_result df_notes (Core * c, vector <string> & parameters)
     c->Suspend();
 
     DFHack::Notes * note_mod = c->getNotes();
-    std::vector<t_note*>* note_list = note_mod->getNotes();
+    std::vector<t_note*>* note_list = note_mod->notes;
 
     if (note_list == NULL)
     {
-        con << "No notes yet." << std::endl;
+        con.printerr("Notes are not supported under this version of DF.\n");
         c->Resume();
         return CR_OK;
     }
 
     if (note_list->empty())
     {
-        con << "All notes deleted." << std::endl;
+        con << "There are no notes." << std::endl;
         c->Resume();
         return CR_OK;
     }
@@ -58,7 +58,7 @@ DFhackCExport command_result df_notes (Core * c, vector <string> & parameters)
     {
         t_note* note = (*note_list)[i];
 
-        con.print("Note at: %d/%d/%d\n", note->x, note->y, note->z);
+        con.print("Note %x at: %d/%d/%d\n",note, note->x, note->y, note->z);
         con.print("Note id: %d\n", note->id);
         con.print("Note symbol: '%c'\n", note->symbol);
 

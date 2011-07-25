@@ -24,8 +24,6 @@ distribution.
 
 #pragma once
 
-#ifndef DF_MISCUTILS
-#define DF_MISCUTILS
 #include <iostream>
 #include <iomanip>
 #include <climits>
@@ -36,7 +34,7 @@ distribution.
 #include <cstdio>
 
 using namespace std;
-
+/*
 #include <dfhack/Process.h>
 #include <dfhack/VersionInfo.h>
 #include <dfhack/Vector.h>
@@ -75,11 +73,12 @@ void DumpDWordVector (const char * name, DFHack::Process *p, uint32_t addr)
     }
     cout << endl;
 }
-
+*/
 /*
 address = absolute address of dump start
 length = length in lines. 1 line = 16 bytes
 */
+/*
 void hexdump (DFHack::Context *DF, uint32_t address, uint32_t length)
 {
     char *buf = new char[length];
@@ -156,36 +155,39 @@ void interleave_hex (DFHack::Context* DF, vector < uint32_t > & addresses, uint3
         delete bufs[counter];
     }
 }
-
+*/
 template <typename T>
-void print_bits ( T val, std::ostream& out )
+void print_bits ( T val, DFHack::Console& out )
 {
+    stringstream strs;
     T n_bits = sizeof ( val ) * CHAR_BIT;
     int cnt;
     for ( unsigned i = 0; i < n_bits; ++i )
     {
         cnt = i/10;
-        cout << cnt << " ";
+        strs << cnt << " ";
     }
-    cout << endl;
+    strs << endl;
     for ( unsigned i = 0; i < n_bits; ++i )
     {
         cnt = i%10;
-        cout << cnt << " ";
+        strs << cnt << " ";
     }
-    cout << endl;
+    strs << endl;
     for ( unsigned i = 0; i < n_bits; ++i )
     {
-        cout << "--";
+        strs << "--";
     }
-    cout << endl;
+    strs << endl;
     for ( unsigned i = 0; i < n_bits; ++i )
     {
-        out<< !!( val & 1 ) << " ";
+        strs<< !!( val & 1 ) << " ";
         val >>= 1;
     }
+    strs << endl;
+    out.print(strs.str().c_str());
 }
-
+/*
 // this is probably completely bogus
 std::string PrintSplatterType (int16_t mat1, int32_t mat2, vector<DFHack::t_matgloss> &creature_types)
 {
@@ -243,5 +245,6 @@ std::string PrintSplatterType (int16_t mat1, int32_t mat2, vector<DFHack::t_matg
             return "Unknown";
     }
 }
-#endif
+*/
+
 

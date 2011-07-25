@@ -37,12 +37,43 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
+#include <string>
+#include <malloc.h>
+#include <iostream>
 
 class xgetopt
 {
 public:
+    xgetopt(std::vector<std::string> & params, const char* optstr_ )
+    {
+        allocd_argv = (char **) malloc((params.size() + 2) * sizeof(char*));
+        int index = 0;
+        allocd_argv[0] = strdup("foo");
+        while(index < params.size())
+        {
+            allocd_argv[index+1] = strdup( params[index].c_str() );
+            index++;
+        }
+        allocd_argv[index+1] = 0;
+        optarg = NULL;
+        optind = 0;
+        opterr = 1;
+        optopt = '?';
+        argv_index = 1;
+        argv_index2 = 1;
+        opt_offset = 1;
+        dashdash = 0;
+        nonopt = 0;
+        argc = index;
+        argv = allocd_argv;
+        optstr = optstr_;
+        prev_argv = argv;
+        prev_argc = argc;
+    }
     xgetopt(int argc_, char** argv_, const char* optstr_)
     {
+        allocd_argv = NULL;
         optarg = NULL;
         optind = 0;
         opterr = 1;
@@ -57,6 +88,18 @@ public:
         optstr = optstr_;
         prev_argv = argv;
         prev_argc = argc;
+    }
+    ~xgetopt()
+    {
+        if (allocd_argv)
+        {
+            int idx = 0;
+            while (char * tmp = allocd_argv[idx])
+            {
+                free(tmp);
+            }
+            free(allocd_argv);
+        }
     }
     int optind;
     int opterr;
@@ -211,6 +254,7 @@ private:
     char ** argv;
     const char * optstr;
     char* optarg;
+    char** allocd_argv;
 
     void increment_index()
     {

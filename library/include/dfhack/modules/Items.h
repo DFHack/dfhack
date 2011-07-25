@@ -59,40 +59,40 @@ union t_itemflags
     {
         unsigned int on_ground : 1;      ///< 0000 0001 Item on ground
         unsigned int in_job : 1;         ///< 0000 0002 Item currently being used in a job
-        unsigned int u_ngrd1 : 1;        ///< 0000 0004 unknown, unseen
+        unsigned int hostile : 1;        ///< 0000 0004 Item owned by hostile
         unsigned int in_inventory : 1;   ///< 0000 0008 Item in a creature or workshop inventory
 
-        unsigned int u_ngrd2 : 1;        ///< 0000 0010 unknown, lost (artifact)?, unseen
+        unsigned int unk1 : 1;           ///< 0000 0010 unknown, lost (artifact)?, unusable, unseen
         unsigned int in_building : 1;    ///< 0000 0020 Part of a building (including mechanisms, bodies in coffins)
-        unsigned int u_ngrd3 : 1;        ///< 0000 0040 unknown, unseen
+        unsigned int unk2 : 1;           ///< 0000 0040 unknown, unseen
         unsigned int dead_dwarf : 1;     ///< 0000 0080 Dwarf's dead body or body part
 
         unsigned int rotten : 1;         ///< 0000 0100 Rotten food
         unsigned int spider_web : 1;     ///< 0000 0200 Thread in spider web
         unsigned int construction : 1;   ///< 0000 0400 Material used in construction
-        unsigned int u_ngrd5 : 1;        ///< 0000 0800 unknown, unseen
+        unsigned int unk3 : 1;           ///< 0000 0800 unknown, unseen, unusable
 
-        unsigned int unk3 : 1;           ///< 0000 1000 unknown, unseen
-        unsigned int u_ngrd6 : 1;        ///< 0000 2000 unknown, unseen
+        unsigned int unk4 : 1;           ///< 0000 1000 unknown, unseen
+        unsigned int unk5 : 1;           ///< 0000 2000 unknown, unseen
         unsigned int foreign : 1;        ///< 0000 4000 Item is imported
-        unsigned int u_ngrd7 : 1;        ///< 0000 8000 unknown, unseen
+        unsigned int trader : 1;         ///< 0000 8000 Item ownwed by trader
 
         unsigned int owned : 1;          ///< 0001 0000 Item is owned by a dwarf
         unsigned int garbage_colect : 1; ///< 0002 0000 Marked for deallocation by DF it seems
         unsigned int artifact1 : 1;      ///< 0004 0000 Artifact ?
         unsigned int forbid : 1;         ///< 0008 0000 Forbidden item
 
-        unsigned int unk5 : 1;           ///< 0010 0000 unknown, unseen
+        unsigned int unk6 : 1;           ///< 0010 0000 unknown, unseen
         unsigned int dump : 1;           ///< 0020 0000 Designated for dumping
         unsigned int on_fire: 1;         ///< 0040 0000 Indicates if item is on fire, Will Set Item On Fire if Set!
         unsigned int melt : 1;           ///< 0080 0000 Designated for melting, if applicable
 
         unsigned int hidden : 1;       ///< 0100 0000 Hidden item
         unsigned int in_chest : 1;     ///< 0200 0000 Stored in chest/part of well?
-        unsigned int unk6 : 1;         ///< 0400 0000 unknown, unseen
+        unsigned int unk7 : 1;         ///< 0400 0000 unknown, unseen
         unsigned int artifact2 : 1;    ///< 0800 0000 Artifact ?
 
-        unsigned int unk8 : 1;         ///< 1000 0000 unknown, unseen
+        unsigned int unk8 : 1;         ///< 1000 0000 unknown, unseen, common
         unsigned int unk9 : 1;         ///< 2000 0000 unknown, set when viewing details
         unsigned int unk10 : 1;        ///< 4000 0000 unknown, unseen
         unsigned int unk11 : 1;        ///< 8000 0000 unknown, unseen
@@ -120,9 +120,9 @@ struct t_item : public t_virtual
     int16_t z;          // 0x8 + 2
     // 2B padding          0xA + 2
     t_itemflags flags;  // 0xC + 4
-    uint32_t unk1;      // 0x10 + 4
+    uint32_t age ;      // 0x10 + 4
     uint32_t id;        // 0x14 + 4
-    std::vector<void *> unk2;// usage is pretty rare
+    std::vector<void *> unk1;// Used by tasked items.
     std::vector<t_itemref *> itemrefs;
 };
 
@@ -187,7 +187,10 @@ public:
     /// wipe out the owner records
     bool removeItemOwner(dfh_item &item, Creatures *creatures);
 
-    bool readItemRefs(const dfh_item &item, const ClassNameCheck &classname, std::vector<int32_t> &values);
+    bool readItemRefs(const dfh_item &item, const ClassNameCheck &classname,
+                      std::vector<int32_t> &values);
+    bool unknownRefs(const dfh_item &item, std::vector<std::string>& names,
+                     std::vector<int32_t>& values);
 private:
     class Private;
     Private* d;

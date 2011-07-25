@@ -282,18 +282,18 @@ namespace DFHack
     {
         std::string name;
         mutable void * vptr;
+
     public:
-        ClassNameCheck() : vptr(0) {};
-        ClassNameCheck(std::string _name) : name(_name), vptr(0) {};
-        ClassNameCheck &operator= (const ClassNameCheck &b)
-        {
-            name = b.name; vptr = b.vptr; return *this;
-        }
-        bool operator() (Process *p, void * ptr) const {
-            if (vptr == 0 && p->readClassName(ptr) == name)
-                vptr = ptr;
-            return (vptr && vptr == ptr);
-        };
+        ClassNameCheck() : vptr(0) {}
+        ClassNameCheck(std::string _name);
+        ClassNameCheck &operator= (const ClassNameCheck &b);
+
+        // Is the class name of the given virtual table pointer the same as the
+        // name for thei ClassNameCheck object?
+        bool operator() (Process *p, void * ptr) const;
+
+        // Get list of names given to ClassNameCheck constructors.
+        static void getKnownClassNames(std::vector<std::string> &names);
     };
 }
 #endif

@@ -567,6 +567,42 @@ int Core::SDL_Event(SDL::Event* ev, int orig_return)
     // do stuff with the events...
 }
 
+////////////////
+// ClassNamCheck
+////////////////
+
+// Since there is no Process.cpp, put ClassNamCheck stuff in Core.cpp
+
+static std::set<std::string> known_class_names;
+static std::map<std::string, void*> known_vptrs;
+
+ClassNameCheck::ClassNameCheck(std::string _name) : name(_name), vptr(0)
+{
+    known_class_names.insert(name);
+}
+
+ClassNameCheck &ClassNameCheck::operator= (const ClassNameCheck &b)
+{
+    name = b.name; vptr = b.vptr; return *this;
+}
+
+bool ClassNameCheck::operator() (Process *p, void * ptr) const {
+    if (vptr == 0 && p->readClassName(ptr) == name)
+    {
+        vptr = ptr;
+        known_vptrs[name] = ptr;
+    }
+    return (vptr && vptr == ptr);
+}
+
+void ClassNameCheck::getKnownClassNames(std::vector<std::string> &names)
+{
+    std::set<std::string>::iterator it = known_class_names.begin();
+
+    for (; it != known_class_names.end(); it++)
+        names.push_back(*it);
+}
+
 /*******************************************************************************
                                 M O D U L E S
 *******************************************************************************/

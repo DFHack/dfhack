@@ -96,6 +96,7 @@ ENDMACRO(DFHACK_PLUGIN)
 #endmacro()
 
 #RECURSE_DIRS()
+add_subdirectory (dfusion)
 
 OPTION(BUILD_QTPLUG "Build the experimental Qt plugin." OFF)
 if(BUILD_QTPLUG)

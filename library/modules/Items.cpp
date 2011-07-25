@@ -30,6 +30,7 @@ distribution.
 #include <vector>
 #include <cstdio>
 #include <map>
+#include <set>
 using namespace std;
 
 #include "dfhack/Types.h"
@@ -427,9 +428,48 @@ class Items::Private
         uint32_t refVectorOffset;
         uint32_t idFieldOffset;
         uint32_t itemVectorAddress;
+
         ClassNameCheck isOwnerRefClass;
         ClassNameCheck isContainerRefClass;
         ClassNameCheck isContainsRefClass;
+
+        // Similar to isOwnerRefClass.  Value is unique to each creature, but
+        // different than the creature's id.
+        ClassNameCheck isUnitHolderRefClass;
+
+        // One of these is present for each creature contained in a cage.
+        // The value is similar to that for isUnitHolderRefClass, different
+        // than the creature's ID but unique for each creature.
+        ClassNameCheck isCagedUnitRefClass;
+
+        // ID of bulding containing/holding the item.
+        ClassNameCheck isBuildingHolderRefClass;
+
+        // Building ID of lever/etc which triggers bridge/etc holding
+        // this mechanism.
+        ClassNameCheck isTriggeredByRefClass;
+
+        // Building ID of bridge/etc which is triggered by lever/etc holding
+        // this mechanism.
+        ClassNameCheck isTriggerTargetRefClass;
+
+        // Civilization ID of owner of item, for items not owned by the
+        // fortress.
+        ClassNameCheck isEntityOwnerRefClass;
+
+        // Item has been offered to the caravan.  The value is the
+        // civilization ID of
+        ClassNameCheck isOfferedRefClass;
+
+        // Item is in a depot for trade.  Purpose of value is unknown, but is
+        // different for each item, even in the same depot at the same time.
+        ClassNameCheck isTradingRefClass;
+
+        // Item is flying or falling through the air.  The value seems to
+        // be the ID for a "projectile information" object.
+        ClassNameCheck isProjectileRefClass;
+
+        std::set<std::string> knownItemRefTypes;
 };
 
 Items::Items()
@@ -438,14 +478,34 @@ Items::Items()
     d = new Private;
     d->owner = c.p;
 
-    d->isOwnerRefClass = ClassNameCheck("general_ref_unit_itemownerst");
-    d->isContainerRefClass = ClassNameCheck("general_ref_contained_in_itemst");
-    d->isContainsRefClass = ClassNameCheck("general_ref_contains_itemst");
-
     DFHack::OffsetGroup* itemGroup = c.vinfo->getGroup("Items");
     d->itemVectorAddress = itemGroup->getAddress("items_vector");
     d->idFieldOffset = itemGroup->getOffset("id");
     d->refVectorOffset = itemGroup->getOffset("item_ref_vector");
+
+    d->isOwnerRefClass = ClassNameCheck("general_ref_unit_itemownerst");
+    d->isContainerRefClass = ClassNameCheck("general_ref_contained_in_itemst");
+    d->isContainsRefClass = ClassNameCheck("general_ref_contains_itemst");
+    d->isUnitHolderRefClass = ClassNameCheck("general_ref_unit_holderst");
+    d->isCagedUnitRefClass = ClassNameCheck("general_ref_contains_unitst");
+    d->isBuildingHolderRefClass
+        = ClassNameCheck("general_ref_building_holderst");
+    d->isTriggeredByRefClass = ClassNameCheck("general_ref_building_triggerst");
+    d->isTriggerTargetRefClass
+        = ClassNameCheck("general_ref_building_triggertargetst");
+    d->isEntityOwnerRefClass = ClassNameCheck("general_ref_entity_itemownerst");
+    d->isOfferedRefClass = ClassNameCheck("general_ref_entity_offeredst");
+    d->isTradingRefClass = ClassNameCheck("general_ref_unit_tradebringerst");
+    d->isProjectileRefClass = ClassNameCheck("general_ref_projectilest");
+
+    std::vector<std::string> known_names;
+    ClassNameCheck::getKnownClassNames(known_names);
+
+    for (size_t i = 0; i < known_names.size(); i++)
+    {
+        if (known_names[i].find("general_ref_") == 0)
+            d->knownItemRefTypes.insert(known_names[i]);
+    }
 }
 
 bool Items::Start()
@@ -560,6 +620,28 @@ bool Items::readItemRefs(const dfh_item &item, const ClassNameCheck &classname, 
     }
 
     return !values.empty();
+}
+
+bool Items::unknownRefs(const dfh_item &item, std::vector<std::string>& names,
+                        std::vector<int32_t>& values)
+{
+    names.clear();
+    values.clear();
+
+    std::vector <t_itemref *> &p_refs = item.base->itemrefs;
+
+    for (uint32_t i=0; i<p_refs.size(); i++)
+    {
+        std::string name = p_refs[i]->getClassName();
+
+        if (d->knownItemRefTypes.find(name) == d->knownItemRefTypes.end())
+        {
+            names.push_back(name);
+            values.push_back(p_refs[i]->value);
+        }
+    }
+
+    return (names.size() > 0);
 }
 
 bool Items::removeItemOwner(dfh_item &item, Creatures *creatures)

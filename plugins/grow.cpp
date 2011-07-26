@@ -3,68 +3,77 @@
 #include <map>
 #include <algorithm>
 #include <vector>
+#include <string>
 
-using namespace std;
-#include <DFHack.h>
+#include <dfhack/Core.h>
+#include <dfhack/Console.h>
+#include <dfhack/Export.h>
+#include <dfhack/PluginManager.h>
+#include <dfhack/modules/Vegetation.h>
+#include <dfhack/modules/Maps.h>
+#include <dfhack/modules/Gui.h>
+#include <dfhack/TileTypes.h>
 #include <dfhack/extra/MapExtras.h>
-#include <xgetopt.h>
-#include <time.h>
-#include <stdlib.h>
-#include <dfhack/extra/termutil.h>
 
-int main(int argc, char *argv[])
+using std::vector;
+using std::string;
+using namespace DFHack;
+
+DFhackCExport command_result df_grow (Core * c, vector <string> & parameters);
+
+DFhackCExport const char * plugin_name ( void )
 {
-    bool temporary_terminal = TemporaryTerminal();
-    srand(time(0));
+    return "grow";
+}
 
-    uint32_t x_max = 0, y_max = 0, z_max = 0;
-    DFHack::ContextManager manager("Memory.xml");
+DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+{
+    commands.clear();
+    commands.push_back(PluginCommand("grow", "Grows saplings into trees (with active cursor, only the targetted one).", df_grow));
+    return CR_OK;
+}
 
-    DFHack::Context *context = manager.getSingleContext();
-    if (!context->Attach())
-    {
-        std::cerr << "Unable to attach to DF!" << std::endl;
-        if(temporary_terminal)
-            std::cin.ignore();
-        return 1;
-    }
+DFhackCExport command_result plugin_shutdown ( Core * c )
+{
+    return CR_OK;
+}
 
-    DFHack::Maps *maps = context->getMaps();
+DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
+{
+    //uint32_t x_max = 0, y_max = 0, z_max = 0;
+    c->Suspend();
+    DFHack::Maps *maps = c->getMaps();
+    Console & con = c->con;
     if (!maps->Start())
     {
-        std::cerr << "Cannot get map info!" << std::endl;
-        context->Detach();
-        if(temporary_terminal)
-            std::cin.ignore();
-        return 1;
+        con.printerr("Cannot get map info!\n");
+        c->Resume();
+        return CR_FAILURE;
     }
-    DFHack::Gui * Gui = context->getGui();
-    maps->getSize(x_max, y_max, z_max);
+    //maps->getSize(x_max, y_max, z_max);
     MapExtras::MapCache map(maps);
-    uint32_t vegCount = 0;
-    DFHack::Vegetation *veg = context->getVegetation();
-    if (!veg->Start(vegCount))
+    DFHack::Vegetation *veg = c->getVegetation();
+    if (!veg->all_plants)
     {
-        std::cerr << "Unable to read vegetation!" << std::endl;
-        if(temporary_terminal)
-            cin.ignore();
-        return 1;
+        con.printerr("Unable to read vegetation!\n");
+        c->Resume();
+        return CR_FAILURE;
     }
+    DFHack::Gui *Gui = c->getGui();
     int32_t x,y,z;
     if(Gui->getCursorCoords(x,y,z))
     {
-        vector<DFHack::dfh_plant> alltrees;
-        if(maps->ReadVegetation(x/16,y/16,z,&alltrees))
+        vector<DFHack::df_plant *> * alltrees;
+        if(maps->ReadVegetation(x/16,y/16,z,alltrees))
         {
-            for(size_t i = 0 ; i < alltrees.size(); i++)
+            for(size_t i = 0 ; i < alltrees->size(); i++)
             {
-                DFHack::dfh_plant & tree = alltrees[i];
-                if(tree.sdata.x == x && tree.sdata.y == y && tree.sdata.z == z)
+                DFHack::df_plant * tree = alltrees->at(i);
+                if(tree->x == x && tree->y == y && tree->z == z)
                 {
                     if(DFHack::tileShape(map.tiletypeAt(DFHack::DFCoord(x,y,z))) == DFHack::SAPLING_OK)
                     {
-                        tree.sdata.grow_counter = DFHack::sapling_to_tree_threshold;
-                        veg->Write(tree);
+                        tree->grow_counter = DFHack::sapling_to_tree_threshold;
                     }
                     break;
                 }
@@ -74,15 +83,13 @@ int main(int argc, char *argv[])
     else
     {
         int grown = 0;
-        for(size_t i = 0 ; i < vegCount; i++)
+        for(size_t i = 0 ; i < veg->all_plants->size(); i++)
         {
-            DFHack::dfh_plant p;
-            veg->Read(i,p);
-            uint16_t ttype = map.tiletypeAt(DFHack::DFCoord(p.sdata.x,p.sdata.y,p.sdata.z));
-            if(!p.sdata.is_shrub && DFHack::tileShape(ttype) == DFHack::SAPLING_OK)
+            DFHack::df_plant *p = veg->all_plants->at(i);
+            uint16_t ttype = map.tiletypeAt(DFHack::DFCoord(p->x,p->y,p->z));
+            if(!p->is_shrub && DFHack::tileShape(ttype) == DFHack::SAPLING_OK)
             {
-                p.sdata.grow_counter = DFHack::sapling_to_tree_threshold;
-                veg->Write(p);
+                p->grow_counter = DFHack::sapling_to_tree_threshold;
             }
         }
     }
@@ -90,11 +97,7 @@ int main(int argc, char *argv[])
     // Cleanup
     veg->Finish();
     maps->Finish();
-    context->Detach();
-    if(temporary_terminal)
-    {
-        std::cout << " Press any key to finish.";
-        std::cin.ignore();
-    }
-    return 0;
+    c->Resume();
+    return CR_OK;
 }
+

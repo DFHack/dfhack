@@ -57,21 +57,6 @@ class Materials::Private
     uint32_t vector_organic_trees;
     uint32_t vector_races;
     uint32_t vector_other;
-/*
-    class t_inorganic_extras
-    {
-    public:
-        uint32_t offset_ore_types;
-        uint32_t offset_ore_chances;
-        uint32_t offset_strand_types;
-        uint32_t offset_strand_chances;
-        uint32_t offset_value;
-        uint32_t offset_wall_tile;
-        uint32_t offset_boulder_tile;
-    };
-
-    t_inorganic_extras i_ex;
-    */
 };
 
 Materials::Materials()
@@ -87,18 +72,6 @@ Materials::Materials()
         d->vector_organic_trees = OG_Materials->getAddress ("organics_trees");
         d->vector_races = OG_Materials->getAddress("creature_type_vector");
     }
-    /*
-    OffsetGroup *OG_Offsets = OG_Materials->getGroup("inorganic_extras");
-    {
-        d->i_ex.offset_ore_types      = OG_Offsets->getOffset("ore_types");
-        d->i_ex.offset_ore_chances    = OG_Offsets->getOffset("ore_chances");
-        d->i_ex.offset_strand_types   = OG_Offsets->getOffset("strand_types");
-        d->i_ex.offset_strand_chances = OG_Offsets->getOffset("strand_chances");
-        d->i_ex.offset_value          = OG_Offsets->getOffset("value");
-        d->i_ex.offset_wall_tile      = OG_Offsets->getOffset("wall_tile");
-        d->i_ex.offset_boulder_tile   = OG_Offsets->getOffset("boulder_tile");
-    }
-    */
 }
 
 Materials::~Materials()
@@ -110,41 +83,6 @@ bool Materials::Finish()
 {
     return true;
 }
-
-/*
-bool API::ReadInorganicMaterials (vector<t_matgloss> & inorganic)
-{
-    Process *p = d->owner;
-    memory_info * minfo = p->getDescriptor();
-    int matgloss_address = minfo->getAddress ("mat_inorganics");
-    int matgloss_colors = minfo->getOffset ("material_color");
-    int matgloss_stone_name_offset = minfo->getOffset("matgloss_stone_name");
-
-    DfVector <uint32_t> p_matgloss (p, matgloss_address);
-
-    uint32_t size = p_matgloss.getSize();
-    inorganic.resize (0);
-    inorganic.reserve (size);
-    for (uint32_t i = 0; i < size;i++)
-    {
-        // read the matgloss pointer from the vector into temp
-        uint32_t temp = p_matgloss[i];
-        // read the string pointed at by
-        t_matgloss mat;
-        //cout << temp << endl;
-        //fill_char_buf(mat.id, d->p->readSTLString(temp)); // reads a C string given an address
-        p->readSTLString (temp, mat.id, 128);
-
-        p->readSTLString (temp+matgloss_stone_name_offset, mat.name, 128);
-        mat.fore = (uint8_t) p->readWord (temp + matgloss_colors);
-        mat.back = (uint8_t) p->readWord (temp + matgloss_colors + 2);
-        mat.bright = (uint8_t) p->readWord (temp + matgloss_colors + 4);
-
-        inorganic.push_back (mat);
-    }
-    return true;
-}
-*/
 
 t_matgloss::t_matgloss()
 {
@@ -182,7 +120,6 @@ inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & nam
     {
         t_matgloss mat;
         mat.id = *(std::string *)p_matgloss[i];
-        //p->readSTLString (p_matgloss[i], mat.id, 128);
         names.push_back(mat);
     }
     return true;
@@ -200,7 +137,6 @@ bool Materials::ReadInorganicMaterials (void)
         t_matglossInorganic mat;
         mat.id = orig->Inorganic_ID;
         mat.name = orig->STONE_NAME;
-        //p->readSTLString (p_matgloss[i] + mat_name, mat.name, 128);
 
         mat.ore_types = orig->METAL_ORE_matID;
         mat.ore_chances = orig->METAL_ORE_prob;
@@ -306,10 +242,6 @@ bool Materials::ReadCreatureTypesEx (void)
     uint32_t caste_bodypart_offset;
     uint32_t bodypart_id_offset;
     uint32_t bodypart_category_offset;
-    //FIXME: this is unused. why do we mess with it when it's not even read?
-    //uint32_t bodypart_layers_offset;
-    //uint32_t bodypart_singular_offset;
-    //uint32_t bodypart_plural_offset;
     uint32_t color_modifier_part_offset;
     uint32_t color_modifier_startdate_offset;
     uint32_t color_modifier_enddate_offset;
@@ -322,9 +254,6 @@ bool Materials::ReadCreatureTypesEx (void)
         OffsetGroup * OG_CasteBodyparts = OG_Creature->getGroup("caste_bodyparts");
             bodypart_id_offset = OG_CasteBodyparts->getOffset ("id");
             bodypart_category_offset = OG_CasteBodyparts->getOffset ("category");
-            //bodypart_layers_offset = OG_CasteBodyparts->getOffset ("layers_vector"); // unused
-            //bodypart_singular_offset = OG_CasteBodyparts->getOffset ("singular_vector"); // unused
-            //bodypart_plural_offset = OG_CasteBodyparts->getOffset ("plural_vector"); // unused
         OffsetGroup * OG_CasteColorMods = OG_Creature->getGroup("caste_color_mods");
             color_modifier_part_offset = OG_CasteColorMods->getOffset ("part");
             color_modifier_startdate_offset = OG_CasteColorMods->getOffset ("startdate");
@@ -343,12 +272,6 @@ bool Materials::ReadCreatureTypesEx (void)
     for (uint32_t i = 0; i < size;i++)
     {
         t_creaturetype mat;
-        // FROM race READ
-        // std::string rawname AT 0,
-        // char tile_character AT tile_offset,
-        // word tilecolor.fore : tile_color_offset,
-        // word tilecolor.back : tile_color_offset + 2,
-        // word tilecolor.bright : tile_color_offset + 4
         mat.id = p->readSTLString (p_races[i]);
         mat.tile_character = p->readByte( p_races[i] + tile_offset );
         mat.tilecolor.fore = p->readWord( p_races[i] + tile_color_offset );

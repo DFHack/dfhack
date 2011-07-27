@@ -33,6 +33,13 @@ distribution.
 #include <stdint.h>
 #include "dfhack/Console.h"
 
+namespace tthread
+{
+    class mutex;
+    class condition_variable;
+    class thread;
+}
+
 namespace DFHack
 {
     class Process;
@@ -69,6 +76,7 @@ namespace DFHack
         friend int  ::SDL_NumJoysticks(void);
         friend void ::SDL_Quit(void);
         friend int  ::SDL_PollEvent(SDL::Event *);
+        friend int  ::SDL_Init(uint32_t flags);
     public:
         /// Get the single Core instance or make one.
         static Core& getInstance()
@@ -129,8 +137,8 @@ namespace DFHack
         bool errorstate;
         // regulate access to DF
         struct Cond;
-        SDL::Mutex * AccessMutex;
-        SDL::Mutex * StackMutex;
+        tthread::mutex * AccessMutex;
+        tthread::mutex * StackMutex;
         std::stack < Core::Cond * > suspended_tools;
         Core::Cond * core_cond;
         // FIXME: shouldn't be kept around like this
@@ -158,8 +166,8 @@ namespace DFHack
         int hotkey_states[16];
         std::string hotkey_cmd;
         bool hotkey_set;
-        SDL::Mutex * HotkeyMutex;
-        SDL::Cond * HotkeyCond;
+        tthread::mutex * HotkeyMutex;
+        tthread::condition_variable * HotkeyCond;
         // Very important!
         bool started;
     };

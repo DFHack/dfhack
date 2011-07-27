@@ -7,8 +7,8 @@ OPTION(BUILD_DOXYGEN "Create/install/package doxygen documentation for DFHack (F
 
 include_directories (include)
 include_directories (depends/md5)
-include_directories (depends/libnoise)
 include_directories (depends/tinyxml)
+include_directories (depends/tthread)
 include_directories (private)
 
 SET(PROJECT_HDRS_INTERNAL
@@ -67,6 +67,8 @@ depends/tinyxml/tinystr.cpp
 depends/tinyxml/tinyxml.cpp
 depends/tinyxml/tinyxmlerror.cpp
 depends/tinyxml/tinyxmlparser.cpp
+
+depends/tthread/tinythread.cpp
 
 modules/Buildings.cpp
 modules/Constructions.cpp

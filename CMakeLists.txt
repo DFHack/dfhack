@@ -72,6 +72,7 @@ OPTION(BUILD_LIBRARY "Build the library that goes into DF." ON)
 OPTION(BUILD_PLUGINS "Build the plugins." ON)
 
 IF(BUILD_LIBRARY)
+    #add_subdirectory (dlib)
     add_subdirectory (library)
     ## install the default documentation files
     install(FILES LICENSE Readme.html DESTINATION ${DFHACK_USERDOC_DESTINATION})

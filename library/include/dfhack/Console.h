@@ -26,7 +26,12 @@ distribution.
 #include "dfhack/Pragma.h"
 #include "dfhack/Export.h"
 #include <ostream>
-#include "FakeSDL.h"
+namespace tthread
+{
+    class mutex;
+    class condition_variable;
+    class thread;
+}
 namespace  DFHack
 {
     class Private;
@@ -93,7 +98,7 @@ namespace  DFHack
         void history_clear();
     private:
         Private * d;
-        SDL::Mutex * wlock;
+        tthread::mutex * wlock;
         bool inited;
     };
 }

@@ -44,43 +44,46 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "dfhack/modules/Gui.h"
 #include "dfhack/modules/World.h"
+using namespace DFHack;
 
 #include "dfhack/SDL_fakes/events.h"
 
 #include <stdio.h>
 #include <iomanip>
 #include <stdlib.h>
-using namespace DFHack;
+#include "tinythread.h"
+using namespace tthread;
 
-    struct Core::Cond
+
+struct Core::Cond
+{
+    Cond()
     {
-        Cond()
+        predicate = false;
+        wakeup = new tthread::condition_variable();
+    }
+    ~Cond()
+    {
+        delete wakeup;
+    }
+    bool Lock(tthread::mutex * m)
+    {
+        while(!predicate)
         {
-            predicate = false;
-            wakeup = SDL_CreateCond();
+            wakeup->wait(*m);
         }
-        ~Cond()
-        {
-            SDL_DestroyCond(wakeup);
-        }
-        bool Lock(SDL::Mutex * m)
-        {
-            while(!predicate)
-            {
-                SDL_CondWait(wakeup,m);
-            }
-            predicate = false;
-            return true;
-        }
-        bool Unlock()
-        {
-            predicate = true;
-            SDL_CondSignal(wakeup);
-            return true;
-        }
-        SDL::Cond * wakeup;
-        bool predicate;
-    };
+        predicate = false;
+        return true;
+    }
+    bool Unlock()
+    {
+        predicate = true;
+        wakeup->notify_one();
+        return true;
+    }
+    tthread::condition_variable * wakeup;
+    bool predicate;
+};
 
 void cheap_tokenise(string const& input, vector<string> &output)
 {
@@ -98,14 +101,14 @@ struct IODATA
 // A thread function... for handling hotkeys. This is needed because
 // all the plugin commands are expected to be run from foreign threads.
 // Running them from one of the main DF threads will result in deadlock!
-int fHKthread(void * iodata)
+void fHKthread(void * iodata)
 {
     Core * core = ((IODATA*) iodata)->core;
     PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
     if(plug_mgr == 0 || core == 0)
     {
         cerr << "Hotkey thread has croaked." << endl;
-        return 0;
+        return;
     }
     while(1)
     {
@@ -119,7 +122,7 @@ int fHKthread(void * iodata)
 }
 
 // A thread function... for the interactive console.
-int fIOthread(void * iodata)
+void fIOthread(void * iodata)
 {
     IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
@@ -128,7 +131,7 @@ int fIOthread(void * iodata)
     if(plug_mgr == 0 || core == 0)
     {
         con.printerr("Something horrible happened in Core's constructor...\n");
-        return 0;
+        return;
     }
     con.print("DFHack is ready. Have a nice day!\n"
               "Type in '?' or 'help' for general help, 'ls' to see all commands.\n");
@@ -140,7 +143,7 @@ int fIOthread(void * iodata)
         if(ret == -2)
         {
             cerr << "Console is shutting down properly." << endl;
-            return 0;
+            return;
         }
         else if(ret == -1)
         {
@@ -371,6 +374,7 @@ Core::Core()
 
     // create mutex for syncing with interactive tasks
     AccessMutex = 0;
+    StackMutex = 0;
     core_cond = 0;
     // set up hotkey capture
     memset(hotkey_states,0,sizeof(hotkey_states));
@@ -395,34 +399,21 @@ bool Core::Init()
         return false;
     }
     vinfo = p->getDescriptor();
-
     // create mutex for syncing with interactive tasks
-    AccessMutex = SDL_CreateMutex();
-    if(!AccessMutex)
-    {
-        con.printerr("Mutex creation failed\n");
-        errorstate = true;
-        return false;
-    }
+    StackMutex = new mutex();
+    AccessMutex = new mutex();
     core_cond = new Core::Cond();
     // create plugin manager
     plug_mgr = new PluginManager(this);
-    if(!plug_mgr)
-    {
-        con.printerr("Failed to create the Plugin Manager.\n");
-        errorstate = true;
-        return false;
-    }
-    // look for all plugins, 
     // create IO thread
     IODATA *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
-    SDL::Thread * IO = SDL_CreateThread(fIOthread, (void *) temp);
+    thread * IO = new thread(fIOthread, (void *) temp);
     // set up hotkey capture
-    HotkeyMutex = SDL_CreateMutex();
-    HotkeyCond = SDL_CreateCond();
-    SDL::Thread * HK = SDL_CreateThread(fHKthread, (void *) temp);
+    HotkeyMutex = new mutex();
+    HotkeyCond = new condition_variable();
+    thread * HK = new thread(fHKthread, (void *) temp);
     started = true;
     return true;
 }
@@ -430,28 +421,28 @@ bool Core::Init()
 bool Core::setHotkeyCmd( std::string cmd )
 {
     // access command
-    SDL_mutexP(HotkeyMutex);
+    HotkeyMutex->lock();
     {
         hotkey_set = true;
         hotkey_cmd = cmd;
-        SDL_CondSignal(HotkeyCond);
+        HotkeyCond->notify_all();
     }
-    SDL_mutexV(HotkeyMutex);
+    HotkeyMutex->unlock();
     return true;
 }
 /// removes the hotkey command and gives it to the caller thread
 std::string Core::getHotkeyCmd( void )
 {
     string returner;
-    SDL_mutexP(HotkeyMutex);
+    HotkeyMutex->lock();
     while ( ! hotkey_set )
     {
-        SDL_CondWait(HotkeyCond, HotkeyMutex);
+        HotkeyCond->wait(*HotkeyMutex);
     }
     hotkey_set = false;
     returner = hotkey_cmd;
     hotkey_cmd.clear();
-    SDL_mutexV(HotkeyMutex);
+    HotkeyMutex->unlock();
     return returner;
 }
 
@@ -460,26 +451,25 @@ void Core::Suspend()
 {
     Core::Cond * nc = new Core::Cond();
     // put the condition on a stack
-    SDL_mutexP(StackMutex);
+    StackMutex->lock();
         suspended_tools.push(nc);
-    SDL_mutexV(StackMutex);
+    StackMutex->unlock();
     // wait until Core::Update() wakes up the tool
-    SDL_mutexP(AccessMutex);
+    AccessMutex->lock();
         nc->Lock(AccessMutex);
-    SDL_mutexV(AccessMutex);
+    AccessMutex->unlock();
 }
 
 void Core::Resume()
 {
-    SDL_mutexP(AccessMutex);
+    AccessMutex->lock();
         core_cond->Unlock();
-    SDL_mutexV(AccessMutex);
+    AccessMutex->unlock();
 }
 
 // should always be from simulation thread!
 int Core::Update()
 {
-    if(!started) Init();
     if(errorstate)
         return -1;
 
@@ -487,21 +477,21 @@ int Core::Update()
     plug_mgr->OnUpdate();
     // wake waiting tools
     // do not allow more tools to join in while we process stuff here
-    SDL_mutexP(StackMutex);
+    StackMutex->lock();
     while (!suspended_tools.empty())
     {
         Core::Cond * nc = suspended_tools.top();
         suspended_tools.pop();
-        SDL_mutexP(AccessMutex);
+        AccessMutex->lock();
             // wake tool
             nc->Unlock();
             // wait for tool to wake us
             core_cond->Lock(AccessMutex);
-        SDL_mutexV(AccessMutex);
+        AccessMutex->unlock();
         // destroy condition
         delete nc;
     }
-    SDL_mutexV(StackMutex);
+    StackMutex->unlock();
     return 0;
 };
 

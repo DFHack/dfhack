@@ -46,7 +46,6 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "dfhack/Console.h"
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -61,8 +60,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <termios.h>
 #include <errno.h>
 #include <deque>
-#include <dfhack/FakeSDL.h>
+
+#include "dfhack/Console.h"
+#include "dfhack/FakeSDL.h"
 using namespace DFHack;
+
+#include "tinythread.h"
+using namespace tthread;
 
 static int isUnsupportedTerm(void)
 {
@@ -263,7 +267,7 @@ namespace DFHack
         /// beep. maybe?
         //void beep (void);
         /// A simple line edit (raw mode)
-        int lineedit(const std::string& prompt, std::string& output, SDL::Mutex * lock)
+        int lineedit(const std::string& prompt, std::string& output, mutex * lock)
         {
             output.clear();
             this->prompt = prompt;
@@ -377,7 +381,7 @@ namespace DFHack
             if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;
         }
 
-        int prompt_loop(SDL::Mutex * lock)
+        int prompt_loop(mutex * lock)
         {
             int fd = STDIN_FILENO;
             size_t plen = prompt.size();
@@ -394,9 +398,9 @@ namespace DFHack
                 char c;
                 int nread;
                 char seq[2], seq2;
-                SDL_mutexV(lock);
+                lock->unlock();
                 nread = ::read(fd,&c,1);
-                SDL_mutexP(lock);
+                lock->lock();
                 if (nread <= 0) return raw_buffer.size();
 
                 /* Only autocomplete when the callback is set. It returns < 0 when
@@ -440,13 +444,13 @@ namespace DFHack
                     }
                     break;
                 case 27:    // escape sequence
-                    SDL_mutexV(lock);
+                    lock->unlock();
                     if (::read(fd,seq,2) == -1)
                     {
-                        SDL_mutexP(lock);
+                        lock->lock();
                         break;
                     }
-                    SDL_mutexP(lock);
+                    lock->lock();
                     if(seq[0] == '[')
                     {
                         if (seq[1] == 'D')
@@ -508,13 +512,13 @@ namespace DFHack
                         else if (seq[1] > '0' && seq[1] < '7')
                         {
                             // extended escape
-                            SDL_mutexV(lock);
+                            lock->unlock();
                             if (::read(fd,&seq2,1) == -1)
                             {
-                                SDL_mutexP(lock);
-                                break;
+                                lock->lock();
+                                return -1;
                             }
-                            SDL_mutexP(lock);
+                            lock->lock();
                             if (seq[1] == '3' && seq2 == '~' )
                             {
                                 // delete
@@ -604,7 +608,7 @@ Console::~Console()
     if(inited)
         shutdown();
     if(wlock)
-        SDL_DestroyMutex(wlock);
+        delete wlock;
     if(d)
         delete d;
 }
@@ -614,7 +618,7 @@ bool Console::init(void)
     d = new Private();
     // make our own weird streams so our IO isn't redirected
     d->dfout_C = fopen("/dev/tty", "w");
-    wlock = SDL_CreateMutex();
+    wlock = new mutex();
     rdbuf(d);
     std::cin.tie(this);
     clear();
@@ -624,19 +628,18 @@ bool Console::init(void)
 
 bool Console::shutdown(void)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     if(d->rawmode)
         d->disable_raw();
-    print("\n");
+    d->print("\n");
     inited = false;
-    SDL_mutexV(wlock);
     return true;
 }
 
 int Console::print( const char* format, ... )
 {
     va_list args;
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     int ret;
     if(!inited) ret = -1;
     else
@@ -645,14 +648,13 @@ int Console::print( const char* format, ... )
         ret = d->vprint(format, args);
         va_end(args);
     }
-    SDL_mutexV(wlock);
     return ret;
 }
 
 int Console::printerr( const char* format, ... )
 {
     va_list args;
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     int ret;
     if(!inited) ret = -1;
     else
@@ -661,86 +663,76 @@ int Console::printerr( const char* format, ... )
         ret = d->vprinterr(format, args);
         va_end(args);
     }
-    SDL_mutexV(wlock);
     return ret;
 }
 
 int Console::get_columns(void)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     int ret = -1;
     if(inited)
         ret = d->get_columns();
-    SDL_mutexV(wlock);
     return ret;
 }
 
 int Console::get_rows(void)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     int ret = -1;
     if(inited)
         ret = d->get_rows();
-    SDL_mutexV(wlock);
     return ret;
 }
 
 void Console::clear()
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     if(inited)
         d->clear();
-    SDL_mutexV(wlock);
 }
 
 void Console::gotoxy(int x, int y)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     if(inited)
         d->gotoxy(x,y);
-    SDL_mutexV(wlock);
 }
 
 void Console::color(color_value index)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     if(inited)
         d->color(index);
-    SDL_mutexV(wlock);
 }
 
 void Console::reset_color( void )
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     if(inited)
         d->reset_color();
-    SDL_mutexV(wlock);
 }
 
 void Console::cursor(bool enable)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     if(inited)
         d->cursor(enable);
-    SDL_mutexV(wlock);
 }
 
 // push to front, remove from back if we are above maximum. ignore immediate duplicates
 void Console::history_add(const std::string & command)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     if(inited)
         d->history_add(command);
-    SDL_mutexV(wlock);
 }
 
 int Console::lineedit(const std::string & prompt, std::string & output)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     int ret = -2;
     if(inited)
         ret = d->lineedit(prompt,output,wlock);
-    SDL_mutexV(wlock);
     return ret;
 }
 

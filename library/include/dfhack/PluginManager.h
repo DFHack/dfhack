@@ -30,6 +30,11 @@ distribution.
 #include <vector>
 #include "FakeSDL.h"
 struct DFLibrary;
+namespace tthread
+{
+    class mutex;
+    class condition_variable;
+}
 namespace DFHack
 {
     class Core;
@@ -131,7 +136,7 @@ namespace DFHack
         }
     // DATA
     private:
-        SDL::Mutex * cmdlist_mutex;
+        tthread::mutex * cmdlist_mutex;
         std::map <std::string, Plugin *> belongs;
         std::vector <Plugin *> all_plugins;
         std::string plugin_path;

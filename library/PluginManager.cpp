@@ -34,12 +34,17 @@ using namespace DFHack;
 #include <map>
 using namespace std;
 
+#include "tinythread.h"
+using namespace tthread;
+
 #ifdef LINUX_BUILD
     #include <dirent.h>
     #include <errno.h>
 #else
     #include "wdirent.h"
 #endif
+
+#include <assert.h>
 
 static int getdir (string dir, vector<string> &files)
 {
@@ -72,53 +77,44 @@ struct Plugin::RefLock
     RefLock()
     {
         refcount = 0;
-        wakeup = SDL_CreateCond();
-        mut = SDL_CreateMutex();
+        wakeup = new condition_variable();
+        mut = new mutex();
     }
     ~RefLock()
     {
-        SDL_DestroyCond(wakeup);
-        SDL_DestroyMutex(mut);
+        delete wakeup;
+        delete mut;
     }
     void lock()
     {
-        SDL_mutexP(mut);
+        mut->lock();
     }
     void unlock()
     {
-        SDL_mutexV(mut);
+        mut->unlock();
     }
     void lock_add()
     {
-        SDL_mutexP(mut);
+        mut->lock();
         refcount ++;
-        SDL_mutexV(mut);
+        mut->unlock();
     }
     void lock_sub()
     {
-        SDL_mutexP(mut);
+        mut->lock();
         refcount --;
-        SDL_CondSignal(wakeup);
-        SDL_mutexV(mut);
-    }
-    void operator++()
-    {
-        refcount ++;
-    }
-    void operator--()
-    {
-        refcount --;
-        SDL_CondSignal(wakeup);
+        wakeup->notify_one();
+        mut->unlock();
     }
     void wait()
     {
         while(refcount)
         {
-            SDL_CondWait(wakeup, mut);
+            wakeup->wait(*mut);
         }
     }
-    SDL::Cond * wakeup;
-    SDL::Mutex * mut;
+    condition_variable * wakeup;
+    mutex * mut;
     int refcount;
 };
 Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _filename, PluginManager * pm)
@@ -313,7 +309,7 @@ PluginManager::PluginManager(Core * core)
     string path = core->p->getPath() + "\\plugins\\";
     const string searchstr = ".plug.dll";
 #endif
-    cmdlist_mutex = SDL_CreateMutex();
+    cmdlist_mutex = new mutex();
     vector <string> filez;
     getdir(path, filez);
     for(int i = 0; i < filez.size();i++)
@@ -335,7 +331,7 @@ PluginManager::~PluginManager()
         delete all_plugins[i];
     }
     all_plugins.clear();
-    SDL_DestroyMutex(cmdlist_mutex);
+    delete cmdlist_mutex;
 }
 
 Plugin *PluginManager::getPluginByName (const std::string & name)
@@ -353,13 +349,13 @@ command_result PluginManager::InvokeCommand( std::string & command, std::vector 
 {
     command_result cr = CR_NOT_IMPLEMENTED;
     Core * c = &Core::getInstance();
-    SDL_mutexP(cmdlist_mutex);
+    cmdlist_mutex->lock();
     map <string, Plugin *>::iterator iter = belongs.find(command);
     if(iter != belongs.end())
     {
         cr = iter->second->invoke(command, parameters);
     }
-    SDL_mutexV(cmdlist_mutex);
+    cmdlist_mutex->unlock();
     return cr;
 }
 
@@ -373,23 +369,23 @@ void PluginManager::OnUpdate( void )
 // FIXME: doesn't check name collisions!
 void PluginManager::registerCommands( Plugin * p )
 {
-    SDL_mutexP(cmdlist_mutex);
+    cmdlist_mutex->lock();
     vector <PluginCommand> & cmds = p->commands;
     for(int i = 0; i < cmds.size();i++)
     {
         belongs[cmds[i].name] = p;
     }
-    SDL_mutexV(cmdlist_mutex);
+    cmdlist_mutex->unlock();
 }
 
 // FIXME: doesn't check name collisions!
 void PluginManager::unregisterCommands( Plugin * p )
 {
-    SDL_mutexP(cmdlist_mutex);
+    cmdlist_mutex->lock();
     vector <PluginCommand> & cmds = p->commands;
     for(int i = 0; i < cmds.size();i++)
     {
         belongs.erase(cmds[i].name);
     }
-    SDL_mutexV(cmdlist_mutex);
+    cmdlist_mutex->unlock();
 }

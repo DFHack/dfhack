@@ -58,6 +58,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <deque>
 using namespace DFHack;
 
+#include "tinythread.h"
+using namespace tthread;
+
 // FIXME: maybe make configurable with an ini option?
 #define MAX_CONSOLE_LINES 999;
 
@@ -247,7 +250,7 @@ namespace DFHack
             SetConsoleCursorPosition(console_out, inf.dwCursorPosition);
         }
 
-        int prompt_loop(SDL::Mutex * lock)
+        int prompt_loop(mutex * lock)
         {
             raw_buffer.clear(); // make sure the buffer is empty!
             size_t plen = prompt.size();
@@ -269,9 +272,9 @@ namespace DFHack
             {
                 INPUT_RECORD rec;
                 DWORD count;
-                SDL_mutexV(lock);
+                lock->unlock();
                 ReadConsoleInputA(console_in, &rec, 1, &count);
-                SDL_mutexP(lock);
+                lock->lock();
                 if (rec.EventType != KEY_EVENT || !rec.Event.KeyEvent.bKeyDown)
                     continue;
                 switch (rec.Event.KeyEvent.wVirtualKeyCode)
@@ -356,7 +359,7 @@ namespace DFHack
                 }
             }
         }
-        int lineedit(const std::string & prompt, std::string & output, SDL::Mutex*lock)
+        int lineedit(const std::string & prompt, std::string & output, mutex * lock)
         {
             output.clear();
             int count;
@@ -382,7 +385,7 @@ namespace DFHack
         }
 
         FILE * dfout_C;
-        int rawmode; /* for atexit() function to check if restore is needed*/
+        int rawmode;
         std::deque <std::string> history;
 
         HANDLE console_in;
@@ -425,7 +428,7 @@ bool Console::init(void)
     // Allocate a console!
     AllocConsole();
     d->ConsoleWindow = GetConsoleWindow();
-    wlock = SDL_CreateMutex();
+    wlock = new mutex();
     HMENU  hm = GetSystemMenu(d->ConsoleWindow,false);
     DeleteMenu(hm, SC_CLOSE, MF_BYCOMMAND);
 
@@ -465,16 +468,15 @@ bool Console::init(void)
 // FIXME: looks awfully empty, doesn't it?
 bool Console::shutdown(void)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     FreeConsole();
     inited = false;
-    SDL_mutexV(wlock);
     return true;
 }
 int Console::print( const char* format, ... )
 {
     va_list args;
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     int ret;
     if(!inited) ret = -1;
     else
@@ -483,14 +485,13 @@ int Console::print( const char* format, ... )
         ret = d->vprint(format, args);
         va_end(args);
     }
-    SDL_mutexV(wlock);
     return ret;
 }
 
 int Console::printerr( const char* format, ... )
 {
     va_list args;
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     int ret;
     if(!inited) ret = -1;
     else
@@ -499,86 +500,77 @@ int Console::printerr( const char* format, ... )
         ret = d->vprinterr(format, args);
         va_end(args);
     }
-    SDL_mutexV(wlock);
     return ret;
 }
 
 int Console::get_columns(void)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     int ret = -1;
     if(inited)
         ret = d->get_columns();
-    SDL_mutexV(wlock);
     return ret;
 }
 
 int Console::get_rows(void)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     int ret = -1;
     if(inited)
         ret = d->get_rows();
-    SDL_mutexV(wlock);
     return ret;
 }
 
 void Console::clear()
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     if(inited)
         d->clear();
-    SDL_mutexV(wlock);
 }
 
 void Console::gotoxy(int x, int y)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     if(inited)
         d->gotoxy(x,y);
-    SDL_mutexV(wlock);
 }
 
 void Console::color(color_value index)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     if(inited)
         d->color(index);
-    SDL_mutexV(wlock);
 }
 
 void Console::reset_color( void )
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     if(inited)
         d->reset_color();
-    SDL_mutexV(wlock);
 }
 
 void Console::cursor(bool enable)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     if(inited)
         d->cursor(enable);
-    SDL_mutexV(wlock);
 }
 
 // push to front, remove from back if we are above maximum. ignore immediate duplicates
 void Console::history_add(const std::string & command)
 {
-    SDL_mutexP(wlock);
+    lock_guard <mutex> g(*wlock);
     if(inited)
         d->history_add(command);
-    SDL_mutexV(wlock);
 }
 
 int Console::lineedit(const std::string & prompt, std::string & output)
 {
-    SDL_mutexP(wlock);
+    wlock->lock();
     int ret = -2;
     if(inited)
         ret = d->lineedit(prompt,output,wlock);
-    SDL_mutexV(wlock);
+    wlock->unlock();
     return ret;
 }
 

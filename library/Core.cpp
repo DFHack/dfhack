@@ -385,6 +385,8 @@ Core::Core()
 
 bool Core::Init()
 {
+    if(started)
+        return true;
     // init the console. This must be always the first step!
     con.init();
     // find out what we are...

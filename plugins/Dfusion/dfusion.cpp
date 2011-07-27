@@ -82,7 +82,29 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 	return CR_OK;
 }
 
-
+void InterpreterLoop(Core* c)
+{
+	Console &con=c->con;
+	lua::state s=lua::glua::Get();
+	string curline;
+	con.print("Type quit to exit interactive mode\n");
+	con.lineedit(">>",curline);
+	
+	while (curline!="quit") {
+		try
+		{
+			s.loadstring(curline);
+			s.pcall();
+		}
+		catch(lua::exception &e)
+		{
+			con.printerr("Error:%s\n",e.what());
+			s.settop(0);
+		}
+		con.lineedit(">>",curline);
+	}
+	s.settop(0);
+}
 DFhackCExport command_result lua_run (Core * c, vector <string> & parameters)
 {
 	Console &con=c->con;
@@ -101,7 +123,7 @@ DFhackCExport command_result lua_run (Core * c, vector <string> & parameters)
 	}
 	else
 	{
-		//TODO interpreter...
+		InterpreterLoop(c);
 	}
 	s.settop(0);// clean up
 	mymutex->unlock();

@@ -6,6 +6,10 @@
 #include <vector>
 #include <string>
 
+
+#include "tinythread.h"
+
+
 #include "luamain.h"
 #include "lua_Console.h"
 #include "functioncall.h"
@@ -14,7 +18,7 @@ using std::vector;
 using std::string;
 using namespace DFHack;
 
-static SDL::Mutex* mymutex=0;
+static tthread::mutex* mymutex=0;
 
 DFhackCExport command_result dfusion (Core * c, vector <string> & parameters);
 DFhackCExport command_result lua_run (Core * c, vector <string> & parameters);
@@ -37,7 +41,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 	commands.push_back(PluginCommand("lua", "Run interactive interpreter.\
 \n              Options: <filename> = run <filename> instead",lua_run));
 	
-	mymutex=SDL_CreateMutex();
+	mymutex=new tthread::mutex;
     return CR_OK;
 }
 
@@ -45,6 +49,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 {
 	
 // shutdown stuff
+	delete mymutex;
 	return CR_OK;
 }
 
@@ -58,7 +63,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
         c->con.print("Time delta = %d ms\n", delta);
     }
     return CR_OK;*/
-	SDL_mutexP(mymutex); 
+	mymutex->lock();
 	lua::state s=lua::glua::Get();
 	s.getglobal("OnTick");
 	if(s.is<lua::function>())
@@ -73,7 +78,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 		}
 	}
 	s.settop(0);
-	SDL_mutexV(mymutex);
+	mymutex->unlock();
 	return CR_OK;
 }
 
@@ -81,7 +86,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 DFhackCExport command_result lua_run (Core * c, vector <string> & parameters)
 {
 	Console &con=c->con;
-	SDL_mutexP(mymutex);
+	mymutex->lock();
 	lua::state s=lua::glua::Get();
 	if(parameters.size()>0)
 	{
@@ -99,15 +104,14 @@ DFhackCExport command_result lua_run (Core * c, vector <string> & parameters)
 		//TODO interpreter...
 	}
 	s.settop(0);// clean up
-	SDL_mutexV(mymutex);
+	mymutex->unlock();
 	return CR_OK;
 }
 DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
 {
 
 	Console &con=c->con;
-	con.print("%x\n",c->p->getBase());
-	SDL_mutexP(mymutex);
+	mymutex->lock();
 	lua::state s=lua::glua::Get();
 	
 	try{
@@ -119,6 +123,6 @@ DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
 		con.printerr("Error:%s\n",e.what());
 	}
 	s.settop(0);// clean up
-	SDL_mutexV(mymutex);
+	mymutex->unlock();
 	return CR_OK;
 }

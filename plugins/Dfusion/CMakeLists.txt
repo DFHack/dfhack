@@ -2,6 +2,7 @@ find_package(Lua51 QUIET)
 
 if(LUA51_FOUND)
 	include_directories(${LUA_INCLUDE_DIR} include)
+	include_directories("${dfhack_SOURCE_DIR}/library/depends/tthread")
 	FILE(GLOB DFUSION_CPPS src/*.c*)
 	set(
 		DFUSION_CPPS_ALL

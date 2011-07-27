@@ -269,6 +269,9 @@ namespace DFHack
             int getPID();
             /// get the DF Process FilePath
             std::string getPath();
+
+			/// modify permisions of memory range
+			bool setPermisions(const t_memrange & range,const t_memrange &trgrange);
     private:
         VersionInfo * my_descriptor;
         PlatformSpecific *d;

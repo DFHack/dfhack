@@ -25,6 +25,7 @@ distribution.
 #include "Internal.h"
 #include <dirent.h>
 #include <errno.h>
+#include <sys/mman.h>
 
 #include <string>
 #include <vector>
@@ -176,4 +177,16 @@ string Process::getPath()
 int Process::getPID()
 {
     return getpid();
+}
+
+bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
+{
+	int result;
+	int protect=0;
+	if(trgrange.read)protect|=PROT_READ;
+	if(trgrange.write)protect|=PROT_WRITE;
+	if(trgrange.execute)protect|=PROT_EXECUTE;
+	result=mprotect((void *)range.start, range.end-range.start,protect);
+
+	return result==0;
 }

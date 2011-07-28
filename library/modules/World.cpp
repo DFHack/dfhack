@@ -177,8 +177,8 @@ bool World::WriteGameMode(const t_gamemodes & wr)
 {
     if(d->Inited && d->StartedMode)
     {
-        d->owner->writeDWord(d->gamemode_offset,wr.g_mode);
-        d->owner->writeDWord(d->controlmode_offset,wr.g_type);
+        d->owner->writeDWord(d->gamemode_offset,wr.g_type);
+        d->owner->writeDWord(d->controlmode_offset,wr.g_mode);
         return true;
     }
     return false;

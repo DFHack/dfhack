@@ -3,16 +3,23 @@
 #include <map>
 #include <set>
 #include <cstdlib>
-using namespace std;
+#include <sstream>
+using std::vector;
+using std::string;
+using std::endl;
+using std::set;
 
-#include <DFHack.h>
+#include <dfhack/Core.h>
+#include <dfhack/Console.h>
+#include <dfhack/Export.h>
+#include <dfhack/PluginManager.h>
+#include <dfhack/modules/Vegetation.h>
+#include <dfhack/modules/Maps.h>
+#include <dfhack/modules/Gui.h>
+#include <dfhack/TileTypes.h>
 #include <dfhack/extra/MapExtras.h>
 using namespace MapExtras;
-#include <dfhack/extra/termutil.h>
-
-
-
-
+using namespace DFHack;
 
 typedef vector <DFHack::DFCoord> coord_vec;
 
@@ -133,46 +140,36 @@ public:
     };
 };
 
-int main (int argc, char** argv)
-{
-    bool temporary_terminal = TemporaryTerminal();
-    bool quiet = false;
-    for(int i = 1; i < argc; i++)
-    {
-        string test = argv[i];
-        if(test == "-q")
-        {
-            quiet = true;
-        }
-    }
-    int32_t x,y,z;
+DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters);
 
+DFhackCExport const char * plugin_name ( void )
+{
+    return "liquids";
+}
+
+DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+{
+    commands.clear();
+    commands.push_back(PluginCommand("liquids", "Place magma, water or obsidian.", df_liquids));
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown ( Core * c )
+{
+    return CR_OK;
+}
+
+DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
+{
+    int32_t x,y,z;
     uint32_t x_max,y_max,z_max;
 
-    DFHack::ContextManager DFMgr("Memory.xml");
-    DFHack::Context *DF;
     DFHack::Maps * Maps;
     DFHack::Gui * Position;
     Brush * brush = new RectangleBrush(1,1);
     string brushname = "point";
-    try
-    {
-        DF=DFMgr.getSingleContext();
-        DF->Attach();
-        Maps = DF->getMaps();
-        Maps->Start();
-        Maps->getSize(x_max,y_max,z_max);
-        Position = DF->getGui();
-    }
-    catch (exception& e)
-    {
-        cerr << e.what() << endl;
-        if(temporary_terminal)
-            cin.ignore();
-        return 1;
-    }
     bool end = false;
-    cout << "Welcome to the liquid spawner.\nType 'help' or '?' for a list of available commands, 'q' to quit.\nPress return after a command to confirm." << endl;
+    c->con << "Welcome to the liquid spawner.\nType 'help' or '?' for a list of available commands, 'q' to quit.\nPress return after a command to confirm." << std::endl;
     string mode="magma";
 
     string flowmode="f+";
@@ -181,18 +178,15 @@ int main (int argc, char** argv)
     int width = 1, height = 1, z_levels = 1;
     while(!end)
     {
-        DF->Resume();
+        c->Resume();
         string command = "";
-        cout <<"[" << mode << ":" << brushname << ":" << amount << ":" << flowmode << ":" << setmode << "]# ";
-        getline(cin, command);
-        if (std::cin.eof())
-        {
-            command = "q";
-            std::cout << std::endl; // No newline from the user here!
-        }
+        std::stringstream str;
+        str <<"[" << mode << ":" << brushname << ":" << amount << ":" << flowmode << ":" << setmode << "]#";
+        if(c->con.lineedit(str.str(),command) == -1)
+            return CR_FAILURE;
         if(command=="help" || command == "?")
         {
-            cout << "Modes:" << endl
+            c->con << "Modes:" << endl
                  << "m             - switch to magma" << endl
                  << "w             - switch to water" << endl
                  << "o             - make obsidian wall instead" << endl
@@ -255,18 +249,21 @@ int main (int argc, char** argv)
         }
         else if(command == "range" || command == "r")
         {
-            cout << " :set range width<" << width << "># ";
-            getline(cin, command);
+            std::stringstream str;
+            str << " :set range width<" << width << "># ";
+            c->con.lineedit(str.str(),command);
             width = command == "" ? width : atoi (command.c_str());
             if(width < 1) width = 1;
 
-            cout << " :set range height<" << height << "># ";
-            getline(cin, command);
+            str.clear();
+            str << " :set range height<" << height << "># ";
+            c->con.lineedit(str.str(),command);
             height = command == "" ? height : atoi (command.c_str());
             if(height < 1) height = 1;
 
-            cout << " :set range z-levels<" << z_levels << "># ";
-            getline(cin, command);
+            str.clear();
+            str << " :set range z-levels<" << z_levels << "># ";
+            c->con.lineedit(str.str(),command);
             z_levels = command == "" ? z_levels : atoi (command.c_str());
             if(z_levels < 1) z_levels = 1;
             delete brush;
@@ -339,24 +336,28 @@ int main (int argc, char** argv)
             amount = 7;
         else if(command.empty())
         {
-            DF->Suspend();
+            c->Suspend();
+            Maps = c->getMaps();
+            Maps->Start();
+            Maps->getSize(x_max,y_max,z_max);
+            Position = c->getGui();
             do
             {
                 if(!Maps->Start())
                 {
-                    cout << "Can't see any DF map loaded." << endl;
+                    c->con << "Can't see any DF map loaded." << endl;
                     break;
                 }
                 if(!Position->getCursorCoords(x,y,z))
                 {
-                    cout << "Can't get cursor coords! Make sure you have a cursor active in DF." << endl;
+                    c->con << "Can't get cursor coords! Make sure you have a cursor active in DF." << endl;
                     break;
                 }
-                cout << "cursor coords: " << x << "/" << y << "/" << z << endl;
+                c->con << "cursor coords: " << x << "/" << y << "/" << z << endl;
                 MapCache mcache(Maps);
                 DFHack::DFCoord cursor(x,y,z);
                 coord_vec all_tiles = brush->points(mcache,cursor);
-                cout << "working..." << endl;
+                c->con << "working..." << endl;
                 if(mode == "obsidian")
                 {
                     coord_vec::iterator iter = all_tiles.begin();
@@ -478,29 +479,24 @@ int main (int argc, char** argv)
                         }
                         else
                         {
-                            cout << "flow bit 1 = " << bflags.bits.liquid_1 << endl; 
-                            cout << "flow bit 2 = " << bflags.bits.liquid_2 << endl;
+                            c->con << "flow bit 1 = " << bflags.bits.liquid_1 << endl; 
+                            c->con << "flow bit 2 = " << bflags.bits.liquid_2 << endl;
                         }
                         biter ++;
                     }
                 }
                 if(mcache.WriteAll())
-                    cout << "OK" << endl;
+                    c->con << "OK" << endl;
                 else
-                    cout << "Something failed horribly! RUN!" << endl;
+                    c->con << "Something failed horribly! RUN!" << endl;
                 Maps->Finish();
             } while (0);
+            c->Resume();
         }
         else
         {
-            cout << command << " : unknown command." << endl;
+            c->con << command << " : unknown command." << endl;
         }
     }
-    DF->Detach();
-    if(temporary_terminal && !quiet)
-    {
-        cout << "Done. Press any key to continue" << endl;
-        cin.ignore();
-    }
-    return 0;
+    return CR_OK;
 }

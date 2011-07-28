@@ -3,6 +3,7 @@
 #include <map>
 #include <set>
 #include <cstdlib>
+#include <sstream>
 using std::vector;
 using std::string;
 
@@ -24,6 +25,7 @@ class Brush
 {
 public:
     virtual ~Brush(){};
+    virtual string Name(){return "bogus";};
     virtual coord_vec points(MapCache & mc,DFHack::DFCoord start) = 0;
 };
 /**
@@ -51,6 +53,21 @@ public:
         y_ = y;
         z_ = z;
     };
+    string Name()
+    {
+        if(x_ == 1 && y_ == 1 && z_ == 1)
+            return "point";
+        else
+        {
+            std::stringstream str;
+            str << x_ << "x" << y_;
+            if(z_ != 1)
+            {
+                str << "x" << z_;
+            }
+            return str.str();
+        }
+    }
     coord_vec points(MapCache & mc, DFHack::DFCoord start)
     {
         coord_vec v;
@@ -88,6 +105,10 @@ class BlockBrush : public Brush
 public:
     BlockBrush(){};
     ~BlockBrush(){};
+    string Name()
+    {
+        return "block";
+    }
     coord_vec points(MapCache & mc, DFHack::DFCoord start)
     {
         coord_vec v;
@@ -118,6 +139,10 @@ class ColumnBrush : public Brush
 public:
     ColumnBrush(){};
     ~ColumnBrush(){};
+    string Name()
+    {
+        return "column";
+    }
     coord_vec points(MapCache & mc, DFHack::DFCoord start)
     {
         coord_vec v;
@@ -137,8 +162,42 @@ public:
     };
 };
 
-DFhackCExport command_result df_tile (Core * c, vector <string> & parameters);
+DFhackCExport command_result df_tiles (Core * c, vector <string> & parameters);
 DFhackCExport command_result df_paint (Core * c, vector <string> & parameters);
+
+struct Settings
+{
+    Settings()
+    {
+        brush = new RectangleBrush(1,1);
+        mode = none;
+        liquidamount = 0;
+    }
+    enum
+    {
+        none,
+        water,
+        magma,
+        obsidian_wall,
+        obsidian_floor,
+        obsidian_ramp,
+        river_source,
+    } mode;
+    int liquidamount;
+    enum
+    {
+        set_flow,
+        unset_flow,
+        ignore_flow,
+    } flowmode;
+    enum
+    {
+        liquid_set,
+        liquid_add,
+        liquid_remove,
+    } liquidmode;
+    Brush * brush;
+} settings;
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -148,8 +207,8 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("tile", "Set tile painter brush.", df_tile));
-    commands.push_back(PluginCommand("paint", "Paint with the current brush.", df_paint));
+    commands.push_back(PluginCommand("tiles", "A tile painter. See 'tile help' for details.", df_tiles));
+    commands.push_back(PluginCommand("paint", "Paint with the last used brush.", df_paint));
     return CR_OK;
 }
 
@@ -158,62 +217,64 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result df_tile (Core * c, vector <string> & parameters)
+DFhackCExport command_result df_tiles (Core * c, vector <string> & parameters)
 {
     int32_t x,y,z;
     uint32_t x_max,y_max,z_max;
     DFHack::Maps * Maps;
     DFHack::Gui * Position;
     Brush * brush = new RectangleBrush(1,1);
-    string brushname = "point";
 
     Maps = c->getMaps();
     Maps->Start();
     Maps->getSize(x_max,y_max,z_max);
     Position = c->getGui();
 
-    string mode="magma";
-
-    string flowmode="f+";
-    string setmode ="s.";
-    unsigned int amount = 7;
-    int width = 1, height = 1, z_levels = 1;
-
     string command = "";
     if(command=="help" || command == "?")
     {
         c->con.print
         (
+            "Usage: This command sets the properties of the tile painter brush\n"
+            "       It is best used from the console, or as an alias bound to a hotkey\n"
+            "       After setting the brush\n"
+            "\n"
             "Modes:\n"
-            "m             - switch to magma\n"
-            "w             - switch to water\n"
-            "o             - make obsidian wall instead\n"
-            "of            - make obsidian floors\n"
-            "rs            - make a river source\n"
-            "f             - flow bits only\n"
+            "none          - nothing, the default"
+            "magma [0-7]   - magma, accepts depth\n"
+            "water [0-7]   - water\n"
+            "obsidian      - obsidian wall\n"
+            "obsfloor      - obsidian floors\n"
+            "obsramp       - obsidian ramp (forces 1 z-level brush)\n"
+            "riversource   - an endless source of water (floor tile)\n"
+            "type ###      - plain tiletype painter. For a list of tile types see:\n"
+            "                http://df.magmawiki.com/index.php/DF2010:Tile_types_in_DF_memory\n"
+            "\n"
             "Set-Modes (only for magma/water):\n"
-            "s+            - only add\n"
-            "s.            - set\n"
-            "s-            - only remove\n"
-            "Properties (only for magma/water):\n"
-            "f+            - make the spawned liquid flow\n"
-            "f.            - don't change flow state (read state in flow mode)\n"
-            "f-            - make the spawned liquid static\n"
-            "0-7           - set liquid amount\n"
+            "add           - set liquid level everywhere\n"
+            "keep          - set liquid level only where liquids are already present\n"
+            "\n"
             "Brush:\n"
             "point         - single tile [p]\n"
-            "range         - block with cursor at bottom north-west [r]\n"
+            "#x#[x#]       - block with cursor at bottom north-west [r]\n"
             "                (any place, any size)\n"
+            "                Example:"
+            "                3x3x2 = rectangle 3x3 x2 z-levels\n"
+            "                The z-level part is optional - ommiting it is\n"
+            "                the same as setting it to 1.\n"
+            "h#x#[x#]      - Same as previous, only the rectangle is 'hollow'.\n"
             "block         - DF map block with cursor in it\n"
             "                (regular spaced 16x16x1 blocks)\n"
             "column        - Column from cursor, up through free space\n"
-            "Other:\n"
-            "q             - quit\n"
-            "help or ?     - print this list of commands\n"
-            "empty line    - put liquid\n"
+            "line          - A line between two points.\n"
+            "circle [#]    - A filled circle, optional # specifies radius in tiles.\n"
+            "hcircle [#,#] - A hollow circle (ring). First # specifies radius\n"
+            "                second # ring thickness in tiles.\n"
             "\n"
-            "Usage: point the DF cursor at a tile you want to modify\n"
-            "and use the commands available :)\n"
+            "Other:\n"
+            "help or ?     - print this list of commands\n"
+            "paint         - same effect as if you also the 'paint' command at the same time.\n"
+            "\n"
         );
     }
     else if(command == "m")

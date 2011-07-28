@@ -3,6 +3,7 @@
 #include <dfhack/Export.h>
 #include <dfhack/PluginManager.h>
 #include <dfhack/Process.h>
+#include "dfhack/extra/stopwatch.h"
 #include <vector>
 #include <string>
 
@@ -20,6 +21,7 @@ using std::string;
 using namespace DFHack;
 
 static tthread::mutex* mymutex=0;
+uint64_t timeLast=0;
 
 DFhackCExport command_result dfusion (Core * c, vector <string> & parameters);
 DFhackCExport command_result lua_run (Core * c, vector <string> & parameters);
@@ -52,15 +54,12 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 }
 
 DFhackCExport command_result plugin_onupdate ( Core * c )
-{
-    /*if(timering == true) //TODO maybe reuse this to make it run less often.
-    {
-        uint64_t time2 = GetTimeMs64();
-        uint64_t delta = time2-timeLast;
-        timeLast = time2;
-        c->con.print("Time delta = %d ms\n", delta);
-    }
-    return CR_OK;*/
+{        
+	uint64_t time2 = GetTimeMs64();
+	uint64_t delta = time2-timeLast;
+	if(delta<100)
+		return CR_OK;
+	timeLast = time2;
 	mymutex->lock();
 	lua::state s=lua::glua::Get();
 	s.getglobal("OnTick");
@@ -89,6 +88,7 @@ void InterpreterLoop(Core* c)
 	con.lineedit(">>",curline);
 	
 	while (curline!="quit") {
+		con.history_add(curline);
 		try
 		{
 			s.loadstring(curline);

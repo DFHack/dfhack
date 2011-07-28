@@ -229,7 +229,7 @@ static int lua_Process_setPermisions(lua_State *S)
 	range.start=st.as<uint64_t>();
 	st.pop();
 	st.getfield("end",1);
-	range.start=st.as<uint64_t>();
+	range.end=st.as<uint64_t>();
 	st.pop();
 
 	st.getfield("read",2);

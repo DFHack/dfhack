@@ -12,6 +12,7 @@
 
 #include "luamain.h"
 #include "lua_Console.h"
+#include "lua_Process.h"
 #include "functioncall.h"
 
 using std::vector;
@@ -23,9 +24,6 @@ static tthread::mutex* mymutex=0;
 DFhackCExport command_result dfusion (Core * c, vector <string> & parameters);
 DFhackCExport command_result lua_run (Core * c, vector <string> & parameters);
 
- typedef
- int  (__thiscall *dfprint)(const char*, char, char,void *) ; 
-
 DFhackCExport const char * plugin_name ( void )
 {
     return "dfusion";
@@ -36,7 +34,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.clear();
 	//maybe remake it to run automaticaly
 	lua::RegisterConsole(lua::glua::Get(),&c->con);
-
+	lua::RegisterProcess(lua::glua::Get(),c->p);
     commands.push_back(PluginCommand("dfusion","Init dfusion system.",dfusion));
 	commands.push_back(PluginCommand("lua", "Run interactive interpreter.\
 \n              Options: <filename> = run <filename> instead",lua_run));

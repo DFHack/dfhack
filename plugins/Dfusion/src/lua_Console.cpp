@@ -126,7 +126,12 @@ const luaL_Reg lua_console_func[]=
 };
 void lua::RegisterConsole(lua::state &st, DFHack::Console *c)
 {
-	st.newtable();
+	st.getglobal("Console");
+	if(st.is<lua::nil>())
+	{
+		st.pop();
+		st.newtable();
+	}
 
 	st.pushlightuserdata(c);
 	st.setfield("__pointer");

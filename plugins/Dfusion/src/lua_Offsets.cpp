@@ -142,9 +142,15 @@ const luaL_Reg lua_engine_func[]=
 	{"pokestr",lua_pokestr},
 	{NULL,NULL}
 };
+
 void lua::RegisterEngine(lua::state &st)
 {
-	st.newtable();
+	st.getglobal("engine");
+	if(st.is<lua::nil>())
+	{
+		st.pop();
+		st.newtable();
+	}
 	lua::RegFunctionsLocal(st,lua_engine_func);
 	st.setglobal("engine");
 }

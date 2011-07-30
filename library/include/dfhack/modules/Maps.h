@@ -35,6 +35,7 @@ distribution.
 #include "dfhack/modules/Vegetation.h"
 #include <vector>
 #include "dfhack/Virtual.h"
+#include <dfhack/BitArray.h>
 
 /**
  * \defgroup grp_maps Maps module and its types
@@ -534,9 +535,7 @@ namespace DFHack
     // one of the vector is the 'effects' vector. another should be item id/index vector
     struct df_block
     {
-        // FIXME: wrap the flag array!
-        unsigned char * flagarray;
-        unsigned long flagarray_slots;
+        BitArray flags;
         // how to handle this virtual mess?
         std::vector <t_virtual *> block_events;
         // no idea what these are

@@ -2,8 +2,8 @@
 IF(UNIX)
     add_definitions(-DLINUX_BUILD)
     SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
-    SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32")
-    SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32")
+    SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32 -std=c++0x")
+    SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32 -std=c++0x")
 ENDIF()
 
 include_directories("${dfhack_SOURCE_DIR}/library/include")

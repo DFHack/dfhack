@@ -295,7 +295,8 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
         // FIXME: not 64-bit safe
         buffer->origin = (uint32_t) &block;
         //uint32_t addr_of_struct = p->readDWord(addr);
-        buffer->blockflags.whole = *(uint32_t*) block->flagarray;
+        // FIXME: maybe truncates
+        buffer->blockflags.whole = block->flags;
         return true;
     }
     return false;
@@ -324,7 +325,6 @@ bool Maps::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buf
     if (block)
     {
         memcpy(block->tiletype, buffer, sizeof(tiletypes40d));
-        //d->owner->write (addr + d->offsets.tile_type_offset, sizeof (tiletypes40d), (uint8_t *) buffer);
         return true;
     }
     return false;
@@ -333,65 +333,53 @@ bool Maps::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buf
 /*
  * Dirty bit
  */
-//FIXME: this is bullshit
 bool Maps::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
 {
     MAPS_GUARD
     df_block * block = getBlock(x,y,z);
     if (block)
     {
-        if(!block->flagarray)
-            return false;
-        dirtybit = ((t_blockflags *)block->flagarray)->bits.designated;
+        dirtybit = block->flags.is_set(1);
         return true;
     }
     return false;
 }
-//FIXME: this is bullshit
+
 bool Maps::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
 {
     MAPS_GUARD
     df_block * block = getBlock(x,y,z);
     if (block)
     {
-        if(!block->flagarray)
-            return false;
-        t_blockflags & flagz = (*(t_blockflags *)block->flagarray);
-        flagz.bits.designated = dirtybit;
+        block->flags.set(1,dirtybit);
         return true;
     }
     return false;
 }
-
+/*
 /*
  * Block flags
  */
-//FIXME: this is bullshit
+// FIXME: maybe truncates, still bullshit
 bool Maps::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags &blockflags)
 {
     MAPS_GUARD
     df_block * block = getBlock(x,y,z);
     if (block)
     {
-        if(!block->flagarray)
-            return false;
-        blockflags = *(t_blockflags *) block->flagarray;
+        blockflags.whole = block->flags;
         return true;
     }
     return false;
 }
-//FIXME: this is bullshit
+//FIXME: maybe truncated, still bullshit
 bool Maps::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags blockflags)
 {
     MAPS_GUARD
     df_block * block = getBlock(x,y,z);
     if (block)
     {
-        if(!block->flagarray)
-            return false;
-        t_blockflags & bf = *(t_blockflags *) block->flagarray;
-        bf.whole = blockflags.whole;
-        return true;
+        return (block->flags = blockflags.whole);
     }
     return false;
 }

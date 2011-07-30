@@ -99,9 +99,10 @@ ENDMACRO(DFHACK_PLUGIN)
 #RECURSE_DIRS()
 
 # Dfusion plugin (Windows only right now)
-IF(NOT UNIX)
+OPTION(BUILD_DFUSION "Build DFusion." ON)
+if(NOT UNIX AND BUILD_DFUSION)
     add_subdirectory (Dfusion)
-ENDIF()
+endif()
 
 OPTION(BUILD_QTPLUG "Build the experimental Qt plugin." OFF)
 if(BUILD_QTPLUG)

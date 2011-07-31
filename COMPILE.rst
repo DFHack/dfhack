@@ -1,37 +1,40 @@
-################
-Compiling DFHACK
-################
-
-============================
-Here's how you build dfhack!
-============================
+###############
+Building DFHACK
+###############
 
 .. contents::
-    
+
+=================
+Building on Linux
+=================
+On Linux, DFHack acts as a library that shadows parts of the SDL API using LD_PRELOAD.
 
 Dependencies
 ============
-* ``cmake``
-* A compiler for building the main lib and the various tools.
-* (Linux only) Veinlook requires the wide-character ncurses library (libncursesw)
-* (Linux only) You'll need X11 dev libraries.
+DFHack is meant to be installed into an existing DF folder, so get one ready.
 
-Building on Linux
-=================
-To run in the output folder (without installing) building the library
-is simple. Enter the build folder, run the tools. Like this::
+For building, you need a 32-bit version of GCC. For example, to build DFHack on
+a 64-bit distribution like Arch, you'll need the multilib development tools and libraries.
+
+Before you can build anything, you'll also need ``cmake``. It is advisable to also get
+``ccmake`` on distributions that split the cmake package into multiple parts.
+
+Build
+=====
+Building is fairly straightforward. Enter the ``build`` folder and start the build like this::
     
     cd build
-    cmake .. -DCMAKE_BUILD_TYPE:string=Release
-    make
+    cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=/home/user/DF
+    make install
 
-This will build the library and its tools and place them in a sub-directory ``bin`` inside your build directory.
+Obviously, replace the install path with path to your DF. This will build the library
+along with the normal set of plugins and install them into your DF folder.
 
-Alternatively, you can use ccmake instead of cmake:
-
+Alternatively, you can use ccmake instead of cmake::
+    
     cd build
     ccmake ..
-    make
+    make install
 
 This will show a curses-based interface that lets you set all of the
 extra options.
@@ -39,94 +42,32 @@ extra options.
 You can also use a cmake-friendly IDE like KDevelop 4 or the cmake-gui
 program.
 
-To be installed into the system or packaged::
-    
-    cd build
-    cmake -DCMAKE_BUILD_TYPE:string=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DMEMXML_DATA_PATH:path=/usr/share/dfhack ..
-    make
-    make install
-
-With this dfhack installs:
-
-* library to ``$CMAKE_INSTALL_PREFIX/lib``
-* executables to ``$CMAKE_INSTALL_PREFIX/bin``
-* The ``Memory.xml`` file to ``/usr/share/dfhack``
-
+===================
 Building on Windows
 ===================
-You need ``cmake``. Get the win32 installer version from the official
+First, you need ``cmake``. Get the win32 installer version from the official
 site: http://www.cmake.org/cmake/resources/software.html
 
-It has the usual installer wizard thing.
+It has the usual installer wizard. Make sure you let it add its binary folder
+to your binary search PATH so the tool can be later run from anywhere.
 
------------
-Using mingw
------------
-You also need a compiler. I build dfhack using mingw. You can get it
-from the mingw site: http://www.mingw.org/
+You'll also need a copy of Microsoft Visual C++ 2010. The Express version is sufficient.
+Grab it from Microsoft's site.
 
-Get the automated installer, it will download newest version of mingw
-and set things up nicely.
+Build
+=====
+Open the ``build`` folder and double click the batch script there. This will eventually open
+a cmake GUI window. Here, set CMAKE_INSTALL_PREFIX to your DF folder and set up any other
+options you're interested in. Hit configure and generate, close the GUI.
 
-You'll have to add ``C:\MinGW\`` to your PATH variable.
+This crates a folder under build/ that contains the solution files for MSVC.
 
-Building
---------
-open up cmd and navigate to the ``dfhack\build`` folder, run ``cmake``
-and the mingw version of make:: 
-    
-    cd build
-    cmake .. -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE:string=Release
-    mingw32-make
+When you open the solution, make sure you never use the Debug builds. Those aren't
+binary-compatible with DF. If you try to use a debug build with DF, you'll only get crashes.
+So pick either Release or RelWithDebInfo build and build the INSTALL target.
 
-----------
-Using MSVC
-----------
-open up ``cmd`` and navigate to the ``dfhack\build`` folder, run
-``cmake``::
-    
-    cd build
-    cmake ..
 
-This will generate MSVC solution and project files.
-
-.. note::
-    
-    You are working in the ``/build`` folder. Files added to
-    projects from within MSVC will end up there! (and that's
-    wrong). Any changes to the build system should be done
-    by changing the CMakeLists.txt files and running ``cmake``!
-
--------------------------
-Using some other compiler
--------------------------
-I'm afraid you are on your own. dfhack wasn't tested with any other
-compiler.
-
-Try using a different cmake generator that's intended for your tools.
-
-Build targets
-=============
-dfhack has a few build targets:
-
-* If you're only after the library run ``make dfhack``.
-* ``make`` will build everything.
-* ``make expbench`` will build the expbench testing program and the
-  library.
-* Some of the utilities and the doxygen documentation won't be
-  normally built. You can enable them by specifying some extra
-  CMake variables::
-
-    BUILD_DFHACK_DOCUMENTATION - generate the documentation (really bad)
-    BUILD_DFHACK_EXAMPLES      - build tools from tools/examples
-    BUILD_DFHACK_PLAYGROUND    - build tools from tools/playground
-    
-  Example::
-
-    cmake .. -DBUILD_DFHACK_EXAMPLES=ON
-
+===========
 Build types
 ===========
 ``cmake`` allows you to pick a build type by changing this
@@ -139,19 +80,30 @@ variable: ``CMAKE_BUILD_TYPE``
 Without specifying a build type or 'None', cmake uses the
 ``CMAKE_CXX_FLAGS`` variable for building.
 
-Valid an useful build types include 'Release', 'Debug' and
-'RelWithDebInfo'. There are others, but they aren't really that useful.
-
-Have fun.
+Valid and useful build types include 'Release', 'Debug' and
+'RelWithDebInfo'. 'Debug' is not available on Windows.
 
 ================================
 Using the library as a developer
 ================================
-DFHack is using the zlib/libpng license. This makes it easy to link to
-it, use it in-source or add your own extensions. Contributing back to
-the dfhack repository is welcome and the right thing to do :)
+Currently, the only way to use the library is to write a plugin that can be loaded by it.
+All the plugins can be found in the 'plugins' folder. There's no in-depth documentation
+on how to write one yet, but it should be easy enough to copy one and just follow the pattern.
 
-Rudimentary API documentation can be built using doxygen.
+The most important parts of DFHack are the Core, Console, Modules and Plugins.
+
+* Core acts as the centerpiece of DFHack - it acts as a filter between DF and SDL and synchronizes the various plugins with DF.
+* Console is a thread-safe console that can be used to invoke commands exported by Plugins.
+* Modules actually describe the way to access information in DF's memory. You can get them from the Core. Most modules are split into two parts: high-level and low-level. Higl-level is mostly method calls, low-level publicly visible pointers to DF's data structures.
+* Plugins are the tools that use all the other stuff to make things happen. A plugin can have a list of commands that it exports and an onupdate function that will be called each DF game tick.
+
+Rudimentary API documentation can be built using doxygen (see build options with ``ccmake`` or ``cmake-gui``).
+
+DFHack consists of variously licensed code, but invariably weak copyleft.
+The main license is zlib/libpng, some bits are MIT licensed, and some are BSD licensed.
+
+Feel free to add your own extensions and plugins. Contributing back to
+the dfhack repository is welcome and the right thing to do :)
 
 Contributing to DFHack
 ======================
@@ -178,89 +130,22 @@ don't know what, check out http://github.com/peterix/dfhack/issues --
 this is also a good place to dump new ideas and/or bugs that need
 fixing.
 
-----------------
-Layout for tools
-----------------
-Tools live in the tools/ folder. There, they are split into three
-categories.
+---------------
+Memory research
+---------------
+If you want to do memory research, you'll need some tools and some knowledge.
+In general, you'll need a good memory viewer and optionally something
+to look at machine code without getting crazy :)
 
-distributed
-    these tools get distributed with binary releases and are installed
-    by doing 'make install' on linux. They are supposed to be stable
-    and supported. Experimental, useless, buggy or untested stuff
-    doesn't belong here.
-examples
-    examples are tools that aren't very useful, but show how DF and
-    DFHack work. They should use only DFHack API functions. No actual
-    hacking or 'magic offsets' are allowed.
-playground
-    This is a catch-all folder for tools that aren't ready to be
-    examples or be distributed in binary releases. All new tools should
-    start here. They can contain actual hacking, magic values and other
-    nasty business.
+Good windows tools include:
 
-------------------------
-Modules - what are they?
-------------------------
-DFHack uses modules to partition sets of features into manageable
-chunks. A module can have both client and server side.
+* Cheat Engine
+* IDA Pro (the free version)
 
-Client side is the part that goes into the main library and is
-generally written in C++. It is exposed to the users of DFHack.
+Good linux tools:
 
-Server side is used inside DF and serves to accelerate the client
-modules. This is written mostly in C style.
+* edb (Evan's Debugger)
+* IDA Pro running under wine.
+* Some of the tools residing in the ``legacy`` dfhack branch.
 
-There's a Core module that shouldn't be changed, because it defines the
-basic commands like reading and writing raw data. The client parts for
-the Core module are the various implementations of the Process
-interface.
-
-A good example of a module is Maps. Named the same in both client and
-server, it allows accelerating the reading of map blocks.
-
-Communication between modules happens by using shared memory. This is
-pretty fast, but needs quite a bit of care to not break. 
-
-------------
-Dependencies
-------------
-Internal
-    either part of the codebase or statically linked.
-External
-    linked as dynamic loaded libraries (.dll, .so, etc.)
-
-If you want to add dependencies, think twice about it. All internal
-dependencies for core dfhack should be either public domain or require
-attribution at most. External dependencies for tools can be either
-that, or any Free Software licenses.
-
-Current internal dependencies
------------------------------
-tinyxml
-    used by core dfhack to read offset definitions from Memory.xml
-md5
-    an implementation of the MD5 hash algorithm. Used for identifying
-    DF binaries on Linux.
-argstream
-    Allows reading terminal application arguments. GPL!
-
-Current external dependencies
------------------------------
-wide-character ncurses
-    used for the veinlook tool on Linux.
-x11 libraries
-    used for sending key events on linux
-
-Build-time dependencies
------------------------
-cmake
-    you need cmake to generate the build system and some configuration
-    headers
-
-=========================
-Memory offset definitions
-=========================
-The files with memory offset definitions used by dfhack can be found in the
-data folder.
-
+Using publicly known information and analyzing the game's data is preferred.

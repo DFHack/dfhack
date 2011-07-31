@@ -356,3 +356,18 @@ string Process::getPath()
     string out(String);
     return(out.substr(0,out.find_last_of("\\")));
 }
+
+bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
+{
+	DWORD newprotect=0;
+	if(trgrange.read && !trgrange.write && !trgrange.execute)newprotect=PAGE_READONLY;
+	if(trgrange.read && trgrange.write && !trgrange.execute)newprotect=PAGE_READWRITE;
+	if(!trgrange.read && !trgrange.write && trgrange.execute)newprotect=PAGE_EXECUTE;
+	if(trgrange.read && !trgrange.write && trgrange.execute)newprotect=PAGE_EXECUTE_READ;
+	if(trgrange.read && trgrange.write && trgrange.execute)newprotect=PAGE_EXECUTE_READWRITE;
+	DWORD oldprotect=0;
+	bool result;
+	result=VirtualProtect((LPVOID)range.start,range.end-range.start,newprotect,&oldprotect);
+	
+	return result;
+}

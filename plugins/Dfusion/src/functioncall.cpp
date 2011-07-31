@@ -73,7 +73,10 @@ int FunctionCaller::CallF(size_t count,callconv conv,void* f,const vector<int> &
 int FunctionCaller::CallFunction(size_t func_ptr,callconv conv,const vector<int> &arguments)
 {
 	//nasty nasty code...
-	
+#ifdef LINUX_BUILD	//quick fix
+	if(conv==THIS_CALL)
+		conv=STD_CALL
+#endif
 	void* f= reinterpret_cast<void*>(func_ptr+base_);
 	size_t count=arguments.size();
 	if(count==0)

@@ -416,7 +416,7 @@ Console::~Console()
 {
 }
 
-bool Console::init(void)
+bool Console::init(bool)
 {
     d = new Private();
     int                        hConHandle;

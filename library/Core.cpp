@@ -532,6 +532,43 @@ int Core::Shutdown ( void )
     return -1;
 }
 
+// from ncurses
+#define KEY_F0      0410        /* Function keys.  Space for 64 */
+#define KEY_F(n)    (KEY_F0+(n))    /* Value of function key n */
+
+bool Core::ncurses_wgetch(int in, int & out)
+{
+    if(!started)
+    {
+        out = in;
+        return true;
+    }
+    if(in >= KEY_F(1) && in <= KEY_F(8))
+    {
+        int idx = in - KEY_F(1);
+        // FIXME: copypasta, push into a method!
+        Gui * g = getGui();
+        if(g->hotkeys && g->df_interface && g->df_menu_state)
+        {
+            t_viewscreen * ws = g->GetCurrentScreen();
+            // FIXME: put hardcoded values into memory.xml
+            if(ws->getClassName() == "viewscreen_dwarfmodest" && *g->df_menu_state == 0x23)
+            {
+                out = in;
+                return true;
+            }
+            else
+            {
+                t_hotkey & hotkey = (*g->hotkeys)[idx];
+                setHotkeyCmd(hotkey.name);
+                return false;
+            }
+        }
+    }
+    out = in;
+    return true;
+}
+
 int Core::SDL_Event(SDL::Event* ev, int orig_return)
 {
     // do NOT process events before we are ready.

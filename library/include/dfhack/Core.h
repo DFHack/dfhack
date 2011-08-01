@@ -33,6 +33,8 @@ distribution.
 #include <stdint.h>
 #include "dfhack/Console.h"
 
+struct WINDOW;
+
 namespace tthread
 {
     class mutex;
@@ -77,6 +79,7 @@ namespace DFHack
         friend void ::SDL_Quit(void);
         friend int  ::SDL_PollEvent(SDL::Event *);
         friend int  ::SDL_Init(uint32_t flags);
+        friend int  ::wgetch(WINDOW * w);
     public:
         /// Get the single Core instance or make one.
         static Core& getInstance()
@@ -132,6 +135,7 @@ namespace DFHack
         int Update   (void);
         int Shutdown (void);
         int SDL_Event(SDL::Event* event, int orig_return);
+        bool ncurses_wgetch(int in, int & out);
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement
         bool errorstate;

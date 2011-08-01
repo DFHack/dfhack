@@ -104,6 +104,30 @@ DFhackCExport int SDL_PollEvent(SDL::Event* event)
     return orig_return;
 }
 
+struct WINDOW;
+DFhackCExport int wgetch(WINDOW *win)
+{
+    static int (*_wgetch)(WINDOW * win) = (int (*)( WINDOW * )) dlsym(RTLD_NEXT, "wgetch");
+    if(!_wgetch)
+    {
+        exit(EXIT_FAILURE);
+    }
+    DFHack::Core & c = DFHack::Core::getInstance();
+    wgetch_again:
+    int in = _wgetch(win);
+    int out;
+    if(c.ncurses_wgetch(in, out))
+    {
+        // not consumed, give to DF
+        return out;
+    }
+    else
+    {
+        // consumed, repeat
+        goto wgetch_again;
+    }
+}
+
 // hook - called at program start, initialize some stuffs we'll use later
 static int (*_SDL_Init)(uint32_t flags) = 0;
 DFhackCExport int SDL_Init(uint32_t flags)

@@ -37,6 +37,7 @@ distribution.
 
 typedef void * fPtr;
 typedef void * vPtr;
+struct WINDOW;
 namespace SDL
 {
     union Event;
@@ -66,5 +67,6 @@ DFhackCExport int SDL_NumJoysticks(void);
 DFhackCExport void SDL_Quit(void);
 DFhackCExport int SDL_PollEvent(SDL::Event* event);
 DFhackCExport int SDL_Init(uint32_t flags);
+DFhackCExport int wgetch(WINDOW * win);
 
 // Other crud is in the OS-specific core files.

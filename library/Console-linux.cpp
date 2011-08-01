@@ -601,7 +601,7 @@ Console::Console():std::ostream(0), std::ios(0)
     d = 0;
     inited = false;
     // we can't create the mutex at this time. the SDL functions aren't hooked yet.
-    wlock = 0;
+    wlock = new mutex();
 }
 Console::~Console()
 {
@@ -613,12 +613,18 @@ Console::~Console()
         delete d;
 }
 
-bool Console::init(void)
+bool Console::init(bool sharing)
 {
+    if(sharing)
+    {
+        inited = false;
+        return false;
+    }
+    freopen("stdout.log", "w", stdout);
+    freopen("stderr.log", "w", stderr);
     d = new Private();
     // make our own weird streams so our IO isn't redirected
     d->dfout_C = fopen("/dev/tty", "w");
-    wlock = new mutex();
     rdbuf(d);
     std::cin.tie(this);
     clear();
@@ -628,6 +634,8 @@ bool Console::init(void)
 
 bool Console::shutdown(void)
 {
+    if(!d)
+        return true;
     lock_guard <mutex> g(*wlock);
     if(d->rawmode)
         d->disable_raw();

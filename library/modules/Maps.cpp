@@ -339,7 +339,7 @@ bool Maps::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
     df_block * block = getBlock(x,y,z);
     if (block)
     {
-        dirtybit = block->flags.is_set(1);
+        dirtybit = block->flags.is_set(BLOCK_DESIGNATED);
         return true;
     }
     return false;
@@ -351,7 +351,7 @@ bool Maps::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
     df_block * block = getBlock(x,y,z);
     if (block)
     {
-        block->flags.set(1,dirtybit);
+        block->flags.set(BLOCK_DESIGNATED,dirtybit);
         return true;
     }
     return false;

@@ -31,6 +31,7 @@ distribution.
 //#include <ostream>
 namespace DFHack
 {
+    template <typename T = int>
     class BitArray
     {
     public:
@@ -49,7 +50,7 @@ namespace DFHack
             if(bits)
                 memset(bits, 0, size);
         }
-        void set (uint32_t index, bool value = true)
+        void set (T index, bool value = true)
         {
             if(!value)
             {
@@ -63,7 +64,7 @@ namespace DFHack
                 bits[byte] |= bit;
             }
         }
-        void clear (uint32_t index)
+        void clear (T index)
         {
             uint32_t byte = index / 8;
             if(byte < size)
@@ -72,7 +73,7 @@ namespace DFHack
                 bits[byte] &= ~bit;
             }
         }
-        void toggle (uint32_t index)
+        void toggle (T index)
         {
             uint32_t byte = index / 8;
             if(byte < size)
@@ -81,7 +82,7 @@ namespace DFHack
                 bits[byte] ^= bit;
             }
         }
-        bool is_set (uint32_t index)
+        bool is_set (T index)
         {
             uint32_t byte = index / 8;
             if(byte < size)
@@ -115,22 +116,21 @@ namespace DFHack
             memcpy(bits, &data, size);
             return true;
         }
-        friend std::ostream& operator<< (std::ostream &out, BitArray &ba);
+        friend std::ostream& operator<< (std::ostream &out, BitArray <T> &ba)
+        {
+            std::stringstream sstr;
+            for (int i = 0; i < ba.size * 8; i++)
+            {
+                if(ba.is_set((T)i))
+                    sstr << "1 ";
+                else
+                    sstr << "0 ";
+            }
+            out << sstr.str();
+            return out;
+        }
     //private:
         uint8_t * bits;
         uint32_t size;
     };
-    inline std::ostream& operator<< (std::ostream &out, BitArray &ba)
-    {
-        std::stringstream sstr;
-        for (int i = 0; i < ba.size * 8; i++)
-        {
-            if(ba.is_set(i))
-                sstr << "1 ";
-            else
-                sstr << "0 ";
-        }
-        out << sstr.str();
-        return out;
-    }
 }

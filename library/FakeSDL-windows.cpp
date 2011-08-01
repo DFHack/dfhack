@@ -596,8 +596,6 @@ DFhackCExport int SDL_Init(uint32_t flags)
 {
     if(!inited)
         FirstCall();
-	DFHack::Core & c = DFHack::Core::getInstance();
-	c.Init();
     return _SDL_Init(flags);
 }
 

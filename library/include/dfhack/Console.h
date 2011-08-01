@@ -64,7 +64,7 @@ namespace  DFHack
         ///dtor, NOT thread-safe
         ~Console();
         /// initialize the console. NOT thread-safe
-        bool init( void );
+        bool init( bool sharing );
         /// shutdown the console. NOT thread-safe
         bool shutdown( void );
 

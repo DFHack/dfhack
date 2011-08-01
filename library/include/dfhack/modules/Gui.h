@@ -29,6 +29,7 @@ distribution.
 #include "dfhack/Export.h"
 #include "dfhack/Module.h"
 #include "dfhack/Virtual.h"
+#include "dfhack/BitArray.h"
 #include <string>
 
 /**
@@ -40,6 +41,7 @@ namespace DFHack
 {
     class DFContextShared;
     /**
+     * A GUI screen
      * \ingroup grp_gui
      */
     struct t_viewscreen : public t_virtual
@@ -50,6 +52,7 @@ namespace DFHack
         char unk2; // state?
     };
     /**
+     * Interface - wrapper for the GUI
      * \ingroup grp_gui
      */
     struct t_interface
@@ -59,7 +62,52 @@ namespace DFHack
         unsigned int flags; // ?
         // more crud this way ...
     };
-
+    enum graphics_flag
+    {
+        GRAPHICS_ENABLED = 0,
+        GRAPHICS_BLACKSPACE = 1,
+        GRAPHICS_PARTIAL_PRINT = 2,
+        GRAPHICS_TEXT = 11,
+        GRAPHICS_FIXED_SIZE = 13
+    };
+    enum media_flag
+    {
+        MEDIA_NO_SOUND,
+        MEDIA_NO_INTRO,
+        MEDIA_COMPRESS_WORLDS,
+    };
+    /**
+     * The init structure - basically DF settings
+     * \ingroup grp_gui
+     */
+    struct t_init
+    {
+        struct
+        {
+            BitArray <graphics_flag> flags;
+            enum
+            {
+                WINDOWED_YES,
+                WINDOWED_NO,
+                WINDOWED_PROMPT
+            } windowed;
+            // screen size in tiles
+            int grid_x;
+            int grid_y;
+            // in pixels ?
+            int fullscreen_x;
+            int fullscreen_y;
+            int window_x;
+            int window_y;
+            char partial_print;
+        } graphics;
+        struct
+        {
+            BitArray <media_flag> flags;
+            int32_t volume;
+        } media;
+        // much more stuff follows
+    };
     #define NUM_HOTKEYS 16
     /**
      * The hotkey structure
@@ -124,6 +172,11 @@ namespace DFHack
          * Hotkeys (DF's zoom locations)
          */
         hotkey_array * hotkeys;
+
+        /*
+         * Game settings
+         */
+        t_init * init;
         
         /*
          * Window size in tiles

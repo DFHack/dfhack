@@ -387,11 +387,24 @@ bool Core::Init()
 {
     if(started)
         return true;
-    // init the console. This must be always the first step!
-    con.init();
+
     // find out what we are...
     vif = new DFHack::VersionInfoFactory("Memory.xml");
     p = new DFHack::Process(vif);
+    vinfo = p->getDescriptor();
+
+    // init the console.
+    Gui * g = getGui();
+    if(g->init)
+    {
+        if(g->init->graphics.flags.is_set(GRAPHICS_TEXT))
+        {
+            con.init(true);
+        }
+        else con.init(false);
+    }
+    else con.init(false);
+
     if (!p->isIdentified())
     {
         con.printerr("Couldn't identify this version of DF.\n");
@@ -400,7 +413,7 @@ bool Core::Init()
         p = NULL;
         return false;
     }
-    vinfo = p->getDescriptor();
+
     // create mutex for syncing with interactive tasks
     StackMutex = new mutex();
     AccessMutex = new mutex();
@@ -472,6 +485,8 @@ void Core::Resume()
 // should always be from simulation thread!
 int Core::Update()
 {
+    if(!started)
+        Init();
     if(errorstate)
         return -1;
 

@@ -181,12 +181,12 @@ int Process::getPID()
 
 bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
 {
-	int result;
-	int protect=0;
-	if(trgrange.read)protect|=PROT_READ;
-	if(trgrange.write)protect|=PROT_WRITE;
-	if(trgrange.execute)protect|=PROT_EXECUTE;
-	result=mprotect((void *)range.start, range.end-range.start,protect);
+    int result;
+    int protect=0;
+    if(trgrange.read)protect|=PROT_READ;
+    if(trgrange.write)protect|=PROT_WRITE;
+    if(trgrange.execute)protect|=PROT_EXEC;
+    result=mprotect((void *)range.start, range.end-range.start,protect);
 
-	return result==0;
+    return result==0;
 }

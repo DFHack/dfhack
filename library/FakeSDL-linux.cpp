@@ -108,8 +108,6 @@ DFhackCExport int SDL_PollEvent(SDL::Event* event)
 static int (*_SDL_Init)(uint32_t flags) = 0;
 DFhackCExport int SDL_Init(uint32_t flags)
 {
-    freopen("stdout.log", "w", stdout);
-    freopen("stderr.log", "w", stderr);
     // find real functions
     _SDL_Init = (int (*)( uint32_t )) dlsym(RTLD_NEXT, "SDL_Init");
     _SDL_Quit = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_Quit");
@@ -126,8 +124,10 @@ DFhackCExport int SDL_Init(uint32_t flags)
         fprintf(stderr,"dfhack: something went horribly wrong\n");
         exit(1);
     }
+    /*
     DFHack::Core & c = DFHack::Core::getInstance();
     c.Init();
+    */
     int ret = _SDL_Init(flags);
     return ret;
 }

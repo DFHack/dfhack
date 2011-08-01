@@ -83,6 +83,16 @@ Gui::Gui()
         hotkeys = 0;
     };
 
+    // Setting up init
+    try
+    {
+        init = (t_init *) OG_Gui->getAddress("init");
+    }
+    catch(Error::All &)
+    {
+        init = 0;
+    };
+
     // Setting up menu state
     try
     {

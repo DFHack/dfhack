@@ -806,6 +806,7 @@
                 <Address name="interface" description="Pointer to the global interfacest object (gview symbol on Linux)."/>
                 <Address name="current_menu_state" description="A numeric value that describes the state of the current GUI element (switching between menus will change this)."/>
                 <Address name="hotkeys" description="Address where the array of hotkeys starts." />
+                <Address name="init" description="Address with the init.txt structure." />
             </Group>
             <Group name="Maps" description="Offsets used by the Maps module.">
                 <Address name="map_data" description="Pointer to the start of the map structure."/>
@@ -3055,6 +3056,7 @@
                 <Address name="hotkeys" value="0x93f740c" />
                 <Address name="interface" value="0x8C3E900" />
                 <Address name="current_menu_state" value="0x93F756C" />
+                <Address name="init" value="0x959C2A0" />
             </Group>
             <Group name="Creatures">
                 Maybe, possibly.

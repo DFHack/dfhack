@@ -461,11 +461,18 @@ namespace DFHack
         unsigned int liquid_1 : 1;
         unsigned int liquid_2 : 1;
         /// rest of the flags is completely unknown
-        unsigned int unk_2: 28;
-        // there's a possibility that this flags field is shorter than 32 bits
-        // FIXME: yes, it's a crazy dynamically sized array of flags. DERP.
+        unsigned int unk_2: 4;
     };
-
+    enum e_block_flags
+    {
+        /// designated for jobs (digging and stuff like that)
+        BLOCK_DESIGNATED,
+        /// possibly related to the designated flag
+        BLOCK_UNKN1,
+        /// two flags required for liquid flow.
+        BLOCK_LIQUIDFLOW_1,
+        BLOCK_LIQUIDFLOW_2,
+    };
     /**
      * map block flags wrapper
      * \ingroup grp_maps
@@ -535,7 +542,7 @@ namespace DFHack
     // one of the vector is the 'effects' vector. another should be item id/index vector
     struct df_block
     {
-        BitArray flags;
+        BitArray <e_block_flags> flags;
         // how to handle this virtual mess?
         std::vector <t_virtual *> block_events;
         // no idea what these are

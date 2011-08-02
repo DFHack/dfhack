@@ -8,7 +8,9 @@
 #include <dfhack/PluginManager.h>
 #include <dfhack/modules/Maps.h>
 #include <dfhack/modules/World.h>
-
+#include <dfhack/extra/MapExtras.h>
+#include <dfhack/modules/Gui.h>
+using MapExtras::MapCache;
 using namespace DFHack;
 
 /*
@@ -58,6 +60,7 @@ revealstate revealed = NOT_REVEALED;
 DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params);
 DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string> & params);
 DFhackCExport command_result revtoggle(DFHack::Core * c, std::vector<std::string> & params);
+DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string> & params);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -70,6 +73,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.push_back(PluginCommand("reveal","Reveal the map. 'reveal hell' will also reveal hell.",reveal));
     commands.push_back(PluginCommand("unreveal","Revert the map to its previous state.",unreveal));
     commands.push_back(PluginCommand("revtoggle","Reveal/unreveal depending on state.",revtoggle));
+    commands.push_back(PluginCommand("revflood","Hide all, reveal all tiles reachable from cursor position.",revflood));
     return CR_OK;
 }
 
@@ -248,4 +252,178 @@ DFhackCExport command_result revtoggle (DFHack::Core * c, std::vector<std::strin
     {
         return reveal(c,params);
     }
+}
+
+DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string> & params)
+{
+    c->Suspend();
+    uint32_t x_max,y_max,z_max;
+    Maps * Maps = c->getMaps();
+    Gui * Gui = c->getGui();
+    World * World = c->getWorld();
+    // init the map
+    if(!Maps->Start())
+    {
+        c->con.printerr("Can't init map. Make sure you have a map loaded in DF.\n");
+        c->Resume();
+        return CR_FAILURE;
+    }
+    if(revealed != NOT_REVEALED)
+    {
+        c->con.printerr("This is only safe to use with non-revealed map.\n");
+        c->Resume();
+        return CR_FAILURE;
+    }
+    t_gamemodes gm;
+    World->ReadGameMode(gm);
+    if(gm.g_type != GAMETYPE_DWARF_MAIN && gm.g_mode != GAMEMODE_DWARF )
+    {
+        c->con.printerr("Only in proper dwarf mode.\n");
+        c->Resume();
+        return CR_FAILURE;
+    }
+    int32_t cx, cy, cz;
+    Maps->getSize(x_max,y_max,z_max);
+    uint32_t tx_max = x_max * 16;
+    uint32_t ty_max = y_max * 16;
+
+    Gui->getCursorCoords(cx,cy,cz);
+    if(cx == -30000)
+    {
+        c->con.printerr("Cursor is not active. Point the cursor at some empty space you want to be unhidden.\n");
+        c->Resume();
+        return CR_FAILURE;
+    }
+    DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
+    MapCache * MCache = new MapCache(Maps);
+    int16_t tt = MCache->tiletypeAt(xy);
+    if(isWallTerrain(tt))
+    {
+        c->con.printerr("Point the cursor at some empty space you want to be unhidden.\n");
+        delete MCache;
+        c->Resume();
+        return CR_FAILURE;
+    }
+    // hide all tiles, flush cache
+    Maps->getSize(x_max,y_max,z_max);
+
+    for(uint32_t x = 0; x< x_max;x++)
+    {
+        for(uint32_t y = 0; y< y_max;y++)
+        {
+            for(uint32_t z = 0; z< z_max;z++)
+            {
+                df_block * b = Maps->getBlock(x,y,z);
+                if(b)
+                {
+                    // change the hidden flag to 0
+                    for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
+                    {
+                        b->designation[i][j].bits.hidden = 1;
+                    }
+                }
+            }
+        }
+    }
+    MCache->trash();
+
+    typedef std::pair <DFCoord, bool> foo;
+    std::stack < foo > flood;
+    flood.push( foo(xy,false) );
+
+    while( !flood.empty() )
+    {
+        foo tile = flood.top();
+        DFCoord & current = tile.first;
+        bool & from_below = tile.second;
+        flood.pop();
+
+        if(!MCache->testCoord(current))
+            continue;
+        int16_t tt = MCache->tiletypeAt(current);
+        t_designation des = MCache->designationAt(current);
+        if(!des.bits.hidden)
+        {
+            continue;
+        }
+        const TileRow * r = getTileRow(tt);
+        /*
+        if(!r)
+        {
+            cerr << "unknown tiletype! " << dec << tt << endl;
+            continue;
+        }
+        */
+        bool below = 0;
+        bool above = 0;
+        bool sides = 0;
+        bool unhide = 1;
+        // by tile shape, determine behavior and action
+        switch (r->shape)
+        {
+            // walls:
+            case WALL:
+            case PILLAR:
+                if(from_below)
+                    unhide = 0;
+                break;
+            // air/free space
+            case EMPTY:
+            case RAMP_TOP:
+            case STAIR_UPDOWN:
+            case STAIR_DOWN:
+            case BROOK_TOP:
+                above = below = sides = true;
+                break;
+            // has floor
+            case FORTIFICATION:
+            case STAIR_UP:
+            case RAMP:
+            case FLOOR:
+            case TREE_DEAD:
+            case TREE_OK:
+            case SAPLING_DEAD:
+            case SAPLING_OK:
+            case SHRUB_DEAD:
+            case SHRUB_OK:
+            case BOULDER:
+            case PEBBLES:
+            case BROOK_BED:
+            case RIVER_BED:
+            case ENDLESS_PIT:
+            case POOL:
+                if(from_below)
+                    unhide = 0;
+                above = sides = true;
+                break;
+        }
+        if(unhide)
+        {
+            des.bits.hidden = false;
+            MCache->setDesignationAt(current,des);
+        }
+        if(sides)
+        {
+            flood.push(foo(DFCoord(current.x + 1, current.y ,current.z),0));
+            flood.push(foo(DFCoord(current.x + 1, current.y + 1 ,current.z),0));
+            flood.push(foo(DFCoord(current.x, current.y + 1 ,current.z),0));
+            flood.push(foo(DFCoord(current.x - 1, current.y + 1 ,current.z),0));
+            flood.push(foo(DFCoord(current.x - 1, current.y ,current.z),0));
+            flood.push(foo(DFCoord(current.x - 1, current.y - 1 ,current.z),0));
+            flood.push(foo(DFCoord(current.x, current.y - 1 ,current.z),0));
+            flood.push(foo(DFCoord(current.x + 1, current.y - 1 ,current.z),0));
+        }
+        if(above)
+        {
+            flood.push(foo(DFCoord(current.x, current.y ,current.z + 1),1));
+        }
+        if(below)
+        {
+            flood.push(foo(DFCoord(current.x, current.y ,current.z - 1),0));
+        }
+    }
+    MCache->WriteAll();
+    delete MCache;
+    c->Resume();
+    return CR_OK;
 }

@@ -130,7 +130,7 @@ endif()
 
 DFHACK_PLUGIN(reveal reveal.cpp)
 DFHACK_PLUGIN(probe probe.cpp)
-DFHACK_PLUGIN(grow grow.cpp)
+DFHACK_PLUGIN(plants plants.cpp)
 DFHACK_PLUGIN(prospector prospector.cpp)
 DFHACK_PLUGIN(rawdump rawdump.cpp)
 DFHACK_PLUGIN(cleanmap cleanmap.cpp)

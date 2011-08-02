@@ -1,1 +1,0 @@
-dfprospector.exe -a

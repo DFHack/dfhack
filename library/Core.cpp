@@ -40,6 +40,7 @@ using namespace std;
 #include "dfhack/Console.h"
 #include "dfhack/Module.h"
 #include "dfhack/VersionInfoFactory.h"
+#include "dfhack/VersionInfo.h"
 #include "dfhack/PluginManager.h"
 #include "ModuleFactory.h"
 #include "dfhack/modules/Gui.h"
@@ -51,6 +52,7 @@ using namespace DFHack;
 #include <stdio.h>
 #include <iomanip>
 #include <stdlib.h>
+#include <fstream>
 #include "tinythread.h"
 using namespace tthread;
 
@@ -392,7 +394,13 @@ bool Core::Init()
     vif = new DFHack::VersionInfoFactory("Memory.xml");
     p = new DFHack::Process(vif);
     vinfo = p->getDescriptor();
-
+    // dump offsets to a file
+    std::ofstream dump("offsets.log");
+    if(!dump.fail())
+    {
+        dump << vinfo->PrintOffsets();
+        dump.close();
+    }
     // init the console.
     Gui * g = getGui();
     if(g->init)

@@ -1,20 +1,41 @@
 // Adamantine tube filler. It fills the hollow ones.
 
+#include <stdint.h>
 #include <iostream>
-#include <vector>
 #include <map>
-#include <stddef.h>
-#include <assert.h>
-#include <string.h>
-using namespace std;
+#include <vector>
+#include <dfhack/Core.h>
+#include <dfhack/Console.h>
+#include <dfhack/Export.h>
+#include <dfhack/PluginManager.h>
+#include <dfhack/modules/Maps.h>
+#include <dfhack/modules/World.h>
+#include <dfhack/extra/MapExtras.h>
+#include <dfhack/modules/Gui.h>
+using MapExtras::MapCache;
+using namespace DFHack;
 
-#include <DFHack.h>
-#include <dfhack/DFTileTypes.h>
-#include <dfhack/extra/termutil.h>
+DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string> & params);
 
-int main (void)
+DFhackCExport const char * plugin_name ( void )
 {
-    bool temporary_terminal = TemporaryTerminal();
+    return "tubefill";
+}
+
+DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+{
+    commands.clear();
+    commands.push_back(PluginCommand("tubefill","Fill in all the adamantine tubes again.",tubefill));
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown ( Core * c )
+{
+    return CR_OK;
+}
+
+DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string> & params)
+{
     uint32_t x_max,y_max,z_max;
     DFHack::designations40d designations;
     DFHack::tiletypes40d tiles;
@@ -24,39 +45,23 @@ int main (void)
 
     int dirty=0;
 
-    DFHack::ContextManager DFMgr("Memory.xml");
-    DFHack::Context *DF = DFMgr.getSingleContext();
-
-    //Init
-    try
-    {
-        DF->Attach();
-    }
-    catch (exception& e)
-    {
-        cerr << e.what() << endl;
-        if(temporary_terminal)
-            cin.ignore();
-        return 1;
-    }
-    DFHack::Maps *Mapz = DF->getMaps();
+    c->Suspend();
+    DFHack::Maps *Mapz = c->getMaps();
 
     // init the map
     if (!Mapz->Start())
     {
-        cerr << "Can't init map." << endl;
-        if(temporary_terminal)
-            cin.ignore();
-        return 1;
+        c->con.printerr("Can't init map.\n");
+        c->Resume();
+        return CR_FAILURE;
     }
 
     Mapz->getSize(x_max,y_max,z_max);
     if(!Mapz->StartFeatures())
     {
-        cerr << "Can't get features." << endl;
-        if(temporary_terminal)
-            cin.ignore();
-        return 1; 
+        c->con.printerr("Can't get map features.\n");
+        c->Resume();
+        return CR_FAILURE;
     }
 
     // walk the map
@@ -109,12 +114,7 @@ int main (void)
             }
         }
     }
-    DF->Detach();
-    cout << "Found and changed " << count << " tiles." << endl;
-    if(temporary_terminal)
-    {
-        cout << "Done. Press any key to continue" << endl;
-        cin.ignore();
-    }
-    return 0;
+    c->Resume();
+    c->con.print("Found and changed %d tiles.\n", count);
+    return CR_OK;
 }

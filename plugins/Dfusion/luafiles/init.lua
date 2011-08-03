@@ -13,7 +13,7 @@ end
 dofile("dfusion/common.lua")
 
 print("Unlocking Df .text section...")
-unlockDF()
+--unlockDF()
 print("Done unlock")
 text=GetTextRegion()
 h=hexsearch(text.start,text["end"],0x73,0x02,0x8b,0xce,0x53,0x6a,0x01,0x6a,0x06)

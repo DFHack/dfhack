@@ -25,7 +25,7 @@ public:
 
 	DEF_LUNE(Hexsearch);
 };
-void RegisterHexsearch(lua::state &st);//TODO remake into OO oriented thing
+void RegisterHexsearch(lua::state &st);
 
 }
 

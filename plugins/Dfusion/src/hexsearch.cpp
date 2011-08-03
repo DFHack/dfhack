@@ -1,7 +1,7 @@
 #include "hexsearch.h"
 
 
-Hexsearch::Hexsearch(const SearchArgType &args,uint64_t startpos,uint64_t endpos):args_(args),pos_(startpos_),startpos_(startpos),endpos_(endpos)
+Hexsearch::Hexsearch(const SearchArgType &args,uint64_t startpos,uint64_t endpos):args_(args),pos_(startpos),startpos_(startpos),endpos_(endpos)
 {
 
 }
@@ -36,7 +36,7 @@ uint64_t Hexsearch::FindNext() //TODO rewrite using Boyer-Moore algorithm
 			{
 				pos_+=args_.size();
 				delete [] buf;
-				return pos_;
+				return pos_-args_.size();
 			}
 		}
 		pos_++;

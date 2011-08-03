@@ -24,9 +24,9 @@ lua::Hexsearch::Hexsearch(lua_State *L,int id):tblid(id)
     lua::state st(L);
 	uint64_t start,end;
 	::Hexsearch::SearchArgType args;
-	start=st.as<uint32_t>(2);
-	end=st.as<uint32_t>(3);
-	for(int i=4;i<st.gettop();i++)
+	start=st.as<uint32_t>(1);
+	end=st.as<uint32_t>(2);
+	for(int i=3;i<=st.gettop();i++)
 	{
 		args.push_back(st.as<int>(i));
 	}

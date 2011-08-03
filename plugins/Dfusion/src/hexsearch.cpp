@@ -29,10 +29,10 @@ void Hexsearch::ReparseArgs()
 			i++;
 			for(int j=0;j<4;j++)
 			{
-				args_.push_back(targ[i+4-j]);
+				args_.push_back((targ[i]&(0xff<<i))>>i);//TODO is this correct???
 
 			}
-			i+=4;
+			i++;
 		}
 		else if (targ[i]==ANYDWORD)
 		{

@@ -25,6 +25,8 @@ public:
 	std::vector<uint64_t> FindAll();
 	
 private:
+	bool Compare(int a,int b);
+	void ReparseArgs();
 	SearchArgType args_;
 	uint64_t pos_,startpos_,endpos_;
 	std::vector<int> BadCharShifts,GoodSuffixShift;

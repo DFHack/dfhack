@@ -11,7 +11,7 @@ int lua::Hexsearch::findall(lua_State *L)
     lua::state st(L);
 	std::vector<uint64_t> pos=p->FindAll();
 	st.newtable();
-	for(int i=0;i<pos.size();i++)
+	for(unsigned i=0;i<pos.size();i++)
 	{
 		st.push(i+1);
 		st.push(pos[i]);
@@ -49,9 +49,13 @@ LUNE_METHODS_START(lua::Hexsearch)
 	method(lua::Hexsearch,findall),
 	method(lua::Hexsearch,reset),
 LUNE_METHODS_END();
+#define __ADDCONST(name) st.push(::Hexsearch:: ## name); st.setglobal(#name)
 void lua::RegisterHexsearch(lua::state &st)
 {
 
 	Lune<lua::Hexsearch>::Register(st);
-
+	__ADDCONST(ANYBYTE);
+	__ADDCONST(ANYDWORD);
+	__ADDCONST(DWORD_);
 }
+#undef __ADDCONST

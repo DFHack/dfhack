@@ -11,7 +11,7 @@ extern "C" {
 #include "lualib.h"
 }
 
-//#include "lune.h"
+#include "lune.h"
 #include "luaxx.hpp"
 
 namespace lua

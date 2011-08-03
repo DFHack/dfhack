@@ -14,6 +14,7 @@
 #include "luamain.h"
 #include "lua_Console.h"
 #include "lua_Process.h"
+#include "lua_Hexsearch.h"
 #include "functioncall.h"
 
 using std::vector;
@@ -37,6 +38,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 	//maybe remake it to run automaticaly
 	lua::RegisterConsole(lua::glua::Get(),&c->con);
 	lua::RegisterProcess(lua::glua::Get(),c->p);
+	lua::RegisterHexsearch(lua::glua::Get());
     commands.push_back(PluginCommand("dfusion","Init dfusion system.",dfusion));
 	commands.push_back(PluginCommand("lua", "Run interactive interpreter.\
 \n              Options: <filename> = run <filename> instead",lua_run));

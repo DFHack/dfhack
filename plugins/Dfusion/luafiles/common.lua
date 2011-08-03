@@ -17,7 +17,7 @@ offsets.load = function ()
 	end
 end
 offsets.load()
-function unlockDF()
+function GetTextRegion()
 	local ranges=Process.getMemRanges()
 	for k,v in pairs(ranges) do
 		--for k2,v2 in pairs(v) do
@@ -30,32 +30,27 @@ function unlockDF()
 		--if(v["execute"]) then num=num+100 end
 		--print(string.format("%d %x->%x %s %d",k,v["start"],v["end"],v.name,num))
 		local pos=string.find(v.name,".text")
-		if pos~=nil then
-			v["write"]=true
-			Process.setPermisions(v,v)
+		if(pos~=nil) then
+			return v;
 		end
 	end
+	return nil
+end
+function unlockDF()
+	local reg=GetTextRegion()
+	reg["write"]=true
+	Process.setPermisions(reg,reg)
 end
 function lockDF()
-	local ranges=Process.getMemRanges()
-	for k,v in pairs(ranges) do
-		--for k2,v2 in pairs(v) do
-		--	print(string.format("%d %s->%s",k,tostring(k2),tostring(v2)))
-		--end
-		--local num
-		--num=0
-		--if(v["read"])then num=num+1 end
-		--if(v["write"])then	num=num+10 end
-		--if(v["execute"]) then num=num+100 end
-		--print(string.format("%d %x->%x %s %d",k,v["start"],v["end"],v.name,num))
-		local pos=string.find(v.name,".text")
-		if pos~=nil then
-			v["write"]=false
-			Process.setPermisions(v,v)
-		end
-	end
+	local reg=GetTextRegion()
+	reg["write"]=false
+	Process.setPermisions(reg,reg)
 end
 -- engine bindings
 engine=engine or {}
 engine.peekd=Process.readDWord
 engine.poked=Process.writeDWord
+
+dofile("dfusion/patterns.lua")
+dofile("dfusion/patterns2.lua")
+dofile("dfusion/itempatterns.lua")

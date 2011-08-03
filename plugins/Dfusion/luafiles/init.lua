@@ -15,10 +15,17 @@ dofile("dfusion/common.lua")
 print("Unlocking Df .text section...")
 unlockDF()
 print("Done unlock")
-lockDF()
-dofile("dfusion/simple_embark/plugin.lua")
-print("hello world")
-Console.print("Hello world in console!\n")
+text=GetTextRegion()
+h=hexsearch(text.start,text["end"],0x73,0x02,0x8b,0xce,0x53,0x6a,0x01,0x6a,0x06)
+pos=h:findall()
+for k,v in pairs(pos) do
+	print(k..v)
+end
+--hexsearch.delete(h)
+lockDF() --DOES NOT WORK?!
+--dofile("dfusion/simple_embark/plugin.lua")
+--print("hello world")
+--Console.print("Hello world in console!\n")
 --name=Console.lineedit("Enter name:")
 --Console.print("Your name is:"..name)
 

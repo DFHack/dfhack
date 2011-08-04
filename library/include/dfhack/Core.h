@@ -180,6 +180,7 @@ namespace DFHack
         // Very important!
         bool started;
 
+		tthread::mutex * misc_data_mutex;
 		std::map<std::string,void*> misc_data_map;
     };
 }

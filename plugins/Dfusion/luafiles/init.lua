@@ -34,6 +34,6 @@ unlockDF()
 plugins={}
 table.insert(plugins,{"simple_embark","A simple embark dwarf count editor"})
 table.insert(plugins,{"items","A collection of item hacking tools"})
-
+table.insert(plugins,{"offsets","Find all offsets"})
 mainmenu(plugins)
 

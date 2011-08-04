@@ -5,8 +5,8 @@ WORD=2
 BYTE=3
 
 function GetTextRegion()
-	local ranges=Process.getMemRanges()
-	for k,v in pairs(ranges) do
+	ranges__=ranges__ or Process.getMemRanges()
+	for k,v in pairs(ranges__) do
 		--for k2,v2 in pairs(v) do
 		--	print(string.format("%d %s->%s",k,tostring(k2),tostring(v2)))
 		--end
@@ -24,8 +24,26 @@ function GetTextRegion()
 	return nil
 end
 function GetRegionIn(pos)
-	local ranges=Process.getMemRanges()
-	for k,v in pairs(ranges) do
+	ranges__=ranges__ or Process.getMemRanges()
+	for k,v in pairs(ranges__) do
+		--for k2,v2 in pairs(v) do
+		--	print(string.format("%d %s->%s",k,tostring(k2),tostring(v2)))
+		--end
+		--local num
+		--num=0
+		--if(v["read"])then num=num+1 end
+		--if(v["write"])then	num=num+10 end
+		--if(v["execute"]) then num=num+100 end
+		print(string.format("%d %x->%x %s %x",k,v["start"],v["end"],v.name,pos))
+		if pos>=v.start and pos<=v["end"] then
+			return v
+		end
+	end
+	return nil
+end
+function ValidOffset(pos)
+	ranges__=ranges__ or Process.getMemRanges()
+	for k,v in pairs(ranges__) do
 		--for k2,v2 in pairs(v) do
 		--	print(string.format("%d %s->%s",k,tostring(k2),tostring(v2)))
 		--end
@@ -36,10 +54,10 @@ function GetRegionIn(pos)
 		--if(v["execute"]) then num=num+100 end
 		--print(string.format("%d %x->%x %s %d",k,v["start"],v["end"],v.name,num))
 		if pos>=v.start and pos<=v["end"] then
-			return v
+			return true
 		end
 	end
-	return nil
+	return false
 end
 function unlockDF()
 	local reg=GetTextRegion()

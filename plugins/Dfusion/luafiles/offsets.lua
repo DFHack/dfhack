@@ -57,16 +57,26 @@ offsets.new("CreaturePtr",f_creatureptr)
 
 function f_creaturegloss() --creature race vector
 	for k,v in pairs(offsets.getvectors()) do
-		if k~=0 then
-			--print("Looking into:"..string.format("%x",k).." used:"..v)
-			
+		local reg
+		reg=GetRegionIn(k)
+		if reg ~=nil then
+			print(string.format("looking into %x wich is in %s",k,reg.name or ""))
+		else
+			print(string.format("looking into %x in nil region",k))
+		end
+		if ValidOffset(k) then
+			print("Looking into:"..string.format("%x",k).." used:"..v)
+				
 			local vec=engine.peek(k,ptr_vector)
 			if vec:size()>0 and vec:size()<100000 and vec:getval(0)~=0 then
-				--print("\tval:"..string.format("%x",vec:getval(0)))
-				local token=engine.peek(vec:getval(0),ptt_dfstring)
-				--print("\t\tval:".. token:getval())
-				if token:getval()=="TOAD" then -- more offsets could be found this way
-					return k-offsets.base()
+				local toff=vec:getval(0)
+				if ValidOffset(toff) then 
+					print("\tval:"..string.format("%x",vec:getval(0)))
+					local token=engine.peek(toff,ptt_dfstring)
+					--print("\t\tval:".. token:getval())
+					if token:getval()=="TOAD" then -- more offsets could be found this way
+						return k-offsets.base()
+					end
 				end
 			end
 		end

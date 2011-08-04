@@ -469,6 +469,19 @@ std::string Core::getHotkeyCmd( void )
     return returner;
 }
 
+void Core::RegisterData(void *p,std::string key)
+{
+	misc_data_map[key]=p;
+}
+		
+void *Core::GetData(std::string key)
+{
+	std::map<std::string,void*>::iterator it=misc_data_map.find(key);
+	if (it!=misc_data_map.end())
+		return misc_data_map[key];
+	else
+		return 0;// or throw an error.
+}
 
 void Core::Suspend()
 {

@@ -35,5 +35,7 @@ plugins={}
 table.insert(plugins,{"simple_embark","A simple embark dwarf count editor"})
 table.insert(plugins,{"items","A collection of item hacking tools"})
 table.insert(plugins,{"offsets","Find all offsets"})
+table.insert(plugins,{"friendship","Multi race fort enabler"})
+table.insert(plugins,{"embark","Multi race embark"})
 mainmenu(plugins)
 

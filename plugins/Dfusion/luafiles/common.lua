@@ -34,7 +34,7 @@ function GetRegionIn(pos)
 		--if(v["read"])then num=num+1 end
 		--if(v["write"])then	num=num+10 end
 		--if(v["execute"]) then num=num+100 end
-		print(string.format("%d %x->%x %s %x",k,v["start"],v["end"],v.name,pos))
+		--print(string.format("%d %x->%x %s %x",k,v["start"],v["end"],v.name,pos))
 		if pos>=v.start and pos<=v["end"] then
 			return v
 		end
@@ -68,6 +68,11 @@ function lockDF()
 	local reg=GetTextRegion()
 	reg["write"]=false
 	Process.setPermisions(reg,reg)
+end
+function SetExecute(pos)
+	local reg=GetRegionIn(pos)
+	reg.execute=true
+	Process.setPermisions(reg,reg) -- TODO maybe make a page with only execute permisions or sth
 end
 -- engine bindings
 engine=engine or {}
@@ -163,6 +168,31 @@ function engine.pokepattern(offset,pattern,val)
 	end
 end
 
+function engine.LoadModData(file)
+	local T2={}
+	T2.symbols={}
+	T2.data,T2.size=engine.loadobj(file)
+	data,modsize=engine.loadobj(file)
+	local T=engine.loadobjsymbols(file)
+	for k,v in pairs(T) do
+
+		if v.pos~=0 then
+			T2.symbols[v.name]=v.pos
+		end
+	end
+	return T2
+end
+function engine.FindMarker(moddata,name)
+	if moddata.symbols[name] ~=nil then
+		return engine.findmarker(0xDEADBEEF,moddata.data,moddata.size,moddata.symbols[name])
+	end
+end
+function engine.installMod(file,name,bonussize)
+	local T=engine.LoadModData(file)
+	local modpos,modsize=engine.loadmod(file,name,bonussize)
+	T.pos=modpos
+	return T
+end
 
 it_menu={}
 it_menu.__index=it_menu
@@ -290,8 +320,11 @@ end
 
 function GetRaceToken(p) --actually gets token...
 	local vec=engine.peek(offsets.getEx('CreatureGloss'),ptr_vector)
+	--print("Vector ok")
 	local off=vec:getval(p)
+	--print("Offset:"..off)
 	local crgloss=engine.peek(off,ptr_CrGloss)
+	--print("Peek ok")
 	return crgloss.token:getval()
 end
 function BuildNameTable()

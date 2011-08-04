@@ -68,7 +68,9 @@ function ptr_vector:size()
 end
 ptr_vector.type=DWORD
 function ptr_vector:getval(num)
-	if self.st==0 then return 0 end
+	if self.st==0 then return error("Vector empty.") end
+	--print("Wants:"..num.." size:"..self:size())
+	if num>=self:size() then error("Index out of bounds in vector.") end
 	return engine.peek(self.st+engine.sizeof(self.type)*num,self.type)
 end
 function ptr_vector:setval(num,val)

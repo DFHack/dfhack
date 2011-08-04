@@ -70,6 +70,7 @@ function offsets.find(startoffset,...)
 		--print("searching in:"..reg.name)
 		endadr=reg["end"]
 	end
+	--print(string.format("Searching (%x->%x)",startoffset,endadr))
 	local h=hexsearch(startoffset,endadr,...)
 	local pos=h:find()
 	h=nil

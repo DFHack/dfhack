@@ -19,6 +19,11 @@ inline bool Hexsearch::Compare(int a,int b)
 }
 void Hexsearch::ReparseArgs()
 {
+	union
+	{
+		uint32_t val;
+		uint8_t bytes[4];
+	}B;
 	SearchArgType targ;
 	targ=args_;
 	args_.clear();
@@ -27,10 +32,10 @@ void Hexsearch::ReparseArgs()
 		if(targ[i]==DWORD_)
 		{
 			i++;
+			B.val=targ[i];
 			for(int j=0;j<4;j++)
 			{
-				args_.push_back((targ[i]&(0xff<<i))>>i);//TODO is this correct???
-
+				args_.push_back(B.bytes[j]);
 			}
 			i++;
 		}

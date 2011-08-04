@@ -369,7 +369,7 @@ namespace DFHack
         bool ReadDescriptorColors(void);
         bool ReadOthers (void);
 
-        void ReadAllMaterials(void);
+        bool ReadAllMaterials(void);
 
         std::string getType(const t_material & mat);
         std::string getDescription(const t_material & mat);

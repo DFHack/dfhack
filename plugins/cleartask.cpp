@@ -8,70 +8,62 @@
 #include <vector>
 using namespace std;
 
-#include <DFHack.h>
-#include <dfhack/DFVector.h>
-#include <dfhack/DFTypes.h>
+#include <dfhack/Core.h>
+#include <dfhack/Console.h>
+#include <dfhack/Export.h>
+#include <dfhack/PluginManager.h>
+#include <dfhack/modules/Items.h>
+#include <dfhack/Types.h>
 #include <dfhack/extra/termutil.h>
+using namespace DFHack;
 
-int main ()
+DFhackCExport command_result df_cleartask (Core * c, vector <string> & parameters);
+
+DFhackCExport const char * plugin_name ( void )
 {
-    bool temporary_terminal = TemporaryTerminal();
-    DFHack::Process * p;
-    unsigned int i;
-    DFHack::ContextManager DFMgr("Memory.xml");
-    DFHack::Context * DF;
-    DFHack::Items * Items;
-    try
-    {
-        DF = DFMgr.getSingleContext();
-        DF->Attach();
-    }
-    catch (exception& e)
-    {
-        cerr << e.what() << endl;
-        if(temporary_terminal)
-            cin.ignore();
-        return 1;
-    }
+    return "cleartask";
+}
 
-    p = DF->getProcess();
+DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+{
+    commands.clear();
+    commands.push_back(PluginCommand("cleartask",
+                                     "Clears the \"tasked\" flag on all items. This is dangerous. Only use after reclaims.",
+                                     df_cleartask));
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown ( Core * c )
+{
+    return CR_OK;
+}
+
+DFhackCExport command_result df_cleartask (Core * c, vector <string> & parameters)
+{
+    c->Suspend();
+    DFHack::Items * Items = c->getItems();
     uint32_t item_vec_offset = 0;
-    try
+    vector <t_item *> p_items;
+    if(!Items->readItemVector(p_items))
     {
-        Items = DF->getItems();
-        DFHack::OffsetGroup* itemGroup = p->getDescriptor()->getGroup("Items");
-        item_vec_offset = itemGroup->getAddress("items_vector");
+        c->con.printerr("Can't read items...\n");
+        c->Resume();
+        return CR_FAILURE;
     }
-    catch(DFHack::Error::All & e)
-    {
-        cerr << "Fatal error, exiting :(" << endl << e.what() << endl;
-        if(temporary_terminal)
-            cin.ignore();
-        return 1;
-    }
-
-    DFHack::DfVector <uint32_t> p_items (p, item_vec_offset);
-    uint32_t size = p_items.size();
 
     int numtasked = 0;
-    for (i=0;i<size;i++)
+    for (std::size_t i = 0; i < p_items.size(); i++)
     {
+        t_item * ptr;
         DFHack::dfh_item temp;
         Items->readItem(p_items[i],temp);
-        DFHack::t_itemflags & flags = temp.base.flags;
-        if (flags.in_job)
+        if (ptr->flags.in_job)
         {
-            flags.in_job = 0;
-            Items->writeItem(temp);
+            ptr->flags.in_job = 0;
             numtasked++;
         }
     }
-    cout << "Found and untasked " << numtasked << " items." << endl;
-
-    if(temporary_terminal)
-    {
-        cout << "Done. Press any key to continue" << endl;
-        cin.ignore();
-    }
-    return 0;
+    c->con.print("Found and untasked %d items.\n", numtasked);
+    c->Resume();
+    return CR_OK;
 }

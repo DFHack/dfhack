@@ -2,137 +2,151 @@
  * Confiscates and dumps garbage owned by dwarfs.
  */
 
-#include <cstdio>
-#include <iostream>
-#include <iomanip>
 #include <sstream>
 #include <climits>
 #include <vector>
+#include <set>
 using namespace std;
 
-#include <DFHack.h>
-#include <dfhack/DFVector.h>
-#include <dfhack/DFTypes.h>
-#include <dfhack/extra/termutil.h>
+#include <dfhack/Core.h>
+#include <dfhack/Console.h>
+#include <dfhack/Export.h>
+#include <dfhack/PluginManager.h>
+#include <vector>
+#include <string>
+#include <dfhack/modules/Maps.h>
+#include <dfhack/modules/Items.h>
+#include <dfhack/modules/Creatures.h>
+#include <dfhack/modules/Materials.h>
+#include <dfhack/modules/Translation.h>
+using namespace DFHack;
 
-int main (int argc, char *argv[])
+DFhackCExport command_result df_cleanowned (Core * c, vector <string> & parameters);
+
+DFhackCExport const char * plugin_name ( void )
 {
-    bool temporary_terminal = TemporaryTerminal();
+    return "cleanowned";
+}
+
+DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+{
+    commands.clear();
+    commands.push_back(PluginCommand("cleanowned",
+                                     "Confiscates and dumps garbage owned by dwarfs.",
+                                     df_cleanowned));
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown ( Core * c )
+{
+    return CR_OK;
+}
+
+typedef std::map <DFCoord, uint32_t> coordmap;
+
+DFhackCExport command_result df_cleanowned (Core * c, vector <string> & parameters)
+{
     bool dump_scattered = false;
     bool confiscate_all = false;
     bool dry_run = false;
     int wear_dump_level = 65536;
 
-    for(int i = 1; i < argc; i++)
+    for(int i = 0; i < parameters.size(); i++)
     {
-        char *arg = argv[i];
-        if (arg[0] != '-')
-            continue;
-
-        for (; *arg; arg++) {
-            switch (arg[0]) {
-            case 'd':
-                dry_run = true;
-                break;
-            case 'l':
-                dump_scattered = true;
-                break;
-            case 'a':
-                confiscate_all = true;
-                break;
-            case 'x':
-                wear_dump_level = 1;
-                break;
-            case 'X':
-                wear_dump_level = 2;
-                break;
-            }
+        string & param = parameters[i];
+        if(param == "dryrun")
+            dry_run = true;
+        else if(param == "scattered")
+            dump_scattered = true;
+        else if(param == "all")
+            confiscate_all = true;
+        else if(param == "x")
+            wear_dump_level = 1;
+        else if(param == "X")
+            wear_dump_level = 1;
+        else if(param == "?" || param == "help")
+        {
+            c->con.print("Oh no! Someone has to write the help text!\n");
+            return CR_OK;
+        }
+        else
+        {
+            c->con.printerr("Parameter '%s' is not valid. See 'cleanowned help'.\n",param.c_str());
+            return CR_FAILURE;
         }
     }
+    DFHack::Materials *Materials = c->getMaterials();
+    DFHack::Items *Items = c->getItems();
+    DFHack::Creatures *Creatures = c->getCreatures();
+    DFHack::Translation *Tran = c->getTranslation();
 
-    DFHack::Process * p;
-    unsigned int i;
-    DFHack::ContextManager DFMgr("Memory.xml");
-    DFHack::Context * DF;
-    try
-    {
-        DF = DFMgr.getSingleContext();
-        DF->Attach();
-    }
-    catch (exception& e)
-    {
-        cerr << e.what() << endl;
-        if(temporary_terminal)
-            cin.ignore();
-        return 1;
-    }
-
-    DFHack::VersionInfo * mem = DF->getMemoryInfo();
-    DFHack::Materials *Materials = DF->getMaterials();
-    DFHack::Items *Items = DF->getItems();
-    DFHack::Creatures *Creatures = DF->getCreatures();
-    DFHack::Translation *Tran = DF->getTranslation();
-
-    Materials->ReadAllMaterials();
     uint32_t num_creatures;
-    Creatures->Start(num_creatures);
-    Tran->Start();
+    bool ok = true;
+    ok &= Materials->ReadAllMaterials();
+    ok &= Creatures->Start(num_creatures);
+    ok &= Tran->Start();
 
-    p = DF->getProcess();
-    DFHack::OffsetGroup* itemGroup = mem->getGroup("Items");
-    unsigned vector_addr = itemGroup->getAddress("items_vector");
-    DFHack::DfVector <uint32_t> p_items (p, vector_addr);
-    uint32_t size = p_items.size();
-
-    printf("Found total %d items.\n", size);
-
-    for (i=0;i<size;i++)
+    vector<t_item *> p_items;
+    ok &= Items->readItemVector(p_items);
+    if(!ok)
     {
-        uint32_t curItem = p_items[i];
+        c->con.printerr("Can't continue due to offset errors.\n");
+        c->Resume();
+        return CR_FAILURE;
+    }
+    c->con.print("Found total %d items.\n", p_items.size());
+
+    for (std::size_t i=0; i < p_items.size(); i++)
+    {
+        t_item * curItem = p_items[i];
         DFHack::dfh_item itm;
         Items->readItem(curItem, itm);
 
         bool confiscate = false;
         bool dump = false;
 
-        if (!itm.base.flags.owned) {
+        if (!itm.base->flags.owned)
+        {
             int32_t owner = Items->getItemOwnerID(itm);
-            if (owner >= 0) {
-                printf("Fixing a misflagged item: ");
+            if (owner >= 0)
+            {
+                c->con.print("Fixing a misflagged item: ");
                 confiscate = true;
             }
             else
+            {
                 continue;
+            }
         }
 
         std::string name = Items->getItemClass(itm.matdesc.itemType);
 
-        if (itm.base.flags.rotten)
+        if (itm.base->flags.rotten)
         {
-            printf("Confiscating a rotten item: \t");
+            c->con.print("Confiscating a rotten item: \t");
             confiscate = true;
         }
-        else if (itm.base.flags.on_ground &&
+        else if (itm.base->flags.on_ground &&
                  (name == "food" || name == "meat" || name == "plant"))
         {
-            printf("Confiscating a dropped foodstuff: \t");
+            c->con.print("Confiscating a dropped foodstuff: \t");
             confiscate = true;
         }
         else if (itm.wear_level >= wear_dump_level)
         {
-            printf("Confiscating and dumping a worn item: \t");
+            c->con.print("Confiscating and dumping a worn item: \t");
             confiscate = true;
             dump = true;
         }
-        else if (dump_scattered && itm.base.flags.on_ground)
+        else if (dump_scattered && itm.base->flags.on_ground)
         {
-            printf("Confiscating and dumping litter: \t");
+            c->con.print("Confiscating and dumping litter: \t");
             confiscate = true;
             dump = true;
         }
         else if (confiscate_all)
         {
-            printf("Confiscating: \t");
+            c->con.print("Confiscating: \t");
             confiscate = true;
         }
 
@@ -140,14 +154,14 @@ int main (int argc, char *argv[])
         {
             if (!dry_run) {
                 if (!Items->removeItemOwner(itm, Creatures))
-                    printf("(unsuccessfully) ");
+                    c->con.print("(unsuccessfully) ");
                 if (dump)
-                    itm.base.flags.dump = 1;
+                    itm.base->flags.dump = 1;
 
                 Items->writeItem(itm);
             }
 
-            printf(
+            c->con.print(
                 "%s (wear %d)",
                 Items->getItemDescription(itm, Materials).c_str(),
                 itm.wear_level
@@ -167,10 +181,10 @@ int main (int argc, char *argv[])
                     info += std::string(" '") + temp.name.nickname + "'";
                 info += " ";
                 info += Tran->TranslateName(temp.name,false);
-                printf(", owner %s", info.c_str());
+                c->con.print(", owner %s", info.c_str());
             }
 
-            printf("\n");
+            c->con.print("\n");
 /*
             printf(
                 "%5d: %08x %08x (%d,%d,%d) #%08x [%d] %s - %s %s\n",
@@ -185,10 +199,5 @@ int main (int argc, char *argv[])
                   */
         }
     }
-    if(temporary_terminal)
-    {
-        cout << "Done. Press any key to continue" << endl;
-        cin.ignore();
-    }
-    return 0;
+    return CR_OK;
 }

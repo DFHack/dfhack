@@ -458,7 +458,18 @@ function GetCreatureAtPos(x,y,z) -- gets the creature index @ x,y,z coord
 	return -1
 	
 end
-
+function Allocate(size)
+	local ptr=engine.getmod('General_Space')
+	if ptr==nil then
+		ptr=engine.newmod("General_Space",4096) -- some time later maybe make some more space
+		engine.poked(ptr,4)
+	end
+	
+	local curptr=engine.peekd(ptr)
+	curptr=curptr+size
+	engine.poked(ptr,curptr)
+	return curptr-size+ptr
+end
 dofile("dfusion/patterns.lua")
 dofile("dfusion/patterns2.lua")
 dofile("dfusion/itempatterns.lua")

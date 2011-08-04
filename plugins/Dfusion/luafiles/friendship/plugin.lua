@@ -5,14 +5,14 @@
 --end
 
 function analyzeF(off)
-	pos=offsets.find(off,0x39,ANYBYTE,0x8c,00,00,00,EOL)
+	pos=offsets.find(off,0x39,ANYBYTE,0x8c,00,00,00)
 	print(string.format("Compare at:%x",pos))
 	if pos ==0 then
 		return 0
 	end
 	if(pos-off>0x100) then
 		print(string.format("Distance to cmp:%x",pos-off))
-		pos =offsets.find(off,CALL,EOL)
+		pos =offsets.find(off,CALL)
 		print(string.format("Distance to call:%x",pos-off))
 		return 0
 		--return analyzeF(pos)

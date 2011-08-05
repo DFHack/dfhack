@@ -54,9 +54,7 @@ DFhackCExport command_result df_cleartask (Core * c, vector <string> & parameter
     int numtasked = 0;
     for (std::size_t i = 0; i < p_items.size(); i++)
     {
-        t_item * ptr;
-        DFHack::dfh_item temp;
-        Items->readItem(p_items[i],temp);
+        t_item * ptr = p_items[i];
         if (ptr->flags.in_job)
         {
             ptr->flags.in_job = 0;

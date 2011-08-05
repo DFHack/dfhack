@@ -106,7 +106,7 @@ bool Translation::Start()
     for (uint32_t i = 0;i < genericVec.size();i++)
     {
         uint32_t genericNamePtr = genericVec.at(i);
-        for(int j=0; j<10;i++)
+        for(int j=0; j<10;j++)
         {
             string word = p->readSTLString (genericNamePtr + j * d->sizeof_string);
             translations[j].push_back (word);

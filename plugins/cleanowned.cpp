@@ -31,7 +31,7 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("cleanowned",
+    commands.push_back(PluginCommand("vlub",
                                      "Confiscates and dumps garbage owned by dwarfs.",
                                      df_cleanowned));
     return CR_OK;
@@ -42,8 +42,6 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-typedef std::map <DFCoord, uint32_t> coordmap;
-
 DFhackCExport command_result df_cleanowned (Core * c, vector <string> & parameters)
 {
     bool dump_scattered = false;
@@ -51,7 +49,7 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
     bool dry_run = false;
     int wear_dump_level = 65536;
 
-    for(int i = 0; i < parameters.size(); i++)
+    for(std::size_t i = 0; i < parameters.size(); i++)
     {
         string & param = parameters[i];
         if(param == "dryrun")
@@ -63,10 +61,24 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
         else if(param == "x")
             wear_dump_level = 1;
         else if(param == "X")
-            wear_dump_level = 1;
+            wear_dump_level = 2;
         else if(param == "?" || param == "help")
         {
-            c->con.print("Oh no! Someone has to write the help text!\n");
+            c->con.print("This tool lets you confiscate and dump all the garbage\n"
+                         "dwarves ultimately accumulate.\n"
+                         "By default, only rotten and dropped food is confiscated.\n"
+                         "Options:\n"
+                         "  dryrun    - don't actually do anything, just print what would be done.\n"
+                         "  scattered - confiscate owned items on the ground\n"
+                         "  all       - confiscate everything\n"
+                         "  x         - confiscate & dump 'x' and worse damaged items\n"
+                         "  X         - confiscate & dump 'X' and worse damaged items\n"
+                         "  ?         - this help\n"
+                         "Example:\n"
+                         "  confiscate scattered X\n"
+                         "  This will confiscate rotten and dropped food, garbage on the floors\n"
+                         "  and any worn items wit 'X' damage and above.\n"
+            );
             return CR_OK;
         }
         else
@@ -75,6 +87,7 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
             return CR_FAILURE;
         }
     }
+    c->Suspend();
     DFHack::Materials *Materials = c->getMaterials();
     DFHack::Items *Items = c->getItems();
     DFHack::Creatures *Creatures = c->getCreatures();
@@ -152,13 +165,15 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
 
         if (confiscate)
         {
-            if (!dry_run) {
+            if (!dry_run)
+            {
                 if (!Items->removeItemOwner(itm, Creatures))
                     c->con.print("(unsuccessfully) ");
                 if (dump)
                     itm.base->flags.dump = 1;
 
-                Items->writeItem(itm);
+                // NO-OP really
+                //Items->writeItem(itm);
             }
 
             c->con.print(
@@ -199,5 +214,6 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
                   */
         }
     }
+    c->Resume();
     return CR_OK;
 }

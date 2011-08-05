@@ -141,8 +141,8 @@ DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
     }
     c->Resume();
     if(count)
-        c->con.print("Found and changed %d tiles.",count);
+        c->con.print("Found and changed %d tiles.\n",count);
     if(countbad)
-        c->con.print("Fixed %d bad down ramps.",countbad);
+        c->con.print("Fixed %d bad down ramps.\n",countbad);
     return CR_OK;
 }

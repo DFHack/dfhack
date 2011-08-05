@@ -165,19 +165,9 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
 
         if (confiscate)
         {
-            if (!dry_run)
-            {
-                if (!Items->removeItemOwner(itm, Creatures))
-                    c->con.print("(unsuccessfully) ");
-                if (dump)
-                    itm.base->flags.dump = 1;
-
-                // NO-OP really
-                //Items->writeItem(itm);
-            }
-
             c->con.print(
-                "%s (wear %d)",
+                "0x%x %s (wear %d)",
+                itm.base,
                 Items->getItemDescription(itm, Materials).c_str(),
                 itm.wear_level
             );
@@ -199,6 +189,16 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
                 c->con.print(", owner %s", info.c_str());
             }
 
+            if (!dry_run)
+            {
+                if (!Items->removeItemOwner(itm, Creatures))
+                    c->con.print("(unsuccessfully) ");
+                if (dump)
+                    itm.base->flags.dump = 1;
+                
+                // NO-OP really
+                    //Items->writeItem(itm);
+            }
             c->con.print("\n");
 /*
             printf(

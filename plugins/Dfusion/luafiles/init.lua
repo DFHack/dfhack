@@ -10,24 +10,36 @@ function dofile(filename) --safer dofile, with traceback (very usefull)
 		print(perr)
 	end
 end
-dofile("dfusion/common.lua")
 
-print("Unlocking Df .text section...")
-unlockDF()
-print("Done unlock")
-lockDF()
-dofile("dfusion/simple_embark/plugin.lua")
-print("hello world")
-Console.print("Hello world in console!\n")
---name=Console.lineedit("Enter name:")
---Console.print("Your name is:"..name)
-
-function OnTick() -- floods the console
-	r=Console.get_rows()
-	c=Console.get_columns()
+function mainmenu(t1)
 	Console.clear()
-	Console.gotoxy(math.random(1,r),math.random(1,2))
-	Console.color(math.random(0,15))
-	Console.print("*")
+	while true do
+		print("No.	Name		Desc")
+		for k,v in pairs(t1) do
+			print(string.format("%d %s		%s",k,v[1],v[2]))
+		end
+		local q=Console.lineedit("Select plugin to run (q to quit):")
+		if q=='q' then return end
+		q=tonumber(q)
+		if q~=nil then
+			if q>=1 and q<=#t1 then
+				dofile("dfusion/"..t1[q][1].."/plugin.lua")
+				
+			end
+		end
+	end
 end
-OnTick=nil
+dofile("dfusion/common.lua")
+unlockDF()
+plugins={}
+table.insert(plugins,{"simple_embark","A simple embark dwarf count editor"})
+table.insert(plugins,{"items","A collection of item hacking tools"})
+table.insert(plugins,{"offsets","Find all offsets"})
+table.insert(plugins,{"friendship","Multi race fort enabler"})
+table.insert(plugins,{"embark","Multi race embark"})
+table.insert(plugins,{"adv_tools","some tools for (mainly) advneturer hacking"})
+table.insert(plugins,{"tools","some misc tools"})
+table.insert(plugins,{"triggers","a function calling plug (discontinued...)"})
+table.insert(plugins,{"migrants","multi race imigrations"})
+mainmenu(plugins)
+

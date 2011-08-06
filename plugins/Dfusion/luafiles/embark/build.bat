@@ -1,0 +1,1 @@
+as  -a --32  -o embark.o embark.asm

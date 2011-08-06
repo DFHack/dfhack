@@ -1,0 +1,1 @@
+as  -anl --32 -o triggers.o triggers.asm

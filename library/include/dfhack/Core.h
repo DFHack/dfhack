@@ -126,6 +126,11 @@ namespace DFHack
         /// removes the hotkey command and gives it to the caller thread
         std::string getHotkeyCmd( void );
 
+		/// adds a named pointer (for later or between plugins)
+		void RegisterData(void *p,std::string key);
+		/// returns a named pointer.
+		void *GetData(std::string key);
+
         DFHack::Process * p;
         DFHack::VersionInfo * vinfo;
         DFHack::Console con;
@@ -174,5 +179,8 @@ namespace DFHack
         tthread::condition_variable * HotkeyCond;
         // Very important!
         bool started;
+
+		tthread::mutex * misc_data_mutex;
+		std::map<std::string,void*> misc_data_map;
     };
 }

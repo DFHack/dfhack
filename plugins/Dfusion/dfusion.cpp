@@ -14,6 +14,8 @@
 #include "luamain.h"
 #include "lua_Console.h"
 #include "lua_Process.h"
+#include "lua_Hexsearch.h"
+#include "lua_Misc.h"
 #include "functioncall.h"
 
 using std::vector;
@@ -37,6 +39,8 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 	//maybe remake it to run automaticaly
 	lua::RegisterConsole(lua::glua::Get(),&c->con);
 	lua::RegisterProcess(lua::glua::Get(),c->p);
+	lua::RegisterHexsearch(lua::glua::Get());
+	lua::RegisterMisc(lua::glua::Get());
     commands.push_back(PluginCommand("dfusion","Init dfusion system.",dfusion));
 	commands.push_back(PluginCommand("lua", "Run interactive interpreter.\
 \n              Options: <filename> = run <filename> instead",lua_run));
@@ -71,6 +75,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 		catch(lua::exception &e)
 		{
 			c->con.printerr("Error OnTick:%s\n",e.what());
+			c->con.printerr("%s",lua::DebugDump(lua::glua::Get()));
 			c->con.msleep(1000);
 		}
 	}
@@ -97,6 +102,7 @@ void InterpreterLoop(Core* c)
 		catch(lua::exception &e)
 		{
 			con.printerr("Error:%s\n",e.what());
+			c->con.printerr("%s",lua::DebugDump(lua::glua::Get()));
 			s.settop(0);
 		}
 		con.lineedit(">>",curline);
@@ -117,6 +123,7 @@ DFhackCExport command_result lua_run (Core * c, vector <string> & parameters)
 		catch(lua::exception &e)
 		{
 			con.printerr("Error:%s\n",e.what());
+			c->con.printerr("%s",lua::DebugDump(lua::glua::Get()));
 		}
 	}
 	else
@@ -141,6 +148,7 @@ DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
 	catch(lua::exception &e)
 	{
 		con.printerr("Error:%s\n",e.what());
+		c->con.printerr("%s",lua::DebugDump(lua::glua::Get()));
 	}
 	s.settop(0);// clean up
 	mymutex->unlock();

@@ -118,7 +118,11 @@ void fHKthread(void * iodata)
         if(!stuff.empty())
         {
             vector <string> crap;
-            plug_mgr->InvokeCommand(stuff, crap);
+            command_result cr = plug_mgr->InvokeCommand(stuff, crap, false);
+            if(cr == CR_WOULD_BREAK)
+            {
+                core->con.printerr("It isn't possible to run an interactive command outside the console.\n");
+            }
         }
     }
 }

@@ -31,7 +31,7 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("vlub",
+    commands.push_back(PluginCommand("cleanowned",
                                      "Confiscates and dumps garbage owned by dwarfs.",
                                      df_cleanowned));
     return CR_OK;
@@ -195,23 +195,8 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
                     c->con.print("(unsuccessfully) ");
                 if (dump)
                     itm.base->flags.dump = 1;
-                
-                // NO-OP really
-                    //Items->writeItem(itm);
             }
             c->con.print("\n");
-/*
-            printf(
-                "%5d: %08x %08x (%d,%d,%d) #%08x [%d] %s - %s %s\n",
-                i, itm.origin, itm.base.flags.whole,
-                itm.base.x, itm.base.y, itm.base.z,
-                itm.base.vtable,
-                itm.wear_level,
-                Items->getItemClass(itm.matdesc.itemType).c_str(),
-                Items->getItemDescription(itm, Materials).c_str(),
-                info.c_str()
-                  );
-                  */
         }
     }
     c->Resume();

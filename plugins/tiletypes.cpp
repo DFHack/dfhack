@@ -124,7 +124,7 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
 
     if (option == "shape" || option == "sh" || option == "s")
     {
-        if (valInt >= -1 && valInt << DFHack::tileshape_count)
+        if (valInt >= -1 && valInt < DFHack::tileshape_count)
         {
             paint.shape = (DFHack::TileShape) valInt;
             found = true;
@@ -174,7 +174,7 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
     }
     else if (option == "special" || option == "sp")
     {
-        if (valInt >= -1 && valInt << DFHack::tilespecial_count)
+        if (valInt >= -1 && valInt < DFHack::tilespecial_count)
         {
             paint.special = (DFHack::TileSpecial) valInt;
             found = true;

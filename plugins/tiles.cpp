@@ -208,7 +208,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.clear();
     commands.push_back(PluginCommand("tiles", "A tile painter. See 'tile help' for details.", df_tiles));
-    commands.push_back(PluginCommand("paint", "Paint with the last used brush.", df_paint));
+    commands.push_back(PluginCommand("paint", "Paint with the current tiles settings.", df_paint));
     return CR_OK;
 }
 

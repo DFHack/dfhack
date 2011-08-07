@@ -1,0 +1,9 @@
+IF(UNIX)
+DFHACK_PLUGIN(vectors vectors.cpp)
+endif()
+
+DFHACK_PLUGIN(kittens kittens.cpp)
+DFHACK_PLUGIN(rawdump rawdump.cpp)
+DFHACK_PLUGIN(itemhacks itemhacks.cpp)
+DFHACK_PLUGIN(notes notes.cpp)
+#DFHACK_PLUGIN(tiles tiles.cpp)

@@ -430,6 +430,7 @@ bool Core::Init()
     // create mutex for syncing with interactive tasks
     StackMutex = new mutex();
     AccessMutex = new mutex();
+    misc_data_mutex=new mutex();
     core_cond = new Core::Cond();
     // create plugin manager
     plug_mgr = new PluginManager(this);
@@ -442,7 +443,6 @@ bool Core::Init()
     HotkeyMutex = new mutex();
     HotkeyCond = new condition_variable();
     thread * HK = new thread(fHKthread, (void *) temp);
-	misc_data_mutex=new mutex();
     started = true;
     return true;
 }
@@ -475,29 +475,29 @@ std::string Core::getHotkeyCmd( void )
     return returner;
 }
 
-void Core::RegisterData(void *p,std::string key)
+void Core::RegisterData( void *p, std::string key )
 {
-	misc_data_mutex->lock();
-	misc_data_map[key]=p;
-	misc_data_mutex->unlock();
+    misc_data_mutex->lock();
+    misc_data_map[key] = p;
+    misc_data_mutex->unlock();
 }
-		
-void *Core::GetData(std::string key)
+
+void *Core::GetData( std::string key )
 {
-	misc_data_mutex->lock();
-	std::map<std::string,void*>::iterator it=misc_data_map.find(key);
-	
-	if (it!=misc_data_map.end())
-	{
-		void *p=it->second;
-		misc_data_mutex->unlock();
-		return p;
-	}
-	else
-	{
-		misc_data_mutex->unlock();
-		return 0;// or throw an error.
-	}
+    misc_data_mutex->lock();
+    std::map<std::string,void*>::iterator it=misc_data_map.find(key);
+
+    if ( it != misc_data_map.end() )
+    {
+        void *p=it->second;
+        misc_data_mutex->unlock();
+        return p;
+    }
+    else
+    {
+        misc_data_mutex->unlock();
+        return 0;// or throw an error.
+    }
 }
 
 void Core::Suspend()

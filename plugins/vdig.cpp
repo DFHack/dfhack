@@ -27,7 +27,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.clear();
     commands.push_back(PluginCommand("vdig","Dig a whole vein. With 'x' option, dig stairs between z-levels.",vdig));
-    commands.push_back(PluginCommand("autodig","Mark a tile for continuous digging.",autodig));
+    //commands.push_back(PluginCommand("autodig","Mark a tile for continuous digging.",autodig));
     return CR_OK;
 }
 

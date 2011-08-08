@@ -2287,6 +2287,17 @@
                 <Offset name="item_quantity_accessor" value="0x214" /> 0x194  TEST
                 <Offset name="item_quality_accessor" value="0x25C" />
             </Group>
+            <Group name="Vermin" valid="true">
+                <Group name="Spawn Points">
+                    <Address name="vector"   value="0x16b0a88"/>
+                    <Offset name="race"      value="0x0"/>
+                    <Offset name="type"      value="0x2"/>
+                    <Offset name="position"  value="0x4"/>
+                    <Offset name="in_use"    value="0xa"/>
+                    <Offset name="unknown"   value="0xb"/>
+                    <Offset name="countdown" value="0xc"/>
+                </Group>
+            </Group>
         </Offsets>
         cmake
         item vector:

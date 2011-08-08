@@ -41,30 +41,38 @@ namespace DFHack
     class PluginManager;
     enum command_result
     {
+        CR_WOULD_BREAK = -2,
         CR_NOT_IMPLEMENTED = -1,
         CR_FAILURE = 0,
         CR_OK = 1
     };
     struct PluginCommand
     {
+        /// create a command with a name, description, function pointer to its code
+        /// and saying if it needs an interactive terminal
+        /// Most commands shouldn't require an interactive terminal!
         PluginCommand(const char * _name,
                       const char * _description,
-                      command_result (*function_)(Core *, std::vector <std::string> &)
+                      command_result (*function_)(Core *, std::vector <std::string> &),
+                      bool interactive_ = false
                      )
         {
             name = _name;
             description = _description;
             function = function_;
+            interactive = interactive_;
         }
         PluginCommand (const PluginCommand & rhs)
         {
             name = rhs.name;
             description = rhs.description;
             function = rhs.function;
+            interactive = rhs.interactive;
         }
         std::string name;
         std::string description;
         command_result (*function)(Core *, std::vector <std::string> &);
+        bool interactive;
     };
     class Plugin
     {
@@ -83,7 +91,7 @@ namespace DFHack
         bool load();
         bool unload();
         bool reload();
-        command_result invoke( std::string & command, std::vector <std::string> & parameters );
+        command_result invoke( std::string & command, std::vector <std::string> & parameters, bool interactive );
         plugin_state getState () const;
         const PluginCommand& operator[] (std::size_t index) const
         {
@@ -123,7 +131,7 @@ namespace DFHack
     // PUBLIC METHODS
     public:
         Plugin *getPluginByName (const std::string & name);
-        command_result InvokeCommand( std::string & command, std::vector <std::string> & parameters );
+        command_result InvokeCommand( std::string & command, std::vector <std::string> & parameters, bool interactive = true );
         Plugin* operator[] (std::size_t index)
         {
             if(index >= all_plugins.size())

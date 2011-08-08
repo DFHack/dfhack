@@ -318,333 +318,282 @@ ul.auto-toc {
 
 
 <div class="section" id="introduction">
-<h1><a class="toc-backref" href="#id4">Introduction</a></h1>
+<h1><a class="toc-backref" href="#id5">Introduction</a></h1>
 <p>DFHack is a Dwarf Fortress memory access library and a set of basic
-tools using this library. The library is a work in progress, so things
-might change as more tools are written for it.</p>
-<p>It is an attempt to unite the various ways tools access DF memory and
-allow for easier development of new tools.</p>
+tools that use it. Tools come in the form of plugins or (not yet)
+external tools. It is an attempt to unite the various ways tools
+access DF memory and allow for easier development of new tools.</p>
 <div class="contents topic" id="contents">
 <p class="topic-title first">Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#introduction" id="id4">Introduction</a></li>
-<li><a class="reference internal" href="#getting-dfhack" id="id5">Getting DFHack</a></li>
-<li><a class="reference internal" href="#compatibility" id="id6">Compatibility</a><ul>
-<li><a class="reference internal" href="#windows" id="id7">Windows</a></li>
-<li><a class="reference internal" href="#linux" id="id8">Linux</a><ul>
-<li><a class="reference internal" href="#native-linux-df" id="id9">Native linux DF</a></li>
-<li><a class="reference internal" href="#windows-df-under-wine" id="id10">Windows DF under wine</a></li>
+<li><a class="reference internal" href="#introduction" id="id5">Introduction</a></li>
+<li><a class="reference internal" href="#getting-dfhack" id="id6">Getting DFHack</a></li>
+<li><a class="reference internal" href="#compatibility" id="id7">Compatibility</a></li>
+<li><a class="reference internal" href="#installation-removal" id="id8">Installation/Removal</a></li>
+<li><a class="reference internal" href="#using-dfhack" id="id9">Using DFHack</a></li>
+<li><a class="reference internal" href="#commands" id="id10">Commands</a><ul>
+<li><a class="reference internal" href="#autodump" id="id11">autodump</a><ul>
+<li><a class="reference internal" href="#options" id="id12">Options</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#cleanmap" id="id13">cleanmap</a></li>
+<li><a class="reference internal" href="#cleanowned" id="id14">cleanowned</a><ul>
+<li><a class="reference internal" href="#id1" id="id15">Options</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#tools" id="id11">Tools</a><ul>
-<li><a class="reference internal" href="#dfattachtest" id="id12">dfattachtest</a></li>
-<li><a class="reference internal" href="#dfautodump" id="id13">dfautodump</a><ul>
-<li><a class="reference internal" href="#options" id="id14">Options:</a></li>
+<li><a class="reference internal" href="#colonies" id="id16">colonies</a><ul>
+<li><a class="reference internal" href="#id2" id="id17">Options</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#dfcleanmap" id="id15">dfcleanmap</a></li>
-<li><a class="reference internal" href="#dfcleanowned" id="id16">dfcleanowned</a><ul>
-<li><a class="reference internal" href="#id1" id="id17">Options:</a></li>
+<li><a class="reference internal" href="#deramp-by-zilpin" id="id18">deramp (by zilpin)</a></li>
+<li><a class="reference internal" href="#flows" id="id19">flows</a></li>
+<li><a class="reference internal" href="#grow" id="id20">grow</a></li>
+<li><a class="reference internal" href="#extirpate" id="id21">extirpate</a><ul>
+<li><a class="reference internal" href="#id3" id="id22">Options</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#dfcleartask" id="id18">dfcleartask</a></li>
-<li><a class="reference internal" href="#dfderamp-by-zilpin" id="id19">dfderamp (by zilpin)</a></li>
-<li><a class="reference internal" href="#dfdoffsets" id="id20">dfdoffsets</a></li>
-<li><a class="reference internal" href="#dfexpbench" id="id21">dfexpbench</a></li>
-<li><a class="reference internal" href="#dfflows" id="id22">dfflows</a></li>
-<li><a class="reference internal" href="#dfincremental" id="id23">dfincremental</a></li>
-<li><a class="reference internal" href="#dfgrow" id="id24">dfgrow</a></li>
-<li><a class="reference internal" href="#dfimmolate" id="id25">dfimmolate</a><ul>
-<li><a class="reference internal" href="#id2" id="id26">Options:</a></li>
+<li><a class="reference internal" href="#immolate" id="id23">immolate</a></li>
+<li><a class="reference internal" href="#liquids" id="id24">liquids</a></li>
+<li><a class="reference internal" href="#mode" id="id25">mode</a></li>
+<li><a class="reference internal" href="#forcepause" id="id26">forcepause</a></li>
+<li><a class="reference internal" href="#die" id="id27">die</a></li>
+<li><a class="reference internal" href="#probe" id="id28">probe</a></li>
+<li><a class="reference internal" href="#prospector" id="id29">prospector</a><ul>
+<li><a class="reference internal" href="#id4" id="id30">Options</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#dfstatus-by-enjia2000" id="id27">dfstatus (by enjia2000)</a></li>
-<li><a class="reference internal" href="#dflair" id="id28">dflair</a></li>
-<li><a class="reference internal" href="#dfliquids" id="id29">dfliquids</a></li>
-<li><a class="reference internal" href="#dfmode" id="id30">dfmode</a></li>
-<li><a class="reference internal" href="#dfpause" id="id31">dfpause</a></li>
-<li><a class="reference internal" href="#dfposition" id="id32">dfposition</a></li>
-<li><a class="reference internal" href="#dfprobe" id="id33">dfprobe</a></li>
-<li><a class="reference internal" href="#dfprospector" id="id34">dfprospector</a><ul>
-<li><a class="reference internal" href="#id3" id="id35">Options:</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#dfreveal" id="id36">dfreveal</a></li>
-<li><a class="reference internal" href="#dfunreveal" id="id37">dfunreveal</a></li>
-<li><a class="reference internal" href="#dfsuspend" id="id38">dfsuspend</a></li>
-<li><a class="reference internal" href="#dftubefill" id="id39">dftubefill</a></li>
-<li><a class="reference internal" href="#dfunstuck" id="id40">dfunstuck</a></li>
-<li><a class="reference internal" href="#dfvdig" id="id41">dfvdig</a></li>
-<li><a class="reference internal" href="#dfveinlook" id="id42">dfveinlook</a></li>
-<li><a class="reference internal" href="#dfweather" id="id43">dfweather</a></li>
-<li><a class="reference internal" href="#your-tool-here" id="id44">Your tool here</a></li>
+<li><a class="reference internal" href="#reveal" id="id31">reveal</a></li>
+<li><a class="reference internal" href="#unreveal" id="id32">unreveal</a></li>
+<li><a class="reference internal" href="#revtoggle" id="id33">revtoggle</a></li>
+<li><a class="reference internal" href="#revflood" id="id34">revflood</a></li>
+<li><a class="reference internal" href="#tubefill" id="id35">tubefill</a></li>
+<li><a class="reference internal" href="#vdig" id="id36">vdig</a></li>
+<li><a class="reference internal" href="#weather" id="id37">weather</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 <div class="section" id="getting-dfhack">
-<h1><a class="toc-backref" href="#id5">Getting DFHack</a></h1>
+<h1><a class="toc-backref" href="#id6">Getting DFHack</a></h1>
 <p>The project is currently hosted on <a class="reference external" href="http://www.github.com/">github</a>, for both source and
 binaries at  <a class="reference external" href="http://github.com/peterix/dfhack">http://github.com/peterix/dfhack</a></p>
+<p>Releases can be downloaded from here: <a class="reference external" href="https://github.com/peterix/dfhack/downloads">https://github.com/peterix/dfhack/downloads</a></p>
 </div>
 <div class="section" id="compatibility">
-<h1><a class="toc-backref" href="#id6">Compatibility</a></h1>
+<h1><a class="toc-backref" href="#id7">Compatibility</a></h1>
 <p>DFHack works on Windows XP, Vista, 7 or any modern Linux distribution.
 OSX is not supported due to lack of developers with a Mac.</p>
-<p>In general, the older DF release you use, the less features will work.
-DFHack development is always focused on the latest DF version. Go too
-far into the past, and only the most basic tools will work.</p>
-<div class="section" id="windows">
-<h2><a class="toc-backref" href="#id7">Windows</a></h2>
-<div class="note">
-<p class="first admonition-title">Note</p>
-<p class="last">Windows 2000 is currently <em>not supported</em> due to missing OS
-functionality. If you know how to easily suspend processes, you can
-fix it :)</p>
+<p>Currently, only the 31.25 version is supported. If you need DFHack
+for older versions, look for older releases.</p>
+<p>On Windows, you have to use the SDL version of DF.</p>
+<p>It is possible to use the Windows DFHack under wine/OSX.</p>
 </div>
-<p>0.31.01 - 0.31.03 legacy</p>
-<p>0.31.04 - 0.31.25 SDL</p>
+<div class="section" id="installation-removal">
+<h1><a class="toc-backref" href="#id8">Installation/Removal</a></h1>
+<p>Installing DFhack involves copying files into your DF folder.
+Copy the files from a release archive so that:</p>
+<blockquote>
+<ul class="simple">
+<li>On Windows, SDL.dll is replaced</li>
+<li>On Linux, the 'dfhack' script is placed in the same folder as the 'df' script</li>
+</ul>
+</blockquote>
+<p>Uninstalling is basically the same, in reverse:</p>
+<blockquote>
+<ul class="simple">
+<li>On Windows, first delete SDL.dll and rename SDLreal.dll to SDL.dll. Then remove the other DFHack files</li>
+<li>On Linux, Remove the DFHack files.</li>
+</ul>
+</blockquote>
 </div>
-<div class="section" id="linux">
-<h2><a class="toc-backref" href="#id8">Linux</a></h2>
-<div class="section" id="native-linux-df">
-<h3><a class="toc-backref" href="#id9">Native linux DF</a></h3>
-<p>0.31.05 - 0.31.24: spotty support (some things might not work)</p>
-<p>0.31.25: full support</p>
+<div class="section" id="using-dfhack">
+<h1><a class="toc-backref" href="#id9">Using DFHack</a></h1>
+<p>DFHack basically extends what DF can do with something similar to a quake console. On Windows, this is a separate command line window. On linux, the terminal used to launch the dfhack script is taken over (so, make sure you start from a terminal).
+Basic interaction with dfhack involves entering commands into the console. For some basic instroduction, use the 'help' command. To list all possible commands, use the 'ls' command.
+Many commands have their own help or detailed description. You can use 'command help' or 'command ?' to show that.</p>
+<p>The second way to interact with DFHack is to bind the available commands to in-game hotkeys. This is done in the hotkey/zoom menu (normally opened with the 'h' key). Binding the commands is done by assigning a command as a hotkey name (with 'n').
+Some commands can't be used from hotkeys - this includes interactive commands like 'liquids' and commands that have names longer than 9 characters.</p>
+<p>Most of the commands come from plugins (those reside in DF/plugins/).</p>
 </div>
-<div class="section" id="windows-df-under-wine">
-<h3><a class="toc-backref" href="#id10">Windows DF under wine</a></h3>
-<p>0.31.01 - 0.31.03 legacy</p>
-<p>0.31.04 - 0.31.25 SDL</p>
-</div>
-</div>
-</div>
-<div class="section" id="tools">
-<h1><a class="toc-backref" href="#id11">Tools</a></h1>
-<p>All the DFHack tools are terminal programs. This might seem strange to Windows
-users, but these are meant mostly as examples for developers. Still, they can
-be useful and are cross-platform just like the library itself.</p>
-<div class="section" id="dfattachtest">
-<h2><a class="toc-backref" href="#id12">dfattachtest</a></h2>
-<p>Test of the process attach/detach mechanism.</p>
-</div>
-<div class="section" id="dfautodump">
-<h2><a class="toc-backref" href="#id13">dfautodump</a></h2>
+<div class="section" id="commands">
+<h1><a class="toc-backref" href="#id10">Commands</a></h1>
+<div class="section" id="autodump">
+<h2><a class="toc-backref" href="#id11">autodump</a></h2>
 <p>Automated item dumping tool. All loose items on the floor marked
 for dumping are insta-dumped to the position of the in-game cursor.</p>
 <p>Cursor must be placed on a floor tile. Instadumped items may not
 show up in the cursor description list until you save/reload.</p>
 <div class="section" id="options">
-<h3><a class="toc-backref" href="#id14">Options:</a></h3>
-<table class="docutils option-list" frame="void" rules="none">
-<col class="option" />
-<col class="description" />
+<h3><a class="toc-backref" href="#id12">Options</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
 <tbody valign="top">
-<tr><td class="option-group">
-<kbd><span class="option">-d</span></kbd></td>
-<td>Destroy instead of dumping. Doesn't require a cursor.</td></tr>
+<tr class="field"><th class="field-name">destroy:</th><td class="field-body">Destroy instead of dumping. Doesn't require a cursor.</td>
+</tr>
 </tbody>
 </table>
 </div>
 </div>
-<div class="section" id="dfcleanmap">
-<h2><a class="toc-backref" href="#id15">dfcleanmap</a></h2>
+<div class="section" id="cleanmap">
+<h2><a class="toc-backref" href="#id13">cleanmap</a></h2>
 <p>Cleans all the splatter that get scattered all over the map.
-Only exception is mud. It leaves mud alone.</p>
+By default, it leaves mud and snow alone.</p>
 </div>
-<div class="section" id="dfcleanowned">
-<h2><a class="toc-backref" href="#id16">dfcleanowned</a></h2>
-<p>Removes the ownership flag from items.
+<div class="section" id="cleanowned">
+<h2><a class="toc-backref" href="#id14">cleanowned</a></h2>
+<p>Confiscates items owned by dwarfs.
 By default, owned food on the floor and rotten items are confistacted and dumped.</p>
 <div class="section" id="id1">
-<h3><a class="toc-backref" href="#id17">Options:</a></h3>
-<table class="docutils option-list" frame="void" rules="none">
-<col class="option" />
-<col class="description" />
+<h3><a class="toc-backref" href="#id15">Options</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
 <tbody valign="top">
-<tr><td class="option-group">
-<kbd><span class="option">-a</span></kbd></td>
-<td>confiscate all owned items</td></tr>
-<tr><td class="option-group">
-<kbd><span class="option">-l</span></kbd></td>
-<td>confiscated and dump all items scattered on the floor</td></tr>
-<tr><td class="option-group">
-<kbd><span class="option">-x</span></kbd></td>
-<td>confiscate/dump items with wear level 'x' and more</td></tr>
-<tr><td class="option-group">
-<kbd><span class="option">-X</span></kbd></td>
-<td>confiscate/dump items with wear level 'X' and more</td></tr>
-<tr><td class="option-group">
-<kbd><span class="option">-d</span></kbd></td>
-<td>a dry run. combine with other options to see what will happen without it actually happening.</td></tr>
+<tr class="field"><th class="field-name">all:</th><td class="field-body">confiscate all owned items</td>
+</tr>
+<tr class="field"><th class="field-name">scattered:</th><td class="field-body">confiscated and dump all items scattered on the floor</td>
+</tr>
+<tr class="field"><th class="field-name">x:</th><td class="field-body">confiscate/dump items with wear level 'x' and more</td>
+</tr>
+<tr class="field"><th class="field-name">X:</th><td class="field-body">confiscate/dump items with wear level 'X' and more</td>
+</tr>
+<tr class="field"><th class="field-name">dryrun:</th><td class="field-body">a dry run. combine with other options to see what will happen without it actually happening.</td>
+</tr>
 </tbody>
 </table>
-<dl class="docutils">
-<dt>On Windows:</dt>
-<dd><ul class="first last simple">
-<li>dfremovelitter.bat runs the tool with -lx</li>
-<li>dfconfiscate.bat runs the tool with -a</li>
-</ul>
-</dd>
-</dl>
 </div>
 </div>
-<div class="section" id="dfcleartask">
-<h2><a class="toc-backref" href="#id18">dfcleartask</a></h2>
-<p>Items marked for a job can get stuck during a abandon/reclaim. This tool aims to fix that.
-Best used immediately after a reclaim. Not thoroughly tested, use at your own risk.</p>
+<div class="section" id="colonies">
+<h2><a class="toc-backref" href="#id16">colonies</a></h2>
+<p>Allows listing all the vermin colonies on the map and optionally turning them into honey bee colonies.</p>
+<div class="section" id="id2">
+<h3><a class="toc-backref" href="#id17">Options</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">bees:</th><td class="field-body">turn colonies into honey bee colonies</td>
+</tr>
+</tbody>
+</table>
 </div>
-<div class="section" id="dfderamp-by-zilpin">
-<h2><a class="toc-backref" href="#id19">dfderamp (by zilpin)</a></h2>
+</div>
+<div class="section" id="deramp-by-zilpin">
+<h2><a class="toc-backref" href="#id18">deramp (by zilpin)</a></h2>
 <p>Removes all ramps designated for removal from the map. This is useful for replicating the old channel digging designation.
 It also removes any and all 'down ramps' that can remain after a cave-in (you don't have to designate anything for that to happen).</p>
 </div>
-<div class="section" id="dfdoffsets">
-<h2><a class="toc-backref" href="#id20">dfdoffsets</a></h2>
-<p>Dumps the offsets for the currently running DF version into the terminal.</p>
+<div class="section" id="flows">
+<h2><a class="toc-backref" href="#id19">flows</a></h2>
+<p>A tool for checking how many tiles contain flowing liquids. If you suspect that your magma sea leaks into HFS, you can use this tool to be sure without revealing the map.</p>
 </div>
-<div class="section" id="dfexpbench">
-<h2><a class="toc-backref" href="#id21">dfexpbench</a></h2>
-<p>Just a simple benchmark of the data export speed.</p>
-</div>
-<div class="section" id="dfflows">
-<h2><a class="toc-backref" href="#id22">dfflows</a></h2>
-<p>A tool for checking how many liquid tiles are actively checked for flows.</p>
-</div>
-<div class="section" id="dfincremental">
-<h2><a class="toc-backref" href="#id23">dfincremental</a></h2>
-<p>A simple memory search tool for DF. Requires arcane knowledge ;)</p>
-</div>
-<div class="section" id="dfgrow">
-<h2><a class="toc-backref" href="#id24">dfgrow</a></h2>
+<div class="section" id="grow">
+<h2><a class="toc-backref" href="#id20">grow</a></h2>
 <p>Makes all saplings present on the map grow into trees (almost) instantly.</p>
 </div>
-<div class="section" id="dfimmolate">
-<h2><a class="toc-backref" href="#id25">dfimmolate</a></h2>
-<p>A tool for getting rid of trees and shrubs. By default, it only kills a tree/shrub under the cursor.</p>
-<div class="section" id="id2">
-<h3><a class="toc-backref" href="#id26">Options:</a></h3>
-<table class="docutils option-list" frame="void" rules="none">
-<col class="option" />
-<col class="description" />
+<div class="section" id="extirpate">
+<h2><a class="toc-backref" href="#id21">extirpate</a></h2>
+<p>A tool for getting rid of trees and shrubs. By default, it only kills a tree/shrub under the cursor.
+The plants are turned into ashes instantly.</p>
+<div class="section" id="id3">
+<h3><a class="toc-backref" href="#id22">Options</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
 <tbody valign="top">
-<tr><td class="option-group">
-<kbd><span class="option">-s</span></kbd></td>
-<td>affect all shrubs on the map</td></tr>
-<tr><td class="option-group">
-<kbd><span class="option">-t</span></kbd></td>
-<td>affect all trees on the map</td></tr>
-<tr><td class="option-group">
-<kbd><span class="option">-i</span></kbd></td>
-<td>instead of just instaburning plants to ashes, produce fire. WILL KILL FPS!</td></tr>
+<tr class="field"><th class="field-name">shrubs:</th><td class="field-body">affect all shrubs on the map</td>
+</tr>
+<tr class="field"><th class="field-name">trees:</th><td class="field-body">affect all trees on the map</td>
+</tr>
+<tr class="field"><th class="field-name">all:</th><td class="field-body">affect every plant!</td>
+</tr>
 </tbody>
 </table>
-<p>The windows binary releases contain many .bat files that can run the tool with different parameters.</p>
 </div>
 </div>
-<div class="section" id="dfstatus-by-enjia2000">
-<h2><a class="toc-backref" href="#id27">dfstatus (by enjia2000)</a></h2>
-<p>Runs next to DF and shows some vital statistics of the fort, including food and booze.</p>
+<div class="section" id="immolate">
+<h2><a class="toc-backref" href="#id23">immolate</a></h2>
+<p>Very similar to extirpate, but additionally sets the plants on fire. The fires can and <em>will</em> spread ;)</p>
 </div>
-<div class="section" id="dflair">
-<h2><a class="toc-backref" href="#id28">dflair</a></h2>
-<p>Marks all of the map as a lair, preventing item scatter on abandon/reclaim.</p>
-</div>
-<div class="section" id="dfliquids">
-<h2><a class="toc-backref" href="#id29">dfliquids</a></h2>
-<p>A command prompt for liquid creation and manipulation (the Moses
-effect included!) Also allows painting obsidian walls directly.</p>
+<div class="section" id="liquids">
+<h2><a class="toc-backref" href="#id24">liquids</a></h2>
+<p>Allows adding magma, water and obsidian to the game. It replaces the normal dfhack command line and can't be used from a hotkey.
+For more information, refer to the command's internal help.</p>
 <div class="note">
 <p class="first admonition-title">Note</p>
 <p class="last">Spawning and deleting liquids can F up pathing data and
 temperatures (creating heat traps). You've been warned.</p>
 </div>
 </div>
-<div class="section" id="dfmode">
-<h2><a class="toc-backref" href="#id30">dfmode</a></h2>
-<p>This tool lets you change the game mode directly. Not all combinations are good for every situation and most of them will produce undesirable results.
+<div class="section" id="mode">
+<h2><a class="toc-backref" href="#id25">mode</a></h2>
+<p>This command lets you see and change the game mode directly. Not all combinations are good for every situation and most of them will produce undesirable results.
 There are a few good ones though.</p>
 <div class="admonition-example admonition">
 <p class="first admonition-title">Example</p>
-<p class="last">You are in fort game mode (0 game mode), managing your fortress (0 control mode) and paused.
-You switch to the arena game mode, <em>assume control of a creature</em> and the switch to adventure game mode(1).
+<p class="last">You are in fort game mode, managing your fortress and paused.
+You switch to the arena game mode, <em>assume control of a creature</em> and then switch to adventure game mode(1).
 You just lost a fortress and gained an adventurer.</p>
 </div>
 <p>I take no responsibility of anything that happens as a result of using this tool :P</p>
 </div>
-<div class="section" id="dfpause">
-<h2><a class="toc-backref" href="#id31">dfpause</a></h2>
+<div class="section" id="forcepause">
+<h2><a class="toc-backref" href="#id26">forcepause</a></h2>
 <p>Forces DF to pause. This is useful when your FPS drops below 1 and you lose control of the game.</p>
 </div>
-<div class="section" id="dfposition">
-<h2><a class="toc-backref" href="#id32">dfposition</a></h2>
-<p>Prints the game mode, current DF window properties and cursor position in both local and world coordinates.</p>
+<div class="section" id="die">
+<h2><a class="toc-backref" href="#id27">die</a></h2>
+<p>Instantly kills DF without saving.</p>
 </div>
-<div class="section" id="dfprobe">
-<h2><a class="toc-backref" href="#id33">dfprobe</a></h2>
+<div class="section" id="probe">
+<h2><a class="toc-backref" href="#id28">probe</a></h2>
 <p>Can be used to determine tile properties like temperature.</p>
 </div>
-<div class="section" id="dfprospector">
-<h2><a class="toc-backref" href="#id34">dfprospector</a></h2>
-<p>Lists all available minerals on the map and how much of them there is.</p>
-<div class="section" id="id3">
-<h3><a class="toc-backref" href="#id35">Options:</a></h3>
-<table class="docutils option-list" frame="void" rules="none">
-<col class="option" />
-<col class="description" />
+<div class="section" id="prospector">
+<h2><a class="toc-backref" href="#id29">prospector</a></h2>
+<p>Lists all available minerals on the map and how much of them there is. By default, only processes the already discovered part of the map.</p>
+<div class="section" id="id4">
+<h3><a class="toc-backref" href="#id30">Options</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
 <tbody valign="top">
-<tr><td class="option-group">
-<kbd><span class="option">-a</span></kbd></td>
-<td>processes all tiles, even hidden ones.</td></tr>
+<tr class="field"><th class="field-name">all:</th><td class="field-body">processes all tiles, even hidden ones.</td>
+</tr>
 </tbody>
 </table>
-<p>On windows, it's possible to run dfprospector-all.bat to process all the tiles without messing with terminal windows.
-Also on Windos, dfprospector-text.bat will print the output into a file and then show it in a notepad program (whatever opens .txt by default).</p>
 </div>
 </div>
-<div class="section" id="dfreveal">
-<h2><a class="toc-backref" href="#id36">dfreveal</a></h2>
-<p>Reveals the whole map, waits for input and hides it again. If you close
-the tool while it waits, the map remains revealed.</p>
+<div class="section" id="reveal">
+<h2><a class="toc-backref" href="#id31">reveal</a></h2>
+<p>This reveals the map. By default, HFS will remain hidden so that the demons don't spawn. You can use 'reveal hell' to reveal everything. With hell revealed, you won't be able to unpause until you hide the map again.</p>
 </div>
-<div class="section" id="dfunreveal">
-<h2><a class="toc-backref" href="#id37">dfunreveal</a></h2>
-<p>Hides everything and then only reveals the part of the map accessible from the position of DF's cursor. Place the cursor in open space that you want to keep revealed - this should include the surface world.
-Can be used to fix maps stuck revealed or hide parts of the fortress blocked off by walls.</p>
+<div class="section" id="unreveal">
+<h2><a class="toc-backref" href="#id32">unreveal</a></h2>
+<p>Reverts the effects of 'reveal'.</p>
 </div>
-<div class="section" id="dfsuspend">
-<h2><a class="toc-backref" href="#id38">dfsuspend</a></h2>
-<p>Test of the process suspend/resume mechanism. If this doesn't work as expected, it's not safe to use DFHack.</p>
+<div class="section" id="revtoggle">
+<h2><a class="toc-backref" href="#id33">revtoggle</a></h2>
+<p>Switches between 'reveal' and 'unreveal'.</p>
 </div>
-<div class="section" id="dftubefill">
-<h2><a class="toc-backref" href="#id39">dftubefill</a></h2>
-<p>Fills all the 'candy stores' with 'delicious candy'. No need to fear the clowns. Don't use if you haven't seen the hidden fun stuff
-yet ;)</p>
+<div class="section" id="revflood">
+<h2><a class="toc-backref" href="#id34">revflood</a></h2>
+<p>This command will hide the whole map and then reveal all the tiles that have a path to the in-game cursor.</p>
 </div>
-<div class="section" id="dfunstuck">
-<h2><a class="toc-backref" href="#id40">dfunstuck</a></h2>
-<p>Use if you prematurely close any of the tools and DF appears to be stuck. Mostly only needed on Windows.</p>
+<div class="section" id="tubefill">
+<h2><a class="toc-backref" href="#id35">tubefill</a></h2>
+<p>Fills all the adamantine veins again. Veins that were empty will be filled in too, but might still trigger a demon invasion (this is a known bug).</p>
 </div>
-<div class="section" id="dfvdig">
-<h2><a class="toc-backref" href="#id41">dfvdig</a></h2>
-<p>Designates a whole vein for digging. Point the cursor at a vein and run this thing :)
-Running 'dfXvdig' on Windows or using the '-x' parameter will dig stairs between z-levels to follow the veins.</p>
+<div class="section" id="vdig">
+<h2><a class="toc-backref" href="#id36">vdig</a></h2>
+<p>Designates a whole vein for digging. Requires an active in-game cursor placed over a vein tile. With the 'x' option, it will traverse z-levels (putting stairs between the same-material tiles).</p>
 </div>
-<div class="section" id="dfveinlook">
-<h2><a class="toc-backref" href="#id42">dfveinlook</a></h2>
-<p>Simplistic map viewer. Mostly a debug/development thing. Now supported on Windows too!</p>
-</div>
-<div class="section" id="dfweather">
-<h2><a class="toc-backref" href="#id43">dfweather</a></h2>
-<p>Lets you change the current weather to 'clear sky', 'rainy' or 'snowing'. Fill those ponds without mucking around with dfliquids
-:D Rain can also stop brush fires.</p>
-</div>
-<div class="section" id="your-tool-here">
-<h2><a class="toc-backref" href="#id44">Your tool here</a></h2>
-<p>Write one ;)</p>
+<div class="section" id="weather">
+<h2><a class="toc-backref" href="#id37">weather</a></h2>
+<p>Lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.
+Fill those ponds without mucking around with dfliquids :D Rain can also stop brush fires.</p>
 </div>
 </div>
 </div>

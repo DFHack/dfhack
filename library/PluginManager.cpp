@@ -262,7 +262,7 @@ bool Plugin::reload()
     return true;
 }
 
-command_result Plugin::invoke( std::string & command, std::vector <std::string> & parameters)
+command_result Plugin::invoke( std::string & command, std::vector <std::string> & parameters, bool interactive_)
 {
     Core & c = Core::getInstance();
     command_result cr = CR_NOT_IMPLEMENTED;
@@ -273,7 +273,11 @@ command_result Plugin::invoke( std::string & command, std::vector <std::string> 
         {
             if(commands[i].name == command)
             {
-                cr = commands[i].function(&c, parameters);
+                // running interactive things from some other source than the console would break it
+                if(!interactive_ && commands[i].interactive)
+                    cr = CR_WOULD_BREAK;
+                else
+                    cr = commands[i].function(&c, parameters);
                 break;
             }
         }
@@ -345,7 +349,7 @@ Plugin *PluginManager::getPluginByName (const std::string & name)
 }
 
 // FIXME: handle name collisions...
-command_result PluginManager::InvokeCommand( std::string & command, std::vector <std::string> & parameters)
+command_result PluginManager::InvokeCommand( std::string & command, std::vector <std::string> & parameters, bool interactive)
 {
     command_result cr = CR_NOT_IMPLEMENTED;
     Core * c = &Core::getInstance();
@@ -353,7 +357,7 @@ command_result PluginManager::InvokeCommand( std::string & command, std::vector 
     map <string, Plugin *>::iterator iter = belongs.find(command);
     if(iter != belongs.end())
     {
-        cr = iter->second->invoke(command, parameters);
+        cr = iter->second->invoke(command, parameters, interactive);
     }
     cmdlist_mutex->unlock();
     return cr;

@@ -150,7 +150,7 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("liquids", "Place magma, water or obsidian.", df_liquids));
+    commands.push_back(PluginCommand("liquids", "Place magma, water or obsidian.", df_liquids, true));
     return CR_OK;
 }
 

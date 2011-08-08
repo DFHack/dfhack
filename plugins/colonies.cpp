@@ -54,11 +54,10 @@ DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
 
     if (destroy && convert)
     {
-
-        c->con << "Kill or make bees? DECIDE!" << std::endl;
+        c->con.printerr("Kill or make bees? DECIDE!\n");
+        c->Resume();
         return CR_FAILURE;
     }
- 
     c->Suspend();
 
     Vermin    * vermin    = c->getVermin();
@@ -66,9 +65,10 @@ DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
 
     SpawnPoints *points = vermin->getSpawnPoints();
 
-    if(!points->isValid())
+    if(!points || !points->isValid())
     {
-        c->con << "vermin not supported for this DF version" << std::endl;
+        c->con.printerr("vermin not supported for this DF version\n");
+        c->Resume();
         return CR_FAILURE;
     }
 

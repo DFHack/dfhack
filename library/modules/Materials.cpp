@@ -341,16 +341,18 @@ bool Materials::ReadCreatureTypesEx (void)
     return true;
 }
 
-void Materials::ReadAllMaterials(void)
+bool Materials::ReadAllMaterials(void)
 {
-    this->ReadInorganicMaterials();
-    this->ReadOrganicMaterials();
-    this->ReadWoodMaterials();
-    this->ReadPlantMaterials();
-    this->ReadCreatureTypes();
-    this->ReadCreatureTypesEx();
-    this->ReadDescriptorColors();
-    this->ReadOthers();
+    bool ok = true;
+    ok &= this->ReadInorganicMaterials();
+    ok &= this->ReadOrganicMaterials();
+    ok &= this->ReadWoodMaterials();
+    ok &= this->ReadPlantMaterials();
+    ok &= this->ReadCreatureTypes();
+    ok &= this->ReadCreatureTypesEx();
+    ok &= this->ReadDescriptorColors();
+    ok &= this->ReadOthers();
+    return ok;
 }
 
 /// miserable pile of magic. The material system is insane.

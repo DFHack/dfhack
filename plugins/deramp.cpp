@@ -7,14 +7,37 @@
 #include <assert.h>
 #include <string.h>
 using namespace std;
+#include <dfhack/Core.h>
+#include <dfhack/Console.h>
+#include <dfhack/Export.h>
+#include <dfhack/PluginManager.h>
+#include <dfhack/modules/Maps.h>
+#include <dfhack/TileTypes.h>
+using namespace DFHack;
 
-#include <DFHack.h>
-#include <dfhack/DFTileTypes.h>
-#include <dfhack/extra/termutil.h>
+DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters);
 
-int main (void)
+DFhackCExport const char * plugin_name ( void )
 {
-    bool temporary_terminal = TemporaryTerminal();
+    return "deramp";
+}
+
+DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+{
+    commands.clear();
+    commands.push_back(PluginCommand("deramp",
+                                     "De-ramp.  All ramps marked for removal are replaced with floors.",
+                                     df_deramp));
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown ( Core * c )
+{
+    return CR_OK;
+}
+
+DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
+{
     uint32_t x_max,y_max,z_max;
     uint32_t num_blocks = 0;
     uint32_t bytes_read = 0;
@@ -29,33 +52,15 @@ int main (void)
     int count=0;
     int countbad=0;
 
-    DFHack::ContextManager DFMgr("Memory.xml");
-    DFHack::Context *DF = DFMgr.getSingleContext();
-
-    //sanity check
-    assert( sizeof(designations) == (16*16*sizeof(DFHack::t_designation)) );
-
-    //Init
-    try
-    {
-        DF->Attach();
-    }
-    catch (exception& e)
-    {
-        cerr << e.what() << endl;
-        if(temporary_terminal)
-            cin.ignore();
-        return 1;
-    }
-    DFHack::Maps *Mapz = DF->getMaps();
+    c->Suspend();
+    DFHack::Maps *Mapz = c->getMaps();
 
     // init the map
     if (!Mapz->Start())
     {
-        cerr << "Can't init map." << endl;
-        if(temporary_terminal)
-            cin.ignore();
-        return 1;
+        c->con.printerr("Can't init map.\n");
+        c->Resume();
+        return CR_FAILURE;
     }
 
     Mapz->getSize(x_max,y_max,z_max);
@@ -69,12 +74,12 @@ int main (void)
         {
             for (uint32_t z = 0; z< z_max;z++)
             {
-                if (Mapz->isValidBlock(x,y,z))
+                if (Mapz->getBlock(x,y,z))
                 {
                     dirty= false;
                     Mapz->ReadDesignations(x,y,z, &designations);
                     Mapz->ReadTileTypes(x,y,z, &tiles);
-                    if (Mapz->isValidBlock(x,y,z+1))
+                    if (Mapz->getBlock(x,y,z+1))
                     {
                         Mapz->ReadTileTypes(x,y,z+1, &tilesAbove);
                     }
@@ -124,7 +129,7 @@ int main (void)
                     {
                         Mapz->WriteDesignations(x,y,z, &designations);
                         Mapz->WriteTileTypes(x,y,z, &tiles);
-                        if (Mapz->isValidBlock(x,y,z+1))
+                        if (Mapz->getBlock(x,y,z+1))
                         {
                             Mapz->WriteTileTypes(x,y,z+1, &tilesAbove);
                         }
@@ -134,13 +139,10 @@ int main (void)
             }
         }
     }
-    DF->Detach();
-    cout << "Found and changed " << count << " tiles." << endl;
-    cout << "Fixed " << countbad << " bad down ramps." << endl;
-    if(temporary_terminal)
-    {
-        cout << "Done. Press any key to continue" << endl;
-        cin.ignore();
-    }
-    return 0;
+    c->Resume();
+    if(count)
+        c->con.print("Found and changed %d tiles.\n",count);
+    if(countbad)
+        c->con.print("Fixed %d bad down ramps.\n",countbad);
+    return CR_OK;
 }

@@ -7,7 +7,7 @@
 #include <limits>
 using namespace std;
 
-#include <conio.h>
+//#include <conio.h>
 
 
 #include <DFHack.h>

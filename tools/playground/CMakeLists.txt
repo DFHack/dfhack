@@ -74,13 +74,17 @@ DFHACK_TOOL(dfhellhole hellhole.cpp)
 # Author: zilpin
 # Arbitrary tile drawing at the cursor.
 # Does not fix tiles above/below for consistency (e.g. ramps).
-DFHACK_TOOL(dfdrawtile drawtile.cpp)
+IF(WIN32)
+    DFHACK_TOOL(dfdrawtile drawtile.cpp)
+ENDIF()
 
 # veinswap
 # Author: zilpin
 # Randomly swap a percentage of the specified vein material with another material.
 # Or, set the material of a vein under the cursor.
-DFHACK_TOOL(dfveinswap veinswap.cpp)
+IF(WIN32)
+    DFHACK_TOOL(dfveinswap veinswap.cpp)
+ENDIF()
 
 # lumberjack
 # Author: zilpin

@@ -670,7 +670,7 @@ namespace DFHack
 		//Cheap pseudo-entropy, by using address of the variable on the stack.
 		//No need for real random numbers.
 		static int entropy;
-		entropy += (int)( (void *)(&match) );
+		entropy += (long)( (void *)(&match) );
 		entropy ^= ((entropy & 0xFF000000)>>24) ^ ((entropy & 0x00FF0000)>>16);
 
 

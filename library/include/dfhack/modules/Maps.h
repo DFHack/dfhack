@@ -674,7 +674,7 @@ namespace DFHack
                        std::vector<t_worldconstruction>* constructions = 0
                       );
 		/// write a single vein back to the address it was retreived from
-		bool Maps::WriteVein(t_vein *vein);
+		bool WriteVein(t_vein *vein);
 
 		/// read all plants in this block
         bool ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<dfh_plant>* plants);

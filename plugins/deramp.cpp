@@ -51,7 +51,17 @@ DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
     bool dirty= false;
     int count=0;
     int countbad=0;
-
+    for(int i = 0; i < parameters.size();i++)
+    {
+        if(parameters[i] == "help" || parameters[i] == "?")
+        {
+            c->con.print("This command does two things:\n"
+            "* If there are any ramps designated for removal, thyw will be instantly removed.\n"
+            "* Any ramps that don't have their counterpart will be removed (fixes bugs with caveins)\n"
+            );
+            return CR_OK;
+        }
+    }
     c->Suspend();
     DFHack::Maps *Mapz = c->getMaps();
 

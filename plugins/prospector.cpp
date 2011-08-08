@@ -125,7 +125,7 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("prospect","Show stats of available raw resources. Use parameter 'all' to show hidden resources.",prospector));
+    commands.push_back(PluginCommand("prospect","Show stats of available raw resources. Use option 'all' to show hidden resources.",prospector));
     return CR_OK;
 }
 
@@ -141,9 +141,22 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     bool showSlade = true;
     bool showTemple = true;
     Console & con = c->con;
-    if(parameters.size() && parameters[0] == "all")
+    for(int i = 0; i < parameters.size();i++)
     {
-        showHidden = true;
+        if (parameters[0] == "all")
+        {
+            showHidden = true;
+        }
+        else if(parameters[i] == "help" || parameters[i] == "?")
+        {
+            c->con.print("Prints a big list of all the present minerals.\n"
+                         "By default, only the visible part of the map is scanned.\n"
+                         "\n"
+                         "Options:\n"
+                         "all   - Scan the whole map, as if it was revealed.\n"
+            );
+            return CR_OK;
+        }
     }
     uint32_t x_max = 0, y_max = 0, z_max = 0;
     c->Suspend();

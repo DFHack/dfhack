@@ -25,8 +25,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.clear();
     commands.push_back(PluginCommand("weather",
                "Print the weather map or change weather.\
-\n              Options: 'lock'/'unlock' = disallow game from changing weather\
-\n                       'snow' = make it snow, 'rain' = make it rain.\
+\n              Options: 'snow' = make it snow, 'rain' = make it rain.\
 \n                       'clear' = clear the sky",weather));
     return CR_OK;
 }
@@ -44,6 +43,7 @@ DFhackCExport command_result weather (Core * c, vector <string> & parameters)
     bool snow = false;
     bool rain = false;
     bool clear = false;
+    bool help = false;
     for(int i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "rain")
@@ -56,6 +56,12 @@ DFhackCExport command_result weather (Core * c, vector <string> & parameters)
             lock = true;
         else if(parameters[i] == "unlock")
             unlock = true;
+        else if(parameters[i] == "help" || parameters[i] == "?")
+            help = true;
+    }
+    if(help)
+    {
+        
     }
     if(lock && unlock)
     {

@@ -166,6 +166,16 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
 
     DFHack::Maps * Maps;
     DFHack::Gui * Position;
+    for(int i = 0; i < parameters.size();i++)
+    {
+        if(parameters[i] == "help" || parameters[i] == "?")
+        {
+            c->con.print("This tool allows placing magma, water and other similar things.\n"
+            "It is interactive and further help is available when you run it.\n"
+            );
+            return CR_OK;
+        }
+    }
     Brush * brush = new RectangleBrush(1,1);
     string brushname = "point";
     bool end = false;

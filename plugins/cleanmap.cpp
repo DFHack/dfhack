@@ -21,7 +21,7 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("cleanmap","Cleans the map from various substances. Options: 'snow' for removing snow, 'mud' for mud.",cleanmap));
+    commands.push_back(PluginCommand("cleanmap","Cleans the map from various substances.",cleanmap));
     return CR_OK;
 }
 
@@ -37,12 +37,26 @@ DFhackCExport command_result cleanmap (Core * c, vector <string> & parameters)
 
     bool snow = false;
     bool mud = false;
+    bool help = false;
     for(int i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "snow")
             snow = true;
         else if(parameters[i] == "mud")
             mud = true;
+        else if(parameters[i] == "help" ||parameters[i] == "?")
+        {
+            help = true;
+        }
+    }
+    if(help)
+    {
+        c->con.print("This command cleans the coverings from the map. Snow and mud are ignored by default.\n"
+                     "Options:\n"
+                     "snow   - also remove snow\n"
+                     "mud    - also remove mud\n"
+                    );
+        return CR_OK;
     }
     c->Suspend();
     vector<DFHack::t_spattervein *> splatter;

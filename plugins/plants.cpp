@@ -48,7 +48,7 @@ enum do_what
     do_extirpate
 };
 
-static bool getoptions( vector <string> & parameters, bool & shrubs, bool & trees)
+static bool getoptions( vector <string> & parameters, bool & shrubs, bool & trees, bool & help)
 {
     for(int i = 0;i < parameters.size();i++)
     {
@@ -65,6 +65,10 @@ static bool getoptions( vector <string> & parameters, bool & shrubs, bool & tree
             trees = true;
             shrubs = true;
         }
+        else if(parameters[i] == "help" || parameters[i] == "?")
+        {
+            help = true;
+        }
         else
         {
             return false;
@@ -79,8 +83,21 @@ static bool getoptions( vector <string> & parameters, bool & shrubs, bool & tree
  * And he cursed the plants and trees for their bloodless wood, turning them into ash and smoldering ruin.
  * Armok was pleased and great temples were built by the dwarves, for they shared his hatred for trees and plants.
  */
-static command_result immolations (Core * c, do_what what, bool shrubs, bool trees)
+static command_result immolations (Core * c, do_what what, bool shrubs, bool trees, bool help)
 {
+    static const char * what1 = "destroys";
+    static const char * what2 = "burns";
+    if(help)
+    {
+        c->con.print("Without any options, this command %s a plant under the cursor.\n"
+        "Options:\n"
+        "shrubs   - affect all shrubs\n"
+        "trees    - affect all trees\n"
+        "all      - affect all plants\n",
+        what == do_immolate? what2 : what1
+        );
+        return CR_OK;
+    }
     c->Suspend();
     DFHack::Maps *maps = c->getMaps();
     if (!maps->Start())
@@ -158,10 +175,10 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
 
 DFhackCExport command_result df_immolate (Core * c, vector <string> & parameters)
 {
-    bool shrubs = false, trees = false;
-    if(getoptions(parameters,shrubs,trees))
+    bool shrubs = false, trees = false, help = false;
+    if(getoptions(parameters,shrubs,trees,help))
     {
-        return immolations(c,do_immolate,shrubs,trees);
+        return immolations(c,do_immolate,shrubs,trees, help);
     }
     else
     {
@@ -172,10 +189,10 @@ DFhackCExport command_result df_immolate (Core * c, vector <string> & parameters
 
 DFhackCExport command_result df_extirpate (Core * c, vector <string> & parameters)
 {
-    bool shrubs = false, trees = false;
-    if(getoptions(parameters,shrubs,trees))
+    bool shrubs = false, trees = false, help = false;
+    if(getoptions(parameters,shrubs,trees, help))
     {
-        return immolations(c,do_extirpate,shrubs,trees);
+        return immolations(c,do_extirpate,shrubs,trees, help);
     }
     else
     {
@@ -186,7 +203,14 @@ DFhackCExport command_result df_extirpate (Core * c, vector <string> & parameter
 
 DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
 {
-    //uint32_t x_max = 0, y_max = 0, z_max = 0;
+    for(int i = 0; i < parameters.size();i++)
+    {
+        if(parameters[i] == "help" || parameters[i] == "?")
+        {
+            c->con.print("This command turns all living saplings into full-grown trees.\n");
+            return CR_OK;
+        }
+    }
     c->Suspend();
     DFHack::Maps *maps = c->getMaps();
     Console & con = c->con;

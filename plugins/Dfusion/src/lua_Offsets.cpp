@@ -1,5 +1,7 @@
 #include "lua_Offsets.h"
+#include <string.h>
 //TODO make a seperate module with peeks/pokes and page permisions (linux/windows spec)
+//TODO maybe remove alltogether- use DFHack::Process instead?
 unsigned char peekb(size_t offset) 
 {
 	return *((unsigned char*)(offset));
@@ -18,7 +20,7 @@ void peekarb(size_t offset, void *mem,size_t size)
 }
 void peekstr(size_t offset, char* buf, size_t maxsize)
 {
-	strcpy_s(buf,maxsize,(char*)offset);
+	strncpy(buf,(char*)offset,maxsize);
 }
 void pokeb(size_t offset,unsigned char val) 
 {
@@ -38,7 +40,7 @@ void pokearb(size_t offset, void *mem,size_t size)
 }
 void pokestr(size_t offset, char* buf, size_t maxsize)
 {
-	strcpy_s((char*)offset,maxsize,buf);
+	strncpy((char*)offset,buf,maxsize);
 }
 template <typename T>
 T peek(size_t offset)		//prob lower performance

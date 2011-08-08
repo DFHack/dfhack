@@ -49,7 +49,7 @@ LUNE_METHODS_START(lua::Hexsearch)
 	method(lua::Hexsearch,findall),
 	method(lua::Hexsearch,reset),
 LUNE_METHODS_END();
-#define __ADDCONST(name) st.push(::Hexsearch:: ## name); st.setglobal(#name)
+#define __ADDCONST(name) st.push(::Hexsearch::  name); st.setglobal(#name)
 void lua::RegisterHexsearch(lua::state &st)
 {
 

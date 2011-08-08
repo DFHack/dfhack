@@ -1,5 +1,11 @@
 #include "functioncall.h"
-#define __F_TDEF(CONV,CONV_,tag) typedef int(CONV_ *F_TYPE##CONV##tag)
+
+#ifdef LINUX_BUILD
+#define __F_TDEF(CONV,CONV_,tag) typedef int(__attribute__ ( (CONV_) ) *F_TYPE##CONV##tag)
+#else
+#define __F_TDEF(CONV,CONV_,tag) typedef int(__ ## CONV_ *F_TYPE##CONV##tag)
+#endif
+
 #define __F_T(CONV,tag) F_TYPE##CONV##tag
 #define __F_TYPEDEFS(CONV,CONV_)	__F_TDEF(CONV,CONV_,1)(int);\
 	__F_TDEF(CONV,CONV_,2)(int,int);\
@@ -57,7 +63,7 @@
 			       (arguments[0],arguments[1],arguments[2],arguments[3],arguments[4],arguments[5],arguments[6],arguments[7],arguments[8],arguments[9]);}*/
 	
 
-int FunctionCaller::CallF(size_t count,callconv conv,void* f,const vector<int> &arguments)//more complex but not more error safe
+/*int FunctionCaller::CallF(size_t count,callconv conv,void* f,const vector<int> &arguments)//more complex but not more error safe
 {
 	__F_TYPEDEFS(STD_CALL,__stdcall);
 	__F_TYPEDEFS(FAST_CALL,__fastcall);
@@ -69,13 +75,13 @@ int FunctionCaller::CallF(size_t count,callconv conv,void* f,const vector<int> &
 	__FCALLEX(THIS_CALL,__thiscall);
 	__FCALLEX(CDECL_CALL,__cdecl);
 	}
-}
+}*/
 int FunctionCaller::CallFunction(size_t func_ptr,callconv conv,const vector<int> &arguments)
 {
 	//nasty nasty code...
 #ifdef LINUX_BUILD	//quick fix
 	if(conv==THIS_CALL)
-		conv=STD_CALL
+		conv=STD_CALL;
 #endif
 	void* f= reinterpret_cast<void*>(func_ptr+base_);
 	size_t count=arguments.size();
@@ -83,15 +89,15 @@ int FunctionCaller::CallFunction(size_t func_ptr,callconv conv,const vector<int>
 		return (reinterpret_cast<int (*)()>(f))(); //does not matter how we call it...
 	int ret=0;
 	//typedefs
-	__F_TYPEDEFS(STD_CALL,__stdcall);
-	__F_TYPEDEFS(FAST_CALL,__fastcall);
-	__F_TYPEDEFS(THIS_CALL,__thiscall);
-	__F_TYPEDEFS(CDECL_CALL,__cdecl);
+	__F_TYPEDEFS(STD_CALL,stdcall);
+	__F_TYPEDEFS(FAST_CALL,fastcall);
+	__F_TYPEDEFS(THIS_CALL,thiscall);
+	__F_TYPEDEFS(CDECL_CALL,cdecl);
 	//calls
-	__FCALL(STD_CALL,__stdcall);
-	__FCALL(FAST_CALL,__fastcall);
-	__FCALL(THIS_CALL,__thiscall);
-	__FCALL(CDECL_CALL,__cdecl);
+	__FCALL(STD_CALL,stdcall);
+	__FCALL(FAST_CALL,fastcall);
+	__FCALL(THIS_CALL,thiscall);
+	__FCALL(CDECL_CALL,cdecl);
 	return -1; //incorect type. Should probably throw...
 	//return CallF(count,conv,f,arguments);
 	/*//testing part{  worked some time ago..., put where DFHack::Core is accesible

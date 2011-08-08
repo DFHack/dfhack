@@ -249,7 +249,7 @@ private:
     static int index_T(lua_State *L)  // calls with (table, key), return value
     {
         lua::state st(L);
-        string key=st.as<string>(-1);
+        std::string key=st.as<std::string>(-1);
         T *p=check(L,1);
         GetTable(L,p);
         st.insert(-2);

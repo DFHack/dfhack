@@ -18,9 +18,11 @@ function adv_tools.ressurect()
 	engine.poke(vector:getval(indx),ptr_Creature.bloodlvl,60000) --give blood
 	engine.poke(vector:getval(indx),ptr_Creature.bleedlvl,0) --stop some bleeding...
 	local flg=engine.peek(vector:getval(indx),ptr_Creature.flags)
-    flg:set(1,false) --ALIVE
+	flg:set(1,false) --ALIVE
     flg:set(39,false) -- leave body yet again
     flg:set(37,false) -- something todo with wounds- lets you walk again.
+    flg:set(58,true) -- makes them able to breathe
+    flg:set(61,true) -- gives them sight
     engine.poke(vector:getval(indx),ptr_Creature.flags,flg)
 end
 

@@ -16,6 +16,7 @@
 #include "lua_Process.h"
 #include "lua_Hexsearch.h"
 #include "lua_Misc.h"
+#include "lua_VersionInfo.h"
 #include "functioncall.h"
 
 using std::vector;
@@ -41,24 +42,25 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 	lua::RegisterProcess(lua::glua::Get(),c->p);
 	lua::RegisterHexsearch(lua::glua::Get());
 	lua::RegisterMisc(lua::glua::Get());
+	lua::RegisterVersionInfo(lua::glua::Get());
     commands.push_back(PluginCommand("dfusion","Init dfusion system.",dfusion));
 	commands.push_back(PluginCommand("lua", "Run interactive interpreter.\
 \n              Options: <filename> = run <filename> instead",lua_run));
-	
+
 	mymutex=new tthread::mutex;
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
-	
+
 // shutdown stuff
 	delete mymutex;
 	return CR_OK;
 }
 
 DFhackCExport command_result plugin_onupdate ( Core * c )
-{        
+{
 	uint64_t time2 = GetTimeMs64();
 	uint64_t delta = time2-timeLast;
 	if(delta<100)
@@ -91,7 +93,7 @@ void InterpreterLoop(Core* c)
 	string curline;
 	con.print("Type quit to exit interactive mode\n");
 	con.lineedit(">>",curline);
-	
+
 	while (curline!="quit") {
 		con.history_add(curline);
 		try
@@ -140,7 +142,7 @@ DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
 	Console &con=c->con;
 	mymutex->lock();
 	lua::state s=lua::glua::Get();
-	
+
 	try{
 		s.loadfile("dfusion/init.lua"); //load script
 		s.pcall(0,0);// run it

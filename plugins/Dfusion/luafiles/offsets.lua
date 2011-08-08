@@ -1,11 +1,11 @@
 
 
 function f_dwarves()
-	--pos_=offsets.findall(0,0x07,0,0,0) --search pattern
-	--for _,v in pairs(pos_) do
-	--	print(string.format("Possible hit:%x",v))
-	--end
-	pos=offsets.find(0,0x07,0,0,0) --search pattern
+	pos_=offsets.findall(0,0x24,0x14,0x07,0,0,0) --search pattern
+	for _,v in pairs(pos_) do
+		print(string.format("Possible hit:%x",v))
+	end
+	pos=offsets.find(0,0x24,0x14,0x07,0,0,0,0xeb,0x08,0x8d) --search pattern
 	print(string.format("Start dwarf position:%x",pos))
 	if pos~=0 then
 		return pos+2-offsets.base();

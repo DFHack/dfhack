@@ -8,6 +8,11 @@ ELSE()
     SET ( LIBS m dl )
 ENDIF()
 
+IF(UNIX)
+  add_definitions(-DLINUX_BUILD)
+  SET(CMAKE_C_FLAGS "-m32")
+ENDIF()
+
 # Build Libraries
 SET (SRC_LIBLUA
 src/lapi.c

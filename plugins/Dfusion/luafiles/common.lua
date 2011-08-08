@@ -3,9 +3,9 @@ STD_STRING=0
 DWORD=1
 WORD=2
 BYTE=3
-
 function GetTextRegion()
 	ranges__=ranges__ or Process.getMemRanges()
+	--print("Ranges:"..#ranges__)
 	for k,v in pairs(ranges__) do
 		--for k2,v2 in pairs(v) do
 		--	print(string.format("%d %s->%s",k,tostring(k2),tostring(v2)))
@@ -15,8 +15,10 @@ function GetTextRegion()
 		--if(v["read"])then num=num+1 end
 		--if(v["write"])then	num=num+10 end
 		--if(v["execute"]) then num=num+100 end
-		--print(string.format("%d %x->%x %s %d",k,v["start"],v["end"],v.name,num))
-		local pos=string.find(v.name,".text")
+		--if num>=100 then
+		--print(string.format("%d %x->%x %s %d",k,v["start"],v["end"],v.name or "",num))
+		--end
+		local pos=string.find(v.name,".text") or string.find(v.name,"libs/Dwarf_Fortress")
 		if(pos~=nil) then
 			return v;
 		end

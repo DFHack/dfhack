@@ -201,3 +201,7 @@ weather
 =======
 Lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.
 Fill those ponds without mucking around with dfliquids :D Rain can also stop brush fires.
+
+ssense
+======
+Creates a stonesense window!

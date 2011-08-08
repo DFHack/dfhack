@@ -71,6 +71,10 @@ SET(DFHACK_DOXYGEN_DESTINATION dev/doxygen)
 OPTION(BUILD_LIBRARY "Build the library that goes into DF." ON)
 OPTION(BUILD_PLUGINS "Build the plugins." ON)
 
+# build the static lua
+INCLUDE_DIRECTORIES ( lua/include )
+add_subdirectory (lua)
+
 IF(BUILD_LIBRARY)
     #add_subdirectory (dlib)
     add_subdirectory (library)

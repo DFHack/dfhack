@@ -45,21 +45,21 @@ case "$1" in
     ;;
   -h | --helgrind)
     shift
-    LD_PRELOAD=./libdfhack.so valgrind $DF_HELGRIND_OPTS --tool=helgrind --log-file=helgrind.log ./libs/Dwarf_Fortress $*
+    LD_PRELOAD=./libdfhack.so setarch i386 -R valgrind $DF_HELGRIND_OPTS --tool=helgrind --log-file=helgrind.log ./libs/Dwarf_Fortress $*
     ret=$?
     ;;
   -v | --valgrind)
     shift
-    LD_PRELOAD=./libdfhack.so valgrind $DF_VALGRIND_OPTS --log-file=valgrind.log ./libs/Dwarf_Fortress $*
+    LD_PRELOAD=./libdfhack.so setarch i386 -R valgrind $DF_VALGRIND_OPTS --log-file=valgrind.log ./libs/Dwarf_Fortress $*
     ret=$?
     ;;
   -c | --callgrind)
     shift
-    LD_PRELOAD=./libdfhack.so valgrind $DF_CALLGRIND_OPTS --tool=callgrind --separate-threads=yes --dump-instr=yes --instr-atstart=no --log-file=callgrind.log ./libs/Dwarf_Fortress $*
+    LD_PRELOAD=./libdfhack.so setarch i386 -R valgrind $DF_CALLGRIND_OPTS --tool=callgrind --separate-threads=yes --dump-instr=yes --instr-atstart=no --log-file=callgrind.log ./libs/Dwarf_Fortress $*
     ret=$?
     ;;
   *)
-    LD_PRELOAD=./libdfhack.so ./libs/Dwarf_Fortress $*
+    LD_PRELOAD=./libdfhack.so setarch i386 -R ./libs/Dwarf_Fortress $*
     ret=$?
     ;;
 esac

@@ -41,7 +41,7 @@ function embark(names)
 		count=MakeTable(modpos,modsize,names) --just remake tables
 	else
 	
-	tofind=offsets.getEx('CurrentRace')
+	tofind=VersionInfo.getGroup("Creatures"):getAddress("current_race")--offsets.getEx('CurrentRace')
 
 	loc=offsets.find(stoff,0xa1,DWORD_,tofind)
 

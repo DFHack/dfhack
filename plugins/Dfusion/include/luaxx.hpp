@@ -28,7 +28,11 @@
 #define lua_Integer_long 1
 #define lua_Integer_int 1
 
-#include <lua.hpp>
+extern "C" {
+#include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
+}
 #include <string>
 #include <vector>
 #include <new>

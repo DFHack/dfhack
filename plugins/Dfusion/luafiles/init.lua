@@ -1,3 +1,6 @@
+function print(msg)
+	Console.print(msg.."\n")
+end
 function err(msg) --make local maybe...
 	print(msg)
 	print(debug.traceback())

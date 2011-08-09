@@ -1,4 +1,117 @@
 #include "lua_VersionInfo.h"
+namespace lua
+{
+OffsetGroup::OffsetGroup(lua_State *L,int id):tblid(id)
+{
+	p=static_cast<DFHack::OffsetGroup*>(lua_touserdata(L,1));
+}
+
+int OffsetGroup::getOffset(lua_State *L)
+{
+    lua::state st(L);
+    int32_t ret=p->getOffset(st.as<std::string>(2));
+    st.push(ret);
+    return 1;
+}
+int OffsetGroup::getAddress(lua_State *L)
+{
+    lua::state st(L);
+    uint32_t ret=p->getAddress(st.as<std::string>(2));
+    st.push(ret);
+    return 1;
+}
+int OffsetGroup::getHexValue(lua_State *L)
+{
+    lua::state st(L);
+    uint32_t ret=p->getHexValue(st.as<std::string>(2));
+    st.push(ret);
+    return 1;
+}
+int OffsetGroup::getString(lua_State *L)
+{
+    lua::state st(L);
+    std::string ret=p->getString(st.as<std::string>(2));
+    st.push(ret);
+    return 1;
+}
+int OffsetGroup::getGroup(lua_State *L)
+{
+    lua::state st(L);
+	DFHack::OffsetGroup* t= p->getGroup(st.as<std::string>(2));
+	st.getglobal("OffsetGroup");
+	st.getfield("new");
+	st.pushlightuserdata(t);
+	st.pcall(1,1);
+	return 1;
+}
+int OffsetGroup::getSafeOffset(lua_State *L)
+{
+    lua::state st(L);
+    int32_t out;
+    bool ret=p->getSafeOffset(st.as<std::string>(2),out);
+    st.push(ret);
+    st.push(out);
+    return 2;
+}
+int OffsetGroup::getSafeAddress(lua_State *L)
+{
+    lua::state st(L);
+    uint32_t out;
+    bool ret=p->getSafeAddress(st.as<std::string>(2),out);
+    st.push(ret);
+    st.push(out);
+    return 2;
+}
+int OffsetGroup::PrintOffsets(lua_State *L)
+{
+	lua::state st(L);
+    std::string output;
+    output=p->PrintOffsets(st.as<int>(2)); 
+    st.push(output);
+    return 1;
+}
+int OffsetGroup::getName(lua_State *L)
+{
+    lua::state st(L);
+    std::string ret=p->getName();
+    st.push(ret);
+    return 1;
+}
+int OffsetGroup::getFullName(lua_State *L)
+{
+    lua::state st(L);
+    std::string ret=p->getFullName();
+    st.push(ret);
+    return 1;
+}
+int OffsetGroup::getParent(lua_State *L)
+{
+	lua::state st(L);
+	DFHack::OffsetGroup* t= p->getParent();
+	st.getglobal("OffsetGroup");
+	st.getfield("new");
+	st.pushlightuserdata(t);
+	st.pcall(1,1);
+	return 1;
+}
+}
+IMP_LUNE(lua::OffsetGroup,OffsetGroup);
+LUNE_METHODS_START(lua::OffsetGroup)
+	method(lua::OffsetGroup,getOffset),
+	method(lua::OffsetGroup,getAddress),
+	method(lua::OffsetGroup,getHexValue),
+	method(lua::OffsetGroup,getString),
+	method(lua::OffsetGroup,getGroup),
+
+	method(lua::OffsetGroup,getSafeOffset),
+	method(lua::OffsetGroup,getSafeAddress),
+
+	method(lua::OffsetGroup,PrintOffsets),
+	method(lua::OffsetGroup,getName),
+	method(lua::OffsetGroup,getFullName),
+	method(lua::OffsetGroup,getParent),
+LUNE_METHODS_END();
+//	VersionInfo Stuff
 static int __lua_getMD5(lua_State *S)
 {
     lua::state st(S);
@@ -20,7 +133,11 @@ static int __lua_getPE(lua_State *S)
 static int __lua_PrintOffsets(lua_State *S)
 {
     lua::state st(S);
-    std::string output=DFHack::Core::getInstance().vinfo->PrintOffsets();
+    std::string output;
+    //if(st.is<lua::nil>(1))
+        output=DFHack::Core::getInstance().vinfo->PrintOffsets();
+    //else
+    //    output=DFHack::Core::getInstance().vinfo->PrintOffsets(st.as<int>(1)); //TODO add when virtual methods are ok
     st.push(output);
     return 1;
 }
@@ -175,6 +292,89 @@ static int __lua_resolveClassIDToClassname(lua_State *S)
     st.push(ret);
     return 2;
 }
+//      OFFSET BASE STUFF (for version info)
+static int __lua_getOffset(lua_State *S)
+{
+    lua::state st(S);
+    int32_t ret=DFHack::Core::getInstance().vinfo->getOffset(st.as<std::string>(1));
+    st.push(ret);
+    return 1;
+}
+static int __lua_getAddress(lua_State *S)
+{
+    lua::state st(S);
+    uint32_t ret=DFHack::Core::getInstance().vinfo->getAddress(st.as<std::string>(1));
+    st.push(ret);
+    return 1;
+}
+static int __lua_getHexValue(lua_State *S)
+{
+    lua::state st(S);
+    uint32_t ret=DFHack::Core::getInstance().vinfo->getHexValue(st.as<std::string>(1));
+    st.push(ret);
+    return 1;
+}
+/*static int __lua_getString(lua_State *S) //from offsetbase
+{
+    lua::state st(S);
+    std::string ret=DFHack::Core::getInstance().vinfo->getString(st.as<std::string>(1));
+    st.push(ret);
+    return 1;
+}*/
+static int __lua_getGroup(lua_State *S)
+{
+	lua::state st(S);
+	DFHack::OffsetGroup* t= DFHack::Core::getInstance().vinfo->getGroup(st.as<std::string>(2));
+	st.getglobal("OffsetGroup");	
+	st.getfield("new");
+	st.pushlightuserdata(t);
+	st.pcall(1,1);
+	return 1;
+}
+static int __lua_getParent(lua_State *S)
+{
+	lua::state st(S);
+	DFHack::OffsetGroup* t= DFHack::Core::getInstance().vinfo->getParent();
+	st.getglobal("OffsetGroup");
+	st.getfield("new");
+	st.pushlightuserdata(t);
+	st.pcall(1,1);
+	return 1;
+}
+static int __lua_getSafeOffset(lua_State *S)
+{
+    lua::state st(S);
+    int32_t out;
+    bool ret=DFHack::Core::getInstance().vinfo->getSafeOffset(st.as<std::string>(1),out);
+    st.push(ret);
+    st.push(out);
+    return 2;
+}
+static int __lua_getSafeAddress(lua_State *S)
+{
+    lua::state st(S);
+    uint32_t out;
+    bool ret=DFHack::Core::getInstance().vinfo->getSafeAddress(st.as<std::string>(1),out);
+    st.push(ret);
+    st.push(out);
+    return 2;
+}
+//std::string PrintOffsets(int indentation); //overload up there^^^
+static int __lua_getName(lua_State *S)
+{
+    lua::state st(S);
+    std::string ret=DFHack::Core::getInstance().vinfo->getName();
+    st.push(ret);
+    return 1;
+}
+static int __lua_getFullName(lua_State *S)
+{
+    lua::state st(S);
+    std::string ret=DFHack::Core::getInstance().vinfo->getFullName();
+    st.push(ret);
+    return 1;
+}
+
 #define ___m(x) {#x,__lua_##x}
 const luaL_Reg lua_vinfo_func[]=
 {
@@ -198,6 +398,19 @@ const luaL_Reg lua_vinfo_func[]=
     ___m(resolveClassnameToClassID),
     ___m(resolveClassnameToVPtr),
     ___m(resolveClassIDToClassname),
+
+	___m(getGroup),
+	___m(getParent),
+
+    ___m(getOffset),
+    ___m(getAddress),
+    ___m(getHexValue),
+    //___m(getString),
+    ___m(getSafeOffset),
+    ___m(getSafeAddress),
+    ___m(getName),
+    ___m(getFullName),
+
     {NULL,NULL}
 };
 #undef ___m
@@ -212,4 +425,5 @@ void lua::RegisterVersionInfo(lua::state &st)
 
 	lua::RegFunctionsLocal(st, lua_vinfo_func);
 	st.setglobal("VersionInfo");
+	Lune<lua::OffsetGroup>::Register(st);
 }

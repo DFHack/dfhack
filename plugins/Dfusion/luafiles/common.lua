@@ -321,7 +321,9 @@ function findVectors()
 end
 
 function GetRaceToken(p) --actually gets token...
-	local vec=engine.peek(offsets.getEx('CreatureGloss'),ptr_vector)
+	print(string.format("%x vs %x",offsets.getEx('CreatureGloss'),VersionInfo.getGroup("Materials"):getAddress("creature_type_vector")))
+	--local vec=engine.peek(offsets.getEx('CreatureGloss'),ptr_vector)
+	local vec=engine.peek(VersionInfo.getGroup("Materials"):getAddress("creature_type_vector"),ptr_vector)
 	--print("Vector ok")
 	local off=vec:getval(p)
 	--print("Offset:"..off)

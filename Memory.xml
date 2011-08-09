@@ -2263,6 +2263,7 @@
                 <Address name="current_menu_state" value="0x14f5fac" />
             </Group>
             <Group name="Creatures">
+				<Address name="current_race" value="0x14F0C28" />
                 <Group name="creature">
                     <Offset name="flags3" value="0xE8"/>
                 </Group>

@@ -1,35 +1,48 @@
 //
-
 #include <iostream>
-#include <iomanip>
-#include <map>
-#include <algorithm>
 #include <vector>
-#include <locale>
-#include <functional>
+#include <map>
+#include <set>
+#include <cstdlib>
+#include <sstream>
+using std::vector;
+using std::string;
+using std::endl;
+using std::set;
 
-using namespace std;
-#include <DFHack.h>
+#include <dfhack/Core.h>
+#include <dfhack/Console.h>
+#include <dfhack/Export.h>
+#include <dfhack/PluginManager.h>
+#include <dfhack/modules/Vegetation.h>
+#include <dfhack/modules/Maps.h>
+#include <dfhack/modules/Gui.h>
+#include <dfhack/TileTypes.h>
 #include <dfhack/extra/MapExtras.h>
-#include <dfhack/extra/termutil.h>
+using namespace MapExtras;
+using namespace DFHack;
 
 //zilpin: These two functions were giving me compile errors in VS2008, so I cheated with the C style loop below, just to get it to build.
 //Original code is commented out.
 void tolower(std::string &str)
 {
-	//The C++ way...
+    //The C++ way...
     //std::transform(str.begin(), str.end(), str.begin(), std::bind2nd(std::ptr_fun(&std::tolower<char> ), std::locale("")));
 
-	//The C way...
-	for(char *c=(char *)str.c_str(); *c; ++c)
-		*c = tolower(*c);
+    //The C way...
+    for(char *c=(char *)str.c_str(); *c; ++c)
+    {
+        *c = tolower(*c);
+    }
 }
 
 void toupper(std::string &str)
 {
     //std::transform(str.begin(), str.end(), str.begin(), std::bind2nd(std::ptr_fun(&std::toupper<char>), std::locale("")));
-	for(char *c=(char *)str.c_str(); *c; ++c)
-		*c = toupper(*c);
+    for(char *c=(char *)str.c_str(); *c; ++c)
+    {
+        *c = toupper(*c);
+    }
 }
 
 int toint(const std::string &str, int failValue = 0)
@@ -44,7 +57,8 @@ int toint(const std::string &str, int failValue = 0)
     return valInt;
 }
 
-struct TileType {
+struct TileType
+{
     DFHack::TileShape shape;
     DFHack::TileMaterial material;
     DFHack::TileSpecial special;
@@ -205,50 +219,50 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
     return found;
 }
 
-void help(const std::string &option)
+void help( std::ostream & out, const std::string &option)
 {
     if (option.empty())
     {
-        std::cout << "Commands:" << std::endl
-                  << " quit / q              : quit" << std::endl
-                  << " filter / f [options]  : change filter options" << std::endl
-                  << " paint / p [options]   : change paint options" << std::endl
-                  << " point / p             : set point brush" << std::endl
-                  << " range / r             : set range brush" << std::endl
-                  << " block                 : set block brush" << std::endl
-                  << " column                : set column brush" << std::endl
-                  << std::endl
-                  << "Filter/paint options:" << std::endl
-                  << " Shape / sh / s: set tile shape information" << std::endl
-                  << " Material / mat / m: set tile material information" << std::endl
-                  << " Special / s: set special tile information" << std::endl
-                  << "See help [option] for more information" << std::endl;
+        out << "Commands:" << std::endl
+            << " quit / q              : quit" << std::endl
+            << " filter / f [options]  : change filter options" << std::endl
+            << " paint / p [options]   : change paint options" << std::endl
+            << " point / p             : set point brush" << std::endl
+            << " range / r             : set range brush" << std::endl
+            << " block                 : set block brush" << std::endl
+            << " column                : set column brush" << std::endl
+            << std::endl
+            << "Filter/paint options:" << std::endl
+            << " Shape / sh / s: set tile shape information" << std::endl
+            << " Material / mat / m: set tile material information" << std::endl
+            << " Special / s: set special tile information" << std::endl
+            << "See help [option] for more information" << std::endl;
     }
     else if (option == "shape")
     {
-        std::cout << "Available shapes:" << std::endl
-                  << " ANY" << std::endl;
+        out << "Available shapes:" << std::endl
+            << " ANY" << std::endl;
         for (int i = 0; i < DFHack::tileshape_count; i++)
         {
-            std::cout << " " << DFHack::TileShapeString[i] << std::endl;
+            out << " " << DFHack::TileShapeString[i] << std::endl;
         }
     }
     else if (option == "material")
     {
-        std::cout << "Available materials:" << std::endl
-                  << " ANY" << std::endl;
+        out << "Available materials:" << std::endl
+            << " ANY" << std::endl;
         for (int i = 0; i < DFHack::tilematerial_count; i++)
         {
-            std::cout << " " << DFHack::TileMaterialString[i] << std::endl;
+            out << " " << DFHack::TileMaterialString[i] << std::endl;
         }
     }
     else if (option == "special")
     {
-        std::cout << "Available specials:" << std::endl
-                  << " ANY" << std::endl;
+        out << "Available specials:" << std::endl
+            << " ANY" << std::endl;
         for (int i = 0; i < DFHack::tilespecial_count; i++)
         {
-            std::cout << " " << DFHack::TileSpecialString[i] << std::endl;
+            out << " " << DFHack::TileSpecialString[i] << std::endl;
         }
     }
 }
@@ -397,24 +411,32 @@ public:
     };
 };
 
-int main(int argc, char *argv[])
+DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameters);
+
+DFhackCExport const char * plugin_name ( void )
 {
-    bool temporary_terminal = TemporaryTerminal();
+    return "tiletypes";
+}
+
+DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+{
+    commands.clear();
+    commands.push_back(PluginCommand("tiletypes", "Paint map tiles freely, similar to liquids.", df_tiletypes, true));
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown ( Core * c )
+{
+    return CR_OK;
+}
+
+DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameters)
+{
     uint32_t x_max = 0, y_max = 0, z_max = 0;
     int32_t x = 0, y = 0, z = 0;
-    DFHack::ContextManager manager("Memory.xml");
 
-    DFHack::Context *context = manager.getSingleContext();
-    if (!context->Attach())
-    {
-        std::cerr << "Unable to attach to DF!" << std::endl;
-        if(temporary_terminal)
-            std::cin.ignore();
-        return 1;
-    }
-
-    DFHack::Maps *maps = context->getMaps();
-    DFHack::Gui *gui = context->getGui();
+    DFHack::Maps *maps;
+    DFHack::Gui *gui;
 
     TileType filter, paint;
     Brush *brush = new RectangleBrush(1,1);
@@ -422,26 +444,18 @@ int main(int argc, char *argv[])
     std::string brushname = "point";
     int width = 1, height = 1, z_levels = 1;
 
-    context->Resume();
     while (!end)
     {
-        std::cout << std::endl;
-        std::cout << "Filter: " << filter << std::endl;
-        std::cout << "Paint: " << paint << std::endl;
-        std::cout << "Brush: " << brushname << std::endl;
+        c->con << "Filter: " << filter    << std::endl
+               << "Paint: "  << paint     << std::endl
+               << "Brush: "  << brushname << std::endl;
 
         std::string input = "";
         std::string command = "";
         std::string option = "";
         std::string value = "";
 
-        std::cout << "Command > ";
-        std::getline(std::cin, input);
-        if (std::cin.eof())
-        {
-            command = "q";
-            std::cout << std::endl; // No newline from the user here!
-        }
+        c->con.lineedit("tiletypes> ",input);
         std::istringstream ss(input);
         ss >> command >> option >> value;
         tolower(command);
@@ -449,7 +463,7 @@ int main(int argc, char *argv[])
 
         if (command == "help" || command == "?")
         {
-            help(option);
+            help(c->con,option);
         }
         else if (command == "quit" || command == "q")
         {
@@ -471,18 +485,21 @@ int main(int argc, char *argv[])
         }
         else if (command == "range" || command == "r")
         {
-            std::cout << "\tSet range width <" << width << "> ";
-            std::getline(std::cin, command);
+            std::stringstream ss;
+            ss << "Set range width <" << width << "> ";
+            c->con.lineedit(ss.str(),command);
             width = command == "" ? width : toint(command);
             if (width < 1) width = 1;
 
-            std::cout << "\tSet range height <" << height << "> ";
-            std::getline(std::cin, command);
+            ss.str("");
+            ss << "Set range height <" << height << "> ";
+            c->con.lineedit(ss.str(),command);
             height = command == "" ? height : toint(command);
             if (height < 1) height = 1;
 
-            std::cout << "\tSet range z-levels <" << z_levels << "> ";
-            std::getline(std::cin, command);
+            ss.str("");
+            ss << "Set range z-levels <" << z_levels << "> ";
+            c->con.lineedit(ss.str(),command);
             z_levels = command == "" ? z_levels : toint(command);
             if (z_levels < 1) z_levels = 1;
 
@@ -513,41 +530,41 @@ int main(int argc, char *argv[])
         {
             if (paint.empty())
             {
-                std::cout << "No paint!" << std::endl;
+                c->con.printerr("Set the paint first.\n");
                 continue;
             }
 
-            context->Suspend();
-
+            c->Suspend();
+            maps = c->getMaps();
+            gui = c->getGui();
             if (!maps->Start())
             {
-                std::cerr << "Cannot get map info!" << std::endl;
-                context->Detach();
-                if(temporary_terminal)
-                    std::cin.ignore();
-                return 1;
+                c->con.printerr("Cannot get map info!\n");
+                c->Resume();
+                return CR_FAILURE;
             }
             maps->getSize(x_max, y_max, z_max);
 
             if (!(gui->Start() && gui->getCursorCoords(x,y,z)))
             {
-                cout << "Can't get cursor coords! Make sure you have a cursor active in DF." << endl;
-                break;
+                c->con.printerr("Can't get cursor coords! Make sure you have a cursor active in DF.\n");
+                c->Resume();
+                return CR_FAILURE;
             }
-            std::cout << "Cursor coords: (" << x << ", " << y << ", " << z << ")" << std::endl;
+            c->con.print("Cursor coords: (%d, %d, %d)\n",x,y,z);
 
             DFHack::DFCoord cursor(x,y,z);
             MapExtras::MapCache map(maps);
             coord_vec all_tiles = brush->points(map, cursor);
-            std::cout << "working..." << std::endl;
+            c->con.print("working...\n");
 
             for (coord_vec::iterator iter = all_tiles.begin(); iter != all_tiles.end(); ++iter)
             {
                 const DFHack::TileRow *source = DFHack::getTileRow(map.tiletypeAt(*iter));
 
                 if ((filter.shape > -1 && filter.shape != source->shape)
-                        || (filter.material > -1 && filter.material != source->material)
-                        || (filter.special > -1 && filter.special != source->special))
+                 || (filter.material > -1 && filter.material != source->material)
+                 || (filter.special > -1 && filter.special != source->special))
                 {
                     continue;
                 }
@@ -584,23 +601,15 @@ int main(int argc, char *argv[])
 
             if (map.WriteAll())
             {
-                std::cout << "OK" << std::endl;
+                c->con.print("OK\n");
             }
             else
             {
-                std::cout << "Something failed horribly! RUN!" << std::endl;
+                c->con.printerr("Something failed horribly! RUN!\n");
             }
             maps->Finish();
-            context->Resume();
+            c->Resume();
         }
     }
-
-    context->Detach();
-    if(temporary_terminal)
-    {
-        std::cout << "Press any key to finish.";
-        std::cin.ignore();
-    }
-    std::cout << std::endl;
-    return 0;
+    return CR_OK;
 }

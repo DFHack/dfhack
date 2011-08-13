@@ -25,7 +25,12 @@ distribution.
 #pragma once
 #include "dfhack/Pragma.h"
 #include "dfhack/Export.h"
-#include <ostream>
+#include <deque>
+#include <fstream>
+#include <llimits.h>
+#include <assert.h>
+#include <iostream>
+#include <string>
 namespace tthread
 {
     class mutex;
@@ -34,6 +39,74 @@ namespace tthread
 }
 namespace  DFHack
 {
+    class CommandHistory
+    {
+    public:
+        CommandHistory(std::size_t capacity = 100)
+        {
+            this->capacity = capacity;
+        }
+        bool load (const char * filename)
+        {
+            std::string reader;
+            std::ifstream infile(filename);
+            if(infile.bad())
+                return false;
+            std::string s;
+            while(std::getline(infile, s))
+            {
+                if(s.empty())
+                    continue;
+                history.push_back(s);
+            }
+            return true;
+        }
+        bool save (const char * filename)
+        {
+            std::ofstream outfile (filename);
+            if(outfile.bad())
+                return false;
+            for(auto iter = history.begin();iter < history.end(); iter++)
+            {
+                outfile << *iter << std::endl;
+            }
+            outfile.close();
+            return true;
+        }
+        /// add a command to the history
+        void add(const std::string& command)
+        {
+            // if current command = last in history -> do not add. Always add if history is empty.
+            if(!history.empty() && history.front() == command)
+                return;
+            history.push_front(command);
+            if(history.size() > capacity)
+                history.pop_back();
+        }
+        /// clear the command history
+        void clear()
+        {
+            history.clear();
+        }
+        /// get current history size
+        std::size_t size()
+        {
+            return history.size();
+        }
+        /// get pointer to a particular history item
+        std::string & operator[](std::size_t index)
+        {
+            assert(index < history.size());
+            return history[index];
+        }
+        void remove( void )
+        {
+            history.pop_front();
+        }
+    private:
+        std::size_t capacity;
+        std::deque <std::string> history;
+    };
     class Private;
     class DFHACK_EXPORT Console : public std::ostream
     {
@@ -91,11 +164,7 @@ namespace  DFHack
         /// beep. maybe?
         //void beep (void);
         /// A simple line edit (raw mode)
-        int lineedit(const std::string& prompt, std::string& output);
-        /// add a command to the history
-        void history_add(const std::string& command);
-        /// clear the command history
-        void history_clear();
+        int lineedit(const std::string& prompt, std::string& output, CommandHistory & history );
     private:
         Private * d;
         tthread::mutex * wlock;

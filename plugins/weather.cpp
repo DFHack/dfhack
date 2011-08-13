@@ -23,10 +23,7 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("weather",
-               "Print the weather map or change weather.\
-\n              Options: 'snow' = make it snow, 'rain' = make it rain.\
-\n                       'clear' = clear the sky",weather));
+    commands.push_back(PluginCommand("weather", "Print the weather map or change weather.",weather));
     return CR_OK;
 }
 
@@ -61,7 +58,13 @@ DFhackCExport command_result weather (Core * c, vector <string> & parameters)
     }
     if(help)
     {
-        
+        c->con.print("Prints the current weather map by default.\n"
+                     "Options:\n"
+                     "snow   - make it snow everywhere.\n"
+                     "rain   - make it rain.\n"
+                     "clear  - clear the sky.\n"
+        );
+        return CR_OK;
     }
     if(lock && unlock)
     {

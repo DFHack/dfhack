@@ -140,6 +140,23 @@ namespace DFHack
         {
             //sync();
         }
+    private:
+        bool read_char(unsigned char & out)
+        {
+            while(1)
+            {
+                if (select(FD_SETSIZE, &descriptor_set, NULL, NULL, NULL) < 0)
+                    return false;
+                if (FD_ISSET(STDIN_FILENO, &descriptor_set))
+                {
+                    // read byte from stdin
+                    read(STDIN_FILENO, &out, 1);
+                    return true;
+                }
+                if (FD_ISSET(exit_pipe[0], &descriptor_set))
+                    return false;
+            }
+        }
     protected:
         int sync()
         {
@@ -267,7 +284,7 @@ namespace DFHack
         /// beep. maybe?
         //void beep (void);
         /// A simple line edit (raw mode)
-        int lineedit(const std::string& prompt, std::string& output, mutex * lock)
+        int lineedit(const std::string& prompt, std::string& output, mutex * lock, CommandHistory & ch)
         {
             output.clear();
             this->prompt = prompt;
@@ -288,7 +305,7 @@ namespace DFHack
                 if(state == con_lineedit)
                     return -1;
                 state = con_lineedit;
-                count = prompt_loop(lock);
+                count = prompt_loop(lock,ch);
                 state = con_unclaimed;
                 disable_raw();
                 print("\n");
@@ -299,19 +316,6 @@ namespace DFHack
                 return count;
             }
         }
-        /// add a command to the history
-        void history_add(const std::string& command)
-        {
-            // if current command = last in history -> do not add. Always add if history is empty.
-            if(!history.empty() && history.front() == command)
-                return;
-            history.push_front(command);
-            if(history.size() > 100)
-                history.pop_back();
-        }
-        /// clear the command history
-        void history_clear();
-
         int enable_raw()
         {
             struct termios raw;
@@ -381,7 +385,7 @@ namespace DFHack
             if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;
         }
 
-        int prompt_loop(mutex * lock)
+        int prompt_loop(mutex * lock, CommandHistory & history)
         {
             int fd = STDIN_FILENO;
             size_t plen = prompt.size();
@@ -391,18 +395,20 @@ namespace DFHack
             /* The latest history entry is always our current buffer, that
              * initially is just an empty string. */
             const std::string empty;
-            history_add(empty);
+            history.add(empty);
             if (::write(fd,prompt.c_str(),prompt.size()) == -1) return -1;
             while(1)
             {
-                char c;
-                int nread;
-                char seq[2], seq2;
+                unsigned char c;
+                int isok;
+                unsigned char seq[2], seq2;
                 lock->unlock();
-                nread = ::read(fd,&c,1);
+                if(!read_char(c))
+                {
+                    lock->lock();
+                    return -2;
+                }
                 lock->lock();
-                if (nread <= 0) return raw_buffer.size();
-
                 /* Only autocomplete when the callback is set. It returns < 0 when
                  * there was an error reading from fd. Otherwise it will return the
                  * character that should be handled next. */
@@ -429,7 +435,7 @@ namespace DFHack
                 switch(c)
                 {
                 case 13:    // enter
-                    history.pop_front();
+                    history.remove();
                     return raw_buffer.size();
                 case 3:     // ctrl-c
                     errno = EAGAIN;
@@ -445,10 +451,10 @@ namespace DFHack
                     break;
                 case 27:    // escape sequence
                     lock->unlock();
-                    if (::read(fd,seq,2) == -1)
+                    if(!read_char(seq[0]) || !read_char(seq[1]))
                     {
                         lock->lock();
-                        break;
+                        return -2;
                     }
                     lock->lock();
                     if(seq[0] == '[')
@@ -513,10 +519,10 @@ namespace DFHack
                         {
                             // extended escape
                             lock->unlock();
-                            if (::read(fd,&seq2,1) == -1)
+                            if(!read_char(seq2))
                             {
                                 lock->lock();
-                                return -1;
+                                return -2;
                             }
                             lock->lock();
                             if (seq[1] == '3' && seq2 == '~' )
@@ -579,7 +585,6 @@ namespace DFHack
             return raw_buffer.size();
         }
         FILE * dfout_C;
-        std::deque <std::string> history;
         bool supported_terminal;
         // state variables
         bool rawmode;           // is raw mode active?
@@ -593,6 +598,9 @@ namespace DFHack
         std::string prompt;     // current prompt string
         std::string raw_buffer; // current raw mode buffer
         int raw_cursor;         // cursor position in the buffer
+        // thread exit mechanism
+        int exit_pipe[2];
+        fd_set descriptor_set;
     };
 }
 
@@ -629,6 +637,11 @@ bool Console::init(bool sharing)
     std::cin.tie(this);
     clear();
     d->supported_terminal = !isUnsupportedTerm() &&  isatty(STDIN_FILENO);
+    // init the exit mechanism
+    pipe(d->exit_pipe);
+    FD_ZERO(&d->descriptor_set);
+    FD_SET(STDIN_FILENO, &d->descriptor_set);
+    FD_SET(d->exit_pipe[0], &d->descriptor_set);
     inited = true;
 }
 
@@ -641,6 +654,8 @@ bool Console::shutdown(void)
         d->disable_raw();
     d->print("\n");
     inited = false;
+    // kill the thing
+    close(d->exit_pipe[1]);
     return true;
 }
 
@@ -727,20 +742,12 @@ void Console::cursor(bool enable)
         d->cursor(enable);
 }
 
-// push to front, remove from back if we are above maximum. ignore immediate duplicates
-void Console::history_add(const std::string & command)
-{
-    lock_guard <mutex> g(*wlock);
-    if(inited)
-        d->history_add(command);
-}
-
-int Console::lineedit(const std::string & prompt, std::string & output)
+int Console::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
 {
     lock_guard <mutex> g(*wlock);
     int ret = -2;
     if(inited)
-        ret = d->lineedit(prompt,output,wlock);
+        ret = d->lineedit(prompt,output,wlock,ch);
     return ret;
 }
 

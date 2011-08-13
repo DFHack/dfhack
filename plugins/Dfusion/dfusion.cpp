@@ -89,13 +89,14 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 void InterpreterLoop(Core* c)
 {
 	Console &con=c->con;
+	DFHack::CommandHistory hist;
 	lua::state s=lua::glua::Get();
 	string curline;
 	con.print("Type quit to exit interactive mode\n");
-	con.lineedit(">>",curline);
+	con.lineedit(">>",curline,hist);
 
 	while (curline!="quit") {
-		con.history_add(curline);
+		hist.add(curline);
 		try
 		{
 			s.loadstring(curline);
@@ -104,10 +105,10 @@ void InterpreterLoop(Core* c)
 		catch(lua::exception &e)
 		{
 			con.printerr("Error:%s\n",e.what());
-            c->con.printerr("%s",lua::DebugDump(lua::glua::Get()).c_str());
+			c->con.printerr("%s",lua::DebugDump(lua::glua::Get()).c_str());
 			s.settop(0);
 		}
-		con.lineedit(">>",curline);
+		con.lineedit(">>",curline,hist);
 	}
 	s.settop(0);
 }
@@ -125,7 +126,7 @@ DFhackCExport command_result lua_run (Core * c, vector <string> & parameters)
 		catch(lua::exception &e)
 		{
 			con.printerr("Error:%s\n",e.what());
-            c->con.printerr("%s",lua::DebugDump(lua::glua::Get()).c_str());
+			c->con.printerr("%s",lua::DebugDump(lua::glua::Get()).c_str());
 		}
 	}
 	else
@@ -150,7 +151,7 @@ DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
 	catch(lua::exception &e)
 	{
 		con.printerr("Error:%s\n",e.what());
-        c->con.printerr("%s",lua::DebugDump(lua::glua::Get()).c_str());
+		c->con.printerr("%s",lua::DebugDump(lua::glua::Get()).c_str());
 	}
 	s.settop(0);// clean up
 	mymutex->unlock();

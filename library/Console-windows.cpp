@@ -250,7 +250,7 @@ namespace DFHack
             SetConsoleCursorPosition(console_out, inf.dwCursorPosition);
         }
 
-        int prompt_loop(mutex * lock)
+        int prompt_loop(mutex * lock, CommandHistory & history)
         {
             raw_buffer.clear(); // make sure the buffer is empty!
             size_t plen = prompt.size();
@@ -259,7 +259,7 @@ namespace DFHack
             // The latest history entry is always our current buffer, that
             // initially is just an empty string.
             const std::string empty;
-            history_add(empty);
+            history.add(empty);
 
             CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
             GetConsoleScreenBufferInfo(console_out, &inf);
@@ -280,7 +280,7 @@ namespace DFHack
                 switch (rec.Event.KeyEvent.wVirtualKeyCode)
                 {
                 case VK_RETURN: // enter
-                    history.pop_front();
+                    history.remove();
                     return raw_buffer.size();
                 case VK_BACK:   // backspace
                     if (raw_cursor > 0 && raw_buffer.size() > 0)
@@ -359,13 +359,13 @@ namespace DFHack
                 }
             }
         }
-        int lineedit(const std::string & prompt, std::string & output, mutex * lock)
+        int lineedit(const std::string & prompt, std::string & output, mutex * lock, CommandHistory & ch)
         {
             output.clear();
             int count;
             state = con_lineedit;
             this->prompt = prompt;
-            count = prompt_loop(lock);
+            count = prompt_loop(lock, ch);
             if(count != -1)
                 output = raw_buffer;
             state = con_unclaimed;
@@ -373,21 +373,8 @@ namespace DFHack
             return count;
         }
 
-        // push to front, remove from back if we are above maximum. ignore immediate duplicates
-        void history_add(const std::string & command)
-        {
-            // if current command = last in history -> do not add. Always add if history is empty.
-            if(!history.empty() && history.front() == command)
-                return;
-            history.push_front(command);
-            if(history.size() > 100)
-                history.pop_back();
-        }
-
         FILE * dfout_C;
         int rawmode;
-        std::deque <std::string> history;
-
         HANDLE console_in;
         HANDLE console_out;
         HWND ConsoleWindow;
@@ -556,20 +543,12 @@ void Console::cursor(bool enable)
         d->cursor(enable);
 }
 
-// push to front, remove from back if we are above maximum. ignore immediate duplicates
-void Console::history_add(const std::string & command)
-{
-    lock_guard <mutex> g(*wlock);
-    if(inited)
-        d->history_add(command);
-}
-
-int Console::lineedit(const std::string & prompt, std::string & output)
+int Console::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
 {
     wlock->lock();
     int ret = -2;
     if(inited)
-        ret = d->lineedit(prompt,output,wlock);
+        ret = d->lineedit(prompt,output,wlock,ch);
     wlock->unlock();
     return ret;
 }

@@ -140,6 +140,8 @@ public:
     };
 };
 
+CommandHistory liquids_hist;
+
 DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
@@ -149,6 +151,7 @@ DFhackCExport const char * plugin_name ( void )
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
+    liquids_hist.load("liquids.history");
     commands.clear();
     commands.push_back(PluginCommand("liquids", "Place magma, water or obsidian.", df_liquids, true));
     return CR_OK;
@@ -156,6 +159,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
+    liquids_hist.save("liquids.history");
     return CR_OK;
 }
 
@@ -192,7 +196,7 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
         string command = "";
         std::stringstream str;
         str <<"[" << mode << ":" << brushname << ":" << amount << ":" << flowmode << ":" << setmode << "]#";
-        if(c->con.lineedit(str.str(),command) == -1)
+        if(c->con.lineedit(str.str(),command,liquids_hist) == -1)
             return CR_FAILURE;
         if(command=="help" || command == "?")
         {
@@ -260,20 +264,24 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
         else if(command == "range" || command == "r")
         {
             std::stringstream str;
+            CommandHistory range_hist;
             str << " :set range width<" << width << "># ";
-            c->con.lineedit(str.str(),command);
+            c->con.lineedit(str.str(),command,range_hist);
+            range_hist.add(command);
             width = command == "" ? width : atoi (command.c_str());
             if(width < 1) width = 1;
 
             str.clear();
             str << " :set range height<" << height << "># ";
-            c->con.lineedit(str.str(),command);
+            c->con.lineedit(str.str(),command,range_hist);
+            range_hist.add(command);
             height = command == "" ? height : atoi (command.c_str());
             if(height < 1) height = 1;
 
             str.clear();
             str << " :set range z-levels<" << z_levels << "># ";
-            c->con.lineedit(str.str(),command);
+            c->con.lineedit(str.str(),command,range_hist);
+            range_hist.add(command);
             z_levels = command == "" ? z_levels : atoi (command.c_str());
             if(z_levels < 1) z_levels = 1;
             delete brush;

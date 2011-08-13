@@ -131,7 +131,8 @@ DFhackCExport command_result mode (Core * c, vector <string> & parameters)
 
         string selected;
         input_again:
-        c->con.lineedit("Enter new mode: ",selected);
+        CommandHistory hist;
+        c->con.lineedit("Enter new mode: ",selected, hist);
         if(selected == "c")
             return CR_OK;
         const char * start = selected.c_str();

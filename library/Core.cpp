@@ -133,6 +133,8 @@ void fIOthread(void * iodata)
     IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
     PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
+    CommandHistory main_history;
+    main_history.load("dfhack.history");
     Console & con = core->con;
     if(plug_mgr == 0 || core == 0)
     {
@@ -145,7 +147,7 @@ void fIOthread(void * iodata)
     while (true)
     {
         string command = "";
-        int ret = con.lineedit("[DFHack]# ",command);
+        int ret = con.lineedit("[DFHack]# ",command, main_history);
         if(ret == -2)
         {
             cerr << "Console is shutting down properly." << endl;
@@ -159,7 +161,8 @@ void fIOthread(void * iodata)
         else if(ret)
         {
             // a proper, non-empty command was entered
-            con.history_add(command);
+            main_history.add(command);
+            main_history.save("dfhack.history");
         }
         // cut the input into parts
         vector <string> parts;
@@ -387,7 +390,7 @@ Core::Core()
     hotkey_set = false;
     HotkeyMutex = 0;
     HotkeyCond = 0;
-	misc_data_mutex=0;
+    misc_data_mutex=0;
 };
 
 bool Core::Init()

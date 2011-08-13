@@ -88,25 +88,12 @@ static int lua_Console_lineedit(lua_State *S)
 	lua::state st(S);
 	DFHack::Console* c=GetConsolePtr(st);
 	string ret;
-	int i=c->lineedit(st.as<string>(1),ret);
+	DFHack::CommandHistory hist;
+	int i=c->lineedit(st.as<string>(1),ret,hist);
 	st.push(ret);
 	st.push(i);
 	return 2;// dunno if len is needed...
 }
-static int lua_Console_history_add(lua_State *S)
-{
-	lua::state st(S);
-	DFHack::Console* c=GetConsolePtr(st);
-	c->history_add(st.as<string>(1));
-	return 0;
-}
-/*static int lua_Console_history_clear(lua_State *S) //TODO someday add this
-{
-	lua::state st(S);
-	DFHack::Console* c=GetConsolePtr(st);
-	c->history_clear();
-	return 0;
-}*/
 const luaL_Reg lua_console_func[]=
 {
 	{"print",lua_Console_print},
@@ -120,8 +107,6 @@ const luaL_Reg lua_console_func[]=
 	{"get_columns",lua_Console_get_columns},
 	{"get_rows",lua_Console_get_rows},
 	{"lineedit",lua_Console_lineedit},
-	{"history_add",lua_Console_history_add},
-	//{"history_clear",lua_Console_history_clear},
 	{NULL,NULL}
 };
 void lua::RegisterConsole(lua::state &st, DFHack::Console *c)

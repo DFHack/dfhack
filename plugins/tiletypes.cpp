@@ -411,6 +411,8 @@ public:
     };
 };
 
+CommandHistory tiletypes_hist;
+
 DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
@@ -420,6 +422,7 @@ DFhackCExport const char * plugin_name ( void )
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
+    tiletypes_hist.load("tiletypes.history");
     commands.clear();
     commands.push_back(PluginCommand("tiletypes", "Paint map tiles freely, similar to liquids.", df_tiletypes, true));
     return CR_OK;
@@ -427,6 +430,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
+    tiletypes_hist.save("tiletypes.history");
     return CR_OK;
 }
 
@@ -455,7 +459,8 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
         std::string option = "";
         std::string value = "";
 
-        c->con.lineedit("tiletypes> ",input);
+        c->con.lineedit("tiletypes> ",input,tiletypes_hist);
+        tiletypes_hist.add(input);
         std::istringstream ss(input);
         ss >> command >> option >> value;
         tolower(command);
@@ -486,20 +491,21 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
         else if (command == "range" || command == "r")
         {
             std::stringstream ss;
+            CommandHistory hist;
             ss << "Set range width <" << width << "> ";
-            c->con.lineedit(ss.str(),command);
+            c->con.lineedit(ss.str(),command,hist);
             width = command == "" ? width : toint(command);
             if (width < 1) width = 1;
 
             ss.str("");
             ss << "Set range height <" << height << "> ";
-            c->con.lineedit(ss.str(),command);
+            c->con.lineedit(ss.str(),command,hist);
             height = command == "" ? height : toint(command);
             if (height < 1) height = 1;
 
             ss.str("");
             ss << "Set range z-levels <" << z_levels << "> ";
-            c->con.lineedit(ss.str(),command);
+            c->con.lineedit(ss.str(),command,hist);
             z_levels = command == "" ? z_levels : toint(command);
             if (z_levels < 1) z_levels = 1;
 

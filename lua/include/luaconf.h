@@ -152,17 +152,17 @@
 ** LUA_BUILD_AS_DLL to get it).
 */
 #if defined(LUA_BUILD_AS_DLL)
-
-#if defined(LUA_CORE) || defined(LUA_LIB)
-#define LUA_API __declspec(dllexport)
+    #if defined(LUA_CORE) || defined(LUA_LIB)
+        #define LUA_API __declspec(dllexport)
+    #else
+        #define LUA_API __declspec(dllimport)
+    #endif
 #else
-#define LUA_API __declspec(dllimport)
-#endif
-
-#else
-
-#define LUA_API		extern
-
+    #ifdef __cplusplus
+        #define LUA_API extern "C"
+    #else
+        #define LUA_API extern
+    #endif
 #endif
 
 /* more often than not the libs go together with the core */

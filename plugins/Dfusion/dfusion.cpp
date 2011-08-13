@@ -77,7 +77,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 		catch(lua::exception &e)
 		{
 			c->con.printerr("Error OnTick:%s\n",e.what());
-            c->con.printerr("%s",lua::DebugDump(lua::glua::Get()).c_str());
+            c->con.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
 			c->con.msleep(1000);
 		}
 	}
@@ -105,7 +105,7 @@ void InterpreterLoop(Core* c)
 		catch(lua::exception &e)
 		{
 			con.printerr("Error:%s\n",e.what());
-			c->con.printerr("%s",lua::DebugDump(lua::glua::Get()).c_str());
+            c->con.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
 			s.settop(0);
 		}
 		con.lineedit(">>",curline,hist);
@@ -126,7 +126,7 @@ DFhackCExport command_result lua_run (Core * c, vector <string> & parameters)
 		catch(lua::exception &e)
 		{
 			con.printerr("Error:%s\n",e.what());
-			c->con.printerr("%s",lua::DebugDump(lua::glua::Get()).c_str());
+            c->con.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
 		}
 	}
 	else
@@ -151,7 +151,7 @@ DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
 	catch(lua::exception &e)
 	{
 		con.printerr("Error:%s\n",e.what());
-		c->con.printerr("%s",lua::DebugDump(lua::glua::Get()).c_str());
+        c->con.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
 	}
 	s.settop(0);// clean up
 	mymutex->unlock();

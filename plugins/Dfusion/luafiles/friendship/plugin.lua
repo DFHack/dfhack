@@ -40,10 +40,15 @@ end
 	Two more compares are missing. There are calls instead (same function) 
 ]]--
 if not(FILE) then
-print("race num:"..engine.peekw(offsets.getEx("CurrentRace")))
-print("Your current race is:"..GetRaceToken(engine.peekw(offsets.getEx('CurrentRace'))))
-print("If this is wrong please quit now (by ctrl+c)")
-io.stdin:read()
+--print("race num:"..engine.peekw(offsets.getEx("CurrentRace")))
+--print(string.format("%x vs %x",offsets.getEx("CurrentRace"),VersionInfo.getGroup("Creatures"):getAddress("current_race")))
+add_race=VersionInfo.getGroup("Creatures"):getAddress("current_race")
+print("Race num:"..engine.peekw(add_race))
+print("Your current race is:"..GetRaceToken(engine.peekw(add_race)))
+print("If this is wrong please type 'q'")
+if(io.stdin:read()=='q') then
+	return
+end
 end
 friendship_in={}
 dofile("dfusion/friendship/install.lua")

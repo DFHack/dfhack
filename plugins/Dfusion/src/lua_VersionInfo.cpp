@@ -9,46 +9,47 @@ OffsetGroup::OffsetGroup(lua_State *L,int id):tblid(id)
 int OffsetGroup::getOffset(lua_State *L)
 {
     lua::state st(L);
-    int32_t ret=p->getOffset(st.as<std::string>(2));
+    int32_t ret=p->getOffset(st.as<std::string>(1));
     st.push(ret);
     return 1;
 }
 int OffsetGroup::getAddress(lua_State *L)
 {
     lua::state st(L);
-    uint32_t ret=p->getAddress(st.as<std::string>(2));
+    uint32_t ret=p->getAddress(st.as<std::string>(1));
     st.push(ret);
     return 1;
 }
 int OffsetGroup::getHexValue(lua_State *L)
 {
     lua::state st(L);
-    uint32_t ret=p->getHexValue(st.as<std::string>(2));
+    uint32_t ret=p->getHexValue(st.as<std::string>(1));
     st.push(ret);
     return 1;
 }
 int OffsetGroup::getString(lua_State *L)
 {
     lua::state st(L);
-    std::string ret=p->getString(st.as<std::string>(2));
+    std::string ret=p->getString(st.as<std::string>(1));
     st.push(ret);
     return 1;
 }
 int OffsetGroup::getGroup(lua_State *L)
 {
     lua::state st(L);
-	DFHack::OffsetGroup* t= p->getGroup(st.as<std::string>(2));
-	st.getglobal("OffsetGroup");
+	DFHack::OffsetGroup* t= p->getGroup(st.as<std::string>(1));
+	st.getglobal("OffsetGroup");	
 	st.getfield("new");
+	st.getglobal("OffsetGroup");
 	st.pushlightuserdata(t);
-	st.pcall(1,1);
+	st.pcall(2,1);
 	return 1;
 }
 int OffsetGroup::getSafeOffset(lua_State *L)
 {
     lua::state st(L);
     int32_t out;
-    bool ret=p->getSafeOffset(st.as<std::string>(2),out);
+    bool ret=p->getSafeOffset(st.as<std::string>(1),out);
     st.push(ret);
     st.push(out);
     return 2;
@@ -57,7 +58,7 @@ int OffsetGroup::getSafeAddress(lua_State *L)
 {
     lua::state st(L);
     uint32_t out;
-    bool ret=p->getSafeAddress(st.as<std::string>(2),out);
+    bool ret=p->getSafeAddress(st.as<std::string>(1),out);
     st.push(ret);
     st.push(out);
     return 2;
@@ -66,7 +67,7 @@ int OffsetGroup::PrintOffsets(lua_State *L)
 {
 	lua::state st(L);
     std::string output;
-    output=p->PrintOffsets(st.as<int>(2)); 
+    output=p->PrintOffsets(st.as<int>(1)); 
     st.push(output);
     return 1;
 }
@@ -88,10 +89,11 @@ int OffsetGroup::getParent(lua_State *L)
 {
 	lua::state st(L);
 	DFHack::OffsetGroup* t= p->getParent();
-	st.getglobal("OffsetGroup");
+	st.getglobal("OffsetGroup");	
 	st.getfield("new");
+	st.getglobal("OffsetGroup");
 	st.pushlightuserdata(t);
-	st.pcall(1,1);
+	st.pcall(2,1);
 	return 1;
 }
 }
@@ -324,21 +326,23 @@ static int __lua_getHexValue(lua_State *S)
 static int __lua_getGroup(lua_State *S)
 {
 	lua::state st(S);
-	DFHack::OffsetGroup* t= DFHack::Core::getInstance().vinfo->getGroup(st.as<std::string>(2));
+	DFHack::OffsetGroup* t= DFHack::Core::getInstance().vinfo->getGroup(st.as<std::string>(1));
 	st.getglobal("OffsetGroup");	
 	st.getfield("new");
+	st.getglobal("OffsetGroup");
 	st.pushlightuserdata(t);
-	st.pcall(1,1);
+	st.pcall(2,1);
 	return 1;
 }
 static int __lua_getParent(lua_State *S)
 {
 	lua::state st(S);
 	DFHack::OffsetGroup* t= DFHack::Core::getInstance().vinfo->getParent();
-	st.getglobal("OffsetGroup");
+	st.getglobal("OffsetGroup");	
 	st.getfield("new");
+	st.getglobal("OffsetGroup");
 	st.pushlightuserdata(t);
-	st.pcall(1,1);
+	st.pcall(2,1);
 	return 1;
 }
 static int __lua_getSafeOffset(lua_State *S)

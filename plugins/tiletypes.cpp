@@ -605,7 +605,9 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
                 }
 
                 int32_t type = DFHack::findTileType(shape, material, source->variant, special, source->direction);
-                map.setTiletypeAt(*iter, type);
+                // make sure it's not invalid
+                if(type != -1)
+                    map.setTiletypeAt(*iter, type);
 
                 // Remove liquid from walls, etc
                 if (!DFHack::FlowPassable(shape))

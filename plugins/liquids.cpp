@@ -192,7 +192,6 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
     int width = 1, height = 1, z_levels = 1;
     while(!end)
     {
-        c->Resume();
         string command = "";
         std::stringstream str;
         str <<"[" << mode << ":" << brushname << ":" << amount << ":" << flowmode << ":" << setmode << "]#";
@@ -271,14 +270,14 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
             width = command == "" ? width : atoi (command.c_str());
             if(width < 1) width = 1;
 
-            str.clear();
+            str.str("");
             str << " :set range height<" << height << "># ";
             c->con.lineedit(str.str(),command,range_hist);
             range_hist.add(command);
             height = command == "" ? height : atoi (command.c_str());
             if(height < 1) height = 1;
 
-            str.clear();
+            str.str("");
             str << " :set range z-levels<" << z_levels << "># ";
             c->con.lineedit(str.str(),command,range_hist);
             range_hist.add(command);

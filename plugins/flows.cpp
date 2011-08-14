@@ -24,7 +24,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.clear();
     commands.push_back(PluginCommand("flows",
-                                     "De-ramp.  All ramps marked for removal are replaced with floors.",
+                                     "Counts map blocks with flowing liquids.",
                                      df_flows));
     return CR_OK;
 }
@@ -41,7 +41,7 @@ DFhackCExport command_result df_flows (Core * c, vector <string> & parameters)
     DFHack::Maps *Maps;
 
     c->Suspend();
-
+    Maps = c->getMaps();
     // init the map
     if(!Maps->Start())
     {

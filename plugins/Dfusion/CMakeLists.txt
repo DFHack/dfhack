@@ -7,4 +7,5 @@ set(
     ${DFUSION_CPPS}
 )
 DFHACK_PLUGIN(dfusion  ${DFUSION_CPPS_ALL} LINK_LIBRARIES lua)
-install(DIRECTORY luafiles/ DESTINATION ${DFHACK_DATA_DESTINATION}/dfusion)
+# installs into DF root
+install(DIRECTORY luafiles/ DESTINATION dfusion)

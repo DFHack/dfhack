@@ -108,6 +108,22 @@ deramp (by zilpin)
 Removes all ramps designated for removal from the map. This is useful for replicating the old channel digging designation.
 It also removes any and all 'down ramps' that can remain after a cave-in (you don't have to designate anything for that to happen).
 
+dfusion
+=======
+This is the DFusion lua plugin system by warmist/darius, running as a DFHack plugin.
+
+See the bay12 thread for details: http://www.bay12forums.com/smf/index.php?topic=69682.15
+
+Confirmed working DFusion plugins:
+----------------------------------
+:simple_embark:allows changing the number of dwarves available on embark.
+
+.. note::
+    
+    * Some of the DFusion plugins aren't completely ported yet. This can lead to crashes.
+    * This is currently working only on Windows.
+    * The game will be suspended while you're using dfusion. Don't panic when it doen't respond.
+
 flows
 =====
 A tool for checking how many tiles contain flowing liquids. If you suspect that your magma sea leaks into HFS, you can use this tool to be sure without revealing the map.
@@ -197,7 +213,7 @@ This is an isometric visualizer that is runs in a second window.
 
 This requires working graphics acceleration, at least a dual core CPU (otherwise it will slow down DF) and on Linux, the allegro 5 libraries installed (look for 'allegro5' in your package manager app).
 
-For further details, see the contents of 'DF/stonesense'.
+All the data resides in the 'stonesense' directory.
 
 Older versions, support and extra graphics can be found in the bay12 forum thread:
 http://www.bay12forums.com/smf/index.php?topic=43260.0

@@ -122,13 +122,10 @@ IF(UNIX)
   SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
   SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32 -std=c++0x")
   SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32")
-
   SET(PROJECT_LIBS rt )
 ELSE()
   IF(MSVC)
     SET(PROJECT_LIBS psapi ${dfhack_SOURCE_DIR}/library/depends/ntdll/ntdll.lib)
-  ELSE()
-    SET(PROJECT_LIBS psapi ntdll)
   ENDIF()
 ENDIF()
 
@@ -138,40 +135,26 @@ IF(WIN32)
     SET_TARGET_PROPERTIES(dfhack PROPERTIES OUTPUT_NAME "SDL" )
 ENDIF()
 
+#effectively disables debug builds...
 SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 
 TARGET_LINK_LIBRARIES(dfhack ${PROJECT_LIBS})
 
-ADD_CUSTOM_TARGET( prepare
-DEPENDS ${dfhack_SOURCE_DIR}/Memory.xml
-COMMAND ${CMAKE_COMMAND} -E make_directory ${DFHACK_OUTPUT_DIR}
-COMMAND ${CMAKE_COMMAND} -E make_directory ${DFHACK_PLUGIN_OUTPUT_DIR}
-COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/Memory.xml ${DFHACK_OUTPUT_DIR})
-ADD_DEPENDENCIES(dfhack prepare)
-
-# On linux, copy our version of the df launch script which sets LD_PRELOAD
 IF(UNIX)
-    ADD_CUSTOM_TARGET( prepare_UNIX
-    DEPENDS ${dfhack_SOURCE_DIR}/package/linux/dfhack
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${DFHACK_OUTPUT_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/package/linux/dfhack ${DFHACK_OUTPUT_DIR})
-    ADD_DEPENDENCIES(dfhack prepare_UNIX)
+    # On linux, copy our version of the df launch script which sets LD_PRELOAD
     install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack
-            DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+            DESTINATION .)
 ELSE()
-# On windows, copy the renamed SDL so DF can still run.
-    ADD_CUSTOM_TARGET( prepare_WINDOWS
-    DEPENDS ${dfhack_SOURCE_DIR}/package/windows/SDLreal.dll
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${DFHACK_OUTPUT_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy ${dfhack_SOURCE_DIR}/package/windows/SDLreal.dll ${DFHACK_OUTPUT_DIR})
-    ADD_DEPENDENCIES(dfhack prepare_WINDOWS)
+    # On windows, copy the renamed SDL so DF can still run.
     install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/SDLreal.dll
             DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 ENDIF()
- 
+
+#install the main lib
 install(TARGETS dfhack
         LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
-        RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION}) #linux: lib
+        RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+#install the offset file
 install(FILES ${dfhack_SOURCE_DIR}/Memory.xml
         DESTINATION ${DFHACK_DATA_DESTINATION}) #linux: share/dfhack
 

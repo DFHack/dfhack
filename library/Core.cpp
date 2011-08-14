@@ -399,7 +399,12 @@ bool Core::Init()
         return true;
 
     // find out what we are...
-    vif = new DFHack::VersionInfoFactory("Memory.xml");
+    #ifdef LINUX_BUILD
+        const char * path = "hack/Memory.xml";
+    #else
+        const char * path = "hack\\Memory.xml";
+    #endif
+    vif = new DFHack::VersionInfoFactory(path);
     p = new DFHack::Process(vif);
     vinfo = p->getDescriptor();
     // dump offsets to a file

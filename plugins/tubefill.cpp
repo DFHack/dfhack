@@ -44,7 +44,16 @@ DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string>
     uint64_t count = 0;
 
     int dirty=0;
-
+    for(int i = 0; i < params.size();i++)
+    {
+        if(params[i] == "help" || params[i] == "?")
+        {
+            c->con.print("Replenishes mined out adamantine and hollow adamantine tubes.\n"
+                         "May cause !!FUN!!\n"
+            );
+            return CR_OK;
+        }
+    }
     c->Suspend();
     DFHack::Maps *Mapz = c->getMaps();
 

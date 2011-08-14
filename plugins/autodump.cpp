@@ -63,6 +63,8 @@ DFhackCExport command_result df_autodump (Core * c, vector <string> & parameters
                 "Items are instantly moved to the cursor position, the dump flag is unset,\n"
                 "and the forbid flag is set, as if it had been dumped normally.\n"
                 "Be aware that any active dump item tasks still point at the item.\n\n"
+                "Options:\n"
+                "destroy  - instead of dumping, destroy the items instantly.\n"
                         );
             return CR_OK;
         }

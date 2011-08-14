@@ -346,30 +346,34 @@ access DF memory and allow for easier development of new tools.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#deramp-by-zilpin" id="id18">deramp (by zilpin)</a></li>
-<li><a class="reference internal" href="#flows" id="id19">flows</a></li>
-<li><a class="reference internal" href="#grow" id="id20">grow</a></li>
-<li><a class="reference internal" href="#extirpate" id="id21">extirpate</a><ul>
-<li><a class="reference internal" href="#id3" id="id22">Options</a></li>
+<li><a class="reference internal" href="#dfusion" id="id19">dfusion</a><ul>
+<li><a class="reference internal" href="#confirmed-working-dfusion-plugins" id="id20">Confirmed working DFusion plugins:</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#immolate" id="id23">immolate</a></li>
-<li><a class="reference internal" href="#liquids" id="id24">liquids</a></li>
-<li><a class="reference internal" href="#mode" id="id25">mode</a></li>
-<li><a class="reference internal" href="#forcepause" id="id26">forcepause</a></li>
-<li><a class="reference internal" href="#die" id="id27">die</a></li>
-<li><a class="reference internal" href="#probe" id="id28">probe</a></li>
-<li><a class="reference internal" href="#prospector" id="id29">prospector</a><ul>
-<li><a class="reference internal" href="#id4" id="id30">Options</a></li>
+<li><a class="reference internal" href="#flows" id="id21">flows</a></li>
+<li><a class="reference internal" href="#grow" id="id22">grow</a></li>
+<li><a class="reference internal" href="#extirpate" id="id23">extirpate</a><ul>
+<li><a class="reference internal" href="#id3" id="id24">Options</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#reveal" id="id31">reveal</a></li>
-<li><a class="reference internal" href="#unreveal" id="id32">unreveal</a></li>
-<li><a class="reference internal" href="#revtoggle" id="id33">revtoggle</a></li>
-<li><a class="reference internal" href="#revflood" id="id34">revflood</a></li>
-<li><a class="reference internal" href="#ssense-stonesense" id="id35">ssense / stonesense</a></li>
-<li><a class="reference internal" href="#tubefill" id="id36">tubefill</a></li>
-<li><a class="reference internal" href="#vdig" id="id37">vdig</a></li>
-<li><a class="reference internal" href="#weather" id="id38">weather</a></li>
+<li><a class="reference internal" href="#immolate" id="id25">immolate</a></li>
+<li><a class="reference internal" href="#liquids" id="id26">liquids</a></li>
+<li><a class="reference internal" href="#mode" id="id27">mode</a></li>
+<li><a class="reference internal" href="#forcepause" id="id28">forcepause</a></li>
+<li><a class="reference internal" href="#die" id="id29">die</a></li>
+<li><a class="reference internal" href="#probe" id="id30">probe</a></li>
+<li><a class="reference internal" href="#prospector" id="id31">prospector</a><ul>
+<li><a class="reference internal" href="#id4" id="id32">Options</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#reveal" id="id33">reveal</a></li>
+<li><a class="reference internal" href="#unreveal" id="id34">unreveal</a></li>
+<li><a class="reference internal" href="#revtoggle" id="id35">revtoggle</a></li>
+<li><a class="reference internal" href="#revflood" id="id36">revflood</a></li>
+<li><a class="reference internal" href="#ssense-stonesense" id="id37">ssense / stonesense</a></li>
+<li><a class="reference internal" href="#tubefill" id="id38">tubefill</a></li>
+<li><a class="reference internal" href="#vdig" id="id39">vdig</a></li>
+<li><a class="reference internal" href="#weather" id="id40">weather</a></li>
 </ul>
 </li>
 </ul>
@@ -487,20 +491,37 @@ By default, owned food on the floor and rotten items are confistacted and dumped
 <p>Removes all ramps designated for removal from the map. This is useful for replicating the old channel digging designation.
 It also removes any and all 'down ramps' that can remain after a cave-in (you don't have to designate anything for that to happen).</p>
 </div>
+<div class="section" id="dfusion">
+<h2><a class="toc-backref" href="#id19">dfusion</a></h2>
+<p>This is the DFusion lua plugin system by warmist/darius, running as a DFHack plugin.</p>
+<p>See the bay12 thread for details: <a class="reference external" href="http://www.bay12forums.com/smf/index.php?topic=69682.15">http://www.bay12forums.com/smf/index.php?topic=69682.15</a></p>
+<div class="section" id="confirmed-working-dfusion-plugins">
+<h3><a class="toc-backref" href="#id20">Confirmed working DFusion plugins:</a></h3>
+<p>:simple_embark:allows changing the number of dwarves available on embark.</p>
+<div class="note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li>Some of the DFusion plugins aren't completely ported yet. This can lead to crashes.</li>
+<li>This is currently working only on Windows.</li>
+<li>The game will be suspended while you're using dfusion. Don't panic when it doen't respond.</li>
+</ul>
+</div>
+</div>
+</div>
 <div class="section" id="flows">
-<h2><a class="toc-backref" href="#id19">flows</a></h2>
+<h2><a class="toc-backref" href="#id21">flows</a></h2>
 <p>A tool for checking how many tiles contain flowing liquids. If you suspect that your magma sea leaks into HFS, you can use this tool to be sure without revealing the map.</p>
 </div>
 <div class="section" id="grow">
-<h2><a class="toc-backref" href="#id20">grow</a></h2>
+<h2><a class="toc-backref" href="#id22">grow</a></h2>
 <p>Makes all saplings present on the map grow into trees (almost) instantly.</p>
 </div>
 <div class="section" id="extirpate">
-<h2><a class="toc-backref" href="#id21">extirpate</a></h2>
+<h2><a class="toc-backref" href="#id23">extirpate</a></h2>
 <p>A tool for getting rid of trees and shrubs. By default, it only kills a tree/shrub under the cursor.
 The plants are turned into ashes instantly.</p>
 <div class="section" id="id3">
-<h3><a class="toc-backref" href="#id22">Options</a></h3>
+<h3><a class="toc-backref" href="#id24">Options</a></h3>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -516,11 +537,11 @@ The plants are turned into ashes instantly.</p>
 </div>
 </div>
 <div class="section" id="immolate">
-<h2><a class="toc-backref" href="#id23">immolate</a></h2>
+<h2><a class="toc-backref" href="#id25">immolate</a></h2>
 <p>Very similar to extirpate, but additionally sets the plants on fire. The fires can and <em>will</em> spread ;)</p>
 </div>
 <div class="section" id="liquids">
-<h2><a class="toc-backref" href="#id24">liquids</a></h2>
+<h2><a class="toc-backref" href="#id26">liquids</a></h2>
 <p>Allows adding magma, water and obsidian to the game. It replaces the normal dfhack command line and can't be used from a hotkey.
 For more information, refer to the command's internal help.</p>
 <div class="note">
@@ -530,7 +551,7 @@ temperatures (creating heat traps). You've been warned.</p>
 </div>
 </div>
 <div class="section" id="mode">
-<h2><a class="toc-backref" href="#id25">mode</a></h2>
+<h2><a class="toc-backref" href="#id27">mode</a></h2>
 <p>This command lets you see and change the game mode directly. Not all combinations are good for every situation and most of them will produce undesirable results.
 There are a few good ones though.</p>
 <div class="admonition-example admonition">
@@ -542,22 +563,22 @@ You just lost a fortress and gained an adventurer.</p>
 <p>I take no responsibility of anything that happens as a result of using this tool :P</p>
 </div>
 <div class="section" id="forcepause">
-<h2><a class="toc-backref" href="#id26">forcepause</a></h2>
+<h2><a class="toc-backref" href="#id28">forcepause</a></h2>
 <p>Forces DF to pause. This is useful when your FPS drops below 1 and you lose control of the game.</p>
 </div>
 <div class="section" id="die">
-<h2><a class="toc-backref" href="#id27">die</a></h2>
+<h2><a class="toc-backref" href="#id29">die</a></h2>
 <p>Instantly kills DF without saving.</p>
 </div>
 <div class="section" id="probe">
-<h2><a class="toc-backref" href="#id28">probe</a></h2>
+<h2><a class="toc-backref" href="#id30">probe</a></h2>
 <p>Can be used to determine tile properties like temperature.</p>
 </div>
 <div class="section" id="prospector">
-<h2><a class="toc-backref" href="#id29">prospector</a></h2>
+<h2><a class="toc-backref" href="#id31">prospector</a></h2>
 <p>Lists all available minerals on the map and how much of them there is. By default, only processes the already discovered part of the map.</p>
 <div class="section" id="id4">
-<h3><a class="toc-backref" href="#id30">Options</a></h3>
+<h3><a class="toc-backref" href="#id32">Options</a></h3>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -569,41 +590,41 @@ You just lost a fortress and gained an adventurer.</p>
 </div>
 </div>
 <div class="section" id="reveal">
-<h2><a class="toc-backref" href="#id31">reveal</a></h2>
+<h2><a class="toc-backref" href="#id33">reveal</a></h2>
 <p>This reveals the map. By default, HFS will remain hidden so that the demons don't spawn. You can use 'reveal hell' to reveal everything. With hell revealed, you won't be able to unpause until you hide the map again.</p>
 </div>
 <div class="section" id="unreveal">
-<h2><a class="toc-backref" href="#id32">unreveal</a></h2>
+<h2><a class="toc-backref" href="#id34">unreveal</a></h2>
 <p>Reverts the effects of 'reveal'.</p>
 </div>
 <div class="section" id="revtoggle">
-<h2><a class="toc-backref" href="#id33">revtoggle</a></h2>
+<h2><a class="toc-backref" href="#id35">revtoggle</a></h2>
 <p>Switches between 'reveal' and 'unreveal'.</p>
 </div>
 <div class="section" id="revflood">
-<h2><a class="toc-backref" href="#id34">revflood</a></h2>
+<h2><a class="toc-backref" href="#id36">revflood</a></h2>
 <p>This command will hide the whole map and then reveal all the tiles that have a path to the in-game cursor.</p>
 </div>
 <div class="section" id="ssense-stonesense">
-<h2><a class="toc-backref" href="#id35">ssense / stonesense</a></h2>
+<h2><a class="toc-backref" href="#id37">ssense / stonesense</a></h2>
 <p>This is an isometric visualizer that is runs in a second window.</p>
 <p>This requires working graphics acceleration, at least a dual core CPU (otherwise it will slow down DF) and on Linux, the allegro 5 libraries installed (look for 'allegro5' in your package manager app).</p>
-<p>For further details, see the contents of 'DF/stonesense'.</p>
+<p>All the data resides in the 'stonesense' directory.</p>
 <p>Older versions, support and extra graphics can be found in the bay12 forum thread:
 <a class="reference external" href="http://www.bay12forums.com/smf/index.php?topic=43260.0">http://www.bay12forums.com/smf/index.php?topic=43260.0</a></p>
 <p>Some additional resources:
 <a class="reference external" href="http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository">http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository</a></p>
 </div>
 <div class="section" id="tubefill">
-<h2><a class="toc-backref" href="#id36">tubefill</a></h2>
+<h2><a class="toc-backref" href="#id38">tubefill</a></h2>
 <p>Fills all the adamantine veins again. Veins that were empty will be filled in too, but might still trigger a demon invasion (this is a known bug).</p>
 </div>
 <div class="section" id="vdig">
-<h2><a class="toc-backref" href="#id37">vdig</a></h2>
+<h2><a class="toc-backref" href="#id39">vdig</a></h2>
 <p>Designates a whole vein for digging. Requires an active in-game cursor placed over a vein tile. With the 'x' option, it will traverse z-levels (putting stairs between the same-material tiles).</p>
 </div>
 <div class="section" id="weather">
-<h2><a class="toc-backref" href="#id38">weather</a></h2>
+<h2><a class="toc-backref" href="#id40">weather</a></h2>
 <p>Lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.
 Fill those ponds without mucking around with dfliquids :D Rain can also stop brush fires.</p>
 </div>

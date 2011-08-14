@@ -40,8 +40,19 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
 {
     uint32_t x_max,y_max,z_max;
     bool updown = false;
-    if(parameters.size() && parameters[0]=="x")
-        updown = true;
+    for(int i = 0; i < parameters.size();i++)
+    {
+        if(parameters.size() && parameters[0]=="x")
+            updown = true;
+        else if(parameters[i] == "help" || parameters[i] == "?")
+        {
+            c->con.print("Designates a whole vein under the cursor for digging.\n"
+                         "Options:\n"
+                         "x        - follow veins through z-levels with stairs.\n"
+            );
+            return CR_OK;
+        }
+    }
 
     Console & con = c->con;
 

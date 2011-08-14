@@ -101,6 +101,19 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params)
 {
     bool no_hell = true;
+    for(int i = 0; i < params.size();i++)
+    {
+        if(params[i]=="hell")
+            no_hell = false;
+        else if(params[i] == "help" || params[i] == "?")
+        {
+            c->con.print("Reveals the map, by default ignoring hell.\n"
+                         "Options:\n"
+                         "hell     - also reveal hell, while forcing the game to pause.\n"
+            );
+            return CR_OK;
+        }
+    }
     if(params.size() && params[0] == "hell")
     {
         no_hell = false;
@@ -189,6 +202,14 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
 DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string> & params)
 {
     Console & con = c->con;
+    for(int i = 0; i < params.size();i++)
+    {
+        if(params[i] == "help" || params[i] == "?")
+        {
+            c->con.print("Reverts the previous reveal operation, hiding the map again.\n");
+            return CR_OK;
+        }
+    }
     if(!revealed)
     {
         con.printerr("There's nothing to revert!\n");
@@ -244,6 +265,14 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
 
 DFhackCExport command_result revtoggle (DFHack::Core * c, std::vector<std::string> & params)
 {
+    for(int i = 0; i < params.size();i++)
+    {
+        if(params[i] == "help" || params[i] == "?")
+        {
+            c->con.print("Toggles between reveal and unreveal.\nCurrently it: ");
+            break;
+        }
+    }
     if(revealed)
     {
         return unreveal(c,params);
@@ -256,6 +285,16 @@ DFhackCExport command_result revtoggle (DFHack::Core * c, std::vector<std::strin
 
 DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string> & params)
 {
+    for(int i = 0; i < params.size();i++)
+    {
+        if(params[i] == "help" || params[i] == "?")
+        {
+            c->con.print("This command hides the whole map. Then, starting from the cursor,\n"
+                         "reveals all accessible tiles. Allows repairing parma-revealed maps.\n"
+            );
+            return CR_OK;
+        }
+    }
     c->Suspend();
     uint32_t x_max,y_max,z_max;
     Maps * Maps = c->getMaps();

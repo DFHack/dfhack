@@ -307,10 +307,10 @@ Plugin::plugin_state Plugin::getState() const
 PluginManager::PluginManager(Core * core)
 {
 #ifdef LINUX_BUILD
-    string path = core->p->getPath() + "/plugins/";
+    string path = core->p->getPath() + "/hack/plugins/";
     const string searchstr = ".plug.so";
 #else
-    string path = core->p->getPath() + "\\plugins\\";
+    string path = core->p->getPath() + "\\hack\\plugins\\";
     const string searchstr = ".plug.dll";
 #endif
     cmdlist_mutex = new mutex();

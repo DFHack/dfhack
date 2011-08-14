@@ -441,13 +441,24 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
 
     DFHack::Maps *maps;
     DFHack::Gui *gui;
+    for(int i = 0; i < parameters.size();i++)
+    {
+        if(parameters[i] == "help" || parameters[i] == "?")
+        {
+            c->con.print("This tool allows painting tiles types with a brush, using an optional filter.\n"
+                         "The tool is interactive, similarly to the liquids tool.\n"
+                         "Further help is available inside.\n"
+            );
+            return CR_OK;
+        }
+    }
 
     TileType filter, paint;
     Brush *brush = new RectangleBrush(1,1);
     bool end = false;
     std::string brushname = "point";
     int width = 1, height = 1, z_levels = 1;
-
+    c->con << "Welcome to the tiletype tool.\nType 'help' or '?' for a list of available commands, 'q' to quit.\nPress return after a command to confirm." << std::endl;
     while (!end)
     {
         c->con << "Filter: " << filter    << std::endl

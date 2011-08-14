@@ -56,8 +56,8 @@ DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
         if(parameters[i] == "help" || parameters[i] == "?")
         {
             c->con.print("This command does two things:\n"
-            "* If there are any ramps designated for removal, thyw will be instantly removed.\n"
-            "* Any ramps that don't have their counterpart will be removed (fixes bugs with caveins)\n"
+            "If there are any ramps designated for removal, they will be instantly removed.\n"
+            "Any ramps that don't have their counterpart will be removed (fixes bugs with caveins)\n"
             );
             return CR_OK;
         }

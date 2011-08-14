@@ -238,7 +238,7 @@ void help( std::ostream & out, const std::string &option)
             << " Special / s: set special tile information" << std::endl
             << "See help [option] for more information" << std::endl;
     }
-    else if (option == "shape")
+    else if (option == "shape" || option == "s" ||option == "sh")
     {
         out << "Available shapes:" << std::endl
             << " ANY" << std::endl;
@@ -247,7 +247,7 @@ void help( std::ostream & out, const std::string &option)
             out << " " << DFHack::TileShapeString[i] << std::endl;
         }
     }
-    else if (option == "material")
+    else if (option == "material"|| option == "mat" ||option == "m")
     {
         out << "Available materials:" << std::endl
             << " ANY" << std::endl;
@@ -459,6 +459,7 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
     std::string brushname = "point";
     int width = 1, height = 1, z_levels = 1;
     c->con << "Welcome to the tiletype tool.\nType 'help' or '?' for a list of available commands, 'q' to quit.\nPress return after a command to confirm." << std::endl;
+    c->con.printerr("THIS TOOL CAN BE DANGEROUS. YOU'VE BEEN WARNED.\n");
     while (!end)
     {
         c->con << "Filter: " << filter    << std::endl

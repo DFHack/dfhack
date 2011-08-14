@@ -53,10 +53,12 @@ DFHack basically extends what DF can do with something similar to a quake consol
 Basic interaction with dfhack involves entering commands into the console. For some basic instroduction, use the 'help' command. To list all possible commands, use the 'ls' command.
 Many commands have their own help or detailed description. You can use 'command help' or 'command ?' to show that.
 
+The command line has some nce line editing capabilities, including history that's preserved between different runs of DF (use up/down keys to go through the history).
+
 The second way to interact with DFHack is to bind the available commands to in-game hotkeys. This is done in the hotkey/zoom menu (normally opened with the 'h' key). Binding the commands is done by assigning a command as a hotkey name (with 'n').
 Some commands can't be used from hotkeys - this includes interactive commands like 'liquids' and commands that have names longer than 9 characters.
 
-Most of the commands come from plugins (those reside in DF/plugins/).
+Most of the commands come from plugins. Those reside in 'DF/plugins/'.
 
 ========
 Commands
@@ -189,6 +191,20 @@ revflood
 ========
 This command will hide the whole map and then reveal all the tiles that have a path to the in-game cursor.
 
+ssense / stonesense
+===================
+This is an isometric visualizer that is runs in a second window.
+
+This requires working graphics acceleration, at least a dual core CPU (otherwise it will slow down DF) and on Linux, the allegro 5 libraries installed (look for 'allegro5' in your package manager app).
+
+For further details, see the contents of 'DF/stonesense'.
+
+Older versions, support and extra graphics can be found in the bay12 forum thread:
+http://www.bay12forums.com/smf/index.php?topic=43260.0
+
+Some additional resources:
+http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository
+
 tubefill
 ==========
 Fills all the adamantine veins again. Veins that were empty will be filled in too, but might still trigger a demon invasion (this is a known bug).
@@ -201,7 +217,3 @@ weather
 =======
 Lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.
 Fill those ponds without mucking around with dfliquids :D Rain can also stop brush fires.
-
-ssense
-======
-Creates a stonesense window!

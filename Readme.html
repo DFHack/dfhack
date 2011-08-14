@@ -366,9 +366,10 @@ access DF memory and allow for easier development of new tools.</p>
 <li><a class="reference internal" href="#unreveal" id="id32">unreveal</a></li>
 <li><a class="reference internal" href="#revtoggle" id="id33">revtoggle</a></li>
 <li><a class="reference internal" href="#revflood" id="id34">revflood</a></li>
-<li><a class="reference internal" href="#tubefill" id="id35">tubefill</a></li>
-<li><a class="reference internal" href="#vdig" id="id36">vdig</a></li>
-<li><a class="reference internal" href="#weather" id="id37">weather</a></li>
+<li><a class="reference internal" href="#ssense-stonesense" id="id35">ssense / stonesense</a></li>
+<li><a class="reference internal" href="#tubefill" id="id36">tubefill</a></li>
+<li><a class="reference internal" href="#vdig" id="id37">vdig</a></li>
+<li><a class="reference internal" href="#weather" id="id38">weather</a></li>
 </ul>
 </li>
 </ul>
@@ -412,9 +413,10 @@ Copy the files from a release archive so that:</p>
 <p>DFHack basically extends what DF can do with something similar to a quake console. On Windows, this is a separate command line window. On linux, the terminal used to launch the dfhack script is taken over (so, make sure you start from a terminal).
 Basic interaction with dfhack involves entering commands into the console. For some basic instroduction, use the 'help' command. To list all possible commands, use the 'ls' command.
 Many commands have their own help or detailed description. You can use 'command help' or 'command ?' to show that.</p>
+<p>The command line has some nce line editing capabilities, including history that's preserved between different runs of DF (use up/down keys to go through the history).</p>
 <p>The second way to interact with DFHack is to bind the available commands to in-game hotkeys. This is done in the hotkey/zoom menu (normally opened with the 'h' key). Binding the commands is done by assigning a command as a hotkey name (with 'n').
 Some commands can't be used from hotkeys - this includes interactive commands like 'liquids' and commands that have names longer than 9 characters.</p>
-<p>Most of the commands come from plugins (those reside in DF/plugins/).</p>
+<p>Most of the commands come from plugins. Those reside in 'DF/plugins/'.</p>
 </div>
 <div class="section" id="commands">
 <h1><a class="toc-backref" href="#id10">Commands</a></h1>
@@ -582,16 +584,26 @@ You just lost a fortress and gained an adventurer.</p>
 <h2><a class="toc-backref" href="#id34">revflood</a></h2>
 <p>This command will hide the whole map and then reveal all the tiles that have a path to the in-game cursor.</p>
 </div>
+<div class="section" id="ssense-stonesense">
+<h2><a class="toc-backref" href="#id35">ssense / stonesense</a></h2>
+<p>This is an isometric visualizer that is runs in a second window.</p>
+<p>This requires working graphics acceleration, at least a dual core CPU (otherwise it will slow down DF) and on Linux, the allegro 5 libraries installed (look for 'allegro5' in your package manager app).</p>
+<p>For further details, see the contents of 'DF/stonesense'.</p>
+<p>Older versions, support and extra graphics can be found in the bay12 forum thread:
+<a class="reference external" href="http://www.bay12forums.com/smf/index.php?topic=43260.0">http://www.bay12forums.com/smf/index.php?topic=43260.0</a></p>
+<p>Some additional resources:
+<a class="reference external" href="http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository">http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository</a></p>
+</div>
 <div class="section" id="tubefill">
-<h2><a class="toc-backref" href="#id35">tubefill</a></h2>
+<h2><a class="toc-backref" href="#id36">tubefill</a></h2>
 <p>Fills all the adamantine veins again. Veins that were empty will be filled in too, but might still trigger a demon invasion (this is a known bug).</p>
 </div>
 <div class="section" id="vdig">
-<h2><a class="toc-backref" href="#id36">vdig</a></h2>
+<h2><a class="toc-backref" href="#id37">vdig</a></h2>
 <p>Designates a whole vein for digging. Requires an active in-game cursor placed over a vein tile. With the 'x' option, it will traverse z-levels (putting stairs between the same-material tiles).</p>
 </div>
 <div class="section" id="weather">
-<h2><a class="toc-backref" href="#id37">weather</a></h2>
+<h2><a class="toc-backref" href="#id38">weather</a></h2>
 <p>Lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.
 Fill those ponds without mucking around with dfliquids :D Rain can also stop brush fires.</p>
 </div>

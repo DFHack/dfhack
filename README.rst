@@ -19,6 +19,8 @@ binaries at  http://github.com/peterix/dfhack
 
 Releases can be downloaded from here: https://github.com/peterix/dfhack/downloads
 
+All new releases are announced in the bay12 thread: http://tinyurl.com/dfhack-ng
+
 =============
 Compatibility
 =============
@@ -46,6 +48,11 @@ Uninstalling is basically the same, in reverse:
  * On Windows, first delete SDL.dll and rename SDLreal.dll to SDL.dll. Then remove the other DFHack files
  * On Linux, Remove the DFHack files.
 
+The stonesense plugin might require some additional libraries on Linux:
+ * libjpeg 8
+
+If it refuses to load, check the stderr.log file created in your DF folder.
+
 ============
 Using DFHack
 ============
@@ -59,6 +66,12 @@ The second way to interact with DFHack is to bind the available commands to in-g
 Some commands can't be used from hotkeys - this includes interactive commands like 'liquids' and commands that have names longer than 9 characters.
 
 Most of the commands come from plugins. Those reside in 'DF/plugins/'.
+
+=============================
+Something doesn't work, help!
+=============================
+First, don't panic :) Second, dfhack keeps a few log files in DF's folder - stderr.log and stdout.log. You can look at those and possibly find out what's happening.
+If you found a bug, you can either report it in the bay12 DFHack thread, the issues tracker on github, contact me (peterix@gmail.com) or visit the #dfhack IRC channel on freenode.
 
 ========
 Commands

@@ -53,7 +53,7 @@ DFHack basically extends what DF can do with something similar to a quake consol
 Basic interaction with dfhack involves entering commands into the console. For some basic instroduction, use the 'help' command. To list all possible commands, use the 'ls' command.
 Many commands have their own help or detailed description. You can use 'command help' or 'command ?' to show that.
 
-The command line has some nce line editing capabilities, including history that's preserved between different runs of DF (use up/down keys to go through the history).
+The command line has some nice line editing capabilities, including history that's preserved between different runs of DF (use up/down keys to go through the history).
 
 The second way to interact with DFHack is to bind the available commands to in-game hotkeys. This is done in the hotkey/zoom menu (normally opened with the 'h' key). Binding the commands is done by assigning a command as a hotkey name (with 'n').
 Some commands can't be used from hotkeys - this includes interactive commands like 'liquids' and commands that have names longer than 9 characters.

@@ -15,11 +15,14 @@ using namespace DFHack;
 bool shutdown_flag = false;
 bool final_flag = true;
 bool timering = false;
+bool trackmenu_flg = false;
+uint32_t last_menu = 0;
 uint64_t timeLast = 0;
 
 DFhackCExport command_result kittens (Core * c, vector <string> & parameters);
 DFhackCExport command_result ktimer (Core * c, vector <string> & parameters);
 DFhackCExport command_result bflags (Core * c, vector <string> & parameters);
+DFhackCExport command_result trackmenu (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -30,8 +33,9 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.clear();
     commands.push_back(PluginCommand("nyan","NYAN CAT INVASION!",kittens, true));
-    commands.push_back(PluginCommand("ktimer","Measure time between game updates and console lag.",ktimer));
+    commands.push_back(PluginCommand("ktimer","Measure time between game updates and console lag (toggle).",ktimer));
     commands.push_back(PluginCommand("blockflags","Look up block flags",bflags));
+    commands.push_back(PluginCommand("trackmenu","Track menu ID changes (toggle).",trackmenu));
     return CR_OK;
 }
 
@@ -56,7 +60,40 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
         timeLast = time2;
         c->con.print("Time delta = %d ms\n", delta);
     }
+    if(trackmenu_flg)
+    {
+        DFHack::Gui * g =c->getGui();
+        if (last_menu != *g->df_menu_state)
+        {
+            last_menu = *g->df_menu_state;
+            c->con.print("Menu: %d\n",last_menu);
+        }
+    }
     return CR_OK;
+}
+DFhackCExport command_result trackmenu (Core * c, vector <string> & parameters)
+{
+    if(trackmenu_flg)
+    {
+        trackmenu_flg = false;
+        return CR_OK;
+    }
+    else
+    {
+        DFHack::Gui * g =c->getGui();
+        if(g->df_menu_state)
+        {
+            trackmenu_flg = true;
+            last_menu =  *g->df_menu_state;
+            c->con.print("Menu: %d\n",last_menu);
+            return CR_OK;
+        }
+        else
+        {
+            c->con.printerr("Can't read menu state\n");
+            return CR_FAILURE;
+        }
+    }
 }
 
 DFhackCExport command_result bflags (Core * c, vector <string> & parameters)

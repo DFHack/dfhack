@@ -58,6 +58,7 @@ Process::Process(VersionInfoFactory * known_versions)
     target_result = readlink(exe_link_name, target_name, sizeof(target_name)-1);
     if (target_result == -1)
     {
+        cerr << "Failed to readlink(/proc/self/exe)\n";
         return;
     }
     // make sure we have a null terminated string...
@@ -77,6 +78,14 @@ Process::Process(VersionInfoFactory * known_versions)
             my_descriptor->setParentProcess(this);
             identified = true;
         }
+        else
+        {
+            cerr << "Unable to retrieve version information.\n";
+        }
+    }
+    else
+    {
+        cerr << "This isn't DF.\n";
     }
 }
 

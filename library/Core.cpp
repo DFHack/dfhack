@@ -407,13 +407,25 @@ bool Core::Init()
     vif = new DFHack::VersionInfoFactory(path);
     p = new DFHack::Process(vif);
     vinfo = p->getDescriptor();
-    // dump offsets to a file
-    std::ofstream dump("offsets.log");
-    if(!dump.fail())
+
+    if(!vinfo)
     {
-        dump << vinfo->PrintOffsets();
-        dump.close();
+        cerr << "Couldn't retrieve version information.\n";
+        errorstate = true;
+        delete p;
+        p = NULL;
+        return false;
     }
+
+    if (!p->isIdentified())
+    {
+        cerr << "Couldn't identify this version of DF.\n";
+        errorstate = true;
+        delete p;
+        p = NULL;
+        return false;
+    }
+
     // init the console.
     Gui * g = getGui();
     if(g->init)
@@ -426,13 +438,12 @@ bool Core::Init()
     }
     else con.init(false);
 
-    if (!p->isIdentified())
+    // dump offsets to a file
+    std::ofstream dump("offsets.log");
+    if(!dump.fail())
     {
-        con.printerr("Couldn't identify this version of DF.\n");
-        errorstate = true;
-        delete p;
-        p = NULL;
-        return false;
+        dump << vinfo->PrintOffsets();
+        dump.close();
     }
 
     // create mutex for syncing with interactive tasks

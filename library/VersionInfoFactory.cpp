@@ -28,6 +28,7 @@ distribution.
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <iostream>
 using namespace std;
 
 #include "dfhack/VersionInfoFactory.h"
@@ -680,11 +681,17 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
 bool VersionInfoFactory::loadFile(string path_to_xml)
 {
     TiXmlDocument doc( path_to_xml.c_str() );
+    std::cerr << "Loading " << path_to_xml << " ... ";
     //bool loadOkay = doc.LoadFile();
     if (!doc.LoadFile())
     {
         error = true;
+        cerr << "failed!\n";
         throw Error::MemoryXmlParse(doc.ErrorDesc(), doc.ErrorId(), doc.ErrorRow(), doc.ErrorCol());
+    }
+    else
+    {
+        cerr << "OK\n";
     }
     TiXmlHandle hDoc(&doc);
     TiXmlElement* pElem;

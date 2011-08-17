@@ -415,6 +415,10 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
                 if(tt == 0)
                     continue;
                 t_designation des = mx.designationAt(pos);
+                if(tileMaterial(tt) == CONSTRUCTED && !des.bits.hidden)
+                    continue;
+                if(!isWallTerrain(tt) && !des.bits.hidden)
+                    continue;
                 if(cross[y][x])
                 {
                     des.bits.dig = designation_default;

@@ -242,6 +242,39 @@ vdig
 ====
 Designates a whole vein for digging. Requires an active in-game cursor placed over a vein tile. With the 'x' option, it will traverse z-levels (putting stairs between the same-material tiles).
 
+vdigx
+=====
+A permanent alias for 'vdig x'.
+
+expdig
+======
+This command can be used for exploratory mining.
+
+See: http://df.magmawiki.com/index.php/DF2010:Exploratory_mining
+
+There are two variables that can be set: pattern and filter.
+
+Patterns:
+---------
+:diag5:            diagonals separated by 5 tiles
+:ladder:           A 'ladder' pattern
+:clear:            Just remove all dig designations
+:cross:            A cross, exactly in the middle of the map.
+
+Filters:
+--------
+:all:              designate whole z-level
+:hidden:           designate only hidden tiles of z-level (default)
+:designated:       Take current designation and apply pattern to it.
+
+After you have a pattern set, you can use 'expdig' to apply it again.
+
+Examples:
+---------
+* 'expdig diag5 hidden' = designate the diagonal 5 patter over all hidden tiles.
+* 'expdig' = apply last used pattern and filter.
+* 'expdig ladder designated' = Take current designations and replace them with the ladder pattern.
+
 weather
 =======
 Lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.

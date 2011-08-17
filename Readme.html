@@ -374,7 +374,14 @@ access DF memory and allow for easier development of new tools.</p>
 <li><a class="reference internal" href="#ssense-stonesense" id="id38">ssense / stonesense</a></li>
 <li><a class="reference internal" href="#tubefill" id="id39">tubefill</a></li>
 <li><a class="reference internal" href="#vdig" id="id40">vdig</a></li>
-<li><a class="reference internal" href="#weather" id="id41">weather</a></li>
+<li><a class="reference internal" href="#vdigx" id="id41">vdigx</a></li>
+<li><a class="reference internal" href="#expdig" id="id42">expdig</a><ul>
+<li><a class="reference internal" href="#patterns" id="id43">Patterns:</a></li>
+<li><a class="reference internal" href="#filters" id="id44">Filters:</a></li>
+<li><a class="reference internal" href="#examples" id="id45">Examples:</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#weather" id="id46">weather</a></li>
 </ul>
 </li>
 </ul>
@@ -413,6 +420,14 @@ Copy the files from a release archive so that:</p>
 <li>On Linux, Remove the DFHack files.</li>
 </ul>
 </blockquote>
+<dl class="docutils">
+<dt>The stonesense plugin might require some additional libraries on Linux:</dt>
+<dd><ul class="first last simple">
+<li>libjpeg 8</li>
+</ul>
+</dd>
+</dl>
+<p>If it refuses to load, check the stderr.log file created in your DF folder.</p>
 </div>
 <div class="section" id="using-dfhack">
 <h1><a class="toc-backref" href="#id9">Using DFHack</a></h1>
@@ -630,8 +645,59 @@ You just lost a fortress and gained an adventurer.</p>
 <h2><a class="toc-backref" href="#id40">vdig</a></h2>
 <p>Designates a whole vein for digging. Requires an active in-game cursor placed over a vein tile. With the 'x' option, it will traverse z-levels (putting stairs between the same-material tiles).</p>
 </div>
+<div class="section" id="vdigx">
+<h2><a class="toc-backref" href="#id41">vdigx</a></h2>
+<p>A permanent alias for 'vdig x'.</p>
+</div>
+<div class="section" id="expdig">
+<h2><a class="toc-backref" href="#id42">expdig</a></h2>
+<p>This command can be used for exploratory mining.</p>
+<p>See: <a class="reference external" href="http://df.magmawiki.com/index.php/DF2010:Exploratory_mining">http://df.magmawiki.com/index.php/DF2010:Exploratory_mining</a></p>
+<p>There are two variables that can be set: pattern and filter.</p>
+<div class="section" id="patterns">
+<h3><a class="toc-backref" href="#id43">Patterns:</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">diag5:</th><td class="field-body">diagonals separated by 5 tiles</td>
+</tr>
+<tr class="field"><th class="field-name">ladder:</th><td class="field-body">A 'ladder' pattern</td>
+</tr>
+<tr class="field"><th class="field-name">clear:</th><td class="field-body">Just remove all dig designations</td>
+</tr>
+<tr class="field"><th class="field-name">cross:</th><td class="field-body">A cross, exactly in the middle of the map.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="filters">
+<h3><a class="toc-backref" href="#id44">Filters:</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">all:</th><td class="field-body">designate whole z-level</td>
+</tr>
+<tr class="field"><th class="field-name">hidden:</th><td class="field-body">designate only hidden tiles of z-level (default)</td>
+</tr>
+<tr class="field"><th class="field-name">designated:</th><td class="field-body">Take current designation and apply pattern to it.</td>
+</tr>
+</tbody>
+</table>
+<p>After you have a pattern set, you can use 'expdig' to apply it again.</p>
+</div>
+<div class="section" id="examples">
+<h3><a class="toc-backref" href="#id45">Examples:</a></h3>
+<ul class="simple">
+<li>'expdig diag5 hidden' = designate the diagonal 5 patter over all hidden tiles.</li>
+<li>'expdig' = apply last used pattern and filter.</li>
+<li>'expdig ladder designated' = Take current designations and replace them with the ladder pattern.</li>
+</ul>
+</div>
+</div>
 <div class="section" id="weather">
-<h2><a class="toc-backref" href="#id41">weather</a></h2>
+<h2><a class="toc-backref" href="#id46">weather</a></h2>
 <p>Lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.
 Fill those ponds without mucking around with dfliquids :D Rain can also stop brush fires.</p>
 </div>

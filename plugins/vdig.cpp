@@ -212,12 +212,33 @@ static digmask all_tiles =
     {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
     {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
 };
+
+static digmask cross =
+{
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0},
+    {0,0,0,1,0,0,0,1,1,0,0,0,1,0,0,0},
+    {0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0},
+    {0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0},
+    {0,0,0,1,0,0,0,1,1,0,0,0,1,0,0,0},
+    {0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+};
 enum explo_how
 {
     EXPLO_NOTHING,
     EXPLO_DIAG5,
     EXPLO_LADDER,
     EXPLO_CLEAR,
+    EXPLO_CROSS,
 };
 
 enum explo_what
@@ -262,6 +283,10 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
         {
             how = EXPLO_LADDER;
         }
+        else if(parameters[i] == "cross")
+        {
+            how = EXPLO_CROSS;
+        }
     }
     if(force_help || how == EXPLO_NOTHING)
     {
@@ -273,6 +298,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
                      "  diag5 = diagonals separated by 5 tiles\n"
                      " ladder = A 'ladder' pattern\n"
                      "  clear = Just remove all dig designations\n"
+                     "  cross = A cross, exactly in the middle of the map.\n"
                      "Filters:\n"
                      " all        = designate whole z-level\n"
                      " hidden     = designate only hidden tiles of z-level (default)\n"
@@ -374,6 +400,28 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
                 apply(x,y,ladder[which]);
             }
         }
+    }
+    else if(how == EXPLO_CROSS)
+    {
+        // middle + recentering for the image
+        int xmid = x_max * 8 - 8;
+        int ymid = y_max * 8 - 8;
+        MapExtras::MapCache mx (maps);
+        for(int x = 0; x < 16; x++)
+            for(int y = 0; y < 16; y++)
+            {
+                DFCoord pos(xmid+x,ymid+y,z_level);
+                short unsigned int tt = mx.tiletypeAt(pos);
+                if(tt == 0)
+                    continue;
+                t_designation des = mx.designationAt(pos);
+                if(cross[y][x])
+                {
+                    des.bits.dig = designation_default;
+                    mx.setDesignationAt(pos,des);
+                }
+            }
+        mx.WriteAll();
     }
     else for(uint32_t x = 0; x < x_max; x++)
         for(int32_t y = 0 ; y < y_max; y++)

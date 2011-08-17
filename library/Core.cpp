@@ -397,6 +397,8 @@ bool Core::Init()
 {
     if(started)
         return true;
+    if(errorstate)
+        return false;
 
     // find out what we are...
     #ifdef LINUX_BUILD

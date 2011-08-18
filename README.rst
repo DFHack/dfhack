@@ -77,6 +77,8 @@ If you found a bug, you can either report it in the bay12 DFHack thread, the iss
 Commands
 ========
 
+Almost all the commands have a 'help'/'?' option that will give you further help without having to look at this document.
+
 autodump
 ========
 Automated item dumping tool. All loose items on the floor marked

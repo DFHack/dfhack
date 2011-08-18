@@ -222,9 +222,9 @@ This command will hide the whole map and then reveal all the tiles that have a p
 
 ssense / stonesense
 ===================
-This is an isometric visualizer that is runs in a second window.
+An isometric visualizer that runs in a second window. This requires working graphics acceleration and at least a dual core CPU (otherwise it will slow down DF).
 
-This requires working graphics acceleration, at least a dual core CPU (otherwise it will slow down DF) and on Linux, the allegro 5 libraries installed (look for 'allegro5' in your package manager app).
+Unfortunately currently fails to run on Windows XP and most Linux distributions.
 
 All the data resides in the 'stonesense' directory.
 
@@ -277,5 +277,12 @@ Examples:
 
 weather
 =======
-Lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.
-Fill those ponds without mucking around with dfliquids :D Rain can also stop brush fires.
+Prints the current weather map by default.
+
+Also lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.
+
+Options:
+--------
+:snow:   make it snow everywhere.
+:rain:   make it rain.
+:clear:  clear the sky.

@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 2.8)
 ## build options
 OPTION(BUILD_DEVEL "Install/package files required for development (For SDK)." OFF)
 OPTION(BUILD_DOXYGEN "Create/install/package doxygen documentation for DFHack (For SDK)." OFF)
+IF(UNIX)
+    OPTION(CONSOLE_NO_CATCH "Make the console not catch 'CTRL+C' events for easier debugging." OFF)
+ENDIF()
 
 include_directories (include)
 include_directories (depends/md5)
@@ -116,6 +119,12 @@ SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
 LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
 
 ADD_DEFINITIONS(-DBUILD_DFHACK_LIB)
+
+IF(UNIX)
+    IF(CONSOLE_NO_CATCH)
+        ADD_DEFINITIONS(-DCONSOLE_NO_CATCH)
+    ENDIF()
+ENDIF()
 
 IF(UNIX)
   add_definitions(-DLINUX_BUILD)

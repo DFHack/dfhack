@@ -24,6 +24,7 @@ using std::string;
 using namespace DFHack;
 
 static tthread::mutex* mymutex=0;
+static tthread::thread* thread_dfusion=0;
 uint64_t timeLast=0;
 
 DFhackCExport command_result dfusion (Core * c, vector <string> & parameters);
@@ -43,9 +44,8 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 	lua::RegisterHexsearch(lua::glua::Get());
 	lua::RegisterMisc(lua::glua::Get());
 	lua::RegisterVersionInfo(lua::glua::Get());
-    commands.push_back(PluginCommand("dfusion","Init dfusion system.",dfusion));
-	commands.push_back(PluginCommand("lua", "Run interactive interpreter.\
-\n              Options: <filename> = run <filename> instead",lua_run));
+    commands.push_back(PluginCommand("dfusion","Init dfusion system. Use 'dfusion thready' to spawn a different thread.",dfusion));
+	commands.push_back(PluginCommand("lua", "Run interactive interpreter. Use 'lua <filename>' to run <filename> instead.",lua_run));
 
 	mymutex=new tthread::mutex;
     return CR_OK;
@@ -55,11 +55,13 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 {
 
 // shutdown stuff
+	if(thread_dfusion)
+		delete thread_dfusion;
 	delete mymutex;
 	return CR_OK;
 }
 
-DFhackCExport command_result plugin_onupdate ( Core * c )
+DFhackCExport command_result plugin_onupdate_DISABLED ( Core * c )
 {
 	uint64_t time2 = GetTimeMs64();
 	uint64_t delta = time2-timeLast;
@@ -137,13 +139,12 @@ DFhackCExport command_result lua_run (Core * c, vector <string> & parameters)
 	mymutex->unlock();
 	return CR_OK;
 }
-DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
+void RunDfusion(void *p)
 {
-
-	Console &con=c->con;
+	Console &con=static_cast<Core*>(p)->con;
 	mymutex->lock();
+	
 	lua::state s=lua::glua::Get();
-
 	try{
 		s.loadfile("dfusion/init.lua"); //load script
 		s.pcall(0,0);// run it
@@ -151,9 +152,21 @@ DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
 	catch(lua::exception &e)
 	{
 		con.printerr("Error:%s\n",e.what());
-        c->con.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
+        con.printerr("%s\n",lua::DebugDump(lua::glua::Get()).c_str());
 	}
 	s.settop(0);// clean up
 	mymutex->unlock();
+}
+DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
+{
+	if(thread_dfusion==0)
+		thread_dfusion=new tthread::thread(RunDfusion,c);
+	if(parameters[0]!="thready")
+	{
+		thread_dfusion->join();
+		delete thread_dfusion;
+		thread_dfusion=0;
+	}
+		
 	return CR_OK;
 }

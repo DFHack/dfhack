@@ -44,5 +44,6 @@ table.insert(plugins,{"adv_tools","some tools for (mainly) advneturer hacking"})
 table.insert(plugins,{"tools","some misc tools"})
 table.insert(plugins,{"triggers","a function calling plug (discontinued...)"})
 table.insert(plugins,{"migrants","multi race imigrations"})
+table.insert(plugins,{"onfunction","run lua on some df function"})
 mainmenu(plugins)
 

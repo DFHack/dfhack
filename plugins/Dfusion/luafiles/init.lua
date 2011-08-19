@@ -17,9 +17,9 @@ end
 function mainmenu(t1)
 	Console.clear()
 	while true do
-		print("No.	Name		Desc")
+		print("No.	Name           Desc")
 		for k,v in pairs(t1) do
-			print(string.format("%d %s		%s",k,v[1],v[2]))
+			print(string.format("%3d %15s %s",k,v[1],v[2]))
 		end
 		local q=Console.lineedit("Select plugin to run (q to quit):")
 		if q=='q' then return end

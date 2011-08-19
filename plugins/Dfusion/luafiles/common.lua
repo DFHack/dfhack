@@ -204,7 +204,7 @@ end
 function it_menu:display()
 	print("Select choice (q exits):")
 	for p,c in pairs(self.items) do
-		print(p..")."..c[2])
+		print(string.format("%3d).%s",p,c[2]))
 	end
 	local ans
 	repeat

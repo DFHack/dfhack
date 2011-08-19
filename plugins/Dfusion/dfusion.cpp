@@ -167,6 +167,5 @@ DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
 		delete thread_dfusion;
 		thread_dfusion=0;
 	}
-		
 	return CR_OK;
 }

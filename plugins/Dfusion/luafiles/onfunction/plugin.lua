@@ -20,6 +20,10 @@ function OnFunction(values)
 	for k,v in pairs(values) do
 		print(string.format("%s=%x",k,v))
 	end
+	print("stack:")
+	for i=0,2 do 
+		print(string.format("%d %x",i,engine.peekd(values.esp+i*4)))
+	end
 	return  onfunction.calls[values.ret] --returns real function to call
 end
 function onfunction.patch(addr)

@@ -129,7 +129,7 @@ static int GetMod(lua_State *L)
         st.push(pos);
     return 1;
 }
-static size_t __stdcall PushValue(size_t ret,uint32_t eax,uint32_t ebx,uint32_t ecx,uint32_t edx)
+static size_t __stdcall PushValue(size_t ret,uint32_t eax,uint32_t ebx,uint32_t ecx,uint32_t edx,uint32_t edi,uint32_t esi,uint32_t esp,uint32_t ebp)
 {
 	lua::state st=lua::glua::Get();
 	st.getglobal("OnFunction");
@@ -144,6 +144,14 @@ static size_t __stdcall PushValue(size_t ret,uint32_t eax,uint32_t ebx,uint32_t 
 	st.setfield("ecx");
 	st.push(edx);
 	st.setfield("edx");
+	st.push(edi);
+	st.setfield("edi");
+	st.push(esi);
+	st.setfield("esi");
+	st.push(esp);
+	st.setfield("esp");
+	st.push(ebp);
+	st.setfield("ebp");
 	st.push(ret);
 	st.setfield("ret");
 	st.pcall(1,1);

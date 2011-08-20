@@ -38,12 +38,21 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
+	lua::state st=lua::glua::Get();
 	//maybe remake it to run automaticaly
-	lua::RegisterConsole(lua::glua::Get(),&c->con);
-	lua::RegisterProcess(lua::glua::Get(),c->p);
-	lua::RegisterHexsearch(lua::glua::Get());
-	lua::RegisterMisc(lua::glua::Get());
-	lua::RegisterVersionInfo(lua::glua::Get());
+	lua::RegisterConsole(st,&c->con);
+	lua::RegisterProcess(st,c->p);
+	lua::RegisterHexsearch(st);
+	lua::RegisterMisc(st);
+	lua::RegisterVersionInfo(st);
+	#ifdef LINUX_BUILD
+		st.push(1);
+		st.setglobal("LINUX");
+	#else
+		st.push(1);
+		st.setglobal("WINDOWS");
+	#endif
+
     commands.push_back(PluginCommand("dfusion","Init dfusion system. Use 'dfusion thready' to spawn a different thread.",dfusion));
 	commands.push_back(PluginCommand("lua", "Run interactive interpreter. Use 'lua <filename>' to run <filename> instead.",lua_run));
 

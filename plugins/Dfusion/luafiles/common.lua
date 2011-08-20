@@ -438,7 +438,7 @@ function ParseNames(path)
 end
 
 function getxyz() -- this will return pointers x,y and z coordinates.
-	local off=offsets.getEx("Xpointer") -- lets find where in memory its being held
+	local off=VersionInfo.getGroup("Position"):getAddress("cursor_xyz") -- lets find where in memory its being held
 	-- now lets read them (they are double words (or unsigned longs or 4 bits each) and go in sucesion
 	local x=engine.peekd(off)
 	local y=engine.peekd(off+4) --next is 4 from start
@@ -448,7 +448,7 @@ function getxyz() -- this will return pointers x,y and z coordinates.
 end
 function GetCreatureAtPos(x,y,z) -- gets the creature index @ x,y,z coord
 	--local x,y,z=getxyz() --get 'X' coords
-	local vector=engine.peek(offsets.getEx("AdvCreatureVec"),ptr_vector) -- load all creatures
+	local vector=engine.peek(VersionInfo.getGroup("Creatures"):getAddress("vector"),ptr_vector) -- load all creatures
 	for i = 0, vector:size()-1 do -- look into all creatures offsets
 		local curoff=vector:getval(i) -- get i-th creatures offset
 		local cx=engine.peek(curoff,ptr_Creature.x) --get its coordinates

@@ -21,7 +21,7 @@ function OnFunction(values)
 		print(string.format("%s=%x",k,v))
 	end
 	print("stack:")
-	for i=0,2 do 
+	for i=0,3 do 
 		print(string.format("%d %x",i,engine.peekd(values.esp+i*4)))
 	end
 	return  onfunction.calls[values.ret] --returns real function to call
@@ -40,7 +40,8 @@ end
 mypos=engine.getmod("functions")
 if mypos then
 	print("Onfunction already installed")
-	onfunction.patch(0x189dd6+offsets.base())
+	--onfunction.patch(0x189dd6+offsets.base())
+	onfunction.patch(0x55499D+offsets.base()) --on creature move
 else
 	onfunction.install()
 end

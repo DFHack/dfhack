@@ -26,7 +26,7 @@ function GetTextRegion()
 	return nil
 end
 function GetRegionIn(pos)
-	ranges__=ranges__ or Process.getMemRanges()
+	ranges__= Process.getMemRanges()
 	for k,v in pairs(ranges__) do
 		--for k2,v2 in pairs(v) do
 		--	print(string.format("%d %s->%s",k,tostring(k2),tostring(v2)))
@@ -449,7 +449,7 @@ end
 function GetCreatureAtPos(x,y,z) -- gets the creature index @ x,y,z coord
 	--local x,y,z=getxyz() --get 'X' coords
 	local vector=engine.peek(offsets.getEx("AdvCreatureVec"),ptr_vector) -- load all creatures
-	for i = 0, vector:size() do -- look into all creatures offsets
+	for i = 0, vector:size()-1 do -- look into all creatures offsets
 		local curoff=vector:getval(i) -- get i-th creatures offset
 		local cx=engine.peek(curoff,ptr_Creature.x) --get its coordinates
 		local cy=engine.peek(curoff,ptr_Creature.y) 

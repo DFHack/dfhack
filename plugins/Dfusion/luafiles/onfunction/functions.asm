@@ -12,7 +12,7 @@ function2:
 mov [0xdeadbeef],eax #self modifying code... :/
 pop eax
 function3:
-call [0xdeadbeef]
+jmp [0xdeadbeef]
 
 
 

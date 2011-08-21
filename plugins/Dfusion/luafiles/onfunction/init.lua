@@ -15,6 +15,7 @@ function onfunction.install()
 	onfunction.calls={}
 	onfunction.functions={}
 	onfunction.names={}
+	onfunction.hints={}
 end
 function OnFunction(values)
 	--[=[print("Onfunction called!")
@@ -43,9 +44,12 @@ function onfunction.patch(addr)
 		engine.poked(addr+1,engine.getmod("functions")-addr-5)
 	end
 end
-function onfunction.AddFunction(addr,name)
+function onfunction.AddFunction(addr,name,hints)
 	onfunction.patch(addr)
 	onfunction.names[name]=addr+5
+	if hints~=nil then
+		onfunction.hints[name]=hints
+	end
 end
 function onfunction.SetCallback(name,func)
 	if onfunction.names[name]==nil then

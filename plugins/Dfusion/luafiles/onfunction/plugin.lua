@@ -1,6 +1,11 @@
 mypos=engine.getmod("functions")
 function DeathMsg(values)
-	name=engine.peek(values.edi,ptt_dfstring)
+	local name
+	if WINDOWS then
+		name=engine.peek(values.edi,ptt_dfstring)
+	else
+		name=engine.peek(values.ebx,ptt_dfstring)
+	end
 	print(name:getval().." died")
 end
 if mypos then
@@ -14,7 +19,7 @@ else
 	else
 		--onfunction.AddFunction(0x0899be82+offsets.base(),"Move") -- found out by attaching watch...
 		onfunction.AddFunction(0x899befe+offsets.base(),"Move") -- found out by attaching watch...
-
+		onfunction.AddFunction(0x850eecd+offsets.base(),"Die")  -- same
 	end
 	onfunction.SetCallback("Die",DeathMsg)
 end

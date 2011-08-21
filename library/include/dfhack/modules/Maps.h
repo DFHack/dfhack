@@ -79,6 +79,10 @@ namespace DFHack
         {
             return (other.comparate == comparate);
         }
+        bool operator!=(const DFCoord &other) const
+        {
+            return (other.comparate != comparate);
+        }
         // FIXME: <tomprince> peterix_: you could probably get away with not defining operator< if you defined a std::less specialization for Vertex.
         bool operator<(const DFCoord &other) const
         {

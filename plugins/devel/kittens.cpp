@@ -6,6 +6,7 @@
 #include <string>
 #include "dfhack/extra/stopwatch.h"
 #include "dfhack/modules/Maps.h"
+#include "dfhack/modules/Items.h"
 #include <dfhack/modules/Gui.h>
 
 using std::vector;
@@ -23,6 +24,7 @@ DFhackCExport command_result kittens (Core * c, vector <string> & parameters);
 DFhackCExport command_result ktimer (Core * c, vector <string> & parameters);
 DFhackCExport command_result bflags (Core * c, vector <string> & parameters);
 DFhackCExport command_result trackmenu (Core * c, vector <string> & parameters);
+DFhackCExport command_result mapitems (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -36,6 +38,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.push_back(PluginCommand("ktimer","Measure time between game updates and console lag (toggle).",ktimer));
     commands.push_back(PluginCommand("blockflags","Look up block flags",bflags));
     commands.push_back(PluginCommand("trackmenu","Track menu ID changes (toggle).",trackmenu));
+    commands.push_back(PluginCommand("mapitems","Check item ids under cursor against item ids in map block.",mapitems));
     return CR_OK;
 }
 
@@ -71,6 +74,55 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
     }
     return CR_OK;
 }
+
+DFhackCExport command_result mapitems (Core * c, vector <string> & parameters)
+{
+    c->Suspend();
+    vector <t_item *> vec_items;
+    Gui * g = c-> getGui();
+    Maps* m = c->getMaps();
+    Items* it = c->getItems();
+    if(!m->Start())
+    {
+        c->con.printerr("No map to probe\n");
+        return CR_FAILURE;
+    }
+    if(!it->Start() || !it->readItemVector(vec_items))
+    {
+        c->con.printerr("Failed to get items\n");
+        return CR_FAILURE;
+    }
+    int32_t cx,cy,cz;
+    g->getCursorCoords(cx,cy,cz);
+    if(cx != -30000)
+    {
+        df_block * b = m->getBlock(cx/16,cy/16,cz);
+        if(b)
+        {
+            c->con.print("Items in block:\n");
+            auto iter_b = b->items.begin();
+            while (iter_b != b->items.end())
+            {
+                c->con.print("%d\n",*iter_b);
+                iter_b++;
+            }
+            c->con.print("Items under cursor:\n");
+            auto iter_it = vec_items.begin();
+            while (iter_it != vec_items.end())
+            {
+                t_item * itm = *iter_it;
+                if(itm->x == cx && itm->y == cy && itm->z == cz)
+                {
+                    c->con.print("%d\n",itm->id);
+                }
+                iter_it ++;
+            }
+        }
+    }
+    c->Resume();
+    return CR_OK;
+}
+
 DFhackCExport command_result trackmenu (Core * c, vector <string> & parameters)
 {
     if(trackmenu_flg)

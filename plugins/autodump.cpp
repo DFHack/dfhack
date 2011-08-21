@@ -14,7 +14,9 @@ using namespace std;
 #include <dfhack/PluginManager.h>
 #include <vector>
 #include <string>
+#include <algorithm>
 #include <dfhack/modules/Maps.h>
+
 #include <dfhack/modules/Gui.h>
 #include <dfhack/modules/Items.h>
 #include <dfhack/modules/Materials.h>
@@ -165,6 +167,31 @@ DFhackCExport command_result df_autodump (Core * c, vector <string> & parameters
             // Don't move items if they're already at the cursor
             if (pos_cursor == pos_item)
                 continue;
+
+            // Do we need to fix block-local item ID vector?
+            if(pos_item/16 != pos_cursor/16)
+            {
+                // yes...
+                cerr << "Moving from block to block!" << endl;
+                df_block * bl_src = Maps->getBlock(itm->x /16, itm->y/16, itm->z);
+                df_block * bl_tgt = Maps->getBlock(cx /16, cy/16, cz);
+                if(bl_src)
+                {
+                    std::remove(bl_src->items.begin(), bl_src->items.end(),itm->id);
+                }
+                else
+                {
+                    cerr << "No source block" << endl;
+                }
+                if(bl_tgt)
+                {
+                    bl_tgt->items.push_back(itm->id);
+                }
+                else
+                {
+                    cerr << "No target block" << endl;
+                }
+            }
 
             // Move the item
             itm->x = pos_cursor.x;

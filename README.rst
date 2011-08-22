@@ -277,6 +277,26 @@ Examples:
 * 'expdig' = apply last used pattern and filter.
 * 'expdig ladder designated' = Take current designations and replace them with the ladder pattern.
 
+digcircle
+=========
+A command for easy designation of filled and hollow circles.
+
+Options:
+--------
+:hollow:   Set the circle to hollow (default)
+:filled:   Set the circle to filled
+:set:      Set designation (default)
+:unset:    Unset current designation
+:#:        Radius in tiles (default = 0)
+
+After you have set the options, the command called with no options
+repeats with the last selected parameters.
+
+Examples:
+---------
+* 'digcircle filled 3' = Dig a filled circle with radius = 3.
+* 'digcircle' = Do it again.
+
 weather
 =======
 Prints the current weather map by default.

@@ -162,6 +162,11 @@ class Block
         dirty_designations = true;
         //printf("setting block %d/%d/%d , %d %d\n",x,y,z, p.x, p.y);
         raw.designation[p.x][p.y] = des;
+        if(des.bits.dig)
+        {
+            dirty_blockflags = true;
+            raw.blockflags.bits.designated = true;
+        }
         return true;
     }
 

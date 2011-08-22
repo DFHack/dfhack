@@ -19,6 +19,8 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters);
 DFhackCExport command_result vdigx (Core * c, vector <string> & parameters);
 DFhackCExport command_result autodig (Core * c, vector <string> & parameters);
 DFhackCExport command_result expdig (Core * c, vector <string> & parameters);
+DFhackCExport command_result digcircle (Core *c, vector <string> & parameters);
+
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -31,12 +33,228 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.push_back(PluginCommand("vdig","Dig a whole vein.",vdig));
     commands.push_back(PluginCommand("vdigx","Dig a whole vein, follow vein through z-levels with stairs.",vdigx));
     commands.push_back(PluginCommand("expdig","Select or designate an exploratory pattern. Use 'expdig ?' for help.",expdig));
+    commands.push_back(PluginCommand("digcircle","Dig desingate a circle (filled or hollow) with given radius.",digcircle));
     //commands.push_back(PluginCommand("autodig","Mark a tile for continuous digging.",autodig));
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
+    return CR_OK;
+}
+
+template <class T>
+bool from_string(T& t, 
+                 const std::string& s, 
+                 std::ios_base& (*f)(std::ios_base&))
+{
+    std::istringstream iss(s);
+    return !(iss >> f >> t).fail();
+}
+
+enum circle_what
+{
+    circle_set,
+    circle_unset,
+};
+
+DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
+{
+    static bool filled = false;
+    static circle_what what = circle_set;
+    static int r = 0;
+    auto saved_r = r;
+    bool force_help = false;
+    for(int i = 0; i < parameters.size();i++)
+    {
+        if(parameters[i] == "help" || parameters[i] == "?")
+        {
+            force_help = true;
+        }
+        else if(parameters[i] == "hollow")
+        {
+            filled = false;
+        }
+        else if(parameters[i] == "filled")
+        {
+            filled = true;
+        }
+        else if(parameters[i] == "set")
+        {
+            what = circle_set;
+        }
+        else if(parameters[i] == "unset")
+        {
+            what = circle_unset;
+        }
+        else if (!from_string(r,parameters[i], std::dec))
+        {
+            r = saved_r;
+        }
+    }
+    if(r < 0)
+        r = -r;
+    if(force_help || r == 0)
+    {
+        c->con.print(   "A command for easy designation of filled and hollow circles.\n"
+                        "\n"
+                        "Options:\n"
+                        " hollow = Set the circle to hollow (default)\n"
+                        " filled = Set the circle to filled\n"
+                        "    set = set designation\n"
+                        "  unset = unset current designation\n"
+                        "      # = radius in tiles (default = 0)\n"
+                        "\n"
+                        "After you have set the options, the command called with no options\n"
+                        "repeats with the last selected parameters:\n"
+                        "'digcircle filled 3' = Dig a filled circle with radius = 3.\n"
+                        "'digcircle' = Do it again.\n"
+        );
+        return CR_OK;
+    }
+    int32_t cx, cy, cz;
+    c->Suspend();
+    Gui * gui = c->getGui();
+    Maps * maps = c->getMaps();
+    if(!maps->Start())
+    {
+        c->Resume();
+        c->con.printerr("Can't init the map...\n");
+        return CR_FAILURE;
+    }
+
+    uint32_t x_max, y_max, z_max;
+    maps->getSize(x_max,y_max,z_max);
+
+    MapExtras::MapCache MCache (maps);
+    if(!gui->getCursorCoords(cx,cy,cz) || cx == -30000)
+    {
+        c->Resume();
+        c->con.printerr("Can't get the cursor coords...\n");
+        return CR_FAILURE;
+    }
+    auto dig = [&](int32_t x, int32_t y, int32_t z) -> bool
+    {
+        DFCoord at (x,y,z);
+        auto b = MCache.BlockAt(at/16);
+        if(!b || !b->valid)
+            return false;
+        if(x == 0 || x == x_max - 1)
+            return false;
+        if(y == 0 || y == y_max - 1)
+            return false;
+        uint16_t tt = MCache.tiletypeAt(at);
+        t_designation des = MCache.designationAt(at);
+        // could be potentially used to locate hidden constructions?
+        if(tileMaterial(tt) == CONSTRUCTED && !des.bits.hidden)
+            return false;
+        if(!isWallTerrain(tt) && !des.bits.hidden)
+            return false;
+        switch(what)
+        {
+            case circle_set:
+                if(des.bits.dig == designation_no)
+                {
+                    des.bits.dig = designation_default;
+                }
+                break;
+            case circle_unset:
+                if (des.bits.dig == designation_default)
+                {
+                    des.bits.dig = designation_no;
+                }
+                break;
+        }
+        MCache.setDesignationAt(at,des);
+        return true;
+    };
+    auto lineX = [&](int32_t y1, int32_t y2, int32_t x, int32_t z) -> bool
+    {
+        for(int32_t y = y1; y <= y2; y++)
+        {
+            dig(x,y,z);
+        }
+        return true;
+    };
+    auto lineY = [&](int32_t x1, int32_t x2, int32_t y, int32_t z) -> bool
+    {
+        for(int32_t x = x1; x <= x2; x++)
+        {
+            dig(x,y,z);
+        }
+        return true;
+    };
+    int f = 1 - r;
+    int ddF_x = 1;
+    int ddF_y = -2 * r;
+    int x = 0;
+    int y = r;
+    if(!filled)
+    {
+        dig(cx, cy + r, cz);
+        dig(cx, cy - r, cz);
+        dig(cx + r, cy, cz);
+        dig(cx - r, cy, cz);
+    }
+    else
+    {
+        lineX(cy-r, cy+r, cx, cz);
+        lineY(cx-r, cx+r, cy, cz);
+    }
+
+    while(x < y)
+    {
+        // ddF_x == 2 * x + 1;
+        // ddF_y == -2 * y;
+        // f == x*x + y*y - radius*radius + 2*x - y + 1;
+        if(f >= 0)
+        {
+            y--;
+            ddF_y += 2;
+            f += ddF_y;
+        }
+        x++;
+        ddF_x += 2;
+        f += ddF_x;
+        if(!filled)
+        {
+            dig(cx + x, cy + y, cz);
+            dig(cx - x, cy + y, cz);
+            dig(cx + x, cy - y, cz);
+            dig(cx - x, cy - y, cz);
+            dig(cx + y, cy + x, cz);
+            dig(cx - y, cy + x, cz);
+            dig(cx + y, cy - x, cz);
+            dig(cx - y, cy - x, cz);
+        }
+        else
+        {
+            lineY(cx-x, cx+x, cy+y, cz);
+            lineY(cx-x, cx+x, cy-y, cz);
+            lineY(cx-y, cx+y, cy+x, cz);
+            lineY(cx-y, cx+y, cy-x, cz);
+        }
+    }
+    /*
+    int x = -r, y = 0, err = 2-2*r; //  2. quadrant
+    do
+    {
+        dig(cx-x, cy+y, cz); // 1. quadrant
+        dig(cx-y, cy-x, cz); // 2. quadrant
+        dig(cx+x, cy-y, cz); // 3. quadrant
+        dig(cx+y, cy+x, cz); // 4. quadrant
+        r = err;
+        if (r >  x)
+        {
+            err += ++x*2+1; // e_xy+e_x > 0
+        }
+        if (r <= y)
+        {
+            err += ++y*2+1; // e_xy+e_y < 0
+        }
+    } while (x < 0);*/
+    MCache.WriteAll();
+    c->Resume();
     return CR_OK;
 }
 typedef char digmask[16][16];

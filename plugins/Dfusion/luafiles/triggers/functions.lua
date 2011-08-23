@@ -4,7 +4,7 @@ function func.Find_Print()
 end
 function func.PrintMessage(msg,color1,color2)
 	func.f_print_pos= func.f_print_pos or func.Find_Print()
-	--print(string.format("%x",func.f_print_pos))
+	print(string.format("Print @:%x",func.f_print_pos))
 	debuger.suspend()
 	d=NewCallTable() -- make a call table
 	t=Allocate(string.len(msg))

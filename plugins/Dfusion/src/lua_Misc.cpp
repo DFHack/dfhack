@@ -129,6 +129,40 @@ static int GetMod(lua_State *L)
         st.push(pos);
     return 1;
 }
+static size_t __attribute__((stdcall))  PushValue(size_t ret,uint32_t eax,uint32_t ebx,uint32_t ecx,uint32_t edx,uint32_t edi,uint32_t esi,uint32_t esp,uint32_t ebp)
+{
+	lua::state st=lua::glua::Get();
+	st.getglobal("OnFunction");
+	if(st.is<lua::nil>())
+		return 0;
+	st.newtable();
+	st.push(eax);
+	st.setfield("eax");
+	st.push(ebx);
+	st.setfield("ebx");
+	st.push(ecx);
+	st.setfield("ecx");
+	st.push(edx);
+	st.setfield("edx");
+	st.push(edi);
+	st.setfield("edi");
+	st.push(esi);
+	st.setfield("esi");
+	st.push(esp);
+	st.setfield("esp");
+	st.push(ebp);
+	st.setfield("ebp");
+	st.push(ret);
+	st.setfield("ret");
+	st.pcall(1,1);
+	return st.as<uint32_t>();
+}
+static int Get_PushValue(lua_State *L)
+{
+    lua::state st(L);
+    st.push((uint32_t)&PushValue);
+    return 1;
+}
 const luaL_Reg lua_misc_func[]=
 {
 	{"loadmod",LoadMod},
@@ -137,6 +171,7 @@ const luaL_Reg lua_misc_func[]=
 	{"loadobjsymbols",LoadObjSymbols},
 	{"findmarker",FindMarker},
 	{"newmod",NewMod},
+	{"getpushvalue",Get_PushValue},
 	{NULL,NULL}
 };
 void lua::RegisterMisc(lua::state &st)

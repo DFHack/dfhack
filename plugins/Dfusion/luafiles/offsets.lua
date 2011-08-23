@@ -1,7 +1,9 @@
 
 
 function f_dwarves()
-	pos_=offsets.findall(0,0x24,0x14,0x07,0,0,0) --search pattern
+	--mov DWORD PTR [ESP+14],7
+	--jmp +0x08
+	pos_=offsets.findall(0,0x24,0x14,0x07,0,0,0) --search pattern 
 	for _,v in pairs(pos_) do
 		print(string.format("Possible hit:%x",v))
 	end

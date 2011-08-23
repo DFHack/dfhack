@@ -118,3 +118,5 @@ DFHACK_PLUGIN(autodump autodump.cpp)
 DFHACK_PLUGIN(cleanowned cleanowned.cpp)
 DFHACK_PLUGIN(deramp deramp.cpp)
 DFHACK_PLUGIN(flows flows.cpp)
+DFHACK_PLUGIN(memview memview.cpp)
+

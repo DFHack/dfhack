@@ -1,50 +1,51 @@
 ptt_dfstring={}
-if(COMPATMODE) then
-ptt_dfstring.ptr={off=4,rtype=DWORD}
-ptt_dfstring.size={off=20,rtype=DWORD}
+if WINDOWS then
+	ptt_dfstring.ptr={off=0,rtype=DWORD}
+	ptt_dfstring.size={off=16,rtype=DWORD}
+	ptt_dfstring.alloc={off=20,rtype=DWORD}
 
-else
-ptt_dfstring.ptr={off=0,rtype=DWORD}
-ptt_dfstring.size={off=16,rtype=DWORD}
-ptt_dfstring.alloc={off=20,rtype=DWORD}
-end
-function ptt_dfstring:getval()
-	--print(string.format("GETTING FROM:%x",self.__offset))
-	if self.size<16 then
+	function ptt_dfstring:getval()
 		--print(string.format("GETTING FROM:%x",self.__offset))
-		return string.sub(engine.peekstr(self.__offset),1,self.size)
-	else
-		--print(string.format("GETTING FROM:%x",self.ptr))
-		return string.sub(engine.peekstr(self.ptr),1,self.size)
-	end
-end
-function ptt_dfstring:setval(newstring)
-	local offset=self.__offset
-	local strl=string.len(newstring)
-	if strl<16 then
-		--print(string.format("GETTING FROM:%x",self.__offset))
-		
-		engine.poked(offset+ptt_dfstring.size.off,strl)
-		engine.poked(offset+ptt_dfstring.alloc.off,15)
-		engine.pokestr(offset,newstring)
-		
-	else
-		local loc
-		if engine.peekd(offset+ptt_dfstring.alloc.off) > strl then
-			loc=engine.peekd(offset)
-			print("Will fit:"..loc.." len:"..strl)
+		if self.size<16 then
+			--print(string.format("GETTING FROM:%x",self.__offset))
+			return string.sub(engine.peekstr(self.__offset),1,self.size)
 		else
-			loc=Allocate(strl+1)
-			engine.poked(offset+ptt_dfstring.alloc.off,strl)
-			print("Will not fit:"..loc.." len:"..strl)
+			--print(string.format("GETTING FROM:%x",self.ptr))
+			return string.sub(engine.peekstr(self.ptr),1,self.size)
 		end
-		--print(string.format("GETTING FROM:%x",self.ptr))
-		engine.poked(self.__offset+ptt_dfstring.size.off,strl)
-		engine.pokestr(loc,newstring)
-		engine.poked(self.__offset,loc)
+	end
+	function ptt_dfstring:setval(newstring)
+		local offset=self.__offset
+		local strl=string.len(newstring)
+		if strl<16 then
+			--print(string.format("GETTING FROM:%x",self.__offset))
+		
+			engine.poked(offset+ptt_dfstring.size.off,strl)
+			engine.poked(offset+ptt_dfstring.alloc.off,15)
+			engine.pokestr(offset,newstring)
+		
+		else
+			local loc
+			if engine.peekd(offset+ptt_dfstring.alloc.off) > strl then
+				loc=engine.peekd(offset)
+				print("Will fit:"..loc.." len:"..strl)
+			else
+				loc=Allocate(strl+1)
+				engine.poked(offset+ptt_dfstring.alloc.off,strl)
+				print("Will not fit:"..loc.." len:"..strl)
+			end
+			--print(string.format("GETTING FROM:%x",self.ptr))
+			engine.poked(self.__offset+ptt_dfstring.size.off,strl)
+			engine.pokestr(loc,newstring)
+			engine.poked(self.__offset,loc)
+		end
+	end
+else
+	--ptt_dfstring.ptr={off=0,rtype=DWORD}
+	function ptt_dfstring:getval()
+		return engine.peekstr_stl(self.__offset)
 	end
 end
-
 --if(COMPATMODE) then
 --ptr_vector={}
 --ptr_vector.st={off=4,rtype=DWORD}
@@ -169,10 +170,11 @@ end
 	
 ]]--
 ptr_Creature={}
-ptr_Creature.x={off=144,rtype=WORD} --ok
-ptr_Creature.y={off=146,rtype=WORD} --ok
-ptr_Creature.z={off=148,rtype=WORD} --ok
-ptr_Creature.flags={off=224,rtype=ptt_dfflag.new(10)}
+local posoff=VersionInfo.getGroup("Creatures"):getGroup("creature"):getOffset("position")
+ptr_Creature.x={off=posoff,rtype=WORD} --ok
+ptr_Creature.y={off=posoff+2,rtype=WORD} --ok
+ptr_Creature.z={off=posoff+4,rtype=WORD} --ok
+ptr_Creature.flags={off=VersionInfo.getGroup("Creatures"):getGroup("creature"):getOffset("flags1"),rtype=ptt_dfflag.new(10)}
 ptr_Creature.name={off=0,rtype=ptt_dfstring}
 ptr_Creature.ID={off=252,rtype=DWORD} --ok i guess
 ptr_Creature.followID={off=592,rtype=DWORD} --ok

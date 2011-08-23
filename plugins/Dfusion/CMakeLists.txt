@@ -4,6 +4,7 @@ FILE(GLOB DFUSION_CPPS src/*.c*)
 set(
     DFUSION_CPPS_ALL
     dfusion.cpp
+	${dfhack_SOURCE_DIR}/library/depends/tthread/tinythread.cpp
     ${DFUSION_CPPS}
 )
 DFHACK_PLUGIN(dfusion  ${DFUSION_CPPS_ALL} LINK_LIBRARIES lua)

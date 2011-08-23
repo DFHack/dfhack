@@ -13,13 +13,23 @@ function dofile(filename) --safer dofile, with traceback (very usefull)
 		print(perr)
 	end
 end
-
+function dofile_silent(filename) --safer dofile, with traceback, no file not found error
+	f,perr=loadfile(filename)
+	if f~=nil then
+		return xpcall(f,err)
+	end
+end
+function loadall(t1) --loads all non interactive plugin parts, so that later they could be used
+	for k,v in pairs(t1) do
+		dofile_silent("dfusion/"..v[1].."/init.lua")
+	end
+end
 function mainmenu(t1)
 	Console.clear()
 	while true do
-		print("No.	Name		Desc")
+		print("No.	Name           Desc")
 		for k,v in pairs(t1) do
-			print(string.format("%d %s		%s",k,v[1],v[2]))
+			print(string.format("%3d %15s %s",k,v[1],v[2]))
 		end
 		local q=Console.lineedit("Select plugin to run (q to quit):")
 		if q=='q' then return end
@@ -44,5 +54,9 @@ table.insert(plugins,{"adv_tools","some tools for (mainly) advneturer hacking"})
 table.insert(plugins,{"tools","some misc tools"})
 table.insert(plugins,{"triggers","a function calling plug (discontinued...)"})
 table.insert(plugins,{"migrants","multi race imigrations"})
+table.insert(plugins,{"onfunction","run lua on some df function"})
+loadall(plugins)
+if not INIT then
 mainmenu(plugins)
+end
 

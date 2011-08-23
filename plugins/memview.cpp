@@ -3,6 +3,7 @@
 #include <dfhack/PluginManager.h>
 #include <dfhack/Process.h>
 #include <dfhack/extra/stopwatch.h>
+#include <../depends/tthread/tinythread.h> //not sure if correct
 #include <string>
 #include <vector>
 #include <sstream>
@@ -11,6 +12,22 @@ using std::vector;
 using std::string;
 using namespace DFHack;
 
+uint64_t timeLast=0;
+static tthread::mutex* mymutex=0;
+
+struct memory_data
+{
+	size_t addr;
+	size_t len;
+	size_t refresh;
+	int state;
+	uint8_t *buf,*lbuf;
+	vector<t_memrange> ranges;
+}memdata;
+enum HEXVIEW_STATES
+{
+	STATE_OFF,STATE_ON
+};
 DFhackCExport command_result memview (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
@@ -21,7 +38,9 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-	commands.push_back(PluginCommand("memview","Shows memory in real time. Params: adrr length refresh_rate.",memview));
+	commands.push_back(PluginCommand("memview","Shows memory in real time. Params: adrr length refresh_rate. If addr==0 then stop viewing",memview));
+	memdata.state=STATE_OFF;
+	mymutex=new tthread::mutex;
     return CR_OK;
 }
 size_t convert(const std::string& p,bool ishex=false)
@@ -74,41 +93,90 @@ void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,Console &con,v
 		con.print("\n");
 	}
 }
+void Deinit()
+{
+	if(memdata.state==STATE_ON)
+	{
+		memdata.state=STATE_OFF;
+		delete [] memdata.buf;
+		delete [] memdata.lbuf;
+	}
+}
+DFhackCExport command_result plugin_onupdate ( Core * c )
+{
+	mymutex->lock();
+	if(memdata.state==STATE_OFF)
+	{
+		mymutex->unlock();
+		return CR_OK;
+	}
+	Console &con=c->con;
+	uint64_t time2 = GetTimeMs64();
+	uint64_t delta = time2-timeLast;
+	if(memdata.refresh!=0)
+	if(delta<memdata.refresh)
+	{
+		mymutex->unlock();
+		return CR_OK;
+	}
+	timeLast = time2;
+
+	c->p->read(memdata.addr,memdata.len,memdata.buf);
+	outputHex(memdata.buf,memdata.lbuf,memdata.len,memdata.addr,con,memdata.ranges);
+    memcpy(memdata.lbuf, memdata.buf, memdata.len);
+	if(memdata.refresh==0)
+		Deinit();
+	mymutex->unlock();
+	return CR_OK;
+
+}
 DFhackCExport command_result memview (Core * c, vector <string> & parameters)
 {
-	size_t addr=convert(parameters[0],true);
-	size_t len;
-	if(parameters.size()>1)
-		len=convert(parameters[1]);
-	else
-		len=20*16;
-	size_t refresh;
-	if(parameters.size()>2)
-		refresh=convert(parameters[2]);
-	else
-		refresh=0;
-	Console &con=c->con;
-	uint8_t *buf,*lbuf;
-	buf=new uint8_t[len];
-	lbuf=new uint8_t[len];
-	uint64_t timeLast=0;
-	vector<t_memrange> ranges;
-	c->p->getMemRanges(ranges);
-	while(true)//TODO add some sort of way to exit loop??!!
+	mymutex->lock();
+	c->p->getMemRanges(memdata.ranges);
+	memdata.addr=convert(parameters[0],true);
+	if(memdata.addr==0)
 	{
-		uint64_t time2 = GetTimeMs64();
-		uint64_t delta = time2-timeLast;
-		if(refresh!=0)
-		if(delta<refresh)
-			continue;
-		timeLast = time2;
-
-		c->p->read(addr,len,buf);
-		outputHex(buf,lbuf,len,addr,con,ranges);
-		if(refresh==0)
-			break;
-        memcpy(lbuf, buf, len);
+		memdata.state=STATE_OFF;
+		mymutex->unlock();
+		return CR_OK;
 	}
-	delete[] buf;
-	delete[] lbuf;
+	else
+	{
+		Deinit();
+		bool isValid=false;
+		for(size_t i=0;i<memdata.ranges.size();i++)
+			if(memdata.ranges[i].isInRange(memdata.addr))
+				isValid=true;
+		if(!isValid)
+		{
+			c->con.printerr("Invalid address:%x\n",memdata.addr);
+			mymutex->unlock();
+			return CR_OK;
+		}
+		memdata.state=STATE_ON; 
+	}
+	if(parameters.size()>1)
+		memdata.len=convert(parameters[1]);
+	else
+		memdata.len=20*16;
+
+	if(parameters.size()>2)
+		memdata.refresh=convert(parameters[2]);
+	else
+		memdata.refresh=0;
+	
+
+	uint8_t *buf,*lbuf;
+	memdata.buf=new uint8_t[memdata.len];
+	memdata.lbuf=new uint8_t[memdata.len];
+	c->p->getMemRanges(memdata.ranges);
+	mymutex->unlock();
+	return CR_OK;
+}
+DFhackCExport command_result plugin_shutdown ( Core * c )
+{
+	Deinit();
+	return CR_OK;
+	delete mymutex;
 }

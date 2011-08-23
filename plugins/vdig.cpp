@@ -62,6 +62,7 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
 {
     static bool filled = false;
     static circle_what what = circle_set;
+    static e_designation type = designation_default;
     static int r = 0;
     auto saved_r = r;
     bool force_help = false;
@@ -87,6 +88,30 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         {
             what = circle_unset;
         }
+        else if(parameters[i] == "dig")
+        {
+            type = designation_default;
+        }
+        else if(parameters[i] == "ramp")
+        {
+            type = designation_ramp;
+        }
+        else if(parameters[i] == "dstair")
+        {
+            type = designation_d_stair;
+        }
+        else if(parameters[i] == "ustair")
+        {
+            type = designation_u_stair;
+        }
+        else if(parameters[i] == "xstair")
+        {
+            type = designation_ud_stair;
+        }
+        else if(parameters[i] == "chan")
+        {
+            type = designation_channel;
+        }
         else if (!from_string(r,parameters[i], std::dec))
         {
             r = saved_r;
@@ -101,8 +126,17 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
                         "Options:\n"
                         " hollow = Set the circle to hollow (default)\n"
                         " filled = Set the circle to filled\n"
+                        "\n"
                         "    set = set designation\n"
                         "  unset = unset current designation\n"
+                        "\n"
+                        "    dig = normal digging\n"
+                        "   ramp = ramp digging\n"
+                        " ustair = staircase up\n"
+                        " dstair = staircase down\n"
+                        " xstair = staircase up/down\n"
+                        "   chan = dig channel\n"
+                        "\n"
                         "      # = radius in tiles (default = 0)\n"
                         "\n"
                         "After you have set the options, the command called with no options\n"
@@ -148,23 +182,47 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         // could be potentially used to locate hidden constructions?
         if(tileMaterial(tt) == CONSTRUCTED && !des.bits.hidden)
             return false;
-        if(!isWallTerrain(tt) && !des.bits.hidden)
+        TileShape ts = tileShape(tt);
+        if(ts == EMPTY)
             return false;
+        if(!des.bits.hidden)
+        {
+            do
+            {
+                if(isWallTerrain(tt))
+                {
+                    std::cerr << "allowing tt" << tt << ", is wall\n";
+                    break;
+                }
+                if(isFloorTerrain(tt)
+                   && (type == designation_d_stair || type == designation_channel)
+                   && ts != TREE_OK
+                   && ts != TREE_DEAD
+                )
+                {
+                    std::cerr << "allowing tt" << tt << ", is floor\n";
+                    break;
+                }
+                return false;
+            }
+            while(0);
+        }
         switch(what)
         {
             case circle_set:
                 if(des.bits.dig == designation_no)
                 {
-                    des.bits.dig = designation_default;
+                    des.bits.dig = type;
                 }
                 break;
             case circle_unset:
-                if (des.bits.dig == designation_default)
+                if (des.bits.dig != designation_no)
                 {
                     des.bits.dig = designation_no;
                 }
                 break;
         }
+        std::cerr << "allowing tt" << tt << "\n";
         MCache.setDesignationAt(at,des);
         return true;
     };
@@ -204,9 +262,6 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
 
     while(x < y)
     {
-        // ddF_x == 2 * x + 1;
-        // ddF_y == -2 * y;
-        // f == x*x + y*y - radius*radius + 2*x - y + 1;
         if(f >= 0)
         {
             y--;
@@ -235,24 +290,6 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
             lineY(cx-y, cx+y, cy-x, cz);
         }
     }
-    /*
-    int x = -r, y = 0, err = 2-2*r; //  2. quadrant
-    do
-    {
-        dig(cx-x, cy+y, cz); // 1. quadrant
-        dig(cx-y, cy-x, cz); // 2. quadrant
-        dig(cx+x, cy-y, cz); // 3. quadrant
-        dig(cx+y, cy+x, cz); // 4. quadrant
-        r = err;
-        if (r >  x)
-        {
-            err += ++x*2+1; // e_xy+e_x > 0
-        }
-        if (r <= y)
-        {
-            err += ++y*2+1; // e_xy+e_y < 0
-        }
-    } while (x < 0);*/
     MCache.WriteAll();
     c->Resume();
     return CR_OK;

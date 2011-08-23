@@ -35,7 +35,7 @@ distribution.
 #include "dfhack/modules/Vegetation.h"
 #include <vector>
 #include "dfhack/Virtual.h"
-#include <dfhack/BitArray.h>
+#include "dfhack/BitArray.h"
 
 /**
  * \defgroup grp_maps Maps module and its types

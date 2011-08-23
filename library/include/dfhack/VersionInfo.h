@@ -31,7 +31,9 @@ distribution.
 #include "dfhack/Pragma.h"
 #include "dfhack/Export.h"
 #include "dfhack/Types.h"
+#include <maps>
 #include <sys/types.h>
+#include <vector>
 
 namespace DFHack
 {

@@ -56,6 +56,7 @@ enum circle_what
 {
     circle_set,
     circle_unset,
+    circle_invert,
 };
 
 DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
@@ -87,6 +88,10 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         else if(parameters[i] == "unset")
         {
             what = circle_unset;
+        }
+        else if(parameters[i] == "invert")
+        {
+            what = circle_invert;
         }
         else if(parameters[i] == "dig")
         {
@@ -129,6 +134,7 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
                         "\n"
                         "    set = set designation\n"
                         "  unset = unset current designation\n"
+                        " invert = invert current designation\n"
                         "\n"
                         "    dig = normal digging\n"
                         "   ramp = ramp digging\n"
@@ -223,6 +229,15 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
                 break;
             case circle_unset:
                 if (des.bits.dig != designation_no)
+                {
+                    des.bits.dig = designation_no;
+                }
+            case circle_invert:
+                if(des.bits.dig == designation_no)
+                {
+                    des.bits.dig = type;
+                }
+                else
                 {
                     des.bits.dig = designation_no;
                 }

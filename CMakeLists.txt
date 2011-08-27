@@ -1,5 +1,10 @@
 # main project file. use it from a build sub-folder, see COMPILE for details
 
+## setting the build type.
+IF(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
+  SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Release RelWithDebInfo.")
+ENDIF()
+
 ## some generic CMake magic
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 project(dfhack)
@@ -13,11 +18,6 @@ ${CMAKE_MODULE_PATH}
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
    message(FATAL_ERROR "In-source builds are not allowed.")
 endif()
-
-## setting the build type.
-IF(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
-  SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Release RelWithDebInfo.")
-ENDIF()
 
 # set up versioning.
 set(DF_VERSION_MAJOR "0")

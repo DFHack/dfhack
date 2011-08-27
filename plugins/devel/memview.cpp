@@ -62,36 +62,43 @@ bool isAddr(uint32_t *trg,vector<t_memrange> & ranges)
 
 	return false;
 }
-void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,Console &con,vector<t_memrange> & ranges)
-{	
-	
+void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,Core *c,vector<t_memrange> & ranges)
+{
+	Console &con=c->con;
+    const size_t page_size=16;
 	con.clear();
-	const size_t page_size=16;
+
 	for(size_t i=0;i<len;i+=page_size)
 	{
-		con.print("%8x  ",i+start);
+	    con.gotoxy(1,i/page_size+1);
+		con.print("0x%08X ",i+start);
 		for(size_t j=0;(j<page_size) && (i+j<len);j++)
 			{
 				if(j%4==0)
 				{
 					con.reset_color();
+
 					if(isAddr((uint32_t *)(buf+j+i),ranges))
-						con.color(Console::COLOR_LIGHTRED);
+						con.color(Console::COLOR_LIGHTRED); //coloring in the middle does not work
+                    //TODO make something better?
 				}
 				if(lbuf[j+i]!=buf[j+i])
-					con.print("*%2x",buf[j+i]);
+					con.print("*%02X",buf[j+i]); //if modfied show a star
 				else
-					con.print(" %2x",buf[j+i]);
+					con.print(" %02X",buf[j+i]);
 			}
 		con.reset_color();
 		con.print(" | ");
 		for(size_t j=0;(j<page_size) && (i+j<len);j++)
-			if(buf[j+i]>20)
+			if((buf[j+i]>31)&&(buf[j+i]<128)) //only printable ascii
 				con.print("%c",buf[j+i]);
 			else
 				con.print(".");
-		con.print("\n");
+		//con.print("\n");
 	}
+	con.print("\n");
+	con.flush();
+
 }
 void Deinit()
 {
@@ -104,15 +111,17 @@ void Deinit()
 }
 DFhackCExport command_result plugin_onupdate ( Core * c )
 {
+
 	mymutex->lock();
 	if(memdata.state==STATE_OFF)
 	{
 		mymutex->unlock();
 		return CR_OK;
 	}
-	Console &con=c->con;
+	//Console &con=c->con;
 	uint64_t time2 = GetTimeMs64();
 	uint64_t delta = time2-timeLast;
+
 	if(memdata.refresh!=0)
 	if(delta<memdata.refresh)
 	{
@@ -122,7 +131,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 	timeLast = time2;
 
 	c->p->read(memdata.addr,memdata.len,memdata.buf);
-	outputHex(memdata.buf,memdata.lbuf,memdata.len,memdata.addr,con,memdata.ranges);
+	outputHex(memdata.buf,memdata.lbuf,memdata.len,memdata.addr,c,memdata.ranges);
     memcpy(memdata.lbuf, memdata.buf, memdata.len);
 	if(memdata.refresh==0)
 		Deinit();
@@ -137,6 +146,7 @@ DFhackCExport command_result memview (Core * c, vector <string> & parameters)
 	memdata.addr=convert(parameters[0],true);
 	if(memdata.addr==0)
 	{
+		Deinit();
 		memdata.state=STATE_OFF;
 		mymutex->unlock();
 		return CR_OK;
@@ -154,7 +164,7 @@ DFhackCExport command_result memview (Core * c, vector <string> & parameters)
 			mymutex->unlock();
 			return CR_OK;
 		}
-		memdata.state=STATE_ON; 
+		memdata.state=STATE_ON;
 	}
 	if(parameters.size()>1)
 		memdata.len=convert(parameters[1]);
@@ -165,7 +175,7 @@ DFhackCExport command_result memview (Core * c, vector <string> & parameters)
 		memdata.refresh=convert(parameters[2]);
 	else
 		memdata.refresh=0;
-	
+
 
 	uint8_t *buf,*lbuf;
 	memdata.buf=new uint8_t[memdata.len];
@@ -176,7 +186,9 @@ DFhackCExport command_result memview (Core * c, vector <string> & parameters)
 }
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
+	mymutex->lock();
 	Deinit();
-	return CR_OK;
 	delete mymutex;
+	mymutex->unlock();
+	return CR_OK;
 }

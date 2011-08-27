@@ -1,6 +1,6 @@
 function friendship_in.patch()
 	pos=GetTextRegion().start
-	local crace=add_race --offsets.getEx("CurrentRace")
+	local crace=VersionInfo.getGroup("Creatures"):getAddress("current_race")
 	hits={}
 	i=1
 	repeat

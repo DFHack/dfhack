@@ -1,0 +1,3 @@
+[submodule "plugins/stonesense"]
+	path = plugins/stonesense
+	url = git://github.com/peterix/stonesense.git

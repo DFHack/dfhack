@@ -293,7 +293,7 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         int top = cy - ((iter + 1) / 2) + adjust;
         int bottom = cy + ((iter + 1) / 2);
         // see where the current 'line' intersects the circle
-        double val = std::sqrt(diameter*diameter - iter*iter);
+        double val = std::sqrt(double(diameter*diameter - iter*iter));
         // adjust for circles with odd diameter
         if(!adjust)
             val -= 1;

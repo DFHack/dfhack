@@ -27,7 +27,6 @@ distribution.
 #include "dfhack/Export.h"
 #include <deque>
 #include <fstream>
-#include <llimits.h>
 #include <assert.h>
 #include <iostream>
 #include <string>

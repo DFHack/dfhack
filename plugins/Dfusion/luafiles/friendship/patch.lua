@@ -1,4 +1,5 @@
 function friendship_in.patch()
+	UpdateRanges()
 	pos=GetTextRegion().start
 	local crace=VersionInfo.getGroup("Creatures"):getAddress("current_race")
 	hits={}
@@ -24,6 +25,7 @@ function friendship_in.patch()
 		repeat
 
 			--print(string.format("Analyzing %x...",p))
+			--TODO read offset from memory.xml
 			pos1=offsets.find(myp,0x39,ANYBYTE,0x8c,00,00,00) -- compare [reg+08c] (creature race) with any reg 
 			pos2=offsets.find(myp,0x3b,ANYBYTE,0x8c,00,00,00) -- compare  any reg with [reg+08c] (creature race)
 			pos=minEx(pos1,pos2)

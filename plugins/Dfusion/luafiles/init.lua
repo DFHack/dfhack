@@ -25,7 +25,7 @@ function loadall(t1) --loads all non interactive plugin parts, so that later the
 	end
 end
 function mainmenu(t1)
-	Console.clear()
+	--Console.clear()
 	while true do
 		print("No.	Name           Desc")
 		for k,v in pairs(t1) do

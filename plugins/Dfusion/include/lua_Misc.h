@@ -7,6 +7,7 @@
 #include <dfhack/Process.h>
 #include "luamain.h"
 #include "OutFile.h"
+#include "bit.h"
 
 namespace lua
 {

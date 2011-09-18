@@ -168,7 +168,7 @@ bool Translation::InitReadNames()
     return true;
 }
 
-bool Translation::readName(t_name & name, uint32_t address)
+bool Translation::readName(t_name & name, df_name * source)
 {
     Core & c = Core::getInstance();
     Process * p = c.p;
@@ -180,36 +180,35 @@ bool Translation::readName(t_name & name, uint32_t address)
     {
         if(!InitReadNames()) return false;
     }
-    p->readSTLString(address + d->name_firstname_offset , name.first_name, 128);
-    p->readSTLString(address + d->name_nickname_offset , name.nickname, 128);
-    p->read(address + d->name_words_offset, 7*4, (uint8_t *)name.words);
-    p->read(address + d->name_parts_offset, 7*2, (uint8_t *)name.parts_of_speech);
-    name.language = p->readDWord(address + d->name_language_offset);
-    name.has_name = p->readByte(address + d->name_set_offset);
+    strncpy(name.first_name,source->first_name.c_str(),127);
+    strncpy(name.nickname,source->nick_name.c_str(),127);
+    memcpy(&name.parts_of_speech, &source->parts_of_speech, sizeof (source->parts_of_speech));
+    memcpy(&name.words, &source->words, sizeof (source->words));
+    name.language = source->language;
+    name.has_name = source->has_name;
     return true;
 }
 
-bool Translation::copyName(uint32_t address, uint32_t target)
+bool Translation::copyName(df_name * source, df_name * target)
 {
     uint8_t buf[28];
 
-    if (address == target)
+    if (source == target)
         return true;
     Core & c = Core::getInstance();
     Process * p = c.p;
 
-    p->copySTLString(address + d->name_firstname_offset, target + d->name_firstname_offset);
-    p->copySTLString(address + d->name_nickname_offset, target + d->name_nickname_offset);
-    p->read(address + d->name_words_offset, 7*4, buf);
-    p->write(target + d->name_words_offset, 7*4, buf);
-    p->read(address + d->name_parts_offset, 7*2, buf);
-    p->write(target + d->name_parts_offset, 7*2, buf);
-    p->writeDWord(target + d->name_language_offset, p->readDWord(address + d->name_language_offset));
-    p->writeByte(target + d->name_set_offset, p->readByte(address + d->name_set_offset));
+    target->first_name = source->first_name;
+    target->nick_name = source->nick_name;
+    target->has_name = source->has_name;
+    target->language = source->language;
+    memcpy(&target->parts_of_speech, &source->parts_of_speech, sizeof (source->parts_of_speech));
+    memcpy(&target->words, &source->words, sizeof (source->words));
+    target->unknown = source->unknown;
     return true;
 }
 
-string Translation::TranslateName(const t_name &name, bool inEnglish)
+string Translation::TranslateName(const df_name * name, bool inEnglish)
 {
     string out;
     assert (d->Started);
@@ -218,25 +217,25 @@ string Translation::TranslateName(const t_name &name, bool inEnglish)
 
     if(!inEnglish)
     {
-        if(name.words[0] >=0 || name.words[1] >=0)
+        if(name->words[0] >=0 || name->words[1] >=0)
         {
-            if(name.words[0]>=0) out.append(d->dicts.foreign_languages[name.language][name.words[0]]);
-            if(name.words[1]>=0) out.append(d->dicts.foreign_languages[name.language][name.words[1]]);
+            if(name->words[0]>=0) out.append(d->dicts.foreign_languages[name->language][name->words[0]]);
+            if(name->words[1]>=0) out.append(d->dicts.foreign_languages[name->language][name->words[1]]);
             out[0] = toupper(out[0]);
         }
-        if(name.words[5] >=0)
+        if(name->words[5] >=0)
         {
             string word;
             for(int i=2;i<=5;i++)
-                if(name.words[i]>=0) word.append(d->dicts.foreign_languages[name.language][name.words[i]]);
+                if(name->words[i]>=0) word.append(d->dicts.foreign_languages[name->language][name->words[i]]);
             word[0] = toupper(word[0]);
             if(out.length() > 0) out.append(" ");
             out.append(word);
         }
-        if(name.words[6] >=0)
+        if(name->words[6] >=0)
         {
             string word;
-            word.append(d->dicts.foreign_languages[name.language][name.words[6]]);
+            word.append(d->dicts.foreign_languages[name->language][name->words[6]]);
             word[0] = toupper(word[0]);
             if(out.length() > 0) out.append(" ");
             out.append(word);
@@ -244,13 +243,13 @@ string Translation::TranslateName(const t_name &name, bool inEnglish)
     }
     else
     {
-        if(name.words[0] >=0 || name.words[1] >=0)
+        if(name->words[0] >=0 || name->words[1] >=0)
         {
-            if(name.words[0]>=0) out.append(d->dicts.translations[name.parts_of_speech[0]+1][name.words[0]]);
-            if(name.words[1]>=0) out.append(d->dicts.translations[name.parts_of_speech[1]+1][name.words[1]]);
+            if(name->words[0]>=0) out.append(d->dicts.translations[name->parts_of_speech[0]+1][name->words[0]]);
+            if(name->words[1]>=0) out.append(d->dicts.translations[name->parts_of_speech[1]+1][name->words[1]]);
             out[0] = toupper(out[0]);
         }
-        if(name.words[5] >=0)
+        if(name->words[5] >=0)
         {
             if(out.length() > 0)
                 out.append(" the");
@@ -259,22 +258,22 @@ string Translation::TranslateName(const t_name &name, bool inEnglish)
             string word;
             for(int i=2;i<=5;i++)
             {
-                if(name.words[i]>=0)
+                if(name->words[i]>=0)
                 {
-                    word = d->dicts.translations[name.parts_of_speech[i]+1][name.words[i]];
+                    word = d->dicts.translations[name->parts_of_speech[i]+1][name->words[i]];
                     word[0] = toupper(word[0]);
                     out.append(" " + word);
                 }
             }
         }
-        if(name.words[6] >=0)
+        if(name->words[6] >=0)
         {
             if(out.length() > 0)
                 out.append(" of");
             else
                 out.append("Of");
             string word;
-            word.append(d->dicts.translations[name.parts_of_speech[6]+1][name.words[6]]);
+            word.append(d->dicts.translations[name->parts_of_speech[6]+1][name->words[6]]);
             word[0] = toupper(word[0]);
             out.append(" " + word);
         }

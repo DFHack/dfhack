@@ -655,7 +655,7 @@ bool Items::removeItemOwner(dfh_item &item, Creatures *creatures)
         int32_t & oid = p_refs[i]->value;
         int32_t ix = creatures->FindIndexById(oid);
 
-        if (ix < 0 || !creatures->RemoveOwnedItemIdx(ix, item.base->id))
+        if (ix < 0 || !creatures->RemoveOwnedItemByIdx(ix, item.base->id))
         {
             cerr << "RemoveOwnedItemIdx: CREATURE " << ix << " ID " << item.base->id << " FAILED!" << endl;
             return false;

@@ -25,6 +25,7 @@ DFhackCExport command_result ktimer (Core * c, vector <string> & parameters);
 DFhackCExport command_result bflags (Core * c, vector <string> & parameters);
 DFhackCExport command_result trackmenu (Core * c, vector <string> & parameters);
 DFhackCExport command_result mapitems (Core * c, vector <string> & parameters);
+DFhackCExport command_result test_creature_offsets (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -39,6 +40,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.push_back(PluginCommand("blockflags","Look up block flags",bflags));
     commands.push_back(PluginCommand("trackmenu","Track menu ID changes (toggle).",trackmenu));
     commands.push_back(PluginCommand("mapitems","Check item ids under cursor against item ids in map block.",mapitems));
+    commands.push_back(PluginCommand("test_creature_offsets","Bleh.",test_creature_offsets));
     return CR_OK;
 }
 
@@ -287,3 +289,15 @@ DFhackCExport command_result kittens (Core * c, vector <string> & parameters)
             color = Console::COLOR_BLUE;
     }
 }
+
+#include "dfhack/modules/Creatures.h"
+#include "dfhack/VersionInfo.h"
+#include <stddef.h>
+
+command_result test_creature_offsets(Core* c, vector< string >& parameters)
+{
+	uint32_t off_vinfo = c->vinfo->getGroup("Creatures")->getGroup("creature")->/*getGroup("advanced")->*/getOffset("custom_profession");
+	uint32_t off_struct = offsetof(df_creature,custom_profession);
+    c->con.print("Struct 0x%x, vinfo 0x%x\n", off_struct, off_vinfo);
+    return CR_OK;
+};

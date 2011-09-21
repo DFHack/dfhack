@@ -508,7 +508,7 @@ namespace DFHack
         uint32_t birth_time;    // 228
         uint32_t unk_22c;
         uint32_t unk_230;
-        uint32_t unk_234;
+        df_creature * unk_234; // suspiciously close to the pregnancy/birth stuff. Mother?
         uint32_t unk_238;
         int32_t unk_23c;
         int32_t unk_240;
@@ -674,8 +674,8 @@ namespace DFHack
         uint16_t able_stand_impair;     // 796
         uint16_t able_grasp;            // 798
         uint16_t able_grasp_impair;     // 79a
-        uint32_t unk_79c;
-        uint32_t unk_7a0;
+        uint32_t unk_79c; // able_fly/impair (maybe)
+        uint32_t unk_7a0; // able_fly/impair (maybe)
         std::vector<void*> unk_7a4;
         uint32_t unk_7b4;
         uint32_t unk_7b8;

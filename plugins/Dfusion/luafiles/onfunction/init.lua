@@ -39,7 +39,6 @@ function onfunction.patch(addr)
 	if(engine.peekb(addr)~=0xe8) then
 		error("Incorrect address, not a function call")
 	else
-		
 		onfunction.calls[addr+5]=addr+engine.peekd(addr+1)+5 --adds real function to call
 		engine.poked(addr+1,engine.getmod("functions")-addr-5)
 	end
@@ -50,6 +49,14 @@ function onfunction.AddFunction(addr,name,hints)
 	if hints~=nil then
 		onfunction.hints[name]=hints
 	end
+end
+function onfunction.ReadHint(values,name,hintname)
+	local hints=onfunction.hints[name]
+	if hints ==nil then return nil end
+	local hint=hints[hintname]
+	if type(hint)=="string" then return values[hint] end
+	local off=hint.off or 0
+	return engine.peek(off+values[hint.reg],hints[hintname].rtype)
 end
 function onfunction.SetCallback(name,func)
 	if onfunction.names[name]==nil then

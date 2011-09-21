@@ -5,6 +5,7 @@ if WINDOWS then --windows function defintions
 	onfunction.AddFunction(0x349640+offsets.base(),"AddItem",{item="esp"}) --or esp
 	onfunction.AddFunction(0x26e840+offsets.base(),"Dig_Create",{item_type="esp"}) --esp+8 -> material esp->block type
 	onfunction.AddFunction(0x3d4301+offsets.base(),"Make_Item",{item_type="esp"}) 
+	onfunction.AddFunction(0x5af826+offsets.base(),"Hurt",{target="esi",attacker={off=0x74,rtype=DWORD,reg="esp"}}) 
 else --linux
 	onfunction.AddFunction(0x899befe+offsets.base(),"Move") -- found out by attaching watch...
 	onfunction.AddFunction(0x850eecd+offsets.base(),"Die",{creature="ebx"})  -- same

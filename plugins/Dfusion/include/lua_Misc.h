@@ -8,6 +8,7 @@
 #include "luamain.h"
 #include "OutFile.h"
 #include "bit.h"
+#include "functioncall.h"
 
 namespace lua
 {

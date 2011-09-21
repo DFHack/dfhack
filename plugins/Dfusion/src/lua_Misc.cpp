@@ -136,6 +136,8 @@ static size_t __stdcall PushValue(size_t ret,uint32_t eax,uint32_t ebx,uint32_t 
 #endif
 {
 	lua::state st=lua::glua::Get();
+	st.getglobal("err");
+	int perr=st.gettop();
 	st.getglobal("OnFunction");
 	if(st.is<lua::nil>())
 		return 0;
@@ -152,19 +154,33 @@ static size_t __stdcall PushValue(size_t ret,uint32_t eax,uint32_t ebx,uint32_t 
 	st.setfield("edi");
 	st.push(esi);
 	st.setfield("esi");
-	st.push(esp);
+	st.push(esp+12);
 	st.setfield("esp");
 	st.push(ebp);
 	st.setfield("ebp");
 	st.push(ret);
 	st.setfield("ret");
-	st.pcall(1,1);
+	st.pcall(1,1,perr);
 	return st.as<uint32_t>();
 }
 static int Get_PushValue(lua_State *L)
 {
     lua::state st(L);
     st.push((uint32_t)&PushValue);
+    return 1;
+}
+static int Call_Df(lua_State *L)
+{
+    lua::state st(L);
+    FunctionCaller f(0);
+	std::vector<int> args;
+	size_t ptr;
+	FunctionCaller::callconv conv;
+	ptr=st.as<size_t>(1);
+	conv=(FunctionCaller::callconv)st.as<size_t>(2);
+	for(size_t j=3;j<=st.gettop();j++)
+		args.push_back(st.as<int>(j));
+	st.push(f.CallFunction(ptr,conv,args));
     return 1;
 }
 const luaL_Reg lua_misc_func[]=
@@ -176,6 +192,7 @@ const luaL_Reg lua_misc_func[]=
 	{"findmarker",FindMarker},
 	{"newmod",NewMod},
 	{"getpushvalue",Get_PushValue},
+	{"calldf",Call_Df},
 	{NULL,NULL}
 };
 void lua::RegisterMisc(lua::state &st)

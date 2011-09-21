@@ -4,7 +4,11 @@ DWORD=1
 WORD=2
 BYTE=3
 function GetTextRegion()
-	ranges__=ranges__ or Process.getMemRanges()
+	if __TEXT ~=nil then --Chache this, not going to change.
+		return __TEXT
+	end
+	
+	ranges__=Process.getMemRanges()
 	--print("Ranges:"..#ranges__)
 	for k,v in pairs(ranges__) do
 		--for k2,v2 in pairs(v) do
@@ -20,13 +24,27 @@ function GetTextRegion()
 		--end
 		local pos=string.find(v.name,".text") or string.find(v.name,"libs/Dwarf_Fortress")
 		if(pos~=nil) and v["execute"] then
+			__TEXT=v;
 			return v;
+		end
+	end
+	error(".Text region not found!")
+end
+function UpdateRanges()
+	ranges__=Process.getMemRanges()
+end
+function GetRegionIn(pos)
+	ranges__=ranges__ or Process.getMemRanges()
+	for k,v in pairs(ranges__) do
+		if pos>=v.start and pos<v["end"] then 
+			return v
 		end
 	end
 	return nil
 end
-function GetRegionIn(pos)
-	ranges__= Process.getMemRanges()
+function GetRegionIn2(pos)
+	ranges__=ranges__ or Process.getMemRanges()
+	local cr=nil
 	for k,v in pairs(ranges__) do
 		--for k2,v2 in pairs(v) do
 		--	print(string.format("%d %s->%s",k,tostring(k2),tostring(v2)))
@@ -37,29 +55,21 @@ function GetRegionIn(pos)
 		--if(v["write"])then	num=num+10 end
 		--if(v["execute"]) then num=num+100 end
 		--print(string.format("%d %x->%x %s %x",k,v["start"],v["end"],v.name,pos))
-		if pos>=v.start and pos<=v["end"] then
-			return v
+		if pos>=v.start then --This is a hack to counter .text region suddenly shrinking.
+			if cr~=nil then
+				if v.start < cr.start then -- find region that start is closest
+					cr=v
+				end
+			else
+				cr=v
+			end
 		end
 	end
-	return nil
+	return cr
 end
 function ValidOffset(pos)
 	ranges__=ranges__ or Process.getMemRanges()
-	for k,v in pairs(ranges__) do
-		--for k2,v2 in pairs(v) do
-		--	print(string.format("%d %s->%s",k,tostring(k2),tostring(v2)))
-		--end
-		--local num
-		--num=0
-		--if(v["read"])then num=num+1 end
-		--if(v["write"])then	num=num+10 end
-		--if(v["execute"]) then num=num+100 end
-		--print(string.format("%d %x->%x %s %d",k,v["start"],v["end"],v.name,num))
-		if pos>=v.start and pos<=v["end"] then
-			return true
-		end
-	end
-	return false
+	return GetRegionIn(pos)~=nil
 end
 function unlockDF()
 	local reg=GetTextRegion()
@@ -72,6 +82,7 @@ function lockDF()
 	Process.setPermisions(reg,reg)
 end
 function SetExecute(pos)
+	UpdateRanges()
 	local reg=GetRegionIn(pos)
 	reg.execute=true
 	Process.setPermisions(reg,reg) -- TODO maybe make a page with only execute permisions or sth
@@ -302,15 +313,18 @@ function ModPattern(itemoffset,pattern)
 end
 
 function findVectors()
+	if __VECTORS ~=nil then --chache
+		return __VECTORS
+	end
 	local text=GetTextRegion()
-	local h=hexsearch(text.start,text["end"],0x8b,ANYBYTE,ANYDWORD,0x8b,ANYBYTE,ANYDWORD,0x2b,ANYBYTE)
+	local h=hexsearch(text.start,text["end"],0x8b,ANYBYTE,ANYDWORD,0x8b,ANYBYTE,ANYDWORD,0x2b)
 	local pos=h:findall()
 	local T={}
 	for k,v in pairs(pos) do
 		local loc1,loc2
 		loc1=engine.peekd(v+2)
 		loc2=engine.peekd(v+8)
-		--print(string.format("%x - %x=%x",loc1,loc2,loc1-loc2))
+		print(string.format("%x - %x=%x",loc1,loc2,loc1-loc2))
 		if(loc1-loc2==4) then
 			if T[loc1-4]~=nil then
 				T[loc1-4]=T[loc1-4]+1
@@ -319,6 +333,7 @@ function findVectors()
 			end
 		end
 	end
+	__VECTORS=T
 	return T
 end
 

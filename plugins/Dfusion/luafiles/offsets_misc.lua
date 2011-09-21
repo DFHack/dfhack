@@ -59,8 +59,8 @@ function offsets.searchoffsets(forcelazy)
 	end
 end
 function offsets.find(startoffset,...)
-	local endadr;
-	if startoffset== 0 then
+	local endadr=GetTextRegion()["end"];
+	--[=[if startoffset== 0 then
 		local text=GetTextRegion()
 		--print("searching in:"..text.name)
 		startoffset=text.start
@@ -68,8 +68,12 @@ function offsets.find(startoffset,...)
 	else
 		local reg=GetRegionIn(startoffset)
 		--print("searching in:"..reg.name)
+		if reg==nil then 
+			print(string.format("Warning: memory range for search @:%x not found!",startoffset))
+			return 0
+		end
 		endadr=reg["end"]
-	end
+	end--]=]
 	--print(string.format("Searching (%x->%x)",startoffset,endadr))
 	local h=hexsearch(startoffset,endadr,...)
 	local pos=h:find()

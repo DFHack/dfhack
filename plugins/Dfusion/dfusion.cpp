@@ -155,8 +155,11 @@ void RunDfusion(void *p)
 	
 	lua::state s=lua::glua::Get();
 	try{
+		s.getglobal("err");
+		int errpos=s.gettop();
 		s.loadfile("dfusion/init.lua"); //load script
-		s.pcall(0,0);// run it
+		
+		s.pcall(0,0,errpos);// run it
 	}
 	catch(lua::exception &e)
 	{

@@ -67,10 +67,10 @@ namespace DFHack
 
         // names, used by a few other modules.
         bool InitReadNames();
-        bool readName(t_name & name, uint32_t address);
-        bool copyName(uint32_t address, uint32_t target);
+        bool readName(t_name & name, df_name * address);
+        bool copyName(df_name * address, df_name * target);
         // translate a name using the loaded dictionaries
-        std::string TranslateName(const DFHack::t_name& name, bool inEnglish = true);
+        std::string TranslateName(const DFHack::df_name * name, bool inEnglish = true);
 
         private:
         struct Private;

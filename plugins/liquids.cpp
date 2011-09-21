@@ -206,6 +206,7 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                  << "of            - make obsidian floors" << endl
                  << "rs            - make a river source" << endl
                  << "f             - flow bits only" << endl
+                 << "wclean        - remove salt and stagnant flags from tiles" << endl
                  << "Set-Modes (only for magma/water):" << endl
                  << "s+            - only add" << endl
                  << "s.            - set" << endl
@@ -253,6 +254,10 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
         else if(command == "rs")
         {
             mode = "riversource";
+        }
+        else if(command == "wclean")
+        {
+            mode = "wclean";
         }
         else if(command == "point" || command == "p")
         {
@@ -420,6 +425,19 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                         bf.bits.liquid_2 = true;
                         b->setBlockFlags(bf);
 
+                        iter++;
+                    }
+                }
+                else if(mode=="wclean")
+                {
+                    coord_vec::iterator iter = all_tiles.begin();
+                    while (iter != all_tiles.end())
+                    {
+                        DFHack::DFCoord current = *iter;
+                        DFHack::t_designation des = mcache.designationAt(current);
+                        des.bits.water_salt = false;
+                        des.bits.water_stagnant = false;
+                        mcache.setDesignationAt(current,des);
                         iter++;
                     }
                 }

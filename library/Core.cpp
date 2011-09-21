@@ -186,7 +186,7 @@ void fIOthread(void * iodata)
                           "by clicking on the program icon in the top bar of the window.\n\n"
                           "Basic commands:\n"
                           "  help|?                - This text.\n"
-                          "  ls|dir [PLUGIN]           - List available commands. Optionally for single plugin.\n"
+                          "  ls|dir [PLUGIN]       - List available commands. Optionally for single plugin.\n"
                           "  cls                   - Clear the console.\n"
                           "  fpause                - Force DF to pause.\n"
                           "  die                   - Force DF to close immediately\n"

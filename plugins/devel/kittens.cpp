@@ -25,6 +25,8 @@ DFhackCExport command_result ktimer (Core * c, vector <string> & parameters);
 DFhackCExport command_result bflags (Core * c, vector <string> & parameters);
 DFhackCExport command_result trackmenu (Core * c, vector <string> & parameters);
 DFhackCExport command_result mapitems (Core * c, vector <string> & parameters);
+DFhackCExport command_result test_creature_offsets (Core * c, vector <string> & parameters);
+DFhackCExport command_result creat_job (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -39,6 +41,8 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.push_back(PluginCommand("blockflags","Look up block flags",bflags));
     commands.push_back(PluginCommand("trackmenu","Track menu ID changes (toggle).",trackmenu));
     commands.push_back(PluginCommand("mapitems","Check item ids under cursor against item ids in map block.",mapitems));
+    commands.push_back(PluginCommand("test_creature_offsets","Bleh.",test_creature_offsets));
+    commands.push_back(PluginCommand("creat_job","Bleh.",creat_job));
     return CR_OK;
 }
 
@@ -287,3 +291,49 @@ DFhackCExport command_result kittens (Core * c, vector <string> & parameters)
             color = Console::COLOR_BLUE;
     }
 }
+
+#include "dfhack/modules/Creatures.h"
+#include "dfhack/VersionInfo.h"
+#include <stddef.h>
+
+command_result test_creature_offsets(Core* c, vector< string >& parameters)
+{
+	uint32_t off_vinfo = c->vinfo->getGroup("Creatures")->getGroup("creature")->/*getGroup("advanced")->*/getOffset("custom_profession");
+	uint32_t off_struct = offsetof(df_creature,custom_profession);
+    c->con.print("Struct 0x%x, vinfo 0x%x\n", off_struct, off_vinfo);
+    return CR_OK;
+};
+
+command_result creat_job (Core * c, vector< string >& parameters)
+{
+    c->Suspend();
+    Creatures * cr = c->getCreatures();
+    Gui * g = c-> getGui();
+    uint32_t num_cr = 0;
+    int32_t cx,cy,cz;
+    g->getCursorCoords(cx,cy,cz);
+    if(cx == -30000)
+    {
+        c->con.printerr("No cursor.\n");
+        c->Resume();
+        return CR_FAILURE;
+    }
+    if(!cr->Start(num_cr) || num_cr == 0)
+    {
+        c->con.printerr("No creatures.\n");
+        c->Resume();
+        return CR_FAILURE;
+    }
+    auto iter = cr->creatures->begin();
+    while (iter != cr->creatures->end())
+    {
+        df_creature * unit = *iter;
+        if(cx == unit->x && cy == unit->y && cz == unit->z)
+        {
+            c->con.print("%d:%s - address 0x%x - job 0x%x\n", unit->id, unit->name.first_name.c_str(), unit, uint32_t(unit) + offsetof(df_creature,current_job));
+        }
+        iter++;
+    }
+    c->Resume();
+    return CR_OK;
+};

@@ -9,7 +9,7 @@
 #include <cstdio>
 #include <stack>
 #include <string>
-
+#include <cmath>
 using std::vector;
 using std::string;
 using std::stack;
@@ -56,6 +56,7 @@ enum circle_what
 {
     circle_set,
     circle_unset,
+    circle_invert,
 };
 
 DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
@@ -63,8 +64,8 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
     static bool filled = false;
     static circle_what what = circle_set;
     static e_designation type = designation_default;
-    static int r = 0;
-    auto saved_r = r;
+    static int diameter = 0;
+    auto saved_d = diameter;
     bool force_help = false;
     for(int i = 0; i < parameters.size();i++)
     {
@@ -87,6 +88,10 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         else if(parameters[i] == "unset")
         {
             what = circle_unset;
+        }
+        else if(parameters[i] == "invert")
+        {
+            what = circle_invert;
         }
         else if(parameters[i] == "dig")
         {
@@ -112,14 +117,14 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         {
             type = designation_channel;
         }
-        else if (!from_string(r,parameters[i], std::dec))
+        else if (!from_string(diameter,parameters[i], std::dec))
         {
-            r = saved_r;
+            diameter = saved_d;
         }
     }
-    if(r < 0)
-        r = -r;
-    if(force_help || r == 0)
+    if(diameter < 0)
+        diameter = -diameter;
+    if(force_help || diameter == 0)
     {
         c->con.print(   "A command for easy designation of filled and hollow circles.\n"
                         "\n"
@@ -129,6 +134,7 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
                         "\n"
                         "    set = set designation\n"
                         "  unset = unset current designation\n"
+                        " invert = invert current designation\n"
                         "\n"
                         "    dig = normal digging\n"
                         "   ramp = ramp digging\n"
@@ -137,7 +143,7 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
                         " xstair = staircase up/down\n"
                         "   chan = dig channel\n"
                         "\n"
-                        "      # = radius in tiles (default = 0)\n"
+                        "      # = diameter in tiles (default = 0)\n"
                         "\n"
                         "After you have set the options, the command called with no options\n"
                         "repeats with the last selected parameters:\n"
@@ -173,10 +179,16 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         auto b = MCache.BlockAt(at/16);
         if(!b || !b->valid)
             return false;
-        if(x == 0 || x == x_max - 1)
+        if(x == 0 || x == x_max * 16 - 1)
+        {
+            //c->con.print("not digging map border\n");
             return false;
-        if(y == 0 || y == y_max - 1)
+        }
+        if(y == 0 || y == y_max * 16 - 1)
+        {
+            //c->con.print("not digging map border\n");
             return false;
+        }
         uint16_t tt = MCache.tiletypeAt(at);
         t_designation des = MCache.designationAt(at);
         // could be potentially used to locate hidden constructions?
@@ -220,6 +232,15 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
                 {
                     des.bits.dig = designation_no;
                 }
+            case circle_invert:
+                if(des.bits.dig == designation_no)
+                {
+                    des.bits.dig = type;
+                }
+                else
+                {
+                    des.bits.dig = designation_no;
+                }
                 break;
         }
         std::cerr << "allowing tt" << tt << "\n";
@@ -242,53 +263,71 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         }
         return true;
     };
-    int f = 1 - r;
-    int ddF_x = 1;
-    int ddF_y = -2 * r;
-    int x = 0;
-    int y = r;
-    if(!filled)
+    int r = diameter / 2;
+    int iter;
+    bool adjust;
+    if(diameter % 2)
     {
-        dig(cx, cy + r, cz);
-        dig(cx, cy - r, cz);
-        dig(cx + r, cy, cz);
-        dig(cx - r, cy, cz);
-    }
-    else
-    {
-        lineX(cy-r, cy+r, cx, cz);
-        lineY(cx-r, cx+r, cy, cz);
-    }
-
-    while(x < y)
-    {
-        if(f >= 0)
+        // paint center
+        if(filled)
         {
-            y--;
-            ddF_y += 2;
-            f += ddF_y;
-        }
-        x++;
-        ddF_x += 2;
-        f += ddF_x;
-        if(!filled)
-        {
-            dig(cx + x, cy + y, cz);
-            dig(cx - x, cy + y, cz);
-            dig(cx + x, cy - y, cz);
-            dig(cx - x, cy - y, cz);
-            dig(cx + y, cy + x, cz);
-            dig(cx - y, cy + x, cz);
-            dig(cx + y, cy - x, cz);
-            dig(cx - y, cy - x, cz);
+            lineY(cx - r, cx + r, cy, cz);
         }
         else
         {
-            lineY(cx-x, cx+x, cy+y, cz);
-            lineY(cx-x, cx+x, cy-y, cz);
-            lineY(cx-y, cx+y, cy+x, cz);
-            lineY(cx-y, cx+y, cy-x, cz);
+            dig(cx - r, cy, cz);
+            dig(cx + r, cy, cz);
         }
+        adjust = false;
+        iter = 2;
+    }
+    else
+    {
+        adjust = true;
+        iter = 1;
+    }
+    int lastwhole = r;
+    for(; iter <= diameter - 1; iter +=2)
+    {
+        // top, bottom coords
+        int top = cy - ((iter + 1) / 2) + adjust;
+        int bottom = cy + ((iter + 1) / 2);
+        // see where the current 'line' intersects the circle
+        double val = std::sqrt(double(diameter*diameter - iter*iter));
+        // adjust for circles with odd diameter
+        if(!adjust)
+            val -= 1;
+        // map the found value to the DF grid
+        double whole;
+        double fraction = std::modf(val / 2.0, & whole);
+        if (fraction > 0.5)
+            whole += 1.0;
+        int right = cx + whole;
+        int left = cx - whole + adjust;
+        int diff = lastwhole - whole;
+        // paint
+        if(filled || iter == diameter - 1)
+        {
+            lineY(left, right, top , cz);
+            lineY(left, right, bottom , cz);
+        }
+        else
+        {
+            dig(left, top, cz);
+            dig(left, bottom, cz);
+            dig(right, top, cz);
+            dig(right, bottom, cz);
+        }
+        if(!filled && diff > 1)
+        {
+            int lright = cx + lastwhole;
+            int lleft = cx - lastwhole + adjust;
+            lineY(lleft + 1, left - 1, top + 1 , cz);
+            lineY(right + 1, lright - 1, top + 1 , cz);
+            lineY(lleft + 1, left - 1, bottom - 1 , cz);
+            lineY(right + 1, lright - 1, bottom - 1 , cz);
+        }
+        lastwhole = whole;
     }
     MCache.WriteAll();
     c->Resume();

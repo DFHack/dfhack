@@ -198,6 +198,10 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
                     con << "rained?" << std::endl;
                 if(des.smooth)
                     con << "smooth?" << std::endl;
+                if(des.water_salt)
+                    con << "salty" << endl;
+                if(des.water_stagnant)
+                    con << "stagnant" << endl;
 
                 #define PRINT_FLAG( X )  con.print("%-16s= %c\n", #X , ( des.X ? 'Y' : ' ' ) )
                 PRINT_FLAG( hidden );

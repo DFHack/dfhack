@@ -67,7 +67,7 @@ public:
 
         t_itemflags &f = itm->base->flags;
 
-        return (f.unk1 || f.unk2 || f.unk3 || f.unk4 || f.unk5 ||
+        return (f.unk1 || f.unk2 || f.unk3 || f.unk4 || /*f.unk5 ||*/
                 f.unk6 || f.unk7 ||
                 // f.unk8 || f.unk9 || /* Too common */
                 f.unk10 || f.unk11);
@@ -100,7 +100,7 @@ public:
         if (f.unk2) flags.push_back("unk2");
         if (f.unk3) flags.push_back("unk3");
         if (f.unk4) flags.push_back("unk4");
-        if (f.unk5) flags.push_back("unk5");
+        //if (f.unk5) flags.push_back("unk5");
         if (f.unk6) flags.push_back("unk6");
         if (f.unk7) flags.push_back("unk7");
         if (f.unk8) flags.push_back("unk8");

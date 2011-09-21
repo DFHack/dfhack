@@ -73,7 +73,7 @@ union t_itemflags
         unsigned int unk3 : 1;           ///< 0000 0800 unknown, unseen, unusable
 
         unsigned int unk4 : 1;           ///< 0000 1000 unknown, unseen
-        unsigned int unk5 : 1;           ///< 0000 2000 unknown, unseen
+        unsigned int murder : 1;         ///< 0000 2000 Implies murder - used in fell moods
         unsigned int foreign : 1;        ///< 0000 4000 Item is imported
         unsigned int trader : 1;         ///< 0000 8000 Item ownwed by trader
 

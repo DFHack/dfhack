@@ -53,73 +53,12 @@ struct Creatures::Private
 {
     bool Inited;
     bool Started;
-    /*
-    bool Ft_basic;
-    bool Ft_advanced;
-    bool Ft_jobs;
-    bool Ft_job_materials;
-    bool Ft_soul;
-    bool Ft_inventory;
-    bool Ft_owned_items;
-    struct t_offsets
-    {
-        // creature offsets
-        uint32_t vector;
-        uint32_t pos_offset;
-        uint32_t profession_offset;
-        uint32_t custom_profession_offset;
-        uint32_t race_offset;
-        int32_t civ_offset;
-        uint32_t flags1_offset;
-        uint32_t flags2_offset;
-        uint32_t flags3_offset;
-        uint32_t name_offset;
-        uint32_t sex_offset;
-        uint32_t caste_offset;
-        uint32_t id_offset;
-        uint32_t labors_offset;
-        uint32_t happiness_offset;
-        uint32_t artifact_name_offset;
-        uint32_t physical_offset;
-        uint32_t mood_offset;
-        uint32_t pregnancy_offset;
-        uint32_t pregnancy_ptr_offset;
-        uint32_t mood_skill_offset;
-        uint32_t pickup_equipment_bit;
-        uint32_t soul_vector_offset;
-        uint32_t default_soul_offset;
-        uint32_t current_job_offset;
-        // soul offsets
-        uint32_t soul_skills_vector_offset;
-        // name offsets (needed for reading creature names)
-        uint32_t name_firstname_offset;
-        uint32_t name_nickname_offset;
-        uint32_t name_words_offset;
-        uint32_t soul_mental_offset;
-        uint32_t soul_traits_offset;
-        uint32_t appearance_vector_offset;
-        uint32_t birth_year_offset;
-        uint32_t birth_time_offset;
-        uint32_t inventory_offset;
-        uint32_t owned_items_offset;
-        // creature job stuff
-        int32_t job_type_offset;
-        int32_t job_id_offset;
-        int32_t job_materials_vector;
-        int32_t job_material_itemtype_o;
-        int32_t job_material_subtype_o;
-        int32_t job_material_subindex_o;
-        int32_t job_material_index_o;
-        int32_t job_material_flags_o;
-        // creature job material stuff
-    } creatures;
-    */
-    uint32_t creature_module;
+
     uint32_t dwarf_race_index_addr;
     uint32_t dwarf_civ_id_addr;
     bool IdMapReady;
     std::map<int32_t, int32_t> IdMap;
-    //DfVector <uint32_t> *p_cre;
+
     Process *owner;
     Translation * trans;
 };
@@ -132,7 +71,6 @@ Module* DFHack::createCreatures()
 Creatures::Creatures()
 {
     Core & c = Core::getInstance();
-    creatures = 0;
     d = new Private;
     d->owner = c.p;
     VersionInfo * minfo = c.vinfo;
@@ -140,16 +78,11 @@ Creatures::Creatures()
     d->Started = false;
     d->IdMapReady = false;
     d->trans = c.getTranslation();
-    d->trans->InitReadNames(); // throws on error
+    d->trans->InitReadNames(); // FIXME: throws on error
 
     OffsetGroup *OG_Creatures = minfo->getGroup("Creatures");
-    OffsetGroup *OG_creature = OG_Creatures->getGroup("creature");
-    OffsetGroup *OG_creature_ex = OG_creature->getGroup("advanced");
-    OffsetGroup *OG_soul = OG_Creatures->getGroup("soul");
-    OffsetGroup * OG_name = minfo->getGroup("name");
-    OffsetGroup * OG_jobs = OG_Creatures->getGroup("job");
-    OffsetGroup * OG_job_mats = OG_jobs->getGroup("material");
 
+    creatures = 0;
     try
     {
         creatures = (vector <df_creature *> *) OG_Creatures->getAddress ("vector");
@@ -172,6 +105,7 @@ bool Creatures::Start( uint32_t &numcreatures )
     {
         d->Started = true;
         numcreatures =  creatures->size();
+        d->IdMap.clear();
         d->IdMapReady = false;
         return true;
     }

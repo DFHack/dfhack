@@ -260,7 +260,6 @@ namespace DFHack
     /**
      * \ingroup grp_creatures
      */
-    /*
     struct t_like
     {
         int16_t type;
@@ -268,8 +267,8 @@ namespace DFHack
         int16_t itemIndex;
         t_matglossPair material;
         bool active;
+        uint32_t mystery;
     };
-    */
 
     // FIXME: THIS IS VERY, VERY BAD.
     #define NUM_CREATURE_LABORS 96
@@ -369,7 +368,7 @@ namespace DFHack
         uint32_t unk_18;
     };
     /**
-     * Creature skil descriptor
+     * Creature skill descriptor
      * \ingroup grp_creatures
      */
     struct df_skill
@@ -384,12 +383,26 @@ namespace DFHack
         uint32_t unk_1c;
     };
     /**
+     * Creature like descriptor
+     * \ingroup grp_creatures
+     */
+    struct df_like
+    {
+        int16_t type;
+        int16_t itemClass;
+        int16_t itemIndex;
+        int16_t material_type;
+        int32_t material_index;
+        bool active;
+        uint32_t mystery;
+    };
+    /**
      * A creature's soul, as it appears in DF memory
      * \ingroup grp_creatures
      */
     struct df_soul
     {
-        uint32_t unk_0;
+        uint32_t creature_id;
         df_name name;   // 4
         uint32_t unk_70;
         uint16_t unk_74;
@@ -400,7 +413,7 @@ namespace DFHack
         int32_t unk_84;
         df_attrib mental[NUM_CREATURE_MENTAL_ATTRIBUTES];       // 88..1f3
         std::vector<df_skill*> skills;  // 1f4;
-        std::vector<void*> unk_204;     // pointers to 14 0x14-byte structures ... likes?
+        std::vector<df_like*> likes;     // pointers to 14 0x14-byte structures ... likes?
         uint16_t traits[NUM_CREATURE_TRAITS];   // 214
         std::vector<int16_t*> unk_250;  // 1 pointer to 2 shorts
         uint32_t unk_260;

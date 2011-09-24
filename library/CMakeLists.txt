@@ -6,6 +6,7 @@ OPTION(BUILD_DEVEL "Install/package files required for development (For SDK)." O
 OPTION(BUILD_DOXYGEN "Create/install/package doxygen documentation for DFHack (For SDK)." OFF)
 IF(UNIX)
     OPTION(CONSOLE_NO_CATCH "Make the console not catch 'CTRL+C' events for easier debugging." OFF)
+    OPTION(MALLOC_FILL "Make malloc calls fill the allocated memory with 0xCC values." OFF)
 ENDIF()
 
 include_directories (include)
@@ -123,6 +124,9 @@ ADD_DEFINITIONS(-DBUILD_DFHACK_LIB)
 IF(UNIX)
     IF(CONSOLE_NO_CATCH)
         ADD_DEFINITIONS(-DCONSOLE_NO_CATCH)
+    ENDIF()
+    IF(MALLOC_FILL)
+        ADD_DEFINITIONS(-DMALLOC_FILL)
     ENDIF()
 ENDIF()
 

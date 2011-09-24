@@ -330,7 +330,29 @@ command_result creat_job (Core * c, vector< string >& parameters)
         df_creature * unit = *iter;
         if(cx == unit->x && cy == unit->y && cz == unit->z)
         {
-            c->con.print("%d:%s - address 0x%x - job 0x%x\n", unit->id, unit->name.first_name.c_str(), unit, uint32_t(unit) + offsetof(df_creature,current_job));
+            c->con.print("%d:%s - address 0x%x - job 0x%x\n"
+                         "Soul: 0x%x, likes: 0x%x\n",
+                         unit->id,
+                         unit->name.first_name.c_str(),
+                         unit,
+                         uint32_t(unit) + offsetof(df_creature,current_job),
+                         uint32_t(unit) + offsetof(df_creature,current_soul),
+                         uint32_t(unit->current_soul) + offsetof(df_soul,likes)
+                        );
+            df_soul * s = unit->current_soul;
+            if(s)
+            {
+                c->con.print("LIKES:\n");
+                int idx = 1;
+                auto iter = s->likes.begin();
+                while(iter != s->likes.end())
+                {
+                    df_like * l = *iter;
+                    c->con.print("%3d: %f\n", idx, float(l->mystery));
+                    iter++;
+                    idx++;
+                }
+            }
         }
         iter++;
     }

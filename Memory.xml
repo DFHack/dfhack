@@ -872,9 +872,72 @@
                 <Address name="vector"/>
                 <Address name="current_race" description="Index of the current player race." />
                 <Address name="current_civ" description="Index of the current player civilization." />
+                <Group name="creature">
+                    <Offset name="name" description="Creature name, see the name group." />
+                    <Offset name="custom_profession"  description="String object with custom profession." />
+                    <Offset name="profession"  description="Profession index." />
+                    <Offset name="race"  description="Race of the creature." />
+                    <Offset name="position"  description="X,Y,Z." />
+                    <Offset name="flags1"  description="First set of flags" />
+                    <Offset name="flags2"  description="Second set of flags" />
+                    <Offset name="flags3"  description="Third set of flags" />
+                    <Offset name="caste"  description="Caste of the creature. Same as sex most of the time." />
+                    <Offset name="sex"  description="Sex of the creature." />
+                    <Offset name="id"  description="Unique ID of the creature, seems to be used for binary search in the creature vector." />
+                    <Offset name="civ" description="What civ the creature belongs to." />
+                    <Group name="advanced">
+                        <Offset name="pickup_equipment_bit" description="Setting this makes creatures re-check the status of their equip." />
+                        <Offset name="mood" />
+                        <Offset name="pregnancy"  description="Pregnancy timer.." />
+                        <Offset name="pregnancy_ptr"  description="Pregnancy object." />
+                        <Offset name="birth_year" description="The year the creature has been born." />
+                        <Offset name="birth_time"  description="Time of year the creature has been born." />
+                        <Offset name="current_job" />
+                        <Offset name="current_job_skill"  description="the skill that will be increased at the end of the mood (or not)" />
+                        <Offset name="physical" value="0x464" description="An array of physical attributes." />
+                        <Offset name="appearance_vector" description="seems to be indexes in the list of possible colors defined in the raws for each group" />
+                        <Offset name="inventory_vector" />
+                        <Offset name="owned_items_vector" />
+                        <Offset name="artifact_name" description="Name of the artifact created by this creature." />
+                        <Offset name="soul_vector" description="A vector of souls attached to the creature." />
+                        <Offset name="current_soul" description="Currently active soul?" />
+                        <Offset name="labors" description="Array of labors. Used by DT to enable/disable them." />
+                        <Offset name="happiness" description="Number that says how happy the creature is." />
+                        <Offset name="hist_figure_id" description="For a creature matching a historical figure, it's ID"/>
+                    </Group>
+                </Group>
+
+                <Group name="soul">
+                    <Offset name="name" description="Name of the soul." />
+                    <Offset name="mental" description="An array of mental attributes." />
+                    <Offset name="skills_vector" description="Vector of non-zero skills the creature has." />
+                    <Offset name="traits" />
+                </Group>
+
+                <Group name="job">
+                    <Offset name="id" description="Incrementaly assigned." />
+                    <Offset name="type" description="seems to be just like the old occupations" />
+                    <Offset name="materials_vector" />
+                    <Group name="material">
+                        <Offset name="maintype" description="like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ..." />
+                        <Offset name="sectype1" description="subsubtype ?" />
+                        <Offset name="sectype2" description="subtype ?" />
+                        <Offset name="sectype3" description="index of material (for example, 2 is for silver)" />
+                        <Offset name="flags" description="set only for shell / bone mood requirements ?" />
+                    </Group>
+                </Group>
             </Group>
             <Group name="Materials" description="Offsets used by the Materials module.">
                 <Address name="inorganics" description="Soil, stone, gems and metal."/>
+                <Group name="inorganic_extras">
+                    <Offset name="ore_types" description="Vector of indexes of metals produced when ore is smelted"/>
+                    <Offset name="ore_chances" description="Vector of percent chance of each type of metal being produced on smelting"/>
+                    <Offset name="strand_types" description="Vector of indexes of metals produced when ore undergoes strand extraction"/>
+                    <Offset name="strand_chances" description="Vector of percent chance of each type of metal being produced on strand extraction"/>
+                    <Offset name="value" description="Meterial value"/>
+                    <Offset name="wall_tile" description="Tile when material is a natural wall"/>
+                    <Offset name="boulder_tile" description="Tile when material is a dug out stone"/>
+                </Group>
                 <Address name="organics_all" description="Wood and plant matter, mixed" />
                 <Address name="organics_plants" description="plant matter" />
                 <Address name="organics_trees" description="just wood" />
@@ -1160,6 +1223,56 @@
                 <Address name="vector" value="0x0166ecc4" />
                 <Address name="current_race" value="0x01470fbc" />
                 <Address name="current_civ" value="0x01470fb0" />
+                <Group name="creature">
+                    <Offset name="name" value="0x0" />
+                    <Offset name="custom_profession" value="0x6c" />
+                    <Offset name="profession" value="0x88" />
+                    <Offset name="race" value="0x8C" />
+                    <Offset name="position" value="0x90" />
+                    <Offset name="flags1" value="0xF8" />
+                    <Offset name="flags2" value="0xFC" />
+                    <Offset name="caste" value="0x110" />
+                    <Offset name="sex" value="0x112" />
+                    <Offset name="id" value="0x114" />
+                    <Offset name="civ" value="0X120" />
+                    <Group name="advanced">
+                        <Offset name="pickup_equipment_bit" value="0X21C" />
+                        <Offset name="mood" value="0x288" />
+                        <Offset name="pregnancy" value="0x28C" />
+                        <Offset name="pregnancy_ptr" value="0x290" />
+                        <Offset name="birth_year" value="0x298" />
+                        <Offset name="birth_time" value="0x29C" />
+                        <Offset name="current_job" value="0x390" /> <!-- from chmod -->
+                        <Offset name="current_job_skill" value="0x394" /> the skill that will be increased at the end of the mood (or not)
+                        <Offset name="physical" value="0x464" />
+                        <Offset name="appearance_vector" value="0x604" /> seems to be indexes in the list of possible colors defined in the raws for each group
+                        <Offset name="artifact_name" value="0x6D0" />
+                        <Offset name="soul_vector" value="0x073C" />
+                        <Offset name="current_soul" value="0x0754" />
+                        <Offset name="labors" value="0x770" />
+                        <Offset name="happiness" value="0x830" />
+                    </Group>
+                </Group>
+
+                <Group name="soul">
+                    <Offset name="name" value="0x0" />
+                    <Offset name="mental" value="0x88" />
+                    <Offset name="skills_vector" value="0x1F4" />
+                    <Offset name="traits" value="0x224" />
+                </Group>
+
+                <Group name="job">
+                    <Offset name="id" value="0x0" /> Incrementaly assigned
+                    <Offset name="type" value="0x8" /> seems to be just like the old occupations
+                    <Offset name="materials_vector" value="0xa4" />
+                    <Group name="material">
+                        <Offset name="maintype" value="0x0" /> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
+                        <Offset name="sectype1" value="0x2" /> subsubtype ?
+                        <Offset name="sectype2" value="0x4" /> subtype ?
+                        <Offset name="sectype3" value="0x8" /> index of material (for example, 2 is for silver)
+                        <Offset name="flags" value="0x18" /> set only for shell / bone mood requirements ?
+                    </Group>
+                </Group>
             </Group>
             <Group name="Materials">
                 <Address name="inorganics" value="0x16afd04" /><!-- WORLD + 0x54B7C -->
@@ -1283,6 +1396,15 @@
             </Group>
             <Group name="Creatures">
                 <Address name="vector" value="0x166FD0C" />
+                <Group name="creature">
+                    <Group name="advanced">
+                        <Offset name="artifact_name" value="0x6D4" />
+                        <Offset name="soul_vector" value="0x0740" />
+                        <Offset name="current_soul" value="0x0758" />
+                        <Offset name="labors" value="0x774" />
+                        <Offset name="happiness" value="0x834" />
+                    </Group>
+                </Group>
             </Group>
             <Group name="Materials">
                 <Address name="inorganics" value="0x16B0D4C" /><!--inorganics vector = WORLD + 0x54B7C = 0x16B0D4C-->
@@ -1470,6 +1592,18 @@
             </Group>
             <Group name="Creatures">
                 <Address name="vector" value="0x168E73C" />
+                <Group name="creature">
+                    <Group name="advanced">
+                        <Offset name="inventory_vector" value="0x2FC" />
+                        <Offset name="physical" value="0x4AC" />
+                        <Offset name="appearance_vector" value="0x64c" /> <!-- Maybe slightly wrong -->
+                        <Offset name="artifact_name" value="0x71c" />
+                        <Offset name="labors" value="0x7Bc" />
+                        <Offset name="soul_vector" value="0x0788" />
+                        <Offset name="current_soul" value="0x07A0" />
+                        <Offset name="happiness" value="0x87c" />
+                    </Group>
+                </Group>
             </Group>
         </Offsets>
     </Version>
@@ -1665,6 +1799,49 @@
                 <Address name="vector" value="0x01655fe4"/>
                 <Address name="current_race" value="0x1482874" />
                 <Address name="current_civ" value="0x1482868" />
+                <Group name="creature">
+                    <Offset name="name" value="0x0" />
+                    <Offset name="custom_profession"  value="0x006C" />
+                    <Offset name="profession"  value="0x0088" />
+                    <Offset name="race"  value="0x008C" />
+                    <Offset name="position"  value="0x90" />
+                    <Offset name="flags1"  value="0x00E0" />
+                    <Offset name="flags2"  value="0x00E4" />
+                    <Offset name="caste"  value="0x00F8"/>
+                    <Offset name="sex"  value="0x00FA" /> <!-- ASSUMED -->
+                    <Offset name="id"  value="0x00FC" />
+                    <Offset name="civ" value="0x108" />
+                    <Group name="advanced">
+                        <Offset name="pickup_equipment_bit" value="0x01BC" />
+                        <Offset name="mood" value="0x210" />
+                        <Offset name="pregnancy" value="0x214" />
+                        <Offset name="pregnancy_ptr" value="0x218" />
+                        <Offset name="birth_year" value="0x220" />
+                        <Offset name="birth_time" value="0x224" />
+                        <Offset name="inventory_vector" value="0x284" />
+                        <Offset name="current_job" value="0x02F0" />
+                        <Offset name="current_job_skill" value="0x02F4" />
+                        <Offset name="physical" value="0x3C4" />
+                        <Offset name="appearance_vector" value="0x524" />
+                        <Offset name="artifact_name" value="0x5D4"  />
+                        <Offset name="soul_vector" value="0x640" />
+                        <Offset name="current_soul" value="0x650" />
+                        <Offset name="labors" value="0x0664" />
+                        <Offset name="happiness" value="0x0704" />
+                    </Group>
+                </Group>
+
+                <Group name="soul">
+                    <Offset name="name" value="0x4" />
+                    <Offset name="mental" value="0x88" />
+                    <Offset name="skills_vector" value="0x1F4 0x01F0" />
+                    <Offset name="traits" value="0x0214" /> is it a vector?
+                </Group>
+
+                <Group name="job">
+                    <Offset name="id" value="0x08" />
+                    <Offset name="type" value="0x40" />
+                </Group>
             </Group>
             <Group name="Vegetation">
                 <Offset name="tree_desc_offset" value="0x6C"/>
@@ -1839,6 +2016,28 @@
                 <Address name="current_civ" value="0x01506c1C" /> maybe
                 <Address name="current_race" value="0x01506c28" />
                 <Address name="vector" value="0x016da47C" />
+
+                <Group name="creature">
+                    <Group name="advanced">
+                        <Offset name="birth_year" value="0x224" />
+                        <Offset name="birth_time" value="0x228" />
+                        <Offset name="inventory_vector" value="0x288" />
+                        <Offset name="owned_items_vector" value="0x298"/>
+                        <Offset name="current_job" value="0x2f4" />
+                        <Offset name="current_job_skill" value="0x2f8" /> THIS IS TOTAL BS
+                        <Offset name="physical" value="0x3cc" /> DT: 0x3C4, I don't believe that's OK'
+                        <Offset name="appearance_vector" value="0x52C" /> DT calls it 'states' it seems
+                        <Offset name="artifact_name" value="0x5E0" /> maybe
+                        <Offset name="soul_vector" value="0x64c" />
+                        <Offset name="current_soul" value="0x65c" />
+                        <Offset name="labors" value="0x670" />
+                        <Offset name="happiness" value="0x710" />
+                    </Group>
+                </Group>
+                <Group name="job" valid="false">
+                    <Offset name="id" valid="true" />
+                    <Offset name="type" valid="true" />
+                </Group>
             </Group>
             <Group name="Maps" valid="true">
                 <Address name="map_data" value="0x171C128" />
@@ -2064,7 +2263,21 @@
                 <Address name="current_menu_state" value="0x14f5fac" />
             </Group>
             <Group name="Creatures">
-                <Address name="current_race" value="0x14F0C28" />
+				<Address name="current_race" value="0x14F0C28" />
+                <Group name="creature">
+                    <Offset name="flags3" value="0xE8"/>
+                </Group>
+            </Group>
+            <Group name="Materials">
+                <Group name="inorganic_extras">
+                    <Offset name="ore_types" value="0x18"/>
+                    <Offset name="ore_chances" value="0x24"/>
+                    <Offset name="strand_types" value="0x3c"/>
+                    <Offset name="strand_chances" value="0x48"/>
+                    <Offset name="value" value="0x17c"/>
+                    <Offset name="wall_tile" value="0x20c"/>
+                    <Offset name="boulder_tile" value="0x21e"/>
+                </Group>
             </Group>
             <Group name="Items" valid="true">
                 <Address name="items_vector" value="0x16c4540"/>
@@ -2209,6 +2422,57 @@
                 <Address name="vector" value="0x92D9AC0" />
                 <Address name="current_race" value="0x92C1628" />
                 <Address name="current_civ" value="0x92C161C" />
+                <Group name="creature">
+                    <Offset name="name" value="0x0" />
+                    <Offset name="custom_profession" value="0x3c" />
+                    <Offset name="profession" value="0x40" />
+                    <Offset name="race" value="0x44" />
+                    <Offset name="position" value="0x48" />
+                    <Offset name="flags1" value="0x8C" />
+                    <Offset name="flags2" value="0x90" />
+                    <Offset name="caste" value="0xA4" />
+                    <Offset name="sex" value="0xA6" />
+                    <Offset name="id" value="0xA8" />
+                    <Offset name="civ" value="0xB4" />
+                    <Group name="advanced">
+                        <Offset name="pickup_equipment_bit" value="0x144" /> CHMOD
+                        <Offset name="mood" value="0x18C"/> It's good
+                        <Offset name="birth_year" value="0x19C" />
+                        <Offset name="birth_time" value="0x1A0" />
+                        <Offset name="current_job" value="0x258" /> chmod
+                        <Offset name="current_job_skill" value="0x394" />
+                        <Offset name="physical" value="0x464" />
+                        <Offset name="appearance_vector" value="0x604" valid="false" />
+                        <Offset name="artifact_name" value="0x6D4" valid="false" />
+                        <Offset name="soul_vector" value="0x0500" />
+                        <Offset name="current_soul" value="0x0758" valid="false" />
+                        <Offset name="labors" value="0x51C" />
+                        <Offset name="happiness" value="0x5AC" />
+                    </Group>
+                </Group>
+                <!--
+                The vector is bad.
+                <Group name="soul" valid="verify">
+                    <Offset name="name" value="0x0" />
+                    <Offset name="mental" value="0x88" />
+                    <Offset name="skills_vector" value="0x1C4" /> CHMOD
+                    <Offset name="traits" value="0x1DC" />
+                </Group>
+                -->
+                <!--
+                <Group name="job">
+                    <Offset name="id" value="0x0" /> Incrementaly assigned
+                    <Offset name="type" value="0x8" /> seems to be just like the old occupations
+                    <Offset name="materials_vector" value="0xa4" />
+                    <Group name="material">
+                        <Offset name="maintype" value="0x0" /> like mood materials, 0=bars, 4=stone, 5=wood, 57=cloth, 54=leather ...
+                        <Offset name="sectype1" value="0x2" /> subsubtype ?
+                        <Offset name="sectype2" value="0x4" /> subtype ?
+                        <Offset name="sectype3" value="0x8" /> index of material (for example, 2 is for silver)
+                        <Offset name="flags" value="0x18" /> set only for shell / bone mood requirements ?
+                    </Group>
+                </Group>
+                -->
             </Group>
             <Group name="Materials">
                 <Address name="inorganics" value="0x931ae88" /><!-- WORLD + 0x54B7C -->
@@ -2289,6 +2553,24 @@
         <!-- TODO: fix creature offsets -->
         <!-- TODO: small offsets added all over the place, investigate -->
         <MD5 value="4f1f988bc1b425d4193d3d8b7b0579a5" />
+        <Offsets>
+            <Group name="Creatures">
+                <Group name="creature"> VERIFY
+                    <Group name="advanced">
+                        <Offset name="soul_vector" value="0x0524" />
+                        <Offset name="current_soul" value="0x0530" />
+                        <Offset name="labors" value="0x540" />
+                        <Offset name="happiness" value="0x5d0" />
+                    </Group>
+                </Group>
+                <Group name="soul">
+                    <Offset name="name" value="0x0" />
+                    <Offset name="mental" value="0x88" />
+                    <Offset name="skills_vector" value="0x1C4" /> CHMOD
+                    <Offset name="traits" value="0x1DC" />
+                </Group>
+            </Group>
+        </Offsets>
     </Version>
     <Version name="v0.31.10 linux" os="linux" base="v0.31.09 linux">
         <MD5 value="3e7bea269018a6fb88ef53715685aa64" />
@@ -2638,6 +2920,48 @@
             <Group name="Creatures">
                 <Address name="current_civ" value="0x93f2cdc" />
                 <Address name="current_race" value="0x93f2ce8" />
+                <Group name="creature">
+                    <Group name="advanced">
+                        <Offset name="pregnancy" value="0x190" />
+                        <Offset name="pregnancy_ptr" value="0x194" />
+                        <Offset name="birth_year" value="0x1A0" />
+                        <Offset name="birth_time" value="0x1A4" />
+                        <Offset name="inventory_vector" value="0x204" />
+                        <Offset name="owned_items_vector" value="0x210"/>
+                        <Offset name="current_job" value="0x25C" />
+                        <Offset name="current_job_skill" value="0x260" />
+                        <Offset name="physical" value="0x310" />
+                        <Offset name="appearance_vector" value="0x450" />
+                        <Offset name="artifact_name" value="0x4f4" />
+                        <Offset name="soul_vector" value="0x530" />
+                        <Offset name="current_soul" value="0x53C" />
+                        <Offset name="labors" value="0x54C" />
+                        <Offset name="happiness" value="0x05dc" />
+                        <Offset name="hist_figure_id" value="0x640"/>
+                    </Group>
+                </Group>
+                <Group name="job">
+                    <Offset name="id" value="0x8" />
+                    <!--<Offset name="materials_vector" />-->
+                    <Offset name="type" value="0x40" /> MAYBE, DT SAYS SO
+                    <!--
+                    <Group name="material">
+                        <Offset name="flags" /> NOT SET!
+                        <Offset name="maintype" /> NOT SET!
+                        <Offset name="sectype1" /> NOT SET!
+                        <Offset name="sectype2" /> NOT SET!
+                        <Offset name="sectype3" /> NOT SET!
+                    </Group>
+                    -->
+                </Group>
+                <Group name="soul">
+                    <Offset name="name" value="0x4" />
+                    <!--
+                    <Offset name="mental" value="0x88" />
+                    <Offset name="skills_vector" value="0x1c4" />
+                    <Offset name="traits" value="0x1dc" />
+                    -->
+                </Group>
             </Group>
             <Group name="GUI">
                 <Address name="pause_state" value="0x93f0850" />
@@ -2750,6 +3074,21 @@
                 Maybe, possibly.
                 <Address name="current_civ" value="0x093f2b50 0x93f2cdc" />
                 <Address name="current_race" value="0x093f2b5c 0x93f2ce8" />
+                Address name="vector" value="0x0940b174"
+                <Group name="creature">
+                    <Offset name="flags3" value="0x94"/>
+                </Group>
+            </Group>
+            <Group name="Materials">
+                <Group name="inorganic_extras">
+                    <Offset name="ore_types" value="0x18"/>
+                    <Offset name="ore_chances" value="0x24"/>
+                    <Offset name="strand_types" value="0x3c"/>
+                    <Offset name="strand_chances" value="0x48"/>
+                    <Offset name="value" value="0x17c"/>
+                    <Offset name="wall_tile" value="0x20c"/>
+                    <Offset name="boulder_tile" value="0x21e"/>
+                </Group>
             </Group>
             <Group name="Vermin" valid="true">
                 <Group name="Spawn Points">

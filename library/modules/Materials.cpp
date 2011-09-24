@@ -103,10 +103,10 @@ bool t_matglossInorganic::isOre()
         return true;
     return false;
 }
-// FIXME: implement properly
+
 bool t_matglossInorganic::isGem()
 {
-    return (wall_tile == 15 && boulder_tile == 7);
+    return is_gem;
 }
 
 // good for now
@@ -147,6 +147,7 @@ bool Materials::ReadInorganicMaterials (void)
         mat.boulder_tile = orig->ITEM_SYMBOL;
         mat.bright = orig->BASIC_COLOR_bright;
         mat.fore = orig->BASIC_COLOR_foreground;
+        mat.is_gem = orig->mat_flags.is_set(MATERIAL_IS_GEM);
         inorganic.push_back(mat);
     }
     return true;

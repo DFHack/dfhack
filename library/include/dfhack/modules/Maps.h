@@ -163,7 +163,7 @@ namespace DFHack
         /// bit mask describing how the vein maps to the map block
         /// assignment[y] & (1 << x) describes the tile (x, y) of the block
         int16_t assignment[16];
-        uint32_t flags;
+        uint32_t flags; // FIXME: figure those out
 
         //zilpin: Functions to more conveniently check the assignment flags of the vein.
         //Coordinates are given in tile within the block.

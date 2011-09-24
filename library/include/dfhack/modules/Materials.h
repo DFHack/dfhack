@@ -32,6 +32,7 @@ distribution.
 #include "dfhack/Export.h"
 #include "dfhack/Module.h"
 #include "dfhack/Types.h"
+#include "dfhack/BitArray.h"
 
 #include <vector>
 #include <string>
@@ -41,6 +42,157 @@ namespace DFHack
     struct t_syndrome
     {
         // it's lonely here...
+    };
+    enum material_flags
+    {
+        MATERIAL_BONE = 0,
+        MATERIAL_MEAT,
+        MATERIAL_EDIBLE_VERMIN,
+        MATERIAL_EDIBLE_RAW,
+        MATERIAL_EDIBLE_COOKED,
+        MATERIAL_UNK5,
+        MATERIAL_ITEMS_METAL,
+        MATERIAL_ITEMS_BARRED,
+        
+        MATERIAL_ITEMS_SCALED = 8,
+        MATERIAL_ITEMS_LEATHER,
+        MATERIAL_ITEMS_SOFT,
+        MATERIAL_ITEMS_HARD,
+        MATERIAL_IMPLIES_ANIMAL_KILL,
+        MATERIAL_ALCOHOL_PLANT,
+        MATERIAL_ALCOHOL_CREATURE,
+        MATERIAL_CHEESE_PLANT,
+        
+        MATERIAL_CHEESE_CREATURE = 16,
+        MATERIAL_POWDER_MISC_PLANT,
+        MATERIAL_POWDER_MISC_CREATURE,
+        MATERIAL_STOCKPILE_GLOB,
+        MATERIAL_LIQUID_MISC_PLANT,
+        MATERIAL_LIQUID_MISC_CREATURE,
+        MATERIAL_LIQUID_MISC_OTHER,
+        MATERIAL_WOOD,
+        
+        MATERIAL_THREAD_PLANT = 24,
+        MATERIAL_TOOTH,
+        MATERIAL_HORN,
+        MATERIAL_PEARL,
+        MATERIAL_SHELL,
+        MATERIAL_LEATHER,
+        MATERIAL_SILK,
+        MATERIAL_SOAP,
+        
+        MATERIAL_ROTS = 32,
+        MATERIAL_UNK33,
+        MATERIAL_UNK34,
+        MATERIAL_UNK35,
+        MATERIAL_STRUCTURAL_PLANT_MAT,
+        MATERIAL_SEED_MAT,
+        MATERIAL_LEAF_MAT,
+        MATERIAL_UNK39,
+        
+        MATERIAL_ENTERS_BLOOD = 40,
+        MATERIAL_BLOOD_MAP_DESCRIPTOR,
+        MATERIAL_ICHOR_MAP_DESCRIPTOR,
+        MATERIAL_GOO_MAP_DESCRIPTOR,
+        MATERIAL_SLIME_MAP_DESCRIPTOR,
+        MATERIAL_PUS_MAP_DESCRIPTOR,
+        MATERIAL_GENERATES_MIASMA,
+        MATERIAL_IS_METAL,
+        
+        MATERIAL_IS_GEM = 48,
+        MATERIAL_IS_GLASS,
+        MATERIAL_CRYSTAL_GLASSABLE,
+        MATERIAL_ITEMS_WEAPON,
+        MATERIAL_ITEMS_WEAPON_RANGED,
+        MATERIAL_ITEMS_ANVIL,
+        MATERIAL_ITEMS_AMMO,
+        MATERIAL_ITEMS_DIGGER,
+        
+        MATERIAL_ITEMS_ARMOR = 56,
+        MATERIAL_ITEMS_DELICATE,
+        MATERIAL_ITEMS_SIEGE_ENGINE,
+        MATERIAL_ITEMS_QUERN,
+        MATERIAL_IS_STONE,
+        MATERIAL_UNDIGGABLE,
+        MATERIAL_YARN,
+        MATERIAL_STOCKPILE_GLOB_PASTE,
+        
+        MATERIAL_STOCKPILE_GLOB_PRESSED = 64,
+        MATERIAL_DISPLAY_UNGLAZED,
+        MATERIAL_DO_NOT_CLEAN_GLOB,
+        MATERIAL_NO_STONE_STOCKPILE,
+        MATERIAL_STOCKPILE_THREAD_METAL,
+        MATERIAL_UNK69,
+        MATERIAL_UNK70,
+        MATERIAL_UNK71,
+        
+        MATERIAL_UNK72 = 72,
+        MATERIAL_UNK73,
+        MATERIAL_UNK74,
+        MATERIAL_UNK75,
+        MATERIAL_UNK76,
+        MATERIAL_UNK77,
+        MATERIAL_UNK78,
+        MATERIAL_UNK79,
+    };
+    enum inorganic_flags
+    {
+        INORGANIC_LAVA = 0,
+        INORGANIC_UNK1,
+        INORGANIC_UNK2,
+        INORGANIC_SEDIMENTARY,
+        INORGANIC_SEDIMENTARY_OCEAN_SHALLOW,
+        INORGANIC_IGNEOUS_INTRUSIVE,
+        INORGANIC_IGNEOUS_EXTRUSIVE,
+        INORGANIC_METAMORPHIC,
+
+        INORGANIC_DEEP_SURFACE = 8,
+        INORGANIC_METAL_ORE, // maybe
+        INORGANIC_AQUIFER,
+        INORGANIC_SOIL,
+        INORGANIC_SOIL_OCEAN,
+        INORGANIC_SOIL_SAND,
+        INORGANIC_SEDIMENTARY_OCEAN_DEEP,
+        INORGANIC_THREAD_METAL, // maybe
+
+        INORGANIC_DEEP = 16, // in general
+        INORGANIC_SOIL2, // more soil?
+        INORGANIC_DEEP_SPECIAL,
+        INORGANIC_UNK19,
+        INORGANIC_UNK20,
+        INORGANIC_UNK21,
+        INORGANIC_UNK22,
+        INORGANIC_UNK23,
+
+        INORGANIC_UNK24 = 24,
+        INORGANIC_WAFERS,
+        INORGANIC_UNK26,
+        INORGANIC_UNK27,
+        INORGANIC_UNK28,
+        INORGANIC_UNK29,
+        INORGANIC_UNK30,
+        INORGANIC_UNK31,
+    };
+    //Environment locations:
+    enum environment_location
+    {
+        ENV_SOIL,
+        ENV_SOIL_OCEAN,
+        ENV_SOIL_SAND,
+        ENV_METAMORPHIC,
+        ENV_SEDIMENTARY,
+        ENV_IGNEOUS_INTRUSIVE,
+        ENV_IGNEOUS_EXTRUSIVE,
+        ENV_ALLUVIAL,
+    };
+    //Inclusion types:
+    enum inclusion_type
+    {
+        INCLUSION_NONE, // maybe
+        INCLUSION_VEIN,
+        INCLUSION_CLUSTER,
+        INCLUSION_CLUSTER_SMALL,
+        INCLUSION_CLUSTER_ONE,
     };
     /// Research by Quietust
     struct df_material
@@ -99,9 +251,7 @@ namespace DFHack
         int32_t COMPRESSIVE_STRAIN_AT_YIELD;
         int32_t MAX_EDGE;
         int32_t MATERIAL_VALUE;
-        // FIXME: needs flagarray implementation!
-        uint8_t * flagarray_properties;
-        uint32_t flagarray_properties_length;
+        BitArray <material_flags> mat_flags;
         int16_t EXTRACT_STORAGE;// (item type)
         int16_t BUTCHER_SPECIAL_type;// (item type)
         int16_t BUTCHER_SPECIAL_subtype;// (item subtype)
@@ -124,7 +274,7 @@ namespace DFHack
         std::string HARDENS_WITH_WATER_2nd_parm;// (e.g. GYPSUM)
         std::string HARDENS_WITH_WATER_3rd_parm;// (if you used CREATURE_MAT or PLANT_MAT)
         std::vector <std::string> REACTION_CLASS;
-        int8_t TILE;
+        int8_t TILE; // Tile when material is a natural wall
         int16_t BASIC_COLOR_foreground;
         int16_t BASIC_COLOR_bright;
         // what exactly ARE those colors?
@@ -135,7 +285,7 @@ namespace DFHack
         int16_t TILE_COLOR_foreground;
         int16_t TILE_COLOR_background;
         int16_t TILE_COLOR_bright;
-        int8_t ITEM_SYMBOL;
+        int8_t ITEM_SYMBOL; // Tile when material is a dug out stone
         int16_t POWDER_DYE; // (color token index)
         int16_t TEMP_DIET_INFO;// (whatever it means)
         std::vector <t_syndrome *> SYNDROME;
@@ -143,19 +293,18 @@ namespace DFHack
         std::string PREFIX;
         // etc...
     };
+
     /// Research by Quietust
     struct df_inorganic_base
     {
         std::string Inorganic_ID;
-        // FIXME: needs flagarray implementation!
-        uint8_t * flagarray_inorganic;
-        uint32_t flagarray_inorganic_length;
+        BitArray<inorganic_flags> inorg_flags;
         std::vector <uint32_t> empty1;
-        std::vector <int16_t> METAL_ORE_matID;
-        std::vector <int16_t> METAL_ORE_prob;
+        std::vector <int16_t> METAL_ORE_matID; // Vector of indexes of metals produced when ore is smelted
+        std::vector <int16_t> METAL_ORE_prob; // Vector of percent chance of each type of metal being produced on smelting
         std::vector <uint32_t> empty2;
-        std::vector <int16_t> THREAD_METAL_matID;
-        std::vector <int16_t> THREAD_METAL_prob;
+        std::vector <int16_t> THREAD_METAL_matID;// Vector of indexes of metals produced when ore undergoes strand extraction
+        std::vector <int16_t> THREAD_METAL_prob; // Vector of percent chance of each type of metal being produced on strand extraction
         std::vector <uint32_t> unknown_in_1;
         std::vector <uint32_t> empty3;
         std::vector <int16_t> ENVIRONMENT_SPEC_matID;
@@ -183,6 +332,7 @@ namespace DFHack
         int32_t  value;        // Material value
         uint8_t wall_tile;    // Tile when a natural wall
         uint8_t boulder_tile; // Tile when a dug-out stone;
+        bool is_gem;
 
     public:
         t_matgloss();

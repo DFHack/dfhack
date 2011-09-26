@@ -12,15 +12,16 @@
 
 #include <QtGui/QApplication>
 #include "blankslade.h"
+#include "tinythread.h"
 
 using std::vector;
 using std::string;
 using std::stack;
 using namespace DFHack;
-static int runnable(void *);
-static SDL::Mutex * instance_mutex = 0;
+static void runnable(void *);
+static tthread::mutex * instance_mutex = 0;
 static bool running = false;
-static SDL::Thread * QTThread;
+static tthread::thread * QTThread;
 
 DFhackCExport command_result runqt (Core * c, vector <string> & parameters);
 
@@ -31,7 +32,7 @@ DFhackCExport const char * plugin_name ( void )
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-    instance_mutex = SDL_CreateMutex();
+    instance_mutex = new tthread::mutex();
     commands.clear();
     commands.push_back(PluginCommand("runqt","Open an interactive Qt gui.",runqt));
     return CR_OK;
@@ -44,29 +45,28 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 DFhackCExport command_result runqt (Core * c, vector <string> & parameters)
 {
-    SDL_mutexP(instance_mutex);
+    instance_mutex->lock();
     if(!running)
     {
         running = true;
-        QTThread = SDL_CreateThread(runnable, 0);
+        QTThread = new tthread::thread(runnable, 0);
     }
     else
     {
         c->con.printerr("The Qt test plugin is already running!\n");
     }
-    SDL_mutexV(instance_mutex);
+    instance_mutex->unlock();
     return CR_OK;
 }
 
-static int runnable(void *)
+static void runnable(void *)
 {
-	int zero = 0;
+    int zero = 0;
     QApplication app(zero, 0);
     blankslade appGui;
     appGui.show();
-    int ret = app.exec();
-    SDL_mutexP(instance_mutex);
+    app.exec();
+    instance_mutex->lock();
     running = false;
-    SDL_mutexV(instance_mutex);
-    return ret;
+    instance_mutex->unlock();
 }

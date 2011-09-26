@@ -158,6 +158,11 @@ namespace DFHack
         
         bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
         bool setCursorCoords (const int32_t x, const int32_t y, const int32_t z);
+
+        bool getDesignationCoords (int32_t &x, int32_t &y, int32_t &z);
+        bool setDesignationCoords (const int32_t x, const int32_t y, const int32_t z);
+
+        bool getMousePos (int32_t & x, int32_t & y);
         /*
          * Gui screens
          */

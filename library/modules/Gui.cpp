@@ -50,6 +50,8 @@ struct Gui::Private
     {
         Started = false;
         StartedScreen = false;
+        mouse_xy_offset = 0;
+        designation_xyz_offset = 0;
     }
 
     bool Started;
@@ -57,6 +59,8 @@ struct Gui::Private
     uint32_t window_y_offset;
     uint32_t window_z_offset;
     uint32_t cursor_xyz_offset;
+    uint32_t designation_xyz_offset;
+    uint32_t mouse_xy_offset;
     uint32_t window_dims_offset;
 
     bool StartedScreen;
@@ -125,6 +129,8 @@ Gui::Gui()
         d->Started = true;
     }
     catch(Error::All &){};
+    OG_Position->getSafeAddress("mouse_xy", d->mouse_xy_offset);
+    OG_Position->getSafeAddress("designation_xyz", d->designation_xyz_offset);
     try
     {
         d->screen_tiles_ptr_offset = OG_Position->getAddress ("screen_tiles_pointer");
@@ -207,6 +213,37 @@ bool Gui::setCursorCoords (const int32_t x, const int32_t y, const int32_t z)
     if (!d->Started) return false;
     int32_t coords[3] = {x, y, z};
     d->owner->write (d->cursor_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
+    return true;
+}
+
+bool Gui::getDesignationCoords (int32_t &x, int32_t &y, int32_t &z)
+{
+    if(!d->designation_xyz_offset) return false;
+    int32_t coords[3];
+    d->owner->read (d->designation_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
+    x = coords[0];
+    y = coords[1];
+    z = coords[2];
+    if (x == -30000) return false;
+    return true;
+}
+
+bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t z)
+{
+    if(!d->designation_xyz_offset) return false;
+    int32_t coords[3] = {x, y, z};
+    d->owner->write (d->designation_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
+    return true;
+}
+
+bool Gui::getMousePos (int32_t & x, int32_t & y)
+{
+    if(!d->mouse_xy_offset) return false;
+    int32_t coords[2];
+    d->owner->read (d->mouse_xy_offset, 2*sizeof (int32_t), (uint8_t *) coords);
+    x = coords[0];
+    y = coords[1];
+    if(x == -1) return false;
     return true;
 }
 

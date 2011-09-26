@@ -17,6 +17,9 @@ bool shutdown_flag = false;
 bool final_flag = true;
 bool timering = false;
 bool trackmenu_flg = false;
+bool trackpos_flg = false;
+int32_t last_designation[3] = {-30000, -30000, -30000};
+int32_t last_mouse[2] = {-1, -1};
 uint32_t last_menu = 0;
 uint64_t timeLast = 0;
 
@@ -24,6 +27,7 @@ DFhackCExport command_result kittens (Core * c, vector <string> & parameters);
 DFhackCExport command_result ktimer (Core * c, vector <string> & parameters);
 DFhackCExport command_result bflags (Core * c, vector <string> & parameters);
 DFhackCExport command_result trackmenu (Core * c, vector <string> & parameters);
+DFhackCExport command_result trackpos (Core * c, vector <string> & parameters);
 DFhackCExport command_result mapitems (Core * c, vector <string> & parameters);
 DFhackCExport command_result test_creature_offsets (Core * c, vector <string> & parameters);
 DFhackCExport command_result creat_job (Core * c, vector <string> & parameters);
@@ -40,6 +44,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.push_back(PluginCommand("ktimer","Measure time between game updates and console lag (toggle).",ktimer));
     commands.push_back(PluginCommand("blockflags","Look up block flags",bflags));
     commands.push_back(PluginCommand("trackmenu","Track menu ID changes (toggle).",trackmenu));
+    commands.push_back(PluginCommand("trackpos","Track mouse and designation coords (toggle).",trackpos));
     commands.push_back(PluginCommand("mapitems","Check item ids under cursor against item ids in map block.",mapitems));
     commands.push_back(PluginCommand("test_creature_offsets","Bleh.",test_creature_offsets));
     commands.push_back(PluginCommand("creat_job","Bleh.",creat_job));
@@ -74,6 +79,28 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
         {
             last_menu = *g->df_menu_state;
             c->con.print("Menu: %d\n",last_menu);
+        }
+    }
+    if(trackpos_flg)
+    {
+        DFHack::Gui * g =c->getGui();
+        g->Start();
+        int32_t desig_x, desig_y, desig_z;
+        g->getDesignationCoords(desig_x,desig_y,desig_z);
+        if(desig_x != last_designation[0] || desig_y != last_designation[1] || desig_z != last_designation[2])
+        {
+            last_designation[0] = desig_x;
+            last_designation[1] = desig_y;
+            last_designation[2] = desig_z;
+            c->con.print("Designation: %d %d %d\n",desig_x, desig_y, desig_z);
+        }
+        int mouse_x, mouse_y;
+        g->getMousePos(mouse_x,mouse_y);
+        if(mouse_x != last_mouse[0] || mouse_y != last_mouse[1])
+        {
+            last_mouse[0] = mouse_x;
+            last_mouse[1] = mouse_y;
+            c->con.print("Mouse: %d %d\n",mouse_x, mouse_y);
         }
     }
     return CR_OK;
@@ -151,7 +178,11 @@ DFhackCExport command_result trackmenu (Core * c, vector <string> & parameters)
         }
     }
 }
-
+DFhackCExport command_result trackpos (Core * c, vector <string> & parameters)
+{
+    trackpos_flg = !trackpos_flg;
+    return CR_OK;
+}
 DFhackCExport command_result bflags (Core * c, vector <string> & parameters)
 {
     c->Suspend();

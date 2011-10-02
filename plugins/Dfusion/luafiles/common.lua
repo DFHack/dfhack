@@ -494,3 +494,4 @@ end
 dofile("dfusion/patterns.lua")
 dofile("dfusion/patterns2.lua")
 dofile("dfusion/itempatterns.lua")
+dofile("dfusion/buildingpatterns.lua")

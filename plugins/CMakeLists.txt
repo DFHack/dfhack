@@ -28,7 +28,9 @@ endif()
 
 DFHACK_PLUGIN(reveal reveal.cpp)
 DFHACK_PLUGIN(probe probe.cpp)
+DFHACK_PLUGIN(getplants getplants.cpp)
 DFHACK_PLUGIN(plants plants.cpp)
+DFHACK_PLUGIN(fastdwarf fastdwarf.cpp)
 DFHACK_PLUGIN(prospector prospector.cpp)
 DFHACK_PLUGIN(cleanmap cleanmap.cpp)
 DFHACK_PLUGIN(weather weather.cpp)
@@ -43,3 +45,8 @@ DFHACK_PLUGIN(cleanowned cleanowned.cpp)
 DFHACK_PLUGIN(deramp deramp.cpp)
 DFHACK_PLUGIN(flows flows.cpp)
 
+# this is the skeleton plugin. If you want to make your own, make a copy and then change it
+OPTION(BUILD_SKELETON "Build the skeleton plugin." OFF)
+if(BUILD_SKELETON)
+    add_subdirectory(skeleton)
+endif()

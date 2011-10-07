@@ -215,6 +215,8 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
                     std::cerr << "allowing tt" << tt << ", is floor\n";
                     break;
                 }
+                if(isStairTerrain(tt) && type == designation_channel )
+                    break;
                 return false;
             }
             while(0);

@@ -19,6 +19,7 @@ using namespace std;
 #include <dfhack/extra/termutil.h>
 
 typedef std::map<int16_t, unsigned int> MatMap;
+typedef std::map<int16_t, int> LevelMap;
 typedef std::vector< pair<int16_t, unsigned int> > MatSorter;
 
 typedef std::vector<DFHack::t_feature> FeatureList;
@@ -27,10 +28,10 @@ typedef std::map<DFHack::DFCoord, FeatureListPointer> FeatureMap;
 typedef std::vector<DFHack::dfh_plant> PlantList;
 
 bool parseOptions(int argc, char **argv, bool &showHidden, bool &showPlants,
-                  bool &showSlade, bool &showTemple)
+                  bool &showSlade, bool &showTemple, bool &showLevels)
 {
     char c;
-    xgetopt opt(argc, argv, "apst");
+    xgetopt opt(argc, argv, "apstz");
     opt.opterr = 0;
     while ((c = opt()) != -1)
     {
@@ -47,6 +48,9 @@ bool parseOptions(int argc, char **argv, bool &showHidden, bool &showPlants,
             break;
         case 't':
             showTemple = false;
+            break;
+        case 'z':
+            showLevels = true;
             break;
         case '?':
             switch (opt.optopt)
@@ -78,8 +82,22 @@ struct compare_pair_second
         }
 };
 
+inline void countMat(MatMap &mat, LevelMap &low, LevelMap &high, int16_t id, int z)
+{
+    mat[id]++;
+    if (!low.count(id))
+        low[id] = z;
+    high[id] = z;
+}
 
-void printMats(MatMap &mat, std::vector<DFHack::t_matgloss> &materials)
+void printLevels(LevelMap &low, LevelMap &high, int16_t id, int z_base)
+{
+    int lowv = low[id];
+    int highv = high[id];
+    std::cout << " (" << (z_base+low[id]) << ".." << (z_base+high[id]) << ")";
+}
+
+void printMats(MatMap &mat, std::vector<DFHack::t_matgloss> &materials, bool showLevels, LevelMap &low, LevelMap &high, int z_base)
 {
     unsigned int total = 0;
     MatSorter sorting_vector;
@@ -96,7 +114,10 @@ void printMats(MatMap &mat, std::vector<DFHack::t_matgloss> &materials)
             continue;
         }
         DFHack::t_matgloss mat = materials[it->first];
-        std::cout << std::setw(25) << mat.id << " : " << it->second << std::endl;
+        std::cout << std::setw(25) << mat.id << " : " << it->second;
+        if (showLevels)
+            printLevels(low, high, it->first, z_base);
+        std::cout << std::endl;
         total += it->second;
     }
 
@@ -110,13 +131,15 @@ int main(int argc, char *argv[])
     bool showPlants = true;
     bool showSlade = true;
     bool showTemple = true;
+    bool showLevels = false;
 
-    if (!parseOptions(argc, argv, showHidden, showPlants, showSlade, showTemple))
+    if (!parseOptions(argc, argv, showHidden, showPlants, showSlade, showTemple, showLevels))
     {
         return -1;
     }
 
     uint32_t x_max = 0, y_max = 0, z_max = 0;
+    int32_t x_base = 0, y_base = 0, z_base = 0;
     DFHack::ContextManager manager("Memory.xml");
 
     DFHack::Context *context = manager.getSingleContext();
@@ -138,6 +161,7 @@ int main(int argc, char *argv[])
         return 1;
     }
     maps->getSize(x_max, y_max, z_max);
+    maps->getPosition(x_base, y_base, z_base);
     MapExtras::MapCache map(maps);
 
     DFHack::Materials *mats = context->getMaterials();
@@ -163,11 +187,16 @@ int main(int argc, char *argv[])
     bool hasAquifer = false;
     bool hasDemonTemple = false;
     bool hasLair = false;
+    int topMagmaLevel = -1;
     MatMap baseMats;
+    LevelMap baseMatLow, baseMatHigh;
     MatMap layerMats;
+    LevelMap layerMatLow, layerMatHigh;
     MatMap veinMats;
+    LevelMap veinMatLow, veinMatHigh;
     MatMap plantMats;
     MatMap treeMats;
+    LevelMap plantMatLow, plantMatHigh;
 
     if (!(showSlade && maps->ReadGlobalFeatures(globalFeatures)))
     {
@@ -248,6 +277,12 @@ int main(int argc, char *argv[])
                         {
                             hasLair = true;
                         }
+                        
+                        // Remember magma
+                        if (des.bits.flow_size && des.bits.liquid_type == 1)
+                        {
+                            topMagmaLevel = z;
+                        }
 
                         uint16_t type = b->TileTypeAt(coord);
                         const DFHack::TileRow *info = DFHack::getTileRow(type);
@@ -270,17 +305,17 @@ int main(int argc, char *argv[])
                         }
 
                         // Count the material type
-                        baseMats[info->material]++;
+                        countMat(baseMats, baseMatLow, baseMatHigh, info->material, z);
 
                         // Find the type of the tile
                         switch (info->material)
                         {
                         case DFHack::SOIL:
                         case DFHack::STONE:
-                            layerMats[b->baseMaterialAt(coord)]++;
+                            countMat(layerMats, layerMatLow, layerMatHigh, b->baseMaterialAt(coord), z);
                             break;
                         case DFHack::VEIN:
-                            veinMats[b->veinMaterialAt(coord)]++;
+                            countMat(veinMats, veinMatLow, veinMatHigh, b->veinMaterialAt(coord), z);
                             break;
                         case DFHack::FEATSTONE:
                             if (blockFeatureLocal && des.bits.feature_local)
@@ -288,7 +323,7 @@ int main(int argc, char *argv[])
                                 if (blockFeatureLocal->type == DFHack::feature_Adamantine_Tube
                                         && blockFeatureLocal->main_material == 0) // stone
                                 {
-                                    veinMats[blockFeatureLocal->sub_material]++;
+                                    countMat(veinMats, veinMatLow, veinMatHigh, blockFeatureLocal->sub_material, z);
                                 }
                                 else if (showTemple
                                          && blockFeatureLocal->type == DFHack::feature_Hell_Temple)
@@ -301,7 +336,7 @@ int main(int argc, char *argv[])
                                     && blockFeatureGlobal->type == DFHack::feature_Underworld
                                     && blockFeatureGlobal->main_material == 0) // stone
                             {
-                                layerMats[blockFeatureGlobal->sub_material]++;
+                                countMat(layerMats, layerMatLow, layerMatHigh, blockFeatureGlobal->sub_material, z);
                             }
                             break;
                         case DFHack::OBSIDIAN:
@@ -325,10 +360,8 @@ int main(int argc, char *argv[])
                             loc = loc % 16;
                             if (showHidden || !b->DesignationAt(loc).bits.hidden)
                             {
-                                if(plant.is_shrub)
-                                    plantMats[plant.material]++;
-                                else
-                                    treeMats[plant.material]++;
+                                MatMap &mmap = (plant.is_shrub ? plantMats : treeMats);
+                                countMat(mmap, plantMatLow, plantMatHigh, plant.material, z);
                             }
                         }
                     }
@@ -346,21 +379,29 @@ int main(int argc, char *argv[])
     std::cout << "Base materials:" << std::endl;
     for (it = baseMats.begin(); it != baseMats.end(); ++it)
     {
-        std::cout << std::setw(25) << DFHack::TileMaterialString[it->first] << " : " << it->second << std::endl;
+        std::cout << std::setw(25) << DFHack::TileMaterialString[it->first] << " : " << it->second;
+        if (showLevels)
+            printLevels(baseMatLow, baseMatHigh, it->first, z_base);
+        std::cout << std::endl;
     }
 
     std::cout << std::endl << "Layer materials:" << std::endl;
-    printMats(layerMats, mats->inorganic);
+    printMats(layerMats, mats->inorganic, showLevels, layerMatLow, layerMatHigh, z_base);
 
     std::cout << "Vein materials:" << std::endl;
-    printMats(veinMats, mats->inorganic);
+    printMats(veinMats, mats->inorganic, showLevels, veinMatLow, veinMatHigh, z_base);
 
     if (showPlants)
     {
         std::cout << "Shrubs:" << std::endl;
-        printMats(plantMats, mats->organic);
+        printMats(plantMats, mats->organic, showLevels, plantMatLow, plantMatHigh, z_base);
         std::cout << "Wood in trees:" << std::endl;
-        printMats(treeMats, mats->organic);
+        printMats(treeMats, mats->organic, showLevels, plantMatLow, plantMatHigh, z_base);
+    }
+
+    if (showLevels && topMagmaLevel >= 0)
+    {
+        std::cout << "Topmost magma z-level: " << (z_base + topMagmaLevel) << std::endl;
     }
 
     if (hasAquifer)

@@ -2304,6 +2304,9 @@
                     <Offset name="countdown" value="0xc"/>
                 </Group>
             </Group>
+            <Group name="World">
+                <Address name="save_folder" value="0x1847A40" />
+            </Group>
         </Offsets>
         cmake
         item vector:

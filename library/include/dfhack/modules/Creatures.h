@@ -597,7 +597,8 @@ namespace DFHack
         uint32_t unk_48c;       // blood_max?
         uint32_t blood_count;   // 490
         uint32_t unk_494;
-        std::vector<void*> unk_498;
+        // dirt, grime, FB blood, mud and plain old filth stuck to the poor thing's parts and pieces
+        std::vector<void*> contaminants;
         std::vector<uint16_t> unk_4a8;
         std::vector<uint16_t> unk_4b8;
         uint32_t unk_4c8;

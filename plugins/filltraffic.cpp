@@ -54,42 +54,45 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
         if(params[i] == "help" || params[i] == "?")
         {
             c->con.print("Flood-fill selected traffic type from the cursor.\n"
-						 "Traffic Type Codes:\n"
-						 "	H: High Traffic\n"
-						 "	N: Normal Traffic\n"
-						 "	L: Low Traffic\n"
-						 "	R: Restricted Traffic\n"
-						 "Other Options:\n"
-						 "	X: Fill accross z-levels.\n"
-						 "	B: Include buildings and stockpiles.\n"
-						 "  P: Include empty space.\n"
+                         "Traffic Type Codes:\n"
+                         "\tH: High Traffic\n"
+                         "\tN: Normal Traffic\n"
+                         "\tL: Low Traffic\n"
+                         "\tR: Restricted Traffic\n"
+                         "Other Options:\n"
+                         "\tX: Fill accross z-levels.\n"
+                         "\tB: Include buildings and stockpiles.\n"
+                         "\tP: Include empty space.\n"
+                         "Example:\n"
+                         "'filltraffic H' - When used in a room with doors,\n"
+                         "                  it will set traffic to HIGH in just that room."
             );
             return CR_OK;
         }
 
-		switch (toupper(params[i][0]))
-		{
-			case 'H':
-				target = traffic_high; break;
-			case 'N':
-				target = traffic_normal; break;
-			case 'L':
-				target = traffic_low; break;
-			case 'R':
-				target = traffic_restricted; break;
-			case 'X':
-				updown = true; break;
-			case 'B':
-				checkbuilding = false; break;
-			case 'P':
-				checkpit = false; break;
-		}
+        switch (toupper(params[i][0]))
+        {
+            case 'H':
+                target = traffic_high; break;
+            case 'N':
+                target = traffic_normal; break;
+            case 'L':
+                target = traffic_low; break;
+            case 'R':
+                target = traffic_restricted; break;
+            case 'X':
+                updown = true; break;
+            case 'B':
+                checkbuilding = false; break;
+            case 'P':
+                checkpit = false; break;
+        }
     }
 
-	//Initialization.
-	c->Suspend();
+    //Initialization.
+    c->Suspend();
 
-	DFHack::Maps * Maps = c->getMaps();
+    DFHack::Maps * Maps = c->getMaps();
     DFHack::Gui * Gui = c->getGui();
     // init the map
     if(!Maps->Start())
@@ -111,17 +114,17 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
         return CR_FAILURE;
     }
 
-	DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
-	MapExtras::MapCache * MCache = new MapExtras::MapCache(Maps);
-    
-	DFHack::t_designation des = MCache->designationAt(xy);
-	int16_t tt = MCache->tiletypeAt(xy);
-	DFHack::t_occupancy oc;
+    DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
+    MapExtras::MapCache * MCache = new MapExtras::MapCache(Maps);
 
-	if (checkbuilding)
-		oc = MCache->occupancyAt(xy);
+    DFHack::t_designation des = MCache->designationAt(xy);
+    int16_t tt = MCache->tiletypeAt(xy);
+    DFHack::t_occupancy oc;
 
-	source = des.bits.traffic;
+    if (checkbuilding)
+        oc = MCache->occupancyAt(xy);
+
+    source = des.bits.traffic;
     if(source == target)
     {
         c->con.printerr("This tile is already set to the target traffic type.\n");
@@ -130,13 +133,13 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
         return CR_FAILURE;
     }
 
-	if(DFHack::isWallTerrain(tt))
-	{
-		c->con.printerr("This tile is a wall. Please select a passable tile.\n");
+    if(DFHack::isWallTerrain(tt))
+    {
+        c->con.printerr("This tile is a wall. Please select a passable tile.\n");
         delete MCache;
         c->Resume();
         return CR_FAILURE;
-	}
+    }
 
 	if(checkpit && DFHack::isOpenTerrain(tt))
 	{

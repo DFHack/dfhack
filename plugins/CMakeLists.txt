@@ -45,6 +45,7 @@ DFHACK_PLUGIN(cleanowned cleanowned.cpp)
 DFHACK_PLUGIN(deramp deramp.cpp)
 DFHACK_PLUGIN(flows flows.cpp)
 DFHACK_PLUGIN(filltraffic filltraffic.cpp)
+DFHACK_PLUGIN(seedwatch seedwatch.cpp)
 
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it
 OPTION(BUILD_SKELETON "Build the skeleton plugin." OFF)

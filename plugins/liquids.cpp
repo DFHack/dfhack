@@ -94,11 +94,11 @@ public:
     coord_vec points(MapCache & mc, DFHack::DFCoord start)
     {
         coord_vec v;
-        DFHack::DFCoord blockc = start % 16;
+        DFHack::DFCoord blockc = start / 16;
         DFHack::DFCoord iterc = blockc * 16;
         if( !mc.testCoord(start) )
             return v;
-
+        auto starty = iterc.y;
         for(int xi = 0; xi < 16; xi++)
         {
             for(int yi = 0; yi < 16; yi++)
@@ -106,6 +106,7 @@ public:
                 v.push_back(iterc);
                 iterc.y++;
             }
+            iterc.y = starty;
             iterc.x ++;
         }
         return v;
@@ -405,7 +406,6 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                 }
                 else if(mode == "riversource")
                 {
-                    set <Block *> seen_blocks;
                     coord_vec::iterator iter = all_tiles.begin();
                     while (iter != all_tiles.end())
                     {
@@ -447,7 +447,14 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                     coord_vec::iterator iter = all_tiles.begin();
                     while (iter != all_tiles.end())
                     {
-                        DFHack::DFCoord current = *iter;
+                        DFHack::DFCoord current = *iter; // current tile coord
+                        DFHack::DFCoord curblock = current /16; // current block coord
+                        // check if the block is actually there
+                        if(!mcache.BlockAt(curblock))
+                        {
+                            iter ++;
+                            continue;
+                        }
                         DFHack::t_designation des = mcache.designationAt(current);
                         uint16_t tt = mcache.tiletypeAt(current);
                         DFHack::naked_designation & flow = des.bits;
@@ -493,7 +500,7 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                             }
                             mcache.setDesignationAt(current,des);
                         }
-                        seen_blocks.insert(mcache.BlockAt((*iter) / 16));
+                        seen_blocks.insert(mcache.BlockAt(current / 16));
                         iter++;
                     }
                     set <Block *>::iterator biter = seen_blocks.begin();

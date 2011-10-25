@@ -51,6 +51,7 @@ struct matdata
                 upper_z = z_level;
             }
         }
+        return count;
     }
     unsigned int count;
     int lower_z;

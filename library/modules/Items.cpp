@@ -292,38 +292,11 @@ std::string Items::getItemClass(const dfh_item & item)
     return virt->getClassName();
     //return getItemClass(item.matdesc.itemType);
 }
-
-std::string Items::getItemDescription(const dfh_item & item, Materials * Materials)
+/*
+std::string Items::getItemDescription(const dfh_item & item, int type)
 {
-    /*
-    std::stringstream outss;
-    switch(item.quality)
-    {
-        case 0:
-            outss << "Ordinary ";
-            break;
-        case 1:
-            outss << "Well crafted ";
-            break;
-        case 2:
-            outss << "Finely crafted ";
-            break;
-        case 3:
-            outss << "Superior quality ";
-            break;
-        case 4:
-            outss << "Exceptionnal ";
-            break;
-        case 5:
-            outss << "Masterful ";
-            break;
-        default: outss << "Crazy quality " << item.quality << " "; break;
-    }
-    outss << Materials->getDescription(item.matdesc) << " " << getItemClass(item);
-    return outss.str();
-    */
     std::string strzzz;
-    item.base->getItemDescription(&strzzz);
+    item.base->getItemDescription(&strzzz,type);
 //    delete ptrs;
     return strzzz;
-}
+}*/

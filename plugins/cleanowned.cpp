@@ -165,10 +165,12 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
 
         if (confiscate)
         {
+            std::string description;
+            itm.base->getItemDescription(&description, 0);
             c->con.print(
                 "0x%x %s (wear %d)",
                 itm.base,
-                Items->getItemDescription(itm, Materials).c_str(),
+                description.c_str(),
                 itm.wear_level
             );
 

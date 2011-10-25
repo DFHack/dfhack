@@ -228,15 +228,23 @@ DFhackCExport command_result df_dumpitems (Core * c, vector <string> & parameter
         else
             sprintf(location, "%d,%d,%d", itm.base->x, itm.base->y,
                     itm.base->z);
-
+        std::string descr;
+        string name1,name2,name0;
+        itm.base->getItemDescription(&name0, 0);
+        itm.base->getItemDescription(&name1, 1);
+        itm.base->getItemDescription(&name2, 2);
         c->con.print(
             "%5d: addr:0x%08x %6d %08x (%s) vptr:0x%08x [%d]\n"
+            "       %s\n"
+            "       %s\n"
             "       %s\n",
             i, itm.base, itm.base->id, itm.base->flags.whole,
             location,
             ((t_virtual *)itm.base)->vptr,
             itm.wear_level,
-            Items->getItemDescription(itm, Materials).c_str()
+            name0.c_str(),// stacked
+            name1.c_str(),// singular
+            name2.c_str() // plural
         );
         chooser->postPrint(&itm);
     /*

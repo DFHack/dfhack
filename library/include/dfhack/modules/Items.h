@@ -115,12 +115,18 @@ struct t_itemref : public t_virtual
 class df_item
 {
 public:
+    // 4
     int16_t x;
     int16_t y;
+    // 8
     int16_t z;
+    // C
     t_itemflags flags;
+    // 10
     uint32_t age;
+    // 14
     uint32_t id;
+    // 18
     std::vector<void *> unk1;
     std::vector<t_itemref *> itemrefs;
 public:
@@ -344,7 +350,7 @@ public:
     virtual void fn166(void);
     virtual void fn167(void);
     // 0x2A0
-    virtual void fn168(void);
+    virtual void fn168(void); // value returned (int) = first param to descriprion construction function
     virtual void fn169(void);
     virtual void fn170(void);
     virtual void fn171(void);
@@ -356,7 +362,8 @@ public:
     // 0x2C0
     virtual void fn176(void);
     virtual void fn177(void);
-    virtual std::string *getItemDescription ( std::string * str, int bleh = 0);
+    //virtual std::string *getItemDescription ( std::string * str, int sizes = 0); // 0 = stacked, 1 = singular, 2 = plural
+    virtual std::string *getItemDescription ( std::string * str, int sizes = 0); // 0 = stacked, 1 = singular, 2 = plural
     virtual void fn179(void);
     // more follows for sure... bleh.
 };
@@ -402,7 +409,7 @@ public:
     df_item * findItemByID(int32_t id);
 
     /// get a string describing an item
-    std::string getItemDescription(const dfh_item & item, Materials * Materials);
+    //std::string getItemDescription(const dfh_item & item, int type);
     /// get a short name for an item
     std::string getItemClass(const dfh_item & item);
     /// read an item, including the extra attributes

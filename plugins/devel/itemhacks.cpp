@@ -187,7 +187,7 @@ DFhackCExport command_result df_dumpitems (Core * c, vector <string> & parameter
     int32_t x,y,z;
     Gui->getCursorCoords(x,y,z);
 
-    std::vector<t_item *> p_items;
+    std::vector<df_item *> p_items;
     Items->readItemVector(p_items);
     uint32_t size = p_items.size();
 
@@ -231,13 +231,12 @@ DFhackCExport command_result df_dumpitems (Core * c, vector <string> & parameter
 
         c->con.print(
             "%5d: addr:0x%08x %6d %08x (%s) vptr:0x%08x [%d]\n"
-            "       *%d %s - %s\n",
+            "       %d %s\n",
             i, itm.base, itm.base->id, itm.base->flags.whole,
             location,
-            itm.base->vptr,
+            ((t_virtual *)itm.base)->vptr,
             itm.wear_level,
             itm.quantity,
-            Items->getItemClass(itm.matdesc.itemType).c_str(),
             Items->getItemDescription(itm, Materials).c_str()
         );
         chooser->postPrint(&itm);

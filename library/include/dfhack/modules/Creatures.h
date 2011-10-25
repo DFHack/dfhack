@@ -543,7 +543,7 @@ namespace DFHack
         int16_t unk_280;
         int32_t unk_284;
 
-        std::vector<t_item *> inventory;   // 288 - vector of item pointers
+        std::vector<df_item *> inventory;   // 288 - vector of item pointers
         std::vector<int32_t> owned_items;  // 298 - vector of item IDs
         std::vector<uint32_t> unk_2a8;
         std::vector<uint32_t> unk_2b8;
@@ -763,8 +763,8 @@ namespace DFHack
 
         bool ReadJob(const df_creature * unit, std::vector<t_material> & mat);
 
-        bool ReadInventoryByIdx(const uint32_t index, std::vector<t_item *> & item);
-        bool ReadInventoryByPtr(const df_creature * unit, std::vector<t_item *> & item);
+        bool ReadInventoryByIdx(const uint32_t index, std::vector<df_item *> & item);
+        bool ReadInventoryByPtr(const df_creature * unit, std::vector<df_item *> & item);
 
         bool ReadOwnedItemsByIdx(const uint32_t index, std::vector<int32_t> & item);
         bool ReadOwnedItemsByPtr(const df_creature * unit, std::vector<int32_t> & item);

@@ -109,21 +109,221 @@ struct t_itemref : public t_virtual
 };
 
 /**
- * Basic item data, read as a single chunk
+ * A partial mirror of a DF base type for items
  * \ingroup grp_items
  */
-struct t_item : public t_virtual
+class df_item
 {
-    // vptr                0x0 + 4
-    int16_t x;          // 0x4 + 2
-    int16_t y;          // 0x6 + 2
-    int16_t z;          // 0x8 + 2
-    // 2B padding          0xA + 2
-    t_itemflags flags;  // 0xC + 4
-    uint32_t age ;      // 0x10 + 4
-    uint32_t id;        // 0x14 + 4
-    std::vector<void *> unk1;// Used by tasked items.
+public:
+    int16_t x;
+    int16_t y;
+    int16_t z;
+    t_itemflags flags;
+    uint32_t age;
+    uint32_t id;
+    std::vector<void *> unk1;
     std::vector<t_itemref *> itemrefs;
+public:
+    // 0x0
+    virtual int32_t getType();
+    virtual int32_t getSubtype();
+    virtual int32_t getSubMaterial();
+    virtual int16_t getMaterial();
+    // 0x10
+    /*
+     hm, [4] looks complicated                    *
+     takes a parameter
+     looks like 0x017081A4 is a vector of something
+     this one sets an item property at offset 0xA0
+     (0.31.25 Windows SDL)
+     */
+    virtual void fn4(void);
+    virtual void setMaterial(int16_t mat);
+    virtual void setSubMaterial (int32_t submat);
+    // another one? really? 
+    virtual int16_t getMaterial2();
+    // 0x20
+    // more of the same?
+    virtual int32_t getSubMaterial2();
+    virtual void fn9(void);
+    virtual void fn10(void);
+    virtual void fn11(void);
+    // 0x30
+    virtual void fn12(void);
+    virtual void fn13(void);
+    virtual void fn14(void);
+    virtual void fn15(void);
+    // 0x40
+    virtual void fn16(void);
+    virtual void fn17(void);
+    virtual void fn18(void);
+    virtual void fn19(void);
+    // 0x50
+    virtual void fn20(void);
+    virtual void fn21(void);
+    virtual void fn22(void);
+    virtual void fn23(void);
+    // 0x60
+    virtual void fn24(void);
+    virtual void fn25(void);
+    virtual void fn26(void);
+    virtual void fn27(void);
+    // 0x70
+    virtual void fn28(void);
+    virtual void fn29(void);
+    virtual void fn30(void);
+    virtual void fn31(void);
+    // 0x80
+    virtual void fn32(void);
+    virtual void fn33(void);
+    virtual void fn34(void);
+    virtual void fn35(void);
+    // 0x90
+    virtual void fn36(void);
+    virtual void fn37(void);
+    virtual void fn38(void);
+    virtual void fn39(void);
+    // 0xA0
+    virtual void fn40(void);
+    virtual void fn41(void);
+    virtual void fn42(void);
+    virtual void fn43(void);
+    // 0xB0
+    virtual void fn44(void);
+    virtual void fn45(void);
+    virtual void fn46(void);
+    virtual void fn47(void);
+    // 0xC0
+    virtual void fn48(void);
+    virtual void fn49(void);
+    virtual void fn50(void);
+    virtual int16_t getWear(void); // 0 = normal, 1 = x, 2 = X, 3 = XX
+    // 0xD0
+    virtual void setWear(int16_t wear); // also zeroes wear timer?
+    virtual void fn53(void);
+    virtual void fn54(void);
+    virtual void fn55(void);
+    // 0xE0
+    virtual void fn56(void);
+    virtual void fn57(void);
+    virtual void fn58(void);
+    virtual void fn59(void);
+    // 0xF0
+    virtual void fn60(void);
+    virtual void fn61(void);
+    virtual void fn62(void);
+    virtual void fn63(void);
+    // 0x100
+    virtual void fn64(void);
+    virtual void fn65(void);
+    virtual void fn66(void);
+    virtual void fn67(void);
+    // 0x110
+    virtual void fn68(void);
+    virtual void fn69(void);
+    virtual void fn70(void);
+    virtual void fn71(void);
+    // 0x120
+    virtual void fn72(void);
+    virtual void fn73(void);
+    virtual void fn74(void);
+    virtual void fn75(void);
+    // 0x130
+    virtual void fn76(void);
+    virtual void fn77(void);
+    virtual void fn78(void);
+    virtual void fn79(void);
+    // 0x140
+    virtual void fn80(void);
+    virtual void fn81(void);
+    virtual void fn82(void);
+    virtual void fn83(void);
+    // 0x150
+    virtual void fn84(void);
+    virtual void fn85(void);
+    virtual void fn86(void);
+    virtual void fn87(void);
+    // 0x160
+    virtual void fn88(void);
+    virtual void fn89(void);
+    virtual void fn90(void);
+    virtual void fn91(void);
+    // 0x170
+    virtual void fn92(void);
+    virtual void fn93(void);
+    virtual void fn94(void);
+    virtual void fn95(void);
+    // 0x180
+    virtual void fn96(void);
+    virtual void fn97(void);
+    virtual void fn98(void);
+    virtual void fn99(void);
+    // 0x190
+    virtual void fn100(void);
+    virtual void fn101(void);
+    virtual void fn102(void);
+    virtual void fn103(void);
+    // 0x1A0
+    virtual void fn104(void);
+    virtual void fn105(void);
+    virtual void fn106(void);
+    virtual void fn107(void);
+    // 0x1B0
+    virtual void fn108(void);
+    virtual void fn109(void);
+    virtual void fn110(void);
+    virtual void fn111(void);
+    // 0x1C0
+    virtual void fn112(void);
+    virtual void fn113(void);
+    virtual void fn114(void);
+    virtual void fn115(void);
+    // 0x1D0
+    virtual void fn116(void);
+    virtual void fn117(void);
+    virtual void fn118(void);
+    virtual void fn119(void);
+    // 0x1E0
+    virtual void fn120(void);
+    virtual void fn121(void);
+    virtual void fn122(void);
+    virtual void fn123(void);
+    // 0x1F0
+    virtual void fn124(void);
+    virtual void fn125(void);
+    virtual void fn126(void);
+    virtual void fn127(void);
+    // 0x200
+    virtual void fn128(void);
+    virtual void fn129(void);
+    virtual void fn130(void);
+    virtual void fn131(void);
+    // 0x210
+    virtual void fn132(void);
+    virtual int32_t getStackSize( void );
+    virtual void fn134(void);
+    virtual void fn135(void);
+    // 0x220
+    virtual void fn136(void);
+    virtual void fn137(void);
+    virtual void fn138(void);
+    virtual void fn139(void);
+    // 0x230
+    virtual void fn140(void);
+    virtual void fn141(void);
+    virtual void fn142(void);
+    virtual void fn143(void);
+    // 0x240
+    virtual void fn144(void);
+    virtual void fn145(void);
+    virtual void fn146(void);
+    virtual void fn147(void);
+    // 0x250
+    virtual void fn148(void);
+    virtual void fn149(void);
+    virtual void fn150(void);
+    virtual int16_t getQuality( void );
+    // more follows for sure... bleh.
 };
 
 /**
@@ -132,12 +332,13 @@ struct t_item : public t_virtual
  */
 struct dfh_item
 {
-    t_item * base;
+    df_item * base;
     t_material matdesc;
     int32_t quantity;
     int32_t quality;
     int16_t wear_level;
 };
+
 
 /**
  * Type for holding item improvements. broken/unused.
@@ -162,20 +363,17 @@ public:
     bool Start();
     bool Finish();
 
-    bool readItemVector(std::vector<t_item *> &items);
-    t_item * findItemByID(int32_t id);
+    bool readItemVector(std::vector<df_item *> &items);
+    df_item * findItemByID(int32_t id);
 
     /// get a string describing an item
     std::string getItemDescription(const dfh_item & item, Materials * Materials);
     /// get a short name for an item
-    std::string getItemClass(int32_t index);
     std::string getItemClass(const dfh_item & item);
     /// read an item, including the extra attributes
-    bool readItem(t_item * itembase, dfh_item & item);
+    bool readItem(df_item * itembase, dfh_item & item);
     /// write item base (position and flags only = t_item part of dfh_item)
     bool writeItem(const dfh_item & item);
-    /// dump offsets used by accessors to a string
-    std::string dumpAccessors(const dfh_item & item);
 
     /// who owns this item we already read?
     int32_t getItemOwnerID(const dfh_item & item);

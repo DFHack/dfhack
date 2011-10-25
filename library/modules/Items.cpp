@@ -42,6 +42,7 @@ using namespace std;
 #include "dfhack/modules/Creatures.h"
 #include "ModuleFactory.h"
 #include <dfhack/Core.h>
+#include <dfhack/Virtual.h>
 
 using namespace DFHack;
 
@@ -50,381 +51,11 @@ Module* DFHack::createItems()
     return new Items();
 }
 
-enum accessor_type {ACCESSOR_CONSTANT, ACCESSOR_INDIRECT, ACCESSOR_DOUBLE_INDIRECT};
-
-/* this is used to store data about the way accessors work */
-class Accessor
-{
-public:
-    enum DataWidth {
-        Data32 = 0,
-        DataSigned16,
-        DataUnsigned16
-    };
-private:
-    accessor_type type;
-    int32_t constant;
-    int32_t offset1;
-    int32_t offset2;
-    Process * p;
-    DataWidth dataWidth;
-    uint32_t method;
-public:
-    Accessor(uint32_t function, Process * p);
-    Accessor(accessor_type type, int32_t constant, uint32_t offset1, uint32_t offset2, uint32_t dataWidth, Process * p);
-    std::string dump();
-    int32_t getValue(t_item * objectPtr);
-    bool isConstant();
-};
-class ItemImprovementDesc
-{
-private:
-    Accessor * AType;
-    Process * p;
-public:
-    ItemImprovementDesc(uint32_t VTable, Process * p);
-    bool getImprovement(uint32_t descptr, t_improvement & imp);
-    uint32_t vtable;
-    uint32_t maintype;
-};
-
-class ItemDesc
-{
-private:
-    Accessor * AMainType;
-    Accessor * ASubType;
-    Accessor * ASubIndex;
-    Accessor * AIndex;
-    Accessor * AQuality;
-    Accessor * AQuantity;
-    Accessor * AWear;
-    Process * p;
-    bool hasDecoration;
-    int idFieldOffset;
-public:
-    ItemDesc(void * VTable, Process * p);
-    bool readItem(t_item * itemptr, dfh_item & item);
-    std::string dumpAccessors();
-    std::string className;
-    void * vtable;
-    uint32_t mainType;
-    std::vector<ItemImprovementDesc> improvement;
-};
-
-inline bool do_match(uint32_t &ptr, uint64_t val, int size, uint64_t mask, uint64_t check)
-{
-    if ((val & mask) == check) {
-        ptr += size;
-        return true;
-    }
-    return false;
-}
-
-static bool match_MEM_ACCESS(uint32_t &ptr, uint64_t v, int isize, int in_reg, int &out_reg, int &offset)
-{
-    // ESP & EBP are hairy
-    if (in_reg == 4 || in_reg == 5)
-        return false;
-
-    if ((v & 7) != in_reg)
-        return false;
-
-    out_reg = (v>>3) & 7;
-
-    switch ((v>>6)&3) {
-        case 0: // MOV REG2, [REG]
-            offset = 0;
-            ptr += isize+1;
-            return true;
-        case 1: // MOV REG2, [REG+offset8]
-            offset = (signed char)(v >> 8);
-            ptr += isize+2;
-            return true;
-        case 2: // MOV REG2, [REG+offset32]
-            offset = (signed int)(v >> 8);
-            ptr += isize+5;
-            return true;
-        default:
-            return false;
-    }
-}
-
-static bool match_MOV_MEM(uint32_t &ptr, uint64_t v, int in_reg, int &out_reg, int &offset, Accessor::DataWidth &size) 
-{
-    int prefix = 0;
-    size = Accessor::Data32;
-    if ((v & 0xFF) == 0x8B) { // MOV
-        v >>= 8;
-        prefix = 1;
-    }
-    else if ((v & 0xFFFF) == 0x8B66) { // MOV 16-bit
-        v >>= 16;
-        prefix = 2;
-        size = Accessor::DataUnsigned16;
-    }
-    else if ((v & 0xFFFF) == 0xBF0F) { // MOVSX
-        v >>= 16;
-        prefix = 2;
-        size = Accessor::DataSigned16;
-    }
-    else if ((v & 0xFFFF) == 0xB70F) { // MOVZ
-        v >>= 16;
-        prefix = 2;
-        size = Accessor::DataUnsigned16;
-    }
-    else
-        return false;
-
-    return match_MEM_ACCESS(ptr, v, prefix, in_reg, out_reg, offset);
-}
-
-Accessor::Accessor(uint32_t function, Process *p)
-{
-    this->p = p;
-    this->type = ACCESSOR_CONSTANT;
-    if(!p)
-    {
-        this->constant = 0;
-        return;
-    }
-    method = function;
-    uint32_t temp = function;
-    int data_reg = -1;
-    uint64_t v = p->readQuad(temp);
-
-    if (do_match(temp, v, 2, 0xFFFF, 0xC033) ||
-        do_match(temp, v, 2, 0xFFFF, 0xC031)) // XOR EAX, EAX
-    {
-        data_reg = 0;
-        this->constant = 0;
-    }
-    else if (do_match(temp, v, 3, 0xFFFFFF, 0xFFC883)) // OR EAX, -1
-    {
-        data_reg = 0;
-        this->constant = -1;
-    }
-    else if (do_match(temp, v, 5, 0xFF, 0xB8)) // MOV EAX,imm
-    {
-        data_reg = 0;
-        this->constant = (v>>8) & 0xFFFFFFFF;
-    }
-    else
-    {
-        DataWidth xsize;
-        int ptr_reg = 1, tmp; // ECX
-
-        // MOV REG,[ESP+4]
-        if (do_match(temp, v, 4, 0xFFFFC7FFU, 0x0424448B))
-        {
-            ptr_reg = (v>>11)&7;
-            v = p->readQuad(temp);
-        }
-
-        if (match_MOV_MEM(temp, v, ptr_reg, tmp, this->offset1, xsize)) {
-            data_reg = tmp;
-            this->type = ACCESSOR_INDIRECT;
-            this->dataWidth = xsize;
-
-            if (xsize == Data32)
-            {
-                v = p->readQuad(temp);
-
-                if (match_MOV_MEM(temp, v, data_reg, tmp, this->offset2, xsize)) {
-                    data_reg = tmp;
-                    this->type = ACCESSOR_DOUBLE_INDIRECT;
-                    this->dataWidth = xsize;
-                }
-            }
-        }
-    }
-
-    v = p->readQuad(temp);
-
-    if (data_reg == 0 && do_match(temp, v, 1, 0xFF, 0xC3)) // RET
-        return;
-    else
-    {
-        this->type = ACCESSOR_CONSTANT;
-        this->constant = 0;
-        printf("bad accessor @0x%x\n", function);
-    }
-}
-
-bool Accessor::isConstant()
-{
-    if(this->type == ACCESSOR_CONSTANT)
-        return true;
-    else
-        return false;
-}
-
-string Accessor::dump()
-{
-    stringstream sstr;
-    sstr << hex << "method @0x" << method << dec << " ";
-    switch(type)
-    {
-        case ACCESSOR_CONSTANT:
-            sstr << "Constant: " << dec << constant;
-            break;
-        case ACCESSOR_INDIRECT:
-            switch(dataWidth)
-            {
-                case Data32:
-                    sstr << "int32_t ";
-                    break;
-                case DataSigned16:
-                    sstr << "int16_t ";
-                    break;
-                case DataUnsigned16:
-                    sstr << "uint16_t ";
-                    break;
-                default:
-                    sstr << "unknown ";
-                    break;
-            }
-            sstr << hex << "[obj + 0x" << offset1 << " ]";
-            break;
-        case ACCESSOR_DOUBLE_INDIRECT:
-            switch(dataWidth)
-            {
-                case Data32:
-                    sstr << "int32_t ";
-                    break;
-                case DataSigned16:
-                    sstr << "int16_t ";
-                    break;
-                case DataUnsigned16:
-                    sstr << "uint16_t ";
-                    break;
-                default:
-                    sstr << "unknown ";
-                    break;
-            }
-            sstr << hex << "[ [obj + 0x" << offset1 << " ] + 0x" << offset2 << " ]";
-            break;
-    }
-    return sstr.str();
-}
-
-int32_t Accessor::getValue(t_item * objectPtr)
-{
-    int32_t offset = this->offset1;
-
-    switch(this->type)
-    {
-    case ACCESSOR_CONSTANT:
-        return this->constant;
-        break;
-    case ACCESSOR_DOUBLE_INDIRECT:
-        objectPtr = (t_item *) p->readDWord((uint32_t)objectPtr + this->offset1);
-        offset = this->offset2;
-        // fallthrough
-    case ACCESSOR_INDIRECT:
-        switch(this->dataWidth)
-        {
-        case Data32:
-            return p->readDWord((uint32_t)objectPtr + offset);
-        case DataSigned16:
-            return (int16_t) p->readWord((uint32_t)objectPtr + offset);
-        case DataUnsigned16:
-            return (uint16_t) p->readWord((uint32_t)objectPtr + offset);
-        default:
-            return -1;
-        }
-        break;
-    default:
-        return -1;
-    }
-}
-
-// FIXME: turn into a proper factory with caching
-Accessor * buildAccessor (OffsetGroup * I, Process * p, const char * name, void * vtable)
-{
-    int32_t offset;
-    if(I->getSafeOffset(name,offset))
-    {
-        return new Accessor( p->readDWord( (uint32_t)vtable + offset ), p);
-    }
-    else
-    {
-        fprintf(stderr,"Missing offset for item accessor \"%s\"\n", name);
-        return new Accessor(-1,0); // dummy accessor. always returns -1
-    }
-}
-
-ItemDesc::ItemDesc(void * VTable, Process *p)
-{
-    OffsetGroup * Items = p->getDescriptor()->getGroup("Items");
-
-    /* 
-     * FIXME: and what about types, different sets of methods depending on class?
-     * what about more complex things than constants and integers?
-     * If this is to be generally useful, it needs much more power.
-     */ 
-    AMainType = buildAccessor(Items, p, "item_type_accessor", VTable);
-    ASubType = buildAccessor(Items, p, "item_subtype_accessor", VTable);
-    ASubIndex = buildAccessor(Items, p, "item_subindex_accessor", VTable);
-    AIndex = buildAccessor(Items, p, "item_index_accessor", VTable);
-    AQuality = buildAccessor(Items, p, "item_quality_accessor", VTable);
-    AWear = buildAccessor(Items, p, "item_wear_accessor", VTable);
-    AQuantity = buildAccessor(Items, p, "item_quantity_accessor", VTable);
-
-    idFieldOffset = Items->getOffset("id");
-
-    this->vtable = VTable;
-    this->p = p;
-    this->className = p->readClassName((void *) VTable).substr(5);
-    this->className.resize(this->className.size()-2);
-
-    this->hasDecoration = false;
-    if(AMainType->isConstant())
-        mainType = this->AMainType->getValue(0);
-    else
-    {
-        cerr << "Bad item main type accessor: " << AMainType->dump() << endl;
-        mainType = 0;
-    }
-}
-
-string ItemDesc::dumpAccessors()
-{
-    std::stringstream outss;
-    outss << "MainType  :" << AMainType->dump() << endl;
-    outss << "ASubType  :" << ASubType->dump() << endl;
-    outss << "ASubIndex :" << ASubIndex->dump() << endl;
-    outss << "AIndex    :" << AIndex->dump() << endl;
-    outss << "AQuality  :" << AQuality->dump() << endl;
-    outss << "AQuantity :" << AQuantity->dump() << endl;
-    outss << "AWear     :" << AWear->dump() << endl;
-    return outss.str();
-}
-
-
-bool ItemDesc::readItem(t_item * itemptr, DFHack::dfh_item &item)
-{
-    item.base = itemptr;
-    item.matdesc.itemType = AMainType->getValue(itemptr);
-    item.matdesc.subType = ASubType->getValue(itemptr);
-    item.matdesc.subIndex = ASubIndex->getValue(itemptr);
-    item.matdesc.index = AIndex->getValue(itemptr);
-    item.quality = AQuality->getValue(itemptr);
-    item.quantity = AQuantity->getValue(itemptr);
-    // FIXME: use templates. seriously.
-    // Note: this accessor returns a 32-bit value with the higher
-    // half sometimes containing garbage, so the cast is essential:
-    item.wear_level = (int16_t)this->AWear->getValue(itemptr);
-    return true;
-}
-
 class Items::Private
 {
     public:
-        DFContextShared *d;
         Process * owner;
-        std::map<int32_t, ItemDesc *> descType;
-        std::map<void *, ItemDesc *> descVTable;
-        std::map<int32_t, t_item *> idLookupTable;
+        std::map<int32_t, df_item *> idLookupTable;
         uint32_t refVectorOffset;
         uint32_t idFieldOffset;
         uint32_t itemVectorAddress;
@@ -519,16 +150,16 @@ bool Items::Finish()
     return true;
 }
 
-bool Items::readItemVector(std::vector<t_item *> &items)
+bool Items::readItemVector(std::vector<df_item *> &items)
 {
-    std::vector <t_item *> *p_items = (std::vector <t_item *> *) d->itemVectorAddress;
+    std::vector <df_item *> *p_items = (std::vector <df_item *> *) d->itemVectorAddress;
 
     d->idLookupTable.clear();
     items.resize(p_items->size());
 
     for (unsigned i = 0; i < p_items->size(); i++)
     {
-        t_item * ptr = p_items->at(i);
+        df_item * ptr = p_items->at(i);
         items[i] = ptr;
         d->idLookupTable[ptr->id] = ptr;
     }
@@ -536,14 +167,14 @@ bool Items::readItemVector(std::vector<t_item *> &items)
     return true;
 }
 
-t_item * Items::findItemByID(int32_t id)
+df_item * Items::findItemByID(int32_t id)
 {
     if (id < 0)
         return 0;
 
     if (d->idLookupTable.empty())
     {
-        std::vector<t_item *> tmp;
+        std::vector<df_item *> tmp;
         readItemVector(tmp);
     }
 
@@ -553,36 +184,23 @@ t_item * Items::findItemByID(int32_t id)
 Items::~Items()
 {
     Finish();
-    std::map<void *, ItemDesc *>::iterator it;
-    it = d->descVTable.begin();
-    while (it != d->descVTable.end())
-    {
-        delete (*it).second;
-        ++it;
-    }
-    d->descType.clear();
-    d->descVTable.clear();
     delete d;
 }
 
-bool Items::readItem(t_item * itembase, DFHack::dfh_item &item)
+bool Items::readItem(df_item * itembase, DFHack::dfh_item &item)
 {
-    std::map<void *, ItemDesc *>::iterator it;
-    Process * p = d->owner;
-    ItemDesc * desc;
-
-    void * vtable = itembase->vptr;
-    it = d->descVTable.find(vtable);
-    if(it == d->descVTable.end())
-    {
-        desc = new ItemDesc(vtable, p);
-        d->descVTable[vtable] = desc;
-        d->descType[desc->mainType] = desc;
-    }
-    else
-        desc = it->second;
-
-    return desc->readItem(itembase, item);
+    if(!itembase)
+        return false;
+    df_item * itreal = (df_item *) itembase;
+    item.base = itembase;
+    item.matdesc.itemType = itreal->getType();
+    item.matdesc.subType = itreal->getSubtype();
+    item.matdesc.index = itreal->getMaterial();
+    item.matdesc.subIndex = itreal->getSubMaterial();
+    item.wear_level = itreal->getWear();
+    item.quality = itreal->getQuality();
+    item.quantity = itreal->getStackSize();
+    return true;
 }
 
 int32_t Items::getItemOwnerID(const DFHack::dfh_item &item)
@@ -670,34 +288,9 @@ bool Items::removeItemOwner(dfh_item &item, Creatures *creatures)
 
 std::string Items::getItemClass(const dfh_item & item)
 {
-    return getItemClass(item.matdesc.itemType);
-}
-
-std::string Items::getItemClass(int32_t index)
-{
-    std::map<int32_t, ItemDesc *>::iterator it;
-    std::string out;
-
-    it = d->descType.find(index);
-    if(it == d->descType.end())
-    {
-        /* these are dummy values for mood decoding */
-        switch(index)
-        {
-            case 0: return "bar";
-            case 1: return "cut gem";
-            case 2: return "block";
-            case 3: return "raw gem";
-            case 4: return "raw stone";
-            case 5: return "log";
-            case 54: return "leather";
-            case 57: return "cloth";
-            case -1: return "probably bone or shell, but I really don't know";
-            default: return "unknown";
-        }
-    }
-    out = it->second->className;
-    return out;
+    t_virtual * virt = (t_virtual *) item.base;
+    return virt->getClassName();
+    //return getItemClass(item.matdesc.itemType);
 }
 
 std::string Items::getItemDescription(const dfh_item & item, Materials * Materials)
@@ -725,15 +318,6 @@ std::string Items::getItemDescription(const dfh_item & item, Materials * Materia
             break;
         default: outss << "Crazy quality " << item.quality << " "; break;
     }
-    outss << Materials->getDescription(item.matdesc) << " " << getItemClass(item.matdesc.itemType);
+    outss << Materials->getDescription(item.matdesc) << " " << getItemClass(item);
     return outss.str();
-}
-
-/// dump offsets used by accessors of a valid item to a string
-std::string Items::dumpAccessors(const dfh_item & item)
-{
-    std::map< void *, ItemDesc* >::const_iterator it = d->descVTable.find(item.base->vptr);
-    if(it != d->descVTable.end())
-        return it->second->dumpAccessors();
-    return "crud";
 }

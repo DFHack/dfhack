@@ -94,7 +94,7 @@ int main (int argc, char *argv[])
             itm.base.vtable,
             itm.wear_level,
             itm.quantity,
-            Items->getItemClass(itm.matdesc.itemType).c_str(),
+            Items->getItemClass(itm).c_str(),
             Items->getItemDescription(itm, Materials).c_str()
         );
 

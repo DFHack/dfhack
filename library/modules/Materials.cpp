@@ -396,8 +396,10 @@ std::string Materials::getDescription(const t_material & mat)
             else
                 if(mat.index<0)
                     return "any inorganic";
-                else
+                else if (mat.index < inorganic.size())
                     return this->inorganic[mat.index].id;
+                else
+                    return "INDEX OUT OF BOUNDS!";
         }
         else
         {

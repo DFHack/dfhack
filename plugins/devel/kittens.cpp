@@ -109,7 +109,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 DFhackCExport command_result mapitems (Core * c, vector <string> & parameters)
 {
     c->Suspend();
-    vector <t_item *> vec_items;
+    vector <df_item *> vec_items;
     Gui * g = c-> getGui();
     Maps* m = c->getMaps();
     Items* it = c->getItems();
@@ -141,7 +141,7 @@ DFhackCExport command_result mapitems (Core * c, vector <string> & parameters)
             auto iter_it = vec_items.begin();
             while (iter_it != vec_items.end())
             {
-                t_item * itm = *iter_it;
+                df_item * itm = *iter_it;
                 if(itm->x == cx && itm->y == cy && itm->z == cz)
                 {
                     c->con.print("%d\n",itm->id);

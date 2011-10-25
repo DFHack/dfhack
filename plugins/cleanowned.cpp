@@ -99,7 +99,7 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
     ok &= Creatures->Start(num_creatures);
     ok &= Tran->Start();
 
-    vector<t_item *> p_items;
+    vector<df_item *> p_items;
     ok &= Items->readItemVector(p_items);
     if(!ok)
     {
@@ -111,7 +111,7 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
 
     for (std::size_t i=0; i < p_items.size(); i++)
     {
-        t_item * curItem = p_items[i];
+        df_item * curItem = p_items[i];
         DFHack::dfh_item itm;
         Items->readItem(curItem, itm);
 
@@ -132,7 +132,7 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
             }
         }
 
-        std::string name = Items->getItemClass(itm.matdesc.itemType);
+        std::string name = Items->getItemClass(itm);
 
         if (itm.base->flags.rotten)
         {

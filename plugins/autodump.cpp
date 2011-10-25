@@ -78,7 +78,7 @@ DFhackCExport command_result df_autodump (Core * c, vector <string> & parameters
     DFHack::Items * Items = c->getItems();
     DFHack::Maps *Maps = c->getMaps();
 
-    vector <t_item*> p_items;
+    vector <df_item*> p_items;
     if(!Items->readItemVector(p_items))
     {
         c->con.printerr("Can't access the item vector.\n");
@@ -130,7 +130,7 @@ DFhackCExport command_result df_autodump (Core * c, vector <string> & parameters
     // proceed with the dumpification operation
     for(std::size_t i=0; i< numItems; i++)
     {
-        t_item * itm = p_items[i];
+        df_item * itm = p_items[i];
         DFCoord pos_item(itm->x, itm->y, itm->z);
 
         // keep track how many items are at places. all items.

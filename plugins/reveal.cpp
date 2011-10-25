@@ -52,7 +52,8 @@ enum revealstate
 {
     NOT_REVEALED,
     REVEALED,
-    SAFE_REVEALED
+    SAFE_REVEALED,
+    DEMON_REVEALED
 };
 
 revealstate revealed = NOT_REVEALED;
@@ -70,7 +71,7 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("reveal","Reveal the map. 'reveal hell' will also reveal hell.",reveal));
+    commands.push_back(PluginCommand("reveal","Reveal the map. 'reveal hell' will also reveal hell. 'reveal demon' won't pause.",reveal));
     commands.push_back(PluginCommand("unreveal","Revert the map to its previous state.",unreveal));
     commands.push_back(PluginCommand("revtoggle","Reveal/unreveal depending on state.",revtoggle));
     commands.push_back(PluginCommand("revflood","Hide all, reveal all tiles reachable from cursor position.",revflood));
@@ -101,6 +102,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params)
 {
     bool no_hell = true;
+    bool pause = true;
     for(int i = 0; i < params.size();i++)
     {
         if(params[i]=="hell")
@@ -110,6 +112,7 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
             c->con.print("Reveals the map, by default ignoring hell.\n"
                          "Options:\n"
                          "hell     - also reveal hell, while forcing the game to pause.\n"
+                         "demon    - reveal hell, do not pause.\n"
             );
             return CR_OK;
         }
@@ -117,6 +120,11 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
     if(params.size() && params[0] == "hell")
     {
         no_hell = false;
+    }
+    if(params.size() && params[0] == "demon")
+    {
+        no_hell = false;
+        pause = false;
     }
     Console & con = c->con;
     if(revealed != NOT_REVEALED)
@@ -188,8 +196,13 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
     }
     else
     {
-        revealed = REVEALED;
-        World->SetPauseState(true);
+        if(pause)
+        {
+            revealed = REVEALED;
+            World->SetPauseState(true);
+        }
+        else
+            revealed = DEMON_REVEALED;
     }
     c->Resume();
     con.print("Map revealed.\n");

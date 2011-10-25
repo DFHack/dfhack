@@ -295,6 +295,7 @@ std::string Items::getItemClass(const dfh_item & item)
 
 std::string Items::getItemDescription(const dfh_item & item, Materials * Materials)
 {
+    /*
     std::stringstream outss;
     switch(item.quality)
     {
@@ -320,4 +321,9 @@ std::string Items::getItemDescription(const dfh_item & item, Materials * Materia
     }
     outss << Materials->getDescription(item.matdesc) << " " << getItemClass(item);
     return outss.str();
+    */
+    std::string strzzz;
+    item.base->getItemDescription(&strzzz);
+//    delete ptrs;
+    return strzzz;
 }

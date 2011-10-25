@@ -126,7 +126,7 @@ public:
 public:
     // 0x0
     virtual int32_t getType();
-    virtual int32_t getSubtype();
+    virtual int16_t getSubtype();
     virtual int32_t getSubMaterial();
     virtual int16_t getMaterial();
     // 0x10
@@ -323,6 +323,41 @@ public:
     virtual void fn149(void);
     virtual void fn150(void);
     virtual int16_t getQuality( void );
+    // 0x260
+    virtual void fn152(void);
+    virtual void fn153(void);
+    virtual void fn154(void);
+    virtual void fn155(void);
+    // 0x270
+    virtual void fn156(void);
+    virtual void fn157(void);
+    virtual void fn158(void);
+    virtual void fn159(void);
+    // 0x280
+    virtual void fn160(void);
+    virtual void fn161(void);
+    virtual void fn162(void);
+    virtual void fn163(void);
+    // 0x290
+    virtual void fn164(void);
+    virtual void fn165(void);
+    virtual void fn166(void);
+    virtual void fn167(void);
+    // 0x2A0
+    virtual void fn168(void);
+    virtual void fn169(void);
+    virtual void fn170(void);
+    virtual void fn171(void);
+    // 0x2B0
+    virtual void fn172(void);
+    virtual void fn173(void);
+    virtual void fn174(void);
+    virtual void fn175(void);
+    // 0x2C0
+    virtual void fn176(void);
+    virtual void fn177(void);
+    virtual std::string *getItemDescription ( std::string * str, int bleh = 0);
+    virtual void fn179(void);
     // more follows for sure... bleh.
 };
 

@@ -231,12 +231,11 @@ DFhackCExport command_result df_dumpitems (Core * c, vector <string> & parameter
 
         c->con.print(
             "%5d: addr:0x%08x %6d %08x (%s) vptr:0x%08x [%d]\n"
-            "       %d %s\n",
+            "       %s\n",
             i, itm.base, itm.base->id, itm.base->flags.whole,
             location,
             ((t_virtual *)itm.base)->vptr,
             itm.wear_level,
-            itm.quantity,
             Items->getItemDescription(itm, Materials).c_str()
         );
         chooser->postPrint(&itm);

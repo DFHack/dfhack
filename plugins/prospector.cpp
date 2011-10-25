@@ -22,8 +22,48 @@ using namespace std;
 
 using namespace DFHack;
 
-typedef std::map<int16_t, unsigned int> MatMap;
-typedef std::vector< pair<int16_t, unsigned int> > MatSorter;
+struct matdata
+{
+    const static int invalid_z = -30000;
+    matdata()
+    {
+        count = 0;
+        lower_z = invalid_z;
+        upper_z = invalid_z;
+    }
+    matdata (const matdata & copyme)
+    {
+        count = copyme.count;
+        lower_z = copyme.lower_z;
+        upper_z = copyme.upper_z;
+    }
+    unsigned int add( int z_level = invalid_z )
+    {
+        count ++;
+        if(z_level != invalid_z)
+        {
+            if(lower_z == invalid_z || z_level < lower_z)
+            {
+                lower_z = z_level;
+            }
+            if(upper_z == invalid_z || z_level > upper_z)
+            {
+                upper_z = z_level;
+            }
+        }
+    }
+    unsigned int count;
+    int lower_z;
+    int upper_z;
+};
+
+bool operator>(const matdata & q1, const matdata & q2)
+{
+    return q1.count > q2.count;
+}
+
+typedef std::map<int16_t, matdata> MatMap;
+typedef std::vector< pair<int16_t, matdata> > MatSorter;
 
 typedef std::vector<DFHack::t_feature> FeatureList;
 typedef std::vector<DFHack::t_feature*> FeatureListPointer;
@@ -68,8 +108,13 @@ void printMats(DFHack::Console & con, MatMap &mat,
             continue;
         }
         DFHack::t_matgloss* mat = materials[it->first];
-        con << std::setw(25) << mat->id << " : " << it->second << std::endl;
-        total += it->second;
+        con << std::setw(25) << mat->id << " : "
+        << std::setw(9) << it->second.count;
+        if(it->second.lower_z != it->second.upper_z)
+            con <<" Z:" << std::setw(4) << it->second.lower_z << ".." <<  it->second.upper_z << std::endl;
+        else
+            con <<" Z:" << std::setw(4) << it->second.lower_z << std::endl;
+        total += it->second.count;
     }
 
     con << ">>> TOTAL = " << total << std::endl << std::endl;
@@ -298,17 +343,17 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                         }
 
                         // Count the material type
-                        baseMats[info->material]++;
+                        baseMats[info->material].add(z);
 
                         // Find the type of the tile
                         switch (info->material)
                         {
                         case DFHack::SOIL:
                         case DFHack::STONE:
-                            layerMats[b->baseMaterialAt(coord)]++;
+                            layerMats[b->baseMaterialAt(coord)].add(z);
                             break;
                         case DFHack::VEIN:
-                            veinMats[b->veinMaterialAt(coord)]++;
+                            veinMats[b->veinMaterialAt(coord)].add(z);
                             break;
                         case DFHack::FEATSTONE:
                             if (blockFeatureLocal && des.bits.feature_local)
@@ -316,7 +361,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                                 if (blockFeatureLocal->type == DFHack::feature_Adamantine_Tube
                                         && blockFeatureLocal->main_material == 0) // stone
                                 {
-                                    veinMats[blockFeatureLocal->sub_material]++;
+                                    veinMats[blockFeatureLocal->sub_material].add(z);
                                 }
                                 else if (showTemple
                                          && blockFeatureLocal->type == DFHack::feature_Hell_Temple)
@@ -329,7 +374,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                                     && blockFeatureGlobal->type == DFHack::feature_Underworld
                                     && blockFeatureGlobal->main_material == 0) // stone
                             {
-                                layerMats[blockFeatureGlobal->sub_material]++;
+                                layerMats[blockFeatureGlobal->sub_material].add(z);
                             }
                             break;
                         case DFHack::OBSIDIAN:
@@ -354,9 +399,9 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                             if (showHidden || !b->DesignationAt(loc).bits.hidden)
                             {
                                 if(plant.is_shrub)
-                                    plantMats[plant.material]++;
+                                    plantMats[plant.material].add(z);
                                 else
-                                    treeMats[plant.material]++;
+                                    treeMats[plant.material].add(z);
                             }
                         }
                     }
@@ -374,7 +419,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     con << "Base materials:" << std::endl;
     for (it = baseMats.begin(); it != baseMats.end(); ++it)
     {
-        con << std::setw(25) << DFHack::TileMaterialString[it->first] << " : " << it->second << std::endl;
+        con << std::setw(25) << DFHack::TileMaterialString[it->first] << " : " << it->second.count << std::endl;
     }
 
     std::vector<t_matgloss*> ptr_vec;

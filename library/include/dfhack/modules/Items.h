@@ -105,6 +105,11 @@ struct t_itemref : public t_virtual
     int32_t value;
 };
 
+struct df_contaminant
+{
+    // fixme: figure it out
+};
+
 /**
  * A partial mirror of a DF base type for items
  * \ingroup grp_items
@@ -125,7 +130,22 @@ public:
     uint32_t id;
     // 18
     std::vector<void *> unk1;
+    // 24 L, 28 W
     std::vector<t_itemref *> itemrefs;
+    // 30 L, 38 W - these were mostly unset (0xCC with malloc patch)
+    int16_t mystery_meat[12];
+    // 48 L, 50 W
+    int32_t mystery1;
+    // 4C L, 54 W
+    int32_t mystery2;
+    // 50 L, 58 W
+    int32_t mystery3;
+    // 54 L, 5C W
+    int32_t mystery4;
+    // 58 L, 60 W
+    int32_t mystery5;
+    // 5C L, 64 W - pointer to vector of contaminants
+    std::vector <df_contaminant *> * contaminants;
 public:
     // 0x0
     virtual int32_t getType();

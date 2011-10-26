@@ -483,7 +483,7 @@ namespace DFHack
     {
         int16_t itemType;
         int16_t subType;
-        int16_t subIndex;
+        int16_t material;
         int32_t index;
         uint32_t flags;
     };

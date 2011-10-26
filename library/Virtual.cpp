@@ -9,7 +9,7 @@
 #include "dfhack/Virtual.h"
 using namespace DFHack;
 
-std::string t_virtual::getClassName()
+std::string t_virtual::getClassName() const
 {
     Core & c = Core::getInstance();
     return c.p->readClassName(vptr);

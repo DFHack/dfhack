@@ -31,6 +31,6 @@ namespace DFHack
     struct t_virtual
     {
         void * vptr;
-        std::string getClassName();
+        std::string getClassName() const;
     };
 }

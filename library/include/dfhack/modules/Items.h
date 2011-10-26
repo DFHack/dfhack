@@ -23,9 +23,6 @@ distribution.
 */
 
 #pragma once
-#ifndef CL_MOD_ITEMS
-#define CL_MOD_ITEMS
-
 /*
 * Items!
 */
@@ -133,8 +130,8 @@ public:
     // 0x0
     virtual int32_t getType();
     virtual int16_t getSubtype();
-    virtual int32_t getSubMaterial();
     virtual int16_t getMaterial();
+    virtual int32_t getMaterialIndex();
     // 0x10
     /*
      hm, [4] looks complicated                    *
@@ -145,12 +142,12 @@ public:
      */
     virtual void fn4(void);
     virtual void setMaterial(int16_t mat);
-    virtual void setSubMaterial (int32_t submat);
+    virtual void setMaterialIndex (int32_t submat);
     // another one? really? 
     virtual int16_t getMaterial2();
     // 0x20
     // more of the same?
-    virtual int32_t getSubMaterial2();
+    virtual int32_t getMaterialIndex2();
     virtual void fn9(void);
     virtual void fn10(void);
     virtual void fn11(void);
@@ -374,7 +371,13 @@ public:
  */
 struct dfh_item
 {
-    df_item * base;
+    df_item *origin; // where this was read from
+    int16_t x;
+    int16_t y;
+    int16_t z;
+    t_itemflags flags;
+    uint32_t age;
+    uint32_t id;
     t_material matdesc;
     int32_t quantity;
     int32_t quality;
@@ -408,32 +411,28 @@ public:
     bool readItemVector(std::vector<df_item *> &items);
     df_item * findItemByID(int32_t id);
 
-    /// get a string describing an item
-    //std::string getItemDescription(const dfh_item & item, int type);
-    /// get a short name for an item
-    std::string getItemClass(const dfh_item & item);
     /// read an item, including the extra attributes
-    bool readItem(df_item * itembase, dfh_item & item);
-    /// write item base (position and flags only = t_item part of dfh_item)
+    bool copyItem(df_item * source, dfh_item & target);
+    /// write copied item back to its origin
     bool writeItem(const dfh_item & item);
 
+    /// get the class name of an item
+    std::string getItemClass(const df_item * item);
     /// who owns this item we already read?
-    int32_t getItemOwnerID(const dfh_item & item);
+    int32_t getItemOwnerID(const df_item * item);
     /// which item is it contained in?
-    int32_t getItemContainerID(const dfh_item & item);
+    int32_t getItemContainerID(const df_item * item);
     /// which items does it contain?
-    bool getContainedItems(const dfh_item & item, std::vector<int32_t> &items);
-
+    bool getContainedItems(const df_item * item, /*output*/ std::vector<int32_t> &items);
     /// wipe out the owner records
-    bool removeItemOwner(dfh_item &item, Creatures *creatures);
-
-    bool readItemRefs(const dfh_item &item, const ClassNameCheck &classname,
-                      std::vector<int32_t> &values);
-    bool unknownRefs(const dfh_item &item, std::vector<std::string>& names,
-                     std::vector<int32_t>& values);
+    bool removeItemOwner(df_item * item, Creatures *creatures);
+    /// read item references, filtered by class
+    bool readItemRefs(const df_item * item, const ClassNameCheck &classname,
+                      /*output*/ std::vector<int32_t> &values);
+    /// get list of item references that are unknown along with their values
+    bool unknownRefs(const df_item * item, /*output*/ std::vector<std::pair<std::string, int32_t> >& refs);
 private:
     class Private;
     Private* d;
 };
 }
-#endif

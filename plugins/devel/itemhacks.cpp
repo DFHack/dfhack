@@ -57,15 +57,14 @@ public:
 
     virtual bool doPrint(DFHack::dfh_item *itm)
     {
-        if (itm->base->unk1.size() > 0)
+        if (itm->origin->unk1.size() > 0)
             return true;
 
-        std::vector<std::string> refs;
-        std::vector<int32_t>     values;
-        if (Items->unknownRefs(*itm, refs, values))
+        std::vector<std::pair<std::string, int32_t> > refs;
+        if (Items->unknownRefs(itm->origin, refs))
             return true;
 
-        t_itemflags &f = itm->base->flags;
+        t_itemflags &f = itm->origin->flags;
 
         return (f.unk1 || f.unk2 || f.unk3 || f.unk4 || /*f.unk5 ||*/
                 f.unk6 || f.unk7 ||
@@ -77,19 +76,18 @@ public:
     {
         std::vector<std::string> flags;
 
-        t_itemflags &f = itm->base->flags;
+        t_itemflags &f = itm->origin->flags;
 
-        if (itm->base->unk1.size() > 0)
-            c->con.print("      vec1: %p\n", itm->base->unk1[0]);
+        if (itm->origin->unk1.size() > 0)
+            c->con.print("      vec1: %p\n", itm->origin->unk1[0]);
 
-        std::vector<std::string> refs;
-        std::vector<int32_t>     values;
-        if (Items->unknownRefs(*itm, refs, values))
+        std::vector<std::pair<std::string, int32_t> > refs;
+        if (Items->unknownRefs(itm->origin, refs))
         {
             c->con.print("      refs: ");
             for (size_t i = 0; i < refs.size(); i++)
             {
-                c->con.print("%s: %d", refs[i].c_str(), values[i]);
+                c->con.print("%s: %d", refs[i].first.c_str(), refs[i].second);
                 if ( (i + 1) < refs.size() )
                     c->con.print(", ");
             }
@@ -133,11 +131,11 @@ public:
 
     virtual bool doPrint(DFHack::dfh_item *itm)
     {
-        return (itm->base->x == x && itm->base->y == y && itm->base->z == z
-                && itm->base->flags.on_ground
-                && !itm->base->flags.in_chest
-                && !itm->base->flags.in_inventory
-                && !itm->base->flags.in_building);
+        return (itm->origin->x == x && itm->origin->y == y && itm->origin->z == z
+                && itm->origin->flags.on_ground
+                && !itm->origin->flags.in_chest
+                && !itm->origin->flags.in_inventory
+                && !itm->origin->flags.in_building);
     }
 
 protected:
@@ -211,7 +209,7 @@ DFhackCExport command_result df_dumpitems (Core * c, vector <string> & parameter
     {
         DFHack::dfh_item itm;
         memset(&itm, 0, sizeof(DFHack::dfh_item));
-        Items->readItem(p_items[i],itm);
+        Items->copyItem(p_items[i],itm);
 
         if (!chooser->doPrint(&itm))
             continue;
@@ -219,28 +217,28 @@ DFhackCExport command_result df_dumpitems (Core * c, vector <string> & parameter
         // Print something useful, instead of (-30000,-30000,-30000), if
         // the item isn't on the ground.
         char location[80];
-        if (itm.base->flags.in_chest)
+        if (itm.origin->flags.in_chest)
             sprintf(location, "chest");
-        else if (itm.base->flags.in_inventory)
+        else if (itm.origin->flags.in_inventory)
             sprintf(location, "inventory");
-        else if (itm.base->flags.in_building)
+        else if (itm.origin->flags.in_building)
             sprintf(location, "building");
         else
-            sprintf(location, "%d,%d,%d", itm.base->x, itm.base->y,
-                    itm.base->z);
+            sprintf(location, "%d,%d,%d", itm.origin->x, itm.origin->y,
+                    itm.origin->z);
         std::string descr;
         string name1,name2,name0;
-        itm.base->getItemDescription(&name0, 0);
-        itm.base->getItemDescription(&name1, 1);
-        itm.base->getItemDescription(&name2, 2);
+        itm.origin->getItemDescription(&name0, 0);
+        itm.origin->getItemDescription(&name1, 1);
+        itm.origin->getItemDescription(&name2, 2);
         c->con.print(
             "%5d: addr:0x%08x %6d %08x (%s) vptr:0x%08x [%d]\n"
             "       %s\n"
             "       %s\n"
             "       %s\n",
-            i, itm.base, itm.base->id, itm.base->flags.whole,
+            i, itm.origin, itm.origin->id, itm.origin->flags.whole,
             location,
-            ((t_virtual *)itm.base)->vptr,
+            ((t_virtual *)itm.origin)->vptr,
             itm.wear_level,
             name0.c_str(),// stacked
             name1.c_str(),// singular

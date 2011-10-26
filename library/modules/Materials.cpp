@@ -362,35 +362,35 @@ std::string Materials::getDescription(const t_material & mat)
 {
     std::string out;
     int32_t typeC;
-    if ( (mat.subIndex<419) || (mat.subIndex>618) )
+    if ( (mat.material<419) || (mat.material>618) )
     {
-        if ( (mat.subIndex<19) || (mat.subIndex>218) )
+        if ( (mat.material<19) || (mat.material>218) )
         {
-            if (mat.subIndex)
-                if (mat.subIndex>0x292)
+            if (mat.material)
+                if (mat.material>0x292)
                     return "?";
                 else
                 {
-                    if (mat.subIndex>=this->other.size())
+                    if (mat.material>=this->other.size())
                     {
                         if (mat.itemType == 0) {
-                            if(mat.subIndex<0)
+                            if(mat.material<0)
                                 return "any inorganic";
                             else
-                                return this->inorganic[mat.subIndex].id;
+                                return this->inorganic[mat.material].id;
                         }
-                        if(mat.subIndex<0)
+                        if(mat.material<0)
                             return "any";
-                        if(mat.subIndex>=this->raceEx.size())
+                        if(mat.material>=this->raceEx.size())
                             return "stuff";
-                        return this->raceEx[mat.subIndex].id;
+                        return this->raceEx[mat.material].id;
                     }
                     else
                     {
                         if (mat.index==-1)
-                            return std::string(this->other[mat.subIndex].id);
+                            return std::string(this->other[mat.material].id);
                         else
-                            return std::string(this->other[mat.subIndex].id) + " derivate";
+                            return std::string(this->other[mat.material].id) + " derivate";
                     }
                 }
             else
@@ -405,7 +405,7 @@ std::string Materials::getDescription(const t_material & mat)
         {
             if (mat.index>=this->raceEx.size())
                 return "unknown race";
-            typeC = mat.subIndex;
+            typeC = mat.material;
             typeC -=19;
             if ((typeC<0) || (typeC>=this->raceEx[mat.index].extract.size()))
             {
@@ -425,24 +425,24 @@ std::string Materials::getDescription(const t_material & mat)
 // FIXME: this also contains potential errors when the indexes are -1 and compared to unsigned numbers!
 std::string Materials::getType(const t_material & mat)
 {
-    if((mat.subIndex<419) || (mat.subIndex>618))
+    if((mat.material<419) || (mat.material>618))
     {
-        if((mat.subIndex<19) || (mat.subIndex>218))
+        if((mat.material<19) || (mat.material>218))
         {
-            if(mat.subIndex)
+            if(mat.material)
             {
-                if(mat.subIndex>0x292)
+                if(mat.material>0x292)
                 {
                     return "unknown";
                 }
                 else
                 {
-                    if(mat.subIndex>=this->other.size())
+                    if(mat.material>=this->other.size())
                     {
-                        if(mat.subIndex<0)
+                        if(mat.material<0)
                             return "any";
 
-                        if(mat.subIndex>=this->raceEx.size())
+                        if(mat.material>=this->raceEx.size())
                             return "unknown";
 
                         return "racex";

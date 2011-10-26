@@ -8,6 +8,7 @@
 #include "dfhack/modules/Maps.h"
 #include "dfhack/modules/Items.h"
 #include <dfhack/modules/Gui.h>
+#include <llimits.h>
 
 using std::vector;
 using std::string;
@@ -130,11 +131,14 @@ DFhackCExport command_result mapitems (Core * c, vector <string> & parameters)
         df_block * b = m->getBlock(cx/16,cy/16,cz);
         if(b)
         {
-            c->con.print("Items in block:\n");
+            c->con.print("Item IDs present in block:\n");
             auto iter_b = b->items.begin();
             while (iter_b != b->items.end())
             {
-                c->con.print("%d\n",*iter_b);
+                df_item * itmz = it->findItemByID(*iter_b);
+                string s;
+                itmz->getItemDescription(&s);
+                c->con.print("%d = %s\n",*iter_b, s.c_str());
                 iter_b++;
             }
             c->con.print("Items under cursor:\n");
@@ -144,7 +148,9 @@ DFhackCExport command_result mapitems (Core * c, vector <string> & parameters)
                 df_item * itm = *iter_it;
                 if(itm->x == cx && itm->y == cy && itm->z == cz)
                 {
-                    c->con.print("%d\n",itm->id);
+                    string s;
+                    itm->getItemDescription(&s,0);
+                    c->con.print("%d = %s\n",itm->id, s.c_str());
                 }
                 iter_it ++;
             }

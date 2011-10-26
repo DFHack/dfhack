@@ -187,23 +187,29 @@ Items::~Items()
     delete d;
 }
 
-bool Items::readItem(df_item * itembase, DFHack::dfh_item &item)
+bool Items::copyItem(df_item * itembase, DFHack::dfh_item &item)
 {
     if(!itembase)
         return false;
     df_item * itreal = (df_item *) itembase;
-    item.base = itembase;
+    item.origin = itembase;
+    item.x = itreal->x;
+    item.y = itreal->y;
+    item.z = itreal->z;
+    item.id = itreal->id;
+    item.age = itreal->age;
+    item.flags = itreal->flags;
     item.matdesc.itemType = itreal->getType();
     item.matdesc.subType = itreal->getSubtype();
-    item.matdesc.index = itreal->getMaterial();
-    item.matdesc.subIndex = itreal->getSubMaterial();
+    item.matdesc.material = itreal->getMaterial();
+    item.matdesc.index = itreal->getMaterialIndex();
     item.wear_level = itreal->getWear();
     item.quality = itreal->getQuality();
     item.quantity = itreal->getStackSize();
     return true;
 }
 
-int32_t Items::getItemOwnerID(const DFHack::dfh_item &item)
+int32_t Items::getItemOwnerID(const DFHack::df_item * item)
 {
     std::vector<int32_t> vals;
     if (readItemRefs(item, d->isOwnerRefClass, vals))
@@ -212,7 +218,7 @@ int32_t Items::getItemOwnerID(const DFHack::dfh_item &item)
         return -1;
 }
 
-int32_t Items::getItemContainerID(const DFHack::dfh_item &item)
+int32_t Items::getItemContainerID(const DFHack::df_item * item)
 {
     std::vector<int32_t> vals;
     if (readItemRefs(item, d->isContainerRefClass, vals))
@@ -221,14 +227,14 @@ int32_t Items::getItemContainerID(const DFHack::dfh_item &item)
         return -1;
 }
 
-bool Items::getContainedItems(const DFHack::dfh_item &item, std::vector<int32_t> &items)
+bool Items::getContainedItems(const DFHack::df_item * item, std::vector<int32_t> &items)
 {
     return readItemRefs(item, d->isContainsRefClass, items);
 }
 
-bool Items::readItemRefs(const dfh_item &item, const ClassNameCheck &classname, std::vector<int32_t> &values)
+bool Items::readItemRefs(const df_item * item, const ClassNameCheck &classname, std::vector<int32_t> &values)
 {
-    std::vector <t_itemref *> &p_refs = item.base->itemrefs;
+    const std::vector <t_itemref *> &p_refs = item->itemrefs;
     values.clear();
 
     for (uint32_t i=0; i<p_refs.size(); i++)
@@ -240,13 +246,11 @@ bool Items::readItemRefs(const dfh_item &item, const ClassNameCheck &classname, 
     return !values.empty();
 }
 
-bool Items::unknownRefs(const dfh_item &item, std::vector<std::string>& names,
-                        std::vector<int32_t>& values)
+bool Items::unknownRefs(const df_item * item, std::vector<std::pair<std::string, int32_t> >& refs)
 {
-    names.clear();
-    values.clear();
+    refs.clear();
 
-    std::vector <t_itemref *> &p_refs = item.base->itemrefs;
+    const std::vector <t_itemref *> &p_refs = item->itemrefs;
 
     for (uint32_t i=0; i<p_refs.size(); i++)
     {
@@ -254,17 +258,16 @@ bool Items::unknownRefs(const dfh_item &item, std::vector<std::string>& names,
 
         if (d->knownItemRefTypes.find(name) == d->knownItemRefTypes.end())
         {
-            names.push_back(name);
-            values.push_back(p_refs[i]->value);
+            refs.push_back(pair<string, int32_t>(name, p_refs[i]->value));
         }
     }
 
-    return (names.size() > 0);
+    return (refs.size() > 0);
 }
 
-bool Items::removeItemOwner(dfh_item &item, Creatures *creatures)
+bool Items::removeItemOwner(df_item * item, Creatures *creatures)
 {
-    std::vector <t_itemref *> &p_refs = item.base->itemrefs;
+    std::vector <t_itemref *> &p_refs = item->itemrefs;
     for (uint32_t i=0; i<p_refs.size(); i++)
     {
         if (!d->isOwnerRefClass(d->owner, p_refs[i]->vptr))
@@ -273,30 +276,22 @@ bool Items::removeItemOwner(dfh_item &item, Creatures *creatures)
         int32_t & oid = p_refs[i]->value;
         int32_t ix = creatures->FindIndexById(oid);
 
-        if (ix < 0 || !creatures->RemoveOwnedItemByIdx(ix, item.base->id))
+        if (ix < 0 || !creatures->RemoveOwnedItemByIdx(ix, item->id))
         {
-            cerr << "RemoveOwnedItemIdx: CREATURE " << ix << " ID " << item.base->id << " FAILED!" << endl;
+            cerr << "RemoveOwnedItemIdx: CREATURE " << ix << " ID " << item->id << " FAILED!" << endl;
             return false;
         }
         p_refs.erase(p_refs.begin() + i--);
     }
 
-    item.base->flags.owned = 0;
+    item->flags.owned = 0;
 
     return true;
 }
 
-std::string Items::getItemClass(const dfh_item & item)
+std::string Items::getItemClass(const df_item * item)
 {
-    t_virtual * virt = (t_virtual *) item.base;
+    const t_virtual * virt = (t_virtual *) item;
     return virt->getClassName();
-    //return getItemClass(item.matdesc.itemType);
 }
-/*
-std::string Items::getItemDescription(const dfh_item & item, int type)
-{
-    std::string strzzz;
-    item.base->getItemDescription(&strzzz,type);
-//    delete ptrs;
-    return strzzz;
-}*/
+

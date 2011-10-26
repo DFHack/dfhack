@@ -111,16 +111,13 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
 
     for (std::size_t i=0; i < p_items.size(); i++)
     {
-        df_item * curItem = p_items[i];
-        DFHack::dfh_item itm;
-        Items->readItem(curItem, itm);
-
+        df_item * item = p_items[i];
         bool confiscate = false;
         bool dump = false;
 
-        if (!itm.base->flags.owned)
+        if (!item->flags.owned)
         {
-            int32_t owner = Items->getItemOwnerID(itm);
+            int32_t owner = Items->getItemOwnerID(item);
             if (owner >= 0)
             {
                 c->con.print("Fixing a misflagged item: ");
@@ -132,26 +129,26 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
             }
         }
 
-        std::string name = Items->getItemClass(itm);
+        std::string name = Items->getItemClass(item);
 
-        if (itm.base->flags.rotten)
+        if (item->flags.rotten)
         {
             c->con.print("Confiscating a rotten item: \t");
             confiscate = true;
         }
-        else if (itm.base->flags.on_ground &&
-                 (name == "food" || name == "meat" || name == "plant"))
+        // FIXME: this is wrong
+        else if (item->flags.on_ground && (name == "food" || name == "meat" || name == "plant"))
         {
             c->con.print("Confiscating a dropped foodstuff: \t");
             confiscate = true;
         }
-        else if (itm.wear_level >= wear_dump_level)
+        else if (item->getWear() >= wear_dump_level)
         {
             c->con.print("Confiscating and dumping a worn item: \t");
             confiscate = true;
             dump = true;
         }
-        else if (dump_scattered && itm.base->flags.on_ground)
+        else if (dump_scattered && item->flags.on_ground)
         {
             c->con.print("Confiscating and dumping litter: \t");
             confiscate = true;
@@ -166,15 +163,15 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
         if (confiscate)
         {
             std::string description;
-            itm.base->getItemDescription(&description, 0);
+            item->getItemDescription(&description, 0);
             c->con.print(
                 "0x%x %s (wear %d)",
-                itm.base,
+                item,
                 description.c_str(),
-                itm.wear_level
+                item->getWear()
             );
 
-            int32_t owner = Items->getItemOwnerID(itm);
+            int32_t owner = Items->getItemOwnerID(item);
             int32_t owner_index = Creatures->FindIndexById(owner);
             std::string info;
 
@@ -191,10 +188,10 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
 
             if (!dry_run)
             {
-                if (!Items->removeItemOwner(itm, Creatures))
+                if (!Items->removeItemOwner(item, Creatures))
                     c->con.print("(unsuccessfully) ");
                 if (dump)
-                    itm.base->flags.dump = 1;
+                    item->flags.dump = 1;
             }
             c->con.print("\n");
         }

@@ -403,15 +403,114 @@ struct t_improvement
 class DFHACK_EXPORT Items : public Module
 {
 public:
+    /**
+     * All the known item types as an enum
+     * From http://df.magmawiki.com/index.php/DF2010:Item_token
+     */
+    enum item_types
+    {
+        BAR,        ///< Bars, such as metal, fuel, or soap.
+        SMALLGEM,   ///< Cut gemstones usable in jeweler's workshop
+        BLOCKS,     ///< Blocks of any kind.
+        ROUGH,      ///< Rough gemstones.
+        BOULDER, ///< or IT_STONE - raw mined stone.
+        STONE = BOULDER,
+        WOOD,       ///< Wooden logs.
+        DOOR,       ///< Doors.
+        FLOODGATE,  ///< Floodgates.
+        BED,        ///< Beds.
+        CHAIR,      ///< Chairs and thrones.
+        CHAIN,      ///< Restraints.
+        FLASK,      ///< Flasks.
+        GOBLET,     ///< Goblets.
+        INSTRUMENT, ///< Musical instruments. Subtypes come from item_instrument.txt
+        TOY,        ///< Toys. Subtypes come from item_toy.txt
+        WINDOW,     ///< Glass windows.
+        CAGE,       ///< Cages.
+        BARREL,     ///< Barrels.
+        BUCKET,     ///< Buckets.
+        ANIMALTRAP, ///< Animal traps.
+        TABLE,      ///< Tables.
+        COFFIN,     ///< Coffins.
+        STATUE,     ///< Statues.
+        CORPSE,     ///< Corpses.
+        WEAPON,     ///< Weapons. Subtypes come from item_weapon.txt
+        ARMOR,      ///< Armor and clothing worn on the upper body. Subtypes come from item_armor.txt
+        SHOES,      ///< Armor and clothing worn on the feet. Subtypes come from item_shoes.txt
+        SHIELD,     ///< Shields and bucklers. Subtypes come from item_shield.txt
+        HELM,       ///< Armor and clothing worn on the head. Subtypes come from item_helm.txt
+        GLOVES,     ///< Armor and clothing worn on the hands. Subtypes come from item_gloves.txt
+        BOX,        ///< Chests (wood), coffers (stone), boxes (glass), and bags (cloth or leather).
+        BIN,        ///< Bins.
+        ARMORSTAND, ///< Armor stands.
+        WEAPONRACK, ///< Weapon racks.
+        CABINET,    ///< Cabinets.
+        FIGURINE,   ///< Figurines.
+        AMULET,     ///< Amulets.
+        SCEPTER,    ///< Scepters.
+        AMMO,       ///< Ammunition for hand-held weapons. Subtypes come from item_ammo.txt
+        CROWN,      ///< Crowns.
+        RING,       ///< Rings.
+        EARRING,    ///< Earrings.
+        BRACELET,   ///< Bracelets.
+        GEM,        ///< Large gems.
+        ANVIL,      ///< Anvils.
+        CORPSEPIECE,///< Body parts.
+        REMAINS,    ///< Dead vermin bodies.
+        MEAT,       ///< Butchered meat.
+        FISH,       ///< Prepared fish.
+        FISH_RAW,   ///< Unprepared fish.
+        VERMIN,     ///< Live vermin.
+        PET,        ///< Tame vermin.
+        SEEDS,      ///< Seeds from plants.
+        PLANT,      ///< Plants.
+        SKIN_TANNED,///< Tanned skins.
+        LEAVES,     ///< Leaves, usually from quarry bushes.
+        THREAD,     ///< Thread gathered from webs or made at the farmer's workshop.
+        CLOTH,      ///< Cloth made at the loom.
+        TOTEM,      ///< Skull totems.
+        PANTS,      ///< Armor and clothing worn on the legs. Subtypes come from item_pants.txt
+        BACKPACK,   ///< Backpacks.
+        QUIVER,     ///< Quivers.
+        CATAPULTPARTS, ///< Catapult parts.
+        BALLISTAPARTS, ///< Ballista parts.
+        SIEGEAMMO,  ///< Siege engine ammunition. Subtypes come from item_siegeammo.txt
+        BALLISTAARROWHEAD, ///< Ballista arrow heads.
+        TRAPPARTS,  ///< Mechanisms.
+        TRAPCOMP,   ///< Trap components. Subtypes come from item_trapcomp.txt
+        DRINK,      ///< Alcoholic drinks.
+        POWDER_MISC,///< Powders such as flour, gypsum plaster, dye, or sand.
+        CHEESE,     ///< Pieces of cheese.
+        FOOD,       ///< Prepared meals. Subtypes come from item_food.txt
+        LIQUID_MISC,///< Liquids such as water, lye, and extracts.
+        COIN,       ///< Coins.
+        GLOB,       ///< Fat, tallow, pastes/pressed objects, and small bits of molten rock/metal.
+        ROCK,       ///< Small rocks (usually sharpened and/or thrown in adventurer mode)
+        PIPE_SECTION, ///< Pipe sections.
+        HATCH_COVER, ///< Hatch covers.
+        GRATE,      ///< Grates.
+        QUERN,      ///< Querns.
+        MILLSTONE,  ///< Millstones.
+        SPLINT,     ///< Splints.
+        CRUTCH,     ///< Crutches.
+        TRACTION_BENCH, ///< Traction benches.
+        ORTHOPEDIC_CAST, ///< Casts.
+        TOOL,       ///< Tools. Subtypes come from item_tool.txt
+        SLAB,       ///< Slabs.
+        EGG,        ///< Eggs.
+    };
+
+public:
     Items();
     ~Items();
     bool Start();
     bool Finish();
-
+    /// Read the item vector from DF into a supplied vector
     bool readItemVector(std::vector<df_item *> &items);
+    /// Look for a particular item by ID
     df_item * findItemByID(int32_t id);
 
-    /// read an item, including the extra attributes
+    /// Make a partial copy of a DF item
     bool copyItem(df_item * source, dfh_item & target);
     /// write copied item back to its origin
     bool writeItem(const dfh_item & item);

@@ -136,11 +136,21 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
             c->con.print("Confiscating a rotten item: \t");
             confiscate = true;
         }
-        // FIXME: this is wrong
-        else if (item->flags.on_ground && (name == "food" || name == "meat" || name == "plant"))
+        else if (item->flags.on_ground)
         {
-            c->con.print("Confiscating a dropped foodstuff: \t");
-            confiscate = true;
+            int32_t type = item->getType();
+            if(type == Items::MEAT ||
+               type == Items::FISH ||
+               type == Items::VERMIN ||
+               type == Items::PET ||
+               type == Items::PLANT ||
+               type == Items::CHEESE ||
+               type == Items::FOOD
+            )
+            {
+                c->con.print("Confiscating a dropped foodstuff/pet vermin: \t");
+                confiscate = true;
+            }
         }
         else if (item->getWear() >= wear_dump_level)
         {

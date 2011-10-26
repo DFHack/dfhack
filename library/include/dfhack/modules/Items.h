@@ -362,7 +362,57 @@ public:
     //virtual std::string *getItemDescription ( std::string * str, int sizes = 0); // 0 = stacked, 1 = singular, 2 = plural
     virtual std::string *getItemDescription ( std::string * str, int sizes = 0); // 0 = stacked, 1 = singular, 2 = plural
     virtual void fn179(void);
-    // more follows for sure... bleh.
+    // 0x2D0
+    virtual void fn180(void);
+    virtual void fn181(void);
+    virtual void fn182(void);
+    virtual void fn183(void);
+    // 0x2E0
+    virtual void fn184(void);
+    virtual void fn185(void);
+    virtual void fn186(void);
+    virtual void fn187(void);
+    // 0x2F0
+    virtual void fn188(void);
+    virtual void fn189(void);
+    virtual void fn190(void);
+    virtual void fn191(void);
+    // 0x300
+    virtual void fn192(void);
+    virtual void fn193(void);
+    virtual void fn194(void);
+    virtual void fn195(void);
+    // 0x310
+    virtual void fn196(void);
+    virtual void fn197(void);
+    virtual void fn198(void);
+    virtual void fn199(void);
+    // 0x320
+    virtual void fn200(void);
+    virtual void fn201(void);
+    virtual void fn202(void);
+    virtual void fn203(void);
+    // 0x330
+    virtual void fn204(void);
+    virtual void fn205(void);
+    virtual void fn206(void);
+    virtual void fn207(void);
+    // 0x340
+    virtual void fn208(void);
+    virtual void fn209(void);
+    virtual void fn210(void);
+    virtual void fn211(void);
+    // 0x350
+    virtual void fn212(void);
+    virtual void fn213(void);
+    virtual void fn214(void);
+    virtual void fn215(void);
+    // 0x360
+    virtual void fn216(void);
+    virtual void fn217(void);
+
+    // and this should be all 218 of them
+    // fn numbers start with 0
 };
 
 /**

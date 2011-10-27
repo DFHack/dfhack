@@ -107,7 +107,12 @@ struct t_itemref : public t_virtual
 
 struct df_contaminant
 {
-    // fixme: figure it out
+    int16_t material;
+    int32_t mat_index;
+    int16_t mat_state; // FIXME: enum or document in text
+    int16_t temperature;
+    int16_t temperature_fraction; // maybe...
+    int32_t size; ///< 1-24=spatter, 25-49=smear, 50-* = coating
 };
 
 /**
@@ -146,6 +151,10 @@ public:
     int32_t mystery5;
     // 5C L, 64 W - pointer to vector of contaminants
     std::vector <df_contaminant *> * contaminants;
+    // 60 L, 6C W - temperature in Urists
+    int16_t temperature;
+    // 62 L, 6E W - temperature fraction (maybe, just a guess)
+    int16_t temperature_fraction;
 public:
     // 0x0
     virtual int32_t getType();

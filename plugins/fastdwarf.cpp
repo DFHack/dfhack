@@ -29,44 +29,43 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 static int enable_fastdwarf;
 
-// remove that if struct df_creature is updated
-#define job_counter unk_540
-
 DFhackCExport command_result plugin_onupdate ( Core * c )
 {
     if (!enable_fastdwarf)
         return CR_OK;
-
-    static vector <df_creature*> *v;
     df_creature *cre;
-
-    if (!v) {
-        OffsetGroup *ogc = c->vinfo->getGroup("Creatures");
-        v = (vector<df_creature*>*)ogc->getAddress("vector");
+    DFHack::Creatures * cr = c->getCreatures();
+    static vector <df_creature*> *v = cr->creatures;
+    uint32_t race = cr->GetDwarfRaceIndex();
+    uint32_t civ = cr->GetDwarfCivId();
+    if (!v)
+    {
+        c->con.printerr("Unable to locate creature vector. Fastdwarf cancelled.\n");
     }
 
-    //c->Suspend(); // will deadlock in onupdate
-    for (unsigned i=0 ; i<v->size() ; ++i) {
+    for (unsigned i=0 ; i<v->size() ; ++i)
+    {
         cre = v->at(i);
-        if (cre->race == 241 && cre->job_counter > 0)
+        if (cre->race == race && cre->civ == civ && cre->job_counter > 0)
             cre->job_counter = 0;
-	// could also patch the cre->current_job->counter
+        // could also patch the cre->current_job->counter
     }
-    //c->Resume();
-
     return CR_OK;
 }
 
 static command_result fastdwarf (Core * c, vector <string> & parameters)
 {
-    if (parameters.size() == 1 && (parameters[0] == "0" || parameters[0] == "1")) {
+    if (parameters.size() == 1 && (parameters[0] == "0" || parameters[0] == "1"))
+    {
         if (parameters[0] == "0")
             enable_fastdwarf = 0;
         else
             enable_fastdwarf = 1;
         c->con.print("fastdwarf %sactivated.\n", (enable_fastdwarf ? "" : "de"));
-    } else {
-        c->con.print("Activate fastdwarf with 'fastdwarf 1', deactivate with 'fastdwarf 0'.\nCurrent state: %d.\n", enable_fastdwarf);
+    }
+    else
+    {
+        c->con.print("Makes your minions move at ludicrous speeds.\nActivate with 'fastdwarf 1', deactivate with 'fastdwarf 0'.\nCurrent state: %d.\n", enable_fastdwarf);
     }
 
     return CR_OK;

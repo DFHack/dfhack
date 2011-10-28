@@ -616,7 +616,7 @@ namespace DFHack
         std::vector<uint32_t> appearance;        // 52c
         int16_t unk_53c;
         int16_t unk_53e;
-        int16_t unk_540;
+        int16_t job_counter; // tick until next job update?
         int16_t unk_542;
         int16_t unk_544;
         int16_t unk_546;

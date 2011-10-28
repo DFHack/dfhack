@@ -113,6 +113,8 @@ command_result cleanitems (Core * c)
             continue;
         if (itm->contaminants->size())
         {
+            for(int j = 0; j < itm->contaminants->size(); j++)
+                delete itm->contaminants->at(j);
             cleaned_items++;
             cleaned_total += itm->contaminants->size();
             itm->contaminants->clear();
@@ -141,6 +143,8 @@ command_result cleanunits (Core * c)
         int num = unit->contaminants.size();
         if (num)
         {
+            for(int j = 0; j < unit->contaminants.size(); j++)
+                delete unit->contaminants.at(j);
             cleaned_units++;
             cleaned_total += num;
             unit->contaminants.clear();

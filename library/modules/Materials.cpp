@@ -52,9 +52,6 @@ class Materials::Private
     public:
     Process * owner;
     OffsetGroup * OG_Materials;
-    uint32_t vector_organic_all;
-    uint32_t vector_organic_plants;
-    uint32_t vector_organic_trees;
     uint32_t vector_races;
     uint32_t vector_other;
 };
@@ -64,12 +61,16 @@ Materials::Materials()
     Core & c = Core::getInstance();
     d = new Private;
     d->owner = c.p;
+    df_organic = 0;
+    df_trees = 0;
+    df_plants = 0;
+    df_inorganic = 0;
     OffsetGroup *OG_Materials = d->OG_Materials = c.vinfo->getGroup("Materials");
     {
-        df_inorganic = (vector <df_inorganic_material *> *) OG_Materials->getAddress("inorganics");
-        d->vector_organic_all = OG_Materials->getAddress ("organics_all");
-        d->vector_organic_plants = OG_Materials->getAddress ("organics_plants");
-        d->vector_organic_trees = OG_Materials->getAddress ("organics_trees");
+        OG_Materials->getSafeAddress("inorganics",(uint32_t &)df_inorganic);
+        OG_Materials->getSafeAddress("organics_all",(uint32_t &)df_organic);
+        OG_Materials->getSafeAddress("organics_plants",(uint32_t &)df_plants);
+        OG_Materials->getSafeAddress("organics_trees",(uint32_t &)df_trees);
         d->vector_races = OG_Materials->getAddress("creature_type_vector");
     }
 }
@@ -128,6 +129,8 @@ inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & nam
 bool Materials::ReadInorganicMaterials (void)
 {
     Process * p = d->owner;
+    if(!df_inorganic)
+        return false;
     uint32_t size = df_inorganic->size();
     inorganic.clear();
     inorganic.reserve (size);
@@ -155,23 +158,28 @@ bool Materials::ReadInorganicMaterials (void)
 
 bool Materials::ReadOrganicMaterials (void)
 {
-    return ReadNamesOnly(d->owner, d->vector_organic_all, organic );
+    if(df_organic)
+        return ReadNamesOnly(d->owner, (uint32_t) df_organic, organic );
+    else return false;
 }
 
 bool Materials::ReadWoodMaterials (void)
 {
-    return ReadNamesOnly(d->owner, d->vector_organic_trees, tree );
+    if(df_trees)
+        return ReadNamesOnly(d->owner, (uint32_t) df_trees, tree );
+    else return false;
 }
 
 bool Materials::ReadPlantMaterials (void)
 {
-    return ReadNamesOnly(d->owner, d->vector_organic_plants, plant );
+    if(df_plants)
+        return ReadNamesOnly(d->owner, (uint32_t) df_plants, plant );
+    else return false;
 }
 
 bool Materials::ReadCreatureTypes (void)
 {
     return ReadNamesOnly(d->owner, d->vector_races, race );
-    return true;
 }
 
 bool Materials::ReadOthers(void)

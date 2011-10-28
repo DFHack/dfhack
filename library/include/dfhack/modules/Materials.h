@@ -366,7 +366,172 @@ namespace DFHack
         bool isOre();
         bool isGem();
     };
-
+    /**
+     * The plant flags
+     * \ingroup grp_materials
+     */
+    enum plant_flags
+    {
+        // byte 0
+        PLANT_SPRING,
+        PLANT_SUMMER,
+        PLANT_AUTUMN,
+        PLANT_WINTER,
+        PLANT_UNK1,
+        PLANT_SEED,
+        PLANT_LEAVES,
+        PLANT_DRINK,
+        // byte 1
+        PLANT_EXTRACT_BARREL,
+        PLANT_EXTRACT_VIAL,
+        PLANT_EXTRACT_STILL_VIAL,
+        PLANT_UNK2,
+        PLANT_THREAD,
+        PLANT_MILL,
+        PLANT_UNK3,
+        PLANT_UNK4,
+        // byte 2
+        PLANT_UNK5,
+        PLANT_UNK6,
+        PLANT_UNK7,
+        PLANT_UNK8,
+        PLANT_WET,
+        PLANT_DRY,
+        PLANT_BIOME_MOUNTAIN,
+        PLANT_BIOME_GLACIER,
+        // byte 3
+        PLANT_BIOME_TUNDRA,
+        PLANT_BIOME_SWAMP_TEMPERATE_FRESHWATER,
+        PLANT_BIOME_SWAMP_TEMPERATE_SALTWATER,
+        PLANT_BIOME_MARSH_TEMPERATE_FRESHWATER,
+        PLANT_BIOME_MARSH_TEMPERATE_SALTWATER,
+        PLANT_BIOME_SWAMP_TROPICAL_FRESHWATER,
+        PLANT_BIOME_SWAMP_TROPICAL_SALTWATER,
+        PLANT_BIOME_SWAMP_MANGROVE,
+        // byte 4
+        PLANT_BIOME_MARSH_TROPICAL_FRESHWATER,
+        PLANT_BIOME_MARSH_TROPICAL_SALTWATER,
+        PLANT_BIOME_FOREST_TAIGA,
+        PLANT_BIOME_FOREST_TEMPERATE_CONIFER,
+        PLANT_BIOME_FOREST_TEMPERATE_BROADLEAF,
+        PLANT_BIOME_FOREST_TROPICAL_CONIFER,
+        PLANT_BIOME_FOREST_TROPICAL_DRY_BROADLEAF,
+        PLANT_BIOME_FOREST_TROPICAL_MOIST_BROADLEAF,
+        // byte 5
+        PLANT_BIOME_GRASSLAND_TEMPERATE,
+        PLANT_BIOME_SAVANNA_TEMPERATE,
+        PLANT_BIOME_SHRUBLAND_TEMPERATE,
+        PLANT_BIOME_GRASSLAND_TROPICAL,
+        PLANT_BIOME_SAVANNA_TROPICAL,
+        PLANT_BIOME_SHRUBLAND_TROPICAL,
+        PLANT_BIOME_DESERT_BADLAND,
+        PLANT_BIOME_DESERT_ROCK,
+        // byte 6
+        PLANT_BIOME_DESERT_SAND,
+        PLANT_BIOME_OCEAN_TROPICAL,
+        PLANT_BIOME_OCEAN_TEMPERATE,
+        PLANT_BIOME_OCEAN_ARCTIC,
+        PLANT_BIOME_POOL_TEMPERATE_FRESHWATER,
+        PLANT_BIOME_SUBTERRANEAN_WATER,
+        PLANT_BIOME_SUBTERRANEAN_CHASM,
+        PLANT_BIOME_SUBTERRANEAN_LAVA,
+        // byte 7
+        PLANT_GOOD,
+        PLANT_EVIL,
+        PLANT_SAVAGE,
+        PLANT_BIOME_POOL_TEMPERATE_BRACKISHWATER,
+        PLANT_BIOME_POOL_TEMPERATE_SALTWATER,
+        PLANT_BIOME_POOL_TROPICAL_FRESHWATER,
+        PLANT_BIOME_POOL_TROPICAL_BRACKISHWATER,
+        PLANT_BIOME_POOL_TROPICAL_SALTWATER,
+        // byte 8
+        PLANT_BIOME_LAKE_TEMPERATE_FRESHWATER,
+        PLANT_BIOME_LAKE_TEMPERATE_BRACKISHWATER,
+        PLANT_BIOME_LAKE_TEMPERATE_SALTWATER,
+        PLANT_BIOME_LAKE_TROPICAL_FRESHWATER,
+        PLANT_BIOME_LAKE_TROPICAL_BRACKISHWATER,
+        PLANT_BIOME_LAKE_TROPICAL_SALTWATER,
+        PLANT_BIOME_RIVER_TEMPERATE_FRESHWATER,
+        PLANT_BIOME_RIVER_TEMPERATE_BRACKISHWATER,
+        // byte 9
+        PLANT_BIOME_RIVER_TEMPERATE_SALTWATER,
+        PLANT_BIOME_RIVER_TROPICAL_FRESHWATER,
+        PLANT_BIOME_RIVER_TROPICAL_BRACKISHWATER,
+        PLANT_BIOME_RIVER_TROPICAL_SALTWATER,
+        PLANT_AUTUMNCOLOR,
+        PLANT_SAPLING,
+        PLANT_TREE,
+        PLANT_GRASS,
+    };
+    /**
+     * The plant RAWs in memory
+     * \ingroup grp_materials
+     */
+    struct df_plant_type
+    {
+        std::string ID;
+        BitArray <plant_flags> flags;
+        std::string name, name_plural, adj;
+        std::string seed_singular, seed_plural;
+        std::string leaves_singular, leaves_plural;
+        uint8_t unk1;
+        uint8_t unk2;
+        char picked_tile, dead_picked_tile;
+        char shrub_tile, dead_shrub_tile;
+        char leaves_tile;
+        char tree_tile, dead_tree_tile;
+        char sapling_tile, dead_sapling_tile;
+        char grass_tiles[16];
+        char alt_grass_tiles[12];
+        int32_t growdur;
+        int32_t value;
+        int8_t picked_color[3], dead_picked_color[3];
+        int8_t shrub_color[3], dead_shrub_color[3];
+        int8_t seed_color[3];
+        int8_t leaves_color[3], dead_leaves_color[3];
+        int8_t tree_color[3], dead_tree_color[3];
+        int8_t sapling_color[3], dead_sapling_color[3];
+        int8_t grass_colors_0[20], grass_colors_1[20], grass_colors_2[20];
+        int32_t alt_period[2];
+        int8_t shrub_drown_level;
+        int8_t tree_drown_level;
+        int8_t sapling_drown_level;
+        int16_t frequency;
+        int16_t clustersize;
+        std::vector<std::string *> prefstring;
+        std::vector<df_material *> materials;
+        int16_t material_subid_basic_mat;
+        int16_t material_subid_tree;
+        int16_t material_subid_drink;
+        int16_t material_subid_seed;
+        int16_t material_subid_thread;
+        int16_t material_subid_mill;
+        int16_t material_subid_extract_vial;
+        int16_t material_subid_extract_barrel;
+        int16_t material_subid_extract_still_vial;
+        int16_t material_subid_leaves;
+        int32_t material_id_basic_mat;
+        int32_t material_id_tree;
+        int32_t material_id_drink;
+        int32_t material_id_seed;
+        int32_t material_id_thread;
+        int32_t material_id_mill;
+        int32_t material_id_extract_vial;
+        int32_t material_id_extract_barrel;
+        int32_t material_id_extract_still_vial;
+        int32_t material_id_leaves;
+        std::string material_str_basic_mat[3];
+        std::string material_str_tree[3];
+        std::string material_str_drink[3];
+        std::string material_str_seed[3];
+        std::string material_str_thread[3];
+        std::string material_str_mill[3];
+        std::string material_str_extract_vial[3];
+        std::string material_str_extract_barrel[3];
+        std::string material_str_extract_still_vial[3];
+        std::string material_str_leaves[3];
+        int32_t underground_depth[2];
+    };
     /**
      * \ingroup grp_materials
      */
@@ -501,9 +666,13 @@ namespace DFHack
 
         std::vector<df_inorganic_material*>* df_inorganic;
         std::vector<t_matglossInorganic> inorganic;
+        std::vector<df_plant_type*>* df_organic;
         std::vector<t_matgloss> organic;
+        std::vector<df_plant_type*>* df_trees;
         std::vector<t_matgloss> tree;
+        std::vector<df_plant_type*>* df_plants;
         std::vector<t_matgloss> plant;
+
         std::vector<t_matgloss> race;
         std::vector<t_creaturetype> raceEx;
         std::vector<t_descriptor_color> color;

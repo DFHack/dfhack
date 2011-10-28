@@ -71,12 +71,18 @@ void updateCountAndSubindices(DFHack::Core& core, std::map<t_materialIndex, unsi
 void printHelp(DFHack::Core& core) // prints help
 {
     core.con.print(
-        "\ne.g. #seedwatch MUSHROOM_HELMET_PLUMP 30\n"
-        "This is how to add an item to the watch list.\n"
-        "MUSHROOM_HELMET_PLUMP is the plant token for plump helmets (found in raws)\n"
-        "The number of available plump helmet seeds is counted each tick\n"
-        "If it falls below 30, plump helmets and plump helmet seeds will be excluded from cookery.\n"
-        "%i is the buffer, therefore if the number rises above 30 + %i, then cooking will be allowed.\n", buffer, buffer);
+        "Watches the numbers of plants and seeds available and enables/disables cooking automatically.\n"
+        "Each plant type can be assigned a limit. If their number falls below,\n"
+        "the plants and seeds of that type will be excluded from cookery.\n"
+        "If the number rises above the limit + %i, then cooking will be allowed.\n"
+        "Options:\n"
+        "seedwatch all   - Adds all plants from the abbreviation list to the watch list.\n"
+        "seedwatch start - Start watching.\n"
+        "seedwatch stop  - Stop watching.\n"
+        "seedwatch info  - Display whether seedwatch is watching, and the watch list.\n"
+        "seedwatch clear - Clears the watch list.\n\n"
+        , buffer
+    );
     if(!abbreviations.empty())
     {
         core.con.print("You can use these abbreviations for the plant tokens:\n");
@@ -86,14 +92,15 @@ void printHelp(DFHack::Core& core) // prints help
         }
     }
     core.con.print(
-        "e.g. #seedwatch ph 30\nis the same as #seedwatch MUSHROOM_HELMET_PLUMP 30\n\n"
-        "e.g. #seedwatch all 30\nAdds all which are in the abbreviation list to the watch list, the limit being 30.\n\n"
-        "e.g. #seedwatch MUSHROOM_HELMET_PLUMP\nRemoves MUSHROOM_HELMET_PLUMP from the watch list.\n\n"
-        "#seedwatch all\nClears the watch list.\n\n"
-        "#seedwatch start\nStart seedwatch watch.\n\n"
-        "#seedwatch stop\nStop seedwatch watch.\n\n"
-        "#seedwatch info\nDisplay whether seedwatch is watching, and the watch list.\n\n"
-        "#seedwatch clear\nClears the watch list.\n"
+        "Examples:\n"
+        "seedwatch MUSHROOM_HELMET_PLUMP 30\n"
+        "  add MUSHROOM_HELMET_PLUMP to the watch list, limit = 30\n"
+        "seedwatch MUSHROOM_HELMET_PLUMP\n"
+        "  removes MUSHROOM_HELMET_PLUMP from the watch list.\n"
+        "seedwatch ph 30\n"
+        "  is the same as 'seedwatch MUSHROOM_HELMET_PLUMP 30'\n"
+        "seedwatch all 30\n"
+        "  adds all plants from the abbreviation list to the watch list, the limit being 30.\n"
     );
 };
 

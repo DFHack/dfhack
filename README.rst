@@ -91,10 +91,26 @@ Options
 -------
 :destroy:            Destroy instead of dumping. Doesn't require a cursor.
 
-cleanmap
-========
-Cleans all the splatter that get scattered all over the map.
-By default, it leaves mud and snow alone.
+clean
+=====
+Cleans all the splatter that get scattered all over the map, items and creatures.
+In an old fortress, this can significantly reduce FPS lag. It can also spoil your
+!!FUN!!, so think before you use it.
+
+Options
+-------
+:map:          Clean the map tiles. By default, it leaves mud and snow alone.
+:units:        Clean the creatures. Will also clean hostiles.
+:items:        Clean all the items. Even a poisoned blade.
+
+Extra options for 'map'
+-----------------------
+:mud:          Remove mud in addition to the normal stuff.
+:snow:         Also remove snow coverings.
+
+spotclean
+=========
+Works like 'clean map snow mud', but only for the tile under the cursor. Ideal if you want to keep that bloody entrance 'clean map' would clean up.
 
 cleanowned
 ==========
@@ -131,7 +147,7 @@ See the bay12 thread for details: http://www.bay12forums.com/smf/index.php?topic
 
 Confirmed working DFusion plugins:
 ----------------------------------
-:simple_embark:allows changing the number of dwarves available on embark.
+:simple_embark:   allows changing the number of dwarves available on embark.
 
 .. note::
     
@@ -139,9 +155,65 @@ Confirmed working DFusion plugins:
     * This is currently working only on Windows.
     * The game will be suspended while you're using dfusion. Don't panic when it doen't respond.
 
+fastdwarf
+=========
+Makes your minions move at ludicrous speeds.
+
+ * Activate with 'fastdwarf 1'
+ * Deactivate with 'fastdwarf 0'
+
+filltraffic
+===========
+Set traffic designations using flood-fill starting at the cursor.
+
+Traffic Type Codes:
+-------------------
+:H:     High Traffic
+:N:     Normal Traffic
+:L:     Low Traffic
+:R:     Restricted Traffic
+
+Other Options:
+--------------
+:X: Fill accross z-levels.
+:B: Include buildings and stockpiles.
+:P: Include empty space.
+
+Example:
+--------
+'filltraffic H' - When used in a room with doors, it will set traffic to HIGH in just that room.
+
+tiletraffic
+===========
+Set traffic designations for every single tile of the map (useful for resetting traffic designations).
+
+Traffic Type Codes:
+-------------------
+:H:     High Traffic
+:N:     Normal Traffic
+:L:     Low Traffic
+:R:     Restricted Traffic
+
+Example:
+--------
+'filltraffic N' - Set traffic to 'normal' for all tiles.
+
 flows
 =====
 A tool for checking how many tiles contain flowing liquids. If you suspect that your magma sea leaks into HFS, you can use this tool to be sure without revealing the map.
+
+getplants
+=========
+This tool allows plant gathering and tree cutting by RAW ID. Specify the types of trees to cut down and/or shrubs to gather by their plant names, separated by spaces.
+
+Options
+-------
+:-t:        Select trees only (exclude shrubs)
+:-s:        Select shrubs only (exclude trees)
+:-c:        Clear designations instead of setting them
+:-x:        Apply selected action to all plants except those specified (invert selection)
+
+Specifying both -t and -s will have no effect. If no plant IDs are specified, all valid plant IDs will be listed.
 
 grow
 ====
@@ -174,7 +246,7 @@ For more information, refer to the command's internal help.
     temperatures (creating heat traps). You've been warned.
 
 mode
-======
+====
 This command lets you see and change the game mode directly. Not all combinations are good for every situation and most of them will produce undesirable results.
 There are a few good ones though.
 
@@ -200,7 +272,7 @@ Can be used to determine tile properties like temperature.
 
 prospector
 ============
-Lists all available minerals on the map and how much of them there is. By default, only processes the already discovered part of the map.
+Lists all available minerals on the map, how much of them there is and the z-levels where they can be found. By default, only processes the already discovered part of the map.
 
 Options
 -------
@@ -208,7 +280,7 @@ Options
 
 reveal
 ======
-This reveals the map. By default, HFS will remain hidden so that the demons don't spawn. You can use 'reveal hell' to reveal everything. With hell revealed, you won't be able to unpause until you hide the map again.
+This reveals the map. By default, HFS will remain hidden so that the demons don't spawn. You can use 'reveal hell' to reveal everything. With hell revealed, you won't be able to unpause until you hide the map again. If you really want to unpause with hell revealed, use 'reveal demons'.
 
 unreveal
 ========
@@ -222,11 +294,17 @@ revflood
 ========
 This command will hide the whole map and then reveal all the tiles that have a path to the in-game cursor.
 
+seedwatch
+=========
+Tool for turning cooking of seeds and plants on/off depending on how much you have of them.
+
+See 'seedwatch help' for detailed description.
+
 ssense / stonesense
 ===================
 An isometric visualizer that runs in a second window. This requires working graphics acceleration and at least a dual core CPU (otherwise it will slow down DF).
 
-Unfortunately currently fails to run on Windows XP and most Linux distributions.
+Compatible with Windows > XP SP3 and most modern Linux distributions.
 
 All the data resides in the 'stonesense' directory.
 

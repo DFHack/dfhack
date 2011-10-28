@@ -5,15 +5,18 @@
 #include <dfhack/modules/Maps.h>
 #include <dfhack/modules/Items.h>
 #include <dfhack/modules/Creatures.h>
+#include <dfhack/modules/Gui.h>
+
+using namespace DFHack;
+
 #include <vector>
 #include <string>
 #include <string.h>
-
 using std::vector;
 using std::string;
-using namespace DFHack;
 
 DFhackCExport command_result clean (Core * c, vector <string> & parameters);
+DFhackCExport command_result spotclean (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -24,6 +27,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.clear();
     commands.push_back(PluginCommand("clean","Removes contaminants from map tiles, items and creatures.",clean));
+    commands.push_back(PluginCommand("spotclean","Cleans map tile under cursor.",spotclean));
     return CR_OK;
 }
 
@@ -152,6 +156,40 @@ command_result cleanunits (Core * c)
     }
     if(cleaned_total)
         c->con.print("Removed %d contaminants from %d creatures.\n", cleaned_total, cleaned_units);
+    return CR_OK;
+}
+
+DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
+{
+    c->Suspend();
+    vector<DFHack::t_spattervein *> splatter;
+    DFHack::Maps *Mapz = c->getMaps();
+    DFHack::Gui *Gui = c->getGui();
+    // init the map
+    if(!Mapz->Start())
+    {
+        c->con.printerr("Can't init map.\n");
+        c->Resume();
+        return CR_FAILURE;
+    }
+    int32_t cursorX, cursorY, cursorZ;
+    Gui->getCursorCoords(cursorX,cursorY,cursorZ);
+    if(cursorX == -30000)
+    {
+        c->con.printerr("The cursor is not active.\n");
+        c->Resume();
+        return CR_FAILURE;
+    }
+    int32_t blockX = cursorX / 16, blockY = cursorY / 16;
+    int32_t tileX = cursorX % 16, tileY = cursorY % 16;
+    df_block *b = Mapz->getBlock(blockX,blockY,cursorZ);
+    vector <t_spattervein *> spatters;
+    Mapz->SortBlockEvents(blockX, blockY, cursorZ, 0,0, &spatters);
+    for(int i = 0; i < spatters.size(); i++)
+    {
+        spatters[i]->intensity[tileX][tileY] = 0;
+    }
+    c->Resume();
     return CR_OK;
 }
 

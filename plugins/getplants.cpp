@@ -80,20 +80,21 @@ DFhackCExport command_result df_getplants (Core * c, vector <string> & parameter
 	c->Suspend();
 
 	Materials *mats = c->getMaterials();
-	mats->ReadOrganicMaterials();
-	for (vector<t_matgloss>::const_iterator it = mats->organic.begin(); it != mats->organic.end(); it++)
+	for (vector<df_plant_type *>::const_iterator it = mats->df_organic->begin(); it != mats->df_organic->end(); it++)
 	{
-		if (plantNames.find((*it).id) != plantNames.end())
+		df_plant_type &plant = **it;
+		if (plantNames.find(plant.ID) != plantNames.end())
 		{
-			plantNames.erase((*it).id);
-			plantIDs.insert(it - mats->organic.begin());
+			plantNames.erase(plant.ID);
+			plantIDs.insert(it - mats->df_organic->begin());
 		}
 	}
 	if (plantNames.size() > 0)
 	{
 		c->con.printerr("Invalid plant ID(s):");
 		for (set<string>::const_iterator it = plantNames.begin(); it != plantNames.end(); it++)
-			c->con.printerr(" %s", (*it).c_str());
+			c->con.printerr(" %s", it->c_str());
+		c->con.printerr("\n");
 		c->Resume();
 		return CR_FAILURE;
 	}
@@ -101,8 +102,13 @@ DFhackCExport command_result df_getplants (Core * c, vector <string> & parameter
 	if (plantIDs.size() == 0)
 	{
 		c->con.print("Valid plant IDs:\n");
-		for (vector<t_matgloss>::const_iterator it = mats->organic.begin(); it != mats->organic.end(); it++)
-			c->con.print("* %s\n", (*it).id.c_str());
+		for (vector<df_plant_type *>::const_iterator it = mats->df_organic->begin(); it != mats->df_organic->end(); it++)
+		{
+			df_plant_type &plant = **it;
+			if (plant.flags.is_set(PLANT_GRASS))
+				continue;
+			c->con.print("* (%s) %s - %s\n", plant.flags.is_set(PLANT_TREE) ? "tree" : "shrub", plant.ID.c_str(), plant.name.c_str());
+		}
 		c->Resume();
 		return CR_OK;
 	}
@@ -137,7 +143,7 @@ DFhackCExport command_result df_getplants (Core * c, vector <string> & parameter
 					{
 						for (vector<df_plant *>::const_iterator it = plants->begin(); it != plants->end(); it++)
 						{
-							const df_plant &plant = *(*it);
+							const df_plant &plant = **it;
 							uint32_t tx = plant.x % 16;
 							uint32_t ty = plant.y % 16;
 							if (plantIDs.find(plant.material) != plantIDs.end())

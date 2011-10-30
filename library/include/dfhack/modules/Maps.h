@@ -36,6 +36,7 @@ distribution.
 #include <vector>
 #include "dfhack/Virtual.h"
 #include "dfhack/BitArray.h"
+#include "Materials.h"
 
 /**
  * \defgroup grp_maps Maps module and its types
@@ -219,11 +220,9 @@ namespace DFHack
     struct t_spattervein : public t_virtual
     {
         /// generic material.
-        uint16_t mat1;
-        /// possibly alignment artifact
-        uint16_t unk1;
+        t_materialType mat1;
         /// material vector index
-        uint32_t mat2;
+        t_materialIndex mat2;
         /**
          * matter state - liquid/solid/etc.
          * @ref e_matter_state
@@ -240,7 +239,7 @@ namespace DFHack
     struct t_grassvein : public t_virtual
     {
         /// material vector index
-        uint32_t material;
+        t_materialIndex material;
         /// 16x16 array of covering 'intensity'
         uint8_t intensity[16][16];
     };

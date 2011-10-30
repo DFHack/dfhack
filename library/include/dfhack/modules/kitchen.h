@@ -59,202 +59,37 @@ class Exclusions
 {
 public:
     /// ctor
-    Exclusions(DFHack::Core& core_)
-        : core(core_)
-        , itemTypes       (*((std::vector<t_itemType     >*)(addr(core_,0))))
-        , itemSubtypes    (*((std::vector<t_itemSubtype  >*)(addr(core_,1))))
-        , materialTypes   (*((std::vector<t_materialType >*)(addr(core_,2))))
-        , materialIndices (*((std::vector<t_materialIndex>*)(addr(core_,3))))
-        , exclusionTypes  (*((std::vector<t_exclusionType>*)(addr(core_,4))))
-    {
-    };
+    Exclusions(DFHack::Core& core_);
+    /// dtor
+    ~Exclusions();
 
     /// print the exclusion list, with the material index also translated into its token (for organics) - for debug really
-    void debug_print()
-    {
-        core.con.print("Kitchen Exclusions\n");
-        DFHack::Materials& materialsModule= *core.getMaterials();
-        for(std::size_t i = 0; i < size(); ++i)
-        {
-            core.con.print("%2u: IT:%2i IS:%i MT:%3i MI:%2i ET:%i %s\n",
-                           i,
-                           itemTypes[i],
-                           itemSubtypes[i],
-                           materialTypes[i],
-                           materialIndices[i],
-                           exclusionTypes[i],
-                           materialsModule.df_organic->at(materialIndices[i])->ID.c_str()
-                          );
-        }
-        core.con.print("\n");
-    };
+    void debug_print() const;
 
     /// remove this material from the exclusion list if it is in it
-    void allowPlantSeedCookery(t_materialIndex materialIndex)
-    {
-        bool match = false;
-        do
-        {
-            match = false;
-            std::size_t matchIndex = 0;
-            for(std::size_t i = 0; i < size(); ++i)
-            {
-                if(materialIndices[i] == materialIndex
-                   && (itemTypes[i] == DFHack::Items::SEEDS || itemTypes[i] == DFHack::Items::PLANT)
-                   && exclusionTypes[i] == cookingExclusion
-                )
-                {
-                    match = true;
-                    matchIndex = i;
-                }
-            }
-            if(match)
-            {
-                itemTypes.erase(itemTypes.begin() + matchIndex);
-                itemSubtypes.erase(itemSubtypes.begin() + matchIndex);
-                materialIndices.erase(materialIndices.begin() + matchIndex);
-                materialTypes.erase( materialTypes.begin() + matchIndex);
-                exclusionTypes.erase(exclusionTypes.begin() + matchIndex);
-            }
-        } while(match);
-    };
+    void allowPlantSeedCookery(t_materialIndex materialIndex);
 
     /// add this material to the exclusion list, if it is not already in it
-    void denyPlantSeedCookery(t_materialIndex materialIndex)
-    {
-        Materials *mats = core.getMaterials();
-        df_plant_type *type = mats->df_organic->at(materialIndex);
-        bool SeedAlreadyIn = false;
-        bool PlantAlreadyIn = false;
-        for(std::size_t i = 0; i < size(); ++i)
-        {
-            if(materialIndices[i] == materialIndex
-               && exclusionTypes[i] == cookingExclusion)
-            {
-                if(itemTypes[i] == DFHack::Items::SEEDS)
-                    SeedAlreadyIn = true;
-                else if (itemTypes[i] == DFHack::Items::PLANT)
-                    PlantAlreadyIn = true;
-            }
-        }
-        if(!SeedAlreadyIn)
-        {
-            itemTypes.push_back(DFHack::Items::SEEDS);
-            itemSubtypes.push_back(organicSubtype);
-            materialTypes.push_back(type->material_type_seed);
-            materialIndices.push_back(materialIndex);
-            exclusionTypes.push_back(cookingExclusion);
-        }
-        if(!PlantAlreadyIn)
-        {
-            itemTypes.push_back(DFHack::Items::PLANT);
-            itemSubtypes.push_back(organicSubtype);
-            materialTypes.push_back(type->material_type_basic_mat);
-            materialIndices.push_back(materialIndex);
-            exclusionTypes.push_back(cookingExclusion);
-        }
-    };
+    void denyPlantSeedCookery(t_materialIndex materialIndex);
 
     /// fills a map with info from the limit info storage entries in the exclusion list
-    void fillWatchMap(std::map<t_materialIndex, unsigned int>& watchMap)
-    {
-        watchMap.clear();
-        for(std::size_t i = 0; i < size(); ++i)
-        {
-            if(itemTypes[i] == limitType && itemSubtypes[i] == limitSubtype && exclusionTypes[i] == limitExclusion)
-            {
-                watchMap[materialIndices[i]] = (unsigned int) materialTypes[i];
-            }
-        }
-    };
+    void fillWatchMap(std::map<t_materialIndex, unsigned int>& watchMap) const;
 
     /// removes a limit info storage entry from the exclusion list if it's present
-    void removeLimit(t_materialIndex materialIndex)
-    {
-        bool match = false;
-        do
-        {
-            match = false;
-            std::size_t matchIndex = 0;
-            for(std::size_t i = 0; i < size(); ++i)
-            {
-                if(itemTypes[i] == limitType
-                   && itemSubtypes[i] == limitSubtype
-                   && materialIndices[i] == materialIndex
-                   && exclusionTypes[i] == limitExclusion)
-                {
-                    match = true;
-                    matchIndex = i;
-                }
-            }
-            if(match)
-            {
-                itemTypes.erase(itemTypes.begin() + matchIndex);
-                itemSubtypes.erase(itemSubtypes.begin() + matchIndex);
-                materialTypes.erase( materialTypes.begin() + matchIndex);
-                materialIndices.erase(materialIndices.begin() + matchIndex);
-                exclusionTypes.erase(exclusionTypes.begin() + matchIndex);
-            }
-        } while(match);
-    };
+    void removeLimit(t_materialIndex materialIndex);
 
     /// add a limit info storage item to the exclusion list, or alters an existing one
-    void setLimit(t_materialIndex materialIndex, unsigned int limit)
-    {
-        removeLimit(materialIndex);
-        if(limit > seedLimit) limit = seedLimit;
-
-        itemTypes.push_back(limitType);
-        itemSubtypes.push_back(limitSubtype);
-        materialIndices.push_back(materialIndex);
-        materialTypes.push_back((t_materialType) (limit < seedLimit) ? limit : seedLimit);
-        exclusionTypes.push_back(limitExclusion);
-    };
+    void setLimit(t_materialIndex materialIndex, unsigned int limit);
 
     /// clears all limit info storage items from the exclusion list
-    void clearLimits() 
-    {
-        bool match = false;
-        do
-        {
-            match = false;
-            std::size_t matchIndex;
-            for(std::size_t i = 0; i < size(); ++i)
-            {
-                if(itemTypes[i] == limitType
-                   && itemSubtypes[i] == limitSubtype
-                   && exclusionTypes[i] == limitExclusion)
-                {
-                    match = true;
-                    matchIndex = i;
-                }
-            }
-            if(match)
-            {
-                itemTypes.erase(itemTypes.begin() + matchIndex);
-                itemSubtypes.erase(itemSubtypes.begin() + matchIndex);
-                materialIndices.erase(materialIndices.begin() + matchIndex);
-                materialTypes.erase( materialTypes.begin() + matchIndex);
-                exclusionTypes.erase(exclusionTypes.begin() + matchIndex);
-            }
-        } while(match);
-    };
+    void clearLimits();
+
+    /// the size of the exclusions vectors (they are all the same size - if not, there is a problem!)
+    std::size_t size() const;
 private:
-    DFHack::Core& core;
-    std::vector<t_itemType>& itemTypes; // the item types vector of the kitchen exclusion list
-    std::vector<t_itemSubtype>& itemSubtypes; // the item subtype vector of the kitchen exclusion list
-    std::vector<t_materialType>& materialTypes; // the material subindex vector of the kitchen exclusion list
-    std::vector<t_materialIndex>& materialIndices; // the material index vector of the kitchen exclusion list
-    std::vector<t_exclusionType>& exclusionTypes; // the exclusion type vector of the kitchen excluions list
-    std::size_t size() // the size of the exclusions vectors (they are all the same size - if not, there is a problem!)
-    {
-        return itemTypes.size();
-    };
-    static uint32_t addr(const DFHack::Core& core, int index)
-    {
-        static uint32_t start = core.vinfo->getAddress("kitchen_limits");
-        return start + sizeof(std::vector<int>) * index;
-    };
+    class Private;
+    Private* d;
+
 };
 
 }

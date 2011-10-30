@@ -47,6 +47,7 @@ include/dfhack/modules/Creatures.h
 include/dfhack/modules/Engravings.h
 include/dfhack/modules/Gui.h
 include/dfhack/modules/Items.h
+include/dfhack/modules/kitchen.h
 include/dfhack/modules/Maps.h
 include/dfhack/modules/Materials.h
 include/dfhack/modules/Notes.h
@@ -80,6 +81,7 @@ modules/Creatures.cpp
 modules/Engravings.cpp
 modules/Gui.cpp
 modules/Items.cpp
+modules/kitchen.cpp
 modules/Maps.cpp
 modules/Materials.cpp
 modules/Notes.cpp

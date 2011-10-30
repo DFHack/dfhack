@@ -155,6 +155,10 @@ Confirmed working DFusion plugins:
     * This is currently working only on Windows.
     * The game will be suspended while you're using dfusion. Don't panic when it doen't respond.
 
+drybuckets
+==========
+This utility removes all objects of type LIQUID_MISC:NONE and material WATER:NONE - that is, water stored in buckets.
+
 fastdwarf
 =========
 Makes your minions move at ludicrous speeds.

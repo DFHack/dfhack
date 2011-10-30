@@ -758,8 +758,8 @@
             <class name="building_hivest" />
         </VTable>
         <Offsets>
-            <Address name="WORLD" description="A huge object that many things in DF are part of. Contains the whole game and can be used as a base
-            for many of the addresses." />
+            <Address name="WORLD" description="A huge object that many things in DF are part of. Contains the whole game and can be used as a base for many of the addresses." />
+            <Address name="kitchen_limits" description="five vectors describing plants/items that can't be cooked/brewed" />
             <Group name="vector" description="An STL vector.">
                 <HexValue name="sizeof" description="The total size in bytes." />
                 <Offset name="start" description="The offset where the actual start/end/alloc_end triplet is." />
@@ -2258,6 +2258,7 @@
         <PETimeStamp value="0x4D90764F" />
         <MD5 value="6ada05fc94785b53efe6aa5728b3756b" />
         <Offsets>
+            <Address name="kitchen_limits" value="0x014F0BB4"/>
             <Group name="GUI">
                 <Address name="hotkeys" value="0x14f5cc8" />
                 <Address name="interface" value="0x14f6070" />
@@ -3071,7 +3072,7 @@
         <MD5 value="fc15065c4d1977ca019c6dad220413d1" />
         <Offsets>
             WORLD: 0x93f77a0
-
+            <Address name="kitchen_limits" value="0x93f2b00"/>
             <Group name="GUI">
                 <Address name="hotkeys" value="0x93f740c" />
                 <Address name="interface" value="0x8C3E900" />

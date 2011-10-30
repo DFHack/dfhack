@@ -157,10 +157,10 @@ public:
     int16_t temperature_fraction;
 public:
     // 0x0
-    virtual int32_t getType();
-    virtual int16_t getSubtype();
-    virtual int16_t getMaterial();
-    virtual int32_t getMaterialIndex();
+    virtual t_itemType getType();
+    virtual t_itemSubtype getSubtype();
+    virtual t_materialType getMaterial();
+    virtual t_materialIndex getMaterialIndex();
     // 0x10
     /*
      hm, [4] looks complicated                    *
@@ -170,13 +170,13 @@ public:
      (0.31.25 Windows SDL)
      */
     virtual void fn4(void);
-    virtual void setMaterial(int16_t mat);
-    virtual void setMaterialIndex (int32_t submat);
+    virtual void setMaterial(t_materialType mat);
+    virtual void setMaterialIndex (t_materialIndex submat);
     // another one? really? 
-    virtual int16_t getMaterial2();
+    virtual t_materialType getMaterial2();
     // 0x20
     // more of the same?
-    virtual int32_t getMaterialIndex2();
+    virtual t_materialIndex getMaterialIndex2();
     virtual void fn9(void);
     virtual void fn10(void);
     virtual void fn11(void);

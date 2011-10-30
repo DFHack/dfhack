@@ -501,16 +501,16 @@ namespace DFHack
         std::vector<std::string *> prefstring;
         std::vector<df_material *> materials;
         // materials and material indexes - only valid when appropriate flags in the BitArray are set
-        int16_t material_basic_mat;
-        int16_t material_tree;
-        int16_t material_drink;
-        int16_t material_seed;
-        int16_t material_thread;
-        int16_t material_mill;
-        int16_t material_extract_vial;
-        int16_t material_extract_barrel;
-        int16_t material_extract_still_vial;
-        int16_t material_leaves;
+        int16_t material_type_basic_mat;
+        int16_t material_type_tree;
+        int16_t material_type_drink;
+        int16_t material_type_seed;
+        int16_t material_type_thread;
+        int16_t material_type_mill;
+        int16_t material_type_extract_vial;
+        int16_t material_type_extract_barrel;
+        int16_t material_type_extract_still_vial;
+        int16_t material_type_leaves;
         int32_t material_idx_basic_mat;
         int32_t material_idx_tree;
         int32_t material_idx_drink;
@@ -641,16 +641,19 @@ namespace DFHack
         } tilecolor;
     };
 
+    typedef int32_t t_materialIndex;
+    typedef int16_t t_materialType, t_itemType, t_itemSubtype;
+
     /**
      * this structure describes what are things made of in the DF world
      * \ingroup grp_materials
      */
     struct t_material
     {
-        int16_t itemType;
-        int16_t subType;
-        int16_t material;
-        int32_t index;
+        t_itemType itemType;
+        t_itemSubtype subType;
+        t_materialType material;
+        t_materialIndex index;
         uint32_t flags;
     };
     /**

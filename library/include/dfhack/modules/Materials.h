@@ -668,6 +668,29 @@ namespace DFHack
         ~Materials();
         bool Finish();
 
+        enum base_material
+        {
+            INORGANIC,
+            AMBER,
+            CORAL,
+            GLASS_GREEN,
+            GLASS_CLEAR,
+            GLASS_CRYSTAL,
+            WATER,
+            COAL,
+            POTASH,
+            ASH,
+            PEARLASH,
+            LYE,
+            MUD,
+            VOMIT,
+            SALT,
+            FILTH_B,
+            FILTH_Y,
+            UNKNOWN_SUBSTANCE,
+            GRIME
+        };
+
         std::vector<df_inorganic_material*>* df_inorganic;
         std::vector<t_matglossInorganic> inorganic;
         std::vector<df_plant_type*>* df_organic;

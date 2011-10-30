@@ -64,7 +64,7 @@ DFhackCExport command_result df_drybuckets (Core * c, vector <string> & paramete
 	for (std::size_t i = 0; i < numItems; i++)
 	{
 		df_item *item = p_items[i];
-		if ((item->getType() == 72) && (item->getMaterial() == 6))
+		if ((item->getType() == Items::LIQUID_MISC) && (item->getMaterial() == Materials::WATER))
 		{
 			item->flags.garbage_colect = 1;
 			dried_total++;

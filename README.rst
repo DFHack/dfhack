@@ -308,9 +308,9 @@ ssense / stonesense
 ===================
 An isometric visualizer that runs in a second window. This requires working graphics acceleration and at least a dual core CPU (otherwise it will slow down DF).
 
-Compatible with Windows > XP SP3 and most modern Linux distributions.
+All the data resides in the 'stonesense' directory. For detailed instructions, see stonesense/README.txt
 
-All the data resides in the 'stonesense' directory.
+Compatible with Windows > XP SP3 and most modern Linux distributions.
 
 Older versions, support and extra graphics can be found in the bay12 forum thread:
 http://www.bay12forums.com/smf/index.php?topic=43260.0

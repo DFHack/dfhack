@@ -1,6 +1,6 @@
 [submodule "plugins/stonesense"]
 	path = plugins/stonesense
 	url = git://github.com/peterix/stonesense.git
-[submodule "plugins/df2mc"]
-	path = plugins/df2mc
+[submodule "plugins/devel/df2mc"]
+	path = plugins/devel/df2mc
 	url = git://github.com/peterix/DF2MC.git

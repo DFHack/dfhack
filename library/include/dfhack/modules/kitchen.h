@@ -55,7 +55,7 @@ const t_exclusionType limitExclusion = 4; // used to store limit as an entry in 
  * Kitchen exclusions manipulator class. Currently geared towards plants and seeds.
  * @ingroup grp_kitchen
  */
-class Exclusions
+class DFHACK_EXPORT Exclusions
 {
 public:
     /// ctor

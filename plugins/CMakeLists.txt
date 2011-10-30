@@ -20,6 +20,12 @@ if(BUILD_STONESENSE)
     add_subdirectory (stonesense)
 endif()
 
+OPTION(BUILD_DF2MC "Build DF2MC (needs a checkout first)." ON)
+if(BUILD_DF2MC)
+    add_subdirectory (df2mc)
+endif()
+
+
 OPTION(BUILD_DEV_PLUGINS "Build developer plugins." OFF)
 if(BUILD_DEV_PLUGINS)
     add_subdirectory (devel)
@@ -28,6 +34,7 @@ endif()
 
 DFHACK_PLUGIN(reveal reveal.cpp)
 DFHACK_PLUGIN(probe probe.cpp)
+DFHACK_PLUGIN(drybuckets drybuckets.cpp)
 DFHACK_PLUGIN(getplants getplants.cpp)
 DFHACK_PLUGIN(plants plants.cpp)
 DFHACK_PLUGIN(fastdwarf fastdwarf.cpp)

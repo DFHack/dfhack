@@ -25,7 +25,7 @@ set(DF_VERSION_MINOR "31")
 set(DF_VERSION_PATCH "25")
 set(DF_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}")
 
-set(DFHACK_RELEASE "6")
+set(DFHACK_RELEASE "7")
 
 ## where to install things (after the build is done, classic 'make install' or package structure)
 # the dfhack libraries will be installed here:
@@ -55,6 +55,9 @@ SET(DFHACK_DEVDOC_DESTINATION hack)
 ## some options for the user/developer to play with
 OPTION(BUILD_LIBRARY "Build the library that goes into DF." ON)
 OPTION(BUILD_PLUGINS "Build the plugins." ON)
+
+#add depends to include path
+INCLUDE_DIRECTORIES ( library/depends )
 
 # build the static lua for dfusion
 INCLUDE_DIRECTORIES ( lua/include )

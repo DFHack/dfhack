@@ -143,22 +143,25 @@ namespace DFHack
     private:
         bool read_char(unsigned char & out)
         {
-            while(1)
+            FD_ZERO(&descriptor_set);
+            FD_SET(STDIN_FILENO, &descriptor_set);
+            FD_SET(exit_pipe[0], &descriptor_set);
+            int ret = TEMP_FAILURE_RETRY(
+                select (FD_SETSIZE,&descriptor_set, NULL, NULL, NULL)
+            );
+            if(ret == -1)
+                return false;
+            if (FD_ISSET(exit_pipe[0], &descriptor_set))
+                return false;
+            if (FD_ISSET(STDIN_FILENO, &descriptor_set))
             {
-                while (select(FD_SETSIZE, &descriptor_set, NULL, NULL, NULL) < 0)
-                {
-                    if(errno == EINTR)
-                        continue;
+                // read byte from stdin
+                ret = TEMP_FAILURE_RETRY(
+                    read(STDIN_FILENO, &out, 1)
+                );
+                if(ret == -1)
                     return false;
-                }
-                if (FD_ISSET(STDIN_FILENO, &descriptor_set))
-                {
-                    // read byte from stdin
-                    read(STDIN_FILENO, &out, 1);
-                    return true;
-                }
-                if (FD_ISSET(exit_pipe[0], &descriptor_set))
-                    return false;
+                return true;
             }
         }
     protected:

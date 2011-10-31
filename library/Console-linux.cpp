@@ -145,8 +145,12 @@ namespace DFHack
         {
             while(1)
             {
-                if (select(FD_SETSIZE, &descriptor_set, NULL, NULL, NULL) < 0)
+                while (select(FD_SETSIZE, &descriptor_set, NULL, NULL, NULL) < 0)
+                {
+                    if(errno == EINTR)
+                        continue;
                     return false;
+                }
                 if (FD_ISSET(STDIN_FILENO, &descriptor_set))
                 {
                     // read byte from stdin

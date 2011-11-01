@@ -15,6 +15,7 @@ using namespace std;
 #include <dfhack/PluginManager.h>
 #include <vector>
 #include <string>
+#include <dfhack/modules/Creatures.h>
 #include <dfhack/modules/Maps.h>
 #include <dfhack/modules/Gui.h>
 #include <dfhack/modules/Materials.h>
@@ -27,6 +28,7 @@ using std::string;
 using namespace DFHack;
 
 DFhackCExport command_result df_probe (Core * c, vector <string> & parameters);
+DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -39,11 +41,45 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.push_back(PluginCommand("probe",
                                      "A tile probe",
                                      df_probe));
+    commands.push_back(PluginCommand("cprobe",
+                                     "A creature probe",
+                                     df_cprobe));
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
+    return CR_OK;
+}
+
+DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters)
+{
+    Console & con = c->con;
+    BEGIN_PROBE:
+    c->Suspend();
+    DFHack::Gui *Gui = c->getGui();
+    DFHack::Creatures * cr = c->getCreatures();
+    int32_t cursorX, cursorY, cursorZ;
+    Gui->getCursorCoords(cursorX,cursorY,cursorZ);
+    if(cursorX == -30000)
+    {
+        con.printerr("No cursor; place cursor over creature to probe.\n");
+    }
+    else
+    {
+        uint32_t ncr;
+        cr->Start(ncr);
+        for(auto i = 0; i < ncr; i++)
+        {
+            df_creature * unit = cr->GetCreature( i );
+            if(unit->x == cursorX && unit->y == cursorY && unit->z == cursorZ)
+            {
+                con.print("Creature %d, race %d (%x), civ %d (%x)\n", unit->id, unit->race, unit->race, unit->civ, unit->civ);
+                break;
+            }
+        }
+    }
+    c->Resume();
     return CR_OK;
 }
 

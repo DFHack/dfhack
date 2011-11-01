@@ -24,7 +24,8 @@
 //basic includes
 #include <fstream>
 #include <iostream>
-
+#include <errno.h>
+#include <string.h>
 //my includes
 #include "md5wrapper.h"
 #include "md5.h"
@@ -118,15 +119,32 @@ std::string md5wrapper::getHashFromFile(std::string filename)
     //open file
     if ((file = fopen (filename.c_str(), "rb")) == NULL)
     {
-        return "-1";
+        return "file unreadable.";
     }
 
     //init md5
     md5->MD5Init (&context);
 
     //read the filecontent
-    while ( (len = fread (buffer, 1, 1024, file)) )
+    while (1)
     {
+        errno = 0;
+        len = fread (buffer, 1, 1024, file);
+        if(len != 1024)
+        {
+            int err = ferror(file);
+            //FIXME: check errno here.
+            if(err)
+            {
+                fclose(file);
+                return strerror(err);
+            }
+            if(feof(file))
+            {
+                md5->MD5Update (&context, buffer, len);
+                break;
+            }
+        }
         md5->MD5Update (&context, buffer, len);
     }
 

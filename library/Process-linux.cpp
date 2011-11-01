@@ -48,45 +48,37 @@ Process::Process(VersionInfoFactory * known_versions)
     const char * exe_link_name = "/proc/self/exe";
     const char * cwd_name = "/proc/self/cwd";
     const char * cmdline_name = "/proc/self/cmdline";
-    char target_name[1024];
     int target_result;
 
     identified = false;
     my_descriptor = 0;
 
-    // resolve /proc/self/exe link
-    target_result = readlink(exe_link_name, target_name, sizeof(target_name)-1);
-    if (target_result == -1)
+    md5wrapper md5;
+    // get hash of the running DF process
+    string hash = md5.getHashFromFile(exe_link_name);
+    // create linux process, add it to the vector
+    VersionInfo * vinfo = known_versions->getVersionInfoByMD5(hash);
+    if(vinfo)
     {
-        cerr << "Failed to readlink(/proc/self/exe)\n";
-        return;
-    }
-    // make sure we have a null terminated string...
-    target_name[target_result] = 0;
-
-    // is this the regular linux DF?
-    if (strstr(target_name, "dwarfort.exe") != 0 || strstr(target_name,"Dwarf_Fortress") != 0)
-    {
-        md5wrapper md5;
-        // get hash of the running DF process
-        string hash = md5.getHashFromFile(target_name);
-        // create linux process, add it to the vector
-        VersionInfo * vinfo = known_versions->getVersionInfoByMD5(hash);
-        if(vinfo)
-        {
-            my_descriptor = new VersionInfo(*vinfo);
-            my_descriptor->setParentProcess(this);
-            identified = true;
-        }
-        else
-        {
-            cerr << "Unable to retrieve version information.\n";
-        }
+        my_descriptor = new VersionInfo(*vinfo);
+        my_descriptor->setParentProcess(this);
+        identified = true;
     }
     else
     {
-        cerr << "This isn't DF.\n";
+        char * wd = getcwd(NULL, 0);
+        cerr << "Unable to retrieve version information.\n";
+        cerr << "File: " << exe_link_name << endl;
+        cerr << "MD5: " << hash << endl;
+        cerr << "working dir: " << wd << endl;
+        free(wd);
     }
+}
+
+Process::~Process()
+{
+    // destroy our copy of the memory descriptor
+    delete my_descriptor;
 }
 
 string Process::doReadClassName (void * vptr)

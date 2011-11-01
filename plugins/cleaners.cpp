@@ -78,10 +78,14 @@ command_result cleanmap (Core * c, bool snow, bool mud)
                     {
                         DFHack::t_spattervein * vein = splatter[i];
                         // filter snow
-                        if(!snow && vein->mat1 == water_idx && vein->matter_state == DFHack::state_powder)
+                        if(!snow
+                            && vein->mat1 == DFHack::Materials::WATER
+                            && vein->matter_state == DFHack::state_powder)
                             continue;
                         // filter mud
-                        if(!mud && vein->mat1 == mud_idx && vein->matter_state == DFHack::state_solid)
+                        if(!mud
+                            && vein->mat1 == DFHack::Materials::MUD
+                            && vein->matter_state == DFHack::state_solid)
                             continue;
                         Mapz->RemoveBlockEvent(x,y,z,(t_virtual *) vein);
                         cleaned = true;

@@ -410,18 +410,9 @@ bool Core::Init()
     p = new DFHack::Process(vif);
     vinfo = p->getDescriptor();
 
-    if(!vinfo)
+    if(!vinfo || !p->isIdentified())
     {
-        cerr << "Couldn't retrieve version information.\n";
-        errorstate = true;
-        delete p;
-        p = NULL;
-        return false;
-    }
-
-    if (!p->isIdentified())
-    {
-        cerr << "Couldn't identify this version of DF.\n";
+        cerr << "Not a known DF version. DFHack will now deactivate.\n";
         errorstate = true;
         delete p;
         p = NULL;

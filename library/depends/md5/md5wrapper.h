@@ -61,7 +61,7 @@ class md5wrapper
 		 * a file specified in "filename" and
 		 * returns it as string
 		 */
-		std::string getHashFromFile(std::string filename);
+		std::string getHashFromFile(const std::string filename, uint32_t & length, char * first_kb = NULL);
 };
 
 

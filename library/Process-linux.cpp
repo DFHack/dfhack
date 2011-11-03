@@ -40,6 +40,7 @@ using namespace std;
 #include "dfhack/VersionInfoFactory.h"
 #include "dfhack/VersionInfo.h"
 #include "dfhack/Error.h"
+#include <string.h>
 using namespace DFHack;
 
 Process::Process(VersionInfoFactory * known_versions)
@@ -54,8 +55,11 @@ Process::Process(VersionInfoFactory * known_versions)
     my_descriptor = 0;
 
     md5wrapper md5;
+    uint32_t length;
+    uint8_t first_kb [1024];
+    memset(first_kb, 0, sizeof(first_kb));
     // get hash of the running DF process
-    string hash = md5.getHashFromFile(exe_link_name);
+    string hash = md5.getHashFromFile(exe_link_name, length, (char *) first_kb);
     // create linux process, add it to the vector
     VersionInfo * vinfo = known_versions->getVersionInfoByMD5(hash);
     if(vinfo)
@@ -71,6 +75,29 @@ Process::Process(VersionInfoFactory * known_versions)
         cerr << "File: " << exe_link_name << endl;
         cerr << "MD5: " << hash << endl;
         cerr << "working dir: " << wd << endl;
+        cerr << "length:" << length << endl;
+        cerr << "1KB hexdump follows:" << endl;
+        for(int i = 0; i < 64; i++)
+        {
+            fprintf(stderr, "%02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x\n",
+                    first_kb[i*16],
+                    first_kb[i*16+1],
+                    first_kb[i*16+2],
+                    first_kb[i*16+3],
+                    first_kb[i*16+4],
+                    first_kb[i*16+5],
+                    first_kb[i*16+6],
+                    first_kb[i*16+7],
+                    first_kb[i*16+8],
+                    first_kb[i*16+9],
+                    first_kb[i*16+10],
+                    first_kb[i*16+11],
+                    first_kb[i*16+12],
+                    first_kb[i*16+13],
+                    first_kb[i*16+14],
+                    first_kb[i*16+15]
+                   );
+        }
         free(wd);
     }
 }

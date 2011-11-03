@@ -126,7 +126,7 @@ inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & nam
     return true;
 }
 
-bool Materials::ReadInorganicMaterials (void)
+bool Materials::CopyInorganicMaterials (std::vector<t_matglossInorganic> & inorganic)
 {
     Process * p = d->owner;
     if(!df_inorganic)
@@ -136,41 +136,41 @@ bool Materials::ReadInorganicMaterials (void)
     inorganic.reserve (size);
     for (uint32_t i = 0; i < size;i++)
     {
-        df_inorganic_material * orig = df_inorganic->at(i);
+        df_inorganic_type * orig = df_inorganic->at(i);
         t_matglossInorganic mat;
-        mat.id = orig->Inorganic_ID;
-        mat.name = orig->STONE_NAME;
+        mat.id = orig->ID;
+        mat.name = orig->mat.STONE_NAME;
 
         mat.ore_types = orig->METAL_ORE_matID;
         mat.ore_chances = orig->METAL_ORE_prob;
         mat.strand_types = orig->THREAD_METAL_matID;
         mat.strand_chances = orig->THREAD_METAL_prob;
-        mat.value = orig->MATERIAL_VALUE;
-        mat.wall_tile = orig->TILE;
-        mat.boulder_tile = orig->ITEM_SYMBOL;
-        mat.bright = orig->BASIC_COLOR_bright;
-        mat.fore = orig->BASIC_COLOR_foreground;
-        mat.is_gem = orig->mat_flags.is_set(MATERIAL_IS_GEM);
+        mat.value = orig->mat.MATERIAL_VALUE;
+        mat.wall_tile = orig->mat.TILE;
+        mat.boulder_tile = orig->mat.ITEM_SYMBOL;
+        mat.bright = orig->mat.BASIC_COLOR_bright;
+        mat.fore = orig->mat.BASIC_COLOR_foreground;
+        mat.is_gem = orig->mat.mat_flags.is_set(MATERIAL_IS_GEM);
         inorganic.push_back(mat);
     }
     return true;
 }
 
-bool Materials::ReadOrganicMaterials (void)
+bool Materials::CopyOrganicMaterials (std::vector<t_matgloss> & organic)
 {
     if(df_organic)
         return ReadNamesOnly(d->owner, (uint32_t) df_organic, organic );
     else return false;
 }
 
-bool Materials::ReadWoodMaterials (void)
+bool Materials::CopyWoodMaterials (std::vector<t_matgloss> & tree)
 {
     if(df_trees)
         return ReadNamesOnly(d->owner, (uint32_t) df_trees, tree );
     else return false;
 }
 
-bool Materials::ReadPlantMaterials (void)
+bool Materials::CopyPlantMaterials (std::vector<t_matgloss> & plant)
 {
     if(df_plants)
         return ReadNamesOnly(d->owner, (uint32_t) df_plants, plant );
@@ -353,10 +353,6 @@ bool Materials::ReadCreatureTypesEx (void)
 bool Materials::ReadAllMaterials(void)
 {
     bool ok = true;
-    ok &= this->ReadInorganicMaterials();
-    ok &= this->ReadOrganicMaterials();
-    ok &= this->ReadWoodMaterials();
-    ok &= this->ReadPlantMaterials();
     ok &= this->ReadCreatureTypes();
     ok &= this->ReadCreatureTypesEx();
     ok &= this->ReadDescriptorColors();
@@ -385,7 +381,7 @@ std::string Materials::getDescription(const t_material & mat)
                             if(mat.material<0)
                                 return "any inorganic";
                             else
-                                return this->inorganic[mat.material].id;
+                                return this->df_inorganic->at(mat.material)->ID;
                         }
                         if(mat.material<0)
                             return "any";
@@ -404,8 +400,8 @@ std::string Materials::getDescription(const t_material & mat)
             else
                 if(mat.index<0)
                     return "any inorganic";
-                else if (mat.index < inorganic.size())
-                    return this->inorganic[mat.index].id;
+                else if (mat.index < df_inorganic->size())
+                    return this->df_inorganic->at(mat.index)->ID;
                 else
                     return "INDEX OUT OF BOUNDS!";
         }
@@ -424,7 +420,7 @@ std::string Materials::getDescription(const t_material & mat)
     }
     else
     {
-        return this->organic[mat.index].id;
+        return this->df_organic->at(mat.material)->ID;
     }
     return out;
 }

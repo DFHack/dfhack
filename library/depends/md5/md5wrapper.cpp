@@ -108,12 +108,13 @@ std::string md5wrapper::getHashFromString(std::string text)
  * (based on Ronald L. Rivest's code
  * from RFC1321 "The MD5 Message-Digest Algorithm")
  */
-std::string md5wrapper::getHashFromFile(std::string filename)
+std::string md5wrapper::getHashFromFile(std::string filename, uint32_t & length, char * first_kb)
 {
     FILE *file;
     MD5_CTX context;
 
     int len;
+    int saved = 0;
     unsigned char buffer[1024], digest[16];
 
     //open file
@@ -121,7 +122,7 @@ std::string md5wrapper::getHashFromFile(std::string filename)
     {
         return "file unreadable.";
     }
-
+    length = 0;
     //init md5
     md5->MD5Init (&context);
 
@@ -130,6 +131,12 @@ std::string md5wrapper::getHashFromFile(std::string filename)
     {
         errno = 0;
         len = fread (buffer, 1, 1024, file);
+        if(saved < 1024 && first_kb)
+        {
+            memcpy(first_kb + saved, buffer, std::min (len, 1024 - saved));
+            saved += len;
+        }
+        length += len;
         if(len != 1024)
         {
             int err = ferror(file);

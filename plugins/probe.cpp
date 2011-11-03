@@ -103,7 +103,8 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
     DFHack::Materials *Materials = c->getMaterials();
     DFHack::VersionInfo* mem = c->vinfo;
     DFHack::Maps *Maps = c->getMaps();
-    bool hasmats = Materials->ReadInorganicMaterials();
+    std::vector<t_matglossInorganic> inorganic;
+    bool hasmats = Materials->CopyInorganicMaterials(inorganic);
 
     if(!Maps->Start())
     {
@@ -199,9 +200,9 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
                 {
                     con << "Layer material: " << dec << base_rock;
                     if(hasmats)
-                        con << " / " << Materials->inorganic[base_rock].id
+                        con << " / " << inorganic[base_rock].id
                             << " / "
-                            << Materials->inorganic[base_rock].name
+                            << inorganic[base_rock].name
                             << endl;
                     else
                         con << endl;
@@ -211,9 +212,9 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
                 {
                     con << "Vein material (final): " << dec << vein_rock;
                     if(hasmats)
-                        con << " / " << Materials->inorganic[vein_rock].id
+                        con << " / " << inorganic[vein_rock].id
                             << " / "
-                            << Materials->inorganic[vein_rock].name
+                            << inorganic[vein_rock].name
                             << endl;
                     else
                         con << endl;

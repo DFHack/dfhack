@@ -39,10 +39,29 @@ distribution.
 
 namespace DFHack
 {
+    typedef int32_t t_materialIndex;
+    typedef int16_t t_materialType, t_itemType, t_itemSubtype;
+
     struct t_syndrome
     {
         // it's lonely here...
     };
+    /**
+     * \ingroup grp_materials
+     */
+    enum e_matter_state
+    {
+        state_solid,
+        state_liquid,
+        state_gas,
+        state_powder,
+        state_paste,
+        state_pressed,
+        NUM_MATTER_STATES
+    };
+    /**
+     * \ingroup grp_materials
+     */
     enum material_flags
     {
         MATERIAL_BONE = 0,
@@ -135,6 +154,9 @@ namespace DFHack
         MATERIAL_UNK78,
         MATERIAL_UNK79,
     };
+    /**
+     * \ingroup grp_materials
+     */
     enum inorganic_flags
     {
         INORGANIC_LAVA = 0,
@@ -173,7 +195,10 @@ namespace DFHack
         INORGANIC_UNK30,
         INORGANIC_UNK31,
     };
-    //Environment locations:
+    /**
+     * Environment locations
+     * \ingroup grp_materials
+     */
     enum environment_location
     {
         ENV_SOIL,
@@ -185,7 +210,10 @@ namespace DFHack
         ENV_IGNEOUS_EXTRUSIVE,
         ENV_ALLUVIAL,
     };
-    //Inclusion types:
+    /**
+     * Inclusion types
+     * \ingroup grp_materials
+     */
     enum inclusion_type
     {
         INCLUSION_NONE, // maybe
@@ -194,7 +222,11 @@ namespace DFHack
         INCLUSION_CLUSTER_SMALL,
         INCLUSION_CLUSTER_ONE,
     };
-    /// Research by Quietust
+    /**
+     * The reversed generic material struct
+     * Research by Quietust
+     * \ingroup grp_materials
+     */
     struct df_material
     {
         std::string Material_ID;
@@ -212,24 +244,9 @@ namespace DFHack
         int32_t SOLID_DENSITY;
         int32_t LIQUID_DENSITY;
         int32_t MOLAR_MASS;
-        int32_t STATE_COLOR_SOLID;  // (color token index)
-        int32_t STATE_COLOR_LIQUID; // (color token index)
-        int32_t STATE_COLOR_GAS;    // (color token index)
-        int32_t STATE_COLOR_POWDER; // (color token index)
-        int32_t STATE_COLOR_PASTE;  // (color token index)
-        int32_t STATE_COLOR_PRESSED;// (color token index)
-        std::string STATE_NAME_SOLID;
-        std::string STATE_NAME_LIQUID;
-        std::string STATE_NAME_GAS;
-        std::string STATE_NAME_POWDER;
-        std::string STATE_NAME_PASTE;
-        std::string STATE_NAME_PRESSED;
-        std::string STATE_ADJ_SOLID;
-        std::string STATE_ADJ_LIQUID;
-        std::string STATE_ADJ_GAS;
-        std::string STATE_ADJ_POWDER;
-        std::string STATE_ADJ_PASTE;
-        std::string STATE_ADJ_PRESSED;
+        int32_t state_color[NUM_MATTER_STATES];  // color token indexes
+        std::string state_name[NUM_MATTER_STATES];
+        std::string state_adj[NUM_MATTER_STATES];
         int32_t ABSORPTION;
         int32_t BENDING_YIELD;
         int32_t SHEAR_YIELD;
@@ -252,9 +269,9 @@ namespace DFHack
         int32_t MAX_EDGE;
         int32_t MATERIAL_VALUE;
         BitArray <material_flags> mat_flags;
-        int16_t EXTRACT_STORAGE;// (item type)
-        int16_t BUTCHER_SPECIAL_type;// (item type)
-        int16_t BUTCHER_SPECIAL_subtype;// (item subtype)
+        t_itemType EXTRACT_STORAGE;
+        t_itemType BUTCHER_SPECIAL_type;
+        t_itemSubtype BUTCHER_SPECIAL_subtype;
         //int16_t padding; // added by compiler
         std::string MEAT_NAME_1st_parm; // (adj)
         std::string MEAT_NAME_2nd_parm;
@@ -298,11 +315,15 @@ namespace DFHack
         };
         bool isStone()
         {
-            mat_flags.is_set(MATERIAL_IS_STONE);
+            return mat_flags.is_set(MATERIAL_IS_STONE);
         };
     };
 
-    /// Research by Quietust
+    /**
+     * The reversed inorganic material struct
+     * Research by Quietust
+     * \ingroup grp_materials
+     */
     struct df_inorganic_type
     {
         std::string ID;
@@ -656,9 +677,6 @@ namespace DFHack
             uint16_t bright;
         } tilecolor;
     };
-
-    typedef int32_t t_materialIndex;
-    typedef int16_t t_materialType, t_itemType, t_itemSubtype;
 
     /**
      * this structure describes what are things made of in the DF world

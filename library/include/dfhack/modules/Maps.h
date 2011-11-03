@@ -200,18 +200,6 @@ namespace DFHack
         int16_t tiles[16][16];
     };
     /**
-     * \ingroup grp_maps
-     */
-    enum e_matter_state
-    {
-        state_solid,
-        state_liquid,
-        state_gas,
-        state_powder,
-        state_paste,
-        state_pressed
-    };
-    /**
      * a 'spattervein' defines what coverings the individual map tiles have (snow, blood, etc)
      * bitmap of intensity with matrial type
      * \ingroup grp_maps

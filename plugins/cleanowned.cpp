@@ -148,19 +148,27 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
                type == Items::FOOD
             )
             {
-                c->con.print("Confiscating a dropped foodstuff/pet vermin: \t");
                 confiscate = true;
+                if(dump_scattered)
+                {
+                    c->con.print("Dumping a dropped item: \t");
+                    dump = true;
+                }
+                else
+                {
+                    c->con.print("Confiscating a dropped item: \t");
+                }
+            }
+            else if(dump_scattered)
+            {
+                c->con.print("Confiscating and dumping litter: \t");
+                confiscate = true;
+                dump = true;
             }
         }
         else if (item->getWear() >= wear_dump_level)
         {
             c->con.print("Confiscating and dumping a worn item: \t");
-            confiscate = true;
-            dump = true;
-        }
-        else if (dump_scattered && item->flags.on_ground)
-        {
-            c->con.print("Confiscating and dumping litter: \t");
             confiscate = true;
             dump = true;
         }

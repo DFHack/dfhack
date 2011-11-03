@@ -22,6 +22,7 @@
 
 //basic includes
 #include <string>
+#include <stdint.h>
 
 //forwards
 class MD5;

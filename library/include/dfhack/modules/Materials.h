@@ -292,12 +292,20 @@ namespace DFHack
         int32_t SOAP_LEVEL;
         std::string PREFIX;
         // etc...
+        bool isGem()
+        {
+            return mat_flags.is_set(MATERIAL_IS_GEM);
+        };
+        bool isStone()
+        {
+            mat_flags.is_set(MATERIAL_IS_STONE);
+        };
     };
 
     /// Research by Quietust
-    struct df_inorganic_base
+    struct df_inorganic_type
     {
-        std::string Inorganic_ID;
+        std::string ID;
         BitArray<inorganic_flags> inorg_flags;
         std::vector <uint32_t> empty1;
         std::vector <int16_t> METAL_ORE_matID; // Vector of indexes of metals produced when ore is smelted
@@ -314,8 +322,16 @@ namespace DFHack
         std::vector <int16_t> ENVIRONMENT_inclusion_type;
         std::vector <int8_t> ENVIRONMENT_prob;
         int32_t unknown_in_2;
+        df_material mat;
+        bool isOre()
+        {
+            if(!METAL_ORE_matID.empty())
+                return true;
+            if(!THREAD_METAL_matID.empty())
+                return true;
+            return false;
+        }
     };
-    struct df_inorganic_material:public df_inorganic_base, public df_material {};
     /**
      * A copy of the game's material data.
      * \ingroup grp_materials
@@ -691,14 +707,10 @@ namespace DFHack
             GRIME
         };
 
-        std::vector<df_inorganic_material*>* df_inorganic;
-        std::vector<t_matglossInorganic> inorganic;
+        std::vector<df_inorganic_type*>* df_inorganic;
         std::vector<df_plant_type*>* df_organic;
-        std::vector<t_matgloss> organic;
         std::vector<df_plant_type*>* df_trees;
-        std::vector<t_matgloss> tree;
         std::vector<df_plant_type*>* df_plants;
-        std::vector<t_matgloss> plant;
 
         std::vector<t_matgloss> race;
         std::vector<t_creaturetype> raceEx;
@@ -706,10 +718,11 @@ namespace DFHack
         std::vector<t_matglossOther> other;
         std::vector<t_matgloss> alldesc;
 
-        bool ReadInorganicMaterials (void);
-        bool ReadOrganicMaterials (void);
-        bool ReadWoodMaterials (void);
-        bool ReadPlantMaterials (void);
+        bool CopyInorganicMaterials (std::vector<t_matglossInorganic> & inorganic);
+        bool CopyOrganicMaterials (std::vector<t_matgloss> & organic);
+        bool CopyWoodMaterials (std::vector<t_matgloss> & tree);
+        bool CopyPlantMaterials (std::vector<t_matgloss> & plant);
+
         bool ReadCreatureTypes (void);
         bool ReadCreatureTypesEx (void);
         bool ReadDescriptorColors(void);

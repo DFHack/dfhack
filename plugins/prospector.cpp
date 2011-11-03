@@ -88,8 +88,8 @@ struct compare_pair_second
 
 // printMats() accepts a vector of pointers to t_matgloss so that it can
 // deal t_matgloss and all subclasses.
-void printMats(DFHack::Console & con, MatMap &mat,
-               std::vector<DFHack::t_matgloss*> &materials)
+template <typename T>
+void printMats(DFHack::Console & con, MatMap &mat, std::vector<T*> &materials)
 {
     unsigned int total = 0;
     MatSorter sorting_vector;
@@ -108,8 +108,8 @@ void printMats(DFHack::Console & con, MatMap &mat,
                 <<  materials.size() << endl;
             continue;
         }
-        DFHack::t_matgloss* mat = materials[it->first];
-        con << std::setw(25) << mat->id << " : "
+        T* mat = materials[it->first];
+        con << std::setw(25) << mat->ID << " : "
         << std::setw(9) << it->second.count;
         if(it->second.lower_z != it->second.upper_z)
             con <<" Z:" << std::setw(4) << it->second.lower_z << ".." <<  it->second.upper_z << std::endl;
@@ -121,14 +121,6 @@ void printMats(DFHack::Console & con, MatMap &mat,
     con << ">>> TOTAL = " << total << std::endl << std::endl;
 }
 
-void printMats(DFHack::Console & con, MatMap &mat,
-               std::vector<DFHack::t_matgloss> &materials)
-{
-    std::vector<DFHack::t_matgloss*> ptr_vec;
-    TO_PTR_VEC(materials, ptr_vec);
-    printMats(con, mat, ptr_vec);
-}
-
 void printVeins(DFHack::Console & con, MatMap &mat_map,
                 DFHack::Materials* mats)
 {
@@ -138,27 +130,24 @@ void printVeins(DFHack::Console & con, MatMap &mat_map,
 
     for (MatMap::const_iterator it = mat_map.begin(); it != mat_map.end(); ++it)
     {
-        DFHack::t_matglossInorganic &gloss = mats->inorganic[it->first];
+        DFHack::df_inorganic_type *gloss = mats->df_inorganic->at(it->first);
 
-        if (gloss.isGem())
+        if (gloss->mat.isGem())
             gems[it->first] = it->second;
-        else if (gloss.isOre())
+        else if (gloss->isOre())
             ores[it->first] = it->second;
         else
             rest[it->first] = it->second;
     }
 
-    std::vector<DFHack::t_matgloss*> ptr_vec;
-    TO_PTR_VEC(mats->inorganic, ptr_vec);
-
     con << "Ores:" << std::endl;
-    printMats(con, ores, ptr_vec);
+    printMats(con, ores, *mats->df_inorganic);
 
     con << "Gems:" << std::endl;
-    printMats(con, gems, ptr_vec);
+    printMats(con, gems, *mats->df_inorganic);
 
     con << "Other vein stone:" << std::endl;
-    printMats(con, rest, ptr_vec);
+    printMats(con, rest, *mats->df_inorganic);
 }
 
 DFhackCExport command_result prospector (Core * c, vector <string> & parameters);
@@ -217,13 +206,13 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     MapExtras::MapCache map(maps);
 
     DFHack::Materials *mats = c->getMaterials();
-    if (!mats->ReadInorganicMaterials())
+    if (!mats->df_inorganic)
     {
         con << "Unable to read inorganic material definitons!" << std::endl;
         c->Resume();
         return CR_FAILURE;
     }
-    if (showPlants && !mats->ReadOrganicMaterials())
+    if (showPlants && !mats->df_organic)
     {
         con << "Unable to read organic material definitons; plants won't be listed!" << std::endl;
         showPlants = false;
@@ -423,20 +412,17 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
         con << std::setw(25) << DFHack::TileMaterialString[it->first] << " : " << it->second.count << std::endl;
     }
 
-    std::vector<t_matgloss*> ptr_vec;
-    TO_PTR_VEC(mats->inorganic, ptr_vec);
-
     con << std::endl << "Layer materials:" << std::endl;
-    printMats(con, layerMats, ptr_vec);
+    printMats(con, layerMats, *mats->df_inorganic);
 
     printVeins(con, veinMats, mats);
 
     if (showPlants)
     {
         con << "Shrubs:" << std::endl;
-        printMats(con, plantMats, mats->organic);
+        printMats(con, plantMats, *mats->df_organic);
         con << "Wood in trees:" << std::endl;
-        printMats(con, treeMats, mats->organic);
+        printMats(con, treeMats, *mats->df_organic);
     }
 
     if (hasAquifer)

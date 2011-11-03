@@ -103,8 +103,8 @@ DFhackCExport DFHack::command_result df_seedwatch(DFHack::Core* pCore, std::vect
     core.Suspend();
 
     DFHack::Materials& materialsModule = *core.getMaterials();
-    materialsModule.ReadOrganicMaterials();
-    std::vector<DFHack::t_matgloss>& organics = materialsModule.organic;
+    std::vector<DFHack::t_matgloss> organics;
+    materialsModule.CopyOrganicMaterials(organics);
 
     std::map<std::string, t_materialIndex> materialsReverser;
     for(std::size_t i = 0; i < organics.size(); ++i)

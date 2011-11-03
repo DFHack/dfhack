@@ -1,7 +1,8 @@
 // Wide-area traffic designation utility.
 // Flood-fill from cursor or fill entire map.
 
-#include <ctype.h>		//For toupper().
+#include <ctype.h>		//For toupper(). 
+#include <algorithm>    //for min().
 #include <map>
 #include <vector>
 #include <dfhack/Core.h>
@@ -15,8 +16,21 @@ using std::stack;
 using MapExtras::MapCache;
 using namespace DFHack;
 
+//Function pointer type for whole-map tile checks.
+typedef bool (*checkTile)(DFHack::DFCoord, MapExtras::MapCache);
+
+//Forward Declarations for Commands
 DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::string> & params);
-DFhackCExport command_result tiletraffic(DFHack::Core * c, std::vector<std::string> & params);
+DFhackCExport command_result alltraffic(DFHack::Core * c, std::vector<std::string> & params);
+
+DFhackCExport command_result testchecktile(DFHack::Core * c, std::vector<std::string> & params);
+
+//Forward Declarations for Utility Functions
+DFhackCExport command_result setAllMatching(DFHack::Core * c, e_traffic newTraffic, checkTile check,
+											DFHack::DFCoord minCoord = DFHack::DFCoord(0, 0, 0),
+											DFHack::DFCoord maxCoord = DFHack::DFCoord(0xFFFF, 0xFFFF, 0xFFFFFFFF));
+
+bool checkerboard(DFHack::DFCoord coord, MapExtras::MapCache map);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -27,7 +41,12 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.clear();
 	commands.push_back(PluginCommand("filltraffic","Flood-fill with selected traffic designation from cursor",filltraffic));
-	commands.push_back(PluginCommand("tiletraffic","Set traffic for all tiles based on given criteria",tiletraffic));
+	commands.push_back(PluginCommand("alltraffic","Set traffic for the entire map",alltraffic));
+
+
+	commands.push_back(PluginCommand("testchecktile","Create checkerboard pattern",testchecktile));
+
+
     return CR_OK;
 }
 
@@ -227,11 +246,10 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
 
 enum e_checktype {no_check, check_equal, check_nequal};
 
-DFhackCExport command_result tiletraffic(DFHack::Core * c, std::vector<std::string> & params)
+DFhackCExport command_result alltraffic(DFHack::Core * c, std::vector<std::string> & params)
 {
 	//Target traffic types.
 	e_traffic target = traffic_normal;
-	//!!! Options Later !!!
 
 	//Loop through parameters
     for(int i = 0; i < params.size();i++)
@@ -303,4 +321,96 @@ DFhackCExport command_result tiletraffic(DFHack::Core * c, std::vector<std::stri
 	MCache->WriteAll();
     c->Resume();
     return CR_OK;
+}
+
+//Helper function for writing new functions that check every tile on the map.
+//newTraffic is the traffic designation to set.
+//check takes a coordinate and the map cache as arguments, and returns true if the criteria is met.
+//minCoord and maxCoord can be used to specify a bounding cube.
+DFhackCExport command_result setAllMatching(DFHack::Core * c, e_traffic newTraffic, checkTile check,
+											DFHack::DFCoord minCoord, DFHack::DFCoord maxCoord)
+{
+	//Initialization.
+	c->Suspend();
+
+	DFHack::Maps * Maps = c->getMaps();
+    DFHack::Gui * Gui = c->getGui();
+    // init the map
+    if(!Maps->Start())
+    {
+        c->con.printerr("Can't init map. Make sure you have a map loaded in DF.\n");
+        c->Resume();
+        return CR_FAILURE;
+    }
+
+	//Maximum map size.
+	uint32_t x_max,y_max,z_max;
+    Maps->getSize(x_max,y_max,z_max);
+    uint32_t tx_max = x_max * 16;
+    uint32_t ty_max = y_max * 16;
+
+	//Ensure maximum coordinate is within map.  Truncate to map edge.
+	maxCoord.x = std::min((uint32_t) maxCoord.x, tx_max);
+	maxCoord.y = std::min((uint32_t) maxCoord.y, ty_max);
+	maxCoord.z = std::min(maxCoord.z,  z_max);
+
+	//Check minimum co-ordinates against maximum map size
+	if (minCoord.x > maxCoord.x) 
+	{
+		c->con.printerr("Minimum x coordinate is greater than maximum x coordinate.\n");
+        c->Resume();
+        return CR_FAILURE;
+	}
+	if (minCoord.y > maxCoord.y) 
+	{
+		c->con.printerr("Minimum y coordinate is greater than maximum y coordinate.\n");
+        c->Resume();
+        return CR_FAILURE;
+	}
+	if (minCoord.z > maxCoord.y) 
+	{
+		c->con.printerr("Minimum z coordinate is greater than maximum z coordinate.\n");
+        c->Resume();
+        return CR_FAILURE;
+	}
+
+	MapExtras::MapCache * MCache = new MapExtras::MapCache(Maps);
+
+	c->con.print("Setting traffic...\n");
+
+	//Loop through every single tile
+	for(uint32_t x = minCoord.x; x <= maxCoord.x; x++)
+	{
+		for(uint32_t y = minCoord.y; y <= maxCoord.y; y++)
+		{
+			for(uint32_t z = minCoord.z; z <= maxCoord.z; z++)
+			{
+				DFHack::DFCoord tile = DFHack::DFCoord(x, y, z);
+
+				if (check(tile, *MCache))
+				{
+					DFHack::t_designation des = MCache->designationAt(tile);
+					des.bits.traffic = newTraffic;
+					MCache->setDesignationAt(tile, des);
+				}
+			}
+		}
+	}
+
+	MCache->WriteAll();
+	c->con.print("Complete!\n");
+    c->Resume();
+    return CR_OK;
+}
+
+//Test functions. I'll probably remove these later.
+command_result testchecktile(DFHack::Core * c, std::vector<std::string> & params)
+{
+	c->con.print("Yosh! Checkerboard attack, go!\n");
+	return setAllMatching(c, traffic_restricted, &checkerboard);
+}
+
+bool checkerboard(DFHack::DFCoord coord, MapExtras::MapCache map)
+{
+	return ((coord.x * coord.y - coord.z) % 2 == 0);
 }

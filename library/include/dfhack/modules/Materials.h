@@ -171,14 +171,14 @@ namespace DFHack
         INORGANIC_DEEP_SURFACE = 8,
         INORGANIC_METAL_ORE, // maybe
         INORGANIC_AQUIFER,
-        INORGANIC_SOIL,
+        INORGANIC_SOIL_ANY, // any soil
         INORGANIC_SOIL_OCEAN,
         INORGANIC_SOIL_SAND,
         INORGANIC_SEDIMENTARY_OCEAN_DEEP,
         INORGANIC_THREAD_METAL, // maybe
 
         INORGANIC_DEEP = 16, // in general
-        INORGANIC_SOIL2, // more soil?
+        INORGANIC_SOIL, // specific soil
         INORGANIC_DEEP_SPECIAL,
         INORGANIC_UNK19,
         INORGANIC_UNK20,

@@ -164,6 +164,7 @@ namespace  DFHack
         //void beep (void);
         /// A simple line edit (raw mode)
         int lineedit(const std::string& prompt, std::string& output, CommandHistory & history );
+        bool isInited (void) { return inited; };
     private:
         Private * d;
         tthread::mutex * wlock;

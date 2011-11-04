@@ -640,7 +640,6 @@ bool Console::init(bool sharing)
         return false;
     }
     freopen("stdout.log", "w", stdout);
-    freopen("stderr.log", "w", stderr);
     d = new Private();
     // make our own weird streams so our IO isn't redirected
     d->dfout_C = fopen("/dev/tty", "w");
@@ -690,11 +689,18 @@ int Console::printerr( const char* format, ... )
     va_list args;
     lock_guard <mutex> g(*wlock);
     int ret;
-    if(!inited) ret = -1;
+    // also mirror in error log
+    if(!inited)
+    {
+        va_start( args, format );
+        ret = vfprintf(stderr, format, args);
+        va_end(args);
+    }
     else
     {
         va_start( args, format );
         ret = d->vprinterr(format, args);
+        vfprintf(stderr, format, args);
         va_end(args);
     }
     return ret;

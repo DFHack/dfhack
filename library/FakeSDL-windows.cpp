@@ -694,6 +694,9 @@ DFhackCExport uint32_t SDL_ThreadID(void)
 // FIXME: this has to be thread-safe.
 bool FirstCall()
 {
+    // reroute stdout and stderr
+    freopen("stdout.log", "w", stdout);
+    freopen("stderr.log", "w", stderr);
     HMODULE realSDLlib =  LoadLibrary("SDLreal.dll");
     if(!realSDLlib)
     {

@@ -56,13 +56,13 @@ DFhackCExport command_result rawdump_i (Core * c, vector <string> & parameters)
     {
         if( index < mats->df_inorganic->size())
         {
-            df_inorganic_material * mat = mats->df_inorganic->at(index);
+            df_inorganic_type * mat = mats->df_inorganic->at(index);
             // dump single material
             con.print("%-3d : [%s] %s\n",
                       index,
-                      mat->Inorganic_ID.c_str(),
-                      mat->STATE_NAME_SOLID.c_str());
-            con.print("MAX EDGE: %d\n",mat->MAX_EDGE);
+                      mat->ID.c_str(),
+                      mat->mat.state_name[DFHack::state_solid].c_str());
+            con.print("MAX EDGE: %d\n",mat->mat.MAX_EDGE);
         }
         else
         {
@@ -74,7 +74,7 @@ DFhackCExport command_result rawdump_i (Core * c, vector <string> & parameters)
         // dump all materials
         for(int i = 0; i < mats->df_inorganic->size();i++)
         {
-            con.print("%-3d : %s\n",i,mats->df_inorganic->at(i)->Inorganic_ID.c_str());
+            con.print("%-3d : %s\n",i,mats->df_inorganic->at(i)->ID.c_str());
         }
     }
     c->Resume();

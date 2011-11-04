@@ -126,10 +126,10 @@ namespace DFHack
         /// removes the hotkey command and gives it to the caller thread
         std::string getHotkeyCmd( void );
 
-		/// adds a named pointer (for later or between plugins)
-		void RegisterData(void *p,std::string key);
-		/// returns a named pointer.
-		void *GetData(std::string key);
+        /// adds a named pointer (for later or between plugins)
+        void RegisterData(void *p,std::string key);
+        /// returns a named pointer.
+        void *GetData(std::string key);
 
         DFHack::Process * p;
         DFHack::VersionInfo * vinfo;
@@ -143,6 +143,9 @@ namespace DFHack
         bool ncurses_wgetch(int in, int & out);
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement
+        // report error to user while failing
+        void fatal (std::string output, bool will_deactivate);
+        // 1 = fatal failure
         bool errorstate;
         // regulate access to DF
         struct Cond;

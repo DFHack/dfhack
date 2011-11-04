@@ -5,7 +5,7 @@
  * This code is in the public domain; do with it what you wish.
  */
 
-#include <memory.h>      /* for memcpy() */
+#include <string.h>
 #include "md5.h"
 
 #ifndef HIGHFIRST

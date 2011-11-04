@@ -38,18 +38,18 @@
  */
 std::string md5wrapper::hashit(std::string text)
 {
-	MD5_CTX ctx;
+	MD5Context ctx;
 
 	//init md5
-	md5->MD5Init(&ctx);
+	MD5Init(&ctx);
 	//update with our string
-	md5->MD5Update(&ctx,
+	MD5Update(&ctx,
 		 (unsigned char*)text.c_str(),
 		 text.length());
 
 	//create the hash
 	unsigned char buff[16] = "";
-	md5->MD5Final((unsigned char*)buff,&ctx);
+	MD5Final((unsigned char*)buff,&ctx);
 
 	//converte the hash to a string and return it
 	return convToString(buff);
@@ -80,14 +80,12 @@ std::string md5wrapper::convToString(unsigned char *bytes)
 //constructor
 md5wrapper::md5wrapper()
 {
-	md5 = new MD5();
 }
 
 
 //destructor
 md5wrapper::~md5wrapper()
 {
-	delete md5;
 }
 
 /*
@@ -111,7 +109,7 @@ std::string md5wrapper::getHashFromString(std::string text)
 std::string md5wrapper::getHashFromFile(std::string filename, uint32_t & length, char * first_kb)
 {
     FILE *file;
-    MD5_CTX context;
+    MD5Context context;
 
     int len;
     int saved = 0;
@@ -124,7 +122,7 @@ std::string md5wrapper::getHashFromFile(std::string filename, uint32_t & length,
     }
     length = 0;
     //init md5
-    md5->MD5Init (&context);
+    MD5Init (&context);
 
     //read the filecontent
     while (1)
@@ -148,18 +146,18 @@ std::string md5wrapper::getHashFromFile(std::string filename, uint32_t & length,
             }
             if(feof(file))
             {
-                md5->MD5Update (&context, buffer, len);
+                MD5Update (&context, buffer, len);
                 break;
             }
         }
-        md5->MD5Update (&context, buffer, len);
+        MD5Update (&context, buffer, len);
     }
 
     /*
     generate hash, close the file and return the
     hash as std::string
     */
-    md5->MD5Final (digest, &context);
+    MD5Final (digest, &context);
     fclose (file);
     return convToString(digest);
  }

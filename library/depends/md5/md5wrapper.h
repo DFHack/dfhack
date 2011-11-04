@@ -24,14 +24,9 @@
 #include <string>
 #include <stdint.h>
 
-//forwards
-class MD5;
-
 class md5wrapper
 {
 	private:
-		MD5 *md5;
-
 		/*
 		 * internal hash function, calling
 		 * the basic methods from md5.h

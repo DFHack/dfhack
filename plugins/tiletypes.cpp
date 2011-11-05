@@ -62,17 +62,28 @@ struct TileType
     DFHack::TileShape shape;
     DFHack::TileMaterial material;
     DFHack::TileSpecial special;
+    DFHack::TileVariant variant;
+    int hidden;
+    int light;
+    int subterranean;
+    int skyview;
 
     TileType()
     {
         shape = DFHack::tileshape_invalid;
         material = DFHack::tilematerial_invalid;
         special = DFHack::tilespecial_invalid;
+        variant = DFHack::tilevariant_invalid;
+        hidden = -1;
+        light = -1;
+        subterranean = -1;
+        skyview = -1;
     }
 
     bool empty()
     {
-        return shape == -1 && material == -1 && special == -1;
+        return shape == -1 && material == -1 && special == -1 && variant == -1
+            && hidden == -1 && light == -1 && subterranean == -1 && skyview == -1;
     }
 };
 
@@ -111,6 +122,72 @@ std::ostream &operator<<(std::ostream &stream, const TileType &paint)
 
         stream << DFHack::TileShapeString[paint.shape];
         used = true;
+        needSpace = true;
+    }
+
+    if (paint.variant >= 0)
+    {
+        if (needSpace)
+        {
+            stream << " ";
+            needSpace = false;
+        }
+
+        stream << "VAR_" << (paint.variant + 1);
+        used = true;
+        needSpace = true;
+    }
+
+    if (paint.hidden >= 0)
+    {
+        if (needSpace)
+        {
+            stream << " ";
+            needSpace = false;
+        }
+
+        stream << (paint.hidden ? "HIDDEN" : "VISIBLE");
+        used = true;
+        needSpace = true;
+    }
+
+    if (paint.light >= 0)
+    {
+        if (needSpace)
+        {
+            stream << " ";
+            needSpace = false;
+        }
+
+        stream << (paint.light ? "LIGHT" : "DARK");
+        used = true;
+        needSpace = true;
+    }
+
+    if (paint.subterranean >= 0)
+    {
+        if (needSpace)
+        {
+            stream << " ";
+            needSpace = false;
+        }
+
+        stream << (paint.subterranean ? "SUBTERRANEAN" : "ABOVE GROUND");
+        used = true;
+        needSpace = true;
+    }
+
+    if (paint.skyview >= 0)
+    {
+        if (needSpace)
+        {
+            stream << " ";
+            needSpace = false;
+        }
+
+        stream << (paint.skyview ? "OUTSIDE" : "INSIDE");
+        used = true;
+        needSpace = true;
     }
 
     if (!used)
@@ -211,6 +288,66 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
             }
         }
     }
+    else if (option == "variant" || option == "var" || option == "v")
+    {
+        if (valInt >= -1 && valInt <= DFHack::VAR_4)
+        {
+            paint.variant = (DFHack::TileVariant) valInt;
+            found = true;
+        }
+        else
+        {
+            std::cout << "Unknown tile variant: " << value << std::endl;
+        }
+    }
+    else if (option == "hidden" || option == "h")
+    {
+        if (valInt >= -1 && valInt < 2)
+        {
+            paint.hidden = valInt;
+            found = true;
+        }
+        else
+        {
+            std::cout << "Unknown hidden flag: " << value << std::endl;
+        }
+    }
+    else if (option == "light" || option == "l")
+    {
+        if (valInt >= -1 && valInt < 2)
+        {
+            paint.light = valInt;
+            found = true;
+        }
+        else
+        {
+            std::cout << "Unknown light flag: " << value << std::endl;
+        }
+    }
+    else if (option == "subterranean" || option == "st")
+    {
+        if (valInt >= -1 && valInt < 2)
+        {
+            paint.subterranean = valInt;
+            found = true;
+        }
+        else
+        {
+            std::cout << "Unknown subterranean flag: " << value << std::endl;
+        }
+    }
+    else if (option == "skyview" || option == "sv")
+    {
+        if (valInt >= -1 && valInt < 2)
+        {
+            paint.skyview = valInt;
+            found = true;
+        }
+        else
+        {
+            std::cout << "Unknown skyview flag: " << value << std::endl;
+        }
+    }
     else
     {
         std::cout << "Unknown option: '" << option << "'" << std::endl;
@@ -235,7 +372,12 @@ void help( std::ostream & out, const std::string &option)
             << "Filter/paint options:" << std::endl
             << " Shape / sh / s: set tile shape information" << std::endl
             << " Material / mat / m: set tile material information" << std::endl
-            << " Special / s: set special tile information" << std::endl
+            << " Special / sp: set special tile information" << std::endl
+            << " Variant / var / v: set variant tile information" << std::endl
+            << " Hidden / h: set hidden flag" << std::endl
+            << " Light / l: set light flag" << std::endl
+            << " Subterranean / st: set subterranean flag" << std::endl
+            << " Skyview / sv: set skyview flag" << std::endl
             << "See help [option] for more information" << std::endl;
     }
     else if (option == "shape" || option == "s" ||option == "sh")
@@ -256,7 +398,7 @@ void help( std::ostream & out, const std::string &option)
             out << " " << DFHack::TileMaterialString[i] << std::endl;
         }
     }
-    else if (option == "special")
+    else if (option == "special" || option == "sp")
     {
         out << "Available specials:" << std::endl
             << " ANY" << std::endl;
@@ -264,6 +406,31 @@ void help( std::ostream & out, const std::string &option)
         {
             out << " " << DFHack::TileSpecialString[i] << std::endl;
         }
+    }
+    else if (option == "variant" || option == "var" || option == "v")
+    {
+        out << "Available variants:" << std::endl
+            << " ANY, 0 - " << DFHack::VAR_4 << std::endl;
+    }
+    else if (option == "hidden" || option == "h")
+    {
+        out << "Available hidden flags:" << std::endl
+            << " ANY, 0, 1" << std::endl;
+    }
+    else if (option == "light" || option == "l")
+    {
+        out << "Available light flags:" << std::endl
+            << " ANY, 0, 1" << std::endl;
+    }
+    else if (option == "subterranean" || option == "st")
+    {
+        out << "Available subterranean flags:" << std::endl
+            << " ANY, 0, 1" << std::endl;
+    }
+    else if (option == "skyview" || option == "sv")
+    {
+        out << "Available skyview flags:" << std::endl
+            << " ANY, 0, 1" << std::endl;
     }
 }
 
@@ -605,18 +772,62 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
                     special = source->special;
                 }
 
-                int32_t type = DFHack::findTileType(shape, material, source->variant, special, source->direction);
+                DFHack::TileVariant variant = paint.variant;
+                if (variant < 0)
+                {
+                    variant = source->variant;
+                }
+
+                // Remove direction from directionless tiles
+                DFHack::TileDirection direction = source->direction;
+                if (!(shape == DFHack::RIVER_BED || shape == DFHack::BROOK_BED || shape == DFHack::WALL && (material == DFHack::CONSTRUCTED || special == DFHack::TILE_SMOOTH))) {
+                    direction.whole = 0;
+                }
+
+                int32_t type = DFHack::findTileType(shape, material, variant, special, direction);
+                // hack for empty space
+                if (shape == DFHack::EMPTY && material == DFHack::AIR && variant == DFHack::VAR_1 && special == DFHack::TILE_NORMAL && direction.whole == 0) {
+                    type = 32;
+                }
                 // make sure it's not invalid
                 if(type != -1)
                     map.setTiletypeAt(*iter, type);
 
-                // Remove liquid from walls, etc
-                if (!DFHack::FlowPassable(shape))
+                DFHack::t_designation des = map.designationAt(*iter);
+
+                if (paint.hidden > -1)
                 {
-                    DFHack::t_designation des = map.designationAt(*iter);
-                    des.bits.flow_size = 0;
-                    map.setDesignationAt(*iter, des);
+                    des.bits.hidden = paint.hidden;
                 }
+
+                if (paint.light > -1)
+                {
+                    des.bits.light = paint.light;
+                }
+
+                if (paint.subterranean > -1)
+                {
+                    des.bits.subterranean = paint.subterranean;
+                }
+
+                if (paint.skyview > -1)
+                {
+                    des.bits.skyview = paint.skyview;
+                }
+
+                // Remove liquid from walls, etc
+                if (type != -1 && !DFHack::FlowPassable(type))
+                {
+                    des.bits.flow_size = 0;
+                    //des.bits.liquid_type = DFHack::liquid_water;
+                    //des.bits.water_table = 0;
+                    des.bits.flow_forbid = 0;
+                    //des.bits.liquid_static = 0;
+                    //des.bits.water_stagnant = 0;
+                    //des.bits.water_salt = 0;
+                }
+
+                map.setDesignationAt(*iter, des);
             }
 
             if (map.WriteAll())

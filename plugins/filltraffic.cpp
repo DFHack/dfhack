@@ -79,7 +79,7 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
                          "\tL: Low Traffic\n"
                          "\tR: Restricted Traffic\n"
                          "Other Options:\n"
-                         "\tX: Fill accross z-levels.\n"
+                         "\tX: Fill across z-levels.\n"
                          "\tB: Include buildings and stockpiles.\n"
                          "\tP: Include empty space.\n"
                          "Example:\n"

@@ -174,6 +174,8 @@ void fIOthread(void * iodata)
         }
         string first = parts[0];
         parts.erase(parts.begin());
+        cerr << "Invoking: " << command << endl;
+        
         // let's see what we actually got
         if(first=="help" || first == "?")
         {
@@ -351,7 +353,7 @@ void fIOthread(void * iodata)
                 command_result res = plug_mgr->InvokeCommand(first, parts);
                 if(res == CR_NOT_IMPLEMENTED)
                 {
-                    con.printerr("Invalid command.\n");
+                    con.printerr("%s is not a recognized command.\n", first.c_str());
                     clueless_counter ++;
                 }
                 /*
@@ -393,6 +395,23 @@ Core::Core()
     misc_data_mutex=0;
 };
 
+void Core::fatal (std::string output, bool deactivate)
+{
+    stringstream out;
+    out << output ;
+    if(deactivate)
+        out << "DFHack will now deactivate.\n";
+    if(con.isInited())
+    {
+        con.printerr("%s", out.str().c_str());
+    }
+    fprintf(stderr, "%s\n", out.str().c_str());
+#ifndef LINUX_BUILD
+    out << "Check file stderr.log for details\n";
+    MessageBox(0,out.str().c_str(),"DFHack error!", MB_OK | MB_ICONERROR);
+#endif
+}
+
 bool Core::Init()
 {
     if(started)
@@ -406,30 +425,48 @@ bool Core::Init()
     #else
         const char * path = "hack\\Memory.xml";
     #endif
-    vif = new DFHack::VersionInfoFactory(path);
+    vif = new DFHack::VersionInfoFactory();
+    cerr << "Identifying DF version.\n";
+    try
+    {
+        vif->loadFile(path);
+    }
+    catch(Error::All & err)
+    {
+        std::stringstream out;
+        out << "Error while reading Memory.xml:\n";
+        out << err.what() << std::endl;
+        delete vif;
+        vif = nullptr;
+        errorstate = true;
+        fatal(out.str(), true);
+        return false;
+    }
     p = new DFHack::Process(vif);
     vinfo = p->getDescriptor();
 
     if(!vinfo || !p->isIdentified())
     {
-        cerr << "Not a known DF version. DFHack will now deactivate.\n";
+        fatal ("Not a known DF version.\n", true);
         errorstate = true;
         delete p;
         p = NULL;
         return false;
     }
+    cerr << "Version: " << vinfo->getVersion() << endl;
 
+    cerr << "Initializing Console.\n";
     // init the console.
     Gui * g = getGui();
-    if(g->init)
+    bool is_text_mode = false;
+    if(g->init && g->init->graphics.flags.is_set(GRAPHICS_TEXT))
     {
-        if(g->init->graphics.flags.is_set(GRAPHICS_TEXT))
-        {
-            con.init(true);
-        }
-        else con.init(false);
+        is_text_mode = true;
     }
-    else con.init(false);
+    if(con.init(is_text_mode))
+        cerr << "Console is running.\n";
+    else
+        fatal ("Console has failed to initialize!\n", false);
 
     // dump offsets to a file
     std::ofstream dump("offsets.log");
@@ -444,18 +481,22 @@ bool Core::Init()
     AccessMutex = new mutex();
     misc_data_mutex=new mutex();
     core_cond = new Core::Cond();
+    cerr << "Initializing Plugins.\n";
     // create plugin manager
     plug_mgr = new PluginManager(this);
+    cerr << "Starting IO thread.\n";
     // create IO thread
     IODATA *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
     thread * IO = new thread(fIOthread, (void *) temp);
+    cerr << "Starting DF input capture thread.\n";
     // set up hotkey capture
     HotkeyMutex = new mutex();
     HotkeyCond = new condition_variable();
     thread * HK = new thread(fHKthread, (void *) temp);
     started = true;
+    cerr << "DFHack is running.\n";
     return true;
 }
 /// sets the current hotkey command
@@ -565,6 +606,8 @@ int Core::Update()
 // FIXME: needs to terminate the IO threads and properly dismantle all the machinery involved.
 int Core::Shutdown ( void )
 {
+    if(errorstate)
+        return true;
     errorstate = 1;
     if(plug_mgr)
     {

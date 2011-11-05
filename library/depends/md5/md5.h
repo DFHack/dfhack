@@ -1,92 +1,36 @@
-/*
- *	This is the C++ implementation of the MD5 Message-Digest
- *	Algorithm desrcipted in RFC 1321.
- *	I translated the C code from this RFC to C++.
- *	There is now warranty.
- *
- *	Feb. 12. 2005
- *	Benjamin Grüdelbach
- */
+#pragma once
 
-/*
- * Changed unsigned long int types into uint32_t to make this work on 64bit systems.
- * Sep. 5. 2009
- * Petr Mrázek
- */
+/*  The following tests optimise behaviour on little-endian
+    machines, where there is no need to reverse the byte order
+    of 32 bit words in the MD5 computation.  By default,
+    HIGHFIRST is defined, which indicates we're running on a
+    big-endian (most significant byte first) machine, on which
+    the byteReverse function in md5.c must be invoked. However,
+    byteReverse is coded in such a way that it is an identity
+    function when run on a little-endian machine, so calling it
+    on such a platform causes no harm apart from wasting time.
+    If the platform is known to be little-endian, we speed
+    things up by undefining HIGHFIRST, which defines
+    byteReverse as a null macro.  Doing things in this manner
+    insures we work on new platforms regardless of their byte
+    order.  */
 
-/*
- * Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
- * rights reserved.
- *
- * License to copy and use this software is granted provided that it
- * is identified as the "RSA Data Security, Inc. MD5 Message-Digest
- * Algorithm" in all material mentioning or referencing this software
- * or this function.
- *
- * License is also granted to make and use derivative works provided
- * that such works are identified as "derived from the RSA Data
- * Security, Inc. MD5 Message-Digest Algorithm" in all material
- * mentioning or referencing the derived work.
- *
- * RSA Data Security, Inc. makes no representations concerning either
- * the merchantability of this software or the suitability of this
- * software for any particular purpose. It is provided "as is"
- * without express or implied warranty of any kind.
- *
- * These notices must be retained in any copies of any part of this
- * documentation and/or software.
- */
+#define HIGHFIRST
 
-//----------------------------------------------------------------------
-//include protection
-#ifndef MD5_H
-#define MD5_H
-
-//----------------------------------------------------------------------
-//STL includes
-#include <string>
-#include <stdint.h>
-//----------------------------------------------------------------------
-//typedefs
-typedef unsigned char *POINTER;
-
-/*
- * MD5 context.
- */
-typedef struct
-{
-	uint32_t state[4];   	      /* state (ABCD) */
-	uint32_t count[2]; 	      /* number of bits, modulo 2^64 (lsb first) */
-	unsigned char buffer[64];	      /* input buffer */
-} MD5_CTX;
-
-/*
- * MD5 class
- */
-class MD5
-{
-
-	private:
-
-        void MD5Transform (uint32_t state[4], unsigned char block[64]);
-		void Encode (unsigned char*, uint32_t*, unsigned int);
-		void Decode (uint32_t*, unsigned char*, unsigned int);
-		void MD5_memcpy (POINTER, POINTER, unsigned int);
-		void MD5_memset (POINTER, int, unsigned int);
-
-	public:
-
-		void MD5Init (MD5_CTX*);
-		void MD5Update (MD5_CTX*, unsigned char*, unsigned int);
-		void MD5Final (unsigned char [16], MD5_CTX*);
-
-	MD5(){};
-};
-
-//----------------------------------------------------------------------
-//End of include protection
+#ifdef __i386__
+#undef HIGHFIRST
 #endif
 
-/*
- * EOF
- */
+#include <stdint.h>
+
+struct MD5Context
+{
+    uint32_t buf[4];
+    uint32_t bits[2];
+    unsigned char in[64];
+};
+
+extern void MD5Init( MD5Context *ctx);
+extern void MD5Update( MD5Context *ctx, unsigned char *buf, unsigned len);
+extern void MD5Final(unsigned char digest[16], MD5Context *ctx);
+extern void MD5Transform(uint32_t buf[4], uint32_t in[16]);

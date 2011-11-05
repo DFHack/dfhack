@@ -378,6 +378,7 @@ namespace DFHack
         HANDLE console_in;
         HANDLE console_out;
         HWND ConsoleWindow;
+        HWND MainWindow;
         WORD default_attributes;
         // current state
         enum console_state
@@ -402,7 +403,29 @@ Console::Console():std::ostream(0), std::ios(0)
 Console::~Console()
 {
 }
+/*
+// DOESN'T WORK - locks up DF!
+void ForceForegroundWindow(HWND window)
+{
+    DWORD nForeThread, nAppThread;
 
+    nForeThread = GetWindowThreadProcessId(GetForegroundWindow(), 0);
+    nAppThread = ::GetWindowThreadProcessId(window,0);
+
+    if(nForeThread != nAppThread)
+    {
+        AttachThreadInput(nForeThread, nAppThread, true);
+        BringWindowToTop(window);
+        ShowWindow(window,3);
+        AttachThreadInput(nForeThread, nAppThread, false);
+    }
+    else
+    {
+        BringWindowToTop(window);
+        ShowWindow(window,3);
+    }
+}
+*/
 bool Console::init(bool)
 {
     d = new Private();
@@ -411,6 +434,21 @@ bool Console::init(bool)
     CONSOLE_SCREEN_BUFFER_INFO coninfo;
     FILE                       *fp;
     DWORD  oldMode, newMode;
+    DWORD dwTheardId;
+
+    HWND h = ::GetTopWindow(0 );
+    while ( h )
+    {
+        DWORD pid;
+        dwTheardId = ::GetWindowThreadProcessId( h,&pid);
+        if ( pid == GetCurrentProcessId() )
+        {
+            // here h is the handle to the window
+            break;
+        }
+        h = ::GetNextWindow( h , GW_HWNDNEXT);
+    }
+    d->MainWindow = h;
 
     // Allocate a console!
     AllocConsole();
@@ -450,6 +488,8 @@ bool Console::init(bool)
     std::cin.tie(this);
     clear();
     inited = true;
+    // DOESN'T WORK - locks up DF!
+    // ForceForegroundWindow(d->MainWindow);
     return true;
 }
 // FIXME: looks awfully empty, doesn't it?
@@ -480,11 +520,18 @@ int Console::printerr( const char* format, ... )
     va_list args;
     lock_guard <mutex> g(*wlock);
     int ret;
-    if(!inited) ret = -1;
+    // also mirror in error log
+    if(!inited)
+    {
+        va_start( args, format );
+        ret = vfprintf(stderr, format, args);
+        va_end(args);
+    }
     else
     {
         va_start( args, format );
         ret = d->vprinterr(format, args);
+        vfprintf(stderr, format, args);
         va_end(args);
     }
     return ret;

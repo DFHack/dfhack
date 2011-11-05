@@ -97,13 +97,16 @@ inline bool operator>=(const triple<_T1, _T2, _T3>& __x, const triple<_T1, _T2, 
     return !(__x < __y);
 }
 
-VersionInfoFactory::VersionInfoFactory(string path_to_xml)
+VersionInfoFactory::VersionInfoFactory()
 {
     error = false;
-    loadFile(path_to_xml);
 }
 
 VersionInfoFactory::~VersionInfoFactory()
+{
+    clear();
+}
+void VersionInfoFactory::clear(void)
 {
     // for each stored version, delete
     for(uint32_t i = 0; i < versions.size();i++)
@@ -111,6 +114,8 @@ VersionInfoFactory::~VersionInfoFactory()
         delete versions[i];
     }
     versions.clear();
+    knownVersions.clear();
+    error = false;
 }
 
 VersionInfo * VersionInfoFactory::getVersionInfoByMD5(string hash)
@@ -768,5 +773,6 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
         }
     }
     error = false;
+    std::cerr << "Loaded " << versions.size() << " DF versions." << std::endl;
     return true;
 }

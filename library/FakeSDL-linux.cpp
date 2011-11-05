@@ -132,6 +132,11 @@ DFhackCExport int wgetch(WINDOW *win)
 static int (*_SDL_Init)(uint32_t flags) = 0;
 DFhackCExport int SDL_Init(uint32_t flags)
 {
+    // reroute stderr
+    freopen("stderr.log", "w", stderr);
+    // we don't reroute stdout until  we figure out if this should be done at all
+    // See: Console-linux.cpp
+
     // find real functions
     _SDL_Init = (int (*)( uint32_t )) dlsym(RTLD_NEXT, "SDL_Init");
     _SDL_Quit = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_Quit");

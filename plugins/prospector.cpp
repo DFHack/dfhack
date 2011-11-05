@@ -198,7 +198,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     DFHack::Maps *maps = c->getMaps();
     if (!maps->Start())
     {
-        con << "Cannot get map info!" << std::endl;
+        con.printerr("Cannot get map info!\n");
         c->Resume();
         return CR_FAILURE;
     }
@@ -208,13 +208,13 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     DFHack::Materials *mats = c->getMaterials();
     if (!mats->df_inorganic)
     {
-        con << "Unable to read inorganic material definitons!" << std::endl;
+        con.printerr("Unable to read inorganic material definitons!\n");
         c->Resume();
         return CR_FAILURE;
     }
     if (showPlants && !mats->df_organic)
     {
-        con << "Unable to read organic material definitons; plants won't be listed!" << std::endl;
+        con.printerr("Unable to read organic material definitons; plants won't be listed!\n");
         showPlants = false;
     }
 
@@ -234,21 +234,19 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
 
     if (!(showSlade && maps->ReadGlobalFeatures(globalFeatures)))
     {
-        con << "Unable to read global features; slade won't be listed!" << std::endl;
+        con.printerr("Unable to read global features; slade won't be listed!\n");
     }
 
     if (!maps->ReadLocalFeatures(localFeatures))
     {
-        con << "Unable to read local features; adamantine "
-            << (showTemple ? "and demon temples " : "")
-            << "won't be listed!" << std::endl;
+        con.printerr("Unable to read local features; adamantine and demon temples won't be listed.\n" );
     }
 
     uint32_t vegCount = 0;
     DFHack::Vegetation *veg = c->getVegetation();
     if (showPlants && !veg->Start())
     {
-        con << "Unable to read vegetation; plants won't be listed!" << std::endl;
+        con.printerr("Unable to read vegetation; plants won't be listed!\n" );
     }
 
     for(uint32_t z = 0; z < z_max; z++)

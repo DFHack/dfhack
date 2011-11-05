@@ -9,8 +9,3 @@ DFHACK_PLUGIN(notes notes.cpp)
 DFHACK_PLUGIN(memview memview.cpp)
 DFHACK_PLUGIN(buildprobe buildprobe.cpp)
 #DFHACK_PLUGIN(tiles tiles.cpp)
-
-OPTION(BUILD_DF2MC "Build DF2MC (needs a checkout first)." ON)
-if(BUILD_DF2MC)
-    add_subdirectory (df2mc)
-endif()

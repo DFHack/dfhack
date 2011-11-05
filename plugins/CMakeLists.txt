@@ -25,6 +25,11 @@ if(BUILD_DEV_PLUGINS)
     add_subdirectory (devel)
 endif()
 
+OPTION(BUILD_DF2MC "Build DF2MC (needs a checkout first)." ON)
+if(BUILD_DF2MC)
+    add_subdirectory (df2mc)
+endif()
+
 
 DFHACK_PLUGIN(reveal reveal.cpp)
 DFHACK_PLUGIN(probe probe.cpp)

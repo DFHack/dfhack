@@ -139,6 +139,17 @@ deramp (by zilpin)
 Removes all ramps designated for removal from the map. This is useful for replicating the old channel digging designation.
 It also removes any and all 'down ramps' that can remain after a cave-in (you don't have to designate anything for that to happen).
 
+df2minecraft
+============
+This generates a minecraft world out of the currently loaded fortress.
+Generated worlds are placed into your DF folder, named "World #".
+
+.. warning::
+    
+    * This is experimental! It *will* cause crashes.
+    * If it works, the process takes quite a while to complete.
+    * Do not use if you have any unsaved progress!
+
 dfusion
 =======
 This is the DFusion lua plugin system by warmist/darius, running as a DFHack plugin.

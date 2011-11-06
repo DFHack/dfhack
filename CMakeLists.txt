@@ -25,7 +25,7 @@ set(DF_VERSION_MINOR "31")
 set(DF_VERSION_PATCH "25")
 set(DF_VERSION "${DF_VERSION_MAJOR}.${DF_VERSION_MINOR}.${DF_VERSION_PATCH}")
 
-set(DFHACK_RELEASE "7e")
+set(DFHACK_RELEASE "8")
 
 ## where to install things (after the build is done, classic 'make install' or package structure)
 # the dfhack libraries will be installed here:

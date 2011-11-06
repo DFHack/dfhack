@@ -277,6 +277,14 @@ forcepause
 ==========
 Forces DF to pause. This is useful when your FPS drops below 1 and you lose control of the game.
 
+ * Activate with 'forcepause 1'
+ * Deactivate with 'forcepause 0'
+
+nopause
+=======
+Disables pausing (both manual and automatic) with the exception of pause forced by 'reveal hell'.
+This is nice for digging under rivers.
+
 die
 ===
 Instantly kills DF without saving.
@@ -328,6 +336,14 @@ http://www.bay12forums.com/smf/index.php?topic=43260.0
 
 Some additional resources:
 http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository
+
+tiletypes
+=========
+Can be used for painting map tiles and is a interactive command, much like liquids.
+You can paint tiles by their properties - shape, general material and a few others (paint).
+You can also paint only over tiles that match a set of properties (filter)
+
+For more details, see the 'help' command while using this.
 
 tubefill
 ==========

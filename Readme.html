@@ -384,36 +384,38 @@ access DF memory and allow for easier development of new tools.</p>
 <li><a class="reference internal" href="#liquids" id="id48">liquids</a></li>
 <li><a class="reference internal" href="#mode" id="id49">mode</a></li>
 <li><a class="reference internal" href="#forcepause" id="id50">forcepause</a></li>
-<li><a class="reference internal" href="#die" id="id51">die</a></li>
-<li><a class="reference internal" href="#probe" id="id52">probe</a></li>
-<li><a class="reference internal" href="#prospector" id="id53">prospector</a><ul>
-<li><a class="reference internal" href="#id8" id="id54">Options</a></li>
+<li><a class="reference internal" href="#nopause" id="id51">nopause</a></li>
+<li><a class="reference internal" href="#die" id="id52">die</a></li>
+<li><a class="reference internal" href="#probe" id="id53">probe</a></li>
+<li><a class="reference internal" href="#prospector" id="id54">prospector</a><ul>
+<li><a class="reference internal" href="#id8" id="id55">Options</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#reveal" id="id55">reveal</a></li>
-<li><a class="reference internal" href="#unreveal" id="id56">unreveal</a></li>
-<li><a class="reference internal" href="#revtoggle" id="id57">revtoggle</a></li>
-<li><a class="reference internal" href="#revflood" id="id58">revflood</a></li>
-<li><a class="reference internal" href="#seedwatch" id="id59">seedwatch</a></li>
-<li><a class="reference internal" href="#ssense-stonesense" id="id60">ssense / stonesense</a></li>
-<li><a class="reference internal" href="#tubefill" id="id61">tubefill</a></li>
-<li><a class="reference internal" href="#vdig" id="id62">vdig</a></li>
-<li><a class="reference internal" href="#vdigx" id="id63">vdigx</a></li>
-<li><a class="reference internal" href="#expdig" id="id64">expdig</a><ul>
-<li><a class="reference internal" href="#patterns" id="id65">Patterns:</a></li>
-<li><a class="reference internal" href="#filters" id="id66">Filters:</a></li>
-<li><a class="reference internal" href="#examples" id="id67">Examples:</a></li>
+<li><a class="reference internal" href="#reveal" id="id56">reveal</a></li>
+<li><a class="reference internal" href="#unreveal" id="id57">unreveal</a></li>
+<li><a class="reference internal" href="#revtoggle" id="id58">revtoggle</a></li>
+<li><a class="reference internal" href="#revflood" id="id59">revflood</a></li>
+<li><a class="reference internal" href="#seedwatch" id="id60">seedwatch</a></li>
+<li><a class="reference internal" href="#ssense-stonesense" id="id61">ssense / stonesense</a></li>
+<li><a class="reference internal" href="#tiletypes" id="id62">tiletypes</a></li>
+<li><a class="reference internal" href="#tubefill" id="id63">tubefill</a></li>
+<li><a class="reference internal" href="#vdig" id="id64">vdig</a></li>
+<li><a class="reference internal" href="#vdigx" id="id65">vdigx</a></li>
+<li><a class="reference internal" href="#expdig" id="id66">expdig</a><ul>
+<li><a class="reference internal" href="#patterns" id="id67">Patterns:</a></li>
+<li><a class="reference internal" href="#filters" id="id68">Filters:</a></li>
+<li><a class="reference internal" href="#examples" id="id69">Examples:</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#digcircle" id="id68">digcircle</a><ul>
-<li><a class="reference internal" href="#shape" id="id69">Shape:</a></li>
-<li><a class="reference internal" href="#action" id="id70">Action:</a></li>
-<li><a class="reference internal" href="#designation-types" id="id71">Designation types:</a></li>
-<li><a class="reference internal" href="#id9" id="id72">Examples:</a></li>
+<li><a class="reference internal" href="#digcircle" id="id70">digcircle</a><ul>
+<li><a class="reference internal" href="#shape" id="id71">Shape:</a></li>
+<li><a class="reference internal" href="#action" id="id72">Action:</a></li>
+<li><a class="reference internal" href="#designation-types" id="id73">Designation types:</a></li>
+<li><a class="reference internal" href="#id9" id="id74">Examples:</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#weather" id="id73">weather</a><ul>
-<li><a class="reference internal" href="#id10" id="id74">Options:</a></li>
+<li><a class="reference internal" href="#weather" id="id75">weather</a><ul>
+<li><a class="reference internal" href="#id10" id="id76">Options:</a></li>
 </ul>
 </li>
 </ul>
@@ -776,20 +778,31 @@ You just lost a fortress and gained an adventurer.</p>
 <div class="section" id="forcepause">
 <h2><a class="toc-backref" href="#id50">forcepause</a></h2>
 <p>Forces DF to pause. This is useful when your FPS drops below 1 and you lose control of the game.</p>
+<blockquote>
+<ul class="simple">
+<li>Activate with 'forcepause 1'</li>
+<li>Deactivate with 'forcepause 0'</li>
+</ul>
+</blockquote>
+</div>
+<div class="section" id="nopause">
+<h2><a class="toc-backref" href="#id51">nopause</a></h2>
+<p>Disables pausing (both manual and automatic) with the exception of pause forced by 'reveal hell'.
+This is nice for digging under rivers.</p>
 </div>
 <div class="section" id="die">
-<h2><a class="toc-backref" href="#id51">die</a></h2>
+<h2><a class="toc-backref" href="#id52">die</a></h2>
 <p>Instantly kills DF without saving.</p>
 </div>
 <div class="section" id="probe">
-<h2><a class="toc-backref" href="#id52">probe</a></h2>
+<h2><a class="toc-backref" href="#id53">probe</a></h2>
 <p>Can be used to determine tile properties like temperature.</p>
 </div>
 <div class="section" id="prospector">
-<h2><a class="toc-backref" href="#id53">prospector</a></h2>
+<h2><a class="toc-backref" href="#id54">prospector</a></h2>
 <p>Lists all available minerals on the map, how much of them there is and the z-levels where they can be found. By default, only processes the already discovered part of the map.</p>
 <div class="section" id="id8">
-<h3><a class="toc-backref" href="#id54">Options</a></h3>
+<h3><a class="toc-backref" href="#id55">Options</a></h3>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -801,28 +814,28 @@ You just lost a fortress and gained an adventurer.</p>
 </div>
 </div>
 <div class="section" id="reveal">
-<h2><a class="toc-backref" href="#id55">reveal</a></h2>
+<h2><a class="toc-backref" href="#id56">reveal</a></h2>
 <p>This reveals the map. By default, HFS will remain hidden so that the demons don't spawn. You can use 'reveal hell' to reveal everything. With hell revealed, you won't be able to unpause until you hide the map again. If you really want to unpause with hell revealed, use 'reveal demons'.</p>
 </div>
 <div class="section" id="unreveal">
-<h2><a class="toc-backref" href="#id56">unreveal</a></h2>
+<h2><a class="toc-backref" href="#id57">unreveal</a></h2>
 <p>Reverts the effects of 'reveal'.</p>
 </div>
 <div class="section" id="revtoggle">
-<h2><a class="toc-backref" href="#id57">revtoggle</a></h2>
+<h2><a class="toc-backref" href="#id58">revtoggle</a></h2>
 <p>Switches between 'reveal' and 'unreveal'.</p>
 </div>
 <div class="section" id="revflood">
-<h2><a class="toc-backref" href="#id58">revflood</a></h2>
+<h2><a class="toc-backref" href="#id59">revflood</a></h2>
 <p>This command will hide the whole map and then reveal all the tiles that have a path to the in-game cursor.</p>
 </div>
 <div class="section" id="seedwatch">
-<h2><a class="toc-backref" href="#id59">seedwatch</a></h2>
+<h2><a class="toc-backref" href="#id60">seedwatch</a></h2>
 <p>Tool for turning cooking of seeds and plants on/off depending on how much you have of them.</p>
 <p>See 'seedwatch help' for detailed description.</p>
 </div>
 <div class="section" id="ssense-stonesense">
-<h2><a class="toc-backref" href="#id60">ssense / stonesense</a></h2>
+<h2><a class="toc-backref" href="#id61">ssense / stonesense</a></h2>
 <p>An isometric visualizer that runs in a second window. This requires working graphics acceleration and at least a dual core CPU (otherwise it will slow down DF).</p>
 <p>All the data resides in the 'stonesense' directory. For detailed instructions, see stonesense/README.txt</p>
 <p>Compatible with Windows &gt; XP SP3 and most modern Linux distributions.</p>
@@ -831,25 +844,32 @@ You just lost a fortress and gained an adventurer.</p>
 <p>Some additional resources:
 <a class="reference external" href="http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository">http://df.magmawiki.com/index.php/Utility:Stonesense/Content_repository</a></p>
 </div>
+<div class="section" id="tiletypes">
+<h2><a class="toc-backref" href="#id62">tiletypes</a></h2>
+<p>Can be used for painting map tiles and is a interactive command, much like liquids.
+You can paint tiles by their properties - shape, general material and a few others (paint).
+You can also paint only over tiles that match a set of properties (filter)</p>
+<p>For more details, see the 'help' command while using this.</p>
+</div>
 <div class="section" id="tubefill">
-<h2><a class="toc-backref" href="#id61">tubefill</a></h2>
+<h2><a class="toc-backref" href="#id63">tubefill</a></h2>
 <p>Fills all the adamantine veins again. Veins that were empty will be filled in too, but might still trigger a demon invasion (this is a known bug).</p>
 </div>
 <div class="section" id="vdig">
-<h2><a class="toc-backref" href="#id62">vdig</a></h2>
+<h2><a class="toc-backref" href="#id64">vdig</a></h2>
 <p>Designates a whole vein for digging. Requires an active in-game cursor placed over a vein tile. With the 'x' option, it will traverse z-levels (putting stairs between the same-material tiles).</p>
 </div>
 <div class="section" id="vdigx">
-<h2><a class="toc-backref" href="#id63">vdigx</a></h2>
+<h2><a class="toc-backref" href="#id65">vdigx</a></h2>
 <p>A permanent alias for 'vdig x'.</p>
 </div>
 <div class="section" id="expdig">
-<h2><a class="toc-backref" href="#id64">expdig</a></h2>
+<h2><a class="toc-backref" href="#id66">expdig</a></h2>
 <p>This command can be used for exploratory mining.</p>
 <p>See: <a class="reference external" href="http://df.magmawiki.com/index.php/DF2010:Exploratory_mining">http://df.magmawiki.com/index.php/DF2010:Exploratory_mining</a></p>
 <p>There are two variables that can be set: pattern and filter.</p>
 <div class="section" id="patterns">
-<h3><a class="toc-backref" href="#id65">Patterns:</a></h3>
+<h3><a class="toc-backref" href="#id67">Patterns:</a></h3>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -866,7 +886,7 @@ You just lost a fortress and gained an adventurer.</p>
 </table>
 </div>
 <div class="section" id="filters">
-<h3><a class="toc-backref" href="#id66">Filters:</a></h3>
+<h3><a class="toc-backref" href="#id68">Filters:</a></h3>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -882,7 +902,7 @@ You just lost a fortress and gained an adventurer.</p>
 <p>After you have a pattern set, you can use 'expdig' to apply it again.</p>
 </div>
 <div class="section" id="examples">
-<h3><a class="toc-backref" href="#id67">Examples:</a></h3>
+<h3><a class="toc-backref" href="#id69">Examples:</a></h3>
 <ul class="simple">
 <li>'expdig diag5 hidden' = designate the diagonal 5 patter over all hidden tiles.</li>
 <li>'expdig' = apply last used pattern and filter.</li>
@@ -891,11 +911,11 @@ You just lost a fortress and gained an adventurer.</p>
 </div>
 </div>
 <div class="section" id="digcircle">
-<h2><a class="toc-backref" href="#id68">digcircle</a></h2>
+<h2><a class="toc-backref" href="#id70">digcircle</a></h2>
 <p>A command for easy designation of filled and hollow circles.
 It has several types of options.</p>
 <div class="section" id="shape">
-<h3><a class="toc-backref" href="#id69">Shape:</a></h3>
+<h3><a class="toc-backref" href="#id71">Shape:</a></h3>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -910,7 +930,7 @@ It has several types of options.</p>
 </table>
 </div>
 <div class="section" id="action">
-<h3><a class="toc-backref" href="#id70">Action:</a></h3>
+<h3><a class="toc-backref" href="#id72">Action:</a></h3>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -925,7 +945,7 @@ It has several types of options.</p>
 </table>
 </div>
 <div class="section" id="designation-types">
-<h3><a class="toc-backref" href="#id71">Designation types:</a></h3>
+<h3><a class="toc-backref" href="#id73">Designation types:</a></h3>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -948,7 +968,7 @@ It has several types of options.</p>
 repeats with the last selected parameters.</p>
 </div>
 <div class="section" id="id9">
-<h3><a class="toc-backref" href="#id72">Examples:</a></h3>
+<h3><a class="toc-backref" href="#id74">Examples:</a></h3>
 <ul class="simple">
 <li>'digcircle filled 3' = Dig a filled circle with radius = 3.</li>
 <li>'digcircle' = Do it again.</li>
@@ -956,11 +976,11 @@ repeats with the last selected parameters.</p>
 </div>
 </div>
 <div class="section" id="weather">
-<h2><a class="toc-backref" href="#id73">weather</a></h2>
+<h2><a class="toc-backref" href="#id75">weather</a></h2>
 <p>Prints the current weather map by default.</p>
 <p>Also lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.</p>
 <div class="section" id="id10">
-<h3><a class="toc-backref" href="#id74">Options:</a></h3>
+<h3><a class="toc-backref" href="#id76">Options:</a></h3>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />

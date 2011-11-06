@@ -56,6 +56,18 @@ SET(DFHACK_DEVDOC_DESTINATION hack)
 OPTION(BUILD_LIBRARY "Build the library that goes into DF." ON)
 OPTION(BUILD_PLUGINS "Build the plugins." ON)
 
+## flags for GCC
+# default to hidden symbols
+# build 32bit
+# ensure compatibility with older CPUs
+# enable C++11 features
+IF(UNIX)
+  add_definitions(-DLINUX_BUILD)
+  SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
+  SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32 -march=i686 -std=c++0x")
+  SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32 -march=i686")
+ENDIF()
+
 #add depends to include path
 INCLUDE_DIRECTORIES ( library/depends )
 

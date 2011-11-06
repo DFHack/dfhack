@@ -133,15 +133,10 @@ IF(UNIX)
 ENDIF()
 
 IF(UNIX)
-  add_definitions(-DLINUX_BUILD)
-  SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
-  SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32 -std=c++0x")
-  SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32")
   SET(PROJECT_LIBS rt )
-ELSE()
-  IF(MSVC)
-    SET(PROJECT_LIBS psapi ${dfhack_SOURCE_DIR}/library/depends/ntdll/ntdll.lib)
-  ENDIF()
+ELSE(WIN32)
+  #FIXME: do we really need this?
+  SET(PROJECT_LIBS psapi ${dfhack_SOURCE_DIR}/library/depends/ntdll/ntdll.lib)
 ENDIF()
 
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SRCS})

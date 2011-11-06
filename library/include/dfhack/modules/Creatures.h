@@ -430,6 +430,20 @@ namespace DFHack
         
     };
     /**
+     * A creature though - dwarves staring at waterfalls!
+     * \ingroup grp_creatures
+     */
+    struct df_thought
+    {
+        // needs enum
+        int16_t type;
+        // possible int16_t here
+        int32_t age;
+        int32_t subtype;
+        int32_t severity;
+        //possibly more.
+    };
+    /**
      * A creature, as it appears in DF memory
      * \ingroup grp_creatures
      */
@@ -667,7 +681,7 @@ namespace DFHack
 
         std::vector<uint32_t> unk_6d0;
         std::vector<uint32_t> unk_6e0;
-        std::vector<uint32_t> unk_6f0;
+        std::vector<df_thought *> thoughts;
         std::vector<uint32_t> unk_700;
         uint32_t happiness;     // 710
         uint16_t unk_714;

@@ -749,7 +749,9 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
 
                 if ((filter.shape > -1 && filter.shape != source->shape)
                  || (filter.material > -1 && filter.material != source->material)
-                 || (filter.special > -1 && filter.special != source->special))
+                 || (filter.special > -1 && filter.special != source->special)
+                 || (filter.variant > -1 && filter.variant != source->variant)
+                )
                 {
                     continue;
                 }
@@ -771,13 +773,30 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
                 {
                     special = source->special;
                 }
-
                 DFHack::TileVariant variant = paint.variant;
+                /*
+                 * FIXME: variant should be:
+                 * 1. If user variant:
+                 * 2.   If user variant \belongs target variants
+                 * 3.     use user variant
+                 * 4.   Else
+                 * 5.     use variant 0
+                 * 6. If the source variant \belongs target variants
+                 * 7    use source variant
+                 * 8  ElseIf num target shape/material variants > 1
+                 * 9.   pick one randomly
+                 * 10.Else
+                 * 11.  use variant 0
+                 *
+                 * The following variant check has been disabled because it's severely limiting
+                 * the usefullness of the tool.
+                 */
+                /*
                 if (variant < 0)
                 {
                     variant = source->variant;
                 }
-
+                */
                 // Remove direction from directionless tiles
                 DFHack::TileDirection direction = source->direction;
                 if (!(shape == DFHack::RIVER_BED || shape == DFHack::BROOK_BED || shape == DFHack::WALL && (material == DFHack::CONSTRUCTED || special == DFHack::TILE_SMOOTH))) {

@@ -47,6 +47,7 @@ struct hideblock
 // the saved data. we keep map size to check if things still match
 uint32_t x_max, y_max, z_max;
 std::vector <hideblock> hidesaved;
+bool nopause_state = false;
 
 enum revealstate
 {
@@ -62,6 +63,7 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
 DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string> & params);
 DFhackCExport command_result revtoggle(DFHack::Core * c, std::vector<std::string> & params);
 DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string> & params);
+DFhackCExport command_result nopause(DFHack::Core * c, std::vector<std::string> & params);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -75,20 +77,25 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.push_back(PluginCommand("unreveal","Revert the map to its previous state.",unreveal));
     commands.push_back(PluginCommand("revtoggle","Reveal/unreveal depending on state.",revtoggle));
     commands.push_back(PluginCommand("revflood","Hide all, reveal all tiles reachable from cursor position.",revflood));
+    commands.push_back(PluginCommand("nopause","Disable pausing (doesn't affect pause forced by reveal).",nopause));
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_onupdate ( Core * c )
 {
-    // if the map is revealed and we're in fortress mode, force the game to pause.
-    if(revealed == REVEALED)
+    DFHack::World *World =c->getWorld();
+    t_gamemodes gm;
+    World->ReadGameMode(gm);
+    if(gm.g_mode == GAMEMODE_DWARF)
     {
-        DFHack::World *World =c->getWorld();
-        t_gamemodes gm;
-        World->ReadGameMode(gm);
-        if(gm.g_mode == GAMEMODE_DWARF)
+        // if the map is revealed and we're in fortress mode, force the game to pause.
+        if(revealed == REVEALED)
         {
             World->SetPauseState(true);
+        }
+        else if(nopause_state)
+        {
+            World->SetPauseState(false);
         }
     }
     return CR_OK;
@@ -98,6 +105,25 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 {
     return CR_OK;
 }
+
+command_result nopause (Core * c, std::vector <std::string> & parameters)
+{
+    if (parameters.size() == 1 && (parameters[0] == "0" || parameters[0] == "1"))
+    {
+        if (parameters[0] == "0")
+            nopause_state = 0;
+        else
+            nopause_state = 1;
+        c->con.print("nopause %sactivated.\n", (nopause_state ? "" : "de"));
+    }
+    else
+    {
+        c->con.print("Disable pausing (doesn't affect pause forced by reveal).\nActivate with 'nopause 1', deactivate with 'nopause 0'.\nCurrent state: %d.\n", nopause_state);
+    }
+
+    return CR_OK;
+}
+
 
 DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> & params)
 {

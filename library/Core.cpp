@@ -221,8 +221,14 @@ void fIOthread(void * iodata)
                 else
                 {
                     Plugin * plug = plug_mgr->getPluginByName(plugname);
-                    if(!plug) con.printerr("No such plugin\n");
-                    plug->load();
+                    if(!plug)
+                    {
+                        con.printerr("No such plugin\n");
+                    }
+                    else
+                    {
+                        plug->load();
+                    }
                 }
             }
         }
@@ -242,8 +248,14 @@ void fIOthread(void * iodata)
                 else
                 {
                     Plugin * plug = plug_mgr->getPluginByName(plugname);
-                    if(!plug) con.printerr("No such plugin\n");
-                    plug->reload();
+                    if(!plug)
+                    {
+                        con.printerr("No such plugin\n");
+                    }
+                    else
+                    {
+                        plug->reload();
+                    }
                 }
             }
         }
@@ -263,8 +275,14 @@ void fIOthread(void * iodata)
                 else
                 {
                     Plugin * plug = plug_mgr->getPluginByName(plugname);
-                    if(!plug) con.printerr("No such plugin\n");
-                    plug->unload();
+                    if(!plug)
+                    {
+                        con.printerr("No such plugin\n");
+                    }
+                    else
+                    {
+                        plug->unload();
+                    }
                 }
             }
         }

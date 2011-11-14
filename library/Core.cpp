@@ -455,7 +455,7 @@ bool Core::Init()
         out << "Error while reading Memory.xml:\n";
         out << err.what() << std::endl;
         delete vif;
-        vif = nullptr;
+        vif = NULL;
         errorstate = true;
         fatal(out.str(), true);
         return false;

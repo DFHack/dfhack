@@ -293,8 +293,8 @@ probe
 =====
 Can be used to determine tile properties like temperature.
 
-prospector
-============
+prospect
+========
 Lists all available minerals on the map, how much of them there is and the z-levels where they can be found. By default, only processes the already discovered part of the map.
 
 Options

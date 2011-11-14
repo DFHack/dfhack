@@ -120,11 +120,11 @@ bool Creatures::Finish()
 
 df_creature * Creatures::GetCreature (const int32_t index)
 {
-    if(!d->Started) return nullptr;
+    if(!d->Started) return NULL;
 
     // read pointer from vector at position
     if(index > creatures->size())
-        return nullptr;
+        return 0;
     return creatures->at(index);
 }
 
@@ -156,7 +156,7 @@ int32_t Creatures::GetCreatureInBox (int32_t index, df_creature ** furball,
         }
         index++;
     }
-    *furball = nullptr;
+    *furball = NULL;
     return -1;
 }
 

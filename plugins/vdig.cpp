@@ -59,6 +59,117 @@ enum circle_what
     circle_invert,
 };
 
+bool dig (MapExtras::MapCache & MCache,
+          circle_what what,
+          e_designation type,
+          int32_t x, int32_t y, int32_t z,
+          int x_max, int y_max
+         )
+{
+    DFCoord at (x,y,z);
+    auto b = MCache.BlockAt(at/16);
+    if(!b || !b->valid)
+        return false;
+    if(x == 0 || x == x_max * 16 - 1)
+    {
+        //c->con.print("not digging map border\n");
+        return false;
+    }
+    if(y == 0 || y == y_max * 16 - 1)
+    {
+        //c->con.print("not digging map border\n");
+        return false;
+    }
+    uint16_t tt = MCache.tiletypeAt(at);
+    t_designation des = MCache.designationAt(at);
+    // could be potentially used to locate hidden constructions?
+    if(tileMaterial(tt) == CONSTRUCTED && !des.bits.hidden)
+        return false;
+    TileShape ts = tileShape(tt);
+    if(ts == EMPTY)
+        return false;
+    if(!des.bits.hidden)
+    {
+        do
+        {
+            if(isWallTerrain(tt))
+            {
+                std::cerr << "allowing tt" << tt << ", is wall\n";
+                break;
+            }
+            if(isFloorTerrain(tt)
+               && (type == designation_d_stair || type == designation_channel)
+               && ts != TREE_OK
+               && ts != TREE_DEAD
+            )
+            {
+                std::cerr << "allowing tt" << tt << ", is floor\n";
+                break;
+            }
+            if(isStairTerrain(tt) && type == designation_channel )
+                break;
+            return false;
+        }
+        while(0);
+    }
+    switch(what)
+    {
+        case circle_set:
+            if(des.bits.dig == designation_no)
+            {
+                des.bits.dig = type;
+            }
+            break;
+        case circle_unset:
+            if (des.bits.dig != designation_no)
+            {
+                des.bits.dig = designation_no;
+            }
+            break;
+        case circle_invert:
+            if(des.bits.dig == designation_no)
+            {
+                des.bits.dig = type;
+            }
+            else
+            {
+                des.bits.dig = designation_no;
+            }
+            break;
+    }
+    std::cerr << "allowing tt" << tt << "\n";
+    MCache.setDesignationAt(at,des);
+    return true;
+};
+
+bool lineX (MapExtras::MapCache & MCache,
+            circle_what what,
+            e_designation type,
+            int32_t y1, int32_t y2, int32_t x, int32_t z,
+            int x_max, int y_max
+           )
+{
+    for(int32_t y = y1; y <= y2; y++)
+    {
+        dig(MCache, what, type,x,y,z, x_max, y_max);
+    }
+    return true;
+};
+
+bool lineY (MapExtras::MapCache & MCache,
+            circle_what what,
+            e_designation type,
+            int32_t x1, int32_t x2, int32_t y, int32_t z,
+            int x_max, int y_max
+           )
+{
+    for(int32_t x = x1; x <= x2; x++)
+    {
+        dig(MCache, what, type,x,y,z, x_max, y_max);
+    }
+    return true;
+};
+
 DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
 {
     static bool filled = false;
@@ -173,98 +284,6 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         c->con.printerr("Can't get the cursor coords...\n");
         return CR_FAILURE;
     }
-    auto dig = [&](int32_t x, int32_t y, int32_t z) -> bool
-    {
-        DFCoord at (x,y,z);
-        auto b = MCache.BlockAt(at/16);
-        if(!b || !b->valid)
-            return false;
-        if(x == 0 || x == x_max * 16 - 1)
-        {
-            //c->con.print("not digging map border\n");
-            return false;
-        }
-        if(y == 0 || y == y_max * 16 - 1)
-        {
-            //c->con.print("not digging map border\n");
-            return false;
-        }
-        uint16_t tt = MCache.tiletypeAt(at);
-        t_designation des = MCache.designationAt(at);
-        // could be potentially used to locate hidden constructions?
-        if(tileMaterial(tt) == CONSTRUCTED && !des.bits.hidden)
-            return false;
-        TileShape ts = tileShape(tt);
-        if(ts == EMPTY)
-            return false;
-        if(!des.bits.hidden)
-        {
-            do
-            {
-                if(isWallTerrain(tt))
-                {
-                    std::cerr << "allowing tt" << tt << ", is wall\n";
-                    break;
-                }
-                if(isFloorTerrain(tt)
-                   && (type == designation_d_stair || type == designation_channel)
-                   && ts != TREE_OK
-                   && ts != TREE_DEAD
-                )
-                {
-                    std::cerr << "allowing tt" << tt << ", is floor\n";
-                    break;
-                }
-                if(isStairTerrain(tt) && type == designation_channel )
-                    break;
-                return false;
-            }
-            while(0);
-        }
-        switch(what)
-        {
-            case circle_set:
-                if(des.bits.dig == designation_no)
-                {
-                    des.bits.dig = type;
-                }
-                break;
-            case circle_unset:
-                if (des.bits.dig != designation_no)
-                {
-                    des.bits.dig = designation_no;
-                }
-            case circle_invert:
-                if(des.bits.dig == designation_no)
-                {
-                    des.bits.dig = type;
-                }
-                else
-                {
-                    des.bits.dig = designation_no;
-                }
-                break;
-        }
-        std::cerr << "allowing tt" << tt << "\n";
-        MCache.setDesignationAt(at,des);
-        return true;
-    };
-    auto lineX = [&](int32_t y1, int32_t y2, int32_t x, int32_t z) -> bool
-    {
-        for(int32_t y = y1; y <= y2; y++)
-        {
-            dig(x,y,z);
-        }
-        return true;
-    };
-    auto lineY = [&](int32_t x1, int32_t x2, int32_t y, int32_t z) -> bool
-    {
-        for(int32_t x = x1; x <= x2; x++)
-        {
-            dig(x,y,z);
-        }
-        return true;
-    };
     int r = diameter / 2;
     int iter;
     bool adjust;
@@ -273,12 +292,12 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         // paint center
         if(filled)
         {
-            lineY(cx - r, cx + r, cy, cz);
+            lineY(MCache,what,type, cx - r, cx + r, cy, cz,x_max,y_max);
         }
         else
         {
-            dig(cx - r, cy, cz);
-            dig(cx + r, cy, cz);
+            dig(MCache, what, type,cx - r, cy, cz,x_max,y_max);
+            dig(MCache, what, type,cx + r, cy, cz,x_max,y_max);
         }
         adjust = false;
         iter = 2;
@@ -310,24 +329,24 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         // paint
         if(filled || iter == diameter - 1)
         {
-            lineY(left, right, top , cz);
-            lineY(left, right, bottom , cz);
+            lineY(MCache,what,type, left, right, top , cz,x_max,y_max);
+            lineY(MCache,what,type, left, right, bottom , cz,x_max,y_max);
         }
         else
         {
-            dig(left, top, cz);
-            dig(left, bottom, cz);
-            dig(right, top, cz);
-            dig(right, bottom, cz);
+            dig(MCache, what, type,left, top, cz,x_max,y_max);
+            dig(MCache, what, type,left, bottom, cz,x_max,y_max);
+            dig(MCache, what, type,right, top, cz,x_max,y_max);
+            dig(MCache, what, type,right, bottom, cz,x_max,y_max);
         }
         if(!filled && diff > 1)
         {
             int lright = cx + lastwhole;
             int lleft = cx - lastwhole + adjust;
-            lineY(lleft + 1, left - 1, top + 1 , cz);
-            lineY(right + 1, lright - 1, top + 1 , cz);
-            lineY(lleft + 1, left - 1, bottom - 1 , cz);
-            lineY(right + 1, lright - 1, bottom - 1 , cz);
+            lineY(MCache,what,type, lleft + 1, left - 1, top + 1 , cz,x_max,y_max);
+            lineY(MCache,what,type, right + 1, lright - 1, top + 1 , cz,x_max,y_max);
+            lineY(MCache,what,type, lleft + 1, left - 1, bottom - 1 , cz,x_max,y_max);
+            lineY(MCache,what,type, right + 1, lright - 1, bottom - 1 , cz,x_max,y_max);
         }
         lastwhole = whole;
     }
@@ -544,6 +563,60 @@ enum explo_what
     EXPLO_DESIGNATED,
 };
 
+bool stamp_pattern (DFHack::Maps * maps,
+                    uint32_t bx, uint32_t by, int z_level,
+                    digmask & dm, explo_how how, explo_what what,
+                    int x_max, int y_max
+                   )
+{
+    df_block * bl = maps->getBlock(bx,by,z_level);
+    if(!bl)
+        return false;
+    int x = 0,mx = 16;
+    if(bx == 0)
+        x = 1;
+    if(bx == x_max - 1)
+        mx = 15;
+    for(; x < mx; x++)
+    {
+        int y = 0,my = 16;
+        if(by == 0)
+            y = 1;
+        if(by == y_max - 1)
+            my = 15;
+        for(; y < my; y++)
+        {
+            naked_designation & des = bl->designation[x][y].bits;
+            short unsigned int tt = bl->tiletype[x][y];
+            // could be potentially used to locate hidden constructions?
+            if(tileMaterial(tt) == CONSTRUCTED && !des.hidden)
+                continue;
+            if(!isWallTerrain(tt) && !des.hidden)
+                continue;
+            if(how == EXPLO_CLEAR)
+            {
+                des.dig = designation_no;
+                continue;
+            }
+            if(dm[y][x])
+            {
+                if(what == EXPLO_ALL
+                    || des.dig == designation_default && what == EXPLO_DESIGNATED
+                    || des.hidden && what == EXPLO_HIDDEN)
+                {
+                    des.dig = designation_default;
+                }
+            }
+            else if(what == EXPLO_DESIGNATED)
+            {
+                des.dig = designation_no;
+            }
+        }
+    }
+    bl->flags.set(BLOCK_DESIGNATED);
+    return true;
+};
+
 DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
 {
     bool force_help = false;
@@ -624,55 +697,6 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
         c->con.printerr("Can't get view coords...\n");
         return CR_FAILURE;
     }
-    auto apply = [&](uint32_t bx, uint32_t by, digmask & dm) -> bool
-    {
-        df_block * bl = maps->getBlock(bx,by,z_level);
-        if(!bl)
-            return false;
-        int x = 0,mx = 16;
-        if(bx == 0)
-            x = 1;
-        if(bx == x_max - 1)
-            mx = 15;
-        for(; x < mx; x++)
-        {
-            int y = 0,my = 16;
-            if(by == 0)
-                y = 1;
-            if(by == y_max - 1)
-                my = 15;
-            for(; y < my; y++)
-            {
-                naked_designation & des = bl->designation[x][y].bits;
-                short unsigned int tt = bl->tiletype[x][y];
-                // could be potentially used to locate hidden constructions?
-                if(tileMaterial(tt) == CONSTRUCTED && !des.hidden)
-                    continue;
-                if(!isWallTerrain(tt) && !des.hidden)
-                    continue;
-                if(how == EXPLO_CLEAR)
-                {
-                    des.dig = designation_no;
-                    continue;
-                }
-                if(dm[y][x])
-                {
-                    if(what == EXPLO_ALL
-                        || des.dig == designation_default && what == EXPLO_DESIGNATED
-                        || des.hidden && what == EXPLO_HIDDEN)
-                    {
-                        des.dig = designation_default;
-                    }
-                }
-                else if(what == EXPLO_DESIGNATED)
-                {
-                    des.dig = designation_no;
-                }
-            }
-        }
-        bl->flags.set(BLOCK_DESIGNATED);
-        return true;
-    };
     if(how == EXPLO_DIAG5)
     {
         int which;
@@ -681,7 +705,8 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             for(int32_t y = 0 ; y < y_max; y++)
             {
                 which = (4*x + y) % 5;
-                apply(x,y_max - 1 - y,diag5[which]);
+                stamp_pattern(maps, x,y_max - 1 - y, z_level, diag5[which],
+                              how, what, x_max, y_max);
             }
         }
     }
@@ -693,7 +718,8 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             which = x % 3;
             for(int32_t y = 0 ; y < y_max; y++)
             {
-                apply(x,y,ladder[which]);
+                stamp_pattern(maps, x, y, z_level, ladder[which],
+                    how, what, x_max, y_max);
             }
         }
     }
@@ -724,8 +750,13 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
         mx.WriteAll();
     }
     else for(uint32_t x = 0; x < x_max; x++)
+    {
         for(int32_t y = 0 ; y < y_max; y++)
-            apply(x,y,all_tiles);
+        {
+            stamp_pattern(maps, x, y, z_level, all_tiles,
+                          how, what, x_max, y_max);
+        }
+    }
     c->Resume();
     return CR_OK;
 }

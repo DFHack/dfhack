@@ -17,20 +17,21 @@ using MapExtras::MapCache;
 using namespace DFHack;
 
 //Function pointer type for whole-map tile checks.
-typedef bool (*checkTile)(DFHack::DFCoord, MapExtras::MapCache);
+typedef void (*checkTile)(DFHack::DFCoord, MapExtras::MapCache *);
 
 //Forward Declarations for Commands
 DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::string> & params);
 DFhackCExport command_result alltraffic(DFHack::Core * c, std::vector<std::string> & params);
 
-DFhackCExport command_result testchecktile(DFHack::Core * c, std::vector<std::string> & params);
-
 //Forward Declarations for Utility Functions
-DFhackCExport command_result setAllMatching(DFHack::Core * c, e_traffic newTraffic, checkTile check,
+DFhackCExport command_result setAllMatching(DFHack::Core * c, checkTile checkProc,
 											DFHack::DFCoord minCoord = DFHack::DFCoord(0, 0, 0),
 											DFHack::DFCoord maxCoord = DFHack::DFCoord(0xFFFF, 0xFFFF, 0xFFFFFFFF));
 
-bool checkerboard(DFHack::DFCoord coord, MapExtras::MapCache map);
+void allHigh(DFHack::DFCoord coord, MapExtras::MapCache * map);
+void allNormal(DFHack::DFCoord coord, MapExtras::MapCache * map);
+void allLow(DFHack::DFCoord coord, MapExtras::MapCache * map);
+void allRestricted(DFHack::DFCoord coord, MapExtras::MapCache * map);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -42,10 +43,6 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.clear();
 	commands.push_back(PluginCommand("filltraffic","Flood-fill with selected traffic designation from cursor",filltraffic));
 	commands.push_back(PluginCommand("alltraffic","Set traffic for the entire map",alltraffic));
-
-
-	commands.push_back(PluginCommand("testchecktile","Create checkerboard pattern",testchecktile));
-
 
     return CR_OK;
 }
@@ -248,9 +245,8 @@ enum e_checktype {no_check, check_equal, check_nequal};
 
 DFhackCExport command_result alltraffic(DFHack::Core * c, std::vector<std::string> & params)
 {
-	//Target traffic types.
-	e_traffic target = traffic_normal;
-
+	void (*proc)(DFHack::DFCoord, MapExtras::MapCache *) = allNormal;
+	
 	//Loop through parameters
     for(int i = 0; i < params.size();i++)
     {
@@ -266,68 +262,28 @@ DFhackCExport command_result alltraffic(DFHack::Core * c, std::vector<std::strin
             return CR_OK;
         }
 
+		//Pick traffic type. Possibly set bounding rectangle later.
 		switch (toupper(params[i][0]))
 		{
 			case 'H':
-				target = traffic_high; break;
+				proc = allHigh; break;
 			case 'N':
-				target = traffic_normal; break;
+				proc = allNormal; break;
 			case 'L':
-				target = traffic_low; break;
+				proc = allLow; break;
 			case 'R':
-				target = traffic_restricted; break;
+				proc = allRestricted; break;
 		}
     }
 
-	//Initialization.
-	c->Suspend();
-
-	DFHack::Maps * Maps = c->getMaps();
-    DFHack::Gui * Gui = c->getGui();
-    // init the map
-    if(!Maps->Start())
-    {
-        c->con.printerr("Can't init map. Make sure you have a map loaded in DF.\n");
-        c->Resume();
-        return CR_FAILURE;
-    }
-
-	//Maximum map size.
-	uint32_t x_max,y_max,z_max;
-    Maps->getSize(x_max,y_max,z_max);
-    uint32_t tx_max = x_max * 16;
-    uint32_t ty_max = y_max * 16;
-
-	MapExtras::MapCache * MCache = new MapExtras::MapCache(Maps);
-
-	c->con.print("Entire map ... FILLING!\n");
-
-	//Loop through every single tile
-	for(uint32_t x = 0; x <= tx_max; x++)
-	{
-		for(uint32_t y = 0; y <= ty_max; y++)
-		{
-			for(uint32_t z = 0; z <= z_max; z++)
-			{
-				DFHack::DFCoord tile = DFHack::DFCoord(x, y, z);
-				DFHack::t_designation des = MCache->designationAt(tile);
-
-				des.bits.traffic = target;
-				MCache->setDesignationAt(tile, des);
-			}
-		}
-	}
-
-	MCache->WriteAll();
-    c->Resume();
-    return CR_OK;
+    return setAllMatching(c, proc);
 }
 
 //Helper function for writing new functions that check every tile on the map.
 //newTraffic is the traffic designation to set.
 //check takes a coordinate and the map cache as arguments, and returns true if the criteria is met.
 //minCoord and maxCoord can be used to specify a bounding cube.
-DFhackCExport command_result setAllMatching(DFHack::Core * c, e_traffic newTraffic, checkTile check,
+DFhackCExport command_result setAllMatching(DFHack::Core * c, checkTile checkProc,
 											DFHack::DFCoord minCoord, DFHack::DFCoord maxCoord)
 {
 	//Initialization.
@@ -386,13 +342,7 @@ DFhackCExport command_result setAllMatching(DFHack::Core * c, e_traffic newTraff
 			for(uint32_t z = minCoord.z; z <= maxCoord.z; z++)
 			{
 				DFHack::DFCoord tile = DFHack::DFCoord(x, y, z);
-
-				if (check(tile, *MCache))
-				{
-					DFHack::t_designation des = MCache->designationAt(tile);
-					des.bits.traffic = newTraffic;
-					MCache->setDesignationAt(tile, des);
-				}
+				checkProc(tile, MCache);
 			}
 		}
 	}
@@ -403,14 +353,28 @@ DFhackCExport command_result setAllMatching(DFHack::Core * c, e_traffic newTraff
     return CR_OK;
 }
 
-//Test functions. I'll probably remove these later.
-command_result testchecktile(DFHack::Core * c, std::vector<std::string> & params)
+//Unconditionally set map to target traffic type
+void allHigh(DFHack::DFCoord coord, MapExtras::MapCache * map)
 {
-	c->con.print("Yosh! Checkerboard attack, go!\n");
-	return setAllMatching(c, traffic_restricted, &checkerboard);
+	DFHack::t_designation des = map->designationAt(coord);
+	des.bits.traffic = traffic_high;
+	map->setDesignationAt(coord, des);
 }
-
-bool checkerboard(DFHack::DFCoord coord, MapExtras::MapCache map)
+void allNormal(DFHack::DFCoord coord, MapExtras::MapCache * map)
 {
-	return ((coord.x * coord.y - coord.z) % 2 == 0);
+	DFHack::t_designation des = map->designationAt(coord);
+	des.bits.traffic = traffic_normal;
+	map->setDesignationAt(coord, des);
+}
+void allLow(DFHack::DFCoord coord, MapExtras::MapCache * map)
+{
+	DFHack::t_designation des = map->designationAt(coord);
+	des.bits.traffic = traffic_low;
+	map->setDesignationAt(coord, des);
+}
+void allRestricted(DFHack::DFCoord coord, MapExtras::MapCache * map)
+{
+	DFHack::t_designation des = map->designationAt(coord);
+	des.bits.traffic = traffic_restricted;
+	map->setDesignationAt(coord, des);
 }

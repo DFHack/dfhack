@@ -63,6 +63,7 @@ struct TileType
     DFHack::TileMaterial material;
     DFHack::TileSpecial special;
     DFHack::TileVariant variant;
+    int dig;
     int hidden;
     int light;
     int subterranean;
@@ -74,6 +75,7 @@ struct TileType
         material = DFHack::tilematerial_invalid;
         special = DFHack::tilespecial_invalid;
         variant = DFHack::tilevariant_invalid;
+        dig = -1;
         hidden = -1;
         light = -1;
         subterranean = -1;
@@ -134,6 +136,19 @@ std::ostream &operator<<(std::ostream &stream, const TileType &paint)
         }
 
         stream << "VAR_" << (paint.variant + 1);
+        used = true;
+        needSpace = true;
+    }
+
+    if (paint.dig >= 0)
+    {
+        if (needSpace)
+        {
+            stream << " ";
+            needSpace = false;
+        }
+
+        stream << (paint.dig ? "DESIGNED" : "UNDESIGNED");
         used = true;
         needSpace = true;
     }
@@ -300,6 +315,18 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
             std::cout << "Unknown tile variant: " << value << std::endl;
         }
     }
+    else if (option == "designed" || option == "d")
+    {
+        if (valInt >= -1 && valInt < 2)
+        {
+            paint.dig = valInt;
+            found = true;
+        }
+        else
+        {
+            std::cout << "Unknown designed flag: " << value << std::endl;
+        }
+    }
     else if (option == "hidden" || option == "h")
     {
         if (valInt >= -1 && valInt < 2)
@@ -374,6 +401,7 @@ void help( std::ostream & out, const std::string &option)
             << " Material / mat / m: set tile material information" << std::endl
             << " Special / sp: set special tile information" << std::endl
             << " Variant / var / v: set variant tile information" << std::endl
+            << " Designed / d: set designed flag" << std::endl
             << " Hidden / h: set hidden flag" << std::endl
             << " Light / l: set light flag" << std::endl
             << " Subterranean / st: set subterranean flag" << std::endl
@@ -411,6 +439,11 @@ void help( std::ostream & out, const std::string &option)
     {
         out << "Available variants:" << std::endl
             << " ANY, 0 - " << DFHack::VAR_4 << std::endl;
+    }
+    else if (option == "designed" || option == "d")
+    {
+        out << "Available designed flags:" << std::endl
+            << " ANY, 0, 1" << std::endl;
     }
     else if (option == "hidden" || option == "h")
     {
@@ -746,10 +779,14 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
             for (coord_vec::iterator iter = all_tiles.begin(); iter != all_tiles.end(); ++iter)
             {
                 const DFHack::TileRow *source = DFHack::getTileRow(map.tiletypeAt(*iter));
+                DFHack::t_designation des = map.designationAt(*iter);
 
                 if ((filter.shape > -1 && filter.shape != source->shape)
                  || (filter.material > -1 && filter.material != source->material)
-                 || (filter.special > -1 && filter.special != source->special))
+                 || (filter.special > -1 && filter.special != source->special)
+                 || (filter.variant > -1 && filter.variant != source->variant)
+                 || (filter.dig > -1 && (filter.dig != 0) != (des.bits.dig != DFHack::designation_no))
+                )
                 {
                     continue;
                 }
@@ -771,13 +808,30 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
                 {
                     special = source->special;
                 }
-
                 DFHack::TileVariant variant = paint.variant;
+                /*
+                 * FIXME: variant should be:
+                 * 1. If user variant:
+                 * 2.   If user variant \belongs target variants
+                 * 3.     use user variant
+                 * 4.   Else
+                 * 5.     use variant 0
+                 * 6. If the source variant \belongs target variants
+                 * 7    use source variant
+                 * 8  ElseIf num target shape/material variants > 1
+                 * 9.   pick one randomly
+                 * 10.Else
+                 * 11.  use variant 0
+                 *
+                 * The following variant check has been disabled because it's severely limiting
+                 * the usefullness of the tool.
+                 */
+                /*
                 if (variant < 0)
                 {
                     variant = source->variant;
                 }
-
+                */
                 // Remove direction from directionless tiles
                 DFHack::TileDirection direction = source->direction;
                 if (!(shape == DFHack::RIVER_BED || shape == DFHack::BROOK_BED || shape == DFHack::WALL && (material == DFHack::CONSTRUCTED || special == DFHack::TILE_SMOOTH))) {
@@ -792,8 +846,6 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
                 // make sure it's not invalid
                 if(type != -1)
                     map.setTiletypeAt(*iter, type);
-
-                DFHack::t_designation des = map.designationAt(*iter);
 
                 if (paint.hidden > -1)
                 {

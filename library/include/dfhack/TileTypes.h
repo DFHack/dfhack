@@ -390,12 +390,13 @@ namespace DFHack
     int32_t findTileType( const TileShape tshape, const TileMaterial tmat, const TileVariant tvar, const TileSpecial tspecial, const TileDirection tdir )
     {
         int32_t tt;
-        for(tt=0;tt<TILE_TYPE_ARRAY_LENGTH; ++tt){
-            if( tshape>-1	) if( tshape != tileTypeTable[tt].shape ) continue;
-            if( tmat>-1		) if( tmat != tileTypeTable[tt].material ) continue;
-            if( tvar>-1		) if( tvar != tileTypeTable[tt].variant ) continue;
-            if( tspecial>-1 ) if( tspecial != tileTypeTable[tt].special ) continue;
-            if( tdir.whole  ) if( tdir.whole != tileTypeTable[tt].direction.whole ) continue;
+        for(tt=0;tt<TILE_TYPE_ARRAY_LENGTH; ++tt)
+        {
+            if( tshape>-1   && tshape != tileTypeTable[tt].shape ) continue;
+            if( tmat>-1     && tmat != tileTypeTable[tt].material ) continue;
+            if( tvar>-1     && tvar != tileTypeTable[tt].variant ) continue;
+            if( tspecial>-1 && tspecial != tileTypeTable[tt].special ) continue;
+            if( tdir.whole  && tdir.whole != tileTypeTable[tt].direction.whole ) continue;
             //Match!
             return tt;
         }

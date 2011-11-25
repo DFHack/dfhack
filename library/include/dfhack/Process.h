@@ -38,7 +38,7 @@ namespace DFHack
 {
     class VersionInfo;
     class Process;
-    class Window;
+    //class Window;
     class DFVector;
     class VersionInfoFactory;
     class PlatformSpecific;

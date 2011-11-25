@@ -21,7 +21,6 @@ using namespace std;
 #include <dfhack/modules/Materials.h>
 #include <dfhack/extra/MapExtras.h>
 #include <dfhack/MiscUtils.h>
-#include <xgetopt.h>
 
 using std::vector;
 using std::string;

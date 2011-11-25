@@ -31,46 +31,46 @@ namespace DFHack
     const TileRow tileTypeTable[TILE_TYPE_ARRAY_LENGTH] =
     {
         // 0
-        {"void",EMPTY, AIR, VAR_1},
+        {"void",tileshape_invalid, tilematerial_invalid, VAR_1},
         {"ramp top",RAMP_TOP, AIR, VAR_1},
         {"pool",POOL, SOIL, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 10
-        {0, EMPTY, AIR, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
-        {0, EMPTY, AIR, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0, tileshape_invalid, tilematerial_invalid, VAR_1},
         {"driftwood stack",FLOOR, DRIFTWOOD, VAR_1},
 
         // 20
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"tree",TREE_OK, SOIL, VAR_1},
         {"ice stair up/down",STAIR_UPDOWN, ICE, VAR_1},
         {"ice stair down",STAIR_DOWN, ICE, VAR_1},
         {"ice stair up",STAIR_UP, ICE, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 30
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"empty space",EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"shrub",SHRUB_OK, SOIL, VAR_1},
         {"chasm",ENDLESS_PIT, AIR, VAR_1},
         {"obsidian stair up/down",STAIR_UPDOWN, OBSIDIAN, VAR_1},
@@ -87,7 +87,7 @@ namespace DFHack
         {"smooth featstone? floor",FLOOR, FEATSTONE, VAR_1 , TILE_SMOOTH },
         {"smooth vein floor",FLOOR, VEIN, VAR_1 , TILE_SMOOTH },
         {"smooth ice floor",FLOOR, ICE, VAR_1 , TILE_SMOOTH },
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"grass stair up/down",STAIR_UPDOWN, GRASS, VAR_1},
 
         // 50
@@ -107,23 +107,23 @@ namespace DFHack
         {"featstone? stair up/down",STAIR_UPDOWN, FEATSTONE, VAR_1},
         {"featstone? stair down",STAIR_DOWN, FEATSTONE, VAR_1},
         {"featstone? stair up",STAIR_UP, FEATSTONE, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"stone fortification",FORTIFICATION, STONE, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"campfire",FLOOR, CAMPFIRE, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 70
         {"fire",FLOOR, FIRE, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"stone pillar",PILLAR, STONE, VAR_1},
 
         //80
@@ -131,185 +131,185 @@ namespace DFHack
         {"featstone? pillar",PILLAR, FEATSTONE, VAR_1,TILE_SMOOTH},
         {"vein pillar",PILLAR, VEIN, VAR_1,TILE_SMOOTH},
         {"ice pillar",PILLAR, ICE, VAR_1,TILE_SMOOTH},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"waterfall landing",FLOOR, SOIL, VAR_1,  TILE_WATERFALL }, // verify material
 
         // 90
         {"river source",FLOOR, SOIL, VAR_1,  TILE_RIVER_SOURCE }, // verify material
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 100
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 110
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 120
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 130
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 140
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 150
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 160
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 170
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"cracked stone wall" ,WALL, STONE, VAR_1, TILE_CRACKED },
         {"damaged stone wall" ,WALL, STONE, VAR_1, TILE_DAMAGED },
         {"worn stone wall" ,WALL, STONE, VAR_1,    TILE_WORN },
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 180
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 190
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 200
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 210
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"stone wall" ,WALL, STONE, VAR_1},
 
         // 220
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 230
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"sapling" ,SAPLING_OK, SOIL, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"dry grass ramp" ,RAMP, GRASS_DRY, VAR_1},
         {"dead grass ramp" ,RAMP, GRASS_DEAD, VAR_1},
         {"grass ramp" ,RAMP, GRASS, VAR_1},
@@ -325,20 +325,20 @@ namespace DFHack
         {"ashes" ,FLOOR, ASHES, VAR_2},
         {"ashes" ,FLOOR, ASHES, VAR_3},
         {"ice ramp" ,RAMP, ICE, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 250
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"ice floor" ,FLOOR, ICE, VAR_2},
         {"ice floor" ,FLOOR, ICE, VAR_3},
 
@@ -351,7 +351,7 @@ namespace DFHack
         {"soil wall" ,WALL, SOIL, VAR_1},
         {"glowing barrier" ,WALL, CYAN_GLOW, VAR_1},
         {"glowing floor" ,FLOOR, CYAN_GLOW, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"smooth obsidian wall RD2",WALL,OBSIDIAN,VAR_1 , TILE_SMOOTH ,  "--SS--E-" },
 
         // 270
@@ -489,11 +489,11 @@ namespace DFHack
         // 380
         {"brook bed SE",BROOK_BED,SOIL,VAR_1, TILE_NORMAL, "SE" },
         {"brook top",BROOK_TOP,SOIL,VAR_1 },
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"dry grass 1",FLOOR,GRASS_DRY,VAR_1},
         {"dry grass 2",FLOOR,GRASS_DRY,VAR_2},
         {"dry grass 3",FLOOR,GRASS_DRY,VAR_3},
@@ -592,36 +592,36 @@ namespace DFHack
         {"smooth ice wall",WALL,ICE,VAR_1 , TILE_SMOOTH , "--S-W---" },
         {"smooth ice wall",WALL,ICE,VAR_1 , TILE_SMOOTH , "N-S-----" },
         {"smooth ice wall",WALL,ICE,VAR_1 , TILE_SMOOTH , "----W-E-"},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 470
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 480
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
 
         // 490
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1},
         {"constructed floor",FLOOR,CONSTRUCTED, VAR_1},
         {"constructed fortification",FORTIFICATION,CONSTRUCTED, VAR_1},
         {"constructed pillar",PILLAR,CONSTRUCTED, VAR_1},
@@ -652,7 +652,7 @@ namespace DFHack
         {"constructed stair down",STAIR_DOWN,CONSTRUCTED, VAR_1},
         {"constructed stair up",STAIR_UP,CONSTRUCTED, VAR_1},
         {"constructed ramp",RAMP,CONSTRUCTED, VAR_1},
-        {0 ,EMPTY, AIR, VAR_1} // end
+        {0 ,tileshape_invalid, tilematerial_invalid, VAR_1} // end
     };
 
     //set tile class string lookup table (e.g. for printing to user)
@@ -685,39 +685,37 @@ namespace DFHack
         int value=0, matchv=0;
         const TileRow *source = &tileTypeTable[sourceTileType];
 
-		//Shortcut.
-		//If the current tile is already a shape match, leave.
-		if( tshape == source->shape ) return sourceTileType;
+        //Shortcut.
+        //If the current tile is already a shape match, leave.
+        if( tshape == source->shape ) return sourceTileType;
 
-
-		//Cheap pseudo-entropy, by using address of the variable on the stack.
-		//No need for real random numbers.
-		static int entropy;
-		entropy += (int)( (void *)(&match) );
-		entropy ^= ((entropy & 0xFF000000)>>24) ^ ((entropy & 0x00FF0000)>>16);
+        //Cheap pseudo-entropy, by using address of the variable on the stack.
+        //No need for real random numbers.
+        static int entropy;
+        entropy += (int)( (void *)(&match) );
+        entropy ^= ((entropy & 0xFF000000)>>24) ^ ((entropy & 0x00FF0000)>>16);
 
 
         #ifdef assert
         assert( sourceTileType >=0 && sourceTileType < TILE_TYPE_ARRAY_LENGTH );
         #endif
 
-		//Special case for smooth pillars.
-		//When you want a smooth wall, no need to search for best match.  Just use a pillar instead.
-		//Choosing the right direction would require knowing neighbors.
-		if( WALL==tshape && (TILE_SMOOTH==source->special || CONSTRUCTED==source->material) ){
-			switch( source->material ){
-				case CONSTRUCTED:      match=495;  break;
-				case ICE:              match= 83;  break;
-				case VEIN:             match= 82;  break;
-				case FEATSTONE:        match= 81;  break;
-				case OBSIDIAN:         match= 80;  break;
-				case STONE:            match= 79;  break;
-			}
-			if( match ) return match;
-		}
+        //Special case for smooth pillars.
+        //When you want a smooth wall, no need to search for best match.  Just use a pillar instead.
+        //Choosing the right direction would require knowing neighbors.
+        if( WALL==tshape && (TILE_SMOOTH==source->special || CONSTRUCTED==source->material) ){
+            switch( source->material ){
+                case CONSTRUCTED:      match=495;  break;
+                case ICE:              match= 83;  break;
+                case VEIN:             match= 82;  break;
+                case FEATSTONE:        match= 81;  break;
+                case OBSIDIAN:         match= 80;  break;
+                case STONE:            match= 79;  break;
+            }
+            if( match ) return match;
+        }
 
-
-		//Run through until perfect match found or hit end.
+        //Run through until perfect match found or hit end.
         for(int32_t tt=0;tt<TILE_TYPE_ARRAY_LENGTH && value<(8|4|1); ++tt)
         {
             if( tshape == tileTypeTable[tt].shape )
@@ -728,9 +726,9 @@ namespace DFHack
                 //Special flag match is absolutely mandatory!
                 if( source->special != tileTypeTable[tt].special ) continue;
 
-				//Special case for constructions.
-				//Never turn a construction into a non-contruction.
-				if( CONSTRUCTED == source->material && CONSTRUCTED != tileTypeTable[tt].material ) continue;
+                //Special case for constructions.
+                //Never turn a construction into a non-contruction.
+                if( CONSTRUCTED == source->material && CONSTRUCTED != tileTypeTable[tt].material ) continue;
 
                 value=0;
                 //Material is high-value match
@@ -749,39 +747,38 @@ namespace DFHack
             }
         }
 
-		//Post-processing for floors.
-		//Give raw floors variation.
-		//Variant matters, but does not matter for source.
-		//Error on the side of caution.
-		if( FLOOR==tshape && CONSTRUCTED!=source->material && !source->special )
-		{
-			//Trying to make a floor type with variants, so randomize the variant.
-			//Very picky, only handle known safe tile types.
-			//Some floors have 4 variants, some have 3, so the order of these matters.
-			switch( match ){
-				case 261:
-					//Furrowed soil got chosen by accident.  Fix that.
-					match=352+(3&entropy); 
-					break; 
-				case 336:	//STONE
-				case 340:	//OBSIDIAN
-				case 344:	//featstone
-				case 349:	//grass
-				case 352:	//soil
-				case 356:	//wet soil
-				case 387:	//dry grass
-				case 394:	//dead grass
-				case 398:	//grass B
-				case 441:	//vein
-					match +=  3&entropy;
-					break;
-				case 242:	//ASHES
-				case 258:	//ICE
-					match += (1&entropy) + (2&entropy);
-					break;
-			}
-		}
-
+        //Post-processing for floors.
+        //Give raw floors variation.
+        //Variant matters, but does not matter for source.
+        //Error on the side of caution.
+        if( FLOOR==tshape && CONSTRUCTED!=source->material && !source->special )
+        {
+            //Trying to make a floor type with variants, so randomize the variant.
+            //Very picky, only handle known safe tile types.
+            //Some floors have 4 variants, some have 3, so the order of these matters.
+            switch( match ){
+                case 261:
+                    //Furrowed soil got chosen by accident.  Fix that.
+                    match=352+(3&entropy);
+                    break;
+                case 336:	//STONE
+                case 340:	//OBSIDIAN
+                case 344:	//featstone
+                case 349:	//grass
+                case 352:	//soil
+                case 356:	//wet soil
+                case 387:	//dry grass
+                case 394:	//dead grass
+                case 398:	//grass B
+                case 441:	//vein
+                    match +=  3&entropy;
+                    break;
+                case 242:	//ASHES
+                case 258:	//ICE
+                    match += (1&entropy) + (2&entropy);
+                    break;
+            }
+        }
         if( match ) return match;
         return sourceTileType;
     }

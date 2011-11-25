@@ -3,6 +3,9 @@
 #include <dfhack/Export.h>
 #include <dfhack/PluginManager.h>
 #include <zmq.hpp>
+#ifndef LINUX_BUILD
+#include <windows.h>
+#endif
 using namespace DFHack;
 
 // Here go all the command declarations...
@@ -64,7 +67,11 @@ DFhackCExport command_result server (Core * c, std::vector <std::string> & param
         c->con.print("Received Hello\n");
 
         // Do some 'work'
+#ifdef LINUX_BUILD
         sleep (1);
+#else
+		Sleep(1000);
+#endif
 
         // Send reply back to client
         zmq::message_t reply (5);

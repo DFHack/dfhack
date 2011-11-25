@@ -35,7 +35,7 @@ fi
 
 # Now run
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"./stonesense/deplibs"
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"./stonesense/deplibs":"./hack/deplibs"
 
 case "$1" in
   -g | --gdb)

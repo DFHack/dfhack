@@ -42,7 +42,7 @@ namespace DFHack
 
 class Context;
 class DFContextShared;
-class Creatures;
+class Units;
 
 /**
  * Item flags. A bit fuzzy.
@@ -594,7 +594,7 @@ public:
     /// which items does it contain?
     bool getContainedItems(const df_item * item, /*output*/ std::vector<int32_t> &items);
     /// wipe out the owner records
-    bool removeItemOwner(df_item * item, Creatures *creatures);
+    bool removeItemOwner(df_item * item, Units *creatures);
     /// read item references, filtered by class
     bool readItemRefs(const df_item * item, const ClassNameCheck &classname,
                       /*output*/ std::vector<int32_t> &values);

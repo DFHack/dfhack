@@ -42,14 +42,14 @@ using namespace std;
 
 // we connect to those
 #include "dfhack/modules/Materials.h"
-#include "dfhack/modules/Creatures.h"
+#include "dfhack/modules/Units.h"
 #include "dfhack/modules/Translation.h"
 #include "ModuleFactory.h"
 #include <dfhack/Core.h>
 
 using namespace DFHack;
 
-struct Creatures::Private
+struct Units::Private
 {
     bool Inited;
     bool Started;
@@ -63,12 +63,12 @@ struct Creatures::Private
     Translation * trans;
 };
 
-Module* DFHack::createCreatures()
+Module* DFHack::createUnits()
 {
-    return new Creatures();
+    return new Units();
 }
 
-Creatures::Creatures()
+Units::Units()
 {
     Core & c = Core::getInstance();
     d = new Private;
@@ -85,7 +85,7 @@ Creatures::Creatures()
     creatures = 0;
     try
     {
-        creatures = (vector <df_creature *> *) OG_Creatures->getAddress ("vector");
+        creatures = (vector <df_unit *> *) OG_Creatures->getAddress ("vector");
         d->dwarf_race_index_addr = OG_Creatures->getAddress("current_race");
         d->dwarf_civ_id_addr = OG_Creatures->getAddress("current_civ");
     }
@@ -93,13 +93,13 @@ Creatures::Creatures()
     d->Inited = true;
 }
 
-Creatures::~Creatures()
+Units::~Units()
 {
     if(d->Started)
         Finish();
 }
 
-bool Creatures::Start( uint32_t &numcreatures )
+bool Units::Start( uint32_t &numcreatures )
 {
     if(creatures)
     {
@@ -112,13 +112,13 @@ bool Creatures::Start( uint32_t &numcreatures )
     return false;
 }
 
-bool Creatures::Finish()
+bool Units::Finish()
 {
     d->Started = false;
     return true;
 }
 
-df_creature * Creatures::GetCreature (const int32_t index)
+df_unit * Units::GetCreature (const int32_t index)
 {
     if(!d->Started) return NULL;
 
@@ -129,7 +129,7 @@ df_creature * Creatures::GetCreature (const int32_t index)
 }
 
 // returns index of creature actually read or -1 if no creature can be found
-int32_t Creatures::GetCreatureInBox (int32_t index, df_creature ** furball,
+int32_t Units::GetCreatureInBox (int32_t index, df_unit ** furball,
                                 const uint16_t x1, const uint16_t y1, const uint16_t z1,
                                 const uint16_t x2, const uint16_t y2, const uint16_t z2)
 {
@@ -142,7 +142,7 @@ int32_t Creatures::GetCreatureInBox (int32_t index, df_creature ** furball,
     while (uint32_t(index) < size)
     {
         // read pointer from vector at position
-        df_creature * temp = creatures->at(index);
+        df_unit * temp = creatures->at(index);
         if (temp->x >= x1 && temp->x < x2)
         {
             if (temp->y >= y1 && temp->y < y2)
@@ -160,7 +160,7 @@ int32_t Creatures::GetCreatureInBox (int32_t index, df_creature ** furball,
     return -1;
 }
 
-void Creatures::CopyCreature(df_creature * source, t_creature & furball)
+void Units::CopyCreature(df_unit * source, t_unit & furball)
 {
     if(!d->Started) return;
     // read pointer from vector at position
@@ -275,7 +275,7 @@ void Creatures::CopyCreature(df_creature * source, t_creature & furball)
         furball.current_job.active = false;
     }
 }
-int32_t Creatures::FindIndexById(int32_t creature_id)
+int32_t Units::FindIndexById(int32_t creature_id)
 {
     if (!d->Started)
         return -1;
@@ -287,7 +287,7 @@ int32_t Creatures::FindIndexById(int32_t creature_id)
         uint32_t size = creatures->size();
         for (uint32_t index = 0; index < size; index++)
         {
-            df_creature * temp = creatures->at(index);
+            df_unit * temp = creatures->at(index);
             int32_t id = temp->id;
             d->IdMap[id] = index;
         }
@@ -507,14 +507,14 @@ bool Creatures::WritePregnancy(const uint32_t index, const uint32_t pregTimer)
     return true;
 }
 */
-uint32_t Creatures::GetDwarfRaceIndex()
+uint32_t Units::GetDwarfRaceIndex()
 {
     if(!d->Inited) return 0;
     Process * p = d->owner;
     return p->readDWord(d->dwarf_race_index_addr);
 }
 
-int32_t Creatures::GetDwarfCivId()
+int32_t Units::GetDwarfCivId()
 {
     if(!d->Inited) return -1;
     Process * p = d->owner;
@@ -551,30 +551,30 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
     return true;
 }
 */
-bool Creatures::ReadInventoryByIdx(const uint32_t index, std::vector<df_item *> & item)
+bool Units::ReadInventoryByIdx(const uint32_t index, std::vector<df_item *> & item)
 {
     if(!d->Started) return false;
     if(index >= creatures->size()) return false;
-    df_creature * temp = creatures->at(index);
+    df_unit * temp = creatures->at(index);
     return this->ReadInventoryByPtr(temp, item);
 }
 
-bool Creatures::ReadInventoryByPtr(const df_creature * temp, std::vector<df_item *> & items)
+bool Units::ReadInventoryByPtr(const df_unit * temp, std::vector<df_item *> & items)
 {
     if(!d->Started) return false;
     items = temp->inventory;
     return true;
 }
 
-bool Creatures::ReadOwnedItemsByIdx(const uint32_t index, std::vector<int32_t> & item)
+bool Units::ReadOwnedItemsByIdx(const uint32_t index, std::vector<int32_t> & item)
 {
     if(!d->Started ) return false;
     if(index >= creatures->size()) return false;
-    df_creature * temp = creatures->at(index);
+    df_unit * temp = creatures->at(index);
     return this->ReadOwnedItemsByPtr(temp, item);
 }
 
-bool Creatures::ReadOwnedItemsByPtr(const df_creature * temp, std::vector<int32_t> & items)
+bool Units::ReadOwnedItemsByPtr(const df_unit * temp, std::vector<int32_t> & items)
 {
     unsigned int i;
     if(!d->Started) return false;
@@ -582,18 +582,18 @@ bool Creatures::ReadOwnedItemsByPtr(const df_creature * temp, std::vector<int32_
     return true;
 }
 
-bool Creatures::RemoveOwnedItemByIdx(const uint32_t index, int32_t id)
+bool Units::RemoveOwnedItemByIdx(const uint32_t index, int32_t id)
 {
     if(!d->Started)
     {
         cerr << "!d->Started FAIL" << endl;
         return false;
     }
-    df_creature * temp = creatures->at (index);
+    df_unit * temp = creatures->at (index);
     return this->RemoveOwnedItemByPtr(temp, id);
 }
 
-bool Creatures::RemoveOwnedItemByPtr(df_creature * temp, int32_t id)
+bool Units::RemoveOwnedItemByPtr(df_unit * temp, int32_t id)
 {
     if(!d->Started) return false;
     Process * p = d->owner;
@@ -612,7 +612,7 @@ bool Creatures::RemoveOwnedItemByPtr(df_creature * temp, int32_t id)
     return true;
 }
 
-void Creatures::CopyNameTo(df_creature * creature, df_name * target)
+void Units::CopyNameTo(df_unit * creature, df_name * target)
 {
     d->trans->copyName(&creature->name, target);
 }

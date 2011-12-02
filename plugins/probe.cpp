@@ -15,7 +15,7 @@ using namespace std;
 #include <dfhack/PluginManager.h>
 #include <vector>
 #include <string>
-#include <dfhack/modules/Creatures.h>
+#include <dfhack/modules/Units.h>
 #include <dfhack/modules/Maps.h>
 #include <dfhack/modules/Gui.h>
 #include <dfhack/modules/Materials.h>
@@ -57,7 +57,7 @@ DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters)
     BEGIN_PROBE:
     c->Suspend();
     DFHack::Gui *Gui = c->getGui();
-    DFHack::Creatures * cr = c->getCreatures();
+    DFHack::Units * cr = c->getUnits();
     int32_t cursorX, cursorY, cursorZ;
     Gui->getCursorCoords(cursorX,cursorY,cursorZ);
     if(cursorX == -30000)
@@ -70,7 +70,7 @@ DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters)
         cr->Start(ncr);
         for(auto i = 0; i < ncr; i++)
         {
-            df_creature * unit = cr->GetCreature( i );
+            df_unit * unit = cr->GetCreature( i );
             if(unit->x == cursorX && unit->y == cursorY && unit->z == cursorZ)
             {
                 con.print("Creature %d, race %d (%x), civ %d (%x)\n", unit->id, unit->race, unit->race, unit->civ, unit->civ);

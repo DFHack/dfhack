@@ -775,7 +775,7 @@ TYPE * Core::get##TYPE() \
     return s_mods.p##TYPE;\
 }
 
-MODULE_GETTER(Creatures);
+MODULE_GETTER(Units);
 MODULE_GETTER(Engravings);
 MODULE_GETTER(Maps);
 MODULE_GETTER(Gui);

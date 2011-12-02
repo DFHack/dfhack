@@ -46,7 +46,7 @@ namespace DFHack
 {
     class Process;
     class Module;
-    class Creatures;
+    class Units;
     class Engravings;
     class Maps;
     class Gui;
@@ -96,7 +96,7 @@ namespace DFHack
         bool isValid(void) { return !errorstate; }
 
         /// get the creatures module
-        Creatures * getCreatures();
+        Units * getUnits();
         /// get the engravings module
         Engravings * getEngravings();
         /// get the maps module
@@ -158,7 +158,7 @@ namespace DFHack
         // Module storage
         struct
         {
-            Creatures * pCreatures;
+            Units * pUnits;
             Engravings * pEngravings;
             Maps * pMaps;
             Gui * pGui;

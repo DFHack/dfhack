@@ -329,14 +329,14 @@ DFhackCExport command_result kittens (Core * c, vector <string> & parameters)
     }
 }
 
-#include "dfhack/modules/Creatures.h"
+#include "dfhack/modules/Units.h"
 #include "dfhack/VersionInfo.h"
 #include <stddef.h>
 
 command_result test_creature_offsets(Core* c, vector< string >& parameters)
 {
-	uint32_t off_vinfo = c->vinfo->getGroup("Creatures")->getGroup("creature")->/*getGroup("advanced")->*/getOffset("custom_profession");
-	uint32_t off_struct = offsetof(df_creature,custom_profession);
+    uint32_t off_vinfo = c->vinfo->getGroup("Creatures")->getGroup("creature")->/*getGroup("advanced")->*/getOffset("custom_profession");
+    uint32_t off_struct = offsetof(df_unit,custom_profession);
     c->con.print("Struct 0x%x, vinfo 0x%x\n", off_struct, off_vinfo);
     return CR_OK;
 };
@@ -344,7 +344,7 @@ command_result test_creature_offsets(Core* c, vector< string >& parameters)
 command_result creat_job (Core * c, vector< string >& parameters)
 {
     c->Suspend();
-    Creatures * cr = c->getCreatures();
+    Units * cr = c->getUnits();
     Gui * g = c-> getGui();
     uint32_t num_cr = 0;
     int32_t cx,cy,cz;
@@ -364,7 +364,7 @@ command_result creat_job (Core * c, vector< string >& parameters)
     auto iter = cr->creatures->begin();
     while (iter != cr->creatures->end())
     {
-        df_creature * unit = *iter;
+        df_unit * unit = *iter;
         if(cx == unit->x && cy == unit->y && cz == unit->z)
         {
             c->con.print("%d:%s - address 0x%x - job 0x%x\n"
@@ -372,8 +372,8 @@ command_result creat_job (Core * c, vector< string >& parameters)
                          unit->id,
                          unit->name.first_name.c_str(),
                          unit,
-                         uint32_t(unit) + offsetof(df_creature,current_job),
-                         uint32_t(unit) + offsetof(df_creature,current_soul),
+                         uint32_t(unit) + offsetof(df_unit,current_job),
+                         uint32_t(unit) + offsetof(df_unit,current_soul),
                          uint32_t(unit->current_soul) + offsetof(df_soul,likes)
                         );
             df_soul * s = unit->current_soul;

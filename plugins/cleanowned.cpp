@@ -16,7 +16,7 @@ using namespace std;
 #include <string>
 #include <dfhack/modules/Maps.h>
 #include <dfhack/modules/Items.h>
-#include <dfhack/modules/Creatures.h>
+#include <dfhack/modules/Units.h>
 #include <dfhack/modules/Materials.h>
 #include <dfhack/modules/Translation.h>
 using namespace DFHack;
@@ -90,7 +90,7 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
     c->Suspend();
     DFHack::Materials *Materials = c->getMaterials();
     DFHack::Items *Items = c->getItems();
-    DFHack::Creatures *Creatures = c->getCreatures();
+    DFHack::Units *Creatures = c->getUnits();
     DFHack::Translation *Tran = c->getTranslation();
 
     uint32_t num_creatures;
@@ -195,7 +195,7 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
 
             if (owner_index >= 0)
             {
-                DFHack::df_creature * temp = Creatures->GetCreature(owner_index);
+                DFHack::df_unit * temp = Creatures->GetCreature(owner_index);
                 info = temp->name.first_name;
                 if (!temp->name.nick_name.empty())
                     info += std::string(" '") + temp->name.nick_name + "'";

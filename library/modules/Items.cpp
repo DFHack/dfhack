@@ -39,7 +39,7 @@ using namespace std;
 #include "dfhack/Vector.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Items.h"
-#include "dfhack/modules/Creatures.h"
+#include "dfhack/modules/Units.h"
 #include "ModuleFactory.h"
 #include <dfhack/Core.h>
 #include <dfhack/Virtual.h>
@@ -265,7 +265,7 @@ bool Items::unknownRefs(const df_item * item, std::vector<std::pair<std::string,
     return (refs.size() > 0);
 }
 
-bool Items::removeItemOwner(df_item * item, Creatures *creatures)
+bool Items::removeItemOwner(df_item * item, Units *creatures)
 {
     std::vector <t_itemref *> &p_refs = item->itemrefs;
     for (uint32_t i=0; i<p_refs.size(); i++)

@@ -32,16 +32,16 @@ distribution.
 #include "dfhack/Module.h"
 #include "dfhack/modules/Items.h"
 /**
- * \defgroup grp_creatures Creatures module parts
+ * \defgroup grp_units Unit module parts
  * @ingroup grp_modules
  */
 namespace DFHack
 {
     /**
      * easy access to first crature flags block
-     * \ingroup grp_creatures
+     * \ingroup grp_units
      */
-    union t_creaturflags1
+    union t_unitflags1
     {
         uint32_t whole;/*!< Access all flags as a single 32bit number. */
         struct
@@ -88,7 +88,7 @@ namespace DFHack
         } bits;
     };
 
-    union t_creaturflags2
+    union t_unitflags2
     {
         uint32_t whole; /*!< Access all flags as a single 32bit number. */
         struct
@@ -135,7 +135,7 @@ namespace DFHack
         } bits;
     };
 
-    union t_creaturflags3
+    union t_unitflags3
     {
         uint32_t whole; /*!< Access all flags as a single 32bit number. */
         struct
@@ -239,7 +239,7 @@ namespace DFHack
     };
     */
     /**
-     * \ingroup grp_creatures
+     * \ingroup grp_units
      */
     struct t_skill
     {
@@ -248,7 +248,7 @@ namespace DFHack
         uint32_t experience;
     };
     /**
-     * \ingroup grp_creatures
+     * \ingroup grp_units
      */
     struct t_job
     {
@@ -258,7 +258,7 @@ namespace DFHack
         uint32_t occupationPtr;
     };
     /**
-     * \ingroup grp_creatures
+     * \ingroup grp_units
      */
     struct t_like
     {
@@ -276,8 +276,8 @@ namespace DFHack
     #define NUM_CREATURE_MENTAL_ATTRIBUTES 13
     #define NUM_CREATURE_PHYSICAL_ATTRIBUTES 6
     /**
-     * structure for holding a copy of a creature's soul
-     * \ingroup grp_creatures
+     * Structure for holding a copy of a DF unit's soul
+     * \ingroup grp_units
      */
     struct t_soul
     {
@@ -301,23 +301,23 @@ namespace DFHack
         t_attrib social_awareness;
     };
     #define MAX_COLORS  15
-    struct df_creature;
+    struct df_unit;
     /**
-     * structure for holding a copy of a creature
-     * \ingroup grp_creatures
+     * Structure for holding a limited copy of a DF unit
+     * \ingroup grp_units
      */
-    struct t_creature
+    struct t_unit
     {
-        df_creature * origin;
+        df_unit * origin;
         uint16_t x;
         uint16_t y;
         uint16_t z;
         uint32_t race;
         int32_t civ;
 
-        t_creaturflags1 flags1;
-        t_creaturflags2 flags2;
-        t_creaturflags3 flags3;
+        t_unitflags1 flags1;
+        t_unitflags2 flags2;
+        t_unitflags3 flags3;
 
         t_name name;
 
@@ -354,8 +354,8 @@ namespace DFHack
     };
 
     /**
-     * Creature attribute descriptor
-     * \ingroup grp_creatures
+     * Unit attribute descriptor
+     * \ingroup grp_units
      */
     struct df_attrib
     {
@@ -368,8 +368,8 @@ namespace DFHack
         uint32_t unk_18;
     };
     /**
-     * Creature skill descriptor
-     * \ingroup grp_creatures
+     * Unit skill descriptor
+     * \ingroup grp_units
      */
     struct df_skill
     {
@@ -383,8 +383,8 @@ namespace DFHack
         uint32_t unk_1c;
     };
     /**
-     * Creature like descriptor
-     * \ingroup grp_creatures
+     * Unit like descriptor
+     * \ingroup grp_units
      */
     struct df_like
     {
@@ -398,7 +398,7 @@ namespace DFHack
     };
     /**
      * A creature's soul, as it appears in DF memory
-     * \ingroup grp_creatures
+     * \ingroup grp_units
      */
     struct df_soul
     {
@@ -423,7 +423,7 @@ namespace DFHack
     };
     /**
      * A creature job - what it's supposed to be doing.
-     * \ingroup grp_creatures
+     * \ingroup grp_units
      */
     struct df_job
     {
@@ -431,7 +431,7 @@ namespace DFHack
     };
     /**
      * A creature though - dwarves staring at waterfalls!
-     * \ingroup grp_creatures
+     * \ingroup grp_units
      */
     struct df_thought
     {
@@ -445,9 +445,9 @@ namespace DFHack
     };
     /**
      * A creature, as it appears in DF memory
-     * \ingroup grp_creatures
+     * \ingroup grp_units
      */
-    struct df_creature
+    struct df_unit
     {
         df_name name;   // 0
         std::string custom_profession;  // 6c (MSVC)
@@ -475,9 +475,9 @@ namespace DFHack
         std::vector<uint32_t> unk_c0;
         std::vector<uint32_t> unk_d0;
 
-        t_creaturflags1 flags1;         // e0
-        t_creaturflags2 flags2;         // e4
-        t_creaturflags3 flags3;         // e8
+        t_unitflags1 flags1;         // e0
+        t_unitflags2 flags2;         // e4
+        t_unitflags3 flags3;         // e8
 
         void ** unk_ec;
         int32_t unk_f0;
@@ -535,7 +535,7 @@ namespace DFHack
         uint32_t birth_time;    // 228
         uint32_t unk_22c;
         uint32_t unk_230;
-        df_creature * unk_234; // suspiciously close to the pregnancy/birth stuff. Mother?
+        df_unit * unk_234; // suspiciously close to the pregnancy/birth stuff. Mother?
         uint32_t unk_238;
         int32_t unk_23c;
         int32_t unk_240;
@@ -754,34 +754,34 @@ namespace DFHack
     /**
      * The Creatures module - allows reading all non-vermin creatures and their properties
      * \ingroup grp_modules
-     * \ingroup grp_creatures
+     * \ingroup grp_units
      */
-    class DFHACK_EXPORT Creatures : public Module
+    class DFHACK_EXPORT Units : public Module
     {
     public:
-        std::vector <df_creature *> * creatures;
+        std::vector <df_unit *> * creatures;
     public:
-        Creatures();
-        ~Creatures();
+        Units();
+        ~Units();
         bool Start( uint32_t & numCreatures );
         bool Finish();
 
         /* Read Functions */
         // Read creatures in a box, starting with index. Returns -1 if no more creatures
         // found. Call repeatedly do get all creatures in a specified box (uses tile coords)
-        int32_t GetCreatureInBox(const int32_t index, df_creature ** furball,
+        int32_t GetCreatureInBox(const int32_t index, df_unit ** furball,
             const uint16_t x1, const uint16_t y1,const uint16_t z1,
             const uint16_t x2, const uint16_t y2,const uint16_t z2);
-        df_creature * GetCreature(const int32_t index);
-        void CopyCreature(df_creature * source, t_creature & target);
+        df_unit * GetCreature(const int32_t index);
+        void CopyCreature(df_unit * source, t_unit & target);
 
-        bool ReadJob(const df_creature * unit, std::vector<t_material> & mat);
+        bool ReadJob(const df_unit * unit, std::vector<t_material> & mat);
 
         bool ReadInventoryByIdx(const uint32_t index, std::vector<df_item *> & item);
-        bool ReadInventoryByPtr(const df_creature * unit, std::vector<df_item *> & item);
+        bool ReadInventoryByPtr(const df_unit * unit, std::vector<df_item *> & item);
 
         bool ReadOwnedItemsByIdx(const uint32_t index, std::vector<int32_t> & item);
-        bool ReadOwnedItemsByPtr(const df_creature * unit, std::vector<int32_t> & item);
+        bool ReadOwnedItemsByPtr(const df_unit * unit, std::vector<int32_t> & item);
 
         int32_t FindIndexById(int32_t id);
 
@@ -805,12 +805,12 @@ namespace DFHack
         //bool WriteCiv(const uint32_t index, const int32_t civ);
         //bool WritePregnancy(const uint32_t index, const uint32_t pregTimer);
 
-        void CopyNameTo(df_creature *creature, df_name * target);
+        void CopyNameTo(df_unit *creature, df_name * target);
 
     protected:
         friend class Items;
         bool RemoveOwnedItemByIdx(const uint32_t index, int32_t id);
-        bool RemoveOwnedItemByPtr(df_creature * unit, int32_t id);
+        bool RemoveOwnedItemByPtr(df_unit * unit, int32_t id);
 
     private:
         struct Private;

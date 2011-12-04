@@ -18,6 +18,7 @@
 #include "lua_Misc.h"
 #include "lua_VersionInfo.h"
 #include "functioncall.h"
+#include "lua_FunctionCall.h"
 
 using std::vector;
 using std::string;
@@ -45,6 +46,8 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 	lua::RegisterHexsearch(st);
 	lua::RegisterMisc(st);
 	lua::RegisterVersionInfo(st);
+	lua::RegisterFunctionCall(st);
+
 	#ifdef LINUX_BUILD
 		st.push(1);
 		st.setglobal("LINUX");

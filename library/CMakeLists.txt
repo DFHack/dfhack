@@ -43,7 +43,7 @@ include/dfhack/extra/stopwatch.h
 include/dfhack/extra/termutil.h
 include/dfhack/modules/Buildings.h
 include/dfhack/modules/Constructions.h
-include/dfhack/modules/Creatures.h
+include/dfhack/modules/Units.h
 include/dfhack/modules/Engravings.h
 include/dfhack/modules/Gui.h
 include/dfhack/modules/Items.h
@@ -55,6 +55,7 @@ include/dfhack/modules/Translation.h
 include/dfhack/modules/Vegetation.h
 include/dfhack/modules/Vermin.h
 include/dfhack/modules/World.h
+include/dfhack/modules/Graphic.h
 )
 
 SET(PROJECT_SRCS
@@ -77,7 +78,7 @@ depends/tthread/tinythread.cpp
 
 modules/Buildings.cpp
 modules/Constructions.cpp
-modules/Creatures.cpp
+modules/Units.cpp
 modules/Engravings.cpp
 modules/Gui.cpp
 modules/Items.cpp
@@ -89,6 +90,7 @@ modules/Translation.cpp
 modules/Vegetation.cpp
 modules/Vermin.cpp
 modules/World.cpp
+modules/Graphic.cpp
 )
 
 SET(PROJECT_HDRS_LINUX

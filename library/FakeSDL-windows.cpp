@@ -33,6 +33,7 @@ distribution.
 #include <stdio.h>
 
 #include "tinythread.h"
+#include "dfhack/modules/Graphic.h"
 
 /*
  * Plugin loading functions
@@ -284,9 +285,44 @@ DFhackCExport vPtr SDL_SetVideoMode(int width, int height, int bpp, uint32_t fla
 {
     return _SDL_SetVideoMode(width, height, bpp, flags);
 }
-static int (*_SDL_UpperBlit)(vPtr src, vPtr srcrect, vPtr dst, vPtr dstrect) = 0;
-DFhackCExport int SDL_UpperBlit(vPtr src, vPtr srcrect, vPtr dst, vPtr dstrect)
+
+static int (*_SDL_UpperBlit)(DFHack::DFSDL_Surface* src, DFHack::DFSDL_Rect* srcrect, DFHack::DFSDL_Surface* dst, DFHack::DFSDL_Rect* dstrect) = 0;
+DFhackCExport int SDL_UpperBlit(DFHack::DFSDL_Surface* src, DFHack::DFSDL_Rect* srcrect, DFHack::DFSDL_Surface* dst, DFHack::DFSDL_Rect* dstrect)
 {
+	if ( dstrect != NULL && dstrect->h != 0 && dstrect->w != 0 )
+	{
+		DFHack::Core & c = DFHack::Core::getInstance();
+		DFHack::Graphic* g = c.getGraphic();
+		DFHack::DFTileSurface* ov = g->Call(dstrect->x/dstrect->w, dstrect->y/dstrect->h);
+
+		if ( ov != NULL )
+		{
+			if ( ov->paintOver )
+			{
+				_SDL_UpperBlit(src, srcrect, dst, dstrect);
+			}
+
+			DFHack::DFSDL_Rect* dstrect2 = new DFHack::DFSDL_Rect;
+			dstrect2->x = dstrect->x;
+			dstrect2->y = dstrect->y;
+			dstrect2->w = dstrect->w;
+			dstrect2->h = dstrect->h;
+
+			if ( ov->dstResize != NULL )
+			{
+				DFHack::DFSDL_Rect* r = (DFHack::DFSDL_Rect*)ov->dstResize;
+				dstrect2->x += r->x;
+				dstrect2->y += r->y;
+				dstrect2->w += r->w;
+				dstrect2->h += r->h;
+			}
+
+			int result = _SDL_UpperBlit(ov->surface, ov->rect, dst, dstrect2);
+			delete dstrect2;
+			return result;
+		}
+	}
+
     return _SDL_UpperBlit(src, srcrect, dst, dstrect);
 }
 
@@ -745,7 +781,7 @@ bool FirstCall()
     _SDL_SetVideoMode = (void*(*)(int, int, int, uint32_t))GetProcAddress(realSDLlib,"SDL_SetVideoMode");
     _SDL_ShowCursor = (int (*)(int))GetProcAddress(realSDLlib,"SDL_ShowCursor");
     _SDL_UnlockSurface = (void (*)(void*))GetProcAddress(realSDLlib,"SDL_UnlockSurface");
-    _SDL_UpperBlit = (int (*)(void*, void*, void*, void*))GetProcAddress(realSDLlib,"SDL_UpperBlit");
+    _SDL_UpperBlit = (int (*)(DFHack::DFSDL_Surface*, DFHack::DFSDL_Rect*, DFHack::DFSDL_Surface*, DFHack::DFSDL_Rect*))GetProcAddress(realSDLlib,"SDL_UpperBlit");
     _SDL_WM_SetCaption = (void (*)(const char*, const char*))GetProcAddress(realSDLlib,"SDL_WM_SetCaption");
     _SDL_WM_SetIcon = (void (*)(void*, uint8_t*))GetProcAddress(realSDLlib,"SDL_WM_SetIcon");
     _SDL_mutexP = (int (*)(vPtr))GetProcAddress(realSDLlib,"SDL_mutexP");
@@ -781,4 +817,3 @@ bool FirstCall()
     inited = true;
     return 1;
 }
-

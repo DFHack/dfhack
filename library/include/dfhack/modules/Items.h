@@ -42,7 +42,7 @@ namespace DFHack
 
 class Context;
 class DFContextShared;
-class Creatures;
+class Units;
 
 /**
  * Item flags. A bit fuzzy.
@@ -162,21 +162,12 @@ public:
     virtual t_materialType getMaterial();
     virtual t_materialIndex getMaterialIndex();
     // 0x10
-    /*
-     hm, [4] looks complicated                    *
-     takes a parameter
-     looks like 0x017081A4 is a vector of something
-     this one sets an item property at offset 0xA0
-     (0.31.25 Windows SDL)
-     */
-    virtual void fn4(void);
+    virtual void setSubType(t_itemSubtype);
     virtual void setMaterial(t_materialType mat);
     virtual void setMaterialIndex (t_materialIndex submat);
-    // another one? really? 
-    virtual t_materialType getMaterial2();
+    virtual t_materialType getMaterial2(); // weird
     // 0x20
-    // more of the same?
-    virtual t_materialIndex getMaterialIndex2();
+    virtual t_materialIndex getMaterialIndex2(); // weird
     virtual void fn9(void);
     virtual void fn10(void);
     virtual void fn11(void);
@@ -603,7 +594,7 @@ public:
     /// which items does it contain?
     bool getContainedItems(const df_item * item, /*output*/ std::vector<int32_t> &items);
     /// wipe out the owner records
-    bool removeItemOwner(df_item * item, Creatures *creatures);
+    bool removeItemOwner(df_item * item, Units *creatures);
     /// read item references, filtered by class
     bool readItemRefs(const df_item * item, const ClassNameCheck &classname,
                       /*output*/ std::vector<int32_t> &values);

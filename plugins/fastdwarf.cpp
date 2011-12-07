@@ -13,7 +13,7 @@ using namespace std;
 #include <dfhack/Export.h>
 #include <dfhack/PluginManager.h>
 #include <dfhack/VersionInfo.h>
-#include <dfhack/modules/Creatures.h>
+#include <dfhack/modules/Units.h>
 using namespace DFHack;
 
 // dfhack interface
@@ -33,9 +33,9 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 {
     if (!enable_fastdwarf)
         return CR_OK;
-    df_creature *cre;
-    DFHack::Creatures * cr = c->getCreatures();
-    static vector <df_creature*> *v = cr->creatures;
+    df_unit *cre;
+    DFHack::Units * cr = c->getUnits();
+    static vector <df_unit*> *v = cr->creatures;
     uint32_t race = cr->GetDwarfRaceIndex();
     uint32_t civ = cr->GetDwarfCivId();
     if (!v)

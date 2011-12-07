@@ -45,6 +45,7 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "dfhack/modules/Gui.h"
 #include "dfhack/modules/World.h"
+#include "dfhack/modules/Graphic.h"
 using namespace DFHack;
 
 #include "dfhack/SDL_fakes/events.h"
@@ -775,7 +776,7 @@ TYPE * Core::get##TYPE() \
     return s_mods.p##TYPE;\
 }
 
-MODULE_GETTER(Creatures);
+MODULE_GETTER(Units);
 MODULE_GETTER(Engravings);
 MODULE_GETTER(Maps);
 MODULE_GETTER(Gui);
@@ -788,3 +789,4 @@ MODULE_GETTER(Buildings);
 MODULE_GETTER(Constructions);
 MODULE_GETTER(Vermin);
 MODULE_GETTER(Notes);
+MODULE_GETTER(Graphic);

@@ -57,7 +57,7 @@ distribution.
 #include "dfhack/modules/Engravings.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Constructions.h"
-#include "dfhack/modules/Creatures.h"
+#include "dfhack/modules/Units.h"
 #include "dfhack/modules/Translation.h"
 #include "dfhack/modules/World.h"
 #include "dfhack/modules/Items.h"

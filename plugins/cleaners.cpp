@@ -4,7 +4,7 @@
 #include <dfhack/PluginManager.h>
 #include <dfhack/modules/Maps.h>
 #include <dfhack/modules/Items.h>
-#include <dfhack/modules/Creatures.h>
+#include <dfhack/modules/Units.h>
 #include <dfhack/modules/Gui.h>
 
 using namespace DFHack;
@@ -135,7 +135,7 @@ command_result cleanitems (Core * c)
 
 command_result cleanunits (Core * c)
 {
-    DFHack::Creatures * Creatures = c->getCreatures();
+    DFHack::Units * Creatures = c->getUnits();
 
     uint32_t num_creatures;
     if (!Creatures->Start(num_creatures))
@@ -147,7 +147,7 @@ command_result cleanunits (Core * c)
     int cleaned_units = 0, cleaned_total = 0;
     for (std::size_t i = 0; i < num_creatures; i++)
     {
-        df_creature *unit = Creatures->creatures->at(i);
+        df_unit *unit = Creatures->creatures->at(i);
         int num = unit->contaminants.size();
         if (num)
         {

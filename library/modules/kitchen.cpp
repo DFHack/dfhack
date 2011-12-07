@@ -15,7 +15,7 @@ using namespace std;
 #include "dfhack/Vector.h"
 #include "dfhack/modules/Materials.h"
 #include "dfhack/modules/Items.h"
-#include "dfhack/modules/Creatures.h"
+#include "dfhack/modules/Units.h"
 #include "dfhack/modules/kitchen.h"
 #include "ModuleFactory.h"
 #include <dfhack/Core.h>

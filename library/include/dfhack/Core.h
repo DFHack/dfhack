@@ -32,6 +32,7 @@ distribution.
 #include <map>
 #include <stdint.h>
 #include "dfhack/Console.h"
+#include "dfhack/modules/Graphic.h"
 
 struct WINDOW;
 
@@ -46,7 +47,7 @@ namespace DFHack
 {
     class Process;
     class Module;
-    class Creatures;
+    class Units;
     class Engravings;
     class Maps;
     class Gui;
@@ -96,7 +97,7 @@ namespace DFHack
         bool isValid(void) { return !errorstate; }
 
         /// get the creatures module
-        Creatures * getCreatures();
+        Units * getUnits();
         /// get the engravings module
         Engravings * getEngravings();
         /// get the maps module
@@ -121,6 +122,8 @@ namespace DFHack
         Vermin * getVermin();
         /// get the notes module
         Notes * getNotes();
+        /// get the graphic module
+        Graphic * getGraphic();
         /// sets the current hotkey command
         bool setHotkeyCmd( std::string cmd );
         /// removes the hotkey command and gives it to the caller thread
@@ -158,7 +161,7 @@ namespace DFHack
         // Module storage
         struct
         {
-            Creatures * pCreatures;
+            Units * pUnits;
             Engravings * pEngravings;
             Maps * pMaps;
             Gui * pGui;
@@ -171,6 +174,7 @@ namespace DFHack
             Constructions * pConstructions;
             Vermin * pVermin;
             Notes * pNotes;
+            Graphic * pGraphic;
         } s_mods;
         std::vector <Module *> allModules;
         DFHack::PluginManager * plug_mgr;

@@ -55,6 +55,7 @@ include/dfhack/modules/Translation.h
 include/dfhack/modules/Vegetation.h
 include/dfhack/modules/Vermin.h
 include/dfhack/modules/World.h
+include/dfhack/modules/Graphic.h
 )
 
 SET(PROJECT_SRCS
@@ -89,6 +90,7 @@ modules/Translation.cpp
 modules/Vegetation.cpp
 modules/Vermin.cpp
 modules/World.cpp
+modules/Graphic.cpp
 )
 
 SET(PROJECT_HDRS_LINUX

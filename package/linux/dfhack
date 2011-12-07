@@ -67,7 +67,7 @@ case "$1" in
 esac
 
 # Reset terminal to sane state in case of a crash
-reset $DF_RESET_OPTS
+# reset $DF_RESET_OPTS
 
 if [ -n "$DF_POST_CMD" ]; then
     eval $DF_POST_CMD

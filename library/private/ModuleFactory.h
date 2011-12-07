@@ -43,5 +43,6 @@ namespace DFHack
     Module* createMaps();
     Module* createVermin();
     Module* createNotes();
+    Module* createGraphic();
 }
 #endif

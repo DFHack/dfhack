@@ -45,6 +45,7 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "dfhack/modules/Gui.h"
 #include "dfhack/modules/World.h"
+#include "dfhack/modules/Graphic.h"
 using namespace DFHack;
 
 #include "dfhack/SDL_fakes/events.h"
@@ -788,3 +789,4 @@ MODULE_GETTER(Buildings);
 MODULE_GETTER(Constructions);
 MODULE_GETTER(Vermin);
 MODULE_GETTER(Notes);
+MODULE_GETTER(Graphic);

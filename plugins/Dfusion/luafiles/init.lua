@@ -56,6 +56,7 @@ table.insert(plugins,{"triggers","a function calling plug (discontinued...)"})
 table.insert(plugins,{"migrants","multi race imigrations"})
 table.insert(plugins,{"onfunction","run lua on some df function"})
 loadall(plugins)
+dofile_silent("dfusion/initcustom.lua")
 if not INIT then
 mainmenu(plugins)
 end

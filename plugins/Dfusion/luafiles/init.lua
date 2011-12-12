@@ -49,6 +49,7 @@ table.insert(plugins,{"simple_embark","A simple embark dwarf count editor"})
 table.insert(plugins,{"items","A collection of item hacking tools"})
 table.insert(plugins,{"offsets","Find all offsets"})
 table.insert(plugins,{"friendship","Multi race fort enabler"})
+table.insert(plugins,{"friendship_civ","Multi civ fort enabler"})
 table.insert(plugins,{"embark","Multi race embark"})
 table.insert(plugins,{"adv_tools","some tools for (mainly) advneturer hacking"})
 table.insert(plugins,{"tools","some misc tools"})
@@ -57,6 +58,13 @@ table.insert(plugins,{"migrants","multi race imigrations"})
 table.insert(plugins,{"onfunction","run lua on some df function"})
 loadall(plugins)
 dofile_silent("dfusion/initcustom.lua")
+
+print("Locating saves...")
+local str=engine.peekstr(0x1447A40+offsets.base())
+print("Current region:"..str)
+str="data/save/"..str.."/dfusion/init.lua"
+dofile_silent(str)
+
 if not INIT then
 mainmenu(plugins)
 end

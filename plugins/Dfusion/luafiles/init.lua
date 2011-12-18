@@ -43,6 +43,7 @@ function mainmenu(t1)
 	end
 end
 dofile("dfusion/common.lua")
+dofile("dfusion/utils.lua")
 unlockDF()
 plugins={}
 table.insert(plugins,{"simple_embark","A simple embark dwarf count editor"})

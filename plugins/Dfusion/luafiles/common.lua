@@ -324,7 +324,7 @@ function findVectors()
 		local loc1,loc2
 		loc1=engine.peekd(v+2)
 		loc2=engine.peekd(v+8)
-		print(string.format("%x - %x=%x",loc1,loc2,loc1-loc2))
+		--print(string.format("%x - %x=%x",loc1,loc2,loc1-loc2))
 		if(loc1-loc2==4) then
 			if T[loc1-4]~=nil then
 				T[loc1-4]=T[loc1-4]+1

@@ -1,14 +1,13 @@
 <data-definition>
     -- MACHINE
 
-    <class-type type-name='machine' original-name='machinest' key-field='id'>
+    <class-type type-name='machine' original-name='machinest'
+                instance-vector='$global.world.machines.all' key-field='id'>
         <int32_t name="x"/>
         <int32_t name="y"/>
         <int32_t name="z"/>
 
         <int32_t name="id"/>
-
-        <code-helper name='find-instance'>(find-by-id $global.world.machines.all $id $)</code-helper>
 
         <stl-vector name="components">
             <pointer>

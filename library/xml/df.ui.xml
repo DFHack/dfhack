@@ -7,11 +7,10 @@
         <stl-string name='code' comment='DWARF_LIAISON etc'/>
     </struct-type>
 
-    <struct-type type-name='burrow' key-field='id'>
+    <struct-type type-name='burrow' key-field='id' instance-vector='$global.ui.burrows.list'>
         <int32_t name='id'/>
         <stl-string name='name'/>
 
-        <code-helper name='find-instance'>(find-by-id $global.ui.burrows.list $id $)</code-helper>
         <code-helper name='describe'>
             (describe-obj $.name)
         </code-helper>

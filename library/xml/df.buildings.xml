@@ -7,8 +7,8 @@
         <flag-bit name='justice'/>
     </bitfield-type>
 
-    <class-type type-name='building' original-name='buildingst' key-field='id'>
-        <code-helper name='find-instance'>(find-by-id $global.world.buildings.all $id $)</code-helper>
+    <class-type type-name='building' original-name='buildingst'
+                instance-vector='$global.world.buildings.all' key-field='id'>
 
         <int32_t name='x1' comment='left'/>
         <int32_t name='y1'/>

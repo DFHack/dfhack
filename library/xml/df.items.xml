@@ -66,9 +66,8 @@
 
     -- CORE ITEM
 
-    <class-type type-name='item' original-name='itemst' key-field='id'>
-        <code-helper name='find-instance'>(find-by-id $global.world.items.all $id $)</code-helper>
-
+    <class-type type-name='item' original-name='itemst'
+                instance-vector='$global.world.items.all' key-field='id'>
         <int16_t name='x'/>
         <int16_t name='y'/>
         <int16_t name='z'/>

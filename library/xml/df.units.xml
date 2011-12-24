@@ -114,10 +114,8 @@
         <flag-bit name='ghostly'/>
     </bitfield-type>
 
-    <struct-type type-name='unit' key-field='id'>
+    <struct-type type-name='unit' key-field='id' instance-vector='$global.world.units.all'>
         <compound type-name='language_name' name='name'/>
-
-        <code-helper name='find-instance'>(find-by-id $global.world.units.all $id $)</code-helper>
 
         <code-helper name='describe'>
             (describe-obj $.name)

@@ -56,6 +56,17 @@ sub type_header_def($) {
     return uc($main_namespace).'_'.uc($name).'_H';
 }
 
+sub translate_lookup($) {
+    my ($str) = @_;
+    return undef unless $str && $str =~ /^\$global((\.[_a-zA-Z0-9]+)+)$/;
+    my @fields = split /\./, substr($1,1);
+    my $expr = "df::global::".shift(@fields);
+    for my $fn (@fields) {
+        $expr = "_toref($expr).$fn";
+    }
+    return $expr;
+}
+
 # Text generation with indentation
 
 our @lines;
@@ -730,6 +741,32 @@ sub get_df_flagarray_type($) {
 );
 $struct_field_handlers{$_} ||= \&get_primitive_field_type for @primitive_type_list;
 
+sub emit_find_instance {
+    my ($tag) = @_;
+
+    my $instance_vector = translate_lookup $tag->getAttribute('instance-vector');
+    if ($instance_vector) {
+        emit "static std::vector<$typename*> &get_vector();";
+        emit "static $typename *find(int id);";
+
+        with_emit_static {
+            emit_block {
+                emit "return ", $instance_vector, ";";
+            } "std::vector<$typename*>& ${typename}::get_vector() ";
+
+            emit_block {
+                emit "std::vector<$typename*> &vec_ = get_vector();";
+
+                if (my $id = $tag->getAttribute('key-field')) {
+                    emit "return binsearch_in_vector(vec_, &${typename}::$id, id_);";
+                } else {
+                    emit "return (id_ >= 0 && id_ < vec_.size()) ? vec_[id_] : NULL;";
+                }
+            } "$typename *${typename}::find(int id_) ";
+        }
+    }
+}
+
 sub render_struct_type {
     my ($tag) = @_;
 
@@ -750,6 +787,8 @@ sub render_struct_type {
     with_struct_block {
         render_struct_field($_) for get_struct_fields($tag);
 
+        emit_find_instance($tag);
+        
         if ($has_methods) {
             if ($is_class) {
                 emit "static class_virtual_identity<$typename> _identity;";

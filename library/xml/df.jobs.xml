@@ -190,9 +190,7 @@
         <uint8_t name='unk5'/>
     </struct-type>
 
-    <struct-type type-name='activity_entry' key-field='id'>
-        <code-helper name='find-instance'>(find-by-id $global.world.activities.all $id $)</code-helper>
-
+    <struct-type type-name='activity_entry' instance-vector='$global.world.activities.all' key-field='id'>
         <int32_t name='id'/>
         <int16_t name='is_individual'/>
         <stl-vector name='events'>

@@ -187,6 +187,7 @@ void print_bits ( T val, DFHack::Console& out )
     strs << endl;
     out.print(strs.str().c_str());
 }
+
 /*
 // this is probably completely bogus
 std::string PrintSplatterType (int16_t mat1, int32_t mat2, vector<DFHack::t_matgloss> &creature_types)
@@ -247,4 +248,21 @@ std::string PrintSplatterType (int16_t mat1, int32_t mat2, vector<DFHack::t_matg
 }
 */
 
-
+template <typename CT, typename FT, typename AT = FT>
+CT *binsearch_in_vector(std::vector<CT*> &vec, FT CT::*field, AT value) {
+    int min = -1, max = (int)vec.size();
+    CT **p = vec.data();
+    FT key = (FT)value;
+    for (;;) {
+        int mid = (min + max)>>1;
+        if (mid == min)
+            return NULL;
+        FT midv = p[mid]->*field;
+        if (midv == key)
+            return p[mid];
+        else if (midv < key)
+            min = mid;
+        else
+            max = mid;        
+    }
+}

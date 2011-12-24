@@ -111,10 +111,8 @@
         <int32_t name="unk_11c"/>
     </struct-type>
 
-    <struct-type type-name='squad' key-field='id'>
+    <struct-type type-name='squad' key-field='id' instance-vector='$global.world.squads.all'>
         <int32_t name='id'/>
-
-        <code-helper name='find-instance'>(find-by-id $global.world.squads.all $id $)</code-helper>
 
         <compound name='name' type-name='language_name'/>
         <stl-string name='unk'/>

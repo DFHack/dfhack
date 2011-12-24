@@ -126,10 +126,10 @@
         <static-array name='state_color_str' type-name='stl-string' count='6'/>
     </struct-type>
 
-    <struct-type type-name='material_plant' key-field='id'>
+    <struct-type type-name='material_plant' instance-vector='$global.world.raws.plants.all'>
         <stl-string name='id'/>
 
-        <code-helper name='find-instance'>$global.world.raws.plants.all[$]</code-helper>
+        <code-helper name='describe'>$.id</code-helper>
 
         <df-flagarray name='flags'/>
 
@@ -234,10 +234,10 @@
         <int32_t name='underground_depth_max'/>
     </struct-type>
 
-    <struct-type type-name='material_inorganic' key-field='id'>
+    <struct-type type-name='material_inorganic' instance-vector='$global.world.raws.inorganics'>
         <stl-string name='id'/>
 
-        <code-helper name='find-instance'>$global.world.raws.inorganics.all[$]</code-helper>
+        <code-helper name='describe'>$.id</code-helper>
 
         <df-flagarray name='flags'/>
 

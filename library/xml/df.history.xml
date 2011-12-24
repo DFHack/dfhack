@@ -1,5 +1,5 @@
 <data-definition>
-    <struct-type type-name='historical_figure' key-field='id'>
+    <struct-type type-name='historical_figure' instance-vector='$global.world.history.figures' key-field='id'>
         <enum base-type='int16_t' name='profession' type-name='profession'/>
 
         <int16_t name='race' ref-target='creature_raw'/>
@@ -16,8 +16,6 @@
         <int32_t name='died_seconds'/>
 
         <compound type-name='language_name' name='name'/>
-
-        <code-helper name='find-instance'>(find-by-id $global.world.history.figures $id $)</code-helper>
 
         <code-helper name='describe'>
             (describe-obj $.name)
@@ -43,6 +41,14 @@
 
         <static-array name='unk7' count='5' type-name='int32_t' comment='empty'/>
     </struct-type>
+
+    <class-type type-name='history_event' original-name='history_eventst'
+                instance-vector='$global.world.history.events' key-field='id'>
+        <int32_t name='year'/>
+        <int32_t name='seconds'/>
+        <df-flagarray name='flags'/>
+        <int32_t name='id'/>
+    </class-type>
 
     <class-type type-name='history_event_masterpiece_createdst' inherits-from='history_event'>
         <int32_t name='maker' ref-target='historical_figure'/>

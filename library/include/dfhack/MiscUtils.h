@@ -248,7 +248,8 @@ std::string PrintSplatterType (int16_t mat1, int32_t mat2, vector<DFHack::t_matg
 }
 */
 
-template <typename CT, typename FT, typename AT = FT>
+//FIXME: Error	8	error C4519: default template arguments are only allowed on a class template
+template <typename CT, typename FT, typename AT/* = FT*/> 
 CT *binsearch_in_vector(std::vector<CT*> &vec, FT CT::*field, AT value) {
     int min = -1, max = (int)vec.size();
     CT **p = vec.data();

@@ -7,6 +7,9 @@ set(
 	${dfhack_SOURCE_DIR}/library/depends/tthread/tinythread.cpp
     ${DFUSION_CPPS}
 )
-DFHACK_PLUGIN(dfusion  ${DFUSION_CPPS_ALL} LINK_LIBRARIES lua)
+FILE(GLOB DFUSION_HS include/*)
+SET_SOURCE_FILES_PROPERTIES( ${DFUSION_HS} PROPERTIES HEADER_FILE_ONLY TRUE )
+DFHACK_PLUGIN(dfusion  ${DFUSION_CPPS_ALL} ${DFUSION_HS} LINK_LIBRARIES lua)
+
 # installs into DF root
 install(DIRECTORY luafiles/ DESTINATION dfusion)

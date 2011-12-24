@@ -1,0 +1,403 @@
+<data-definition>
+    <bitfield-type type-name='building_flags'>
+        <flag-bit name='exists' comment='actually built, not just ordered'/>
+        <flag-bit/>
+        <flag-bit name='room_collision' comment='major intersection with another room?'/>
+        <flag-bit/>
+        <flag-bit name='justice'/>
+    </bitfield-type>
+
+    <class-type type-name='building' original-name='buildingst' key-field='id'>
+        <code-helper name='find-instance'>(find-by-id $global.world.buildings.all $id $)</code-helper>
+
+        <int32_t name='x1' comment='left'/>
+        <int32_t name='y1'/>
+        <int32_t name='x2' comment='work location'/>
+        <int32_t name='x3' comment='right'/>
+        <int32_t name='y3'/>
+        <int32_t name='y2'/>
+        <int32_t name='z'/>
+
+        <compound name='flags' type-name='building_flags'/>
+
+        <int16_t name='materialType' ref-target='material' aux-value='$$.materialIndex'/>
+        <int32_t name='materialIndex'/>
+
+        <compound name='room'>
+            <pointer name='extents' type-name='uint8_t'>
+                <comment>0 - not room; 1 in stockpile; 2 wall; 3 inner; 4 distance boundary.</comment>
+            </pointer>
+            <int32_t name='x'/>
+            <int32_t name='y'/>
+            <int32_t name='width'/>
+            <int32_t name='height'/>
+        </compound>
+
+        <int32_t name='age'/>
+        <int16_t name='race' ref-target='creature_raw'/>
+        <int32_t name='id'/>
+
+        <stl-vector name='jobs'>
+            <pointer type-name='job'/>
+        </stl-vector>
+        <stl-vector name='meetings'>
+            <pointer type-name='meeting_ref'/>
+        </stl-vector>
+        <stl-vector name='unk6' type-name='pointer'/>
+
+        <bool name='is_room'/>
+
+        <stl-vector name='children' comment='other buildings within this room'>
+            <pointer type-name='building'/>
+        </stl-vector>
+        <stl-vector name='parents' comment='rooms this building belongs to'>
+            <pointer type-name='building'/>
+        </stl-vector>
+
+        <pointer type-name='unit' name='owner'/>
+
+        <stl-vector name='unk7' type-name='pointer'/>
+        <stl-string name='name'/>
+
+        <stl-vector name='activities'>
+            <pointer>
+                <int32_t name='id' ref-target='activity_entry'/>
+                <int32_t name='is_group'/>
+            </pointer>
+        </stl-vector>
+    </class-type>
+
+    -- stockpile --
+
+    <class-type type-name='building_stockpilest' inherits-from='building'>
+        <compound type-name='stockpile_settings' name='settings'/>
+
+        <int16_t name='max_barrels'/>
+        <int16_t name='max_bins'/>
+
+        <stl-vector name='container_type'>
+            <enum base-type='int16_t' type-name='item_type'/>
+        </stl-vector>
+        <stl-vector name='container_item_id'>
+            <int32_t ref-target='item'/>
+        </stl-vector>
+        <stl-vector name='container_x' type-name='int16_t'/>
+        <stl-vector name='container_y' type-name='int16_t'/>
+
+        <pointer name='give_to' type-name='building_stockpilest'/>
+        <stl-vector name='take_from'>
+            <pointer type-name='building_stockpilest'/>
+        </stl-vector>
+
+        <int32_t name='stockpile_number'/>
+    </class-type>
+
+    -- zone --
+
+    <class-type type-name='building_civzonest' inherits-from='building'>
+
+    </class-type>
+
+    -- actual --
+
+    <class-type type-name='building_actual' inherits-from='building'
+                original-name='building_actualst'>
+        <int16_t name='construction_stage'
+                 comment='0 not started, then 1 or 3 max depending on type'/>
+
+        <stl-vector name='contained_items'>
+            <pointer>
+                <pointer name='item' type-name='item'/>
+                <int16_t name='use_mode'/>
+            </pointer>
+        </stl-vector>
+
+        <pointer name='design' type-name='building_design'/>
+    </class-type>
+
+    <struct-type type-name='building_design'>
+        <int32_t name='architect' ref-target='historical_figure'/>
+        <int32_t name='unk2' comment='-1'/>
+        <int16_t name='unk3'/>
+        <int32_t name='builder1' ref-target='historical_figure'/>
+        <int32_t name='unk5' comment='-1'/>
+        <int16_t name='unk6'/>
+        <int16_t name='build_timer1' comment='+1 per 10 frames while building'/>
+        <int32_t name='builder2' ref-target='historical_figure'/>
+        <int16_t name='build_timer2'/>
+        <int16_t name='unk8b'/>
+        <int16_t name='unk9'/>
+        <bitfield name='flags' base-type='uint32_t'>
+            <flag-bit name='rough' comment='rough gabbro road'/>
+            <flag-bit name='built'/>
+            <flag-bit name='designed'/>
+        </bitfield>
+        <int32_t name='unk11'/>
+        <int32_t name='unk12'/>
+        <int32_t name='unk13'/>
+    </struct-type>
+
+    -- workshops --
+
+    <enum-type type-name='furnace_type'>
+        <enum-item name="WoodFurnace"/>
+        <enum-item name="Smelter"/>
+        <enum-item name="GlassFurnace"/>
+        <enum-item name="Kiln"/>
+        <enum-item name="MagmaSmelter"/>
+        <enum-item name="MagmaGlassFurnace"/>
+        <enum-item name="MagmaKiln"/>
+        <enum-item name="Custom"/>
+    </enum-type>
+
+    <class-type type-name='building_furnacest' inherits-from='building_actual'>
+        <stl-vector name='melt_remainder' type-name='int32_t'
+                    index-refers-to='(material-by-id 0 $)'/>
+
+        <int16_t name="unk_108"/>
+
+        <enum base-type='int16_t' name="type" type-name='furnace_type'/>
+
+        <stl-vector name="permitted_workers">
+            <int32_t ref-target='unit'/>
+        </stl-vector>
+        <int32_t name="min_level"/>
+        <int32_t name="max_level"/>
+
+        <int32_t name="custom_type" refers-to='$global.world.raws.buildings.furnaces[$]'/>
+    </class-type>
+
+    <enum-type type-name='workshop_type'>
+        <enum-item name="Carpenters"/>
+        <enum-item name="Farmers"/>
+        <enum-item name="Masons"/>
+        <enum-item name="Craftdwarfs"/>
+        <enum-item name="Jewelers"/>
+        <enum-item name="MetalsmithsForge"/>
+        <enum-item name="MagmaForge"/>
+        <enum-item name="Bowyers"/>
+        <enum-item name="Mechanics"/>
+        <enum-item name="Siege"/>
+        <enum-item name="Butchers"/>
+        <enum-item name="Leatherworks"/>
+        <enum-item name="Tanners"/>
+        <enum-item name="Clothiers"/>
+        <enum-item name="Fishery"/>
+        <enum-item name="Still"/>
+        <enum-item name="Loom"/>
+        <enum-item name="Quern"/>
+        <enum-item name="Kennels"/>
+        <enum-item name="Kitchen"/>
+        <enum-item name="Ashery"/>
+        <enum-item name="Dyers"/>
+        <enum-item name="Millstone"/>
+        <enum-item name="Custom"/>
+    </enum-type>
+
+    <class-type type-name='building_workshopst' inherits-from='building_actual'>
+        <enum base-type='int16_t' name="type" type-name='workshop_type'/>
+
+        <stl-vector name="permitted_workers">
+            <int32_t ref-target='unit'/>
+        </stl-vector>
+        <int32_t name="min_level"/>
+        <int32_t name="max_level"/>
+
+        <int32_t name="machine_id" ref-target='machine'/>
+        <int32_t name="unk_118"/>
+
+        <int32_t name="custom_type" refers-to='$global.world.raws.buildings.workshops[$]'/>
+    </class-type>
+
+    -- misc --
+
+    <class-type type-name='building_animaltrapst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_archerytargetst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_armorstandst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_bars_verticalst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_bars_floorst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_bedst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_boxst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_bridgest' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_cabinetst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_cagest' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_chainst' inherits-from='building_actual'>
+        <pointer name='assigned' type-name='unit'/>
+        <pointer name='chained' type-name='unit'/>
+        <int16_t name='unk'/>
+    </class-type>
+
+    <class-type type-name='building_chairst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_coffinst' inherits-from='building_actual'>
+        <bitfield name='burial_mode' base-type='uint16_t'>
+            <flag-bit name='allow_burial'/>
+            <flag-bit name='no_citizens'/>
+            <flag-bit name='no_pets'/>
+        </bitfield>
+    </class-type>
+
+    <class-type type-name='building_constructionst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_doorst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_farmplotst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_floodgatest' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_grate_floorst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_grate_wallst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_hatchst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_hivest' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_nestst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_nest_boxst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_roadst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_road_dirtst' inherits-from='building_roadst'>
+
+    </class-type>
+
+    <class-type type-name='building_road_pavedst' inherits-from='building_roadst'>
+
+    </class-type>
+
+    <class-type type-name='building_shopst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_siegeenginest' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_slabst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_statuest' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_supportst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_tablest' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_traction_benchst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_tradedepotst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_trapst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_wagonst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_weaponst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_weaponrackst' inherits-from='building_actual'>
+        <int16_t name='unk_c0'/>
+
+        <stl-vector name='assignments'>
+            <pointer>
+                <int32_t name='squad_id' ref-target='squad'/>
+                <compound name='mode' type-name='squad_use_flags'/>
+            </pointer>
+        </stl-vector>
+
+        <int32_t name='unk_d0'/>
+    </class-type>
+
+    <class-type type-name='building_wellst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_windowst' inherits-from='building_actual'>
+
+    </class-type>
+
+    <class-type type-name='building_window_glassst' inherits-from='building_windowst'>
+
+    </class-type>
+
+    <class-type type-name='building_window_gemst' inherits-from='building_windowst'>
+
+    </class-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

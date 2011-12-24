@@ -37,6 +37,7 @@ using namespace std;
 #include "dfhack/Error.h"
 #include "dfhack/Process.h"
 #include "dfhack/Core.h"
+#include "dfhack/DataDefs.h"
 #include "dfhack/Console.h"
 #include "dfhack/Module.h"
 #include "dfhack/VersionInfoFactory.h"
@@ -494,6 +495,10 @@ bool Core::Init()
         dump << vinfo->PrintOffsets();
         dump.close();
     }
+    
+    // initialize data defs
+    virtual_identity::Init();
+    InitDataDefGlobals(this);
 
     // create mutex for syncing with interactive tasks
     StackMutex = new mutex();

@@ -1,0 +1,108 @@
+<data-definition>
+    <enum-type type-name='language_word_flags'>
+        <enum-item name='FRONT_COMPOUND_NOUN_SING'/>
+        <enum-item name='FRONT_COMPOUND_NOUN_PLUR'/>
+        <enum-item name='FRONT_COMPOUND_ADJ'/>
+        <enum-item name='FRONT_COMPOUND_PREFIX'/>
+        <enum-item name='REAR_COMPOUND_NOUN_SING'/>
+        <enum-item name='REAR_COMPOUND_NOUN_PLUR'/>
+        <enum-item name='REAR_COMPOUND_ADJ'/>
+        <enum-item name='THE_NOUN_SING'/>
+        <enum-item name='THE_NOUN_PLUR'/>
+        <enum-item name='THE_COMPOUND_NOUN_SING'/>
+        <enum-item name='THE_COMPOUND_NOUN_PLUR'/>
+        <enum-item name='THE_COMPOUND_ADJ'/>
+        <enum-item name='THE_COMPOUND_PREFIX'/>
+        <enum-item name='OF_NOUN_SING'/>
+        <enum-item name='OF_NOUN_PLUR'/>
+        <enum-item name='STANDARD_VERB'/>
+    </enum-type>
+
+    <struct-type type-name='language_word' key-field='word'>
+        <stl-string name='word'/>
+
+        <code-helper name='find-instance'>$global.world.raws.language_words[$]</code-helper>
+
+        <compound name='forms' is-union='true'>
+            <static-array type-name='stl-string' name='all' count='9'/>
+            <compound>
+                <stl-string name='noun'/>
+                <stl-string name='noun_plural'/>
+
+                <stl-string name='adjective'/>
+
+                <stl-string name='prefix'/>
+
+                <stl-string name='verb'/>
+                <stl-string name='verb_3rd_person'/>
+                <stl-string name='verb_past'/>
+                <stl-string name='verb_passive'/>
+                <stl-string name='verb_gerund'/>
+            </compound>
+        </compound>
+
+        <uint8_t name='adj_dist'/>
+
+        <padding size='7' comment='looks like garbage'/>
+
+        <df-flagarray name='flags' index-enum='language_word_flags'/>
+    </struct-type>
+
+    <struct-type type-name='language_translation' key-field='name'>
+        <stl-string name='name'/>
+
+        <code-helper name='find-instance'>$global.world.raws.translations[$]</code-helper>
+
+        <stl-vector name='unknown1' comment='empty'/>
+        <stl-vector name='unknown2' comment='empty'/>
+
+        <stl-vector name='words' index-refers-to='$global.world.raws.language_words[$]'>
+            <pointer type-name='stl-string'/>
+        </stl-vector>
+    </struct-type>
+
+    <struct-type type-name='language_symbol'>
+        <stl-string name='name'/>
+
+        <stl-vector name='unknown' comment='empty'/>
+
+        <stl-vector name='words'>
+            <int32_t ref-target='language_word'/>
+        </stl-vector>
+    </struct-type>
+
+    <struct-type type-name='language_name'>
+        <stl-string name='first_name'/>
+        <stl-string name='nickname'/>
+
+        <static-array name='words' count='7'>
+            <int32_t ref-target='language_word'/>
+        </static-array>
+        <static-array name='parts_of_speech' count='7' type-name='int16_t'/>
+
+        <int32_t name='language' ref-target='language_translation'/>
+        <int16_t name='unknown'/>
+
+        <bool name='has_name'/>
+
+        <code-helper name='describe'>
+          (when $.has_name
+            (let* ((nick $.nickname)
+                   (language $global.world.raws.translations[$.language])
+                   (fname $.first_name)
+                   (lwords $language.words))
+              (fmt "~:(~@[~A ~]~@['~A' ~]~{~A~^ ~}~)"
+                   (if (> (length fname) 0) fname)
+                   (if (> (length nick) 0) nick)
+                   (loop for i from 0 below 7 for word = $.words[i]
+                      when (>= word 0) collect $lwords[word].value))))
+        </code-helper>
+    </struct-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

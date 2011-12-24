@@ -1078,6 +1078,13 @@
             <Group name="Notes" description="In-game notes">
                 <Address name="vector"/>
             </Group>
+            <Group name='global'>
+                <Address name='world'/>
+                <Address name='ui'/>
+                <Address name='gview'/>
+                <Address name='init'/>
+                <Address name='d_init'/>
+            </Group>
         </Offsets>
     </Base>
 
@@ -2309,6 +2316,13 @@
             <Group name="World">
                 <Address name="save_folder" value="0x1847A40" />
             </Group>
+            <Group name='global'>
+                <Address name='world' value='0x16b0a58'/>
+                <Address name='ui' value='0x14ee7e0'/>
+                <Address name='gview' value='0x14f6070'/>
+                <Address name='init' value='0x184ae58'/>
+                <Address name='d_init' value='0x1848350'/>
+            </Group>
         </Offsets>
         cmake
         item vector:
@@ -3173,6 +3187,13 @@
             </Group>
             <Group name="Notes">
                 <Address name="vector" value="0x93f635c"/>
+            </Group>
+            <Group name='global'>
+                <Address name='world' value='0x93f77a0'/>
+                <Address name='ui' value='0x93f0780'/>
+                <Address name='gview' value='0x8c3e900'/>
+                <Address name='init' value='0x959c2a0'/>
+                <Address name='d_init' value='0x959d340'/>
             </Group>
         </Offsets>
     </Version>

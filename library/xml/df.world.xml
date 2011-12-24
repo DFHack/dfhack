@@ -1,0 +1,503 @@
+<data-definition>
+    <struct-type type-name='world'>
+        dtor 89fff80
+
+        <static-array name='unk0' count='21'>
+            dtor 8532540
+
+            <stl-vector>
+                <pointer/>
+            </stl-vector>
+        </static-array>
+
+        <stl-vector name='unk_fc'>
+            <pointer/>
+        </stl-vector>
+        <stl-vector name='unk_108'>
+            <pointer/>
+        </stl-vector>
+        <stl-vector name='unk_114'>
+            <pointer/>
+        </stl-vector>
+
+        --
+
+        <stl-vector name='manager_orders'>
+            <pointer type-name='manager_order'/>
+        </stl-vector>
+
+        <stl-vector name='mandates'>
+            <pointer type-name='mandate'/>
+        </stl-vector>
+
+        --  Entities
+
+        <compound name='entities'>
+            <stl-vector name='all'>
+                <pointer type-name='historical_entity'/>
+            </stl-vector>
+
+            <stl-vector name='bad' has-bad-pointers='true'>
+                <pointer type-name='historical_entity'/>
+            </stl-vector>
+        </compound>
+
+        -- Unknown
+
+        <padding size='80004' comment='0 bytes; same size on Windows'/>
+
+        -- Units
+
+        <compound name='units'>
+            <stl-vector name='all'>
+                <pointer type-name='unit'/>
+            </stl-vector>
+
+            <static-array name='other' count='4'>
+                <stl-vector>
+                    <pointer type-name='unit'/>
+                </stl-vector>
+            </static-array>
+
+            <stl-vector name='bad' has-bad-pointers='true'>
+                <pointer type-name='unit'/>
+            </stl-vector>
+        </compound>
+
+        -- Unknown
+
+        <stl-vector name='unk_13a1c'>
+            <pointer/>
+        </stl-vector>
+        <stl-vector name='unk_13a28'>
+            <pointer/>
+        </stl-vector>
+
+        -- Nemesis
+
+        <compound name='nemesis'>
+            <stl-vector name='all'>
+                <pointer type-name='nemesis_record'/>
+            </stl-vector>
+
+            <stl-vector name='bad' has-bad-pointers='true'>
+                <pointer type-name='nemesis_record'/>
+            </stl-vector>
+        </compound>
+
+        <bool name='unk4'/>
+
+        -- Items
+
+        <compound name='items'>
+            dtor 852f4b0
+
+            <stl-vector name='all'>
+                <pointer type-name='item'/>
+            </stl-vector>
+
+            <static-array name='other' count='127'>
+                <stl-vector>
+                    <pointer type-name='item'/>
+                </stl-vector>
+            </static-array>
+
+            <stl-vector name='bad' has-bad-pointers='true'>
+                <pointer type-name='item'/>
+            </stl-vector>
+
+            <stl-vector name='bad_tag' type-name='int32_t'/>
+        </compound>
+
+        -- Artifacts
+
+        <compound name='artifacts'>
+            <stl-vector name='all'>
+                <pointer type-name='artifact_record'/>
+            </stl-vector>
+
+            <stl-vector name='bad' has-bad-pointers='true'>
+                <pointer type-name='artifact_record'/>
+            </stl-vector>
+        </compound>
+
+        -- Jobs and projectiles
+
+        <compound name='job_list' type-name='job_list_link'/>
+
+        <compound name='proj_list' type-name='proj_list_link'/>
+
+        -- Buildings
+
+        <compound name='buildings'>
+            dtor 85316f0
+
+            <stl-vector name='all'>
+                <pointer type-name='building'/>
+            </stl-vector>
+
+            <static-array name='other' count='86'>
+                <stl-vector>
+                    <pointer type-name='building'/>
+                </stl-vector>
+            </static-array>
+
+            <stl-vector name='bad' has-bad-pointers='true'>
+                <pointer type-name='building'/>
+            </stl-vector>
+        </compound>
+
+        <bool name='unk5a'/>
+        <bool name='unk5b'/>
+
+        -- Machines (connected groups of gears and so on)
+
+        <compound name='machines'>
+            <stl-vector name='all'>
+                <pointer type-name='machine'/>
+            </stl-vector>
+            <stl-vector name='bad' has-bad-pointers='true'>
+                <pointer type-name='machine'/>
+            </stl-vector>
+        </compound>
+
+        -- Unknown
+
+        <compound name='unk_144d4'>
+            <stl-vector name='all' type-name='pointer'/>
+            <stl-vector name='bad' has-bad-pointers='true' type-name='pointer'/>
+        </compound>
+
+        <padding size='84'/>
+
+        <compound name='unk_material_info_14540'>
+            <stl-vector name='unk_plant_1' type-name='bool'
+                        index-refers-to='(find-plant-raw $)'/>
+            <stl-vector name='unk_plant_2' type-name='bool'
+                        index-refers-to='(find-plant-raw $)'/>
+            <stl-vector name='unk_creature_1' type-name='bool'
+                        index-refers-to='(find-creature $)'/>
+            <stl-vector name='unk_creature_2' type-name='bool'
+                        index-refers-to='(find-creature $)'/>
+            <stl-vector name='unk_creature_3' type-name='bool'
+                        index-refers-to='(find-creature $)'/>
+            <stl-vector name='unk_plant_3' type-name='bool'
+                        index-refers-to='(find-plant-raw $)'/>
+            <stl-vector name='unk_plant_4' type-name='bool'
+                        index-refers-to='(find-plant-raw $)'/>
+            <padding size='8' comment='0'/>
+            <stl-vector name='unk_plant_5' type-name='bool'
+                        index-refers-to='(find-plant-raw $)'/>
+            <stl-vector name='unk_creature_4' type-name='bool'
+                        index-refers-to='(find-creature $)'/>
+            <stl-vector name='unk_builtin' type-name='bool'
+                        index-refers-to='(material-by-id $ -1)'/>
+            <padding size='16' comment='0'/>
+        </compound>
+
+        -- Plants
+
+        <compound name='plants'>
+            <stl-vector name='all' type-name='pointer'/>
+            <static-array name='other' count='5'>
+                <stl-vector type-name='pointer'/>
+            </static-array>
+        </compound>
+
+        -- Unknown
+
+        <padding name='unk_14618' size='12' comment='linked list'/>
+
+        -- Unknown
+
+        <padding size='500' comment='bool array?'/>
+        <static-array name='unk_14818' type-name='int8_t' count='250000'/>
+        <int32_t name='unk_518a8'/>
+
+        <compound name='unk_518ac'>
+            <stl-vector name='all'>
+                <pointer/>
+            </stl-vector>
+            <stl-vector name='bad' has-bad-pointers='true'>
+                <pointer/>
+            </stl-vector>
+        </compound>
+
+        <compound name='squads'>
+            <stl-vector name='all'>
+                <pointer type-name='squad'/>
+            </stl-vector>
+            <stl-vector name='bad' has-bad-pointers='true'>
+                <pointer type-name='squad'/>
+            </stl-vector>
+        </compound>
+
+        <compound name='unk_518dc'>
+            <stl-vector name='all'>
+                <pointer/>
+            </stl-vector>
+            <stl-vector name='bad' has-bad-pointers='true'>
+                <pointer/>
+            </stl-vector>
+        </compound>
+
+        -- Drills
+
+        <compound name='activities'>
+            <stl-vector name='all'>
+                <pointer type-name='activity_entry'/>
+            </stl-vector>
+            <stl-vector name='bad' has-bad-pointers='true'>
+                <pointer type-name='activity_entry'/>
+            </stl-vector>
+        </compound>
+
+        -- Reports and announcements
+
+        <compound name='status'>
+            dtor 85356e0
+            <stl-vector name='reports' type-name='pointer'/>
+            <stl-vector name='announcements' type-name='pointer'/>
+            <stl-vector name='unk_vec' type-name='pointer'/>
+
+            <int32_t name='next_report_id'/>
+            <int32_t/>
+            <int32_t/>
+
+            <static-array name='slots' count='100'>
+                <comment>Written to by code at 0x80fd7b0</comment>
+                <int16_t name='id'/>
+                <padding name='info' size='24' alignment='4'
+                         comment='Weird garbage. Possibly types change for different entries.'/>
+                <stl-string name='unk3a'/>
+                <stl-string name='unk3b'/>
+                <stl-string name='unk3c'/>
+                <stl-string name='unk3d'/>
+                <int32_t name='unk4'/>
+            </static-array>
+
+            <static-array name='slot_id_used' type-name='int16_t' count='34'/>
+            <static-array name='slot_id_idx1' type-name='int16_t' count='34'/>
+            <static-array name='slot_id_idx2' type-name='int16_t' count='34'/>
+
+            <int16_t name='slots_used'/>
+        </compound>
+
+        <pointer name='selected_building' type-name='building'/>
+        <enum base-type='int16_t' name='selected_stockpile_type' type-name='stockpile_category'/>
+        <bool/>
+        <padding size='8' alignment='4' comment='0'/>
+
+        <compound name='map'> 52cdc
+        <stl-vector name='map_blocks'>
+            <pointer type-name='map_block'/>
+        </stl-vector>
+        <pointer name='block_index'/>
+
+        <stl-vector name='map_block_columns'>
+            <pointer type-name='map_block_column'/>
+        </stl-vector>
+        <pointer name='column_index'/>
+
+        <int32_t name='x_count_block'/>
+        <int32_t name='y_count_block'/>
+        <int32_t name='z_count_block'/>
+        <int32_t name='x_count'/>
+        <int32_t name='y_count'/>
+        <int32_t name='z_count'/>
+        <int32_t name='region_x'/>
+        <int32_t name='region_y'/>
+        <int32_t name='region_z'/>
+        </compound>
+
+        <static-array name='unknown_52d20'
+                      count='2810' type-name='int16_t'/>
+
+        <pointer name='world_data' type-name='world_data'/>
+
+        <compound name='unk_54318'>
+            <padding size='1180'/>
+            <stl-vector comment='547b4'/>
+            <stl-vector/>
+            <padding size='8'/>
+            <stl-vector/>
+            <stl-vector/>
+            <padding size='8'/>
+            <bool/>
+            <stl-string/> 547f8
+            <padding size='24'/>
+            <stl-vector comment='54814'/>
+            <stl-vector/>
+            <padding size='8'/>
+            <stl-vector/>
+            <stl-vector/>
+            <padding size='8'/>
+            <static-array count='10' comment='true array 54854'>
+                <stl-vector/>
+            </static-array>
+            <static-array count='10' comment='true array 548cc'>
+                <stl-vector/>
+            </static-array>
+            <static-array count='10' comment='true array'>
+                <stl-vector/>
+            </static-array>
+            <stl-vector/>
+            <stl-vector/>
+            <stl-vector/>
+            <stl-vector/>
+            <stl-vector/>
+            <stl-vector/>
+        </compound>
+
+        <padding size='8' comment='0'/>
+        <int32_t name='unk_54a0c'/>
+        <int32_t name='unk_54a10'/>
+
+        -- RAWs
+
+        <compound name='raws' type-name='world_raws'/>
+
+        <compound name='unk_59dc4'>
+            <stl-vector type-name='int16_t'/>
+            <stl-vector type-name='int16_t'/>
+            <stl-vector type-name='pointer'/>
+            <static-array type-name='int16_t' count='32'/>
+            <int32_t/>
+            <int32_t/>
+            <int32_t/>
+            <stl-vector type-name='int16_t'/>
+            <stl-vector type-name='int16_t'/>
+            <stl-vector type-name='int16_t'/>
+            <stl-vector type-name='int16_t'/>
+            <stl-vector type-name='int32_t'/>
+            <pointer name='unk_59e70'/>
+            <int32_t name='unk_59e74'/>
+        </compound>
+
+        <int32_t name='unk_59e78'/>
+
+        <compound name='unk_59e7c'>
+            <stl-string name='unk_59e7c'/>
+            <int32_t name="unk_5e200"/>
+            <int32_t name="unk_5e204"/>
+            <int32_t name="unk_5e208"/>
+            <int32_t name="unk_5e20c"/>
+            ctor 87ae880
+            <stl-string name='unk_59e90'/>
+            <padding size='16'/>
+            <int32_t name="unk_5e23c"/>
+            <int32_t name="unk_5e240"/>
+            <stl-string name='unk_59eac'/>
+            <bool/>
+            <bool/>
+            <bool/>
+            <bool/>
+            <padding size='900'/>
+            <pointer name='unk_5a238'/> dtor 83bed90
+            <int32_t name="unk_5e5ec"/>
+            <int32_t name="unk_5e5f0"/>
+            <int32_t name="unk_5e5f4"/>
+            <int32_t name="unk_5e5f8"/>
+            <int32_t name="unk_5e5fc"/>
+            <int32_t name="unk_5e600"/>
+            <int32_t name="unk_5e604"/>
+            <int32_t name="unk_5e608"/>
+            <bool/>
+        </compound>
+
+        -- hist figures
+
+        <compound name='history' type-name='world_history'/>
+
+        <stl-vector name='entity_populations'>
+            <pointer type-name='entity_population'/>
+        </stl-vector>
+
+        <int32_t name="unk_5e7a0"/>
+
+        <int32_t name='frame_counter' comment='increases by 1 every time . is pressed'/>
+
+        <compound name='unk_5a39c'>
+            <stl-vector name='unk_5a39c'/>
+
+            <static-array name='unk' count='80000'>
+                <comment>Looks like a temporary buffer for pathfinding or something.</comment>
+                <uint16_t name='unk1a'/>
+                <uint16_t name='tag'/>
+                <int32_t name='unk2'/>
+                <int16_t name='x'/>
+                <int16_t name='y'/>
+                <int32_t name='z'/>
+            </static-array>
+
+            <int32_t/>
+            <int16_t name='x1'/>
+            <int16_t name='y1'/>
+            <int16_t name='z1'/>
+            <int16_t name='x2'/>
+            <int16_t name='y2'/>
+            <int16_t name='z2'/>
+            <int32_t/>
+            <int32_t/>
+            <int32_t/>
+            <uint16_t/>
+            <uint16_t name='tag'/>
+            <bool/>
+            <uint16_t/>
+            <bool/>
+            <int16_t/>
+            <int16_t/>
+            <bool/>
+            <int32_t/>
+        </compound>
+
+        <compound name='unk_192bd8'>
+            <stl-string name='save_dir'/>
+            <padding size='4'/>
+
+            <static-array count='19'> 192be0
+            <stl-vector/>
+            </static-array>
+        </compound>
+
+        <int32_t name="unk_192cc4"/>
+
+        <compound name='unk_192cc8'>
+            <stl-vector/>
+            <stl-vector/>
+
+            <padding size='4'/>
+
+            <static-array count='105' comment='true array'>
+                <stl-vector type-name='pointer'/>
+            </static-array>
+
+            <stl-vector/>
+            <stl-vector/>
+            <stl-vector/>
+
+            <static-array count='7'>
+                <stl-vector/>
+            </static-array>
+
+            <padding size='8'/>
+
+            <stl-vector/>
+        </compound>
+
+        <compound name='unk_19325c'>
+            <static-array count='3'>
+                <stl-vector type-name='pointer'/>
+            </static-array>
+
+            <padding size='12'/>
+        </compound>
+    </struct-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

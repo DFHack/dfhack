@@ -1,0 +1,129 @@
+<data-definition>
+    <enum-type type-name='d_init_nickname'>
+        <enum-item name='REPLACE_FIRST'/>
+        <enum-item name='CENTRALIZE'/>
+        <enum-item name='REPLACE_ALL'/>
+    </enum-type>
+
+    <enum-type type-name='d_init_z_view'>
+        <enum-item name='OFF'/>
+        <enum-item name='UNHIDDEN'/>
+        <enum-item name='CREATURE'/>
+        <enum-item name='ON'/>
+    </enum-type>
+
+    <enum-type type-name='d_init_idlers'>
+        <enum-item name='OFF' value='-1'/>
+        <enum-item name='TOP'/>
+        <enum-item name='BOTTOM'/>
+    </enum-type>
+
+    <enum-type type-name='d_init_tunnel'>
+        <enum-item name='NO'/>
+        <enum-item name='FINDER'/>
+        <enum-item name='ALWAYS'/>
+    </enum-type>
+
+    <enum-type type-name='d_init_flags1'>
+        <enum-item name='VARIED_GROUND_TILES'/>
+        <enum-item name='ENGRAVINGS_START_OBSCURED'/>
+        <enum-item name='SHOW_IMP_QUALITY'/>
+        <enum-item name='SHOW_FLOW_AMOUNTS'/>
+    </enum-type>
+
+    <enum-type type-name='d_init_flags2'>
+        <enum-item name='MORE'/>
+        <enum-item name='ADVENTURER_TRAPS'/>
+        <enum-item name='ADVENTURER_ALWAYS_CENTER'/>
+    </enum-type>
+
+    <enum-type type-name='d_init_flags3'>
+        <enum-item name='COFFIN_NO_PETS_DEFAULT'/>
+    </enum-type>
+
+    <enum-type type-name='d_init_flags4'>
+        <enum-item name='TEMPERATURE'/>
+        <enum-item name='WEATHER'/>
+        <enum-item name='ECONOMY'/>
+        <enum-item name='ZERO_RENT'/>
+        <enum-item name='AUTOSAVE_SEASONAL'/>
+        <enum-item name='AUTOSAVE_YEARLY'/>
+        <enum-item name='AUTOSAVE_PAUSE'/>
+        <enum-item name='AUTOBACKUP'/>
+        <enum-item name='INITIAL_SAVE'/>
+        <enum-item name='INVADERS'/>
+        <enum-item name='CAVEINS'/>
+        <enum-item name='ARTIFACTS'/>
+        <enum-item name='LOG_MAP_REJECTS'/>
+        <enum-item name='PAUSE_ON_LOAD'/>
+        <enum-item name='EMBARK_WARNING_ALWAYS'/>
+        <enum-item name='SHOW_ALL_HISTORY_IN_DWARF_MODE'/>
+        <enum-item name='TESTING_ARENA'/>
+        <enum-item name='WALKING_SPREADS_SPATTER_DWF'/>
+        <enum-item name='WALKING_SPREADS_SPATTER_ADV'/>
+    </enum-type>
+
+    <struct-type type-name='d_init'>
+        <df-flagarray name='flags1' index-enum='d_init_flags1'/>
+
+        <enum name="nickname_dwarf" type-name='d_init_nickname'/>
+        <enum name="nickname_adventure" type-name='d_init_nickname'/>
+        <enum name="nickname_legends" type-name='d_init_nickname'/>
+        <enum name="nickname_dwarf2" type-name='d_init_nickname'/>
+
+        <int32_t name="unk_18"/>
+        <int32_t name="unk_1c"/>
+
+        <uint8_t name='sky_tile'/>
+        <static-array name='sky_color' type-name='int16_t' count='3'/>
+        <uint8_t name='chasm_tile'/>
+        <uint8_t name='pillar_tile'/>
+        <static-array name='chasm_color' type-name='int16_t' count='3'/>
+
+        <compound name='wound_color'>
+            <static-array name='none' type-name='int16_t' count='3'/>
+            <static-array name='minor' type-name='int16_t' count='3'/>
+            <static-array name='inhibited' type-name='int16_t' count='3'/>
+            <static-array name='function_loss' type-name='int16_t' count='3'/>
+            <static-array name='broken' type-name='int16_t' count='3'/>
+            <static-array name='missing' type-name='int16_t' count='3'/>
+        </compound>
+
+        <enum name="idlers" base-type='int16_t' type-name='d_init_idlers'/>
+        <enum name="show_embark_tunnel" base-type='int16_t' type-name='d_init_tunnel'/>
+
+        <df-flagarray name='flags2' index-enum='d_init_flags2'/>
+
+        <int32_t name="display_length"/>
+
+        <enum name="adventurer_z_view" type-name='d_init_z_view'/>
+        <int32_t name="adventurer_z_view_size"/>
+
+        <df-flagarray name='flags3' index-enum='d_init_flags3'/>
+
+        <int32_t name="population_cap"/>
+        <int32_t name="baby_cap_absolute"/>
+        <int32_t name="baby_cap_percent"/>
+
+        <static-array name='path_cost' type-name='int32_t' count='4'/>
+        <static-array name='embark_rect' type-name='int16_t' count='2'/>
+
+        <compound name='store_dist'>
+            <int16_t name='item_decrease'/>
+            <int16_t name='seed_combine'/>
+            <int16_t name='bucket_combine'/>
+            <int16_t name='barrel_combine'/>
+            <int16_t name='bin_combine'/>
+        </compound>
+
+        <df-flagarray name='flags4' index-enum='d_init_flags4'/>
+        85266c0
+    </struct-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

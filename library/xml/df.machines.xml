@@ -1,0 +1,97 @@
+<data-definition>
+    -- MACHINE
+
+    <class-type type-name='machine' original-name='machinest' key-field='id'>
+        <int32_t name="x"/>
+        <int32_t name="y"/>
+        <int32_t name="z"/>
+
+        <int32_t name="id"/>
+
+        <code-helper name='find-instance'>(find-by-id $global.world.machines.all $id $)</code-helper>
+
+        <stl-vector name="components">
+            <pointer>
+                <int32_t name="building_id" ref-target='building'/>
+                <stl-vector name="connections" type-name='int32_t'
+                            comment='indices into the same component vector'/>
+            </pointer>
+        </stl-vector>
+
+        <int32_t name="cur_power"/>
+        <int32_t name="min_power"/>
+
+        <int8_t name='visual_phase'/>
+        <int16_t name="phase_timer"/>
+
+        <int32_t name="is_active"/>
+    </class-type>
+
+    <class-type type-name='machine_standardst' inherits-from='machine'>
+    </class-type>
+
+    -- MACHINE COMPONENT BUILDINGS
+
+    <class-type type-name='building_axle_horizontalst' inherits-from='building_actual'>
+        <int32_t name="machine_id" ref-target='machine'/>
+        <int32_t name="unk_fc"/>
+        <bool name='is_vertical'/>
+    </class-type>
+
+    <class-type type-name='building_axle_verticalst' inherits-from='building_actual'>
+        <int32_t name="machine_id" ref-target='machine'/>
+        <int32_t name="unk_fc"/>
+    </class-type>
+
+    <class-type type-name='building_gear_assemblyst' inherits-from='building_actual'>
+        <int32_t name="machine_id" ref-target='machine'/>
+        <int32_t name="unk_fc"/>
+        <bitfield name='gear_flags'>
+            <flag-bit name='disengaged'/>
+        </bitfield>
+    </class-type>
+
+    <class-type type-name='building_windmillst' inherits-from='building_actual'>
+        <int32_t name="machine_id" ref-target='machine'/>
+        <int32_t name="unk_fc"/>
+
+        <int16_t name="orient_angle"/>
+        <int16_t name="orient_mode"/>
+
+        <int16_t name="is_working"/>
+        <bool name="visual_rotated"/>
+        <int16_t name="rotate_timer"/>
+
+        <int16_t name="orient_timer"/>
+    </class-type>
+
+    <class-type type-name='building_water_wheelst' inherits-from='building_actual'>
+        <int32_t name="machine_id" ref-target='machine'/>
+        <int32_t name="unk_fc"/>
+        <bool name='is_vertical'/>
+        <bool name='gives_power'/>
+    </class-type>
+
+    <class-type type-name='building_screw_pumpst' inherits-from='building_actual'>
+        <int32_t name="machine_id" ref-target='machine'/>
+        <int32_t name="unk_fc"/>
+
+        <uint8_t name="unk_100"/>
+
+        <enum name='direction' base-type='int8_t'>
+            <enum-item name='FromNorth'/>
+            <enum-item name='FromEast'/>
+            <enum-item name='FromSouth'/>
+            <enum-item name='FromWest'/>
+        </enum>
+
+        <bool name='pump_manually'/>
+    </class-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

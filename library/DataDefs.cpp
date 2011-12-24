@@ -30,9 +30,10 @@ distribution.
 
 #include "dfhack/Process.h"
 #include "dfhack/Core.h"
-#include "dfhack/DataDefs.h"
 #include "dfhack/VersionInfo.h"
 #include "tinythread.h"
+// must be last due to MS stupidity
+#include "dfhack/DataDefs.h"
 
 using namespace DFHack;
 

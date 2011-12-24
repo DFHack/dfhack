@@ -31,6 +31,11 @@ distribution.
 #include "dfhack/Core.h"
 #include "dfhack/BitArray.h"
 
+// Stop some MS stupidity
+#ifdef interface
+	#undef interface
+#endif
+
 namespace DFHack
 {
     class virtual_class {};

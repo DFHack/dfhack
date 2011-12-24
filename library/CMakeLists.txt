@@ -15,6 +15,10 @@ include_directories (depends/tinyxml)
 include_directories (depends/tthread)
 include_directories (private)
 
+execute_process(COMMAND perl xml/list.pl xml include/dfhack/df ";"
+                WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
+                OUTPUT_VARIABLE GENERATED_HDRS)
+
 SET(PROJECT_HDRS_INTERNAL
     private/ContextShared.h
     private/Internal.h
@@ -123,6 +127,24 @@ SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
 
 LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
 
+# Generation
+
+SET_SOURCE_FILES_PROPERTIES(${GENERATED_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE GENERATED TRUE)
+
+FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/*.xml)
+
+ADD_CUSTOM_COMMAND(
+    OUTPUT ${dfapi_SOURCE_DIR}/include/dfhack/df/static.inc
+    COMMAND perl xml/codegen.pl xml include/dfhack/df
+    WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
+    MAIN_DEPENDENCY ${dfapi_SOURCE_DIR}/xml/codegen.pl
+    DEPENDS ${GENERATE_INPUT_XMLS}
+)
+
+ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/dfhack/df/static.inc)
+
+# Compilation
+
 ADD_DEFINITIONS(-DBUILD_DFHACK_LIB)
 
 IF(UNIX)
@@ -142,6 +164,7 @@ ELSE(WIN32)
 ENDIF()
 
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SRCS})
+ADD_DEPENDENCIES(dfhack generate_headers)
 
 IF(WIN32)
     SET_TARGET_PROPERTIES(dfhack PROPERTIES OUTPUT_NAME "SDL" )

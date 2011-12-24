@@ -1,0 +1,592 @@
+<data-definition>
+    <enum-type type-name='creature_raw_flags'>
+        <enum-item/>
+        <enum-item name='EQUIPMENT_WAGON'/>
+        <enum-item name='MUNDANE'/>
+        <enum-item name='VERMIN_EATER'/>
+        <enum-item name='VERMIN_GROUNDER'/>
+        <enum-item name='VERMIN_ROTTER'/>
+        <enum-item name='VERMIN_SOIL'/>
+        <enum-item name='VERMIN_SOIL_COLONY'/>
+
+        <enum-item name='LARGE_ROAMING'/>
+        <enum-item name='VERMIN_FISH'/>
+        <enum-item name='LOOSE_CLUSTERS'/>
+        <enum-item name='FANCIFUL'/>
+        <enum-item name='BIOME_MOUNTAIN'/>
+        <enum-item name='BIOME_GLACIER'/>
+        <enum-item name='BIOME_TUNDRA'/>
+        <enum-item name='BIOME_SWAMP_TEMPERATE_FRESHWATER'/>
+
+        <enum-item name='BIOME_SWAMP_TEMPERATE_SALTWATER'/>
+        <enum-item name='BIOME_MARSH_TEMPERATE_FRESHWATER'/>
+        <enum-item name='BIOME_MARSH_TEMPERATE_SALTWATER'/>
+        <enum-item name='BIOME_SWAMP_TROPICAL_FRESHWATER'/>
+        <enum-item name='BIOME_SWAMP_TROPICAL_SALTWATER'/>
+        <enum-item name='BIOME_SWAMP_MANGROVE'/>
+        <enum-item name='BIOME_MARSH_TROPICAL_FRESHWATER'/>
+        <enum-item name='BIOME_MARSH_TROPICAL_SALTWATER'/>
+
+        <enum-item name='BIOME_FOREST_TAIGA'/>
+        <enum-item name='BIOME_FOREST_TEMPERATE_CONIFER'/>
+        <enum-item name='BIOME_FOREST_TEMPERATE_BROADLEAF'/>
+        <enum-item name='BIOME_FOREST_TROPICAL_CONIFER'/>
+        <enum-item name='BIOME_FOREST_TROPICAL_DRY_BROADLEAF'/>
+        <enum-item name='BIOME_FOREST_TROPICAL_MOIST_BROADLEAF'/>
+        <enum-item name='BIOME_GRASSLAND_TEMPERATE'/>
+        <enum-item name='BIOME_SAVANNA_TEMPERATE'/>
+
+        <enum-item name='BIOME_SHRUBLAND_TEMPERATE'/>
+        <enum-item name='BIOME_GRASSLAND_TROPICAL'/>
+        <enum-item name='BIOME_SAVANNA_TROPICAL'/>
+        <enum-item name='BIOME_SHRUBLAND_TROPICAL'/>
+        <enum-item name='BIOME_DESERT_BADLAND'/>
+        <enum-item name='BIOME_DESERT_ROCK'/>
+        <enum-item name='BIOME_DESERT_SAND'/>
+        <enum-item name='BIOME_OCEAN_TROPICAL'/>
+
+        <enum-item name='BIOME_OCEAN_TEMPERATE'/>
+        <enum-item name='BIOME_OCEAN_ARCTIC'/>
+        <enum-item name='BIOME_SUBTERRANEAN_WATER'/>
+        <enum-item name='BIOME_SUBTERRANEAN_CHASM'/>
+        <enum-item name='BIOME_SUBTERRANEAN_LAVA'/>
+        <enum-item name='BIOME_POOL_TEMPERATE_FRESHWATER'/>
+        <enum-item name='BIOME_POOL_TEMPERATE_BRACKISHWATER'/>
+        <enum-item name='BIOME_POOL_TEMPERATE_SALTWATER'/>
+
+        <enum-item name='BIOME_POOL_TROPICAL_FRESHWATER'/>
+        <enum-item name='BIOME_POOL_TROPICAL_BRACKISHWATER'/>
+        <enum-item name='BIOME_POOL_TROPICAL_SALTWATER'/>
+        <enum-item name='BIOME_LAKE_TEMPERATE_FRESHWATER'/>
+        <enum-item name='BIOME_LAKE_TEMPERATE_BRACKISHWATER'/>
+        <enum-item name='BIOME_LAKE_TEMPERATE_SALTWATER'/>
+        <enum-item name='BIOME_LAKE_TROPICAL_FRESHWATER'/>
+        <enum-item name='BIOME_LAKE_TROPICAL_BRACKISHWATER'/>
+
+        <enum-item name='BIOME_LAKE_TROPICAL_SALTWATER'/>
+        <enum-item name='BIOME_RIVER_TEMPERATE_FRESHWATER'/>
+        <enum-item name='BIOME_RIVER_TEMPERATE_BRACKISHWATER'/>
+        <enum-item name='BIOME_RIVER_TEMPERATE_SALTWATER'/>
+        <enum-item name='BIOME_RIVER_TROPICAL_FRESHWATER'/>
+        <enum-item name='BIOME_RIVER_TROPICAL_BRACKISHWATER'/>
+        <enum-item name='BIOME_RIVER_TROPICAL_SALTWATER'/>
+        <enum-item name='GOOD'/>
+
+        <enum-item name='EVIL'/>
+        <enum-item name='SAVAGE'/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item name='GENERATED'/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item name='DOES_NOT_EXIST'/>
+        <enum-item/>
+
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item name='ARTIFICIAL_HIVEABLE'/>
+
+        <enum-item name='UBIQUITOUS'/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item/>
+    </enum-type>
+
+    <struct-type type-name='body_part_layer_raw' key-field='layer_name'>
+        <stl-string name='layer_name'/>
+
+        <int32_t name='tissue_id'/>
+
+        <df-flagarray name='flags'/>
+
+        <int32_t name='unk2'/>
+
+        <int32_t name='healing_rate'/>
+        <int32_t name='vascular'/>
+        <int32_t name='pain_receptors'/>
+
+        <int32_t name='unk6'/>
+        <int16_t name='unk7'/>
+
+        <stl-vector name='unk8'/>
+
+        <int32_t name='layer_id' comment='across all body parts'/>
+
+        <int32_t name='unk10'/>
+        <int32_t name='unk11'/>
+        <int32_t name='layer_depth' comment='-1 for skin and internal organs'/>
+        <int32_t name='unk13'/>
+        <int32_t name='unk14'/>
+        <int32_t name='unk15'/>
+        <int32_t name='unk16'/>
+    </struct-type>
+
+    <struct-type type-name='body_part_raw' key-field='part_name'>
+        <stl-string name='part_code'/>
+        <stl-string name='part_name'/>
+
+        <int16_t name='con_part_id'/>
+
+        <df-flagarray name='flags'/>
+
+        <stl-vector name='layers'>
+            <pointer type-name='body_part_layer_raw'/>
+        </stl-vector>
+
+        <int32_t name='unk2'/>
+        <int32_t name='unk3'/>
+        <int32_t name='unk4'/>
+        <int32_t name='unk5'/>
+        <int32_t name='relsize'/>
+        <int32_t name='unk7'/>
+
+        <int16_t name='unk7b'/>
+
+        <stl-vector name='name_singular'>
+            <pointer type-name='stl-string'/>
+        </stl-vector>
+        <stl-vector name='name_plural'>
+            <pointer type-name='stl-string'/>
+        </stl-vector>
+
+        <pointer name='bp_relation_part_id'>
+            <stl-vector type-name='int16_t'/>
+        </pointer>
+        <pointer name='bp_relation_code'>
+            <stl-vector type-name='int16_t'/> // 0 around of, 1 around by
+        </pointer>
+        <pointer name='bp_relation_coverage'>
+            <stl-vector type-name='int16_t'/>
+        </pointer>
+
+        <uint16_t name='min_temp'/>
+        <uint16_t name='max_temp'/>
+        <uint16_t name='temp_factor'/>
+
+        <int32_t name='unused'/>
+
+        <int32_t name='unk11'/>
+        <int16_t name='unk12'/>
+    </struct-type>
+
+    <struct-type type-name='caste_raw' key-field='caste_id'>
+        <stl-string name='caste_id'/>
+
+        <code-helper name='find-instance'>$global.world.raws.creatures.all[$$].caste[$]</code-helper>
+
+        <static-array type-name='stl-string' name='caste_name' count='3'/>
+
+        <stl-string name='vermin_bite_txt'/>
+        <stl-string name='gnawer_txt'/>
+
+        <static-array type-name='stl-string' name='baby_name' count='2'/>
+        <static-array type-name='stl-string' name='child_name' count='2'/>
+        <static-array type-name='stl-string' name='itemcorpse_str' count='5'/> // temporary
+        <static-array type-name='stl-string' name='remains' count='2'/>
+        <stl-string name='description'/>
+        <static-array type-name='stl-string' name='mannerisms' count='17'>
+            <comment>fingers[2], nose, ear, head, eyes, mouth, hair, knuckles, lips, cheek, nails, f eet, arms, hands, tongue, leg</comment>
+        </static-array>
+
+        <uint8_t name='caste_tile'/>
+        <uint8_t name='caste_soldier_tile'/>
+        <uint8_t name='caste_alttile'/>
+        <uint8_t name='caste_soldier_alttile'/>
+        <uint8_t name='caste_glowtile'/>
+
+        <uint16_t name='homeotherm'/>
+        <int16_t name='unk1_1'/>
+        <int16_t name='unk1_2'/>
+        <uint16_t name='fixed_temp'/>
+
+        <static-array type-name='int16_t' name='caste_color' count='3'/>
+
+        <compound name='misc'>
+            <int16_t name='litter_size_min'/>
+            <int16_t name='litter_size_max'/>
+            <int16_t name='penetratepower'/>
+            <int16_t name='vermin_bite_chance'/>
+            <int16_t name='grasstrample'/>
+            <int16_t name='buildingdestroyer'/>
+            <enum base-type='int16_t' name='itemcorpse_itemtype' type-name='item_type'/>
+            <int16_t name='itemcorpse_itemsubtype'/>
+            <int16_t name='itemcorpse_materialtype'
+                     ref-target='material' aux-value='$$.itemcorpse_materialindex'/>
+            <int16_t name='itemcorpse_materialindex'/> // NOT 32-bit!
+            <int16_t name='itemcorpse_quality'/>
+            <static-array type-name='int16_t' name='remains_color' count='3'/>
+            <int16_t name='difficulty'/>
+            <static-array type-name='int16_t' name='caste_glowcolor' count='3'/>
+            <int16_t name='beach_frequency'/>
+            <int16_t name='clutch_size_min'/>
+            <int16_t name='clutch_size_max'/>
+            <int32_t name='speed'/>
+            <int32_t name='modvalue'/>
+            <int32_t name='petvalue'/>
+            <int32_t name='milkable'/>
+            <int32_t name='viewrange'/>
+            <int32_t name='maxage_min'/>
+            <int32_t name='maxage_max'/>
+            <static-array type-name='int32_t' name='unk3' count='2'/>
+            <int32_t name='swim_speed'/>
+            <int32_t name='trade_capacity'/>
+            <int32_t name='unk4'/>
+            <int32_t name='pop_ratio'/>
+            <int32_t name='adult_size'/>
+            <static-array type-name='int32_t' name='unk5' count='4'/>
+            <static-array type-name='int32_t' name='attack_trigger' count='3'/>
+            <int32_t name='egg_size'/>
+            <int32_t name='grazer'/>
+            <int32_t name='petvalue_divisor'/>
+            <int32_t name='prone_to_rage'/>
+            <static-array type-name='int32_t' name='unk6' count='29'/>
+        </compound>
+
+        <static-array name='personality' count='30'>
+            <int16_t name='a'/>
+            <int16_t name='b'/>
+            <int16_t name='c'/>
+        </static-array>
+
+        <df-flagarray name='flags'/>
+
+        <int32_t name='unk7'/>
+
+        <stl-vector name='body_parts'>
+            <pointer type-name='body_part_raw'/>
+        </stl-vector>
+
+        <stl-vector name='attacks'>
+            <pointer/>
+        </stl-vector>
+
+        <compound name='unknown1'>
+            <int32_t name='unk8'/>
+            <stl-vector type-name='int16_t' name='unk9a'/>
+            <stl-vector type-name='int16_t' name='unk9b'/>
+            <stl-vector name='unk10'/>
+            <stl-vector name='unk11'/>
+            <stl-vector name='unk12'/>
+            <stl-vector type-name='int16_t' name='unk13'/>
+            <stl-vector type-name='int32_t' name='unk14'/>
+        </compound>
+
+        <static-array type-name='int32_t' name='unk15' count='4'/>
+
+        <stl-vector name='caste_speech_1'/>
+        <stl-vector name='caste_speech_2'/>
+
+        <static-array name='skill_rates' count='116'>
+            <static-array type-name='int32_t' count='4'/>
+        </static-array>
+
+        <compound name='attributes'>
+            <static-array name='phys_att_range' count='7'>
+                <static-array type-name='int32_t' count='6'/>
+            </static-array>
+            <static-array name='ment_att_range' count='7'>
+                <static-array type-name='int32_t' count='13'/>
+            </static-array>
+            <static-array name='phys_att_rates' count='4'>
+                <static-array type-name='int32_t' count='6'/>
+            </static-array>
+            <static-array name='ment_att_rates' count='4'>
+                <static-array type-name='int32_t' count='13'/>
+            </static-array>
+            <static-array type-name='int32_t' name='phys_att_cap_perc' count='6'/>
+            <static-array type-name='int32_t' name='ment_att_cap_perc' count='13'/>
+        </compound>
+
+        <int8_t name='gender'/>
+
+        <stl-vector type-name='int32_t' name='body_size_1'/>
+        <stl-vector type-name='int32_t' name='body_size_2'/>
+
+        <static-array name='unk16' count='19'>
+            <stl-vector/>
+        </static-array>
+
+        <static-array type-name='int32_t' name='unk17' count='2'/>
+
+        <stl-vector type-name='int16_t' name='natural_skill_id'/>
+        <stl-vector type-name='int32_t' name='natural_skill_exp'/>
+        <stl-vector type-name='int32_t' name='natural_skill_lvl'/>
+
+        <static-array name='caste_profession_name' count='106'>
+            <stl-string name='singular'/>
+            <stl-string name='plural'/>
+        </static-array>
+
+        <compound name='extracts'>
+            <stl-vector type-name='int16_t' name='extract_mat'/>
+            <stl-vector type-name='int32_t' name='extract_matidx'/>
+            <static-array name='extract_str' count='3'>
+                <stl-vector>
+                    <pointer type-name='stl-string'/>
+                </stl-vector>
+            </static-array>
+
+            <int16_t name='milkable_mat'/>
+            <int32_t name='milkable_matidx'/>
+            <static-array name='milkable_str' count='3'>
+                <stl-string/>
+            </static-array>
+
+            <int16_t name='webber_mat'/>
+            <int32_t name='webber_matidx'/>
+            <static-array name='webber_str' count='3'>
+                <stl-string/>
+            </static-array>
+
+            <int16_t name='vermin_bite_mat'/>
+            <int32_t name='vermin_bite_matidx'/>
+            <int16_t name='vermin_bite_chance'/>
+            <static-array name='vermin_bite_str' count='3'>
+                <stl-string/>
+            </static-array>
+
+            <int16_t name='tendons_mat'/>
+            <int32_t name='tendons_matidx'/>
+            <static-array name='tendons_str' count='3'>
+                <stl-string/>
+            </static-array>
+            <int32_t name='tendons_heal'/>
+
+            <int16_t name='ligaments_mat'/>
+            <int32_t name='ligaments_matidx'/>
+            <static-array name='ligaments_str' count='3'>
+                <stl-string/>
+            </static-array>
+            <int32_t name='ligaments_heal'/>
+
+            <int16_t name='blood_state'/>
+            <int16_t name='blood_mat'/>
+            <int32_t name='blood_matidx'/>
+            <static-array name='blood_str' count='3'>
+                <stl-string/>
+            </static-array>
+
+            <int16_t name='pus_state'/>
+            <int16_t name='pus_mat'/>
+            <int32_t name='pus_matidx'/>
+            <static-array name='pus_str' count='3'>
+                <stl-string/>
+            </static-array>
+
+            <stl-vector type-name='int16_t' name='material_breath_attack_mattype'/>
+            <stl-vector type-name='int32_t' name='material_breath_attack_matindex'/>
+            <static-array name='material_breath_attack_str' count='3'>
+                <stl-vector>
+                    <pointer type-name='stl-string'/>
+                </stl-vector>
+            </static-array>
+            <stl-vector type-name='int16_t' name='material_breath_attack_type'/>
+
+            <stl-vector type-name='int16_t' name='egg_material_mattype'/>
+            <stl-vector type-name='int32_t' name='egg_material_matindex'/>
+            <static-array name='egg_material_str' count='3'>
+                <stl-vector>
+                    <pointer type-name='stl-string'/>
+                </stl-vector>
+            </static-array>
+
+            <stl-vector name='lays_unusual_eggs_itemtype'>
+                <enum base-type='int16_t' type-name='item_type'/>
+            </stl-vector>
+            <stl-vector name='lays_unusual_eggs_itemsubtype'/>
+            <stl-vector type-name='int16_t' name='lays_unusual_eggs_mattype'/>
+            <stl-vector type-name='int32_t' name='lays_unusual_eggs_matindex'/>
+            <static-array name='lays_unusual_eggs_str' count='5'>
+                <stl-vector>
+                    <pointer type-name='stl-string'/>
+                </stl-vector>
+            </static-array>
+        </compound>
+
+        <stl-vector name='unk22'/>
+
+        <stl-vector name='creature_class'>
+            <pointer type-name='stl-string'/>
+        </stl-vector>
+
+        <compound name='unknown2'>
+            <stl-vector name='unk23a'/>
+            <stl-vector name='unk23b'/>
+            <stl-vector name='unk23c'/>
+
+            <df-flagarray name='unk24_flags'/>
+            <df-flagarray name='unk25_flags'/>
+
+            <static-array type-name='int32_t' name='unk26' count='33'/>
+            <static-array name='unk27' count='5'><stl-vector/></static-array>
+            <static-array type-name='int32_t' name='unk28' count='2'/>
+        </compound>
+
+        <static-array type-name='int32_t' name='habit_num' count='2'/>
+        <static-array name='habit' count='2'><stl-vector/></static-array>
+        <static-array name='lair' count='2'><stl-vector/></static-array>
+        <static-array name='lair_characteristic' count='2'><stl-vector/></static-array>
+        <static-array name='lair_hunter_speech' count='2'><stl-vector/></static-array>
+        <static-array name='unk29' count='2'><stl-vector/></static-array>
+        <static-array name='specific_food' count='2'><stl-vector/></static-array>
+        <static-array name='unk30' count='3'><stl-vector/></static-array>
+    </struct-type>
+
+    <struct-type type-name='creature_raw' key-field='creature_id'>
+        <stl-string name='creature_id'/>
+
+        <code-helper name='find-instance'>$global.world.raws.creatures.all[$]</code-helper>
+
+        <static-array type-name='stl-string' name='name' count='3'/>
+        <static-array type-name='stl-string' name='general_baby_name' count='2'/>
+        <static-array type-name='stl-string' name='general_child_name' count='2'/>
+
+        <uint8_t name='creature_tile'/>
+        <uint8_t name='creature_soldier_tile'/>
+        <uint8_t name='alttile'/>
+        <uint8_t name='soldier_alttile'/>
+        <uint8_t name='glowtile'/>
+
+        <int16_t name='unk1'/>
+        <int16_t name='unk2'/>
+        <int16_t name='frequency'/>
+        <static-array type-name='int16_t' name='population_number' count='2'/>
+        <static-array type-name='int16_t' name='cluster_number' count='2'/>
+        <static-array type-name='int16_t' name='triggerable_group' count='2'/>
+        <static-array type-name='int16_t' name='color' count='3'/>
+        <static-array type-name='int16_t' name='glowcolor' count='3'/>
+
+        <int32_t name='adultsize'/>
+
+        <stl-vector name='prefstring'>
+            <pointer type-name='stl-string'/>
+        </stl-vector>
+
+        <stl-vector type-name='int16_t' name='sphere'/>
+        <stl-vector name='caste'>
+            <pointer type-name='caste_raw'/>
+        </stl-vector>
+
+        <stl-vector type-name='int32_t' name='pop_ratio'/>
+
+        <df-flagarray name='flags' index-enum='creature_raw_flags'/>
+
+        <compound name='stuff'>
+            <static-array name='stuff1' count='2'>
+                <static-array type-name='int32_t' count='7'/>
+            </static-array>
+
+            <static-array name='stuff2a' count='7'>
+                <static-array type-name='int32_t' count='12'/>
+            </static-array>
+
+            <static-array name='stuff2b' count='7'>
+                <static-array type-name='int32_t' count='12'/>
+            </static-array>
+
+            <static-array type-name='int32_t' name='unk3' count='84'/>
+
+            <static-array name='stuff3a' count='7'>
+                <static-array type-name='int32_t' count='106'/>
+            </static-array>
+
+            <static-array name='stuff3b' count='7'>
+                <static-array type-name='int32_t' count='106'/>
+            </static-array>
+
+            <static-array type-name='int8_t' name='stuff4' count='7'/>
+
+            <static-array name='stuff2c' count='7'>
+                <static-array type-name='int8_t' count='12'/>
+            </static-array>
+
+            <static-array type-name='int8_t' name='unk4' count='42'/>
+
+            <static-array name='stuff3c' count='7'>
+                <static-array type-name='int8_t' count='106'/>
+            </static-array>
+        </compound>
+
+        <stl-vector name='unk5'/>
+        <stl-vector name='speech1'/>
+        <stl-vector name='speech2'/>
+        <stl-vector name='speech3'/>
+
+        <stl-vector name='material'>
+            <pointer type-name='material'/>
+        </stl-vector>
+        <stl-vector type-name='pointer' name='tissue'/>
+
+        <static-array name='profession_name' count='106'>
+            <stl-string name='singular'/>
+            <stl-string name='plural'/>
+        </static-array>
+
+        <pointer name='unk6pa'/>
+        <pointer name='unk6pb'/>
+
+        <stl-vector type-name='int32_t' name='unk6'/>
+        <stl-vector type-name='int32_t' name='unk7'/>
+
+        <stl-vector type-name='int32_t' name='hive_product_0'/>
+        <stl-vector type-name='int32_t' name='hive_product_1'/>
+        <stl-vector type-name='int16_t' name='hive_product_2'/>
+        <stl-vector type-name='int16_t' name='hive_product_3'/>
+        <stl-vector type-name='int16_t' name='hive_product_4'/>
+        <stl-vector type-name='int32_t' name='hive_product_5'/>
+
+        <static-array name='hive_product_tmpstr' count='5'>
+            <stl-vector>
+                <pointer type-name='stl-string'/>
+            </stl-vector>
+        </static-array>
+
+        <int32_t name='unk8'/>
+
+        <stl-vector name='raws'>
+            <pointer type-name='stl-string'/>
+        </stl-vector>
+    </struct-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

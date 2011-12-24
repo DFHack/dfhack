@@ -1,0 +1,341 @@
+<data-definition>
+    <struct-type type-name='material_common'>
+        <stl-string name='id'/>
+        <stl-string name='gem_name1'/>
+        <stl-string name='gem_name2'/>
+        <stl-string name='stone_name'/>
+
+        <code-helper name='describe'> (describe-material $) </code-helper>
+
+        <compound name='heat'>
+            <uint16_t name='spec_heat'/>
+            <uint16_t name='heatdam_point'/>
+            <uint16_t name='colddam_point'/>
+            <uint16_t name='ignite_point'/>
+            <uint16_t name='melting_point'/>
+            <uint16_t name='boiling_point'/>
+            <uint16_t name='mat_fixed_temp'/>
+        </compound>
+
+        <int32_t name='solid_density'/>
+        <int32_t name='liquid_density'/>
+        <int32_t name='molar_mass'/>
+
+        <static-array name='state_color' type-name='int32_t' count='6'/>
+        <static-array name='state_name' type-name='stl-string' count='6'/>
+        <static-array name='state_adj' type-name='stl-string' count='6'/>
+
+        <compound name='strength'>
+            <int32_t name='absorption'/>
+            <int32_t name='bending_yield'/>
+            <int32_t name='shear_yield'/>
+            <int32_t name='torsion_yield'/>
+            <int32_t name='impact_yield'/>
+            <int32_t name='tensile_yield'/>
+            <int32_t name='compressive_yield'/>
+
+            <int32_t name='bending_fracture'/>
+            <int32_t name='shear_fracture'/>
+            <int32_t name='torsion_fracture'/>
+            <int32_t name='impact_fracture'/>
+            <int32_t name='tensile_fracture'/>
+            <int32_t name='compressive_fracture'/>
+
+            <int32_t name='bending_strain_at_yield'/>
+            <int32_t name='shear_strain_at_yield'/>
+            <int32_t name='torsion_strain_at_yield'/>
+            <int32_t name='impact_strain_at_yield'/>
+            <int32_t name='tensile_strain_at_yield'/>
+            <int32_t name='compressive_strain_at_yield'/>
+
+            <int32_t name='max_edge'/>
+        </compound>
+
+        <int32_t name='material_value'/>
+
+        <df-flagarray name='mat_flags'/>
+
+        <int16_t name='extract_storage'/>
+        <int16_t name='butcher_special_type'/>
+        <int16_t name='butcher_special_subtype'/>
+
+        <static-array name='meat_name' type-name='stl-string' count='3'/>
+        <static-array name='block_name' type-name='stl-string' count='2'/>
+
+        <stl-vector name='material_reaction_product_id'>
+            <pointer type-name='stl-string'/>
+        </stl-vector>
+
+        <stl-vector name='material_reaction_product_matType' type-name='int16_t'/>
+        <stl-vector name='material_reaction_product_matIndex' type-name='int32_t'/>
+        <static-array name='material_reaction_product_str' count='3'>
+            <stl-vector>
+                <pointer type-name='stl-string'/>
+            </stl-vector>
+        </static-array>
+
+        <int16_t name='hardens_with_water_matType'/>
+        <int32_t name='hardens_with_water_matIndex'/>
+        <static-array name='hardens_with_water_str' type-name='stl-string' count='3'/>
+
+        <stl-vector name='reaction_class'>
+            <pointer type-name='stl-string'/>
+        </stl-vector>
+
+        <uint8_t name='tile'/>
+
+        <static-array name='basic_color' type-name='int16_t' count='2'/>
+        <static-array name='build_color' type-name='int16_t' count='3'/>
+        <static-array name='tile_color' type-name='int16_t' count='3'/>
+
+        <uint8_t name='item_symbol'/>
+
+        <int16_t name='powder_dye'/> // color token index
+        <int16_t name='temp_diet_info'/>
+
+        <stl-vector name='syndrome'>
+            <pointer/>
+        </stl-vector>
+
+        <int32_t name='soap_level'/>
+    </struct-type>
+
+    <struct-type type-name='material'>
+        <compound type-name='material_common'/>
+
+        <code-helper name='find-instance'>(material-by-id $ $$)</code-helper>
+        <code-helper name='describe'> (describe-material $) </code-helper>
+
+        <stl-string name='prefix'/>
+
+        <static-array name='food_mat_index' count='37'>
+            <int32_t refers-to='(food-mat-by-idx $$._key $)'
+                     comment='When valid, refers to itself.'/>
+        </static-array>
+
+        <stl-string name='powder_dye_str' comment='temporary'/>
+        <static-array name='state_color_str' type-name='stl-string' count='6'/>
+    </struct-type>
+
+    <struct-type type-name='material_template'>
+        <compound type-name='material_common'/>
+
+        <code-helper name='describe'> (describe-material $) </code-helper>
+
+        <stl-string name='powder_dye_str' comment='temporary'/>
+        <static-array name='state_color_str' type-name='stl-string' count='6'/>
+    </struct-type>
+
+    <struct-type type-name='material_plant' key-field='id'>
+        <stl-string name='id'/>
+
+        <code-helper name='find-instance'>$global.world.raws.plants.all[$]</code-helper>
+
+        <df-flagarray name='flags'/>
+
+        <stl-string name='name'/>
+        <stl-string name='name_plural'/>
+        <stl-string name='adj'/>
+
+        <stl-string name='seed_singular'/>
+        <stl-string name='seed_plural'/>
+        <stl-string name='leaves_singular'/>
+        <stl-string name='leaves_plural'/>
+
+        <uint8_t name='unk1'/>
+        <uint8_t name='unk2'/>
+
+        <compound name='tiles'>
+            <uint8_t name='picked_tile'/>
+            <uint8_t name='dead_picked_tile'/>
+            <uint8_t name='shrub_tile'/>
+            <uint8_t name='dead_shrub_tile'/>
+            <uint8_t name='leaves_tile'/>
+            <uint8_t name='tree_tile'/>
+            <uint8_t name='dead_tree_tile'/>
+            <uint8_t name='sapling_tile'/>
+            <uint8_t name='dead_sapling_tile'/>
+            <static-array type-name='uint8_t' name='grass_tiles' count='16'/>
+            <static-array type-name='uint8_t' name='alt_grass_tiles' count='12'/>
+        </compound>
+
+        <int32_t name='growdur'/>
+        <int32_t name='value'/>
+
+        <compound name='colors'>
+            <static-array type-name='int8_t' name='picked_color' count='3'/>
+            <static-array type-name='int8_t' name='dead_picked_color' count='3'/>
+            <static-array type-name='int8_t' name='shrub_color' count='3'/>
+            <static-array type-name='int8_t' name='dead_shrub_color' count='3'/>
+            <static-array type-name='int8_t' name='seed_color' count='3'/>
+            <static-array type-name='int8_t' name='leaves_color' count='3'/>
+            <static-array type-name='int8_t' name='dead_leaves_color' count='3'/>
+            <static-array type-name='int8_t' name='tree_color' count='3'/>
+            <static-array type-name='int8_t' name='dead_tree_color' count='3'/>
+            <static-array type-name='int8_t' name='sapling_color' count='3'/>
+            <static-array type-name='int8_t' name='dead_sapling_color' count='3'/>
+
+            <static-array type-name='int8_t' name='grass_colors_0' count='20'/>
+            <static-array type-name='int8_t' name='grass_colors_1' count='20'/>
+            <static-array type-name='int8_t' name='grass_colors_2' count='20'/>
+        </compound>
+
+        <static-array type-name='int32_t' name='alt_period' count='2'/>
+
+        <int8_t name='shrub_drown_level'/>
+        <int8_t name='tree_drown_level'/>
+        <int8_t name='sapling_drown_level'/>
+        <int16_t name='frequency'/>
+        <int16_t name='clustersize'/>
+        <stl-vector name='prefstring'>
+            <pointer type-name='stl-string'/>
+        </stl-vector>
+
+        <stl-vector name='material'>
+            <pointer type-name='material'/>
+        </stl-vector>
+
+        <compound name='material_defs'>
+            <int16_t name='material_type_basic_mat'/>
+            <int16_t name='material_type_tree'/>
+            <int16_t name='material_type_drink'/>
+            <int16_t name='material_type_seed'/>
+            <int16_t name='material_type_thread'/>
+            <int16_t name='material_type_mill'/>
+            <int16_t name='material_type_extract_vial'/>
+            <int16_t name='material_type_extract_barrel'/>
+            <int16_t name='material_type_extract_still_vial'/>
+            <int16_t name='material_type_leaves'/>
+
+            <int32_t name='material_idx_basic_mat'/>
+            <int32_t name='material_idx_tree'/>
+            <int32_t name='material_idx_drink'/>
+            <int32_t name='material_idx_seed'/>
+            <int32_t name='material_idx_thread'/>
+            <int32_t name='material_idx_mill'/>
+            <int32_t name='material_idx_extract_vial'/>
+            <int32_t name='material_idx_extract_barrel'/>
+            <int32_t name='material_idx_extract_still_vial'/>
+            <int32_t name='material_idx_leaves'/>
+
+            <static-array type-name='stl-string' name='material_str_basic_mat' count='3'/>
+            <static-array type-name='stl-string' name='material_str_tree' count='3'/>
+            <static-array type-name='stl-string' name='material_str_drink' count='3'/>
+            <static-array type-name='stl-string' name='material_str_seed' count='3'/>
+            <static-array type-name='stl-string' name='material_str_thread' count='3'/>
+            <static-array type-name='stl-string' name='material_str_mill' count='3'/>
+            <static-array type-name='stl-string' name='material_str_extract_vial' count='3'/>
+            <static-array type-name='stl-string' name='material_str_extract_barrel' count='3'/>
+            <static-array type-name='stl-string' name='material_str_extract_still_vial' count='3'/>
+            <static-array type-name='stl-string' name='material_str_leaves' count='3'/>
+        </compound>
+
+        <int32_t name='underground_depth_min'/>
+        <int32_t name='underground_depth_max'/>
+    </struct-type>
+
+    <struct-type type-name='material_inorganic' key-field='id'>
+        <stl-string name='id'/>
+
+        <code-helper name='find-instance'>$global.world.raws.inorganics.all[$]</code-helper>
+
+        <df-flagarray name='flags'/>
+
+        <stl-vector name='metal_ore_str' comment='only during parsing'>
+            <pointer type-name='stl-string'/>
+        </stl-vector>
+        <stl-vector type-name='int16_t' name='metal_ore_matIndex'/>
+        <stl-vector type-name='int16_t' name='metal_ore_probability'/>
+
+        <stl-vector name='thread_metal_str' comment='only during parsing'>
+            <pointer type-name='stl-string'/>
+        </stl-vector>
+        <stl-vector type-name='int16_t' name='thread_metal_matIndex'/>
+        <stl-vector type-name='int16_t' name='thread_metal_probability'/>
+
+        <stl-vector type-name='int32_t' name='unk1'/>
+
+        <stl-vector name='environment_spec_str' comment='only during parsing'>
+            <pointer type-name='stl-string'/>
+        </stl-vector>
+        <stl-vector type-name='int16_t' name='environment_spec_matIndex'/>
+        <stl-vector type-name='int16_t' name='environment_spec_inclusion_type'/>
+        <stl-vector type-name='int8_t' name='environment_spec_probability'/>
+        <stl-vector type-name='int16_t' name='environment_location'/>
+        <stl-vector type-name='int16_t' name='environment_type'/>
+        <stl-vector type-name='int8_t' name='environment_probability'/>
+
+        <int32_t name='unk2'/>
+        <compound name='material' type-name='material'/>
+    </struct-type>
+
+    <enum-type type-name='organic_mat_category'>
+        <enum-item name='Meat'/>
+        <enum-item name='Fish'/>
+        <enum-item name='UnpreparedFish'/>
+        <enum-item name='Eggs'/>
+        <enum-item name='Plants'/>
+        <enum-item name='PlantDrink'/>
+        <enum-item name='CreatureDrink'/>
+        <enum-item name='PlantCheese'/>
+        <enum-item name='CreatureCheese'/>
+        <enum-item name='Seed'/>
+        <enum-item name='Leaf'/>
+        <enum-item name='PlantPowder'/>
+        <enum-item name='CreaturePowder'/>
+        <enum-item name='Glob'/>
+        <enum-item name='PlantLiquid'/>
+        <enum-item name='CreatureLiquid'/>
+        <enum-item name='MiscLiquid'/>
+        <enum-item name='Leather'/>
+        <enum-item name='Silk'/>
+        <enum-item name='PlantFiber'/>
+        <enum-item name='Bone'/>
+        <enum-item name='Shell'/>
+        <enum-item name='Wood'/>
+        <enum-item name='Horn'/>
+        <enum-item name='Pearl'/>
+        <enum-item name='Tooth'/>
+        <enum-item name='EdibleCheese'/>
+        <enum-item name='AnyDrink'/>
+        <enum-item name='EdiblePlant'/>
+        <enum-item name='CookableLiquid'/>
+        <enum-item name='CookablePowder'/>
+        <enum-item name='CookableSeed'/>
+        <enum-item name='CookableLeaf'/>
+        <enum-item name='Paste'/>
+        <enum-item name='Pressed'/>
+        <enum-item name='Yarn'/>
+        <enum-item name='MetalThread'/>
+    </enum-type>
+
+    <struct-type type-name='special_mat_table'>
+        <static-array name='organic_types' count='37' index-enum='organic_mat_category'>
+            <stl-vector type-name='int16_t' index-refers-to='(food-mat-by-idx $$._key $)'/>
+        </static-array>
+        <static-array name='organic_indexes' count='37' index-enum='organic_mat_category'>
+            <stl-vector type-name='int32_t'/>
+        </static-array>
+        <static-array name='organic_unknown' count='37' comment='everything 0'
+                      index-enum='organic_mat_category'>
+            <stl-vector type-name='int32_t'/>
+        </static-array>
+
+        <static-array name='builtin' count='659'>
+            <pointer type-name='material'/>
+        </static-array>
+
+        <stl-vector name='extract_types'>
+            <int16_t ref-target='material' aux-value='$$._parent.extract_indexes[$._key]'/>
+        </stl-vector>
+        <stl-vector name='extract_indexes' type-name='int32_t'/>
+        <stl-vector name='extract_unknown' type-name='int32_t'/>
+    </struct-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

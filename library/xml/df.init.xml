@@ -1,0 +1,138 @@
+<data-definition>
+    -- init.h
+
+    <enum-type type-name='init_display_flags'>
+        <enum-item name='USE_GRAPHICS'/>
+        <enum-item name='BLACK_SPACE'/>
+        <enum-item name='PARTIAL_PRINT'/>
+        <enum-item name='FRAME_BUFFER'/>
+        <enum-item name='SINGLE_BUFFER'/>
+        <enum-item name='ACCUM_BUFFER'/>
+        <enum-item name='VBO'/>
+        <enum-item name='RENDER_2D'/>
+        <enum-item name='RENDER_2DHW'/>
+        <enum-item name='RENDER_2DASYNC'/>
+        <enum-item name='UNUSED_01_08'/>
+        <enum-item name='TEXT'/>
+        <enum-item name='SHADER'/>
+        <enum-item name='NOT_RESIZABLE'/>
+        <enum-item name='ARB_SYNC'/>
+    </enum-type>
+
+    <struct-type type-name='init_display'>
+        <df-flagarray name='flag' index-enum='init_display_flags'/>
+
+        <enum name='windowed'>
+            <enum-item name='True'/>
+            <enum-item name='False'/>
+            <enum-item name='Prompt'/>
+        </enum>
+
+        <int32_t name='grid_x'/>
+        <int32_t name='grid_y'/>
+
+        <int32_t name='desired_fullscreen_width'/>
+        <int32_t name='desired_fullscreen_height'/>
+        <int32_t name='desired_windowed_width'/>
+        <int32_t name='desired_windowed_height'/>
+
+        <int8_t name='partial_print_count'/>
+    </struct-type>
+
+    <enum-type type-name='init_media_flags'>
+        <enum-item name='SOUND_OFF'/>
+        <enum-item name='INTRO_OFF'/>
+        <enum-item name='COMPRESS_SAVES'/>
+    </enum-type>
+
+    <struct-type type-name='init_media'>
+        <df-flagarray name='flag' index-enum='init_media_flags'/>
+        <int32_t name='volume'/>
+    </struct-type>
+
+    <enum-type type-name='init_input_flags'>
+        <enum-item name='MOUSE_OFF'/>
+        <enum-item name='MOUSE_PICTURE'/>
+    </enum-type>
+
+    <struct-type type-name='init_input'>
+        <int32_t name='hold_time'/>
+        <int32_t name='repeat_time'/>
+        <int32_t name='macro_time'/>
+        <int32_t name='pause_zoom_no_interface_ms'/>
+        <df-flagarray name='flag' index-enum='init_input_flags'/>
+        <int32_t name='zoom_speed'/>
+        <int32_t name='repeat_accel_start'/>
+        <int32_t name='repeat_accel_limit'/>
+    </struct-type>
+
+    <struct-type type-name='init_font'>
+        <static-array name='small_font_texpos' type-name='int32_t' count='256'/>
+        <static-array name='large_font_texpos' type-name='int32_t' count='256'/>
+        <static-array name='small_font_datapos' type-name='int32_t' count='256'/>
+        <static-array name='large_font_datapos' type-name='int32_t' count='256'/>
+        <s-float name='small_font_adjx'/>
+        <s-float name='small_font_adjy'/>
+        <s-float name='large_font_adjx'/>
+        <s-float name='large_font_adjy'/>
+        <int32_t name='small_font_dispx'/>
+        <int32_t name='small_font_dispy'/>
+        <int32_t name='large_font_dispx'/>
+        <int32_t name='large_font_dispy'/>
+        <bool name='use_ttf'/>
+    </struct-type>
+
+    <enum-type type-name='init_window_flags'>
+        <enum-item name='TOPMOST'/>
+        <enum-item name='VSYNC_ON'/>
+        <enum-item name='VSYNC_OFF'/>
+        <enum-item name='TEXTURE_LINEAR'/>
+    </enum-type>
+
+    <struct-type type-name='init_window'>
+        <df-flagarray name='flag' index-enum='init_window_flags'/>
+    </struct-type>
+
+    <struct-type type-name='init'>
+        <compound name='display' type-name='init_display'/>
+        <compound name='media' type-name='init_media'/>
+        <compound name='input' type-name='init_input'/>
+        <compound name='font' type-name='init_font'/>
+        <compound name='window' type-name='init_window'/>
+    </struct-type>
+
+    -- texture_handler.h
+
+    <struct-type type-name='tile_page'>
+        <stl-string name='token'/>
+        <stl-string name='filename'/>
+
+        <int16_t name='tile_dim_x'/>
+        <int16_t name='tile_dim_y'/>
+        <int16_t name='page_dim_x'/>
+        <int16_t name='page_dim_y'/>
+
+        <stl-vector name='texpos' type-name='int32_t'/>
+        <stl-vector name='datapos' type-name='int32_t'/>
+        <stl-vector name='texpos_gs' type-name='int32_t'/>
+        <stl-vector name='datapos_gs' type-name='int32_t'/>
+
+        <bool name='loaded'/>
+    </struct-type>
+
+    <struct-type type-name='texture_handler'>
+        <stl-vector name='page'>
+            <pointer type-name='tile_page'/>
+        </stl-vector>
+
+        <stl-vector name='texpos' type-name='int32_t'/>
+        <stl-vector name='datapos' type-name='int32_t'/>
+    </struct-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

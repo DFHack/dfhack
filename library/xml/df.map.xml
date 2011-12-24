@@ -1,0 +1,247 @@
+<data-definition>
+    <enum-type type-name='tile_traffic'>
+        <enum-item name='Normal'/>
+        <enum-item name='Low'/>
+        <enum-item name='High'/>
+        <enum-item name='Restricted'/>
+    </enum-type>
+
+    <enum-type type-name='tile_dig_designation'>
+        <enum-item name='No' comment='no designation'/>
+        <enum-item name='Default' comment='dig walls, remove stairs and ramps, gather plants, fell trees'/>
+        <enum-item name='UpDownStair'/>
+        <enum-item name='Channel'/>
+        <enum-item name='Ramp'/>
+        <enum-item name='DownStair'/>
+        <enum-item name='UpStair'/>
+    </enum-type>
+
+    <enum-type type-name='tile_liquid'>
+        <enum-item name='Water'/>
+        <enum-item name='Magma'/>
+    </enum-type>
+
+    <bitfield-type type-name='tile_designation'>
+        <flag-bit name='flow_size' count='3' comment='liquid amount'/>
+        <flag-bit name='pile' comment='stockpile?'/>
+        <flag-bit name='dig' count='3'
+                  refers-to='(enum-to-key $tile_dig_designation $)'/>
+        <flag-bit name='smooth' count='2'/>
+        <flag-bit name='hidden'/>
+
+        <flag-bit name='geolayer_index' count='4'/>
+        <flag-bit name='light'/>
+        <flag-bit name='subterranean'/>
+        <flag-bit name='outside'/>
+        <flag-bit name='biome' count='4'/>
+
+        <flag-bit name='liquid_type'
+                  refers-to='(enum-to-key $tile_liquid $)'/>
+
+        <flag-bit name='water_table' comment='aquifer'/>
+        <flag-bit name='rained'/>
+
+        <flag-bit name='traffic' count='2'
+                  refers-to='(enum-to-key $tile_traffic $)'/>
+
+        <flag-bit name='flow_forbid'/>
+        <flag-bit name='liquid_static'/>
+        <flag-bit name='feature_local'/>
+        <flag-bit name='feature_global'/>
+        <flag-bit name='water_stagnant'/>
+        <flag-bit name='water_salt'/>
+    </bitfield-type>
+
+    <bitfield-type type-name='tile_occupancy'>
+        <flag-bit name='building' count='3'/>
+        <flag-bit name='unit' comment='standing'/>
+        <flag-bit name='unit_grounded' comment='prone'/>
+        <flag-bit name='item'/>
+        <flag-bit name='edge_flow_in'
+                  comment='if set on an edge tile, water or magma will flow in'/>
+        <flag-bit name='moss'/>
+        <flag-bit name='arrow_color' count='4'/>
+        <flag-bit name='arrow_variant'/>
+        <flag-bit name='unk13'/>
+        <flag-bit name='monster_lair'
+                  comment='A monster lair. Items placed wont be moved.'/>
+        <flag-bit name='no_grow'
+                  comment='seems to be set on terrain tiles where grass growth is impossible'/>
+    </bitfield-type>
+
+    <enum-type type-name='block_flags'>
+        <enum-item name='Designated' comment='for jobs etc'/>
+        <enum-item name='UpdateTemperature'/>
+        <enum-item name='UpdateLiquid'/>
+        <enum-item name='UpdateLiquidTwice'
+                   comment='Protects UpdateLiquid from being cleared the first time.'/>
+    </enum-type>
+
+    <struct-type type-name='block_burrow'>
+        <int32_t name='id' ref-target='burrow'/>
+
+        <static-array name='tile_bitmask' count='16'>
+            <uint16_t/>
+        </static-array>
+
+        <pointer name="link" type-name='block_burrow_link'/>
+    </struct-type>
+
+    <struct-type type-name='block_burrow_link'>
+        <pointer name='item' type-name='block_burrow'/>
+        <pointer name='prev' type-name='block_burrow_link'/>
+        <pointer name='next' type-name='block_burrow_link'/>
+    </struct-type>
+
+    <struct-type type-name='map_block'>
+        <df-flagarray name='flags' index-enum='block_flags'/>
+
+        <stl-vector name='block_events'>
+            <pointer/>
+        </stl-vector>
+
+        <compound name='block_burrows' type-name='block_burrow_link'/>
+
+        <int32_t name='local_feature'/>
+        <int32_t name='global_feature'/>
+        <int32_t name='unk2'/>
+        <int32_t name='unk3' comment='undef'/>
+        <int32_t name='unk4'/>
+        <int32_t name='unk5'/>
+
+        <stl-vector name='items'>
+            <int32_t ref-target='item'/>
+        </stl-vector>
+        <stl-vector name='effects'>
+            <pointer/>
+        </stl-vector>
+
+        <int32_t name='unk7'/>
+        <int32_t name='unk8' comment='undef'/>
+
+        <stl-vector name='plants'>
+            <pointer/>
+        </stl-vector>
+
+        <int16_t name='map_x'/>
+        <int16_t name='map_y'/>
+        <int16_t name='map_z'/>
+        <int16_t name='region_x'/>
+        <int16_t name='region_y'/>
+
+        <static-array name='tiletype' count='16'>
+            <static-array count='16'>
+                <int16_t/>
+            </static-array>
+        </static-array>
+        <static-array name='designation' count='16'>
+            <static-array count='16'>
+                <compound type-name='tile_designation'/>
+            </static-array>
+        </static-array>
+        <static-array name='occupancy' count='16'>
+            <static-array count='16'>
+                <compound type-name='tile_occupancy'/>
+            </static-array>
+        </static-array>
+
+        <static-array name='unk9' count='16'>
+            <static-array count='16'>
+                <int8_t/>
+            </static-array>
+        </static-array>
+        <static-array name='pathfinding' count='16'>
+            <static-array count='16'>
+                <int32_t/>
+            </static-array>
+        </static-array>
+        <static-array name='unk10' count='16'>
+            <static-array count='16'>
+                <uint16_t/>
+            </static-array>
+        </static-array>
+        <static-array name='unk11' count='16'>
+            <static-array count='16'>
+                <uint16_t/>
+            </static-array>
+        </static-array>
+        <static-array name='unk12' count='16'>
+            <static-array count='16'>
+                <uint16_t/>
+            </static-array>
+        </static-array>
+
+        <static-array name='temperature_1' count='16'>
+            <static-array count='16'>
+                <uint16_t/>
+            </static-array>
+        </static-array>
+        <static-array name='temperature_2' count='16'>
+            <static-array count='16'>
+                <uint16_t/>
+            </static-array>
+        </static-array>
+
+        <static-array name='unk13' count='16'>
+            <static-array count='16'>
+                <uint16_t/>
+            </static-array>
+        </static-array>
+        <static-array name='unk14' count='16'>
+            <static-array count='16'>
+                <uint16_t/>
+            </static-array>
+        </static-array>
+
+        <static-array name='region_offset' count='9'>
+            <uint8_t/>
+        </static-array>
+    </struct-type>
+
+    <struct-type type-name='cave_column_link'>
+        <pointer name='item'/>
+        <pointer name='prev' type-name='cave_column_link'/>
+        <pointer name='next' type-name='cave_column_link'/>
+    </struct-type>
+
+    <struct-type type-name='map_block_column'>
+        <int16_t name="unk_0"/>
+        <int16_t name="unk_2"/>
+        <int16_t name="unk_4"/>
+
+        <stl-vector name="unk_8">
+            <pointer>
+                <static-array name='unk1' count='8' type-name='int16_t'/>
+                <static-array name='unk2' count='4' type-name='uint8_t'/>
+            </pointer>
+        </stl-vector>
+
+        <int16_t name="z_base"/>
+
+        <static-array name='cave_columns' count='16'>
+            <static-array count='16'>
+                <compound type-name='cave_column_link'/>
+            </static-array>
+        </static-array>
+
+        <stl-vector name='column_rectangles'>
+            <pointer/>
+        </stl-vector>
+
+        <int16_t name='unk_c2c'/>
+        <df-flagarray name='flags'/>
+
+        <int16_t name='tile_min_x'/>
+        <int16_t name='tile_min_y'/>
+        <int16_t name='unk_c3c' comment='uninitialized'/>
+        <int16_t name='unk_c3e'/>
+        <int16_t name='unk_c40'/>
+    </struct-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

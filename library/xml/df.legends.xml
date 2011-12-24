@@ -1,5 +1,5 @@
 <data-definition>
-    <struct-type type-name='historical_entity' key-field='id'>
+    <struct-type type-name='historical_entity' key-field='id' instance-vector='$global.world.entities.all'>
         <int16_t name='unk1'/>
         <int32_t name='id' comment='index in the array'/>
         <pointer name='entity_raw'/>
@@ -8,8 +8,6 @@
         <int16_t name='next_member_idx'/>
 
         <compound name='name' type-name='language_name'/>
-
-        <code-helper name='find-instance'>(find-by-id $global.world.entities.all $id $)</code-helper>
 
         <code-helper name='describe'>
             (describe-obj $.name)
@@ -225,10 +223,9 @@
         </compound>
     </struct-type>
 
-    <struct-type type-name='entity_population' key-field='id'>
+    <struct-type type-name='entity_population' key-field='id' instance-vector='$global.world.entity_populations'>
         <compound name='name' type-name='language_name'/>
 
-        <code-helper name='find-instance'>(find-by-id $global.world.entity_populations $id $)</code-helper>
         <code-helper name='describe'>
             (describe-obj $.name)
         </code-helper>
@@ -258,10 +255,8 @@
         <int32_t name='civ_id' ref-target='historical_entity'/>
     </struct-type>
 
-    <struct-type type-name='nemesis_record' key-field='id'>
+    <struct-type type-name='nemesis_record' key-field='id' instance-vector='$global.world.nemesis.all'>
         <int32_t name='id' comment='sequential index in the array'/>
-
-        <code-helper name='find-instance'>(find-by-id $global.world.nemesis.all $id $)</code-helper>
 
         <int32_t name='unit_id' ref-target='unit'/>
 
@@ -284,10 +279,8 @@
         <stl-vector name='unk13' type-name='pointer' comment='empty'/>
     </struct-type>
 
-    <struct-type type-name='artifact_record' key-field='id'>
+    <struct-type type-name='artifact_record' key-field='id' instance-vector='$global.world.artifacts.all'>
         <int32_t name='id'/>
-
-        <code-helper name='find-instance'>(find-by-id $global.world.artifacts.all $id $)</code-helper>
 
         <code-helper name='describe'>
             (describe-obj $.name)
@@ -298,15 +291,6 @@
         <int32_t name='unk2'/>
         <pointer name='item' type-name='item'/>
     </struct-type>
-
-    <class-type type-name='history_event' original-name='history_eventst' key-field='id'>
-        <int32_t name='year'/>
-        <int32_t name='seconds'/>
-        <df-flagarray name='flags'/>
-        <int32_t name='id'/>
-
-        <code-helper name='find-instance'>(find-by-id $global.world.history.events $id $)</code-helper>
-    </class-type>
 </data-definition>
 
 <!--

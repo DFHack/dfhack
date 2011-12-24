@@ -19,6 +19,9 @@ a 64-bit distribution like Arch, you'll need the multilib development tools and 
 Before you can build anything, you'll also need ``cmake``. It is advisable to also get
 ``ccmake`` on distributions that split the cmake package into multiple parts.
 
+For the code generation parts, you need perl and the XML::LibXML perl package.
+You should be able to find them in your distro repositories (on Arch linux 'perl-xml-libxml').
+
 Build
 =====
 Building is fairly straightforward. Enter the ``build`` folder and start the build like this::
@@ -51,8 +54,13 @@ site: http://www.cmake.org/cmake/resources/software.html
 It has the usual installer wizard. Make sure you let it add its binary folder
 to your binary search PATH so the tool can be later run from anywhere.
 
-You'll also need a copy of Microsoft Visual C++ 2010. The Express version is sufficient.
+You'll need a copy of Microsoft Visual C++ 2010. The Express version is sufficient.
 Grab it from Microsoft's site.
+
+For the code generation parts, you'll need perl and XML::LibXML. You can install them like this:
+* download and install strawberry perl from http://strawberryperl.com/
+* reboot so that the system can pick up the new binary path
+* open a cmd.exe window and run "cpan XML::LibXML" (obviously without the quotes). This can take a while to complete.
 
 Build
 =====

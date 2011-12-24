@@ -29,6 +29,7 @@ SET(PROJECT_HDRS
 include/DFHack.h
 include/dfhack/Console.h
 include/dfhack/Core.h
+include/dfhack/DataDefs.h
 include/dfhack/Error.h
 include/dfhack/Export.h
 include/dfhack/FakeSDL.h
@@ -64,6 +65,8 @@ include/dfhack/modules/Graphic.h
 
 SET(PROJECT_SRCS
 Core.cpp
+DataDefs.cpp
+DataStatics.cpp
 PluginManager.cpp
 TileTypes.cpp
 VersionInfo.cpp

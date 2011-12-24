@@ -35,6 +35,12 @@ namespace DFHack
 {
     class virtual_class {};
 
+#ifdef _MSC_VER
+    typedef void *virtual_ptr;
+#else
+    typedef virtual_class *virtual_ptr;
+#endif
+
     class DFHACK_EXPORT virtual_identity {
         static virtual_identity *list;
         static std::map<void*, virtual_identity*> known;
@@ -51,9 +57,9 @@ namespace DFHack
     protected:
         virtual_identity(const char *dfhack_name, const char *original_name, virtual_identity *parent);
 
-        bool check_instance(virtual_class *instance_ptr, bool allow_subclasses);
+        bool check_instance(virtual_ptr instance_ptr, bool allow_subclasses);
 
-        static void *get_vtable(virtual_class *instance_ptr) { return *(void**)instance_ptr; }
+        static void *get_vtable(virtual_ptr instance_ptr) { return *(void**)instance_ptr; }
 
     public:
         const char *getName() { return dfhack_name; }
@@ -62,9 +68,9 @@ namespace DFHack
         virtual_identity *getParent() { return parent; }
         const std::vector<virtual_identity*> &getChildren() { return children; }
 
-        static virtual_identity *get(virtual_class *instance_ptr);
+        static virtual_identity *get(virtual_ptr instance_ptr);
 
-        bool is_instance(virtual_class *instance_ptr) {
+        bool is_instance(virtual_ptr instance_ptr) {
             if (!instance_ptr) return false;
             if (vtable_ptr) {
                 void *vtable = get_vtable(instance_ptr);
@@ -74,7 +80,7 @@ namespace DFHack
             return check_instance(instance_ptr, true);
         }
 
-        bool is_direct_instance(virtual_class *instance_ptr) {
+        bool is_direct_instance(virtual_ptr instance_ptr) {
             if (!instance_ptr) return false;
             return vtable_ptr ? (vtable_ptr == get_vtable(instance_ptr)) 
                               : check_instance(instance_ptr, false);
@@ -84,12 +90,12 @@ namespace DFHack
     };
 
     template<class T>
-    inline T *virtual_cast(virtual_class *ptr) {
+    inline T *virtual_cast(virtual_ptr ptr) {
         return T::_identity.is_instance(ptr) ? static_cast<T*>(ptr) : NULL;
     }
 
     template<class T>
-    inline T *strict_virtual_cast(virtual_class *ptr) {
+    inline T *strict_virtual_cast(virtual_ptr ptr) {
         return T::_identity.is_direct_instance(ptr) ? static_cast<T*>(ptr) : NULL;
     }
 

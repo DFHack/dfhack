@@ -55,7 +55,7 @@ virtual_identity::virtual_identity(const char *dfhack_name, const char *original
 static tthread::mutex *known_mutex = NULL;
 std::map<void*, virtual_identity*> virtual_identity::known;
 
-virtual_identity *virtual_identity::get(virtual_class *instance_ptr)
+virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
 {
     if (!instance_ptr) return NULL;
 
@@ -86,7 +86,7 @@ virtual_identity *virtual_identity::get(virtual_class *instance_ptr)
     return NULL;
 }
 
-bool virtual_identity::check_instance(virtual_class *instance_ptr, bool allow_subclasses)
+bool virtual_identity::check_instance(virtual_ptr instance_ptr, bool allow_subclasses)
 {
     virtual_identity *actual = get(instance_ptr);
 

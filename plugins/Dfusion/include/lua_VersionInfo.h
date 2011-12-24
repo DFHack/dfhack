@@ -28,6 +28,7 @@ public:
     int getName(lua_State *L);
     int getFullName(lua_State *L);
     int getParent(lua_State *L);
+	int getKeys(lua_State *L);
 
     DEF_LUNE(OffsetGroup);
 };

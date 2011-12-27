@@ -3,6 +3,11 @@ STD_STRING=0
 DWORD=1
 WORD=2
 BYTE=3
+function printd(...)
+	if DEBUG then
+		print(...)
+	end
+end
 function GetTextRegion()
 	if __TEXT ~=nil then --Chache this, not going to change.
 		return __TEXT

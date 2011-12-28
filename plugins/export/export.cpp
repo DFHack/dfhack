@@ -163,7 +163,7 @@ DFhackCExport command_result export_dwarves (Core * c, std::vector <std::string>
     uint32_t num_creatures;
     cr->Start(num_creatures);
 
-    outf << "<Creatures>" << endl;
+    outf << "<?xml version='1.0' encoding='ibm850'?>" << endl << "<Creatures>" << endl;
     
     for (unsigned i = 0; i < num_creatures; ++i)
     {

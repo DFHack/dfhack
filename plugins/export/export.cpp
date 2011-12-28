@@ -100,10 +100,13 @@ static void printTraits(Core* c, Translation* t, t_unit* cre, ostream& out) {
     df_soul * s = cre->origin->current_soul;
     if (s) {
         for (int i = 0; i < NUM_CREATURE_TRAITS; i++) {
+            out << "      <Trait name='" << c->vinfo->getTraitName(i) <<
+                "' value='" << s->traits[i] << "'>";
             string trait = c->vinfo->getTrait(i, s->traits[i]);
             if (!trait.empty()) {
-                element("Trait", trait.c_str(), out, "  ");
+                out << trait.c_str();
             }
+            out << "</Trait>" << endl;
         }
     }
     out << "    </Traits>" << endl;

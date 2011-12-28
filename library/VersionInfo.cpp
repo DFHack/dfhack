@@ -1164,7 +1164,7 @@ string VersionInfo::getTrait (const uint32_t traitIdx, const uint32_t traitValue
     if(d->traits.size() > traitIdx)
     {
         int diff = absolute(traitValue-50);
-        if(diff < 10)
+        if(diff <= 10)
         {
             return string("");
         }

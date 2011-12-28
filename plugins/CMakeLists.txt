@@ -61,6 +61,8 @@ DFHACK_PLUGIN(initflags initflags.cpp)
 DFHACK_PLUGIN(stockpiles stockpiles.cpp)
 #DFHACK_PLUGIN(versionosd versionosd.cpp)
 
+add_subdirectory(export)
+
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it
 OPTION(BUILD_SKELETON "Build the skeleton plugin." OFF)
 if(BUILD_SKELETON)

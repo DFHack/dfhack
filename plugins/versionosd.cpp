@@ -36,16 +36,16 @@ DFhackCExport const char * plugin_name ( void )
 
 DFTileSurface* createTile(int x, int y)
 {
-	DFTileSurface* tile = new DFTileSurface;
-	tile->paintOver = true;
-	tile->rect = new DFSDL_Rect;
-	tile->rect->x = x*16;
-	tile->rect->y = y*16;
-	tile->rect->w = 16;
-	tile->rect->h = 16;
-	tile->surface = surface;
-	tile->dstResize = NULL;
-	return tile;
+    DFTileSurface* tile = new DFTileSurface;
+    tile->paintOver = true;
+    tile->rect = new DFSDL_Rect;
+    tile->rect->x = x*16;
+    tile->rect->y = y*16;
+    tile->rect->w = 16;
+    tile->rect->h = 16;
+    tile->surface = surface;
+    tile->dstResize = NULL;
+    return tile;
 }
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
@@ -55,72 +55,72 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
                                      "Toggles displaying version in DF window",
                                      df_versionosd));
 
-	HMODULE SDLImageLib = LoadLibrary("SDL_image.dll");
-	_IMG_LoadPNG_RW = (DFHack::DFSDL_Surface* (*)(void*))GetProcAddress(SDLImageLib, "IMG_LoadPNG_RW");
+    HMODULE SDLImageLib = LoadLibrary("SDL_image.dll");
+    _IMG_LoadPNG_RW = (DFHack::DFSDL_Surface* (*)(void*))GetProcAddress(SDLImageLib, "IMG_LoadPNG_RW");
 
-	HMODULE realSDLlib = LoadLibrary("SDLreal.dll");
-	_SDL_RWFromFile = (void*(*)(const char*, const char*))GetProcAddress(realSDLlib,"SDL_RWFromFile");
-	_SDL_SetAlpha = (int (*)(void*, uint32_t, uint8_t))GetProcAddress(realSDLlib,"SDL_SetAlpha");
+    HMODULE realSDLlib = LoadLibrary("SDLreal.dll");
+    _SDL_RWFromFile = (void*(*)(const char*, const char*))GetProcAddress(realSDLlib,"SDL_RWFromFile");
+    _SDL_SetAlpha = (int (*)(void*, uint32_t, uint8_t))GetProcAddress(realSDLlib,"SDL_SetAlpha");
     _SDL_SetColorKey = (int (*)(void*, uint32_t, uint32_t))GetProcAddress(realSDLlib,"SDL_SetColorKey");
-	_SDL_MapRGB = (uint32_t (*)(void*, uint8_t, uint8_t, uint8_t))GetProcAddress(realSDLlib,"SDL_MapRGB");
+    _SDL_MapRGB = (uint32_t (*)(void*, uint8_t, uint8_t, uint8_t))GetProcAddress(realSDLlib,"SDL_MapRGB");
 
-	void* RWop = _SDL_RWFromFile(file, "rb");
-	surface = _IMG_LoadPNG_RW(RWop);
+    void* RWop = _SDL_RWFromFile(file, "rb");
+    surface = _IMG_LoadPNG_RW(RWop);
 
-	if ( !surface )
-	{
-		c->con.print("Couldnt load image from file %s", file);
-		return CR_FAILURE;
-	}
+    if ( !surface )
+    {
+        c->con.print("Couldnt load image from file %s", file);
+        return CR_FAILURE;
+    }
 
-	UINT32 pink = _SDL_MapRGB(vPtr(surface->format), 0xff, 0x00, 0xff);
+    UINT32 pink = _SDL_MapRGB(vPtr(surface->format), 0xff, 0x00, 0xff);
 
-	_SDL_SetColorKey((vPtr)surface, 4096, pink);
-	_SDL_SetAlpha((vPtr)surface, 65536, 255);
-
-
-	// setup tiles
-	tiles[0] = createTile(4, 4); // D
-	tiles[1] = createTile(6, 4); // F
-	tiles[2] = createTile(8, 4); // H
-	tiles[3] = createTile(1, 6); // a
-	tiles[4] = createTile(3, 6); // c
-	tiles[5] = createTile(11, 6); // k
-	tiles[6] = createTile(0, 0); // " "
-	// FIXME: it should get REAL version not hardcoded one
-	tiles[7] = createTile(2, 7); // r
-	tiles[8] = createTile(8, 3); // 8
-
-	tiles[9] = createTile(9, 0); // o
-
-	gui = c->getGui();
+    _SDL_SetColorKey((vPtr)surface, 4096, pink);
+    _SDL_SetAlpha((vPtr)surface, 65536, 255);
 
 
-	Graphic* g = c->getGraphic();
-	g->Register(gettile);
+    // setup tiles
+    tiles[0] = createTile(4, 4); // D
+    tiles[1] = createTile(6, 4); // F
+    tiles[2] = createTile(8, 4); // H
+    tiles[3] = createTile(1, 6); // a
+    tiles[4] = createTile(3, 6); // c
+    tiles[5] = createTile(11, 6); // k
+    tiles[6] = createTile(0, 0); // " "
+    // FIXME: it should get REAL version not hardcoded one
+    tiles[7] = createTile(2, 7); // r
+    tiles[8] = createTile(8, 3); // 8
+
+    tiles[9] = createTile(9, 0); // o
+
+    gui = c->getGui();
+
+
+    Graphic* g = c->getGraphic();
+    g->Register(gettile);
 
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
-	Graphic* g = c->getGraphic();
-	g->Unregister(gettile);
-	delete surface;
+    Graphic* g = c->getGraphic();
+    g->Unregister(gettile);
+    delete surface;
 
-	for (int i=0; i<10; i++)
-	{
-		delete tiles[i];
-	}
-	delete [] tiles;
+    for (int i=0; i<10; i++)
+    {
+        delete tiles[i];
+    }
+    delete [] tiles;
 
     return CR_OK;
 }
 
 DFhackCExport command_result df_versionosd (Core * c, vector <string> & parameters)
 {
-	On = !On;
-	c->Suspend();
+    On = !On;
+    c->Suspend();
     c->con.print("Version OSD is %s\n", On ? "On" : "Off");
     c->Resume();
     return CR_OK;
@@ -128,21 +128,21 @@ DFhackCExport command_result df_versionosd (Core * c, vector <string> & paramete
 
 DFTileSurface* gettile (int x, int y)
 {
-	if ( !On ) return NULL;
+    if ( !On ) return NULL;
 
-	if ( x == 0 && y-4 >= 0 && y-4 < 9 )
-	{
-		return tiles[y-4];
-	}
+    if ( x == 0 && y-4 >= 0 && y-4 < 9 )
+    {
+        return tiles[y-4];
+    }
 
-	int32_t cx, cy, cz;
-	int32_t vx, vy, vz;
-	if ( !gui->getViewCoords(vx, vy, vz) ) return NULL;
-	if ( !gui->getCursorCoords(cx, cy, cz) ) return NULL;
-	if ( cx-vx+1 == x && cy-vy+1 == y )
-	{
-		return tiles[9];
-	}
+    int32_t cx, cy, cz;
+    int32_t vx, vy, vz;
+    if ( !gui->getViewCoords(vx, vy, vz) ) return NULL;
+    if ( !gui->getCursorCoords(cx, cy, cz) ) return NULL;
+    if ( cx-vx+1 == x && cy-vy+1 == y )
+    {
+        return tiles[9];
+    }
 
-	return NULL;
+    return NULL;
 }

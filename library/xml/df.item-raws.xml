@@ -1,0 +1,303 @@
+<data-definition>
+    <enum-type type-name='item_type'>
+        <enum-item name='BAR' comment='Bars, such as metal, fuel, or soap.'/>
+        <enum-item name='SMALLGEM' comment='Cut gemstones usable in jewelers workshop'/>
+        <enum-item name='BLOCKS' comment='Blocks of any kind.'/>
+        <enum-item name='ROUGH' comment='Rough gemstones.'/>
+        <enum-item name='BOULDER' comment='Raw mined stone.'/>
+        <enum-item name='WOOD' comment='Wooden logs.'/>
+        <enum-item name='DOOR' comment='Doors.'/>
+        <enum-item name='FLOODGATE' comment='Floodgates.'/>
+        <enum-item name='BED' comment='Beds.'/>
+        <enum-item name='CHAIR' comment='Chairs and thrones.'/>
+        <enum-item name='CHAIN' comment='Restraints.'/>
+        <enum-item name='FLASK' comment='Flasks.'/>
+        <enum-item name='GOBLET' comment='Goblets.'/>
+        <enum-item name='INSTRUMENT' comment='Musical instruments.'/>
+        <enum-item name='TOY' comment='Toys.'/>
+        <enum-item name='WINDOW' comment='Glass windows.'/>
+        <enum-item name='CAGE' comment='Cages.'/>
+        <enum-item name='BARREL' comment='Barrels.'/>
+        <enum-item name='BUCKET' comment='Buckets.'/>
+        <enum-item name='ANIMALTRAP' comment='Animal traps.'/>
+        <enum-item name='TABLE' comment='Tables.'/>
+        <enum-item name='COFFIN' comment='Coffins.'/>
+        <enum-item name='STATUE' comment='Statues.'/>
+        <enum-item name='CORPSE' comment='Corpses. Does not have a material.'/>
+        <enum-item name='WEAPON' comment='Weapons.'/>
+        <enum-item name='ARMOR' comment='Armor and clothing worn on the upper body.'/>
+        <enum-item name='SHOES' comment='Armor and clothing worn on the feet.'/>
+        <enum-item name='SHIELD' comment='Shields and bucklers.'/>
+        <enum-item name='HELM' comment='Armor and clothing worn on the head.'/>
+        <enum-item name='GLOVES' comment='Armor and clothing worn on the hands.'/>
+        <enum-item name='BOX' comment='Chests (wood), coffers (stone), boxes (glass), and bags (cloth or leather).'/>
+        <enum-item name='BIN' comment='Bins.'/>
+        <enum-item name='ARMORSTAND' comment='Armor stands.'/>
+        <enum-item name='WEAPONRACK' comment='Weapon racks.'/>
+        <enum-item name='CABINET' comment='Cabinets.'/>
+        <enum-item name='FIGURINE' comment='Figurines.'/>
+        <enum-item name='AMULET' comment='Amulets.'/>
+        <enum-item name='SCEPTER' comment='Scepters.'/>
+        <enum-item name='AMMO' comment='Ammunition for hand-held weapons.'/>
+        <enum-item name='CROWN' comment='Crowns.'/>
+        <enum-item name='RING' comment='Rings.'/>
+        <enum-item name='EARRING' comment='Earrings.'/>
+        <enum-item name='BRACELET' comment='Bracelets.'/>
+        <enum-item name='GEM' comment='Large gems.'/>
+        <enum-item name='ANVIL' comment='Anvils.'/>
+        <enum-item name='CORPSEPIECE' comment='Body parts. Does not have a material.'/>
+        <enum-item name='REMAINS' comment='Dead vermin bodies. Material is CREATURE_ID:CASTE.'/>
+        <enum-item name='MEAT' comment='Butchered meat.'/>
+        <enum-item name='FISH' comment='Prepared fish. Material is CREATURE_ID:CASTE.'/>
+        <enum-item name='FISH_RAW' comment='Unprepared fish. Material is CREATURE_ID:CASTE.'/>
+        <enum-item name='VERMIN' comment='Live vermin. Material is CREATURE_ID:CASTE.'/>
+        <enum-item name='PET' comment='Tame vermin. Material is CREATURE_ID:CASTE.'/>
+        <enum-item name='SEEDS' comment='Seeds from plants.'/>
+        <enum-item name='PLANT' comment='Plants.'/>
+        <enum-item name='SKIN_TANNED' comment='Tanned skins.'/>
+        <enum-item name='LEAVES' comment='Leaves, usually from quarry bushes.'/>
+        <enum-item name='THREAD' comment='Thread gathered from webs or made at the farmers workshop.'/>
+        <enum-item name='CLOTH' comment='Cloth made at the loom.'/>
+        <enum-item name='TOTEM' comment='Skull totems.'/>
+        <enum-item name='PANTS' comment='Armor and clothing worn on the legs.'/>
+        <enum-item name='BACKPACK' comment='Backpacks.'/>
+        <enum-item name='QUIVER' comment='Quivers.'/>
+        <enum-item name='CATAPULTPARTS' comment='Catapult parts.'/>
+        <enum-item name='BALLISTAPARTS' comment='Ballista parts.'/>
+        <enum-item name='SIEGEAMMO' comment='Siege engine ammunition.'/>
+        <enum-item name='BALLISTAARROWHEAD' comment='Ballista arrow heads.'/>
+        <enum-item name='TRAPPARTS' comment='Mechanisms.'/>
+        <enum-item name='TRAPCOMP' comment='Trap components.'/>
+        <enum-item name='DRINK' comment='Alcoholic drinks.'/>
+        <enum-item name='POWDER_MISC' comment='Powders such as flour, gypsum plaster, dye, or sand.'/>
+        <enum-item name='CHEESE' comment='Pieces of cheese.'/>
+        <enum-item name='FOOD' comment='Prepared meals. Subtypes come from item_food.txt'/>
+        <enum-item name='LIQUID_MISC' comment='Liquids such as water, lye, and extracts.'/>
+        <enum-item name='COIN' comment='Coins.'/>
+        <enum-item name='GLOB' comment='Fat, tallow, pastes/pressed objects, and small bits of molten rock/metal.'/>
+        <enum-item name='ROCK' comment='Small rocks (usually sharpened and/or thrown in adventurer mode)'/>
+        <enum-item name='PIPE_SECTION' comment='Pipe sections.'/>
+        <enum-item name='HATCH_COVER' comment='Hatch covers.'/>
+        <enum-item name='GRATE' comment='Grates.'/>
+        <enum-item name='QUERN' comment='Querns.'/>
+        <enum-item name='MILLSTONE' comment='Millstones.'/>
+        <enum-item name='SPLINT' comment='Splints.'/>
+        <enum-item name='CRUTCH' comment='Crutches.'/>
+        <enum-item name='TRACTION_BENCH' comment='Traction benches.'/>
+        <enum-item name='ORTHOPEDIC_CAST' comment='Casts'/>
+        <enum-item name='TOOL' comment='Tools.'/>
+        <enum-item name='SLAB' comment='Slabs.'/>
+        <enum-item name='EGGS' comment='Eggs. Material is CREATURE_ID:CASTE.'/>
+    </enum-type>
+
+    <class-type type-name='itemdef' original-name='itemdefst' key-field='id'>
+        <stl-string name="id"/>
+        <int16_t name="subtype"/>
+    </class-type>
+
+    <class-type type-name='itemdef_ammost' inherits-from='itemdef'>
+        <stl-string name="name"/>
+        <stl-string name="name_plural"/>
+        <stl-string name="ammo_class"/>
+
+        <df-flagarray name='flags'/>
+
+        <int32_t name="size" comment='divided by 10'/>
+        <int32_t name="unk_84"/>
+
+        <stl-vector name="attacks">
+            <pointer/>
+        </stl-vector>
+    </class-type>
+
+    <struct-type type-name='armor_properties'>
+        <df-flagarray name='flags'/>
+        <int32_t name="layer"/>
+        <int16_t name="layer_size"/>
+        <int16_t name="layer_permit"/>
+        <int16_t name="coverage"/>
+    </struct-type>
+
+    <class-type type-name='itemdef_armorst' inherits-from='itemdef'>
+        <stl-string name="name"/>
+        <stl-string name="name_plural"/>
+        <stl-string name="name_preplural"/>
+        <stl-string name="material_placeholder"/>
+        <int32_t name="value"/>
+        <int8_t name="armorlevel"/>
+        <int16_t name="ubstep"/>
+        <int16_t name="lbstep"/>
+        <int32_t name="material_size"/>
+
+        <compound name='props' type-name='armor_properties'/>
+
+        <df-flagarray name='flags'/>
+    </class-type>
+
+    <class-type type-name='itemdef_foodst' inherits-from='itemdef'>
+        <stl-string name="name"/>
+        <int16_t name="level"/>
+    </class-type>
+
+    <class-type type-name='itemdef_glovesst' inherits-from='itemdef'>
+        <stl-string name="name"/>
+        <stl-string name="name_plural"/>
+        <int32_t name="value"/>
+        <int8_t name='armorlevel'/>
+        <int16_t name="ubstep"/>
+        <df-flagarray name='flags'/>
+        <int32_t name="material_size"/>
+        <compound name='props' type-name='armor_properties'/>
+    </class-type>
+
+    <class-type type-name='itemdef_helmst' inherits-from='itemdef'>
+        <stl-string name="name"/>
+        <stl-string name="name_plural"/>
+        <int32_t name="value"/>
+        <int8_t name='armorlevel'/>
+        <df-flagarray name='flags'/>
+        <int32_t name="material_size"/>
+        <compound name='props' type-name='armor_properties'/>
+    </class-type>
+
+    <class-type type-name='itemdef_instrumentst' inherits-from='itemdef'>
+        <stl-string name="name"/>
+        <stl-string name="name_plural"/>
+        <df-flagarray name='flags'/>
+    </class-type>
+
+    <class-type type-name='itemdef_pantsst' inherits-from='itemdef'>
+        <stl-string name="name"/>
+        <stl-string name="name_plural"/>
+        <stl-string name="name_preplural"/>
+        <stl-string name="material_placeholder"/>
+        <int32_t name="value"/>
+        <int8_t name="armorlevel"/>
+        <df-flagarray name='flags'/>
+        <int32_t name="material_size"/>
+        <int16_t name="lbstep"/>
+
+        <compound name='props' type-name='armor_properties'/>
+    </class-type>
+
+    <class-type type-name='itemdef_shieldst' inherits-from='itemdef'>
+        <stl-string name="name"/>
+        <stl-string name="name_plural"/>
+        <int32_t name="value"/>
+        <int32_t name="blockchance"/>
+        <int8_t name='armorlevel'/>
+        <int16_t name="ubstep"/>
+        <int32_t name="material_size"/>
+    </class-type>
+
+    <class-type type-name='itemdef_shoesst' inherits-from='itemdef'>
+        <stl-string name="name"/>
+        <stl-string name="name_plural"/>
+        <int32_t name="value"/>
+        <int8_t name='armorlevel'/>
+        <int16_t name="ubstep"/>
+        <df-flagarray name='flags'/>
+        <int32_t name="material_size"/>
+
+        <compound name='props' type-name='armor_properties'/>
+    </class-type>
+
+    <class-type type-name='itemdef_siegeammost' inherits-from='itemdef'>
+        <stl-string name="name"/>
+        <stl-string name="name_plural"/>
+        <stl-string name="ammo_class"/>
+    </class-type>
+
+    <enum-type type-name='tool_uses'>
+        <enum-item name='TOOL_USE_LIQUID_COOKING'/>
+        <enum-item name='TOOL_USE_LIQUID_SCOOP'/>
+        <enum-item name='TOOL_USE_GRIND_POWDER_RECEPTACLE'/>
+        <enum-item name='TOOL_USE_GRIND_POWDER_GRINDER'/>
+        <enum-item name='TOOL_USE_MEAT_CARVING'/>
+        <enum-item name='TOOL_USE_MEAT_BONING'/>
+        <enum-item name='TOOL_USE_MEAT_SLICING'/>
+        <enum-item name='TOOL_USE_MEAT_CLEAVING'/>
+        <enum-item name='TOOL_USE_HOLD_MEAT_FOR_CARVING'/>
+        <enum-item name='TOOL_USE_MEAL_CONTAINER'/>
+        <enum-item name='TOOL_USE_LIQUID_CONTAINER'/>
+        <enum-item name='TOOL_USE_FOOD_STORAGE'/>
+        <enum-item name='TOOL_USE_HIVE'/>
+        <enum-item name='TOOL_USE_NEST_BOX'/>
+    </enum-type>
+
+    <class-type type-name='itemdef_toolst' inherits-from='itemdef'>
+        <stl-string name="name"/>
+        <stl-string name="name_plural"/>
+        <df-flagarray name='flags'/>
+        <int32_t name="value"/>
+        <uint8_t name="tile"/>
+
+        <stl-vector name="tool_use">
+            <enum base-type='int16_t' type-name='tool_uses'/>
+        </stl-vector>
+
+        <stl-string name="adjective"/>
+        <int32_t name="size"/>
+        <int16_t name="skill_melee"/>
+        <int16_t name="skill_ranged"/>
+        <stl-string name="ranged_ammo"/>
+        <int32_t name="two_handed"/>
+        <int32_t name="minimum_size"/>
+        <int32_t name="material_size"/>
+
+        <stl-vector name="attacks"/>
+
+        <int32_t name="shoot_force"/>
+        <int32_t name="shoot_maxvel"/>
+
+        <int32_t name="container_capacity"/>
+    </class-type>
+
+    <class-type type-name='itemdef_toyst' inherits-from='itemdef'>
+        <stl-string name="name"/>
+        <stl-string name="name_plural"/>
+        <df-flagarray name='flags'/>
+    </class-type>
+
+    <class-type type-name='itemdef_trapcompst' inherits-from='itemdef'>
+        <stl-string name="name"/>
+        <stl-string name="name_plural"/>
+        <stl-string name="adjective"/>
+
+        <int32_t name="size"/>
+        <int32_t name="unk_7c"/>
+        <int32_t name="hits"/>
+        <int32_t name="material_size"/>
+        <df-flagarray name='flags'/>
+        <stl-vector name="attacks">
+            <pointer/>
+        </stl-vector>
+    </class-type>
+
+    <class-type type-name='itemdef_weaponst' inherits-from='itemdef'>
+        <stl-string name="name"/>
+        <stl-string name="name_plural"/>
+        <stl-string name="adjective"/>
+        <int32_t name="size"/>
+        <int32_t name="unk_7c"/>
+        <int16_t name="skill_melee"/>
+        <int16_t name="skill_ranged"/>
+        <stl-string name="ranged_ammo"/>
+        <int32_t name="two_handed"/>
+        <int32_t name="minimum_size"/>
+        <int32_t name="material_size"/>
+        <df-flagarray name='flags'/>
+        <stl-vector name="attacks">
+            <pointer/>
+        </stl-vector>
+        <int32_t name="shoot_force"/>
+        <int32_t name="shoot_maxvel"/>
+    </class-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

@@ -190,4 +190,11 @@ namespace DFHack
 		tthread::mutex * misc_data_mutex;
 		std::map<std::string,void*> misc_data_map;
     };
+
+    class CoreSuspender {
+        Core *core;
+    public:
+        CoreSuspender(Core *core) : core(core) { core->Suspend(); }
+        ~CoreSuspender() { core->Resume(); }
+    };
 }

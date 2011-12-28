@@ -1,0 +1,263 @@
+<data-definition>
+    <struct-type type-name='meeting_diplomat'>
+        <int32_t name='unk1' comment='uninitialized'/>
+        <pointer name='person1' type-name='unit' comment='diplomat'/>
+        <pointer name='person2' type-name='unit' comment='count'/>
+        <pointer name='place' type-name='building'/>
+        <int16_t name='unk2' comment='1'/>
+        <int8_t name='unk3' comment='3'/>
+        <int16_t name='unk4' comment='0'/>
+        <int32_t name='unk5' comment='-1'/>
+    </struct-type>
+
+    <struct-type type-name='meeting_pet' key-field='name'>
+        <int32_t name='unk0' comment='uninitialized'/>
+        <int32_t name='unk1' comment='-1'/>
+        <int32_t name='pet_id' ref-target='unit'/>
+        <compound name='name' type-name='language_name'/>
+        <int32_t name='unk3'/>
+    </struct-type>
+
+    <struct-type type-name='meeting_ref'>
+        <int32_t name='unk1'
+                 comment='4 person, 7 pet (pet), 8 pet (owner)'/>
+        <pointer name='ptr' comment='type varies'/>
+        <int32_t name='unk2' comment='0'/>
+    </struct-type>
+
+    <bitfield-type type-name='job_material_category' base-type='uint32_t'>
+        <flag-bit name='plant'/>
+        <flag-bit name='wood'/>
+        <flag-bit name='cloth'/>
+        <flag-bit name='silk'/>
+        <flag-bit name='leather'/>
+        <flag-bit name='bone'/>
+        <flag-bit name='shell'/>
+        <flag-bit name='wood2'/>
+        <flag-bit name='soap'/>
+        <flag-bit name='tooth'/>
+        <flag-bit name='horn'/>
+        <flag-bit name='pearl'/>
+        <flag-bit name='yarn'/>
+    </bitfield-type>
+
+    <bitfield-type type-name='job_item_category' base-type='uint32_t'>
+        <flag-bit name='unk1'/>
+        <flag-bit name='unk2'/>
+        <flag-bit name='furniture'/>
+        <flag-bit name='unk8'/>
+        <flag-bit name='unk16'/>
+        <flag-bit name='unk32'/>
+        <flag-bit name='ammo'/>
+        <flag-bit name='unk128'/>
+        <flag-bit name='unk256'/>
+        <flag-bit name='unk512'/>
+        <flag-bit name='finished_goods'/>
+    </bitfield-type>
+
+    <struct-type type-name='job_list_link' key-field='job'>
+        <pointer name='job' type-name='job'/>
+        <pointer name='prev' type-name='job_list_link'/>
+        <pointer name='next' type-name='job_list_link'/>
+    </struct-type>
+
+    <struct-type type-name='job' key-field='id'>
+        <int32_t name='id'/>
+        <pointer name='list_link' type-name='job_list_link'/>
+        <enum name='job_id' base-type='int16_t' type-name='job_type'/>
+        <int32_t name='unk2'/>
+
+        <int16_t name='x'/>
+        <int16_t name='y'/>
+        <int16_t name='z'/>
+
+        <int32_t name='completion_timer' comment='-1 per 10 frames'/>
+
+        <uint16_t name='unk4a'/>
+        <uint16_t name='unk4b'/>
+
+        <bitfield name='flags' base-type='uint32_t'>
+            <flag-bit name='repeat'/>
+            <flag-bit name='suspend'/>
+        </bitfield>
+
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+        <int16_t name='unk5'/>
+        <int16_t name='unk6'/>
+        <int16_t name='item_subtype'/>
+        <int32_t name='unk7'/>
+        <int32_t name='unk8'/>
+
+        <compound name='job_material_category' type-name='job_material_category'/>
+
+        <stl-string name='reaction_name'/>
+
+        <int32_t name='unk9'/>
+        <int32_t name='unk10'/>
+
+        <stl-vector name='items'>
+            <pointer>
+                <pointer name='item' type-name='item'/>
+                <int32_t name='unk1' comment='1 for reagents, 2 for build materials'/>
+                <int32_t name='to_bring'
+                         comment='0 immediately once taken to be brought'/>
+                <int32_t name='job_item_idx'/>
+            </pointer>
+        </stl-vector>
+
+        <stl-vector name='unk11' type-name='pointer'/>
+
+        <stl-vector name='references'>
+            <pointer type-name='general_ref'/>
+        </stl-vector>
+
+        <stl-vector name='job_items'>
+            <pointer type-name='job_item'/>
+        </stl-vector>
+    </struct-type>
+
+    <struct-type type-name='job_item'>
+        <enum base-type='int16_t' name='itemType' type-name='item_type'/>
+        <int16_t name='itemSubtype' refers-to='(item-subtype-target $$._parent.itemType $)'/>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+
+        <bitfield name='flags1' base-type='uint32_t'/>
+
+        <int32_t name='count'/>
+        <int16_t name='unk1'/>
+
+        <bitfield name='flags2' base-type='uint32_t'/>
+        <int32_t name='unk2'/>
+        <bitfield name='flags3' base-type='uint32_t'/>
+        <int32_t name='unk3'/>
+
+        <int32_t name='metal_ore'/>
+
+        <stl-string name='reaction_class'/>
+        <stl-string name='has_material_reaction_product'/>
+
+        <int32_t name='unk4'/>
+        <int32_t name='reagent_index'/>
+
+        <stl-vector type-name='int32_t' name='contains' comment='used with custom reactions'/>
+
+        <int32_t name='unk5'/>
+        <int16_t name='has_tool_use'/>
+    </struct-type>
+
+    <struct-type type-name='manager_order'>
+        <enum name='job_id' base-type='int16_t' type-name='job_type'/>
+        <int16_t name="unk_2"/>
+
+        <int16_t name="item_subtype"/>
+
+        <stl-string name="reaction_name"/>
+
+        <int16_t name="mat_type" ref-target='material' aux-value='$$.mat_index'/>
+        <int32_t name="mat_index"/>
+
+        <compound name="item_category" type-name='job_item_category'/>
+        <int32_t name="unk_18"/>
+        <compound name="material_category" type-name='job_material_category'/>
+
+        <int16_t name="amount_left"/>
+        <int16_t name="amount_total"/>
+        <int32_t name="is_validated"/>
+    </struct-type>
+
+    <struct-type type-name='mandate'>
+        <pointer name='unit' type-name='unit'/>
+
+        <int16_t name='mode' comment='0 export, 1 make, 2 guild jobs'/>
+
+        <enum base-type='int16_t' name='item_type' type-name='item_type'/>
+        <int16_t name='item_subtype' refers-to='(item-subtype-target $$._parent.item_type $)'/>
+
+        <int16_t name='mat_type' ref-target='material' aux-value='$$.mat_index'/>
+        <int32_t name='mat_index'/>
+
+        <int16_t name='amount_total'/>
+        <int16_t name='amount_remaining'/>
+
+        <int32_t name='timeout_counter' comment='counts once per 10 frames'/>
+        <int32_t name='timeout_limit' comment='once counter passes limit, mandate ends'/>
+
+        <int16_t name='unk2'/>
+        <int16_t name='unk3'/>
+        <int32_t name='unk4'/>
+        <uint8_t name='unk5'/>
+    </struct-type>
+
+    <struct-type type-name='activity_entry' instance-vector='$global.world.activities.all' key-field='id'>
+        <int32_t name='id'/>
+        <int16_t name='is_individual'/>
+        <stl-vector name='events'>
+            <pointer type-name='activity_event'/>
+        </stl-vector>
+        <int32_t name='unk2'/>
+    </struct-type>
+
+    <class-type type-name='activity_event' original-name='activity_eventst'>
+        <int32_t name='event_id'
+                 comment='mostly, but not always, the index in activity.events'/>
+        <int32_t name='activity_id' ref-target='activity_entry'/>
+
+        -- Guess:
+        <int32_t name='subevent_id' comment='-1 unless subevent'/>
+        <int32_t name='num_subevents' comment='0 for ind.drill, 2 for all in training session'/>
+
+        <stl-vector name='hist_figure_ids'>
+            <int32_t ref-target='historical_figure'/>
+        </stl-vector>
+        <stl-vector name='participant_ids'>
+            <int32_t ref-target='unit'/>
+        </stl-vector>
+
+        -- Either empty, or same as above:
+        <stl-vector name='hist_figure_ids2'>
+            <int32_t ref-target='historical_figure'/>
+        </stl-vector>
+        <stl-vector name='participant_ids2'>
+            <int32_t ref-target='unit'/>
+        </stl-vector>
+
+        -- These are equal to the ones above:
+        <int32_t name='activity_id2' ref-target='activity_entry'/>
+        <int32_t name='event_id2'/>
+    </class-type>
+
+    <class-type type-name='activity_event_individual_skill_drillst' inherits-from='activity_event'>
+        <int32_t name='building_id' ref-target='building'/>
+        <int32_t name='unk5'/>
+    </class-type>
+
+    <class-type type-name='activity_event_training_sessionst' inherits-from='activity_event'>
+    </class-type>
+
+    <class-type type-name='activity_event_combat_trainingst' inherits-from='activity_event'>
+        <int32_t name='building_id' ref-target='building'/>
+        <int32_t name='hist_figure_id' ref-target='historical_figure'/>
+        <int32_t name='unit_id' ref-target='unit'/>
+        <int32_t name='unk5'/>
+    </class-type>
+
+    <class-type type-name='activity_event_skill_demonstrationst' inherits-from='activity_event'>
+        <int32_t name='building_id' ref-target='building'/>
+        <int32_t name='hist_figure_id' ref-target='historical_figure'/>
+        <int32_t name='unit_id' ref-target='unit'/>
+        <int16_t name='unk5'/>
+        <int32_t name='unk6'/>
+        <int32_t name='unk7'/>
+        <int32_t name='unk8'/>
+        <int32_t name='unk9'/>
+    </class-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

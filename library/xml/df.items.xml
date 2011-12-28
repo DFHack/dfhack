@@ -1,0 +1,577 @@
+<data-definition>
+    -- MISC TYPES
+
+    <bitfield-type type-name='item_flags'>
+        <flag-bit name='on_ground' comment='Item on ground'/>
+        <flag-bit name='in_job' comment='Item currently being used in a job'/>
+        <flag-bit name='hostile' comment='Item owned by hostile'/>
+        <flag-bit name='in_inventory' comment='Item in a creature or workshop inventory'/>
+
+        <flag-bit name='unk1' comment='unknown, lost (artifact)?, unusable, unseen'/>
+        <flag-bit name='in_building' comment='Part of a building (including mechanisms, bodies in coffins)'/>
+        <flag-bit name='unk2' comment='unknown, unseen'/>
+        <flag-bit name='dead_dwarf' comment='Dwarfs dead body or body part'/>
+
+        <flag-bit name='rotten' comment='Rotten food'/>
+        <flag-bit name='spider_web' comment='Thread in spider web'/>
+        <flag-bit name='construction' comment='Material used in construction'/>
+        <flag-bit name='unk3' comment='unknown, unseen, unusable'/>
+
+        <flag-bit name='unk4' comment='unknown, unseen'/>
+        <flag-bit name='murder' comment='Implies murder - used in fell moods'/>
+        <flag-bit name='foreign' comment='Item is imported'/>
+        <flag-bit name='trader' comment='Item ownwed by trader'/>
+
+        <flag-bit name='owned' comment='Item is owned by a dwarf'/>
+        <flag-bit name='garbage_colect' comment='Marked for deallocation by DF it seems'/>
+        <flag-bit name='artifact1' comment='Artifact ?'/>
+        <flag-bit name='forbid' comment='Forbidden item'/>
+
+        <flag-bit name='unk6' comment='unknown, unseen'/>
+        <flag-bit name='dump' comment='Designated for dumping'/>
+        <flag-bit name='on_fire' comment='Indicates if item is on fire, Will Set Item On Fire if Set!'/>
+        <flag-bit name='melt' comment='Designated for melting, if applicable'/>
+
+        <flag-bit name='hidden' comment='Hidden item'/>
+        <flag-bit name='in_chest' comment='Stored in chest/part of well?'/>
+        <flag-bit name='unk7' comment='unknown, unseen'/>
+        <flag-bit name='artifact2' comment='Artifact ?'/>
+
+        <flag-bit name='unk8' comment='unknown, unseen, common'/>
+        <flag-bit name='weight_computed'/>
+        <flag-bit name='unk10' comment='unknown, unseen'/>
+        <flag-bit name='unk11' comment='unknown, unseen'/>
+    </bitfield-type>
+
+    <struct-type type-name='contaminant'>
+        <int16_t name='mat_type' ref-target='material' aux-value='$$.mat_index'/>
+        <int32_t name='mat_index'/>
+        <int16_t name='mat_state' comment='enum or document in text'/>
+        <uint16_t name='temperature'/>
+        <uint16_t name='temperature_fraction'/>
+        <int32_t name='size' comment='1-24=spatter, 25-49=smear, 50-* = coating'/>
+        <int16_t name='unk' comment='-1'/>
+        <int16_t name='id'/>
+    </struct-type>
+
+    <enum-type type-name='item_quality'>
+        <enum-item name='Ordinary'/>
+        <enum-item name='WellCrafted'/>
+        <enum-item name='FinelyCrafted'/>
+        <enum-item name='Superior'/>
+        <enum-item name='Exceptional'/>
+        <enum-item name='Masterful'/>
+        <enum-item name='Artifact'/>
+    </enum-type>
+
+    -- CORE ITEM
+
+    <class-type type-name='item' original-name='itemst'
+                instance-vector='$global.world.items.all' key-field='id'>
+        <int16_t name='x'/>
+        <int16_t name='y'/>
+        <int16_t name='z'/>
+
+        <compound name='flags' type-name='item_flags'/>
+
+        <uint32_t name='age'/>
+        <uint32_t name='id'/>
+
+        <stl-vector name='jobs'>
+            <pointer>
+                <int32_t name='unk1'/>
+                <pointer name='job' type-name='job'/>
+                <int32_t name='unk2'/>
+            </pointer>
+        </stl-vector>
+
+        <stl-vector name='itemrefs'>
+            <pointer type-name='general_ref'/>
+        </stl-vector>
+
+        <compound name='temp'>
+            <int16_t name='unk1'/>
+            <int16_t name='unk2'/>
+            <int16_t name='unk3'/>
+            <int16_t name='unk4'/>
+            <int16_t name='unk5'/>
+            <int16_t name='spec_heat'/>
+            <int16_t name='ignite_point'/>
+            <int16_t name='heatdam_point'/>
+            <int16_t name='colddam_point'/>
+            <int16_t name='boiling_point'/>
+            <int16_t name='melting_point'/>
+            <int16_t name='fixed_temp'/>
+        </compound>
+
+        <int32_t name='weight' comment='if flags.weight_computed'/>
+        <int32_t name='weight_fraction' comment='1e-6'/>
+    </class-type>
+
+    -- ACTUAL ITEM
+
+    <struct-type type-name='item_kill_info'>
+        -- Important
+
+        <stl-vector name="events">
+            <int32_t ref-target='history_event'/>
+        </stl-vector>
+
+        -- Misc
+
+        <stl-vector name="killed_race">
+            <int16_t ref-target='creature_raw'/>
+        </stl-vector>
+        <stl-vector name="killed_caste">
+            <int16_t ref-target='caste_raw' aux-value='$$._parent.killed_race[$._key]'/>
+        </stl-vector>
+        <stl-vector name="unk_30">
+            <int32_t comment='-1'/>
+        </stl-vector>
+        <stl-vector name="unk_40">
+            <int32_t comment='-1'/>
+        </stl-vector>
+        <stl-vector name="killed_site">
+            <int32_t ref-target='world_site'/>
+        </stl-vector>
+        <stl-vector name="killed_undead">
+            <bitfield base-type='uint16_t'>
+                <flag-bit name='skeletal'/>
+                <flag-bit name='zombie'/>
+                <flag-bit name='ghostly'/>
+            </bitfield>
+        </stl-vector>
+        <stl-vector name="killed_count" type-name='int32_t'/>
+
+        -- Wielders
+
+        <stl-vector name="slayers">
+            <int32_t ref-target='historical_figure'/>
+        </stl-vector>
+        <stl-vector name="slayer_kill_counts" type-name='int32_t'/>
+    </struct-type>
+
+    <class-type type-name='item_actual' inherits-from='item' original-name='item_actualst'>
+        <int32_t name='stack_size'/>
+
+        <code-helper name='describe'>
+            (if (> $.stack_size 1) (fmt "stack: ~A" $.stack_size))
+            (if (> $.wear 0) (fmt "wear: ~A" $.wear))
+        </code-helper>
+
+        <pointer name='history_info'>
+            <pointer>
+                <pointer name='kills' type-name='item_kill_info'/>
+                <int32_t name='unk1'/>
+                <int32_t name='unk2'/>
+            </pointer>
+        </pointer>
+
+        <pointer name='unk5'>
+            <stl-vector/>
+        </pointer>
+
+        <pointer name='contaminants'>
+            <stl-vector>
+                <pointer type-name='contaminant'/>
+            </stl-vector>
+        </pointer>
+
+        <uint16_t name='temperature'/>
+        <uint16_t name='temperature_fraction'/>
+
+        <int16_t name='wear'/>
+        <int32_t name='wear_timer' comment='counts up to 806400'/>
+
+        <int32_t name='unk3' comment='-1'/>
+    </class-type>
+
+    -- CRAFTED ITEM
+
+    <class-type type-name='item_crafted' inherits-from='item_actual'
+                original-name='item_craftedst'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+
+        <code-helper name='describe'>
+            $.quality
+            (describe-obj (material-by-id $.matType $.matIndex))
+        </code-helper>
+
+        <int16_t name='maker_race' ref-target='creature_raw'/>
+        <enum base-type='int16_t' name='quality' type-name='item_quality'/>
+        <enum base-type='int32_t' name='skill_used' type-name='job_skill'/>
+        <int32_t name='maker' ref-target='historical_figure'/>
+        <int32_t name='masterpiece_event' ref-target='history_event'/>
+    </class-type>
+
+    -- CONSTRUCTED ITEM
+
+    <class-type type-name='item_constructed' inherits-from='item_crafted'
+                original-name='item_constructedst'>
+        <stl-vector name='improvements'>
+            <pointer/>
+        </stl-vector>
+    </class-type>
+
+    -- BODY COMPONENT
+
+    <class-type type-name='item_body_component' inherits-from='item_actual'
+                original-name='item_body_componentst'>
+        <int16_t name='race' ref-target='creature_raw'/>
+        <int32_t name='unk_7c'/>
+        <int32_t name='unk_80'/>
+        <int16_t name='caste' ref-target='caste_raw' aux-value='$$.race'/>
+        <int8_t name='unk_86'/>
+        <int32_t name='unk_88'/>
+        <int8_t name='unk_8c'/>
+        <stl-vector name='unk_90'/>
+        <padding size='44'/>
+        <stl-vector name='unk_cc'/>
+        <stl-vector name='unk_dc'/>
+        <stl-vector name='unk_ec'/>
+        <stl-vector name='unk_fc'/>
+        <stl-vector name='unk_10c'/>
+        <stl-vector name='unk_11c'/>
+        <stl-vector name='unk_12c'/>
+        <stl-vector name='unk_13c'/>
+        <padding size='72'/>
+        <stl-vector name='unk_194'/>
+        <stl-vector name='unk_1a4'/>
+        <stl-vector name='unk_1b4'/>
+        <padding size='20'/>
+        <stl-vector name='unk_1d8'/>
+        <stl-vector name='unk_1e8'/>
+        <stl-vector name='unk_1f8'/>
+        <stl-vector name='unk_208'/>
+        <stl-vector name='unk_218'/>
+        <padding size='12'/>
+        <static-array name='unk_234' count='19' type-name='int32_t'/>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+        <int16_t name='unk_288'/>
+        <int32_t name='unk_28c'/>
+    </class-type>
+
+    <class-type type-name='item_corpsest' inherits-from='item_body_component'/>
+    <class-type type-name='item_corpsepiecest' inherits-from='item_body_component'/>
+
+    -- CRITTER
+
+    <class-type type-name='item_critter' inherits-from='item_actual' original-name='item_critterst'>
+        <int16_t name='race' ref-target='creature_raw'/>
+        <int16_t name='caste' ref-target='caste_raw' aux-value='$$.race'/>
+        <int32_t name='unk_7c'/>
+        <int32_t name='unk_80'/>
+    </class-type>
+
+    -- LIQUID/POWER
+
+    <bitfield-type type-name='item_matstate'>
+        <flag-bit/>
+        <flag-bit name='pressed'/>
+        <flag-bit name='paste'/>
+    </bitfield-type>
+
+    <class-type type-name='item_liquidpowder' inherits-from='item_actual'
+                original-name='item_liquidpowderst'>
+        <compound name='mat_state' type-name='item_matstate'/>
+        <int32_t name='dimension'/>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+    </class-type>
+
+    <class-type type-name='item_liquid' inherits-from='item_liquidpowder' original-name='item_liquidst'/>
+    <class-type type-name='item_powder' inherits-from='item_liquidpowder' original-name='item_powderst'/>
+
+    -- MISC
+
+    <class-type type-name='item_barst' inherits-from='item_actual'>
+        <int16_t name='subtype'/>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+        <int32_t name='dimension'/>
+    </class-type>
+
+    <class-type type-name='item_smallgemst' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+    </class-type>
+    <class-type type-name='item_blocksst' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+    </class-type>
+    <class-type type-name='item_roughst' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+    </class-type>
+    <class-type type-name='item_boulderst' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+    </class-type>
+    <class-type type-name='item_woodst' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+    </class-type>
+
+    <class-type type-name='item_rockst' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+        <int32_t name='sharpness'/>
+        <int32_t name='unk_84'/>
+    </class-type>
+
+    <class-type type-name='item_seedsst' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+        <int32_t name='unk_80'/>
+        <int32_t name='unk_84'/>
+    </class-type>
+
+    <class-type type-name='item_skin_tannedst' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+        <int32_t name='unk_80'/>
+    </class-type>
+
+    <class-type type-name='item_meatst' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+        <int32_t name='rot_timer'/>
+    </class-type>
+    <class-type type-name='item_plantst' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+        <int32_t name='rot_timer'/>
+    </class-type>
+    <class-type type-name='item_leavesst' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+        <int32_t name='rot_timer'/>
+    </class-type>
+    <class-type type-name='item_cheesest' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+        <int32_t name='rot_timer'/>
+    </class-type>
+    <class-type type-name='item_globst' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+        <int32_t name='rot_timer'/>
+        <compound name='mat_state' type-name='item_matstate'/>
+    </class-type>
+    <class-type type-name='item_remainsst' inherits-from='item_actual'>
+        <int16_t name='race' ref-target='creature_raw'/>
+        <int16_t name='caste' ref-target='caste_raw' aux-value='$$.race'/>
+        <int32_t name='rot_timer'/>
+    </class-type>
+    <class-type type-name='item_fishst' inherits-from='item_actual'>
+        <int16_t name='race' ref-target='creature_raw'/>
+        <int16_t name='caste' ref-target='caste_raw' aux-value='$$.race'/>
+        <int32_t name='rot_timer'/>
+    </class-type>
+    <class-type type-name='item_fish_rawst' inherits-from='item_actual'>
+        <int16_t name='race' ref-target='creature_raw'/>
+        <int16_t name='caste' ref-target='caste_raw' aux-value='$$.race'/>
+        <int32_t name='rot_timer'/>
+    </class-type>
+
+    <class-type type-name='item_foodst' inherits-from='item_crafted'>
+        <pointer name='subtype' type-name='itemdef_foodst'/>
+        <int32_t name='unk_94'/>
+        <int16_t name='unk_98'/>
+        <stl-vector name='unk_9c'/>
+        <int32_t name='rot_timer'/>
+    </class-type>
+
+    <class-type type-name='item_verminst' inherits-from='item_critter'/>
+    <class-type type-name='item_petst' inherits-from='item_critter'/>
+
+    <class-type type-name='item_drinkst' inherits-from='item_liquid'/>
+    <class-type type-name='item_powder_miscst' inherits-from='item_powder'/>
+    <class-type type-name='item_liquid_miscst' inherits-from='item_liquid'>
+        <int32_t name='unk_88'/>
+    </class-type>
+
+    <class-type type-name='item_threadst' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+        <int16_t name='dyeColor'/>
+        <int32_t name='unk_84'/>
+        <int32_t name='unk_88'/>
+        <int32_t name='unk_8c'/>
+        <int16_t name='unk_90'/>
+        <int16_t name='unk_92'/>
+        <int32_t name='unk_94'/>
+        <int8_t name='unk_98'/>
+        <int32_t name='dimension'/>
+    </class-type>
+
+    <class-type type-name='item_eggst' inherits-from='item_actual'>
+        <int16_t name='race' ref-target='creature_raw'/>
+        <int16_t name='caste' ref-target='caste_raw' aux-value='$$.race'/>
+        <int32_t name='unk_7c'/>
+        <stl-vector name='eggMatType' type-name='int16_t'/>
+        <stl-vector name='eggMatIndex' type-name='int32_t'/>
+        <padding size='44'/>
+        <compound name='unk_cc'>
+            <int16_t/>
+            <int16_t/>
+            <int16_t/>
+            <int32_t/>
+            <int32_t/>
+            <int32_t/>
+            <int16_t/>
+        </compound>
+        <int32_t/>
+        <int32_t name='size'/>
+    </class-type>
+
+    -- CONSTRUCTED
+
+    <class-type type-name='item_doorst' inherits-from='item_constructed'/>
+    <class-type type-name='item_floodgatest' inherits-from='item_constructed'/>
+    <class-type type-name='item_bedst' inherits-from='item_constructed'/>
+    <class-type type-name='item_chairst' inherits-from='item_constructed'/>
+    <class-type type-name='item_chainst' inherits-from='item_constructed'/>
+    <class-type type-name='item_flaskst' inherits-from='item_constructed'/>
+    <class-type type-name='item_gobletst' inherits-from='item_constructed'/>
+    <class-type type-name='item_windowst' inherits-from='item_constructed'/>
+    <class-type type-name='item_cagest' inherits-from='item_constructed'/>
+    <class-type type-name='item_bucketst' inherits-from='item_constructed'/>
+    <class-type type-name='item_animaltrapst' inherits-from='item_constructed'/>
+    <class-type type-name='item_tablest' inherits-from='item_constructed'/>
+    <class-type type-name='item_coffinst' inherits-from='item_constructed'/>
+    <class-type type-name='item_boxst' inherits-from='item_constructed'/>
+    <class-type type-name='item_armorstandst' inherits-from='item_constructed'/>
+    <class-type type-name='item_weaponrackst' inherits-from='item_constructed'/>
+    <class-type type-name='item_cabinetst' inherits-from='item_constructed'/>
+    <class-type type-name='item_amuletst' inherits-from='item_constructed'/>
+    <class-type type-name='item_scepterst' inherits-from='item_constructed'/>
+    <class-type type-name='item_crownst' inherits-from='item_constructed'/>
+    <class-type type-name='item_ringst' inherits-from='item_constructed'/>
+    <class-type type-name='item_earringst' inherits-from='item_constructed'/>
+    <class-type type-name='item_braceletst' inherits-from='item_constructed'/>
+    <class-type type-name='item_gemst' inherits-from='item_constructed'/>
+    <class-type type-name='item_anvilst' inherits-from='item_constructed'/>
+    <class-type type-name='item_backpackst' inherits-from='item_constructed'/>
+    <class-type type-name='item_quiverst' inherits-from='item_constructed'/>
+    <class-type type-name='item_catapultpartsst' inherits-from='item_constructed'/>
+    <class-type type-name='item_ballistapartsst' inherits-from='item_constructed'/>
+    <class-type type-name='item_trappartsst' inherits-from='item_constructed'/>
+    <class-type type-name='item_pipe_sectionst' inherits-from='item_constructed'/>
+    <class-type type-name='item_hatch_coverst' inherits-from='item_constructed'/>
+    <class-type type-name='item_gratest' inherits-from='item_constructed'/>
+    <class-type type-name='item_quernst' inherits-from='item_constructed'/>
+    <class-type type-name='item_millstonest' inherits-from='item_constructed'/>
+    <class-type type-name='item_splintst' inherits-from='item_constructed'/>
+    <class-type type-name='item_crutchst' inherits-from='item_constructed'/>
+    <class-type type-name='item_traction_benchst' inherits-from='item_constructed'/>
+
+    <class-type type-name='item_instrumentst' inherits-from='item_constructed'>
+        <pointer name='subtype' type-name='itemdef_instrumentst'/>
+    </class-type>
+    <class-type type-name='item_toyst' inherits-from='item_constructed'>
+        <pointer name='subtype' type-name='itemdef_toyst'/>
+    </class-type>
+    <class-type type-name='item_armorst' inherits-from='item_constructed'>
+        <pointer name='subtype' type-name='itemdef_armorst'/>
+    </class-type>
+    <class-type type-name='item_shoesst' inherits-from='item_constructed'>
+        <pointer name='subtype' type-name='itemdef_shoesst'/>
+    </class-type>
+    <class-type type-name='item_shieldst' inherits-from='item_constructed'>
+        <pointer name='subtype' type-name='itemdef_shieldst'/>
+    </class-type>
+    <class-type type-name='item_helmst' inherits-from='item_constructed'>
+        <pointer name='subtype' type-name='itemdef_helmst'/>
+    </class-type>
+    <class-type type-name='item_glovesst' inherits-from='item_constructed'>
+        <pointer name='subtype' type-name='itemdef_glovesst'/>
+        <df-flagarray name='flags' comment='1 right, 2 left'/>
+    </class-type>
+    <class-type type-name='item_pantsst' inherits-from='item_constructed'>
+        <pointer name='subtype' type-name='itemdef_pantsst'/>
+    </class-type>
+    <class-type type-name='item_siegeammost' inherits-from='item_constructed'>
+        <pointer name='subtype' type-name='itemdef_siegeammost'/>
+    </class-type>
+    <class-type type-name='item_weaponst' inherits-from='item_constructed'>
+        <pointer name='subtype' type-name='itemdef_weaponst'/>
+        <int32_t name='sharpness'/>
+    </class-type>
+    <class-type type-name='item_ammost' inherits-from='item_constructed'>
+        <pointer name='subtype' type-name='itemdef_ammost'/>
+        <int32_t name='sharpness'/>
+    </class-type>
+    <class-type type-name='item_trapcompst' inherits-from='item_constructed'>
+        <pointer name='subtype' type-name='itemdef_trapcompst'/>
+        <int32_t name='sharpness'/>
+    </class-type>
+    <class-type type-name='item_toolst' inherits-from='item_constructed'>
+        <pointer name='subtype' type-name='itemdef_toolst'/>
+        <int32_t name='sharpness'/>
+        <int32_t name='unk_a8'/>
+        <int16_t name='unk_ac'/>
+        <int16_t name='unk_ae'/>
+    </class-type>
+
+    <class-type type-name='item_barrelst' inherits-from='item_constructed'>
+        <int32_t name='stockpile' ref-target='building'/>
+        <int16_t name='x'/>
+        <int16_t name='y'/>
+    </class-type>
+    <class-type type-name='item_binst' inherits-from='item_constructed'>
+        <int32_t name='stockpile' ref-target='building'/>
+        <int16_t name='x'/>
+        <int16_t name='y'/>
+    </class-type>
+
+    <class-type type-name='item_statuest' inherits-from='item_constructed'>
+        <int32_t name='unk_a0'/>
+        <int16_t name='unk_a4'/>
+        <stl-string name='description'/>
+    </class-type>
+    <class-type type-name='item_figurinest' inherits-from='item_constructed'>
+        <int32_t name='unk_a0'/>
+        <int16_t name='unk_a4'/>
+        <stl-string name='description'/>
+    </class-type>
+
+    <class-type type-name='item_slabst' inherits-from='item_constructed'>
+        <stl-string name='description'/>
+        <int32_t name='unk_bc'/>
+        <int16_t name='unk_c0'/>
+    </class-type>
+
+    <class-type type-name='item_orthopedic_castst' inherits-from='item_constructed'>
+        <stl-string name='unk_a0'/>
+        <stl-string name='unk_bc'/>
+    </class-type>
+
+    <class-type type-name='item_coinst' inherits-from='item_constructed'>
+        <int16_t name='unk_a0'/>
+    </class-type>
+
+    <class-type type-name='item_totemst' inherits-from='item_constructed'>
+        <int16_t name='unk_a0'/>
+        <int16_t name='unk_a2'/>
+        <int16_t name='unk_a4'/>
+    </class-type>
+
+    <class-type type-name='item_clothst' inherits-from='item_constructed'>
+        <int32_t name='dimension'/>
+    </class-type>
+
+    <class-type type-name='item_ballistaarrowheadst' inherits-from='item_actual'>
+        <int16_t name='matType' ref-target='material' aux-value='$$.matIndex'/>
+        <int32_t name='matIndex'/>
+    </class-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

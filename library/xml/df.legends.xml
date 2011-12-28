@@ -1,0 +1,301 @@
+<data-definition>
+    <struct-type type-name='historical_entity' key-field='id' instance-vector='$global.world.entities.all'>
+        <int16_t name='unk1'/>
+        <int32_t name='id' comment='index in the array'/>
+        <pointer name='entity_raw'/>
+
+        <int32_t name='save_file_id' comment='changes once has 100 entries'/>
+        <int16_t name='next_member_idx'/>
+
+        <compound name='name' type-name='language_name'/>
+
+        <code-helper name='describe'>
+            (describe-obj $.name)
+            (describe-obj (find-creature $.race))
+        </code-helper>
+
+        <int16_t name='race' ref-target='creature_raw'/>
+        <int32_t name='unk5'/>
+
+        <static-array name='unk6' count='2'>
+            <stl-vector>
+                <pointer>
+                    <int16_t name='unk1'/>
+                    <int32_t name='unk2'/>
+                    <int16_t name='unk3'/>
+                </pointer>
+            </stl-vector>
+        </static-array>
+
+        <stl-vector name='unit_ids'>
+            <int32_t ref-target='unit'/>
+        </stl-vector>
+
+        <stl-vector name='unk7' type-name='int32_t'/>
+
+        <stl-vector name='nemesis_ids'>
+            <int32_t ref-target='historical_figure'/>
+        </stl-vector>
+
+        <compound name='unknown1'>
+            <static-array name='unk8' count='15'>
+                <stl-vector type-name='int16_t'/>
+            </static-array>
+
+            <static-array name='unk9' count='12'>
+                <stl-vector name='unk1' type-name='int16_t'/>
+                <stl-vector name='unk2' type-name='int32_t'/>
+            </static-array>
+
+            <static-array name='unk10' count='3'>
+                <stl-vector type-name='int32_t'/>
+            </static-array>
+
+            <static-array name='unk11' count='21'>
+                <stl-vector name='unk1' type-name='int16_t'/>
+                <stl-vector name='unk2' type-name='int32_t'/>
+            </static-array>
+
+            <compound name='unk12'>
+                <stl-vector type-name='int32_t'/>
+                <stl-vector type-name='int16_t'/>
+
+                <stl-vector type-name='int32_t'/>
+                <stl-vector type-name='int16_t'/>
+
+                <stl-vector type-name='int16_t'/>
+                <stl-vector type-name='int32_t'/>
+
+                <stl-vector type-name='int16_t'/>
+                <stl-vector type-name='int32_t'/>
+
+                <stl-vector type-name='int16_t'/>
+                <stl-vector type-name='int16_t'/>
+                <stl-vector type-name='int16_t'/>
+                <stl-vector type-name='int32_t'/>
+
+                <stl-vector type-name='int32_t'/>
+                <stl-vector name='unk6e8' type-name='int32_t' comment='empty'/>
+                <stl-vector type-name='int32_t'/>
+                <stl-vector type-name='int32_t'/>
+                <stl-vector type-name='int32_t'/>
+                <stl-vector type-name='int32_t' comment='empty'/>
+
+                <stl-vector type-name='int16_t'/>
+                <stl-vector name='unk748' type-name='int16_t' comment='empty'/>
+                <stl-vector type-name='int16_t'/>
+                <stl-vector type-name='int16_t'/>
+                <stl-vector type-name='int16_t'/>
+                <stl-vector type-name='int16_t'/>
+
+                <stl-vector name='unk798' type-name='int32_t' comment='empty'/>
+                <stl-vector name='unk7a8' type-name='int32_t' comment='empty'/>
+            </compound>
+
+            <static-array name='unk13' count='3'>
+                <int16_t name='unk1'/>
+                <int32_t name='unk2'/>
+            </static-array>
+
+            <stl-vector name='unk14' type-name='pointer' comment='empty'/>
+
+            <static-array name='unk15' count='24' type-name='int16_t'/>
+
+            <stl-vector name='unk16' type-name='int16_t'/>
+            <stl-vector name='unk17' type-name='int32_t'/>
+            <stl-vector name='unk18' type-name='int16_t'/>
+            <stl-vector name='unk19' type-name='int8_t'/>
+            <stl-vector name='unk20' type-name='int8_t'/>
+            <stl-vector name='unk21' type-name='int8_t'/>
+            <stl-vector name='unk22' type-name='int8_t'/>
+            <stl-vector name='unk23' type-name='int16_t'/>
+            <stl-vector name='unk24' type-name='int16_t'/>
+        </compound>
+
+        <stl-vector name='uniforms'>
+            <pointer type-name='entity_uniform'/>
+        </stl-vector>
+
+        <compound name='unknown1b'>
+            <int16_t name='unk26a'/>
+            <int16_t name='unk26b'/>
+            <int16_t name='unk27'/>
+            <int32_t name='unk28'/>
+            <int32_t name='unk29'/>
+            <int32_t name='unk30'/>
+            <int32_t name='unk31'/>
+
+            <df-flagarray name='flags'/>
+
+            <stl-vector name='unk32a' type-name='pointer' comment='empty'/>
+            <stl-vector name='unk32b' type-name='int32_t'/>
+            <stl-vector name='unk32c' type-name='int32_t'/>
+            <stl-vector name='unk32d' type-name='int32_t'/>
+            <stl-vector name='unk32e' type-name='pointer'/>
+            <stl-vector name='unk32f' type-name='pointer'/>
+
+            <int16_t name='unk33'/>
+
+            <stl-vector name='unk34a' type-name='int16_t'/>
+            <stl-vector name='unk34b' type-name='int16_t'/>
+            <stl-vector name='unk34c' type-name='int16_t'/>
+            <stl-vector name='unk34d' type-name='pointer' comment='empty'/>
+            <stl-vector name='unk34e' type-name='pointer' comment='empty'/>
+            <stl-vector name='unk34f' type-name='pointer'/>
+            <stl-vector name='unk34g' type-name='pointer'/>
+            <stl-vector name='unk34h' type-name='pointer'/>
+
+            <int32_t name='unk35'/>
+            <stl-vector name='unk36' type-name='pointer'/>
+            <int32_t name='unk37'/>
+            <stl-vector name='unk38' type-name='pointer'/>
+            <int32_t name='unk39'/>
+            <stl-vector name='unk40' type-name='pointer'/>
+            <stl-vector name='unk41' type-name='int32_t'/>
+            <int32_t name='unk42'/>
+            <stl-vector name='unk43' type-name='pointer' comment='empty'/>
+            <int32_t name='unk44'/>
+            <stl-vector name='unk45' type-name='pointer'/>
+
+            <pointer name='unk46'/>
+            <int16_t name='unk47'/>
+            <int32_t name='unk48'/>
+
+            <static-array name='unk49' count='15' type-name='int32_t'/>
+
+            <stl-vector name='unk50' type-name='pointer' comment='empty'/>
+        </compound>
+
+        <stl-vector name='hist_figures'>
+            <pointer type-name='historical_figure'/>
+        </stl-vector>
+        <stl-vector name='nemesis'>
+            <pointer type-name='nemesis_record'/>
+        </stl-vector>
+
+        <compound name='unknown2'>
+            <stl-vector name='unk1' type-name='int16_t'/>
+            <stl-vector name='unk2' type-name='int32_t'/>
+            <stl-vector name='unk3' type-name='int16_t'/>
+            <stl-vector name='unk4' type-name='int32_t'/>
+
+            <static-array name='unk5' count='30'>
+                <stl-vector type-name='int16_t'/>
+            </static-array>
+
+            <static-array name='unk6' count='25'>
+                <stl-vector type-name='pointer'/>
+            </static-array>
+
+            <static-array name='unk6b' count='6'>
+                <stl-vector type-name='int16_t'/>
+            </static-array>
+
+            <stl-vector name='unk8' type-name='int32_t'/>
+
+            <int32_t name='unk9'/>
+            <stl-vector name='unk10' type-name='int16_t'/>
+
+            <pointer name='unk11'/>
+            <int16_t name='unk12a' comment='-1'/>
+            <int16_t name='unk12b' comment='uninitialized'/>
+            <bool name='unk13' comment='0'/>
+            <int32_t name='unk14' comment='0'/>
+            <int32_t name='unk15' comment='uninitialized'/>
+            <int32_t name='unk16' comment='uninitialized'/>
+            <int16_t name='unk17' comment='0'/>
+
+            <stl-vector name='unk18' type-name='pointer' comment='empty'/>
+            <stl-vector name='unk19' type-name='pointer' comment='empty'/>
+
+            <int16_t name='unk20' comment='0'/>
+            <int32_t name='unk21' comment='0'/>
+            <int32_t name='unk22' comment='0'/>
+            <int32_t name='unk23' comment='0'/>
+
+            <stl-vector name='unk24' type-name='pointer' comment='empty'/>
+            <stl-vector name='unk25' type-name='pointer' comment='empty'/>
+
+            <static-array name='unk26' count='173' type-name='int32_t' comment='Uninitialized'/>
+            <static-array name='unk27' count='15' type-name='int32_t' comment='0'/>
+
+            <stl-vector name='unk28' type-name='pointer' comment='empty'/>
+        </compound>
+    </struct-type>
+
+    <struct-type type-name='entity_population' key-field='id' instance-vector='$global.world.entity_populations'>
+        <compound name='name' type-name='language_name'/>
+
+        <code-helper name='describe'>
+            (describe-obj $.name)
+        </code-helper>
+
+        <stl-vector name='unk1'>
+            <int16_t ref-target='creature_raw'/>
+        </stl-vector>
+        <stl-vector name='unk2' type-name='int32_t'/>
+        <stl-vector name='unk3' type-name='int32_t'/>
+        <stl-vector name='unk4'>
+            <pointer>
+                <static-array count='3'>
+                    <stl-vector>
+                        <pointer>
+                            <int32_t name='idx'/>
+                            <int32_t name='unk1'/>
+                            <int32_t name='unk2'/>
+                        </pointer>
+                    </stl-vector>
+                </static-array>
+            </pointer>
+        </stl-vector>
+        <int32_t name='unk5'/>
+        <int32_t name='unk6'/>
+        <int32_t name='id'/>
+        <bool name='unk7' comment='unk6 == -1'/>
+        <int32_t name='civ_id' ref-target='historical_entity'/>
+    </struct-type>
+
+    <struct-type type-name='nemesis_record' key-field='id' instance-vector='$global.world.nemesis.all'>
+        <int32_t name='id' comment='sequential index in the array'/>
+
+        <int32_t name='unit_id' ref-target='unit'/>
+
+        <int32_t name='save_file_id' comment='unit-*.dat'/>
+        <int16_t name='member_idx' comment='index in the file'/>
+
+        <pointer name='figure' type-name='historical_figure'/>
+        <pointer name='unit' type-name='unit'/>
+
+        <code-helper name='describe'>
+            (describe-obj $.figure)
+        </code-helper>
+
+        <int32_t name='unk6' comment='-1'/>
+        <stl-vector name='unk7' type-name='pointer' comment='empty'/>
+        <int16_t name='unk10' comment='-1'/>
+        <int32_t name='unk11' comment='-1'/>
+        <int32_t name='unk12' comment='-1'/>
+        <df-flagarray name='flags'/>
+        <stl-vector name='unk13' type-name='pointer' comment='empty'/>
+    </struct-type>
+
+    <struct-type type-name='artifact_record' key-field='id' instance-vector='$global.world.artifacts.all'>
+        <int32_t name='id'/>
+
+        <code-helper name='describe'>
+            (describe-obj $.name)
+        </code-helper>
+
+        <compound name='name' type-name='language_name'/>
+        <pointer name='unk1'/>
+        <int32_t name='unk2'/>
+        <pointer name='item' type-name='item'/>
+    </struct-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

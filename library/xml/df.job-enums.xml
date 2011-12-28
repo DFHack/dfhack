@@ -1,0 +1,1785 @@
+<data-definition>
+    ----- PROFESSION -----
+
+    <enum-type type-name='profession'>
+        <enum-attr name='caption'/>
+        <enum-attr name='military' type-name='bool' default-value='false'/>
+        <enum-attr name='can_assign_labor' type-name='bool' default-value='true'
+                   comment='Can be assigned any labors, i.e. not child or baby'/>
+
+        -- 0
+
+        <enum-item name='MINER'>
+            <item-attr name='caption' value='Miner'/>
+        </enum-item>
+        <enum-item name='WOODWORKER'>
+            <item-attr name='caption' value='Woodworker'/>
+        </enum-item>
+        <enum-item name='CARPENTER'>
+            <item-attr name='caption' value='Carpenter'/>
+        </enum-item>
+        <enum-item name='BOWYER'>
+            <item-attr name='caption' value='Bowyer'/>
+        </enum-item>
+        <enum-item name='WOODCUTTER'>
+            <item-attr name='caption' value='Woodcutter'/>
+        </enum-item>
+        <enum-item name='STONEWORKER'>
+            <item-attr name='caption' value='Stoneworker'/>
+        </enum-item>
+        <enum-item name='ENGRAVER'>
+            <item-attr name='caption' value='Engraver'/>
+        </enum-item>
+        <enum-item name='MASON'>
+            <item-attr name='caption' value='Mason'/>
+        </enum-item>
+        <enum-item name='RANGER'>
+            <item-attr name='caption' value='Ranger'/>
+        </enum-item>
+        <enum-item name='ANIMAL_CARETAKER'>
+            <item-attr name='caption' value='Animal Caretaker'/>
+        </enum-item>
+
+        -- 10
+
+        <enum-item name='ANIMAL_TRAINER'>
+            <item-attr name='caption' value='Animal Trainer'/>
+        </enum-item>
+        <enum-item name='HUNTER'>
+            <item-attr name='caption' value='Hunter'/>
+        </enum-item>
+        <enum-item name='TRAPPER'>
+            <item-attr name='caption' value='Trapper'/>
+        </enum-item>
+        <enum-item name='ANIMAL_DISSECTOR'>
+            <item-attr name='caption' value='Animal Dissector'/>
+        </enum-item>
+        <enum-item name='METALSMITH'>
+            <item-attr name='caption' value='Metalsmith'/>
+        </enum-item>
+        <enum-item name='FURNACE_OPERATOR'>
+            <item-attr name='caption' value='Furnace Operator'/>
+        </enum-item>
+        <enum-item name='WEAPONSMITH'>
+            <item-attr name='caption' value='Weaponsmith'/>
+        </enum-item>
+        <enum-item name='ARMORER'>
+            <item-attr name='caption' value='Armorer'/>
+        </enum-item>
+        <enum-item name='BLACKSMITH'>
+            <item-attr name='caption' value='Blacksmith'/>
+        </enum-item>
+        <enum-item name='METALCRAFTER'>
+            <item-attr name='caption' value='Metalcrafter'/>
+        </enum-item>
+
+        -- 20
+
+        <enum-item name='JEWELER'>
+            <item-attr name='caption' value='Jeweler'/>
+        </enum-item>
+        <enum-item name='GEM_CUTTER'>
+            <item-attr name='caption' value='Gem Cutter'/>
+        </enum-item>
+        <enum-item name='GEM_SETTER'>
+            <item-attr name='caption' value='Gem Setter'/>
+        </enum-item>
+        <enum-item name='CRAFTSMAN'>
+            <item-attr name='caption' value='Craftsman'/>
+        </enum-item>
+        <enum-item name='WOODCRAFTER'>
+            <item-attr name='caption' value='Woodcrafter'/>
+        </enum-item>
+        <enum-item name='STONECRAFTER'>
+            <item-attr name='caption' value='Stonecrafter'/>
+        </enum-item>
+        <enum-item name='LEATHERWORKER'>
+            <item-attr name='caption' value='Leatherworker'/>
+        </enum-item>
+        <enum-item name='BONE_CARVER'>
+            <item-attr name='caption' value='Bone Carver'/>
+        </enum-item>
+        <enum-item name='WEAVER'>
+            <item-attr name='caption' value='Weaver'/>
+        </enum-item>
+        <enum-item name='CLOTHIER'>
+            <item-attr name='caption' value='Clothier'/>
+        </enum-item>
+
+        -- 30
+
+        <enum-item name='GLASSMAKER'>
+            <item-attr name='caption' value='Glassmaker'/>
+        </enum-item>
+        <enum-item name='STRAND_EXTRACTOR'>
+            <item-attr name='caption' value='Strand Extractor'/>
+        </enum-item>
+        <enum-item name='FISHERY_WORKER'>
+            <item-attr name='caption' value='Fishery Worker'/>
+        </enum-item>
+        <enum-item name='FISHERMAN'>
+            <item-attr name='caption' value='Fisherman'/>
+        </enum-item>
+        <enum-item name='FISH_DISSECTOR'>
+            <item-attr name='caption' value='Fish Dissector'/>
+        </enum-item>
+        <enum-item name='FISH_CLEANER'>
+            <item-attr name='caption' value='Fish Cleaner'/>
+        </enum-item>
+        <enum-item name='FARMER'>
+            <item-attr name='caption' value='Farmer'/>
+        </enum-item>
+        <enum-item name='CHEESE_MAKER'>
+            <item-attr name='caption' value='Cheese Maker'/>
+        </enum-item>
+        <enum-item name='MILKER'>
+            <item-attr name='caption' value='Milker'/>
+        </enum-item>
+        <enum-item name='COOK'>
+            <item-attr name='caption' value='Cook'/>
+        </enum-item>
+
+        -- 40
+
+        <enum-item name='THRESHER'>
+            <item-attr name='caption' value='Thresher'/>
+        </enum-item>
+        <enum-item name='MILLER'>
+            <item-attr name='caption' value='Miller'/>
+        </enum-item>
+        <enum-item name='BUTCHER'>
+            <item-attr name='caption' value='Butcher'/>
+        </enum-item>
+        <enum-item name='TANNER'>
+            <item-attr name='caption' value='Tanner'/>
+        </enum-item>
+        <enum-item name='DYER'>
+            <item-attr name='caption' value='Dyer'/>
+        </enum-item>
+        <enum-item name='PLANTER'>
+            <item-attr name='caption' value='Planter'/>
+        </enum-item>
+        <enum-item name='HERBALIST'>
+            <item-attr name='caption' value='Herbalist'/>
+        </enum-item>
+        <enum-item name='BREWER'>
+            <item-attr name='caption' value='Brewer'/>
+        </enum-item>
+        <enum-item name='SOAP_MAKER'>
+            <item-attr name='caption' value='Soap Maker'/>
+        </enum-item>
+        <enum-item name='POTASH_MAKER'>
+            <item-attr name='caption' value='Potash Maker'/>
+        </enum-item>
+
+        -- 50
+
+        <enum-item name='LYE_MAKER'>
+            <item-attr name='caption' value='Lye Maker'/>
+        </enum-item>
+        <enum-item name='WOOD_BURNER'>
+            <item-attr name='caption' value='Wood Burner'/>
+        </enum-item>
+        <enum-item name='ENGINEER'>
+            <item-attr name='caption' value='Engineer'/>
+        </enum-item>
+        <enum-item name='MECHANIC'>
+            <item-attr name='caption' value='Mechanic'/>
+        </enum-item>
+        <enum-item name='SIEGE_ENGINEER'>
+            <item-attr name='caption' value='Siege Engineer'/>
+        </enum-item>
+        <enum-item name='SIEGE_OPERATOR'>
+            <item-attr name='caption' value='Siege Operator'/>
+        </enum-item>
+        <enum-item name='PUMP_OPERATOR'>
+            <item-attr name='caption' value='Pump Operator'/>
+        </enum-item>
+        <enum-item name='CLERK'>
+            <item-attr name='caption' value='Clerk'/>
+        </enum-item>
+        <enum-item name='ADMINISTRATOR'>
+            <item-attr name='caption' value='Administrator'/>
+        </enum-item>
+        <enum-item name='TRADER'>
+            <item-attr name='caption' value='Trader'/>
+        </enum-item>
+
+        -- 60
+
+        <enum-item name='ARCHITECT'>
+            <item-attr name='caption' value='Architect'/>
+        </enum-item>
+        <enum-item name='ALCHEMIST'>
+            <item-attr name='caption' value='Alchemist'/>
+        </enum-item>
+        <enum-item name='DOCTOR'>
+            <item-attr name='caption' value='Doctor'/>
+        </enum-item>
+        <enum-item name='DIAGNOSER'>
+            <item-attr name='caption' value='Diagnoser'/>
+        </enum-item>
+        <enum-item name='BONE_SETTER'>
+            <item-attr name='caption' value='Bone Setter'/>
+        </enum-item>
+        <enum-item name='SUTURER'>
+            <item-attr name='caption' value='Suturer'/>
+        </enum-item>
+        <enum-item name='SURGEON'>
+            <item-attr name='caption' value='Surgeon'/>
+        </enum-item>
+        <enum-item name='MERCHANT'>
+            <item-attr name='caption' value='Merchant'/>
+        </enum-item>
+        <enum-item name='HAMMERMAN'>
+            <item-attr name='caption' value='Hammerman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='MASTER_HAMMERMAN'>
+            <item-attr name='caption' value='Master Hammerman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+
+        -- 70
+
+        <enum-item name='SPEARMAN'>
+            <item-attr name='caption' value='Spearman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='MASTER_SPEARMAN'>
+            <item-attr name='caption' value='Master Spearman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='CROSSBOWMAN'>
+            <item-attr name='caption' value='Crossbowman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='MASTER_CROSSBOWMAN'>
+            <item-attr name='caption' value='Master Crossbowman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='WRESTLER'>
+            <item-attr name='caption' value='Wrestler'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='MASTER_WRESTLER'>
+            <item-attr name='caption' value='Master Wrestler'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='AXEMAN'>
+            <item-attr name='caption' value='Axeman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='MASTER_AXEMAN'>
+            <item-attr name='caption' value='Master Axeman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='SWORDSMAN'>
+            <item-attr name='caption' value='Swordsman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='MASTER_SWORDSMAN'>
+            <item-attr name='caption' value='Master Swordsman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+
+        -- 80
+
+        <enum-item name='MACEMAN'>
+            <item-attr name='caption' value='Maceman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='MASTER_MACEMAN'>
+            <item-attr name='caption' value='Master Maceman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='PIKEMAN'>
+            <item-attr name='caption' value='Pikeman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='MASTER_PIKEMAN'>
+            <item-attr name='caption' value='Master Pikeman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='BOWMAN'>
+            <item-attr name='caption' value='Bowman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='MASTER_BOWMAN'>
+            <item-attr name='caption' value='Master Bowman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='BLOWGUNMAN'>
+            <item-attr name='caption' value='Blowgunman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='MASTER_BLOWGUNMAN'>
+            <item-attr name='caption' value='Master Blowgunman'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='LASHER'>
+            <item-attr name='caption' value='Lasher'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='MASTER_LASHER'>
+            <item-attr name='caption' value='Master Lasher'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+
+        -- 90
+
+        <enum-item name='RECRUIT'>
+            <item-attr name='caption' value='Recruit'/>
+            <item-attr name='military' value='true'/>
+        </enum-item>
+        <enum-item name='TRAINED_HUNTER'>
+            <item-attr name='caption' value='Trained Hunter'/>
+        </enum-item>
+        <enum-item name='TRAINED_WAR'>
+            <item-attr name='caption' value='Trained War'/>
+        </enum-item>
+        <enum-item name='MASTER_THIEF'>
+            <item-attr name='caption' value='Master Thief'/>
+        </enum-item>
+        <enum-item name='THIEF'>
+            <item-attr name='caption' value='Thief'/>
+        </enum-item>
+        <enum-item name='STANDARD'>
+            <item-attr name='caption' value='Standard'/>
+        </enum-item>
+        <enum-item name='CHILD'>
+            <item-attr name='caption' value='Child'/>
+            <item-attr name='can_assign_labor' value='false'/>
+        </enum-item>
+        <enum-item name='BABY'>
+            <item-attr name='caption' value='Baby'/>
+            <item-attr name='can_assign_labor' value='false'/>
+        </enum-item>
+        <enum-item name='DRUNK'>
+            <item-attr name='caption' value='Drunk'/>
+            <item-attr name='can_assign_labor' value='false'/>
+        </enum-item>
+        <enum-item name='SHEARER'>
+            <item-attr name='caption' value='Shearer'/>
+        </enum-item>
+
+        -- 100
+
+        <enum-item name='SPINNER'>
+            <item-attr name='caption' value='Spinner'/>
+        </enum-item>
+        <enum-item name='POTTER'>
+            <item-attr name='caption' value='Potter'/>
+        </enum-item>
+        <enum-item name='GLAZER'>
+            <item-attr name='caption' value='Glazer'/>
+        </enum-item>
+        <enum-item name='PRESSER'>
+            <item-attr name='caption' value='Presser'/>
+        </enum-item>
+        <enum-item name='BEE_KEEPER'>
+            <item-attr name='caption' value='Bee Keeper'/>
+        </enum-item>
+        <enum-item name='WAX_WORKER'>
+            <item-attr name='caption' value='Wax Worker'/>
+        </enum-item>
+    </enum-type>
+
+    ----- LABOR -----
+
+    <enum-type type-name='unit_labor'>
+        <enum-attr name='caption'/>
+
+        -- 0
+
+        <enum-item name='Mining'>
+            <item-attr name='caption' value='Mining'/>
+        </enum-item>
+        <enum-item name='StoneHauling'>
+            <item-attr name='caption' value='Stone Hauling'/>
+        </enum-item>
+        <enum-item name='WoodHauling'>
+            <item-attr name='caption' value='Wood Hauling'/>
+        </enum-item>
+        <enum-item name='Burial'>
+            <item-attr name='caption' value='Burial'/>
+        </enum-item>
+        <enum-item name='FoodHauling'>
+            <item-attr name='caption' value='Food Hauling'/>
+        </enum-item>
+        <enum-item name='RefuseHauling'>
+            <item-attr name='caption' value='Refuse Hauling'/>
+        </enum-item>
+        <enum-item name='ItemHauling'>
+            <item-attr name='caption' value='Item Hauling'/>
+        </enum-item>
+        <enum-item name='FurnitureHauling'>
+            <item-attr name='caption' value='Furniture Hauling'/>
+        </enum-item>
+        <enum-item name='AnimalHauling'>
+            <item-attr name='caption' value='Animal Hauling'/>
+        </enum-item>
+        <enum-item name='Cleaning'>
+            <item-attr name='caption' value='Cleaning'/>
+        </enum-item>
+
+        -- 10
+
+        <enum-item name='WoodCutting'>
+            <item-attr name='caption' value='Wood Cutting'/>
+        </enum-item>
+        <enum-item name='Carpentry'>
+            <item-attr name='caption' value='Carpentry'/>
+        </enum-item>
+        <enum-item name='StoneDetailing'>
+            <item-attr name='caption' value='Stone Detailing'/>
+        </enum-item>
+        <enum-item name='Masonry'>
+            <item-attr name='caption' value='Masonry'/>
+        </enum-item>
+        <enum-item name='Architecture'>
+            <item-attr name='caption' value='Architecture'/>
+        </enum-item>
+        <enum-item name='AnimalTraining'>
+            <item-attr name='caption' value='Animal Training'/>
+        </enum-item>
+        <enum-item name='AnimalCare'>
+            <item-attr name='caption' value='Animal Care'/>
+        </enum-item>
+        <enum-item name='Diagnosis'>
+            <item-attr name='caption' value='Diagnosis'/>
+        </enum-item>
+        <enum-item name='Surgery'>
+            <item-attr name='caption' value='Surgery'/>
+        </enum-item>
+        <enum-item name='SettingBones'>
+            <item-attr name='caption' value='Setting Bones'/>
+        </enum-item>
+
+        -- 20
+
+        <enum-item name='Suturing'>
+            <item-attr name='caption' value='Suturing'/>
+        </enum-item>
+        <enum-item name='DressingWounds'>
+            <item-attr name='caption' value='Dressing Wounds'/>
+        </enum-item>
+        <enum-item name='FeedPatients'>
+            <item-attr name='caption' value='Feed Patients/Prisoners'/>
+        </enum-item>
+        <enum-item name='RecoveringWounded'>
+            <item-attr name='caption' value='Recovering Wounded'/>
+        </enum-item>
+        <enum-item name='Butchery'>
+            <item-attr name='caption' value='Butchery'/>
+        </enum-item>
+        <enum-item name='Trapping'>
+            <item-attr name='caption' value='Trapping'/>
+        </enum-item>
+        <enum-item name='SmallAnimalDissection'>
+            <item-attr name='caption' value='Small Animal Dissection'/>
+        </enum-item>
+        <enum-item name='Leatherworking'>
+            <item-attr name='caption' value='Leatherworking'/>
+        </enum-item>
+        <enum-item name='Tanning'>
+            <item-attr name='caption' value='Tanning'/>
+        </enum-item>
+        <enum-item name='Brewing'>
+            <item-attr name='caption' value='Brewing'/>
+        </enum-item>
+
+        -- 30
+
+        <enum-item name='Alchemy'>
+            <item-attr name='caption' value='Alchemy'/>
+        </enum-item>
+        <enum-item name='SoapMaker'>
+            <item-attr name='caption' value='Soap Maker'/>
+        </enum-item>
+        <enum-item name='Weaving'>
+            <item-attr name='caption' value='Weaving'/>
+        </enum-item>
+        <enum-item name='Clothesmaking'>
+            <item-attr name='caption' value='Clothesmaking'/>
+        </enum-item>
+        <enum-item name='Milling'>
+            <item-attr name='caption' value='Milling'/>
+        </enum-item>
+        <enum-item name='PlantProcessing'>
+            <item-attr name='caption' value='Plant Processing'/>
+        </enum-item>
+        <enum-item name='CheeseMaking'>
+            <item-attr name='caption' value='Cheese Making'/>
+        </enum-item>
+        <enum-item name='Milking'>
+            <item-attr name='caption' value='Milking'/>
+        </enum-item>
+        <enum-item name='Cooking'>
+            <item-attr name='caption' value='Cooking'/>
+        </enum-item>
+        <enum-item name='FarmingFields'>
+            <item-attr name='caption' value='Farming (Fields)'/>
+        </enum-item>
+
+        -- 40
+
+        <enum-item name='PlantGathering'>
+            <item-attr name='caption' value='Plant Gathering'/>
+        </enum-item>
+        <enum-item name='Fishing'>
+            <item-attr name='caption' value='Fishing'/>
+        </enum-item>
+        <enum-item name='FishCleaning'>
+            <item-attr name='caption' value='Fish Cleaning'/>
+        </enum-item>
+        <enum-item name='FishDissection'>
+            <item-attr name='caption' value='Fish Dissection'/>
+        </enum-item>
+        <enum-item name='Hunting'>
+            <item-attr name='caption' value='Hunting'/>
+        </enum-item>
+        <enum-item name='FurnaceOperating'>
+            <item-attr name='caption' value='Furnace Operating'/>
+        </enum-item>
+        <enum-item name='Weaponsmithing'>
+            <item-attr name='caption' value='Weaponsmithing'/>
+        </enum-item>
+        <enum-item name='Armoring'>
+            <item-attr name='caption' value='Armoring'/>
+        </enum-item>
+        <enum-item name='Blacksmithing'>
+            <item-attr name='caption' value='Blacksmithing'/>
+        </enum-item>
+        <enum-item name='Metalcrafting'>
+            <item-attr name='caption' value='Metalcrafting'/>
+        </enum-item>
+
+        -- 50
+
+        <enum-item name='GemCutting'>
+            <item-attr name='caption' value='Gem Cutting'/>
+        </enum-item>
+        <enum-item name='GemSetting'>
+            <item-attr name='caption' value='Gem Setting'/>
+        </enum-item>
+        <enum-item name='Woodcrafting'>
+            <item-attr name='caption' value='Woodcrafting'/>
+        </enum-item>
+        <enum-item name='Stonecrafting'>
+            <item-attr name='caption' value='Stonecrafting'/>
+        </enum-item>
+        <enum-item name='BoneCarving'>
+            <item-attr name='caption' value='Bone Carving'/>
+        </enum-item>
+        <enum-item name='Glassmaking'>
+            <item-attr name='caption' value='Glassmaking'/>
+        </enum-item>
+        <enum-item name='StrandExtraction'>
+            <item-attr name='caption' value='Strand Extraction'/>
+        </enum-item>
+        <enum-item name='SiegeEngineering'>
+            <item-attr name='caption' value='Siege Engineering'/>
+        </enum-item>
+        <enum-item name='SiegeOperating'>
+            <item-attr name='caption' value='Siege Operating'/>
+        </enum-item>
+        <enum-item name='CrossbowMaking'>
+            <item-attr name='caption' value='Crossbow-making'/>
+        </enum-item>
+
+        -- 60
+
+        <enum-item name='Mechanics'>
+            <item-attr name='caption' value='Mechanics'/>
+        </enum-item>
+        <enum-item name='PotashMaking'>
+            <item-attr name='caption' value='Potash Making'/>
+        </enum-item>
+        <enum-item name='LyeMaking'>
+            <item-attr name='caption' value='Lye Making'/>
+        </enum-item>
+        <enum-item name='Dyeing'>
+            <item-attr name='caption' value='Dyeing'/>
+        </enum-item>
+        <enum-item name='WoodBurning'>
+            <item-attr name='caption' value='Wood Burning'/>
+        </enum-item>
+        <enum-item name='PumpOperating'>
+            <item-attr name='caption' value='Pump Operating'/>
+        </enum-item>
+        <enum-item name='Shearing'>
+            <item-attr name='caption' value='Shearing'/>
+        </enum-item>
+        <enum-item name='Spinning'>
+            <item-attr name='caption' value='Spinning'/>
+        </enum-item>
+        <enum-item name='Pottery'>
+            <item-attr name='caption' value='Pottery'/>
+        </enum-item>
+        <enum-item name='Glazing'>
+            <item-attr name='caption' value='Glazing'/>
+        </enum-item>
+
+        -- 70
+
+        <enum-item name='Pressing'>
+            <item-attr name='caption' value='Pressing'/>
+        </enum-item>
+        <enum-item name='BeeKeeping'>
+            <item-attr name='caption' value='Bee Keeping'/>
+        </enum-item>
+        <enum-item name='WaxWorking'>
+            <item-attr name='caption' value='Wax Working'/>
+        </enum-item>
+    </enum-type>
+
+    ----- SKILL -----
+
+    <enum-type type-name='job_skill'>
+        <enum-attr name='caption'/>
+
+        -- 0
+
+        <enum-item name='Mining'>
+            <item-attr name='caption' value='Mining'/>
+        </enum-item>
+        <enum-item name='WoodCutting'>
+            <item-attr name='caption' value='Wood Cutting'/>
+        </enum-item>
+        <enum-item name='Carpentry'>
+            <item-attr name='caption' value='Carpentry'/>
+        </enum-item>
+        <enum-item name='Engraving'>
+            <item-attr name='caption' value='Engraving'/>
+        </enum-item>
+        <enum-item name='Masonry'>
+            <item-attr name='caption' value='Masonry'/>
+        </enum-item>
+        <enum-item name='AnimalTraining'>
+            <item-attr name='caption' value='Animal Training'/>
+        </enum-item>
+        <enum-item name='AnimalCaretaking'>
+            <item-attr name='caption' value='Animal Caretaking'/>
+        </enum-item>
+        <enum-item name='FishDissection'>
+            <item-attr name='caption' value='Fish Dissection'/>
+        </enum-item>
+        <enum-item name='AnimalDissection'>
+            <item-attr name='caption' value='Animal Dissection'/>
+        </enum-item>
+        <enum-item name='FishCleaning'>
+            <item-attr name='caption' value='Fish Cleaning'/>
+        </enum-item>
+
+        -- 10
+
+        <enum-item name='Butchery'>
+            <item-attr name='caption' value='Butchery'/>
+        </enum-item>
+        <enum-item name='Trapping'>
+            <item-attr name='caption' value='Trapping'/>
+        </enum-item>
+        <enum-item name='Tanning'>
+            <item-attr name='caption' value='Tanning'/>
+        </enum-item>
+        <enum-item name='Weaving'>
+            <item-attr name='caption' value='Weaving'/>
+        </enum-item>
+        <enum-item name='Brewing'>
+            <item-attr name='caption' value='Brewing'/>
+        </enum-item>
+        <enum-item name='Alchemy'>
+            <item-attr name='caption' value='Alchemy'/>
+        </enum-item>
+        <enum-item name='ClothesMaking'>
+            <item-attr name='caption' value='Clothes Making'/>
+        </enum-item>
+        <enum-item name='Milling'>
+            <item-attr name='caption' value='Milling'/>
+        </enum-item>
+        <enum-item name='Threshing'>
+            <item-attr name='caption' value='Threshing'/>
+        </enum-item>
+        <enum-item name='CheeseMaking'>
+            <item-attr name='caption' value='Cheese Making'/>
+        </enum-item>
+
+        -- 20
+
+        <enum-item name='Milking'>
+            <item-attr name='caption' value='Milking'/>
+        </enum-item>
+        <enum-item name='Cooking'>
+            <item-attr name='caption' value='Cooking'/>
+        </enum-item>
+        <enum-item name='Growing'>
+            <item-attr name='caption' value='Growing'/>
+        </enum-item>
+        <enum-item name='Herbalism'>
+            <item-attr name='caption' value='Herbalism'/>
+        </enum-item>
+        <enum-item name='Fishing'>
+            <item-attr name='caption' value='Fishing'/>
+        </enum-item>
+        <enum-item name='FurnaceOperation'>
+            <item-attr name='caption' value='Furnace Operation'/>
+        </enum-item>
+        <enum-item name='StrandExtraction'>
+            <item-attr name='caption' value='Strand Extraction'/>
+        </enum-item>
+        <enum-item name='Weaponsmithing'>
+            <item-attr name='caption' value='Weaponsmithing'/>
+        </enum-item>
+        <enum-item name='Armorsmithing'>
+            <item-attr name='caption' value='Armorsmithing'/>
+        </enum-item>
+        <enum-item name='Metalsmithing'>
+            <item-attr name='caption' value='Metalsmithing'/>
+        </enum-item>
+
+        -- 30
+
+        <enum-item name='GemCutting'>
+            <item-attr name='caption' value='Gem Cutting'/>
+        </enum-item>
+        <enum-item name='GemSetting'>
+            <item-attr name='caption' value='Gem Setting'/>
+        </enum-item>
+        <enum-item name='WoodCrafting'>
+            <item-attr name='caption' value='Wood Crafting'/>
+        </enum-item>
+        <enum-item name='StoneCrafting'>
+            <item-attr name='caption' value='Stone Crafting'/>
+        </enum-item>
+        <enum-item name='MetalCrafting'>
+            <item-attr name='caption' value='Metal Crafting'/>
+        </enum-item>
+        <enum-item name='Glassmaking'>
+            <item-attr name='caption' value='Glassmaking'/>
+        </enum-item>
+        <enum-item name='Leatherworkering'>
+            <item-attr name='caption' value='Leatherworkering'/>
+        </enum-item>
+        <enum-item name='BoneCarving'>
+            <item-attr name='caption' value='Bone Carving'/>
+        </enum-item>
+        <enum-item name='Axe'>
+            <item-attr name='caption' value='Axe'/>
+        </enum-item>
+        <enum-item name='Sword'>
+            <item-attr name='caption' value='Sword'/>
+        </enum-item>
+
+        -- 40
+
+        <enum-item name='Knife'>
+            <item-attr name='caption' value='Knife'/>
+        </enum-item>
+        <enum-item name='Mace'>
+            <item-attr name='caption' value='Mace'/>
+        </enum-item>
+        <enum-item name='Hammer'>
+            <item-attr name='caption' value='Hammer'/>
+        </enum-item>
+        <enum-item name='Spear'>
+            <item-attr name='caption' value='Spear'/>
+        </enum-item>
+        <enum-item name='Crossbow'>
+            <item-attr name='caption' value='Crossbow'/>
+        </enum-item>
+        <enum-item name='Shield'>
+            <item-attr name='caption' value='Shield'/>
+        </enum-item>
+        <enum-item name='Armor'>
+            <item-attr name='caption' value='Armor'/>
+        </enum-item>
+        <enum-item name='SiegeEngineering'>
+            <item-attr name='caption' value='Siege Engineering'/>
+        </enum-item>
+        <enum-item name='SiegeOperation'>
+            <item-attr name='caption' value='Siege Operation'/>
+        </enum-item>
+        <enum-item name='Bowmaking'>
+            <item-attr name='caption' value='Bowmaking'/>
+        </enum-item>
+
+        -- 50
+
+        <enum-item name='Pike'>
+            <item-attr name='caption' value='Pike'/>
+        </enum-item>
+        <enum-item name='Lash'>
+            <item-attr name='caption' value='Lash'/>
+        </enum-item>
+        <enum-item name='Bow'>
+            <item-attr name='caption' value='Bow'/>
+        </enum-item>
+        <enum-item name='Blowgun'>
+            <item-attr name='caption' value='Blowgun'/>
+        </enum-item>
+        <enum-item name='Throwing'>
+            <item-attr name='caption' value='Throwing'/>
+        </enum-item>
+        <enum-item name='Machinery'>
+            <item-attr name='caption' value='Machinery'/>
+        </enum-item>
+        <enum-item name='Nature'>
+            <item-attr name='caption' value='Nature'/>
+        </enum-item>
+        <enum-item name='Ambush'>
+            <item-attr name='caption' value='Ambush'/>
+        </enum-item>
+        <enum-item name='BuildingDesign'>
+            <item-attr name='caption' value='Building Design'/>
+        </enum-item>
+        <enum-item name='WoundDressing'>
+            <item-attr name='caption' value='Wound Dressing'/>
+        </enum-item>
+
+        -- 60
+
+        <enum-item name='Diagnostics'>
+            <item-attr name='caption' value='Diagnostics'/>
+        </enum-item>
+        <enum-item name='Surgery'>
+            <item-attr name='caption' value='Surgery'/>
+        </enum-item>
+        <enum-item name='BoneSetting'>
+            <item-attr name='caption' value='Bone Setting'/>
+        </enum-item>
+        <enum-item name='Suturing'>
+            <item-attr name='caption' value='Suturing'/>
+        </enum-item>
+        <enum-item name='CrutchWalking'>
+            <item-attr name='caption' value='Crutch-walking'/>
+        </enum-item>
+        <enum-item name='WoodBurning'>
+            <item-attr name='caption' value='Wood Burning'/>
+        </enum-item>
+        <enum-item name='LyeMaking'>
+            <item-attr name='caption' value='Lye Making'/>
+        </enum-item>
+        <enum-item name='SoapMaking'>
+            <item-attr name='caption' value='Soap Making'/>
+        </enum-item>
+        <enum-item name='PotashMaking'>
+            <item-attr name='caption' value='Potash Making'/>
+        </enum-item>
+        <enum-item name='Dyeing'>
+            <item-attr name='caption' value='Dyeing'/>
+        </enum-item>
+
+        -- 70
+
+        <enum-item name='PumpOperation'>
+            <item-attr name='caption' value='Pump Operation'/>
+        </enum-item>
+        <enum-item name='Swimming'>
+            <item-attr name='caption' value='Swimming'/>
+        </enum-item>
+        <enum-item name='Persuasion'>
+            <item-attr name='caption' value='Persuasion'/>
+        </enum-item>
+        <enum-item name='Negotiation'>
+            <item-attr name='caption' value='Negotiation'/>
+        </enum-item>
+        <enum-item name='JudgingIntent'>
+            <item-attr name='caption' value='Judging Intent'/>
+        </enum-item>
+        <enum-item name='Appraisal'>
+            <item-attr name='caption' value='Appraisal'/>
+        </enum-item>
+        <enum-item name='Organization'>
+            <item-attr name='caption' value='Organization'/>
+        </enum-item>
+        <enum-item name='RecordKeeping'>
+            <item-attr name='caption' value='Record Keeping'/>
+        </enum-item>
+        <enum-item name='Lying'>
+            <item-attr name='caption' value='Lying'/>
+        </enum-item>
+        <enum-item name='Intimidation'>
+            <item-attr name='caption' value='Intimidation'/>
+        </enum-item>
+
+        -- 80
+
+        <enum-item name='Conversation'>
+            <item-attr name='caption' value='Conversation'/>
+        </enum-item>
+        <enum-item name='Comedy'>
+            <item-attr name='caption' value='Comedy'/>
+        </enum-item>
+        <enum-item name='Flattery'>
+            <item-attr name='caption' value='Flattery'/>
+        </enum-item>
+        <enum-item name='Consoling'>
+            <item-attr name='caption' value='Consoling'/>
+        </enum-item>
+        <enum-item name='Pacification'>
+            <item-attr name='caption' value='Pacification'/>
+        </enum-item>
+        <enum-item name='Tracking'>
+            <item-attr name='caption' value='Tracking'/>
+        </enum-item>
+        <enum-item name='Studying'>
+            <item-attr name='caption' value='Studying'/>
+        </enum-item>
+        <enum-item name='Concentration'>
+            <item-attr name='caption' value='Concentration'/>
+        </enum-item>
+        <enum-item name='Discipline'>
+            <item-attr name='caption' value='Discipline'/>
+        </enum-item>
+        <enum-item name='Observation'>
+            <item-attr name='caption' value='Observation'/>
+        </enum-item>
+
+        -- 90
+
+        <enum-item name='Writing'>
+            <item-attr name='caption' value='Writing'/>
+        </enum-item>
+        <enum-item name='Prose'>
+            <item-attr name='caption' value='Prose'/>
+        </enum-item>
+        <enum-item name='Poetry'>
+            <item-attr name='caption' value='Poetry'/>
+        </enum-item>
+        <enum-item name='Reading'>
+            <item-attr name='caption' value='Reading'/>
+        </enum-item>
+        <enum-item name='Speaking'>
+            <item-attr name='caption' value='Speaking'/>
+        </enum-item>
+        <enum-item name='Coordination'>
+            <item-attr name='caption' value='Coordination'/>
+        </enum-item>
+        <enum-item name='Balance'>
+            <item-attr name='caption' value='Balance'/>
+        </enum-item>
+        <enum-item name='Leadership'>
+            <item-attr name='caption' value='Leadership'/>
+        </enum-item>
+        <enum-item name='Teaching'>
+            <item-attr name='caption' value='Teaching'/>
+        </enum-item>
+        <enum-item name='Fighting'>
+            <item-attr name='caption' value='Fighting'/>
+        </enum-item>
+
+        -- 100
+
+        <enum-item name='Archery'>
+            <item-attr name='caption' value='Archery'/>
+        </enum-item>
+        <enum-item name='Wrestling'>
+            <item-attr name='caption' value='Wrestling'/>
+        </enum-item>
+        <enum-item name='Biting'>
+            <item-attr name='caption' value='Biting'/>
+        </enum-item>
+        <enum-item name='Striking'>
+            <item-attr name='caption' value='Striking'/>
+        </enum-item>
+        <enum-item name='Kicking'>
+            <item-attr name='caption' value='Kicking'/>
+        </enum-item>
+        <enum-item name='Dodging'>
+            <item-attr name='caption' value='Dodging'/>
+        </enum-item>
+        <enum-item name='MiscObject'>
+            <item-attr name='caption' value='Misc. Object'/>
+        </enum-item>
+        <enum-item name='Knapping'>
+            <item-attr name='caption' value='Knapping'/>
+        </enum-item>
+        <enum-item name='SomethingWeird'>
+            <item-attr name='caption' value='Something Weird'/>
+        </enum-item>
+        <enum-item name='Shearing'>
+            <item-attr name='caption' value='Shearing'/>
+        </enum-item>
+
+        -- 110
+
+        <enum-item name='WoolSpinning'>
+            <item-attr name='caption' value='Wool Spinning'/>
+        </enum-item>
+        <enum-item name='Pottery'>
+            <item-attr name='caption' value='Pottery'/>
+        </enum-item>
+        <enum-item name='Glazing'>
+            <item-attr name='caption' value='Glazing'/>
+        </enum-item>
+        <enum-item name='PressOperation'>
+            <item-attr name='caption' value='Press Operation'/>
+        </enum-item>
+        <enum-item name='BeeKeeping'>
+            <item-attr name='caption' value='Bee Keeping'/>
+        </enum-item>
+        <enum-item name='WaxWorking'>
+            <item-attr name='caption' value='Wax Working'/>
+        </enum-item>
+    </enum-type>
+
+    ----- JOB TYPE -----
+
+    <enum-type type-name='job_type'>
+        -- Declare attributes:
+
+        <enum-attr name='caption'/>
+
+        -- 0
+
+        <enum-item name='CarveFortification'>
+            <item-attr name='caption' value="Carve Fortification"/>
+        </enum-item>
+        <enum-item name='DetailWall'>
+            <item-attr name='caption' value='Detail Wall'/>
+        </enum-item>
+        <enum-item name='DetailFloor'>
+            <item-attr name='caption' value='Detail Floor'/>
+        </enum-item>
+        <enum-item name='Dig'>
+            <item-attr name='caption' value='Dig'/>
+        </enum-item>
+        <enum-item name='CarveUpwardStaircase'>
+            <item-attr name='caption' value='Carve Upward Staircase'/>
+        </enum-item>
+        <enum-item name='CarveDownwardStaircase'>
+            <item-attr name='caption' value='Carve Downward Staircase'/>
+        </enum-item>
+        <enum-item name='CarveUpDownStaircase'>
+            <item-attr name='caption' value='Carve Up/Down Staircase'/>
+        </enum-item>
+        <enum-item name='CarveRamp'>
+            <item-attr name='caption' value='Carve Ramp'/>
+        </enum-item>
+        <enum-item name='DigChannel'>
+            <item-attr name='caption' value='Dig Channel'/>
+        </enum-item>
+        <enum-item name='FellTree'>
+            <item-attr name='caption' value='Fell Tree'/>
+        </enum-item>
+
+        -- 10
+
+        <enum-item name='GatherPlants'>
+            <item-attr name='caption' value='Gather Plants'/>
+        </enum-item>
+        <enum-item name='RemoveConstruction'>
+            <item-attr name='caption' value='Remove Construction'/>
+        </enum-item>
+        <enum-item name='CollectWebs'>
+            <item-attr name='caption' value='Collect Webs'/>
+        </enum-item>
+        <enum-item name='BringItemToDepot'>
+            <item-attr name='caption' value='Bring Item to Depot'/>
+        </enum-item>
+        <enum-item name='BringItemToShop'>
+            <item-attr name='caption' value='Bring Item to Shop'/>
+        </enum-item>
+        <enum-item name='Eat'>
+            <item-attr name='caption' value='Eat'/>
+        </enum-item>
+        <enum-item name='GetProvisions'>
+            <item-attr name='caption' value='Get Provisions'/>
+        </enum-item>
+        <enum-item name='Drink'>
+            <item-attr name='caption' value='Drink'/>
+        </enum-item>
+        <enum-item name='Drink2'>
+            <item-attr name='caption' value='Drink'/>
+        </enum-item>
+        <enum-item name='FillWaterskin'>
+            <item-attr name='caption' value='Fill Waterskin'/>
+        </enum-item>
+
+        -- 20
+
+        <enum-item name='FillWaterskin2'>
+            <item-attr name='caption' value='Fill Waterskin'/>
+        </enum-item>
+        <enum-item name='Sleep'>
+            <item-attr name='caption' value='Sleep'/>
+        </enum-item>
+        <enum-item name='CollectSand'>
+            <item-attr name='caption' value='Collect Sand'/>
+        </enum-item>
+        <enum-item name='Fish'>
+            <item-attr name='caption' value='Fish'/>
+        </enum-item>
+        <enum-item name='Hunt'>
+            <item-attr name='caption' value='Hunt'/>
+        </enum-item>
+        <enum-item name='HuntSmallCreature'>
+            <item-attr name='caption' value='Hunt for Small Creature'/>
+        </enum-item>
+        <enum-item name='Kidnap'>
+            <item-attr name='caption' value='Kidnap'/>
+        </enum-item>
+        <enum-item name='BeatCriminal'>
+            <item-attr name='caption' value='Beat Criminal'/>
+        </enum-item>
+        <enum-item name='StartingFistFight'>
+            <item-attr name='caption' value='Starting Fist Fight'/>
+        </enum-item>
+        <enum-item name='CollectTaxes'>
+            <item-attr name='caption' value='Collect Taxes'/>
+        </enum-item>
+
+        -- 30
+
+        <enum-item name='GuardTaxCollector'>
+            <item-attr name='caption' value='Guard Tax Collector'/>
+        </enum-item>
+        <enum-item name='CatchLiveLandAnimal'>
+            <item-attr name='caption' value='Catch Live Land Animal'/>
+        </enum-item>
+        <enum-item name='CatchLiveFish'>
+            <item-attr name='caption' value='Catch Live Fish'/>
+        </enum-item>
+        <enum-item name='ReturnKill'>
+            <item-attr name='caption' value='Return Kill'/>
+        </enum-item>
+        <enum-item name='CheckChest'>
+            <item-attr name='caption' value='Check Chest'/>
+        </enum-item>
+        <enum-item name='StoreOwnedItem'>
+            <item-attr name='caption' value='Store Owned Item'/>
+        </enum-item>
+        <enum-item name='PlaceItemInTomb'>
+            <item-attr name='caption' value='Place Item in Tomb'/>
+        </enum-item>
+        <enum-item name='StoreItemInStockpile'>
+            <item-attr name='caption' value='Store Item in Stockpile'/>
+        </enum-item>
+        <enum-item name='StoreItemInBag'>
+            <item-attr name='caption' value='Store Item in Bag'/>
+        </enum-item>
+        <enum-item name='StoreItemInHospital'>
+            <item-attr name='caption' value='Store Item in Hospital'/>
+        </enum-item>
+
+        -- 40
+
+        <enum-item name='StoreItemInChest'>
+            <item-attr name='caption' value='Store Item in Chest'/>
+        </enum-item>
+        <enum-item name='StoreItemInCabinet'>
+            <item-attr name='caption' value='Store Item in Cabinet'/>
+        </enum-item>
+        <enum-item name='StoreWeapon'>
+            <item-attr name='caption' value='Store Weapon'/>
+        </enum-item>
+        <enum-item name='StoreArmor'>
+            <item-attr name='caption' value='Store Armor'/>
+        </enum-item>
+        <enum-item name='StoreItemInBarrel'>
+            <item-attr name='caption' value='Store Item in Barrel'/>
+        </enum-item>
+        <enum-item name='StoreItemInBin'>
+            <item-attr name='caption' value='Store Item in Bin'/>
+        </enum-item>
+        <enum-item name='SeekArtifact'>
+            <item-attr name='caption' value='Seek Artifact'/>
+        </enum-item>
+        <enum-item name='SeekInfant'>
+            <item-attr name='caption' value='Seek Infant'/>
+        </enum-item>
+        <enum-item name='AttendParty'>
+            <item-attr name='caption' value='Attend Party'/>
+        </enum-item>
+        <enum-item name='GoShopping'>
+            <item-attr name='caption' value='Go Shopping'/>
+        </enum-item>
+
+        -- 50
+
+        <enum-item name='GoShopping2'>
+            <item-attr name='caption' value='Go Shopping'/>
+        </enum-item>
+        <enum-item name='Clean'>
+            <item-attr name='caption' value='Clean'/>
+        </enum-item>
+        <enum-item name='Rest'>
+            <item-attr name='caption' value='Rest'/>
+        </enum-item>
+        <enum-item name='PickupEquipment'>
+            <item-attr name='caption' value='Pickup Equipment'/>
+        </enum-item>
+        <enum-item name='DumpItem'>
+            <item-attr name='caption' value='Dump Item'/>
+        </enum-item>
+        <enum-item name='StrangeMoodCrafter'>
+            <item-attr name='caption' value='Strange Mood Crafter'/>
+        </enum-item>
+        <enum-item name='StrangeMoodJeweller'>
+            <item-attr name='caption' value='Strange Mood Jeweller'/>
+        </enum-item>
+        <enum-item name='StrangeMoodForge'>
+            <item-attr name='caption' value='Strange Mood Forge'/>
+        </enum-item>
+        <enum-item name='StrangeMoodMagmaForge'>
+            <item-attr name='caption' value='Strange Mood Magma Forge'/>
+        </enum-item>
+        <enum-item name='StrangeMoodBrooding'>
+            <item-attr name='caption' value='Strange Mood Brooding'/>
+        </enum-item>
+
+        -- 60
+
+        <enum-item name='StrangeMoodFell'>
+            <item-attr name='caption' value='Strange Mood Fell'/>
+        </enum-item>
+        <enum-item name='StrangeMoodCarpenter'>
+            <item-attr name='caption' value='Strange Mood Carpenter'/>
+        </enum-item>
+        <enum-item name='StrangeMoodMason'>
+            <item-attr name='caption' value='Strange Mood Mason'/>
+        </enum-item>
+        <enum-item name='StrangeMoodBowyer'>
+            <item-attr name='caption' value='Strange Mood Bowyer'/>
+        </enum-item>
+        <enum-item name='StrangeMoodTanner'>
+            <item-attr name='caption' value='Strange Mood Tanner'/>
+        </enum-item>
+        <enum-item name='StrangeMoodWeaver'>
+            <item-attr name='caption' value='Strange Mood Weaver'/>
+        </enum-item>
+        <enum-item name='StrangeMoodGlassmaker'>
+            <item-attr name='caption' value='Strange Mood Glassmaker'/>
+        </enum-item>
+        <enum-item name='StrangeMoodMechanics'>
+            <item-attr name='caption' value='Strange Mood Mechanics'/>
+        </enum-item>
+        <enum-item name='ConstructBuilding'>
+            <item-attr name='caption' value='Construct Building'/>
+        </enum-item>
+        <enum-item name='ConstructDoor'>
+            <item-attr name='caption' value='Construct Door'/>
+        </enum-item>
+
+        -- 70
+
+        <enum-item name='ConstructFloodgate'>
+            <item-attr name='caption' value='Construct Floodgate'/>
+        </enum-item>
+        <enum-item name='ConstructBed'>
+            <item-attr name='caption' value='Construct [MAT] Bed'/>
+        </enum-item>
+        <enum-item name='ConstructThrone'>
+            <item-attr name='caption' value='Construct [MAT] Throne'/>
+        </enum-item>
+        <enum-item name='ConstructCoffin'>
+            <item-attr name='caption' value='Construct [MAT] Casket/Sarcophagus/Coffin'/>
+        </enum-item>
+        <enum-item name='ConstructTable'>
+            <item-attr name='caption' value='Construct [MAT] Table'/>
+        </enum-item>
+        <enum-item name='ConstructContainer'>
+            <item-attr name='caption' value='Construct [MAT] Container'/>
+        </enum-item>
+        <enum-item name='ConstructBin'>
+            <item-attr name='caption' value='Construct [MAT] Bin'/>
+        </enum-item>
+        <enum-item name='ConstructArmorStand'>
+            <item-attr name='caption' value='Construct [MAT] Armor Stand'/>
+        </enum-item>
+        <enum-item name='ConstructWeaponRack'>
+            <item-attr name='caption' value='Construct [MAT] Weapon Rack'/>
+        </enum-item>
+        <enum-item name='ConstructCabinet'>
+            <item-attr name='caption' value='Construct [MAT] Cabinet'/>
+        </enum-item>
+
+        -- 80
+
+        <enum-item name='ConstructStatue'>
+            <item-attr name='caption' value='Construct [MAT] Statue'/>
+        </enum-item>
+        <enum-item name='ConstructBlocks'>
+            <item-attr name='caption' value='Construct [MAT] Blocks'/>
+        </enum-item>
+        <enum-item name='MakeRaw'>
+            <item-attr name='caption' value='Make Raw [MAT]'/>
+        </enum-item>
+        <enum-item name='MakeCrafts'>
+            <item-attr name='caption' value='Make [MAT] Crafts'/>
+        </enum-item>
+        <enum-item name='MintCoins'>
+            <item-attr name='caption' value='Mint [MAT] Coins'/>
+        </enum-item>
+        <enum-item name='CutGems'>
+            <item-attr name='caption' value='Cut [MAT]'/>
+        </enum-item>
+        <enum-item name='CutGlass'>
+            <item-attr name='caption' value='Cut crystal(?) glass(?)'/>
+        </enum-item>
+        <enum-item name='EncrustWith1'>
+            <item-attr name='caption' value='Encrust ?something? with [MAT]'/>
+        </enum-item>
+        <enum-item name='EncrustWith2'>
+            <item-attr name='caption' value='Encrust ?something? with [MAT]'/>
+        </enum-item>
+        <enum-item name='DestroyBuilding'>
+            <item-attr name='caption' value='Destroy Building'/>
+        </enum-item>
+
+        -- 90
+
+        <enum-item name='SmeltOre'>
+            <item-attr name='caption' value='Smelt [MAT] Ore'/>
+        </enum-item>
+        <enum-item name='MeltMetalObject'>
+            <item-attr name='caption' value='Melt a Metal Object'/>
+        </enum-item>
+        <enum-item name='ExtractMetalStrands'>
+            <item-attr name='caption' value='Extract Metal Strands'/>
+        </enum-item>
+        <enum-item name='PlantSeeds'>
+            <item-attr name='caption' value='Plant Seeds'/>
+        </enum-item>
+        <enum-item name='HarvestPlants'>
+            <item-attr name='caption' value='Harvest Plants'/>
+        </enum-item>
+        <enum-item name='TrainHuntingAnimal'>
+            <item-attr name='caption' value='Train Hunting Animal'/>
+        </enum-item>
+        <enum-item name='TrainWarAnimal'>
+            <item-attr name='caption' value='Train War Animal'/>
+        </enum-item>
+        <enum-item name='MakeWeapon'>
+            <item-attr name='caption' value='Forge Weapon'/>
+        </enum-item>
+        <enum-item name='ForgeAnvil'>
+            <item-attr name='caption' value='Forge Anvil'/>
+        </enum-item>
+        <enum-item name='ConstructCatapultParts'>
+            <item-attr name='caption' value='Construct Catapult Parts'/>
+        </enum-item>
+
+        -- 100
+
+        <enum-item name='ConstructBallistaParts'>
+            <item-attr name='caption' value='Construct Ballista Parts'/>
+        </enum-item>
+        <enum-item name='MakeArmor'>
+            <item-attr name='caption' value='Make Armor'/>
+        </enum-item>
+        <enum-item name='MakeHelm'>
+            <item-attr name='caption' value='Forge Helm'/>
+        </enum-item>
+        <enum-item name='MakePants'>
+            <item-attr name='caption' value='Make Pants'/>
+        </enum-item>
+        <enum-item name='StudWith'>
+            <item-attr name='caption' value='Stud with [MAT]'/>
+        </enum-item>
+        <enum-item name='ButcherAnimal'>
+            <item-attr name='caption' value='Butcher an Animal'/>
+        </enum-item>
+        <enum-item name='PrepareRawFish'>
+            <item-attr name='caption' value='Prepare a Raw Fish'/>
+        </enum-item>
+        <enum-item name='MillPlants'>
+            <item-attr name='caption' value='Mill Plants'/>
+        </enum-item>
+        <enum-item name='BaitTrap'>
+            <item-attr name='caption' value='Bait Trap with Meat/Gem/Fish'/>
+        </enum-item>
+        <enum-item name='MilkCreature'>
+            <item-attr name='caption' value='Milk Creature'/>
+        </enum-item>
+
+        -- 110
+
+        <enum-item name='MakeCheese'>
+            <item-attr name='caption' value='Make Cheese'/>
+        </enum-item>
+        <enum-item name='ProcessPlants'>
+            <item-attr name='caption' value='Process Plants'/>
+        </enum-item>
+        <enum-item name='ProcessPlantsBag'>
+            <item-attr name='caption' value='Process Plants (Bag)'/>
+        </enum-item>
+        <enum-item name='ProcessPlantsVial'>
+            <item-attr name='caption' value='Process Plants (Vial)'/>
+        </enum-item>
+        <enum-item name='ProcessPlantsBarrel'>
+            <item-attr name='caption' value='Process Plants (Barrel)'/>
+        </enum-item>
+        <enum-item name='PrepareMeal'>
+            <item-attr name='caption' value='Prepare Meal'/>
+        </enum-item>
+        <enum-item name='WeaveCloth'>
+            <item-attr name='caption' value='Weave ?? into ??'/>
+        </enum-item>
+        <enum-item name='MakeGloves'>
+            <item-attr name='caption' value='Make Gloves'/>
+        </enum-item>
+        <enum-item name='MakeShoes'>
+            <item-attr name='caption' value='Make Shoes'/>
+        </enum-item>
+        <enum-item name='MakeShield'>
+            <item-attr name='caption' value='Make Shield'/>
+        </enum-item>
+
+        -- 120
+
+        <enum-item name='ForgeCage'>
+            <item-attr name='caption' value='Forge Cage'/>
+        </enum-item>
+        <enum-item name='MakeChain'>
+            <item-attr name='caption' value='Make Chain'/>
+        </enum-item>
+        <enum-item name='MakeFlask'>
+            <item-attr name='caption' value='Forge/Make Waterskin/Vial/Flask'/>
+        </enum-item>
+        <enum-item name='MakeGoblet'>
+            <item-attr name='caption' value='Make Goblet'/>
+        </enum-item>
+        <enum-item name='MakeInstrument'>
+            <item-attr name='caption' value='Make Instrument'/>
+        </enum-item>
+        <enum-item name='MakeToy'>
+            <item-attr name='caption' value='Make Toy'/>
+        </enum-item>
+        <enum-item name='MakeAnimalTrap'>
+            <item-attr name='caption' value='Make Animal Trap'/>
+        </enum-item>
+        <enum-item name='MakeBarrel'>
+            <item-attr name='caption' value='Make Barrel'/>
+        </enum-item>
+        <enum-item name='MakeBucket'>
+            <item-attr name='caption' value='Make Bucket'/>
+        </enum-item>
+        <enum-item name='MakeWindow'>
+            <item-attr name='caption' value='Make Window'/>
+        </enum-item>
+
+        -- 130
+
+        <enum-item name='MakeTotem'>
+            <item-attr name='caption' value='Make Totem'/>
+        </enum-item>
+        <enum-item name='ForgeBolts'>
+            <item-attr name='caption' value='Forge Bolts'/>
+        </enum-item>
+        <enum-item name='DecorateWith'>
+            <item-attr name='caption' value='Decorate With ?something?'/>
+        </enum-item>
+        <enum-item name='MakeBackpack'>
+            <item-attr name='caption' value='Make Backpack'/>
+        </enum-item>
+        <enum-item name='MakeLeatherQuiver'>
+            <item-attr name='caption' value='Make leather quiver'/>
+        </enum-item>
+        <enum-item name='MakeBallistaArrowHead'>
+            <item-attr name='caption' value='Make Ballista Arrow Head'/>
+        </enum-item>
+        <enum-item name='AssembleSiegeAmmo'>
+            <item-attr name='caption' value='Assemble Siege Ammo'/>
+        </enum-item>
+        <enum-item name='LoadCatapult'>
+            <item-attr name='caption' value='Load Catapult'/>
+        </enum-item>
+        <enum-item name='LoadBallista'>
+            <item-attr name='caption' value='Load Ballista'/>
+        </enum-item>
+        <enum-item name='FireCatapult'>
+            <item-attr name='caption' value='Fire Catapult'/>
+        </enum-item>
+
+        -- 140
+
+        <enum-item name='FireBallista'>
+            <item-attr name='caption' value='Fire Ballista'/>
+        </enum-item>
+        <enum-item name='ConstructMechanisms'>
+            <item-attr name='caption' value='Construct Mechanisms'/>
+        </enum-item>
+        <enum-item name='ForgeTrapWeapon'>
+            <item-attr name='caption' value='Forge Trap Weapon'/>
+        </enum-item>
+        <enum-item name='LoadCageTrap'>
+            <item-attr name='caption' value='Load Cage Trap'/>
+        </enum-item>
+        <enum-item name='LoadStoneTrap'>
+            <item-attr name='caption' value='Load Stone Trap'/>
+        </enum-item>
+        <enum-item name='LoadWeaponTrap'>
+            <item-attr name='caption' value='Load Weapon Trap'/>
+        </enum-item>
+        <enum-item name='CleanTrap'>
+            <item-attr name='caption' value='Clean Trap'/>
+        </enum-item>
+        <enum-item name='CastSpell'>
+            <item-attr name='caption' value='Cast Spell'/>
+        </enum-item>
+        <enum-item name='LinkBuildingToTrigger'>
+            <item-attr name='caption' value='Link a Building to Trigger'/>
+        </enum-item>
+        <enum-item name='PullLever'>
+            <item-attr name='caption' value='Pull the Lever'/>
+        </enum-item>
+
+        -- 150
+
+        <enum-item name='BrewDrink'>
+            <item-attr name='caption' value='Brew Drink'/>
+        </enum-item>
+        <enum-item name='ExtractFromPlants'>
+            <item-attr name='caption' value='Extract from Plants'/>
+        </enum-item>
+        <enum-item name='ExtractFromRawFish'>
+            <item-attr name='caption' value='Extract from Raw Fish'/>
+        </enum-item>
+        <enum-item name='ExtractFromLandAnimal'>
+            <item-attr name='caption' value='Extract from Land Animal'/>
+        </enum-item>
+        <enum-item name='TameSmallAnimal'>
+            <item-attr name='caption' value='Tame Small Animal'/>
+        </enum-item>
+        <enum-item name='TameAnimal'>
+            <item-attr name='caption' value='Tame ?something?'/>
+        </enum-item>
+        <enum-item name='ChainAnimal'>
+            <item-attr name='caption' value='Chain Animal'/>
+        </enum-item>
+        <enum-item name='UnchainAnimal'>
+            <item-attr name='caption' value='Unchain Animal'/>
+        </enum-item>
+        <enum-item name='UnchainPet'>
+            <item-attr name='caption' value='Unchain Pet'/>
+        </enum-item>
+        <enum-item name='ReleaseLargeCreature'>
+            <item-attr name='caption' value='Release Large Creature'/>
+        </enum-item>
+
+        -- 160
+
+        <enum-item name='ReleasePet'>
+            <item-attr name='caption' value='Release Pet'/>
+        </enum-item>
+        <enum-item name='ReleaseSmallCreature'>
+            <item-attr name='caption' value='Release Small Creature'/>
+        </enum-item>
+        <enum-item name='HandleSmallCreature'>
+            <item-attr name='caption' value='Handle Small Creature'/>
+        </enum-item>
+        <enum-item name='HandleLargeCreature'>
+            <item-attr name='caption' value='Handle Large Creature'/>
+        </enum-item>
+        <enum-item name='CageLargeCreature'>
+            <item-attr name='caption' value='Cage Large Creature'/>
+        </enum-item>
+        <enum-item name='CageSmallCreature'>
+            <item-attr name='caption' value='Cage Small Creature'/>
+        </enum-item>
+        <enum-item name='RecoverWounded'>
+            <item-attr name='caption' value='Recover Wounded'/>
+        </enum-item>
+        <enum-item name='DiagnosePatient'>
+            <item-attr name='caption' value='Diagnose Patient'/>
+        </enum-item>
+        <enum-item name='ImmobilizeBreak'>
+            <item-attr name='caption' value='Immobilize Break'/>
+        </enum-item>
+        <enum-item name='DressWound'>
+            <item-attr name='caption' value='Dress Wound'/>
+        </enum-item>
+
+        -- 170
+
+        <enum-item name='CleanPatient'>
+            <item-attr name='caption' value='Clean Patient'/>
+        </enum-item>
+        <enum-item name='Surgery'>
+            <item-attr name='caption' value='Surgery'/>
+        </enum-item>
+        <enum-item name='Suture'>
+            <item-attr name='caption' value='Suture'/>
+        </enum-item>
+        <enum-item name='SetBone'>
+            <item-attr name='caption' value='Set Bone'/>
+        </enum-item>
+        <enum-item name='PlaceInTraction'>
+            <item-attr name='caption' value='Place In Traction'/>
+        </enum-item>
+        <enum-item name='DrainAquarium'>
+            <item-attr name='caption' value='Drain Aquarium'/>
+        </enum-item>
+        <enum-item name='FillAquarium'>
+            <item-attr name='caption' value='Fill Aquarium'/>
+        </enum-item>
+        <enum-item name='FillPond'>
+            <item-attr name='caption' value='Fill Pond'/>
+        </enum-item>
+        <enum-item name='GiveWater'>
+            <item-attr name='caption' value='Give Water'/>
+        </enum-item>
+        <enum-item name='GiveFood'>
+            <item-attr name='caption' value='Give Food'/>
+        </enum-item>
+
+        -- 180
+
+        <enum-item name='GiveWater2'>
+            <item-attr name='caption' value='Give Water'/>
+        </enum-item>
+        <enum-item name='GiveFood2'>
+            <item-attr name='caption' value='Give Food'/>
+        </enum-item>
+        <enum-item name='RecoverPet'>
+            <item-attr name='caption' value='Recover Pet'/>
+        </enum-item>
+        <enum-item name='PitLargeAnimal'>
+            <item-attr name='caption' value='Pit/Pond Large Animal'/>
+        </enum-item>
+        <enum-item name='PitSmallAnimal'>
+            <item-attr name='caption' value='Pit/Pond Small Animal'/>
+        </enum-item>
+        <enum-item name='SlaughterAnimal'>
+            <item-attr name='caption' value='Slaughter Animal'/>
+        </enum-item>
+        <enum-item name='MakeCharcoal'>
+            <item-attr name='caption' value='Make Charcoal'/>
+        </enum-item>
+        <enum-item name='MakeAsh'>
+            <item-attr name='caption' value='Make Ash'/>
+        </enum-item>
+        <enum-item name='MakeLye'>
+            <item-attr name='caption' value='Make Lye'/>
+        </enum-item>
+        <enum-item name='MakePotashFromLye'>
+            <item-attr name='caption' value='Make Potash From Lye'/>
+        </enum-item>
+
+        -- 190
+
+        <enum-item name='FertilizeField'>
+            <item-attr name='caption' value='Fertilize Field'/>
+        </enum-item>
+        <enum-item name='MakePotashFromAsh'>
+            <item-attr name='caption' value='Make Potash From Ash'/>
+        </enum-item>
+        <enum-item name='DyeThread'>
+            <item-attr name='caption' value='Dye Thread'/>
+        </enum-item>
+        <enum-item name='DyeCloth'>
+            <item-attr name='caption' value='Dye Cloth'/>
+        </enum-item>
+        <enum-item name='SewImage'>
+            <item-attr name='caption' value='Sew ?? Image'/>
+        </enum-item>
+        <enum-item name='MakePipeSection'>
+            <item-attr name='caption' value='Make Pipe Section'/>
+        </enum-item>
+        <enum-item name='OperatePump'>
+            <item-attr name='caption' value='Operate Pump'/>
+        </enum-item>
+        <enum-item name='ManageWorkOrders'>
+            <item-attr name='caption' value='Manage Work Orders'/>
+        </enum-item>
+        <enum-item name='UpdateStockpileRecords'>
+            <item-attr name='caption' value='Update Stockpile Records'/>
+        </enum-item>
+        <enum-item name='TradeAtDepot'>
+            <item-attr name='caption' value='Trade at Depot'/>
+        </enum-item>
+
+        -- 200
+
+        <enum-item name='ConstructHatchCover'>
+            <item-attr name='caption' value='Construct ?? Hatch Cover'/>
+        </enum-item>
+        <enum-item name='ConstructGrate'>
+            <item-attr name='caption' value='Construct ?? Grate'/>
+        </enum-item>
+        <enum-item name='RemoveStairs'>
+            <item-attr name='caption' value='Remove Stairs/Ramps'/>
+        </enum-item>
+        <enum-item name='ConstructQuern'>
+            <item-attr name='caption' value='Construct ?? Quern'/>
+        </enum-item>
+        <enum-item name='ConstructMillstone'>
+            <item-attr name='caption' value='Construct Millstone'/>
+        </enum-item>
+        <enum-item name='UpgradeSquadEquipment'>
+            <item-attr name='caption' value='Upgrade Squad Equipment'/>
+        </enum-item>
+        <enum-item name='PrepareEquipmentManifests'>
+            <item-attr name='caption' value='Prepare Equipment Manifests'/>
+        </enum-item>
+        <enum-item name='ConstructSplint'>
+            <item-attr name='caption' value='Construct ?? Splint'/>
+        </enum-item>
+        <enum-item name='ConstructCrutch'>
+            <item-attr name='caption' value='Construct ?? Crutch'/>
+        </enum-item>
+        <enum-item name='ConstructTractionBench'>
+            <item-attr name='caption' value='Construct Traction Bench'/>
+        </enum-item>
+
+        -- 210
+
+        <enum-item name='CleanSelf'>
+            <item-attr name='caption' value='Clean Self'/>
+        </enum-item>
+        <enum-item name='BringCrutch'>
+            <item-attr name='caption' value='Bring Crutch'/>
+        </enum-item>
+        <enum-item name='ApplyCast'>
+            <item-attr name='caption' value='Apply Cast'/>
+        </enum-item>
+        <enum-item name='PerformCustomReaction'>
+            <item-attr name='caption' value='Perform Custom Reaction'/>
+        </enum-item>
+        <enum-item name='Unknown214'>
+            <item-attr name='caption' value='Unknown Job'/>
+        </enum-item>
+        <enum-item name='Unknown215'>
+            <item-attr name='caption' value='Unknown Job'/>
+        </enum-item>
+        <enum-item name='ShearCreature'>
+            <item-attr name='caption' value='Shear Creature'/>
+        </enum-item>
+        <enum-item name='SpinThread'>
+            <item-attr name='caption' value='Spin Thread'/>
+        </enum-item>
+        <enum-item name='PenLargeAnimal'>
+            <item-attr name='caption' value='Pen/Pasture Large Animal'/>
+        </enum-item>
+        <enum-item name='PenSmallAnimal'>
+            <item-attr name='caption' value='Pen/Pasture Small Animal'/>
+        </enum-item>
+
+        -- 220
+
+        <enum-item name='Unknown220'>
+            <item-attr name='caption' value='Unknown Job'/>
+        </enum-item>
+        <enum-item name='ForgeTool'>
+            <item-attr name='caption' value='Forge Tool'/>
+        </enum-item>
+        <enum-item name='CollectClay'>
+            <item-attr name='caption' value='Collect Clay'/>
+        </enum-item>
+        <enum-item name='InstallColonyInHive'>
+            <item-attr name='caption' value='Install Colony In Hive'/>
+        </enum-item>
+        <enum-item name='CollectHiveProducts'>
+            <item-attr name='caption' value='Collect Hive Products'/>
+        </enum-item>
+    </enum-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

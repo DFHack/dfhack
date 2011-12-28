@@ -1,0 +1,126 @@
+<data-definition>
+    <struct-type type-name='historical_figure' instance-vector='$global.world.history.figures' key-field='id'>
+        <enum base-type='int16_t' name='profession' type-name='profession'/>
+
+        <int16_t name='race' ref-target='creature_raw'/>
+        <int16_t name='caste' ref-target='caste_raw' aux-value='$$.race'/>
+
+        <int8_t name='sex'/>
+
+        <int32_t name='appeared_year'/>
+        <int32_t name='born_year'/>
+        <int32_t name='born_seconds'/>
+        <int32_t name='old_year'/>
+        <int32_t name='old_seconds'/>
+        <int32_t name='died_year'/>
+        <int32_t name='died_seconds'/>
+
+        <compound type-name='language_name' name='name'/>
+
+        <code-helper name='describe'>
+            (describe-obj $.name)
+            (awhen (find-creature $.race)
+              (fmt "~:(~A ~A~)" $it.caste[$.caste].caste_id $it.creature_id))
+        </code-helper>
+
+        <int32_t name='civ_id' ref-target='historical_entity'/>
+        <int32_t name='population_id' ref-target='entity_population'/>
+
+        <df-flagarray name='flags'/>
+
+        <int32_t name='unit_id' ref-target='unit'/>
+        <int32_t name='id'/>
+
+        <int32_t name='unk4'/>
+
+        <stl-vector name='entity_links'/>
+        <stl-vector name='site_links'/>
+        <stl-vector name='histfig_links'/>
+
+        <pointer name='unk6'/>
+
+        <static-array name='unk7' count='5' type-name='int32_t' comment='empty'/>
+    </struct-type>
+
+    <class-type type-name='history_event' original-name='history_eventst'
+                instance-vector='$global.world.history.events' key-field='id'>
+        <int32_t name='year'/>
+        <int32_t name='seconds'/>
+        <df-flagarray name='flags'/>
+        <int32_t name='id'/>
+    </class-type>
+
+    <class-type type-name='history_event_masterpiece_createdst' inherits-from='history_event'>
+        <int32_t name='maker' ref-target='historical_figure'/>
+        <int32_t name='maker_entity' ref-target='historical_entity'/>
+        <int32_t name='site' ref-target='world_site'/>
+    </class-type>
+
+    <class-type type-name='history_event_masterpiece_created_itemst'
+                inherits-from='history_event_masterpiece_createdst'>
+        <enum base-type='int32_t' name='skill_used' type-name='job_skill'/>
+        <enum base-type='int16_t' name='item_type' type-name='item_type'/>
+        <int16_t name='item_subtype' refers-to='(item-subtype-target $$._parent.item_type $)'/>
+        <int16_t name='mat_type' ref-target='material' aux-value='$$.mat_index'/>
+        <int16_t name='mat_index'/>
+        <int32_t name='item_id' ref-target='item'/>
+    </class-type>
+
+    <class-type type-name='history_event_masterpiece_created_foodst'
+                inherits-from='history_event_masterpiece_createdst'>
+        <int32_t name='unk1'/>
+        <int16_t name='item_subtype' refers-to='$global.world.raws.itemdefs.food[$]'/>
+        <int32_t name='item_id' ref-target='item'/>
+    </class-type>
+
+    <struct-type type-name='world_history'>
+        dtor 8532fa0
+
+        <stl-vector name='events'>
+            <pointer type-name='history_event'/>
+        </stl-vector>
+        <stl-vector name='events2'>
+            <pointer type-name='history_event'/>
+        </stl-vector>
+
+        <stl-vector name='figures'>
+            <pointer type-name='historical_figure'/>
+        </stl-vector>
+
+        <static-array name='other_events' count='9'>
+            <stl-vector>
+                <pointer type-name='history_event'/>
+            </stl-vector>
+        </static-array>
+
+        <stl-vector name='ages'>
+            <pointer/>
+        </stl-vector>
+
+        <stl-vector name='unk1' type-name='int32_t'/>
+        <stl-vector name='unk2' type-name='int16_t'/>
+
+        <int32_t/>
+        <int32_t/>
+        <int32_t/>
+        <int32_t/>
+        <stl-vector/>
+        <stl-vector/>
+        <stl-vector/>
+        <stl-vector/>
+        <stl-vector/>
+        <stl-vector/>
+        <bool/>
+        <stl-vector/>
+        <int32_t/>
+        <int32_t/>
+        <int32_t/>
+    </struct-type>
+</data-definition>
+
+<!--
+Local Variables:
+indent-tabs-mode: nil
+nxml-child-indent: 4
+End:
+-->

@@ -67,6 +67,7 @@ SET(PROJECT_SRCS
 Core.cpp
 DataDefs.cpp
 DataStatics.cpp
+DataStaticsCtor.cpp
 PluginManager.cpp
 TileTypes.cpp
 VersionInfo.cpp
@@ -134,6 +135,7 @@ LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
 
 SET_SOURCE_FILES_PROPERTIES(${GENERATED_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE GENERATED TRUE)
 
+FILE(GLOB GENERATE_INPUT_SCRIPTS ${dfapi_SOURCE_DIR}/xml/*.pm ${dfapi_SOURCE_DIR}/xml/*.xslt)
 FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/*.xml)
 
 ADD_CUSTOM_COMMAND(
@@ -141,7 +143,7 @@ ADD_CUSTOM_COMMAND(
     COMMAND perl xml/codegen.pl xml include/dfhack/df
     WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
     MAIN_DEPENDENCY ${dfapi_SOURCE_DIR}/xml/codegen.pl
-    DEPENDS ${GENERATE_INPUT_XMLS}
+    DEPENDS ${GENERATE_INPUT_XMLS} ${GENERATE_INPUT_SCRIPTS}
 )
 
 ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/dfhack/df/static.inc)

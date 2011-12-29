@@ -1078,6 +1078,8 @@
             <Group name="Notes" description="In-game notes">
                 <Address name="vector"/>
             </Group>
+            <Group name='vtable'>
+            </Group>
             <Group name='global'>
                 <Address name='world'/>
                 <Address name='ui'/>
@@ -2316,6 +2318,8 @@
             <Group name="World">
                 <Address name="save_folder" value="0x1847A40" />
             </Group>
+            <Group name='vtable'>
+            </Group>
             <Group name='global'>
                 <Address name='world' value='0x16b0a58'/>
                 <Address name='ui' value='0x14ee7e0'/>
@@ -3187,6 +3191,8 @@
             </Group>
             <Group name="Notes">
                 <Address name="vector" value="0x93f635c"/>
+            </Group>
+            <Group name='vtable'>
             </Group>
             <Group name='global'>
                 <Address name='world' value='0x93f77a0'/>

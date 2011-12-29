@@ -497,7 +497,7 @@ bool Core::Init()
     }
     
     // initialize data defs
-    virtual_identity::Init();
+    virtual_identity::Init(this);
     InitDataDefGlobals(this);
 
     // create mutex for syncing with interactive tasks

@@ -78,31 +78,62 @@ virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
 
     for (virtual_identity *p = list; p; p = p->next) {
         if (strcmp(name.c_str(), p->getOriginalName()) != 0) continue;
+
+        if (p->vtable_ptr && p->vtable_ptr != vtable) {
+            std::cerr << "Conflicting vtable ptr for class '" << p->getName()
+                      << "': found 0x" << std::hex << unsigned(vtable)
+                      << ", previous 0x" << unsigned(p->vtable_ptr) << std::dec << std::endl;
+            abort();
+        } else if (!p->vtable_ptr) {
+            std::cerr << "class '" << p->getName() << "': vtable = 0x"
+                      << std::hex << unsigned(vtable) << std::dec << std::endl;
+        }
+
         known[vtable] = p;
         p->vtable_ptr = vtable;
         return p;
     }
 
+    std::cerr << "UNKNOWN CLASS '" << name << "': vtable = 0x"
+              << std::hex << unsigned(vtable) << std::dec << std::endl;
+
     known[vtable] = NULL;
     return NULL;
 }
 
-bool virtual_identity::check_instance(virtual_ptr instance_ptr, bool allow_subclasses)
+bool virtual_identity::is_subclass(virtual_identity *actual)
 {
-    virtual_identity *actual = get(instance_ptr);
-
-    if (actual == this) return true;
-    if (!allow_subclasses || !actual) return false;
-
-    do {
-        actual = actual->parent;
+    for (; actual; actual = actual->parent)
         if (actual == this) return true;
-    } while (actual);
 
     return false;
 }
 
-void virtual_identity::Init()
+void virtual_identity::adjust_vtable(virtual_ptr obj, virtual_identity *main)
+{
+    if (vtable_ptr) {
+        *(void**)obj = vtable_ptr;
+        return;
+    }
+
+    if (main && main != this && is_subclass(main))
+        return;
+
+    std::cerr << "Attempt to create class '" << getName() << "' without known vtable." << std::endl;
+    abort();
+}
+
+virtual_ptr virtual_identity::clone(virtual_ptr obj)
+{
+    virtual_identity *id = get(obj);
+    if (!id) return NULL;
+    virtual_ptr copy = id->instantiate();
+    if (!copy) return NULL;
+    id->do_copy(copy, obj);
+    return copy;
+}
+
+void virtual_identity::Init(Core *core)
 {
     if (!known_mutex)
         known_mutex = new tthread::mutex();
@@ -118,6 +149,14 @@ void virtual_identity::Init()
             p->parent->children.push_back(p);
             p->parent->has_children = true;
         }
+    }
+
+    // Read pre-filled vtable ptrs
+    OffsetGroup *ptr_table = core->vinfo->getGroup("vtable");
+    for (virtual_identity *p = list; p; p = p->next) {
+        uint32_t tmp;
+        if (ptr_table->getSafeAddress(p->getName(),tmp))
+            p->vtable_ptr = (void*)tmp;
     }
 }
 

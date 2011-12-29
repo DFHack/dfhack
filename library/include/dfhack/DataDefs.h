@@ -62,8 +62,6 @@ namespace DFHack
     protected:
         virtual_identity(const char *dfhack_name, const char *original_name, virtual_identity *parent);
 
-        bool check_instance(virtual_ptr instance_ptr, bool allow_subclasses);
-
         static void *get_vtable(virtual_ptr instance_ptr) { return *(void**)instance_ptr; }
 
     public:
@@ -73,8 +71,10 @@ namespace DFHack
         virtual_identity *getParent() { return parent; }
         const std::vector<virtual_identity*> &getChildren() { return children; }
 
+    public:
         static virtual_identity *get(virtual_ptr instance_ptr);
-
+        
+        bool is_subclass(virtual_identity *subtype);
         bool is_instance(virtual_ptr instance_ptr) {
             if (!instance_ptr) return false;
             if (vtable_ptr) {
@@ -82,16 +82,28 @@ namespace DFHack
                 if (vtable == vtable_ptr) return true;
                 if (!has_children) return false;
             }
-            return check_instance(instance_ptr, true);
+            return is_subclass(get(instance_ptr));
         }
 
         bool is_direct_instance(virtual_ptr instance_ptr) {
             if (!instance_ptr) return false;
             return vtable_ptr ? (vtable_ptr == get_vtable(instance_ptr)) 
-                              : check_instance(instance_ptr, false);
+                              : (this == get(instance_ptr));
         }
 
-        static void Init();
+    public:
+        bool can_instantiate() { return (vtable_ptr != NULL); }
+        virtual_ptr instantiate() { return can_instantiate() ? do_instantiate() : NULL; }
+        static virtual_ptr clone(virtual_ptr obj);
+
+    protected:
+        virtual virtual_ptr do_instantiate() = 0;
+        virtual void do_copy(virtual_ptr tgt, virtual_ptr src) = 0;
+    public:
+        static void Init(Core *core);
+
+        // Strictly for use in virtual class constructors
+        void adjust_vtable(virtual_ptr obj, virtual_identity *main);
     };
 
     template<class T>
@@ -112,14 +124,23 @@ namespace DFHack
 
 namespace df
 {
+    using DFHack::virtual_ptr;
+    using DFHack::virtual_identity;
     using DFHack::virtual_class;
     using DFHack::BitArray;
 
     template<class T>
-    class class_virtual_identity : public DFHack::virtual_identity {
+    class class_virtual_identity : public virtual_identity {
     public:
         class_virtual_identity(const char *dfhack_name, const char *original_name, virtual_identity *parent)
             : virtual_identity(dfhack_name, original_name, parent) {};
+
+        T *instantiate() { return static_cast<T*>(virtual_identity::instantiate()); }
+        T *clone(T* obj) { return static_cast<T*>(virtual_identity::clone(obj)); }
+
+    protected:
+        virtual virtual_ptr do_instantiate() { return new T(); }
+        virtual void do_copy(virtual_ptr tgt, virtual_ptr src) { *static_cast<T*>(tgt) = *static_cast<T*>(src); }
     };
 
     template<class EnumType, class IntType = int32_t>
@@ -148,6 +169,8 @@ namespace df
 
 namespace df {
 #define DF_KNOWN_GLOBALS \
+    GLOBAL(cursor,cursor) \
+    GLOBAL(selection_rect,selection_rect) \
     GLOBAL(world,world) \
     GLOBAL(ui,ui) \
     GLOBAL(gview,interface) \

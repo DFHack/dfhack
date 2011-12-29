@@ -15,3 +15,4 @@ namespace {
 
 // Instantiate all the static objects
 #include "dfhack/df/static.inc"
+#include "dfhack/df/static.enums.inc"

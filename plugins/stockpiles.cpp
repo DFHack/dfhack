@@ -7,6 +7,7 @@
 #include <dfhack/df/world.h>
 #include <dfhack/df/ui.h>
 #include <dfhack/df/building_stockpilest.h>
+#include <dfhack/df/selection_rect.h>
 
 using std::vector;
 using std::string;
@@ -16,6 +17,7 @@ using namespace df::enums;
 
 using df::global::world;
 using df::global::ui;
+using df::global::selection_rect;
 
 using df::building_stockpilest;
 
@@ -62,6 +64,7 @@ DFhackCExport command_result copystock(Core * c, vector <string> & parameters)
     if (ui->main.mode == ui_sidebar_mode::Stockpiles) {
         world->selected_building = NULL; // just in case it contains some kind of garbage
         ui->main.mode = ui_sidebar_mode::QueryBuilding;
+        selection_rect->start_x = -30000;
 
         c->con << "Switched back to query building." << endl;
         return CR_OK;

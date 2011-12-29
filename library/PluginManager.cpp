@@ -232,7 +232,7 @@ bool Plugin::unload()
             ClosePlugin(plugin_lib);
             state = PS_UNLOADED;
             access->unlock();
-            return false;
+            return true;
         }
         else
         {

@@ -91,9 +91,35 @@ struct Core::Cond
 
 void cheap_tokenise(string const& input, vector<string> &output)
 {
-    istringstream str(input);
-    istream_iterator<string> cur(str), end;
-    output.assign(cur, end);
+    string *cur = NULL;
+
+    for (unsigned i = 0; i < input.size(); i++) {
+        char c = input[i];
+        if (isspace(c)) {
+            cur = NULL;
+        } else {
+            if (!cur) {
+                output.push_back("");
+                cur = &output.back();
+            }
+
+            if (c == '"') {
+                for (i++; i < input.size(); i++) {
+                    c = input[i];
+                    if (c == '"')
+                        break;
+                    else if (c == '\\') {
+                        if (++i < input.size())
+                            cur->push_back(input[i]);
+                    }
+                    else
+                        cur->push_back(c);
+                }
+            } else {
+                cur->push_back(c);
+            }
+        }
+    }
 }
 
 struct IODATA

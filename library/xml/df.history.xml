@@ -1,4 +1,113 @@
 <data-definition>
+    <struct-type type-name='historical_kills'>
+        -- Important
+
+        <stl-vector name="events">
+            <int32_t ref-target='history_event'/>
+        </stl-vector>
+
+        -- Misc
+
+        <stl-vector name="killed_race">
+            <int16_t ref-target='creature_raw'/>
+        </stl-vector>
+        <stl-vector name="killed_caste">
+            <int16_t ref-target='caste_raw' aux-value='$$._parent.killed_race[$._key]'/>
+        </stl-vector>
+        <stl-vector name="unk_30">
+            <int32_t comment='-1'/>
+        </stl-vector>
+        <stl-vector name="unk_40">
+            <int32_t comment='-1'/>
+        </stl-vector>
+        <stl-vector name="killed_site">
+            <int32_t ref-target='world_site'/>
+        </stl-vector>
+        <stl-vector name="killed_undead">
+            <bitfield base-type='uint16_t'>
+                <flag-bit name='skeletal'/>
+                <flag-bit name='zombie'/>
+                <flag-bit name='ghostly'/>
+            </bitfield>
+        </stl-vector>
+        <stl-vector name="killed_count" type-name='int32_t'/>
+    </struct-type>
+
+    <struct-type type-name='historical_figure_info'>
+        <pointer name="unk_0">
+            <stl-vector>
+                <int16_t/>
+            </stl-vector>
+        </pointer>
+
+        <pointer name="unk_4">
+            <stl-vector name="unk_0">
+                <int16_t/>
+            </stl-vector>
+            <stl-vector name="unk_10">
+                <int32_t/>
+            </stl-vector>
+            <stl-vector name="unk_20"/>
+            <stl-vector name="unk_30"/>
+            <stl-vector name="unk_40" type-name='int16_t'/>
+            <stl-vector name="unk_50" type-name='int16_t'/>
+            <int16_t name="unk_60"/>
+        </pointer>
+
+        <pointer name="unk_8">
+            <stl-vector>
+                <int16_t/>
+            </stl-vector>
+        </pointer>
+
+        <pointer name="unk_c">
+            <static-array name='unk_0' count='30' type-name='int16_t'/>
+            <stl-vector name="unk_3c">
+                <pointer>
+                    <int16_t name='a'/>
+                    <int16_t name='b'/>
+                </pointer>
+            </stl-vector>
+            <stl-vector name="unk_4c">
+                <int16_t/>
+            </stl-vector>
+        </pointer>
+
+        <pointer name="masterpieces">
+            <stl-vector name="events">
+                <int32_t ref-target='history_event'/>
+            </stl-vector>
+            <stl-vector name="events2" comment='ones that were stolen??..'>
+                <int32_t ref-target='history_event'/>
+            </stl-vector>
+        </pointer>
+
+        <pointer name="unk_14">
+            <int16_t name="unk_0"/>
+            <int32_t name="site" ref-target='world_site'/>
+            <int32_t name="unk_8"/>
+            <int32_t name="unk_c"/>
+            <int16_t name="unk_10"/>
+            <int16_t name="unk_12"/>
+        </pointer>
+
+        <pointer name="kills" type-name='historical_kills'/>
+
+        <pointer name="wounds">
+            <stl-vector name="events">
+                <int32_t ref-target='history_event'/>
+            </stl-vector>
+            <stl-bit-vector name="status">
+                <code-helper name='index-refers-to'>
+                    (let* ((info $$._parent._parent._parent)
+                           (figure $info._parent._parent)
+                           (caste (find-instance $caste_raw $figure.caste $figure.race)))
+                      $caste.body_parts[$])
+                </code-helper>
+            </stl-bit-vector>
+        </pointer>
+    </struct-type>
+
     <struct-type type-name='historical_figure' instance-vector='$global.world.history.figures' key-field='id'>
         <enum base-type='int16_t' name='profession' type-name='profession'/>
 
@@ -37,9 +146,20 @@
         <stl-vector name='site_links'/>
         <stl-vector name='histfig_links'/>
 
-        <pointer name='unk6'/>
+        <pointer name='info' type-name='historical_figure_info'/>
 
-        <static-array name='unk7' count='5' type-name='int32_t' comment='empty'/>
+        <compound name='worldgen'>
+            <pointer name="unk_0" type-name="world_site"/>
+            <pointer name="unk_4" type-name="language_name"/>
+            <pointer name="unk_8" type-name="world_underground_region"/>
+            <pointer name="unk_c">
+                <pointer name="unk_0" type-name='uint8_t' is-array='true'/>
+                <int16_t name="unk_4"/>
+                <pointer name="unk_8" type-name='int16_t' is-array='true'/>
+                <int16_t name="unk_c"/>
+            </pointer>
+            <int32_t name="unk_10"/>
+        </compound>
     </struct-type>
 
     <class-type type-name='history_event' original-name='history_eventst'

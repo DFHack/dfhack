@@ -1,4 +1,84 @@
 <data-definition>
+    <enum-type type-name='material_flags'>
+        <enum-item name='BONE'/>
+        <enum-item name='MEAT'/>
+        <enum-item name='EDIBLE_VERMIN'/>
+        <enum-item name='EDIBLE_RAW'/>
+        <enum-item name='EDIBLE_COOKED'/>
+        <enum-item/>
+        <enum-item name='ITEMS_METAL'/>
+        <enum-item name='ITEMS_BARRED'/>
+
+        <enum-item name='ITEMS_SCALED'/>
+        <enum-item name='ITEMS_LEATHER'/>
+        <enum-item name='ITEMS_SOFT'/>
+        <enum-item name='ITEMS_HARD'/>
+        <enum-item name='IMPLIES_ANIMAL_KILL'/>
+        <enum-item name='ALCOHOL_PLANT'/>
+        <enum-item name='ALCOHOL_CREATURE'/>
+        <enum-item name='CHEESE_PLANT'/>
+
+        <enum-item name='CHEESE_CREATURE'/>
+        <enum-item name='POWDER_MISC_PLANT'/>
+        <enum-item name='POWDER_MISC_CREATURE'/>
+        <enum-item name='STOCKPILE_GLOB'/>
+        <enum-item name='LIQUID_MISC_PLANT'/>
+        <enum-item name='LIQUID_MISC_CREATURE'/>
+        <enum-item name='LIQUID_MISC_OTHER'/>
+        <enum-item name='WOOD'/>
+
+        <enum-item name='THREAD_PLANT'/>
+        <enum-item name='TOOTH'/>
+        <enum-item name='HORN'/>
+        <enum-item name='PEARL'/>
+        <enum-item name='SHELL'/>
+        <enum-item name='LEATHER'/>
+        <enum-item name='SILK'/>
+        <enum-item name='SOAP'/>
+
+        <enum-item name='ROTS'/>
+        <enum-item comment='dye?'/>
+        <enum-item/>
+        <enum-item/>
+        <enum-item name='STRUCTURAL_PLANT_MAT'/>
+        <enum-item name='SEED_MAT'/>
+        <enum-item name='LEAF_MAT'/>
+        <enum-item/>
+
+        <enum-item name='ENTERS_BLOOD'/>
+        <enum-item name='BLOOD_MAP_DESCRIPTOR'/>
+        <enum-item name='ICHOR_MAP_DESCRIPTOR'/>
+        <enum-item name='GOO_MAP_DESCRIPTOR'/>
+        <enum-item name='SLIME_MAP_DESCRIPTOR'/>
+        <enum-item name='PUS_MAP_DESCRIPTOR'/>
+        <enum-item name='GENERATES_MIASMA'/>
+        <enum-item name='IS_METAL'/>
+
+        <enum-item name='IS_GEM'/>
+        <enum-item name='IS_GLASS'/>
+        <enum-item name='CRYSTAL_GLASSABLE'/>
+        <enum-item name='ITEMS_WEAPON'/>
+        <enum-item name='ITEMS_WEAPON_RANGED'/>
+        <enum-item name='ITEMS_ANVIL'/>
+        <enum-item name='ITEMS_AMMO'/>
+        <enum-item name='ITEMS_DIGGER'/>
+
+        <enum-item name='ITEMS_ARMOR'/>
+        <enum-item name='ITEMS_DELICATE'/>
+        <enum-item name='ITEMS_SIEGE_ENGINE'/>
+        <enum-item name='ITEMS_QUERN'/>
+        <enum-item name='IS_STONE'/>
+        <enum-item name='UNDIGGABLE'/>
+        <enum-item name='YARN'/>
+        <enum-item name='STOCKPILE_GLOB_PASTE'/>
+
+        <enum-item name='STOCKPILE_GLOB_PRESSED'/>
+        <enum-item name='DISPLAY_UNGLAZED'/>
+        <enum-item name='DO_NOT_CLEAN_GLOB'/>
+        <enum-item name='NO_STONE_STOCKPILE'/>
+        <enum-item name='STOCKPILE_THREAD_METAL'/>
+    </enum-type>
+
     <struct-type type-name='material_common'>
         <stl-string name='id'/>
         <stl-string name='gem_name1'/>
@@ -53,7 +133,7 @@
 
         <int32_t name='material_value'/>
 
-        <df-flagarray name='mat_flags'/>
+        <df-flagarray name='mat_flags' index-enum='material_flags'/>
 
         <int16_t name='extract_storage'/>
         <int16_t name='butcher_special_type'/>
@@ -100,15 +180,13 @@
         <int32_t name='soap_level'/>
     </struct-type>
 
-    <struct-type type-name='material'>
-        <compound type-name='material_common'/>
-
+    <struct-type type-name='material' inherits-from='material_common'>
         <code-helper name='find-instance'>(material-by-id $ $$)</code-helper>
         <code-helper name='describe'> (describe-material $) </code-helper>
 
         <stl-string name='prefix'/>
 
-        <static-array name='food_mat_index' count='37'>
+        <static-array name='food_mat_index' count='37' index-enum='organic_mat_category'>
             <int32_t refers-to='(food-mat-by-idx $$._key $)'
                      comment='When valid, refers to itself.'/>
         </static-array>

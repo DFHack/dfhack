@@ -11,6 +11,19 @@
         <pointer name='parent' type-name='viewscreen'/>
         <enum base-type='int8_t' name='breakdown_level' type-name='interface_breakdown_types'/>
         <int8_t name='option_key_pressed'/>
+        
+        <virtual-methods>
+            <vmethod name='feed'> <pointer name='events'/> </vmethod>
+            <vmethod name='logic'/>
+            <vmethod name='render'/>
+            <vmethod name='resize'> <int32_t name='w'/> <int32_t name='h'/> </vmethod>
+            <vmethod name='help'/>
+            <vmethod ret-type='bool' name='movies_okay'/>
+            <vmethod ret-type='bool' name='is_option_screen'/>
+            <vmethod ret-type='bool' name='is_save_screen'/>
+            <vmethod is-destructor='true'/>
+            <vmethod ret-type='bool' name='key_conflict'> <int32_t/> </vmethod>
+        </virtual-methods>
     </class-type>
 
     <struct-type type-name='interface'>

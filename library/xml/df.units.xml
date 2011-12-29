@@ -171,7 +171,7 @@
             <int8_t name='unk_ec'/>
             <int32_t name='unk_f0'/>
             <int16_t name='unk_f4'/>
-            <int16_t name='unused_f6'/>
+            <padding size='2'/>
         </compound>
 
         <uint16_t name='caste' ref-target='caste_raw' aux-value='$$.race'/>
@@ -207,28 +207,23 @@
             <int32_t name='squad_position'/>
             <int32_t name='unk_170'/>
             <int32_t name='draft_timer'/>
-            <int16_t name='is_military'
-                     comment='if dead, may be military, but not in squad'/>
 
-            <stl-vector name='uniform_civilian'>
-                <int32_t ref-target='item'/>
-            </stl-vector>
-            <stl-vector name='uniform_military'>
-                <int32_t ref-target='item'/>
-            </stl-vector>
-            <stl-vector name='uniform_unk1'>
-                <int32_t ref-target='item'/>
-            </stl-vector>
-            <stl-vector name='uniform_unk2'>
-                <int32_t ref-target='item'/>
-            </stl-vector>
+            <int16_t name='cur_uniform'/>
 
-            <int32_t name='pickup_equipment_bit'/>
+            <static-array name='uniforms' count='4'>
+                <stl-vector>
+                    <int32_t ref-target='item'/>
+                </stl-vector>
+            </static-array>
 
-            <stl-vector name='uniform_unk3'>
+            <bitfield name='pickup_flags'>
+                <flag-bit name='update'/>
+            </bitfield>
+
+            <stl-vector name='uniform_pickup'>
                 <int32_t ref-target='item'/>
             </stl-vector>
-            <stl-vector name='uniform_alien' comment='for goblins, elves'>
+            <stl-vector name='uniform_drop'>
                 <int32_t ref-target='item'/>
             </stl-vector>
 
@@ -596,7 +591,7 @@
 
     <struct-type type-name='unit_misc_trait' key-field='id'>
         <enum base-type='int16_t' name='id'>
-            <enum-item name='ClaimedRecently' value='12'/>
+            <enum-item name='ClaimCooldown' value='12'/>
             <enum-item name='WantsDrink'/>
             <enum-item name='LikesOutdoors'/>
             <enum-item name='Hardened'/>
@@ -674,7 +669,7 @@
         </enum>
 
         <compound is-union='true'>
-            <enum base-type='int16_t' name="item_type" type-name='item_type'/>
+            <int16_t name="item_type" refers-to='(enum-to-key $item_type $)'/>
             <int16_t name='creature_id' ref-target='creature_raw'/>
             <int16_t name='color_id' refers-to='$global.world.raws.color_words[$]'/>
             <int16_t name='shape_id' refers-to='$global.world.raws.shape_words[$]'/>

@@ -87,13 +87,30 @@
           (when $.has_name
             (let* ((nick $.nickname)
                    (language $global.world.raws.translations[$.language])
+                   (english $global.world.raws.language_words)
                    (fname $.first_name)
                    (lwords $language.words))
-              (fmt "~:(~@[~A ~]~@['~A' ~]~{~A~^ ~}~)"
-                   (if (> (length fname) 0) fname)
-                   (if (> (length nick) 0) nick)
-                   (loop for i from 0 below 7 for word = $.words[i]
-                      when (>= word 0) collect $lwords[word].value))))
+              (flet ((get-words (start end)
+                       (loop for i from start to end
+                         for word = $.words[i]
+                         collect $lwords[word].value))
+                     (get-english (start end)
+                       (loop for i from start to end
+                         for word = $.words[i] and ps = $.parts_of_speech[i]
+                         collect $english[word].forms[ps])))
+                (list
+                 (fmt "Name:~:(~@[ ~A~]~@[ '~A'~]~@[ ~{~A~}~]~@[ ~{~A~}~]~@[ ~{~A~}~]~)"
+                      (if (> (length fname) 0) fname)
+                      (if (> (length nick) 0) nick)
+                      (flatten (get-words 0 1))
+                      (flatten (get-words 2 5))
+                      (flatten (get-words 6 6)))
+                 (fmt "aka~:(~@[ ~A~]~@[ ~{~A~}~]~@[ the ~A~]~@[ of ~{~A~}~]~)"
+                      (if (> (length fname) 0) fname)
+                      (flatten (get-english 0 1))
+                      (when (>= $.words[5] 0)
+                        (apply #'format nil "~@[~A ~]~@[~A ~]~@[~A-~]~A" (get-english 2 5)))
+                      (flatten (get-english 6 6)))))))
         </code-helper>
     </struct-type>
 </data-definition>

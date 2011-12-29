@@ -16,6 +16,7 @@
         <int32_t name='pet_id' ref-target='unit'/>
         <compound name='name' type-name='language_name'/>
         <int32_t name='unk3'/>
+        <int32_t name='owner_id' ref-target='unit'/>
     </struct-type>
 
     <struct-type type-name='meeting_ref'>

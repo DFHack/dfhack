@@ -1081,6 +1081,8 @@
             <Group name='vtable'>
             </Group>
             <Group name='global'>
+                <Address name='cursor'/>
+                <Address name='selection_rect'/>
                 <Address name='world'/>
                 <Address name='ui'/>
                 <Address name='gview'/>
@@ -2321,6 +2323,10 @@
             <Group name='vtable'>
             </Group>
             <Group name='global'>
+                <!-- .data -->
+                <Address name='cursor' value='0xb347f0'/>
+                <Address name='selection_rect' value='0xb347fc'/>
+                <!-- .bss -->
                 <Address name='world' value='0x16b0a58'/>
                 <Address name='ui' value='0x14ee7e0'/>
                 <Address name='gview' value='0x14f6070'/>
@@ -3195,6 +3201,10 @@
             <Group name='vtable'>
             </Group>
             <Group name='global'>
+                <!-- .data -->
+                <Address name='cursor' value='0x8c3de60'/>
+                <Address name='selection_rect' value='0x8c3de70'/>
+                <!-- .bss -->
                 <Address name='world' value='0x93f77a0'/>
                 <Address name='ui' value='0x93f0780'/>
                 <Address name='gview' value='0x8c3e900'/>

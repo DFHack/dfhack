@@ -223,6 +223,18 @@
         </compound>
     </struct-type>
 
+    <struct-type type-name='entity_population_unk4'>
+        <static-array count='3'>
+            <stl-vector>
+                <pointer>
+                    <int32_t name='idx'/>
+                    <int32_t name='unk1'/>
+                    <int32_t name='unk2'/>
+                </pointer>
+            </stl-vector>
+        </static-array>
+    </struct-type>
+
     <struct-type type-name='entity_population' key-field='id' instance-vector='$global.world.entity_populations'>
         <compound name='name' type-name='language_name'/>
 
@@ -236,17 +248,7 @@
         <stl-vector name='unk2' type-name='int32_t'/>
         <stl-vector name='unk3' type-name='int32_t'/>
         <stl-vector name='unk4'>
-            <pointer>
-                <static-array count='3'>
-                    <stl-vector>
-                        <pointer>
-                            <int32_t name='idx'/>
-                            <int32_t name='unk1'/>
-                            <int32_t name='unk2'/>
-                        </pointer>
-                    </stl-vector>
-                </static-array>
-            </pointer>
+            <pointer type-name='entity_population_unk4'/>
         </stl-vector>
         <int32_t name='unk5'/>
         <int32_t name='unk6'/>
@@ -279,7 +281,8 @@
         <stl-vector name='unk13' type-name='pointer' comment='empty'/>
     </struct-type>
 
-    <struct-type type-name='artifact_record' key-field='id' instance-vector='$global.world.artifacts.all'>
+    <struct-type type-name='artifact_record' key-field='id'
+                 instance-vector='$global.world.artifacts.all'>
         <int32_t name='id'/>
 
         <code-helper name='describe'>
@@ -287,8 +290,9 @@
         </code-helper>
 
         <compound name='name' type-name='language_name'/>
-        <pointer name='unk1'/>
-        <int32_t name='unk2'/>
+
+        <df-flagarray name='flags'/>
+
         <pointer name='item' type-name='item'/>
     </struct-type>
 </data-definition>

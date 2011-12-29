@@ -417,12 +417,16 @@
             <stl-vector name='work_units'>
                 <int32_t ref-target='unit'/>
             </stl-vector>
+
             <stl-vector name='hunter_ammunition'>
                 <pointer type-name='squad_ammo_spec'/>
             </stl-vector>
-
-            <stl-vector name='unk6c74'/>
-            <stl-vector name='unk6c80'/>
+            <stl-vector name='ammo_items'>
+                <int32_t ref-target='item'/>
+            </stl-vector>
+            <stl-vector name='ammo_units'>
+                <int32_t ref-target='unit'/>
+            </stl-vector>
         </compound>
 
         <compound name='main'>

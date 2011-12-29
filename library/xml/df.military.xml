@@ -1,14 +1,64 @@
 <data-definition>
-    <struct-type type-name='squad_uniform_spec'>
-        <int32_t name="item" ref-target='item'/>
+    <enum-type type-name='uniform_material_class'>
+        <enum-item name='None' value='-1'/>
 
+        <enum-item comment='BROKEN'/>
+        <enum-item name='Leather'/>
+        <enum-item name='Cloth'/>
+        <enum-item name='Wood'/>
+        <enum-item comment='BROKEN'/>
+
+        <enum-item name='Stone'/>
+        <enum-item comment='BROKEN'/>
+        <enum-item comment='BROKEN'/>
+        <enum-item comment='BROKEN'/>
+        <enum-item comment='BROKEN'/>
+
+        <enum-item comment='BROKEN'/>
+        <enum-item comment='BROKEN'/>
+        <enum-item comment='BROKEN'/>
+        <enum-item comment='BROKEN'/>
+        <enum-item name='Metal'/>
+
+        <enum-item comment='BROKEN'/>
+        <enum-item name='Metal2'/>
+        <enum-item name='Gem'/>
+        <enum-item name='Bone'/>
+        <enum-item name='Shell'/>
+
+        <enum-item name='Pearl'/>
+        <enum-item name='Tooth'/>
+        <enum-item name='Horn'/>
+        <enum-item comment='BROKEN'/>
+        <enum-item comment='BROKEN'/>
+
+        <enum-item comment='BROKEN'/>
+        <enum-item comment='BROKEN'/>
+        <enum-item name='PlantFiber'/>
+        <enum-item name='Silk'/>
+        <enum-item name='Yarn'/>
+    </enum-type>
+
+    <bitfield-type type-name='uniform_indiv_choice'>
+        <flag-bit name='any'/>
+        <flag-bit name='melee'/>
+        <flag-bit name='ranged'/>
+    </bitfield-type>
+
+    <struct-type type-name='item_filter_spec'>
         <enum base-type='int16_t' name="item_type" type-name='item_type'/>
         <int16_t name="item_subtype" refers-to='(item-subtype-target $$._parent.item_type $)'/>
 
-        <int16_t name="material_class"/>
+        <enum base-type='int16_t' name="material_class" type-name='uniform_material_class'/>
 
         <int16_t name='mattype' ref-target='material' aux-value='$$.matindex'/>
         <int32_t name='matindex'/>
+    </struct-type>
+
+    <struct-type type-name='squad_uniform_spec'>
+        <int32_t name="item" ref-target='item'/>
+
+        <compound name='item_filter' type-name='item_filter_spec'/>
 
         <int32_t name="color"/>
 
@@ -16,17 +66,11 @@
             <int32_t ref-target='item'/>
         </stl-vector>
 
-        <int32_t name="indiv_choice" comment='1 weapon, 2 melee, 4 ranged'/>
+        <compound name="indiv_choice" type-name='uniform_indiv_choice'/>
     </struct-type>
 
     <struct-type type-name='squad_ammo_spec'>
-        <enum base-type='int16_t' name="item_type" type-name='item_type'/>
-        <int16_t name="item_subtype" refers-to='(item-subtype-target $$._parent.item_type $)'/>
-
-        <int16_t name="material_class"/>
-
-        <int16_t name='mattype' ref-target='material' aux-value='$$.matindex'/>
-        <int32_t name='matindex'/>
+        <compound name='item_filter' type-name='item_filter_spec'/>
 
         <int32_t name="amount"/>
 
@@ -115,7 +159,8 @@
         <int32_t name='id'/>
 
         <compound name='name' type-name='language_name'/>
-        <stl-string name='unk'/>
+
+        <stl-string name='alias' comment='if not empty, used instead of name'/>
 
         <code-helper name='describe'>
             (describe-obj $.name)
@@ -172,8 +217,12 @@
             <pointer type-name='squad_ammo_spec'/>
         </stl-vector>
 
-        <stl-vector name="unk_108"/>
-        <stl-vector name="unk_118"/>
+        <stl-vector name="weapons_free">
+            <int32_t ref-target='item'/>
+        </stl-vector>
+        <stl-vector name="weapons_inuse">
+            <int32_t ref-target='item'/>
+        </stl-vector>
 
         <stl-vector name="ammo_items">
             <int32_t ref-target='item'/>
@@ -214,10 +263,10 @@
                     <int32_t name="unk_4"/>
                     <int32_t name="unk_8"/>
                     <int32_t name="unk_c"/>
-                    <int32_t name="indiv_choice"/>
+                    <compound name="indiv_choice" type-name='uniform_indiv_choice'/>
                     <int16_t name="mattype" ref-target='material' aux-value='$$.matindex'/>
                     <int32_t name="matindex"/>
-                    <int16_t name="material_class"/>
+                    <enum base-type='int16_t' name="material_class" type-name='uniform_material_class'/>
                 </pointer>
             </stl-vector>
         </static-array>

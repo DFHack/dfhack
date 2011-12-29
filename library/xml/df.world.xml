@@ -16,8 +16,23 @@
         <stl-vector name='unk_108'>
             <pointer/>
         </stl-vector>
+
         <stl-vector name='unk_114'>
-            <pointer/>
+            <pointer>
+                <int8_t name='unk_0'/>
+                <int16_t name="unk_2"/>
+                <int32_t name="unk_4"/>
+                <int8_t name="unk_8"/>
+                <padding name="unk_9" size="3"/>
+                <int16_t name="unk_c"/>
+                <int16_t name="unk_e"/>
+                <int16_t name="unk_10"/>
+
+                <int32_t name="unk_14"/>
+                <int32_t name="unk_18"/>
+                <int32_t name="unk_1c"/>
+                <int16_t name="unk_20"/>
+            </pointer>
         </stl-vector>
 
         --

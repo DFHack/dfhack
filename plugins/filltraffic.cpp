@@ -26,7 +26,7 @@ DFhackCExport command_result alltraffic(DFHack::Core * c, std::vector<std::strin
 //Forward Declarations for Utility Functions
 DFhackCExport command_result setAllMatching(DFHack::Core * c, checkTile checkProc,
 											DFHack::DFCoord minCoord = DFHack::DFCoord(0, 0, 0),
-											DFHack::DFCoord maxCoord = DFHack::DFCoord(0xFFFF, 0xFFFF, 0xFFFFFFFF));
+											DFHack::DFCoord maxCoord = DFHack::DFCoord(0xFFFF, 0xFFFF, 0xFFFF));
 
 void allHigh(DFHack::DFCoord coord, MapExtras::MapCache * map);
 void allNormal(DFHack::DFCoord coord, MapExtras::MapCache * map);

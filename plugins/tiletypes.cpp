@@ -85,7 +85,8 @@ struct TileType
     bool empty()
     {
         return shape == -1 && material == -1 && special == -1 && variant == -1
-            && hidden == -1 && light == -1 && subterranean == -1 && skyview == -1;
+            && hidden == -1 && light == -1 && subterranean == -1 && skyview == -1
+            && dig == -1;
     }
 };
 
@@ -148,7 +149,7 @@ std::ostream &operator<<(std::ostream &stream, const TileType &paint)
             needSpace = false;
         }
 
-        stream << (paint.dig ? "DESIGNED" : "UNDESIGNED");
+        stream << (paint.dig ? "DESIGNATED" : "UNDESIGATNED");
         used = true;
         needSpace = true;
     }
@@ -315,7 +316,7 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
             std::cout << "Unknown tile variant: " << value << std::endl;
         }
     }
-    else if (option == "designed" || option == "d")
+    else if (option == "designated" || option == "d")
     {
         if (valInt >= -1 && valInt < 2)
         {
@@ -324,7 +325,7 @@ bool processTileType(TileType &paint, const std::string &option, const std::stri
         }
         else
         {
-            std::cout << "Unknown designed flag: " << value << std::endl;
+            std::cout << "Unknown designation flag: " << value << std::endl;
         }
     }
     else if (option == "hidden" || option == "h")
@@ -401,7 +402,7 @@ void help( std::ostream & out, const std::string &option)
             << " Material / mat / m: set tile material information" << std::endl
             << " Special / sp: set special tile information" << std::endl
             << " Variant / var / v: set variant tile information" << std::endl
-            << " Designed / d: set designed flag" << std::endl
+            << " Designated / d: set designated flag" << std::endl
             << " Hidden / h: set hidden flag" << std::endl
             << " Light / l: set light flag" << std::endl
             << " Subterranean / st: set subterranean flag" << std::endl
@@ -440,9 +441,9 @@ void help( std::ostream & out, const std::string &option)
         out << "Available variants:" << std::endl
             << " ANY, 0 - " << DFHack::VAR_4 << std::endl;
     }
-    else if (option == "designed" || option == "d")
+    else if (option == "designated" || option == "d")
     {
-        out << "Available designed flags:" << std::endl
+        out << "Available designated flags:" << std::endl
             << " ANY, 0, 1" << std::endl;
     }
     else if (option == "hidden" || option == "h")

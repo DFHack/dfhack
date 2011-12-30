@@ -148,8 +148,17 @@ void fHKthread(void * iodata)
         std::string stuff = core->getHotkeyCmd(); // waits on mutex!
         if(!stuff.empty())
         {
-            vector <string> crap;
-            command_result cr = plug_mgr->InvokeCommand(stuff, crap, false);
+            vector <string> args;
+            cheap_tokenise(stuff, args);
+            if (args.empty()) {
+                core->con.printerr("Empty hotkey command.\n");
+                continue;
+            }
+            
+            string first = args[0];
+            args.erase(args.begin());
+            command_result cr = plug_mgr->InvokeCommand(first, args, false);
+
             if(cr == CR_WOULD_BREAK)
             {
                 core->con.printerr("It isn't possible to run an interactive command outside the console.\n");

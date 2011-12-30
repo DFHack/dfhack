@@ -288,10 +288,32 @@ DFhackCExport DFHack::command_result plugin_init(DFHack::Core* pCore, std::vecto
     return DFHack::CR_OK;
 }
 
+DFhackCExport DFHack::command_result plugin_onstatechange(DFHack::Core* pCore, DFHack::state_change_event event)
+{
+    switch (event) {
+    case DFHack::SC_GAME_LOADED:
+    case DFHack::SC_GAME_UNLOADED:
+        if (running)
+            pCore->con.printerr("seedwatch deactivated due to game load/unload\n");
+        running = false;
+        break;
+    default:
+        break;
+    }
+
+    return DFHack::CR_OK;
+}
+
 DFhackCExport DFHack::command_result plugin_onupdate(DFHack::Core* pCore)
 {
-    if(running)
+    if (running)
     {
+        // reduce processing rate
+        static int counter = 0;
+        if (++counter < 500)
+            return DFHack::CR_OK;
+        counter = 0;
+
         DFHack::Core& core = *pCore;
         DFHack::World *w = core.getWorld();
         DFHack::t_gamemodes gm;

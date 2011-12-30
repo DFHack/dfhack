@@ -134,6 +134,8 @@ namespace DFHack
         /// returns a named pointer.
         void *GetData(std::string key);
 
+        bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
+
         DFHack::Process * p;
         DFHack::VersionInfo * vinfo;
         DFHack::Console con;
@@ -184,6 +186,7 @@ namespace DFHack
         bool hotkey_set;
         tthread::mutex * HotkeyMutex;
         tthread::condition_variable * HotkeyCond;
+        void *last_world_data_ptr; // for state change tracking
         // Very important!
         bool started;
 

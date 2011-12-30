@@ -51,6 +51,9 @@ using namespace DFHack;
 
 #include "dfhack/SDL_fakes/events.h"
 
+#include "dfhack/df/world.h"
+#include "dfhack/df/world_data.h"
+
 #include <stdio.h>
 #include <iomanip>
 #include <stdlib.h>
@@ -439,6 +442,7 @@ Core::Core()
     HotkeyMutex = 0;
     HotkeyCond = 0;
     misc_data_mutex=0;
+    last_world_data_ptr = NULL;
 };
 
 void Core::fatal (std::string output, bool deactivate)
@@ -631,8 +635,23 @@ int Core::Update()
     if(errorstate)
         return -1;
 
+    // detect if the game was loaded or unloaded in the meantime
+    void *new_wdata = NULL;
+    if (df::global::world) {
+        df::world_data *wdata = df::global::world->world_data;
+        // when the game is unloaded, world_data isn't deleted, but its contents are
+        if (wdata && !wdata->sites.empty())
+            new_wdata = wdata;
+    }
+    
+    if (new_wdata != last_world_data_ptr) {
+        last_world_data_ptr = new_wdata;
+        plug_mgr->OnStateChange(new_wdata ? SC_GAME_LOADED : SC_GAME_UNLOADED);
+    }
+
     // notify all the plugins that a game tick is finished
     plug_mgr->OnUpdate();
+
     // wake waiting tools
     // do not allow more tools to join in while we process stuff here
     StackMutex->lock();

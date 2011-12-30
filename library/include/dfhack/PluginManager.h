@@ -46,6 +46,11 @@ namespace DFHack
         CR_FAILURE = 0,
         CR_OK = 1
     };
+    enum state_change_event
+    {
+        SC_GAME_LOADED,
+        SC_GAME_UNLOADED
+    };
     struct PluginCommand
     {
         /// create a command with a name, description, function pointer to its code
@@ -87,6 +92,7 @@ namespace DFHack
         Plugin(DFHack::Core* core, const std::string& filepath, const std::string& filename, PluginManager * pm);
         ~Plugin();
         command_result on_update();
+        command_result on_state_change(state_change_event event);
     public:
         bool load();
         bool unload();
@@ -117,6 +123,7 @@ namespace DFHack
         command_result (*plugin_status)(Core *, std::string &);
         command_result (*plugin_shutdown)(Core *);
         command_result (*plugin_onupdate)(Core *);
+        command_result (*plugin_onstatechange)(Core *, state_change_event);
     };
     class DFHACK_EXPORT PluginManager
     {
@@ -126,6 +133,7 @@ namespace DFHack
         PluginManager(Core * core);
         ~PluginManager();
         void OnUpdate( void );
+        void OnStateChange( state_change_event event );
         void registerCommands( Plugin * p );
         void unregisterCommands( Plugin * p );
     // PUBLIC METHODS

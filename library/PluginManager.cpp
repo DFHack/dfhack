@@ -135,6 +135,7 @@ Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _f
     plugin_shutdown = 0;
     plugin_status = 0;
     plugin_onupdate = 0;
+    plugin_onstatechange = 0;
     state = PS_UNLOADED;
     access = new RefLock();
 }
@@ -192,6 +193,7 @@ bool Plugin::load()
     plugin_status = (command_result (*)(Core *, std::string &)) LookupPlugin(plug, "plugin_status");
     plugin_onupdate = (command_result (*)(Core *)) LookupPlugin(plug, "plugin_onupdate");
     plugin_shutdown = (command_result (*)(Core *)) LookupPlugin(plug, "plugin_shutdown");
+    plugin_onstatechange = (command_result (*)(Core *, state_change_event)) LookupPlugin(plug, "plugin_onstatechange");
     //name = _PlugName();
     plugin_lib = plug;
     if(plugin_init(&c,commands) == CR_OK)
@@ -299,6 +301,19 @@ command_result Plugin::on_update()
     return cr;
 }
 
+command_result Plugin::on_state_change(state_change_event event)
+{
+    Core & c = Core::getInstance();
+    command_result cr = CR_NOT_IMPLEMENTED;
+    access->lock_add();
+    if(state == PS_LOADED && plugin_onstatechange)
+    {
+        cr = plugin_onstatechange(&c, event);
+    }
+    access->lock_sub();
+    return cr;
+}
+
 Plugin::plugin_state Plugin::getState() const
 {
     return state;
@@ -370,6 +385,15 @@ void PluginManager::OnUpdate( void )
         all_plugins[i]->on_update();
     }
 }
+
+void PluginManager::OnStateChange( state_change_event event )
+{
+    for(int i = 0; i < all_plugins.size(); i++)
+    {
+        all_plugins[i]->on_state_change(event);
+    }
+}
+
 // FIXME: doesn't check name collisions!
 void PluginManager::registerCommands( Plugin * p )
 {

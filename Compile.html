@@ -351,8 +351,8 @@ ul.auto-toc {
 a 64-bit distribution like Arch, you'll need the multilib development tools and libraries.</p>
 <p>Before you can build anything, you'll also need <tt class="docutils literal">cmake</tt>. It is advisable to also get
 <tt class="docutils literal">ccmake</tt> on distributions that split the cmake package into multiple parts.</p>
-<p>For the code generation parts, you need perl and the XML::LibXML perl package.
-You should be able to find them in your distro repositories (on Arch linux 'perl-xml-libxml').</p>
+<p>For the code generation parts, you need perl and the XML::LibXML and XML::LibXSLT perl packages.
+You should be able to find them in your distro repositories (on Arch linux 'perl-xml-libxml' and 'perl-xml-libxslt').</p>
 </div>
 <div class="section" id="build">
 <h2><a class="toc-backref" href="#id4">Build</a></h2>
@@ -384,10 +384,13 @@ site: <a class="reference external" href="http://www.cmake.org/cmake/resources/s
 to your binary search PATH so the tool can be later run from anywhere.</p>
 <p>You'll need a copy of Microsoft Visual C++ 2010. The Express version is sufficient.
 Grab it from Microsoft's site.</p>
-<p>For the code generation parts, you'll need perl and XML::LibXML. You can install them like this:
-* download and install strawberry perl from http://strawberryperl.com/
-* reboot so that the system can pick up the new binary path
-* open a cmd.exe window and run &quot;cpan XML::LibXML&quot; (obviously without the quotes). This can take a while to complete.</p>
+<p>For the code generation parts, you'll need perl and XML::LibXML. You can install them like this:</p>
+<ul class="simple">
+<li>download and install strawberry perl from <a class="reference external" href="http://strawberryperl.com/">http://strawberryperl.com/</a></li>
+<li>reboot so that the system can pick up the new binary path</li>
+<li>open a cmd.exe window and run &quot;cpan XML::LibXML&quot; (obviously without the quotes). This can take a while to complete.</li>
+<li>Same with &quot;cpan XML::LibXSLT&quot;.</li>
+</ul>
 <div class="section" id="id1">
 <h2><a class="toc-backref" href="#id6">Build</a></h2>
 <p>Open the <tt class="docutils literal">build</tt> folder and double click the batch script there. This will eventually open

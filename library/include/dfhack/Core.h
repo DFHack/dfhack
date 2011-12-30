@@ -43,6 +43,11 @@ namespace tthread
     class thread;
 }
 
+namespace df
+{
+    struct viewscreen;
+}
+
 namespace DFHack
 {
     class Process;
@@ -134,7 +139,11 @@ namespace DFHack
         /// returns a named pointer.
         void *GetData(std::string key);
 
+        bool ClearKeyBindings(std::string keyspec);
+        bool AddKeyBinding(std::string keyspec, std::string cmdline);
+
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
+        df::viewscreen *getTopViewscreen() { return top_viewscreen; }
 
         DFHack::Process * p;
         DFHack::VersionInfo * vinfo;
@@ -180,13 +189,25 @@ namespace DFHack
         } s_mods;
         std::vector <Module *> allModules;
         DFHack::PluginManager * plug_mgr;
+        
         // hotkey-related stuff
-        int hotkey_states[16];
+        struct KeyBinding {
+            int modifiers;
+            std::vector<std::string> command;
+            std::string cmdline;
+        };
+
+        std::map<int, std::vector<KeyBinding> > key_bindings;
+        std::map<int, bool> hotkey_states;
         std::string hotkey_cmd;
         bool hotkey_set;
         tthread::mutex * HotkeyMutex;
         tthread::condition_variable * HotkeyCond;
+
+        bool SelectHotkey(int key, int modifiers);
+
         void *last_world_data_ptr; // for state change tracking
+        df::viewscreen *top_viewscreen;
         // Very important!
         bool started;
 

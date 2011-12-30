@@ -27,6 +27,10 @@ distribution.
 #include "dfhack/Process.h"
 #include "dfhack/PluginManager.h"
 #include "dfhack/Console.h"
+
+#include "dfhack/DataDefs.h"
+#include "dfhack/df/viewscreen.h"
+
 using namespace DFHack;
 
 #include <string>
@@ -273,13 +277,69 @@ command_result Plugin::invoke( std::string & command, std::vector <std::string> 
     {
         for (int i = 0; i < commands.size();i++)
         {
-            if(commands[i].name == command)
+            PluginCommand &cmd = commands[i];
+            
+            if(cmd.name == command)
             {
                 // running interactive things from some other source than the console would break it
-                if(!interactive_ && commands[i].interactive)
+                if(!interactive_ && cmd.interactive)
                     cr = CR_WOULD_BREAK;
-                else
-                    cr = commands[i].function(&c, parameters);
+                else if (cmd.guard)
+                {
+                    // Execute hotkey commands in a way where they can
+                    // expect their guard conditions to be matched,
+                    // so as to avoid duplicating checks.
+                    // This means suspending the core beforehand.
+                    CoreSuspender suspend(&c);
+                    df::viewscreen *top = c.getTopViewscreen();
+
+                    if ((cmd.viewscreen_type && !cmd.viewscreen_type->is_instance(top))
+                        || !cmd.guard(&c, top)) 
+                    {
+                        c.con.printerr("Could not invoke %s: unsuitable UI state.\n", command.c_str());
+                        cr = CR_FAILURE;
+                    }
+                    else 
+                    {
+                        cr = cmd.function(&c, parameters);
+                    }
+                }
+                else 
+                {
+                    cr = cmd.function(&c, parameters);
+                }
+                break;
+            }
+        }
+    }
+    access->lock_sub();
+    return cr;
+}
+
+bool Plugin::can_invoke_hotkey( std::string & command, df::viewscreen *top )
+{
+    Core & c = Core::getInstance();
+    bool cr = false;
+    access->lock_add();
+    if(state == PS_LOADED)
+    {
+        for (int i = 0; i < commands.size();i++)
+        {
+            PluginCommand &cmd = commands[i];
+            
+            if(cmd.name == command)
+            {
+                if (cmd.interactive)
+                    cr = false;
+                else if (cmd.guard)
+                {
+                    cr = (!cmd.viewscreen_type || cmd.viewscreen_type->is_instance(top))
+                         && cmd.guard(&c, top);
+                }
+                else 
+                {
+                    cr = default_hotkey(&c, top);
+                }
                 break;
             }
         }
@@ -363,19 +423,27 @@ Plugin *PluginManager::getPluginByName (const std::string & name)
     return 0;
 }
 
+Plugin *PluginManager::getPluginByCommand(const std::string &command)
+{
+    tthread::lock_guard<tthread::mutex> lock(*cmdlist_mutex);
+    map <string, Plugin *>::iterator iter = belongs.find(command);
+    if (iter != belongs.end())
+        return iter->second;
+    else
+        return NULL;    
+}
+
 // FIXME: handle name collisions...
 command_result PluginManager::InvokeCommand( std::string & command, std::vector <std::string> & parameters, bool interactive)
 {
-    command_result cr = CR_NOT_IMPLEMENTED;
-    Core * c = &Core::getInstance();
-    cmdlist_mutex->lock();
-    map <string, Plugin *>::iterator iter = belongs.find(command);
-    if(iter != belongs.end())
-    {
-        cr = iter->second->invoke(command, parameters, interactive);
-    }
-    cmdlist_mutex->unlock();
-    return cr;
+    Plugin *plugin = getPluginByCommand(command);
+    return plugin ? plugin->invoke(command, parameters, interactive) : CR_NOT_IMPLEMENTED;
+}
+
+bool PluginManager::CanInvokeHotkey(std::string &command, df::viewscreen *top)
+{
+    Plugin *plugin = getPluginByCommand(command);
+    return plugin ? plugin->can_invoke_hotkey(command, top) : false;
 }
 
 void PluginManager::OnUpdate( void )

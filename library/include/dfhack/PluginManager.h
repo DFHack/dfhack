@@ -35,10 +35,16 @@ namespace tthread
     class mutex;
     class condition_variable;
 }
+namespace df
+{
+    struct viewscreen;
+}
 namespace DFHack
 {
     class Core;
     class PluginManager;
+    struct virtual_identity;
+
     enum command_result
     {
         CR_WOULD_BREAK = -2,
@@ -49,35 +55,45 @@ namespace DFHack
     enum state_change_event
     {
         SC_GAME_LOADED,
-        SC_GAME_UNLOADED
+        SC_GAME_UNLOADED,
+        SC_VIEWSCREEN_CHANGED
     };
-    struct PluginCommand
+    struct DFHACK_EXPORT PluginCommand
     {
+        typedef command_result (*command_function)(Core *, std::vector <std::string> &);
+        typedef bool (*command_hotkey_guard)(Core *, df::viewscreen *);
+        
         /// create a command with a name, description, function pointer to its code
         /// and saying if it needs an interactive terminal
         /// Most commands shouldn't require an interactive terminal!
         PluginCommand(const char * _name,
                       const char * _description,
-                      command_result (*function_)(Core *, std::vector <std::string> &),
+                      command_function function_,
                       bool interactive_ = false
                      )
+            : name(_name), description(_description),
+              function(function_), interactive(interactive_),
+              guard(NULL), viewscreen_type(NULL)
         {
-            name = _name;
-            description = _description;
-            function = function_;
-            interactive = interactive_;
         }
-        PluginCommand (const PluginCommand & rhs)
+
+        PluginCommand(const char * _name,
+                      const char * _description,
+                      command_function function_,
+                      command_hotkey_guard guard_,
+                      virtual_identity *viewscreen_type_ = NULL)
+            : name(_name), description(_description),
+              function(function_), interactive(false),
+              guard(guard_), viewscreen_type(viewscreen_type_)
         {
-            name = rhs.name;
-            description = rhs.description;
-            function = rhs.function;
-            interactive = rhs.interactive;
         }
+
         std::string name;
         std::string description;
-        command_result (*function)(Core *, std::vector <std::string> &);
+        command_function function;
         bool interactive;
+        command_hotkey_guard guard;
+        virtual_identity *viewscreen_type;
     };
     class Plugin
     {
@@ -98,6 +114,7 @@ namespace DFHack
         bool unload();
         bool reload();
         command_result invoke( std::string & command, std::vector <std::string> & parameters, bool interactive );
+        bool can_invoke_hotkey( std::string & command, df::viewscreen *top );
         plugin_state getState () const;
         const PluginCommand& operator[] (std::size_t index) const
         {
@@ -139,7 +156,9 @@ namespace DFHack
     // PUBLIC METHODS
     public:
         Plugin *getPluginByName (const std::string & name);
+        Plugin *getPluginByCommand (const std::string &command);
         command_result InvokeCommand( std::string & command, std::vector <std::string> & parameters, bool interactive = true );
+        bool CanInvokeHotkey(std::string &command, df::viewscreen *top);
         Plugin* operator[] (std::size_t index)
         {
             if(index >= all_plugins.size())
@@ -157,5 +176,7 @@ namespace DFHack
         std::vector <Plugin *> all_plugins;
         std::string plugin_path;
     };
+
+    DFHACK_EXPORT bool default_hotkey(Core *, df::viewscreen *);
 }
 

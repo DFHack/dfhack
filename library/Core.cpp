@@ -167,53 +167,25 @@ void fHKthread(void * iodata)
     }
 }
 
-// A thread function... for the interactive console.
-void fIOthread(void * iodata)
+static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clueless_counter, const string &command)
 {
-    IODATA * iod = ((IODATA*) iodata);
-    Core * core = iod->core;
-    PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
-    CommandHistory main_history;
-    main_history.load("dfhack.history");
     Console & con = core->con;
-    if(plug_mgr == 0 || core == 0)
+    
+    if (!command.empty())
     {
-        con.printerr("Something horrible happened in Core's constructor...\n");
-        return;
-    }
-    con.print("DFHack is ready. Have a nice day!\n"
-              "Type in '?' or 'help' for general help, 'ls' to see all commands.\n");
-    int clueless_counter = 0;
-    while (true)
-    {
-        string command = "";
-        int ret = con.lineedit("[DFHack]# ",command, main_history);
-        if(ret == -2)
-        {
-            cerr << "Console is shutting down properly." << endl;
-            return;
-        }
-        else if(ret == -1)
-        {
-            cerr << "Console caught an unspecified error." << endl;
-            continue;
-        }
-        else if(ret)
-        {
-            // a proper, non-empty command was entered
-            main_history.add(command);
-            main_history.save("dfhack.history");
-        }
         // cut the input into parts
         vector <string> parts;
         cheap_tokenise(command,parts);
         if(parts.size() == 0)
         {
             clueless_counter ++;
-            continue;
+            return;
         }
         string first = parts[0];
         parts.erase(parts.begin());
+
+        if (first[0] == '#') return;
+
         cerr << "Invoking: " << command << endl;
         
         // let's see what we actually got
@@ -422,6 +394,70 @@ void fIOthread(void * iodata)
                 */
             }
         }
+    }
+}
+
+static void loadInitFile(Core *core, PluginManager *plug_mgr, string fname)
+{
+    ifstream init(fname);
+    if (init.bad())
+        return;
+
+    int tmp = 0;
+    string command;
+    while (getline(init, command))
+    {
+        if (!command.empty())
+            runInteractiveCommand(core, plug_mgr, tmp, command);
+    }
+}
+
+// A thread function... for the interactive console.
+void fIOthread(void * iodata)
+{
+    IODATA * iod = ((IODATA*) iodata);
+    Core * core = iod->core;
+    PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
+
+    CommandHistory main_history;
+    main_history.load("dfhack.history");
+
+    Console & con = core->con;
+    if(plug_mgr == 0 || core == 0)
+    {
+        con.printerr("Something horrible happened in Core's constructor...\n");
+        return;
+    }
+
+    loadInitFile(core, plug_mgr, "dfhack.init");
+
+    con.print("DFHack is ready. Have a nice day!\n"
+              "Type in '?' or 'help' for general help, 'ls' to see all commands.\n");
+
+    int clueless_counter = 0;
+    while (true)
+    {
+        string command = "";
+        int ret = con.lineedit("[DFHack]# ",command, main_history);
+        if(ret == -2)
+        {
+            cerr << "Console is shutting down properly." << endl;
+            return;
+        }
+        else if(ret == -1)
+        {
+            cerr << "Console caught an unspecified error." << endl;
+            continue;
+        }
+        else if(ret)
+        {
+            // a proper, non-empty command was entered
+            main_history.add(command);
+            main_history.save("dfhack.history");
+        }
+
+        runInteractiveCommand(core, plug_mgr, clueless_counter, command);
+
         if(clueless_counter == 3)
         {
             con.print("Do 'help' or '?' for the list of available commands.\n");

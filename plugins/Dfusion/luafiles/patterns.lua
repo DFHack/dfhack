@@ -195,7 +195,7 @@ ptr_CrGloss.castes={off=296,rtype=ptr_vector}
 
 ptr_CrCaste={}
 ptr_CrCaste.name={off=0,rtype=ptt_dfstring}
-ptr_CrCaste.flags_ptr={off=0x524,rtype=DWORD} --size 17?
+ptr_CrCaste.flags_ptr={off=0x5A0,rtype=DWORD} --size 17?
 --[=[
 	Flags:
 	57 - is sentient (allows setting labours)

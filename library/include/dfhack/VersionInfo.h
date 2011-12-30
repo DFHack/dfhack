@@ -52,7 +52,20 @@ namespace DFHack
         IS_INVALID,
         IS_VALID
     };
-
+	enum KEY_TYPE
+	{
+		IS_OFFSET,
+		IS_ADDRESS,
+		IS_HEX_VAL,
+		IS_STRING,
+		IS_GROUP
+	};
+	struct OffsetKey
+	{
+		std::string key;
+		INVAL_TYPE inval;
+		KEY_TYPE keytype;
+	};
     /*
      * Offset Group
      */
@@ -96,6 +109,8 @@ namespace DFHack
         std::string getFullName();
         OffsetGroup * getParent();
         void setInvalid(INVAL_TYPE arg1);
+		
+		std::vector<OffsetKey> getKeys() const;
     };
 
     /*

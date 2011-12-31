@@ -7,12 +7,12 @@
 #include <stddef.h>
 #include <string.h>
 using namespace std;
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
-#include <dfhack/modules/Graphic.h>
-#include <dfhack/modules/Gui.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
+#include <modules/Graphic.h>
+#include <modules/Gui.h>
 using namespace DFHack;
 
 DFhackCExport command_result df_versionosd (Core * c, vector <string> & parameters);

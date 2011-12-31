@@ -28,12 +28,12 @@ distribution.
 #include <vector>
 #include <map>
 
-#include "dfhack/Process.h"
-#include "dfhack/Core.h"
-#include "dfhack/VersionInfo.h"
+#include "MemAccess.h"
+#include "Core.h"
+#include "VersionInfo.h"
 #include "tinythread.h"
 // must be last due to MS stupidity
-#include "dfhack/DataDefs.h"
+#include "DataDefs.h"
 
 using namespace DFHack;
 

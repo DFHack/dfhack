@@ -34,28 +34,28 @@ distribution.
 #include <sstream>
 using namespace std;
 
-#include "dfhack/Error.h"
-#include "dfhack/Process.h"
-#include "dfhack/Core.h"
-#include "dfhack/DataDefs.h"
-#include "dfhack/Console.h"
-#include "dfhack/Module.h"
-#include "dfhack/VersionInfoFactory.h"
-#include "dfhack/VersionInfo.h"
-#include "dfhack/PluginManager.h"
+#include "Error.h"
+#include "MemAccess.h"
+#include "Core.h"
+#include "DataDefs.h"
+#include "Console.h"
+#include "Module.h"
+#include "VersionInfoFactory.h"
+#include "VersionInfo.h"
+#include "PluginManager.h"
 #include "ModuleFactory.h"
-#include "dfhack/modules/Gui.h"
-#include "dfhack/modules/World.h"
-#include "dfhack/modules/Graphic.h"
+#include "modules/Gui.h"
+#include "modules/World.h"
+#include "modules/Graphic.h"
 using namespace DFHack;
 
-#include "dfhack/SDL_fakes/events.h"
+#include "SDL_events.h"
 
-#include "dfhack/df/ui.h"
-#include "dfhack/df/world.h"
-#include "dfhack/df/world_data.h"
-#include "dfhack/df/interface.h"
-#include "dfhack/df/viewscreen_dwarfmodest.h"
+#include "df/ui.h"
+#include "df/world.h"
+#include "df/world_data.h"
+#include "df/interface.h"
+#include "df/viewscreen_dwarfmodest.h"
 
 #include <stdio.h>
 #include <iomanip>

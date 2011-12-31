@@ -5,13 +5,13 @@
 #include <algorithm>    //for min().
 #include <map>
 #include <vector>
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
-#include <dfhack/modules/Maps.h>
-#include <dfhack/extra/MapExtras.h>
-#include <dfhack/modules/Gui.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
+#include <modules/Maps.h>
+#include <modules/MapCache.h>
+#include <modules/Gui.h>
 using std::stack;
 using MapExtras::MapCache;
 using namespace DFHack;

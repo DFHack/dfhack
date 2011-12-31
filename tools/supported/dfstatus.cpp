@@ -24,8 +24,8 @@
 #include <time.h>
 using namespace std;
 #include <DFHack.h>
-#include <dfhack/DFVector.h>
-#include <dfhack/extra/stopwatch.h>
+#include <DFVector.h>
+#include <extra/stopwatch.h>
 
 WINDOW *create_newwin(int height, int width, int starty, int startx);
 

@@ -34,18 +34,18 @@ distribution.
 using namespace std;
 
 
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Process.h"
-#include "dfhack/Vector.h"
-#include "dfhack/Error.h"
-#include "dfhack/Types.h"
+#include "VersionInfo.h"
+#include "MemAccess.h"
+#include "Vector.h"
+#include "Error.h"
+#include "Types.h"
 
 // we connect to those
-#include "dfhack/modules/Materials.h"
-#include "dfhack/modules/Units.h"
-#include "dfhack/modules/Translation.h"
+#include "modules/Materials.h"
+#include "modules/Units.h"
+#include "modules/Translation.h"
 #include "ModuleFactory.h"
-#include <dfhack/Core.h>
+#include "Core.h"
 
 using namespace DFHack;
 

@@ -10,15 +10,15 @@ using std::string;
 using std::endl;
 using std::set;
 
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
-#include <dfhack/modules/Vegetation.h>
-#include <dfhack/modules/Maps.h>
-#include <dfhack/modules/Gui.h>
-#include <dfhack/TileTypes.h>
-#include <dfhack/extra/MapExtras.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
+#include <modules/Vegetation.h>
+#include <modules/Maps.h>
+#include <modules/Gui.h>
+#include <TileTypes.h>
+#include <modules/MapCache.h>
 using namespace MapExtras;
 using namespace DFHack;
 

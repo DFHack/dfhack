@@ -1,12 +1,12 @@
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
 
-#include <dfhack/DataDefs.h>
-#include <dfhack/df/ui.h>
-#include <dfhack/df/world.h>
-#include <dfhack/df/squad.h>
+#include <DataDefs.h>
+#include <df/ui.h>
+#include <df/world.h>
+#include <df/squad.h>
 
 #include <stdlib.h>
 

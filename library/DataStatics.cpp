@@ -1,10 +1,10 @@
 #include "Internal.h"
-#include "dfhack/DataDefs.h"
-#include "dfhack/MiscUtils.h"
+#include "DataDefs.h"
+#include "MiscUtils.h"
 
-#include "dfhack/df/world.h"
-#include "dfhack/df/world_data.h"
-#include "dfhack/df/ui.h"
+#include "df/world.h"
+#include "df/world_data.h"
+#include "df/ui.h"
 
 namespace {
     template<class T>
@@ -14,5 +14,5 @@ namespace {
 }
 
 // Instantiate all the static objects
-#include "dfhack/df/static.inc"
-#include "dfhack/df/static.enums.inc"
+#include "df/static.inc"
+#include "df/static.enums.inc"

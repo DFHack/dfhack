@@ -6,8 +6,8 @@
 
 using namespace std;
 #include <DFHack.h>
-#include <dfhack/extra/MapExtras.h>
-#include <dfhack/extra/termutil.h>
+#include <extra/MapExtras.h>
+#include <extra/termutil.h>
 
 
 int main(int argc, char *argv[])

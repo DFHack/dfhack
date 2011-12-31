@@ -22,7 +22,7 @@
 using namespace std;
 
 #include <DFHack.h>
-#include <dfhack/DFTileTypes.h>
+#include <DFTileTypes.h>
 #define BLOCK_SIZE 16
 
 

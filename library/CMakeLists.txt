@@ -13,54 +13,52 @@ include_directories (include)
 include_directories (depends/md5)
 include_directories (depends/tinyxml)
 include_directories (depends/tthread)
-include_directories (private)
 
-execute_process(COMMAND perl xml/list.pl xml include/dfhack/df ";"
+execute_process(COMMAND perl xml/list.pl xml include/df ";"
                 WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
                 OUTPUT_VARIABLE GENERATED_HDRS)
 
 SET(PROJECT_HDRS_INTERNAL
-    private/ContextShared.h
-    private/Internal.h
-    private/wdirent.h
 )
 
 SET(PROJECT_HDRS
+include/Internal.h
 include/DFHack.h
-include/dfhack/Console.h
-include/dfhack/Core.h
-include/dfhack/DataDefs.h
-include/dfhack/Error.h
-include/dfhack/Export.h
-include/dfhack/FakeSDL.h
-include/dfhack/MiscUtils.h
-include/dfhack/Module.h
-include/dfhack/Pragma.h
-include/dfhack/Process.h
-include/dfhack/TileTypes.h
-include/dfhack/Types.h
-include/dfhack/Vector.h
-include/dfhack/VersionInfo.h
-include/dfhack/VersionInfoFactory.h
-include/dfhack/Virtual.h
-include/dfhack/extra/MapExtras.h
-include/dfhack/extra/stopwatch.h
-include/dfhack/extra/termutil.h
-include/dfhack/modules/Buildings.h
-include/dfhack/modules/Constructions.h
-include/dfhack/modules/Units.h
-include/dfhack/modules/Engravings.h
-include/dfhack/modules/Gui.h
-include/dfhack/modules/Items.h
-include/dfhack/modules/kitchen.h
-include/dfhack/modules/Maps.h
-include/dfhack/modules/Materials.h
-include/dfhack/modules/Notes.h
-include/dfhack/modules/Translation.h
-include/dfhack/modules/Vegetation.h
-include/dfhack/modules/Vermin.h
-include/dfhack/modules/World.h
-include/dfhack/modules/Graphic.h
+include/Console.h
+include/Core.h
+include/DataDefs.h
+include/Error.h
+include/Export.h
+include/Hooks.h
+include/MiscUtils.h
+include/Module.h
+include/Pragma.h
+include/MemAccess.h
+include/SDL_events.h
+include/SDL_keyboard.h
+include/SDL_keysym.h
+include/TileTypes.h
+include/Types.h
+include/Vector.h
+include/VersionInfo.h
+include/VersionInfoFactory.h
+include/Virtual.h
+include/modules/Buildings.h
+include/modules/Constructions.h
+include/modules/Units.h
+include/modules/Engravings.h
+include/modules/Gui.h
+include/modules/Items.h
+include/modules/kitchen.h
+include/modules/Maps.h
+include/modules/MapCache.h
+include/modules/Materials.h
+include/modules/Notes.h
+include/modules/Translation.h
+include/modules/Vegetation.h
+include/modules/Vermin.h
+include/modules/World.h
+include/modules/Graphic.h
 )
 
 SET(PROJECT_SRCS
@@ -68,6 +66,7 @@ Core.cpp
 DataDefs.cpp
 DataStatics.cpp
 DataStaticsCtor.cpp
+MiscUtils.cpp
 PluginManager.cpp
 TileTypes.cpp
 VersionInfo.cpp
@@ -105,17 +104,18 @@ SET(PROJECT_HDRS_LINUX
 )
 
 SET(PROJECT_HDRS_WINDOWS
+include/wdirent.h
 )
 
 SET(PROJECT_SRCS_LINUX
 Console-linux.cpp
-FakeSDL-linux.cpp
+Hooks-linux.cpp
 Process-linux.cpp
 )
 
 SET(PROJECT_SRCS_WINDOWS
 Console-windows.cpp
-FakeSDL-windows.cpp
+Hooks-windows.cpp
 Process-windows.cpp
 )
 
@@ -139,14 +139,14 @@ FILE(GLOB GENERATE_INPUT_SCRIPTS ${dfapi_SOURCE_DIR}/xml/*.pm ${dfapi_SOURCE_DIR
 FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/*.xml)
 
 ADD_CUSTOM_COMMAND(
-    OUTPUT ${dfapi_SOURCE_DIR}/include/dfhack/df/static.inc
-    COMMAND perl xml/codegen.pl xml include/dfhack/df
+    OUTPUT ${dfapi_SOURCE_DIR}/include/df/static.inc
+    COMMAND perl xml/codegen.pl xml include/df
     WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
     MAIN_DEPENDENCY ${dfapi_SOURCE_DIR}/xml/codegen.pl
     DEPENDS ${GENERATE_INPUT_XMLS} ${GENERATE_INPUT_SCRIPTS}
 )
 
-ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/dfhack/df/static.inc)
+ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/df/static.inc)
 
 # Compilation
 

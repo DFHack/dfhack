@@ -13,7 +13,7 @@
 #define DFHACK_WANT_MISCUTILS
 #define DFHACK_WANT_TILETYPES
 #include <DFHack.h>
-#include "dfhack/modules/WindowIO.h"
+#include "modules/WindowIO.h"
 
 using namespace DFHack;
 //bool waitTillCursorState(DFHack::Context *DF, bool On);

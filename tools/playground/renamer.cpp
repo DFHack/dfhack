@@ -8,9 +8,9 @@ using namespace std;
 
 #define DFHACK_WANT_MISCUTILS
 #include <DFHack.h>
-#include <dfhack/modules/Materials.h>
-#include <dfhack/modules/Units.h>
-#include <dfhack/modules/Translation.h>
+#include <modules/Materials.h>
+#include <modules/Units.h>
+#include <modules/Translation.h>
 
 vector< vector<string> > englishWords;
 vector< vector<string> > foreignWords;

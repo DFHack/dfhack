@@ -1,14 +1,14 @@
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
 
-#include <dfhack/DataDefs.h>
-#include <dfhack/df/world.h>
-#include <dfhack/df/ui.h>
-#include <dfhack/df/building_stockpilest.h>
-#include <dfhack/df/selection_rect.h>
-#include <dfhack/df/viewscreen_dwarfmodest.h>
+#include <DataDefs.h>
+#include <df/world.h>
+#include <df/ui.h>
+#include <df/building_stockpilest.h>
+#include <df/selection_rect.h>
+#include <df/viewscreen_dwarfmodest.h>
 
 using std::vector;
 using std::string;

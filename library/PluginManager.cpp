@@ -23,13 +23,13 @@ distribution.
 */
 
 #include "Internal.h"
-#include "dfhack/Core.h"
-#include "dfhack/Process.h"
-#include "dfhack/PluginManager.h"
-#include "dfhack/Console.h"
+#include "Core.h"
+#include "MemAccess.h"
+#include "PluginManager.h"
+#include "Console.h"
 
-#include "dfhack/DataDefs.h"
-#include "dfhack/df/viewscreen.h"
+#include "DataDefs.h"
+#include "df/viewscreen.h"
 
 using namespace DFHack;
 
@@ -278,7 +278,6 @@ command_result Plugin::invoke( std::string & command, std::vector <std::string> 
         for (int i = 0; i < commands.size();i++)
         {
             PluginCommand &cmd = commands[i];
-            
             if(cmd.name == command)
             {
                 // running interactive things from some other source than the console would break it
@@ -294,7 +293,7 @@ command_result Plugin::invoke( std::string & command, std::vector <std::string> 
                     df::viewscreen *top = c.getTopViewscreen();
 
                     if ((cmd.viewscreen_type && !cmd.viewscreen_type->is_instance(top))
-                        || !cmd.guard(&c, top)) 
+                        || !cmd.guard(&c, top))
                     {
                         c.con.printerr("Could not invoke %s: unsuitable UI state.\n", command.c_str());
                         cr = CR_FAILURE;

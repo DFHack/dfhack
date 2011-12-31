@@ -9,17 +9,17 @@
 #include <set>
 using namespace std;
 
-#include "dfhack/Types.h"
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Process.h"
-#include "dfhack/Vector.h"
-#include "dfhack/modules/Materials.h"
-#include "dfhack/modules/Items.h"
-#include "dfhack/modules/Units.h"
-#include "dfhack/modules/kitchen.h"
+#include "Types.h"
+#include "VersionInfo.h"
+#include "MemAccess.h"
+#include "Vector.h"
+#include "modules/Materials.h"
+#include "modules/Items.h"
+#include "modules/Units.h"
+#include "modules/kitchen.h"
 #include "ModuleFactory.h"
-#include <dfhack/Core.h>
-#include <dfhack/Virtual.h>
+#include "Core.h"
+#include "Virtual.h"
 
 namespace DFHack
 {

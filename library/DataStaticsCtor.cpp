@@ -1,6 +1,6 @@
 #include "Internal.h"
-#include "dfhack/DataDefs.h"
-#include "dfhack/MiscUtils.h"
+#include "DataDefs.h"
+#include "MiscUtils.h"
 
 // Object constructors
-#include "dfhack/df/static.ctors.inc"
+#include "df/static.ctors.inc"

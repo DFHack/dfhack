@@ -27,7 +27,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.clear();
     commands.push_back(PluginCommand("clean","Removes contaminants from map tiles, items and creatures.",clean));
-    commands.push_back(PluginCommand("spotclean","Cleans map tile under cursor.",spotclean));
+    commands.push_back(PluginCommand("spotclean","Cleans map tile under cursor.",spotclean,cursor_hotkey));
     return CR_OK;
 }
 
@@ -165,7 +165,7 @@ command_result cleanunits (Core * c)
 
 DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
 {
-    c->Suspend();
+    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     vector<DFHack::t_spattervein *> splatter;
     DFHack::Maps *Mapz = c->getMaps();
     DFHack::Gui *Gui = c->getGui();
@@ -173,7 +173,6 @@ DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
     if(!Mapz->Start())
     {
         c->con.printerr("Can't init map.\n");
-        c->Resume();
         return CR_FAILURE;
     }
     int32_t cursorX, cursorY, cursorZ;
@@ -181,7 +180,6 @@ DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
     if(cursorX == -30000)
     {
         c->con.printerr("The cursor is not active.\n");
-        c->Resume();
         return CR_FAILURE;
     }
     int32_t blockX = cursorX / 16, blockY = cursorY / 16;
@@ -193,7 +191,6 @@ DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
     {
         spatters[i]->intensity[tileX][tileY] = 0;
     }
-    c->Resume();
     return CR_OK;
 }
 

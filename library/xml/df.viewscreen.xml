@@ -91,6 +91,11 @@
         <stl-string name="str_visit"/>
         <stl-string name="str_site"/>
     </class-type>
+
+    <class-type type-name='viewscreen_dwarfmodest' inherits-from='viewscreen'>
+        todo
+    </class-type>
+
 </data-definition>
 
 <!--

@@ -50,7 +50,8 @@ namespace DFHack
         CR_WOULD_BREAK = -2,
         CR_NOT_IMPLEMENTED = -1,
         CR_FAILURE = 0,
-        CR_OK = 1
+        CR_OK = 1,
+        CR_WRONG_USAGE = 2
     };
     enum state_change_event
     {
@@ -62,18 +63,19 @@ namespace DFHack
     {
         typedef command_result (*command_function)(Core *, std::vector <std::string> &);
         typedef bool (*command_hotkey_guard)(Core *, df::viewscreen *);
-        
+
         /// create a command with a name, description, function pointer to its code
         /// and saying if it needs an interactive terminal
         /// Most commands shouldn't require an interactive terminal!
         PluginCommand(const char * _name,
                       const char * _description,
                       command_function function_,
-                      bool interactive_ = false
+                      bool interactive_ = false,
+                      const char * usage_ = ""
                      )
             : name(_name), description(_description),
               function(function_), interactive(interactive_),
-              guard(NULL), viewscreen_type(NULL)
+              guard(NULL), usage(usage_)
         {
         }
 
@@ -81,19 +83,21 @@ namespace DFHack
                       const char * _description,
                       command_function function_,
                       command_hotkey_guard guard_,
-                      virtual_identity *viewscreen_type_ = NULL)
+                      const char * usage_ = "")
             : name(_name), description(_description),
               function(function_), interactive(false),
-              guard(guard_), viewscreen_type(viewscreen_type_)
+              guard(guard_), usage(usage_)
         {
         }
+
+        bool isHotkeyCommand() const { return guard != NULL; }
 
         std::string name;
         std::string description;
         command_function function;
         bool interactive;
         command_hotkey_guard guard;
-        virtual_identity *viewscreen_type;
+        std::string usage;
     };
     class Plugin
     {
@@ -177,6 +181,9 @@ namespace DFHack
         std::string plugin_path;
     };
 
+    // Predefined hotkey guards
     DFHACK_EXPORT bool default_hotkey(Core *, df::viewscreen *);
+    DFHACK_EXPORT bool dwarfmode_hotkey(Core *, df::viewscreen *);
+    DFHACK_EXPORT bool cursor_hotkey(Core *, df::viewscreen *);
 }
 

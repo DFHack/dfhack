@@ -29,7 +29,6 @@ distribution.
 #include "Console.h"
 
 #include "DataDefs.h"
-#include "df/viewscreen.h"
 
 using namespace DFHack;
 
@@ -292,21 +291,22 @@ command_result Plugin::invoke( std::string & command, std::vector <std::string> 
                     CoreSuspender suspend(&c);
                     df::viewscreen *top = c.getTopViewscreen();
 
-                    if ((cmd.viewscreen_type && !cmd.viewscreen_type->is_instance(top))
-                        || !cmd.guard(&c, top))
+                    if (!cmd.guard(&c, top))
                     {
                         c.con.printerr("Could not invoke %s: unsuitable UI state.\n", command.c_str());
-                        cr = CR_FAILURE;
+                        cr = CR_WRONG_USAGE;
                     }
-                    else 
+                    else
                     {
                         cr = cmd.function(&c, parameters);
                     }
                 }
-                else 
+                else
                 {
                     cr = cmd.function(&c, parameters);
                 }
+                if (cr == CR_WRONG_USAGE && !cmd.usage.empty())
+                    c.con << "Usage:\n" << cmd.usage << flush;
                 break;
             }
         }
@@ -325,20 +325,14 @@ bool Plugin::can_invoke_hotkey( std::string & command, df::viewscreen *top )
         for (int i = 0; i < commands.size();i++)
         {
             PluginCommand &cmd = commands[i];
-            
             if(cmd.name == command)
             {
                 if (cmd.interactive)
                     cr = false;
                 else if (cmd.guard)
-                {
-                    cr = (!cmd.viewscreen_type || cmd.viewscreen_type->is_instance(top))
-                         && cmd.guard(&c, top);
-                }
-                else 
-                {
+                    cr = cmd.guard(&c, top);
+                else
                     cr = default_hotkey(&c, top);
-                }
                 break;
             }
         }

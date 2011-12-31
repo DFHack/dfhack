@@ -217,6 +217,27 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                           "  reload PLUGIN|all     - Reload a plugin or all loaded plugins.\n"
                          );
             }
+            else if (parts.size() == 1)
+            {
+                Plugin *plug = plug_mgr->getPluginByCommand(parts[0]);
+                if (plug) {
+                    for (int j = 0; j < plug->size();j++)
+                    {
+                        const PluginCommand & pcmd = (plug->operator[](j));
+                        if (pcmd.name != parts[0])
+                            continue;
+
+                        if (pcmd.isHotkeyCommand())
+                            con.color(Console::COLOR_CYAN);
+                        con.print("%s: %s\n",pcmd.name.c_str(), pcmd.description.c_str());
+                        con.reset_color();
+                        if (!pcmd.usage.empty())
+                            con << "Usage:\n" << pcmd.usage << flush;
+                        return;
+                    }
+                }
+                con.printerr("Unknown command: %s\n", parts[0].c_str());
+            }
             else
             {
                 con.printerr("not implemented yet\n");
@@ -316,7 +337,10 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                 else for (int j = 0; j < plug->size();j++)
                 {
                     const PluginCommand & pcmd = (plug->operator[](j));
+                    if (pcmd.isHotkeyCommand())
+                        con.color(Console::COLOR_CYAN);
                     con.print("  %-22s - %s\n",pcmd.name.c_str(), pcmd.description.c_str());
+                    con.reset_color();
                 }
             }
             else
@@ -344,7 +368,10 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     for (int j = 0; j < plug->size();j++)
                     {
                         const PluginCommand & pcmd = (plug->operator[](j));
+                        if (pcmd.isHotkeyCommand())
+                            con.color(Console::COLOR_CYAN);
                         con.print("  %-22s- %s\n",pcmd.name.c_str(), pcmd.description.c_str());
+                        con.reset_color();
                     }
                 }
             }
@@ -384,9 +411,18 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                     }
                 }
             }
+            else if (parts.size() == 2 && parts[0] == "list")
+            {
+                std::vector<std::string> list = core->ListKeyBindings(parts[1]);
+                if (list.empty())
+                    con << "No bindings." << endl;
+                for (unsigned i = 0; i < list.size(); i++)
+                    con << "  " << list[i] << endl;
+            }
             else
             {
                 con << "Usage:" << endl
+                    << "  keybinding list <key>" << endl
                     << "  keybinding clear <key> <key>..." << endl
                     << "  keybinding set <key> \"cmdline\" \"cmdline\"..." << endl
                     << "  keybinding add <key> \"cmdline\" \"cmdline\"..." << endl
@@ -968,18 +1004,35 @@ bool Core::AddKeyBinding(std::string keyspec, std::string cmdline)
 
     tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
 
+    // Don't add duplicates
+    std::vector<KeyBinding> &bindings = key_bindings[sym];
+    for (int i = bindings.size()-1; i >= 0; --i) {
+        if (bindings[i].modifiers == binding.modifiers &&
+            bindings[i].cmdline == cmdline)
+            return true;
+    }
+
     binding.cmdline = cmdline;
-    key_bindings[sym].push_back(binding);
+    bindings.push_back(binding);
     return true;
 }
 
-bool DFHack::default_hotkey(Core *, df::viewscreen *top)
+std::vector<std::string> Core::ListKeyBindings(std::string keyspec)
 {
-    // Default hotkey guard function
-    for (;top ;top = top->parent)
-        if (strict_virtual_cast<df::viewscreen_dwarfmodest>(top))
-            return true;
-    return false;
+    int sym, mod;
+    std::vector<std::string> rv;
+    if (!parseKeySpec(keyspec, &sym, &mod))
+        return rv;
+
+    tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
+
+    std::vector<KeyBinding> &bindings = key_bindings[sym];
+    for (int i = bindings.size()-1; i >= 0; --i) {
+        if (bindings[i].modifiers == mod)
+            rv.push_back(bindings[i].cmdline);
+    }
+
+    return rv;
 }
 
 ////////////////

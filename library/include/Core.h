@@ -141,6 +141,7 @@ namespace DFHack
 
         bool ClearKeyBindings(std::string keyspec);
         bool AddKeyBinding(std::string keyspec, std::string cmdline);
+        std::vector<std::string> ListKeyBindings(std::string keyspec);
 
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
         df::viewscreen *getTopViewscreen() { return top_viewscreen; }

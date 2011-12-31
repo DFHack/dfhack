@@ -30,8 +30,17 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("vdig","Dig a whole vein.",vdig));
-    commands.push_back(PluginCommand("vdigx","Dig a whole vein, follow vein through z-levels with stairs.",vdigx));
+    commands.push_back(PluginCommand(
+        "vdig","Dig a whole vein.",vdig,cursor_hotkey,
+        "  Designates a whole vein under the cursor for digging.\n"
+        "Options:\n"
+        "  x - follow veins through z-levels with stairs.\n"
+    ));
+    commands.push_back(PluginCommand(
+        "vdigx","Dig a whole vein, following through z-levels.",vdigx,cursor_hotkey,
+        "  Designates a whole vein under the cursor for digging.\n"
+        "  Also follows the vein between z-levels with stairs, like 'vdig x' would.\n"
+    ));
     commands.push_back(PluginCommand("expdig","Select or designate an exploratory pattern. Use 'expdig ?' for help.",expdig));
     commands.push_back(PluginCommand("digcircle","Dig desingate a circle (filled or hollow) with given radius.",digcircle));
     //commands.push_back(PluginCommand("autodig","Mark a tile for continuous digging.",autodig));
@@ -760,18 +769,10 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
     c->Resume();
     return CR_OK;
 }
+
 DFhackCExport command_result vdigx (Core * c, vector <string> & parameters)
 {
-    for(int i = 0; i < parameters.size();i++)
-    {
-        if(parameters[i] == "help" || parameters[i] == "?")
-        {
-            c->con.print("Designates a whole vein under the cursor for digging.\n"
-            "Also follows the vein between z-levels with stairs, like 'vdig x' would.\n"
-            );
-            return CR_OK;
-        }
-    }
+    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     vector <string> lol;
     lol.push_back("x");
     return vdig(c,lol);
@@ -779,32 +780,25 @@ DFhackCExport command_result vdigx (Core * c, vector <string> & parameters)
 
 DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
 {
+    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     uint32_t x_max,y_max,z_max;
     bool updown = false;
     for(int i = 0; i < parameters.size();i++)
     {
         if(parameters.size() && parameters[0]=="x")
             updown = true;
-        else if(parameters[i] == "help" || parameters[i] == "?")
-        {
-            c->con.print("Designates a whole vein under the cursor for digging.\n"
-                         "Options:\n"
-                         "x        - follow veins through z-levels with stairs.\n"
-            );
-            return CR_OK;
-        }
+        else
+            return CR_WRONG_USAGE;
     }
 
     Console & con = c->con;
 
-    c->Suspend();
     DFHack::Maps * Maps = c->getMaps();
     DFHack::Gui * Gui = c->getGui();
     // init the map
     if(!Maps->Start())
     {
         con.printerr("Can't init map. Make sure you have a map loaded in DF.\n");
-        c->Resume();
         return CR_FAILURE;
     }
 
@@ -816,14 +810,12 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
     while(cx == -30000)
     {
         con.printerr("Cursor is not active. Point the cursor at a vein.\n");
-        c->Resume();
         return CR_FAILURE;
     }
     DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
     if(xy.x == 0 || xy.x == tx_max - 1 || xy.y == 0 || xy.y == ty_max - 1)
     {
         con.printerr("I won't dig the borders. That would be cheating!\n");
-        c->Resume();
         return CR_FAILURE;
     }
     MapExtras::MapCache * MCache = new MapExtras::MapCache(Maps);
@@ -834,7 +826,6 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
     {
         con.printerr("This tile is not a vein.\n");
         delete MCache;
-        c->Resume();
         return CR_FAILURE;
     }
     con.print("%d/%d/%d tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, des.whole);
@@ -944,7 +935,6 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
         }
     }
     MCache->WriteAll();
-    c->Resume();
     return CR_OK;
 }
 

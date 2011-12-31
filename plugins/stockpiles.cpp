@@ -36,8 +36,12 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
     if (world && ui) {
         commands.push_back(
             PluginCommand(
-                "copystock", "Copy stockpile under cursor.", copystock,
-                copystock_guard, &df::viewscreen_dwarfmodest::_identity
+                "copystock", "Copy stockpile under cursor.",
+                copystock, copystock_guard,
+                "  - In 'q' or 't' mode: select a stockpile and invoke in order\n"
+                "    to switch to the 'p' stockpile creation mode, and initialize\n"
+                "    the custom settings from the selected stockpile.\n"
+                "  - In 'p': invoke in order to switch back to 'q'.\n"
             )
         );
     }
@@ -51,9 +55,12 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-static bool copystock_guard(Core *c, df::viewscreen *)
+static bool copystock_guard(Core *c, df::viewscreen *top)
 {
     using namespace ui_sidebar_mode;
+
+    if (!dwarfmode_hotkey(c,top))
+        return false;
 
     switch (ui->main.mode) {
     case Stockpiles:
@@ -63,12 +70,12 @@ static bool copystock_guard(Core *c, df::viewscreen *)
         return !!virtual_cast<building_stockpilest>(world->selected_building);
     default:
         return false;
-    }    
+    }
 }
 
 static command_result copystock(Core * c, vector <string> & parameters)
 {
-    /* HOTKEY COMMAND: CORE ALREADY SUSPENDED */
+    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
 
     // For convenience: when used in the stockpiles mode, switch to 'q'
     if (ui->main.mode == ui_sidebar_mode::Stockpiles) {
@@ -81,9 +88,10 @@ static command_result copystock(Core * c, vector <string> & parameters)
     }
 
     building_stockpilest *sp = virtual_cast<building_stockpilest>(world->selected_building);
-    if (!sp) {
+    if (!sp)
+    {
         c->con.printerr("Selected building isn't a stockpile.\n");
-        return CR_FAILURE;
+        return CR_WRONG_USAGE;
     }
 
     ui->stockpile.custom_settings = sp->settings;

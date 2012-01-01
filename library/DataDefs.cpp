@@ -160,17 +160,21 @@ void virtual_identity::Init(Core *core)
     }
 }
 
-#define GLOBAL(name,tname) \
-    df::tname *df::global::name = NULL;
+#define SIMPLE_GLOBAL(name,tname) \
+    tname *df::global::name = NULL;
+#define GLOBAL(name,tname) SIMPLE_GLOBAL(name,df::tname)
 DF_KNOWN_GLOBALS
 #undef GLOBAL
+#undef SIMPLE_GLOBAL
 
 void DFHack::InitDataDefGlobals(Core *core) {
     OffsetGroup *global_table = core->vinfo->getGroup("global");
     uint32_t tmp;
 
-#define GLOBAL(name,tname) \
-    if (global_table->getSafeAddress(#name,tmp)) df::global::name = (df::tname*)tmp;
+#define SIMPLE_GLOBAL(name,tname) \
+    if (global_table->getSafeAddress(#name,tmp)) df::global::name = (tname*)tmp;
+#define GLOBAL(name,tname) SIMPLE_GLOBAL(name,df::tname)
 DF_KNOWN_GLOBALS
 #undef GLOBAL
+#undef SIMPLE_GLOBAL
 }

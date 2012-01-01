@@ -175,11 +175,18 @@ namespace df {
     GLOBAL(ui,ui) \
     GLOBAL(gview,interface) \
     GLOBAL(init,init) \
-    GLOBAL(d_init,d_init)
+    GLOBAL(d_init,d_init) \
+    SIMPLE_GLOBAL(ui_look_cursor,int) \
+    SIMPLE_GLOBAL(ui_workshop_job_cursor,int) \
+    GLOBAL(ui_sidebar_menus,ui_sidebar_menus) \
+    GLOBAL(ui_build_selector,ui_build_selector) \
+    GLOBAL(ui_look_list,ui_look_list)
 
-#define GLOBAL(name,tname) \
-    struct tname; \
+#define SIMPLE_GLOBAL(name,tname) \
     namespace global { extern DFHACK_EXPORT tname *name; }
+#define GLOBAL(name,tname) \
+    struct tname; SIMPLE_GLOBAL(name,tname)
 DF_KNOWN_GLOBALS
 #undef GLOBAL
+#undef SIMPLE_GLOBAL
 }

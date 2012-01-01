@@ -928,7 +928,7 @@ bool Core::SelectHotkey(int sym, int modifiers)
                 if (modifiers & 1)
                     idx += 8;
 
-                if (!strict_virtual_cast<df::viewscreen_dwarfmodest>(screen) ||
+                if (strict_virtual_cast<df::viewscreen_dwarfmodest>(screen) &&
                     df::global::ui->main.mode != ui_sidebar_mode::Hotkeys)
                 {
                     cmd = df::global::ui->main.hotkeys[idx].name;

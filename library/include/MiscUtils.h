@@ -102,3 +102,6 @@ CT *binsearch_in_vector(std::vector<CT*> &vec, FT CT::*field, AT value)
  * source: http://stackoverflow.com/questions/1861294/how-to-calculate-execution-time-of-a-code-snippet-in-c
  */
 DFHACK_EXPORT uint64_t GetTimeMs64();
+
+DFHACK_EXPORT std::string stl_sprintf(const char *fmt, ...);
+DFHACK_EXPORT std::string stl_vsprintf(const char *fmt, va_list args);

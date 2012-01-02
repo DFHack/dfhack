@@ -111,10 +111,14 @@ namespace DFHack
         return T::_identity.is_instance(ptr) ? static_cast<T*>(ptr) : NULL;
     }
 
+#define VIRTUAL_CAST_VAR(var,type,input) type *var = virtual_cast<type>(input)
+
     template<class T>
     inline T *strict_virtual_cast(virtual_ptr ptr) {
         return T::_identity.is_direct_instance(ptr) ? static_cast<T*>(ptr) : NULL;
     }
+
+#define STRICT_VIRTUAL_CAST_VAR(var,type,input) type *var = strict_virtual_cast<type>(input)
 
     void InitDataDefGlobals(Core *core);
 

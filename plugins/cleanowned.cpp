@@ -8,17 +8,17 @@
 #include <set>
 using namespace std;
 
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
 #include <vector>
 #include <string>
-#include <dfhack/modules/Maps.h>
-#include <dfhack/modules/Items.h>
-#include <dfhack/modules/Units.h>
-#include <dfhack/modules/Materials.h>
-#include <dfhack/modules/Translation.h>
+#include <modules/Maps.h>
+#include <modules/Items.h>
+#include <modules/Units.h>
+#include <modules/Materials.h>
+#include <modules/Translation.h>
 using namespace DFHack;
 
 DFhackCExport command_result df_cleanowned (Core * c, vector <string> & parameters);

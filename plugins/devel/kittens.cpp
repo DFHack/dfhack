@@ -1,13 +1,13 @@
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
+#include "Core.h"
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "MiscUtils.h"
 #include <vector>
 #include <string>
-#include "dfhack/extra/stopwatch.h"
-#include "dfhack/modules/Maps.h"
-#include "dfhack/modules/Items.h"
-#include <dfhack/modules/Gui.h>
+#include "modules/Maps.h"
+#include "modules/Items.h"
+#include <modules/Gui.h>
 #include <llimits.h>
 
 using std::vector;
@@ -329,8 +329,8 @@ DFhackCExport command_result kittens (Core * c, vector <string> & parameters)
     }
 }
 
-#include "dfhack/modules/Units.h"
-#include "dfhack/VersionInfo.h"
+#include "modules/Units.h"
+#include "VersionInfo.h"
 #include <stddef.h>
 
 command_result test_creature_offsets(Core* c, vector< string >& parameters)

@@ -3,8 +3,8 @@
 
 #include <map>
 
-#include <dfhack/Core.h>
-#include <dfhack/Process.h>
+#include "Core.h"
+#include <MemAccess.h>
 #include "luamain.h"
 #include "OutFile.h"
 #include "bit.h"

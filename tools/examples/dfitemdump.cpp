@@ -12,7 +12,7 @@
 using namespace std;
 #define DFHACK_WANT_MISCUTILS
 #include <DFHack.h>
-#include <dfhack/DFVector.h>
+#include <DFVector.h>
 
 int main (int argc, char *argv[])
 {

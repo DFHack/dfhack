@@ -1,8 +1,8 @@
 #ifndef HEXSEARCH_H
 #define HEXSEARCH_H
 #include <vector>
-#include "dfhack/Core.h" //for some reason process.h needs core
-#include "dfhack/Process.h"
+#include "Core.h" //for some reason process.h needs core
+#include "MemAccess.h"
 
 //(not yet)implemented using Boyer-Moore algorithm
 

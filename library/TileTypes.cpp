@@ -23,8 +23,8 @@ distribution.
 */
 
 #include "Internal.h"
-#include "dfhack/TileTypes.h"
-#include "dfhack/Export.h"
+#include "TileTypes.h"
+#include "Export.h"
 
 namespace DFHack
 {

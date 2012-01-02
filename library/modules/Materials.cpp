@@ -31,14 +31,14 @@ distribution.
 #include <cstring>
 using namespace std;
 
-#include "dfhack/Types.h"
-#include "dfhack/modules/Materials.h"
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Process.h"
-#include "dfhack/Vector.h"
-#include <dfhack/Error.h>
+#include "Types.h"
+#include "modules/Materials.h"
+#include "VersionInfo.h"
+#include "MemAccess.h"
+#include "Vector.h"
+#include "Error.h"
 #include "ModuleFactory.h"
-#include <dfhack/Core.h>
+#include "Core.h"
 
 using namespace DFHack;
 

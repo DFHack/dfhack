@@ -30,13 +30,13 @@ distribution.
 #include <cstring>
 using namespace std;
 
-#include "dfhack/modules/World.h"
-#include "dfhack/Process.h"
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Types.h"
-#include "dfhack/Error.h"
+#include "modules/World.h"
+#include "MemAccess.h"
+#include "VersionInfo.h"
+#include "Types.h"
+#include "Error.h"
 #include "ModuleFactory.h"
-#include <dfhack/Core.h>
+#include "Core.h"
 
 using namespace DFHack;
 

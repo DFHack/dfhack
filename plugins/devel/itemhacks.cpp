@@ -1,8 +1,8 @@
-#include <dfhack/Core.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
-#include <dfhack/modules/Items.h>
-#include <dfhack/modules/Gui.h>
+#include "Core.h"
+#include <Export.h>
+#include <PluginManager.h>
+#include <modules/Items.h>
+#include <modules/Gui.h>
 #include <vector>
 #include <string>
 #include <string.h>

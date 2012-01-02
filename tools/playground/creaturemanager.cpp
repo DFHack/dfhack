@@ -70,7 +70,7 @@ using namespace std;
 
 #define DFHACK_WANT_MISCUTILS
 #include <DFHack.h>
-#include <dfhack/modules/Units.h>
+#include <modules/Units.h>
 
 /* Note about magic numbers:
  * If you have an idea how to better solve this, tell me. Currently I'd be

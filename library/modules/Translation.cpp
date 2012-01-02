@@ -30,13 +30,13 @@ distribution.
 #include <cassert>
 using namespace std;
 
-#include "dfhack/modules/Translation.h"
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Process.h"
-#include "dfhack/Vector.h"
-#include "dfhack/Types.h"
+#include "modules/Translation.h"
+#include "VersionInfo.h"
+#include "MemAccess.h"
+#include "Vector.h"
+#include "Types.h"
 #include "ModuleFactory.h"
-#include <dfhack/Core.h>
+#include "Core.h"
 using namespace DFHack;
 
 Module* DFHack::createTranslation()

@@ -61,8 +61,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <errno.h>
 #include <deque>
 
-#include "dfhack/Console.h"
-#include "dfhack/FakeSDL.h"
+#include "Console.h"
+#include "Hooks.h"
 using namespace DFHack;
 
 #include "tinythread.h"

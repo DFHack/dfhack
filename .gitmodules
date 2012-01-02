@@ -4,3 +4,6 @@
 [submodule "plugins/df2mc"]
 	path = plugins/df2mc
 	url = git://github.com/peterix/DF2MC.git
+[submodule "library/xml"]
+	path = library/xml
+	url = git://github.com/peterix/df-structures.git

@@ -9,7 +9,7 @@
 using namespace std;
 
 #include <DFHack.h>
-#include <dfhack/DFProcessEnumerator.h>
+#include <DFProcessEnumerator.h>
 using namespace DFHack;
 #ifndef LINUX_BUILD
 #endif

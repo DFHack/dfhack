@@ -30,14 +30,50 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "dfhack/modules/Gui.h"
-#include "dfhack/Process.h"
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Types.h"
-#include "dfhack/Error.h"
+#include "modules/Gui.h"
+#include "MemAccess.h"
+#include "VersionInfo.h"
+#include "Types.h"
+#include "Error.h"
 #include "ModuleFactory.h"
-#include "dfhack/Core.h"
+#include "Core.h"
+#include "PluginManager.h"
 using namespace DFHack;
+
+#include "DataDefs.h"
+#include "df/cursor.h"
+#include "df/viewscreen_dwarfmodest.h"
+
+// Predefined common guard functions
+
+bool DFHack::default_hotkey(Core *, df::viewscreen *top)
+{
+    // Default hotkey guard function
+    for (;top ;top = top->parent)
+        if (strict_virtual_cast<df::viewscreen_dwarfmodest>(top))
+            return true;
+    return false;
+}
+
+bool DFHack::dwarfmode_hotkey(Core *, df::viewscreen *top)
+{
+    // Require the main dwarf mode screen
+    return !!strict_virtual_cast<df::viewscreen_dwarfmodest>(top);
+}
+
+bool DFHack::cursor_hotkey(Core *c, df::viewscreen *top)
+{
+    if (!dwarfmode_hotkey(c, top))
+        return false;
+
+    // Also require the cursor.
+    if (!df::global::cursor || df::global::cursor->x == -30000)
+        return false;
+
+    return true;
+}
+
+//
 
 Module* DFHack::createGui()
 {

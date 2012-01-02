@@ -91,10 +91,10 @@ extern "C" __declspec(dllimport) NTSTATUS __stdcall RtlDestroyQueryDebugBuffer( 
 #include <map>
 using namespace std;
 
-#include "dfhack/VersionInfo.h"
-#include "dfhack/VersionInfoFactory.h"
-#include "dfhack/Error.h"
-#include "dfhack/Process.h"
+#include "VersionInfo.h"
+#include "VersionInfoFactory.h"
+#include "Error.h"
+#include "MemAccess.h"
 using namespace DFHack;
 namespace DFHack
 {

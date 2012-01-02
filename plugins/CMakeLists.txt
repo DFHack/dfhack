@@ -59,6 +59,8 @@ DFHACK_PLUGIN(filltraffic filltraffic.cpp)
 DFHACK_PLUGIN(seedwatch seedwatch.cpp)
 DFHACK_PLUGIN(initflags initflags.cpp)
 DFHACK_PLUGIN(stockpiles stockpiles.cpp)
+DFHACK_PLUGIN(rename rename.cpp)
+DFHACK_PLUGIN(fixwagons fixwagons.cpp)
 #DFHACK_PLUGIN(versionosd versionosd.cpp)
 
 add_subdirectory(export)

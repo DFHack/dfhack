@@ -1078,12 +1078,21 @@
             <Group name="Notes" description="In-game notes">
                 <Address name="vector"/>
             </Group>
+            <Group name='vtable'>
+            </Group>
             <Group name='global'>
+                <Address name='cursor'/>
+                <Address name='selection_rect'/>
                 <Address name='world'/>
                 <Address name='ui'/>
                 <Address name='gview'/>
                 <Address name='init'/>
                 <Address name='d_init'/>
+                <Address name='ui_sidebar_menus'/>
+                <Address name='ui_build_selector'/>
+                <Address name='ui_look_list'/>
+                <Address name='ui_look_cursor'/>
+                <Address name='ui_workshop_job_cursor'/>
             </Group>
         </Offsets>
     </Base>
@@ -2316,12 +2325,24 @@
             <Group name="World">
                 <Address name="save_folder" value="0x1847A40" />
             </Group>
+            <Group name='vtable'>
+            </Group>
             <Group name='global'>
+                <!-- .data -->
+                <Address name='cursor' value='0xb347f0'/>
+                <Address name='selection_rect' value='0xb347fc'/>
+                <!-- .bss -->
                 <Address name='world' value='0x16b0a58'/>
                 <Address name='ui' value='0x14ee7e0'/>
                 <Address name='gview' value='0x14f6070'/>
                 <Address name='init' value='0x184ae58'/>
                 <Address name='d_init' value='0x1848350'/>
+
+                <Address name='ui_sidebar_menus' value='0x1848648'/>
+                <Address name='ui_build_selector' value='0x1849e88'/>
+                <Address name='ui_look_list' value='0x185c104'/>
+                <Address name='ui_look_cursor' value='0xedeb98'/>
+                <Address name='ui_workshop_job_cursor' value='0x14ec79c'/>
             </Group>
         </Offsets>
         cmake
@@ -3188,12 +3209,24 @@
             <Group name="Notes">
                 <Address name="vector" value="0x93f635c"/>
             </Group>
+            <Group name='vtable'>
+            </Group>
             <Group name='global'>
+                <!-- .data -->
+                <Address name='cursor' value='0x8c3de60'/>
+                <Address name='selection_rect' value='0x8c3de70'/>
+                <!-- .bss -->
                 <Address name='world' value='0x93f77a0'/>
                 <Address name='ui' value='0x93f0780'/>
                 <Address name='gview' value='0x8c3e900'/>
                 <Address name='init' value='0x959c2a0'/>
                 <Address name='d_init' value='0x959d340'/>
+
+                <Address name='ui_sidebar_menus' value='0x958aa40'/>
+                <Address name='ui_build_selector' value='0x8df9b20'/>
+                <Address name='ui_look_list' value='0x961d840'/>
+                <!--<Address name='ui_look_cursor' value=''/>-->
+                <Address name='ui_workshop_job_cursor' value='0x93f0644'/>
             </Group>
         </Offsets>
     </Version>

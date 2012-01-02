@@ -23,10 +23,13 @@ distribution.
 */
 
 #include "Internal.h"
-#include "dfhack/Core.h"
-#include "dfhack/Process.h"
-#include "dfhack/PluginManager.h"
-#include "dfhack/Console.h"
+#include "Core.h"
+#include "MemAccess.h"
+#include "PluginManager.h"
+#include "Console.h"
+
+#include "DataDefs.h"
+
 using namespace DFHack;
 
 #include <string>
@@ -135,6 +138,7 @@ Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _f
     plugin_shutdown = 0;
     plugin_status = 0;
     plugin_onupdate = 0;
+    plugin_onstatechange = 0;
     state = PS_UNLOADED;
     access = new RefLock();
 }
@@ -192,6 +196,7 @@ bool Plugin::load()
     plugin_status = (command_result (*)(Core *, std::string &)) LookupPlugin(plug, "plugin_status");
     plugin_onupdate = (command_result (*)(Core *)) LookupPlugin(plug, "plugin_onupdate");
     plugin_shutdown = (command_result (*)(Core *)) LookupPlugin(plug, "plugin_shutdown");
+    plugin_onstatechange = (command_result (*)(Core *, state_change_event)) LookupPlugin(plug, "plugin_onstatechange");
     //name = _PlugName();
     plugin_lib = plug;
     if(plugin_init(&c,commands) == CR_OK)
@@ -232,7 +237,7 @@ bool Plugin::unload()
             ClosePlugin(plugin_lib);
             state = PS_UNLOADED;
             access->unlock();
-            return false;
+            return true;
         }
         else
         {
@@ -271,13 +276,63 @@ command_result Plugin::invoke( std::string & command, std::vector <std::string> 
     {
         for (int i = 0; i < commands.size();i++)
         {
-            if(commands[i].name == command)
+            PluginCommand &cmd = commands[i];
+            if(cmd.name == command)
             {
                 // running interactive things from some other source than the console would break it
-                if(!interactive_ && commands[i].interactive)
+                if(!interactive_ && cmd.interactive)
                     cr = CR_WOULD_BREAK;
+                else if (cmd.guard)
+                {
+                    // Execute hotkey commands in a way where they can
+                    // expect their guard conditions to be matched,
+                    // so as to avoid duplicating checks.
+                    // This means suspending the core beforehand.
+                    CoreSuspender suspend(&c);
+                    df::viewscreen *top = c.getTopViewscreen();
+
+                    if (!cmd.guard(&c, top))
+                    {
+                        c.con.printerr("Could not invoke %s: unsuitable UI state.\n", command.c_str());
+                        cr = CR_WRONG_USAGE;
+                    }
+                    else
+                    {
+                        cr = cmd.function(&c, parameters);
+                    }
+                }
                 else
-                    cr = commands[i].function(&c, parameters);
+                {
+                    cr = cmd.function(&c, parameters);
+                }
+                if (cr == CR_WRONG_USAGE && !cmd.usage.empty())
+                    c.con << "Usage:\n" << cmd.usage << flush;
+                break;
+            }
+        }
+    }
+    access->lock_sub();
+    return cr;
+}
+
+bool Plugin::can_invoke_hotkey( std::string & command, df::viewscreen *top )
+{
+    Core & c = Core::getInstance();
+    bool cr = false;
+    access->lock_add();
+    if(state == PS_LOADED)
+    {
+        for (int i = 0; i < commands.size();i++)
+        {
+            PluginCommand &cmd = commands[i];
+            if(cmd.name == command)
+            {
+                if (cmd.interactive)
+                    cr = false;
+                else if (cmd.guard)
+                    cr = cmd.guard(&c, top);
+                else
+                    cr = default_hotkey(&c, top);
                 break;
             }
         }
@@ -294,6 +349,19 @@ command_result Plugin::on_update()
     if(state == PS_LOADED && plugin_onupdate)
     {
         cr = plugin_onupdate(&c);
+    }
+    access->lock_sub();
+    return cr;
+}
+
+command_result Plugin::on_state_change(state_change_event event)
+{
+    Core & c = Core::getInstance();
+    command_result cr = CR_NOT_IMPLEMENTED;
+    access->lock_add();
+    if(state == PS_LOADED && plugin_onstatechange)
+    {
+        cr = plugin_onstatechange(&c, event);
     }
     access->lock_sub();
     return cr;
@@ -348,19 +416,27 @@ Plugin *PluginManager::getPluginByName (const std::string & name)
     return 0;
 }
 
+Plugin *PluginManager::getPluginByCommand(const std::string &command)
+{
+    tthread::lock_guard<tthread::mutex> lock(*cmdlist_mutex);
+    map <string, Plugin *>::iterator iter = belongs.find(command);
+    if (iter != belongs.end())
+        return iter->second;
+    else
+        return NULL;    
+}
+
 // FIXME: handle name collisions...
 command_result PluginManager::InvokeCommand( std::string & command, std::vector <std::string> & parameters, bool interactive)
 {
-    command_result cr = CR_NOT_IMPLEMENTED;
-    Core * c = &Core::getInstance();
-    cmdlist_mutex->lock();
-    map <string, Plugin *>::iterator iter = belongs.find(command);
-    if(iter != belongs.end())
-    {
-        cr = iter->second->invoke(command, parameters, interactive);
-    }
-    cmdlist_mutex->unlock();
-    return cr;
+    Plugin *plugin = getPluginByCommand(command);
+    return plugin ? plugin->invoke(command, parameters, interactive) : CR_NOT_IMPLEMENTED;
+}
+
+bool PluginManager::CanInvokeHotkey(std::string &command, df::viewscreen *top)
+{
+    Plugin *plugin = getPluginByCommand(command);
+    return plugin ? plugin->can_invoke_hotkey(command, top) : false;
 }
 
 void PluginManager::OnUpdate( void )
@@ -370,6 +446,15 @@ void PluginManager::OnUpdate( void )
         all_plugins[i]->on_update();
     }
 }
+
+void PluginManager::OnStateChange( state_change_event event )
+{
+    for(int i = 0; i < all_plugins.size(); i++)
+    {
+        all_plugins[i]->on_state_change(event);
+    }
+}
+
 // FIXME: doesn't check name collisions!
 void PluginManager::registerCommands( Plugin * p )
 {

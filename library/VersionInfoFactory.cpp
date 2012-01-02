@@ -31,9 +31,9 @@ distribution.
 #include <iostream>
 using namespace std;
 
-#include "dfhack/VersionInfoFactory.h"
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Error.h"
+#include "VersionInfoFactory.h"
+#include "VersionInfo.h"
+#include "Error.h"
 using namespace DFHack;
 
 #include <tinyxml.h>

@@ -178,6 +178,7 @@ namespace df {
     GLOBAL(d_init,d_init) \
     SIMPLE_GLOBAL(ui_look_cursor,int) \
     SIMPLE_GLOBAL(ui_workshop_job_cursor,int) \
+    SIMPLE_GLOBAL(ui_workshop_in_add,bool) \
     GLOBAL(ui_sidebar_menus,ui_sidebar_menus) \
     GLOBAL(ui_build_selector,ui_build_selector) \
     GLOBAL(ui_look_list,ui_look_list)

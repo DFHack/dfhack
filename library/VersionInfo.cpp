@@ -31,9 +31,9 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Error.h"
-#include "dfhack/Process.h"
+#include "VersionInfo.h"
+#include "Error.h"
+#include "MemAccess.h"
 using namespace DFHack;
 
 //Inital amount of space in levels vector (since we usually know the number, efficient!)
@@ -598,7 +598,48 @@ void OffsetGroup::setInvalid(INVAL_TYPE invalidity)
         (*iter4).second->setInvalid(invalidity);
     }
 }
-
+std::vector<OffsetKey> OffsetGroup::getKeys() const
+{
+	std::vector<OffsetKey> ret;
+	OffsetKey K;
+	K.keytype=IS_ADDRESS;
+    for(uint32_Iter iter = OGd->addresses.begin(); iter != OGd->addresses.end(); iter++)
+    {
+		K.key=iter->first;
+		K.inval=iter->second.first;
+		ret.push_back(K);
+    }
+	K.keytype=IS_OFFSET;
+    for(int32_Iter iter = OGd->offsets.begin(); iter != OGd->offsets.end(); iter++)
+    {
+		K.key=iter->first;
+		K.inval=iter->second.first;
+		ret.push_back(K);
+    }
+	K.keytype=IS_HEX_VAL;
+    for(uint32_Iter iter = OGd->hexvals.begin(); iter != OGd->hexvals.end(); iter++)
+    {
+        K.key=iter->first;
+		K.inval=iter->second.first;
+		ret.push_back(K);
+    }
+	K.keytype=IS_STRING;
+    for(strings_Iter iter = OGd->strings.begin(); iter != OGd->strings.end(); iter++)
+    {
+        K.key=iter->first;
+		K.inval=iter->second.first;
+		ret.push_back(K);
+    }
+	K.keytype=IS_GROUP;
+	K.inval=IS_VALID;
+    for(groups_Iter iter = OGd->groups.begin(); iter != OGd->groups.end(); iter++)
+    {
+        K.key=iter->first;
+		
+		ret.push_back(K);
+    }
+	return ret;
+}
 /*
  * Private data
  */

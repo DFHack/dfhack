@@ -8,19 +8,19 @@
 #include <set>
 using namespace std;
 
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <dfhack/modules/Maps.h>
+#include <modules/Maps.h>
 
-#include <dfhack/modules/Gui.h>
-#include <dfhack/modules/Items.h>
-#include <dfhack/modules/Materials.h>
-#include <dfhack/extra/MapExtras.h>
+#include <modules/Gui.h>
+#include <modules/Items.h>
+#include <modules/Materials.h>
+#include <modules/MapCache.h>
 
 using namespace DFHack;
 using MapExtras::Block;

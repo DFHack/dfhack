@@ -29,13 +29,13 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Types.h"
-#include "dfhack/Error.h"
-#include "dfhack/Process.h"
-#include "dfhack/modules/Vermin.h"
+#include "VersionInfo.h"
+#include "Types.h"
+#include "Error.h"
+#include "MemAccess.h"
+#include "modules/Vermin.h"
 #include "ModuleFactory.h"
-#include "dfhack/Core.h"
+#include "Core.h"
 using namespace DFHack;
 
 struct Vermin::Private
@@ -106,7 +106,6 @@ SpawnPoints* Vermin::getSpawnPoints()
         cerr << "Couldn't get spawn points: Vermin module not inited" << endl;
         return NULL;
     }
-
     return new SpawnPoints(this);
 }
 
@@ -120,15 +119,11 @@ SpawnPoints::SpawnPoints(Vermin* v_)
         cerr << "Couldn't get spawn points: Vermin module not inited" << endl;
         return;
     }
-
-    //p_sp = new DfVector <uint32_t> (v->d->spawn_points_vector);
-    //p_sp = new vector <void*> (v->d->spawn_points_vector);
     p_sp = (vector <void*>*) (v->d->spawn_points_vector);
 }
 
 SpawnPoints::~SpawnPoints()
 {
-    // Do NOT delete p_sp; it's a pointer to memory the game owns.
 }
 
 size_t SpawnPoints::size()

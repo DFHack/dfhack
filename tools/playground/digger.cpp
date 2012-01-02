@@ -13,7 +13,7 @@
 using namespace std;
 
 #include <DFHack.h>
-#include <dfhack/DFTileTypes.h>
+#include <DFTileTypes.h>
 #include <argstream.h>
 
 // counts the occurances of a certain element in a vector

@@ -16,8 +16,8 @@
 using namespace std;
 
 #include <DFHack.h>
-#include <dfhack/DFTileTypes.h>
-#include <dfhack/modules/Gui.h>
+#include <DFTileTypes.h>
+#include <modules/Gui.h>
 using namespace DFHack;
 
 

@@ -1,9 +1,9 @@
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
-#include <dfhack/Process.h>
-#include "dfhack/extra/stopwatch.h"
+#include "Core.h"
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "MemAccess.h"
+#include "MiscUtils.h"
 #include <vector>
 #include <string>
 
@@ -18,6 +18,7 @@
 #include "lua_Misc.h"
 #include "lua_VersionInfo.h"
 #include "functioncall.h"
+#include "lua_FunctionCall.h"
 
 using std::vector;
 using std::string;
@@ -45,6 +46,8 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 	lua::RegisterHexsearch(st);
 	lua::RegisterMisc(st);
 	lua::RegisterVersionInfo(st);
+	lua::RegisterFunctionCall(st);
+
 	#ifdef LINUX_BUILD
 		st.push(1);
 		st.setglobal("LINUX");
@@ -53,7 +56,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 		st.setglobal("WINDOWS");
 	#endif
 
-    commands.push_back(PluginCommand("dfusion","Init dfusion system. Use 'dfusion thready' to spawn a different thread.",dfusion));
+    commands.push_back(PluginCommand("dfusion","Init dfusion system. Use 'dfusion init' to run dfusion in init mode (not interactive).",dfusion));
 	commands.push_back(PluginCommand("lua", "Run interactive interpreter. Use 'lua <filename>' to run <filename> instead.",lua_run));
 
 	mymutex=new tthread::mutex;
@@ -171,13 +174,18 @@ void RunDfusion(void *p)
 }
 DFhackCExport command_result dfusion (Core * c, vector <string> & parameters)
 {
-	if(thread_dfusion==0)
-		thread_dfusion=new tthread::thread(RunDfusion,c);
-	if(parameters[0]!="thready")
+	if(parameters[0]=="init")
 	{
-		thread_dfusion->join();
-		delete thread_dfusion;
-		thread_dfusion=0;
+		lua::state s=lua::glua::Get();
+		s.push(1);
+		s.setglobal("INIT");
 	}
+	else
+	{
+		lua::state s=lua::glua::Get();
+		s.push();
+		s.setglobal("INIT");
+	}
+	RunDfusion(c);
 	return CR_OK;
 }

@@ -1,7 +1,7 @@
 #ifndef LUA_VERSIONINFO_H
 #define LUA_VERSIONINFO_H
-#include <dfhack/Core.h>
-#include <dfhack/VersionInfo.h>
+#include "Core.h"
+#include <VersionInfo.h>
 #include "luamain.h"
 namespace lua
 {
@@ -28,6 +28,7 @@ public:
     int getName(lua_State *L);
     int getFullName(lua_State *L);
     int getParent(lua_State *L);
+	int getKeys(lua_State *L);
 
     DEF_LUNE(OffsetGroup);
 };

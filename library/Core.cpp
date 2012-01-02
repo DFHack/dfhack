@@ -34,30 +34,37 @@ distribution.
 #include <sstream>
 using namespace std;
 
-#include "dfhack/Error.h"
-#include "dfhack/Process.h"
-#include "dfhack/Core.h"
-#include "dfhack/DataDefs.h"
-#include "dfhack/Console.h"
-#include "dfhack/Module.h"
-#include "dfhack/VersionInfoFactory.h"
-#include "dfhack/VersionInfo.h"
-#include "dfhack/PluginManager.h"
+#include "Error.h"
+#include "MemAccess.h"
+#include "Core.h"
+#include "DataDefs.h"
+#include "Console.h"
+#include "Module.h"
+#include "VersionInfoFactory.h"
+#include "VersionInfo.h"
+#include "PluginManager.h"
 #include "ModuleFactory.h"
-#include "dfhack/modules/Gui.h"
-#include "dfhack/modules/World.h"
-#include "dfhack/modules/Graphic.h"
+#include "modules/Gui.h"
+#include "modules/World.h"
+#include "modules/Graphic.h"
 using namespace DFHack;
 
-#include "dfhack/SDL_fakes/events.h"
+#include "SDL_events.h"
+
+#include "df/ui.h"
+#include "df/world.h"
+#include "df/world_data.h"
+#include "df/interface.h"
+#include "df/viewscreen_dwarfmodest.h"
 
 #include <stdio.h>
 #include <iomanip>
 #include <stdlib.h>
 #include <fstream>
 #include "tinythread.h"
-using namespace tthread;
 
+using namespace tthread;
+using namespace df::enums;
 
 struct Core::Cond
 {
@@ -91,9 +98,35 @@ struct Core::Cond
 
 void cheap_tokenise(string const& input, vector<string> &output)
 {
-    istringstream str(input);
-    istream_iterator<string> cur(str), end;
-    output.assign(cur, end);
+    string *cur = NULL;
+
+    for (unsigned i = 0; i < input.size(); i++) {
+        char c = input[i];
+        if (isspace(c)) {
+            cur = NULL;
+        } else {
+            if (!cur) {
+                output.push_back("");
+                cur = &output.back();
+            }
+
+            if (c == '"') {
+                for (i++; i < input.size(); i++) {
+                    c = input[i];
+                    if (c == '"')
+                        break;
+                    else if (c == '\\') {
+                        if (++i < input.size())
+                            cur->push_back(input[i]);
+                    }
+                    else
+                        cur->push_back(c);
+                }
+            } else {
+                cur->push_back(c);
+            }
+        }
+    }
 }
 
 struct IODATA
@@ -119,8 +152,17 @@ void fHKthread(void * iodata)
         std::string stuff = core->getHotkeyCmd(); // waits on mutex!
         if(!stuff.empty())
         {
-            vector <string> crap;
-            command_result cr = plug_mgr->InvokeCommand(stuff, crap, false);
+            vector <string> args;
+            cheap_tokenise(stuff, args);
+            if (args.empty()) {
+                core->con.printerr("Empty hotkey command.\n");
+                continue;
+            }
+            
+            string first = args[0];
+            args.erase(args.begin());
+            command_result cr = plug_mgr->InvokeCommand(first, args, false);
+
             if(cr == CR_WOULD_BREAK)
             {
                 core->con.printerr("It isn't possible to run an interactive command outside the console.\n");
@@ -129,53 +171,25 @@ void fHKthread(void * iodata)
     }
 }
 
-// A thread function... for the interactive console.
-void fIOthread(void * iodata)
+static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clueless_counter, const string &command)
 {
-    IODATA * iod = ((IODATA*) iodata);
-    Core * core = iod->core;
-    PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
-    CommandHistory main_history;
-    main_history.load("dfhack.history");
     Console & con = core->con;
-    if(plug_mgr == 0 || core == 0)
+    
+    if (!command.empty())
     {
-        con.printerr("Something horrible happened in Core's constructor...\n");
-        return;
-    }
-    con.print("DFHack is ready. Have a nice day!\n"
-              "Type in '?' or 'help' for general help, 'ls' to see all commands.\n");
-    int clueless_counter = 0;
-    while (true)
-    {
-        string command = "";
-        int ret = con.lineedit("[DFHack]# ",command, main_history);
-        if(ret == -2)
-        {
-            cerr << "Console is shutting down properly." << endl;
-            return;
-        }
-        else if(ret == -1)
-        {
-            cerr << "Console caught an unspecified error." << endl;
-            continue;
-        }
-        else if(ret)
-        {
-            // a proper, non-empty command was entered
-            main_history.add(command);
-            main_history.save("dfhack.history");
-        }
         // cut the input into parts
         vector <string> parts;
         cheap_tokenise(command,parts);
         if(parts.size() == 0)
         {
             clueless_counter ++;
-            continue;
+            return;
         }
         string first = parts[0];
         parts.erase(parts.begin());
+
+        if (first[0] == '#') return;
+
         cerr << "Invoking: " << command << endl;
         
         // let's see what we actually got
@@ -194,6 +208,7 @@ void fIOthread(void * iodata)
                           "  cls                   - Clear the console.\n"
                           "  fpause                - Force DF to pause.\n"
                           "  die                   - Force DF to close immediately\n"
+                          "  keybinding            - Modify bindings of commands to keys\n"
                           "Plugin management (useful for developers):\n"
                           //"  belongs COMMAND       - Tell which plugin a command belongs to.\n"
                           "  plug [PLUGIN|v]       - List plugin state and description.\n"
@@ -201,6 +216,27 @@ void fIOthread(void * iodata)
                           "  unload PLUGIN|all     - Unload a plugin or all loaded plugins.\n"
                           "  reload PLUGIN|all     - Reload a plugin or all loaded plugins.\n"
                          );
+            }
+            else if (parts.size() == 1)
+            {
+                Plugin *plug = plug_mgr->getPluginByCommand(parts[0]);
+                if (plug) {
+                    for (int j = 0; j < plug->size();j++)
+                    {
+                        const PluginCommand & pcmd = (plug->operator[](j));
+                        if (pcmd.name != parts[0])
+                            continue;
+
+                        if (pcmd.isHotkeyCommand())
+                            con.color(Console::COLOR_CYAN);
+                        con.print("%s: %s\n",pcmd.name.c_str(), pcmd.description.c_str());
+                        con.reset_color();
+                        if (!pcmd.usage.empty())
+                            con << "Usage:\n" << pcmd.usage << flush;
+                        return;
+                    }
+                }
+                con.printerr("Unknown command: %s\n", parts[0].c_str());
             }
             else
             {
@@ -301,7 +337,10 @@ void fIOthread(void * iodata)
                 else for (int j = 0; j < plug->size();j++)
                 {
                     const PluginCommand & pcmd = (plug->operator[](j));
+                    if (pcmd.isHotkeyCommand())
+                        con.color(Console::COLOR_CYAN);
                     con.print("  %-22s - %s\n",pcmd.name.c_str(), pcmd.description.c_str());
+                    con.reset_color();
                 }
             }
             else
@@ -329,7 +368,10 @@ void fIOthread(void * iodata)
                     for (int j = 0; j < plug->size();j++)
                     {
                         const PluginCommand & pcmd = (plug->operator[](j));
+                        if (pcmd.isHotkeyCommand())
+                            con.color(Console::COLOR_CYAN);
                         con.print("  %-22s- %s\n",pcmd.name.c_str(), pcmd.description.c_str());
+                        con.reset_color();
                     }
                 }
             }
@@ -342,6 +384,49 @@ void fIOthread(void * iodata)
                 if(!plug->size())
                     continue;
                 con.print("%s\n", plug->getName().c_str());
+            }
+        }
+        else if(first == "keybinding")
+        {
+            if (parts.size() >= 3 && (parts[0] == "set" || parts[0] == "add"))
+            {
+                std::string keystr = parts[1];
+                if (parts[0] == "set")
+                    core->ClearKeyBindings(keystr);
+                for (int i = parts.size()-1; i >= 2; i--) 
+                {
+                    if (!core->AddKeyBinding(keystr, parts[i])) {
+                        con.printerr("Invalid key spec: %s\n", keystr.c_str());
+                        break;
+                    }
+                }
+            }
+            else if (parts.size() >= 2 && parts[0] == "clear")
+            {
+                for (unsigned i = 1; i < parts.size(); i++)
+                {
+                    if (!core->ClearKeyBindings(parts[i])) {
+                        con.printerr("Invalid key spec: %s\n", parts[i].c_str());
+                        break;
+                    }
+                }
+            }
+            else if (parts.size() == 2 && parts[0] == "list")
+            {
+                std::vector<std::string> list = core->ListKeyBindings(parts[1]);
+                if (list.empty())
+                    con << "No bindings." << endl;
+                for (unsigned i = 0; i < list.size(); i++)
+                    con << "  " << list[i] << endl;
+            }
+            else
+            {
+                con << "Usage:" << endl
+                    << "  keybinding list <key>" << endl
+                    << "  keybinding clear <key> <key>..." << endl
+                    << "  keybinding set <key> \"cmdline\" \"cmdline\"..." << endl
+                    << "  keybinding add <key> \"cmdline\" \"cmdline\"..." << endl
+                    << "Later adds, and earlier items within one command have priority." << endl;
             }
         }
         else if(first == "fpause")
@@ -384,6 +469,70 @@ void fIOthread(void * iodata)
                 */
             }
         }
+    }
+}
+
+static void loadInitFile(Core *core, PluginManager *plug_mgr, string fname)
+{
+    ifstream init(fname);
+    if (init.bad())
+        return;
+
+    int tmp = 0;
+    string command;
+    while (getline(init, command))
+    {
+        if (!command.empty())
+            runInteractiveCommand(core, plug_mgr, tmp, command);
+    }
+}
+
+// A thread function... for the interactive console.
+void fIOthread(void * iodata)
+{
+    IODATA * iod = ((IODATA*) iodata);
+    Core * core = iod->core;
+    PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
+
+    CommandHistory main_history;
+    main_history.load("dfhack.history");
+
+    Console & con = core->con;
+    if(plug_mgr == 0 || core == 0)
+    {
+        con.printerr("Something horrible happened in Core's constructor...\n");
+        return;
+    }
+
+    loadInitFile(core, plug_mgr, "dfhack.init");
+
+    con.print("DFHack is ready. Have a nice day!\n"
+              "Type in '?' or 'help' for general help, 'ls' to see all commands.\n");
+
+    int clueless_counter = 0;
+    while (true)
+    {
+        string command = "";
+        int ret = con.lineedit("[DFHack]# ",command, main_history);
+        if(ret == -2)
+        {
+            cerr << "Console is shutting down properly." << endl;
+            return;
+        }
+        else if(ret == -1)
+        {
+            cerr << "Console caught an unspecified error." << endl;
+            continue;
+        }
+        else if(ret)
+        {
+            // a proper, non-empty command was entered
+            main_history.add(command);
+            main_history.save("dfhack.history");
+        }
+
+        runInteractiveCommand(core, plug_mgr, clueless_counter, command);
+
         if(clueless_counter == 3)
         {
             con.print("Do 'help' or '?' for the list of available commands.\n");
@@ -408,11 +557,12 @@ Core::Core()
     StackMutex = 0;
     core_cond = 0;
     // set up hotkey capture
-    memset(hotkey_states,0,sizeof(hotkey_states));
     hotkey_set = false;
     HotkeyMutex = 0;
     HotkeyCond = 0;
     misc_data_mutex=0;
+    last_world_data_ptr = NULL;
+    top_viewscreen = NULL;
 };
 
 void Core::fatal (std::string output, bool deactivate)
@@ -497,7 +647,7 @@ bool Core::Init()
     }
     
     // initialize data defs
-    virtual_identity::Init();
+    virtual_identity::Init(this);
     InitDataDefGlobals(this);
 
     // create mutex for syncing with interactive tasks
@@ -605,8 +755,36 @@ int Core::Update()
     if(errorstate)
         return -1;
 
+    // detect if the game was loaded or unloaded in the meantime
+    void *new_wdata = NULL;
+    if (df::global::world) {
+        df::world_data *wdata = df::global::world->world_data;
+        // when the game is unloaded, world_data isn't deleted, but its contents are
+        if (wdata && !wdata->sites.empty())
+            new_wdata = wdata;
+    }
+    
+    if (new_wdata != last_world_data_ptr) {
+        last_world_data_ptr = new_wdata;
+        plug_mgr->OnStateChange(new_wdata ? SC_GAME_LOADED : SC_GAME_UNLOADED);
+    }
+
+    // detect if the viewscreen changed
+    if (df::global::gview) 
+    {
+        df::viewscreen *screen = &df::global::gview->view;
+        while (screen->child)
+            screen = screen->child;
+        if (screen != top_viewscreen) 
+        {
+            top_viewscreen = screen;
+            plug_mgr->OnStateChange(SC_VIEWSCREEN_CHANGED);
+        }
+    }
+
     // notify all the plugins that a game tick is finished
     plug_mgr->OnUpdate();
+
     // wake waiting tools
     // do not allow more tools to join in while we process stuff here
     StackMutex->lock();
@@ -695,37 +873,166 @@ int Core::SDL_Event(SDL::Event* ev, int orig_return)
     if(ev && ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP)
     {
         SDL::KeyboardEvent * ke = (SDL::KeyboardEvent *)ev;
-        bool shift = ke->ksym.mod & SDL::KMOD_SHIFT;
-        // consuming F1 .. F8
-        int idx = ke->ksym.sym - SDL::K_F1;
-        if(idx < 0 || idx > 7)
-            return orig_return;
-        idx += 8*shift;
-        // now we have the real index...
-        if(ke->state == SDL::BTN_PRESSED && !hotkey_states[idx])
+        
+        if(ke->state == SDL::BTN_PRESSED && !hotkey_states[ke->ksym.sym])
         {
-            hotkey_states[idx] = 1;
-            Gui * g = getGui();
-            if(g->hotkeys && g->df_interface && g->df_menu_state)
-            {
-                t_viewscreen * ws = g->GetCurrentScreen();
-                // FIXME: put hardcoded values into memory.xml
-                if(ws->getClassName() == "viewscreen_dwarfmodest" && *g->df_menu_state == 0x23)
-                    return orig_return;
-                else
-                {
-                    t_hotkey & hotkey = (*g->hotkeys)[idx];
-                    setHotkeyCmd(hotkey.name);
-                }
-            }
+            hotkey_states[ke->ksym.sym] = true;
+
+            int mod = 0;
+            if (ke->ksym.mod & SDL::KMOD_SHIFT) mod |= 1;
+            if (ke->ksym.mod & SDL::KMOD_CTRL) mod |= 2;
+            if (ke->ksym.mod & SDL::KMOD_ALT) mod |= 4;
+
+            SelectHotkey(ke->ksym.sym, mod);
         }
         else if(ke->state == SDL::BTN_RELEASED)
         {
-            hotkey_states[idx] = 0;
+            hotkey_states[ke->ksym.sym] = false;
         }
     }
     return orig_return;
     // do stuff with the events...
+}
+
+bool Core::SelectHotkey(int sym, int modifiers)
+{
+    // Find the topmost viewscreen
+    if (!df::global::gview || !df::global::ui)
+        return false;
+
+    df::viewscreen *screen = &df::global::gview->view;
+    while (screen->child)
+        screen = screen->child;
+
+    std::string cmd;
+    
+    {
+        tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
+    
+        // Check the internal keybindings
+        std::vector<KeyBinding> &bindings = key_bindings[sym];
+        for (int i = bindings.size()-1; i >= 0; --i) {
+            if (bindings[i].modifiers != modifiers)
+                continue;
+            if (!plug_mgr->CanInvokeHotkey(bindings[i].command[0], screen))
+                continue;
+            cmd = bindings[i].cmdline;
+            break;
+        }
+
+        if (cmd.empty()) {
+            // Check the hotkey keybindings
+            int idx = sym - SDL::K_F1;
+            if(idx >= 0 && idx < 8)
+            {
+                if (modifiers & 1)
+                    idx += 8;
+
+                if (strict_virtual_cast<df::viewscreen_dwarfmodest>(screen) &&
+                    df::global::ui->main.mode != ui_sidebar_mode::Hotkeys)
+                {
+                    cmd = df::global::ui->main.hotkeys[idx].name;
+                }
+            }
+        }
+    }
+
+    if (!cmd.empty()) {
+        setHotkeyCmd(cmd);
+        return true;
+    }
+    else
+        return false;
+}
+
+static bool parseKeySpec(std::string keyspec, int *psym, int *pmod)
+{
+    *pmod = 0;
+
+    // ugh, ugly
+    for (;;) {
+        if (keyspec.size() > 6 && keyspec.substr(0, 6) == "Shift-") {
+            *pmod |= 1;
+            keyspec = keyspec.substr(6);
+        } else if (keyspec.size() > 5 && keyspec.substr(0, 5) == "Ctrl-") {
+            *pmod |= 2;
+            keyspec = keyspec.substr(5);
+        } else if (keyspec.size() > 4 && keyspec.substr(0, 4) == "Alt-") {
+            *pmod |= 4;
+            keyspec = keyspec.substr(4);
+        } else 
+            break;
+    }
+
+    if (keyspec.size() == 1 && keyspec[0] >= 'A' && keyspec[0] <= 'Z') {
+        *psym = SDL::K_a + (keyspec[0]-'A');
+        return true;
+    } else if (keyspec.size() == 2 && keyspec[0] == 'F' && keyspec[1] >= '1' && keyspec[1] <= '9') {
+        *psym = SDL::K_F1 + (keyspec[1]-'1');
+        return true;
+    } else
+        return false;    
+}
+
+bool Core::ClearKeyBindings(std::string keyspec)
+{
+    int sym, mod;
+    if (!parseKeySpec(keyspec, &sym, &mod))
+        return false;
+
+    tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
+
+    std::vector<KeyBinding> &bindings = key_bindings[sym];
+    for (int i = bindings.size()-1; i >= 0; --i) {
+        if (bindings[i].modifiers == mod)
+            bindings.erase(bindings.begin()+i);
+    }
+
+    return true;
+}
+
+bool Core::AddKeyBinding(std::string keyspec, std::string cmdline)
+{
+    int sym;
+    KeyBinding binding;
+    if (!parseKeySpec(keyspec, &sym, &binding.modifiers))
+        return false;
+
+    cheap_tokenise(cmdline, binding.command);
+    if (binding.command.empty())
+        return false;
+
+    tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
+
+    // Don't add duplicates
+    std::vector<KeyBinding> &bindings = key_bindings[sym];
+    for (int i = bindings.size()-1; i >= 0; --i) {
+        if (bindings[i].modifiers == binding.modifiers &&
+            bindings[i].cmdline == cmdline)
+            return true;
+    }
+
+    binding.cmdline = cmdline;
+    bindings.push_back(binding);
+    return true;
+}
+
+std::vector<std::string> Core::ListKeyBindings(std::string keyspec)
+{
+    int sym, mod;
+    std::vector<std::string> rv;
+    if (!parseKeySpec(keyspec, &sym, &mod))
+        return rv;
+
+    tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
+
+    std::vector<KeyBinding> &bindings = key_bindings[sym];
+    for (int i = bindings.size()-1; i >= 0; --i) {
+        if (bindings[i].modifiers == mod)
+            rv.push_back(bindings[i].cmdline);
+    }
+
+    return rv;
 }
 
 ////////////////

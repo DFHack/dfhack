@@ -30,14 +30,14 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Process.h"
-#include "dfhack/Vector.h"
-#include "dfhack/Types.h"
-#include "dfhack/Error.h"
-#include "dfhack/modules/Buildings.h"
+#include "VersionInfo.h"
+#include "MemAccess.h"
+#include "Vector.h"
+#include "Types.h"
+#include "Error.h"
+#include "modules/Buildings.h"
 #include "ModuleFactory.h"
-#include "dfhack/Core.h"
+#include "Core.h"
 using namespace DFHack;
 
 //raw

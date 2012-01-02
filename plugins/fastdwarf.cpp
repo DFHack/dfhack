@@ -8,12 +8,12 @@
 #include <assert.h>
 #include <string.h>
 using namespace std;
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
-#include <dfhack/VersionInfo.h>
-#include <dfhack/modules/Units.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
+#include <VersionInfo.h>
+#include <modules/Units.h>
 using namespace DFHack;
 
 // dfhack interface

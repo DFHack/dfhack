@@ -7,7 +7,7 @@
 using namespace std;
 
 #include <DFHack.h>
-#include <dfhack/extra/termutil.h>
+#include <extra/termutil.h>
 std::ostream &operator<<(std::ostream &stream, DFHack::t_gamemodes funzies)
 {
     const char * gm[]=

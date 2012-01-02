@@ -1,8 +1,8 @@
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/PluginManager.h>
-#include <dfhack/Process.h>
-#include <dfhack/extra/stopwatch.h>
+#include "Core.h"
+#include "Console.h"
+#include "PluginManager.h"
+#include "MemAccess.h"
+#include "MiscUtils.h"
 #include <../depends/tthread/tinythread.h> //not sure if correct
 #include <string>
 #include <vector>

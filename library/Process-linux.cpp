@@ -36,10 +36,10 @@ distribution.
 using namespace std;
 
 #include <md5wrapper.h>
-#include "dfhack/Process.h"
-#include "dfhack/VersionInfoFactory.h"
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Error.h"
+#include "MemAccess.h"
+#include "VersionInfoFactory.h"
+#include "VersionInfo.h"
+#include "Error.h"
 #include <string.h>
 using namespace DFHack;
 

@@ -4,9 +4,9 @@
 #include <vector>
 #include <map>
 
-#include "dfhack/Process.h"
-#include "dfhack/Core.h"
-#include "dfhack/Virtual.h"
+#include "MemAccess.h"
+#include "Core.h"
+#include "Virtual.h"
 using namespace DFHack;
 
 std::string t_virtual::getClassName() const

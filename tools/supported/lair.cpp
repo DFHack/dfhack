@@ -5,7 +5,7 @@
 #include <map>
 using namespace std;
 #include <DFHack.h>
-#include <dfhack/extra/termutil.h>
+#include <extra/termutil.h>
 
 int main (void)
 {

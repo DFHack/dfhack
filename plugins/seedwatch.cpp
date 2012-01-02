@@ -1,19 +1,18 @@
-﻿// This does not work with Linux Dwarf Fortress
+// This does not work with Linux Dwarf Fortress
 // With thanks to peterix for DFHack and Quietust for information http://www.bay12forums.com/smf/index.php?topic=91166.msg2605147#msg2605147
 
 #include <map>
 #include <string>
 #include <vector>
-#include "dfhack/Console.h"
-#include "dfhack/Core.h"
-#include "dfhack/Export.h"
-#include "dfhack/PluginManager.h"
-#include "dfhack/Process.h"
-#include "dfhack/modules/Materials.h"
-#include "dfhack/modules/Items.h"
-#include "dfhack/modules/World.h"
-#include "dfhack/modules/kitchen.h"
-#include <dfhack/VersionInfo.h>
+#include "Console.h"
+#include "Core.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "modules/Materials.h"
+#include "modules/Items.h"
+#include "modules/World.h"
+#include "modules/kitchen.h"
+#include <VersionInfo.h>
 
 using DFHack::t_materialType;
 using DFHack::t_materialIndex;
@@ -288,10 +287,32 @@ DFhackCExport DFHack::command_result plugin_init(DFHack::Core* pCore, std::vecto
     return DFHack::CR_OK;
 }
 
+DFhackCExport DFHack::command_result plugin_onstatechange(DFHack::Core* pCore, DFHack::state_change_event event)
+{
+    switch (event) {
+    case DFHack::SC_GAME_LOADED:
+    case DFHack::SC_GAME_UNLOADED:
+        if (running)
+            pCore->con.printerr("seedwatch deactivated due to game load/unload\n");
+        running = false;
+        break;
+    default:
+        break;
+    }
+
+    return DFHack::CR_OK;
+}
+
 DFhackCExport DFHack::command_result plugin_onupdate(DFHack::Core* pCore)
 {
-    if(running)
+    if (running)
     {
+        // reduce processing rate
+        static int counter = 0;
+        if (++counter < 500)
+            return DFHack::CR_OK;
+        counter = 0;
+
         DFHack::Core& core = *pCore;
         DFHack::World *w = core.getWorld();
         DFHack::t_gamemodes gm;

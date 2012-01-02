@@ -8,7 +8,7 @@
 using namespace std;
 
 #include <DFHack.h>
-#include <dfhack/DFVector.h>
+#include <DFVector.h>
 using namespace DFHack;
 
 int main ()

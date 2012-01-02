@@ -9,8 +9,8 @@ using namespace std;
 #include <conio.h>
 
 #include <DFHack.h>
-#include <dfhack/DFTileTypes.h>
-#include <dfhack/extra/MapExtras.h>
+#include <DFTileTypes.h>
+#include <extra/MapExtras.h>
 
 
 //Globals

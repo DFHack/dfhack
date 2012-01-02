@@ -9,7 +9,7 @@
 using namespace std;
 
 #include <DFHack.h>
-#include <dfhack/extra/MapExtras.h>
+#include <extra/MapExtras.h>
 using namespace MapExtras;
 //#include <argstream.h>
 

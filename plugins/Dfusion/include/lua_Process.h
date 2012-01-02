@@ -1,8 +1,8 @@
 #ifndef LUA_PROCESS_H
 #define LUA_PROCESS_H
 
-#include <dfhack/Core.h>
-#include <dfhack/Process.h>
+#include "Core.h"
+#include <MemAccess.h>
 
 #include "luamain.h"
 

@@ -6,13 +6,13 @@
 using namespace std;
 
 #define DFHACK_WANT_MISCUTILS
-#include <dfhack/Core.h>
-#include <dfhack/VersionInfo.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
-#include <dfhack/modules/Units.h>
-#include <dfhack/modules/Translation.h>
+#include <Core.h>
+#include <VersionInfo.h>
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
+#include <modules/Units.h>
+#include <modules/Translation.h>
 using namespace DFHack;
 
 // our own, empty header.

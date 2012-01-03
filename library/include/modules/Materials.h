@@ -34,11 +34,80 @@ distribution.
 #include "Types.h"
 #include "BitArray.h"
 
+#include "DataDefs.h"
+#include "df/material.h"
+
 #include <vector>
 #include <string>
 
+namespace df
+{
+    struct item;
+    struct inorganic_raw;
+    struct plant_raw;
+    struct creature_raw;
+    struct historical_figure;
+    union job_material_category;
+}
+
 namespace DFHack
 {
+    struct DFHACK_EXPORT MaterialInfo {
+        static const int NUM_BUILTIN = 19;
+        static const int GROUP_SIZE = 200;
+        static const int CREATURE_BASE = NUM_BUILTIN;
+        static const int FIGURE_BASE = NUM_BUILTIN + GROUP_SIZE;
+        static const int PLANT_BASE = NUM_BUILTIN + GROUP_SIZE*2;
+        static const int END_BASE = NUM_BUILTIN + GROUP_SIZE*3;
+
+        int16_t type;
+        int32_t index;
+
+        df::material *material;
+
+        enum Mode {
+            Builtin,
+            Inorganic,
+            Creature,
+            Plant
+        };
+        Mode mode;
+
+        int16_t subtype;
+        df::inorganic_raw *inorganic;
+        df::creature_raw *creature;
+        df::plant_raw *plant;
+
+        df::historical_figure *figure;
+
+    public:
+        MaterialInfo(int16_t type = -1, int32_t index = -1) { decode(type, index); }
+        MaterialInfo(df::item *item) { decode(item); }
+
+        bool isValid() const { return material != NULL; }
+
+        bool decode(int16_t type, int32_t index = -1);
+        bool decode(df::item *item);
+
+        bool find(const std::string &token, const std::string &subtoken = std::string());
+        bool findBuiltin(const std::string &token);
+        bool findInorganic(const std::string &token);
+        bool findPlant(const std::string &token, const std::string &subtoken);
+        bool findCreature(const std::string &token, const std::string &subtoken);
+
+        std::string toString(uint16_t temp = 10015, bool named = true);
+
+        df::craft_material_class getCraftClass();
+        bool matches(const df::job_material_category &cat);
+    };
+
+    inline bool operator== (const MaterialInfo &a, const MaterialInfo &b) {
+        return a.type == b.type && a.index == b.index;
+    }
+    inline bool operator!= (const MaterialInfo &a, const MaterialInfo &b) {
+        return a.type != b.type || a.index != b.index;
+    }
+
     typedef int32_t t_materialIndex;
     typedef int16_t t_materialType, t_itemType, t_itemSubtype;
 

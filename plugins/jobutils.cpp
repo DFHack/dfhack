@@ -4,6 +4,8 @@
 #include <PluginManager.h>
 #include <MiscUtils.h>
 
+#include <modules/Materials.h>
+
 #include <DataDefs.h>
 #include <df/world.h>
 #include <df/ui.h>
@@ -13,11 +15,6 @@
 #include <df/build_req_choice_specst.h>
 #include <df/building_workshopst.h>
 #include <df/building_furnacest.h>
-#include <df/material.h>
-#include <df/inorganic_raw.h>
-#include <df/plant_raw.h>
-#include <df/creature_raw.h>
-#include <df/historical_figure.h>
 #include <df/job.h>
 #include <df/job_item.h>
 #include <df/item.h>
@@ -27,156 +24,6 @@ using std::string;
 using std::endl;
 using namespace DFHack;
 using namespace df::enums;
-
-/*
- * TODO: This should be in core:
- */
-
-struct MaterialInfo {
-    int16_t type;
-    int32_t index;
-
-    df::material *material;
-
-    enum Mode {
-        Builtin,
-        Inorganic,
-        Creature,
-        Plant
-    };
-    Mode mode;
-
-    int16_t subtype;
-    df::inorganic_raw *inorganic;
-    df::creature_raw *creature;
-    df::plant_raw *plant;
-
-    df::historical_figure *figure;
-
-    MaterialInfo(int16_t type = -1, int32_t index = -1) {
-        decode(type, index);
-    }
-
-    bool isValid() const { return material != NULL; }
-    bool decode(int16_t type, int32_t index = -1);
-
-    bool findInorganic(const std::string &token);
-
-    std::string toString(uint16_t temp = 10015, bool named = true);
-};
-
-inline bool operator== (const MaterialInfo &a, const MaterialInfo &b) {
-    return a.type == b.type && a.index == b.index;
-}
-inline bool operator!= (const MaterialInfo &a, const MaterialInfo &b) {
-    return a.type != b.type || a.index != b.index;
-}
-
-bool MaterialInfo::decode(int16_t type, int32_t index)
-{
-    this->type = type;
-    this->index = index;
-
-    material = NULL;
-    mode = Builtin; subtype = 0;
-    inorganic = NULL; plant = NULL; creature = NULL;
-    figure = NULL;
-
-    if (type < 0 || type >= 659)
-        return false;
-
-    df::world_raws &raws = df::global::world->raws;
-
-    if (index < 0)
-    {
-        material = raws.mat_table.builtin[type];
-    }
-    else if (type == 0)
-    {
-        mode = Inorganic;
-        inorganic = df::inorganic_raw::find(index);
-        if (!inorganic)
-            return false;
-        material = &inorganic->material;
-    }
-    else if (type < 19)
-    {
-        material = raws.mat_table.builtin[type];
-    }
-    else if (type < 219)
-    {
-        mode = Creature;
-        subtype = type-19;
-        creature = df::creature_raw::find(index);
-        if (!creature || subtype >= creature->material.size())
-            return false;
-        material = creature->material[subtype];
-    }
-    else if (type < 419)
-    {
-        mode = Creature;
-        subtype = type-219;
-        figure = df::historical_figure::find(index);
-        if (!figure)
-            return false;
-        creature = df::creature_raw::find(figure->race);
-        if (!creature || subtype >= creature->material.size())
-            return false;
-        material = creature->material[subtype];
-    }
-    else if (type < 619)
-    {
-        mode = Plant;
-        subtype = type-419;
-        plant = df::plant_raw::find(index);
-        if (!plant || subtype >= plant->material.size())
-            return false;
-        material = plant->material[subtype];
-    }
-    else
-    {
-        material = raws.mat_table.builtin[type];
-    }
-
-    return (material != NULL);
-}
-
-bool MaterialInfo::findInorganic(const std::string &token)
-{
-    df::world_raws &raws = df::global::world->raws;
-    for (unsigned i = 0; i < raws.inorganics.size(); i++)
-    {
-        df::inorganic_raw *p = raws.inorganics[i];
-        if (p->id == token)
-            return decode(0, i);
-    }
-    return decode(-1);
-}
-
-std::string MaterialInfo::toString(uint16_t temp, bool named)
-{
-    if (type == -1)
-        return "NONE";
-    if (!material)
-        return stl_sprintf("INVALID %d:%d", type, index);
-
-    int idx = 0;
-    if (temp >= material->heat.melting_point)
-        idx = 1;
-    if (temp >= material->heat.boiling_point)
-        idx = 2;
-    std::string name = material->state_name[idx];
-    if (!material->prefix.empty())
-        name = material->prefix + " " + name;
-
-    if (named && figure)
-        name += stl_sprintf(" of HF %d", index);
-    return name;
-}
-
-/*
- * Plugin-specific code starts here.
- */
 
 using df::global::world;
 using df::global::ui;
@@ -277,6 +124,7 @@ static command_result job_material_in_job(Core *c, MaterialInfo &new_mat)
     }
 
     df::job *job = selected->jobs[idx];
+
     MaterialInfo cur_mat(job->matType, job->matIndex);
 
     if (!cur_mat.isValid() || cur_mat.type != 0)
@@ -286,26 +134,17 @@ static command_result job_material_in_job(Core *c, MaterialInfo &new_mat)
         return CR_FAILURE;
     }
 
-    // Verify that the new material matches the old one
-    df::material_flags rq_flag = material_flags::IS_STONE;
-    if (cur_mat.mode != MaterialInfo::Builtin)
+    df::craft_material_class old_class = cur_mat.getCraftClass();
+    if (old_class == craft_material_class::None)
     {
-        if (cur_mat.material->flags.is_set(material_flags::IS_GEM))
-            rq_flag = material_flags::IS_GEM;
-        else if (cur_mat.material->flags.is_set(material_flags::IS_METAL))
-            rq_flag = material_flags::IS_METAL;
-        else if (!cur_mat.material->flags.is_set(rq_flag))
-        {
-            c->con.printerr("Unexpected current material type: %s\n",
-                            cur_mat.toString().c_str());
-            return CR_FAILURE;
-        }
+        c->con.printerr("Unexpected current material type: %s\n",
+                        cur_mat.toString().c_str());
+        return CR_FAILURE;
     }
-
-    if (!new_mat.material->flags.is_set(rq_flag))
+    if (new_mat.getCraftClass() != old_class)
     {
         c->con.printerr("New material %s does not satisfy requirement: %s\n",
-                        new_mat.toString().c_str(), ENUM_KEY_STR(material_flags, rq_flag));
+                        new_mat.toString().c_str(), ENUM_KEY_STR(craft_material_class, old_class));
         return CR_FAILURE;
     }
 
@@ -334,8 +173,34 @@ static command_result job_material_in_job(Core *c, MaterialInfo &new_mat)
     }
 
     c->con << "Applied material '" << new_mat.toString()
-           << " jo job " << ENUM_KEY_STR(job_type,job->job_id) << endl;
+           << "' to job " << ENUM_KEY_STR(job_type,job->job_id) << endl;
     return CR_OK;
+}
+
+static bool build_choice_matches(df::ui_build_item_req *req, df::build_req_choicest *choice,
+                                 MaterialInfo &new_mat)
+{
+    if (VIRTUAL_CAST_VAR(gen, df::build_req_choice_genst, choice))
+    {
+        if (gen->matType == new_mat.type &&
+            gen->matIndex == new_mat.index &&
+            gen->used_count < gen->candidates.size())
+        {
+            return true;
+        }
+    }
+    else if (VIRTUAL_CAST_VAR(spec, df::build_req_choice_specst, choice))
+    {
+        if (spec->candidate &&
+            spec->candidate->getActualMaterial() == new_mat.type &&
+            spec->candidate->getActualMaterialIndex() == new_mat.index &&
+            !req->candidate_selected[spec->candidate_id])
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 static command_result job_material_in_build(Core *c, MaterialInfo &new_mat)
@@ -344,30 +209,7 @@ static command_result job_material_in_build(Core *c, MaterialInfo &new_mat)
 
     for (unsigned i = 0; i < ui_build_selector->choices.size(); i++)
     {
-        df::build_req_choicest *choice = ui_build_selector->choices[i];
-        bool found = false;
-
-        if (VIRTUAL_CAST_VAR(gen, df::build_req_choice_genst, choice))
-        {
-            if (gen->matType == new_mat.type &&
-                gen->matIndex == new_mat.index &&
-                gen->used_count < gen->candidates.size())
-            {
-                found = true;
-            }
-        }
-        else if (VIRTUAL_CAST_VAR(spec, df::build_req_choice_specst, choice))
-        {
-            if (spec->candidate &&
-                spec->candidate->getActualMaterial() == new_mat.type &&
-                spec->candidate->getActualMaterialIndex() == new_mat.index &&
-                !req->candidate_selected[spec->candidate_id])
-            {
-                found = true;
-            }
-        }
-
-        if (found)
+        if (build_choice_matches(req, ui_build_selector->choices[i], new_mat))
         {
             ui_build_selector->sel_index = i;
             return CR_OK;

@@ -124,6 +124,12 @@ namespace DFHack
 
     template<class T>
     T *ifnull(T *a, T *b) { return a ? a : b; }
+
+    template<class T, T start, bool (*isvalid)(T)>
+    inline T next_enum_item_(T v) {
+        v = T(int(v) + 1);
+        return isvalid(v) ? v : start;
+    }
 }
 
 namespace df
@@ -170,6 +176,11 @@ namespace df
 #define ENUM_KEY_STR(enum,val) ENUM_ATTR_STR(enum,key,val)
 #define ENUM_FIRST_ITEM(enum) (df::enums::enum::_first_item_of_##enum)
 #define ENUM_LAST_ITEM(enum) (df::enums::enum::_last_item_of_##enum)
+
+#define ENUM_NEXT_ITEM(enum,val) \
+    (DFHack::next_enum_item_<df::enum,ENUM_FIRST_ITEM(enum),df::enums::enum::is_valid>(val))
+#define FOR_ENUM_ITEMS(enum,iter) \
+    for(df::enum iter = ENUM_FIRST_ITEM(enum); iter < ENUM_LAST_ITEM(enum); iter = df::enum(1+int(iter)))
 
 namespace df {
 #define DF_KNOWN_GLOBALS \

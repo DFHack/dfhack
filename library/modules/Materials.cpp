@@ -40,7 +40,239 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "Core.h"
 
+#include "MiscUtils.h"
+
+#include "df/world.h"
+#include "df/item.h"
+#include "df/inorganic_raw.h"
+#include "df/plant_raw.h"
+#include "df/creature_raw.h"
+#include "df/historical_figure.h"
+
+#include "df/job_material_category.h"
+#include "df/matter_state.h"
+
 using namespace DFHack;
+using namespace df::enums;
+
+bool MaterialInfo::decode(df::item *item)
+{
+    if (!item)
+        decode(-1);
+    else
+        decode(item->getActualMaterial(), item->getActualMaterialIndex());
+}
+
+bool MaterialInfo::decode(int16_t type, int32_t index)
+{
+    this->type = type;
+    this->index = index;
+
+    material = NULL;
+    mode = Builtin; subtype = 0;
+    inorganic = NULL; plant = NULL; creature = NULL;
+    figure = NULL;
+
+    df::world_raws &raws = df::global::world->raws;
+
+    if (type < 0 || type >= sizeof(raws.mat_table.builtin)/sizeof(void*))
+        return false;
+
+    if (index < 0)
+    {
+        material = raws.mat_table.builtin[type];
+    }
+    else if (type == 0)
+    {
+        mode = Inorganic;
+        inorganic = df::inorganic_raw::find(index);
+        if (!inorganic)
+            return false;
+        material = &inorganic->material;
+    }
+    else if (type < CREATURE_BASE)
+    {
+        material = raws.mat_table.builtin[type];
+    }
+    else if (type < FIGURE_BASE)
+    {
+        mode = Creature;
+        subtype = type-CREATURE_BASE;
+        creature = df::creature_raw::find(index);
+        if (!creature || subtype >= creature->material.size())
+            return false;
+        material = creature->material[subtype];
+    }
+    else if (type < PLANT_BASE)
+    {
+        mode = Creature;
+        subtype = type-FIGURE_BASE;
+        figure = df::historical_figure::find(index);
+        if (!figure)
+            return false;
+        creature = df::creature_raw::find(figure->race);
+        if (!creature || subtype >= creature->material.size())
+            return false;
+        material = creature->material[subtype];
+    }
+    else if (type < END_BASE)
+    {
+        mode = Plant;
+        subtype = type-PLANT_BASE;
+        plant = df::plant_raw::find(index);
+        if (!plant || subtype >= plant->material.size())
+            return false;
+        material = plant->material[subtype];
+    }
+    else
+    {
+        material = raws.mat_table.builtin[type];
+    }
+
+    return (material != NULL);
+}
+
+bool MaterialInfo::find(const std::string &token, const std::string &subtoken)
+{
+    if (findBuiltin(token))
+        return true;
+    if (subtoken.empty())
+    {
+        if (findInorganic(token))
+            return true;
+    }
+    else
+    {
+        if (findPlant(token, subtoken))
+            return true;
+        if (findCreature(token, subtoken))
+            return true;
+    }
+    return false;
+}
+
+bool MaterialInfo::findBuiltin(const std::string &token)
+{
+    df::world_raws &raws = df::global::world->raws;
+    for (int i = 1; i < NUM_BUILTIN; i++)
+        if (raws.mat_table.builtin[i]->id == token)
+            return decode(i, -1);
+    return decode(-1);
+}
+
+bool MaterialInfo::findInorganic(const std::string &token)
+{
+    df::world_raws &raws = df::global::world->raws;
+    for (unsigned i = 0; i < raws.inorganics.size(); i++)
+    {
+        df::inorganic_raw *p = raws.inorganics[i];
+        if (p->id == token)
+            return decode(0, i);
+    }
+    return decode(-1);
+}
+
+bool MaterialInfo::findPlant(const std::string &token, const std::string &subtoken)
+{
+    df::world_raws &raws = df::global::world->raws;
+    for (unsigned i = 0; i < raws.plants.all.size(); i++)
+    {
+        df::plant_raw *p = raws.plants.all[i];
+        if (p->id != token)
+            continue;
+
+        for (unsigned j = 0; j < p->material.size(); j++)
+            if (p->material[j]->id == subtoken)
+                return decode(PLANT_BASE+j, i);
+
+        break;
+    }
+    return decode(-1);
+}
+
+bool MaterialInfo::findCreature(const std::string &token, const std::string &subtoken)
+{
+    df::world_raws &raws = df::global::world->raws;
+    for (unsigned i = 0; i < raws.creatures.all.size(); i++)
+    {
+        df::creature_raw *p = raws.creatures.all[i];
+        if (p->creature_id != token)
+            continue;
+
+        for (unsigned j = 0; j < p->material.size(); j++)
+            if (p->material[j]->id == subtoken)
+                return decode(CREATURE_BASE+j, i);
+
+        break;
+    }
+    return decode(-1);
+}
+
+std::string MaterialInfo::toString(uint16_t temp, bool named)
+{
+    if (type == -1)
+        return "NONE";
+    if (!material)
+        return stl_sprintf("INVALID %d:%d", type, index);
+
+    df::matter_state state = matter_state::Solid;
+    if (temp >= material->heat.melting_point)
+        state = matter_state::Liquid;
+    if (temp >= material->heat.boiling_point)
+        state = matter_state::Gas;
+
+    std::string name = material->state_name[state];
+    if (!material->prefix.empty())
+        name = material->prefix + " " + name;
+
+    if (named && figure)
+        name += stl_sprintf(" of HF %d", index);
+    return name;
+}
+
+df::craft_material_class MaterialInfo::getCraftClass()
+{
+    if (!material)
+        return craft_material_class::None;
+
+    if (type == 0 && index == -1)
+        return craft_material_class::Stone;
+
+    FOR_ENUM_ITEMS(material_flags, i)
+    {
+        df::craft_material_class ccv = ENUM_ATTR(material_flags, type, i);
+        if (ccv == craft_material_class::None)
+            continue;
+        if (material->flags.is_set(i))
+            return ccv;
+    }
+
+    return craft_material_class::None;
+}
+
+bool MaterialInfo::matches(const df::job_material_category &cat)
+{
+    if (!material)
+        return false;
+
+    using namespace df::enums::material_flags;
+#define TEST(bit,flag) if (cat.bits.bit && material->flags.is_set(flag)) return true;
+    TEST(plant, STRUCTURAL_PLANT_MAT);
+    TEST(wood, WOOD);
+    TEST(cloth, THREAD_PLANT);
+    TEST(silk, SILK);
+    TEST(leather, LEATHER);
+    TEST(bone, BONE);
+    TEST(shell, SHELL);
+    TEST(wood2, WOOD);
+    TEST(soap, SOAP);
+    TEST(tooth, TOOTH);
+    TEST(horn, HORN);
+    TEST(pearl, PEARL);
+    TEST(yarn, YARN);
+#undef TEST
+    return false;
+}
 
 Module* DFHack::createMaterials()
 {

@@ -130,6 +130,18 @@ namespace DFHack
         v = T(int(v) + 1);
         return isvalid(v) ? v : start;
     }
+
+    struct bitfield_item_info {
+        const char *name;
+        int size;
+    };
+
+    DFHACK_EXPORT std::string bitfieldToString(const void *p, int size, const bitfield_item_info *items);
+
+    template<class T>
+    inline std::string bitfieldToString(const T &val) {
+        return bitfieldToString(&val.whole, sizeof(val.whole), val.get_items());
+    }
 }
 
 namespace df
@@ -137,6 +149,7 @@ namespace df
     using DFHack::virtual_ptr;
     using DFHack::virtual_identity;
     using DFHack::virtual_class;
+    using DFHack::bitfield_item_info;
     using DFHack::BitArray;
 
     template<class T>

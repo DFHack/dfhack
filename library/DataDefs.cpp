@@ -35,6 +35,8 @@ distribution.
 // must be last due to MS stupidity
 #include "DataDefs.h"
 
+#include "MiscUtils.h"
+
 using namespace DFHack;
 
 /* The order of global object constructor calls is
@@ -158,6 +160,41 @@ void virtual_identity::Init(Core *core)
         if (ptr_table->getSafeAddress(p->getName(),tmp))
             p->vtable_ptr = (void*)tmp;
     }
+}
+
+std::string DFHack::bitfieldToString(const void *p, int size, const bitfield_item_info *items)
+{
+    std::string res;
+    const char *data = (const char*)p;
+
+    for (int i = 0; i < size*8; i++) {
+        unsigned v;
+
+        if (items[i].size > 1) {
+            unsigned pdv = *(unsigned*)&data[i/8];
+            v = (pdv >> (i%8)) & ((1 << items[i].size)-1);
+        } else {
+            v = (data[i/8]>>(i%8)) & 1;
+        }
+
+        if (v) {
+            if (!res.empty())
+                res += ' ';
+
+            if (items[i].name)
+                res += items[i].name;
+            else
+                res += stl_sprintf("UNK_%d", i);
+
+            if (items[i].size > 1)
+                res += stl_sprintf("=%u", v);
+        }
+
+        if (items[i].size > 1)
+            i += items[i].size-1;
+    }
+
+    return res;
 }
 
 #define SIMPLE_GLOBAL(name,tname) \

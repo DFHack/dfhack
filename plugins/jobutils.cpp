@@ -418,8 +418,10 @@ static void print_job_item_details(Core *c, df::job *job, df::job_item *item)
 
 static void print_job_details(Core *c, df::job *job)
 {
-    c->con << "Job " << job->id << ": " << ENUM_KEY_STR(job_type,job->job_type)
-           << " (" << bitfieldToString(job->flags) << ")" << endl;
+    c->con << "Job " << job->id << ": " << ENUM_KEY_STR(job_type,job->job_type);
+    if (job->flags.whole)
+           c->con << " (" << bitfieldToString(job->flags) << ")";
+    c->con << endl;
 
     MaterialInfo mat(job);
     if (mat.isValid() || job->material_category.whole)

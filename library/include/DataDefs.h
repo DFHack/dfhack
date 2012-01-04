@@ -204,6 +204,7 @@ namespace df {
     GLOBAL(gview,interface) \
     GLOBAL(init,init) \
     GLOBAL(d_init,d_init) \
+    SIMPLE_GLOBAL(job_next_id,int) \
     SIMPLE_GLOBAL(ui_look_cursor,int) \
     SIMPLE_GLOBAL(ui_workshop_job_cursor,int) \
     SIMPLE_GLOBAL(ui_workshop_in_add,bool) \

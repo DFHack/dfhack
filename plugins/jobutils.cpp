@@ -17,8 +17,11 @@
 #include <df/building_furnacest.h>
 #include <df/job.h>
 #include <df/job_item.h>
+#include <df/job_list_link.h>
 #include <df/item.h>
 #include <df/tool_uses.h>
+#include <df/general_ref.h>
+#include <df/general_ref_unit_workerst.h>
 
 using std::vector;
 using std::string;
@@ -30,13 +33,16 @@ using df::global::world;
 using df::global::ui;
 using df::global::ui_build_selector;
 using df::global::ui_workshop_job_cursor;
+using df::global::job_next_id;
 
-static bool wokshop_job_hotkey(Core *c, df::viewscreen *top);
+/* Plugin registration */
+
+static bool workshop_job_hotkey(Core *c, df::viewscreen *top);
 static bool build_selector_hotkey(Core *c, df::viewscreen *top);
-
 static bool job_material_hotkey(Core *c, df::viewscreen *top);
-static command_result job_material(Core *c, vector <string> & parameters);
 
+static command_result job_material(Core *c, vector <string> & parameters);
+static command_result job_duplicate(Core *c, vector <string> & parameters);
 static command_result job_cmd(Core *c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
@@ -75,6 +81,17 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
         );
     }
 
+    if (ui_workshop_job_cursor && job_next_id) {
+        commands.push_back(
+            PluginCommand(
+                "job-duplicate", "Duplicate the selected job in a workshop.",
+                job_duplicate, workshop_job_hotkey,
+                "  - In 'q' mode, when a job is highlighted within a workshop\n"
+                "    or furnace building, instantly duplicates the job.\n"
+            )
+        );
+    }
+
     return CR_OK;
 }
 
@@ -82,6 +99,8 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 {
     return CR_OK;
 }
+
+/* UI state guards */
 
 static bool workshop_job_hotkey(Core *c, df::viewscreen *top)
 {
@@ -149,6 +168,8 @@ static bool job_material_hotkey(Core *c, df::viewscreen *top)
     return workshop_job_hotkey(c, top) ||
            build_selector_hotkey(c, top);
 }
+
+/* job-material implementation */
 
 static df::job *getWorkshopJob(Core *c)
 {
@@ -287,6 +308,79 @@ static command_result job_material(Core * c, vector <string> & parameters)
 
     return CR_WRONG_USAGE;
 }
+
+/* job-duplicate implementation */
+
+static df::job *clone_job(df::job *job)
+{
+    df::job *pnew = new df::job(*job);
+
+    pnew->id = (*job_next_id)++;
+
+    // Clean out transient fields
+    pnew->flags.whole = 0;
+    pnew->flags.bits.repeat = job->flags.bits.repeat;
+
+    pnew->completion_timer = -1;
+    pnew->items.clear();
+    pnew->misc_links.clear();
+
+    // Link the job into the global list
+    pnew->list_link = new df::job_list_link();
+    pnew->list_link->item = pnew;
+
+    linked_list_append(&world->job_list, pnew->list_link);
+
+    // Clone refs
+    for (int i = pnew->references.size()-1; i >= 0; i--)
+    {
+        df::general_ref *ref = pnew->references[i];
+
+        if (virtual_cast<df::general_ref_unit_workerst>(ref))
+            pnew->references.erase(pnew->references.begin()+i);
+        else
+            pnew->references[i] = ref->clone();
+    }
+
+    // Clone items
+    for (int i = pnew->job_items.size()-1; i >= 0; i--)
+        pnew->job_items[i] = new df::job_item(*pnew->job_items[i]);
+
+    return pnew;
+}
+
+static command_result job_duplicate(Core * c, vector <string> & parameters)
+{
+    if (!parameters.empty())
+        return CR_WRONG_USAGE;
+
+    df::job *job = getWorkshopJob(c);
+    if (!job)
+        return CR_FAILURE;
+
+    if (!job->misc_links.empty() || job->job_items.empty())
+    {
+        c->con.printerr("Cannot duplicate job %s\n", ENUM_KEY_STR(job_type,job->job_type));
+        return CR_FAILURE;
+    }
+
+    df::building *building = world->selected_building;
+    if (building->jobs.size() >= 10)
+    {
+        c->con.printerr("Job list is already full.\n");
+        return CR_FAILURE;
+    }
+
+    // Actually clone
+    df::job *pnew = clone_job(job);
+
+    int pos = ++*ui_workshop_job_cursor;
+    building->jobs.insert(building->jobs.begin()+pos, pnew);
+
+    return CR_OK;
+}
+
+/* Main job command implementation */
 
 static void print_job_item_details(Core *c, df::job *job, df::job_item *item)
 {

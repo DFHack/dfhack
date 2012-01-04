@@ -1094,6 +1094,7 @@
                 <Address name='ui_look_cursor'/>
                 <Address name='ui_workshop_job_cursor'/>
                 <Address name='ui_workshop_in_add'/>
+                <Address name='job_next_id'/>
             </Group>
         </Offsets>
     </Base>
@@ -2345,6 +2346,8 @@
                 <Address name='ui_look_cursor' value='0xedeb98'/>
                 <Address name='ui_workshop_job_cursor' value='0x14ec79c'/>
                 <Address name='ui_workshop_in_add' value='0xeb0992'/>
+
+                <Address name='job_next_id' value='0xe18290'/>
             </Group>
         </Offsets>
         cmake
@@ -3230,6 +3233,8 @@
                 <!--<Address name='ui_look_cursor' value=''/>-->
                 <Address name='ui_workshop_job_cursor' value='0x93f0644'/>
                 <Address name='ui_workshop_in_add' value='0x93f0651'/>
+
+                <Address name='job_next_id' value='0x961d940'/>
             </Group>
         </Offsets>
     </Version>

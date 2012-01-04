@@ -173,6 +173,20 @@ CT *binsearch_in_vector(const std::vector<CT*> &vec, FT CT::*field, FT value)
 }
 
 /*
+ * List
+ */
+
+template<typename Link>
+Link *linked_list_append(Link *head, Link *tail)
+{
+    while (head->next)
+        head = head->next;
+    head->next = tail;
+    tail->prev = head;
+    return tail;
+}
+
+/*
  * MISC
  */
 

@@ -39,7 +39,6 @@ include/SDL_keyboard.h
 include/SDL_keysym.h
 include/TileTypes.h
 include/Types.h
-include/Vector.h
 include/VersionInfo.h
 include/VersionInfoFactory.h
 include/Virtual.h

@@ -35,7 +35,6 @@ using namespace std;
 #include "modules/Materials.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"
-#include "Vector.h"
 #include "Error.h"
 #include "ModuleFactory.h"
 #include "Core.h"
@@ -52,8 +51,8 @@ class Materials::Private
     public:
     Process * owner;
     OffsetGroup * OG_Materials;
-    uint32_t vector_races;
-    uint32_t vector_other;
+    void * vector_races;
+    void * vector_other;
 };
 
 Materials::Materials()
@@ -67,10 +66,10 @@ Materials::Materials()
     df_inorganic = 0;
     OffsetGroup *OG_Materials = d->OG_Materials = c.vinfo->getGroup("Materials");
     {
-        OG_Materials->getSafeAddress("inorganics",(uint32_t &)df_inorganic);
-        OG_Materials->getSafeAddress("organics_all",(uint32_t &)df_organic);
-        OG_Materials->getSafeAddress("organics_plants",(uint32_t &)df_plants);
-        OG_Materials->getSafeAddress("organics_trees",(uint32_t &)df_trees);
+        OG_Materials->getSafeAddress("inorganics",(void * &)df_inorganic);
+        OG_Materials->getSafeAddress("organics_all",(void * &)df_organic);
+        OG_Materials->getSafeAddress("organics_plants",(void * &)df_plants);
+        OG_Materials->getSafeAddress("organics_trees",(void * &)df_trees);
         d->vector_races = OG_Materials->getAddress("creature_type_vector");
     }
 }
@@ -111,16 +110,16 @@ bool t_matglossInorganic::isGem()
 }
 
 // good for now
-inline bool ReadNamesOnly(Process* p, uint32_t address, vector<t_matgloss> & names)
+inline bool ReadNamesOnly(Process* p, void * address, vector<t_matgloss> & names)
 {
-    DfVector <uint32_t> p_matgloss (address);
-    uint32_t size = p_matgloss.size();
+    vector <string *> * p_names = (vector <string *> *) address;
+    uint32_t size = p_names->size();
     names.clear();
     names.reserve (size);
     for (uint32_t i = 0; i < size;i++)
     {
         t_matgloss mat;
-        mat.id = *(std::string *)p_matgloss[i];
+        mat.id = *p_names->at(i);
         names.push_back(mat);
     }
     return true;
@@ -159,21 +158,21 @@ bool Materials::CopyInorganicMaterials (std::vector<t_matglossInorganic> & inorg
 bool Materials::CopyOrganicMaterials (std::vector<t_matgloss> & organic)
 {
     if(df_organic)
-        return ReadNamesOnly(d->owner, (uint32_t) df_organic, organic );
+        return ReadNamesOnly(d->owner, (void *) df_organic, organic );
     else return false;
 }
 
 bool Materials::CopyWoodMaterials (std::vector<t_matgloss> & tree)
 {
     if(df_trees)
-        return ReadNamesOnly(d->owner, (uint32_t) df_trees, tree );
+        return ReadNamesOnly(d->owner, (void *) df_trees, tree );
     else return false;
 }
 
 bool Materials::CopyPlantMaterials (std::vector<t_matgloss> & plant)
 {
     if(df_plants)
-        return ReadNamesOnly(d->owner, (uint32_t) df_plants, plant );
+        return ReadNamesOnly(d->owner, (void *) df_plants, plant );
     else return false;
 }
 
@@ -185,7 +184,7 @@ bool Materials::ReadCreatureTypes (void)
 bool Materials::ReadOthers(void)
 {
     Process * p = d->owner;
-    uint32_t matBase = d->OG_Materials->getAddress ("other");
+    void * matBase = d->OG_Materials->getAddress ("other");
     uint32_t i = 0;
     std::string * ptr;
 
@@ -194,7 +193,7 @@ bool Materials::ReadOthers(void)
     while(1)
     {
         t_matglossOther mat;
-        ptr = (std::string *) p->readDWord(matBase + i*4);
+        ptr = (std::string *) p->readPtr(matBase + i*4);
         if(ptr==0)
             break;
         mat.id = *ptr;
@@ -208,7 +207,7 @@ bool Materials::ReadDescriptorColors (void)
 {
     Process * p = d->owner;
     OffsetGroup * OG_Descriptors = p->getDescriptor()->getGroup("Materials")->getGroup("descriptors");
-    DfVector <uint32_t> p_colors (OG_Descriptors->getAddress ("colors_vector"));
+    vector <void *> & p_colors = *(vector<void*> *) OG_Descriptors->getAddress ("colors_vector");
     uint32_t size = p_colors.size();
 
     color.clear();
@@ -237,7 +236,7 @@ bool Materials::ReadCreatureTypesEx (void)
     uint32_t sizeof_string = OG_string->getHexValue ("sizeof");
 
     OffsetGroup * OG_Mats = mem->getGroup("Materials");
-    DfVector <uint32_t> p_races (OG_Mats->getAddress ("creature_type_vector"));
+    vector <void *> & p_races = *(vector<void*> *) OG_Mats->getAddress ("creature_type_vector");
 
     OffsetGroup * OG_Creature = OG_Mats->getGroup("creature");
         uint32_t castes_vector_offset = OG_Creature->getOffset ("caste_vector");
@@ -287,13 +286,13 @@ bool Materials::ReadCreatureTypesEx (void)
         mat.tilecolor.back = p->readWord( p_races[i] + tile_color_offset + 2 );
         mat.tilecolor.bright = p->readWord( p_races[i] + tile_color_offset + 4 );
 
-        DfVector <uint32_t> p_castes(p_races[i] + castes_vector_offset);
+        vector <void *> & p_castes = *(vector<void*> *) (p_races[i] + castes_vector_offset);
         sizecas = p_castes.size();
         for (uint32_t j = 0; j < sizecas;j++)
         {
             /* caste name */
             t_creaturecaste caste;
-            uint32_t caste_start = p_castes[j];
+            void * caste_start = p_castes[j];
             caste.id = p->readSTLString (caste_start);
             caste.singular = p->readSTLString (caste_start + sizeof_string);
             caste.plural = p->readSTLString (caste_start + 2 * sizeof_string);
@@ -303,13 +302,13 @@ bool Materials::ReadCreatureTypesEx (void)
             {
                 /* color mod reading */
                 // Caste + offset > color mod vector
-                DfVector <uint32_t> p_colormod(caste_start + caste_colormod_offset);
+                vector <void *> & p_colormod = *(vector<void*> *) (caste_start + caste_colormod_offset);
                 sizecolormod = p_colormod.size();
                 caste.ColorModifier.resize(sizecolormod);
                 for(uint32_t k = 0; k < sizecolormod;k++)
                 {
                     // color mod [0] -> color list
-                    DfVector <uint32_t> p_colorlist(p_colormod[k]);
+                    vector <uint32_t> & p_colorlist = *(vector<uint32_t> *) (p_colormod[k]);
                     sizecolorlist = p_colorlist.size();
                     caste.ColorModifier[k].colorlist.resize(sizecolorlist);
                     for(uint32_t l = 0; l < sizecolorlist; l++)
@@ -320,7 +319,7 @@ bool Materials::ReadCreatureTypesEx (void)
                     caste.ColorModifier[k].enddate = p->readDWord( p_colormod[k] + color_modifier_enddate_offset );
                 }
                 /* body parts */
-                DfVector <uint32_t> p_bodypart(caste_start + caste_bodypart_offset);
+                vector <void *> & p_bodypart = *(vector<void*> *) (caste_start + caste_bodypart_offset);
                 caste.bodypart.empty();
                 sizebp = p_bodypart.size();
                 for(uint32_t k = 0; k < sizebp; k++)
@@ -338,7 +337,7 @@ bool Materials::ReadCreatureTypesEx (void)
             }
             mat.castes.push_back(caste);
         }
-        DfVector <uint32_t> p_extract(p_races[i] + extract_vector_offset);
+        vector <void *> & p_extract = *(vector<void*> *) (p_races[i] + extract_vector_offset);
         for(uint32_t j = 0; j < p_extract.size(); j++)
         {
             t_creatureextract extract;

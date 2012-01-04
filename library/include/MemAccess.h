@@ -72,8 +72,8 @@ namespace DFHack
      */
     struct DFHACK_EXPORT t_memrange
     {
-        uint64_t start;
-        uint64_t end;
+        void * start;
+        void * end;
         // memory range name (if any)
         char name[1024];
         // permission to read
@@ -84,7 +84,7 @@ namespace DFHack
         bool execute : 1;
         // is a shared region
         bool shared : 1;
-        inline bool isInRange( uint64_t address)
+        inline bool isInRange( void * address)
         {
             if (address >= start && address < end) return true;
             return false;
@@ -104,99 +104,110 @@ namespace DFHack
             Process(VersionInfoFactory * known_versions);
             ~Process();
             /// read a 8-byte integer
-            uint64_t readQuad(const uint32_t address)
+            uint64_t readQuad(const void * address)
             {
                 return *(uint64_t *)address;
             }
             /// read a 8-byte integer
-            void readQuad(const uint32_t address, uint64_t & value)
+            void readQuad(const void * address, uint64_t & value)
             {
                 value = *(uint64_t *)address;
             };
             /// write a 8-byte integer
-            void writeQuad(const uint32_t address, const uint64_t value)
+            void writeQuad(const void * address, const uint64_t value)
             {
                 (*(uint64_t *)address) = value;
             };
 
             /// read a 4-byte integer
-            uint32_t readDWord(const uint32_t address)
+            uint32_t readDWord(const void * address)
             {
                 return *(uint32_t *)address;
             }
             /// read a 4-byte integer
-            void readDWord(const uint32_t address, uint32_t & value)
+            void readDWord(const void * address, uint32_t & value)
             {
                 value = *(uint32_t *)address;
             };
             /// write a 4-byte integer
-            void writeDWord(const uint32_t address, const uint32_t value)
+            void writeDWord(const void * address, const uint32_t value)
             {
                 (*(uint32_t *)address) = value;
             };
 
+            /// read a pointer
+            void * readPtr(const void * address)
+            {
+                return *(void **)address;
+            }
+            /// read a pointer
+            void readPtr(const void * address, void * & value)
+            {
+                value = *(void **)address;
+            };
+
             /// read a float
-            float readFloat(const uint32_t address)
+            float readFloat(const void * address)
             {
                 return *(float*)address;
             }
             /// write a float
-            void readFloat(const uint32_t address, float & value)
+            void readFloat(const void * address, float & value)
             {
                 value = *(float*)address;
             };
 
             /// read a 2-byte integer
-            uint16_t readWord(const uint32_t address)
+            uint16_t readWord(const void * address)
             {
                 return *(uint16_t *)address;
             }
             /// read a 2-byte integer
-            void readWord(const uint32_t address, uint16_t & value)
+            void readWord(const void * address, uint16_t & value)
             {
                 value = *(uint16_t *)address;
             };
             /// write a 2-byte integer
-            void writeWord(const uint32_t address, const uint16_t value)
+            void writeWord(const void * address, const uint16_t value)
             {
                 (*(uint16_t *)address) = value;
             };
 
             /// read a byte
-            uint8_t readByte(const uint32_t address)
+            uint8_t readByte(const void * address)
             {
                 return *(uint8_t *)address;
             }
             /// read a byte
-            void readByte(const uint32_t address, uint8_t & value)
+            void readByte(const void * address, uint8_t & value)
             {
                 value = *(uint8_t *)address;
             };
             /// write a byte
-            void writeByte(const uint32_t address, const uint8_t value)
+            void writeByte(const void * address, const uint8_t value)
             {
                 (*(uint8_t *)address) = value;
             };
 
             /// read an arbitrary amount of bytes
-            void read( uint32_t address, uint32_t length, uint8_t* buffer)
+            void read(void * address, uint32_t length, uint8_t* buffer)
             {
                 memcpy(buffer, (void *) address, length);
             };
             /// write an arbitrary amount of bytes
-            void write(uint32_t address, uint32_t length, uint8_t* buffer)
+            void write(void * address, uint32_t length, uint8_t* buffer)
             {
                 memcpy((void *) address, buffer, length);
             };
 
             /// read an STL string
-            const std::string readSTLString (uint32_t offset)
+            const std::string readSTLString (void * offset)
             {
                 std::string * str = (std::string *) offset;
                 return *str;
             };
             /// read an STL string
-            size_t readSTLString (uint32_t offset, char * buffer, size_t bufcapacity)
+            size_t readSTLString (void * offset, char * buffer, size_t bufcapacity)
             {
                 if(!bufcapacity || bufcapacity == 1)
                     return 0;
@@ -209,7 +220,7 @@ namespace DFHack
              * write an STL string
              * @return length written
              */
-            size_t writeSTLString(const uint32_t address, const std::string writeString)
+            size_t writeSTLString(const void * address, const std::string writeString)
             {
                 std::string * str = (std::string *) address;
                 str->assign(writeString);
@@ -219,7 +230,7 @@ namespace DFHack
              * attempt to copy a string from source address to target address. may truncate or leak, depending on platform
              * @return length copied
              */
-            size_t copySTLString(const uint32_t address, const uint32_t target)
+            size_t copySTLString(const void * address, const uint32_t target)
             {
                 std::string * strsrc = (std::string *) address;
                 std::string * str = (std::string *) target;
@@ -239,7 +250,7 @@ namespace DFHack
             }
 
             /// read a null-terminated C string
-            const std::string readCString (uint32_t offset)
+            const std::string readCString (void * offset)
             {
                 return std::string((char *) offset);
             };

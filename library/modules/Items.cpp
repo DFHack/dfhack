@@ -36,7 +36,6 @@ using namespace std;
 #include "Types.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"
-#include "Vector.h"
 #include "modules/Materials.h"
 #include "modules/Items.h"
 #include "modules/Units.h"
@@ -58,7 +57,7 @@ class Items::Private
         std::map<int32_t, df_item *> idLookupTable;
         uint32_t refVectorOffset;
         uint32_t idFieldOffset;
-        uint32_t itemVectorAddress;
+        void * itemVectorAddress;
 
         ClassNameCheck isOwnerRefClass;
         ClassNameCheck isContainerRefClass;

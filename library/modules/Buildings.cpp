@@ -32,7 +32,6 @@ using namespace std;
 
 #include "VersionInfo.h"
 #include "MemAccess.h"
-#include "Vector.h"
 #include "Types.h"
 #include "Error.h"
 #include "modules/Buildings.h"
@@ -58,13 +57,12 @@ struct t_building_df40d
 
 struct Buildings::Private
 {
-    uint32_t buildings_vector;
-    uint32_t custom_workshop_vector;
+    vector <void *> * custom_workshop_vector;
     uint32_t building_custom_workshop_type;
     uint32_t custom_workshop_type;
     uint32_t custom_workshop_name;
     int32_t custom_workshop_id;
-    DfVector <uint32_t> * p_bld;
+    vector <t_building_df40d *> * p_bld;
     Process * owner;
     bool Inited;
     bool hasCustomWorkshops;
@@ -88,7 +86,7 @@ Buildings::Buildings()
     d->Inited = true;
     try
     {
-        d->buildings_vector = OG_build->getAddress ("buildings_vector");
+        d->p_bld = (decltype(d->p_bld)) OG_build->getAddress ("buildings_vector");
     }
     catch(DFHack::Error::AllMemdef &e)
     {
@@ -99,7 +97,7 @@ Buildings::Buildings()
     {
         try
         {
-            d->custom_workshop_vector = OG_build->getAddress("custom_workshop_vector");
+            d->custom_workshop_vector =(decltype(d->custom_workshop_vector)) OG_build->getAddress ("custom_workshop_vector");
             d->building_custom_workshop_type = OG_build->getOffset("building_custom_workshop_type");
             d->custom_workshop_type = OG_build->getOffset("custom_workshop_type");
             d->custom_workshop_name = OG_build->getOffset("custom_workshop_name");
@@ -124,7 +122,6 @@ bool Buildings::Start(uint32_t & numbuildings)
 {
     if(!d->Inited)
         return false;
-    d->p_bld = new DfVector <uint32_t> (d->buildings_vector);
     numbuildings = d->p_bld->size();
     d->Started = true;
     return true;
@@ -134,37 +131,25 @@ bool Buildings::Read (const uint32_t index, t_building & building)
 {
     if(!d->Started)
         return false;
-    t_building_df40d bld_40d;
-
-    // read pointer from vector at position
-    uint32_t temp = d->p_bld->at (index);
-    //d->p_bld->read(index,(uint8_t *)&temp);
-
-    //read building from memory
-    d->owner->read (temp, sizeof (t_building_df40d), (uint8_t *) &bld_40d);
+    t_building_df40d *bld_40d = d->p_bld->at (index);
 
     // transform
     int32_t type = -1;
-    d->owner->getDescriptor()->resolveObjectToClassID (temp, type);
-    building.origin = temp;
-    building.vtable = bld_40d.vtable;
-    building.x1 = bld_40d.x1;
-    building.x2 = bld_40d.x2;
-    building.y1 = bld_40d.y1;
-    building.y2 = bld_40d.y2;
-    building.z = bld_40d.z;
-    building.material = bld_40d.material;
+    d->owner->getDescriptor()->resolveObjectToClassID (bld_40d, type);
+    building.origin = bld_40d;
+    building.vtable = bld_40d->vtable;
+    building.x1 = bld_40d->x1;
+    building.x2 = bld_40d->x2;
+    building.y1 = bld_40d->y1;
+    building.y2 = bld_40d->y2;
+    building.z = bld_40d->z;
+    building.material = bld_40d->material;
     building.type = type;
     return true;
 }
 
 bool Buildings::Finish()
 {
-    if(d->p_bld)
-    {
-        delete d->p_bld;
-        d->p_bld = NULL;
-    }
     d->Started = false;
     return true;
 }
@@ -177,14 +162,14 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
         return false;
 
     Process * p = d->owner;
-    DfVector <uint32_t> p_matgloss (d->custom_workshop_vector);
-    uint32_t size = p_matgloss.size();
+    uint32_t size = d->custom_workshop_vector->size();
     btypes.clear();
 
     for (uint32_t i = 0; i < size;i++)
     {
-        string out = p->readSTLString (p_matgloss[i] + d->custom_workshop_name);
-        uint32_t type = p->readDWord (p_matgloss[i] + d->custom_workshop_type);
+        void * obj = d->custom_workshop_vector->at(i);
+        string out = p->readSTLString (obj + d->custom_workshop_name);
+        uint32_t type = p->readDWord (obj + d->custom_workshop_type);
         #ifdef DEBUG
             cout << out << ": " << type << endl;
         #endif

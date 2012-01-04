@@ -42,7 +42,7 @@ namespace DFHack
      */
     struct t_building
     {
-        uint32_t origin;
+        void * origin;
         uint32_t vtable;
         uint32_t x1;
         uint32_t y1;

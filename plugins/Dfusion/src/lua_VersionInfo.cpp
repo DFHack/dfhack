@@ -16,7 +16,7 @@ int OffsetGroup::getOffset(lua_State *L)
 int OffsetGroup::getAddress(lua_State *L)
 {
     lua::state st(L);
-    uint32_t ret=p->getAddress(st.as<std::string>(1));
+    uint32_t ret= (uint32_t)p->getAddress(st.as<std::string>(1));
     st.push(ret);
     return 1;
 }
@@ -57,7 +57,7 @@ int OffsetGroup::getSafeOffset(lua_State *L)
 int OffsetGroup::getSafeAddress(lua_State *L)
 {
     lua::state st(L);
-    uint32_t out;
+    void * out;
     bool ret=p->getSafeAddress(st.as<std::string>(1),out);
     st.push(ret);
     st.push(out);
@@ -286,7 +286,7 @@ static int __lua_resolveObjectToClassID(lua_State *S)
 {
     lua::state st(S);
     int32_t ret;
-    bool output=DFHack::Core::getInstance().vinfo->resolveObjectToClassID(st.as<uint32_t>(1),ret);
+    bool output=DFHack::Core::getInstance().vinfo->resolveObjectToClassID((void *)st.as<uint32_t>(1),ret);
     st.push(output);
     st.push(ret);
     return 2;
@@ -329,7 +329,7 @@ static int __lua_getOffset(lua_State *S)
 static int __lua_getAddress(lua_State *S)
 {
     lua::state st(S);
-    uint32_t ret=DFHack::Core::getInstance().vinfo->getAddress(st.as<std::string>(1));
+    void * ret=DFHack::Core::getInstance().vinfo->getAddress(st.as<std::string>(1));
     st.push(ret);
     return 1;
 }
@@ -392,7 +392,7 @@ static int __lua_getSafeOffset(lua_State *S)
 static int __lua_getSafeAddress(lua_State *S)
 {
     lua::state st(S);
-    uint32_t out;
+    void * out;
     bool ret=DFHack::Core::getInstance().vinfo->getSafeAddress(st.as<std::string>(1),out);
     st.push(ret);
     st.push(out);

@@ -12,7 +12,6 @@ using namespace std;
 #include "Types.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"
-#include "Vector.h"
 #include "modules/Materials.h"
 #include "modules/Items.h"
 #include "modules/Units.h"
@@ -44,9 +43,9 @@ namespace Kitchen
         std::vector<t_materialIndex>& materialIndices; // the material index vector of the kitchen exclusion list
         std::vector<t_exclusionType>& exclusionTypes; // the exclusion type vector of the kitchen excluions list
 
-        static uint32_t addr(const DFHack::Core& core, int index)
+        static void * addr(const DFHack::Core& core, int index)
         {
-            static uint32_t start = core.vinfo->getAddress("kitchen_limits");
+            static void * start = core.vinfo->getAddress("kitchen_limits");
             return start + sizeof(std::vector<int>) * index;
         };
     };

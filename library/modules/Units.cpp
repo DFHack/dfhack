@@ -36,7 +36,6 @@ using namespace std;
 
 #include "VersionInfo.h"
 #include "MemAccess.h"
-#include "Vector.h"
 #include "Error.h"
 #include "Types.h"
 
@@ -54,8 +53,8 @@ struct Units::Private
     bool Inited;
     bool Started;
 
-    uint32_t dwarf_race_index_addr;
-    uint32_t dwarf_civ_id_addr;
+    void * dwarf_race_index_addr;
+    void * dwarf_civ_id_addr;
     bool IdMapReady;
     std::map<int32_t, int32_t> IdMap;
 
@@ -86,8 +85,8 @@ Units::Units()
     try
     {
         creatures = (vector <df_unit *> *) OG_Creatures->getAddress ("vector");
-        d->dwarf_race_index_addr = OG_Creatures->getAddress("current_race");
-        d->dwarf_civ_id_addr = OG_Creatures->getAddress("current_civ");
+        d->dwarf_race_index_addr = (void *) OG_Creatures->getAddress("current_race");
+        d->dwarf_civ_id_addr = (void *) OG_Creatures->getAddress("current_civ");
     }
     catch(Error::All&){};
     d->Inited = true;

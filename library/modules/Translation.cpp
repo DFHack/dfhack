@@ -33,7 +33,6 @@ using namespace std;
 #include "modules/Translation.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"
-#include "Vector.h"
 #include "Types.h"
 #include "ModuleFactory.h"
 #include "Core.h"
@@ -46,8 +45,8 @@ Module* DFHack::createTranslation()
 
 struct Translation::Private
 {
-    uint32_t genericAddress;
-    uint32_t transAddress;
+    void * genericAddress;
+    void * transAddress;
     uint32_t word_table_offset;
     uint32_t sizeof_string;
 
@@ -97,15 +96,15 @@ bool Translation::Start()
         return false;
     Process * p = c.p;
     Finish();
-    DfVector <uint32_t> genericVec (d->genericAddress);
-    DfVector <uint32_t> transVec (d->transAddress);
+    vector <void *> & genericVec = *(vector <void *> *) d->genericAddress;
+    vector <void *> & transVec = *(vector <void *> *) d->transAddress;
     DFDict & translations = d->dicts.translations;
     DFDict & foreign_languages = d->dicts.foreign_languages;
 
     translations.resize(10);
     for (uint32_t i = 0;i < genericVec.size();i++)
     {
-        uint32_t genericNamePtr = genericVec.at(i);
+        void * genericNamePtr = genericVec[i];
         for(int j=0; j<10;j++)
         {
             string word = p->readSTLString (genericNamePtr + j * d->sizeof_string);
@@ -116,11 +115,11 @@ bool Translation::Start()
     foreign_languages.resize(transVec.size());
     for (uint32_t i = 0; i < transVec.size();i++)
     {
-        uint32_t transPtr = transVec.at(i);
-        DfVector <uint32_t> trans_names_vec (transPtr + d->word_table_offset);
+        void * transPtr = transVec.at(i);
+        vector <void *> & trans_names_vec = *(vector <void *> *) (transPtr + d->word_table_offset);
         for (uint32_t j = 0;j < trans_names_vec.size();j++)
         {
-            uint32_t transNamePtr = trans_names_vec.at(j);
+            void * transNamePtr = trans_names_vec[j];
             string name = p->readSTLString (transNamePtr);
             foreign_languages[i].push_back (name);
         }

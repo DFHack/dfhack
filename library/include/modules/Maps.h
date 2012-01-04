@@ -149,7 +149,7 @@ namespace DFHack
         /// placeholder
         bool discovered;
         /// this is NOT part of the DF feature, but an address of the feature as seen by DFhack.
-        uint32_t origin;
+        void * origin;
     };
 
 

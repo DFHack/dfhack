@@ -40,7 +40,7 @@ using namespace DFHack;
 
 struct Vermin::Private
 {
-    uint32_t spawn_points_vector;
+    void * spawn_points_vector;
     uint32_t race_offset;
     uint32_t type_offset;
     uint32_t position_offset;
@@ -140,7 +140,7 @@ bool SpawnPoints::Read (const uint32_t index, t_spawnPoint & sp)
         return false;
 
     // read pointer from vector at position
-    uint32_t temp = (uint32_t) p_sp->at (index);
+    void * temp = p_sp->at (index);
 
     sp.origin    = temp;
     sp.race      = v->d->owner->readWord(temp + v->d->race_offset);
@@ -161,7 +161,7 @@ bool SpawnPoints::Write (const uint32_t index, t_spawnPoint & sp)
         return false;
 
     // read pointer from vector at position
-    uint32_t temp = (uint32_t) p_sp->at (index);
+    void * temp = p_sp->at (index);
 
     v->d->owner->writeWord(temp + v->d->race_offset, sp.race);
     v->d->owner->writeWord(temp + v->d->type_offset, sp.type);

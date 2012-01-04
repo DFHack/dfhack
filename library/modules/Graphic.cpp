@@ -37,7 +37,6 @@ using namespace std;
 #include "Error.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"
-#include "Vector.h"
 #include "ModuleFactory.h"
 #include "Core.h"
 

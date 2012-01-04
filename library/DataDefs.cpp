@@ -154,9 +154,9 @@ void virtual_identity::Init(Core *core)
     // Read pre-filled vtable ptrs
     OffsetGroup *ptr_table = core->vinfo->getGroup("vtable");
     for (virtual_identity *p = list; p; p = p->next) {
-        uint32_t tmp;
+        void * tmp;
         if (ptr_table->getSafeAddress(p->getName(),tmp))
-            p->vtable_ptr = (void*)tmp;
+            p->vtable_ptr = tmp;
     }
 }
 
@@ -169,7 +169,7 @@ DF_KNOWN_GLOBALS
 
 void DFHack::InitDataDefGlobals(Core *core) {
     OffsetGroup *global_table = core->vinfo->getGroup("global");
-    uint32_t tmp;
+    void * tmp;
 
 #define SIMPLE_GLOBAL(name,tname) \
     if (global_table->getSafeAddress(#name,tmp)) df::global::name = (tname*)tmp;

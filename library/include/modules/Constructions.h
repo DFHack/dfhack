@@ -74,7 +74,7 @@ namespace DFHack
         uint32_t unk6;
 
         /// Address of the read object in DF memory. Added by DFHack.
-        uint32_t origin;
+        t_construction * origin;
     };
     #pragma pack (pop)
     class DFContextShared;

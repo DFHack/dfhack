@@ -37,7 +37,6 @@ using namespace std;
 #include "Error.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"
-#include "Vector.h"
 #include "ModuleFactory.h"
 #include "Core.h"
 
@@ -96,7 +95,7 @@ struct Maps::Private
         FEATURES
          */
         // FIXME: replace with a struct pointer, eventually. needs to be mapped out first
-        uint32_t world_data;
+        void * world_data;
         uint32_t local_f_start; // offset from world_data
         // FIXME: replace by virtual function call
         uint32_t local_material;
@@ -122,7 +121,7 @@ struct Maps::Private
     set <uint32_t> unknown_veins;
 
     // map between feature address and the read object
-    map <uint32_t, t_feature> local_feature_store;
+    map <void *, t_feature> local_feature_store;
     map <DFCoord, vector <t_feature *> > m_local_feature;
     vector <t_feature> v_global_feature;
 
@@ -142,7 +141,7 @@ Maps::Maps()
 
     // get the offsets once here
     OffsetGroup *OG_Maps = mem->getGroup("Maps");
-    off.world_data = OG_Maps->getAddress("world_data");
+    off.world_data = (void *) OG_Maps->getAddress("world_data");
     {
         mdata = (map_data *) OG_Maps->getAddress ("map_data");
         off.world_size_x = OG_Maps->getOffset ("world_size_x_from_wdata");
@@ -508,13 +507,13 @@ bool Maps::StartFeatures()
 
     Process * p = d->owner;
     Private::t_offsets &off = d->offsets;
-    uint32_t base = 0;
-    uint32_t global_feature_vector = 0;
+    void * base = 0;
+    void * global_feature_vector = 0;
 
-    uint32_t world = p->readDWord(off.world_data);
+    void * world = p->readPtr( (void *) off.world_data);
     if(!world) return false;
-    base = p->readDWord(world + off.local_f_start);
-    global_feature_vector = p->readDWord(off.world_data) + off.global_vector;
+    base = p->readPtr(world + off.local_f_start);
+    global_feature_vector = p->readDWord(off.world_data) + (void *) off.global_vector;
 
     // deref pointer to the humongo-structure
     if(!base)
@@ -549,22 +548,21 @@ bool Maps::StartFeatures()
 
         // base = pointer to local feature structure (inside world data struct)
         // bigregion is 16x16 regions. for each bigregion in X dimension:
-        uint32_t mega_column = p->readDWord(base + bigregion_x * 4);
+        void * mega_column = p->readPtr(base + bigregion_x * 4);
 
         // 16B structs, second DWORD of the struct is a pointer
-        uint32_t loc_f_array16x16 = p->readDWord(mega_column + offset_elem + (sizeof_elem * bigregion_y));
+        void * loc_f_array16x16 = p->readPtr(mega_column + offset_elem + (sizeof_elem * bigregion_y));
         if(loc_f_array16x16)
         {
-            uint32_t feat_vector = loc_f_array16x16 + sizeof_16vec * sub_x + sizeof_vec * sub_y;
-            DfVector<uint32_t> p_features(feat_vector);
-            uint32_t size = p_features.size();
+            vector <void *> * p_features = (vector <void *> *) (loc_f_array16x16 + sizeof_16vec * sub_x + sizeof_vec * sub_y);
+            uint32_t size = p_features->size();
             DFCoord pc(blockX,blockY);
             std::vector<t_feature *> tempvec;
             for(uint32_t i = 0; i < size; i++)
             {
-                uint32_t cur_ptr = p_features[i];
+                void * cur_ptr = p_features->at(i);
 
-                map <uint32_t, t_feature>::iterator it;
+                map <void *, t_feature>::iterator it;
                 it = d->local_feature_store.find(cur_ptr);
                 // do we already have the feature?
                 if(it != d->local_feature_store.end())
@@ -579,7 +577,7 @@ bool Maps::StartFeatures()
                     // create, add to store
                     t_feature tftemp;
                     tftemp.discovered = false; //= p->readDWord(cur_ptr + 4);
-                    tftemp.origin = cur_ptr;
+                    tftemp.origin = (t_feature *) cur_ptr;
                     string name = p->readClassName((void *)p->readDWord( cur_ptr ));
                     if(name == "feature_init_deep_special_tubest")
                     {
@@ -611,17 +609,15 @@ bool Maps::StartFeatures()
     const uint32_t global_feature_funcptr = off.global_funcptr;
     const uint32_t glob_main_mat_offset = off.global_material;
     const uint32_t glob_sub_mat_offset = off.global_submaterial;
-    DfVector<uint32_t> p_features (global_feature_vector);
-
+    vector <void *> * p_features = (vector <void *> *) global_feature_vector;
     d->v_global_feature.clear();
-    uint32_t size = p_features.size();
+    uint32_t size = p_features->size();
     d->v_global_feature.reserve(size);
     for(uint32_t i = 0; i < size; i++)
     {
         t_feature temp;
-        uint32_t feat_ptr = p->readDWord(p_features[i] + global_feature_funcptr );
+        void * feat_ptr = p->readPtr(p_features->at(i) + global_feature_funcptr );
         temp.origin = feat_ptr;
-        //temp.discovered = p->readDWord( feat_ptr + 4 ); // maybe, placeholder
         temp.discovered = false;
 
         // FIXME: use the memory_info cache mechanisms
@@ -887,8 +883,8 @@ bool Maps::RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, t_virtual * whic
 }
 
 /*
- * Layer geology
- */
+* Layer geology
+*/
 bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 {
     MAPS_GUARD
@@ -896,17 +892,18 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     Process *p = d->owner;
     // get needed addresses and offsets. Now this is what I call crazy.
     uint16_t worldSizeX, worldSizeY;
-    uint32_t regions, geoblocks_vector_addr;
+    void *regions;
+    void *geoblocks_vector_addr;
     Private::t_offsets &off = d->offsets;
     // get world size
-    uint32_t world = p->readDWord(off.world_data);
+    void * world = p->readPtr(off.world_data);
     p->readWord (world + off.world_size_x, worldSizeX);
     p->readWord (world + off.world_size_y, worldSizeY);
-    regions = p->readDWord ( world + off.world_regions); // ptr2_region_array
+    regions = p->readPtr ( world + off.world_regions); // ptr2_region_array
     geoblocks_vector_addr = world + off.world_geoblocks_vector;
 
     // read the geoblock vector
-    DfVector <uint32_t> geoblocks (geoblocks_vector_addr);
+    vector <void *> & geoblocks = *(vector <void *> *)(geoblocks_vector_addr);
 
     // iterate over 8 surrounding regions + local region
     for (int i = eNorthWest; i < eBiomeCount; i++)
@@ -925,8 +922,8 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
         /// regions are a 2d array. consists of pointers to arrays of regions
         /// regions are of region_size size
         // get pointer to column of regions
-        uint32_t geoX;
-        p->readDWord (regions + bioRX*4, geoX);
+        void * geoX;
+        p->readPtr (regions + bioRX*4, geoX);
 
         // get index into geoblock vector
         uint16_t geoindex;
@@ -935,11 +932,11 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
         /// geology blocks are assigned to regions from a vector
         // get the geoblock from the geoblock vector using the geoindex
         // read the matgloss pointer from the vector into temp
-        uint32_t geoblock_off = geoblocks[geoindex];
+        void * geoblock_off = geoblocks[geoindex];
 
         /// geology blocks have a vector of layer descriptors
         // get the vector with pointer to layers
-        DfVector <uint32_t> geolayers (geoblock_off + off.geolayer_geoblock_offset); // let's hope
+        vector <void *> & geolayers = *(vector <void *> *)(geoblock_off + off.geolayer_geoblock_offset);
         // make sure we don't load crap
         assert (geolayers.size() > 0 && geolayers.size() <= 16);
 
@@ -949,7 +946,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
         for (uint32_t j = 0;j < geolayers.size();j++)
         {
             // read pointer to a layer
-            uint32_t geol_offset = geolayers[j];
+            void * geol_offset = geolayers[j];
             // read word at pointer + 2, store in our geology vectors
             d->v_geology[i].push_back (p->readWord (geol_offset + off.type_inside_geolayer));
         }

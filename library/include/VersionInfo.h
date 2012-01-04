@@ -88,13 +88,13 @@ namespace DFHack
         OffsetGroup * createGroup ( const std::string & name );
 
         int32_t getOffset (const std::string & key);
-        uint32_t getAddress (const std::string & key);
+        void * getAddress (const std::string & key);
         uint32_t getHexValue (const std::string & key);
         std::string getString (const std::string & key);
         OffsetGroup * getGroup ( const std::string & name );
 
         bool getSafeOffset (const std::string & key, int32_t & out);
-        bool getSafeAddress (const std::string & key, uint32_t & out);
+        bool getSafeAddress (const std::string & key, void * & out);
 
         void setOffset (const std::string& key, const std::string& value, const DFHack::INVAL_TYPE inval = IS_VALID);
         void setOffsetValidity(const std::string& key, const DFHack::INVAL_TYPE inval = IS_VALID);
@@ -189,7 +189,7 @@ namespace DFHack
          *   uses memory reading directly, needs suspend. input = address of the object
          *   fails if it's unable to read from memory
          */
-        bool resolveObjectToClassID (const uint32_t address, int32_t & classID);
+        bool resolveObjectToClassID (const void * address, int32_t & classID);
 
         /**
         * Get a ClassID when you know the classname. can fail if the class is not in the cache

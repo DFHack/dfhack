@@ -51,6 +51,7 @@ using namespace std;
 
 #include "df/job_material_category.h"
 #include "df/matter_state.h"
+#include "df/material_vec_ref.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -58,9 +59,17 @@ using namespace df::enums;
 bool MaterialInfo::decode(df::item *item)
 {
     if (!item)
-        decode(-1);
+        return decode(-1);
     else
-        decode(item->getActualMaterial(), item->getActualMaterialIndex());
+        return decode(item->getActualMaterial(), item->getActualMaterialIndex());
+}
+
+bool MaterialInfo::decode(const df::material_vec_ref &vr, int idx)
+{
+    if (idx < 0 || idx >= vr.mat_type.size() || idx >= vr.mat_index.size())
+        return decode(-1);
+    else
+        return decode(vr.mat_type[idx], vr.mat_index[idx]);
 }
 
 bool MaterialInfo::decode(int16_t type, int32_t index)

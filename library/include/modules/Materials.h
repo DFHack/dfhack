@@ -47,6 +47,7 @@ namespace df
     struct plant_raw;
     struct creature_raw;
     struct historical_figure;
+    struct material_vec_ref;
     union job_material_category;
 }
 
@@ -82,12 +83,18 @@ namespace DFHack
 
     public:
         MaterialInfo(int16_t type = -1, int32_t index = -1) { decode(type, index); }
-        MaterialInfo(df::item *item) { decode(item); }
+        template<class T> MaterialInfo(T *ptr) { decode(ptr); }
 
         bool isValid() const { return material != NULL; }
 
         bool decode(int16_t type, int32_t index = -1);
         bool decode(df::item *item);
+        bool decode(const df::material_vec_ref &vr, int idx);
+
+        template<class T> bool decode(T *ptr) {
+            // Assume and exploit a certain naming convention
+            return ptr ? decode(ptr->mat_type, ptr->mat_index) : decode(-1);
+        }
 
         bool find(const std::string &token, const std::string &subtoken = std::string());
         bool findBuiltin(const std::string &token);

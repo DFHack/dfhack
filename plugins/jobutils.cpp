@@ -18,6 +18,7 @@
 #include <df/job.h>
 #include <df/job_item.h>
 #include <df/item.h>
+#include <df/tool_uses.h>
 
 using std::vector;
 using std::string;
@@ -102,7 +103,7 @@ static bool workshop_job_hotkey(Core *c, df::viewscreen *top)
 
             // No jobs?
             if (selected->jobs.empty() ||
-                selected->jobs[0]->job_id == job_type::DestroyBuilding)
+                selected->jobs[0]->job_type == job_type::DestroyBuilding)
                 return false;
 
             // Add job gui activated?
@@ -169,7 +170,7 @@ static command_result job_material_in_job(Core *c, MaterialInfo &new_mat)
     if (!job)
         return CR_FAILURE;
 
-    MaterialInfo cur_mat(job->matType, job->matIndex);
+    MaterialInfo cur_mat(job);
 
     if (!cur_mat.isValid() || cur_mat.type != 0)
     {
@@ -195,7 +196,7 @@ static command_result job_material_in_job(Core *c, MaterialInfo &new_mat)
     for (unsigned i = 0; i < job->job_items.size(); i++)
     {
         df::job_item *item = job->job_items[i];
-        MaterialInfo item_mat(item->matType, item->matIndex);
+        MaterialInfo item_mat(item);
 
         if (item_mat != cur_mat)
         {
@@ -206,18 +207,18 @@ static command_result job_material_in_job(Core *c, MaterialInfo &new_mat)
     }
 
     // Apply the substitution
-    job->matType = new_mat.type;
-    job->matIndex = new_mat.index;
+    job->mat_type = new_mat.type;
+    job->mat_index = new_mat.index;
 
     for (unsigned i = 0; i < job->job_items.size(); i++)
     {
         df::job_item *item = job->job_items[i];
-        item->matType = new_mat.type;
-        item->matIndex = new_mat.index;
+        item->mat_type = new_mat.type;
+        item->mat_index = new_mat.index;
     }
 
     c->con << "Applied material '" << new_mat.toString()
-           << "' to job " << ENUM_KEY_STR(job_type,job->job_id) << endl;
+           << "' to job " << ENUM_KEY_STR(job_type,job->job_type) << endl;
     return CR_OK;
 }
 
@@ -226,8 +227,8 @@ static bool build_choice_matches(df::ui_build_item_req *req, df::build_req_choic
 {
     if (VIRTUAL_CAST_VAR(gen, df::build_req_choice_genst, choice))
     {
-        if (gen->matType == new_mat.type &&
-            gen->matIndex == new_mat.index &&
+        if (gen->mat_type == new_mat.type &&
+            gen->mat_index == new_mat.index &&
             gen->used_count < gen->candidates.size())
         {
             return true;
@@ -289,14 +290,22 @@ static command_result job_material(Core * c, vector <string> & parameters)
 
 static void print_job_item_details(Core *c, df::job *job, df::job_item *item)
 {
-    c->con << "  Input Item: " << ENUM_KEY_STR(item_type,item->itemType);
-    if (item->itemSubtype != -1)
-        c->con << " [" << item->itemSubtype << "]";
-    c->con << "; count=" << item->count << endl;
+    c->con << "  Input Item: " << ENUM_KEY_STR(item_type,item->item_type);
+    if (item->item_subtype != -1)
+        c->con << " [" << item->item_subtype << "]";
+    if (item->quantity != 1)
+        c->con << "; quantity=" << item->quantity;
+    if (item->min_dimension >= 0)
+        c->con << "; min_dimension=" << item->min_dimension;
+    c->con << endl;
 
-    MaterialInfo mat(item->matType, item->matIndex);
-    if (mat.isValid())
-        c->con << "    material: " << mat.toString() << endl;
+    MaterialInfo mat(item);
+    if (mat.isValid() || item->metal_ore >= 0) {
+        c->con << "    material: " << mat.toString();
+        if (item->metal_ore >= 0)
+            c->con << "; ore of " << MaterialInfo(0,item->metal_ore).toString();
+        c->con << endl;
+    }
 
     if (item->flags1.whole)
         c->con << "    flags1: " << bitfieldToString(item->flags1) << endl;
@@ -309,15 +318,16 @@ static void print_job_item_details(Core *c, df::job *job, df::job_item *item)
         c->con << "    reaction class: " << item->reaction_class << endl;
     if (!item->has_material_reaction_product.empty())
         c->con << "    reaction product: " << item->has_material_reaction_product << endl;
+    if (item->has_tool_use >= 0)
+        c->con << "    tool use: " << ENUM_KEY_STR(tool_uses, item->has_tool_use) << endl;
 }
 
 static void print_job_details(Core *c, df::job *job)
 {
-    c->con << "Job " << job->id << ": " << ENUM_KEY_STR(job_type,job->job_id)
-           << " [" << job->x << "," << job->y << "," << job->z << "] ("
-           << bitfieldToString(job->flags) << ")" << endl;
+    c->con << "Job " << job->id << ": " << ENUM_KEY_STR(job_type,job->job_type)
+           << " (" << bitfieldToString(job->flags) << ")" << endl;
 
-    MaterialInfo mat(job->matType, job->matIndex);
+    MaterialInfo mat(job);
     if (mat.isValid() || job->material_category.whole)
     {
         c->con << "    material: " << mat.toString();

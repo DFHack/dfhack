@@ -111,15 +111,37 @@ namespace DFHack
         return T::_identity.is_instance(ptr) ? static_cast<T*>(ptr) : NULL;
     }
 
+#define VIRTUAL_CAST_VAR(var,type,input) type *var = virtual_cast<type>(input)
+
     template<class T>
     inline T *strict_virtual_cast(virtual_ptr ptr) {
         return T::_identity.is_direct_instance(ptr) ? static_cast<T*>(ptr) : NULL;
     }
 
+#define STRICT_VIRTUAL_CAST_VAR(var,type,input) type *var = strict_virtual_cast<type>(input)
+
     void InitDataDefGlobals(Core *core);
 
     template<class T>
     T *ifnull(T *a, T *b) { return a ? a : b; }
+
+    template<class T, T start, bool (*isvalid)(T)>
+    inline T next_enum_item_(T v) {
+        v = T(int(v) + 1);
+        return isvalid(v) ? v : start;
+    }
+
+    struct bitfield_item_info {
+        const char *name;
+        int size;
+    };
+
+    DFHACK_EXPORT std::string bitfieldToString(const void *p, int size, const bitfield_item_info *items);
+
+    template<class T>
+    inline std::string bitfieldToString(const T &val) {
+        return bitfieldToString(&val.whole, sizeof(val.whole), val.get_items());
+    }
 }
 
 namespace df
@@ -127,6 +149,7 @@ namespace df
     using DFHack::virtual_ptr;
     using DFHack::virtual_identity;
     using DFHack::virtual_class;
+    using DFHack::bitfield_item_info;
     using DFHack::BitArray;
 
     template<class T>
@@ -167,6 +190,11 @@ namespace df
 #define ENUM_FIRST_ITEM(enum) (df::enums::enum::_first_item_of_##enum)
 #define ENUM_LAST_ITEM(enum) (df::enums::enum::_last_item_of_##enum)
 
+#define ENUM_NEXT_ITEM(enum,val) \
+    (DFHack::next_enum_item_<df::enum,ENUM_FIRST_ITEM(enum),df::enums::enum::is_valid>(val))
+#define FOR_ENUM_ITEMS(enum,iter) \
+    for(df::enum iter = ENUM_FIRST_ITEM(enum); iter < ENUM_LAST_ITEM(enum); iter = df::enum(1+int(iter)))
+
 namespace df {
 #define DF_KNOWN_GLOBALS \
     GLOBAL(cursor,cursor) \
@@ -176,8 +204,10 @@ namespace df {
     GLOBAL(gview,interface) \
     GLOBAL(init,init) \
     GLOBAL(d_init,d_init) \
+    SIMPLE_GLOBAL(job_next_id,int) \
     SIMPLE_GLOBAL(ui_look_cursor,int) \
     SIMPLE_GLOBAL(ui_workshop_job_cursor,int) \
+    SIMPLE_GLOBAL(ui_workshop_in_add,bool) \
     GLOBAL(ui_sidebar_menus,ui_sidebar_menus) \
     GLOBAL(ui_build_selector,ui_build_selector) \
     GLOBAL(ui_look_list,ui_look_list)

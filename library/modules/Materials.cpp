@@ -39,7 +39,359 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "Core.h"
 
+#include "MiscUtils.h"
+
+#include "df/world.h"
+#include "df/ui.h"
+#include "df/item.h"
+#include "df/inorganic_raw.h"
+#include "df/plant_raw.h"
+#include "df/plant_raw_flags.h"
+#include "df/creature_raw.h"
+#include "df/historical_figure.h"
+
+#include "df/job_item.h"
+#include "df/job_material_category.h"
+#include "df/matter_state.h"
+#include "df/material_vec_ref.h"
+
 using namespace DFHack;
+using namespace df::enums;
+
+bool MaterialInfo::decode(df::item *item)
+{
+    if (!item)
+        return decode(-1);
+    else
+        return decode(item->getActualMaterial(), item->getActualMaterialIndex());
+}
+
+bool MaterialInfo::decode(const df::material_vec_ref &vr, int idx)
+{
+    if (idx < 0 || idx >= vr.mat_type.size() || idx >= vr.mat_index.size())
+        return decode(-1);
+    else
+        return decode(vr.mat_type[idx], vr.mat_index[idx]);
+}
+
+bool MaterialInfo::decode(int16_t type, int32_t index)
+{
+    this->type = type;
+    this->index = index;
+
+    material = NULL;
+    mode = Builtin; subtype = 0;
+    inorganic = NULL; plant = NULL; creature = NULL;
+    figure = NULL;
+
+    df::world_raws &raws = df::global::world->raws;
+
+    if (type < 0 || type >= sizeof(raws.mat_table.builtin)/sizeof(void*))
+        return false;
+
+    if (index < 0)
+    {
+        material = raws.mat_table.builtin[type];
+    }
+    else if (type == 0)
+    {
+        mode = Inorganic;
+        inorganic = df::inorganic_raw::find(index);
+        if (!inorganic)
+            return false;
+        material = &inorganic->material;
+    }
+    else if (type < CREATURE_BASE)
+    {
+        material = raws.mat_table.builtin[type];
+    }
+    else if (type < FIGURE_BASE)
+    {
+        mode = Creature;
+        subtype = type-CREATURE_BASE;
+        creature = df::creature_raw::find(index);
+        if (!creature || subtype >= creature->material.size())
+            return false;
+        material = creature->material[subtype];
+    }
+    else if (type < PLANT_BASE)
+    {
+        mode = Creature;
+        subtype = type-FIGURE_BASE;
+        figure = df::historical_figure::find(index);
+        if (!figure)
+            return false;
+        creature = df::creature_raw::find(figure->race);
+        if (!creature || subtype >= creature->material.size())
+            return false;
+        material = creature->material[subtype];
+    }
+    else if (type < END_BASE)
+    {
+        mode = Plant;
+        subtype = type-PLANT_BASE;
+        plant = df::plant_raw::find(index);
+        if (!plant || subtype >= plant->material.size())
+            return false;
+        material = plant->material[subtype];
+    }
+    else
+    {
+        material = raws.mat_table.builtin[type];
+    }
+
+    return (material != NULL);
+}
+
+bool MaterialInfo::find(const std::string &token, const std::string &subtoken)
+{
+    if (findBuiltin(token))
+        return true;
+    if (subtoken.empty())
+    {
+        if (findInorganic(token))
+            return true;
+    }
+    else
+    {
+        if (findPlant(token, subtoken))
+            return true;
+        if (findCreature(token, subtoken))
+            return true;
+    }
+    return false;
+}
+
+bool MaterialInfo::findBuiltin(const std::string &token)
+{
+    df::world_raws &raws = df::global::world->raws;
+    for (int i = 1; i < NUM_BUILTIN; i++)
+        if (raws.mat_table.builtin[i]->id == token)
+            return decode(i, -1);
+    return decode(-1);
+}
+
+bool MaterialInfo::findInorganic(const std::string &token)
+{
+    df::world_raws &raws = df::global::world->raws;
+    for (unsigned i = 0; i < raws.inorganics.size(); i++)
+    {
+        df::inorganic_raw *p = raws.inorganics[i];
+        if (p->id == token)
+            return decode(0, i);
+    }
+    return decode(-1);
+}
+
+bool MaterialInfo::findPlant(const std::string &token, const std::string &subtoken)
+{
+    df::world_raws &raws = df::global::world->raws;
+    for (unsigned i = 0; i < raws.plants.all.size(); i++)
+    {
+        df::plant_raw *p = raws.plants.all[i];
+        if (p->id != token)
+            continue;
+
+        for (unsigned j = 0; j < p->material.size(); j++)
+            if (p->material[j]->id == subtoken)
+                return decode(PLANT_BASE+j, i);
+
+        break;
+    }
+    return decode(-1);
+}
+
+bool MaterialInfo::findCreature(const std::string &token, const std::string &subtoken)
+{
+    df::world_raws &raws = df::global::world->raws;
+    for (unsigned i = 0; i < raws.creatures.all.size(); i++)
+    {
+        df::creature_raw *p = raws.creatures.all[i];
+        if (p->creature_id != token)
+            continue;
+
+        for (unsigned j = 0; j < p->material.size(); j++)
+            if (p->material[j]->id == subtoken)
+                return decode(CREATURE_BASE+j, i);
+
+        break;
+    }
+    return decode(-1);
+}
+
+std::string MaterialInfo::toString(uint16_t temp, bool named)
+{
+    if (type == -1)
+        return "NONE";
+    if (!material)
+        return stl_sprintf("INVALID %d:%d", type, index);
+
+    df::matter_state state = matter_state::Solid;
+    if (temp >= material->heat.melting_point)
+        state = matter_state::Liquid;
+    if (temp >= material->heat.boiling_point)
+        state = matter_state::Gas;
+
+    std::string name = material->state_name[state];
+    if (!material->prefix.empty())
+        name = material->prefix + " " + name;
+
+    if (named && figure)
+        name += stl_sprintf(" of HF %d", index);
+    return name;
+}
+
+df::craft_material_class MaterialInfo::getCraftClass()
+{
+    if (!material)
+        return craft_material_class::None;
+
+    if (type == 0 && index == -1)
+        return craft_material_class::Stone;
+
+    FOR_ENUM_ITEMS(material_flags, i)
+    {
+        df::craft_material_class ccv = ENUM_ATTR(material_flags, type, i);
+        if (ccv == craft_material_class::None)
+            continue;
+        if (material->flags.is_set(i))
+            return ccv;
+    }
+
+    return craft_material_class::None;
+}
+
+bool MaterialInfo::isAnyCloth()
+{
+    using namespace df::enums::material_flags;
+
+    return material && (
+        material->flags.is_set(THREAD_PLANT) ||
+        material->flags.is_set(SILK) ||
+        material->flags.is_set(YARN)
+    );
+}
+
+bool MaterialInfo::matches(const df::job_material_category &cat)
+{
+    if (!material)
+        return false;
+
+    using namespace df::enums::material_flags;
+#define TEST(bit,flag) if (cat.bits.bit && material->flags.is_set(flag)) return true;
+    TEST(plant, STRUCTURAL_PLANT_MAT);
+    TEST(wood, WOOD);
+    TEST(cloth, THREAD_PLANT);
+    TEST(silk, SILK);
+    TEST(leather, LEATHER);
+    TEST(bone, BONE);
+    TEST(shell, SHELL);
+    TEST(wood2, WOOD);
+    TEST(soap, SOAP);
+    TEST(tooth, TOOTH);
+    TEST(horn, HORN);
+    TEST(pearl, PEARL);
+    TEST(yarn, YARN);
+#undef TEST
+    return false;
+}
+
+bool MaterialInfo::matches(const df::job_item &item)
+{
+    if (!isValid()) return false;
+
+    df::job_item_flags1 ok1, mask1;
+    getMatchBits(ok1, mask1);
+
+    df::job_item_flags2 ok2, mask2;
+    getMatchBits(ok2, mask2);
+
+    df::job_item_flags3 ok3, mask3;
+    getMatchBits(ok3, mask3);
+
+    return ((item.flags1.whole & mask1.whole) == (item.flags1.whole & ok1.whole)) &&
+           ((item.flags2.whole & mask2.whole) == (item.flags2.whole & ok2.whole)) &&
+           ((item.flags3.whole & mask3.whole) == (item.flags3.whole & ok3.whole));
+}
+
+void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &mask)
+{
+    ok.whole = mask.whole = 0;
+    if (!isValid()) return;
+
+#define MAT_FLAG(name) material->flags.is_set(df::enums::material_flags::name)
+#define FLAG(field, name) (field && field->flags.is_set(name))
+#define TEST(bit, check) \
+    mask.bits.bit = true; ok.bits.bit = !!(check);
+
+    bool structural = MAT_FLAG(STRUCTURAL_PLANT_MAT);
+
+    TEST(millable, structural && FLAG(plant, plant_raw_flags::MILL));
+    TEST(sharpenable, MAT_FLAG(IS_STONE));
+    TEST(distillable, structural && FLAG(plant, plant_raw_flags::DRINK));
+    TEST(processable, structural && FLAG(plant, plant_raw_flags::THREAD));
+    TEST(bag, isAnyCloth());
+    TEST(cookable, MAT_FLAG(EDIBLE_COOKED));
+    TEST(extract_bearing_plant, structural && FLAG(plant, plant_raw_flags::EXTRACT_STILL_VIAL));
+    TEST(extract_bearing_fish, false);
+    TEST(extract_bearing_vermin, false);
+    TEST(processable_to_vial, structural && FLAG(plant, plant_raw_flags::EXTRACT_VIAL));
+    TEST(processable_to_bag, structural && FLAG(plant, plant_raw_flags::LEAVES));
+    TEST(processable_to_barrel, structural && FLAG(plant, plant_raw_flags::EXTRACT_BARREL));
+    TEST(solid, !(MAT_FLAG(ALCOHOL_PLANT) ||
+                  MAT_FLAG(ALCOHOL_CREATURE) ||
+                  MAT_FLAG(LIQUID_MISC_PLANT) ||
+                  MAT_FLAG(LIQUID_MISC_CREATURE) ||
+                  MAT_FLAG(LIQUID_MISC_OTHER)));
+    TEST(tameable_vermin, false);
+    TEST(sharpenable, MAT_FLAG(IS_GLASS));
+    TEST(milk, linear_index(material->reaction_product.id, std::string("CHEESE_MAT")) >= 0);
+    //04000000 - "milkable" - vtable[107],1,1
+}
+
+void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &mask)
+{
+    ok.whole = mask.whole = 0;
+    if (!isValid()) return;
+
+    bool is_cloth = isAnyCloth();
+
+    TEST(dye, MAT_FLAG(IS_DYE));
+    TEST(dyeable, is_cloth);
+    TEST(dyed, is_cloth);
+    TEST(sewn_imageless, is_cloth);
+    TEST(glass_making, MAT_FLAG(CRYSTAL_GLASSABLE));
+
+    TEST(fire_safe, material->heat.melting_point > 11000);
+    TEST(magma_safe, material->heat.melting_point > 12000);
+    TEST(deep_material, FLAG(inorganic, df::enums::inorganic_flags::DEEP_ANY));
+    TEST(non_economic, inorganic && !(df::global::ui && df::global::ui->economic_stone[index]));
+
+    TEST(plant, plant);
+    TEST(silk, MAT_FLAG(SILK));
+    TEST(leather, MAT_FLAG(LEATHER));
+    TEST(bone, MAT_FLAG(BONE));
+    TEST(shell, MAT_FLAG(SHELL));
+    TEST(totemable, false);
+    TEST(horn, MAT_FLAG(HORN));
+    TEST(pearl, MAT_FLAG(PEARL));
+    TEST(soap, MAT_FLAG(SOAP));
+    TEST(ivory_tooth, MAT_FLAG(TOOTH));
+    //TEST(hair_wool, MAT_FLAG(YARN));
+    TEST(yarn, MAT_FLAG(YARN));
+}
+
+void MaterialInfo::getMatchBits(df::job_item_flags3 &ok, df::job_item_flags3 &mask)
+{
+    ok.whole = mask.whole = 0;
+    if (!isValid()) return;
+
+    TEST(hard, MAT_FLAG(ITEMS_HARD));
+}
+
+#undef MAT_FLAG
+#undef FLAG
+#undef TEST
 
 Module* DFHack::createMaterials()
 {

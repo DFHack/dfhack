@@ -61,6 +61,7 @@ DFHACK_PLUGIN(initflags initflags.cpp)
 DFHACK_PLUGIN(stockpiles stockpiles.cpp)
 DFHACK_PLUGIN(rename rename.cpp)
 DFHACK_PLUGIN(fixwagons fixwagons.cpp)
+DFHACK_PLUGIN(jobutils jobutils.cpp)
 #DFHACK_PLUGIN(versionosd versionosd.cpp)
 
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it

@@ -119,8 +119,8 @@ bool Buildings::Read (const uint32_t index, t_building & building)
     building.y1 = bld_40d->y1;
     building.y2 = bld_40d->y2;
     building.z = bld_40d->z;
-    building.material.index = bld_40d->materialIndex;
-    building.material.type = bld_40d->materialType;
+    building.material.index = bld_40d->mat_index;
+    building.material.type = bld_40d->mat_type;
     building.type = type;
     building.origin = (void *) &bld_40d;
     return true;

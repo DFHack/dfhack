@@ -158,8 +158,8 @@ namespace DFHack
 {
     typedef pair <INVAL_TYPE, uint32_t> nullableUint32;
     typedef map <string, nullableUint32 >::iterator uint32_Iter;
-    typedef pair <INVAL_TYPE, void *> nullableVoidPtr;
-    typedef map <string, nullableVoidPtr >::iterator voidptr_Iter;
+    typedef pair <INVAL_TYPE, char *> nullableBytePtr;
+    typedef map <string, nullableBytePtr >::iterator byteptr_Iter;
     typedef pair <INVAL_TYPE, int32_t> nullableInt32;
     typedef map <string, nullableInt32 >::iterator int32_Iter;
     typedef pair <INVAL_TYPE, string> nullableString;
@@ -168,7 +168,7 @@ namespace DFHack
     class OffsetGroupPrivate
     {
         public:
-        map <string, nullableVoidPtr > addresses;
+        map <string, nullableBytePtr > addresses;
         map <string, nullableUint32 > hexvals;
         map <string, nullableInt32 > offsets;
         map <string, nullableString > strings;
@@ -185,7 +185,7 @@ void OffsetGroup::createOffset(const string & key)
 
 void OffsetGroup::createAddress(const string & key)
 {
-    OGd->addresses[key] = nullableVoidPtr(NOT_SET, 0);
+    OGd->addresses[key] = nullableBytePtr(NOT_SET, (char*) 0);
 }
 
 void OffsetGroup::createHexValue(const string & key)
@@ -229,10 +229,10 @@ void OffsetGroup::setOffsetValidity (const string & key, const INVAL_TYPE inval)
 
 void OffsetGroup::setAddress (const string & key, const string & value, const INVAL_TYPE inval)
 {
-    voidptr_Iter it = OGd->addresses.find(key);
+    byteptr_Iter it = OGd->addresses.find(key);
     if(it != OGd->addresses.end())
     {
-        void * address = (void *) strtol(value.c_str(), NULL, 16);
+        char * address = (char *) strtol(value.c_str(), NULL, 16);
         if((*it).second.second == address)
             std::cout << "Pointless address setting: " << this->getFullName() + key << endl;
         (*it).second.second = address;
@@ -246,7 +246,7 @@ void OffsetGroup::setAddressValidity (const string & key, const INVAL_TYPE inval
 {
     if(inval != NOT_SET)
     {
-        voidptr_Iter it = OGd->addresses.find(key);
+        byteptr_Iter it = OGd->addresses.find(key);
         if(it != OGd->addresses.end())
         {
             (*it).second.first = inval;
@@ -307,9 +307,9 @@ void OffsetGroup::setStringValidity (const string & key, const INVAL_TYPE inval)
 }
 
 // Get named address
-void * OffsetGroup::getAddress (const string & key)
+char * OffsetGroup::getAddress (const string & key)
 {
-    voidptr_Iter iter = OGd->addresses.find(key);
+    byteptr_Iter iter = OGd->addresses.find(key);
 
     if(iter != OGd->addresses.end())
     {
@@ -325,7 +325,7 @@ void * OffsetGroup::getAddress (const string & key)
 // Get named offset, return bool instead of throwing exceptions
 bool OffsetGroup::getSafeAddress (const string & key, void * & out)
 {
-    voidptr_Iter iter = OGd->addresses.find(key);
+    byteptr_Iter iter = OGd->addresses.find(key);
     if(iter != OGd->addresses.end() && (*iter).second.first == IS_VALID)
     {
         out = (*iter).second.second;
@@ -412,7 +412,7 @@ OffsetGroup * OffsetGroup::createGroup(const std::string &name)
 
 void OffsetGroup::RebaseAddresses(int32_t offset)
 {
-    for(voidptr_Iter iter = OGd->addresses.begin(); iter != OGd->addresses.end(); iter++)
+    for(byteptr_Iter iter = OGd->addresses.begin(); iter != OGd->addresses.end(); iter++)
     {
         if(iter->second.first)
             OGd->addresses[iter->first].second = iter->second.second + offset;
@@ -472,11 +472,11 @@ std::string OffsetGroup::getFullName()
 
 std::string OffsetGroup::PrintOffsets(int indentation)
 {
-    voidptr_Iter addriter;
+    byteptr_Iter addriter;
     uint32_Iter iter;
     ostringstream ss;
     indentr i(indentation);
-    typedef pair <void *, pair< string, nullableVoidPtr > > horrible;
+    typedef pair <void *, pair< string, nullableBytePtr > > horrible;
     vector < horrible > addrsorter;
     for(addriter = OGd->addresses.begin(); addriter != OGd->addresses.end(); addriter++)
     {
@@ -572,7 +572,7 @@ void OffsetGroup::setInvalid(INVAL_TYPE invalidity)
     if(invalidity == NOT_SET)
         return;
 
-    voidptr_Iter iter;
+    byteptr_Iter iter;
     for(iter = OGd->addresses.begin(); iter != OGd->addresses.end(); iter++)
     {
         if((*iter).second.first)
@@ -607,7 +607,7 @@ std::vector<OffsetKey> OffsetGroup::getKeys() const
 	std::vector<OffsetKey> ret;
 	OffsetKey K;
 	K.keytype=IS_ADDRESS;
-    for(voidptr_Iter iter = OGd->addresses.begin(); iter != OGd->addresses.end(); iter++)
+    for(byteptr_Iter iter = OGd->addresses.begin(); iter != OGd->addresses.end(); iter++)
     {
 		K.key=iter->first;
 		K.inval=iter->second.first;
@@ -1019,7 +1019,7 @@ void VersionInfo::setClassChild (t_class * parent, const char * name, const char
 
 
 // FIXME: This in now DEPRECATED!
-bool VersionInfo::resolveObjectToClassID(const void * address, int32_t & classid)
+bool VersionInfo::resolveObjectToClassID(const char * address, int32_t & classid)
 {
     uint32_t vtable = d->p->readDWord(address);
     // try to find the vtable in our cache

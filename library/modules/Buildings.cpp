@@ -39,6 +39,17 @@ using namespace std;
 #include "Core.h"
 using namespace DFHack;
 
+#include "DataDefs.h"
+#include "df/world.h"
+#include "df/world_raws.h"
+#include "df/building_def.h"
+#include "df/building.h"
+#include "df/building_workshopst.h"
+
+using namespace df::enums;
+using df::global::world;
+using df::building_def;
+
 //raw
 struct t_building_df40d
 {
@@ -57,16 +68,10 @@ struct t_building_df40d
 
 struct Buildings::Private
 {
-    vector <void *> * custom_workshop_vector;
-    uint32_t building_custom_workshop_type;
-    uint32_t custom_workshop_type;
-    uint32_t custom_workshop_name;
-    int32_t custom_workshop_id;
-    vector <t_building_df40d *> * p_bld;
     Process * owner;
     bool Inited;
-    bool hasCustomWorkshops;
     bool Started;
+    int32_t custom_workshop_id;
 };
 
 Module* DFHack::createBuildings()
@@ -78,37 +83,10 @@ Buildings::Buildings()
 {
     Core & c = Core::getInstance();
     d = new Private;
-    d->p_bld = NULL;
-    d->Inited = d->Started = d->hasCustomWorkshops = false;
-    VersionInfo * mem = c.vinfo;
+    d->Started = false;
     d->owner = c.p;
-    OffsetGroup * OG_build = mem->getGroup("Buildings");
     d->Inited = true;
-    try
-    {
-        d->p_bld = (decltype(d->p_bld)) OG_build->getAddress ("buildings_vector");
-    }
-    catch(DFHack::Error::AllMemdef &e)
-    {
-        cerr << "Buildings not available... " << e.what() << endl;
-        d->Inited = false;
-    }
-    if(d->Inited)
-    {
-        try
-        {
-            d->custom_workshop_vector =(decltype(d->custom_workshop_vector)) OG_build->getAddress ("custom_workshop_vector");
-            d->building_custom_workshop_type = OG_build->getOffset("building_custom_workshop_type");
-            d->custom_workshop_type = OG_build->getOffset("custom_workshop_type");
-            d->custom_workshop_name = OG_build->getOffset("custom_workshop_name");
-            mem->resolveClassnameToClassID("building_custom_workshop", d->custom_workshop_id);
-            d->hasCustomWorkshops = true;
-        }
-        catch(DFHack::Error::AllMemdef &e)
-        {
-            cerr << "Custom workshops not available. Memory Definition: " << e.what() << endl;
-        }
-    }
+    c.vinfo->resolveClassnameToClassID("building_custom_workshop", d->custom_workshop_id);
 }
 
 Buildings::~Buildings()
@@ -122,7 +100,7 @@ bool Buildings::Start(uint32_t & numbuildings)
 {
     if(!d->Inited)
         return false;
-    numbuildings = d->p_bld->size();
+    numbuildings = world->buildings.all.size();
     d->Started = true;
     return true;
 }
@@ -131,20 +109,20 @@ bool Buildings::Read (const uint32_t index, t_building & building)
 {
     if(!d->Started)
         return false;
-    t_building_df40d *bld_40d = d->p_bld->at (index);
+    df::building *bld_40d = world->buildings.all[index];
 
     // transform
     int32_t type = -1;
-    d->owner->getDescriptor()->resolveObjectToClassID (bld_40d, type);
-    building.origin = bld_40d;
-    building.vtable = bld_40d->vtable;
+    d->owner->getDescriptor()->resolveObjectToClassID ( (char *)bld_40d, type);
     building.x1 = bld_40d->x1;
     building.x2 = bld_40d->x2;
     building.y1 = bld_40d->y1;
     building.y2 = bld_40d->y2;
     building.z = bld_40d->z;
-    building.material = bld_40d->material;
+    building.material.index = bld_40d->materialIndex;
+    building.material.type = bld_40d->materialType;
     building.type = type;
+    building.origin = (void *) &bld_40d;
     return true;
 }
 
@@ -158,38 +136,35 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 {
     if(!d->Inited)
         return false;
-    if(!d->hasCustomWorkshops)
-        return false;
+    Core & c = Core::getInstance();
 
     Process * p = d->owner;
-    uint32_t size = d->custom_workshop_vector->size();
+    vector <building_def *> & bld_def = world->raws.buildings.all;
+    uint32_t size = bld_def.size();
     btypes.clear();
 
-    for (uint32_t i = 0; i < size;i++)
+    c.con.print("Probing vector at 0x%x for custom workshops.\n", &bld_def);
+    for (auto iter = bld_def.begin(); iter != bld_def.end();iter++)
     {
-        void * obj = d->custom_workshop_vector->at(i);
-        string out = p->readSTLString (obj + d->custom_workshop_name);
-        uint32_t type = p->readDWord (obj + d->custom_workshop_type);
-        #ifdef DEBUG
-            cout << out << ": " << type << endl;
-        #endif
-        btypes[type] = out;
+        building_def * temp = *iter;
+        btypes[temp->id] = temp->code;
+        c.con.print("%d : %s\n",temp->id, temp->code.c_str());
     }
     return true;
 }
 
+// FIXME: ugly hack
 int32_t Buildings::GetCustomWorkshopType(t_building & building)
 {
     if(!d->Inited)
-        return false;
-    if(!d->hasCustomWorkshops)
         return false;
     int32_t type = (int32_t)building.type;
     int32_t ret = -1;
     if(type != -1 && type == d->custom_workshop_id)
     {
         // read the custom workshop subtype
-        ret = (int32_t) d->owner->readDWord(building.origin + d->building_custom_workshop_type);
+        df::building_workshopst * workshop = (df::building_workshopst *) building.origin;
+        ret = workshop->custom_type;
     }
     return ret;
 }

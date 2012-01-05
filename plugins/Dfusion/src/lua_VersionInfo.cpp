@@ -286,7 +286,7 @@ static int __lua_resolveObjectToClassID(lua_State *S)
 {
     lua::state st(S);
     int32_t ret;
-    bool output=DFHack::Core::getInstance().vinfo->resolveObjectToClassID((void *)st.as<uint32_t>(1),ret);
+    bool output=DFHack::Core::getInstance().vinfo->resolveObjectToClassID((char *)st.as<uint32_t>(1),ret);
     st.push(output);
     st.push(ret);
     return 2;

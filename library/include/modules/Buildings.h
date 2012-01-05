@@ -42,8 +42,6 @@ namespace DFHack
      */
     struct t_building
     {
-        void * origin;
-        uint32_t vtable;
         uint32_t x1;
         uint32_t y1;
         uint32_t x2;
@@ -51,7 +49,8 @@ namespace DFHack
         uint32_t z;
         t_matglossPair material;
         uint32_t type;
-        // FIXME: not complete, we need building presence bitmaps for stuff like farm plots and stockpiles, orientation (N,E,S,W) and state (open/closed)
+        int32_t custom_type;
+        void * origin;
     };
 
 #ifdef __cplusplus

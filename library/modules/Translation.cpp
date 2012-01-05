@@ -96,15 +96,15 @@ bool Translation::Start()
         return false;
     Process * p = c.p;
     Finish();
-    vector <void *> & genericVec = *(vector <void *> *) d->genericAddress;
-    vector <void *> & transVec = *(vector <void *> *) d->transAddress;
+    vector <char *> & genericVec = *(vector <char *> *) d->genericAddress;
+    vector <char *> & transVec = *(vector <char *> *) d->transAddress;
     DFDict & translations = d->dicts.translations;
     DFDict & foreign_languages = d->dicts.foreign_languages;
 
     translations.resize(10);
     for (uint32_t i = 0;i < genericVec.size();i++)
     {
-        void * genericNamePtr = genericVec[i];
+        char * genericNamePtr = genericVec[i];
         for(int j=0; j<10;j++)
         {
             string word = p->readSTLString (genericNamePtr + j * d->sizeof_string);
@@ -115,7 +115,7 @@ bool Translation::Start()
     foreign_languages.resize(transVec.size());
     for (uint32_t i = 0; i < transVec.size();i++)
     {
-        void * transPtr = transVec.at(i);
+        char * transPtr = transVec.at(i);
         vector <void *> & trans_names_vec = *(vector <void *> *) (transPtr + d->word_table_offset);
         for (uint32_t j = 0;j < trans_names_vec.size();j++)
         {

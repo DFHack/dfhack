@@ -61,7 +61,7 @@ struct World::Private
     void * tick_offset;
 
     bool StartedWeather;
-    void * weather_offset;
+    char * weather_offset;
 
     bool StartedMode;
     void * gamemode_offset;

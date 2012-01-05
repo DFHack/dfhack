@@ -136,14 +136,14 @@ namespace DFHack
             };
 
             /// read a pointer
-            void * readPtr(const void * address)
+            char * readPtr(const void * address)
             {
-                return *(void **)address;
+                return *(char **)address;
             }
             /// read a pointer
-            void readPtr(const void * address, void * & value)
+            void readPtr(const void * address, char * & value)
             {
-                value = *(void **)address;
+                value = *(char **)address;
             };
 
             /// read a float

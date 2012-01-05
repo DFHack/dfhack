@@ -45,7 +45,7 @@ namespace Kitchen
 
         static void * addr(const DFHack::Core& core, int index)
         {
-            static void * start = core.vinfo->getAddress("kitchen_limits");
+            static char * start = core.vinfo->getAddress("kitchen_limits");
             return start + sizeof(std::vector<int>) * index;
         };
     };

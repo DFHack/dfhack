@@ -22,10 +22,10 @@ int lua::Hexsearch::findall(lua_State *L)
 lua::Hexsearch::Hexsearch(lua_State *L,int id):tblid(id)
 {
     lua::state st(L);
-	void * start,* end;
+	char * start,* end;
 	::Hexsearch::SearchArgType args;
-	start= (void *)st.as<uint32_t>(1);
-	end=(void *)st.as<uint32_t>(2);
+	start= (char *)st.as<uint32_t>(1);
+	end=(char *)st.as<uint32_t>(2);
 	for(int i=3;i<=st.gettop();i++)
 	{
 		args.push_back(st.as<int>(i));

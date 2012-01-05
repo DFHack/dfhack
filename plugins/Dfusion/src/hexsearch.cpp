@@ -1,7 +1,7 @@
 #include "hexsearch.h"
 
 
-Hexsearch::Hexsearch(const SearchArgType &args,void * startpos,void * endpos):args_(args),pos_(startpos),startpos_(startpos),endpos_(endpos)
+Hexsearch::Hexsearch(const SearchArgType &args,char * startpos,char * endpos):args_(args),pos_(startpos),startpos_(startpos),endpos_(endpos)
 {
 	ReparseArgs();
 }

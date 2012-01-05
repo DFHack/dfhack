@@ -95,7 +95,7 @@ struct Maps::Private
         FEATURES
          */
         // FIXME: replace with a struct pointer, eventually. needs to be mapped out first
-        void * world_data;
+        char * world_data;
         uint32_t local_f_start; // offset from world_data
         // FIXME: replace by virtual function call
         uint32_t local_material;
@@ -141,7 +141,7 @@ Maps::Maps()
 
     // get the offsets once here
     OffsetGroup *OG_Maps = mem->getGroup("Maps");
-    off.world_data = (void *) OG_Maps->getAddress("world_data");
+    off.world_data = OG_Maps->getAddress("world_data");
     {
         mdata = (map_data *) OG_Maps->getAddress ("map_data");
         off.world_size_x = OG_Maps->getOffset ("world_size_x_from_wdata");
@@ -507,13 +507,13 @@ bool Maps::StartFeatures()
 
     Process * p = d->owner;
     Private::t_offsets &off = d->offsets;
-    void * base = 0;
-    void * global_feature_vector = 0;
+    char * base = 0;
+    char * global_feature_vector = 0;
 
-    void * world = p->readPtr( (void *) off.world_data);
+    char * world = p->readPtr( (void *) off.world_data);
     if(!world) return false;
     base = p->readPtr(world + off.local_f_start);
-    global_feature_vector = p->readDWord(off.world_data) + (void *) off.global_vector;
+    global_feature_vector = p->readPtr(off.world_data) + off.global_vector;
 
     // deref pointer to the humongo-structure
     if(!base)
@@ -548,19 +548,19 @@ bool Maps::StartFeatures()
 
         // base = pointer to local feature structure (inside world data struct)
         // bigregion is 16x16 regions. for each bigregion in X dimension:
-        void * mega_column = p->readPtr(base + bigregion_x * 4);
+        char * mega_column = p->readPtr(base + bigregion_x * 4);
 
         // 16B structs, second DWORD of the struct is a pointer
-        void * loc_f_array16x16 = p->readPtr(mega_column + offset_elem + (sizeof_elem * bigregion_y));
+        char * loc_f_array16x16 = p->readPtr(mega_column + offset_elem + (sizeof_elem * bigregion_y));
         if(loc_f_array16x16)
         {
-            vector <void *> * p_features = (vector <void *> *) (loc_f_array16x16 + sizeof_16vec * sub_x + sizeof_vec * sub_y);
+            vector <char *> * p_features = (vector <char *> *) (loc_f_array16x16 + sizeof_16vec * sub_x + sizeof_vec * sub_y);
             uint32_t size = p_features->size();
             DFCoord pc(blockX,blockY);
             std::vector<t_feature *> tempvec;
             for(uint32_t i = 0; i < size; i++)
             {
-                void * cur_ptr = p_features->at(i);
+                char * cur_ptr = p_features->at(i);
 
                 map <void *, t_feature>::iterator it;
                 it = d->local_feature_store.find(cur_ptr);
@@ -609,14 +609,14 @@ bool Maps::StartFeatures()
     const uint32_t global_feature_funcptr = off.global_funcptr;
     const uint32_t glob_main_mat_offset = off.global_material;
     const uint32_t glob_sub_mat_offset = off.global_submaterial;
-    vector <void *> * p_features = (vector <void *> *) global_feature_vector;
+    vector <char *> * p_features = (vector <char *> *) global_feature_vector;
     d->v_global_feature.clear();
     uint32_t size = p_features->size();
     d->v_global_feature.reserve(size);
     for(uint32_t i = 0; i < size; i++)
     {
         t_feature temp;
-        void * feat_ptr = p->readPtr(p_features->at(i) + global_feature_funcptr );
+        char * feat_ptr = p->readPtr(p_features->at(i) + global_feature_funcptr );
         temp.origin = feat_ptr;
         temp.discovered = false;
 
@@ -892,18 +892,18 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     Process *p = d->owner;
     // get needed addresses and offsets. Now this is what I call crazy.
     uint16_t worldSizeX, worldSizeY;
-    void *regions;
-    void *geoblocks_vector_addr;
+    char *regions;
+    char *geoblocks_vector_addr;
     Private::t_offsets &off = d->offsets;
     // get world size
-    void * world = p->readPtr(off.world_data);
+    char * world = p->readPtr(off.world_data);
     p->readWord (world + off.world_size_x, worldSizeX);
     p->readWord (world + off.world_size_y, worldSizeY);
     regions = p->readPtr ( world + off.world_regions); // ptr2_region_array
     geoblocks_vector_addr = world + off.world_geoblocks_vector;
 
     // read the geoblock vector
-    vector <void *> & geoblocks = *(vector <void *> *)(geoblocks_vector_addr);
+    vector <char *> & geoblocks = *(vector <char *> *)(geoblocks_vector_addr);
 
     // iterate over 8 surrounding regions + local region
     for (int i = eNorthWest; i < eBiomeCount; i++)
@@ -922,7 +922,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
         /// regions are a 2d array. consists of pointers to arrays of regions
         /// regions are of region_size size
         // get pointer to column of regions
-        void * geoX;
+        char * geoX;
         p->readPtr (regions + bioRX*4, geoX);
 
         // get index into geoblock vector
@@ -932,11 +932,11 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
         /// geology blocks are assigned to regions from a vector
         // get the geoblock from the geoblock vector using the geoindex
         // read the matgloss pointer from the vector into temp
-        void * geoblock_off = geoblocks[geoindex];
+        char * geoblock_off = geoblocks[geoindex];
 
         /// geology blocks have a vector of layer descriptors
         // get the vector with pointer to layers
-        vector <void *> & geolayers = *(vector <void *> *)(geoblock_off + off.geolayer_geoblock_offset);
+        vector <char *> & geolayers = *(vector <char *> *)(geoblock_off + off.geolayer_geoblock_offset);
         // make sure we don't load crap
         assert (geolayers.size() > 0 && geolayers.size() <= 16);
 
@@ -946,7 +946,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
         for (uint32_t j = 0;j < geolayers.size();j++)
         {
             // read pointer to a layer
-            void * geol_offset = geolayers[j];
+            char * geol_offset = geolayers[j];
             // read word at pointer + 2, store in our geology vectors
             d->v_geology[i].push_back (p->readWord (geol_offset + off.type_inside_geolayer));
         }

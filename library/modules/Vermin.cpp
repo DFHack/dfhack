@@ -119,7 +119,7 @@ SpawnPoints::SpawnPoints(Vermin* v_)
         cerr << "Couldn't get spawn points: Vermin module not inited" << endl;
         return;
     }
-    p_sp = (vector <void*>*) (v->d->spawn_points_vector);
+    p_sp = (vector <char*>*) (v->d->spawn_points_vector);
 }
 
 SpawnPoints::~SpawnPoints()
@@ -140,7 +140,7 @@ bool SpawnPoints::Read (const uint32_t index, t_spawnPoint & sp)
         return false;
 
     // read pointer from vector at position
-    void * temp = p_sp->at (index);
+    char * temp = p_sp->at (index);
 
     sp.origin    = temp;
     sp.race      = v->d->owner->readWord(temp + v->d->race_offset);
@@ -161,7 +161,7 @@ bool SpawnPoints::Write (const uint32_t index, t_spawnPoint & sp)
         return false;
 
     // read pointer from vector at position
-    void * temp = p_sp->at (index);
+    char * temp = p_sp->at (index);
 
     v->d->owner->writeWord(temp + v->d->race_offset, sp.race);
     v->d->owner->writeWord(temp + v->d->type_offset, sp.type);

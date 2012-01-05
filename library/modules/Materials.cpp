@@ -184,7 +184,7 @@ bool Materials::ReadCreatureTypes (void)
 bool Materials::ReadOthers(void)
 {
     Process * p = d->owner;
-    void * matBase = d->OG_Materials->getAddress ("other");
+    char * matBase = d->OG_Materials->getAddress ("other");
     uint32_t i = 0;
     std::string * ptr;
 
@@ -207,7 +207,7 @@ bool Materials::ReadDescriptorColors (void)
 {
     Process * p = d->owner;
     OffsetGroup * OG_Descriptors = p->getDescriptor()->getGroup("Materials")->getGroup("descriptors");
-    vector <void *> & p_colors = *(vector<void*> *) OG_Descriptors->getAddress ("colors_vector");
+    vector <char *> & p_colors = *(vector<char*> *) OG_Descriptors->getAddress ("colors_vector");
     uint32_t size = p_colors.size();
 
     color.clear();
@@ -236,7 +236,7 @@ bool Materials::ReadCreatureTypesEx (void)
     uint32_t sizeof_string = OG_string->getHexValue ("sizeof");
 
     OffsetGroup * OG_Mats = mem->getGroup("Materials");
-    vector <void *> & p_races = *(vector<void*> *) OG_Mats->getAddress ("creature_type_vector");
+    vector <char *> & p_races = *(vector<char*> *) OG_Mats->getAddress ("creature_type_vector");
 
     OffsetGroup * OG_Creature = OG_Mats->getGroup("creature");
         uint32_t castes_vector_offset = OG_Creature->getOffset ("caste_vector");
@@ -286,13 +286,13 @@ bool Materials::ReadCreatureTypesEx (void)
         mat.tilecolor.back = p->readWord( p_races[i] + tile_color_offset + 2 );
         mat.tilecolor.bright = p->readWord( p_races[i] + tile_color_offset + 4 );
 
-        vector <void *> & p_castes = *(vector<void*> *) (p_races[i] + castes_vector_offset);
+        vector <char *> & p_castes = *(vector<char*> *) (p_races[i] + castes_vector_offset);
         sizecas = p_castes.size();
         for (uint32_t j = 0; j < sizecas;j++)
         {
             /* caste name */
             t_creaturecaste caste;
-            void * caste_start = p_castes[j];
+            char * caste_start = p_castes[j];
             caste.id = p->readSTLString (caste_start);
             caste.singular = p->readSTLString (caste_start + sizeof_string);
             caste.plural = p->readSTLString (caste_start + 2 * sizeof_string);
@@ -302,7 +302,7 @@ bool Materials::ReadCreatureTypesEx (void)
             {
                 /* color mod reading */
                 // Caste + offset > color mod vector
-                vector <void *> & p_colormod = *(vector<void*> *) (caste_start + caste_colormod_offset);
+                vector <char *> & p_colormod = *(vector<char*> *) (caste_start + caste_colormod_offset);
                 sizecolormod = p_colormod.size();
                 caste.ColorModifier.resize(sizecolormod);
                 for(uint32_t k = 0; k < sizecolormod;k++)
@@ -319,7 +319,7 @@ bool Materials::ReadCreatureTypesEx (void)
                     caste.ColorModifier[k].enddate = p->readDWord( p_colormod[k] + color_modifier_enddate_offset );
                 }
                 /* body parts */
-                vector <void *> & p_bodypart = *(vector<void*> *) (caste_start + caste_bodypart_offset);
+                vector <char *> & p_bodypart = *(vector<char*> *) (caste_start + caste_bodypart_offset);
                 caste.bodypart.empty();
                 sizebp = p_bodypart.size();
                 for(uint32_t k = 0; k < sizebp; k++)

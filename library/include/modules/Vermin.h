@@ -76,7 +76,7 @@ namespace DFHack
 
     private:
         Vermin* v;
-        std::vector <void*> * p_sp;
+        std::vector <char*> * p_sp;
 
         friend class Vermin;
     };

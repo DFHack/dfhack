@@ -43,12 +43,15 @@ using namespace std;
 #include "MiscUtils.h"
 
 #include "df/world.h"
+#include "df/ui.h"
 #include "df/item.h"
 #include "df/inorganic_raw.h"
 #include "df/plant_raw.h"
+#include "df/plant_raw_flags.h"
 #include "df/creature_raw.h"
 #include "df/historical_figure.h"
 
+#include "df/job_item.h"
 #include "df/job_material_category.h"
 #include "df/matter_state.h"
 #include "df/material_vec_ref.h"
@@ -259,6 +262,17 @@ df::craft_material_class MaterialInfo::getCraftClass()
     return craft_material_class::None;
 }
 
+bool MaterialInfo::isAnyCloth()
+{
+    using namespace df::enums::material_flags;
+
+    return material && (
+        material->flags.is_set(THREAD_PLANT) ||
+        material->flags.is_set(SILK) ||
+        material->flags.is_set(YARN)
+    );
+}
+
 bool MaterialInfo::matches(const df::job_material_category &cat)
 {
     if (!material)
@@ -282,6 +296,103 @@ bool MaterialInfo::matches(const df::job_material_category &cat)
 #undef TEST
     return false;
 }
+
+bool MaterialInfo::matches(const df::job_item &item)
+{
+    if (!isValid()) return false;
+
+    df::job_item_flags1 ok1, mask1;
+    getMatchBits(ok1, mask1);
+
+    df::job_item_flags2 ok2, mask2;
+    getMatchBits(ok2, mask2);
+
+    df::job_item_flags3 ok3, mask3;
+    getMatchBits(ok3, mask3);
+
+    return ((item.flags1.whole & mask1.whole) == (item.flags1.whole & ok1.whole)) &&
+           ((item.flags2.whole & mask2.whole) == (item.flags2.whole & ok2.whole)) &&
+           ((item.flags3.whole & mask3.whole) == (item.flags3.whole & ok3.whole));
+}
+
+void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &mask)
+{
+    ok.whole = mask.whole = 0;
+    if (!isValid()) return;
+
+#define MAT_FLAG(name) material->flags.is_set(df::enums::material_flags::name)
+#define FLAG(field, name) (field && field->flags.is_set(name))
+#define TEST(bit, check) \
+    mask.bits.bit = true; ok.bits.bit = !!(check);
+
+    bool structural = MAT_FLAG(STRUCTURAL_PLANT_MAT);
+
+    TEST(millable, structural && FLAG(plant, plant_raw_flags::MILL));
+    TEST(sharpenable, MAT_FLAG(IS_STONE));
+    TEST(distillable, structural && FLAG(plant, plant_raw_flags::DRINK));
+    TEST(processable, structural && FLAG(plant, plant_raw_flags::THREAD));
+    TEST(bag, isAnyCloth());
+    TEST(cookable, MAT_FLAG(EDIBLE_COOKED));
+    TEST(extract_bearing_plant, structural && FLAG(plant, plant_raw_flags::EXTRACT_STILL_VIAL));
+    TEST(extract_bearing_fish, false);
+    TEST(extract_bearing_vermin, false);
+    TEST(processable_to_vial, structural && FLAG(plant, plant_raw_flags::EXTRACT_VIAL));
+    TEST(processable_to_bag, structural && FLAG(plant, plant_raw_flags::LEAVES));
+    TEST(processable_to_barrel, structural && FLAG(plant, plant_raw_flags::EXTRACT_BARREL));
+    TEST(solid, !(MAT_FLAG(ALCOHOL_PLANT) ||
+                  MAT_FLAG(ALCOHOL_CREATURE) ||
+                  MAT_FLAG(LIQUID_MISC_PLANT) ||
+                  MAT_FLAG(LIQUID_MISC_CREATURE) ||
+                  MAT_FLAG(LIQUID_MISC_OTHER)));
+    TEST(tameable_vermin, false);
+    TEST(sharpenable, MAT_FLAG(IS_GLASS));
+    TEST(milk, linear_index(material->reaction_product.id, std::string("CHEESE_MAT")) >= 0);
+    //04000000 - "milkable" - vtable[107],1,1
+}
+
+void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &mask)
+{
+    ok.whole = mask.whole = 0;
+    if (!isValid()) return;
+
+    bool is_cloth = isAnyCloth();
+
+    TEST(dye, MAT_FLAG(IS_DYE));
+    TEST(dyeable, is_cloth);
+    TEST(dyed, is_cloth);
+    TEST(sewn_imageless, is_cloth);
+    TEST(glass_making, MAT_FLAG(CRYSTAL_GLASSABLE));
+
+    TEST(fire_safe, material->heat.melting_point > 11000);
+    TEST(magma_safe, material->heat.melting_point > 12000);
+    TEST(deep_material, FLAG(inorganic, df::enums::inorganic_flags::DEEP_ANY));
+    TEST(non_economic, inorganic && !(df::global::ui && df::global::ui->economic_stone[index]));
+
+    TEST(plant, plant);
+    TEST(silk, MAT_FLAG(SILK));
+    TEST(leather, MAT_FLAG(LEATHER));
+    TEST(bone, MAT_FLAG(BONE));
+    TEST(shell, MAT_FLAG(SHELL));
+    TEST(totemable, false);
+    TEST(horn, MAT_FLAG(HORN));
+    TEST(pearl, MAT_FLAG(PEARL));
+    TEST(soap, MAT_FLAG(SOAP));
+    TEST(ivory_tooth, MAT_FLAG(TOOTH));
+    //TEST(hair_wool, MAT_FLAG(YARN));
+    TEST(yarn, MAT_FLAG(YARN));
+}
+
+void MaterialInfo::getMatchBits(df::job_item_flags3 &ok, df::job_item_flags3 &mask)
+{
+    ok.whole = mask.whole = 0;
+    if (!isValid()) return;
+
+    TEST(hard, MAT_FLAG(ITEMS_HARD));
+}
+
+#undef MAT_FLAG
+#undef FLAG
+#undef TEST
 
 Module* DFHack::createMaterials()
 {

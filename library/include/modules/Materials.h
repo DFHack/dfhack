@@ -48,7 +48,12 @@ namespace df
     struct creature_raw;
     struct historical_figure;
     struct material_vec_ref;
+    struct job_item;
+
     union job_material_category;
+    union job_item_flags1;
+    union job_item_flags2;
+    union job_item_flags3;
 }
 
 namespace DFHack
@@ -104,8 +109,16 @@ namespace DFHack
 
         std::string toString(uint16_t temp = 10015, bool named = true);
 
+        bool isAnyCloth();
+
+        void getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &mask);
+        void getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &mask);
+        void getMatchBits(df::job_item_flags3 &ok, df::job_item_flags3 &mask);
+
         df::craft_material_class getCraftClass();
+
         bool matches(const df::job_material_category &cat);
+        bool matches(const df::job_item &item);
     };
 
     inline bool operator== (const MaterialInfo &a, const MaterialInfo &b) {

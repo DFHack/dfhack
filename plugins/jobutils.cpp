@@ -60,8 +60,12 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
         PluginCommand(
             "job", "General job query and manipulation.",
             job_cmd, false,
-            "  job query   - Print details of the current job.\n"
-            "  job list    - Print details of all jobs in the workshop.\n"
+            "  job query\n"
+            "    Print details of the current job.\n"
+            "  job list\n"
+            "    Print details of all jobs in the workshop.\n"
+            "  job item-material <item-idx> <material> [submaterial]\n"
+            "    Replace the exact material id in the job item.\n"
         )
     );
 
@@ -382,9 +386,9 @@ static command_result job_duplicate(Core * c, vector <string> & parameters)
 
 /* Main job command implementation */
 
-static void print_job_item_details(Core *c, df::job *job, df::job_item *item)
+static void print_job_item_details(Core *c, df::job *job, unsigned idx, df::job_item *item)
 {
-    c->con << "  Input Item: " << ENUM_KEY_STR(item_type,item->item_type);
+    c->con << "  Input Item " << (idx+1) << ": " << ENUM_KEY_STR(item_type,item->item_type);
     if (item->item_subtype != -1)
         c->con << " [" << item->item_subtype << "]";
     if (item->quantity != 1)
@@ -443,7 +447,17 @@ static void print_job_details(Core *c, df::job *job)
         c->con << "    reaction: " << job->reaction_name << endl;
 
     for (unsigned i = 0; i < job->job_items.size(); i++)
-        print_job_item_details(c, job, job->job_items[i]);
+        print_job_item_details(c, job, i, job->job_items[i]);
+}
+
+static df::job *getWorkshopJobSafe(Core *c)
+{
+    if (!workshop_job_hotkey(c, c->getTopViewscreen())) {
+        c->con.printerr("No job is highlighted.\n");
+        return NULL;
+    }
+
+    return getWorkshopJob(c);
 }
 
 static command_result job_cmd(Core * c, vector <string> & parameters)
@@ -456,21 +470,62 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
     std::string cmd = parameters[0];
     if (cmd == "query" || cmd == "list")
     {
-        if (!workshop_job_hotkey(c, c->getTopViewscreen())) {
-            c->con.printerr("No job is highlighted.\n");
+        df::job *job = getWorkshopJobSafe(c);
+        if (!job)
             return CR_WRONG_USAGE;
-        }
 
         if (cmd == "query") {
-            df::job *job = getWorkshopJob(c);
-            if (!job)
-                return CR_FAILURE;
             print_job_details(c, job);
         } else {
             df::building *selected = world->selected_building;
             for (unsigned i = 0; i < selected->jobs.size(); i++)
                 print_job_details(c, selected->jobs[i]);
         }
+    }
+    else if (cmd == "item-material")
+    {
+        if (parameters.size() < 1+1+1)
+            return CR_WRONG_USAGE;
+
+        df::job *job = getWorkshopJobSafe(c);
+        if (!job)
+            return CR_WRONG_USAGE;
+
+        int v = atoi(parameters[1].c_str());
+        if (v < 1 || v > job->job_items.size()) {
+            c->con.printerr("Invalid item index.\n");
+            return CR_WRONG_USAGE;
+        }
+
+        df::job_item *item = job->job_items[v-1];
+
+        std::string subtoken = (parameters.size()>3 ? parameters[3] : "");
+        MaterialInfo info;
+        if (!info.find(parameters[2], subtoken)) {
+            c->con.printerr("Could not find the specified material.\n");
+            return CR_FAILURE;
+        }
+
+        if (!info.matches(*item)) {
+            c->con.printerr("Material does not match the requirements.\n");
+            print_job_details(c, job);
+            return CR_FAILURE;
+        }
+
+        if (job->mat_type != -1 &&
+            job->mat_type == item->mat_type &&
+            job->mat_index == item->mat_index)
+        {
+            job->mat_type = info.type;
+            job->mat_index = info.index;
+        }
+
+        item->mat_type = info.type;
+        item->mat_index = info.index;
+
+        c->con << "Job item " << v << " updated." << endl;
+        print_job_details(c, job);
+        return CR_OK;
     }
     else
         return CR_WRONG_USAGE;

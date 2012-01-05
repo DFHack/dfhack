@@ -71,6 +71,24 @@ void print_bits ( T val, DFHack::Console& out )
  */
 
 template <typename FT>
+int linear_index(const std::vector<FT> &vec, FT key)
+{
+    for (unsigned i = 0; i < vec.size(); i++)
+        if (vec[i] == key)
+            return i;
+    return -1;
+}
+
+template <typename FT>
+int linear_index(const std::vector<FT*> &vec, const FT &key)
+{
+    for (unsigned i = 0; i < vec.size(); i++)
+        if (vec[i] && *vec[i] == key)
+            return i;
+    return -1;
+}
+
+template <typename FT>
 int binsearch_index(const std::vector<FT> &vec, FT key, bool exact = true)
 {
     // Returns the index of the value >= the key
@@ -89,6 +107,15 @@ int binsearch_index(const std::vector<FT> &vec, FT key, bool exact = true)
         else
             max = mid;
     }
+}
+
+template <typename CT, typename FT>
+int linear_index(const std::vector<CT*> &vec, FT CT::*field, FT key)
+{
+    for (unsigned i = 0; i < vec.size(); i++)
+        if (vec[i]->*field == key)
+            return i;
+    return -1;
 }
 
 template <typename CT, typename FT>

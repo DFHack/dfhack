@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <stack>
 #include <map>
 #include <set>
 #include <cstdlib>
@@ -141,6 +142,63 @@ public:
     };
 };
 
+/**
+ * Flood-fill water tiles from cursor (for wclean)
+ * example: remove salt flag from a river
+ */
+class FloodBrush : public Brush
+{
+public:
+    FloodBrush(Core *c){c_ = c;};
+    ~FloodBrush(){};
+    coord_vec points(MapCache & mc, DFHack::DFCoord start)
+    {
+        coord_vec v;
+
+		std::stack<DFCoord> to_flood;
+	    to_flood.push(start);
+
+		std::set<DFCoord> seen;
+
+		while (!to_flood.empty()) {
+			DFCoord xy = to_flood.top();
+			to_flood.pop();
+
+			t_designation des = mc.designationAt(xy);
+
+			if (seen.find(xy) == seen.end() 
+				&& des.bits.flow_size && des.bits.liquid_type != liquid_magma) {
+				v.push_back(xy);
+				seen.insert(xy);
+
+				maybeFlood(DFCoord(xy.x - 1, xy.y, xy.z), to_flood, mc);
+				maybeFlood(DFCoord(xy.x + 1, xy.y, xy.z), to_flood, mc);
+				maybeFlood(DFCoord(xy.x, xy.y - 1, xy.z), to_flood, mc);
+				maybeFlood(DFCoord(xy.x, xy.y + 1, xy.z), to_flood, mc);
+
+				uint16_t tt = mc.tiletypeAt(xy);
+				if (LowPassable(tt))
+				{
+					maybeFlood(DFCoord(xy.x, xy.y, xy.z - 1), to_flood, mc);
+				}
+				if (HighPassable(tt))
+				{
+					maybeFlood(DFCoord(xy.x, xy.y, xy.z + 1), to_flood, mc);
+				}
+			}
+		}
+
+		return v;
+	}
+private:
+	void maybeFlood(DFCoord &c, std::stack<DFCoord> &to_flood, MapCache &mc) {
+		if (mc.testCoord(c)) {
+			to_flood.push(c);
+		}
+	}
+	Core *c_;
+};
+
 CommandHistory liquids_hist;
 
 DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters);
@@ -224,6 +282,8 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                  << "block         - DF map block with cursor in it" << endl
                  << "                (regular spaced 16x16x1 blocks)" << endl
                  << "column        - Column from cursor, up through free space" << endl
+                 << "flood         - Flood-fill water tiles from cursor" << endl
+                 << "                (only makes sense with wclean)" << endl
                  << "Other:" << endl
                  << "q             - quit" << endl
                  << "help or ?     - print this list of commands" << endl
@@ -312,6 +372,12 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
             brushname = "column";
             brush = new ColumnBrush();
         }
+		else if(command == "flood")
+		{
+			delete brush;
+			brushname = "flood";
+			brush = new FloodBrush(c);
+		}
         else if(command == "q")
         {
             end = true;

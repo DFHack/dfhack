@@ -191,7 +191,7 @@ public:
 		return v;
 	}
 private:
-	void maybeFlood(DFCoord &c, std::stack<DFCoord> &to_flood, MapCache &mc) {
+	void maybeFlood(DFCoord c, std::stack<DFCoord> &to_flood, MapCache &mc) {
 		if (mc.testCoord(c)) {
 			to_flood.push(c);
 		}

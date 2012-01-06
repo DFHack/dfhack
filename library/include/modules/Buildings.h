@@ -69,10 +69,9 @@ namespace DFHack
         bool Read (const uint32_t index, t_building & building);
         bool Finish();
 
-        // read a vector of names
+        // read mapping from custom_type value to building RAW name
+        // custom_type of -1 implies ordinary building
         bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
-        // returns -1 on error, >= 0 for real value
-        int32_t GetCustomWorkshopType(t_building & building);
 
         private:
         struct Private;

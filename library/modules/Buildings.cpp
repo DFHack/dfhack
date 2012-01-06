@@ -122,6 +122,7 @@ bool Buildings::Read (const uint32_t index, t_building & building)
     building.material.index = bld_40d->mat_index;
     building.material.type = bld_40d->mat_type;
     building.type = type;
+    building.custom_type = bld_40d->getCustomType();
     building.origin = (void *) &bld_40d;
     return true;
 }
@@ -151,21 +152,5 @@ bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
         c.con.print("%d : %s\n",temp->id, temp->code.c_str());
     }
     return true;
-}
-
-// FIXME: ugly hack
-int32_t Buildings::GetCustomWorkshopType(t_building & building)
-{
-    if(!d->Inited)
-        return false;
-    int32_t type = (int32_t)building.type;
-    int32_t ret = -1;
-    if(type != -1 && type == d->custom_workshop_id)
-    {
-        // read the custom workshop subtype
-        df::building_workshopst * workshop = (df::building_workshopst *) building.origin;
-        ret = workshop->custom_type;
-    }
-    return ret;
 }
 

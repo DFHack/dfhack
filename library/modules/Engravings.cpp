@@ -30,21 +30,19 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Process.h"
-#include "dfhack/Vector.h"
-#include "dfhack/Types.h"
-#include "dfhack/modules/Engravings.h"
+#include "VersionInfo.h"
+#include "MemAccess.h"
+#include "Types.h"
+#include "modules/Engravings.h"
 #include "ModuleFactory.h"
-#include "dfhack/Core.h"
+#include "Core.h"
 
 using namespace DFHack;
 
 struct Engravings::Private
 {
     uint32_t engraving_vector;
-    // translation
-    DfVector <uint32_t> * p_engr;
+    vector <t_engraving *> * p_engr;
 
     Process * owner;
     bool Inited;
@@ -61,9 +59,8 @@ Engravings::Engravings()
     Core & c = Core::getInstance();
     d = new Private;
     d->owner = c.p;
-    d->p_engr = 0;
     d->Inited = d->Started = false;
-    d->engraving_vector = c.vinfo->getGroup("Engravings")->getAddress ("vector");
+    d->p_engr = (decltype(d->p_engr)) c.vinfo->getGroup("Engravings")->getAddress ("vector");
     d->Inited = true;
 }
 
@@ -76,7 +73,8 @@ Engravings::~Engravings()
 
 bool Engravings::Start(uint32_t & numengravings)
 {
-    d->p_engr = new DfVector <uint32_t> (d->engraving_vector);
+    if(!d->Inited)
+        return false;
     numengravings = d->p_engr->size();
     d->Started = true;
     return true;
@@ -88,13 +86,10 @@ bool Engravings::Read (const uint32_t index, dfh_engraving & engraving)
     if(!d->Started) return false;
 
     // read pointer from vector at position
-    uint32_t temp = d->p_engr->at (index);
-
-    //read construction from memory
-    d->owner->read (temp, sizeof (t_engraving), (uint8_t *) &(engraving.s));
+    engraving.s = *d->p_engr->at (index);
 
     // transform
-    engraving.origin = temp;
+    engraving.origin = d->p_engr->at (index);
     return true;
 }
 
@@ -108,11 +103,6 @@ bool Engravings::Write (const dfh_engraving & engraving)
 
 bool Engravings::Finish()
 {
-    if(d->p_engr)
-    {
-        delete d->p_engr;
-        d->p_engr = NULL;
-    }
     d->Started = false;
     return true;
 }

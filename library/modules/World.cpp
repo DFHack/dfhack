@@ -30,13 +30,13 @@ distribution.
 #include <cstring>
 using namespace std;
 
-#include "dfhack/modules/World.h"
-#include "dfhack/Process.h"
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Types.h"
-#include "dfhack/Error.h"
+#include "modules/World.h"
+#include "MemAccess.h"
+#include "VersionInfo.h"
+#include "Types.h"
+#include "Error.h"
 #include "ModuleFactory.h"
-#include <dfhack/Core.h>
+#include "Core.h"
 
 using namespace DFHack;
 
@@ -54,22 +54,22 @@ struct World::Private
     bool Inited;
 
     bool PauseInited;
-    uint32_t pause_state_offset;
+    void * pause_state_offset;
 
     bool StartedTime;
-    uint32_t year_offset;
-    uint32_t tick_offset;
+    void * year_offset;
+    void * tick_offset;
 
     bool StartedWeather;
-    uint32_t weather_offset;
+    char * weather_offset;
 
     bool StartedMode;
-    uint32_t gamemode_offset;
-    uint32_t controlmode_offset;
-    uint32_t controlmodecopy_offset;
+    void * gamemode_offset;
+    void * controlmode_offset;
+    void * controlmodecopy_offset;
 
     bool StartedFolder;
-    uint32_t folder_name_offset;
+    void * folder_name_offset;
 
     Process * owner;
 };

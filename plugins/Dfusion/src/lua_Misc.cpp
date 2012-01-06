@@ -32,7 +32,7 @@ static int LoadMod(lua_State *L)
     buf=new char[size];
     f.GetText(buf);
     //std::cout<<"poking @:"<<std::hex<<pos<<"size :"<<size<<std::endl;
-	DFHack::Core::getInstance().p->write(pos,size,(uint8_t*)buf);
+    DFHack::Core::getInstance().p->write((void *) pos,size,(uint8_t*)buf);
     delete [] buf;
     st.push(pos);
     st.push(size);

@@ -14,11 +14,10 @@
 
 using namespace std;
 #include <DFHack.h>
-#include <dfhack/extra/MapExtras.h>
-#include <dfhack/extra/termutil.h>
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/PluginManager.h>
+#include <modules/MapCache.h>
+#include "Core.h"
+#include <Console.h>
+#include <PluginManager.h>
 
 using namespace DFHack;
 

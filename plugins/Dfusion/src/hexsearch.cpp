@@ -1,7 +1,7 @@
 #include "hexsearch.h"
 
 
-Hexsearch::Hexsearch(const SearchArgType &args,uint64_t startpos,uint64_t endpos):args_(args),pos_(startpos),startpos_(startpos),endpos_(endpos)
+Hexsearch::Hexsearch(const SearchArgType &args,char * startpos,char * endpos):args_(args),pos_(startpos),startpos_(startpos),endpos_(endpos)
 {
 	ReparseArgs();
 }
@@ -52,7 +52,7 @@ void Hexsearch::ReparseArgs()
 		}
 	}
 }
-uint64_t Hexsearch::FindNext() //TODO rewrite using Boyer-Moore algorithm
+void * Hexsearch::FindNext() //TODO rewrite using Boyer-Moore algorithm
 {
 	DFHack::Core &inst=DFHack::Core::getInstance();
 	DFHack::Process *p=inst.p;
@@ -81,16 +81,16 @@ uint64_t Hexsearch::FindNext() //TODO rewrite using Boyer-Moore algorithm
 				return pos_-args_.size();
 			}
 		}
-		pos_++;
+		pos_ = pos_ + 1;
 	}
 	delete [] buf;
 	return 0;
 }
 
-std::vector<uint64_t> Hexsearch::FindAll()
+std::vector<void *> Hexsearch::FindAll()
 {
-	std::vector<uint64_t> ret;
-	uint64_t cpos=pos_;
+	std::vector<void *> ret;
+	void * cpos=pos_;
 	while(cpos!=0)
 	{
 		cpos=FindNext();

@@ -8,14 +8,14 @@
 #include <assert.h>
 #include <string.h>
 
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
-#include <dfhack/modules/Maps.h>
-#include <dfhack/modules/Materials.h>
-#include <dfhack/modules/Vegetation.h>
-#include <dfhack/TileTypes.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
+#include <modules/Maps.h>
+#include <modules/Materials.h>
+#include <modules/Vegetation.h>
+#include <TileTypes.h>
 
 using namespace std;
 using namespace DFHack;

@@ -1,10 +1,10 @@
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
-#include <dfhack/modules/Maps.h>
-#include <dfhack/modules/Gui.h>
-#include <dfhack/extra/MapExtras.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
+#include <modules/Maps.h>
+#include <modules/Gui.h>
+#include <modules/MapCache.h>
 #include <vector>
 #include <cstdio>
 #include <stack>
@@ -30,8 +30,17 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("vdig","Dig a whole vein.",vdig));
-    commands.push_back(PluginCommand("vdigx","Dig a whole vein, follow vein through z-levels with stairs.",vdigx));
+    commands.push_back(PluginCommand(
+        "vdig","Dig a whole vein.",vdig,cursor_hotkey,
+        "  Designates a whole vein under the cursor for digging.\n"
+        "Options:\n"
+        "  x - follow veins through z-levels with stairs.\n"
+    ));
+    commands.push_back(PluginCommand(
+        "vdigx","Dig a whole vein, following through z-levels.",vdigx,cursor_hotkey,
+        "  Designates a whole vein under the cursor for digging.\n"
+        "  Also follows the vein between z-levels with stairs, like 'vdig x' would.\n"
+    ));
     commands.push_back(PluginCommand("expdig","Select or designate an exploratory pattern. Use 'expdig ?' for help.",expdig));
     commands.push_back(PluginCommand("digcircle","Dig desingate a circle (filled or hollow) with given radius.",digcircle));
     //commands.push_back(PluginCommand("autodig","Mark a tile for continuous digging.",autodig));
@@ -450,6 +459,100 @@ static digmask diag5[5] =
     },
 };
 
+static digmask diag5r[5] =
+{
+    {
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        },
+        {
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        },
+        {
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        },
+        {
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        },
+        {
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
+        {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
+        {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
+        {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
+        {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+    },
+};
+
 static digmask ladder[3] =
 {
     {
@@ -508,6 +611,64 @@ static digmask ladder[3] =
     },
 };
 
+static digmask ladderr[3] =
+{
+    {
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+    },
+    {
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+    },
+    {
+        {0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
+        {0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0},
+    },
+};
+
 static digmask all_tiles =
 {
     {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
@@ -551,7 +712,9 @@ enum explo_how
 {
     EXPLO_NOTHING,
     EXPLO_DIAG5,
+    EXPLO_DIAG5R,
     EXPLO_LADDER,
+    EXPLO_LADDERR,
     EXPLO_CLEAR,
     EXPLO_CROSS,
 };
@@ -644,6 +807,10 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
         {
             how = EXPLO_DIAG5;
         }
+        else if(parameters[i] == "diag5r")
+        {
+            how = EXPLO_DIAG5R;
+        }
         else if(parameters[i] == "clear")
         {
             how = EXPLO_CLEAR;
@@ -651,6 +818,10 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
         else if(parameters[i] == "ladder")
         {
             how = EXPLO_LADDER;
+        }
+        else if(parameters[i] == "ladderr")
+        {
+            how = EXPLO_LADDERR;
         }
         else if(parameters[i] == "cross")
         {
@@ -665,7 +836,9 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
                      "There are two variables that can be set: pattern and filter.\n"
                      "Patterns:\n"
                      "  diag5 = diagonals separated by 5 tiles\n"
-                     " ladder = A 'ladder' pattern\n"
+                     " diag5r = diag5 rotated 90 degrees\n"
+                             " ladder = A 'ladder' pattern\n"
+                     "ladderr = ladder rotated 90 degrees\n"
                      "  clear = Just remove all dig designations\n"
                      "  cross = A cross, exactly in the middle of the map.\n"
                      "Filters:\n"
@@ -710,6 +883,19 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             }
         }
     }
+    else if(how == EXPLO_DIAG5R)
+    {
+        int which;
+        for(uint32_t x = 0; x < x_max; x++)
+        {
+            for(int32_t y = 0 ; y < y_max; y++)
+            {
+                which = (4*x + 1000-y) % 5;
+                stamp_pattern(maps, x,y_max - 1 - y, z_level, diag5r[which],
+                              how, what, x_max, y_max);
+            }
+        }
+    }
     else if(how == EXPLO_LADDER)
     {
         int which;
@@ -720,6 +906,19 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             {
                 stamp_pattern(maps, x, y, z_level, ladder[which],
                     how, what, x_max, y_max);
+            }
+        }
+    }
+    else if(how == EXPLO_LADDERR)
+    {
+        int which;
+        for(int32_t y = 0 ; y < y_max; y++)
+        {
+            which = y % 3;
+            for(uint32_t x = 0; x < x_max; x++)
+            {
+                stamp_pattern(maps, x, y, z_level, ladderr[which],
+                              how, what, x_max, y_max);
             }
         }
     }
@@ -760,18 +959,10 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
     c->Resume();
     return CR_OK;
 }
+
 DFhackCExport command_result vdigx (Core * c, vector <string> & parameters)
 {
-    for(int i = 0; i < parameters.size();i++)
-    {
-        if(parameters[i] == "help" || parameters[i] == "?")
-        {
-            c->con.print("Designates a whole vein under the cursor for digging.\n"
-            "Also follows the vein between z-levels with stairs, like 'vdig x' would.\n"
-            );
-            return CR_OK;
-        }
-    }
+    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     vector <string> lol;
     lol.push_back("x");
     return vdig(c,lol);
@@ -779,32 +970,25 @@ DFhackCExport command_result vdigx (Core * c, vector <string> & parameters)
 
 DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
 {
+    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     uint32_t x_max,y_max,z_max;
     bool updown = false;
     for(int i = 0; i < parameters.size();i++)
     {
         if(parameters.size() && parameters[0]=="x")
             updown = true;
-        else if(parameters[i] == "help" || parameters[i] == "?")
-        {
-            c->con.print("Designates a whole vein under the cursor for digging.\n"
-                         "Options:\n"
-                         "x        - follow veins through z-levels with stairs.\n"
-            );
-            return CR_OK;
-        }
+        else
+            return CR_WRONG_USAGE;
     }
 
     Console & con = c->con;
 
-    c->Suspend();
     DFHack::Maps * Maps = c->getMaps();
     DFHack::Gui * Gui = c->getGui();
     // init the map
     if(!Maps->Start())
     {
         con.printerr("Can't init map. Make sure you have a map loaded in DF.\n");
-        c->Resume();
         return CR_FAILURE;
     }
 
@@ -816,14 +1000,12 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
     while(cx == -30000)
     {
         con.printerr("Cursor is not active. Point the cursor at a vein.\n");
-        c->Resume();
         return CR_FAILURE;
     }
     DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
     if(xy.x == 0 || xy.x == tx_max - 1 || xy.y == 0 || xy.y == ty_max - 1)
     {
         con.printerr("I won't dig the borders. That would be cheating!\n");
-        c->Resume();
         return CR_FAILURE;
     }
     MapExtras::MapCache * MCache = new MapExtras::MapCache(Maps);
@@ -834,7 +1016,6 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
     {
         con.printerr("This tile is not a vein.\n");
         delete MCache;
-        c->Resume();
         return CR_FAILURE;
     }
     con.print("%d/%d/%d tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, des.whole);
@@ -944,7 +1125,6 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
         }
     }
     MCache->WriteAll();
-    c->Resume();
     return CR_OK;
 }
 

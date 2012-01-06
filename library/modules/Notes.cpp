@@ -29,13 +29,13 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Types.h"
-#include "dfhack/Error.h"
-#include "dfhack/Process.h"
+#include "VersionInfo.h"
+#include "Types.h"
+#include "Error.h"
+#include "MemAccess.h"
 #include "ModuleFactory.h"
-#include "dfhack/Core.h"
-#include "dfhack/modules/Notes.h"
+#include "Core.h"
+#include "modules/Notes.h"
 using namespace DFHack;
 
 Module* DFHack::createNotes()

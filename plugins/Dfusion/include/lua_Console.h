@@ -1,6 +1,6 @@
 #ifndef LUA_CONSOLE_H
 #define LUA_CONSOLE_H
-#include <dfhack/Console.h>
+#include <Console.h>
 #include "luamain.h"
 
 namespace lua

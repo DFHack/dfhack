@@ -1,6 +1,6 @@
 /*
 https://github.com/peterix/dfhack
-Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
+Copyright (c) 2009-2011 Petr Mrï¿½zek (peterix@gmail.com)
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
@@ -33,13 +33,12 @@ distribution.
 #include <cstdlib>
 using namespace std;
 
-#include "dfhack/modules/Graphic.h"
-#include "dfhack/Error.h"
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Process.h"
-#include "dfhack/Vector.h"
+#include "modules/Graphic.h"
+#include "Error.h"
+#include "VersionInfo.h"
+#include "MemAccess.h"
 #include "ModuleFactory.h"
-#include <dfhack/Core.h>
+#include "Core.h"
 
 using namespace DFHack;
 

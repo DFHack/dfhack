@@ -3,11 +3,11 @@
 //
 // Linux only, enabled with BUILD_VECTORS cmake option.
 
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
-#include <dfhack/Process.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
+#include <MemAccess.h>
 #include <vector>
 #include <string>
 
@@ -19,9 +19,9 @@ using namespace DFHack;
 
 struct t_vecTriplet
 {
-    uint32_t start;
-    uint32_t end;
-    uint32_t alloc_end;
+    void * start;
+    void * end;
+    void * alloc_end;
 };
 
 DFhackCExport command_result df_vectors  (Core * c,
@@ -74,7 +74,7 @@ static bool mightBeVec(vector<t_memrange> &heap_ranges,
     // Vector length might not be a multiple of 4 if, for example,
     // it's a vector of uint8_t or uint16_t.  However, the actual memory
     // allocated to the vector should be 4 byte aligned.
-    if ((vec->start % 4 != 0) || (vec->alloc_end % 4 != 0))
+    if (((int)vec->start % 4 != 0) || ((int)vec->alloc_end % 4 != 0))
         return false;
 
     for (size_t i = 0; i < heap_ranges.size(); i++)
@@ -88,7 +88,7 @@ static bool mightBeVec(vector<t_memrange> &heap_ranges,
     return false;
 }
 
-static bool inAnyRange(vector<t_memrange> &ranges, uint32_t ptr)
+static bool inAnyRange(vector<t_memrange> &ranges, void * ptr)
 {
     for (size_t i = 0; i < ranges.size(); i++)
     {
@@ -141,7 +141,7 @@ static void vectorsUsage(Console &con)
 static void printVec(Console &con, const char* msg, t_vecTriplet *vec,
                      uint32_t start, uint32_t pos)
 {
-    uint32_t length = vec->end - vec->start;
+    uint32_t length = (int)vec->end - (int)vec->start;
     uint32_t offset = pos - start;
 
     con.print("%8s offset %06p, addr %010p, start %010p, length %u\n",
@@ -193,15 +193,15 @@ DFhackCExport command_result df_vectors (Core * c, vector <string> & parameters)
     {
         t_memrange &range = heap_ranges[i];
 
-        if (!range.isInRange(start))
+        if (!range.isInRange((void *)start))
             continue;
 
         // Found the range containing the start
-        if (!range.isInRange(end))
+        if (!range.isInRange((void *)end))
         {
             con.print("Scanning %u bytes would read past end of memory "
                       "range.\n", bytes);
-            uint32_t diff = end - range.end;
+            uint32_t diff = end - (int)range.end;
             con.print("Cutting bytes down by %u.\n", diff);
 
             end = (uint32_t) range.end;
@@ -242,7 +242,7 @@ DFhackCExport command_result df_vectors (Core * c, vector <string> & parameters)
         {
             uint32_t ptr = * ( (uint32_t*) pos);
 
-            if (inAnyRange(heap_ranges, ptr))
+            if (inAnyRange(heap_ranges, (void *) ptr))
             {
                 t_vecTriplet* vec = (t_vecTriplet*) ptr;
 
@@ -320,7 +320,7 @@ DFhackCExport command_result df_clearvec (Core * c, vector <string> & parameters
             continue;
         }
 
-        if (!inAnyRange(heap_ranges, addr))
+        if (!inAnyRange(heap_ranges, (void *) addr))
         {
             con << addr_str << " not in any valid address range." << std::endl;
             continue;
@@ -338,7 +338,7 @@ DFhackCExport command_result df_clearvec (Core * c, vector <string> & parameters
             addr = * ( (uint32_t*) addr);
             vec  = (t_vecTriplet*) addr;
 
-            if (inAnyRange(heap_ranges, addr) && mightBeVec(heap_ranges, vec))
+            if (inAnyRange(heap_ranges, (void *) addr) && mightBeVec(heap_ranges, vec))
             {
                 valid = true;
                 ptr   = true;

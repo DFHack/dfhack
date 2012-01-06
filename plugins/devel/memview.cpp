@@ -1,8 +1,8 @@
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/PluginManager.h>
-#include <dfhack/Process.h>
-#include <dfhack/extra/stopwatch.h>
+#include "Core.h"
+#include "Console.h"
+#include "PluginManager.h"
+#include "MemAccess.h"
+#include "MiscUtils.h"
 #include <../depends/tthread/tinythread.h> //not sure if correct
 #include <string>
 #include <vector>
@@ -17,7 +17,7 @@ static tthread::mutex* mymutex=0;
 
 struct memory_data
 {
-	size_t addr;
+	void * addr;
 	size_t len;
 	size_t refresh;
 	int state;
@@ -57,7 +57,7 @@ bool isAddr(uint32_t *trg,vector<t_memrange> & ranges)
 {
 	if(trg[0]%4==0)
 		for(size_t i=0;i<ranges.size();i++)
-			if(ranges[i].isInRange(trg[0]))
+			if(ranges[i].isInRange((void *)trg[0]))
 				return true;
 
 	return false;
@@ -131,7 +131,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 	timeLast = time2;
 
 	c->p->read(memdata.addr,memdata.len,memdata.buf);
-	outputHex(memdata.buf,memdata.lbuf,memdata.len,memdata.addr,c,memdata.ranges);
+	outputHex(memdata.buf,memdata.lbuf,memdata.len,(size_t)memdata.addr,c,memdata.ranges);
     memcpy(memdata.lbuf, memdata.buf, memdata.len);
 	if(memdata.refresh==0)
 		Deinit();
@@ -143,7 +143,7 @@ DFhackCExport command_result memview (Core * c, vector <string> & parameters)
 {
 	mymutex->lock();
 	c->p->getMemRanges(memdata.ranges);
-	memdata.addr=convert(parameters[0],true);
+	memdata.addr=(void *)convert(parameters[0],true);
 	if(memdata.addr==0)
 	{
 		Deinit();

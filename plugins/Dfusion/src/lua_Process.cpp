@@ -14,7 +14,7 @@ static int lua_Process_readDWord(lua_State *S)
 {
 	lua::state st(S);
 	DFHack::Process* c=GetProcessPtr(st);
-	uint32_t ret=c->readDWord(st.as<uint32_t>(1));
+	uint32_t ret=c->readDWord( (void *) st.as<uint32_t>(1));
 	st.push(ret);
 	return 1;
 }
@@ -22,14 +22,14 @@ static int lua_Process_writeDWord(lua_State *S)
 {
 	lua::state st(S);
 	DFHack::Process* c=GetProcessPtr(st);
-	c->writeDWord(st.as<uint32_t>(1),st.as<uint32_t>(2));
+    c->writeDWord((void *) st.as<uint32_t>(1),st.as<uint32_t>(2));
 	return 0;
 }
 static int lua_Process_readFloat(lua_State *S)
 {
 	lua::state st(S);
 	DFHack::Process* c=GetProcessPtr(st);
-	float ret=c->readFloat(st.as<uint32_t>(1));
+    float ret=c->readFloat((void *) st.as<uint32_t>(1));
 	st.push(ret);
 	return 1;
 }
@@ -38,7 +38,7 @@ static int lua_Process_readWord(lua_State *S)
 {
 	lua::state st(S);
 	DFHack::Process* c=GetProcessPtr(st);
-	uint16_t ret=c->readWord(st.as<uint32_t>(1));
+    uint16_t ret=c->readWord((void *) st.as<uint32_t>(1));
 	st.push(ret);
 	return 1;
 }
@@ -47,14 +47,14 @@ static int lua_Process_writeWord(lua_State *S)
 {
 	lua::state st(S);
 	DFHack::Process* c=GetProcessPtr(st);
-	c->writeWord(st.as<uint32_t>(1),st.as<uint16_t>(2));
+    c->writeWord((void *) st.as<uint32_t>(1),st.as<uint16_t>(2));
 	return 0;
 }
 static int lua_Process_readByte(lua_State *S)
 {
 	lua::state st(S);
 	DFHack::Process* c=GetProcessPtr(st);
-	uint8_t ret=c->readByte(st.as<uint32_t>(1));
+    uint8_t ret=c->readByte((void *) st.as<uint32_t>(1));
 	st.push(ret);
 	return 1;
 }
@@ -63,7 +63,7 @@ static int lua_Process_writeByte(lua_State *S)
 {
 	lua::state st(S);
 	DFHack::Process* c=GetProcessPtr(st);
-	c->writeByte(st.as<uint32_t>(1),st.as<uint8_t>(2));
+    c->writeByte((void *) st.as<uint32_t>(1),st.as<uint8_t>(2));
 	return 0;
 }
 static int lua_Process_read(lua_State *S)
@@ -77,7 +77,7 @@ static int lua_Process_read(lua_State *S)
 		buf=(uint8_t*)lua_touserdata(st,3);
 	else
 		buf=new uint8_t[len];
-	c->read(st.as<uint32_t>(1),len,buf);
+    c->read((void *) st.as<uint32_t>(1),len,buf);
 	st.pushlightuserdata(buf);
 	return 1;
 }
@@ -85,14 +85,14 @@ static int lua_Process_write(lua_State *S)
 {
 	lua::state st(S);
 	DFHack::Process* c=GetProcessPtr(st);
-	c-> write(st.as<uint32_t>(1),st.as<uint32_t>(2),static_cast<uint8_t*>(lua_touserdata(st,3)));
+    c-> write((void *) st.as<uint32_t>(1),st.as<uint32_t>(2),static_cast<uint8_t*>(lua_touserdata(st,3)));
 	return 0;
 }
 static int lua_Process_readSTLString (lua_State *S)
 {
 	lua::state st(S);
 	DFHack::Process* c=GetProcessPtr(st);
-	std::string r=c->readSTLString(st.as<uint32_t>(1));
+    std::string r=c->readSTLString((void *) st.as<uint32_t>(1));
 	st.push(r);
 	return 1;
 }
@@ -101,14 +101,14 @@ static int lua_Process_writeSTLString(lua_State *S)
 {
 	lua::state st(S);
 	DFHack::Process* c=GetProcessPtr(st);
-	c->writeSTLString(st.as<uint32_t>(1),st.as<std::string>(2));
+    c->writeSTLString((void *) st.as<uint32_t>(1),st.as<std::string>(2));
 	return 0;
 }
 static int lua_Process_copySTLString(lua_State *S)
 {
 	lua::state st(S);
 	DFHack::Process* c=GetProcessPtr(st);
-	c->copySTLString(st.as<uint32_t>(1),st.as<uint32_t>(2));
+    c->copySTLString((void *) st.as<uint32_t>(1),st.as<uint32_t>(2));
 	return 0;
 }
 static int lua_Process_doReadClassName(lua_State *S)
@@ -131,7 +131,7 @@ static int lua_Process_readCString (lua_State *S)
 {
 	lua::state st(S);
 	DFHack::Process* c=GetProcessPtr(st);
-	std::string r=c->readCString(st.as<uint32_t>(1));
+    std::string r=c->readCString((void *) st.as<uint32_t>(1));
 	st.push(r);
 	return 1;
 }
@@ -226,10 +226,10 @@ static int lua_Process_setPermisions(lua_State *S)
 	DFHack::t_memrange range,trange;
 
 	st.getfield("start",1);
-	range.start=st.as<uint64_t>();
+	range.start= (void *)st.as<uint64_t>();
 	st.pop();
 	st.getfield("end",1);
-	range.end=st.as<uint64_t>();
+	range.end= (void *)st.as<uint64_t>();
 	st.pop();
 
 	st.getfield("read",2);

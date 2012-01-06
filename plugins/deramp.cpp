@@ -7,12 +7,12 @@
 #include <assert.h>
 #include <string.h>
 using namespace std;
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
-#include <dfhack/modules/Maps.h>
-#include <dfhack/TileTypes.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
+#include <modules/Maps.h>
+#include <TileTypes.h>
 using namespace DFHack;
 
 DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters);

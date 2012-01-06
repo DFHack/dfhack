@@ -34,18 +34,17 @@ distribution.
 using namespace std;
 
 
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Process.h"
-#include "dfhack/Vector.h"
-#include "dfhack/Error.h"
-#include "dfhack/Types.h"
+#include "VersionInfo.h"
+#include "MemAccess.h"
+#include "Error.h"
+#include "Types.h"
 
 // we connect to those
-#include "dfhack/modules/Materials.h"
-#include "dfhack/modules/Units.h"
-#include "dfhack/modules/Translation.h"
+#include "modules/Materials.h"
+#include "modules/Units.h"
+#include "modules/Translation.h"
 #include "ModuleFactory.h"
-#include <dfhack/Core.h>
+#include "Core.h"
 
 using namespace DFHack;
 
@@ -54,8 +53,8 @@ struct Units::Private
     bool Inited;
     bool Started;
 
-    uint32_t dwarf_race_index_addr;
-    uint32_t dwarf_civ_id_addr;
+    void * dwarf_race_index_addr;
+    void * dwarf_civ_id_addr;
     bool IdMapReady;
     std::map<int32_t, int32_t> IdMap;
 
@@ -86,8 +85,8 @@ Units::Units()
     try
     {
         creatures = (vector <df_unit *> *) OG_Creatures->getAddress ("vector");
-        d->dwarf_race_index_addr = OG_Creatures->getAddress("current_race");
-        d->dwarf_civ_id_addr = OG_Creatures->getAddress("current_civ");
+        d->dwarf_race_index_addr = (void *) OG_Creatures->getAddress("current_race");
+        d->dwarf_civ_id_addr = (void *) OG_Creatures->getAddress("current_civ");
     }
     catch(Error::All&){};
     d->Inited = true;

@@ -7,14 +7,14 @@
 #include <set>
 using namespace std;
 
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <dfhack/modules/Items.h>
+#include <modules/Items.h>
 
 using namespace DFHack;
 

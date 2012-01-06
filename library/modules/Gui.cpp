@@ -30,14 +30,50 @@ distribution.
 #include <map>
 using namespace std;
 
-#include "dfhack/modules/Gui.h"
-#include "dfhack/Process.h"
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Types.h"
-#include "dfhack/Error.h"
+#include "modules/Gui.h"
+#include "MemAccess.h"
+#include "VersionInfo.h"
+#include "Types.h"
+#include "Error.h"
 #include "ModuleFactory.h"
-#include "dfhack/Core.h"
+#include "Core.h"
+#include "PluginManager.h"
 using namespace DFHack;
+
+#include "DataDefs.h"
+#include "df/cursor.h"
+#include "df/viewscreen_dwarfmodest.h"
+
+// Predefined common guard functions
+
+bool DFHack::default_hotkey(Core *, df::viewscreen *top)
+{
+    // Default hotkey guard function
+    for (;top ;top = top->parent)
+        if (strict_virtual_cast<df::viewscreen_dwarfmodest>(top))
+            return true;
+    return false;
+}
+
+bool DFHack::dwarfmode_hotkey(Core *, df::viewscreen *top)
+{
+    // Require the main dwarf mode screen
+    return !!strict_virtual_cast<df::viewscreen_dwarfmodest>(top);
+}
+
+bool DFHack::cursor_hotkey(Core *c, df::viewscreen *top)
+{
+    if (!dwarfmode_hotkey(c, top))
+        return false;
+
+    // Also require the cursor.
+    if (!df::global::cursor || df::global::cursor->x == -30000)
+        return false;
+
+    return true;
+}
+
+//
 
 Module* DFHack::createGui()
 {
@@ -55,16 +91,23 @@ struct Gui::Private
     }
 
     bool Started;
-    uint32_t window_x_offset;
-    uint32_t window_y_offset;
-    uint32_t window_z_offset;
-    uint32_t cursor_xyz_offset;
-    uint32_t designation_xyz_offset;
-    uint32_t mouse_xy_offset;
-    uint32_t window_dims_offset;
+    int32_t * window_x_offset;
+    int32_t * window_y_offset;
+    int32_t * window_z_offset;
+    struct xyz
+    {
+        int32_t x;
+        int32_t y;
+        int32_t z;
+    } * cursor_xyz_offset, * designation_xyz_offset;
+    struct xy
+    {
+        int32_t x;
+        int32_t y;
+    } * mouse_xy_offset, * window_dims_offset;
 
     bool StartedScreen;
-    uint32_t screen_tiles_ptr_offset;
+    void * screen_tiles_ptr_offset;
 
     Process * owner;
 };
@@ -121,19 +164,33 @@ Gui::Gui()
     try
     {
         OG_Position = mem->getGroup("Position");
-        d->window_x_offset = OG_Position->getAddress ("window_x");
-        d->window_y_offset = OG_Position->getAddress ("window_y");
-        d->window_z_offset = OG_Position->getAddress ("window_z");
-        d->cursor_xyz_offset = OG_Position->getAddress ("cursor_xyz");
-        d->window_dims_offset = OG_Position->getAddress ("window_dims");
+        d->window_x_offset = (int32_t *) OG_Position->getAddress ("window_x");
+        d->window_y_offset = (int32_t *) OG_Position->getAddress ("window_y");
+        d->window_z_offset = (int32_t *) OG_Position->getAddress ("window_z");
+        d->cursor_xyz_offset = (Private::xyz *) OG_Position->getAddress ("cursor_xyz");
+        d->window_dims_offset = (Private::xy *) OG_Position->getAddress ("window_dims");
         d->Started = true;
     }
     catch(Error::All &){};
-    OG_Position->getSafeAddress("mouse_xy", d->mouse_xy_offset);
-    OG_Position->getSafeAddress("designation_xyz", d->designation_xyz_offset);
     try
     {
-        d->screen_tiles_ptr_offset = OG_Position->getAddress ("screen_tiles_pointer");
+        d->mouse_xy_offset = (Private::xy *) OG_Position->getAddress ("mouse_xy");
+    }
+    catch(Error::All &)
+    {
+        d->mouse_xy_offset = 0;
+    };
+    try
+    {
+        d->designation_xyz_offset = (Private::xyz *) OG_Position->getAddress ("designation_xyz");
+    }
+    catch(Error::All &)
+    {
+        d->designation_xyz_offset = 0;
+    };
+    try
+    {
+        d->screen_tiles_ptr_offset = (void *) OG_Position->getAddress ("screen_tiles_pointer");
         d->StartedScreen = true;
     }
     catch(Error::All &){};
@@ -263,10 +320,10 @@ bool Gui::getScreenTiles (int32_t width, int32_t height, t_screen screen[])
 {
     if(!d->StartedScreen) return false;
 
-    uint32_t screen_addr = d->owner->readDWord(d->screen_tiles_ptr_offset);
+    void * screen_addr = (void *) d->owner->readDWord(d->screen_tiles_ptr_offset);
     uint8_t* tiles = new uint8_t[width*height*4/* + 80 + width*height*4*/];
 
-    d->owner->read (screen_addr, (width*height*4/* + 80 + width*height*4*/), (uint8_t *) tiles);
+    d->owner->read (screen_addr, (width*height*4/* + 80 + width*height*4*/), tiles);
 
     for(int32_t iy=0; iy<height; iy++)
     {

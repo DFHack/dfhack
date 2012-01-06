@@ -9,18 +9,18 @@
 #include <cstdio>
 using namespace std;
 
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
 #include <vector>
 #include <string>
-#include <dfhack/modules/Units.h>
-#include <dfhack/modules/Maps.h>
-#include <dfhack/modules/Gui.h>
-#include <dfhack/modules/Materials.h>
-#include <dfhack/extra/MapExtras.h>
-#include <dfhack/MiscUtils.h>
+#include <modules/Units.h>
+#include <modules/Maps.h>
+#include <modules/Gui.h>
+#include <modules/Materials.h>
+#include <modules/MapCache.h>
+#include <MiscUtils.h>
 
 using std::vector;
 using std::string;

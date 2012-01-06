@@ -11,7 +11,7 @@ using namespace std;
 
 
 #include <DFHack.h>
-#include <dfhack/DFTileTypes.h>
+#include <DFTileTypes.h>
 
 //Avoid including Windows.h because it causes name clashes
 extern "C" __declspec(dllimport) void __stdcall Sleep(unsigned long milliseconds);

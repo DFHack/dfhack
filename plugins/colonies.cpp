@@ -1,10 +1,10 @@
-#include <dfhack/Core.h>
-#include <dfhack/Console.h>
-#include <dfhack/Export.h>
-#include <dfhack/PluginManager.h>
+#include "Core.h"
+#include <Console.h>
+#include <Export.h>
+#include <PluginManager.h>
 #include <vector>
 #include <string>
-#include <dfhack/modules/Vermin.h>
+#include <modules/Vermin.h>
 
 using std::vector;
 using std::string;

@@ -9,17 +9,16 @@
 #include <set>
 using namespace std;
 
-#include "dfhack/Types.h"
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Process.h"
-#include "dfhack/Vector.h"
-#include "dfhack/modules/Materials.h"
-#include "dfhack/modules/Items.h"
-#include "dfhack/modules/Units.h"
-#include "dfhack/modules/kitchen.h"
+#include "Types.h"
+#include "VersionInfo.h"
+#include "MemAccess.h"
+#include "modules/Materials.h"
+#include "modules/Items.h"
+#include "modules/Units.h"
+#include "modules/kitchen.h"
 #include "ModuleFactory.h"
-#include <dfhack/Core.h>
-#include <dfhack/Virtual.h>
+#include "Core.h"
+#include "Virtual.h"
 
 namespace DFHack
 {
@@ -44,9 +43,9 @@ namespace Kitchen
         std::vector<t_materialIndex>& materialIndices; // the material index vector of the kitchen exclusion list
         std::vector<t_exclusionType>& exclusionTypes; // the exclusion type vector of the kitchen excluions list
 
-        static uint32_t addr(const DFHack::Core& core, int index)
+        static void * addr(const DFHack::Core& core, int index)
         {
-            static uint32_t start = core.vinfo->getAddress("kitchen_limits");
+            static char * start = core.vinfo->getAddress("kitchen_limits");
             return start + sizeof(std::vector<int>) * index;
         };
     };

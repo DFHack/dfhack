@@ -36,10 +36,10 @@ distribution.
 using namespace std;
 
 #include <md5wrapper.h>
-#include "dfhack/Process.h"
-#include "dfhack/VersionInfoFactory.h"
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Error.h"
+#include "MemAccess.h"
+#include "VersionInfoFactory.h"
+#include "VersionInfo.h"
+#include "Error.h"
 #include <string.h>
 using namespace DFHack;
 
@@ -111,8 +111,8 @@ Process::~Process()
 string Process::doReadClassName (void * vptr)
 {
     //FIXME: BAD!!!!!
-    int typeinfo = Process::readDWord((uint32_t)vptr - 0x4);
-    int typestring = Process::readDWord(typeinfo + 0x4);
+    char * typeinfo = Process::readPtr(((char *)vptr - 0x4));
+    char * typestring = Process::readPtr(typeinfo + 0x4);
     string raw = readCString(typestring);
     size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
     size_t end = raw.length();
@@ -138,8 +138,8 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
                (char*)&permissions,
                &offset, &device1, &device2, &node,
                (char*)&temp.name);
-        temp.start = start;
-        temp.end = end;
+        temp.start = (void *) start;
+        temp.end = (void *) end;
         temp.read = permissions[0] == 'r';
         temp.write = permissions[1] == 'w';
         temp.execute = permissions[2] == 'x';
@@ -214,7 +214,7 @@ bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
     if(trgrange.read)protect|=PROT_READ;
     if(trgrange.write)protect|=PROT_WRITE;
     if(trgrange.execute)protect|=PROT_EXEC;
-    result=mprotect((void *)range.start, range.end-range.start,protect);
+    result=mprotect((void *)range.start, (size_t)range.end-(size_t)range.start,protect);
 
     return result==0;
 }

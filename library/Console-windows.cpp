@@ -50,8 +50,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <istream>
 #include <string>
 
-#include "dfhack/Console.h"
-#include "dfhack/FakeSDL.h"
+#include "Console.h"
+#include "Hooks.h"
 #include <cstdio>
 #include <cstdlib>
 #include <sstream>

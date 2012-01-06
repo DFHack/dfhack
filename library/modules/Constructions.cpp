@@ -31,22 +31,18 @@ distribution.
 using namespace std;
 
 
-#include "dfhack/VersionInfo.h"
-#include "dfhack/Process.h"
-#include "dfhack/Vector.h"
-#include "dfhack/Types.h"
-#include "dfhack/modules/Constructions.h"
+#include "VersionInfo.h"
+#include "MemAccess.h"
+#include "Types.h"
+#include "modules/Constructions.h"
 #include "ModuleFactory.h"
-#include "dfhack/Core.h"
+#include "Core.h"
 
 using namespace DFHack;
 
 struct Constructions::Private
 {
-    uint32_t construction_vector;
-    // translation
-    DfVector <uint32_t> * p_cons;
-
+    vector <t_construction *> * p_cons;
     Process * owner;
     bool Inited;
     bool Started;
@@ -62,10 +58,9 @@ Constructions::Constructions()
     Core & c = Core::getInstance();
     d = new Private;
     d->owner = c.p;
-    d->p_cons = 0;
     d->Inited = d->Started = false;
     VersionInfo * mem = c.vinfo;
-    d->construction_vector = mem->getGroup("Constructions")->getAddress ("vector");
+    d->p_cons = (decltype(d->p_cons)) mem->getGroup("Constructions")->getAddress ("vector");
     d->Inited = true;
 }
 
@@ -78,7 +73,6 @@ Constructions::~Constructions()
 
 bool Constructions::Start(uint32_t & numconstructions)
 {
-    d->p_cons = new DfVector <uint32_t> (d->construction_vector);
     numconstructions = d->p_cons->size();
     d->Started = true;
     return true;
@@ -89,24 +83,14 @@ bool Constructions::Read (const uint32_t index, t_construction & construction)
 {
     if(!d->Started) return false;
 
-    // read pointer from vector at position
-    uint32_t temp = d->p_cons->at (index);
-
-    //read construction from memory
-    d->owner->read (temp, sizeof (t_construction), (uint8_t *) &construction);
-
-    // transform
-    construction.origin = temp;
+    t_construction * orig = d->p_cons->at(index);
+    construction = *orig;
+    construction.origin = orig;
     return true;
 }
 
 bool Constructions::Finish()
 {
-    if(d->p_cons)
-    {
-        delete d->p_cons;
-        d->p_cons = NULL;
-    }
     d->Started = false;
     return true;
 }

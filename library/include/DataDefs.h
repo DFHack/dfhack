@@ -135,6 +135,12 @@ namespace DFHack
         const char *name;
         int size;
     };
+    
+    template<class T>
+    struct enum_list_attr {
+        int size;
+        const T *items;
+    };
 
     DFHACK_EXPORT std::string bitfieldToString(const void *p, int size, const bitfield_item_info *items);
 
@@ -150,6 +156,7 @@ namespace df
     using DFHack::virtual_identity;
     using DFHack::virtual_class;
     using DFHack::bitfield_item_info;
+    using DFHack::enum_list_attr;
     using DFHack::BitArray;
 
     template<class T>

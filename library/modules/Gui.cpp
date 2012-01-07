@@ -41,8 +41,16 @@ using namespace std;
 using namespace DFHack;
 
 #include "DataDefs.h"
+#include "df/world.h"
 #include "df/cursor.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/ui.h"
+#include "df/job.h"
+#include "df/ui_build_selector.h"
+#include "df/building_workshopst.h"
+#include "df/building_furnacest.h"
+
+using namespace df::enums;
 
 // Predefined common guard functions
 
@@ -71,6 +79,95 @@ bool DFHack::cursor_hotkey(Core *c, df::viewscreen *top)
         return false;
 
     return true;
+}
+
+bool DFHack::workshop_job_hotkey(Core *c, df::viewscreen *top)
+{
+    using namespace ui_sidebar_mode;
+    using df::global::ui;
+    using df::global::world;
+    using df::global::ui_workshop_in_add;
+    using df::global::ui_workshop_job_cursor;
+
+    if (!dwarfmode_hotkey(c,top))
+        return false;
+
+    switch (ui->main.mode) {
+    case QueryBuilding:
+        {
+            if (!ui_workshop_job_cursor) // allow missing
+                return false;
+
+            df::building *selected = world->selected_building;
+            if (!virtual_cast<df::building_workshopst>(selected) &&
+                !virtual_cast<df::building_furnacest>(selected))
+                return false;
+
+            // No jobs?
+            if (selected->jobs.empty() ||
+                selected->jobs[0]->job_type == job_type::DestroyBuilding)
+                return false;
+
+            // Add job gui activated?
+            if (ui_workshop_in_add && *ui_workshop_in_add)
+                return false;
+
+            return true;
+        };
+    default:
+        return false;
+    }
+}
+
+bool DFHack::build_selector_hotkey(Core *c, df::viewscreen *top)
+{
+    using namespace ui_sidebar_mode;
+    using df::global::ui;
+    using df::global::ui_build_selector;
+
+    if (!dwarfmode_hotkey(c,top))
+        return false;
+
+    switch (ui->main.mode) {
+    case Build:
+        {
+            if (!ui_build_selector) // allow missing
+                return false;
+
+            // Not selecting, or no choices?
+            if (ui_build_selector->building_type < 0 ||
+                ui_build_selector->stage != 2 ||
+                ui_build_selector->choices.empty())
+                return false;
+
+            return true;
+        };
+    default:
+        return false;
+    }
+}
+
+df::job *DFHack::getSelectedWorkshopJob(Core *c, bool quiet)
+{
+    using df::global::world;
+    using df::global::ui_workshop_job_cursor;
+
+    if (!workshop_job_hotkey(c, c->getTopViewscreen())) {
+        if (!quiet)
+            c->con.printerr("Not in a workshop, or no job is highlighted.\n");
+        return NULL;
+    }
+
+    df::building *selected = world->selected_building;
+    int idx = *ui_workshop_job_cursor;
+
+    if (idx < 0 || idx >= selected->jobs.size())
+    {
+        c->con.printerr("Invalid job cursor index: %d\n", idx);
+        return NULL;
+    }
+
+    return selected->jobs[idx];
 }
 
 //

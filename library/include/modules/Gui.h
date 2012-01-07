@@ -32,6 +32,11 @@ distribution.
 #include "BitArray.h"
 #include <string>
 
+namespace df {
+    struct viewscreen;
+    struct job;
+};
+
 /**
  * \defgroup grp_gui query DF's GUI state
  * @ingroup grp_modules
@@ -39,6 +44,13 @@ distribution.
 
 namespace DFHack
 {
+    class Core;
+
+    bool workshop_job_hotkey(Core *c, df::viewscreen *top);
+    bool build_selector_hotkey(Core *c, df::viewscreen *top);
+
+    df::job *getSelectedWorkshopJob(Core *c, bool quiet = false);
+
     class DFContextShared;
     /**
      * A GUI screen

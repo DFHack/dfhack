@@ -188,6 +188,18 @@ namespace df
         }
     };
 
+    template<class EnumType, class IntType1, class IntType2>
+    inline bool operator== (enum_field<EnumType,IntType1> a, enum_field<EnumType,IntType2> b)
+    {
+        return EnumType(a) == EnumType(b);
+    }
+
+    template<class EnumType, class IntType1, class IntType2>
+    inline bool operator!= (enum_field<EnumType,IntType1> a, enum_field<EnumType,IntType2> b)
+    {
+        return EnumType(a) != EnumType(b);
+    }
+
     namespace enums {}
 }
 

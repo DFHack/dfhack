@@ -5,6 +5,8 @@
 #include <MiscUtils.h>
 
 #include <modules/Materials.h>
+#include <modules/Gui.h>
+#include <modules/Job.h>
 
 #include <DataDefs.h>
 #include <df/world.h>
@@ -37,8 +39,6 @@ using df::global::job_next_id;
 
 /* Plugin registration */
 
-static bool workshop_job_hotkey(Core *c, df::viewscreen *top);
-static bool build_selector_hotkey(Core *c, df::viewscreen *top);
 static bool job_material_hotkey(Core *c, df::viewscreen *top);
 
 static command_result job_material(Core *c, vector <string> & parameters);
@@ -106,67 +106,6 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 /* UI state guards */
 
-static bool workshop_job_hotkey(Core *c, df::viewscreen *top)
-{
-    using namespace ui_sidebar_mode;
-
-    if (!dwarfmode_hotkey(c,top))
-        return false;
-
-    switch (ui->main.mode) {
-    case QueryBuilding:
-        {
-            if (!ui_workshop_job_cursor) // allow missing
-                return false;
-
-            df::building *selected = world->selected_building;
-            if (!virtual_cast<df::building_workshopst>(selected) &&
-                !virtual_cast<df::building_furnacest>(selected))
-                return false;
-
-            // No jobs?
-            if (selected->jobs.empty() ||
-                selected->jobs[0]->job_type == job_type::DestroyBuilding)
-                return false;
-
-            // Add job gui activated?
-            if (df::global::ui_workshop_in_add && // allow missing
-                *df::global::ui_workshop_in_add)
-                return false;
-
-            return true;
-        };
-    default:
-        return false;
-    }
-}
-
-static bool build_selector_hotkey(Core *c, df::viewscreen *top)
-{
-    using namespace ui_sidebar_mode;
-
-    if (!dwarfmode_hotkey(c,top))
-        return false;
-
-    switch (ui->main.mode) {
-    case Build:
-        {
-            if (!ui_build_selector) // allow missing
-                return false;
-
-            // Not selecting, or no choices?
-            if (ui_build_selector->building_type < 0 ||
-                ui_build_selector->stage != 2 ||
-                ui_build_selector->choices.empty())
-                return false;
-
-            return true;
-        };
-    default:
-        return false;
-    }
-}
-
 static bool job_material_hotkey(Core *c, df::viewscreen *top)
 {
     return workshop_job_hotkey(c, top) ||
@@ -175,23 +114,9 @@ static bool job_material_hotkey(Core *c, df::viewscreen *top)
 
 /* job-material implementation */
 
-static df::job *getWorkshopJob(Core *c)
-{
-    df::building *selected = world->selected_building;
-    int idx = *ui_workshop_job_cursor;
-
-    if (idx < 0 || idx >= selected->jobs.size())
-    {
-        c->con.printerr("Invalid job cursor index: %d\n", idx);
-        return NULL;
-    }
-
-    return selected->jobs[idx];
-}
-
 static command_result job_material_in_job(Core *c, MaterialInfo &new_mat)
 {
-    df::job *job = getWorkshopJob(c);
+    df::job *job = getSelectedWorkshopJob(c);
     if (!job)
         return CR_FAILURE;
 
@@ -248,13 +173,13 @@ static command_result job_material_in_job(Core *c, MaterialInfo &new_mat)
 }
 
 static bool build_choice_matches(df::ui_build_item_req *req, df::build_req_choicest *choice,
-                                 MaterialInfo &new_mat)
+                                 MaterialInfo &new_mat, bool ignore_select)
 {
     if (VIRTUAL_CAST_VAR(gen, df::build_req_choice_genst, choice))
     {
         if (gen->mat_type == new_mat.type &&
             gen->mat_index == new_mat.index &&
-            gen->used_count < gen->candidates.size())
+            (ignore_select || gen->used_count < gen->candidates.size()))
         {
             return true;
         }
@@ -264,7 +189,7 @@ static bool build_choice_matches(df::ui_build_item_req *req, df::build_req_choic
         if (spec->candidate &&
             spec->candidate->getActualMaterial() == new_mat.type &&
             spec->candidate->getActualMaterialIndex() == new_mat.index &&
-            !req->candidate_selected[spec->candidate_id])
+            (ignore_select || !req->candidate_selected[spec->candidate_id]))
         {
             return true;
         }
@@ -275,13 +200,22 @@ static bool build_choice_matches(df::ui_build_item_req *req, df::build_req_choic
 
 static command_result job_material_in_build(Core *c, MaterialInfo &new_mat)
 {
-    df::ui_build_item_req *req = ui_build_selector->requirements[ui_build_selector->req_index];
+    df::ui_build_selector *sel = ui_build_selector;
+    df::ui_build_item_req *req = sel->requirements[ui_build_selector->req_index];
 
-    for (unsigned i = 0; i < ui_build_selector->choices.size(); i++)
+    // Loop through matching choices
+    bool matches = build_choice_matches(req, sel->choices[sel->sel_index], new_mat, true);
+
+    int size = sel->choices.size();
+    int base = (matches ? sel->sel_index + 1 : 0);
+
+    for (unsigned i = 0; i < size; i++)
     {
-        if (build_choice_matches(req, ui_build_selector->choices[i], new_mat))
+        int idx = (base + i) % size;
+
+        if (build_choice_matches(req, sel->choices[idx], new_mat, false))
         {
-            ui_build_selector->sel_index = i;
+            sel->sel_index = idx;
             return CR_OK;
         }
     }
@@ -317,38 +251,15 @@ static command_result job_material(Core * c, vector <string> & parameters)
 
 static df::job *clone_job(df::job *job)
 {
-    df::job *pnew = new df::job(*job);
+    df::job *pnew = cloneJobStruct(job);
 
     pnew->id = (*job_next_id)++;
-
-    // Clean out transient fields
-    pnew->flags.whole = 0;
-    pnew->flags.bits.repeat = job->flags.bits.repeat;
-
-    pnew->completion_timer = -1;
-    pnew->items.clear();
-    pnew->misc_links.clear();
 
     // Link the job into the global list
     pnew->list_link = new df::job_list_link();
     pnew->list_link->item = pnew;
 
     linked_list_append(&world->job_list, pnew->list_link);
-
-    // Clone refs
-    for (int i = pnew->references.size()-1; i >= 0; i--)
-    {
-        df::general_ref *ref = pnew->references[i];
-
-        if (virtual_cast<df::general_ref_unit_workerst>(ref))
-            pnew->references.erase(pnew->references.begin()+i);
-        else
-            pnew->references[i] = ref->clone();
-    }
-
-    // Clone items
-    for (int i = pnew->job_items.size()-1; i >= 0; i--)
-        pnew->job_items[i] = new df::job_item(*pnew->job_items[i]);
 
     return pnew;
 }
@@ -358,7 +269,7 @@ static command_result job_duplicate(Core * c, vector <string> & parameters)
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 
-    df::job *job = getWorkshopJob(c);
+    df::job *job = getSelectedWorkshopJob(c);
     if (!job)
         return CR_FAILURE;
 
@@ -386,80 +297,6 @@ static command_result job_duplicate(Core * c, vector <string> & parameters)
 
 /* Main job command implementation */
 
-static void print_job_item_details(Core *c, df::job *job, unsigned idx, df::job_item *item)
-{
-    c->con << "  Input Item " << (idx+1) << ": " << ENUM_KEY_STR(item_type,item->item_type);
-    if (item->item_subtype != -1)
-        c->con << " [" << item->item_subtype << "]";
-    if (item->quantity != 1)
-        c->con << "; quantity=" << item->quantity;
-    if (item->min_dimension >= 0)
-        c->con << "; min_dimension=" << item->min_dimension;
-    c->con << endl;
-
-    MaterialInfo mat(item);
-    if (mat.isValid() || item->metal_ore >= 0) {
-        c->con << "    material: " << mat.toString();
-        if (item->metal_ore >= 0)
-            c->con << "; ore of " << MaterialInfo(0,item->metal_ore).toString();
-        c->con << endl;
-    }
-
-    if (item->flags1.whole)
-        c->con << "    flags1: " << bitfieldToString(item->flags1) << endl;
-    if (item->flags2.whole)
-        c->con << "    flags2: " << bitfieldToString(item->flags2) << endl;
-    if (item->flags3.whole)
-        c->con << "    flags3: " << bitfieldToString(item->flags3) << endl;
-
-    if (!item->reaction_class.empty())
-        c->con << "    reaction class: " << item->reaction_class << endl;
-    if (!item->has_material_reaction_product.empty())
-        c->con << "    reaction product: " << item->has_material_reaction_product << endl;
-    if (item->has_tool_use >= 0)
-        c->con << "    tool use: " << ENUM_KEY_STR(tool_uses, item->has_tool_use) << endl;
-}
-
-static void print_job_details(Core *c, df::job *job)
-{
-    c->con << "Job " << job->id << ": " << ENUM_KEY_STR(job_type,job->job_type);
-    if (job->flags.whole)
-           c->con << " (" << bitfieldToString(job->flags) << ")";
-    c->con << endl;
-
-    MaterialInfo mat(job);
-    if (mat.isValid() || job->material_category.whole)
-    {
-        c->con << "    material: " << mat.toString();
-        if (job->material_category.whole)
-            c->con << " (" << bitfieldToString(job->material_category) << ")";
-        c->con << endl;
-    }
-
-    if (job->item_subtype >= 0 || job->item_category.whole)
-        c->con << "    item: " << job->item_subtype
-               << " (" << bitfieldToString(job->item_category) << ")" << endl;
-
-    if (job->hist_figure_id >= 0)
-        c->con << "    figure: " << job->hist_figure_id << endl;
-
-    if (!job->reaction_name.empty())
-        c->con << "    reaction: " << job->reaction_name << endl;
-
-    for (unsigned i = 0; i < job->job_items.size(); i++)
-        print_job_item_details(c, job, i, job->job_items[i]);
-}
-
-static df::job *getWorkshopJobSafe(Core *c)
-{
-    if (!workshop_job_hotkey(c, c->getTopViewscreen())) {
-        c->con.printerr("No job is highlighted.\n");
-        return NULL;
-    }
-
-    return getWorkshopJob(c);
-}
-
 static command_result job_cmd(Core * c, vector <string> & parameters)
 {
     CoreSuspender suspend(c);
@@ -470,16 +307,16 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
     std::string cmd = parameters[0];
     if (cmd == "query" || cmd == "list")
     {
-        df::job *job = getWorkshopJobSafe(c);
+        df::job *job = getSelectedWorkshopJob(c);
         if (!job)
             return CR_WRONG_USAGE;
 
         if (cmd == "query") {
-            print_job_details(c, job);
+            printJobDetails(c, job);
         } else {
             df::building *selected = world->selected_building;
             for (unsigned i = 0; i < selected->jobs.size(); i++)
-                print_job_details(c, selected->jobs[i]);
+                printJobDetails(c, selected->jobs[i]);
         }
     }
     else if (cmd == "item-material")
@@ -487,7 +324,7 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
         if (parameters.size() < 1+1+1)
             return CR_WRONG_USAGE;
 
-        df::job *job = getWorkshopJobSafe(c);
+        df::job *job = getSelectedWorkshopJob(c);
         if (!job)
             return CR_WRONG_USAGE;
 
@@ -508,7 +345,7 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
 
         if (!info.matches(*item)) {
             c->con.printerr("Material does not match the requirements.\n");
-            print_job_details(c, job);
+            printJobDetails(c, job);
             return CR_FAILURE;
         }
 
@@ -524,8 +361,11 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
         item->mat_index = info.index;
 
         c->con << "Job item " << v << " updated." << endl;
-        print_job_details(c, job);
+        printJobDetails(c, job);
         return CR_OK;
+    }
+    else if (cmd == "item-type")
+    {
     }
     else
         return CR_WRONG_USAGE;

@@ -46,10 +46,10 @@ namespace DFHack
 {
     class Core;
 
-    bool workshop_job_hotkey(Core *c, df::viewscreen *top);
-    bool build_selector_hotkey(Core *c, df::viewscreen *top);
+    DFHACK_EXPORT bool workshop_job_hotkey(Core *c, df::viewscreen *top);
+    DFHACK_EXPORT bool build_selector_hotkey(Core *c, df::viewscreen *top);
 
-    df::job *getSelectedWorkshopJob(Core *c, bool quiet = false);
+    DFHACK_EXPORT df::job *getSelectedWorkshopJob(Core *c, bool quiet = false);
 
     class DFContextShared;
     /**

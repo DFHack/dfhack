@@ -38,6 +38,12 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "Core.h"
 
+#include "MiscUtils.h"
+
+#include "DataDefs.h"
+#include "df/world.h"
+#include "df/historical_figure.h"
+
 using namespace DFHack;
 
 Module* DFHack::createWorld()
@@ -240,4 +246,72 @@ string World::ReadWorldFolder()
         return string( * ( (string*) d->folder_name_offset ) );
     }
     return string("");
+}
+
+static PersistentDataItem dataFromHFig(df::historical_figure *hfig)
+{
+    return PersistentDataItem(hfig->id, hfig->name.first_name, &hfig->name.nickname, hfig->name.words);
+}
+
+PersistentDataItem World::AddPersistentData(const std::string &key)
+{
+    std::vector<df::historical_figure*> &hfvec = df::historical_figure::get_vector();
+
+    int new_id = -100;
+    if (hfvec.size() > 0 && hfvec[0]->id <= new_id)
+        new_id = hfvec[0]->id-1;
+
+    df::historical_figure *hfig = new df::historical_figure();
+    hfig->id = new_id;
+    hfig->name.has_name = true;
+    hfig->name.first_name = key;
+    memset(hfig->name.words, 0, sizeof(hfig->name.words));
+
+    hfvec.insert(hfvec.begin(), hfig);
+    return dataFromHFig(hfig);
+}
+
+PersistentDataItem World::GetPersistentData(const std::string &key)
+{
+    std::vector<df::historical_figure*> &hfvec = df::historical_figure::get_vector();
+    for (unsigned i = 0; i < hfvec.size(); i++)
+    {
+        df::historical_figure *hfig = hfvec[i];
+
+        if (hfig->id >= 0)
+            break;
+
+        if (hfig->name.has_name && hfig->name.first_name == key)
+            return dataFromHFig(hfig);
+    }
+
+    return PersistentDataItem();
+}
+
+void World::GetPersistentData(std::vector<PersistentDataItem> *vec, const std::string &key)
+{
+    std::vector<df::historical_figure*> &hfvec = df::historical_figure::get_vector();
+    for (unsigned i = 0; i < hfvec.size(); i++)
+    {
+        df::historical_figure *hfig = hfvec[i];
+
+        if (hfig->id >= 0)
+            break;
+
+        if (hfig->name.has_name && hfig->name.first_name == key)
+            vec->push_back(dataFromHFig(hfig));
+    }
+}
+
+void World::DeletePersistentData(const PersistentDataItem &item)
+{
+    if (item.id > -100)
+        return;
+
+    std::vector<df::historical_figure*> &hfvec = df::historical_figure::get_vector();
+    int idx = binsearch_index(hfvec, item.id);
+    if (idx >= 0) {
+        delete hfvec[idx];
+        hfvec.erase(hfvec.begin()+idx);
+    }
 }

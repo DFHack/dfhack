@@ -38,10 +38,10 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "Core.h"
 using namespace DFHack;
+using namespace DFHack::Simple;
 
 #include "DataDefs.h"
 #include "df/world.h"
-#include "df/world_raws.h"
 #include "df/building_def.h"
 #include "df/building.h"
 #include "df/building_workshopst.h"
@@ -50,70 +50,19 @@ using namespace df::enums;
 using df::global::world;
 using df::building_def;
 
-//raw
-struct t_building_df40d
+uint32_t Buildings::getNumBuildings()
 {
-    uint32_t vtable;
-    uint32_t x1;
-    uint32_t y1;
-    uint32_t centerx;
-    uint32_t x2;
-    uint32_t y2;
-    uint32_t centery;
-    uint32_t z;
-    uint32_t height;
-    t_matglossPair material;
-    // not complete
-};
-
-struct Buildings::Private
-{
-    Process * owner;
-    bool Inited;
-    bool Started;
-    int32_t custom_workshop_id;
-};
-
-Module* DFHack::createBuildings()
-{
-    return new Buildings();
-}
-
-Buildings::Buildings()
-{
-    Core & c = Core::getInstance();
-    d = new Private;
-    d->Started = false;
-    d->owner = c.p;
-    d->Inited = true;
-    c.vinfo->resolveClassnameToClassID("building_custom_workshop", d->custom_workshop_id);
-}
-
-Buildings::~Buildings()
-{
-    if(d->Started)
-        Finish();
-    delete d;
-}
-
-bool Buildings::Start(uint32_t & numbuildings)
-{
-    if(!d->Inited)
-        return false;
-    numbuildings = world->buildings.all.size();
-    d->Started = true;
-    return true;
+    return world->buildings.all.size();
 }
 
 bool Buildings::Read (const uint32_t index, t_building & building)
 {
-    if(!d->Started)
-        return false;
+    Core & c = Core::getInstance();
     df::building *bld_40d = world->buildings.all[index];
 
     // transform
     int32_t type = -1;
-    d->owner->getDescriptor()->resolveObjectToClassID ( (char *)bld_40d, type);
+    c.vinfo->resolveObjectToClassID ( (char *)bld_40d, type);
     building.x1 = bld_40d->x1;
     building.x2 = bld_40d->x2;
     building.y1 = bld_40d->y1;
@@ -127,19 +76,10 @@ bool Buildings::Read (const uint32_t index, t_building & building)
     return true;
 }
 
-bool Buildings::Finish()
-{
-    d->Started = false;
-    return true;
-}
-
 bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 {
-    if(!d->Inited)
-        return false;
     Core & c = Core::getInstance();
 
-    Process * p = d->owner;
     vector <building_def *> & bld_def = world->raws.buildings.all;
     uint32_t size = bld_def.size();
     btypes.clear();

@@ -23,61 +23,49 @@ distribution.
 */
 
 #pragma once
-#ifndef CL_MOD_BUILDINGS
-#define CL_MOD_BUILDINGS
-/**
- * \defgroup grp_buildings Building module parts - also includes zones and stockpiles
- * @ingroup grp_modules
- */
 #include "Export.h"
-#include "Module.h"
 
-#ifdef __cplusplus
 namespace DFHack
 {
-#endif
-    /**
-     * Structure for holding a read DF building object
-     * \ingroup grp_buildings
-     */
-    struct t_building
-    {
-        uint32_t x1;
-        uint32_t y1;
-        uint32_t x2;
-        uint32_t y2;
-        uint32_t z;
-        t_matglossPair material;
-        uint32_t type;
-        int32_t custom_type;
-        void * origin;
-    };
+namespace Simple
+{
+namespace Buildings
+{
+/**
+ * Structure for holding a read DF building object
+ * \ingroup grp_buildings
+ */
+struct t_building
+{
+    uint32_t x1;
+    uint32_t y1;
+    uint32_t x2;
+    uint32_t y2;
+    uint32_t z;
+    t_matglossPair material;
+    uint32_t type;
+    int32_t custom_type;
+    void * origin;
+};
 
-#ifdef __cplusplus
-    /**
-     * The Buildings module - allows reading DF buildings
-     * \ingroup grp_modules
-     * \ingroup grp_buildings
-     */
-    class DFHACK_EXPORT Buildings : public Module
-    {
-        public:
-        Buildings();
-        ~Buildings();
-        bool Start(uint32_t & numBuildings);
-        // read one building at offset
-        bool Read (const uint32_t index, t_building & building);
-        bool Finish();
+/**
+ * The Buildings module - allows reading DF buildings
+ * \ingroup grp_modules
+ * \ingroup grp_buildings
+ */
+DFHACK_EXPORT uint32_t getNumBuildings ();
 
-        // read mapping from custom_type value to building RAW name
-        // custom_type of -1 implies ordinary building
-        bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
+/**
+ * read building by index
+ */
+DFHACK_EXPORT bool Read (const uint32_t index, t_building & building);
 
-        private:
-        struct Private;
-        Private *d;
-    };
+/**
+ * read mapping from custom_type value to building RAW name
+ * custom_type of -1 implies ordinary building
+ */
+DFHACK_EXPORT bool ReadCustomWorkshopTypes(std::map <uint32_t, std::string> & btypes);
+
 }
-#endif // __cplusplus
-
-#endif
+}
+}

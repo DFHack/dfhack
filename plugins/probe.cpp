@@ -135,7 +135,7 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
 
             MapExtras::Block * b = mc.BlockAt(cursor/16);
             mapblock40d & block = b->raw;
-            if(b)
+            if(b && b->valid)
             {
                 con.print("block addr: 0x%x\n\n", block.origin);
 /*
@@ -284,6 +284,10 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
                     << endl;
                 con << "mystery: " << block.mystery << endl;
                 con << std::endl;
+            }
+            else
+            {
+                con.printerr("No data.\n");
             }
         }
     }

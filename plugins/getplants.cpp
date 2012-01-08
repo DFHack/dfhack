@@ -89,7 +89,7 @@ DFhackCExport command_result df_getplants (Core * c, vector <string> & parameter
 		return CR_OK;
 	}
 
-	int count = 0;
+	count = 0;
 	for (int i = 0; i < world->map.map_blocks.size(); i++)
 	{
 		df::map_block *cur = world->map.map_blocks[i];

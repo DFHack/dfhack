@@ -20,7 +20,7 @@ if mypos then
 	engine.poked(modpos+0x1c,count) --max size for div
 	
 else
-	modpos,modsize=engine.loadmod("dfusion/migrants/migrants.o","Migrants")
+	modpos,modsize=engine.loadmod("dfusion/migrants/migrants.o","Migrants",400)
 	print(string.format("Loaded module @:%x",modpos))
 	count=0
 	for _,v in pairs(names) do

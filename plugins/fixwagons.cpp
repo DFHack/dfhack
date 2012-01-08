@@ -6,21 +6,17 @@
 #include <PluginManager.h>
 
 #include <DataDefs.h>
-#include <df/world.h>
-#include <df/historical_entity.h>
-#include <df/entity_raw.h>
-#include <df/creature_raw.h>
-#include <df/caste_raw.h>
+#include "df/world.h"
+#include "df/historical_entity.h"
+#include "df/entity_raw.h"
+#include "df/creature_raw.h"
+#include "df/caste_raw.h"
 
 using std::string;
 using std::vector;
 using namespace DFHack;
 
 using df::global::world;
-using df::historical_entity;
-using df::entity_raw_flags;
-using df::creature_raw;
-using df::creature_raw_flags;
 
 command_result df_fixwagons (Core *c, vector<string> &parameters)
 {
@@ -29,11 +25,11 @@ command_result df_fixwagons (Core *c, vector<string> &parameters)
 
         CoreSuspender suspend(c);
 	int32_t wagon_creature = -1, wagon_puller_creature = -1;
-	creature_raw *wagon, *wagon_puller;
+	df::creature_raw *wagon, *wagon_puller;
 	for (int i = 0; i < world->raws.creatures.all.size(); i++)
 	{
-		creature_raw *cr = world->raws.creatures.all[i];
-		if (cr->flags.is_set(creature_raw_flags::EQUIPMENT_WAGON) && (wagon_creature == -1))
+		df::creature_raw *cr = world->raws.creatures.all[i];
+		if (cr->flags.is_set(df::creature_raw_flags::EQUIPMENT_WAGON) && (wagon_creature == -1))
 		{
 			wagon = cr;
 			wagon_creature = i;
@@ -58,8 +54,8 @@ command_result df_fixwagons (Core *c, vector<string> &parameters)
 	for (int i = 0; i < world->entities.all.size(); i++)
 	{
 		bool updated = false;
-		historical_entity *ent = world->entities.all[i];
-		if (!ent->entity_raw->flags.is_set(entity_raw_flags::COMMON_DOMESTIC_PULL))
+		df::historical_entity *ent = world->entities.all[i];
+		if (!ent->entity_raw->flags.is_set(df::entity_raw_flags::COMMON_DOMESTIC_PULL))
 			continue;
 		if (ent->resources.animals.wagon_races.size() == 0)
 		{

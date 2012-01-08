@@ -1,24 +1,43 @@
 // Dry Buckets : Remove all "water" objects from buckets scattered around the fortress
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-#include <climits>
-#include <vector>
-#include <set>
-using namespace std;
 
 #include "Core.h"
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <modules/Items.h>
 
+#include <DataDefs.h>
+#include "df/world.h"
+#include "df/item.h"
+
+#include "modules/Materials.h"
+
+using std::string;
+using std::vector;
 using namespace DFHack;
 
-DFhackCExport command_result df_drybuckets (Core * c, vector <string> & parameters);
+using df::global::world;
+
+DFhackCExport command_result df_drybuckets (Core * c, vector <string> & parameters)
+{
+	if (!parameters.empty())
+		return CR_WRONG_USAGE;
+
+        CoreSuspender suspend(c);
+
+	int dried_total = 0;
+	for (int i = 0; i < world->items.all.size(); i++)
+	{
+		df::item *item = world->items.all[i];
+		if ((item->getType() == df::item_type::LIQUID_MISC) && (item->getMaterial() == DFHack::Materials::WATER))
+		{
+			item->flags.bits.garbage_colect = 1;
+			dried_total++;
+		}
+	}
+	if (dried_total)
+		c->con.print("Done. %d buckets of water marked for emptying.\n", dried_total);
+	return CR_OK;
+}
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -34,43 +53,5 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
-	return CR_OK;
-}
-
-DFhackCExport command_result df_drybuckets (Core * c, vector <string> & parameters)
-{
-	if(parameters.size() > 0)
-	{
-		string & p = parameters[0];
-		if(p == "?" || p == "help")
-		{
-			c->con.print("This utility removes all objects of type LIQUID_MISC:NONE and material WATER:NONE - that is, water stored in buckets.\n");
-			return CR_OK;
-		}
-	}
-	c->Suspend();
-	DFHack::Items * Items = c->getItems();
-
-	vector <df_item *> p_items;
-	if(!Items->readItemVector(p_items))
-	{
-		c->con.printerr("Can't access the item vector.\n");
-		c->Resume();
-		return CR_FAILURE;
-	}
-	std::size_t numItems = p_items.size();
-
-	int dried_total = 0;
-	for (std::size_t i = 0; i < numItems; i++)
-	{
-		df_item *item = p_items[i];
-		if ((item->getType() == Items::LIQUID_MISC) && (item->getMaterial() == Materials::WATER))
-		{
-			item->flags.garbage_colect = 1;
-			dried_total++;
-		}
-	}
-	c->Resume();
-	c->con.print("Done. %d buckets of water emptied.\n", dried_total);
 	return CR_OK;
 }

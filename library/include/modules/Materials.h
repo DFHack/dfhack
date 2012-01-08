@@ -101,7 +101,8 @@ namespace DFHack
             return ptr ? decode(ptr->mat_type, ptr->mat_index) : decode(-1);
         }
 
-        bool find(const std::string &token, const std::string &subtoken = std::string());
+        bool find(const std::string &token);
+
         bool findBuiltin(const std::string &token);
         bool findInorganic(const std::string &token);
         bool findPlant(const std::string &token, const std::string &subtoken);
@@ -120,6 +121,8 @@ namespace DFHack
         bool matches(const df::job_material_category &cat);
         bool matches(const df::job_item &item);
     };
+
+    DFHACK_EXPORT bool parseJobMaterialCategory(df::job_material_category *cat, const std::string &token);
 
     inline bool operator== (const MaterialInfo &a, const MaterialInfo &b) {
         return a.type == b.type && a.index == b.index;

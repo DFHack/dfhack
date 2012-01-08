@@ -34,6 +34,7 @@ distribution.
     #include <ctime>
 #endif
 
+#include <ctype.h>
 #include <stdarg.h>
 
 std::string stl_sprintf(const char *fmt, ...) {
@@ -57,6 +58,45 @@ std::string stl_vsprintf(const char *fmt, va_list args) {
         else
             return std::string(&buf[0], rsz);
     }
+}
+
+bool split_string(std::vector<std::string> *out,
+                  const std::string &str, const std::string &separator, bool squash_empty)
+{
+    out->clear();
+
+    size_t start = 0, pos;
+
+    if (!separator.empty())
+    {
+        while ((pos = str.find(separator,start)) != std::string::npos)
+        {
+            if (pos > start || !squash_empty)
+                out->push_back(str.substr(start, pos-start));
+            start = pos + separator.size();
+        }
+    }
+
+    if (start < str.size() || !squash_empty)
+        out->push_back(str.substr(start));
+
+    return out->size() > 1;
+}
+
+std::string toUpper(const std::string &str)
+{
+    std::string rv(str.size(),' ');
+    for (unsigned i = 0; i < str.size(); ++i)
+        rv[i] = toupper(str[i]);
+    return rv;
+}
+
+std::string toLower(const std::string &str)
+{
+    std::string rv(str.size(),' ');
+    for (unsigned i = 0; i < str.size(); ++i)
+        rv[i] = tolower(str[i]);
+    return rv;
 }
 
 #ifdef LINUX_BUILD // Linux

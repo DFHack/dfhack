@@ -33,6 +33,7 @@ using namespace std;
 
 #include "Core.h"
 #include "PluginManager.h"
+#include "MiscUtils.h"
 
 #include "modules/Job.h"
 #include "modules/Materials.h"
@@ -45,6 +46,7 @@ using namespace std;
 #include <df/job_list_link.h>
 #include <df/general_ref.h>
 #include <df/general_ref_unit_workerst.h>
+#include <df/general_ref_building_holderst.h>
 
 using namespace DFHack;
 using namespace df::enums;
@@ -69,7 +71,7 @@ df::job *DFHack::cloneJobStruct(df::job *job)
         df::general_ref *ref = pnew->references[i];
 
         if (virtual_cast<df::general_ref_unit_workerst>(ref))
-            pnew->references.erase(pnew->references.begin()+i);
+            vector_erase_at(pnew->references, i);
         else
             pnew->references[i] = ref->clone();
     }
@@ -198,4 +200,45 @@ void DFHack::printJobDetails(Core *c, df::job *job)
 
     for (unsigned i = 0; i < job->job_items.size(); i++)
         print_job_item_details(c, job, i, job->job_items[i]);
+}
+
+df::building *DFHack::getJobHolder(df::job *job)
+{
+    for (unsigned i = 0; i < job->references.size(); i++)
+    {
+        VIRTUAL_CAST_VAR(ref, df::general_ref_building_holderst, job->references[i]);
+        if (ref)
+            return ref->getBuilding();
+    }
+
+    return NULL;
+}
+
+bool DFHack::linkJobIntoWorld(df::job *job, bool new_id)
+{
+    using df::global::world;
+    using df::global::job_next_id;
+
+    assert(!job->list_link);
+
+    if (new_id) {
+        job->id = (*job_next_id)++;
+
+        job->list_link = new df::job_list_link();
+        job->list_link->item = job;
+        linked_list_append(&world->job_list, job->list_link);
+        return true;
+    } else {
+        df::job_list_link *ins_pos = &world->job_list;
+        while (ins_pos->next && ins_pos->next->item->id < job->id)
+            ins_pos = ins_pos->next;
+
+        if (ins_pos->next && ins_pos->next->item->id == job->id)
+            return false;
+
+        job->list_link = new df::job_list_link();
+        job->list_link->item = job;
+        linked_list_insert_after(ins_pos, job->list_link);
+        return true;
+    }
 }

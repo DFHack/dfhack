@@ -265,7 +265,7 @@ PersistentDataItem World::AddPersistentData(const std::string &key)
     hfig->id = new_id;
     hfig->name.has_name = true;
     hfig->name.first_name = key;
-    memset(hfig->name.words, 0, sizeof(hfig->name.words));
+    memset(hfig->name.words, 0xFF, sizeof(hfig->name.words));
 
     hfvec.insert(hfvec.begin(), hfig);
     return dataFromHFig(hfig);

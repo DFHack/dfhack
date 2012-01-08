@@ -143,6 +143,12 @@ namespace DFHack
     };
 
     DFHACK_EXPORT std::string bitfieldToString(const void *p, int size, const bitfield_item_info *items);
+    DFHACK_EXPORT int findBitfieldField(const std::string &name, int size, const bitfield_item_info *items);
+
+    template<class T>
+    inline int findBitfieldField(const T &val, const std::string &name) {
+        return findBitfieldField(name, sizeof(val.whole), val.get_items());
+    }
 
     template<class T>
     inline std::string bitfieldToString(const T &val) {

@@ -143,27 +143,40 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
     return (material != NULL);
 }
 
-bool MaterialInfo::find(const std::string &token, const std::string &subtoken)
+bool MaterialInfo::find(const std::string &token)
 {
-    if (findBuiltin(token))
-        return true;
-    if (subtoken.empty())
+    std::vector<std::string> items;
+    split_string(&items, token, ":");
+
+    if (items[0] == "INORGANIC")
+        return findInorganic(vector_get(items,1));
+    if (items[0] == "CREATURE_MAT" || items[0] == "CREATURE")
+        return findCreature(vector_get(items,1), vector_get(items,2));
+    if (items[0] == "PLANT_MAT" || items[0] == "PLANT")
+        return findPlant(vector_get(items,1), vector_get(items,2));
+
+    if (items.size() == 1)
     {
-        if (findInorganic(token))
+        if (findBuiltin(items[0]))
+            return true;
+        if (findInorganic(items[0]))
             return true;
     }
-    else
+    else if (items.size() == 2)
     {
-        if (findPlant(token, subtoken))
+        if (findPlant(items[0], items[1]))
             return true;
-        if (findCreature(token, subtoken))
+        if (findCreature(items[0], items[1]))
             return true;
     }
+
     return false;
 }
 
 bool MaterialInfo::findBuiltin(const std::string &token)
 {
+    if (token.empty())
+        return decode(-1);
     df::world_raws &raws = df::global::world->raws;
     for (int i = 1; i < NUM_BUILTIN; i++)
         if (raws.mat_table.builtin[i]->id == token)
@@ -173,6 +186,8 @@ bool MaterialInfo::findBuiltin(const std::string &token)
 
 bool MaterialInfo::findInorganic(const std::string &token)
 {
+    if (token.empty())
+        return decode(-1);
     df::world_raws &raws = df::global::world->raws;
     for (unsigned i = 0; i < raws.inorganics.size(); i++)
     {
@@ -185,6 +200,8 @@ bool MaterialInfo::findInorganic(const std::string &token)
 
 bool MaterialInfo::findPlant(const std::string &token, const std::string &subtoken)
 {
+    if (token.empty() || subtoken.empty())
+        return decode(-1);
     df::world_raws &raws = df::global::world->raws;
     for (unsigned i = 0; i < raws.plants.all.size(); i++)
     {
@@ -203,6 +220,8 @@ bool MaterialInfo::findPlant(const std::string &token, const std::string &subtok
 
 bool MaterialInfo::findCreature(const std::string &token, const std::string &subtoken)
 {
+    if (token.empty() || subtoken.empty())
+        return decode(-1);
     df::world_raws &raws = df::global::world->raws;
     for (unsigned i = 0; i < raws.creatures.all.size(); i++)
     {
@@ -392,6 +411,25 @@ void MaterialInfo::getMatchBits(df::job_item_flags3 &ok, df::job_item_flags3 &ma
 #undef MAT_FLAG
 #undef FLAG
 #undef TEST
+
+bool DFHack::parseJobMaterialCategory(df::job_material_category *cat, const std::string &token)
+{
+    cat->whole = 0;
+
+    std::vector<std::string> items;
+    split_string(&items, toLower(token), ",", true);
+
+    for (unsigned i = 0; i < items.size(); i++)
+    {
+        int id = findBitfieldField(*cat, items[i]);
+        if (id < 0)
+            return false;
+
+        cat->whole |= (1 << id);
+    }
+
+    return true;
+}
 
 Module* DFHack::createMaterials()
 {

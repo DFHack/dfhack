@@ -98,18 +98,6 @@ DFhackCExport command_result plugin_onstatechange(Core* c, state_change_event ev
 
 /*******************************/
 
-static df::building *getJobHolder(df::job *job)
-{
-    for (unsigned i = 0; i < job->references.size(); i++)
-    {
-        VIRTUAL_CAST_VAR(ref, df::general_ref_building_holderst, job->references[i]);
-        if (ref)
-            return ref->getBuilding();
-    }
-
-    return NULL;
-};
-
 struct ProtectedJob {
     int id;
     int building_id;
@@ -253,8 +241,6 @@ static int *find_protected_id_slot(Core *c, int key)
     if (key == -1) {
         protected_cfg.push_back(c->getWorld()->AddPersistentData("workflow/protected-jobs"));
         PersistentDataItem &item = protected_cfg.back();
-        for (int j = 0; j < PersistentDataItem::NumInts; j++)
-            item.ival(j) = -1;
         return &item.ival(0);
     }
 
@@ -408,7 +394,7 @@ DFhackCExport command_result plugin_onupdate(Core* c)
     {
         for (int i = pending_recover.size()-1; i >= 0; i--)
             if (recover_job(c, pending_recover[i]))
-                pending_recover.erase(pending_recover.begin()+i);
+                vector_erase_at(pending_recover, i);
 
         check_lost_jobs(c);
     }

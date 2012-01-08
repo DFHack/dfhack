@@ -64,7 +64,7 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
             "    Print details of the current job.\n"
             "  job list\n"
             "    Print details of all jobs in the workshop.\n"
-            "  job item-material <item-idx> <material> [submaterial]\n"
+            "  job item-material <item-idx> <material[:subtoken]>\n"
             "    Replace the exact material id in the job item.\n"
         )
     );
@@ -249,21 +249,6 @@ static command_result job_material(Core * c, vector <string> & parameters)
 
 /* job-duplicate implementation */
 
-static df::job *clone_job(df::job *job)
-{
-    df::job *pnew = cloneJobStruct(job);
-
-    pnew->id = (*job_next_id)++;
-
-    // Link the job into the global list
-    pnew->list_link = new df::job_list_link();
-    pnew->list_link->item = pnew;
-
-    linked_list_append(&world->job_list, pnew->list_link);
-
-    return pnew;
-}
-
 static command_result job_duplicate(Core * c, vector <string> & parameters)
 {
     if (!parameters.empty())
@@ -287,10 +272,10 @@ static command_result job_duplicate(Core * c, vector <string> & parameters)
     }
 
     // Actually clone
-    df::job *pnew = clone_job(job);
+    df::job *pnew = cloneJobStruct(job);
 
-    int pos = ++*ui_workshop_job_cursor;
-    building->jobs.insert(building->jobs.begin()+pos, pnew);
+    linkJobIntoWorld(pnew);
+    vector_insert_at(building->jobs, ++*ui_workshop_job_cursor, pnew);
 
     return CR_OK;
 }
@@ -336,9 +321,8 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
 
         df::job_item *item = job->job_items[v-1];
 
-        std::string subtoken = (parameters.size()>3 ? parameters[3] : "");
         MaterialInfo info;
-        if (!info.find(parameters[2], subtoken)) {
+        if (!info.find(parameters[2])) {
             c->con.printerr("Could not find the specified material.\n");
             return CR_FAILURE;
         }

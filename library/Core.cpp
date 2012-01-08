@@ -1098,6 +1098,5 @@ MODULE_GETTER(Items);
 MODULE_GETTER(Translation);
 MODULE_GETTER(Vegetation);
 MODULE_GETTER(Constructions);
-MODULE_GETTER(Vermin);
 MODULE_GETTER(Notes);
 MODULE_GETTER(Graphic);

@@ -9,6 +9,7 @@
 using std::vector;
 using std::string;
 using namespace DFHack;
+using namespace DFHack::Simple;
 #include <DFHack.h>
 
 DFhackCExport command_result colonies (Core * c, vector <string> & parameters);
@@ -32,10 +33,9 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-void destroyColonies(DFHack::SpawnPoints *points);
-void convertColonies(DFHack::SpawnPoints *points, DFHack::Materials *Materials);
-void showColonies(Core *c, DFHack::SpawnPoints *points,
-                  DFHack::Materials *Materials);
+void destroyColonies();
+void convertColonies(DFHack::Materials *Materials);
+void showColonies(Core *c, DFHack::Materials *Materials);
 
 DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
 {
@@ -71,54 +71,41 @@ DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
     }
     c->Suspend();
 
-    Vermin    * vermin    = c->getVermin();
     Materials * materials = c->getMaterials();
-
-    SpawnPoints *points = vermin->getSpawnPoints();
-
-    if(!points || !points->isValid())
-    {
-        c->con.printerr("vermin not supported for this DF version\n");
-        c->Resume();
-        return CR_FAILURE;
-    }
 
     materials->ReadCreatureTypesEx();
 
     if (destroy)
-        destroyColonies(points);
+        destroyColonies();
     else if (convert)
-        convertColonies(points, materials);
+        convertColonies(materials);
     else
-        showColonies(c, points, materials);
+        showColonies(c, materials);
 
-    delete points;
-
-    vermin->Finish();
     materials->Finish();
 
     c->Resume();
     return CR_OK;
 }
 
-void destroyColonies(DFHack::SpawnPoints *points)
+void destroyColonies()
 {
-    uint32_t numSpawnPoints = points->size();
+    uint32_t numSpawnPoints = Vermin::getNumVermin();
     for (uint32_t i = 0; i < numSpawnPoints; i++)
     {
-        DFHack::t_spawnPoint sp;
-        points->Read(i, sp);
+        Vermin::t_vermin sp;
+        Vermin::Read(i, sp);
 
-        if (sp.in_use && DFHack::SpawnPoints::isWildColony(sp))
+        if (sp.in_use && Vermin::isWildColony(sp))
         {
             sp.in_use = false;
-            points->Write(i, sp);
+            Vermin::Write(i, sp);
         }
     }
 }
 
 // Convert all colonies to honey bees.
-void convertColonies(DFHack::SpawnPoints *points, DFHack::Materials *Materials)
+void convertColonies(DFHack::Materials *Materials)
 {
     int bee_idx = -1;
     for (size_t i = 0; i < Materials->raceEx.size(); i++)
@@ -134,32 +121,31 @@ void convertColonies(DFHack::SpawnPoints *points, DFHack::Materials *Materials)
         return;
     }
 
-    uint32_t numSpawnPoints = points->size();
+    uint32_t numSpawnPoints = Vermin::getNumVermin();
     for (uint32_t i = 0; i < numSpawnPoints; i++)
     {
-        DFHack::t_spawnPoint sp;
-        points->Read(i, sp);
+        Vermin::t_vermin sp;
+        Vermin::Read(i, sp);
 
-        if (sp.in_use && DFHack::SpawnPoints::isWildColony(sp))
+        if (sp.in_use && Vermin::isWildColony(sp))
         {
             sp.race = bee_idx;
-            points->Write(i, sp);
+            Vermin::Write(i, sp);
         }
     }
 }
 
-void showColonies(Core *c, DFHack::SpawnPoints *points,
-                  DFHack::Materials *Materials)
+void showColonies(Core *c, DFHack::Materials *Materials)
 {
-    uint32_t numSpawnPoints = points->size();
+    uint32_t numSpawnPoints = Vermin::getNumVermin();
     int      numColonies    = 0;
     for (uint32_t i = 0; i < numSpawnPoints; i++)
     {
-        DFHack::t_spawnPoint sp;
+        Vermin::t_vermin sp;
 
-        points->Read(i, sp);
+        Vermin::Read(i, sp);
 
-        if (sp.in_use && DFHack::SpawnPoints::isWildColony(sp))
+        if (sp.in_use && Vermin::isWildColony(sp))
         {
             numColonies++;
             string race="(no race)";

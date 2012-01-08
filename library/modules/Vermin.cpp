@@ -37,150 +37,54 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "Core.h"
 using namespace DFHack;
+using namespace DFHack::Simple;
 
-struct Vermin::Private
-{
-    void * spawn_points_vector;
-    uint32_t race_offset;
-    uint32_t type_offset;
-    uint32_t position_offset;
-    uint32_t in_use_offset;
-    uint32_t unknown_offset;
-    uint32_t countdown_offset;
-    Process * owner;
-    bool Inited;
-    bool Started;
-};
+#include "DataDefs.h"
+#include "df/world.h"
+using namespace df::enums;
+using df::global::world;
 
-Module* DFHack::createVermin()
+uint32_t Vermin::getNumVermin()
 {
-    return new Vermin();
+    return world->vermin.size();
 }
 
-#include <stdio.h>
-
-Vermin::Vermin()
+bool Vermin::Read (const uint32_t index, t_vermin & sp)
 {
-    Core & c = Core::getInstance();
-
-    d = new Private;
-    d->owner = c.p;
-    d->Inited = d->Started = false;
-    VersionInfo * mem = c.vinfo;
-    OffsetGroup * OG_vermin = mem->getGroup("Vermin");
-    OffsetGroup * OG_spawn  = OG_vermin->getGroup("Spawn Points");
-    d->Inited = true;
-    try
-    {
-        d->spawn_points_vector = OG_spawn->getAddress("vector");
-
-        d->race_offset      = OG_spawn->getOffset("race");
-        d->type_offset      = OG_spawn->getOffset("type");
-        d->position_offset  = OG_spawn->getOffset("position");
-        d->in_use_offset    = OG_spawn->getOffset("in_use");
-        d->unknown_offset   = OG_spawn->getOffset("unknown");
-        d->countdown_offset = OG_spawn->getOffset("countdown");
-    }
-    catch(DFHack::Error::AllMemdef &e)
-    {
-        cerr << "Vermin not available... " << e.what() << endl;
-        d->Inited = false;
-    }
-}
-
-bool Vermin::Finish()
-{
-    return true;
-}
-
-Vermin::~Vermin()
-{
-    delete d;
-}
-
-// NOTE: caller must call delete on result when done.
-SpawnPoints* Vermin::getSpawnPoints()
-{
-    if (!d->Inited)
-    {
-        cerr << "Couldn't get spawn points: Vermin module not inited" << endl;
-        return NULL;
-    }
-    return new SpawnPoints(this);
-}
-
-SpawnPoints::SpawnPoints(Vermin* v_)
-{
-    v    = v_;
-    p_sp = NULL;
-
-    if (!v->d->Inited)
-    {
-        cerr << "Couldn't get spawn points: Vermin module not inited" << endl;
-        return;
-    }
-    p_sp = (vector <char*>*) (v->d->spawn_points_vector);
-}
-
-SpawnPoints::~SpawnPoints()
-{
-}
-
-size_t SpawnPoints::size()
-{
-    if (!isValid())
-        return 0;
-
-    return p_sp->size();
-}
-
-bool SpawnPoints::Read (const uint32_t index, t_spawnPoint & sp)
-{
-    if(!isValid())
+    if(index >= world->vermin.size())
         return false;
 
-    // read pointer from vector at position
-    char * temp = p_sp->at (index);
+    df::world::T_vermin * verm = world->vermin[index];
 
-    sp.origin    = temp;
-    sp.race      = v->d->owner->readWord(temp + v->d->race_offset);
-    sp.type      = v->d->owner->readWord(temp + v->d->type_offset);
-    sp.in_use    = v->d->owner->readByte(temp + v->d->in_use_offset);
-    sp.unknown   = v->d->owner->readByte(temp + v->d->unknown_offset);
-    sp.countdown = v->d->owner->readDWord(temp + v->d->countdown_offset);
-
-    // Three consecutive 16 bit numbers for x/y/z
-    v->d->owner->read(temp + v->d->position_offset, 6, (uint8_t*) &sp.x);
-
+    sp.origin    = verm;
+    sp.race      = verm->race;
+    sp.type      = verm->type;
+    sp.in_use    = verm->in_use;
+    sp.countdown = verm->countdown;
+    sp.x = verm->x;
+    sp.y = verm->y;
+    sp.z = verm->z;
     return true;
 }
 
-bool SpawnPoints::Write (const uint32_t index, t_spawnPoint & sp)
+bool Vermin::Write (const uint32_t index, t_vermin & sp)
 {
-    if(!isValid())
+    if(index >= world->vermin.size())
         return false;
 
-    // read pointer from vector at position
-    char * temp = p_sp->at (index);
+    df::world::T_vermin * verm = world->vermin[index];
 
-    v->d->owner->writeWord(temp + v->d->race_offset, sp.race);
-    v->d->owner->writeWord(temp + v->d->type_offset, sp.type);
-    v->d->owner->writeByte(temp + v->d->in_use_offset, sp.in_use);
-    v->d->owner->writeByte(temp + v->d->unknown_offset, sp.unknown);
-    v->d->owner->writeDWord(temp + v->d->countdown_offset, sp.countdown);
-
-    // Three consecutive 16 bit numbers for x/y/z
-    v->d->owner->write(temp + v->d->position_offset, 6, (uint8_t*) &sp.x);
-
+    verm->race = sp.race;
+    verm->type = sp.type;
+    verm->in_use = sp.in_use;
+    verm->countdown = sp.countdown;
+    verm->x = sp.x;
+    verm->y = sp.y;
+    verm->z = sp.z;
     return true;
 }
 
-bool SpawnPoints::isWildColony(t_spawnPoint & point)
+bool Vermin::isWildColony(t_vermin & point)
 {
     return (point.type == TYPE_WILD_COLONY);
-}
-
-bool SpawnPoints::isValid()
-{
-  return (v != NULL && v->d->Inited && p_sp != NULL);
 }

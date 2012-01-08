@@ -62,7 +62,6 @@ namespace DFHack
     class Translation;
     class Vegetation;
     class Constructions;
-    class Vermin;
     class Notes;
     class VersionInfo;
     class VersionInfoFactory;
@@ -120,8 +119,6 @@ namespace DFHack
         Vegetation * getVegetation();
         /// get the constructions module
         Constructions * getConstructions();
-        /// get the vermin module
-        Vermin * getVermin();
         /// get the notes module
         Notes * getNotes();
         /// get the graphic module
@@ -180,7 +177,6 @@ namespace DFHack
             Translation * pTranslation;
             Vegetation * pVegetation;
             Constructions * pConstructions;
-            Vermin * pVermin;
             Notes * pNotes;
             Graphic * pGraphic;
         } s_mods;

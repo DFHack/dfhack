@@ -125,21 +125,23 @@ namespace DFHack
     template<class T>
     T *ifnull(T *a, T *b) { return a ? a : b; }
 
+    // Enums
     template<class T, T start, bool (*isvalid)(T)>
     inline T next_enum_item_(T v) {
         v = T(int(v) + 1);
         return isvalid(v) ? v : start;
     }
 
-    struct bitfield_item_info {
-        const char *name;
-        int size;
-    };
-    
     template<class T>
     struct enum_list_attr {
         int size;
         const T *items;
+    };
+
+    // Bitfields
+    struct bitfield_item_info {
+        const char *name;
+        int size;
     };
 
     DFHACK_EXPORT std::string bitfieldToString(const void *p, int size, const bitfield_item_info *items);
@@ -154,6 +156,21 @@ namespace DFHack
     inline std::string bitfieldToString(const T &val) {
         return bitfieldToString(&val.whole, sizeof(val.whole), val.get_items());
     }
+}
+
+template<class T>
+int linear_index(const DFHack::enum_list_attr<T> &lst, T val) {
+    for (int i = 0; i < lst.size; i++)
+        if (lst.items[i] == val)
+            return i;
+    return -1;
+}
+
+inline int linear_index(const DFHack::enum_list_attr<const char*> &lst, const std::string &val) {
+    for (int i = 0; i < lst.size; i++)
+        if (lst.items[i] == val)
+            return i;
+    return -1;
 }
 
 namespace df

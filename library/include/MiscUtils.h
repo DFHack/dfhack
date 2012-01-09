@@ -257,6 +257,11 @@ DFHACK_EXPORT bool split_string(std::vector<std::string> *out,
 DFHACK_EXPORT std::string toUpper(const std::string &str);
 DFHACK_EXPORT std::string toLower(const std::string &str);
 
+inline bool bits_match(unsigned required, unsigned ok, unsigned mask)
+{
+    return (required & mask) == (required & mask & ok);
+}
+
 /**
  * Returns the amount of milliseconds elapsed since the UNIX epoch.
  * Works on both windows and linux.

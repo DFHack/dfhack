@@ -37,6 +37,7 @@ using namespace std;
 
 #include "modules/Job.h"
 #include "modules/Materials.h"
+#include "modules/Items.h"
 
 #include "DataDefs.h"
 #include <df/world.h>
@@ -140,9 +141,9 @@ bool DFHack::operator== (const df::job &a, const df::job &b)
 
 static void print_job_item_details(Core *c, df::job *job, unsigned idx, df::job_item *item)
 {
-    c->con << "  Input Item " << (idx+1) << ": " << ENUM_KEY_STR(item_type,item->item_type);
-    if (item->item_subtype != -1)
-        c->con << " [" << item->item_subtype << "]";
+    ItemTypeInfo info(item);
+    c->con << "  Input Item " << (idx+1) << ": " << info.toString();
+
     if (item->quantity != 1)
         c->con << "; quantity=" << item->quantity;
     if (item->min_dimension >= 0)
@@ -179,7 +180,12 @@ void DFHack::printJobDetails(Core *c, df::job *job)
            c->con << " (" << bitfieldToString(job->flags) << ")";
     c->con << endl;
 
+    df::item_type itype = ENUM_ATTR(job_type, item, job->job_type);
+
     MaterialInfo mat(job);
+    if (itype == item_type::FOOD)
+        mat.decode(-1);
+
     if (mat.isValid() || job->material_category.whole)
     {
         c->con << "    material: " << mat.toString();
@@ -189,8 +195,12 @@ void DFHack::printJobDetails(Core *c, df::job *job)
     }
 
     if (job->item_subtype >= 0 || job->item_category.whole)
-        c->con << "    item: " << job->item_subtype
+    {
+        ItemTypeInfo iinfo(itype, job->item_subtype);
+
+        c->con << "    item: " << iinfo.toString()
                << " (" << bitfieldToString(job->item_category) << ")" << endl;
+    }
 
     if (job->hist_figure_id >= 0)
         c->con << "    figure: " << job->hist_figure_id << endl;

@@ -161,6 +161,8 @@ bool MaterialInfo::find(const std::string &token)
             return true;
         if (findInorganic(items[0]))
             return true;
+        if (findPlant(items[0], ""))
+            return true;
     }
     else if (items.size() == 2)
     {
@@ -177,6 +179,12 @@ bool MaterialInfo::findBuiltin(const std::string &token)
 {
     if (token.empty())
         return decode(-1);
+
+    if (token == "NONE") {
+        decode(-1);
+        return true;
+    }
+
     df::world_raws &raws = df::global::world->raws;
     for (int i = 1; i < NUM_BUILTIN; i++)
         if (raws.mat_table.builtin[i]->id == token)
@@ -188,6 +196,12 @@ bool MaterialInfo::findInorganic(const std::string &token)
 {
     if (token.empty())
         return decode(-1);
+
+    if (token == "NONE") {
+        decode(0, -1);
+        return true;
+    }
+
     df::world_raws &raws = df::global::world->raws;
     for (unsigned i = 0; i < raws.inorganics.size(); i++)
     {
@@ -200,7 +214,7 @@ bool MaterialInfo::findInorganic(const std::string &token)
 
 bool MaterialInfo::findPlant(const std::string &token, const std::string &subtoken)
 {
-    if (token.empty() || subtoken.empty())
+    if (token.empty())
         return decode(-1);
     df::world_raws &raws = df::global::world->raws;
     for (unsigned i = 0; i < raws.plants.all.size(); i++)
@@ -208,6 +222,10 @@ bool MaterialInfo::findPlant(const std::string &token, const std::string &subtok
         df::plant_raw *p = raws.plants.all[i];
         if (p->id != token)
             continue;
+
+        // As a special exception, return the structural material with empty subtoken
+        if (subtoken.empty())
+            return decode(p->material_defs.type_basic_mat, p->material_defs.idx_basic_mat);
 
         for (unsigned j = 0; j < p->material.size(); j++)
             if (p->material[j]->id == subtoken)
@@ -317,7 +335,7 @@ bool MaterialInfo::matches(const df::job_material_category &cat)
 
 bool MaterialInfo::matches(const df::job_item &item)
 {
-    if (!isValid()) return false;
+    if (!isValid()) return true;
 
     df::job_item_flags1 ok1, mask1;
     getMatchBits(ok1, mask1);
@@ -328,9 +346,9 @@ bool MaterialInfo::matches(const df::job_item &item)
     df::job_item_flags3 ok3, mask3;
     getMatchBits(ok3, mask3);
 
-    return ((item.flags1.whole & mask1.whole) == (item.flags1.whole & ok1.whole)) &&
-           ((item.flags2.whole & mask2.whole) == (item.flags2.whole & ok2.whole)) &&
-           ((item.flags3.whole & mask3.whole) == (item.flags3.whole & ok3.whole));
+    return bits_match(item.flags1.whole, ok1.whole, mask1.whole) &&
+           bits_match(item.flags2.whole, ok2.whole, mask2.whole) &&
+           bits_match(item.flags3.whole, ok3.whole, mask3.whole);
 }
 
 void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &mask)
@@ -349,7 +367,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &ma
     TEST(sharpenable, MAT_FLAG(IS_STONE));
     TEST(distillable, structural && FLAG(plant, plant_raw_flags::DRINK));
     TEST(processable, structural && FLAG(plant, plant_raw_flags::THREAD));
-    TEST(bag, isAnyCloth());
+    TEST(bag, isAnyCloth() || MAT_FLAG(LEATHER));
     TEST(cookable, MAT_FLAG(EDIBLE_COOKED));
     TEST(extract_bearing_plant, structural && FLAG(plant, plant_raw_flags::EXTRACT_STILL_VIAL));
     TEST(extract_bearing_fish, false);
@@ -363,7 +381,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &ma
                   MAT_FLAG(LIQUID_MISC_CREATURE) ||
                   MAT_FLAG(LIQUID_MISC_OTHER)));
     TEST(tameable_vermin, false);
-    TEST(sharpenable, MAT_FLAG(IS_GLASS));
+    TEST(sharpenable, MAT_FLAG(IS_STONE));
     TEST(milk, linear_index(material->reaction_product.id, std::string("CHEESE_MAT")) >= 0);
     //04000000 - "milkable" - vtable[107],1,1
 }

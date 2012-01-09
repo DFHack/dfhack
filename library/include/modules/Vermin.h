@@ -13,13 +13,13 @@ namespace DFHack { namespace Simple { namespace Vermin
     {
         void * origin;
         int16_t race;
-        uint16_t type;
+        int16_t caste;
         uint16_t x;
         uint16_t y;
         uint16_t z;
-        bool     in_use;
-        uint8_t  unknown;
         uint32_t countdown;
+        bool visible:1;
+        bool is_colony:1; /// Is vermin object a colony?
     };
 
     static const uint16_t TYPE_WILD_COLONY = 0xFFFF;
@@ -35,8 +35,4 @@ namespace DFHack { namespace Simple { namespace Vermin
      * Write into vermin object
      */
     DFHACK_EXPORT bool Write (const uint32_t index, t_vermin & point);
-    /**
-     * Is vermin object a colony?
-     */
-    DFHACK_EXPORT bool isWildColony(t_vermin & point);
 } } } // end DFHack::Simple::Vermin

@@ -88,6 +88,7 @@ DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
     return CR_OK;
 }
 
+//FIXME: this is probably bullshit
 void destroyColonies()
 {
     uint32_t numSpawnPoints = Vermin::getNumVermin();
@@ -96,9 +97,9 @@ void destroyColonies()
         Vermin::t_vermin sp;
         Vermin::Read(i, sp);
 
-        if (sp.in_use && Vermin::isWildColony(sp))
+        if (sp.visible && sp.is_colony)
         {
-            sp.in_use = false;
+            sp.visible = false;
             Vermin::Write(i, sp);
         }
     }
@@ -127,7 +128,7 @@ void convertColonies(DFHack::Materials *Materials)
         Vermin::t_vermin sp;
         Vermin::Read(i, sp);
 
-        if (sp.in_use && Vermin::isWildColony(sp))
+        if (sp.visible && sp.is_colony)
         {
             sp.race = bee_idx;
             Vermin::Write(i, sp);
@@ -145,14 +146,14 @@ void showColonies(Core *c, DFHack::Materials *Materials)
 
         Vermin::Read(i, sp);
 
-        if (sp.in_use && Vermin::isWildColony(sp))
+        if (sp.visible && sp.is_colony)
         {
             numColonies++;
             string race="(no race)";
             if(sp.race != -1)
                 race = Materials->raceEx[sp.race].id;
 
-             c->con.print("Spawn point %u: %s at %d:%d:%d\n", i,
+             c->con.print("Colony %u: %s at %d:%d:%d\n", i,
                           race.c_str(), sp.x, sp.y, sp.z);
         }
     }

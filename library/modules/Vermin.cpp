@@ -57,12 +57,13 @@ bool Vermin::Read (const uint32_t index, t_vermin & sp)
 
     sp.origin    = verm;
     sp.race      = verm->race;
-    sp.type      = verm->type;
-    sp.in_use    = verm->in_use;
+    sp.caste      = verm->caste;
+    sp.visible    = verm->visible;
     sp.countdown = verm->countdown;
     sp.x = verm->x;
     sp.y = verm->y;
     sp.z = verm->z;
+    sp.is_colony = verm->flags.bits.is_colony;
     return true;
 }
 
@@ -72,16 +73,12 @@ bool Vermin::Write (const uint32_t index, t_vermin & sp)
     if (!verm) return false;
 
     verm->race = sp.race;
-    verm->type = sp.type;
-    verm->in_use = sp.in_use;
+    verm->caste = sp.caste;
+    verm->visible = sp.visible;
     verm->countdown = sp.countdown;
     verm->x = sp.x;
     verm->y = sp.y;
     verm->z = sp.z;
+    verm->flags.bits.is_colony = sp.is_colony;
     return true;
-}
-
-bool Vermin::isWildColony(t_vermin & point)
-{
-    return (point.type == TYPE_WILD_COLONY);
 }

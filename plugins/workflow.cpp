@@ -36,7 +36,7 @@ using df::global::job_next_id;
 
 /* Plugin registration */
 
-static command_result protect_job(Core *c, vector <string> & parameters);
+static command_result workflow_cmd(Core *c, vector <string> & parameters);
 
 static void init_state(Core *c);
 static void cleanup_state(Core *c);
@@ -55,14 +55,17 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
     if (ui_workshop_job_cursor && job_next_id) {
         commands.push_back(
             PluginCommand(
-                "protect-job", "Manage protection of workshop jobs from removal.",
-                protect_job, false,
-                "  protect-job list\n"
-                "    List protected jobs. If a workshop is selected, filters by it.\n"
-                "  protect-job add [all]\n"
-                "    Protect the selected job, or any repeat jobs (possibly in the workshop).\n"
-                "  protect-job remove [all]\n"
-                "    Unprotect the selected job, or any repeat jobs (possibly in the workshop).\n"
+                "workflow", "Manage control of repeat jobs.",
+                workflow_cmd, false,
+                "  workflow enable\n"
+                "  workflow disable\n"
+                "    Enable or disable the plugin.\n"
+                "  workflow list-jobs\n"
+                "    List workflow-controlled jobs (if in a workshop, filtered by it).\n"
+                "Function:\n"
+                "  When the plugin is enabled, it protects all repeat jobs from removal.\n"
+                "  If they do disappear due to any cause, they are immediately re-added\n"
+                "  to their workshop and suspended.\n"
             )
         );
     }
@@ -130,18 +133,33 @@ struct ProtectedJob {
     }
 };
 
-PersistentDataItem config;
-static std::vector<PersistentDataItem> protected_cfg;
+/*******************************/
+
+static bool enabled = false;
+static PersistentDataItem config;
+
+enum ConfigFlags {
+    CF_ENABLED = 1
+};
 
 typedef std::map<int, ProtectedJob*> TKnownJobs;
 static TKnownJobs known_jobs;
 
 static std::vector<ProtectedJob*> pending_recover;
 
+/*******************************/
+
 static ProtectedJob *get_known(int id)
 {
     TKnownJobs::iterator it = known_jobs.find(id);
     return (it != known_jobs.end()) ? it->second : NULL;
+}
+
+static bool isSupportedJob(df::job *job)
+{
+    return job->misc_links.empty() &&
+           !job->job_items.empty() &&
+           getJobHolder(job);
 }
 
 static void enumLiveJobs(std::map<int, df::job*> &rv)
@@ -151,12 +169,14 @@ static void enumLiveJobs(std::map<int, df::job*> &rv)
         rv[p->item->id] = p->item;
 }
 
-static void cleanup_state(Core *)
-{
-    config = PersistentDataItem();
-    protected_cfg.clear();
+/*******************************/
 
+static void stop_protect(Core *c)
+{
     pending_recover.clear();
+
+    if (!known_jobs.empty())
+        c->con.print("Unprotecting %d jobs.\n", known_jobs.size());
 
     for (TKnownJobs::iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
         delete it->second;
@@ -164,114 +184,57 @@ static void cleanup_state(Core *)
     known_jobs.clear();
 }
 
-static void init_state(Core *c)
+static void cleanup_state(Core *c)
 {
-    config = c->getWorld()->GetPersistentData("workflow/config");
-    c->getWorld()->GetPersistentData(&protected_cfg, "workflow/protected-jobs");
+    config = PersistentDataItem();
 
-    std::map<int, df::job*> jobs;
-    enumLiveJobs(jobs);
+    stop_protect(c);
+}
 
-    for (unsigned i = 0; i < protected_cfg.size(); i++)
-    {
-        PersistentDataItem &item = protected_cfg[i];
-        for (int j = 0; j < PersistentDataItem::NumInts; j++)
-        {
-            int id = item.ival(j);
-            if (id <= 0)
-                continue;
+static bool check_lost_jobs(Core *c);
 
-            if (get_known(id)) // duplicate
-            {
-                item.ival(j) = -1;
-                continue;
-            }
-
-            df::job *job = jobs[id];
-            if (!job)
-            {
-                c->con.printerr("Protected job lost: %d\n", id);
-                item.ival(j) = -1;
-                continue;
-            }
-
-            if (!job->misc_links.empty() || job->job_items.empty())
-            {
-                c->con.printerr("Protected job unsupported: %d (%s)\n",
-                                id, ENUM_KEY_STR(job_type, job->job_type));
-                item.ival(j) = -1;
-                continue;
-            }
-
-            ProtectedJob *pj = new ProtectedJob(job);
-            if (!pj->holder)
-            {
-                c->con.printerr("Protected job not in building: %d (%s)\n",
-                                id, ENUM_KEY_STR(job_type, job->job_type));
-                delete pj;
-                item.ival(j) = -1;
-                continue;
-            }
-
-            known_jobs[id] = pj;
-
-            if (!job->flags.bits.repeat) {
-                c->con.printerr("Protected job not repeating: %d\n", id);
-                job->flags.bits.repeat = true;
-            }
-        }
-    }
+static void start_protect(Core *c)
+{
+    check_lost_jobs(c);
 
     if (!known_jobs.empty())
         c->con.print("Protecting %d jobs.\n", known_jobs.size());
 }
 
-static int *find_protected_id_slot(Core *c, int key)
+static void init_state(Core *c)
 {
-    for (unsigned i = 0; i < protected_cfg.size(); i++)
-    {
-        PersistentDataItem &item = protected_cfg[i];
-        for (int j = 0; j < PersistentDataItem::NumInts; j++)
-        {
-            if (item.ival(j) == key)
-                return &item.ival(j);
-        }
-    }
+    config = c->getWorld()->GetPersistentData("workflow/config");
 
-    if (key == -1) {
-        protected_cfg.push_back(c->getWorld()->AddPersistentData("workflow/protected-jobs"));
-        PersistentDataItem &item = protected_cfg.back();
-        return &item.ival(0);
-    }
+    enabled = config.isValid() && config.ival(0) != -1 &&
+              (config.ival(0) & CF_ENABLED);
 
-    return NULL;
+    if (!enabled)
+        return;
+
+    start_protect(c);
 }
+
+static void enable_plugin(Core *c)
+{
+    if (!config.isValid())
+    {
+        config = c->getWorld()->AddPersistentData("workflow/config");
+        config.ival(0) = 0;
+    }
+
+    config.ival(0) |= CF_ENABLED;
+    enabled = true;
+    c->con << "Enabling the plugin." << endl;
+
+    start_protect(c);
+}
+
+/*******************************/
 
 static void forget_job(Core *c, ProtectedJob *pj)
 {
     known_jobs.erase(pj->id);
-
-    if (int *p = find_protected_id_slot(c, pj->id))
-        *p = -1;
-
     delete pj;
-}
-
-static void remember_job(Core *c, df::job *job)
-{
-    if (get_known(job->id))
-        return;
-
-    if (!job->misc_links.empty() || job->job_items.empty())
-    {
-        c->con.printerr("Unsupported job type: %d (%s)\n",
-                        job->id, ENUM_KEY_STR(job_type, job->job_type));
-        return;
-    }
-
-    known_jobs[job->id] = new ProtectedJob(job);
-
-    *find_protected_id_slot(c, -1) = job->id;
 }
 
 static bool recover_job(Core *c, ProtectedJob *pj)
@@ -305,37 +268,22 @@ static bool recover_job(Core *c, ProtectedJob *pj)
             return false;
     }
 
-    // Find the position in the job list
-    df::job_list_link *ins_pos = &world->job_list;
-    while (ins_pos->next && ins_pos->next->item->id < pj->id)
-        ins_pos = ins_pos->next;
+    // Create and link in the actual job structure
+    df::job *recovered = cloneJobStruct(pj->job_copy);
 
-    if (ins_pos->next && ins_pos->next->item->id == pj->id)
+    recovered->flags.bits.repeat = true;
+    recovered->flags.bits.suspend = true;
+
+    if (!linkJobIntoWorld(recovered, false)) // reuse same id
     {
+        deleteJobStruct(recovered);
+
         c->con.printerr("Inconsistency: job %d (%s) already in list.",
                         pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type));
         pj->live = true;
         return true;
     }
 
-    // Create the actual job structure
-    df::job *recovered = cloneJobStruct(pj->job_copy);
-
-    recovered->flags.bits.repeat = true;
-    recovered->flags.bits.suspend = true;
-
-    // Link the job into the global list
-    df::job_list_link *link = new df::job_list_link();
-    recovered->list_link = link;
-
-    link->item = recovered;
-    link->next = ins_pos->next;
-    if (ins_pos->next)
-        ins_pos->next->prev = link;
-    link->prev = ins_pos;
-    ins_pos->next = link;
-
-    // Add to building jobs
     pj->holder->jobs.push_back(recovered);
 
     // Done
@@ -343,7 +291,7 @@ static bool recover_job(Core *c, ProtectedJob *pj)
     return true;
 }
 
-static void check_lost_jobs(Core *c)
+static bool check_lost_jobs(Core *c)
 {
     static int check = 1;
     check++;
@@ -351,14 +299,26 @@ static void check_lost_jobs(Core *c)
     df::job_list_link *p = world->job_list.next;
     for (; p; p = p->next)
     {
-        ProtectedJob *pj = get_known(p->item->id);
-        if (!pj)
-            continue;
-        pj->check_idx = check;
+        df::job *job = p->item;
 
-        // force repeat
-        p->item->flags.bits.repeat = true;
+        ProtectedJob *pj = get_known(job->id);
+        if (pj)
+        {
+            if (!job->flags.bits.repeat)
+                forget_job(c, pj);
+            else
+                pj->check_idx = check;
+        }
+        else if (job->flags.bits.repeat && isSupportedJob(job))
+        {
+            pj = new ProtectedJob(job);
+            assert(pj->holder);
+            known_jobs[pj->id] = pj;
+            pj->check_idx = check;
+        }
     }
+
+    bool any_lost = false;
 
     for (TKnownJobs::const_iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
     {
@@ -367,7 +327,10 @@ static void check_lost_jobs(Core *c)
 
         it->second->live = false;
         pending_recover.push_back(it->second);
+        any_lost = true;
     }
+
+    return any_lost;
 }
 
 static void update_job_data(Core *c)
@@ -382,21 +345,30 @@ static void update_job_data(Core *c)
     }
 }
 
+static void recover_jobs(Core *c)
+{
+    for (int i = pending_recover.size()-1; i >= 0; i--)
+        if (recover_job(c, pending_recover[i]))
+            vector_erase_at(pending_recover, i);
+}
+
 DFhackCExport command_result plugin_onupdate(Core* c)
 {
-    if (known_jobs.empty())
+    if (!enabled)
         return CR_OK;
 
     static unsigned cnt = 0;
     cnt++;
 
-    if ((cnt % 10) == 0)
+    bool force_recover = false;
+    if ((cnt % 5) == 0)
     {
-        for (int i = pending_recover.size()-1; i >= 0; i--)
-            if (recover_job(c, pending_recover[i]))
-                vector_erase_at(pending_recover, i);
+        force_recover = check_lost_jobs(c);
+    }
 
-        check_lost_jobs(c);
+    if (force_recover || (cnt % 50) == 0)
+    {
+        recover_jobs(c);
     }
 
     if ((cnt % 500) == 0)
@@ -405,9 +377,11 @@ DFhackCExport command_result plugin_onupdate(Core* c)
     return CR_OK;
 }
 
-static command_result protect_job(Core *c, vector <string> & parameters)
+static command_result workflow_cmd(Core *c, vector <string> & parameters)
 {
     CoreSuspender suspend(c);
+
+    update_job_data(c);
 
     if (parameters.empty())
         return CR_WRONG_USAGE;
@@ -424,10 +398,38 @@ static command_result protect_job(Core *c, vector <string> & parameters)
 
     std::map<int, df::job*> jobs;
     enumLiveJobs(jobs);
-    update_job_data(c);
 
     std::string cmd = parameters[0];
-    if (cmd == "list")
+
+    if (cmd == "enable")
+    {
+        if (enabled)
+        {
+            c->con << "The plugin is already enabled." << endl;
+            return CR_OK;
+        }
+
+        enable_plugin(c);
+        return CR_OK;
+    }
+    else if (cmd == "disable")
+    {
+        if (!enabled)
+        {
+            c->con << "The plugin is already disabled." << endl;
+            return CR_OK;
+        }
+
+        enabled = false;
+        config.ival(0) &= ~CF_ENABLED;
+        stop_protect(c);
+        return CR_OK;
+    }
+
+    if (!enabled)
+        c->con << "Note: the plugin is not enabled." << endl;
+
+    if (cmd == "list-jobs")
     {
         if (workshop)
         {
@@ -457,65 +459,8 @@ static command_result protect_job(Core *c, vector <string> & parameters)
                 printJobDetails(c, pending_recover[i]->job_copy);
             }
         }
-    }
-    else if (cmd == "add" || cmd == "remove")
-    {
-        bool add = (cmd == "add");
-        bool all = (parameters.size() >= 2 && parameters[1] == "all");
-        if (parameters.size() >= 2 && !all)
-            return CR_WRONG_USAGE;
 
-        if (workshop && all)
-        {
-            for (unsigned i = 0; i < workshop->jobs.size(); i++)
-            {
-                df::job *job = workshop->jobs[i];
-                if (add)
-                {
-                    if (!job->flags.bits.repeat)
-                        continue;
-                    remember_job(c, job);
-                }
-                else
-                {
-                    if (ProtectedJob *pj = get_known(job->id))
-                        forget_job(c, pj);
-                }
-            }
-        }
-        else if (workshop)
-        {
-            if (!job) {
-                c->con.printerr("No job is selected in the current building.\n");
-                return CR_FAILURE;
-            }
-
-            if (add)
-                remember_job(c, job);
-            else if (ProtectedJob *pj = get_known(job->id))
-                forget_job(c, pj);
-        }
-        else
-        {
-            if (!all) {
-                c->con.printerr("Please either select a job, or specify 'all'.\n");
-                return CR_WRONG_USAGE;
-            }
-
-            if (add)
-            {
-                for (std::map<int,df::job*>::iterator it = jobs.begin(); it != jobs.end(); it++)
-                    if (it->second->flags.bits.repeat)
-                        remember_job(c, it->second);
-            }
-            else
-            {
-                pending_recover.clear();
-
-                while (!known_jobs.empty())
-                    forget_job(c, known_jobs.begin()->second);
-            }
-        }
+        return CR_OK;
     }
     else
         return CR_WRONG_USAGE;

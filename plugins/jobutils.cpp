@@ -5,6 +5,7 @@
 #include <MiscUtils.h>
 
 #include <modules/Materials.h>
+#include <modules/Items.h>
 #include <modules/Gui.h>
 #include <modules/Job.h>
 
@@ -60,12 +61,14 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
         PluginCommand(
             "job", "General job query and manipulation.",
             job_cmd, false,
-            "  job query\n"
+            "  job [query]\n"
             "    Print details of the current job.\n"
             "  job list\n"
             "    Print details of all jobs in the workshop.\n"
-            "  job item-material <item-idx> <material> [submaterial]\n"
+            "  job item-material <item-idx> <material[:subtoken]>\n"
             "    Replace the exact material id in the job item.\n"
+            "  job item-type <item-idx> <type[:subtype]>\n"
+            "    Replace the exact item type id in the job item.\n"
         )
     );
 
@@ -152,6 +155,13 @@ static command_result job_material_in_job(Core *c, MaterialInfo &new_mat)
         {
             c->con.printerr("Job item %d has different material: %s\n",
                             i, item_mat.toString().c_str());
+            return CR_FAILURE;
+        }
+
+        if (!new_mat.matches(*item))
+        {
+            c->con.printerr("Job item %d requirements not satisfied by %s.\n",
+                            i, new_mat.toString().c_str());
             return CR_FAILURE;
         }
     }
@@ -249,21 +259,6 @@ static command_result job_material(Core * c, vector <string> & parameters)
 
 /* job-duplicate implementation */
 
-static df::job *clone_job(df::job *job)
-{
-    df::job *pnew = cloneJobStruct(job);
-
-    pnew->id = (*job_next_id)++;
-
-    // Link the job into the global list
-    pnew->list_link = new df::job_list_link();
-    pnew->list_link->item = pnew;
-
-    linked_list_append(&world->job_list, pnew->list_link);
-
-    return pnew;
-}
-
 static command_result job_duplicate(Core * c, vector <string> & parameters)
 {
     if (!parameters.empty())
@@ -287,24 +282,35 @@ static command_result job_duplicate(Core * c, vector <string> & parameters)
     }
 
     // Actually clone
-    df::job *pnew = clone_job(job);
+    df::job *pnew = cloneJobStruct(job);
 
-    int pos = ++*ui_workshop_job_cursor;
-    building->jobs.insert(building->jobs.begin()+pos, pnew);
+    linkJobIntoWorld(pnew);
+    vector_insert_at(building->jobs, ++*ui_workshop_job_cursor, pnew);
 
     return CR_OK;
 }
 
 /* Main job command implementation */
 
+static df::job_item *getJobItem(Core *c, df::job *job, std::string idx)
+{
+    if (!job)
+        return NULL;
+
+    int v = atoi(idx.c_str());
+    if (v < 1 || v > job->job_items.size()) {
+        c->con.printerr("Invalid item index.\n");
+        return NULL;
+    }
+
+    return job->job_items[v-1];
+}
+
 static command_result job_cmd(Core * c, vector <string> & parameters)
 {
     CoreSuspender suspend(c);
 
-    if (parameters.empty())
-        return CR_WRONG_USAGE;
-
-    std::string cmd = parameters[0];
+    std::string cmd = (parameters.empty() ? "query" : parameters[0]);
     if (cmd == "query" || cmd == "list")
     {
         df::job *job = getSelectedWorkshopJob(c);
@@ -321,29 +327,23 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
     }
     else if (cmd == "item-material")
     {
-        if (parameters.size() < 1+1+1)
+        if (parameters.size() != 3)
             return CR_WRONG_USAGE;
 
         df::job *job = getSelectedWorkshopJob(c);
-        if (!job)
+        df::job_item *item = getJobItem(c, job, parameters[1]);
+        if (!item)
             return CR_WRONG_USAGE;
 
-        int v = atoi(parameters[1].c_str());
-        if (v < 1 || v > job->job_items.size()) {
-            c->con.printerr("Invalid item index.\n");
-            return CR_WRONG_USAGE;
-        }
+        ItemTypeInfo iinfo(item);
+        MaterialInfo minfo;
 
-        df::job_item *item = job->job_items[v-1];
-
-        std::string subtoken = (parameters.size()>3 ? parameters[3] : "");
-        MaterialInfo info;
-        if (!info.find(parameters[2], subtoken)) {
+        if (!minfo.find(parameters[2])) {
             c->con.printerr("Could not find the specified material.\n");
             return CR_FAILURE;
         }
 
-        if (!info.matches(*item)) {
+        if (!iinfo.matches(*item, &minfo)) {
             c->con.printerr("Material does not match the requirements.\n");
             printJobDetails(c, job);
             return CR_FAILURE;
@@ -353,19 +353,52 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
             job->mat_type == item->mat_type &&
             job->mat_index == item->mat_index)
         {
-            job->mat_type = info.type;
-            job->mat_index = info.index;
+            job->mat_type = minfo.type;
+            job->mat_index = minfo.index;
         }
 
-        item->mat_type = info.type;
-        item->mat_index = info.index;
+        item->mat_type = minfo.type;
+        item->mat_index = minfo.index;
 
-        c->con << "Job item " << v << " updated." << endl;
+        c->con << "Job item updated." << endl;
+
+        if (item->item_type < 0 && minfo.isValid())
+            c->con.printerr("WARNING: Due to a probable bug, creature & plant material subtype\n"
+                            "         is ignored unless the item type is also specified.\n");
+
         printJobDetails(c, job);
         return CR_OK;
     }
     else if (cmd == "item-type")
     {
+        if (parameters.size() != 3)
+            return CR_WRONG_USAGE;
+
+        df::job *job = getSelectedWorkshopJob(c);
+        df::job_item *item = getJobItem(c, job, parameters[1]);
+        if (!item)
+            return CR_WRONG_USAGE;
+
+        ItemTypeInfo iinfo;
+        MaterialInfo minfo(item);
+
+        if (!iinfo.find(parameters[2])) {
+            c->con.printerr("Could not find the specified item type.\n");
+            return CR_FAILURE;
+        }
+
+        if (!iinfo.matches(*item, &minfo)) {
+            c->con.printerr("Item type does not match the requirements.\n");
+            printJobDetails(c, job);
+            return CR_FAILURE;
+        }
+
+        item->item_type = iinfo.type;
+        item->item_subtype = iinfo.subtype;
+
+        c->con << "Job item updated." << endl;
+        printJobDetails(c, job);
+        return CR_OK;
     }
     else
         return CR_WRONG_USAGE;

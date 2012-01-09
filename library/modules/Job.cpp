@@ -33,9 +33,11 @@ using namespace std;
 
 #include "Core.h"
 #include "PluginManager.h"
+#include "MiscUtils.h"
 
 #include "modules/Job.h"
 #include "modules/Materials.h"
+#include "modules/Items.h"
 
 #include "DataDefs.h"
 #include <df/world.h>
@@ -45,6 +47,7 @@ using namespace std;
 #include <df/job_list_link.h>
 #include <df/general_ref.h>
 #include <df/general_ref_unit_workerst.h>
+#include <df/general_ref_building_holderst.h>
 
 using namespace DFHack;
 using namespace df::enums;
@@ -69,7 +72,7 @@ df::job *DFHack::cloneJobStruct(df::job *job)
         df::general_ref *ref = pnew->references[i];
 
         if (virtual_cast<df::general_ref_unit_workerst>(ref))
-            pnew->references.erase(pnew->references.begin()+i);
+            vector_erase_at(pnew->references, i);
         else
             pnew->references[i] = ref->clone();
     }
@@ -138,9 +141,9 @@ bool DFHack::operator== (const df::job &a, const df::job &b)
 
 static void print_job_item_details(Core *c, df::job *job, unsigned idx, df::job_item *item)
 {
-    c->con << "  Input Item " << (idx+1) << ": " << ENUM_KEY_STR(item_type,item->item_type);
-    if (item->item_subtype != -1)
-        c->con << " [" << item->item_subtype << "]";
+    ItemTypeInfo info(item);
+    c->con << "  Input Item " << (idx+1) << ": " << info.toString();
+
     if (item->quantity != 1)
         c->con << "; quantity=" << item->quantity;
     if (item->min_dimension >= 0)
@@ -177,7 +180,12 @@ void DFHack::printJobDetails(Core *c, df::job *job)
            c->con << " (" << bitfieldToString(job->flags) << ")";
     c->con << endl;
 
+    df::item_type itype = ENUM_ATTR(job_type, item, job->job_type);
+
     MaterialInfo mat(job);
+    if (itype == item_type::FOOD)
+        mat.decode(-1);
+
     if (mat.isValid() || job->material_category.whole)
     {
         c->con << "    material: " << mat.toString();
@@ -187,8 +195,12 @@ void DFHack::printJobDetails(Core *c, df::job *job)
     }
 
     if (job->item_subtype >= 0 || job->item_category.whole)
-        c->con << "    item: " << job->item_subtype
+    {
+        ItemTypeInfo iinfo(itype, job->item_subtype);
+
+        c->con << "    item: " << iinfo.toString()
                << " (" << bitfieldToString(job->item_category) << ")" << endl;
+    }
 
     if (job->hist_figure_id >= 0)
         c->con << "    figure: " << job->hist_figure_id << endl;
@@ -198,4 +210,45 @@ void DFHack::printJobDetails(Core *c, df::job *job)
 
     for (unsigned i = 0; i < job->job_items.size(); i++)
         print_job_item_details(c, job, i, job->job_items[i]);
+}
+
+df::building *DFHack::getJobHolder(df::job *job)
+{
+    for (unsigned i = 0; i < job->references.size(); i++)
+    {
+        VIRTUAL_CAST_VAR(ref, df::general_ref_building_holderst, job->references[i]);
+        if (ref)
+            return ref->getBuilding();
+    }
+
+    return NULL;
+}
+
+bool DFHack::linkJobIntoWorld(df::job *job, bool new_id)
+{
+    using df::global::world;
+    using df::global::job_next_id;
+
+    assert(!job->list_link);
+
+    if (new_id) {
+        job->id = (*job_next_id)++;
+
+        job->list_link = new df::job_list_link();
+        job->list_link->item = job;
+        linked_list_append(&world->job_list, job->list_link);
+        return true;
+    } else {
+        df::job_list_link *ins_pos = &world->job_list;
+        while (ins_pos->next && ins_pos->next->item->id < job->id)
+            ins_pos = ins_pos->next;
+
+        if (ins_pos->next && ins_pos->next->item->id == job->id)
+            return false;
+
+        job->list_link = new df::job_list_link();
+        job->list_link->item = job;
+        linked_list_insert_after(ins_pos, job->list_link);
+        return true;
+    }
 }

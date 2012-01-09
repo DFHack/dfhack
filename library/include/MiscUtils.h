@@ -163,6 +163,28 @@ inline bool vector_contains(const std::vector<CT*> &vec, FT CT::*field, FT key)
     return binsearch_index(vec, field, key) >= 0;
 }
 
+template<typename T>
+inline T vector_get(const std::vector<T> &vec, unsigned idx, const T &defval = T())
+{
+    if (idx < vec.size())
+        return vec[idx];
+    else
+        return defval;
+}
+
+template<typename T>
+inline void vector_insert_at(std::vector<T> &vec, unsigned idx, const T &val)
+{
+    vec.insert(vec.begin()+idx, val);
+}
+
+template<typename T>
+inline void vector_erase_at(std::vector<T> &vec, unsigned idx)
+{
+    if (idx < vec.size())
+        vec.erase(vec.begin()+idx);
+}
+
 template<typename FT>
 unsigned insert_into_vector(std::vector<FT> &vec, FT key, bool *inserted = NULL)
 {
@@ -170,7 +192,7 @@ unsigned insert_into_vector(std::vector<FT> &vec, FT key, bool *inserted = NULL)
     bool to_ins = (pos >= vec.size() || vec[pos] != key);
     if (inserted) *inserted = to_ins;
     if (to_ins)
-        vec.insert(vec.begin()+pos,key);
+        vector_insert_at(vec, pos, key);
     return pos;
 }
 
@@ -181,7 +203,7 @@ unsigned insert_into_vector(std::vector<CT*> &vec, FT CT::*field, CT *obj, bool 
     bool to_ins = (pos >= vec.size() || vec[pos] != obj);
     if (inserted) *inserted = to_ins;
     if (to_ins)
-        vec.insert(vec.begin()+pos,obj);
+        vector_insert_at(vec, pos, obj);
     return pos;
 }
 
@@ -213,9 +235,32 @@ Link *linked_list_append(Link *head, Link *tail)
     return tail;
 }
 
+template<typename Link>
+Link *linked_list_insert_after(Link *pos, Link *link)
+{
+    link->next = pos->next;
+    if (pos->next)
+        pos->next->prev = link;
+    link->prev = pos;
+    pos->next = link;
+    return link;
+}
+
 /*
  * MISC
  */
+
+DFHACK_EXPORT bool split_string(std::vector<std::string> *out,
+                                const std::string &str, const std::string &separator,
+                                bool squash_empty = false);
+
+DFHACK_EXPORT std::string toUpper(const std::string &str);
+DFHACK_EXPORT std::string toLower(const std::string &str);
+
+inline bool bits_match(unsigned required, unsigned ok, unsigned mask)
+{
+    return (required & mask) == (required & mask & ok);
+}
 
 /**
  * Returns the amount of milliseconds elapsed since the UNIX epoch.

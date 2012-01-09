@@ -35,6 +35,7 @@ namespace df
     struct job;
     struct job_item;
     struct job_item_filter;
+    struct building;
 }
 
 namespace DFHack
@@ -49,6 +50,10 @@ namespace DFHack
     DFHACK_EXPORT bool operator== (const df::job &a, const df::job &b);
 
     DFHACK_EXPORT void printJobDetails(Core *c, df::job *job);
+
+    DFHACK_EXPORT df::building *getJobHolder(df::job *job);
+
+    DFHACK_EXPORT bool linkJobIntoWorld(df::job *job, bool new_id = true);
 }
 #endif
 

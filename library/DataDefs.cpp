@@ -197,6 +197,16 @@ std::string DFHack::bitfieldToString(const void *p, int size, const bitfield_ite
     return res;
 }
 
+int DFHack::findBitfieldField(const std::string &name, int size, const bitfield_item_info *items)
+{
+    for (int i = 0; i < size*8; i++) {
+        if (items[i].name && items[i].name == name)
+            return i;
+    }
+
+    return -1;
+}
+
 #define SIMPLE_GLOBAL(name,tname) \
     tname *df::global::name = NULL;
 #define GLOBAL(name,tname) SIMPLE_GLOBAL(name,df::tname)

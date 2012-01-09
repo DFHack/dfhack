@@ -32,6 +32,15 @@ distribution.
 #include "Virtual.h"
 #include "modules/Materials.h"
 #include "MemAccess.h"
+
+#include "DataDefs.h"
+#include "df/item_type.h"
+
+namespace df
+{
+    struct itemdef;
+}
+
 /**
  * \defgroup grp_items Items module and its types
  * @ingroup grp_modules
@@ -39,6 +48,42 @@ distribution.
 
 namespace DFHack
 {
+    struct DFHACK_EXPORT ItemTypeInfo {
+        df::item_type type;
+        int16_t subtype;
+
+        df::itemdef *custom;
+
+    public:
+        ItemTypeInfo(df::item_type type_ = df::enums::item_type::NONE, int16_t subtype_ = -1) {
+            decode(type_, subtype_);
+        }
+        template<class T> ItemTypeInfo(T *ptr) { decode(ptr); }
+
+        bool isValid() const {
+            return (type != df::enums::item_type::NONE) && (subtype == -1 || custom);
+        }
+
+        bool decode(df::item_type type_, int16_t subtype_ = -1);
+        bool decode(df::item *ptr);
+
+        template<class T> bool decode(T *ptr) {
+            return ptr ? decode(ptr->item_type, ptr->item_subtype) : decode(df::enums::item_type::NONE);
+        }
+
+        std::string toString();
+
+        bool find(const std::string &token);
+
+        bool matches(const df::job_item &item, MaterialInfo *mat = NULL);
+    };
+
+    inline bool operator== (const ItemTypeInfo &a, const ItemTypeInfo &b) {
+        return a.type == b.type && a.subtype == b.subtype;
+    }
+    inline bool operator!= (const ItemTypeInfo &a, const ItemTypeInfo &b) {
+        return a.type != b.type || a.subtype != b.subtype;
+    }
 
 class Context;
 class DFContextShared;

@@ -5,6 +5,7 @@
 #include <MiscUtils.h>
 
 #include <modules/Materials.h>
+#include <modules/Items.h>
 #include <modules/Gui.h>
 #include <modules/Job.h>
 #include <modules/World.h>
@@ -60,8 +61,14 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
                 "  workflow enable\n"
                 "  workflow disable\n"
                 "    Enable or disable the plugin.\n"
-                "  workflow list-jobs\n"
+                "  workflow jobs\n"
                 "    List workflow-controlled jobs (if in a workshop, filtered by it).\n"
+                "  workflow list\n"
+                "    List active constraints, and their job counts.\n"
+                "  workflow limit <constraint-spec> <cnt-limit> [cnt-gap]\n"
+                "    Set a constraint.\n"
+                "  workflow unlimit <constraint-spec>\n"
+                "    Delete a constraint.\n"
                 "Function:\n"
                 "  When the plugin is enabled, it protects all repeat jobs from removal.\n"
                 "  If they do disappear due to any cause, they are immediately re-added\n"
@@ -101,6 +108,8 @@ DFhackCExport command_result plugin_onstatechange(Core* c, state_change_event ev
 
 /*******************************/
 
+struct ItemConstraint;
+
 struct ProtectedJob {
     int id;
     int building_id;
@@ -110,12 +119,17 @@ struct ProtectedJob {
     df::building *holder;
     df::job *job_copy;
 
+    df::job *actual_job;
+
+    std::vector<ItemConstraint*> constraints;
+
     ProtectedJob(df::job *job) : id(job->id), live(true)
     {
         check_idx = 0;
         holder = getJobHolder(job);
         building_id = holder ? holder->id : -1;
         job_copy = cloneJobStruct(job);
+        actual_job = job;
     }
 
     ~ProtectedJob()
@@ -125,12 +139,36 @@ struct ProtectedJob {
 
     void update(df::job *job)
     {
+        actual_job = job;
         if (*job == *job_copy)
             return;
 
         deleteJobStruct(job_copy);
         job_copy = cloneJobStruct(job);
     }
+};
+
+struct ItemConstraint {
+    PersistentDataItem config;
+
+    ItemTypeInfo item;
+
+    MaterialInfo material;
+    df::job_material_category mat_mask;
+
+    int weight;
+    std::vector<ProtectedJob*> jobs;
+
+    std::map<std::pair<int,int>, bool> material_cache;
+
+    int goalCount() { return config.ival(0); }
+    void setGoalCount(int v) { config.ival(0) = v; }
+
+    int goalGap() {
+        int gcnt = std::max(1, goalCount()/2);
+        return std::min(gcnt, config.ival(1) <= 0 ? 5 : config.ival(1));
+    }
+    void setGoalGap(int v) { config.ival(1) = v; }
 };
 
 /*******************************/
@@ -146,6 +184,7 @@ typedef std::map<int, ProtectedJob*> TKnownJobs;
 static TKnownJobs known_jobs;
 
 static std::vector<ProtectedJob*> pending_recover;
+static std::vector<ItemConstraint*> constraints;
 
 /*******************************/
 
@@ -189,9 +228,14 @@ static void cleanup_state(Core *c)
     config = PersistentDataItem();
 
     stop_protect(c);
+
+    for (unsigned i = 0; i < constraints.size(); i++)
+        delete constraints[i];
+    constraints.clear();
 }
 
 static bool check_lost_jobs(Core *c);
+static ItemConstraint *get_constraint(Core *c, const std::string &str, PersistentDataItem *cfg = NULL);
 
 static void start_protect(Core *c)
 {
@@ -207,6 +251,18 @@ static void init_state(Core *c)
 
     enabled = config.isValid() && config.ival(0) != -1 &&
               (config.ival(0) & CF_ENABLED);
+
+    // Parse constraints
+    std::vector<PersistentDataItem> items;
+    c->getWorld()->GetPersistentData(&items, "workflow/constraints");
+
+    for (int i = items.size()-1; i >= 0; i--) {
+        if (get_constraint(c, items[i].val(), &items[i]))
+            continue;
+
+        c->con.printerr("Lost constraint %s\n", items[i].val().c_str());
+        c->getWorld()->DeletePersistentData(items[i]);
+    }
 
     if (!enabled)
         return;
@@ -287,6 +343,7 @@ static bool recover_job(Core *c, ProtectedJob *pj)
     pj->holder->jobs.push_back(recovered);
 
     // Done
+    pj->actual_job = recovered;
     pj->live = true;
     return true;
 }
@@ -326,6 +383,7 @@ static bool check_lost_jobs(Core *c)
             continue;
 
         it->second->live = false;
+        it->second->actual_job = NULL;
         pending_recover.push_back(it->second);
         any_lost = true;
     }
@@ -358,33 +416,207 @@ DFhackCExport command_result plugin_onupdate(Core* c)
         return CR_OK;
 
     static unsigned cnt = 0;
+    static unsigned last_rlen = 0;
     cnt++;
 
-    bool force_recover = false;
-    if ((cnt % 5) == 0)
-    {
-        force_recover = check_lost_jobs(c);
-    }
+    if ((cnt % 5) == 0) {
+        check_lost_jobs(c);
 
-    if (force_recover || (cnt % 50) == 0)
-    {
-        recover_jobs(c);
-    }
+        if (pending_recover.size() != last_rlen || (cnt % 50) == 0)
+        {
+            recover_jobs(c);
+            last_rlen = pending_recover.size();
 
-    if ((cnt % 500) == 0)
-        update_job_data(c);
+            if ((cnt % 500) == 0)
+                update_job_data(c);
+        }
+    }
 
     return CR_OK;
+}
+
+/*******************************/
+
+static ItemConstraint *get_constraint(Core *c, const std::string &str, PersistentDataItem *cfg)
+{
+    std::vector<std::string> tokens;
+    split_string(&tokens, str, "/");
+
+    if (tokens.size() > 3)
+        return NULL;
+
+    int weight = 0;
+
+    ItemTypeInfo item;
+    if (!item.find(tokens[0]) || !item.isValid()) {
+        c->con.printerr("Cannot find item type: %s\n", tokens[0].c_str());
+        return NULL;
+    }
+
+    if (item.subtype >= 0)
+        weight += 10000;
+
+    MaterialInfo material;
+    std::string matstr = vector_get(tokens,1);
+    if (!matstr.empty() && (!material.find(matstr) || !material.isValid())) {
+        c->con.printerr("Cannot find material: %s\n", matstr.c_str());
+        return NULL;
+    }
+
+    if (material.type >= 0)
+        weight += (material.index >= 0 ? 5000 : 1000);
+
+    df::job_material_category mat_mask;
+    std::string maskstr = vector_get(tokens,2);
+    if (!maskstr.empty() && !parseJobMaterialCategory(&mat_mask, maskstr)) {
+        c->con.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
+        return NULL;
+    }
+
+    if (mat_mask.whole && material.isValid() && !material.matches(mat_mask)) {
+        c->con.printerr("Material %s doesn't match mask %s\n", matstr.c_str(), maskstr.c_str());
+        return NULL;
+    }
+
+    if (mat_mask.whole != 0)
+        weight += 100;
+
+    for (unsigned i = 0; i < constraints.size(); i++)
+    {
+        ItemConstraint *ct = constraints[i];
+        if (ct->item == item && ct->material == material &&
+            ct->mat_mask.whole == mat_mask.whole)
+            return ct;
+    }
+
+    ItemConstraint *nct = new ItemConstraint;
+    nct->item = item;
+    nct->material = material;
+    nct->mat_mask = mat_mask;
+    nct->weight = weight;
+
+    if (cfg)
+        nct->config = *cfg;
+    else
+    {
+        nct->config = c->getWorld()->AddPersistentData("workflow/constraints");
+        nct->config.val() = str;
+    }
+
+    constraints.push_back(nct);
+    return nct;
+}
+
+static void delete_constraint(Core *c, ItemConstraint *cv)
+{
+    int idx = linear_index(constraints, cv);
+    if (idx >= 0)
+        vector_erase_at(constraints, idx);
+
+    c->getWorld()->DeletePersistentData(cv->config);
+    delete cv;
+}
+
+static void print_constraint(Core *c, ItemConstraint *cv, bool no_job = false, std::string prefix = "")
+{
+    c->con << prefix << "Constraint " << cv->config.val() << ": "
+           << cv->goalCount() << " (gap " << cv->goalGap() << ")" << endl;
+
+    if (no_job) return;
+
+    if (cv->jobs.empty())
+        c->con.printerr("  (no jobs)\n");
+
+    for (int i = 0; i < cv->jobs.size(); i++)
+    {
+        ProtectedJob *pj = cv->jobs[i];
+        df::job *job = pj->actual_job;
+
+        c->con << prefix << "  job " << job->id << ": "
+               << ENUM_KEY_STR(job_type, job->job_type);
+        if (job->flags.bits.suspend)
+            c->con << " (suspended)";
+        c->con << endl;
+    }
+}
+
+static void print_job(Core *c, ProtectedJob *pj)
+{
+    if (!pj)
+        return;
+
+    printJobDetails(c, pj->job_copy);
+
+    for (int i = 0; i < pj->constraints.size(); i++)
+        print_constraint(c, pj->constraints[i], true, "  ");
+}
+
+static void map_job_constraints(Core *c)
+{
+    for (unsigned i = 0; i < constraints.size(); i++)
+        constraints[i]->jobs.clear();
+
+    for (TKnownJobs::const_iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
+    {
+        it->second->constraints.clear();
+
+        if (!it->second->live)
+            continue;
+
+        df::job *job = it->second->job_copy;
+
+        df::item_type itype = ENUM_ATTR(job_type, item, job->job_type);
+        if (itype == item_type::NONE)
+            continue;
+
+        int16_t isubtype = job->item_subtype;
+
+        int16_t mat_type = job->mat_type;
+        int32_t mat_index = job->mat_index;
+
+        if (itype == item_type::FOOD)
+            mat_type = -1;
+
+        if (mat_type == -1 && job->job_items.size() == 1) {
+            mat_type = job->job_items[0]->mat_type;
+            mat_index = job->job_items[0]->mat_index;
+        }
+
+        MaterialInfo mat(mat_type, mat_index);
+
+        for (unsigned i = 0; i < constraints.size(); i++)
+        {
+            ItemConstraint *ct = constraints[i];
+
+            if (ct->item.type != itype ||
+                (ct->item.subtype != -1 && ct->item.subtype != isubtype))
+                continue;
+            if (ct->material.isValid() && ct->material != mat)
+                continue;
+            if (ct->mat_mask.whole)
+            {
+                if (mat.isValid() && !mat.matches(ct->mat_mask))
+                    continue;
+                else if (!(job->material_category.whole & ct->mat_mask.whole))
+                    continue;
+            }
+
+            ct->jobs.push_back(it->second);
+            it->second->constraints.push_back(ct);
+        }
+    }
 }
 
 static command_result workflow_cmd(Core *c, vector <string> & parameters)
 {
     CoreSuspender suspend(c);
 
-    update_job_data(c);
-
-    if (parameters.empty())
-        return CR_WRONG_USAGE;
+    if (enabled) {
+        check_lost_jobs(c);
+        recover_jobs(c);
+        update_job_data(c);
+        map_job_constraints(c);
+    }
 
     df::building *workshop = NULL;
     df::job *job = NULL;
@@ -396,10 +628,7 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
         job = getSelectedWorkshopJob(c, true);
     }
 
-    std::map<int, df::job*> jobs;
-    enumLiveJobs(jobs);
-
-    std::string cmd = parameters[0];
+    std::string cmd = parameters.empty() ? "list" : parameters[0];
 
     if (cmd == "enable")
     {
@@ -429,19 +658,18 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
     if (!enabled)
         c->con << "Note: the plugin is not enabled." << endl;
 
-    if (cmd == "list-jobs")
+    if (cmd == "jobs")
     {
         if (workshop)
         {
             for (unsigned i = 0; i < workshop->jobs.size(); i++)
-                if (get_known(workshop->jobs[i]->id))
-                    printJobDetails(c, workshop->jobs[i]);
+                print_job(c, get_known(workshop->jobs[i]->id));
         }
         else
         {
             for (TKnownJobs::iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
-                if (df::job *job = jobs[it->first])
-                    printJobDetails(c, job);
+                if (it->second->live)
+                    print_job(c, it->second);
         }
 
         bool pending = false;
@@ -461,6 +689,53 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
         }
 
         return CR_OK;
+    }
+    else if (cmd == "list")
+    {
+        for (int i = 0; i < constraints.size(); i++)
+            print_constraint(c, constraints[i]);
+
+        return CR_OK;
+    }
+    else if (cmd == "limit")
+    {
+        if (parameters.size() < 3)
+            return CR_WRONG_USAGE;
+
+        int limit = atoi(parameters[2].c_str());
+        if (limit <= 0) {
+            c->con.printerr("Invalid limit value.\n");
+            return CR_FAILURE;
+        }
+
+        ItemConstraint *icv = get_constraint(c, parameters[1]);
+        if (!icv)
+            return CR_FAILURE;
+
+        icv->setGoalCount(limit);
+        if (parameters.size() >= 4)
+            icv->setGoalGap(atoi(parameters[3].c_str()));
+
+        map_job_constraints(c);
+        print_constraint(c, icv);
+        return CR_OK;
+    }
+    else if (cmd == "unlimit")
+    {
+        if (parameters.size() != 2)
+            return CR_WRONG_USAGE;
+
+        for (int i = 0; i < constraints.size(); i++)
+        {
+            if (constraints[i]->config.val() != parameters[1])
+                continue;
+
+            delete_constraint(c, constraints[i]);
+            return CR_OK;
+        }
+
+        c->con.printerr("Constraint not found: %s\n", parameters[1].c_str());
+        return CR_FAILURE;
     }
     else
         return CR_WRONG_USAGE;

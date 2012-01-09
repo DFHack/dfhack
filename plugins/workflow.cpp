@@ -23,6 +23,7 @@
 #include <df/general_ref.h>
 #include <df/general_ref_unit_workerst.h>
 #include <df/general_ref_building_holderst.h>
+#include <df/general_ref_contains_itemst.h>
 
 using std::vector;
 using std::string;
@@ -66,13 +67,25 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
                 "  workflow list\n"
                 "    List active constraints, and their job counts.\n"
                 "  workflow limit <constraint-spec> <cnt-limit> [cnt-gap]\n"
-                "    Set a constraint.\n"
+                "  workflow limit-count <constraint-spec> <cnt-limit> [cnt-gap]\n"
+                "    Set a constraint. The second form counts each stack as 1 item.\n"
                 "  workflow unlimit <constraint-spec>\n"
                 "    Delete a constraint.\n"
                 "Function:\n"
-                "  When the plugin is enabled, it protects all repeat jobs from removal.\n"
-                "  If they do disappear due to any cause, they are immediately re-added\n"
-                "  to their workshop and suspended.\n"
+                "  - When the plugin is enabled, it protects all repeat jobs from removal.\n"
+                "    If they do disappear due to any cause, they are immediately re-added\n"
+                "    to their workshop and suspended.\n"
+                "  - In addition, when any constraints on item amounts are set, repeat jobs\n"
+                "    that produce that kind of item are automatically suspended and resumed\n"
+                "    as the item amount goes above or below the limit. The gap specifies how\n"
+                "    much below the limit the amount has to drop before jobs are resumed.\n"
+                "Constraint examples:\n"
+                "  workflow limit AMMO:ITEM_AMMO_BOLTS//WOOD,BONE 200 50\n"
+                "    Keep wooden and bone bolts between 150 and 200.\n"
+                "  workflow limit-count DRINK 120 30\n"
+                "    Keep the number of drink barrels between 90 and 120\n"
+                "  workflow limit-count BIN 30\n"
+                "    Make sure there are always 25-30 empty bins.\n"
             )
         );
     }
@@ -148,6 +161,8 @@ struct ProtectedJob {
     }
 };
 
+typedef std::map<std::pair<int,int>, bool> TMaterialCache;
+
 struct ItemConstraint {
     PersistentDataItem config;
 
@@ -159,7 +174,12 @@ struct ItemConstraint {
     int weight;
     std::vector<ProtectedJob*> jobs;
 
-    std::map<std::pair<int,int>, bool> material_cache;
+    int item_amount, item_count, item_inuse;
+    bool request_suspend, request_resume;
+
+    TMaterialCache material_cache;
+
+    ItemConstraint() : weight(0), item_amount(0), item_count(0), item_inuse(0) {}
 
     int goalCount() { return config.ival(0); }
     void setGoalCount(int v) { config.ival(0) = v; }
@@ -169,6 +189,27 @@ struct ItemConstraint {
         return std::min(gcnt, config.ival(1) <= 0 ? 5 : config.ival(1));
     }
     void setGoalGap(int v) { config.ival(1) = v; }
+
+    bool goalByCount() { return config.ival(2) & 1; }
+    void setGoalByCount(bool v) {
+        if (v)
+            config.ival(2) |= 1;
+        else
+            config.ival(2) &= ~1;
+    }
+
+    void init(const std::string &str)
+    {
+        config.val() = str;
+        config.ival(2) = 0;
+    }
+
+    void computeRequest()
+    {
+        int size = goalByCount() ? item_count : item_amount;
+        request_resume = (size <= goalCount()-goalGap());
+        request_suspend = (size >= goalCount());
+    }
 };
 
 /*******************************/
@@ -410,6 +451,8 @@ static void recover_jobs(Core *c)
             vector_erase_at(pending_recover, i);
 }
 
+static void process_constraints(Core *c);
+
 DFhackCExport command_result plugin_onupdate(Core* c)
 {
     if (!enabled)
@@ -419,7 +462,8 @@ DFhackCExport command_result plugin_onupdate(Core* c)
     static unsigned last_rlen = 0;
     cnt++;
 
-    if ((cnt % 5) == 0) {
+    if ((cnt % 5) == 0)
+    {
         check_lost_jobs(c);
 
         if (pending_recover.size() != last_rlen || (cnt % 50) == 0)
@@ -428,7 +472,10 @@ DFhackCExport command_result plugin_onupdate(Core* c)
             last_rlen = pending_recover.size();
 
             if ((cnt % 500) == 0)
+            {
                 update_job_data(c);
+                process_constraints(c);
+            }
         }
     }
 
@@ -500,7 +547,7 @@ static ItemConstraint *get_constraint(Core *c, const std::string &str, Persisten
     else
     {
         nct->config = c->getWorld()->AddPersistentData("workflow/constraints");
-        nct->config.val() = str;
+        nct->init(str);
     }
 
     constraints.push_back(nct);
@@ -520,7 +567,13 @@ static void delete_constraint(Core *c, ItemConstraint *cv)
 static void print_constraint(Core *c, ItemConstraint *cv, bool no_job = false, std::string prefix = "")
 {
     c->con << prefix << "Constraint " << cv->config.val() << ": "
+           << (cv->goalByCount() ? "count " : "amount ")
            << cv->goalCount() << " (gap " << cv->goalGap() << ")" << endl;
+
+    if (cv->item_count || cv->item_inuse)
+        c->con << prefix << "  items: amount " << cv->item_amount << "; "
+                         << cv->item_count << " stacks available, "
+                         << cv->item_inuse << " in use." << endl;
 
     if (no_job) return;
 
@@ -607,6 +660,136 @@ static void map_job_constraints(Core *c)
     }
 }
 
+static bool itemNotEmpty(df::item *item)
+{
+    for (unsigned i = 0; i < item->itemrefs.size(); i++)
+        if (strict_virtual_cast<df::general_ref_contains_itemst>(item->itemrefs[i]))
+            return true;
+
+    return false;
+}
+
+static void map_job_items(Core *c)
+{
+    for (unsigned i = 0; i < constraints.size(); i++)
+    {
+        constraints[i]->item_amount = 0;
+        constraints[i]->item_count = 0;
+        constraints[i]->item_inuse = 0;
+    }
+
+    // Precompute a bitmask with the bad flags
+    df::item_flags bad_flags;
+    bad_flags.whole = 0;
+
+#define F(x) bad_flags.bits.x = true;
+    F(dump); F(forbid); F(garbage_colect);
+    F(hostile); F(on_fire); F(rotten); F(trader);
+    F(in_building); F(in_job);
+#undef F
+
+    std::vector<df::item*> &items = df::item::get_vector();
+    for (unsigned i = 0; i < items.size(); i++)
+    {
+        df::item *item = items[i];
+
+        if (item->flags.whole & bad_flags.whole)
+            continue;
+
+        bool in_use = item->isAssignedToStockpile() || itemNotEmpty(item);
+
+        df::item_type itype = item->getType();
+        int16_t isubtype = item->getSubtype();
+        int16_t imattype = item->getActualMaterial();
+        int32_t imatindex = item->getActualMaterialIndex();
+
+        TMaterialCache::key_type matkey(imattype, imatindex);
+
+        for (unsigned i = 0; i < constraints.size(); i++)
+        {
+            ItemConstraint *cv = constraints[i];
+            if (cv->item.type != itype ||
+                (cv->item.subtype != -1 && cv->item.subtype != isubtype))
+                continue;
+
+            TMaterialCache::iterator it = cv->material_cache.find(matkey);
+
+            bool ok = true;
+            if (it != cv->material_cache.end())
+                ok = it->second;
+            else
+            {
+                MaterialInfo mat(imattype, imatindex);
+                bool ok = (!cv->material.isValid() || mat == cv->material) &&
+                          (cv->mat_mask.whole == 0 || (mat.isValid() && mat.matches(cv->mat_mask)));
+                cv->material_cache[matkey] = ok;
+            }
+
+            if (!ok)
+                continue;
+
+            if (in_use)
+                cv->item_inuse++;
+            else
+            {
+                cv->item_count++;
+                cv->item_amount += item->getStackSize();
+            }
+        }
+    }
+
+    for (unsigned i = 0; i < constraints.size(); i++)
+        constraints[i]->computeRequest();
+}
+
+static void update_jobs_by_constraints(Core *c)
+{
+    for (TKnownJobs::const_iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
+    {
+        ProtectedJob *pj = it->second;
+        if (!pj->live || pj->constraints.empty())
+            continue;
+
+        int resume_weight = -1;
+        int suspend_weight = -1;
+
+        for (unsigned i = 0; i < pj->constraints.size(); i++)
+        {
+            if (pj->constraints[i]->request_resume)
+                resume_weight = std::max(resume_weight, pj->constraints[i]->weight);
+            if (pj->constraints[i]->request_suspend)
+                suspend_weight = std::max(suspend_weight, pj->constraints[i]->weight);
+        }
+
+        bool goal = pj->actual_job->flags.bits.suspend;
+
+        if (suspend_weight >= 0 && suspend_weight >= resume_weight)
+            goal = true;
+        else if (resume_weight >= 0)
+            goal = false;
+
+        if (goal != pj->actual_job->flags.bits.suspend)
+        {
+            pj->actual_job->flags.bits.suspend = goal;
+            c->con.print("%s job %d: %s\n",
+                         (goal ? "Suspending" : "Resuming"), pj->id,
+                         ENUM_KEY_STR(job_type, pj->actual_job->job_type));
+        }
+    }
+}
+
+static void process_constraints(Core *c)
+{
+    if (constraints.empty())
+        return;
+
+    map_job_constraints(c);
+    map_job_items(c);
+    update_jobs_by_constraints(c);
+}
+
+/*******************************/
+
 static command_result workflow_cmd(Core *c, vector <string> & parameters)
 {
     CoreSuspender suspend(c);
@@ -616,6 +799,7 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
         recover_jobs(c);
         update_job_data(c);
         map_job_constraints(c);
+        map_job_items(c);
     }
 
     df::building *workshop = NULL;
@@ -653,6 +837,11 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
         config.ival(0) &= ~CF_ENABLED;
         stop_protect(c);
         return CR_OK;
+    }
+    else if (cmd == "limit" || cmd == "limit-count")
+    {
+        if (!enabled)
+            enable_plugin(c);
     }
 
     if (!enabled)
@@ -697,7 +886,7 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
 
         return CR_OK;
     }
-    else if (cmd == "limit")
+    else if (cmd == "limit" || cmd == "limit-count")
     {
         if (parameters.size() < 3)
             return CR_WRONG_USAGE;
@@ -712,11 +901,13 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
         if (!icv)
             return CR_FAILURE;
 
+        icv->setGoalByCount(cmd == "limit-count");
         icv->setGoalCount(limit);
         if (parameters.size() >= 4)
             icv->setGoalGap(atoi(parameters[3].c_str()));
 
         map_job_constraints(c);
+        map_job_items(c);
         print_constraint(c, icv);
         return CR_OK;
     }

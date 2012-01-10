@@ -18,12 +18,19 @@
 #include <df/job.h>
 #include <df/job_item.h>
 #include <df/job_list_link.h>
+#include <df/dfhack_material_category.h>
 #include <df/item.h>
 #include <df/tool_uses.h>
 #include <df/general_ref.h>
 #include <df/general_ref_unit_workerst.h>
 #include <df/general_ref_building_holderst.h>
 #include <df/general_ref_contains_itemst.h>
+#include <df/itemdef_foodst.h>
+#include <df/reaction.h>
+#include <df/reaction_reagent_itemst.h>
+#include <df/reaction_product_itemst.h>
+#include <df/plant_raw.h>
+#include <df/inorganic_raw.h>
 
 using std::vector;
 using std::string;
@@ -78,14 +85,30 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
                 "  - In addition, when any constraints on item amounts are set, repeat jobs\n"
                 "    that produce that kind of item are automatically suspended and resumed\n"
                 "    as the item amount goes above or below the limit. The gap specifies how\n"
-                "    much below the limit the amount has to drop before jobs are resumed.\n"
+                "    much below the limit the amount has to drop before jobs are resumed;\n"
+                "    this is intended to reduce the frequency of jobs being toggled.\n"
                 "Constraint examples:\n"
-                "  workflow limit AMMO:ITEM_AMMO_BOLTS//WOOD,BONE 200 50\n"
-                "    Keep wooden and bone bolts between 150 and 200.\n"
+                "  workflow limit AMMO:ITEM_AMMO_BOLTS/METAL 1000 100\n"
+                "  workflow limit AMMO:ITEM_AMMO_BOLTS/WOOD,BONE 200 50\n"
+                "    Keep metal bolts within 900-1000, and wood/bone within 150-200.\n"
+                "  workflow limit-count FOOD 120 30\n"
                 "  workflow limit-count DRINK 120 30\n"
-                "    Keep the number of drink barrels between 90 and 120\n"
-                "  workflow limit-count BIN 30\n"
-                "    Make sure there are always 25-30 empty bins.\n"
+                "    Keep the number of prepared food & drink stacks between 90 and 120\n"
+                "  workflow limit BIN 30\n"
+                "  workflow limit BARREL 30\n"
+                "  workflow limit BOX/CLOTH,SILK,YARN 30\n"
+                "    Make sure there are always 25-30 empty bins/barrels/bags.\n"
+                "  workflow limit BAR//COAL 20\n"
+                "  workflow limit BAR//COPPER 30\n"
+                "    Make sure there are always 15-20 coal and 25-30 copper bars.\n"
+                "  workflow limit-count POWDER_MISC/SAND 20\n"
+                "  workflow limit-count BOULDER/CLAY 20\n"
+                "    Collect 15-20 sand bags and clay boulders.\n"
+                "  workflow limit POWDER_MISC//MUSHROOM_CUP_DIMPLE:MILL 100 20\n"
+                "    Make sure there are always 80-100 units of dimple dye.\n"
+                "    In order for this to work, you have to set the material of\n"
+                "    the PLANT input on the Mill Plants job to MUSHROOM_CUP_DIMPLE\n"
+                "    using the 'job item-material' command.\n"
             )
         );
     }
@@ -131,6 +154,7 @@ struct ProtectedJob {
     bool live;
     df::building *holder;
     df::job *job_copy;
+    int reaction_id;
 
     df::job *actual_job;
 
@@ -143,6 +167,7 @@ struct ProtectedJob {
         building_id = holder ? holder->id : -1;
         job_copy = cloneJobStruct(job);
         actual_job = job;
+        reaction_id = -1;
     }
 
     ~ProtectedJob()
@@ -156,6 +181,7 @@ struct ProtectedJob {
         if (*job == *job_copy)
             return;
 
+        reaction_id = -1;
         deleteJobStruct(job_copy);
         job_copy = cloneJobStruct(job);
     }
@@ -169,7 +195,7 @@ struct ItemConstraint {
     ItemTypeInfo item;
 
     MaterialInfo material;
-    df::job_material_category mat_mask;
+    df::dfhack_material_category mat_mask;
 
     int weight;
     std::vector<ProtectedJob*> jobs;
@@ -238,8 +264,10 @@ static ProtectedJob *get_known(int id)
 static bool isSupportedJob(df::job *job)
 {
     return job->misc_links.empty() &&
-           !job->job_items.empty() &&
-           getJobHolder(job);
+           getJobHolder(job) &&
+           (!job->job_items.empty() ||
+            job->job_type == job_type::CollectClay ||
+            job->job_type == job_type::CollectSand);
 }
 
 static void enumLiveJobs(std::map<int, df::job*> &rv)
@@ -503,8 +531,18 @@ static ItemConstraint *get_constraint(Core *c, const std::string &str, Persisten
     if (item.subtype >= 0)
         weight += 10000;
 
+    df::dfhack_material_category mat_mask;
+    std::string maskstr = vector_get(tokens,1);
+    if (!maskstr.empty() && !parseJobMaterialCategory(&mat_mask, maskstr)) {
+        c->con.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
+        return NULL;
+    }
+
+    if (mat_mask.whole != 0)
+        weight += 100;
+
     MaterialInfo material;
-    std::string matstr = vector_get(tokens,1);
+    std::string matstr = vector_get(tokens,2);
     if (!matstr.empty() && (!material.find(matstr) || !material.isValid())) {
         c->con.printerr("Cannot find material: %s\n", matstr.c_str());
         return NULL;
@@ -513,20 +551,10 @@ static ItemConstraint *get_constraint(Core *c, const std::string &str, Persisten
     if (material.type >= 0)
         weight += (material.index >= 0 ? 5000 : 1000);
 
-    df::job_material_category mat_mask;
-    std::string maskstr = vector_get(tokens,2);
-    if (!maskstr.empty() && !parseJobMaterialCategory(&mat_mask, maskstr)) {
-        c->con.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
-        return NULL;
-    }
-
     if (mat_mask.whole && material.isValid() && !material.matches(mat_mask)) {
         c->con.printerr("Material %s doesn't match mask %s\n", matstr.c_str(), maskstr.c_str());
         return NULL;
     }
-
-    if (mat_mask.whole != 0)
-        weight += 100;
 
     for (unsigned i = 0; i < constraints.size(); i++)
     {
@@ -564,44 +592,226 @@ static void delete_constraint(Core *c, ItemConstraint *cv)
     delete cv;
 }
 
-static void print_constraint(Core *c, ItemConstraint *cv, bool no_job = false, std::string prefix = "")
+static void link_job_constraint(ProtectedJob *pj, df::item_type itype, int16_t isubtype,
+                                df::dfhack_material_category mat_mask,
+                                int16_t mat_type, int32_t mat_index)
 {
-    c->con << prefix << "Constraint " << cv->config.val() << ": "
-           << (cv->goalByCount() ? "count " : "amount ")
-           << cv->goalCount() << " (gap " << cv->goalGap() << ")" << endl;
+    MaterialInfo mat(mat_type, mat_index);
 
-    if (cv->item_count || cv->item_inuse)
-        c->con << prefix << "  items: amount " << cv->item_amount << "; "
-                         << cv->item_count << " stacks available, "
-                         << cv->item_inuse << " in use." << endl;
-
-    if (no_job) return;
-
-    if (cv->jobs.empty())
-        c->con.printerr("  (no jobs)\n");
-
-    for (int i = 0; i < cv->jobs.size(); i++)
+    for (unsigned i = 0; i < constraints.size(); i++)
     {
-        ProtectedJob *pj = cv->jobs[i];
-        df::job *job = pj->actual_job;
+        ItemConstraint *ct = constraints[i];
 
-        c->con << prefix << "  job " << job->id << ": "
-               << ENUM_KEY_STR(job_type, job->job_type);
-        if (job->flags.bits.suspend)
-            c->con << " (suspended)";
-        c->con << endl;
+        if (ct->item.type != itype ||
+            (ct->item.subtype != -1 && ct->item.subtype != isubtype))
+            continue;
+        if (!mat.matches(ct->material))
+            continue;
+        if (ct->mat_mask.whole)
+        {
+            if (mat.isValid())
+            {
+                if (!mat.matches(ct->mat_mask))
+                    continue;
+            }
+            else
+            {
+                if (!(mat_mask.whole & ct->mat_mask.whole))
+                    continue;
+            }
+        }
+
+        if (linear_index(pj->constraints, ct) >= 0)
+            continue;
+
+        ct->jobs.push_back(pj);
+        pj->constraints.push_back(ct);
     }
 }
 
-static void print_job(Core *c, ProtectedJob *pj)
+static void compute_custom_job(ProtectedJob *pj, df::job *job)
 {
-    if (!pj)
+    if (pj->reaction_id < 0)
+        pj->reaction_id = linear_index(df::reaction::get_vector(),
+                                       &df::reaction::code, job->reaction_name);
+
+    df::reaction *r = df::reaction::find(pj->reaction_id);
+    if (!r)
         return;
 
-    printJobDetails(c, pj->job_copy);
+    for (unsigned i = 0; i < r->products.size(); i++)
+    {
+        using namespace df::enums::reaction_product_item_flags;
 
-    for (int i = 0; i < pj->constraints.size(); i++)
-        print_constraint(c, pj->constraints[i], true, "  ");
+        VIRTUAL_CAST_VAR(prod, df::reaction_product_itemst, r->products[i]);
+        if (!prod || prod->item_type < 0)
+            continue;
+
+        MaterialInfo mat(prod);
+
+        bool get_mat_prod = prod->flags.is_set(GET_MATERIAL_PRODUCT);
+        if (get_mat_prod || prod->flags.is_set(GET_MATERIAL_SAME))
+        {
+            int reagent_idx = linear_index(r->reagents, &df::reaction_reagent::code,
+                                           prod->get_material.reagent_code);
+            if (reagent_idx < 0)
+                continue;
+
+            int item_idx = linear_index(job->job_items, &df::job_item::reagent_index, reagent_idx);
+            if (item_idx >= 0)
+                mat.decode(job->job_items[item_idx]);
+            else
+            {
+                VIRTUAL_CAST_VAR(src, df::reaction_reagent_itemst, r->reagents[reagent_idx]);
+                if (!src)
+                    continue;
+                mat.decode(src);
+            }
+
+            if (get_mat_prod)
+            {
+                if (!mat.isValid())
+                    continue;
+
+                int idx = linear_index(mat.material->reaction_product.id,
+                                       prod->get_material.product_code);
+                if (idx < 0)
+                    continue;
+
+                mat.decode(mat.material->reaction_product.material, idx);
+            }
+        }
+
+        link_job_constraint(pj, prod->item_type, prod->item_subtype,
+                            0, mat.type, mat.index);
+    }
+}
+
+static void guess_job_material(df::job *job, MaterialInfo &mat, df::dfhack_material_category &mat_mask)
+{
+    using namespace df::enums::job_type;
+
+    if (job->job_type == PrepareMeal)
+        mat.decode(-1);
+    else
+        mat.decode(job);
+
+    mat_mask.whole = job->material_category.whole;
+
+    // Material from the job enum
+    const char *job_material = ENUM_ATTR(job_type, material, job->job_type);
+    if (job_material)
+    {
+        MaterialInfo info;
+        if (info.findBuiltin(job_material))
+            mat = info;
+        else
+            parseJobMaterialCategory(&mat_mask, job_material);
+    }
+
+    // Material from the job reagent
+    if (!mat.isValid() && job->job_items.size() == 1)
+    {
+        mat.decode(job->job_items[0]);
+
+        switch (job->job_items[0]->item_type)
+        {
+        case item_type::WOOD:
+            mat_mask.bits.wood = mat_mask.bits.wood2 = true;
+            break;
+        }
+    }
+}
+
+static void compute_job_outputs(Core *c, ProtectedJob *pj)
+{
+    using namespace df::enums::job_type;
+
+    // Custom reactions handled in another function
+    df::job *job = pj->job_copy;
+
+    if (job->job_type == CustomReaction)
+    {
+        compute_custom_job(pj, job);
+        return;
+    }
+
+    // Item type & subtype
+    df::item_type itype = ENUM_ATTR(job_type, item, job->job_type);
+    int16_t isubtype = job->item_subtype;
+    if (itype == item_type::NONE)
+        return;
+
+    // Item material & material category
+    MaterialInfo mat;
+    df::dfhack_material_category mat_mask;
+    guess_job_material(job, mat, mat_mask);
+
+    // Job-specific code
+    switch (job->job_type)
+    {
+    case SmeltOre:
+        if (mat.inorganic)
+        {
+            std::vector<int16_t> &ores = mat.inorganic->metal_ore.mat_index;
+            for (unsigned i = 0; i < ores.size(); i++)
+                link_job_constraint(pj, item_type::BAR, -1, 0, 0, ores[i]);
+        }
+        return;
+
+    case ExtractMetalStrands:
+        if (mat.inorganic)
+        {
+            std::vector<int16_t> &threads = mat.inorganic->thread_metal.mat_index;
+            for (unsigned i = 0; i < threads.size(); i++)
+                link_job_constraint(pj, item_type::THREAD, -1, 0, 0, threads[i]);
+        }
+        return;
+
+    case PrepareMeal:
+        if (job->mat_type != -1)
+        {
+            std::vector<df::itemdef_foodst*> &food = df::itemdef_foodst::get_vector();
+            for (unsigned i = 0; i < food.size(); i++)
+                if (food[i]->level == job->mat_type)
+                    link_job_constraint(pj, item_type::FOOD, i, 0, -1, -1);
+            return;
+        }
+        break;
+
+#define PLANT_PROCESS_MAT(flag, tag) \
+        if (!mat.isValid() && !job->job_items.empty()\
+            && job->job_items[0]->item_type == item_type::PLANT) \
+            mat.decode(job->job_items[0]); \
+        if (mat.plant && mat.plant->flags.is_set(plant_raw_flags::flag)) \
+            mat.decode(mat.plant->material_defs.type_##tag, \
+                       mat.plant->material_defs.idx_##tag); \
+        else mat.decode(-1);
+    case MillPlants:
+        PLANT_PROCESS_MAT(MILL, mill);
+        break;
+    case ProcessPlants:
+        PLANT_PROCESS_MAT(THREAD, thread);
+        break;
+    case ProcessPlantsBag:
+        PLANT_PROCESS_MAT(LEAVES, leaves);
+        break;
+    case ProcessPlantsBarrel:
+        PLANT_PROCESS_MAT(EXTRACT_BARREL, extract_barrel);
+        break;
+    case ProcessPlantsVial:
+        PLANT_PROCESS_MAT(EXTRACT_VIAL, extract_vial);
+        break;
+    case ExtractFromPlants:
+        PLANT_PROCESS_MAT(EXTRACT_STILL_VIAL, extract_still_vial);
+        break;
+#undef PLANT_PROCESS_MAT
+
+    default:
+        break;
+    }
+
+    link_job_constraint(pj, itype, isubtype, mat_mask, mat.type, mat.index);
 }
 
 static void map_job_constraints(Core *c)
@@ -616,47 +826,7 @@ static void map_job_constraints(Core *c)
         if (!it->second->live)
             continue;
 
-        df::job *job = it->second->job_copy;
-
-        df::item_type itype = ENUM_ATTR(job_type, item, job->job_type);
-        if (itype == item_type::NONE)
-            continue;
-
-        int16_t isubtype = job->item_subtype;
-
-        int16_t mat_type = job->mat_type;
-        int32_t mat_index = job->mat_index;
-
-        if (itype == item_type::FOOD)
-            mat_type = -1;
-
-        if (mat_type == -1 && job->job_items.size() == 1) {
-            mat_type = job->job_items[0]->mat_type;
-            mat_index = job->job_items[0]->mat_index;
-        }
-
-        MaterialInfo mat(mat_type, mat_index);
-
-        for (unsigned i = 0; i < constraints.size(); i++)
-        {
-            ItemConstraint *ct = constraints[i];
-
-            if (ct->item.type != itype ||
-                (ct->item.subtype != -1 && ct->item.subtype != isubtype))
-                continue;
-            if (ct->material.isValid() && ct->material != mat)
-                continue;
-            if (ct->mat_mask.whole)
-            {
-                if (mat.isValid() && !mat.matches(ct->mat_mask))
-                    continue;
-                else if (!(job->material_category.whole & ct->mat_mask.whole))
-                    continue;
-            }
-
-            ct->jobs.push_back(it->second);
-            it->second->constraints.push_back(ct);
-        }
+        compute_job_outputs(c, it->second);
     }
 }
 
@@ -667,6 +837,20 @@ static bool itemNotEmpty(df::item *item)
             return true;
 
     return false;
+}
+
+static bool itemInRealJob(df::item *item)
+{
+    if (!item->flags.bits.in_job)
+        return false;
+
+    if (item->jobs.size() != 1 ||
+        item->jobs[0]->unk1 != 2 ||
+        item->jobs[0]->job == NULL)
+        return true;
+
+    return ENUM_ATTR(job_type, type, item->jobs[0]->job->job_type)
+               != job_type_class::Hauling;
 }
 
 static void map_job_items(Core *c)
@@ -685,7 +869,7 @@ static void map_job_items(Core *c)
 #define F(x) bad_flags.bits.x = true;
     F(dump); F(forbid); F(garbage_colect);
     F(hostile); F(on_fire); F(rotten); F(trader);
-    F(in_building); F(in_job);
+    F(in_building); F(artifact1);
 #undef F
 
     std::vector<df::item*> &items = df::item::get_vector();
@@ -695,8 +879,8 @@ static void map_job_items(Core *c)
 
         if (item->flags.whole & bad_flags.whole)
             continue;
-
-        bool in_use = item->isAssignedToStockpile() || itemNotEmpty(item);
+        if (itemInRealJob(item))
+            continue;
 
         df::item_type itype = item->getType();
         int16_t isubtype = item->getSubtype();
@@ -720,16 +904,20 @@ static void map_job_items(Core *c)
             else
             {
                 MaterialInfo mat(imattype, imatindex);
-                bool ok = (!cv->material.isValid() || mat == cv->material) &&
-                          (cv->mat_mask.whole == 0 || (mat.isValid() && mat.matches(cv->mat_mask)));
+                ok = mat.matches(cv->material) &&
+                     (cv->mat_mask.whole == 0 || mat.matches(cv->mat_mask));
                 cv->material_cache[matkey] = ok;
             }
 
             if (!ok)
                 continue;
 
-            if (in_use)
+            if (item->flags.bits.owned ||
+                item->isAssignedToStockpile() ||
+                itemNotEmpty(item))
+            {
                 cv->item_inuse++;
+            }
             else
             {
                 cv->item_count++;
@@ -763,10 +951,10 @@ static void update_jobs_by_constraints(Core *c)
 
         bool goal = pj->actual_job->flags.bits.suspend;
 
-        if (suspend_weight >= 0 && suspend_weight >= resume_weight)
-            goal = true;
-        else if (resume_weight >= 0)
+        if (resume_weight >= 0 && resume_weight >= suspend_weight)
             goal = false;
+        else if (suspend_weight >= 0 && suspend_weight >= resume_weight)
+            goal = true;
 
         if (goal != pj->actual_job->flags.bits.suspend)
         {
@@ -789,6 +977,60 @@ static void process_constraints(Core *c)
 }
 
 /*******************************/
+
+static void print_constraint(Core *c, ItemConstraint *cv, bool no_job = false, std::string prefix = "")
+{
+    c->con << prefix << "Constraint " << cv->config.val() << ": "
+           << (cv->goalByCount() ? "count " : "amount ")
+           << cv->goalCount() << " (gap " << cv->goalGap() << ")" << endl;
+
+    if (cv->item_count || cv->item_inuse)
+        c->con << prefix << "  items: amount " << cv->item_amount << "; "
+                         << cv->item_count << " stacks available, "
+                         << cv->item_inuse << " in use." << endl;
+
+    if (no_job) return;
+
+    if (cv->jobs.empty())
+        c->con.printerr("  (no jobs)\n");
+
+    for (int i = 0; i < cv->jobs.size(); i++)
+    {
+        ProtectedJob *pj = cv->jobs[i];
+        df::job *job = pj->actual_job;
+
+        c->con << prefix << "  job " << job->id << ": ";
+
+        if (job->job_type != job_type::CustomReaction)
+            c->con << ENUM_KEY_STR(job_type, job->job_type);
+        else
+            c->con << job->reaction_name;
+
+        MaterialInfo mat;
+        df::dfhack_material_category mat_mask;
+        guess_job_material(job, mat, mat_mask);
+
+        if (mat.isValid())
+            c->con << " [" << mat.toString() << "]";
+        else if (mat_mask.whole)
+            c->con << " [" << bitfieldToString(mat_mask) << "]";
+
+        if (job->flags.bits.suspend)
+            c->con << " (suspended)";
+        c->con << endl;
+    }
+}
+
+static void print_job(Core *c, ProtectedJob *pj)
+{
+    if (!pj)
+        return;
+
+    printJobDetails(c, pj->job_copy);
+
+    for (int i = 0; i < pj->constraints.size(); i++)
+        print_constraint(c, pj->constraints[i], true, "  ");
+}
 
 static command_result workflow_cmd(Core *c, vector <string> & parameters)
 {
@@ -905,6 +1147,8 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
         icv->setGoalCount(limit);
         if (parameters.size() >= 4)
             icv->setGoalGap(atoi(parameters[3].c_str()));
+        else
+            icv->setGoalGap(-1);
 
         map_job_constraints(c);
         map_job_items(c);

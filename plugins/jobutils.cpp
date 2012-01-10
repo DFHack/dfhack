@@ -268,7 +268,10 @@ static command_result job_duplicate(Core * c, vector <string> & parameters)
     if (!job)
         return CR_FAILURE;
 
-    if (!job->misc_links.empty() || job->job_items.empty())
+    if (!job->misc_links.empty() ||
+        (job->job_items.empty() &&
+         job->job_type != job_type::CollectSand &&
+         job->job_type != job_type::CollectClay))
     {
         c->con.printerr("Cannot duplicate job %s\n", ENUM_KEY_STR(job_type,job->job_type));
         return CR_FAILURE;
@@ -343,7 +346,7 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
             return CR_FAILURE;
         }
 
-        if (!iinfo.matches(*item, &minfo)) {
+        if (minfo.isValid() && !iinfo.matches(*item, &minfo)) {
             c->con.printerr("Material does not match the requirements.\n");
             printJobDetails(c, job);
             return CR_FAILURE;
@@ -387,7 +390,7 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
             return CR_FAILURE;
         }
 
-        if (!iinfo.matches(*item, &minfo)) {
+        if (iinfo.isValid() && !iinfo.matches(*item, &minfo)) {
             c->con.printerr("Item type does not match the requirements.\n");
             printJobDetails(c, job);
             return CR_FAILURE;

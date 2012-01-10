@@ -187,7 +187,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
     using namespace df::enums::item_type;
 
     if (!isValid())
-        return mat ? mat->matches(item) : true;
+        return mat ? mat->matches(item) : false;
 
     df::job_item_flags1 ok1, mask1, item_ok1, item_mask1;
     df::job_item_flags2 ok2, mask2, item_ok2, item_mask2;

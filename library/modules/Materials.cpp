@@ -52,6 +52,7 @@ using namespace std;
 
 #include "df/job_item.h"
 #include "df/job_material_category.h"
+#include "df/dfhack_material_category.h"
 #include "df/matter_state.h"
 #include "df/material_vec_ref.h"
 
@@ -314,8 +315,9 @@ bool MaterialInfo::matches(const df::job_material_category &cat)
     if (!material)
         return false;
 
-    using namespace df::enums::material_flags;
 #define TEST(bit,flag) if (cat.bits.bit && material->flags.is_set(flag)) return true;
+
+    using namespace df::enums::material_flags;
     TEST(plant, STRUCTURAL_PLANT_MAT);
     TEST(wood, WOOD);
     TEST(cloth, THREAD_PLANT);
@@ -329,13 +331,37 @@ bool MaterialInfo::matches(const df::job_material_category &cat)
     TEST(horn, HORN);
     TEST(pearl, PEARL);
     TEST(yarn, YARN);
-#undef TEST
     return false;
 }
 
+bool MaterialInfo::matches(const df::dfhack_material_category &cat)
+{
+    if (!material)
+        return false;
+
+    df::job_material_category mc;
+    mc.whole = cat.whole;
+    if (matches(mc))
+        return true;
+
+    using namespace df::enums::material_flags;
+    using namespace df::enums::inorganic_flags;
+    TEST(metal, IS_METAL);
+    TEST(stone, IS_STONE);
+    if (cat.bits.stone && type == 0 && index == -1)
+        return true;
+    if (cat.bits.sand && inorganic && inorganic->flags.is_set(SOIL_SAND))
+        return true;
+    TEST(glass, IS_GLASS);
+    if (cat.bits.clay && linear_index(material->reaction_product.id, std::string("FIRED_MAT")) >= 0)
+        return true;
+}
+
+#undef TEST
+
 bool MaterialInfo::matches(const df::job_item &item)
 {
-    if (!isValid()) return true;
+    if (!isValid()) return false;
 
     df::job_item_flags1 ok1, mask1;
     getMatchBits(ok1, mask1);
@@ -431,6 +457,25 @@ void MaterialInfo::getMatchBits(df::job_item_flags3 &ok, df::job_item_flags3 &ma
 #undef TEST
 
 bool DFHack::parseJobMaterialCategory(df::job_material_category *cat, const std::string &token)
+{
+    cat->whole = 0;
+
+    std::vector<std::string> items;
+    split_string(&items, toLower(token), ",", true);
+
+    for (unsigned i = 0; i < items.size(); i++)
+    {
+        int id = findBitfieldField(*cat, items[i]);
+        if (id < 0)
+            return false;
+
+        cat->whole |= (1 << id);
+    }
+
+    return true;
+}
+
+bool DFHack::parseJobMaterialCategory(df::dfhack_material_category *cat, const std::string &token)
 {
     cat->whole = 0;
 

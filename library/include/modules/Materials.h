@@ -51,6 +51,7 @@ namespace df
     struct job_item;
 
     union job_material_category;
+    union dfhack_material_category;
     union job_item_flags1;
     union job_item_flags2;
     union job_item_flags3;
@@ -118,11 +119,20 @@ namespace DFHack
 
         df::craft_material_class getCraftClass();
 
+        bool matches(const MaterialInfo &mat)
+        {
+            if (!mat.isValid()) return true;
+            return (type == mat.type) &&
+                   (mat.index == -1 || index == mat.index);
+        }
+
         bool matches(const df::job_material_category &cat);
+        bool matches(const df::dfhack_material_category &cat);
         bool matches(const df::job_item &item);
     };
 
     DFHACK_EXPORT bool parseJobMaterialCategory(df::job_material_category *cat, const std::string &token);
+    DFHACK_EXPORT bool parseJobMaterialCategory(df::dfhack_material_category *cat, const std::string &token);
 
     inline bool operator== (const MaterialInfo &a, const MaterialInfo &b) {
         return a.type == b.type && a.index == b.index;

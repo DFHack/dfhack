@@ -166,7 +166,7 @@ DFhackCExport command_result mode (Core * c, vector <string> & parameters)
         c->Suspend();
         world->WriteGameMode(gm);
         c->Resume();
-        cout << endl;
+        c->con << endl;
     }
     return CR_OK;
 }

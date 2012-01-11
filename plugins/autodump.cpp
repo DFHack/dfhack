@@ -72,7 +72,6 @@ DFhackCExport command_result df_autodump (Core * c, vector <string> & parameters
         }
     }
     c->Suspend();
-    DFHack::occupancies40d * occupancies;
     DFHack::VersionInfo *mem = c->vinfo;
     DFHack::Gui * Gui = c->getGui();
     DFHack::Items * Items = c->getItems();

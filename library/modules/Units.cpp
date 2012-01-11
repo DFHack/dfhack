@@ -136,7 +136,6 @@ int32_t Units::GetCreatureInBox (int32_t index, df_unit ** furball,
         return -1;
 
     Process *p = d->owner;
-    uint16_t coords[3];
     uint32_t size = creatures->size();
     while (uint32_t(index) < size)
     {
@@ -575,7 +574,6 @@ bool Units::ReadOwnedItemsByIdx(const uint32_t index, std::vector<int32_t> & ite
 
 bool Units::ReadOwnedItemsByPtr(const df_unit * temp, std::vector<int32_t> & items)
 {
-    unsigned int i;
     if(!d->Started) return false;
     items = temp->owned_items;
     return true;

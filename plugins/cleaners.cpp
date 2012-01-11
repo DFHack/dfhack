@@ -12,8 +12,7 @@
 #include "df/unit.h"
 #include "df/matter_state.h"
 #include "df/cursor.h"
-
-#include "modules/Materials.h"
+#include "df/builtin_mats.h"
 
 using std::vector;
 using std::string;
@@ -48,12 +47,12 @@ command_result cleanmap (Core * c, bool snow, bool mud)
 
             // filter snow
             if(!snow
-                && spatter->mat_type == DFHack::Materials::WATER
+                && spatter->mat_type == df::builtin_mats::WATER
                 && spatter->mat_state == df::matter_state::Powder)
                 continue;
             // filter mud
             if(!mud
-                && spatter->mat_type == DFHack::Materials::MUD
+                && spatter->mat_type == df::builtin_mats::MUD
                 && spatter->mat_state == df::matter_state::Solid)
                 continue;
 

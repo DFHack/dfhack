@@ -196,7 +196,7 @@ DFhackCExport command_result clean (Core * c, vector <string> & parameters)
             "snow       - also remove snow\n"
             "mud        - also remove mud\n"
             "Example: clean all mud snow\n"
-            "This removes all spatter, including mud and snow from map tiles."
+            "This removes all spatter, including mud and snow from map tiles.\n"
             );
         return CR_OK;
     }

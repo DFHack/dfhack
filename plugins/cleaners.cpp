@@ -120,8 +120,7 @@ df::map_block *getBlock (int32_t x, int32_t y, int32_t z)
         return NULL;
     if ((x >= world->map.x_count) || (y >= world->map.y_count) || (z >= world->map.z_count))
         return NULL;
-    // block_index isn't declared correctly - needs one more level of indirection
-    return ((df::map_block ****)world->map.block_index)[x >> 4][y >> 4][z];
+    return world->map.block_index[x >> 4][y >> 4][z];
 }
 
 DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)

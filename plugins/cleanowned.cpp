@@ -120,7 +120,7 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
             int32_t owner = Items->getItemOwnerID(item);
             if (owner >= 0)
             {
-                c->con.print("Fixing a misflagged item: ");
+                c->con.print("Fixing a misflagged item: \t");
                 confiscate = true;
             }
             else

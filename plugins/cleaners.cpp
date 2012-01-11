@@ -13,6 +13,7 @@
 #include "df/matter_state.h"
 #include "df/cursor.h"
 #include "df/builtin_mats.h"
+#include "df/contaminant.h"
 
 using std::vector;
 using std::string;

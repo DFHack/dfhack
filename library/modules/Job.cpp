@@ -175,10 +175,12 @@ static void print_job_item_details(Core *c, df::job *job, unsigned idx, df::job_
 
 void DFHack::printJobDetails(Core *c, df::job *job)
 {
+    c->con.color(job->flags.bits.suspend ? Console::COLOR_DARKGREY : Console::COLOR_GREY);
     c->con << "Job " << job->id << ": " << ENUM_KEY_STR(job_type,job->job_type);
     if (job->flags.whole)
            c->con << " (" << bitfieldToString(job->flags) << ")";
     c->con << endl;
+    c->con.reset_color();
 
     df::item_type itype = ENUM_ATTR(job_type, item, job->job_type);
 

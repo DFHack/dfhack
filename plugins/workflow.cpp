@@ -24,6 +24,7 @@
 #include <df/tool_uses.h>
 #include <df/general_ref.h>
 #include <df/general_ref_unit_workerst.h>
+#include <df/general_ref_unit_holderst.h>
 #include <df/general_ref_building_holderst.h>
 #include <df/general_ref_contains_itemst.h>
 #include <df/general_ref_contains_unitst.h>
@@ -33,6 +34,7 @@
 #include <df/reaction_product_itemst.h>
 #include <df/plant_raw.h>
 #include <df/inorganic_raw.h>
+#include <df/builtin_mats.h>
 
 using std::vector;
 using std::string;
@@ -68,9 +70,12 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
             PluginCommand(
                 "workflow", "Manage control of repeat jobs.",
                 workflow_cmd, false,
-                "  workflow enable\n"
-                "  workflow disable\n"
-                "    Enable or disable the plugin.\n"
+                "  workflow enable [option...]\n"
+                "  workflow disable [option...]\n"
+                "    If no options are specified, enables or disables the plugin.\n"
+                "    Otherwise, enables or disables any of the following options:\n"
+                "     - drybuckets: Automatically empty abandoned water buckets.\n"
+                "     - auto-melt: Resume melt jobs when there are objects to melt.\n"
                 "  workflow jobs\n"
                 "    List workflow-controlled jobs (if in a workshop, filtered by it).\n"
                 "  workflow list\n"
@@ -241,8 +246,6 @@ public:
 
     void set_resumed(bool resume)
     {
-        want_resumed = resume;
-
         if (resume)
         {
             if (world->frame_counter >= resume_time)
@@ -250,14 +253,14 @@ public:
         }
         else
         {
+            resume_time = 0;
             if (isActuallyResumed())
-            {
-                resume_time = 0;
                 resume_delay = DAY_TICKS;
-            }
 
             actual_job->flags.bits.suspend = true;
         }
+
+        want_resumed = resume;
     }
 };
 
@@ -326,7 +329,9 @@ static int last_tick_frame_count = 0;
 static int last_frame_count = 0;
 
 enum ConfigFlags {
-    CF_ENABLED = 1
+    CF_ENABLED = 1,
+    CF_DRYBUCKETS = 2,
+    CF_AUTOMELT = 4
 };
 
 typedef std::map<int, ProtectedJob*> TKnownJobs;
@@ -334,6 +339,8 @@ static TKnownJobs known_jobs;
 
 static std::vector<ProtectedJob*> pending_recover;
 static std::vector<ItemConstraint*> constraints;
+
+static int meltable_count = 0;
 
 /******************************
  *       MISC FUNCTIONS       *
@@ -359,6 +366,22 @@ static void enumLiveJobs(std::map<int, df::job*> &rv)
     df::job_list_link *p = world->job_list.next;
     for (; p; p = p->next)
         rv[p->item->id] = p->item;
+}
+
+static bool isOptionEnabled(unsigned flag)
+{
+    return config.isValid() && (config.ival(0) & flag) != 0;
+}
+
+static void setOptionEnabled(ConfigFlags flag, bool on)
+{
+    if (!config.isValid())
+        return;
+
+    if (on)
+        config.ival(0) |= flag;
+    else
+        config.ival(0) &= ~flag;
 }
 
 /******************************
@@ -403,9 +426,10 @@ static void start_protect(Core *c)
 static void init_state(Core *c)
 {
     config = c->getWorld()->GetPersistentData("workflow/config");
+    if (config.isValid() && config.ival(0) == -1)
+        config.ival(0) = 0;
 
-    enabled = config.isValid() && config.ival(0) != -1 &&
-              (config.ival(0) & CF_ENABLED);
+    enabled = isOptionEnabled(CF_ENABLED);
 
     // Parse constraints
     std::vector<PersistentDataItem> items;
@@ -436,7 +460,7 @@ static void enable_plugin(Core *c)
         config.ival(0) = 0;
     }
 
-    config.ival(0) |= CF_ENABLED;
+    setOptionEnabled(CF_ENABLED, true);
     enabled = true;
     c->con << "Enabling the plugin." << endl;
 
@@ -929,15 +953,45 @@ static void map_job_constraints(Core *c)
  *  ITEM-CONSTRAINT MAPPING   *
  ******************************/
 
-static bool itemNotEmpty(df::item *item)
+static void dryBucket(df::item *item)
 {
     for (unsigned i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
         if (strict_virtual_cast<df::general_ref_contains_itemst>(ref))
+        {
+            df::item *obj = ref->getItem();
+
+            if (obj &&
+                obj->getType() == item_type::LIQUID_MISC &&
+                obj->getMaterial() == builtin_mats::WATER)
+            {
+                obj->flags.bits.garbage_colect = true;
+                obj->flags.bits.hidden = true;
+            }
+        }
+    }
+}
+
+static bool itemBusy(df::item *item)
+{
+
+    for (unsigned i = 0; i < item->itemrefs.size(); i++)
+    {
+        df::general_ref *ref = item->itemrefs[i];
+        if (strict_virtual_cast<df::general_ref_contains_itemst>(ref))
+        {
+            df::item *obj = ref->getItem();
+            if (obj && !obj->flags.bits.garbage_colect)
+                return true;
+        }
+        else if (strict_virtual_cast<df::general_ref_contains_unitst>(ref))
             return true;
-        if (strict_virtual_cast<df::general_ref_contains_unitst>(ref))
-            return true;
+        else if (strict_virtual_cast<df::general_ref_unit_holderst>(ref))
+        {
+            if (!item->flags.bits.in_job)
+                return true;
+        }
     }
 
     return false;
@@ -966,6 +1020,8 @@ static void map_job_items(Core *c)
         constraints[i]->item_inuse = 0;
     }
 
+    meltable_count = 0;
+
     // Precompute a bitmask with the bad flags
     df::item_flags bad_flags;
     bad_flags.whole = 0;
@@ -976,6 +1032,8 @@ static void map_job_items(Core *c)
     F(in_building); F(construction); F(artifact1);
 #undef F
 
+    bool dry_buckets = isOptionEnabled(CF_DRYBUCKETS);
+
     std::vector<df::item*> &items = world->items.other[items_other_id::ANY_FREE];
 
     for (unsigned i = 0; i < items.size(); i++)
@@ -984,14 +1042,20 @@ static void map_job_items(Core *c)
 
         if (item->flags.whole & bad_flags.whole)
             continue;
-        if (itemInRealJob(item))
-            continue;
 
         df::item_type itype = item->getType();
         int16_t isubtype = item->getSubtype();
         int16_t imattype = item->getActualMaterial();
         int32_t imatindex = item->getActualMaterialIndex();
 
+        // Special handling
+        if (dry_buckets && itype == item_type::BUCKET && !item->flags.bits.in_job)
+            dryBucket(item);
+
+        if (item->flags.bits.melt && !item->flags.bits.owned && !itemBusy(item))
+            meltable_count++;
+
+        // Match to constraints
         TMaterialCache::key_type matkey(imattype, imatindex);
 
         for (unsigned i = 0; i < constraints.size(); i++)
@@ -1019,7 +1083,8 @@ static void map_job_items(Core *c)
 
             if (item->flags.bits.owned ||
                 item->isAssignedToStockpile() ||
-                itemNotEmpty(item))
+                itemInRealJob(item) ||
+                itemBusy(item))
             {
                 cv->item_inuse++;
             }
@@ -1041,12 +1106,37 @@ static void map_job_items(Core *c)
 
 static std::string shortJobDescription(df::job *job);
 
+static void setJobResumed(Core *c, ProtectedJob *pj, bool goal)
+{
+    bool current = pj->isResumed();
+
+    pj->set_resumed(goal);
+
+    if (goal != current)
+    {
+        c->con.print("%s %s%s\n",
+                     (goal ? "Resuming" : "Suspending"),
+                     shortJobDescription(pj->actual_job).c_str(),
+                     (!goal || pj->isActuallyResumed() ? "" : " (delayed)"));
+    }
+}
+
 static void update_jobs_by_constraints(Core *c)
 {
     for (TKnownJobs::const_iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
     {
         ProtectedJob *pj = it->second;
-        if (!pj->isLive() || pj->constraints.empty())
+        if (!pj->isLive())
+            continue;
+
+        if (pj->actual_job->job_type == job_type::MeltMetalObject &&
+            isOptionEnabled(CF_AUTOMELT))
+        {
+            setJobResumed(c, pj, meltable_count > 0);
+            continue;
+        }
+
+        if (pj->constraints.empty())
             continue;
 
         int resume_weight = -1;
@@ -1060,29 +1150,21 @@ static void update_jobs_by_constraints(Core *c)
                 suspend_weight = std::max(suspend_weight, pj->constraints[i]->weight);
         }
 
-        bool current = pj->isResumed();
-        bool goal = current;
+        bool goal = pj->isResumed();
 
         if (resume_weight >= 0 && resume_weight >= suspend_weight)
             goal = true;
         else if (suspend_weight >= 0 && suspend_weight >= resume_weight)
             goal = false;
 
-        pj->set_resumed(goal);
-
-        if (goal != current)
-        {
-            c->con.print("%s %s%s\n",
-                         (goal ? "Resuming" : "Suspending"),
-                         shortJobDescription(pj->actual_job).c_str(),
-                         (!goal || pj->isActuallyResumed() ? "" : " (delayed)"));
-        }
+        setJobResumed(c, pj, goal);
     }
 }
 
 static void process_constraints(Core *c)
 {
-    if (constraints.empty())
+    if (constraints.empty() &&
+        !isOptionEnabled(CF_DRYBUCKETS | CF_AUTOMELT))
         return;
 
     map_job_constraints(c);
@@ -1203,7 +1285,22 @@ static void print_job(Core *c, ProtectedJob *pj)
     if (!pj)
         return;
 
-    printJobDetails(c, pj->isLive() ? pj->actual_job : pj->job_copy);
+    df::job *job = pj->isLive() ? pj->actual_job : pj->job_copy;
+
+    printJobDetails(c, job);
+
+    if (job->job_type == job_type::MeltMetalObject &&
+        isOptionEnabled(CF_AUTOMELT))
+    {
+        if (meltable_count <= 0)
+            c->con.color(Console::COLOR_CYAN);
+        else if (pj->want_resumed && !pj->isActuallyResumed())
+            c->con.color(Console::COLOR_YELLOW);
+        else
+            c->con.color(Console::COLOR_GREEN);
+        c->con << "  Meltable: " << meltable_count << " objects." << endl;
+        c->con.reset_color();
+    }
 
     for (int i = 0; i < pj->constraints.size(); i++)
         print_constraint(c, pj->constraints[i], true, "  ");
@@ -1233,28 +1330,46 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
 
     std::string cmd = parameters.empty() ? "list" : parameters[0];
 
-    if (cmd == "enable")
+    if (cmd == "enable" || cmd == "disable")
     {
+        bool enable = (cmd == "enable");
+        if (enable && !enabled)
+        {
+            enable_plugin(c);
+        }
+        else if (!enable && parameters.size() == 1)
+        {
+            if (enabled)
+            {
+                enabled = false;
+                setOptionEnabled(CF_ENABLED, false);
+                stop_protect(c);
+            }
+
+            c->con << "The plugin is disabled." << endl;
+            return CR_OK;
+        }
+
+        for (unsigned i = 1; i < parameters.size(); i++)
+        {
+            if (parameters[i] == "drybuckets")
+                setOptionEnabled(CF_DRYBUCKETS, enable);
+            else if (parameters[i] == "auto-melt")
+                setOptionEnabled(CF_AUTOMELT, enable);
+            else
+                return CR_WRONG_USAGE;
+        }
+
         if (enabled)
-        {
-            c->con << "The plugin is already enabled." << endl;
-            return CR_OK;
-        }
+            c->con << "The plugin is enabled." << endl;
+        else
+            c->con << "The plugin is disabled." << endl;
 
-        enable_plugin(c);
-        return CR_OK;
-    }
-    else if (cmd == "disable")
-    {
-        if (!enabled)
-        {
-            c->con << "The plugin is already disabled." << endl;
-            return CR_OK;
-        }
+        if (isOptionEnabled(CF_DRYBUCKETS))
+            c->con << "Option drybuckets is enabled." << endl;
+        if (isOptionEnabled(CF_AUTOMELT))
+            c->con << "Option auto-melt is enabled." << endl;
 
-        enabled = false;
-        config.ival(0) &= ~CF_ENABLED;
-        stop_protect(c);
         return CR_OK;
     }
     else if (cmd == "count" || cmd == "amount")

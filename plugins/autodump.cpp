@@ -22,11 +22,18 @@ using namespace std;
 #include <modules/Materials.h>
 #include <modules/MapCache.h>
 
+#include <DataDefs.h>
+#include <df/item.h>
+#include <df/world.h>
+#include <df/general_ref_unit_holderst.h>
+
 using namespace DFHack;
 using MapExtras::Block;
 using MapExtras::MapCache;
 
-DFhackCExport command_result df_autodump (Core * c, vector <string> & parameters);
+DFhackCExport command_result df_autodump(Core * c, vector <string> & parameters);
+DFhackCExport command_result df_autodump_destroy_here(Core * c, vector <string> & parameters);
+DFhackCExport command_result df_autodump_destroy_item(Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -39,6 +46,18 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.push_back(PluginCommand("autodump",
                                      "Teleport items marked for dumping to the cursor.",
                                      df_autodump));
+    commands.push_back(PluginCommand(
+        "autodump-destroy-here", "Destroy items marked for dumping under cursor.",
+        df_autodump_destroy_here, cursor_hotkey,
+        "  Identical to autodump destroy-here, but intended for use as keybinding.\n"
+    ));
+    commands.push_back(PluginCommand(
+        "autodump-destroy-item", "Destroy the selected item.",
+        df_autodump_destroy_item, any_item_hotkey,
+        "  Destroy the selected item. The item may be selected\n"
+        "  in the 'k' list, or inside a container. If called\n"
+        "  again before the game is resumed, cancels destroy.\n"
+    ));
     return CR_OK;
 }
 
@@ -49,15 +68,18 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 typedef std::map <DFCoord, uint32_t> coordmap;
 
-DFhackCExport command_result df_autodump (Core * c, vector <string> & parameters)
+static command_result autodump_main(Core * c, vector <string> & parameters)
 {
     // Command line options
     bool destroy = false;
+    bool here = false;
     if(parameters.size() > 0)
     {
         string & p = parameters[0];
         if(p == "destroy")
             destroy = true;
+        else if (p == "destroy-here")
+            destroy = here = true;
         else if(p == "?" || p == "help")
         {
             c->con.print(
@@ -66,12 +88,13 @@ DFhackCExport command_result df_autodump (Core * c, vector <string> & parameters
                 "and the forbid flag is set, as if it had been dumped normally.\n"
                 "Be aware that any active dump item tasks still point at the item.\n\n"
                 "Options:\n"
-                "destroy  - instead of dumping, destroy the items instantly.\n"
+                "destroy       - instead of dumping, destroy the items instantly.\n"
+                "destroy-here  - only affect the tile under cursor.\n"
                         );
             return CR_OK;
         }
     }
-    c->Suspend();
+
     DFHack::occupancies40d * occupancies;
     DFHack::VersionInfo *mem = c->vinfo;
     DFHack::Gui * Gui = c->getGui();
@@ -82,7 +105,6 @@ DFhackCExport command_result df_autodump (Core * c, vector <string> & parameters
     if(!Items->readItemVector(p_items))
     {
         c->con.printerr("Can't access the item vector.\n");
-        c->Resume();
         return CR_FAILURE;
     }
     std::size_t numItems = p_items.size();
@@ -91,7 +113,6 @@ DFhackCExport command_result df_autodump (Core * c, vector <string> & parameters
     if(!Maps->Start())
     {
         c->con.printerr("Can't initialize map.\n");
-        c->Resume();
         return CR_FAILURE;
     }
     MapCache MC (Maps);
@@ -100,28 +121,28 @@ DFhackCExport command_result df_autodump (Core * c, vector <string> & parameters
 
     int cx, cy, cz;
     DFCoord pos_cursor;
-    if(!destroy)
+    if(!destroy || here)
     {
         if (!Gui->getCursorCoords(cx,cy,cz))
         {
             c->con.printerr("Cursor position not found. Please enabled the cursor.\n");
-            c->Resume();
             return CR_FAILURE;
         }
         pos_cursor = DFCoord(cx,cy,cz);
+    }
+    if (!destroy)
+    {
         {
             Block * b = MC.BlockAt(pos_cursor / 16);
             if(!b)
             {
                 c->con.printerr("Cursor is in an invalid/uninitialized area. Place it over a floor.\n");
-                c->Resume();
                 return CR_FAILURE;
             }
             uint16_t ttype = MC.tiletypeAt(pos_cursor);
             if(!DFHack::isFloorTerrain(ttype))
             {
                 c->con.printerr("Cursor should be placed over a floor.\n");
-                c->Resume();
                 return CR_FAILURE;
             }
         }
@@ -154,7 +175,7 @@ DFhackCExport command_result df_autodump (Core * c, vector <string> & parameters
             ||  itm->flags.in_building
             ||  itm->flags.in_chest
             ||  itm->flags.in_inventory
-            ||  itm->flags.construction
+            ||  itm->flags.artifact1
         )
             continue;
 
@@ -200,7 +221,14 @@ DFhackCExport command_result df_autodump (Core * c, vector <string> & parameters
         }
         else // destroy
         {
+            if (here && pos_item != pos_cursor)
+                continue;
+
             itm->flags.garbage_colect = true;
+
+            // Cosmetic changes: make them disappear from view instantly
+            itm->flags.forbid = true;
+            itm->flags.hidden = true;
         }
         // keeping track of item pile sizes ;)
         it->second --;
@@ -238,7 +266,92 @@ DFhackCExport command_result df_autodump (Core * c, vector <string> & parameters
         // Is this necessary?  Is "forbid" a dirtyable attribute like "dig" is?
         Maps->WriteDirtyBit(cx/16, cy/16, cz, true);
     }
-    c->Resume();
     c->con.print("Done. %d items %s.\n", dumped_total, destroy ? "marked for desctruction" : "quickdumped");
+    return CR_OK;
+}
+
+DFhackCExport command_result df_autodump(Core * c, vector <string> & parameters)
+{
+    CoreSuspender suspend(c);
+
+    return autodump_main(c, parameters);
+}
+
+DFhackCExport command_result df_autodump_destroy_here(Core * c, vector <string> & parameters)
+{
+    // HOTKEY COMMAND; CORE ALREADY SUSPENDED
+    if (!parameters.empty())
+        return CR_WRONG_USAGE;
+
+    vector<string> args;
+    args.push_back("destroy-here");
+
+    return autodump_main(c, args);
+}
+
+static std::map<int, df::item_flags> pending_destroy;
+static int last_frame = 0;
+
+DFhackCExport command_result df_autodump_destroy_item(Core * c, vector <string> & parameters)
+{
+    // HOTKEY COMMAND; CORE ALREADY SUSPENDED
+    if (!parameters.empty())
+        return CR_WRONG_USAGE;
+
+    df::item *item = getSelectedItem(c);
+    if (!item)
+        return CR_FAILURE;
+
+    // Allow undoing the destroy
+    if (df::global::world->frame_counter != last_frame)
+    {
+        last_frame = df::global::world->frame_counter;
+        pending_destroy.clear();
+    }
+
+    if (pending_destroy.count(item->id))
+    {
+        df::item_flags old_flags = pending_destroy[item->id];
+        pending_destroy.erase(item->id);
+
+        item->flags.bits.garbage_colect = false;
+        item->flags.bits.hidden = old_flags.bits.hidden;
+        item->flags.bits.dump = old_flags.bits.dump;
+        item->flags.bits.forbid = old_flags.bits.forbid;
+        return CR_OK;
+    }
+
+    // Check the item is good to destroy
+    if (item->flags.bits.garbage_colect)
+    {
+        c->con.printerr("Item is already marked for destroy.\n");
+        return CR_FAILURE;
+    }
+
+    if (item->flags.bits.construction ||
+        item->flags.bits.in_building ||
+        item->flags.bits.artifact1)
+    {
+        c->con.printerr("Choosing not to destroy buildings, constructions and artifacts.\n");
+        return CR_FAILURE;
+    }
+
+    for (unsigned i = 0; i < item->itemrefs.size(); i++)
+    {
+        df::general_ref *ref = item->itemrefs[i];
+        if (strict_virtual_cast<df::general_ref_unit_holderst>(ref))
+        {
+            c->con.printerr("Choosing not to destroy items in unit inventory.\n");
+            return CR_FAILURE;
+        }
+    }
+
+    // Set the flags
+    pending_destroy[item->id] = item->flags;
+
+    item->flags.bits.garbage_colect = true;
+    item->flags.bits.hidden = true;
+    item->flags.bits.dump = true;
+    item->flags.bits.forbid = true;
     return CR_OK;
 }

@@ -35,6 +35,8 @@ distribution.
 namespace df {
     struct viewscreen;
     struct job;
+    struct unit;
+    struct item;
 };
 
 /**
@@ -46,10 +48,23 @@ namespace DFHack
 {
     class Core;
 
+    DFHACK_EXPORT bool item_details_hotkey(Core *, df::viewscreen *top);
+    DFHACK_EXPORT bool unitjobs_hotkey(Core *, df::viewscreen *top);
+
     DFHACK_EXPORT bool workshop_job_hotkey(Core *c, df::viewscreen *top);
     DFHACK_EXPORT bool build_selector_hotkey(Core *c, df::viewscreen *top);
+    DFHACK_EXPORT bool view_unit_hotkey(Core *c, df::viewscreen *top);
+    DFHACK_EXPORT bool unit_inventory_hotkey(Core *c, df::viewscreen *top);
+
+    DFHACK_EXPORT bool any_job_hotkey(Core *c, df::viewscreen *top);
+    DFHACK_EXPORT bool any_unit_hotkey(Core *c, df::viewscreen *top);
+    DFHACK_EXPORT bool any_item_hotkey(Core *c, df::viewscreen *top);
 
     DFHACK_EXPORT df::job *getSelectedWorkshopJob(Core *c, bool quiet = false);
+
+    DFHACK_EXPORT df::job *getSelectedJob(Core *c, bool quiet = false);
+    DFHACK_EXPORT df::unit *getSelectedUnit(Core *c, bool quiet = false);
+    DFHACK_EXPORT df::item *getSelectedItem(Core *c, bool quiet = false);
 
     class DFContextShared;
     /**

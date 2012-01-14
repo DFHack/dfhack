@@ -12,6 +12,8 @@
 #include "df/unit.h"
 #include "df/matter_state.h"
 #include "df/cursor.h"
+#include "df/contaminant.h"
+#include "df/unit_spatter.h"
 
 #include "modules/Materials.h"
 

@@ -1095,6 +1095,11 @@
                 <Address name='ui_workshop_job_cursor'/>
                 <Address name='ui_workshop_in_add'/>
                 <Address name='job_next_id'/>
+                <Address name='ui_building_item_cursor'/>
+                <Address name='ui_selected_unit'/>
+                <Address name='ui_unit_view_mode'/>
+                <Address name='cur_year'/>
+                <Address name='cur_year_tick'/>
             </Group>
         </Offsets>
     </Base>
@@ -2348,6 +2353,12 @@
                 <Address name='ui_workshop_in_add' value='0xeb0992'/>
 
                 <Address name='job_next_id' value='0xe18290'/>
+
+                <Address name='ui_building_item_cursor' value='0xef7264'/>
+                <Address name='ui_selected_unit' value='0xef2430'/>
+                <Address name='ui_unit_view_mode' value='0xec4a5c'/>
+                <Address name='cur_year' value='0xef7268'/>
+                <Address name='cur_year_tick' value='0xec5170'/>
             </Group>
         </Offsets>
         cmake
@@ -3230,11 +3241,17 @@
                 <Address name='ui_sidebar_menus' value='0x958aa40'/>
                 <Address name='ui_build_selector' value='0x8df9b20'/>
                 <Address name='ui_look_list' value='0x961d840'/>
-                <!--<Address name='ui_look_cursor' value=''/>-->
+                <Address name='ui_look_cursor' value='0x93f06dc'/>
                 <Address name='ui_workshop_job_cursor' value='0x93f0644'/>
                 <Address name='ui_workshop_in_add' value='0x93f0651'/>
 
                 <Address name='job_next_id' value='0x961d940'/>
+
+                <Address name='ui_building_item_cursor' value='0x93f0648'/>
+                <Address name='ui_selected_unit' value='0x93f06d0'/>
+                <Address name='ui_unit_view_mode' value='0x93f06d8'/>
+                <Address name='cur_year' value='0x93f0600'/>
+                <Address name='cur_year_tick' value='0x93f0620'/>
             </Group>
         </Offsets>
     </Version>

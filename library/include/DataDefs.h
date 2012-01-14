@@ -249,10 +249,16 @@ namespace df {
     SIMPLE_GLOBAL(job_next_id,int) \
     SIMPLE_GLOBAL(ui_look_cursor,int) \
     SIMPLE_GLOBAL(ui_workshop_job_cursor,int) \
+    SIMPLE_GLOBAL(ui_building_item_cursor,int) \
     SIMPLE_GLOBAL(ui_workshop_in_add,bool) \
+    SIMPLE_GLOBAL(ui_selected_unit,int) \
+    SIMPLE_GLOBAL(cur_year,int) \
+    SIMPLE_GLOBAL(cur_year_tick,int) \
     GLOBAL(ui_sidebar_menus,ui_sidebar_menus) \
     GLOBAL(ui_build_selector,ui_build_selector) \
-    GLOBAL(ui_look_list,ui_look_list)
+    GLOBAL(ui_look_list,ui_look_list) \
+    GLOBAL(ui_unit_view_mode, ui_unit_view_mode)
+
 
 #define SIMPLE_GLOBAL(name,tname) \
     namespace global { extern DFHACK_EXPORT tname *name; }

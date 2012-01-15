@@ -40,7 +40,9 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
             "rename", "Rename various things.", rename, false,
             "  rename squad <index> \"name\"\n"
             "  rename hotkey <index> \"name\"\n"
+            "    (identified by ordinal index)\n"
             "  rename unit \"nickname\"\n"
+            "  rename unit-profession \"custom profession\"\n"
             "    (a unit must be highlighted in the ui)\n"
         ));
     }
@@ -122,6 +124,17 @@ static command_result rename(Core * c, vector <string> &parameters)
         df::historical_figure *figure = df::historical_figure::find(unit->hist_figure_id);
         if (figure)
             set_nickname(&figure->name, parameters[1]);
+    }
+    else if (cmd == "unit-profession")
+    {
+        if (parameters.size() != 2)
+            return CR_WRONG_USAGE;
+
+        df::unit *unit = getSelectedUnit(c);
+        if (!unit)
+            return CR_WRONG_USAGE;
+
+        unit->custom_profession = parameters[1];
     }
     else
     {

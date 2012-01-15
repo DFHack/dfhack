@@ -27,6 +27,7 @@
 #include <df/general_ref_unit_holderst.h>
 #include <df/general_ref_building_holderst.h>
 #include <df/general_ref_contains_itemst.h>
+#include <df/general_ref_contained_in_itemst.h>
 #include <df/general_ref_contains_unitst.h>
 #include <df/itemdef_foodst.h>
 #include <df/reaction.h>
@@ -993,6 +994,7 @@ static void dryBucket(df::item *item)
 
 static bool itemBusy(df::item *item)
 {
+    using namespace df::enums::item_type;
 
     for (unsigned i = 0; i < item->itemrefs.size(); i++)
     {
@@ -1008,6 +1010,17 @@ static bool itemBusy(df::item *item)
         else if (strict_virtual_cast<df::general_ref_unit_holderst>(ref))
         {
             if (!item->flags.bits.in_job)
+                return true;
+        }
+        else if (strict_virtual_cast<df::general_ref_contained_in_itemst>(ref))
+        {
+            df::item *obj = ref->getItem();
+            if (!obj)
+                continue;
+
+            // Stuff in flasks and backpacks is busy
+            df::item_type type = obj->getType();
+            if ((type == FLASK && item->getType() == DRINK) || type == BACKPACK)
                 return true;
         }
     }

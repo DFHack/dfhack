@@ -71,6 +71,7 @@ namespace DFHack
             return ptr ? decode(ptr->item_type, ptr->item_subtype) : decode(df::enums::item_type::NONE);
         }
 
+        std::string getToken();
         std::string toString();
 
         bool find(const std::string &token);

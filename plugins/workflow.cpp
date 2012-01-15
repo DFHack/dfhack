@@ -282,10 +282,15 @@ struct ItemConstraint {
     int item_amount, item_count, item_inuse;
     bool request_suspend, request_resume;
 
+    bool is_active, cant_resume_reported;
+
     TMaterialCache material_cache;
 
 public:
-    ItemConstraint() : weight(0), item_amount(0), item_count(0), item_inuse(0) {}
+    ItemConstraint()
+        : weight(0), item_amount(0), item_count(0), item_inuse(0)
+        , is_active(false), cant_resume_reported(false)
+    {}
 
     int goalCount() { return config.ival(0); }
     void setGoalCount(int v) { config.ival(0) = v; }
@@ -341,6 +346,7 @@ static std::vector<ProtectedJob*> pending_recover;
 static std::vector<ItemConstraint*> constraints;
 
 static int meltable_count = 0;
+static bool melt_active = false;
 
 /******************************
  *       MISC FUNCTIONS       *
@@ -745,6 +751,9 @@ static void link_job_constraint(ProtectedJob *pj, df::item_type itype, int16_t i
 
         ct->jobs.push_back(pj);
         pj->constraints.push_back(ct);
+
+        if (!ct->is_active && pj->isResumed())
+            ct->is_active = true;
     }
 }
 
@@ -934,17 +943,27 @@ static void compute_job_outputs(Core *c, ProtectedJob *pj)
 
 static void map_job_constraints(Core *c)
 {
+    melt_active = false;
+
     for (unsigned i = 0; i < constraints.size(); i++)
+    {
         constraints[i]->jobs.clear();
+        constraints[i]->is_active = false;
+    }
 
     for (TKnownJobs::const_iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
     {
-        it->second->constraints.clear();
+        ProtectedJob *pj = it->second;
 
-        if (!it->second->isLive())
+        pj->constraints.clear();
+
+        if (!pj->isLive())
             continue;
 
-        compute_job_outputs(c, it->second);
+        if (!melt_active && pj->actual_job->job_type == job_type::MeltMetalObject)
+            melt_active = pj->isResumed();
+
+        compute_job_outputs(c, pj);
     }
 }
 
@@ -1157,6 +1176,42 @@ static void update_jobs_by_constraints(Core *c)
             goal = false;
 
         setJobResumed(c, pj, goal);
+    }
+
+    for (unsigned i = 0; i < constraints.size(); i++)
+    {
+        ItemConstraint *ct = constraints[i];
+
+        bool is_running = false;
+        for (unsigned j = 0; j < ct->jobs.size(); j++)
+            if (!!(is_running = ct->jobs[j]->isResumed()))
+                break;
+
+        std::string info = ct->item.toString();
+
+        if (ct->material.isValid())
+            info = ct->material.toString() + " " + info;
+        else if (ct->mat_mask.whole)
+            info = bitfieldToString(ct->mat_mask) + " " + info;
+
+        if (is_running != ct->is_active)
+        {
+            if (is_running && ct->request_resume)
+                showAnnouncement("Resuming production: " + info, 2, false);
+            else if (!is_running && !ct->request_resume)
+                showAnnouncement("Stopping production: " + info, 3, false);
+        }
+
+        if (ct->request_resume && !is_running)
+        {
+            if (!ct->cant_resume_reported)
+                showAnnouncement("Cannot produce: " + info, 6, true);
+            ct->cant_resume_reported = true;
+        }
+        else
+        {
+            ct->cant_resume_reported = false;
+        }
     }
 }
 

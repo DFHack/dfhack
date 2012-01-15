@@ -68,20 +68,20 @@ using namespace DFHack;
 using namespace df::enums;
 
 #define ITEMDEF_VECTORS \
-    ITEM(WEAPON, weapons) \
-    ITEM(TRAPCOMP, trapcomps) \
-    ITEM(TOY, toys) \
-    ITEM(TOOL, tools) \
-    ITEM(INSTRUMENT, instruments) \
-    ITEM(ARMOR, armor) \
-    ITEM(AMMO, ammo) \
-    ITEM(SIEGEAMMO, siege_ammo) \
-    ITEM(GLOVES, gloves) \
-    ITEM(SHOES, shoes) \
-    ITEM(SHIELD, shields) \
-    ITEM(HELM, helms) \
-    ITEM(PANTS, pants) \
-    ITEM(FOOD, food)
+    ITEM(WEAPON, weapons, itemdef_weaponst) \
+    ITEM(TRAPCOMP, trapcomps, itemdef_trapcompst) \
+    ITEM(TOY, toys, itemdef_toyst) \
+    ITEM(TOOL, tools, itemdef_toolst) \
+    ITEM(INSTRUMENT, instruments, itemdef_instrumentst) \
+    ITEM(ARMOR, armor, itemdef_armorst) \
+    ITEM(AMMO, ammo, itemdef_ammost) \
+    ITEM(SIEGEAMMO, siege_ammo, itemdef_siegeammost) \
+    ITEM(GLOVES, gloves, itemdef_glovesst) \
+    ITEM(SHOES, shoes, itemdef_shoesst) \
+    ITEM(SHIELD, shields, itemdef_shieldst) \
+    ITEM(HELM, helms, itemdef_helmst) \
+    ITEM(PANTS, pants, itemdef_pantsst) \
+    ITEM(FOOD, food, itemdef_foodst)
 
 bool ItemTypeInfo::decode(df::item_type type_, int16_t subtype_)
 {
@@ -97,7 +97,7 @@ bool ItemTypeInfo::decode(df::item_type type_, int16_t subtype_)
     case NONE:
         return false;
 
-#define ITEM(type,vec) \
+#define ITEM(type,vec,tclass) \
     case type: \
         custom = vector_get(defs.vec, subtype); \
         break;
@@ -119,7 +119,7 @@ bool ItemTypeInfo::decode(df::item *ptr)
         return decode(ptr->getType(), ptr->getSubtype());
 }
 
-std::string ItemTypeInfo::toString()
+std::string ItemTypeInfo::getToken()
 {
     std::string rv = ENUM_KEY_STR(item_type, type);
     if (custom)
@@ -127,6 +127,25 @@ std::string ItemTypeInfo::toString()
     else if (subtype != -1)
         rv += stl_sprintf(":%d", subtype);
     return rv;
+}
+
+std::string ItemTypeInfo::toString()
+{
+    using namespace df::enums::item_type;
+
+    switch (type) {
+#define ITEM(type,vec,tclass) \
+    case type: \
+        if (VIRTUAL_CAST_VAR(cv, df::tclass, custom)) \
+            return cv->name;
+ITEMDEF_VECTORS
+#undef ITEM
+
+    default:
+        break;
+    }
+
+    return toLower(ENUM_KEY_STR(item_type, type));
 }
 
 bool ItemTypeInfo::find(const std::string &token)
@@ -164,7 +183,7 @@ bool ItemTypeInfo::find(const std::string &token)
     df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
 
     switch (type) {
-#define ITEM(type,vec) \
+#define ITEM(type,vec,tclass) \
     case type: \
         for (int i = 0; i < defs.vec.size(); i++) { \
             if (defs.vec[i]->id == items[1]) { \

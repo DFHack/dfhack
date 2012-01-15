@@ -57,6 +57,8 @@ using namespace DFHack;
 #include "df/building_furnacest.h"
 #include "df/general_ref.h"
 #include "df/unit_inventory_item.h"
+#include "df/report.h"
+#include "df/popup_message.h"
 
 using namespace df::enums;
 
@@ -376,6 +378,70 @@ df::item *DFHack::getSelectedItem(Core *c, bool quiet)
         c->con.printerr("No item is selected in the UI.\n");
 
     return item;
+}
+
+//
+
+void DFHack::showAnnouncement(std::string message, int color, bool bright)
+{
+    using df::global::world;
+    using df::global::cur_year;
+    using df::global::cur_year_tick;
+
+    int year = 0, year_time = 0;
+
+    if (cur_year && cur_year_tick)
+    {
+        year = *cur_year;
+        year_time = *cur_year_tick;
+    }
+    else if (!world->status.reports.empty())
+    {
+        // Fallback: copy from the last report
+        df::report *last = world->status.reports.back();
+        year = last->year;
+        year_time = last->time;
+    }
+
+    bool continued = false;
+
+    while (!message.empty())
+    {
+        df::report *new_rep = new df::report();
+
+        new_rep->color = color;
+        new_rep->bright = bright;
+        new_rep->year = year;
+        new_rep->time = year_time;
+
+        new_rep->flags.bits.continuation = continued;
+        new_rep->flags.bits.announcement = true;
+
+        int size = std::min(message.size(), 73U);
+        new_rep->text = message.substr(0, size);
+        message = message.substr(size);
+
+        continued = true;
+
+        // Add the object to the lists
+        new_rep->id = world->status.next_report_id++;
+
+        world->status.reports.push_back(new_rep);
+        world->status.announcements.push_back(new_rep);
+        world->status.display_timer = 2000;
+    }
+
+}
+
+void DFHack::showPopupAnnouncement(std::string message, int color, bool bright)
+{
+    using df::global::world;
+
+    df::popup_message *popup = new df::popup_message();
+    popup->text = message;
+    popup->color = color;
+    popup->bright = bright;
+    world->status.popups.push_back(popup);
 }
 
 //

@@ -54,7 +54,6 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters)
 {
     Console & con = c->con;
-    BEGIN_PROBE:
     c->Suspend();
     DFHack::Gui *Gui = c->getGui();
     DFHack::Units * cr = c->getUnits();

@@ -43,7 +43,7 @@ namespace DFHack
 {
     class Core;
     class PluginManager;
-    struct virtual_identity;
+    class virtual_identity;
 
     enum command_result
     {

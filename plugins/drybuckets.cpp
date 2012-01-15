@@ -8,8 +8,7 @@
 #include <DataDefs.h>
 #include "df/world.h"
 #include "df/item.h"
-
-#include "modules/Materials.h"
+#include "df/builtin_mats.h"
 
 using std::string;
 using std::vector;
@@ -28,7 +27,7 @@ DFhackCExport command_result df_drybuckets (Core * c, vector <string> & paramete
 	for (int i = 0; i < world->items.all.size(); i++)
 	{
 		df::item *item = world->items.all[i];
-		if ((item->getType() == df::item_type::LIQUID_MISC) && (item->getMaterial() == DFHack::Materials::WATER))
+		if ((item->getType() == df::item_type::LIQUID_MISC) && (item->getMaterial() == df::builtin_mats::WATER))
 		{
 			item->flags.bits.garbage_colect = 1;
 			dried_total++;

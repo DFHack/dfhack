@@ -7,16 +7,15 @@
 #include <PluginManager.h>
 
 #include <DataDefs.h>
+#include "df/world.h"
+#include "df/map_block.h"
 #include <TileTypes.h>
-#include <df/world.h>
-#include <df/map_block.h>
 
 using std::string;
 using std::vector;
 using namespace DFHack;
 
 using df::global::world;
-using df::map_block;
 
 DFhackCExport command_result df_regrass (Core * c, vector <string> & parameters)
 {
@@ -28,7 +27,7 @@ DFhackCExport command_result df_regrass (Core * c, vector <string> & parameters)
 	int count = 0;
 	for (int i = 0; i < world->map.map_blocks.size(); i++)
 	{
-		map_block *cur = world->map.map_blocks[i];
+		df::map_block *cur = world->map.map_blocks[i];
 		for (int x = 0; x < 16; x++)
 		{
 			for (int y = 0; y < 16; y++)

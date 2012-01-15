@@ -94,8 +94,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
             return CR_OK;
         }
     }
-
-    DFHack::occupancies40d * occupancies;
+    c->Suspend();
     DFHack::VersionInfo *mem = c->vinfo;
     DFHack::Gui * Gui = c->getGui();
     DFHack::Items * Items = c->getItems();

@@ -12,10 +12,8 @@
 #include "df/unit.h"
 #include "df/matter_state.h"
 #include "df/cursor.h"
+#include "df/builtin_mats.h"
 #include "df/contaminant.h"
-#include "df/unit_spatter.h"
-
-#include "modules/Materials.h"
 
 using std::vector;
 using std::string;
@@ -50,12 +48,12 @@ command_result cleanmap (Core * c, bool snow, bool mud)
 
             // filter snow
             if(!snow
-                && spatter->mat_type == DFHack::Materials::WATER
+                && spatter->mat_type == df::builtin_mats::WATER
                 && spatter->mat_state == df::matter_state::Powder)
                 continue;
             // filter mud
             if(!mud
-                && spatter->mat_type == DFHack::Materials::MUD
+                && spatter->mat_type == df::builtin_mats::MUD
                 && spatter->mat_state == df::matter_state::Solid)
                 continue;
 
@@ -123,8 +121,7 @@ df::map_block *getBlock (int32_t x, int32_t y, int32_t z)
         return NULL;
     if ((x >= world->map.x_count) || (y >= world->map.y_count) || (z >= world->map.z_count))
         return NULL;
-    // block_index isn't declared correctly - needs one more level of indirection
-    return ((df::map_block ****)world->map.block_index)[x >> 4][y >> 4][z];
+    return world->map.block_index[x >> 4][y >> 4][z];
 }
 
 DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
@@ -199,7 +196,7 @@ DFhackCExport command_result clean (Core * c, vector <string> & parameters)
             "snow       - also remove snow\n"
             "mud        - also remove mud\n"
             "Example: clean all mud snow\n"
-            "This removes all spatter, including mud and snow from map tiles."
+            "This removes all spatter, including mud and snow from map tiles.\n"
             );
         return CR_OK;
     }

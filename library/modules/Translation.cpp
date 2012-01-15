@@ -190,8 +190,6 @@ bool Translation::readName(t_name & name, df_name * source)
 
 bool Translation::copyName(df_name * source, df_name * target)
 {
-    uint8_t buf[28];
-
     if (source == target)
         return true;
     Core & c = Core::getInstance();

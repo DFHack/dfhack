@@ -1,19 +1,59 @@
 // This tool counts static tiles and active flows of water and magma.
 
-#include <iostream>
-#include <vector>
-#include <map>
-#include <stddef.h>
-#include <string.h>
-using namespace std;
 #include "Core.h"
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
-#include <modules/Maps.h>
+
+#include <DataDefs.h>
+#include "df/world.h"
+#include "df/map_block.h"
+#include "df/tile_liquid.h"
+
+using std::string;
+using std::vector;
 using namespace DFHack;
 
-DFhackCExport command_result df_flows (Core * c, vector <string> & parameters);
+using df::global::world;
+
+DFhackCExport command_result df_flows (Core * c, vector <string> & parameters)
+{
+    CoreSuspender suspend(c);
+
+    int flow1 = 0, flow2 = 0, flowboth = 0, water = 0, magma = 0;
+    c->con.print("Counting flows and liquids ...\n");
+
+    for (int i = 0; i < world->map.map_blocks.size(); i++)
+    {
+        df::map_block *cur = world->map.map_blocks[i];
+        if (cur->flags.is_set(df::block_flags::UpdateLiquid))
+            flow1++;
+        if (cur->flags.is_set(df::block_flags::UpdateLiquidTwice))
+            flow2++;
+        if (cur->flags.is_set(df::block_flags::UpdateLiquid) && cur->flags.is_set(df::block_flags::UpdateLiquidTwice))
+            flowboth++;
+        for (int x = 0; x < 16; x++)
+        {
+            for (int y = 0; y < 16; y++)
+            {
+                // only count tiles with actual liquid in them
+                if (cur->designation[x][y].bits.flow_size == 0)
+                    continue;
+                if (cur->designation[x][y].bits.liquid_type == df::tile_liquid::Magma)
+                    magma++;
+                if (cur->designation[x][y].bits.liquid_type == df::tile_liquid::Water)
+                    water++;
+            }
+        }
+    }
+
+    c->con.print("Blocks with liquid_1=true: %d\n", flow1);
+    c->con.print("Blocks with liquid_2=true: %d\n", flow2);
+    c->con.print("Blocks with both:          %d\n", flowboth);
+    c->con.print("Water tiles:               %d\n", water);
+    c->con.print("Magma tiles:               %d\n", magma);
+    return CR_OK;
+}
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -24,70 +64,12 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.clear();
     commands.push_back(PluginCommand("flows",
-                                     "Counts map blocks with flowing liquids.",
-                                     df_flows));
+        "Counts map blocks with flowing liquids.",
+        df_flows));
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
-    return CR_OK;
-}
-
-DFhackCExport command_result df_flows (Core * c, vector <string> & parameters)
-{
-    uint32_t x_max,y_max,z_max;
-    DFHack::designations40d designations;
-    DFHack::Maps *Maps;
-
-    c->Suspend();
-    Maps = c->getMaps();
-    // init the map
-    if(!Maps->Start())
-    {
-        c->con.printerr("Can't init map.\n");
-        c->Resume();
-        return CR_FAILURE;
-    }
-    DFHack::t_blockflags bflags;
-    Maps->getSize(x_max,y_max,z_max);
-    // walk the map, count flowing tiles, magma, water
-    uint32_t flow1=0, flow2=0, flowboth=0, water=0, magma=0;
-    c->con.print("Counting flows and liquids ...\n");
-    for(uint32_t x = 0; x< x_max;x++)
-    {
-        for(uint32_t y = 0; y< y_max;y++)
-        {
-            for(uint32_t z = 0; z< z_max;z++)
-            {
-                if(Maps->getBlock(x,y,z))
-                {
-                    Maps->ReadBlockFlags(x, y, z, bflags);
-                    Maps->ReadDesignations(x, y, z, &designations);
-                    if (bflags.bits.liquid_1)
-                        flow1++;
-                    if (bflags.bits.liquid_2)
-                        flow2++;
-                    if (bflags.bits.liquid_1 && bflags.bits.liquid_2)
-                        flowboth++;
-                    for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
-                    {
-                        if (designations[i][j].bits.liquid_type == DFHack::liquid_magma)
-                            magma++;
-                        if (designations[i][j].bits.liquid_type == DFHack::liquid_water)
-                            water++;
-                    }
-                }
-            }
-        }
-    }
-    c->con.print("Blocks with liquid_1=true: %d\n"
-                 "Blocks with liquid_2=true: %d\n"
-                 "Blocks with both:          %d\n"
-                 "Water tiles:               %d\n"
-                 "Magma tiles:               %d\n"
-                 ,flow1, flow2, flowboth, water, magma
-                );
-    c->Resume();
     return CR_OK;
 }

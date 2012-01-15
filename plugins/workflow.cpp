@@ -977,7 +977,7 @@ static void dryBucket(df::item *item)
     for (unsigned i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (strict_virtual_cast<df::general_ref_contains_itemst>(ref))
+        if (ref->getType() == df::general_ref_type::contains_item)
         {
             df::item *obj = ref->getItem();
 
@@ -999,20 +999,20 @@ static bool itemBusy(df::item *item)
     for (unsigned i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (strict_virtual_cast<df::general_ref_contains_itemst>(ref))
+        if (ref->getType() == df::general_ref_type::contains_item)
         {
             df::item *obj = ref->getItem();
             if (obj && !obj->flags.bits.garbage_colect)
                 return true;
         }
-        else if (strict_virtual_cast<df::general_ref_contains_unitst>(ref))
+        else if (ref->getType() == df::general_ref_type::contains_unit)
             return true;
-        else if (strict_virtual_cast<df::general_ref_unit_holderst>(ref))
+        else if (ref->getType() == df::general_ref_type::unit_holder)
         {
             if (!item->flags.bits.in_job)
                 return true;
         }
-        else if (strict_virtual_cast<df::general_ref_contained_in_itemst>(ref))
+        else if (ref->getType() == df::general_ref_type::contained_in_item)
         {
             df::item *obj = ref->getItem();
             if (!obj)

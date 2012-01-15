@@ -829,7 +829,9 @@ static void guess_job_material(df::job *job, MaterialInfo &mat, df::dfhack_mater
     }
 
     // Material from the job reagent
-    if (!mat.isValid() && job->job_items.size() == 1)
+    if (!mat.isValid() && !job->job_items.empty() &&
+        (job->job_items.size() == 1 ||
+         job->job_items[0]->item_type == item_type::PLANT))
     {
         mat.decode(job->job_items[0]);
 
@@ -899,9 +901,6 @@ static void compute_job_outputs(Core *c, ProtectedJob *pj)
         break;
 
 #define PLANT_PROCESS_MAT(flag, tag) \
-        if (!mat.isValid() && !job->job_items.empty()\
-            && job->job_items[0]->item_type == item_type::PLANT) \
-            mat.decode(job->job_items[0]); \
         if (mat.plant && mat.plant->flags.is_set(plant_raw_flags::flag)) \
             mat.decode(mat.plant->material_defs.type_##tag, \
                        mat.plant->material_defs.idx_##tag); \

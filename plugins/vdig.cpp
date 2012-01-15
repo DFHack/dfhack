@@ -1,10 +1,10 @@
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <modules/Maps.h>
-#include <modules/Gui.h>
-#include <modules/MapCache.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "modules/Maps.h"
+#include "modules/Gui.h"
+#include "modules/MapCache.h"
 #include <vector>
 #include <cstdio>
 #include <stack>

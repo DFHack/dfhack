@@ -1,11 +1,11 @@
 // This tool counts static tiles and active flows of water and magma.
 
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 
-#include <DataDefs.h>
+#include "DataDefs.h"
 #include "df/world.h"
 #include "df/map_block.h"
 #include "df/tile_liquid.h"

@@ -10,14 +10,14 @@ using std::endl;
 using std::set;
 
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <modules/Vegetation.h>
-#include <modules/Maps.h>
-#include <modules/Gui.h>
-#include <TileTypes.h>
-#include <modules/MapCache.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "modules/Vegetation.h"
+#include "modules/Maps.h"
+#include "modules/Gui.h"
+#include "TileTypes.h"
+#include "modules/MapCache.h"
 using namespace MapExtras;
 using namespace DFHack;
 

@@ -6,12 +6,12 @@
 #include <map>
 #include <vector>
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <modules/Maps.h>
-#include <modules/MapCache.h>
-#include <modules/Gui.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "modules/Maps.h"
+#include "modules/MapCache.h"
+#include "modules/Gui.h"
 using std::stack;
 using MapExtras::MapCache;
 using namespace DFHack;

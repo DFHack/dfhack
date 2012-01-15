@@ -1,9 +1,9 @@
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 
-#include <DataDefs.h>
+#include "DataDefs.h"
 #include "df/ui.h"
 #include "df/world.h"
 #include "df/unit.h"

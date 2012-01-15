@@ -4,23 +4,22 @@
 #include <iomanip>
 #include <climits>
 #include <vector>
+#include <string>
 #include <sstream>
 #include <ctime>
 #include <cstdio>
 using namespace std;
 
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <vector>
-#include <string>
-#include <modules/Units.h>
-#include <modules/Maps.h>
-#include <modules/Gui.h>
-#include <modules/Materials.h>
-#include <modules/MapCache.h>
-#include <MiscUtils.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "modules/Units.h"
+#include "modules/Maps.h"
+#include "modules/Gui.h"
+#include "modules/Materials.h"
+#include "modules/MapCache.h"
+#include "MiscUtils.h"
 
 using std::vector;
 using std::string;

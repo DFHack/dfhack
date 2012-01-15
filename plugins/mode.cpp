@@ -2,12 +2,12 @@
 using namespace std;
 
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 #include <vector>
 #include <string>
-#include <modules/World.h>
+#include "modules/World.h"
 #include <stdlib.h>
 using namespace DFHack;
 

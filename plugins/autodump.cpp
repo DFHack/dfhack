@@ -5,27 +5,25 @@
 #include <sstream>
 #include <climits>
 #include <vector>
+#include <string>
+#include <algorithm>
 #include <set>
 using namespace std;
 
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <modules/Maps.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "modules/Maps.h"
+#include "modules/Gui.h"
+#include "modules/Items.h"
+#include "modules/Materials.h"
+#include "modules/MapCache.h"
 
-#include <modules/Gui.h>
-#include <modules/Items.h>
-#include <modules/Materials.h>
-#include <modules/MapCache.h>
-
-#include <DataDefs.h>
-#include <df/item.h>
-#include <df/world.h>
-#include <df/general_ref_unit_holderst.h>
+#include "DataDefs.h"
+#include "df/item.h"
+#include "df/world.h"
+#include "df/general_ref.h"
 
 using namespace DFHack;
 using MapExtras::Block;

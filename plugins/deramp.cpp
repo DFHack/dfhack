@@ -1,15 +1,15 @@
 // De-ramp.  All ramps marked for removal are replaced with given tile (presently, normal floor).
 
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/map_block.h"
 #include "df/tile_dig_designation.h"
-#include <TileTypes.h>
+#include "TileTypes.h"
 
 using std::vector;
 using std::string;

@@ -123,6 +123,13 @@ static command_result job_material_in_job(Core *c, MaterialInfo &new_mat)
     if (!job)
         return CR_FAILURE;
 
+    if (!new_mat.isValid() || new_mat.type != 0)
+    {
+        c->con.printerr("New job material isn't inorganic: %s\n",
+                        new_mat.toString().c_str());
+        return CR_FAILURE;
+    }
+
     MaterialInfo cur_mat(job);
 
     if (!cur_mat.isValid() || cur_mat.type != 0)
@@ -241,8 +248,8 @@ static command_result job_material(Core * c, vector <string> & parameters)
     MaterialInfo new_mat;
     if (parameters.size() == 1)
     {
-        if (!new_mat.findInorganic(parameters[0])) {
-            c->con.printerr("Could not find inorganic material: %s\n", parameters[0].c_str());
+        if (!new_mat.find(parameters[0])) {
+            c->con.printerr("Could not find material: %s\n", parameters[0].c_str());
             return CR_WRONG_USAGE;
         }
     }

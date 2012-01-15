@@ -263,7 +263,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
         // Is this necessary?  Is "forbid" a dirtyable attribute like "dig" is?
         Maps->WriteDirtyBit(cx/16, cy/16, cz, true);
     }
-    c->con.print("Done. %d items %s.\n", dumped_total, destroy ? "marked for desctruction" : "quickdumped");
+    c->con.print("Done. %d items %s.\n", dumped_total, destroy ? "marked for destruction" : "quickdumped");
     return CR_OK;
 }
 

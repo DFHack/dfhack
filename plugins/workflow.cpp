@@ -777,6 +777,7 @@ static void compute_custom_job(ProtectedJob *pj, df::job *job)
             continue;
 
         MaterialInfo mat(prod);
+        df::dfhack_material_category mat_mask(0);
 
         bool get_mat_prod = prod->flags.is_set(GET_MATERIAL_PRODUCT);
         if (get_mat_prod || prod->flags.is_set(GET_MATERIAL_SAME))
@@ -799,20 +800,26 @@ static void compute_custom_job(ProtectedJob *pj, df::job *job)
 
             if (get_mat_prod)
             {
-                if (!mat.isValid())
-                    continue;
+                std::string code = prod->get_material.product_code;
 
-                int idx = linear_index(mat.material->reaction_product.id,
-                                       prod->get_material.product_code);
-                if (idx < 0)
-                    continue;
+                if (mat.isValid())
+                {
+                    int idx = linear_index(mat.material->reaction_product.id, code);
+                    if (idx < 0)
+                        continue;
 
-                mat.decode(mat.material->reaction_product.material, idx);
+                    mat.decode(mat.material->reaction_product.material, idx);
+                }
+                else
+                {
+                    if (code == "SOAP_MAT")
+                        mat_mask.bits.soap = true;
+                }
             }
         }
 
         link_job_constraint(pj, prod->item_type, prod->item_subtype,
-                            0, mat.type, mat.index);
+                            mat_mask, mat.type, mat.index);
     }
 }
 
@@ -1113,6 +1120,7 @@ static void map_job_items(Core *c)
                 continue;
 
             if (item->flags.bits.owned ||
+                item->flags.bits.in_chest ||
                 item->isAssignedToStockpile() ||
                 itemInRealJob(item) ||
                 itemBusy(item))

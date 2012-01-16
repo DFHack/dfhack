@@ -1,12 +1,12 @@
 // Designate all matching plants for gathering/cutting
 
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 
-#include <DataDefs.h>
-#include <TileTypes.h>
+#include "DataDefs.h"
+#include "TileTypes.h"
 #include "df/world.h"
 #include "df/map_block.h"
 #include "df/tile_dig_designation.h"

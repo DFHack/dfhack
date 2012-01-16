@@ -13,11 +13,11 @@
 #include <vector>
 
 using namespace std;
-#include <DFHack.h>
-#include <modules/MapCache.h>
 #include "Core.h"
-#include <Console.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "modules/MapCache.h"
 
 using namespace DFHack;
 

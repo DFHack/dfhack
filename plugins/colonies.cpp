@@ -1,16 +1,16 @@
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 #include <vector>
 #include <string>
-#include <modules/Vermin.h>
+#include "modules/Vermin.h"
+#include "modules/Materials.h"
 
 using std::vector;
 using std::string;
 using namespace DFHack;
 using namespace DFHack::Simple;
-#include <DFHack.h>
 
 DFhackCExport command_result colonies (Core * c, vector <string> & parameters);
 
@@ -34,8 +34,8 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 }
 
 void destroyColonies();
-void convertColonies(DFHack::Materials *Materials);
-void showColonies(Core *c, DFHack::Materials *Materials);
+void convertColonies(Materials *Materials);
+void showColonies(Core *c, Materials *Materials);
 
 DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
 {
@@ -106,7 +106,7 @@ void destroyColonies()
 }
 
 // Convert all colonies to honey bees.
-void convertColonies(DFHack::Materials *Materials)
+void convertColonies(Materials *Materials)
 {
     int bee_idx = -1;
     for (size_t i = 0; i < Materials->raceEx.size(); i++)
@@ -136,7 +136,7 @@ void convertColonies(DFHack::Materials *Materials)
     }
 }
 
-void showColonies(Core *c, DFHack::Materials *Materials)
+void showColonies(Core *c, Materials *Materials)
 {
     uint32_t numSpawnPoints = Vermin::getNumVermin();
     int      numColonies    = 0;

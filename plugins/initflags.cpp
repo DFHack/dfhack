@@ -1,10 +1,10 @@
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 
-#include <DataDefs.h>
-#include <df/d_init.h>
+#include "DataDefs.h"
+#include "df/d_init.h"
 
 using std::vector;
 using std::string;

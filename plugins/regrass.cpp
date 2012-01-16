@@ -2,14 +2,14 @@
 // Necessary for worlds generated prior to version 0.31.19 - otherwise, outdoor shrubs and trees no longer grow.
 
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 
-#include <DataDefs.h>
+#include "DataDefs.h"
 #include "df/world.h"
 #include "df/map_block.h"
-#include <TileTypes.h>
+#include "TileTypes.h"
 
 using std::string;
 using std::vector;

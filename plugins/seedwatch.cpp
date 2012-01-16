@@ -12,7 +12,7 @@
 #include "modules/Items.h"
 #include "modules/World.h"
 #include "modules/kitchen.h"
-#include <VersionInfo.h>
+#include "VersionInfo.h"
 
 using DFHack::t_materialType;
 using DFHack::t_materialIndex;

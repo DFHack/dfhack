@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
@@ -40,14 +40,14 @@ using namespace std;
 #include "modules/Items.h"
 
 #include "DataDefs.h"
-#include <df/world.h>
-#include <df/ui.h>
-#include <df/job.h>
-#include <df/job_item.h>
-#include <df/job_list_link.h>
-#include <df/general_ref.h>
-#include <df/general_ref_unit_workerst.h>
-#include <df/general_ref_building_holderst.h>
+#include "df/world.h"
+#include "df/ui.h"
+#include "df/job.h"
+#include "df/job_item.h"
+#include "df/job_list_link.h"
+#include "df/general_ref.h"
+#include "df/general_ref_unit_workerst.h"
+#include "df/general_ref_building_holderst.h"
 
 using namespace DFHack;
 using namespace df::enums;

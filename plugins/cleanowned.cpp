@@ -9,16 +9,16 @@
 using namespace std;
 
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 #include <vector>
 #include <string>
-#include <modules/Maps.h>
-#include <modules/Items.h>
-#include <modules/Units.h>
-#include <modules/Materials.h>
-#include <modules/Translation.h>
+#include "modules/Maps.h"
+#include "modules/Items.h"
+#include "modules/Units.h"
+#include "modules/Materials.h"
+#include "modules/Translation.h"
 using namespace DFHack;
 
 DFhackCExport command_result df_cleanowned (Core * c, vector <string> & parameters);

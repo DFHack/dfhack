@@ -1,41 +1,41 @@
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <MiscUtils.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "MiscUtils.h"
 
-#include <modules/Materials.h>
-#include <modules/Items.h>
-#include <modules/Gui.h>
-#include <modules/Job.h>
-#include <modules/World.h>
+#include "modules/Materials.h"
+#include "modules/Items.h"
+#include "modules/Gui.h"
+#include "modules/Job.h"
+#include "modules/World.h"
 
-#include <DataDefs.h>
-#include <df/world.h>
-#include <df/ui.h>
-#include <df/building_workshopst.h>
-#include <df/building_furnacest.h>
-#include <df/job.h>
-#include <df/job_item.h>
-#include <df/job_list_link.h>
-#include <df/dfhack_material_category.h>
-#include <df/item.h>
-#include <df/items_other_id.h>
-#include <df/tool_uses.h>
-#include <df/general_ref.h>
-#include <df/general_ref_unit_workerst.h>
-#include <df/general_ref_unit_holderst.h>
-#include <df/general_ref_building_holderst.h>
-#include <df/general_ref_contains_itemst.h>
-#include <df/general_ref_contained_in_itemst.h>
-#include <df/general_ref_contains_unitst.h>
-#include <df/itemdef_foodst.h>
-#include <df/reaction.h>
-#include <df/reaction_reagent_itemst.h>
-#include <df/reaction_product_itemst.h>
-#include <df/plant_raw.h>
-#include <df/inorganic_raw.h>
-#include <df/builtin_mats.h>
+#include "DataDefs.h"
+#include "df/world.h"
+#include "df/ui.h"
+#include "df/building_workshopst.h"
+#include "df/building_furnacest.h"
+#include "df/job.h"
+#include "df/job_item.h"
+#include "df/job_list_link.h"
+#include "df/dfhack_material_category.h"
+#include "df/item.h"
+#include "df/items_other_id.h"
+#include "df/tool_uses.h"
+#include "df/general_ref.h"
+#include "df/general_ref_unit_workerst.h"
+#include "df/general_ref_unit_holderst.h"
+#include "df/general_ref_building_holderst.h"
+#include "df/general_ref_contains_itemst.h"
+#include "df/general_ref_contained_in_itemst.h"
+#include "df/general_ref_contains_unitst.h"
+#include "df/itemdef_foodst.h"
+#include "df/reaction.h"
+#include "df/reaction_reagent_itemst.h"
+#include "df/reaction_product_itemst.h"
+#include "df/plant_raw.h"
+#include "df/inorganic_raw.h"
+#include "df/builtin_mats.h"
 
 using std::vector;
 using std::string;
@@ -984,7 +984,7 @@ static void dryBucket(df::item *item)
     for (unsigned i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (strict_virtual_cast<df::general_ref_contains_itemst>(ref))
+        if (ref->getType() == df::general_ref_type::contains_item)
         {
             df::item *obj = ref->getItem();
 
@@ -1006,20 +1006,20 @@ static bool itemBusy(df::item *item)
     for (unsigned i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (strict_virtual_cast<df::general_ref_contains_itemst>(ref))
+        if (ref->getType() == df::general_ref_type::contains_item)
         {
             df::item *obj = ref->getItem();
             if (obj && !obj->flags.bits.garbage_colect)
                 return true;
         }
-        else if (strict_virtual_cast<df::general_ref_contains_unitst>(ref))
+        else if (ref->getType() == df::general_ref_type::contains_unit)
             return true;
-        else if (strict_virtual_cast<df::general_ref_unit_holderst>(ref))
+        else if (ref->getType() == df::general_ref_type::unit_holder)
         {
             if (!item->flags.bits.in_job)
                 return true;
         }
-        else if (strict_virtual_cast<df::general_ref_contained_in_itemst>(ref))
+        else if (ref->getType() == df::general_ref_type::contained_in_item)
         {
             df::item *obj = ref->getItem();
             if (!obj)

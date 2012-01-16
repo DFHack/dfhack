@@ -1,18 +1,18 @@
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 
-#include <modules/Gui.h>
+#include "modules/Gui.h"
 
-#include <DataDefs.h>
-#include <df/ui.h>
-#include <df/world.h>
-#include <df/squad.h>
-#include <df/unit.h>
-#include <df/unit_soul.h>
-#include <df/historical_figure.h>
-#include <df/language_name.h>
+#include "DataDefs.h"
+#include "df/ui.h"
+#include "df/world.h"
+#include "df/squad.h"
+#include "df/unit.h"
+#include "df/unit_soul.h"
+#include "df/historical_figure.h"
+#include "df/language_name.h"
 
 #include <stdlib.h>
 

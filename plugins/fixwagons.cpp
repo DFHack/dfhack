@@ -1,11 +1,11 @@
 // I'll fix his little red wagon...
 
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 
-#include <DataDefs.h>
+#include "DataDefs.h"
 #include "df/world.h"
 #include "df/historical_entity.h"
 #include "df/entity_raw.h"

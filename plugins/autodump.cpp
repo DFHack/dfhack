@@ -5,27 +5,25 @@
 #include <sstream>
 #include <climits>
 #include <vector>
+#include <string>
+#include <algorithm>
 #include <set>
 using namespace std;
 
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <modules/Maps.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "modules/Maps.h"
+#include "modules/Gui.h"
+#include "modules/Items.h"
+#include "modules/Materials.h"
+#include "modules/MapCache.h"
 
-#include <modules/Gui.h>
-#include <modules/Items.h>
-#include <modules/Materials.h>
-#include <modules/MapCache.h>
-
-#include <DataDefs.h>
-#include <df/item.h>
-#include <df/world.h>
-#include <df/general_ref_unit_holderst.h>
+#include "DataDefs.h"
+#include "df/item.h"
+#include "df/world.h"
+#include "df/general_ref.h"
 
 using namespace DFHack;
 using MapExtras::Block;
@@ -94,7 +92,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
             return CR_OK;
         }
     }
-    c->Suspend();
+
     DFHack::VersionInfo *mem = c->vinfo;
     DFHack::Gui * Gui = c->getGui();
     DFHack::Items * Items = c->getItems();
@@ -265,7 +263,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
         // Is this necessary?  Is "forbid" a dirtyable attribute like "dig" is?
         Maps->WriteDirtyBit(cx/16, cy/16, cz, true);
     }
-    c->con.print("Done. %d items %s.\n", dumped_total, destroy ? "marked for desctruction" : "quickdumped");
+    c->con.print("Done. %d items %s.\n", dumped_total, destroy ? "marked for destruction" : "quickdumped");
     return CR_OK;
 }
 
@@ -338,7 +336,7 @@ DFhackCExport command_result df_autodump_destroy_item(Core * c, vector <string> 
     for (unsigned i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (strict_virtual_cast<df::general_ref_unit_holderst>(ref))
+        if (ref->getType() == df::general_ref_type::unit_holder)
         {
             c->con.printerr("Choosing not to destroy items in unit inventory.\n");
             return CR_FAILURE;

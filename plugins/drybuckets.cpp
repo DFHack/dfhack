@@ -1,11 +1,11 @@
 // Dry Buckets : Remove all "water" objects from buckets scattered around the fortress
 
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 
-#include <DataDefs.h>
+#include "DataDefs.h"
 #include "df/world.h"
 #include "df/item.h"
 #include "df/builtin_mats.h"

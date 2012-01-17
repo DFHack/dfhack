@@ -88,7 +88,7 @@ struct compare_pair_second
         }
 };
 
-void printMatdata(DFHack::Console & con, const matdata &data)
+static void printMatdata(DFHack::Console & con, const matdata &data)
 {
     con << std::setw(9) << data.count;
 
@@ -98,10 +98,20 @@ void printMatdata(DFHack::Console & con, const matdata &data)
         con <<" Z:" << std::setw(4) << data.lower_z << std::endl;
 }
 
+static int getValue(const df_inorganic_type &info)
+{
+    return info.mat.MATERIAL_VALUE;
+}
+
+static int getValue(const df_plant_type &info)
+{
+    return info.value;
+}
+
 // printMats() accepts a vector of pointers to t_matgloss so that it can
 // deal t_matgloss and all subclasses.
 template <typename T>
-void printMats(DFHack::Console & con, MatMap &mat, std::vector<T*> &materials)
+void printMats(DFHack::Console & con, MatMap &mat, std::vector<T*> &materials, bool show_value)
 {
     unsigned int total = 0;
     MatSorter sorting_vector;
@@ -122,6 +132,8 @@ void printMats(DFHack::Console & con, MatMap &mat, std::vector<T*> &materials)
         }
         T* mat = materials[it->first];
         con << std::setw(25) << mat->ID << " : ";
+        if (show_value)
+            con << std::setw(3) << getValue(*mat) << " : ";
         printMatdata(con, it->second);
         total += it->second.count;
     }
@@ -130,7 +142,7 @@ void printMats(DFHack::Console & con, MatMap &mat, std::vector<T*> &materials)
 }
 
 void printVeins(DFHack::Console & con, MatMap &mat_map,
-                DFHack::Materials* mats)
+                DFHack::Materials* mats, bool show_value)
 {
     MatMap ores;
     MatMap gems;
@@ -149,13 +161,13 @@ void printVeins(DFHack::Console & con, MatMap &mat_map,
     }
 
     con << "Ores:" << std::endl;
-    printMats(con, ores, *mats->df_inorganic);
+    printMats(con, ores, *mats->df_inorganic, show_value);
 
     con << "Gems:" << std::endl;
-    printMats(con, gems, *mats->df_inorganic);
+    printMats(con, gems, *mats->df_inorganic, show_value);
 
     con << "Other vein stone:" << std::endl;
-    printMats(con, rest, *mats->df_inorganic);
+    printMats(con, rest, *mats->df_inorganic, show_value);
 }
 
 DFhackCExport command_result prospector (Core * c, vector <string> & parameters);
@@ -183,12 +195,17 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     bool showPlants = true;
     bool showSlade = true;
     bool showTemple = true;
+    bool showValue = false;
     Console & con = c->con;
     for(int i = 0; i < parameters.size();i++)
     {
-        if (parameters[0] == "all")
+        if (parameters[i] == "all")
         {
             showHidden = true;
+        }
+        if (parameters[i] == "value")
+        {
+            showValue = true;
         }
         else if(parameters[i] == "help" || parameters[i] == "?")
         {
@@ -197,6 +214,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                          "\n"
                          "Options:\n"
                          "all   - Scan the whole map, as if it was revealed.\n"
+                         "value - Show material value in the output.\n"
             );
             return CR_OK;
         }
@@ -450,16 +468,16 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     }
 
     con << std::endl << "Layer materials:" << std::endl;
-    printMats(con, layerMats, *mats->df_inorganic);
+    printMats(con, layerMats, *mats->df_inorganic, showValue);
 
-    printVeins(con, veinMats, mats);
+    printVeins(con, veinMats, mats, showValue);
 
     if (showPlants)
     {
         con << "Shrubs:" << std::endl;
-        printMats(con, plantMats, *mats->df_organic);
+        printMats(con, plantMats, *mats->df_organic, showValue);
         con << "Wood in trees:" << std::endl;
-        printMats(con, treeMats, *mats->df_organic);
+        printMats(con, treeMats, *mats->df_organic, showValue);
     }
 
     if (hasAquifer)

@@ -100,16 +100,6 @@ struct t_itemref : public t_virtual
     int32_t value;
 };
 
-struct df_contaminant
-{
-    int16_t material;
-    int32_t mat_index;
-    int16_t mat_state; // FIXME: enum or document in text
-    int16_t temperature;
-    int16_t temperature_fraction; // maybe...
-    int32_t size; ///< 1-24=spatter, 25-49=smear, 50-* = coating
-};
-
 /**
  * Type for holding an item read from DF
  * \ingroup grp_items

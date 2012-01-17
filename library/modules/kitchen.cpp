@@ -19,6 +19,7 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "Core.h"
 #include "Virtual.h"
+#include "df/item_type.h"
 
 namespace DFHack
 {
@@ -89,7 +90,7 @@ namespace Kitchen
             for(std::size_t i = 0; i < size(); ++i)
             {
                 if(d->materialIndices[i] == materialIndex
-                   && (d->itemTypes[i] == DFHack::Items::SEEDS || d->itemTypes[i] == DFHack::Items::PLANT)
+                   && (d->itemTypes[i] == df::item_type::SEEDS || d->itemTypes[i] == df::item_type::PLANT)
                    && d->exclusionTypes[i] == cookingExclusion
                 )
                 {
@@ -119,15 +120,15 @@ namespace Kitchen
             if(d->materialIndices[i] == materialIndex
                && d->exclusionTypes[i] == cookingExclusion)
             {
-                if(d->itemTypes[i] == DFHack::Items::SEEDS)
+                if(d->itemTypes[i] == df::item_type::SEEDS)
                     SeedAlreadyIn = true;
-                else if (d->itemTypes[i] == DFHack::Items::PLANT)
+                else if (d->itemTypes[i] == df::item_type::PLANT)
                     PlantAlreadyIn = true;
             }
         }
         if(!SeedAlreadyIn)
         {
-            d->itemTypes.push_back(DFHack::Items::SEEDS);
+            d->itemTypes.push_back(df::item_type::SEEDS);
             d->itemSubtypes.push_back(organicSubtype);
             d->materialTypes.push_back(type->material_type_seed);
             d->materialIndices.push_back(materialIndex);
@@ -135,7 +136,7 @@ namespace Kitchen
         }
         if(!PlantAlreadyIn)
         {
-            d->itemTypes.push_back(DFHack::Items::PLANT);
+            d->itemTypes.push_back(df::item_type::PLANT);
             d->itemSubtypes.push_back(organicSubtype);
             d->materialTypes.push_back(type->material_type_basic_mat);
             d->materialIndices.push_back(materialIndex);

@@ -13,6 +13,7 @@
 #include "modules/World.h"
 #include "modules/kitchen.h"
 #include "VersionInfo.h"
+#include "df/item_flags.h"
 
 using DFHack::t_materialType;
 using DFHack::t_materialIndex;
@@ -23,19 +24,19 @@ bool running = false; // whether seedwatch is counting the seeds or not
 // abbreviations for the standard plants
 std::map<std::string, std::string> abbreviations;
 
-bool ignoreSeeds(DFHack::t_itemflags& f) // seeds with the following flags should not be counted
+bool ignoreSeeds(df::item_flags& f) // seeds with the following flags should not be counted
 {
     return
-        f.dump ||
-        f.forbid ||
-        f.garbage_colect ||
-        f.hidden ||
-        f.hostile ||
-        f.on_fire ||
-        f.rotten ||
-        f.trader ||
-        f.in_building ||
-        f.in_job;
+        f.bits.dump ||
+        f.bits.forbid ||
+        f.bits.garbage_colect ||
+        f.bits.hidden ||
+        f.bits.hostile ||
+        f.bits.on_fire ||
+        f.bits.rotten ||
+        f.bits.trader ||
+        f.bits.in_building ||
+        f.bits.in_job;
 };
 
 void printHelp(DFHack::Core& core) // prints help
@@ -329,9 +330,9 @@ DFhackCExport DFHack::command_result plugin_onupdate(DFHack::Core* pCore)
         std::map<t_materialIndex, unsigned int> seedCount; // the number of seeds
         DFHack::Items& itemsModule = *core.getItems();
         itemsModule.Start();
-        std::vector<DFHack::df_item*> items;
+        std::vector<df::item*> items;
         itemsModule.readItemVector(items);
-        DFHack::df_item * item;
+        df::item * item;
         // count all seeds and plants by RAW material
         for(std::size_t i = 0; i < items.size(); ++i)
         {
@@ -339,10 +340,10 @@ DFhackCExport DFHack::command_result plugin_onupdate(DFHack::Core* pCore)
             t_materialIndex materialIndex = item->getMaterialIndex();
             switch(item->getType())
             {
-            case DFHack::Items::SEEDS:
+            case df::item_type::SEEDS:
                 if(!ignoreSeeds(item->flags)) ++seedCount[materialIndex];
                 break;
-            case DFHack::Items::PLANT:
+            case df::item_type::PLANT:
                 break;
             }
         }

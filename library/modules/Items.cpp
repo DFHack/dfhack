@@ -403,7 +403,7 @@ class Items::Private
 {
     public:
         Process * owner;
-        std::map<int32_t, df_item *> idLookupTable;
+        std::map<int32_t, df::item *> idLookupTable;
         uint32_t refVectorOffset;
         uint32_t idFieldOffset;
         void * itemVectorAddress;
@@ -498,16 +498,16 @@ bool Items::Finish()
     return true;
 }
 
-bool Items::readItemVector(std::vector<df_item *> &items)
+bool Items::readItemVector(std::vector<df::item *> &items)
 {
-    std::vector <df_item *> *p_items = (std::vector <df_item *> *) d->itemVectorAddress;
+    std::vector <df::item *> *p_items = (std::vector <df::item *> *) d->itemVectorAddress;
 
     d->idLookupTable.clear();
     items.resize(p_items->size());
 
     for (unsigned i = 0; i < p_items->size(); i++)
     {
-        df_item * ptr = p_items->at(i);
+        df::item * ptr = p_items->at(i);
         items[i] = ptr;
         d->idLookupTable[ptr->id] = ptr;
     }
@@ -515,14 +515,14 @@ bool Items::readItemVector(std::vector<df_item *> &items)
     return true;
 }
 
-df_item * Items::findItemByID(int32_t id)
+df::item * Items::findItemByID(int32_t id)
 {
     if (id < 0)
         return 0;
 
     if (d->idLookupTable.empty())
     {
-        std::vector<df_item *> tmp;
+        std::vector<df::item *> tmp;
         readItemVector(tmp);
     }
 
@@ -535,11 +535,11 @@ Items::~Items()
     delete d;
 }
 
-bool Items::copyItem(df_item * itembase, DFHack::dfh_item &item)
+bool Items::copyItem(df::item * itembase, DFHack::dfh_item &item)
 {
     if(!itembase)
         return false;
-    df_item * itreal = (df_item *) itembase;
+    df::item * itreal = (df::item *) itembase;
     item.origin = itembase;
     item.x = itreal->x;
     item.y = itreal->y;
@@ -557,7 +557,7 @@ bool Items::copyItem(df_item * itembase, DFHack::dfh_item &item)
     return true;
 }
 
-int32_t Items::getItemOwnerID(const DFHack::df_item * item)
+int32_t Items::getItemOwnerID(const df::item * item)
 {
     std::vector<int32_t> vals;
     if (readItemRefs(item, d->isOwnerRefClass, vals))
@@ -566,7 +566,7 @@ int32_t Items::getItemOwnerID(const DFHack::df_item * item)
         return -1;
 }
 
-int32_t Items::getItemContainerID(const DFHack::df_item * item)
+int32_t Items::getItemContainerID(const df::item * item)
 {
     std::vector<int32_t> vals;
     if (readItemRefs(item, d->isContainerRefClass, vals))
@@ -575,14 +575,14 @@ int32_t Items::getItemContainerID(const DFHack::df_item * item)
         return -1;
 }
 
-bool Items::getContainedItems(const DFHack::df_item * item, std::vector<int32_t> &items)
+bool Items::getContainedItems(const df::item * item, std::vector<int32_t> &items)
 {
     return readItemRefs(item, d->isContainsRefClass, items);
 }
 
-bool Items::readItemRefs(const df_item * item, const ClassNameCheck &classname, std::vector<int32_t> &values)
+bool Items::readItemRefs(const df::item * item, const ClassNameCheck &classname, std::vector<int32_t> &values)
 {
-    const std::vector <t_itemref *> &p_refs = item->itemrefs;
+    const std::vector <t_itemref *> &p_refs = (const std::vector<t_itemref *> &)item->itemrefs;
     values.clear();
 
     for (uint32_t i=0; i<p_refs.size(); i++)
@@ -594,11 +594,11 @@ bool Items::readItemRefs(const df_item * item, const ClassNameCheck &classname, 
     return !values.empty();
 }
 
-bool Items::unknownRefs(const df_item * item, std::vector<std::pair<std::string, int32_t> >& refs)
+bool Items::unknownRefs(const df::item * item, std::vector<std::pair<std::string, int32_t> >& refs)
 {
     refs.clear();
 
-    const std::vector <t_itemref *> &p_refs = item->itemrefs;
+    const std::vector <t_itemref *> &p_refs = (const std::vector<t_itemref *> &)item->itemrefs;
 
     for (uint32_t i=0; i<p_refs.size(); i++)
     {
@@ -613,9 +613,9 @@ bool Items::unknownRefs(const df_item * item, std::vector<std::pair<std::string,
     return (refs.size() > 0);
 }
 
-bool Items::removeItemOwner(df_item * item, Units *creatures)
+bool Items::removeItemOwner(df::item * item, Units *creatures)
 {
-    std::vector <t_itemref *> &p_refs = item->itemrefs;
+    std::vector <t_itemref *> &p_refs = (std::vector<t_itemref *> &)item->itemrefs;
     for (uint32_t i=0; i<p_refs.size(); i++)
     {
         if (!d->isOwnerRefClass(d->owner, p_refs[i]->vptr))
@@ -632,12 +632,12 @@ bool Items::removeItemOwner(df_item * item, Units *creatures)
         p_refs.erase(p_refs.begin() + i--);
     }
 
-    item->flags.owned = 0;
+    item->flags.bits.owned = 0;
 
     return true;
 }
 
-std::string Items::getItemClass(const df_item * item)
+std::string Items::getItemClass(const df::item * item)
 {
     const t_virtual * virt = (t_virtual *) item;
     return virt->getClassName();

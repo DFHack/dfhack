@@ -807,8 +807,6 @@ namespace DFHack
 
         void CopyNameTo(df_unit *creature, df_name * target);
 
-    protected:
-        friend class Items;
         bool RemoveOwnedItemByIdx(const uint32_t index, int32_t id);
         bool RemoveOwnedItemByPtr(df_unit * unit, int32_t id);
 

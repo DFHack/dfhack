@@ -116,46 +116,32 @@ struct dfh_item
  * \ingroup grp_modules
  * \ingroup grp_items
  */
-class DFHACK_EXPORT Items : public Module
+namespace Simple
 {
-public:
-    /**
-     * All the known item types as an enum
-     * From http://df.magmawiki.com/index.php/DF2010:Item_token
-     */
+namespace Items
+{
 
-public:
-    Items();
-    ~Items();
-    bool Start();
-    bool Finish();
-    /// Read the item vector from DF into a supplied vector
-    bool readItemVector(std::vector<df::item *> &items);
-    /// Look for a particular item by ID
-    df::item * findItemByID(int32_t id);
+/// Look for a particular item by ID
+DFHACK_EXPORT df::item * findItemByID(int32_t id);
 
-    /// Make a partial copy of a DF item
-    bool copyItem(df::item * source, dfh_item & target);
-    /// write copied item back to its origin
-    bool writeItem(const dfh_item & item);
+/// Make a partial copy of a DF item
+DFHACK_EXPORT bool copyItem(df::item * source, dfh_item & target);
+/// write copied item back to its origin
+DFHACK_EXPORT bool writeItem(const dfh_item & item);
 
-    /// get the class name of an item
-    std::string getItemClass(const df::item * item);
-    /// who owns this item we already read?
-    int32_t getItemOwnerID(const df::item * item);
-    /// which item is it contained in?
-    int32_t getItemContainerID(const df::item * item);
-    /// which items does it contain?
-    bool getContainedItems(const df::item * item, /*output*/ std::vector<int32_t> &items);
-    /// wipe out the owner records
-    bool removeItemOwner(df::item * item, Units *creatures);
-    /// read item references, filtered by class
-    bool readItemRefs(const df::item * item, const df::general_ref_type type,
-                      /*output*/ std::vector<int32_t> &values);
-    /// get list of item references that are unknown along with their values
-    bool unknownRefs(const df::item * item, /*output*/ std::vector<std::pair<std::string, int32_t> >& refs);
-private:
-    class Private;
-    Private* d;
-};
+/// get the class name of an item
+DFHACK_EXPORT std::string getItemClass(const df::item * item);
+/// who owns this item we already read?
+DFHACK_EXPORT int32_t getItemOwnerID(const df::item * item);
+/// which item is it contained in?
+DFHACK_EXPORT int32_t getItemContainerID(const df::item * item);
+/// which items does it contain?
+DFHACK_EXPORT bool getContainedItems(const df::item * item, /*output*/ std::vector<int32_t> &items);
+/// wipe out the owner records
+DFHACK_EXPORT bool removeItemOwner(df::item * item, Units *creatures);
+/// read item references, filtered by class
+DFHACK_EXPORT bool readItemRefs(const df::item * item, const df::general_ref_type type,
+                  /*output*/ std::vector<int32_t> &values);
+}
+}
 }

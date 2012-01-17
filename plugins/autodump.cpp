@@ -28,6 +28,7 @@ using namespace std;
 using namespace DFHack;
 using MapExtras::Block;
 using MapExtras::MapCache;
+using df::global::world;
 
 DFhackCExport command_result df_autodump(Core * c, vector <string> & parameters);
 DFhackCExport command_result df_autodump_destroy_here(Core * c, vector <string> & parameters);
@@ -95,16 +96,9 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
 
     DFHack::VersionInfo *mem = c->vinfo;
     DFHack::Gui * Gui = c->getGui();
-    DFHack::Items * Items = c->getItems();
     DFHack::Maps *Maps = c->getMaps();
 
-    vector <df::item*> p_items;
-    if(!Items->readItemVector(p_items))
-    {
-        c->con.printerr("Can't access the item vector.\n");
-        return CR_FAILURE;
-    }
-    std::size_t numItems = p_items.size();
+    std::size_t numItems = world->items.all.size();
 
     // init the map
     if(!Maps->Start())
@@ -148,7 +142,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
     // proceed with the dumpification operation
     for(std::size_t i=0; i< numItems; i++)
     {
-        df::item * itm = p_items[i];
+        df::item * itm = world->items.all[i];
         DFCoord pos_item(itm->x, itm->y, itm->z);
 
         // keep track how many items are at places. all items.

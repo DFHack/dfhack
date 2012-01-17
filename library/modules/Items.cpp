@@ -66,7 +66,9 @@ using namespace std;
 #include "df/general_ref.h"
 
 using namespace DFHack;
+using namespace DFHack::Simple;
 using namespace df::enums;
+using df::global::world;
 
 #define ITEMDEF_VECTORS \
     ITEM(WEAPON, weapons, itemdef_weaponst) \
@@ -394,146 +396,11 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
            bits_match(item.flags3.whole, item_ok3.whole, item_mask3.whole);
 }
 
-
-Module* DFHack::createItems()
-{
-    return new Items();
-}
-
-class Items::Private
-{
-    public:
-        Process * owner;
-        std::map<int32_t, df::item *> idLookupTable;
-        uint32_t refVectorOffset;
-        uint32_t idFieldOffset;
-        void * itemVectorAddress;
-
-        ClassNameCheck isOwnerRefClass;
-        ClassNameCheck isContainerRefClass;
-        ClassNameCheck isContainsRefClass;
-
-        // Similar to isOwnerRefClass.  Value is unique to each creature, but
-        // different than the creature's id.
-        ClassNameCheck isUnitHolderRefClass;
-
-        // One of these is present for each creature contained in a cage.
-        // The value is similar to that for isUnitHolderRefClass, different
-        // than the creature's ID but unique for each creature.
-        ClassNameCheck isCagedUnitRefClass;
-
-        // ID of bulding containing/holding the item.
-        ClassNameCheck isBuildingHolderRefClass;
-
-        // Building ID of lever/etc which triggers bridge/etc holding
-        // this mechanism.
-        ClassNameCheck isTriggeredByRefClass;
-
-        // Building ID of bridge/etc which is triggered by lever/etc holding
-        // this mechanism.
-        ClassNameCheck isTriggerTargetRefClass;
-
-        // Civilization ID of owner of item, for items not owned by the
-        // fortress.
-        ClassNameCheck isEntityOwnerRefClass;
-
-        // Item has been offered to the caravan.  The value is the
-        // civilization ID of
-        ClassNameCheck isOfferedRefClass;
-
-        // Item is in a depot for trade.  Purpose of value is unknown, but is
-        // different for each item, even in the same depot at the same time.
-        ClassNameCheck isTradingRefClass;
-
-        // Item is flying or falling through the air.  The value seems to
-        // be the ID for a "projectile information" object.
-        ClassNameCheck isProjectileRefClass;
-
-        std::set<std::string> knownItemRefTypes;
-};
-
-Items::Items()
-{
-    Core & c = Core::getInstance();
-    d = new Private;
-    d->owner = c.p;
-
-    DFHack::OffsetGroup* itemGroup = c.vinfo->getGroup("Items");
-    d->itemVectorAddress = itemGroup->getAddress("items_vector");
-    d->idFieldOffset = itemGroup->getOffset("id");
-    d->refVectorOffset = itemGroup->getOffset("item_ref_vector");
-
-    d->isOwnerRefClass = ClassNameCheck("general_ref_unit_itemownerst");
-    d->isContainerRefClass = ClassNameCheck("general_ref_contained_in_itemst");
-    d->isContainsRefClass = ClassNameCheck("general_ref_contains_itemst");
-    d->isUnitHolderRefClass = ClassNameCheck("general_ref_unit_holderst");
-    d->isCagedUnitRefClass = ClassNameCheck("general_ref_contains_unitst");
-    d->isBuildingHolderRefClass
-        = ClassNameCheck("general_ref_building_holderst");
-    d->isTriggeredByRefClass = ClassNameCheck("general_ref_building_triggerst");
-    d->isTriggerTargetRefClass
-        = ClassNameCheck("general_ref_building_triggertargetst");
-    d->isEntityOwnerRefClass = ClassNameCheck("general_ref_entity_itemownerst");
-    d->isOfferedRefClass = ClassNameCheck("general_ref_entity_offeredst");
-    d->isTradingRefClass = ClassNameCheck("general_ref_unit_tradebringerst");
-    d->isProjectileRefClass = ClassNameCheck("general_ref_projectilest");
-
-    std::vector<std::string> known_names;
-    ClassNameCheck::getKnownClassNames(known_names);
-
-    for (size_t i = 0; i < known_names.size(); i++)
-    {
-        if (known_names[i].find("general_ref_") == 0)
-            d->knownItemRefTypes.insert(known_names[i]);
-    }
-}
-
-bool Items::Start()
-{
-    d->idLookupTable.clear();
-    return true;
-}
-
-bool Items::Finish()
-{
-    return true;
-}
-
-bool Items::readItemVector(std::vector<df::item *> &items)
-{
-    std::vector <df::item *> *p_items = (std::vector <df::item *> *) d->itemVectorAddress;
-
-    d->idLookupTable.clear();
-    items.resize(p_items->size());
-
-    for (unsigned i = 0; i < p_items->size(); i++)
-    {
-        df::item * ptr = p_items->at(i);
-        items[i] = ptr;
-        d->idLookupTable[ptr->id] = ptr;
-    }
-
-    return true;
-}
-
 df::item * Items::findItemByID(int32_t id)
 {
     if (id < 0)
         return 0;
-
-    if (d->idLookupTable.empty())
-    {
-        std::vector<df::item *> tmp;
-        readItemVector(tmp);
-    }
-
-    return d->idLookupTable[id];
-}
-
-Items::~Items()
-{
-    Finish();
-    delete d;
+    return df::item::find(id);
 }
 
 bool Items::copyItem(df::item * itembase, DFHack::dfh_item &item)
@@ -597,23 +464,6 @@ bool Items::readItemRefs(const df::item * item, df::general_ref_type type, std::
     }
 
     return !values.empty();
-}
-
-bool Items::unknownRefs(const df::item * item, std::vector<std::pair<std::string, int32_t> >& refs)
-{
-    refs.clear();
-
-    for (uint32_t i = 0; i < item->itemrefs.size(); i++)
-    {
-        std::string name = ((t_virtual *)(item->itemrefs[i]))->getClassName();
-
-        if (d->knownItemRefTypes.find(name) == d->knownItemRefTypes.end())
-        {
-            refs.push_back(pair<string, int32_t>(name, item->itemrefs[i]->getID()));
-        }
-    }
-
-    return (refs.size() > 0);
 }
 
 bool Items::removeItemOwner(df::item * item, Units *creatures)

@@ -111,17 +111,6 @@ struct dfh_item
     int16_t wear_level;
 };
 
-
-/**
- * Type for holding item improvements. broken/unused.
- * \ingroup grp_items
- */
-struct t_improvement
-{
-    t_material matdesc;
-    int32_t quality;
-};
-
 /**
  * The Items module
  * \ingroup grp_modules

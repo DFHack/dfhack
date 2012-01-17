@@ -9,226 +9,191 @@
 #include <set>
 using namespace std;
 
-#include "Types.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"
-#include "modules/Materials.h"
-#include "modules/Items.h"
-#include "modules/Units.h"
+#include "Types.h"
+#include "Error.h"
 #include "modules/kitchen.h"
 #include "ModuleFactory.h"
 #include "Core.h"
-#include "Virtual.h"
+using namespace DFHack;
+using namespace DFHack::Simple;
+
+#include "DataDefs.h"
+#include "df/world.h"
+#include "df/ui.h"
 #include "df/item_type.h"
+#include "df/plant_raw.h"
 
-namespace DFHack
+using namespace df::enums;
+using df::global::world;
+using df::global::ui;
+
+void Kitchen::debug_print(Core &core)
 {
-namespace Kitchen
-{
-    class Exclusions::Private
+    core.con.print("Kitchen Exclusions\n");
+    for(std::size_t i = 0; i < size(); ++i)
     {
-    public:
-        Private (DFHack::Core& core_)
-            : core(core_)
-            , itemTypes       (*((std::vector<t_itemType     >*)(addr(core_,0))))
-            , itemSubtypes    (*((std::vector<t_itemSubtype  >*)(addr(core_,1))))
-            , materialTypes   (*((std::vector<t_materialType >*)(addr(core_,2))))
-            , materialIndices (*((std::vector<t_materialIndex>*)(addr(core_,3))))
-            , exclusionTypes  (*((std::vector<t_exclusionType>*)(addr(core_,4))))
-        {
-        };
-        DFHack::Core& core;
-        std::vector<t_itemType>& itemTypes; // the item types vector of the kitchen exclusion list
-        std::vector<t_itemSubtype>& itemSubtypes; // the item subtype vector of the kitchen exclusion list
-        std::vector<t_materialType>& materialTypes; // the material subindex vector of the kitchen exclusion list
-        std::vector<t_materialIndex>& materialIndices; // the material index vector of the kitchen exclusion list
-        std::vector<t_exclusionType>& exclusionTypes; // the exclusion type vector of the kitchen excluions list
-
-        static void * addr(const DFHack::Core& core, int index)
-        {
-            static char * start = core.vinfo->getAddress("kitchen_limits");
-            return start + sizeof(std::vector<int>) * index;
-        };
-    };
-
-    Exclusions::Exclusions(Core & c)
-    {
-        d = new Private(c);
-    };
-
-    Exclusions::~Exclusions()
-    {
-        delete d;
-    };
-
-    void Exclusions::debug_print() const
-    {
-        d->core.con.print("Kitchen Exclusions\n");
-        Materials& materialsModule= *d->core.getMaterials();
-        for(std::size_t i = 0; i < size(); ++i)
-        {
-            d->core.con.print("%2u: IT:%2i IS:%i MT:%3i MI:%2i ET:%i %s\n",
-                           i,
-                           d->itemTypes[i],
-                           d->itemSubtypes[i],
-                           d->materialTypes[i],
-                           d->materialIndices[i],
-                           d->exclusionTypes[i],
-                           materialsModule.df_organic->at(d->materialIndices[i])->ID.c_str()
-            );
-        }
-        d->core.con.print("\n");
+        core.con.print("%2u: IT:%2i IS:%i MT:%3i MI:%2i ET:%i %s\n",
+                       i,
+                       ui->kitchen.item_types[i],
+                       ui->kitchen.item_subtypes[i],
+                       ui->kitchen.mat_types[i],
+                       ui->kitchen.mat_indices[i],
+                       ui->kitchen.exc_types[i],
+                       (ui->kitchen.mat_types[i] >= 419 && ui->kitchen.mat_types[i] <= 618) ? world->raws.plants.all[ui->kitchen.mat_indices[i]]->id.c_str() : "n/a"
+        );
     }
-
-    void Exclusions::allowPlantSeedCookery(t_materialIndex materialIndex)
-    {
-        bool match = false;
-        do
-        {
-            match = false;
-            std::size_t matchIndex = 0;
-            for(std::size_t i = 0; i < size(); ++i)
-            {
-                if(d->materialIndices[i] == materialIndex
-                   && (d->itemTypes[i] == df::item_type::SEEDS || d->itemTypes[i] == df::item_type::PLANT)
-                   && d->exclusionTypes[i] == cookingExclusion
-                )
-                {
-                    match = true;
-                    matchIndex = i;
-                }
-            }
-            if(match)
-            {
-                d->itemTypes.erase(d->itemTypes.begin() + matchIndex);
-                d->itemSubtypes.erase(d->itemSubtypes.begin() + matchIndex);
-                d->materialIndices.erase(d->materialIndices.begin() + matchIndex);
-                d->materialTypes.erase(d->materialTypes.begin() + matchIndex);
-                d->exclusionTypes.erase(d->exclusionTypes.begin() + matchIndex);
-            }
-        } while(match);
-    };
-
-    void Exclusions::denyPlantSeedCookery(t_materialIndex materialIndex)
-    {
-        Materials *mats = d->core.getMaterials();
-        df_plant_type *type = mats->df_organic->at(materialIndex);
-        bool SeedAlreadyIn = false;
-        bool PlantAlreadyIn = false;
-        for(std::size_t i = 0; i < size(); ++i)
-        {
-            if(d->materialIndices[i] == materialIndex
-               && d->exclusionTypes[i] == cookingExclusion)
-            {
-                if(d->itemTypes[i] == df::item_type::SEEDS)
-                    SeedAlreadyIn = true;
-                else if (d->itemTypes[i] == df::item_type::PLANT)
-                    PlantAlreadyIn = true;
-            }
-        }
-        if(!SeedAlreadyIn)
-        {
-            d->itemTypes.push_back(df::item_type::SEEDS);
-            d->itemSubtypes.push_back(organicSubtype);
-            d->materialTypes.push_back(type->material_type_seed);
-            d->materialIndices.push_back(materialIndex);
-            d->exclusionTypes.push_back(cookingExclusion);
-        }
-        if(!PlantAlreadyIn)
-        {
-            d->itemTypes.push_back(df::item_type::PLANT);
-            d->itemSubtypes.push_back(organicSubtype);
-            d->materialTypes.push_back(type->material_type_basic_mat);
-            d->materialIndices.push_back(materialIndex);
-            d->exclusionTypes.push_back(cookingExclusion);
-        }
-    };
-
-    void Exclusions::fillWatchMap(std::map<t_materialIndex, unsigned int>& watchMap) const
-    {
-        watchMap.clear();
-        for(std::size_t i = 0; i < size(); ++i)
-        {
-            if(d->itemTypes[i] == limitType && d->itemSubtypes[i] == limitSubtype && d->exclusionTypes[i] == limitExclusion)
-            {
-                watchMap[d->materialIndices[i]] = (unsigned int) d->materialTypes[i];
-            }
-        }
-    };
-
-    void Exclusions::removeLimit(t_materialIndex materialIndex)
-    {
-        bool match = false;
-        do
-        {
-            match = false;
-            std::size_t matchIndex = 0;
-            for(std::size_t i = 0; i < size(); ++i)
-            {
-                if(d->itemTypes[i] == limitType
-                   && d->itemSubtypes[i] == limitSubtype
-                   && d->materialIndices[i] == materialIndex
-                   && d->exclusionTypes[i] == limitExclusion)
-                {
-                    match = true;
-                    matchIndex = i;
-                }
-            }
-            if(match)
-            {
-                d->itemTypes.erase(d->itemTypes.begin() + matchIndex);
-                d->itemSubtypes.erase(d->itemSubtypes.begin() + matchIndex);
-                d->materialTypes.erase(d->materialTypes.begin() + matchIndex);
-                d->materialIndices.erase(d->materialIndices.begin() + matchIndex);
-                d->exclusionTypes.erase(d->exclusionTypes.begin() + matchIndex);
-            }
-        } while(match);
-    };
-
-    void Exclusions::setLimit(t_materialIndex materialIndex, unsigned int limit)
-    {
-        removeLimit(materialIndex);
-        if(limit > seedLimit)
-        {
-            limit = seedLimit;
-        }
-        d->itemTypes.push_back(limitType);
-        d->itemSubtypes.push_back(limitSubtype);
-        d->materialIndices.push_back(materialIndex);
-        d->materialTypes.push_back((t_materialType) (limit < seedLimit) ? limit : seedLimit);
-        d->exclusionTypes.push_back(limitExclusion);
-    };
-
-    void Exclusions::clearLimits()
-    {
-        bool match = false;
-        do
-        {
-            match = false;
-            std::size_t matchIndex;
-            for(std::size_t i = 0; i < size(); ++i)
-            {
-                if(d->itemTypes[i] == limitType
-                   && d->itemSubtypes[i] == limitSubtype
-                   && d->exclusionTypes[i] == limitExclusion)
-                {
-                    match = true;
-                    matchIndex = i;
-                }
-            }
-            if(match)
-            {
-                d->itemTypes.erase(d->itemTypes.begin() + matchIndex);
-                d->itemSubtypes.erase(d->itemSubtypes.begin() + matchIndex);
-                d->materialIndices.erase(d->materialIndices.begin() + matchIndex);
-                d->materialTypes.erase(d->materialTypes.begin() + matchIndex);
-                d->exclusionTypes.erase(d->exclusionTypes.begin() + matchIndex);
-            }
-        } while(match);
-    };
-    size_t Exclusions::size() const
-    {
-        return d->itemTypes.size();
-    };
+    core.con.print("\n");
 }
+
+void Kitchen::allowPlantSeedCookery(t_materialIndex materialIndex)
+{
+    bool match = false;
+    do
+    {
+        match = false;
+        std::size_t matchIndex = 0;
+        for(std::size_t i = 0; i < size(); ++i)
+        {
+            if(ui->kitchen.mat_indices[i] == materialIndex
+               && (ui->kitchen.item_types[i] == df::item_type::SEEDS || ui->kitchen.item_types[i] == df::item_type::PLANT)
+               && ui->kitchen.exc_types[i] == cookingExclusion
+            )
+            {
+                match = true;
+                matchIndex = i;
+            }
+        }
+        if(match)
+        {
+            ui->kitchen.item_types.erase(ui->kitchen.item_types.begin() + matchIndex);
+            ui->kitchen.item_subtypes.erase(ui->kitchen.item_subtypes.begin() + matchIndex);
+            ui->kitchen.mat_indices.erase(ui->kitchen.mat_indices.begin() + matchIndex);
+            ui->kitchen.mat_types.erase(ui->kitchen.mat_types.begin() + matchIndex);
+            ui->kitchen.exc_types.erase(ui->kitchen.exc_types.begin() + matchIndex);
+        }
+    } while(match);
+};
+
+void Kitchen::denyPlantSeedCookery(t_materialIndex materialIndex)
+{
+    df::plant_raw *type = world->raws.plants.all[materialIndex];
+    bool SeedAlreadyIn = false;
+    bool PlantAlreadyIn = false;
+    for(std::size_t i = 0; i < size(); ++i)
+    {
+        if(ui->kitchen.mat_indices[i] == materialIndex
+           && ui->kitchen.exc_types[i] == cookingExclusion)
+        {
+            if(ui->kitchen.item_types[i] == df::item_type::SEEDS)
+                SeedAlreadyIn = true;
+            else if (ui->kitchen.item_types[i] == df::item_type::PLANT)
+                PlantAlreadyIn = true;
+        }
+    }
+    if(!SeedAlreadyIn)
+    {
+        ui->kitchen.item_types.push_back(df::item_type::SEEDS);
+        ui->kitchen.item_subtypes.push_back(organicSubtype);
+        ui->kitchen.mat_types.push_back(type->material_defs.type_seed);
+        ui->kitchen.mat_indices.push_back(materialIndex);
+        ui->kitchen.exc_types.push_back(cookingExclusion);
+    }
+    if(!PlantAlreadyIn)
+    {
+        ui->kitchen.item_types.push_back(df::item_type::PLANT);
+        ui->kitchen.item_subtypes.push_back(organicSubtype);
+        ui->kitchen.mat_types.push_back(type->material_defs.type_basic_mat);
+        ui->kitchen.mat_indices.push_back(materialIndex);
+        ui->kitchen.exc_types.push_back(cookingExclusion);
+    }
+};
+
+void Kitchen::fillWatchMap(std::map<t_materialIndex, unsigned int>& watchMap)
+{
+    watchMap.clear();
+    for(std::size_t i = 0; i < size(); ++i)
+    {
+        if(ui->kitchen.item_subtypes[i] == limitType && ui->kitchen.item_subtypes[i] == limitSubtype && ui->kitchen.exc_types[i] == limitExclusion)
+        {
+            watchMap[ui->kitchen.mat_indices[i]] = (unsigned int) ui->kitchen.mat_types[i];
+        }
+    }
+};
+
+void Kitchen::removeLimit(t_materialIndex materialIndex)
+{
+    bool match = false;
+    do
+    {
+        match = false;
+        std::size_t matchIndex = 0;
+        for(std::size_t i = 0; i < size(); ++i)
+        {
+            if(ui->kitchen.item_types[i] == limitType
+               && ui->kitchen.item_subtypes[i] == limitSubtype
+               && ui->kitchen.mat_indices[i] == materialIndex
+               && ui->kitchen.exc_types[i] == limitExclusion)
+            {
+                match = true;
+                matchIndex = i;
+            }
+        }
+        if(match)
+        {
+            ui->kitchen.item_types.erase(ui->kitchen.item_types.begin() + matchIndex);
+            ui->kitchen.item_subtypes.erase(ui->kitchen.item_subtypes.begin() + matchIndex);
+            ui->kitchen.mat_types.erase(ui->kitchen.mat_types.begin() + matchIndex);
+            ui->kitchen.mat_indices.erase(ui->kitchen.mat_indices.begin() + matchIndex);
+            ui->kitchen.exc_types.erase(ui->kitchen.exc_types.begin() + matchIndex);
+        }
+    } while(match);
+};
+
+void Kitchen::setLimit(t_materialIndex materialIndex, unsigned int limit)
+{
+    removeLimit(materialIndex);
+    if(limit > seedLimit)
+    {
+        limit = seedLimit;
+    }
+    ui->kitchen.item_types.push_back(limitType);
+    ui->kitchen.item_subtypes.push_back(limitSubtype);
+    ui->kitchen.mat_indices.push_back(materialIndex);
+    ui->kitchen.mat_types.push_back((t_materialType) (limit < seedLimit) ? limit : seedLimit);
+    ui->kitchen.exc_types.push_back(limitExclusion);
+};
+
+void Kitchen::clearLimits()
+{
+    bool match = false;
+    do
+    {
+        match = false;
+        std::size_t matchIndex;
+        for(std::size_t i = 0; i < size(); ++i)
+        {
+            if(ui->kitchen.item_types[i] == limitType
+               && ui->kitchen.item_subtypes[i] == limitSubtype
+               && ui->kitchen.exc_types[i] == limitExclusion)
+            {
+                match = true;
+                matchIndex = i;
+            }
+        }
+        if(match)
+        {
+            ui->kitchen.item_types.erase(ui->kitchen.item_types.begin() + matchIndex);
+            ui->kitchen.item_subtypes.erase(ui->kitchen.item_subtypes.begin() + matchIndex);
+            ui->kitchen.mat_indices.erase(ui->kitchen.mat_indices.begin() + matchIndex);
+            ui->kitchen.mat_types.erase(ui->kitchen.mat_types.begin() + matchIndex);
+            ui->kitchen.exc_types.erase(ui->kitchen.exc_types.begin() + matchIndex);
+        }
+    } while(match);
+};
+
+size_t Kitchen::size()
+{
+    return ui->kitchen.item_types.size();
 };

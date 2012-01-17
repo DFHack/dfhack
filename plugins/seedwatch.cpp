@@ -8,15 +8,14 @@
 #include "Core.h"
 #include "Export.h"
 #include "PluginManager.h"
-#include "modules/Materials.h"
 #include "modules/Items.h"
 #include "modules/World.h"
 #include "modules/kitchen.h"
 #include "VersionInfo.h"
 #include "df/item_flags.h"
 
-using DFHack::t_materialType;
-using DFHack::t_materialIndex;
+using namespace DFHack;
+using namespace DFHack::Simple;
 
 const int buffer = 20; // seed number buffer - 20 is reasonable
 bool running = false; // whether seedwatch is counting the seeds or not
@@ -39,7 +38,7 @@ bool ignoreSeeds(df::item_flags& f) // seeds with the following flags should not
         f.bits.in_job;
 };
 
-void printHelp(DFHack::Core& core) // prints help
+void printHelp(Core& core) // prints help
 {
     core.con.print(
         "Watches the numbers of seeds available and enables/disables seed and plant cooking.\n"
@@ -93,17 +92,17 @@ std::string searchAbbreviations(std::string in)
     }
 };
 
-DFhackCExport DFHack::command_result df_seedwatch(DFHack::Core* pCore, std::vector<std::string>& parameters)
+DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>& parameters)
 {
-    DFHack::Core& core = *pCore;
+    Core& core = *pCore;
     if(!core.isValid())
     {
-        return DFHack::CR_FAILURE;
+        return CR_FAILURE;
     }
     core.Suspend();
 
-    DFHack::Materials& materialsModule = *core.getMaterials();
-    std::vector<DFHack::t_matgloss> organics;
+    Materials& materialsModule = *core.getMaterials();
+    std::vector<t_matgloss> organics;
     materialsModule.CopyOrganicMaterials(organics);
 
     std::map<std::string, t_materialIndex> materialsReverser;
@@ -112,17 +111,17 @@ DFhackCExport DFHack::command_result df_seedwatch(DFHack::Core* pCore, std::vect
         materialsReverser[organics[i].id] = i;
     }
 
-    DFHack::World *w = core.getWorld();
-    DFHack::t_gamemodes gm;
+    World *w = core.getWorld();
+    t_gamemodes gm;
     w->ReadGameMode(gm);// FIXME: check return value
 
     // if game mode isn't fortress mode
-    if(gm.g_mode != DFHack::GAMEMODE_DWARF || gm.g_type != DFHack::GAMETYPE_DWARF_MAIN)
+    if(gm.g_mode != GAMEMODE_DWARF || gm.g_type != GAMETYPE_DWARF_MAIN)
     {
         // just print the help
         printHelp(core);
         core.Resume();
-        return DFHack::CR_OK;
+        return CR_OK;
     }
 
     std::string par;
@@ -148,8 +147,7 @@ DFhackCExport DFHack::command_result df_seedwatch(DFHack::Core* pCore, std::vect
         }
         else if(par == "clear")
         {
-            DFHack::Kitchen::Exclusions kitchenExclusions(core);
-            kitchenExclusions.clearLimits();
+            Kitchen::clearLimits();
             core.con.print("seedwatch watchlist cleared\n");
         }
         else if(par == "info")
@@ -163,9 +161,8 @@ DFhackCExport DFHack::command_result df_seedwatch(DFHack::Core* pCore, std::vect
             {
                 core.con.print("seedwatch is not supervising.  Use 'seedwatch start' to start supervision.\n");
             }
-            DFHack::Kitchen::Exclusions kitchenExclusions(core);
             std::map<t_materialIndex, unsigned int> watchMap;
-            kitchenExclusions.fillWatchMap(watchMap);
+            Kitchen::fillWatchMap(watchMap);
             if(watchMap.empty())
             {
                 core.con.print("The watch list is empty.\n");
@@ -181,10 +178,9 @@ DFhackCExport DFHack::command_result df_seedwatch(DFHack::Core* pCore, std::vect
         }
         else if(par == "debug")
         {
-            DFHack::Kitchen::Exclusions kitchenExclusions(core);
             std::map<t_materialIndex, unsigned int> watchMap;
-            kitchenExclusions.fillWatchMap(watchMap);
-            kitchenExclusions.debug_print();
+            Kitchen::fillWatchMap(watchMap);
+            Kitchen::debug_print(core);
         }
         /*
         else if(par == "dumpmaps")
@@ -209,8 +205,7 @@ DFhackCExport DFHack::command_result df_seedwatch(DFHack::Core* pCore, std::vect
             std::string token = searchAbbreviations(par);
             if(materialsReverser.count(token) > 0)
             {
-                DFHack::Kitchen::Exclusions kitchenExclusions(core);
-                kitchenExclusions.removeLimit(materialsReverser[token]);
+                Kitchen::removeLimit(materialsReverser[token]);
                 core.con.print("%s is not being watched\n", token.c_str());
             }
             else
@@ -226,8 +221,7 @@ DFhackCExport DFHack::command_result df_seedwatch(DFHack::Core* pCore, std::vect
         {
             for(std::map<std::string, std::string>::const_iterator i = abbreviations.begin(); i != abbreviations.end(); ++i)
             {
-                DFHack::Kitchen::Exclusions kitchenExclusions(core);
-                if(materialsReverser.count(i->second) > 0) kitchenExclusions.setLimit(materialsReverser[i->second], limit);
+                if(materialsReverser.count(i->second) > 0) Kitchen::setLimit(materialsReverser[i->second], limit);
             }
         }
         else
@@ -235,8 +229,7 @@ DFhackCExport DFHack::command_result df_seedwatch(DFHack::Core* pCore, std::vect
             std::string token = searchAbbreviations(parameters[0]);
             if(materialsReverser.count(token) > 0)
             {
-                DFHack::Kitchen::Exclusions kitchenExclusions(core);
-                kitchenExclusions.setLimit(materialsReverser[token], limit);
+                Kitchen::setLimit(materialsReverser[token], limit);
                 core.con.print("%s is being watched.\n", token.c_str());
             }
             else
@@ -251,7 +244,7 @@ DFhackCExport DFHack::command_result df_seedwatch(DFHack::Core* pCore, std::vect
     }
 
     core.Resume();
-    return DFHack::CR_OK;
+    return CR_OK;
 }
 
 DFhackCExport const char* plugin_name(void)
@@ -259,10 +252,10 @@ DFhackCExport const char* plugin_name(void)
     return "seedwatch";
 }
 
-DFhackCExport DFHack::command_result plugin_init(DFHack::Core* pCore, std::vector<DFHack::PluginCommand>& commands)
+DFhackCExport command_result plugin_init(Core* pCore, std::vector<PluginCommand>& commands)
 {
     commands.clear();
-    commands.push_back(DFHack::PluginCommand("seedwatch", "Switches cookery based on quantity of seeds, to keep reserves", df_seedwatch));
+    commands.push_back(PluginCommand("seedwatch", "Switches cookery based on quantity of seeds, to keep reserves", df_seedwatch));
     // fill in the abbreviations map, with abbreviations for the standard plants
     abbreviations["bs"] = "SLIVER_BARB";
     abbreviations["bt"] = "TUBER_BLOATED";
@@ -285,14 +278,14 @@ DFhackCExport DFHack::command_result plugin_init(DFHack::Core* pCore, std::vecto
     abbreviations["vh"] = "HERB_VALLEY";
     abbreviations["ws"] = "BERRIES_STRAW_WILD";
     abbreviations["wv"] = "VINE_WHIP";
-    return DFHack::CR_OK;
+    return CR_OK;
 }
 
-DFhackCExport DFHack::command_result plugin_onstatechange(DFHack::Core* pCore, DFHack::state_change_event event)
+DFhackCExport command_result plugin_onstatechange(Core* pCore, state_change_event event)
 {
     switch (event) {
-    case DFHack::SC_GAME_LOADED:
-    case DFHack::SC_GAME_UNLOADED:
+    case SC_GAME_LOADED:
+    case SC_GAME_UNLOADED:
         if (running)
             pCore->con.printerr("seedwatch deactivated due to game load/unload\n");
         running = false;
@@ -301,34 +294,34 @@ DFhackCExport DFHack::command_result plugin_onstatechange(DFHack::Core* pCore, D
         break;
     }
 
-    return DFHack::CR_OK;
+    return CR_OK;
 }
 
-DFhackCExport DFHack::command_result plugin_onupdate(DFHack::Core* pCore)
+DFhackCExport command_result plugin_onupdate(Core* pCore)
 {
     if (running)
     {
         // reduce processing rate
         static int counter = 0;
         if (++counter < 500)
-            return DFHack::CR_OK;
+            return CR_OK;
         counter = 0;
 
-        DFHack::Core& core = *pCore;
-        DFHack::World *w = core.getWorld();
-        DFHack::t_gamemodes gm;
+        Core& core = *pCore;
+        World *w = core.getWorld();
+        t_gamemodes gm;
         w->ReadGameMode(gm);// FIXME: check return value
         // if game mode isn't fortress mode
-        if(gm.g_mode != DFHack::GAMEMODE_DWARF || gm.g_type != DFHack::GAMETYPE_DWARF_MAIN)
+        if(gm.g_mode != GAMEMODE_DWARF || gm.g_type != GAMETYPE_DWARF_MAIN)
         {
             // stop running.
             running = false;
             core.con.printerr("seedwatch deactivated due to game mode switch\n");
-            return DFHack::CR_OK;
+            return CR_OK;
         }
         // this is dwarf mode, continue
         std::map<t_materialIndex, unsigned int> seedCount; // the number of seeds
-        DFHack::Items& itemsModule = *core.getItems();
+        Items& itemsModule = *core.getItems();
         itemsModule.Start();
         std::vector<df::item*> items;
         itemsModule.readItemVector(items);
@@ -349,25 +342,24 @@ DFhackCExport DFHack::command_result plugin_onupdate(DFHack::Core* pCore)
         }
         itemsModule.Finish();
 
-        DFHack::Kitchen::Exclusions kitchenExclusions(core);
         std::map<t_materialIndex, unsigned int> watchMap;
-        kitchenExclusions.fillWatchMap(watchMap);
+        Kitchen::fillWatchMap(watchMap);
         for(auto i = watchMap.begin(); i != watchMap.end(); ++i)
         {
             if(seedCount[i->first] <= i->second)
             {
-                kitchenExclusions.denyPlantSeedCookery(i->first);
+                Kitchen::denyPlantSeedCookery(i->first);
             }
             else if(i->second + buffer < seedCount[i->first])
             {
-                kitchenExclusions.allowPlantSeedCookery(i->first);
+                Kitchen::allowPlantSeedCookery(i->first);
             }
         }
     }
-    return DFHack::CR_OK;
+    return CR_OK;
 }
 
-DFhackCExport DFHack::command_result plugin_shutdown(DFHack::Core* pCore)
+DFhackCExport command_result plugin_shutdown(Core* pCore)
 {
-    return DFHack::CR_OK;
+    return CR_OK;
 }

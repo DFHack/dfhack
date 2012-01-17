@@ -36,6 +36,7 @@ distribution.
 #include "DataDefs.h"
 #include "df/item.h"
 #include "df/item_type.h"
+#include "df/general_ref.h"
 
 namespace df
 {
@@ -90,15 +91,6 @@ namespace DFHack
 class Context;
 class DFContextShared;
 class Units;
-
-/**
- * Describes relationship of an item with other objects
- * \ingroup grp_items
- */
-struct t_itemref : public t_virtual
-{
-    int32_t value;
-};
 
 /**
  * Type for holding an item read from DF
@@ -169,7 +161,7 @@ public:
     /// wipe out the owner records
     bool removeItemOwner(df::item * item, Units *creatures);
     /// read item references, filtered by class
-    bool readItemRefs(const df::item * item, const ClassNameCheck &classname,
+    bool readItemRefs(const df::item * item, const df::general_ref_type type,
                       /*output*/ std::vector<int32_t> &values);
     /// get list of item references that are unknown along with their values
     bool unknownRefs(const df::item * item, /*output*/ std::vector<std::pair<std::string, int32_t> >& refs);

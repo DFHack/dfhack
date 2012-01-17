@@ -63,6 +63,7 @@ using namespace std;
 #include "df/itemdef_foodst.h"
 #include "df/trapcomp_flags.h"
 #include "df/job_item.h"
+#include "df/general_ref.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -559,36 +560,40 @@ bool Items::copyItem(df::item * itembase, DFHack::dfh_item &item)
 
 int32_t Items::getItemOwnerID(const df::item * item)
 {
-    std::vector<int32_t> vals;
-    if (readItemRefs(item, d->isOwnerRefClass, vals))
-        return vals[0];
-    else
-        return -1;
+    for (uint32_t i = 0; i < item->itemrefs.size(); i++)
+    {
+        df::general_ref *ref = item->itemrefs[i];
+        if (ref->getType() == df::general_ref_type::unit_itemowner)
+            return ref->getID();
+    }
+    return -1;
 }
 
 int32_t Items::getItemContainerID(const df::item * item)
 {
-    std::vector<int32_t> vals;
-    if (readItemRefs(item, d->isContainerRefClass, vals))
-        return vals[0];
-    else
-        return -1;
+    for (uint32_t i = 0; i < item->itemrefs.size(); i++)
+    {
+        df::general_ref *ref = item->itemrefs[i];
+        if (ref->getType() == df::general_ref_type::contained_in_item)
+            return ref->getID();
+    }
+    return -1;
 }
 
 bool Items::getContainedItems(const df::item * item, std::vector<int32_t> &items)
 {
-    return readItemRefs(item, d->isContainsRefClass, items);
+    return readItemRefs(item, df::general_ref_type::contains_item, items);
 }
 
-bool Items::readItemRefs(const df::item * item, const ClassNameCheck &classname, std::vector<int32_t> &values)
+bool Items::readItemRefs(const df::item * item, df::general_ref_type type, std::vector<int32_t> &values)
 {
-    const std::vector <t_itemref *> &p_refs = (const std::vector<t_itemref *> &)item->itemrefs;
     values.clear();
 
-    for (uint32_t i=0; i<p_refs.size(); i++)
+    for (uint32_t i = 0; i < item->itemrefs.size(); i++)
     {
-        if (classname(d->owner, p_refs[i]->vptr))
-            values.push_back(int32_t(p_refs[i]->value));
+        df::general_ref *ref = item->itemrefs[i];
+        if (ref->getType() == type)
+            values.push_back(ref->getID());
     }
 
     return !values.empty();
@@ -598,15 +603,13 @@ bool Items::unknownRefs(const df::item * item, std::vector<std::pair<std::string
 {
     refs.clear();
 
-    const std::vector <t_itemref *> &p_refs = (const std::vector<t_itemref *> &)item->itemrefs;
-
-    for (uint32_t i=0; i<p_refs.size(); i++)
+    for (uint32_t i = 0; i < item->itemrefs.size(); i++)
     {
-        std::string name = p_refs[i]->getClassName();
+        std::string name = ((t_virtual *)(item->itemrefs[i]))->getClassName();
 
         if (d->knownItemRefTypes.find(name) == d->knownItemRefTypes.end())
         {
-            refs.push_back(pair<string, int32_t>(name, p_refs[i]->value));
+            refs.push_back(pair<string, int32_t>(name, item->itemrefs[i]->getID()));
         }
     }
 
@@ -615,21 +618,21 @@ bool Items::unknownRefs(const df::item * item, std::vector<std::pair<std::string
 
 bool Items::removeItemOwner(df::item * item, Units *creatures)
 {
-    std::vector <t_itemref *> &p_refs = (std::vector<t_itemref *> &)item->itemrefs;
-    for (uint32_t i=0; i<p_refs.size(); i++)
+    for (uint32_t i = 0; i < item->itemrefs.size(); i++)
     {
-        if (!d->isOwnerRefClass(d->owner, p_refs[i]->vptr))
+        df::general_ref *ref = item->itemrefs[i];
+        if (ref->getType() != df::general_ref_type::unit_itemowner)
             continue;
 
-        int32_t & oid = p_refs[i]->value;
-        int32_t ix = creatures->FindIndexById(oid);
+        df_unit *unit = (df_unit *)ref->getUnit();
 
-        if (ix < 0 || !creatures->RemoveOwnedItemByIdx(ix, item->id))
+        if (unit == NULL || !creatures->RemoveOwnedItemByPtr(unit, item->id))
         {
-            cerr << "RemoveOwnedItemIdx: CREATURE " << ix << " ID " << item->id << " FAILED!" << endl;
+            cerr << "RemoveOwnedItemIdx: CREATURE " << ref->getID() << " ID " << item->id << " FAILED!" << endl;
             return false;
         }
-        p_refs.erase(p_refs.begin() + i--);
+        delete ref;
+        item->itemrefs.erase(item->itemrefs.begin() + i--);
     }
 
     item->flags.bits.owned = 0;

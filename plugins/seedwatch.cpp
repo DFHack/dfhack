@@ -8,14 +8,17 @@
 #include "Core.h"
 #include "Export.h"
 #include "PluginManager.h"
-#include "modules/Items.h"
 #include "modules/World.h"
 #include "modules/kitchen.h"
 #include "VersionInfo.h"
+#include "df/world.h"
+#include "df/plant_raw.h"
 #include "df/item_flags.h"
 
 using namespace DFHack;
 using namespace DFHack::Simple;
+
+using df::global::world;
 
 const int buffer = 20; // seed number buffer - 20 is reasonable
 bool running = false; // whether seedwatch is counting the seeds or not
@@ -101,14 +104,10 @@ DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>&
     }
     core.Suspend();
 
-    Materials& materialsModule = *core.getMaterials();
-    std::vector<t_matgloss> organics;
-    materialsModule.CopyOrganicMaterials(organics);
-
     std::map<std::string, t_materialIndex> materialsReverser;
-    for(std::size_t i = 0; i < organics.size(); ++i)
+    for(std::size_t i = 0; i < world->raws.plants.all.size(); ++i)
     {
-        materialsReverser[organics[i].id] = i;
+        materialsReverser[world->raws.plants.all[i]->id] = i;
     }
 
     World *w = core.getWorld();
@@ -172,7 +171,7 @@ DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>&
                 core.con.print("The watch list is:\n");
                 for(std::map<t_materialIndex, unsigned int>::const_iterator i = watchMap.begin(); i != watchMap.end(); ++i)
                 {
-                    core.con.print("%s : %u\n", organics[i->first].id.c_str(), i->second);
+                    core.con.print("%s : %u\n", world->raws.plants.all[i->first]->id.c_str(), i->second);
                 }
             }
         }
@@ -321,15 +320,11 @@ DFhackCExport command_result plugin_onupdate(Core* pCore)
         }
         // this is dwarf mode, continue
         std::map<t_materialIndex, unsigned int> seedCount; // the number of seeds
-        Items& itemsModule = *core.getItems();
-        itemsModule.Start();
-        std::vector<df::item*> items;
-        itemsModule.readItemVector(items);
-        df::item * item;
+
         // count all seeds and plants by RAW material
-        for(std::size_t i = 0; i < items.size(); ++i)
+        for(std::size_t i = 0; i < world->items.all.size(); ++i)
         {
-            item = items[i];
+            df::item * item = world->items.all[i];
             t_materialIndex materialIndex = item->getMaterialIndex();
             switch(item->getType())
             {
@@ -340,7 +335,6 @@ DFhackCExport command_result plugin_onupdate(Core* pCore)
                 break;
             }
         }
-        itemsModule.Finish();
 
         std::map<t_materialIndex, unsigned int> watchMap;
         Kitchen::fillWatchMap(watchMap);

@@ -502,6 +502,11 @@ bool Items::readItemVectorSubset(std::vector<df_item *> &items, size_t offset, s
 
     // ensure copy size is within bounds of request and itemvector
     size_t outputsize = p_items->size() - offset;
+    // guard against empty read
+    if (outputsize <= 0)
+    {
+        return false;
+    }
     if (outputsize > maxsize)
     {
         outputsize = maxsize;

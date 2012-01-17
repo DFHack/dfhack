@@ -496,6 +496,26 @@ bool Items::readItemVector(std::vector<df_item *> &items)
     return true;
 }
 
+bool Items::readItemVectorSubset(std::vector<df_item *> &items, size_t offset, size_t maxsize)
+{
+    std::vector <df_item *> *p_items = (std::vector <df_item *> *) d->itemVectorAddress;
+
+    // ensure copy size is within bounds of request and itemvector
+    size_t outputsize = p_items->size() - offset;
+    if (outputsize > maxsize)
+    {
+        outputsize = maxsize;
+    }
+    items.resize(outputsize);
+    
+    for (unsigned i = 0; i < items.size(); i++)
+    {
+        items[i] = p_items->at(i+offset);
+    }
+
+    return true;
+}
+
 df_item * Items::findItemByID(int32_t id)
 {
     if (id < 0)

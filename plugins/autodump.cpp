@@ -330,7 +330,7 @@ DFhackCExport command_result df_autodump_destroy_item(Core * c, vector <string> 
     for (unsigned i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (ref->getType() == df::general_ref_type::unit_holder)
+        if (ref->getType() == df::general_ref_type::UNIT_HOLDER)
         {
             c->con.printerr("Choosing not to destroy items in unit inventory.\n");
             return CR_FAILURE;

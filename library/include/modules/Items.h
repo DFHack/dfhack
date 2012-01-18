@@ -625,6 +625,8 @@ public:
     /// Read a subset of the item vector from DF into a supplied vector
     ///    subset starts at item given by offset, and contains up to maxsize elements
     bool readItemVectorSubset(std::vector<df_item *> &items, size_t offset, size_t maxsize);
+    /// Read just the size of the item vector
+    bool readItemVectorSize(size_t &vectorsize);
     /// Look for a particular item by ID
     df_item * findItemByID(int32_t id);
 

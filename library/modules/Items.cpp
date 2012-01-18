@@ -505,7 +505,8 @@ bool Items::readItemVectorSubset(std::vector<df_item *> &items, size_t offset, s
     // guard against empty read
     if (outputsize <= 0)
     {
-        return false;
+        items.clear();
+        return true;
     }
     if (outputsize > maxsize)
     {
@@ -517,7 +518,7 @@ bool Items::readItemVectorSubset(std::vector<df_item *> &items, size_t offset, s
     {
         items[i] = p_items->at(i+offset);
     }
-
+    
     return true;
 }
 

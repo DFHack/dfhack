@@ -13,6 +13,7 @@ include_directories (include)
 include_directories (depends/md5)
 include_directories (depends/tinyxml)
 include_directories (depends/tthread)
+add_subdirectory (depends/protobuf)
 
 execute_process(COMMAND perl xml/list.pl xml include/df ";"
                 WORKING_DIRECTORY ${dfapi_SOURCE_DIR}

@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
@@ -189,7 +189,7 @@ df::map_block* Maps::getBlock (int32_t blockx, int32_t blocky, int32_t blockz)
 {
     if ((blockx < 0) || (blocky < 0) || (blockz < 0))
         return NULL;
-    if ((blockx >= world->map.x_count_block) || (blocky << 4 >= world->map.y_count_block) || (blockz >= world->map.z_count_block))
+    if ((blockx >= world->map.x_count_block) || (blocky >= world->map.y_count_block) || (blockz >= world->map.z_count_block))
         return NULL;
     return world->map.block_index[blockx][blocky][blockz];
 }

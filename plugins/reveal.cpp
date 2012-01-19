@@ -27,10 +27,10 @@ bool isSafe(uint32_t x, uint32_t y, uint32_t z, DFHack::Maps *Maps)
         return false;
     }
     // Adamantine tubes and temples lead to Hell
-    if (local_feature && local_feature->type != DFHack::feature_Other)
+    if (local_feature && (local_feature->type == df::feature_type::deep_special_tube || local_feature->type == df::feature_type::deep_surface_portal))
         return false;
     // And Hell *is* Hell.
-    if (global_feature && global_feature->type == DFHack::feature_Underworld)
+    if (global_feature && global_feature->type == df::feature_type::feature_underworld_from_layer)
         return false;
     // otherwise it's safe.
     return true;
@@ -192,7 +192,7 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
         {
             for(uint32_t z = 0; z< z_max;z++)
             {
-                df_block *block = Maps->getBlock(x,y,z);
+                df::map_block *block = Maps->getBlock(x,y,z);
                 if(block)
                 {
                     // in 'no-hell'/'safe' mode, don't reveal blocks with hell and adamantine
@@ -288,7 +288,7 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     for(size_t i = 0; i < hidesaved.size();i++)
     {
         hideblock & hb = hidesaved[i];
-        df_block * b = Maps->getBlock(hb.x,hb.y,hb.z);
+        df::map_block * b = Maps->getBlock(hb.x,hb.y,hb.z);
         for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
         {
             b->designation[i][j].bits.hidden = hb.hiddens[i][j];
@@ -391,7 +391,7 @@ DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string>
         {
             for(uint32_t z = 0; z< z_max;z++)
             {
-                df_block * b = Maps->getBlock(x,y,z);
+                df::map_block * b = Maps->getBlock(x,y,z);
                 if(b)
                 {
                     // change the hidden flag to 0
@@ -419,7 +419,7 @@ DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string>
         if(!MCache->testCoord(current))
             continue;
         int16_t tt = MCache->tiletypeAt(current);
-        t_designation des = MCache->designationAt(current);
+        df::tile_designation des = MCache->designationAt(current);
         if(!des.bits.hidden)
         {
             continue;

@@ -145,7 +145,7 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
                 }
 */
                 int16_t tiletype = mc.tiletypeAt(cursor);
-                naked_designation &des = block.designation[tileX][tileY].bits;
+                df::tile_designation &des = block.designation[tileX][tileY];
 /*
                 if(showDesig)
                 {
@@ -189,8 +189,8 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
                 con.print("temperature2: %d U\n",mc.temperature2At(cursor));
 
                 // biome, geolayer
-                con << "biome: " << des.biome << std::endl;
-                con << "geolayer: " << des.geolayer_index
+                con << "biome: " << des.bits.biome << std::endl;
+                con << "geolayer: " << des.bits.geolayer_index
                     << std::endl;
                 int16_t base_rock = mc.baseMaterialAt(cursor);
                 if(base_rock != -1)
@@ -217,33 +217,33 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
                         con << endl;
                 }
                 // liquids
-                if(des.flow_size)
+                if(des.bits.flow_size)
                 {
-                    if(des.liquid_type == DFHack::liquid_magma)
+                    if(des.bits.liquid_type == df::tile_liquid::Magma)
                         con <<"magma: ";
                     else con <<"water: ";
-                    con << des.flow_size << std::endl;
+                    con << des.bits.flow_size << std::endl;
                 }
-                if(des.flow_forbid)
+                if(des.bits.flow_forbid)
                     con << "flow forbid" << std::endl;
-                if(des.pile)
+                if(des.bits.pile)
                     con << "stockpile?" << std::endl;
-                if(des.rained)
+                if(des.bits.rained)
                     con << "rained?" << std::endl;
-                if(des.smooth)
+                if(des.bits.smooth)
                     con << "smooth?" << std::endl;
-                if(des.water_salt)
+                if(des.bits.water_salt)
                     con << "salty" << endl;
-                if(des.water_stagnant)
+                if(des.bits.water_stagnant)
                     con << "stagnant" << endl;
 
                 #define PRINT_FLAG( X )  con.print("%-16s= %c\n", #X , ( des.X ? 'Y' : ' ' ) )
-                PRINT_FLAG( hidden );
-                PRINT_FLAG( light );
-                PRINT_FLAG( skyview );
-                PRINT_FLAG( subterranean );
-                PRINT_FLAG( water_table );
-                PRINT_FLAG( rained );
+                PRINT_FLAG( bits.hidden );
+                PRINT_FLAG( bits.light );
+                PRINT_FLAG( bits.outside );
+                PRINT_FLAG( bits.subterranean );
+                PRINT_FLAG( bits.water_table );
+                PRINT_FLAG( bits.rained );
 
                 DFCoord pc(blockX, blockY);
 
@@ -252,7 +252,7 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
                     t_feature * local = 0;
                     t_feature * global = 0;
                     Maps->ReadFeatures(&(b->raw),&local,&global);
-                    PRINT_FLAG( feature_local );
+                    PRINT_FLAG( bits.feature_local );
                     if(local)
                     {
                         con.print("%-16s", "");
@@ -261,7 +261,7 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
                         con.print(" addr 0x%X ", local->origin);
                         con.print(" %s\n", sa_feature(local->type));
                     }
-                    PRINT_FLAG( feature_global );
+                    PRINT_FLAG( bits.feature_global );
                     if(global)
                     {
                         con.print("%-16s", "");
@@ -272,8 +272,8 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
                 }
                 else
                 {
-                    PRINT_FLAG( feature_local );
-                    PRINT_FLAG( feature_global );
+                    PRINT_FLAG( bits.feature_local );
+                    PRINT_FLAG( bits.feature_global );
                 }
                 #undef PRINT_FLAG
                 con << "local feature idx: " << block.local_feature

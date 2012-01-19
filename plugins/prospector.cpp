@@ -321,8 +321,8 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                     for(uint32_t x = 0; x < 16; x++)
                     {
                         DFHack::DFCoord coord(x, y);
-                        DFHack::t_designation des = b->DesignationAt(coord);
-                        DFHack::t_occupancy occ = b->OccupancyAt(coord);
+                        df::tile_designation des = b->DesignationAt(coord);
+                        df::tile_occupancy occ = b->OccupancyAt(coord);
 
                         // Skip hidden tiles
                         if (!showHidden && des.bits.hidden)
@@ -346,7 +346,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                         // Check for liquid
                         if (des.bits.flow_size)
                         {
-                            if (des.bits.liquid_type == liquid_magma)
+                            if (des.bits.liquid_type == df::tile_liquid::Magma)
                                 liquidMagma.add(global_z);
                             else
                                 liquidWater.add(global_z);
@@ -388,20 +388,20 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                         case DFHack::FEATSTONE:
                             if (blockFeatureLocal && des.bits.feature_local)
                             {
-                                if (blockFeatureLocal->type == DFHack::feature_Adamantine_Tube
+                                if (blockFeatureLocal->type == df::feature_type::deep_special_tube
                                         && blockFeatureLocal->main_material == 0) // stone
                                 {
                                     veinMats[blockFeatureLocal->sub_material].add(global_z);
                                 }
                                 else if (showTemple
-                                         && blockFeatureLocal->type == DFHack::feature_Hell_Temple)
+                                         && blockFeatureLocal->type == df::feature_type::deep_surface_portal)
                                 {
                                     hasDemonTemple = true;
                                 }
                             }
 
                             if (showSlade && blockFeatureGlobal && des.bits.feature_global
-                                    && blockFeatureGlobal->type == DFHack::feature_Underworld
+                                    && blockFeatureGlobal->type == df::feature_type::feature_underworld_from_layer
                                     && blockFeatureGlobal->main_material == 0) // stone
                             {
                                 layerMats[blockFeatureGlobal->sub_material].add(global_z);

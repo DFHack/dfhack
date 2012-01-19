@@ -36,7 +36,20 @@ distribution.
 #include <vector>
 #include "Virtual.h"
 #include "BitArray.h"
-#include "Materials.h"
+#include "modules/Materials.h"
+
+#include "df/world.h"
+#include "df/feature_type.h"
+#include "df/map_block.h"
+#include "df/block_square_event.h"
+#include "df/block_square_event_mineralst.h"
+#include "df/block_square_event_frozen_liquidst.h"
+#include "df/block_square_event_world_constructionst.h"
+#include "df/block_square_event_material_spatterst.h"
+#include "df/block_square_event_grassst.h"
+#include "df/tile_liquid.h"
+#include "df/tile_dig_designation.h"
+#include "df/tile_traffic.h"
 
 /**
  * \defgroup grp_maps Maps module and its types
@@ -49,20 +62,10 @@ namespace DFHack
                                     T Y P E S
     ***************************************************************************/
     /**
-     * \ingroup grp_maps
-     */
-    enum e_feature
-    {
-        feature_Other,
-        feature_Adamantine_Tube,
-        feature_Underworld,
-        feature_Hell_Temple
-    };
-    /**
      * Function for translating feature index to its name
      * \ingroup grp_maps
      */
-    extern DFHACK_EXPORT const char * sa_feature(e_feature index);
+    extern DFHACK_EXPORT const char * sa_feature(df::feature_type index);
 
     /**
      * Class for holding a world coordinate. Can do math with coordinates and can be used as an index for std::map
@@ -141,7 +144,7 @@ namespace DFHack
      */
     struct t_feature
     {
-        e_feature type;
+        df::feature_type type;
         /// main material type - decides between stuff like bodily fluids, inorganics, vomit, amber, etc.
         int16_t main_material;
         /// generally some index to a vector of material types.
@@ -150,97 +153,6 @@ namespace DFHack
         bool discovered;
         /// this is NOT part of the DF feature, but an address of the feature as seen by DFhack.
         void * origin;
-    };
-
-
-    /**
-     * mineral vein object - bitmap with a material type
-     * \ingroup grp_maps
-     */
-    struct t_vein : public t_virtual
-    {
-        /// index into the inorganic material vector
-        int32_t type;
-        /// bit mask describing how the vein maps to the map block
-        /// assignment[y] & (1 << x) describes the tile (x, y) of the block
-        int16_t assignment[16];
-        uint32_t flags; // FIXME: figure those out
-
-        //zilpin: Functions to more conveniently check the assignment flags of the vein.
-        //Coordinates are given in tile within the block.
-        //Important to make these inline.
-        inline bool getassignment( DFCoord & xy )
-        {
-            return getassignment(xy.x,xy.y);
-        }
-        inline bool getassignment( int x, int y )
-        {
-            return (assignment[y] & (1 << x));
-        }
-        inline void setassignment( DFCoord & xy, bool bit )
-        {
-            return setassignment(xy.x,xy.y, bit);
-        }
-        inline void setassignment( int x, int y, bool bit )
-        {
-            if(bit)
-                assignment[y] |= (1 << x);
-            else
-                assignment[y] &= 0xFFFF ^ (1 << x);
-        }
-    };
-
-    /**
-     * stores what tiles should appear when the ice melts - bitmap of material types
-     * \ingroup grp_maps
-     */
-    struct t_frozenliquidvein : public t_virtual
-    {
-        /// a 16x16 array of the original tile types
-        int16_t tiles[16][16];
-    };
-    /**
-     * a 'spattervein' defines what coverings the individual map tiles have (snow, blood, etc)
-     * bitmap of intensity with matrial type
-     * \ingroup grp_maps
-     * @see PrintSplatterType
-     */
-    struct t_spattervein : public t_virtual
-    {
-        /// generic material.
-        t_materialType mat1;
-        /// material vector index
-        t_materialIndex mat2;
-        /**
-         * matter state - liquid/solid/etc.
-         * @ref e_matter_state
-         */
-        uint16_t matter_state;
-        /// 16x16 array of covering 'intensity'
-        uint8_t intensity[16][16];
-    };
-    /**
-     * a 'grass vein' defines the grass coverage of a map block
-     * bitmap of density (max = 100) with plant material type
-     * \ingroup grp_maps
-     */
-    struct t_grassvein : public t_virtual
-    {
-        /// material vector index
-        t_materialIndex material;
-        /// 16x16 array of covering 'intensity'
-        uint8_t intensity[16][16];
-    };
-    /**
-     * defines the world constructions present. The material member is a mystery.
-     * \ingroup grp_maps
-     */
-    struct t_worldconstruction : public t_virtual
-    {
-        /// material vector index
-        uint32_t material;
-        /// 16x16 array of bits
-        uint16_t assignment[16];
     };
 
     /**
@@ -261,184 +173,6 @@ namespace DFHack
     };
 
     /**
-     * \ingroup grp_maps
-     */
-    enum e_traffic
-    {
-        traffic_normal,
-        traffic_low,
-        traffic_high,
-        traffic_restricted
-    };
-
-    /**
-     * type of a designation for a tile
-     * \ingroup grp_maps
-     */
-    enum e_designation
-    {
-        /// no designation
-        designation_no,
-        /// dig walls, remove stairs and ramps, gather plants, fell trees. depends on tile type
-        designation_default,
-        /// dig up/down stairs
-        designation_ud_stair,
-        /// dig a channel
-        designation_channel,
-        /// dig ramp out of a wall
-        designation_ramp,
-        /// dig a stair down
-        designation_d_stair,
-        /// dig a stair up
-        designation_u_stair,
-        /// whatever. for completenes I guess
-        designation_7
-    };
-    
-    /**
-     * type of liquid in a tile
-     * \ingroup grp_maps
-     */
-    enum e_liquidtype
-    {
-        liquid_water,
-        liquid_magma
-    };
-
-    /**
-     * designation bit field
-     * \ingroup grp_maps
-     */
-    struct naked_designation
-    {
-        unsigned int flow_size : 3; // how much liquid is here?
-        unsigned int pile : 1; // stockpile?
-        /// All the different dig designations
-        e_designation dig : 3;
-        unsigned int smooth : 2;
-        unsigned int hidden : 1;
-
-        /**
-         * This one is rather involved, but necessary to retrieve the base layer matgloss index
-         * @see http://www.bay12games.com/forum/index.php?topic=608.msg253284#msg253284
-         */
-        unsigned int geolayer_index :4;
-        unsigned int light : 1;
-        unsigned int subterranean : 1; // never seen the light of day?
-        unsigned int skyview : 1; // sky is visible now, it rains in here when it rains
-
-        /**
-         * Probably similar to the geolayer_index. Only with a different set of offsets and different data.
-         * we don't use this yet
-         */
-        unsigned int biome : 4;
-        /**
-         * 0 = water
-         * 1 = magma
-         */
-        e_liquidtype liquid_type : 1;
-        unsigned int water_table : 1; // srsly. wtf?
-        unsigned int rained : 1; // does this mean actual rain (as in the blue blocks) or a wet tile?
-        e_traffic traffic : 2;
-        /// the tile is not evaluated when calculating flows?
-        unsigned int flow_forbid : 1;
-        /// no liquid spreading
-        unsigned int liquid_static : 1;
-        /// this tile is a part of a local feature. can be combined with 'featstone' tiles
-        unsigned int feature_local : 1; 
-        /// this tile is a part of a global feature. can be combined with 'featstone' tiles
-        unsigned int feature_global : 1;
-        unsigned int water_stagnant : 1;
-        unsigned int water_salt : 1;
-    };
-    /**
-     * designation bit field wrapper
-     * \ingroup grp_maps
-     */
-    union t_designation
-    {
-        uint32_t whole;
-        naked_designation bits;
-    };
-
-    /**
-     * occupancy flags (rat,dwarf,horse,built wall,not build wall,etc)
-     * \ingroup grp_maps
-     */
-    struct naked_occupancy
-    {
-        /// 0-2: building type... should be an enum.
-        unsigned int building : 3;// 0-2
-        /// 3: the tile contains a standing creature
-        unsigned int unit : 1; // 3
-        /// 4: the tile contains a prone creature
-        unsigned int unit_grounded : 1;
-        /// 5: the tile contains an item
-        unsigned int item : 1;
-        /// 6: set on magma sea tiles, cavern lake tiles, rivers. not set on pools. probably something like 'inhibit growth'?
-        unsigned int unk6 : 1;
-        /// 7: mossy!
-        unsigned int moss : 1;
-        /// 8-11: arrow color. 0 = no arrow
-        unsigned int arrow_color : 4;
-        /// 12: arrow orientaton
-        unsigned int broken_arrows_variant : 1;
-        /// 13
-        unsigned int unk13 : 1;
-        /// 14: A monster lair. Items placed won't be moved.
-        unsigned int monster_lair : 1;
-        /**
-         * 15: seems to be set on terrain tiles where grass growth is impossible
-         * pebbles, boulders, rock floors in the middle of grass. also shrubs. but not trees
-         */
-        unsigned int no_grow : 1;
-        /// 16
-        unsigned int unk16 : 1;
-        /// 17
-        unsigned int unk17 : 1;
-        /// 18
-        unsigned int unk18 : 1;
-        /// 19
-        unsigned int unk19 : 1;
-        
-        /// 20
-        unsigned int unk20 : 1;
-        /// 21
-        unsigned int unk21 : 1;
-        /// 22
-        unsigned int unk22 : 1;
-        /// 23
-        unsigned int unk23 : 1;
-        
-        /// 24
-        unsigned int unk24 : 1;
-        /// 25
-        unsigned int unk25 : 1;
-        /// 26
-        unsigned int unk26 : 1;
-        /// 27
-        unsigned int unk27 : 1;
-        
-        /// 28
-        unsigned int unk28 : 1;
-        /// 29
-        unsigned int unk29 : 1;
-        /// 30
-        unsigned int unk30 : 1;
-        /// 31
-        unsigned int unk31 : 1;
-    };
-    /**
-     * occupancy flags (rat,dwarf,horse,built wall,not build wall,etc) wrapper
-     * \ingroup grp_maps
-     */
-    union t_occupancy
-    {
-        uint32_t whole;
-        naked_occupancy bits;
-    };
-
-    /**
      * map block flags
      * \ingroup grp_maps
      */
@@ -453,16 +187,6 @@ namespace DFHack
         unsigned int liquid_2 : 1;
         /// rest of the flags is completely unknown
         unsigned int unk_2: 4;
-    };
-    enum e_block_flags
-    {
-        /// designated for jobs (digging and stuff like that)
-        BLOCK_DESIGNATED,
-        /// possibly related to the designated flag
-        BLOCK_UNKN1,
-        /// two flags required for liquid flow.
-        BLOCK_LIQUIDFLOW_1,
-        BLOCK_LIQUIDFLOW_2,
     };
     /**
      * map block flags wrapper
@@ -488,12 +212,12 @@ namespace DFHack
      * 16x16 array of designation flags
      * \ingroup grp_maps
      */
-    typedef DFHack::t_designation designations40d [16][16];
+    typedef df::tile_designation designations40d [16][16];
     /**
      * 16x16 array of occupancy flags
      * \ingroup grp_maps
      */
-    typedef DFHack::t_occupancy occupancies40d [16][16];
+    typedef df::tile_occupancy occupancies40d [16][16];
     /**
      * array of 16 biome indexes valid for the block
      * \ingroup grp_maps
@@ -520,107 +244,15 @@ namespace DFHack
         /// values used for geology/biome assignment
         biome_indices40d biome_indices;
         /// the address where the block came from
-        uint32_t origin;
+        void * origin;
         t_blockflags blockflags;
         /// index into the global feature vector
-        int16_t global_feature;
+        int32_t global_feature;
         /// index into the local feature vector... complicated
-        int16_t local_feature;
+        int32_t local_feature;
         int32_t mystery;
     } mapblock40d;
 
-    // A raw DF block.
-    // one of the vector is the 'effects' vector. another should be item id/index vector
-    struct df_block
-    {
-        BitArray <e_block_flags> flags;
-        // how to handle this virtual mess?
-        std::vector <t_virtual *> block_events;
-        // no idea what these are
-        long unk1;
-        long unk2;
-        long unk3;
-        // feature indexes
-        signed long local_feature;  // local feature index, -1 = no local feature
-        signed long global_feature; // global feature index, -1 = no global feature
-        signed long mystery; // no idea. couldn't manage to catch its use in debugger.
-        // more mysterious numbers
-        long unk4;
-        long unk5;
-        long unk6;
-        std::vector <unsigned long> items; // item related - probly item IDs
-        std::vector <void *> effects;
-        signed long unk7; // -1 most of the time, another index?
-        unsigned long unk8; // again, index?
-        std::vector<df_plant *> plants;
-        unsigned short map_x;
-        unsigned short map_y;
-        unsigned short map_z;
-        unsigned short region_x;
-        unsigned short region_y;
-        unsigned short tiletype[16][16]; // weird 2-byte alignment here
-        t_designation designation[16][16];
-        t_occupancy occupancy[16][16];
-        // following is uncertain, but total length should be fixed.
-        unsigned char unk9[16][16];
-        unsigned long pathfinding[16][16];
-        unsigned short unk10[16][16];
-        unsigned short unk11[16][16];
-        unsigned short unk12[16][16];
-        // end uncertain section
-        unsigned short temperature_1[16][16];
-        unsigned short temperature_2[16][16];
-        // no idea again. needs research...
-        unsigned short unk13[16][16];
-        unsigned short unk14[16][16];
-        unsigned char region_offset[9];
-    };
-    template <typename T>
-    struct df_array
-    {
-        inline T& operator[] (uint32_t index)
-        {
-            return array[index];
-        };
-        T * array;
-    };
-    template <typename T>
-    struct df_2darray
-    {
-        inline df_array<T>& operator[] (uint32_t index)
-        {
-            return array[index];
-        };
-        df_array <T> * array;
-    };
-    template <typename T>
-    struct df_3darray
-    {
-        inline df_2darray<T>& operator[] (uint32_t index)
-        {
-            return array[index];
-        };
-        inline bool operator! ()
-        {
-            return !array;
-        }
-        df_2darray <T> * array;
-    };
-    struct map_data
-    {
-        df_3darray<df_block *> map;
-        std::vector <void *> unk1;
-        void * unk2;
-        uint32_t x_size_blocks;
-        uint32_t y_size_blocks;
-        uint32_t z_size_blocks;
-        uint32_t x_size;
-        uint32_t y_size;
-        uint32_t z_size;
-        int32_t  x_area_offset;
-        int32_t  y_area_offset;
-        int32_t  z_area_offset;
-    };
     /**
      * The Maps module
      * \ingroup grp_modules
@@ -629,9 +261,6 @@ namespace DFHack
     class DFHACK_EXPORT Maps : public Module
     {
         public:
-        // the map data of DF, as we know it.
-        map_data * mdata;
-        
         Maps();
         ~Maps();
         bool Start();
@@ -730,7 +359,8 @@ namespace DFHack
         /**
          * Get the map block or NULL if block is not valid
          */
-        df_block * getBlock (uint32_t blockx, uint32_t blocky, uint32_t blockz);
+        df::map_block * getBlock (int32_t blockx, int32_t blocky, int32_t blockz);
+        df::map_block * getBlockAbs (int32_t x, int32_t y, int32_t z);
 
         /// copy the whole map block at block coords (see DFTypes.h for the block structure)
         bool ReadBlock40d(uint32_t blockx, uint32_t blocky, uint32_t blockz, mapblock40d * buffer);
@@ -770,15 +400,15 @@ namespace DFHack
         /// sorts the block event vector into multiple vectors by type
         /// mineral veins, what's under ice, blood smears and mud
         bool SortBlockEvents(uint32_t x, uint32_t y, uint32_t z,
-                       std::vector<t_vein *>* veins,
-                       std::vector<t_frozenliquidvein *>* ices = 0,
-                       std::vector<t_spattervein *>* splatter = 0,
-                       std::vector<t_grassvein *>* grass = 0,
-                       std::vector<t_worldconstruction *>* constructions = 0
+                       std::vector<df::block_square_event_mineralst *>* veins,
+                       std::vector<df::block_square_event_frozen_liquidst *>* ices = 0,
+                       std::vector<df::block_square_event_material_spatterst *>* splatter = 0,
+                       std::vector<df::block_square_event_grassst *>* grass = 0,
+                       std::vector<df::block_square_event_world_constructionst *>* constructions = 0
                       );
 
         /// remove a block event from the block by address
-        bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, t_virtual * which );
+        bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which );
 
         /// read all plants in this block
         bool ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<df_plant *>*& plants);

@@ -185,8 +185,8 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
             {
                 // yes...
                 cerr << "Moving from block to block!" << endl;
-                df_block * bl_src = Maps->getBlock(itm->pos.x /16, itm->pos.y/16, itm->pos.z);
-                df_block * bl_tgt = Maps->getBlock(cx /16, cy/16, cz);
+                df::map_block * bl_src = Maps->getBlock(itm->pos.x /16, itm->pos.y/16, itm->pos.z);
+                df::map_block * bl_tgt = Maps->getBlock(cx /16, cy/16, cz);
                 if(bl_src)
                 {
                     std::remove(bl_src->items.begin(), bl_src->items.end(),itm->id);
@@ -234,7 +234,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
         {
             if(it->second == 0)
             {
-                t_occupancy occ = MC.occupancyAt(it->first);
+                df::tile_occupancy occ = MC.occupancyAt(it->first);
                 occ.bits.item = false;
                 MC.setOccupancyAt(it->first, occ);
             }
@@ -247,7 +247,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
             Block * b = MC.BlockAt(pos_cursor / 16);
             if(b)
             {
-                t_occupancy occ = MC.occupancyAt(pos_cursor);
+                df::tile_occupancy occ = MC.occupancyAt(pos_cursor);
                 occ.bits.item = 1;
                 MC.setOccupancyAt(pos_cursor,occ);
             }

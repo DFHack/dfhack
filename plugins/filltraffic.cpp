@@ -57,8 +57,8 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
 	//Maximum map size.
 	uint32_t x_max,y_max,z_max;
 	//Source and target traffic types.
-	e_traffic source = traffic_normal;
-	e_traffic target = traffic_normal;
+	df::tile_traffic source = df::tile_traffic::Normal;
+	df::tile_traffic target = df::tile_traffic::Normal;
 	//Option flags
 	bool updown        = false;
 	bool checkpit      = true;
@@ -89,13 +89,13 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
         switch (toupper(params[i][0]))
         {
             case 'H':
-                target = traffic_high; break;
+                target = df::tile_traffic::High; break;
             case 'N':
-                target = traffic_normal; break;
+                target = df::tile_traffic::Normal; break;
             case 'L':
-                target = traffic_low; break;
+                target = df::tile_traffic::Low; break;
             case 'R':
-                target = traffic_restricted; break;
+                target = df::tile_traffic::Restricted; break;
             case 'X':
                 updown = true; break;
             case 'B':
@@ -133,14 +133,14 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
     DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
     MapExtras::MapCache * MCache = new MapExtras::MapCache(Maps);
 
-    DFHack::t_designation des = MCache->designationAt(xy);
+    df::tile_designation des = MCache->designationAt(xy);
     int16_t tt = MCache->tiletypeAt(xy);
-    DFHack::t_occupancy oc;
+    df::tile_occupancy oc;
 
     if (checkbuilding)
         oc = MCache->occupancyAt(xy);
 
-    source = des.bits.traffic;
+    source = (df::tile_traffic)des.bits.traffic;
     if(source == target)
     {
         c->con.printerr("This tile is already set to the target traffic type.\n");
@@ -356,25 +356,25 @@ DFhackCExport command_result setAllMatching(DFHack::Core * c, checkTile checkPro
 //Unconditionally set map to target traffic type
 void allHigh(DFHack::DFCoord coord, MapExtras::MapCache * map)
 {
-	DFHack::t_designation des = map->designationAt(coord);
-	des.bits.traffic = traffic_high;
+	df::tile_designation des = map->designationAt(coord);
+	des.bits.traffic = df::tile_traffic::High;
 	map->setDesignationAt(coord, des);
 }
 void allNormal(DFHack::DFCoord coord, MapExtras::MapCache * map)
 {
-	DFHack::t_designation des = map->designationAt(coord);
-	des.bits.traffic = traffic_normal;
+	df::tile_designation des = map->designationAt(coord);
+	des.bits.traffic = df::tile_traffic::Normal;
 	map->setDesignationAt(coord, des);
 }
 void allLow(DFHack::DFCoord coord, MapExtras::MapCache * map)
 {
-	DFHack::t_designation des = map->designationAt(coord);
-	des.bits.traffic = traffic_low;
+	df::tile_designation des = map->designationAt(coord);
+	des.bits.traffic = df::tile_traffic::Low;
 	map->setDesignationAt(coord, des);
 }
 void allRestricted(DFHack::DFCoord coord, MapExtras::MapCache * map)
 {
-	DFHack::t_designation des = map->designationAt(coord);
-	des.bits.traffic = traffic_restricted;
+	df::tile_designation des = map->designationAt(coord);
+	des.bits.traffic = df::tile_traffic::Restricted;
 	map->setDesignationAt(coord, des);
 }

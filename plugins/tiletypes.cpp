@@ -19,6 +19,7 @@ using std::set;
 #include "modules/Gui.h"
 #include "TileTypes.h"
 #include "modules/MapCache.h"
+#include "df/tile_dig_designation.h"
 using namespace MapExtras;
 using namespace DFHack;
 
@@ -780,13 +781,13 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
             for (coord_vec::iterator iter = all_tiles.begin(); iter != all_tiles.end(); ++iter)
             {
                 const DFHack::TileRow *source = DFHack::getTileRow(map.tiletypeAt(*iter));
-                DFHack::t_designation des = map.designationAt(*iter);
+                df::tile_designation des = map.designationAt(*iter);
 
                 if ((filter.shape > -1 && filter.shape != source->shape)
                  || (filter.material > -1 && filter.material != source->material)
                  || (filter.special > -1 && filter.special != source->special)
                  || (filter.variant > -1 && filter.variant != source->variant)
-                 || (filter.dig > -1 && (filter.dig != 0) != (des.bits.dig != DFHack::designation_no))
+		 || (filter.dig > -1 && (filter.dig != 0) != (des.bits.dig != df::tile_dig_designation::No))
                 )
                 {
                     continue;
@@ -865,7 +866,7 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
 
                 if (paint.skyview > -1)
                 {
-                    des.bits.skyview = paint.skyview;
+                    des.bits.outside = paint.skyview;
                 }
 
                 // Remove liquid from walls, etc

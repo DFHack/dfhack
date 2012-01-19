@@ -86,7 +86,7 @@ DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string>
                 {
                     // we're looking for addy tubes
                     if(!locf) continue;
-                    if(locf->type != DFHack::feature_Adamantine_Tube) continue;
+		    if(locf->type != df::feature_type::deep_special_tube) continue;
 
                     dirty=0;
                     Mapz->ReadDesignations(x,y,z, &designations);

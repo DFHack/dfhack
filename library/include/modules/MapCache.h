@@ -30,12 +30,14 @@ distribution.
 #include "TileTypes.h"
 #include <stdint.h>
 #include <cstring>
+#include "df/map_block.h"
+#include "df/block_square_event_mineralst.h"
 namespace MapExtras
 {
 void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d & mb, DFHack::t_blockmaterials & materials)
 {
     memset(materials,-1,sizeof(materials));
-    std::vector <DFHack::t_vein *> veins;
+    std::vector <df::block_square_event_mineralst *> veins;
     m->SortBlockEvents(bcoord.x,bcoord.y,bcoord.z,&veins);
     //iterate through block rows
     for(uint32_t j = 0;j<16;j++)
@@ -48,9 +50,9 @@ void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d &
             {
                 for(int i = (int) veins.size() - 1; i >= 0;i--)
                 {
-                    if(!!(((1 << k) & veins[i]->assignment[j]) >> k))
+                    if(!!(((1 << k) & veins[i]->tile_bitmask[j]) >> k))
                     {
-                        materials[k][j] = veins[i]->type;
+                        materials[k][j] = veins[i]->inorganic_mat;
                         i = -1;
                     }
                 }
@@ -152,11 +154,11 @@ class Block
         return true;
     }
 
-    DFHack::t_designation DesignationAt(DFHack::DFCoord p)
+    df::tile_designation DesignationAt(DFHack::DFCoord p)
     {
         return raw.designation[p.x][p.y];
     }
-    bool setDesignationAt(DFHack::DFCoord p, DFHack::t_designation des)
+    bool setDesignationAt(DFHack::DFCoord p, df::tile_designation des)
     {
         if(!valid) return false;
         dirty_designations = true;
@@ -170,11 +172,11 @@ class Block
         return true;
     }
 
-    DFHack::t_occupancy OccupancyAt(DFHack::DFCoord p)
+    df::tile_occupancy OccupancyAt(DFHack::DFCoord p)
     {
         return raw.occupancy[p.x][p.y];
     }
-    bool setOccupancyAt(DFHack::DFCoord p, DFHack::t_occupancy des)
+    bool setOccupancyAt(DFHack::DFCoord p, df::tile_occupancy des)
     {
         if(!valid) return false;
         dirty_occupancies = true;
@@ -373,18 +375,18 @@ class MapCache
         return 0;
     }
     
-    DFHack::t_designation designationAt (DFHack::DFCoord tilecoord)
+    df::tile_designation designationAt (DFHack::DFCoord tilecoord)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
         {
             return b->DesignationAt(tilecoord % 16);
         }
-        DFHack:: t_designation temp;
+        df::tile_designation temp;
         temp.whole = 0;
         return temp;
     }
-    bool setDesignationAt (DFHack::DFCoord tilecoord, DFHack::t_designation des)
+    bool setDesignationAt (DFHack::DFCoord tilecoord, df::tile_designation des)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
@@ -395,18 +397,18 @@ class MapCache
         return false;
     }
     
-    DFHack::t_occupancy occupancyAt (DFHack::DFCoord tilecoord)
+    df::tile_occupancy occupancyAt (DFHack::DFCoord tilecoord)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
         {
             return b->OccupancyAt(tilecoord % 16);
         }
-        DFHack:: t_occupancy temp;
+        df::tile_occupancy temp;
         temp.whole = 0;
         return temp;
     }
-    bool setOccupancyAt (DFHack::DFCoord tilecoord, DFHack::t_occupancy occ)
+    bool setOccupancyAt (DFHack::DFCoord tilecoord, df::tile_occupancy occ)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)

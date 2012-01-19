@@ -20,6 +20,11 @@ using namespace std;
 #include "modules/Materials.h"
 #include "modules/Translation.h"
 using namespace DFHack;
+using namespace DFHack::Simple;
+#include "DataDefs.h"
+#include "df/world.h"
+
+using df::global::world;
 
 DFhackCExport command_result df_cleanowned (Core * c, vector <string> & parameters);
 
@@ -89,7 +94,6 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
     }
     c->Suspend();
     DFHack::Materials *Materials = c->getMaterials();
-    DFHack::Items *Items = c->getItems();
     DFHack::Units *Creatures = c->getUnits();
     DFHack::Translation *Tran = c->getTranslation();
 
@@ -99,25 +103,17 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
     ok &= Creatures->Start(num_creatures);
     ok &= Tran->Start();
 
-    vector<df_item *> p_items;
-    ok &= Items->readItemVector(p_items);
-    if(!ok)
-    {
-        c->con.printerr("Can't continue due to offset errors.\n");
-        c->Resume();
-        return CR_FAILURE;
-    }
-    c->con.print("Found total %d items.\n", p_items.size());
+    c->con.print("Found total %d items.\n", world->items.all.size());
 
-    for (std::size_t i=0; i < p_items.size(); i++)
+    for (std::size_t i=0; i < world->items.all.size(); i++)
     {
-        df_item * item = p_items[i];
+        df::item * item = world->items.all[i];
         bool confiscate = false;
         bool dump = false;
 
-        if (!item->flags.owned)
+        if (!item->flags.bits.owned)
         {
-            int32_t owner = Items->getItemOwnerID(item);
+            int32_t owner = Items::getItemOwnerID(item);
             if (owner >= 0)
             {
                 c->con.print("Fixing a misflagged item: \t");
@@ -129,23 +125,21 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
             }
         }
 
-        std::string name = Items->getItemClass(item);
-
-        if (item->flags.rotten)
+        if (item->flags.bits.rotten)
         {
             c->con.print("Confiscating a rotten item: \t");
             confiscate = true;
         }
-        else if (item->flags.on_ground)
+        else if (item->flags.bits.on_ground)
         {
             int32_t type = item->getType();
-            if(type == Items::MEAT ||
-               type == Items::FISH ||
-               type == Items::VERMIN ||
-               type == Items::PET ||
-               type == Items::PLANT ||
-               type == Items::CHEESE ||
-               type == Items::FOOD
+	    if(type == df::item_type::MEAT ||
+               type == df::item_type::FISH ||
+               type == df::item_type::VERMIN ||
+               type == df::item_type::PET ||
+               type == df::item_type::PLANT ||
+               type == df::item_type::CHEESE ||
+               type == df::item_type::FOOD
             )
             {
                 confiscate = true;
@@ -189,7 +183,7 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
                 item->getWear()
             );
 
-            int32_t owner = Items->getItemOwnerID(item);
+            int32_t owner = Items::getItemOwnerID(item);
             int32_t owner_index = Creatures->FindIndexById(owner);
             std::string info;
 
@@ -206,10 +200,10 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
 
             if (!dry_run)
             {
-                if (!Items->removeItemOwner(item, Creatures))
+                if (!Items::removeItemOwner(item, Creatures))
                     c->con.print("(unsuccessfully) ");
                 if (dump)
-                    item->flags.dump = 1;
+                    item->flags.bits.dump = 1;
             }
             c->con.print("\n");
         }

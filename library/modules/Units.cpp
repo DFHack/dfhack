@@ -549,7 +549,7 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
     return true;
 }
 */
-bool Units::ReadInventoryByIdx(const uint32_t index, std::vector<df_item *> & item)
+bool Units::ReadInventoryByIdx(const uint32_t index, std::vector<df::item *> & item)
 {
     if(!d->Started) return false;
     if(index >= creatures->size()) return false;
@@ -557,7 +557,7 @@ bool Units::ReadInventoryByIdx(const uint32_t index, std::vector<df_item *> & it
     return this->ReadInventoryByPtr(temp, item);
 }
 
-bool Units::ReadInventoryByPtr(const df_unit * temp, std::vector<df_item *> & items)
+bool Units::ReadInventoryByPtr(const df_unit * temp, std::vector<df::item *> & items)
 {
     if(!d->Started) return false;
     items = temp->inventory;

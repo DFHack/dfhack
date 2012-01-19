@@ -28,6 +28,7 @@ using namespace std;
 using namespace DFHack;
 using MapExtras::Block;
 using MapExtras::MapCache;
+using df::global::world;
 
 DFhackCExport command_result df_autodump(Core * c, vector <string> & parameters);
 DFhackCExport command_result df_autodump_destroy_here(Core * c, vector <string> & parameters);
@@ -95,16 +96,9 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
 
     DFHack::VersionInfo *mem = c->vinfo;
     DFHack::Gui * Gui = c->getGui();
-    DFHack::Items * Items = c->getItems();
     DFHack::Maps *Maps = c->getMaps();
 
-    vector <df_item*> p_items;
-    if(!Items->readItemVector(p_items))
-    {
-        c->con.printerr("Can't access the item vector.\n");
-        return CR_FAILURE;
-    }
-    std::size_t numItems = p_items.size();
+    std::size_t numItems = world->items.all.size();
 
     // init the map
     if(!Maps->Start())
@@ -148,7 +142,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
     // proceed with the dumpification operation
     for(std::size_t i=0; i< numItems; i++)
     {
-        df_item * itm = p_items[i];
+        df::item * itm = world->items.all[i];
         DFCoord pos_item(itm->x, itm->y, itm->z);
 
         // keep track how many items are at places. all items.
@@ -165,22 +159,22 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
         // iterator is valid here, we use it later to decrement the pile counter if the item is moved
 
         // only dump the stuff marked for dumping and laying on the ground
-        if (   !itm->flags.dump
-            || !itm->flags.on_ground
-            ||  itm->flags.construction
-            ||  itm->flags.hidden
-            ||  itm->flags.in_building
-            ||  itm->flags.in_chest
-            ||  itm->flags.in_inventory
-            ||  itm->flags.artifact1
+        if (   !itm->flags.bits.dump
+            || !itm->flags.bits.on_ground
+            ||  itm->flags.bits.construction
+            ||  itm->flags.bits.hidden
+            ||  itm->flags.bits.in_building
+            ||  itm->flags.bits.in_chest
+            ||  itm->flags.bits.in_inventory
+            ||  itm->flags.bits.artifact1
         )
             continue;
 
         if(!destroy) // move to cursor
         {
             // Change flags to indicate the dump was completed, as if by super-dwarfs
-            itm->flags.dump = false;
-            itm->flags.forbid = true;
+            itm->flags.bits.dump = false;
+            itm->flags.bits.forbid = true;
 
             // Don't move items if they're already at the cursor
             if (pos_cursor == pos_item)
@@ -221,11 +215,11 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
             if (here && pos_item != pos_cursor)
                 continue;
 
-            itm->flags.garbage_colect = true;
+            itm->flags.bits.garbage_colect = true;
 
             // Cosmetic changes: make them disappear from view instantly
-            itm->flags.forbid = true;
-            itm->flags.hidden = true;
+            itm->flags.bits.forbid = true;
+            itm->flags.bits.hidden = true;
         }
         // keeping track of item pile sizes ;)
         it->second --;
@@ -336,7 +330,7 @@ DFhackCExport command_result df_autodump_destroy_item(Core * c, vector <string> 
     for (unsigned i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (ref->getType() == df::general_ref_type::unit_holder)
+        if (ref->getType() == df::general_ref_type::UNIT_HOLDER)
         {
             c->con.printerr("Choosing not to destroy items in unit inventory.\n");
             return CR_FAILURE;

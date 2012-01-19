@@ -58,7 +58,6 @@ namespace DFHack
     class Gui;
     class World;
     class Materials;
-    class Items;
     class Translation;
     class Vegetation;
     class Constructions;
@@ -111,8 +110,6 @@ namespace DFHack
         World * getWorld();
         /// get the materials module
         Materials * getMaterials();
-        /// get the items module
-        Items * getItems();
         /// get the translation module
         Translation * getTranslation();
         /// get the vegetation module
@@ -173,7 +170,6 @@ namespace DFHack
             Gui * pGui;
             World * pWorld;
             Materials * pMaterials;
-            Items * pItems;
             Translation * pTranslation;
             Vegetation * pVegetation;
             Constructions * pConstructions;

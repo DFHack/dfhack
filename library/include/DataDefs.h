@@ -257,7 +257,8 @@ namespace df {
     GLOBAL(ui_sidebar_menus,ui_sidebar_menus) \
     GLOBAL(ui_build_selector,ui_build_selector) \
     GLOBAL(ui_look_list,ui_look_list) \
-    GLOBAL(ui_unit_view_mode, ui_unit_view_mode)
+    GLOBAL(ui_unit_view_mode, ui_unit_view_mode) \
+    GLOBAL(gps, graphic) \
 
 
 #define SIMPLE_GLOBAL(name,tname) \

@@ -60,9 +60,9 @@ bool Vermin::Read (const uint32_t index, t_vermin & sp)
     sp.caste      = verm->caste;
     sp.visible    = verm->visible;
     sp.countdown = verm->countdown;
-    sp.x = verm->x;
-    sp.y = verm->y;
-    sp.z = verm->z;
+    sp.x = verm->pos.x;
+    sp.y = verm->pos.y;
+    sp.z = verm->pos.z;
     sp.is_colony = verm->flags.bits.is_colony;
     return true;
 }
@@ -76,9 +76,9 @@ bool Vermin::Write (const uint32_t index, t_vermin & sp)
     verm->caste = sp.caste;
     verm->visible = sp.visible;
     verm->countdown = sp.countdown;
-    verm->x = sp.x;
-    verm->y = sp.y;
-    verm->z = sp.z;
+    verm->pos.x = sp.x;
+    verm->pos.y = sp.y;
+    verm->pos.z = sp.z;
     verm->flags.bits.is_colony = sp.is_colony;
     return true;
 }

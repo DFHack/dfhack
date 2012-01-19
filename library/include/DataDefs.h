@@ -268,3 +268,7 @@ DF_KNOWN_GLOBALS
 #undef GLOBAL
 #undef SIMPLE_GLOBAL
 }
+
+// A couple of headers that have to be included at once
+#include "df/coord2d.h"
+#include "df/coord.h"

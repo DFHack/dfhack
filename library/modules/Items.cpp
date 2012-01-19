@@ -409,9 +409,9 @@ bool Items::copyItem(df::item * itembase, DFHack::dfh_item &item)
         return false;
     df::item * itreal = (df::item *) itembase;
     item.origin = itembase;
-    item.x = itreal->x;
-    item.y = itreal->y;
-    item.z = itreal->z;
+    item.x = itreal->pos.x;
+    item.y = itreal->pos.y;
+    item.z = itreal->pos.z;
     item.id = itreal->id;
     item.age = itreal->age;
     item.flags = itreal->flags;

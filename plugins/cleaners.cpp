@@ -10,6 +10,7 @@
 #include "df/block_square_event_material_spatterst.h"
 #include "df/item_actual.h"
 #include "df/unit.h"
+#include "df/unit_spatter.h"
 #include "df/matter_state.h"
 #include "df/cursor.h"
 #include "df/builtin_mats.h"

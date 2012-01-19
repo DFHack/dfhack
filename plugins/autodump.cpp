@@ -143,7 +143,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
     for(std::size_t i=0; i< numItems; i++)
     {
         df::item * itm = world->items.all[i];
-        DFCoord pos_item(itm->x, itm->y, itm->z);
+        DFCoord pos_item(itm->pos.x, itm->pos.y, itm->pos.z);
 
         // keep track how many items are at places. all items.
         coordmap::iterator it = counts.find(pos_item);
@@ -185,7 +185,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
             {
                 // yes...
                 cerr << "Moving from block to block!" << endl;
-                df_block * bl_src = Maps->getBlock(itm->x /16, itm->y/16, itm->z);
+                df_block * bl_src = Maps->getBlock(itm->pos.x /16, itm->pos.y/16, itm->pos.z);
                 df_block * bl_tgt = Maps->getBlock(cx /16, cy/16, cz);
                 if(bl_src)
                 {
@@ -206,9 +206,9 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
             }
 
             // Move the item
-            itm->x = pos_cursor.x;
-            itm->y = pos_cursor.y;
-            itm->z = pos_cursor.z;
+            itm->pos.x = pos_cursor.x;
+            itm->pos.y = pos_cursor.y;
+            itm->pos.z = pos_cursor.z;
         }
         else // destroy
         {

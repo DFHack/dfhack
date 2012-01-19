@@ -51,7 +51,7 @@ DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
     for (int i = 0; i < blocks_total; i++)
     {
         df::map_block *block = world->map.map_blocks[i];
-        df::map_block *above = getBlock(block->map_x, block->map_y, block->map_z + 1);
+        df::map_block *above = getBlock(block->map_pos.x, block->map_pos.y, block->map_pos.z + 1);
 
         for (int x = 0; x < 16; x++)
         {

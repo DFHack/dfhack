@@ -14,7 +14,7 @@ IF(CMAKE_COMPILER_IS_GNUCC)
 
     FOREACH(header tr1/unordered_map unordered_map)
         FOREACH(namespace std::tr1 std )
-            IF(HAVE_HASH_MAP EQUAL 0)
+            IF(HAVE_HASH_MAP EQUAL 0 AND NOT STL_HASH_OLD_GCC)
                 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/testHashMap.cpp.in" "${CMAKE_CURRENT_SOURCE_DIR}/testHashMap.cpp")
                 TRY_RUN(HASH_MAP_RUN_RESULT HASH_MAP_COMPILE_RESULT ${PROJECT_BINARY_DIR}/CMakeTmp "${CMAKE_CURRENT_SOURCE_DIR}/testHashMap.cpp")
                 IF (HASH_MAP_COMPILE_RESULT AND HASH_MAP_RUN_RESULT EQUAL 1)

@@ -432,11 +432,15 @@ bool Maps::ReadFeatures(mapblock40d * block, t_feature * local, t_feature * glob
     {
         if (block->global_feature != -1)
             result &= GetGlobalFeature(*global, block->global_feature);
+        else
+            global->type = (df::feature_type)-1;
     }
     if (local)
     {
         if (block->local_feature != -1)
             result &= GetLocalFeature(*local, block->position, block->local_feature);
+        else
+            local->type = (df::feature_type)-1;
     }
     return result;
 }

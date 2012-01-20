@@ -12,17 +12,18 @@
 #include "modules/Gui.h"
 using MapExtras::MapCache;
 using namespace DFHack;
+using df::global::world;
 
 /*
  * Anything that might reveal Hell is unsafe.
  */
-bool isSafe(uint32_t x, uint32_t y, uint32_t z)
+bool isSafe(df::coord c)
 {
     DFHack::t_feature local_feature;
     DFHack::t_feature global_feature;
     // get features of block
     // error -> obviously not safe to manipulate
-    if(!Maps::ReadFeatures(x,y,z,&local_feature,&global_feature))
+    if(!Maps::ReadFeatures(c.x >> 4,c.y >> 4,c.z,&local_feature,&global_feature))
         return false;
 
     // Adamantine tubes and temples lead to Hell
@@ -37,9 +38,7 @@ bool isSafe(uint32_t x, uint32_t y, uint32_t z)
 
 struct hideblock
 {
-    uint32_t x;
-    uint32_t y;
-    uint32_t z;
+    df::coord c;
     uint8_t hiddens [16][16];
 };
 
@@ -177,35 +176,24 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
 
     Maps::getSize(x_max,y_max,z_max);
     hidesaved.reserve(x_max * y_max * z_max);
-    for(uint32_t x = 0; x< x_max;x++)
+    for (uint32_t i = 0; i < world->map.map_blocks.size(); i++)
     {
-        for(uint32_t y = 0; y< y_max;y++)
+        df::map_block *block = world->map.map_blocks[i];
+        // in 'no-hell'/'safe' mode, don't reveal blocks with hell and adamantine
+        if (no_hell && !isSafe(block->map_pos))
+            continue;
+        hideblock hb;
+        hb.c = block->map_pos;
+        DFHack::designations40d & designations = block->designation;
+        // for each tile in block
+        for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
         {
-            for(uint32_t z = 0; z< z_max;z++)
-            {
-                df::map_block *block = Maps::getBlock(x,y,z);
-                if(block)
-                {
-                    // in 'no-hell'/'safe' mode, don't reveal blocks with hell and adamantine
-                    if (no_hell && !isSafe(x, y, z))
-                        continue;
-                    hideblock hb;
-                    hb.x = x;
-                    hb.y = y;
-                    hb.z = z;
-                    DFHack::designations40d & designations = block->designation;
-                    // for each tile in block
-                    for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
-                    {
-                        // save hidden state of tile
-                        hb.hiddens[i][j] = designations[i][j].bits.hidden;
-                        // set to revealed
-                        designations[i][j].bits.hidden = 0;
-                    }
-                    hidesaved.push_back(hb);
-                }
-            }
+            // save hidden state of tile
+            hb.hiddens[x][y] = designations[x][y].bits.hidden;
+            // set to revealed
+            designations[x][y].bits.hidden = 0;
         }
+        hidesaved.push_back(hb);
     }
     if(no_hell)
     {
@@ -273,15 +261,13 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
         return CR_FAILURE;
     }
 
-    // FIXME: add more sanity checks / MAP ID
-
     for(size_t i = 0; i < hidesaved.size();i++)
     {
         hideblock & hb = hidesaved[i];
-        df::map_block * b = Maps::getBlock(hb.x,hb.y,hb.z);
-        for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
+        df::map_block * b = Maps::getBlock(hb.c.x,hb.c.y,hb.c.z);
+        for (uint32_t x = 0; x < 16;x++) for (uint32_t y = 0; y < 16;y++)
         {
-            b->designation[i][j].bits.hidden = hb.hiddens[i][j];
+            b->designation[x][y].bits.hidden = hb.hiddens[x][y];
         }
     }
     // give back memory.
@@ -373,22 +359,13 @@ DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string>
     // hide all tiles, flush cache
     Maps::getSize(x_max,y_max,z_max);
 
-    for(uint32_t x = 0; x< x_max;x++)
+    for(uint32_t i = 0; i < world->map.map_blocks.size(); i++)
     {
-        for(uint32_t y = 0; y< y_max;y++)
+        df::map_block * b = world->map.map_blocks[i];
+        // change the hidden flag to 0
+        for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
         {
-            for(uint32_t z = 0; z< z_max;z++)
-            {
-                df::map_block * b = Maps::getBlock(x,y,z);
-                if(b)
-                {
-                    // change the hidden flag to 0
-                    for (uint32_t i = 0; i < 16;i++) for (uint32_t j = 0; j < 16;j++)
-                    {
-                        b->designation[i][j].bits.hidden = 1;
-                    }
-                }
-            }
+            b->designation[x][y].bits.hidden = 1;
         }
     }
     MCache->trash();

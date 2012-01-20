@@ -43,6 +43,8 @@ using namespace std;
 #include "DataDefs.h"
 #include "df/world_data.h"
 #include "df/world_underground_region.h"
+#include "df/world_geo_biome.h"
+#include "df/world_geo_layer.h"
 #include "df/feature_init.h"
 
 using namespace DFHack;
@@ -337,7 +339,7 @@ bool Maps::GetGlobalFeature(t_feature &feature, int32_t index)
     return true;
 }
 
-bool Maps::GetLocalFeature(t_feature &feature, DFCoord coord, int32_t index)
+bool Maps::GetLocalFeature(t_feature &feature, df::coord2d coord, int32_t index)
 {
     feature.type = (df::feature_type)-1;
     if (!world->world_data)
@@ -416,7 +418,7 @@ bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature *local, t_
     {
         if (loc != -1)
         {
-            DFCoord coord(x,y,0);
+            df::coord2d coord(x,y);
             result &= GetLocalFeature(*local, coord, loc);
         }
         else
@@ -569,14 +571,18 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 
         /// geology blocks have a vector of layer descriptors
         // get the vector with pointer to layers
-	    vector <df::world_data::T_unk_190::T_unk_4 *> &geolayers = world->world_data->unk_190[geoindex]->unk_4;
+        df::world_geo_biome *geo_biome = df::world_geo_biome::find(geoindex);
+        if (!geo_biome)
+            continue;
+
+        vector <df::world_geo_layer*> &geolayers = geo_biome->layers;
 
         /// layer descriptor has a field that determines the type of stone/soil
         v_geology[i].reserve(geolayers.size());
 
         // finally, read the layer matgloss
         for (uint32_t j = 0; j < geolayers.size(); j++)
-            v_geology[i].push_back(geolayers[j]->unk_4);
+            v_geology[i].push_back(geolayers[j]->mat_index);
     }
 
     assign.clear();

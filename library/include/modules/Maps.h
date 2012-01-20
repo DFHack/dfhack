@@ -67,75 +67,7 @@ namespace DFHack
     */
 extern DFHACK_EXPORT const char * sa_feature(df::feature_type index);
 
-/**
- * Class for holding a world coordinate. Can do math with coordinates and can be used as an index for std::map
- * \ingroup grp_maps
- */
-class DFCoord
-{
-    public:
-    DFCoord(uint16_t _x, uint16_t _y, uint16_t _z = 0): x(_x), y(_y), z(_z) {}
-    DFCoord()
-    {
-        comparate = 0;
-    }
-    bool operator==(const DFCoord &other) const
-    {
-        return (other.comparate == comparate);
-    }
-    bool operator!=(const DFCoord &other) const
-    {
-        return (other.comparate != comparate);
-    }
-    // FIXME: <tomprince> peterix_: you could probably get away with not defining operator< if you defined a std::less specialization for Vertex.
-    bool operator<(const DFCoord &other) const
-    {
-        return comparate < other.comparate;
-    }
-    DFCoord operator/(int number) const
-    {
-        return DFCoord(x/number, y/number, z);
-    }
-    DFCoord operator*(int number) const
-    {
-        return DFCoord(x*number, y*number, z);
-    }
-    DFCoord operator%(int number) const
-    {
-        return DFCoord(x%number, y%number, z);
-    }
-    DFCoord operator-(int number) const
-    {
-        return DFCoord(x,y,z-number);
-    }
-    DFCoord operator+(int number) const
-    {
-        return DFCoord(x,y,z+number);
-    }
-    // this is a hack. beware.
-    // x,y,z share the same space with comparate. comparate can be used for fast comparisons
-    union
-    {
-        // new shiny DFCoord struct. notice the ludicrous space for Z-levels
-        struct
-        {
-            uint16_t x;
-            uint16_t y;
-            uint32_t z;
-        };
-        // old planeccord struct for compatibility
-        struct
-        {
-            uint16_t x;
-            uint16_t y;
-        } dim;
-        // comparing thing
-        uint64_t comparate;
-    };
-};
-/**
- * \ingroup grp_maps
- */
+typedef df::coord DFCoord;
 typedef DFCoord planecoord;
 
 /**
@@ -323,7 +255,7 @@ extern DFHACK_EXPORT bool ReadFeatures(mapblock40d * block, t_feature * local, t
  * Read a specific global or local feature directly
  */
 extern DFHACK_EXPORT bool GetGlobalFeature(t_feature &feature, int32_t index);
-extern DFHACK_EXPORT bool GetLocalFeature(t_feature &feature, DFCoord coord, int32_t index);
+extern DFHACK_EXPORT bool GetLocalFeature(t_feature &feature, df::coord2d coord, int32_t index);
 
 /*
  * BLOCK DATA

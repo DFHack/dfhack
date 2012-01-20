@@ -70,7 +70,7 @@ enum circle_what
 
 bool dig (MapExtras::MapCache & MCache,
           circle_what what,
-          e_designation type,
+          df::tile_dig_designation type,
           int32_t x, int32_t y, int32_t z,
           int x_max, int y_max
          )
@@ -90,7 +90,7 @@ bool dig (MapExtras::MapCache & MCache,
         return false;
     }
     uint16_t tt = MCache.tiletypeAt(at);
-    t_designation des = MCache.designationAt(at);
+    df::tile_designation des = MCache.designationAt(at);
     // could be potentially used to locate hidden constructions?
     if(tileMaterial(tt) == CONSTRUCTED && !des.bits.hidden)
         return false;
@@ -107,7 +107,7 @@ bool dig (MapExtras::MapCache & MCache,
                 break;
             }
             if(isFloorTerrain(tt)
-               && (type == designation_d_stair || type == designation_channel)
+               && (type == df::tile_dig_designation::DownStair || type == df::tile_dig_designation::Channel)
                && ts != TREE_OK
                && ts != TREE_DEAD
             )
@@ -115,7 +115,7 @@ bool dig (MapExtras::MapCache & MCache,
                 std::cerr << "allowing tt" << tt << ", is floor\n";
                 break;
             }
-            if(isStairTerrain(tt) && type == designation_channel )
+            if(isStairTerrain(tt) && type == df::tile_dig_designation::Channel )
                 break;
             return false;
         }
@@ -124,25 +124,25 @@ bool dig (MapExtras::MapCache & MCache,
     switch(what)
     {
         case circle_set:
-            if(des.bits.dig == designation_no)
+            if(des.bits.dig == df::tile_dig_designation::No)
             {
                 des.bits.dig = type;
             }
             break;
         case circle_unset:
-            if (des.bits.dig != designation_no)
+            if (des.bits.dig != df::tile_dig_designation::No)
             {
-                des.bits.dig = designation_no;
+                des.bits.dig = df::tile_dig_designation::No;
             }
             break;
         case circle_invert:
-            if(des.bits.dig == designation_no)
+            if(des.bits.dig == df::tile_dig_designation::No)
             {
                 des.bits.dig = type;
             }
             else
             {
-                des.bits.dig = designation_no;
+                des.bits.dig = df::tile_dig_designation::No;
             }
             break;
     }
@@ -153,7 +153,7 @@ bool dig (MapExtras::MapCache & MCache,
 
 bool lineX (MapExtras::MapCache & MCache,
             circle_what what,
-            e_designation type,
+            df::tile_dig_designation type,
             int32_t y1, int32_t y2, int32_t x, int32_t z,
             int x_max, int y_max
            )
@@ -167,7 +167,7 @@ bool lineX (MapExtras::MapCache & MCache,
 
 bool lineY (MapExtras::MapCache & MCache,
             circle_what what,
-            e_designation type,
+            df::tile_dig_designation type,
             int32_t x1, int32_t x2, int32_t y, int32_t z,
             int x_max, int y_max
            )
@@ -183,7 +183,7 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
 {
     static bool filled = false;
     static circle_what what = circle_set;
-    static e_designation type = designation_default;
+    static df::tile_dig_designation type = df::tile_dig_designation::Default;
     static int diameter = 0;
     auto saved_d = diameter;
     bool force_help = false;
@@ -215,27 +215,27 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         }
         else if(parameters[i] == "dig")
         {
-            type = designation_default;
+            type = df::tile_dig_designation::Default;
         }
         else if(parameters[i] == "ramp")
         {
-            type = designation_ramp;
+            type = df::tile_dig_designation::Ramp;
         }
         else if(parameters[i] == "dstair")
         {
-            type = designation_d_stair;
+            type = df::tile_dig_designation::DownStair;
         }
         else if(parameters[i] == "ustair")
         {
-            type = designation_u_stair;
+            type = df::tile_dig_designation::UpStair;
         }
         else if(parameters[i] == "xstair")
         {
-            type = designation_ud_stair;
+            type = df::tile_dig_designation::UpDownStair;
         }
         else if(parameters[i] == "chan")
         {
-            type = designation_channel;
+            type = df::tile_dig_designation::Channel;
         }
         else if (!from_string(diameter,parameters[i], std::dec))
         {
@@ -275,18 +275,17 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
     int32_t cx, cy, cz;
     c->Suspend();
     Gui * gui = c->getGui();
-    Maps * maps = c->getMaps();
-    if(!maps->Start())
+    if (!Maps::IsValid())
     {
+        c->con.printerr("Map is not available!\n");
         c->Resume();
-        c->con.printerr("Can't init the map...\n");
         return CR_FAILURE;
     }
 
     uint32_t x_max, y_max, z_max;
-    maps->getSize(x_max,y_max,z_max);
+    Maps::getSize(x_max,y_max,z_max);
 
-    MapExtras::MapCache MCache (maps);
+    MapExtras::MapCache MCache;
     if(!gui->getCursorCoords(cx,cy,cz) || cx == -30000)
     {
         c->Resume();
@@ -726,13 +725,12 @@ enum explo_what
     EXPLO_DESIGNATED,
 };
 
-bool stamp_pattern (DFHack::Maps * maps,
-                    uint32_t bx, uint32_t by, int z_level,
+bool stamp_pattern (uint32_t bx, uint32_t by, int z_level,
                     digmask & dm, explo_how how, explo_what what,
                     int x_max, int y_max
                    )
 {
-    df_block * bl = maps->getBlock(bx,by,z_level);
+    df::map_block * bl = Maps::getBlock(bx,by,z_level);
     if(!bl)
         return false;
     int x = 0,mx = 16;
@@ -749,34 +747,34 @@ bool stamp_pattern (DFHack::Maps * maps,
             my = 15;
         for(; y < my; y++)
         {
-            naked_designation & des = bl->designation[x][y].bits;
+            df::tile_designation & des = bl->designation[x][y];
             short unsigned int tt = bl->tiletype[x][y];
             // could be potentially used to locate hidden constructions?
-            if(tileMaterial(tt) == CONSTRUCTED && !des.hidden)
+            if(tileMaterial(tt) == CONSTRUCTED && !des.bits.hidden)
                 continue;
-            if(!isWallTerrain(tt) && !des.hidden)
+            if(!isWallTerrain(tt) && !des.bits.hidden)
                 continue;
             if(how == EXPLO_CLEAR)
             {
-                des.dig = designation_no;
+                des.bits.dig = df::tile_dig_designation::No;
                 continue;
             }
             if(dm[y][x])
             {
                 if(what == EXPLO_ALL
-                    || des.dig == designation_default && what == EXPLO_DESIGNATED
-                    || des.hidden && what == EXPLO_HIDDEN)
+                    || des.bits.dig == df::tile_dig_designation::Default && what == EXPLO_DESIGNATED
+                    || des.bits.hidden && what == EXPLO_HIDDEN)
                 {
-                    des.dig = designation_default;
+                    des.bits.dig = df::tile_dig_designation::Default;
                 }
             }
             else if(what == EXPLO_DESIGNATED)
             {
-                des.dig = designation_no;
+                des.bits.dig = df::tile_dig_designation::No;
             }
         }
     }
-    bl->flags.set(BLOCK_DESIGNATED);
+    bl->flags.set(df::block_flags::Designated);
     return true;
 };
 
@@ -854,15 +852,14 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
     }
     c->Suspend();
     Gui * gui = c->getGui();
-    Maps * maps = c->getMaps();
     uint32_t x_max, y_max, z_max;
-    if(!maps->Start())
+    if (!Maps::IsValid())
     {
+        c->con.printerr("Map is not available!\n");
         c->Resume();
-        c->con.printerr("Can't init the map...\n");
         return CR_FAILURE;
     }
-    maps->getSize(x_max,y_max,z_max);
+    Maps::getSize(x_max,y_max,z_max);
     int32_t xzzz,yzzz,z_level;
     if(!gui->getViewCoords(xzzz,yzzz,z_level))
     {
@@ -878,7 +875,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             for(int32_t y = 0 ; y < y_max; y++)
             {
                 which = (4*x + y) % 5;
-                stamp_pattern(maps, x,y_max - 1 - y, z_level, diag5[which],
+                stamp_pattern(x,y_max - 1 - y, z_level, diag5[which],
                               how, what, x_max, y_max);
             }
         }
@@ -891,7 +888,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             for(int32_t y = 0 ; y < y_max; y++)
             {
                 which = (4*x + 1000-y) % 5;
-                stamp_pattern(maps, x,y_max - 1 - y, z_level, diag5r[which],
+                stamp_pattern(x,y_max - 1 - y, z_level, diag5r[which],
                               how, what, x_max, y_max);
             }
         }
@@ -904,7 +901,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             which = x % 3;
             for(int32_t y = 0 ; y < y_max; y++)
             {
-                stamp_pattern(maps, x, y, z_level, ladder[which],
+                stamp_pattern(x, y, z_level, ladder[which],
                     how, what, x_max, y_max);
             }
         }
@@ -917,7 +914,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             which = y % 3;
             for(uint32_t x = 0; x < x_max; x++)
             {
-                stamp_pattern(maps, x, y, z_level, ladderr[which],
+                stamp_pattern(x, y, z_level, ladderr[which],
                               how, what, x_max, y_max);
             }
         }
@@ -927,7 +924,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
         // middle + recentering for the image
         int xmid = x_max * 8 - 8;
         int ymid = y_max * 8 - 8;
-        MapExtras::MapCache mx (maps);
+        MapExtras::MapCache mx;
         for(int x = 0; x < 16; x++)
             for(int y = 0; y < 16; y++)
             {
@@ -935,14 +932,14 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
                 short unsigned int tt = mx.tiletypeAt(pos);
                 if(tt == 0)
                     continue;
-                t_designation des = mx.designationAt(pos);
+                df::tile_designation des = mx.designationAt(pos);
                 if(tileMaterial(tt) == CONSTRUCTED && !des.bits.hidden)
                     continue;
                 if(!isWallTerrain(tt) && !des.bits.hidden)
                     continue;
                 if(cross[y][x])
                 {
-                    des.bits.dig = designation_default;
+                    des.bits.dig = df::tile_dig_designation::Default;
                     mx.setDesignationAt(pos,des);
                 }
             }
@@ -952,7 +949,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
     {
         for(int32_t y = 0 ; y < y_max; y++)
         {
-            stamp_pattern(maps, x, y, z_level, all_tiles,
+            stamp_pattern(x, y, z_level, all_tiles,
                           how, what, x_max, y_max);
         }
     }
@@ -983,17 +980,15 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
 
     Console & con = c->con;
 
-    DFHack::Maps * Maps = c->getMaps();
     DFHack::Gui * Gui = c->getGui();
-    // init the map
-    if(!Maps->Start())
+    if (!Maps::IsValid())
     {
-        con.printerr("Can't init map. Make sure you have a map loaded in DF.\n");
+        c->con.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
 
     int32_t cx, cy, cz;
-    Maps->getSize(x_max,y_max,z_max);
+    Maps::getSize(x_max,y_max,z_max);
     uint32_t tx_max = x_max * 16;
     uint32_t ty_max = y_max * 16;
     Gui->getCursorCoords(cx,cy,cz);
@@ -1008,8 +1003,8 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
         con.printerr("I won't dig the borders. That would be cheating!\n");
         return CR_FAILURE;
     }
-    MapExtras::MapCache * MCache = new MapExtras::MapCache(Maps);
-    DFHack::t_designation des = MCache->designationAt(xy);
+    MapExtras::MapCache * MCache = new MapExtras::MapCache;
+    df::tile_designation des = MCache->designationAt(xy);
     int16_t tt = MCache->tiletypeAt(xy);
     int16_t veinmat = MCache->veinMaterialAt(xy);
     if( veinmat == -1 )
@@ -1034,9 +1029,9 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
             continue;
 
         // found a good tile, dig+unset material
-        DFHack::t_designation des = MCache->designationAt(current);
-        DFHack::t_designation des_minus;
-        DFHack::t_designation des_plus;
+        df::tile_designation des = MCache->designationAt(current);
+        df::tile_designation des_minus;
+        df::tile_designation des_plus;
         des_plus.whole = des_minus.whole = 0;
         int16_t vmat_minus = -1;
         int16_t vmat_plus = -1;
@@ -1095,32 +1090,32 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
                 {
                     flood.push(current-1);
 
-                    if(des_minus.bits.dig == DFHack::designation_d_stair)
-                        des_minus.bits.dig = DFHack::designation_ud_stair;
+                    if(des_minus.bits.dig == df::tile_dig_designation::DownStair)
+                        des_minus.bits.dig = df::tile_dig_designation::UpDownStair;
                     else
-                        des_minus.bits.dig = DFHack::designation_u_stair;
+                        des_minus.bits.dig = df::tile_dig_designation::UpStair;
                     MCache->setDesignationAt(current-1,des_minus);
 
-                    des.bits.dig = DFHack::designation_d_stair;
+                    des.bits.dig = df::tile_dig_designation::DownStair;
                 }
                 if(current.z < z_max - 1 && above && vmat_plus == vmat2)
                 {
                     flood.push(current+ 1);
 
-                    if(des_plus.bits.dig == DFHack::designation_u_stair)
-                        des_plus.bits.dig = DFHack::designation_ud_stair;
+                    if(des_plus.bits.dig == df::tile_dig_designation::UpStair)
+                        des_plus.bits.dig = df::tile_dig_designation::UpDownStair;
                     else
-                        des_plus.bits.dig = DFHack::designation_d_stair;
+                        des_plus.bits.dig = df::tile_dig_designation::DownStair;
                     MCache->setDesignationAt(current+1,des_plus);
 
-                    if(des.bits.dig == DFHack::designation_d_stair)
-                        des.bits.dig = DFHack::designation_ud_stair;
+                    if(des.bits.dig == df::tile_dig_designation::DownStair)
+                        des.bits.dig = df::tile_dig_designation::UpDownStair;
                     else
-                        des.bits.dig = DFHack::designation_u_stair;
+                        des.bits.dig = df::tile_dig_designation::UpStair;
                 }
             }
-            if(des.bits.dig == DFHack::designation_no)
-                des.bits.dig = DFHack::designation_default;
+            if(des.bits.dig == df::tile_dig_designation::No)
+                des.bits.dig = df::tile_dig_designation::Default;
             MCache->setDesignationAt(current,des);
         }
     }

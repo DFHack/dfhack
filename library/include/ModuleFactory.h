@@ -39,7 +39,6 @@ namespace DFHack
     Module* createVegetation();
     Module* createBuildings();
     Module* createConstructions();
-    Module* createMaps();
     Module* createNotes();
     Module* createGraphic();
 }

@@ -169,7 +169,6 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
     int32_t x,y,z;
     uint32_t x_max,y_max,z_max;
 
-    DFHack::Maps * Maps;
     DFHack::Gui * Position;
     for(int i = 0; i < parameters.size();i++)
     {
@@ -360,16 +359,14 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
         else if(command.empty())
         {
             c->Suspend();
-            Maps = c->getMaps();
-            Maps->Start();
-            Maps->getSize(x_max,y_max,z_max);
+            Maps::getSize(x_max,y_max,z_max);
             Position = c->getGui();
             do
             {
-                if(!Maps->Start())
+                if (!Maps::IsValid())
                 {
                     c->con << "Can't see any DF map loaded." << endl;
-                    break;
+                    break;;
                 }
                 if(!Position->getCursorCoords(x,y,z))
                 {
@@ -377,7 +374,7 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                     break;
                 }
                 c->con << "cursor coords: " << x << "/" << y << "/" << z << endl;
-                MapCache mcache(Maps);
+                MapCache mcache;
                 DFHack::DFCoord cursor(x,y,z);
                 coord_vec all_tiles = brush->points(mcache,cursor);
                 c->con << "working..." << endl;
@@ -389,7 +386,7 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                         mcache.setTiletypeAt(*iter, 331);
                         mcache.setTemp1At(*iter,10015);
                         mcache.setTemp2At(*iter,10015);
-                        DFHack::t_designation des = mcache.designationAt(*iter);
+                        df::tile_designation des = mcache.designationAt(*iter);
                         des.bits.flow_size = 0;
                         mcache.setDesignationAt(*iter, des);
                         iter ++;
@@ -411,8 +408,8 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                     {
                         mcache.setTiletypeAt(*iter, 90);
 
-                        DFHack::t_designation a = mcache.designationAt(*iter);
-                        a.bits.liquid_type = DFHack::liquid_water;
+                        df::tile_designation a = mcache.designationAt(*iter);
+                        a.bits.liquid_type = df::tile_liquid::Water;
                         a.bits.liquid_static = false;
                         a.bits.flow_size = 7;
                         mcache.setTemp1At(*iter,10015);
@@ -434,7 +431,7 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                     while (iter != all_tiles.end())
                     {
                         DFHack::DFCoord current = *iter;
-                        DFHack::t_designation des = mcache.designationAt(current);
+                        df::tile_designation des = mcache.designationAt(current);
                         des.bits.water_salt = false;
                         des.bits.water_stagnant = false;
                         mcache.setDesignationAt(current,des);
@@ -455,9 +452,8 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                             iter ++;
                             continue;
                         }
-                        DFHack::t_designation des = mcache.designationAt(current);
+                        df::tile_designation des = mcache.designationAt(current);
                         uint16_t tt = mcache.tiletypeAt(current);
-                        DFHack::naked_designation & flow = des.bits;
                         // don't put liquids into places where they don't belong...
                         if(!DFHack::FlowPassable(tt))
                         {
@@ -468,27 +464,27 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                         {
                             if(setmode == "s.")
                             {
-                                flow.flow_size = amount;
+                                des.bits.flow_size = amount;
                             }
                             else if(setmode == "s+")
                             {
-                                if(flow.flow_size < amount)
-                                    flow.flow_size = amount;
+                                if(des.bits.flow_size < amount)
+                                    des.bits.flow_size = amount;
                             }
                             else if(setmode == "s-")
                             {
-                                if (flow.flow_size > amount)
-                                    flow.flow_size = amount;
+                                if (des.bits.flow_size > amount)
+                                    des.bits.flow_size = amount;
                             }
                             if(amount != 0 && mode == "magma")
                             {
-                                flow.liquid_type =  DFHack::liquid_magma;
+                                des.bits.liquid_type =  df::tile_liquid::Magma;
                                 mcache.setTemp1At(current,12000);
                                 mcache.setTemp2At(current,12000);
                             }
                             else if(amount != 0 && mode == "water")
                             {
-                                flow.liquid_type =  DFHack::liquid_water;
+                                des.bits.liquid_type =  df::tile_liquid::Water;
                                 mcache.setTemp1At(current,10015);
                                 mcache.setTemp2At(current,10015);
                             }
@@ -531,7 +527,6 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                     c->con << "OK" << endl;
                 else
                     c->con << "Something failed horribly! RUN!" << endl;
-                Maps->Finish();
             } while (0);
             c->Resume();
         }

@@ -19,6 +19,7 @@ using std::set;
 #include "modules/Gui.h"
 #include "TileTypes.h"
 #include "modules/MapCache.h"
+#include "df/tile_dig_designation.h"
 using namespace MapExtras;
 using namespace DFHack;
 
@@ -640,7 +641,6 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
     uint32_t x_max = 0, y_max = 0, z_max = 0;
     int32_t x = 0, y = 0, z = 0;
 
-    DFHack::Maps *maps;
     DFHack::Gui *gui;
     for(int i = 0; i < parameters.size();i++)
     {
@@ -754,15 +754,14 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
             }
 
             c->Suspend();
-            maps = c->getMaps();
             gui = c->getGui();
-            if (!maps->Start())
+            if (!Maps::IsValid())
             {
-                c->con.printerr("Cannot get map info!\n");
+                c->con.printerr("Map is not available!\n");
                 c->Resume();
                 return CR_FAILURE;
             }
-            maps->getSize(x_max, y_max, z_max);
+            Maps::getSize(x_max, y_max, z_max);
 
             if (!(gui->Start() && gui->getCursorCoords(x,y,z)))
             {
@@ -773,20 +772,20 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
             c->con.print("Cursor coords: (%d, %d, %d)\n",x,y,z);
 
             DFHack::DFCoord cursor(x,y,z);
-            MapExtras::MapCache map(maps);
+            MapExtras::MapCache map;
             coord_vec all_tiles = brush->points(map, cursor);
             c->con.print("working...\n");
 
             for (coord_vec::iterator iter = all_tiles.begin(); iter != all_tiles.end(); ++iter)
             {
                 const DFHack::TileRow *source = DFHack::getTileRow(map.tiletypeAt(*iter));
-                DFHack::t_designation des = map.designationAt(*iter);
+                df::tile_designation des = map.designationAt(*iter);
 
                 if ((filter.shape > -1 && filter.shape != source->shape)
                  || (filter.material > -1 && filter.material != source->material)
                  || (filter.special > -1 && filter.special != source->special)
                  || (filter.variant > -1 && filter.variant != source->variant)
-                 || (filter.dig > -1 && (filter.dig != 0) != (des.bits.dig != DFHack::designation_no))
+		 || (filter.dig > -1 && (filter.dig != 0) != (des.bits.dig != df::tile_dig_designation::No))
                 )
                 {
                     continue;
@@ -865,7 +864,7 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
 
                 if (paint.skyview > -1)
                 {
-                    des.bits.skyview = paint.skyview;
+                    des.bits.outside = paint.skyview;
                 }
 
                 // Remove liquid from walls, etc
@@ -891,7 +890,6 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
             {
                 c->con.printerr("Something failed horribly! RUN!\n");
             }
-            maps->Finish();
             c->Resume();
         }
     }

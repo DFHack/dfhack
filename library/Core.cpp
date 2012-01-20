@@ -1090,7 +1090,6 @@ TYPE * Core::get##TYPE() \
 
 MODULE_GETTER(Units);
 MODULE_GETTER(Engravings);
-MODULE_GETTER(Maps);
 MODULE_GETTER(Gui);
 MODULE_GETTER(World);
 MODULE_GETTER(Materials);

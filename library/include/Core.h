@@ -54,7 +54,6 @@ namespace DFHack
     class Module;
     class Units;
     class Engravings;
-    class Maps;
     class Gui;
     class World;
     class Materials;
@@ -102,8 +101,6 @@ namespace DFHack
         Units * getUnits();
         /// get the engravings module
         Engravings * getEngravings();
-        /// get the maps module
-        Maps * getMaps();
         /// get the gui module
         Gui * getGui();
         /// get the world module
@@ -166,7 +163,6 @@ namespace DFHack
         {
             Units * pUnits;
             Engravings * pEngravings;
-            Maps * pMaps;
             Gui * pGui;
             World * pWorld;
             Materials * pMaterials;

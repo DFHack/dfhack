@@ -2,7 +2,8 @@
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
-#include "proto/Tile.pb.h"
+
+#include "proto/Map.pb.h"
 using namespace DFHack;
 
 DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & parameters);

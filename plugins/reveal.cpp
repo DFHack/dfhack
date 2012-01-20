@@ -264,7 +264,7 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     for(size_t i = 0; i < hidesaved.size();i++)
     {
         hideblock & hb = hidesaved[i];
-        df::map_block * b = Maps::getBlock(hb.c.x,hb.c.y,hb.c.z);
+        df::map_block * b = Maps::getBlockAbs(hb.c.x,hb.c.y,hb.c.z);
         for (uint32_t x = 0; x < 16;x++) for (uint32_t y = 0; y < 16;y++)
         {
             b->designation[x][y].bits.hidden = hb.hiddens[x][y];

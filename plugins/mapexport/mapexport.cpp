@@ -14,7 +14,7 @@ DFhackCExport const char * plugin_name ( void )
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-	GOOGLE_PROTOBUF_VERIFY_VERSION;
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
     commands.clear();
     commands.push_back(PluginCommand("mapexport", "Starts up and shuts down protobufs.", mapexport, true));
     return CR_OK;
@@ -22,7 +22,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
-	google::protobuf::ShutdownProtobufLibrary();
+    google::protobuf::ShutdownProtobufLibrary();
     return CR_OK;
 }
 
@@ -38,7 +38,7 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
     }
 
     c->Suspend();
-	dfproto::Tile tile;
+    dfproto::Tile tile;
     c->con.print("Hold on, I'm working on it!\n");
     c->Resume();
     return CR_OK;

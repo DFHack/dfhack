@@ -96,17 +96,14 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
 
     DFHack::VersionInfo *mem = c->vinfo;
     DFHack::Gui * Gui = c->getGui();
-    DFHack::Maps *Maps = c->getMaps();
-
-    std::size_t numItems = world->items.all.size();
-
-    // init the map
-    if(!Maps->Start())
+    if (!Maps::IsValid())
     {
-        c->con.printerr("Can't initialize map.\n");
+        c->con.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
-    MapCache MC (Maps);
+    std::size_t numItems = world->items.all.size();
+
+    MapCache MC;
     int i = 0;
     int dumped_total = 0;
 
@@ -185,8 +182,8 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
             {
                 // yes...
                 cerr << "Moving from block to block!" << endl;
-                df::map_block * bl_src = Maps->getBlock(itm->pos.x /16, itm->pos.y/16, itm->pos.z);
-                df::map_block * bl_tgt = Maps->getBlock(cx /16, cy/16, cz);
+                df::map_block * bl_src = Maps::getBlockAbs(itm->pos.x, itm->pos.y, itm->pos.z);
+                df::map_block * bl_tgt = Maps::getBlockAbs(cx, cy, cz);
                 if(bl_src)
                 {
                     std::remove(bl_src->items.begin(), bl_src->items.end(),itm->id);
@@ -255,7 +252,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
         // write map changes back to DF.
         MC.WriteAll();
         // Is this necessary?  Is "forbid" a dirtyable attribute like "dig" is?
-        Maps->WriteDirtyBit(cx/16, cy/16, cz, true);
+        Maps::WriteDirtyBit(cx/16, cy/16, cz, true);
     }
     c->con.print("Done. %d items %s.\n", dumped_total, destroy ? "marked for destruction" : "quickdumped");
     return CR_OK;

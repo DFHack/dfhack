@@ -99,196 +99,182 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
     DFHack::Gui *Gui = c->getGui();
     DFHack::Materials *Materials = c->getMaterials();
     DFHack::VersionInfo* mem = c->vinfo;
-    DFHack::Maps *Maps = c->getMaps();
     std::vector<t_matglossInorganic> inorganic;
     bool hasmats = Materials->CopyInorganicMaterials(inorganic);
 
-    if(!Maps->Start())
+    if (!Maps::IsValid())
     {
-        con.printerr("Unable to access map data!\n");
+        c->con.printerr("Map is not available!\n");
+        c->Resume();
+        return CR_FAILURE;
     }
-    else
+    MapExtras::MapCache mc;
+
+    int32_t regionX, regionY, regionZ;
+    Maps::getPosition(regionX,regionY,regionZ);
+
+    int32_t cursorX, cursorY, cursorZ;
+    Gui->getCursorCoords(cursorX,cursorY,cursorZ);
+    if(cursorX == -30000)
     {
-        MapExtras::MapCache mc (Maps);
+        con.printerr("No cursor; place cursor over tile to probe.\n");
+        c->Resume();
+        return CR_FAILURE;
+    }
+    DFCoord cursor (cursorX,cursorY,cursorZ);
 
-        int32_t regionX, regionY, regionZ;
-        Maps->getPosition(regionX,regionY,regionZ);
+    uint32_t blockX = cursorX / 16;
+    uint32_t tileX = cursorX % 16;
+    uint32_t blockY = cursorY / 16;
+    uint32_t tileY = cursorY % 16;
 
-        bool have_features = Maps->StartFeatures();
+    MapExtras::Block * b = mc.BlockAt(cursor/16);
+    if(!b && !b->valid)
+    {
+        con.printerr("No data.\n");
+        c->Resume();
+        return CR_OK;
+    }
+    mapblock40d & block = b->raw;
+    con.print("block addr: 0x%x\n\n", block.origin);
+/*
+    if (showBlock)
+    {
+        con.print("block flags:\n");
+        print_bits<uint32_t>(block.blockflags.whole,con);
+        con.print("\n\n");
+    }
+*/
+    int16_t tiletype = mc.tiletypeAt(cursor);
+    df::tile_designation &des = block.designation[tileX][tileY];
+/*
+    if(showDesig)
+    {
+        con.print("designation\n");
+        print_bits<uint32_t>(block.designation[tileX][tileY].whole,
+                                con);
+        con.print("\n\n");
+    }
 
-        int32_t cursorX, cursorY, cursorZ;
-        Gui->getCursorCoords(cursorX,cursorY,cursorZ);
-        if(cursorX == -30000)
-        {
-            con.printerr("No cursor; place cursor over tile to probe.\n");
-        }
+    if(showOccup)
+    {
+        con.print("occupancy\n");
+        print_bits<uint32_t>(block.occupancy[tileX][tileY].whole,
+                                con);
+        con.print("\n\n");
+    }
+*/
+
+    // tiletype
+    con.print("tiletype: %d", tiletype);
+    if(tileName(tiletype))
+        con.print(" = %s",tileName(tiletype));
+    con.print("\n");
+
+    DFHack::TileShape shape = tileShape(tiletype);
+    DFHack::TileMaterial material = tileMaterial(tiletype);
+    DFHack::TileSpecial special = tileSpecial(tiletype);
+    con.print("%-10s: %4d %s\n","Class"    ,shape,
+            TileShapeString[ shape ]);
+    con.print("%-10s: %4d %s\n","Material" ,
+            material,TileMaterialString[ material ]);
+    con.print("%-10s: %4d %s\n","Special"  ,
+            special, TileSpecialString[ special ]);
+    con.print("%-10s: %4d\n"   ,"Variant"  ,
+            tileVariant(tiletype));
+    con.print("%-10s: %s\n"    ,"Direction",
+            tileDirection(tiletype).getStr());
+    con.print("\n");
+
+    con.print("temperature1: %d U\n",mc.temperature1At(cursor));
+    con.print("temperature2: %d U\n",mc.temperature2At(cursor));
+
+    // biome, geolayer
+    con << "biome: " << des.bits.biome << std::endl;
+    con << "geolayer: " << des.bits.geolayer_index
+        << std::endl;
+    int16_t base_rock = mc.baseMaterialAt(cursor);
+    if(base_rock != -1)
+    {
+        con << "Layer material: " << dec << base_rock;
+        if(hasmats)
+            con << " / " << inorganic[base_rock].id
+                << " / "
+                << inorganic[base_rock].name
+                << endl;
         else
-        {
-            DFCoord cursor (cursorX,cursorY,cursorZ);
-
-            uint32_t blockX = cursorX / 16;
-            uint32_t tileX = cursorX % 16;
-            uint32_t blockY = cursorY / 16;
-            uint32_t tileY = cursorY % 16;
-
-            MapExtras::Block * b = mc.BlockAt(cursor/16);
-            mapblock40d & block = b->raw;
-            if(b && b->valid)
-            {
-                con.print("block addr: 0x%x\n\n", block.origin);
-/*
-                if (showBlock)
-                {
-                    con.print("block flags:\n");
-                    print_bits<uint32_t>(block.blockflags.whole,con);
-                    con.print("\n\n");
-                }
-*/
-                int16_t tiletype = mc.tiletypeAt(cursor);
-                df::tile_designation &des = block.designation[tileX][tileY];
-/*
-                if(showDesig)
-                {
-                    con.print("designation\n");
-                    print_bits<uint32_t>(block.designation[tileX][tileY].whole,
-                                         con);
-                    con.print("\n\n");
-                }
-
-                if(showOccup)
-                {
-                    con.print("occupancy\n");
-                    print_bits<uint32_t>(block.occupancy[tileX][tileY].whole,
-                                         con);
-                    con.print("\n\n");
-                }
-*/
-
-                // tiletype
-                con.print("tiletype: %d", tiletype);
-                if(tileName(tiletype))
-                    con.print(" = %s",tileName(tiletype));
-                con.print("\n");
-
-                DFHack::TileShape shape = tileShape(tiletype);
-                DFHack::TileMaterial material = tileMaterial(tiletype);
-                DFHack::TileSpecial special = tileSpecial(tiletype);
-                con.print("%-10s: %4d %s\n","Class"    ,shape,
-                       TileShapeString[ shape ]);
-                con.print("%-10s: %4d %s\n","Material" ,
-                       material,TileMaterialString[ material ]);
-                con.print("%-10s: %4d %s\n","Special"  ,
-                       special, TileSpecialString[ special ]);
-                con.print("%-10s: %4d\n"   ,"Variant"  ,
-                       tileVariant(tiletype));
-                con.print("%-10s: %s\n"    ,"Direction",
-                       tileDirection(tiletype).getStr());
-                con.print("\n");
-
-                con.print("temperature1: %d U\n",mc.temperature1At(cursor));
-                con.print("temperature2: %d U\n",mc.temperature2At(cursor));
-
-                // biome, geolayer
-                con << "biome: " << des.bits.biome << std::endl;
-                con << "geolayer: " << des.bits.geolayer_index
-                    << std::endl;
-                int16_t base_rock = mc.baseMaterialAt(cursor);
-                if(base_rock != -1)
-                {
-                    con << "Layer material: " << dec << base_rock;
-                    if(hasmats)
-                        con << " / " << inorganic[base_rock].id
-                            << " / "
-                            << inorganic[base_rock].name
-                            << endl;
-                    else
-                        con << endl;
-                }
-                int16_t vein_rock = mc.veinMaterialAt(cursor);
-                if(vein_rock != -1)
-                {
-                    con << "Vein material (final): " << dec << vein_rock;
-                    if(hasmats)
-                        con << " / " << inorganic[vein_rock].id
-                            << " / "
-                            << inorganic[vein_rock].name
-                            << endl;
-                    else
-                        con << endl;
-                }
-                // liquids
-                if(des.bits.flow_size)
-                {
-                    if(des.bits.liquid_type == df::tile_liquid::Magma)
-                        con <<"magma: ";
-                    else con <<"water: ";
-                    con << des.bits.flow_size << std::endl;
-                }
-                if(des.bits.flow_forbid)
-                    con << "flow forbid" << std::endl;
-                if(des.bits.pile)
-                    con << "stockpile?" << std::endl;
-                if(des.bits.rained)
-                    con << "rained?" << std::endl;
-                if(des.bits.smooth)
-                    con << "smooth?" << std::endl;
-                if(des.bits.water_salt)
-                    con << "salty" << endl;
-                if(des.bits.water_stagnant)
-                    con << "stagnant" << endl;
-
-                #define PRINT_FLAG( X )  con.print("%-16s= %c\n", #X , ( des.X ? 'Y' : ' ' ) )
-                PRINT_FLAG( bits.hidden );
-                PRINT_FLAG( bits.light );
-                PRINT_FLAG( bits.outside );
-                PRINT_FLAG( bits.subterranean );
-                PRINT_FLAG( bits.water_table );
-                PRINT_FLAG( bits.rained );
-
-                DFCoord pc(blockX, blockY);
-
-                if(have_features)
-                {
-                    t_feature * local = 0;
-                    t_feature * global = 0;
-                    Maps->ReadFeatures(&(b->raw),&local,&global);
-                    PRINT_FLAG( bits.feature_local );
-                    if(local)
-                    {
-                        con.print("%-16s", "");
-                        con.print("  %4d", block.local_feature);
-                        con.print(" (%2d)", local->type);
-                        con.print(" addr 0x%X ", local->origin);
-                        con.print(" %s\n", sa_feature(local->type));
-                    }
-                    PRINT_FLAG( bits.feature_global );
-                    if(global)
-                    {
-                        con.print("%-16s", "");
-                        con.print("  %4d", block.global_feature);
-                        con.print(" (%2d)", global->type);
-                        con.print(" %s\n", sa_feature(global->type));
-                    }
-                }
-                else
-                {
-                    PRINT_FLAG( bits.feature_local );
-                    PRINT_FLAG( bits.feature_global );
-                }
-                #undef PRINT_FLAG
-                con << "local feature idx: " << block.local_feature
-                    << endl;
-                con << "global feature idx: " << block.global_feature
-                    << endl;
-                con << "mystery: " << block.mystery << endl;
-                con << std::endl;
-            }
-            else
-            {
-                con.printerr("No data.\n");
-            }
-        }
+            con << endl;
     }
+    int16_t vein_rock = mc.veinMaterialAt(cursor);
+    if(vein_rock != -1)
+    {
+        con << "Vein material (final): " << dec << vein_rock;
+        if(hasmats)
+            con << " / " << inorganic[vein_rock].id
+                << " / "
+                << inorganic[vein_rock].name
+                << endl;
+        else
+            con << endl;
+    }
+    // liquids
+    if(des.bits.flow_size)
+    {
+        if(des.bits.liquid_type == df::tile_liquid::Magma)
+            con <<"magma: ";
+        else con <<"water: ";
+        con << des.bits.flow_size << std::endl;
+    }
+    if(des.bits.flow_forbid)
+        con << "flow forbid" << std::endl;
+    if(des.bits.pile)
+        con << "stockpile?" << std::endl;
+    if(des.bits.rained)
+        con << "rained?" << std::endl;
+    if(des.bits.smooth)
+        con << "smooth?" << std::endl;
+    if(des.bits.water_salt)
+        con << "salty" << endl;
+    if(des.bits.water_stagnant)
+        con << "stagnant" << endl;
+
+    #define PRINT_FLAG( X )  con.print("%-16s= %c\n", #X , ( des.X ? 'Y' : ' ' ) )
+    PRINT_FLAG( bits.hidden );
+    PRINT_FLAG( bits.light );
+    PRINT_FLAG( bits.outside );
+    PRINT_FLAG( bits.subterranean );
+    PRINT_FLAG( bits.water_table );
+    PRINT_FLAG( bits.rained );
+
+    DFCoord pc(blockX, blockY);
+
+    t_feature local;
+    t_feature global;
+    Maps::ReadFeatures(&(b->raw),&local,&global);
+    PRINT_FLAG( bits.feature_local );
+    if(local.type != -1)
+    {
+        con.print("%-16s", "");
+        con.print("  %4d", block.local_feature);
+        con.print(" (%2d)", local.type);
+        con.print(" addr 0x%X ", local.origin);
+        con.print(" %s\n", sa_feature(local.type));
+    }
+    PRINT_FLAG( bits.feature_global );
+    if(global.type != -1)
+    {
+        con.print("%-16s", "");
+        con.print("  %4d", block.global_feature);
+        con.print(" (%2d)", global.type);
+        con.print(" %s\n", sa_feature(global.type));
+    }
+    #undef PRINT_FLAG
+    con << "local feature idx: " << block.local_feature
+        << endl;
+    con << "global feature idx: " << block.global_feature
+        << endl;
+    con << "mystery: " << block.mystery << endl;
+    con << std::endl;
     c->Resume();
     return CR_OK;
 }

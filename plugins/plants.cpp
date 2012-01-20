@@ -99,17 +99,16 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
         return CR_OK;
     }
     c->Suspend();
-    DFHack::Maps *maps = c->getMaps();
-    if (!maps->Start())
+    if (!Maps::IsValid())
     {
-        c->con.printerr( "Cannot get map info!\n");
+        c->con.printerr("Map is not available!\n");
         c->Resume();
         return CR_FAILURE;
     }
     DFHack::Gui * Gui = c->getGui();
     uint32_t x_max, y_max, z_max;
-    maps->getSize(x_max, y_max, z_max);
-    MapExtras::MapCache map(maps);
+    Maps::getSize(x_max, y_max, z_max);
+    MapExtras::MapCache map;
     DFHack::Vegetation *veg = c->getVegetation();
     if (!veg->all_plants)
     {
@@ -138,7 +137,7 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
         if(Gui->getCursorCoords(x,y,z))
         {
             vector<DFHack::df_plant *> * alltrees;
-            if(maps->ReadVegetation(x/16,y/16,z,alltrees))
+            if(Maps::ReadVegetation(x/16,y/16,z,alltrees))
             {
                 bool didit = false;
                 for(size_t i = 0 ; i < alltrees->size(); i++)
@@ -168,7 +167,6 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
     }
     // Cleanup
     veg->Finish();
-    maps->Finish();
     c->Resume();
     return CR_OK;
 }
@@ -212,16 +210,14 @@ DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
         }
     }
     c->Suspend();
-    DFHack::Maps *maps = c->getMaps();
     Console & con = c->con;
-    if (!maps->Start())
+    if (!Maps::IsValid())
     {
-        con.printerr("Cannot get map info!\n");
+        c->con.printerr("Map is not available!\n");
         c->Resume();
         return CR_FAILURE;
     }
-    //maps->getSize(x_max, y_max, z_max);
-    MapExtras::MapCache map(maps);
+    MapExtras::MapCache map;
     DFHack::Vegetation *veg = c->getVegetation();
     if (!veg->all_plants)
     {
@@ -234,7 +230,7 @@ DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
     if(Gui->getCursorCoords(x,y,z))
     {
         vector<DFHack::df_plant *> * alltrees;
-        if(maps->ReadVegetation(x/16,y/16,z,alltrees))
+        if(Maps::ReadVegetation(x/16,y/16,z,alltrees))
         {
             for(size_t i = 0 ; i < alltrees->size(); i++)
             {
@@ -266,7 +262,6 @@ DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
 
     // Cleanup
     veg->Finish();
-    maps->Finish();
     c->Resume();
     return CR_OK;
 }

@@ -275,18 +275,17 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
     int32_t cx, cy, cz;
     c->Suspend();
     Gui * gui = c->getGui();
-    Maps * maps = c->getMaps();
-    if(!maps->Start())
+    if (!Maps::IsValid())
     {
+        c->con.printerr("Map is not available!\n");
         c->Resume();
-        c->con.printerr("Can't init the map...\n");
         return CR_FAILURE;
     }
 
     uint32_t x_max, y_max, z_max;
-    maps->getSize(x_max,y_max,z_max);
+    Maps::getSize(x_max,y_max,z_max);
 
-    MapExtras::MapCache MCache (maps);
+    MapExtras::MapCache MCache;
     if(!gui->getCursorCoords(cx,cy,cz) || cx == -30000)
     {
         c->Resume();
@@ -726,13 +725,12 @@ enum explo_what
     EXPLO_DESIGNATED,
 };
 
-bool stamp_pattern (DFHack::Maps * maps,
-                    uint32_t bx, uint32_t by, int z_level,
+bool stamp_pattern (uint32_t bx, uint32_t by, int z_level,
                     digmask & dm, explo_how how, explo_what what,
                     int x_max, int y_max
                    )
 {
-    df::map_block * bl = maps->getBlock(bx,by,z_level);
+    df::map_block * bl = Maps::getBlock(bx,by,z_level);
     if(!bl)
         return false;
     int x = 0,mx = 16;
@@ -854,15 +852,14 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
     }
     c->Suspend();
     Gui * gui = c->getGui();
-    Maps * maps = c->getMaps();
     uint32_t x_max, y_max, z_max;
-    if(!maps->Start())
+    if (!Maps::IsValid())
     {
+        c->con.printerr("Map is not available!\n");
         c->Resume();
-        c->con.printerr("Can't init the map...\n");
         return CR_FAILURE;
     }
-    maps->getSize(x_max,y_max,z_max);
+    Maps::getSize(x_max,y_max,z_max);
     int32_t xzzz,yzzz,z_level;
     if(!gui->getViewCoords(xzzz,yzzz,z_level))
     {
@@ -878,7 +875,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             for(int32_t y = 0 ; y < y_max; y++)
             {
                 which = (4*x + y) % 5;
-                stamp_pattern(maps, x,y_max - 1 - y, z_level, diag5[which],
+                stamp_pattern(x,y_max - 1 - y, z_level, diag5[which],
                               how, what, x_max, y_max);
             }
         }
@@ -891,7 +888,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             for(int32_t y = 0 ; y < y_max; y++)
             {
                 which = (4*x + 1000-y) % 5;
-                stamp_pattern(maps, x,y_max - 1 - y, z_level, diag5r[which],
+                stamp_pattern(x,y_max - 1 - y, z_level, diag5r[which],
                               how, what, x_max, y_max);
             }
         }
@@ -904,7 +901,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             which = x % 3;
             for(int32_t y = 0 ; y < y_max; y++)
             {
-                stamp_pattern(maps, x, y, z_level, ladder[which],
+                stamp_pattern(x, y, z_level, ladder[which],
                     how, what, x_max, y_max);
             }
         }
@@ -917,7 +914,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             which = y % 3;
             for(uint32_t x = 0; x < x_max; x++)
             {
-                stamp_pattern(maps, x, y, z_level, ladderr[which],
+                stamp_pattern(x, y, z_level, ladderr[which],
                               how, what, x_max, y_max);
             }
         }
@@ -927,7 +924,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
         // middle + recentering for the image
         int xmid = x_max * 8 - 8;
         int ymid = y_max * 8 - 8;
-        MapExtras::MapCache mx (maps);
+        MapExtras::MapCache mx;
         for(int x = 0; x < 16; x++)
             for(int y = 0; y < 16; y++)
             {
@@ -952,7 +949,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
     {
         for(int32_t y = 0 ; y < y_max; y++)
         {
-            stamp_pattern(maps, x, y, z_level, all_tiles,
+            stamp_pattern(x, y, z_level, all_tiles,
                           how, what, x_max, y_max);
         }
     }
@@ -983,17 +980,15 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
 
     Console & con = c->con;
 
-    DFHack::Maps * Maps = c->getMaps();
     DFHack::Gui * Gui = c->getGui();
-    // init the map
-    if(!Maps->Start())
+    if (!Maps::IsValid())
     {
-        con.printerr("Can't init map. Make sure you have a map loaded in DF.\n");
+        c->con.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
 
     int32_t cx, cy, cz;
-    Maps->getSize(x_max,y_max,z_max);
+    Maps::getSize(x_max,y_max,z_max);
     uint32_t tx_max = x_max * 16;
     uint32_t ty_max = y_max * 16;
     Gui->getCursorCoords(cx,cy,cz);
@@ -1008,7 +1003,7 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
         con.printerr("I won't dig the borders. That would be cheating!\n");
         return CR_FAILURE;
     }
-    MapExtras::MapCache * MCache = new MapExtras::MapCache(Maps);
+    MapExtras::MapCache * MCache = new MapExtras::MapCache;
     df::tile_designation des = MCache->designationAt(xy);
     int16_t tt = MCache->tiletypeAt(xy);
     int16_t veinmat = MCache->veinMaterialAt(xy);

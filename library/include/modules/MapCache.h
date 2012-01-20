@@ -32,13 +32,15 @@ distribution.
 #include <cstring>
 #include "df/map_block.h"
 #include "df/block_square_event_mineralst.h"
+using namespace DFHack;
+using namespace DFHack::Simple;
 namespace MapExtras
 {
-void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d & mb, DFHack::t_blockmaterials & materials)
+void SquashVeins (DFCoord bcoord, mapblock40d & mb, t_blockmaterials & materials)
 {
     memset(materials,-1,sizeof(materials));
     std::vector <df::block_square_event_mineralst *> veins;
-    m->SortBlockEvents(bcoord.x,bcoord.y,bcoord.z,&veins);
+    Maps::SortBlockEvents(bcoord.x,bcoord.y,bcoord.z,&veins);
     //iterate through block rows
     for(uint32_t j = 0;j<16;j++)
     {
@@ -83,9 +85,8 @@ void SquashRocks ( std::vector< std::vector <uint16_t> > * layerassign, DFHack::
 class Block
 {
     public:
-    Block(DFHack::Maps *_m, DFHack::DFCoord _bcoord, std::vector< std::vector <uint16_t> > * layerassign = 0)
+    Block(DFHack::DFCoord _bcoord, std::vector< std::vector <uint16_t> > * layerassign = 0)
     {
-        m = _m;
         dirty_designations = false;
         dirty_tiletypes = false;
         dirty_temperatures = false;
@@ -93,10 +94,10 @@ class Block
         dirty_occupancies = false;
         valid = false;
         bcoord = _bcoord;
-        if(m->ReadBlock40d(bcoord.x,bcoord.y,bcoord.z,&raw))
+        if(Maps::ReadBlock40d(bcoord.x,bcoord.y,bcoord.z,&raw))
         {
-            m->ReadTemperatures(bcoord.x,bcoord.y, bcoord.z,&temp1,&temp2);
-            SquashVeins(m,bcoord,raw,veinmats);
+            Maps::ReadTemperatures(bcoord.x,bcoord.y, bcoord.z,&temp1,&temp2);
+            SquashVeins(bcoord,raw,veinmats);
             if(layerassign)
                 SquashRocks(layerassign,raw,basemats);
             else
@@ -202,28 +203,28 @@ class Block
         if(!valid) return false;
         if(dirty_designations)
         {
-            m->WriteDesignations(bcoord.x,bcoord.y,bcoord.z, &raw.designation);
-            m->WriteDirtyBit(bcoord.x,bcoord.y,bcoord.z,true);
+            Maps::WriteDesignations(bcoord.x,bcoord.y,bcoord.z, &raw.designation);
+            Maps::WriteDirtyBit(bcoord.x,bcoord.y,bcoord.z,true);
             dirty_designations = false;
         }
         if(dirty_tiletypes)
         {
-            m->WriteTileTypes(bcoord.x,bcoord.y,bcoord.z, &raw.tiletypes);
+            Maps::WriteTileTypes(bcoord.x,bcoord.y,bcoord.z, &raw.tiletypes);
             dirty_tiletypes = false;
         }
         if(dirty_temperatures)
         {
-            m->WriteTemperatures(bcoord.x,bcoord.y,bcoord.z, &temp1, &temp2);
+            Maps::WriteTemperatures(bcoord.x,bcoord.y,bcoord.z, &temp1, &temp2);
             dirty_temperatures = false;
         }
         if(dirty_blockflags)
         {
-            m->WriteBlockFlags(bcoord.x,bcoord.y,bcoord.z,raw.blockflags);
+            Maps::WriteBlockFlags(bcoord.x,bcoord.y,bcoord.z,raw.blockflags);
             dirty_blockflags = false;
         }
         if(dirty_occupancies)
         {
-            m->WriteOccupancy(bcoord.x,bcoord.y,bcoord.z,&raw.occupancy);
+            Maps::WriteOccupancy(bcoord.x,bcoord.y,bcoord.z,&raw.occupancy);
             dirty_occupancies = false;
         }
         return true;
@@ -234,7 +235,6 @@ class Block
     bool dirty_temperatures:1;
     bool dirty_blockflags:1;
     bool dirty_occupancies:1;
-    DFHack::Maps * m;
     DFHack::mapblock40d raw;
     DFHack::DFCoord bcoord;
     DFHack::t_blockmaterials veinmats;
@@ -246,12 +246,11 @@ class Block
 class MapCache
 {
     public:
-    MapCache(DFHack::Maps * Maps)
+    MapCache()
     {
         valid = 0;
-        this->Maps = Maps;
-        Maps->getSize(x_bmax, y_bmax, z_max);
-        validgeo = Maps->ReadGeology( layerassign );
+        Maps::getSize(x_bmax, y_bmax, z_max);
+        validgeo = Maps::ReadGeology( layerassign );
         valid = true;
     };
     ~MapCache()
@@ -278,9 +277,9 @@ class MapCache
             {
                 Block * nblo;
                 if(validgeo)
-                    nblo = new Block(Maps,blockcoord, &layerassign);
+                    nblo = new Block(blockcoord, &layerassign);
                 else
-                    nblo = new Block(Maps,blockcoord);
+                    nblo = new Block(blockcoord);
                 blocks[blockcoord] = nblo;
                 return nblo;
             }
@@ -455,7 +454,6 @@ class MapCache
     uint32_t y_tmax;
     uint32_t z_max;
     std::vector< std::vector <uint16_t> > layerassign;
-    DFHack::Maps * Maps;
     std::map<DFHack::DFCoord, Block *> blocks;
 };
 }

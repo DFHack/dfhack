@@ -2,12 +2,9 @@
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
+#include "modules/Maps.h"
 
 #include "DataDefs.h"
-#include "df/world.h"
-#include "df/map_block.h"
-#include "df/block_square_event.h"
-#include "df/block_square_event_material_spatterst.h"
 #include "df/item_actual.h"
 #include "df/unit.h"
 #include "df/unit_spatter.h"
@@ -19,6 +16,7 @@
 using std::vector;
 using std::string;
 using namespace DFHack;
+using namespace DFHack::Simple;
 
 using df::global::world;
 using df::global::cursor;
@@ -115,16 +113,6 @@ command_result cleanunits (Core * c)
     return CR_OK;
 }
 
-// This is slightly different from what's in the Maps module - it takes tile coordinates rather than block coordinates
-df::map_block *getBlock (int32_t x, int32_t y, int32_t z)
-{
-    if ((x < 0) || (y < 0) || (z < 0))
-        return NULL;
-    if ((x >= world->map.x_count) || (y >= world->map.y_count) || (z >= world->map.z_count))
-        return NULL;
-    return world->map.block_index[x >> 4][y >> 4][z];
-}
-
 DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
@@ -133,7 +121,7 @@ DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
         c->con.printerr("The cursor is not active.\n");
         return CR_FAILURE;
     }
-    df::map_block *block = getBlock(cursor->x, cursor->y, cursor->z);
+    df::map_block *block = Maps::getBlockAbs(cursor->x, cursor->y, cursor->z);
     if (block == NULL)
     {
         c->con.printerr("Invalid map block selected!\n");

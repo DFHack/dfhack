@@ -641,7 +641,6 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
     uint32_t x_max = 0, y_max = 0, z_max = 0;
     int32_t x = 0, y = 0, z = 0;
 
-    DFHack::Maps *maps;
     DFHack::Gui *gui;
     for(int i = 0; i < parameters.size();i++)
     {
@@ -755,15 +754,14 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
             }
 
             c->Suspend();
-            maps = c->getMaps();
             gui = c->getGui();
-            if (!maps->Start())
+            if (!Maps::IsValid())
             {
-                c->con.printerr("Cannot get map info!\n");
+                c->con.printerr("Map is not available!\n");
                 c->Resume();
                 return CR_FAILURE;
             }
-            maps->getSize(x_max, y_max, z_max);
+            Maps::getSize(x_max, y_max, z_max);
 
             if (!(gui->Start() && gui->getCursorCoords(x,y,z)))
             {
@@ -774,7 +772,7 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
             c->con.print("Cursor coords: (%d, %d, %d)\n",x,y,z);
 
             DFHack::DFCoord cursor(x,y,z);
-            MapExtras::MapCache map(maps);
+            MapExtras::MapCache map;
             coord_vec all_tiles = brush->points(map, cursor);
             c->con.print("working...\n");
 
@@ -892,7 +890,6 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
             {
                 c->con.printerr("Something failed horribly! RUN!\n");
             }
-            maps->Finish();
             c->Resume();
         }
     }

@@ -45,16 +45,9 @@ using namespace std;
 #include "df/world_underground_region.h"
 #include "df/feature_init.h"
 
-using df::global::world;
-
-#define MAPS_GUARD if(!d->Started) throw DFHack::Error::ModuleNotInitialized();
-
 using namespace DFHack;
-
-Module* DFHack::createMaps()
-{
-    return new Maps();
-}
+using namespace DFHack::Simple;
+using df::global::world;
 
 const char * DFHack::sa_feature(df::feature_type index)
 {
@@ -85,78 +78,12 @@ const char * DFHack::sa_feature(df::feature_type index)
     }
 };
 
-struct Maps::Private
+bool Maps::IsValid ()
 {
-    uint32_t worldSizeX, worldSizeY;
-
-    uint32_t maps_module;
-
-    Process * owner;
-    bool Inited;
-    bool FeaturesStarted;
-    bool Started;
-    bool hasGeology;
-    bool hasFeatures;
-    bool hasVeggies;
-
-    // map between feature address and the read object
-    map <void *, t_feature> local_feature_store;
-    map <DFCoord, vector <t_feature *> > m_local_feature;
-    vector <t_feature> v_global_feature;
-
-    vector<uint16_t> v_geology[eBiomeCount];
-};
-
-Maps::Maps()
-{
-    Core & c = Core::getInstance();
-    d = new Private;
-    Process *p = d->owner = c.p;
-    d->Inited = d->FeaturesStarted = d->Started = false;
-
-    DFHack::VersionInfo * mem = c.vinfo;
-    d->hasFeatures = d->hasGeology = d->hasVeggies = true;
-
-    d->Inited = true;
+    return (world->map.block_index != NULL);
 }
 
-Maps::~Maps()
-{
-    if(d->FeaturesStarted)
-        StopFeatures();
-    if(d->Started)
-        Finish();
-    delete d;
-}
-
-/*-----------------------------------*
- *  Init the mapblock pointer array  *
- *-----------------------------------*/
-bool Maps::Start()
-{
-    if(!d->Inited)
-        return false;
-    if(d->Started)
-        Finish();
-
-    Process *p = d->owner;
-
-    // get the size
-    int32_t & mx = world->map.x_count_block;
-    int32_t & my = world->map.y_count_block;
-    int32_t & mz = world->map.z_count_block;
-
-    // test for wrong map dimensions
-    if (mx == 0 || mx > 48 || my == 0 || my > 48 || mz == 0)
-    {
-        cerr << hex << &mx << " " << &my << " " << &mz << endl;
-        cerr << dec << mx << " "<< my << " "<< mz << endl;
-        return false;
-    }
-
-    d->Started = true;
-    return true;
-}
+#define MAPS_GUARD if(!IsValid()) throw DFHack::Error::ModuleNotInitialized();
 
 // getter for map size
 void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z)
@@ -176,16 +103,11 @@ void Maps::getPosition (int32_t& x, int32_t& y, int32_t& z)
     z = world->map.region_z;
 }
 
-bool Maps::Finish()
-{
-    return true;
-}
-
 /*
  * Block reading
  */
 
-df::map_block* Maps::getBlock (int32_t blockx, int32_t blocky, int32_t blockz)
+df::map_block *Maps::getBlock (int32_t blockx, int32_t blocky, int32_t blockz)
 {
     if ((blockx < 0) || (blocky < 0) || (blockz < 0))
         return NULL;
@@ -206,7 +128,6 @@ df::map_block *Maps::getBlockAbs (int32_t x, int32_t y, int32_t z)
 bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer)
 {
     MAPS_GUARD
-    Process *p = d->owner;
     df::map_block * block = getBlock(x,y,z);
     if (block)
     {
@@ -218,10 +139,7 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
         buffer->global_feature = block->global_feature;
         buffer->local_feature = block->local_feature;
         buffer->mystery = block->unk2;
-        // FIXME: not 64-bit safe
         buffer->origin = &block;
-        //uint32_t addr_of_struct = p->readDWord(addr);
-        // FIXME: maybe truncates
         buffer->blockflags.whole = block->flags;
         return true;
     }
@@ -235,7 +153,7 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
 bool Maps::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         memcpy(buffer, block->tiletype, sizeof(tiletypes40d));
@@ -247,7 +165,7 @@ bool Maps::ReadTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buff
 bool Maps::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buffer)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         memcpy(block->tiletype, buffer, sizeof(tiletypes40d));
@@ -262,7 +180,7 @@ bool Maps::WriteTileTypes (uint32_t x, uint32_t y, uint32_t z, tiletypes40d *buf
 bool Maps::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         dirtybit = block->flags.is_set(df::block_flags::Designated);
@@ -274,7 +192,7 @@ bool Maps::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
 bool Maps::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         block->flags.set(df::block_flags::Designated, dirtybit);
@@ -290,7 +208,7 @@ bool Maps::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
 bool Maps::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags &blockflags)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         blockflags.whole = block->flags;
@@ -302,7 +220,7 @@ bool Maps::ReadBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags &bloc
 bool Maps::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags blockflags)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         return (block->flags = blockflags.whole);
@@ -316,7 +234,7 @@ bool Maps::WriteBlockFlags(uint32_t x, uint32_t y, uint32_t z, t_blockflags bloc
 bool Maps::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         memcpy(buffer, block->designation, sizeof(designations40d));
@@ -328,7 +246,7 @@ bool Maps::ReadDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d
 bool Maps::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, designations40d *buffer)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         memcpy(block->designation, buffer, sizeof(designations40d));
@@ -343,7 +261,7 @@ bool Maps::WriteDesignations (uint32_t x, uint32_t y, uint32_t z, designations40
 bool Maps::ReadOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buffer)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         memcpy(buffer, block->occupancy, sizeof(occupancies40d));
@@ -355,7 +273,7 @@ bool Maps::ReadOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *bu
 bool Maps::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *buffer)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         memcpy(block->occupancy, buffer, sizeof(occupancies40d));
@@ -370,7 +288,7 @@ bool Maps::WriteOccupancy (uint32_t x, uint32_t y, uint32_t z, occupancies40d *b
 bool Maps::ReadTemperatures(uint32_t x, uint32_t y, uint32_t z, t_temperatures *temp1, t_temperatures *temp2)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         if(temp1)
@@ -384,7 +302,7 @@ bool Maps::ReadTemperatures(uint32_t x, uint32_t y, uint32_t z, t_temperatures *
 bool Maps::WriteTemperatures (uint32_t x, uint32_t y, uint32_t z, t_temperatures *temp1, t_temperatures *temp2)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         if(temp1)
@@ -402,7 +320,7 @@ bool Maps::WriteTemperatures (uint32_t x, uint32_t y, uint32_t z, t_temperatures
 bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices40d *buffer)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         memcpy(buffer, block->region_offset,sizeof(biome_indices40d));
@@ -410,126 +328,64 @@ bool Maps::ReadRegionOffsets (uint32_t x, uint32_t y, uint32_t z, biome_indices4
     }
     return false;
 }
-bool Maps::StopFeatures()
+
+bool Maps::GetGlobalFeature(t_feature &feature, int32_t index)
 {
-    if(d->FeaturesStarted)
-    {
-        d->local_feature_store.clear();
-        d->v_global_feature.clear();
-        d->m_local_feature.clear();
-        d->FeaturesStarted = false;
-        return true;
-    }
-    return false;
+    feature.type = (df::feature_type)-1;
+    MAPS_GUARD
+
+    if ((index < 0) || (index >= world->world_data->underground_regions.size()))
+        return false;
+
+	df::feature_init *f = world->world_data->underground_regions[index]->feature_init;
+
+    feature.discovered = false;
+    feature.origin = f;
+    feature.type = f->getType();
+    f->getMaterial(&feature.main_material, &feature.sub_material);
+    return true;
 }
 
-bool Maps::StartFeatures()
+bool Maps::GetLocalFeature(t_feature &feature, DFCoord coord, int32_t index)
 {
+    feature.type = (df::feature_type)-1;
     MAPS_GUARD
-    if(d->FeaturesStarted) return true;
-    if(!d->hasFeatures) return false;
 
     // regionX and regionY are in embark squares!
     // we convert to full region tiles
     // this also works in adventure mode
     // region X coord - whole regions
+    uint32_t region_x = ( (coord.x / 3) + world->map.region_x ) / 16;
+    // region Y coord - whole regions
+    uint32_t region_y = ( (coord.y / 3) + world->map.region_y ) / 16;
 
-    for(uint32_t blockX = 0; blockX < world->map.x_count_block; blockX ++)
-        for(uint32_t blockY = 0; blockY < world->map.y_count_block; blockY ++)
-    {
-        // regionX and regionY are in embark squares!
-        // we convert to full region tiles
-        // this also works in adventure mode
-        // region X coord - whole regions
-        uint32_t region_x = ( (blockX / 3) + world->map.region_x ) / 16;
-        // region Y coord - whole regions
-        uint32_t region_y = ( (blockY / 3) + world->map.region_y ) / 16;
-        uint32_t bigregion_x = region_x / 16;
-        uint32_t bigregion_y = region_y / 16;
-        uint32_t sub_x = region_x % 16;
-        uint32_t sub_y = region_y % 16;
-        // megaregions = 16x16 squares of regions = 256x256 squares of embark squares
+    uint32_t bigregion_x = region_x / 16;
+    uint32_t bigregion_y = region_y / 16;
 
-        // base = pointer to local feature structure (inside world data struct)
-        // bigregion is 16x16 regions. for each bigregion in X dimension:
+    uint32_t sub_x = region_x % 16;
+    uint32_t sub_y = region_y % 16;
+    // megaregions = 16x16 squares of regions = 256x256 squares of embark squares
 
-        if(world->world_data->unk_204[bigregion_x][bigregion_y].features)
-        {
-            vector <df::feature_init *> *features = &world->world_data->unk_204[bigregion_x][bigregion_y].features->feature_init[sub_x][sub_y];
-            uint32_t size = features->size();
-            DFCoord pc(blockX,blockY);
-            std::vector<t_feature *> tempvec;
-            for(uint32_t i = 0; i < size; i++)
-            {
-                df::feature_init * cur_ptr = features->at(i);
+    // bigregion is 16x16 regions. for each bigregion in X dimension:
+    if (!world->world_data->unk_204[bigregion_x][bigregion_y].features)
+        return false;
 
-                map <void *, t_feature>::iterator it;
-                it = d->local_feature_store.find(cur_ptr);
-                // do we already have the feature?
-                if(it != d->local_feature_store.end())
-                {
-                    // push pointer to existing feature
-                    tempvec.push_back(&((*it).second));
-                }
-                // no?
-                else
-                {
-                    t_feature tftemp;
-                    tftemp.discovered = false;
-                    tftemp.origin = cur_ptr;
-		    tftemp.type = cur_ptr->getType();
-		    cur_ptr->getMaterial(&tftemp.main_material, &tftemp.sub_material);
-                    d->local_feature_store[cur_ptr] = tftemp;
-                    // push pointer
-                    tempvec.push_back(&(d->local_feature_store[cur_ptr]));
-                }
-            }
-            d->m_local_feature[pc] = tempvec;
-        }
-    }
+    vector <df::feature_init *> &features = world->world_data->unk_204[bigregion_x][bigregion_y].features->feature_init[sub_x][sub_y];
+    if ((index < 0) || (index >= features.size()))
+        return false;
+    df::feature_init *f = features[index];
 
-    // enumerate global features
-    uint32_t size = world->world_data->underground_regions.size();
-    d->v_global_feature.clear();
-    d->v_global_feature.reserve(size);
-    for (uint32_t i = 0; i < size; i++)
-    {
-        t_feature temp;
-	df::feature_init * feat_ptr = world->world_data->underground_regions[i]->feature_init;
-        temp.origin = feat_ptr;
-        temp.discovered = false;
-	temp.type = feat_ptr->getType();
-	feat_ptr->getMaterial(&temp.main_material, &temp.sub_material);
-        d->v_global_feature.push_back(temp);
-    }
-    d->FeaturesStarted = true;
+    feature.discovered = false;
+    feature.origin = f;
+    feature.type = f->getType();
+    f->getMaterial(&feature.main_material, &feature.sub_material);
     return true;
 }
 
-t_feature * Maps::GetGlobalFeature(int16_t index)
-{
-    if(!d->FeaturesStarted) return 0;
-    if(index < 0 || uint16_t(index) >= d->v_global_feature.size())
-        return 0;
-    return &(d->v_global_feature[index]);
-}
-
-std::vector <t_feature *> * Maps::GetLocalFeatures(DFCoord coord)
-{
-    if(!d->FeaturesStarted) return 0;
-    coord.z = 0; // just making sure
-    map <DFCoord, std::vector <t_feature* > >::iterator iter = d->m_local_feature.find(coord);
-    if(iter != d->m_local_feature.end())
-    {
-        return &((*iter).second);
-    }
-    return 0;
-}
-
-bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, int16_t & local, int16_t & global)
+bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, int32_t & local, int32_t & global)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         local = block->local_feature;
@@ -539,10 +395,10 @@ bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, int16_t & local, int
     return false;
 }
 
-bool Maps::WriteFeatures(uint32_t x, uint32_t y, uint32_t z, const int16_t & local, const int16_t & global)
+bool Maps::WriteFeatures(uint32_t x, uint32_t y, uint32_t z, const int32_t & local, const int32_t & global)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         block->local_feature = local;
@@ -552,58 +408,56 @@ bool Maps::WriteFeatures(uint32_t x, uint32_t y, uint32_t z, const int16_t & loc
     return false;
 }
 
-bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature ** local, t_feature ** global)
-{
-    if(!d->FeaturesStarted) return false;
-    int16_t loc, glob;
-    if(!ReadFeatures(x,y,z,loc,glob)) return false;
-
-    if(global && glob != -1)
-        *global = &(d->v_global_feature[glob]);
-    else if (global)
-        *global = 0;
-
-    if(local && loc != -1)
-    {
-        DFCoord foo(x,y,0);
-        map <DFCoord, std::vector <t_feature* > >::iterator iter = d->m_local_feature.find(foo);
-        if(iter != d->m_local_feature.end())
-        {
-            *local = ((*iter).second)[loc];
-        }
-        else *local = 0;
-    }
-    else if(local)
-        *local = 0;
-    return true;
-}
-
-bool Maps::ReadFeatures(mapblock40d * block, t_feature ** local, t_feature ** global)
-{
-    if(!block) return false;
-    if(!d->FeaturesStarted) return false;
-    DFCoord c = block->position;
-    c.z = 0;
-    *global = 0;
-    *local = 0;
-    if(block->global_feature != -1)
-        *global = &(d->v_global_feature[block->global_feature]);
-    if(local && block->local_feature != -1)
-    {
-        map <DFCoord, std::vector <t_feature* > >::iterator iter = d->m_local_feature.find(c);
-        if(iter != d->m_local_feature.end())
-        {
-            *local = ((*iter).second)[block->local_feature];
-        }
-        else *local = 0;
-    }
-    return true;
-}
-
-bool Maps::SetBlockLocalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t local)
+bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature *local, t_feature *global)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+
+    int32_t loc, glob;
+    if (!ReadFeatures(x, y, z, loc, glob))
+        return false;
+
+    bool result = true;
+    if (global)
+    {
+        if (glob != -1)
+            result &= GetGlobalFeature(*global, glob);
+        else
+            global->type = (df::feature_type)-1;
+    }
+    if (local)
+    {
+        if (loc != -1)
+        {
+            DFCoord coord(x,y,0);
+            result &= GetLocalFeature(*local, coord, loc);
+        }
+        else
+            local->type = (df::feature_type)-1;
+    }
+    return result;
+}
+
+bool Maps::ReadFeatures(mapblock40d * block, t_feature * local, t_feature * global)
+{
+    MAPS_GUARD
+
+    if (global)
+    {
+        if (block->global_feature != -1)
+            GetGlobalFeature(*global, block->global_feature);
+    }
+    if (local)
+    {
+        if (block->local_feature != -1)
+            GetLocalFeature(*local, block->position, block->local_feature);
+    }
+    return true;
+}
+
+bool Maps::SetBlockLocalFeature(uint32_t x, uint32_t y, uint32_t z, int32_t local)
+{
+    MAPS_GUARD
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         block->local_feature = local;
@@ -612,10 +466,10 @@ bool Maps::SetBlockLocalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t loca
     return false;
 }
 
-bool Maps::SetBlockGlobalFeature(uint32_t x, uint32_t y, uint32_t z, int16_t global)
+bool Maps::SetBlockGlobalFeature(uint32_t x, uint32_t y, uint32_t z, int32_t global)
 {
     MAPS_GUARD
-    df::map_block * block = getBlock(x,y,z);
+    df::map_block *block = getBlock(x,y,z);
     if (block)
     {
         block->global_feature = global;
@@ -635,19 +489,24 @@ bool Maps::SortBlockEvents(uint32_t x, uint32_t y, uint32_t z,
     vector <df::block_square_event_world_constructionst *> *constructions)
 {
     MAPS_GUARD
-    Process* p = d->owner;
+
+    if (veins)
+        veins->clear();
+    if (ices)
+        ices->clear();
+    if (splatter)
+        splatter->clear();
+    if (grass)
+        grass->clear();
+    if (constructions)
+        constructions->clear();
 
     df::map_block * block = getBlock(x,y,z);
-    if(veins) veins->clear();
-    if(ices) ices->clear();
-    if(splatter) splatter->clear();
-    if(grass) grass->clear();
-    if(constructions) constructions->clear();
-
     if (!block)
         return false;
+
     uint32_t size = block->block_events.size();
-    // read all veins
+    // read all events
     for (uint32_t i = 0; i < size;i++)
     {
         df::block_square_event *evt = block->block_events[i];
@@ -681,19 +540,17 @@ bool Maps::SortBlockEvents(uint32_t x, uint32_t y, uint32_t z,
 bool Maps::RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which)
 {
     MAPS_GUARD
-    Process* p = d->owner;
 
     df::map_block * block = getBlock(x,y,z);
-    if(block)
+    if (!block)
+        return false;
+    for (uint32_t i = 0; i < block->block_events.size(); i++)
     {
-        for(int i = 0; i < block->block_events.size();i++)
+        if (block->block_events[i] == which)
         {
-            if (block->block_events[i] == which)
-            {
-                free(which);
-                block->block_events.erase(block->block_events.begin() + i);
-                return true;
-            }
+            delete which;
+            block->block_events.erase(block->block_events.begin() + i);
+            return true;
         }
     }
     return false;
@@ -705,8 +562,8 @@ bool Maps::RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square
 bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 {
     MAPS_GUARD
-    if(!d->hasGeology) return false;
 
+    vector<uint16_t> v_geology[eBiomeCount];
     // iterate over 8 surrounding regions + local region
     for (int i = eNorthWest; i < eBiomeCount; i++)
     {
@@ -726,55 +583,29 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
 
         /// geology blocks have a vector of layer descriptors
         // get the vector with pointer to layers
-	vector <df::world_data::T_unk_190::T_unk_4 *> *geolayers = &world->world_data->unk_190[geoindex]->unk_4;
+	    vector <df::world_data::T_unk_190::T_unk_4 *> &geolayers = world->world_data->unk_190[geoindex]->unk_4;
 
         /// layer descriptor has a field that determines the type of stone/soil
-        d->v_geology[i].reserve (geolayers->size());
+        v_geology[i].reserve(geolayers.size());
+
         // finally, read the layer matgloss
-        for (uint32_t j = 0;j < geolayers->size();j++)
-        {
-            d->v_geology[i].push_back (geolayers->at(j)->unk_4);
-        }
+        for (uint32_t j = 0; j < geolayers.size(); j++)
+            v_geology[i].push_back(geolayers[j]->unk_4);
     }
+
     assign.clear();
-    assign.reserve (eBiomeCount);
-    for (int i = 0; i < eBiomeCount;i++)
-    {
-        assign.push_back (d->v_geology[i]);
-    }
+    assign.reserve(eBiomeCount);
+    for (int i = 0; i < eBiomeCount; i++)
+        assign.push_back(v_geology[i]);
     return true;
-}
-
-bool Maps::ReadLocalFeatures( std::map <DFCoord, std::vector<t_feature *> > & local_features )
-{
-    StopFeatures();
-    StartFeatures();
-    if(d->FeaturesStarted)
-    {
-        local_features = d->m_local_feature;
-        return true;
-    }
-    return false;
-}
-
-bool Maps::ReadGlobalFeatures( std::vector <t_feature> & features )
-{
-    StopFeatures();
-    StartFeatures();
-    if(d->FeaturesStarted)
-    {
-        features = d->v_global_feature;
-        return true;
-    }
-    return false;
 }
 
 bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<df_plant *>*& plants)
 {
-    if(!d->hasVeggies || !d->Started)
-        return false;
-    df::map_block * block = getBlock(x,y,z);
-    if(!block)
+    MAPS_GUARD
+
+    df::map_block *block = getBlock(x,y,z);
+    if (!block)
         return false;
 
     plants = (vector<DFHack::df_plant *> *)&block->plants;

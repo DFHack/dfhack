@@ -169,7 +169,6 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
     int32_t x,y,z;
     uint32_t x_max,y_max,z_max;
 
-    DFHack::Maps * Maps;
     DFHack::Gui * Position;
     for(int i = 0; i < parameters.size();i++)
     {
@@ -360,16 +359,14 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
         else if(command.empty())
         {
             c->Suspend();
-            Maps = c->getMaps();
-            Maps->Start();
-            Maps->getSize(x_max,y_max,z_max);
+            Maps::getSize(x_max,y_max,z_max);
             Position = c->getGui();
             do
             {
-                if(!Maps->Start())
+                if (!Maps::IsValid())
                 {
                     c->con << "Can't see any DF map loaded." << endl;
-                    break;
+                    break;;
                 }
                 if(!Position->getCursorCoords(x,y,z))
                 {
@@ -377,7 +374,7 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                     break;
                 }
                 c->con << "cursor coords: " << x << "/" << y << "/" << z << endl;
-                MapCache mcache(Maps);
+                MapCache mcache;
                 DFHack::DFCoord cursor(x,y,z);
                 coord_vec all_tiles = brush->points(mcache,cursor);
                 c->con << "working..." << endl;
@@ -530,7 +527,6 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                     c->con << "OK" << endl;
                 else
                     c->con << "Something failed horribly! RUN!" << endl;
-                Maps->Finish();
             } while (0);
             c->Resume();
         }

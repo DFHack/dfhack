@@ -55,23 +55,14 @@ DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string>
         }
     }
     c->Suspend();
-    DFHack::Maps *Mapz = c->getMaps();
-
-    // init the map
-    if (!Mapz->Start())
+    if (!Maps::IsValid())
     {
-        c->con.printerr("Can't init map.\n");
+        c->con.printerr("Map is not available!\n");
         c->Resume();
         return CR_FAILURE;
     }
 
-    Mapz->getSize(x_max,y_max,z_max);
-    if(!Mapz->StartFeatures())
-    {
-        c->con.printerr("Can't get map features.\n");
-        c->Resume();
-        return CR_FAILURE;
-    }
+    Maps::getSize(x_max,y_max,z_max);
 
     // walk the map
     for (uint32_t x = 0; x< x_max;x++)
@@ -80,17 +71,17 @@ DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string>
         {
             for (uint32_t z = 0; z< z_max;z++)
             {
-                DFHack::t_feature * locf = 0;
-                DFHack::t_feature * glof = 0;
-                if (Mapz->ReadFeatures(x,y,z,&locf,&glof))
+                DFHack::t_feature locf;
+                DFHack::t_feature glof;
+                if (Maps::ReadFeatures(x,y,z,&locf,&glof))
                 {
                     // we're looking for addy tubes
-                    if(!locf) continue;
-		    if(locf->type != df::feature_type::deep_special_tube) continue;
+                    if(locf.type == -1) continue;
+		            if(locf.type != df::feature_type::deep_special_tube) continue;
 
                     dirty=0;
-                    Mapz->ReadDesignations(x,y,z, &designations);
-                    Mapz->ReadTileTypes(x,y,z, &tiles);
+                    Maps::ReadDesignations(x,y,z, &designations);
+                    Maps::ReadTileTypes(x,y,z, &tiles);
 
                     for (uint32_t ty=0;ty<16;++ty)
                     {
@@ -117,7 +108,7 @@ DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string>
                     //If anything was changed, write it all.
                     if (dirty)
                     {
-                        Mapz->WriteTileTypes(x,y,z, &tiles);
+                        Maps::WriteTileTypes(x,y,z, &tiles);
                     }
                 }
             }

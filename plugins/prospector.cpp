@@ -68,9 +68,6 @@ bool operator>(const matdata & q1, const matdata & q2)
 typedef std::map<int16_t, matdata> MatMap;
 typedef std::vector< pair<int16_t, matdata> > MatSorter;
 
-typedef std::vector<DFHack::t_feature> FeatureList;
-typedef std::vector<DFHack::t_feature*> FeatureListPointer;
-typedef std::map<DFHack::DFCoord, FeatureListPointer> FeatureMap;
 typedef std::vector<DFHack::df_plant *> PlantList;
 
 #define TO_PTR_VEC(obj_vec, ptr_vec) \
@@ -221,15 +218,14 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     }
     uint32_t x_max = 0, y_max = 0, z_max = 0;
     c->Suspend();
-    DFHack::Maps *maps = c->getMaps();
-    if (!maps->Start())
+    if (!Maps::IsValid())
     {
-        con.printerr("Cannot get map info!\n");
+        c->con.printerr("Map is not available!\n");
         c->Resume();
         return CR_FAILURE;
     }
-    maps->getSize(x_max, y_max, z_max);
-    MapExtras::MapCache map(maps);
+    Maps::getSize(x_max, y_max, z_max);
+    MapExtras::MapCache map;
 
     DFHack::Materials *mats = c->getMaterials();
     if (!mats->df_inorganic)
@@ -244,10 +240,8 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
         showPlants = false;
     }
 
-    FeatureList globalFeatures;
-    FeatureMap localFeatures;
-    DFHack::t_feature *blockFeatureGlobal = 0;
-    DFHack::t_feature *blockFeatureLocal = 0;
+    DFHack::t_feature blockFeatureGlobal;
+    DFHack::t_feature blockFeatureLocal;
 
     bool hasAquifer = false;
     bool hasDemonTemple = false;
@@ -261,16 +255,6 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     matdata liquidWater;
     matdata liquidMagma;
     matdata aquiferTiles;
-
-    if (!(showSlade && maps->ReadGlobalFeatures(globalFeatures)))
-    {
-        con.printerr("Unable to read global features; slade won't be listed!\n");
-    }
-
-    if (!maps->ReadLocalFeatures(localFeatures))
-    {
-        con.printerr("Unable to read local features; adamantine and demon temples won't be listed.\n" );
-    }
 
     uint32_t vegCount = 0;
     DFHack::Vegetation *veg = c->getVegetation();
@@ -294,23 +278,13 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                 }
 
                 { // Find features
-                    uint16_t index = b->raw.global_feature;
-                    if (index != -1 && index < globalFeatures.size())
-                    {
-                        blockFeatureGlobal = &globalFeatures[index];
-                    }
+                    uint32_t index = b->raw.global_feature;
+                    if (index != -1)
+                        Maps::GetGlobalFeature(blockFeatureGlobal, index);
 
                     index = b->raw.local_feature;
-                    FeatureMap::const_iterator it = localFeatures.find(blockCoord);
-                    if (it != localFeatures.end())
-                    {
-                        FeatureListPointer features = it->second;
-
-                        if (index != -1 && index < features.size())
-                        {
-                            blockFeatureLocal = features[index];
-                        }
-                    }
+                    if (index != -1)
+                        Maps::GetLocalFeature(blockFeatureLocal, blockCoord, index);
                 }
 
                 int global_z = df::global::world->map.region_z + z;
@@ -386,25 +360,25 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                             veinMats[b->veinMaterialAt(coord)].add(global_z);
                             break;
                         case DFHack::FEATSTONE:
-                            if (blockFeatureLocal && des.bits.feature_local)
+                            if (blockFeatureLocal.type != -1 && des.bits.feature_local)
                             {
-                                if (blockFeatureLocal->type == df::feature_type::deep_special_tube
-                                        && blockFeatureLocal->main_material == 0) // stone
+                                if (blockFeatureLocal.type == df::feature_type::deep_special_tube
+                                        && blockFeatureLocal.main_material == 0) // stone
                                 {
-                                    veinMats[blockFeatureLocal->sub_material].add(global_z);
+                                    veinMats[blockFeatureLocal.sub_material].add(global_z);
                                 }
                                 else if (showTemple
-                                         && blockFeatureLocal->type == df::feature_type::deep_surface_portal)
+                                         && blockFeatureLocal.type == df::feature_type::deep_surface_portal)
                                 {
                                     hasDemonTemple = true;
                                 }
                             }
 
-                            if (showSlade && blockFeatureGlobal && des.bits.feature_global
-                                    && blockFeatureGlobal->type == df::feature_type::feature_underworld_from_layer
-                                    && blockFeatureGlobal->main_material == 0) // stone
+                            if (showSlade && blockFeatureGlobal.type != -1 && des.bits.feature_global
+                                    && blockFeatureGlobal.type == df::feature_type::feature_underworld_from_layer
+                                    && blockFeatureGlobal.main_material == 0) // stone
                             {
-                                layerMats[blockFeatureGlobal->sub_material].add(global_z);
+                                layerMats[blockFeatureGlobal.sub_material].add(global_z);
                             }
                             break;
                         case DFHack::OBSIDIAN:
@@ -419,7 +393,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                 if (showPlants)
                 {
                     PlantList * plants;
-                    if (maps->ReadVegetation(b_x, b_y, z, plants))
+                    if (Maps::ReadVegetation(b_x, b_y, z, plants))
                     {
                         for (PlantList::const_iterator it = plants->begin(); it != plants->end(); it++)
                         {
@@ -508,7 +482,6 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
         veg->Finish();
     }
     mats->Finish();
-    maps->Finish();
     c->Resume();
     con << std::endl;
     return CR_OK;

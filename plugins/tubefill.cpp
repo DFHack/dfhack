@@ -10,10 +10,12 @@
 #include "PluginManager.h"
 #include "modules/Maps.h"
 #include "modules/World.h"
-#include "modules/MapCache.h"
 #include "modules/Gui.h"
-using MapExtras::MapCache;
+#include "TileTypes.h"
+
 using namespace DFHack;
+using namespace DFHack::Simple;
+using df::global::world;
 
 DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string> & params);
 
@@ -36,14 +38,8 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string> & params)
 {
-    uint32_t x_max,y_max,z_max;
-    DFHack::designations40d designations;
-    DFHack::tiletypes40d tiles;
-
-    int32_t oldT, newT;
     uint64_t count = 0;
 
-    int dirty=0;
     for(int i = 0; i < params.size();i++)
     {
         if(params[i] == "help" || params[i] == "?")
@@ -62,55 +58,45 @@ DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string>
         return CR_FAILURE;
     }
 
-    Maps::getSize(x_max,y_max,z_max);
-
     // walk the map
-    for (uint32_t x = 0; x< x_max;x++)
+    for (uint32_t i = 0; i < world->map.map_blocks.size(); i++)
     {
-        for (uint32_t y = 0; y< y_max;y++)
+        df::map_block *block = world->map.map_blocks[i];
+        df::map_block *above = Maps::getBlockAbs(block->map_pos.x, block->map_pos.y, block->map_pos.z + 1);
+        if (block->local_feature == -1)
+            continue;
+        DFHack::t_feature feature;
+        DFCoord coord(block->map_pos.x >> 4, block->map_pos.y >> 4, block->map_pos.z);
+        if (!Maps::GetLocalFeature(feature, coord, block->local_feature))
+            continue;
+        if (feature.type != df::feature_type::deep_special_tube)
+            continue;
+        for (uint32_t x = 0; x < 16; x++)
         {
-            for (uint32_t z = 0; z< z_max;z++)
+            for (uint32_t y = 0; y < 16; y++)
             {
-                DFHack::t_feature locf;
-                DFHack::t_feature glof;
-                if (Maps::ReadFeatures(x,y,z,&locf,&glof))
+                if (!block->designation[x][y].bits.feature_local)
+                    continue;
+
+                // Is the tile already a wall?
+                if (tileShape(block->tiletype[x][y]) == WALL)
+                    continue;
+
+                // Set current tile, as accurately as can be expected
+                // block->tiletype[x][y] = findSimilarTileType(block->tiletype[x][y], WALL);
+
+                // Check the tile above this one, in case we need to add a floor
+                if (above)
                 {
-                    // we're looking for addy tubes
-                    if(locf.type == -1) continue;
-		            if(locf.type != df::feature_type::deep_special_tube) continue;
-
-                    dirty=0;
-                    Maps::ReadDesignations(x,y,z, &designations);
-                    Maps::ReadTileTypes(x,y,z, &tiles);
-
-                    for (uint32_t ty=0;ty<16;++ty)
-                    {
-                        for (uint32_t tx=0;tx<16;++tx)
-                        {
-                            if(!designations[tx][ty].bits.feature_local) continue;
-                            oldT = tiles[tx][ty];
-                            if ( DFHack::tileShape(oldT) != DFHack::WALL )
-                            {
-                                //Current tile is not a wall.
-                                //Set current tile, as accurately as can be expected
-                                //newT = DFHack::findSimilarTileType(oldT,DFHack::WALL);
-                                newT = DFHack::findTileType( DFHack::WALL, DFHack::FEATSTONE, DFHack::tilevariant_invalid, DFHack::TILE_NORMAL, DFHack::TileDirection() );
-
-                                //If no change, skip it (couldn't find a good tile type)
-                                if ( oldT == newT) continue;
-                                //Set new tile type, clear designation
-                                tiles[tx][ty] = newT;
-                                dirty=1;
-                                ++count;
-                            }
-                        }
-                    }
-                    //If anything was changed, write it all.
-                    if (dirty)
-                    {
-                        Maps::WriteTileTypes(x,y,z, &tiles);
-                    }
+                    // if this tile isn't a local feature, it's likely the tile underneath was originally just a floor
+                    // it's also possible there was just solid non-feature stone above, but we don't care enough to check
+                    if (!above->designation[x][y].bits.feature_local)
+                        continue;
+                    if ((tileShape(above->tiletype[x][y]) == EMPTY) || (tileShape(above->tiletype[x][y]) == RAMP_TOP))
+                        above->tiletype[x][y] = findTileType(FLOOR, FEATSTONE, tilevariant_invalid, TILE_NORMAL, TileDirection());
                 }
+                block->tiletype[x][y] = findTileType(WALL, FEATSTONE, tilevariant_invalid, TILE_NORMAL, TileDirection());
+                ++count;
             }
         }
     }

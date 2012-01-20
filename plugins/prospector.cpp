@@ -193,6 +193,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     bool showSlade = true;
     bool showTemple = true;
     bool showValue = false;
+    bool showTube = false;
     Console & con = c->con;
     for(int i = 0; i < parameters.size();i++)
     {
@@ -200,9 +201,13 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
         {
             showHidden = true;
         }
-        if (parameters[i] == "value")
+        else if (parameters[i] == "value")
         {
             showValue = true;
+        }
+        else if (parameters[i] == "hell")
+        {
+            showHidden = showTube = true;
         }
         else if(parameters[i] == "help" || parameters[i] == "?")
         {
@@ -212,6 +217,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                          "Options:\n"
                          "all   - Scan the whole map, as if it was revealed.\n"
                          "value - Show material value in the output.\n"
+                         "hell  - Show the Z range of HFS tubes.\n"
             );
             return CR_OK;
         }
@@ -255,6 +261,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     matdata liquidWater;
     matdata liquidMagma;
     matdata aquiferTiles;
+    matdata tubeTiles;
 
     uint32_t vegCount = 0;
     DFHack::Vegetation *veg = c->getVegetation();
@@ -342,6 +349,16 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                         case DFHack::PILLAR:
                         case DFHack::FORTIFICATION:
                             break;
+                        case DFHack::EMPTY:
+                            /* A heuristic: tubes inside adamantine have EMPTY:AIR tiles which
+                               still have feature_local set. Also check the unrevealed status,
+                               so as to exclude any holes mined by the player. */
+                            if (info->material == DFHack::AIR &&
+                                des.bits.feature_local && des.bits.hidden &&
+                                blockFeatureLocal.type == df::feature_type::deep_special_tube)
+                            {
+                                tubeTiles.add(global_z);
+                            }
                         default:
                             continue;
                         }
@@ -464,6 +481,12 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
         }
         else
             con << std::endl;
+    }
+
+    if (showTube && tubeTiles.count)
+    {
+        con << "Has HFS tubes             : ";
+        printMatdata(con, tubeTiles);
     }
 
     if (hasDemonTemple)

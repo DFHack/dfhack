@@ -6,9 +6,7 @@
 #include "PluginManager.h"
 
 #include "DataDefs.h"
-#include "df/world.h"
-#include "df/map_block.h"
-#include "df/tile_dig_designation.h"
+#include "modules/Maps.h"
 #include "TileTypes.h"
 
 using std::vector;
@@ -17,16 +15,7 @@ using namespace DFHack;
 
 using df::global::world;
 using namespace DFHack;
-
-// This is slightly different from what's in the Maps module - it takes tile coordinates rather than block coordinates
-df::map_block *getBlock (int32_t x, int32_t y, int32_t z)
-{
-    if ((x < 0) || (y < 0) || (z < 0))
-        return NULL;
-    if ((x >= world->map.x_count) || (y >= world->map.y_count) || (z >= world->map.z_count))
-        return NULL;
-    return world->map.block_index[x >> 4][y >> 4][z];
-}
+using namespace DFHack::Simple;
 
 DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
 {
@@ -51,7 +40,7 @@ DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
     for (int i = 0; i < blocks_total; i++)
     {
         df::map_block *block = world->map.map_blocks[i];
-        df::map_block *above = getBlock(block->map_pos.x, block->map_pos.y, block->map_pos.z + 1);
+        df::map_block *above = Maps::getBlockAbs(block->map_pos.x, block->map_pos.y, block->map_pos.z + 1);
 
         for (int x = 0; x < 16; x++)
         {

@@ -246,7 +246,7 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
     PRINT_FLAG( bits.water_table );
     PRINT_FLAG( bits.rained );
 
-    DFCoord pc(blockX, blockY);
+    df::coord2d pc(blockX, blockY);
 
     t_feature local;
     t_feature global;

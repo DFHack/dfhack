@@ -337,7 +337,7 @@ bool Maps::GetGlobalFeature(t_feature &feature, int32_t index)
     return true;
 }
 
-bool Maps::GetLocalFeature(t_feature &feature, DFCoord coord, int32_t index)
+bool Maps::GetLocalFeature(t_feature &feature, df::coord2d coord, int32_t index)
 {
     feature.type = (df::feature_type)-1;
     if (!world->world_data)
@@ -416,7 +416,7 @@ bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature *local, t_
     {
         if (loc != -1)
         {
-            DFCoord coord(x,y,0);
+            df::coord2d coord(x,y);
             result &= GetLocalFeature(*local, coord, loc);
         }
         else

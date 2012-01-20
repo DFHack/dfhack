@@ -1,4 +1,4 @@
-inline bool getassignment( DFCoord & xy )
+inline bool getassignment( const df::coord2d &xy )
 {
     return getassignment(xy.x,xy.y);
 }
@@ -6,7 +6,7 @@ inline bool getassignment( int x, int y )
 {
     return (tile_bitmask[y] & (1 << x));
 }
-inline void setassignment( DFCoord & xy, bool bit )
+inline void setassignment( const df::coord2d &xy, bool bit )
 {
     return setassignment(xy.x,xy.y, bit);
 }

@@ -105,24 +105,24 @@ class Block
             valid = true;
         }
     }
-    int16_t veinMaterialAt(DFHack::DFCoord p)
+    int16_t veinMaterialAt(df::coord2d p)
     {
         return veinmats[p.x][p.y];
     }
-    int16_t baseMaterialAt(DFHack::DFCoord p)
+    int16_t baseMaterialAt(df::coord2d p)
     {
         return basemats[p.x][p.y];
     }
-    void ClearMaterialAt(DFHack::DFCoord p)
+    void ClearMaterialAt(df::coord2d p)
     {
         veinmats[p.x][p.y] = -1;
     }
 
-    uint16_t TileTypeAt(DFHack::DFCoord p)
+    uint16_t TileTypeAt(df::coord2d p)
     {
         return raw.tiletypes[p.x][p.y];
     }
-    bool setTiletypeAt(DFHack::DFCoord p, uint16_t tiletype)
+    bool setTiletypeAt(df::coord2d p, uint16_t tiletype)
     {
         if(!valid) return false;
         dirty_tiletypes = true;
@@ -131,11 +131,11 @@ class Block
         return true;
     }
 
-    uint16_t temperature1At(DFHack::DFCoord p)
+    uint16_t temperature1At(df::coord2d p)
     {
         return temp1[p.x][p.y];
     }
-    bool setTemp1At(DFHack::DFCoord p, uint16_t temp)
+    bool setTemp1At(df::coord2d p, uint16_t temp)
     {
         if(!valid) return false;
         dirty_temperatures = true;
@@ -143,11 +143,11 @@ class Block
         return true;
     }
 
-    uint16_t temperature2At(DFHack::DFCoord p)
+    uint16_t temperature2At(df::coord2d p)
     {
         return temp2[p.x][p.y];
     }
-    bool setTemp2At(DFHack::DFCoord p, uint16_t temp)
+    bool setTemp2At(df::coord2d p, uint16_t temp)
     {
         if(!valid) return false;
         dirty_temperatures = true;
@@ -155,11 +155,11 @@ class Block
         return true;
     }
 
-    df::tile_designation DesignationAt(DFHack::DFCoord p)
+    df::tile_designation DesignationAt(df::coord2d p)
     {
         return raw.designation[p.x][p.y];
     }
-    bool setDesignationAt(DFHack::DFCoord p, df::tile_designation des)
+    bool setDesignationAt(df::coord2d p, df::tile_designation des)
     {
         if(!valid) return false;
         dirty_designations = true;
@@ -173,11 +173,11 @@ class Block
         return true;
     }
 
-    df::tile_occupancy OccupancyAt(DFHack::DFCoord p)
+    df::tile_occupancy OccupancyAt(df::coord2d p)
     {
         return raw.occupancy[p.x][p.y];
     }
-    bool setOccupancyAt(DFHack::DFCoord p, df::tile_occupancy des)
+    bool setOccupancyAt(df::coord2d p, df::tile_occupancy des)
     {
         if(!valid) return false;
         dirty_occupancies = true;
@@ -295,7 +295,7 @@ class MapCache
         }
         return 0;
     }
-    bool setTiletypeAt(DFHack::DFCoord& tilecoord, uint16_t tiletype)
+    bool setTiletypeAt(DFHack::DFCoord tilecoord, uint16_t tiletype)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
@@ -315,7 +315,7 @@ class MapCache
         }
         return 0;
     }
-    bool setTemp1At(DFHack::DFCoord& tilecoord, uint16_t temperature)
+    bool setTemp1At(DFHack::DFCoord tilecoord, uint16_t temperature)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
@@ -335,7 +335,7 @@ class MapCache
         }
         return 0;
     }
-    bool setTemp2At(DFHack::DFCoord& tilecoord, uint16_t temperature)
+    bool setTemp2At(DFHack::DFCoord tilecoord, uint16_t temperature)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)

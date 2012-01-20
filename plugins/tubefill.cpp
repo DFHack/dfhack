@@ -82,18 +82,24 @@ DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string>
                 if (tileShape(block->tiletype[x][y]) == WALL)
                     continue;
 
+                // Does the tile contain liquid?
+                if (block->designation[x][y].bits.flow_size)
+                    continue;
+
                 // Set current tile, as accurately as can be expected
                 // block->tiletype[x][y] = findSimilarTileType(block->tiletype[x][y], WALL);
 
                 // Check the tile above this one, in case we need to add a floor
                 if (above)
                 {
-                    // if this tile isn't a local feature, it's likely the tile underneath was originally just a floor
-                    // it's also possible there was just solid non-feature stone above, but we don't care enough to check
-                    if (!above->designation[x][y].bits.feature_local)
-                        continue;
                     if ((tileShape(above->tiletype[x][y]) == EMPTY) || (tileShape(above->tiletype[x][y]) == RAMP_TOP))
+                    {
+                        // if this tile isn't a local feature, it's likely the tile underneath was originally just a floor
+                        // it's also possible there was just solid non-feature stone above, but we don't care enough to check
+                        if (!above->designation[x][y].bits.feature_local)
+                            continue;
                         above->tiletype[x][y] = findTileType(FLOOR, FEATSTONE, tilevariant_invalid, TILE_NORMAL, TileDirection());
+                    }
                 }
                 block->tiletype[x][y] = findTileType(WALL, FEATSTONE, tilevariant_invalid, TILE_NORMAL, TileDirection());
                 ++count;

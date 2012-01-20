@@ -14,7 +14,6 @@ using namespace std;
 #include "PluginManager.h"
 #include <vector>
 #include <string>
-#include "modules/Maps.h"
 #include "modules/Items.h"
 #include "modules/Units.h"
 #include "modules/Materials.h"

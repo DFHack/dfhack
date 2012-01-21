@@ -567,7 +567,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
         if (bioRY >= world->world_data->world_height) bioRY = world->world_data->world_height - 1;
 
         // get index into geoblock vector
-        uint16_t geoindex = world->world_data->unk_1c0[bioRX][bioRY].geo_index;
+        uint16_t geoindex = world->world_data->region_map[bioRX][bioRY].geo_index;
 
         /// geology blocks have a vector of layer descriptors
         // get the vector with pointer to layers

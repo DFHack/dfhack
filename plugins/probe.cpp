@@ -68,10 +68,10 @@ DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters)
         cr->Start(ncr);
         for(auto i = 0; i < ncr; i++)
         {
-            df_unit * unit = cr->GetCreature( i );
-            if(unit->x == cursorX && unit->y == cursorY && unit->z == cursorZ)
+            df::unit * unit = cr->GetCreature( i );
+            if(unit->pos.x == cursorX && unit->pos.y == cursorY && unit->pos.z == cursorZ)
             {
-                con.print("Creature %d, race %d (%x), civ %d (%x)\n", unit->id, unit->race, unit->race, unit->civ, unit->civ);
+                con.print("Creature %d, race %d (%x), civ %d (%x)\n", unit->id, unit->race, unit->race, unit->civ_id, unit->civ_id);
                 break;
             }
         }

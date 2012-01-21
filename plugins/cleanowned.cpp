@@ -188,10 +188,10 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
 
             if (owner_index >= 0)
             {
-                DFHack::df_unit * temp = Creatures->GetCreature(owner_index);
+                df::unit * temp = Creatures->GetCreature(owner_index);
                 info = temp->name.first_name;
-                if (!temp->name.nick_name.empty())
-                    info += std::string(" '") + temp->name.nick_name + "'";
+                if (!temp->name.nickname.empty())
+                    info += std::string(" '") + temp->name.nickname + "'";
                 info += " ";
                 info += Tran->TranslateName(&temp->name,false);
                 c->con.print(", owner %s", info.c_str());

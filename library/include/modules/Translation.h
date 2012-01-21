@@ -33,6 +33,9 @@ distribution.
 #include "Export.h"
 #include "Module.h"
 #include "Types.h"
+#include "DataDefs.h"
+#include "df/language_name.h"
+
 namespace DFHack
 {
 
@@ -67,10 +70,10 @@ namespace DFHack
 
         // names, used by a few other modules.
         bool InitReadNames();
-        bool readName(t_name & name, df_name * address);
-        bool copyName(df_name * address, df_name * target);
+        bool readName(t_name & name, df::language_name * address);
+        bool copyName(df::language_name * address, df::language_name * target);
         // translate a name using the loaded dictionaries
-        std::string TranslateName(const DFHack::df_name * name, bool inEnglish = true);
+        std::string TranslateName(const df::language_name * name, bool inEnglish = true);
 
         private:
         struct Private;

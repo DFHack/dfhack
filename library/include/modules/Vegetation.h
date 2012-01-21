@@ -33,6 +33,8 @@ distribution.
 #include "Export.h"
 #include "Module.h"
 #include "Types.h"
+#include "DataDefs.h"
+#include "df/language_name.h"
 namespace DFHack
 {
     /**
@@ -45,7 +47,7 @@ namespace DFHack
     #pragma pack(push, 2)
     struct df_plant
     {
-        df_name name;
+        df::language_name name;
         union
         {
             uint16_t type;

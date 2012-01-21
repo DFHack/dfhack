@@ -474,7 +474,7 @@ bool Items::removeItemOwner(df::item * item, Units *creatures)
         if (ref->getType() != df::general_ref_type::UNIT_ITEMOWNER)
             continue;
 
-        df_unit *unit = (df_unit *)ref->getUnit();
+        df::unit *unit = ref->getUnit();
 
         if (unit == NULL || !creatures->RemoveOwnedItemByPtr(unit, item->id))
         {

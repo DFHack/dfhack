@@ -46,15 +46,19 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "Core.h"
 
+#include "df/world.h"
+#include "df/ui.h"
+#include "df/unit_inventory_item.h"
+
 using namespace DFHack;
+using df::global::world;
+using df::global::ui;
 
 struct Units::Private
 {
     bool Inited;
     bool Started;
 
-    void * dwarf_race_index_addr;
-    void * dwarf_civ_id_addr;
     bool IdMapReady;
     std::map<int32_t, int32_t> IdMap;
 
@@ -81,14 +85,6 @@ Units::Units()
 
     OffsetGroup *OG_Creatures = minfo->getGroup("Creatures");
 
-    creatures = 0;
-    try
-    {
-        creatures = (vector <df_unit *> *) OG_Creatures->getAddress ("vector");
-        d->dwarf_race_index_addr = (void *) OG_Creatures->getAddress("current_race");
-        d->dwarf_civ_id_addr = (void *) OG_Creatures->getAddress("current_civ");
-    }
-    catch(Error::All&){};
     d->Inited = true;
 }
 
@@ -100,15 +96,11 @@ Units::~Units()
 
 bool Units::Start( uint32_t &numcreatures )
 {
-    if(creatures)
-    {
-        d->Started = true;
-        numcreatures =  creatures->size();
-        d->IdMap.clear();
-        d->IdMapReady = false;
-        return true;
-    }
-    return false;
+    d->Started = true;
+    numcreatures = world->units.all.size();
+    d->IdMap.clear();
+    d->IdMapReady = false;
+    return true;
 }
 
 bool Units::Finish()
@@ -117,35 +109,34 @@ bool Units::Finish()
     return true;
 }
 
-df_unit * Units::GetCreature (const int32_t index)
+df::unit * Units::GetCreature (const int32_t index)
 {
     if(!d->Started) return NULL;
 
     // read pointer from vector at position
-    if(index > creatures->size())
+    if(index > world->units.all.size())
         return 0;
-    return creatures->at(index);
+    return world->units.all[index];
 }
 
 // returns index of creature actually read or -1 if no creature can be found
-int32_t Units::GetCreatureInBox (int32_t index, df_unit ** furball,
+int32_t Units::GetCreatureInBox (int32_t index, df::unit ** furball,
                                 const uint16_t x1, const uint16_t y1, const uint16_t z1,
                                 const uint16_t x2, const uint16_t y2, const uint16_t z2)
 {
     if (!d->Started)
         return -1;
 
-    Process *p = d->owner;
-    uint32_t size = creatures->size();
+    uint32_t size = world->units.all.size();
     while (uint32_t(index) < size)
     {
         // read pointer from vector at position
-        df_unit * temp = creatures->at(index);
-        if (temp->x >= x1 && temp->x < x2)
+        df::unit * temp = world->units.all[index];
+        if (temp->pos.x >= x1 && temp->pos.x < x2)
         {
-            if (temp->y >= y1 && temp->y < y2)
+            if (temp->pos.y >= y1 && temp->pos.y < y2)
             {
-                if (temp->z >= z1 && temp->z < z2)
+                if (temp->pos.z >= z1 && temp->pos.z < z2)
                 {
                     *furball = temp;
                     return index;
@@ -158,7 +149,7 @@ int32_t Units::GetCreatureInBox (int32_t index, df_unit ** furball,
     return -1;
 }
 
-void Units::CopyCreature(df_unit * source, t_unit & furball)
+void Units::CopyCreature(df::unit * source, t_unit & furball)
 {
     if(!d->Started) return;
     // read pointer from vector at position
@@ -166,15 +157,15 @@ void Units::CopyCreature(df_unit * source, t_unit & furball)
 
     //read creature from memory
     // name
-    d->trans->readName(furball.name,&source->name);
+    d->trans->readName(furball.name, &source->name);
 
     // basic stuff
     furball.id = source->id;
-    furball.x = source->x;
-    furball.y = source->y;
-    furball.z = source->z;
+    furball.x = source->pos.x;
+    furball.y = source->pos.y;
+    furball.z = source->pos.z;
     furball.race = source->race;
-    furball.civ = source->civ;
+    furball.civ = source->civ_id;
     furball.sex = source->sex;
     furball.caste = source->caste;
     furball.flags1.whole = source->flags1.whole;
@@ -185,28 +176,28 @@ void Units::CopyCreature(df_unit * source, t_unit & furball)
     // profession
     furball.profession = source->profession;
     // happiness
-    furball.happiness = source->happiness;
+    furball.happiness = source->status.happiness;
     // physical attributes
-    memcpy(&furball.strength, source->physical, sizeof(source->physical));
+    memcpy(&furball.strength, source->body.physical_attrs, sizeof(source->body.physical_attrs));
 
     // mood stuff
     furball.mood = source->mood;
-    furball.mood_skill = source->unk_2f8; // FIXME: really? More like currently used skill anyway.
-    d->trans->readName(furball.artifact_name, &source->artifact_name);
+    furball.mood_skill = source->job.unk_2f8; // FIXME: really? More like currently used skill anyway.
+    d->trans->readName(furball.artifact_name, &source->status.artifact_name);
 
     // labors
-    memcpy(&furball.labors, &source->labors, sizeof(furball.labors));
+    memcpy(&furball.labors, &source->status.labors, sizeof(furball.labors));
 
-    furball.birth_year = source->birth_year;
-    furball.birth_time = source->birth_time;
-    furball.pregnancy_timer = source->pregnancy_timer;
+    furball.birth_year = source->relations.birth_year;
+    furball.birth_time = source->relations.birth_time;
+    furball.pregnancy_timer = source->relations.pregnancy_timer;
     // appearance
-    furball.nbcolors = source->appearance.size();
+    furball.nbcolors = source->appearance.colors.size();
     if(furball.nbcolors>MAX_COLORS)
         furball.nbcolors = MAX_COLORS;
     for(uint32_t i = 0; i < furball.nbcolors; i++)
     {
-        furball.color[i] = source->appearance[i];
+        furball.color[i] = source->appearance.colors[i];
     }
 
     //likes. FIXME: where do they fit in now? The soul?
@@ -275,28 +266,7 @@ void Units::CopyCreature(df_unit * source, t_unit & furball)
 }
 int32_t Units::FindIndexById(int32_t creature_id)
 {
-    if (!d->Started)
-        return -1;
-
-    if (!d->IdMapReady)
-    {
-        d->IdMap.clear();
-
-        uint32_t size = creatures->size();
-        for (uint32_t index = 0; index < size; index++)
-        {
-            df_unit * temp = creatures->at(index);
-            int32_t id = temp->id;
-            d->IdMap[id] = index;
-        }
-    }
-
-    std::map<int32_t,int32_t>::iterator it;
-    it = d->IdMap.find(creature_id);
-    if(it == d->IdMap.end())
-        return -1;
-    else
-        return it->second;
+    return df::unit::binsearch_index(world->units.all, creature_id);
 }
 /*
 bool Creatures::WriteLabors(const uint32_t index, uint8_t labors[NUM_CREATURE_LABORS])
@@ -507,16 +477,12 @@ bool Creatures::WritePregnancy(const uint32_t index, const uint32_t pregTimer)
 */
 uint32_t Units::GetDwarfRaceIndex()
 {
-    if(!d->Inited) return 0;
-    Process * p = d->owner;
-    return p->readDWord(d->dwarf_race_index_addr);
+    return ui->race_id;
 }
 
 int32_t Units::GetDwarfCivId()
 {
-    if(!d->Inited) return -1;
-    Process * p = d->owner;
-    return p->readDWord(d->dwarf_civ_id_addr);
+    return ui->civ_id;
 }
 /*
 bool Creatures::getCurrentCursorCreature(uint32_t & creature_index)
@@ -551,28 +517,28 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
 */
 bool Units::ReadInventoryByIdx(const uint32_t index, std::vector<df::item *> & item)
 {
-    if(!d->Started) return false;
-    if(index >= creatures->size()) return false;
-    df_unit * temp = creatures->at(index);
+    if(index >= world->units.all.size()) return false;
+    df::unit * temp = world->units.all[index];
     return this->ReadInventoryByPtr(temp, item);
 }
 
-bool Units::ReadInventoryByPtr(const df_unit * temp, std::vector<df::item *> & items)
+bool Units::ReadInventoryByPtr(const df::unit * temp, std::vector<df::item *> & items)
 {
     if(!d->Started) return false;
-    items = temp->inventory;
+    items.clear();
+    for (uint32_t i = 0; i < temp->inventory.size(); i++)
+        items.push_back(temp->inventory[i]->item);
     return true;
 }
 
 bool Units::ReadOwnedItemsByIdx(const uint32_t index, std::vector<int32_t> & item)
 {
-    if(!d->Started ) return false;
-    if(index >= creatures->size()) return false;
-    df_unit * temp = creatures->at(index);
+    if(index >= world->units.all.size()) return false;
+    df::unit * temp = world->units.all[index];
     return this->ReadOwnedItemsByPtr(temp, item);
 }
 
-bool Units::ReadOwnedItemsByPtr(const df_unit * temp, std::vector<int32_t> & items)
+bool Units::ReadOwnedItemsByPtr(const df::unit * temp, std::vector<int32_t> & items)
 {
     if(!d->Started) return false;
     items = temp->owned_items;
@@ -581,16 +547,12 @@ bool Units::ReadOwnedItemsByPtr(const df_unit * temp, std::vector<int32_t> & ite
 
 bool Units::RemoveOwnedItemByIdx(const uint32_t index, int32_t id)
 {
-    if(!d->Started)
-    {
-        cerr << "!d->Started FAIL" << endl;
-        return false;
-    }
-    df_unit * temp = creatures->at (index);
+    if(index >= world->units.all.size()) return false;
+    df::unit * temp = world->units.all[index];
     return this->RemoveOwnedItemByPtr(temp, id);
 }
 
-bool Units::RemoveOwnedItemByPtr(df_unit * temp, int32_t id)
+bool Units::RemoveOwnedItemByPtr(df::unit * temp, int32_t id)
 {
     if(!d->Started) return false;
     Process * p = d->owner;
@@ -609,7 +571,7 @@ bool Units::RemoveOwnedItemByPtr(df_unit * temp, int32_t id)
     return true;
 }
 
-void Units::CopyNameTo(df_unit * creature, df_name * target)
+void Units::CopyNameTo(df::unit * creature, df::language_name * target)
 {
     d->trans->copyName(&creature->name, target);
 }

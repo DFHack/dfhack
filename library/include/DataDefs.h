@@ -235,7 +235,7 @@ namespace df
 #define ENUM_NEXT_ITEM(enum,val) \
     (DFHack::next_enum_item_<df::enum,ENUM_FIRST_ITEM(enum),df::enums::enum::is_valid>(val))
 #define FOR_ENUM_ITEMS(enum,iter) \
-    for(df::enum iter = ENUM_FIRST_ITEM(enum); iter < ENUM_LAST_ITEM(enum); iter = df::enum(1+int(iter)))
+    for(df::enum iter = ENUM_FIRST_ITEM(enum); iter <= ENUM_LAST_ITEM(enum); iter = df::enum(1+int(iter)))
 
 namespace df {
 #define DF_KNOWN_GLOBALS \

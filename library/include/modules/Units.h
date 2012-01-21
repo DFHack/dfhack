@@ -259,7 +259,7 @@ namespace DFHack
         uint32_t GetDwarfRaceIndex ( void );
         int32_t GetDwarfCivId ( void );
 
-        void CopyNameTo(df::unit *creature, df_name * target);
+        void CopyNameTo(df::unit *creature, df::language_name * target);
 
         bool RemoveOwnedItemByIdx(const uint32_t index, int32_t id);
         bool RemoveOwnedItemByPtr(df::unit * unit, int32_t id);

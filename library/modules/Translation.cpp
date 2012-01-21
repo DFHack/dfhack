@@ -36,6 +36,7 @@ using namespace std;
 #include "Types.h"
 #include "ModuleFactory.h"
 #include "Core.h"
+
 using namespace DFHack;
 
 Module* DFHack::createTranslation()
@@ -167,7 +168,7 @@ bool Translation::InitReadNames()
     return true;
 }
 
-bool Translation::readName(t_name & name, df_name * source)
+bool Translation::readName(t_name & name, df::language_name * source)
 {
     Core & c = Core::getInstance();
     Process * p = c.p;
@@ -180,7 +181,7 @@ bool Translation::readName(t_name & name, df_name * source)
         if(!InitReadNames()) return false;
     }
     strncpy(name.first_name,source->first_name.c_str(),127);
-    strncpy(name.nickname,source->nick_name.c_str(),127);
+    strncpy(name.nickname,source->nickname.c_str(),127);
     memcpy(&name.parts_of_speech, &source->parts_of_speech, sizeof (source->parts_of_speech));
     memcpy(&name.words, &source->words, sizeof (source->words));
     name.language = source->language;
@@ -188,7 +189,7 @@ bool Translation::readName(t_name & name, df_name * source)
     return true;
 }
 
-bool Translation::copyName(df_name * source, df_name * target)
+bool Translation::copyName(df::language_name * source, df::language_name * target)
 {
     if (source == target)
         return true;
@@ -196,7 +197,7 @@ bool Translation::copyName(df_name * source, df_name * target)
     Process * p = c.p;
 
     target->first_name = source->first_name;
-    target->nick_name = source->nick_name;
+    target->nickname = source->nickname;
     target->has_name = source->has_name;
     target->language = source->language;
     memcpy(&target->parts_of_speech, &source->parts_of_speech, sizeof (source->parts_of_speech));
@@ -205,7 +206,7 @@ bool Translation::copyName(df_name * source, df_name * target)
     return true;
 }
 
-string Translation::TranslateName(const df_name * name, bool inEnglish)
+string Translation::TranslateName(const df::language_name * name, bool inEnglish)
 {
     string out;
     assert (d->Started);
@@ -242,8 +243,8 @@ string Translation::TranslateName(const df_name * name, bool inEnglish)
     {
         if(name->words[0] >=0 || name->words[1] >=0)
         {
-            if(name->words[0]>=0) out.append(d->dicts.translations[name->parts_of_speech[0]+1][name->words[0]]);
-            if(name->words[1]>=0) out.append(d->dicts.translations[name->parts_of_speech[1]+1][name->words[1]]);
+            if(name->words[0]>=0) out.append(d->dicts.translations[name->parts_of_speech[0].value+1][name->words[0]]);
+            if(name->words[1]>=0) out.append(d->dicts.translations[name->parts_of_speech[1].value+1][name->words[1]]);
             out[0] = toupper(out[0]);
         }
         if(name->words[5] >=0)
@@ -257,7 +258,7 @@ string Translation::TranslateName(const df_name * name, bool inEnglish)
             {
                 if(name->words[i]>=0)
                 {
-                    word = d->dicts.translations[name->parts_of_speech[i]+1][name->words[i]];
+                    word = d->dicts.translations[name->parts_of_speech[i].value+1][name->words[i]];
                     word[0] = toupper(word[0]);
                     out.append(" " + word);
                 }
@@ -270,7 +271,7 @@ string Translation::TranslateName(const df_name * name, bool inEnglish)
             else
                 out.append("Of");
             string word;
-            word.append(d->dicts.translations[name->parts_of_speech[6]+1][name->words[6]]);
+            word.append(d->dicts.translations[name->parts_of_speech[6].value+1][name->words[6]]);
             word[0] = toupper(word[0]);
             out.append(" " + word);
         }

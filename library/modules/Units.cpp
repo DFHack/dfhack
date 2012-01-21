@@ -157,7 +157,7 @@ void Units::CopyCreature(df::unit * source, t_unit & furball)
 
     //read creature from memory
     // name
-    d->trans->readName(furball.name,(df_name *)&source->name);
+    d->trans->readName(furball.name, &source->name);
 
     // basic stuff
     furball.id = source->id;
@@ -183,7 +183,7 @@ void Units::CopyCreature(df::unit * source, t_unit & furball)
     // mood stuff
     furball.mood = source->mood;
     furball.mood_skill = source->job.unk_2f8; // FIXME: really? More like currently used skill anyway.
-    d->trans->readName(furball.artifact_name, (df_name *)&source->status.artifact_name);
+    d->trans->readName(furball.artifact_name, &source->status.artifact_name);
 
     // labors
     memcpy(&furball.labors, &source->status.labors, sizeof(furball.labors));
@@ -571,8 +571,8 @@ bool Units::RemoveOwnedItemByPtr(df::unit * temp, int32_t id)
     return true;
 }
 
-void Units::CopyNameTo(df::unit * creature, df_name * target)
+void Units::CopyNameTo(df::unit * creature, df::language_name * target)
 {
-    d->trans->copyName((df_name *)&creature->name, target);
+    d->trans->copyName(&creature->name, target);
 }
 

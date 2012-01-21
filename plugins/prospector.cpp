@@ -23,6 +23,7 @@ using namespace std;
 #include "df/world.h"
 
 using namespace DFHack;
+using df::global::world;
 
 struct matdata
 {
@@ -95,18 +96,16 @@ static void printMatdata(DFHack::Console & con, const matdata &data)
         con <<" Z:" << std::setw(4) << data.lower_z << std::endl;
 }
 
-static int getValue(const df_inorganic_type &info)
+static int getValue(const df::inorganic_raw &info)
 {
-    return info.mat.MATERIAL_VALUE;
+    return info.material.material_value;
 }
 
-static int getValue(const df_plant_type &info)
+static int getValue(const df::plant_raw &info)
 {
     return info.value;
 }
 
-// printMats() accepts a vector of pointers to t_matgloss so that it can
-// deal t_matgloss and all subclasses.
 template <typename T>
 void printMats(DFHack::Console & con, MatMap &mat, std::vector<T*> &materials, bool show_value)
 {
@@ -128,7 +127,8 @@ void printMats(DFHack::Console & con, MatMap &mat, std::vector<T*> &materials, b
             continue;
         }
         T* mat = materials[it->first];
-        con << std::setw(25) << mat->ID << " : ";
+        // Somewhat of a hack, but it works because df::inorganic_raw and df::plant_raw both have a field named "id"
+        con << std::setw(25) << mat->id << " : ";
         if (show_value)
             con << std::setw(3) << getValue(*mat) << " : ";
         printMatdata(con, it->second);
@@ -147,9 +147,9 @@ void printVeins(DFHack::Console & con, MatMap &mat_map,
 
     for (MatMap::const_iterator it = mat_map.begin(); it != mat_map.end(); ++it)
     {
-        DFHack::df_inorganic_type *gloss = mats->df_inorganic->at(it->first);
+        df::inorganic_raw *gloss = world->raws.inorganics[it->first];
 
-        if (gloss->mat.isGem())
+        if (gloss->material.isGem())
             gems[it->first] = it->second;
         else if (gloss->isOre())
             ores[it->first] = it->second;
@@ -158,13 +158,13 @@ void printVeins(DFHack::Console & con, MatMap &mat_map,
     }
 
     con << "Ores:" << std::endl;
-    printMats(con, ores, *mats->df_inorganic, show_value);
+    printMats(con, ores, world->raws.inorganics, show_value);
 
     con << "Gems:" << std::endl;
-    printMats(con, gems, *mats->df_inorganic, show_value);
+    printMats(con, gems, world->raws.inorganics, show_value);
 
     con << "Other vein stone:" << std::endl;
-    printMats(con, rest, *mats->df_inorganic, show_value);
+    printMats(con, rest, world->raws.inorganics, show_value);
 }
 
 DFhackCExport command_result prospector (Core * c, vector <string> & parameters);
@@ -234,17 +234,6 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     MapExtras::MapCache map;
 
     DFHack::Materials *mats = c->getMaterials();
-    if (!mats->df_inorganic)
-    {
-        con.printerr("Unable to read inorganic material definitons!\n");
-        c->Resume();
-        return CR_FAILURE;
-    }
-    if (showPlants && !mats->df_organic)
-    {
-        con.printerr("Unable to read organic material definitons; plants won't be listed!\n");
-        showPlants = false;
-    }
 
     DFHack::t_feature blockFeatureGlobal;
     DFHack::t_feature blockFeatureLocal;
@@ -459,16 +448,16 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     }
 
     con << std::endl << "Layer materials:" << std::endl;
-    printMats(con, layerMats, *mats->df_inorganic, showValue);
+    printMats(con, layerMats, world->raws.inorganics, showValue);
 
     printVeins(con, veinMats, mats, showValue);
 
     if (showPlants)
     {
         con << "Shrubs:" << std::endl;
-        printMats(con, plantMats, *mats->df_organic, showValue);
+        printMats(con, plantMats, world->raws.plants.all, showValue);
         con << "Wood in trees:" << std::endl;
-        printMats(con, treeMats, *mats->df_organic, showValue);
+        printMats(con, treeMats, world->raws.plants.all, showValue);
     }
 
     if (hasAquifer)

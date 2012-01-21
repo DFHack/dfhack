@@ -60,6 +60,9 @@ using namespace std;
 #include "df/descriptor_pattern.h"
 #include "df/descriptor_shape.h"
 
+#include "df/physical_attribute_type.h"
+#include "df/mental_attribute_type.h"
+
 using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
@@ -747,48 +750,28 @@ bool Materials::ReadCreatureTypesEx (void)
                 caste.bodypart.push_back(part);
             }
 
-            t_attrib *phys[] = {
-                &caste.strength,
-                &caste.agility,
-                &caste.toughness,
-                &caste.endurance,
-                &caste.recuperation,
-                &caste.disease_resistance
-            };
-            for (uint32_t k = 0; k < 6; k++)
+            for (int32_t k = 0; k < 7; k++)
             {
-                phys[k]->level = ca->attributes.phys_att_range[k][0];
-                phys[k]->field_4 = ca->attributes.phys_att_range[k][1];
-                phys[k]->field_8 = ca->attributes.phys_att_range[k][2];
-                phys[k]->field_C = ca->attributes.phys_att_range[k][3];
-                phys[k]->leveldiff = ca->attributes.phys_att_range[k][4];
-                phys[k]->field_14 = ca->attributes.phys_att_range[k][5];
-                phys[k]->field_18 = ca->attributes.phys_att_range[k][6];
-            }
-            t_attrib *ment[] = {
-                &caste.analytical_ability,
-                &caste.focus,
-                &caste.willpower,
-                &caste.creativity,
-                &caste.intuition,
-                &caste.patience,
-                &caste.memory,
-                &caste.linguistic_ability,
-                &caste.spatial_sense,
-                &caste.musicality,
-                &caste.kinesthetic_sense,
-                &caste.empathy,
-                &caste.social_awareness
-            };
-            for (uint32_t k = 0; k < 13; k++)
-            {
-                ment[k]->level = ca->attributes.ment_att_range[k][0];
-                ment[k]->field_4 = ca->attributes.ment_att_range[k][1];
-                ment[k]->field_8 = ca->attributes.ment_att_range[k][2];
-                ment[k]->field_C = ca->attributes.ment_att_range[k][3];
-                ment[k]->leveldiff = ca->attributes.ment_att_range[k][4];
-                ment[k]->field_14 = ca->attributes.ment_att_range[k][5];
-                ment[k]->field_18 = ca->attributes.ment_att_range[k][6];
+                caste.strength[k] = ca->attributes.phys_att_range[df::physical_attribute_type::STRENGTH][k];
+                caste.agility[k] = ca->attributes.phys_att_range[df::physical_attribute_type::AGILITY][k];
+                caste.toughness[k] = ca->attributes.phys_att_range[df::physical_attribute_type::TOUGHNESS][k];
+                caste.endurance[k] = ca->attributes.phys_att_range[df::physical_attribute_type::ENDURANCE][k];
+                caste.recuperation[k] = ca->attributes.phys_att_range[df::physical_attribute_type::RECUPERATION][k];
+                caste.disease_resistance[k] = ca->attributes.phys_att_range[df::physical_attribute_type::DISEASE_RESISTANCE][k];
+
+                caste.analytical_ability[k] = ca->attributes.phys_att_range[df::mental_attribute_type::ANALYTICAL_ABILITY][k];
+                caste.focus[k] = ca->attributes.phys_att_range[df::mental_attribute_type::FOCUS][k];
+                caste.willpower[k] = ca->attributes.phys_att_range[df::mental_attribute_type::WILLPOWER][k];
+                caste.creativity[k] = ca->attributes.phys_att_range[df::mental_attribute_type::CREATIVITY][k];
+                caste.intuition[k] = ca->attributes.phys_att_range[df::mental_attribute_type::INTUITION][k];
+                caste.patience[k] = ca->attributes.phys_att_range[df::mental_attribute_type::PATIENCE][k];
+                caste.memory[k] = ca->attributes.phys_att_range[df::mental_attribute_type::MEMORY][k];
+                caste.linguistic_ability[k] = ca->attributes.phys_att_range[df::mental_attribute_type::LINGUISTIC_ABILITY][k];
+                caste.spatial_sense[k] = ca->attributes.phys_att_range[df::mental_attribute_type::SPATIAL_SENSE][k];
+                caste.musicality[k] = ca->attributes.phys_att_range[df::mental_attribute_type::MUSICALITY][k];
+                caste.kinesthetic_sense[k] = ca->attributes.phys_att_range[df::mental_attribute_type::KINESTHETIC_SENSE][k];
+                caste.empathy[k] = ca->attributes.phys_att_range[df::mental_attribute_type::EMPATHY][k];
+                caste.social_awareness[k] = ca->attributes.phys_att_range[df::mental_attribute_type::SOCIAL_AWARENESS][k];
             }
             mat.castes.push_back(caste);
         }

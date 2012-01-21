@@ -253,25 +253,25 @@ namespace DFHack
         std::vector<t_colormodifier> ColorModifier;
         std::vector<t_bodypart> bodypart;
 
-        t_attrib strength;
-        t_attrib agility;
-        t_attrib toughness;
-        t_attrib endurance;
-        t_attrib recuperation;
-        t_attrib disease_resistance;
-        t_attrib analytical_ability;
-        t_attrib focus;
-        t_attrib willpower;
-        t_attrib creativity;
-        t_attrib intuition;
-        t_attrib patience;
-        t_attrib memory;
-        t_attrib linguistic_ability;
-        t_attrib spatial_sense;
-        t_attrib musicality;
-        t_attrib kinesthetic_sense;
-        t_attrib empathy;
-        t_attrib social_awareness;
+        int32_t strength[7];
+        int32_t agility[7];
+        int32_t toughness[7];
+        int32_t endurance[7];
+        int32_t recuperation[7];
+        int32_t disease_resistance[7];
+        int32_t analytical_ability[7];
+        int32_t focus[7];
+        int32_t willpower[7];
+        int32_t creativity[7];
+        int32_t intuition[7];
+        int32_t patience[7];
+        int32_t memory[7];
+        int32_t linguistic_ability[7];
+        int32_t spatial_sense[7];
+        int32_t musicality[7];
+        int32_t kinesthetic_sense[7];
+        int32_t empathy[7];
+        int32_t social_awareness[7];
     };
 
     /**

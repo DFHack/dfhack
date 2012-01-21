@@ -45,13 +45,13 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
             return CR_OK;
         }
     }
-	std::string filename;
-	if (parameters.size() < 1)
-	{
-		c->con.printerr("Please supply a filename.\n");
-		return CR_OK;
-	}
-	filename = parameters[0];
+    std::string filename;
+    if (parameters.size() < 1)
+    {
+            c->con.printerr("Please supply a filename.\n");
+            return CR_OK;
+    }
+    filename = parameters[0];
 
     bool showHidden = true;
 
@@ -84,10 +84,10 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
         c->con.printerr("Unable to read vegetation; plants won't be listed!\n" );
     }
 
-	dfproto::Map protomap;
-	protomap.set_x_size(x_max);
-	protomap.set_y_size(y_max);
-	protomap.set_z_size(z_max);
+    dfproto::Map protomap;
+    protomap.set_x_size(x_max);
+    protomap.set_y_size(y_max);
+    protomap.set_z_size(z_max);
 
     DFHack::t_feature blockFeatureGlobal;
     DFHack::t_feature blockFeatureLocal;
@@ -106,10 +106,10 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                     continue;
                 }
 
-				dfproto::Block *protoblock = protomap.add_block();
-				protoblock->set_x(b_x);
-				protoblock->set_y(b_y);
-				protoblock->set_z(z);
+                dfproto::Block *protoblock = protomap.add_block();
+                protoblock->set_x(b_x);
+                protoblock->set_y(b_y);
+                protoblock->set_z(z);
 
                 { // Find features
                     uint32_t index = b->raw.global_feature;
@@ -138,9 +138,9 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                             continue;
                         }
 
-						dfproto::Tile *prototile = protoblock->add_tile();
-						prototile->set_x(x);
-						prototile->set_y(y);
+                        dfproto::Tile *prototile = protoblock->add_tile();
+                        prototile->set_x(x);
+                        prototile->set_y(y);
 
                         // Check for liquid
                         if (des.bits.flow_size)
@@ -152,7 +152,7 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
 
                         uint16_t type = b->TileTypeAt(coord);
                         const DFHack::TileRow *info = DFHack::getTileRow(type);
-						prototile->set_type((dfproto::Tile::TileType)info->shape);
+                        prototile->set_type((dfproto::Tile::TileType)info->shape);
                         /*switch (info->shape)
                         {
                         case DFHack::WALL:
@@ -170,20 +170,20 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
         } // block y
     } // z
 
-	std::ofstream output(filename, std::ios::out | std::ios::trunc | std::ios::binary);
-	if (!output.is_open())
-	{
-		c->con.printerr("Couldn't open the output file.\n");
-		c->Resume();
-		return CR_FAILURE;
-	}
-	if (!protomap.SerializeToOstream(&output))
-	{
-		c->con.printerr("Failed to save map file.\n");
-		c->Resume();
-		return CR_FAILURE;
-	}
-	c->con.print("Map succesfully exported.\n");
+    std::ofstream output(filename, std::ios::out | std::ios::trunc | std::ios::binary);
+    if (!output.is_open())
+    {
+            c->con.printerr("Couldn't open the output file.\n");
+            c->Resume();
+            return CR_FAILURE;
+    }
+    if (!protomap.SerializeToOstream(&output))
+    {
+            c->con.printerr("Failed to save map file.\n");
+            c->Resume();
+            return CR_FAILURE;
+    }
+    c->con.print("Map succesfully exported.\n");
     c->Resume();
     return CR_OK;
 }

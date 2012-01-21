@@ -321,7 +321,7 @@ extern DFHACK_EXPORT bool SortBlockEvents(uint32_t x, uint32_t y, uint32_t z,
 extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which );
 
 /// read all plants in this block
-extern DFHACK_EXPORT bool ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<df_plant *>*& plants);
+extern DFHACK_EXPORT bool ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<df::plant *>*& plants);
 
 }
 }

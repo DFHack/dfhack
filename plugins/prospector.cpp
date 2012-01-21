@@ -69,7 +69,7 @@ bool operator>(const matdata & q1, const matdata & q2)
 typedef std::map<int16_t, matdata> MatMap;
 typedef std::vector< pair<int16_t, matdata> > MatSorter;
 
-typedef std::vector<DFHack::df_plant *> PlantList;
+typedef std::vector<df::plant *> PlantList;
 
 #define TO_PTR_VEC(obj_vec, ptr_vec) \
     ptr_vec.clear(); \
@@ -403,12 +403,12 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                     {
                         for (PlantList::const_iterator it = plants->begin(); it != plants->end(); it++)
                         {
-                            const DFHack::df_plant & plant = *(*it);
-                            df::coord2d loc(plant.x, plant.y);
+                            const df::plant & plant = *(*it);
+                            df::coord2d loc(plant.pos.x, plant.pos.y);
                             loc = loc % 16;
                             if (showHidden || !b->DesignationAt(loc).bits.hidden)
                             {
-                                if(plant.is_shrub)
+                                if(plant.flags.bits.is_shrub)
                                     plantMats[plant.material].add(global_z);
                                 else
                                     treeMats[plant.material].add(global_z);

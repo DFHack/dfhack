@@ -66,17 +66,6 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
     Maps::getSize(x_max, y_max, z_max);
     MapExtras::MapCache map;
     DFHack::Materials *mats = c->getMaterials();
-    if (!mats->df_inorganic)
-    {
-        c->con.printerr("Unable to read inorganic material definitons!\n");
-        c->Resume();
-        return CR_FAILURE;
-    }
-    if (!mats->df_organic)
-    {
-        c->con.printerr("Unable to read organic material definitons!\n");
-        //showPlants = false;
-    }
 
     DFHack::Vegetation *veg = c->getVegetation();
     if (veg->Start())

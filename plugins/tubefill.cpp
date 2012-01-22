@@ -15,6 +15,7 @@
 
 using namespace DFHack;
 using namespace DFHack::Simple;
+using namespace df::enums;
 using df::global::world;
 
 DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string> & params);
@@ -45,16 +46,15 @@ DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string>
         if(params[i] == "help" || params[i] == "?")
         {
             c->con.print("Replenishes mined out adamantine and hollow adamantine tubes.\n"
-                         "May cause !!FUN!!\n"
-            );
+                "May cause !!FUN!!\n"
+                );
             return CR_OK;
         }
     }
-    c->Suspend();
+    CoreSuspender suspend(c);
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
-        c->Resume();
         return CR_FAILURE;
     }
 
@@ -69,7 +69,7 @@ DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string>
         DFCoord coord(block->map_pos.x >> 4, block->map_pos.y >> 4, block->map_pos.z);
         if (!Maps::GetLocalFeature(feature, coord, block->local_feature))
             continue;
-        if (feature.type != df::feature_type::deep_special_tube)
+        if (feature.type != feature_type::deep_special_tube)
             continue;
         for (uint32_t x = 0; x < 16; x++)
         {
@@ -106,7 +106,6 @@ DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string>
             }
         }
     }
-    c->Resume();
     c->con.print("Found and changed %d tiles.\n", count);
     return CR_OK;
 }

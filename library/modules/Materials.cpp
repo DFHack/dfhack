@@ -60,9 +60,14 @@ using namespace std;
 #include "df/descriptor_pattern.h"
 #include "df/descriptor_shape.h"
 
+#include "df/physical_attribute_type.h"
+#include "df/mental_attribute_type.h"
+
 using namespace DFHack;
 using namespace df::enums;
+
 using df::global::world;
+using df::global::ui;
 
 bool MaterialInfo::decode(df::item *item)
 {
@@ -90,7 +95,7 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
     inorganic = NULL; plant = NULL; creature = NULL;
     figure = NULL;
 
-    df::world_raws &raws = df::global::world->raws;
+    df::world_raws &raws = world->raws;
 
     if (type < 0 || type >= sizeof(raws.mat_table.builtin)/sizeof(void*))
         return false;
@@ -191,7 +196,7 @@ bool MaterialInfo::findBuiltin(const std::string &token)
         return true;
     }
 
-    df::world_raws &raws = df::global::world->raws;
+    df::world_raws &raws = world->raws;
     for (int i = 1; i < NUM_BUILTIN; i++)
         if (raws.mat_table.builtin[i]->id == token)
             return decode(i, -1);
@@ -208,7 +213,7 @@ bool MaterialInfo::findInorganic(const std::string &token)
         return true;
     }
 
-    df::world_raws &raws = df::global::world->raws;
+    df::world_raws &raws = world->raws;
     for (unsigned i = 0; i < raws.inorganics.size(); i++)
     {
         df::inorganic_raw *p = raws.inorganics[i];
@@ -222,7 +227,7 @@ bool MaterialInfo::findPlant(const std::string &token, const std::string &subtok
 {
     if (token.empty())
         return decode(-1);
-    df::world_raws &raws = df::global::world->raws;
+    df::world_raws &raws = world->raws;
     for (unsigned i = 0; i < raws.plants.all.size(); i++)
     {
         df::plant_raw *p = raws.plants.all[i];
@@ -246,7 +251,7 @@ bool MaterialInfo::findCreature(const std::string &token, const std::string &sub
 {
     if (token.empty() || subtoken.empty())
         return decode(-1);
-    df::world_raws &raws = df::global::world->raws;
+    df::world_raws &raws = world->raws;
     for (unsigned i = 0; i < raws.creatures.all.size(); i++)
     {
         df::creature_raw *p = raws.creatures.all[i];
@@ -388,7 +393,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &ma
     ok.whole = mask.whole = 0;
     if (!isValid()) return;
 
-#define MAT_FLAG(name) material->flags.is_set(df::enums::material_flags::name)
+#define MAT_FLAG(name) material->flags.is_set(material_flags::name)
 #define FLAG(field, name) (field && field->flags.is_set(name))
 #define TEST(bit, check) \
     mask.bits.bit = true; ok.bits.bit = !!(check);
@@ -433,8 +438,8 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
 
     TEST(fire_safe, material->heat.melting_point > 11000);
     TEST(magma_safe, material->heat.melting_point > 12000);
-    TEST(deep_material, FLAG(inorganic, df::enums::inorganic_flags::DEEP_ANY));
-    TEST(non_economic, inorganic && !(df::global::ui && df::global::ui->economic_stone[index]));
+    TEST(deep_material, FLAG(inorganic, inorganic_flags::DEEP_ANY));
+    TEST(non_economic, inorganic && !(ui && ui->economic_stone[index]));
 
     TEST(plant, plant);
     TEST(silk, MAT_FLAG(SILK));
@@ -646,10 +651,8 @@ bool Materials::ReadCreatureTypes (void)
 
 bool Materials::ReadOthers(void)
 {
-    uint32_t size = df::enums::builtin_mats::_last_item_of_builtin_mats + 1;
     other.clear();
-    other.reserve(size);
-    for (uint32_t i = 0; i < size;i++)
+    FOR_ENUM_ITEMS(builtin_mats, i)
     {
         t_matglossOther mat;
         mat.id = world->raws.mat_table.builtin[i]->id;
@@ -747,48 +750,28 @@ bool Materials::ReadCreatureTypesEx (void)
                 caste.bodypart.push_back(part);
             }
 
-            t_attrib *phys[] = {
-                &caste.strength,
-                &caste.agility,
-                &caste.toughness,
-                &caste.endurance,
-                &caste.recuperation,
-                &caste.disease_resistance
-            };
-            for (uint32_t k = 0; k < 6; k++)
+            for (int32_t k = 0; k < 7; k++)
             {
-                phys[k]->level = ca->attributes.phys_att_range[k][0];
-                phys[k]->field_4 = ca->attributes.phys_att_range[k][1];
-                phys[k]->field_8 = ca->attributes.phys_att_range[k][2];
-                phys[k]->field_C = ca->attributes.phys_att_range[k][3];
-                phys[k]->leveldiff = ca->attributes.phys_att_range[k][4];
-                phys[k]->field_14 = ca->attributes.phys_att_range[k][5];
-                phys[k]->field_18 = ca->attributes.phys_att_range[k][6];
-            }
-            t_attrib *ment[] = {
-                &caste.analytical_ability,
-                &caste.focus,
-                &caste.willpower,
-                &caste.creativity,
-                &caste.intuition,
-                &caste.patience,
-                &caste.memory,
-                &caste.linguistic_ability,
-                &caste.spatial_sense,
-                &caste.musicality,
-                &caste.kinesthetic_sense,
-                &caste.empathy,
-                &caste.social_awareness
-            };
-            for (uint32_t k = 0; k < 13; k++)
-            {
-                ment[k]->level = ca->attributes.ment_att_range[k][0];
-                ment[k]->field_4 = ca->attributes.ment_att_range[k][1];
-                ment[k]->field_8 = ca->attributes.ment_att_range[k][2];
-                ment[k]->field_C = ca->attributes.ment_att_range[k][3];
-                ment[k]->leveldiff = ca->attributes.ment_att_range[k][4];
-                ment[k]->field_14 = ca->attributes.ment_att_range[k][5];
-                ment[k]->field_18 = ca->attributes.ment_att_range[k][6];
+                caste.strength[k] = ca->attributes.phys_att_range[df::physical_attribute_type::STRENGTH][k];
+                caste.agility[k] = ca->attributes.phys_att_range[df::physical_attribute_type::AGILITY][k];
+                caste.toughness[k] = ca->attributes.phys_att_range[df::physical_attribute_type::TOUGHNESS][k];
+                caste.endurance[k] = ca->attributes.phys_att_range[df::physical_attribute_type::ENDURANCE][k];
+                caste.recuperation[k] = ca->attributes.phys_att_range[df::physical_attribute_type::RECUPERATION][k];
+                caste.disease_resistance[k] = ca->attributes.phys_att_range[df::physical_attribute_type::DISEASE_RESISTANCE][k];
+
+                caste.analytical_ability[k] = ca->attributes.phys_att_range[df::mental_attribute_type::ANALYTICAL_ABILITY][k];
+                caste.focus[k] = ca->attributes.phys_att_range[df::mental_attribute_type::FOCUS][k];
+                caste.willpower[k] = ca->attributes.phys_att_range[df::mental_attribute_type::WILLPOWER][k];
+                caste.creativity[k] = ca->attributes.phys_att_range[df::mental_attribute_type::CREATIVITY][k];
+                caste.intuition[k] = ca->attributes.phys_att_range[df::mental_attribute_type::INTUITION][k];
+                caste.patience[k] = ca->attributes.phys_att_range[df::mental_attribute_type::PATIENCE][k];
+                caste.memory[k] = ca->attributes.phys_att_range[df::mental_attribute_type::MEMORY][k];
+                caste.linguistic_ability[k] = ca->attributes.phys_att_range[df::mental_attribute_type::LINGUISTIC_ABILITY][k];
+                caste.spatial_sense[k] = ca->attributes.phys_att_range[df::mental_attribute_type::SPATIAL_SENSE][k];
+                caste.musicality[k] = ca->attributes.phys_att_range[df::mental_attribute_type::MUSICALITY][k];
+                caste.kinesthetic_sense[k] = ca->attributes.phys_att_range[df::mental_attribute_type::KINESTHETIC_SENSE][k];
+                caste.empathy[k] = ca->attributes.phys_att_range[df::mental_attribute_type::EMPATHY][k];
+                caste.social_awareness[k] = ca->attributes.phys_att_range[df::mental_attribute_type::SOCIAL_AWARENESS][k];
             }
             mat.castes.push_back(caste);
         }

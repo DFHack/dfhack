@@ -592,12 +592,12 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
     return true;
 }
 
-bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<df_plant *>*& plants)
+bool Maps::ReadVegetation(uint32_t x, uint32_t y, uint32_t z, std::vector<df::plant *>*& plants)
 {
     df::map_block *block = getBlock(x,y,z);
     if (!block)
         return false;
 
-    plants = (vector<DFHack::df_plant *> *)&block->plants;
+    plants = &block->plants;
     return true;
 }

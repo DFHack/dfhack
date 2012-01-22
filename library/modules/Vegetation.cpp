@@ -46,16 +46,6 @@ Module* DFHack::createVegetation()
 
 Vegetation::Vegetation()
 {
-    Core & c = Core::getInstance();
-    try
-    {
-        OffsetGroup * OG_Veg = c.vinfo->getGroup("Vegetation");
-        all_plants = (vector<df_plant *> *) OG_Veg->getAddress ("vector");
-    }
-    catch(exception &)
-    {
-        all_plants = 0;
-    }
 }
 
 Vegetation::~Vegetation()

@@ -17,7 +17,7 @@
 
 using namespace DFHack;
 using namespace DFHack::Simple;
-
+using namespace df::enums;
 using df::global::world;
 
 const int buffer = 20; // seed number buffer - 20 is reasonable
@@ -48,11 +48,11 @@ void printHelp(Core& core) // prints help
         "Each plant type can be assigned a limit. If their number falls below,\n"
         "the plants and seeds of that type will be excluded from cookery.\n"
         "If the number rises above the limit + %i, then cooking will be allowed.\n", buffer
-    );
+        );
     core.con.printerr(
         "The plugin needs a fortress to be loaded and will deactivate automatically otherwise.\n"
         "You have to reactivate with 'seedwatch start' after you load the game.\n"
-    );
+        );
     core.con.print(
         "Options:\n"
         "seedwatch all   - Adds all plants from the abbreviation list to the watch list.\n"
@@ -60,7 +60,7 @@ void printHelp(Core& core) // prints help
         "seedwatch stop  - Stop watching.\n"
         "seedwatch info  - Display whether seedwatch is watching, and the watch list.\n"
         "seedwatch clear - Clears the watch list.\n\n"
-    );
+        );
     if(!abbreviations.empty())
     {
         core.con.print("You can use these abbreviations for the plant tokens:\n");
@@ -79,7 +79,7 @@ void printHelp(Core& core) // prints help
         "  is the same as 'seedwatch MUSHROOM_HELMET_PLUMP 30'\n"
         "seedwatch all 30\n"
         "  adds all plants from the abbreviation list to the watch list, the limit being 30.\n"
-    );
+        );
 };
 
 // searches abbreviations, returns expansion if so, returns original if not
@@ -102,7 +102,7 @@ DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>&
     {
         return CR_FAILURE;
     }
-    core.Suspend();
+    CoreSuspender suspend(pCore);
 
     std::map<std::string, t_materialIndex> materialsReverser;
     for(std::size_t i = 0; i < world->raws.plants.all.size(); ++i)
@@ -119,7 +119,6 @@ DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>&
     {
         // just print the help
         printHelp(core);
-        core.Resume();
         return CR_OK;
     }
 
@@ -184,7 +183,6 @@ DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>&
         /*
         else if(par == "dumpmaps")
         {
-            
             core.con.print("Plants:\n");
             for(auto i = plantMaterialTypes.begin(); i != plantMaterialTypes.end(); i++)
             {
@@ -242,7 +240,6 @@ DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>&
         break;
     }
 
-    core.Resume();
     return CR_OK;
 }
 
@@ -328,10 +325,10 @@ DFhackCExport command_result plugin_onupdate(Core* pCore)
             t_materialIndex materialIndex = item->getMaterialIndex();
             switch(item->getType())
             {
-            case df::item_type::SEEDS:
+            case item_type::SEEDS:
                 if(!ignoreSeeds(item->flags)) ++seedCount[materialIndex];
                 break;
-            case df::item_type::PLANT:
+            case item_type::PLANT:
                 break;
             }
         }

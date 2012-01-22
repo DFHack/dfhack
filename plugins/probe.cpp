@@ -24,6 +24,7 @@ using namespace std;
 using std::vector;
 using std::string;
 using namespace DFHack;
+using namespace df::enums;
 
 DFhackCExport command_result df_probe (Core * c, vector <string> & parameters);
 DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters);
@@ -53,7 +54,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters)
 {
     Console & con = c->con;
-    c->Suspend();
+    CoreSuspender suspend(c);
     DFHack::Gui *Gui = c->getGui();
     DFHack::Units * cr = c->getUnits();
     int32_t cursorX, cursorY, cursorZ;
@@ -76,7 +77,6 @@ DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters)
             }
         }
     }
-    c->Resume();
     return CR_OK;
 }
 
@@ -93,8 +93,7 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
     }
     */
 
-    BEGIN_PROBE:
-    c->Suspend();
+    CoreSuspender suspend(c);
 
     DFHack::Gui *Gui = c->getGui();
     DFHack::Materials *Materials = c->getMaterials();
@@ -105,7 +104,6 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
-        c->Resume();
         return CR_FAILURE;
     }
     MapExtras::MapCache mc;
@@ -118,7 +116,6 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
     if(cursorX == -30000)
     {
         con.printerr("No cursor; place cursor over tile to probe.\n");
-        c->Resume();
         return CR_FAILURE;
     }
     DFCoord cursor (cursorX,cursorY,cursorZ);
@@ -132,7 +129,6 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
     if(!b && !b->valid)
     {
         con.printerr("No data.\n");
-        c->Resume();
         return CR_OK;
     }
     mapblock40d & block = b->raw;
@@ -220,7 +216,7 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
     // liquids
     if(des.bits.flow_size)
     {
-        if(des.bits.liquid_type == df::tile_liquid::Magma)
+        if(des.bits.liquid_type == tile_liquid::Magma)
             con <<"magma: ";
         else con <<"water: ";
         con << des.bits.flow_size << std::endl;
@@ -275,6 +271,5 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
         << endl;
     con << "mystery: " << block.mystery << endl;
     con << std::endl;
-    c->Resume();
     return CR_OK;
 }

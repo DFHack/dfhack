@@ -18,10 +18,12 @@ using namespace std;
 #include "modules/Units.h"
 #include "modules/Materials.h"
 #include "modules/Translation.h"
-using namespace DFHack;
-using namespace DFHack::Simple;
 #include "DataDefs.h"
 #include "df/world.h"
+
+using namespace DFHack;
+using namespace DFHack::Simple;
+using namespace df::enums;
 
 using df::global::world;
 
@@ -91,7 +93,9 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
             return CR_FAILURE;
         }
     }
-    c->Suspend();
+
+    CoreSuspender suspend(c);
+
     DFHack::Materials *Materials = c->getMaterials();
     DFHack::Units *Creatures = c->getUnits();
     DFHack::Translation *Tran = c->getTranslation();
@@ -132,13 +136,13 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
         else if (item->flags.bits.on_ground)
         {
             int32_t type = item->getType();
-	    if(type == df::item_type::MEAT ||
-               type == df::item_type::FISH ||
-               type == df::item_type::VERMIN ||
-               type == df::item_type::PET ||
-               type == df::item_type::PLANT ||
-               type == df::item_type::CHEESE ||
-               type == df::item_type::FOOD
+	    if(type == item_type::MEAT ||
+               type == item_type::FISH ||
+               type == item_type::VERMIN ||
+               type == item_type::PET ||
+               type == item_type::PLANT ||
+               type == item_type::CHEESE ||
+               type == item_type::FOOD
             )
             {
                 confiscate = true;
@@ -207,6 +211,5 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
             c->con.print("\n");
         }
     }
-    c->Resume();
     return CR_OK;
 }

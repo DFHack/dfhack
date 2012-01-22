@@ -14,6 +14,7 @@ using std::vector;
 using std::string;
 using std::stack;
 using namespace DFHack;
+using namespace df::enums;
 
 DFhackCExport command_result vdig (Core * c, vector <string> & parameters);
 DFhackCExport command_result vdigx (Core * c, vector <string> & parameters);
@@ -35,12 +36,12 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
         "  Designates a whole vein under the cursor for digging.\n"
         "Options:\n"
         "  x - follow veins through z-levels with stairs.\n"
-    ));
+        ));
     commands.push_back(PluginCommand(
         "vdigx","Dig a whole vein, following through z-levels.",vdigx,cursor_hotkey,
         "  Designates a whole vein under the cursor for digging.\n"
         "  Also follows the vein between z-levels with stairs, like 'vdig x' would.\n"
-    ));
+        ));
     commands.push_back(PluginCommand("expdig","Select or designate an exploratory pattern. Use 'expdig ?' for help.",expdig));
     commands.push_back(PluginCommand("digcircle","Dig desingate a circle (filled or hollow) with given radius.",digcircle));
     //commands.push_back(PluginCommand("autodig","Mark a tile for continuous digging.",autodig));
@@ -53,9 +54,9 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 }
 
 template <class T>
-bool from_string(T& t, 
-                 const std::string& s, 
-                 std::ios_base& (*f)(std::ios_base&))
+bool from_string(T& t,
+    const std::string& s,
+    std::ios_base& (*f)(std::ios_base&))
 {
     std::istringstream iss(s);
     return !(iss >> f >> t).fail();
@@ -69,11 +70,11 @@ enum circle_what
 };
 
 bool dig (MapExtras::MapCache & MCache,
-          circle_what what,
-          df::tile_dig_designation type,
-          int32_t x, int32_t y, int32_t z,
-          int x_max, int y_max
-         )
+    circle_what what,
+    df::tile_dig_designation type,
+    int32_t x, int32_t y, int32_t z,
+    int x_max, int y_max
+    )
 {
     DFCoord at (x,y,z);
     auto b = MCache.BlockAt(at/16);
@@ -107,15 +108,15 @@ bool dig (MapExtras::MapCache & MCache,
                 break;
             }
             if(isFloorTerrain(tt)
-               && (type == df::tile_dig_designation::DownStair || type == df::tile_dig_designation::Channel)
-               && ts != TREE_OK
-               && ts != TREE_DEAD
-            )
+                && (type == tile_dig_designation::DownStair || type == tile_dig_designation::Channel)
+                && ts != TREE_OK
+                && ts != TREE_DEAD
+                )
             {
                 std::cerr << "allowing tt" << tt << ", is floor\n";
                 break;
             }
-            if(isStairTerrain(tt) && type == df::tile_dig_designation::Channel )
+            if(isStairTerrain(tt) && type == tile_dig_designation::Channel )
                 break;
             return false;
         }
@@ -123,28 +124,28 @@ bool dig (MapExtras::MapCache & MCache,
     }
     switch(what)
     {
-        case circle_set:
-            if(des.bits.dig == df::tile_dig_designation::No)
-            {
-                des.bits.dig = type;
-            }
-            break;
-        case circle_unset:
-            if (des.bits.dig != df::tile_dig_designation::No)
-            {
-                des.bits.dig = df::tile_dig_designation::No;
-            }
-            break;
-        case circle_invert:
-            if(des.bits.dig == df::tile_dig_designation::No)
-            {
-                des.bits.dig = type;
-            }
-            else
-            {
-                des.bits.dig = df::tile_dig_designation::No;
-            }
-            break;
+    case circle_set:
+        if(des.bits.dig == tile_dig_designation::No)
+        {
+            des.bits.dig = type;
+        }
+        break;
+    case circle_unset:
+        if (des.bits.dig != tile_dig_designation::No)
+        {
+            des.bits.dig = tile_dig_designation::No;
+        }
+        break;
+    case circle_invert:
+        if(des.bits.dig == tile_dig_designation::No)
+        {
+            des.bits.dig = type;
+        }
+        else
+        {
+            des.bits.dig = tile_dig_designation::No;
+        }
+        break;
     }
     std::cerr << "allowing tt" << tt << "\n";
     MCache.setDesignationAt(at,des);
@@ -152,11 +153,11 @@ bool dig (MapExtras::MapCache & MCache,
 };
 
 bool lineX (MapExtras::MapCache & MCache,
-            circle_what what,
-            df::tile_dig_designation type,
-            int32_t y1, int32_t y2, int32_t x, int32_t z,
-            int x_max, int y_max
-           )
+    circle_what what,
+    df::tile_dig_designation type,
+    int32_t y1, int32_t y2, int32_t x, int32_t z,
+    int x_max, int y_max
+    )
 {
     for(int32_t y = y1; y <= y2; y++)
     {
@@ -166,11 +167,11 @@ bool lineX (MapExtras::MapCache & MCache,
 };
 
 bool lineY (MapExtras::MapCache & MCache,
-            circle_what what,
-            df::tile_dig_designation type,
-            int32_t x1, int32_t x2, int32_t y, int32_t z,
-            int x_max, int y_max
-           )
+    circle_what what,
+    df::tile_dig_designation type,
+    int32_t x1, int32_t x2, int32_t y, int32_t z,
+    int x_max, int y_max
+    )
 {
     for(int32_t x = x1; x <= x2; x++)
     {
@@ -183,7 +184,7 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
 {
     static bool filled = false;
     static circle_what what = circle_set;
-    static df::tile_dig_designation type = df::tile_dig_designation::Default;
+    static df::tile_dig_designation type = tile_dig_designation::Default;
     static int diameter = 0;
     auto saved_d = diameter;
     bool force_help = false;
@@ -215,27 +216,27 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         }
         else if(parameters[i] == "dig")
         {
-            type = df::tile_dig_designation::Default;
+            type = tile_dig_designation::Default;
         }
         else if(parameters[i] == "ramp")
         {
-            type = df::tile_dig_designation::Ramp;
+            type = tile_dig_designation::Ramp;
         }
         else if(parameters[i] == "dstair")
         {
-            type = df::tile_dig_designation::DownStair;
+            type = tile_dig_designation::DownStair;
         }
         else if(parameters[i] == "ustair")
         {
-            type = df::tile_dig_designation::UpStair;
+            type = tile_dig_designation::UpStair;
         }
         else if(parameters[i] == "xstair")
         {
-            type = df::tile_dig_designation::UpDownStair;
+            type = tile_dig_designation::UpDownStair;
         }
         else if(parameters[i] == "chan")
         {
-            type = df::tile_dig_designation::Channel;
+            type = tile_dig_designation::Channel;
         }
         else if (!from_string(diameter,parameters[i], std::dec))
         {
@@ -246,39 +247,39 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         diameter = -diameter;
     if(force_help || diameter == 0)
     {
-        c->con.print(   "A command for easy designation of filled and hollow circles.\n"
-                        "\n"
-                        "Options:\n"
-                        " hollow = Set the circle to hollow (default)\n"
-                        " filled = Set the circle to filled\n"
-                        "\n"
-                        "    set = set designation\n"
-                        "  unset = unset current designation\n"
-                        " invert = invert current designation\n"
-                        "\n"
-                        "    dig = normal digging\n"
-                        "   ramp = ramp digging\n"
-                        " ustair = staircase up\n"
-                        " dstair = staircase down\n"
-                        " xstair = staircase up/down\n"
-                        "   chan = dig channel\n"
-                        "\n"
-                        "      # = diameter in tiles (default = 0)\n"
-                        "\n"
-                        "After you have set the options, the command called with no options\n"
-                        "repeats with the last selected parameters:\n"
-                        "'digcircle filled 3' = Dig a filled circle with radius = 3.\n"
-                        "'digcircle' = Do it again.\n"
-        );
+        c->con.print(
+            "A command for easy designation of filled and hollow circles.\n"
+            "\n"
+            "Options:\n"
+            " hollow = Set the circle to hollow (default)\n"
+            " filled = Set the circle to filled\n"
+            "\n"
+            "    set = set designation\n"
+            "  unset = unset current designation\n"
+            " invert = invert current designation\n"
+            "\n"
+            "    dig = normal digging\n"
+            "   ramp = ramp digging\n"
+            " ustair = staircase up\n"
+            " dstair = staircase down\n"
+            " xstair = staircase up/down\n"
+            "   chan = dig channel\n"
+            "\n"
+            "      # = diameter in tiles (default = 0)\n"
+            "\n"
+            "After you have set the options, the command called with no options\n"
+            "repeats with the last selected parameters:\n"
+            "'digcircle filled 3' = Dig a filled circle with radius = 3.\n"
+            "'digcircle' = Do it again.\n"
+            );
         return CR_OK;
     }
     int32_t cx, cy, cz;
-    c->Suspend();
+    CoreSuspender suspend(c);
     Gui * gui = c->getGui();
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
-        c->Resume();
         return CR_FAILURE;
     }
 
@@ -288,7 +289,6 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
     MapExtras::MapCache MCache;
     if(!gui->getCursorCoords(cx,cy,cz) || cx == -30000)
     {
-        c->Resume();
         c->con.printerr("Can't get the cursor coords...\n");
         return CR_FAILURE;
     }
@@ -359,7 +359,6 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
         lastwhole = whole;
     }
     MCache.WriteAll();
-    c->Resume();
     return CR_OK;
 }
 typedef char digmask[16][16];
@@ -477,8 +476,8 @@ static digmask diag5r[5] =
         {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
         {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
         {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
-        },
-        {
+    },
+    {
         {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
         {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
         {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
@@ -495,8 +494,8 @@ static digmask diag5r[5] =
         {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
         {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
         {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
-        },
-        {
+    },
+    {
         {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
         {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
         {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
@@ -513,8 +512,8 @@ static digmask diag5r[5] =
         {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
         {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
         {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
-        },
-        {
+    },
+    {
         {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
         {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
         {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
@@ -531,8 +530,8 @@ static digmask diag5r[5] =
         {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
         {0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0},
         {0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0},
-        },
-        {
+    },
+    {
         {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
         {0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0},
         {0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0},
@@ -726,9 +725,9 @@ enum explo_what
 };
 
 bool stamp_pattern (uint32_t bx, uint32_t by, int z_level,
-                    digmask & dm, explo_how how, explo_what what,
-                    int x_max, int y_max
-                   )
+    digmask & dm, explo_how how, explo_what what,
+    int x_max, int y_max
+    )
 {
     df::map_block * bl = Maps::getBlock(bx,by,z_level);
     if(!bl)
@@ -756,25 +755,25 @@ bool stamp_pattern (uint32_t bx, uint32_t by, int z_level,
                 continue;
             if(how == EXPLO_CLEAR)
             {
-                des.bits.dig = df::tile_dig_designation::No;
+                des.bits.dig = tile_dig_designation::No;
                 continue;
             }
             if(dm[y][x])
             {
                 if(what == EXPLO_ALL
-                    || des.bits.dig == df::tile_dig_designation::Default && what == EXPLO_DESIGNATED
+                    || des.bits.dig == tile_dig_designation::Default && what == EXPLO_DESIGNATED
                     || des.bits.hidden && what == EXPLO_HIDDEN)
                 {
-                    des.bits.dig = df::tile_dig_designation::Default;
+                    des.bits.dig = tile_dig_designation::Default;
                 }
             }
             else if(what == EXPLO_DESIGNATED)
             {
-                des.bits.dig = df::tile_dig_designation::No;
+                des.bits.dig = tile_dig_designation::No;
             }
         }
     }
-    bl->flags.set(df::block_flags::Designated);
+    bl->flags.set(block_flags::Designated);
     return true;
 };
 
@@ -828,42 +827,41 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
     }
     if(force_help || how == EXPLO_NOTHING)
     {
-        c->con.print("This command can be used for exploratory mining.\n"
-                     "http://df.magmawiki.com/index.php/DF2010:Exploratory_mining\n"
-                     "\n"
-                     "There are two variables that can be set: pattern and filter.\n"
-                     "Patterns:\n"
-                     "  diag5 = diagonals separated by 5 tiles\n"
-                     " diag5r = diag5 rotated 90 degrees\n"
-                             " ladder = A 'ladder' pattern\n"
-                     "ladderr = ladder rotated 90 degrees\n"
-                     "  clear = Just remove all dig designations\n"
-                     "  cross = A cross, exactly in the middle of the map.\n"
-                     "Filters:\n"
-                     " all        = designate whole z-level\n"
-                     " hidden     = designate only hidden tiles of z-level (default)\n"
-                     " designated = Take current designation and apply pattern to it.\n"
-                     "\n"
-                     "After you have a pattern set, you can use 'expdig' to apply it:\n"
-                     "'expdig diag5 hidden' = set filter to hidden, pattern to diag5.\n"
-                     "'expdig' = apply the pattern with filter.\n"
-        );
+        c->con.print(
+            "This command can be used for exploratory mining.\n"
+            "http://df.magmawiki.com/index.php/DF2010:Exploratory_mining\n"
+            "\n"
+            "There are two variables that can be set: pattern and filter.\n"
+            "Patterns:\n"
+            "  diag5 = diagonals separated by 5 tiles\n"
+            " diag5r = diag5 rotated 90 degrees\n"
+            " ladder = A 'ladder' pattern\n"
+            "ladderr = ladder rotated 90 degrees\n"
+            "  clear = Just remove all dig designations\n"
+            "  cross = A cross, exactly in the middle of the map.\n"
+            "Filters:\n"
+            " all        = designate whole z-level\n"
+            " hidden     = designate only hidden tiles of z-level (default)\n"
+            " designated = Take current designation and apply pattern to it.\n"
+            "\n"
+            "After you have a pattern set, you can use 'expdig' to apply it:\n"
+            "'expdig diag5 hidden' = set filter to hidden, pattern to diag5.\n"
+            "'expdig' = apply the pattern with filter.\n"
+            );
         return CR_OK;
     }
-    c->Suspend();
+    CoreSuspender suspend(c);
     Gui * gui = c->getGui();
     uint32_t x_max, y_max, z_max;
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
-        c->Resume();
         return CR_FAILURE;
     }
     Maps::getSize(x_max,y_max,z_max);
     int32_t xzzz,yzzz,z_level;
     if(!gui->getViewCoords(xzzz,yzzz,z_level))
     {
-        c->Resume();
         c->con.printerr("Can't get view coords...\n");
         return CR_FAILURE;
     }
@@ -876,7 +874,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             {
                 which = (4*x + y) % 5;
                 stamp_pattern(x,y_max - 1 - y, z_level, diag5[which],
-                              how, what, x_max, y_max);
+                    how, what, x_max, y_max);
             }
         }
     }
@@ -889,7 +887,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             {
                 which = (4*x + 1000-y) % 5;
                 stamp_pattern(x,y_max - 1 - y, z_level, diag5r[which],
-                              how, what, x_max, y_max);
+                    how, what, x_max, y_max);
             }
         }
     }
@@ -915,7 +913,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
             for(uint32_t x = 0; x < x_max; x++)
             {
                 stamp_pattern(x, y, z_level, ladderr[which],
-                              how, what, x_max, y_max);
+                    how, what, x_max, y_max);
             }
         }
     }
@@ -939,21 +937,20 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
                     continue;
                 if(cross[y][x])
                 {
-                    des.bits.dig = df::tile_dig_designation::Default;
+                    des.bits.dig = tile_dig_designation::Default;
                     mx.setDesignationAt(pos,des);
                 }
             }
-        mx.WriteAll();
+            mx.WriteAll();
     }
     else for(uint32_t x = 0; x < x_max; x++)
     {
         for(int32_t y = 0 ; y < y_max; y++)
         {
             stamp_pattern(x, y, z_level, all_tiles,
-                          how, what, x_max, y_max);
+                how, what, x_max, y_max);
         }
     }
-    c->Resume();
     return CR_OK;
 }
 
@@ -1090,32 +1087,32 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
                 {
                     flood.push(current-1);
 
-                    if(des_minus.bits.dig == df::tile_dig_designation::DownStair)
-                        des_minus.bits.dig = df::tile_dig_designation::UpDownStair;
+                    if(des_minus.bits.dig == tile_dig_designation::DownStair)
+                        des_minus.bits.dig = tile_dig_designation::UpDownStair;
                     else
-                        des_minus.bits.dig = df::tile_dig_designation::UpStair;
+                        des_minus.bits.dig = tile_dig_designation::UpStair;
                     MCache->setDesignationAt(current-1,des_minus);
 
-                    des.bits.dig = df::tile_dig_designation::DownStair;
+                    des.bits.dig = tile_dig_designation::DownStair;
                 }
                 if(current.z < z_max - 1 && above && vmat_plus == vmat2)
                 {
                     flood.push(current+ 1);
 
-                    if(des_plus.bits.dig == df::tile_dig_designation::UpStair)
-                        des_plus.bits.dig = df::tile_dig_designation::UpDownStair;
+                    if(des_plus.bits.dig == tile_dig_designation::UpStair)
+                        des_plus.bits.dig = tile_dig_designation::UpDownStair;
                     else
-                        des_plus.bits.dig = df::tile_dig_designation::DownStair;
+                        des_plus.bits.dig = tile_dig_designation::DownStair;
                     MCache->setDesignationAt(current+1,des_plus);
 
-                    if(des.bits.dig == df::tile_dig_designation::DownStair)
-                        des.bits.dig = df::tile_dig_designation::UpDownStair;
+                    if(des.bits.dig == tile_dig_designation::DownStair)
+                        des.bits.dig = tile_dig_designation::UpDownStair;
                     else
-                        des.bits.dig = df::tile_dig_designation::UpStair;
+                        des.bits.dig = tile_dig_designation::UpStair;
                 }
             }
-            if(des.bits.dig == df::tile_dig_designation::No)
-                des.bits.dig = df::tile_dig_designation::Default;
+            if(des.bits.dig == tile_dig_designation::No)
+                des.bits.dig = tile_dig_designation::Default;
             MCache->setDesignationAt(current,des);
         }
     }

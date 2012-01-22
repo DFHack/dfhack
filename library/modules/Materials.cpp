@@ -65,7 +65,9 @@ using namespace std;
 
 using namespace DFHack;
 using namespace df::enums;
+
 using df::global::world;
+using df::global::ui;
 
 bool MaterialInfo::decode(df::item *item)
 {
@@ -93,7 +95,7 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
     inorganic = NULL; plant = NULL; creature = NULL;
     figure = NULL;
 
-    df::world_raws &raws = df::global::world->raws;
+    df::world_raws &raws = world->raws;
 
     if (type < 0 || type >= sizeof(raws.mat_table.builtin)/sizeof(void*))
         return false;
@@ -194,7 +196,7 @@ bool MaterialInfo::findBuiltin(const std::string &token)
         return true;
     }
 
-    df::world_raws &raws = df::global::world->raws;
+    df::world_raws &raws = world->raws;
     for (int i = 1; i < NUM_BUILTIN; i++)
         if (raws.mat_table.builtin[i]->id == token)
             return decode(i, -1);
@@ -211,7 +213,7 @@ bool MaterialInfo::findInorganic(const std::string &token)
         return true;
     }
 
-    df::world_raws &raws = df::global::world->raws;
+    df::world_raws &raws = world->raws;
     for (unsigned i = 0; i < raws.inorganics.size(); i++)
     {
         df::inorganic_raw *p = raws.inorganics[i];
@@ -225,7 +227,7 @@ bool MaterialInfo::findPlant(const std::string &token, const std::string &subtok
 {
     if (token.empty())
         return decode(-1);
-    df::world_raws &raws = df::global::world->raws;
+    df::world_raws &raws = world->raws;
     for (unsigned i = 0; i < raws.plants.all.size(); i++)
     {
         df::plant_raw *p = raws.plants.all[i];
@@ -249,7 +251,7 @@ bool MaterialInfo::findCreature(const std::string &token, const std::string &sub
 {
     if (token.empty() || subtoken.empty())
         return decode(-1);
-    df::world_raws &raws = df::global::world->raws;
+    df::world_raws &raws = world->raws;
     for (unsigned i = 0; i < raws.creatures.all.size(); i++)
     {
         df::creature_raw *p = raws.creatures.all[i];
@@ -391,7 +393,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &ma
     ok.whole = mask.whole = 0;
     if (!isValid()) return;
 
-#define MAT_FLAG(name) material->flags.is_set(df::enums::material_flags::name)
+#define MAT_FLAG(name) material->flags.is_set(material_flags::name)
 #define FLAG(field, name) (field && field->flags.is_set(name))
 #define TEST(bit, check) \
     mask.bits.bit = true; ok.bits.bit = !!(check);
@@ -436,8 +438,8 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
 
     TEST(fire_safe, material->heat.melting_point > 11000);
     TEST(magma_safe, material->heat.melting_point > 12000);
-    TEST(deep_material, FLAG(inorganic, df::enums::inorganic_flags::DEEP_ANY));
-    TEST(non_economic, inorganic && !(df::global::ui && df::global::ui->economic_stone[index]));
+    TEST(deep_material, FLAG(inorganic, inorganic_flags::DEEP_ANY));
+    TEST(non_economic, inorganic && !(ui && ui->economic_stone[index]));
 
     TEST(plant, plant);
     TEST(silk, MAT_FLAG(SILK));
@@ -649,10 +651,8 @@ bool Materials::ReadCreatureTypes (void)
 
 bool Materials::ReadOthers(void)
 {
-    uint32_t size = df::enums::builtin_mats::_last_item_of_builtin_mats + 1;
     other.clear();
-    other.reserve(size);
-    for (uint32_t i = 0; i < size;i++)
+    FOR_ENUM_ITEMS(builtin_mats, i)
     {
         t_matglossOther mat;
         mat.id = world->raws.mat_table.builtin[i]->id;

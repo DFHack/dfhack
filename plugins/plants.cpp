@@ -18,7 +18,6 @@
 using std::vector;
 using std::string;
 using namespace DFHack;
-
 using df::global::world;
 
 DFhackCExport command_result df_grow (Core * c, vector <string> & parameters);
@@ -100,11 +99,10 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
         );
         return CR_OK;
     }
-    c->Suspend();
+    CoreSuspender suspend(c);
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
-        c->Resume();
         return CR_FAILURE;
     }
     DFHack::Gui * Gui = c->getGui();
@@ -161,8 +159,6 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
             c->con.printerr("No mass destruction and no cursor...\n" );
         }
     }
-    // Cleanup
-    c->Resume();
     return CR_OK;
 }
 
@@ -204,12 +200,11 @@ DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
             return CR_OK;
         }
     }
-    c->Suspend();
+    CoreSuspender suspend(c);
     Console & con = c->con;
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
-        c->Resume();
         return CR_FAILURE;
     }
     MapExtras::MapCache map;
@@ -248,8 +243,6 @@ DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
         }
     }
 
-    // Cleanup
-    c->Resume();
     return CR_OK;
 }
 

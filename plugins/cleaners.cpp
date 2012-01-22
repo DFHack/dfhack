@@ -17,6 +17,7 @@ using std::vector;
 using std::string;
 using namespace DFHack;
 using namespace DFHack::Simple;
+using namespace df::enums;
 
 using df::global::world;
 using df::global::cursor;
@@ -40,20 +41,20 @@ command_result cleanmap (Core * c, bool snow, bool mud)
         for (int j = 0; j < block->block_events.size(); j++)
         {
             df::block_square_event *evt = block->block_events[j];
-            if (evt->getType() != df::block_square_event_type::material_spatter)
+            if (evt->getType() != block_square_event_type::material_spatter)
                 continue;
             // type verified - recast to subclass
             df::block_square_event_material_spatterst *spatter = (df::block_square_event_material_spatterst *)evt;
 
             // filter snow
             if(!snow
-                && spatter->mat_type == df::builtin_mats::WATER
-                && spatter->mat_state == df::matter_state::Powder)
+                && spatter->mat_type == builtin_mats::WATER
+                && spatter->mat_state == matter_state::Powder)
                 continue;
             // filter mud
             if(!mud
-                && spatter->mat_type == df::builtin_mats::MUD
-                && spatter->mat_state == df::matter_state::Solid)
+                && spatter->mat_type == builtin_mats::MUD
+                && spatter->mat_state == matter_state::Solid)
                 continue;
 
             delete evt;
@@ -119,7 +120,7 @@ DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
     if (cursor->x == -30000)
     {
         c->con.printerr("The cursor is not active.\n");
-        return CR_FAILURE;
+        return CR_WRONG_USAGE;
     }
     df::map_block *block = Maps::getBlockAbs(cursor->x, cursor->y, cursor->z);
     if (block == NULL)
@@ -131,7 +132,7 @@ DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
     for (int i = 0; i < block->block_events.size(); i++)
     {
         df::block_square_event *evt = block->block_events[i];
-        if (evt->getType() != df::block_square_event_type::material_spatter)
+        if (evt->getType() != block_square_event_type::material_spatter)
             continue;
         // type verified - recast to subclass
         df::block_square_event_material_spatterst *spatter = (df::block_square_event_material_spatterst *)evt;
@@ -189,14 +190,13 @@ DFhackCExport command_result clean (Core * c, vector <string> & parameters)
             );
         return CR_OK;
     }
-    c->Suspend();
+    CoreSuspender suspend(c);
     if(map)
         cleanmap(c,snow,mud);
     if(units)
         cleanunits(c);
     if(items)
         cleanitems(c);
-    c->Resume();
     return CR_OK;
 }
 

@@ -23,6 +23,7 @@ using namespace std;
 #include "df/world.h"
 
 using namespace DFHack;
+using namespace df::enums;
 using df::global::world;
 
 struct matdata
@@ -223,11 +224,10 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
         }
     }
     uint32_t x_max = 0, y_max = 0, z_max = 0;
-    c->Suspend();
+    CoreSuspender suspend(c);
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
-        c->Resume();
         return CR_FAILURE;
     }
     Maps::getSize(x_max, y_max, z_max);
@@ -283,7 +283,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                         Maps::GetLocalFeature(blockFeatureLocal, blockCoord, index);
                 }
 
-                int global_z = df::global::world->map.region_z + z;
+                int global_z = world->map.region_z + z;
 
                 // Iterate over all the tiles in the block
                 for(uint32_t y = 0; y < 16; y++)
@@ -316,7 +316,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                         // Check for liquid
                         if (des.bits.flow_size)
                         {
-                            if (des.bits.liquid_type == df::tile_liquid::Magma)
+                            if (des.bits.liquid_type == tile_liquid::Magma)
                                 liquidMagma.add(global_z);
                             else
                                 liquidWater.add(global_z);
@@ -344,7 +344,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                                so as to exclude any holes mined by the player. */
                             if (info->material == DFHack::AIR &&
                                 des.bits.feature_local && des.bits.hidden &&
-                                blockFeatureLocal.type == df::feature_type::deep_special_tube)
+                                blockFeatureLocal.type == feature_type::deep_special_tube)
                             {
                                 tubeTiles.add(global_z);
                             }
@@ -368,20 +368,20 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                         case DFHack::FEATSTONE:
                             if (blockFeatureLocal.type != -1 && des.bits.feature_local)
                             {
-                                if (blockFeatureLocal.type == df::feature_type::deep_special_tube
+                                if (blockFeatureLocal.type == feature_type::deep_special_tube
                                         && blockFeatureLocal.main_material == 0) // stone
                                 {
                                     veinMats[blockFeatureLocal.sub_material].add(global_z);
                                 }
                                 else if (showTemple
-                                         && blockFeatureLocal.type == df::feature_type::deep_surface_portal)
+                                         && blockFeatureLocal.type == feature_type::deep_surface_portal)
                                 {
                                     hasDemonTemple = true;
                                 }
                             }
 
                             if (showSlade && blockFeatureGlobal.type != -1 && des.bits.feature_global
-                                    && blockFeatureGlobal.type == df::feature_type::feature_underworld_from_layer
+                                    && blockFeatureGlobal.type == feature_type::feature_underworld_from_layer
                                     && blockFeatureGlobal.main_material == 0) // stone
                             {
                                 layerMats[blockFeatureGlobal.sub_material].add(global_z);
@@ -494,7 +494,6 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
         veg->Finish();
     }
     mats->Finish();
-    c->Resume();
     con << std::endl;
     return CR_OK;
 }

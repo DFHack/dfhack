@@ -20,8 +20,8 @@ using std::set;
 #include "modules/MapCache.h"
 using namespace MapExtras;
 using namespace DFHack;
-
-typedef vector <DFHack::DFCoord> coord_vec;
+using namespace df::enums;
+typedef vector <df::coord> coord_vec;
 
 class Brush
 {
@@ -358,7 +358,7 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
             amount = 7;
         else if(command.empty())
         {
-            c->Suspend();
+            CoreSuspender suspend(c);
             Maps::getSize(x_max,y_max,z_max);
             Position = c->getGui();
             do
@@ -409,7 +409,7 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                         mcache.setTiletypeAt(*iter, 90);
 
                         df::tile_designation a = mcache.designationAt(*iter);
-                        a.bits.liquid_type = df::tile_liquid::Water;
+                        a.bits.liquid_type = tile_liquid::Water;
                         a.bits.liquid_static = false;
                         a.bits.flow_size = 7;
                         mcache.setTemp1At(*iter,10015);
@@ -478,13 +478,13 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                             }
                             if(amount != 0 && mode == "magma")
                             {
-                                des.bits.liquid_type =  df::tile_liquid::Magma;
+                                des.bits.liquid_type =  tile_liquid::Magma;
                                 mcache.setTemp1At(current,12000);
                                 mcache.setTemp2At(current,12000);
                             }
                             else if(amount != 0 && mode == "water")
                             {
-                                des.bits.liquid_type =  df::tile_liquid::Water;
+                                des.bits.liquid_type =  tile_liquid::Water;
                                 mcache.setTemp1At(current,10015);
                                 mcache.setTemp2At(current,10015);
                             }
@@ -528,7 +528,6 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
                 else
                     c->con << "Something failed horribly! RUN!" << endl;
             } while (0);
-            c->Resume();
         }
         else
         {

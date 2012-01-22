@@ -12,6 +12,7 @@
 #include "modules/Gui.h"
 using MapExtras::MapCache;
 using namespace DFHack;
+using namespace df::enums;
 using df::global::world;
 
 /*
@@ -27,10 +28,10 @@ bool isSafe(df::coord c)
         return false;
 
     // Adamantine tubes and temples lead to Hell
-    if (local_feature.type == df::feature_type::deep_special_tube || local_feature.type == df::feature_type::deep_surface_portal)
+    if (local_feature.type == feature_type::deep_special_tube || local_feature.type == feature_type::deep_surface_portal)
         return false;
     // And Hell *is* Hell.
-    if (global_feature.type == df::feature_type::feature_underworld_from_layer)
+    if (global_feature.type == feature_type::feature_underworld_from_layer)
         return false;
     // otherwise it's safe.
     return true;
@@ -157,20 +158,18 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
         return CR_FAILURE;
     }
 
-    c->Suspend();
+    CoreSuspender suspend(c);
     DFHack::World *World =c->getWorld();
     t_gamemodes gm;
     World->ReadGameMode(gm);
     if(gm.g_mode != GAMEMODE_DWARF)
     {
         con.printerr("Only in fortress mode.\n");
-        c->Resume();
         return CR_FAILURE;
     }
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
-        c->Resume();
         return CR_FAILURE;
     }
 
@@ -209,7 +208,6 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
         else
             revealed = DEMON_REVEALED;
     }
-    c->Resume();
     con.print("Map revealed.\n");
     if(!no_hell)
         con.print("Unpausing can unleash the forces of hell, so it has been temporarily disabled.\n");
@@ -233,7 +231,7 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
         con.printerr("There's nothing to revert!\n");
         return CR_FAILURE;
     }
-    c->Suspend();
+    CoreSuspender suspend(c);
 
     DFHack::World *World =c->getWorld();
     t_gamemodes gm;
@@ -241,13 +239,11 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     if(gm.g_mode != GAMEMODE_DWARF)
     {
         con.printerr("Only in fortress mode.\n");
-        c->Resume();
         return CR_FAILURE;
     }
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
-        c->Resume();
         return CR_FAILURE;
     }
 
@@ -257,7 +253,6 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     if(x_max != x_max_b || y_max != y_max_b || z_max != z_max_b)
     {
         con.printerr("The map is not of the same size...\n");
-        c->Resume();
         return CR_FAILURE;
     }
 
@@ -274,7 +269,6 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
     hidesaved.clear();
     revealed = NOT_REVEALED;
     con.print("Map hidden!\n");
-    c->Resume();
     return CR_OK;
 }
 
@@ -310,20 +304,18 @@ DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string>
             return CR_OK;
         }
     }
-    c->Suspend();
+    CoreSuspender suspend(c);
     uint32_t x_max,y_max,z_max;
     Gui * Gui = c->getGui();
     World * World = c->getWorld();
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
-        c->Resume();
         return CR_FAILURE;
     }
     if(revealed != NOT_REVEALED)
     {
         c->con.printerr("This is only safe to use with non-revealed map.\n");
-        c->Resume();
         return CR_FAILURE;
     }
     t_gamemodes gm;
@@ -331,7 +323,6 @@ DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string>
     if(gm.g_type != GAMETYPE_DWARF_MAIN && gm.g_mode != GAMEMODE_DWARF )
     {
         c->con.printerr("Only in proper dwarf mode.\n");
-        c->Resume();
         return CR_FAILURE;
     }
     int32_t cx, cy, cz;
@@ -343,7 +334,6 @@ DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string>
     if(cx == -30000)
     {
         c->con.printerr("Cursor is not active. Point the cursor at some empty space you want to be unhidden.\n");
-        c->Resume();
         return CR_FAILURE;
     }
     DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
@@ -353,7 +343,6 @@ DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string>
     {
         c->con.printerr("Point the cursor at some empty space you want to be unhidden.\n");
         delete MCache;
-        c->Resume();
         return CR_FAILURE;
     }
     // hide all tiles, flush cache
@@ -467,6 +456,5 @@ DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string>
     }
     MCache->WriteAll();
     delete MCache;
-    c->Resume();
     return CR_OK;
 }

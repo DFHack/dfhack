@@ -12,10 +12,10 @@
 using std::vector;
 using std::string;
 using namespace DFHack;
+using namespace DFHack::Simple;
+using namespace df::enums;
 
 using df::global::world;
-using namespace DFHack;
-using namespace DFHack::Simple;
 
 DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
 {
@@ -48,7 +48,7 @@ DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
             {
                 int16_t oldT = block->tiletype[x][y];
                 if ((tileShape(oldT) == RAMP) &&
-                    (block->designation[x][y].bits.dig == df::tile_dig_designation::Default))
+                    (block->designation[x][y].bits.dig == tile_dig_designation::Default))
                 {
                     // Current tile is a ramp.
                     // Set current tile, as accurately as can be expected
@@ -59,7 +59,7 @@ DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
                         continue;
                     // Set new tile type, clear designation
                     block->tiletype[x][y] = newT;
-                    block->designation[x][y].bits.dig = df::tile_dig_designation::No;
+                    block->designation[x][y].bits.dig = tile_dig_designation::No;
 
                     // Check the tile above this one, in case a downward slope needs to be removed.
                     if ((above) && (tileShape(above->tiletype[x][y]) == RAMP_TOP))

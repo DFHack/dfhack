@@ -22,6 +22,7 @@ using std::set;
 #include "df/tile_dig_designation.h"
 using namespace MapExtras;
 using namespace DFHack;
+using namespace df::enums;
 
 //zilpin: These two functions were giving me compile errors in VS2008, so I cheated with the C style loop below, just to get it to build.
 //Original code is commented out.
@@ -753,12 +754,11 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
                 continue;
             }
 
-            c->Suspend();
+            CoreSuspender suspend(c);
             gui = c->getGui();
             if (!Maps::IsValid())
             {
                 c->con.printerr("Map is not available!\n");
-                c->Resume();
                 return CR_FAILURE;
             }
             Maps::getSize(x_max, y_max, z_max);
@@ -766,7 +766,6 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
             if (!(gui->Start() && gui->getCursorCoords(x,y,z)))
             {
                 c->con.printerr("Can't get cursor coords! Make sure you have a cursor active in DF.\n");
-                c->Resume();
                 return CR_FAILURE;
             }
             c->con.print("Cursor coords: (%d, %d, %d)\n",x,y,z);
@@ -785,7 +784,7 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
                  || (filter.material > -1 && filter.material != source->material)
                  || (filter.special > -1 && filter.special != source->special)
                  || (filter.variant > -1 && filter.variant != source->variant)
-		 || (filter.dig > -1 && (filter.dig != 0) != (des.bits.dig != df::tile_dig_designation::No))
+		 || (filter.dig > -1 && (filter.dig != 0) != (des.bits.dig != tile_dig_designation::No))
                 )
                 {
                     continue;
@@ -890,7 +889,6 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
             {
                 c->con.printerr("Something failed horribly! RUN!\n");
             }
-            c->Resume();
         }
     }
     return CR_OK;

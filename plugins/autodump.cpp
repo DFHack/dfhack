@@ -26,6 +26,8 @@ using namespace std;
 #include "df/general_ref.h"
 
 using namespace DFHack;
+using namespace df::enums;
+
 using MapExtras::Block;
 using MapExtras::MapCache;
 using df::global::world;
@@ -291,9 +293,9 @@ DFhackCExport command_result df_autodump_destroy_item(Core * c, vector <string> 
         return CR_FAILURE;
 
     // Allow undoing the destroy
-    if (df::global::world->frame_counter != last_frame)
+    if (world->frame_counter != last_frame)
     {
-        last_frame = df::global::world->frame_counter;
+        last_frame = world->frame_counter;
         pending_destroy.clear();
     }
 
@@ -327,7 +329,7 @@ DFhackCExport command_result df_autodump_destroy_item(Core * c, vector <string> 
     for (unsigned i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (ref->getType() == df::general_ref_type::UNIT_HOLDER)
+        if (ref->getType() == general_ref_type::UNIT_HOLDER)
         {
             c->con.printerr("Choosing not to destroy items in unit inventory.\n");
             return CR_FAILURE;

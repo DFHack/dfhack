@@ -4,23 +4,22 @@
 #include <iomanip>
 #include <climits>
 #include <vector>
+#include <string>
 #include <sstream>
 #include <ctime>
 #include <cstdio>
 using namespace std;
 
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <vector>
-#include <string>
-#include <modules/Units.h>
-#include <modules/Maps.h>
-#include <modules/Gui.h>
-#include <modules/Materials.h>
-#include <modules/MapCache.h>
-#include <MiscUtils.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "modules/Units.h"
+#include "modules/Maps.h"
+#include "modules/Gui.h"
+#include "modules/Materials.h"
+#include "modules/MapCache.h"
+#include "MiscUtils.h"
 
 using std::vector;
 using std::string;
@@ -54,7 +53,6 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters)
 {
     Console & con = c->con;
-    BEGIN_PROBE:
     c->Suspend();
     DFHack::Gui *Gui = c->getGui();
     DFHack::Units * cr = c->getUnits();
@@ -135,7 +133,7 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
 
             MapExtras::Block * b = mc.BlockAt(cursor/16);
             mapblock40d & block = b->raw;
-            if(b)
+            if(b && b->valid)
             {
                 con.print("block addr: 0x%x\n\n", block.origin);
 /*
@@ -284,6 +282,10 @@ DFhackCExport command_result df_probe (Core * c, vector <string> & parameters)
                     << endl;
                 con << "mystery: " << block.mystery << endl;
                 con << std::endl;
+            }
+            else
+            {
+                con.printerr("No data.\n");
             }
         }
     }

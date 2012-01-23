@@ -35,6 +35,8 @@ distribution.
 // must be last due to MS stupidity
 #include "DataDefs.h"
 
+#include "MiscUtils.h"
+
 using namespace DFHack;
 
 /* The order of global object constructor calls is
@@ -154,10 +156,55 @@ void virtual_identity::Init(Core *core)
     // Read pre-filled vtable ptrs
     OffsetGroup *ptr_table = core->vinfo->getGroup("vtable");
     for (virtual_identity *p = list; p; p = p->next) {
-        uint32_t tmp;
+        void * tmp;
         if (ptr_table->getSafeAddress(p->getName(),tmp))
-            p->vtable_ptr = (void*)tmp;
+            p->vtable_ptr = tmp;
     }
+}
+
+std::string DFHack::bitfieldToString(const void *p, int size, const bitfield_item_info *items)
+{
+    std::string res;
+    const char *data = (const char*)p;
+
+    for (int i = 0; i < size*8; i++) {
+        unsigned v;
+
+        if (items[i].size > 1) {
+            unsigned pdv = *(unsigned*)&data[i/8];
+            v = (pdv >> (i%8)) & ((1 << items[i].size)-1);
+        } else {
+            v = (data[i/8]>>(i%8)) & 1;
+        }
+
+        if (v) {
+            if (!res.empty())
+                res += ' ';
+
+            if (items[i].name)
+                res += items[i].name;
+            else
+                res += stl_sprintf("UNK_%d", i);
+
+            if (items[i].size > 1)
+                res += stl_sprintf("=%u", v);
+        }
+
+        if (items[i].size > 1)
+            i += items[i].size-1;
+    }
+
+    return res;
+}
+
+int DFHack::findBitfieldField(const std::string &name, int size, const bitfield_item_info *items)
+{
+    for (int i = 0; i < size*8; i++) {
+        if (items[i].name && items[i].name == name)
+            return i;
+    }
+
+    return -1;
 }
 
 #define SIMPLE_GLOBAL(name,tname) \
@@ -169,7 +216,7 @@ DF_KNOWN_GLOBALS
 
 void DFHack::InitDataDefGlobals(Core *core) {
     OffsetGroup *global_table = core->vinfo->getGroup("global");
-    uint32_t tmp;
+    void * tmp;
 
 #define SIMPLE_GLOBAL(name,tname) \
     if (global_table->getSafeAddress(#name,tmp)) df::global::name = (tname*)tmp;

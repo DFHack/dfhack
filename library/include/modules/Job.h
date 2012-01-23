@@ -23,24 +23,37 @@ distribution.
 */
 
 #pragma once
+#ifndef CL_MOD_JOB
+#define CL_MOD_JOB
 
-#ifndef MODULE_FACTORY_H_INCLUDED
-#define MODULE_FACTORY_H_INCLUDED
+#include "Export.h"
+#include "Module.h"
+#include <ostream>
+
+namespace df
+{
+    struct job;
+    struct job_item;
+    struct job_item_filter;
+    struct building;
+}
 
 namespace DFHack
 {
-    class Module;
-    Module* createUnits();
-    Module* createEngravings();
-    Module* createGui();
-    Module* createWorld();
-    Module* createMaterials();
-    Module* createTranslation();
-    Module* createVegetation();
-    Module* createBuildings();
-    Module* createConstructions();
-    Module* createMaps();
-    Module* createNotes();
-    Module* createGraphic();
+    // Duplicate the job structure. It is not linked into any DF lists.
+    DFHACK_EXPORT df::job *cloneJobStruct(df::job *job);
+
+    // Delete a cloned structure.
+    DFHACK_EXPORT void deleteJobStruct(df::job *job);
+
+    DFHACK_EXPORT bool operator== (const df::job_item &a, const df::job_item &b);
+    DFHACK_EXPORT bool operator== (const df::job &a, const df::job &b);
+
+    DFHACK_EXPORT void printJobDetails(Core *c, df::job *job);
+
+    DFHACK_EXPORT df::building *getJobHolder(df::job *job);
+
+    DFHACK_EXPORT bool linkJobIntoWorld(df::job *job, bool new_id = true);
 }
 #endif
+

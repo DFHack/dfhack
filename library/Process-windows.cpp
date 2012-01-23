@@ -112,7 +112,7 @@ namespace DFHack
         uint32_t my_pid;
         IMAGE_NT_HEADERS pe_header;
         IMAGE_SECTION_HEADER * sections;
-        uint32_t base;
+        char * base;
     };
 }
 Process::Process(VersionInfoFactory * factory)
@@ -134,7 +134,7 @@ Process::Process(VersionInfoFactory * factory)
     }
 
     // got base ;)
-    d->base = (uint32_t)hmod;
+    d->base = (char *)hmod;
 
     // read from this process
     try
@@ -161,7 +161,7 @@ Process::Process(VersionInfoFactory * factory)
         identified = true;
         // give the process a data model and memory layout fixed for the base of first module
         my_descriptor  = new VersionInfo(*vinfo);
-        my_descriptor->RebaseAll(d->base);
+        my_descriptor->RebaseAll((uint32_t)d->base);
         // keep track of created memory_info object so we can destroy it later
         my_descriptor->setParentProcess(this);
         for(size_t i = 0; i < threads_ids.size();i++)
@@ -236,7 +236,7 @@ struct HeapBlock
       ULONG reserved;
 };
 */
-void HeapNodes(DWORD pid, map<uint64_t, unsigned int> & heaps)
+void HeapNodes(DWORD pid, map<char *, unsigned int> & heaps)
 {
     // Create debug buffer
     PDEBUG_BUFFER db = RtlCreateQueryDebugBuffer(0, FALSE); 
@@ -247,7 +247,7 @@ void HeapNodes(DWORD pid, map<uint64_t, unsigned int> & heaps)
     // Go through each of the heap nodes and dispaly the information
     for (unsigned int i = 0; i < heapNodeCount; i++) 
     {
-        heaps[heapInfo[i].Base] = i;
+        heaps[(char *)heapInfo[i].Base] = i;
     }
     // Clean up the buffer
     RtlDestroyQueryDebugBuffer( db );
@@ -257,9 +257,9 @@ void HeapNodes(DWORD pid, map<uint64_t, unsigned int> & heaps)
 void Process::getMemRanges( vector<t_memrange> & ranges )
 {
     MEMORY_BASIC_INFORMATION MBI;
-    map<uint64_t, unsigned int> heaps;
+    map<char *, unsigned int> heaps;
     uint64_t movingStart = 0;
-    map <uint64_t, string> nameMap;
+    map <char *, string> nameMap;
 
     // get page size
     SYSTEM_INFO si;
@@ -277,18 +277,18 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
         if( !(MBI.State & MEM_COMMIT) /*|| !(MBI.Type & MEM_PRIVATE)*/ )
             continue;
         t_memrange temp;
-        temp.start   = (uint64_t) MBI.BaseAddress;
-        temp.end     =  ((uint64_t)MBI.BaseAddress + (uint64_t)MBI.RegionSize);
+        temp.start   = (char *) MBI.BaseAddress;
+        temp.end     =  ((char *)MBI.BaseAddress + (uint64_t)MBI.RegionSize);
         temp.read    = MBI.Protect & PAGE_EXECUTE_READ || MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_READONLY || MBI.Protect & PAGE_READWRITE;
         temp.write   = MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_READWRITE;
         temp.execute = MBI.Protect & PAGE_EXECUTE_READ || MBI.Protect & PAGE_EXECUTE_READWRITE || MBI.Protect & PAGE_EXECUTE;
         temp.valid = true;
         if(!GetModuleBaseName(d->my_handle, (HMODULE) temp.start, temp.name, 1024))
         {
-            if(nameMap.count(temp.start))
+            if(nameMap.count((char *)temp.start))
             {
                 // potential buffer overflow...
-                strcpy(temp.name, nameMap[temp.start].c_str());
+                strcpy(temp.name, nameMap[(char *)temp.start].c_str());
             }
             else
             {
@@ -298,9 +298,9 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
                 else
                 {
                     // could be a heap?
-                    if(heaps.count(temp.start))
+                    if(heaps.count((char *)temp.start))
                     {
-                        sprintf(temp.name,"HEAP %d",heaps[temp.start]);
+                        sprintf(temp.name,"HEAP %d",heaps[(char*)temp.start]);
                     }
                     else temp.name[0]=0;
                 }
@@ -320,7 +320,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
                     nm.append(temp.name);
                     nm.append(" : ");
                     nm.append(sectionName);
-                    nameMap[temp.start + d->sections[i].VirtualAddress] = nm;
+                    nameMap[(char *)temp.start + d->sections[i].VirtualAddress] = nm;
                 }
             }
             else
@@ -333,14 +333,14 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
 uint32_t Process::getBase()
 {
     if(d)
-        return d->base;
+        return (uint32_t) d->base;
     return 0x400000;
 }
 
 string Process::doReadClassName (void * vptr)
 {
-    int rtti = readDWord((uint32_t)vptr - 0x4);
-    int typeinfo = readDWord(rtti + 0xC);
+    char * rtti = readPtr((char *)vptr - 0x4);
+    char * typeinfo = readPtr(rtti + 0xC);
     string raw = readCString(typeinfo + 0xC); // skips the .?AV
     raw.resize(raw.length() - 2);// trim @@ from end
     return raw;
@@ -367,7 +367,7 @@ bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
 	if(trgrange.read && trgrange.write && trgrange.execute)newprotect=PAGE_EXECUTE_READWRITE;
 	DWORD oldprotect=0;
 	bool result;
-	result=VirtualProtect((LPVOID)range.start,range.end-range.start,newprotect,&oldprotect);
+	result=VirtualProtect((LPVOID)range.start,(char *)range.end-(char *)range.start,newprotect,&oldprotect);
 	
 	return result;
 }

@@ -58,12 +58,9 @@ namespace DFHack
     class Gui;
     class World;
     class Materials;
-    class Items;
     class Translation;
     class Vegetation;
-    class Buildings;
     class Constructions;
-    class Vermin;
     class Notes;
     class VersionInfo;
     class VersionInfoFactory;
@@ -113,18 +110,12 @@ namespace DFHack
         World * getWorld();
         /// get the materials module
         Materials * getMaterials();
-        /// get the items module
-        Items * getItems();
         /// get the translation module
         Translation * getTranslation();
         /// get the vegetation module
         Vegetation * getVegetation();
-        /// get the buildings module
-        Buildings * getBuildings();
         /// get the constructions module
         Constructions * getConstructions();
-        /// get the vermin module
-        Vermin * getVermin();
         /// get the notes module
         Notes * getNotes();
         /// get the graphic module
@@ -179,12 +170,9 @@ namespace DFHack
             Gui * pGui;
             World * pWorld;
             Materials * pMaterials;
-            Items * pItems;
             Translation * pTranslation;
             Vegetation * pVegetation;
-            Buildings * pBuildings;
             Constructions * pConstructions;
-            Vermin * pVermin;
             Notes * pNotes;
             Graphic * pGraphic;
         } s_mods;

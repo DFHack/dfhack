@@ -39,7 +39,6 @@ include/SDL_keyboard.h
 include/SDL_keysym.h
 include/TileTypes.h
 include/Types.h
-include/Vector.h
 include/VersionInfo.h
 include/VersionInfoFactory.h
 include/Virtual.h
@@ -49,6 +48,7 @@ include/modules/Units.h
 include/modules/Engravings.h
 include/modules/Gui.h
 include/modules/Items.h
+include/modules/Job.h
 include/modules/kitchen.h
 include/modules/Maps.h
 include/modules/MapCache.h
@@ -89,6 +89,7 @@ modules/Units.cpp
 modules/Engravings.cpp
 modules/Gui.cpp
 modules/Items.cpp
+modules/Job.cpp
 modules/kitchen.cpp
 modules/Maps.cpp
 modules/Materials.cpp

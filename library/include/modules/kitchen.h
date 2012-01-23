@@ -30,15 +30,17 @@ distribution.
 #include "Module.h"
 #include "Types.h"
 #include "VersionInfo.h"
-#include "modules/Materials.h"
-#include "modules/Items.h"
 #include "Core.h"
+#include "modules/Items.h"
+
 /**
  * \defgroup grp_kitchen Kitchen settings
  * @ingroup grp_modules
  */
 
 namespace DFHack
+{
+namespace Simple
 {
 namespace Kitchen
 {
@@ -52,45 +54,33 @@ const t_itemSubtype limitSubtype = 0; // used to store limit as an entry in the 
 const t_exclusionType limitExclusion = 4; // used to store limit as an entry in the exclusion list
 
 /**
- * Kitchen exclusions manipulator class. Currently geared towards plants and seeds.
- * @ingroup grp_kitchen
+ * Kitchen exclusions manipulator. Currently geared towards plants and seeds.
+ * \ingroup grp_modules
+ * \ingroup grp_kitchen
  */
-class DFHACK_EXPORT Exclusions
-{
-public:
-    /// ctor
-    Exclusions(DFHack::Core& core_);
-    /// dtor
-    ~Exclusions();
 
-    /// print the exclusion list, with the material index also translated into its token (for organics) - for debug really
-    void debug_print() const;
+// print the exclusion list, with the material index also translated into its token (for organics) - for debug really
+DFHACK_EXPORT void debug_print(Core &);
 
-    /// remove this material from the exclusion list if it is in it
-    void allowPlantSeedCookery(t_materialIndex materialIndex);
+// remove this material from the exclusion list if it is in it
+DFHACK_EXPORT void allowPlantSeedCookery(t_materialIndex materialIndex);
 
-    /// add this material to the exclusion list, if it is not already in it
-    void denyPlantSeedCookery(t_materialIndex materialIndex);
+// add this material to the exclusion list, if it is not already in it
+DFHACK_EXPORT void denyPlantSeedCookery(t_materialIndex materialIndex);
 
-    /// fills a map with info from the limit info storage entries in the exclusion list
-    void fillWatchMap(std::map<t_materialIndex, unsigned int>& watchMap) const;
+// fills a map with info from the limit info storage entries in the exclusion list
+DFHACK_EXPORT void fillWatchMap(std::map<t_materialIndex, unsigned int>& watchMap);
 
-    /// removes a limit info storage entry from the exclusion list if it's present
-    void removeLimit(t_materialIndex materialIndex);
+// removes a limit info storage entry from the exclusion list if it's present
+DFHACK_EXPORT void removeLimit(t_materialIndex materialIndex);
 
-    /// add a limit info storage item to the exclusion list, or alters an existing one
-    void setLimit(t_materialIndex materialIndex, unsigned int limit);
+// add a limit info storage item to the exclusion list, or alters an existing one
+DFHACK_EXPORT void setLimit(t_materialIndex materialIndex, unsigned int limit);
 
-    /// clears all limit info storage items from the exclusion list
-    void clearLimits();
+// clears all limit info storage items from the exclusion list
+DFHACK_EXPORT void clearLimits();
 
-    /// the size of the exclusions vectors (they are all the same size - if not, there is a problem!)
-    std::size_t size() const;
-private:
-    class Private;
-    Private* d;
-
-};
-
+DFHACK_EXPORT std::size_t size();
+}
 }
 }

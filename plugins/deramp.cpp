@@ -1,21 +1,98 @@
 // De-ramp.  All ramps marked for removal are replaced with given tile (presently, normal floor).
 
-#include <iostream>
-#include <vector>
-#include <map>
-#include <stddef.h>
-#include <assert.h>
-#include <string.h>
-using namespace std;
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <modules/Maps.h>
-#include <TileTypes.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+
+#include "DataDefs.h"
+#include "df/world.h"
+#include "df/map_block.h"
+#include "df/tile_dig_designation.h"
+#include "TileTypes.h"
+
+using std::vector;
+using std::string;
 using namespace DFHack;
 
-DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters);
+using df::global::world;
+using namespace DFHack;
+
+// This is slightly different from what's in the Maps module - it takes tile coordinates rather than block coordinates
+df::map_block *getBlock (int32_t x, int32_t y, int32_t z)
+{
+    if ((x < 0) || (y < 0) || (z < 0))
+        return NULL;
+    if ((x >= world->map.x_count) || (y >= world->map.y_count) || (z >= world->map.z_count))
+        return NULL;
+    return world->map.block_index[x >> 4][y >> 4][z];
+}
+
+DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
+{
+    for(int i = 0; i < parameters.size();i++)
+    {
+        if(parameters[i] == "help" || parameters[i] == "?")
+        {
+            c->con.print("This command does two things:\n"
+                "If there are any ramps designated for removal, they will be instantly removed.\n"
+                "Any ramps that don't have their counterpart will be removed (fixes bugs with caveins)\n"
+                );
+            return CR_OK;
+        }
+    }
+
+    CoreSuspender suspend(c);
+
+    int count = 0;
+    int countbad = 0;
+
+    int num_blocks = 0, blocks_total = world->map.map_blocks.size();
+    for (int i = 0; i < blocks_total; i++)
+    {
+        df::map_block *block = world->map.map_blocks[i];
+        df::map_block *above = getBlock(block->map_pos.x, block->map_pos.y, block->map_pos.z + 1);
+
+        for (int x = 0; x < 16; x++)
+        {
+            for (int y = 0; y < 16; y++)
+            {
+                int16_t oldT = block->tiletype[x][y];
+                if ((tileShape(oldT) == RAMP) &&
+                    (block->designation[x][y].bits.dig == df::tile_dig_designation::Default))
+                {
+                    // Current tile is a ramp.
+                    // Set current tile, as accurately as can be expected
+                    int16_t newT = findSimilarTileType(oldT, FLOOR);
+
+                    // If no change, skip it (couldn't find a good tile type)
+                    if (oldT == newT)
+                        continue;
+                    // Set new tile type, clear designation
+                    block->tiletype[x][y] = newT;
+                    block->designation[x][y].bits.dig = df::tile_dig_designation::No;
+
+                    // Check the tile above this one, in case a downward slope needs to be removed.
+                    if ((above) && (tileShape(above->tiletype[x][y]) == RAMP_TOP))
+                        above->tiletype[x][y] = 32; // open space
+                    count++;
+                }
+                // ramp fixer
+                else if ((tileShape(oldT) != RAMP)
+                    && (above) && (tileShape(above->tiletype[x][y]) == RAMP_TOP))
+                {
+                    above->tiletype[x][y] = 32; // open space
+                    countbad++;
+                }
+            }
+        }
+    }
+    if (count)
+        c->con.print("Found and changed %d tiles.\n", count);
+    if (countbad)
+        c->con.print("Fixed %d bad down ramps.\n", countbad);
+    return CR_OK;
+}
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -26,133 +103,12 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.clear();
     commands.push_back(PluginCommand("deramp",
-                                     "De-ramp.  All ramps marked for removal are replaced with floors.",
-                                     df_deramp));
+        "De-ramp.  All ramps marked for removal are replaced with floors.",
+        df_deramp));
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
-    return CR_OK;
-}
-
-DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
-{
-    uint32_t x_max,y_max,z_max;
-    uint32_t num_blocks = 0;
-    uint32_t bytes_read = 0;
-    DFHack::designations40d designations;
-    DFHack::tiletypes40d tiles;
-    DFHack::tiletypes40d tilesAbove;
-
-    //DFHack::TileRow *ptile;
-    int32_t oldT, newT;
-
-    bool dirty= false;
-    int count=0;
-    int countbad=0;
-    for(int i = 0; i < parameters.size();i++)
-    {
-        if(parameters[i] == "help" || parameters[i] == "?")
-        {
-            c->con.print("This command does two things:\n"
-            "If there are any ramps designated for removal, they will be instantly removed.\n"
-            "Any ramps that don't have their counterpart will be removed (fixes bugs with caveins)\n"
-            );
-            return CR_OK;
-        }
-    }
-    c->Suspend();
-    DFHack::Maps *Mapz = c->getMaps();
-
-    // init the map
-    if (!Mapz->Start())
-    {
-        c->con.printerr("Can't init map.\n");
-        c->Resume();
-        return CR_FAILURE;
-    }
-
-    Mapz->getSize(x_max,y_max,z_max);
-
-    uint8_t zeroes [16][16] = {0};
-
-    // walk the map
-    for (uint32_t x = 0; x< x_max;x++)
-    {
-        for (uint32_t y = 0; y< y_max;y++)
-        {
-            for (uint32_t z = 0; z< z_max;z++)
-            {
-                if (Mapz->getBlock(x,y,z))
-                {
-                    dirty= false;
-                    Mapz->ReadDesignations(x,y,z, &designations);
-                    Mapz->ReadTileTypes(x,y,z, &tiles);
-                    if (Mapz->getBlock(x,y,z+1))
-                    {
-                        Mapz->ReadTileTypes(x,y,z+1, &tilesAbove);
-                    }
-                    else
-                    {
-                        memset(&tilesAbove,0,sizeof(tilesAbove));
-                    }
-
-                    for (uint32_t ty=0;ty<16;++ty)
-                    {
-                        for (uint32_t tx=0;tx<16;++tx)
-                        {
-                            //Only the remove ramp designation (ignore channel designation, etc)
-                            oldT = tiles[tx][ty];
-                            if ( DFHack::designation_default == designations[tx][ty].bits.dig
-                                    && DFHack::RAMP==DFHack::tileShape(oldT))
-                            {
-                                //Current tile is a ramp.
-                                //Set current tile, as accurately as can be expected
-                                newT = DFHack::findSimilarTileType(oldT,DFHack::FLOOR);
-
-                                //If no change, skip it (couldn't find a good tile type)
-                                if ( oldT == newT) continue;
-                                //Set new tile type, clear designation
-                                tiles[tx][ty] = newT;
-                                designations[tx][ty].bits.dig = DFHack::designation_no;
-
-                                //Check the tile above this one, in case a downward slope needs to be removed.
-                                if ( DFHack::RAMP_TOP == DFHack::tileShape(tilesAbove[tx][ty]) )
-                                {
-                                    tilesAbove[tx][ty] = 32;
-                                }
-                                dirty= true;
-                                ++count;
-                            }
-                            // ramp fixer
-                            else if(DFHack::RAMP!=DFHack::tileShape(oldT) && DFHack::RAMP_TOP == DFHack::tileShape(tilesAbove[tx][ty]))
-                            {
-                                tilesAbove[tx][ty] = 32;
-                                countbad++;
-                                dirty = true;
-                            }
-                        }
-                    }
-                    //If anything was changed, write it all.
-                    if (dirty)
-                    {
-                        Mapz->WriteDesignations(x,y,z, &designations);
-                        Mapz->WriteTileTypes(x,y,z, &tiles);
-                        if (Mapz->getBlock(x,y,z+1))
-                        {
-                            Mapz->WriteTileTypes(x,y,z+1, &tilesAbove);
-                        }
-                        dirty = false;
-                    }
-                }
-            }
-        }
-    }
-    c->Resume();
-    if(count)
-        c->con.print("Found and changed %d tiles.\n",count);
-    if(countbad)
-        c->con.print("Fixed %d bad down ramps.\n",countbad);
     return CR_OK;
 }

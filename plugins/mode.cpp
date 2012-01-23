@@ -2,12 +2,12 @@
 using namespace std;
 
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 #include <vector>
 #include <string>
-#include <modules/World.h>
+#include "modules/World.h"
 #include <stdlib.h>
 using namespace DFHack;
 
@@ -166,7 +166,7 @@ DFhackCExport command_result mode (Core * c, vector <string> & parameters)
         c->Suspend();
         world->WriteGameMode(gm);
         c->Resume();
-        cout << endl;
+        c->con << endl;
     }
     return CR_OK;
 }

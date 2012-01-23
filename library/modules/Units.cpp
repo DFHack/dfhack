@@ -36,7 +36,6 @@ using namespace std;
 
 #include "VersionInfo.h"
 #include "MemAccess.h"
-#include "Vector.h"
 #include "Error.h"
 #include "Types.h"
 
@@ -54,8 +53,8 @@ struct Units::Private
     bool Inited;
     bool Started;
 
-    uint32_t dwarf_race_index_addr;
-    uint32_t dwarf_civ_id_addr;
+    void * dwarf_race_index_addr;
+    void * dwarf_civ_id_addr;
     bool IdMapReady;
     std::map<int32_t, int32_t> IdMap;
 
@@ -86,8 +85,8 @@ Units::Units()
     try
     {
         creatures = (vector <df_unit *> *) OG_Creatures->getAddress ("vector");
-        d->dwarf_race_index_addr = OG_Creatures->getAddress("current_race");
-        d->dwarf_civ_id_addr = OG_Creatures->getAddress("current_civ");
+        d->dwarf_race_index_addr = (void *) OG_Creatures->getAddress("current_race");
+        d->dwarf_civ_id_addr = (void *) OG_Creatures->getAddress("current_civ");
     }
     catch(Error::All&){};
     d->Inited = true;
@@ -137,7 +136,6 @@ int32_t Units::GetCreatureInBox (int32_t index, df_unit ** furball,
         return -1;
 
     Process *p = d->owner;
-    uint16_t coords[3];
     uint32_t size = creatures->size();
     while (uint32_t(index) < size)
     {
@@ -551,7 +549,7 @@ bool Creatures::ReadJob(const t_creature * furball, vector<t_material> & mat)
     return true;
 }
 */
-bool Units::ReadInventoryByIdx(const uint32_t index, std::vector<df_item *> & item)
+bool Units::ReadInventoryByIdx(const uint32_t index, std::vector<df::item *> & item)
 {
     if(!d->Started) return false;
     if(index >= creatures->size()) return false;
@@ -559,7 +557,7 @@ bool Units::ReadInventoryByIdx(const uint32_t index, std::vector<df_item *> & it
     return this->ReadInventoryByPtr(temp, item);
 }
 
-bool Units::ReadInventoryByPtr(const df_unit * temp, std::vector<df_item *> & items)
+bool Units::ReadInventoryByPtr(const df_unit * temp, std::vector<df::item *> & items)
 {
     if(!d->Started) return false;
     items = temp->inventory;
@@ -576,7 +574,6 @@ bool Units::ReadOwnedItemsByIdx(const uint32_t index, std::vector<int32_t> & ite
 
 bool Units::ReadOwnedItemsByPtr(const df_unit * temp, std::vector<int32_t> & items)
 {
-    unsigned int i;
     if(!d->Started) return false;
     items = temp->owned_items;
     return true;

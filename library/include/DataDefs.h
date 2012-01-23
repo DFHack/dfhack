@@ -111,15 +111,66 @@ namespace DFHack
         return T::_identity.is_instance(ptr) ? static_cast<T*>(ptr) : NULL;
     }
 
+#define VIRTUAL_CAST_VAR(var,type,input) type *var = virtual_cast<type>(input)
+
     template<class T>
     inline T *strict_virtual_cast(virtual_ptr ptr) {
         return T::_identity.is_direct_instance(ptr) ? static_cast<T*>(ptr) : NULL;
     }
 
+#define STRICT_VIRTUAL_CAST_VAR(var,type,input) type *var = strict_virtual_cast<type>(input)
+
     void InitDataDefGlobals(Core *core);
 
     template<class T>
     T *ifnull(T *a, T *b) { return a ? a : b; }
+
+    // Enums
+    template<class T, T start, bool (*isvalid)(T)>
+    inline T next_enum_item_(T v) {
+        v = T(int(v) + 1);
+        return isvalid(v) ? v : start;
+    }
+
+    template<class T>
+    struct enum_list_attr {
+        int size;
+        const T *items;
+    };
+
+    // Bitfields
+    struct bitfield_item_info {
+        const char *name;
+        int size;
+    };
+
+    DFHACK_EXPORT std::string bitfieldToString(const void *p, int size, const bitfield_item_info *items);
+    DFHACK_EXPORT int findBitfieldField(const std::string &name, int size, const bitfield_item_info *items);
+
+    template<class T>
+    inline int findBitfieldField(const T &val, const std::string &name) {
+        return findBitfieldField(name, sizeof(val.whole), val.get_items());
+    }
+
+    template<class T>
+    inline std::string bitfieldToString(const T &val) {
+        return bitfieldToString(&val.whole, sizeof(val.whole), val.get_items());
+    }
+}
+
+template<class T>
+int linear_index(const DFHack::enum_list_attr<T> &lst, T val) {
+    for (int i = 0; i < lst.size; i++)
+        if (lst.items[i] == val)
+            return i;
+    return -1;
+}
+
+inline int linear_index(const DFHack::enum_list_attr<const char*> &lst, const std::string &val) {
+    for (int i = 0; i < lst.size; i++)
+        if (lst.items[i] == val)
+            return i;
+    return -1;
 }
 
 namespace df
@@ -127,6 +178,8 @@ namespace df
     using DFHack::virtual_ptr;
     using DFHack::virtual_identity;
     using DFHack::virtual_class;
+    using DFHack::bitfield_item_info;
+    using DFHack::enum_list_attr;
     using DFHack::BitArray;
 
     template<class T>
@@ -158,6 +211,18 @@ namespace df
         }
     };
 
+    template<class EnumType, class IntType1, class IntType2>
+    inline bool operator== (enum_field<EnumType,IntType1> a, enum_field<EnumType,IntType2> b)
+    {
+        return EnumType(a) == EnumType(b);
+    }
+
+    template<class EnumType, class IntType1, class IntType2>
+    inline bool operator!= (enum_field<EnumType,IntType1> a, enum_field<EnumType,IntType2> b)
+    {
+        return EnumType(a) != EnumType(b);
+    }
+
     namespace enums {}
 }
 
@@ -166,6 +231,11 @@ namespace df
 #define ENUM_KEY_STR(enum,val) ENUM_ATTR_STR(enum,key,val)
 #define ENUM_FIRST_ITEM(enum) (df::enums::enum::_first_item_of_##enum)
 #define ENUM_LAST_ITEM(enum) (df::enums::enum::_last_item_of_##enum)
+
+#define ENUM_NEXT_ITEM(enum,val) \
+    (DFHack::next_enum_item_<df::enum,ENUM_FIRST_ITEM(enum),df::enums::enum::is_valid>(val))
+#define FOR_ENUM_ITEMS(enum,iter) \
+    for(df::enum iter = ENUM_FIRST_ITEM(enum); iter < ENUM_LAST_ITEM(enum); iter = df::enum(1+int(iter)))
 
 namespace df {
 #define DF_KNOWN_GLOBALS \
@@ -176,11 +246,20 @@ namespace df {
     GLOBAL(gview,interface) \
     GLOBAL(init,init) \
     GLOBAL(d_init,d_init) \
+    SIMPLE_GLOBAL(job_next_id,int) \
     SIMPLE_GLOBAL(ui_look_cursor,int) \
     SIMPLE_GLOBAL(ui_workshop_job_cursor,int) \
+    SIMPLE_GLOBAL(ui_building_item_cursor,int) \
+    SIMPLE_GLOBAL(ui_workshop_in_add,bool) \
+    SIMPLE_GLOBAL(ui_selected_unit,int) \
+    SIMPLE_GLOBAL(cur_year,int) \
+    SIMPLE_GLOBAL(cur_year_tick,int) \
     GLOBAL(ui_sidebar_menus,ui_sidebar_menus) \
     GLOBAL(ui_build_selector,ui_build_selector) \
-    GLOBAL(ui_look_list,ui_look_list)
+    GLOBAL(ui_look_list,ui_look_list) \
+    GLOBAL(ui_unit_view_mode, ui_unit_view_mode) \
+    GLOBAL(gps, graphic) \
+
 
 #define SIMPLE_GLOBAL(name,tname) \
     namespace global { extern DFHACK_EXPORT tname *name; }
@@ -190,3 +269,7 @@ DF_KNOWN_GLOBALS
 #undef GLOBAL
 #undef SIMPLE_GLOBAL
 }
+
+// A couple of headers that have to be included at once
+#include "df/coord2d.h"
+#include "df/coord.h"

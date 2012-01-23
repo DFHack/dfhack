@@ -97,7 +97,7 @@ namespace DFHack
     struct dfh_engraving
     {
         t_engraving s;
-        uint32_t origin;
+        t_engraving * origin;
     };
     /**
      * The Engravings module - allows reading engravings :D

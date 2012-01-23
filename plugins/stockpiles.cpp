@@ -1,14 +1,14 @@
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 
-#include <DataDefs.h>
-#include <df/world.h>
-#include <df/ui.h>
-#include <df/building_stockpilest.h>
-#include <df/selection_rect.h>
-#include <df/viewscreen_dwarfmodest.h>
+#include "DataDefs.h"
+#include "df/world.h"
+#include "df/ui.h"
+#include "df/building_stockpilest.h"
+#include "df/selection_rect.h"
+#include "df/viewscreen_dwarfmodest.h"
 
 using std::vector;
 using std::string;

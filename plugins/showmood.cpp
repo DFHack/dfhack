@@ -221,10 +221,10 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
                     else if (item->flags2.bits.ivory_tooth)
                         c->con.print("%s ivory/teeth", mat_name.c_str());
                     else
-                        c->con.print("%s unknown body parts", mat_name.c_str());
+                        c->con.print("%s unknown body parts (%08x:%08x:%08x)", mat_name.c_str(), item->flags1.whole, item->flags2.whole, item->flags3.whole);
                 }
                 else
-                    c->con.print("indeterminate %s item", mat_name.c_str());
+                    c->con.print("indeterminate %s item (%08x:%08x:%08x)", mat_name.c_str(),  item->flags1.whole, item->flags2.whole, item->flags3.whole);
                 break;
             default:
                 c->con.print("item %s:%s with flags %08x,%08x,%08x",

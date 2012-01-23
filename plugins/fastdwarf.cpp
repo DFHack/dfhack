@@ -1,20 +1,19 @@
-// foo
-// vi:expandtab:sw=4
-
-#include <iostream>
-#include <vector>
-#include <map>
-#include <stddef.h>
-#include <assert.h>
-#include <string.h>
-using namespace std;
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <VersionInfo.h>
-#include <modules/Units.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+
+#include "DataDefs.h"
+#include "df/ui.h"
+#include "df/world.h"
+#include "df/unit.h"
+
+using std::string;
+using std::vector;
 using namespace DFHack;
+
+using df::global::world;
+using df::global::ui;
 
 // dfhack interface
 DFhackCExport const char * plugin_name ( void )
@@ -33,22 +32,16 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
 {
     if (!enable_fastdwarf)
         return CR_OK;
-    df_unit *cre;
-    DFHack::Units * cr = c->getUnits();
-    static vector <df_unit*> *v = cr->creatures;
-    uint32_t race = cr->GetDwarfRaceIndex();
-    uint32_t civ = cr->GetDwarfCivId();
-    if (!v)
-    {
-        c->con.printerr("Unable to locate creature vector. Fastdwarf cancelled.\n");
-    }
+    int32_t race = ui->race_id;
+    int32_t civ = ui->civ_id;
 
-    for (unsigned i=0 ; i<v->size() ; ++i)
+    for (int i = 0; i < world->units.all.size(); i++)
     {
-        cre = v->at(i);
-        if (cre->race == race && cre->civ == civ && cre->job_counter > 0)
-            cre->job_counter = 0;
-        // could also patch the cre->current_job->counter
+        df::unit *unit = world->units.all[i];
+
+        if (unit->race == race && unit->civ_id == civ && unit->counters.job_counter > 0)
+            unit->counters.job_counter = 0;
+        // could also patch the unit->job.current_job->completion_timer
     }
     return CR_OK;
 }
@@ -65,7 +58,9 @@ static command_result fastdwarf (Core * c, vector <string> & parameters)
     }
     else
     {
-        c->con.print("Makes your minions move at ludicrous speeds.\nActivate with 'fastdwarf 1', deactivate with 'fastdwarf 0'.\nCurrent state: %d.\n", enable_fastdwarf);
+        c->con.print("Makes your minions move at ludicrous speeds.\n"
+            "Activate with 'fastdwarf 1', deactivate with 'fastdwarf 0'.\n"
+            "Current state: %d.\n", enable_fastdwarf);
     }
 
     return CR_OK;
@@ -76,8 +71,8 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.clear();
 
     commands.push_back(PluginCommand("fastdwarf",
-                "enable/disable fastdwarf (parameter=0/1)",
-                fastdwarf));
+        "enable/disable fastdwarf (parameter=0/1)",
+        fastdwarf));
 
     return CR_OK;
 }

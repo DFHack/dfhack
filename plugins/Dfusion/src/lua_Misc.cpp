@@ -32,7 +32,7 @@ static int LoadMod(lua_State *L)
     buf=new char[size];
     f.GetText(buf);
     //std::cout<<"poking @:"<<std::hex<<pos<<"size :"<<size<<std::endl;
-	DFHack::Core::getInstance().p->write(pos,size,(uint8_t*)buf);
+    DFHack::Core::getInstance().p->write((void *) pos,size,(uint8_t*)buf);
     delete [] buf;
     st.push(pos);
     st.push(size);
@@ -183,6 +183,18 @@ static int Call_Df(lua_State *L)
 	st.push(f.CallFunction(ptr,conv,args));
     return 1;
 }
+static int Suspend_Df(lua_State *L)
+{
+	lua::state st(L);
+	DFHack::Core::getInstance().Suspend();
+	return 0;
+}
+static int Resume_Df(lua_State *L)
+{
+	lua::state st(L);
+	DFHack::Core::getInstance().Resume();
+	return 0;
+}
 const luaL_Reg lua_misc_func[]=
 {
 	{"loadmod",LoadMod},
@@ -193,6 +205,8 @@ const luaL_Reg lua_misc_func[]=
 	{"newmod",NewMod},
 	{"getpushvalue",Get_PushValue},
 	{"calldf",Call_Df},
+	{"suspend",Suspend_Df},
+	{"resume",Resume_Df},
 	{NULL,NULL}
 };
 void lua::RegisterMisc(lua::state &st)

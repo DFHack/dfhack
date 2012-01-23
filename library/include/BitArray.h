@@ -50,6 +50,18 @@ namespace DFHack
             if(bits)
                 memset(bits, 0, size);
         }
+        void extend (T index)
+        {
+            uint32_t newsize = (index / 8) + 1;
+            if (newsize <= size)
+                return;
+            uint8_t *newbits = new uint8_t[newsize];
+            memset(newbits, 0, newsize);
+            memcpy(newbits, bits, size);
+            delete[] bits;
+            bits = newbits;
+            size = newsize;
+        }
         void set (T index, bool value = true)
         {
             if(!value)
@@ -58,7 +70,8 @@ namespace DFHack
                 return;
             }
             uint32_t byte = index / 8;
-            if(byte < size)
+            extend(index);
+            //if(byte < size)
             {
                 uint8_t bit = 1 << (index % 8);
                 bits[byte] |= bit;
@@ -76,7 +89,8 @@ namespace DFHack
         void toggle (T index)
         {
             uint32_t byte = index / 8;
-            if(byte < size)
+            extend(index);
+            //if(byte < size)
             {
                 uint8_t bit = 1 << (index % 8);
                 bits[byte] ^= bit;

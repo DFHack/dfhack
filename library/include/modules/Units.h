@@ -557,7 +557,7 @@ namespace DFHack
         int16_t unk_280;
         int32_t unk_284;
 
-        std::vector<df_item *> inventory;   // 288 - vector of item pointers
+        std::vector<df::item *> inventory;   // 288 - vector of item pointers
         std::vector<int32_t> owned_items;  // 298 - vector of item IDs
         std::vector<uint32_t> unk_2a8;
         std::vector<uint32_t> unk_2b8;
@@ -777,8 +777,8 @@ namespace DFHack
 
         bool ReadJob(const df_unit * unit, std::vector<t_material> & mat);
 
-        bool ReadInventoryByIdx(const uint32_t index, std::vector<df_item *> & item);
-        bool ReadInventoryByPtr(const df_unit * unit, std::vector<df_item *> & item);
+        bool ReadInventoryByIdx(const uint32_t index, std::vector<df::item *> & item);
+        bool ReadInventoryByPtr(const df_unit * unit, std::vector<df::item *> & item);
 
         bool ReadOwnedItemsByIdx(const uint32_t index, std::vector<int32_t> & item);
         bool ReadOwnedItemsByPtr(const df_unit * unit, std::vector<int32_t> & item);
@@ -807,8 +807,6 @@ namespace DFHack
 
         void CopyNameTo(df_unit *creature, df_name * target);
 
-    protected:
-        friend class Items;
         bool RemoveOwnedItemByIdx(const uint32_t index, int32_t id);
         bool RemoveOwnedItemByPtr(df_unit * unit, int32_t id);
 

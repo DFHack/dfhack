@@ -8,11 +8,11 @@
 #include <string.h>
 using namespace std;
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <modules/Graphic.h>
-#include <modules/Gui.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "modules/Graphic.h"
+#include "modules/Gui.h"
 using namespace DFHack;
 
 DFhackCExport command_result df_versionosd (Core * c, vector <string> & parameters);

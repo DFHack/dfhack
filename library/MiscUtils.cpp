@@ -27,14 +27,77 @@ distribution.
 #include "Core.h"
 #include "MiscUtils.h"
 
-
-
 #ifndef LINUX_BUILD
     #include <Windows.h>
 #else
     #include <sys/time.h>
     #include <ctime>
 #endif
+
+#include <ctype.h>
+#include <stdarg.h>
+
+std::string stl_sprintf(const char *fmt, ...) {
+    va_list lst;
+    va_start(lst, fmt);
+    std::string rv = stl_vsprintf(fmt, lst);
+    va_end(lst);
+    return rv;
+}
+
+std::string stl_vsprintf(const char *fmt, va_list args) {
+    std::vector<char> buf;
+    buf.resize(4096);
+    for (;;) {
+        int rsz = vsnprintf(&buf[0], buf.size(), fmt, args);
+
+        if (rsz < 0)
+            buf.resize(buf.size()*2);
+        else if (unsigned(rsz) > buf.size())
+            buf.resize(rsz+1);
+        else
+            return std::string(&buf[0], rsz);
+    }
+}
+
+bool split_string(std::vector<std::string> *out,
+                  const std::string &str, const std::string &separator, bool squash_empty)
+{
+    out->clear();
+
+    size_t start = 0, pos;
+
+    if (!separator.empty())
+    {
+        while ((pos = str.find(separator,start)) != std::string::npos)
+        {
+            if (pos > start || !squash_empty)
+                out->push_back(str.substr(start, pos-start));
+            start = pos + separator.size();
+        }
+    }
+
+    if (start < str.size() || !squash_empty)
+        out->push_back(str.substr(start));
+
+    return out->size() > 1;
+}
+
+std::string toUpper(const std::string &str)
+{
+    std::string rv(str.size(),' ');
+    for (unsigned i = 0; i < str.size(); ++i)
+        rv[i] = toupper(str[i]);
+    return rv;
+}
+
+std::string toLower(const std::string &str)
+{
+    std::string rv(str.size(),' ');
+    for (unsigned i = 0; i < str.size(); ++i)
+        rv[i] = tolower(str[i]);
+    return rv;
+}
 
 #ifdef LINUX_BUILD // Linux
 uint64_t GetTimeMs64()

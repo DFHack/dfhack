@@ -38,11 +38,29 @@ using namespace std;
 #include "ModuleFactory.h"
 #include "Core.h"
 #include "PluginManager.h"
+#include "MiscUtils.h"
 using namespace DFHack;
 
 #include "DataDefs.h"
+#include "df/world.h"
 #include "df/cursor.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_unitjobsst.h"
+#include "df/viewscreen_itemst.h"
+#include "df/ui.h"
+#include "df/ui_unit_view_mode.h"
+#include "df/ui_sidebar_menus.h"
+#include "df/ui_look_list.h"
+#include "df/job.h"
+#include "df/ui_build_selector.h"
+#include "df/building_workshopst.h"
+#include "df/building_furnacest.h"
+#include "df/general_ref.h"
+#include "df/unit_inventory_item.h"
+#include "df/report.h"
+#include "df/popup_message.h"
+
+using namespace df::enums;
 
 // Predefined common guard functions
 
@@ -61,6 +79,18 @@ bool DFHack::dwarfmode_hotkey(Core *, df::viewscreen *top)
     return !!strict_virtual_cast<df::viewscreen_dwarfmodest>(top);
 }
 
+bool DFHack::unitjobs_hotkey(Core *, df::viewscreen *top)
+{
+    // Require the main dwarf mode screen
+    return !!strict_virtual_cast<df::viewscreen_unitjobsst>(top);
+}
+
+bool DFHack::item_details_hotkey(Core *, df::viewscreen *top)
+{
+    // Require the main dwarf mode screen
+    return !!strict_virtual_cast<df::viewscreen_itemst>(top);
+}
+
 bool DFHack::cursor_hotkey(Core *c, df::viewscreen *top)
 {
     if (!dwarfmode_hotkey(c, top))
@@ -71,6 +101,347 @@ bool DFHack::cursor_hotkey(Core *c, df::viewscreen *top)
         return false;
 
     return true;
+}
+
+bool DFHack::workshop_job_hotkey(Core *c, df::viewscreen *top)
+{
+    using namespace ui_sidebar_mode;
+    using df::global::ui;
+    using df::global::world;
+    using df::global::ui_workshop_in_add;
+    using df::global::ui_workshop_job_cursor;
+
+    if (!dwarfmode_hotkey(c,top))
+        return false;
+
+    switch (ui->main.mode) {
+    case QueryBuilding:
+        {
+            if (!ui_workshop_job_cursor) // allow missing
+                return false;
+
+            df::building *selected = world->selected_building;
+            if (!virtual_cast<df::building_workshopst>(selected) &&
+                !virtual_cast<df::building_furnacest>(selected))
+                return false;
+
+            // No jobs?
+            if (selected->jobs.empty() ||
+                selected->jobs[0]->job_type == job_type::DestroyBuilding)
+                return false;
+
+            // Add job gui activated?
+            if (ui_workshop_in_add && *ui_workshop_in_add)
+                return false;
+
+            return true;
+        };
+    default:
+        return false;
+    }
+}
+
+bool DFHack::build_selector_hotkey(Core *c, df::viewscreen *top)
+{
+    using namespace ui_sidebar_mode;
+    using df::global::ui;
+    using df::global::ui_build_selector;
+
+    if (!dwarfmode_hotkey(c,top))
+        return false;
+
+    switch (ui->main.mode) {
+    case Build:
+        {
+            if (!ui_build_selector) // allow missing
+                return false;
+
+            // Not selecting, or no choices?
+            if (ui_build_selector->building_type < 0 ||
+                ui_build_selector->stage != 2 ||
+                ui_build_selector->choices.empty())
+                return false;
+
+            return true;
+        };
+    default:
+        return false;
+    }
+}
+
+bool DFHack::view_unit_hotkey(Core *c, df::viewscreen *top)
+{
+    using df::global::ui;
+    using df::global::world;
+    using df::global::ui_selected_unit;
+
+    if (!dwarfmode_hotkey(c,top))
+        return false;
+    if (ui->main.mode != ui_sidebar_mode::ViewUnits)
+        return false;
+    if (!ui_selected_unit) // allow missing
+        return false;
+
+    return vector_get(world->units.other[0], *ui_selected_unit) != NULL;
+}
+
+bool DFHack::unit_inventory_hotkey(Core *c, df::viewscreen *top)
+{
+    using df::global::ui_unit_view_mode;
+
+    if (!view_unit_hotkey(c,top))
+        return false;
+    if (!ui_unit_view_mode)
+        return false;
+
+    return ui_unit_view_mode->value == df::ui_unit_view_mode::Inventory;
+}
+
+df::job *DFHack::getSelectedWorkshopJob(Core *c, bool quiet)
+{
+    using df::global::world;
+    using df::global::ui_workshop_job_cursor;
+
+    if (!workshop_job_hotkey(c, c->getTopViewscreen())) {
+        if (!quiet)
+            c->con.printerr("Not in a workshop, or no job is highlighted.\n");
+        return NULL;
+    }
+
+    df::building *selected = world->selected_building;
+    int idx = *ui_workshop_job_cursor;
+
+    if (idx < 0 || idx >= selected->jobs.size())
+    {
+        c->con.printerr("Invalid job cursor index: %d\n", idx);
+        return NULL;
+    }
+
+    return selected->jobs[idx];
+}
+
+bool DFHack::any_job_hotkey(Core *c, df::viewscreen *top)
+{
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitjobsst, top))
+        return vector_get(screen->jobs, screen->cursor_pos) != NULL;
+
+    return workshop_job_hotkey(c,top);
+}
+
+df::job *DFHack::getSelectedJob(Core *c, bool quiet)
+{
+    df::viewscreen *top = c->getTopViewscreen();
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitjobsst, top))
+    {
+        df::job *job = vector_get(screen->jobs, screen->cursor_pos);
+
+        if (!job && !quiet)
+            c->con.printerr("Selected unit has no job\n");
+
+        return job;
+    }
+    else
+        return getSelectedWorkshopJob(c, quiet);
+}
+
+static df::unit *getAnyUnit(Core *c, df::viewscreen *top)
+{
+    using namespace ui_sidebar_mode;
+    using df::global::ui;
+    using df::global::world;
+    using df::global::ui_look_cursor;
+    using df::global::ui_look_list;
+    using df::global::ui_selected_unit;
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitjobsst, top))
+        return vector_get(screen->units, screen->cursor_pos);
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_itemst, top))
+    {
+        df::general_ref *ref = vector_get(screen->entry_ref, screen->cursor_pos);
+        return ref ? ref->getUnit() : NULL;
+    }
+
+    if (!dwarfmode_hotkey(c,top))
+        return NULL;
+
+    switch (ui->main.mode) {
+    case ViewUnits:
+    {
+        if (!ui_selected_unit)
+            return NULL;
+
+        return vector_get(world->units.other[0], *ui_selected_unit);
+    }
+    case LookAround:
+    {
+        if (!ui_look_list || !ui_look_cursor)
+            return NULL;
+
+        auto item = vector_get(ui_look_list->items, *ui_look_cursor);
+        if (item && item->type == df::ui_look_list::T_items::Unit)
+            return item->unit;
+        else
+            return NULL;
+    }
+    default:
+        return NULL;
+    }
+}
+
+bool DFHack::any_unit_hotkey(Core *c, df::viewscreen *top)
+{
+    return getAnyUnit(c, top) != NULL;
+}
+
+df::unit *DFHack::getSelectedUnit(Core *c, bool quiet)
+{
+    df::unit *unit = getAnyUnit(c, c->getTopViewscreen());
+
+    if (!unit && !quiet)
+        c->con.printerr("No unit is selected in the UI.\n");
+
+    return unit;
+}
+
+static df::item *getAnyItem(Core *c, df::viewscreen *top)
+{
+    using namespace ui_sidebar_mode;
+    using df::global::ui;
+    using df::global::world;
+    using df::global::ui_look_cursor;
+    using df::global::ui_look_list;
+    using df::global::ui_unit_view_mode;
+    using df::global::ui_building_item_cursor;
+    using df::global::ui_sidebar_menus;
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_itemst, top))
+    {
+        df::general_ref *ref = vector_get(screen->entry_ref, screen->cursor_pos);
+        return ref ? ref->getItem() : NULL;
+    }
+
+    if (!dwarfmode_hotkey(c,top))
+        return NULL;
+
+    switch (ui->main.mode) {
+    case ViewUnits:
+    {
+        if (!ui_unit_view_mode || !ui_look_cursor || !ui_sidebar_menus)
+            return NULL;
+
+        if (ui_unit_view_mode->value != df::ui_unit_view_mode::Inventory)
+            return NULL;
+
+        auto inv_item = vector_get(ui_sidebar_menus->unit.inv_items, *ui_look_cursor);
+        return inv_item ? inv_item->item : NULL;
+    }
+    case LookAround:
+    {
+        if (!ui_look_list || !ui_look_cursor)
+            return NULL;
+
+        auto item = vector_get(ui_look_list->items, *ui_look_cursor);
+        if (item && item->type == df::ui_look_list::T_items::Item)
+            return item->item;
+        else
+            return NULL;
+    }
+    case BuildingItems:
+    {
+        if (!ui_building_item_cursor)
+            return NULL;
+
+        VIRTUAL_CAST_VAR(selected, df::building_actual, world->selected_building);
+        if (!selected)
+            return NULL;
+
+        auto inv_item = vector_get(selected->contained_items, *ui_building_item_cursor);
+        return inv_item ? inv_item->item : NULL;
+    }
+    default:
+        return NULL;
+    }
+}
+
+bool DFHack::any_item_hotkey(Core *c, df::viewscreen *top)
+{
+    return getAnyItem(c, top) != NULL;
+}
+
+df::item *DFHack::getSelectedItem(Core *c, bool quiet)
+{
+    df::item *item = getAnyItem(c, c->getTopViewscreen());
+
+    if (!item && !quiet)
+        c->con.printerr("No item is selected in the UI.\n");
+
+    return item;
+}
+
+//
+
+void DFHack::showAnnouncement(std::string message, int color, bool bright)
+{
+    using df::global::world;
+    using df::global::cur_year;
+    using df::global::cur_year_tick;
+
+    int year = 0, year_time = 0;
+
+    if (cur_year && cur_year_tick)
+    {
+        year = *cur_year;
+        year_time = *cur_year_tick;
+    }
+    else if (!world->status.reports.empty())
+    {
+        // Fallback: copy from the last report
+        df::report *last = world->status.reports.back();
+        year = last->year;
+        year_time = last->time;
+    }
+
+    bool continued = false;
+
+    while (!message.empty())
+    {
+        df::report *new_rep = new df::report();
+
+        new_rep->color = color;
+        new_rep->bright = bright;
+        new_rep->year = year;
+        new_rep->time = year_time;
+
+        new_rep->flags.bits.continuation = continued;
+        new_rep->flags.bits.announcement = true;
+
+        int size = std::min(message.size(), 73U);
+        new_rep->text = message.substr(0, size);
+        message = message.substr(size);
+
+        continued = true;
+
+        // Add the object to the lists
+        new_rep->id = world->status.next_report_id++;
+
+        world->status.reports.push_back(new_rep);
+        world->status.announcements.push_back(new_rep);
+        world->status.display_timer = 2000;
+    }
+
+}
+
+void DFHack::showPopupAnnouncement(std::string message, int color, bool bright)
+{
+    using df::global::world;
+
+    df::popup_message *popup = new df::popup_message();
+    popup->text = message;
+    popup->color = color;
+    popup->bright = bright;
+    world->status.popups.push_back(popup);
 }
 
 //
@@ -91,16 +462,23 @@ struct Gui::Private
     }
 
     bool Started;
-    uint32_t window_x_offset;
-    uint32_t window_y_offset;
-    uint32_t window_z_offset;
-    uint32_t cursor_xyz_offset;
-    uint32_t designation_xyz_offset;
-    uint32_t mouse_xy_offset;
-    uint32_t window_dims_offset;
+    int32_t * window_x_offset;
+    int32_t * window_y_offset;
+    int32_t * window_z_offset;
+    struct xyz
+    {
+        int32_t x;
+        int32_t y;
+        int32_t z;
+    } * cursor_xyz_offset, * designation_xyz_offset;
+    struct xy
+    {
+        int32_t x;
+        int32_t y;
+    } * mouse_xy_offset, * window_dims_offset;
 
     bool StartedScreen;
-    uint32_t screen_tiles_ptr_offset;
+    void * screen_tiles_ptr_offset;
 
     Process * owner;
 };
@@ -157,19 +535,33 @@ Gui::Gui()
     try
     {
         OG_Position = mem->getGroup("Position");
-        d->window_x_offset = OG_Position->getAddress ("window_x");
-        d->window_y_offset = OG_Position->getAddress ("window_y");
-        d->window_z_offset = OG_Position->getAddress ("window_z");
-        d->cursor_xyz_offset = OG_Position->getAddress ("cursor_xyz");
-        d->window_dims_offset = OG_Position->getAddress ("window_dims");
+        d->window_x_offset = (int32_t *) OG_Position->getAddress ("window_x");
+        d->window_y_offset = (int32_t *) OG_Position->getAddress ("window_y");
+        d->window_z_offset = (int32_t *) OG_Position->getAddress ("window_z");
+        d->cursor_xyz_offset = (Private::xyz *) OG_Position->getAddress ("cursor_xyz");
+        d->window_dims_offset = (Private::xy *) OG_Position->getAddress ("window_dims");
         d->Started = true;
     }
     catch(Error::All &){};
-    OG_Position->getSafeAddress("mouse_xy", d->mouse_xy_offset);
-    OG_Position->getSafeAddress("designation_xyz", d->designation_xyz_offset);
     try
     {
-        d->screen_tiles_ptr_offset = OG_Position->getAddress ("screen_tiles_pointer");
+        d->mouse_xy_offset = (Private::xy *) OG_Position->getAddress ("mouse_xy");
+    }
+    catch(Error::All &)
+    {
+        d->mouse_xy_offset = 0;
+    };
+    try
+    {
+        d->designation_xyz_offset = (Private::xyz *) OG_Position->getAddress ("designation_xyz");
+    }
+    catch(Error::All &)
+    {
+        d->designation_xyz_offset = 0;
+    };
+    try
+    {
+        d->screen_tiles_ptr_offset = (void *) OG_Position->getAddress ("screen_tiles_pointer");
         d->StartedScreen = true;
     }
     catch(Error::All &){};
@@ -299,10 +691,10 @@ bool Gui::getScreenTiles (int32_t width, int32_t height, t_screen screen[])
 {
     if(!d->StartedScreen) return false;
 
-    uint32_t screen_addr = d->owner->readDWord(d->screen_tiles_ptr_offset);
+    void * screen_addr = (void *) d->owner->readDWord(d->screen_tiles_ptr_offset);
     uint8_t* tiles = new uint8_t[width*height*4/* + 80 + width*height*4*/];
 
-    d->owner->read (screen_addr, (width*height*4/* + 80 + width*height*4*/), (uint8_t *) tiles);
+    d->owner->read (screen_addr, (width*height*4/* + 80 + width*height*4*/), tiles);
 
     for(int32_t iy=0; iy<height; iy++)
     {

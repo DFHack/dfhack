@@ -1,10 +1,10 @@
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
 
-#include <DataDefs.h>
-#include <df/d_init.h>
+#include "DataDefs.h"
+#include "df/d_init.h"
 
 using std::vector;
 using std::string;
@@ -51,10 +51,7 @@ DFhackCExport command_result twaterlvl(Core * c, vector <string> & parameters)
 DFhackCExport command_result tidlers(Core * c, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
-    df::d_init_idlers iv = df::d_init_idlers(int(d_init->idlers) + 1);
-    if (!d_init_idlers::is_valid(iv))
-        iv = ENUM_FIRST_ITEM(d_init_idlers);
-    d_init->idlers = iv;
-    c->con << "Toggled the display of idlers to " << ENUM_KEY_STR(d_init_idlers, iv) << endl;
+    d_init->idlers = ENUM_NEXT_ITEM(d_init_idlers, d_init->idlers);
+    c->con << "Toggled the display of idlers to " << ENUM_KEY_STR(d_init_idlers, d_init->idlers) << endl;
     return CR_OK;
 }

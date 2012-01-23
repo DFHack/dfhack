@@ -80,6 +80,30 @@ namespace DFHack
         GameType g_type;
     };
     class DFContextShared;
+
+    class DFHACK_EXPORT PersistentDataItem {
+        friend class World;
+
+        int id;
+        std::string key_value;
+
+        std::string *str_value;
+        int *int_values;
+    public:
+        static const int NumInts = 7;
+
+        bool isValid() { return id != 0; }
+
+        const std::string &key() { return key_value; }
+
+        std::string &val() { return *str_value; }
+        int &ival(int i) { return int_values[i]; }
+
+        PersistentDataItem() : id(0), str_value(0), int_values(0) {}
+        PersistentDataItem(int id, const std::string &key, std::string *sv, int *iv)
+            : id(id), key_value(key), str_value(sv), int_values(iv) {}
+    };
+
     /**
      * The World module
      * \ingroup grp_modules
@@ -108,6 +132,14 @@ namespace DFHack
         bool ReadGameMode(t_gamemodes& rd);
         bool WriteGameMode(const t_gamemodes & wr); // this is very dangerous
         std::string ReadWorldFolder();
+
+        // Store data in fake historical figure names.
+        // This ensures that the values are stored in save games.
+        PersistentDataItem AddPersistentData(const std::string &key);
+        PersistentDataItem GetPersistentData(const std::string &key);
+        void GetPersistentData(std::vector<PersistentDataItem> *vec, const std::string &key);
+        void DeletePersistentData(const PersistentDataItem &item);
+
         private:
         struct Private;
         Private *d;

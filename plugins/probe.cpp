@@ -21,10 +21,15 @@ using namespace std;
 #include "modules/MapCache.h"
 #include "MiscUtils.h"
 
+#include "df/world.h"
+
+
 using std::vector;
 using std::string;
 using namespace DFHack;
+using namespace DFHack::Simple;
 using namespace df::enums;
+using df::global::world;
 
 DFhackCExport command_result df_probe (Core * c, vector <string> & parameters);
 DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters);
@@ -56,7 +61,6 @@ DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters)
     Console & con = c->con;
     CoreSuspender suspend(c);
     DFHack::Gui *Gui = c->getGui();
-    DFHack::Units * cr = c->getUnits();
     int32_t cursorX, cursorY, cursorZ;
     Gui->getCursorCoords(cursorX,cursorY,cursorZ);
     if(cursorX == -30000)
@@ -65,11 +69,10 @@ DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters)
     }
     else
     {
-        uint32_t ncr;
-        cr->Start(ncr);
+        uint32_t ncr = world->units.all.size();
         for(auto i = 0; i < ncr; i++)
         {
-            df::unit * unit = cr->GetCreature( i );
+            df::unit * unit = world->units.all[i];
             if(unit->pos.x == cursorX && unit->pos.y == cursorY && unit->pos.z == cursorZ)
             {
                 con.print("Creature %d, race %d (%x), civ %d (%x)\n", unit->id, unit->race, unit->race, unit->civ_id, unit->civ_id);

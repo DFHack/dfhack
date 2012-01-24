@@ -90,7 +90,6 @@ namespace DFHack
 
 class Context;
 class DFContextShared;
-class Units;
 
 /**
  * Type for holding an item read from DF
@@ -133,12 +132,14 @@ DFHACK_EXPORT bool writeItem(const dfh_item & item);
 DFHACK_EXPORT std::string getItemClass(const df::item * item);
 /// who owns this item we already read?
 DFHACK_EXPORT int32_t getItemOwnerID(const df::item * item);
+DFHACK_EXPORT df::unit *getItemOwner(const df::item * item);
 /// which item is it contained in?
 DFHACK_EXPORT int32_t getItemContainerID(const df::item * item);
+DFHACK_EXPORT df::item *getItemContainer(const df::item * item);
 /// which items does it contain?
 DFHACK_EXPORT bool getContainedItems(const df::item * item, /*output*/ std::vector<int32_t> &items);
 /// wipe out the owner records
-DFHACK_EXPORT bool removeItemOwner(df::item * item, Units *creatures);
+DFHACK_EXPORT bool removeItemOwner(df::item * item);
 /// read item references, filtered by class
 DFHACK_EXPORT bool readItemRefs(const df::item * item, const df::general_ref_type type,
                   /*output*/ std::vector<int32_t> &values);

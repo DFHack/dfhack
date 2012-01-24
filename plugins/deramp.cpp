@@ -33,6 +33,12 @@ DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
 
     CoreSuspender suspend(c);
 
+    if (!Maps::IsValid())
+    {
+        c->con.printerr("Map is not available!\n");
+        return CR_FAILURE;
+    }
+
     int count = 0;
     int countbad = 0;
 

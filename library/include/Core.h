@@ -52,13 +52,9 @@ namespace DFHack
 {
     class Process;
     class Module;
-    class Units;
-    class Engravings;
     class Gui;
     class World;
     class Materials;
-    class Translation;
-    class Vegetation;
     class Constructions;
     class Notes;
     class VersionInfo;
@@ -97,20 +93,12 @@ namespace DFHack
         /// Is everything OK?
         bool isValid(void) { return !errorstate; }
 
-        /// get the creatures module
-        Units * getUnits();
-        /// get the engravings module
-        Engravings * getEngravings();
         /// get the gui module
         Gui * getGui();
         /// get the world module
         World * getWorld();
         /// get the materials module
         Materials * getMaterials();
-        /// get the translation module
-        Translation * getTranslation();
-        /// get the vegetation module
-        Vegetation * getVegetation();
         /// get the constructions module
         Constructions * getConstructions();
         /// get the notes module
@@ -161,13 +149,9 @@ namespace DFHack
         // Module storage
         struct
         {
-            Units * pUnits;
-            Engravings * pEngravings;
             Gui * pGui;
             World * pWorld;
             Materials * pMaterials;
-            Translation * pTranslation;
-            Vegetation * pVegetation;
             Constructions * pConstructions;
             Notes * pNotes;
             Graphic * pGraphic;

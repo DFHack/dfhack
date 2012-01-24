@@ -1088,13 +1088,9 @@ TYPE * Core::get##TYPE() \
     return s_mods.p##TYPE;\
 }
 
-MODULE_GETTER(Units);
-MODULE_GETTER(Engravings);
 MODULE_GETTER(Gui);
 MODULE_GETTER(World);
 MODULE_GETTER(Materials);
-MODULE_GETTER(Translation);
-MODULE_GETTER(Vegetation);
 MODULE_GETTER(Constructions);
 MODULE_GETTER(Notes);
 MODULE_GETTER(Graphic);

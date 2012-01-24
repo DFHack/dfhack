@@ -253,11 +253,6 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     matdata tubeTiles;
 
     uint32_t vegCount = 0;
-    DFHack::Vegetation *veg = c->getVegetation();
-    if (showPlants && !veg->Start())
-    {
-        con.printerr("Unable to read vegetation; plants won't be listed!\n" );
-    }
 
     for(uint32_t z = 0; z < z_max; z++)
     {
@@ -489,10 +484,6 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     }
 
     // Cleanup
-    if (showPlants)
-    {
-        veg->Finish();
-    }
     mats->Finish();
     con << std::endl;
     return CR_OK;

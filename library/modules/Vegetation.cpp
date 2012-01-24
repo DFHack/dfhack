@@ -33,23 +33,29 @@ using namespace std;
 #include "VersionInfo.h"
 #include "MemAccess.h"
 #include "Types.h"
-#include "modules/Vegetation.h"
-#include "modules/Translation.h"
-#include "ModuleFactory.h"
 #include "Core.h"
 using namespace DFHack;
 
-Module* DFHack::createVegetation()
+#include "modules/Vegetation.h"
+#include "df/world.h"
+
+using namespace DFHack;
+using namespace DFHack::Simple;
+using df::global::world;
+
+bool Vegetation::isValid()
 {
-    return new Vegetation();
+    return (world->plants.all.size() > 0);
 }
 
-Vegetation::Vegetation()
+uint32_t Vegetation::getCount()
 {
+    return world->plants.all.size();
 }
 
-Vegetation::~Vegetation()
+df::plant *Vegetation::getPlant(const int32_t index)
 {
+    if (index < 0 || index >= getCount())
+        return NULL;
+    return world->plants.all[index];
 }
-
-

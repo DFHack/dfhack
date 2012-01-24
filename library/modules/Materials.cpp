@@ -95,9 +95,14 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
     inorganic = NULL; plant = NULL; creature = NULL;
     figure = NULL;
 
+    if (type < 0) {
+        mode = None;
+        return false;
+    }
+
     df::world_raws &raws = world->raws;
 
-    if (type < 0 || type >= sizeof(raws.mat_table.builtin)/sizeof(void*))
+    if (type >= sizeof(raws.mat_table.builtin)/sizeof(void*))
         return false;
 
     if (index < 0)
@@ -159,7 +164,7 @@ bool MaterialInfo::find(const std::string &token)
     std::vector<std::string> items;
     split_string(&items, token, ":");
 
-    if (items[0] == "INORGANIC")
+    if (items[0] == "INORGANIC" && items.size() > 1)
         return findInorganic(vector_get(items,1));
     if (items[0] == "CREATURE_MAT" || items[0] == "CREATURE")
         return findCreature(vector_get(items,1), vector_get(items,2));
@@ -267,12 +272,35 @@ bool MaterialInfo::findCreature(const std::string &token, const std::string &sub
     return decode(-1);
 }
 
+std::string MaterialInfo::getToken()
+{
+    if (isNone())
+        return "NONE";
+
+    if (!material)
+        return stl_sprintf("INVALID:%d:%d", type, index);
+
+    switch (mode) {
+    case Builtin:
+        return material->id;
+    case Inorganic:
+        return "INORGANIC:" + inorganic->id;
+    case Creature:
+        return "CREATURE:" + creature->creature_id + ":" + material->id;
+    case Plant:
+        return "PLANT:" + plant->id + ":" + material->id;
+    default:
+        return stl_sprintf("INVALID_MODE:%d:%d", type, index);
+    }
+}
+
 std::string MaterialInfo::toString(uint16_t temp, bool named)
 {
-    if (type == -1)
-        return "NONE";
+    if (isNone())
+        return "any";
+
     if (!material)
-        return stl_sprintf("INVALID %d:%d", type, index);
+        return stl_sprintf("INVALID:%d:%d", type, index);
 
     df::matter_state state = matter_state::Solid;
     if (temp >= material->heat.melting_point)

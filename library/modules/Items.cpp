@@ -304,7 +304,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat)
         OK(2,blunt);
 
         if (VIRTUAL_CAST_VAR(def, df::itemdef_toolst, custom)) {
-            df::enum_field<df::tool_uses,int16_t> key(tool_uses::FOOD_STORAGE);
+            df::tool_uses key(tool_uses::FOOD_STORAGE);
             if (linear_index(def->tool_use, key) >= 0)
                 OK(3,food_storage);
         } else {

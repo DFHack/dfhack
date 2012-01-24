@@ -180,6 +180,13 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
             return CR_OK;
         }
     }
+
+    if (!Maps::IsValid())
+    {
+        c->con.printerr("Map is not available!\n");
+        return CR_FAILURE;
+    }
+
     Brush * brush = new RectangleBrush(1,1);
     string brushname = "point";
     bool end = false;

@@ -6,6 +6,7 @@
 #include "PluginManager.h"
 #include "modules/Materials.h"
 #include "modules/Translation.h"
+#include "modules/Items.h"
 
 #include "DataDefs.h"
 #include "df/world.h"
@@ -157,8 +158,6 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
             MaterialInfo matinfo(item->mat_type, item->mat_index);
 
             string mat_name = matinfo.toString();
-            if (mat_name == "NONE")
-                mat_name = "any";
 
             switch (item->item_type)
             {
@@ -172,9 +171,9 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
                 c->con.print("%s logs", mat_name.c_str());
                 break;
             case item_type::BAR:
-                if (mat_name == "rock")
+                if (matinfo.isInorganicWildcard())
                     mat_name = "metal";
-                if ((matinfo.mode == MaterialInfo::Inorganic) && (matinfo.inorganic->flags.is_set(inorganic_flags::WAFERS)))
+                if (matinfo.inorganic && matinfo.inorganic->flags.is_set(inorganic_flags::WAFERS))
                     c->con.print("%s wafers", mat_name.c_str());
                 else
                     c->con.print("%s bars", mat_name.c_str());
@@ -183,9 +182,9 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
                 c->con.print("%s cut gems", mat_name.c_str());
                 break;
             case item_type::ROUGH:
-                if (item->mat_type == 0)
+                if (matinfo.isAnyInorganic())
                 {
-                    if (item->mat_index == -1)
+                    if (matinfo.isInorganicWildcard())
                         mat_name = "any";
                     c->con.print("%s rough gems", mat_name.c_str());
                 }
@@ -196,7 +195,7 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
                 c->con.print("%s leather", mat_name.c_str());
                 break;
             case item_type::CLOTH:
-                if (mat_name == "any")
+                if (matinfo.isNone())
                 {
                     if (item->flags2.bits.plant)
                         mat_name = "any plant fiber";
@@ -221,20 +220,32 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
                     else if (item->flags2.bits.ivory_tooth)
                         c->con.print("%s ivory/teeth", mat_name.c_str());
                     else
-                        c->con.print("%s unknown body parts (%08x:%08x:%08x)", mat_name.c_str(), item->flags1.whole, item->flags2.whole, item->flags3.whole);
+                        c->con.print("%s unknown body parts (%s:%s:%s)",
+                                     mat_name.c_str(),
+                                     bitfieldToString(item->flags1).c_str(),
+                                     bitfieldToString(item->flags2).c_str(),
+                                     bitfieldToString(item->flags3).c_str());
                 }
                 else
-                    c->con.print("indeterminate %s item (%08x:%08x:%08x)", mat_name.c_str(),  item->flags1.whole, item->flags2.whole, item->flags3.whole);
+                    c->con.print("indeterminate %s item (%s:%s:%s)",
+                                 mat_name.c_str(),
+                                 bitfieldToString(item->flags1).c_str(),
+                                 bitfieldToString(item->flags2).c_str(),
+                                 bitfieldToString(item->flags3).c_str());
                 break;
             default:
-                c->con.print("item %s:%s with flags %08x,%08x,%08x",
-                    df::enums::item_type::get_key(item->item_type),
-                    (item->item_subtype == -1) ? "NONE" : "???",
-                    item->flags1.whole,
-                    item->flags2.whole,
-                    item->flags3.whole);
-                break;
+                {
+                    ItemTypeInfo itinfo(item->item_type, item->item_subtype);
+
+                    c->con.print("item %s material %s flags (%s:%s:%s)",
+                                 itinfo.toString().c_str(), mat_name.c_str(),
+                                 bitfieldToString(item->flags1).c_str(),
+                                 bitfieldToString(item->flags2).c_str(),
+                                 bitfieldToString(item->flags3).c_str());
+                    break;
+                }
             }
+
             c->con.print(", quantity %i\n", item->quantity);
         }
     }

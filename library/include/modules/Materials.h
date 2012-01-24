@@ -74,6 +74,7 @@ namespace DFHack
         df::material *material;
 
         enum Mode {
+            None,
             Builtin,
             Inorganic,
             Creature,
@@ -94,6 +95,15 @@ namespace DFHack
 
         bool isValid() const { return material != NULL; }
 
+        bool isNone() const { return mode == None; }
+        bool isBuiltin() const { return mode == Builtin; }
+        bool isInorganic() const { return mode == Inorganic; }
+        bool isCreature() const { return mode == Creature; }
+        bool isPlant() const { return mode == Plant; }
+
+        bool isAnyInorganic() const { return type == 0; }
+        bool isInorganicWildcard() const { return isAnyInorganic() && isBuiltin(); }
+
         bool decode(int16_t type, int32_t index = -1);
         bool decode(df::item *item);
         bool decode(const df::material_vec_ref &vr, int idx);
@@ -110,6 +120,7 @@ namespace DFHack
         bool findPlant(const std::string &token, const std::string &subtoken);
         bool findCreature(const std::string &token, const std::string &subtoken);
 
+        std::string getToken();
         std::string toString(uint16_t temp = 10015, bool named = true);
 
         bool isAnyCloth();

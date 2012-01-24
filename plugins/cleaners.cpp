@@ -122,6 +122,11 @@ DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
         c->con.printerr("The cursor is not active.\n");
         return CR_WRONG_USAGE;
     }
+    if (!Maps::IsValid())
+    {
+        c->con.printerr("Map is not available.\n");
+        return CR_FAILURE;
+    }
     df::map_block *block = Maps::getBlockAbs(cursor->x, cursor->y, cursor->z);
     if (block == NULL)
     {

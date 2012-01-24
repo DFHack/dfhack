@@ -1,0 +1,34 @@
+##############################
+# Generic dwarfmode bindings #
+##############################
+
+keybinding add Ctrl-W twaterlvl
+
+# with cursor:
+keybinding add Ctrl-V vdig
+keybinding add Ctrl-Shift-V "vdig x"
+keybinding add Ctrl-C spotclean
+keybinding add Ctrl-Shift-K autodump-destroy-here
+
+# any item:
+keybinding add Ctrl-K autodump-destroy-item
+
+#############################
+# Context-specific bindings #
+#############################
+
+# q->stockpile; p
+keybinding add Alt-P copystock
+
+# q->workshop
+keybinding add Ctrl-D job-duplicate
+
+# materials: q->workshop; b->select items
+keybinding add Shift-A "job-material ALUNITE"
+keybinding add Shift-M "job-material MICROCLINE"
+keybinding add Shift-D "job-material DACITE"
+keybinding add Shift-R "job-material RHYOLITE"
+keybinding add Shift-I "job-material CINNABAR"
+keybinding add Shift-B "job-material COBALTITE"
+keybinding add Shift-O "job-material OBSIDIAN"
+keybinding add Shift-G "job-material GLASS_GREEN"

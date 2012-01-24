@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
@@ -1091,6 +1091,5 @@ TYPE * Core::get##TYPE() \
 MODULE_GETTER(Gui);
 MODULE_GETTER(World);
 MODULE_GETTER(Materials);
-MODULE_GETTER(Constructions);
 MODULE_GETTER(Notes);
 MODULE_GETTER(Graphic);

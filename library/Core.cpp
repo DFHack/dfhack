@@ -1091,7 +1091,6 @@ TYPE * Core::get##TYPE() \
 MODULE_GETTER(Gui);
 MODULE_GETTER(World);
 MODULE_GETTER(Materials);
-MODULE_GETTER(Vegetation);
 MODULE_GETTER(Constructions);
 MODULE_GETTER(Notes);
 MODULE_GETTER(Graphic);

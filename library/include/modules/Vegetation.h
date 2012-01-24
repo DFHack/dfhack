@@ -31,27 +31,21 @@ distribution.
  */
 
 #include "Export.h"
-#include "Module.h"
-#include "Types.h"
 #include "DataDefs.h"
 #include "df/plant.h"
+
 namespace DFHack
 {
-    /**
-     * \ingroup grp_vegetation
-     */
-    const uint32_t sapling_to_tree_threshold = 0x1D880;
-    /**
-     * The Vegetation module
-     * \ingroup grp_vegetation
-     * \ingroup grp_modules
-     */
-    class DFHACK_EXPORT Vegetation : public Module
-    {
-        public:
-        Vegetation();
-        ~Vegetation();
-        bool Finish(){return true;};
-    };
+namespace Simple
+{
+namespace Vegetation
+{
+const uint32_t sapling_to_tree_threshold = 120 * 28 * 12 * 3; // 3 years
+
+DFHACK_EXPORT bool isValid();
+DFHACK_EXPORT uint32_t getCount();
+DFHACK_EXPORT df::plant *getPlant (const int32_t index);
+}
+}
 }
 #endif

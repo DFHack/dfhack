@@ -222,7 +222,7 @@ DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
                 {
                     if(DFHack::tileShape(map.tiletypeAt(DFHack::DFCoord(x,y,z))) == DFHack::SAPLING_OK)
                     {
-                        tree->grow_counter = DFHack::sapling_to_tree_threshold;
+                        tree->grow_counter = Vegetation::sapling_to_tree_threshold;
                     }
                     break;
                 }
@@ -238,7 +238,7 @@ DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
             uint16_t ttype = map.tiletypeAt(df::coord(p->pos.x,p->pos.y,p->pos.z));
             if(!p->flags.bits.is_shrub && DFHack::tileShape(ttype) == DFHack::SAPLING_OK)
             {
-                p->grow_counter = DFHack::sapling_to_tree_threshold;
+                p->grow_counter = Vegetation::sapling_to_tree_threshold;
             }
         }
     }

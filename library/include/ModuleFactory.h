@@ -35,7 +35,6 @@ namespace DFHack
     Module* createGui();
     Module* createWorld();
     Module* createMaterials();
-    Module* createTranslation();
     Module* createVegetation();
     Module* createBuildings();
     Module* createConstructions();

@@ -1093,7 +1093,6 @@ MODULE_GETTER(Engravings);
 MODULE_GETTER(Gui);
 MODULE_GETTER(World);
 MODULE_GETTER(Materials);
-MODULE_GETTER(Translation);
 MODULE_GETTER(Vegetation);
 MODULE_GETTER(Constructions);
 MODULE_GETTER(Notes);

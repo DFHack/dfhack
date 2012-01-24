@@ -22,6 +22,7 @@
 using std::string;
 using std::vector;
 using namespace DFHack;
+using namespace DFHack::Simple;
 using namespace df::enums;
 
 using df::global::world;
@@ -31,8 +32,6 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 
-    Translation *trans = c->getTranslation();
-    trans->Start();
     CoreSuspender suspend(c);
 
     bool found = false;
@@ -62,7 +61,7 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
             c->con.printerr("Dwarf with strange mood does not have a mood type!\n");
             continue;
         }
-        c->con.print("%s %s is currently ", unit->name.first_name.c_str(), trans->TranslateName(&unit->name, false).c_str());
+        c->con.print("%s %s is currently ", unit->name.first_name.c_str(), Translation::TranslateName(&unit->name, false).c_str());
         switch (unit->mood)
         {
         case mood_type::Macabre:
@@ -255,7 +254,6 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
             c->con.print(", quantity %i\n", item->quantity);
         }
     }
-    trans->Finish();
     if (!found)
         c->con.print("No strange moods currently active.\n");
 

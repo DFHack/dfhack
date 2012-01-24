@@ -51,6 +51,7 @@ using namespace std;
 #include "df/unit_inventory_item.h"
 
 using namespace DFHack;
+using namespace DFHack::Simple;
 using df::global::world;
 using df::global::ui;
 
@@ -58,12 +59,6 @@ struct Units::Private
 {
     bool Inited;
     bool Started;
-
-    bool IdMapReady;
-    std::map<int32_t, int32_t> IdMap;
-
-    Process *owner;
-    Translation * trans;
 };
 
 Module* DFHack::createUnits()
@@ -75,16 +70,9 @@ Units::Units()
 {
     Core & c = Core::getInstance();
     d = new Private;
-    d->owner = c.p;
     VersionInfo * minfo = c.vinfo;
     d->Inited = false;
     d->Started = false;
-    d->IdMapReady = false;
-    d->trans = c.getTranslation();
-    d->trans->InitReadNames(); // FIXME: throws on error
-
-    OffsetGroup *OG_Creatures = minfo->getGroup("Creatures");
-
     d->Inited = true;
 }
 
@@ -98,8 +86,6 @@ bool Units::Start( uint32_t &numcreatures )
 {
     d->Started = true;
     numcreatures = world->units.all.size();
-    d->IdMap.clear();
-    d->IdMapReady = false;
     return true;
 }
 
@@ -157,7 +143,7 @@ void Units::CopyCreature(df::unit * source, t_unit & furball)
 
     //read creature from memory
     // name
-    d->trans->readName(furball.name, &source->name);
+    Translation::readName(furball.name, &source->name);
 
     // basic stuff
     furball.id = source->id;
@@ -183,7 +169,7 @@ void Units::CopyCreature(df::unit * source, t_unit & furball)
     // mood stuff
     furball.mood = source->mood;
     furball.mood_skill = source->job.unk_2f8; // FIXME: really? More like currently used skill anyway.
-    d->trans->readName(furball.artifact_name, &source->status.artifact_name);
+    Translation::readName(furball.artifact_name, &source->status.artifact_name);
 
     // labors
     memcpy(&furball.labors, &source->status.labors, sizeof(furball.labors));
@@ -555,7 +541,6 @@ bool Units::RemoveOwnedItemByIdx(const uint32_t index, int32_t id)
 bool Units::RemoveOwnedItemByPtr(df::unit * temp, int32_t id)
 {
     if(!d->Started) return false;
-    Process * p = d->owner;
     vector <int32_t> & vec = temp->owned_items;
     vec.erase(std::remove(vec.begin(), vec.end(), id), vec.end());
 /*
@@ -573,6 +558,6 @@ bool Units::RemoveOwnedItemByPtr(df::unit * temp, int32_t id)
 
 void Units::CopyNameTo(df::unit * creature, df::language_name * target)
 {
-    d->trans->copyName(&creature->name, target);
+    Translation::copyName(&creature->name, target);
 }
 

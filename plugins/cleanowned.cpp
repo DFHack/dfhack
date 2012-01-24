@@ -98,13 +98,11 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
 
     DFHack::Materials *Materials = c->getMaterials();
     DFHack::Units *Creatures = c->getUnits();
-    DFHack::Translation *Tran = c->getTranslation();
 
     uint32_t num_creatures;
     bool ok = true;
     ok &= Materials->ReadAllMaterials();
     ok &= Creatures->Start(num_creatures);
-    ok &= Tran->Start();
 
     c->con.print("Found total %d items.\n", world->items.all.size());
 
@@ -197,7 +195,7 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
                 if (!temp->name.nickname.empty())
                     info += std::string(" '") + temp->name.nickname + "'";
                 info += " ";
-                info += Tran->TranslateName(&temp->name,false);
+                info += Translation::TranslateName(&temp->name,false);
                 c->con.print(", owner %s", info.c_str());
             }
 

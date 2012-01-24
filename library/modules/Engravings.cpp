@@ -36,6 +36,7 @@ using namespace std;
 #include "Core.h"
 
 #include "modules/Engravings.h"
+#include "df/world.h"
 
 using namespace DFHack;
 using namespace DFHack::Simple;

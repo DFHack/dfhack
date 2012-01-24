@@ -30,7 +30,7 @@ distribution.
 */
 #include "Export.h"
 #include "DataDefs.h"
-#include "df/world.h"
+#include "df/engraving.h"
 /**
  * \defgroup grp_engraving Engraving module parts
  * @ingroup grp_modules

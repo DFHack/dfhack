@@ -27,7 +27,6 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
-#include <cassert>
 using namespace std;
 
 #include "modules/Translation.h"
@@ -82,7 +81,6 @@ bool Translation::copyName(df::language_name * source, df::language_name * targe
 string Translation::TranslateName(const df::language_name * name, bool inEnglish)
 {
     string out;
-    assert (d->Started);
 
     if(!inEnglish)
     {

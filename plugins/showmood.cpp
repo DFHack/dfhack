@@ -174,7 +174,7 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
             case item_type::BAR:
                 if (mat_name == "rock")
                     mat_name = "metal";
-                if ((matinfo.mode == MaterialInfo::Inorganic) && (matinfo.inorganic->flags.is_set(inorganic_flags::WAFERS)))
+                if ((matinfo.inorganic) && (matinfo.inorganic->flags.is_set(inorganic_flags::WAFERS)))
                     c->con.print("%s wafers", mat_name.c_str());
                 else
                     c->con.print("%s bars", mat_name.c_str());
@@ -228,7 +228,7 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
                 break;
             default:
                 c->con.print("item %s:%s with flags %08x,%08x,%08x",
-                    df::enums::item_type::get_key(item->item_type),
+                    ENUM_KEY_STR(item_type, item->item_type),
                     (item->item_subtype == -1) ? "NONE" : "???",
                     item->flags1.whole,
                     item->flags2.whole,

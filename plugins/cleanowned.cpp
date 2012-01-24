@@ -97,12 +97,9 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
     CoreSuspender suspend(c);
 
     DFHack::Materials *Materials = c->getMaterials();
-    DFHack::Units *Creatures = c->getUnits();
 
     uint32_t num_creatures;
-    bool ok = true;
-    ok &= Materials->ReadAllMaterials();
-    ok &= Creatures->Start(num_creatures);
+    bool ok = Materials->ReadAllMaterials();
 
     c->con.print("Found total %d items.\n", world->items.all.size());
 
@@ -184,24 +181,22 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
                 item->getWear()
             );
 
-            int32_t owner = Items::getItemOwnerID(item);
-            int32_t owner_index = Creatures->FindIndexById(owner);
+            df::unit *owner = Items::getItemOwner(item);
             std::string info;
 
-            if (owner_index >= 0)
+            if (owner)
             {
-                df::unit * temp = Creatures->GetCreature(owner_index);
-                info = temp->name.first_name;
-                if (!temp->name.nickname.empty())
-                    info += std::string(" '") + temp->name.nickname + "'";
+                info = owner->name.first_name;
+                if (!owner->name.nickname.empty())
+                    info += std::string(" '") + owner->name.nickname + "'";
                 info += " ";
-                info += Translation::TranslateName(&temp->name,false);
+                info += Translation::TranslateName(&owner->name,false);
                 c->con.print(", owner %s", info.c_str());
             }
 
             if (!dry_run)
             {
-                if (!Items::removeItemOwner(item, Creatures))
+                if (!Items::removeItemOwner(item))
                     c->con.print("(unsuccessfully) ");
                 if (dump)
                     item->flags.bits.dump = 1;

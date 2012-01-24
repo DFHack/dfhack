@@ -30,7 +30,6 @@ distribution.
 namespace DFHack
 {
     class Module;
-    Module* createUnits();
     Module* createEngravings();
     Module* createGui();
     Module* createWorld();

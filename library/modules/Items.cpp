@@ -436,6 +436,17 @@ int32_t Items::getItemOwnerID(const df::item * item)
     return -1;
 }
 
+df::unit *Items::getItemOwner(const df::item * item)
+{
+    for (uint32_t i = 0; i < item->itemrefs.size(); i++)
+    {
+        df::general_ref *ref = item->itemrefs[i];
+        if (ref->getType() == df::general_ref_type::UNIT_ITEMOWNER)
+            return ref->getUnit();
+    }
+    return NULL;
+}
+
 int32_t Items::getItemContainerID(const df::item * item)
 {
     for (uint32_t i = 0; i < item->itemrefs.size(); i++)
@@ -445,6 +456,17 @@ int32_t Items::getItemContainerID(const df::item * item)
             return ref->getID();
     }
     return -1;
+}
+
+df::item *Items::getItemContainer(const df::item * item)
+{
+    for (uint32_t i = 0; i < item->itemrefs.size(); i++)
+    {
+        df::general_ref *ref = item->itemrefs[i];
+        if (ref->getType() == df::general_ref_type::CONTAINED_IN_ITEM)
+            return ref->getItem();
+    }
+    return NULL;
 }
 
 bool Items::getContainedItems(const df::item * item, std::vector<int32_t> &items)
@@ -466,7 +488,7 @@ bool Items::readItemRefs(const df::item * item, df::general_ref_type type, std::
     return !values.empty();
 }
 
-bool Items::removeItemOwner(df::item * item, Units *creatures)
+bool Items::removeItemOwner(df::item * item)
 {
     for (uint32_t i = 0; i < item->itemrefs.size(); i++)
     {
@@ -476,7 +498,7 @@ bool Items::removeItemOwner(df::item * item, Units *creatures)
 
         df::unit *unit = ref->getUnit();
 
-        if (unit == NULL || !creatures->RemoveOwnedItemByPtr(unit, item->id))
+        if (unit == NULL || !Units::RemoveOwnedItemByPtr(unit, item->id))
         {
             cerr << "RemoveOwnedItemIdx: CREATURE " << ref->getID() << " ID " << item->id << " FAILED!" << endl;
             return false;

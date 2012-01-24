@@ -206,6 +206,12 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
                 }
                 c->con.print("%s cloth", mat_name.c_str());
                 break;
+            case item_type::REMAINS:
+                c->con.print("%s remains", mat_name.c_str());
+                break;
+            case item_type::CORPSE:
+                c->con.print("%s %scorpse", mat_name.c_str(), (item->flags1.bits.murdered ? "murdered " : ""));
+                break;
             case item_type::NONE:
                 if (item->flags2.bits.body_part)
                 {

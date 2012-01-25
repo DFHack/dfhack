@@ -47,7 +47,6 @@ using namespace DFHack;
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_unitjobsst.h"
 #include "df/viewscreen_itemst.h"
-#include "df/ui.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/ui_sidebar_menus.h"
 #include "df/ui_look_list.h"
@@ -59,8 +58,14 @@ using namespace DFHack;
 #include "df/unit_inventory_item.h"
 #include "df/report.h"
 #include "df/popup_message.h"
+#include "df/interface.h"
+#include "df/graphic.h"
+#include "df/selection_rect.h"
 
 using namespace df::enums;
+using df::global::gview;
+using df::global::init;
+using df::global::gps;
 
 // Predefined common guard functions
 
@@ -457,25 +462,12 @@ struct Gui::Private
     {
         Started = false;
         StartedScreen = false;
-        mouse_xy_offset = 0;
-        designation_xyz_offset = 0;
     }
 
     bool Started;
     int32_t * window_x_offset;
     int32_t * window_y_offset;
     int32_t * window_z_offset;
-    struct xyz
-    {
-        int32_t x;
-        int32_t y;
-        int32_t z;
-    } * cursor_xyz_offset, * designation_xyz_offset;
-    struct xy
-    {
-        int32_t x;
-        int32_t y;
-    } * mouse_xy_offset, * window_dims_offset;
 
     bool StartedScreen;
     void * screen_tiles_ptr_offset;
@@ -491,26 +483,6 @@ Gui::Gui()
     VersionInfo * mem = c.vinfo;
     OffsetGroup * OG_Gui = mem->getGroup("GUI");
 
-    // Setting up hotkeys
-    try
-    {
-        hotkeys = (hotkey_array *) OG_Gui->getAddress("hotkeys");
-    }
-    catch(Error::All &)
-    {
-        hotkeys = 0;
-    };
-
-    // Setting up init
-    try
-    {
-        init = (t_init *) OG_Gui->getAddress("init");
-    }
-    catch(Error::All &)
-    {
-        init = 0;
-    };
-
     // Setting up menu state
     try
     {
@@ -521,16 +493,6 @@ Gui::Gui()
         df_menu_state = 0;
     };
 
-    // Setting up the view screen stuff
-    try
-    {
-        df_interface = (t_interface *) OG_Gui->getAddress ("interface");
-    }
-    catch(exception &)
-    {
-        df_interface = 0;
-    };
-
     OffsetGroup * OG_Position;
     try
     {
@@ -538,27 +500,9 @@ Gui::Gui()
         d->window_x_offset = (int32_t *) OG_Position->getAddress ("window_x");
         d->window_y_offset = (int32_t *) OG_Position->getAddress ("window_y");
         d->window_z_offset = (int32_t *) OG_Position->getAddress ("window_z");
-        d->cursor_xyz_offset = (Private::xyz *) OG_Position->getAddress ("cursor_xyz");
-        d->window_dims_offset = (Private::xy *) OG_Position->getAddress ("window_dims");
         d->Started = true;
     }
     catch(Error::All &){};
-    try
-    {
-        d->mouse_xy_offset = (Private::xy *) OG_Position->getAddress ("mouse_xy");
-    }
-    catch(Error::All &)
-    {
-        d->mouse_xy_offset = 0;
-    };
-    try
-    {
-        d->designation_xyz_offset = (Private::xyz *) OG_Position->getAddress ("designation_xyz");
-    }
-    catch(Error::All &)
-    {
-        d->designation_xyz_offset = 0;
-    };
     try
     {
         d->screen_tiles_ptr_offset = (void *) OG_Position->getAddress ("screen_tiles_pointer");
@@ -582,11 +526,9 @@ bool Gui::Finish()
     return true;
 }
 
-t_viewscreen * Gui::GetCurrentScreen()
+df::viewscreen * Gui::GetCurrentScreen()
 {
-    if(!df_interface)
-        return 0;
-    t_viewscreen * ws = &df_interface->view;
+    df::viewscreen * ws = &gview->view;
     while(ws)
     {
         if(ws->child)
@@ -625,12 +567,9 @@ bool Gui::setViewCoords (const int32_t x, const int32_t y, const int32_t z)
 
 bool Gui::getCursorCoords (int32_t &x, int32_t &y, int32_t &z)
 {
-    if(!d->Started) return false;
-    int32_t coords[3];
-    d->owner->read (d->cursor_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
-    x = coords[0];
-    y = coords[1];
-    z = coords[2];
+    x = df::global::cursor->x;
+    y = df::global::cursor->y;
+    z = df::global::cursor->z;
     if (x == -30000) return false;
     return true;
 }
@@ -638,54 +577,43 @@ bool Gui::getCursorCoords (int32_t &x, int32_t &y, int32_t &z)
 //FIXME: confine writing of coords to map bounds?
 bool Gui::setCursorCoords (const int32_t x, const int32_t y, const int32_t z)
 {
-    if (!d->Started) return false;
-    int32_t coords[3] = {x, y, z};
-    d->owner->write (d->cursor_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
+    df::global::cursor->x = x;
+    df::global::cursor->y = y;
+    df::global::cursor->z = z;
     return true;
 }
 
 bool Gui::getDesignationCoords (int32_t &x, int32_t &y, int32_t &z)
 {
-    if(!d->designation_xyz_offset) return false;
-    int32_t coords[3];
-    d->owner->read (d->designation_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
-    x = coords[0];
-    y = coords[1];
-    z = coords[2];
+    x = df::global::selection_rect->start_x;
+    y = df::global::selection_rect->start_y;
+    z = df::global::selection_rect->start_z;
     if (x == -30000) return false;
     return true;
 }
 
 bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t z)
 {
-    if(!d->designation_xyz_offset) return false;
-    int32_t coords[3] = {x, y, z};
-    d->owner->write (d->designation_xyz_offset, 3*sizeof (int32_t), (uint8_t *) coords);
+    df::global::selection_rect->start_x = x;
+    df::global::selection_rect->start_y = y;
+    df::global::selection_rect->start_z = z;
     return true;
 }
 
 bool Gui::getMousePos (int32_t & x, int32_t & y)
 {
-    if(!d->mouse_xy_offset) return false;
-    int32_t coords[2];
-    d->owner->read (d->mouse_xy_offset, 2*sizeof (int32_t), (uint8_t *) coords);
-    x = coords[0];
-    y = coords[1];
+    x = gps->mouse_x;
+    y = gps->mouse_y;
     if(x == -1) return false;
     return true;
 }
 
 bool Gui::getWindowSize (int32_t &width, int32_t &height)
 {
-    if(!d->Started) return false;
-
-    int32_t coords[2];
-    d->owner->read (d->window_dims_offset, 2*sizeof (int32_t), (uint8_t *) coords);
-    width = coords[0];
-    height = coords[1];
+    width = gps->dimx;
+    height = gps->dimy;
     return true;
 }
-
 
 bool Gui::getScreenTiles (int32_t width, int32_t height, t_screen screen[])
 {

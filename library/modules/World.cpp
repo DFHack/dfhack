@@ -46,6 +46,8 @@ using namespace std;
 
 using namespace DFHack;
 
+using df::global::world;
+
 Module* DFHack::createWorld()
 {
     return new World();
@@ -55,16 +57,12 @@ struct World::Private
 {
     Private()
     {
-        Inited = StartedTime = StartedWeather = StartedMode = PauseInited = false;
+        Inited = PauseInited = StartedWeather = StartedMode = false;
     }
     bool Inited;
 
     bool PauseInited;
     void * pause_state_offset;
-
-    bool StartedTime;
-    void * year_offset;
-    void * tick_offset;
 
     bool StartedWeather;
     char * weather_offset;
@@ -73,9 +71,6 @@ struct World::Private
     void * gamemode_offset;
     void * controlmode_offset;
     void * controlmodecopy_offset;
-
-    bool StartedFolder;
-    void * folder_name_offset;
 
     Process * owner;
 };
@@ -87,14 +82,6 @@ World::World()
     d->owner = c.p;
     wmap = 0;
 
-    OffsetGroup * OG_World = c.vinfo->getGroup("World");
-    try
-    {
-        d->year_offset = OG_World->getAddress( "current_year" );
-        d->tick_offset = OG_World->getAddress( "current_tick" );
-        d->StartedTime = true;
-    }
-    catch(Error::All &){};
     OffsetGroup * OG_Gui = c.vinfo->getGroup("GUI");
     try
     {
@@ -102,6 +89,8 @@ World::World()
         d->PauseInited = true;
     }
     catch(exception &){};
+
+    OffsetGroup * OG_World = c.vinfo->getGroup("World");
     try
     {
         d->weather_offset = OG_World->getAddress( "current_weather" );
@@ -116,13 +105,6 @@ World::World()
         d->StartedMode = true;
     }
     catch(Error::All &){};
-    try
-    {
-        d->folder_name_offset = OG_World->getAddress( "save_folder" );
-        d->StartedFolder = true;
-    }
-    catch(Error::All &){};
-
 
     d->Inited = true;
 }
@@ -145,28 +127,24 @@ bool World::Finish()
 bool World::ReadPauseState()
 {
     if(!d->PauseInited) return false;
-    uint32_t pauseState = d->owner->readDWord (d->pause_state_offset);
+    uint8_t pauseState = d->owner->readByte (d->pause_state_offset);
     return pauseState & 1;
 }
 
 void World::SetPauseState(bool paused)
 {
     if(!d->PauseInited) return;
-    d->owner->writeDWord (d->pause_state_offset, paused);
+    d->owner->writeByte (d->pause_state_offset, paused);
 }
 
 uint32_t World::ReadCurrentYear()
 {
-    if(d->Inited && d->StartedTime)
-        return(d->owner->readDWord(d->year_offset));
-    return 0;
+    return *df::global::cur_year;
 }
 
 uint32_t World::ReadCurrentTick()
 {
-    if(d->Inited && d->StartedTime)
-        return(d->owner->readDWord(d->tick_offset));
-    return 0;
+    return *df::global::cur_year_tick;
 }
 
 bool World::ReadGameMode(t_gamemodes& rd)
@@ -241,11 +219,7 @@ void World::SetCurrentWeather(uint8_t weather)
 
 string World::ReadWorldFolder()
 {
-    if (d->Inited && d->StartedFolder)
-    {
-        return string( * ( (string*) d->folder_name_offset ) );
-    }
-    return string("");
+    return world->unk_192bd8.save_dir;
 }
 
 static PersistentDataItem dataFromHFig(df::historical_figure *hfig)

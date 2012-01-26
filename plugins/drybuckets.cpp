@@ -13,44 +13,45 @@
 using std::string;
 using std::vector;
 using namespace DFHack;
+using namespace df::enums;
 
 using df::global::world;
 
 DFhackCExport command_result df_drybuckets (Core * c, vector <string> & parameters)
 {
-	if (!parameters.empty())
-		return CR_WRONG_USAGE;
+    if (!parameters.empty())
+        return CR_WRONG_USAGE;
 
-        CoreSuspender suspend(c);
+    CoreSuspender suspend(c);
 
-	int dried_total = 0;
-	for (int i = 0; i < world->items.all.size(); i++)
-	{
-		df::item *item = world->items.all[i];
-		if ((item->getType() == df::item_type::LIQUID_MISC) && (item->getMaterial() == df::builtin_mats::WATER))
-		{
-			item->flags.bits.garbage_colect = 1;
-			dried_total++;
-		}
-	}
-	if (dried_total)
-		c->con.print("Done. %d buckets of water marked for emptying.\n", dried_total);
-	return CR_OK;
+    int dried_total = 0;
+    for (int i = 0; i < world->items.all.size(); i++)
+    {
+        df::item *item = world->items.all[i];
+        if ((item->getType() == item_type::LIQUID_MISC) && (item->getMaterial() == builtin_mats::WATER))
+        {
+            item->flags.bits.garbage_colect = 1;
+            dried_total++;
+        }
+    }
+    if (dried_total)
+        c->con.print("Done. %d buckets of water marked for emptying.\n", dried_total);
+    return CR_OK;
 }
 
 DFhackCExport const char * plugin_name ( void )
 {
-	return "drybuckets";
+    return "drybuckets";
 }
 
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
-	commands.clear();
-	commands.push_back(PluginCommand("drybuckets", "Removes water from buckets.", df_drybuckets));
-	return CR_OK;
+    commands.clear();
+    commands.push_back(PluginCommand("drybuckets", "Removes water from buckets.", df_drybuckets));
+    return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
-	return CR_OK;
+    return CR_OK;
 }

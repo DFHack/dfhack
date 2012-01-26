@@ -59,11 +59,11 @@ DFhackCExport command_result weather (Core * c, vector <string> & parameters)
     if(help)
     {
         c->con.print("Prints the current weather map by default.\n"
-                     "Options:\n"
-                     "snow   - make it snow everywhere.\n"
-                     "rain   - make it rain.\n"
-                     "clear  - clear the sky.\n"
-        );
+            "Options:\n"
+            "snow   - make it snow everywhere.\n"
+            "rain   - make it rain.\n"
+            "clear  - clear the sky.\n"
+            );
         return CR_OK;
     }
     if(lock && unlock)
@@ -81,12 +81,12 @@ DFhackCExport command_result weather (Core * c, vector <string> & parameters)
         return CR_FAILURE;
     }
     bool something = lock || unlock || rain || snow || clear;
-    c->Suspend();
+
+    CoreSuspender suspend(c);
     DFHack::World * w = c->getWorld();
     if(!w->wmap)
     {
         con << "Weather support seems broken :(" << std::endl;
-        c->Resume();
         return CR_FAILURE;
     }
     if(!something)
@@ -99,18 +99,18 @@ DFhackCExport command_result weather (Core * c, vector <string> & parameters)
             {
                 switch((*w->wmap)[x][y])
                 {
-                    case DFHack::CLEAR:
-                        con << "C ";
-                        break;
-                    case DFHack::RAINING:
-                        con << "R ";
-                        break;
-                    case DFHack::SNOWING:
-                        con << "S ";
-                        break;
-                    default:
-                        con << (int) (*w->wmap)[x][y] << " ";
-                        break;
+                case CLEAR:
+                    con << "C ";
+                    break;
+                case RAINING:
+                    con << "R ";
+                    break;
+                case SNOWING:
+                    con << "S ";
+                    break;
+                default:
+                    con << (int) (*w->wmap)[x][y] << " ";
+                    break;
                 }
             }
             con << std::endl;
@@ -136,6 +136,5 @@ DFhackCExport command_result weather (Core * c, vector <string> & parameters)
         }
         // FIXME: weather lock needs map ID to work reliably... needs to be implemented.
     }
-    c->Resume();
     return CR_OK;
 }

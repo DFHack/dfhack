@@ -29,7 +29,6 @@ distribution.
 #include <vector>
 #include <map>
 #include <set>
-#include <cassert>
 #include <cstdlib>
 using namespace std;
 

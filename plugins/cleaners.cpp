@@ -2,12 +2,9 @@
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
+#include "modules/Maps.h"
 
 #include "DataDefs.h"
-#include "df/world.h"
-#include "df/map_block.h"
-#include "df/block_square_event.h"
-#include "df/block_square_event_material_spatterst.h"
 #include "df/item_actual.h"
 #include "df/unit.h"
 #include "df/unit_spatter.h"
@@ -19,6 +16,8 @@
 using std::vector;
 using std::string;
 using namespace DFHack;
+using namespace DFHack::Simple;
+using namespace df::enums;
 
 using df::global::world;
 using df::global::cursor;
@@ -42,20 +41,20 @@ command_result cleanmap (Core * c, bool snow, bool mud)
         for (int j = 0; j < block->block_events.size(); j++)
         {
             df::block_square_event *evt = block->block_events[j];
-            if (evt->getType() != df::block_square_event_type::material_spatter)
+            if (evt->getType() != block_square_event_type::material_spatter)
                 continue;
             // type verified - recast to subclass
             df::block_square_event_material_spatterst *spatter = (df::block_square_event_material_spatterst *)evt;
 
             // filter snow
             if(!snow
-                && spatter->mat_type == df::builtin_mats::WATER
-                && spatter->mat_state == df::matter_state::Powder)
+                && spatter->mat_type == builtin_mats::WATER
+                && spatter->mat_state == matter_state::Powder)
                 continue;
             // filter mud
             if(!mud
-                && spatter->mat_type == df::builtin_mats::MUD
-                && spatter->mat_state == df::matter_state::Solid)
+                && spatter->mat_type == builtin_mats::MUD
+                && spatter->mat_state == matter_state::Solid)
                 continue;
 
             delete evt;
@@ -115,25 +114,20 @@ command_result cleanunits (Core * c)
     return CR_OK;
 }
 
-// This is slightly different from what's in the Maps module - it takes tile coordinates rather than block coordinates
-df::map_block *getBlock (int32_t x, int32_t y, int32_t z)
-{
-    if ((x < 0) || (y < 0) || (z < 0))
-        return NULL;
-    if ((x >= world->map.x_count) || (y >= world->map.y_count) || (z >= world->map.z_count))
-        return NULL;
-    return world->map.block_index[x >> 4][y >> 4][z];
-}
-
 DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     if (cursor->x == -30000)
     {
         c->con.printerr("The cursor is not active.\n");
+        return CR_WRONG_USAGE;
+    }
+    if (!Maps::IsValid())
+    {
+        c->con.printerr("Map is not available.\n");
         return CR_FAILURE;
     }
-    df::map_block *block = getBlock(cursor->x, cursor->y, cursor->z);
+    df::map_block *block = Maps::getBlockAbs(cursor->x, cursor->y, cursor->z);
     if (block == NULL)
     {
         c->con.printerr("Invalid map block selected!\n");
@@ -143,7 +137,7 @@ DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
     for (int i = 0; i < block->block_events.size(); i++)
     {
         df::block_square_event *evt = block->block_events[i];
-        if (evt->getType() != df::block_square_event_type::material_spatter)
+        if (evt->getType() != block_square_event_type::material_spatter)
             continue;
         // type verified - recast to subclass
         df::block_square_event_material_spatterst *spatter = (df::block_square_event_material_spatterst *)evt;
@@ -201,14 +195,13 @@ DFhackCExport command_result clean (Core * c, vector <string> & parameters)
             );
         return CR_OK;
     }
-    c->Suspend();
+    CoreSuspender suspend(c);
     if(map)
         cleanmap(c,snow,mud);
     if(units)
         cleanunits(c);
     if(items)
         cleanitems(c);
-    c->Resume();
     return CR_OK;
 }
 

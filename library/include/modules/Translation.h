@@ -33,48 +33,28 @@ distribution.
 #include "Export.h"
 #include "Module.h"
 #include "Types.h"
+
+#include "DataDefs.h"
+#include "df/language_word.h"
+#include "df/language_translation.h"
+#include "df/language_name.h"
+
 namespace DFHack
 {
+namespace Simple
+{
+namespace Translation
+{
+// simple check to make sure if there's actual language data present
+DFHACK_EXPORT bool IsValid ();
 
-    class DFContextShared;
-    /**
-     * \ingroup grp_translation
-     */
-    typedef std::vector< std::vector<std::string> > DFDict;
-    /**
-     * \ingroup grp_translation
-     */
-    typedef struct
-    {
-        DFDict translations;
-        DFDict foreign_languages;
-    } Dicts;
-    /**
-     * The Tanslation module
-     * \ingroup grp_translation
-     * \ingroup grp_maps
-     */
-    class DFHACK_EXPORT Translation : public Module
-    {
-        public:
-        Translation();
-        ~Translation();
-        bool Start();
-        bool Finish();
+// names, used by a few other modules.
+DFHACK_EXPORT bool readName(t_name & name, df::language_name * address);
+DFHACK_EXPORT bool copyName(df::language_name * address, df::language_name * target);
 
-        // Get pointer to the two dictionary structures
-        Dicts * getDicts();
-
-        // names, used by a few other modules.
-        bool InitReadNames();
-        bool readName(t_name & name, df_name * address);
-        bool copyName(df_name * address, df_name * target);
-        // translate a name using the loaded dictionaries
-        std::string TranslateName(const DFHack::df_name * name, bool inEnglish = true);
-
-        private:
-        struct Private;
-        Private *d;
-    };
+// translate a name using the loaded dictionaries
+DFHACK_EXPORT std::string TranslateName (const df::language_name * name, bool inEnglish = true);
+}
+}
 }
 #endif

@@ -30,13 +30,17 @@ distribution.
 #include "TileTypes.h"
 #include <stdint.h>
 #include <cstring>
+#include "df/map_block.h"
+#include "df/block_square_event_mineralst.h"
+using namespace DFHack;
+using namespace DFHack::Simple;
 namespace MapExtras
 {
-void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d & mb, DFHack::t_blockmaterials & materials)
+void SquashVeins (DFCoord bcoord, mapblock40d & mb, t_blockmaterials & materials)
 {
     memset(materials,-1,sizeof(materials));
-    std::vector <DFHack::t_vein *> veins;
-    m->SortBlockEvents(bcoord.x,bcoord.y,bcoord.z,&veins);
+    std::vector <df::block_square_event_mineralst *> veins;
+    Maps::SortBlockEvents(bcoord.x,bcoord.y,bcoord.z,&veins);
     //iterate through block rows
     for(uint32_t j = 0;j<16;j++)
     {
@@ -48,9 +52,9 @@ void SquashVeins (DFHack::Maps *m, DFHack::DFCoord bcoord, DFHack::mapblock40d &
             {
                 for(int i = (int) veins.size() - 1; i >= 0;i--)
                 {
-                    if(!!(((1 << k) & veins[i]->assignment[j]) >> k))
+                    if(!!(((1 << k) & veins[i]->tile_bitmask[j]) >> k))
                     {
-                        materials[k][j] = veins[i]->type;
+                        materials[k][j] = veins[i]->inorganic_mat;
                         i = -1;
                     }
                 }
@@ -81,9 +85,8 @@ void SquashRocks ( std::vector< std::vector <uint16_t> > * layerassign, DFHack::
 class Block
 {
     public:
-    Block(DFHack::Maps *_m, DFHack::DFCoord _bcoord, std::vector< std::vector <uint16_t> > * layerassign = 0)
+    Block(DFHack::DFCoord _bcoord, std::vector< std::vector <uint16_t> > * layerassign = 0)
     {
-        m = _m;
         dirty_designations = false;
         dirty_tiletypes = false;
         dirty_temperatures = false;
@@ -91,10 +94,10 @@ class Block
         dirty_occupancies = false;
         valid = false;
         bcoord = _bcoord;
-        if(m->ReadBlock40d(bcoord.x,bcoord.y,bcoord.z,&raw))
+        if(Maps::ReadBlock40d(bcoord.x,bcoord.y,bcoord.z,&raw))
         {
-            m->ReadTemperatures(bcoord.x,bcoord.y, bcoord.z,&temp1,&temp2);
-            SquashVeins(m,bcoord,raw,veinmats);
+            Maps::ReadTemperatures(bcoord.x,bcoord.y, bcoord.z,&temp1,&temp2);
+            SquashVeins(bcoord,raw,veinmats);
             if(layerassign)
                 SquashRocks(layerassign,raw,basemats);
             else
@@ -102,24 +105,24 @@ class Block
             valid = true;
         }
     }
-    int16_t veinMaterialAt(DFHack::DFCoord p)
+    int16_t veinMaterialAt(df::coord2d p)
     {
         return veinmats[p.x][p.y];
     }
-    int16_t baseMaterialAt(DFHack::DFCoord p)
+    int16_t baseMaterialAt(df::coord2d p)
     {
         return basemats[p.x][p.y];
     }
-    void ClearMaterialAt(DFHack::DFCoord p)
+    void ClearMaterialAt(df::coord2d p)
     {
         veinmats[p.x][p.y] = -1;
     }
 
-    uint16_t TileTypeAt(DFHack::DFCoord p)
+    uint16_t TileTypeAt(df::coord2d p)
     {
         return raw.tiletypes[p.x][p.y];
     }
-    bool setTiletypeAt(DFHack::DFCoord p, uint16_t tiletype)
+    bool setTiletypeAt(df::coord2d p, uint16_t tiletype)
     {
         if(!valid) return false;
         dirty_tiletypes = true;
@@ -128,11 +131,11 @@ class Block
         return true;
     }
 
-    uint16_t temperature1At(DFHack::DFCoord p)
+    uint16_t temperature1At(df::coord2d p)
     {
         return temp1[p.x][p.y];
     }
-    bool setTemp1At(DFHack::DFCoord p, uint16_t temp)
+    bool setTemp1At(df::coord2d p, uint16_t temp)
     {
         if(!valid) return false;
         dirty_temperatures = true;
@@ -140,11 +143,11 @@ class Block
         return true;
     }
 
-    uint16_t temperature2At(DFHack::DFCoord p)
+    uint16_t temperature2At(df::coord2d p)
     {
         return temp2[p.x][p.y];
     }
-    bool setTemp2At(DFHack::DFCoord p, uint16_t temp)
+    bool setTemp2At(df::coord2d p, uint16_t temp)
     {
         if(!valid) return false;
         dirty_temperatures = true;
@@ -152,11 +155,11 @@ class Block
         return true;
     }
 
-    DFHack::t_designation DesignationAt(DFHack::DFCoord p)
+    df::tile_designation DesignationAt(df::coord2d p)
     {
         return raw.designation[p.x][p.y];
     }
-    bool setDesignationAt(DFHack::DFCoord p, DFHack::t_designation des)
+    bool setDesignationAt(df::coord2d p, df::tile_designation des)
     {
         if(!valid) return false;
         dirty_designations = true;
@@ -170,11 +173,11 @@ class Block
         return true;
     }
 
-    DFHack::t_occupancy OccupancyAt(DFHack::DFCoord p)
+    df::tile_occupancy OccupancyAt(df::coord2d p)
     {
         return raw.occupancy[p.x][p.y];
     }
-    bool setOccupancyAt(DFHack::DFCoord p, DFHack::t_occupancy des)
+    bool setOccupancyAt(df::coord2d p, df::tile_occupancy des)
     {
         if(!valid) return false;
         dirty_occupancies = true;
@@ -200,28 +203,28 @@ class Block
         if(!valid) return false;
         if(dirty_designations)
         {
-            m->WriteDesignations(bcoord.x,bcoord.y,bcoord.z, &raw.designation);
-            m->WriteDirtyBit(bcoord.x,bcoord.y,bcoord.z,true);
+            Maps::WriteDesignations(bcoord.x,bcoord.y,bcoord.z, &raw.designation);
+            Maps::WriteDirtyBit(bcoord.x,bcoord.y,bcoord.z,true);
             dirty_designations = false;
         }
         if(dirty_tiletypes)
         {
-            m->WriteTileTypes(bcoord.x,bcoord.y,bcoord.z, &raw.tiletypes);
+            Maps::WriteTileTypes(bcoord.x,bcoord.y,bcoord.z, &raw.tiletypes);
             dirty_tiletypes = false;
         }
         if(dirty_temperatures)
         {
-            m->WriteTemperatures(bcoord.x,bcoord.y,bcoord.z, &temp1, &temp2);
+            Maps::WriteTemperatures(bcoord.x,bcoord.y,bcoord.z, &temp1, &temp2);
             dirty_temperatures = false;
         }
         if(dirty_blockflags)
         {
-            m->WriteBlockFlags(bcoord.x,bcoord.y,bcoord.z,raw.blockflags);
+            Maps::WriteBlockFlags(bcoord.x,bcoord.y,bcoord.z,raw.blockflags);
             dirty_blockflags = false;
         }
         if(dirty_occupancies)
         {
-            m->WriteOccupancy(bcoord.x,bcoord.y,bcoord.z,&raw.occupancy);
+            Maps::WriteOccupancy(bcoord.x,bcoord.y,bcoord.z,&raw.occupancy);
             dirty_occupancies = false;
         }
         return true;
@@ -232,7 +235,6 @@ class Block
     bool dirty_temperatures:1;
     bool dirty_blockflags:1;
     bool dirty_occupancies:1;
-    DFHack::Maps * m;
     DFHack::mapblock40d raw;
     DFHack::DFCoord bcoord;
     DFHack::t_blockmaterials veinmats;
@@ -244,12 +246,11 @@ class Block
 class MapCache
 {
     public:
-    MapCache(DFHack::Maps * Maps)
+    MapCache()
     {
         valid = 0;
-        this->Maps = Maps;
-        Maps->getSize(x_bmax, y_bmax, z_max);
-        validgeo = Maps->ReadGeology( layerassign );
+        Maps::getSize(x_bmax, y_bmax, z_max);
+        validgeo = Maps::ReadGeology( layerassign );
         valid = true;
     };
     ~MapCache()
@@ -276,9 +277,9 @@ class MapCache
             {
                 Block * nblo;
                 if(validgeo)
-                    nblo = new Block(Maps,blockcoord, &layerassign);
+                    nblo = new Block(blockcoord, &layerassign);
                 else
-                    nblo = new Block(Maps,blockcoord);
+                    nblo = new Block(blockcoord);
                 blocks[blockcoord] = nblo;
                 return nblo;
             }
@@ -294,7 +295,7 @@ class MapCache
         }
         return 0;
     }
-    bool setTiletypeAt(DFHack::DFCoord& tilecoord, uint16_t tiletype)
+    bool setTiletypeAt(DFHack::DFCoord tilecoord, uint16_t tiletype)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
@@ -314,7 +315,7 @@ class MapCache
         }
         return 0;
     }
-    bool setTemp1At(DFHack::DFCoord& tilecoord, uint16_t temperature)
+    bool setTemp1At(DFHack::DFCoord tilecoord, uint16_t temperature)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
@@ -334,7 +335,7 @@ class MapCache
         }
         return 0;
     }
-    bool setTemp2At(DFHack::DFCoord& tilecoord, uint16_t temperature)
+    bool setTemp2At(DFHack::DFCoord tilecoord, uint16_t temperature)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
@@ -373,18 +374,18 @@ class MapCache
         return 0;
     }
     
-    DFHack::t_designation designationAt (DFHack::DFCoord tilecoord)
+    df::tile_designation designationAt (DFHack::DFCoord tilecoord)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
         {
             return b->DesignationAt(tilecoord % 16);
         }
-        DFHack:: t_designation temp;
+        df::tile_designation temp;
         temp.whole = 0;
         return temp;
     }
-    bool setDesignationAt (DFHack::DFCoord tilecoord, DFHack::t_designation des)
+    bool setDesignationAt (DFHack::DFCoord tilecoord, df::tile_designation des)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
@@ -395,18 +396,18 @@ class MapCache
         return false;
     }
     
-    DFHack::t_occupancy occupancyAt (DFHack::DFCoord tilecoord)
+    df::tile_occupancy occupancyAt (DFHack::DFCoord tilecoord)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
         {
             return b->OccupancyAt(tilecoord % 16);
         }
-        DFHack:: t_occupancy temp;
+        df::tile_occupancy temp;
         temp.whole = 0;
         return temp;
     }
-    bool setOccupancyAt (DFHack::DFCoord tilecoord, DFHack::t_occupancy occ)
+    bool setOccupancyAt (DFHack::DFCoord tilecoord, df::tile_occupancy occ)
     {
         Block * b= BlockAt(tilecoord / 16);
         if(b && b->valid)
@@ -453,7 +454,6 @@ class MapCache
     uint32_t y_tmax;
     uint32_t z_max;
     std::vector< std::vector <uint16_t> > layerassign;
-    DFHack::Maps * Maps;
     std::map<DFHack::DFCoord, Block *> blocks;
 };
 }

@@ -26,6 +26,8 @@ using namespace std;
 #include "df/general_ref.h"
 
 using namespace DFHack;
+using namespace df::enums;
+
 using MapExtras::Block;
 using MapExtras::MapCache;
 using df::global::world;
@@ -96,17 +98,14 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
 
     DFHack::VersionInfo *mem = c->vinfo;
     DFHack::Gui * Gui = c->getGui();
-    DFHack::Maps *Maps = c->getMaps();
-
-    std::size_t numItems = world->items.all.size();
-
-    // init the map
-    if(!Maps->Start())
+    if (!Maps::IsValid())
     {
-        c->con.printerr("Can't initialize map.\n");
+        c->con.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
-    MapCache MC (Maps);
+    std::size_t numItems = world->items.all.size();
+
+    MapCache MC;
     int i = 0;
     int dumped_total = 0;
 
@@ -185,8 +184,8 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
             {
                 // yes...
                 cerr << "Moving from block to block!" << endl;
-                df_block * bl_src = Maps->getBlock(itm->pos.x /16, itm->pos.y/16, itm->pos.z);
-                df_block * bl_tgt = Maps->getBlock(cx /16, cy/16, cz);
+                df::map_block * bl_src = Maps::getBlockAbs(itm->pos.x, itm->pos.y, itm->pos.z);
+                df::map_block * bl_tgt = Maps::getBlockAbs(cx, cy, cz);
                 if(bl_src)
                 {
                     std::remove(bl_src->items.begin(), bl_src->items.end(),itm->id);
@@ -234,7 +233,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
         {
             if(it->second == 0)
             {
-                t_occupancy occ = MC.occupancyAt(it->first);
+                df::tile_occupancy occ = MC.occupancyAt(it->first);
                 occ.bits.item = false;
                 MC.setOccupancyAt(it->first, occ);
             }
@@ -247,7 +246,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
             Block * b = MC.BlockAt(pos_cursor / 16);
             if(b)
             {
-                t_occupancy occ = MC.occupancyAt(pos_cursor);
+                df::tile_occupancy occ = MC.occupancyAt(pos_cursor);
                 occ.bits.item = 1;
                 MC.setOccupancyAt(pos_cursor,occ);
             }
@@ -255,7 +254,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
         // write map changes back to DF.
         MC.WriteAll();
         // Is this necessary?  Is "forbid" a dirtyable attribute like "dig" is?
-        Maps->WriteDirtyBit(cx/16, cy/16, cz, true);
+        Maps::WriteDirtyBit(cx/16, cy/16, cz, true);
     }
     c->con.print("Done. %d items %s.\n", dumped_total, destroy ? "marked for destruction" : "quickdumped");
     return CR_OK;
@@ -294,9 +293,9 @@ DFhackCExport command_result df_autodump_destroy_item(Core * c, vector <string> 
         return CR_FAILURE;
 
     // Allow undoing the destroy
-    if (df::global::world->frame_counter != last_frame)
+    if (world->frame_counter != last_frame)
     {
-        last_frame = df::global::world->frame_counter;
+        last_frame = world->frame_counter;
         pending_destroy.clear();
     }
 
@@ -330,7 +329,7 @@ DFhackCExport command_result df_autodump_destroy_item(Core * c, vector <string> 
     for (unsigned i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (ref->getType() == df::general_ref_type::UNIT_HOLDER)
+        if (ref->getType() == general_ref_type::UNIT_HOLDER)
         {
             c->con.printerr("Choosing not to destroy items in unit inventory.\n");
             return CR_FAILURE;

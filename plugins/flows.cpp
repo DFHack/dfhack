@@ -13,6 +13,7 @@
 using std::string;
 using std::vector;
 using namespace DFHack;
+using namespace df::enums;
 
 using df::global::world;
 
@@ -26,11 +27,11 @@ DFhackCExport command_result df_flows (Core * c, vector <string> & parameters)
     for (int i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block *cur = world->map.map_blocks[i];
-        if (cur->flags.is_set(df::block_flags::UpdateLiquid))
+        if (cur->flags.is_set(block_flags::UpdateLiquid))
             flow1++;
-        if (cur->flags.is_set(df::block_flags::UpdateLiquidTwice))
+        if (cur->flags.is_set(block_flags::UpdateLiquidTwice))
             flow2++;
-        if (cur->flags.is_set(df::block_flags::UpdateLiquid) && cur->flags.is_set(df::block_flags::UpdateLiquidTwice))
+        if (cur->flags.is_set(block_flags::UpdateLiquid) && cur->flags.is_set(block_flags::UpdateLiquidTwice))
             flowboth++;
         for (int x = 0; x < 16; x++)
         {
@@ -39,9 +40,9 @@ DFhackCExport command_result df_flows (Core * c, vector <string> & parameters)
                 // only count tiles with actual liquid in them
                 if (cur->designation[x][y].bits.flow_size == 0)
                     continue;
-                if (cur->designation[x][y].bits.liquid_type == df::tile_liquid::Magma)
+                if (cur->designation[x][y].bits.liquid_type == tile_liquid::Magma)
                     magma++;
-                if (cur->designation[x][y].bits.liquid_type == df::tile_liquid::Water)
+                if (cur->designation[x][y].bits.liquid_type == tile_liquid::Water)
                     water++;
             }
         }

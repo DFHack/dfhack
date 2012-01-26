@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
@@ -30,16 +30,10 @@ distribution.
 namespace DFHack
 {
     class Module;
-    Module* createUnits();
-    Module* createEngravings();
     Module* createGui();
     Module* createWorld();
     Module* createMaterials();
-    Module* createTranslation();
     Module* createVegetation();
-    Module* createBuildings();
-    Module* createConstructions();
-    Module* createMaps();
     Module* createNotes();
     Module* createGraphic();
 }

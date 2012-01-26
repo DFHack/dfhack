@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
@@ -34,64 +34,26 @@ using namespace std;
 #include "VersionInfo.h"
 #include "MemAccess.h"
 #include "Types.h"
-#include "modules/Constructions.h"
-#include "ModuleFactory.h"
 #include "Core.h"
-
+#include "modules/Constructions.h"
+#include "df/world.h"
 using namespace DFHack;
+using namespace DFHack::Simple;
+using df::global::world;
 
-struct Constructions::Private
+bool Constructions::isValid()
 {
-    vector <t_construction *> * p_cons;
-    Process * owner;
-    bool Inited;
-    bool Started;
-};
-
-Module* DFHack::createConstructions()
-{
-    return new Constructions();
+    return (world->constructions.size() > 0);
 }
 
-Constructions::Constructions()
+uint32_t Constructions::getCount()
 {
-    Core & c = Core::getInstance();
-    d = new Private;
-    d->owner = c.p;
-    d->Inited = d->Started = false;
-    VersionInfo * mem = c.vinfo;
-    d->p_cons = (decltype(d->p_cons)) mem->getGroup("Constructions")->getAddress ("vector");
-    d->Inited = true;
+    return world->constructions.size();
 }
 
-Constructions::~Constructions()
+df::construction *Constructions::getConstruction(const int32_t index)
 {
-    if(d->Started)
-        Finish();
-    delete d;
+    if (index < 0 || index >= getCount())
+        return NULL;
+    return world->constructions[index];
 }
-
-bool Constructions::Start(uint32_t & numconstructions)
-{
-    numconstructions = d->p_cons->size();
-    d->Started = true;
-    return true;
-}
-
-
-bool Constructions::Read (const uint32_t index, t_construction & construction)
-{
-    if(!d->Started) return false;
-
-    t_construction * orig = d->p_cons->at(index);
-    construction = *orig;
-    construction.origin = orig;
-    return true;
-}
-
-bool Constructions::Finish()
-{
-    d->Started = false;
-    return true;
-}
-

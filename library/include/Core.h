@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
@@ -52,15 +52,9 @@ namespace DFHack
 {
     class Process;
     class Module;
-    class Units;
-    class Engravings;
-    class Maps;
     class Gui;
     class World;
     class Materials;
-    class Translation;
-    class Vegetation;
-    class Constructions;
     class Notes;
     class VersionInfo;
     class VersionInfoFactory;
@@ -98,24 +92,12 @@ namespace DFHack
         /// Is everything OK?
         bool isValid(void) { return !errorstate; }
 
-        /// get the creatures module
-        Units * getUnits();
-        /// get the engravings module
-        Engravings * getEngravings();
-        /// get the maps module
-        Maps * getMaps();
         /// get the gui module
         Gui * getGui();
         /// get the world module
         World * getWorld();
         /// get the materials module
         Materials * getMaterials();
-        /// get the translation module
-        Translation * getTranslation();
-        /// get the vegetation module
-        Vegetation * getVegetation();
-        /// get the constructions module
-        Constructions * getConstructions();
         /// get the notes module
         Notes * getNotes();
         /// get the graphic module
@@ -164,15 +146,9 @@ namespace DFHack
         // Module storage
         struct
         {
-            Units * pUnits;
-            Engravings * pEngravings;
-            Maps * pMaps;
             Gui * pGui;
             World * pWorld;
             Materials * pMaterials;
-            Translation * pTranslation;
-            Vegetation * pVegetation;
-            Constructions * pConstructions;
             Notes * pNotes;
             Graphic * pGraphic;
         } s_mods;

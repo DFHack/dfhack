@@ -23,8 +23,8 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     commands.clear();
     commands.push_back(PluginCommand("colonies",
-               "List or change wild colonies (ants hills and such)",
-                colonies));
+        "List or change wild colonies (ants hills and such)",
+        colonies));
     return CR_OK;
 }
 
@@ -57,19 +57,18 @@ DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
     if(help)
     {
         c->con.print("Without any options, this command lists all the vermin colonies present.\n"
-        "Options:\n"
-        "kill   - destroy colonies\n"
-        "bees   - turn colonies into honey bees\n"
-        );
+            "Options:\n"
+            "kill   - destroy colonies\n"
+            "bees   - turn colonies into honey bees\n"
+            );
         return CR_OK;
     }
     if (destroy && convert)
     {
         c->con.printerr("Kill or make bees? DECIDE!\n");
-        c->Resume();
         return CR_FAILURE;
     }
-    c->Suspend();
+    CoreSuspender suspend(c);
 
     Materials * materials = c->getMaterials();
 
@@ -84,7 +83,6 @@ DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
 
     materials->Finish();
 
-    c->Resume();
     return CR_OK;
 }
 
@@ -110,11 +108,13 @@ void convertColonies(Materials *Materials)
 {
     int bee_idx = -1;
     for (size_t i = 0; i < Materials->raceEx.size(); i++)
+    {
         if (Materials->raceEx[i].id == "HONEY_BEE")
         {
             bee_idx = i;
             break;
         }
+    }
 
     if (bee_idx == -1)
     {
@@ -153,8 +153,8 @@ void showColonies(Core *c, Materials *Materials)
             if(sp.race != -1)
                 race = Materials->raceEx[sp.race].id;
 
-             c->con.print("Colony %u: %s at %d:%d:%d\n", i,
-                          race.c_str(), sp.x, sp.y, sp.z);
+            c->con.print("Colony %u: %s at %d:%d:%d\n", i,
+                race.c_str(), sp.x, sp.y, sp.z);
         }
     }
 

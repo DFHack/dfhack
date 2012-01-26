@@ -67,12 +67,6 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
     MapExtras::MapCache map;
     DFHack::Materials *mats = c->getMaterials();
 
-    DFHack::Vegetation *veg = c->getVegetation();
-    if (veg->Start())
-    {
-        c->con.printerr("Unable to read vegetation; plants won't be listed!\n" );
-    }
-
     dfproto::Map protomap;
     protomap.set_x_size(x_max);
     protomap.set_y_size(y_max);

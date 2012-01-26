@@ -167,7 +167,6 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
 {
     int32_t x,y,z;
-    uint32_t x_max,y_max,z_max;
 
     DFHack::Gui * Position;
     for(int i = 0; i < parameters.size();i++)
@@ -366,7 +365,6 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
         else if(command.empty())
         {
             CoreSuspender suspend(c);
-            Maps::getSize(x_max,y_max,z_max);
             Position = c->getGui();
             do
             {

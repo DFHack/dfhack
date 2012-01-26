@@ -35,6 +35,11 @@ if(BUILD_DF2MC)
     add_subdirectory (df2mc)
 endif()
 
+OPTION(BUILD_MAPEXPORT "Build map exporter." ON)
+if (BUILD_MAPEXPORT)
+    add_subdirectory (mapexport)
+endif()
+
 
 DFHACK_PLUGIN(reveal reveal.cpp)
 DFHACK_PLUGIN(probe probe.cpp)

@@ -18,6 +18,7 @@
 using std::vector;
 using std::string;
 using namespace DFHack;
+using df::global::world;
 
 DFhackCExport command_result df_grow (Core * c, vector <string> & parameters);
 DFhackCExport command_result df_immolate (Core * c, vector <string> & parameters);
@@ -98,31 +99,23 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
         );
         return CR_OK;
     }
-    c->Suspend();
-    DFHack::Maps *maps = c->getMaps();
-    if (!maps->Start())
+    CoreSuspender suspend(c);
+    if (!Maps::IsValid())
     {
-        c->con.printerr( "Cannot get map info!\n");
-        c->Resume();
+        c->con.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
     DFHack::Gui * Gui = c->getGui();
     uint32_t x_max, y_max, z_max;
-    maps->getSize(x_max, y_max, z_max);
-    MapExtras::MapCache map(maps);
-    DFHack::Vegetation *veg = c->getVegetation();
-    if (!veg->all_plants)
-    {
-        std::cerr << "Unable to read vegetation!" << std::endl;
-        return CR_FAILURE;
-    }
+    Maps::getSize(x_max, y_max, z_max);
+    MapExtras::MapCache map;
     if(shrubs || trees)
     {
         int destroyed = 0;
-        for(size_t i = 0 ; i < veg->all_plants->size(); i++)
+        for(size_t i = 0 ; i < world->plants.all.size(); i++)
         {
-            DFHack::df_plant *p = veg->all_plants->at(i);
-            if(shrubs && p->is_shrub || trees && !p->is_shrub)
+            df::plant *p = world->plants.all[i];
+            if(shrubs && p->flags.bits.is_shrub || trees && !p->flags.bits.is_shrub)
             {
                 if (what == do_immolate)
                     p->is_burning = true;
@@ -137,14 +130,14 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
         int32_t x,y,z;
         if(Gui->getCursorCoords(x,y,z))
         {
-            vector<DFHack::df_plant *> * alltrees;
-            if(maps->ReadVegetation(x/16,y/16,z,alltrees))
+            vector<df::plant *> * alltrees;
+            if(Maps::ReadVegetation(x/16,y/16,z,alltrees))
             {
                 bool didit = false;
                 for(size_t i = 0 ; i < alltrees->size(); i++)
                 {
-                    DFHack::df_plant * tree = alltrees->at(i);
-                    if(tree->x == x && tree->y == y && tree->z == z)
+                    df::plant * tree = alltrees->at(i);
+                    if(tree->pos.x == x && tree->pos.y == y && tree->pos.z == z)
                     {
                         if(what == do_immolate)
                             tree->is_burning = true;
@@ -166,10 +159,6 @@ static command_result immolations (Core * c, do_what what, bool shrubs, bool tre
             c->con.printerr("No mass destruction and no cursor...\n" );
         }
     }
-    // Cleanup
-    veg->Finish();
-    maps->Finish();
-    c->Resume();
     return CR_OK;
 }
 
@@ -211,39 +200,29 @@ DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
             return CR_OK;
         }
     }
-    c->Suspend();
-    DFHack::Maps *maps = c->getMaps();
+    CoreSuspender suspend(c);
     Console & con = c->con;
-    if (!maps->Start())
+    if (!Maps::IsValid())
     {
-        con.printerr("Cannot get map info!\n");
-        c->Resume();
+        c->con.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
-    //maps->getSize(x_max, y_max, z_max);
-    MapExtras::MapCache map(maps);
-    DFHack::Vegetation *veg = c->getVegetation();
-    if (!veg->all_plants)
-    {
-        con.printerr("Unable to read vegetation!\n");
-        c->Resume();
-        return CR_FAILURE;
-    }
+    MapExtras::MapCache map;
     DFHack::Gui *Gui = c->getGui();
     int32_t x,y,z;
     if(Gui->getCursorCoords(x,y,z))
     {
-        vector<DFHack::df_plant *> * alltrees;
-        if(maps->ReadVegetation(x/16,y/16,z,alltrees))
+        vector<df::plant *> * alltrees;
+        if(Maps::ReadVegetation(x/16,y/16,z,alltrees))
         {
             for(size_t i = 0 ; i < alltrees->size(); i++)
             {
-                DFHack::df_plant * tree = alltrees->at(i);
-                if(tree->x == x && tree->y == y && tree->z == z)
+                df::plant * tree = alltrees->at(i);
+                if(tree->pos.x == x && tree->pos.y == y && tree->pos.z == z)
                 {
                     if(DFHack::tileShape(map.tiletypeAt(DFHack::DFCoord(x,y,z))) == DFHack::SAPLING_OK)
                     {
-                        tree->grow_counter = DFHack::sapling_to_tree_threshold;
+                        tree->grow_counter = Vegetation::sapling_to_tree_threshold;
                     }
                     break;
                 }
@@ -253,21 +232,17 @@ DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
     else
     {
         int grown = 0;
-        for(size_t i = 0 ; i < veg->all_plants->size(); i++)
+        for(size_t i = 0 ; i < world->plants.all.size(); i++)
         {
-            DFHack::df_plant *p = veg->all_plants->at(i);
-            uint16_t ttype = map.tiletypeAt(DFHack::DFCoord(p->x,p->y,p->z));
-            if(!p->is_shrub && DFHack::tileShape(ttype) == DFHack::SAPLING_OK)
+            df::plant *p = world->plants.all[i];
+            uint16_t ttype = map.tiletypeAt(df::coord(p->pos.x,p->pos.y,p->pos.z));
+            if(!p->flags.bits.is_shrub && DFHack::tileShape(ttype) == DFHack::SAPLING_OK)
             {
-                p->grow_counter = DFHack::sapling_to_tree_threshold;
+                p->grow_counter = Vegetation::sapling_to_tree_threshold;
             }
         }
     }
 
-    // Cleanup
-    veg->Finish();
-    maps->Finish();
-    c->Resume();
     return CR_OK;
 }
 

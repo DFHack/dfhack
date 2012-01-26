@@ -35,6 +35,11 @@ if(BUILD_DF2MC)
     add_subdirectory (df2mc)
 endif()
 
+OPTION(BUILD_MAPEXPORT "Build map exporter." ON)
+if (BUILD_MAPEXPORT)
+    add_subdirectory (mapexport)
+endif()
+
 
 DFHACK_PLUGIN(reveal reveal.cpp)
 DFHACK_PLUGIN(probe probe.cpp)
@@ -64,6 +69,7 @@ DFHACK_PLUGIN(fixwagons fixwagons.cpp)
 DFHACK_PLUGIN(jobutils jobutils.cpp)
 DFHACK_PLUGIN(regrass regrass.cpp)
 DFHACK_PLUGIN(workflow workflow.cpp)
+DFHACK_PLUGIN(showmood showmood.cpp)
 #DFHACK_PLUGIN(versionosd versionosd.cpp)
 
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it

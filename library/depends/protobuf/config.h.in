@@ -1,0 +1,12 @@
+#define HASH_MAP_H @HASH_MAP_H@
+#define HASH_SET_H @HASH_SET_H@
+#define HASH_MAP_CLASS @HASH_MAP_CLASS@
+#define HASH_SET_CLASS @HASH_SET_CLASS@
+#define HASH_NAMESPACE @HASH_NAMESPACE@
+#define HAVE_HASH_MAP @HAVE_HASH_MAP@
+#define HAVE_HASH_SET @HAVE_HASH_SET@
+#define HAVE_PTHREAD @CMAKE_USE_PTHREADS_INIT@
+
+/* define if you want to use zlib.  See readme.txt for additional
+ * requirements. */
+// #define HAVE_ZLIB 1

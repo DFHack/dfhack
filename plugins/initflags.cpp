@@ -43,7 +43,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 DFhackCExport command_result twaterlvl(Core * c, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
-    df::global::d_init->flags1.toggle(d_init_flags1::SHOW_FLOW_AMOUNTS);
+    d_init->flags1.toggle(d_init_flags1::SHOW_FLOW_AMOUNTS);
     c->con << "Toggled the display of water/magma depth." << endl;
     return CR_OK;
 }

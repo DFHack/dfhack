@@ -14,15 +14,16 @@ using namespace std;
 #include "PluginManager.h"
 #include <vector>
 #include <string>
-#include "modules/Maps.h"
 #include "modules/Items.h"
 #include "modules/Units.h"
 #include "modules/Materials.h"
 #include "modules/Translation.h"
-using namespace DFHack;
-using namespace DFHack::Simple;
 #include "DataDefs.h"
 #include "df/world.h"
+
+using namespace DFHack;
+using namespace DFHack::Simple;
+using namespace df::enums;
 
 using df::global::world;
 
@@ -92,16 +93,12 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
             return CR_FAILURE;
         }
     }
-    c->Suspend();
-    DFHack::Materials *Materials = c->getMaterials();
-    DFHack::Units *Creatures = c->getUnits();
-    DFHack::Translation *Tran = c->getTranslation();
 
-    uint32_t num_creatures;
-    bool ok = true;
-    ok &= Materials->ReadAllMaterials();
-    ok &= Creatures->Start(num_creatures);
-    ok &= Tran->Start();
+    CoreSuspender suspend(c);
+
+    DFHack::Materials *Materials = c->getMaterials();
+
+    bool ok = Materials->ReadAllMaterials();
 
     c->con.print("Found total %d items.\n", world->items.all.size());
 
@@ -133,13 +130,13 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
         else if (item->flags.bits.on_ground)
         {
             int32_t type = item->getType();
-	    if(type == df::item_type::MEAT ||
-               type == df::item_type::FISH ||
-               type == df::item_type::VERMIN ||
-               type == df::item_type::PET ||
-               type == df::item_type::PLANT ||
-               type == df::item_type::CHEESE ||
-               type == df::item_type::FOOD
+	    if(type == item_type::MEAT ||
+               type == item_type::FISH ||
+               type == item_type::VERMIN ||
+               type == item_type::PET ||
+               type == item_type::PLANT ||
+               type == item_type::CHEESE ||
+               type == item_type::FOOD
             )
             {
                 confiscate = true;
@@ -183,24 +180,22 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
                 item->getWear()
             );
 
-            int32_t owner = Items::getItemOwnerID(item);
-            int32_t owner_index = Creatures->FindIndexById(owner);
+            df::unit *owner = Items::getItemOwner(item);
             std::string info;
 
-            if (owner_index >= 0)
+            if (owner)
             {
-                DFHack::df_unit * temp = Creatures->GetCreature(owner_index);
-                info = temp->name.first_name;
-                if (!temp->name.nick_name.empty())
-                    info += std::string(" '") + temp->name.nick_name + "'";
+                info = owner->name.first_name;
+                if (!owner->name.nickname.empty())
+                    info += std::string(" '") + owner->name.nickname + "'";
                 info += " ";
-                info += Tran->TranslateName(&temp->name,false);
+                info += Translation::TranslateName(&owner->name,false);
                 c->con.print(", owner %s", info.c_str());
             }
 
             if (!dry_run)
             {
-                if (!Items::removeItemOwner(item, Creatures))
+                if (!Items::removeItemOwner(item))
                     c->con.print("(unsuccessfully) ");
                 if (dump)
                     item->flags.bits.dump = 1;
@@ -208,6 +203,5 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
             c->con.print("\n");
         }
     }
-    c->Resume();
     return CR_OK;
 }

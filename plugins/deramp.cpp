@@ -6,27 +6,16 @@
 #include "PluginManager.h"
 
 #include "DataDefs.h"
-#include "df/world.h"
-#include "df/map_block.h"
-#include "df/tile_dig_designation.h"
+#include "modules/Maps.h"
 #include "TileTypes.h"
 
 using std::vector;
 using std::string;
 using namespace DFHack;
+using namespace DFHack::Simple;
+using namespace df::enums;
 
 using df::global::world;
-using namespace DFHack;
-
-// This is slightly different from what's in the Maps module - it takes tile coordinates rather than block coordinates
-df::map_block *getBlock (int32_t x, int32_t y, int32_t z)
-{
-    if ((x < 0) || (y < 0) || (z < 0))
-        return NULL;
-    if ((x >= world->map.x_count) || (y >= world->map.y_count) || (z >= world->map.z_count))
-        return NULL;
-    return world->map.block_index[x >> 4][y >> 4][z];
-}
 
 DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
 {
@@ -44,6 +33,12 @@ DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
 
     CoreSuspender suspend(c);
 
+    if (!Maps::IsValid())
+    {
+        c->con.printerr("Map is not available!\n");
+        return CR_FAILURE;
+    }
+
     int count = 0;
     int countbad = 0;
 
@@ -51,7 +46,7 @@ DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
     for (int i = 0; i < blocks_total; i++)
     {
         df::map_block *block = world->map.map_blocks[i];
-        df::map_block *above = getBlock(block->map_pos.x, block->map_pos.y, block->map_pos.z + 1);
+        df::map_block *above = Maps::getBlockAbs(block->map_pos.x, block->map_pos.y, block->map_pos.z + 1);
 
         for (int x = 0; x < 16; x++)
         {
@@ -59,7 +54,7 @@ DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
             {
                 int16_t oldT = block->tiletype[x][y];
                 if ((tileShape(oldT) == RAMP) &&
-                    (block->designation[x][y].bits.dig == df::tile_dig_designation::Default))
+                    (block->designation[x][y].bits.dig == tile_dig_designation::Default))
                 {
                     // Current tile is a ramp.
                     // Set current tile, as accurately as can be expected
@@ -70,7 +65,7 @@ DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
                         continue;
                     // Set new tile type, clear designation
                     block->tiletype[x][y] = newT;
-                    block->designation[x][y].bits.dig = df::tile_dig_designation::No;
+                    block->designation[x][y].bits.dig = tile_dig_designation::No;
 
                     // Check the tile above this one, in case a downward slope needs to be removed.
                     if ((above) && (tileShape(above->tiletype[x][y]) == RAMP_TOP))

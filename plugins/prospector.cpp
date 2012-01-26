@@ -23,6 +23,8 @@ using namespace std;
 #include "df/world.h"
 
 using namespace DFHack;
+using namespace df::enums;
+using df::global::world;
 
 struct matdata
 {
@@ -68,10 +70,7 @@ bool operator>(const matdata & q1, const matdata & q2)
 typedef std::map<int16_t, matdata> MatMap;
 typedef std::vector< pair<int16_t, matdata> > MatSorter;
 
-typedef std::vector<DFHack::t_feature> FeatureList;
-typedef std::vector<DFHack::t_feature*> FeatureListPointer;
-typedef std::map<DFHack::DFCoord, FeatureListPointer> FeatureMap;
-typedef std::vector<DFHack::df_plant *> PlantList;
+typedef std::vector<df::plant *> PlantList;
 
 #define TO_PTR_VEC(obj_vec, ptr_vec) \
     ptr_vec.clear(); \
@@ -98,18 +97,16 @@ static void printMatdata(DFHack::Console & con, const matdata &data)
         con <<" Z:" << std::setw(4) << data.lower_z << std::endl;
 }
 
-static int getValue(const df_inorganic_type &info)
+static int getValue(const df::inorganic_raw &info)
 {
-    return info.mat.MATERIAL_VALUE;
+    return info.material.material_value;
 }
 
-static int getValue(const df_plant_type &info)
+static int getValue(const df::plant_raw &info)
 {
     return info.value;
 }
 
-// printMats() accepts a vector of pointers to t_matgloss so that it can
-// deal t_matgloss and all subclasses.
 template <typename T>
 void printMats(DFHack::Console & con, MatMap &mat, std::vector<T*> &materials, bool show_value)
 {
@@ -131,7 +128,8 @@ void printMats(DFHack::Console & con, MatMap &mat, std::vector<T*> &materials, b
             continue;
         }
         T* mat = materials[it->first];
-        con << std::setw(25) << mat->ID << " : ";
+        // Somewhat of a hack, but it works because df::inorganic_raw and df::plant_raw both have a field named "id"
+        con << std::setw(25) << mat->id << " : ";
         if (show_value)
             con << std::setw(3) << getValue(*mat) << " : ";
         printMatdata(con, it->second);
@@ -150,9 +148,9 @@ void printVeins(DFHack::Console & con, MatMap &mat_map,
 
     for (MatMap::const_iterator it = mat_map.begin(); it != mat_map.end(); ++it)
     {
-        DFHack::df_inorganic_type *gloss = mats->df_inorganic->at(it->first);
+        df::inorganic_raw *gloss = world->raws.inorganics[it->first];
 
-        if (gloss->mat.isGem())
+        if (gloss->material.isGem())
             gems[it->first] = it->second;
         else if (gloss->isOre())
             ores[it->first] = it->second;
@@ -161,13 +159,13 @@ void printVeins(DFHack::Console & con, MatMap &mat_map,
     }
 
     con << "Ores:" << std::endl;
-    printMats(con, ores, *mats->df_inorganic, show_value);
+    printMats(con, ores, world->raws.inorganics, show_value);
 
     con << "Gems:" << std::endl;
-    printMats(con, gems, *mats->df_inorganic, show_value);
+    printMats(con, gems, world->raws.inorganics, show_value);
 
     con << "Other vein stone:" << std::endl;
-    printMats(con, rest, *mats->df_inorganic, show_value);
+    printMats(con, rest, world->raws.inorganics, show_value);
 }
 
 DFhackCExport command_result prospector (Core * c, vector <string> & parameters);
@@ -196,6 +194,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     bool showSlade = true;
     bool showTemple = true;
     bool showValue = false;
+    bool showTube = false;
     Console & con = c->con;
     for(int i = 0; i < parameters.size();i++)
     {
@@ -203,9 +202,13 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
         {
             showHidden = true;
         }
-        if (parameters[i] == "value")
+        else if (parameters[i] == "value")
         {
             showValue = true;
+        }
+        else if (parameters[i] == "hell")
+        {
+            showHidden = showTube = true;
         }
         else if(parameters[i] == "help" || parameters[i] == "?")
         {
@@ -215,39 +218,25 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                          "Options:\n"
                          "all   - Scan the whole map, as if it was revealed.\n"
                          "value - Show material value in the output.\n"
+                         "hell  - Show the Z range of HFS tubes.\n"
             );
             return CR_OK;
         }
     }
     uint32_t x_max = 0, y_max = 0, z_max = 0;
-    c->Suspend();
-    DFHack::Maps *maps = c->getMaps();
-    if (!maps->Start())
+    CoreSuspender suspend(c);
+    if (!Maps::IsValid())
     {
-        con.printerr("Cannot get map info!\n");
-        c->Resume();
+        c->con.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
-    maps->getSize(x_max, y_max, z_max);
-    MapExtras::MapCache map(maps);
+    Maps::getSize(x_max, y_max, z_max);
+    MapExtras::MapCache map;
 
     DFHack::Materials *mats = c->getMaterials();
-    if (!mats->df_inorganic)
-    {
-        con.printerr("Unable to read inorganic material definitons!\n");
-        c->Resume();
-        return CR_FAILURE;
-    }
-    if (showPlants && !mats->df_organic)
-    {
-        con.printerr("Unable to read organic material definitons; plants won't be listed!\n");
-        showPlants = false;
-    }
 
-    FeatureList globalFeatures;
-    FeatureMap localFeatures;
-    DFHack::t_feature *blockFeatureGlobal = 0;
-    DFHack::t_feature *blockFeatureLocal = 0;
+    DFHack::t_feature blockFeatureGlobal;
+    DFHack::t_feature blockFeatureLocal;
 
     bool hasAquifer = false;
     bool hasDemonTemple = false;
@@ -261,23 +250,9 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     matdata liquidWater;
     matdata liquidMagma;
     matdata aquiferTiles;
-
-    if (!(showSlade && maps->ReadGlobalFeatures(globalFeatures)))
-    {
-        con.printerr("Unable to read global features; slade won't be listed!\n");
-    }
-
-    if (!maps->ReadLocalFeatures(localFeatures))
-    {
-        con.printerr("Unable to read local features; adamantine and demon temples won't be listed.\n" );
-    }
+    matdata tubeTiles;
 
     uint32_t vegCount = 0;
-    DFHack::Vegetation *veg = c->getVegetation();
-    if (showPlants && !veg->Start())
-    {
-        con.printerr("Unable to read vegetation; plants won't be listed!\n" );
-    }
 
     for(uint32_t z = 0; z < z_max; z++)
     {
@@ -286,7 +261,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
             for(uint32_t b_x = 0; b_x < x_max; b_x++)
             {
                 // Get the map block
-                DFHack::DFCoord blockCoord(b_x, b_y);
+                df::coord2d blockCoord(b_x, b_y);
                 MapExtras::Block *b = map.BlockAt(DFHack::DFCoord(b_x, b_y, z));
                 if (!b || !b->valid)
                 {
@@ -294,35 +269,25 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                 }
 
                 { // Find features
-                    uint16_t index = b->raw.global_feature;
-                    if (index != -1 && index < globalFeatures.size())
-                    {
-                        blockFeatureGlobal = &globalFeatures[index];
-                    }
+                    uint32_t index = b->raw.global_feature;
+                    if (index != -1)
+                        Maps::GetGlobalFeature(blockFeatureGlobal, index);
 
                     index = b->raw.local_feature;
-                    FeatureMap::const_iterator it = localFeatures.find(blockCoord);
-                    if (it != localFeatures.end())
-                    {
-                        FeatureListPointer features = it->second;
-
-                        if (index != -1 && index < features.size())
-                        {
-                            blockFeatureLocal = features[index];
-                        }
-                    }
+                    if (index != -1)
+                        Maps::GetLocalFeature(blockFeatureLocal, blockCoord, index);
                 }
 
-                int global_z = df::global::world->map.region_z + z;
+                int global_z = world->map.region_z + z;
 
                 // Iterate over all the tiles in the block
                 for(uint32_t y = 0; y < 16; y++)
                 {
                     for(uint32_t x = 0; x < 16; x++)
                     {
-                        DFHack::DFCoord coord(x, y);
-                        DFHack::t_designation des = b->DesignationAt(coord);
-                        DFHack::t_occupancy occ = b->OccupancyAt(coord);
+                        df::coord2d coord(x, y);
+                        df::tile_designation des = b->DesignationAt(coord);
+                        df::tile_occupancy occ = b->OccupancyAt(coord);
 
                         // Skip hidden tiles
                         if (!showHidden && des.bits.hidden)
@@ -346,7 +311,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                         // Check for liquid
                         if (des.bits.flow_size)
                         {
-                            if (des.bits.liquid_type == liquid_magma)
+                            if (des.bits.liquid_type == tile_liquid::Magma)
                                 liquidMagma.add(global_z);
                             else
                                 liquidWater.add(global_z);
@@ -368,6 +333,16 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                         case DFHack::PILLAR:
                         case DFHack::FORTIFICATION:
                             break;
+                        case DFHack::EMPTY:
+                            /* A heuristic: tubes inside adamantine have EMPTY:AIR tiles which
+                               still have feature_local set. Also check the unrevealed status,
+                               so as to exclude any holes mined by the player. */
+                            if (info->material == DFHack::AIR &&
+                                des.bits.feature_local && des.bits.hidden &&
+                                blockFeatureLocal.type == feature_type::deep_special_tube)
+                            {
+                                tubeTiles.add(global_z);
+                            }
                         default:
                             continue;
                         }
@@ -386,25 +361,25 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                             veinMats[b->veinMaterialAt(coord)].add(global_z);
                             break;
                         case DFHack::FEATSTONE:
-                            if (blockFeatureLocal && des.bits.feature_local)
+                            if (blockFeatureLocal.type != -1 && des.bits.feature_local)
                             {
-                                if (blockFeatureLocal->type == DFHack::feature_Adamantine_Tube
-                                        && blockFeatureLocal->main_material == 0) // stone
+                                if (blockFeatureLocal.type == feature_type::deep_special_tube
+                                        && blockFeatureLocal.main_material == 0) // stone
                                 {
-                                    veinMats[blockFeatureLocal->sub_material].add(global_z);
+                                    veinMats[blockFeatureLocal.sub_material].add(global_z);
                                 }
                                 else if (showTemple
-                                         && blockFeatureLocal->type == DFHack::feature_Hell_Temple)
+                                         && blockFeatureLocal.type == feature_type::deep_surface_portal)
                                 {
                                     hasDemonTemple = true;
                                 }
                             }
 
-                            if (showSlade && blockFeatureGlobal && des.bits.feature_global
-                                    && blockFeatureGlobal->type == DFHack::feature_Underworld
-                                    && blockFeatureGlobal->main_material == 0) // stone
+                            if (showSlade && blockFeatureGlobal.type != -1 && des.bits.feature_global
+                                    && blockFeatureGlobal.type == feature_type::feature_underworld_from_layer
+                                    && blockFeatureGlobal.main_material == 0) // stone
                             {
-                                layerMats[blockFeatureGlobal->sub_material].add(global_z);
+                                layerMats[blockFeatureGlobal.sub_material].add(global_z);
                             }
                             break;
                         case DFHack::OBSIDIAN:
@@ -419,16 +394,16 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
                 if (showPlants)
                 {
                     PlantList * plants;
-                    if (maps->ReadVegetation(b_x, b_y, z, plants))
+                    if (Maps::ReadVegetation(b_x, b_y, z, plants))
                     {
                         for (PlantList::const_iterator it = plants->begin(); it != plants->end(); it++)
                         {
-                            const DFHack::df_plant & plant = *(*it);
-                            DFHack::DFCoord loc(plant.x, plant.y);
+                            const df::plant & plant = *(*it);
+                            df::coord2d loc(plant.pos.x, plant.pos.y);
                             loc = loc % 16;
                             if (showHidden || !b->DesignationAt(loc).bits.hidden)
                             {
-                                if(plant.is_shrub)
+                                if(plant.flags.bits.is_shrub)
                                     plantMats[plant.material].add(global_z);
                                 else
                                     treeMats[plant.material].add(global_z);
@@ -468,16 +443,16 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     }
 
     con << std::endl << "Layer materials:" << std::endl;
-    printMats(con, layerMats, *mats->df_inorganic, showValue);
+    printMats(con, layerMats, world->raws.inorganics, showValue);
 
     printVeins(con, veinMats, mats, showValue);
 
     if (showPlants)
     {
         con << "Shrubs:" << std::endl;
-        printMats(con, plantMats, *mats->df_organic, showValue);
+        printMats(con, plantMats, world->raws.plants.all, showValue);
         con << "Wood in trees:" << std::endl;
-        printMats(con, treeMats, *mats->df_organic, showValue);
+        printMats(con, treeMats, world->raws.plants.all, showValue);
     }
 
     if (hasAquifer)
@@ -492,6 +467,12 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
             con << std::endl;
     }
 
+    if (showTube && tubeTiles.count)
+    {
+        con << "Has HFS tubes             : ";
+        printMatdata(con, tubeTiles);
+    }
+
     if (hasDemonTemple)
     {
         con << "Has demon temple" << std::endl;
@@ -503,13 +484,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     }
 
     // Cleanup
-    if (showPlants)
-    {
-        veg->Finish();
-    }
     mats->Finish();
-    maps->Finish();
-    c->Resume();
     con << std::endl;
     return CR_OK;
 }

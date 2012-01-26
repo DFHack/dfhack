@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
@@ -629,7 +629,7 @@ bool Core::Init()
     // init the console.
     Gui * g = getGui();
     bool is_text_mode = false;
-    if(g->init && g->init->graphics.flags.is_set(GRAPHICS_TEXT))
+    if(df::global::init && df::global::init->display.flag.is_set(df::enums::init_display_flags::TEXT))
     {
         is_text_mode = true;
     }
@@ -843,19 +843,18 @@ bool Core::ncurses_wgetch(int in, int & out)
         int idx = in - KEY_F(1);
         // FIXME: copypasta, push into a method!
         Gui * g = getGui();
-        if(g->hotkeys && g->df_interface && g->df_menu_state)
+        if(df::global::ui && df::global::gview && g->df_menu_state)
         {
-            t_viewscreen * ws = g->GetCurrentScreen();
+            df::viewscreen * ws = g->GetCurrentScreen();
             // FIXME: put hardcoded values into memory.xml
-            if(ws->getClassName() == "viewscreen_dwarfmodest" && *g->df_menu_state == 0x23)
+            if(((t_virtual *)ws)->getClassName() == "viewscreen_dwarfmodest" && *g->df_menu_state == 0x23)
             {
                 out = in;
                 return true;
             }
             else
             {
-                t_hotkey & hotkey = (*g->hotkeys)[idx];
-                setHotkeyCmd(hotkey.name);
+                setHotkeyCmd(df::global::ui->main.hotkeys[idx].name);
                 return false;
             }
         }
@@ -1088,14 +1087,8 @@ TYPE * Core::get##TYPE() \
     return s_mods.p##TYPE;\
 }
 
-MODULE_GETTER(Units);
-MODULE_GETTER(Engravings);
-MODULE_GETTER(Maps);
 MODULE_GETTER(Gui);
 MODULE_GETTER(World);
 MODULE_GETTER(Materials);
-MODULE_GETTER(Translation);
-MODULE_GETTER(Vegetation);
-MODULE_GETTER(Constructions);
 MODULE_GETTER(Notes);
 MODULE_GETTER(Graphic);

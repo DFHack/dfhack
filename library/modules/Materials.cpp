@@ -62,6 +62,7 @@ using namespace std;
 
 #include "df/physical_attribute_type.h"
 #include "df/mental_attribute_type.h"
+#include <df/color_modifier_raw.h>
 
 using namespace DFHack;
 using namespace df::enums;
@@ -746,32 +747,32 @@ bool Materials::ReadCreatureTypesEx (void)
             caste.singular = ca->caste_name[0];
             caste.plural = ca->caste_name[1];
             caste.adjective = ca->caste_name[2];
-/*
+
             // color mod reading
             // Caste + offset > color mod vector
-            vector <char *> & p_colormod = *(vector<char*> *) (world->raws.creatures.all[i]->caste + caste_colormod_offset);
-            uint32_t sizecolormod = p_colormod.size();
+            auto & colorings = ca->color_modifiers;
+            uint32_t sizecolormod = colorings.size();
             caste.ColorModifier.resize(sizecolormod);
             for(uint32_t k = 0; k < sizecolormod;k++)
             {
                 // color mod [0] -> color list
-                vector <uint32_t> & p_colorlist = *(vector<uint32_t> *) (p_colormod[k]);
-                uint32_t sizecolorlist = p_colorlist.size();
+                auto & indexes = colorings[k]->color_indexes;
+                uint32_t sizecolorlist = indexes.size();
                 caste.ColorModifier[k].colorlist.resize(sizecolorlist);
                 for(uint32_t l = 0; l < sizecolorlist; l++)
-                    caste.ColorModifier[k].colorlist[l] = p_colorlist[l];
+                    caste.ColorModifier[k].colorlist[l] = indexes[l];
                 // color mod [color_modifier_part_offset] = string part
-                caste.ColorModifier[k].part = p->readSTLString( p_colormod[k] + color_modifier_part_offset);
-                caste.ColorModifier[k].startdate = p->readDWord( p_colormod[k] + color_modifier_startdate_offset );
-                caste.ColorModifier[k].enddate = p->readDWord( p_colormod[k] + color_modifier_enddate_offset );
+                caste.ColorModifier[k].part = colorings[k]->part;
+                caste.ColorModifier[k].startdate = colorings[k]->start_date;
+                caste.ColorModifier[k].enddate = colorings[k]->end_date;
             }
-*/
+
             // body parts
             caste.bodypart.empty();
-            uint32_t sizebp = ca->body_parts.size();
+            uint32_t sizebp = ca->unknown1.body_parts.size();
             for (uint32_t k = 0; k < sizebp; k++)
             {
-                df::body_part_raw *bp = ca->body_parts[k];
+                df::body_part_raw *bp = ca->unknown1.body_parts[k];
                 t_bodypart part;
                 part.id = bp->part_code;
                 part.category = bp->part_name;

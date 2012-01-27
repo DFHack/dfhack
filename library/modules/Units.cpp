@@ -59,6 +59,11 @@ bool Units::isValid()
     return (world->units.all.size() > 0);
 }
 
+int32_t Units::getNumCreatures()
+{
+    return world->units.all.size();
+}
+
 df::unit * Units::GetCreature (const int32_t index)
 {
     if (!isValid()) return NULL;

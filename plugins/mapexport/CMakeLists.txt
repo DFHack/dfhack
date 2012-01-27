@@ -39,7 +39,7 @@ LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
 #Generate sources from our proto files and store them in the source tree
 ADD_CUSTOM_COMMAND(
 OUTPUT ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
-COMMAND protoc-bin -I=${CMAKE_CURRENT_SOURCE_DIR}/proto --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto ${PROJECT_PROTOS}
+COMMAND protoc-bin -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/ --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/ ${PROJECT_PROTOS}
 DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
 

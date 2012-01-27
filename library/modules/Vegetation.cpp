@@ -45,7 +45,7 @@ using df::global::world;
 
 bool Vegetation::isValid()
 {
-    return (world->plants.all.size() > 0);
+    return (world != NULL);
 }
 
 uint32_t Vegetation::getCount()
@@ -53,9 +53,27 @@ uint32_t Vegetation::getCount()
     return world->plants.all.size();
 }
 
-df::plant *Vegetation::getPlant(const int32_t index)
+bool Vegetation::copyPlant(const int32_t index, t_plant &out)
 {
     if (index < 0 || index >= getCount())
-        return NULL;
-    return world->plants.all[index];
+        return false;
+
+    out.origin = world->plants.all[index];
+
+    out.name = out.origin->name;
+    out.flags = out.origin->flags;
+    out.material = out.origin->material;
+    out.pos = out.origin->pos;
+    out.grow_counter = out.origin->grow_counter;
+    out.temperature_1 = out.origin->temperature_1;
+    out.temperature_2 = out.origin->temperature_2;
+    out.is_burning = out.origin->is_burning;
+    out.hitpoints = out.origin->hitpoints;
+    out.update_order = out.origin->update_order;
+    //out.unk1 = out.origin->anon_1;
+    //out.unk2 = out.origin->anon_2;
+    //out.temperature_3 = out.origin->temperature_3;
+    //out.temperature_4 = out.origin->temperature_4;
+    //out.temperature_5 = out.origin->temperature_5;
+    return true;
 }

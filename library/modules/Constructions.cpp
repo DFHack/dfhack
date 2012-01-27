@@ -43,7 +43,7 @@ using df::global::world;
 
 bool Constructions::isValid()
 {
-    return (world->constructions.size() > 0);
+    return (world != NULL);
 }
 
 uint32_t Constructions::getCount()
@@ -51,9 +51,19 @@ uint32_t Constructions::getCount()
     return world->constructions.size();
 }
 
-df::construction *Constructions::getConstruction(const int32_t index)
+bool Constructions::copyConstruction(const int32_t index, t_construction &out)
 {
     if (index < 0 || index >= getCount())
-        return NULL;
-    return world->constructions[index];
+        return false;
+
+    out.origin = world->constructions[index];
+
+    out.pos = out.origin->pos;
+    out.item_type = out.origin->item_type;
+    out.unk = out.origin->anon_1;
+    out.mat_type = out.origin->mat_type;
+    out.mat_index = out.origin->mat_index;
+    out.flags = out.origin->flags;
+    out.original_tile = out.origin->original_tile;
+    return true;
 }

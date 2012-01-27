@@ -41,9 +41,24 @@ namespace Simple
 {
 namespace Engravings
 {
+// "Simplified" copy of engraving
+struct t_engraving {
+    int32_t artist;
+    int32_t masterpiece_event;
+    int32_t skill_rating;
+    df::coord pos;
+    df::engraving_flags flags;
+    int8_t tile;
+    int32_t type;
+    int16_t subtype;
+    df::item_quality quality;
+    // Pointer to original object, in case you want to modify it
+    df::engraving *origin;
+};
+
 DFHACK_EXPORT bool isValid();
 DFHACK_EXPORT uint32_t getCount();
-DFHACK_EXPORT df::engraving *getEngraving (const int32_t index);
+DFHACK_EXPORT bool copyEngraving (const int32_t index, t_engraving &out);
 }
 }
 }

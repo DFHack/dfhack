@@ -43,7 +43,7 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
         {
             c->con.print("Exports the currently visible map to a file.\n"
                          "Usage: mapexport <filename>\n"
-			);
+            );
             return CR_OK;
         }
     }

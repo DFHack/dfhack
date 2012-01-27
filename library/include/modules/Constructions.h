@@ -42,9 +42,23 @@ namespace Simple
 {
 namespace Constructions
 {
+// "Simplified" copy of construction
+struct t_construction {
+    df::coord pos;
+    df::item_type item_type;
+    int16_t unk;
+    int16_t mat_type;
+    int32_t mat_index;
+    df::construction_flags flags;
+    int16_t original_tile;
+    // Pointer to original object, in case you want to modify it
+    df::construction *origin;
+};
+
 DFHACK_EXPORT bool isValid();
 DFHACK_EXPORT uint32_t getCount();
-DFHACK_EXPORT df::construction *getConstruction (const int32_t index);
+DFHACK_EXPORT bool copyConstruction (const int32_t index, t_construction &out);
+DFHACK_EXPORT df::construction * getConstruction (const int32_t index);
 }
 }
 }

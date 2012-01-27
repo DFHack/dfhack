@@ -65,6 +65,7 @@ struct t_plant {
 
 DFHACK_EXPORT bool isValid();
 DFHACK_EXPORT uint32_t getCount();
+DFHACK_EXPORT df::plant * getPlant(const int32_t index);
 DFHACK_EXPORT bool copyPlant (const int32_t index, t_plant &out);
 }
 }

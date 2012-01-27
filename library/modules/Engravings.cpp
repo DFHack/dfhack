@@ -52,6 +52,13 @@ uint32_t Engravings::getCount()
     return world->engravings.size();
 }
 
+df::engraving * Engravings::getEngraving(int index)
+{
+    if (index < 0 || index >= getCount())
+        return NULL;
+    return world->engravings[index];
+}
+
 bool Engravings::copyEngraving(const int32_t index, t_engraving &out)
 {
     if (index < 0 || index >= getCount())

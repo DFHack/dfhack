@@ -51,6 +51,13 @@ uint32_t Constructions::getCount()
     return world->constructions.size();
 }
 
+df::construction * Constructions::getConstruction(const int32_t index)
+{
+    if (index < 0 || index >= getCount())
+        return NULL;
+    return world->constructions[index];
+}
+
 bool Constructions::copyConstruction(const int32_t index, t_construction &out)
 {
     if (index < 0 || index >= getCount())

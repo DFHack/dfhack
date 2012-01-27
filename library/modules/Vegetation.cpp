@@ -53,6 +53,13 @@ uint32_t Vegetation::getCount()
     return world->plants.all.size();
 }
 
+df::plant * Vegetation::getPlant(const int32_t index)
+{
+    if (index < 0 || index >= getCount())
+        return NULL;
+    return world->plants.all[index];
+}
+
 bool Vegetation::copyPlant(const int32_t index, t_plant &out)
 {
     if (index < 0 || index >= getCount())

@@ -12,6 +12,8 @@ using namespace DFHack;
 
 #include "proto/Map.pb.h"
 
+using namespace DFHack::Simple;
+
 DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
@@ -66,6 +68,11 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
     Maps::getSize(x_max, y_max, z_max);
     MapExtras::MapCache map;
     DFHack::Materials *mats = c->getMaterials();
+
+    if (!Vegetation::isValid())
+    {
+        c->con.printerr("Unable to read vegetation; plants won't be listed!\n" );
+    }
 
     dfproto::Map protomap;
     protomap.set_x_size(x_max);

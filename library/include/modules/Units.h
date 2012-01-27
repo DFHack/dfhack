@@ -169,6 +169,7 @@ DFHACK_EXPORT bool isValid();
 /* Read Functions */
 // Read creatures in a box, starting with index. Returns -1 if no more creatures
 // found. Call repeatedly do get all creatures in a specified box (uses tile coords)
+DFHACK_EXPORT int32_t getNumCreatures();
 DFHACK_EXPORT int32_t GetCreatureInBox(const int32_t index, df::unit ** furball,
     const uint16_t x1, const uint16_t y1,const uint16_t z1,
     const uint16_t x2, const uint16_t y2,const uint16_t z2);

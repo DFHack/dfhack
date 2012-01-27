@@ -13,7 +13,18 @@ using namespace std;
 #include <PluginManager.h>
 #include <modules/Units.h>
 #include <modules/Translation.h>
+
+#include <df/ui.h>
+#include <df/world.h>
+#include <df/unit.h>
+#include <df/unit_soul.h>
+
 using namespace DFHack;
+using namespace DFHack::Simple;
+using namespace DFHack::Simple;
+
+using df::global::ui;
+using df::global::world;
 
 // our own, empty header.
 #include "export.h"
@@ -80,24 +91,24 @@ static void element(const char* name, const uint32_t content, ostream& out, cons
     out << extra_indent << "    <" << name << ">" << content << "</" << name << ">" << endl;
 }
 
-static void printAttributes(Core* c, Translation* t, t_unit* cre, ostream& out) {
+static void printAttributes(Core* c, df::unit* cre, ostream& out) {
     out << "    <Attributes>" << endl;
     for (int i = 0; i < NUM_CREATURE_PHYSICAL_ATTRIBUTES; i++) {
-        element(physicals[i], cre->origin->physical[i].unk_0, out, "  ");
+        element(physicals[i], cre->body.physical_attrs[i].unk1, out, "  ");
     }
 
-    df_soul * s = cre->origin->current_soul;
+    df::unit_soul * s = cre->status.current_soul;
     if (s) {
         for (int i = 0; i < NUM_CREATURE_MENTAL_ATTRIBUTES; i++) {
-            element(mentals[i], s->mental[i].unk_0, out, "  ");
+            element(mentals[i], s->mental_attrs[i].unk1, out, "  ");
         }
     }
     out << "    </Attributes>" << endl;
 }
 
-static void printTraits(Core* c, Translation* t, t_unit* cre, ostream& out) {
+static void printTraits(Core* c, df::unit* cre, ostream& out) {
     out << "    <Traits>" << endl;
-    df_soul * s = cre->origin->current_soul;
+    df::unit_soul * s = cre->status.current_soul;
     if (s) {
         for (int i = 0; i < NUM_CREATURE_TRAITS; i++) {
             out << "      <Trait name='" << c->vinfo->getTraitName(i) <<
@@ -118,19 +129,19 @@ static void printTraits(Core* c, Translation* t, t_unit* cre, ostream& out) {
 // Sex
 // Attributes
 // Traits
-static void export_dwarf(Core* c, Translation* t, t_unit* cre, ostream& out) {
+static void export_dwarf(Core* c, df::unit* cre, ostream& out) {
     string info = cre->name.first_name;
     info += " ";
-    info += t->TranslateName(&cre->origin->name, false);
+    info += Translation::TranslateName(&cre->name, false);
     info[0] = toupper(info[0]);
     c->con.print("Exporting %s\n", info.c_str());
 
     out << "  <Creature>" << endl;
     element("Name", info.c_str(), out);
-    element("Nickname", cre->name.nickname, out);
+    element("Nickname", cre->name.nickname.c_str(), out);
     element("Sex", cre->sex == 0 ? "Female" : "Male", out);
-    printAttributes(c, t, cre, out);
-    printTraits(c, t, cre, out);
+    printAttributes(c, cre, out);
+    printTraits(c, cre, out);
 
     out << "  </Creature>" << endl;
 }
@@ -153,25 +164,16 @@ DFhackCExport command_result export_dwarves (Core * c, std::vector <std::string>
 
     c->Suspend();
 
-    Translation* t = c->getTranslation();
-    t->Start();
-
-    DFHack::Units* cr = c->getUnits();
-    uint32_t race = cr->GetDwarfRaceIndex();
-    uint32_t civ = cr->GetDwarfCivId();
-
-    uint32_t num_creatures;
-    cr->Start(num_creatures);
+    uint32_t race = ui->race_id;
+    uint32_t civ = ui->civ_id;
 
     outf << "<?xml version='1.0' encoding='ibm850'?>" << endl << "<Creatures>" << endl;
     
-    for (unsigned i = 0; i < num_creatures; ++i)
+    for (int i = 0; i < world->units.all.size(); ++i)
     {
-        df_unit* cre = cr->GetCreature(i);
-        if (cre->race == race && cre->civ == civ) {
-            t_unit t_cre;
-            cr->CopyCreature(cre, t_cre);
-            export_dwarf(c, t, &t_cre, outf);
+        df::unit* cre = world->units.all[i];
+        if (cre->race == race && cre->civ_id == civ) {
+            export_dwarf(c, cre, outf);
         }
     }
     outf << "</Creatures>" << endl;

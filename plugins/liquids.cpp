@@ -164,10 +164,11 @@ public:
 			DFCoord xy = to_flood.top();
 			to_flood.pop();
 
-			t_designation des = mc.designationAt(xy);
+                        df::tile_designation des = mc.designationAt(xy);
 
 			if (seen.find(xy) == seen.end() 
-				&& des.bits.flow_size && des.bits.liquid_type != liquid_magma) {
+                            && des.bits.flow_size
+                            && des.bits.liquid_type == tile_liquid::Water) {
 				v.push_back(xy);
 				seen.insert(xy);
 

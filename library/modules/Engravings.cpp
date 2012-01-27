@@ -44,7 +44,7 @@ using df::global::world;
 
 bool Engravings::isValid()
 {
-    return (world->engravings.size() > 0);
+    return (world != NULL);
 }
 
 uint32_t Engravings::getCount()
@@ -52,9 +52,28 @@ uint32_t Engravings::getCount()
     return world->engravings.size();
 }
 
-df::engraving *Engravings::getEngraving(const int32_t index)
+df::engraving * Engravings::getEngraving(int index)
 {
     if (index < 0 || index >= getCount())
         return NULL;
     return world->engravings[index];
+}
+
+bool Engravings::copyEngraving(const int32_t index, t_engraving &out)
+{
+    if (index < 0 || index >= getCount())
+        return false;
+
+    out.origin = world->engravings[index];
+
+    out.artist = out.origin->artist;
+    out.masterpiece_event = out.origin->masterpiece_event;
+    out.skill_rating = out.origin->skill_rating;
+    out.pos = out.origin->pos;
+    out.flags = out.origin->flags;
+    out.tile = out.origin->tile;
+    out.type = out.origin->type;
+    out.subtype = out.origin->subtype;
+    out.quality = out.origin->quality;
+    return true;
 }

@@ -70,6 +70,7 @@ DFHACK_PLUGIN(jobutils jobutils.cpp)
 DFHACK_PLUGIN(regrass regrass.cpp)
 DFHACK_PLUGIN(workflow workflow.cpp)
 DFHACK_PLUGIN(showmood showmood.cpp)
+DFHACK_PLUGIN(fixveins fixveins.cpp)
 #DFHACK_PLUGIN(versionosd versionosd.cpp)
 
 add_subdirectory(export)

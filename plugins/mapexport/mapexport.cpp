@@ -12,6 +12,8 @@ using namespace DFHack;
 
 #include "proto/Map.pb.h"
 
+using namespace DFHack::Simple;
+
 DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
@@ -41,7 +43,7 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
         {
             c->con.print("Exports the currently visible map to a file.\n"
                          "Usage: mapexport <filename>\n"
-			);
+            );
             return CR_OK;
         }
     }
@@ -67,8 +69,7 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
     MapExtras::MapCache map;
     DFHack::Materials *mats = c->getMaterials();
 
-    DFHack::Vegetation *veg = c->getVegetation();
-    if (veg->Start())
+    if (!Vegetation::isValid())
     {
         c->con.printerr("Unable to read vegetation; plants won't be listed!\n" );
     }

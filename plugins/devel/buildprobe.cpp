@@ -43,10 +43,9 @@ DFhackCExport DFHack::command_result readFlag (Core * c, vector <string> & param
 {
 	c->Suspend();
 
-	DFHack::Maps * Maps = c->getMaps();
     DFHack::Gui * Gui = c->getGui();
     // init the map
-    if(!Maps->Start())
+    if(!Maps::IsValid())
     {
         c->con.printerr("Can't init map. Make sure you have a map loaded in DF.\n");
         c->Resume();
@@ -64,7 +63,7 @@ DFhackCExport DFHack::command_result readFlag (Core * c, vector <string> & param
 
 	DFHack::DFCoord cursor = DFHack::DFCoord(cx,cy,cz);
 
-	MapExtras::MapCache * MCache = new MapExtras::MapCache(Maps);
+	MapExtras::MapCache * MCache = new MapExtras::MapCache();
 	DFHack::t_occupancy oc = MCache->occupancyAt(cursor);
 
 	c->con.print("Current Value: %d\n", oc.bits.building);
@@ -111,10 +110,9 @@ DFhackCExport DFHack::command_result writeFlag (Core * c, vector <string> & para
 
 	c->Suspend();
 
-	DFHack::Maps * Maps = c->getMaps();
     DFHack::Gui * Gui = c->getGui();
     // init the map
-    if(!Maps->Start())
+    if(!Maps::IsValid())
     {
         c->con.printerr("Can't init map. Make sure you have a map loaded in DF.\n");
         c->Resume();
@@ -132,7 +130,7 @@ DFhackCExport DFHack::command_result writeFlag (Core * c, vector <string> & para
 
 	DFHack::DFCoord cursor = DFHack::DFCoord(cx,cy,cz);
 
-	MapExtras::MapCache * MCache = new MapExtras::MapCache(Maps);
+	MapExtras::MapCache * MCache = new MapExtras::MapCache();
 	DFHack::t_occupancy oc = MCache->occupancyAt(cursor);
 
 	oc.bits.building = value;

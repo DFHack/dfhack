@@ -48,7 +48,7 @@ namespace DFHack
         X(RAMP_TOP,         "used for pathing?" ) \
         X(FLOOR,            "") \
         X(BROOK_TOP,        "water-passable floor on top of BROOK_BED tiles") \
-        X(RIVER_BED,        "It's a riverbed. Basically a floor.'") \
+        X(RIVER_BED,        "It's a riverbed. Basically a floor that doesn't get muddy.") \
         X(POOL,             "A pool. Gathers water while it's raining.'") \
         X(TREE_DEAD,        "") \
         X(TREE_OK,          "") \
@@ -77,14 +77,14 @@ namespace DFHack
         X(SOIL,       "ordinary soil. material depends on geology" ) \
         X(STONE,      "ordinary layer stone. material depends on geology" ) \
         X(FEATSTONE,  "map special stone. used for things like hell, the hell temple or adamantine tubes. material depends on local/global special" ) \
-        X(OBSIDIAN,   "cast obsidian" ) \
+        X(OBSIDIAN,   "lava stone created by mixing magma and water" ) \
         X(VEIN,       "vein stone. material depends on mineral veins present" ) \
         X(ICE,        "frozen water... not much to say. you can determine what was on the tile before it froze by looking into the 'ice vein' objects" ) \
-        X(GRASS,      "grass (has 4 variants)" ) \
-        X(GRASS2,     "grass (has 4 variants)" ) \
+        X(GRASS,      "light grass (has 4 variants)" ) \
+        X(GRASS2,     "dark grass (has 4 variants)" ) \
         X(GRASS_DEAD, "dead grass (has 4 variants)" ) \
         X(GRASS_DRY,  "dry grass (has 4 variants)" ) \
-        X(DRIFTWOOD,  "non-specified wood - normally on top of the local layer stone/soil." ) \
+        X(DRIFTWOOD,  "driftwood. normally shows up on beaches" ) \
         X(HFS,        "the stuff demon pits are made of - this makes them different from ordinary pits." ) \
         X(MAGMA,      "material for semi-molten rock and 'magma flow' tiles" ) \
         X(CAMPFIRE,   "human armies make them when they siege. The original tile may be lost?" ) \
@@ -111,11 +111,11 @@ namespace DFHack
     // When the TileType class gets created, everything should be re-thought.
     #define TILESPECIAL_MACRO \
         X(NORMAL,            "Default for all type, nothing present" ) \
-        X(RIVER_SOURCE,      "Rivers Source, when it exists on a map" ) \
-        X(WATERFALL,         "Special case for Waterfall Landing. How's this used?" ) \
-        X(CRACKED,           "Walls being dug" ) \
-        X(DAMAGED,           "Walls being dug" ) \
-        X(WORN,              "Walls being dug ??" ) \
+        X(RIVER_SOURCE,      "River Source, when it exists on a map" ) \
+        X(WATERFALL,         "Waterfall from Nowhere, used by cave rivers back in 40d" ) \
+        X(CRACKED,           "Partially (75%) mined walls" ) \
+        X(DAMAGED,           "Partially (50%) mined walls" ) \
+        X(WORN,              "Partially (25%) mined walls" ) \
         X(SMOOTH,            "Walls and floors." ) 
     //end TILESPECIAL_MACRO
 
@@ -255,7 +255,7 @@ namespace DFHack
 
     // tile is missing a floor
     inline
-    bool LowPassable(uint16_t tiletype)
+    bool LowPassable(int16_t tiletype)
     {
         switch(DFHack::tileTypeTable[tiletype].shape)
         {
@@ -271,7 +271,7 @@ namespace DFHack
 
     // tile is missing a roof
     inline
-    bool HighPassable(uint16_t tiletype)
+    bool HighPassable(int16_t tiletype)
     {
         switch(DFHack::tileTypeTable[tiletype].shape)
         {
@@ -299,81 +299,81 @@ namespace DFHack
     };
 
     inline
-    bool FlowPassable(uint16_t tiletype)
+    bool FlowPassable(int16_t tiletype)
     {
         TileShape tc = tileTypeTable[tiletype].shape;
         return tc != WALL && tc != PILLAR && tc != TREE_DEAD && tc != TREE_OK;
     };
 
     inline
-    bool isWallTerrain(int tiletype)
+    bool isWallTerrain(int16_t tiletype)
     {
         return tileTypeTable[tiletype].shape >= WALL && tileTypeTable[tiletype].shape <= FORTIFICATION ;
     }
 
     inline
-    bool isFloorTerrain(int tiletype)
+    bool isFloorTerrain(int16_t tiletype)
     {
         return tileTypeTable[tiletype].shape >= FLOOR && tileTypeTable[tiletype].shape <= PEBBLES;
     }
 
     inline
-    bool isRampTerrain(int tiletype)
+    bool isRampTerrain(int16_t tiletype)
     {
         return tileTypeTable[tiletype].shape == RAMP;
     }
 
     inline
-    bool isStairTerrain(int tiletype)
+    bool isStairTerrain(int16_t tiletype)
     {
         return tileTypeTable[tiletype].shape >= STAIR_UP && tileTypeTable[tiletype].shape <= STAIR_UPDOWN;
     }
 
     inline
-    bool isOpenTerrain(int tiletype)
+    bool isOpenTerrain(int16_t tiletype)
     {
         return tileTypeTable[tiletype].shape == EMPTY;
     }
 
     inline
-    const char * tileName(int tiletype)
+    const char * tileName(int16_t tiletype)
     {
         return tileTypeTable[tiletype].name;
     }
 
     inline
-    TileShape tileShape(int tiletype)
+    TileShape tileShape(int16_t tiletype)
     {
         return tileTypeTable[tiletype].shape;
     }
 
     inline
-    TileSpecial tileSpecial(int tiletype)
+    TileSpecial tileSpecial(int16_t tiletype)
     {
         return tileTypeTable[tiletype].special;
     }
 
     inline
-    TileVariant tileVariant(int tiletype)
+    TileVariant tileVariant(int16_t tiletype)
     {
         return tileTypeTable[tiletype].variant;
     }
 
     inline
-    TileMaterial tileMaterial(int tiletype)
+    TileMaterial tileMaterial(int16_t tiletype)
     {
         return tileTypeTable[tiletype].material;
     }
 
     inline
-    TileDirection tileDirection(int tiletype)
+    TileDirection tileDirection(int16_t tiletype)
     {
         return tileTypeTable[tiletype].direction;
     }
 
     /// Safely access the tile type array.
     inline const
-    TileRow * getTileRow(int tiletype)
+    TileRow * getTileRow(int16_t tiletype)
     {
         if( tiletype<0 || tiletype>=TILE_TYPE_ARRAY_LENGTH ) return 0;
         return ( const TileRow * ) &tileTypeTable[tiletype];
@@ -387,9 +387,9 @@ namespace DFHack
      * @return matching index in tileTypeTable, or -1 if none found.
      */
     inline
-    int32_t findTileType( const TileShape tshape, const TileMaterial tmat, const TileVariant tvar, const TileSpecial tspecial, const TileDirection tdir )
+    int16_t findTileType( const TileShape tshape, const TileMaterial tmat, const TileVariant tvar, const TileSpecial tspecial, const TileDirection tdir )
     {
-        int32_t tt;
+        int16_t tt;
         for(tt=0;tt<TILE_TYPE_ARRAY_LENGTH; ++tt)
         {
             if( tshape>-1   && tshape != tileTypeTable[tt].shape ) continue;
@@ -410,7 +410,7 @@ namespace DFHack
      * 
      * @todo Definitely needs improvement for wall directions, etc.
      */
-    DFHACK_EXPORT int32_t findSimilarTileType( const int32_t sourceTileType, const TileShape tshape );
+    DFHACK_EXPORT int16_t findSimilarTileType( const int16_t sourceTileType, const TileShape tshape );
 }
 
 

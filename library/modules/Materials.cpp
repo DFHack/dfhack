@@ -768,10 +768,10 @@ bool Materials::ReadCreatureTypesEx (void)
 */
             // body parts
             caste.bodypart.empty();
-            uint32_t sizebp = ca->body_parts.size();
+            uint32_t sizebp = ca->unknown1.body_parts.size();
             for (uint32_t k = 0; k < sizebp; k++)
             {
-                df::body_part_raw *bp = ca->body_parts[k];
+                df::body_part_raw *bp = ca->unknown1.body_parts[k];
                 t_bodypart part;
                 part.id = bp->part_code;
                 part.category = bp->part_name;

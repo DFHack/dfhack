@@ -1086,9 +1086,25 @@ static void map_job_items(Core *c)
         int16_t imattype = item->getActualMaterial();
         int32_t imatindex = item->getActualMaterialIndex();
 
+        bool is_invalid = false;
+
         // Special handling
-        if (dry_buckets && itype == item_type::BUCKET && !item->flags.bits.in_job)
-            dryBucket(item);
+        switch (itype) {
+        case item_type::BUCKET:
+            if (dry_buckets && !item->flags.bits.in_job)
+                dryBucket(item);
+            break;
+
+        case item_type::THREAD:
+            if (item->getTotalDimension() < 15000)
+                is_invalid = true;
+            break;
+
+        case item_type::CLOTH:
+            if (item->getTotalDimension() < 10000)
+                is_invalid = true;
+            break;
+        }
 
         if (item->flags.bits.melt && !item->flags.bits.owned && !itemBusy(item))
             meltable_count++;
@@ -1119,7 +1135,8 @@ static void map_job_items(Core *c)
             if (!ok)
                 continue;
 
-            if (item->flags.bits.owned ||
+            if (is_invalid ||
+                item->flags.bits.owned ||
                 item->flags.bits.in_chest ||
                 item->isAssignedToStockpile() ||
                 itemInRealJob(item) ||

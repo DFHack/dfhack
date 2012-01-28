@@ -22,6 +22,19 @@ using namespace df::enums;
 
 using df::global::world;
 
+bool setTileMaterial(int16_t &tile, const TileMaterial mat)
+{
+    int16_t newTile = findTileType(tileShape(tile), mat, tileVariant(tile), tileSpecial(tile), tileDirection(tile));
+    if (newTile == -1)
+        return false;
+    if (newTile != tile)
+    {
+        tile = newTile;
+        return true;
+    }
+    return false;
+}
+
 DFhackCExport command_result df_fixveins (Core * c, vector <string> & parameters)
 {
     if (parameters.size())
@@ -35,8 +48,8 @@ DFhackCExport command_result df_fixveins (Core * c, vector <string> & parameters
         return CR_FAILURE;
     }
 
-    int removed = 0;
-    int added = 0;
+    int mineral_removed = 0, feature_removed = 0;
+    int mineral_added = 0, feature_added = 0;
 
     int num_blocks = 0, blocks_total = world->map.map_blocks.size();
     for (int i = 0; i < blocks_total; i++)
@@ -57,33 +70,22 @@ DFhackCExport command_result df_fixveins (Core * c, vector <string> & parameters
             for (int y = 0; y < 16; y++)
             {
                 int16_t oldT = block->tiletype[x][y];
-                int16_t newT = oldT;
                 TileMaterial mat = tileMaterial(oldT);
                 if ((mat == VEIN) && !(has_mineral[y] & (1 << x)))
-                {
-                    newT = findTileType(tileShape(oldT), STONE, tileVariant(oldT), tileSpecial(oldT), tileDirection(oldT));
-                    if ((newT != -1) && (newT != oldT))
-                    {
-                        block->tiletype[x][y] = newT;
-                        removed++;
-                    }
-                }
+                    mineral_removed += setTileMaterial(block->tiletype[x][y], STONE);
                 if ((mat == STONE) && (has_mineral[y] & (1 << x)))
-                {
-                    newT = findTileType(tileShape(oldT), VEIN, tileVariant(oldT), tileSpecial(oldT), tileDirection(oldT));
-                    if ((newT != -1) && (newT != oldT))
-                    {
-                        block->tiletype[x][y] = newT;
-                        added++;
-                    }
-                }
+                    mineral_added += setTileMaterial(block->tiletype[x][y], VEIN);
+                if ((mat == FEATSTONE) && !(block->designation[x][y].bits.feature_local || block->designation[x][y].bits.feature_global))
+                    feature_removed += setTileMaterial(block->tiletype[x][y], STONE);
+                if ((mat == STONE) && (block->designation[x][y].bits.feature_local || block->designation[x][y].bits.feature_global))
+                    feature_added += setTileMaterial(block->tiletype[x][y], FEATSTONE);
             }
         }
     }
-    if (removed)
-        c->con.print("Removed %i invalid references to mineral inclusions.\n", removed);
-    if (added)
-        c->con.print("Restored %i missing references to mineral inclusions.\n", added);
+    if (mineral_removed || feature_removed)
+        c->con.print("Removed invalid references from %i mineral inclusion and %i map feature tiles.\n", mineral_removed, feature_removed);
+    if (mineral_added || feature_added)
+        c->con.print("Restored missing references to %i mineral inclusion and %i map feature tiles.\n", mineral_added, feature_added);
     return CR_OK;
 }
 

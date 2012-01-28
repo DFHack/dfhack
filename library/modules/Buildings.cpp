@@ -43,7 +43,6 @@ using namespace DFHack::Simple;
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/building_def.h"
-#include "df/building.h"
 #include "df/building_workshopst.h"
 
 using namespace df::enums;
@@ -72,7 +71,7 @@ bool Buildings::Read (const uint32_t index, t_building & building)
     building.material.type = bld_40d->mat_type;
     building.type = type;
     building.custom_type = bld_40d->getCustomType();
-    building.origin = (void *) &bld_40d;
+    building.origin = bld_40d;
     return true;
 }
 

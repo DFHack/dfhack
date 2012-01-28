@@ -16,7 +16,6 @@ using namespace std;
 #include <string>
 #include "modules/Items.h"
 #include "modules/Units.h"
-#include "modules/Materials.h"
 #include "modules/Translation.h"
 #include "DataDefs.h"
 #include "df/world.h"
@@ -96,9 +95,11 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
 
     CoreSuspender suspend(c);
 
-    DFHack::Materials *Materials = c->getMaterials();
-
-    bool ok = Materials->ReadAllMaterials();
+    if (!Translation::IsValid())
+    {
+        c->con.printerr("Translation data unavailable!\n");
+        return CR_FAILURE;
+    }
 
     c->con.print("Found total %d items.\n", world->items.all.size());
 
@@ -181,17 +182,9 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
             );
 
             df::unit *owner = Items::getItemOwner(item);
-            std::string info;
 
             if (owner)
-            {
-                info = owner->name.first_name;
-                if (!owner->name.nickname.empty())
-                    info += std::string(" '") + owner->name.nickname + "'";
-                info += " ";
-                info += Translation::TranslateName(&owner->name,false);
-                c->con.print(", owner %s", info.c_str());
-            }
+                c->con.print(", owner %s", Translation::TranslateName(&owner->name,false).c_str());
 
             if (!dry_run)
             {

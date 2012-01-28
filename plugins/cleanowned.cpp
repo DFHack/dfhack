@@ -98,7 +98,6 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
 
     DFHack::Materials *Materials = c->getMaterials();
 
-    uint32_t num_creatures;
     bool ok = Materials->ReadAllMaterials();
 
     c->con.print("Found total %d items.\n", world->items.all.size());

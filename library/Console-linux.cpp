@@ -653,6 +653,7 @@ bool Console::init(bool sharing)
     FD_SET(STDIN_FILENO, &d->descriptor_set);
     FD_SET(d->exit_pipe[0], &d->descriptor_set);
     inited = true;
+    return true;
 }
 
 bool Console::shutdown(void)

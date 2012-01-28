@@ -15,6 +15,8 @@ using namespace google::protobuf::io;
 
 #include "proto/Map.pb.h"
 
+using namespace DFHack::Simple;
+
 DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
@@ -44,7 +46,7 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
         {
             c->con.print("Exports the currently visible map to a file.\n"
                          "Usage: mapexport <filename>\n"
-			);
+            );
             return CR_OK;
         }
     }

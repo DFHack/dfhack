@@ -32,6 +32,10 @@ distribution.
 #include "BitArray.h"
 #include <string>
 
+#include "DataDefs.h"
+#include "df/init.h"
+#include "df/ui.h"
+
 namespace df {
     struct viewscreen;
     struct job;
@@ -86,88 +90,6 @@ namespace DFHack
     DFHACK_EXPORT void showPopupAnnouncement(std::string message, int color = 7, bool bright = true);
 
     class DFContextShared;
-    /**
-     * A GUI screen
-     * \ingroup grp_gui
-     */
-    struct t_viewscreen : public t_virtual
-    {
-        t_viewscreen * child;
-        t_viewscreen * parent;
-        char unk1; // varies
-        char unk2; // state?
-    };
-    /**
-     * Interface - wrapper for the GUI
-     * \ingroup grp_gui
-     */
-    struct t_interface
-    {
-        int fps;
-        t_viewscreen view;
-        unsigned int flags; // ?
-        // more crud this way ...
-    };
-    enum graphics_flag
-    {
-        GRAPHICS_ENABLED = 0,
-        GRAPHICS_BLACKSPACE = 1,
-        GRAPHICS_PARTIAL_PRINT = 2,
-        GRAPHICS_TEXT = 11,
-        GRAPHICS_FIXED_SIZE = 13
-    };
-    enum media_flag
-    {
-        MEDIA_NO_SOUND,
-        MEDIA_NO_INTRO,
-        MEDIA_COMPRESS_WORLDS,
-    };
-    /**
-     * The init structure - basically DF settings
-     * \ingroup grp_gui
-     */
-    struct t_init
-    {
-        struct
-        {
-            BitArray <graphics_flag> flags;
-            enum
-            {
-                WINDOWED_YES,
-                WINDOWED_NO,
-                WINDOWED_PROMPT
-            } windowed;
-            // screen size in tiles
-            int grid_x;
-            int grid_y;
-            // in pixels ?
-            int fullscreen_x;
-            int fullscreen_y;
-            int window_x;
-            int window_y;
-            char partial_print;
-        } graphics;
-        struct
-        {
-            BitArray <media_flag> flags;
-            int32_t volume;
-        } media;
-        // much more stuff follows
-    };
-    #define NUM_HOTKEYS 16
-    /**
-     * The hotkey structure
-     * \ingroup grp_gui
-     */
-    struct t_hotkey
-    {
-        std::string name;
-        int16_t mode;
-        int32_t x;
-        int32_t y;
-        int32_t z;
-    };
-    typedef t_hotkey hotkey_array[NUM_HOTKEYS];
 
     /**
      * One tile of the screen. Possibly outdated.
@@ -212,23 +134,11 @@ namespace DFHack
         /*
          * Gui screens
          */
-        /// handle to the interface object
-        t_interface * df_interface;
         /// Get the current top-level view-screen
-        t_viewscreen * GetCurrentScreen();
+        df::viewscreen * GetCurrentScreen();
         /// The DF menu state (designation menu ect)
         uint32_t * df_menu_state;
 
-        /*
-         * Hotkeys (DF's zoom locations)
-         */
-        hotkey_array * hotkeys;
-
-        /*
-         * Game settings
-         */
-        t_init * init;
-        
         /*
          * Window size in tiles
          */

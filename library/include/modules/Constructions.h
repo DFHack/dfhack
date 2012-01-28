@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
@@ -26,10 +26,11 @@ distribution.
 #ifndef CL_MOD_CONSTRUCTIONS
 #define CL_MOD_CONSTRUCTIONS
 /*
-* DF constructions
-*/
+ * DF constructions
+ */
 #include "Export.h"
-#include "Module.h"
+#include "DataDefs.h"
+#include "df/construction.h"
 
 /**
  * \defgroup grp_constructions Construction module parts
@@ -37,64 +38,28 @@ distribution.
  */
 namespace DFHack
 {
-    /**
-     * type of item the construction is made of
-     * \ingroup grp_constructions
-     */
-    enum e_construction_base
-    {
-        constr_bar = 0, /*!< Bars */
-        constr_block = 2, /*!< Blocks */
-        constr_boulder = 4, /*!< Rough stones or boulders */
-        constr_logs = 5 /*!< Wooden logs */
-    };
-    #pragma pack(push, 1)
-    /**
-     * structure for holding a DF construction
-     * \ingroup grp_constructions
-     */
-    struct t_construction
-    {
-        //0
-        uint16_t x; /*!< X coordinate */
-        uint16_t y; /*!< Y coordinate */
-        // 4
-        uint16_t z; /*!< Z coordinate */
-        uint16_t form; /*!< type of item the construction is made of */
-        // 8
-        uint16_t unk_8; // = -1 in many cases
-        uint16_t mat_type;
-        // C
-        uint32_t mat_idx;
-        uint16_t unk3;
-        // 10
-        uint16_t unk4;
-        uint16_t unk5;
-        // 14
-        uint32_t unk6;
+namespace Simple
+{
+namespace Constructions
+{
+// "Simplified" copy of construction
+struct t_construction {
+    df::coord pos;
+    df::item_type item_type;
+    int16_t unk;
+    int16_t mat_type;
+    int32_t mat_index;
+    df::construction_flags flags;
+    int16_t original_tile;
+    // Pointer to original object, in case you want to modify it
+    df::construction *origin;
+};
 
-        /// Address of the read object in DF memory. Added by DFHack.
-        t_construction * origin;
-    };
-    #pragma pack (pop)
-    class DFContextShared;
-    /**
-     * The Constructions module - allows reading constructed tiles (walls, floors, stairs, etc.)
-     * \ingroup grp_modules
-     * \ingroup grp_constructions
-     */
-    class DFHACK_EXPORT Constructions : public Module
-    {
-        public:
-        Constructions();
-        ~Constructions();
-        bool Start(uint32_t & numConstructions);
-        bool Read (const uint32_t index, t_construction & constr);
-        bool Finish();
-
-        private:
-        struct Private;
-        Private *d;
-    };
+DFHACK_EXPORT bool isValid();
+DFHACK_EXPORT uint32_t getCount();
+DFHACK_EXPORT bool copyConstruction (const int32_t index, t_construction &out);
+DFHACK_EXPORT df::construction * getConstruction (const int32_t index);
+}
+}
 }
 #endif

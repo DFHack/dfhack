@@ -6,7 +6,7 @@
 #include <string>
 #include <modules/Materials.h>
 #include <stdlib.h>
-
+/*
 using std::vector;
 using std::string;
 using namespace DFHack;
@@ -136,4 +136,4 @@ DFhackCExport command_result rawdump_p (Core * c, vector <string> & parameters)
     c->Resume();
     return CR_OK;
 }
-
+*/

@@ -145,11 +145,13 @@ typedef int16_t t_blockmaterials [16][16];
  * \ingroup grp_maps
  */
 typedef df::tile_designation designations40d [16][16];
+typedef df::tile_designation t_designation;
 /**
  * 16x16 array of occupancy flags
  * \ingroup grp_maps
  */
 typedef df::tile_occupancy occupancies40d [16][16];
+typedef df::tile_occupancy t_occupancy;
 /**
  * array of 16 biome indexes valid for the block
  * \ingroup grp_maps

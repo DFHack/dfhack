@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2011 Petr Mrázek (peterix@gmail.com)
 
@@ -55,7 +55,6 @@ namespace DFHack
     class Gui;
     class World;
     class Materials;
-    class Constructions;
     class Notes;
     class VersionInfo;
     class VersionInfoFactory;
@@ -99,8 +98,6 @@ namespace DFHack
         World * getWorld();
         /// get the materials module
         Materials * getMaterials();
-        /// get the constructions module
-        Constructions * getConstructions();
         /// get the notes module
         Notes * getNotes();
         /// get the graphic module
@@ -152,7 +149,6 @@ namespace DFHack
             Gui * pGui;
             World * pWorld;
             Materials * pMaterials;
-            Constructions * pConstructions;
             Notes * pNotes;
             Graphic * pGraphic;
         } s_mods;

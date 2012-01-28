@@ -143,7 +143,7 @@ bool Maps::ReadBlock40d(uint32_t x, uint32_t y, uint32_t z, mapblock40d * buffer
         buffer->global_feature = block->global_feature;
         buffer->local_feature = block->local_feature;
         buffer->mystery = block->unk2;
-        buffer->origin = &block;
+        buffer->origin = block;
         buffer->blockflags.whole = block->flags;
         return true;
     }

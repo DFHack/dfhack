@@ -9,10 +9,13 @@
 #include "modules/Items.h"
 #include <modules/Gui.h>
 #include <llimits.h>
+#include <df/caste_raw.h>
+#include <df/creature_raw.h>
 
 using std::vector;
 using std::string;
 using namespace DFHack;
+using namespace DFHack::Simple;
 //FIXME: possible race conditions with calling kittens from the IO thread and shutdown from Core.
 bool shutdown_flag = false;
 bool final_flag = true;
@@ -26,12 +29,9 @@ uint64_t timeLast = 0;
 
 DFhackCExport command_result kittens (Core * c, vector <string> & parameters);
 DFhackCExport command_result ktimer (Core * c, vector <string> & parameters);
-DFhackCExport command_result bflags (Core * c, vector <string> & parameters);
 DFhackCExport command_result trackmenu (Core * c, vector <string> & parameters);
 DFhackCExport command_result trackpos (Core * c, vector <string> & parameters);
-DFhackCExport command_result mapitems (Core * c, vector <string> & parameters);
-DFhackCExport command_result test_creature_offsets (Core * c, vector <string> & parameters);
-DFhackCExport command_result creat_job (Core * c, vector <string> & parameters);
+DFhackCExport command_result colormods (Core * c, vector <string> & parameters);
 
 DFhackCExport const char * plugin_name ( void )
 {
@@ -43,12 +43,9 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
     commands.clear();
     commands.push_back(PluginCommand("nyan","NYAN CAT INVASION!",kittens, true));
     commands.push_back(PluginCommand("ktimer","Measure time between game updates and console lag (toggle).",ktimer));
-    commands.push_back(PluginCommand("blockflags","Look up block flags",bflags));
     commands.push_back(PluginCommand("trackmenu","Track menu ID changes (toggle).",trackmenu));
     commands.push_back(PluginCommand("trackpos","Track mouse and designation coords (toggle).",trackpos));
-    commands.push_back(PluginCommand("mapitems","Check item ids under cursor against item ids in map block.",mapitems));
-    commands.push_back(PluginCommand("test_creature_offsets","Bleh.",test_creature_offsets));
-    commands.push_back(PluginCommand("creat_job","Bleh.",creat_job));
+    commands.push_back(PluginCommand("colormods","Dump colormod vectors.",colormods));
     return CR_OK;
 }
 
@@ -107,59 +104,6 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
     return CR_OK;
 }
 
-DFhackCExport command_result mapitems (Core * c, vector <string> & parameters)
-{
-    c->Suspend();
-    vector <df_item *> vec_items;
-    Gui * g = c-> getGui();
-    Maps* m = c->getMaps();
-    Items* it = c->getItems();
-    if(!m->Start())
-    {
-        c->con.printerr("No map to probe\n");
-        return CR_FAILURE;
-    }
-    if(!it->Start() || !it->readItemVector(vec_items))
-    {
-        c->con.printerr("Failed to get items\n");
-        return CR_FAILURE;
-    }
-    int32_t cx,cy,cz;
-    g->getCursorCoords(cx,cy,cz);
-    if(cx != -30000)
-    {
-        df_block * b = m->getBlock(cx/16,cy/16,cz);
-        if(b)
-        {
-            c->con.print("Item IDs present in block:\n");
-            auto iter_b = b->items.begin();
-            while (iter_b != b->items.end())
-            {
-                df_item * itmz = it->findItemByID(*iter_b);
-                string s;
-                itmz->getItemDescription(&s);
-                c->con.print("%d = %s\n",*iter_b, s.c_str());
-                iter_b++;
-            }
-            c->con.print("Items under cursor:\n");
-            auto iter_it = vec_items.begin();
-            while (iter_it != vec_items.end())
-            {
-                df_item * itm = *iter_it;
-                if(itm->x == cx && itm->y == cy && itm->z == cz)
-                {
-                    string s;
-                    itm->getItemDescription(&s,0);
-                    c->con.print("%d = %s\n",itm->id, s.c_str());
-                }
-                iter_it ++;
-            }
-        }
-    }
-    c->Resume();
-    return CR_OK;
-}
-
 DFhackCExport command_result trackmenu (Core * c, vector <string> & parameters)
 {
     if(trackmenu_flg)
@@ -189,53 +133,19 @@ DFhackCExport command_result trackpos (Core * c, vector <string> & parameters)
     trackpos_flg = !trackpos_flg;
     return CR_OK;
 }
-DFhackCExport command_result bflags (Core * c, vector <string> & parameters)
+
+DFhackCExport command_result colormods (Core * c, vector <string> & parameters)
 {
     c->Suspend();
-    Gui * g = c-> getGui();
-    Maps* m = c->getMaps();
-    if(!m->Start())
+    auto & vec = df::global::world->raws.creatures.alphabetic;
+    for(int i = 0; i < vec.size();i++)
     {
-        c->con.printerr("No map to probe\n");
-        return CR_FAILURE;
-    }
-    int32_t cx,cy,cz;
-    g->getCursorCoords(cx,cy,cz);
-    if(cx == -30000)
-    {
-        // get map size in blocks
-        uint32_t sx,sy,sz;
-        m->getSize(sx,sy,sz);
-        std::map <uint8_t, df_block *> counts;
-        // for each block
-        for(size_t x = 0; x < sx; x++)
-            for(size_t y = 0; y < sx; y++)
-                for(size_t z = 0; z < sx; z++)
-                {
-                    df_block * b = m->getBlock(x,y,z);
-                    if(!b) continue;
-                    auto iter = counts.find(b->flags.size);
-                    if(iter == counts.end())
-                    {
-                        counts[b->flags.bits[0]] = b;
-                    }
-                }
-        for(auto iter = counts.begin(); iter != counts.end(); iter++)
+        df::creature_raw* rawlion = vec[i];
+        df::caste_raw * caste = rawlion->caste[0];
+        c->con.print("%s\nCaste addr 0x%x\n",rawlion->creature_id.c_str(), &caste->color_modifiers);
+        for(int j = 0; j < caste->color_modifiers.size();j++)
         {
-            c->con.print("%2x : 0x%x\n",iter->first, iter->second);
-        }
-    }
-    else
-    {
-        df_block * b = m->getBlock(cx/16,cy/16,cz);
-        if(b)
-        {
-            c->con << "Block flags:" << b->flags << std::endl;
-        }
-        else
-        {
-            c->con.printerr("No block here\n");
-            return CR_FAILURE;
+            c->con.print("mod %d: 0x%x\n", j, caste->color_modifiers[j]);
         }
     }
     c->Resume();
@@ -328,71 +238,3 @@ DFhackCExport command_result kittens (Core * c, vector <string> & parameters)
             color = Console::COLOR_BLUE;
     }
 }
-
-#include "modules/Units.h"
-#include "VersionInfo.h"
-#include <stddef.h>
-
-command_result test_creature_offsets(Core* c, vector< string >& parameters)
-{
-    uint32_t off_vinfo = c->vinfo->getGroup("Creatures")->getGroup("creature")->/*getGroup("advanced")->*/getOffset("custom_profession");
-    uint32_t off_struct = offsetof(df_unit,custom_profession);
-    c->con.print("Struct 0x%x, vinfo 0x%x\n", off_struct, off_vinfo);
-    return CR_OK;
-};
-
-command_result creat_job (Core * c, vector< string >& parameters)
-{
-    c->Suspend();
-    Units * cr = c->getUnits();
-    Gui * g = c-> getGui();
-    uint32_t num_cr = 0;
-    int32_t cx,cy,cz;
-    g->getCursorCoords(cx,cy,cz);
-    if(cx == -30000)
-    {
-        c->con.printerr("No cursor.\n");
-        c->Resume();
-        return CR_FAILURE;
-    }
-    if(!cr->Start(num_cr) || num_cr == 0)
-    {
-        c->con.printerr("No creatures.\n");
-        c->Resume();
-        return CR_FAILURE;
-    }
-    auto iter = cr->creatures->begin();
-    while (iter != cr->creatures->end())
-    {
-        df_unit * unit = *iter;
-        if(cx == unit->x && cy == unit->y && cz == unit->z)
-        {
-            c->con.print("%d:%s - address 0x%x - job 0x%x\n"
-                         "Soul: 0x%x, likes: 0x%x\n",
-                         unit->id,
-                         unit->name.first_name.c_str(),
-                         unit,
-                         uint32_t(unit) + offsetof(df_unit,current_job),
-                         uint32_t(unit) + offsetof(df_unit,current_soul),
-                         uint32_t(unit->current_soul) + offsetof(df_soul,likes)
-                        );
-            df_soul * s = unit->current_soul;
-            if(s)
-            {
-                c->con.print("LIKES:\n");
-                int idx = 1;
-                auto iter = s->likes.begin();
-                while(iter != s->likes.end())
-                {
-                    df_like * l = *iter;
-                    c->con.print("%3d: %f\n", idx, float(l->mystery));
-                    iter++;
-                    idx++;
-                }
-            }
-        }
-        iter++;
-    }
-    c->Resume();
-    return CR_OK;
-};

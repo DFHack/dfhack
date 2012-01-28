@@ -49,7 +49,7 @@ using df::global::d_init;
 
 bool Translation::IsValid ()
 {
-    return (world->raws.language.words.size() > 0) && (world->raws.language.translations.size() > 0);
+    return (world && (world->raws.language.words.size() > 0) && (world->raws.language.translations.size() > 0));
 }
 
 bool Translation::readName(t_name & name, df::language_name * source)

@@ -32,6 +32,12 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 
+    if (!Translation::IsValid())
+    {
+        c->con.printerr("Translation data unavailable!\n");
+        return CR_FAILURE;
+    }
+
     CoreSuspender suspend(c);
 
     bool found = false;

@@ -1,38 +1,36 @@
 package dfproto;
-//option optimize_for = LITE_RUNTIME;
+option optimize_for = LITE_RUNTIME;
 
 message Tile
 {
+    enum TileType
+    {
+            EMPTY = 0;
+            WALL = 1;
+            PILLAR = 2;
+            BROOK_BED = 3;
+            FORTIFICATION = 4;
+            STAIR_UP = 5;
+            STAIR_DOWN = 6;
+            STAIR_UPDOWN = 7;
+            RAMP = 8;
+            RAMP_TOP = 9;
+            FLOOR = 10;
+            BROOK_TOP = 11;
+            RIVER_BED = 12;
+            POOL = 13;
+            TREE_DEAD = 14;
+            TREE_OK = 15;
+            SAPLING_DEAD = 16;
+            SAPLING_OK = 17;
+            SHRUB_DEAD = 18;
+            SHRUB_OK = 19;
+            BOULDER = 20;
+            PEBLLES = 21;
+            ENDLESS_PIT = 22;
+    }
     required uint32 x = 1;
     required uint32 y = 2;
-    
-	enum TileType
-	{
-		EMPTY = 0;
-		WALL = 1;
-		PILLAR = 2;
-		BROOK_BED = 3;
-		FORTIFICATION = 4;
-		STAIR_UP = 5;
-		STAIR_DOWN = 6;
-		STAIR_UPDOWN = 7;
-		RAMP = 8;
-		RAMP_TOP = 9;
-		FLOOR = 10;
-		BROOK_TOP = 11;
-		RIVER_BED = 12;
-		POOL = 13;
-		TREE_DEAD = 14;
-		TREE_OK = 15;
-		SAPLING_DEAD = 16;
-		SAPLING_OK = 17;
-		SHRUB_DEAD = 18;
-		SHRUB_OK = 19;
-		BOULDER = 20;
-		PEBLLES = 21;
-		ENDLESS_PIT = 22;
-	}
-	required TileType type = 3;
-	
+    required TileType type = 3;
     optional uint32 material = 4;
 }

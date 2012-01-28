@@ -1,5 +1,5 @@
 package dfproto;
-//option optimize_for = LITE_RUNTIME;
+option optimize_for = LITE_RUNTIME;
 
 import "Tile.proto";
 

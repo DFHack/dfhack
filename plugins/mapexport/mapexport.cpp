@@ -6,6 +6,9 @@
 using namespace DFHack;
 
 #include <fstream>
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+using namespace google::protobuf::io;
 
 #include "DataDefs.h"
 #include "df/world.h"
@@ -63,20 +66,29 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
         c->Resume();
         return CR_FAILURE;
     }
+
+    std::ofstream output_file(filename, std::ios::out | std::ios::trunc | std::ios::binary);
+    if (!output_file.is_open())
+    {
+            c->con.printerr("Couldn't open the output file.\n");
+            c->Resume();
+            return CR_FAILURE;
+    }
+    ZeroCopyOutputStream *raw_output = new OstreamOutputStream(&output_file);
+    CodedOutputStream *coded_output = new CodedOutputStream(raw_output);
+    coded_output->WriteLittleEndian32(0x50414DDF);
+
     Maps::getSize(x_max, y_max, z_max);
     MapExtras::MapCache map;
     DFHack::Materials *mats = c->getMaterials();
-
-    DFHack::Vegetation *veg = c->getVegetation();
-    if (veg->Start())
-    {
-        c->con.printerr("Unable to read vegetation; plants won't be listed!\n" );
-    }
 
     dfproto::Map protomap;
     protomap.set_x_size(x_max);
     protomap.set_y_size(y_max);
     protomap.set_z_size(z_max);
+
+    //coded_output->WriteVarint32(protomap.ByteSize());
+    //protomap.SerializeToCodedStream(coded_output);
 
     DFHack::t_feature blockFeatureGlobal;
     DFHack::t_feature blockFeatureLocal;
@@ -95,7 +107,7 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                     continue;
                 }
 
-                dfproto::Block *protoblock = protomap.add_block();
+                dfproto::Block *protoblock = new dfproto::Block;
                 protoblock->set_x(b_x);
                 protoblock->set_y(b_y);
                 protoblock->set_z(z);
@@ -159,19 +171,9 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
         } // block y
     } // z
 
-    std::ofstream output(filename, std::ios::out | std::ios::trunc | std::ios::binary);
-    if (!output.is_open())
-    {
-            c->con.printerr("Couldn't open the output file.\n");
-            c->Resume();
-            return CR_FAILURE;
-    }
-    if (!protomap.SerializeToOstream(&output))
-    {
-            c->con.printerr("Failed to save map file.\n");
-            c->Resume();
-            return CR_FAILURE;
-    }
+    delete coded_output;
+    delete raw_output;
+
     c->con.print("Map succesfully exported.\n");
     c->Resume();
     return CR_OK;

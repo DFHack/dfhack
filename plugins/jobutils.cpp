@@ -61,9 +61,10 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
             "job", "General job query and manipulation.",
             job_cmd, false,
             "  job [query]\n"
-            "    Print details of the current job.\n"
+            "    Print details of the current job. The job can be\n"
+            "    selected in a workshop, or the unit/jobs screen.\n"
             "  job list\n"
-            "    Print details of all jobs in the workshop.\n"
+            "    Print details of all jobs in the selected workshop.\n"
             "  job item-material <item-idx> <material[:subtoken]>\n"
             "    Replace the exact material id in the job item.\n"
             "  job item-type <item-idx> <type[:subtype]>\n"
@@ -79,7 +80,8 @@ DFhackCExport command_result plugin_init (Core *c, std::vector <PluginCommand> &
                 "  job-material <inorganic-token>\n"
                 "Intended to be used as a keybinding:\n"
                 "  - In 'q' mode, when a job is highlighted within a workshop\n"
-                "    or furnace, changes the material of the job.\n"
+                "    or furnace, changes the material of the job. Only inorganic\n"
+                "    materials can be used in this mode.\n"
                 "  - In 'b' mode, during selection of building components\n"
                 "    positions the cursor over the first available choice\n"
                 "    with the matching material.\n"
@@ -322,13 +324,16 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
     std::string cmd = (parameters.empty() ? "query" : parameters[0]);
     if (cmd == "query" || cmd == "list")
     {
-        df::job *job = getSelectedWorkshopJob(c);
+        df::job *job = getSelectedJob(c);
         if (!job)
             return CR_WRONG_USAGE;
 
         if (cmd == "query") {
             printJobDetails(c, job);
         } else {
+            if (!workshop_job_hotkey(c, c->getTopViewscreen()))
+                return CR_WRONG_USAGE;
+
             df::building *selected = world->selected_building;
             for (unsigned i = 0; i < selected->jobs.size(); i++)
                 printJobDetails(c, selected->jobs[i]);
@@ -339,7 +344,7 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
         if (parameters.size() != 3)
             return CR_WRONG_USAGE;
 
-        df::job *job = getSelectedWorkshopJob(c);
+        df::job *job = getSelectedJob(c);
         df::job_item *item = getJobItem(c, job, parameters[1]);
         if (!item)
             return CR_WRONG_USAGE;
@@ -383,7 +388,7 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
         if (parameters.size() != 3)
             return CR_WRONG_USAGE;
 
-        df::job *job = getSelectedWorkshopJob(c);
+        df::job *job = getSelectedJob(c);
         df::job_item *item = getJobItem(c, job, parameters[1]);
         if (!item)
             return CR_WRONG_USAGE;

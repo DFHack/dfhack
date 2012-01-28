@@ -184,14 +184,7 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
             std::string info;
 
             if (owner)
-            {
-                info = owner->name.first_name;
-                if (!owner->name.nickname.empty())
-                    info += std::string(" '") + owner->name.nickname + "'";
-                info += " ";
-                info += Translation::TranslateName(&owner->name,false);
-                c->con.print(", owner %s", info.c_str());
-            }
+                c->con.print(", owner %s", Translation::TranslateName(&owner->name,false).c_str());
 
             if (!dry_run)
             {

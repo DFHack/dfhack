@@ -61,7 +61,7 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
             c->con.printerr("Dwarf with strange mood does not have a mood type!\n");
             continue;
         }
-        c->con.print("%s %s is currently ", unit->name.first_name.c_str(), Translation::TranslateName(&unit->name, false).c_str());
+        c->con.print("%s is currently ", Translation::TranslateName(&unit->name, false).c_str());
         switch (unit->mood)
         {
         case mood_type::Macabre:

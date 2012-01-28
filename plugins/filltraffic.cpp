@@ -42,9 +42,34 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("filltraffic","Flood-fill with selected traffic designation from cursor",filltraffic));
-    commands.push_back(PluginCommand("alltraffic","Set traffic for the entire map",alltraffic));
-
+    commands.push_back(PluginCommand(
+        "filltraffic","Flood-fill with selected traffic designation from cursor",
+        filltraffic, cursor_hotkey,
+        "  Flood-fill selected traffic type from the cursor.\n"
+        "Traffic Type Codes:\n"
+        "  H: High Traffic\n"
+        "  N: Normal Traffic\n"
+        "  L: Low Traffic\n"
+        "  R: Restricted Traffic\n"
+        "Other Options:\n"
+        "  X: Fill across z-levels.\n"
+        "  B: Include buildings and stockpiles.\n"
+        "  P: Include empty space.\n"
+        "Example:\n"
+        "  filltraffic H\n"
+        "    When used in a room with doors,\n"
+        "    it will set traffic to HIGH in just that room.\n"
+    ));
+    commands.push_back(PluginCommand(
+        "alltraffic","Set traffic for the entire map",
+        alltraffic, false,
+        "  Set traffic types for all tiles on the map.\n"
+        "Traffic Type Codes:\n"
+        "  H: High Traffic\n"
+        "  N: Normal Traffic\n"
+        "  L: Low Traffic\n"
+        "  R: Restricted Traffic\n"
+    ));
     return CR_OK;
 }
 
@@ -55,6 +80,8 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::string> & params)
 {
+    // HOTKEY COMMAND; CORE ALREADY SUSPENDED
+
     //Maximum map size.
     uint32_t x_max,y_max,z_max;
     //Source and target traffic types.
@@ -68,24 +95,8 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
     //Loop through parameters
     for(int i = 0; i < params.size();i++)
     {
-        if(params[i] == "help" || params[i] == "?")
-        {
-            c->con.print("Flood-fill selected traffic type from the cursor.\n"
-                "Traffic Type Codes:\n"
-                "\tH: High Traffic\n"
-                "\tN: Normal Traffic\n"
-                "\tL: Low Traffic\n"
-                "\tR: Restricted Traffic\n"
-                "Other Options:\n"
-                "\tX: Fill across z-levels.\n"
-                "\tB: Include buildings and stockpiles.\n"
-                "\tP: Include empty space.\n"
-                "Example:\n"
-                "'filltraffic H' - When used in a room with doors,\n"
-                "                  it will set traffic to HIGH in just that room."
-                );
-            return CR_OK;
-        }
+        if (params[i] == "help" || params[i] == "?" || params[i].size() != 1)
+            return CR_WRONG_USAGE;
 
         switch (toupper(params[i][0]))
         {
@@ -103,11 +114,10 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
             checkbuilding = false; break;
         case 'P':
             checkpit = false; break;
+        default:
+            return CR_WRONG_USAGE;
         }
     }
-
-    //Initialization.
-    CoreSuspender suspend(c);
 
     DFHack::Gui * Gui = c->getGui();
     if (!Maps::IsValid())
@@ -238,17 +248,8 @@ DFhackCExport command_result alltraffic(DFHack::Core * c, std::vector<std::strin
     //Loop through parameters
     for(int i = 0; i < params.size();i++)
     {
-        if(params[i] == "help" || params[i] == "?")
-        {
-            c->con.print("Set traffic types for all tiles on the map.\n"
-                "Traffic Type Codes:\n"
-                "	H: High Traffic\n"
-                "	N: Normal Traffic\n"
-                "	L: Low Traffic\n"
-                "	R: Restricted Traffic\n"
-                );
-            return CR_OK;
-        }
+        if (params[i] == "help" || params[i] == "?" || params[i].size() != 1)
+            return CR_WRONG_USAGE;
 
         //Pick traffic type. Possibly set bounding rectangle later.
         switch (toupper(params[i][0]))
@@ -261,6 +262,8 @@ DFhackCExport command_result alltraffic(DFHack::Core * c, std::vector<std::strin
             proc = allLow; break;
         case 'R':
             proc = allRestricted; break;
+        default:
+            return CR_WRONG_USAGE;
         }
     }
 

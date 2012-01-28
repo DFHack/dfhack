@@ -1402,6 +1402,11 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
 {
     CoreSuspender suspend(c);
 
+    if (!c->isWorldLoaded()) {
+        c->con.printerr("World is not loaded: please load a game first.\n");
+        return CR_FAILURE;
+    }
+
     if (enabled) {
         check_lost_jobs(c, 0);
         recover_jobs(c);

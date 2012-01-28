@@ -22,9 +22,14 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("colonies",
-        "List or change wild colonies (ants hills and such)",
-        colonies));
+    commands.push_back(PluginCommand(
+        "colonies", "List or change wild colonies (ants hills and such)",
+        colonies, false,
+        "  Without any options, this command lists all the vermin colonies present.\n"
+        "Options:\n"
+        "  kill   - destroy colonies\n"
+        "  bees   - turn colonies into honey bees\n"
+    ));
     return CR_OK;
 }
 
@@ -41,7 +46,6 @@ DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
 {
     bool destroy = false;
     bool convert = false;
-    bool help = false;
 
     for(int i = 0; i < parameters.size();i++)
     {
@@ -49,19 +53,8 @@ DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
             destroy = true;
         else if(parameters[i] == "bees")
             convert = true;
-        else if(parameters[i] == "help" || parameters[i] == "?")
-        {
-            help = true;
-        }
-    }
-    if(help)
-    {
-        c->con.print("Without any options, this command lists all the vermin colonies present.\n"
-            "Options:\n"
-            "kill   - destroy colonies\n"
-            "bees   - turn colonies into honey bees\n"
-            );
-        return CR_OK;
+        else
+            return CR_WRONG_USAGE;
     }
     if (destroy && convert)
     {

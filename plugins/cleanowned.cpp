@@ -36,9 +36,23 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("cleanowned",
-                                     "Confiscates and dumps garbage owned by dwarfs.",
-                                     df_cleanowned));
+    commands.push_back(PluginCommand(
+        "cleanowned", "Confiscates and dumps garbage owned by dwarfs.",
+        df_cleanowned, false,
+        "  This tool lets you confiscate and dump all the garbage\n"
+        "  dwarves ultimately accumulate.\n"
+        "  By default, only rotten and dropped food is confiscated.\n"
+        "Options:\n"
+        "  dryrun    - don't actually do anything, just print what would be done.\n"
+        "  scattered - confiscate owned items on the ground\n"
+        "  all       - confiscate everything\n"
+        "  x         - confiscate & dump 'x' and worse damaged items\n"
+        "  X         - confiscate & dump 'X' and worse damaged items\n"
+        "Example:\n"
+        "  confiscate scattered X\n"
+        "    This will confiscate rotten and dropped food, garbage on the floors\n"
+        "    and any worn items wit 'X' damage and above.\n"
+    ));
     return CR_OK;
 }
 
@@ -67,30 +81,8 @@ DFhackCExport command_result df_cleanowned (Core * c, vector <string> & paramete
             wear_dump_level = 1;
         else if(param == "X")
             wear_dump_level = 2;
-        else if(param == "?" || param == "help")
-        {
-            c->con.print("This tool lets you confiscate and dump all the garbage\n"
-                         "dwarves ultimately accumulate.\n"
-                         "By default, only rotten and dropped food is confiscated.\n"
-                         "Options:\n"
-                         "  dryrun    - don't actually do anything, just print what would be done.\n"
-                         "  scattered - confiscate owned items on the ground\n"
-                         "  all       - confiscate everything\n"
-                         "  x         - confiscate & dump 'x' and worse damaged items\n"
-                         "  X         - confiscate & dump 'X' and worse damaged items\n"
-                         "  ?         - this help\n"
-                         "Example:\n"
-                         "  confiscate scattered X\n"
-                         "  This will confiscate rotten and dropped food, garbage on the floors\n"
-                         "  and any worn items wit 'X' damage and above.\n"
-            );
-            return CR_OK;
-        }
         else
-        {
-            c->con.printerr("Parameter '%s' is not valid. See 'cleanowned help'.\n",param.c_str());
-            return CR_FAILURE;
-        }
+            return CR_WRONG_USAGE;
     }
 
     CoreSuspender suspend(c);

@@ -44,9 +44,17 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("autodump",
-                                     "Teleport items marked for dumping to the cursor.",
-                                     df_autodump));
+    commands.push_back(PluginCommand(
+        "autodump", "Teleport items marked for dumping to the cursor.",
+        df_autodump, false,
+        "  This utility lets you quickly move all items designated to be dumped.\n"
+        "  Items are instantly moved to the cursor position, the dump flag is unset,\n"
+        "  and the forbid flag is set, as if it had been dumped normally.\n"
+        "  Be aware that any active dump item tasks still point at the item.\n"
+        "Options:\n"
+        "  destroy       - instead of dumping, destroy the items instantly.\n"
+        "  destroy-here  - only affect the tile under cursor.\n"
+    ));
     commands.push_back(PluginCommand(
         "autodump-destroy-here", "Destroy items marked for dumping under cursor.",
         df_autodump_destroy_here, cursor_hotkey,
@@ -81,19 +89,8 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
             destroy = true;
         else if (p == "destroy-here")
             destroy = here = true;
-        else if(p == "?" || p == "help")
-        {
-            c->con.print(
-                "This utility lets you quickly move all items designated to be dumped.\n"
-                "Items are instantly moved to the cursor position, the dump flag is unset,\n"
-                "and the forbid flag is set, as if it had been dumped normally.\n"
-                "Be aware that any active dump item tasks still point at the item.\n\n"
-                "Options:\n"
-                "destroy       - instead of dumping, destroy the items instantly.\n"
-                "destroy-here  - only affect the tile under cursor.\n"
-                        );
-            return CR_OK;
-        }
+        else
+            return CR_WRONG_USAGE;
     }
 
     DFHack::VersionInfo *mem = c->vinfo;

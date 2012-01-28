@@ -3,6 +3,9 @@
  * \defgroup grp_vermin Wild vermin (ants, bees, etc)
  */
 #include "Export.h"
+#include "DataDefs.h"
+#include "df/vermin.h"
+
 namespace DFHack { namespace Simple { namespace Vermin
 {
     /**
@@ -11,7 +14,7 @@ namespace DFHack { namespace Simple { namespace Vermin
      */
     struct t_vermin
     {
-        void * origin;
+        df::vermin * origin;
         int16_t race;
         int16_t caste;
         uint16_t x;

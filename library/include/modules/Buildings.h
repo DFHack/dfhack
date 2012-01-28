@@ -24,6 +24,8 @@ distribution.
 
 #pragma once
 #include "Export.h"
+#include "DataDefs.h"
+#include "df/building.h"
 
 namespace DFHack
 {
@@ -45,7 +47,7 @@ struct t_building
     t_matglossPair material;
     uint32_t type;
     int32_t custom_type;
-    void * origin;
+    df::building * origin;
 };
 
 /**

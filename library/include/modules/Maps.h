@@ -39,7 +39,7 @@ distribution.
 #include "modules/Materials.h"
 
 #include "df/world.h"
-#include "df/feature_type.h"
+#include "df/feature_init.h"
 #include "df/map_block.h"
 #include "df/block_square_event.h"
 #include "df/block_square_event_mineralst.h"
@@ -84,7 +84,7 @@ struct t_feature
     /// placeholder
     bool discovered;
     /// this is NOT part of the DF feature, but an address of the feature as seen by DFhack.
-    void * origin;
+    df::feature_init * origin;
 };
 
 /**
@@ -178,7 +178,7 @@ typedef struct
     /// values used for geology/biome assignment
     biome_indices40d biome_indices;
     /// the address where the block came from
-    void * origin;
+    df::map_block * origin;
     t_blockflags blockflags;
     /// index into the global feature vector
     int32_t global_feature;

@@ -39,7 +39,7 @@ distribution.
 #include "modules/Materials.h"
 
 #include "df/world.h"
-#include "df/feature_type.h"
+#include "df/feature_init.h"
 #include "df/map_block.h"
 #include "df/block_square_event.h"
 #include "df/block_square_event_mineralst.h"
@@ -84,7 +84,7 @@ struct t_feature
     /// placeholder
     bool discovered;
     /// this is NOT part of the DF feature, but an address of the feature as seen by DFhack.
-    void * origin;
+    df::feature_init * origin;
 };
 
 /**
@@ -144,14 +144,14 @@ typedef int16_t t_blockmaterials [16][16];
  * 16x16 array of designation flags
  * \ingroup grp_maps
  */
-typedef df::tile_designation designations40d [16][16];
 typedef df::tile_designation t_designation;
+typedef t_designation designations40d [16][16];
 /**
  * 16x16 array of occupancy flags
  * \ingroup grp_maps
  */
-typedef df::tile_occupancy occupancies40d [16][16];
 typedef df::tile_occupancy t_occupancy;
+typedef t_occupancy occupancies40d [16][16];
 /**
  * array of 16 biome indexes valid for the block
  * \ingroup grp_maps
@@ -178,7 +178,7 @@ typedef struct
     /// values used for geology/biome assignment
     biome_indices40d biome_indices;
     /// the address where the block came from
-    void * origin;
+    df::map_block * origin;
     t_blockflags blockflags;
     /// index into the global feature vector
     int32_t global_feature;
@@ -251,7 +251,7 @@ extern DFHACK_EXPORT bool ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_fea
 /**
  * Get pointers to features of an already read block
  */
-extern DFHACK_EXPORT bool ReadFeatures(mapblock40d * block, t_feature * local, t_feature * global);
+extern DFHACK_EXPORT bool ReadFeatures(mapblock40d * block,t_feature * local, t_feature * global);
 
 /**
  * Read a specific global or local feature directly
@@ -306,8 +306,7 @@ extern DFHACK_EXPORT bool SetBlockLocalFeature(uint32_t blockx, uint32_t blocky,
 extern DFHACK_EXPORT bool SetBlockGlobalFeature(uint32_t blockx, uint32_t blocky, uint32_t blockz, int32_t global = -1);
 
 /// copy region offsets of a block - used for determining layer stone matgloss
-extern DFHACK_EXPORT bool ReadRegionOffsets(uint32_t blockx, uint32_t blocky, uint32_t blockz,
-    biome_indices40d *buffer);
+extern DFHACK_EXPORT bool ReadRegionOffsets(uint32_t blockx, uint32_t blocky, uint32_t blockz, biome_indices40d *buffer);
 
 /// sorts the block event vector into multiple vectors by type
 /// mineral veins, what's under ice, blood smears and mud

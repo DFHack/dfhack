@@ -88,9 +88,9 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
     bool need_visible = false;
     bool need_hidden = false;
     bool need_forbidden = false;
-    if(parameters.size() > 0)
+    for (unsigned i = 0; i < parameters.size(); i++)
     {
-        string & p = parameters[0];
+        string & p = parameters[i];
         if(p == "destroy")
             destroy = true;
         else if (p == "destroy-here")

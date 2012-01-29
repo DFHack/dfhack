@@ -8,12 +8,14 @@ using namespace DFHack;
 #include <fstream>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/io/gzip_stream.h>
 using namespace google::protobuf::io;
 
 #include "DataDefs.h"
 #include "df/world.h"
 
 #include "proto/Map.pb.h"
+#include "proto/Block.pb.h"
 
 using namespace DFHack::Simple;
 
@@ -50,13 +52,6 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
             return CR_OK;
         }
     }
-    std::string filename;
-    if (parameters.size() < 1)
-    {
-            c->con.printerr("Please supply a filename.\n");
-            return CR_OK;
-    }
-    filename = parameters[0];
 
     bool showHidden = true;
 
@@ -69,6 +64,15 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
         return CR_FAILURE;
     }
 
+	if (parameters.size() < 1)
+    {
+            c->con.printerr("Please supply a filename.\n");
+			c->Resume();
+            return CR_FAILURE;
+    }
+
+    std::string filename = parameters[0];
+
     std::ofstream output_file(filename, std::ios::out | std::ios::trunc | std::ios::binary);
     if (!output_file.is_open())
     {
@@ -77,8 +81,10 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
             return CR_FAILURE;
     }
     ZeroCopyOutputStream *raw_output = new OstreamOutputStream(&output_file);
-    CodedOutputStream *coded_output = new CodedOutputStream(raw_output);
-    coded_output->WriteLittleEndian32(0x50414DDF);
+	GzipOutputStream *zip_output = new GzipOutputStream(raw_output);
+    CodedOutputStream *coded_output = new CodedOutputStream(zip_output);
+    
+	coded_output->WriteLittleEndian32(0x50414DDF); //Write our file header
 
     Maps::getSize(x_max, y_max, z_max);
     MapExtras::MapCache map;
@@ -89,8 +95,8 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
     protomap.set_y_size(y_max);
     protomap.set_z_size(z_max);
 
-    //coded_output->WriteVarint32(protomap.ByteSize());
-    //protomap.SerializeToCodedStream(coded_output);
+    coded_output->WriteVarint32(protomap.ByteSize());
+    protomap.SerializeToCodedStream(coded_output);
 
     DFHack::t_feature blockFeatureGlobal;
     DFHack::t_feature blockFeatureLocal;
@@ -109,10 +115,10 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                     continue;
                 }
 
-                dfproto::Block *protoblock = new dfproto::Block;
-                protoblock->set_x(b_x);
-                protoblock->set_y(b_y);
-                protoblock->set_z(z);
+                dfproto::Block protoblock;
+                protoblock.set_x(b_x);
+                protoblock.set_y(b_y);
+                protoblock.set_z(z);
 
                 { // Find features
                     uint32_t index = b->raw.global_feature;
@@ -141,39 +147,32 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                             continue;
                         }
 
-                        dfproto::Tile *prototile = protoblock->add_tile();
+                        dfproto::Tile *prototile = protoblock.add_tile();
                         prototile->set_x(x);
                         prototile->set_y(y);
 
                         // Check for liquid
                         if (des.bits.flow_size)
                         {
-                            //if (des.bits.liquid_type == df::tile_liquid::Magma)
-
-                            //else
+                            prototile->set_liquid_type((dfproto::Tile::LiquidType)des.bits.liquid_type);
+							prototile->set_flow_size(des.bits.flow_size);
                         }
 
                         uint16_t type = b->TileTypeAt(coord);
                         const DFHack::TileRow *info = DFHack::getTileRow(type);
                         prototile->set_type((dfproto::Tile::TileType)info->shape);
-                        /*switch (info->shape)
-                        {
-                        case DFHack::WALL:
-                            prototile->set_type(dfproto::Tile::WALL);
-                            break;
-                        default:
-                            break;
-                        }*/
                     }
                 }
+				coded_output->WriteVarint32(protoblock.ByteSize());
+				protoblock.SerializeToCodedStream(coded_output);
             } // block x
-
             // Clean uneeded memory
             map.trash();
         } // block y
     } // z
 
     delete coded_output;
+	delete zip_output;
     delete raw_output;
 
     c->con.print("Map succesfully exported.\n");

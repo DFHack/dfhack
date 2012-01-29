@@ -1,8 +1,6 @@
 package dfproto;
 option optimize_for = LITE_RUNTIME;
 
-import "Block.proto";
-
 message Map
 {
     required uint32 x_size = 1;

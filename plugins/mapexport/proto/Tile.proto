@@ -29,8 +29,15 @@ message Tile
             PEBLLES = 21;
             ENDLESS_PIT = 22;
     }
+    enum LiquidType
+    {
+        WATER = 0;
+        MAGMA = 1;
+    }
     required uint32 x = 1;
     required uint32 y = 2;
     required TileType type = 3;
     optional uint32 material = 4;
+    optional LiquidType liquid_type = 5;
+    optional uint32 flow_size = 6;
 }

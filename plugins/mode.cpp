@@ -22,7 +22,13 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("mode","View, change and track game mode.", mode, true));
+    commands.push_back(PluginCommand(
+        "mode","View, change and track game mode.",
+        mode, true,
+        "  Without any parameters, this command prints the current game mode\n"
+        "  You can interactively set the game mode with 'mode set'.\n"
+        "!!Setting the game modes can be dangerous and break your game!!\n"
+    ));
     return CR_OK;
 }
 
@@ -96,17 +102,8 @@ DFhackCExport command_result mode (Core * c, vector <string> & parameters)
         {
             set = true;
         }
-        else if(parameters[0] == "?" || parameters[0] == "help")
-        {
-            c->con.print("Without any parameters, this command prints the current game mode\n"
-                         "You can interactively set the game mode with 'mode set'.\n");
-            c->con.printerr("!!Setting the game modes can be dangerous and break your game!!\n");
-            return CR_OK;
-        }
         else
-        {
-            c->con.printerr("Unrecognized parameter: %s\n",parameters[0].c_str());
-        }
+            return CR_WRONG_USAGE;
     }
     c->Suspend();
     World *world = c->getWorld();

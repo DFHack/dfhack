@@ -44,9 +44,20 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("autodump",
-                                     "Teleport items marked for dumping to the cursor.",
-                                     df_autodump));
+    commands.push_back(PluginCommand(
+        "autodump", "Teleport items marked for dumping to the cursor.",
+        df_autodump, false,
+        "  This utility lets you quickly move all items designated to be dumped.\n"
+        "  Items are instantly moved to the cursor position, the dump flag is unset,\n"
+        "  and the forbid flag is set, as if it had been dumped normally.\n"
+        "  Be aware that any active dump item tasks still point at the item.\n"
+        "Options:\n"
+        "  destroy       - instead of dumping, destroy the items instantly.\n"
+        "  destroy-here  - only affect the tile under cursor.\n"
+        "  visible       - only process items that are not hidden.\n"
+        "  hidden        - only process hidden items.\n"
+        "  forbidden     - only process forbidden items (default: only unforbidden).\n"
+    ));
     commands.push_back(PluginCommand(
         "autodump-destroy-here", "Destroy items marked for dumping under cursor.",
         df_autodump_destroy_here, cursor_hotkey,
@@ -74,26 +85,30 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
     // Command line options
     bool destroy = false;
     bool here = false;
-    if(parameters.size() > 0)
+    bool need_visible = false;
+    bool need_hidden = false;
+    bool need_forbidden = false;
+    for (unsigned i = 0; i < parameters.size(); i++)
     {
-        string & p = parameters[0];
+        string & p = parameters[i];
         if(p == "destroy")
             destroy = true;
         else if (p == "destroy-here")
             destroy = here = true;
-        else if(p == "?" || p == "help")
-        {
-            c->con.print(
-                "This utility lets you quickly move all items designated to be dumped.\n"
-                "Items are instantly moved to the cursor position, the dump flag is unset,\n"
-                "and the forbid flag is set, as if it had been dumped normally.\n"
-                "Be aware that any active dump item tasks still point at the item.\n\n"
-                "Options:\n"
-                "destroy       - instead of dumping, destroy the items instantly.\n"
-                "destroy-here  - only affect the tile under cursor.\n"
-                        );
-            return CR_OK;
-        }
+        else if (p == "visible")
+            need_visible = true;
+        else if (p == "hidden")
+            need_hidden = true;
+        else if (p == "forbidden")
+            need_forbidden = true;
+        else
+            return CR_WRONG_USAGE;
+    }
+
+    if (need_visible && need_hidden)
+    {
+        c->con.printerr("An item can't be both hidden and visible.\n");
+        return CR_WRONG_USAGE;
     }
 
     DFHack::VersionInfo *mem = c->vinfo;
@@ -161,12 +176,20 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
         if (   !itm->flags.bits.dump
             || !itm->flags.bits.on_ground
             ||  itm->flags.bits.construction
-            ||  itm->flags.bits.hidden
             ||  itm->flags.bits.in_building
             ||  itm->flags.bits.in_chest
             ||  itm->flags.bits.in_inventory
             ||  itm->flags.bits.artifact1
         )
+            continue;
+
+        if (need_visible && itm->flags.bits.hidden)
+            continue;
+        if (need_hidden && !itm->flags.bits.hidden)
+            continue;
+        if (need_forbidden && !itm->flags.bits.forbid)
+            continue;
+        if (!need_forbidden && itm->flags.bits.forbid)
             continue;
 
         if(!destroy) // move to cursor

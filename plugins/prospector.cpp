@@ -178,7 +178,16 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("prospect","Show stats of available raw resources. Use option 'all' to show hidden resources.",prospector));
+    commands.push_back(PluginCommand(
+        "prospect", "Show stats of available raw resources.",
+        prospector, false,
+        "  Prints a big list of all the present minerals.\n"
+        "  By default, only the visible part of the map is scanned.\n"
+        "Options:\n"
+        "  all   - Scan the whole map, as if it was revealed.\n"
+        "  value - Show material value in the output. Most useful for gems.\n"
+        "  hell  - Show the Z range of HFS tubes. Implies 'all'.\n"
+    ));
     return CR_OK;
 }
 
@@ -210,18 +219,8 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
         {
             showHidden = showTube = true;
         }
-        else if(parameters[i] == "help" || parameters[i] == "?")
-        {
-            c->con.print("Prints a big list of all the present minerals.\n"
-                         "By default, only the visible part of the map is scanned.\n"
-                         "\n"
-                         "Options:\n"
-                         "all   - Scan the whole map, as if it was revealed.\n"
-                         "value - Show material value in the output.\n"
-                         "hell  - Show the Z range of HFS tubes.\n"
-            );
-            return CR_OK;
-        }
+        else
+            return CR_WRONG_USAGE;
     }
     uint32_t x_max = 0, y_max = 0, z_max = 0;
     CoreSuspender suspend(c);

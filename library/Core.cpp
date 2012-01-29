@@ -204,6 +204,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                           "by clicking on the program icon in the top bar of the window.\n\n"
                           "Basic commands:\n"
                           "  help|?                - This text.\n"
+                          "  help COMMAND          - Usage help for the given command.\n"
                           "  ls|dir [PLUGIN]       - List available commands. Optionally for single plugin.\n"
                           "  cls                   - Clear the console.\n"
                           "  fpause                - Force DF to pause.\n"

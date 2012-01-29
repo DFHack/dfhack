@@ -34,18 +34,7 @@ DFhackCExport command_result df_getplants (Core * c, vector <string> & parameter
     for (size_t i = 0; i < parameters.size(); i++)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
-        {
-            c->con.print("Specify the types of trees to cut down and/or shrubs to gather by their plant IDs, separated by spaces.\n"
-                "Options:\n"
-                "\t-t - Select trees only (exclude shrubs)\n"
-                "\t-s - Select shrubs only (exclude trees)\n"
-                "\t-c - Clear designations instead of setting them\n"
-                "\t-x - Apply selected action to all plants except those specified\n"
-                "Specifying both -t and -s will have no effect.\n"
-                "If no plant IDs are specified, all valid plant IDs will be listed.\n"
-                );
             return CR_WRONG_USAGE;
-        }
         else if(parameters[i] == "-t")
             treesonly = true;
         else if(parameters[i] == "-s")
@@ -152,7 +141,19 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("getplants", "Cut down all of the specified trees or gather all of the specified shrubs", df_getplants));
+    commands.push_back(PluginCommand(
+        "getplants", "Cut down all of the specified trees or gather specified shrubs",
+        df_getplants, false,
+        "  Specify the types of trees to cut down and/or shrubs to gather by their\n"
+        "  plant IDs, separated by spaces.\n"
+        "Options:\n"
+        "  -t - Select trees only (exclude shrubs)\n"
+        "  -s - Select shrubs only (exclude trees)\n"
+        "  -c - Clear designations instead of setting them\n"
+        "  -x - Apply selected action to all plants except those specified\n"
+        "Specifying both -t and -s will have no effect.\n"
+        "If no plant IDs are specified, all valid plant IDs will be listed.\n"
+    ));
     return CR_OK;
 }
 

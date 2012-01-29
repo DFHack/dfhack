@@ -19,17 +19,8 @@ using df::global::world;
 
 DFhackCExport command_result df_deramp (Core * c, vector <string> & parameters)
 {
-    for(int i = 0; i < parameters.size();i++)
-    {
-        if(parameters[i] == "help" || parameters[i] == "?")
-        {
-            c->con.print("This command does two things:\n"
-                "If there are any ramps designated for removal, they will be instantly removed.\n"
-                "Any ramps that don't have their counterpart will be removed (fixes bugs with caveins)\n"
-                );
-            return CR_OK;
-        }
-    }
+    if (!parameters.empty())
+        return CR_WRONG_USAGE;
 
     CoreSuspender suspend(c);
 
@@ -97,9 +88,13 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("deramp",
-        "De-ramp.  All ramps marked for removal are replaced with floors.",
-        df_deramp));
+    commands.push_back(PluginCommand(
+        "deramp", "De-ramp. All ramps marked for removal are replaced with floors.",
+        df_deramp, false,
+        "  If there are any ramps designated for removal, they will be instantly\n"
+        "  removed. Any ramps that don't have their counterpart will also be removed\n"
+        "  (fixes bugs with caveins)\n"
+    ));
     return CR_OK;
 }
 

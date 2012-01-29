@@ -148,7 +148,6 @@ DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
 
 DFhackCExport command_result clean (Core * c, vector <string> & parameters)
 {
-    bool help = false;
     bool map = false;
     bool snow = false;
     bool mud = false;
@@ -168,33 +167,16 @@ DFhackCExport command_result clean (Core * c, vector <string> & parameters)
             items = true;
             units = true;
         }
-        if(parameters[i] == "snow")
+        else if(parameters[i] == "snow")
             snow = true;
         else if(parameters[i] == "mud")
             mud = true;
-        else if(parameters[i] == "help" ||parameters[i] == "?")
-        {
-            help = true;
-        }
+        else
+            return CR_WRONG_USAGE;
     }
     if(!map && !units && !items)
-        help = true;
-    if(help)
-    {
-        c->con.print("Removes contaminants from map tiles, items and creatures.\n"
-            "Options:\n"
-            "map        - clean the map tiles\n"
-            "items      - clean all items\n"
-            "units      - clean all creatures\n"
-            "all        - clean everything.\n"
-            "More options for 'map':\n"
-            "snow       - also remove snow\n"
-            "mud        - also remove mud\n"
-            "Example: clean all mud snow\n"
-            "This removes all spatter, including mud and snow from map tiles.\n"
-            );
-        return CR_OK;
-    }
+        return CR_WRONG_USAGE;
+
     CoreSuspender suspend(c);
     if(map)
         cleanmap(c,snow,mud);
@@ -213,8 +195,26 @@ DFhackCExport const char * plugin_name ( void )
 DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
 {
     commands.clear();
-    commands.push_back(PluginCommand("clean","Removes contaminants from map tiles, items and creatures.",clean));
-    commands.push_back(PluginCommand("spotclean","Cleans map tile under cursor.",spotclean,cursor_hotkey));
+    commands.push_back(PluginCommand(
+        "clean","Removes contaminants from map tiles, items and creatures.",
+        clean, false,
+        "  Removes contaminants from map tiles, items and creatures.\n"
+        "Options:\n"
+        "  map        - clean the map tiles\n"
+        "  items      - clean all items\n"
+        "  units      - clean all creatures\n"
+        "  all        - clean everything.\n"
+        "More options for 'map':\n"
+        "  snow       - also remove snow\n"
+        "  mud        - also remove mud\n"
+        "Example:\n"
+        "  clean all mud snow\n"
+        "    Removes all spatter, including mud and snow from map tiles.\n"
+    ));
+    commands.push_back(PluginCommand(
+        "spotclean","Cleans map tile under cursor.",
+        spotclean,cursor_hotkey
+    ));
     return CR_OK;
 }
 

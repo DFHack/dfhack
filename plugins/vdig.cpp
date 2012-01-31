@@ -188,7 +188,7 @@ DFhackCExport command_result digcircle (Core * c, vector <string> & parameters)
     static int diameter = 0;
     auto saved_d = diameter;
     bool force_help = false;
-    for(int i = 0; i < parameters.size();i++)
+    for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {
@@ -782,7 +782,7 @@ DFhackCExport command_result expdig (Core * c, vector <string> & parameters)
     bool force_help = false;
     static explo_how how = EXPLO_NOTHING;
     static explo_what what = EXPLO_HIDDEN;
-    for(int i = 0; i < parameters.size();i++)
+    for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {
@@ -967,7 +967,7 @@ DFhackCExport command_result vdig (Core * c, vector <string> & parameters)
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     uint32_t x_max,y_max,z_max;
     bool updown = false;
-    for(int i = 0; i < parameters.size();i++)
+    for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters.size() && parameters[0]=="x")
             updown = true;

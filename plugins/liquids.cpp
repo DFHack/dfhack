@@ -169,7 +169,7 @@ DFhackCExport command_result df_liquids (Core * c, vector <string> & parameters)
     int32_t x,y,z;
 
     DFHack::Gui * Position;
-    for(int i = 0; i < parameters.size();i++)
+    for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {

@@ -93,7 +93,7 @@ DFhackCExport command_result filltraffic(DFHack::Core * c, std::vector<std::stri
     bool checkbuilding = true;
 
     //Loop through parameters
-    for(int i = 0; i < params.size();i++)
+    for(size_t i = 0; i < params.size();i++)
     {
         if (params[i] == "help" || params[i] == "?" || params[i].size() != 1)
             return CR_WRONG_USAGE;
@@ -246,7 +246,7 @@ DFhackCExport command_result alltraffic(DFHack::Core * c, std::vector<std::strin
     void (*proc)(DFHack::DFCoord, MapExtras::MapCache &) = allNormal;
 
     //Loop through parameters
-    for(int i = 0; i < params.size();i++)
+    for(size_t i = 0; i < params.size();i++)
     {
         if (params[i] == "help" || params[i] == "?" || params[i].size() != 1)
             return CR_WRONG_USAGE;

@@ -414,7 +414,7 @@ static void cleanup_state(Core *c)
 
     stop_protect(c);
 
-    for (unsigned i = 0; i < constraints.size(); i++)
+    for (size_t i = 0; i < constraints.size(); i++)
         delete constraints[i];
     constraints.clear();
 }
@@ -678,7 +678,7 @@ static ItemConstraint *get_constraint(Core *c, const std::string &str, Persisten
         return NULL;
     }
 
-    for (unsigned i = 0; i < constraints.size(); i++)
+    for (size_t i = 0; i < constraints.size(); i++)
     {
         ItemConstraint *ct = constraints[i];
         if (ct->item == item && ct->material == material &&
@@ -724,7 +724,7 @@ static void link_job_constraint(ProtectedJob *pj, df::item_type itype, int16_t i
 {
     MaterialInfo mat(mat_type, mat_index);
 
-    for (unsigned i = 0; i < constraints.size(); i++)
+    for (size_t i = 0; i < constraints.size(); i++)
     {
         ItemConstraint *ct = constraints[i];
 
@@ -768,7 +768,7 @@ static void compute_custom_job(ProtectedJob *pj, df::job *job)
     if (!r)
         return;
 
-    for (unsigned i = 0; i < r->products.size(); i++)
+    for (size_t i = 0; i < r->products.size(); i++)
     {
         using namespace df::enums::reaction_product_item_flags;
 
@@ -892,7 +892,7 @@ static void compute_job_outputs(Core *c, ProtectedJob *pj)
         if (mat.inorganic)
         {
             std::vector<int16_t> &ores = mat.inorganic->metal_ore.mat_index;
-            for (unsigned i = 0; i < ores.size(); i++)
+            for (size_t i = 0; i < ores.size(); i++)
                 link_job_constraint(pj, item_type::BAR, -1, 0, 0, ores[i]);
         }
         return;
@@ -901,7 +901,7 @@ static void compute_job_outputs(Core *c, ProtectedJob *pj)
         if (mat.inorganic)
         {
             std::vector<int16_t> &threads = mat.inorganic->thread_metal.mat_index;
-            for (unsigned i = 0; i < threads.size(); i++)
+            for (size_t i = 0; i < threads.size(); i++)
                 link_job_constraint(pj, item_type::THREAD, -1, 0, 0, threads[i]);
         }
         return;
@@ -910,7 +910,7 @@ static void compute_job_outputs(Core *c, ProtectedJob *pj)
         if (job->mat_type != -1)
         {
             std::vector<df::itemdef_foodst*> &food = df::itemdef_foodst::get_vector();
-            for (unsigned i = 0; i < food.size(); i++)
+            for (size_t i = 0; i < food.size(); i++)
                 if (food[i]->level == job->mat_type)
                     link_job_constraint(pj, item_type::FOOD, i, 0, -1, -1);
             return;
@@ -953,7 +953,7 @@ static void map_job_constraints(Core *c)
 {
     melt_active = false;
 
-    for (unsigned i = 0; i < constraints.size(); i++)
+    for (size_t i = 0; i < constraints.size(); i++)
     {
         constraints[i]->jobs.clear();
         constraints[i]->is_active = false;
@@ -981,7 +981,7 @@ static void map_job_constraints(Core *c)
 
 static void dryBucket(df::item *item)
 {
-    for (unsigned i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
         if (ref->getType() == general_ref_type::CONTAINS_ITEM)
@@ -1003,7 +1003,7 @@ static bool itemBusy(df::item *item)
 {
     using namespace df::enums::item_type;
 
-    for (unsigned i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
         if (ref->getType() == general_ref_type::CONTAINS_ITEM)
@@ -1051,7 +1051,7 @@ static bool itemInRealJob(df::item *item)
 
 static void map_job_items(Core *c)
 {
-    for (unsigned i = 0; i < constraints.size(); i++)
+    for (size_t i = 0; i < constraints.size(); i++)
     {
         constraints[i]->item_amount = 0;
         constraints[i]->item_count = 0;
@@ -1074,7 +1074,7 @@ static void map_job_items(Core *c)
 
     std::vector<df::item*> &items = world->items.other[items_other_id::ANY_FREE];
 
-    for (unsigned i = 0; i < items.size(); i++)
+    for (size_t i = 0; i < items.size(); i++)
     {
         df::item *item = items[i];
 
@@ -1112,7 +1112,7 @@ static void map_job_items(Core *c)
         // Match to constraints
         TMaterialCache::key_type matkey(imattype, imatindex);
 
-        for (unsigned i = 0; i < constraints.size(); i++)
+        for (size_t i = 0; i < constraints.size(); i++)
         {
             ItemConstraint *cv = constraints[i];
             if (cv->item.type != itype ||
@@ -1152,7 +1152,7 @@ static void map_job_items(Core *c)
         }
     }
 
-    for (unsigned i = 0; i < constraints.size(); i++)
+    for (size_t i = 0; i < constraints.size(); i++)
         constraints[i]->computeRequest();
 }
 
@@ -1198,7 +1198,7 @@ static void update_jobs_by_constraints(Core *c)
         int resume_weight = -1;
         int suspend_weight = -1;
 
-        for (unsigned i = 0; i < pj->constraints.size(); i++)
+        for (size_t i = 0; i < pj->constraints.size(); i++)
         {
             if (pj->constraints[i]->request_resume)
                 resume_weight = std::max(resume_weight, pj->constraints[i]->weight);
@@ -1216,12 +1216,12 @@ static void update_jobs_by_constraints(Core *c)
         setJobResumed(c, pj, goal);
     }
 
-    for (unsigned i = 0; i < constraints.size(); i++)
+    for (size_t i = 0; i < constraints.size(); i++)
     {
         ItemConstraint *ct = constraints[i];
 
         bool is_running = false;
-        for (unsigned j = 0; j < ct->jobs.size(); j++)
+        for (size_t j = 0; j < ct->jobs.size(); j++)
             if (!!(is_running = ct->jobs[j]->isResumed()))
                 break;
 
@@ -1321,10 +1321,10 @@ static void print_constraint(Core *c, ItemConstraint *cv, bool no_job = false, s
     std::vector<ProtectedJob*> unique_jobs;
     std::vector<int> unique_counts;
 
-    for (int i = 0; i < cv->jobs.size(); i++)
+    for (size_t i = 0; i < cv->jobs.size(); i++)
     {
         ProtectedJob *pj = cv->jobs[i];
-        for (int j = 0; j < unique_jobs.size(); j++)
+        for (size_t j = 0; j < unique_jobs.size(); j++)
         {
             if (unique_jobs[j]->building_id == pj->building_id &&
                 *unique_jobs[j]->actual_job == *pj->actual_job)
@@ -1339,7 +1339,7 @@ static void print_constraint(Core *c, ItemConstraint *cv, bool no_job = false, s
     next_job:;
     }
 
-    for (int i = 0; i < unique_jobs.size(); i++)
+    for (size_t i = 0; i < unique_jobs.size(); i++)
     {
         ProtectedJob *pj = unique_jobs[i];
         df::job *job = pj->actual_job;
@@ -1394,7 +1394,7 @@ static void print_job(Core *c, ProtectedJob *pj)
         c->con.reset_color();
     }
 
-    for (int i = 0; i < pj->constraints.size(); i++)
+    for (size_t i = 0; i < pj->constraints.size(); i++)
         print_constraint(c, pj->constraints[i], true, "  ");
 }
 
@@ -1447,7 +1447,7 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
             return CR_OK;
         }
 
-        for (unsigned i = 1; i < parameters.size(); i++)
+        for (size_t i = 1; i < parameters.size(); i++)
         {
             if (parameters[i] == "drybuckets")
                 setOptionEnabled(CF_DRYBUCKETS, enable);
@@ -1482,7 +1482,7 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
     {
         if (workshop)
         {
-            for (unsigned i = 0; i < workshop->jobs.size(); i++)
+            for (size_t i = 0; i < workshop->jobs.size(); i++)
                 print_job(c, get_known(workshop->jobs[i]->id));
         }
         else
@@ -1494,7 +1494,7 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
 
         bool pending = false;
 
-        for (unsigned i = 0; i < pending_recover.size(); i++)
+        for (size_t i = 0; i < pending_recover.size(); i++)
         {
             if (!workshop || pending_recover[i]->holder == workshop)
             {
@@ -1512,7 +1512,7 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
     }
     else if (cmd == "list")
     {
-        for (int i = 0; i < constraints.size(); i++)
+        for (size_t i = 0; i < constraints.size(); i++)
             print_constraint(c, constraints[i]);
 
         return CR_OK;
@@ -1548,7 +1548,7 @@ static command_result workflow_cmd(Core *c, vector <string> & parameters)
         if (parameters.size() != 2)
             return CR_WRONG_USAGE;
 
-        for (int i = 0; i < constraints.size(); i++)
+        for (size_t i = 0; i < constraints.size(); i++)
         {
             if (constraints[i]->config.val() != parameters[1])
                 continue;

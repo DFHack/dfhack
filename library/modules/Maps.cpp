@@ -494,9 +494,8 @@ bool Maps::SortBlockEvents(uint32_t x, uint32_t y, uint32_t z,
     if (!block)
         return false;
 
-    uint32_t size = block->block_events.size();
     // read all events
-    for (uint32_t i = 0; i < size;i++)
+    for (size_t i = 0; i < block->block_events.size(); i++)
     {
         df::block_square_event *evt = block->block_events[i];
         switch (evt->getType())
@@ -531,7 +530,7 @@ bool Maps::RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square
     df::map_block * block = getBlock(x,y,z);
     if (!block)
         return false;
-    for (uint32_t i = 0; i < block->block_events.size(); i++)
+    for (size_t i = 0; i < block->block_events.size(); i++)
     {
         if (block->block_events[i] == which)
         {
@@ -581,7 +580,7 @@ bool Maps::ReadGeology (vector < vector <uint16_t> >& assign)
         v_geology[i].reserve(geolayers.size());
 
         // finally, read the layer matgloss
-        for (uint32_t j = 0; j < geolayers.size(); j++)
+        for (size_t j = 0; j < geolayers.size(); j++)
             v_geology[i].push_back(geolayers[j]->mat_index);
     }
 

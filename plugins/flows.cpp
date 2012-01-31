@@ -24,7 +24,7 @@ DFhackCExport command_result df_flows (Core * c, vector <string> & parameters)
     int flow1 = 0, flow2 = 0, flowboth = 0, water = 0, magma = 0;
     c->con.print("Counting flows and liquids ...\n");
 
-    for (int i = 0; i < world->map.map_blocks.size(); i++)
+    for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block *cur = world->map.map_blocks[i];
         if (cur->flags.is_set(block_flags::UpdateLiquid))

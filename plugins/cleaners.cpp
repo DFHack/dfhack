@@ -38,7 +38,7 @@ command_result cleanmap (Core * c, bool snow, bool mud)
                 block->occupancy[x][y].bits.arrow_variant = 0;
             }
         }
-        for (int j = 0; j < block->block_events.size(); j++)
+        for (size_t j = 0; j < block->block_events.size(); j++)
         {
             df::block_square_event *evt = block->block_events[j];
             if (evt->getType() != block_square_event_type::material_spatter)
@@ -74,13 +74,13 @@ command_result cleanitems (Core * c)
 {
     // Invoked from clean(), already suspended
     int cleaned_items = 0, cleaned_total = 0;
-    for (int i = 0; i < world->items.all.size(); i++)
+    for (size_t i = 0; i < world->items.all.size(); i++)
     {
         // currently, all item classes extend item_actual, so this should be safe
         df::item_actual *item = (df::item_actual *)world->items.all[i];
         if (item->contaminants && item->contaminants->size())
         {
-            for (int j = 0; j < item->contaminants->size(); j++)
+            for (size_t j = 0; j < item->contaminants->size(); j++)
                 delete item->contaminants->at(j);
             cleaned_items++;
             cleaned_total += item->contaminants->size();
@@ -95,14 +95,13 @@ command_result cleanitems (Core * c)
 command_result cleanunits (Core * c)
 {
     // Invoked from clean(), already suspended
-    int num_units = world->units.all.size();
     int cleaned_units = 0, cleaned_total = 0;
-    for (int i = 0; i < num_units; i++)
+    for (size_t i = 0; i < world->units.all.size(); i++)
     {
         df::unit *unit = world->units.all[i];
         if (unit->body.spatters.size())
         {
-            for (int j = 0; j < unit->body.spatters.size(); j++)
+            for (size_t j = 0; j < unit->body.spatters.size(); j++)
                 delete unit->body.spatters[j];
             cleaned_units++;
             cleaned_total += unit->body.spatters.size();
@@ -134,7 +133,7 @@ DFhackCExport command_result spotclean (Core * c, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    for (int i = 0; i < block->block_events.size(); i++)
+    for (size_t i = 0; i < block->block_events.size(); i++)
     {
         df::block_square_event *evt = block->block_events[i];
         if (evt->getType() != block_square_event_type::material_spatter)
@@ -153,7 +152,7 @@ DFhackCExport command_result clean (Core * c, vector <string> & parameters)
     bool mud = false;
     bool units = false;
     bool items = false;
-    for(int i = 0; i < parameters.size();i++)
+    for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "map")
             map = true;

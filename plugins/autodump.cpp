@@ -41,7 +41,7 @@ DFhackCExport const char * plugin_name ( void )
     return "autodump";
 }
 
-DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init ( Core * c, vector <PluginCommand> &commands)
 {
     commands.clear();
     commands.push_back(PluginCommand(
@@ -78,7 +78,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-typedef std::map <DFCoord, uint32_t> coordmap;
+typedef map <DFCoord, uint32_t> coordmap;
 
 static command_result autodump_main(Core * c, vector <string> & parameters)
 {
@@ -88,7 +88,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
     bool need_visible = false;
     bool need_hidden = false;
     bool need_forbidden = false;
-    for (unsigned i = 0; i < parameters.size(); i++)
+    for (size_t i = 0; i < parameters.size(); i++)
     {
         string & p = parameters[i];
         if(p == "destroy")
@@ -118,7 +118,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
         c->con.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
-    std::size_t numItems = world->items.all.size();
+    size_t numItems = world->items.all.size();
 
     MapCache MC;
     int i = 0;
@@ -154,7 +154,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
     }
     coordmap counts;
     // proceed with the dumpification operation
-    for(std::size_t i=0; i< numItems; i++)
+    for(size_t i=0; i< numItems; i++)
     {
         df::item * itm = world->items.all[i];
         DFCoord pos_item(itm->pos.x, itm->pos.y, itm->pos.z);
@@ -163,7 +163,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
         coordmap::iterator it = counts.find(pos_item);
         if(it == counts.end())
         {
-            std::pair< coordmap::iterator, bool > inserted = counts.insert(std::make_pair(pos_item,1));
+            pair< coordmap::iterator, bool > inserted = counts.insert(make_pair(pos_item,1));
             it = inserted.first;
         }
         else
@@ -211,7 +211,7 @@ static command_result autodump_main(Core * c, vector <string> & parameters)
                 df::map_block * bl_tgt = Maps::getBlockAbs(cx, cy, cz);
                 if(bl_src)
                 {
-                    std::remove(bl_src->items.begin(), bl_src->items.end(),itm->id);
+                    remove(bl_src->items.begin(), bl_src->items.end(),itm->id);
                 }
                 else
                 {
@@ -302,7 +302,7 @@ DFhackCExport command_result df_autodump_destroy_here(Core * c, vector <string> 
     return autodump_main(c, args);
 }
 
-static std::map<int, df::item_flags> pending_destroy;
+static map<int, df::item_flags> pending_destroy;
 static int last_frame = 0;
 
 DFhackCExport command_result df_autodump_destroy_item(Core * c, vector <string> & parameters)
@@ -349,7 +349,7 @@ DFhackCExport command_result df_autodump_destroy_item(Core * c, vector <string> 
         return CR_FAILURE;
     }
 
-    for (unsigned i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
         if (ref->getType() == general_ref_type::UNIT_HOLDER)

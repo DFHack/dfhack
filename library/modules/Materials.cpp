@@ -220,7 +220,7 @@ bool MaterialInfo::findInorganic(const std::string &token)
     }
 
     df::world_raws &raws = world->raws;
-    for (unsigned i = 0; i < raws.inorganics.size(); i++)
+    for (size_t i = 0; i < raws.inorganics.size(); i++)
     {
         df::inorganic_raw *p = raws.inorganics[i];
         if (p->id == token)
@@ -234,7 +234,7 @@ bool MaterialInfo::findPlant(const std::string &token, const std::string &subtok
     if (token.empty())
         return decode(-1);
     df::world_raws &raws = world->raws;
-    for (unsigned i = 0; i < raws.plants.all.size(); i++)
+    for (size_t i = 0; i < raws.plants.all.size(); i++)
     {
         df::plant_raw *p = raws.plants.all[i];
         if (p->id != token)
@@ -244,7 +244,7 @@ bool MaterialInfo::findPlant(const std::string &token, const std::string &subtok
         if (subtoken.empty())
             return decode(p->material_defs.type_basic_mat, p->material_defs.idx_basic_mat);
 
-        for (unsigned j = 0; j < p->material.size(); j++)
+        for (size_t j = 0; j < p->material.size(); j++)
             if (p->material[j]->id == subtoken)
                 return decode(PLANT_BASE+j, i);
 
@@ -258,13 +258,13 @@ bool MaterialInfo::findCreature(const std::string &token, const std::string &sub
     if (token.empty() || subtoken.empty())
         return decode(-1);
     df::world_raws &raws = world->raws;
-    for (unsigned i = 0; i < raws.creatures.all.size(); i++)
+    for (size_t i = 0; i < raws.creatures.all.size(); i++)
     {
         df::creature_raw *p = raws.creatures.all[i];
         if (p->creature_id != token)
             continue;
 
-        for (unsigned j = 0; j < p->material.size(); j++)
+        for (size_t j = 0; j < p->material.size(); j++)
             if (p->material[j]->id == subtoken)
                 return decode(CREATURE_BASE+j, i);
 
@@ -503,7 +503,7 @@ bool DFHack::parseJobMaterialCategory(df::job_material_category *cat, const std:
     std::vector<std::string> items;
     split_string(&items, toLower(token), ",", true);
 
-    for (unsigned i = 0; i < items.size(); i++)
+    for (size_t i = 0; i < items.size(); i++)
     {
         int id = findBitfieldField(*cat, items[i]);
         if (id < 0)
@@ -522,7 +522,7 @@ bool DFHack::parseJobMaterialCategory(df::dfhack_material_category *cat, const s
     std::vector<std::string> items;
     split_string(&items, toLower(token), ",", true);
 
-    for (unsigned i = 0; i < items.size(); i++)
+    for (size_t i = 0; i < items.size(); i++)
     {
         int id = findBitfieldField(*cat, items[i]);
         if (id < 0)
@@ -597,10 +597,10 @@ bool t_matglossInorganic::isGem()
 bool Materials::CopyInorganicMaterials (std::vector<t_matglossInorganic> & inorganic)
 {
     Process * p = d->owner;
-    uint32_t size = world->raws.inorganics.size();
+    size_t size = world->raws.inorganics.size();
     inorganic.clear();
     inorganic.reserve (size);
-    for (uint32_t i = 0; i < size;i++)
+    for (size_t i = 0; i < size;i++)
     {
         df::inorganic_raw *orig = world->raws.inorganics[i];
         t_matglossInorganic mat;
@@ -624,10 +624,10 @@ bool Materials::CopyInorganicMaterials (std::vector<t_matglossInorganic> & inorg
 
 bool Materials::CopyOrganicMaterials (std::vector<t_matgloss> & organic)
 {
-    uint32_t size = world->raws.plants.all.size();
+    size_t size = world->raws.plants.all.size();
     organic.clear();
     organic.reserve (size);
-    for (uint32_t i = 0; i < size;i++)
+    for (size_t i = 0; i < size;i++)
     {
         t_matgloss mat;
         mat.id = world->raws.plants.all[i]->id;
@@ -638,10 +638,10 @@ bool Materials::CopyOrganicMaterials (std::vector<t_matgloss> & organic)
 
 bool Materials::CopyWoodMaterials (std::vector<t_matgloss> & tree)
 {
-    uint32_t size = world->raws.plants.trees.size();
+    size_t size = world->raws.plants.trees.size();
     tree.clear();
     tree.reserve (size);
-    for (uint32_t i = 0; i < size;i++)
+    for (size_t i = 0; i < size;i++)
     {
         t_matgloss mat;
         mat.id = world->raws.plants.trees[i]->id;
@@ -652,10 +652,10 @@ bool Materials::CopyWoodMaterials (std::vector<t_matgloss> & tree)
 
 bool Materials::CopyPlantMaterials (std::vector<t_matgloss> & plant)
 {
-    uint32_t size = world->raws.plants.bushes.size();
+    size_t size = world->raws.plants.bushes.size();
     plant.clear();
     plant.reserve (size);
-    for (uint32_t i = 0; i < size;i++)
+    for (size_t i = 0; i < size;i++)
     {
         t_matgloss mat;
         mat.id = world->raws.plants.bushes[i]->id;
@@ -666,10 +666,10 @@ bool Materials::CopyPlantMaterials (std::vector<t_matgloss> & plant)
 
 bool Materials::ReadCreatureTypes (void)
 {
-    uint32_t size = world->raws.creatures.all.size();
+    size_t size = world->raws.creatures.all.size();
     race.clear();
     race.reserve (size);
-    for (uint32_t i = 0; i < size;i++)
+    for (size_t i = 0; i < size;i++)
     {
         t_matgloss mat;
         mat.id = world->raws.creatures.all[i]->creature_id;
@@ -692,13 +692,13 @@ bool Materials::ReadOthers(void)
 
 bool Materials::ReadDescriptorColors (void)
 {
-    uint32_t size = world->raws.language.colors.size();
+    size_t size = world->raws.language.colors.size();
 
     color.clear();
     if(size == 0)
         return false;
     color.reserve(size);
-    for (uint32_t i = 0; i < size;i++)
+    for (size_t i = 0; i < size;i++)
     {
         df::descriptor_color *c = world->raws.language.colors[i];
         t_descriptor_color col;
@@ -713,7 +713,7 @@ bool Materials::ReadDescriptorColors (void)
     size = world->raws.language.patterns.size();
     alldesc.clear();
     alldesc.reserve(size);
-    for (uint32_t i = 0; i < size;i++)
+    for (size_t i = 0; i < size;i++)
     {
         t_matgloss mat;
         mat.id = world->raws.language.patterns[i]->id;
@@ -724,10 +724,10 @@ bool Materials::ReadDescriptorColors (void)
 
 bool Materials::ReadCreatureTypesEx (void)
 {
-    uint32_t size = world->raws.creatures.all.size();
+    size_t size = world->raws.creatures.all.size();
     raceEx.clear();
     raceEx.reserve (size);
-    for (uint32_t i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
         df::creature_raw *cr = world->raws.creatures.all[i];
         t_creaturetype mat;
@@ -737,8 +737,8 @@ bool Materials::ReadCreatureTypesEx (void)
         mat.tilecolor.back = cr->color[1];
         mat.tilecolor.bright = cr->color[2];
 
-        uint32_t sizecas = cr->caste.size();
-        for (uint32_t j = 0; j < sizecas;j++)
+        size_t sizecas = cr->caste.size();
+        for (size_t j = 0; j < sizecas;j++)
         {
             df::caste_raw *ca = cr->caste[j];
             /* caste name */
@@ -751,15 +751,15 @@ bool Materials::ReadCreatureTypesEx (void)
             // color mod reading
             // Caste + offset > color mod vector
             auto & colorings = ca->color_modifiers;
-            uint32_t sizecolormod = colorings.size();
+            size_t sizecolormod = colorings.size();
             caste.ColorModifier.resize(sizecolormod);
-            for(uint32_t k = 0; k < sizecolormod;k++)
+            for(size_t k = 0; k < sizecolormod;k++)
             {
                 // color mod [0] -> color list
                 auto & indexes = colorings[k]->color_indexes;
-                uint32_t sizecolorlist = indexes.size();
+                size_t sizecolorlist = indexes.size();
                 caste.ColorModifier[k].colorlist.resize(sizecolorlist);
-                for(uint32_t l = 0; l < sizecolorlist; l++)
+                for(size_t l = 0; l < sizecolorlist; l++)
                     caste.ColorModifier[k].colorlist[l] = indexes[l];
                 // color mod [color_modifier_part_offset] = string part
                 caste.ColorModifier[k].part = colorings[k]->part;
@@ -769,8 +769,8 @@ bool Materials::ReadCreatureTypesEx (void)
 
             // body parts
             caste.bodypart.empty();
-            uint32_t sizebp = ca->body_info.body_parts.size();
-            for (uint32_t k = 0; k < sizebp; k++)
+            size_t sizebp = ca->body_info.body_parts.size();
+            for (size_t k = 0; k < sizebp; k++)
             {
                 df::body_part_raw *bp = ca->body_info.body_parts[k];
                 t_bodypart part;
@@ -804,7 +804,7 @@ bool Materials::ReadCreatureTypesEx (void)
             }
             mat.castes.push_back(caste);
         }
-        for (uint32_t j = 0; j < world->raws.creatures.all[i]->material.size(); j++)
+        for (size_t j = 0; j < world->raws.creatures.all[i]->material.size(); j++)
         {
             t_creatureextract extract;
             extract.id = world->raws.creatures.all[i]->material[j]->id;

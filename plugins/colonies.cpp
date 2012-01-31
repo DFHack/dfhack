@@ -47,7 +47,7 @@ DFhackCExport command_result colonies (Core * c, vector <string> & parameters)
     bool destroy = false;
     bool convert = false;
 
-    for(int i = 0; i < parameters.size();i++)
+    for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "kill")
             destroy = true;

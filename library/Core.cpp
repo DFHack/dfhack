@@ -101,7 +101,7 @@ void cheap_tokenise(string const& input, vector<string> &output)
 {
     string *cur = NULL;
 
-    for (unsigned i = 0; i < input.size(); i++) {
+    for (size_t i = 0; i < input.size(); i++) {
         char c = input[i];
         if (isspace(c)) {
             cur = NULL;
@@ -223,7 +223,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
             {
                 Plugin *plug = plug_mgr->getPluginByCommand(parts[0]);
                 if (plug) {
-                    for (int j = 0; j < plug->size();j++)
+                    for (size_t j = 0; j < plug->size();j++)
                     {
                         const PluginCommand & pcmd = (plug->operator[](j));
                         if (pcmd.name != parts[0])
@@ -252,7 +252,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                 string & plugname = parts[0];
                 if(plugname == "all")
                 {
-                    for(int i = 0; i < plug_mgr->size();i++)
+                    for(size_t i = 0; i < plug_mgr->size();i++)
                     {
                         Plugin * plug = (plug_mgr->operator[](i));
                         plug->load();
@@ -279,7 +279,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                 string & plugname = parts[0];
                 if(plugname == "all")
                 {
-                    for(int i = 0; i < plug_mgr->size();i++)
+                    for(size_t i = 0; i < plug_mgr->size();i++)
                     {
                         Plugin * plug = (plug_mgr->operator[](i));
                         plug->reload();
@@ -306,7 +306,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                 string & plugname = parts[0];
                 if(plugname == "all")
                 {
-                    for(int i = 0; i < plug_mgr->size();i++)
+                    for(size_t i = 0; i < plug_mgr->size();i++)
                     {
                         Plugin * plug = (plug_mgr->operator[](i));
                         plug->unload();
@@ -336,7 +336,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                 {
                     con.printerr("There's no plugin called %s!\n",plugname.c_str());
                 }
-                else for (int j = 0; j < plug->size();j++)
+                else for (size_t j = 0; j < plug->size();j++)
                 {
                     const PluginCommand & pcmd = (plug->operator[](j));
                     if (pcmd.isHotkeyCommand())
@@ -362,12 +362,12 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                 "\n"
                 "plugins:\n"
                 );
-                for(int i = 0; i < plug_mgr->size();i++)
+                for(size_t i = 0; i < plug_mgr->size();i++)
                 {
                     const Plugin * plug = (plug_mgr->operator[](i));
                     if(!plug->size())
                         continue;
-                    for (int j = 0; j < plug->size();j++)
+                    for (size_t j = 0; j < plug->size();j++)
                     {
                         const PluginCommand & pcmd = (plug->operator[](j));
                         if (pcmd.isHotkeyCommand())
@@ -380,7 +380,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
         }
         else if(first == "plug")
         {
-            for(int i = 0; i < plug_mgr->size();i++)
+            for(size_t i = 0; i < plug_mgr->size();i++)
             {
                 const Plugin * plug = (plug_mgr->operator[](i));
                 if(!plug->size())
@@ -405,7 +405,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
             }
             else if (parts.size() >= 2 && parts[0] == "clear")
             {
-                for (unsigned i = 1; i < parts.size(); i++)
+                for (size_t i = 1; i < parts.size(); i++)
                 {
                     if (!core->ClearKeyBindings(parts[i])) {
                         con.printerr("Invalid key spec: %s\n", parts[i].c_str());
@@ -418,7 +418,7 @@ static void runInteractiveCommand(Core *core, PluginManager *plug_mgr, int &clue
                 std::vector<std::string> list = core->ListKeyBindings(parts[1]);
                 if (list.empty())
                     con << "No bindings." << endl;
-                for (unsigned i = 0; i < list.size(); i++)
+                for (size_t i = 0; i < list.size(); i++)
                     con << "  " << list[i] << endl;
             }
             else
@@ -819,7 +819,7 @@ int Core::Shutdown ( void )
         plug_mgr = 0;
     }
     // invalidate all modules
-    for(unsigned int i = 0 ; i < allModules.size(); i++)
+    for(size_t i = 0 ; i < allModules.size(); i++)
     {
         delete allModules[i];
     }

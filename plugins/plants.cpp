@@ -51,7 +51,7 @@ enum do_what
 
 static bool getoptions( vector <string> & parameters, bool & shrubs, bool & trees, bool & help)
 {
-    for(int i = 0;i < parameters.size();i++)
+    for(size_t i = 0;i < parameters.size();i++)
     {
         if(parameters[i] == "shrubs")
         {
@@ -192,7 +192,7 @@ DFhackCExport command_result df_extirpate (Core * c, vector <string> & parameter
 
 DFhackCExport command_result df_grow (Core * c, vector <string> & parameters)
 {
-    for(int i = 0; i < parameters.size();i++)
+    for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {

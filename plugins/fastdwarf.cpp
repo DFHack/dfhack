@@ -35,7 +35,7 @@ DFhackCExport command_result plugin_onupdate ( Core * c )
     int32_t race = ui->race_id;
     int32_t civ = ui->civ_id;
 
-    for (int i = 0; i < world->units.all.size(); i++)
+    for (size_t i = 0; i < world->units.all.size(); i++)
     {
         df::unit *unit = world->units.all[i];
 

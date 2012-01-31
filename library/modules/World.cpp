@@ -248,7 +248,7 @@ PersistentDataItem World::AddPersistentData(const std::string &key)
 PersistentDataItem World::GetPersistentData(const std::string &key)
 {
     std::vector<df::historical_figure*> &hfvec = df::historical_figure::get_vector();
-    for (unsigned i = 0; i < hfvec.size(); i++)
+    for (size_t i = 0; i < hfvec.size(); i++)
     {
         df::historical_figure *hfig = hfvec[i];
 
@@ -265,7 +265,7 @@ PersistentDataItem World::GetPersistentData(const std::string &key)
 void World::GetPersistentData(std::vector<PersistentDataItem> *vec, const std::string &key)
 {
     std::vector<df::historical_figure*> &hfvec = df::historical_figure::get_vector();
-    for (unsigned i = 0; i < hfvec.size(); i++)
+    for (size_t i = 0; i < hfvec.size(); i++)
     {
         df::historical_figure *hfig = hfvec[i];
 

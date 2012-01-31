@@ -69,8 +69,7 @@ DFhackCExport command_result df_cprobe (Core * c, vector <string> & parameters)
     }
     else
     {
-        uint32_t ncr = world->units.all.size();
-        for(auto i = 0; i < ncr; i++)
+        for(size_t i = 0; i < world->units.all.size(); i++)
         {
             df::unit * unit = world->units.all[i];
             if(unit->pos.x == cursorX && unit->pos.y == cursorY && unit->pos.z == cursorZ)

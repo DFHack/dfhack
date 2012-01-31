@@ -82,8 +82,8 @@ int32_t Units::GetCreatureInBox (int32_t index, df::unit ** furball,
     if (!isValid())
         return -1;
 
-    uint32_t size = world->units.all.size();
-    while (uint32_t(index) < size)
+    size_t size = world->units.all.size();
+    while (size_t(index) < size)
     {
         // read pointer from vector at position
         df::unit * temp = world->units.all[index];
@@ -482,7 +482,7 @@ bool Units::ReadInventoryByPtr(const df::unit * unit, std::vector<df::item *> & 
     if(!isValid()) return false;
     if(!unit) return false;
     items.clear();
-    for (uint32_t i = 0; i < unit->inventory.size(); i++)
+    for (size_t i = 0; i < unit->inventory.size(); i++)
         items.push_back(unit->inventory[i]->item);
     return true;
 }

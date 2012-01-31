@@ -188,7 +188,7 @@ bool ItemTypeInfo::find(const std::string &token)
     switch (type) {
 #define ITEM(type,vec,tclass) \
     case type: \
-        for (int i = 0; i < defs.vec.size(); i++) { \
+        for (size_t i = 0; i < defs.vec.size(); i++) { \
             if (defs.vec[i]->id == items[1]) { \
                 subtype = i; custom = defs.vec[i]; return true; \
             } \
@@ -427,7 +427,7 @@ bool Items::copyItem(df::item * itembase, DFHack::dfh_item &item)
 
 int32_t Items::getItemOwnerID(const df::item * item)
 {
-    for (uint32_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
         if (ref->getType() == general_ref_type::UNIT_ITEMOWNER)
@@ -438,7 +438,7 @@ int32_t Items::getItemOwnerID(const df::item * item)
 
 df::unit *Items::getItemOwner(const df::item * item)
 {
-    for (uint32_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
         if (ref->getType() == general_ref_type::UNIT_ITEMOWNER)
@@ -449,7 +449,7 @@ df::unit *Items::getItemOwner(const df::item * item)
 
 int32_t Items::getItemContainerID(const df::item * item)
 {
-    for (uint32_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
         if (ref->getType() == general_ref_type::CONTAINED_IN_ITEM)
@@ -460,7 +460,7 @@ int32_t Items::getItemContainerID(const df::item * item)
 
 df::item *Items::getItemContainer(const df::item * item)
 {
-    for (uint32_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
         if (ref->getType() == general_ref_type::CONTAINED_IN_ITEM)
@@ -478,7 +478,7 @@ bool Items::readItemRefs(const df::item * item, df::general_ref_type type, std::
 {
     values.clear();
 
-    for (uint32_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
         if (ref->getType() == type)
@@ -490,7 +490,7 @@ bool Items::readItemRefs(const df::item * item, df::general_ref_type type, std::
 
 bool Items::removeItemOwner(df::item * item)
 {
-    for (uint32_t i = 0; i < item->itemrefs.size(); i++)
+    for (size_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
         if (ref->getType() != general_ref_type::UNIT_ITEMOWNER)

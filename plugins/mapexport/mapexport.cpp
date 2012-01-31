@@ -161,6 +161,33 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                         uint16_t type = b->TileTypeAt(coord);
                         const DFHack::TileRow *info = DFHack::getTileRow(type);
                         prototile->set_type((dfproto::Tile::TileType)info->shape);
+
+						prototile->set_material_type((dfproto::Tile::MaterialType)info->material);
+						switch (info->material)
+						{
+						case DFHack::SOIL:
+						case DFHack::STONE:
+							prototile->set_material(b->baseMaterialAt(coord));
+							break;
+						case DFHack::VEIN:
+							prototile->set_material(b->veinMaterialAt(coord));
+							break;
+						case DFHack::FEATSTONE:
+							if (blockFeatureLocal.type != -1 && des.bits.feature_local)
+                            {
+                                if (blockFeatureLocal.type == df::feature_type::deep_special_tube
+                                        && blockFeatureLocal.main_material == 0) // stone
+                                {
+									prototile->set_material(blockFeatureLocal.sub_material);
+                                }
+								if (blockFeatureGlobal.type != -1 && des.bits.feature_global
+										&& blockFeatureGlobal.type == df::feature_type::feature_underworld_from_layer
+										&& blockFeatureGlobal.main_material == 0) // stone
+								{
+									prototile->set_material(blockFeatureGlobal.sub_material);
+								}
+                            }
+						}
                     }
                 }
 				coded_output->WriteVarint32(protoblock.ByteSize());

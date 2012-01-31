@@ -81,10 +81,10 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
             return CR_FAILURE;
     }
     ZeroCopyOutputStream *raw_output = new OstreamOutputStream(&output_file);
-	GzipOutputStream *zip_output = new GzipOutputStream(raw_output);
+    GzipOutputStream *zip_output = new GzipOutputStream(raw_output);
     CodedOutputStream *coded_output = new CodedOutputStream(zip_output);
-    
-	coded_output->WriteLittleEndian32(0x50414DDF); //Write our file header
+
+    coded_output->WriteLittleEndian32(0x50414DDF); //Write our file header
 
     Maps::getSize(x_max, y_max, z_max);
     MapExtras::MapCache map;

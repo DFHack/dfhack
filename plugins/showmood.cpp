@@ -49,7 +49,7 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
         found = true;
         df::unit *unit = NULL;
         df::building *building = NULL;
-        for (int i = 0; i < job->references.size(); i++)
+        for (size_t i = 0; i < job->references.size(); i++)
         {
             df::general_ref *ref = job->references[i];
             if (ref->getType() == general_ref_type::UNIT_WORKER)
@@ -155,7 +155,7 @@ DFhackCExport command_result df_showmood (Core * c, vector <string> & parameters
         else
             c->con.print(" and has not yet claimed a workshop\n");
 
-        for (int i = 0; i < job->job_items.size(); i++)
+        for (size_t i = 0; i < job->job_items.size(); i++)
         {
             df::job_item *item = job->job_items[i];
             c->con.print("Item %i: ", i + 1);

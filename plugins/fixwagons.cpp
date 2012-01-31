@@ -27,7 +27,7 @@ command_result df_fixwagons (Core *c, vector<string> &parameters)
     CoreSuspender suspend(c);
     int32_t wagon_creature = -1, wagon_puller_creature = -1;
     df::creature_raw *wagon, *wagon_puller;
-    for (int i = 0; i < world->raws.creatures.all.size(); i++)
+    for (size_t i = 0; i < world->raws.creatures.all.size(); i++)
     {
         df::creature_raw *cr = world->raws.creatures.all[i];
         if (cr->flags.is_set(creature_raw_flags::EQUIPMENT_WAGON) && (wagon_creature == -1))
@@ -52,7 +52,7 @@ command_result df_fixwagons (Core *c, vector<string> &parameters)
         return CR_FAILURE;
     }
     int count = 0;
-    for (int i = 0; i < world->entities.all.size(); i++)
+    for (size_t i = 0; i < world->entities.all.size(); i++)
     {
         bool updated = false;
         df::historical_entity *ent = world->entities.all[i];
@@ -61,7 +61,7 @@ command_result df_fixwagons (Core *c, vector<string> &parameters)
         if (ent->resources.animals.wagon_races.size() == 0)
         {
             updated = true;
-            for (int j = 0; j < wagon->caste.size(); j++)
+            for (size_t j = 0; j < wagon->caste.size(); j++)
             {
                 ent->resources.animals.wagon_races.push_back(wagon_creature);
                 ent->resources.animals.wagon_castes.push_back(j);
@@ -70,7 +70,7 @@ command_result df_fixwagons (Core *c, vector<string> &parameters)
         if (ent->resources.animals.wagon_puller_races.size() == 0)
         {
             updated = true;
-            for (int j = 0; j < wagon_puller->caste.size(); j++)
+            for (size_t j = 0; j < wagon_puller->caste.size(); j++)
             {
                 ent->resources.animals.wagon_puller_races.push_back(wagon_puller_creature);
                 ent->resources.animals.wagon_puller_castes.push_back(j);

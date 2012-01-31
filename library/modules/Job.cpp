@@ -210,13 +210,13 @@ void DFHack::printJobDetails(Core *c, df::job *job)
     if (!job->reaction_name.empty())
         c->con << "    reaction: " << job->reaction_name << endl;
 
-    for (unsigned i = 0; i < job->job_items.size(); i++)
+    for (size_t i = 0; i < job->job_items.size(); i++)
         print_job_item_details(c, job, i, job->job_items[i]);
 }
 
 df::building *DFHack::getJobHolder(df::job *job)
 {
-    for (unsigned i = 0; i < job->references.size(); i++)
+    for (size_t i = 0; i < job->references.size(); i++)
     {
         VIRTUAL_CAST_VAR(ref, df::general_ref_building_holderst, job->references[i]);
         if (ref)

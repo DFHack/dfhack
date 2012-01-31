@@ -54,7 +54,7 @@ DFhackCExport command_result df_getplants (Core * c, vector <string> & parameter
 
     CoreSuspender suspend(c);
 
-    for (int i = 0; i < world->raws.plants.all.size(); i++)
+    for (size_t i = 0; i < world->raws.plants.all.size(); i++)
     {
         df::plant_raw *plant = world->raws.plants.all[i];
         if (plantNames.find(plant->id) != plantNames.end())
@@ -75,7 +75,7 @@ DFhackCExport command_result df_getplants (Core * c, vector <string> & parameter
     if (plantIDs.size() == 0)
     {
         c->con.print("Valid plant IDs:\n");
-        for (int i = 0; i < world->raws.plants.all.size(); i++)
+        for (size_t i = 0; i < world->raws.plants.all.size(); i++)
         {
             df::plant_raw *plant = world->raws.plants.all[i];
             if (plant->flags.is_set(plant_raw_flags::GRASS))
@@ -86,11 +86,11 @@ DFhackCExport command_result df_getplants (Core * c, vector <string> & parameter
     }
 
     count = 0;
-    for (int i = 0; i < world->map.map_blocks.size(); i++)
+    for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block *cur = world->map.map_blocks[i];
         bool dirty = false;
-        for (int j = 0; j < cur->plants.size(); j++)
+        for (size_t j = 0; j < cur->plants.size(); j++)
         {
             const df::plant *plant = cur->plants[i];
             int x = plant->pos.x % 16;

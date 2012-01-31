@@ -41,7 +41,7 @@ DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string>
 {
     uint64_t count = 0;
 
-    for(int i = 0; i < params.size();i++)
+    for(size_t i = 0; i < params.size();i++)
     {
         if(params[i] == "help" || params[i] == "?")
         {
@@ -59,7 +59,7 @@ DFhackCExport command_result tubefill(DFHack::Core * c, std::vector<std::string>
     }
 
     // walk the map
-    for (uint32_t i = 0; i < world->map.map_blocks.size(); i++)
+    for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block *block = world->map.map_blocks[i];
         df::map_block *above = Maps::getBlockAbs(block->map_pos.x, block->map_pos.y, block->map_pos.z + 1);

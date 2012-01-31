@@ -109,7 +109,7 @@ VersionInfoFactory::~VersionInfoFactory()
 void VersionInfoFactory::clear(void)
 {
     // for each stored version, delete
-    for(uint32_t i = 0; i < versions.size();i++)
+    for(size_t i = 0; i < versions.size();i++)
     {
         delete versions[i];
     }
@@ -121,7 +121,7 @@ void VersionInfoFactory::clear(void)
 VersionInfo * VersionInfoFactory::getVersionInfoByMD5(string hash)
 {
     VersionInfo * vinfo;
-    for(uint32_t i = 0; i < versions.size();i++)
+    for(size_t i = 0; i < versions.size();i++)
     {
         vinfo = versions[i];
         string test_hash;
@@ -137,7 +137,7 @@ VersionInfo * VersionInfoFactory::getVersionInfoByPETimestamp(uint32_t timestamp
 {
     VersionInfo * vinfo;
     //cout << "lookup size:" << versions.size() << endl;
-    for(uint32_t i = 0; i < versions.size();i++)
+    for(size_t i = 0; i < versions.size();i++)
     {
         vinfo = versions[i];
         uint32_t test_PE;
@@ -724,7 +724,7 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
     // transform elements
     {
         // trash existing list
-        for(uint32_t i = 0; i < versions.size(); i++)
+        for(size_t i = 0; i < versions.size(); i++)
         {
             delete versions[i];
         }
@@ -759,7 +759,7 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
             }
         }
         // Parse the versions
-        for(uint32_t i = 0; i< v_sEntries.size();i++)
+        for(size_t i = 0; i< v_sEntries.size();i++)
         {
             //FIXME: add a set of entries processed in a step of this cycle, use it to check for infinite loops
             string & name = v_sEntries[i];

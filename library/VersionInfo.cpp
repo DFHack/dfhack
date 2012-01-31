@@ -83,7 +83,7 @@ namespace DFHack
             vtable = old.vtable;
             assign = old.assign;
             type_offset = old.type_offset;
-            for(uint32_t i = 0; i < old.subs.size();i++)
+            for(size_t i = 0; i < old.subs.size();i++)
             {
                 t_type * t = new t_type (*old.subs[i]);
                 subs.push_back(t);
@@ -97,7 +97,7 @@ namespace DFHack
         }
         ~t_class()
         {
-            for(uint32_t i = 0; i < subs.size();i++)
+            for(size_t i = 0; i < subs.size();i++)
             {
                 delete subs[i];
             }
@@ -730,7 +730,7 @@ void VersionInfo::copy(const VersionInfo * old)
     d->has_timestamp = old->d->has_timestamp;
     d->base = old->d->base;
     //d->classes = old.d->classes;
-    for(uint32_t i = 0; i < old->d->classes.size(); i++)
+    for(size_t i = 0; i < old->d->classes.size(); i++)
     {
         t_class * copy = new t_class(*old->d->classes[i]);
         d->classes.push_back(copy);
@@ -757,7 +757,7 @@ void VersionInfo::setParentProcess(Process * _p)
 VersionInfo::~VersionInfo()
 {
     // delete the vtables
-    for(uint32_t i = 0; i < d->classes.size();i++)
+    for(size_t i = 0; i < d->classes.size();i++)
     {
         delete d->classes[i];
     }
@@ -966,7 +966,7 @@ t_class * VersionInfo::setClass (const char * name, uint32_t vtable, uint32_t ty
 {
     if(name == 0)
         return 0;
-    for (uint32_t i=0; i<d->classes.size(); i++)
+    for (size_t i=0; i<d->classes.size(); i++)
     {
         if(d->classes[i]->classname == name)
         {
@@ -1000,7 +1000,7 @@ t_class * VersionInfo::setClass (const char * name, uint32_t vtable, uint32_t ty
 void VersionInfo::setClassChild (t_class * parent, const char * name, const char * type)
 {
     vector <t_type *>& vec = parent->subs;
-    for (uint32_t i=0; i<vec.size(); i++)
+    for (size_t i=0; i<vec.size(); i++)
     {
         if(vec[i]->classname == name)
         {
@@ -1054,7 +1054,7 @@ bool VersionInfo::resolveObjectToClassID(const char * address, int32_t & classid
         uint32_t type = d->p->readWord(address + cl->type_offset);
         // return typed building if successful
         //FIXME: the vector should map directly to the type IDs here, so we don't have to mess with O(n) search
-        for (uint32_t k = 0; k < vec.size();k++)
+        for (size_t k = 0; k < vec.size();k++)
         {
             if(vec[k]->type == type)
             {
@@ -1076,7 +1076,7 @@ bool VersionInfo::resolveObjectToClassID(const char * address, int32_t & classid
 bool VersionInfo::resolveClassnameToVPtr(const string classname, void * & vptr)
 {
     // FIXME: another stupid search.
-    for(uint32_t i = 0;i< d->classes.size();i++)
+    for(size_t i = 0;i< d->classes.size();i++)
     {
         //if(classes[i].)
         if(d->classes[i]->classname == classname) // got class
@@ -1094,7 +1094,7 @@ bool VersionInfo::resolveClassnameToClassID (const string classname, int32_t & c
 {
     // FIXME: another stupid search.
     classID = -1;
-    for(uint32_t i = 0;i< d->classnames.size();i++)
+    for(size_t i = 0;i< d->classnames.size();i++)
     {
         if(d->classnames[i] == classname)
         {

@@ -205,7 +205,7 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
     bool showValue = false;
     bool showTube = false;
     Console & con = c->con;
-    for(int i = 0; i < parameters.size();i++)
+    for(size_t i = 0; i < parameters.size();i++)
     {
         if (parameters[i] == "all")
         {

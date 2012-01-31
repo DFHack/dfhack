@@ -48,7 +48,7 @@ DFhackCExport command_result weather (Core * c, vector <string> & parameters)
     bool snow = false;
     bool rain = false;
     bool clear = false;
-    for(int i = 0; i < parameters.size();i++)
+    for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "rain")
             rain = true;

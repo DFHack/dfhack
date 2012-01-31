@@ -56,7 +56,7 @@ DFhackCExport command_result df_fixveins (Core * c, vector <string> & parameters
     {
         df::map_block *block = world->map.map_blocks[i];
         uint16_t has_mineral[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-        for (int j = 0; j < block->block_events.size(); j++)
+        for (size_t j = 0; j < block->block_events.size(); j++)
         {
             df::block_square_event *evt = block->block_events[j];
             if (evt->getType() != block_square_event_type::mineral)

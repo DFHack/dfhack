@@ -42,7 +42,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & parameters)
 {
-    for(int i = 0; i < parameters.size();i++)
+    for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {

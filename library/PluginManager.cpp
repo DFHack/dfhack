@@ -125,7 +125,7 @@ Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _f
     filename = filepath;
     parent = pm;
     name.reserve(_filename.size());
-    for(int i = 0; i < _filename.size();i++)
+    for(size_t i = 0; i < _filename.size();i++)
     {
         char ch = _filename[i];
         if(ch == '.')
@@ -274,7 +274,7 @@ command_result Plugin::invoke( std::string & command, std::vector <std::string> 
     access->lock_add();
     if(state == PS_LOADED)
     {
-        for (int i = 0; i < commands.size();i++)
+        for (size_t i = 0; i < commands.size();i++)
         {
             PluginCommand &cmd = commands[i];
             if(cmd.name == command)
@@ -322,7 +322,7 @@ bool Plugin::can_invoke_hotkey( std::string & command, df::viewscreen *top )
     access->lock_add();
     if(state == PS_LOADED)
     {
-        for (int i = 0; i < commands.size();i++)
+        for (size_t i = 0; i < commands.size();i++)
         {
             PluginCommand &cmd = commands[i];
             if(cmd.name == command)
@@ -384,7 +384,7 @@ PluginManager::PluginManager(Core * core)
     cmdlist_mutex = new mutex();
     vector <string> filez;
     getdir(path, filez);
-    for(int i = 0; i < filez.size();i++)
+    for(size_t i = 0; i < filez.size();i++)
     {
         if(hasEnding(filez[i],searchstr))
         {
@@ -398,7 +398,7 @@ PluginManager::PluginManager(Core * core)
 
 PluginManager::~PluginManager()
 {
-    for(int i = 0; i < all_plugins.size();i++)
+    for(size_t i = 0; i < all_plugins.size();i++)
     {
         delete all_plugins[i];
     }
@@ -408,7 +408,7 @@ PluginManager::~PluginManager()
 
 Plugin *PluginManager::getPluginByName (const std::string & name)
 {
-    for(int i = 0; i < all_plugins.size(); i++)
+    for(size_t i = 0; i < all_plugins.size(); i++)
     {
         if(name == all_plugins[i]->name)
             return all_plugins[i];
@@ -441,7 +441,7 @@ bool PluginManager::CanInvokeHotkey(std::string &command, df::viewscreen *top)
 
 void PluginManager::OnUpdate( void )
 {
-    for(int i = 0; i < all_plugins.size(); i++)
+    for(size_t i = 0; i < all_plugins.size(); i++)
     {
         all_plugins[i]->on_update();
     }
@@ -449,7 +449,7 @@ void PluginManager::OnUpdate( void )
 
 void PluginManager::OnStateChange( state_change_event event )
 {
-    for(int i = 0; i < all_plugins.size(); i++)
+    for(size_t i = 0; i < all_plugins.size(); i++)
     {
         all_plugins[i]->on_state_change(event);
     }
@@ -460,7 +460,7 @@ void PluginManager::registerCommands( Plugin * p )
 {
     cmdlist_mutex->lock();
     vector <PluginCommand> & cmds = p->commands;
-    for(int i = 0; i < cmds.size();i++)
+    for(size_t i = 0; i < cmds.size();i++)
     {
         belongs[cmds[i].name] = p;
     }
@@ -472,7 +472,7 @@ void PluginManager::unregisterCommands( Plugin * p )
 {
     cmdlist_mutex->lock();
     vector <PluginCommand> & cmds = p->commands;
-    for(int i = 0; i < cmds.size();i++)
+    for(size_t i = 0; i < cmds.size();i++)
     {
         belongs.erase(cmds[i].name);
     }

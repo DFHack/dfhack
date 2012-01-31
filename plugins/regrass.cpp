@@ -25,7 +25,7 @@ DFhackCExport command_result df_regrass (Core * c, vector <string> & parameters)
     CoreSuspender suspend(c);
 
     int count = 0;
-    for (int i = 0; i < world->map.map_blocks.size(); i++)
+    for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block *cur = world->map.map_blocks[i];
         for (int x = 0; x < 16; x++)

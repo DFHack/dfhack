@@ -643,7 +643,7 @@ DFhackCExport command_result df_tiletypes (Core * c, vector <string> & parameter
     int32_t x = 0, y = 0, z = 0;
 
     DFHack::Gui *gui;
-    for(int i = 0; i < parameters.size();i++)
+    for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {

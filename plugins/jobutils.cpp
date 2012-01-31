@@ -154,7 +154,7 @@ static command_result job_material_in_job(Core *c, MaterialInfo &new_mat)
         return CR_FAILURE;
     }
 
-    for (unsigned i = 0; i < job->job_items.size(); i++)
+    for (size_t i = 0; i < job->job_items.size(); i++)
     {
         df::job_item *item = job->job_items[i];
         MaterialInfo item_mat(item);
@@ -178,7 +178,7 @@ static command_result job_material_in_job(Core *c, MaterialInfo &new_mat)
     job->mat_type = new_mat.type;
     job->mat_index = new_mat.index;
 
-    for (unsigned i = 0; i < job->job_items.size(); i++)
+    for (size_t i = 0; i < job->job_items.size(); i++)
     {
         df::job_item *item = job->job_items[i];
         item->mat_type = new_mat.type;
@@ -224,10 +224,10 @@ static command_result job_material_in_build(Core *c, MaterialInfo &new_mat)
     // Loop through matching choices
     bool matches = build_choice_matches(req, sel->choices[sel->sel_index], new_mat, true);
 
-    int size = sel->choices.size();
+    size_t size = sel->choices.size();
     int base = (matches ? sel->sel_index + 1 : 0);
 
-    for (unsigned i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
         int idx = (base + i) % size;
 
@@ -335,7 +335,7 @@ static command_result job_cmd(Core * c, vector <string> & parameters)
                 return CR_WRONG_USAGE;
 
             df::building *selected = world->selected_building;
-            for (unsigned i = 0; i < selected->jobs.size(); i++)
+            for (size_t i = 0; i < selected->jobs.size(); i++)
                 printJobDetails(c, selected->jobs[i]);
         }
     }

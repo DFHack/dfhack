@@ -128,7 +128,7 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
 {
     bool no_hell = true;
     bool pause = true;
-    for(int i = 0; i < params.size();i++)
+    for(size_t i = 0; i < params.size();i++)
     {
         if(params[i]=="hell")
             no_hell = false;
@@ -175,7 +175,7 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
 
     Maps::getSize(x_max,y_max,z_max);
     hidesaved.reserve(x_max * y_max * z_max);
-    for (uint32_t i = 0; i < world->map.map_blocks.size(); i++)
+    for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block *block = world->map.map_blocks[i];
         // in 'no-hell'/'safe' mode, don't reveal blocks with hell and adamantine
@@ -218,7 +218,7 @@ DFhackCExport command_result reveal(DFHack::Core * c, std::vector<std::string> &
 DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string> & params)
 {
     Console & con = c->con;
-    for(int i = 0; i < params.size();i++)
+    for(size_t i = 0; i < params.size();i++)
     {
         if(params[i] == "help" || params[i] == "?")
         {
@@ -274,7 +274,7 @@ DFhackCExport command_result unreveal(DFHack::Core * c, std::vector<std::string>
 
 DFhackCExport command_result revtoggle (DFHack::Core * c, std::vector<std::string> & params)
 {
-    for(int i = 0; i < params.size();i++)
+    for(size_t i = 0; i < params.size();i++)
     {
         if(params[i] == "help" || params[i] == "?")
         {
@@ -294,7 +294,7 @@ DFhackCExport command_result revtoggle (DFHack::Core * c, std::vector<std::strin
 
 DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string> & params)
 {
-    for(int i = 0; i < params.size();i++)
+    for(size_t i = 0; i < params.size();i++)
     {
         if(params[i] == "help" || params[i] == "?")
         {
@@ -348,7 +348,7 @@ DFhackCExport command_result revflood(DFHack::Core * c, std::vector<std::string>
     // hide all tiles, flush cache
     Maps::getSize(x_max,y_max,z_max);
 
-    for(uint32_t i = 0; i < world->map.map_blocks.size(); i++)
+    for(size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block * b = world->map.map_blocks[i];
         // change the hidden flag to 0

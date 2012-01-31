@@ -430,7 +430,7 @@ int32_t Items::getItemOwnerID(const df::item * item)
     for (uint32_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (ref->getType() == df::general_ref_type::UNIT_ITEMOWNER)
+        if (ref->getType() == general_ref_type::UNIT_ITEMOWNER)
             return ref->getID();
     }
     return -1;
@@ -441,7 +441,7 @@ df::unit *Items::getItemOwner(const df::item * item)
     for (uint32_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (ref->getType() == df::general_ref_type::UNIT_ITEMOWNER)
+        if (ref->getType() == general_ref_type::UNIT_ITEMOWNER)
             return ref->getUnit();
     }
     return NULL;
@@ -452,7 +452,7 @@ int32_t Items::getItemContainerID(const df::item * item)
     for (uint32_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (ref->getType() == df::general_ref_type::CONTAINED_IN_ITEM)
+        if (ref->getType() == general_ref_type::CONTAINED_IN_ITEM)
             return ref->getID();
     }
     return -1;
@@ -463,7 +463,7 @@ df::item *Items::getItemContainer(const df::item * item)
     for (uint32_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (ref->getType() == df::general_ref_type::CONTAINED_IN_ITEM)
+        if (ref->getType() == general_ref_type::CONTAINED_IN_ITEM)
             return ref->getItem();
     }
     return NULL;
@@ -471,7 +471,7 @@ df::item *Items::getItemContainer(const df::item * item)
 
 bool Items::getContainedItems(const df::item * item, std::vector<int32_t> &items)
 {
-    return readItemRefs(item, df::general_ref_type::CONTAINS_ITEM, items);
+    return readItemRefs(item, general_ref_type::CONTAINS_ITEM, items);
 }
 
 bool Items::readItemRefs(const df::item * item, df::general_ref_type type, std::vector<int32_t> &values)
@@ -493,7 +493,7 @@ bool Items::removeItemOwner(df::item * item)
     for (uint32_t i = 0; i < item->itemrefs.size(); i++)
     {
         df::general_ref *ref = item->itemrefs[i];
-        if (ref->getType() != df::general_ref_type::UNIT_ITEMOWNER)
+        if (ref->getType() != general_ref_type::UNIT_ITEMOWNER)
             continue;
 
         df::unit *unit = ref->getUnit();

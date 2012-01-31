@@ -65,6 +65,7 @@ using namespace DFHack;
 
 using namespace tthread;
 using namespace df::enums;
+using df::global::init;
 
 struct Core::Cond
 {
@@ -630,7 +631,7 @@ bool Core::Init()
     // init the console.
     Gui * g = getGui();
     bool is_text_mode = false;
-    if(df::global::init && df::global::init->display.flag.is_set(df::enums::init_display_flags::TEXT))
+    if(init && init->display.flag.is_set(init_display_flags::TEXT))
     {
         is_text_mode = true;
     }

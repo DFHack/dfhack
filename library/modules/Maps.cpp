@@ -48,31 +48,32 @@ using namespace std;
 
 using namespace DFHack;
 using namespace DFHack::Simple;
+using namespace df::enums;
 using df::global::world;
 
 const char * DFHack::sa_feature(df::feature_type index)
 {
     switch(index)
     {
-    case df::feature_type::outdoor_river:
+    case feature_type::outdoor_river:
         return "River";
-    case df::feature_type::cave:
+    case feature_type::cave:
         return "Cave";
-    case df::feature_type::pit:
+    case feature_type::pit:
         return "Pit";
-    case df::feature_type::magma_pool:
+    case feature_type::magma_pool:
         return "Magma pool";
-    case df::feature_type::volcano:
+    case feature_type::volcano:
         return "Volcano";
-    case df::feature_type::deep_special_tube:
+    case feature_type::deep_special_tube:
         return "Adamantine deposit";
-    case df::feature_type::deep_surface_portal:
+    case feature_type::deep_surface_portal:
         return "Underworld portal";
-    case df::feature_type::subterranean_from_layer:
+    case feature_type::subterranean_from_layer:
         return "Cavern";
-    case df::feature_type::magma_core_from_layer:
+    case feature_type::magma_core_from_layer:
         return "Magma sea";
-    case df::feature_type::feature_underworld_from_layer:
+    case feature_type::feature_underworld_from_layer:
         return "Underworld";
     default:
         return "Unknown/Error";
@@ -184,7 +185,7 @@ bool Maps::ReadDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool &dirtybit)
     df::map_block *block = getBlock(x,y,z);
     if (block)
     {
-        dirtybit = block->flags.is_set(df::block_flags::Designated);
+        dirtybit = block->flags.is_set(block_flags::Designated);
         return true;
     }
     return false;
@@ -195,7 +196,7 @@ bool Maps::WriteDirtyBit(uint32_t x, uint32_t y, uint32_t z, bool dirtybit)
     df::map_block *block = getBlock(x,y,z);
     if (block)
     {
-        block->flags.set(df::block_flags::Designated, dirtybit);
+        block->flags.set(block_flags::Designated, dirtybit);
         return true;
     }
     return false;
@@ -475,7 +476,7 @@ bool Maps::SortBlockEvents(uint32_t x, uint32_t y, uint32_t z,
     vector <df::block_square_event_mineralst *>* veins,
     vector <df::block_square_event_frozen_liquidst *>* ices,
     vector <df::block_square_event_material_spatterst *> *splatter,
-    vector <df::block_square_event_grassst *> *grass,
+    vector <df::block_square_event_grassst *> *grasses,
     vector <df::block_square_event_world_constructionst *> *constructions)
 {
     if (veins)
@@ -484,8 +485,8 @@ bool Maps::SortBlockEvents(uint32_t x, uint32_t y, uint32_t z,
         ices->clear();
     if (splatter)
         splatter->clear();
-    if (grass)
-        grass->clear();
+    if (grasses)
+        grasses->clear();
     if (constructions)
         constructions->clear();
 
@@ -500,23 +501,23 @@ bool Maps::SortBlockEvents(uint32_t x, uint32_t y, uint32_t z,
         df::block_square_event *evt = block->block_events[i];
         switch (evt->getType())
         {
-        case df::block_square_event_type::mineral:
+        case block_square_event_type::mineral:
             if (veins)
                 veins->push_back((df::block_square_event_mineralst *)evt);
             break;
-        case df::block_square_event_type::frozen_liquid:
+        case block_square_event_type::frozen_liquid:
             if (ices)
                 ices->push_back((df::block_square_event_frozen_liquidst *)evt);
             break;
-        case df::block_square_event_type::material_spatter:
+        case block_square_event_type::material_spatter:
             if (splatter)
                 splatter->push_back((df::block_square_event_material_spatterst *)evt);
             break;
-        case df::block_square_event_type::grass:
-            if (grass)
-                grass->push_back((df::block_square_event_grassst *)evt);
+        case block_square_event_type::grass:
+            if (grasses)
+                grasses->push_back((df::block_square_event_grassst *)evt);
             break;
-        case df::block_square_event_type::world_construction:
+        case block_square_event_type::world_construction:
             if (constructions)
                 constructions->push_back((df::block_square_event_world_constructionst *)evt);
             break;

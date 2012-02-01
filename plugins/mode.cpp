@@ -113,7 +113,7 @@ DFhackCExport command_result mode (Core * c, vector <string> & parameters)
     printCurrentModes(gm, c->con);
     if(set)
     {
-        if(gm.g_mode == GAMEMODE_NONE || gm.g_type == GAMETYPE_VIEW_LEGENDS || gm.g_type == GAMETYPE_DWARF_RECLAIM)
+        if( gm.g_mode == GAMEMODE_NONE || gm.g_type == GAMETYPE_VIEW_LEGENDS )
         {
             c->con.printerr("It is not safe to set modes in menus.\n");
             return CR_FAILURE;
@@ -123,6 +123,7 @@ DFhackCExport command_result mode (Core * c, vector <string> & parameters)
                << "1 = Adventurer Mode" << endl
                << "2 = Arena Mode" << endl
                << "3 = Arena, controlling creature" << endl
+               << "4 = Reclaim Fortress Mode" << endl
                << "c = cancel/do nothing" << endl;
         uint32_t select=99;
 
@@ -135,7 +136,7 @@ DFhackCExport command_result mode (Core * c, vector <string> & parameters)
         const char * start = selected.c_str();
         char * end = 0;
         select = strtol(start, &end, 10);
-        if(!end || end==start || select > 3)
+        if(!end || end==start || select > 4)
         {
             c->con.printerr("This is not a valid selection.\n");
             goto input_again;
@@ -158,6 +159,10 @@ DFhackCExport command_result mode (Core * c, vector <string> & parameters)
             case 3:
                 gm.g_mode = GAMEMODE_ADVENTURE;
                 gm.g_type = GAMETYPE_ADVENTURE_ARENA;
+                break;
+            case 4:
+                gm.g_mode = GAMEMODE_DWARF;
+                gm.g_type = GAMETYPE_DWARF_RECLAIM;
                 break;
         }
         c->Suspend();

@@ -262,6 +262,13 @@ inline bool bits_match(unsigned required, unsigned ok, unsigned mask)
     return (required & mask) == (required & mask & ok);
 }
 
+template<typename T, typename T1, typename T2>
+inline T clip_range(T a, T1 minv, T2 maxv) {
+    if (a < minv) return minv;
+    if (a > maxv) return maxv;
+    return a;
+}
+
 /**
  * Returns the amount of milliseconds elapsed since the UNIX epoch.
  * Works on both windows and linux.

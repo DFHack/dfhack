@@ -18,6 +18,15 @@ bool operator<(const coord2d &other) const
     return y < other.y;
 }
 
+coord2d operator+(const coord2d &other) const
+{
+    return coord2d(x + other.x, y + other.y);
+}
+coord2d operator-(const coord2d &other) const
+{
+    return coord2d(x - other.x, y - other.y);
+}
+
 coord2d operator/(int number) const
 {
     return coord2d(x/number, y/number);

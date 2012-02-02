@@ -14,7 +14,9 @@
 #include "df/world.h"
 #include "df/plant_raw.h"
 #include "df/item_flags.h"
+#include "df/items_other_id.h"
 
+using namespace std;
 using namespace DFHack;
 using namespace DFHack::Simple;
 using namespace df::enums;
@@ -24,7 +26,7 @@ const int buffer = 20; // seed number buffer - 20 is reasonable
 bool running = false; // whether seedwatch is counting the seeds or not
 
 // abbreviations for the standard plants
-std::map<std::string, std::string> abbreviations;
+map<string, string> abbreviations;
 
 bool ignoreSeeds(df::item_flags& f) // seeds with the following flags should not be counted
 {
@@ -64,7 +66,7 @@ void printHelp(Core& core) // prints help
     if(!abbreviations.empty())
     {
         core.con.print("You can use these abbreviations for the plant tokens:\n");
-        for(std::map<std::string, std::string>::const_iterator i = abbreviations.begin(); i != abbreviations.end(); ++i)
+        for(map<string, string>::const_iterator i = abbreviations.begin(); i != abbreviations.end(); ++i)
         {
             core.con.print("%s -> %s\n", i->first.c_str(), i->second.c_str());
         }
@@ -83,7 +85,7 @@ void printHelp(Core& core) // prints help
 };
 
 // searches abbreviations, returns expansion if so, returns original if not
-std::string searchAbbreviations(std::string in) 
+string searchAbbreviations(string in)
 {
     if(abbreviations.count(in) > 0)
     {
@@ -95,7 +97,7 @@ std::string searchAbbreviations(std::string in)
     }
 };
 
-DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>& parameters)
+DFhackCExport command_result df_seedwatch(Core* pCore, vector<string>& parameters)
 {
     Core& core = *pCore;
     if(!core.isValid())
@@ -104,8 +106,8 @@ DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>&
     }
     CoreSuspender suspend(pCore);
 
-    std::map<std::string, t_materialIndex> materialsReverser;
-    for(std::size_t i = 0; i < world->raws.plants.all.size(); ++i)
+    map<string, t_materialIndex> materialsReverser;
+    for(size_t i = 0; i < world->raws.plants.all.size(); ++i)
     {
         materialsReverser[world->raws.plants.all[i]->id] = i;
     }
@@ -122,7 +124,7 @@ DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>&
         return CR_OK;
     }
 
-    std::string par;
+    string par;
     int limit;
     switch(parameters.size())
     {
@@ -159,7 +161,7 @@ DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>&
             {
                 core.con.print("seedwatch is not supervising.  Use 'seedwatch start' to start supervision.\n");
             }
-            std::map<t_materialIndex, unsigned int> watchMap;
+            map<t_materialIndex, unsigned int> watchMap;
             Kitchen::fillWatchMap(watchMap);
             if(watchMap.empty())
             {
@@ -168,7 +170,7 @@ DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>&
             else
             {
                 core.con.print("The watch list is:\n");
-                for(std::map<t_materialIndex, unsigned int>::const_iterator i = watchMap.begin(); i != watchMap.end(); ++i)
+                for(map<t_materialIndex, unsigned int>::const_iterator i = watchMap.begin(); i != watchMap.end(); ++i)
                 {
                     core.con.print("%s : %u\n", world->raws.plants.all[i->first]->id.c_str(), i->second);
                 }
@@ -176,7 +178,7 @@ DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>&
         }
         else if(par == "debug")
         {
-            std::map<t_materialIndex, unsigned int> watchMap;
+            map<t_materialIndex, unsigned int> watchMap;
             Kitchen::fillWatchMap(watchMap);
             Kitchen::debug_print(core);
         }
@@ -199,7 +201,7 @@ DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>&
         */
         else
         {
-            std::string token = searchAbbreviations(par);
+            string token = searchAbbreviations(par);
             if(materialsReverser.count(token) > 0)
             {
                 Kitchen::removeLimit(materialsReverser[token]);
@@ -216,14 +218,14 @@ DFhackCExport command_result df_seedwatch(Core* pCore, std::vector<std::string>&
         if(limit < 0) limit = 0;
         if(parameters[0] == "all")
         {
-            for(std::map<std::string, std::string>::const_iterator i = abbreviations.begin(); i != abbreviations.end(); ++i)
+            for(map<string, string>::const_iterator i = abbreviations.begin(); i != abbreviations.end(); ++i)
             {
                 if(materialsReverser.count(i->second) > 0) Kitchen::setLimit(materialsReverser[i->second], limit);
             }
         }
         else
         {
-            std::string token = searchAbbreviations(parameters[0]);
+            string token = searchAbbreviations(parameters[0]);
             if(materialsReverser.count(token) > 0)
             {
                 Kitchen::setLimit(materialsReverser[token], limit);
@@ -248,7 +250,7 @@ DFhackCExport const char* plugin_name(void)
     return "seedwatch";
 }
 
-DFhackCExport command_result plugin_init(Core* pCore, std::vector<PluginCommand>& commands)
+DFhackCExport command_result plugin_init(Core* pCore, vector<PluginCommand>& commands)
 {
     commands.clear();
     commands.push_back(PluginCommand("seedwatch", "Switches cookery based on quantity of seeds, to keep reserves", df_seedwatch));
@@ -316,24 +318,17 @@ DFhackCExport command_result plugin_onupdate(Core* pCore)
             return CR_OK;
         }
         // this is dwarf mode, continue
-        std::map<t_materialIndex, unsigned int> seedCount; // the number of seeds
+        map<t_materialIndex, unsigned int> seedCount; // the number of seeds
 
         // count all seeds and plants by RAW material
-        for(std::size_t i = 0; i < world->items.all.size(); ++i)
+        for(size_t i = 0; i < world->items.other[items_other_id::SEEDS].size(); ++i)
         {
-            df::item * item = world->items.all[i];
+            df::item * item = world->items.other[items_other_id::SEEDS][i];
             t_materialIndex materialIndex = item->getMaterialIndex();
-            switch(item->getType())
-            {
-            case item_type::SEEDS:
-                if(!ignoreSeeds(item->flags)) ++seedCount[materialIndex];
-                break;
-            case item_type::PLANT:
-                break;
-            }
+            if(!ignoreSeeds(item->flags)) ++seedCount[materialIndex];
         }
 
-        std::map<t_materialIndex, unsigned int> watchMap;
+        map<t_materialIndex, unsigned int> watchMap;
         Kitchen::fillWatchMap(watchMap);
         for(auto i = watchMap.begin(); i != watchMap.end(); ++i)
         {

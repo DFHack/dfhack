@@ -65,19 +65,27 @@ DFhackCExport command_result df_fixveins (Core * c, vector <string> & parameters
             for (int k = 0; k < 16; k++)
                 has_mineral[k] |= mineral->tile_bitmask[k];
         }
+        t_feature local, global;
+        Maps::GetGlobalFeature(global, block->global_feature);
+        Maps::GetLocalFeature(local, df::coord2d(block->map_pos.x / 16, block->map_pos.y / 16), block->local_feature);
         for (int x = 0; x < 16; x++)
         {
             for (int y = 0; y < 16; y++)
             {
+                bool has_feature = ((block->designation[x][y].bits.feature_global) && (global.main_material != -1) && (global.sub_material != -1)) ||
+                    ((block->designation[x][y].bits.feature_local) && (local.main_material != -1) && (local.sub_material != -1));
+                bool has_vein = has_mineral[y] & (1 << x);
+                if (has_feature)
+                    has_vein = false;
                 int16_t oldT = block->tiletype[x][y];
                 TileMaterial mat = tileMaterial(oldT);
-                if ((mat == VEIN) && !(has_mineral[y] & (1 << x)))
+                if ((mat == VEIN) && !has_vein)
                     mineral_removed += setTileMaterial(block->tiletype[x][y], STONE);
-                if ((mat == STONE) && (has_mineral[y] & (1 << x)))
+                if ((mat == STONE) && has_vein)
                     mineral_added += setTileMaterial(block->tiletype[x][y], VEIN);
-                if ((mat == FEATSTONE) && !(block->designation[x][y].bits.feature_local || block->designation[x][y].bits.feature_global))
+                if ((mat == FEATSTONE) && !has_feature)
                     feature_removed += setTileMaterial(block->tiletype[x][y], STONE);
-                if ((mat == STONE) && (block->designation[x][y].bits.feature_local || block->designation[x][y].bits.feature_global))
+                if ((mat == STONE) && has_feature)
                     feature_added += setTileMaterial(block->tiletype[x][y], FEATSTONE);
             }
         }

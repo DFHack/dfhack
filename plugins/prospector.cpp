@@ -280,33 +280,40 @@ static command_result embark_prospector(DFHack::Core *c, df::viewscreen_choose_s
         {
             auto layer = geo_biome->layers[i];
 
-            for (int z = layer->bottom_height; z <= layer->top_height; z++)
+            layerMats[layer->mat_index].add(layer->bottom_height, 0);
+
+            int level_cnt = layer->top_height - layer->bottom_height + 1;
+            int layer_size = 48*48*cnt*level_cnt;
+
+            for (unsigned j = 0; j < layer->vein_mat.size(); j++)
             {
-                layerMats[layer->mat_index].add(z, 48*48*cnt);
-
-                for (unsigned j = 0; j < layer->vein_mat.size(); j++)
+                // TODO: find out how to estimate the real density
+                int bias = 100;
+                switch (layer->vein_type[j])
                 {
-                    // TODO: find out how to estimate the real density
-                    int bias = 100;
-                    switch (layer->vein_type[j])
-                    {
-                    case inclusion_type::VEIN:
-                        bias = 360;
-                        break;
-                    case inclusion_type::CLUSTER:
-                        bias = 1800;
-                        break;
-                    case inclusion_type::CLUSTER_SMALL:
-                        bias = 18;
-                        break;
-                    case inclusion_type::CLUSTER_ONE:
-                        bias = 3;
-                        break;
-                    }
-
-                    veinMats[layer->vein_mat[j]].add(z, layer->vein_unk_38[j]*bias*cnt/100);
+                case inclusion_type::VEIN:
+                    bias = 200;
+                    break;
+                case inclusion_type::CLUSTER:
+                    bias = 1000;
+                    break;
+                case inclusion_type::CLUSTER_SMALL:
+                    bias = 15;
+                    break;
+                case inclusion_type::CLUSTER_ONE:
+                    bias = 2;
+                    break;
                 }
+
+                int size = layer->vein_unk_38[j]*bias*cnt*level_cnt/100;
+
+                veinMats[layer->vein_mat[j]].add(layer->bottom_height, 0);
+                veinMats[layer->vein_mat[j]].add(layer->top_height, size);
+
+                layer_size -= size;
             }
+
+            layerMats[layer->mat_index].add(layer->top_height, std::max(0,layer_size));
         }
     }
 

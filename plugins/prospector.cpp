@@ -285,27 +285,40 @@ static command_result embark_prospector(DFHack::Core *c, df::viewscreen_choose_s
             int level_cnt = layer->top_height - layer->bottom_height + 1;
             int layer_size = 48*48*cnt*level_cnt;
 
+            int sums[ENUM_LAST_ITEM(inclusion_type)+1] = { 0 };
+
+            for (unsigned j = 0; j < layer->vein_mat.size(); j++)
+                if (inclusion_type::is_valid(layer->vein_type[j]))
+                    sums[layer->vein_type[j]] += layer->vein_unk_38[j];
+
             for (unsigned j = 0; j < layer->vein_mat.size(); j++)
             {
                 // TODO: find out how to estimate the real density
-                int bias = 100;
-                switch (layer->vein_type[j])
+                // this code assumes that vein_unk_38 is the weight
+                // used when choosing the vein material
+                int size = layer->vein_unk_38[j]*cnt*level_cnt;
+                df::inclusion_type type = layer->vein_type[j];
+
+                switch (type)
                 {
                 case inclusion_type::VEIN:
-                    bias = 200;
+                    // 3 veins of 80 tiles avg
+                    size = size * 80 * 3 / sums[type];
                     break;
                 case inclusion_type::CLUSTER:
-                    bias = 1000;
+                    // 1 cluster of 700 tiles avg
+                    size = size * 700 * 1 / sums[type];
                     break;
                 case inclusion_type::CLUSTER_SMALL:
-                    bias = 15;
+                    size = size * 6 * 7 / sums[type];
                     break;
                 case inclusion_type::CLUSTER_ONE:
-                    bias = 2;
+                    size = size * 1 * 5 / sums[type];
                     break;
+                default:
+                    // shouldn't actually happen
+                    size = cnt*level_cnt;
                 }
-
-                int size = layer->vein_unk_38[j]*bias*cnt*level_cnt/100;
 
                 veinMats[layer->vein_mat[j]].add(layer->bottom_height, 0);
                 veinMats[layer->vein_mat[j]].add(layer->top_height, size);

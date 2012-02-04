@@ -64,8 +64,8 @@ OPTION(BUILD_PLUGINS "Build the plugins." ON)
 IF(UNIX)
   add_definitions(-DLINUX_BUILD)
   SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
-  SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32 -march=i686 -std=c++0x")
-  SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32 -march=i686")
+  SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -m32 -march=i686 -mtune=generic -std=c++0x")
+  SET(CMAKE_C_FLAGS "-fvisibility=hidden -m32 -march=i686 -mtune=generic")
 ENDIF()
 
 #add depends to include path

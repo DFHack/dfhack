@@ -15,7 +15,9 @@ include_directories (depends/tinyxml)
 include_directories (depends/tthread)
 add_subdirectory (depends/protobuf)
 
-execute_process(COMMAND perl xml/list.pl xml include/df ";"
+SET(PERL_EXECUTABLE "perl" CACHE FILEPATH "This is the perl executable to run in the codegen step. Tweak it if you need to run a specific one.")
+
+execute_process(COMMAND ${PERL_EXECUTABLE} xml/list.pl xml include/df ";"
                 WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
                 OUTPUT_VARIABLE GENERATED_HDRS)
 
@@ -142,7 +144,7 @@ FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/*.xml)
 
 ADD_CUSTOM_COMMAND(
     OUTPUT ${dfapi_SOURCE_DIR}/include/df/static.inc
-    COMMAND perl xml/codegen.pl xml include/df
+    COMMAND ${PERL_EXECUTABLE} xml/codegen.pl xml include/df
     WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
     MAIN_DEPENDENCY ${dfapi_SOURCE_DIR}/xml/codegen.pl
     DEPENDS ${GENERATE_INPUT_XMLS} ${GENERATE_INPUT_SCRIPTS}
@@ -164,7 +166,7 @@ IF(UNIX)
 ENDIF()
 
 IF(UNIX)
-  SET(PROJECT_LIBS rt )
+  SET(PROJECT_LIBS rt dl)
 ELSE(WIN32)
   #FIXME: do we really need this?
   SET(PROJECT_LIBS psapi ${dfhack_SOURCE_DIR}/library/depends/ntdll/ntdll.lib)

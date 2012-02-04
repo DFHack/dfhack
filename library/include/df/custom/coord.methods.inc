@@ -22,6 +22,15 @@ bool operator<(const coord &other) const
     return z < other.z;
 }
 
+coord operator+(const coord &other) const
+{
+    return coord(x + other.x, y + other.y, z + other.z);
+}
+coord operator-(const coord &other) const
+{
+    return coord(x - other.x, y - other.y, z - other.z);
+}
+
 coord operator/(int number) const
 {
     return coord(x/number, y/number, z);

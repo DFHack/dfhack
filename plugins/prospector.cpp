@@ -19,12 +19,21 @@ using namespace std;
 #include "PluginManager.h"
 #include "modules/MapCache.h"
 
+#include "MiscUtils.h"
+
 #include "DataDefs.h"
 #include "df/world.h"
+#include "df/world_data.h"
+#include "df/world_region_details.h"
+#include "df/world_geo_biome.h"
+#include "df/world_geo_layer.h"
+#include "df/inclusion_type.h"
+#include "df/viewscreen_choose_start_sitest.h"
 
 using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
+using df::coord2d;
 
 struct matdata
 {
@@ -41,9 +50,9 @@ struct matdata
         lower_z = copyme.lower_z;
         upper_z = copyme.upper_z;
     }
-    unsigned int add( int z_level = invalid_z )
+    unsigned int add( int z_level = invalid_z, int delta = 1 )
     {
-        count ++;
+        count += delta;
         if(z_level != invalid_z)
         {
             if(lower_z == invalid_z || z_level < lower_z)
@@ -187,12 +196,132 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
         "  all   - Scan the whole map, as if it was revealed.\n"
         "  value - Show material value in the output. Most useful for gems.\n"
         "  hell  - Show the Z range of HFS tubes. Implies 'all'.\n"
+        "Pre-embark estimate:\n"
+        "  If called during the embark selection screen, displays\n"
+        "  an estimate of layer stone availability. If the 'all'\n"
+        "  option is specified, also estimates veins.\n"
+        "  The estimate is computed either for 1 embark tile of the\n"
+        "  blinking biome, or for all tiles of the embark rectangle.\n"
     ));
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( Core * c )
 {
+    return CR_OK;
+}
+
+static coord2d biome_delta[] = {
+    coord2d(-1,1), coord2d(0,1), coord2d(1,1),
+    coord2d(-1,0), coord2d(0,0), coord2d(1,0),
+    coord2d(-1,-1), coord2d(0,-1), coord2d(1,-1)
+};
+
+static command_result embark_prospector(DFHack::Core *c, df::viewscreen_choose_start_sitest *screen,
+                                        bool showHidden, bool showValue)
+{
+    if (!world || !world->world_data)
+    {
+        c->con.printerr("World data is not available.\n");
+        return CR_FAILURE;
+    }
+
+    df::world_data *data = world->world_data;
+    coord2d cur_region = screen->region_pos;
+    int d_idx = linear_index(data->region_details, &df::world_region_details::pos, cur_region);
+    auto cur_details = vector_get(data->region_details, d_idx);
+
+    if (!cur_details)
+    {
+        c->con.printerr("Current region details are not available.\n");
+        return CR_FAILURE;
+    }
+
+    // Compute biomes
+    std::map<coord2d, int> biomes;
+
+    if (screen->biome_highlighted)
+    {
+        c->con.print("Processing one embark tile of biome F%d.\n\n", screen->biome_idx+1);
+        biomes[screen->biome_rgn[screen->biome_idx]]++;
+    }
+    else
+    {
+        for (int x = screen->embark_pos_min.x; x <= screen->embark_pos_max.x; x++)
+        {
+            for (int y = screen->embark_pos_min.y; y <= screen->embark_pos_max.y; y++)
+            {
+                int bv = clip_range(cur_details->biome[x][y], 1, 9);
+                biomes[cur_region + biome_delta[bv-1]]++;
+            }
+        }
+    }
+
+    // Compute material maps
+    MatMap layerMats;
+    MatMap veinMats;
+
+    for (auto biome_it = biomes.begin(); biome_it != biomes.end(); ++biome_it)
+    {
+        int bx = clip_range(biome_it->first.x, 0, data->world_width-1);
+        int by = clip_range(biome_it->first.y, 0, data->world_height-1);
+        auto &region = data->region_map[bx][by];
+        df::world_geo_biome *geo_biome = df::world_geo_biome::find(region.geo_index);
+
+        if (!geo_biome)
+        {
+            c->con.printerr("Region geo-biome not found: (%d,%d)\n", bx, by);
+            return CR_FAILURE;
+        }
+
+        int cnt = biome_it->second;
+
+        for (unsigned i = 0; i < geo_biome->layers.size(); i++)
+        {
+            auto layer = geo_biome->layers[i];
+
+            for (int z = layer->bottom_height; z <= layer->top_height; z++)
+            {
+                layerMats[layer->mat_index].add(z, 48*48*cnt);
+
+                for (unsigned j = 0; j < layer->vein_mat.size(); j++)
+                {
+                    // TODO: find out how to estimate the real density
+                    int bias = 100;
+                    switch (layer->vein_type[j])
+                    {
+                    case inclusion_type::VEIN:
+                        bias = 360;
+                        break;
+                    case inclusion_type::CLUSTER:
+                        bias = 1800;
+                        break;
+                    case inclusion_type::CLUSTER_SMALL:
+                        bias = 18;
+                        break;
+                    case inclusion_type::CLUSTER_ONE:
+                        bias = 3;
+                        break;
+                    }
+
+                    veinMats[layer->vein_mat[j]].add(z, layer->vein_unk_38[j]*bias*cnt/100);
+                }
+            }
+        }
+    }
+
+    // Print the report
+    c->con << "Layer materials:" << std::endl;
+    printMats(c->con, layerMats, world->raws.inorganics, showValue);
+
+    if (showHidden) {
+        DFHack::Materials *mats = c->getMaterials();
+        printVeins(c->con, veinMats, mats, showValue);
+        mats->Finish();
+    }
+
+    c->con << "Warning: the above data is only a very rough estimate." << std::endl;
+
     return CR_OK;
 }
 
@@ -222,13 +351,19 @@ DFhackCExport command_result prospector (DFHack::Core * c, vector <string> & par
         else
             return CR_WRONG_USAGE;
     }
-    uint32_t x_max = 0, y_max = 0, z_max = 0;
     CoreSuspender suspend(c);
+
+    // Embark screen active: estimate using world geology data
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_choose_start_sitest, c->getTopViewscreen()))
+        return embark_prospector(c, screen, showHidden, showValue);
+
     if (!Maps::IsValid())
     {
         c->con.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
+
+    uint32_t x_max = 0, y_max = 0, z_max = 0;
     Maps::getSize(x_max, y_max, z_max);
     MapExtras::MapCache map;
 

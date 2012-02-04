@@ -27,7 +27,9 @@ mapexport.cpp
 
 SET(PROJECT_PROTOS
 ${CMAKE_CURRENT_SOURCE_DIR}/proto/Tile.proto
+${CMAKE_CURRENT_SOURCE_DIR}/proto/Plant.proto
 ${CMAKE_CURRENT_SOURCE_DIR}/proto/Block.proto
+${CMAKE_CURRENT_SOURCE_DIR}/proto/Material.proto
 ${CMAKE_CURRENT_SOURCE_DIR}/proto/Map.proto
 )
 

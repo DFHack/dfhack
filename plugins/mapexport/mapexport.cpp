@@ -13,11 +13,15 @@ using namespace google::protobuf::io;
 
 #include "DataDefs.h"
 #include "df/world.h"
+#include "modules/Constructions.h"
 
 #include "proto/Map.pb.h"
 #include "proto/Block.pb.h"
 
-using namespace DFHack::Simple;
+using namespace DFHack;
+using df::global::world;
+
+typedef std::vector<df::plant *> PlantList;
 
 DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & parameters);
 
@@ -42,18 +46,29 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
 
 DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & parameters)
 {
+    bool showHidden = false;
+
+    int filenameParameter = 1;
+
     for(size_t i = 0; i < parameters.size();i++)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {
             c->con.print("Exports the currently visible map to a file.\n"
-                         "Usage: mapexport <filename>\n"
+                         "Usage: mapexport [options] <filename>\n"
+                         "Example: mapexport all embark.dfmap\n"
+                         "Options:\n"
+                         "   all   - Export the entire map, not just what's revealed."
             );
             return CR_OK;
         }
+        if (parameters[i] == "all")
+        {
+            showHidden = true;
+            filenameParameter++;
+        }
     }
 
-    bool showHidden = true;
 
     uint32_t x_max=0, y_max=0, z_max=0;
     c->Suspend();
@@ -64,14 +79,16 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
         return CR_FAILURE;
     }
 
-	if (parameters.size() < 1)
+	if (parameters.size() < filenameParameter)
     {
             c->con.printerr("Please supply a filename.\n");
 			c->Resume();
             return CR_FAILURE;
     }
 
-    std::string filename = parameters[0];
+    std::string filename = parameters[filenameParameter-1];
+    if (filename.rfind(".dfmap") == std::string::npos) filename += ".dfmap";
+    c->con << "Writing to " << filename << "..." << std::endl;
 
     std::ofstream output_file(filename, std::ios::out | std::ios::trunc | std::ios::binary);
     if (!output_file.is_open())
@@ -90,16 +107,46 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
     MapExtras::MapCache map;
     DFHack::Materials *mats = c->getMaterials();
 
+    c->con << "Writing  map info..." << std::endl;
+
     dfproto::Map protomap;
     protomap.set_x_size(x_max);
     protomap.set_y_size(y_max);
     protomap.set_z_size(z_max);
 
+    c->con << "Writing material dictionary..." << std::endl;
+    
+    for (size_t i = 0; i < world->raws.inorganics.size(); i++)
+    {
+        dfproto::Material *protomaterial = protomap.add_inorganic_material();
+        protomaterial->set_type(i);
+        protomaterial->set_name(world->raws.inorganics[i]->id);
+    }
+
+    for (size_t i = 0; i < world->raws.plants.all.size(); i++)
+    {
+        dfproto::Material *protomaterial = protomap.add_organic_material();
+        protomaterial->set_type(i);
+        protomaterial->set_name(world->raws.plants.all[i]->id);
+    }
+
+    std::map<df::coord,std::pair<uint32_t,uint16_t> > constructionMaterials;
+    if (Constructions::isValid())
+    {
+        for (uint32_t i = 0; i < Constructions::getCount(); i++)
+        {
+            df::construction *construction = Constructions::getConstruction(i);
+            constructionMaterials[construction->pos] = std::make_pair(construction->mat_index, construction->mat_type);
+        }
+    }
+        
     coded_output->WriteVarint32(protomap.ByteSize());
     protomap.SerializeToCodedStream(coded_output);
-
+    
     DFHack::t_feature blockFeatureGlobal;
     DFHack::t_feature blockFeatureLocal;
+
+    c->con.print("Writing map block information");
 
     for(uint32_t z = 0; z < z_max; z++)
     {
@@ -107,6 +154,7 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
         {
             for(uint32_t b_x = 0; b_x < x_max; b_x++)
             {
+                if (b_x == 0 && b_y == 0 && z % 10 == 0) c->con.print(".");
                 // Get the map block
                 df::coord2d blockCoord(b_x, b_y);
                 MapExtras::Block *b = map.BlockAt(DFHack::DFCoord(b_x, b_y, z));
@@ -163,13 +211,18 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                         prototile->set_type((dfproto::Tile::TileType)info->shape);
 
 						prototile->set_material_type((dfproto::Tile::MaterialType)info->material);
+
+                        df::coord map_pos = df::coord(b_x*16+x,b_y*16+y,z);
+                        
 						switch (info->material)
 						{
 						case DFHack::SOIL:
 						case DFHack::STONE:
+                            prototile->set_material_index(0);
 							prototile->set_material(b->baseMaterialAt(coord));
 							break;
 						case DFHack::VEIN:
+                            prototile->set_material_index(0);
 							prototile->set_material(b->veinMaterialAt(coord));
 							break;
 						case DFHack::FEATSTONE:
@@ -178,18 +231,46 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                                 if (blockFeatureLocal.type == df::feature_type::deep_special_tube
                                         && blockFeatureLocal.main_material == 0) // stone
                                 {
+                                    prototile->set_material_index(0);
 									prototile->set_material(blockFeatureLocal.sub_material);
                                 }
 								if (blockFeatureGlobal.type != -1 && des.bits.feature_global
 										&& blockFeatureGlobal.type == df::feature_type::feature_underworld_from_layer
 										&& blockFeatureGlobal.main_material == 0) // stone
 								{
+                                    prototile->set_material_index(0);
 									prototile->set_material(blockFeatureGlobal.sub_material);
 								}
                             }
+                            break;
+                        case DFHack::CONSTRUCTED:
+                            if (constructionMaterials.find(map_pos) != constructionMaterials.end())
+                            {
+                                prototile->set_material_index(constructionMaterials[map_pos].first);
+                                prototile->set_material(constructionMaterials[map_pos].second);
+                            }
+                            break;
 						}
                     }
                 }
+
+                PlantList *plants;
+                if (Maps::ReadVegetation(b_x, b_y, z, plants))
+                {
+                    for (PlantList::const_iterator it = plants->begin(); it != plants->end(); it++)
+                    {
+                        dfproto::Plant *protoplant = protoblock.add_plant();
+                        const df::plant & plant = *(*it);
+                        df::coord2d loc(plant.pos.x, plant.pos.y);
+                        loc = loc % 16;
+                        if (showHidden || !b->DesignationAt(loc).bits.hidden)
+                        {
+                            protoplant->set_is_shrub(plant.flags.bits.is_shrub);
+                            protoplant->set_material(plant.material);
+                        }
+                    }
+                }
+                
 				coded_output->WriteVarint32(protoblock.ByteSize());
 				protoblock.SerializeToCodedStream(coded_output);
             } // block x
@@ -202,7 +283,8 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
 	delete zip_output;
     delete raw_output;
 
-    c->con.print("Map succesfully exported.\n");
+    mats->Finish();
+    c->con.print("\nMap succesfully exported!\n");
     c->Resume();
     return CR_OK;
 }

@@ -60,7 +60,8 @@ message Tile
     required uint32 y = 2;
     required TileType type = 3;
     optional MaterialType material_type = 4;
-    optional uint32 material = 5;
-    optional LiquidType liquid_type = 6;
-    optional uint32 flow_size = 7;
+    optional uint32 material_index = 5;
+    optional uint32 material = 6;
+    optional LiquidType liquid_type = 7;
+    optional uint32 flow_size = 8;
 }

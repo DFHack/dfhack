@@ -92,7 +92,7 @@ DFhackCExport command_result df_getplants (Core * c, vector <string> & parameter
         bool dirty = false;
         for (size_t j = 0; j < cur->plants.size(); j++)
         {
-            const df::plant *plant = cur->plants[i];
+            const df::plant *plant = cur->plants[j];
             int x = plant->pos.x % 16;
             int y = plant->pos.y % 16;
             if (plantIDs.find(plant->material) != plantIDs.end())

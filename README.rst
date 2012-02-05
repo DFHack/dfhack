@@ -301,8 +301,8 @@ job-material
 Alter the material of the selected job. Invoked as: job-material <inorganic-token>
 
 Intended to be used as a keybinding:
- * In 'q' mode, when a job is highlighted within a workshop or furnace, changes the material of the job. Only inorganic materials can be used in this mode.\n"
- * In 'b' mode, during selection of building components positions the cursor over the first available choice with the matching material.\n"
+ * In 'q' mode, when a job is highlighted within a workshop or furnace, changes the material of the job. Only inorganic materials can be used in this mode.
+ * In 'b' mode, during selection of building components positions the cursor over the first available choice with the matching material.
 
 job-duplicate
 =============
@@ -416,7 +416,7 @@ showmood
 ========
 Shows all items needed for the currently active strange mood.
 
-stockpiles
+copystock
 ==========
 Copies the parameters of the currently highlighted stockpile to the custom stockpile settings and switches to custom stockpile placement mode, effectively allowing you to copy/paste stockpiles easily.
 

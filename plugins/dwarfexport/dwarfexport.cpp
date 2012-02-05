@@ -27,7 +27,7 @@ using df::global::ui;
 using df::global::world;
 
 // our own, empty header.
-#include "export.h"
+#include "dwarfexport.h"
 
 
 // Here go all the command declarations...
@@ -37,7 +37,7 @@ DFhackCExport command_result export_dwarves (Core * c, std::vector <std::string>
 // A plugins must be able to return its name. This must correspond to the filename - export.plug.so or export.plug.dll
 DFhackCExport const char * plugin_name ( void )
 {
-    return "export";
+    return "dwarfexport";
 }
 
 // Mandatory init function. If you have some global state, create it here.
@@ -45,7 +45,7 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
 {
     // Fill the command list with your commands.
     commands.clear();
-    commands.push_back(PluginCommand("export",
+    commands.push_back(PluginCommand("dwarfexport",
                                      "Export dwarves to RuneSmith-compatible XML.",
                                      export_dwarves /*,
                                      true or false - true means that the command can't be used from non-interactive user interface'*/));
@@ -58,7 +58,7 @@ DFhackCExport command_result plugin_shutdown ( Core * c )
     return CR_OK;
 }
 
-static char* physicals[] = {
+static const char* physicals[] = {
     "Strength",
     "Agility",
     "Toughness",
@@ -67,7 +67,7 @@ static char* physicals[] = {
     "DiseaseResistance",
 };
 
-static char* mentals[] = {
+static const char* mentals[] = {
     "Willpower",
     "Memory",
     "Focus",

@@ -42,7 +42,7 @@ endif()
 
 OPTION(BUILD_DWARFEXPORT "Build dwarf exporter." ON)
 if (BUILD_DWARFEXPORT)
-    add_subdirectory (export)
+    add_subdirectory (dwarfexport)
 endif()
 
 DFHACK_PLUGIN(reveal reveal.cpp)

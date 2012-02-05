@@ -1168,7 +1168,7 @@ repeats with the last selected parameters.</p>
 <div class="section" id="usage">
 <h3><a class="toc-backref" href="#id98">Usage</a></h3>
 <dl class="docutils">
-<dt>workflow enable [option...], workflow disable [option...]</dt>
+<dt><tt class="docutils literal">workflow enable <span class="pre">[option...],</span> workflow disable <span class="pre">[option...]</span></tt></dt>
 <dd><p class="first">If no options are specified, enables or disables the plugin.
 Otherwise, enables or disables any of the following options:</p>
 <ul class="last simple">
@@ -1176,13 +1176,13 @@ Otherwise, enables or disables any of the following options:</p>
 <li>auto-melt: Resume melt jobs when there are objects to melt.</li>
 </ul>
 </dd>
-<dt>workflow jobs</dt>
+<dt><tt class="docutils literal">workflow jobs</tt></dt>
 <dd>List workflow-controlled jobs (if in a workshop, filtered by it).</dd>
-<dt>workflow list</dt>
+<dt><tt class="docutils literal">workflow list</tt></dt>
 <dd>List active constraints, and their job counts.</dd>
-<dt>workflow count &lt;constraint-spec&gt; &lt;cnt-limit&gt; [cnt-gap], workflow amount &lt;constraint-spec&gt; &lt;cnt-limit&gt; [cnt-gap]</dt>
+<dt><tt class="docutils literal">workflow count <span class="pre">&lt;constraint-spec&gt;</span> <span class="pre">&lt;cnt-limit&gt;</span> <span class="pre">[cnt-gap],</span> workflow amount <span class="pre">&lt;constraint-spec&gt;</span> <span class="pre">&lt;cnt-limit&gt;</span> <span class="pre">[cnt-gap]</span></tt></dt>
 <dd>Set a constraint. The first form counts each stack as only 1 item.</dd>
-<dt>workflow unlimit &lt;constraint-spec&gt;</dt>
+<dt><tt class="docutils literal">workflow unlimit <span class="pre">&lt;constraint-spec&gt;</span></tt></dt>
 <dd>Delete a constraint.</dd>
 </dl>
 </div>
@@ -1199,46 +1199,39 @@ the frequency of jobs being toggled.</p>
 </div>
 <div class="section" id="constraint-examples">
 <h3><a class="toc-backref" href="#id100">Constraint examples</a></h3>
-<dl class="docutils">
-<dt>Keep metal bolts within 900-1000, and wood/bone within 150-200.</dt>
-<dd><ul class="first last simple">
-<li>workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100</li>
-<li>workflow amount AMMO:ITEM_AMMO_BOLTS/WOOD,BONE 200 50</li>
-</ul>
-</dd>
-<dt>Keep the number of prepared food &amp; drink stacks between 90 and 120</dt>
-<dd><ul class="first last simple">
-<li>workflow count FOOD 120 30</li>
-<li>workflow count DRINK 120 30</li>
-</ul>
-</dd>
-<dt>Make sure there are always 25-30 empty bins/barrels/bags.</dt>
-<dd><ul class="first last simple">
-<li>workflow count BIN 30</li>
-<li>workflow count BARREL 30</li>
-<li>workflow count BOX/CLOTH,SILK,YARN 30</li>
-</ul>
-</dd>
-<dt>Make sure there are always 15-20 coal and 25-30 copper bars.</dt>
-<dd><ul class="first last simple">
-<li>workflow count BAR//COAL 20</li>
-<li>workflow count BAR//COPPER 30</li>
-</ul>
-</dd>
-<dt>Collect 15-20 sand bags and clay boulders.</dt>
-<dd><ul class="first last simple">
-<li>workflow count POWDER_MISC/SAND 20</li>
-<li>workflow count BOULDER/CLAY 20</li>
-</ul>
-</dd>
-<dt>Make sure there are always 80-100 units of dimple dye.</dt>
-<dd><ul class="first simple">
-<li>workflow amount POWDER_MISC//MUSHROOM_CUP_DIMPLE:MILL 100 20</li>
-</ul>
-<p class="last">In order for this to work, you have to set the material of the PLANT input on
-the Mill Plants job to MUSHROOM_CUP_DIMPLE using the 'job item-material' command.</p>
-</dd>
-</dl>
+<p>Keep metal bolts within 900-1000, and wood/bone within 150-200.</p>
+<pre class="literal-block">
+workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100
+workflow amount AMMO:ITEM_AMMO_BOLTS/WOOD,BONE 200 50
+</pre>
+<p>Keep the number of prepared food &amp; drink stacks between 90 and 120</p>
+<pre class="literal-block">
+workflow count FOOD 120 30
+workflow count DRINK 120 30
+</pre>
+<p>Make sure there are always 25-30 empty bins/barrels/bags.</p>
+<pre class="literal-block">
+workflow count BIN 30
+workflow count BARREL 30
+workflow count BOX/CLOTH,SILK,YARN 30
+</pre>
+<p>Make sure there are always 15-20 coal and 25-30 copper bars.</p>
+<pre class="literal-block">
+workflow count BAR//COAL 20
+workflow count BAR//COPPER 30
+</pre>
+<p>Collect 15-20 sand bags and clay boulders.</p>
+<pre class="literal-block">
+workflow count POWDER_MISC/SAND 20
+workflow count BOULDER/CLAY 20
+</pre>
+<p>Make sure there are always 80-100 units of dimple dye.</p>
+<pre class="literal-block">
+  workflow amount POWDER_MISC//MUSHROOM_CUP_DIMPLE:MILL 100 20
+
+In order for this to work, you have to set the material of the PLANT input on
+the Mill Plants job to MUSHROOM_CUP_DIMPLE using the 'job item-material' command.
+</pre>
 </div>
 </div>
 </div>

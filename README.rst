@@ -534,19 +534,19 @@ Manage control of repeat jobs.
 
 Usage
 -----
-workflow enable [option...], workflow disable [option...]
+``workflow enable [option...], workflow disable [option...]``
    If no options are specified, enables or disables the plugin.
    Otherwise, enables or disables any of the following options:
 
    - drybuckets: Automatically empty abandoned water buckets.
    - auto-melt: Resume melt jobs when there are objects to melt.
-workflow jobs
+``workflow jobs``
    List workflow-controlled jobs (if in a workshop, filtered by it).
-workflow list
+``workflow list``
    List active constraints, and their job counts.
-workflow count <constraint-spec> <cnt-limit> [cnt-gap], workflow amount <constraint-spec> <cnt-limit> [cnt-gap]
+``workflow count <constraint-spec> <cnt-limit> [cnt-gap], workflow amount <constraint-spec> <cnt-limit> [cnt-gap]``
    Set a constraint. The first form counts each stack as only 1 item.
-workflow unlimit <constraint-spec>
+``workflow unlimit <constraint-spec>``
    Delete a constraint.
 
 Function
@@ -565,28 +565,40 @@ the frequency of jobs being toggled.
 Constraint examples
 -------------------
 Keep metal bolts within 900-1000, and wood/bone within 150-200.
-  * workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100
-  * workflow amount AMMO:ITEM_AMMO_BOLTS/WOOD,BONE 200 50
+::
+    
+    workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100
+    workflow amount AMMO:ITEM_AMMO_BOLTS/WOOD,BONE 200 50
 
 Keep the number of prepared food & drink stacks between 90 and 120
-  * workflow count FOOD 120 30
-  * workflow count DRINK 120 30
+::
+    
+    workflow count FOOD 120 30
+    workflow count DRINK 120 30
 
 Make sure there are always 25-30 empty bins/barrels/bags.
-  * workflow count BIN 30
-  * workflow count BARREL 30
-  * workflow count BOX/CLOTH,SILK,YARN 30
+::
+    
+    workflow count BIN 30
+    workflow count BARREL 30
+    workflow count BOX/CLOTH,SILK,YARN 30
 
 Make sure there are always 15-20 coal and 25-30 copper bars.
-  * workflow count BAR//COAL 20
-  * workflow count BAR//COPPER 30
+::
+    
+    workflow count BAR//COAL 20
+    workflow count BAR//COPPER 30
 
 Collect 15-20 sand bags and clay boulders.
-  * workflow count POWDER_MISC/SAND 20
-  * workflow count BOULDER/CLAY 20
+::
+    
+    workflow count POWDER_MISC/SAND 20
+    workflow count BOULDER/CLAY 20
 
 Make sure there are always 80-100 units of dimple dye.
-  * workflow amount POWDER_MISC//MUSHROOM_CUP_DIMPLE:MILL 100 20
+::
+    
+    workflow amount POWDER_MISC//MUSHROOM_CUP_DIMPLE:MILL 100 20
 
   In order for this to work, you have to set the material of the PLANT input on
   the Mill Plants job to MUSHROOM_CUP_DIMPLE using the 'job item-material' command.

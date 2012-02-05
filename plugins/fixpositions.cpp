@@ -41,9 +41,9 @@ command_result df_fixdiplomats (Core *c, vector<string> &parameters)
         bool update = true;
         df::entity_position *pos = NULL;
         // see if we need to add a new position or modify an existing one
-        for (int j = 0; j < ent->positions.size(); j++)
+        for (int j = 0; j < ent->positions.own.size(); j++)
         {
-            pos = ent->positions[j];
+            pos = ent->positions.own[j];
             if (pos->responsibilities[entity_position_responsibility::MAKE_INTRODUCTIONS] && 
                 pos->responsibilities[entity_position_responsibility::MAKE_PEACE_AGREEMENTS] &&
                 pos->responsibilities[entity_position_responsibility::MAKE_TOPIC_AGREEMENTS])
@@ -64,10 +64,10 @@ command_result df_fixdiplomats (Core *c, vector<string> &parameters)
             {
                 // there was no diplomat - create it
                 pos = new df::entity_position;
-                ent->positions.push_back(pos);
+                ent->positions.own.push_back(pos);
 
                 pos->code = "DIPLOMAT";
-                pos->id = ent->next_position_id++;
+                pos->id = ent->positions.next_position_id++;
                 pos->flags.set(entity_position_flags::DO_NOT_CULL);
                 pos->flags.set(entity_position_flags::MENIAL_WORK_EXEMPTION);
                 pos->flags.set(entity_position_flags::SLEEP_PRETENSION);
@@ -97,9 +97,9 @@ command_result df_fixdiplomats (Core *c, vector<string> &parameters)
 
         // make sure the diplomat position, whether we created it or not, is set up for proper assignment
         bool assign = true;
-        for (int j = 0; j < ent->position_assignment.size(); j++)
+        for (int j = 0; j < ent->positions.assignments.size(); j++)
         {
-            if (ent->position_assignment[j]->position_id == pos->id)
+            if (ent->positions.assignments[j]->position_id == pos->id)
             {
                 // it is - nothing more to do here
                 assign = false;
@@ -110,16 +110,12 @@ command_result df_fixdiplomats (Core *c, vector<string> &parameters)
         {
             // it isn't - set it up
             df::entity_position_assignment *asn = new df::entity_position_assignment;
-            ent->position_assignment.push_back(asn);
+            ent->positions.assignments.push_back(asn);
 
-            asn->id = ent->next_position_assignment_id++;
-            asn->histfig = -1;
+            asn->id = ent->positions.next_assignment_id++;
             asn->position_id = pos->id;
             asn->flags.extend(0x1F); // make room for 32 flags
             asn->flags.set(0);  // and set the first one
-            asn->anon_1 = -1;
-            asn->anon_2 = -1;
-            asn->anon_3 = -1;
         }
         if (update || assign)
             fixed++;
@@ -149,9 +145,9 @@ command_result df_fixmerchants (Core *c, vector<string> &parameters)
         bool update = true;
         df::entity_position *pos = NULL;
         // see if we need to add a new position or modify an existing one
-        for (int j = 0; j < ent->positions.size(); j++)
+        for (int j = 0; j < ent->positions.own.size(); j++)
         {
-            pos = ent->positions[j];
+            pos = ent->positions.own[j];
             if (pos->responsibilities[entity_position_responsibility::TRADE])
             {
                 // a guild rep exists with the proper responsibilities - skip to the end
@@ -170,10 +166,10 @@ command_result df_fixmerchants (Core *c, vector<string> &parameters)
             {
                 // there was no guild rep - create it
                 pos = new df::entity_position;
-                ent->positions.push_back(pos);
+                ent->positions.own.push_back(pos);
 
                 pos->code = "GUILD_REPRESENTATIVE";
-                pos->id = ent->next_position_id++;
+                pos->id = ent->positions.next_position_id++;
                 pos->flags.set(entity_position_flags::DO_NOT_CULL);
                 pos->flags.set(entity_position_flags::MENIAL_WORK_EXEMPTION);
                 pos->flags.set(entity_position_flags::SLEEP_PRETENSION);
@@ -201,9 +197,9 @@ command_result df_fixmerchants (Core *c, vector<string> &parameters)
 
         // make sure the guild rep position, whether we created it or not, is set up for proper assignment
         bool assign = true;
-        for (int j = 0; j < ent->position_assignment.size(); j++)
+        for (int j = 0; j < ent->positions.assignments.size(); j++)
         {
-            if (ent->position_assignment[j]->position_id == pos->id)
+            if (ent->positions.assignments[j]->position_id == pos->id)
             {
                 // it is - nothing more to do here
                 assign = false;
@@ -214,16 +210,12 @@ command_result df_fixmerchants (Core *c, vector<string> &parameters)
         {
             // it isn't - set it up
             df::entity_position_assignment *asn = new df::entity_position_assignment;
-            ent->position_assignment.push_back(asn);
+            ent->positions.assignments.push_back(asn);
 
-            asn->id = ent->next_position_assignment_id++;
-            asn->histfig = -1;
+            asn->id = ent->positions.next_assignment_id++;
             asn->position_id = pos->id;
             asn->flags.extend(0x1F); // make room for 32 flags
             asn->flags.set(0);  // and set the first one
-            asn->anon_1 = -1;
-            asn->anon_2 = -1;
-            asn->anon_3 = -1;
         }
         if (update || assign)
             fixed++;

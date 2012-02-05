@@ -1,7 +1,8 @@
 package dfproto;
-//option optimize_for = LITE_RUNTIME;
+option optimize_for = LITE_RUNTIME;
 
 import "Tile.proto";
+import "Plant.proto";
 
 message Block
 {
@@ -9,4 +10,5 @@ message Block
     required uint32 y = 2;
     required uint32 z = 3;
     repeated Tile tile = 4;
+    repeated Plant plant = 5;
 }

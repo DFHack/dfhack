@@ -1,8 +1,13 @@
 PROJECT(mapexport)
 
-include_directories (
+INCLUDE_DIRECTORIES (
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${dfhack_SOURCE_DIR}/library/depends/protobuf/
+    ${dfhack_SOURCE_DIR}/library/depends/zlib/
+)
+
+LINK_DIRECTORIES(
+    ${dfhack_SOURCE_DIR}/library/depends/zlib/
 )
 
 #The protobuf sources we generate will require these headers
@@ -22,7 +27,9 @@ mapexport.cpp
 
 SET(PROJECT_PROTOS
 ${CMAKE_CURRENT_SOURCE_DIR}/proto/Tile.proto
+${CMAKE_CURRENT_SOURCE_DIR}/proto/Plant.proto
 ${CMAKE_CURRENT_SOURCE_DIR}/proto/Block.proto
+${CMAKE_CURRENT_SOURCE_DIR}/proto/Material.proto
 ${CMAKE_CURRENT_SOURCE_DIR}/proto/Map.proto
 )
 
@@ -43,4 +50,8 @@ COMMAND protoc-bin -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/ --cpp_out=${CMAKE_CURRE
 DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
 
-DFHACK_PLUGIN(mapexport ${PROJECT_SRCS} ${PROJECT_HDRS} LINK_LIBRARIES protobuf)
+IF(WIN32)
+    DFHACK_PLUGIN(mapexport ${PROJECT_SRCS} ${PROJECT_HDRS} LINK_LIBRARIES protobuf zlib)
+ELSE()
+    DFHACK_PLUGIN(mapexport ${PROJECT_SRCS} ${PROJECT_HDRS} LINK_LIBRARIES protobuf z)
+ENDIF()

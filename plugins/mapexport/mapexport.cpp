@@ -259,12 +259,12 @@ DFhackCExport command_result mapexport (Core * c, std::vector <std::string> & pa
                 {
                     for (PlantList::const_iterator it = plants->begin(); it != plants->end(); it++)
                     {
-                        dfproto::Plant *protoplant = protoblock.add_plant();
                         const df::plant & plant = *(*it);
                         df::coord2d loc(plant.pos.x, plant.pos.y);
                         loc = loc % 16;
                         if (showHidden || !b->DesignationAt(loc).bits.hidden)
                         {
+                            dfproto::Plant *protoplant = protoblock.add_plant();
                             protoplant->set_x(loc.x);
                             protoplant->set_y(loc.y);
                             protoplant->set_is_shrub(plant.flags.bits.is_shrub);

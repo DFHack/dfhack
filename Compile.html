@@ -391,15 +391,27 @@ Grab it from Microsoft's site.</p>
 <li>open a cmd.exe window and run &quot;cpan XML::LibXML&quot; (obviously without the quotes). This can take a while to complete.</li>
 <li>Same with &quot;cpan XML::LibXSLT&quot;.</li>
 </ul>
+<p>If you already have a different version of perl (for example the one from cygwin), you can run into some trouble. Either remove the other perl install from PATH, or install libxml and libxslt for it instead. Strawberry perl works though and has all the required packages.</p>
 <div class="section" id="id1">
 <h2><a class="toc-backref" href="#id6">Build</a></h2>
-<p>Open the <tt class="docutils literal">build</tt> folder and double click the batch script there. This will eventually open
-a cmake GUI window. Here, set CMAKE_INSTALL_PREFIX to your DF folder and set up any other
-options you're interested in. Hit configure and generate, close the GUI.</p>
-<p>This crates a folder under build/ that contains the solution files for MSVC.</p>
-<p>When you open the solution, make sure you never use the Debug builds. Those aren't
+<p>There are several different batch files in the <tt class="docutils literal">build</tt> folder along with a script that's used for picking the DF path.</p>
+<p>First, run set_df_path.vbs and point the dialog that pops up at your DF folder that you want to use for development.
+Next, run one of the scripts with <tt class="docutils literal">generate</tt> prefix. These create the MSVC solution file(s):</p>
+<ul class="simple">
+<li><tt class="docutils literal">all</tt> will create a solution with everything enabled (and the kitchen sink).</li>
+<li><tt class="docutils literal">gui</tt> will pop up the cmake gui and let you pick and choose what to build. This is probably what you want most of the time. Set the options you are interested in, then hit configure, then generate. More options can appear after the configure step.</li>
+<li><tt class="docutils literal">minimal</tt> will create a minimal solution with just the bare necessities - the main library and standard plugins.</li>
+</ul>
+<p>Then you can either open the solution with MSVC or use one of the msbuild scripts:</p>
+<ul class="simple">
+<li>Scripts with <tt class="docutils literal">build</tt> prefix will only build.</li>
+<li>Scripts with <tt class="docutils literal">install</tt> prefix will build DFHack and install it to the previously selected DF path.</li>
+<li>Scripts with <tt class="docutils literal">package</tt> prefix will build and create a .zip package of DFHack.</li>
+</ul>
+<p>When you open the solution in MSVC, make sure you never use the Debug builds. Those aren't
 binary-compatible with DF. If you try to use a debug build with DF, you'll only get crashes.
 So pick either Release or RelWithDebInfo build and build the INSTALL target.</p>
+<p>The <tt class="docutils literal">debug</tt> scripts actually do RelWithDebInfo builds.</p>
 </div>
 </div>
 <div class="section" id="build-types">
@@ -463,6 +475,7 @@ to look at machine code without getting crazy :)</p>
 </ul>
 <p>Good linux tools:</p>
 <ul class="simple">
+<li>angavrilov's df-structures gui (visit us on IRC for details).</li>
 <li>edb (Evan's Debugger)</li>
 <li>IDA Pro running under wine.</li>
 <li>Some of the tools residing in the <tt class="docutils literal">legacy</tt> dfhack branch.</li>

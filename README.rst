@@ -3,12 +3,12 @@ Introduction
 ============
 
 DFHack is a Dwarf Fortress memory access library and a set of basic
-tools that use it. Tools come in the form of plugins or (not yet) 
+tools that use it. Tools come in the form of plugins or (not yet)
 external tools. It is an attempt to unite the various ways tools
 access DF memory and allow for easier development of new tools.
 
 .. contents::
-    
+
 ==============
 Getting DFHack
 ==============
@@ -32,7 +32,7 @@ for older versions, look for older releases.
 
 On Windows, you have to use the SDL version of DF.
 
-It is possible to use the Windows DFHack under wine/OSX. 
+It is possible to use the Windows DFHack under wine/OSX.
 
 ====================
 Installation/Removal
@@ -48,10 +48,9 @@ Uninstalling is basically the same, in reverse:
  * On Windows, first delete SDL.dll and rename SDLreal.dll to SDL.dll. Then remove the other DFHack files
  * On Linux, Remove the DFHack files.
 
-The stonesense plugin might require some additional libraries on Linux:
- * libjpeg 8
+The stonesense plugin might require some additional libraries on Linux.
 
-If it refuses to load, check the stderr.log file created in your DF folder.
+If any of the plugins or dfhack itself refuses to load, check the stderr.log file created in your DF folder.
 
 ============
 Using DFHack
@@ -81,15 +80,28 @@ Almost all the commands have a 'help'/'?' option that will give you further help
 
 autodump
 ========
-Automated item dumping tool. All loose items on the floor marked
-for dumping are insta-dumped to the position of the in-game cursor.
+This utility lets you quickly move all items designated to be dumped.
+Items are instantly moved to the cursor position, the dump flag is unset,
+and the forbid flag is set, as if it had been dumped normally.
+Be aware that any active dump item tasks still point at the item.
 
-Cursor must be placed on a floor tile. Instadumped items may not
-show up in the cursor description list until you save/reload.
+Cursor must be placed on a floor tile so the items can be dumped there.
 
 Options
 -------
 :destroy:            Destroy instead of dumping. Doesn't require a cursor.
+:destroy-here:       Destroy items only under the cursor.
+:visible:            Only process items that are not hidden.
+:hidden:             Only process hidden items.
+:forbidden:          Only process forbidden items (default: only unforbidden).
+
+autodump-destroy-here
+=====================
+Destroy items marked for dumping under cursor. Identical to autodump destroy-here, but intended for use as keybinding.
+
+autodump-destroy-item
+=====================
+Destroy the selected item. The item may be selected in the 'k' list, or inside a container. If called again before the game is resumed, cancels destroy.
 
 clean
 =====
@@ -125,6 +137,10 @@ Options
 :X:            confiscate/dump items with wear level 'X' and more
 :dryrun:       a dry run. combine with other options to see what will happen without it actually happening.
 
+Example:
+--------
+``cleanowned scattered X`` : This will confiscate rotten and dropped food, garbage on the floors and any worn items with 'X' damage and above.
+
 colonies
 ========
 Allows listing all the vermin colonies on the map and optionally turning them into honey bee colonies.
@@ -145,10 +161,11 @@ This generates a minecraft world out of the currently loaded fortress.
 Generated worlds are placed into your DF folder, named "World #".
 
 .. warning::
-    
+
     * This is experimental! It *will* cause crashes.
     * If it works, the process takes quite a while to complete.
     * Do not use if you have any unsaved progress!
+    * Non-square embarks are exported wrong. It's a known bug.
 
 dfusion
 =======
@@ -161,7 +178,7 @@ Confirmed working DFusion plugins:
 :simple_embark:   allows changing the number of dwarves available on embark.
 
 .. note::
-    
+
     * Some of the DFusion plugins aren't completely ported yet. This can lead to crashes.
     * This is currently working only on Windows.
     * The game will be suspended while you're using dfusion. Don't panic when it doen't respond.
@@ -198,8 +215,8 @@ Example:
 --------
 'filltraffic H' - When used in a room with doors, it will set traffic to HIGH in just that room.
 
-tiletraffic
-===========
+alltraffic
+==========
 Set traffic designations for every single tile of the map (useful for resetting traffic designations).
 
 Traffic Type Codes:
@@ -211,7 +228,15 @@ Traffic Type Codes:
 
 Example:
 --------
-'filltraffic N' - Set traffic to 'normal' for all tiles.
+'alltraffic N' - Set traffic to 'normal' for all tiles.
+
+fixveins
+========
+Removes invalid references to mineral inclusions and restores missing ones. Use this if you broke your embark with tools like tiletypes.
+
+fixwagons
+=========
+Since DF v0.31.1 merchants no longer bring wagons due to a bug. This command re-enables them for all appropriate civilizations.
 
 flows
 =====
@@ -233,6 +258,37 @@ Specifying both -t and -s will have no effect. If no plant IDs are specified, al
 grow
 ====
 Makes all saplings present on the map grow into trees (almost) instantly.
+
+tidlers
+=======
+Toggle between all possible positions where the idlers count can be placed.
+
+twaterlvl
+=========
+Toggle between displaying/not displaying liquid depth as numbers.
+
+job
+===
+Command for general job query and manipulation.
+
+Options:
+ * no extra options - Print details of the current job. The job can be selected in a workshop, or the unit/jobs screen.
+ * list - Print details of all jobs in the selected workshop.
+ * item-material <item-idx> <material[:subtoken]> - Replace the exact material id in the job item.
+ * item-type <item-idx> <type[:subtype]> - Replace the exact item type id in the job item.
+
+job-material
+============
+Alter the material of the selected job. Invoked as: job-material <inorganic-token>
+
+Intended to be used as a keybinding:
+ * In 'q' mode, when a job is highlighted within a workshop or furnace, changes the material of the job. Only inorganic materials can be used in this mode.\n"
+ * In 'b' mode, during selection of building components positions the cursor over the first available choice with the matching material.\n"
+
+job-duplicate
+=============
+Duplicate the selected job in a workshop:
+ * In 'q' mode, when a job is highlighted within a workshop or furnace building, instantly duplicates the job.
 
 extirpate
 =========
@@ -256,7 +312,7 @@ Allows adding magma, water and obsidian to the game. It replaces the normal dfha
 For more information, refer to the command's internal help.
 
 .. note::
-    
+
     Spawning and deleting liquids can F up pathing data and
     temperatures (creating heat traps). You've been warned.
 
@@ -295,11 +351,38 @@ Can be used to determine tile properties like temperature.
 
 prospect
 ========
-Lists all available minerals on the map, how much of them there is and the z-levels where they can be found. By default, only processes the already discovered part of the map.
+Prints a big list of all the present minerals and plants. By default, only the visible part of the map is scanned.
+
+Options
+-------
+:all:   Scan the whole map, as if it was revealed.
+:value: Show material value in the output. Most useful for gems.
+:hell:  Show the Z range of HFS tubes. Implies 'all'.
+
+Pre-embark estimate
+-------------------
+If called during the embark selection screen, displays an estimate of layer stone availability.
+If the 'all' option is specified, also estimates veins. The estimate is computed either
+for 1 embark tile of the blinking biome, or for all tiles of the embark rectangle.
 
 Options
 -------
 :all:            processes all tiles, even hidden ones.
+
+regrass
+=======
+Regrows all surface grass, restoring outdoor plant growth for pre-0.31.19 worlds.
+
+rename
+======
+Allows renaming various things.
+
+Options
+-------
+:rename squad <index> "name": Rename squad by index to 'name'.
+:rename hotkey <index> \"name\": Rename hotkey by index. This allows assigning longer commands to the DF hotkeys.
+:rename unit "nickname": Rename a unit/creature highlighted in the DF user interface.
+:rename unit-profession "custom profession": Change proffession name of the highlighted unit/creature.
 
 reveal
 ======
@@ -322,6 +405,14 @@ seedwatch
 Tool for turning cooking of seeds and plants on/off depending on how much you have of them.
 
 See 'seedwatch help' for detailed description.
+
+showmood
+========
+Shows items needed for current strange mood.
+
+stockpiles
+==========
+Copies the parameters of the currently highlighted stockpile to the custom stockpile settings. Basically a way to copy stockpiles easily.
 
 ssense / stonesense
 ===================
@@ -368,7 +459,9 @@ There are two variables that can be set: pattern and filter.
 Patterns:
 ---------
 :diag5:            diagonals separated by 5 tiles
+:diag5r:           diag5 rotated 90 degrees
 :ladder:           A 'ladder' pattern
+:ladderr:          ladder rotated 90 degrees
 :clear:            Just remove all dig designations
 :cross:            A cross, exactly in the middle of the map.
 
@@ -382,9 +475,12 @@ After you have a pattern set, you can use 'expdig' to apply it again.
 
 Examples:
 ---------
-* 'expdig diag5 hidden' = designate the diagonal 5 patter over all hidden tiles.
-* 'expdig' = apply last used pattern and filter.
-* 'expdig ladder designated' = Take current designations and replace them with the ladder pattern.
+designate the diagonal 5 patter over all hidden tiles:
+  * expdig diag5 hidden
+apply last used pattern and filter:
+  * expdig
+Take current designations and replace them with the ladder pattern:
+  * expdig ladder designated
 
 digcircle
 =========
@@ -431,3 +527,66 @@ Options:
 :snow:   make it snow everywhere.
 :rain:   make it rain.
 :clear:  clear the sky.
+
+workflow
+========
+Manage control of repeat jobs.
+
+Usage
+-----
+workflow enable [option...], workflow disable [option...]
+   If no options are specified, enables or disables the plugin.
+   Otherwise, enables or disables any of the following options:
+
+   - drybuckets: Automatically empty abandoned water buckets.
+   - auto-melt: Resume melt jobs when there are objects to melt.
+workflow jobs
+   List workflow-controlled jobs (if in a workshop, filtered by it).
+workflow list
+   List active constraints, and their job counts.
+workflow count <constraint-spec> <cnt-limit> [cnt-gap], workflow amount <constraint-spec> <cnt-limit> [cnt-gap]
+   Set a constraint. The first form counts each stack as only 1 item.
+workflow unlimit <constraint-spec>
+   Delete a constraint.
+
+Function
+--------
+When the plugin is enabled, it protects all repeat jobs from removal.
+If they do disappear due to any cause, they are immediately re-added to their
+workshop and suspended.
+
+In addition, when any constraints on item amounts are set, repeat jobs that produce
+that kind of item are automatically suspended and resumed as the item amount
+goes above or below the limit. The gap specifies how much below the limit
+the amount has to drop before jobs are resumed; this is intended to reduce
+the frequency of jobs being toggled.
+
+
+Constraint examples
+-------------------
+Keep metal bolts within 900-1000, and wood/bone within 150-200.
+  * workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100
+  * workflow amount AMMO:ITEM_AMMO_BOLTS/WOOD,BONE 200 50
+
+Keep the number of prepared food & drink stacks between 90 and 120
+  * workflow count FOOD 120 30
+  * workflow count DRINK 120 30
+
+Make sure there are always 25-30 empty bins/barrels/bags.
+  * workflow count BIN 30
+  * workflow count BARREL 30
+  * workflow count BOX/CLOTH,SILK,YARN 30
+
+Make sure there are always 15-20 coal and 25-30 copper bars.
+  * workflow count BAR//COAL 20
+  * workflow count BAR//COPPER 30
+
+Collect 15-20 sand bags and clay boulders.
+  * workflow count POWDER_MISC/SAND 20
+  * workflow count BOULDER/CLAY 20
+
+Make sure there are always 80-100 units of dimple dye.
+  * workflow amount POWDER_MISC//MUSHROOM_CUP_DIMPLE:MILL 100 20
+
+  In order for this to work, you have to set the material of the PLANT input on
+  the Mill Plants job to MUSHROOM_CUP_DIMPLE using the 'job item-material' command.

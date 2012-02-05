@@ -49,9 +49,9 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
         "  x         - confiscate & dump 'x' and worse damaged items\n"
         "  X         - confiscate & dump 'X' and worse damaged items\n"
         "Example:\n"
-        "  confiscate scattered X\n"
+        "  cleanowned scattered X\n"
         "    This will confiscate rotten and dropped food, garbage on the floors\n"
-        "    and any worn items wit 'X' damage and above.\n"
+        "    and any worn items with 'X' damage and above.\n"
     ));
     return CR_OK;
 }

@@ -27,8 +27,8 @@ DFhackCExport command_result plugin_init ( Core * c, std::vector <PluginCommand>
         colonies, false,
         "  Without any options, this command lists all the vermin colonies present.\n"
         "Options:\n"
-        "  kill   - destroy colonies\n"
-        "  bees   - turn colonies into honey bees\n"
+        //"  kill   - destroy colonies\n" // unlisted because it's likely broken anyway
+        "  bees   - turn colonies into honey bee hives\n"
     ));
     return CR_OK;
 }

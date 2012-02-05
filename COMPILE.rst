@@ -64,17 +64,30 @@ For the code generation parts, you'll need perl and XML::LibXML. You can install
 * open a cmd.exe window and run "cpan XML::LibXML" (obviously without the quotes). This can take a while to complete.
 * Same with "cpan XML::LibXSLT".
 
+If you already have a different version of perl (for example the one from cygwin), you can run into some trouble. Either remove the other perl install from PATH, or install libxml and libxslt for it instead. Strawberry perl works though and has all the required packages.
+
 Build
 =====
-Open the ``build`` folder and double click the batch script there. This will eventually open
-a cmake GUI window. Here, set CMAKE_INSTALL_PREFIX to your DF folder and set up any other
-options you're interested in. Hit configure and generate, close the GUI.
+There are several different batch files in the ``build`` folder along with a script that's used for picking the DF path.
 
-This crates a folder under build/ that contains the solution files for MSVC.
+First, run set_df_path.vbs and point the dialog that pops up at your DF folder that you want to use for development.
+Next, run one of the scripts with ``generate`` prefix. These create the MSVC solution file(s):
 
-When you open the solution, make sure you never use the Debug builds. Those aren't
+* ``all`` will create a solution with everything enabled (and the kitchen sink).
+* ``gui`` will pop up the cmake gui and let you pick and choose what to build. This is probably what you want most of the time. Set the options you are interested in, then hit configure, then generate. More options can appear after the configure step.
+* ``minimal`` will create a minimal solution with just the bare necessities - the main library and standard plugins.
+
+Then you can either open the solution with MSVC or use one of the msbuild scripts:
+
+* Scripts with ``build`` prefix will only build.
+* Scripts with ``install`` prefix will build DFHack and install it to the previously selected DF path.
+* Scripts with ``package`` prefix will build and create a .zip package of DFHack.
+
+When you open the solution in MSVC, make sure you never use the Debug builds. Those aren't
 binary-compatible with DF. If you try to use a debug build with DF, you'll only get crashes.
 So pick either Release or RelWithDebInfo build and build the INSTALL target.
+
+The ``debug`` scripts actually do RelWithDebInfo builds.
 
 
 ===========
@@ -154,6 +167,7 @@ Good windows tools include:
 
 Good linux tools:
 
+* angavrilov's df-structures gui (visit us on IRC for details).
 * edb (Evan's Debugger)
 * IDA Pro running under wine.
 * Some of the tools residing in the ``legacy`` dfhack branch.
